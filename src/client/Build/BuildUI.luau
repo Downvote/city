@@ -82,18 +82,15 @@ local function paintPicker(parent: Instance, get: () -> any, set: (string, strin
 			end
 		end
 		for i, m in Palette.Materials do
-			local b = Kit.button(
-				m.name,
-				{
-					Parent = mats,
-					Size = UDim2.fromOffset(0, 30),
-					AutomaticSize = Enum.AutomaticSize.X,
-					TextSize = 14,
-					Color = T.PaperDark,
-					TextColor = T.Ink,
-					LayoutOrder = i,
-				}
-			)
+			local b = Kit.button(m.name, {
+				Parent = mats,
+				Size = UDim2.fromOffset(0, 30),
+				AutomaticSize = Enum.AutomaticSize.X,
+				TextSize = 14,
+				Color = T.PaperDark,
+				TextColor = T.Ink,
+				LayoutOrder = i,
+			})
 			Kit.pad(b, 8, 0)
 			matButtons[m.id] = b
 			b.Activated:Connect(function()
@@ -123,18 +120,15 @@ local function choiceRow(
 	local r = row(parent, 40, order)
 	local buttons = {}
 	for i, o in options do
-		local b = Kit.button(
-			o.name,
-			{
-				Parent = r,
-				Size = UDim2.fromOffset(0, 34),
-				AutomaticSize = Enum.AutomaticSize.X,
-				TextSize = 15,
-				Color = T.PaperDark,
-				TextColor = T.Ink,
-				LayoutOrder = i,
-			}
-		)
+		local b = Kit.button(o.name, {
+			Parent = r,
+			Size = UDim2.fromOffset(0, 34),
+			AutomaticSize = Enum.AutomaticSize.X,
+			TextSize = 15,
+			Color = T.PaperDark,
+			TextColor = T.Ink,
+			LayoutOrder = i,
+		})
 		Kit.pad(b, 10, 0)
 		buttons[o.id] = b
 		b.Activated:Connect(function()
@@ -295,17 +289,14 @@ local function paintPanel()
 			s.paint.slot = id
 		end
 	)
-	local pick = Kit.button(
-		"Copy a colour",
-		{
-			Parent = r,
-			Size = UDim2.fromOffset(150, 34),
-			TextSize = 15,
-			Color = T.Yellow,
-			TextColor = T.Ink,
-			LayoutOrder = 9,
-		}
-	)
+	local pick = Kit.button("Copy a colour", {
+		Parent = r,
+		Size = UDim2.fromOffset(150, 34),
+		TextSize = 15,
+		Color = T.Yellow,
+		TextColor = T.Ink,
+		LayoutOrder = 9,
+	})
 	pick.Activated:Connect(function()
 		s.paint.pick = true
 		pick.Text = "Click something..."
@@ -365,29 +356,23 @@ local function catalogPanel()
 			task.spawn(function()
 				ModelPreview.fromPrims(Catalog.prims(def), { Parent = pic })
 			end)
-			Kit.text(
-				def.name,
-				{
-					Parent = card,
-					Size = UDim2.new(1, -10, 0, 30),
-					Position = UDim2.fromOffset(5, 96),
-					TextSize = 14,
-					Font = Kit.Fonts.Bold,
-					AlignX = Enum.TextXAlignment.Center,
-				}
-			)
-			Kit.text(
-				Text.commas(def.price),
-				{
-					Parent = card,
-					Size = UDim2.new(1, -10, 0, 18),
-					Position = UDim2.fromOffset(5, 126),
-					TextSize = 14,
-					Color = T.GreenDark,
-					AlignX = Enum.TextXAlignment.Center,
-					Font = Kit.Fonts.Bold,
-				}
-			)
+			Kit.text(def.name, {
+				Parent = card,
+				Size = UDim2.new(1, -10, 0, 30),
+				Position = UDim2.fromOffset(5, 96),
+				TextSize = 14,
+				Font = Kit.Fonts.Bold,
+				AlignX = Enum.TextXAlignment.Center,
+			})
+			Kit.text(Text.commas(def.price), {
+				Parent = card,
+				Size = UDim2.new(1, -10, 0, 18),
+				Position = UDim2.fromOffset(5, 126),
+				TextSize = 14,
+				Color = T.GreenDark,
+				AlignX = Enum.TextXAlignment.Center,
+				Font = Kit.Fonts.Bold,
+			})
 			card.Activated:Connect(function()
 				BuildMode.startPlacing(def.id)
 			end)
@@ -435,16 +420,13 @@ local function selectPanel()
 	)
 	local actions = row(list, 40, 2)
 	local function action(label: string, color: Color3, fn: () -> ())
-		local b = Kit.button(
-			label,
-			{
-				Parent = actions,
-				Size = UDim2.fromOffset(0, 36),
-				AutomaticSize = Enum.AutomaticSize.X,
-				TextSize = 16,
-				Color = color,
-			}
-		)
+		local b = Kit.button(label, {
+			Parent = actions,
+			Size = UDim2.fromOffset(0, 36),
+			AutomaticSize = Enum.AutomaticSize.X,
+			TextSize = 16,
+			Color = color,
+		})
 		Kit.pad(b, 12, 0)
 		b.Activated:Connect(fn)
 	end
@@ -462,7 +444,13 @@ local function selectPanel()
 		local caption = Kit.text("Main colour", { Parent = slotRow, Size = UDim2.new(0, 150, 1, 0), TextSize = 15 })
 		local flip = Kit.button(
 			"Second colour",
-			{ Parent = slotRow, Size = UDim2.fromOffset(150, 28), TextSize = 14, Color = T.PaperDark, TextColor = T.Ink }
+			{
+				Parent = slotRow,
+				Size = UDim2.fromOffset(150, 28),
+				TextSize = 14,
+				Color = T.PaperDark,
+				TextColor = T.Ink,
+			}
 		)
 		local holder = Kit.box({ Parent = list, Size = UDim2.new(1, 0, 0, 96), LayoutOrder = 4 })
 		local function draw()
@@ -577,17 +565,14 @@ function BuildUI.init(exitCallback: () -> ())
 		{ "delete", "Sell" },
 	}
 	for i, t in tools do
-		local b = Kit.button(
-			t[2],
-			{
-				Parent = toolbar,
-				Size = UDim2.fromOffset(92, 42),
-				TextSize = 17,
-				Color = T.Paper,
-				TextColor = T.Ink,
-				LayoutOrder = i,
-			}
-		)
+		local b = Kit.button(t[2], {
+			Parent = toolbar,
+			Size = UDim2.fromOffset(92, 42),
+			TextSize = 17,
+			Color = T.Paper,
+			TextColor = T.Ink,
+			LayoutOrder = i,
+		})
 		toolButtons[t[1]] = b
 		b.Activated:Connect(function()
 			if t[1] == "catalog" then
@@ -601,30 +586,22 @@ function BuildUI.init(exitCallback: () -> ())
 	end
 	local spacer = Kit.box({ Parent = toolbar, Size = UDim2.fromOffset(6, 40), LayoutOrder = 20 })
 	local _ = spacer
-	Kit.button(
-		"Undo",
-		{
-			Parent = toolbar,
-			Size = UDim2.fromOffset(64, 42),
-			TextSize = 16,
-			Color = T.Yellow,
-			TextColor = T.Ink,
-			LayoutOrder = 21,
-		},
-		BuildMode.undo
-	)
-	Kit.button(
-		"Redo",
-		{
-			Parent = toolbar,
-			Size = UDim2.fromOffset(64, 42),
-			TextSize = 16,
-			Color = T.Yellow,
-			TextColor = T.Ink,
-			LayoutOrder = 22,
-		},
-		BuildMode.redo
-	)
+	Kit.button("Undo", {
+		Parent = toolbar,
+		Size = UDim2.fromOffset(64, 42),
+		TextSize = 16,
+		Color = T.Yellow,
+		TextColor = T.Ink,
+		LayoutOrder = 21,
+	}, BuildMode.undo)
+	Kit.button("Redo", {
+		Parent = toolbar,
+		Size = UDim2.fromOffset(64, 42),
+		TextSize = 16,
+		Color = T.Yellow,
+		TextColor = T.Ink,
+		LayoutOrder = 22,
+	}, BuildMode.redo)
 	Kit.button(
 		"Done",
 		{ Parent = toolbar, Size = UDim2.fromOffset(80, 42), TextSize = 17, Color = T.Green, LayoutOrder = 30 },
@@ -653,16 +630,13 @@ function BuildUI.init(exitCallback: () -> ())
 			BuildMode.setLevel(s.level + 1)
 		end
 	)
-	levelLabel = Kit.title(
-		"Floor 1",
-		{
-			Parent = side,
-			Size = UDim2.new(1, 0, 0, 28),
-			TextSize = 20,
-			AlignX = Enum.TextXAlignment.Center,
-			LayoutOrder = 2,
-		}
-	)
+	levelLabel = Kit.title("Floor 1", {
+		Parent = side,
+		Size = UDim2.new(1, 0, 0, 28),
+		TextSize = 20,
+		AlignX = Enum.TextXAlignment.Center,
+		LayoutOrder = 2,
+	})
 	Kit.button(
 		"Down",
 		{ Parent = side, Size = UDim2.new(1, 0, 0, 34), TextSize = 16, Color = T.Blue, LayoutOrder = 3 },
@@ -670,64 +644,48 @@ function BuildUI.init(exitCallback: () -> ())
 			BuildMode.setLevel(s.level - 1)
 		end
 	)
-	viewButtons.roofs = Kit.button(
-		"Roofs hidden",
-		{
-			Parent = side,
-			Size = UDim2.new(1, 0, 0, 32),
-			TextSize = 14,
-			Color = T.PaperDark,
-			TextColor = T.Ink,
-			LayoutOrder = 4,
-		},
-		function()
-			BuildMode.setRoofsHidden(not s.roofsHidden)
-		end
-	)
-	viewButtons.walls = Kit.button(
-		"See-through walls",
-		{
-			Parent = side,
-			Size = UDim2.new(1, 0, 0, 32),
-			TextSize = 14,
-			Color = T.PaperDark,
-			TextColor = T.Ink,
-			LayoutOrder = 5,
-		},
-		function()
-			BuildMode.setSeeThrough(not s.seeThrough)
-		end
-	)
-	viewButtons.snap = Kit.button(
-		"Grid on",
-		{
-			Parent = side,
-			Size = UDim2.new(1, 0, 0, 32),
-			TextSize = 14,
-			Color = T.PaperDark,
-			TextColor = T.Ink,
-			LayoutOrder = 6,
-		},
-		function()
-			s.snap = not s.snap
-			BuildMode.notify()
-		end
-	)
+	viewButtons.roofs = Kit.button("Roofs hidden", {
+		Parent = side,
+		Size = UDim2.new(1, 0, 0, 32),
+		TextSize = 14,
+		Color = T.PaperDark,
+		TextColor = T.Ink,
+		LayoutOrder = 4,
+	}, function()
+		BuildMode.setRoofsHidden(not s.roofsHidden)
+	end)
+	viewButtons.walls = Kit.button("See-through walls", {
+		Parent = side,
+		Size = UDim2.new(1, 0, 0, 32),
+		TextSize = 14,
+		Color = T.PaperDark,
+		TextColor = T.Ink,
+		LayoutOrder = 5,
+	}, function()
+		BuildMode.setSeeThrough(not s.seeThrough)
+	end)
+	viewButtons.snap = Kit.button("Grid on", {
+		Parent = side,
+		Size = UDim2.new(1, 0, 0, 32),
+		TextSize = 14,
+		Color = T.PaperDark,
+		TextColor = T.Ink,
+		LayoutOrder = 6,
+	}, function()
+		s.snap = not s.snap
+		BuildMode.notify()
+	end)
 	if Kit.isTouch() then
-		Kit.button(
-			"Turn",
-			{
-				Parent = side,
-				Size = UDim2.new(1, 0, 0, 32),
-				TextSize = 14,
-				Color = T.Yellow,
-				TextColor = T.Ink,
-				LayoutOrder = 7,
-			},
-			function()
-				BuildMode.rotate(45)
-			end
-		)
+		Kit.button("Turn", {
+			Parent = side,
+			Size = UDim2.new(1, 0, 0, 32),
+			TextSize = 14,
+			Color = T.Yellow,
+			TextColor = T.Ink,
+			LayoutOrder = 7,
+		}, function()
+			BuildMode.rotate(45)
+		end)
 	end
 
 	panel = Kit.frame({
@@ -739,16 +697,13 @@ function BuildUI.init(exitCallback: () -> ())
 		Parent = gui,
 		Visible = false,
 	})
-	hintLabel = Kit.text(
-		"",
-		{
-			Parent = panel,
-			Size = UDim2.new(1, -24, 0, 22),
-			Position = UDim2.fromOffset(12, 6),
-			TextSize = 15,
-			Color = T.InkSoft,
-		}
-	)
+	hintLabel = Kit.text("", {
+		Parent = panel,
+		Size = UDim2.new(1, -24, 0, 22),
+		Position = UDim2.fromOffset(12, 6),
+		TextSize = 15,
+		Color = T.InkSoft,
+	})
 	panelBody = Kit.box({ Parent = panel, Size = UDim2.new(1, -24, 1, -36), Position = UDim2.fromOffset(12, 30) })
 
 	BuildMode.Changed:Connect(function(what)

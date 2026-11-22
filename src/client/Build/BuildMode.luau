@@ -305,17 +305,13 @@ local function wallTool()
 	local g = Vector3.new(snapGrid(p.X), Plan.levelBase(s.level), snapGrid(p.Z))
 	if s.wallMode == "room" then
 		if not rectStart then
-			showGhost(
-				"dot" .. tostring(g),
-				{
-					Geometry.box(
-						CFrame.new(g + Vector3.new(0, 0.5, 0)),
-						Vector3.new(0.8, 1, 0.8),
-						Color3.fromRGB(255, 212, 92)
-					),
-				},
-				true
-			)
+			showGhost("dot" .. tostring(g), {
+				Geometry.box(
+					CFrame.new(g + Vector3.new(0, 0.5, 0)),
+					Vector3.new(0.8, 1, 0.8),
+					Color3.fromRGB(255, 212, 92)
+				),
+			}, true)
 			setLabel("Click a corner", g + Vector3.new(0, 3, 0))
 			candidate = nil
 			return
@@ -368,17 +364,13 @@ local function wallTool()
 		return
 	end
 	if not wallStart then
-		showGhost(
-			"dot" .. tostring(g),
-			{
-				Geometry.box(
-					CFrame.new(g + Vector3.new(0, 0.5, 0)),
-					Vector3.new(0.8, 1, 0.8),
-					Color3.fromRGB(255, 212, 92)
-				),
-			},
-			true
-		)
+		showGhost("dot" .. tostring(g), {
+			Geometry.box(
+				CFrame.new(g + Vector3.new(0, 0.5, 0)),
+				Vector3.new(0.8, 1, 0.8),
+				Color3.fromRGB(255, 212, 92)
+			),
+		}, true)
 		setLabel(nil)
 		candidate = nil
 		return
@@ -415,17 +407,13 @@ local function rectTool(kind: string)
 	end
 	local g = Vector3.new(snapGrid(p.X), Plan.levelBase(s.level), snapGrid(p.Z))
 	if not rectStart then
-		showGhost(
-			"dot" .. tostring(g),
-			{
-				Geometry.box(
-					CFrame.new(g + Vector3.new(0, 0.3, 0)),
-					Vector3.new(P.WallSnap, 0.4, P.WallSnap),
-					Color3.fromRGB(255, 212, 92)
-				),
-			},
-			true
-		)
+		showGhost("dot" .. tostring(g), {
+			Geometry.box(
+				CFrame.new(g + Vector3.new(0, 0.3, 0)),
+				Vector3.new(P.WallSnap, 0.4, P.WallSnap),
+				Color3.fromRGB(255, 212, 92)
+			),
+		}, true)
 		setLabel(if kind == "floors" then "Click a corner" else "Click a corner of the house", g + Vector3.new(0, 3, 0))
 		candidate = nil
 		return

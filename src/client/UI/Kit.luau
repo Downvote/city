@@ -369,16 +369,13 @@ function Kit.slider(
 	})
 	local caption =
 		Kit.text(label, { Parent = holder, Size = UDim2.new(1, -60, 0, 20), TextSize = 16, Font = Kit.Fonts.Bold })
-	local readout = Kit.text(
-		"",
-		{
-			Parent = holder,
-			Size = UDim2.new(0, 60, 0, 20),
-			Position = UDim2.new(1, -60, 0, 0),
-			TextSize = 16,
-			AlignX = Enum.TextXAlignment.Right,
-		}
-	)
+	local readout = Kit.text("", {
+		Parent = holder,
+		Size = UDim2.new(0, 60, 0, 20),
+		Position = UDim2.new(1, -60, 0, 0),
+		TextSize = 16,
+		AlignX = Enum.TextXAlignment.Right,
+	})
 	local track = Kit.frame({
 		Parent = holder,
 		Size = UDim2.new(1, -12, 0, 8),
@@ -421,16 +418,13 @@ function Kit.slider(
 			onChange(current)
 		end
 	end
-	local hit = Kit.new(
-		"TextButton",
-		{
-			Text = "",
-			BackgroundTransparency = 1,
-			Size = UDim2.new(1, 0, 0, 30),
-			Position = UDim2.fromOffset(0, 20),
-			Parent = holder,
-		}
-	)
+	local hit = Kit.new("TextButton", {
+		Text = "",
+		BackgroundTransparency = 1,
+		Size = UDim2.new(1, 0, 0, 30),
+		Position = UDim2.fromOffset(0, 20),
+		Parent = holder,
+	})
 	hit.InputBegan:Connect(function(input)
 		if
 			input.UserInputType == Enum.UserInputType.MouseButton1

@@ -1,0 +1,454 @@
+--!strict
+-- Rugs, plants and little things that make a room feel lived in.
+-- c1 is the main colour, c2 the second one (a pattern, leaves, a trim).
+
+local Recipe = require(script.Parent.Parent.Recipe)
+local Colors = require(script.Parent.Parent.Parent.Util.Colors)
+
+local C = Recipe.Colors
+
+type R = Recipe.Recipe
+
+local function shade(c: Color3, k: number): Color3
+	return Colors.shade(c, k)
+end
+
+-- Glows at night without a light of its own (when another part of the item already has one).
+local function glowOnly(p: Recipe.Prim)
+	p.role = "glow"
+end
+
+-- A flat rug layer: walked over, never bumped into.
+local function flat(r: R, p: Recipe.Prim)
+	r:noCollide(p)
+end
+
+-- One catalog entry (Build/Catalog explains the fields).
+type Item = {
+	id: string,
+	name: string,
+	cat: string,
+	price: number,
+	place: string,
+	size: Vector3,
+	c1: string,
+	c2: string?,
+	tags: { string }?,
+	surface: number?,
+	build: (r: R) -> (),
+}
+
+local items: { Item } = {
+	{
+		id = "rug_round",
+		name = "Round rug",
+		cat = "decor",
+		price = 60,
+		place = "floor",
+		size = Vector3.new(6, 0.1, 6),
+		c1 = "D9805F",
+		c2 = "F2E8D5",
+		tags = { "rug" },
+		build = function(r: R)
+			flat(r, r:cyl(0, 0.03, 0, 0.06, 6, "y", r.c1, "Carpet"))
+			flat(r, r:cyl(0, 0.035, 0, 0.07, 4.8, "y", r.c2, "Carpet"))
+			flat(r, r:cyl(0, 0.04, 0, 0.08, 4.2, "y", r.c1, "Carpet"))
+			flat(r, r:cyl(0, 0.045, 0, 0.09, 1.6, "y", r.c2, "Carpet"))
+		end,
+	},
+	{
+		id = "rug_long",
+		name = "Long rug",
+		cat = "decor",
+		price = 70,
+		place = "floor",
+		size = Vector3.new(4, 0.1, 8),
+		c1 = "7A9CC6",
+		c2 = "F2E8D5",
+		tags = { "rug" },
+		build = function(r: R)
+			flat(r, r:block(-2, 0, -3.85, 2, 0.06, 3.85, r.c1, "Carpet"))
+			flat(r, r:block(-1.6, 0, -3.45, 1.6, 0.07, 3.45, r.c2, "Carpet"))
+			flat(r, r:block(-1.4, 0, -3.25, 1.4, 0.08, 3.25, r.c1, "Carpet"))
+			for _, z in { -1.8, 0, 1.8 } do
+				flat(
+					r,
+					r:boxAt(CFrame.new(0, 0.045, z) * CFrame.Angles(0, math.pi / 4, 0), 0.9, 0.09, 0.9, r.c2, "Carpet")
+				)
+			end
+			-- fringe at both ends
+			for _, s in { -1, 1 } do
+				flat(r, r:block(-1.9, 0, s * 3.85, 1.9, 0.04, s * 4.0, C.Cream, "Fabric"))
+			end
+		end,
+	},
+	{
+		id = "plant_small",
+		name = "Small plant",
+		cat = "decor",
+		price = 20,
+		place = "surface",
+		size = Vector3.new(1, 1.5, 1),
+		c1 = "C46E50",
+		c2 = "56A048",
+		tags = { "plant" },
+		build = function(r: R)
+			r:cyl(0, 0.3, 0, 0.6, 0.72, "y", r.c1, "SmoothPlastic")
+			r:cyl(0, 0.62, 0, 0.14, 0.86, "y", shade(r.c1, 0.9), "SmoothPlastic")
+			r:cyl(0, 0.7, 0, 0.04, 0.7, "y", C.Soil, "Sand")
+			r:ball(0, 0.98, 0, 0.62, r.c2, "Grass")
+			r:ball(-0.2, 0.88, 0.12, 0.42, shade(r.c2, 0.8), "Grass")
+			r:ball(0.18, 1.18, -0.08, 0.42, shade(r.c2, 1.1), "Grass")
+		end,
+	},
+	{
+		id = "plant_big",
+		name = "Big plant",
+		cat = "decor",
+		price = 60,
+		place = "floor",
+		size = Vector3.new(2.4, 5.4, 2.4),
+		c1 = "F2E8D5",
+		c2 = "56A048",
+		tags = { "plant" },
+		build = function(r: R)
+			r:cyl(0, 0.65, 0, 1.3, 1.5, "y", r.c1, "SmoothPlastic")
+			r:cyl(0, 1.38, 0, 0.18, 1.7, "y", shade(r.c1, 0.9), "SmoothPlastic")
+			r:cyl(0, 1.48, 0, 0.04, 1.4, "y", C.Soil, "Sand")
+			r:cyl(0, 2.6, 0, 2.4, 0.2, "y", C.Bark, "Wood")
+			r:beam(Vector3.new(0, 2.6, 0), Vector3.new(-0.55, 3.4, 0.25), 0.12, 0.12, C.Bark, "Wood")
+			r:beam(Vector3.new(0, 3.0, 0), Vector3.new(0.55, 3.7, -0.2), 0.12, 0.12, C.Bark, "Wood")
+			r:ball(0, 4.45, 0, 1.6, r.c2, "Grass")
+			r:ball(-0.6, 3.7, 0.3, 1.2, shade(r.c2, 0.8), "Grass")
+			r:ball(0.6, 3.95, -0.2, 1.25, shade(r.c2, 0.9), "Grass")
+			r:ball(0.15, 4.85, 0.45, 1.0, shade(r.c2, 1.12), "Grass")
+			r:ball(-0.3, 4.95, -0.35, 0.9, shade(r.c2, 1.05), "Grass")
+		end,
+	},
+	{
+		id = "vase_flowers",
+		name = "Flower vase",
+		cat = "decor",
+		price = 25,
+		place = "surface",
+		size = Vector3.new(1, 2, 1),
+		c1 = "7A9CC6",
+		c2 = "F59EB5",
+		tags = { "plant" },
+		build = function(r: R)
+			r:cyl(0, 0.33, 0, 0.66, 0.56, "y", r.c1, "SmoothPlastic")
+			r:cyl(0, 0.72, 0, 0.14, 0.36, "y", r.c1, "SmoothPlastic")
+			local heads = { { 0.25, 1.55, 0.1 }, { -0.22, 1.68, -0.05 }, { 0.05, 1.85, -0.2 }, { -0.08, 1.48, 0.25 } }
+			for i, h in heads do
+				local top = Vector3.new(h[1], h[2], h[3])
+				r:beam(Vector3.new(0, 0.75, 0), top, 0.05, 0.05, C.DarkLeaf, "SmoothPlastic")
+				r:ball(h[1], h[2], h[3], 0.32, if i % 2 == 0 then C.Yellow else r.c2, "SmoothPlastic")
+			end
+			r:boxAt(CFrame.new(0.18, 1.1, -0.05) * CFrame.Angles(0, 0, -0.6), 0.1, 0.35, 0.18, C.Leaf, "SmoothPlastic")
+			r:boxAt(CFrame.new(-0.16, 1.05, 0.08) * CFrame.Angles(0, 0, 0.6), 0.1, 0.35, 0.18, C.Leaf, "SmoothPlastic")
+		end,
+	},
+	{
+		id = "books_stack",
+		name = "Stack of books",
+		cat = "decor",
+		price = 15,
+		place = "surface",
+		size = Vector3.new(1.4, 0.8, 1.1),
+		c1 = "C7383F",
+		c2 = "3E6E58",
+		tags = { "books" },
+		build = function(r: R)
+			local covers = { r.c1, C.Blue, r.c2, C.Yellow }
+			local turns = { 0.05, -0.12, 0.1, -0.05 }
+			local y = 0
+			for i, col in covers do
+				local h = if i == 2 then 0.22 else 0.17
+				local w = 1.2 - i * 0.06
+				local cf = CFrame.new(0, y + h / 2, 0) * CFrame.Angles(0, turns[i], 0)
+				r:boxAt(cf, w, h, 0.85, col, "SmoothPlastic")
+				r:boxAt(cf * CFrame.new(0.04, 0, 0.02), w - 0.04, h - 0.06, 0.85, C.Paper, "SmoothPlastic")
+				y += h
+			end
+		end,
+	},
+	{
+		id = "globe",
+		name = "Globe",
+		cat = "decor",
+		price = 45,
+		place = "surface",
+		size = Vector3.new(1.3, 1.8, 1.2),
+		c1 = "4FA9D9",
+		c2 = "86C060",
+		build = function(r: R)
+			r:cyl(0, 0.05, 0, 0.1, 0.8, "y", C.Bark, "Wood")
+			r:cyl(0, 0.3, 0, 0.45, 0.14, "y", C.Bark, "Wood")
+			local cy = 1.1
+			r:ball(0, cy, 0, 1.0, r.c1, "SmoothPlastic")
+			-- land: patches that only just poke out of the sea
+			for _, p in
+				{
+					{ 0.6, 0.4, 0.6, 0.5 },
+					{ -0.4, -0.3, 0.7, 0.42 },
+					{ -0.7, 0.6, -0.3, 0.4 },
+					{ 0.3, -0.6, -0.6, 0.36 },
+				}
+			do
+				local dir = Vector3.new(p[1], p[2], p[3]).Unit * (0.54 - p[4] / 2)
+				r:ball(dir.X, cy + dir.Y, dir.Z, p[4], r.c2, "SmoothPlastic")
+			end
+			-- the half ring that holds it
+			local n = 6
+			for i = 0, n - 1 do
+				local a1 = -math.pi / 2 + i / n * math.pi
+				local a2 = -math.pi / 2 + (i + 1) / n * math.pi
+				r:beam(
+					Vector3.new(math.cos(a1) * 0.6, cy + math.sin(a1) * 0.6, 0),
+					Vector3.new(math.cos(a2) * 0.6, cy + math.sin(a2) * 0.6, 0),
+					0.08,
+					0.08,
+					C.Gold,
+					"Metal"
+				)
+			end
+		end,
+	},
+	{
+		id = "candles",
+		name = "Candles",
+		cat = "decor",
+		price = 20,
+		place = "surface",
+		size = Vector3.new(1.2, 1.1, 1.2),
+		c1 = "F7F3EA",
+		c2 = "DEB252",
+		tags = { "light" },
+		build = function(r: R)
+			r:cyl(0, 0.03, 0, 0.06, 1.15, "y", r.c2, "Metal")
+			local set = { { -0.25, 0.1, 0.8 }, { 0.25, 0.05, 0.6 }, { 0, -0.3, 0.45 } }
+			for i, c in set do
+				local x, z, h = c[1], c[2], c[3]
+				r:cyl(x, 0.06 + h / 2, z, h, 0.3, "y", r.c1, "SmoothPlastic")
+				r:cyl(x, 0.1 + h, z, 0.08, 0.04, "y", C.Black, "SmoothPlastic")
+				local flame = r:ball(x, 0.19 + h, z, 0.15, C.Warm, "SmoothPlastic")
+				if i == 1 then
+					r:glow(flame, 10, 0.8)
+				else
+					glowOnly(flame)
+				end
+			end
+		end,
+	},
+	{
+		id = "teddy",
+		name = "Teddy bear",
+		cat = "decor",
+		price = 30,
+		place = "surface",
+		size = Vector3.new(1.1, 1.45, 1),
+		c1 = "B07A45",
+		c2 = "E9D3B0",
+		tags = { "toy" },
+		build = function(r: R)
+			r:ball(0, 0.45, 0, 0.8, r.c1, "Fabric")
+			r:ball(0, 0.42, 0.2, 0.5, r.c2, "Fabric")
+			for _, sx in { -1, 1 } do
+				r:ball(sx * 0.4, 0.55, 0.08, 0.3, r.c1, "Fabric")
+				r:ball(sx * 0.22, 0.17, 0.28, 0.34, r.c1, "Fabric")
+				r:ball(sx * 0.22, 1.32, 0, 0.24, r.c1, "Fabric")
+				r:ball(sx * 0.12, 1.12, 0.27, 0.07, C.Black, "SmoothPlastic")
+			end
+			r:ball(0, 1.05, 0.03, 0.62, r.c1, "Fabric")
+			r:ball(0, 0.98, 0.27, 0.26, r.c2, "Fabric")
+			r:ball(0, 1.02, 0.39, 0.09, C.Black, "SmoothPlastic")
+			-- a bow at the neck
+			for _, sx in { -1, 1 } do
+				r:boxAt(
+					CFrame.new(sx * 0.1, 0.78, 0.3) * CFrame.Angles(0, 0, sx * 0.3),
+					0.16,
+					0.12,
+					0.06,
+					C.Red,
+					"Fabric"
+				)
+			end
+		end,
+	},
+	{
+		id = "fireplace",
+		name = "Fireplace",
+		cat = "decor",
+		price = 400,
+		place = "floor",
+		size = Vector3.new(6, 6.4, 2.4),
+		c1 = "B5523B",
+		c2 = "6B4423",
+		build = function(r: R)
+			r:block(-3, 0, -1.2, 3, 0.3, 1.2, C.Stone, "Slate")
+			r:block(-3, 0.3, -1.2, -1.7, 4.6, 0.6, r.c1, "Brick")
+			r:block(1.7, 0.3, -1.2, 3, 4.6, 0.6, r.c1, "Brick")
+			r:block(-1.7, 3.2, -1.2, 1.7, 4.6, 0.6, r.c1, "Brick")
+			r:block(-1.7, 0.3, -1.2, 1.7, 3.2, -0.7, C.Black, "Slate")
+			r:block(-3, 4.6, -1.2, 3, 4.9, 0.95, r.c2, "Wood")
+			r:block(-2.4, 4.9, -1.2, 2.4, 6.4, -0.3, r.c1, "Brick")
+			-- a grate with logs and a fire
+			for _, x in { -0.8, 0.8 } do
+				r:block(x - 0.06, 0.3, -0.6, x + 0.06, 0.55, 0.3, C.DarkMetal, "Metal")
+			end
+			local ember = r:block(-0.8, 0.3, -0.6, 0.8, 0.4, 0.2, Color3.fromRGB(255, 120, 50), "SmoothPlastic")
+			r:glow(ember, 18, 1.4, Color3.fromRGB(255, 160, 90))
+			r:cyl(0, 0.62, -0.35, 1.7, 0.42, "x", C.Bark, "Wood")
+			r:cyl(0, 0.62, 0.05, 1.5, 0.38, "x", shade(C.Bark, 1.15), "Wood")
+			local top = r:cyl(0, 0.95, -0.15, 1.5, 0.36, "x", C.Bark, "Wood")
+			r:fire(top)
+			-- two candlesticks on the mantel
+			for _, x in { -2.5, 2.5 } do
+				r:cyl(x, 5.0, 0.3, 0.2, 0.3, "y", C.Gold, "Metal")
+				r:cyl(x, 5.35, 0.3, 0.5, 0.18, "y", C.White, "SmoothPlastic")
+			end
+		end,
+	},
+	{
+		id = "aquarium",
+		name = "Fish tank",
+		cat = "decor",
+		price = 300,
+		place = "floor",
+		size = Vector3.new(4, 4.6, 1.8),
+		c1 = "6B4423",
+		c2 = "2B282E",
+		build = function(r: R)
+			r:block(-2, 0, -0.9, 2, 2.2, 0.9, r.c1, "Wood")
+			for _, sx in { -1, 1 } do
+				local xa, xb = sx * 0.05, sx * 1.9
+				r:block(math.min(xa, xb), 0.15, 0.9, math.max(xa, xb), 2.05, 0.96, shade(r.c1, 1.12), "Wood")
+				r:ball(sx * 0.25, 1.1, 1.0, 0.16, C.Gold, "Metal")
+			end
+			r:block(-1.9, 2.2, -0.8, 1.9, 2.35, 0.8, r.c2, "Metal")
+			r:block(-1.9, 4.4, -0.8, 1.9, 4.6, 0.8, r.c2, "Metal")
+			for _, sx in { -1, 1 } do
+				for _, sz in { -1, 1 } do
+					r:box(sx * 1.86, 3.375, sz * 0.76, 0.08, 2.05, 0.08, r.c2, "Metal")
+				end
+			end
+			r:block(-1.82, 2.35, -0.72, 1.82, 2.6, 0.72, Color3.fromRGB(222, 196, 150), "Pebble")
+			r:ball(-1.1, 2.6, -0.2, 0.6, C.Stone, "Rock")
+			-- weeds swaying up from the gravel
+			for _, p in { { -1.4, 0.2, 3.7 }, { 1.3, -0.3, 3.9 }, { 0.6, -0.4, 3.3 } } do
+				r:beam(Vector3.new(p[1], 2.6, p[2]), Vector3.new(p[1] + 0.15, p[3], p[2]), 0.12, 0.2, C.Leaf, "Grass")
+			end
+			-- fish
+			local fish = {
+				{ x = -0.3, y = 3.5, z = 0.1, col = C.Yellow },
+				{ x = 0.7, y = 3.0, z = -0.2, col = Color3.fromRGB(245, 140, 60) },
+				{ x = 0.1, y = 3.95, z = -0.3, col = C.Blue },
+			}
+			for _, f in fish do
+				r:block(f.x - 0.2, f.y - 0.12, f.z - 0.07, f.x + 0.2, f.y + 0.12, f.z + 0.07, f.col, "SmoothPlastic")
+				r:block(f.x + 0.2, f.y - 0.1, f.z - 0.03, f.x + 0.32, f.y + 0.1, f.z + 0.03, f.col, "SmoothPlastic")
+			end
+			local water = r:block(-1.82, 2.6, -0.72, 1.82, 4.2, 0.72, C.Water, "Glass")
+			water.transp = 0.6
+		end,
+	},
+	{
+		id = "mirror_floor",
+		name = "Floor mirror",
+		cat = "decor",
+		price = 80,
+		place = "floor",
+		size = Vector3.new(2.2, 6.3, 1.2),
+		c1 = "DEB252",
+		c2 = "6B4423",
+		tags = { "mirror" },
+		build = function(r: R)
+			local mirror = Color3.fromRGB(205, 225, 234)
+			r:block(-1.0, 0.15, 0.2, 1.0, 5.2, 0.4, r.c1, "Metal")
+			r:cyl(0, 5.2, 0.3, 0.2, 2.0, "z", r.c1, "Metal")
+			r:block(-0.82, 0.33, 0.4, 0.82, 5.2, 0.44, mirror, "Glass")
+			r:cyl(0, 5.2, 0.42, 0.04, 1.64, "z", mirror, "Glass")
+			r:boxAt(CFrame.new(0.2, 3.4, 0.45) * CFrame.Angles(0, 0, -0.5), 0.2, 2.4, 0.01, C.White, "Glass")
+			for _, sx in { -1, 1 } do
+				r:block(sx * 0.75 - 0.2, 0, 0.05, sx * 0.75 + 0.2, 0.15, 0.55, r.c2, "Wood")
+			end
+			r:beam(Vector3.new(0, 4.5, 0.2), Vector3.new(0, 0.05, -0.5), 0.16, 0.12, r.c2, "Wood")
+		end,
+	},
+	{
+		id = "clock_grandfather",
+		name = "Grandfather clock",
+		cat = "decor",
+		price = 250,
+		place = "floor",
+		size = Vector3.new(2, 7.5, 1.4),
+		c1 = "6B4423",
+		c2 = "DEB252",
+		tags = { "clock" },
+		build = function(r: R)
+			r:block(-1.0, 0, -0.7, 1.0, 0.4, 0.7, shade(r.c1, 0.85), "Wood")
+			r:block(-0.9, 0.4, -0.6, 0.9, 2.2, 0.6, r.c1, "Wood")
+			r:block(-0.6, 0.8, 0.6, 0.6, 1.8, 0.64, shade(r.c1, 1.15), "Wood")
+			-- the waist: a back, two sides and a glass door with the pendulum behind it
+			r:block(-0.7, 2.2, -0.5, 0.7, 5.0, -0.3, r.c1, "Wood")
+			for _, sx in { -1, 1 } do
+				r:block(sx * 0.6 - 0.1, 2.2, -0.3, sx * 0.6 + 0.1, 5.0, 0.5, r.c1, "Wood")
+			end
+			r:block(-0.5, 2.2, 0.3, 0.5, 2.4, 0.5, r.c1, "Wood")
+			r:glass(-0.5, 2.4, 0.42, 0.5, 4.85, 0.47)
+			r:block(-0.03, 3.1, -0.05, 0.03, 4.95, 0.05, r.c2, "Metal")
+			r:cyl(0, 3.0, 0, 0.08, 0.45, "z", r.c2, "Metal")
+			-- the head with the face
+			r:block(-0.95, 5.0, -0.65, 0.95, 6.8, 0.65, r.c1, "Wood")
+			r:cyl(0, 5.9, 0.66, 0.04, 1.45, "z", r.c2, "Metal")
+			r:cyl(0, 5.9, 0.69, 0.04, 1.25, "z", C.Cream, "SmoothPlastic")
+			for i = 0, 3 do
+				local a = i * math.pi / 2
+				r:block(
+					math.cos(a) * 0.5 - 0.04,
+					5.9 + math.sin(a) * 0.5 - 0.04,
+					0.71,
+					math.cos(a) * 0.5 + 0.04,
+					5.9 + math.sin(a) * 0.5 + 0.04,
+					0.73,
+					C.Black,
+					"SmoothPlastic"
+				)
+			end
+			r:boxAt(CFrame.new(0.15, 6.0, 0.73) * CFrame.Angles(0, 0, -1.0), 0.05, 0.4, 0.02, C.Black, "SmoothPlastic")
+			r:boxAt(CFrame.new(0, 6.08, 0.74) * CFrame.Angles(0, 0, 0.1), 0.05, 0.36, 0.02, C.Black, "SmoothPlastic")
+			r:block(-1.0, 6.8, -0.7, 1.0, 7.0, 0.7, shade(r.c1, 0.85), "Wood")
+			r:block(-0.6, 7.0, -0.5, 0.6, 7.25, 0.5, r.c1, "Wood")
+			r:ball(0, 7.36, 0, 0.26, r.c2, "Metal")
+		end,
+	},
+	{
+		id = "screen_folding",
+		name = "Folding screen",
+		cat = "decor",
+		price = 90,
+		place = "floor",
+		size = Vector3.new(4.4, 5.2, 1),
+		c1 = "6B4423",
+		c2 = "F2E8D5",
+		build = function(r: R)
+			-- three panels standing in a zigzag
+			local pts = {
+				Vector3.new(-2.06, 0, 0.3),
+				Vector3.new(-0.69, 0, -0.3),
+				Vector3.new(0.69, 0, 0.3),
+				Vector3.new(2.06, 0, -0.3),
+			}
+			for i = 1, 3 do
+				local a, b = pts[i], pts[i + 1]
+				local along = (b - a).Unit
+				r:beam(a + Vector3.new(0, 2.6, 0), b + Vector3.new(0, 2.6, 0), 0.12, 5.0, r.c1, "Wood")
+				local a2, b2 = a + along * 0.14, b - along * 0.14
+				r:beam(a2 + Vector3.new(0, 3.05, 0), b2 + Vector3.new(0, 3.05, 0), 0.16, 3.7, r.c2, "Fabric")
+				r:beam(a2 + Vector3.new(0, 0.85, 0), b2 + Vector3.new(0, 0.85, 0), 0.16, 0.12, shade(r.c1, 1.2), "Wood")
+			end
+		end,
+	},
+}
+
+return items

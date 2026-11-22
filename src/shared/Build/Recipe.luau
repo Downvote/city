@@ -220,14 +220,23 @@ function Recipe.glass(self: Recipe, x1: number, y1: number, z1: number, x2: numb
 	return p
 end
 
--- Marks a prim as lit at night (it glows and its light switches on).
+-- Marks a prim as lit at night (it glows and its light switches on). A range of 0 makes it glow
+-- with no light of its own, for the extra bulbs of something that already has one.
 function Recipe.glow(self: Recipe, prim: Prim, range: number?, brightness: number?, color: Color3?): Prim
 	prim.role = "glow"
+	if range == 0 then
+		return prim
+	end
 	prim.light = {
 		range = range or 14,
 		brightness = brightness or 1.2,
 		color = color or Recipe.Colors.Warm,
 	}
+	return prim
+end
+
+function Recipe.smoke(self: Recipe, prim: Prim): Prim
+	prim.effect = "smoke"
 	return prim
 end
 

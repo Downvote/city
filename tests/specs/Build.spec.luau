@@ -9,6 +9,7 @@ local Shapes = require(Shared .. "Build.Shapes")
 local Geometry = require(Shared .. "Build.Geometry")
 local Builder = require(Shared .. "Build.Builder")
 local Palette = require(Shared .. "Data.Palette")
+local Colors = require(Shared .. "Util.Colors")
 
 local P = Tuning.Plot
 
@@ -81,7 +82,34 @@ describe("Catalog", function()
 			end
 			local prims = Catalog.prims(def)
 			expect(#prims > 0).toBeTruthy()
-			local lo, hi = Geometry.bounds(prims)
+			-- hidden seat and sleep markers can stick out a little; only what you can see must fit
+			local visible = {}
+			local seats, beds, glows = 0, 0, 0
+			for _, p in prims do
+				if p.role == "seat" then
+					seats += 1
+				elseif p.role == "bed" then
+					beds += 1
+				elseif p.role == "glow" then
+					glows += 1
+				end
+				if not ((p.transp or 0) >= 0.99 and (p.role == "seat" or p.role == "bed")) then
+					table.insert(visible, p)
+				end
+			end
+			if not Colors.isHex(def.c1) or (def.c2 ~= nil and not Colors.isHex(def.c2)) then
+				error(def.id .. " has a bad default colour")
+			end
+			if def.cat == "seating" and seats == 0 then
+				error(def.id .. " is seating with nowhere to sit")
+			end
+			if def.tags and table.find(def.tags, "bed") and beds == 0 then
+				error(def.id .. " is a bed with nowhere to sleep")
+			end
+			if def.cat == "lights" and glows == 0 then
+				error(def.id .. " is a light that never lights up")
+			end
+			local lo, hi = Geometry.bounds(visible)
 			local s = def.size
 			local slack = 0.6
 			local yLo, yHi = -slack, s.Y + slack

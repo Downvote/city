@@ -41,11 +41,14 @@ local DATATYPES = {
 local RandomShim = {}
 RandomShim.__index = RandomShim
 function RandomShim.new(seed)
-	local s = math.floor(tonumber(seed) or os.clock() * 1e6) % 2147483646
-	if s <= 0 then
-		s = 1234567
+	local s = math.floor(tonumber(seed) or os.clock() * 1e6)
+	-- spread small seeds out: Park-Miller's first draws from a small seed are all tiny
+	s = (s * 2654435761 + 12345) % 2147483646 + 1
+	local r = setmetatable({ s = s }, RandomShim)
+	for _ = 1, 4 do
+		r:_next()
 	end
-	return setmetatable({ s = s }, RandomShim)
+	return r
 end
 function RandomShim:_next()
 	-- Park-Miller minimal standard generator
