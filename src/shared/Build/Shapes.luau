@@ -90,7 +90,8 @@ function Shapes.wall(w: Plan.Wall, openings: { { number } }?, reach1: number?, r
 
 	if w.style == "wall" or w.style == "half" then
 		local s = -e1
-		for _, o in openings or {} do
+		local cuts: { { number } } = openings or {}
+		for _, o in cuts do
 			local o0, o1 = o[1] - o[2] / 2, o[1] + o[2] / 2
 			piece(s, o0, 0, height)
 			piece(o0, o1, 0, o[3])
@@ -185,7 +186,8 @@ local CEILING = Color3.fromRGB(247, 243, 234)
 function Shapes.floor(f: Plan.Floor, holes: { { number } }?): { Prim }
 	local out: { Prim } = {}
 	local rects = { { f.x1, f.z1, f.x2, f.z2 } }
-	for _, h in holes or {} do
+	local cuts: { { number } } = holes or {}
+	for _, h in cuts do
 		rects = Shapes.subtract(rects, h)
 	end
 	local color = Colors.fromHex(f.c)

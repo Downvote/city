@@ -48,7 +48,7 @@ local function stairs(r: R, w: number, d: number, rails: boolean)
 	end
 end
 
-local items = {
+local items: { any } = {
 	{
 		id = "stairs_straight",
 		name = "Stairs",

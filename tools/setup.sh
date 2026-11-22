@@ -27,7 +27,7 @@ fetch() {
 fetch rojo https://github.com/rojo-rbx/rojo/releases/download/v7.4.4/rojo-7.4.4-linux-x86_64.zip
 fetch lune https://github.com/lune-org/lune/releases/download/v0.9.4/lune-0.9.4-linux-x86_64.zip
 fetch stylua https://github.com/JohnnyMorganz/StyLua/releases/download/v2.0.2/stylua-linux-x86_64.zip
-fetch luau-lsp https://github.com/JohnnyMorganz/luau-lsp/releases/download/1.53.1/luau-lsp-linux-x86_64.zip
+fetch luau-lsp https://github.com/JohnnyMorganz/luau-lsp/releases/download/1.70.0/luau-lsp-linux-x86_64.zip
 fetch luau https://github.com/luau-lang/luau/releases/download/0.700/luau-ubuntu.zip
 
 if [ ! -f "$DEST/globalTypes.d.luau" ]; then

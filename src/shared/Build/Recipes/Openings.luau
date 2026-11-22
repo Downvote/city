@@ -38,7 +38,7 @@ local function sill(r: R, w: number, color: Color3)
 	r:block(-w / 2 - 0.3, -0.25, -0.6, w / 2 + 0.3, 0.05, 0.6, color, "Wood")
 end
 
-local items = {
+local items: { any } = {
 	{
 		id = "door_wood",
 		name = "Wooden door",

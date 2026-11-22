@@ -340,24 +340,21 @@ describe("Builder", function()
 		add("walls", wall(30, 30, 10, 30))
 		add("walls", wall(10, 30, 10, 10))
 		add("floors", { x1 = 10, z1 = 10, x2 = 30, z2 = 30, lv = 0, c = "C99A62", m = "WoodPlanks" })
-		add(
-			"roofs",
-			{
-				x1 = 10,
-				z1 = 10,
-				x2 = 30,
-				z2 = 30,
-				lv = 0,
-				style = "gable",
-				rise = 7,
-				dir = 0,
-				over = 1,
-				c = "9C2A2E",
-				m = "Slate",
-				c2 = "F2E8D5",
-				m2 = "Plaster",
-			}
-		)
+		add("roofs", {
+			x1 = 10,
+			z1 = 10,
+			x2 = 30,
+			z2 = 30,
+			lv = 0,
+			style = "gable",
+			rise = 7,
+			dir = 0,
+			over = 1,
+			c = "9C2A2E",
+			m = "Slate",
+			c2 = "F2E8D5",
+			m2 = "Plaster",
+		})
 		local w = plan.walls[w1]
 		add(
 			"items",

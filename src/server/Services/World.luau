@@ -1,0 +1,540 @@
+-- The town itself: ground, street, plaza buildings and plot bases; the clock and calendar;
+-- lights that come on at night; doors that swing open for whoever walks up; the weather.
+
+local Lighting = game:GetService("Lighting")
+local CollectionService = game:GetService("CollectionService")
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+
+local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+local Tuning = require(Shared.Config.Tuning)
+local Town = require(Shared.Data.Town)
+local TownModels = require(Shared.Data.TownModels)
+local Builder = require(Shared.Build.Builder)
+local Rng = require(Shared.Util.Rng)
+local Schema = require(Shared.Sim.Schema)
+
+local World = {}
+
+local SIZE = Tuning.Plot.Size
+local GRASS = Color3.fromRGB(120, 186, 92)
+local ROAD = Color3.fromRGB(92, 92, 100)
+local WALK = Color3.fromRGB(205, 200, 190)
+local PAVING = Color3.fromRGB(214, 200, 176)
+
+local mapFolder: Folder
+local plotsFolder: Folder
+local plotSigns: { [number]: BasePart } = {}
+
+World.ClockChanged = Instance.new("BindableEvent") -- (hour, dayIndex)
+World.NewDay = Instance.new("BindableEvent") -- (calendar)
+
+local function part(props: { [string]: any }): Part
+	local p = Instance.new("Part")
+	p.Anchored = true
+	p.TopSurface = Enum.SurfaceType.Smooth
+	p.BottomSurface = Enum.SurfaceType.Smooth
+	for k, v in props do
+		(p :: any)[k] = v
+	end
+	return p
+end
+
+local function slab(
+	name: string,
+	center: Vector3,
+	size: Vector3,
+	color: Color3,
+	mat: Enum.Material,
+	parent: Instance
+): Part
+	local p = part({ Name = name, Size = size, CFrame = CFrame.new(center), Color = color, Material = mat })
+	p.Parent = parent
+	return p
+end
+
+local function placeModel(name: string, cf: CFrame, parent: Instance): Model
+	local m = Instance.new("Model")
+	m.Name = name
+	Builder.instantiate(TownModels.prims(name), m, cf)
+	m.Parent = parent
+	return m
+end
+
+-- A prompt that opens a panel on the client (the client reads the Opens attribute).
+local function prompt(at: BasePart, action: string, opens: string, distance: number?)
+	local pp = Instance.new("ProximityPrompt")
+	pp.ActionText = action
+	pp.ObjectText = ""
+	pp.HoldDuration = 0
+	pp.MaxActivationDistance = distance or 12
+	pp.RequiresLineOfSight = false
+	pp:SetAttribute("Opens", opens)
+	pp.Parent = at
+	return pp
+end
+
+local function anchorPart(model: Model): BasePart
+	local best: BasePart? = nil
+	for _, d in model:GetDescendants() do
+		if d:IsA("BasePart") and d.Transparency < 0.9 then
+			if not best or d.Size.Magnitude > best.Size.Magnitude then
+				best = d
+			end
+		end
+	end
+	return best :: BasePart
+end
+
+local function signText(board: BasePart, text: string, face: Enum.NormalId?)
+	local gui = Instance.new("SurfaceGui")
+	gui.Face = face or Enum.NormalId.Front
+	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	gui.PixelsPerStud = 40
+	gui.Parent = board
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.fromScale(1, 1)
+	label.BackgroundTransparency = 1
+	label.Text = text
+	label.TextScaled = true
+	label.Font = Enum.Font.FredokaOne
+	label.TextColor3 = Color3.fromRGB(70, 48, 30)
+	label.Name = "Text"
+	label.Parent = gui
+	local pad = Instance.new("UIPadding")
+	pad.PaddingLeft = UDim.new(0.06, 0)
+	pad.PaddingRight = UDim.new(0.06, 0)
+	pad.PaddingTop = UDim.new(0.1, 0)
+	pad.PaddingBottom = UDim.new(0.1, 0)
+	pad.Parent = label
+	return label
+end
+
+local function buildMap()
+	mapFolder = Instance.new("Folder")
+	mapFolder.Name = "Town"
+	mapFolder.Parent = workspace
+
+	local L = Town.HalfLength
+	slab("Ground", Vector3.new(0, -1.1, 0), Vector3.new(L * 2 + 260, 2, 560), GRASS, Enum.Material.Grass, mapFolder)
+	slab(
+		"Street",
+		Vector3.new(0, -0.05, 0),
+		Vector3.new(L * 2, 0.2, Town.StreetHalfWidth * 2),
+		ROAD,
+		Enum.Material.Asphalt,
+		mapFolder
+	)
+	for _, side in { 1, -1 } do
+		local z = side * (Town.StreetHalfWidth + Town.SidewalkWidth / 2)
+		slab(
+			"Sidewalk",
+			Vector3.new(0, 0, z),
+			Vector3.new(L * 2, 0.3, Town.SidewalkWidth),
+			WALK,
+			Enum.Material.Concrete,
+			mapFolder
+		)
+	end
+	-- dashed middle line
+	for x = -L + 6, L - 6, 14 do
+		slab(
+			"Line",
+			Vector3.new(x, 0.06, 0),
+			Vector3.new(7, 0.02, 0.6),
+			Color3.fromRGB(240, 230, 190),
+			Enum.Material.SmoothPlastic,
+			mapFolder
+		)
+	end
+
+	-- the square (north) and the market (south)
+	for _, center in { Town.SquareCenter, Town.MarketCenter } do
+		slab(
+			"Paving",
+			center + Vector3.new(0, -0.02, 0),
+			Vector3.new(100, 0.2, 120),
+			PAVING,
+			Enum.Material.Pebble,
+			mapFolder
+		)
+	end
+
+	local function place(name: string, pos: Vector3, yaw: number, action: string?, opens: string?): Model
+		local m = placeModel(name, CFrame.new(pos) * CFrame.Angles(0, math.rad(yaw), 0), mapFolder)
+		if action and opens then
+			prompt(anchorPart(m), action, opens)
+		end
+		return m
+	end
+
+	place("fountain", Town.Spots.Fountain, 0)
+	place("board", Town.Spots.Board, 180, "Town news", "news")
+	place("tailor", Town.Spots.Tailor, 180, "Make a villager", "creator")
+	place("shop", Town.Spots.Shop, 0, "Shop", "shop")
+	place("gate", Town.Spots.Gate, 0, "Set out", "adventure")
+	local welcome = place("sign", Vector3.new(14, 0, 30), 180)
+	local board = welcome:FindFirstChild("SignBoard", true)
+	if board and board:IsA("BasePart") then
+		signText(board, "Welcome to " .. Tuning.Game.Name, Enum.NormalId.Back)
+	end
+
+	-- benches and lamps round the square
+	for _, p in { Vector3.new(-12, 0, 80), Vector3.new(12, 0, 80) } do
+		place("bench", p, if p.X < 0 then 90 else -90)
+	end
+	for _, p in
+		{
+			Vector3.new(-40, 0, 30),
+			Vector3.new(40, 0, 30),
+			Vector3.new(-40, 0, 130),
+			Vector3.new(40, 0, 130),
+			Vector3.new(-40, 0, -30),
+			Vector3.new(40, 0, -30),
+			Vector3.new(-40, 0, -130),
+			Vector3.new(40, 0, -130),
+		}
+	do
+		place("lamp", p, 0)
+	end
+	-- street lamps between the plots
+	for x = -L + 40, L - 40, 68 do
+		for _, z in { 18, -18 } do
+			place("lamp", Vector3.new(x, 0, z), 0)
+		end
+	end
+
+	-- trees round the edge of town
+	local rng = Rng.new(7)
+	for _ = 1, 140 do
+		local x = rng:float(-L - 120, L + 120)
+		local z = rng:float(-270, 270)
+		local inTown = math.abs(z) < 150 and math.abs(x) < L - 10
+		local onSquare = math.abs(x) < 54 and math.abs(z) < 150
+		if not inTown and not onSquare then
+			place(if rng:chance(0.45) then "pine" else "tree", Vector3.new(x, 0, z), rng:float(0, 360))
+		end
+	end
+	for _ = 1, 10 do
+		local x = rng:float(-44, 44)
+		local z = rng:float(100, 140)
+		if math.abs(x) > 14 then
+			place("tree", Vector3.new(x, 0, z), rng:float(0, 360))
+		end
+	end
+
+	local spawn = Instance.new("SpawnLocation")
+	spawn.Name = "Spawn"
+	spawn.Anchored = true
+	spawn.Size = Vector3.new(8, 0.4, 8)
+	spawn.CFrame = CFrame.new(Town.Spots.Spawn + Vector3.new(0, 0.1, 0))
+	spawn.Transparency = 1
+	spawn.CanCollide = false
+	spawn.Duration = 0
+	spawn.Parent = mapFolder
+end
+
+local function buildPlots()
+	plotsFolder = Instance.new("Folder")
+	plotsFolder.Name = "Plots"
+	plotsFolder.Parent = workspace
+	for i = 1, Tuning.Plot.Count do
+		local frame = Town.plotFrame(i)
+		local model = Instance.new("Model")
+		model.Name = "Plot" .. i
+		model:SetAttribute("Index", i)
+		local base = part({
+			Name = "Base",
+			Size = Vector3.new(SIZE, 1, SIZE),
+			CFrame = frame * CFrame.new(SIZE / 2, -0.5, SIZE / 2),
+			Color = Color3.fromRGB(128, 196, 98),
+			Material = Enum.Material.Grass,
+		})
+		base.Parent = model
+		-- corner stones so people can see the plot's edges
+		for _, c in { { 0, 0 }, { SIZE, 0 }, { 0, SIZE }, { SIZE, SIZE } } do
+			local stone = part({
+				Name = "Corner",
+				Size = Vector3.new(1.2, 0.6, 1.2),
+				CFrame = frame * CFrame.new(c[1], 0.3, c[2]),
+				Color = Color3.fromRGB(230, 226, 214),
+				Material = Enum.Material.Concrete,
+			})
+			stone.Parent = model
+		end
+		local build = Instance.new("Folder")
+		build.Name = "Build"
+		build.Parent = model
+		local npcs = Instance.new("Folder")
+		npcs.Name = "Villagers"
+		npcs.Parent = model
+		local sign = Instance.new("Model")
+		sign.Name = "Sign"
+		Builder.instantiate(
+			TownModels.prims("plotSign"),
+			sign,
+			frame * CFrame.new(SIZE / 2, 0, -1.6) * CFrame.Angles(0, math.pi, 0)
+		)
+		sign.Parent = model
+		local board = sign:FindFirstChild("SignBoard", true) :: BasePart
+		signText(board, "Plot " .. i .. "\nfor sale", Enum.NormalId.Back)
+		plotSigns[i] = board
+		model.Parent = plotsFolder
+	end
+end
+
+function World.plotModel(i: number): Model
+	return plotsFolder:FindFirstChild("Plot" .. i) :: Model
+end
+
+function World.setPlotSign(i: number, text: string)
+	local board = plotSigns[i]
+	if board then
+		local label = board:FindFirstChild("Text", true)
+		if label and label:IsA("TextLabel") then
+			label.Text = text
+		end
+	end
+end
+
+-- Clock and calendar ------------------------------------------------------------------------------
+
+-- The calendar is the same in every server: it follows real time.
+function World.dayIndex(): number
+	return math.floor(os.time() / Tuning.Day.Length)
+end
+
+function World.hour(): number
+	local t = (os.time() % Tuning.Day.Length) / Tuning.Day.Length
+	return (Tuning.Day.StartClock + t * 24) % 24
+end
+
+function World.calendar(): { s: number, d: number, y: number }
+	local day = World.dayIndex()
+	local perYear = Schema.DaysPerSeason * #Schema.Seasons
+	local inYear = day % perYear
+	return {
+		s = math.floor(inYear / Schema.DaysPerSeason) + 1,
+		d = inYear % Schema.DaysPerSeason + 1,
+		y = math.floor(day / perYear) % 1000 + 1,
+	}
+end
+
+function World.isNight(h: number?): boolean
+	local hour = h or World.hour()
+	return hour >= Tuning.Day.NightStart or hour < Tuning.Day.NightEnd
+end
+
+local lightsOn = false
+
+local function setLight(p: Instance, on: boolean)
+	if not p:IsA("BasePart") then
+		return
+	end
+	for _, l in p:GetChildren() do
+		if l:IsA("Light") then
+			l.Enabled = on
+		end
+	end
+	if on then
+		p.Material = Enum.Material.Neon
+	else
+		local day = p:GetAttribute("DayMaterial")
+		local mat = type(day) == "string" and (Enum.Material :: any)[day]
+		p.Material = mat or Enum.Material.SmoothPlastic
+	end
+end
+
+local function setAllLights(on: boolean)
+	lightsOn = on
+	for _, p in CollectionService:GetTagged(Builder.Tags.NightLight) do
+		setLight(p, on)
+	end
+end
+
+local function clockLoop()
+	local lastDay = World.dayIndex()
+	local lastWhole = -1
+	while true do
+		local h = World.hour()
+		Lighting.ClockTime = h
+		local night = World.isNight(h)
+		if night ~= lightsOn then
+			setAllLights(night)
+		end
+		local day = World.dayIndex()
+		if day ~= lastDay then
+			lastDay = day
+			workspace:SetAttribute("Calendar", nil)
+			local cal = World.calendar()
+			workspace:SetAttribute("Season", cal.s)
+			workspace:SetAttribute("Day", cal.d)
+			World.NewDay:Fire(cal)
+		end
+		local whole = math.floor(h)
+		if whole ~= lastWhole then
+			lastWhole = whole
+			World.ClockChanged:Fire(h, day)
+		end
+		task.wait(0.5)
+	end
+end
+
+-- Weather -----------------------------------------------------------------------------------------
+
+World.Weathers = { "clear", "cloudy", "rain", "storm", "snow", "blossom", "leaves" }
+
+function World.setWeather(kind: string)
+	workspace:SetAttribute("Weather", kind)
+	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
+	if atmosphere then
+		local dense = kind == "rain" or kind == "storm" or kind == "cloudy"
+		atmosphere.Density = if dense then 0.42 else 0.3
+		atmosphere.Haze = if dense then 2.2 else 1
+	end
+end
+
+function World.weather(): string
+	local w = workspace:GetAttribute("Weather")
+	return if type(w) == "string" then w else "clear"
+end
+
+-- A fresh weather for the season every few in-game hours.
+local function weatherLoop()
+	local rng = Rng.new()
+	while true do
+		local cal = World.calendar()
+		local options
+		if cal.s == 1 then
+			options = { "clear", "clear", "blossom", "blossom", "rain", "cloudy" }
+		elseif cal.s == 2 then
+			options = { "clear", "clear", "clear", "cloudy", "storm", "rain" }
+		elseif cal.s == 3 then
+			options = { "clear", "leaves", "leaves", "cloudy", "rain" }
+		else
+			options = { "snow", "snow", "clear", "cloudy" }
+		end
+		World.setWeather(rng:pick(options))
+		task.wait(Tuning.Day.Length / 4)
+	end
+end
+
+-- Doors -------------------------------------------------------------------------------------------
+
+local doorState: { [Instance]: boolean } = {}
+
+local function openFrame(leaf: BasePart): CFrame
+	local closed = leaf:GetAttribute("Closed") :: CFrame
+	local frame = leaf:GetAttribute("Frame") :: CFrame
+	local slide = leaf:GetAttribute("Slide")
+	local lift = leaf:GetAttribute("Lift")
+	if type(slide) == "number" then
+		return closed + frame.RightVector * slide
+	elseif type(lift) == "number" then
+		return closed + Vector3.new(0, lift, 0)
+	end
+	local hx = leaf:GetAttribute("HingeX")
+	hx = if type(hx) == "number" then hx else 0
+	local angle = if hx < 0 then -math.rad(95) else math.rad(95)
+	local pivot = frame * CFrame.new(hx, 0, 0)
+	return pivot * CFrame.Angles(0, angle, 0) * pivot:Inverse() * closed
+end
+
+local function doorLoop()
+	local info = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	while true do
+		task.wait(0.25)
+		-- everyone who can walk through a door
+		local walkers = {}
+		for _, player in Players:GetPlayers() do
+			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+			if root and root:IsA("BasePart") then
+				table.insert(walkers, root.Position)
+			end
+		end
+		for _, plot in plotsFolder:GetChildren() do
+			local npcs = plot:FindFirstChild("Villagers")
+			if npcs then
+				for _, npc in npcs:GetChildren() do
+					local root = npc:FindFirstChild("HumanoidRootPart")
+					if root and root:IsA("BasePart") then
+						table.insert(walkers, root.Position)
+					end
+				end
+			end
+		end
+		-- group leaves by their door model
+		local doors: { [Instance]: { BasePart } } = {}
+		for _, leaf in CollectionService:GetTagged(Builder.Tags.DoorLeaf) do
+			if leaf:IsA("BasePart") and leaf.Parent then
+				local list = doors[leaf.Parent]
+				if not list then
+					list = {}
+					doors[leaf.Parent] = list
+				end
+				table.insert(list, leaf)
+			end
+		end
+		for model, leaves in doors do
+			local frame = leaves[1]:GetAttribute("Frame")
+			if typeof(frame) == "CFrame" then
+				local center = (frame :: CFrame).Position + Vector3.new(0, 3, 0)
+				local near = false
+				for _, pos in walkers do
+					if (pos - center).Magnitude < 7 then
+						near = true
+						break
+					end
+				end
+				if doorState[model] ~= near then
+					doorState[model] = near
+					for _, leaf in leaves do
+						local goal = if near then openFrame(leaf) else leaf:GetAttribute("Closed")
+						TweenService:Create(leaf, info, { CFrame = goal }):Play()
+					end
+				end
+			end
+		end
+		for model in doorState do
+			if not model.Parent then
+				doorState[model] = nil
+			end
+		end
+	end
+end
+
+function World.init()
+	Lighting.ClockTime = World.hour()
+	if not Lighting:FindFirstChildOfClass("Atmosphere") then
+		local a = Instance.new("Atmosphere")
+		a.Density = 0.3
+		a.Haze = 1
+		a.Color = Color3.fromRGB(199, 214, 230)
+		a.Decay = Color3.fromRGB(120, 140, 170)
+		a.Parent = Lighting
+	end
+	if not Lighting:FindFirstChildOfClass("Sky") then
+		local sky = Instance.new("Sky")
+		sky.SunAngularSize = 14
+		sky.MoonAngularSize = 9
+		sky.Parent = Lighting
+	end
+	buildMap()
+	buildPlots()
+	local cal = World.calendar()
+	workspace:SetAttribute("Season", cal.s)
+	workspace:SetAttribute("Day", cal.d)
+	workspace:SetAttribute("Weather", "clear")
+end
+
+function World.start()
+	CollectionService:GetInstanceAddedSignal(Builder.Tags.NightLight):Connect(function(p)
+		setLight(p, lightsOn)
+	end)
+	setAllLights(World.isNight())
+	task.spawn(clockLoop)
+	task.spawn(weatherLoop)
+	task.spawn(doorLoop)
+end
+
+return World

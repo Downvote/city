@@ -89,21 +89,25 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 	end
 	if prim.light then
 		local l = prim.light
-		local light: Light
 		if l.kind == "spot" then
-			local s = Instance.new("SpotLight")
-			s.Face = (Enum.NormalId :: any)[l.face or "Bottom"] or Enum.NormalId.Bottom
-			s.Angle = 80
-			light = s
+			local spot = Instance.new("SpotLight")
+			spot.Face = (Enum.NormalId :: any)[l.face or "Bottom"] or Enum.NormalId.Bottom
+			spot.Angle = 80
+			spot.Range = l.range
+			spot.Brightness = l.brightness
+			spot.Color = l.color
+			spot.Shadows = false
+			spot.Enabled = false
+			spot.Parent = part
 		else
-			light = Instance.new("PointLight")
+			local point = Instance.new("PointLight")
+			point.Range = l.range
+			point.Brightness = l.brightness
+			point.Color = l.color
+			point.Shadows = false
+			point.Enabled = false
+			point.Parent = part
 		end
-		light.Range = l.range
-		light.Brightness = l.brightness
-		light.Color = l.color
-		light.Shadows = false
-		light.Enabled = false
-		light.Parent = part
 	end
 	if prim.effect == "fire" then
 		local f = Instance.new("Fire")

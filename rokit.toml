@@ -2,4 +2,4 @@
 rojo = "rojo-rbx/rojo@7.4.4"
 lune = "lune-org/lune@0.9.4"
 stylua = "JohnnyMorganz/StyLua@2.0.2"
-luau-lsp = "JohnnyMorganz/luau-lsp@1.53.1"
+luau-lsp = "JohnnyMorganz/luau-lsp@1.70.0"
