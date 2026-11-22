@@ -165,6 +165,7 @@ function Data.clientState(player: Player): any
 		stats = p.stats,
 		unsaved = unsaved[player] == true,
 		plot = player:GetAttribute("Plot"),
+		plan = p.plan,
 	}
 end
 

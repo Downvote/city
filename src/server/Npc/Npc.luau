@@ -67,7 +67,7 @@ function Npc.new(model: Model, vid: string): Npc
 		model = model,
 		humanoid = humanoid,
 		root = root,
-		animator = humanoid:FindFirstChildOfClass("Animator"),
+		animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid),
 		tracks = {},
 		moving = 0,
 		busy = false,
@@ -299,9 +299,9 @@ function Npc.sleep(self: Npc, spot: BasePart)
 	self:play("idle")
 	self.humanoid.PlatformStand = true
 	self.root.Anchored = true
-	local hip = self.humanoid.HipHeight
-	local lying = spot.CFrame * CFrame.new(0, 0.3 + self.root.Size.Z / 2, 0) * CFrame.Angles(math.rad(-90), 0, 0)
-	local _ = hip
+	-- on their back: head toward the spot's -Z (the bed head), face up
+	local lying = spot.CFrame
+		* CFrame.fromMatrix(Vector3.new(0, 0.2 + self.root.Size.Z / 2, 0), Vector3.new(-1, 0, 0), Vector3.new(0, 0, -1))
 	self.model:PivotTo(lying)
 end
 

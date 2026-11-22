@@ -19,6 +19,15 @@ else
 	stylua --check src tests
 fi
 
+echo "== writing"
+# the user's writing rule: no em or en dashes in game text or docs
+EM=$(printf '\342\200\224')
+EN=$(printf '\342\200\223')
+if grep -rn -e "$EM" -e "$EN" src docs README.md CLAUDE.md; then
+	echo "found a dash; rewrite the sentence without it"
+	exit 1
+fi
+
 echo "== types"
 rojo sourcemap default.project.json -o sourcemap.json >/dev/null
 luau-lsp analyze \

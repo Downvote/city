@@ -85,6 +85,13 @@ function State.start()
 	task.spawn(function()
 		local full = Remotes.fn("GetState"):InvokeServer()
 		if full then
+			if full.plan then
+				State.plan = Plan.sanitize(full.plan)
+				full.plan = nil
+				for _, fn in planListeners do
+					task.spawn(fn, nil)
+				end
+			end
 			for k, v in full do
 				State.data[k] = v
 			end

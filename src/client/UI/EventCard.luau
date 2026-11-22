@@ -227,16 +227,14 @@ function EventCard.start(_hud: any)
 		Kit.box({ Parent = card, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = 4 })
 	local layout = Kit.list(choiceRow, 8, true)
 	layout.Wraps = true
-	local tap = Kit.new("TextButton", {
-		Text = "",
-		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 0, 60),
-		Position = UDim2.fromOffset(0, 30),
-		Parent = card,
-		ZIndex = 0,
-	})
-	tap.Activated:Connect(function()
-		skip = true
+	-- a click on the card skips to the next line
+	card.InputBegan:Connect(function(input)
+		if
+			input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch
+		then
+			skip = true
+		end
 	end)
 
 	Remotes.event("EventShow").OnClientEvent:Connect(function(ev)
