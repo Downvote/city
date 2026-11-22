@@ -1,6 +1,6 @@
 --!strict
 -- The eight personalities a villager can have. Traits run 0..1 and steer which random events a
--- villager starts, how they react, and what they do on their own in a fight.
+-- villager starts and how they react to them.
 --   social    how often they seek others out
 --   temper    how easily they fall out with someone
 --   kind      how often they help, share and make up
@@ -15,7 +15,6 @@ export type Personality = {
 	blurb: string,
 	traits: { [string]: number },
 	color: string,
-	role: string, -- the adventure role they suit
 	lines: { [string]: { string } },
 }
 
@@ -28,7 +27,6 @@ Personalities.list = {
 		blurb = "Chatty and upbeat. Makes friends with anyone.",
 		traits = { social = 0.95, temper = 0.2, kind = 0.65, mischief = 0.3, lazy = 0.2, brave = 0.6, focus = 0.5 },
 		color = "FFD45C",
-		role = "singer",
 		lines = {
 			hello = { "Hi! Isn't today great?", "Oh good, it's you!", "I was hoping someone would come by." },
 			happy = { "Best day ever.", "I could sing right now.", "Everything's going my way!" },
@@ -43,7 +41,6 @@ Personalities.list = {
 		blurb = "Kind and patient. Notices when someone is down.",
 		traits = { social = 0.6, temper = 0.1, kind = 0.95, mischief = 0.05, lazy = 0.3, brave = 0.4, focus = 0.7 },
 		color = "A8DB8A",
-		role = "medic",
 		lines = {
 			hello = { "Oh, hello there.", "Are you eating well?", "It's nice to see you." },
 			happy = { "This is lovely.", "I feel all warm.", "What a peaceful day." },
@@ -58,7 +55,6 @@ Personalities.list = {
 		blurb = "Brave and loud. First into trouble, first to stand up for a friend.",
 		traits = { social = 0.7, temper = 0.7, kind = 0.5, mischief = 0.4, lazy = 0.15, brave = 0.95, focus = 0.45 },
 		color = "E8667A",
-		role = "guard",
 		lines = {
 			hello = { "Yo!", "Ready for anything!", "Who wants to arm wrestle?" },
 			happy = { "Nothing can stop me!", "Let's gooo!", "I feel like I could lift a house." },
@@ -73,7 +69,6 @@ Personalities.list = {
 		blurb = "Head in the clouds. Says odd things and wanders off.",
 		traits = { social = 0.5, temper = 0.2, kind = 0.6, mischief = 0.45, lazy = 0.5, brave = 0.4, focus = 0.1 },
 		color = "C4A8EB",
-		role = "mage",
 		lines = {
 			hello = { "Oh! Were you there the whole time?", "Do clouds get tired?", "Hello, friend. Or is it Tuesday?" },
 			happy = { "I feel like a balloon.", "Everything is sparkly.", "La la la." },
@@ -88,7 +83,6 @@ Personalities.list = {
 		blurb = "Relaxed and lazy. Naps a lot, never in a hurry.",
 		traits = { social = 0.55, temper = 0.1, kind = 0.6, mischief = 0.25, lazy = 0.95, brave = 0.35, focus = 0.35 },
 		color = "8FD3E8",
-		role = "cook",
 		lines = {
 			hello = { "Hey. 'Sup.", "Mmh. Hi.", "Is it snack time yet?" },
 			happy = { "This is the life.", "Good vibes only.", "Could stay like this all day." },
@@ -103,7 +97,6 @@ Personalities.list = {
 		blurb = "Confident and stubborn. Wants to be the best at everything.",
 		traits = { social = 0.5, temper = 0.6, kind = 0.35, mischief = 0.3, lazy = 0.25, brave = 0.7, focus = 0.8 },
 		color = "F5B431",
-		role = "scout",
 		lines = {
 			hello = { "Ah, you again. Good.", "Admire me later, I'm busy.", "You have good taste in friends." },
 			happy = { "Naturally.", "As expected of me.", "Perfect, like me." },
@@ -118,7 +111,6 @@ Personalities.list = {
 		blurb = "Quiet and careful. Warms up slowly but means it.",
 		traits = { social = 0.25, temper = 0.25, kind = 0.75, mischief = 0.1, lazy = 0.35, brave = 0.2, focus = 0.75 },
 		color = "FFD1DC",
-		role = "medic",
 		lines = {
 			hello = { "Oh! H-hi.", "Um. Hello.", "I didn't think you'd talk to me." },
 			happy = { "This is nice...", "I'm happy. Really.", "Hehe." },
@@ -133,7 +125,6 @@ Personalities.list = {
 		blurb = "A prankster with a big grin. Never boring.",
 		traits = { social = 0.75, temper = 0.35, kind = 0.45, mischief = 0.95, lazy = 0.3, brave = 0.6, focus = 0.3 },
 		color = "F08A2E",
-		role = "scout",
 		lines = {
 			hello = { "Psst. Want to hear a secret?", "Heh heh. Hi.", "Don't check your shoes." },
 			happy = { "Hehehe.", "Today's a good day for mischief.", "Bet nobody saw that coming." },

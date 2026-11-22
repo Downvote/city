@@ -213,6 +213,24 @@ function Recipe.tri(
 	return out
 end
 
+-- A flat four sided face with thickness (corners in order).
+function Recipe.quad(
+	self: Recipe,
+	p1: Vector3,
+	p2: Vector3,
+	p3: Vector3,
+	p4: Vector3,
+	thickness: number,
+	color: Color3,
+	mat: string?
+): { Prim }
+	local out = Geometry.quad(p1, p2, p3, p4, thickness, color, mat)
+	for _, p in out do
+		self:add(p)
+	end
+	return out
+end
+
 -- See-through glass between two corners.
 function Recipe.glass(self: Recipe, x1: number, y1: number, z1: number, x2: number, y2: number, z2: number): Prim
 	local p = self:block(x1, y1, z1, x2, y2, z2, Recipe.Colors.Glass, "Glass")

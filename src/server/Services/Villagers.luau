@@ -15,6 +15,8 @@ local Builder = require(Shared.Build.Builder)
 local Plan = require(Shared.Build.Plan)
 local Town = require(Shared.Data.Town)
 local Colors = require(Shared.Util.Colors)
+local City = require(Shared.Sim.City)
+local EventEngine = require(Shared.Sim.EventEngine)
 local Rng = require(Shared.Util.Rng)
 local Text = require(Shared.Util.Text)
 local Remotes = require(Shared.Net.Remotes)
@@ -29,11 +31,10 @@ local Npc = require(script.Parent.Parent.Npc.Npc)
 local Villagers = {}
 
 local V = Tuning.Villagers
-local SIZE = Tuning.Plot.Size
 
 local rng = Rng.new()
 local npcs: { [Player]: { [string]: any } } = {}
-local control: { [Player]: { [string]: string } } = {}
+local control: { [Player]: { [string]: any } } = {}
 
 local metEvent = Instance.new("BindableEvent")
 Villagers.Met = metEvent.Event -- (player, vidA, vidB) after a casual chat
@@ -211,7 +212,8 @@ local function wanderTarget(player: Player): Vector3?
 		local f = rng:pick(floors)
 		return plotPoint(player, rng:float(f.x1 + 1.5, f.x2 - 1.5), rng:float(f.z1 + 1.5, f.z2 - 1.5))
 	end
-	return plotPoint(player, rng:float(6, SIZE - 6), rng:float(4, SIZE - 6))
+	local x1, z1, x2, z2 = Plan.bounds(profile.plan)
+	return plotPoint(player, rng:float(x1 + 4, x2 - 4), rng:float(z1 + 4, z2 - 4))
 end
 
 function Villagers.spawn(player: Player, vid: string)
@@ -249,6 +251,66 @@ function Villagers.despawn(player: Player, vid: string)
 		list[vid] = nil
 		npc:destroy()
 	end
+end
+
+-- Work -------------------------------------------------------------------------------------------
+
+-- Where a villager stands at their workplace (world space), facing the customers.
+local function workSpot(player: Player, vid: string): CFrame?
+	local profile = Data.get(player)
+	local i = Plots.indexOf(player)
+	if not profile or not i then
+		return nil
+	end
+	local w = City.jobOf(profile, vid)
+	if not w then
+		return nil
+	end
+	local frame = Plan.itemFrame(profile.plan, w.item)
+	if not frame then
+		return nil
+	end
+	local def = w.def
+	local spot = def.workSpot or Vector3.new(0, 0, -(def.size.Z / 2 + 1.5))
+	local yaw = math.rad(def.workYaw or 0)
+	return Town.plotFrame(i) * frame * CFrame.new(spot) * CFrame.Angles(0, yaw, 0)
+end
+
+-- The spot in front of someone else's workplace where a customer stands.
+local function customerSpot(player: Player, vid: string): Vector3?
+	local profile = Data.get(player)
+	local i = Plots.indexOf(player)
+	if not profile or not i then
+		return nil
+	end
+	local w = City.jobOf(profile, vid)
+	if not w then
+		return nil
+	end
+	local frame = Plan.itemFrame(profile.plan, w.item)
+	if not frame then
+		return nil
+	end
+	local spot = w.def.workSpot or Vector3.new(0, 0, -(w.def.size.Z / 2 + 1.5))
+	-- customers stand on the other side from the worker
+	local front = Vector3.new(spot.X, 0, if spot.Z < 0 then w.def.size.Z / 2 + 2 else -(w.def.size.Z / 2 + 2))
+	return Town.plotFrame(i) * frame * front
+end
+
+local function isWorkTime(h: number): boolean
+	return h >= Tuning.Day.WorkStart and h < Tuning.Day.WorkEnd
+end
+
+-- Is this villager at work right now (has a job, it's work hours, not their day off)?
+function Villagers.working(player: Player, vid: string): boolean
+	local v = Villagers.data(player, vid)
+	if not v or not v.job then
+		return false
+	end
+	if v.dayOff == World.dayIndex() then
+		return false
+	end
+	return isWorkTime(World.hour()) and Villagers.control(player, vid) == nil
 end
 
 -- The daily routine ------------------------------------------------------------------------------
@@ -377,10 +439,31 @@ function Villagers.brain(player: Player, vid: string, npc: any)
 			npc:gesture("cheer")
 			task.wait(1)
 		end
+		if v.job and isWorkTime(h) and v.dayOff ~= World.dayIndex() then
+			local spot = workSpot(player, vid)
+			if spot then
+				if (npc:position() - spot.Position).Magnitude > 3 then
+					npc:walkTo(spot.Position + Vector3.new(0, 3, 0), 30)
+				end
+				if not Villagers.control(player, vid) then
+					npc:face(spot.Position + spot.LookVector * 10)
+					local profile = Data.get(player)
+					local w = profile and City.jobOf(profile, vid)
+					if w and rng:chance(0.3) then
+						npc:say(rng:pick(w.job.lines), 3)
+						npc:gesture(rng:pick({ "wave", "point", "cheer" }), 2)
+					end
+				end
+				task.wait(rng:float(6, 12))
+				continue
+			end
+		end
 		local social = Personalities.trait(v.pers, "social")
 		local lazy = Personalities.trait(v.pers, "lazy")
-		local choice = rng:weighted({ "wander", "sit", "chat", "gesture", "idle" }, function(c)
-			if c == "wander" then
+		local choice = rng:weighted({ "wander", "sit", "chat", "gesture", "idle", "shop" }, function(c)
+			if c == "shop" then
+				return if isWorkTime(h) then 1.2 else 0
+			elseif c == "wander" then
 				return 3
 			elseif c == "sit" then
 				return 1 + lazy * 3
@@ -408,6 +491,44 @@ function Villagers.brain(player: Player, vid: string, npc: any)
 			end
 		elseif choice == "chat" then
 			chat(player, vid, npc)
+		elseif choice == "shop" then
+			-- drop by someone's workplace while they're working
+			local profile = Data.get(player)
+			local open = {}
+			if profile then
+				for _, other in profile.order do
+					if other ~= vid and Villagers.working(player, other) then
+						table.insert(open, other)
+					end
+				end
+			end
+			if #open > 0 then
+				local worker = rng:pick(open)
+				local spot = customerSpot(player, worker)
+				if spot and npc:walkTo(spot + Vector3.new(0, 3, 0), 25) and Villagers.working(player, worker) then
+					local wnpc = Villagers.get(player, worker)
+					if wnpc then
+						npc:face(wnpc:position())
+						npc:say(
+							rng:pick({
+								"One of those, please!",
+								"What's good today?",
+								"Just looking. Okay, I'll take it.",
+							}),
+							3
+						)
+						task.wait(1.5)
+						wnpc:say("Thanks! Come again.", 2.5)
+						npc:icon("sparkle")
+					end
+					Data.addCoins(player, Tuning.Jobs.VisitCoins)
+					local wv = profile.villagers[worker]
+					if wv then
+						EventEngine.addXp(wv, 2)
+					end
+					metEvent:Fire(player, vid, worker)
+				end
+			end
 		elseif choice == "gesture" then
 			local g = rng:pick({ "wave", "laugh", "cheer", "point", "dance" })
 			npc:gesture(g, 3)
@@ -510,6 +631,34 @@ local function onBuildChanged(player: Player, ops: { any })
 					v.bed = nil
 					changed = true
 				end
+				if v.job == op.key then
+					v.job = nil
+					changed = true
+					Data.notify(
+						player,
+						Text.fill("{name} lost their job when the workplace went.", { name = v.name }),
+						"warn"
+					)
+				end
+			end
+		end
+	end
+	-- anyone without work takes a free workplace
+	for _, vid in profile.order do
+		local v = profile.villagers[vid]
+		if v and not v.job then
+			local key = City.freeWorkplace(profile)
+			if key then
+				v.job = key
+				changed = true
+				local w = City.jobOf(profile, vid)
+				if w then
+					Data.notify(
+						player,
+						Text.fill("{name} started work as {job}.", { name = v.name, job = Text.an(w.job.name:lower()) }),
+						"good"
+					)
+				end
 			end
 		end
 	end
@@ -573,6 +722,7 @@ local function create(player: Player, raw: any): (boolean, string?)
 		v.isYou = true
 	end
 	v.bed = freeBed(profile)
+	v.job = City.freeWorkplace(profile)
 	profile.villagers[vid] = v
 	table.insert(profile.order, vid)
 	profile.stats.made += 1
@@ -616,12 +766,6 @@ local function update(player: Player, vid: any, fields: any): (boolean, string?)
 	v.pers = input.pers
 	v.color = input.color
 	v.bday = input.bday
-	if type(fields.role) == "string" then
-		local Roles = require(Shared.Data.Roles)
-		if Roles.get(fields.role) then
-			v.role = fields.role
-		end
-	end
 	Data.push(player, "villagers")
 	if respawn then
 		task.spawn(Villagers.spawn, player, vid)
@@ -651,18 +795,9 @@ local function remove(player: Player, vid: any): boolean
 			table.remove(profile.requests, j)
 		end
 	end
-	local party = profile.adv.party
-	for j = #party, 1, -1 do
-		if party[j] == vid then
-			table.remove(party, j)
-		end
-	end
-	if profile.adv.leader == vid then
-		profile.adv.leader = nil
-	end
 	Villagers.despawn(player, vid)
 	Data.log(player, Text.fill("{name} moved away.", { name = v.name }))
-	Data.push(player, "villagers", "order", "rel", "requests", "adv")
+	Data.push(player, "villagers", "order", "rel", "requests")
 	return true
 end
 
@@ -698,6 +833,66 @@ local function setBed(player: Player, vid: any, key: any): (boolean, string?)
 	return true
 end
 
+local function setJob(player: Player, vid: any, key: any): (boolean, string?)
+	local profile = Data.get(player)
+	local v = profile and type(vid) == "string" and profile.villagers[vid]
+	if not v then
+		return false, "Who?"
+	end
+	if key == nil then
+		v.job = nil
+		Data.push(player, "villagers")
+		return true
+	end
+	local item = type(key) == "string" and profile.plan.items[key]
+	local def = item and Catalog.get(item.id)
+	if not def or not def.job then
+		return false, "That isn't a workplace."
+	end
+	for other, o in profile.villagers do
+		if other ~= vid and o.job == key then
+			-- swap: the other villager takes this one's old job (or none)
+			o.job = v.job
+		end
+	end
+	v.job = key
+	Data.push(player, "villagers")
+	return true
+end
+
+-- Payday at the end of the work day: everyone who worked earns their pay and a little skill.
+function Villagers.payday(player: Player)
+	local profile = Data.get(player)
+	if not profile then
+		return
+	end
+	local day = World.dayIndex()
+	if profile.lastPayday == day then
+		return
+	end
+	profile.lastPayday = day
+	local lines, total = City.payday(profile, day, os.time())
+	if total <= 0 then
+		return
+	end
+	local notices = {}
+	for _, l in lines do
+		local v = profile.villagers[l.vid]
+		if v then
+			EventEngine.addXp(v, Tuning.Jobs.XpPerDay, notices)
+		end
+	end
+	Data.addCoins(player, total, true)
+	profile.stats.earned = (profile.stats.earned or 0) + total
+	profile.stats.paydays = (profile.stats.paydays or 0) + 1
+	Remotes.event("Payday"):FireClient(player, { total = total, lines = lines })
+	Data.notify(player, Text.fill("Payday! Your town earned {n} coins today.", { n = Text.commas(total) }), "good")
+	for _, n in notices do
+		Data.notify(player, n, "event")
+	end
+	Data.push(player, "coins", "villagers", "stats")
+end
+
 -- Feeding: favourites count double, the food they hate does nothing but sour their mood.
 function Villagers.feed(player: Player, vid: string, foodId: string): (boolean, any)
 	local profile = Data.get(player)
@@ -721,17 +916,8 @@ function Villagers.feed(player: Player, vid: string, foodId: string): (boolean, 
 		reaction = "hate"
 	end
 	v.known[foodId] = reaction
-	local mult = if reaction == "love" then 2 elseif reaction == "hate" then 0 else 1
-	local gained = {}
-	for stat, amount in food.boost do
-		local before = v.boost[stat] or 0
-		local after = math.min(Foods.StatCap, before + amount * mult)
-		v.boost[stat] = after
-		if after > before then
-			gained[stat] = after - before
-		end
-	end
-	Villagers.addMood(player, vid, if reaction == "love" then 12 elseif reaction == "hate" then -10 else 4)
+	local mood = if reaction == "love" then food.joy * 2 + 6 elseif reaction == "hate" then -10 else food.joy
+	Villagers.addMood(player, vid, mood)
 	profile.stats.fed += 1
 	local npc = Villagers.get(player, vid)
 	if npc then
@@ -748,7 +934,7 @@ function Villagers.feed(player: Player, vid: string, foodId: string): (boolean, 
 		end
 	end
 	Data.push(player, "villagers", "inv", "stats")
-	return true, { reaction = reaction, gained = gained }
+	return true, { reaction = reaction, mood = mood }
 end
 
 function Villagers.start()
@@ -756,6 +942,14 @@ function Villagers.start()
 	Remotes.fn("VillagerUpdate").OnServerInvoke = update
 	Remotes.fn("VillagerRemove").OnServerInvoke = remove
 	Remotes.fn("VillagerBed").OnServerInvoke = setBed
+	Remotes.fn("VillagerJob").OnServerInvoke = setJob
+	World.ClockChanged.Event:Connect(function(hour)
+		if math.floor(hour) == Tuning.Day.WorkEnd then
+			for _, player in Players:GetPlayers() do
+				task.spawn(Villagers.payday, player)
+			end
+		end
+	end)
 	Remotes.fn("VillagerFeed").OnServerInvoke = function(player, vid, foodId)
 		if type(vid) ~= "string" or type(foodId) ~= "string" then
 			return false, "Can't feed that."

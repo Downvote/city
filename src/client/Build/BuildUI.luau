@@ -442,16 +442,13 @@ local function selectPanel()
 		local slotRow = row(list, 30, 3)
 		local slot = "c1"
 		local caption = Kit.text("Main colour", { Parent = slotRow, Size = UDim2.new(0, 150, 1, 0), TextSize = 15 })
-		local flip = Kit.button(
-			"Second colour",
-			{
-				Parent = slotRow,
-				Size = UDim2.fromOffset(150, 28),
-				TextSize = 14,
-				Color = T.PaperDark,
-				TextColor = T.Ink,
-			}
-		)
+		local flip = Kit.button("Second colour", {
+			Parent = slotRow,
+			Size = UDim2.fromOffset(150, 28),
+			TextSize = 14,
+			Color = T.PaperDark,
+			TextColor = T.Ink,
+		})
 		local holder = Kit.box({ Parent = list, Size = UDim2.new(1, 0, 0, 96), LayoutOrder = 4 })
 		local function draw()
 			holder:ClearAllChildren()

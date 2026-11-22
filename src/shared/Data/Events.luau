@@ -1,4 +1,4 @@
---!strict
+--!nonstrict
 -- The random events of town life. Every few minutes Sim/EventEngine weighs all of these against
 -- who is around and picks one. An event has:
 --   id, actors (how many villagers it stars: 0..3), when ("day", "night" or "any"),
@@ -11,7 +11,6 @@
 local Personalities = require(script.Parent.Personalities)
 local Foods = require(script.Parent.Foods)
 local Catalog = require(script.Parent.Parent.Build.Catalog)
-local Roles = require(script.Parent.Roles)
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 
 type Ctx = any
@@ -67,12 +66,12 @@ local JOKES = {
 local LOST = { "lucky sock", "favourite pencil", "house key", "lunch box", "tiny notebook", "hair clip" }
 
 local HOBBIES = {
-	{ "painting the fence a slightly different shade of white", "mag" },
-	{ "doing push-ups behind the house", "atk" },
-	{ "reading under a tree", "mag" },
-	{ "jogging laps round the plot", "spd" },
-	{ "stretching very seriously", "def" },
-	{ "humming to the flowers", "mp" },
+	"painting the fence a slightly different shade of white",
+	"doing push-ups behind the house",
+	"reading under a tree",
+	"jogging laps round the garden",
+	"stretching very seriously",
+	"humming to the flowers",
 }
 
 local DREAMS = {
@@ -87,7 +86,7 @@ local DREAMS = {
 local SKILLS =
 	{ "whistle with two fingers", "juggle three apples", "tie a proper knot", "skip stones", "do a cartwheel" }
 
-local WANTS = { "a new pair of boots", "a fancy hat", "a better backpack", "a lucky charm", "proper training gear" }
+local WANTS = { "a new pair of boots", "a fancy hat", "a fishing rod", "a set of paints", "a kite", "a guitar" }
 
 local NAMES = {
 	"Pip",
@@ -439,34 +438,32 @@ event({
 	end,
 })
 
--- Sparring practice.
+-- A friendly arm wrestle.
 event({
-	id = "spar",
+	id = "armwrestle",
 	actors = 2,
 	when = "day",
 	weight = function(ctx: Ctx, a: string, b: string)
-		return trait(ctx, a, "brave") * 1.4
+		return trait(ctx, a, "brave") * 1.2
 	end,
 	scene = function(ctx: Ctx, a: string, b: string): Scene
-		local aWins = ctx.rng:chance(0.5 + (ctx.v(a).lv - ctx.v(b).lv) * 0.05)
+		local aWins = ctx.rng:chance(0.5)
 		local winner = if aWins then "a" else "b"
 		local loser = if aWins then "b" else "a"
 		return {
-			title = "Sparring",
+			title = "Arm wrestling",
 			lines = {
-				line("a", ctx.f("{b}! Let's spar. Loser does the dishes."), "idea", "point"),
+				line("a", ctx.f("{b}! Arm wrestle. Loser does the dishes."), "idea", "point"),
 				line("b", "You're on!", "sparkle"),
-				line(nil, "Some very dramatic play fighting later..."),
+				line(nil, "A lot of grunting later..."),
 				line(winner, "Ha! Dishes are all yours.", "sparkle", "cheer"),
 				line(loser, "Next time. Next time for sure.", "sweat"),
 			},
 			effects = {
-				{ t = "xp", who = "a", d = 30 },
-				{ t = "xp", who = "b", d = 30 },
 				{ t = "rel", a = "a", b = "b", d = 4 },
 				{ t = "mood", who = winner, d = 4 },
 			},
-			log = ctx.f("{a} and {b} sparred for practice."),
+			log = ctx.f("{a} and {b} had an arm wrestle."),
 		}
 	end,
 })
@@ -543,7 +540,7 @@ event({
 		return 0.5 + trait(ctx, a, "brave") * 0.6
 	end,
 	scene = function(ctx: Ctx, a: string, b: string): Scene
-		local aWins = ctx.rng:chance(0.5 + ((ctx.v(a).boost.spd or 0) - (ctx.v(b).boost.spd or 0)) * 0.03)
+		local aWins = ctx.rng:chance(0.5)
 		local winner = if aWins then "a" else "b"
 		local loser = if aWins then "b" else "a"
 		local loserVid = if aWins then b else a
@@ -756,37 +753,23 @@ event({
 	end,
 })
 
--- Asking for coins for gear (it makes them stronger on adventures).
+-- Asking for coins for something they've had their eye on.
 event({
-	id = "gear",
+	id = "wish",
 	actors = 1,
 	when = "day",
 	weight = function(ctx: Ctx, a: string)
-		local v = ctx.v(a)
-		if (v.gear.weapon or 0) >= Roles.MaxGear and (v.gear.armor or 0) >= Roles.MaxGear then
-			return 0
-		end
-		return 0.9
+		return 0.8
 	end,
 	scene = function(ctx: Ctx, a: string): Scene
-		local v = ctx.v(a)
-		local slot = if (v.gear.weapon or 0) <= (v.gear.armor or 0) then "weapon" else "armor"
-		if (v.gear[slot] or 0) >= Roles.MaxGear then
-			slot = if slot == "weapon" then "armor" else "weapon"
-		end
-		local level = v.gear[slot] or 0
-		local cost = Roles.gearCost(level)
-		local role = Roles.get(v.role) or Roles.list[1]
-		local name = role.gear[slot][level + 2] or ctx.rng:pick(WANTS)
+		local thing = ctx.rng:pick(WANTS)
+		local cost = ctx.rng:int(4, 12) * 25
 		return {
 			title = "A favour",
 			lines = {
 				line(
 					"a",
-					ctx.f(
-						"Could I have {cost} coins? I want to get the {thing}.",
-						{ cost = cost, thing = name:lower() }
-					),
+					ctx.f("Could I have {cost} coins? I've had my eye on {thing}.", { cost = cost, thing = thing }),
 					"question"
 				),
 			},
@@ -794,19 +777,8 @@ event({
 				{
 					text = ctx.f("Here you go ({cost} coins)", { cost = cost }),
 					cost = cost,
-					lines = {
-						line(
-							"a",
-							ctx.f("Thank you! Look at my new {thing}!", { thing = name:lower() }),
-							"sparkle",
-							"cheer"
-						),
-					},
-					effects = {
-						{ t = "coins", d = -cost },
-						{ t = "gear", who = "a", slot = slot },
-						{ t = "mood", who = "a", d = 10 },
-					},
+					lines = { line("a", "Thank you! I love it!", "sparkle", "cheer") },
+					effects = { { t = "coins", d = -cost }, { t = "mood", who = "a", d = 12 } },
 				},
 				{
 					text = "Not this time",
@@ -815,7 +787,7 @@ event({
 				},
 			},
 			default = 2,
-			log = ctx.f("{a} asked for coins for the {thing}.", { thing = name:lower() }),
+			log = ctx.f("{a} asked for coins for {thing}.", { thing = thing }),
 		}
 	end,
 })
@@ -983,11 +955,11 @@ event({
 		return {
 			title = "Free time",
 			lines = {
-				line(nil, ctx.f("{a} spent the afternoon {hobby}.", { hobby = hobby[1] })),
+				line(nil, ctx.f("{a} spent the afternoon {hobby}.", { hobby = hobby })),
 				line("a", "Time well spent.", "sparkle"),
 			},
-			effects = { { t = "boost", who = "a", stat = hobby[2], d = 1 }, { t = "mood", who = "a", d = 3 } },
-			log = ctx.f("{a} spent the afternoon {hobby}.", { hobby = hobby[1] }),
+			effects = { { t = "mood", who = "a", d = 4 } },
+			log = ctx.f("{a} spent the afternoon {hobby}.", { hobby = hobby }),
 		}
 	end,
 })
@@ -1040,24 +1012,28 @@ event({
 	end,
 })
 
--- Practice for adventures.
+-- Practising at work.
 event({
 	id = "practice",
 	actors = 1,
 	when = "day",
 	weight = function(ctx: Ctx, a: string)
+		if not ctx.job(a) then
+			return 0
+		end
 		return 0.4 + trait(ctx, a, "focus") * 0.6
 	end,
 	scene = function(ctx: Ctx, a: string): Scene
-		local role = Roles.get(ctx.v(a).role) or Roles.list[1]
+		local w = ctx.job(a)
+		local place = w.def.name:lower()
 		return {
 			title = "Practice",
 			lines = {
-				line(nil, ctx.f("{a} is practising {move} in the yard.", { move = role.attack:lower() })),
-				line("a", "Hup! Hah!", "sparkle", "point"),
+				line(nil, ctx.f("{a} stayed late at the {place} to practise.", { place = place })),
+				line("a", "I'm getting the hang of this.", "sparkle", "point"),
 			},
 			effects = { { t = "xp", who = "a", d = 25 } },
-			log = ctx.f("{a} practised {move}.", { move = role.attack:lower() }),
+			log = ctx.f("{a} practised at the {place}.", { place = place }),
 		}
 	end,
 })
@@ -1278,44 +1254,187 @@ event({
 	end,
 })
 
--- A gloomling wanders into the garden.
+-- A customer at someone's workplace.
 event({
-	id = "gloomling",
+	id = "shopping",
+	actors = 2,
+	when = "day",
+	weight = function(ctx: Ctx, a: string, b: string)
+		if not ctx.job(a) or ctx.quarreling(a, b) then
+			return 0
+		end
+		return 1.4
+	end,
+	scene = function(ctx: Ctx, a: string, b: string): Scene
+		local w = ctx.job(a)
+		local place = w.def.name:lower()
+		local coins = Tuning.Jobs.VisitCoins * ctx.rng:int(2, 5)
+		return {
+			title = "A customer",
+			lines = {
+				line(nil, ctx.f("{b} stopped by {a}'s {place}.", { place = place })),
+				line("a", ctx.rng:pick(w.job.lines), "music", "wave"),
+				line("b", "I'll take one of those, please.", "sparkle"),
+			},
+			effects = {
+				{ t = "coins", d = coins },
+				{ t = "rel", a = "a", b = "b", d = 4 },
+				{ t = "xp", who = "a", d = 8 },
+			},
+			log = ctx.f("{b} shopped at {a}'s {place}.", { place = place }),
+		}
+	end,
+})
+
+-- A great day at work.
+event({
+	id = "bigday",
 	actors = 1,
 	when = "day",
 	weight = function(ctx: Ctx, a: string)
-		return 0.35 + trait(ctx, a, "brave") * 0.5
+		if not ctx.job(a) then
+			return 0
+		end
+		return 0.6 + ctx.v(a).mood / 200
 	end,
 	scene = function(ctx: Ctx, a: string): Scene
-		local brave = trait(ctx, a, "brave") >= 0.5
+		local w = ctx.job(a)
+		local place = w.def.name:lower()
+		local coins = math.floor(w.job.income * 0.6)
 		return {
-			title = "Trouble in the garden",
+			title = "A busy day",
 			lines = {
-				line(nil, "A gloomling is stomping through the flower beds!"),
-				if brave
-					then line("a", "Leave it to me!", "anger", "point")
-					else line("a", "Eek! What do we do?", "sweat"),
+				line(nil, ctx.f("Customers keep queueing at {a}'s {place}.", { place = place })),
+				line("a", "I've never been this busy! I love it.", "sparkle", "cheer"),
 			},
+			effects = { { t = "coins", d = coins }, { t = "mood", who = "a", d = 5 }, { t = "xp", who = "a", d = 15 } },
+			log = ctx.f("{a} had a busy day at the {place}.", { place = place }),
+		}
+	end,
+})
+
+-- Asking for the day off.
+event({
+	id = "dayoff",
+	actors = 1,
+	when = "day",
+	weight = function(ctx: Ctx, a: string)
+		if not ctx.job(a) or ctx.hour >= Tuning.Day.WorkEnd then
+			return 0
+		end
+		return 0.3 + trait(ctx, a, "lazy") * 0.7
+	end,
+	scene = function(ctx: Ctx, a: string): Scene
+		return {
+			title = "A day off",
+			lines = { line("a", "Could I take the rest of today off? I'm worn out.", "sweat") },
 			choices = {
 				{
-					text = ctx.f("Send {a} to chase it off"),
-					lines = if brave
-						then { line("a", "And stay out!", "sparkle", "cheer") }
-						else { line("a", "I... I did it? I did it!", "sparkle", "cheer") },
-					effects = {
-						{ t = "xp", who = "a", d = 30 },
-						{ t = "coins", d = 40 },
-						{ t = "mood", who = "a", d = if brave then 4 else 8 },
-					},
+					text = "Go and rest",
+					lines = { line("a", "Thank you! Hammock, here I come.", "heart", "cheer") },
+					effects = { { t = "dayoff", who = "a" }, { t = "mood", who = "a", d = 10 } },
 				},
 				{
-					text = "Let it wander off",
-					lines = { line(nil, "It ate some flowers on the way out.") },
-					effects = { { t = "mood", who = "a", d = -2 } },
+					text = "We need you today",
+					lines = { line("a", "Okay... back to it.", "sad") },
+					effects = { { t = "mood", who = "a", d = -6 } },
 				},
 			},
 			default = 1,
-			log = ctx.f("{a} dealt with a gloomling in the garden."),
+			log = ctx.f("{a} asked for a day off."),
+		}
+	end,
+})
+
+-- Wanting a job when there isn't one.
+event({
+	id = "jobhunt",
+	actors = 1,
+	when = "day",
+	weight = function(ctx: Ctx, a: string)
+		if ctx.job(a) then
+			return 0
+		end
+		return 1.1
+	end,
+	scene = function(ctx: Ctx, a: string): Scene
+		return {
+			title = "Looking for work",
+			lines = {
+				line("a", "I'd love a job. Anything, really.", "question"),
+				line(nil, "Put a workplace down from the Work tab in Build mode and they'll take it."),
+			},
+			effects = { { t = "mood", who = "a", d = -2 } },
+			log = ctx.f("{a} is looking for work."),
+		}
+	end,
+})
+
+-- A tourist likes the town.
+event({
+	id = "tourist",
+	actors = 0,
+	when = "day",
+	weight = function(ctx: Ctx)
+		return 0.5
+	end,
+	scene = function(ctx: Ctx): Scene
+		local city = ctx.city()
+		local tip = math.clamp(20 + math.floor(city.value / 300), 20, 400)
+		local words = if city.value > 20000
+			then "said it's the prettiest town for miles"
+			elseif city.value > 6000 then "liked the look of the place"
+			else "said it has a lot of potential"
+		return {
+			title = "A tourist",
+			lines = {
+				line(nil, ctx.f("A tourist wandered through town and {words}.", { words = words })),
+				line(nil, ctx.f("They left a tip of {coins} coins.", { coins = tip })),
+			},
+			effects = { { t = "coins", d = tip } },
+			log = "A tourist visited and left a tip.",
+		}
+	end,
+})
+
+-- The town inspector rates the gardens.
+event({
+	id = "inspector",
+	actors = 0,
+	when = "day",
+	weight = function(ctx: Ctx)
+		local n = 0
+		for _, item in ctx.profile.plan.items do
+			local def = Catalog.get(item.id)
+			if def and def.cat == "garden" then
+				n += 1
+			end
+		end
+		return if n >= 5 then 0.5 else 0
+	end,
+	scene = function(ctx: Ctx): Scene
+		local n = 0
+		for _, item in ctx.profile.plan.items do
+			local def = Catalog.get(item.id)
+			if def and def.cat == "garden" then
+				n += 1
+			end
+		end
+		local prize = math.min(250, n * 10)
+		return {
+			title = "The inspector",
+			lines = {
+				line(nil, "The town inspector came round with a clipboard."),
+				line(
+					nil,
+					ctx.f(
+						"They counted {n} garden pieces and gave the town a prize of {coins} coins.",
+						{ n = n, coins = prize }
+					)
+				),
+			},
+			effects = { { t = "coins", d = prize } },
+			log = "The inspector gave the gardens a prize.",
 		}
 	end,
 })

@@ -42,9 +42,13 @@ function Events.merchantActive(player: Player): boolean
 	return (merchantUntil[player] or 0) > os.time()
 end
 
--- Adventures pause town events while a fight is on.
+-- Pauses town events (while the owner is busy in a menu that can't be interrupted).
 function Events.pause(player: Player, on: boolean)
-	paused[player] = on or nil
+	if on then
+		paused[player] = true
+	else
+		paused[player] = nil
+	end
 end
 
 function Events.busy(player: Player): boolean
@@ -227,6 +231,11 @@ local function serviceEffects(player: Player, ev: any, list: { any })
 			player:SetAttribute("MerchantUntil", merchantUntil[player])
 		elseif e.t == "festival" then
 			festival(player)
+		elseif e.t == "dayoff" and e.vid then
+			local v = Villagers.data(player, e.vid)
+			if v then
+				v.dayOff = World.dayIndex()
+			end
 		elseif e.t == "creator" then
 			Remotes.event("Notify"):FireClient(player, "open:creator:" .. (e.vid or ""), "action")
 		end
@@ -311,6 +320,31 @@ local function play(player: Player, ev: any)
 		end
 	end
 	running[player] = nil
+end
+
+-- A party right now (from a cake). False if a scene is already playing.
+function Events.party(player: Player): boolean
+	if running[player] then
+		return false
+	end
+	festival(player)
+	Data.log(player, "You threw a party.")
+	local profile = Data.get(player)
+	if profile then
+		for _, vid in profile.order do
+			local v = profile.villagers[vid]
+			if v then
+				v.mood = math.clamp(v.mood + 8, 0, 100)
+			end
+		end
+		for i = 1, #profile.order do
+			for j = i + 1, #profile.order do
+				Relationships.add(profile, profile.order[i], profile.order[j], 3)
+			end
+		end
+		Data.push(player, "villagers", "rel")
+	end
+	return true
 end
 
 -- Tries to start an event now. Returns true if one started.

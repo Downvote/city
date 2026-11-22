@@ -16,10 +16,18 @@ local Rng = require(Shared .. "Util.Rng")
 local function makeProfile(rng, count, withBeds)
 	local p = Schema.newProfile()
 	p.plan = StarterHouse.plan()
-	local bedKey
+	local bedKey, workKey
 	for key, item in p.plan.items do
 		if item.id:find("bed") then
 			bedKey = key
+		elseif item.id:find("work_") then
+			workKey = key
+		end
+	end
+	if rng:chance(0.5) then
+		-- a few more garden pieces, so the inspector has something to look at
+		for k = 1, 3 do
+			p.plan.items["g" .. k] = { id = "flower_bed", x = 60 + k * 6, y = 0, z = 80, r = 0, lv = 0 }
 		end
 	end
 	for i = 1, count do
@@ -35,6 +43,9 @@ local function makeProfile(rng, count, withBeds)
 		v.lv = rng:int(1, 10)
 		if withBeds and i == 1 then
 			v.bed = bedKey
+		end
+		if i == 2 and workKey and rng:chance(0.7) then
+			v.job = workKey
 		end
 		p.villagers[vid] = v
 		table.insert(p.order, vid)
@@ -122,7 +133,7 @@ describe("Event engine", function()
 				end
 				for _, v in p.villagers do
 					expect(v.mood).toBeBetween(0, 100)
-					expect(v.lv).toBeBetween(1, Tuning.Battle.LevelCap)
+					expect(v.lv).toBeBetween(1, Tuning.Jobs.SkillCap)
 				end
 				for _, rel in p.rel do
 					expect(rel.s).toBeBetween(-100, 100)

@@ -4,7 +4,8 @@
 --   id, name, cat (a tab below), price, place, size (W x H x D footprint box),
 --   c1, c2 (default paint, hex), build(r) (draws it with Build/Recipe),
 --   optional: tags (what villagers ask for), surface (height of a top you can set things on),
---   opening = { w, h, sill } for doors and windows.
+--   opening = { w, h, sill } for doors and windows,
+--   job, workSpot, workYaw for workplaces (Recipes/Work).
 -- place is one of:
 --   "floor"   stands on a floor or the ground
 --   "surface" small things that can also stand on a table or counter
@@ -29,6 +30,9 @@ export type Def = {
 	tags: { string }?,
 	surface: number?,
 	opening: { w: number, h: number, sill: number }?,
+	job: string?, -- a workplace: the job (Data/Jobs) it opens
+	workSpot: Vector3?,
+	workYaw: number?,
 	build: (r: Recipe.Recipe) -> (),
 	order: number?,
 }
@@ -50,6 +54,7 @@ Catalog.Categories = {
 	{ id = "decor", name = "Decor" },
 	{ id = "walldecor", name = "On walls" },
 	{ id = "garden", name = "Garden" },
+	{ id = "work", name = "Work" },
 }
 
 Catalog.Places = {
@@ -80,6 +85,9 @@ Catalog.Tags = {
 	games = "a game to play",
 	desk = "a desk",
 }
+
+-- Tags that aren't asked for in requests but mean something.
+Catalog.OtherTags = { bed = true, stairs = true, kitchen = true, bath = true, work = true }
 
 local byId: { [string]: Def } = {}
 local byCat: { [string]: { Def } } = {}
@@ -128,6 +136,17 @@ function Catalog.withTag(tag: string): { Def }
 	local out = {}
 	for _, def in all do
 		if def.tags and table.find(def.tags, tag) then
+			table.insert(out, def)
+		end
+	end
+	return out
+end
+
+-- Every workplace in the catalog.
+function Catalog.workplaces(): { Def }
+	local out = {}
+	for _, def in all do
+		if def.job then
 			table.insert(out, def)
 		end
 	end

@@ -5,11 +5,15 @@
 local Plan = require(script.Parent.Parent.Build.Plan)
 local Palette = require(script.Parent.Palette)
 local Catalog = require(script.Parent.Parent.Build.Catalog)
+local Tuning = require(script.Parent.Parent.Config.Tuning)
 
 local StarterHouse = {}
 
 local OUT = Palette.Defaults.WallOut
 local IN = Palette.Defaults.WallIn
+
+-- the house was laid out on a 120 stud lot; this moves it onto the starting land in the middle
+local OX = (Tuning.Plot.Size - Tuning.City.Land[1].Size) / 2 - 10
 
 function StarterHouse.plan(): Plan.PlanData
 	local plan = Plan.new()
@@ -23,9 +27,9 @@ function StarterHouse.plan(): Plan.PlanData
 
 	local function wall(x1: number, z1: number, x2: number, z2: number, inner: boolean?): string
 		return add("walls", {
-			x1 = x1,
+			x1 = x1 + OX,
 			z1 = z1,
-			x2 = x2,
+			x2 = x2 + OX,
 			z2 = z2,
 			lv = 0,
 			style = "wall",
@@ -57,21 +61,21 @@ function StarterHouse.plan(): Plan.PlanData
 		if not Catalog.get(id) then
 			return -- the starter house only uses what the catalog has
 		end
-		add("items", { id = id, x = x, y = y or 1, z = z, r = r, lv = 0 })
+		add("items", { id = id, x = x + OX, y = y or 1, z = z, r = r, lv = 0 })
 	end
 
 	-- the cottage: 24 x 20, front door to the street
-	add("floors", { x1 = 40, z1 = 24, x2 = 64, z2 = 44, lv = 0, c = "C99A62", m = "WoodPlanks" })
-	add("floors", { x1 = 52, z1 = 18, x2 = 64, z2 = 24, lv = 0, c = "B4B4B8", m = "Concrete" })
+	add("floors", { x1 = 40 + OX, z1 = 24, x2 = 64 + OX, z2 = 44, lv = 0, c = "C99A62", m = "WoodPlanks" })
+	add("floors", { x1 = 52 + OX, z1 = 18, x2 = 64 + OX, z2 = 24, lv = 0, c = "B4B4B8", m = "Concrete" })
 	local front = wall(40, 24, 64, 24)
 	local right = wall(64, 24, 64, 44)
 	local back = wall(64, 44, 40, 44)
 	local left = wall(40, 44, 40, 24)
 	local inner = wall(52, 44, 52, 30, true)
 	add("roofs", {
-		x1 = 40,
+		x1 = 40 + OX,
 		z1 = 24,
-		x2 = 64,
+		x2 = 64 + OX,
 		z2 = 44,
 		lv = 0,
 		style = "gable",
@@ -85,12 +89,12 @@ function StarterHouse.plan(): Plan.PlanData
 	})
 	-- a little porch roof over the front step
 	add("roofs", {
-		x1 = 54,
+		x1 = 54 + OX,
 		z1 = 18,
-		x2 = 62,
+		x2 = 62 + OX,
 		z2 = 24,
 		lv = 0,
-		style = "shed",
+		style = "flat",
 		rise = 0,
 		dir = 2,
 		over = 0.5,
@@ -122,6 +126,8 @@ function StarterHouse.plan(): Plan.PlanData
 	item("stove", 61.5, 31.5, 270)
 	item("plant_big", 42, 27, 0)
 	item("mailbox", 50, 6, 0, 0)
+	-- a market stall by the street, so the first villager has a job
+	item("work_market", 76, 10, 180, 0)
 	item("tree_oak", 20, 30, 0, 0)
 	item("tree_pine", 100, 70, 0, 0)
 	item("bush", 66, 22, 0, 0)

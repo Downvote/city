@@ -12,12 +12,14 @@ local Palette = require(Shared .. "Data.Palette")
 local Colors = require(Shared .. "Util.Colors")
 
 local P = Tuning.Plot
+-- the starting land sits in the middle of the plot: x from X0, z from 0
+local X0 = Plan.bounds(Plan.new())
 
 local function wall(x1, z1, x2, z2, lv, style)
 	return {
-		x1 = x1,
+		x1 = x1 + X0,
 		z1 = z1,
-		x2 = x2,
+		x2 = x2 + X0,
 		z2 = z2,
 		lv = lv or 0,
 		style = style or "wall",
@@ -28,9 +30,9 @@ end
 
 local function roof(style, dir)
 	return {
-		x1 = 10,
+		x1 = 10 + X0,
 		z1 = 10,
-		x2 = 30,
+		x2 = 30 + X0,
 		z2 = 22,
 		lv = 0,
 		style = style,
@@ -70,13 +72,7 @@ describe("Catalog", function()
 				expect(def.opening ~= nil).toBeTruthy()
 			end
 			for _, tag in def.tags or {} do
-				if
-					not Catalog.Tags[tag]
-					and tag ~= "bed"
-					and tag ~= "stairs"
-					and tag ~= "kitchen"
-					and tag ~= "bath"
-				then
+				if not Catalog.Tags[tag] and not Catalog.OtherTags[tag] then
 					error(def.id .. " has an unknown tag " .. tag)
 				end
 			end
@@ -193,7 +189,7 @@ describe("Plan rules", function()
 
 	it("keeps stairs on quarter turns and on the floor", function()
 		local plan = Plan.new()
-		local s = { id = "stairs_straight", x = 20, y = P.Foundation, z = 20, r = 90, lv = 0 }
+		local s = { id = "stairs_straight", x = 20 + X0, y = P.Foundation, z = 20, r = 90, lv = 0 }
 		expect(Plan.validItem(plan, s)).toBe(true)
 		s.r = 45
 		expect(Plan.validItem(plan, s)).toBe(false)
@@ -207,8 +203,13 @@ describe("Plan rules", function()
 
 	it("keeps items inside the plot", function()
 		local plan = Plan.new()
-		local sofa = { id = "stairs_straight", x = 1, y = P.Foundation, z = 50, r = 0, lv = 0 }
+		local sofa = { id = "stairs_straight", x = X0 + 1, y = P.Foundation, z = 50, r = 0, lv = 0 }
 		expect(Plan.validItem(plan, sofa)).toBe(false)
+		-- and inside the land they own: past the edge is someone else's grass until they buy it
+		local tree = { id = "tree_oak", x = X0 - 10, y = 0, z = 50, r = 0, lv = 0 }
+		expect(Plan.validItem(plan, tree)).toBe(false)
+		local big = Plan.new(Tuning.City.Land[#Tuning.City.Land].Size)
+		expect(Plan.validItem(big, tree)).toBe(true)
 	end)
 
 	it("applies, inverts and refunds changes exactly", function()
@@ -219,7 +220,7 @@ describe("Plan rules", function()
 				op = "add",
 				kind = "floors",
 				key = Plan.newKey(plan),
-				obj = { x1 = 0, z1 = 0, x2 = 10, z2 = 10, lv = 0, c = "C99A62", m = "WoodPlanks" },
+				obj = { x1 = X0, z1 = 0, x2 = X0 + 10, z2 = 10, lv = 0, c = "C99A62", m = "WoodPlanks" },
 			},
 		}
 		expect(Plan.apply(plan, ops)).toBe(true)
@@ -263,7 +264,7 @@ describe("Plan rules", function()
 			roofs = {},
 			items = {
 				["2"] = { id = "win_square", x = 0, y = 4, z = 0, r = 0, lv = 0, wall = "1", t = 5, side = "a" },
-				["4"] = { id = "no_such_thing", x = 5, y = 0, z = 5, r = 0, lv = 0 },
+				["4"] = { id = "no_such_thing", x = X0 + 5, y = 0, z = 5, r = 0, lv = 0 },
 				["5"] = { id = "win_square", x = 0, y = 4, z = 0, r = 0, lv = 0, wall = "9", t = 5, side = "a" },
 			},
 		}
@@ -367,11 +368,11 @@ describe("Builder", function()
 		add("walls", wall(30, 10, 30, 30))
 		add("walls", wall(30, 30, 10, 30))
 		add("walls", wall(10, 30, 10, 10))
-		add("floors", { x1 = 10, z1 = 10, x2 = 30, z2 = 30, lv = 0, c = "C99A62", m = "WoodPlanks" })
+		add("floors", { x1 = X0 + 10, z1 = 10, x2 = X0 + 30, z2 = 30, lv = 0, c = "C99A62", m = "WoodPlanks" })
 		add("roofs", {
-			x1 = 10,
+			x1 = X0 + 10,
 			z1 = 10,
-			x2 = 30,
+			x2 = X0 + 30,
 			z2 = 30,
 			lv = 0,
 			style = "gable",
@@ -390,7 +391,10 @@ describe("Builder", function()
 		)
 		for kind in Plan.KindSet do
 			for key, obj in plan[kind] do
-				expect(Plan.validate(plan, kind, obj, key)).toBe(true)
+				local ok, why = Plan.validate(plan, kind, obj, key)
+				if not ok then
+					error(kind .. " " .. key .. ": " .. tostring(why))
+				end
 			end
 		end
 		local folder = Instance.new("Folder")

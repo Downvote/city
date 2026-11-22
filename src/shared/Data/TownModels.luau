@@ -175,25 +175,54 @@ TownModels.Models.shop = function(r: R)
 	end
 end
 
-TownModels.Models.gate = function(r: R)
-	-- two stone towers and an arch with a glowing way through
-	for _, x in { -7, 7 } do
-		r:block(x - 2, 0, -2, x + 2, 16, 2, STONE, "Cobblestone")
-		r:block(x - 2.4, 16, -2.4, x + 2.4, 17, 2.4, DARK_STONE, "Cobblestone")
-		for _, cx in { -1.6, 0, 1.6 } do
-			r:block(x + cx - 0.5, 17, -2.4, x + cx + 0.5, 18.2, 2.4, DARK_STONE, "Cobblestone")
-		end
+TownModels.Models.hall = function(r: R)
+	-- the town hall: steps, a row of columns, a pediment with a clock, and a flag
+	local wall = Color3.fromRGB(242, 232, 213)
+	local trim = Color3.fromRGB(196, 190, 178)
+	r:block(-9, 0, -7, 9, 1, 6, trim, "Concrete")
+	r:block(-8, 1, -6, 8, 1.6, 6.5, trim, "Concrete")
+	r:block(-7, 1.6, -6, 7, 11, 1, wall, "Plaster")
+	-- door and windows on the front
+	r:block(-1.5, 1.6, 0.95, 1.5, 6.6, 1.1, Color3.fromRGB(110, 70, 40), "Wood")
+	r:ball(1, 4, 1.15, 0.3, C.Gold, "Metal")
+	for _, x in { -4.6, 4.6 } do
+		r:glass(x - 1.2, 4, 0.95, x + 1.2, 8, 1.05)
+		r:block(x - 1.4, 3.8, 0.95, x + 1.4, 4, 1.3, trim, "Concrete")
 	end
-	r:block(-5, 12, -1.6, 5, 15, 1.6, STONE, "Cobblestone")
-	local portal = r:block(-5, 0.2, -0.3, 5, 12, 0.3, Color3.fromRGB(150, 120, 230), "Neon")
-	portal.transp = 0.35
-	portal.collide = false
-	portal.effect = "sparkles"
-	-- flags
-	for _, x in { -7, 7 } do
-		r:block(x - 0.1, 18.2, -0.1, x + 0.1, 22, 0.1, C.DarkMetal, "Metal")
-		r:block(x + 0.1, 20.4, -0.05, x + 2.4, 21.9, 0.05, C.Yellow, "Fabric")
+	-- porch columns
+	for i = 0, 4 do
+		local x = -6 + i * 3
+		r:cyl(x, 6.3, 4.6, 9.4, 1.1, "y", C.White, "Marble")
 	end
+	r:block(-7.6, 11, -6.4, 7.6, 12, 5.4, trim, "Concrete")
+	-- pediment
+	r:tri(Vector3.new(-7.6, 12, 5.2), Vector3.new(7.6, 12, 5.2), Vector3.new(0, 15.5, 5.2), 0.6, wall, "Plaster")
+	r:quad(
+		Vector3.new(-8, 12, 5.6),
+		Vector3.new(0, 15.8, 5.6),
+		Vector3.new(0, 15.8, -6.6),
+		Vector3.new(-8, 12, -6.6),
+		0.5,
+		Color3.fromRGB(156, 42, 46),
+		"Slate"
+	)
+	r:quad(
+		Vector3.new(8, 12, 5.6),
+		Vector3.new(0, 15.8, 5.6),
+		Vector3.new(0, 15.8, -6.6),
+		Vector3.new(8, 12, -6.6),
+		0.5,
+		Color3.fromRGB(156, 42, 46),
+		"Slate"
+	)
+	r:tri(Vector3.new(-7.6, 12, -6.2), Vector3.new(7.6, 12, -6.2), Vector3.new(0, 15.5, -6.2), 0.6, wall, "Plaster")
+	-- clock
+	r:cyl(0, 13.3, 5.5, 0.2, 2.2, "z", C.White, "SmoothPlastic")
+	r:block(-0.06, 13.3, 5.62, 0.06, 14.1, 5.66, C.Black, "SmoothPlastic")
+	r:block(-0.06, 13.24, 5.62, 0.6, 13.36, 5.66, C.Black, "SmoothPlastic")
+	-- flag
+	r:block(-0.1, 15.5, -0.5, 0.1, 21, -0.3, C.DarkMetal, "Metal")
+	r:block(0.1, 19.4, -0.45, 2.8, 20.9, -0.35, C.Blue, "Fabric")
 end
 
 TownModels.Models.lamp = function(r: R)
@@ -276,7 +305,7 @@ end
 function TownModels.preview(): { Geometry.Prim }
 	local out = {}
 	local x = 0
-	for _, name in { "fountain", "board", "tailor", "shop", "gate", "lamp", "bench", "tree", "pine", "sign" } do
+	for _, name in { "fountain", "board", "tailor", "shop", "hall", "lamp", "bench", "tree", "pine", "sign" } do
 		for _, p in TownModels.prims(name) do
 			p.cf = CFrame.new(x, 0, 0) * p.cf
 			table.insert(out, p)

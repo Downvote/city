@@ -31,9 +31,8 @@ Remotes.Functions = {
 	"EventChoose", -- (token, choice) -> ok
 	"ShopBuy", -- (kind, id, count) -> ok, err
 	"DailyClaim", -- () -> ok, coins
-	"AdventureStart", -- (stageId, party, leader) -> ok, err
-	"AdventureAct", -- (action) -> ok
-	"AdventureLeave", -- () -> ok
+	"VillagerJob", -- (vid, workplaceKey?) -> ok, err
+	"PlotExpand", -- () -> ok, err
 	"SettingSet", -- (key, value) -> ok
 	"TutorialStep", -- (step) -> ok
 	"VisitPlot", -- (plotIndex) -> ok
@@ -46,7 +45,7 @@ Remotes.Events = {
 	"EventShow", -- server -> client: an event scene (lines, choices)
 	"EventLine", -- server -> client: one more line of the running scene
 	"EventEnd", -- server -> client: (token, summary)
-	"Battle", -- server -> client: battle beats
+	"Payday", -- server -> client: { total, lines = { { vid, amount } } }
 	"Say", -- server -> client: (model, text) speech bubble (also visible to everyone nearby)
 }
 

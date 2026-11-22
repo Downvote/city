@@ -17,7 +17,6 @@ Schema.Settings = {
 	sfx = 0.8,
 	bubbles = true,
 	eventCamera = true,
-	autoBattle = false,
 }
 
 Schema.Seasons = { "Spring", "Summer", "Autumn", "Winter" }
@@ -34,16 +33,14 @@ export type Villager = {
 	hate: string,
 	known: { [string]: string },
 	mood: number,
-	role: string,
-	lv: number,
+	job: string?, -- the plan key of their workplace
+	lv: number, -- skill at their job
 	xp: number,
-	boost: { [string]: number },
-	gear: { [string]: number },
 	bed: string?,
 	sick: number?,
+	dayOff: number?, -- the day index they have off
 	isYou: boolean?,
 	born: number,
-	trips: number,
 }
 
 function Schema.newProfile(): any
@@ -55,15 +52,14 @@ function Schema.newProfile(): any
 		order = {},
 		nextVid = 1,
 		rel = {},
-		inv = { food = { apple = 3, bread = 2 }, items = { tonic = 2 } },
-		adv = { cleared = {}, party = {}, leader = nil },
+		inv = { food = { apple = 3, bread = 2 }, items = {} },
 		requests = {},
 		log = {},
 		outfits = {},
 		settings = table.clone(Schema.Settings),
 		tutorial = 0,
 		daily = { last = 0, streak = 0 },
-		stats = { events = 0, battles = 0, wins = 0, fed = 0, made = 0 },
+		stats = { events = 0, fed = 0, made = 0, earned = 0, paydays = 0 },
 		recent = {},
 		calendar = { s = 1, d = 1, y = 1 },
 	}
@@ -111,6 +107,7 @@ function Schema.migrate(raw: any): any
 		end
 	end
 	profile.order = order
+	profile.adv = nil
 	if profile.plan ~= nil then
 		profile.plan = Plan.sanitize(profile.plan)
 	end
@@ -118,8 +115,7 @@ function Schema.migrate(raw: any): any
 	return profile
 end
 
-function Schema.villagerDefaults(pers: string?): any
-	local p = pers and Personalities.get(pers)
+function Schema.villagerDefaults(_pers: string?): any
 	return {
 		color = "4FA9D9",
 		bday = { s = 1, d = 1 },
@@ -127,12 +123,8 @@ function Schema.villagerDefaults(pers: string?): any
 		hate = "pickles",
 		known = {},
 		mood = Tuning.Villagers.StartMood,
-		role = if p then p.role else "guard",
 		lv = 1,
 		xp = 0,
-		boost = { hp = 0, mp = 0, atk = 0, mag = 0, def = 0, spd = 0 },
-		gear = { weapon = 0, armor = 0 },
-		trips = 0,
 		born = 0,
 	}
 end

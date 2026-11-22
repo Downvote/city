@@ -156,7 +156,6 @@ function Data.clientState(player: Player): any
 		order = p.order,
 		rel = p.rel,
 		inv = p.inv,
-		adv = p.adv,
 		requests = p.requests,
 		log = p.log,
 		outfits = p.outfits,

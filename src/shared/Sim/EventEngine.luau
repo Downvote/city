@@ -10,14 +10,15 @@
 --   quarrel a b | makeup a b     start or end a quarrel
 --   request who tag              wants furniture with that tag near their bed
 --   sick who minutes             stays in bed
---   xp who d | boost who stat d | gear who slot | known who food r | bday who
+--   xp who d (skill at their job) | known who food r | bday who
 -- Handled by the service (returned in `service`):
---   eat who food | away who seconds | visitor name | merchant | festival | creator who?
+--   eat who food | away who seconds | visitor name | merchant | festival | creator who? | dayoff who
 
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Events = require(script.Parent.Parent.Data.Events)
 local Relationships = require(script.Parent.Relationships)
-local Roles = require(script.Parent.Parent.Data.Roles)
+local Jobs = require(script.Parent.Parent.Data.Jobs)
+local City = require(script.Parent.City)
 local Foods = require(script.Parent.Parent.Data.Foods)
 local Catalog = require(script.Parent.Parent.Build.Catalog)
 local Plan = require(script.Parent.Parent.Build.Plan)
@@ -125,13 +126,21 @@ function EventEngine.context(profile: any, o: Options): any
 		end
 		return best
 	end
+	-- the job a villager has, if any: { key, def, job }
+	function ctx.job(vid: string): any
+		return City.jobOf(profile, vid)
+	end
+	function ctx.city(): any
+		return City.stats(profile)
+	end
 	function ctx.bdayDone(vid: string): number?
 		return profile.bdays and profile.bdays[vid]
 	end
 	-- fills {a} {b} {c} with the stars' names and any extra words
 	function ctx.f(template: string, vars: { [string]: any }?): string
 		local all = table.clone(ctx.names)
-		for k, v in vars or {} do
+		local extra: { [string]: any } = vars or {}
+		for k, v in extra do
 			all[k] = v
 		end
 		return Text.fill(template, all)
@@ -311,17 +320,6 @@ function EventEngine.apply(profile: any, ev: any, effects: { any }, now: number)
 			if v then
 				EventEngine.addXp(v, e.d, notices)
 			end
-		elseif t == "boost" then
-			local v = profile.villagers[vid(e.who) or ""]
-			if v then
-				v.boost[e.stat] = math.min(Foods.StatCap, (v.boost[e.stat] or 0) + e.d)
-			end
-		elseif t == "gear" then
-			local v = profile.villagers[vid(e.who) or ""]
-			if v then
-				v.gear[e.slot] = math.min(Roles.MaxGear, (v.gear[e.slot] or 0) + 1)
-				table.insert(notices, Text.fill("{x} got new gear.", { x = v.name }))
-			end
 		elseif t == "known" then
 			local v = profile.villagers[vid(e.who) or ""]
 			if v then
@@ -358,16 +356,16 @@ end
 function EventEngine.addXp(v: any, amount: number, notices: { string }?): number
 	local gained = 0
 	v.xp = (v.xp or 0) + amount
-	while v.lv < Tuning.Battle.LevelCap and v.xp >= Roles.xpToNext(v.lv) do
-		v.xp -= Roles.xpToNext(v.lv)
+	while v.lv < Tuning.Jobs.SkillCap and v.xp >= Jobs.xpToNext(v.lv) do
+		v.xp -= Jobs.xpToNext(v.lv)
 		v.lv += 1
 		gained += 1
 	end
-	if v.lv >= Tuning.Battle.LevelCap then
+	if v.lv >= Tuning.Jobs.SkillCap then
 		v.xp = 0
 	end
 	if gained > 0 and notices then
-		table.insert(notices, Text.fill("{x} reached level {n}!", { x = v.name, n = v.lv }))
+		table.insert(notices, Text.fill("{x} got better at their work (skill {n}).", { x = v.name, n = v.lv }))
 	end
 	return gained
 end

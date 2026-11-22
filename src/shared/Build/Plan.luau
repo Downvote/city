@@ -51,6 +51,7 @@ export type Item = {
 }
 export type PlanData = {
 	v: number,
+	size: number?, -- usable land along each side (see Tuning.City.Land)
 	nextId: number,
 	walls: { [string]: Wall },
 	floors: { [string]: Floor },
@@ -281,8 +282,30 @@ local function onGrid(n: number): boolean
 	return math.abs(n / s - math.floor(n / s + 0.5)) < 1e-6
 end
 
-local function inPlot(n: number): boolean
-	return n >= 0 and n <= P.Size
+-- The usable land of a plot of this size, as x1, z1, x2, z2: centred left to right, starting at
+-- the street.
+function Plan.boundsOf(size: number): (number, number, number, number)
+	local x1 = (P.Size - size) / 2
+	return x1, 0, x1 + size, size
+end
+
+function Plan.size(plan: any): number
+	return if plan and type(plan.size) == "number" then plan.size else Tuning.City.Land[1].Size
+end
+
+function Plan.bounds(plan: any): (number, number, number, number)
+	return Plan.boundsOf(Plan.size(plan))
+end
+
+export type Bounds = { number }
+
+local function inside(x: number, z: number, b: Bounds): boolean
+	return x >= b[1] - 1e-6 and x <= b[3] + 1e-6 and z >= b[2] - 1e-6 and z <= b[4] + 1e-6
+end
+
+local function boundsList(plan: any): Bounds
+	local x1, z1, x2, z2 = Plan.bounds(plan)
+	return { x1, z1, x2, z2 }
 end
 
 local function validLevel(lv: any): boolean
@@ -293,17 +316,17 @@ local function validSide(s: any): boolean
 	return type(s) == "table" and Colors.isHex(s.c) and Palette.MaterialSet[s.m] == true
 end
 
-local function validRect(o: any): (boolean, string?)
+local function validRect(o: any, b: Bounds): (boolean, string?)
 	for _, k in { "x1", "z1", "x2", "z2" } do
 		if not finite(o[k]) then
 			return false, "bad number"
 		end
-		if not inPlot(o[k]) then
-			return false, "outside the plot"
-		end
 		if not onGrid(o[k]) then
 			return false, "off the grid"
 		end
+	end
+	if not inside(o.x1, o.z1, b) or not inside(o.x2, o.z2, b) then
+		return false, "outside your land"
 	end
 	if o.x2 <= o.x1 or o.z2 <= o.z1 then
 		return false, "too small"
@@ -317,20 +340,21 @@ local function validRect(o: any): (boolean, string?)
 	return true
 end
 
-function Plan.validWall(w: any): (boolean, string?)
+function Plan.validWall(w: any, bounds: Bounds?): (boolean, string?)
 	if type(w) ~= "table" then
 		return false, "not a wall"
 	end
+	local b = bounds or boundsList(nil)
 	for _, k in { "x1", "z1", "x2", "z2" } do
 		if not finite(w[k]) then
 			return false, "bad number"
 		end
-		if not inPlot(w[k]) then
-			return false, "outside the plot"
-		end
 		if not onGrid(w[k]) then
 			return false, "off the grid"
 		end
+	end
+	if not inside(w.x1, w.z1, b) or not inside(w.x2, w.z2, b) then
+		return false, "outside your land"
 	end
 	local len = Plan.wallLength(w)
 	if len < P.MinWallLength - 1e-6 then
@@ -351,11 +375,11 @@ function Plan.validWall(w: any): (boolean, string?)
 	return true
 end
 
-function Plan.validFloor(f: any): (boolean, string?)
+function Plan.validFloor(f: any, bounds: Bounds?): (boolean, string?)
 	if type(f) ~= "table" then
 		return false, "not a floor"
 	end
-	local ok, err = validRect(f)
+	local ok, err = validRect(f, bounds or boundsList(nil))
 	if not ok then
 		return false, err
 	end
@@ -365,11 +389,11 @@ function Plan.validFloor(f: any): (boolean, string?)
 	return true
 end
 
-function Plan.validRoof(r: any): (boolean, string?)
+function Plan.validRoof(r: any, bounds: Bounds?): (boolean, string?)
 	if type(r) ~= "table" then
 		return false, "not a roof"
 	end
-	local ok, err = validRect(r)
+	local ok, err = validRect(r, bounds or boundsList(nil))
 	if not ok then
 		return false, err
 	end
@@ -472,13 +496,14 @@ function Plan.validItem(plan: PlanData, item: any, ignoreKey: string?): (boolean
 	if item.wall ~= nil or item.t ~= nil or item.side ~= nil then
 		return false, "not a wall item"
 	end
-	if not inPlot(item.x) or not inPlot(item.z) then
-		return false, "outside the plot"
+	local b = boundsList(plan)
+	if not inside(item.x, item.z, b) then
+		return false, "outside your land"
 	end
 	local x1, z1, x2, z2 = Plan.itemRect(item)
 	local slack = 0.05
-	if x1 < -slack or z1 < -slack or x2 > P.Size + slack or z2 > P.Size + slack then
-		return false, "outside the plot"
+	if x1 < b[1] - slack or z1 < b[2] - slack or x2 > b[3] + slack or z2 > b[4] + slack then
+		return false, "outside your land"
 	end
 	if def.place == "ground" and item.lv ~= 0 then
 		return false, "goes outside on the ground"
@@ -512,12 +537,13 @@ function Plan.validItem(plan: PlanData, item: any, ignoreKey: string?): (boolean
 end
 
 function Plan.validate(plan: PlanData, kind: string, obj: any, ignoreKey: string?): (boolean, string?)
+	local b = boundsList(plan)
 	if kind == "walls" then
-		return Plan.validWall(obj)
+		return Plan.validWall(obj, b)
 	elseif kind == "floors" then
-		return Plan.validFloor(obj)
+		return Plan.validFloor(obj, b)
 	elseif kind == "roofs" then
-		return Plan.validRoof(obj)
+		return Plan.validRoof(obj, b)
 	elseif kind == "items" then
 		return Plan.validItem(plan, obj, ignoreKey)
 	end
@@ -547,8 +573,16 @@ end
 
 -- Plans and changes ----------------------------------------------------------------------------
 
-function Plan.new(): PlanData
-	return { v = 1, nextId = 1, walls = {}, floors = {}, roofs = {}, items = {} }
+function Plan.new(size: number?): PlanData
+	return {
+		v = 1,
+		size = size or Tuning.City.Land[1].Size,
+		nextId = 1,
+		walls = {},
+		floors = {},
+		roofs = {},
+		items = {},
+	}
 end
 
 function Plan.newKey(plan: PlanData): string
@@ -695,6 +729,11 @@ function Plan.sanitize(raw: any): PlanData
 	local plan = Plan.new()
 	if type(raw) ~= "table" then
 		return plan
+	end
+	for _, land in Tuning.City.Land do
+		if raw.size == land.Size then
+			plan.size = land.Size
+		end
 	end
 	local maxId = 0
 	local function track(key: string)

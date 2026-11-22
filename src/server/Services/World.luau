@@ -172,7 +172,7 @@ local function buildMap()
 	place("board", Town.Spots.Board, 180, "Town news", "news")
 	place("tailor", Town.Spots.Tailor, 180, "Make a villager", "creator")
 	place("shop", Town.Spots.Shop, 0, "Shop", "shop")
-	place("gate", Town.Spots.Gate, 0, "Set out", "adventure")
+	place("hall", Town.Spots.Hall, 0, "City hall", "city")
 	local welcome = place("sign", Vector3.new(14, 0, 30), 180)
 	local board = welcome:FindFirstChild("SignBoard", true)
 	if board and board:IsA("BasePart") then
@@ -251,17 +251,7 @@ local function buildPlots()
 			Material = Enum.Material.Grass,
 		})
 		base.Parent = model
-		-- corner stones so people can see the plot's edges
-		for _, c in { { 0, 0 }, { SIZE, 0 }, { 0, SIZE }, { SIZE, SIZE } } do
-			local stone = part({
-				Name = "Corner",
-				Size = Vector3.new(1.2, 0.6, 1.2),
-				CFrame = frame * CFrame.new(c[1], 0.3, c[2]),
-				Color = Color3.fromRGB(230, 226, 214),
-				Material = Enum.Material.Concrete,
-			})
-			stone.Parent = model
-		end
+		base.Color = Color3.fromRGB(112, 170, 86)
 		local build = Instance.new("Folder")
 		build.Name = "Build"
 		build.Parent = model

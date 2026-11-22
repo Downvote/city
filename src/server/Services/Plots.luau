@@ -8,6 +8,9 @@ local Town = require(Shared.Data.Town)
 local Builder = require(Shared.Build.Builder)
 local StarterHouse = require(Shared.Data.StarterHouse)
 local Remotes = require(Shared.Net.Remotes)
+local Plan = require(Shared.Build.Plan)
+local City = require(Shared.Sim.City)
+local Text = require(Shared.Util.Text)
 
 local Data = require(script.Parent.Data)
 local World = require(script.Parent.World)
@@ -51,6 +54,49 @@ function Plots.ofPlayer(player: Player): (number?, CFrame?)
 	return i, Town.plotFrame(i)
 end
 
+-- Shows the land a player owns: lighter grass with a low curb round it.
+function Plots.drawLand(i: number, plan: any)
+	local plot = World.plotModel(i)
+	local old = plot:FindFirstChild("Land")
+	if old then
+		old:Destroy()
+	end
+	if not plan then
+		return
+	end
+	local frame = Town.plotFrame(i)
+	local x1, z1, x2, z2 = Plan.bounds(plan)
+	local land = Instance.new("Model")
+	land.Name = "Land"
+	local grass = Instance.new("Part")
+	grass.Name = "Grass"
+	grass.Anchored = true
+	grass.Size = Vector3.new(x2 - x1, 0.1, z2 - z1)
+	grass.CFrame = frame * CFrame.new((x1 + x2) / 2, -0.04, (z1 + z2) / 2)
+	grass.Color = Color3.fromRGB(132, 200, 100)
+	grass.Material = Enum.Material.Grass
+	grass.TopSurface = Enum.SurfaceType.Smooth
+	grass.Parent = land
+	local curb = Color3.fromRGB(232, 228, 216)
+	local edges = {
+		{ (x1 + x2) / 2, z1, x2 - x1 + 0.6, 0.6 },
+		{ (x1 + x2) / 2, z2, x2 - x1 + 0.6, 0.6 },
+		{ x1, (z1 + z2) / 2, 0.6, z2 - z1 },
+		{ x2, (z1 + z2) / 2, 0.6, z2 - z1 },
+	}
+	for _, e in edges do
+		local strip = Instance.new("Part")
+		strip.Name = "Curb"
+		strip.Anchored = true
+		strip.Size = Vector3.new(e[3], 0.3, e[4])
+		strip.CFrame = frame * CFrame.new(e[1], 0.1, e[2])
+		strip.Color = curb
+		strip.Material = Enum.Material.Concrete
+		strip.Parent = land
+	end
+	land.Parent = plot
+end
+
 local function signFor(player: Player): string
 	return player.DisplayName .. "'s\nplace"
 end
@@ -84,6 +130,7 @@ local function assign(player: Player, profile: any)
 	if profile.plan == nil then
 		profile.plan = StarterHouse.plan()
 	end
+	Plots.drawLand(index, profile.plan)
 	local folder = Plots.buildFolder(index)
 	folder:ClearAllChildren()
 	Builder.renderAll(profile.plan, folder, Town.plotFrame(index))
@@ -102,6 +149,7 @@ local function release(player: Player)
 		return
 	end
 	owners[i] = nil
+	Plots.drawLand(i, nil)
 	Plots.buildFolder(i):ClearAllChildren()
 	Plots.villagerFolder(i):ClearAllChildren()
 	World.setPlotSign(i, "Plot " .. i .. "\nfor sale")
@@ -121,6 +169,29 @@ function Plots.start()
 			task.wait(0.2)
 			Plots.sendTo(player, char)
 		end)
+	end
+
+	Remotes.fn("PlotExpand").OnServerInvoke = function(player)
+		local profile = Data.get(player)
+		local i = Plots.indexOf(player)
+		if not profile or not i then
+			return false, "No plot yet."
+		end
+		local land, why = City.canExpand(profile)
+		if not land then
+			return false, why
+		end
+		Data.addCoins(player, -land.Price)
+		profile.plan.size = land.Size
+		Plots.drawLand(i, profile.plan)
+		Remotes.event("PlanSync"):FireClient(player, { full = profile.plan })
+		Data.log(player, Text.fill("You bought more land. It's now {n} by {n}.", { n = land.Size }))
+		Data.notify(
+			player,
+			Text.fill("More land! You now have {n} by {n} studs to build on.", { n = land.Size }),
+			"good"
+		)
+		return true
 	end
 
 	Remotes.fn("VisitPlot").OnServerInvoke = function(player, index)

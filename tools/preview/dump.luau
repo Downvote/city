@@ -8,9 +8,8 @@
 --   walls              every wall style
 --   roofs              every roof style
 --   house              the starter house
---   monster:<id>       one adventure monster
---   monsters           every monster
 --   town               the plaza's own buildings
+--   town:<name>        one of them (fountain, board, tailor, shop, hall...)
 
 local fs = require("@lune/fs")
 local process = require("@lune/process")
@@ -124,17 +123,9 @@ elseif scene == "house" then
 			addPrims(Builder.primsFor(plan, kind, key))
 		end
 	end
-elseif scene:sub(1, 8) == "monster:" then
-	local MonsterModels = R(Shared .. "Data.MonsterModels")
-	addPrims(MonsterModels.prims(scene:sub(9)))
-elseif scene == "monsters" then
-	local MonsterModels = R(Shared .. "Data.MonsterModels")
-	local Monsters = R(Shared .. "Data.Monsters")
-	local x = 0
-	for _, m in Monsters.list do
-		addPrims(MonsterModels.prims(m.id), CFrame.new(x, 0, 0))
-		x += 8
-	end
+elseif scene:sub(1, 5) == "town:" then
+	local TownModels = R(Shared .. "Data.TownModels")
+	addPrims(TownModels.prims(scene:sub(6)))
 elseif scene == "town" then
 	local TownModels = R(Shared .. "Data.TownModels")
 	addPrims(TownModels.preview())

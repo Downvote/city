@@ -1,7 +1,6 @@
 --!strict
 -- Every number the game runs on. Change values here, then run the specs:
--- tests/specs/Economy.spec.luau and Battle.spec.luau hold the economy and the fights
--- to the bounds docs/GAME_DESIGN.md promises.
+-- tests/specs/City.spec.luau holds the economy to the bounds docs/GAME_DESIGN.md promises.
 
 local Tuning = {}
 
@@ -14,7 +13,7 @@ Tuning.Game = {
 
 -- Building ------------------------------------------------------------------
 Tuning.Plot = {
-	Size = 120, -- studs along each side of a plot
+	Size = 200, -- studs along each side of a plot at its biggest (see City.Land for what you start with)
 	Count = 8,
 	WallSnap = 2, -- walls, floors and roofs snap to this grid
 	ItemSnap = 1, -- furniture snaps to this unless free placement is on
@@ -31,7 +30,7 @@ Tuning.Plot = {
 	RoofThickness = 0.6,
 	RoofMaxRise = 18,
 	RoofMaxOverhang = 3,
-	MaxFloorSpan = 120,
+	MaxFloorSpan = 200,
 	OpeningMargin = 0.2, -- min gap between an opening and a wall end or another opening
 }
 
@@ -54,7 +53,7 @@ Tuning.Economy = {
 
 -- Villagers -----------------------------------------------------------------
 Tuning.Villagers = {
-	Max = 12,
+	Max = 16,
 	NameMaxLength = 20,
 	MaxAccessories = 16,
 	StartMood = 70,
@@ -101,6 +100,8 @@ Tuning.Day = {
 	NightEnd = 6.5,
 	BedTime = 21.5,
 	WakeTime = 7,
+	WorkStart = 9,
+	WorkEnd = 17, -- payday is at the end of the work day
 	StartClock = 9,
 }
 
@@ -118,22 +119,29 @@ Tuning.Events = {
 	VisitorChance = 0.35, -- weight scale for "someone wants to move in" while there is room
 }
 
--- Adventures ----------------------------------------------------------------
-Tuning.Battle = {
-	PartyMax = 4,
-	LevelCap = 40,
-	TonicsPerStage = 3, -- shared healing tonics refilled at the start of each stage
-	TonicHeal = 0.4, -- fraction of max HP
-	TonicMana = 0.5,
-	CritChance = 0.06,
-	CritMultiplier = 1.6,
-	DefendFactor = 0.5,
-	AssistBaseChance = 0.05, -- chance of a friend assist at score 0, rising with friendship
-	AssistMaxChance = 0.4,
-	QuirkChance = 0.12, -- chance an auto member acts on personality instead of plan
-	ActionTimeout = 40, -- seconds before the leader's turn is played automatically
-	ReviveHp = 0.25,
-	XpShare = 1.0,
+-- Work and the city -------------------------------------------------------
+Tuning.Jobs = {
+	SkillCap = 30,
+	XpPerDay = 12, -- skill points for a day's work
+	VisitCoins = 6, -- what a villager spends when they drop by a staffed shop
+}
+
+-- City levels: reached by having enough villagers and enough built. Each level lets you buy more land.
+Tuning.City = {
+	Levels = {
+		{ Name = "Hamlet", Pop = 0, Value = 0 },
+		{ Name = "Village", Pop = 3, Value = 3000 },
+		{ Name = "Town", Pop = 6, Value = 10000 },
+		{ Name = "Big town", Pop = 9, Value = 25000 },
+		{ Name = "City", Pop = 12, Value = 50000 },
+	},
+	-- usable land, its price and the city level it needs
+	Land = {
+		{ Size = 100, Price = 0, Level = 1 },
+		{ Size = 128, Price = 4000, Level = 2 },
+		{ Size = 160, Price = 12000, Level = 3 },
+		{ Size = 200, Price = 30000, Level = 4 },
+	},
 }
 
 Tuning.Rewards = {

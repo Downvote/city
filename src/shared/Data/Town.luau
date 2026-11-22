@@ -15,10 +15,10 @@ local SIZE = Tuning.Plot.Size
 Town.StreetHalfWidth = 14
 Town.SidewalkWidth = 6
 Town.PlotSetback = 22 -- plot front edge distance from the street's middle
-Town.PlotCentersX = { -262, -126, 126, 262 }
+Town.PlotCentersX = { -382, -166, 166, 382 }
 Town.SquareCenter = Vector3.new(0, 0, 82)
 Town.MarketCenter = Vector3.new(0, 0, -82)
-Town.HalfLength = 360 -- street runs from -HalfLength to HalfLength
+Town.HalfLength = 520 -- street runs from -HalfLength to HalfLength
 
 -- The frame of plot i (1..8): its local origin is the front left corner, seen from the street.
 function Town.plotFrame(i: number): CFrame
@@ -54,7 +54,7 @@ Town.Spots = {
 	Board = Vector3.new(-24, 0, 40),
 	Tailor = Vector3.new(30, 0, 48),
 	Shop = Vector3.new(-26, 0, -48),
-	Gate = Vector3.new(0, 0, -124),
+	Hall = Vector3.new(0, 0, -124),
 	Spawn = Vector3.new(0, 0, 58),
 	Festival = Vector3.new(0, 0, 95),
 }
