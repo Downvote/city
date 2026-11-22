@@ -27,7 +27,6 @@ local BuildMode = {}
 
 local player = Players.LocalPlayer
 local P = Tuning.Plot
-local SIZE = P.Size
 
 local changedEvent = Instance.new("BindableEvent")
 BuildMode.Changed = changedEvent.Event
@@ -90,9 +89,20 @@ end
 
 -- helpers -----------------------------------------------------------------------------------------
 
-local function snapGrid(v: number): number
+local function snapAxis(v: number, lo: number, hi: number): number
 	local g = P.WallSnap
-	return math.clamp(math.floor(v / g + 0.5) * g, 0, SIZE)
+	return math.clamp(math.floor(v / g + 0.5) * g, lo, hi)
+end
+
+-- Snaps to the wall grid, kept inside the land the player owns.
+local function snapX(v: number): number
+	local x1, _, x2 = Plan.bounds(State.plan)
+	return snapAxis(v, x1, x2)
+end
+
+local function snapZ(v: number): number
+	local _, z1, _, z2 = Plan.bounds(State.plan)
+	return snapAxis(v, z1, z2)
 end
 
 local function snapItem(v: number): number
@@ -302,7 +312,7 @@ local function wallTool()
 		candidate = nil
 		return
 	end
-	local g = Vector3.new(snapGrid(p.X), Plan.levelBase(s.level), snapGrid(p.Z))
+	local g = Vector3.new(snapX(p.X), Plan.levelBase(s.level), snapZ(p.Z))
 	if s.wallMode == "room" then
 		if not rectStart then
 			showGhost("dot" .. tostring(g), {
@@ -405,7 +415,7 @@ local function rectTool(kind: string)
 		candidate = nil
 		return
 	end
-	local g = Vector3.new(snapGrid(p.X), Plan.levelBase(s.level), snapGrid(p.Z))
+	local g = Vector3.new(snapX(p.X), Plan.levelBase(s.level), snapZ(p.Z))
 	if not rectStart then
 		showGhost("dot" .. tostring(g), {
 			Geometry.box(
@@ -778,7 +788,7 @@ local function primary(released: boolean?)
 		if not p then
 			return
 		end
-		local g = Vector3.new(snapGrid(p.X), Plan.levelBase(s.level), snapGrid(p.Z))
+		local g = Vector3.new(snapX(p.X), Plan.levelBase(s.level), snapZ(p.Z))
 		if not wallStart then
 			wallStart = g
 			return
@@ -796,7 +806,7 @@ local function primary(released: boolean?)
 		if not p then
 			return
 		end
-		local g = Vector3.new(snapGrid(p.X), Plan.levelBase(s.level), snapGrid(p.Z))
+		local g = Vector3.new(snapX(p.X), Plan.levelBase(s.level), snapZ(p.Z))
 		if not rectStart then
 			if not released then
 				rectStart = g
@@ -936,26 +946,26 @@ local function drawGrid()
 	end
 	local step = 4
 	local color = Color3.fromRGB(255, 255, 255)
-	for i = 0, SIZE, step do
-		for _, horizontal in { true, false } do
-			local part = Instance.new("Part")
-			part.Anchored = true
-			part.CanCollide = false
-			part.CanQuery = false
-			part.CanTouch = false
-			part.CastShadow = false
-			part.Material = Enum.Material.SmoothPlastic
-			part.Color = color
-			part.Transparency = if i % 12 == 0 then 0.45 else 0.75
-			if horizontal then
-				part.Size = Vector3.new(SIZE, 0.04, 0.12)
-				part.CFrame = plotFrame * CFrame.new(SIZE / 2, h, i)
-			else
-				part.Size = Vector3.new(0.12, 0.04, SIZE)
-				part.CFrame = plotFrame * CFrame.new(i, h, SIZE / 2)
-			end
-			part.Parent = gridFolder
-		end
+	local x1, z1, x2, z2 = Plan.bounds(State.plan)
+	local function line(cf: CFrame, size: Vector3, strong: boolean)
+		local part = Instance.new("Part")
+		part.Anchored = true
+		part.CanCollide = false
+		part.CanQuery = false
+		part.CanTouch = false
+		part.CastShadow = false
+		part.Material = Enum.Material.SmoothPlastic
+		part.Color = color
+		part.Transparency = if strong then 0.45 else 0.75
+		part.Size = size
+		part.CFrame = cf
+		part.Parent = gridFolder
+	end
+	for z = z1, z2, step do
+		line(plotFrame * CFrame.new((x1 + x2) / 2, h, z), Vector3.new(x2 - x1, 0.04, 0.12), (z - z1) % 12 == 0)
+	end
+	for x = x1, x2, step do
+		line(plotFrame * CFrame.new(x, h, (z1 + z2) / 2), Vector3.new(0.12, 0.04, z2 - z1), (x - x1) % 12 == 0)
 	end
 end
 
@@ -1355,9 +1365,12 @@ function BuildMode.plotIndex(): number?
 	return plotIndex
 end
 
-State.onPlan(function()
+State.onPlan(function(ops)
 	if s.active then
 		lastGhostKey = ""
+		if ops == nil then
+			drawGrid() -- a full plan: maybe more land
+		end
 		changed("plan")
 	end
 end)
