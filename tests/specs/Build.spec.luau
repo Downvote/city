@@ -256,6 +256,20 @@ describe("Plan rules", function()
 		expect(Plan.count(plan, "items")).toBe(0)
 	end)
 
+	it("keeps only the fields each kind has", function()
+		local w = wall(0, 0, 10, 0)
+		w.junk = string.rep("x", 1000)
+		w.a.extra = 5
+		local clean = Plan.clean("walls", w)
+		expect(clean.junk).toBe(nil)
+		expect(clean.a.extra).toBe(nil)
+		expect(clean.x2).toBe(w.x2)
+		expect(Plan.validWall(clean)).toBe(true)
+		local item = Plan.clean("items", { id = "tree_oak", x = 60, y = 0, z = 50, r = 0, lv = 0, evil = { 1, 2, 3 } })
+		expect(item.evil).toBe(nil)
+		expect(item.id).toBe("tree_oak")
+	end)
+
 	it("drops broken entries when loading saved data", function()
 		local raw = {
 			nextId = 3,

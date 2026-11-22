@@ -62,7 +62,7 @@ local function prepare(plan: any, requests: { any }): ({ any }?, string?)
 		end
 		local ops: { any }
 		if req.type == "add" then
-			local obj = req.obj
+			local obj = Plan.clean(req.kind, req.obj)
 			local ok, err = Plan.validate(plan, req.kind, obj)
 			if not ok then
 				return fail(err or "can't place that")
@@ -91,7 +91,7 @@ local function prepare(plan: any, requests: { any }): ({ any }?, string?)
 			if before == nil then
 				return fail("that's already gone")
 			end
-			local obj = req.obj
+			local obj = Plan.clean(req.kind, req.obj)
 			local ok, err = Plan.validate(plan, req.kind, obj, req.key)
 			if not ok then
 				return fail(err or "can't do that")

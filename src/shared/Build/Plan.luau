@@ -550,6 +550,40 @@ function Plan.validate(plan: PlanData, kind: string, obj: any, ignoreKey: string
 	return false, "unknown kind"
 end
 
+-- Only the fields each kind of object has, with plain values, so nothing extra a client sends
+-- ends up saved.
+local FIELDS = {
+	walls = { "x1", "z1", "x2", "z2", "lv", "style" },
+	floors = { "x1", "z1", "x2", "z2", "lv", "c", "m" },
+	roofs = { "x1", "z1", "x2", "z2", "lv", "style", "rise", "dir", "over", "c", "m", "c2", "m2" },
+	items = { "id", "x", "y", "z", "r", "lv", "c1", "c2", "wall", "t", "side" },
+}
+
+function Plan.clean(kind: string, obj: any): any
+	if type(obj) ~= "table" then
+		return obj
+	end
+	local out: { [string]: any } = {}
+	for _, k in FIELDS[kind] or {} do
+		local v = obj[k]
+		if type(v) == "number" or (type(v) == "string" and #v <= 32) then
+			out[k] = v
+		end
+	end
+	if kind == "walls" then
+		for _, side in { "a", "b" } do
+			local sd = obj[side]
+			if type(sd) == "table" then
+				out[side] = {
+					c = if type(sd.c) == "string" then sd.c:sub(1, 6) else nil,
+					m = if type(sd.m) == "string" then sd.m:sub(1, 32) else nil,
+				}
+			end
+		end
+	end
+	return out
+end
+
 -- Limits --------------------------------------------------------------------------------------
 
 local LIMITS = {

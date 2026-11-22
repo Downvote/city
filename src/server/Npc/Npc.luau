@@ -274,6 +274,16 @@ function Npc.useSeat(seat: Seat, humanoid: Humanoid)
 	end)
 end
 
+-- Keeps the server simulating the villager (players' clients must not own NPCs).
+function Npc.claim(self: Npc)
+	if self.root.Anchored or not self.root:IsDescendantOf(workspace) then
+		return
+	end
+	pcall(function()
+		self.root:SetNetworkOwner(nil)
+	end)
+end
+
 function Npc.standUp(self: Npc)
 	if self.sleeping then
 		self.sleeping = false
@@ -281,6 +291,7 @@ function Npc.standUp(self: Npc)
 		self.humanoid.PlatformStand = false
 		self.humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
 		self:stop("sit")
+		self:claim()
 	end
 	if self.seat then
 		self.humanoid.Sit = false
@@ -288,6 +299,7 @@ function Npc.standUp(self: Npc)
 		self.seat = nil
 		self:stop("sit")
 		task.wait(0.15)
+		self:claim()
 	end
 end
 

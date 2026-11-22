@@ -65,12 +65,20 @@ function Schema.newProfile(): any
 	}
 end
 
-local function fill(target: any, defaults: any)
+-- Puts back missing keys. Goes one level into tables (settings, stats...) but no deeper, so
+-- inventory counts that ran out aren't refilled with the starting food.
+local function fill(target: any, defaults: any, deep: boolean?)
 	for k, v in defaults do
 		if target[k] == nil then
-			target[k] = if type(v) == "table" then table.clone(v) else v
-		elseif type(v) == "table" and type(target[k]) == "table" and next(v) ~= nil and #v == 0 then
-			fill(target[k], v)
+			if type(v) ~= "table" then
+				target[k] = v
+			elseif deep then
+				target[k] = table.clone(v)
+			else
+				target[k] = {}
+			end
+		elseif deep and type(v) == "table" and type(target[k]) == "table" and next(v) ~= nil and #v == 0 then
+			fill(target[k], v, false)
 		end
 	end
 end
@@ -81,7 +89,7 @@ function Schema.migrate(raw: any): any
 		return Schema.newProfile()
 	end
 	local profile = raw
-	fill(profile, Schema.newProfile())
+	fill(profile, Schema.newProfile(), true)
 	if type(profile.coins) ~= "number" or profile.coins ~= profile.coins then
 		profile.coins = Tuning.Economy.StartCoins
 	end
@@ -90,7 +98,7 @@ function Schema.migrate(raw: any): any
 	for vid, v in profile.villagers do
 		if type(vid) == "string" and type(v) == "table" and type(v.name) == "string" then
 			v.app = Appearance.sanitize(v.app)
-			fill(v, Schema.villagerDefaults(v.pers))
+			fill(v, Schema.villagerDefaults(v.pers), true)
 			clean[vid] = v
 		end
 	end

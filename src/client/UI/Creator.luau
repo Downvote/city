@@ -43,6 +43,8 @@ local zoom = 11
 local focusY = 2.8
 local previewToken = 0
 local previewPending = false
+local openToken = 0
+local saving = false
 
 -- browsing
 local tabId = "hair"
@@ -193,7 +195,7 @@ refreshWorn = function()
 	end
 end
 
-local function itemCard(item: any, order: number): GuiObject
+local function itemCard(item: any, order: number, onClick: (() -> ())?): GuiObject
 	local bundle = item.ItemType == "Bundle"
 	local card = Kit.new("TextButton", {
 		Text = "",
@@ -222,7 +224,11 @@ local function itemCard(item: any, order: number): GuiObject
 		Font = Kit.Fonts.Bold,
 	})
 	card.Activated:Connect(function()
-		wear(item)
+		if onClick then
+			onClick()
+		else
+			wear(item)
+		end
 	end)
 	cards[item.Id] = card
 	return card
@@ -418,8 +424,7 @@ local function wearingPage()
 		if not info then
 			table.insert(unknown, a.id)
 		end
-		local card = itemCard({ Id = a.id, Name = if info then info.name else "Worn item", ItemType = "Asset" }, i);
-		(card :: any).Activated:Connect(function()
+		itemCard({ Id = a.id, Name = if info then info.name else "Worn item", ItemType = "Asset" }, i, function()
 			setApp(Appearance.without(app, a.id))
 			task.defer(wearingPage)
 		end)
@@ -747,12 +752,16 @@ local function buildProfilePage()
 		TextSize = 22,
 	})
 	save.Activated:Connect(function()
+		if saving then
+			return
+		end
 		local name = Text.clean(profile.name)
 		if name == "" then
 			Toasts.show("Give them a name first.", "warn")
 			return
 		end
 		save.Text = "Checking..."
+		saving = true
 		task.spawn(function()
 			local ok, err
 			if mode == "new" then
@@ -769,6 +778,7 @@ local function buildProfilePage()
 					{ name = name, pers = profile.pers, color = profile.color, bday = profile.bday, app = app }
 				)
 			end
+			saving = false
 			if ok then
 				Toasts.show(
 					if mode == "new" then Text.fill("{name} is moving in!", { name = name }) else "Saved.",
@@ -796,7 +806,33 @@ end
 
 -- Camera -----------------------------------------------------------------------------------------------
 
+local function stopCamera()
+	if camConn then
+		camConn:Disconnect()
+		camConn = nil
+	end
+	for _, c in inputConns do
+		c:Disconnect()
+	end
+	inputConns = {}
+	local cam = workspace.CurrentCamera
+	cam.CameraType = Enum.CameraType.Custom
+	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+	if hum then
+		cam.CameraSubject = hum
+	end
+end
+
 local function startCamera()
+	-- never run two camera loops at once
+	if camConn then
+		camConn:Disconnect()
+		camConn = nil
+	end
+	for _, c in inputConns do
+		c:Disconnect()
+	end
+	inputConns = {}
 	local cam = workspace.CurrentCamera
 	cam.CameraType = Enum.CameraType.Scriptable
 	local dragging = false
@@ -859,23 +895,6 @@ local function startCamera()
 			end
 		end)
 	)
-end
-
-local function stopCamera()
-	if camConn then
-		camConn:Disconnect()
-		camConn = nil
-	end
-	for _, c in inputConns do
-		c:Disconnect()
-	end
-	inputConns = {}
-	local cam = workspace.CurrentCamera
-	cam.CameraType = Enum.CameraType.Custom
-	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-	if hum then
-		cam.CameraSubject = hum
-	end
 end
 
 -- Building the screen ------------------------------------------------------------------------------------
@@ -1117,10 +1136,12 @@ function Creator.open(arg: any)
 	end
 	showStep("look")
 	selectTab(tabId)
+	openToken += 1
+	local token = openToken
 	task.spawn(function()
 		local stage = Remotes.fn("CreatorOpen")
 			:InvokeServer(if mode == "edit" then editVid elseif a.start == "me" then "me" else nil)
-		if not stage or not isOpen then
+		if not stage or not isOpen or token ~= openToken then
 			return
 		end
 		origin = stage.origin

@@ -267,17 +267,6 @@ function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?): any
 		Radius = 18,
 	})
 	frame.ZIndex = 5
-	local shadow = Kit.frame({
-		Name = "Shadow",
-		Size = UDim2.new(1, 0, 1, 0),
-		Position = UDim2.fromOffset(0, 6),
-		Color = T.Shadow,
-		Transparency = 0.82,
-		Radius = 18,
-		Parent = frame,
-		ZIndex = 0,
-	})
-	local _ = shadow
 	local header = Kit.box({ Name = "Header", Size = UDim2.new(1, 0, 0, 52), Parent = frame })
 	local title =
 		Kit.title(titleText, { Parent = header, Size = UDim2.new(1, -70, 1, 0), Position = UDim2.fromOffset(20, 0) })

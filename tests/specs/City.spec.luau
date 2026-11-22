@@ -105,6 +105,16 @@ describe("City", function()
 		expect(City.canExpand(p) ~= nil).toBeTruthy()
 	end)
 
+	it("doesn't refill food that ran out when a save loads", function()
+		local p = Schema.newProfile()
+		p.inv.food = {}
+		p.settings = nil
+		local loaded = Schema.migrate(p)
+		expect(next(loaded.inv.food)).toBe(nil)
+		expect(loaded.settings ~= nil).toBeTruthy()
+		expect(loaded.settings.sfx).toBe(Schema.Settings.sfx)
+	end)
+
 	it("pays workers, but not on a day off or while sick", function()
 		local p = Schema.newProfile()
 		p.plan = StarterHouse.plan()

@@ -82,6 +82,7 @@ function Villagers.setControl(player: Player, vid: string, mode: string?)
 			if i then
 				npc.model.Parent = Plots.villagerFolder(i)
 				npc.model:PivotTo(Town.plotArrival(i) + Vector3.new(0, 0.5, 0))
+				npc:claim()
 			end
 		end
 	end
@@ -216,17 +217,35 @@ local function wanderTarget(player: Player): Vector3?
 	return plotPoint(player, rng:float(x1 + 4, x2 - 4), rng:float(z1 + 4, z2 - 4))
 end
 
+local spawnTokens: { [string]: number } = {}
+
 function Villagers.spawn(player: Player, vid: string)
 	local v = Villagers.data(player, vid)
 	local i = Plots.indexOf(player)
 	if not v or not i then
 		return
 	end
+	-- only the newest spawn of a villager counts; building the model takes a moment
+	local tokenKey = player.UserId .. ":" .. vid
+	spawnTokens[tokenKey] = (spawnTokens[tokenKey] or 0) + 1
+	local token = spawnTokens[tokenKey]
 	Villagers.despawn(player, vid)
 	local model = Avatar.buildModel(v.app, v.name)
-	if not model or not player.Parent then
+	if not model then
 		return
 	end
+	if
+		not player.Parent
+		or spawnTokens[tokenKey] ~= token
+		or not Villagers.data(player, vid)
+		or not Plots.indexOf(player)
+	then
+		model:Destroy()
+		return
+	end
+	Villagers.despawn(player, vid)
+	i = Plots.indexOf(player) :: number
+	v = Villagers.data(player, vid)
 	local start = wanderTarget(player) or Town.plotArrival(i).Position
 	model:PivotTo(CFrame.new(start + Vector3.new(0, 2, 0)))
 	model.Parent = Plots.villagerFolder(i)

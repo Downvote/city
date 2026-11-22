@@ -21,8 +21,13 @@ the contract (update it with every API, remote or saved data change), `src/share
 5. `sh scripts/check.sh` must pass: format, types (luau-lsp against Roblox's definitions), specs, place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today: Build (catalog, plan rules, shapes, builder), Events (1500 seeded events, every kind reachable, text
-filled, numbers in range), City (starter town valid, levels, land, paydays, economy bounds). All pass.
+Specs today (31, all passing): Build (catalog, plan rules, field cleaning, shapes, builder), Events (1500 seeded
+events, every kind reachable, text filled, numbers in range), City (starter town valid, levels, land, paydays, save
+loading, economy bounds).
+
+Nothing here runs inside Roblox, so the server services, NPCs and screens are only type checked. A review pass found
+and fixed a batch of runtime bugs (starter house never given, walls refused on bought land, camera loops, saves on
+leave, NPC network ownership, spawn races). Playtest in Studio after changing those parts.
 
 ## Rules
 

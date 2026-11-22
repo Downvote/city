@@ -15,6 +15,7 @@ local Tuning = require(Shared.Config.Tuning)
 local Remotes = require(Shared.Net.Remotes)
 local Plan = require(Shared.Build.Plan)
 local Schema = require(Shared.Sim.Schema)
+local StarterHouse = require(Shared.Data.StarterHouse)
 
 local Data = {}
 
@@ -50,6 +51,19 @@ function Data.init()
 end
 
 -- Loads (and locks) a profile. Returns the profile table, or nil if the player left meanwhile.
+-- Lets go of a lock this server took for a player who left before their profile loaded.
+local function releaseLock(player: Player)
+	pcall(function()
+		(store :: DataStore):UpdateAsync(key(player), function(old)
+			if type(old) == "table" and old.lock and old.lock.job == jobId then
+				old.lock = nil
+				return old
+			end
+			return nil
+		end)
+	end)
+end
+
 local function load(player: Player): any
 	if not store then
 		unsaved[player] = true
@@ -69,7 +83,17 @@ local function load(player: Player): any
 			end)
 		end)
 		if not player.Parent then
+			if ok and result and result.lock and result.lock.job == jobId then
+				releaseLock(player)
+			end
 			return nil
+		end
+		if not ok and attempt == 1 and RunService:IsStudio() then
+			-- Studio without API access: play on fresh data straight away instead of retrying for a minute
+			warn("[Data] no DataStore access in Studio, playing without saves:", err)
+			store = nil
+			unsaved[player] = true
+			return Schema.newProfile()
 		end
 		if ok and result and result.lock and result.lock.job == jobId then
 			local profile = Schema.migrate(result.data)
@@ -230,7 +254,8 @@ local function onJoin(player: Player)
 	if not profile or not player.Parent then
 		return
 	end
-	profile.plan = Plan.sanitize(profile.plan)
+	-- a brand new player starts with the cottage; anyone else gets their saved build back, checked
+	profile.plan = if profile.plan == nil then StarterHouse.plan() else Plan.sanitize(profile.plan)
 	profiles[player] = profile
 	player:SetAttribute("Coins", profile.coins)
 	loadedSignal:Fire(player, profile)
@@ -244,6 +269,11 @@ local function onJoin(player: Player)
 end
 
 local function onLeave(player: Player)
+	-- an autosave may be running; wait for it so the final save (which lets go of the lock) happens
+	local t = os.clock()
+	while saving[player] and os.clock() - t < 20 do
+		task.wait(0.1)
+	end
 	Data.save(player, true)
 	profiles[player] = nil
 	unsaved[player] = nil
@@ -326,6 +356,10 @@ function Data.start()
 		for player in profiles do
 			pending += 1
 			task.spawn(function()
+				local t0 = os.clock()
+				while saving[player] and os.clock() - t0 < 10 do
+					task.wait(0.1)
+				end
 				Data.save(player, true)
 				pending -= 1
 			end)

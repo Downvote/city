@@ -579,14 +579,24 @@ function Avatar.start()
 		return Avatar.search(query)
 	end
 
-	Remotes.fn("CreatorItemInfo").OnServerInvoke = function(_, ids)
+	local lastInfo: { [Player]: number } = {}
+	Players.PlayerRemoving:Connect(function(p)
+		lastInfo[p] = nil
+	end)
+	Remotes.fn("CreatorItemInfo").OnServerInvoke = function(player, ids)
 		local out = {}
 		if type(ids) ~= "table" then
 			return out
 		end
+		-- product info lookups share one quota per server; one batch every few seconds per player
+		local t = os.clock()
+		if lastInfo[player] and t - lastInfo[player] < 4 then
+			return out
+		end
+		lastInfo[player] = t
 		local n = 0
 		for _, id in ids do
-			if type(id) == "number" and n < 30 then
+			if type(id) == "number" and n < 16 and assetTypes[id] ~= false then
 				n += 1
 				local ok, info = pcall(function()
 					return MarketplaceService:GetProductInfoAsync(id, Enum.InfoType.Asset)

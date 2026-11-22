@@ -82,6 +82,7 @@ local pointer: Vector2? = nil
 local pointerIsScreen = false
 local pending = false
 local candidate: any = nil -- what a click would do right now: { requests, valid, reason }
+local pressedInWorld = false
 
 local function changed(what: string?)
 	changedEvent:Fire(what or "state")
@@ -344,7 +345,7 @@ local function wallTool()
 		local cost = 0
 		local valid, reason = true, nil
 		for _, w in walls do
-			local ok, err = Plan.validWall(w)
+			local ok, err = Plan.validate(State.plan, "walls", w)
 			if not ok then
 				valid, reason = false, err
 			end
@@ -356,7 +357,7 @@ local function wallTool()
 		end
 		if s.wallStyle == "wall" then
 			local f = { x1 = x1, z1 = z1, x2 = x2, z2 = z2, lv = s.level, c = s.floorPaint.c, m = s.floorPaint.m }
-			if Plan.validFloor(f) then
+			if Plan.validate(State.plan, "floors", f) then
 				table.insert(requests, { type = "add", kind = "floors", obj = f })
 				cost += Plan.cost("floors", f)
 				Geometry.append(prims, Shapes.floor(f, Plan.holes(State.plan, s.level)))
@@ -393,7 +394,7 @@ local function wallTool()
 		candidate = nil
 		return
 	end
-	local valid, reason = Plan.validWall(w)
+	local valid, reason = Plan.validate(State.plan, "walls", w)
 	if valid and hasWall(w) then
 		valid, reason = false, "there's already a wall there"
 	end
@@ -612,7 +613,7 @@ local function placeTool()
 	)
 	showGhost(key, prims, valid)
 	local at = frame.Position + Vector3.new(0, def.size.Y + 1.5, 0)
-	setLabel(if valid then (if moveKey then "Move here" else costText(cost)) else why, plotFrame:PointToObjectSpace(at))
+	setLabel(if valid then (if moveKey then "Move here" else costText(cost)) else why, at)
 	if moveKey then
 		local before = State.plan.items[moveKey]
 		item.c1 = before and before.c1
@@ -1159,6 +1160,7 @@ local function bindKeys()
 				end
 				pointer = nil
 				pointerIsScreen = false
+				pressedInWorld = true
 				primary(false)
 			elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
 				cancel()
@@ -1200,8 +1202,15 @@ local function bindKeys()
 	)
 	table.insert(
 		connections,
-		UserInputService.InputEnded:Connect(function(input)
-			if s.active and input.UserInputType == Enum.UserInputType.MouseButton1 then
+		UserInputService.InputEnded:Connect(function(input, processed)
+			-- a release over the panels (a swatch, a tab) must not finish a half drawn rectangle
+			if
+				s.active
+				and input.UserInputType == Enum.UserInputType.MouseButton1
+				and not processed
+				and pressedInWorld
+			then
+				pressedInWorld = false
 				primary(true)
 			end
 		end)

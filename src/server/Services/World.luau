@@ -209,7 +209,8 @@ local function buildMap()
 	for _ = 1, 140 do
 		local x = rng:float(-L - 120, L + 120)
 		local z = rng:float(-270, 270)
-		local inTown = math.abs(z) < 150 and math.abs(x) < L - 10
+		-- keep clear of the street, the square and every plot (plots reach 222 studs from the street)
+		local inTown = math.abs(z) < 236 and math.abs(x) < L + 12
 		local onSquare = math.abs(x) < 54 and math.abs(z) < 150
 		if not inTown and not onSquare then
 			place(if rng:chance(0.45) then "pine" else "tree", Vector3.new(x, 0, z), rng:float(0, 360))
