@@ -70,6 +70,9 @@ local plotFrame = CFrame.identity
 local buildFolder: Instance? = nil
 local ghostFolder: Folder? = nil
 local gridFolder: Folder? = nil
+-- the cursor label and the selection highlight live in their own folder: the grid and the
+-- ghost folders are cleared all the time, and clearing them used to destroy these with them
+local markerFolder: Folder? = nil
 local marker: Part? = nil
 local label: BillboardGui? = nil
 local highlight: Highlight? = nil
@@ -171,6 +174,9 @@ local function raycast(): RaycastResult?
 	if gridFolder then
 		table.insert(ignore, gridFolder)
 	end
+	if markerFolder then
+		table.insert(ignore, markerFolder)
+	end
 	params.FilterDescendantsInstances = ignore
 	return workspace:Raycast(ray.Origin, ray.Direction * 600, params)
 end
@@ -227,8 +233,10 @@ local function setLabel(text: string?, at: Vector3?)
 	if text and at then
 		marker.CFrame = plotFrame * CFrame.new(at)
 		label.Enabled = true
-		local t = label:FindFirstChild("Text") :: TextLabel
-		t.Text = text
+		local t = label:FindFirstChild("Text")
+		if t and t:IsA("TextLabel") then
+			t.Text = text
+		end
 	else
 		label.Enabled = false
 	end
@@ -1323,13 +1331,18 @@ function BuildMode.enter(): boolean
 	grid.Name = "BuildGrid"
 	grid.Parent = workspace
 	gridFolder = grid
+	local marks = Instance.new("Folder")
+	marks.Name = "BuildMarkers"
+	marks.Parent = workspace
+	markerFolder = marks
 	local m = Instance.new("Part")
 	m.Anchored = true
 	m.CanCollide = false
 	m.CanQuery = false
+	m.CanTouch = false
 	m.Transparency = 1
 	m.Size = Vector3.new(0.2, 0.2, 0.2)
-	m.Parent = grid
+	m.Parent = marks
 	marker = m
 	local bb = Instance.new("BillboardGui")
 	bb.Size = UDim2.fromOffset(240, 34)
@@ -1355,7 +1368,7 @@ function BuildMode.enter(): boolean
 	h.OutlineTransparency = 0
 	h.DepthMode = Enum.HighlightDepthMode.Occluded
 	h.Enabled = false
-	h.Parent = grid
+	h.Parent = marks
 	highlight = h
 
 	BuildCamera.enable(plotFrame)
@@ -1416,7 +1429,10 @@ function BuildMode.exit()
 	if gridFolder then
 		gridFolder:Destroy()
 	end
-	ghostFolder, gridFolder, marker, label, highlight = nil, nil, nil, nil, nil
+	if markerFolder then
+		markerFolder:Destroy()
+	end
+	ghostFolder, gridFolder, markerFolder, marker, label, highlight = nil, nil, nil, nil, nil, nil
 	wallStart, rectStart, candidate = nil, nil, nil
 	s.selected = nil
 	s.placing = nil

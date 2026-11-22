@@ -1,6 +1,7 @@
 #!/bin/sh
 # The check every change passes before it is committed:
-#   format (stylua), types and lint against Roblox's API (luau-lsp), specs (lune), place build (rojo).
+#   format (stylua), types and lint against Roblox's API (luau-lsp), specs (lune), the client
+#   simulation (tests/sim), place build (rojo).
 # Usage: sh scripts/check.sh [--fix]   (--fix formats the code instead of only checking it)
 set -e
 cd "$(dirname "$0")/.."
@@ -40,6 +41,17 @@ luau-lsp analyze \
 
 echo "== specs"
 lune run tests/run.luau
+
+echo "== client sim"
+# the real Build mode screens and tools on fake Roblox instances, talking to the real server
+SIM_OUT=$(mktemp)
+if ! lune run tests/sim/build_client.luau >"$SIM_OUT" 2>&1; then
+	cat "$SIM_OUT"
+	rm -f "$SIM_OUT"
+	exit 1
+fi
+tail -n 1 "$SIM_OUT"
+rm -f "$SIM_OUT"
 
 echo "== build"
 HASH=$(git rev-parse --short HEAD 2>/dev/null || echo dev)

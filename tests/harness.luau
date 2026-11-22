@@ -404,6 +404,26 @@ function Harness.game()
 	return game
 end
 
+-- Adds (or replaces) a service: anything with methods and fields the code under test reads.
+function Harness.addService(name, obj)
+	for i, child in game._children do
+		if child.Name == name then
+			table.remove(game._children, i)
+			break
+		end
+	end
+	if type(obj) == "table" and getmetatable(obj) == nil then
+		rawset(obj, "_children", rawget(obj, "_children") or {})
+		setmetatable(obj, Node)
+	end
+	if type(obj) == "table" and getmetatable(obj) == Node then
+		rawset(obj, "Name", name)
+	end
+	services[name] = obj
+	table.insert(game._children, obj)
+	return obj
+end
+
 function Harness.env()
 	return env
 end
