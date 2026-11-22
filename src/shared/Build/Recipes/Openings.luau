@@ -9,15 +9,16 @@ local C = Recipe.Colors
 
 type R = Recipe.Recipe
 
--- A plain frame round a w x h hole.
+-- A plain frame round a w x h hole. The frame sits just outside the hole, over the wall, so the
+-- full width stays clear to walk through.
 local function frame(r: R, w: number, h: number, color: Color3, depth: number?, bottom: boolean?)
 	local d = depth or 0.9
 	local t = 0.3
-	r:block(-w / 2 - t / 2, 0, -d / 2, -w / 2 + t / 2, h + t / 2, d / 2, color, "Wood")
-	r:block(w / 2 - t / 2, 0, -d / 2, w / 2 + t / 2, h + t / 2, d / 2, color, "Wood")
-	r:block(-w / 2 - t / 2, h - t / 2, -d / 2, w / 2 + t / 2, h + t / 2, d / 2, color, "Wood")
+	r:block(-w / 2 - t, 0, -d / 2, -w / 2, h + t, d / 2, color, "Wood")
+	r:block(w / 2, 0, -d / 2, w / 2 + t, h + t, d / 2, color, "Wood")
+	r:block(-w / 2 - t, h, -d / 2, w / 2 + t, h + t, d / 2, color, "Wood")
 	if bottom then
-		r:block(-w / 2 - t / 2, -t / 2, -d / 2, w / 2 + t / 2, t / 2, d / 2, color, "Wood")
+		r:block(-w / 2 - t, -t, -d / 2, w / 2 + t, 0, d / 2, color, "Wood")
 	end
 end
 

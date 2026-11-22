@@ -10,6 +10,8 @@
 --   house              the starter house
 --   town               the plaza's own buildings
 --   town:<name>        one of them (fountain, board, tailor, shop, hall...)
+--   map                the middle of town: streets, plaza and street furniture
+--   map:x1,z1,x2,z2    another part of town
 
 local fs = require("@lune/fs")
 local process = require("@lune/process")
@@ -126,6 +128,17 @@ elseif scene == "house" then
 elseif scene:sub(1, 5) == "town:" then
 	local TownModels = R(Shared .. "Data.TownModels")
 	addPrims(TownModels.prims(scene:sub(6)))
+elseif scene == "map" or scene:sub(1, 4) == "map:" then
+	-- map or map:x1,z1,x2,z2 (the middle of town by default)
+	local TownMap = R(Shared .. "Data.TownMap")
+	local region = nil
+	if scene:sub(1, 4) == "map:" then
+		region = {}
+		for n in scene:sub(5):gmatch("[^,]+") do
+			table.insert(region, tonumber(n))
+		end
+	end
+	addPrims(TownMap.preview(region))
 elseif scene == "town" then
 	local TownModels = R(Shared .. "Data.TownModels")
 	addPrims(TownModels.preview())

@@ -108,7 +108,7 @@ end
 
 function News.open()
 	News.close()
-	panel = Kit.panel("Town news", UDim2.fromOffset(620, 560), News.close)
+	panel = Kit.panel("Town news", UDim2.fromOffset(620, 560), News.close, "📰")
 	Kit.popIn(panel.root)
 	draw()
 	table.insert(unbind, State.on("log", draw))

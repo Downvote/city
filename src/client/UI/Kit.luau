@@ -1,4 +1,6 @@
--- A small UI toolkit: one theme and helpers for the panels, buttons, tabs and sliders every screen uses.
+-- The UI toolkit: one theme and the pieces every screen is built from. The look follows what
+-- players know from Roblox life sims and builders: clean white cards with soft shadows, bold
+-- rounded buttons with a light gradient, icon tiles, stat pills and a dock of big icon buttons.
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -8,28 +10,29 @@ local GuiService = game:GetService("GuiService")
 local Kit = {}
 
 Kit.Theme = {
-	Paper = Color3.fromRGB(255, 249, 238),
-	PaperDark = Color3.fromRGB(243, 231, 210),
-	Ink = Color3.fromRGB(74, 52, 38),
-	InkSoft = Color3.fromRGB(133, 108, 88),
-	Line = Color3.fromRGB(214, 190, 160),
-	Green = Color3.fromRGB(120, 191, 94),
-	GreenDark = Color3.fromRGB(78, 140, 62),
-	Coral = Color3.fromRGB(232, 102, 122),
-	CoralDark = Color3.fromRGB(180, 66, 86),
-	Blue = Color3.fromRGB(79, 169, 217),
-	BlueDark = Color3.fromRGB(47, 123, 191),
-	Yellow = Color3.fromRGB(255, 212, 92),
-	YellowDark = Color3.fromRGB(214, 160, 44),
-	Purple = Color3.fromRGB(156, 122, 214),
+	Paper = Color3.fromRGB(250, 251, 253),
+	PaperDark = Color3.fromRGB(234, 239, 246),
+	Ink = Color3.fromRGB(31, 41, 55),
+	InkSoft = Color3.fromRGB(107, 114, 128),
+	Line = Color3.fromRGB(213, 220, 230),
+	Green = Color3.fromRGB(52, 196, 106),
+	GreenDark = Color3.fromRGB(30, 150, 78),
+	Coral = Color3.fromRGB(242, 95, 92),
+	CoralDark = Color3.fromRGB(194, 64, 62),
+	Blue = Color3.fromRGB(59, 130, 246),
+	BlueDark = Color3.fromRGB(37, 99, 235),
+	Yellow = Color3.fromRGB(255, 201, 60),
+	YellowDark = Color3.fromRGB(212, 155, 15),
+	Purple = Color3.fromRGB(139, 92, 246),
 	White = Color3.fromRGB(255, 255, 255),
-	Shadow = Color3.fromRGB(40, 28, 20),
+	Shadow = Color3.fromRGB(15, 23, 42),
+	Glass = Color3.fromRGB(17, 24, 39), -- dark translucent bars over the 3D view
 }
 
 local T = Kit.Theme
 
 Kit.Fonts = {
-	Title = Enum.Font.FredokaOne,
+	Title = Enum.Font.BuilderSansExtraBold,
 	Body = Enum.Font.BuilderSansMedium,
 	Bold = Enum.Font.BuilderSansBold,
 }
@@ -92,8 +95,18 @@ end
 function Kit.stroke(inst: Instance, color: Color3?, thickness: number?): UIStroke
 	return Kit.new("UIStroke", {
 		Color = color or T.Line,
-		Thickness = thickness or 2,
+		Thickness = thickness or 1.5,
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+		Parent = inst,
+	})
+end
+
+-- A top-to-bottom shading on a frame or button (lighter at the top).
+function Kit.gradient(inst: Instance, strength: number?): UIGradient
+	local k = 1 - (strength or 0.14)
+	return Kit.new("UIGradient", {
+		Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.new(k, k, k)),
+		Rotation = 90,
 		Parent = inst,
 	})
 end
@@ -150,7 +163,8 @@ function Kit.frame(props: { [string]: any }?): Frame
 		Kit.corner(f, p.Radius or 12)
 	end
 	if p.Stroke then
-		Kit.stroke(f, if typeof(p.Stroke) == "Color3" then p.Stroke else nil)
+		local s = Kit.stroke(f, if typeof(p.Stroke) == "Color3" then p.Stroke else nil)
+		s.Transparency = 0.2
 	end
 	return f
 end
@@ -194,11 +208,29 @@ function Kit.title(text: string, props: { [string]: any }?): TextLabel
 	return Kit.text(text, p)
 end
 
-local function darker(c: Color3): Color3
-	return Color3.new(c.R * 0.78, c.G * 0.78, c.B * 0.78)
+local function darker(c: Color3, k: number?): Color3
+	local m = k or 0.78
+	return Color3.new(c.R * m, c.G * m, c.B * m)
+end
+Kit.darker = darker
+
+local function pressable(b: GuiButton)
+	local scale = Kit.new("UIScale", { Parent = b })
+	b.MouseEnter:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.1), { Scale = 1.04 }):Play()
+	end)
+	b.MouseLeave:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.1), { Scale = 1 }):Play()
+	end)
+	b.MouseButton1Down:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.06), { Scale = 0.94 }):Play()
+	end)
+	b.MouseButton1Up:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.08), { Scale = 1 }):Play()
+	end)
 end
 
--- A chunky button. Returns the TextButton; `onClick` runs on activation.
+-- A bold rounded button. Returns the TextButton; `onClick` runs on activation.
 function Kit.button(text: string, props: { [string]: any }?, onClick: (() -> ())?): TextButton
 	local p = props or {}
 	local color = p.Color or T.Green
@@ -220,25 +252,14 @@ function Kit.button(text: string, props: { [string]: any }?, onClick: (() -> ())
 		AutomaticSize = p.AutomaticSize or Enum.AutomaticSize.None,
 		Parent = p.Parent,
 	})
-	Kit.corner(b, p.Radius or 12)
-	local stroke = Kit.stroke(b, p.StrokeColor or darker(color), 2)
-	local scale = Kit.new("UIScale", { Parent = b })
-	b.MouseEnter:Connect(function()
-		TweenService:Create(scale, TweenInfo.new(0.1), { Scale = 1.04 }):Play()
-	end)
-	b.MouseLeave:Connect(function()
-		TweenService:Create(scale, TweenInfo.new(0.1), { Scale = 1 }):Play()
-	end)
-	b.MouseButton1Down:Connect(function()
-		TweenService:Create(scale, TweenInfo.new(0.06), { Scale = 0.95 }):Play()
-	end)
-	b.MouseButton1Up:Connect(function()
-		TweenService:Create(scale, TweenInfo.new(0.08), { Scale = 1 }):Play()
-	end)
+	Kit.corner(b, p.Radius or 10)
+	local stroke = Kit.stroke(b, p.StrokeColor or darker(color), 1.5)
+	stroke.Transparency = 0.25
+	Kit.gradient(b)
+	pressable(b)
 	if onClick then
 		b.Activated:Connect(onClick)
 	end
-	local _ = stroke
 	return b
 end
 
@@ -252,43 +273,211 @@ function Kit.setButtonColor(b: GuiButton, color: Color3, textColor: Color3?)
 	if textColor and b:IsA("TextButton") then
 		b.TextColor3 = textColor
 	end
+	local label = b:FindFirstChild("Caption")
+	if textColor and label and label:IsA("TextLabel") then
+		label.TextColor3 = textColor
+	end
 end
 
--- A modal panel with a title bar and a close button. Returns { root, body, close, title }.
-function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?): any
+-- A square tile with a big icon and a caption under it (docks, tool strips, categories).
+function Kit.iconButton(icon: string, caption: string?, props: { [string]: any }?, onClick: (() -> ())?): TextButton
+	local p = props or {}
+	local size = p.Size or UDim2.fromOffset(72, 72)
+	local color = p.Color or T.Paper
+	local b = Kit.new("TextButton", {
+		Text = "",
+		AutoButtonColor = false,
+		BackgroundColor3 = color,
+		BorderSizePixel = 0,
+		Size = size,
+		Position = p.Position or UDim2.new(),
+		AnchorPoint = p.AnchorPoint or Vector2.zero,
+		LayoutOrder = p.LayoutOrder or 0,
+		Name = p.Name or caption or icon,
+		ZIndex = p.ZIndex or 1,
+		Parent = p.Parent,
+	})
+	Kit.corner(b, p.Radius or 14)
+	local stroke = Kit.stroke(b, darker(color, 0.85), 1.5)
+	stroke.Transparency = 0.3
+	Kit.gradient(b, 0.08)
+	local hasCaption = caption ~= nil and caption ~= ""
+	Kit.new("TextLabel", {
+		Name = "Icon",
+		Text = icon,
+		BackgroundTransparency = 1,
+		Font = Enum.Font.BuilderSansBold,
+		TextScaled = true,
+		Size = if hasCaption then UDim2.new(0.62, 0, 0.5, 0) else UDim2.fromScale(0.62, 0.62),
+		Position = if hasCaption then UDim2.new(0.5, 0, 0.1, 0) else UDim2.fromScale(0.5, 0.19),
+		AnchorPoint = Vector2.new(0.5, 0),
+		TextColor3 = p.IconColor or T.Ink,
+		ZIndex = (p.ZIndex or 1) + 1,
+		Parent = b,
+	})
+	if hasCaption then
+		Kit.new("TextLabel", {
+			Name = "Caption",
+			Text = caption,
+			BackgroundTransparency = 1,
+			Font = Kit.Fonts.Bold,
+			TextSize = p.TextSize or 13,
+			TextWrapped = true,
+			Size = UDim2.new(1, -6, 0.32, 0),
+			Position = UDim2.new(0.5, 0, 0.64, 0),
+			AnchorPoint = Vector2.new(0.5, 0),
+			TextColor3 = p.TextColor or T.Ink,
+			ZIndex = (p.ZIndex or 1) + 1,
+			Parent = b,
+		})
+	end
+	pressable(b)
+	if onClick then
+		b.Activated:Connect(onClick)
+	end
+	return b
+end
+
+-- A rounded stat pill: an icon and a value. Returns the frame and the value label.
+function Kit.pill(icon: string, props: { [string]: any }?): (Frame, TextLabel)
+	local p = props or {}
+	local f = Kit.frame({
+		Name = p.Name or "Pill",
+		Size = p.Size or UDim2.fromOffset(150, 40),
+		Position = p.Position,
+		AnchorPoint = p.AnchorPoint,
+		Color = p.Color or T.Paper,
+		Radius = 20,
+		Parent = p.Parent,
+		LayoutOrder = p.LayoutOrder,
+	})
+	local s = Kit.stroke(f, T.Line, 1.5)
+	s.Transparency = 0.2
+	Kit.new("TextLabel", {
+		Name = "Icon",
+		Text = icon,
+		BackgroundTransparency = 1,
+		TextScaled = true,
+		Font = Enum.Font.BuilderSansBold,
+		Size = UDim2.fromOffset(28, 28),
+		Position = UDim2.new(0, 8, 0.5, 0),
+		AnchorPoint = Vector2.new(0, 0.5),
+		Parent = f,
+	})
+	local value = Kit.new("TextLabel", {
+		Name = "Value",
+		Text = "",
+		BackgroundTransparency = 1,
+		Font = Kit.Fonts.Title,
+		TextSize = p.TextSize or 20,
+		TextColor3 = p.TextColor or T.Ink,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Size = UDim2.new(1, -46, 1, 0),
+		Position = UDim2.fromOffset(40, 0),
+		TextTruncate = Enum.TextTruncate.AtEnd,
+		Parent = f,
+	})
+	return f, value
+end
+
+-- A drop shadow behind a card: a sibling just under it (children always draw above parents).
+function Kit.shadow(card: GuiObject, radius: number?): Frame
+	local s = Kit.frame({
+		Name = card.Name .. "Shadow",
+		Size = card.Size,
+		Position = card.Position + UDim2.fromOffset(0, 6),
+		AnchorPoint = card.AnchorPoint,
+		Color = T.Shadow,
+		Transparency = 0.86,
+		Radius = radius or 16,
+		ZIndex = math.max(0, card.ZIndex - 1),
+		Parent = card.Parent,
+	})
+	card:GetPropertyChangedSignal("Visible"):Connect(function()
+		s.Visible = card.Visible
+	end)
+	card.Destroying:Connect(function()
+		s:Destroy()
+	end)
+	return s
+end
+
+-- A modal card with an icon, a title and a close button. Returns { root, body, close, title }.
+-- `root` holds the card and its shadow, so hiding or destroying it takes both.
+function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: string?): any
 	local gui = Kit.root()
-	local frame = Kit.frame({
+	local holder = Kit.box({
 		Name = titleText,
 		Size = size,
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
-		Stroke = T.Line,
 		Parent = gui,
-		Radius = 18,
 	})
-	frame.ZIndex = 5
-	local header = Kit.box({ Name = "Header", Size = UDim2.new(1, 0, 0, 52), Parent = frame })
-	local title =
-		Kit.title(titleText, { Parent = header, Size = UDim2.new(1, -70, 1, 0), Position = UDim2.fromOffset(20, 0) })
-	local close = Kit.button("X", {
-		Size = UDim2.fromOffset(36, 36),
-		Position = UDim2.new(1, -46, 0, 8),
+	holder.ZIndex = 5
+	Kit.frame({
+		Name = "Shadow",
+		Size = UDim2.fromScale(1, 1),
+		Position = UDim2.fromOffset(0, 8),
+		Color = T.Shadow,
+		Transparency = 0.82,
+		Radius = 18,
+		Parent = holder,
+	})
+	local frame =
+		Kit.frame({ Name = "Card", Size = UDim2.fromScale(1, 1), Stroke = T.Line, Parent = holder, Radius = 18 })
+	local header = Kit.box({ Name = "Header", Size = UDim2.new(1, 0, 0, 58), Parent = frame })
+	local x = 20
+	if icon then
+		local badge = Kit.frame({
+			Parent = header,
+			Size = UDim2.fromOffset(38, 38),
+			Position = UDim2.new(0, 16, 0.5, 0),
+			AnchorPoint = Vector2.new(0, 0.5),
+			Color = T.PaperDark,
+			Radius = 12,
+		})
+		Kit.new("TextLabel", {
+			Text = icon,
+			BackgroundTransparency = 1,
+			TextScaled = true,
+			Size = UDim2.fromScale(0.7, 0.7),
+			Position = UDim2.fromScale(0.15, 0.15),
+			Font = Enum.Font.BuilderSansBold,
+			Parent = badge,
+		})
+		x = 64
+	end
+	local title = Kit.title(
+		titleText,
+		{ Parent = header, Size = UDim2.new(1, -x - 60, 1, 0), Position = UDim2.fromOffset(x, 0), TextSize = 26 }
+	)
+	local close = Kit.button("✕", {
+		Size = UDim2.fromOffset(38, 38),
+		Position = UDim2.new(1, -50, 0, 10),
 		Color = T.Coral,
 		TextSize = 18,
+		Radius = 19,
 		Parent = header,
+	})
+	Kit.frame({
+		Parent = frame,
+		Size = UDim2.new(1, -32, 0, 1),
+		Position = UDim2.fromOffset(16, 58),
+		Color = T.Line,
+		Radius = false,
 	})
 	local body = Kit.box({
 		Name = "Body",
-		Size = UDim2.new(1, -28, 1, -64),
-		Position = UDim2.fromOffset(14, 54),
+		Size = UDim2.new(1, -32, 1, -76),
+		Position = UDim2.fromOffset(16, 66),
 		Parent = frame,
 	})
-	local self = { root = frame, body = body, close = close, title = title }
+	local self = { root = holder, card = frame, body = body, close = close, title = title }
 	close.Activated:Connect(function()
 		if onClose then
 			onClose()
 		else
-			frame.Visible = false
+			holder.Visible = false
 		end
 	end)
 	return self
@@ -304,7 +493,8 @@ function Kit.scroll(props: { [string]: any }?): ScrollingFrame
 		CanvasSize = UDim2.new(),
 		AutomaticCanvasSize = p.Axis or Enum.AutomaticSize.Y,
 		ScrollBarThickness = 6,
-		ScrollBarImageColor3 = T.Line,
+		ScrollBarImageColor3 = T.InkSoft,
+		ScrollBarImageTransparency = 0.5,
 		ScrollingDirection = if p.Axis == Enum.AutomaticSize.X
 			then Enum.ScrollingDirection.X
 			else Enum.ScrollingDirection.Y,
@@ -334,8 +524,8 @@ function Kit.textbox(placeholder: string, props: { [string]: any }?): TextBox
 		Parent = p.Parent,
 	})
 	Kit.corner(box, 10)
-	Kit.stroke(box, T.Line, 2)
-	Kit.pad(box, 10, 0)
+	Kit.stroke(box, T.Line, 1.5)
+	Kit.pad(box, 12, 0)
 	return box
 end
 
@@ -356,14 +546,14 @@ function Kit.slider(
 		Parent = p.Parent,
 		Name = label,
 	})
-	local caption =
-		Kit.text(label, { Parent = holder, Size = UDim2.new(1, -60, 0, 20), TextSize = 16, Font = Kit.Fonts.Bold })
+	Kit.text(label, { Parent = holder, Size = UDim2.new(1, -60, 0, 20), TextSize = 16, Font = Kit.Fonts.Bold })
 	local readout = Kit.text("", {
 		Parent = holder,
 		Size = UDim2.new(0, 60, 0, 20),
 		Position = UDim2.new(1, -60, 0, 0),
 		TextSize = 16,
 		AlignX = Enum.TextXAlignment.Right,
+		Color = T.InkSoft,
 	})
 	local track = Kit.frame({
 		Parent = holder,
@@ -372,7 +562,7 @@ function Kit.slider(
 		Color = T.PaperDark,
 		Radius = 4,
 	})
-	local fill = Kit.frame({ Parent = track, Size = UDim2.fromScale(0, 1), Color = T.Green, Radius = 4 })
+	local fill = Kit.frame({ Parent = track, Size = UDim2.fromScale(0, 1), Color = T.Blue, Radius = 4 })
 	local knob = Kit.frame({
 		Parent = track,
 		Size = UDim2.fromOffset(20, 20),
@@ -380,7 +570,7 @@ function Kit.slider(
 		Position = UDim2.fromScale(0, 0.5),
 		Color = T.White,
 		Radius = 10,
-		Stroke = T.GreenDark,
+		Stroke = T.BlueDark,
 	})
 	local current = value
 	local function show(v: number)
@@ -442,13 +632,13 @@ function Kit.slider(
 			dragging = false
 		end
 	end)
-	local _ = caption
 	return holder, set
 end
 
 -- A row of tab buttons. onSelect(id) when one is picked. Returns the frame and select(id).
+-- Entries may carry an `icon`.
 function Kit.tabs(
-	list: { { id: string, name: string } },
+	list: { { id: string, name: string, icon: string? } },
 	onSelect: (string) -> (),
 	props: { [string]: any }?
 ): (ScrollingFrame, (string) -> ())
@@ -474,7 +664,8 @@ function Kit.tabs(
 		end
 	end
 	for i, t in list do
-		local b = Kit.button(t.name, {
+		local label = if t.icon then t.icon .. "  " .. t.name else t.name
+		local b = Kit.button(label, {
 			Parent = bar,
 			Size = UDim2.fromOffset(0, (p.Height or 34)),
 			AutomaticSize = Enum.AutomaticSize.X,
@@ -482,8 +673,9 @@ function Kit.tabs(
 			Color = T.PaperDark,
 			TextColor = T.Ink,
 			LayoutOrder = i,
+			Radius = 17,
 		})
-		Kit.pad(b, 12, 0)
+		Kit.pad(b, 14, 0)
 		buttons[t.id] = b
 		b.Activated:Connect(function()
 			select(t.id)
@@ -504,8 +696,8 @@ function Kit.swatch(color: Color3, size: number?, onClick: (() -> ())?, props: {
 		LayoutOrder = p.LayoutOrder or 0,
 		Parent = p.Parent,
 	})
-	Kit.corner(b, 8)
-	Kit.stroke(b, Color3.new(color.R * 0.7, color.G * 0.7, color.B * 0.7), 2)
+	Kit.corner(b, math.floor((size or 28) / 2))
+	Kit.stroke(b, Color3.new(color.R * 0.7, color.G * 0.7, color.B * 0.7), 1.5)
 	if onClick then
 		b.Activated:Connect(onClick)
 	end
@@ -517,7 +709,7 @@ function Kit.popIn(frame: GuiObject)
 	local s = frame:FindFirstChild("PopScale") or Kit.new("UIScale", { Name = "PopScale", Parent = frame })
 	s.Scale = 0.9
 	frame.Visible = true
-	TweenService:Create(s, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	TweenService:Create(s, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
 end
 
 function Kit.isTouch(): boolean
@@ -529,13 +721,36 @@ function Kit.topInset(): number
 	return inset.Y
 end
 
--- Is the pointer over any of our UI (so world clicks should be ignored)?
+-- Is this object actually on screen: it and every parent visible, its ScreenGui enabled?
+local function shown(o: Instance): boolean
+	local cur: Instance? = o
+	while cur and not cur:IsA("PlayerGui") do
+		if cur:IsA("GuiObject") and not cur.Visible then
+			return false
+		end
+		if cur:IsA("ScreenGui") and not cur.Enabled then
+			return false
+		end
+		cur = cur.Parent
+	end
+	return true
+end
+
+-- Is the pointer over any of our interface (so world clicks should be ignored)? Takes a viewport
+-- position (like GetMouseLocation); defaults to the mouse.
 function Kit.overUI(pos: Vector2?): boolean
 	local p = pos or UserInputService:GetMouseLocation()
 	local inset = GuiService:GetGuiInset()
-	local objects = player:WaitForChild("PlayerGui"):GetGuiObjectsAtPosition(p.X - inset.X, p.Y - inset.Y)
+	local gui = player:FindFirstChild("PlayerGui")
+	if not gui then
+		return false
+	end
+	local objects = (gui :: PlayerGui):GetGuiObjectsAtPosition(p.X - inset.X, p.Y - inset.Y)
 	for _, o in objects do
-		if o.Visible and o.BackgroundTransparency < 1 and o:IsDescendantOf(Kit.root()) then
+		if
+			(o:IsA("GuiButton") or o:IsA("TextBox") or o:IsA("ScrollingFrame") or o.BackgroundTransparency < 0.95)
+			and shown(o)
+		then
 			return true
 		end
 	end

@@ -84,8 +84,9 @@ Bloxburg style, all on a grid and all saved:
 - **150 pieces** in 15 tabs, each drawn from parts with two paintable colours: structure (stairs, posts, decks),
   doors, windows, seating, tables, beds, storage, kitchen, bathroom, lights (they come on at night), fun, decor,
   wall pieces, garden and workplaces.
-- **Tools**: pick (move, turn, copy, repaint, sell), paint with 48 swatches and 22 materials plus a colour picker,
-  sell, undo and redo (server side, many steps), a fine grid, see-through walls, hidden roofs, a free camera.
+- **Tools**: pick (move, turn, copy, repaint, sell), paint with 48 swatches, 30 materials and ready-made finishes
+  (cream plaster, red brick, oak planks, clay tiles...) plus a colour picker, sell, undo and redo (server side, many
+  steps), a fine grid, see-through walls, hidden roofs, a free camera.
 - Selling refunds the full price, so experimenting costs nothing.
 
 ## 6. The villager creator
@@ -123,12 +124,43 @@ Held by `tests/specs/City.spec.luau`:
 
 ## 9. The town
 
-Up to eight players share a server. The street runs east to west with four plots on each side. In the middle: the
-square with the fountain, the notice board (town news) and the tailor's stall (the creator), and across the street
-the market (the shop) and the town hall (city stats and land). Time follows a 12 minute day with a calendar of four
+Up to eight players share a server. The street runs east to west with four plots on each side: asphalt with lane
+lines, curbs that drop at the zebra crossings, wide paved sidewalks with street trees, lamps, hydrants and a bus
+stop. In the middle: the square with the fountain ringed by benches, two lawns, a bandstand for festivals, the notice
+board (town news) and the tailor (the creator), and across the street the market with its stalls and café tables,
+the shop and the town hall (city stats and land). Every plot starts with a cottage behind a picket fence, a path to
+the porch and a market stall by the street. Time follows a 12 minute day with a calendar of four
 ten-day seasons, and weather suited to the season: rain, storms, snow, blossom, falling leaves.
 
-## 10. Writing
+## 10. Look and feel
+
+> i cant put down anything in build mode. also, polish the game much more. instead of designing your own ui and
+> models, please reference games of the genre as closely as possible, such as city building games, character
+> creation games forthe ui and models. you are allowed to research online
+
+> also, it seems like villager ai dosent path around walls or other collision objects to get to locations they want
+
+The screens follow the layouts players already know from the genre, drawn in our own style:
+
+- **Build mode** works like the house builders on Roblox: a dark bar along the bottom with the main categories
+  (Build, Furniture, Outdoor, Work) and Done, a row of sub categories above it, and a tray of items as 3D pictures
+  with their price. Walls, rooms, floors and roofs show their styles and ready-made finishes as tiles. A tool strip
+  down the left (pick, move, turn, copy, paint, sell, undo, redo), the floor switcher with roof, wall and grid
+  toggles top left, coins top right, a hint above the tray, and a small action bar that floats over whatever you
+  picked with its name, its value and quick buttons.
+- **The main screen** has stat pills top left (coins, people, happiness), the town's level card with a progress bar
+  to the next level, the clock and weather top right, and a dock of big icon buttons down the left. It all steps
+  aside in Build mode.
+- **The creator** has a rail of category icons, item cards with a green tick on what's worn, filter chips, a search
+  box, and a tool bar of icon buttons over the 3D view.
+- **Events** play in a dialogue box: the event's name on a banner, the speaker on a name plate, words typed out, a
+  little arrow when you can click on, and the choices stacked underneath.
+- **Panels** are white cards with an icon badge, a soft shadow and a round close button.
+
+Villagers walk with Roblox's pathfinding with jumping on, so they go round walls, through doorways (doors are free to
+pass and open as they come), round furniture and over low steps. If they get stuck they jump, then plan again.
+
+## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no
 "it's not X, it's Y", no hype, not an exclamation mark on every line. Short and specific, the way the town's own

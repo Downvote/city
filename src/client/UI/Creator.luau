@@ -68,6 +68,7 @@ local profilePage: Frame
 local stepButtons: { [string]: TextButton } = {}
 local titleLabel: TextLabel
 local selectTab: (string) -> ()
+local markTab: ((string) -> ())? = nil
 local profile = { name = "", pers = "sunny", color = "4FA9D9", bday = { s = 1, d = 1 } }
 
 local function thumb(id: number, bundle: boolean?): string
@@ -190,7 +191,11 @@ refreshWorn = function()
 		local worn = Categories.isWorn(app, id)
 		if stroke then
 			stroke.Color = if worn then T.GreenDark else T.Line
-			stroke.Thickness = if worn then 4 else 2
+			stroke.Thickness = if worn then 3 else 1.5
+		end
+		local badge = card:FindFirstChild("Worn")
+		if badge and badge:IsA("GuiObject") then
+			badge.Visible = worn
 		end
 	end
 end
@@ -206,20 +211,64 @@ local function itemCard(item: any, order: number, onClick: (() -> ())?): GuiObje
 		Parent = grid,
 	})
 	Kit.corner(card, 12)
-	Kit.stroke(card, T.Line, 2)
+	Kit.stroke(card, T.Line, 1.5)
+	local picture = Kit.frame({
+		Parent = card,
+		Size = UDim2.fromOffset(102, 100),
+		Position = UDim2.fromOffset(5, 5),
+		Color = T.PaperDark,
+		Radius = 10,
+	})
 	Kit.new("ImageLabel", {
 		Image = thumb(item.Id, bundle),
 		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(100, 100),
-		Position = UDim2.fromOffset(6, 4),
+		Size = UDim2.fromScale(1, 1),
 		ScaleType = Enum.ScaleType.Fit,
+		Parent = picture,
+	})
+	if bundle then
+		local tag = Kit.frame({
+			Parent = picture,
+			Size = UDim2.fromOffset(0, 18),
+			AutomaticSize = Enum.AutomaticSize.X,
+			Position = UDim2.fromOffset(4, 4),
+			Color = T.Purple,
+			Radius = 9,
+		})
+		Kit.pad(tag, 6, 0)
+		Kit.text("Set", {
+			Parent = tag,
+			Size = UDim2.fromOffset(0, 18),
+			AutomaticSize = Enum.AutomaticSize.X,
+			TextSize = 11,
+			Font = Kit.Fonts.Bold,
+			Color = T.White,
+			Wrap = false,
+		})
+	end
+	-- the green tick on what they have on
+	local worn = Kit.frame({
+		Name = "Worn",
 		Parent = card,
+		Size = UDim2.fromOffset(24, 24),
+		Position = UDim2.new(1, -28, 0, 4),
+		Color = T.Green,
+		Radius = 12,
+		Visible = false,
+	})
+	Kit.stroke(worn, T.White, 2)
+	Kit.title("✓", {
+		Parent = worn,
+		Size = UDim2.fromScale(1, 1),
+		TextSize = 15,
+		Color = T.White,
+		AlignX = Enum.TextXAlignment.Center,
 	})
 	Kit.text(item.Name or "", {
 		Parent = card,
-		Size = UDim2.new(1, -8, 0, 32),
-		Position = UDim2.fromOffset(4, 104),
-		TextSize = 13,
+		Size = UDim2.new(1, -8, 0, 30),
+		Position = UDim2.fromOffset(4, 107),
+		TextSize = 12,
 		AlignX = Enum.TextXAlignment.Center,
 		Font = Kit.Fonts.Bold,
 	})
@@ -620,11 +669,12 @@ local function showFilters(tab: any)
 			Size = UDim2.fromOffset(0, 30),
 			AutomaticSize = Enum.AutomaticSize.X,
 			TextSize = 14,
-			Color = if on then T.Purple else T.PaperDark,
+			Color = if on then T.Ink else T.PaperDark,
 			TextColor = if on then T.White else T.Ink,
 			LayoutOrder = i,
+			Radius = 15,
 		})
-		Kit.pad(b, 10, 0)
+		Kit.pad(b, 12, 0)
 		b.Activated:Connect(function()
 			filterIndex = i
 			showFilters(tab)
@@ -635,6 +685,9 @@ end
 
 selectTab = function(id: string)
 	tabId = id
+	if markTab then
+		markTab(id)
+	end
 	local tab
 	for _, t in Categories.Tabs do
 		if t.id == id then
@@ -907,7 +960,7 @@ local function build()
 
 	local panel = Kit.frame({
 		Name = "Panel",
-		Size = UDim2.new(0, 580, 1, -24),
+		Size = UDim2.new(0, 660, 1, -24),
 		Position = UDim2.new(1, -12, 0, 12),
 		AnchorPoint = Vector2.new(1, 0),
 		Stroke = T.Line,
@@ -916,48 +969,88 @@ local function build()
 	})
 	Kit.pad(panel, 14, 12)
 	titleLabel = Kit.title("Make a villager", { Parent = panel, Size = UDim2.new(1, -60, 0, 32), TextSize = 26 })
-	Kit.button("X", {
+	Kit.button("✕", {
 		Parent = panel,
 		Size = UDim2.fromOffset(36, 36),
 		Position = UDim2.new(1, -36, 0, -2),
 		Color = T.Coral,
 		TextSize = 18,
+		Radius = 18,
 	}, function()
 		Creator.close()
 	end)
-	local steps = Kit.box({ Parent = panel, Size = UDim2.new(1, 0, 0, 40), Position = UDim2.fromOffset(0, 40) })
-	Kit.list(steps, 8, true)
+	-- the two steps as one segmented control
+	local steps = Kit.frame({
+		Parent = panel,
+		Size = UDim2.new(1, 0, 0, 42),
+		Position = UDim2.fromOffset(0, 40),
+		Color = T.PaperDark,
+		Radius = 21,
+	})
+	Kit.pad(steps, 4, 4)
+	Kit.list(steps, 4, true)
 	stepButtons.look = Kit.button(
-		"1. Look",
-		{ Parent = steps, Size = UDim2.fromOffset(150, 36), TextSize = 17 },
+		"👕  Look",
+		{ Parent = steps, Size = UDim2.new(0.5, -2, 1, 0), TextSize = 17, Radius = 17 },
 		function()
 			showStep("look")
 		end
 	)
 	stepButtons.profile = Kit.button(
-		"2. Name and personality",
-		{ Parent = steps, Size = UDim2.fromOffset(250, 36), TextSize = 17 },
+		"📝  Name and personality",
+		{ Parent = steps, Size = UDim2.new(0.5, -2, 1, 0), TextSize = 17, Radius = 17 },
 		function()
 			showStep("profile")
 		end
 	)
 
-	lookPage = Kit.box({ Parent = panel, Size = UDim2.new(1, 0, 1, -92), Position = UDim2.fromOffset(0, 90) })
+	lookPage = Kit.box({ Parent = panel, Size = UDim2.new(1, 0, 1, -94), Position = UDim2.fromOffset(0, 92) })
 	profilePage =
-		Kit.box({ Parent = panel, Size = UDim2.new(1, 0, 1, -92), Position = UDim2.fromOffset(0, 90), Visible = false })
+		Kit.box({ Parent = panel, Size = UDim2.new(1, 0, 1, -94), Position = UDim2.fromOffset(0, 92), Visible = false })
 
-	local tabs = {}
-	for _, t in Categories.Tabs do
-		table.insert(tabs, { id = t.id, name = t.name })
+	-- categories down the left, as icon tiles
+	local ICONS = {
+		wearing = "👤",
+		hair = "💇",
+		heads = "🙂",
+		accessories = "🎩",
+		tops = "👕",
+		bottoms = "👖",
+		shoes = "👟",
+		bodies = "🧍",
+		moves = "💃",
+		skin = "🎨",
+		shape = "📏",
+		outfits = "👗",
+	}
+	local rail = Kit.scroll({ Parent = lookPage, Size = UDim2.new(0, 78, 1, 0) })
+	rail.ScrollBarThickness = 0
+	Kit.list(rail, 6, false, Enum.HorizontalAlignment.Center)
+	local railButtons: { [string]: TextButton } = {}
+	local function markRail(id: string)
+		for bid, b in railButtons do
+			local on = bid == id
+			Kit.setButtonColor(b, if on then T.Blue else T.Paper, if on then T.White else T.Ink)
+		end
 	end
-	local _, sel = Kit.tabs(tabs, function(id)
-		filterIndex = 1
-		selectTab(id)
-	end, { Parent = lookPage, Size = UDim2.new(1, 0, 0, 40) })
-	sel(tabId)
+	for i, t in Categories.Tabs do
+		railButtons[t.id] = Kit.iconButton(
+			ICONS[t.id] or "•",
+			t.name,
+			{ Parent = rail, Size = UDim2.fromOffset(70, 64), LayoutOrder = i, Radius = 12, TextSize = 12 },
+			function()
+				filterIndex = 1
+				markRail(t.id)
+				selectTab(t.id)
+			end
+		)
+	end
+	markRail(tabId)
+	markTab = markRail
+	local browse = Kit.box({ Parent = lookPage, Size = UDim2.new(1, -88, 1, 0), Position = UDim2.fromOffset(88, 0) })
 
-	local searchRow = Kit.box({ Parent = lookPage, Size = UDim2.new(1, 0, 0, 40), Position = UDim2.fromOffset(0, 46) })
-	searchBox = Kit.textbox("Search the catalog", { Parent = searchRow, Size = UDim2.new(1, -150, 1, 0) })
+	local searchRow = Kit.box({ Parent = browse, Size = UDim2.new(1, 0, 0, 40) })
+	searchBox = Kit.textbox("🔍  Search the catalog", { Parent = searchRow, Size = UDim2.new(1, -150, 1, 0) })
 	searchBox.FocusLost:Connect(function(enter)
 		keyword = Text.clean(searchBox.Text):sub(1, 50)
 		if enter or true then
@@ -985,15 +1078,15 @@ local function build()
 		search()
 	end)
 	filterRow = Kit.scroll({
-		Parent = lookPage,
+		Parent = browse,
 		Size = UDim2.new(1, 0, 0, 34),
-		Position = UDim2.fromOffset(0, 92),
+		Position = UDim2.fromOffset(0, 46),
 		Axis = Enum.AutomaticSize.X,
 	})
 	filterRow.ScrollBarThickness = 3
 	Kit.list(filterRow, 6, true)
 
-	content = Kit.box({ Parent = lookPage, Size = UDim2.new(1, 0, 1, -134), Position = UDim2.fromOffset(0, 132) })
+	content = Kit.box({ Parent = browse, Size = UDim2.new(1, 0, 1, -88), Position = UDim2.fromOffset(0, 86) })
 	grid = Kit.scroll({ Parent = content, Size = UDim2.new(1, 0, 1, -46) })
 	Kit.grid(grid, UDim2.fromOffset(112, 140), 8)
 	loadMore = Kit.button("Show more", {
@@ -1007,35 +1100,32 @@ local function build()
 	-- the tools over the 3D view
 	local tools = Kit.frame({
 		Name = "Tools",
-		Size = UDim2.fromOffset(0, 60),
+		Size = UDim2.fromOffset(0, 76),
 		AutomaticSize = Enum.AutomaticSize.X,
 		Position = UDim2.new(0, 12, 1, -12),
 		AnchorPoint = Vector2.new(0, 1),
-		Stroke = T.Line,
+		Color = T.Glass,
+		Transparency = 0.25,
+		Radius = 18,
 		Parent = frame,
 	})
 	Kit.pad(tools, 8, 8)
 	Kit.list(tools, 6, true)
-	local function tool(label: string, color: Color3, fn: () -> (), order: number, textColor: Color3?)
-		local b = Kit.button(label, {
-			Parent = tools,
-			Size = UDim2.fromOffset(0, 44),
-			AutomaticSize = Enum.AutomaticSize.X,
-			TextSize = 16,
-			Color = color,
-			TextColor = textColor,
-			LayoutOrder = order,
-		})
-		Kit.pad(b, 10, 0)
-		b.Activated:Connect(fn)
+	local function tool(icon: string, label: string, fn: () -> (), order: number)
+		Kit.iconButton(
+			icon,
+			label,
+			{ Parent = tools, Size = UDim2.fromOffset(64, 60), LayoutOrder = order, Radius = 12, TextSize = 12 },
+			fn
+		)
 	end
-	tool("Undo", T.Yellow, undo, 1, T.Ink)
-	tool("Redo", T.Yellow, redo, 2, T.Ink)
-	tool("Shuffle", T.Purple, shuffle, 3)
-	tool("Start over", T.Coral, function()
+	tool("↩️", "Undo", undo, 1)
+	tool("↪️", "Redo", redo, 2)
+	tool("🎲", "Shuffle", shuffle, 3)
+	tool("🧹", "Reset", function()
 		setApp(Appearance.default())
 	end, 4)
-	tool("Face", T.Blue, function()
+	tool("🔍", "Face", function()
 		if zoom > 6 then
 			zoom, focusY = 4.5, 4.2
 		else
@@ -1046,9 +1136,10 @@ local function build()
 	local copy = Kit.frame({
 		Name = "Copy",
 		Size = UDim2.fromOffset(420, 60),
-		Position = UDim2.new(0, 12, 1, -82),
+		Position = UDim2.new(0, 12, 1, -98),
 		AnchorPoint = Vector2.new(0, 1),
 		Stroke = T.Line,
+		Radius = 16,
 		Parent = frame,
 	})
 	Kit.pad(copy, 8, 8)
@@ -1087,12 +1178,24 @@ local function build()
 			end
 		end)
 	end)
-	Kit.text("Drag to turn them round. Scroll to zoom.", {
+	local tip = Kit.frame({
 		Parent = frame,
-		Size = UDim2.fromOffset(360, 22),
-		Position = UDim2.new(0, 16, 0, 16),
-		TextSize = 16,
+		Size = UDim2.fromOffset(0, 30),
+		AutomaticSize = Enum.AutomaticSize.X,
+		Position = UDim2.fromOffset(12, 12),
+		Color = T.Glass,
+		Transparency = 0.3,
+		Radius = 15,
+	})
+	Kit.pad(tip, 14, 0)
+	Kit.text("Drag to turn them round. Scroll to zoom.", {
+		Parent = tip,
+		Size = UDim2.fromOffset(0, 30),
+		AutomaticSize = Enum.AutomaticSize.X,
+		TextSize = 15,
 		Color = T.White,
+		Font = Kit.Fonts.Bold,
+		Wrap = false,
 	})
 end
 

@@ -211,7 +211,7 @@ end
 
 function CityPanel.open()
 	CityPanel.close()
-	panel = Kit.panel("City hall", UDim2.fromOffset(880, 560), CityPanel.close)
+	panel = Kit.panel("City hall", UDim2.fromOffset(880, 560), CityPanel.close, "🏛️")
 	Kit.popIn(panel.root)
 	draw()
 	table.insert(unbind, State.on("coins", draw))

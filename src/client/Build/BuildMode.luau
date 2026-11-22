@@ -21,6 +21,7 @@ local Text = require(Shared.Util.Text)
 
 local State = require(script.Parent.Parent.Controllers.State)
 local Toasts = require(script.Parent.Parent.UI.Toasts)
+local Kit = require(script.Parent.Parent.UI.Kit)
 local BuildCamera = require(script.Parent.BuildCamera)
 
 local BuildMode = {}
@@ -756,22 +757,57 @@ local function update()
 	end
 end
 
+-- A failing frame shouldn't silently kill the tools: report the error once and carry on.
+local lastError: string? = nil
+local function safeUpdate()
+	local ok, err = pcall(update)
+	if not ok then
+		local msg = tostring(err)
+		if msg ~= lastError then
+			lastError = msg
+			warn("[BuildMode] " .. msg)
+			Toasts.show("Build mode hit a snag: " .. msg:sub(1, 100), "warn")
+		end
+	end
+end
+
 -- sending -----------------------------------------------------------------------------------------
+
+local sendToken = 0
+local placedEvent = Instance.new("BindableEvent")
+BuildMode.Placed = placedEvent.Event -- (ok) after the server answers
 
 function BuildMode.send(requests: { any }, onDone: ((boolean) -> ())?)
 	if pending or #requests == 0 then
 		return
 	end
 	pending = true
+	sendToken += 1
+	local token = sendToken
+	-- never let one lost answer freeze the tools
+	task.delay(8, function()
+		if pending and sendToken == token then
+			pending = false
+		end
+	end)
 	task.spawn(function()
-		local ok, err = Remotes.fn("BuildApply"):InvokeServer(requests)
-		pending = false
+		local called, ok, err = pcall(function()
+			return Remotes.fn("BuildApply"):InvokeServer(requests)
+		end)
+		if sendToken == token then
+			pending = false
+		end
 		lastGhostKey = ""
-		if not ok then
+		if not called then
+			warn("[BuildMode] BuildApply failed:", ok)
+			Toasts.show("Couldn't reach the server. Try again.", "warn")
+			ok = false
+		elseif not ok then
 			Toasts.show(Text.fill("Can't do that: {why}", { why = err or "something went wrong" }), "warn")
 		end
+		placedEvent:Fire(ok == true)
 		if onDone then
-			onDone(ok)
+			onDone(ok == true)
 		end
 	end)
 end
@@ -782,18 +818,30 @@ local function primary(released: boolean?)
 	end
 	local tool = s.tool
 	if tool == "wall" and s.wallMode == "line" then
-		if released then
-			return
-		end
+		-- drag from one point to another for a single wall, or click, click, click for a chain
 		local p = planePoint()
 		if not p then
 			return
 		end
 		local g = Vector3.new(snapX(p.X), Plan.levelBase(s.level), snapZ(p.Z))
-		if not wallStart then
-			wallStart = g
+		if released then
+			if wallStart and pressPoint and (g - pressPoint).Magnitude > 0.1 then
+				if candidate and candidate.valid then
+					BuildMode.send(candidate.requests)
+				elseif candidate and candidate.reason then
+					Toasts.show(candidate.reason, "warn")
+				end
+				wallStart = nil
+			end
+			pressPoint = nil
 			return
 		end
+		if not wallStart then
+			wallStart = g
+			pressPoint = g
+			return
+		end
+		pressPoint = nil
 		if candidate and candidate.valid then
 			BuildMode.send(candidate.requests)
 			wallStart = candidate.chain
@@ -1115,6 +1163,15 @@ function BuildMode.editSelected(fields: { [string]: any })
 	BuildMode.send({ { type = "set", kind = sel.kind, key = sel.key, obj = obj } })
 end
 
+-- The Model of the picked object, if it's still built.
+function BuildMode.selectedModel(): Model?
+	local sel = s.selected
+	if not sel then
+		return nil
+	end
+	return modelOf(sel.kind, sel.key)
+end
+
 function BuildMode.selectedObject(): (string?, string?, any)
 	local sel = s.selected
 	if not sel then
@@ -1155,7 +1212,9 @@ local function bindKeys()
 				return
 			end
 			if input.UserInputType == Enum.UserInputType.MouseButton1 then
-				if processed then
+				-- our own check: Roblox's processed flag isn't reliable for telling interface clicks
+				-- from clicks on the world
+				if Kit.overUI() then
 					return
 				end
 				pointer = nil
@@ -1204,15 +1263,13 @@ local function bindKeys()
 		connections,
 		UserInputService.InputEnded:Connect(function(input, processed)
 			-- a release over the panels (a swatch, a tab) must not finish a half drawn rectangle
-			if
-				s.active
-				and input.UserInputType == Enum.UserInputType.MouseButton1
-				and not processed
-				and pressedInWorld
-			then
+			if s.active and input.UserInputType == Enum.UserInputType.MouseButton1 and pressedInWorld then
 				pressedInWorld = false
-				primary(true)
+				if not Kit.overUI() then
+					primary(true)
+				end
 			end
+			local _ = processed
 		end)
 	)
 	table.insert(
@@ -1237,7 +1294,7 @@ local function bindKeys()
 			end
 		end)
 	)
-	table.insert(connections, RunService.RenderStepped:Connect(update))
+	table.insert(connections, RunService.RenderStepped:Connect(safeUpdate))
 end
 
 function BuildMode.enter(): boolean

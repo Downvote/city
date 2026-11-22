@@ -337,6 +337,46 @@ function Harness.init(root)
 	for _, name in DATATYPES do
 		env[name] = roblox[name]
 	end
+	-- Lune has no BindableEvent signals; services use them, so give them a small Lua one
+	local function signal()
+		local handlers = {}
+		local sig = {}
+		function sig:Connect(fn)
+			table.insert(handlers, fn)
+			return {
+				Disconnect = function()
+					local i = table.find(handlers, fn)
+					if i then
+						table.remove(handlers, i)
+					end
+				end,
+			}
+		end
+		function sig:Fire(...)
+			for _, fn in table.clone(handlers) do
+				fn(...)
+			end
+		end
+		return sig
+	end
+	Harness.signal = signal
+	env.Instance = setmetatable({
+		new = function(class, parent)
+			if class == "BindableEvent" then
+				local ev = signal()
+				local b = { Event = ev, ClassName = "BindableEvent" }
+				function b:Fire(...)
+					ev:Fire(...)
+				end
+				return b
+			end
+			local inst = roblox.Instance.new(class)
+			if parent then
+				inst.Parent = parent
+			end
+			return inst
+		end,
+	}, { __index = roblox.Instance })
 	env.Random = RandomShim
 	env.task = taskShim
 	env.game = game
@@ -349,6 +389,15 @@ function Harness.init(root)
 	end
 	env.require = Harness.require
 	return Harness
+end
+
+-- Makes require() of a module return `value` instead of running it (stubs for server services).
+function Harness.stub(path, value)
+	local node = game
+	for part in path:gmatch("[^%.]+") do
+		node = node == game and game:GetService(part) or node[part]
+	end
+	cache[rawget(node, "_file")] = value
 end
 
 function Harness.game()

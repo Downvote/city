@@ -175,7 +175,7 @@ end
 
 function ShopPanel.open()
 	ShopPanel.close()
-	panel = Kit.panel("Shop", UDim2.fromOffset(620, 560), ShopPanel.close)
+	panel = Kit.panel("Shop", UDim2.fromOffset(620, 560), ShopPanel.close, "🛒")
 	Kit.popIn(panel.root)
 	draw()
 	table.insert(unbind, State.on("inv", draw))

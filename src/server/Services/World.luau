@@ -10,6 +10,7 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Tuning = require(Shared.Config.Tuning)
 local Town = require(Shared.Data.Town)
 local TownModels = require(Shared.Data.TownModels)
+local TownMap = require(Shared.Data.TownMap)
 local Builder = require(Shared.Build.Builder)
 local Rng = require(Shared.Util.Rng)
 local Schema = require(Shared.Sim.Schema)
@@ -17,10 +18,6 @@ local Schema = require(Shared.Sim.Schema)
 local World = {}
 
 local SIZE = Tuning.Plot.Size
-local GRASS = Color3.fromRGB(120, 186, 92)
-local ROAD = Color3.fromRGB(92, 92, 100)
-local WALK = Color3.fromRGB(205, 200, 190)
-local PAVING = Color3.fromRGB(214, 200, 176)
 
 local mapFolder: Folder
 local plotsFolder: Folder
@@ -38,27 +35,6 @@ local function part(props: { [string]: any }): Part
 		(p :: any)[k] = v
 	end
 	return p
-end
-
-local function slab(
-	name: string,
-	center: Vector3,
-	size: Vector3,
-	color: Color3,
-	mat: Enum.Material,
-	parent: Instance
-): Part
-	local p = part({ Name = name, Size = size, CFrame = CFrame.new(center), Color = color, Material = mat })
-	p.Parent = parent
-	return p
-end
-
-local function placeModel(name: string, cf: CFrame, parent: Instance): Model
-	local m = Instance.new("Model")
-	m.Name = name
-	Builder.instantiate(TownModels.prims(name), m, cf)
-	m.Parent = parent
-	return m
 end
 
 -- A prompt that opens a panel on the client (the client reads the Opens attribute).
@@ -115,112 +91,25 @@ local function buildMap()
 	mapFolder.Name = "Town"
 	mapFolder.Parent = workspace
 
-	local L = Town.HalfLength
-	slab("Ground", Vector3.new(0, -1.1, 0), Vector3.new(L * 2 + 260, 2, 560), GRASS, Enum.Material.Grass, mapFolder)
-	slab(
-		"Street",
-		Vector3.new(0, -0.05, 0),
-		Vector3.new(L * 2, 0.2, Town.StreetHalfWidth * 2),
-		ROAD,
-		Enum.Material.Asphalt,
-		mapFolder
-	)
-	for _, side in { 1, -1 } do
-		local z = side * (Town.StreetHalfWidth + Town.SidewalkWidth / 2)
-		slab(
-			"Sidewalk",
-			Vector3.new(0, 0, z),
-			Vector3.new(L * 2, 0.3, Town.SidewalkWidth),
-			WALK,
-			Enum.Material.Concrete,
-			mapFolder
-		)
-	end
-	-- dashed middle line
-	for x = -L + 6, L - 6, 14 do
-		slab(
-			"Line",
-			Vector3.new(x, 0.06, 0),
-			Vector3.new(7, 0.02, 0.6),
-			Color3.fromRGB(240, 230, 190),
-			Enum.Material.SmoothPlastic,
-			mapFolder
-		)
-	end
+	-- streets, sidewalks, the square and the market (Data/TownMap lays them out)
+	local ground = Instance.new("Model")
+	ground.Name = "Streets"
+	Builder.instantiate(TownMap.ground(), ground, CFrame.identity)
+	ground.Parent = mapFolder
 
-	-- the square (north) and the market (south)
-	for _, center in { Town.SquareCenter, Town.MarketCenter } do
-		slab(
-			"Paving",
-			center + Vector3.new(0, -0.02, 0),
-			Vector3.new(100, 0.2, 120),
-			PAVING,
-			Enum.Material.Pebble,
-			mapFolder
-		)
-	end
-
-	local function place(name: string, pos: Vector3, yaw: number, action: string?, opens: string?): Model
-		local m = placeModel(name, CFrame.new(pos) * CFrame.Angles(0, math.rad(yaw), 0), mapFolder)
-		if action and opens then
-			prompt(anchorPart(m), action, opens)
+	for _, p in TownMap.placements() do
+		local m = Instance.new("Model")
+		m.Name = p.name
+		Builder.instantiate(TownMap.prims(p.name), m, p.cf)
+		m.Parent = mapFolder
+		if p.action and p.opens then
+			prompt(anchorPart(m), p.action, p.opens)
 		end
-		return m
-	end
-
-	place("fountain", Town.Spots.Fountain, 0)
-	place("board", Town.Spots.Board, 180, "Town news", "news")
-	place("tailor", Town.Spots.Tailor, 180, "Make a villager", "creator")
-	place("shop", Town.Spots.Shop, 0, "Shop", "shop")
-	place("hall", Town.Spots.Hall, 0, "City hall", "city")
-	local welcome = place("sign", Vector3.new(14, 0, 30), 180)
-	local board = welcome:FindFirstChild("SignBoard", true)
-	if board and board:IsA("BasePart") then
-		signText(board, "Welcome to " .. Tuning.Game.Name, Enum.NormalId.Back)
-	end
-
-	-- benches and lamps round the square
-	for _, p in { Vector3.new(-12, 0, 80), Vector3.new(12, 0, 80) } do
-		place("bench", p, if p.X < 0 then 90 else -90)
-	end
-	for _, p in
-		{
-			Vector3.new(-40, 0, 30),
-			Vector3.new(40, 0, 30),
-			Vector3.new(-40, 0, 130),
-			Vector3.new(40, 0, 130),
-			Vector3.new(-40, 0, -30),
-			Vector3.new(40, 0, -30),
-			Vector3.new(-40, 0, -130),
-			Vector3.new(40, 0, -130),
-		}
-	do
-		place("lamp", p, 0)
-	end
-	-- street lamps between the plots
-	for x = -L + 40, L - 40, 68 do
-		for _, z in { 18, -18 } do
-			place("lamp", Vector3.new(x, 0, z), 0)
-		end
-	end
-
-	-- trees round the edge of town
-	local rng = Rng.new(7)
-	for _ = 1, 140 do
-		local x = rng:float(-L - 120, L + 120)
-		local z = rng:float(-270, 270)
-		-- keep clear of the street, the square and every plot (plots reach 222 studs from the street)
-		local inTown = math.abs(z) < 236 and math.abs(x) < L + 12
-		local onSquare = math.abs(x) < 54 and math.abs(z) < 150
-		if not inTown and not onSquare then
-			place(if rng:chance(0.45) then "pine" else "tree", Vector3.new(x, 0, z), rng:float(0, 360))
-		end
-	end
-	for _ = 1, 10 do
-		local x = rng:float(-44, 44)
-		local z = rng:float(100, 140)
-		if math.abs(x) > 14 then
-			place("tree", Vector3.new(x, 0, z), rng:float(0, 360))
+		if p.tag == "welcome" then
+			local board = m:FindFirstChild("SignBoard", true)
+			if board and board:IsA("BasePart") then
+				signText(board, "Welcome to " .. Tuning.Game.Name, Enum.NormalId.Back)
+			end
 		end
 	end
 

@@ -83,6 +83,13 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 		part:AddTag(Builder.Tags.DoorLeaf)
 		part:SetAttribute("Closed", part.CFrame)
 		part:SetAttribute("Frame", frame)
+		-- villagers path straight through doors (they swing open as anyone walks up)
+		pcall(function()
+			local modifier = Instance.new("PathfindingModifier")
+			modifier.Label = "Door"
+			modifier.PassThrough = true
+			modifier.Parent = part
+		end)
 	elseif prim.role == "glow" then
 		part:AddTag(Builder.Tags.NightLight)
 		part:SetAttribute("DayMaterial", prim.mat)

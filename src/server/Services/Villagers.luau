@@ -246,7 +246,8 @@ function Villagers.spawn(player: Player, vid: string)
 	Villagers.despawn(player, vid)
 	i = Plots.indexOf(player) :: number
 	v = Villagers.data(player, vid)
-	local start = wanderTarget(player) or Town.plotArrival(i).Position
+	-- start by the street; they walk in from there
+	local start = Town.plotArrival(i).Position + Vector3.new(rng:float(-6, 6), 0, 0)
 	model:PivotTo(CFrame.new(start + Vector3.new(0, 2, 0)))
 	model.Parent = Plots.villagerFolder(i)
 	local root = model:FindFirstChild("HumanoidRootPart")
@@ -427,11 +428,18 @@ function Villagers.brain(player: Player, vid: string, npc: any)
 			local spot = profile and bedSpot(player, v.bed, bedIndex(profile, vid))
 			if spot then
 				if not npc.sleeping then
+					-- walk up beside the bed (either side or the foot, whichever has a way in)
 					local near = (npc:position() - spot.Position).Magnitude < 6
 					if not near then
-						npc:walkTo(spot.Position + spot.CFrame.RightVector * 2.5, 30)
+						local cf = spot.CFrame
+						for _, side in { cf.RightVector * 2.6, -cf.RightVector * 2.6, cf.LookVector * -3.4 } do
+							if npc:walkTo(spot.Position + side + Vector3.new(0, 2, 0), 25) then
+								near = true
+								break
+							end
+						end
 					end
-					if not Villagers.control(player, vid) then
+					if near and not Villagers.control(player, vid) then
 						npc:sleep(spot)
 					end
 				end
@@ -502,7 +510,9 @@ function Villagers.brain(player: Player, vid: string, npc: any)
 			local list = seats(player)
 			if #list > 0 then
 				local seat = rng:pick(list)
-				if npc:walkTo(seat.Position, 20) then
+				-- stand in front of the seat (a seat faces its sitter along its LookVector)
+				local front = seat.Position + seat.CFrame.LookVector * 2.2 + Vector3.new(0, 2, 0)
+				if npc:walkTo(front, 20) then
 					npc:sit(seat)
 					task.wait(rng:float(8, 20))
 					npc:standUp()

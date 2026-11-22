@@ -166,56 +166,118 @@ end
 -- Walking ----------------------------------------------------------------------------------------
 
 -- Walks to a world point. Returns true if it got there. Cancelled by a newer walk or stand().
+-- How villagers path: a little narrower than a door, allowed to hop small steps, and happy to
+-- walk through door leaves (they swing open as you come up to them).
+local AGENT = {
+	AgentRadius = 1.3,
+	AgentHeight = 5,
+	AgentCanJump = true,
+	AgentCanClimb = false,
+	WaypointSpacing = 3,
+	Costs = { Water = 20, Door = 1 },
+}
+
+-- Is the straight line from the villager to a point free of walls and furniture?
+function Npc.clearLine(self: Npc, target: Vector3): boolean
+	local from = self.root.Position
+	local to = Vector3.new(target.X, from.Y, target.Z)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { self.model }
+	params.RespectCanCollide = true
+	local hit = workspace:Raycast(from, to - from, params)
+	if not hit then
+		return true
+	end
+	-- other people don't count as walls
+	local model = hit.Instance:FindFirstAncestorOfClass("Model")
+	return model ~= nil and model:FindFirstChildOfClass("Humanoid") ~= nil
+end
+
+local function computePath(self: Npc, target: Vector3): { PathWaypoint }?
+	local path = PathfindingService:CreatePath(AGENT)
+	local ok = pcall(function()
+		path:ComputeAsync(self.root.Position, target)
+	end)
+	if ok and path.Status == Enum.PathStatus.Success then
+		return path:GetWaypoints()
+	end
+	return nil
+end
+
+-- Walks to a world point along a real path round walls and furniture. Returns true if it got
+-- there. A point nothing can reach is refused (no walking into walls). Cancelled by a newer walk.
 function Npc.walkTo(self: Npc, target: Vector3, timeout: number?): boolean
 	self:standUp()
 	self.moving += 1
 	local token = self.moving
-	local path = PathfindingService:CreatePath({
-		AgentRadius = 1.6,
-		AgentHeight = 5,
-		AgentCanJump = false,
-		WaypointSpacing = 4,
-		Costs = { Water = 20 },
-	})
-	local ok = pcall(function()
-		path:ComputeAsync(self.root.Position, target)
-	end)
-	local waypoints
-	if ok and path.Status == Enum.PathStatus.Success then
-		waypoints = path:GetWaypoints()
-	else
-		waypoints = { { Position = target } }
-	end
 	local deadline = os.clock() + (timeout or 25)
-	for i, wp in waypoints do
+	local tries = 0
+	while tries < 3 do
+		tries += 1
 		if self.moving ~= token or not self.model.Parent then
 			return false
 		end
-		if i > 1 or #waypoints == 1 then
+		local waypoints = computePath(self, target)
+		if not waypoints then
+			-- no route; only step there if it's right in front of them with nothing in the way
+			if (target - self.root.Position).Magnitude < 6 and self:clearLine(target) then
+				waypoints = {
+					{ Position = self.root.Position, Action = Enum.PathWaypointAction.Walk },
+					{ Position = target, Action = Enum.PathWaypointAction.Walk },
+				} :: any
+			else
+				return false
+			end
+		end
+		local stuck = false
+		for i = 2, #(waypoints :: any) do
+			local wp = (waypoints :: any)[i]
+			if self.moving ~= token or not self.model.Parent then
+				return false
+			end
+			if wp.Action == Enum.PathWaypointAction.Jump then
+				self.humanoid.Jump = true
+			end
 			self.humanoid:MoveTo(wp.Position)
 			local arrived = false
-			local conn
-			conn = self.humanoid.MoveToFinished:Connect(function(reached)
+			local conn = self.humanoid.MoveToFinished:Connect(function()
 				arrived = true
-				local _ = reached
-				conn:Disconnect()
 			end)
-			local stepEnd = os.clock() + 6
-			while not arrived and os.clock() < stepEnd and os.clock() < deadline and self.moving == token do
-				task.wait(0.1)
+			-- watch for being stuck on a corner: no progress for a while means replan
+			local lastPos = self.root.Position
+			local lastMove = os.clock()
+			while not arrived and self.moving == token and os.clock() < deadline do
+				task.wait(0.15)
+				local pos = self.root.Position
+				if (pos - lastPos).Magnitude > 0.4 then
+					lastPos = pos
+					lastMove = os.clock()
+				elseif os.clock() - lastMove > 1.2 then
+					self.humanoid.Jump = true
+					if os.clock() - lastMove > 2.4 then
+						stuck = true
+						break
+					end
+				end
 			end
-			if conn.Connected then
-				conn:Disconnect()
-			end
-			if os.clock() >= deadline then
+			conn:Disconnect()
+			if stuck or os.clock() >= deadline then
 				break
 			end
 		end
+		if self.moving ~= token then
+			return false
+		end
+		if (self.root.Position - target).Magnitude < 3.5 then
+			return true
+		end
+		if os.clock() >= deadline then
+			break
+		end
 	end
-	if self.moving ~= token then
-		return false
-	end
-	return (self.root.Position - target).Magnitude < 4
+	self:halt()
+	return (self.root.Position - target).Magnitude < 3.5
 end
 
 -- Stops walking and turns to face a point.

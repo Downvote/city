@@ -1,4 +1,5 @@
--- Short notices that slide in at the top of the screen and fade away.
+-- Short notices that pop in at the top of the screen and fade away: dark rounded pills with an
+-- icon and an accent colour for the kind of notice.
 
 local TweenService = game:GetService("TweenService")
 
@@ -8,12 +9,13 @@ local Toasts = {}
 
 local holder: Frame? = nil
 
-local COLORS = {
-	info = Kit.Theme.Paper,
-	good = Color3.fromRGB(226, 245, 214),
-	warn = Color3.fromRGB(255, 228, 220),
-	event = Color3.fromRGB(255, 240, 200),
+local ACCENTS = {
+	info = Kit.Theme.Blue,
+	good = Kit.Theme.Green,
+	warn = Kit.Theme.Coral,
+	event = Kit.Theme.Yellow,
 }
+local ICONS = { info = "💬", good = "✅", warn = "⚠️", event = "📣" }
 
 local function getHolder(): Frame
 	if holder and holder.Parent then
@@ -34,25 +36,42 @@ end
 
 function Toasts.show(text: string, kind: string?)
 	local h = getHolder()
+	local k = if kind and ACCENTS[kind] then kind else "info"
 	local card = Kit.frame({
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		Color = COLORS[kind or "info"] or Kit.Theme.Paper,
-		Stroke = Kit.Theme.Line,
+		Color = Kit.Theme.Glass,
+		Transparency = 0.08,
+		Radius = 18,
 		Parent = h,
 		ZIndex = 50,
 	})
+	local stroke = Kit.stroke(card, ACCENTS[k], 2)
+	stroke.Transparency = 0.1
 	card.LayoutOrder = -math.floor(os.clock() * 100)
-	Kit.pad(card, 14, 8)
+	Kit.pad(card, 16, 9)
+	local row =
+		Kit.box({ Parent = card, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, ZIndex = 51 })
+	local icon = Kit.new("TextLabel", {
+		Text = ICONS[k],
+		BackgroundTransparency = 1,
+		TextScaled = true,
+		Font = Enum.Font.BuilderSansBold,
+		Size = UDim2.fromOffset(24, 24),
+		ZIndex = 52,
+		Parent = row,
+	})
 	local label = Kit.text(text, {
-		Parent = card,
-		Size = UDim2.new(1, 0, 0, 0),
+		Parent = row,
+		Size = UDim2.new(1, -34, 0, 0),
+		Position = UDim2.fromOffset(34, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		TextSize = 18,
-		AlignX = Enum.TextXAlignment.Center,
-		ZIndex = 51,
+		TextSize = 17,
+		Color = Kit.Theme.White,
+		ZIndex = 52,
 		Font = Kit.Fonts.Bold,
 	})
+	Kit.popIn(card)
 	-- keep a few at most
 	local cards = {}
 	for _, c in h:GetChildren() do
@@ -73,10 +92,8 @@ function Toasts.show(text: string, kind: string?)
 		local info = TweenInfo.new(0.4)
 		TweenService:Create(card, info, { BackgroundTransparency = 1 }):Play()
 		TweenService:Create(label, info, { TextTransparency = 1 }):Play()
-		local stroke = card:FindFirstChildOfClass("UIStroke")
-		if stroke then
-			TweenService:Create(stroke, info, { Transparency = 1 }):Play()
-		end
+		TweenService:Create(icon, info, { TextTransparency = 1 }):Play()
+		TweenService:Create(stroke, info, { Transparency = 1 }):Play()
 		task.wait(0.45)
 		card:Destroy()
 	end)

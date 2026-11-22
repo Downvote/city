@@ -13,7 +13,7 @@ local Town = {}
 local SIZE = Tuning.Plot.Size
 
 Town.StreetHalfWidth = 14
-Town.SidewalkWidth = 6
+Town.SidewalkWidth = 8 -- runs right up to the plots
 Town.PlotSetback = 22 -- plot front edge distance from the street's middle
 Town.PlotCentersX = { -382, -166, 166, 382 }
 Town.SquareCenter = Vector3.new(0, 0, 82)
@@ -56,7 +56,7 @@ Town.Spots = {
 	Shop = Vector3.new(-26, 0, -48),
 	Hall = Vector3.new(0, 0, -124),
 	Spawn = Vector3.new(0, 0, 58),
-	Festival = Vector3.new(0, 0, 95),
+	Festival = Vector3.new(0, 0, 106), -- in front of the bandstand
 }
 
 return Town

@@ -269,10 +269,11 @@ function Recipe.noCollide(self: Recipe, prim: Prim): Prim
 end
 
 -- A place to sit: (x, y, z) is the seat surface, yaw turns the sitter (0 faces +Z, the front).
+-- Roblox seats face their sitter along the seat's LookVector (-Z), so the part is turned round.
 function Recipe.seat(self: Recipe, x: number, y: number, z: number, yaw: number?): Prim
 	return self:add({
 		shape = "Block",
-		cf = CFrame.new(x, y + 0.1, z) * CFrame.Angles(0, math.rad(yaw or 0), 0),
+		cf = CFrame.new(x, y + 0.1, z) * CFrame.Angles(0, math.rad((yaw or 0) + 180), 0),
 		size = Vector3.new(1.6, 0.2, 1.6),
 		color = Recipe.Colors.White,
 		mat = "SmoothPlastic",

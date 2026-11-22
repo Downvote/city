@@ -26,8 +26,10 @@ The contract between the parts of the game. Update it with every change to an AP
   - `Plan`: a plot's build as data and every rule about changing it (see below).
   - `Shapes`: walls (with openings cut out, corner reach), floors (with stairwells cut out), roofs (five styles).
   - `Builder`: prims to Parts and plan objects to Models; tags night lights, door leaves, seats and beds.
-- `Data/`: `Palette` (paint), `Personalities`, `Foods`, `Items`, `Jobs`, `Events` (the event list), `Town` (map
-  layout and plot frames), `TownModels` (plaza buildings), `StarterHouse` (every new plot's first build).
+- `Data/`: `Palette` (paint swatches, materials and the ready-made finishes Build mode shows as tiles), `Personalities`, `Foods`, `Items`, `Jobs`, `Events` (the event list), `Town` (map
+  layout and plot frames), `TownMap` (the streets, sidewalks, square and market as parts, and where every building
+  and piece of street furniture stands), `TownModels` (plaza buildings), `StarterHouse` (every new plot's first
+  build).
 - `Avatar/`: `Appearance` (the saved look, sanitising, which asset types fit which slot), `Categories` (creator tabs,
   catalog filters, wearing and merging).
 - `Sim/`: `Schema` (profile and villager shapes, defaults, migration), `Relationships`, `EventEngine` (picks events,
@@ -78,7 +80,7 @@ Villager = { id, name, pers, app, color, bday = { s, d }, fav, hate, known, mood
 | Service | Job |
 |---|---|
 | `Data` | Loads with a session lock, autosaves every two minutes, saves on leave and shutdown, pushes state patches (`State`), toasts (`Notify`), coins, the town log, the daily gift. |
-| `World` | Builds the street, plaza and plot bases; the clock (real time, 12 minute days) and calendar; night lights; doors that open for anyone walking up; seasonal weather. |
+| `World` | Builds the town from `Data/TownMap` (streets, plaza, street furniture, prompts) and the plot bases; the clock (real time, 12 minute days) and calendar; night lights; doors that open for anyone walking up; seasonal weather. |
 | `Plots` | Hands out plots, draws the saved build and the owned land, sells more land (`PlotExpand`). |
 | `Build` | `BuildApply`, `BuildUndo`, `BuildRedo`: checks requests, charges or refunds, keeps history, redraws, syncs the plan to its owner (`PlanSync`). Fires `Changed`. |
 | `Avatar` | The creator: a private stage and mannequin per player, catalog search fallback, bundles, copying users, outfits, asset checks, the text filter. `toDescription`, `buildModel` for everyone else. |
@@ -87,7 +89,11 @@ Villager = { id, name, pers, app, color, bday = { s, d }, fav, hate, known, mood
 | `Shop` | Food, medicine and party cakes, cheaper while the merchant is in town. |
 
 `Npc` (`src/server/Npc/Npc.luau`) is one villager's body: animations (their own pack or Roblox's defaults), pathfinding
-walks, sitting, lying in bed, speech bubbles, emotion icons and name tags.
+walks, sitting, lying in bed, speech bubbles, emotion icons and name tags. `Npc.walkTo` plans with
+`PathfindingService` (agent radius 1.3, height 5, jumping on, water costly, doors cheap), follows the waypoints,
+jumps when stuck for a moment and plans again when stuck longer; with no path it only steps straight when the way is
+short and clear (`Npc.clearLine`). Door leaves carry a `PathfindingModifier` that lets paths through. Villagers go
+to approach points beside beds and in front of seats, then sit or lie down.
 
 ## Remotes
 
@@ -106,17 +112,27 @@ server, whatever the client did.
 ## Client
 
 - `Controllers/State`: the mirror of the player's state and plan; `State.on(key, fn)`, `State.onPlan(fn)`.
-- `UI/Kit`: theme and helpers (panels, buttons, tabs, sliders, swatches, scroll lists). `UI/Toasts`,
-  `UI/ModelPreview` (3D thumbnails in ViewportFrames).
-- `UI/Hud` opens one panel at a time: `Creator`, `Residents`, `CityPanel`, `ShopPanel`, `News`, `Welcome`. `EventCard`
-  and `Weather` run all the time.
-- `Build/BuildMode` (tools, snapping, ghosts, picking, sending), `Build/BuildUI` (toolbar, catalog, paint, roof and
-  selection panels), `Build/BuildCamera` (free camera).
+- `UI/Kit`: theme and helpers (panels with icon badges, buttons, icon tiles, stat pills, shadows, tabs, sliders,
+  swatches, scroll lists). `Kit.overUI(pos)` says whether the pointer is over our interface, using
+  `GetGuiObjectsAtPosition`, so world clicks never go through a button. `UI/Toasts`, `UI/ModelPreview` (3D
+  thumbnails in ViewportFrames).
+- `UI/Hud`: stat pills, the level card, the clock, the icon dock and the daily gift; opens one panel at a time:
+  `Creator`, `Residents`, `CityPanel`, `ShopPanel`, `News`, `Welcome`. `EventCard` (the dialogue box) and `Weather`
+  run all the time. The HUD and the event box step aside in Build mode and while the creator is open.
+- `Build/BuildMode` (tools, snapping, ghosts, picking, sending): input checks `Kit.overUI` instead of trusting
+  `gameProcessedEvent`, every frame's update runs in a `pcall` that reports an error once, and `BuildMode.send` never
+  leaves the tools waiting (an eight second timeout, a toast on failure, `BuildMode.Placed` after each answer).
+  `Build/BuildUI`: the bottom category bar, sub categories and item tray, the tool strip, the floor card, the coins
+  pill, the hint and the action bar over the picked object (placed with `WorldToViewportPoint`, the GUI inset and the
+  UI scale). `Build/BuildCamera` (free camera).
 
 ## Tests and tools
 
 - `tests/harness.luau` loads the game's modules under Lune with Roblox datatypes from `@lune/roblox` and a fake
   instance tree built from the Rojo project. `tests/run.luau` runs `tests/specs/*.spec.luau`.
-- `tools/preview/` dumps primitives of a scene (catalog tabs, walls, roofs, the starter house, plaza buildings) and
-  renders them to a PNG with a small rasteriser.
+- Specs: `Build` (catalog, plan rules, shapes, builder), `BuildService` (the server's Build service with its
+  neighbours stubbed: building charges coins, syncs the plan, strips junk, refuses land you don't own), `City`,
+  `Events`, `Town` (every placed model exists, plots and road stay clear, room to walk on the sidewalks).
+- `tools/preview/` dumps primitives of a scene (catalog tabs, walls, roofs, the starter house, plaza buildings, `map`
+  for the middle of town) and renders them to a PNG with a small rasteriser.
 - `scripts/check.sh`: format, types, specs, place build.

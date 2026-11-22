@@ -499,7 +499,7 @@ function Residents.open(vid: string?)
 	if vid then
 		selected = vid
 	end
-	panel = Kit.panel("Villagers", UDim2.fromOffset(920, 600), Residents.close)
+	panel = Kit.panel("Villagers", UDim2.fromOffset(920, 600), Residents.close, "👥")
 	listFrame = Kit.scroll({ Parent = panel.body, Size = UDim2.new(0, 250, 1, 0) })
 	Kit.list(listFrame, 6)
 	detail = Kit.box({ Parent = panel.body, Size = UDim2.new(1, -266, 1, 0), Position = UDim2.fromOffset(266, 0) })

@@ -61,7 +61,7 @@ function StarterHouse.plan(): Plan.PlanData
 		if not Catalog.get(id) then
 			return -- the starter house only uses what the catalog has
 		end
-		add("items", { id = id, x = x + OX, y = y or 1, z = z, r = r, lv = 0 })
+		add("items", { id = id, x = x + OX, y = y or Tuning.Plot.Foundation, z = z, r = r, lv = 0 })
 	end
 
 	-- the cottage: 24 x 20, front door to the street
@@ -81,9 +81,9 @@ function StarterHouse.plan(): Plan.PlanData
 		style = "gable",
 		rise = 7,
 		dir = 0,
-		over = 1,
-		c = "9C2A2E",
-		m = "Slate",
+		over = 1.5,
+		c = Palette.Defaults.Roof.c,
+		m = Palette.Defaults.Roof.m,
 		c2 = OUT.c,
 		m2 = OUT.m,
 	})
@@ -94,12 +94,12 @@ function StarterHouse.plan(): Plan.PlanData
 		x2 = 62 + OX,
 		z2 = 24,
 		lv = 0,
-		style = "flat",
-		rise = 0,
+		style = "shed",
+		rise = 2,
 		dir = 2,
 		over = 0.5,
-		c = "9C2A2E",
-		m = "Slate",
+		c = Palette.Defaults.Roof.c,
+		m = Palette.Defaults.Roof.m,
 		c2 = OUT.c,
 		m2 = OUT.m,
 	})
@@ -118,19 +118,45 @@ function StarterHouse.plan(): Plan.PlanData
 	-- furniture (skipped quietly if an id is missing from the catalog)
 	item("bed_single", 45, 40, 180)
 	item("nightstand", 49, 42.5, 180)
-	item("lamp_table", 49, 42.5, 180, 3.2)
+	item("lamp_table", 49, 42.5, 180, Tuning.Plot.Foundation + 2.2)
 	item("rug_round", 46, 35, 0)
 	item("sofa_two", 58, 40, 180)
 	item("table_coffee", 58, 35.5, 0)
 	item("counter", 61.5, 27.5, 270)
 	item("stove", 61.5, 31.5, 270)
 	item("plant_big", 42, 27, 0)
-	item("mailbox", 50, 6, 0, 0)
+	item("mailbox", 52, 1.5, 0, 0)
+
+	-- the front garden: a stone path from the street to the porch, a low picket fence either
+	-- side of it, a lamp by the path, bushes and a flower bed along the front of the house
+	add("floors", { x1 = 56 + OX, z1 = 0, x2 = 60 + OX, z2 = 18, lv = 0, c = "D9C7A7", m = "Pavement" })
+	local function fence(x1: number, z1: number, x2: number, z2: number)
+		add("walls", {
+			x1 = x1 + OX,
+			z1 = z1,
+			x2 = x2 + OX,
+			z2 = z2,
+			lv = 0,
+			style = "fence",
+			a = { c = Palette.Defaults.Fence.c, m = Palette.Defaults.Fence.m },
+			b = { c = Palette.Defaults.Fence.c, m = Palette.Defaults.Fence.m },
+		})
+	end
+	fence(42, 4, 54, 4)
+	fence(62, 4, 70, 4)
+	fence(42, 4, 42, 18)
+	fence(70, 4, 70, 18)
+	item("lamp_post", 54, 7, 0, 0)
+	item("flower_bed", 46, 21.5, 0, 0)
+	item("bush", 42, 21, 0, 0)
+	item("bush", 50.5, 21, 0, 0)
+	item("bush", 66, 21, 0, 0)
+	item("flower_bed", 46, 8, 0, 0)
+	item("flower_bed", 66, 8, 0, 0)
 	-- a market stall by the street, so the first villager has a job
-	item("work_market", 76, 10, 180, 0)
+	item("work_market", 82, 10, 180, 0)
 	item("tree_oak", 20, 30, 0, 0)
 	item("tree_pine", 100, 70, 0, 0)
-	item("bush", 66, 22, 0, 0)
 
 	return plan
 end
