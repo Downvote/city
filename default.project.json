@@ -1,0 +1,36 @@
+{
+  "name": "Maplewick",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Shared": { "$path": "src/shared" }
+    },
+    "ServerScriptService": {
+      "Server": { "$path": "src/server" }
+    },
+    "StarterPlayer": {
+      "$properties": {
+        "CameraMaxZoomDistance": 120,
+        "CharacterWalkSpeed": 18
+      },
+      "StarterPlayerScripts": {
+        "Client": { "$path": "src/client" }
+      }
+    },
+    "Players": {
+      "$properties": { "CharacterAutoLoads": true }
+    },
+    "Lighting": {
+      "$properties": {
+        "ClockTime": 13,
+        "Brightness": 2.2,
+        "GlobalShadows": true,
+        "OutdoorAmbient": [0.55, 0.55, 0.6],
+        "Ambient": [0.35, 0.35, 0.4]
+      }
+    },
+    "Workspace": {
+      "$properties": { "Gravity": 196.2 }
+    }
+  }
+}

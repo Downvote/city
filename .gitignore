@@ -1,0 +1,6 @@
+/Maplewick*.rbxl
+/Maplewick*.rbxlx
+/sourcemap.json
+/out/
+*.pyc
+__pycache__/
