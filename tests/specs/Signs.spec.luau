@@ -685,7 +685,7 @@ describe("Signs service", function()
 				expect(has(found, Signs.filmAt(at.X, at.Y, at.Z, 1).name)).toBe(true)
 			end
 		end
-		expect(posters).toBe(4)
+		expect(posters).toBe(8)
 	end)
 
 	local function board(name, size, cf, face)
@@ -752,6 +752,44 @@ describe("Signs service", function()
 		-- and the usual way up, turned any way round
 		local upright = board("Ad", Vector3.new(6, 3, 0.4), CFrame.Angles(0, 2.2, 0), "Front")
 		expect(Service.faces(upright)[1].turn).toBe(0)
+	end)
+
+	it("dresses every board on the map, a handful of instances a face", function()
+		local wantedOf = {}
+		local boards, faces, instances = 0, 0, 0
+		for _, p in TownMap.placements() do
+			local wanted = wantedOf[p.name]
+			if not wanted then
+				wanted = {}
+				for _, prim in TownMap.prims(p.name) do
+					local n = prim.name
+					if n == "Ad" or n == "Vend" or n == "Plate" or (prim.attrs and prim.attrs.SignKind) then
+						table.insert(wanted, prim)
+					end
+				end
+				wantedOf[p.name] = wanted
+			end
+			if #wanted > 0 then
+				for _, part in Builder.instantiate(wanted, Instance.new("Model"), p.cf) do
+					boards += 1
+					local guis = Service.dress(part)
+					if #guis == 0 then
+						error(p.name .. ": a " .. part.Name .. " was left bare")
+					end
+					for _, gui in guis do
+						faces += 1
+						local found, count = checkFace(part, gui, p.name .. " " .. part.Name)
+						instances += count + 1
+						-- everything but a vending machine's window has something to read
+						expect(part.Name == "Vend" or #found > 0).toBeTruthy()
+					end
+				end
+			end
+		end
+		-- the town is thick with signs, and they are cheap
+		expect(boards >= 150).toBeTruthy()
+		expect(faces <= 900).toBeTruthy()
+		expect(instances / faces <= 11).toBeTruthy()
 	end)
 
 	it("shines harder after dark, and lights the street", function()

@@ -392,7 +392,8 @@ function CityModels.shop(spec: ShopSpec): (R) -> ()
 		-- wide building)
 		if spec.ads ~= false then
 			sidePosters(r, w, d)
-			for _, x in if w >= 50 then { -w / 4, w / 4 } else { 0 } do
+			local backs: { number } = if w >= 50 then { -w / 4, w / 4 } else { 0 }
+			for _, x in backs do
 				advert(r:block(x - 7, 3.5, d / 2, x + 7, 12, d / 2 + 0.2, DARK, "SmoothPlastic"), "Back")
 			end
 		end

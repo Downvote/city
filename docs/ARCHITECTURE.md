@@ -303,6 +303,30 @@ clipping (`tools/preview/ui_render.py`).
   left, `Hint` above them, `Floors` at the right over the `Done` button in the bottom right corner, the coin
   `Pill` top left.
 
+## The drawn city
+
+- `Services/World.stylize` sets the look of the light (hard shadows, violet ambient, low environment scales,
+  grading, bloom) and `grade(h)` moves tint, saturation and contrast with the hour. `default.project.json` carries
+  the same Lighting values for Studio's edit view.
+- `client/World/Outlines`: ink outlines on people. `Outlines.step(from)` gives the `Most` (20) nearest players'
+  characters and villagers within `Reach` a Highlight named `Ink` (no fill, dark outline) and takes it off the
+  rest; `start` runs it every 0.4 s from the camera.
+- `Data/StreetModels`: the street scene's models (`StreetModels.Models`, `prims(name)`, `wireSpan:<length>` made
+  to measure), looked up by `TownMap.prims` before `DetailModels`. `TownMap`'s `streetScene` places them last,
+  by rule and seed: a thing goes down only where all its parts are clear of everything already placed, and the
+  scene stops at its part budget. It reads walls, storeys and flat roofs from the buildings' own parts.
+- Sign faces are parts with a name and attributes, set in the models (`prim.name`, `prim.attrs`):
+  `Sign` or `SwingSign` with `SignKind` (a key of `Signs.Shops`), `SignForm` (fascia, roof, blade, tile,
+  marquee), optional `SignFace` (Front, Back, Left, Right; without it both big sides) and `SignHome` (a CFrame
+  back to the building's origin, so all its boards agree on the name); `Ad` (an advert; `AdKind = "film"` for a
+  film poster); `Vend` (a drinks machine's window); `Plate` (a street name).
+- `Data/Signs`: the names for every kind of shop and public building, the adverts, films and street names, and
+  the picks from a position (`Signs.Salt` keeps two shops of a kind from sharing a name). No services in it.
+- `Services/Signs` (last in `Main.server`'s order): dresses every such part in the town, and any added later,
+  with a SurfaceGui (LightInfluence 0) laid out in one of a handful of styles, sets the board's colour to the
+  sign's, and after dark (the same test as the lamps, `World.isNight`, on `Lighting.ClockTime` changing) raises
+  Brightness and switches on a SurfaceLight on fascias, drinks machines and big low adverts.
+
 ## Tests and tools
 
 - `tests/harness.luau` loads the game's modules under Lune with Roblox datatypes from `@lune/roblox` and a fake
@@ -316,7 +340,10 @@ clipping (`tools/preview/ui_render.py`).
   (every icon builds from shapes; outline copies all come before the fills and no fill carries a dark stroke;
   every icon has vector art, every piece of art paints inside its square at both sizes, interface icons are
   one colour, an icon is its square of a sheet and tinted, the fallback to shapes works), `Vector` (the path
-  reader, and painted areas of circles, rings, lines, dots and round rectangles checked against geometry).
+  reader, and painted areas of circles, rings, lines, dots and round rectangles checked against geometry),
+  `Street` (street models are cheap, sign faces are marked, overhead parts can't be bumped into, nothing stands
+  inside anything else, wires end on poles, the scene keeps to its budget), `Signs` (every kind has names,
+  adverts are well formed, picks are stable and vary, no dashes or banned words).
 - The harness stands in for Roblox's image API: `AssetService:CreateEditableImage` returns a table that keeps its
   pixels (listed in `Harness.images`), and `Content.fromObject` gives a real Content with the address
   `rbxeditable://<n>`, which Lune's ImageLabel accepts. `tools/preview/ui_dump.luau` writes each such picture out

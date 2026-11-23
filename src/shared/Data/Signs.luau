@@ -243,8 +243,8 @@ Signs.Streets = {
 	"Pell Street",
 }
 
--- A street plate: white letters on dark green.
-Signs.Plate = { bg = rgb(18, 98, 76), fg = WHITE }
+-- A street plate: white letters on blue.
+Signs.Plate = { bg = rgb(30, 86, 180), fg = WHITE }
 
 -- The cans in a vending machine's window.
 Signs.Cans = { CORAL, YELLOW, TEAL, PINK, COBALT, VIOLET, GREEN, rgb(255, 140, 40), rgb(70, 180, 240), RED }

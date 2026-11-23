@@ -712,7 +712,22 @@ clutter, all of it Maplewick's own. None of that game's streets, shops, names, l
   contrast pushed further so lit signs and windows stand out of it.
 - **Ink outlines on people.** You, other players and the villagers wear a thin dark outline, the way a drawn
   character does. Roblox can only show about thirty at once, so it is the twenty nearest the camera.
-- **The streets and the signs** are being built next: street clutter and overhead wires, shop signs and adverts.
+- **The street scene.** Utility poles stand every 68 studs along the main street and downtown's streets, with
+  wires sagging from pole to pole and across the junctions. Drinks machines sit at the back of the sidewalks and
+  against side walls and glow after dark. There are tall billboards at junctions and on the boardwalk, poster
+  hoardings at lane mouths and on the ring road, air conditioners on back and side walls, water tanks, aerials
+  and dishes on flat roofs, and along the kerbs cones, crates, bin bags, news boxes, phone booths, scooters and
+  street name posts. The players' plots, the parks, the hills, the beach and the islets are left calm.
+- **Signs everywhere.** Every shop has its name on a board across the shopfront, on a board on the roof and as
+  an initial on its swinging sign, and the taller ones carry a blade sign up the front. Towers have a name over
+  the door, banners up their walls and adverts on their roofs. The cinema's marquee says what is on. Billboards,
+  hoardings and blank walls carry adverts for two dozen made up places and things (Hilltop Dairy, Wobble
+  Cycles, B Side Records), and the films showing. Signs are bold and graphic: a strong flat colour, heavy
+  lettering, a leaning block or a strip of slanted stripes. After dark they are lit and glow.
+- **How the signs are made.** Nothing is uploaded: each sign is drawn in the game from text and plain shapes on
+  the face of a board. Names and adverts are picked from where a building stands, so they are the same every
+  time, and no two shops of a kind near each other share a name.
+- The plaza's tailor, shop and hall have no boards yet.
 
 ## 11. Writing
 

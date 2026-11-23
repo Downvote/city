@@ -25,7 +25,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    screen (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (114, all passing; `Vector` is new: the path reader and painter, areas checked against geometry): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (143, all passing; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off), Build (catalog, plan rules, field cleaning, shapes, builder), BuildService (the server's
 Build service with stubbed neighbours: charges, syncs, strips junk, refuses land you don't own), Events (3000 seeded
@@ -49,7 +49,7 @@ roads (`Town.Roads`), downtown east, the civic quarter west, the hills north (`D
 `Data/TownMap` lays out the ground and where everything stands, `Data/CityModels` draws the buildings and landmarks,
 `Data/Places` lists the places to find. The user wants it detailed like a classic city builder: buildings on
 landscaped lots (`CityModels.lot`), window bays, signs, roof details, parked cars, groves, textured ground, all
-textures from the Roblox library. Keep the whole place under about 26,000 parts (it is about 22,500 with the interiors the user asked for: every shop,
+textures from the Roblox library. Keep the whole place under about 26,000 parts (it is about 24,800 with the street scene and the signs; before them about 22,500 with the interiors the user asked for: every shop,
 tower, house and public building is a furnished room from `Data/Interiors`, preview with `render.sh
 inside:<kind>,<kind>`). The user: "remove the trees near the road", so trees keep to the
 parks, the market square, the hills and the beach; streets get flower troughs, benches and shrubs instead
@@ -64,6 +64,18 @@ draws every ball as a gem, every cylinder as an eight sided prism (sixteen when 
 sided one, flat shaded. So never rely on a part being smoothly round. Draw organic things with `r:lump` (a ball
 stretched and turned: crowns, rocks, bushes) and `r:cone` (pines, spires), poles and trunks with `r:cyl`; the
 previews show the facets (`--smooth` shows the fallback without the kit).
+
+The user asked for a drawn city ("stylize everything, including the map, to zenless zone zero style. Make
+shaders, new models and textures if necessary. The map should look similar to a city in the game"). Take the
+direction, never the game: none of its streets, shops, names, logos or art. Roblox has no shaders of our own,
+so the look is `World.stylize` (hard shadows, violet shade, flat walls, strong grading, bloom) and ink outlines
+on people (`client/World/Outlines`: Highlights, the 20 nearest). The street scene is `Data/StreetModels`,
+placed by rule in `TownMap`'s `streetScene` (poles and wires, drinks machines, billboards, clutter). Signs are
+drawn in the game by `Services/Signs` from `Data/Signs` onto parts named `Sign` / `SwingSign` (attributes
+`SignKind`, `SignForm`, `SignFace`, `SignHome`), `Ad`, `Vend` and `Plate`: a new shop or billboard only needs
+those parts and, for a new kind, names in `Data/Signs`. Shop names and adverts are made up, plain and human.
+Preview the layouts with `sh tools/preview/ui.sh signs <png>` (also `signs:boards`, `signs:posters`,
+`signs:blades`); the 3D previews show boards blank.
 
 The user asked for a lively world ("animated blades of grass, animated details, small creatures, trees with leaves
 that sway with the wind") and a clear sky ("remove clouds and birds from the sky"): leaves are parts named `Leaf`,

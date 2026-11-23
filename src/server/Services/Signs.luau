@@ -80,8 +80,8 @@ local function band(f: Frame, w: number, h: number, turn: number, t1: number, t2
 	local a = math.rad(turn)
 	local ext = math.abs(w * math.cos(a)) + math.abs(h * math.sin(a))
 	local e = math.clamp(0.6 / ext, 0.0005, 0.02) -- about a pixel of soft edge
-	if t2 - t1 < 6 * e then
-		return
+	if t2 - t1 < 6 * e or (t1 <= 2 * e and t2 >= 1 - 2 * e) then
+		return -- nothing would be left, or nothing would be cut
 	end
 	local keys = {}
 	if t1 > 2 * e then
@@ -270,18 +270,26 @@ local function strip(root: Instance, W: number, H: number, d: Design, style: str
 	-- a very long board keeps its words together in the middle
 	local cw = math.min(W, 16 * u)
 	local x0 = (W - cw) / 2
-	local stacked = line ~= nil and cw < 9 * u
+	-- a short one has less trim, so the words keep their size
+	local compact = cw < 9 * u
+	local stacked = line ~= nil and compact
 	local padL, padR = 0.5 * u, 0.5 * u
+	if compact then
+		padL, padR = 0.3 * u, 0.3 * u
+	end
 	if style == "slab" or style == "tilt" then
-		padL, padR = 0.85 * u, 0.85 * u
+		padL = if compact then 0.55 * u else 0.85 * u
+		padR = padL
 	elseif style == "under" then
-		padL = 0.65 * u
+		padL = if compact then 0.5 * u else 0.65 * u
 	elseif style == "split" then
-		padL, padR = 0.45 * u, if line then 0.4 * u else 2 * u
+		padL = if compact then 0.3 * u else 0.45 * u
+		padR = if line then padL elseif compact then 1.2 * u else 2 * u
 	elseif style == "stripe" then
-		padL = 1.95 * u
+		padL = if compact then 1.3 * u else 1.95 * u
 	elseif style == "frame" then
-		padL, padR = 1.05 * u, 1.05 * u
+		padL = if compact then 0.5 * u else 1.05 * u
+		padR = padL
 	end
 	local ix, inner = x0 + padL, cw - padL - padR
 	-- where the name goes and where the line goes
@@ -329,14 +337,15 @@ local function strip(root: Instance, W: number, H: number, d: Design, style: str
 	end
 
 	if style == "slab" or style == "tilt" then
-		lean(root, nx - 0.5 * u, ny - 0.03 * u, nw + u, nh + 0.06 * u, d.accent, true, true)
+		local grow = if compact then 0.35 * u else 0.5 * u
+		lean(root, nx - grow, ny - 0.03 * u, nw + 2 * grow, nh + 0.06 * u, d.accent, true, true)
 		nameColor = d.bg
-		if beside or line == nil then
+		if not compact then
 			box(root, x0 + cw - 0.3 * u, 0.14 * u, 0.12 * u, 0.12 * u, d.accent)
 			box(root, x0 + cw - 0.3 * u, 0.74 * u, 0.12 * u, 0.12 * u, d.accent)
 		end
 	elseif style == "under" then
-		box(root, x0 + 0.22 * u, 0.14 * u, 0.14 * u, 0.72 * u, d.accent)
+		box(root, x0 + (if compact then 0.16 else 0.22) * u, 0.14 * u, 0.14 * u, 0.72 * u, d.accent)
 		if not stacked then
 			lean(root, nx, ny + nh + 0.04 * u, nw, 0.11 * u, d.accent, false, true)
 		end
@@ -346,20 +355,26 @@ local function strip(root: Instance, W: number, H: number, d: Design, style: str
 			lineColor = d.bg
 		else
 			-- a panel at the right hand end (on a long board, where the words end)
-			local from = if line then lx - 0.6 * u else x0 + cw - 1.6 * u
+			local from = if line then lx - 0.6 * u else x0 + cw - padR + 0.2 * u
 			local long = x0 >= 2.6 * u
 			lean(root, from, 0, (if long then x0 + cw else W) - from, H, d.accent, true, long)
 			lineColor = d.bg
 		end
 	elseif style == "stripe" then
-		stripes(root, x0 + 0.25 * u, 0.16 * u, 1.45 * u, 0.68 * u, d.accent, 4)
+		if compact then
+			stripes(root, x0 + 0.2 * u, 0.16 * u, 0.9 * u, 0.68 * u, d.accent, 3)
+		else
+			stripes(root, x0 + 0.25 * u, 0.16 * u, 1.45 * u, 0.68 * u, d.accent, 4)
+		end
 		if not stacked then
 			box(root, nx, 0.86 * u, nw, 0.07 * u, d.accent)
 		end
 	elseif style == "frame" then
 		outline(root, x0 + 0.14 * u, 0.14 * u, cw - 0.28 * u, 0.72 * u, d.accent, 0.06 * u)
-		diamond(root, x0 + 0.62 * u, 0.5 * u, 0.2 * u, d.accent)
-		diamond(root, x0 + cw - 0.62 * u, 0.5 * u, 0.2 * u, d.accent)
+		if not compact then
+			diamond(root, x0 + 0.62 * u, 0.5 * u, 0.2 * u, d.accent)
+			diamond(root, x0 + cw - 0.62 * u, 0.5 * u, 0.2 * u, d.accent)
+		end
 	else -- bands
 		box(root, 0, 0, W, 0.11 * u, d.accent)
 		if stacked then
@@ -765,8 +780,12 @@ function Signs.dress(part: BasePart): { SurfaceGui }
 			local film = part:GetAttribute("AdKind") == "film"
 			local ad = if film then Data.filmAt(at.X, at.Y, at.Z, i) else Data.advertAt(at.X, at.Y, at.Z, i)
 			Signs.draw(root, W, H, ad)
-			if face.w * face.h >= 40 then
+			-- a big advert near the ground lights the street (one up a tower lights nothing)
+			if face.w * face.h >= 40 and at.Y <= 26 then
 				light, range = glow(ad), 16
+			end
+			if i == 1 then
+				part.Color = ad.bg -- the bare board under the advert, for when it is seen from afar
 			end
 		elseif part.Name == "Vend" then
 			local cans = Data.cansAt(at.X, at.Y, at.Z, 3, 5)
@@ -774,6 +793,7 @@ function Signs.dress(part: BasePart): { SurfaceGui }
 			light, range = Color3.fromRGB(226, 242, 248), 9
 		elseif part.Name == "Plate" then
 			plate(root, W, H, Data.streetAt(at.X, at.Z, face.alongX))
+			part.Color = Data.Plate.bg
 		end
 		gui.Parent = part
 		table.insert(entry.guis, gui)
