@@ -1067,6 +1067,14 @@ no scenery between their parts:
 The tools row, its hint and the Floors card sit above the catalog as before. We read the two requests as the
 category tiles going above the cards; the order is one switch in the code if the other was meant.
 
+### The quick menu without its portrait
+
+> also, remove this button and flush the rest to the left
+
+(With a screenshot of the round person button at the left end of the bottom left bar.) That button opened the
+villagers' screen, which the first tile already does. It is gone: the bar holds Villagers, Create, Goals and Gift,
+starting at the left edge of the screen, and is only as long as they need.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

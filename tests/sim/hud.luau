@@ -118,6 +118,39 @@ run("Home takes you home: the button and the H key", function()
 	check(#errors == warned, "no warnings from any of it")
 end)
 
+run("the quick menu comes out of the bottom left corner, its tiles from the left edge", function()
+	local menu = gui:FindFirstChild("Menu", true)
+	check(
+		menu ~= nil and menu.Position.X.Scale == 0 and menu.Position.X.Offset == 0 and menu.AnchorPoint.Y == 1,
+		"the bar is in the bottom left corner"
+	)
+	-- the user: "remove this button and flush the rest to the left"
+	check(menu:FindFirstChild("Portrait", true) == nil, "the round portrait button is gone")
+	local names, row = {}, nil
+	for _, name in { "Villagers", "Create", "Goals", "Gift" } do
+		local b = menu:FindFirstChild(name, true)
+		if b and b:IsA("TextButton") then
+			table.insert(names, name)
+			row = b.Parent
+		end
+	end
+	check(#names == 4, "the four tiles are still there: villagers, the creator, goals and the gift")
+	check(row ~= nil and row.Position.X.Scale == 0 and row.Position.X.Offset <= 16, "starting at the left edge")
+	local list = row and row:FindFirstChildOfClass("UIListLayout")
+	check(
+		list ~= nil and list.HorizontalAlignment == roblox.Enum.HorizontalAlignment.Left,
+		"and packed to the left, not spread across the bar"
+	)
+	local first = menu:FindFirstChild("Villagers", true)
+	check(first.LayoutOrder == 1, "villagers first")
+	-- the bar is no longer than its tiles need
+	local wide = 0
+	for _, name in names do
+		wide += menu:FindFirstChild(name, true).Size.X.Offset
+	end
+	check(menu.Size.X.Offset < wide + 80, "and the bar is no longer than they need")
+end)
+
 print(
 	string.format(
 		"\nhud sim: %s (%d warnings)",

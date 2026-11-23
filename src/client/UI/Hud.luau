@@ -509,11 +509,13 @@ function Hud.start()
 			refreshVisible()
 		end
 	end)
-	-- the quick menu, bottom left: a portrait, then the town's people, the creator, goals and the gift --
-	-- one bar out of the bottom left corner, leaning the other way so it widens toward the bottom
+	-- the quick menu, bottom left: the town's people, the creator, goals and the gift ------------------
+	-- one bar out of the bottom left corner, leaning the other way so it widens toward the bottom.
+	-- (There was a round portrait button at its left end, which opened the villagers as the first
+	-- tile does. The user: "remove this button and flush the rest to the left".)
 	local menu = Kit.box({
 		Name = "Menu",
-		Size = UDim2.fromOffset(500, 104),
+		Size = UDim2.fromOffset(380, 104),
 		Position = UDim2.new(0, 0, 1, 0),
 		AnchorPoint = Vector2.new(0, 1),
 		Parent = hud,
@@ -526,41 +528,19 @@ function Hud.start()
 		Flip = true,
 		Size = UDim2.new(1, 28, 1, 0),
 		Position = UDim2.fromOffset(-28, 0),
-		Estimate = Vector2.new(528, 104),
+		Estimate = Vector2.new(408, 104),
 	})
 	local barCore = bar:FindFirstChild("Core", true)
 	if barCore and barCore:IsA("Frame") then
 		Kit.shade(barCore, T.Paper)
 		-- a thin line inside its edge and a run of dots toward its far end
-		Kit.detail(barCore, { Line = T.Ink, LineAlpha = 0.86, Tone = T.Ink, ToneAlpha = 0.92 })
+		Kit.detail(barCore, { Line = T.Ink, LineAlpha = 0.86, Tone = T.Ink, ToneAlpha = 0.92, ToneWidth = 96 })
 	end
-	-- (a circle with a border: "make portraits a circle with a border instead of a square")
-	local portrait = Kit.portrait({
-		Parent = menu,
-		Size = 84,
-		Position = UDim2.fromOffset(12, 10),
-		Color = T.Card,
-		Border = T.Blue,
-		BorderWidth = 4,
-		ZIndex = 3,
-	})
-	Icons.make("person", 50, {
-		Parent = portrait,
-		Position = UDim2.new(0.5, -25, 0.5, -25),
-		Color = T.Blue,
-		ZIndex = 4,
-	})
-	local portraitButton = Kit.new(
-		"TextButton",
-		{ Text = "", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), ZIndex = 5, Parent = portrait }
-	)
-	portraitButton.Activated:Connect(function()
-		Hud.open("Residents")
-	end)
 	local _ = barInside
-	local row = Kit.box({ Parent = menu, Size = UDim2.new(1, -110, 1, 0), Position = UDim2.fromOffset(104, 0) })
+	-- the tiles start at the left edge of the screen
+	local row = Kit.box({ Parent = menu, Size = UDim2.new(1, -52, 1, 0), Position = UDim2.fromOffset(10, 0) })
 	row.ZIndex = 3
-	local rowList = Kit.list(row, 2, true, Enum.HorizontalAlignment.Center)
+	local rowList = Kit.list(row, 2, true, Enum.HorizontalAlignment.Left)
 	rowList.VerticalAlignment = Enum.VerticalAlignment.Center
 	local tiles = {}
 	local function menuButton(icon: string, caption: string, color: Color3, order: number, fn: () -> ()): TextButton

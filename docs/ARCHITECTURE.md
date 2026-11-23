@@ -523,7 +523,7 @@ clipping (`tools/preview/ui_render.py`).
   and happiness cells and slanted `Divider`s between them), the quests under it (their rows and header start at
   the left edge too), `ClockTab` (hanging from the top right corner, running up into the top inset, leaning the
   other way, with the `Clock` box over it), `Menu` at the bottom left (its `MenuBar` out of the corner, leaning the
-  other way, the portrait and the four tiles on it), and the Build button running off the bottom right corner.
+  other way, the four tiles on it packed from the left edge), and the Build button running off the bottom right corner.
   Under the clock are the captioned round buttons (`HomeCell` with `Home`, then the map, the city hall, the shop,
   the news and the look). `Hud.goHome()` shuts the menus, dips the screen
   (a `Veil` frame) and asks `GoHome`; H does the same when the HUD shows and nothing has the keyboard. It opens one
