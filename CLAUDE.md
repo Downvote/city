@@ -29,7 +29,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (240, all passing; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (253, all passing; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off; what kind a bundle
 is, the outfit that holds the body, single body parts, the player's own items and avatars; preview scenes
@@ -208,6 +208,12 @@ Nothing here runs inside Roblox. Build mode's client runs end to end on the simu
 screens are built on it for the UI previews; the server services and NPCs are only type checked. A review pass found
 and fixed a batch of runtime bugs (starter house never given, walls refused on bought land, camera loops, saves on
 leave, NPC network ownership, spawn races). Playtest in Studio after changing those parts.
+
+Every plot starts with `Data/StarterHouse`: a detailed house, a workshop where the first villager works as a
+builder, and a fenced garden, all of it ordinary Build mode pieces carrying `gift` (the user: "improve the starting
+house detail by alot, and add a workspace next to it"). Specs find the bed by "bed" in an item's id, so the
+starter must not use `flower_bed`; the Build mode sim clicks at plot (122, 51) and (124, 64), so the workshop must
+stay shallower than z 44 and low.
 
 ## Rules
 

@@ -448,6 +448,105 @@ local items: { Item } = {
 			end
 		end,
 	},
+	{
+		id = "bunting",
+		name = "Bunting",
+		cat = "walldecor",
+		price = 25,
+		place = "wall",
+		size = Vector3.new(8, 1.4, 0.3),
+		c1 = "F7F3EA",
+		c2 = "F7F3EA",
+		build = function(r: R)
+			-- a cord (c1) with eight little flags in the colours flags come in
+			r:block(-4, 1.22, 0.06, 4, 1.3, 0.14, r.c1, "Fabric")
+			local flags = { C.Red, C.Yellow, C.Blue, Color3.fromRGB(120, 191, 94), C.Pink, C.Yellow, C.Red, C.Blue }
+			r:piece(function(q: R)
+				q:block(-4, 1.16, 0.05, -3.9, 1.36, 0.15, C.DarkMetal, "Fabric")
+				for i, col in flags do
+					local x = -3.5 + (i - 1)
+					q:tri(
+						Vector3.new(x - 0.4, 1.22, 0.1),
+						Vector3.new(x + 0.4, 1.22, 0.1),
+						Vector3.new(x, 0.3 + (i % 2) * 0.08, 0.1),
+						0.06,
+						col,
+						"Fabric"
+					)
+				end
+				q:block(3.9, 1.16, 0.05, 4, 1.36, 0.15, C.DarkMetal, "Fabric")
+			end)
+		end,
+	},
+	{
+		id = "tool_board",
+		name = "Tool board",
+		cat = "walldecor",
+		price = 45,
+		place = "wall",
+		size = Vector3.new(4, 3, 0.5),
+		c1 = "8A5A2E",
+		c2 = "D6BE96",
+		build = function(r: R)
+			-- a framed board with tools hung on it and a rack of jars under: c1 the frame and
+			-- the rack, c2 the board
+			r:block(-2, 0.5, 0, 2, 3, 0.1, r.c1, "Wood")
+			r:block(-1.86, 0.64, 0.1, 1.86, 2.86, 0.14, r.c2, "Wood")
+			r:block(-2, 0.32, 0, 2, 0.5, 0.46, r.c1, "Wood")
+			r:piece(function(q: R)
+				-- a square, a hammer, a saw, a spanner, pliers and a level, then jars on the rack
+				q:block(-1.7, 1.0, 0.14, -1.6, 2.0, 0.2, C.Metal, "Metal")
+				q:block(-1.7, 1.0, 0.14, -1.0, 1.1, 0.2, C.Metal, "Metal")
+				q:block(-0.72, 1.0, 0.14, -0.6, 2.1, 0.22, C.Bark, "Metal")
+				q:block(-0.95, 2.1, 0.14, -0.37, 2.38, 0.26, C.DarkMetal, "Metal")
+				q:block(-0.1, 1.3, 0.14, 0.9, 1.9, 0.18, C.Metal, "Metal")
+				q:block(0.9, 1.35, 0.14, 1.25, 1.85, 0.24, C.Red, "Metal")
+				q:block(1.5, 0.95, 0.14, 1.62, 1.9, 0.2, C.Metal, "Metal")
+				q:cyl(1.56, 2.05, 0.17, 0.08, 0.4, "z", C.Metal, "Metal")
+				q:block(-0.3, 2.35, 0.14, 1.3, 2.6, 0.22, C.Yellow, "Metal")
+				q:block(0.42, 2.42, 0.22, 0.58, 2.53, 0.24, Color3.fromRGB(150, 210, 230), "Metal")
+				for i, col in { C.Blue, C.Red, C.Metal, C.Yellow } do
+					q:cyl(-1.5 + (i - 1) * 0.55, 0.72, 0.26, 0.44, 0.3, "y", col, "Metal")
+				end
+			end)
+		end,
+	},
+	{
+		id = "sign_workshop",
+		name = "Workshop sign",
+		cat = "walldecor",
+		price = 40,
+		place = "wall",
+		size = Vector3.new(0.6, 3.3, 3),
+		c1 = "F2E8D5",
+		c2 = "6B4423",
+		build = function(r: R)
+			-- a board with a hammer on it, hung from an iron arm so it stands out square from
+			-- the wall and reads from along the street: c1 the board, c2 its edges
+			r:piece(function(q: R)
+				q:block(-0.1, 2.3, 0, 0.1, 3.3, 0.08, C.DarkMetal, "Metal")
+				q:block(-0.05, 3.0, 0.08, 0.05, 3.1, 2.8, C.DarkMetal, "Metal")
+				q:beam(Vector3.new(0, 2.4, 0.08), Vector3.new(0, 3.0, 1.0), 0.08, 0.08, C.DarkMetal, "Metal")
+				for _, z in { 0.78, 2.38 } do
+					q:block(-0.03, 2.7, z - 0.03, 0.03, 3.0, z + 0.03, C.DarkMetal, "Metal")
+				end
+			end)
+			r:block(-0.08, 0.9, 0.5, 0.08, 2.7, 2.66, r.c1, "Wood")
+			r:block(-0.12, 2.58, 0.46, 0.12, 2.7, 2.7, r.c2, "Wood")
+			r:block(-0.12, 0.9, 0.46, 0.12, 1.02, 2.7, r.c2, "Wood")
+			local handle = Color3.fromRGB(196, 150, 96)
+			r:piece(function(q: R)
+				-- the same hammer on both faces: a nail, a handle and a head
+				for _, sx in { -1, 1 } do
+					local x = sx * 0.1
+					q:box(x, 1.35, 2.2, 0.04, 0.3, 0.06, C.DarkMetal, "Metal")
+					local lean = CFrame.new(x, 1.8, 1.5) * CFrame.Angles(math.rad(-35), 0, 0)
+					q:boxAt(lean, 0.04, 1.3, 0.16, handle, "Metal")
+					q:boxAt(lean * CFrame.new(0, 0.6, 0), 0.06, 0.3, 0.66, C.DarkMetal, "Metal")
+				end
+			end)
+		end,
+	},
 }
 
 return items

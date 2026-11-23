@@ -259,16 +259,32 @@ function Plan.cost(kind: string, obj: any): number
 	return 0
 end
 
+-- Gifts. Everything the starting house is made of was given, not bought: each piece carries
+-- `gift`, the coins of it that were given (its price on the day, Data/StarterHouse). Selling it
+-- refunds only what was paid on top (a dearer finish, a longer wall), never the gift, so a new
+-- player can't turn their free house into coins; putting it back with Undo is free for the same
+-- reason. The server keeps `gift` itself: Plan.clean drops it from anything a client sends, and
+-- the Build service copies it from the piece being changed.
+local function giftOf(obj: any): number
+	local g = if type(obj) == "table" then obj.gift else nil
+	return if type(g) == "number" and g == g and g > 0 and g < math.huge then g else 0
+end
+
+-- What a piece is worth in coins to its owner: its price, less what of it was given.
+function Plan.price(kind: string, obj: any): number
+	return math.max(0, Plan.cost(kind, obj) - giftOf(obj))
+end
+
 -- The coins a change costs (negative when it refunds).
 function Plan.changeCost(ops: { Op }): number
 	local total = 0
 	for _, op in ops do
 		if op.op == "add" then
-			total += Plan.cost(op.kind, op.obj)
+			total += Plan.price(op.kind, op.obj)
 		elseif op.op == "remove" then
-			total -= Plan.cost(op.kind, op.obj)
+			total -= Plan.price(op.kind, op.obj)
 		elseif op.op == "set" then
-			total += Plan.cost(op.kind, op.obj) - Plan.cost(op.kind, op.before)
+			total += Plan.price(op.kind, op.obj) - Plan.price(op.kind, op.before)
 		end
 	end
 	return total
@@ -784,7 +800,9 @@ function Plan.sanitize(raw: any): PlanData
 		if type(src) == "table" then
 			for key, obj in src do
 				if type(key) == "string" and Plan.validate(plan, kind, obj) then
-					(plan :: any)[kind][key] = deepCopy(obj)
+					local copy = deepCopy(obj)
+					copy.gift = if giftOf(obj) > 0 then giftOf(obj) else nil;
+					(plan :: any)[kind][key] = copy
 					track(key)
 				end
 			end
@@ -794,13 +812,26 @@ function Plan.sanitize(raw: any): PlanData
 	if type(raw.items) == "table" then
 		for key, obj in raw.items do
 			if type(key) == "string" and Plan.validItem(plan, obj, key) then
-				plan.items[key] = deepCopy(obj)
+				local copy = deepCopy(obj)
+				copy.gift = if giftOf(obj) > 0 then giftOf(obj) else nil
+				plan.items[key] = copy
 				track(key)
 			end
 		end
 	end
 	plan.nextId = math.max(maxId + 1, if type(raw.nextId) == "number" then raw.nextId else 1)
 	return plan
+end
+
+-- How much of the plan was given (its pieces' `gift`, each at most what the piece costs now).
+function Plan.giftValue(plan: PlanData): number
+	local total = 0
+	for _, kind in Plan.Kinds do
+		for _, obj in (plan :: any)[kind] do
+			total += math.min(Plan.cost(kind, obj), giftOf(obj))
+		end
+	end
+	return total
 end
 
 -- The plan's total build value, for the plot sign and leaderboards.

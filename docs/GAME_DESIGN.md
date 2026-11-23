@@ -134,7 +134,7 @@ Bloxburg style, all on a grid and all saved:
 - **Doors and windows** sit in a wall and cut their own hole: hinged, double, glass, sliding barn, roll-up garage,
   open doorways, and eight windows. Doors swing open when anyone walks up.
 - **Four storeys**, with stairs between them and a floor switcher that hides what's above.
-- **150 pieces** in 15 tabs, each drawn from parts with two paintable colours: structure (stairs, posts, decks),
+- **182 pieces** in 15 tabs, each drawn from parts with two paintable colours: structure (stairs, posts, decks),
   doors, windows, seating, tables, beds, storage, kitchen, bathroom, lights (they come on at night), fun, decor,
   wall pieces, garden and workplaces.
 - **Tools**: pick (move, turn, copy, repaint, sell), paint with 48 swatches, 30 materials and ready-made finishes
@@ -238,7 +238,9 @@ in front of the backdrop, at the height they stood before, so the framing is unc
 
 ## 7. The city
 
-- **City level** comes from population and the build's total value: Hamlet, Village, Town, Big town, City.
+- **City level** comes from population and the build's total value: Hamlet, Village, Town, Big town, City. The
+  starting house counts at what the old cottage was worth (2,610), so the bigger one skips no level; everything
+  the owner builds counts in full.
 - **Land**: you start with 100 by 100 studs in the middle of a 200 by 200 plot. You can buy 128, 160 and then 200,
   each needing a city level and coins.
 - **Jobs**: twelve workplaces (market stall, café counter, bread oven, flower cart, artist's easel, clinic desk,
@@ -252,7 +254,11 @@ Held by `tests/specs/City.spec.luau`:
 
 - a day's pay for one villager at starting mood and skill is 40 to 220 coins, and never more than 700;
 - the starting coins buy a second bed and a workplace;
-- three workers save up for the first land purchase in 3 to 21 town days (a town day is 12 real minutes).
+- three workers save up for the first land purchase in 3 to 21 town days (a town day is 12 real minutes);
+- the starting workshop's pay alone (108 coins a town day for the first villager, 130 for a bold or proud one) takes
+  more than 21 town days to reach the first land (it takes 37);
+- the starting house is a gift: selling any of it refunds nothing (only what was paid on top, say a dearer finish),
+  so a new town can't be sold for coins.
 
 ## 9. The town
 
@@ -315,9 +321,33 @@ Up to eight players share a server. The street runs east to west with four plots
 lines, curbs that drop at the zebra crossings, wide paved sidewalks with street trees, lamps, hydrants and a bus
 stop. In the middle: the square with the fountain ringed by benches, two lawns, a bandstand for festivals, the notice
 board (town news) and the tailor (the creator), and across the street the market with its stalls and café tables,
-the shop and the town hall (city stats and land). Every plot starts with one cottage in the middle of its land and
-a stone path to the porch, nothing else (the user: "players should spawn at their plot, which starts out with a single
-house in the middle"), and you arrive at your own plot when you join and whenever you respawn. Time follows a 12 minute day with a calendar of four
+the shop and the town hall (city stats and land). Every plot starts with one house in the middle of its land (the
+user: "players should spawn at their plot, which starts out with a single house in the middle"), and you arrive at
+your own plot when you join and whenever you respawn.
+
+> improve the starting house detail by alot, and add a workspace next to it
+
+The starting house is now a little home with a lot to look at, and a workshop beside it:
+
+- **The house**: a steep gabled part with the bedroom behind a bay window and the kitchen, and a lower wing with the
+  front room, its roof coming down over a porch. Outside: a chimney over a real fireplace, shutters, hoods and flower
+  boxes on the windows, attic windows in both gables, a weathervane, corner boards, a stone footing, drainpipes into
+  a water butt, porch posts with braces and rails, a doorstep, a lantern, bunting, a doormat, a rocking chair, a
+  woodpile, pots, hanging baskets, roses on trellises. Inside: a bed with a rug, a lamp, a wardrobe, curtains and
+  pictures; a sofa, a bookshelf and a coffee table; a sink, a stove, a fridge, a table and two chairs.
+- **The workshop**: a boarded shed open to the street with a gable roof, the builder's bench, a tool board, crates,
+  a stool, lamps, a hanging sign and a sawhorse on a paved apron. It is a real workplace: the first villager takes
+  the builder's job there from day one.
+- **The garden**: a picket fence along the front with a gate that swings, flower borders, a bench, a bird house, a
+  bicycle, a lamp post and a mailbox, stepping stones to the door; behind the house two vegetable patches and a
+  tree with a swing; a paved path from the street to the gate.
+
+Everything in it is ordinary Build mode pieces (32 new ones: shutters, window boxes, hoods, an attic window, a bay
+window, porch posts and rails, a fireplace chimney, corner boards, a stone footing, a drainpipe, a doorstep, a
+weathervane, picket fence panels and a gate, flower borders, a vegetable patch, a tree swing, a water butt, a bird
+house, a flower pot, a trellis, a woodpile, a hanging basket, a bicycle, a wall lantern, a doormat, bunting, a tool
+board, a workshop sign, a crate and a sawhorse), so the owner can move, repaint or sell any of it, and buy more. The
+whole of it covers under a fifth of the starting land. Time follows a 12 minute day with a calendar of four
 ten-day seasons, and weather suited to the season: rain, storms, snow, blossom, falling leaves.
 
 ## 10. Look and feel

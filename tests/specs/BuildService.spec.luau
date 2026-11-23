@@ -46,6 +46,13 @@ Harness.stub("ReplicatedStorage.Shared.Net.Remotes", {
 local Build = require("ServerScriptService.Server.Services.Build")
 
 local clock = 0
+-- the service turns away calls closer than 0.05 s apart, and the harness's task.wait doesn't
+-- really wait
+local function pause()
+	local t = os.clock()
+	while os.clock() - t < 0.06 do
+	end
+end
 local function player()
 	return { Name = "P", UserId = 1 }
 end
@@ -100,5 +107,62 @@ describe("Build service", function()
 			)
 		)
 		expect(ok).toBe(false)
+	end)
+
+	it("keeps a gift a gift: the starting house sells for nothing, however a client asks", function()
+		-- a piece of the starting house, and the coins before
+		local key, item
+		for k, it in profile.plan.items do
+			if it.gift and it.gift > 0 and not it.wall then
+				key, item = k, it
+				break
+			end
+		end
+		expect(key ~= nil).toBeTruthy()
+		local gift = item.gift
+		-- a client sends it back moved, with its gift "forgotten"
+		local moved = table.clone(item)
+		moved.r = (item.r + 90) % 360
+		moved.gift = 0
+		pause()
+		local coins = profile.coins
+		local ok, why = Build.apply(p, { { type = "set", kind = "items", key = key, obj = moved } })
+		if not ok then
+			error(tostring(why))
+		end
+		expect(profile.plan.items[key].gift).toBe(gift)
+		expect(profile.coins).toBe(coins)
+		-- and sells it
+		pause()
+		coins = profile.coins
+		local sold, why2 = Build.apply(p, { { type = "remove", kind = "items", key = key } })
+		if not sold then
+			error(tostring(why2))
+		end
+		expect(profile.plan.items[key]).toBe(nil)
+		expect(profile.coins).toBe(coins)
+		-- a client can't hand itself a gift either
+		pause()
+		coins = profile.coins
+		local x0 = Plan.bounds(profile.plan)
+		local added = Build.apply(p, {
+			{
+				type = "add",
+				kind = "items",
+				obj = { id = "tree_oak", x = x0 + 8, y = 0.01, z = 92, r = 0, lv = 0, gift = 9999 },
+			},
+		})
+		if not added then
+			error("the tree wasn't planted")
+		end
+		local found = false
+		for _, it in profile.plan.items do
+			if it.id == "tree_oak" and it.x == x0 + 8 and it.z == 92 then
+				found = true
+				expect(it.gift).toBe(nil)
+			end
+		end
+		expect(found).toBeTruthy()
+		expect(profile.coins < coins).toBeTruthy()
 	end)
 end)

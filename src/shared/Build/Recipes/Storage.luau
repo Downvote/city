@@ -390,6 +390,39 @@ local items: { Item } = {
 			r:cyl(-0.55, 5.5, 0, 0.06, 0.52, "y", C.Cream, "Fabric")
 		end,
 	},
+	{
+		id = "crate",
+		name = "Crate",
+		cat = "storage",
+		price = 20,
+		place = "floor",
+		size = Vector3.new(2.2, 2, 2.2),
+		surface = 2,
+		c1 = "C99A62",
+		c2 = "C99A62",
+		tags = { "storage" },
+		build = function(r: R)
+			-- a packing crate: boards (c1) held by darker battens round every edge
+			r:block(-1, 0.06, -1, 1, 1.94, 1, r.c1, "WoodPlanks")
+			local batten = Color3.fromRGB(122, 84, 50)
+			r:piece(function(q: R)
+				for _, y in { 0.1, 1.9 } do
+					q:block(-1.1, y - 0.1, -1.1, 1.1, y + 0.1, -0.9, batten, "Wood")
+					q:block(-1.1, y - 0.1, 0.9, 1.1, y + 0.1, 1.1, batten, "Wood")
+					q:block(-1.1, y - 0.1, -0.9, -0.9, y + 0.1, 0.9, batten, "Wood")
+					q:block(0.9, y - 0.1, -0.9, 1.1, y + 0.1, 0.9, batten, "Wood")
+				end
+				for _, sx in { -1, 1 } do
+					for _, sz in { -1, 1 } do
+						q:box(sx * 1, 1, sz * 1, 0.2, 1.6, 0.2, batten, "Wood")
+					end
+				end
+				-- a brace across the front and the back
+				q:beam(Vector3.new(-0.9, 0.25, 1.03), Vector3.new(0.9, 1.75, 1.03), 0.08, 0.2, batten, "Wood")
+				q:beam(Vector3.new(0.9, 0.25, -1.03), Vector3.new(-0.9, 1.75, -1.03), 0.08, 0.2, batten, "Wood")
+			end, true)
+		end,
+	},
 }
 
 return items

@@ -212,6 +212,14 @@ stats = { events, fed, made, earned, paydays, wishes, hearts, couples, partners 
 
 `Schema.migrate` fills in anything missing and drops anything broken, so old saves load.
 
+Any plan object may carry `gift`: the coins of it that were given (every piece of the starting house carries its
+own price). `Plan.price(kind, obj)` is its cost less its gift and `Plan.changeCost` charges and refunds by price,
+so selling a gift refunds only what was paid on top and an undo puts it back for the same. `Plan.clean` drops
+`gift` from what a client sends; the Build service copies it from the piece a `set` changes; `Plan.sanitize`
+keeps it only as a positive number. `Plan.giftValue(plan)` sums it. `City.worth(plan)` is what counts toward the
+town's level: `Plan.value` less whatever the gifts come to above `Tuning.City.StarterWorth` (2,610, what the old
+cottage was worth); `City.stats(...).value` is that number.
+
 A villager also carries `chatDay?` and `chats?` (the day index of their last chat with the owner and how many
 that day, kept like `feedDay` and `feeds`; `Sim/Talk` reads and writes them).
 

@@ -135,6 +135,9 @@ Tuning.City = {
 		{ Name = "Big town", Pop = 9, Value = 25000 },
 		{ Name = "City", Pop = 12, Value = 50000 },
 	},
+	-- how much of the starting house counts toward the town's level (Sim/City.worth): what the
+	-- small cottage it replaced was worth, so the bigger house skips no level
+	StarterWorth = 2610,
 	-- usable land, its price and the city level it needs
 	Land = {
 		{ Size = 100, Price = 0, Level = 1 },

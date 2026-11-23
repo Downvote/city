@@ -898,6 +898,466 @@ local items: { Item } = {
 			r:seat(0, 0.95, 0.3)
 		end,
 	},
+	{
+		id = "woodpile",
+		name = "Woodpile",
+		cat = "garden",
+		price = 40,
+		place = "ground",
+		size = Vector3.new(3.4, 2.7, 1.4),
+		c1 = "6B4423",
+		c2 = "6B4423",
+		build = function(r: R)
+			-- a rack of two runners and four uprights (c1), stacked with split logs
+			for _, sz in { -1, 1 } do
+				r:block(-1.6, 0, sz * 0.35 - 0.1, 1.6, 0.22, sz * 0.35 + 0.1, r.c1, "Wood")
+				for _, sx in { -1, 1 } do
+					r:block(sx * 1.6 - 0.1, 0.22, sz * 0.35 - 0.1, sx * 1.6 + 0.1, 2.6, sz * 0.35 + 0.1, r.c1, "Wood")
+				end
+			end
+			local pale = Color3.fromRGB(214, 178, 128)
+			local tones = { C.Bark, shade(C.Bark, 1.22), pale, shade(C.Bark, 0.86) }
+			r:piece(function(q: R)
+				-- a bundle of kindling on top, then the logs in four rows, their ends to the front
+				q:box(0.3, 2.3, 0, 1.3, 0.16, 1.0, pale, "Wood")
+				local n = 0
+				for row = 0, 3 do
+					local count = if row % 2 == 0 then 5 else 4
+					for i = 0, count - 1 do
+						n += 1
+						local x = (i - (count - 1) / 2) * 0.58
+						q:cyl(x, 0.5 + row * 0.49, 0, 1.2, 0.56, "z", tones[(n * 3 + row) % #tones + 1], "Wood")
+					end
+				end
+			end, true)
+		end,
+	},
+	{
+		id = "hanging_basket",
+		name = "Hanging basket",
+		cat = "garden",
+		price = 35,
+		place = "wall",
+		size = Vector3.new(1.8, 3.4, 2),
+		c1 = "A8743F",
+		c2 = "F59EB5",
+		tags = { "plant" },
+		build = function(r: R)
+			-- an iron bracket on the wall, three chains and a basket of flowers: c1 the basket,
+			-- c2 the flowers
+			r:piece(function(q: R)
+				q:block(-0.1, 2.3, 0, 0.1, 3.35, 0.08, C.DarkMetal, "Metal")
+				q:block(-0.06, 3.14, 0.08, 0.06, 3.26, 1.3, C.DarkMetal, "Metal")
+				q:beam(Vector3.new(0, 2.4, 0.08), Vector3.new(0, 3.14, 0.9), 0.08, 0.08, C.DarkMetal, "Metal")
+				for i = 0, 2 do
+					local a = i * math.pi * 2 / 3 + 0.5
+					q:beam(
+						Vector3.new(0, 3.14, 1.1),
+						Vector3.new(math.cos(a) * 0.6, 2.0, 1.1 + math.sin(a) * 0.6),
+						0.05,
+						0.05,
+						C.DarkMetal,
+						"Metal"
+					)
+				end
+			end)
+			r:cyl(0, 1.8, 1.1, 0.45, 1.36, "y", r.c1, "Wood")
+			r:cyl(0, 1.45, 1.1, 0.25, 0.9, "y", shade(r.c1, 0.82), "Wood")
+			r:piece(function(q: R)
+				q:box(0, 2.05, 1.1, 0.8, 0.2, 0.8, C.DarkLeaf, "Grass")
+				q:ball(0, 2.25, 1.1, 1.0, C.Leaf, "Grass")
+				q:ball(-0.45, 2.1, 1.3, 0.6, C.DarkLeaf, "Grass")
+				q:ball(0.4, 2.12, 0.85, 0.62, C.Leaf, "Grass")
+				-- stems trailing over the rim
+				q:ball(0.62, 1.6, 1.45, 0.42, C.Leaf, "Grass")
+				q:ball(-0.66, 1.45, 0.9, 0.38, C.DarkLeaf, "Grass")
+				q:ball(0.1, 1.3, 1.72, 0.34, C.Leaf, "Grass")
+			end)
+			for _, p in
+				{ { 0, 2.72, 1.1 }, { -0.42, 2.45, 1.42 }, { 0.46, 2.5, 1.3 }, { 0.3, 2.42, 0.72 }, { -0.4, 2.4, 0.8 } }
+			do
+				r:noCollide(r:ball(p[1], p[2], p[3], 0.36, r.c2, "SmoothPlastic"))
+			end
+		end,
+	},
+	{
+		id = "bicycle",
+		name = "Bicycle",
+		cat = "garden",
+		price = 100,
+		place = "ground",
+		size = Vector3.new(1.4, 3.4, 5.2),
+		c1 = "4FA9D9",
+		c2 = "8A5A2E",
+		build = function(r: R)
+			-- a town bike on its stand, front wheel to +z: c1 the frame, c2 the saddle and basket
+			local bb = Vector3.new(0, 1.05, -0.25) -- where the pedals turn
+			local seat = Vector3.new(0, 2.55, -0.75)
+			local head = Vector3.new(0, 2.75, 1.0)
+			local rear, front = Vector3.new(0, 1, -1.55), Vector3.new(0, 1, 1.55)
+			r:piece(function(q: R)
+				q:box(0, 1.05, -0.25, 0.34, 0.3, 0.3, C.DarkMetal, "Metal")
+				for _, hub in { rear, front } do
+					q:cyl(hub.X, hub.Y, hub.Z, 0.14, 2.0, "x", C.Black, "Metal")
+					q:cyl(hub.X, hub.Y, hub.Z, 0.16, 1.56, "x", Color3.fromRGB(205, 208, 214), "Metal")
+					q:cyl(hub.X, hub.Y, hub.Z, 0.3, 0.3, "x", C.DarkMetal, "Metal")
+				end
+				-- cranks and pedals, the handlebar on its stem, the stand and a carrier at the back
+				q:beam(Vector3.new(0.22, 1.4, -0.1), Vector3.new(0.22, 0.7, -0.4), 0.08, 0.1, C.Metal, "Metal")
+				q:box(0.36, 1.42, -0.1, 0.3, 0.08, 0.22, C.Black, "Metal")
+				q:box(0.36, 0.68, -0.4, 0.3, 0.08, 0.22, C.Black, "Metal")
+				q:beam(head, Vector3.new(0, 3.25, 0.92), 0.1, 0.1, C.Metal, "Metal")
+				q:cyl(0, 3.25, 0.92, 1.3, 0.1, "x", C.Metal, "Metal")
+				q:cyl(-0.58, 3.25, 0.92, 0.24, 0.16, "x", C.Black, "Metal")
+				q:cyl(0.58, 3.25, 0.92, 0.24, 0.16, "x", C.Black, "Metal")
+				q:beam(Vector3.new(-0.12, 1.0, -0.6), Vector3.new(-0.5, 0.03, -0.95), 0.07, 0.07, C.Metal, "Metal")
+				q:box(0, 2.12, -1.65, 0.44, 0.06, 1.1, C.Metal, "Metal")
+				q:beam(Vector3.new(0, 2.1, -2.1), rear, 0.06, 0.06, C.Metal, "Metal")
+			end)
+			local w = 0.14
+			r:beam(seat, head, w, w, r.c1, "Metal")
+			r:beam(Vector3.new(0, 2.35, 1.08), bb, w, w, r.c1, "Metal")
+			r:beam(bb, Vector3.new(0, 2.92, -0.87), w, w, r.c1, "Metal")
+			r:beam(bb, rear, w * 0.8, w * 0.8, r.c1, "Metal")
+			r:beam(seat, rear, w * 0.8, w * 0.8, r.c1, "Metal")
+			r:beam(head, front, w, w, r.c1, "Metal")
+			r:boxAt(CFrame.new(0, 3.0, -0.92) * CFrame.Angles(0.08, 0, 0), 0.42, 0.14, 0.82, r.c2, "Leather")
+			-- a basket on the handlebar
+			r:block(-0.45, 2.6, 1.2, 0.45, 3.1, 1.9, r.c2, "WoodPlanks")
+			r:block(-0.5, 3.1, 1.15, 0.5, 3.18, 1.95, shade(r.c2, 0.8), "Wood")
+		end,
+	},
+	{
+		id = "fence_picket",
+		name = "Picket fence panel",
+		cat = "garden",
+		price = 8,
+		place = "ground",
+		size = Vector3.new(4, 3.1, 0.4),
+		c1 = "FFFFFF",
+		c2 = "FFFFFF",
+		build = function(r: R)
+			-- four studs of fence, to go with the garden gate: a post each end and two rails
+			-- (c2), five pickets (c1) that rise to the middle
+			for _, sx in { -1, 1 } do
+				r:block(sx * 1.86 - 0.14, 0, -0.14, sx * 1.86 + 0.14, 3.0, 0.14, r.c2, "Wood")
+			end
+			for _, y in { 0.8, 2.0 } do
+				r:block(-1.72, y, -0.14, 1.72, y + 0.24, -0.04, r.c2, "Wood")
+			end
+			for i, h in { 2.45, 2.65, 2.8, 2.65, 2.45 } do
+				local x = -1.36 + (i - 1) * 0.68
+				r:block(x - 0.22, 0.25, -0.04, x + 0.22, h, 0.06, r.c1, "Wood")
+			end
+		end,
+	},
+	{
+		id = "gate_garden",
+		name = "Garden gate",
+		cat = "garden",
+		price = 30,
+		place = "ground",
+		size = Vector3.new(4.4, 4, 0.6),
+		c1 = "FFFFFF",
+		c2 = "FFFFFF",
+		build = function(r: R)
+			-- two posts with a ball on top (c2) and a picket gate between them (c1) that swings
+			-- open like a door when somebody comes up to it
+			for _, sx in { -1, 1 } do
+				r:block(sx * 1.95 - 0.22, 0, -0.22, sx * 1.95 + 0.22, 3.4, 0.22, r.c2, "Wood")
+				r:block(sx * 1.95 - 0.3, 3.4, -0.3, sx * 1.95 + 0.3, 3.52, 0.3, r.c2, "Wood")
+				r:ball(sx * 1.95, 3.76, 0, 0.5, r.c2, "Wood")
+			end
+			local hinge = -1.7
+			local leaf = {}
+			for _, y in { 0.75, 2.0 } do
+				table.insert(leaf, r:block(-1.68, y, -0.12, 1.66, y + 0.24, -0.02, r.c1, "Wood"))
+			end
+			for i, h in { 2.9, 2.7, 2.55, 2.7, 2.9 } do
+				local x = -1.36 + (i - 1) * 0.68
+				table.insert(leaf, r:block(x - 0.22, 0.3, -0.02, x + 0.22, h, 0.08, r.c1, "Wood"))
+			end
+			local brace = r:beam(Vector3.new(-1.6, 0.85, -0.07), Vector3.new(1.6, 2.1, -0.07), 0.1, 0.22, r.c1, "Wood")
+			if brace then
+				table.insert(leaf, brace)
+			end
+			table.insert(leaf, r:block(1.5, 1.7, 0.08, 1.72, 1.86, 0.2, C.DarkMetal, "Metal"))
+			for _, p in leaf do
+				r:door(p, hinge)
+			end
+		end,
+	},
+	{
+		id = "flower_border",
+		name = "Flower border",
+		cat = "garden",
+		price = 30,
+		place = "ground",
+		size = Vector3.new(4, 1.7, 1.4),
+		c1 = "B4B4B8",
+		c2 = "F59EB5",
+		tags = { "plant" },
+		build = function(r: R)
+			-- a strip of dug earth behind a row of edging stones (c1), full of flowers (c2)
+			r:block(-2, 0, -0.7, 2, 0.16, 0.5, C.Soil, "Sand")
+			r:block(-2, 0, 0.5, 2, 0.3, 0.7, r.c1, "Cobblestone")
+			r:piece(function(q: R)
+				q:block(-1.9, 0.16, -0.55, 1.9, 0.42, 0.35, C.DarkLeaf, "Grass")
+				for i, x in { -1.55, -0.8, 0, 0.75, 1.5 } do
+					q:ball(
+						x,
+						0.6 + (i % 2) * 0.12,
+						if i % 2 == 0 then -0.25 else 0.05,
+						0.75,
+						if i % 2 == 0 then C.DarkLeaf else C.Leaf,
+						"Grass"
+					)
+				end
+				-- a few taller stems at the back
+				q:block(-1.2, 0.4, -0.5, -1.12, 1.35, -0.42, C.DarkLeaf, "Grass")
+				q:block(0.35, 0.4, -0.5, 0.43, 1.5, -0.42, C.DarkLeaf, "Grass")
+				q:block(1.25, 0.4, -0.48, 1.33, 1.3, -0.4, C.DarkLeaf, "Grass")
+			end)
+			for i, x in { -1.16, 0.39, 1.29 } do
+				r:noCollide(
+					r:ball(
+						x,
+						1.42 + (if i == 2 then 0.15 else 0) - (if i == 3 then 0.05 else 0),
+						-0.46,
+						0.4,
+						r.c2,
+						"SmoothPlastic"
+					)
+				)
+			end
+			for i, x in { -1.7, -0.45, 1.0 } do
+				r:noCollide(r:ball(x, 0.98 + (i % 2) * 0.1, 0.12, 0.36, r.c2, "SmoothPlastic"))
+			end
+			r:piece(function(q: R)
+				q:box(-1.0, 1.0, 0.15, 0.22, 0.22, 0.22, C.Yellow, "SmoothPlastic")
+				q:ball(0.2, 1.06, 0.2, 0.32, C.White, "SmoothPlastic")
+				q:ball(1.6, 0.96, 0.05, 0.3, C.Yellow, "SmoothPlastic")
+				q:ball(-0.3, 1.1, -0.4, 0.3, C.White, "SmoothPlastic")
+			end)
+		end,
+	},
+	{
+		id = "veg_patch",
+		name = "Vegetable patch",
+		cat = "garden",
+		price = 50,
+		place = "ground",
+		size = Vector3.new(4, 3.4, 4),
+		c1 = "8A5A2E",
+		c2 = "8A5A2E",
+		tags = { "plant" },
+		build = function(r: R)
+			-- a square of dug earth inside four boards (c1): a row of cabbages, a row of carrot
+			-- tops, two pumpkins and beans up a wigwam of canes
+			for _, s in { -1, 1 } do
+				r:block(-2, 0, s * 1.9 - 0.1, 2, 0.5, s * 1.9 + 0.1, r.c1, "Wood")
+				r:block(s * 1.9 - 0.1, 0, -1.8, s * 1.9 + 0.1, 0.5, 1.8, r.c1, "Wood")
+			end
+			r:block(-1.8, 0, -1.8, 1.8, 0.36, 1.8, C.Soil, "Sand")
+			r:piece(function(q: R)
+				-- three ridges of earth
+				for _, z in { -1.15, 0, 1.15 } do
+					q:block(-1.7, 0.36, z - 0.32, 1.7, 0.5, z + 0.32, Color3.fromRGB(104, 76, 54), "Sand")
+				end
+			end)
+			local cabbage = Color3.fromRGB(150, 196, 120)
+			local pumpkin = Color3.fromRGB(232, 132, 44)
+			r:piece(function(q: R)
+				q:box(-1.3, 0.62, 1.15, 0.5, 0.3, 0.5, C.Leaf, "Grass")
+				for i = 0, 3 do
+					q:ball(-1.3 + i * 0.87, 0.72, 1.15, 0.7, if i % 2 == 0 then cabbage else C.Leaf, "Grass")
+				end
+				for i = 0, 5 do
+					q:cone(-1.5 + i * 0.6, 0.8, 0, 0.7, 0.32, if i % 2 == 0 then C.Leaf else C.DarkLeaf, "Grass")
+				end
+				q:ball(-1.2, 0.72, -1.2, 0.8, pumpkin, "Grass")
+				q:ball(-0.35, 0.66, -1.0, 0.62, pumpkin, "Grass")
+				q:ball(-0.75, 0.6, -1.5, 0.5, C.Leaf, "Grass")
+				-- the beans: leaves up the canes
+				q:ball(1.05, 1.0, -1.15, 0.7, C.Leaf, "Grass")
+				q:ball(1.1, 1.7, -1.1, 0.6, C.DarkLeaf, "Grass")
+				q:ball(1.05, 2.35, -1.15, 0.45, C.Leaf, "Grass")
+			end)
+			local cane = Color3.fromRGB(196, 164, 110)
+			r:piece(function(q: R)
+				-- a name stake at the corner, then three canes tied at the top
+				q:block(1.45, 0.36, 1.5, 1.55, 1.1, 1.56, cane, "Wood")
+				q:block(1.25, 0.85, 1.48, 1.75, 1.15, 1.5, C.Paper, "Wood")
+				for k = 0, 2 do
+					local a = k * math.pi * 2 / 3 + 0.5
+					q:beam(
+						Vector3.new(1.05 + math.cos(a) * 0.6, 0.36, -1.15 + math.sin(a) * 0.6),
+						Vector3.new(1.05, 3.3, -1.15),
+						0.07,
+						0.07,
+						cane,
+						"Wood"
+					)
+				end
+			end)
+		end,
+	},
+	{
+		id = "tree_swing",
+		name = "Tree with a swing",
+		cat = "garden",
+		price = 180,
+		place = "ground",
+		size = Vector3.new(10, 13, 9),
+		c1 = "5DAA4A",
+		c2 = "6E4C30",
+		tags = { "plant", "seat" },
+		build = function(r: R)
+			-- an old tree with one long bough, and a plank on two ropes hung from it
+			roots(r, 4, 1.4, 0.5, r.c2)
+			r:cyl(0, 0.7, 0, 1.4, 1.7, "y", r.c2, "Wood")
+			r:cyl(0, 3.6, 0, 5.2, 1.3, "y", r.c2, "Wood")
+			rod(r, Vector3.new(0, 5.4, 0), Vector3.new(4.3, 6.6, 0.2), 0.6, r.c2, "Wood")
+			rod(r, Vector3.new(0, 5.6, 0), Vector3.new(-1.9, 8.0, -0.6), 0.6, r.c2, "Wood")
+			rod(r, Vector3.new(0, 5.8, 0), Vector3.new(0.4, 8.4, 1.5), 0.5, r.c2, "Wood")
+			r:ball(0, 9.6, 0, 6.0, r.c1, "Grass")
+			r:ball(-2.4, 8.3, 0.9, 4.2, shade(r.c1, 0.85), "Grass")
+			r:ball(2.6, 8.6, -0.7, 4.6, shade(r.c1, 0.9), "Grass")
+			r:ball(0.6, 8.1, 2.4, 4.0, shade(r.c1, 0.95), "Grass")
+			r:ball(-0.9, 8.5, -2.4, 4.0, shade(r.c1, 0.8), "Grass")
+			r:ball(2.0, 10.6, 1.1, 3.6, shade(r.c1, 1.08), "Grass")
+			r:ball(-1.7, 10.9, -0.7, 3.6, shade(r.c1, 1.04), "Grass")
+			r:ball(0.4, 11.7, -0.3, 3.2, shade(r.c1, 1.14), "Grass")
+			r:piece(function(q: R)
+				q:box(3.6, 1.95, 0.2, 0.7, 0.14, 1.9, Color3.fromRGB(196, 150, 96), "Wood")
+				for _, z in { -0.55, 0.95 } do
+					q:cyl(3.6, 4.2, z, 4.4, 0.09, "y", C.Cream, "Wood")
+				end
+			end)
+			r:seat(3.6, 2.02, 0.2, 90)
+		end,
+	},
+	{
+		id = "water_butt",
+		name = "Water butt",
+		cat = "garden",
+		price = 40,
+		place = "ground",
+		size = Vector3.new(2.2, 3.6, 2.4),
+		c1 = "4E7F5A",
+		c2 = "A34A22",
+		build = function(r: R)
+			-- a rain barrel (c1) on a stand of bricks (c2), with a lid and a tap at the front
+			r:block(-0.9, 0, -0.9, 0.9, 0.5, 0.9, r.c2, "Brick")
+			r:cyl(0, 1.9, 0, 2.8, 2.0, "y", r.c1, "SmoothPlastic")
+			r:cyl(0, 3.36, 0, 0.14, 2.14, "y", shade(r.c1, 0.8), "SmoothPlastic")
+			r:piece(function(q: R)
+				q:box(0, 0.95, 1.08, 0.16, 0.16, 0.3, C.Gold, "Metal")
+				q:box(0, 1.06, 1.18, 0.08, 0.2, 0.08, C.Gold, "Metal")
+				q:cyl(0, 1.2, 0, 0.1, 2.06, "y", C.DarkMetal, "Metal")
+				q:cyl(0, 2.7, 0, 0.1, 2.06, "y", C.DarkMetal, "Metal")
+			end)
+		end,
+	},
+	{
+		id = "bird_house",
+		name = "Bird house",
+		cat = "garden",
+		price = 30,
+		place = "ground",
+		size = Vector3.new(1.6, 7.4, 1.6),
+		c1 = "F2E8D5",
+		c2 = "C7383F",
+		build = function(r: R)
+			-- a nest box (c1) with a pitched roof (c2) up a pole, and somebody at home
+			r:cyl(0, 2.6, 0, 5.2, 0.26, "y", C.Bark, "Wood")
+			r:block(-0.62, 5.1, -0.55, 0.62, 5.22, 0.55, shade(r.c1, 0.8), "Wood")
+			r:block(-0.5, 5.22, -0.45, 0.5, 6.2, 0.45, r.c1, "Wood")
+			r:tri(Vector3.new(-0.5, 6.2, 0), Vector3.new(0.5, 6.2, 0), Vector3.new(0, 6.65, 0), 0.9, r.c1, "Wood")
+			for _, sx in { -1, 1 } do
+				r:beam(Vector3.new(sx * 0.72, 6.08, 0), Vector3.new(0, 6.82, 0), 1.2, 0.1, r.c2, "Wood")
+			end
+			r:piece(function(q: R)
+				q:block(-0.16, 5.62, 0.45, 0.16, 5.94, 0.47, C.Black, "SmoothPlastic")
+				q:cyl(0, 5.5, 0.56, 0.24, 0.07, "z", C.Bark, "SmoothPlastic")
+				-- a blue tit on the ridge
+				q:ball(0.1, 7.02, 0.1, 0.34, C.Blue, "SmoothPlastic")
+				q:ball(0.22, 7.2, 0.14, 0.22, C.Yellow, "SmoothPlastic")
+				q:block(0.3, 7.17, 0.12, 0.42, 7.22, 0.16, C.Black, "SmoothPlastic")
+				q:block(-0.2, 6.98, 0.07, -0.02, 7.03, 0.13, C.Blue, "SmoothPlastic")
+			end)
+		end,
+	},
+	{
+		id = "flower_pot",
+		name = "Flower pot",
+		cat = "garden",
+		price = 20,
+		place = "surface",
+		size = Vector3.new(1.4, 2.3, 1.4),
+		c1 = "C4683E",
+		c2 = "E8667A",
+		tags = { "plant" },
+		build = function(r: R)
+			-- a clay pot (c1) of flowers (c2), for a step, a porch or a windowsill
+			r:cyl(0, 0.45, 0, 0.9, 0.95, "y", r.c1, "Sand")
+			r:cyl(0, 0.92, 0, 0.2, 1.2, "y", shade(r.c1, 1.08), "Sand")
+			r:piece(function(q: R)
+				q:box(0, 1.1, 0, 0.7, 0.2, 0.7, C.DarkLeaf, "Grass")
+				q:ball(0, 1.35, 0, 1.0, C.Leaf, "Grass")
+				q:ball(-0.35, 1.25, 0.3, 0.6, C.DarkLeaf, "Grass")
+				q:ball(0.38, 1.3, -0.25, 0.62, C.DarkLeaf, "Grass")
+			end)
+			for _, p in { { 0, 1.95, 0 }, { -0.42, 1.62, 0.36 }, { 0.44, 1.7, 0.2 }, { 0.1, 1.66, -0.44 } } do
+				r:noCollide(r:ball(p[1], p[2], p[3], 0.4, r.c2, "SmoothPlastic"))
+			end
+		end,
+	},
+	{
+		id = "trellis",
+		name = "Rose trellis",
+		cat = "garden",
+		price = 40,
+		place = "wall",
+		size = Vector3.new(3, 8, 1),
+		c1 = "F7F3EA",
+		c2 = "E8667A",
+		tags = { "plant" },
+		build = function(r: R)
+			-- a lattice against a wall (c1) with a rose climbing it (c2 the flowers)
+			for _, x in { -1.1, 1.1 } do
+				r:block(x - 0.07, 0, 0.06, x + 0.07, 7.9, 0.16, r.c1, "Wood")
+			end
+			for _, y in { 0.9, 3.2, 5.5, 7.7 } do
+				r:block(-1.4, y - 0.07, 0.02, 1.4, y + 0.07, 0.1, r.c1, "Wood")
+			end
+			r:piece(function(q: R)
+				-- the stem in three runs, then leaves where it turns
+				q:block(-0.1, 0, 0.16, 0.1, 2.4, 0.34, C.Bark, "Grass")
+				q:beam(Vector3.new(0, 2.3, 0.25), Vector3.new(-0.8, 4.6, 0.25), 0.14, 0.14, C.Bark, "Grass")
+				q:beam(Vector3.new(-0.8, 4.5, 0.25), Vector3.new(0.6, 7.2, 0.25), 0.12, 0.12, C.Bark, "Grass")
+				for i, p in
+					{
+						{ 0.25, 1.2, 0.7 },
+						{ -0.35, 2.3, 0.85 },
+						{ 0.7, 3.0, 0.75 },
+						{ -0.9, 3.7, 0.9 },
+						{ -0.2, 4.6, 0.8 },
+						{ -1.0, 5.4, 0.7 },
+						{ 0.5, 5.6, 0.85 },
+						{ -0.3, 6.5, 0.75 },
+						{ 0.8, 6.9, 0.9 },
+						{ 0.1, 7.4, 0.7 },
+					}
+				do
+					q:ball(p[1], p[2], 0.5, p[3], if i % 2 == 0 then C.DarkLeaf else C.Leaf, "Grass")
+				end
+			end)
+			for _, p in { { 0.5, 1.6 }, { -0.7, 3.1 }, { 0.3, 4.2 }, { -0.6, 5.9 }, { 0.9, 6.3 }, { 0.2, 7.6 } } do
+				r:noCollide(r:ball(p[1], p[2], 0.82, 0.36, r.c2, "SmoothPlastic"))
+			end
+		end,
+	},
 }
 
 return items

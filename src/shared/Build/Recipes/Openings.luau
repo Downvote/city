@@ -4,10 +4,15 @@
 -- x along the wall, y up from the hole's bottom, z across the wall (+z faces the side chosen).
 
 local Recipe = require(script.Parent.Parent.Recipe)
+local Colors = require(script.Parent.Parent.Parent.Util.Colors)
 
 local C = Recipe.Colors
 
 type R = Recipe.Recipe
+
+local function shade(c: Color3, k: number): Color3
+	return Colors.shade(c, k)
+end
 
 -- A plain frame round a w x h hole. The frame sits just outside the hole, over the wall, so the
 -- full width stays clear to walk through.
@@ -37,6 +42,37 @@ end
 
 local function sill(r: R, w: number, color: Color3)
 	r:block(-w / 2 - 0.3, -0.25, -0.6, w / 2 + 0.3, 0.05, 0.6, color, "Wood")
+end
+
+-- A slope over the box x1..x2, y1..y2, z1..z2 that is high along z1 and comes down to nothing
+-- along z2, as one wedge. With z1 on the wall and z2 out from it, a little roof.
+local function slope(
+	r: R,
+	x1: number,
+	y1: number,
+	z1: number,
+	x2: number,
+	y2: number,
+	z2: number,
+	color: Color3,
+	mat: string
+)
+	-- a wedge is full height at its own back (+Z), so its back is turned to z1
+	local turn = if z2 > z1 then CFrame.Angles(0, math.pi, 0) else CFrame.identity
+	r:wedge(
+		CFrame.new((x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2) * turn,
+		math.abs(x2 - x1),
+		math.abs(y2 - y1),
+		math.abs(z2 - z1),
+		color,
+		mat
+	)
+end
+
+-- A bracket on a wall item's wall (z = 0) under a shelf at height y: a triangle `drop` tall
+-- and `out` deep, as one wedge turned upside down.
+local function bracket(r: R, x: number, y: number, drop: number, out: number, color: Color3)
+	r:wedge(CFrame.new(x, y - drop / 2, 0.02 + out / 2) * CFrame.Angles(math.pi, 0, 0), 0.16, drop, out, color, "Wood")
 end
 
 local items: { any } = {
@@ -409,6 +445,177 @@ local items: { any } = {
 					)
 				end
 			end
+		end,
+	},
+	{
+		id = "win_bay",
+		name = "Bay window",
+		cat = "windows",
+		price = 250,
+		place = "opening",
+		size = Vector3.new(6.8, 7.4, 4.4),
+		opening = { w = 6, h = 6, sill = 2 },
+		c1 = "FFFFFF",
+		c2 = "C7383F",
+		build = function(r: R)
+			-- the hole's own frame, then a bay with slanted sides standing out of the wall on the
+			-- side chosen: a seat board, three panes and a little roof of its own (c2)
+			frame(r, 6, 6, r.c1, nil, true)
+			local W, F = 3, 1.5 -- half the hole's width, half the front pane's
+			local Z0, Z1 = 0.3, 1.9 -- the wall's face, the bay's front
+			r:block(-W, -0.3, -0.5, W, 0, Z0, r.c1, "Wood")
+			r:block(-F, -0.3, Z0, F, 0, Z1, r.c1, "Wood")
+			r:block(-F + 0.2, -0.5, Z0, F - 0.2, -0.3, Z1 - 0.35, shade(r.c1, 0.88), "Wood")
+			r:block(-F, 4.2, Z1 - 0.26, F, 4.36, Z1 - 0.04, r.c1, "Wood")
+			r:block(-0.07, 0, Z1 - 0.24, 0.07, 4.2, Z1 - 0.06, r.c1, "Wood")
+			r:block(-F - 0.1, 5.8, Z1 - 0.3, F + 0.1, 6.3, Z1 + 0.05, r.c1, "Wood")
+			local front = r:block(-F + 0.14, 0, Z1 - 0.2, F - 0.14, 5.8, Z1 - 0.1, C.Glass, "Glass")
+			front.transp = 0.55
+			for _, sx in { -1, 1 } do
+				r:tri(
+					Vector3.new(sx * F, -0.15, Z0),
+					Vector3.new(sx * W, -0.15, Z0),
+					Vector3.new(sx * F, -0.15, Z1),
+					0.3,
+					r.c1,
+					"Wood"
+				)
+				r:block(sx * F - 0.14, 0, Z1 - 0.28, sx * F + 0.14, 5.8, Z1, r.c1, "Wood")
+				-- the slanted side: a pane, its bar and the board over it, all along the slant
+				local along = Vector3.new(sx * (F - W), 0, Z1 - Z0)
+				local len = along.Magnitude
+				local side =
+					CFrame.fromMatrix(Vector3.new(sx * (W + F) / 2, 0, (Z0 + Z1) / 2), along.Unit, Vector3.yAxis)
+				local pane = r:boxAt(side * CFrame.new(0, 2.9, 0), len - 0.1, 5.8, 0.1, C.Glass, "Glass")
+				pane.transp = 0.55
+				r:boxAt(side * CFrame.new(0, 4.28, 0), len, 0.16, 0.2, r.c1, "Wood")
+				r:boxAt(side * CFrame.new(0, 6.05, 0), len + 0.25, 0.5, 0.3, r.c1, "Wood")
+				r:tri(
+					Vector3.new(sx * F, 7.4, Z0),
+					Vector3.new(sx * (W + 0.25), 6.3, Z0),
+					Vector3.new(sx * F, 6.3, Z1 + 0.25),
+					0.2,
+					shade(r.c2, 0.9),
+					"ClayRoofTiles"
+				)
+			end
+			slope(r, -F, 6.3, Z0, F, 7.4, Z1 + 0.25, r.c2, "ClayRoofTiles")
+		end,
+	},
+	-- things that hang on the wall round a window --------------------------------------------
+	{
+		id = "shutters",
+		name = "Shutters",
+		cat = "windows",
+		price = 40,
+		place = "wall",
+		size = Vector3.new(8.2, 4.4, 0.4),
+		c1 = "4E9A44",
+		c2 = "33733A",
+		build = function(r: R)
+			-- a pair of leaves either side of a window four studs wide: c1 the boards, c2 the slats
+			for _, sx in { -1, 1 } do
+				local x1, x2 = math.min(sx * 2.4, sx * 4.05), math.max(sx * 2.4, sx * 4.05)
+				r:block(x1, 0, 0.02, x2, 4.3, 0.2, r.c1, "Wood")
+				for i = 1, 5 do
+					local y = i * 0.72 - 0.01
+					r:block(x1 + 0.15, y - 0.07, 0.2, x2 - 0.15, y + 0.07, 0.28, r.c2, "Wood")
+				end
+				-- two iron hinges on the window's side
+				local hx = sx * 2.5
+				r:piece(function(q: R)
+					q:box(hx, 0.7, 0.25, 0.34, 0.2, 0.1, C.DarkMetal, "Metal")
+					q:box(hx, 3.6, 0.25, 0.34, 0.2, 0.1, C.DarkMetal, "Metal")
+				end)
+			end
+		end,
+	},
+	{
+		id = "window_box",
+		name = "Window box",
+		cat = "windows",
+		price = 35,
+		place = "wall",
+		size = Vector3.new(4.6, 2.1, 1.2),
+		c1 = "8A5A2E",
+		c2 = "E8667A",
+		tags = { "plant" },
+		build = function(r: R)
+			-- a planted box on two brackets, to hang under a window: c1 the box, c2 the flowers
+			for _, x in { -1.6, 1.6 } do
+				bracket(r, x, 0.5, 0.5, 0.83, shade(r.c1, 0.75))
+			end
+			r:block(-2.2, 0.5, 0.02, 2.2, 1.2, 1.05, r.c1, "WoodPlanks")
+			r:block(-2.28, 1.2, 0, 2.28, 1.32, 1.12, shade(r.c1, 0.85), "Wood")
+			r:piece(function(q: R)
+				q:block(-2.0, 1.25, 0.15, 2.0, 1.5, 0.95, C.DarkLeaf, "Grass")
+				for i, x in { -1.5, -0.5, 0.5, 1.5 } do
+					q:ball(x, 1.55, if i % 2 == 0 then 0.45 else 0.65, 0.72, C.Leaf, "Grass")
+				end
+				-- a few stems trailing over the front
+				q:ball(-1.8, 1.05, 1.08, 0.45, C.Leaf, "Grass")
+				q:ball(-0.2, 1.12, 1.1, 0.38, C.DarkLeaf, "Grass")
+				q:ball(1.25, 0.98, 1.08, 0.5, C.Leaf, "Grass")
+			end)
+			for i, x in { -1.7, -0.9, -0.05, 0.85, 1.65 } do
+				r:noCollide(
+					r:ball(x, 1.86 + (i % 3) * 0.08, if i % 2 == 0 then 0.72 else 0.4, 0.42, r.c2, "SmoothPlastic")
+				)
+			end
+			r:piece(function(q: R)
+				q:box(-1.25, 1.82, 0.8, 0.2, 0.2, 0.2, C.Yellow, "SmoothPlastic")
+				q:ball(0.4, 1.9, 0.82, 0.3, C.White, "SmoothPlastic")
+				q:ball(1.2, 1.8, 0.3, 0.28, C.White, "SmoothPlastic")
+				q:ball(-0.5, 1.84, 0.32, 0.26, C.Yellow, "SmoothPlastic")
+			end)
+		end,
+	},
+	{
+		id = "window_hood",
+		name = "Window hood",
+		cat = "windows",
+		price = 15,
+		place = "wall",
+		size = Vector3.new(5, 1, 1),
+		c1 = "FFFFFF",
+		c2 = "C7383F",
+		build = function(r: R)
+			-- a little pent roof on two brackets, to hang over a window or a door: c1 the
+			-- woodwork, c2 the roof
+			for _, x in { -2.1, 2.1 } do
+				bracket(r, x, 0.45, 0.45, 0.7, r.c1)
+			end
+			r:block(-2.45, 0.45, 0.02, 2.45, 0.6, 0.8, r.c1, "Wood")
+			slope(r, -2.5, 0.6, 0, 2.5, 1, 0.92, r.c2, "ClayRoofTiles")
+		end,
+	},
+	{
+		id = "window_attic",
+		name = "Attic window",
+		cat = "windows",
+		price = 60,
+		place = "floor",
+		size = Vector3.new(4, 4.8, 1.4),
+		c1 = "FFFFFF",
+		c2 = "4E9A44",
+		build = function(r: R)
+			-- A window for a gable end, where a wall's own windows can't go: stand it on the
+			-- floor above, the middle of its footprint on the wall's line and its back to the
+			-- gable. It cuts no hole, so the glass is dark. c1 the frame, c2 its two shutters.
+			local z0 = 0.3 -- the gable's face
+			local y0 = 1.4 -- the sill, above the top of the wall below
+			local pane = r:block(-1.2, y0, z0, 1.2, y0 + 3, z0 + 0.1, Color3.fromRGB(72, 98, 122), "Glass")
+			pane.collide = false
+			r:block(-1.4, y0 - 0.22, z0, 1.4, y0, z0 + 0.42, r.c1, "Wood")
+			r:block(-1.4, y0 + 3, z0, 1.4, y0 + 3.24, z0 + 0.34, r.c1, "Wood")
+			for _, sx in { -1, 1 } do
+				local x1, x2 = math.min(sx * 1.2, sx * 1.4), math.max(sx * 1.2, sx * 1.4)
+				r:block(x1, y0, z0, x2, y0 + 3, z0 + 0.26, r.c1, "Wood")
+				local s1, s2 = math.min(sx * 1.45, sx * 1.98), math.max(sx * 1.45, sx * 1.98)
+				r:block(s1, y0, z0, s2, y0 + 3, z0 + 0.14, r.c2, "Wood")
+			end
+			r:block(-0.06, y0, z0 + 0.1, 0.06, y0 + 3, z0 + 0.18, r.c1, "Wood")
+			r:block(-1.2, y0 + 1.44, z0 + 0.1, 1.2, y0 + 1.56, z0 + 0.18, r.c1, "Wood")
 		end,
 	},
 }

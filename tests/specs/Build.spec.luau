@@ -465,6 +465,159 @@ describe("Shapes", function()
 	end)
 end)
 
+describe("Trim, garden and workshop pieces", function()
+	-- the user: "improve the starting house detail by alot". What the starter house is dressed with
+	-- are ordinary catalog pieces, so these hold wherever a player puts them too.
+	it("hang on the outside of a wall round a window without cutting it", function()
+		local plan = Plan.new()
+		plan.walls["1"] = wall(0, 0, 12, 0)
+		local w = plan.walls["1"]
+		local sill = Plan.openingY(w, 3)
+		plan.items["2"] = { id = "win_square", x = 0, y = sill, z = 0, r = 0, lv = 0, wall = "1", t = 6, side = "a" }
+		local n = Plan.wallNormal(w)
+		local heights = {
+			shutters = sill - 0.15,
+			window_box = sill - 1.35,
+			window_hood = sill + 4.38,
+			stone_footing = 0,
+			downpipe = 0,
+			trellis = 1.3,
+			hanging_basket = 5,
+			lantern_wall = 5.6,
+			bunting = 8.8,
+			tool_board = 4.6,
+			sign_workshop = 8.4,
+		}
+		for id, y in heights do
+			local def = Catalog.get(id)
+			if not def then
+				error("no catalog piece " .. id)
+			end
+			expect(def.place).toBe("wall")
+			expect(def.opening).toBe(nil)
+			local item = { id = id, x = 0, y = y, z = 0, r = 0, lv = 0, wall = "1", t = 6, side = "a" }
+			local ok, why = Plan.validItem(plan, item)
+			if not ok then
+				error(id .. ": " .. tostring(why))
+			end
+			-- all of it is in front of the wall's face, none of it in the wall or behind it
+			plan.items.x = item
+			for _, p in Builder.primsFor(plan, "items", "x") do
+				for _, c in Geometry.corners(p) do
+					local out = (c - Vector3.new(w.x1, 0, w.z1)):Dot(n)
+					if out < P.WallThickness / 2 - 0.01 then
+						error(id .. " reaches into its wall")
+					end
+				end
+			end
+			plan.items.x = nil
+		end
+		expect(#Plan.openings(plan, "1")).toBe(1)
+	end)
+
+	it("give the bay window its hole, and a bay that stands out on the side it was put", function()
+		local def = Catalog.get("win_bay")
+		expect(def.opening.w).toBe(6)
+		for _, side in { "a", "b" } do
+			local plan = Plan.new()
+			plan.walls["1"] = wall(0, 20, 12, 20)
+			local w = plan.walls["1"]
+			local item = {
+				id = "win_bay",
+				x = 0,
+				y = Plan.openingY(w, def.opening.sill),
+				z = 0,
+				r = 0,
+				lv = 0,
+				wall = "1",
+				t = 6,
+				side = side,
+			}
+			expect(Plan.validItem(plan, item)).toBe(true)
+			plan.items["2"] = item
+			expect(#Plan.openings(plan, "1")).toBe(1)
+			local n = Plan.wallNormal(w) * (if side == "a" then 1 else -1)
+			local far, back = -math.huge, math.huge
+			for _, p in Builder.primsFor(plan, "items", "2") do
+				for _, c in Geometry.corners(p) do
+					local out = (c - Vector3.new(w.x1, 0, w.z1)):Dot(n)
+					far, back = math.max(far, out), math.min(back, out)
+				end
+			end
+			expect(far > 1.5).toBeTruthy() -- the bay, well out from the wall
+			expect(back > -0.7).toBeTruthy() -- only a sill on the other side
+		end
+	end)
+
+	it("swing the garden gate on its own post, and leave its posts standing", function()
+		local plan = Plan.new()
+		plan.items["1"] = { id = "gate_garden", x = X0 + 30, y = 0, z = 30, r = 90, lv = 0 }
+		expect(Plan.validItem(plan, plan.items["1"])).toBe(true)
+		local folder = Instance.new("Folder")
+		Builder.renderAll(plan, folder, CFrame.new(100, 0, 100))
+		local leaves, still = 0, 0
+		for _, d in folder:GetDescendants() do
+			if d:IsA("BasePart") then
+				if d:HasTag(Builder.Tags.DoorLeaf) then
+					leaves += 1
+					expect(d.CanCollide).toBe(false)
+					local open = Builder.doorOpen(d)
+					expect(open ~= nil).toBeTruthy()
+					-- round its hinge: it ends up within the gate's own length, at the same height
+					expect((open.Position - d.CFrame.Position).Magnitude < 5).toBeTruthy()
+					expect(math.abs(open.Position.Y - d.CFrame.Position.Y) < 0.01).toBeTruthy()
+				else
+					still += 1
+				end
+			end
+		end
+		expect(leaves >= 5).toBeTruthy()
+		expect(still >= 2).toBeTruthy()
+	end)
+
+	it("stand a weathervane on the level above, its vane clear of the roof under it", function()
+		local def = Catalog.get("weathervane")
+		local plan = Plan.new()
+		local vane = { id = "weathervane", x = X0 + 30, y = Plan.levelBase(1), z = 30, r = 0, lv = 1 }
+		expect(Plan.validItem(plan, vane)).toBe(true)
+		-- the pole is long enough to come out of a steep roof on a narrow house
+		expect(Plan.levelBase(1) + def.size.Y > Plan.levelTop(0) + 9 + 2).toBeTruthy()
+		-- and it isn't something for the ground floor's ceiling
+		vane.lv = P.Levels
+		expect(Plan.validItem(plan, vane)).toBe(false)
+	end)
+
+	it("wrap a corner board round each corner of a room, outside its walls", function()
+		-- a room 10 by 10: the board for each corner, turned as the starter house turns them
+		local corners = { { 10, 10, 0 }, { 10, 0, 90 }, { 0, 0, 180 }, { 0, 10, 270 } }
+		local def = Catalog.get("corner_board")
+		for _, c in corners do
+			local frame = CFrame.new(c[1], 0, c[2]) * CFrame.Angles(0, math.rad(c[3]), 0)
+			for _, p in Catalog.prims(def) do
+				local at = frame * p.cf.Position
+				-- its middle is outside the room's outer faces
+				local outside = at.X < -P.WallThickness / 2
+					or at.X > 10 + P.WallThickness / 2
+					or at.Z < -P.WallThickness / 2
+					or at.Z > 10 + P.WallThickness / 2
+				expect(outside).toBe(true)
+			end
+		end
+	end)
+
+	it("give the swing a seat and the crate a top to put things on", function()
+		local seats = 0
+		for _, p in Catalog.prims(Catalog.get("tree_swing")) do
+			if p.role == "seat" then
+				seats += 1
+			end
+		end
+		expect(seats).toBe(1)
+		expect(Catalog.get("crate").surface).toBe(Catalog.get("crate").size.Y)
+		expect(Catalog.get("sawhorse").surface ~= nil).toBeTruthy()
+	end)
+end)
+
 describe("Builder", function()
 	it("builds parts for a small house", function()
 		local plan = Plan.new()

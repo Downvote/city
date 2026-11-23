@@ -127,6 +127,8 @@ local function prepare(plan: any, requests: { any }): ({ any }?, string?)
 					return fail("take the doors and windows off first")
 				end
 			end
+			-- what of it was given stays given, whatever the client sent (Plan: Gifts)
+			obj.gift = before.gift
 			ops = { { op = "set", kind = req.kind, key = req.key, obj = Plan.copy(obj), before = Plan.copy(before) } }
 		else
 			return fail("bad request")

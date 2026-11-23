@@ -353,6 +353,35 @@ local items: { Item } = {
 			r:ball(0, 8.82, 0, 0.28, r.c1, "Metal")
 		end,
 	},
+	{
+		id = "lantern_wall",
+		name = "Porch lantern",
+		cat = "lights",
+		price = 45,
+		place = "wall",
+		size = Vector3.new(1, 2.2, 1.3),
+		c1 = "2F3B35",
+		c2 = "FFE2A8",
+		tags = { "light" },
+		build = function(r: R)
+			-- a lantern on an arm, for beside a door: a back plate, the arm, a glass box with
+			-- four bars and a stepped lid. c1 is the iron, c2 the glass.
+			r:block(-0.25, 0.7, 0, 0.25, 2.05, 0.08, r.c1, "Metal")
+			r:block(-0.06, 1.85, 0.08, 0.06, 1.97, 0.72, r.c1, "Metal")
+			r:block(-0.05, 1.68, 0.6, 0.05, 1.85, 0.7, r.c1, "Metal")
+			r:block(-0.36, 1.5, 0.29, 0.36, 1.6, 1.01, r.c1, "Metal")
+			r:block(-0.22, 1.6, 0.43, 0.22, 1.68, 0.87, r.c1, "Metal")
+			local glass = r:block(-0.26, 0.62, 0.39, 0.26, 1.5, 0.91, r.c2, "Glass")
+			r:glow(glass, 20, 1.4)
+			for _, sx in { -1, 1 } do
+				for _, sz in { -1, 1 } do
+					r:box(sx * 0.28, 1.06, 0.65 + sz * 0.28, 0.07, 0.88, 0.07, r.c1, "Metal")
+				end
+			end
+			r:block(-0.32, 0.5, 0.33, 0.32, 0.62, 0.97, r.c1, "Metal")
+			r:ball(0, 0.42, 0.65, 0.2, r.c1, "Metal")
+		end,
+	},
 }
 
 return items

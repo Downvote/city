@@ -1,140 +1,411 @@
 --!strict
--- The cottage every new plot starts with, alone in the middle of the land, so the first villager
--- has a bed on day one.
--- The street runs along the plot's front edge (z = 0).
+-- What every new plot starts with: a cottage and its little workshop, side by side in the middle
+-- of the land, so the first villager has a bed and a job on day one. The street runs along the
+-- plot's front edge (z = 0).
+--
+-- The user: "players should spawn at their plot, which starts out with a single house in the
+-- middle", then "redo our map, and our starting house as well", then "improve the starting house
+-- detail by alot, and add a workspace next to it". So: one small house somebody loved (a tall
+-- gabled front with a bay window, a lower wing whose roof comes down over a porch, a chimney
+-- with a fire, shutters, flowers and trim at every window, a front garden behind a picket
+-- fence), and beside it an open fronted workshop with the builder's bench. The rest of the land
+-- stays empty for the player.
+--
+-- Every piece of it is an ordinary plan object (walls, floors, roofs, catalog items), so the
+-- player can move, repaint or sell any of it in Build mode.
 
 local Plan = require(script.Parent.Parent.Build.Plan)
-local Palette = require(script.Parent.Palette)
 local Catalog = require(script.Parent.Parent.Build.Catalog)
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 
 local StarterHouse = {}
 
-local OUT = Palette.Defaults.WallOut
-local IN = Palette.Defaults.WallIn
+type Finish = { c: string, m: string }
 
--- The user: "players should spawn at their plot, which starts out with a single house in the
--- middle". The cottage was laid out with its walls from x 40 to 64 and z 24 to 44; these move it
--- so its middle is the middle of the land a new player owns (which starts at the street, z = 0,
--- in the middle of the plot's width).
-local LAND = Tuning.City.Land[1].Size
-local OX = Tuning.Plot.Size / 2 - 52
-local OZ = LAND / 2 - 34
+local F = Tuning.Plot.Foundation
+
+-- Everything is laid out in one frame: x across from the house's left corner, z back from the
+-- workshop's front, on the 2 stud wall grid. All the walls fit a box W by D, and OX and OZ put
+-- that box's middle on the middle of the land a new player owns (which starts at the street, in
+-- the middle of the plot's width). The house stands at (0, HOUSE_Z) in it, the workshop at
+-- (SHOP_X, 0); the fence runs FRONT studs in front of the box.
+local W, D = 40, 28
+local OX = Tuning.Plot.Size / 2 - W / 2
+local OZ = Tuning.City.Land[1].Size / 2 - D / 2
+local HOUSE_Z = 4
+local SHOP_X = 28
+local FRONT = 6
+
+-- Finishes. A wall, floor or roof in a plan is painted with a colour and one of Palette's
+-- materials, nothing else (Plan.validate turns away anything more), so these are Roblox's own
+-- materials and take whatever texture the town gives them.
+local CREAM: Finish = { c = "F6E7C8", m = "Plaster" } -- the house outside
+local BOARDS: Finish = { c = "A9C9A4", m = "WoodPlanks" } -- the gable ends and the workshop
+local TILE: Finish = { c = "CE5B3A", m = "ClayRoofTiles" }
+local FRONT_ROOM: Finish = { c = "F7F3EA", m = "SmoothPlastic" }
+local BEDROOM: Finish = { c = "E3ECEF", m = "SmoothPlastic" }
+local KITCHEN: Finish = { c = "F6ECCF", m = "SmoothPlastic" }
+local SHOP_IN: Finish = { c = "D9B98A", m = "WoodPlanks" }
+local OAK: Finish = { c = "C99A62", m = "WoodPlanks" }
+local WALNUT: Finish = { c = "A8743F", m = "WoodPlanks" }
+local KITCHEN_TILES: Finish = { c = "EADBC0", m = "CeramicTiles" }
+local DECK: Finish = { c = "B98A5A", m = "WoodPlanks" }
+local PAVING: Finish = { c = "D9C7A7", m = "Pavement" }
+local FLAGS: Finish = { c = "A9A6A0", m = "Cobblestone" }
+-- paint for the pieces that take it
+local GREEN = "3F8F6B" -- the door and the shutters
+local GREEN_DARK = "2F6E52"
+local WHITE = "F7F3EA"
+local ROSE = "E8667A"
 
 function StarterHouse.plan(): Plan.PlanData
 	local plan = Plan.new()
+	local walls: { [string]: string } = {} -- a wall's name here to its key in the plan
+	local ox, oz = OX, OZ -- where the part being laid out stands on the plot
 
 	local function add(kind: string, obj: any): string
 		local key = Plan.newKey(plan)
 		local list = (plan :: any)[kind]
+		-- all of it is given: selling a piece of it refunds nothing (Plan: Gifts)
+		obj.gift = Plan.cost(kind, obj)
 		list[key] = obj
 		return key
 	end
 
-	local function wall(x1: number, z1: number, x2: number, z2: number, inner: boolean?): string
-		return add("walls", {
-			x1 = x1 + OX,
-			z1 = z1 + OZ,
-			x2 = x2 + OX,
-			z2 = z2 + OZ,
+	local function floor(x1: number, z1: number, x2: number, z2: number, finish: Finish)
+		add("floors", { x1 = x1 + ox, z1 = z1 + oz, x2 = x2 + ox, z2 = z2 + oz, lv = 0, c = finish.c, m = finish.m })
+	end
+
+	-- A wall from one point to the next. Going round a building clockwise seen from above (front,
+	-- right, back, left) puts side "a" outside.
+	local function wall(name: string, x1: number, z1: number, x2: number, z2: number, a: Finish, b: Finish)
+		walls[name] = add("walls", {
+			x1 = x1 + ox,
+			z1 = z1 + oz,
+			x2 = x2 + ox,
+			z2 = z2 + oz,
 			lv = 0,
 			style = "wall",
-			a = if inner then { c = IN.c, m = IN.m } else { c = OUT.c, m = OUT.m },
-			b = { c = IN.c, m = IN.m },
+			a = { c = a.c, m = a.m },
+			b = { c = b.c, m = b.m },
 		})
 	end
 
-	local function opening(id: string, wallKey: string, t: number, side: string)
+	local function roof(x1: number, z1: number, x2: number, z2: number, rise: number, dir: number)
+		add("roofs", {
+			x1 = x1 + ox,
+			z1 = z1 + oz,
+			x2 = x2 + ox,
+			z2 = z2 + oz,
+			lv = 0,
+			style = "gable",
+			rise = rise,
+			dir = dir,
+			over = 1.2,
+			c = TILE.c,
+			m = TILE.m,
+			c2 = BOARDS.c,
+			m2 = BOARDS.m,
+		})
+	end
+
+	-- A door or window `t` studs along a wall, from the wall's first point.
+	local function opening(id: string, name: string, t: number, c1: string?, c2: string?)
 		local def = Catalog.get(id)
-		if not def or not def.opening then
-			return
+		local key = walls[name]
+		if not def or not def.opening or not key then
+			return -- the starter plan only uses what the catalog has
 		end
-		local w = plan.walls[wallKey]
 		add("items", {
 			id = id,
 			x = 0,
-			y = Plan.openingY(w, def.opening.sill),
+			y = Plan.openingY(plan.walls[key], def.opening.sill),
 			z = 0,
 			r = 0,
 			lv = 0,
-			wall = wallKey,
+			wall = key,
 			t = t,
-			side = side,
+			side = "a",
+			c1 = c1,
+			c2 = c2,
 		})
 	end
 
-	local function item(id: string, x: number, z: number, r: number, y: number?)
-		if not Catalog.get(id) then
-			return -- the starter house only uses what the catalog has
+	-- Something hung on a wall: its bottom edge `y` above the ground, on side "a" (outside) or "b".
+	local function hang(id: string, name: string, t: number, y: number, side: string, c1: string?, c2: string?)
+		local key = walls[name]
+		if not Catalog.get(id) or not key then
+			return
 		end
-		add("items", { id = id, x = x + OX, y = y or Tuning.Plot.Foundation, z = z + OZ, r = r, lv = 0 })
+		add("items", { id = id, x = 0, y = y, z = 0, r = 0, lv = 0, wall = key, t = t, side = side, c1 = c1, c2 = c2 })
 	end
 
-	-- the cottage: 24 x 20, front door to the street
-	add("floors", { x1 = 40 + OX, z1 = 24 + OZ, x2 = 64 + OX, z2 = 44 + OZ, lv = 0, c = "C99A62", m = "WoodPlanks" })
-	add("floors", { x1 = 52 + OX, z1 = 18 + OZ, x2 = 64 + OX, z2 = 24 + OZ, lv = 0, c = "B4B4B8", m = "Concrete" })
-	local front = wall(40, 24, 64, 24)
-	local right = wall(64, 24, 64, 44)
-	local back = wall(64, 44, 40, 44)
-	local left = wall(40, 44, 40, 24)
-	local inner = wall(52, 44, 52, 30, true)
-	add("roofs", {
-		x1 = 40 + OX,
-		z1 = 24 + OZ,
-		x2 = 64 + OX,
-		z2 = 44 + OZ,
-		lv = 0,
-		style = "gable",
-		rise = 7,
-		dir = 0,
-		over = 1.5,
-		c = Palette.Defaults.Roof.c,
-		m = Palette.Defaults.Roof.m,
-		c2 = OUT.c,
-		m2 = OUT.m,
-	})
-	-- a little porch roof over the front step
-	add("roofs", {
-		x1 = 54 + OX,
-		z1 = 18 + OZ,
-		x2 = 62 + OX,
-		z2 = 24 + OZ,
-		lv = 0,
-		style = "shed",
-		rise = 2,
-		dir = 2,
-		over = 0.5,
-		c = Palette.Defaults.Roof.c,
-		m = Palette.Defaults.Roof.m,
-		c2 = OUT.c,
-		m2 = OUT.m,
-	})
+	-- A free-standing piece: on the floor, or on the grass for a garden piece, unless `y` says
+	-- otherwise (on a table, or a garden piece on the porch boards).
+	local function item(id: string, x: number, z: number, r: number, y: number?, c1: string?, c2: string?)
+		local def = Catalog.get(id)
+		if not def then
+			return
+		end
+		local height = y
+		if height == nil then
+			if def.place == "ceiling" then
+				height = Plan.levelTop(0) - 1
+			elseif def.place == "ground" then
+				height = 0
+			else
+				height = F
+			end
+		end
+		add("items", { id = id, x = x + ox, y = height, z = z + oz, r = r, lv = 0, c1 = c1, c2 = c2 })
+	end
 
-	opening("door_front", front, 18, "a")
-	opening("win_shutters", front, 6, "a")
-	opening("win_square", right, 10, "a")
-	opening("win_square", back, 6, "a")
-	opening("win_square", back, 18, "a")
-	opening("win_square", left, 10, "a")
-	opening("arch_open", inner, 10, "a")
+	-- A piece that stands on the level above the house's one storey: what goes on the roof or in
+	-- a gable.
+	local function upstairs(id: string, x: number, z: number, r: number, c1: string?, c2: string?)
+		if Catalog.get(id) then
+			add("items", { id = id, x = x + ox, y = Plan.levelBase(1), z = z + oz, r = r, lv = 1, c1 = c1, c2 = c2 })
+		end
+	end
 
-	item("pillar_square", 54.5, 18.5, 0)
-	item("pillar_square", 61.5, 18.5, 0)
+	-- The top of a piece of furniture standing on the floor, for what stands on it.
+	local function top(id: string): number
+		local def = Catalog.get(id)
+		return F + (if def and def.surface then def.surface else 0)
+	end
 
-	-- furniture (skipped quietly if an id is missing from the catalog)
-	item("bed_single", 45, 40, 180)
-	item("nightstand", 49, 42.5, 180)
-	item("lamp_table", 49, 42.5, 180, Tuning.Plot.Foundation + 2.2)
-	item("rug_round", 46, 35, 0)
-	item("sofa_two", 58, 40, 180)
-	item("table_coffee", 58, 35.5, 0)
-	item("counter", 61.5, 27.5, 270)
-	item("stove", 61.5, 31.5, 270)
-	item("plant_big", 42, 27, 0)
+	-- Trim for an ordinary window (four studs wide, its sill three studs up) from outside: a hood
+	-- over it, a box of flowers under it and, on the house, shutters.
+	local function dress(name: string, t: number, shutters: boolean)
+		local sill = F + 3
+		if shutters then
+			hang("shutters", name, t, sill - 0.15, "a", GREEN, GREEN_DARK)
+		end
+		hang("window_hood", name, t, sill + 4.38, "a", "FFFFFF", TILE.c)
+		hang("window_box", name, t, sill - 1.35, "a", WHITE, ROSE)
+	end
 
-	-- nothing else: no fence, no garden, no stall. One house, and the rest of the land is the
-	-- player's to fill. (A stone path runs from the street to the porch so the door is easy to find.)
-	add("floors", { x1 = 56 + OX, z1 = 0, x2 = 60 + OX, z2 = 18 + OZ, lv = 0, c = "D9C7A7", m = "Pavement" })
+	-- the house ------------------------------------------------------------------------------------
+	-- Its own frame: the gabled part is x 0 to 12 and z 0 to 24, the wing x 12 to 24 and z 8 to
+	-- 22, the porch in front of the wing.
+	ox, oz = OX, OZ + HOUSE_Z
+
+	floor(12, 8, 24, 22, OAK) -- the front room
+	floor(0, 0, 12, 10, WALNUT) -- the bedroom
+	floor(0, 10, 12, 24, KITCHEN_TILES)
+	floor(12, 2, 24, 8, DECK) -- the porch
+
+	-- the outside walls, clockwise from the gable's front
+	wall("gable", 0, 0, 12, 0, CREAM, BEDROOM)
+	wall("side", 12, 0, 12, 8, CREAM, BEDROOM)
+	wall("porch", 12, 8, 24, 8, CREAM, FRONT_ROOM)
+	wall("end", 24, 8, 24, 22, CREAM, FRONT_ROOM)
+	wall("wingback", 24, 22, 12, 22, CREAM, FRONT_ROOM)
+	wall("step", 12, 22, 12, 24, CREAM, KITCHEN)
+	wall("back", 12, 24, 0, 24, CREAM, KITCHEN)
+	wall("leftback", 0, 24, 0, 10, CREAM, KITCHEN)
+	wall("leftfront", 0, 10, 0, 0, CREAM, BEDROOM)
+	-- the inside ones: the bedroom's back wall, and the wall between the front room and the kitchen
+	wall("nook", 12, 8, 12, 10, FRONT_ROOM, BEDROOM)
+	wall("bedroom", 0, 10, 12, 10, BEDROOM, KITCHEN)
+	wall("middle", 12, 10, 12, 22, FRONT_ROOM, KITCHEN)
+
+	-- Two roofs. The gabled part's is steep and runs front to back. The wing's is lower, runs
+	-- across, comes down over the porch and dies into the other one's slope.
+	roof(0, 0, 12, 24, 9, 1)
+	roof(8, 2, 24, 22, 7, 0)
+
+	-- doors and windows
+	opening("door_front", "porch", 6, GREEN, WHITE)
+	opening("win_tall", "porch", 1.8)
+	opening("win_tall", "porch", 10.2)
+	opening("win_bay", "gable", 6, "FFFFFF", TILE.c)
+	opening("win_square", "leftfront", 5)
+	opening("win_square", "leftback", 10)
+	opening("win_small", "back", 4.6)
+	opening("win_square", "wingback", 4.5)
+	opening("win_square", "end", 9.5)
+	opening("door_wood", "bedroom", 9.6)
+	opening("arch_wide", "middle", 5)
+
+	-- the outside: every ordinary window dressed, baskets by the bay, a lantern and bunting on
+	-- the porch, a stone course round the foot of the walls, boards up the corners, two drainpipes
+	dress("leftfront", 5, true)
+	dress("leftback", 10, true)
+	dress("wingback", 4.5, true)
+	dress("end", 9.5, true)
+	hang("hanging_basket", "gable", 1.4, 5, "a")
+	hang("hanging_basket", "gable", 10.6, 5, "a")
+	hang("hanging_basket", "back", 1.6, 5, "a")
+	hang("trellis", "back", 9.4, 1.3, "a")
+	hang("trellis", "end", 2.6, 1.3, "a")
+	hang("lantern_wall", "porch", 8.6, 5.6, "a")
+	hang("bunting", "porch", 6, 8.8, "a")
+	for _, t in { 2, 6, 10 } do
+		hang("stone_footing", "gable", t, 0, "a")
+		hang("stone_footing", "back", t, 0, "a")
+		hang("stone_footing", "wingback", t, 0, "a")
+		hang("stone_footing", "end", t, 0, "a")
+		hang("stone_footing", "leftback", t, 0, "a")
+	end
+	for _, t in { 0, 4, 8 } do
+		hang("stone_footing", "leftfront", t, 0, "a")
+	end
+	item("corner_board", 0, 0, 180, 0)
+	item("corner_board", 12, 0, 90, 0)
+	item("corner_board", 24, 8, 90, 0)
+	item("corner_board", 24, 22, 0, 0)
+	item("corner_board", 12, 24, 0, 0)
+	item("corner_board", 0, 24, 270, 0)
+	hang("downpipe", "end", 12.7, 0, "a")
+	hang("downpipe", "leftback", 1, 0, "a")
+	item("water_butt", 25.45, 20.7, 90)
+	-- Up in the gables, which stand on the level above: a window front and back, and a
+	-- weathervane on the ridge.
+	upstairs("window_attic", 6, 0, 180, WHITE, GREEN)
+	upstairs("window_attic", 6, 24, 0, WHITE, GREEN)
+	upstairs("weathervane", 6, 0.8, 0)
+
+	-- the porch: four posts under the eave (the one against the gabled part is turned, so its
+	-- beam keeps out of the bedroom wall), rails between them, steps up from the path, and what a
+	-- porch collects
+	item("porch_post", 12.9, 2.5, 90)
+	for _, x in { 15.6, 20.4, 23.5 } do
+		item("porch_post", x, 2.5, 0)
+	end
+	item("porch_rail", 14.2, 2.5, 0)
+	item("porch_rail", 21.95, 2.5, 0)
+	item("porch_rail", 23.5, 5.2, 90)
+	item("doorstep", 18, 0.8, 180, 0)
+	item("flower_pot", 15.4, 0.7, 0, 1)
+	item("flower_pot", 20.6, 0.7, 0, 1)
+	item("doormat", 18, 6.8, 0)
+	item("flower_pot", 15.45, 7.2, 0)
+	item("flower_pot", 20.55, 7.2, 0)
+	item("chair_rocking", 21.4, 5.6, 195)
+	item("woodpile", 13.05, 5.3, 90, F)
+
+	-- the front room: the fire on the end wall under the wing's ridge, a sofa under the window
+	item("chimney_hearth", 22.1, 12, 270)
+	item("sofa_two", 22.05, 17.2, 270)
+	item("rug_long", 17.8, 17, 0)
+	item("table_coffee", 16.4, 17.2, 90)
+	item("books_stack", 16.4, 16.5, 20, top("table_coffee"))
+	item("lamp_floor", 22.7, 20.75, 0)
+	item("bookshelf", 14.7, 20.9, 180)
+	item("coat_stand", 13.3, 9.4, 0)
+	item("light_ceiling", 18, 15, 0)
+	hang("curtains", "end", 9.5, 2.2, "b")
+	hang("art_abstract", "wingback", 9.3, 7.6, "b")
+
+	-- the bedroom, behind the bay window
+	item("bed_single", 2.1, 6.1, 180)
+	item("nightstand", 5, 8.75, 180)
+	item("lamp_table", 5, 8.75, 180, top("nightstand"))
+	item("rug_round", 6.8, 4.8, 0)
+	item("wardrobe", 10.6, 4, 270)
+	item("light_ceiling", 6.5, 5, 0)
+	hang("curtains", "leftfront", 5, 2.2, "b")
+	hang("art_flowers", "bedroom", 5, 5.8, "a")
+
+	-- the kitchen: a run along the back wall, the fridge round the corner, a table by the window
+	item("counter_sink", 7.4, 22.4, 180)
+	item("stove", 4.4, 22.4, 180)
+	item("counter_corner", 1.6, 22.4, 90)
+	item("kettle", 1.5, 22.5, 135, top("counter_corner"))
+	item("fridge", 1.6, 19.6, 90)
+	item("table_dining_small", 3.4, 14, 0)
+	item("vase_flowers", 3.4, 14, 0, top("table_dining_small"))
+	item("chair_wood", 6, 14, 270)
+	item("chair_wood", 3.4, 11.4, 0)
+	item("plant_big", 10.1, 22, 0)
+	item("lamp_pendant", 3.4, 14, 0)
+	hang("shelf_wall", "back", 7.6, 6.6, "b")
+	hang("curtains", "leftback", 10, 2.2, "b")
+	hang("art_landscape", "bedroom", 3.4, 6, "b")
+
+	-- the workshop ---------------------------------------------------------------------------------
+	-- Three boarded walls and a roof, open to the front, 12 by 8. The builder's bench stands across
+	-- the opening with its tools to the street: the worker stands at it on the threshold, whoever
+	-- drops by walks in at the right and round behind it.
+	ox, oz = OX + SHOP_X, OZ
+
+	floor(0, 0, 12, 8, FLAGS)
+	floor(0, -4, 12, 0, PAVING)
+	wall("shopright", 12, 0, 12, 8, BOARDS, SHOP_IN)
+	wall("shopback", 12, 8, 0, 8, BOARDS, SHOP_IN)
+	wall("shopleft", 0, 8, 0, 0, BOARDS, SHOP_IN)
+	roof(0, 0, 12, 8, 4, 0)
+	opening("win_small", "shopback", 2.5)
+	opening("win_square", "shopleft", 4)
+	opening("win_square", "shopright", 4)
+	dress("shopleft", 4, false)
+	dress("shopright", 4, false)
+	for _, t in { 2, 6 } do
+		hang("stone_footing", "shopright", t, 0, "a")
+		hang("stone_footing", "shopleft", t, 0, "a")
+	end
+	for _, t in { 2, 6, 10 } do
+		hang("stone_footing", "shopback", t, 0, "a")
+	end
+	item("corner_board", 0, 0, 180, 0)
+	item("corner_board", 12, 0, 90, 0)
+	item("corner_board", 12, 8, 0, 0)
+	item("corner_board", 0, 8, 270, 0)
+	hang("lantern_wall", "shopleft", 7, 5.6, "a")
+	hang("sign_workshop", "shopleft", 7.5, 8.4, "a")
+	hang("trellis", "shopback", 8, 1.3, "a")
+
+	item("work_builder", 4.2, 2.6, 180)
+	hang("tool_board", "shopback", 7.8, 5.9, "b") -- over the heads of whoever stands at the back
+	hang("string_lights", "shopback", 6, 9.6, "b")
+	item("crate", 1.5, 6.6, 0)
+	item("crate", 1.6, 6.5, 20, top("crate"))
+	item("stool", 10.85, 6.85, 0)
+	item("lamp_pendant", 4.2, 3.6, 0)
+	-- out on the flags, clear of the way in
+	item("sawhorse", 9.8, -3.9, 0, 0)
+	item("crate", 1.4, -4.7, 15, 0)
+
+	-- the garden -----------------------------------------------------------------------------------
+	-- A picket fence along the front with a gate on the path, flowers inside it, a bench under
+	-- the bay. Round the back, out of the way of the street: two beds of vegetables and a tree
+	-- with a swing.
+	ox, oz = OX, OZ
+
+	for _, x in { 2, 6, 10, 14, 22, 26, 30, 34, 38 } do
+		item("fence_picket", x, -FRONT, 0)
+	end
+	item("fence_picket", 0, -FRONT + 2, 90)
+	item("fence_picket", 0, -FRONT + 6, 90)
+	item("fence_picket", W, -FRONT + 2, 90)
+	item("gate_garden", 18, -FRONT, 0, F)
+	item("lamp_post", 14.9, -FRONT + 1.2, 0)
+	item("mailbox", 21, -3, 270)
+	for _, x in { 2.5, 6.5, 10.5, 23.5 } do
+		item("flower_border", x, -FRONT + 1, 0)
+	end
+	item("bench_garden", 6, -2.2, 180)
+	item("bird_house", 1.6, -2.8, 200)
+	item("bicycle", 13.3, -0.8, 10)
+	item("planter_box", 6, HOUSE_Z - 2.9, 180)
+	item("bush", 1.6, HOUSE_Z - 1.5, 0)
+	item("bush", 10.4, HOUSE_Z - 1.5, 0)
+	item("bush", 13.5, HOUSE_Z + 0.9, 0)
+	item("bush", 22.6, HOUSE_Z + 0.9, 0)
+	-- stepping stones from the gate to the porch steps, and across to the workshop
+	item("path_stones", 17.8, -2.8, 0)
+	item("path_stones", 18.3, -0.5, 90)
+	item("path_stones", 17.7, 1.8, 200)
+	item("path_stones", 23, -2.5, 0)
+	item("path_stones", 25.5, -1.7, 40)
+
+	item("veg_patch", 31, 13, 0)
+	item("veg_patch", 36, 13, 90)
+	item("tree_swing", 30, 22.5, 0)
+
+	-- a paved path from the street to just inside the gate
+	floor(16, -OZ, 20, -FRONT + 2, PAVING)
 
 	return plan
 end

@@ -359,6 +359,48 @@ local items: { Item } = {
 			r:cyl(1.9, 3.38, 1.24, 0.06, 0.6, "x", C.Metal, "Metal")
 		end,
 	},
+	{
+		id = "sawhorse",
+		name = "Sawhorse",
+		cat = "tables",
+		price = 35,
+		place = "floor",
+		size = Vector3.new(4, 3.3, 2.2),
+		surface = 3,
+		c1 = "C99A62",
+		c2 = "E3C08D",
+		build = function(r: R)
+			-- a trestle on four splayed legs with a brace each end (c1) and two planks waiting
+			-- to be cut (c2), a hand saw left on top
+			r:block(-1.9, 2.5, -0.2, 1.9, 2.8, 0.2, r.c1, "Wood")
+			for _, sx in { -1, 1 } do
+				for _, sz in { -1, 1 } do
+					r:beam(
+						Vector3.new(sx * 1.5, 2.6, sz * 0.15),
+						Vector3.new(sx * 1.7, 0, sz * 0.95),
+						0.22,
+						0.22,
+						r.c1,
+						"Wood"
+					)
+				end
+				r:block(sx * 1.6 - 0.08, 1.1, -0.6, sx * 1.6 + 0.08, 1.3, 0.6, shade(r.c1, 0.85), "Wood")
+			end
+			r:block(-2, 2.8, -0.75, 1.6, 2.92, -0.1, r.c2, "WoodPlanks")
+			r:boxAt(
+				CFrame.new(0.1, 2.98, 0.3) * CFrame.Angles(0, 0.12, 0),
+				3.7,
+				0.12,
+				0.6,
+				shade(r.c2, 0.92),
+				"WoodPlanks"
+			)
+			r:piece(function(q: R)
+				q:block(0.5, 3.04, 0.2, 1.5, 3.07, 0.42, C.Metal, "Metal")
+				q:block(1.5, 3.04, 0.14, 1.9, 3.12, 0.5, C.Red, "Metal")
+			end)
+		end,
+	},
 }
 
 return items

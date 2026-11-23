@@ -638,6 +638,24 @@ local items: { Item } = {
 			end
 		end,
 	},
+	{
+		id = "doormat",
+		name = "Doormat",
+		cat = "decor",
+		price = 15,
+		place = "floor",
+		size = Vector3.new(3, 0.12, 1.8),
+		c1 = "C8A46A",
+		c2 = "8A5A2E",
+		build = function(r: R)
+			-- a bristly mat with a border and two stripes: c1 the mat, c2 the border
+			flat(r, r:block(-1.5, 0, -0.9, 1.5, 0.06, 0.9, r.c2, "Fabric"))
+			flat(r, r:block(-1.32, 0.06, -0.72, 1.32, 0.1, 0.72, r.c1, "Carpet"))
+			for _, z in { -0.4, 0.4 } do
+				flat(r, r:block(-1.1, 0.1, z - 0.06, 1.1, 0.12, z + 0.06, r.c2, "Fabric"))
+			end
+		end,
+	},
 }
 
 return items

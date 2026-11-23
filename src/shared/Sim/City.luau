@@ -74,6 +74,15 @@ function City.level(population: number, value: number): number
 	return level
 end
 
+-- What the town's buildings count for toward its next level: their value, with the starting
+-- house counted at no more than Tuning.City.StarterWorth. The house every plot starts with was
+-- made far bigger (the user: "improve the starting house detail by alot, and add a workspace next
+-- to it"), and counting all of it would put a new town most of the way to Town before its owner
+-- had built a thing. Old towns, whose houses carry no gift, count as they always did.
+function City.worth(plan: any): number
+	return Plan.value(plan) - math.max(0, Plan.giftValue(plan) - Tuning.City.StarterWorth)
+end
+
 -- Everything the city panel shows.
 function City.stats(profile: any): any
 	local population = 0
@@ -86,7 +95,7 @@ function City.stats(profile: any): any
 			employed += 1
 		end
 	end
-	local value = if profile.plan then Plan.value(profile.plan) else 0
+	local value = if profile.plan then City.worth(profile.plan) else 0
 	local level = City.level(population, value)
 	local nextLevel = Tuning.City.Levels[level + 1]
 	local size = Plan.size(profile.plan)
