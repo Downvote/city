@@ -15,7 +15,7 @@ panel:ShopPanel:things panel:News:empty panel:News:busy panel:Goals:claimed pane
 panel:CityPanel:ready event event:talk talk toasts creator
 creator:profile creator:bodies creator:parts creator:items creator:items:ask creator:items:no creator:avatars
 creator:wearing creator:skin creator:shape creator:outfits creator:outfits:saved creator:people build:rooms build:floors build:roofs build:fences
-build:paths build:buildings build:bought build:sell"
+build:paths build:buildings build:bought build:sell build:view"
 COUNT=$(echo $SCENES | wc -w)
 status=0
 for look in dark light; do

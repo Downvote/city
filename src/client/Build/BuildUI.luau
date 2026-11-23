@@ -109,7 +109,10 @@ local CUT = 12
 local DOCK_H, TOOLS_H = 64, 80
 local TILE_H = 64 -- a category or a tool
 local TOOL_W = 64
-local FLOORS_W, FLOORS_H = 248, 216
+-- the floors card: five icon buttons in a row (two arrows, then three switches), as tall as the
+-- tools row beside it, with a quiet line between the two groups
+local VIEW_BTN, VIEW_SPLIT = 64, 13
+local FLOORS_W, FLOORS_H = 5 * VIEW_BTN + VIEW_SPLIT + SIDE * 2, TOOLS_H
 local LABEL_W = 124 -- the name at the left of a labelled row in the tray
 local INNER_H = 160 -- what the tray holds
 -- The catalog is one rounded card: the category tiles in a deeper well along one edge of it, and
@@ -155,7 +158,6 @@ local subButtons: { [string]: TextButton } = {}
 local toolButtons: { [string]: TextButton } = {}
 local hintPill: Frame
 local hintLabel: TextLabel
-local levelLabel: TextLabel
 local levelDown: TextButton
 local levelUp: TextButton
 local coinsLabel: TextLabel
@@ -163,7 +165,11 @@ local actionBar: Frame
 local actionTitle: TextLabel
 local actionValue: Frame
 local actionButtons: Frame
-local viewRows: { [string]: GuiObject } = {}
+local viewButtons: { [string]: TextButton } = {}
+local overView: string? = nil -- the floors card's button under the mouse, which the hint names
+local flashText: string? = nil -- what just changed on the floors card, in the hint for a moment
+local flashToken = 0
+local shownLevel = 0
 local built = false
 local mainTab = "build"
 local subTab = "walls"
@@ -1323,9 +1329,12 @@ local HINTS = {
 	delete = "Click something to sell it.",
 }
 
+-- The floors card's switches, by icon alone (the user: "change this part to 5 icons, 2 arrows, 3
+-- toggleable icons in a row with no need for text"). Their names are what the hint says while the
+-- mouse is on them, and what the simulation presses them by.
 local VIEW = {
 	{ id = "roofs", icon = "roof", name = "Hide roofs" },
-	{ id = "walls", icon = "wall", name = "See-through walls" },
+	{ id = "walls", icon = "wallGlass", name = "See-through walls" },
 	{ id = "snap", icon = "grid", name = "Snap to grid" },
 }
 
@@ -1338,27 +1347,62 @@ local function viewOn(id: string): boolean
 	return s.snap == true
 end
 
--- A view toggle shows its state at a glance: yellow with "On" while it is on.
-local function paintToggle(id: string)
-	local row = viewRows[id]
-	if not row then
-		return
+-- What a switch did, said in the hint for a moment after it changes.
+local function viewWords(id: string): string
+	local on = viewOn(id)
+	if id == "roofs" then
+		return if on then "Roofs hidden" else "Roofs shown"
+	elseif id == "walls" then
+		return if on then "Walls see-through" else "Walls solid"
+	end
+	return if on then "Snap to grid on" else "Snap to grid off"
+end
+
+-- What the floors card's button under the mouse would do, for the hint.
+local function viewTip(id: string): string
+	local top = Tuning.Plot.Levels - 1
+	if id == "down" then
+		return if s.level > 0 then Text.fill("Down to floor {n}", { n = s.level }) else "This is the ground floor"
+	elseif id == "up" then
+		return if s.level < top then Text.fill("Up to floor {n}", { n = s.level + 2 }) else "This is the top floor"
 	end
 	local on = viewOn(id)
-	Kit.setRowSelected(row, on)
-	local art = row:FindFirstChild("IconArt", true)
-	if art then
-		Kit.recolorIcon(art, if on then T.Dark else T.Ink, if on then T.Yellow else T.Card)
+	if id == "roofs" then
+		return if on then "Show the roofs" else "Hide the roofs"
+	elseif id == "walls" then
+		return if on then "Make the walls solid again" else "See through the walls"
 	end
-	local chip = row:FindFirstChild("State", true)
-	if chip and chip:IsA("Frame") then
-		Kit.paint(chip, if on then T.Dark else T.PaperDark)
-		local word = chip:FindFirstChild("Word")
-		if word and word:IsA("TextLabel") then
-			word.Text = if on then "On" else "Off"
-			word.TextColor3 = if on then T.Yellow else T.InkSoft
+	return if on then "Stop snapping to the grid" else "Snap to the grid"
+end
+
+-- Says what changed in the hint line over the tools for a moment.
+local function flash(text: string)
+	flashText = text
+	flashToken += 1
+	local token = flashToken
+	refreshChrome()
+	task.delay(1.6, function()
+		if token == flashToken then
+			flashText = nil
+			refreshChrome()
 		end
+	end)
+end
+
+-- One of the floors card's icon buttons: a rounded square in a thin rim, yellow with a dark icon
+-- while it is on, the plain dark one with a light icon while it is off (or dim, when it can't be
+-- pressed).
+local function paintViewButton(b: GuiButton, on: boolean, dim: boolean?)
+	local face = b:FindFirstChild("Face")
+	local color = if on then T.Yellow else T.Card
+	if face and face:IsA("Frame") then
+		Kit.paint(face, color)
 	end
+	local art = b:FindFirstChild("IconArt")
+	if art then
+		Kit.recolorIcon(art, if on then T.Dark elseif dim then T.InkSoft else T.Ink, color)
+	end
+	b:SetAttribute("On", on)
 end
 
 refreshChrome = function()
@@ -1373,10 +1417,12 @@ refreshChrome = function()
 		local idle = NEEDS[tool.id] and not s.selected and not (tool.id == "rotate" and s.placing ~= nil)
 		Kit.setButtonColor(b, if on then T.Yellow else T.Paper, if on then T.Dark elseif idle then T.InkSoft else T.Ink)
 	end
-	levelLabel.Text = "Floor " .. (s.level + 1)
 	local top = Tuning.Plot.Levels - 1
-	Kit.setButtonColor(levelDown, if s.level > 0 then T.Blue else T.Card, if s.level > 0 then T.White else T.InkSoft)
-	Kit.setButtonColor(levelUp, if s.level < top then T.Blue else T.Card, if s.level < top then T.White else T.InkSoft)
+	paintViewButton(levelDown, false, s.level <= 0)
+	paintViewButton(levelUp, false, s.level >= top)
+	for _, v in VIEW do
+		paintViewButton(viewButtons[v.id], viewOn(v.id))
+	end
 	local hint = HINTS[s.tool] or ""
 	if s.tool == "wall" then
 		hint = if s.wallMode == "room"
@@ -1391,10 +1437,16 @@ refreshChrome = function()
 	if hovering and (s.tool == "place" or s.tool == "preset") then
 		hint = hovering
 	end
-	hintLabel.Text = hint
-	for _, v in VIEW do
-		paintToggle(v.id)
+	-- the floors card's buttons have no words of their own: the hint names the one under the
+	-- mouse, and says what just changed
+	if overView then
+		hint = viewTip(overView)
 	end
+	if flashText then
+		hint = flashText
+	end
+	hintLabel.Text = hint
+	hintPill.Visible = not actionBar.Visible or overView ~= nil or flashText ~= nil
 end
 
 -- the action bar over the picked object ---------------------------------------------------------------------
@@ -1488,8 +1540,9 @@ local function refreshActionBar()
 	end
 	act("trash", "Sell", BuildMode.deleteSelected, 9)
 	actionBar.Visible = true
-	-- the popup says what to do now, so the hint over the tools steps aside
-	hintPill.Visible = false
+	-- the popup says what to do now, so the hint over the tools steps aside (unless something on
+	-- the floors card is being named or just changed)
+	hintPill.Visible = overView ~= nil or flashText ~= nil
 end
 
 local function followSelection()
@@ -1528,6 +1581,10 @@ local function followSelection()
 		lowest = math.min(lowest, H - (TOOLS_AT + FLOORS_H) - GAP)
 	end
 	bottom = math.min(bottom, lowest)
+	if hintPill.Visible and left < (hintPill.AbsolutePosition.X + hintPill.AbsoluteSize.X) / scale then
+		-- the hint is up over the tools (something on the floors card just changed): keep above it
+		lowest = math.min(lowest, H - HINT_AT - 34 - GAP)
+	end
 	local highest = if left < TOP_LEFT_W then TOP_LEFT_H + GAP else EDGE
 	bottom = math.max(bottom, highest + h)
 	actionBar.Position = UDim2.fromOffset(x, bottom)
@@ -1696,7 +1753,9 @@ function BuildUI.init(exitCallback: () -> ())
 		Wrap = false,
 	})
 
-	-- the floors and the view switches, at the right on top of the tray (level with the tools)
+	-- the floors and the view switches, at the right on top of the catalog (level with the tools):
+	-- one row of icon buttons, the arrows, a quiet line, then the three switches (the user:
+	-- "change this part to 5 icons, 2 arrows, 3 toggleable icons in a row with no need for text")
 	local floors = Kit.frame({
 		Name = "Floors",
 		Size = UDim2.fromOffset(FLOORS_W, FLOORS_H),
@@ -1706,52 +1765,78 @@ function BuildUI.init(exitCallback: () -> ())
 		Cut = CUT,
 		Parent = ui,
 	})
-	local floorsBody = Kit.box({
+	local floorsRow = Kit.box({
 		Parent = floors,
-		Size = UDim2.new(1, -SIDE * 2, 1, -SIDE * 2),
-		Position = UDim2.fromOffset(SIDE, SIDE),
+		Size = UDim2.new(1, -SIDE * 2, 1, -PAD * 2),
+		Position = UDim2.fromOffset(SIDE, PAD),
 	})
-	Kit.list(floorsBody, 6, false, Enum.HorizontalAlignment.Center)
-	local levelRow = Kit.box({ Parent = floorsBody, Size = UDim2.new(1, 0, 0, 44), LayoutOrder = 1 })
-	-- a dim caption over the view switches, the way groups of rows are named in menus
-	Kit.text("View", {
-		Name = "Caption",
-		Parent = floorsBody,
-		Size = UDim2.new(1, -8, 0, 16),
-		TextSize = 13,
-		Font = Kit.Fonts.Bold,
-		Color = T.InkSoft,
-		LayoutOrder = 2,
-	})
-	levelDown = Kit.button("", {
-		Name = "FloorDown",
-		Parent = levelRow,
-		Size = UDim2.fromOffset(52, 44),
-		TextSize = 22,
-		Color = T.Blue,
-		Icon = "down",
-	}, function()
+	Kit.list(floorsRow, 0, true)
+	local function viewButton(name: string, icon: string, id: string, order: number, run: () -> ()): TextButton
+		local b = Kit.new("TextButton", {
+			Name = name,
+			Text = "",
+			AutoButtonColor = false,
+			BackgroundTransparency = 1,
+			Size = UDim2.fromOffset(VIEW_BTN, TILE_H),
+			LayoutOrder = order,
+			Parent = floorsRow,
+		})
+		local face = Kit.new("Frame", {
+			Name = "Face",
+			BackgroundColor3 = T.Card,
+			BorderSizePixel = 0,
+			Size = UDim2.new(1, -4, 1, -2),
+			Position = UDim2.fromOffset(2, 1),
+			Parent = b,
+		})
+		Kit.corner(face, 9)
+		Kit.rim(face, Kit.edgeOf(T.Card), 1):SetAttribute("Follow", true)
+		local ipx = 30
+		Icons.make(icon, ipx, {
+			Name = "IconArt",
+			Parent = b,
+			Position = UDim2.new(0.5, -ipx / 2, 0.5, -ipx / 2),
+			Color = T.Ink,
+			Hole = T.Card,
+			ZIndex = 2,
+		})
+		hoverable(b)
+		b.MouseEnter:Connect(function()
+			overView = id
+			refreshChrome()
+		end)
+		b.MouseLeave:Connect(function()
+			if overView == id then
+				overView = nil
+				refreshChrome()
+			end
+		end)
+		b.Activated:Connect(run)
+		return b
+	end
+	levelDown = viewButton("FloorDown", "down", "down", 1, function()
+		if s.level <= 0 then
+			flash(viewTip("down"))
+		end
 		BuildMode.setLevel(s.level - 1)
 	end)
-	levelLabel = Kit.title("Floor 1", {
-		Parent = levelRow,
-		Size = UDim2.new(1, -108, 1, 0),
-		Position = UDim2.fromOffset(54, 0),
-		TextSize = 21,
-		Color = T.Ink,
-		AlignX = Enum.TextXAlignment.Center,
-	})
-	levelUp = Kit.button("", {
-		Name = "FloorUp",
-		Parent = levelRow,
-		Size = UDim2.fromOffset(52, 44),
-		Position = UDim2.new(1, -52, 0, 0),
-		TextSize = 22,
-		Color = T.Blue,
-		Icon = "up",
-	}, function()
+	levelUp = viewButton("FloorUp", "up", "up", 2, function()
+		if s.level >= Tuning.Plot.Levels - 1 then
+			flash(viewTip("up"))
+		end
 		BuildMode.setLevel(s.level + 1)
 	end)
+	-- a quiet line between the arrows and the switches, so they read as two groups
+	local split =
+		Kit.box({ Name = "Split", Parent = floorsRow, Size = UDim2.fromOffset(VIEW_SPLIT, TILE_H), LayoutOrder = 3 })
+	Kit.frame({
+		Name = "Divider",
+		Parent = split,
+		Size = UDim2.new(0, 1, 1, -16),
+		Position = UDim2.new(0.5, 0, 0, 8),
+		Color = T.Line,
+		Radius = false,
+	})
 	local VIEW_RUN: { [string]: () -> () } = {
 		roofs = function()
 			BuildMode.setRoofsHidden(not s.roofsHidden)
@@ -1765,45 +1850,10 @@ function BuildUI.init(exitCallback: () -> ())
 		end,
 	}
 	for i, v in ipairs(VIEW) do
-		local row, inner = Kit.row({
-			Name = v.name,
-			Parent = floorsBody,
-			Height = 36,
-			Title = v.name,
-			TextSize = 14,
-			LayoutOrder = 2 + i,
-			LeftSpace = 32,
-			RightSpace = 42,
-		}, VIEW_RUN[v.id])
-		local lean = row:GetAttribute("Lean") or 0
-		Icons.make(v.icon, 18, {
-			Name = "IconArt",
-			Parent = inner,
-			Position = UDim2.new(0, lean + 8, 0.5, -9),
-			Color = T.Ink,
-			Hole = T.Card,
-			ZIndex = 3,
-		})
-		local chip = Kit.frame({
-			Name = "State",
-			Parent = inner,
-			Size = UDim2.fromOffset(34, 20),
-			Position = UDim2.new(1, -(lean + 40), 0.5, -10),
-			Color = T.PaperDark,
-			Radius = "pill",
-			ZIndex = 3,
-		})
-		Kit.text("Off", {
-			Name = "Word",
-			Parent = chip,
-			Size = UDim2.fromScale(1, 1),
-			TextSize = 13,
-			Font = Kit.Fonts.Bold,
-			Color = T.InkSoft,
-			AlignX = Enum.TextXAlignment.Center,
-			ZIndex = 4,
-		})
-		viewRows[v.id] = row
+		viewButtons[v.id] = viewButton(v.name, v.icon, v.id, 3 + i, function()
+			VIEW_RUN[v.id]()
+			flash(viewWords(v.id))
+		end)
 	end
 
 	-- coins, top left, and under them how to look around
@@ -1924,6 +1974,10 @@ function BuildUI.init(exitCallback: () -> ())
 		end
 		if what == "tool" then
 			hovering = nil
+		end
+		if what == "level" and s.level ~= shownLevel then
+			shownLevel = s.level
+			flash(Text.fill("Floor {n}", { n = s.level + 1 }))
 		end
 		refreshChrome()
 		if what == "tool" then

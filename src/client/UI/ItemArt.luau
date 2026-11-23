@@ -1,34 +1,254 @@
 --!strict
 -- Vector pictures of things: food and what the shop sells. The user: "make vector art for items
--- like carrots, cakes, etc." Flat colour, a few shapes each, drawn on the same 24 grid as the
--- icons (UI/IconArt) and painted by UI/Vector. The name is the thing's id (Data/Foods,
--- Data/Items).
+-- like carrots, cakes, etc.", then "redo the icons, so that it matches the icon style in zenless
+-- zone zero ... this includes the food and things icons". We take that style and none of that
+-- game's pictures or dishes: every thing here is our own design.
+--
+-- So each thing is painted with volume, lit from the top left. The painter (UI/Vector) has flat
+-- fills and no gradients, so a form is a stack of shapes: its outline in a deep tone of its own
+-- colour (a thin edge that keeps it clear of a dark panel and a light one), the base colour, a
+-- darker tone on the side away from the light, a lighter one where the light lands, then a few
+-- small bright glints on whatever is glossy. Shadows on food stay warm (a red shades to plum, a
+-- yellow to amber, never to grey). A dish sits in or on something, seen a little from above:
+-- `bowl` and `plate` below are the one bowl and the one plate, recoloured.
+--
+-- Drawn on the same 24 grid as the icons (UI/IconArt), big in the square with a margin of
+-- about 1. The big shapes carry the picture at 24 pixels; the small marks only show in the
+-- shop's big card. The name is the thing's id (Data/Foods, Data/Items).
 
 local Vector = require(script.Parent.Vector)
 
 local circle, ellipse, rect = Vector.circle, Vector.ellipse, Vector.rect
 
+type Layers = { Vector.Layer }
+
 local function rgb(r: number, g: number, b: number): Color3
 	return Color3.fromRGB(r, g, b)
+end
+
+-- The brightest spot on anything glossy, and the shadow a thing casts on the table.
+local GLINT = rgb(255, 250, 236)
+local SHADOW = rgb(20, 12, 30)
+
+local function shadow(cx: number, cy: number, rx: number, ry: number): Vector.Layer
+	return { ellipse(cx, cy, rx, ry), fill = SHADOW, opacity = 0.32 }
+end
+
+-- A shape with its thin deep edge: the edge goes down first, a little wider than the shape.
+local function edged(d: string, deep: Color3, base: Color3): (Vector.Layer, Vector.Layer)
+	return { d, fill = deep, stroke = deep, w = 0.7 }, { d, fill = base }
+end
+
+-- Several lists of layers as one.
+local function join(...: Layers): Layers
+	local out: Layers = {}
+	for _, list in { ... } do
+		for _, layer in list do
+			table.insert(out, layer)
+		end
+	end
+	return out
+end
+
+-- Moves a path: every point scaled by k (from the grid's corner), then shifted by (dx, dy).
+-- For paths written with capital commands, which is all of them here.
+local SHAPE: { [string]: string } =
+	{ M = "xy", L = "xy", H = "x", V = "y", C = "xy", S = "xy", Q = "xy", T = "xy", A = "rr...xy", Z = "" }
+local function movePath(d: string, dx: number, dy: number, k: number): string
+	local out: { string } = {}
+	local kinds, at = "", 0
+	local pos = 1
+	while pos <= #d do
+		local a, b = string.find(d, "^[%s,]*%a", pos)
+		if a and b then
+			local command = string.sub(d, b, b)
+			kinds, at = SHAPE[command] or "", 0
+			table.insert(out, command)
+			pos = b + 1
+		else
+			a, b = string.find(d, "^[%s,]*[%+%-]?%d*%.?%d+", pos)
+			if not a or not b then
+				break
+			end
+			local n = tonumber((string.gsub(string.sub(d, a, b), "[%s,]", ""))) or 0
+			local kind = string.sub(kinds, at % #kinds + 1, at % #kinds + 1)
+			at += 1
+			if kind == "x" then
+				n = n * k + dx
+			elseif kind == "y" then
+				n = n * k + dy
+			elseif kind == "r" then
+				n *= k
+			end
+			table.insert(out, string.format("%.3f", n))
+			pos = b + 1
+		end
+	end
+	return table.concat(out, " ")
+end
+
+-- The same for a whole drawing (strokes keep their weight in step with the size).
+local function moved(layers: Layers, dx: number, dy: number, k: number?): Layers
+	local scale = k or 1
+	local out: Layers = {}
+	for _, layer in layers do
+		local l: { [any]: any } = if type(layer) == "string" then { layer } else table.clone(layer :: any)
+		l[1] = movePath(l[1], dx, dy, scale)
+		if l.w then
+			l.w *= scale
+		end
+		table.insert(out, l)
+	end
+	return out
+end
+
+-- The kit: the bowl, the plate and other things more than one picture uses.
+
+-- What a glazed or solid thing is painted in: its edge, its dark side, itself, its light side,
+-- and for a dish its rim and the wall inside.
+type Tones = { deep: Color3, shade: Color3, base: Color3, light: Color3, rim: Color3?, inside: Color3? }
+
+-- The bowl, seen a little from above: the rim is an ellipse round (12, 11.8), 20.4 wide. What
+-- is in it goes on top: a soup's surface is ellipse(12, 12.6, 8.5, 2.6).
+local BOWL = "M1.8 11.8 C1.8 17.4 6.2 20.8 12 20.8 C17.8 20.8 22.2 17.4 22.2 11.8 Z"
+local function bowl(c: Tones): Layers
+	local rim = ellipse(12, 11.8, 10.2, 3.8)
+	return {
+		shadow(12, 21.8, 7.2, 1.3),
+		{ "M8.2 19.4 H15.8 V21 Q15.8 22 12 22 Q8.2 22 8.2 21 Z", fill = c.deep },
+		{ BOWL, fill = c.deep, stroke = c.deep, w = 0.7 },
+		{ BOWL, fill = c.base },
+		{
+			"M22.2 11.8 C22.2 17.4 17.8 20.8 12 20.8 C9.6 20.8 7.4 20.2 5.7 19.1 C8 19.6 10.6 19.4 13 18.4 C16.8 16.9 19.4 14.6 20 11.8 Z",
+			fill = c.shade,
+		},
+		{
+			"M22.2 12.6 C21.9 17.6 17.7 20.8 12 20.8 C11.2 20.8 10.4 20.7 9.7 20.6 C15.6 20.4 20.6 17.4 21.4 12.6 Z",
+			fill = c.deep,
+			opacity = 0.5,
+		},
+		{ "M3.1 14.6 C3.7 16.6 4.9 18 6.4 19 C5.5 17.6 4.9 16.2 4.6 14.9 Z", fill = c.light },
+		{ rim, fill = c.deep, stroke = c.deep, w = 0.7 },
+		{ rim, fill = c.rim or c.light },
+		{ "M2.9 11 C4.4 9.5 7.8 8.6 11.2 8.4", stroke = GLINT, w = 0.5, opacity = 0.85 },
+		{ ellipse(12, 12, 9.2, 3.1), fill = c.inside or c.shade },
+	}
+end
+
+-- The plate, seen the same way: its top is an ellipse round (12, 17.4), 21.2 wide, with a
+-- shallow well in the middle.
+local function plate(c: Tones): Layers
+	local under = ellipse(12, 18.2, 10.6, 4.1)
+	return {
+		shadow(12, 19.3, 10.3, 3.8),
+		{ under, fill = c.deep, stroke = c.deep, w = 0.7 },
+		{ under, fill = c.shade },
+		{ ellipse(12, 17.4, 10.6, 4.1), fill = c.base },
+		{ "M2.3 16.3 C4 14.5 7.6 13.5 11.4 13.4", stroke = GLINT, w = 0.5, opacity = 0.8 },
+		{ ellipse(12, 17.5, 7.8, 2.9), fill = c.shade },
+		{ ellipse(12, 17.9, 7.5, 2.6), fill = c.inside or c.light },
+	}
+end
+
+-- Steam off something hot: two pale wisps.
+local function steam(x: number, y: number): Layers
+	return moved({
+		{ "M0 5.6 C-1.4 4.2 1.2 3.2 0 1.6 C-0.4 1 -0.2 0.5 0.2 0", stroke = rgb(240, 244, 250), w = 1, opacity = 0.6 },
+		{ "M5.4 5.2 C4.2 4 6.6 3 5.6 1.6", stroke = rgb(240, 244, 250), w = 1, opacity = 0.6 },
+	}, x, y)
+end
+
+-- An apple, in whatever it is made of: a round fruit with a dimple, a stem and a leaf.
+local function apple(c: Tones): Layers
+	local body =
+		"M12 7.4 C9.6 5.2 2.2 5.4 2.2 12.2 C2.2 17.8 6.6 21.8 9.4 21.8 C10.8 21.8 11.2 21.2 12 21.2 C12.8 21.2 13.2 21.8 14.6 21.8 C17.4 21.8 21.8 17.8 21.8 12.2 C21.8 5.4 14.4 5.2 12 7.4 Z"
+	return {
+		shadow(12, 21.9, 7, 1.2),
+		{ body, fill = c.deep, stroke = c.deep, w = 0.7 },
+		{ body, fill = c.base },
+		{
+			"M19.2 7.2 C21 8.4 21.8 10.2 21.8 12.2 C21.8 17.8 17.4 21.8 14.6 21.8 C13.2 21.8 12.8 21.2 12 21.2 C11.2 21.2 10.8 21.8 9.4 21.8 C8.4 21.8 7.2 21.3 6 20.3 C8.5 21 11.5 20.4 14 18.6 C17.4 16.2 19.6 12 19.2 7.2 Z",
+			fill = c.shade,
+		},
+		{
+			"M21.2 9.6 C21.6 10.4 21.8 11.3 21.8 12.2 C21.8 17.8 17.4 21.8 14.6 21.8 C13.9 21.8 13.4 21.6 13 21.5 C16.6 20.6 20.6 16 21.2 9.6 Z",
+			fill = c.deep,
+			opacity = 0.55,
+		},
+		{
+			"M3.6 12.4 C3.4 9 5.8 6.9 9 7.2 C10.6 7.4 11 8.6 10 9.4 C8.4 9.8 6.6 11.6 5.6 14.4 C4.6 14.8 3.7 13.8 3.6 12.4 Z",
+			fill = c.light,
+		},
+		{ "M9.4 7.3 C10.6 8.9 13.4 8.9 14.6 7.3 C13.7 6.9 12.8 6.9 12 7.6 C11.2 6.9 10.3 6.9 9.4 7.3 Z", fill = c.deep, opacity = 0.6 },
+		{
+			"M4.5 11.4 C4.7 9.4 6 8.1 7.8 7.8 C6.7 8.8 6 10 5.6 11.6 C5.3 12.3 4.5 12.2 4.5 11.4 Z",
+			fill = GLINT,
+			opacity = 0.9,
+		},
+		{ circle(9.3, 7.9, 0.45), fill = GLINT, opacity = 0.8 },
+		{ "M19.9 16.6 Q18.8 19 16.8 20.4", stroke = c.light, w = 0.5, opacity = 0.55 },
+		{ "M12 8.2 C12 5.8 12.6 3.8 14 2.3", stroke = rgb(98, 58, 36), w = 1.5 },
+		{ "M11.7 7.6 C11.7 5.8 12.3 3.9 13.5 2.6", stroke = rgb(176, 118, 68), w = 0.5 },
+		{ "M13.5 5.7 C14.2 2.7 17.4 1.5 21.2 2.3 C20.4 5.7 17.1 7.3 13.5 5.7 Z", fill = rgb(34, 104, 56), stroke = rgb(34, 104, 56), w = 0.6 },
+		{ "M13.5 5.7 C14.2 2.7 17.4 1.5 21.2 2.3 C20.4 5.7 17.1 7.3 13.5 5.7 Z", fill = rgb(58, 148, 66) },
+		{ "M13.5 5.7 C14.2 2.7 17.4 1.5 21.2 2.3 C18.6 2.9 16 4 13.5 5.7 Z", fill = rgb(112, 198, 84) },
+		{ "M15.6 3.6 C16.6 2.8 17.8 2.5 19 2.5", stroke = rgb(196, 240, 150), w = 0.4, opacity = 0.9 },
+	}
 end
 
 local Art: { [string]: { Vector.Layer } } = {}
 
 -- What the shop sells.
 
--- A party cake: sponge with a cream line through it, pink icing running down the side and one
--- lit candle.
-Art.cake = {
-	{ "M3 13 H21 V20 Q21 22 19 22 H5 Q3 22 3 20 Z", fill = rgb(240, 190, 128) },
-	{ rect(3, 17, 18, 1.6, 0), fill = rgb(255, 238, 205) },
+-- A party cake on a plate: sponge with cream through the middle, pink icing running down the
+-- side, sprinkles and one lit candle.
+Art.cake = join(
+	moved(plate({
+		deep = rgb(104, 118, 160),
+		shade = rgb(172, 186, 214),
+		base = rgb(230, 236, 247),
+		light = rgb(246, 249, 253),
+	}), 0, 0.4),
 	{
-		"M3 12 Q3 9 6 9 H18 Q21 9 21 12 V13.5 H19.5 V14 A1.75 1.75 0 0 1 16 14 V13.5 H13 V15.5 A1.75 1.75 0 0 1 9.5 15.5 V13.5 H6.5 V14.5 A1.75 1.75 0 0 1 3 14.5 Z",
-		fill = rgb(255, 143, 171),
-	},
-	{ "M6 11 H9", stroke = rgb(255, 196, 212), w = 1 },
-	{ rect(10.8, 5.2, 2.4, 4.2, 0.6), fill = rgb(143, 211, 232) },
-	{ "M12 2 Q14.2 4.4 12 6 Q9.8 4.4 12 2 Z", fill = rgb(255, 196, 70) },
-}
+		{ "M3.6 10 V17.4 A8.4 3.1 0 0 0 20.4 17.4 V10 Z", fill = rgb(140, 74, 40), stroke = rgb(140, 74, 40), w = 0.7 },
+		{ "M3.6 10 V17.4 A8.4 3.1 0 0 0 20.4 17.4 V10 Z", fill = rgb(234, 172, 98) },
+		{ "M3.6 13.3 A8.4 3.1 0 0 0 20.4 13.3 V14.5 A8.4 3.1 0 0 1 3.6 14.5 Z", fill = rgb(255, 240, 212) },
+		{ "M16.6 10 H20.4 V17.4 A8.4 3.1 0 0 1 16.6 19.99 Z", fill = rgb(120, 44, 40), opacity = 0.26 },
+		{ "M19 10 H20.4 V17.4 A8.4 3.1 0 0 1 19 19.11 Z", fill = rgb(120, 44, 40), opacity = 0.26 },
+		{ "M3.6 10 H5.2 V19.2 A8.4 3.1 0 0 1 3.6 17.4 Z", fill = rgb(255, 244, 220), opacity = 0.3 },
+		{
+			"M3.6 10 V11.6 Q3.6 12.9 4.7 12.9 Q5.7 12.9 5.8 12.6 Q6.4 13.2 7.4 13.5 V15 Q7.4 16.3 8.6 16.3 Q9.8 16.3 9.8 15 V14 Q11 14.1 12.6 14 Q12.6 15.2 13.6 15.2 Q14.6 15.2 14.6 14.2 V13.9 Q15.6 13.7 16.4 13.5 V15.6 Q16.4 17 17.5 17 Q18.6 17 18.6 15.6 V12.8 Q19.6 12.2 20.4 11.4 V10 Z",
+			fill = rgb(176, 44, 98),
+			stroke = rgb(176, 44, 98),
+			w = 0.5,
+		},
+		{
+			"M3.6 10 V11.6 Q3.6 12.9 4.7 12.9 Q5.7 12.9 5.8 12.6 Q6.4 13.2 7.4 13.5 V15 Q7.4 16.3 8.6 16.3 Q9.8 16.3 9.8 15 V14 Q11 14.1 12.6 14 Q12.6 15.2 13.6 15.2 Q14.6 15.2 14.6 14.2 V13.9 Q15.6 13.7 16.4 13.5 V15.6 Q16.4 17 17.5 17 Q18.6 17 18.6 15.6 V12.8 Q19.6 12.2 20.4 11.4 V10 Z",
+			fill = rgb(240, 96, 142),
+		},
+		{ "M16.4 13.5 V15.6 Q16.4 17 17.5 17 Q18.6 17 18.6 15.6 V12.8 Q19.6 12.2 20.4 11.4 V10 H16.4 Z", fill = rgb(206, 62, 116) },
+		{ ellipse(12, 10, 8.4, 3.1), fill = rgb(176, 44, 98), stroke = rgb(176, 44, 98), w = 0.7 },
+		{ ellipse(12, 10, 8.4, 3.1), fill = rgb(255, 146, 176) },
+		{ ellipse(9.6, 9.3, 5, 1.6), fill = rgb(255, 190, 208), opacity = 0.85 },
+		{ "M8 14.2 V15.2 M4.4 11.6 V12.1 M13.2 14 V14.5", stroke = rgb(255, 200, 216), w = 0.5 },
+		{ "M6.6 10.6 L7.3 10.9 M10 11.9 L10.7 11.8 M16.6 11.2 L17.2 10.9", stroke = rgb(255, 232, 120), w = 0.45 },
+		{ "M15.2 8.6 L15.9 8.4 M8.4 8.3 L9 8.6 M14 11.8 L14.6 12", stroke = rgb(130, 214, 240), w = 0.45 },
+		{ ellipse(12, 10.2, 1.6, 0.6), fill = rgb(226, 92, 140) },
+		{ rect(11.1, 5.2, 1.8, 5.1, 0.5), fill = rgb(40, 110, 176), stroke = rgb(40, 110, 176), w = 0.5 },
+		{ rect(11.1, 5.2, 1.8, 5.1, 0.5), fill = rgb(104, 192, 236) },
+		{ rect(12.2, 5.2, 0.7, 5.1, 0.35), fill = rgb(58, 140, 204) },
+		{ "M11.3 7.3 L12.7 6.5 M11.3 9.1 L12.7 8.3", stroke = rgb(240, 250, 255), w = 0.45 },
+		{
+			"M12 1.1 C13.5 2.5 13.9 3.4 13.9 4 C13.9 5 13 5.6 12 5.6 C11 5.6 10.1 5 10.1 4 C10.1 3.4 10.5 2.5 12 1.1 Z",
+			fill = rgb(255, 136, 36),
+		},
+		{
+			"M12 2.7 C12.8 3.5 13 3.9 13 4.3 C13 4.9 12.5 5.2 12 5.2 C11.5 5.2 11 4.9 11 4.3 C11 3.9 11.2 3.5 12 2.7 Z",
+			fill = rgb(255, 226, 110),
+		},
+		{ ellipse(12, 4.5, 0.4, 0.5), fill = GLINT },
+	}
+)
 
 -- Medicine: a white bottle with a teal cap and a red cross on the front.
 Art.medicine = {
@@ -42,19 +262,37 @@ Art.medicine = {
 
 -- Food.
 
--- An apple: red, a darker side away from the light, a stem and one leaf.
-Art.apple = {
-	{
-		"M12 7.5 C10 5.5 3 6 3 12.5 C3 18 7 22 9.5 22 C10.8 22 11.2 21.4 12 21.4 C12.8 21.4 13.2 22 14.5 22 C17 22 21 18 21 12.5 C21 6 14 5.5 12 7.5 Z",
-		fill = rgb(236, 98, 112),
-	},
-	{
-		"M20.3 9.3 Q20.9 10.8 21 12.5 C21 18 17 22 14.5 22 Q13.7 22 13.2 21.8 C16.5 20 19.5 15.5 20.3 9.3 Z",
-		fill = rgb(206, 72, 96),
-	},
-	{ "M6.3 11.4 Q6.8 9.4 8.8 8.8", stroke = rgb(255, 170, 176), w = 1.3 },
-	{ "M12 8 Q12 5 13.5 3.2", stroke = rgb(150, 100, 64), w = 1.5 },
-	{ "M13.3 5.6 Q15 2.2 19.5 3 Q18.2 6.8 13.3 5.6 Z", fill = rgb(118, 196, 96) },
+-- An apple: red, plum on the side away from the light, a stem and one leaf.
+Art.apple = apple({
+	deep = rgb(128, 20, 50),
+	shade = rgb(182, 30, 58),
+	base = rgb(228, 52, 60),
+	light = rgb(248, 104, 84),
+})
+
+-- Cheese: a wedge with a paler top, a rind down its far end and holes in the cut side.
+Art.cheese = {
+	shadow(12.6, 20.4, 10.2, 1.7),
+	{ "M1.6 11.8 L14.4 3.2 L22.4 9.4 V18 L1.6 20.4 Z", fill = rgb(160, 86, 16), stroke = rgb(160, 86, 16), w = 0.7 },
+	{ "M1.6 11.8 L22.4 9.4 V18 L1.6 20.4 Z", fill = rgb(255, 198, 56) },
+	{ "M21 12 V18.16 L5 20 Z", fill = rgb(234, 150, 34), opacity = 0.55 },
+	{ "M21 15.4 V18.16 L11 19.3 Z", fill = rgb(214, 124, 26), opacity = 0.5 },
+	{ "M21 9.56 L22.4 9.4 V18 L21 18.16 Z", fill = rgb(206, 112, 24) },
+	{ "M1.6 11.8 L14.4 3.2 L22.4 9.4 Z", fill = rgb(255, 228, 118) },
+	{ "M3.4 10.9 L14.3 3.9 L15.7 5 L7.4 10.4 Z", fill = rgb(255, 244, 176), opacity = 0.85 },
+	{ "M14.4 3.2 L22.4 9.4 L21 9.56 L13.5 3.8 Z", fill = rgb(232, 150, 40) },
+	{ ellipse(12.2, 7.6, 1.6, 0.8), fill = rgb(240, 180, 60) },
+	{ ellipse(12.5, 7.8, 1.1, 0.5), fill = rgb(250, 208, 90) },
+	{ ellipse(16.8, 8.3, 0.9, 0.45), fill = rgb(240, 180, 60) },
+	{ circle(7.4, 15.8, 2.1), fill = rgb(196, 112, 20) },
+	{ circle(7.8, 16.2, 1.5), fill = rgb(236, 160, 40) },
+	{ circle(13.8, 13.4, 1.3), fill = rgb(196, 112, 20) },
+	{ circle(14.05, 13.65, 0.9), fill = rgb(236, 160, 40) },
+	{ circle(17.3, 15.9, 1.6), fill = rgb(186, 104, 18) },
+	{ circle(17.6, 16.2, 1.1), fill = rgb(226, 146, 34) },
+	{ circle(3.6, 17.6, 0.8), fill = rgb(196, 112, 20) },
+	{ circle(11.8, 17.6, 0.7), fill = rgb(196, 112, 20) },
+	{ "M2.3 11.76 L21.7 9.52", stroke = GLINT, w = 0.45, opacity = 0.9 },
 }
 
 -- A bread roll: a round crust with three cuts across the top and a darker underside.
@@ -82,29 +320,38 @@ Art.carrot = {
 	{ "M8.5 14.5 L10.5 16.5", stroke = rgb(206, 104, 30), w = 1.4 },
 }
 
--- Cheese: a wedge with a paler top and three holes in the cut side.
-Art.cheese = {
-	{ "M3 12.5 L14 4.5 L21 9.5 V20 H3 Z", fill = rgb(255, 204, 72), w = 1 },
-	{ "M3 12.5 L14 4.5 L21 9.5 Z", fill = rgb(255, 230, 140), w = 1 },
-	{ circle(8, 16.6, 1.9), fill = rgb(232, 166, 44) },
-	{ circle(14.4, 14.2, 1.3), fill = rgb(232, 166, 44) },
-	{ circle(17.2, 17.6, 1.5), fill = rgb(232, 166, 44) },
-}
-
--- Mushroom soup: a blue bowl, brown soup with a slice of mushroom on it, and steam.
-Art.soup = {
-	{ "M2.5 12 C2.5 18 6.5 21.8 12 21.8 C17.5 21.8 21.5 18 21.5 12 Z", fill = rgb(126, 176, 222) },
-	{ ellipse(12, 12, 9.5, 3.8), fill = rgb(160, 204, 240) },
-	{ ellipse(12, 12.2, 8, 2.7), fill = rgb(196, 142, 88) },
-	{ "M9.6 12.4 Q9.6 10.2 12 10.2 Q14.4 10.2 14.4 12.4 Z", fill = rgb(246, 228, 196) },
-	{ rect(11.2, 12, 1.6, 1.9, 0.6), fill = rgb(246, 228, 196) },
+-- Mushroom soup: a blue bowl of creamy soup with slices of mushroom and herbs on it, and
+-- steam.
+Art.soup = join(
+	steam(9, 1.4),
+	bowl({
+		deep = rgb(22, 46, 104),
+		shade = rgb(36, 82, 156),
+		base = rgb(60, 124, 200),
+		light = rgb(140, 192, 242),
+		rim = rgb(246, 240, 226),
+		inside = rgb(206, 196, 180),
+	}),
 	{
-		"M9.2 7 Q8 5.6 9.2 4.4 Q10 3.6 9.4 2.8 M14.7 7 Q13.5 5.6 14.7 4.4 Q15.5 3.6 14.9 2.8",
-		stroke = rgb(236, 240, 247),
-		w = 1.3,
-		opacity = 0.75,
-	},
-}
+		{ "M2.6 14.6 C5 16.9 8.4 17.9 12 17.9 C15.6 17.9 19 16.9 21.4 14.6", stroke = rgb(246, 240, 226), w = 0.5, opacity = 0.8 },
+		{ ellipse(12, 12.6, 8.5, 2.6), fill = rgb(160, 100, 52) },
+		{ ellipse(12.2, 12.8, 7.8, 2.2), fill = rgb(212, 158, 92) },
+		{ ellipse(11, 12.6, 5, 1.3), fill = rgb(232, 190, 126), opacity = 0.8 },
+		{ "M8.6 12 C10.2 11.3 13.8 11.5 14.6 12.5 C15.2 13.4 12.8 13.8 11.4 13.4", stroke = rgb(252, 238, 208), w = 0.45 },
+		{
+			"M6.2 13.1 C6.2 11.7 10.8 11.5 11 13 C10 12.7 9.4 12.7 9.4 12.8 L9.7 14.3 C9.1 14.6 8.3 14.6 7.9 14.3 L8 12.8 C7.4 12.8 6.8 12.9 6.2 13.1 Z",
+			fill = rgb(248, 234, 204),
+		},
+		{ "M6.6 13 C7.6 12.6 9.8 12.6 10.7 12.9", stroke = rgb(170, 118, 76), w = 0.35 },
+		{
+			"M13.4 13.5 C13 12.1 17 11.3 17.8 12.7 C16.8 12.6 16.3 12.7 16.3 12.8 L17 14.1 C16.5 14.5 15.7 14.6 15.3 14.4 L15 13 C14.4 13.1 13.9 13.3 13.4 13.5 Z",
+			fill = rgb(248, 234, 204),
+		},
+		{ "M13.7 13.3 C14.6 12.6 16.4 12.3 17.5 12.6", stroke = rgb(170, 118, 76), w = 0.35 },
+		{ circle(12.3, 11.5, 0.4) .. circle(11.3, 14.3, 0.4) .. circle(18.2, 13.5, 0.35) .. circle(12.9, 14.6, 0.3), fill = rgb(84, 160, 62) },
+		{ ellipse(6.4, 11.9, 1.2, 0.3), fill = GLINT, opacity = 0.7 },
+	}
+)
 
 -- A grilled fish on a skewer: the stick runs corner to corner through a pale blue fish, head up.
 Art.skewer = {

@@ -224,8 +224,16 @@ run("every tab and tool opens without an error", function()
 		view.roofsHidden ~= roofsWere and view.seeThrough ~= wallsWere and view.snap ~= snapWas,
 		"each view switch flips its setting"
 	)
+	-- the switches are icons with no words: each shows its state by its colour, and the hint
+	-- over the tools says what just changed
+	local snapButton = gui:FindFirstChild("Snap to grid", true)
+	check(snapButton:GetAttribute("On") == view.snap, "a switch shows whether it is on")
+	local hint = gui:FindFirstChild("Hint", true)
+	local said = hint and hint:FindFirstChildWhichIsA("TextLabel")
+	check(said ~= nil and said.Text:find("Snap to grid", 1, true) ~= nil, "and the hint says what changed")
 	press("FloorUp")
 	check(BuildMode.state.level == 1, "the floor switcher goes up")
+	check(said.Text == "Floor 2", "the hint says which floor you are on")
 	mouseAtPlot(120, 60)
 	press("FloorDown")
 	check(BuildMode.state.level == 0, "and down")

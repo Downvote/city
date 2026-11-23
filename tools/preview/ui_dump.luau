@@ -11,6 +11,7 @@
 --   build:bought        Build mode with a bought armchair picked: it sells for coins
 --   build:paint         Build mode on the Paint tool (finishes and colours)
 --   build:sell          Build mode on the Sell tool
+--   build:view          Build mode just after the up arrow and See-through walls (the hint says so)
 --   panel:<Name>        a panel over the main screen (Residents, CityPanel, ShopPanel, News, Goals,
 --                       MapPanel, Welcome, Rewards)
 --   panel:<Name>:<state> a menu in one of its states: Residents:friends, Residents:empty (nobody
@@ -180,6 +181,7 @@ elseif scene:sub(1, 5) == "build" then
 		["build:paths"] = { "Outdoor", "Paths" },
 		["build:buildings"] = { "Buildings" },
 		["build:sell"] = { "Sell" },
+		["build:view"] = { "Furniture", "FloorUp", "See-through walls" },
 	}
 	for _, tab in TABS[scene] or {} do
 		Sim.press(tab)
