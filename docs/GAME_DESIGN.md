@@ -23,7 +23,8 @@ is, not sources.
    family, made-up people. Visitors also turn up and ask to move in.
 2. **Build.** Every new villager needs a bed. Every workplace you place opens a job. Rooms, gardens and decorations
    make villagers happier, and the town is worth more.
-3. **Watch life happen.** Villagers wander, sit, chat, go to work from 9 to 5, and sleep at night. Every couple of
+3. **Watch life happen.** Villagers work at their stations from 9 to 5 with a break now and then, potter about
+   when they have no job or the day is done, and sleep at night. Every couple of
    minutes something happens: two of them quarrel and look to you to settle it, someone wants a lamp by their bed,
    a birthday party, a prank, a tourist leaves a tip.
 4. **Earn and grow.** Payday at 5 PM pays out for every villager who worked, and that is where the money comes
@@ -43,6 +44,26 @@ is, not sources.
   nothing to feed them by hand: a craving is bought for them there and then (see Wishes).
 - **Job and skill.** A villager takes a free workplace on their own, or you assign one. Skill rises with each day
   worked and makes their pay go up. Jobs a personality enjoys pay a fifth more.
+- **A working day.**
+
+  > also, villagers seem to stand around doing nothing. they should be at their work stations instead, and taking
+  > breaks sometimes to do different things
+
+  From 9 to 5 a villager with a job works their station, going round a little loop of their trade with a stay at
+  each stop (3 to 14 seconds) and now and then a line of their job: the shopkeeper between the till, the crates
+  and the display out front; the barista between the till, the machine and the cakes; the baker at the oven's
+  mouth and side, turning to the room; the florist round all four sides of the cart; the artist at the canvas, a
+  step back to look, the palette; the doctor at the desk and the head of the bed; the teacher between the class
+  and both ends of the board; the musician at the microphone, across the stage and taking a bow; the builder
+  hammering at the bench, fetching tools and planks; the postie at the desk, the parcels and the pigeonholes; the
+  ice cream seller serving, at the tubs, calling people over; the librarian at the desk, the shelves and out on
+  the floor. Now and then they take a break: they sit, go over for a chat, take a stroll, drop in at another
+  workplace as a customer, or stretch and look at the view, then walk back and carry on. Who they are decides it:
+  a lazy villager breaks more often and for longer, a focused one hardly at all, a sunny one usually goes to chat
+  and an easygoing one to sit. Breaks never run past five, never take more than about a quarter of the day, and
+  never touch their pay; most days a worker is at their station for three quarters of it or more. A villager with
+  no job, or one whose day is done, potters: a stroll, a sit, a chat, a look at something, a visit to a staffed
+  workplace, a wave. Standing still is rare and short.
 - **Home.** One bed per villager (double and bunk beds sleep two). Furniture within a few steps of their bed is
   their room; a room request asks for a kind of thing (a lamp, a rug, books...) near the bed.
 - **Birthday.** A season and a day on the town calendar. When it comes round, there's a party.

@@ -251,7 +251,7 @@ The creator's remotes: `CreatorPeople` (the people here and your friends, and th
 | `Plots` | Hands out plots, draws the saved build and the owned land, sells more land (`PlotExpand`). |
 | `Build` | `BuildApply`, `BuildUndo`, `BuildRedo`: checks requests, charges or refunds, keeps history, redraws, syncs the plan to its owner (`PlanSync`). Fires `Changed`. A batch is up to 320 requests (a whole ready-made building); an item's `wall = "@n"` means the wall made by the batch's n-th request. `Build.prepare` is exported for the specs. |
 | `Avatar` | The creator: a private stage (an empty Model `CreatorStage<slot>` with an `Origin` attribute, high over the meadow; nothing is built there) and an anchored mannequin per player, catalog search fallback, bundles, copying users, outfits, asset checks, the text filter. `toDescription`, `buildModel` for everyone else. |
-| `Villagers` | Creating, editing, moving out, beds, jobs, buying a craving (`Villagers.buyWish`, the `WishBuy` remote). Spawns NPCs and runs their routine: sleep at night, work 9 to 5, wander, sit, chat, visit shops. Payday at 5 PM. Talking: `Villagers.spawn` puts `Npc.talkPrompt(name)` on each body (a ProximityPrompt `TalkPrompt` on the HumanoidRootPart: E, held `Tuning.Talk.HoldSeconds`, from `Distance` studs, no `Opens` attribute) and `setControl` switches it with `Npc.setTalkable(Talk.free(mode))`; it is off while they sleep. `Villagers.talkedTo(who, owner, vid)` answers it: it refuses a sleeper, someone in an event or away, a player more than `Range` studs off and a second line within `Cooldown`; then holds them (`setControl(owner, vid, "talk")` for `StaySeconds`, `VisitorSeconds` for a visitor, or until the player walks off), turns them with `Npc.face`, and has them say `Talk.line`. The owner also gets `Talk.chat`'s gain and the `Talk` event. |
+| `Villagers` | Creating, editing, moving out, beds, jobs, buying a craving (`Villagers.buyWish`, the `WishBuy` remote). Spawns NPCs and runs their routine (`Villagers.brain` acts out what `Sim/Routine` chooses): sleep at night; in work hours each worker goes round their job's loop at the workplace and takes breaks; those with no job or done for the day potter. `Villagers.working` still means at work for the day (pay); the body's `npc.atWork` is whether they are at the workplace this moment (an event or an outing clears it). Payday at 5 PM. Talking: `Villagers.spawn` puts `Npc.talkPrompt(name)` on each body (a ProximityPrompt `TalkPrompt` on the HumanoidRootPart: E, held `Tuning.Talk.HoldSeconds`, from `Distance` studs, no `Opens` attribute) and `setControl` switches it with `Npc.setTalkable(Talk.free(mode))`; it is off while they sleep. `Villagers.talkedTo(who, owner, vid)` answers it: it refuses a sleeper, someone in an event or away, a player more than `Range` studs off and a second line within `Cooldown`; then holds them (`setControl(owner, vid, "talk")` for `StaySeconds`, `VisitorSeconds` for a visitor, or until the player walks off), turns them with `Npc.face`, and has them say `Talk.line`. The owner also gets `Talk.chat`'s gain and the `Talk` event. |
 | `Events` | Picks and plays random events, waits for choices, applies effects, room request rewards, small friendship gains from chats, parties. |
 
 `Villagers` also runs the life sim's server side: every in-game hour wishes fade and new ones turn up (the model's
@@ -263,6 +263,15 @@ own saying or a line about their hobby.
 | `Explore` | `PlaceFound` checks the player stands at the place, pays its coins once and marks `found`. (The map and `Travel`, the trip back to a found place, are gone.) |
 | `Materials` | Runs `Textures.install` at start: each uploaded painted texture's MaterialVariant (built into the place) becomes its material's look. Warns when a variant is missing from the place. |
 
+`Sim/Routine` (shared, no services) chooses what a villager does next, given the hour, their job, their traits, a
+seeded rng and how long they have been at it: `Routine.loop(job, def)` is the job's stops round its workplace (each
+a spot in the piece's own space, a facing, a stay, a gesture, a chance of a job line; step 1 is the recipe's own
+`workSpot`, `Routine.home(loop)`), `Routine.breakDue` and the break's kind and length (sit, chat, stroll, visit,
+stretch, weighted by `Personalities.trait` and never the same twice running if it can help it), and the pottering
+turns of a villager with no job. Its numbers are `Tuning.Routine` (`BreakShare`, `LazyShare`, `FocusShare`,
+`ShareMin`, `ShareMax`, `BreakMin`, `BreakMax`, `BreakCap`, `AwayCap`, `RoundCounter` and the rest). The Routine spec
+runs seeded days for every job and personality, then the real brain in the starter town with stand-in bodies.
+
 `Npc` (`src/server/Npc/Npc.luau`) is one villager's body: animations (their own pack or Roblox's defaults), pathfinding
 walks, sitting, lying in bed, speech bubbles, emotion icons and name tags. `Npc.walkTo` plans with
 `PathfindingService` (agent radius 1.3, height 5, jumping on, water costly, doors cheap) and follows the waypoints
@@ -272,7 +281,9 @@ end on a waypoint (`MoveToFinished`) the next starts in that same handler, and a
 than `Npc.Arrived` away) is taken up again. The `Running` handler waits `Npc.StillAfter` (0.25 s) of standing before
 the idle animation replaces the walk. It jumps when stuck for a moment and plans again when stuck longer; with no
 path it only steps straight when the way is short and clear (`Npc.clearLine`). Door leaves carry a `PathfindingModifier` that lets paths through. Villagers go
-to approach points beside beds and in front of seats, then sit or lie down.
+to approach points beside beds and in front of seats, then sit or lie down. `walkTo(target, timeout, maxPath?)`
+returns whether they got there and, when not, why (`"far"`, `"noroute"`, `"cancelled"`); `Npc.routeLength` measures
+a planned route, so a customer goes round a counter only when that is no more than `RoundCounter` studs further.
 
 ## Remotes
 
