@@ -180,8 +180,8 @@ server, whatever the client did.
 swing, grass tufts are pooled and moved onto grass found by raycast (`grassAt`), butterflies, rabbits and ducks are
 `AmbientModels` movers, `trafficLight` models take turns by which road their arm hangs over, `buoy`, `sailboat` and
 `rowboat` models bob, parts named `Jet` spray. `Avatar/Categories` has `bundleWorn` and `unmerge` for sets.
-`UI/Kit` has `wash` (a two colour gradient), `shapes` (simple shapes dotted over a background) and draws the calm
-wave under a panel's header.
+`UI/Kit` has `wash` (a two colour gradient), `shapes` (simple shapes dotted over a background: cards and pills,
+never a panel's header) and draws the calm wave under a panel's header.
 
 `UI/Kit` draws with the engine's own shadows, shaped gradients and rounded clipping (after Roblox's write-up of
 them): `softShadow(gui, depth, color)` (two UIShadows, near and far), `glowShadow(gui, color, size)`,

@@ -96,7 +96,8 @@ rounded clipping ("reference this doc an implement as much as possible"): cards,
 `Kit.softShadow` (two UIShadows), backdrops `Kit.vignette`, progress `Kit.ring` (conical) or `Kit.bar`, glows
 `Kit.halo`, and anything that must cut its children to round corners is a `Kit.frame` with `Clips` and a radius (a
 CanvasGroup). Buttons and tabs still have no shading of their own. All of it sits in pcalls and falls back to flat. Then: "add more life to the uis, such as gradients and simple shapes
-dotting the background" (`Kit.wash`, `Kit.shapes`: on headers, cards and pills, not on buttons or tabs), a wavy edge
+dotting the background" (`Kit.wash`, `Kit.shapes`: on cards and pills, not on buttons or tabs, and not on a menu's
+header: "No need for shapes at the top part seperator of the menu", so headers keep only their wash), a wavy edge
 under a menu's header, then "not that wavy, a calm wave should be enough" (a few pixels over a hundred or so), and
 the villager's face in place of the colour bar in lists.
 The user's rule for icons: "make sure there are no overlapping outlines". A new icon is a

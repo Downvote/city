@@ -574,8 +574,11 @@ pass and open as they come), round furniture and over low steps. If they get stu
   look on Roblox (click one to wear it), and looks players have shared from the creator, with a box to share yours
   (one per player, its name filtered, the newest 48 kept).
 - **Menus.** Headers and cards are washed from one colour into another and little shapes (dots, rings, plus
-  signs, diamonds, dashes) are dotted faintly over their backgrounds. Buttons and tabs stay flat. The edge under a
-  menu's header is a long calm wave, a few pixels up and down. In the villager list each row shows the villager's
+  signs, diamonds, dashes) are dotted faintly over the cards' backgrounds. Buttons and tabs stay flat. The edge
+  under a menu's header is a long calm wave, a few pixels up and down, and the header itself is left clear:
+
+  > No need for shapes at the top part seperator of the menu
+ In the villager list each row shows the villager's
   face where the blue bar was.
 - **A livelier world**, all on each player's own screen and only near them. Every clump of leaves in town leans
   with a wind that crosses the island as a slow wave, so trees move one after another. Tufts of grass blades stand

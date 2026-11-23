@@ -1741,9 +1741,10 @@ function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: s
 		Parent = header,
 	})
 	local _ = icon
-	-- life in the background: the header runs from its colour into a lighter one with white
-	-- shapes dotted over it, and the card warms a little toward the bottom with shapes in the
-	-- header's colour scattered faintly behind everything on it
+	-- life in the background: the header runs from its colour into a lighter one, and the card
+	-- warms a little toward the bottom with shapes in the header's colour scattered faintly
+	-- behind everything on it. The header itself carries no shapes (the user: "No need for
+	-- shapes at the top part seperator of the menu"): the wash and the wave are enough there.
 	local seed = #titleText * 31 + string.byte(titleText, 1)
 	local light = mix(headColor, T.White, 0.28)
 	Kit.wash(header, headColor, light, 0)
@@ -1751,7 +1752,6 @@ function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: s
 	if square and square:IsA("GuiObject") then
 		Kit.wash(square, headColor, light, 0)
 	end
-	Kit.shapes(header, T.White, seed, 12, { Transparency = 0.6, Area = { 0.28, 0.14, 0.8, 0.7 } })
 	-- The user: "for the top seperator part of the menu, make it a wavy line instead of a
 	-- straight one", then "not that wavy, a calm wave should be enough". So the edge between the
 	-- header and the card is a long, shallow wave: a few pixels up and down over a hundred or
