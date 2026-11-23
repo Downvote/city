@@ -221,11 +221,16 @@ replicate the look and feel as much as possible, including the texturing and min
   painting; `Sim.Skin.set(false)` in a simulation builds the fallback.
 A full menu has `Kit.motion` behind it ("make an animated background with shapes like
 it in the menus"). Build mode is laid out like the genre's best known builder ("The building ui should be
-exactly like bloxburg"): the catalog docked at the bottom (tools row, cards, category tiles, main groups), one
-big Done bottom right, coins top left. The cards and the categories run the whole width of the screen and the
-floor card sits on top of them at the right ("build mode should have the right part with all the decor and
-details filling the whole screen horizontally, and the right side should be moved up"): size those bars by scale
-(`UDim2.new(1, -28, 0, h)`), never to a fixed width.
+exactly like bloxburg"): the catalog docked at the bottom, coins top left. From the top: the tools row, then one
+card that holds the category tiles and under them the cards (or the page for paint, walls and the rest), then one
+bar across the whole screen with the main groups at its left end and Done at its right. The user on that: "the
+first screenshot part in the builder should have the background across the whole strip instead of leaving a gap.
+the second should move down, shifting the tab below it up" and "move the bottom part up, but make it such that
+they share the same rectangle background with each other" (`CATEGORIES_ON_TOP` in `Build/BuildUI` is the order,
+should they have meant the other one). Never leave scenery showing between two parts of the tray. The catalog
+runs the whole width of the screen and the floor card sits on top of it at the right ("build mode should have the
+right part with all the decor and details filling the whole screen horizontally, and the right side should be
+moved up"): size those bars by scale (`UDim2.new(1, -28, 0, h)`), never to a fixed width.
 Icons are vector art (the user: "Alot of the icons arent proper vector art and just shapes spliced together,
 look online to see how vector art should be. Make them as simple as possible"): paths in `UI/IconArt` on a 24
 grid, one line weight, round ends, a margin of 2, as few lines as possible, painted by `UI/Vector` into an

@@ -551,10 +551,11 @@ clipping (`tools/preview/ui_render.py`).
   `PivotTo`; `BuildMode.startPreset(id)` picks one up and R turns it a quarter. `Build/BuildUI`: the Buildings tab
   (preset cards), the bottom category bar, sub categories and item tray, the tool strip, the floor card, the coins
   pill, the hint and the action bar over the picked object (placed with `WorldToViewportPoint`, the GUI inset and the
-  UI scale). `Build/BuildCamera` (free camera). The screen's frames, all docked: `Dock` (main groups), `SubsBar`
-  with the scroll `Subs` (category tiles), `Tray` (cards and options) and `Tools` (a row of tiles) up the bottom
-  left, `Hint` above them, `Floors` at the right over the `Done` button in the bottom right corner, the coin
-  `Pill` top left.
+  UI scale). `Build/BuildCamera` (free camera). The screen's frames, all docked, from the bottom: one bar across the whole
+  screen holding the main groups at its left end and `Done` at its right; above it `Catalog`, one rounded card
+  the whole width holding the scroll `Subs` (category tiles, in a deeper well) over `Tray` (cards and options)
+  when `CATEGORIES_ON_TOP` is true, the other way up when false; `Tools` (a row of tiles) above the catalog at
+  the left with `Hint` over it, `Floors` above it at the right, the coin `Pill` top left.
 
 ## The drawn city
 

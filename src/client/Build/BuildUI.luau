@@ -1,7 +1,8 @@
 -- Build mode's interface, laid out the way house builders usually are: the main groups and Done
--- along the bottom, the categories and the item tray above them from one edge of the screen to the
--- other, the tools on top of the tray at the left, the floor switcher with the view toggles on top
--- of it at the right, coins top left, and a little action bar over whatever you pick.
+-- on one bar along the bottom, above it the catalog (the category tiles over the item tray, on one
+-- card) from one edge of the screen to the other, the tools on top of it at the left, the floor
+-- switcher with the view toggles on top of it at the right, coins top left, and a little action bar
+-- over whatever you pick.
 
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -105,16 +106,25 @@ local GAP = 8 -- between bars, and between things side by side
 local PAD = 8 -- inside a bar, above and below
 local SIDE = 12 -- inside a bar, left and right (clear of its round corners)
 local CUT = 12
-local DOCK_H, SUBS_H, TRAY_H, TOOLS_H = 60, 80, 176, 80
-local TILE_H = SUBS_H - PAD * 2 -- a category or a tool
+local DOCK_H, TOOLS_H = 64, 80
+local TILE_H = 64 -- a category or a tool
 local TOOL_W = 64
 local FLOORS_W, FLOORS_H = 248, 216
 local LABEL_W = 124 -- the name at the left of a labelled row in the tray
-local INNER_H = TRAY_H - PAD * 2 -- what the tray holds
+local INNER_H = 160 -- what the tray holds
+-- The catalog is one rounded card: the category tiles in a deeper well along one edge of it, and
+-- the tray (the cards, or a page of finishes, or a note) along the other. The user, of the cards
+-- and the category tiles under them: "the second should move down, shifting the tab below it
+-- up", then "move the bottom part up, but make it such that they share the same rectangle
+-- background with each other". So the categories are on top and the cards under them. This is
+-- the one place that says so: set it to false and the categories go back under the cards.
+local CATEGORIES_ON_TOP = true
+local WELL_PAD = 4 -- round the tiles in their well
+local WELL_H = TILE_H + WELL_PAD * 2
+local CATALOG_H = PAD + WELL_H + PAD + INNER_H + PAD
 -- the bars' bottoms, measured up from the bottom of the screen
-local SUBS_AT = EDGE + DOCK_H + GAP
-local TRAY_AT = SUBS_AT + SUBS_H + GAP
-local TOOLS_AT = TRAY_AT + TRAY_H + GAP
+local CATALOG_AT = EDGE + DOCK_H + GAP
+local TOOLS_AT = CATALOG_AT + CATALOG_H + GAP
 local HINT_AT = TOOLS_AT + TOOLS_H + GAP
 -- the coins and the camera tip, top left
 local COINS_H, TIP_H = 46, 28
@@ -137,7 +147,7 @@ local function materialName(id: string): string
 end
 
 local ui: Frame
-local tray: Frame
+local tray: Frame -- the catalog's lower part, which the tray's pages fill
 local trayBody: Frame
 local subBar: ScrollingFrame
 local mainButtons: { [string]: TextButton } = {}
@@ -1510,7 +1520,7 @@ local function followSelection()
 	local x = math.clamp((p.X - inset.X) / scale, EDGE + w / 2, math.max(EDGE + w / 2, W - EDGE - w / 2))
 	local bottom = (p.Y - inset.Y) / scale - 12
 	local left, right = x - w / 2, x + w / 2
-	local lowest = H - (TRAY_AT + TRAY_H) - GAP
+	local lowest = H - (CATALOG_AT + CATALOG_H) - GAP
 	if left < EDGE + #TOOLS * TOOL_W + SIDE * 2 then
 		lowest = math.min(lowest, H - (TOOLS_AT + TOOLS_H) - GAP)
 	end
@@ -1541,16 +1551,18 @@ function BuildUI.init(exitCallback: () -> ())
 	-- groups; the floors and view switches sit at the right, and the way out is one big button
 	-- in the bottom right corner. Its layout and flow are what is taken, drawn our own way.
 	-- Then the user: "build mode should have the right part with all the decor and details filling
-	-- the whole screen horizontally, and the right side should be moved up". So the tray and the
-	-- categories run from one edge of the screen to the other (their widths are a share of the
-	-- screen, never a count of pixels), the floors card sits on top of the tray at the right, and
-	-- Done shares the bottom row with the main groups.
+	-- the whole screen horizontally, and the right side should be moved up". So the catalog runs
+	-- from one edge of the screen to the other (its width is a share of the screen, never a count
+	-- of pixels) and the floors card sits on top of it at the right. And of the bar along the
+	-- bottom: "the first screenshot part in the builder should have the background across the
+	-- whole strip instead of leaving a gap", so the main groups and Done share one bar as wide
+	-- as the screen, the groups at its left end and Done at its right.
 
-	-- the main groups, along the bottom
+	-- the main groups and the way out, on one bar along the bottom
 	local dockButtonW = 148
 	local dock = Kit.frame({
 		Name = "Dock",
-		Size = UDim2.fromOffset(#MAIN * dockButtonW + (#MAIN - 1) * GAP + SIDE * 2, DOCK_H),
+		Size = UDim2.new(1, -EDGE * 2, 0, DOCK_H),
 		Position = UDim2.new(0, EDGE, 1, -EDGE),
 		AnchorPoint = Vector2.new(0, 1),
 		Color = T.Paper,
@@ -1578,62 +1590,66 @@ function BuildUI.init(exitCallback: () -> ())
 			openMain(m.id)
 		end)
 	end
-
-	-- the way out: one big button in the bottom right corner, as tall as the main groups' bar
-	-- beside it so it stays clear of the categories above, red as every way out is
+	-- the way out, at the bar's right end, red as every way out is
 	Kit.button("Done", {
-		Parent = ui,
+		Parent = dock,
 		Name = "Done",
-		Size = UDim2.fromOffset(196, DOCK_H),
-		Position = UDim2.new(1, -EDGE, 1, -EDGE),
-		AnchorPoint = Vector2.new(1, 1),
-		TextSize = 26,
+		Size = UDim2.fromOffset(196, DOCK_H - PAD * 2),
+		Position = UDim2.new(1, -SIDE, 0, PAD),
+		AnchorPoint = Vector2.new(1, 0),
+		TextSize = 24,
 		Color = T.Red,
 		Icon = "close",
+		ZIndex = 2,
 	}, function()
 		if onExit then
 			onExit()
 		end
 	end)
 
-	-- the categories just above, as icon tiles, scrolling sideways when there are many
-	local subHolder = Kit.frame({
-		Name = "SubsBar",
-		Size = UDim2.new(1, -EDGE * 2, 0, SUBS_H),
-		Position = UDim2.new(0, EDGE, 1, -SUBS_AT),
+	-- the catalog above it: one card holding the category tiles (in a deeper well of their own,
+	-- scrolling sideways when there are many) and the tray of things to place and options, whose
+	-- rows scroll sideways. Which of the two is on top is CATEGORIES_ON_TOP's to say.
+	local catalog = Kit.frame({
+		Name = "Catalog",
+		Size = UDim2.new(1, -EDGE * 2, 0, CATALOG_H),
+		Position = UDim2.new(0, EDGE, 1, -CATALOG_AT),
 		AnchorPoint = Vector2.new(0, 1),
 		Color = T.Paper,
 		Cut = CUT,
 		Parent = ui,
 	})
+	-- a little blue glowing in from its top right, for depth
+	Kit.glow(catalog, T.Blue, 0.16)
+	local wellY = if CATEGORIES_ON_TOP then PAD else PAD + INNER_H + PAD
+	local trayY = if CATEGORIES_ON_TOP then PAD + WELL_H + PAD else PAD
+	local well = Kit.frame({
+		Name = "SubsBar",
+		Parent = catalog,
+		Size = UDim2.new(1, -PAD * 2, 0, WELL_H),
+		Position = UDim2.fromOffset(PAD, wellY),
+		Color = T.Cream,
+		Radius = 10,
+		ZIndex = 2,
+	})
+	Kit.rim(well, T.Line, 1)
 	subBar = Kit.scroll({
 		Name = "Subs",
-		Parent = subHolder,
-		Size = UDim2.new(1, -SIDE * 2, 1, -PAD * 2),
-		Position = UDim2.fromOffset(SIDE, PAD),
+		Parent = well,
+		Size = UDim2.new(1, -WELL_PAD * 2, 0, TILE_H),
+		Position = UDim2.fromOffset(WELL_PAD, WELL_PAD),
 		Axis = Enum.AutomaticSize.X,
 	})
 	subBar.ScrollBarThickness = 0
 	Kit.list(subBar, 0, true)
-
-	-- the tray of things to place and options, as wide as the screen: its rows scroll sideways
-	tray = Kit.frame({
+	tray = Kit.box({
 		Name = "Tray",
-		Size = UDim2.new(1, -EDGE * 2, 0, TRAY_H),
-		Position = UDim2.new(0, EDGE, 1, -TRAY_AT),
-		AnchorPoint = Vector2.new(0, 1),
-		Color = T.Paper,
-		Cut = CUT,
-		Parent = ui,
-	})
-	-- a little of the tray's own blue glowing in from its top right, for depth
-	Kit.glow(tray, T.Blue, 0.16)
-	trayBody = Kit.box({
-		Parent = tray,
-		Size = UDim2.new(1, -SIDE * 2, 1, -PAD * 2),
-		Position = UDim2.fromOffset(SIDE, PAD),
+		Parent = catalog,
+		Size = UDim2.new(1, -SIDE * 2, 0, INNER_H),
+		Position = UDim2.fromOffset(SIDE, trayY),
 		ZIndex = 2,
 	})
+	trayBody = tray
 
 	-- the tools, in a row on top of the tray
 	local strip = Kit.frame({
@@ -1894,13 +1910,11 @@ function BuildUI.init(exitCallback: () -> ())
 					local name = f.Name
 					if name == "Dock" then
 						Kit.slideIn(f, 0, 140, 0)
-					elseif name == "SubsBar" then
-						Kit.slideIn(f, 0, 160, 0.04)
-					elseif name == "Tray" then
-						Kit.slideIn(f, 0, 260, 0.08)
+					elseif name == "Catalog" then
+						Kit.slideIn(f, 0, 320, 0.05)
 					elseif name == "Tools" or name == "Hint" then
 						Kit.slideIn(f, -260, 0, 0.1)
-					elseif name == "Floors" or name == "Done" then
+					elseif name == "Floors" then
 						Kit.slideIn(f, 260, 0, 0.12)
 					elseif name == "Pill" or name == "CameraTip" then
 						Kit.slideIn(f, 0, -120, 0.12)

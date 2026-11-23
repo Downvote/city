@@ -1047,6 +1047,26 @@ Maplewick's.
   waypoint a little before reaching this one, and if they do arrive on one the next leg starts in the same
   moment. The walk animation waits a quarter of a second of real standing before it gives way to the idle one.
 
+### Build mode's tray in two pieces
+
+> the first screenshot part in the builder should have the background across the whole strip instead of leaving a
+> gap. the second should move down, shifting the tab below it up
+
+> move the bottom part up, but make it such that they share the same rectangle background with each other
+
+(With screenshots of the bottom row of tabs and Done, of the row of cards, and of the cards with the category
+tiles under them across a gap.) The bottom of Build mode is two pieces now, each the whole width of the screen with
+no scenery between their parts:
+
+- **The catalog** is one rounded card. The category tiles (Seating, Tables, Beds; or Buildings, Walls, Rooms) run
+  along its top in a deeper well, and under them, on the same card, are the cards to pick from, or the page for
+  paint, walls, rooms, floors, roofs, fences, selling and a picked piece's colours.
+- **The bottom bar** is one bar from edge to edge: Build, Furniture, Outdoor and Work at its left end, Done at its
+  right end.
+
+The tools row, its hint and the Floors card sit above the catalog as before. We read the two requests as the
+category tiles going above the cards; the order is one switch in the code if the other was meant.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no
