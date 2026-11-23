@@ -4,6 +4,7 @@
 -- round icon buttons with a white rim and a little caption pill, and drawn icons (UI/Icons).
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
@@ -13,7 +14,8 @@ local Icons = require(script.Parent.Icons)
 local Kit = {}
 
 Kit.Theme = {
-	Paper = Color3.fromRGB(255, 255, 255), -- cards and panels
+	Paper = Color3.fromRGB(255, 255, 255), -- cards and buttons
+	Cream = Color3.fromRGB(255, 250, 240), -- panels
 	PaperDark = Color3.fromRGB(239, 243, 247), -- wells, tracks, unpicked tabs
 	Ink = Color3.fromRGB(58, 64, 86), -- text and the few outlines: a soft navy
 	InkSoft = Color3.fromRGB(122, 130, 150),
@@ -234,16 +236,47 @@ function Kit.box(props: { [string]: any }?): Frame
 	return Kit.frame(p)
 end
 
--- A translucent navy pill, the kind the HUD floats over the 3D view. White text reads on it.
+-- A card the HUD floats over the 3D view: a cream wobbly bubble with navy words on it. If a list
+-- or grid layout is put inside, the bubble's pieces would be lined up too, so it becomes a plain
+-- rounded cream back instead.
 function Kit.glass(props: { [string]: any }?): Frame
 	local p = table.clone(props or {})
-	p.Color = p.Color or T.Glass
-	p.Transparency = p.Transparency or T.GlassAlpha
-	p.Stroke = nil
-	p.Radius = p.Radius or 18
-	local f = Kit.frame(p)
-	local s = Kit.stroke(f, T.White, 1.5)
-	s.Transparency = 0.75
+	local f = Kit.frame({
+		Name = p.Name or "Glass",
+		Size = p.Size,
+		Position = p.Position,
+		AnchorPoint = p.AnchorPoint,
+		Parent = p.Parent,
+		LayoutOrder = p.LayoutOrder,
+		Visible = p.Visible,
+		ZIndex = p.ZIndex,
+		AutomaticSize = p.AutomaticSize,
+		Color = p.Color or T.Paper,
+		Transparency = 1,
+		Radius = false,
+	})
+	local info = Kit.blobInto(f, {
+		Color = p.Color or T.Paper,
+		Radius = p.Radius or 20,
+		Bulge = p.Bulge or 6,
+		Bumps = p.Bumps or 2,
+		ZIndex = f.ZIndex,
+	})
+	f.ChildAdded:Connect(function(c)
+		if (c:IsA("UIListLayout") or c:IsA("UIGridLayout")) and not info.dead then
+			info.dead = true
+			for _, name in { "Shape", "Base" } do
+				local layer = f:FindFirstChild(name)
+				if layer then
+					layer:Destroy()
+				end
+			end
+			f.BackgroundTransparency = 0
+			Kit.corner(f, p.Radius or 20)
+			local st = Kit.stroke(f, T.Line, 2)
+			st.Transparency = 0.2
+		end
+	end)
 	return f
 end
 
@@ -362,6 +395,91 @@ end
 
 -- What a Kit button does under the pointer: grows when hovered (its icon hops), sinks onto its
 -- lip when pressed, and springs back with a little bounce when let go.
+-- Wobble: some things sway gently on their own, and every button wiggles when the pointer comes
+-- over it. One loop moves them all. Roblox ignores clipping under a turned frame, and some icons
+-- are cut out with clipping, so anything holding one breathes (its face grows and shrinks a
+-- little) instead of turning.
+type Wob = { amount: number, phase: number, kick: number, canTurn: boolean, face: GuiObject?, faceScale: UIScale? }
+local wobbles: { [GuiObject]: Wob } = {}
+local wobbleLoop = false
+
+local function canTurn(g: GuiObject): boolean
+	for _, d in g:GetDescendants() do
+		if d:IsA("GuiObject") and d.ClipsDescendants then
+			return false
+		end
+	end
+	return true
+end
+
+local function startWobble()
+	if wobbleLoop then
+		return
+	end
+	wobbleLoop = true
+	RunService.Heartbeat:Connect(function()
+		local t = os.clock()
+		for g, w in wobbles do
+			if not g.Parent then
+				wobbles[g] = nil
+				continue
+			end
+			if not g.Visible then
+				continue
+			end
+			local since = t - w.kick
+			local kick = if since < 0.6 then math.sin(since * 28) * (1 - since / 0.6) else 0
+			local sway = math.sin(t * 2.1 + w.phase)
+			if w.canTurn then
+				g.Rotation = math.floor((sway * w.amount + kick * 5) * 10 + 0.5) / 10
+			elseif w.face then
+				if not w.faceScale then
+					w.faceScale = Kit.new("UIScale", { Name = "Wobble", Parent = w.face })
+				end
+				local fs = w.faceScale :: UIScale
+				fs.Scale = 1 + sway * w.amount * 0.018 + kick * 0.06
+			end
+		end
+	end)
+end
+
+-- Makes `g` sway on its own by about `amount` degrees (1.6 if not given; 0 only wiggles on hover).
+function Kit.wobbly(g: GuiObject, amount: number?)
+	local w = wobbles[g]
+	if not w then
+		local face = g:FindFirstChild("Face")
+		w = {
+			amount = 0,
+			phase = math.random() * math.pi * 2,
+			kick = -10,
+			canTurn = canTurn(g),
+			face = if face and face:IsA("GuiObject") then face else nil,
+		}
+		wobbles[g] = w
+		startWobble()
+		-- icons and labels are often added just after the button is made: look again shortly
+		task.defer(function()
+			local ww = wobbles[g]
+			if ww then
+				ww.canTurn = canTurn(g)
+			end
+		end)
+	end
+	local ww = w :: Wob
+	ww.amount = amount or 1.6
+end
+
+-- A quick wiggle, as when the pointer comes over a button.
+function Kit.wiggle(g: GuiObject)
+	if not wobbles[g] then
+		Kit.wobbly(g, 0)
+	end
+	local w = wobbles[g]
+	if w then
+		w.kick = os.clock()
+	end
+end
+
 local function pressable(b: GuiButton)
 	local scale = Kit.new("UIScale", { Name = "Press", Parent = b })
 	local hovering, pressed = false, false
@@ -403,6 +521,7 @@ local function pressable(b: GuiButton)
 		hovering = true
 		TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Scale = 1.06 }):Play()
 		hop()
+		Kit.wiggle(b)
 	end)
 	b.MouseLeave:Connect(function()
 		hovering = false
@@ -572,7 +691,17 @@ end
 function Kit.setButtonColor(b: GuiButton, color: Color3, textColor: Color3?)
 	local face = b:FindFirstChild("Face")
 	local lip = b:FindFirstChild("Lip")
-	if face and face:IsA("Frame") then
+	if face and face:GetAttribute("Blob") then
+		Kit.setBlobColor(face, color)
+		if lip then
+			Kit.setBlobColor(lip, darker(color, 0.8))
+		end
+		local art = face:FindFirstChild("IconArt")
+		if art then
+			local light = color.R * 0.3 + color.G * 0.59 + color.B * 0.11 > 0.86
+			Kit.recolorIcon(art, if light then T.Ink else T.White, color)
+		end
+	elseif face and face:IsA("Frame") then
 		face.BackgroundColor3 = color
 		if lip and lip:IsA("Frame") then
 			lip.BackgroundColor3 = darker(color, 0.78)
@@ -635,38 +764,40 @@ function Kit.iconButton(icon: string, caption: string?, props: { [string]: any }
 	b:SetAttribute("Lip", lip)
 	b:SetAttribute("Round", true)
 	local z = b.ZIndex
-	-- the round's shadow, then its face
-	local under = Kit.new("Frame", {
+	-- a wobbly round face on a darker wobbly round under it
+	local under = Kit.blob({
 		Name = "Lip",
-		BackgroundColor3 = darker(color, 0.78),
-		BorderSizePixel = 0,
+		Round = true,
+		Color = darker(color, 0.8),
+		Base = false,
 		Size = UDim2.fromOffset(d, d),
 		Position = UDim2.new(0.5, -d / 2, 0, lip),
 		ZIndex = z,
 		Parent = b,
 	})
-	Kit.corner(under, "circle")
-	local face = Kit.new("Frame", {
+	local _ = under
+	local face, faceContent = Kit.blob({
 		Name = "Face",
-		BackgroundColor3 = color,
-		BorderSizePixel = 0,
+		Round = true,
+		Color = color,
+		Base = false,
 		Size = UDim2.fromOffset(d, d),
 		Position = UDim2.new(0.5, -d / 2, 0, 0),
 		ZIndex = z,
 		Parent = b,
 	})
-	Kit.corner(face, "circle")
-	-- a white rim (a light grey one on a white button, so it shows on a white card)
-	Kit.stroke(face, if color == T.White then T.Line else T.White, 3)
-	Kit.gradient(face, 0.08)
-	addSheen(face, "circle")
-	local iconPx = math.floor(d * 0.62)
+	local _2 = faceContent
+	local iconPx = math.floor(d * 0.6)
 	if Icons.has(icon) then
+		-- one colour: white on a coloured button, navy on a white one, details cut out in the face's colour
+		local light = color.R * 0.3 + color.G * 0.59 + color.B * 0.11 > 0.86
 		Icons.make(icon, iconPx, {
 			Name = "IconArt",
 			Parent = face,
 			Position = UDim2.new(0.5, -iconPx / 2, 0.5, -iconPx / 2),
-			ZIndex = z,
+			ZIndex = z + 1,
+			Color = p.IconColor or (if light then T.Ink else T.White),
+			Hole = color,
 		})
 	else
 		Kit.new("TextLabel", {
@@ -712,6 +843,7 @@ function Kit.iconButton(icon: string, caption: string?, props: { [string]: any }
 		})
 	end
 	pressable(b)
+	Kit.wobbly(b, if p.Wobble == nil then 2 else p.Wobble)
 	if onClick then
 		b.Activated:Connect(onClick)
 	end
@@ -796,14 +928,20 @@ function Kit.pill(icon: string, props: { [string]: any }?): (Frame, TextLabel)
 		AnchorPoint = p.AnchorPoint,
 		Parent = p.Parent,
 		LayoutOrder = p.LayoutOrder,
+		Radius = "pill",
 	})
-	local iconPx = math.floor(h * 1.12)
+	local iconPx = math.floor(h * 0.86)
 	if Icons.has(icon) then
+		-- one colour, the stat's own
+		local tints = { people = T.Blue, smile = T.Orange }
 		Icons.make(icon, iconPx, {
 			Name = "IconArt",
 			Parent = f,
-			Position = UDim2.new(0, -math.floor(h * 0.3) + iconPx / 2, 0.5, 0),
+			Position = UDim2.new(0, math.floor(h * 0.12) + iconPx / 2, 0.5, 0),
 			AnchorPoint = Vector2.new(0.5, 0.5),
+			ZIndex = f.ZIndex + 1,
+			Color = p.IconColor or tints[icon],
+			Hole = T.Paper,
 		})
 	else
 		Kit.new("TextLabel", {
@@ -818,7 +956,7 @@ function Kit.pill(icon: string, props: { [string]: any }?): (Frame, TextLabel)
 			Parent = f,
 		})
 	end
-	local left = math.floor(h * 0.86)
+	local left = math.floor(h * 1.08)
 	local right = if p.Plus then h + 4 else 12
 	local value = Kit.new("TextLabel", {
 		Name = "Value",
@@ -826,14 +964,14 @@ function Kit.pill(icon: string, props: { [string]: any }?): (Frame, TextLabel)
 		BackgroundTransparency = 1,
 		Font = Kit.Fonts.Title,
 		TextSize = p.TextSize or math.floor(h * 0.52),
-		TextColor3 = p.TextColor or T.White,
+		TextColor3 = p.TextColor or T.Ink,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Size = UDim2.new(1, -left - right, 1, 0),
 		Position = UDim2.fromOffset(left, 0),
 		TextTruncate = Enum.TextTruncate.AtEnd,
+		ZIndex = f.ZIndex + 1,
 		Parent = f,
 	})
-	Kit.outlineText(value, T.Glass, 1.2)
 	if p.Plus then
 		Kit.iconButton("plus", nil, {
 			Name = "Plus",
@@ -1021,37 +1159,46 @@ function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: s
 		Parent = gui,
 	})
 	holder.ZIndex = 5
-	Kit.frame({
-		Name = "Shadow",
-		Size = UDim2.fromScale(1, 1),
-		Position = UDim2.fromOffset(0, 8),
-		Color = T.Shadow,
-		Transparency = 0.8,
-		Radius = 24,
-		Parent = holder,
-	})
-	local frame = Kit.frame({
+	-- a cream wobbly card on its darker copy
+	local _, frame = Kit.blob({
 		Name = "Card",
 		Size = UDim2.fromScale(1, 1),
-		Color = T.Paper,
+		Color = T.Cream,
+		Radius = 30,
+		Bulge = 12,
+		Bumps = 3,
+		ZIndex = holder.ZIndex,
 		Parent = holder,
-		Radius = 24,
 	})
+	-- faint doodles in the panel's colour, like a patterned paper
+	local doodles = Random.new(#titleText * 31)
+	for k = 1, 9 do
+		local dx, dy = doodles:NextNumber(0.06, 0.94), doodles:NextNumber(0.2, 0.94)
+		local ring = k % 3 == 0
+		local d = Kit.frame({
+			Name = "Doodle",
+			Size = if ring then UDim2.fromOffset(26, 26) else UDim2.fromOffset(34, 9),
+			Position = UDim2.fromScale(dx, dy),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Color = headColor,
+			Transparency = if ring then 1 else 0.88,
+			Radius = "pill",
+			Parent = frame,
+		})
+		d.Rotation = doodles:NextInteger(-50, 50)
+		if ring then
+			local st = Kit.stroke(d, headColor, 4)
+			st.Transparency = 0.86
+		end
+	end
 	-- a soft tint of the panel's colour across the top, under the banner
 	local header = Kit.frame({
 		Name = "Header",
-		Size = UDim2.new(1, 0, 0, 56),
-		Color = headColor:Lerp(T.White, 0.86),
-		Radius = 24,
+		Size = UDim2.new(1, -36, 0, 46),
+		Position = UDim2.fromOffset(18, 16),
+		Color = headColor:Lerp(T.White, 0.82),
+		Radius = "pill",
 		Parent = frame,
-	})
-	Kit.frame({
-		Name = "Square",
-		Size = UDim2.new(1, 0, 0, 24),
-		Position = UDim2.new(0, 0, 1, -24),
-		Color = headColor:Lerp(T.White, 0.86),
-		Radius = false,
-		Parent = header,
 	})
 	local ribbon, title = Kit.ribbon(titleText, {
 		Parent = frame,
@@ -1089,6 +1236,464 @@ function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: s
 		end
 	end)
 	return self
+end
+
+-- Wobbly blobs ---------------------------------------------------------------------------------------
+-- A blob is a rounded core with soft pills overlapping its sides; the pills push out by
+-- different amounts and slowly breathe in and out, so the edge ripples like a soap bubble. A
+-- darker copy sits a few pixels lower for depth (no see-through shadow: see-through pieces would
+-- darken where they overlap). One loop moves every blob on screen.
+type Bump = { frame: Frame, side: string, at: number, phase: number }
+type BlobInfo = { holder: Frame, bulge: number, bumps: { Bump }, round: boolean, dead: boolean? }
+local blobs: { BlobInfo } = {}
+local blobLoop = false
+
+local function placeBump(b: Bump, bulge: number, out: number, round: boolean)
+	local f = b.frame
+	if round then
+		-- out is how far past the core's edge, as a share of the holder
+		local d = 0.5 - bulge + out - 0.23
+		local a = b.at
+		f.Position = UDim2.fromScale(0.5 + math.cos(a) * d, 0.5 + math.sin(a) * d)
+		return
+	end
+	local inset = bulge - out
+	if b.side == "top" then
+		f.Position = UDim2.new(b.at, 0, 0, inset)
+	elseif b.side == "bottom" then
+		f.Position = UDim2.new(b.at, 0, 1, -inset)
+	elseif b.side == "left" then
+		f.Position = UDim2.new(0, inset, b.at, 0)
+	else
+		f.Position = UDim2.new(1, -inset, b.at, 0)
+	end
+end
+
+local function startBlobs()
+	if blobLoop then
+		return
+	end
+	blobLoop = true
+	local acc = 0
+	RunService.Heartbeat:Connect(function(dt)
+		acc += dt
+		if acc < 1 / 24 then
+			return
+		end
+		acc = 0
+		local t = os.clock()
+		local i = 1
+		while i <= #blobs do
+			local info = blobs[i]
+			if info.dead or not info.holder.Parent then
+				table.remove(blobs, i)
+				continue
+			end
+			if info.holder.Visible and onScreen(info.holder) then
+				for _, b in info.bumps do
+					local out = info.bulge * (0.5 + 0.42 * math.sin(t * 1.4 + b.phase))
+					placeBump(b, info.bulge, out, info.round)
+				end
+			end
+			i += 1
+		end
+	end)
+end
+
+-- One layer of a blob's shape (the face, or the darker copy under it).
+local function blobLayer(
+	holder: Frame,
+	name: string,
+	color: Color3,
+	z: number,
+	radius: any,
+	bulge: number,
+	per: number,
+	round: boolean,
+	seed: number
+): (Frame, { Bump })
+	local layer = Kit.new("Frame", {
+		Name = name,
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = z,
+		Parent = holder,
+	})
+	local bumps: { Bump } = {}
+	local rng = Random.new(seed)
+	if round then
+		local core = Kit.new("Frame", {
+			Name = "Core",
+			BackgroundColor3 = color,
+			BorderSizePixel = 0,
+			Size = UDim2.fromScale(1 - bulge * 2, 1 - bulge * 2),
+			Position = UDim2.fromScale(bulge, bulge),
+			ZIndex = z,
+			Parent = layer,
+		})
+		Kit.corner(core, "circle")
+		local n = 7
+		for k = 1, n do
+			local f = Kit.new("Frame", {
+				Name = "Bump",
+				BackgroundColor3 = color,
+				BorderSizePixel = 0,
+				Size = UDim2.fromScale(0.46, 0.46),
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				ZIndex = z,
+				Parent = layer,
+			})
+			Kit.corner(f, "circle")
+			local b: Bump = {
+				frame = f,
+				side = "round",
+				at = (k / n) * math.pi * 2 + rng:NextNumber(-0.3, 0.3),
+				phase = rng:NextNumber(0, 6.28),
+			}
+			placeBump(b, bulge, bulge * 0.5, true)
+			table.insert(bumps, b)
+		end
+		return layer, bumps
+	end
+	local core = Kit.new("Frame", {
+		Name = "Core",
+		BackgroundColor3 = color,
+		BorderSizePixel = 0,
+		Size = UDim2.new(1, -bulge * 2, 1, -bulge * 2),
+		Position = UDim2.fromOffset(bulge, bulge),
+		ZIndex = z,
+		Parent = layer,
+	})
+	Kit.corner(core, radius)
+	local thick = 40
+	for _, side in { "top", "bottom", "left", "right" } do
+		local horizontal = side == "top" or side == "bottom"
+		for k = 1, per do
+			local at = 0.2 + 0.6 * (k - 0.5) / per + rng:NextNumber(-0.05, 0.05)
+			local length = 0.6 / per + 0.14 + rng:NextNumber(-0.04, 0.06)
+			local f = Kit.new("Frame", {
+				Name = "Bump",
+				BackgroundColor3 = color,
+				BorderSizePixel = 0,
+				Size = if horizontal then UDim2.new(length, 0, 0, thick) else UDim2.new(0, thick, length, 0),
+				AnchorPoint = if side == "top"
+					then Vector2.new(0.5, 0)
+					elseif side == "bottom" then Vector2.new(0.5, 1)
+					elseif side == "left" then Vector2.new(0, 0.5)
+					else Vector2.new(1, 0.5),
+				ZIndex = z,
+				Parent = layer,
+			})
+			Kit.corner(f, "pill")
+			local b: Bump = { frame = f, side = side, at = at, phase = rng:NextNumber(0, 6.28) }
+			placeBump(b, bulge, bulge * 0.5, false)
+			table.insert(bumps, b)
+		end
+	end
+	return layer, bumps
+end
+
+-- Puts a blob's shape (and the darker copy under it) inside an existing frame, behind its
+-- other children. props as Kit.blob (Color, Base, Radius, Bulge, Bumps, Round, Wobble, Tail,
+-- TailAt, TailSize, Seed, ZIndex). Returns the blob's record (set `dead` to stop it moving).
+function Kit.blobInto(holder: Frame, p: { [string]: any }): BlobInfo
+	local color: Color3 = p.Color or T.Paper
+	local z = p.ZIndex or holder.ZIndex
+	local round = p.Round == true
+	local bulge = p.Bulge or (if round then 0.06 else 6)
+	local per = p.Bumps or 3
+	holder:SetAttribute("Blob", true)
+	local seed = p.Seed or math.random(1, 1e6)
+	local radius = p.Radius or 26
+	local baseColor: any = p.Base
+	if baseColor == nil then
+		baseColor = darker(color, 0.86)
+	end
+	if baseColor then
+		local base = blobLayer(holder, "Base", baseColor, z, radius, bulge, per, round, seed)
+		base.Position = if round then UDim2.fromScale(0, 0.05) else UDim2.fromOffset(0, 5)
+	end
+	local face, bumps = blobLayer(holder, "Shape", color, z, radius, bulge, per, round, seed)
+	if p.Tail then
+		local size = p.TailSize or 20
+		local at = p.TailAt or 0.5
+		local tail = p.Tail
+		local edge = if round then 0 else bulge
+		local inset = edge + size * 0.15
+		Kit.new("Frame", {
+			Name = "Tail",
+			BackgroundColor3 = color,
+			BorderSizePixel = 0,
+			Rotation = 45,
+			Size = UDim2.fromOffset(size, size),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = if tail == "down"
+				then UDim2.new(at, 0, 1, -inset)
+				elseif tail == "up" then UDim2.new(at, 0, 0, inset)
+				elseif tail == "left" then UDim2.new(0, inset, at, 0)
+				else UDim2.new(1, -inset, at, 0),
+			ZIndex = z,
+			Parent = face,
+		})
+	end
+	local info: BlobInfo = { holder = holder, bulge = bulge, bumps = bumps, round = round }
+	if p.Wobble ~= false then
+		table.insert(blobs, info)
+		startBlobs()
+	end
+	return info
+end
+
+-- A wobbly bubble. Returns the holder (size and place it) and its content frame (put things in
+-- it; it fills the holder and, with AutomaticSize, sizes it). props: Parent, Size, Position,
+-- AnchorPoint, AutomaticSize, LayoutOrder, Name, ZIndex, Color, Base (the darker copy under it:
+-- a colour, or false for none), Radius, Bulge (how far the edge wobbles, in pixels), Bumps (per
+-- side), Round (a wobbly circle; Bulge is then a share of its size), Wobble (false to keep still),
+-- Tail ("down", "up", "left", "right"), TailAt (0..1 along that side), TailSize, Seed.
+function Kit.blob(props: { [string]: any }?): (Frame, Frame)
+	local p = props or {}
+	local z = p.ZIndex or 1
+	local auto = p.AutomaticSize or Enum.AutomaticSize.None
+	local holder = Kit.box({
+		Name = p.Name or "Blob",
+		Size = p.Size or UDim2.fromOffset(240, 80),
+		Position = p.Position,
+		AnchorPoint = p.AnchorPoint,
+		AutomaticSize = auto,
+		LayoutOrder = p.LayoutOrder,
+		Parent = p.Parent,
+	})
+	holder.ZIndex = z
+	Kit.blobInto(holder, p)
+	local content = Kit.box({
+		Name = "Content",
+		Size = if auto == Enum.AutomaticSize.Y
+			then UDim2.new(1, 0, 0, 0)
+			elseif auto == Enum.AutomaticSize.X then UDim2.new(0, 0, 1, 0)
+			elseif auto == Enum.AutomaticSize.XY then UDim2.new()
+			else UDim2.fromScale(1, 1),
+		AutomaticSize = auto,
+		Parent = holder,
+	})
+	content.ZIndex = z + 1
+	return holder, content
+end
+
+-- Recolours a blob (its face, tail and darker copy).
+function Kit.setBlobColor(holder: Instance, color: Color3)
+	for _, layerName in { "Shape", "Base" } do
+		local layer = holder:FindFirstChild(layerName)
+		if layer then
+			local c = if layerName == "Base" then darker(color, 0.86) else color
+			for _, f in layer:GetChildren() do
+				if f:IsA("Frame") then
+					f.BackgroundColor3 = c
+				end
+			end
+		end
+	end
+end
+
+-- Recolours a flat icon drawn by Icons.make: its glyph and its cut out details.
+function Kit.recolorIcon(icon: Instance, glyph: Color3, hole: Color3)
+	local was = icon:GetAttribute("Glyph")
+	local wasHole = icon:GetAttribute("Hole")
+	for _, d in icon:GetDescendants() do
+		if d:IsA("Frame") and d.BackgroundTransparency < 1 then
+			local hex = d.BackgroundColor3:ToHex()
+			d.BackgroundColor3 = if hex == wasHole then hole else glyph
+		elseif d:IsA("UIStroke") then
+			d.Color = if d.Color:ToHex() == wasHole then hole else glyph
+		end
+	end
+	icon:SetAttribute("Glyph", glyph:ToHex())
+	icon:SetAttribute("Hole", hole:ToHex())
+	local _ = was
+end
+
+-- A speech bubble: a white rounded card with a little tail and a soft shadow under it. Returns
+-- the holder (size and place it) and the body (put things in it). props: Parent, Size,
+-- Position, AnchorPoint, AutomaticSize, LayoutOrder, Name, ZIndex, Color, Radius, Shadow
+-- (default true), Tail ("down", "up", "left", "right" or false), TailAt (0..1 along that side),
+-- TailSize.
+function Kit.bubble(props: { [string]: any }?): (Frame, Frame)
+	local p = props or {}
+	local tail = p.Tail
+	if tail == nil then
+		tail = "down"
+	end
+	return Kit.blob({
+		Name = p.Name or "Bubble",
+		Parent = p.Parent,
+		Size = p.Size or UDim2.fromOffset(240, 64),
+		Position = p.Position,
+		AnchorPoint = p.AnchorPoint,
+		AutomaticSize = p.AutomaticSize,
+		LayoutOrder = p.LayoutOrder,
+		ZIndex = p.ZIndex,
+		Color = p.Color or T.White,
+		Base = if p.Shadow == false then false else nil,
+		Radius = p.Radius or 26,
+		Bulge = p.Bulge or 9,
+		Bumps = p.Bumps,
+		Tail = tail or nil,
+		TailAt = p.TailAt,
+		TailSize = p.TailSize,
+	})
+end
+
+-- Recolours a bubble made by Kit.bubble (its body and tail).
+function Kit.setBubbleColor(holder: Instance, color: Color3)
+	Kit.setBlobColor(holder, color)
+end
+
+-- An answer to pick, as a speech bubble: white with navy words, swaying a little; under the
+-- pointer it turns sunny yellow with soft stripes. props: Parent, Size, LayoutOrder, TextSize,
+-- Name, ZIndex, Disabled (greyed words, no yellow), Icon (an icon left of the words), Rich (the
+-- text is rich text, for coloured names).
+function Kit.choice(text: string, props: { [string]: any }?, onClick: (() -> ())?): TextButton
+	local p = props or {}
+	local z = p.ZIndex or 1
+	local b = Kit.new("TextButton", {
+		Text = "",
+		AutoButtonColor = false,
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Size = p.Size or UDim2.new(1, 0, 0, 54),
+		LayoutOrder = p.LayoutOrder or 0,
+		Name = p.Name or "Choice",
+		ZIndex = z,
+		Parent = p.Parent,
+	})
+	b:SetAttribute("KitButton", true)
+	local holder, body = Kit.bubble({
+		Parent = b,
+		Size = UDim2.fromScale(1, 1),
+		Radius = "pill",
+		Tail = "right",
+		TailAt = 0.72,
+		TailSize = 14,
+		Bulge = 4,
+		Bumps = 3,
+		ZIndex = z,
+	})
+	local core = holder:FindFirstChild("Shape") and (holder :: any).Shape:FindFirstChild("Core")
+	local stripes = Kit.new("UIGradient", {
+		Name = "Stripes",
+		Enabled = false,
+		Rotation = 24,
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+			ColorSequenceKeypoint.new(0.12, Color3.new(0.93, 0.9, 0.84)),
+			ColorSequenceKeypoint.new(0.25, Color3.new(1, 1, 1)),
+			ColorSequenceKeypoint.new(0.37, Color3.new(0.93, 0.9, 0.84)),
+			ColorSequenceKeypoint.new(0.5, Color3.new(1, 1, 1)),
+			ColorSequenceKeypoint.new(0.62, Color3.new(0.93, 0.9, 0.84)),
+			ColorSequenceKeypoint.new(0.75, Color3.new(1, 1, 1)),
+			ColorSequenceKeypoint.new(0.87, Color3.new(0.93, 0.9, 0.84)),
+			ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1)),
+		}),
+		Parent = core or body,
+	})
+	local row = Kit.box({ Name = "Content", Parent = body, Size = UDim2.fromScale(1, 1) })
+	row.ZIndex = z + 1
+	local list = Kit.list(row, 8, true, Enum.HorizontalAlignment.Center)
+	list.VerticalAlignment = Enum.VerticalAlignment.Center
+	if p.Icon and Icons.has(p.Icon) then
+		Icons.make(p.Icon, 26, { Name = "IconArt", Parent = row, ZIndex = z + 1, LayoutOrder = 1 })
+	end
+	local label = Kit.new("TextLabel", {
+		Name = "Label",
+		Text = text,
+		BackgroundTransparency = 1,
+		Font = Kit.Fonts.Title,
+		TextSize = p.TextSize or 20,
+		TextColor3 = if p.Disabled then T.InkSoft else T.Ink,
+		Size = UDim2.fromOffset(0, 30),
+		AutomaticSize = Enum.AutomaticSize.X,
+		LayoutOrder = 2,
+		ZIndex = z + 1,
+		RichText = p.Rich == true,
+		Parent = row,
+	})
+	local _ = label
+	local function lit(on: boolean)
+		Kit.setBubbleColor(holder, if on and not p.Disabled then Color3.fromRGB(255, 214, 72) else T.White)
+		stripes.Enabled = on and not p.Disabled
+	end
+	b.MouseEnter:Connect(function()
+		lit(true)
+	end)
+	b.MouseLeave:Connect(function()
+		lit(false)
+	end)
+	pressable(b)
+	Kit.wobbly(b, 0.9)
+	if onClick then
+		b.Activated:Connect(onClick)
+	end
+	return b
+end
+
+-- A friendship tag shaped like an arrow: the words on a coloured band ending in a point.
+-- `dir` is "right" (default) or "left". Returns the frame; it sizes itself to the words.
+function Kit.arrowTag(text: string, color: Color3?, props: { [string]: any }?): Frame
+	local p = props or {}
+	local col = color or Color3.fromRGB(255, 214, 72)
+	local h = p.Height or 26
+	local left = p.Dir == "left"
+	local z = p.ZIndex or 1
+	local holder = Kit.box({
+		Name = p.Name or "ArrowTag",
+		Size = UDim2.fromOffset(0, h),
+		AutomaticSize = Enum.AutomaticSize.X,
+		Position = p.Position,
+		AnchorPoint = p.AnchorPoint,
+		LayoutOrder = p.LayoutOrder,
+		Parent = p.Parent,
+	})
+	holder.ZIndex = z
+	local band = Kit.frame({
+		Name = "Band",
+		Size = UDim2.fromOffset(0, h),
+		AutomaticSize = Enum.AutomaticSize.X,
+		Color = col,
+		Radius = 6,
+		ZIndex = z,
+		Parent = holder,
+	})
+	local pad = Kit.pad(band, 12, 0)
+	if left then
+		pad.PaddingLeft = UDim.new(0, h * 0.5 + 8)
+	else
+		pad.PaddingRight = UDim.new(0, h * 0.5 + 8)
+	end
+	Kit.new("TextLabel", {
+		Name = "Label",
+		Text = text,
+		BackgroundTransparency = 1,
+		Font = Kit.Fonts.Title,
+		TextSize = math.floor(h * 0.6),
+		TextColor3 = T.Ink,
+		Size = UDim2.fromOffset(0, h),
+		AutomaticSize = Enum.AutomaticSize.X,
+		ZIndex = z + 1,
+		Parent = band,
+	})
+	-- the point: a turned square half out of the band's end
+	local side = h / math.sqrt(2)
+	Kit.new("Frame", {
+		Name = "Point",
+		BackgroundColor3 = col,
+		BorderSizePixel = 0,
+		Rotation = 45,
+		Size = UDim2.fromOffset(side, side),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = if left then UDim2.new(0, 2, 0.5, 0) else UDim2.new(1, -2, 0.5, 0),
+		ZIndex = z,
+		Parent = band,
+	})
+	return holder
 end
 
 function Kit.scroll(props: { [string]: any }?): ScrollingFrame

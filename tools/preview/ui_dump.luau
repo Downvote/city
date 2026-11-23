@@ -8,7 +8,8 @@
 --   build:walls         Build mode on Walls
 --   build:pick          Build mode with a piece of furniture picked (the action bar)
 --   panel:<Name>        a panel over the main screen (Residents, CityPanel, ShopPanel, News, Welcome)
---   event               an event playing in the dialogue box
+--   event               an event at its choices
+--   event:talk          an event part way through its lines
 --   toasts              a few notices
 --   icons               every icon, big and small
 --   icons:<a>,<b>,...   those icons up close
@@ -105,13 +106,14 @@ elseif scene:sub(1, 6) == "panel:" then
 	startHud()
 	Hud.open(scene:sub(7))
 	Sim.frames(3)
-elseif scene == "event" then
+elseif scene == "event" or scene == "event:talk" then
 	startHud()
 	Sim.remoteEvent("EventShow"):FireClient(Sim.player, {
 		token = "e1",
 		title = "A quarrel by the fountain",
 		names = { a = "Mara", b = "Tobin" },
 		lines = {
+			{ text = "Mara and Tobin are arguing by the fountain. Tobin looks like he might cry." },
 			{ who = "a", text = "You took the last bun from the bakery again." },
 		},
 		choices = {
@@ -120,7 +122,7 @@ elseif scene == "event" then
 			{ text = "Buy them both a bun", cost = 40 },
 		},
 	})
-	Sim.advance(8)
+	Sim.advance(if scene == "event:talk" then 2.5 else 24)
 elseif scene == "toasts" then
 	startHud()
 	local Toasts = Harness.require(Sim.CLIENT .. "UI.Toasts")
@@ -229,6 +231,7 @@ local PROPS = {
 	"TextYAlignment",
 	"TextWrapped",
 	"TextScaled",
+	"RichText",
 	"TextTransparency",
 	"TextStrokeTransparency",
 	"TextStrokeColor3",

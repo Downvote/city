@@ -1264,7 +1264,7 @@ function BuildUI.init(exitCallback: () -> ())
 		Size = UDim2.fromOffset(0, 34),
 		AutomaticSize = Enum.AutomaticSize.X,
 		TextSize = 17,
-		Color = T.White,
+		Color = T.Ink,
 		Wrap = false,
 	})
 
@@ -1319,7 +1319,7 @@ function BuildUI.init(exitCallback: () -> ())
 		Size = UDim2.new(1, -96, 1, 0),
 		Position = UDim2.fromOffset(48, 0),
 		TextSize = 20,
-		Color = T.White,
+		Color = T.Ink,
 		AlignX = Enum.TextXAlignment.Center,
 	})
 	Kit.button("", {

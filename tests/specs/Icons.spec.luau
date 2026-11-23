@@ -1,5 +1,6 @@
 --!nocheck
--- The drawn icons: every one builds, and none has an outline drawn over another part. Icons are
+-- The drawn icons: every one builds, and none has an outline drawn over another part. The flat
+-- ones the game uses by default are one colour, with details cut out in a second. Icons are
 -- drawn in two passes (dark outline copies first, then the fills with no stroke), so the only
 -- outline that shows is the one round the whole silhouette.
 
@@ -27,14 +28,14 @@ describe("Icons", function()
 		local names = Icons.names()
 		expect(#names >= 60).toBeTruthy()
 		for _, name in names do
-			local icon = Icons.make(name, 60)
+			local icon = Icons.make(name, 60, { Full = true })
 			expect(#icon:GetChildren() > 0).toBeTruthy()
 		end
 	end)
 
 	it("never draws an outline after a fill", function()
 		for _, name in Icons.names() do
-			local icon = Icons.make(name, 60)
+			local icon = Icons.make(name, 60, { Full = true })
 			local seenFill = false
 			for _, child in icon:GetChildren() do
 				local isInk = child.Name:sub(1, 3) == "Ink"
@@ -53,7 +54,7 @@ describe("Icons", function()
 
 	it("keeps every dark stroke on the outline copies", function()
 		for _, name in Icons.names() do
-			local icon = Icons.make(name, 60)
+			local icon = Icons.make(name, 60, { Full = true })
 			for _, child in icon:GetChildren() do
 				if child.Name:sub(1, 4) == "Fill" then
 					for _, st in strokesUnder(child) do
@@ -68,8 +69,29 @@ describe("Icons", function()
 		end
 	end)
 
+	it("draws flat icons in one colour with cut out details", function()
+		local glyph, hole = Color3.fromRGB(10, 20, 30), Color3.fromRGB(250, 240, 230)
+		for _, name in Icons.names() do
+			local icon = Icons.make(name, 48, { Color = glyph, Hole = hole })
+			local colours = {}
+			for _, d in icon:GetDescendants() do
+				expect(d.Name:sub(1, 3) ~= "Ink").toBeTruthy()
+				if d:IsA("Frame") and d.BackgroundTransparency < 1 then
+					colours[d.BackgroundColor3:ToHex()] = true
+				elseif d:IsA("UIStroke") then
+					colours[d.Color:ToHex()] = true
+				elseif d:IsA("UIGradient") then
+					error(name .. ": a flat icon has shading")
+				end
+			end
+			for hex in colours do
+				expect(hex == glyph:ToHex() or hex == hole:ToHex()).toBeTruthy()
+			end
+		end
+	end)
+
 	it("outlines nothing when asked not to", function()
-		local icon = Icons.make("coin", 40, { Outline = false })
+		local icon = Icons.make("coin", 40, { Full = true, Outline = false })
 		for _, child in icon:GetChildren() do
 			expect(child.Name:sub(1, 3) ~= "Ink").toBeTruthy()
 		end

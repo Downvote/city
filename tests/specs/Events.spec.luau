@@ -8,6 +8,7 @@ local Events = require(Shared .. "Data.Events")
 local EventEngine = require(Shared .. "Sim.EventEngine")
 local Schema = require(Shared .. "Sim.Schema")
 local Relationships = require(Shared .. "Sim.Relationships")
+local Life = require(Shared .. "Sim.Life")
 local Personalities = require(Shared .. "Data.Personalities")
 local StarterHouse = require(Shared .. "Data.StarterHouse")
 local Appearance = require(Shared .. "Avatar.Appearance")
@@ -95,6 +96,12 @@ describe("Event engine", function()
 			end
 			if count >= 3 and rng:chance(0.4) then
 				Relationships.add(p, "v2", "v3", 60)
+			end
+			-- a romance under way: a crush, or sweethearts close enough to propose
+			if count == 2 and rng:chance(0.8) then
+				Relationships.makeUp(p, "v1", "v2")
+				Relationships.add(p, "v1", "v2", 85)
+				Life.setBond(p, "v1", "v2", rng:pick({ "crush", "sweethearts", "sweethearts" }))
 			end
 			if rng:chance(0.3) then
 				p.inv.items.medicine = 1

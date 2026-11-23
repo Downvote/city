@@ -144,6 +144,29 @@ Tuning.City = {
 	},
 }
 
+-- Hearts, wishes and romance ---------------------------------------------------
+Tuning.Life = {
+	HeartMax = 20,
+	HeartBase = 4, -- points for the next heart level: HeartBase + HeartStep * level
+	HeartStep = 2,
+	FeedHearts = 1, -- a snack they like well enough
+	FavHearts = 3, -- their favourite
+	FeedsPerDay = 2, -- only the first few snacks a day count toward hearts
+	WishHearts = 4,
+	WishMood = 12,
+	WishCoinsMin = 20,
+	WishCoinsMax = 60,
+	WishChance = 0.12, -- per villager without a wish, each in-game hour
+	MaxWishes = 3, -- open at once across the town
+	WishHours = 24, -- in-game hours before an unanswered wish fades
+	WishFadeMood = -5,
+	RewardCoinsPerLevel = 40,
+	BasketSize = 4,
+	CrushScore = 55, -- friendship before a crush can start
+	ProposeScore = 80,
+	IntroduceGain = 18,
+}
+
 Tuning.Rewards = {
 	EventCoinsMin = 20,
 	EventCoinsMax = 120,

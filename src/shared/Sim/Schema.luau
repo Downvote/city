@@ -41,6 +41,13 @@ export type Villager = {
 	dayOff: number?, -- the day index they have off
 	isYou: boolean?,
 	born: number,
+	heart: number, -- how close they are to you (Sim/Life)
+	hxp: number,
+	wish: any?, -- { kind, arg?, untilT }
+	saying: string?, -- a Data/Sayings id
+	hobby: string?,
+	feedDay: number?,
+	feeds: number?,
 }
 
 function Schema.newProfile(): any
@@ -59,7 +66,19 @@ function Schema.newProfile(): any
 		settings = table.clone(Schema.Settings),
 		tutorial = 0,
 		daily = { last = 0, streak = 0 },
-		stats = { events = 0, fed = 0, made = 0, earned = 0, paydays = 0 },
+		stats = {
+			events = 0,
+			fed = 0,
+			made = 0,
+			earned = 0,
+			paydays = 0,
+			wishes = 0,
+			hearts = 0,
+			couples = 0,
+			partners = 0,
+		},
+		offers = {}, -- heart level thank yous waiting to be picked (Sim/Life)
+		goals = {}, -- town goals claimed, by id
 		recent = {},
 		calendar = { s = 1, d = 1, y = 1 },
 	}
@@ -134,6 +153,8 @@ function Schema.villagerDefaults(_pers: string?): any
 		lv = 1,
 		xp = 0,
 		born = 0,
+		heart = 1,
+		hxp = 0,
 	}
 end
 

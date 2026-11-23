@@ -460,10 +460,38 @@ def draw_box(cv, node, rect, clip):
         cv.paste(layer, x, y, clip)
 
 
+RICH_TAG = re.compile(r'<font\s+color="#([0-9a-fA-F]{6})">|</font>|<b>|</b>|<i>|</i>')
+
+
+def parse_rich(text):
+    """Roblox rich text, the part the game uses: <font color="#rrggbb"> spans (bold and italic
+    tags are dropped). Returns the plain text and a colour (or None) for every character."""
+    out, cols, stack, pos = [], [], [], 0
+    for m in RICH_TAG.finditer(text):
+        chunk = text[pos:m.start()]
+        out.append(chunk)
+        cols += [stack[-1] if stack else None] * len(chunk)
+        tag = m.group(0)
+        if tag.startswith("<font"):
+            h = m.group(1)
+            stack.append([int(h[0:2], 16) / 255, int(h[2:4], 16) / 255, int(h[4:6], 16) / 255])
+        elif tag == "</font>" and stack:
+            stack.pop()
+        pos = m.end()
+    chunk = text[pos:]
+    out.append(chunk)
+    cols += [stack[-1] if stack else None] * len(chunk)
+    plain = "".join(out).replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&")
+    return plain, cols[:len(plain)] + [None] * max(0, len(plain) - len(cols))
+
+
 def draw_text(cv, node, rect, clip):
     text = P(node, "Text", "") or ""
     if text == "" or P(node, "TextTransparency", 0) >= 1:
         return
+    rich_cols = None
+    if P(node, "RichText", False):
+        text, rich_cols = parse_rich(text)
     mvg = P(node, "MaxVisibleGraphemes", -1)
     if mvg is not None and mvg >= 0:
         text = text[:mvg]
@@ -513,6 +541,13 @@ def draw_text(cv, node, rect, clip):
     f = get_font(font, size * k)
     xa = P(node, "TextXAlignment", "Center")
     margin = int(sw * k + 4)
+    # where each line starts in the text, so rich text colours follow the wrapping
+    starts, cursor = [], 0
+    for line in lines:
+        while cursor < len(text) and text[cursor] in " \n" and not text.startswith(line, cursor):
+            cursor += 1
+        starts.append(cursor)
+        cursor += len(line)
     for i, line in enumerate(lines):
         lw = text_width(line, font, size)
         lx = x + (w - lw) / 2 if xa == "Center" else (x if xa == "Left" else x + w - lw)
@@ -534,8 +569,22 @@ def draw_text(cv, node, rect, clip):
                 kw = {}
                 if sw > 0:
                     kw = {"stroke_width": max(1, int(round(sw * k))), "stroke_fill": scol}
-                d.text((cx, base_y), run, font=f, fill=rgb(color, alpha), **kw)
-                cx += f.getlength(run)
+                if rich_cols is None:
+                    d.text((cx, base_y), run, font=f, fill=rgb(color, alpha), **kw)
+                    cx += f.getlength(run)
+                else:
+                    # draw it in pieces of one colour each
+                    at = starts[i] + line.find(run)
+                    j = 0
+                    while j < len(run):
+                        c = rich_cols[at + j] if at + j < len(rich_cols) else None
+                        e = j
+                        while e < len(run) and (rich_cols[at + e] if at + e < len(rich_cols) else None) == c:
+                            e += 1
+                        piece = run[j:e]
+                        d.text((cx, base_y), piece, font=f, fill=rgb(c or color, alpha), **kw)
+                        cx += f.getlength(piece)
+                        j = e
         cv.paste(layer, lx * k - margin, ly * k - margin, clip)
 
 

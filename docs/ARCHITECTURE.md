@@ -128,7 +128,12 @@ server, whatever the client did.
   the label follows it), `iconButton` (a round button: "Face" and "Lip" discs, the caption on a paper "Tag";
   `setButtonColor` recolours both discs and leaves the tag's ink alone), `pill` (wooden stat plates, `Plus` adds a
   round green +), `glass` (wooden bars: a gradient, so list layouts inside never see it), `ribbon(text, props)` (a
-  banner cut to its text, drawn with `Kit.pieces`), `pieces(parent, list, thick, z)` (rects and triangles with one
+  pill banner sized to its text), `blob(props)` / `blobInto(frame, props)` (wobbly bubbles: a rounded core with
+  soft pills over its sides that breathe in and out, a darker copy under it; `Round` for wobbly circles;
+  `setBlobColor`), `bubble(props)` (a blob with a tail), `choice(text, props, fn)` (an answer as a speech bubble,
+  yellow and striped under the pointer), `arrowTag(text, colour, props)`, `wobbly(g, degrees)` and `wiggle(g)`
+  (one loop sways things and wiggles buttons on hover; anything holding clipped icon pieces breathes instead of
+  turning), `recolorIcon(icon, glyph, hole)`, `pieces(parent, list, thick, z)` (rects and triangles with one
   shared outline: every dark copy first, then every fill), `panel` (cream card, solid shadow, top band, ribbon title,
   round red close; `root` holds the card and its shadow), `bar` (outlined progress bars), `badge`, `closeButton`,
   `outlineText`, `tabs`, `slider`, `swatch`, `textbox`, `scroll`, `shadow` (a solid offset shadow).

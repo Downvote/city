@@ -142,18 +142,16 @@ function Hud.start()
 		Size = UDim2.new(1, -70, 0, 24),
 		Position = UDim2.fromOffset(54, 5),
 		TextSize = 22,
-		Color = T.White,
+		Color = T.Ink,
 	})
 	local track = Kit.frame({
 		Parent = card,
 		Size = UDim2.new(1, -66, 0, 14),
 		Position = UDim2.fromOffset(54, 31),
-		Color = T.Shadow,
-		Radius = 7,
-		Stroke = T.Ink,
-		StrokeThickness = 2,
+		Color = T.PaperDark,
+		Radius = "pill",
 	})
-	local fill = Kit.frame({ Parent = track, Size = UDim2.fromScale(0, 1), Color = T.Purple, Radius = 7 })
+	local fill = Kit.frame({ Parent = track, Size = UDim2.fromScale(0, 1), Color = T.Purple, Radius = "pill" })
 	Kit.gradient(fill, 0.3)
 	local nextLine = Kit.text("", {
 		Parent = card,
@@ -161,7 +159,7 @@ function Hud.start()
 		Position = UDim2.fromOffset(54, 47),
 		TextSize = 12,
 		Font = Kit.Fonts.Bold,
-		Color = Color3.fromRGB(214, 208, 236),
+		Color = T.InkSoft,
 		Wrap = false,
 	})
 	nextLine.TextTruncate = Enum.TextTruncate.AtEnd
@@ -283,7 +281,7 @@ function Hud.start()
 		Size = UDim2.new(1, -66, 0, 28),
 		Position = UDim2.fromOffset(54, 5),
 		TextSize = 26,
-		Color = T.White,
+		Color = T.Ink,
 	})
 	local dateLabel = Kit.text("", {
 		Parent = clock,
@@ -291,7 +289,7 @@ function Hud.start()
 		Position = UDim2.fromOffset(54, 34),
 		TextSize = 14,
 		Font = Kit.Fonts.Bold,
-		Color = Color3.fromRGB(214, 208, 236),
+		Color = T.InkSoft,
 		Wrap = false,
 	})
 	task.spawn(function()

@@ -835,7 +835,12 @@ local function corner(parent: Instance, scale: number)
 end
 
 -- A top-lit shade in icon space: the object spans icon heights y0..y1 (0..100), turned by `rot`.
+local flat = false -- drawing a flat, one colour icon: no shading (set by Icons.make)
+
 local function shade(parent: Instance, y0: number, y1: number, rot: number)
+	if flat then
+		return
+	end
 	local function k(y: number): Color3
 		local v = 1 - SHADE * math.clamp(y / 100, 0, 1)
 		return Color3.new(v, v, v)
@@ -987,11 +992,21 @@ local function drawShape(
 	end
 end
 
--- Draws icon `name` into a new px x px Frame. props: Parent, Position, AnchorPoint, LayoutOrder,
--- Name, ZIndex, Outline (false for none), Tint (a colour that replaces every fill: for a
--- greyed-out icon).
+local function luminance(c: Color3): number
+	return c.R * 0.3 + c.G * 0.59 + c.B * 0.11
+end
+
+-- Draws icon `name` into a new px x px Frame. Icons are flat and one colour by default (the
+-- user asked for simple icons): every piece in `Color` (or `Tint`; navy if neither), dark
+-- details like eyes and lines cut out in `Hole` (white if not given), no outline, no shading,
+-- no shine. `Full = true` draws the old full colour sticker with its outline. props: Parent,
+-- Position, AnchorPoint, LayoutOrder, Name, ZIndex, Color, Hole, Tint, Full, Outline (false for
+-- none, full icons only).
 function Icons.make(name: string, px: number, props: { [string]: any }?): Frame
 	local p = props or {}
+	if not p.Full then
+		return Icons.flat(name, px, p)
+	end
 	local root = Instance.new("Frame")
 	root.Name = p.Name or "Icon"
 	root.BackgroundTransparency = 1
@@ -1039,6 +1054,68 @@ function Icons.make(name: string, px: number, props: { [string]: any }?): Frame
 			local st = f:FindFirstChildOfClass("UIStroke")
 			if st then
 				st.Thickness = width * px + (if f.Name:sub(1, 3) == "Ink" then thick * 2 else 0)
+			end
+		end
+	end
+	root.Parent = p.Parent
+	return root
+end
+
+Icons.Glyph = Color3.fromRGB(58, 64, 86)
+
+-- Icons that read best in their own colour when nobody asks for one.
+Icons.Colors = {
+	coin = Color3.fromRGB(236, 162, 28),
+	coins = Color3.fromRGB(236, 162, 28),
+	medal = Color3.fromRGB(236, 162, 28),
+	sun = Color3.fromRGB(255, 176, 30),
+	moon = Color3.fromRGB(236, 190, 60),
+	heart = Color3.fromRGB(255, 104, 150),
+	cloud = Color3.fromRGB(110, 170, 230),
+	rain = Color3.fromRGB(70, 150, 230),
+	storm = Color3.fromRGB(110, 110, 160),
+	snow = Color3.fromRGB(110, 170, 230),
+	blossom = Color3.fromRGB(255, 120, 170),
+	leaves = Color3.fromRGB(236, 130, 50),
+	alert = Color3.fromRGB(255, 108, 98),
+}
+
+-- The flat, one colour drawing of an icon (see Icons.make).
+function Icons.flat(name: string, px: number, p: { [string]: any }): Frame
+	local root = Instance.new("Frame")
+	root.Name = p.Name or "Icon"
+	root.BackgroundTransparency = 1
+	root.BorderSizePixel = 0
+	root.Size = UDim2.fromOffset(px, px)
+	root.Position = p.Position or UDim2.new()
+	root.AnchorPoint = p.AnchorPoint or Vector2.zero
+	root.LayoutOrder = p.LayoutOrder or 0
+	local z = p.ZIndex or 1
+	root.ZIndex = z
+	local glyph: Color3 = p.Color or p.Tint or Icons.Colors[name] or Icons.Glyph
+	local hole: Color3 = p.Hole or Color3.new(1, 1, 1)
+	local def = D[name] or D.medal
+	flat = true
+	for i, s in def do
+		if (s.t or 0) > 0 then
+			continue -- shines and see-through glints
+		end
+		local original = s[6]
+		local color = glyph
+		if typeof(original) == "Color3" and luminance(original) < 0.3 then
+			color = hole
+		end
+		drawShape(root, s, i, false, 0, 0, color, z)
+	end
+	flat = false
+	root:SetAttribute("Glyph", glyph:ToHex())
+	root:SetAttribute("Hole", hole:ToHex())
+	for _, f in root:GetChildren() do
+		local width = f:GetAttribute("RingWidth")
+		if type(width) == "number" then
+			local st = f:FindFirstChildOfClass("UIStroke")
+			if st then
+				st.Thickness = width * px
 			end
 		end
 	end

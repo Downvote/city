@@ -1266,7 +1266,7 @@ local function build()
 		Size = UDim2.fromOffset(0, 30),
 		AutomaticSize = Enum.AutomaticSize.X,
 		TextSize = 15,
-		Color = T.White,
+		Color = T.Ink,
 		Font = Kit.Fonts.Bold,
 		Wrap = false,
 	})

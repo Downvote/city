@@ -260,7 +260,8 @@ Each one's maker is credited in `Data/TextureIds`.
 
 > stylize it as such. the uis everywhere should also have the same cozy and bright aesthetic tomodachi life has
 
-We can't make a copy of another game, so we went for the same bright, cozy feel in designs of our own.
+We can't make a copy of another game, so we went for the same bright, cozy feel in designs of our own, and the
+life sim side grows the way the genre does (hearts, wishes, romance, town goals: section 3).
 The town is now a sunny island:
 
 - A turquoise sea all round: light shallows over sand by the shore, deep blue further out, with little islets
@@ -285,6 +286,27 @@ The screens get the same bright, cozy feel, replacing the square storybook look 
 - **Outlines are soft**: text is a gentle navy, and lines are thin and light.
 - **Events** play on a white rounded page under a pill banner; **notices** are white rounded notes outlined in
   their colour.
+
+> make the buttons and details more stylized, such as having wobbly buttons, and speechlike text like how tomodachi
+> life does it
+
+> menus and ui should look like this, with a wobbly bubble surrounding text. this includes the overworld ui and its
+> icons
+
+> icons should also be simple, with a single color if possible
+
+In our own drawing:
+
+- **Wobbly bubbles** carry the words everywhere: the HUD's money, people and happiness pills, the level card and
+  the clock are cream bubbles whose edges gently ripple; panels are big cream wobbly cards on a darker copy, with
+  faint doodles in the panel's colour and a tinted pill strip under the title banner.
+- **Buttons wobble**: round buttons and answers sway or breathe on their own, and every button wiggles when the
+  pointer comes over it. Round buttons are wobbly circles.
+- **Speech**: events are told in a big wobbly speech bubble near the top of the screen with its tail pointing at the
+  town, villagers' names picked out in a warm orange; the answers are speech bubbles down the right side that turn
+  sunny yellow with soft stripes under the pointer. Friendships show as arrow tags.
+- **Icons are flat and one colour**: white on a coloured button, navy on a white one, details like eyes cut out in
+  the colour behind them. A few keep their natural colour: the coin and medal gold, the sun yellow, hearts pink.
 
 Villagers walk with Roblox's pathfinding with jumping on, so they go round walls, through doorways (doors are free to
 pass and open as they come), round furniture and over low steps. If they get stuck they jump, then plan again.

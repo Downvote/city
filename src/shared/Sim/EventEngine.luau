@@ -11,6 +11,8 @@
 --   request who tag              wants furniture with that tag near their bed
 --   sick who minutes             stays in bed
 --   xp who d (skill at their job) | known who food r | bday who
+--   bond a b to                  romance: to = "crush" | "sweethearts" | "partners" | nil (over)
+--   hearts who n                 fills their hearts with you (Sim/Life)
 -- Handled by the service (returned in `service`):
 --   eat who food | away who seconds | visitor name | merchant | festival | creator who? | dayoff who
 
@@ -23,6 +25,8 @@ local Foods = require(script.Parent.Parent.Data.Foods)
 local Catalog = require(script.Parent.Parent.Build.Catalog)
 local Plan = require(script.Parent.Parent.Build.Plan)
 local Text = require(script.Parent.Parent.Util.Text)
+local Life = require(script.Parent.Life)
+local Rng = require(script.Parent.Parent.Util.Rng)
 
 local EventEngine = {}
 
@@ -127,6 +131,12 @@ function EventEngine.context(profile: any, o: Options): any
 		return best
 	end
 	-- the job a villager has, if any: { key, def, job }
+	function ctx.bond(a: string, b: string): string?
+		return Life.bond(profile, a, b)
+	end
+	function ctx.free(vid: string): boolean
+		return Life.free(profile, vid)
+	end
 	function ctx.job(vid: string): any
 		return City.jobOf(profile, vid)
 	end
@@ -263,7 +273,8 @@ function EventEngine.apply(profile: any, ev: any, effects: { any }, now: number)
 			v.mood = math.clamp(v.mood + d, Tuning.Villagers.MoodMin, Tuning.Villagers.MoodMax)
 		end
 	end
-	for _, e in effects do
+	local list: { any } = effects or {}
+	for _, e in list do
 		local t = e.t
 		if t == "rel" then
 			relChange(vid(e.a), vid(e.b), e.d)
@@ -324,6 +335,16 @@ function EventEngine.apply(profile: any, ev: any, effects: { any }, now: number)
 			local v = profile.villagers[vid(e.who) or ""]
 			if v then
 				v.known[e.food] = e.r
+			end
+		elseif t == "bond" then
+			local a, b = vid(e.a), vid(e.b)
+			if a and b and a ~= b then
+				Life.setBond(profile, a, b, e.to)
+			end
+		elseif t == "hearts" then
+			local who = vid(e.who)
+			if who then
+				Life.addHearts(profile, who, e.n, Rng.new(math.floor(now) % 100000), notices)
 			end
 		elseif t == "bday" then
 			local who = vid(e.who)
