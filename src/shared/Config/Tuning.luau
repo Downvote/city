@@ -15,6 +15,7 @@ Tuning.Game = {
 Tuning.Plot = {
 	Size = 200, -- studs along each side of a plot at its biggest (see City.Land for what you start with)
 	Count = 8,
+	HomeCooldown = 3, -- seconds between two trips home with the Home button
 	WallSnap = 2, -- walls, floors and roofs snap to this grid
 	ItemSnap = 1, -- furniture snaps to this unless free placement is on
 	Levels = 4, -- floors 0..3

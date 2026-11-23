@@ -46,6 +46,7 @@ Remotes.Functions = {
 	"GoalClaim", -- (goalId) -> ok, coins
 	"PlaceFound", -- (placeId) -> ok: the player is at a place (checked against where they stand)
 	"Travel", -- (placeId) -> ok, err: back to a place they've found
+	"GoHome", -- () -> ok, err: to the player's own plot
 	"VillagerTalk", -- (vid, bye?) -> ok, { vid, text, note, model } or err: the talk card's Chat, or its Bye
 }
 

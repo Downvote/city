@@ -204,6 +204,37 @@ function Plots.start()
 		return true
 	end
 
+	-- The Home button (the user: "make it such that there is a teleport home button"): to the
+	-- spot in front of your own house where you arrive when you join. Out of a seat first, so the
+	-- seat doesn't come along; not more than once every few seconds.
+	local lastHome: { [Player]: number } = {}
+	Remotes.fn("GoHome").OnServerInvoke = function(player)
+		local index = Plots.indexOf(player)
+		local char = player.Character
+		local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+		if not index or not char or not humanoid or humanoid.Health <= 0 then
+			return false, "Can't go home right now."
+		end
+		local now = os.clock()
+		if lastHome[player] and now - lastHome[player] < Tuning.Plot.HomeCooldown then
+			return false, "Hang on a moment."
+		end
+		lastHome[player] = now
+		local seat = humanoid.SeatPart
+		if seat then
+			local weld = seat:FindFirstChild("SeatWeld")
+			if weld then
+				weld:Destroy()
+			end
+			humanoid.Sit = false
+		end
+		char:PivotTo(Town.plotArrival(index))
+		return true, nil
+	end
+	Players.PlayerRemoving:Connect(function(player)
+		lastHome[player] = nil
+	end)
+
 	Remotes.fn("VisitPlot").OnServerInvoke = function(player, index)
 		if type(index) ~= "number" or not owners[index] then
 			return false

@@ -275,7 +275,8 @@ Functions (client asks, server answers): `GetState`, `BuildApply`, `BuildUndo`, 
 `Players:GetHumanoidDescriptionFromOutfitIdAsync`; a whole number, at most one every 0.5 s a player),
 `CreatorBundle` (`bundleId, kind?`: kind "body", "head", "shoes" or "anim", what the tab asked for; anything else
 counts as not said), `CreatorSearch` (its query may carry `offSale` and `inside`, a bundle's `BundledItems`),
-`VillagerTalk` (`vid, bye?` ->
+`GoHome` (-> `ok, err`: to the caller's own plot at `Town.plotArrival`, out of any seat first, at most once every
+`Tuning.Plot.HomeCooldown` seconds), `VillagerTalk` (`vid, bye?` ->
 `ok, { vid, text, note, model }` or an error: the talk card's Chat, or its Bye).
 
 Events (server pushes): `State` (patches of the client state), `PlanSync` (`{ full }` or `{ ops }`), `Notify`
@@ -336,6 +337,15 @@ clipping (`tools/preview/ui_render.py`).
   framed from the feet to the top of the head, and plays its idle animation unless `Still = true`. With
   `Shadow = true` it returns a second viewport, `AvatarShadow`: the same copy again, `ImageColor3` black and see
   through, a little bigger and off to the right, playing the same animation.
+- `UI/Kit` gradients: `Kit.shade(face, colour?)` shades a leaning face across (a UIGradient `Shade` from the colour
+  to `Kit.shadeEnd(colour)`: 16% toward black, 7% for a pale surface, yellow toward amber), keeps the colour in the
+  face's `Base` attribute (its BackgroundColor3 is white) and paints its left wedge (`Wedge_br`) in the first colour
+  and its right one (`Wedge_tl`) in the second; `Kit.colorOf(face)` reads it back; `Kit.paint` re-shades a shaded
+  face. `Kit.row`'s `Fill`, `Kit.segments`' `Well` and tab `Face`s, `Kit.button`'s and `Kit.tile`'s `Face` are shaded.
+  `Kit.glow(frame, colour, strength?, corner?)` adds a `Glow` frame (a diagonal transparency fade from the corner,
+  gone before the middle; marked `KeepColors`). `Kit.panel` puts a `Backglow` (two glows, top left and bottom right)
+  behind a full menu's shapes, a glow in the panel's card and a `Rule` hairline under the title; a look switch
+  repaints `Shade` gradients and `Base` attributes with the rest.
 - `UI/Kit` looks: `Kit.Themes.dark` and `Kit.Themes.light` hold the tokens that differ (`Black`, the colour a
   menu covers the screen with, and the surfaces and words: `PaperDark`, `Cream`, `Paper`, `Card`, `Picture`,
   `Line`, `Ink`, `InkSoft`). `Kit.Theme` holds the one that is on (`Kit.ThemeName`); `Kit.setTheme(name)` swaps
@@ -451,7 +461,15 @@ clipping (`tools/preview/ui_render.py`).
   the card: it opens on the `Talk` event unless an event is being told (`EventCard.isPlaying()`), sits where the
   event's dialogue card does, offers Chat (`VillagerTalk`), Profile (`Hud.open("Residents", vid)`) and Bye, and
   closes on Bye, walking out of `Range`, waiting too long, a menu, Build mode, the creator or an event.
-- `UI/Hud`: stat pills, the level card, the clock, the icon dock and the daily gift; opens one panel at a time:
+- `UI/Quests`: the quest list on the main screen. `Quests.mount(parent, position, open)` builds it (a header that
+  folds it, a list of at most `Quests.Shown` (3) quests) and refreshes it on any state that moves a goal;
+  `Quests.next(profile, count)` picks them (done and unclaimed first, then by how far along). A finished one claims
+  through `GoalClaim`; a click elsewhere calls `open` (the Hud opens the goals menu).
+- `UI/Hud`: the level card, the money, people and happiness pills in a strip under it (`Pills`), the quests under
+  that, the clock and the captioned round buttons under it (`HomeCell` with `Home`, then the map, the city hall, the
+  shop, the news and the look), the icon dock and the daily gift. `Hud.goHome()` shuts the menus, dips the screen
+  (a `Veil` frame) and asks `GoHome`; H does the same when the HUD shows and nothing has the keyboard. It opens one
+  panel at a time:
   `Creator`, `Residents`, `CityPanel`, `ShopPanel`, `News`, `Welcome`. `EventCard` (the dialogue box) and `Weather`
   run all the time. The HUD and the event box step aside in Build mode and while the creator is open. The round
   buttons under the clock start with `Look`, which calls `Theme.toggle()` and is drawn again after a switch.

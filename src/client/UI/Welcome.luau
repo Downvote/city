@@ -22,7 +22,7 @@ function Welcome.open(hud: any)
 	Welcome.close()
 	panel = Kit.panel(
 		"Welcome to Maplewick",
-		UDim2.fromOffset(580, 400),
+		UDim2.fromOffset(580, 326),
 		Welcome.close,
 		"house",
 		Kit.Theme.Blue,

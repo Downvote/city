@@ -96,10 +96,19 @@ end
 -- Shows lines one after another, typed out. A click finishes the line; another moves on.
 local skip = false
 local typing = false
+local topRow: Frame? = nil
+-- The strip over the words (who speaks, and Watch) takes no room when it holds nothing.
+local function fitTop()
+	if topRow then
+		topRow.Visible = plate.Visible or watchButton.Visible
+	end
+end
+
 local function setSpeaker(name: string?)
 	local changed = speakerLabel.Text ~= (name or "")
 	speakerLabel.Text = name or ""
 	plate.Visible = name ~= nil and name ~= ""
+	fitTop()
 	if changed and plate.Visible then
 		Kit.bump(plate, 0.25)
 	end
@@ -225,6 +234,7 @@ local function play(ev: any)
 		Kit.popIn(holder)
 	end
 	watchButton.Visible = ev.focus ~= nil
+	fitTop()
 	showLines(ev.lines or {})
 	if ev.choices and current == ev then
 		setSpeaker(nil)
@@ -307,13 +317,16 @@ function EventCard.start(_hud: any)
 	})
 	Kit.softShadow(card, 1.4)
 	Kit.wash(card, T.Paper, T.Cream, 90)
+	-- a warm glow from the top right, as on the menus
+	Kit.glow(card, T.Orange, 0.2, "tr")
 	Kit.shapes(card, T.Orange, 41, 12, { Transparency = 0.9, Area = { 0.04, 0.1, 0.96, 0.9 } })
 	local inner = Kit.box({ Parent = card, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y })
 	Kit.pad(inner, 28, 22)
 	Kit.list(inner, 12)
 
 	-- who's talking, and the button that points the camera at them
-	local top = Kit.box({ Parent = inner, Size = UDim2.new(1, 0, 0, 30), LayoutOrder = 0 })
+	local top = Kit.box({ Name = "Top", Parent = inner, Size = UDim2.new(1, 0, 0, 30), LayoutOrder = 0 })
+	topRow = top
 	plate = Kit.frame({
 		Parent = top,
 		Size = UDim2.fromOffset(0, 30),

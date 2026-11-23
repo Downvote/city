@@ -34,7 +34,7 @@ function Rewards.open()
 	end
 	local v = State.villager(offer.vid)
 	local name = if v then v.name else "Someone"
-	panel = Kit.panel(Text.fill("{name} feels closer", { name = name }), UDim2.fromOffset(580, 400), function()
+	panel = Kit.panel(Text.fill("{name} feels closer", { name = name }), UDim2.fromOffset(580, 352), function()
 		Rewards.close()
 	end, "heart", T.Pink, { Dialog = true })
 	local body = panel.body

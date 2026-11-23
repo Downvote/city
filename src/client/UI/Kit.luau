@@ -273,8 +273,97 @@ function Kit.slant(face: GuiObject, height: number?, outside: boolean?): number
 	return cap
 end
 
+-- Gradients -----------------------------------------------------------------------------------------
+-- The user: "reference zenless zone zero uis, add gradients to menus as well to add more polish".
+-- A leaning face (a row, a tab, a button, a tile) is shaded across: its colour at the left,
+-- a deeper tone of it at the right, the slanted end on each side in the colour of that side, so
+-- the slab reads as one piece. A picked yellow warms toward amber rather than going muddy. The
+-- face's own colour is kept in its `Base` attribute (its BackgroundColor3 is white under the
+-- gradient); Kit.paint and Kit.setButtonColor keep a shaded face shaded.
+
+local SHADE_TO = Color3.new(0, 0, 0)
+
+-- The right hand end of a face shaded from `color`.
+function Kit.shadeEnd(color: Color3): Color3
+	if color == T.Yellow then
+		return T.Yellow:Lerp(T.YellowDark, 0.75)
+	end
+	-- a pale surface (the light look's rows and tabs) needs less to show the same depth
+	local light = color.R * 0.3 + color.G * 0.59 + color.B * 0.11
+	return color:Lerp(SHADE_TO, if light > 0.7 then 0.07 else 0.16)
+end
+
+-- What colour a face is, shaded or not.
+function Kit.colorOf(face: GuiObject): Color3
+	local base = face:GetAttribute("Base")
+	if type(base) == "string" then
+		return Color3.fromHex(base)
+	end
+	return face.BackgroundColor3
+end
+
+-- Shades a leaning face from `color` (its own colour if none) at the left to a deeper tone at
+-- the right.
+function Kit.shade(face: GuiObject, color: Color3?)
+	local a = color or Kit.colorOf(face)
+	local b = Kit.shadeEnd(a)
+	face:SetAttribute("Base", a:ToHex())
+	face.BackgroundColor3 = Color3.new(1, 1, 1)
+	local g = face:FindFirstChild("Shade")
+	if not (g and g:IsA("UIGradient")) then
+		g = Kit.new("UIGradient", { Name = "Shade", Parent = face })
+	end
+	(g :: UIGradient).Color = ColorSequence.new(a, b)
+	for _, c in face:GetChildren() do
+		if c:IsA("Frame") and c.Name:sub(1, 6) == "Wedge_" then
+			-- the slanted end on the left is the "br" half, the one on the right the "tl" half
+			c.BackgroundColor3 = if c.Name == "Wedge_br" or c.Name == "Wedge_bl" then a else b
+		end
+	end
+end
+
+-- A soft glow of `color` laid into a frame from one corner ("tr" the top right by default, or
+-- "tl", "bl", "br"), fading out before the middle: depth on a dark card without touching its
+-- shape (from the top right it stays clear of a cut card's cut corners). `strength` is how much
+-- of the colour shows at the corner, 0.3 by default. Returns the glow, a frame named Glow under
+-- whatever else the frame holds.
+function Kit.glow(frame: GuiObject, color: Color3, strength: number?, corner: string?): Frame
+	local old = frame:FindFirstChild("Glow")
+	if old then
+		old:Destroy()
+	end
+	local glow = Kit.new("Frame", {
+		Name = "Glow",
+		BackgroundColor3 = color,
+		BorderSizePixel = 0,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 0,
+		Parent = frame,
+	})
+	-- the colour itself is the menu's: a change of look leaves it be
+	glow:SetAttribute("KeepColors", true)
+	local from = 1 - (strength or 0.3)
+	local turn = ({ tr = 135, tl = 45, bl = -45, br = -135 })[corner or "tr"] or 135
+	Kit.new("UIGradient", {
+		Name = "Fade",
+		Rotation = turn,
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, from),
+			NumberSequenceKeypoint.new(0.22, from + (1 - from) * 0.55),
+			NumberSequenceKeypoint.new(0.44, 1),
+			NumberSequenceKeypoint.new(1, 1),
+		}),
+		Parent = glow,
+	})
+	return glow
+end
+
 -- Recolours a face and the wedges on it (and whether they show).
 function Kit.paint(face: GuiObject, color: Color3?, transparency: number?)
+	if color and face:FindFirstChild("Shade") then
+		Kit.shade(face, color)
+		color = nil
+	end
 	if color then
 		face.BackgroundColor3 = color
 	end
@@ -584,6 +673,11 @@ local function repaint(inst: Instance, map: (Color3) -> Color3)
 	local any = inst :: any
 	if inst:IsA("GuiObject") then
 		inst.BackgroundColor3 = map(inst.BackgroundColor3)
+		-- a shaded face remembers its own colour
+		local base = inst:GetAttribute("Base")
+		if type(base) == "string" then
+			inst:SetAttribute("Base", map(Color3.fromHex(base)):ToHex())
+		end
 		-- a row remembers the colour its words go back to when it is no longer picked
 		local plain = inst:GetAttribute("Plain")
 		if type(plain) == "string" then
@@ -610,7 +704,7 @@ local function repaint(inst: Instance, map: (Color3) -> Color3)
 		end
 	elseif inst:IsA("UIStroke") then
 		inst.Color = map(inst.Color)
-	elseif inst:IsA("UIGradient") and inst.Name == "Wash" then
+	elseif inst:IsA("UIGradient") and (inst.Name == "Wash" or inst.Name == "Shade") then
 		local keys = {}
 		for _, k in inst.Color.Keypoints do
 			table.insert(keys, ColorSequenceKeypoint.new(k.Time, map(k.Value)))
@@ -1292,6 +1386,7 @@ local function chunky(b: GuiButton, color: Color3, radius: any, lip: number, _ou
 	local _ = radius
 	-- a button leans: its ends are slanted
 	Kit.slant(face, b.Size.Y.Offset - lip)
+	Kit.shade(face)
 	return face
 end
 
@@ -2179,6 +2274,7 @@ function Kit.row(props: { [string]: any }, onClick: (() -> ())?): (GuiObject, Fr
 		Parent = row,
 	})
 	Kit.slant(face, h - RIM * 2)
+	Kit.shade(face)
 	local inner = Kit.new("Frame", {
 		Name = "Inside",
 		BackgroundTransparency = 1,
@@ -2349,6 +2445,7 @@ function Kit.segments(
 		Parent = bar,
 	})
 	Kit.slant(well, h - RIM * 2)
+	Kit.shade(well)
 	local holder = Kit.new("Frame", {
 		Name = "Row",
 		BackgroundTransparency = 1,
@@ -2416,6 +2513,7 @@ function Kit.segments(
 			Parent = b,
 		})
 		Kit.slant(face, th)
+		Kit.shade(face)
 		buttons[t.id] = b
 		faces[t.id] = face
 		b.Activated:Connect(function()
@@ -2457,6 +2555,7 @@ function Kit.tile(icon: string, caption: string, props: { [string]: any }?, onCl
 	})
 	-- a slight lean, so tiles in a row sit side by side like tabs
 	Kit.slant(face, 26)
+	Kit.shade(face)
 	local content = Kit.new("Frame", {
 		Name = "Content",
 		BackgroundTransparency = 1,
@@ -2765,6 +2864,33 @@ function Kit.panel(
 		-- lighter behind the dialog, darker toward the screen's edges
 		Kit.vignette(dim, 0.6, 0.3, 0.3)
 	else
+		-- the menu's colour glowing up out of the black from the top left, and a little from
+		-- the bottom right, behind the drifting shapes
+		local wide = Kit.new("Frame", {
+			Name = "Backglow",
+			BackgroundTransparency = 1,
+			Size = UDim2.fromScale(1, 1),
+			ZIndex = 0,
+			Parent = holder,
+		})
+		local screenGlow = Kit.box({
+			Name = "Screen",
+			Size = UDim2.fromOffset(2400, 1400),
+			Position = UDim2.fromScale(0.5, 0.5),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Parent = wide,
+		})
+		screenGlow.ZIndex = 0
+		Kit.glow(screenGlow, accent, 0.34, "tl")
+		local low = Kit.box({
+			Name = "Low",
+			Size = UDim2.fromOffset(2400, 1400),
+			Position = UDim2.fromScale(0.5, 0.5),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Parent = wide,
+		})
+		low.ZIndex = 0
+		Kit.glow(low, accent, 0.14, "br")
 		Kit.motion(holder, accent, seed)
 	end
 	local _ = icon
@@ -2784,6 +2910,8 @@ function Kit.panel(
 		Parent = rim,
 	})
 	Kit.cutInto(frame, T.Cream, CUT)
+	-- the menu's colour glowing softly into the panel from its top right corner
+	Kit.glow(frame, accent, if dialog then 0.24 else 0.18, "tr")
 	-- details: a block of stripes inside the cut corner at the bottom right, ticks along the top
 	Kit.stripes({
 		Parent = frame,
@@ -2851,12 +2979,32 @@ function Kit.panel(
 			Parent = header,
 		})
 		Kit.slant(mark, 34)
+		Kit.shade(mark, accent)
 		title = Kit.title(titleText, {
 			Parent = header,
 			Size = UDim2.new(0.5, -130, 0, 46),
 			Position = UDim2.fromOffset(130, 2),
 			TextSize = 30,
 			Color = T.Ink,
+		})
+		-- a hairline in the menu's colour under the name, fading out to the right
+		local rule = Kit.new("Frame", {
+			Name = "Rule",
+			BackgroundColor3 = accent,
+			BorderSizePixel = 0,
+			Size = UDim2.fromOffset(280, 2),
+			Position = UDim2.fromOffset(100, 49),
+			Parent = header,
+		})
+		rule:SetAttribute("KeepColors", true)
+		Kit.new("UIGradient", {
+			Name = "Fade",
+			Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0.1),
+				NumberSequenceKeypoint.new(0.6, 0.6),
+				NumberSequenceKeypoint.new(1, 1),
+			}),
+			Parent = rule,
 		})
 		if o.Tabs then
 			local _bar, select = Kit.segments(o.Tabs, function(id: string)

@@ -4,6 +4,7 @@
 local Lighting = game:GetService("Lighting")
 local ProximityPromptService = game:GetService("ProximityPromptService")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Remotes = require(Shared.Net.Remotes)
@@ -15,6 +16,7 @@ local Kit = require(script.Parent.Kit)
 local Icons = require(script.Parent.Icons)
 local Toasts = require(script.Parent.Toasts)
 local Theme = require(script.Parent.Theme)
+local Quests = require(script.Parent.Quests)
 local State = require(script.Parent.Parent.Controllers.State)
 
 local Hud = {}
@@ -54,6 +56,41 @@ function Hud.closeAll()
 	end
 end
 
+-- Home: back to the player's own plot (the user: "make it such that there is a teleport home
+-- button"). The menus shut, the screen dips to black and comes back up on the doorstep.
+local goingHome = false
+function Hud.goHome()
+	if goingHome then
+		return
+	end
+	goingHome = true
+	Hud.closeAll()
+	local veil = Kit.frame({
+		Name = "Veil",
+		Size = UDim2.fromScale(1, 1),
+		Color = T.Black,
+		Transparency = 1,
+		Radius = false,
+		ZIndex = 50,
+		Parent = Kit.root(),
+	})
+	veil:SetAttribute("KeepColors", true)
+	TweenService:Create(veil, TweenInfo.new(0.18), { BackgroundTransparency = 0.05 }):Play()
+	task.spawn(function()
+		task.wait(0.18)
+		local ok, result, err = pcall(function()
+			return Remotes.fn("GoHome"):InvokeServer()
+		end)
+		TweenService:Create(veil, TweenInfo.new(0.32), { BackgroundTransparency = 1 }):Play()
+		task.wait(0.34)
+		veil:Destroy()
+		goingHome = false
+		if not ok or not result then
+			Toasts.show(if ok and type(err) == "string" then err else "Can't go home right now.", "warn")
+		end
+	end)
+end
+
 -- A profile-like table from the client state, for Sim/City.
 function Hud.cityStats(): any
 	local d = State.data
@@ -90,14 +127,8 @@ local function levelProgress(stats: any): (number, string)
 	end
 	local pop = if nextLevel.Pop > 0 then stats.population / nextLevel.Pop else 1
 	local built = if nextLevel.Value > 0 then stats.value / nextLevel.Value else 1
-	return math.clamp(math.min(pop, built), 0, 1),
-		Text.fill("Next: {name}. {pop}/{needPop} people, {built}/{needBuilt} built", {
-			name = nextLevel.Name,
-			pop = stats.population,
-			needPop = nextLevel.Pop,
-			built = Text.commas(math.min(stats.value, nextLevel.Value)),
-			needBuilt = Text.commas(nextLevel.Value),
-		})
+	-- the detail (people, worth) is in the city hall, a click away: here just where it's going
+	return math.clamp(math.min(pop, built), 0, 1), Text.fill("Next: {name}", { name = nextLevel.Name })
 end
 
 function Hud.start()
@@ -132,40 +163,56 @@ function Hud.start()
 	local fill = Kit.frame({ Parent = track, Size = UDim2.fromScale(0, 1), Color = T.Yellow, Radius = "pill" })
 	local nextLine = Kit.text("", {
 		Parent = card,
-		Size = UDim2.new(1, -96, 0, 16),
-		Position = UDim2.fromOffset(86, 58),
-		TextSize = 13,
+		Size = UDim2.new(1, -150, 0, 18),
+		Position = UDim2.fromOffset(86, 57),
+		TextSize = 15,
 		Font = Kit.Fonts.Bold,
 		Color = T.White,
 		Wrap = false,
 	})
 	Kit.outlineText(nextLine, T.Glass, 1.5)
 	nextLine.TextTruncate = Enum.TextTruncate.AtEnd
+	local pctLine = Kit.text("", {
+		Name = "Percent",
+		Parent = card,
+		Size = UDim2.fromOffset(56, 18),
+		Position = UDim2.new(1, -66, 0, 57),
+		TextSize = 15,
+		Font = Kit.Fonts.Title,
+		Color = T.Yellow,
+		AlignX = Enum.TextXAlignment.Right,
+		Wrap = false,
+	})
+	Kit.outlineText(pctLine, T.Glass, 1.5)
 	local cardButton =
 		Kit.new("TextButton", { Text = "", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), Parent = card })
 	cardButton.Activated:Connect(function()
 		Hud.open("CityPanel")
 	end)
 
-	-- money, people and happiness, top middle -------------------------------------------------------------
+	-- money, people and happiness, in a strip under the level (the user: "put these as a tab
+	-- below the level, then add quests below it as well") --------------------------------------------
 	local pills = Kit.box({
 		Name = "Pills",
-		Size = UDim2.fromOffset(470, 50),
-		Position = UDim2.new(0.5, 0, 0, 14),
-		AnchorPoint = Vector2.new(0.5, 0),
+		Size = UDim2.fromOffset(396, 44),
+		Position = UDim2.fromOffset(22, 96),
 		Parent = hud,
 	})
-	Kit.list(pills, 14, true, Enum.HorizontalAlignment.Center)
+	Kit.list(pills, 10, true, Enum.HorizontalAlignment.Left)
 	local coinPill, coins = Kit.pill("coin", {
 		Parent = pills,
-		Size = UDim2.fromOffset(200, 50),
+		Size = UDim2.fromOffset(176, 44),
 		LayoutOrder = 1,
 		Plus = function()
 			Hud.open("ShopPanel")
 		end,
 	})
-	local _, popLabel = Kit.pill("people", { Parent = pills, Size = UDim2.fromOffset(110, 50), LayoutOrder = 2 })
-	local moodPill, moodLabel = Kit.pill("smile", { Parent = pills, Size = UDim2.fromOffset(122, 50), LayoutOrder = 3 })
+	local _, popLabel = Kit.pill("people", { Parent = pills, Size = UDim2.fromOffset(92, 44), LayoutOrder = 2 })
+	local moodPill, moodLabel = Kit.pill("smile", { Parent = pills, Size = UDim2.fromOffset(104, 44), LayoutOrder = 3 })
+	-- and under that, the quests: the town's next goals
+	Quests.mount(hud, UDim2.fromOffset(16, 150), function()
+		Hud.open("Goals")
+	end)
 
 	local shown = 0
 	local function setCoins(n: number)
@@ -228,6 +275,7 @@ function Hud.start()
 		local t, line = levelProgress(stats)
 		TweenService:Create(fill, TweenInfo.new(0.4), { Size = UDim2.fromScale(math.max(t, 0.04), 1) }):Play()
 		nextLine.Text = line
+		pctLine.Text = if stats.nextLevel then Text.fill("{n}%", { n = math.floor(t * 100) }) else ""
 	end
 	State.on("coins", function(n)
 		setCoins(n or 0)
@@ -247,40 +295,84 @@ function Hud.start()
 		Radius = 32,
 		Parent = hud,
 	})
-	-- round buttons under the clock: the city, the shop, the news
+	-- round buttons under the clock, each with its name under it: home, the map, the city hall,
+	-- the shop, the news, and dark or light
 	local corner = Kit.box({
 		Name = "Corner",
-		Size = UDim2.fromOffset(302, 52),
-		Position = UDim2.new(1, -14, 0, 86),
+		Size = UDim2.fromOffset(372, 76),
+		Position = UDim2.new(1, -14, 0, 84),
 		AnchorPoint = Vector2.new(1, 0),
 		Parent = hud,
 	})
-	local cornerList = Kit.list(corner, 10, true, Enum.HorizontalAlignment.Right)
-	local _ = cornerList
+	Kit.list(corner, 8, true, Enum.HorizontalAlignment.Right)
+	local function cornerButton(icon: string, name: string, caption: string, order: number, fn: () -> ()): Frame
+		local cell =
+			Kit.box({ Name = name .. "Cell", Parent = corner, Size = UDim2.fromOffset(54, 76), LayoutOrder = order })
+		Kit.roundButton(icon, { Parent = cell, Size = 50, Position = UDim2.fromOffset(2, 0), Name = name }, fn)
+		local label = Kit.text(caption, {
+			Name = "Caption",
+			Parent = cell,
+			Size = UDim2.new(1, 8, 0, 18),
+			Position = UDim2.fromOffset(-4, 54),
+			TextSize = 13,
+			Font = Kit.Fonts.Title,
+			Color = T.White,
+			AlignX = Enum.TextXAlignment.Center,
+			Wrap = false,
+		})
+		Kit.outlineText(label, T.Glass, 1.5)
+		return cell
+	end
+	local homeCell = cornerButton("house", "Home", "Home", 1, function()
+		Hud.goHome()
+	end)
+	-- on a keyboard, H does it too: the key shows on the button
+	if UserInputService.KeyboardEnabled then
+		local key = Kit.new("TextLabel", {
+			Name = "Key",
+			Text = "H",
+			Font = Kit.Fonts.Title,
+			TextSize = 12,
+			TextColor3 = T.Dark,
+			BackgroundColor3 = T.Yellow,
+			BorderSizePixel = 0,
+			Size = UDim2.fromOffset(16, 16),
+			Position = UDim2.fromOffset(42, -4),
+			ZIndex = 4,
+			Parent = homeCell,
+		})
+		key:SetAttribute("KeepColors", true)
+	end
 	for i, e in
 		{
-			{ "map", "MapPanel" },
-			{ "city", "CityPanel" },
-			{ "cart", "ShopPanel" },
-			{ "news", "News" },
+			{ "map", "MapPanel", "Map" },
+			{ "city", "CityPanel", "City" },
+			{ "cart", "ShopPanel", "Shop" },
+			{ "news", "News", "News" },
 		}
 	do
-		Kit.roundButton(e[1], { Parent = corner, LayoutOrder = i, Name = e[2] }, function()
+		cornerButton(e[1], e[2], e[3], i + 1, function()
 			Hud.open(e[2])
 		end)
 	end
 	-- dark or light: the button shows the one you would switch to
-	local lookButton: GuiObject? = nil
+	local lookCell: GuiObject? = nil
 	local function drawLook()
-		if lookButton then
-			lookButton:Destroy()
+		if lookCell then
+			lookCell:Destroy()
 		end
-		lookButton = Kit.roundButton(Theme.icon(), { Parent = corner, LayoutOrder = 0, Name = "Look" }, function()
+		lookCell = cornerButton(Theme.icon(), "Look", if Theme.name() == "dark" then "Light" else "Dark", 9, function()
 			Theme.toggle()
 		end)
 	end
 	drawLook()
 	Kit.onTheme(drawLook)
+	UserInputService.InputBegan:Connect(function(input, processed)
+		-- not while typing, in Build mode or in the creator (the HUD is hidden then)
+		if not processed and input.KeyCode == Enum.KeyCode.H and hud.Visible then
+			Hud.goHome()
+		end
+	end)
 	local weatherArt: Frame? = nil
 	local weatherNow = ""
 	local function setWeatherIcon(name: string)

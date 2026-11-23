@@ -262,7 +262,7 @@ run("a menu takes the screen: a way back, tabs, rows", function()
 		return tab:FindFirstChild("Label")
 	end
 	check(
-		slab(first).BackgroundTransparency == 0 and slab(first).BackgroundColor3 == T.Yellow,
+		slab(first).BackgroundTransparency == 0 and Sim.Kit.colorOf(slab(first)) == T.Yellow,
 		"the first tab starts picked, on a yellow slab"
 	)
 	check(slab(first):FindFirstChild("Wedge_br") ~= nil, "which leans: it has slanted ends")
@@ -286,13 +286,27 @@ run("a menu takes the screen: a way back, tabs, rows", function()
 	check(title.TextColor3 == T.Ink, "its words are light")
 	local fill = row:FindFirstChild("Fill")
 	Sim.Kit.setRowSelected(row, true)
-	check(title.TextColor3 == T.Dark and fill.BackgroundColor3 == T.Yellow, "picked, it is yellow with dark words")
-	check(fill:FindFirstChild("Wedge_tl").BackgroundColor3 == T.Yellow, "its slanted ends too")
+	check(title.TextColor3 == T.Dark and Sim.Kit.colorOf(fill) == T.Yellow, "picked, it is yellow with dark words")
+	local shade = fill:FindFirstChild("Shade")
+	check(
+		shade ~= nil
+			and shade.Color.Keypoints[1].Value == T.Yellow
+			and shade.Color.Keypoints[#shade.Color.Keypoints].Value == Sim.Kit.shadeEnd(T.Yellow),
+		"shaded across, yellow warming to amber"
+	)
+	check(
+		fill:FindFirstChild("Wedge_br").BackgroundColor3 == T.Yellow
+			and fill:FindFirstChild("Wedge_tl").BackgroundColor3 == Sim.Kit.shadeEnd(T.Yellow),
+		"its slanted ends take the colour of their side"
+	)
 	Sim.Kit.setRowSelected(row, false)
-	check(title.TextColor3 == T.Ink and fill.BackgroundColor3 == T.PaperDark, "and goes back")
+	check(title.TextColor3 == T.Ink and Sim.Kit.colorOf(fill) == T.PaperDark, "and goes back")
 	row.Activated:Fire()
 	check(hit, "clicking a row calls back")
 	check(panel.root:FindFirstChild("Motion") ~= nil, "shapes drift across the black behind it")
+	check(panel.root:FindFirstChild("Backglow") ~= nil, "the menu's colour glows up out of the black behind it")
+	local card1 = panel.root:FindFirstChild("Card", true)
+	check(card1 ~= nil and card1:FindFirstChild("Glow") ~= nil, "and softly into the panel from its top right")
 	local card0 = panel.root:FindFirstChild("Card", true)
 	check(
 		card0:FindFirstChild("Cut") ~= nil and card0.Cut:FindFirstChild("Wedge_br") ~= nil,
@@ -365,7 +379,7 @@ run("the look switches between dark and light, and back", function()
 	)
 	local fill = row:FindFirstChild("Fill")
 	local title = row:FindFirstChild("Title", true)
-	check(fill.BackgroundColor3 == T.PaperDark and title.TextColor3 == T.Ink, "a row that was up is repainted")
+	check(Sim.Kit.colorOf(fill) == T.PaperDark and title.TextColor3 == T.Ink, "a row that was up is repainted")
 	local label = button:FindFirstChild("Label", true)
 	check(button.TextColor3 == T.Ink and label.TextColor3 == T.Ink, "a button's words are turned once, not twice")
 	check(

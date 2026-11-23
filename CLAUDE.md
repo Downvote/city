@@ -25,7 +25,7 @@ the contract (update it with every API, remote or saved data change), `src/share
 5. `sh scripts/check.sh` must pass: format, types (luau-lsp against Roblox's definitions), specs, the client
    simulations (`tests/sim/build_client.luau`: the real Build mode driven by clicks; `tests/sim/talk_card.luau`:
    the card you get by holding E on a villager; `tests/sim/creator_sections.luau`: the creator's Bodies, Body
-   parts, My items and My avatars), the dark and the light look on every screen
+   parts, My items and My avatars; `tests/sim/hud.luau`: the main screen's stats strip, quests and Home), the dark and the light look on every screen
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
@@ -109,14 +109,24 @@ section 10). New buttons get it from `UI/Kit`; new moving scenery goes in `World
 The user asked for the genre's own layouts (house builders, avatar editors, city builders), then for a bright,
 cozy look like the life sims they showed, then named a mobile city builder (Pocket City 2) as the UI and graphics
 direction: its layout and clean low poly feel, in our own designs, never copied (docs/GAME_DESIGN.md section 10).
-The HUD is a level hexagon top left, dark pills top middle, clock and round buttons top right, a portrait and quick
-menu bottom left and a big Build button bottom right; no outlines on rounded rectangles; the ground is flat colour. Build
+The HUD is a level hexagon top left with the money, people and happiness pills in a strip under it and the quests
+(`UI/Quests`: the next town goals, claimable there) under that ("put these as a tab below the level, then add quests
+below it as well"); the clock top right with a row of captioned round buttons under it, Home first ("make it such
+that there is a teleport home button": `Hud.goHome`, the `GoHome` remote, the H key); a portrait and quick menu
+bottom left and a big Build button bottom right; no outlines on rounded rectangles; the ground is flat colour. Build
 screens from `UI/Kit` (rounded cards with pill banners and soft shadows, rounded buttons on a soft base,
 round icon buttons with a caption pill, translucent dark pills over the 3D view) and `UI/Icons`
 (drawn icons, never emoji in the interface). The user asked for wobbly bubbles round text, wobbly buttons,
 speech bubble dialogue with names in colour, and simple one colour icons: use `Kit.blob`, `Kit.bubble`,
-`Kit.choice`, and `Icons.make` (flat by default: `Color`, `Hole`; `Full = true` for the old stickers). Everything
-is flat colour (no darker base, gradient or sheen: `Kit.gradient` is switched off) and menus have no decorative icons.
+`Kit.choice`, and `Icons.make` (flat by default: `Color`, `Hole`; `Full = true` for the old stickers). Menus
+have no decorative icons. Since "reference zenless zone zero uis, add gradients to menus as well to add more polish",
+leaning faces are shaded: `Kit.shade(face, colour)` runs a face from its colour at the left to a deeper tone at the
+right (picked yellow warms to amber), its slanted ends matching their side, and `Kit.row`, `Kit.segments`,
+`Kit.button` and `Kit.tile` do it already; read a shaded face's colour with `Kit.colorOf`, recolour it with
+`Kit.paint` or `Kit.setButtonColor` (they keep the shade). `Kit.glow(frame, colour, strength, corner)` lays a soft fade
+of a colour into a card from a corner (the top right by default, clear of cut corners): every menu's panel has one in
+its colour, the black behind a menu glows with it from the top left, and a hairline in its colour runs under its
+name. Take only the direction from that game, never its art. (`Kit.gradient`, the old sheen, stays off.)
 The latest word on menus: follow popular games of the genre (never invent layouts) and keep it cozy and soft, so
 panels are cards with a tinted header bar, title, round close button and a dimmed screen behind; events are a
 dialogue card with the answers inside; nothing wobbles (`Kit.blob` draws plain shapes) and nothing inside a
@@ -125,7 +135,7 @@ look best over an island render as `--bg`. The user then pointed at Roblox's wri
 rounded clipping ("reference this doc an implement as much as possible"): cards, pills, buttons and menus get
 `Kit.softShadow` (two UIShadows), backdrops `Kit.vignette`, progress `Kit.ring` (conical) or `Kit.bar`, glows
 `Kit.halo`, and anything that must cut its children to round corners is a `Kit.frame` with `Clips` and a radius (a
-CanvasGroup). Buttons and tabs still have no shading of their own. All of it sits in pcalls and falls back to flat. Then: "add more life to the uis, such as gradients and simple shapes
+CanvasGroup). All of it sits in pcalls and falls back to flat. Then: "add more life to the uis, such as gradients and simple shapes
 dotting the background" (`Kit.wash`, `Kit.shapes`: on cards and pills, not on buttons or tabs, and never on the
 strip at the top of a menu: "No need for shapes at the top part seperator of the menu"), and the villager's
 face in place of the colour bar in lists. (A wavy edge under the header came and went with the old panels.)

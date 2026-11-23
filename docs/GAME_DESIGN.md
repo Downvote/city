@@ -949,6 +949,38 @@ None of that game's streets, shops, signs, gate or art: Maplewick's are its own.
   bays, a roof with its clutter, in a handful of wall treatments and colours, put together by rule so a street is
   varied and still one town.
 
+### More polish, gradients, a way home and quests on the main screen
+
+> could you polish every ui even further? also, make it such that there is a teleport home button
+
+> reference zenless zone zero uis, add gradients to menus as well to add more polish
+
+> put these as a tab below the level, then add quests below it as well
+
+(The second came with no picture; the third with a picture of the money, people and happiness pills.) As before,
+only the direction is taken from that game: dark panels lit by the menu's own colour, clean gradients, thin accent
+lines. Never its art, patterns or layouts.
+
+- **Gradients.** Every leaning slab is shaded across now, its colour at the left running to a deeper tone at the
+  right: list rows, tabs, buttons, Build mode's tiles. The picked row or tab warms from yellow to amber. Behind a
+  menu, its colour glows up out of the black from the top left (a little from the bottom right too), behind the
+  drifting shapes; the panel itself has a soft glow of the colour in its top right corner; a hairline in the colour
+  runs under the menu's name, fading out to the right. Dialogs, the event card and the talk card have the same
+  glow, in the menu's colour, a warm orange, and the villager's own colour.
+- **The main screen.** Under the town's level the line now just says where it's going ("Next: Village") with the
+  percentage at the right; the people and worth it needs are in the city hall, a click away. The round buttons
+  under the clock each carry their name (Home, Map, City, Shop, News, and Light or Dark).
+- **Stats and quests.** The money (with its + to the shop), people and happiness pills sit in a strip under the
+  town's level at the top left, and under them the quests: the town's next goals, at most three, the finished ones
+  first with their Claim button right there, the rest with how far along they are. A click on a quest opens the
+  goals menu; the header folds the list away and back.
+- **Home.** A Home button (first under the clock, with a house) takes you back to your own plot, to the spot in
+  front of your house where you arrive when you join. On a keyboard H does it too (the key shows on the button).
+  The menus shut, the screen dips to black for a moment and comes back up on your doorstep; if you were sitting
+  you stand up first. Once every three seconds at most.
+- **Dialogs** fit what is in them (no empty bottom), and the event card loses the empty strip over its words when
+  nobody in particular is speaking.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

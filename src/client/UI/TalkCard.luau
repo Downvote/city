@@ -166,6 +166,8 @@ local function build(vid: string, v: any)
 	})
 	Kit.softShadow(card, 1.4)
 	Kit.wash(card, T.Paper, T.Cream, 90)
+	-- their own colour glowing in from the top right, as on the menus
+	Kit.glow(card, own, 0.22, "tr")
 	Kit.shapes(card, own, #v.name * 7 + 3, 8, { Transparency = 0.9, Area = { 0.04, 0.1, 0.96, 0.6 } })
 	-- what they said: room for two lines
 	lineLabel = Kit.text("", {
