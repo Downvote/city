@@ -406,6 +406,7 @@ TownModels.Models.fountain = function(r: R)
 	r:cyl(0, 8.5, 0, 0.8, 0.55, "y", STONE, "Marble")
 	r:cyl(0, 8.95, 0, 0.15, 0.85, "y", light, "Marble")
 	local top = r:ball(0, 9.4, 0, 0.9, C.Water, "Glass")
+	top.name = "Spout" -- the client sprays water from here
 	top.transp = 0.2
 	top.effect = "sparkles"
 	-- water falling from each bowl into the one below

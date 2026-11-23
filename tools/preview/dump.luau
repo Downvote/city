@@ -10,6 +10,8 @@
 --   house              the starter house
 --   town               the plaza's own buildings
 --   town:<name>        one of them (fountain, board, tailor, shop, hall...)
+--   ambient            the cars, the bus and a bird
+--   cloud              a cloud
 --   map                the middle of town: streets, plaza and street furniture
 --   map:x1,z1,x2,z2    another part of town
 
@@ -139,6 +141,12 @@ elseif scene == "map" or scene:sub(1, 4) == "map:" then
 		end
 	end
 	addPrims(TownMap.preview(region))
+elseif scene == "ambient" then
+	local AmbientModels = R(Shared .. "Data.AmbientModels")
+	addPrims(AmbientModels.preview())
+elseif scene == "cloud" then
+	local AmbientModels = R(Shared .. "Data.AmbientModels")
+	addPrims(AmbientModels.prims("cloud"))
 elseif scene == "town" then
 	local TownModels = R(Shared .. "Data.TownModels")
 	addPrims(TownModels.preview())

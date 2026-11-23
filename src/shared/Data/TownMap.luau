@@ -20,17 +20,17 @@ local L = Town.HalfLength
 local HW = Town.StreetHalfWidth
 local SW = Town.SidewalkWidth
 
-local GRASS = Color3.fromRGB(116, 178, 88)
-local ROAD = Color3.fromRGB(74, 76, 84)
-local ROAD_EDGE = Color3.fromRGB(66, 68, 75)
+local GRASS = Color3.fromRGB(124, 198, 94)
+local ROAD = Color3.fromRGB(72, 76, 90)
+local ROAD_EDGE = Color3.fromRGB(62, 66, 80)
 local LINE_WHITE = Color3.fromRGB(236, 236, 230)
 local LINE_YELLOW = Color3.fromRGB(240, 200, 80)
 local CURB = Color3.fromRGB(198, 198, 194)
-local WALK = Color3.fromRGB(214, 210, 200)
+local WALK = Color3.fromRGB(226, 222, 214)
 local JOINT = Color3.fromRGB(176, 172, 164)
-local PAVING = Color3.fromRGB(222, 206, 180)
-local PAVING_DARK = Color3.fromRGB(190, 170, 142)
-local HEDGE = Color3.fromRGB(62, 128, 62)
+local PAVING = Color3.fromRGB(238, 222, 194)
+local PAVING_DARK = Color3.fromRGB(210, 188, 156)
+local HEDGE = Color3.fromRGB(70, 150, 70)
 local SOIL = Color3.fromRGB(96, 70, 50)
 
 -- A region the preview crops to: { x1, z1, x2, z2 }. Nil builds the whole town.
@@ -260,9 +260,58 @@ TownMap.Models.flagpole = function(r: R)
 	r:cyl(0, 0.3, 0, 0.6, 1.6, "y", Color3.fromRGB(196, 190, 178), "Concrete")
 	r:cyl(0, 8, 0, 15, 0.3, "y", C.Metal, "Metal")
 	r:ball(0, 15.6, 0, 0.5, C.Gold, "Metal")
-	r:block(0.15, 12.2, -0.05, 4.6, 15, 0.05, Color3.fromRGB(59, 130, 246), "Fabric")
-	r:block(0.15, 13.2, -0.06, 4.6, 14, 0.06, C.White, "Fabric")
+	-- the flag's parts are named so the client can wave them
+	r:block(0.15, 12.2, -0.05, 4.6, 15, 0.05, Color3.fromRGB(59, 130, 246), "Fabric").name = "Flag"
+	r:block(0.15, 13.2, -0.06, 4.6, 14, 0.06, C.White, "Fabric").name = "Flag"
 end
+
+-- decoration ----------------------------------------------------------------------------------------
+
+-- A round bush of a few leafy balls.
+TownMap.Models.bush = function(r: R)
+	r:ball(0, 1.6, 0, 3.4, Color3.fromRGB(78, 160, 74), "Grass")
+	r:ball(-1.3, 1.2, 0.6, 2.4, Color3.fromRGB(96, 182, 84), "Grass")
+	r:ball(1.2, 1.3, -0.4, 2.6, Color3.fromRGB(64, 140, 66), "Grass")
+	r:ball(0.3, 2.6, 0.2, 2, Color3.fromRGB(110, 196, 92), "Grass")
+end
+
+-- A patch of flowers in the grass: a low green tuft dotted with blooms.
+TownMap.Models.flowerPatch = function(r: R)
+	r:cyl(0, 0.15, 0, 0.3, 7, "y", Color3.fromRGB(96, 176, 80), "Grass")
+	local colours = {
+		C.Pink,
+		C.Yellow,
+		Color3.fromRGB(250, 250, 255),
+		Color3.fromRGB(190, 120, 240),
+		C.Red,
+		Color3.fromRGB(255, 160, 80),
+	}
+	local rng = Rng.new(5)
+	for i = 1, 14 do
+		local a = rng:float(0, math.pi * 2)
+		local d = rng:float(0.4, 3)
+		local x, z = math.cos(a) * d, math.sin(a) * d
+		local h = rng:float(0.5, 1.1)
+		r:cyl(x, h / 2, z, h, 0.1, "y", C.DarkLeaf, "Grass")
+		r:ball(x, h + 0.15, z, rng:float(0.45, 0.65), colours[i % #colours + 1], "SmoothPlastic")
+	end
+end
+
+TownMap.Models.rock = function(r: R)
+	r:ball(0, 0.6, 0, 2.6, Color3.fromRGB(170, 172, 182), "Slate")
+	r:ball(1.3, 0.4, 0.6, 1.6, Color3.fromRGB(150, 152, 162), "Slate")
+	r:ball(-1, 0.3, -0.7, 1.2, Color3.fromRGB(186, 188, 196), "Slate")
+end
+
+-- Rolling hills round the edge of the world: the top of a big buried ball.
+local function hill(radius: number, height: number)
+	return function(r: R)
+		r:ball(0, height - radius, 0, radius * 2, Color3.fromRGB(110, 186, 86), "Grass")
+	end
+end
+TownMap.Models.hillS = hill(55, 14)
+TownMap.Models.hillM = hill(80, 22)
+TownMap.Models.hillL = hill(110, 30)
 
 function TownMap.prims(name: string): { Prim }
 	local build = TownMap.Models[name]
@@ -565,6 +614,47 @@ function TownMap.placements(): { Placement }
 	-- the bus stop on the south side, facing the street
 	put("busStop", 96, -(HW + SW - 2.2), 0)
 	put("bin", 88, -(HW + 2), 0)
+
+	-- bushes along the plaza's sides, on the grass between it and the plots
+	for _, sx in { -1, 1 } do
+		for z = 30, 136, 13 do
+			put("bush", sx * 58, z, z * 7)
+		end
+		for z = -136, -30, 13 do
+			put("bush", sx * 58, z, z * 11)
+		end
+	end
+	-- flowers in the square's lawns
+	for _, l in TownMap.lawns() do
+		local cx, cz = l[1], l[2]
+		for _, d in { { -6, 6 }, { 6, -4 } } do
+			put("flowerPatch", cx + d[1], cz + d[2], 0)
+			local last = out[#out]
+			last.cf = last.cf + Vector3.new(0, 0.32, 0)
+		end
+		for _, d in { { -10, -12 }, { 10, 12 } } do
+			put("bush", cx + d[1], cz + d[2], 0)
+			local last = out[#out]
+			last.cf = last.cf + Vector3.new(0, 0.32, 0)
+		end
+	end
+	-- the outskirts: hills on the horizon, meadows of flowers, a few rocks
+	local land = Rng.new(19)
+	for x = -L - 100, L + 100, 150 do
+		for _, side in { 1, -1 } do
+			local size = land:pick({ "hillS", "hillM", "hillL" })
+			put(size, x + land:float(-40, 40), side * land:float(306, 330), 0, { tag = "backdrop" })
+		end
+	end
+	for _ = 1, 70 do
+		local x = land:float(-L - 110, L + 110)
+		local z = land:float(-268, 268)
+		local inTown = math.abs(z) < 238 and math.abs(x) < L + 14
+		local onSquare = math.abs(x) < 70 and math.abs(z) < 150
+		if not inTown and not onSquare then
+			put(if land:chance(0.7) then "flowerPatch" else "rock", x, z, land:float(0, 360))
+		end
+	end
 
 	-- trees round the edge of town, clear of the street, the square and every plot
 	local trees = Rng.new(7)

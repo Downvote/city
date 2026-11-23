@@ -245,6 +245,106 @@ run("leaving Build mode", function()
 	check(count("items") == before + 1, "placing still works the second time round")
 end)
 
+run("life around town and the show when you build", function()
+	local Harness, env = Sim.Harness, Sim.env
+	local Town = Harness.require("ReplicatedStorage.Shared.Data.Town")
+	local CFrame = roblox.CFrame
+	local TownMap = Harness.require("ReplicatedStorage.Shared.Data.TownMap")
+	local Builder = Harness.require("ReplicatedStorage.Shared.Build.Builder")
+	-- a corner of the town for the trees, a flag and the fountain to be found in
+	local town = env.Instance.new("Folder")
+	town.Name = "Town"
+	town.Parent = ws
+	-- the fountain, and a flagpole and trees near the camera (far ones are left still)
+	local near = Town.plotFrame(1) * Vector3.new(100, 0, 60)
+	for _, p in TownMap.placements() do
+		if p.name == "fountain" then
+			local m = env.Instance.new("Model")
+			m.Name = p.name
+			Builder.instantiate(TownMap.prims(p.name), m, p.cf)
+			m.Parent = town
+		end
+	end
+	for i, name in { "flagpole", "tree", "tree" } do
+		local m = env.Instance.new("Model")
+		m.Name = name
+		Builder.instantiate(TownMap.prims(name), m, CFrame.new(near + Vector3.new(i * 12, 0, -20)))
+		m.Parent = town
+	end
+	local warned = #errors
+	local Ambience = Harness.require(Sim.CLIENT .. "World.Ambience")
+	local BuildFx = Harness.require(Sim.CLIENT .. "World.BuildFx")
+	Ambience.start()
+	BuildFx.start()
+	frames(5)
+	local folder = ws:FindFirstChild("Ambience")
+	local n = folder and #folder:GetChildren() or 0
+	check(n > 20, "cars, clouds and birds are out (" .. n .. ")")
+	local car = folder:FindFirstChild("car")
+	local wheel = car and car:FindFirstChild("Wheel")
+	local before = car and car:GetBoundingBox().Position
+	local wheelBefore = wheel and wheel.CFrame
+	frames(30)
+	local after = car and car:GetBoundingBox().Position
+	check(before ~= nil and (after - before).Magnitude > 1, "a car drives along the street")
+	check(wheel ~= nil and wheel.CFrame ~= wheelBefore, "its wheels turn")
+	local bird = folder:FindFirstChild("bird")
+	local wing = bird and bird:FindFirstChild("WingL")
+	local wingBefore = wing and wing.CFrame
+	frames(3)
+	check(wing ~= nil and wing.CFrame ~= wingBefore, "birds flap their wings")
+	Sim.advance(4)
+	frames(10)
+	local flagMoved = false
+	for _, m in town:GetChildren() do
+		if m.Name == "flagpole" and not flagMoved then
+			local flag = m:FindFirstChild("Flag")
+			local was = flag.CFrame
+			frames(8)
+			flagMoved = flag.CFrame ~= was
+		end
+	end
+	check(flagMoved, "flags wave")
+	local swayed = false
+	for _, m in town:GetChildren() do
+		if m.Name == "tree" and not swayed then
+			local leaf
+			for _, d in m:GetDescendants() do
+				if d:IsA("BasePart") and d.Position.Y > 6 then
+					leaf = d
+				end
+			end
+			local was = leaf.CFrame
+			frames(8)
+			swayed = leaf.CFrame ~= was
+		end
+	end
+	check(swayed, "trees sway")
+	local spout = town:FindFirstChild("Spout", true)
+	check(spout ~= nil and spout:FindFirstChild("Spray") ~= nil, "the fountain sprays")
+	-- placing something pops it up out of a puff
+	press("Build")
+	press("Furniture")
+	local tray = gui:FindFirstChild("Tray", true)
+	local cards = Fake.find(tray, function(d)
+		return d:IsA("TextButton") and Fake.shown(d) and d:GetAttribute("ItemId") ~= nil
+	end)
+	cards[1].Activated:Fire()
+	frames(2)
+	mouseAtPlot(140, 40)
+	click()
+	Sim.advance(1)
+	check(ws:FindFirstChild("BuildPuff") ~= nil, "a puff of dust where it lands")
+	local newest
+	for _, m in Sim.buildFolder:GetChildren() do
+		if rawget(m, "_scale") ~= nil then
+			newest = m
+		end
+	end
+	check(newest ~= nil and math.abs(newest:GetScale() - 1) < 1e-6, "the piece springs up and ends at full size")
+	check(#errors == warned, "no warnings from any of it")
+end)
+
 print(
 	string.format(
 		"\nbuild client sim: %s (%d warnings)",

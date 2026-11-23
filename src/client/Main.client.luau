@@ -8,3 +8,8 @@ State.start()
 
 local Hud = require(UI.Hud)
 Hud.start()
+
+-- life around town, and the show when you build
+local World = script.Parent.World
+require(World.Ambience).start()
+require(World.BuildFx).start()

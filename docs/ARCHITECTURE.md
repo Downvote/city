@@ -28,8 +28,8 @@ The contract between the parts of the game. Update it with every change to an AP
   - `Builder`: prims to Parts and plan objects to Models; tags night lights, door leaves, seats and beds.
 - `Data/`: `Palette` (paint swatches, materials and the ready-made finishes Build mode shows as tiles), `Personalities`, `Foods`, `Items`, `Jobs`, `Events` (the event list), `Town` (map
   layout and plot frames), `TownMap` (the streets, sidewalks, square and market as parts, and where every building
-  and piece of street furniture stands), `TownModels` (plaza buildings), `StarterHouse` (every new plot's first
-  build).
+  and piece of street furniture stands), `TownModels` (plaza buildings), `AmbientModels` (cars, the bus, birds,
+  clouds), `StarterHouse` (every new plot's first build).
 - `Avatar/`: `Appearance` (the saved look, sanitising, which asset types fit which slot), `Categories` (creator tabs,
   catalog filters, wearing and merging).
 - `Sim/`: `Schema` (profile and villager shapes, defaults, migration), `Relationships`, `EventEngine` (picks events,
@@ -80,7 +80,7 @@ Villager = { id, name, pers, app, color, bday = { s, d }, fav, hate, known, mood
 | Service | Job |
 |---|---|
 | `Data` | Loads with a session lock, autosaves every two minutes, saves on leave and shutdown, pushes state patches (`State`), toasts (`Notify`), coins, the town log, the daily gift. |
-| `World` | Builds the town from `Data/TownMap` (streets, plaza, street furniture, prompts) and the plot bases; the clock (real time, 12 minute days) and calendar; night lights; doors that open for anyone walking up; seasonal weather. |
+| `World` | Builds the town from `Data/TownMap` (streets, plaza, street furniture, decoration, hills, prompts) and the plot bases; sets the stylised lighting (colour grading tinted by the hour, bloom, sun rays, haze); the clock (real time, 12 minute days) and calendar; night lights; doors that open for anyone walking up; seasonal weather. |
 | `Plots` | Hands out plots, draws the saved build and the owned land, sells more land (`PlotExpand`). |
 | `Build` | `BuildApply`, `BuildUndo`, `BuildRedo`: checks requests, charges or refunds, keeps history, redraws, syncs the plan to its owner (`PlanSync`). Fires `Changed`. |
 | `Avatar` | The creator: a private stage and mannequin per player, catalog search fallback, bundles, copying users, outfits, asset checks, the text filter. `toDescription`, `buildModel` for everyone else. |
@@ -117,12 +117,21 @@ server, whatever the client did.
   sizes it, the label follows it), `iconButton` (square tiles), `pill` (glass stat pills, `Plus` adds a green +),
   `glass` (dark glass bars), `panel` (white card, coloured header, red corner close button), `bar` (outlined
   progress bars), `badge`, `closeButton`, `outlineText`, `tabs`, `slider`, `swatch`, `textbox`, `scroll`, `shadow`.
-  `Kit.pad` on a Kit button stretches its face back over the padding. `Kit.overUI(pos)` says whether the pointer is
+  `Kit.pad` on a Kit button stretches its face back over the padding. Motion: buttons sink onto their lip when
+  pressed, grow and hop their icon on hover and spring back when clicked; one loop sweeps a sheen across a button on
+  screen now and then; `Kit.badge` pulses; `popIn`, `popOut`, `slideIn`, `bump` and `flyCoins` animate screens. `Kit.overUI(pos)` says whether the pointer is
   over our interface, using `GetGuiObjectsAtPosition`, so world clicks never go through a button.
+- `World/Ambience` (client only): cars and the bus on the street (they stop for anyone on a crossing, the bus waits
+  at its stop), drifting clouds with shadows, circling birds with flapping wings, swaying trees and waving flags
+  (only near the camera), the fountain's spray, fireflies at night. Everything moves with `workspace:BulkMoveTo`
+  from one Heartbeat loop; nothing is replicated.
+- `World/BuildFx` (client only): listens to `State.onPlan`; a new piece pops up (`Model:ScaleTo` from 0.4 with an
+  overshoot) out of a dust puff with sparkles, a removed one leaves a puff.
 - `UI/Icons`: the drawn icons. `Icons.make(name, px, props)` builds one from its shape list (rounded rects, ellipses,
   right angled triangles made by clipping a turned square, rings, half ellipses) in two passes: first a dark copy of
   every outlined shape grown by the outline's width ("Ink" pieces), then every fill with no stroke ("Fill" pieces),
-  so the only outline is the one round the silhouette and none crosses another part. The shade is a gradient in
+  so the only outline is the one round the silhouette and none crosses another part. Above 20 px a second dark copy
+  sits a little lower ("InkBase"), so the outline is thicker underneath. The shade is a gradient in
   icon space (each piece's keypoints are the icon's shade at its top and bottom), so overlapping pieces join without
   a seam. `Icons.names()` lists them. `UI/Toasts`, `UI/ModelPreview` (3D thumbnails in ViewportFrames).
 - `UI/Hud`: stat pills, the level card, the clock, the icon dock and the daily gift; opens one panel at a time:
@@ -151,7 +160,8 @@ server, whatever the client did.
   real server Build service (Data and Plots stubbed), with a task scheduler on a fake clock and helpers to move the
   mouse over the plot, click, drag and press buttons. `build_client.luau` drives Build mode end to end (furniture
   from the tray, walls, rooms, floors, roofs, doors, paint, pick, turn, copy, move, sell, undo, every tab, the floor
-  switcher, leaving and coming back); `check.sh` runs it. Lune's own `CFrame.lookAt` faces the wrong way and its
+  switcher, leaving and coming back, then the town's life: cars drive and turn their wheels, birds flap, flags
+  wave, trees sway, the fountain sprays, a placed piece puffs and springs back to full size); `check.sh` runs it. Lune's own `CFrame.lookAt` faces the wrong way and its
   two-value `ColorSequence.new` and `NumberSequence.new` drop the second value, so the sim gives the game correct
   ones.
 - `tools/preview/` dumps primitives of a scene (catalog tabs, walls, roofs, the starter house, plaza buildings, `map`

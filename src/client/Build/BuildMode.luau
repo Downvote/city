@@ -723,9 +723,15 @@ local function pickTool(color: Color3)
 	return hit, kind, key
 end
 
+local pulseClock = 0
 local function update()
 	if not s.active or pending then
 		return
+	end
+	-- whatever is under the pointer or picked breathes gently
+	pulseClock += 1 / 60
+	if highlight then
+		highlight.FillTransparency = 0.68 + math.sin(pulseClock * 5) * 0.12
 	end
 	local tool = s.tool
 	if tool == "wall" then

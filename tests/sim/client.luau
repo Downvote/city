@@ -163,6 +163,11 @@ Fake.extend(ws, {
 	Raycast = function(_, origin, direction, params)
 		return Fake.raycastIn(ws, origin, direction, params)
 	end,
+	BulkMoveTo = function(_, parts, frames)
+		for i, part in parts do
+			part.CFrame = frames[i]
+		end
+	end,
 })
 env.workspace = ws
 Harness.addService("Workspace", ws)
@@ -259,6 +264,7 @@ Harness.addService("ContextActionService", {
 	UnbindAction = function() end,
 })
 Harness.addService("Lighting", { ClockTime = 12 })
+Harness.addService("Debris", { AddItem = function() end })
 Harness.addService("ProximityPromptService", { PromptTriggered = Fake.signal() })
 
 -- remotes: client calls go straight to the server's handlers -------------------------------------------

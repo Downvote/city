@@ -555,6 +555,28 @@ function Methods.PivotTo(self, cf)
 	end
 end
 
+function Methods.GetScale(self)
+	return rawget(self, "_scale") or 1
+end
+
+function Methods.ScaleTo(self, scale)
+	local current = rawget(self, "_scale") or 1
+	local k = scale / current
+	local pivot = Methods.GetPivot(self)
+	for _, p in partsOf(self) do
+		local rel = pivot:ToObjectSpace(p.CFrame)
+		p.CFrame = pivot * roblox.CFrame.new(rel.Position * k) * rel.Rotation
+		p.Size = p.Size * k
+	end
+	rawset(self, "_scale", scale)
+end
+
+function Methods.Emit(self, n)
+	rawset(self, "_emitted", (rawget(self, "_emitted") or 0) + (n or 1))
+end
+
+function Methods.Clear() end
+
 function Methods.SetNetworkOwner() end
 function Methods.CaptureFocus() end
 function Methods.ReleaseFocus() end

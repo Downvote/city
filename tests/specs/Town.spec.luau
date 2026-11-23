@@ -19,6 +19,19 @@ describe("Town", function()
 	it("keeps the plots and the road clear", function()
 		for _, p in TownMap.placements() do
 			local prims = Geometry.transform(TownMap.prims(p.name), p.cf)
+			if p.tag == "backdrop" then
+				-- a hill: only the dome above the ground counts, and it must stay clear of every plot
+				for _, prim in prims do
+					local radius = prim.size.X / 2
+					local depth = -prim.cf.Position.Y
+					local footprint = math.sqrt(math.max(0, radius * radius - depth * depth))
+					local nearest = math.abs(prim.cf.Position.Z) - footprint
+					if nearest < Town.PlotSetback + Tuning.Plot.Size + 4 then
+						error(p.name .. " reaches the plots at z " .. tostring(prim.cf.Position.Z))
+					end
+				end
+				continue
+			end
 			local lo, hi = Geometry.bounds(prims)
 			for i = 1, Tuning.Plot.Count do
 				for _, corner in { Vector3.new(lo.X, 0, lo.Z), Vector3.new(hi.X, 0, hi.Z), p.cf.Position } do

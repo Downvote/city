@@ -178,6 +178,29 @@ our own style:
   bouncing arrow when you can click on, and the choices as big buttons underneath.
 - **Notices** pop in at the top as dark pills with an icon and a coloured edge for their kind.
 
+> stylize and polish the icons and buttons even more, make them look suitable for a city building game. do this for
+> the environment and models as well, animate things and buttons where possible
+
+- **Icons** stand off the screen like stickers (the outline is thicker underneath), and the city has its own:
+  a construction crane for Build, a skyline for City, a blueprint for Build mode's Build tab, a hard hat, a road and
+  a stack of coins.
+- **Buttons move**: they grow and their icon hops when the pointer is over them, the face sinks onto its lip when
+  pressed, and they squash and spring back when clicked. Now and then a glossy sheen sweeps across one. Badges
+  pulse.
+- **Screens move**: the HUD slides into place when the game starts, Build mode's bars slide in from the edges, panels
+  spring open, tray cards and event choices pop in one after another, the speaker's name plate bounces, coins fly
+  into the money pill on a payday and the coin on it flips now and then, the sun in the clock turns and clouds bob.
+  What's picked in Build mode breathes.
+- **The town** is lit like a city builder: brighter and richer colours, soft shadows, a little bloom and haze, warm
+  mornings and evenings and cool blue nights. Bushes line the plaza, flowers grow in the lawns, and the outskirts
+  have meadows, rocks and rolling hills on the horizon.
+- **The town moves**, on each player's own screen: cars drive both ways along the street and stop at the crossings
+  for anyone walking over, the bus pulls in at its stop, clouds drift over and their shadows slide across town,
+  birds circle the square and the market, trees sway (harder in a storm), flags wave, the fountain sprays, and
+  fireflies come out over the lawns at night.
+- **Building has a show**: a new piece springs up out of a puff of dust with a few sparkles, and a piece you sell
+  vanishes in a puff.
+
 Villagers walk with Roblox's pathfinding with jumping on, so they go round walls, through doorways (doors are free to
 pass and open as they come), round furniture and over low steps. If they get stuck they jump, then plan again.
 
