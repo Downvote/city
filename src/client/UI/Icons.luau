@@ -128,10 +128,14 @@ D.trophy = {
 
 -- building and tools -------------------------------------------------------------------------------
 
+-- The Build button's hammer (the user: "Change the hardhat icon for buils to a hammer"): the
+-- handle runs up to the right and the head sits across its end, a square face on one side and
+-- a thinner peen on the other, so it reads as a hammer in one colour.
 D.hammer = {
-	{ "r", 44, 26, 16, 70, C.wood, r = 0.45, rot = 40 },
-	{ "r", 22, 14, 62, 26, C.steel, r = 0.22, rot = 40 },
-	{ "r", 30, 18, 16, 10, C.white, r = 0.5, rot = 40, o = false, t = 0.4 },
+	{ "r", 29, 36, 14, 60, C.wood, r = 0.45, rot = 45 },
+	{ "r", 34, 24, 30, 18, C.steel, r = 0.3, rot = 45 },
+	{ "r", 53, 36, 30, 30, C.steel, r = 0.2, rot = 45 },
+	{ "r", 62, 40, 6, 16, C.white, r = 0.5, rot = 45, o = false, t = 0.4 },
 }
 
 -- A map pin.

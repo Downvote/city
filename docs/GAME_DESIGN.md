@@ -440,7 +440,12 @@ from that game):
   clock with the weather in a dark pill, and round dark buttons under it for the city, the shop and the news.
 - Bottom left, a round portrait (it opens the villagers) beside a white wobbly menu of the town's people, the
   creator, goals and the daily gift, each a coloured icon over its name. Bottom right, a big blue wobbly Build
-  button with a yellow hard hat.
+  button with a yellow hammer (it was a hard hat):
+
+  > Change the hardhat icon for buils to a hammer
+
+  The hammer was redrawn for it: the head sits across the end of the handle, a square face on one side and a
+  thinner peen on the other. The old one had its head off to one side and read as an arrow in one colour.
 - No rounded rectangle has an outline anywhere. Big wobbly shapes (panels, the event bubble) carry faint doodles in
   their background: squiggles, rings, little bar charts and crossed lines.
 - The town's ground is smooth flat colour in a clean low poly look: bright green lawns, mid grey roads, white

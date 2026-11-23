@@ -24,7 +24,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    simulation (`tests/sim/build_client.luau`: the real Build mode driven by clicks), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (96, all passing): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (97, all passing): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off), Build (catalog, plan rules, field cleaning, shapes, builder), BuildService (the server's
 Build service with stubbed neighbours: charges, syncs, strips junk, refuses land you don't own), Events (3000 seeded
@@ -104,7 +104,8 @@ The user's rule for icons: "make sure there are no overlapping outlines". A new 
 shape list in `UI/Icons`; it gets one outline round its silhouette, so tell its parts apart by colour. Look at it
 with `sh tools/preview/ui.sh icons:<name> <png>` (`stickers:<name>` for the outlined version). Flat icons are one
 colour; the one exception the user asked for is a dent ("the coin icon can have a darker circle inside as an
-indent"): mark the shape `dent = true` and it draws a step darker. The Goals button is the `trophy`.
+indent"): mark the shape `dent = true` and it draws a step darker. The Goals button is the `trophy`, the Build
+button the `hammer`. A flat icon is only its silhouette, so check a new one reads in one colour.
 
 The user asked for custom textures, then for "textures from the roblox library that fits": the materials use
 Creator Store pictures listed in `Data/TextureIds` (find more with `scripts/library_textures.py search`, get the

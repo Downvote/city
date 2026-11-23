@@ -111,6 +111,23 @@ describe("Icons", function()
 		expect(Icons.dentOf(glyph) ~= glyph).toBeTruthy()
 	end)
 
+	it("draws the hammer's head across the end of its handle", function()
+		-- the head's two halves sit either side of the handle's top end, so it is a T and not an L
+		local def = Icons.defs.hammer
+		local handle, peen, face = def[1], def[2], def[3]
+		local turn = math.rad(handle.rot)
+		local tipX = handle[2] + handle[4] / 2 + handle[5] / 2 * math.sin(turn)
+		local tipY = handle[3] + handle[5] / 2 - handle[5] / 2 * math.cos(turn)
+		local function along(sh)
+			-- how far the piece's middle is from the tip, along the head (at right angles to the handle)
+			local cx, cy = sh[2] + sh[4] / 2, sh[3] + sh[5] / 2
+			return (cx - tipX) * math.cos(turn) + (cy - tipY) * math.sin(turn)
+		end
+		expect(along(peen) < -4).toBeTruthy()
+		expect(along(face) > 4).toBeTruthy()
+		expect(peen.rot == handle.rot and face.rot == handle.rot).toBeTruthy()
+	end)
+
 	it("has a trophy for the Goals button", function()
 		expect(Icons.has("trophy")).toBeTruthy()
 		expect(#Icons.make("trophy", 40):GetChildren() >= 5).toBeTruthy()

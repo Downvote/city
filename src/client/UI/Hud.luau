@@ -438,7 +438,7 @@ function Hud.start()
 	end)
 
 	-- the big Build button, bottom right
-	local buildButton = Kit.bigButton("Build", "hardhat", {
+	local buildButton = Kit.bigButton("Build", "hammer", {
 		Parent = hud,
 		Size = UDim2.fromOffset(236, 80),
 		Position = UDim2.new(1, -20, 1, -18),
