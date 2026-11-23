@@ -264,6 +264,12 @@ function Npc.pathLength(list: { any }): number
 	return total
 end
 
+-- How far the walk to a point would be (without taking it), or nil when there is no way there.
+function Npc.routeLength(self: Npc, target: Vector3): number?
+	local list = computePath(self, target)
+	return if list then Npc.pathLength(list) else nil
+end
+
 -- Walks to a world point along a real path round walls and furniture. Returns true if it got
 -- there, or false and why not: "noroute" (a point nothing can reach is refused: no walking into
 -- walls), "far" (the way there is longer than `maxPath` studs: for a spot that should be a few

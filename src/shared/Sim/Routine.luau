@@ -161,7 +161,7 @@ local LOOPS: { [string]: { Step } } = {
 			icon = "music",
 		},
 		{ name = "bow", stay = { 3, 5 }, act = "cheer", say = 0.6 },
-		{ name = "speaker", at = V(1.3, 0.5, -1.7), look = V(3.3, 2, -2.2), stay = { 3, 5 } },
+		{ name = "speaker", at = V(1.3, 0.5, -1.5), look = V(3.3, 2, -2.2), stay = { 3, 5 } },
 	},
 	-- Builder's bench (the builder stands in front of it): hammer, fetch a tool, hammer, measure
 	-- the planks, then a step back to look the job over.
@@ -213,6 +213,16 @@ end
 -- Does this job have a loop of its own?
 function Routine.has(job: string): boolean
 	return LOOPS[job] ~= nil
+end
+
+-- Which stop of a loop is the workplace's own spot (where the day's work starts).
+function Routine.home(loop: { Stop }): number
+	for i, stop in loop do
+		if stop.home then
+			return i
+		end
+	end
+	return 1
 end
 
 local loops: { [string]: { Stop } } = {}
@@ -393,6 +403,17 @@ local function breakNow(ctx: Ctx, state: Day, rng: Rng.Rng): Turn?
 		return nil
 	end
 	return { kind = "break", what = pick(K.Breaks, ctx, state.lastBreak, rng) or "stretch", seconds = seconds }
+end
+
+-- Could Routine.next send them on a break now? The brain looks round for what there is to do
+-- (a free seat, somebody to talk to) only then, and in free time.
+function Routine.breakDue(ctx: Ctx, state: Day): boolean
+	if Routine.phase(ctx) ~= "work" or state.day ~= ctx.day or state.stretch < state.due then
+		return false
+	end
+	local lo = Routine.breakLength(ctx.pers)
+	local left = (D.WorkEnd - ctx.hour) / 24 * D.Length
+	return lo <= left and state.away + lo <= K.AwayCap * Routine.workDay()
 end
 
 -- The next step of their loop.

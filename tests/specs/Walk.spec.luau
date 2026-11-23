@@ -197,6 +197,43 @@ describe("Walk", function()
 		expect(jumpedAt).toBe(list[2].Position)
 	end)
 
+	it("says why a walk came to nothing, and turns down a long way round", function()
+		-- 15 studs round a counter to a spot 9 studs off
+		local list = { point(0, 0), point(3, 0), point(3, 9), point(0, 9) }
+		route(list)
+		local npc = body(Vector3.new(0, 3, 0), function(self, target)
+			self.root.Position = target
+			self.humanoid.MoveToFinished:Fire(true)
+		end)
+		expect(Npc.pathLength(list)).toBeNear(15)
+		expect(npc:routeLength(Vector3.new(0, 3, 9))).toBeNear(15)
+		-- a step or two along a workplace (Sim/Routine's hop): the long way round is refused,
+		-- without a step taken
+		local ok, why = npc:walkTo(Vector3.new(0, 3, 9), 5, 12)
+		expect(ok).toBe(false)
+		expect(why).toBe("far")
+		expect(#npc.humanoid.moves).toBe(0)
+		expect(npc:walkTo(Vector3.new(0, 3, 9), 5, 16)).toBe(true)
+		-- nowhere a path can reach, and not right in front of them: refused, never walked into
+		paths.CreatePath = function()
+			return { Status = Enum.PathStatus.NoPath, ComputeAsync = function() end }
+		end
+		npc.root.Position = Vector3.new(0, 3, 0)
+		ok, why = npc:walkTo(Vector3.new(40, 3, 0), 5)
+		expect(ok).toBe(false)
+		expect(why).toBe("noroute")
+		expect(npc:routeLength(Vector3.new(40, 3, 0))).toBe(nil)
+		-- a newer walk, or a halt, takes over
+		route({ point(0, 0), point(3, 0), point(6, 0) })
+		local other = body(Vector3.new(0, 3, 0), function(self)
+			self.moving += 1
+		end)
+		ok, why = other:walkTo(Vector3.new(6, 3, 0), 5)
+		expect(ok).toBe(false)
+		expect(why).toBe("cancelled")
+		expect(other.humanoid.MoveToFinished.count()).toBe(0)
+	end)
+
 	it("keeps the walk animation through a still moment, and stands once they have stopped", function()
 		-- a pause between two legs is shorter than the wait before the idle animation comes back
 		expect(Npc.StillAfter >= 0.2).toBeTruthy()
