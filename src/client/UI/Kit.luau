@@ -247,7 +247,7 @@ end
 -- whole stays inside the box the rectangle had (or with `outside`, the rectangle keeps its box
 -- and the wedges stand out past its ends). `height` is its height in pixels when its Size
 -- doesn't say. Returns how far each end runs.
-function Kit.slant(face: GuiObject, height: number?, outside: boolean?): number
+function Kit.slant(face: GuiObject, height: number?, outside: boolean?, flip: boolean?): number
 	local h = height or face.Size.Y.Offset
 	if h <= 0 then
 		h = 40
@@ -258,17 +258,23 @@ function Kit.slant(face: GuiObject, height: number?, outside: boolean?): number
 		face.Size -= UDim2.fromOffset(cap * 2, 0)
 		face:SetAttribute("Inset", cap)
 	end
-	for _, keep in { "br", "tl" } do
+	-- the usual lean is "/" (wider at the bottom on the left, at the top on the right); flipped
+	-- it is "\": wider at the top on the left, at the bottom on the right
+	local ends = if flip then { "tr", "bl" } else { "br", "tl" }
+	for i, keep in ends do
 		Kit.wedge({
 			Parent = face,
 			Color = face.BackgroundColor3,
 			Transparency = face.BackgroundTransparency,
 			Size = UDim2.new(0, cap, 1, 0),
-			Position = if keep == "br" then UDim2.fromOffset(-cap, 0) else UDim2.new(1, 0, 0, 0),
+			Position = if i == 1 then UDim2.fromOffset(-cap, 0) else UDim2.new(1, 0, 0, 0),
 			ZIndex = face.ZIndex,
 			W = cap,
 			H = h,
 		}, keep)
+	end
+	if flip then
+		face:SetAttribute("Flip", true)
 	end
 	return cap
 end
@@ -316,8 +322,8 @@ function Kit.shade(face: GuiObject, color: Color3?)
 	(g :: UIGradient).Color = ColorSequence.new(a, b)
 	for _, c in face:GetChildren() do
 		if c:IsA("Frame") and c.Name:sub(1, 6) == "Wedge_" then
-			-- the slanted end on the left is the "br" half, the one on the right the "tl" half
-			c.BackgroundColor3 = if c.Name == "Wedge_br" or c.Name == "Wedge_bl" then a else b
+			-- the slanted end on the left takes the left colour, the one on the right the right's
+			c.BackgroundColor3 = if c.Position.X.Scale < 0.5 then a else b
 		end
 	end
 end
@@ -345,7 +351,7 @@ function Kit.glow(frame: GuiObject, color: Color3, strength: number?, corner: st
 	local from = 1 - (strength or 0.3)
 	local turn = ({ tr = 135, tl = 45, bl = -45, br = -135 })[corner or "tr"] or 135
 	Kit.new("UIGradient", {
-		Name = "Fade",
+		Name = "Falloff",
 		Rotation = turn,
 		Transparency = NumberSequence.new({
 			NumberSequenceKeypoint.new(0, from),
@@ -673,10 +679,15 @@ local function repaint(inst: Instance, map: (Color3) -> Color3)
 	local any = inst :: any
 	if inst:IsA("GuiObject") then
 		inst.BackgroundColor3 = map(inst.BackgroundColor3)
-		-- a shaded face remembers its own colour
+		-- a shaded face is shaded again from its own colour in the new look (its two ends and
+		-- slanted ends follow), rather than each end mapped on its own
 		local base = inst:GetAttribute("Base")
 		if type(base) == "string" then
-			inst:SetAttribute("Base", map(Color3.fromHex(base)):ToHex())
+			if inst:FindFirstChild("Shade") then
+				Kit.shade(inst, map(Color3.fromHex(base)))
+			else
+				inst:SetAttribute("Base", map(Color3.fromHex(base)):ToHex())
+			end
 		end
 		-- a row remembers the colour its words go back to when it is no longer picked
 		local plain = inst:GetAttribute("Plain")
@@ -696,7 +707,8 @@ local function repaint(inst: Instance, map: (Color3) -> Color3)
 			end
 		elseif inst:IsA("ImageLabel") or inst:IsA("ImageButton") then
 			-- a line icon is one colour laid over its sheet; a picture keeps its own
-			if inst:GetAttribute("Mono") then
+			-- (Icons marks the icon's frame Mono; the picture in it is its child)
+			if inst:GetAttribute("Mono") or (inst.Parent and inst.Parent:GetAttribute("Mono")) then
 				any.ImageColor3 = map(any.ImageColor3)
 			end
 		elseif inst:IsA("ScrollingFrame") then
@@ -704,15 +716,19 @@ local function repaint(inst: Instance, map: (Color3) -> Color3)
 		end
 	elseif inst:IsA("UIStroke") then
 		inst.Color = map(inst.Color)
-	elseif inst:IsA("UIGradient") and (inst.Name == "Wash" or inst.Name == "Shade") then
+	elseif inst:IsA("UIGradient") and inst.Name == "Wash" then
 		local keys = {}
 		for _, k in inst.Color.Keypoints do
 			table.insert(keys, ColorSequenceKeypoint.new(k.Time, map(k.Value)))
 		end
 		inst.Color = ColorSequence.new(keys)
 	end
+	local shaded = inst:GetAttribute("Base") ~= nil and inst:FindFirstChild("Shade") ~= nil
 	for _, c in inst:GetChildren() do
-		repaint(c, map)
+		-- a shaded face's gradient and slanted ends were just made again
+		if not (shaded and (c.Name == "Shade" or c.Name:sub(1, 6) == "Wedge_")) then
+			repaint(c, map)
+		end
 	end
 end
 
@@ -1724,8 +1740,9 @@ function Kit.darkPill(props: { [string]: any }?): Frame
 	-- the glass is dark in both looks, so what is on it keeps its colours through a switch
 	f:SetAttribute("KeepColors", true)
 	-- a leaning slab: its slanted ends stand out past the box, so what is in it keeps its room
+	-- (Flip leans it the other way: "\\" in place of "/")
 	local h = if p.Size then (p.Size :: UDim2).Y.Offset else 40
-	Kit.slant(f, h, true)
+	Kit.slant(f, h, true, p.Flip == true)
 	return f
 end
 
@@ -2998,7 +3015,7 @@ function Kit.panel(
 		})
 		rule:SetAttribute("KeepColors", true)
 		Kit.new("UIGradient", {
-			Name = "Fade",
+			Name = "Falloff",
 			Transparency = NumberSequence.new({
 				NumberSequenceKeypoint.new(0, 0.1),
 				NumberSequenceKeypoint.new(0.6, 0.6),
@@ -3074,7 +3091,7 @@ function Kit.blobInto(holder: Frame, p: { [string]: any }): BlobInfo
 	})
 	if p.Slant then
 		-- a leaning shape: slanted ends and no rounding at all
-		Kit.slant(core, if type(p.Slant) == "number" then p.Slant else nil)
+		Kit.slant(core, if type(p.Slant) == "number" then p.Slant else nil, nil, p.Flip == true)
 	else
 		Kit.corner(core, p.Radius or 20)
 		-- a soft shadow under the shape (Lift = false for none, or how deep)

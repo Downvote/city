@@ -236,7 +236,8 @@ local function setLabel(text: string?, at: Vector3?)
 		label.Enabled = true
 		local t = label:FindFirstChild("Text")
 		if t and t:IsA("TextLabel") then
-			t.Text = text
+			-- a reason given on its own ("not enough coins") starts with a capital
+			t.Text = text:sub(1, 1):upper() .. text:sub(2)
 		end
 	else
 		label.Enabled = false
@@ -259,11 +260,16 @@ local function coins(): number
 	return State.data.coins or 0
 end
 
+-- What something costs, in words for the label by the cursor.
 local function costText(cost: number): string
-	if cost < 0 then
-		return "+" .. Text.commas(-cost)
+	if cost == 0 then
+		return "Free"
+	elseif cost < 0 then
+		return Text.fill("{n} back", { n = costText(-cost) })
+	elseif cost == 1 then
+		return "1 coin"
 	end
-	return Text.commas(cost)
+	return Text.fill("{n} coins", { n = Text.commas(cost) })
 end
 
 -- what a click does --------------------------------------------------------------------------------
@@ -838,8 +844,20 @@ local function update()
 		if hit and kind and key then
 			local ops = Plan.removeOps(State.plan, kind, key)
 			local refund = -Plan.changeCost(ops)
+			-- what of the starting house was given sells for nothing: say so, so a 0 doesn't
+			-- look like a mistake
+			local gift = false
+			for _, op in ops do
+				local g = op.obj and op.obj.gift
+				if type(g) == "number" and g > 0 then
+					gift = true
+				end
+			end
 			setLabel(
-				"Sell for " .. Text.commas(refund),
+				if refund > 0
+					then Text.fill("Sell for {n}", { n = costText(refund) })
+					elseif gift then "A gift: sells for nothing"
+					else "Sells for nothing",
 				plotFrame:PointToObjectSpace(hit.Position + Vector3.new(0, 3, 0))
 			)
 			candidate = { requests = { { type = "remove", kind = kind, key = key } }, valid = true }
@@ -1168,17 +1186,18 @@ function BuildMode.setTool(tool: string)
 	clearGhost()
 	setLabel(nil)
 	setHighlight(nil)
+	-- (Build mode's screen shows its own words for these: BuildUI's HINTS)
 	local hints = {
 		select = "Click something to pick it.",
 		wall = if s.wallMode == "room"
-			then "Click two corners to make a room."
-			else "Click to start a wall, click again to end it. Right click stops.",
-		floor = "Click two corners to lay a floor.",
-		roof = "Click two corners over the walls.",
-		place = "Click to place. R turns it.",
-		preset = "Click to put the building down. R turns it.",
-		paint = "Click a wall side, floor, roof or item to paint it.",
-		delete = "Click something to sell it back.",
+			then "Drag across the ground to make a room."
+			else "Drag to draw a wall. Right click stops.",
+		floor = "Drag across the ground to lay a floor.",
+		roof = "Drag over the walls to put a roof on.",
+		place = "Click to place it. R turns it, right click puts it away.",
+		preset = "Click to put it down. R turns it, right click puts it away.",
+		paint = "Click a wall, floor, roof or item to paint it.",
+		delete = "Click something to sell it.",
 	}
 	s.hint = hints[tool] or ""
 	changed("tool")
@@ -1466,14 +1485,18 @@ function BuildMode.enter(): boolean
 	m.Parent = marks
 	marker = m
 	local bb = Instance.new("BillboardGui")
-	bb.Size = UDim2.fromOffset(240, 34)
+	bb.Size = UDim2.fromOffset(340, 34)
 	bb.AlwaysOnTop = true
 	bb.Enabled = false
 	bb.Adornee = m
 	bb.Parent = m
 	local t = Instance.new("TextLabel")
 	t.Name = "Text"
-	t.Size = UDim2.fromScale(1, 1)
+	-- as wide as its words, in the middle of the board
+	t.Size = UDim2.fromScale(0, 1)
+	t.AutomaticSize = Enum.AutomaticSize.X
+	t.AnchorPoint = Vector2.new(0.5, 0)
+	t.Position = UDim2.fromScale(0.5, 0)
 	-- dark like the rest of the interface (UI/Kit's Paper and Ink)
 	t.BackgroundColor3 = Color3.fromRGB(37, 40, 54)
 	t.BackgroundTransparency = 0.1
@@ -1481,8 +1504,12 @@ function BuildMode.enter(): boolean
 	t.Font = Enum.Font.FredokaOne
 	t.TextSize = 18
 	t.Parent = bb
+	local pad = Instance.new("UIPadding")
+	pad.PaddingLeft = UDim.new(0, 12)
+	pad.PaddingRight = UDim.new(0, 12)
+	pad.Parent = t
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 10)
+	corner.CornerRadius = UDim.new(0, 3)
 	corner.Parent = t
 	label = bb
 	local h = Instance.new("Highlight")

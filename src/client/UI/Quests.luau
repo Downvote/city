@@ -97,7 +97,7 @@ local function quest(g: any, order: number): Frame
 		Rotation = 45,
 		Size = UDim2.fromOffset(18, 18),
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0, 16, 0.5, -3),
+		Position = UDim2.new(0, 22, 0.5, -3),
 		ZIndex = 3,
 		Parent = slab,
 	})
@@ -105,7 +105,7 @@ local function quest(g: any, order: number): Frame
 	Icons.make(if ready then "check" else "trophy", 14, {
 		Name = "IconArt",
 		Parent = slab,
-		Position = UDim2.new(0, 9, 0.5, -10),
+		Position = UDim2.new(0, 15, 0.5, -10),
 		Color = T.Dark,
 		Hole = if ready then T.Yellow else T.Blue,
 		ZIndex = 4,
@@ -113,8 +113,8 @@ local function quest(g: any, order: number): Frame
 	local name = Kit.title(g.goal.name, {
 		Name = "Name",
 		Parent = slab,
-		Size = UDim2.new(1, -150, 0, 20),
-		Position = UDim2.fromOffset(34, 4),
+		Size = UDim2.new(1, -156, 0, 20),
+		Position = UDim2.fromOffset(40, 4),
 		TextSize = 16,
 		Color = T.White,
 		Wrap = false,
@@ -124,8 +124,8 @@ local function quest(g: any, order: number): Frame
 	local desc = Kit.text(g.goal.desc, {
 		Name = "Desc",
 		Parent = slab,
-		Size = UDim2.new(1, -150, 0, 15),
-		Position = UDim2.fromOffset(34, 23),
+		Size = UDim2.new(1, -156, 0, 15),
+		Position = UDim2.fromOffset(40, 23),
 		TextSize = 12,
 		Color = SOFT,
 		Wrap = false,
@@ -246,21 +246,22 @@ function Quests.mount(parent: GuiObject, position: UDim2, open: () -> ()): Frame
 		LayoutOrder = 0,
 		Parent = frame,
 	})
-	local tab = Kit.darkPill({ Name = "Tab", Parent = head, Size = UDim2.fromOffset(140, 30) })
+	-- (from the left edge of the screen, like the rows under it and the stats above)
+	local tab = Kit.darkPill({ Name = "Tab", Parent = head, Size = UDim2.fromOffset(150, 30) })
 	local bar = Kit.new("Frame", {
 		Name = "Mark",
 		BackgroundColor3 = T.Yellow,
 		BorderSizePixel = 0,
 		Size = UDim2.fromOffset(5, 18),
-		Position = UDim2.new(0, 8, 0.5, -9),
+		Position = UDim2.new(0, 14, 0.5, -9),
 		ZIndex = 3,
 		Parent = tab,
 	})
 	bar:SetAttribute("KeepColors", true)
 	local word = Kit.title("Quests", {
 		Parent = tab,
-		Size = UDim2.new(1, -50, 1, 0),
-		Position = UDim2.fromOffset(20, 0),
+		Size = UDim2.new(1, -56, 1, 0),
+		Position = UDim2.fromOffset(26, 0),
 		TextSize = 17,
 		Color = T.White,
 		Wrap = false,

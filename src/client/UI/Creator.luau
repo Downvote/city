@@ -6,6 +6,7 @@
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
 local UserInputService = game:GetService("UserInputService")
 local AvatarEditorService = game:GetService("AvatarEditorService")
@@ -90,6 +91,9 @@ local selectTab: (string) -> ()
 local markTab: ((string) -> ())? = nil
 local profile = { name = "", pers = "sunny", color = "4FA9D9", bday = { s = 1, d = 1 } }
 local paintStudio: () -> ()
+local panelFrame: Frame? = nil -- the panel on the right, which glows in their favourite colour
+local PANEL_W, PANEL_PAD = 720, 12 -- what the panel holds is this wide, inside this margin
+local ROW_H = 36 -- the search box, the sort, the filters and the copy box are this tall
 
 -- The picture of a card's item: an asset, a bundle, or one of the player's saved avatars.
 local function thumb(id: number, itemType: string?): string
@@ -200,15 +204,16 @@ local function note(text: string?, buttonText: string?, onClick: (() -> ())?)
 	if not text then
 		return
 	end
-	-- on a card of its own: there is nothing behind this panel but the studio's moving backdrop
+	-- on a card of its own on the panel
 	local holder = Kit.frame({
 		Name = "Note",
 		Parent = content,
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		Color = T.Paper,
+		Color = T.Card,
+		Radius = false,
 	})
-	Kit.pad(holder, 14, 12)
+	Kit.pad(holder, 16, 14)
 	Kit.list(holder, 10)
 	Kit.text(text, {
 		Parent = holder,
@@ -299,13 +304,16 @@ local function isOn(id: number): boolean
 	return Categories.isWorn(app, id)
 end
 
+-- What they have on is picked, so its card is yellow with dark words and a tick on its corner
+-- (on Wearing everything is on, so there only the tick shows).
 refreshWorn = function()
 	for id, card in cards do
-		local stroke = card:FindFirstChildOfClass("UIStroke")
 		local worn = isOn(id)
-		if stroke then
-			stroke.Color = if worn then T.Green else T.Ink
-			stroke.Thickness = if worn then 3.5 else 2
+		local lit = worn and tabId ~= "wearing"
+		Kit.paintCut(card, if lit then T.Yellow else T.Card)
+		local name = card:FindFirstChild("Name")
+		if name and name:IsA("TextLabel") then
+			name.TextColor3 = if lit then T.Dark else T.Ink
 		end
 		local badge = card:FindFirstChild("Worn")
 		if badge and badge:IsA("GuiObject") then
@@ -314,24 +322,27 @@ refreshWorn = function()
 	end
 end
 
+-- A card for something to wear: a slab with two corners cut, the picture, and the name under it
+-- on one or two lines. A set (a bundle) says so on a tag; what they have on is yellow and ticked.
 local function itemCard(item: any, order: number, onClick: (() -> ())?, kind: string?): GuiObject
 	local bundle = item.ItemType == "Bundle"
 	local card = Kit.new("TextButton", {
 		Text = "",
-		AutoButtonColor = true,
-		BackgroundColor3 = T.Paper,
+		AutoButtonColor = false,
+		BackgroundTransparency = 1,
 		Size = UDim2.fromOffset(128, 160),
 		LayoutOrder = order,
 		Parent = grid,
 	})
-	Kit.corner(card, 18)
+	Kit.cutInto(card, T.Card, 10)
 	local picture = Kit.frame({
+		Name = "Picture",
 		Parent = card,
-		Size = UDim2.fromOffset(118, 116),
-		Position = UDim2.fromOffset(5, 5),
+		Size = UDim2.fromOffset(116, 112),
+		Position = UDim2.fromOffset(6, 6),
 		Color = T.Picture,
-		Radius = 14,
-		Clips = true, -- the picture is cut to the round corners
+		Radius = false,
+		Clips = true,
 	})
 	Kit.new("ImageLabel", {
 		Image = thumb(item.Id, item.ItemType),
@@ -342,45 +353,75 @@ local function itemCard(item: any, order: number, onClick: (() -> ())?, kind: st
 	})
 	if bundle then
 		local tag = Kit.frame({
+			Name = "Set",
 			Parent = picture,
 			Size = UDim2.fromOffset(0, 18),
 			AutomaticSize = Enum.AutomaticSize.X,
-			Position = UDim2.fromOffset(4, 4),
+			Position = UDim2.fromOffset(8, 6),
 			Color = T.Purple,
-			Radius = 9,
+			Radius = false,
 		})
-		Kit.pad(tag, 6, 0)
+		Kit.slant(tag, 18, true)
+		Kit.pad(tag, 2, 0)
 		Kit.text("Set", {
 			Parent = tag,
 			Size = UDim2.fromOffset(0, 18),
 			AutomaticSize = Enum.AutomaticSize.X,
-			TextSize = 11,
+			TextSize = 12,
 			Font = Kit.Fonts.Bold,
-			Color = T.White,
+			Color = T.Dark,
 			Wrap = false,
 		})
 	end
-	-- the green tick on what they have on
-	local worn = Kit.frame({
+	-- the tick on what they have on: a dark diamond with a yellow check, on the picture's corner
+	local worn = Kit.box({
 		Name = "Worn",
 		Parent = card,
-		Size = UDim2.fromOffset(24, 24),
-		Position = UDim2.new(1, -28, 0, 4),
-		Color = T.Green,
-		Radius = "circle",
+		Size = UDim2.fromOffset(30, 30),
+		Position = UDim2.new(1, -36, 0, 6),
 		Visible = false,
+		ZIndex = 3,
 	})
-	Kit.stroke(worn, T.Ink, 2)
-	Icons.make("check", 18, { Parent = worn, Position = UDim2.fromOffset(3, 3), Color = T.White, Hole = T.Green })
-	Kit.text(item.Name or "", {
+	local diamond = Kit.frame({
+		Name = "Diamond",
+		Parent = worn,
+		Size = UDim2.fromOffset(21, 21),
+		Position = UDim2.fromScale(0.5, 0.5),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Color = T.Dark,
+		Radius = false,
+		ZIndex = 3,
+	})
+	diamond.Rotation = 45
+	Icons.make("check", 18, {
+		Parent = worn,
+		Position = UDim2.fromOffset(6, 6),
+		Color = T.Yellow,
+		Hole = T.Dark,
+		ZIndex = 4,
+	})
+	Kit.title(item.Name or "", {
+		Name = "Name",
 		Parent = card,
-		Size = UDim2.new(1, -10, 0, 34),
-		Position = UDim2.fromOffset(5, 123),
-		TextSize = 13,
+		Size = UDim2.new(1, -12, 0, 36),
+		Position = UDim2.fromOffset(6, 120),
+		TextSize = 15,
 		AlignX = Enum.TextXAlignment.Center,
-		Font = Kit.Fonts.Bold,
-	})
+	}).TextTruncate =
+		Enum.TextTruncate.AtEnd
+	local scale = Kit.new("UIScale", { Parent = card })
+	card.MouseEnter:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Scale = 1.05 }):Play()
+	end)
+	card.MouseLeave:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.15), { Scale = 1 }):Play()
+	end)
+	card.MouseButton1Down:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.06), { Scale = 0.96 }):Play()
+	end)
 	card.Activated:Connect(function()
+		scale.Scale = 0.94
+		TweenService:Create(scale, TweenInfo.new(0.3, Enum.EasingStyle.Back), { Scale = 1 }):Play()
 		if onClick then
 			onClick()
 		else
@@ -714,6 +755,80 @@ local function wearingPage()
 	end
 end
 
+-- A box to type in, drawn like the search box: a leaning dark well with the words on it. props:
+-- Parent, Size, Position, LayoutOrder, Name, TextSize, Text. Returns the text box (in a holder of
+-- its own, sized and placed by props).
+local function inputWell(placeholder: string, props: { [string]: any }): TextBox
+	local h: number = (props.Size :: UDim2).Y.Offset
+	local holder = Kit.box({
+		Name = props.Name or "Input",
+		Parent = props.Parent,
+		Size = props.Size,
+		Position = props.Position,
+		LayoutOrder = props.LayoutOrder,
+	})
+	local well = Kit.frame({ Name = "Well", Parent = holder, Color = T.PaperDark, Radius = false })
+	local lean = Kit.slant(well, h)
+	local box = Kit.textbox(placeholder, {
+		Parent = holder,
+		Size = UDim2.new(1, -lean * 2, 1, 0),
+		Text = props.Text,
+		TextSize = props.TextSize or 16,
+	})
+	box.Position = UDim2.fromOffset(lean, 0)
+	box.BackgroundTransparency = 1
+	box.ZIndex = 2
+	local pad = box:FindFirstChildOfClass("UIPadding")
+	if pad then
+		pad.PaddingLeft = UDim.new(0, 6)
+	end
+	return box
+end
+
+-- A grid of colours to pick from; the one they have stands in a yellow ring, which moves to
+-- whatever is clicked. Returns the grid and a function that rings a colour.
+local function colourGrid(
+	parent: Instance,
+	list: { string },
+	px: number,
+	current: string?,
+	onPick: (string) -> (),
+	order: number
+): (Frame, (string?) -> ())
+	local ring = 3
+	local g = Kit.box({
+		Parent = parent,
+		Size = UDim2.new(1, -10, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		LayoutOrder = order,
+	})
+	Kit.grid(g, UDim2.fromOffset(px + ring * 2, px + ring * 2), 4)
+	local rings: { [string]: Frame } = {}
+	local function mark(hex: string?)
+		for h, r in rings do
+			r.Visible = h == hex
+		end
+	end
+	for i, hex in list do
+		local cell = Kit.box({ Parent = g, LayoutOrder = i })
+		rings[hex] = Kit.frame({
+			Name = "Ring",
+			Parent = cell,
+			Size = UDim2.fromScale(1, 1),
+			Color = T.Yellow,
+			Radius = false,
+			Visible = false,
+		})
+		local b = Kit.swatch(Colors.fromHex(hex), px, function()
+			mark(hex)
+			onPick(hex)
+		end, { Parent = cell })
+		b.Position = UDim2.fromOffset(ring, ring)
+	end
+	mark(current)
+	return g, mark
+end
+
 local SKIN_PARTS = {
 	{ id = "all", name = "Everything", keys = { "head", "torso", "la", "ra", "ll", "rl" } },
 	{ id = "head", name = "Head", keys = { "head" } },
@@ -724,38 +839,46 @@ local SKIN_PARTS = {
 
 local function skinPage()
 	local holder = Kit.box({ Parent = content, Size = UDim2.fromScale(1, 1) })
-	Kit.list(holder, 8)
+	Kit.list(holder, 10)
 	local part = SKIN_PARTS[1]
+	local marks: { (string?) -> () } = {}
+	-- the colour of the part being painted (its first piece), ringed in both grids
+	local function now(): string?
+		return app.colors and app.colors[part.keys[1]]
+	end
+	local function ring()
+		for _, mark in marks do
+			mark(now())
+		end
+	end
 	local _, selectPart = Kit.tabs(SKIN_PARTS, function(id)
 		for _, p in SKIN_PARTS do
 			if p.id == id then
 				part = p
 			end
 		end
-	end, { Parent = holder, LayoutOrder = 1 })
+		ring()
+	end, { Parent = holder, LayoutOrder = 1, Height = 34, TextSize = 15 })
 	selectPart("all")
-	Kit.text("Skin tones", { Parent = holder, TextSize = 16, Font = Kit.Fonts.Bold, LayoutOrder = 2 })
-	local function swatches(list: { string }, order: number)
-		local g = Kit.box({
-			Parent = holder,
-			Size = UDim2.new(1, 0, 0, 0),
-			AutomaticSize = Enum.AutomaticSize.Y,
-			LayoutOrder = order,
-		})
-		Kit.grid(g, UDim2.fromOffset(36, 36), 6)
-		for i, hex in list do
-			Kit.swatch(Colors.fromHex(hex), 36, function()
-				local new = Appearance.sanitize(app)
-				for _, k in part.keys do
-					new.colors[k] = hex
-				end
-				setApp(new)
-			end, { Parent = g, LayoutOrder = i })
+	local function pick(hex: string)
+		local new = Appearance.sanitize(app)
+		for _, k in part.keys do
+			new.colors[k] = hex
 		end
+		setApp(new)
+		ring()
 	end
-	swatches(Appearance.SkinTones, 3)
-	Kit.text("Any colour", { Parent = holder, TextSize = 16, Font = Kit.Fonts.Bold, LayoutOrder = 4 })
-	swatches(Palette.Colors, 5)
+	Kit.text(
+		"Skin tones",
+		{ Parent = holder, TextSize = 15, Font = Kit.Fonts.Bold, Color = T.InkSoft, LayoutOrder = 2 }
+	)
+	local _, a = colourGrid(holder, Appearance.SkinTones, 36, now(), pick, 3)
+	Kit.text(
+		"Any colour",
+		{ Parent = holder, TextSize = 15, Font = Kit.Fonts.Bold, Color = T.InkSoft, LayoutOrder = 4 }
+	)
+	local _, b = colourGrid(holder, Palette.Colors, 30, now(), pick, 5)
+	marks = { a, b }
 end
 
 local function shapePage()
@@ -779,28 +902,31 @@ local function shapePage()
 			sendPreview()
 		end, { Parent = holder, LayoutOrder = i })
 	end
-	Kit.button(
-		"Back to normal",
-		{ Parent = holder, Size = UDim2.fromOffset(180, 40), Color = T.Yellow, TextColor = T.Dark, LayoutOrder = 20 },
-		function()
-			local new = Appearance.sanitize(app)
-			for _, k in Appearance.ScaleKeys do
-				new.scale[k] = Appearance.ScaleLimits[k].Default
-			end
-			setApp(new)
-			selectTab("shape")
+	Kit.button("Back to normal", {
+		Parent = holder,
+		Size = UDim2.fromOffset(200, 40),
+		Color = T.Blue,
+		TextSize = 18,
+		Icon = "undo",
+		LayoutOrder = 20,
+	}, function()
+		local new = Appearance.sanitize(app)
+		for _, k in Appearance.ScaleKeys do
+			new.scale[k] = Appearance.ScaleLimits[k].Default
 		end
-	)
+		setApp(new)
+		selectTab("shape")
+	end)
 end
 
 local function outfitsPage()
 	local holder = Kit.box({ Parent = content, Size = UDim2.fromScale(1, 1) })
-	local row = Kit.box({ Parent = holder, Size = UDim2.new(1, 0, 0, 44) })
+	local row = Kit.box({ Parent = holder, Size = UDim2.new(1, 0, 0, ROW_H) })
 	Kit.list(row, 8, true)
-	local nameBox = Kit.textbox("Outfit name", { Parent = row, Size = UDim2.new(1, -170, 0, 40) })
+	local nameBox = inputWell("Name this outfit", { Parent = row, Size = UDim2.new(1, -196, 0, ROW_H) })
 	Kit.button(
 		"Save this look",
-		{ Parent = row, Size = UDim2.fromOffset(160, 40), Color = T.Green, TextSize = 17 },
+		{ Parent = row, Size = UDim2.fromOffset(188, ROW_H), Color = T.Green, TextSize = 17, Icon = "hanger" },
 		function()
 			local name = Text.clean(nameBox.Text)
 			if name == "" then
@@ -820,36 +946,47 @@ local function outfitsPage()
 			end)
 		end
 	)
-	local list = Kit.scroll({ Parent = holder, Size = UDim2.new(1, 0, 1, -54), Position = UDim2.fromOffset(0, 54) })
+	local list = Kit.scroll({
+		Parent = holder,
+		Size = UDim2.new(1, 0, 1, -(ROW_H + 12)),
+		Position = UDim2.fromOffset(0, ROW_H + 12),
+	})
+	list.ScrollBarThickness = 4
 	Kit.list(list, 6)
 	local outfits = State.data.outfits or {}
 	if #outfits == 0 then
-		Kit.text("No saved outfits yet.", { Parent = list, TextSize = 17, Color = T.InkSoft })
+		-- nothing saved: say how, on a card of its own (the note under the cards)
+		note("No outfits saved yet. Give this look a name and save it, and it will wait here to be worn again.")
+		local n = content:FindFirstChild("Note")
+		if n and n:IsA("GuiObject") then
+			n.Position = UDim2.fromOffset(0, ROW_H + 12)
+		end
 	end
 	for i, o in outfits do
-		local r = Kit.frame({
+		local r, inner = Kit.row({
 			Parent = list,
-			Size = UDim2.new(1, -8, 0, 48),
-			Color = T.Card,
-			Stroke = T.Ink,
-			StrokeThickness = 2,
+			Size = UDim2.new(1, -8, 0, 52),
+			Height = 52,
+			Title = o.name,
+			TextSize = 18,
+			Marker = "hanger",
+			RightSpace = 200,
 			LayoutOrder = i,
 		})
-		Kit.pad(r, 10, 4)
-		Kit.text(o.name, { Parent = r, Size = UDim2.new(1, -200, 1, 0), TextSize = 18, Font = Kit.Fonts.Bold })
+		local _ = r
 		Kit.button("Wear", {
-			Parent = r,
+			Parent = inner,
 			Size = UDim2.fromOffset(84, 36),
-			Position = UDim2.new(1, -184, 0, 2),
+			Position = UDim2.new(1, -200, 0.5, -18),
 			Color = T.Blue,
 			TextSize = 16,
 		}, function()
 			setApp(o.app)
 		end)
 		Kit.button("Delete", {
-			Parent = r,
-			Size = UDim2.fromOffset(90, 36),
-			Position = UDim2.new(1, -92, 0, 2),
+			Parent = inner,
+			Size = UDim2.fromOffset(96, 36),
+			Position = UDim2.new(1, -110, 0.5, -18),
 			Color = T.Coral,
 			TextSize = 16,
 		}, function()
@@ -892,12 +1029,12 @@ local function peoplePage()
 		LayoutOrder = 3,
 	})
 	Kit.title("Shared by players", { Parent = holder, Size = UDim2.new(1, -12, 0, 26), TextSize = 19, LayoutOrder = 4 })
-	local row = Kit.box({ Parent = holder, Size = UDim2.new(1, -12, 0, 44), LayoutOrder = 5 })
+	local row = Kit.box({ Parent = holder, Size = UDim2.new(1, -12, 0, ROW_H), LayoutOrder = 5 })
 	Kit.list(row, 8, true)
-	local nameBox = Kit.textbox("Name this look", { Parent = row, Size = UDim2.new(1, -190, 0, 40) })
+	local nameBox = inputWell("Name this look", { Parent = row, Size = UDim2.new(1, -192, 0, ROW_H) })
 	Kit.button(
 		"Share this look",
-		{ Parent = row, Size = UDim2.fromOffset(176, 40), Color = T.Green, TextSize = 17, Radius = "pill" },
+		{ Parent = row, Size = UDim2.fromOffset(184, ROW_H), Color = T.Green, TextSize = 17 },
 		function()
 			local name = Text.clean(nameBox.Text)
 			if name == "" then
@@ -1149,14 +1286,14 @@ local function layoutBrowse(showSearch: boolean, showFilterRow: boolean)
 	filterRow.Visible = showFilterRow
 	local y = 0
 	if showSearch then
-		y += 46
+		y += ROW_H + 8
 	end
 	filterRow.Position = UDim2.fromOffset(0, y)
 	if showFilterRow then
-		y += 40
+		y += ROW_H + 8
 	end
 	content.Position = UDim2.fromOffset(0, y)
-	content.Size = UDim2.new(1, 0, 1, -(y + 2))
+	content.Size = UDim2.new(1, 0, 1, -y)
 end
 
 local function showFilters(tab: any)
@@ -1178,13 +1315,12 @@ local function showFilters(tab: any)
 		local on = i == filterIndex
 		local b = Kit.button(f.name, {
 			Parent = filterRow,
-			Size = UDim2.fromOffset(0, 30),
+			Size = UDim2.fromOffset(0, ROW_H),
 			AutomaticSize = Enum.AutomaticSize.X,
 			TextSize = 14,
-			Color = if on then T.Yellow else T.PaperDark,
+			Color = if on then T.Yellow else T.Card,
 			TextColor = if on then T.Dark else T.Ink,
 			LayoutOrder = i,
-			Radius = 15,
 		})
 		Kit.pad(b, 12, 0)
 		b.Activated:Connect(function()
@@ -1235,50 +1371,99 @@ local function buildProfilePage()
 			c:Destroy()
 		end
 	end
-	local scroll = Kit.scroll({ Parent = profilePage, Size = UDim2.new(1, 0, 1, -60) })
-	Kit.list(scroll, 10)
-	Kit.text("Name", { Parent = scroll, TextSize = 17, Font = Kit.Fonts.Bold, LayoutOrder = 1 })
+	local scroll = Kit.scroll({ Parent = profilePage, Size = UDim2.new(1, 0, 1, -64) })
+	scroll.ScrollBarThickness = 4
+	Kit.list(scroll, 8)
+	local function heading(text: string, order: number)
+		Kit.text(text, {
+			Parent = scroll,
+			Size = UDim2.new(1, -10, 0, 22),
+			TextSize = 15,
+			Font = Kit.Fonts.Bold,
+			Color = T.InkSoft,
+			LayoutOrder = order,
+		})
+	end
+	heading("Name", 1)
 	local nameBox = Kit.textbox(
 		"What are they called?",
 		{ Parent = scroll, Text = profile.name, LayoutOrder = 2, Size = UDim2.new(1, -10, 0, 42) }
 	)
+	nameBox.Font = Kit.Fonts.Title
+	nameBox.TextSize = 20
 	nameBox:GetPropertyChangedSignal("Text"):Connect(function()
 		if utf8.len(nameBox.Text) and (utf8.len(nameBox.Text) :: number) > Tuning.Villagers.NameMaxLength then
 			nameBox.Text = nameBox.Text:sub(1, Tuning.Villagers.NameMaxLength)
 		end
 		profile.name = nameBox.Text
 	end)
-	Kit.text("Personality", { Parent = scroll, TextSize = 17, Font = Kit.Fonts.Bold, LayoutOrder = 3 })
+	heading("Personality", 3)
 	local persGrid = Kit.box({
 		Parent = scroll,
 		Size = UDim2.new(1, -10, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		LayoutOrder = 4,
 	})
-	Kit.grid(persGrid, UDim2.new(0.5, -6, 0, 70), 8)
-	local persButtons = {}
+	Kit.grid(persGrid, UDim2.new(0.5, -4, 0, 64), 8)
+	-- a card each: a diamond in the personality's own colour, its name and what they are like;
+	-- the one they are is yellow with dark words, like anything picked
+	local persButtons: { [string]: TextButton } = {}
 	local function refreshPers()
 		for id, b in persButtons do
-			local p = Personalities.get(id) :: any
-			-- the one they are: its own colour, sunk into the dark so the light words still read
-			Kit.setButtonColor(b, if id == profile.pers then Colors.fromHex(p.color):Lerp(T.Cream, 0.6) else T.Card)
+			local on = id == profile.pers
+			Kit.paintCut(b, if on then T.Yellow else T.Card)
+			for _, l in b:GetChildren() do
+				if l:IsA("TextLabel") then
+					l.TextColor3 = if on then T.Dark elseif l.Name == "Blurb" then T.InkSoft else T.Ink
+				end
+			end
 		end
 	end
 	for i, p in Personalities.list do
-		local b = Kit.new(
-			"TextButton",
-			{ Text = "", AutoButtonColor = true, BackgroundColor3 = T.Card, LayoutOrder = i, Parent = persGrid }
-		)
-		Kit.corner(b, 12)
-		Kit.stroke(b, T.Ink, 2)
-		Kit.title(
-			p.name,
-			{ Parent = b, Size = UDim2.new(1, -16, 0, 24), Position = UDim2.fromOffset(8, 4), TextSize = 18 }
-		)
-		Kit.text(p.blurb, {
+		local b = Kit.new("TextButton", {
+			Name = p.name,
+			Text = "",
+			AutoButtonColor = false,
+			BackgroundTransparency = 1,
+			LayoutOrder = i,
+			Parent = persGrid,
+		})
+		Kit.cutInto(b, T.Card, 8)
+		local own = Colors.fromHex(p.color)
+		-- (a dark edge round it, so a yellow one still shows on the picked yellow card)
+		local edge = Kit.frame({
+			Name = "Edge",
 			Parent = b,
-			Size = UDim2.new(1, -16, 0, 38),
-			Position = UDim2.fromOffset(8, 28),
+			Size = UDim2.fromOffset(16, 16),
+			Position = UDim2.fromOffset(20, 18),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Color = T.Dark,
+			Radius = false,
+		})
+		edge.Rotation = 45
+		local dot = Kit.frame({
+			Name = "Swatch",
+			Parent = b,
+			Size = UDim2.fromOffset(12, 12),
+			Position = UDim2.fromOffset(20, 18),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Color = own,
+			Radius = false,
+		})
+		dot.Rotation = 45
+		Kit.title(p.name, {
+			Name = "Title",
+			Parent = b,
+			Size = UDim2.new(1, -46, 0, 24),
+			Position = UDim2.fromOffset(34, 6),
+			TextSize = 18,
+			Wrap = false,
+		})
+		Kit.text(p.blurb, {
+			Name = "Blurb",
+			Parent = b,
+			Size = UDim2.new(1, -46, 0, 32),
+			Position = UDim2.fromOffset(34, 29),
 			TextSize = 13,
 			AlignY = Enum.TextYAlignment.Top,
 		})
@@ -1289,28 +1474,19 @@ local function buildProfilePage()
 		end)
 	end
 	refreshPers()
-	Kit.text("Favourite colour", { Parent = scroll, TextSize = 17, Font = Kit.Fonts.Bold, LayoutOrder = 5 })
-	local colorGrid = Kit.box({
-		Parent = scroll,
-		Size = UDim2.new(1, -10, 0, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
-		LayoutOrder = 6,
-	})
-	Kit.grid(colorGrid, UDim2.fromOffset(30, 30), 6)
-	for i, hex in Palette.Colors do
-		Kit.swatch(Colors.fromHex(hex), 30, function()
-			profile.color = hex
-			paintStudio()
-		end, { Parent = colorGrid, LayoutOrder = i })
-	end
-	Kit.text("Birthday", { Parent = scroll, TextSize = 17, Font = Kit.Fonts.Bold, LayoutOrder = 7 })
+	heading("Favourite colour", 5)
+	colourGrid(scroll, Palette.Colors, 26, profile.color, function(hex)
+		profile.color = hex
+		paintStudio()
+	end, 6)
+	heading("Birthday", 7)
 	local seasons = {}
 	for i, name in Schema.Seasons do
 		table.insert(seasons, { id = tostring(i), name = name })
 	end
 	local _, selectSeason = Kit.tabs(seasons, function(id)
 		profile.bday.s = tonumber(id) :: number
-	end, { Parent = scroll, LayoutOrder = 8, Size = UDim2.new(1, -10, 0, 40) })
+	end, { Parent = scroll, LayoutOrder = 8, Size = UDim2.new(1, -10, 0, 38), Height = 34, TextSize = 15 })
 	selectSeason(tostring(profile.bday.s))
 	Kit.slider("Day", 1, Schema.DaysPerSeason, profile.bday.d, 1, function(v)
 		profile.bday.d = v
@@ -1318,10 +1494,11 @@ local function buildProfilePage()
 
 	local save = Kit.button(if mode == "new" then "Move them in" else "Save changes", {
 		Parent = profilePage,
-		Size = UDim2.new(1, 0, 0, 50),
+		Size = UDim2.new(1, 0, 0, 52),
 		Position = UDim2.new(0, 0, 1, -52),
 		Color = T.Green,
 		TextSize = 22,
+		Icon = if mode == "new" then "house" else "check",
 	})
 	save.Activated:Connect(function()
 		if saving then
@@ -1426,6 +1603,9 @@ local function studioColor(): Color3
 end
 
 function paintStudio()
+	if panelFrame and panelFrame.Parent then
+		Kit.glow(panelFrame, studioColor(), 0.22)
+	end
 	local s = studio
 	if not s then
 		return
@@ -1820,21 +2000,35 @@ local function build()
 		Wrap = false,
 	})
 
-	local holder = Kit.box({
+	-- Everything to choose from is one panel on the right, a slab with two corners cut, its
+	-- villager's favourite colour glowing in from the top right (paintStudio). The villager's
+	-- side of the screen stays clear but for the tools in one card at the bottom left.
+	local holder = Kit.frame({
 		Name = "PanelHolder",
-		Size = UDim2.new(0, 720, 1, -28),
-		Position = UDim2.new(1, -18, 0, 14),
+		Size = UDim2.new(0, PANEL_W + PANEL_PAD * 2, 1, -28),
+		Position = UDim2.new(1, -16, 0, 14),
 		AnchorPoint = Vector2.new(1, 0),
+		Color = T.Cream,
+		Cut = 14,
 		Parent = frame,
 	})
-	local panel = Kit.box({ Name = "Panel", Parent = holder })
+	Kit.softShadow(holder, 1)
+	panelFrame = holder
+	Kit.glow(holder, studioColor(), 0.22)
+	local panel = Kit.box({
+		Name = "Panel",
+		Parent = holder,
+		Size = UDim2.new(1, -PANEL_PAD * 2, 1, -PANEL_PAD * 2),
+		Position = UDim2.fromOffset(PANEL_PAD, PANEL_PAD),
+		ZIndex = 2,
+	})
 	-- the two steps as one segmented control
 	local steps = Kit.frame({
 		Parent = panel,
-		Size = UDim2.new(1, 0, 0, 48),
+		Size = UDim2.new(1, 0, 0, 46),
 		Position = UDim2.fromOffset(0, 0),
 		Color = T.PaperDark,
-		Radius = "pill",
+		Radius = false,
 	})
 	Kit.pad(steps, 4, 4)
 	Kit.list(steps, 4, true)
@@ -1857,9 +2051,10 @@ local function build()
 	profilePage =
 		Kit.box({ Parent = panel, Size = UDim2.new(1, 0, 1, -58), Position = UDim2.fromOffset(0, 58), Visible = false })
 
-	-- The sections, as a block of tabs (an icon over a name; the picked one yellow). There are
-	-- more of them than fit across, and a row that scrolled sideways hid the last ones from
-	-- anyone without a touch screen, so they wrap: eight to a row, every one in reach.
+	-- The sections, as a block of tiles (an icon over a name; the picked one yellow with dark
+	-- words, as in Build mode's categories). There are more of them than fit across, and a row
+	-- that scrolled sideways hid the last ones from anyone without a touch screen, so they wrap:
+	-- eight to a row, every one in reach.
 	local ICONS = {
 		wearing = "person",
 		hair = "hair",
@@ -1878,7 +2073,7 @@ local function build()
 		avatars = "idcard",
 		people = "people",
 	}
-	local PER_ROW, CELL_W, CELL_H, GAP_X, GAP_Y = 8, 88, 70, 2, 6
+	local PER_ROW, CELL_W, CELL_H, GAP_X, GAP_Y = 8, 88, 60, 2, 6
 	local railRows = math.ceil(#Categories.Tabs / PER_ROW)
 	local railH = railRows * CELL_H + (railRows - 1) * GAP_Y
 	local rail = Kit.box({ Name = "Rail", Parent = lookPage, Size = UDim2.new(1, 0, 0, railH) })
@@ -1889,78 +2084,84 @@ local function build()
 	local function markRail(id: string)
 		for bid, b in railButtons do
 			local on = bid == id
-			-- each is a round button: the picked one yellow with a dark icon
-			local sel = b:FindFirstChild("Sel")
-			if sel and sel:IsA("Frame") then
-				sel.BackgroundColor3 = if on then T.Yellow else T.Card
-			end
-			local art = b:FindFirstChild("IconArt")
-			if art then
-				Kit.recolorIcon(art, if on then T.Dark else T.Ink, if on then T.Yellow else T.Card)
-			end
-			local cap = b:FindFirstChild("Caption")
-			if cap and cap:IsA("TextLabel") then
-				-- (deepened in the light look, where plain yellow fades into the backdrop)
-				cap.TextColor3 = if on then Kit.tint(T.Yellow) else T.Ink
-			end
+			Kit.setButtonColor(b, if on then T.Yellow else T.Card, if on then T.Dark else T.Ink)
 		end
 	end
 	for i, t in Categories.Tabs do
-		local b = Kit.menuButton(ICONS[t.id] or "person", t.name, {
+		local b = Kit.tile(ICONS[t.id] or "person", t.name, {
 			Parent = rail,
 			LayoutOrder = i,
 			Size = UDim2.fromOffset(CELL_W, CELL_H),
-			Color = T.Ink,
+			Color = T.Card,
 			TextSize = 13,
 		}, function()
 			filterIndex = 1
 			markRail(t.id)
 			selectTab(t.id)
 		end)
-		local sel = Kit.frame({
-			Name = "Sel",
-			Parent = b,
-			Size = UDim2.fromOffset(50, 50),
-			Position = UDim2.new(0.5, -25, 0, -2),
-			Color = T.Card,
-			Radius = "circle",
-		})
-		sel.ZIndex = 0
 		railButtons[t.id] = b
 	end
 	markRail(tabId)
 	markTab = markRail
 	local browse = Kit.box({
 		Parent = lookPage,
-		Size = UDim2.new(1, 0, 1, -(railH + 10)),
-		Position = UDim2.fromOffset(0, railH + 10),
+		Size = UDim2.new(1, 0, 1, -(railH + 12)),
+		Position = UDim2.fromOffset(0, railH + 12),
 	})
 
-	-- (what was typed and the sort picked are kept when the screen is built again)
-	searchRow = Kit.box({ Name = "Search", Parent = browse, Size = UDim2.new(1, 0, 0, 40) })
-	searchBox =
-		Kit.textbox("Search the catalog", { Parent = searchRow, Size = UDim2.new(1, -150, 1, 0), Text = keyword })
-	searchBox.FocusLost:Connect(function(enter)
-		keyword = Text.clean(searchBox.Text):sub(1, 50)
-		if enter or true then
-			search()
-		end
-	end)
-	local sortName = Categories.Sorts[1].name
-	for _, sort in Categories.Sorts do
-		if sort.id == sortId then
-			sortName = sort.name
-		end
+	-- the search box and the sort, one row the width of the panel, as tall as the filters under
+	-- it (what was typed and the sort picked are kept when the screen is built again)
+	local SORT_W = 170
+	searchRow = Kit.box({ Name = "Search", Parent = browse, Size = UDim2.new(1, 0, 0, ROW_H) })
+	local well = Kit.frame({
+		Name = "Well",
+		Parent = searchRow,
+		Size = UDim2.new(1, -(SORT_W + 8), 1, 0),
+		Color = T.PaperDark,
+		Radius = false,
+	})
+	local lean = Kit.slant(well, ROW_H)
+	Icons.make("zoom", 18, {
+		Parent = searchRow,
+		Position = UDim2.new(0, lean + 8, 0.5, -9),
+		Color = T.InkSoft,
+		Hole = T.PaperDark,
+		ZIndex = 2,
+	})
+	searchBox = Kit.textbox("Search the catalog", {
+		Parent = searchRow,
+		Size = UDim2.new(1, -(SORT_W + 8 + lean * 2 + 32), 1, 0),
+		Text = keyword,
+		TextSize = 16,
+	})
+	searchBox.Position = UDim2.fromOffset(lean + 32, 0)
+	searchBox.BackgroundTransparency = 1
+	searchBox.ZIndex = 2
+	local boxPad = searchBox:FindFirstChildOfClass("UIPadding")
+	if boxPad then
+		boxPad.PaddingLeft = UDim.new(0, 4)
 	end
-	sortButton = Kit.button(sortName, {
+	searchBox.FocusLost:Connect(function()
+		keyword = Text.clean(searchBox.Text):sub(1, 50)
+		search()
+	end)
+	local function sortWords(id: string): string
+		local name = Categories.Sorts[1].name
+		for _, sort in Categories.Sorts do
+			if sort.id == id then
+				name = sort.name
+			end
+		end
+		return Text.fill("Sort: {name}", { name = name })
+	end
+	sortButton = Kit.button(sortWords(sortId), {
 		Name = "Sort",
 		Parent = searchRow,
-		Size = UDim2.fromOffset(140, 40),
-		Position = UDim2.new(1, -140, 0, 0),
+		Size = UDim2.fromOffset(SORT_W, ROW_H),
+		Position = UDim2.new(1, -SORT_W, 0, 0),
 		Color = T.Card,
 		TextColor = T.Ink,
-		TextSize = 16,
-		Radius = "pill",
+		TextSize = 15,
 	})
 	sortButton.Activated:Connect(function()
 		local i = 1
@@ -1971,95 +2172,99 @@ local function build()
 		end
 		local nextSort = Categories.Sorts[i % #Categories.Sorts + 1]
 		sortId = nextSort.id
-		sortButton.Text = nextSort.name
+		sortButton.Text = sortWords(sortId)
 		search()
 	end)
 	filterRow = Kit.scroll({
 		Name = "Filters",
 		Parent = browse,
-		Size = UDim2.new(1, 0, 0, 34),
-		Position = UDim2.fromOffset(0, 46),
+		Size = UDim2.new(1, 0, 0, ROW_H),
+		Position = UDim2.fromOffset(0, ROW_H + 8),
 		Axis = Enum.AutomaticSize.X,
 	})
 	filterRow.ScrollBarThickness = 3
-	Kit.list(filterRow, 6, true)
+	Kit.list(filterRow, 4, true)
 
-	content = Kit.box({ Parent = browse, Size = UDim2.new(1, 0, 1, -88), Position = UDim2.fromOffset(0, 86) })
-	grid = Kit.scroll({ Parent = content, Size = UDim2.new(1, 0, 1, -46) })
-	Kit.grid(grid, UDim2.fromOffset(128, 160), 8)
+	content = Kit.box({
+		Parent = browse,
+		Size = UDim2.new(1, 0, 1, -(ROW_H + 8) * 2),
+		Position = UDim2.fromOffset(0, (ROW_H + 8) * 2),
+	})
+	grid = Kit.scroll({ Parent = content, Size = UDim2.new(1, 0, 1, -48) })
+	grid.ScrollBarThickness = 4
+	grid.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
+	-- five cards to a row, spaced to fill the panel's width
+	local cardGrid = Kit.grid(grid, UDim2.fromOffset(128, 160), 12)
+	cardGrid.CellPadding = UDim2.fromOffset(math.floor((PANEL_W - 4 - 5 * 128) / 4), 12)
 	loadMore = Kit.button("Show more", {
 		Parent = content,
 		Size = UDim2.new(1, 0, 0, 40),
 		Position = UDim2.new(0, 0, 1, -40),
 		Color = T.Blue,
 		TextSize = 17,
+		Icon = "down",
 	}, more)
 
-	-- the tools under the villager: round dark buttons with their names
-	local tools = Kit.box({
+	-- the tools under the villager, in one card at the bottom left: copy someone's avatar, then
+	-- a row of tiles (an icon over its name, as in Build mode's tools)
+	local TOOL_W, TOOL_H, CARD_PAD = 64, 60, 12
+	local toolList = {
+		{ "undo", "Undo", undo },
+		{ "redo", "Redo", redo },
+		{ "dice", "Shuffle", shuffle },
+		{
+			"trash",
+			"Reset",
+			function()
+				setApp(Appearance.default())
+			end,
+		},
+		-- one button steps through the three distances, for whoever has no wheel and no second finger
+		{
+			"zoom",
+			"Zoom",
+			function()
+				if zoom > (ZOOM_HOME + ZOOM_WHOLE) / 2 then
+					zoom = ZOOM_FACE
+				elseif zoom > (ZOOM_FACE + ZOOM_HOME) / 2 then
+					zoom = ZOOM_WHOLE
+				else
+					zoom = ZOOM_HOME
+				end
+			end,
+		},
+		-- dark or light, here as well as on the main screen (the user asked for it with this
+		-- screen: "along with the option to change to light mode"); it names the look you would get
+		{ Theme.icon(), if Theme.name() == "dark" then "Light" else "Dark", Theme.toggle },
+	}
+	local cardW = #toolList * TOOL_W + CARD_PAD * 2
+	local toolCard = Kit.frame({
 		Name = "Tools",
-		Size = UDim2.fromOffset(0, 78),
-		AutomaticSize = Enum.AutomaticSize.X,
-		Position = UDim2.new(0, 18, 1, -14),
-		AnchorPoint = Vector2.new(0, 1),
-		Parent = frame,
-	})
-	Kit.list(tools, 10, true)
-	local function tool(icon: string, label: string, fn: () -> (), order: number)
-		local cell = Kit.box({ Parent = tools, Size = UDim2.fromOffset(62, 78), LayoutOrder = order })
-		Kit.roundButton(icon, { Parent = cell, Size = 54, Position = UDim2.fromOffset(4, 0), Name = label }, fn)
-		Kit.text(label, {
-			Parent = cell,
-			Size = UDim2.new(1, 0, 0, 18),
-			Position = UDim2.fromOffset(0, 58),
-			TextSize = 14,
-			Font = Kit.Fonts.Title,
-			Color = T.White,
-			Outline = T.Glass,
-			AlignX = Enum.TextXAlignment.Center,
-		})
-	end
-	tool("undo", "Undo", undo, 1)
-	tool("redo", "Redo", redo, 2)
-	tool("dice", "Shuffle", shuffle, 3)
-	tool("trash", "Reset", function()
-		setApp(Appearance.default())
-	end, 4)
-	-- dark or light, here as well as on the main screen (the user asked for it with this screen:
-	-- "along with the option to change to light mode"); the button names the look you would get
-	tool(Theme.icon(), if Theme.name() == "dark" then "Light" else "Dark", Theme.toggle, 6)
-	-- one button steps through the three distances, for whoever has no wheel and no second finger
-	tool("zoom", "Zoom", function()
-		if zoom > (ZOOM_HOME + ZOOM_WHOLE) / 2 then
-			zoom = ZOOM_FACE
-		elseif zoom > (ZOOM_FACE + ZOOM_HOME) / 2 then
-			zoom = ZOOM_WHOLE
-		else
-			zoom = ZOOM_HOME
-		end
-	end, 5)
-
-	local copy = Kit.frame({
-		Name = "Copy",
-		Size = UDim2.fromOffset(420, 60),
-		Position = UDim2.new(0, 14, 1, -104),
+		Size = UDim2.fromOffset(cardW, CARD_PAD * 2 + ROW_H + 8 + TOOL_H),
+		Position = UDim2.new(0, 16, 1, -14),
 		AnchorPoint = Vector2.new(0, 1),
 		Color = T.Paper,
-		Radius = "pill",
+		Cut = 12,
 		Parent = frame,
 	})
-	Kit.pad(copy, 8, 8)
-	local userBox = Kit.textbox("Copy a Roblox username", { Parent = copy, Size = UDim2.new(1, -196, 1, 0) })
+	Kit.softShadow(toolCard, 1)
+	local copy = Kit.box({
+		Name = "Copy",
+		Parent = toolCard,
+		Size = UDim2.new(1, -CARD_PAD * 2, 0, ROW_H),
+		Position = UDim2.fromOffset(CARD_PAD, CARD_PAD),
+	})
+	local userBox = inputWell("A Roblox username", { Parent = copy, Size = UDim2.new(1, -168, 1, 0), TextSize = 15 })
 	Kit.button("Copy", {
 		Parent = copy,
-		Size = UDim2.fromOffset(84, 44),
-		Position = UDim2.new(1, -188, 0, 0),
+		Size = UDim2.fromOffset(84, ROW_H),
+		Position = UDim2.new(1, -164, 0, 0),
 		Color = T.Blue,
 		TextSize = 16,
-		Radius = "pill",
 	}, function()
 		local name = Text.clean(userBox.Text)
 		if name == "" then
+			Toasts.show("Type a Roblox username to copy their avatar.", "info")
 			return
 		end
 		task.spawn(function()
@@ -2073,11 +2278,10 @@ local function build()
 	end)
 	Kit.button("Me", {
 		Parent = copy,
-		Size = UDim2.fromOffset(96, 44),
-		Position = UDim2.new(1, -96, 0, 0),
+		Size = UDim2.fromOffset(76, ROW_H),
+		Position = UDim2.new(1, -76, 0, 0),
 		Color = T.Green,
 		TextSize = 16,
-		Radius = "pill",
 	}, function()
 		task.spawn(function()
 			local result = Remotes.fn("CreatorFromUser"):InvokeServer("")
@@ -2086,16 +2290,30 @@ local function build()
 			end
 		end)
 	end)
+	local toolRow = Kit.box({
+		Parent = toolCard,
+		Size = UDim2.new(1, -CARD_PAD * 2, 0, TOOL_H),
+		Position = UDim2.fromOffset(CARD_PAD, CARD_PAD + ROW_H + 8),
+	})
+	Kit.list(toolRow, 0, true)
+	for i, t in toolList do
+		Kit.tile(t[1], t[2], {
+			Parent = toolRow,
+			Size = UDim2.fromOffset(TOOL_W, TOOL_H),
+			LayoutOrder = i,
+			Color = T.Paper,
+		}, t[3])
+	end
 	local tip = Kit.darkPill({
 		Parent = frame,
 		Size = UDim2.fromOffset(0, 34),
 		Position = UDim2.fromOffset(16, 68),
 	})
 	tip.AutomaticSize = Enum.AutomaticSize.X
-	Kit.pad(tip, 14, 0)
+	Kit.pad(tip, 8, 0)
 	Kit.text("Drag to turn them round. Scroll or pinch to zoom.", {
 		Parent = tip,
-		Size = UDim2.fromOffset(0, 30),
+		Size = UDim2.fromOffset(0, 34),
 		AutomaticSize = Enum.AutomaticSize.X,
 		TextSize = 15,
 		Color = T.White,

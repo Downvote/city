@@ -215,9 +215,15 @@ run("every tab and tool opens without an error", function()
 		mouseAtPlot(90, 30, 2)
 		frames(2)
 	end
-	press("Roofs off")
-	press("Walls solid")
-	press("Grid 1 stud")
+	local view = BuildMode.state
+	local roofsWere, wallsWere, snapWas = view.roofsHidden, view.seeThrough, view.snap
+	press("Hide roofs")
+	press("See-through walls")
+	press("Snap to grid")
+	check(
+		view.roofsHidden ~= roofsWere and view.seeThrough ~= wallsWere and view.snap ~= snapWas,
+		"each view switch flips its setting"
+	)
 	press("FloorUp")
 	check(BuildMode.state.level == 1, "the floor switcher goes up")
 	mouseAtPlot(120, 60)
@@ -822,7 +828,11 @@ run("the creator: a close view in a studio of its own", function()
 	)
 	check(ws:FindFirstChild("CreatorLamp") ~= nil, "a lamp by the camera lights them at night")
 	check(bloom.Enabled == false, "the town's bloom is off while you are in the studio")
-	check(gui:FindFirstChild("Fade", true) == nil, "no fade to black over the picture any more")
+	-- (a glow's gradient is called Fade too: it is a frame of that name that would cover them)
+	local fades = Fake.find(gui, function(d)
+		return d.Name == "Fade" and d:IsA("GuiObject")
+	end)
+	check(#fades == 0, "no fade to black over the picture any more")
 	-- zooming: the button steps out to the whole of them, in to the face, and back
 	press("Zoom")
 	frames(2)

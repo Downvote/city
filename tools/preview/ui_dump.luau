@@ -5,10 +5,19 @@
 -- Scenes:
 --   hud                 the main screen
 --   build               Build mode on the Furniture tab
---   build:walls         Build mode on Walls
---   build:pick          Build mode with a piece of furniture picked (the action bar)
+--   build:walls         Build mode on Walls (build:rooms, build:floors, build:roofs, build:fences,
+--                       build:paths and build:buildings: those trays)
+--   build:pick          Build mode with a gift from the starting house picked (the action bar)
+--   build:bought        Build mode with a bought armchair picked: it sells for coins
 --   build:paint         Build mode on the Paint tool (finishes and colours)
---   panel:<Name>        a panel over the main screen (Residents, CityPanel, ShopPanel, News, Welcome)
+--   build:sell          Build mode on the Sell tool
+--   panel:<Name>        a panel over the main screen (Residents, CityPanel, ShopPanel, News, Goals,
+--                       MapPanel, Welcome, Rewards)
+--   panel:<Name>:<state> a menu in one of its states: Residents:friends, Residents:empty (nobody
+--                       lives here), ShopPanel:things, News:empty, News:busy (news from several
+--                       days and a request), Goals:claimed (a claimed goal picked), MapPanel:new
+--                       (one place found), MapPanel:picked (a place picked in the list), CityPanel:ready
+--                       (the next land can be bought)
 --   event               an event at its choices
 --   event:talk          an event part way through its lines
 --   talk                the talk card: a villager you held E on tells you their wish
@@ -26,6 +35,8 @@
 --   creator:items:ask   My items before Roblox has asked
 --   creator:items:no    My items after the player has said no
 --   creator:avatars     the creator's My avatars (the player's saved avatars on Roblox), one worn
+--   creator:wearing     what the villager has on (creator:skin, creator:shape, creator:outfits: those
+--                       pages; outfits with none saved yet)
 --   signs               the town's signs laid flat: a shop fascia in every layout
 --   signs:boards        the boards on canopies and roofs
 --   signs:posters       adverts on posters and billboards, the cinema's posters
@@ -146,8 +157,37 @@ elseif scene:sub(1, 5) == "build" then
 	startHud()
 	Sim.BuildMode.enter()
 	Sim.frames(3)
-	if scene == "build" or scene == "build:pick" then
+	if scene == "build" or scene == "build:pick" or scene == "build:bought" then
 		Sim.press("Furniture")
+	end
+	-- the other trays, by the tabs that open them
+	local TABS = {
+		["build:walls"] = { "Walls" },
+		["build:rooms"] = { "Rooms" },
+		["build:floors"] = { "Floors" },
+		["build:roofs"] = { "Roofs" },
+		["build:fences"] = { "Outdoor", "Fences" },
+		["build:paths"] = { "Outdoor", "Paths" },
+		["build:buildings"] = { "Buildings" },
+		["build:sell"] = { "Sell" },
+	}
+	for _, tab in TABS[scene] or {} do
+		Sim.press(tab)
+	end
+	if scene == "build:bought" then
+		-- an armchair put down where the simulation puts its furniture, then picked
+		local tray = Sim.gui:FindFirstChild("Tray", true)
+		local cards = Fake.find(tray, function(d)
+			return d:IsA("TextButton") and Fake.shown(d) and d:GetAttribute("ItemId") == "armchair"
+		end)
+		cards[1].Activated:Fire()
+		Sim.frames(2)
+		Sim.mouseAtPlot(124, 64)
+		Sim.click()
+		Sim.press("Pick")
+		Sim.mouseAtPlot(124, 64, 1)
+		Sim.click()
+		Sim.mouseAtPlot(150, 96)
 	end
 	if scene == "build:pick" then
 		local tray = Sim.gui:FindFirstChild("Tray", true)
@@ -168,11 +208,54 @@ elseif scene:sub(1, 5) == "build" then
 	end
 	Sim.frames(3)
 elseif scene:sub(1, 6) == "panel:" then
+	-- a menu, or one of its states: panel:<Name>:<state> (see the list at the top)
+	local name, state = scene:sub(7):match("^([^:]+):?(.*)$")
+	local function patch(t)
+		Sim.remoteEvent("State"):FireClient(Sim.player, t)
+		Sim.frames(2)
+	end
+	if state == "empty" and name == "News" then
+		patch({ log = {}, requests = {} })
+	elseif state == "busy" and name == "News" then
+		local now = Sim.env.os.time() -- the client's clock in the simulation
+		patch({
+			requests = { { vid = order[2], tag = "light" } },
+			log = {
+				{ t = now - 40, text = "Mara and Tobin made up after their quarrel." },
+				{ t = now - 600, text = "Ivy found 40 coins by the fountain." },
+				{ t = now - 3 * 3600, text = "You threw a party." },
+				{ t = now - 26 * 3600, text = "Pell moved in." },
+				{ t = now - 27 * 3600, text = "You bought more land. It's now 128 by 128." },
+				{ t = now - 4 * 86400, text = "Tobin moved in." },
+			},
+		})
+	elseif state == "empty" and name == "Residents" then
+		patch({ villagers = {}, order = {} })
+	elseif state == "new" and name == "MapPanel" then
+		patch({ found = { square = true } })
+	elseif state == "ready" and name == "CityPanel" then
+		-- the next piece of land open to a hamlet, to see the button that buys it
+		local Tuning = Harness.require("ReplicatedStorage.Shared.Config.Tuning")
+		Tuning.City.Land[2].Level = 1
+	end
 	startHud()
-	if scene == "panel:Rewards" then
+	if name == "Rewards" then
 		Sim.advance(2.5) -- the thank you picker opens by itself when an offer is waiting
 	else
-		Hud.open(scene:sub(7))
+		Hud.open(name)
+	end
+	Sim.frames(3)
+	if state == "friends" then
+		Sim.press("Friends")
+	elseif state == "things" then
+		Sim.press("Things")
+	elseif state == "picked" then
+		-- the lookout picked in the list
+		Sim.gui:FindFirstChild("Row_lookout", true).Activated:Fire()
+	elseif state == "claimed" then
+		-- the first goal, claimed already
+		local row = Sim.gui:FindFirstChild("settlers", true)
+		row.Activated:Fire()
 	end
 	Sim.frames(3)
 elseif scene == "event" or scene == "event:talk" then
@@ -353,6 +436,15 @@ elseif scene == "creator" or scene:sub(1, 8) == "creator:" then
 		Sim.press("My avatars")
 		Sim.press("Show my avatars")
 		Sim.press("Rainy day")
+	elseif page == "wearing" then
+		Sim.press("Short curls")
+		Sim.press("Wearing")
+	elseif page == "skin" then
+		Sim.press("Skin")
+	elseif page == "shape" then
+		Sim.press("Shape")
+	elseif page == "outfits" then
+		Sim.press("Outfits")
 	elseif page ~= "" then
 		error("unknown scene " .. scene)
 	end
@@ -669,6 +761,11 @@ local function dump(inst)
 	-- properties newer than this Lune's copy of the API live on the fake itself
 	for prop, v in rawget(inst, "_props") do
 		node.props[prop] = encode(v)
+	end
+	-- an empty text box shows its placeholder, in the placeholder's colour, as Roblox draws it
+	if inst.ClassName == "TextBox" and inst.Text == "" and inst.PlaceholderText ~= "" then
+		node.props.Text = inst.PlaceholderText
+		node.props.TextColor3 = encode(inst.PlaceholderColor3)
 	end
 	if inst.ClassName == "ImageLabel" or inst.ClassName == "ImageButton" then
 		local ok, content = pcall(function()

@@ -9,6 +9,7 @@ local Text = require(Shared.Util.Text)
 
 local Kit = require(script.Parent.Kit)
 local Icons = require(script.Parent.Icons)
+local MenuParts = require(script.Parent.MenuParts)
 local State = require(script.Parent.Parent.Controllers.State)
 
 local Goals = {}
@@ -58,38 +59,52 @@ local function showDetail(g: any)
 			c:Destroy()
 		end
 	end
+	local ready = g.done and not g.claimed
 	local ratio = math.clamp(g.value / g.goal.need, 0, 1)
 	local _, middle = Kit.ring({
+		Name = "Ring",
 		Parent = frame,
 		Size = 168,
-		Position = UDim2.new(0.5, -84, 0, 26),
+		Position = UDim2.new(0.5, -84, 0, 28),
 		Thickness = 16,
 		Track = T.PaperDark,
 		Hole = T.Paper,
 	}, ratio, if g.done then T.Green else T.Yellow)
-	local shown = math.min(g.value, g.goal.need)
-	Kit.title(
-		if g.goal.need >= 100
-			then Text.fill("{n}%", { n = math.floor(shown / g.goal.need * 100) })
-			else Text.fill("{n}/{need}", { n = shown, need = g.goal.need }),
-		{
-			Parent = middle,
-			Size = UDim2.fromScale(1, 1),
-			TextSize = 34,
-			AlignX = Enum.TextXAlignment.Center,
-		}
-	)
+	if g.claimed then
+		-- a claimed goal is ticked off in the middle of its ring
+		MenuParts.diamond(middle, "check", T.Green, 76, {
+			Name = "Tick",
+			Position = UDim2.fromScale(0.5, 0.5),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			ZIndex = 4,
+		})
+	else
+		local shown = math.min(g.value, g.goal.need)
+		Kit.title(
+			if g.goal.need >= 100
+				then Text.fill("{n}%", { n = math.floor(shown / g.goal.need * 100) })
+				else Text.fill("{n}/{need}", { n = shown, need = g.goal.need }),
+			{
+				Parent = middle,
+				Size = UDim2.fromScale(1, 1),
+				TextSize = 34,
+				AlignX = Enum.TextXAlignment.Center,
+			}
+		)
+	end
 	Kit.title(g.goal.name, {
+		Name = "GoalName",
 		Parent = frame,
-		Size = UDim2.new(1, -48, 0, 36),
-		Position = UDim2.fromOffset(24, 222),
+		Size = UDim2.new(1, 0, 0, 36),
+		Position = UDim2.fromOffset(0, 216),
 		TextSize = 30,
 		AlignX = Enum.TextXAlignment.Center,
 	})
 	Kit.text(g.goal.desc, {
+		Name = "Desc",
 		Parent = frame,
-		Size = UDim2.new(1, -72, 0, 44),
-		Position = UDim2.fromOffset(36, 262),
+		Size = UDim2.new(1, -24, 0, 44),
+		Position = UDim2.fromOffset(12, 256),
 		TextSize = 17,
 		Color = T.InkSoft,
 		AlignX = Enum.TextXAlignment.Center,
@@ -97,13 +112,23 @@ local function showDetail(g: any)
 	})
 	-- what it pays
 	local pay = Kit.box({
+		Name = "Reward",
 		Parent = frame,
 		Size = UDim2.fromOffset(0, 34),
 		AutomaticSize = Enum.AutomaticSize.X,
-		Position = UDim2.new(0.5, 0, 0, 318),
+		Position = UDim2.new(0.5, 0, 0, 310),
 		AnchorPoint = Vector2.new(0.5, 0),
 	})
 	Kit.list(pay, 8, true, Enum.HorizontalAlignment.Center)
+	Kit.text(if g.claimed then "Paid" else "Pays", {
+		Parent = pay,
+		Size = UDim2.fromOffset(0, 34),
+		AutomaticSize = Enum.AutomaticSize.X,
+		TextSize = 17,
+		Color = T.InkSoft,
+		Wrap = false,
+		LayoutOrder = 0,
+	})
 	Icons.make("coin", 28, { Parent = pay, LayoutOrder = 1 })
 	Kit.title(Text.commas(g.goal.reward), {
 		Parent = pay,
@@ -114,23 +139,17 @@ local function showDetail(g: any)
 		Wrap = false,
 		LayoutOrder = 2,
 	})
-	if g.claimed then
-		Kit.title("Claimed", {
-			Parent = frame,
-			Size = UDim2.new(1, 0, 0, 30),
-			Position = UDim2.new(0, 0, 1, -72),
-			TextSize = 20,
-			Tint = T.GreenDark,
-			AlignX = Enum.TextXAlignment.Center,
-		})
-	elseif g.done then
+	-- at the foot: the button to claim it, or where it stands
+	if ready then
 		Kit.button(Text.fill("Claim {n}", { n = Text.commas(g.goal.reward) }), {
+			Name = "Claim",
 			Parent = frame,
 			Size = UDim2.fromOffset(260, 54),
-			Position = UDim2.new(0.5, 0, 1, -30),
+			Position = UDim2.new(0.5, 0, 1, 0),
 			AnchorPoint = Vector2.new(0.5, 1),
 			Color = T.Green,
 			TextSize = 22,
+			Icon = "coin",
 			Radius = "pill",
 		}, function()
 			task.spawn(function()
@@ -138,19 +157,38 @@ local function showDetail(g: any)
 			end)
 		end)
 	else
-		Kit.title(Text.fill("{a} of {b}", { a = Text.commas(g.value), b = Text.commas(g.goal.need) }), {
+		local foot = Kit.box({
+			Name = "Status",
 			Parent = frame,
-			Size = UDim2.new(1, 0, 0, 30),
-			Position = UDim2.new(0, 0, 1, -72),
-			TextSize = 20,
+			Size = UDim2.new(1, 0, 0, 54),
+			Position = UDim2.new(0, 0, 1, -54),
+		})
+		Kit.title(
+			if g.claimed
+				then "Claimed"
+				else Text.fill("{a} of {b}", { a = Text.commas(g.value), b = Text.commas(g.goal.need) }),
+			{
+				Parent = foot,
+				Size = UDim2.new(1, 0, 0, 28),
+				TextSize = 22,
+				Tint = if g.claimed then T.GreenDark else nil,
+				Color = if g.claimed then nil else T.Ink,
+				AlignX = Enum.TextXAlignment.Center,
+			}
+		)
+		Kit.text(if g.claimed then "Done and paid." else "It counts up as you play.", {
+			Parent = foot,
+			Size = UDim2.new(1, 0, 0, 20),
+			Position = UDim2.fromOffset(0, 30),
+			TextSize = 15,
 			Color = T.InkSoft,
 			AlignX = Enum.TextXAlignment.Center,
 		})
 	end
 end
 
--- The right side: every goal as a row. One to claim is marked green, one still under way
--- yellow, one already claimed sits back. Picking a row shows it on the left.
+-- The right side: every goal as a row, in three groups: ready to claim (green), under way
+-- (yellow) and done (sitting back). Picking a row shows it on the left.
 local function fill()
 	local frame = list
 	if not frame then
@@ -162,6 +200,10 @@ local function fill()
 		end
 	end
 	local goals = Life.goals(Goals.view())
+	local groups = { {}, {}, {} } :: { { any } }
+	for _, g in goals do
+		table.insert(groups[if g.claimed then 3 elseif g.done then 1 else 2], g)
+	end
 	-- keep showing the one that was picked; otherwise the first to claim, or the first not done
 	local show: any = nil
 	for _, g in goals do
@@ -169,48 +211,46 @@ local function fill()
 			show = g
 		end
 	end
-	if not show then
-		for _, g in goals do
-			if g.done and not g.claimed then
-				show = g
-				break
-			end
-		end
-	end
-	if not show then
-		for _, g in goals do
-			if not g.done then
-				show = g
-				break
-			end
-		end
-	end
-	show = show or goals[1]
+	show = show or groups[1][1] or groups[2][1] or goals[1]
 	local rows: { [string]: GuiObject } = {}
-	for i, g in goals do
-		local ready = g.done and not g.claimed
-		local row = Kit.row({
-			Name = g.goal.id,
-			Parent = frame,
-			Size = UDim2.new(1, -12, 0, 58),
-			LayoutOrder = i,
-			Title = g.goal.name,
-			Marker = if g.done then "check" else "trophy",
-			MarkerColor = if g.claimed then T.Line elseif ready then T.Green else T.Yellow,
-			Right = if g.claimed
-				then "Done"
-				elseif ready then "Claim"
-				else Text.fill("{a} of {b}", { a = Text.commas(g.value), b = Text.commas(g.goal.need) }),
-			RightColor = if ready then T.Green else nil,
-			Sunk = g.claimed,
-		}, function()
-			picked = g.goal.id
-			for id, r in rows do
-				Kit.setRowSelected(r, id == picked)
-			end
-			showDetail(g)
-		end)
-		rows[g.goal.id] = row
+	local order = 0
+	for k, group in groups do
+		if #group > 0 then
+			order += 1
+			MenuParts.heading(
+				frame,
+				if k == 1 then "Ready to claim" elseif k == 2 then "Under way" else "Done",
+				T.Yellow,
+				order,
+				tostring(#group)
+			)
+		end
+		for _, g in group do
+			order += 1
+			local ready = k == 1
+			local row = Kit.row({
+				Name = g.goal.id,
+				Parent = frame,
+				Size = MenuParts.rowSize(),
+				LayoutOrder = order,
+				Title = g.goal.name,
+				Marker = if g.done then "check" else "trophy",
+				MarkerColor = if g.claimed then T.Line elseif ready then T.Green else T.Yellow,
+				Right = if g.claimed
+					then "Claimed"
+					elseif ready then "Claim"
+					else Text.fill("{a} of {b}", { a = Text.commas(g.value), b = Text.commas(g.goal.need) }),
+				RightColor = if ready then T.Green else nil,
+				Sunk = g.claimed,
+			}, function()
+				picked = g.goal.id
+				for id, r in rows do
+					Kit.setRowSelected(r, id == picked)
+				end
+				showDetail(g)
+			end)
+			rows[g.goal.id] = row
+		end
 	end
 	if show then
 		picked = show.goal.id
@@ -238,20 +278,9 @@ function Goals.open()
 		Goals.close()
 	end, "trophy", T.Yellow)
 	-- the picked goal on the left, the list down the right
-	detail = Kit.frame({
-		Name = "Detail",
-		Parent = panel.body,
-		Size = UDim2.new(0.46, -10, 1, 0),
-		Color = T.Paper,
-		Cut = 22,
-	})
-	local scroll = Kit.scroll({
-		Parent = panel.body,
-		Size = UDim2.new(0.54, -10, 1, 0),
-		Position = UDim2.new(0.46, 10, 0, 0),
-	})
-	Kit.list(scroll, 10, false, Enum.HorizontalAlignment.Left)
-	list = scroll
+	local _, inside = MenuParts.card(panel.body, T.Yellow)
+	detail = inside
+	list = MenuParts.list(panel.body)
 	fill()
 	Kit.popIn(panel.root)
 end
@@ -263,5 +292,12 @@ for _, key in { "goals", "stats", "villagers", "rel", "coins" } do
 		end
 	end)
 end
+
+-- a change of look builds the list again in the new one (a row's shading is made for a look)
+Kit.onTheme(function()
+	if panel then
+		fill()
+	end
+end)
 
 return Goals

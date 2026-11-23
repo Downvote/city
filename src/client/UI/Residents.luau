@@ -26,6 +26,7 @@ local Text = require(Shared.Util.Text)
 
 local Kit = require(script.Parent.Kit)
 local Icons = require(script.Parent.Icons)
+local MenuParts = require(script.Parent.MenuParts)
 local Toasts = require(script.Parent.Toasts)
 local ModelPreview = require(script.Parent.ModelPreview)
 local State = require(script.Parent.Parent.Controllers.State)
@@ -273,13 +274,19 @@ end
 -- where the stats start on the stage: the villager stands to the left of this
 local INFO_X = 400
 
--- A stat: a small soft label over its value.
-local function stat(parent: Instance, label: string, value: string, order: number, color: Color3?)
-	local cell = Kit.box({ Parent = parent, LayoutOrder = order })
-	Kit.text(label, { Parent = cell, Size = UDim2.new(1, 0, 0, 16), TextSize = 13, Color = T.InkSoft })
+-- How they feel, as a colour: the same green, yellow and coral as the diamond by their name.
+local function moodColor(m: number): Color3
+	return if m >= 60 then T.Green elseif m >= 40 then T.Yellow else T.Coral
+end
+
+-- A fact about them: a small soft label over its value, which may run to two lines.
+local function fact(parent: Instance, label: string, value: string, order: number, color: Color3?)
+	local cell = Kit.box({ Name = label, Parent = parent, LayoutOrder = order })
+	Kit.text(label, { Name = "Label", Parent = cell, Size = UDim2.new(1, 0, 0, 16), TextSize = 13, Color = T.InkSoft })
 	Kit.text(value, {
+		Name = "Value",
 		Parent = cell,
-		Size = UDim2.new(1, -8, 0, 40),
+		Size = UDim2.new(1, -8, 0, 36),
 		Position = UDim2.fromOffset(0, 18),
 		TextSize = 16,
 		Font = Kit.Fonts.Bold,
@@ -288,21 +295,41 @@ local function stat(parent: Instance, label: string, value: string, order: numbe
 	})
 end
 
--- The About tab: how they feel, where they work and sleep, their birthday, what they eat.
+-- The About tab: how they feel and how close they are to you as two tiles with bars, then where
+-- they work and sleep, their birthday and what they eat.
 local function about(parent: Frame, vid: string, v: any, p: any)
-	Kit.text(
-		Text.fill("Feeling {word} ({n}%)", { word = moodWord(v.mood), n = math.floor(v.mood) }),
-		{ Parent = parent, Size = UDim2.new(1, 0, 0, 22), TextSize = 17, Font = Kit.Fonts.Bold }
-	)
-	Kit.bar({
+	local tiles = Kit.box({ Name = "Tiles", Parent = parent, Size = UDim2.new(1, 0, 0, 90) })
+	Kit.grid(tiles, UDim2.new(0.5, -6, 0, 90), 12)
+	local mood = math.floor(v.mood)
+	local word = moodWord(mood)
+	MenuParts.stat("smile", "Mood", word:sub(1, 1):upper() .. word:sub(2), moodColor(mood), {
+		Name = "Mood",
+		Parent = tiles,
+		LayoutOrder = 1,
+		TextSize = 24,
+		Sub = Text.fill("{n}%", { n = mood }),
+		Bar = mood / 100,
+	})
+	local level = v.heart or 1
+	local need = Life.heartNeed(level)
+	MenuParts.stat("heart", "Heart level", tostring(level), T.Pink, {
+		Name = "Heart",
+		Parent = tiles,
+		LayoutOrder = 2,
+		TextSize = 24,
+		Sub = Text.fill("of {n}", { n = Tuning.Life.HeartMax }),
+		Bar = if level >= Tuning.Life.HeartMax then 1 else (v.hxp or 0) / math.max(1, need),
+	})
+
+	local grid = Kit.box({
+		Name = "Facts",
 		Parent = parent,
-		Size = UDim2.new(1, -4, 0, 14),
-		Position = UDim2.fromOffset(0, 28),
-	}, v.mood / 100, if v.mood >= 50 then T.Green else T.Coral)
-	local grid = Kit.box({ Parent = parent, Size = UDim2.new(1, 0, 1, -58), Position = UDim2.fromOffset(0, 58) })
-	Kit.grid(grid, UDim2.new(0.5, -8, 0, 62), 8)
+		Size = UDim2.new(1, 0, 1, -106),
+		Position = UDim2.fromOffset(0, 106),
+	})
+	Kit.grid(grid, UDim2.new(0.5, -8, 0, 52), 12)
 	local w = City.jobOf(p, vid)
-	stat(
+	fact(
 		grid,
 		"Work",
 		if w then Text.fill("{job}, {place}", { job = w.job.name, place = w.def.name:lower() }) else "No job yet",
@@ -317,8 +344,8 @@ local function about(parent: Frame, vid: string, v: any, p: any)
 			bedText = def.name
 		end
 	end
-	stat(grid, "Sleeps in", bedText, 2, bedColor)
-	stat(
+	fact(grid, "Sleeps in", bedText, 2, bedColor)
+	fact(
 		grid,
 		"Birthday",
 		Text.fill("{season} {day}", { season = Schema.Seasons[v.bday.s] or "Spring", day = v.bday.d }),
@@ -333,11 +360,11 @@ local function about(parent: Frame, vid: string, v: any, p: any)
 			table.insert(likes, "can't stand " .. f.name:lower())
 		end
 	end
-	stat(grid, "Food", if #likes > 0 then table.concat(likes, ", ") else "Feed them to find out", 4)
+	fact(grid, "Food", if #likes > 0 then table.concat(likes, ", ") else "Feed them to find out", 4)
 end
 
--- The Friends tab: each friendship as an arrow tag (how close they are, or their romance), the
--- other villager's name and a bar.
+-- The Friends tab: everyone else in town as a row, closest first: how they get on (their
+-- friendship, their romance, or a quarrel) in its colour and how close they are as a bar.
 local function friendsOf(parent: Frame, vid: string, p: any)
 	local friends = Kit.scroll({ Parent = parent, Size = UDim2.fromScale(1, 1) })
 	Kit.list(friends, 6)
@@ -356,38 +383,43 @@ local function friendsOf(parent: Frame, vid: string, p: any)
 		return a.s > b.s
 	end)
 	if #rows == 0 then
-		Kit.text("Nobody else lives here yet.", { Parent = friends, TextSize = 16, Color = T.InkSoft, LayoutOrder = 1 })
+		MenuParts.empty("people", "Nobody to know yet", "Friends come along once someone else moves in.", {
+			Parent = friends,
+			LayoutOrder = 1,
+			Color = T.Pink,
+			Height = 200,
+		})
 	end
 	for i, r in rows do
 		local _, levelName = Relationships.level(r.s)
 		local bond = Life.bond(p, vid, r.id)
-		local row = Kit.box({ Parent = friends, Size = UDim2.new(1, -12, 0, 34), LayoutOrder = i })
-		local tagText = if r.q then "Not speaking" elseif bond then Life.BondNames[bond] else levelName
+		local how = if r.q then "Not speaking" elseif bond then Life.BondNames[bond] else levelName
 		local col = if r.q
-			then Color3.fromRGB(255, 176, 166)
-			elseif bond then Color3.fromRGB(255, 168, 204)
-			elseif r.s >= 55 then Color3.fromRGB(255, 214, 72)
-			elseif r.s >= 10 then Color3.fromRGB(176, 228, 146)
-			elseif r.s > -10 then Color3.fromRGB(214, 226, 240)
-			else Color3.fromRGB(204, 192, 240)
-		Kit.arrowTag(tagText, col, {
-			Parent = row,
-			Height = 26,
-			Position = UDim2.new(0, 0, 0.5, 0),
-			AnchorPoint = Vector2.new(0, 0.5),
-		})
-		Kit.text(r.o.name, {
-			Parent = row,
-			Size = UDim2.new(0.3, 0, 1, 0),
-			Position = UDim2.fromScale(0.42, 0),
+			then T.Coral
+			elseif bond then T.Pink
+			elseif r.s >= 55 then T.Yellow
+			elseif r.s >= 10 then T.Green
+			elseif r.s > -10 then T.Blue
+			else T.Purple
+		local _, inner = Kit.row({
+			Name = r.id,
+			Parent = friends,
+			Size = UDim2.new(1, -12, 0, 52),
+			Height = 52,
+			LayoutOrder = i,
+			Title = r.o.name,
+			Sub = how,
 			TextSize = 17,
-			Font = Kit.Fonts.Bold,
+			Marker = if r.q then "alert" else "heart",
+			MarkerColor = col,
+			RightSpace = 128,
 		})
 		Kit.bar({
-			Parent = row,
-			Size = UDim2.new(0.28, -8, 0, 12),
-			Position = UDim2.new(0.72, 0, 0.5, -6),
-		}, (r.s + 100) / 200, if r.s >= 0 then T.Pink else T.BlueDark)
+			Parent = inner,
+			Size = UDim2.fromOffset(96, 8),
+			Position = UDim2.new(1, -30, 0.5, 0),
+			AnchorPoint = Vector2.new(1, 0.5),
+		}, (r.s + 100) / 200, col)
 	end
 end
 
@@ -400,13 +432,29 @@ local function showDetail()
 	local vid = selected
 	local v = vid and State.villager(vid)
 	if not vid or not v then
-		Kit.text("Nobody lives here yet. Press Create to make someone.", {
-			Parent = detail,
-			TextSize = 20,
-			Color = T.InkSoft,
-			Size = UDim2.new(1, -80, 0, 60),
-			Position = UDim2.fromOffset(40, 40),
-		})
+		-- nobody yet: say so in the middle of the stage, with the way to make someone
+		local empty =
+			MenuParts.empty("people", "Nobody lives here yet", "Make your first villager and they'll move into town.", {
+				Parent = detail,
+				Height = 250,
+				Size = UDim2.fromOffset(540, 250),
+				Position = UDim2.fromScale(0.5, 0.5),
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Color = T.Green,
+			})
+		Kit.button("Make a villager", {
+			Name = "MakeVillager",
+			Parent = empty,
+			Size = UDim2.fromOffset(220, 48),
+			Position = UDim2.new(0.5, 0, 1, 0),
+			AnchorPoint = Vector2.new(0.5, 1),
+			Color = T.Green,
+			TextSize = 19,
+			Icon = "plus",
+		}, function()
+			local Hud = require(script.Parent.Hud)
+			Hud.open("Creator", { mode = "new" })
+		end)
 		return
 	end
 	local p = profileView()
@@ -476,51 +524,37 @@ local function showDetail()
 		Position = UDim2.fromOffset(INFO_X, 20),
 	})
 	info.ZIndex = 4
-	-- the name, and how close they are to you
+	-- the name, and what they're like
 	Kit.title(v.name .. (if v.isYou then "  (you)" else ""), {
+		Name = "Name",
 		Parent = info,
 		TextSize = 40,
-		Size = UDim2.new(1, -140, 0, 48),
+		Size = UDim2.new(1, 0, 0, 48),
 		Wrap = false,
-	})
-	local heart = Kit.frame({
-		Name = "Heart",
-		Parent = info,
-		Size = UDim2.fromOffset(132, 32),
-		Position = UDim2.new(1, 0, 0, 8),
-		AnchorPoint = Vector2.new(1, 0),
-		Color = T.Pink,
-		Radius = "pill",
-	})
-	Kit.title(Text.fill("Heart level {n}", { n = v.heart or 1 }), {
-		Parent = heart,
-		Size = UDim2.fromScale(1, 1),
-		TextSize = 15,
-		Color = T.White,
-		AlignX = Enum.TextXAlignment.Center,
 	})
 	Kit.text(if pers then pers.name .. ". " .. pers.blurb else "", {
+		Name = "Personality",
 		Parent = info,
-		TextSize = 16,
+		TextSize = 15,
 		Color = T.InkSoft,
-		Size = UDim2.new(1, 0, 0, 22),
+		Size = UDim2.new(1, 0, 0, 38),
 		Position = UDim2.fromOffset(0, 50),
-		Wrap = false,
-	}).TextTruncate =
-		Enum.TextTruncate.AtEnd
+		AlignY = Enum.TextYAlignment.Top,
+	})
 
 	-- what you can do, as round buttons along the bottom
+	local ACT = 80
 	local actions = Kit.box({
 		Name = "Actions",
 		Parent = info,
-		Size = UDim2.new(1, 0, 0, 88),
-		Position = UDim2.new(0, 0, 1, -88),
+		Size = UDim2.new(1, 0, 0, ACT),
+		Position = UDim2.new(0, 0, 1, -ACT),
 	})
-	Kit.list(actions, 10, true)
+	Kit.list(actions, 9, true, Enum.HorizontalAlignment.Center)
 	local function action(icon: string, label: string, color: Color3, order: number, fn: () -> ())
 		Kit.iconButton(icon, label, {
 			Parent = actions,
-			Size = UDim2.fromOffset(78, 86),
+			Size = UDim2.fromOffset(76, ACT),
 			Color = color,
 			LayoutOrder = order,
 			Wobble = 0,
@@ -554,7 +588,7 @@ local function showDetail()
 	end)
 
 	-- their wish, as a row above the buttons, with what you can do about it
-	local bottom = 100
+	local bottom = ACT + 12
 	local wishText = Life.wishText(p, vid)
 	if wishText and v.wish then
 		local _, wishInside = Kit.row({
@@ -577,6 +611,7 @@ local function showDetail()
 		})
 		local wishRow = wishInside.Parent :: GuiObject
 		wishRow.Position = UDim2.new(0, 0, 1, -(bottom + 56))
+		wishRow.Size = UDim2.new(1, 0, 0, 56)
 		local kind = v.wish.kind
 		local label, fn
 		if kind == "food" then
@@ -607,15 +642,16 @@ local function showDetail()
 			TextSize = 15,
 			ZIndex = 3,
 		}, fn)
-		bottom += 66
+		bottom += 56 + 12
 	end
 
 	-- the tab's own part, between the name and the buttons
+	local TOP = 100
 	local content = Kit.box({
 		Name = "Content",
 		Parent = info,
-		Size = UDim2.new(1, 0, 1, -(86 + bottom + 8)),
-		Position = UDim2.fromOffset(0, 86),
+		Size = UDim2.new(1, 0, 1, -(TOP + bottom)),
+		Position = UDim2.fromOffset(0, TOP),
 	})
 	if tab == "friends" then
 		friendsOf(content, vid, p)
@@ -755,5 +791,14 @@ function Residents.open(vid: string?)
 		end)
 	)
 end
+
+-- a change of look builds what's open again in the new one: the stage's backdrop keeps its own
+-- colours, and a row's shading is made for a look
+Kit.onTheme(function()
+	if panel then
+		refreshList()
+		showDetail()
+	end
+end)
 
 return Residents

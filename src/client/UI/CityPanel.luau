@@ -1,5 +1,7 @@
--- The city hall panel: your town's level and what the next one needs, happiness, jobs and who
--- fills them, what a payday brings in, and buying more land.
+-- The city hall panel: your town's level and what the next one needs, the numbers that matter
+-- (people, happiness, worth, a payday), buying more land, and the workplaces with who fills them.
+-- A full menu (Kit.panel): the town on the card at the left with its level as the headline, the
+-- land and the work down the right.
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Remotes = require(Shared.Net.Remotes)
@@ -8,6 +10,8 @@ local City = require(Shared.Sim.City)
 local Text = require(Shared.Util.Text)
 
 local Kit = require(script.Parent.Kit)
+local Icons = require(script.Parent.Icons)
+local MenuParts = require(script.Parent.MenuParts)
 local Toasts = require(script.Parent.Toasts)
 local State = require(script.Parent.Parent.Controllers.State)
 
@@ -16,104 +20,237 @@ local CityPanel = {}
 local T = Kit.Theme
 local panel: any = nil
 local unbind: { () -> () } = {}
+local draw: () -> () -- (below: everything in the panel, built again)
 
 local function profileView(): any
 	return { villagers = State.data.villagers or {}, plan = State.plan, coins = State.data.coins or 0 }
 end
 
-local function progress(parent: Instance, label: string, have: number, need: number, order: number)
-	local row = Kit.box({ Parent = parent, Size = UDim2.new(1, 0, 0, 40), LayoutOrder = order })
-	Kit.text(
-		Text.fill("{label}: {have} of {need}", { label = label, have = Text.commas(have), need = Text.commas(need) }),
-		{ Parent = row, TextSize = 16, Size = UDim2.new(1, 0, 0, 20) }
-	)
-	Kit.bar(
-		{ Parent = row, Size = UDim2.new(1, -4, 0, 14), Position = UDim2.fromOffset(2, 23) },
-		have / math.max(1, need),
-		if have >= need then T.Green else T.Blue
-	)
+-- The land a level opens up, if any.
+local function landAt(level: number): any
+	for _, land in Tuning.City.Land do
+		if land.Level == level and land.Price > 0 then
+			return land
+		end
+	end
+	return nil
 end
 
-local function draw()
-	if not panel then
-		return
-	end
-	for _, c in panel.body:GetChildren() do
-		c:Destroy()
-	end
-	local p = profileView()
-	local stats = City.stats(p)
-	-- the town itself on a card on the left, the workplaces as rows down the right
-	local card = Kit.frame({
-		Name = "Detail",
-		Parent = panel.body,
-		Size = UDim2.new(0.46, -10, 1, 0),
-		Color = T.Paper,
-		Cut = 22,
+-- The card on the left: the level as the headline, what the next one needs and brings, and the
+-- town's numbers as tiles along the bottom.
+local function town(inside: Frame, stats: any, payday: number)
+	local accent = T.Purple
+	-- the level: a diamond with its number, the name big beside it
+	local mark = MenuParts.diamond(inside, nil, accent, 72, { Name = "Level" })
+	Kit.title(tostring(stats.level), {
+		Name = "Number",
+		Parent = mark,
+		Size = UDim2.fromScale(1, 1),
+		TextSize = 28,
+		Color = T.Dark,
+		AlignX = Enum.TextXAlignment.Center,
+		ZIndex = 4,
 	})
-	local left = Kit.scroll({ Parent = card, Size = UDim2.new(1, -44, 1, -40), Position = UDim2.fromOffset(24, 20) })
-	Kit.list(left, 8)
-	Kit.title(
-		Text.fill("{name}, level {n}", { name = stats.levelName, n = stats.level }),
-		{ Parent = left, TextSize = 26, LayoutOrder = 1, Size = UDim2.new(1, 0, 0, 32) }
-	)
-	Kit.text(
-		Text.fill("{pop} villagers, {mood}% happy on average. Your town is worth {value} coins.", {
-			pop = stats.population,
-			mood = stats.happiness,
-			value = Text.commas(stats.value),
-		}),
-		{ Parent = left, TextSize = 16, LayoutOrder = 2, Size = UDim2.new(1, 0, 0, 44) }
-	)
-	if stats.nextLevel then
-		Kit.text(
-			Text.fill("To become {name}:", { name = stats.nextLevel.Name:lower() }),
-			{ Parent = left, TextSize = 17, Font = Kit.Fonts.Bold, LayoutOrder = 3 }
+	Kit.title(stats.levelName, {
+		Name = "LevelName",
+		Parent = inside,
+		Size = UDim2.new(1, -88, 0, 44),
+		Position = UDim2.fromOffset(88, 2),
+		TextSize = 40,
+		Wrap = false,
+	})
+	Kit.text(Text.fill("Level {n} of {max}", { n = stats.level, max = #Tuning.City.Levels }), {
+		Name = "LevelOf",
+		Parent = inside,
+		Size = UDim2.new(1, -88, 0, 20),
+		Position = UDim2.fromOffset(88, 46),
+		TextSize = 15,
+		Color = T.InkSoft,
+	})
+
+	-- what the next level needs, as two bars, and what it brings
+	local nextLevel = stats.nextLevel
+	if nextLevel then
+		local name = nextLevel.Name:lower()
+		Kit.text(Text.fill("To become {a}", { a = Text.an(name) }), {
+			Name = "Next",
+			Parent = inside,
+			Size = UDim2.new(1, 0, 0, 22),
+			Position = UDim2.fromOffset(0, 92),
+			TextSize = 17,
+			Font = Kit.Fonts.Bold,
+		})
+		local pop, need = stats.population, nextLevel.Pop
+		MenuParts.progress(
+			"Villagers",
+			Text.fill("{a} of {b}", { a = math.min(pop, need), b = need }),
+			pop / math.max(1, need),
+			{ Name = "Villagers", Parent = inside, Position = UDim2.fromOffset(0, 124), Color = accent }
 		)
-		progress(left, "Villagers", stats.population, stats.nextLevel.Pop, 4)
-		progress(left, "Worth", stats.value, stats.nextLevel.Value, 5)
+		local worth, wneed = stats.value, nextLevel.Value
+		MenuParts.progress(
+			"Worth",
+			Text.fill("{a} of {b}", { a = Text.commas(math.min(worth, wneed)), b = Text.commas(wneed) }),
+			worth / math.max(1, wneed),
+			{ Name = "Worth", Parent = inside, Position = UDim2.fromOffset(0, 176), Color = accent, Coin = true }
+		)
+		local land = landAt(stats.level + 1)
+		MenuParts.note(
+			if land
+				then Text.fill("{A} can buy more land, up to {n} by {n} studs.", {
+					A = (Text.an(name):gsub("^%l", string.upper)),
+					n = land.Size,
+				})
+				else "Worth goes up with everything you build.",
+			accent,
+			{ Name = "Unlocks", Parent = inside, Position = UDim2.fromOffset(0, 232), Height = 44 }
+		)
 	else
-		Kit.text("Your town is as big as towns get. Well done.", { Parent = left, TextSize = 17, LayoutOrder = 3 })
+		Kit.text("Your town is as big as towns get.", {
+			Name = "Next",
+			Parent = inside,
+			Size = UDim2.new(1, 0, 0, 22),
+			Position = UDim2.fromOffset(0, 92),
+			TextSize = 17,
+			Font = Kit.Fonts.Bold,
+		})
+		MenuParts.note(
+			"There's no level after this one. Build whatever you like.",
+			accent,
+			{ Name = "Unlocks", Parent = inside, Position = UDim2.fromOffset(0, 124), Height = 44 }
+		)
 	end
 
-	Kit.title("Land", { Parent = left, TextSize = 22, LayoutOrder = 10, Size = UDim2.new(1, 0, 0, 30) })
-	Kit.text(
-		Text.fill("You can build on {n} by {n} studs.", { n = stats.land }),
-		{ Parent = left, TextSize = 16, LayoutOrder = 11 }
-	)
+	-- the town's numbers, two by two along the bottom
+	local grid = Kit.box({
+		Name = "Stats",
+		Parent = inside,
+		Size = UDim2.new(1, 0, 0, 82 * 2 + 12),
+		Position = UDim2.new(0, 0, 1, -(82 * 2 + 12)),
+	})
+	Kit.grid(grid, UDim2.new(0.5, -6, 0, 82), 12)
+	MenuParts.stat("people", "Villagers", tostring(stats.population), T.Green, {
+		Name = "People",
+		Parent = grid,
+		LayoutOrder = 1,
+		Sub = Text.fill("of {n}", { n = Tuning.Villagers.Max }),
+	})
+	MenuParts.stat("smile", "Happiness", Text.fill("{n}%", { n = stats.happiness }), T.Yellow, {
+		Name = "Happiness",
+		Parent = grid,
+		LayoutOrder = 2,
+		Sub = if stats.population == 0
+			then "nobody yet"
+			elseif stats.happiness >= 60 then "on average"
+			else "could be better",
+	})
+	MenuParts.stat("house", "Town worth", Text.commas(stats.value), T.Orange, {
+		Name = "TownWorth",
+		Parent = grid,
+		LayoutOrder = 3,
+		Coin = true,
+	})
+	local at = Text.clock(Tuning.Day.WorkEnd):gsub(":00", "")
+	MenuParts.stat("clock", Text.fill("Payday at {t}", { t = at }), Text.commas(payday), T.Blue, {
+		Name = "Payday",
+		Parent = grid,
+		LayoutOrder = 4,
+		Coin = true,
+		Sub = "today",
+	})
+end
+
+-- Buying the next piece of land: a row with what it is, what it costs and a button that says
+-- what's in the way when it can't be bought yet.
+local function landRow(list: ScrollingFrame, stats: any, coins: number, order: number)
 	local land = stats.nextLand
-	if land then
-		local needLevel = Tuning.City.Levels[land.Level]
-		local can = stats.level >= land.Level and p.coins >= land.Price
-		local why = if stats.level < land.Level
-			then Text.fill("Needs your town to be {name} first.", { name = needLevel.Name:lower() })
-			elseif p.coins < land.Price then Text.fill(
-				"You need {n} more coins.",
-				{ n = Text.commas(land.Price - p.coins) }
-			)
-			else "Ready to buy."
-		Kit.text(
-			Text.fill(
-				"Next: {n} by {n} for {price} coins. {why}",
-				{ n = land.Size, price = Text.commas(land.Price), why = why }
-			),
-			{
-				Parent = left,
-				TextSize = 16,
-				LayoutOrder = 12,
-				Size = UDim2.new(1, 0, 0, 44),
-			}
-		)
-		Kit.button("Buy more land", {
-			Parent = left,
-			Size = UDim2.fromOffset(200, 44),
-			Color = if can then T.Green else T.PaperDark,
+	if not land then
+		Kit.row({
+			Name = "Land",
+			Parent = list,
+			Size = MenuParts.rowSize(),
+			LayoutOrder = order,
+			Title = "You own all the land there is",
+			Sub = Text.fill("{n} by {n} studs to build on", { n = stats.land }),
+			Marker = "check",
+			MarkerColor = T.Green,
+		})
+		return
+	end
+	local needLevel = Tuning.City.Levels[land.Level]
+	local short = land.Price - coins
+	local can = stats.level >= land.Level and short <= 0
+	local why = if stats.level < land.Level
+		then Text.fill("Your town needs to be {a} first.", { a = Text.an(needLevel.Name:lower()) })
+		elseif short > 0 then Text.fill("You need {n} more coins.", { n = Text.commas(short) })
+		else nil
+	local row, inner = Kit.row({
+		Name = "Land",
+		Parent = list,
+		Size = MenuParts.rowSize(64),
+		Height = 64,
+		LayoutOrder = order,
+		Title = Text.fill("{n} by {n} studs", { n = land.Size }),
+		Sub = " ", -- (the price goes here, with its coin)
+		Marker = "ruler",
+		MarkerColor = if can then T.Green else T.Purple,
+		RightSpace = 200,
+	})
+	-- what it costs, under the size: the coin and the price
+	local lean: number = row:GetAttribute("Lean") or 0
+	local left = lean + (64 - 22) + 22
+	local cost = Kit.box({
+		Name = "Cost",
+		Parent = inner,
+		Size = UDim2.new(1, -left - 200 - lean, 0, 18),
+		Position = UDim2.new(0, left, 0.5, 2),
+	})
+	cost.ZIndex = 2
+	Kit.list(cost, 5, true)
+	Kit.text("Costs", {
+		Name = "Sub",
+		Parent = cost,
+		Size = UDim2.fromOffset(0, 18),
+		AutomaticSize = Enum.AutomaticSize.X,
+		TextSize = 14,
+		Color = T.InkSoft,
+		Wrap = false,
+		LayoutOrder = 1,
+		ZIndex = 2,
+	})
+	Icons.make("coin", 15, { Parent = cost, LayoutOrder = 2, ZIndex = 2 })
+	Kit.text(Text.commas(land.Price), {
+		Name = "Sub",
+		Parent = cost,
+		Size = UDim2.fromOffset(0, 18),
+		AutomaticSize = Enum.AutomaticSize.X,
+		TextSize = 14,
+		Font = Kit.Fonts.Bold,
+		Color = T.InkSoft,
+		Wrap = false,
+		LayoutOrder = 3,
+		ZIndex = 2,
+	})
+	local button = Kit.button(
+		if can
+			then Text.fill("Buy for {n}", { n = Text.commas(land.Price) })
+			elseif stats.level < land.Level then Text.fill("Reach {name}", { name = needLevel.Name:lower() })
+			else Text.fill("{n} coins", { n = Text.commas(land.Price) }),
+		{
+			Name = "BuyLand",
+			Parent = inner,
+			Size = UDim2.fromOffset(176, 42),
+			Position = UDim2.new(1, -28, 0.5, 0),
+			AnchorPoint = Vector2.new(1, 0.5),
+			Color = if can then T.Green else T.Card,
 			TextColor = if can then T.White else T.InkSoft,
-			LayoutOrder = 13,
-			Radius = "pill",
-		}, function()
+			TextSize = 17,
+			Icon = if can or stats.level >= land.Level then "coin" else nil,
+			ZIndex = 3,
+		},
+		function()
 			if not can then
-				Toasts.show(why, "warn")
+				Toasts.show(why or "", "warn")
 				return
 			end
 			task.spawn(function()
@@ -122,32 +259,50 @@ local function draw()
 					Toasts.show(err, "warn")
 				end
 				task.wait(0.4)
-				draw()
+				if panel then
+					draw()
+				end
 			end)
-		end)
-	else
-		Kit.text("You own all the land there is.", { Parent = left, TextSize = 16, LayoutOrder = 12 })
+		end
+	)
+	button:SetAttribute("Disabled", not can)
+	if why then
+		-- what's in the way, right under the row
+		MenuParts.note(why, T.Coral, { Name = "LandWhy", Parent = list, LayoutOrder = order + 1 })
 	end
+end
 
-	-- jobs on the right
-	local right =
-		Kit.scroll({ Parent = panel.body, Size = UDim2.new(0.54, -10, 1, 0), Position = UDim2.new(0.46, 10, 0, 0) })
-	Kit.list(right, 8)
-	Kit.title("Work", { Parent = right, TextSize = 22, LayoutOrder = 1, Size = UDim2.new(1, 0, 0, 30) })
+function draw()
+	if not panel then
+		return
+	end
+	for _, c in panel.body:GetChildren() do
+		c:Destroy()
+	end
+	local p = profileView()
+	local stats = City.stats(p)
 	local lines, total = City.payday(p, -1, os.time())
-	Kit.text(
-		Text.fill("{jobs}, {employed} filled. A payday at 5 PM brings in about {total} coins.", {
-			jobs = if stats.jobs == 1 then "1 workplace" else stats.jobs .. " workplaces",
-			employed = stats.employed,
-			total = Text.commas(total),
-		}),
-		{ Parent = right, TextSize = 16, LayoutOrder = 2, Size = UDim2.new(1, 0, 0, 44) }
+
+	local _, inside = MenuParts.card(panel.body, T.Purple)
+	town(inside, stats, total)
+
+	-- the land and the work down the right
+	local list = MenuParts.list(panel.body)
+	MenuParts.heading(list, "Land", T.Purple, 1, Text.fill("{n} by {n} now", { n = stats.land }))
+	landRow(list, stats, p.coins, 2)
+
+	MenuParts.heading(
+		list,
+		"Work",
+		T.Purple,
+		10,
+		if stats.jobs > 0 then Text.fill("{a} of {b} filled", { a = stats.employed, b = stats.jobs }) else nil
 	)
 	local workers = {}
 	for _, l in lines do
 		workers[l.vid] = l.amount
 	end
-	local i = 3
+	local i = 11
 	for _, w in City.workplaces(State.plan) do
 		local who, amount = nil, nil
 		for vid, v in p.villagers do
@@ -157,30 +312,56 @@ local function draw()
 			end
 		end
 		Kit.row({
-			Parent = right,
-			Size = UDim2.new(1, -12, 0, 60),
-			Height = 60,
+			Name = "Job",
+			Parent = list,
+			Size = MenuParts.rowSize(),
 			LayoutOrder = i,
 			Title = Text.fill("{job}, {place}", { job = w.job.name, place = w.def.name:lower() }),
 			Sub = if who
 				then Text.fill("{name}, about {n} coins a day", { name = who, n = amount or w.job.income })
-				else "Nobody works here yet",
+				else "Nobody works here yet. Pick someone on the Villagers screen.",
 			Marker = "briefcase",
 			MarkerColor = if who then T.Purple else T.Line,
 		})
 		i += 1
 	end
 	if stats.jobs == 0 then
-		Kit.text(
-			"No workplaces yet. Find them under Work in Build mode.",
-			{ Parent = right, TextSize = 16, Color = T.InkSoft, LayoutOrder = 3 }
+		MenuParts.empty(
+			"briefcase",
+			"No workplaces yet",
+			"Build one from Work in Build mode, then give a villager the job.",
+			{ Parent = list, LayoutOrder = 11 }
+		)
+	else
+		MenuParts.note(
+			"More workplaces are under Work in Build mode. Each one is a job for a villager.",
+			T.Purple,
+			{ Name = "More", Parent = list, LayoutOrder = 900, Height = 44 }
 		)
 	end
+	-- what work has brought in so far, at the foot of the list
 	local earned = State.data.stats and State.data.stats.earned or 0
-	Kit.text(
-		Text.fill("Earned from work so far: {n} coins.", { n = Text.commas(earned) }),
-		{ Parent = right, TextSize = 15, Color = T.InkSoft, LayoutOrder = 999 }
-	)
+	local foot = Kit.box({ Name = "Earned", Parent = list, Size = UDim2.new(1, -12, 0, 28), LayoutOrder = 999 })
+	Kit.pad(foot, 4, 0)
+	Kit.list(foot, 6, true)
+	Icons.make("coin", 18, { Parent = foot, LayoutOrder = 1 })
+	Kit.title(Text.commas(earned), {
+		Parent = foot,
+		Size = UDim2.fromOffset(0, 28),
+		AutomaticSize = Enum.AutomaticSize.X,
+		TextSize = 17,
+		Wrap = false,
+		LayoutOrder = 2,
+	})
+	Kit.text("coins earned from work so far", {
+		Parent = foot,
+		Size = UDim2.fromOffset(0, 28),
+		AutomaticSize = Enum.AutomaticSize.X,
+		TextSize = 15,
+		Color = T.InkSoft,
+		Wrap = false,
+		LayoutOrder = 3,
+	})
 end
 
 function CityPanel.isOpen(): boolean
@@ -206,5 +387,12 @@ function CityPanel.open()
 	table.insert(unbind, State.on("coins", draw))
 	table.insert(unbind, State.on("villagers", draw))
 end
+
+-- a change of look builds what's open again in the new one (a row's shading is made for a look)
+Kit.onTheme(function()
+	if panel then
+		draw()
+	end
+end)
 
 return CityPanel

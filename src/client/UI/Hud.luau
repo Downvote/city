@@ -192,25 +192,51 @@ function Hud.start()
 
 	-- money, people and happiness, in a strip under the level (the user: "put these as a tab
 	-- below the level, then add quests below it as well") --------------------------------------------
-	local pills = Kit.box({
+	-- One leaning tab that comes out of the left edge of the screen (the user: "the quest tab and
+	-- currency/stats tab should also be part of the left side edge"), the three side by side in it.
+	local pills = Kit.darkPill({
 		Name = "Pills",
-		Size = UDim2.fromOffset(396, 44),
-		Position = UDim2.fromOffset(22, 96),
+		Size = UDim2.fromOffset(396, 46),
+		Position = UDim2.fromOffset(0, 96),
 		Parent = hud,
 	})
-	Kit.list(pills, 10, true, Enum.HorizontalAlignment.Left)
-	local coinPill, coins = Kit.pill("coin", {
-		Parent = pills,
-		Size = UDim2.fromOffset(176, 44),
-		LayoutOrder = 1,
-		Plus = function()
-			Hud.open("ShopPanel")
-		end,
-	})
-	local _, popLabel = Kit.pill("people", { Parent = pills, Size = UDim2.fromOffset(92, 44), LayoutOrder = 2 })
-	local moodPill, moodLabel = Kit.pill("smile", { Parent = pills, Size = UDim2.fromOffset(104, 44), LayoutOrder = 3 })
+	local pillRow =
+		Kit.box({ Name = "Row", Parent = pills, Size = UDim2.new(1, -8, 1, 0), Position = UDim2.fromOffset(8, 0) })
+	pillRow.ZIndex = 2
+	Kit.list(pillRow, 6, true, Enum.HorizontalAlignment.Left).VerticalAlignment = Enum.VerticalAlignment.Center
+	local function cell(icon: string, width: number, order: number, plus: (() -> ())?): (Frame, TextLabel)
+		local f, value = Kit.pill(icon, {
+			Parent = pillRow,
+			Size = UDim2.fromOffset(width, 40),
+			LayoutOrder = order,
+			Plus = plus,
+		})
+		-- the strip is the glass: the cells only hold what is on it
+		Kit.paint(f, nil, 1)
+		return f, value
+	end
+	local function divider(order: number)
+		local d = Kit.new("Frame", {
+			Name = "Divider",
+			BackgroundColor3 = Color3.fromRGB(206, 218, 240),
+			BackgroundTransparency = 0.7,
+			BorderSizePixel = 0,
+			Size = UDim2.fromOffset(2, 26),
+			Rotation = 16,
+			LayoutOrder = order,
+			Parent = pillRow,
+		})
+		d:SetAttribute("KeepColors", true)
+	end
+	local coinPill, coins = cell("coin", 180, 1, function()
+		Hud.open("ShopPanel")
+	end)
+	divider(2)
+	local _, popLabel = cell("people", 82, 3)
+	divider(4)
+	local moodPill, moodLabel = cell("smile", 98, 5)
 	-- and under that, the quests: the town's next goals
-	Quests.mount(hud, UDim2.fromOffset(16, 150), function()
+	Quests.mount(hud, UDim2.fromOffset(0, 152), function()
 		Hud.open("Goals")
 	end)
 
@@ -287,20 +313,33 @@ function Hud.start()
 	refreshCity()
 
 	-- the clock, top right ---------------------------------------------------------------------------------
-	local clock = Kit.darkPill({
-		Name = "Clock",
-		Size = UDim2.fromOffset(226, 64),
-		Position = UDim2.new(1, -14, 0, 12),
+	-- The user: "these three should be coming out of the corners of the screen instead of floating.
+	-- vertically flip the paralleograms of the weather and one of the 4 icons". The clock's glass
+	-- runs up into the strip Roblox keeps at the top and off the right edge, leaning the other way
+	-- from the rest, so it hangs from the corner; what it shows sits in the screen as before.
+	local inset = Kit.topInset()
+	local clockTab = Kit.darkPill({
+		Name = "ClockTab",
+		Size = UDim2.fromOffset(250, 72 + inset),
+		Position = UDim2.new(1, 0, 0, -inset),
 		AnchorPoint = Vector2.new(1, 0),
-		Radius = 32,
+		Flip = true,
 		Parent = hud,
 	})
+	local clock = Kit.box({
+		Name = "Clock",
+		Size = UDim2.fromOffset(226, 64),
+		Position = UDim2.new(1, -10, 0, 4),
+		AnchorPoint = Vector2.new(1, 0),
+		Parent = hud,
+	})
+	clock.ZIndex = 2
 	-- round buttons under the clock, each with its name under it: home, the map, the city hall,
 	-- the shop, the news, and dark or light
 	local corner = Kit.box({
 		Name = "Corner",
 		Size = UDim2.fromOffset(372, 76),
-		Position = UDim2.new(1, -14, 0, 84),
+		Position = UDim2.new(1, -14, 0, 88),
 		AnchorPoint = Vector2.new(1, 0),
 		Parent = hud,
 	})
@@ -470,46 +509,54 @@ function Hud.start()
 		end
 	end)
 	-- the quick menu, bottom left: a portrait, then the town's people, the creator, goals and the gift --
+	-- one bar out of the bottom left corner, leaning the other way so it widens toward the bottom
 	local menu = Kit.box({
 		Name = "Menu",
-		Size = UDim2.fromOffset(470, 108),
-		Position = UDim2.new(0, 14, 1, -12),
+		Size = UDim2.fromOffset(500, 104),
+		Position = UDim2.new(0, 0, 1, 0),
 		AnchorPoint = Vector2.new(0, 1),
 		Parent = hud,
 	})
+	local bar, barInside = Kit.blob({
+		Name = "MenuBar",
+		Parent = menu,
+		Color = T.Paper,
+		Slant = 104,
+		Flip = true,
+		Size = UDim2.new(1, 28, 1, 0),
+		Position = UDim2.fromOffset(-28, 0),
+		Estimate = Vector2.new(528, 104),
+	})
+	local barCore = bar:FindFirstChild("Core", true)
+	if barCore and barCore:IsA("Frame") then
+		Kit.shade(barCore, T.Paper)
+	end
 	-- (a circle with a border: "make portraits a circle with a border instead of a square")
 	local portrait = Kit.portrait({
 		Parent = menu,
-		Size = 92,
-		Position = UDim2.fromOffset(4, 9),
-		Color = T.Paper,
+		Size = 84,
+		Position = UDim2.fromOffset(12, 10),
+		Color = T.Card,
 		Border = T.Blue,
 		BorderWidth = 4,
-	})
-	Kit.softShadow(portrait, 1)
-	Icons.make("person", 54, {
-		Parent = portrait,
-		Position = UDim2.new(0.5, -27, 0.5, -27),
-		Color = T.Blue,
 		ZIndex = 3,
+	})
+	Icons.make("person", 50, {
+		Parent = portrait,
+		Position = UDim2.new(0.5, -25, 0.5, -25),
+		Color = T.Blue,
+		ZIndex = 4,
 	})
 	local portraitButton = Kit.new(
 		"TextButton",
-		{ Text = "", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), ZIndex = 4, Parent = portrait }
+		{ Text = "", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), ZIndex = 5, Parent = portrait }
 	)
 	portraitButton.Activated:Connect(function()
 		Hud.open("Residents")
 	end)
-	local _bar, barInside = Kit.blob({
-		Name = "MenuBar",
-		Parent = menu,
-		Color = T.Paper,
-		Slant = 96,
-		Size = UDim2.fromOffset(356, 96),
-		Position = UDim2.fromOffset(108, 8),
-		Estimate = Vector2.new(356, 96),
-	})
-	local row = Kit.box({ Parent = barInside, Size = UDim2.fromScale(1, 1) })
+	local _ = barInside
+	local row = Kit.box({ Parent = menu, Size = UDim2.new(1, -110, 1, 0), Position = UDim2.fromOffset(104, 0) })
+	row.ZIndex = 3
 	local rowList = Kit.list(row, 2, true, Enum.HorizontalAlignment.Center)
 	rowList.VerticalAlignment = Enum.VerticalAlignment.Center
 	local tiles = {}
@@ -543,10 +590,11 @@ function Hud.start()
 	end)
 
 	-- the big Build button, bottom right
+	-- (its right end runs off the screen: it comes out of the corner)
 	local buildButton = Kit.bigButton("Build", "hammer", {
 		Parent = hud,
-		Size = UDim2.fromOffset(236, 80),
-		Position = UDim2.new(1, -20, 1, -18),
+		Size = UDim2.fromOffset(268, 96),
+		Position = UDim2.new(1, 20, 1, 0),
 		AnchorPoint = Vector2.new(1, 1),
 		Color = T.Blue,
 		IconColor = T.Yellow,
@@ -584,9 +632,10 @@ function Hud.start()
 	end)
 
 	-- everything slides into place when the game starts, one piece after another
-	Kit.slideIn(pills, 0, -90, 0.1)
+	Kit.slideIn(pills, -420, 0, 0.1)
 	Kit.slideIn(card, -360, 0, 0.2)
-	Kit.slideIn(clock, 240, 0, 0.15)
+	Kit.slideIn(clockTab, 260, 0, 0.15)
+	Kit.slideIn(clock, 260, 0, 0.15)
 	Kit.slideIn(corner, 240, 0, 0.2)
 	Kit.slideIn(menu, -480, 0, 0.25)
 	Kit.slideIn(buildButton, 260, 0, 0.3)
