@@ -234,6 +234,18 @@ style of our own, with square corners everywhere. These replace the points above
 - **Events** play on a cream page with a thin rule inside its edge; the event's name is on a ribbon above it.
 - **Notices** are small paper notes with a coloured edge for their kind.
 
+> look at the way miitopia uses textures and the way their models are made. you should be able to replicate that,
+> including custom textures for the environment and everything
+
+Again we can't copy another game's art, so the town gets painted textures of its own, made for this game: soft
+hand-painted surfaces lit from the top left, with darker cracks and edges and lighter tops. There is one for each
+material the town and the build catalog use: grass with painted tufts, wood grain, floor planks, brick, cobbles,
+paving slabs, concrete, asphalt, plaster, clay roof tiles, shingles, slate, bathroom tiles, carpet, woven fabric,
+marble, sand, rock and brushed metal.
+They are nearly grey, so every paint colour in Build mode still works on them: the part's colour tints the
+texture. Each one replaces Roblox's own look for that material everywhere in the place, the town and every build
+alike. They need uploading to Roblox before they show; until then each material keeps Roblox's look.
+
 Villagers walk with Roblox's pathfinding with jumping on, so they go round walls, through doorways (doors are free to
 pass and open as they come), round furniture and over low steps. If they get stuck they jump, then plan again.
 

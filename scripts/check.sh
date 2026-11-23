@@ -1,7 +1,7 @@
 #!/bin/sh
 # The check every change passes before it is committed:
 #   format (stylua), types and lint against Roblox's API (luau-lsp), specs (lune), the client
-#   simulation (tests/sim), place build (rojo).
+#   simulation (tests/sim), the painted textures in the place file, place build (rojo).
 # Usage: sh scripts/check.sh [--fix]   (--fix formats the code instead of only checking it)
 set -e
 cd "$(dirname "$0")/.."
@@ -52,6 +52,10 @@ if ! lune run tests/sim/build_client.luau >"$SIM_OUT" 2>&1; then
 fi
 tail -n 1 "$SIM_OUT"
 rm -f "$SIM_OUT"
+
+echo "== textures"
+# uploaded texture ids (Data/TextureIds) must be in default.project.json as MaterialVariants
+python3 scripts/sync_materials.py --check
 
 echo "== build"
 HASH=$(git rev-parse --short HEAD 2>/dev/null || echo dev)

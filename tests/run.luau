@@ -5,6 +5,7 @@
 
 local fs = require("@lune/fs")
 local process = require("@lune/process")
+local serde = require("@lune/serde")
 local Harness = require("./harness")
 
 Harness.init(".")
@@ -118,6 +119,13 @@ for _, entry in specs do
 			it = it,
 			expect = expect,
 			Harness = Harness,
+			-- for specs that check files the game is built from (nil when the file is missing)
+			readFile = function(path)
+				return if fs.isFile(path) then fs.readFile(path) else nil
+			end,
+			decodeJson = function(text)
+				return serde.decode("json", text)
+			end,
 		})
 		fn()
 	end)

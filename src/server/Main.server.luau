@@ -9,6 +9,7 @@ local Services = script.Parent.Services
 local order = {
 	"Data",
 	"World",
+	"Materials",
 	"Plots",
 	"Build",
 	"Avatar",

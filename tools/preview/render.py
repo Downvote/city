@@ -6,13 +6,55 @@
 A small z-buffered rasteriser: boxes, wedges, cylinders and balls, flat shaded with light from
 the top left, an orthographic camera fitted to the scene. Good enough to see whether a model
 looks the way its recipe meant.
+
+--textures paints each part with its material's texture from art/textures (scripts/gen_textures.py),
+tinted by the part's colour and tiled in the part's own space along the face's main axis, the
+way Roblox lays a MaterialVariant on a part.
 """
 import argparse
 import json
 import math
 
+import os
+
 import numpy as np
 from PIL import Image
+
+TEX_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "art", "textures")
+
+
+class Textures:
+    """The painted textures by Roblox material, each as a small mip pyramid (float RGB)."""
+
+    def __init__(self):
+        self.by_mat = {}
+        index_path = os.path.join(TEX_DIR, "textures.json")
+        if not os.path.exists(index_path):
+            return
+        for name, info in json.load(open(index_path)).items():
+            path = os.path.join(TEX_DIR, name + ".png")
+            if not os.path.exists(path):
+                continue
+            im = Image.open(path).convert("RGB")
+            levels = []
+            while im.width >= 4:
+                levels.append(np.asarray(im, float) / 255)
+                im = im.resize((im.width // 2, im.height // 2), Image.BOX)
+            self.by_mat[info["material"]] = (levels, info["studs"])
+
+    def sample(self, mat, u, v, px_per_stud):
+        """Colours at stud coordinates u, v (arrays), picking the mip level for the zoom."""
+        entry = self.by_mat.get(mat)
+        if entry is None:
+            return None
+        levels, studs = entry
+        texels_per_px = levels[0].shape[0] / studs / max(1e-6, px_per_stud)
+        lv = int(np.clip(math.floor(math.log2(max(1.0, texels_per_px))), 0, len(levels) - 1))
+        tex = levels[lv]
+        n = tex.shape[0]
+        x = (np.floor(u / studs * n).astype(int)) % n
+        y = (np.floor(v / studs * n).astype(int)) % n
+        return tex[y, x]
 
 
 def box_tris():
@@ -106,6 +148,7 @@ def main():
     ap.add_argument("--size", type=int, default=900)
     ap.add_argument("--hide-clear", action="store_true", help="skip invisible parts (default)")
     ap.add_argument("--transparent", action="store_true", help="no background (for thumbnails)")
+    ap.add_argument("--textures", action="store_true", help="paint parts with art/textures")
     args = ap.parse_args()
 
     prims = json.load(open(args.inp))
@@ -117,14 +160,16 @@ def main():
     up = np.cross(right, forward)
     light = np.array([-0.45, 0.85, 0.3]); light /= np.linalg.norm(light)
 
-    tris, cols, alphas = [], [], []
-    for p in prims:
+    textures = Textures() if args.textures else None
+    tris, cols, alphas, owners = [], [], [], []
+    for pi, p in enumerate(prims):
         if p.get("transp", 0) >= 0.99:
             continue
         for t in prim_tris(p):
             tris.append(t)
             cols.append(p["color"])
             alphas.append(1 - p.get("transp", 0))
+            owners.append(pi)
     if not tris:
         print("nothing to draw")
         return
@@ -175,6 +220,30 @@ def main():
         z = w1 * pz[0] + w2 * pz[1] + w3 * pz[2]
         region = zbuf[y0:y1 + 1, x0:x1 + 1]
         closer = inside & (z < region - 1e-4)
+        if textures is not None and closer.any():
+            p = prims[owners[i]]
+            if p.get("mat") in textures.by_mat:
+                # the pixel's place in the part's own space, from the corner, in studs
+                c = p["cf"]
+                ppos = np.array(c[0:3])
+                rot = np.array([[c[3], c[4], c[5]], [c[6], c[7], c[8]], [c[9], c[10], c[11]]])
+                half = np.array(p["size"]) / 2
+                local = (t - ppos) @ rot + half  # the triangle's corners
+                a1, a2, a3 = w1[closer], w2[closer], w3[closer]
+                lp = a1[:, None] * local[0] + a2[:, None] * local[1] + a3[:, None] * local[2]
+                axis = int(np.argmax(np.abs(n @ rot)))
+                if axis == 0:
+                    u, v = lp[:, 2], -lp[:, 1]
+                elif axis == 1:
+                    u, v = lp[:, 0], lp[:, 2]
+                else:
+                    u, v = lp[:, 0], -lp[:, 1]
+                tex = textures.sample(p["mat"], u, v, scale)
+                if tex is not None:
+                    if alphas[i] >= 1:
+                        region[closer] = z[closer]
+                        img[y0:y1 + 1, x0:x1 + 1][closer] = col * tex
+                    continue
         if alphas[i] >= 1:
             region[closer] = z[closer]
             img[y0:y1 + 1, x0:x1 + 1][closer] = col

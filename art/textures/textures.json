@@ -1,0 +1,78 @@
+{
+  "grass": {
+    "material": "Grass",
+    "studs": 8
+  },
+  "wood": {
+    "material": "Wood",
+    "studs": 4
+  },
+  "planks": {
+    "material": "WoodPlanks",
+    "studs": 8
+  },
+  "brick": {
+    "material": "Brick",
+    "studs": 8
+  },
+  "cobble": {
+    "material": "Cobblestone",
+    "studs": 8
+  },
+  "paving": {
+    "material": "Pavement",
+    "studs": 8
+  },
+  "concrete": {
+    "material": "Concrete",
+    "studs": 12
+  },
+  "asphalt": {
+    "material": "Asphalt",
+    "studs": 10
+  },
+  "plaster": {
+    "material": "Plaster",
+    "studs": 10
+  },
+  "clay": {
+    "material": "ClayRoofTiles",
+    "studs": 6
+  },
+  "shingles": {
+    "material": "RoofShingles",
+    "studs": 6
+  },
+  "slate": {
+    "material": "Slate",
+    "studs": 6
+  },
+  "tiles": {
+    "material": "CeramicTiles",
+    "studs": 4
+  },
+  "carpet": {
+    "material": "Carpet",
+    "studs": 4
+  },
+  "fabric": {
+    "material": "Fabric",
+    "studs": 3
+  },
+  "marble": {
+    "material": "Marble",
+    "studs": 12
+  },
+  "sand": {
+    "material": "Sand",
+    "studs": 10
+  },
+  "rock": {
+    "material": "Rock",
+    "studs": 10
+  },
+  "metal": {
+    "material": "Metal",
+    "studs": 6
+  }
+}

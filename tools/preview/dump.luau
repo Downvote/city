@@ -158,11 +158,15 @@ elseif scene:sub(1, 7) == "preset:" or scene:sub(1, 7) == "presets" then
 	end
 	local plan = Plan.new(200)
 	plan.size = 200
-	local x = 0
+	local x, z, rowDepth = 0, 0, 0
 	for _, id in ids do
 		local p = Presets.get(id)
 		assert(p, "no preset " .. id)
-		local _, why, _, trial, made = Presets.check(plan, Presets.requests(id, x, 0, 0))
+		if x + p.w > 200 then -- start a new row
+			x, z, rowDepth = 0, z + rowDepth + 8, 0
+		end
+		rowDepth = math.max(rowDepth, p.d)
+		local _, why, _, trial, made = Presets.check(plan, Presets.requests(id, x, z, 0))
 		assert(why == nil, id .. ": " .. tostring(why))
 		for _, m in made do
 			local obj = trial[m.kind][m.key]
@@ -195,6 +199,7 @@ for _, p in prims do
 		size = { p.size.X, p.size.Y, p.size.Z },
 		color = { p.color.R, p.color.G, p.color.B },
 		transp = p.transp or 0,
+		mat = p.mat,
 	})
 end
 local dir = outPath:match("^(.*)/[^/]*$")

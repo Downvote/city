@@ -30,7 +30,11 @@ The contract between the parts of the game. Update it with every change to an AP
   layout and plot frames), `TownMap` (the streets, sidewalks, square and market as parts, and where every building
   and piece of street furniture stands), `TownModels` (plaza buildings), `AmbientModels` (cars, the bus, birds,
   clouds), `Presets` (ready-made buildings: `requests(id, x, z, rot)` turns one into Build requests, `check(plan,
-  requests)` tries them on a copy of a plan, `price(id)`), `StarterHouse` (every new plot's first build).
+  requests)` tries them on a copy of a plan, `price(id)`), `StarterHouse` (every new plot's first build),
+  `Textures` (the painted texture for each material and its studs per tile; `ready()` lists the uploaded ones,
+  `install(materialService)` sets each material to its MaterialVariant and makes missing variants where Roblox
+  allows it, which is only the command bar and plugins), `TextureIds` (uploaded image ids by texture name, written
+  by `scripts/upload_textures.py`).
 - `Avatar/`: `Appearance` (the saved look, sanitising, which asset types fit which slot), `Categories` (creator tabs,
   catalog filters, wearing and merging).
 - `Sim/`: `Schema` (profile and villager shapes, defaults, migration), `Relationships`, `EventEngine` (picks events,
@@ -88,6 +92,7 @@ Villager = { id, name, pers, app, color, bday = { s, d }, fav, hate, known, mood
 | `Villagers` | Creating, editing, moving out, beds, jobs, feeding. Spawns NPCs and runs their routine: sleep at night, work 9 to 5, wander, sit, chat, visit shops. Payday at 5 PM. |
 | `Events` | Picks and plays random events, waits for choices, applies effects, room request rewards, small friendship gains from chats, parties. |
 | `Shop` | Food, medicine and party cakes, cheaper while the merchant is in town. |
+| `Materials` | Runs `Textures.install` at start: each uploaded painted texture's MaterialVariant (built into the place) becomes its material's look. Warns when a variant is missing from the place. |
 
 `Npc` (`src/server/Npc/Npc.luau`) is one villager's body: animations (their own pack or Roblox's defaults), pathfinding
 walks, sitting, lying in bed, speech bubbles, emotion icons and name tags. `Npc.walkTo` plans with
@@ -160,7 +165,8 @@ server, whatever the client did.
   instance tree built from the Rojo project. `tests/run.luau` runs `tests/specs/*.spec.luau`.
 - Specs: `Build` (catalog, plan rules, shapes, builder), `BuildService` (the server's Build service with its
   neighbours stubbed: building charges coins, syncs the plan, strips junk, refuses land you don't own), `City`,
-  `Events`, `Presets` (every building goes down whole turned every way, on the client's check and the server's,
+  `Events`, `Textures` (every texture has its pictures, studs match what the painter wrote, real materials, only
+  well formed ids become variants), `Presets` (every building goes down whole turned every way, on the client's check and the server's,
   inside its footprint, with its workplace), `Town` (every placed model exists, plots and road stay clear, room to
   walk on the sidewalks), `Icons`
   (every icon builds; outline copies all come before the fills and no fill carries a dark stroke).
@@ -180,4 +186,13 @@ server, whatever the client did.
   event, toasts, creator, icons) and `ui_render.py` lays it out and draws it the way Roblox would (sizes, anchors,
   list and grid layouts, padding, automatic sizes, corners, strokes, gradients, outlined text, clipping, rotation,
   the UIScale). `fonts.sh` fetches Fredoka One for it.
-- `scripts/check.sh`: format, types, specs, place build.
+  `render.sh <scene> <png> --textures` paints each part with its material's texture, tinted by its colour and
+  tiled in the part's own space along the face's main axis, the way Roblox lays a MaterialVariant on a part.
+- `scripts/gen_textures.py` paints the textures (art/textures: `<name>.png`, `<name>_n.png`, `textures.json`):
+  nearly grey so a part's colour tints them, lit from the top left, and tiling exactly (noise made in frequency
+  space, shapes drawn again across the edges). `--sheet <png>` writes a tinted contact sheet.
+  `scripts/upload_textures.py` uploads them with Open Cloud (an API key with asset read and write and legacy asset
+  manage), reads each decal's image id back and writes `Data/TextureIds`. `scripts/sync_materials.py` writes the
+  uploaded ones into `default.project.json` (MaterialVariants under MaterialService and its `<Material>Name`
+  overrides): Roblox only lets plugins set a variant's pictures, so they go in when the place is built.
+- `scripts/check.sh`: format, types, specs, the client sim, textures in sync with the place file, place build.
