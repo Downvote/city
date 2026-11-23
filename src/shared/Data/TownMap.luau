@@ -7,12 +7,14 @@
 
 local Recipe = require(script.Parent.Parent.Build.Recipe)
 local Geometry = require(script.Parent.Parent.Build.Geometry)
+local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Town = require(script.Parent.Town)
 local TownModels = require(script.Parent.TownModels)
 local Rng = require(script.Parent.Parent.Util.Rng)
 local Hills = require(script.Parent.Hills)
 local DetailModels = require(script.Parent.DetailModels)
 local CityModels = require(script.Parent.CityModels)
+local StreetModels = require(script.Parent.StreetModels)
 
 type R = Recipe.Recipe
 type Prim = Geometry.Prim
@@ -506,6 +508,11 @@ TownMap.Models.hillL = hill(110, 30)
 function TownMap.prims(name: string): { Prim }
 	local build = TownMap.Models[name]
 	if not build then
+		-- (the street scene first: its billboard takes the place of the older one)
+		local street = StreetModels.prims(name)
+		if street then
+			return street
+		end
 		local city = CityModels.prims(name)
 		if city then
 			return city
@@ -918,6 +925,813 @@ end
 -- What stands on the ground ---------------------------------------------------------------------------
 
 export type Placement = { name: string, cf: CFrame, action: string?, opens: string?, tag: string? }
+
+-- The street scene ------------------------------------------------------------------------------------
+--
+-- The user asked for the town to read as a dense modern city: drinks machines, utility poles and
+-- their wires, air conditioners on the walls, tanks and aerials on the roofs, billboards, posters
+-- and the clutter of a pavement (Data/StreetModels). All of it goes on last, so nothing that stood
+-- before has moved, and a thing only goes where its parts are clear of every part already there.
+-- It is seeded, so it is the same town every time.
+
+type Box = { number } -- x1, y1, z1, x2, y2, z2
+type Shape = { all: Box, foot: Box?, boxes: { Box }, prims: { Prim } }
+type Wall = { x: number, z: number, dx: number, dz: number, nx: number, nz: number, len: number, top: number }
+type Shell = { walls: { Wall }, x1: number, x2: number, front: number, body: Box?, roof: Box? }
+
+-- What a model takes up, worked out once: a box round all of it, one round what stands on the
+-- ground (anything overhead left out), and one for every part.
+local shapes: { [string]: Shape } = {}
+local function shapeOf(name: string): Shape
+	local s = shapes[name]
+	if not s then
+		local prims = TownMap.prims(name)
+		local lo, hi = Geometry.bounds(prims)
+		local boxes = table.create(#prims)
+		local foot: Box? = nil
+		for i, p in prims do
+			local a, b = Geometry.bounds({ p })
+			boxes[i] = { a.X, a.Y, a.Z, b.X, b.Y, b.Z }
+			if a.Y < 6 then
+				if foot then
+					foot[1], foot[3] = math.min(foot[1], a.X), math.min(foot[3], a.Z)
+					foot[4], foot[6] = math.max(foot[4], b.X), math.max(foot[6], b.Z)
+					foot[5] = math.max(foot[5], b.Y)
+				else
+					foot = { a.X, a.Y, a.Z, b.X, b.Y, b.Z }
+				end
+			end
+		end
+		s = { all = { lo.X, lo.Y, lo.Z, hi.X, hi.Y, hi.Z }, foot = foot, boxes = boxes, prims = prims }
+		shapes[name] = s
+	end
+	return s
+end
+
+-- A model space box moved by a placement's frame (placements only ever turn about Y).
+local function moved(cf: CFrame, b: Box): Box
+	local px, py, pz, r00, _, r02, _, _, _, r20, _, r22 = cf:GetComponents()
+	local ax, bx, cx, dx = r00 * b[1], r00 * b[4], r02 * b[3], r02 * b[6]
+	local az, bz, cz, dz = r20 * b[1], r20 * b[4], r22 * b[3], r22 * b[6]
+	return {
+		px + math.min(ax, bx) + math.min(cx, dx),
+		py + b[2],
+		pz + math.min(az, bz) + math.min(cz, dz),
+		px + math.max(ax, bx) + math.max(cx, dx),
+		py + b[5],
+		pz + math.max(az, bz) + math.max(cz, dz),
+	}
+end
+
+-- The yaw that turns a model's front (local -Z) to look along (nx, nz).
+local function facing(nx: number, nz: number): number
+	return math.deg(math.atan2(-nx, -nz))
+end
+
+-- A building's shell, read from its parts: the outside walls of its ground floor (upright slabs
+-- at least 10 long and 6 high, standing on the ground at the edge of the footprint), where its
+-- front is, the block of storeys over the ground floor, and its flat roof if it has one.
+-- Everything hung on a wall or stood on a roof is placed from this, so it is only ever put where
+-- a wall or a roof really is.
+local shells: { [string]: Shell } = {}
+local function shellOf(name: string): Shell
+	local found = shells[name]
+	if found then
+		return found
+	end
+	local s = shapeOf(name)
+	local slabs: { Box } = {}
+	local x1, z1, x2, z2 = math.huge, math.huge, -math.huge, -math.huge
+	for i, p in s.prims do
+		local b = s.boxes[i]
+		local sx, sy, sz = b[4] - b[1], b[5] - b[2], b[6] - b[3]
+		local solid = p.shape == "Block" and (p.transp or 0) < 0.2 and p.mat ~= "Glass"
+		-- (square to the model: its own box is the box round it)
+		local square = math.abs(sx * sy * sz - p.size.X * p.size.Y * p.size.Z) < 0.01 * sx * sy * sz
+		if solid and square and b[2] <= 1 and sy >= 6 and math.min(sx, sz) <= 1.2 and math.max(sx, sz) >= 10 then
+			table.insert(slabs, b)
+			x1, z1, x2, z2 = math.min(x1, b[1]), math.min(z1, b[3]), math.max(x2, b[4]), math.max(z2, b[6])
+		end
+	end
+	local walls: { Wall } = {}
+	for _, b in slabs do
+		local along = b[4] - b[1] > b[6] - b[3]
+		if along and math.abs(b[6] - z2) < 0.05 then
+			table.insert(walls, { x = b[1], z = b[6], dx = 1, dz = 0, nx = 0, nz = 1, len = b[4] - b[1], top = b[5] })
+		elseif not along and math.abs(b[4] - x2) < 0.05 then
+			table.insert(walls, { x = b[4], z = b[3], dx = 0, dz = 1, nx = 1, nz = 0, len = b[6] - b[3], top = b[5] })
+		elseif not along and math.abs(b[1] - x1) < 0.05 then
+			table.insert(walls, { x = b[1], z = b[3], dx = 0, dz = 1, nx = -1, nz = 0, len = b[6] - b[3], top = b[5] })
+		end
+	end
+	-- the roof: the highest slab as wide as the building, or a deck laid over most of that slab
+	-- (a roof garden's lawn)
+	local roof: Box? = nil
+	local w, d = s.all[4] - s.all[1], s.all[6] - s.all[3]
+	local least = 0
+	for pass = 1, 2 do
+		for i, p in s.prims do
+			local b = s.boxes[i]
+			local sx, sz = b[4] - b[1], b[6] - b[3]
+			if p.shape == "Block" and (p.transp or 0) < 0.2 and b[5] >= 8 then
+				local wide = if pass == 1 then sx >= 0.8 * w and sz >= 0.8 * d else sx * sz >= least
+				if wide and (roof == nil or b[5] > roof[5]) then
+					roof = b
+				end
+			end
+		end
+		if not roof then
+			break
+		end
+		least = 0.7 * (roof[4] - roof[1]) * (roof[6] - roof[3])
+	end
+	-- the storeys over the ground floor: the biggest block that starts above head height
+	local body: Box? = nil
+	local most = 0
+	for i, p in s.prims do
+		local b = s.boxes[i]
+		local sx, sy, sz = b[4] - b[1], b[5] - b[2], b[6] - b[3]
+		local solid = p.shape == "Block" and (p.transp or 0) < 0.2
+		if solid and b[2] >= 6 and sx >= 10 and sz >= 10 and sy >= 4 and sx * sy * sz > most then
+			body = b
+			most = sx * sy * sz
+		end
+	end
+	local shell: Shell = { walls = walls, x1 = x1, x2 = x2, front = z1, body = body, roof = roof }
+	shells[name] = shell
+	return shell
+end
+
+local sceneCache: { Placement }? = nil
+
+local function streetScene(standing: { Placement }): { Placement }
+	local added: { Placement } = {}
+
+	-- Everything standing in town, sorted into a grid of cells: each with a box round all of it
+	-- and, worked out when something comes near, a box for every part.
+	type Solid = { name: string, cf: CFrame, box: Box, parts: { Box }? }
+	local CELL = 48
+	local cells: { [number]: { Solid } } = {}
+	local function stand(name: string, cf: CFrame)
+		local solid: Solid = { name = name, cf = cf, box = moved(cf, shapeOf(name).all) }
+		local b = solid.box
+		for cx = math.floor(b[1] / CELL), math.floor(b[4] / CELL) do
+			for cz = math.floor(b[3] / CELL), math.floor(b[6] / CELL) do
+				local key = (cx + 512) * 1024 + cz + 512
+				local cell = cells[key]
+				if not cell then
+					cell = {}
+					cells[key] = cell
+				end
+				table.insert(cell, solid)
+			end
+		end
+	end
+	for _, p in standing do
+		local z = p.cf.Position.Z
+		if p.tag ~= "backdrop" and z > -310 and z < 290 then
+			stand(p.name, p.cf)
+		end
+	end
+	local function partsOf(solid: Solid): { Box }
+		local parts = solid.parts
+		if parts then
+			return parts
+		end
+		local made: { Box } = {}
+		for i, b in shapeOf(solid.name).boxes do
+			made[i] = moved(solid.cf, b)
+		end
+		solid.parts = made
+		return made
+	end
+	-- Calls `visit` with every part whose box overlaps (x1, z1)-(x2, z2) on the ground; stops when it
+	-- returns true.
+	local NONE: { Solid } = {}
+	local function over(x1: number, z1: number, x2: number, z2: number, visit: (Box) -> boolean): boolean
+		for cx = math.floor(x1 / CELL), math.floor(x2 / CELL) do
+			for cz = math.floor(z1 / CELL), math.floor(z2 / CELL) do
+				local cell: { Solid } = cells[(cx + 512) * 1024 + cz + 512] or NONE
+				for _, solid in cell do
+					local sb = solid.box
+					if sb[1] < x2 and sb[4] > x1 and sb[3] < z2 and sb[6] > z1 then
+						for _, q in partsOf(solid) do
+							if q[1] < x2 and q[4] > x1 and q[3] < z2 and q[6] > z1 and visit(q) then
+								return true
+							end
+						end
+					end
+				end
+			end
+		end
+		return false
+	end
+	-- Does anything reach into this box? Flat things underfoot (paving, a lawn) don't count:
+	-- `floor` is the ground the box stands on.
+	local function hits(b: Box, floor: number): boolean
+		return over(b[1], b[3], b[4], b[6], function(q)
+			return q[2] < b[5] and q[5] > b[2] and q[5] > floor + 0.35
+		end)
+	end
+
+	-- Ground nothing may stand on: the roads, the players' plots, the spawn and the festival spot.
+	local half = Tuning.Plot.Size / 2
+	local function offLimits(b: Box): boolean
+		for _, road in Town.Roads do
+			local hw = road[5] + 0.3
+			if
+				b[4] > math.min(road[1], road[3]) - hw
+				and b[1] < math.max(road[1], road[3]) + hw
+				and b[6] > math.min(road[2], road[4]) - hw
+				and b[3] < math.max(road[2], road[4]) + hw
+			then
+				return true
+			end
+		end
+		for i = 1, Tuning.Plot.Count do
+			local c = Town.plotCenter(i)
+			local reach = half - 0.4
+			if b[4] > c.X - reach and b[1] < c.X + reach and b[6] > c.Z - reach and b[3] < c.Z + reach then
+				return true
+			end
+		end
+		for _, spot in { Town.Spots.Spawn, Town.Spots.Festival } do
+			if b[4] > spot.X - 6 and b[1] < spot.X + 6 and b[6] > spot.Z - 6 and b[3] < spot.Z + 6 then
+				return true
+			end
+		end
+		return false
+	end
+
+	-- The whole scene keeps to a budget of parts, whatever the buildings turn out to have room
+	-- for: once it is spent, nothing more goes down.
+	local BUDGET = 1940
+	local spent = 0
+	local function add(name: string, cf: CFrame): boolean
+		local cost = #shapeOf(name).boxes
+		if spent + cost > BUDGET then
+			return false
+		end
+		spent += cost
+		table.insert(added, { name = name, cf = cf })
+		stand(name, cf)
+		return true
+	end
+	-- Puts a model down if its parts are clear of everything. `room` asks for that many studs of
+	-- empty pavement in front of it too (a drinks machine nobody can reach is no use).
+	local function put(name: string, x: number, y: number, z: number, yaw: number, room: number?): boolean
+		local cf = CFrame.new(x, y, z) * CFrame.Angles(0, math.rad(yaw), 0)
+		local s = shapeOf(name)
+		if spent + #s.boxes > BUDGET or (s.foot and offLimits(moved(cf, s.foot))) then
+			return false
+		end
+		for _, lb in s.boxes do
+			-- (drawn in a hair, so a thing may touch what it leans on or stands on)
+			local b = moved(cf, lb)
+			for axis = 1, 3 do
+				local inset = math.min(0.05, (b[axis + 3] - b[axis]) / 2)
+				b[axis], b[axis + 3] = b[axis] + inset, b[axis + 3] - inset
+			end
+			if hits(b, y) then
+				return false
+			end
+		end
+		if room then
+			local a = s.all
+			if hits(moved(cf, { a[1] + 0.1, 0.6, a[3] - room, a[4] - 0.1, 5, a[3] }), y) then
+				return false
+			end
+		end
+		return add(name, cf)
+	end
+
+	local SIDEWALK = 0.3
+	local DOWNTOWN = 0.22
+	local GRASS = -0.1
+
+	-- Is `u` along a road where people step off the kerb to cross it? The zebra crossings just
+	-- outside each junction, and the main street's own three.
+	local function atCrossing(road: any, u: number): boolean
+		for _, c in crossings(road) do
+			for _, dir in { -1, 1 } do
+				if math.abs(u - (c[1] + dir * (c[2] + c[3] + 4))) < 5 then
+					return true
+				end
+			end
+		end
+		if road == Town.Roads[1] then
+			for _, x in { 0, -274, 274 } do
+				if math.abs(u - x) < 8 then
+					return true
+				end
+			end
+		end
+		return false
+	end
+
+	-- Utility poles along a street's kerb at a regular spacing, the wires strung between them.
+	-- `side` is which side of the road (1: north or east), `first` where the first pole goes.
+	-- (The wires go up once every pole is standing, so one street's wires may cross another's.)
+	local poles = Rng.new(52)
+	local strung: { Placement } = {}
+	local function poleLine(road: any, side: number, first: number, last: number, step: number)
+		local horizontal = road[2] == road[4]
+		local v = (if horizontal then road[2] else road[1]) + side * (road[5] + 1.5)
+		local yaw = if horizontal then (if side > 0 then 0 else 180) else (if side > 0 then 90 else -90)
+		local stood: { number } = {}
+		for u = first, last, step do
+			for _, nudge in { 0, 4, -4, 8, -8 } do
+				local w = u + nudge
+				local x, z = if horizontal then w else v, if horizontal then v else w
+				if not atCrossing(road, w) and put("utilityPole", x, SIDEWALK, z, yaw) then
+					table.insert(stood, w)
+					-- now and then, the morning's rubbish at its foot
+					if poles:chance(0.22) then
+						local o = if poles:chance(0.5) then 2 else -2
+						local back = v + side * 1.2
+						put(
+							"binBags",
+							if horizontal then w + o else back,
+							SIDEWALK,
+							if horizontal then back else w + o,
+							yaw + 180
+						)
+					end
+					break
+				end
+			end
+		end
+		for i = 1, #stood - 1 do
+			local a, b = stood[i], stood[i + 1]
+			local len = b - a
+			-- the wires hang from the pole whose own +X looks at the next one
+			local from = if (horizontal and side > 0) or (not horizontal and side < 0) then a else b
+			local cf = CFrame.new(if horizontal then from else v, SIDEWALK, if horizontal then v else from)
+				* CFrame.Angles(0, math.rad(yaw), 0)
+			if len <= 120 and not hits(moved(cf, { 1.5, 14, -2.2, len - 1.5, 19.4, 2.2 }), 0) then
+				table.insert(strung, { name = string.format("wireSpan:%d", len), cf = cf })
+			end
+		end
+	end
+	local function roadAt(x1: number, z1: number, x2: number, z2: number): any
+		for _, road in Town.Roads do
+			if road[1] == x1 and road[2] == z1 and road[3] == x2 and road[4] == z2 then
+				return road
+			end
+		end
+		error("no such road")
+	end
+	local main = Town.Roads[1]
+	local RZ, CZ = Town.RingZ, Town.CrossZ
+	local AX = Town.AvenueX
+	local hill, harbour = roadAt(-AX[3], RZ, AX[3], RZ), roadAt(-AX[3], -RZ, AX[3], -RZ)
+	local firstAvenue, midAvenue = roadAt(AX[1], -RZ, AX[1], RZ), roadAt(AX[2], -RZ, AX[2], RZ)
+	local crossNorth, crossSouth = roadAt(AX[1], CZ, AX[3], CZ), roadAt(AX[1], -CZ, AX[3], -CZ)
+	-- (how far a side road's sidewalk reaches from its middle)
+	local reach = hill[5] + hill[6]
+	-- The whole length of the main street, and downtown's streets: its two avenues and its two
+	-- cross streets. A pole every 68 studs, as the main street's lamps are, and half way between
+	-- them.
+	poleLine(main, 1, -986, 986, 68)
+	poleLine(midAvenue, 1, -238, 238, 68)
+	poleLine(firstAvenue, 1, -238, 238, 68)
+	poleLine(crossNorth, 1, 578, 986, 68)
+	poleLine(crossSouth, -1, 578, 986, 68)
+	for _, span in strung do
+		add(span.name, span.cf)
+	end
+
+	-- What the ground is at a spot: downtown's paving, a sidewalk, the boardwalk or grass.
+	local function groundAt(x: number, z: number): number
+		for _, b in TownMap.blocks("east") do
+			if x >= b[1] and x <= b[3] and z >= b[2] and z <= b[4] then
+				return DOWNTOWN
+			end
+		end
+		for _, road in Town.Roads do
+			local reach = road[5] + road[6]
+			if
+				x > math.min(road[1], road[3]) - reach
+				and x < math.max(road[1], road[3]) + reach
+				and z > math.min(road[2], road[4]) - reach
+				and z < math.max(road[2], road[4]) + reach
+			then
+				return SIDEWALK
+			end
+		end
+		if z < -(RZ + reach) and z > -TownMap.IslandS then
+			return 0.32 -- the boardwalk
+		end
+		return GRASS
+	end
+	local function set(name: string, x: number, z: number, yaw: number, room: number?): boolean
+		return put(name, x, groundAt(x, z), z, yaw, room)
+	end
+	local MACHINES = { "vendingMachine", "vendingMachine2", "vendingMachine3" }
+	-- A row of drinks machines side by side from (x, z), the row running along local +X, and
+	-- sometimes the bin for empties at the end of it.
+	local function machines(x: number, z: number, yaw: number, count: number, first: number, bin: boolean)
+		local along = CFrame.Angles(0, math.rad(yaw), 0) * Vector3.new(1, 0, 0)
+		for k = 0, count - 1 do
+			set(MACHINES[(first + k) % #MACHINES + 1], x + along.X * k * 3.6, z + along.Z * k * 3.6, yaw, 3)
+		end
+		if bin then
+			set("canBin", x + along.X * (count * 3.6 - 0.7), z + along.Z * (count * 3.6 - 0.7), yaw)
+		end
+	end
+
+	-- Big boards on a post: at the corners where the main street meets the first avenue, at two
+	-- of downtown's junctions (side on to the street, so both ways read them), and on the seafront
+	-- at the ends of the avenues.
+	local edge = Town.StreetHalfWidth + Town.SidewalkWidth
+	set("billboardTall", AX[1] - 28, edge + 12, 90)
+	set("billboardTall", -(AX[1] - 28), -(edge + 12), 90)
+	set("billboardTall", AX[2] + 24, -(edge + 9), 90)
+	set("billboardTall", AX[2] + 25, CZ + 27, 90)
+	for _, x in { AX[1] - 2, AX[2] - 6, -(AX[1] - 2) } do
+		set("billboardTall", x, -(RZ + reach + 5), 0)
+	end
+
+	-- Hoardings of posters. Downtown, one beside the mouth of each lane, with a drinks machine
+	-- beside some of them.
+	local posters = Rng.new(58)
+	local hoardings = 0
+	for _, b in TownMap.blocks("east") do
+		local mid = (b[2] + b[4]) / 2
+		for _, e in { { b[1] + 2.2, 90, 1 }, { b[3] - 2.2, -90, -1 } } do
+			-- (not the last avenue, out by the shore)
+			if math.abs(e[1]) < AX[3] - 40 then
+				hoardings += 1
+				local name = if hoardings % 2 == 0 then "posterWall2" else "posterWall"
+				local side = if hoardings % 3 == 0 then -1 else 1
+				local ok = set(name, e[1], mid + side * 12.5, e[2])
+				if not ok then
+					side = -side
+					ok = set(name, e[1], mid + side * 12.5, e[2])
+				end
+				if ok and posters:chance(0.35) then
+					machines(e[1] - e[3] * 0.9, mid + side * 21.6, e[2], 1, hoardings, posters:chance(0.5))
+				end
+			end
+		end
+	end
+	-- Round the old town, on the verge between the ring road's sidewalk and the hedges, and in the
+	-- gaps between the plots on the main street.
+	local verge = RZ - reach - 0.8
+	for i, x in { -390, -130, 130, 390 } do
+		set(if i % 2 == 0 then "posterWall2" else "posterWall", x, verge, 180)
+		machines(x - 9.5, verge - 0.5, 180, 1, i, i % 2 == 0)
+	end
+	for i, x in { -260, 260 } do
+		set(if i % 2 == 0 then "posterWall2" else "posterWall", x, -verge, 0)
+		machines(x + 9.5, -verge + 0.5, 0, 1, i + 1, true)
+	end
+	set("posterWall", AX[1] - reach - 0.8, 120, -90)
+	set("posterWall2", -(AX[1] - reach - 0.8), -120, 90)
+	set("posterWall", 274, -(edge + 0.5), 180)
+	set("posterWall", -274, edge + 0.5, 0)
+
+	-- Drinks machines at the back of the main street's sidewalk: by the crossings between the
+	-- plots, at the corners of the square and the market, and at either end of the old town.
+	local back = edge - 1.3
+	machines(270.2, back, 0, 2, 0, true)
+	machines(-270.2, -back, 180, 2, 1, true)
+	machines(56, back, 0, 1, 2, true)
+	machines(-56, -back, 180, 1, 0, false)
+	machines(496, -back, 180, 2, 1, false)
+	machines(-496, back, 0, 2, 2, true)
+
+	-- Telephone boxes: by the square, at a crossing, on a downtown corner and on the seafront.
+	set("phoneBooth", -59, edge - 1.9, 0)
+	set("phoneBooth", 287, -(edge - 1.9), 180)
+	set("phoneBooth", AX[2] + 22, edge + 3, 0)
+	set("phoneBooth", 334, -(RZ + reach + 9.3), 180)
+	set("phoneBooth", -250, -(RZ + reach + 9.3), 180)
+
+	-- Where an avenue crosses the main street, a street sign on the two corners that have no
+	-- traffic light.
+	for _, x in { AX[1], -AX[1], AX[2], -AX[2] } do
+		local dx, dz = hill[5] + 1.6, Town.StreetHalfWidth + 1.6
+		set("streetSignPost", x + dx, dz, 0)
+		set("streetSignPost", x - dx, -dz, 180)
+	end
+
+	-- Buildings: what leans on their walls, hangs from them and stands on their roofs --------------
+	type Face = { at: Vector3, dir: Vector3, n: Vector3, len: number, y1: number, y2: number }
+	local HALLS = {
+		cinema = true,
+		station = true,
+		library = true,
+		museum = true,
+		clinic = true,
+		school = true,
+		fireStation = true,
+	}
+	local function kindOf(name: string): string?
+		if name == "shop" then
+			return nil -- the old town's own shop, on the market
+		elseif name:sub(1, 4) == "shop" or name == "deptStore" or name == "postOffice" then
+			return "shop"
+		elseif name:sub(1, 9) == "apartment" then
+			return "flats"
+		elseif name:sub(1, 6) == "office" or name == "hotel" or name == "skyTower" then
+			return "tower"
+		elseif HALLS[name] then
+			return "hall"
+		end
+		return nil
+	end
+	-- Stands a model with its back to a wall, `s` along it from the wall's near end and `gap` out.
+	local function lean(name: string, f: Face, s: number, gap: number?, room: number?): boolean
+		local a = shapeOf(name).all
+		local pos = f.at + f.dir * (s + (a[4] - a[1]) / 2) + f.n * (a[6] + (gap or 0.06))
+		return put(name, pos.X, f.y1, pos.Z, facing(f.n.X, f.n.Z), room)
+	end
+	-- The free heights between y1 and y2 over a patch of ground: the gaps no part reaches into.
+	local function gaps(x1: number, z1: number, x2: number, z2: number, y1: number, y2: number): { { number } }
+		local taken: { { number } } = {}
+		over(x1, z1, x2, z2, function(q)
+			if q[5] > y1 and q[2] < y2 then
+				table.insert(taken, { q[2], q[5] })
+			end
+			return false
+		end)
+		table.sort(taken, function(a, b)
+			return a[1] < b[1]
+		end)
+		local free: { { number } } = {}
+		local y = y1
+		for _, t in taken do
+			if t[1] > y then
+				table.insert(free, { y, t[1] })
+			end
+			y = math.max(y, t[2])
+		end
+		if y2 > y then
+			table.insert(free, { y, y2 })
+		end
+		return free
+	end
+	-- Hangs air conditioners on a wall `s` along it, one in each free height from y1 up (so on a
+	-- tower they sit under the windows, floor after floor), `most` at the most.
+	local AC = shapeOf("acUnit").all
+	local function airCon(f: Face, s: number, y1: number, y2: number, most: number): number
+		local c = f.at + f.dir * s
+		local p1 = c - f.dir * ((AC[4] - AC[1]) / 2 + 0.3) + f.n * 0.07
+		local p2 = c + f.dir * ((AC[4] - AC[1]) / 2 + 0.3) + f.n * (AC[6] - AC[3] + 0.2)
+		local tall = AC[5] - AC[2]
+		local hung = 0
+		for _, g in gaps(math.min(p1.X, p2.X), math.min(p1.Z, p2.Z), math.max(p1.X, p2.X), math.max(p1.Z, p2.Z), y1, y2) do
+			if hung < most and g[2] - g[1] >= tall + 0.08 then
+				-- snug between two rows of windows, or low on a blank wall
+				local y = if g[2] - g[1] < 3 then (g[1] + g[2] - tall) / 2 else g[1] + 0.6
+				local at = c + f.n * 0.03
+				local cf = CFrame.new(at.X, y, at.Z) * CFrame.Angles(0, math.rad(facing(f.n.X, f.n.Z)), 0)
+				if add("acUnit", cf) then
+					hung += 1
+				end
+			end
+		end
+		return hung
+	end
+	local LEFT_OUT = { "crateStack", "binBags", "drinksCrates", "crateStack" }
+	local dress = Rng.new(64)
+	for _, p in standing do
+		local kind = kindOf(p.name)
+		if kind then
+			local shell = shellOf(p.name)
+			local east = p.cf.Position.X > 0
+			-- (the civic quarter is quieter than downtown, and its buildings stand on lawns)
+			local busy = if east then 1 else 0.5
+			local ground = p.cf.Y + (if east then 0 else 0.1)
+			local function face(x: number, z: number, dx: number, dz: number, nx: number, nz: number): Face
+				return {
+					at = p.cf * Vector3.new(x, 0, z),
+					dir = p.cf:VectorToWorldSpace(Vector3.new(dx, 0, dz)),
+					n = p.cf:VectorToWorldSpace(Vector3.new(nx, 0, nz)),
+					len = 0,
+					y1 = ground,
+					y2 = ground,
+				}
+			end
+			local sides: { Face } = {}
+			local backs: { Face } = {}
+			for _, w in shell.walls do
+				local f = face(w.x, w.z, w.dx, w.dz, w.nx, w.nz)
+				f.len, f.y2 = w.len, p.cf.Y + w.top
+				table.insert(if w.nz > 0 then backs else sides, f)
+			end
+
+			-- a drinks machine or two round the corner from the door, at the first clear stretch
+			-- of a side wall (a poster may have the corner)
+			if kind ~= "hall" and #sides > 0 and dress:chance(0.45 * busy) then
+				local f = sides[dress:int(1, #sides)]
+				local first = dress:int(1, #MACHINES)
+				local s = 1.6
+				while s < f.len - 5 and not lean(MACHINES[first], f, s, nil, 3) do
+					s += 1.4
+				end
+				if s < f.len - 5 then
+					s += 3.6
+					if dress:chance(0.3) and lean(MACHINES[first % #MACHINES + 1], f, s, nil, 3) then
+						s += 3.6
+					end
+					if dress:chance(0.35) then
+						lean("canBin", f, s + 0.2)
+					end
+				end
+			end
+			-- behind: the air conditioning's big box, and crates or rubbish by the back door
+			for _, f in backs do
+				if dress:chance(0.55 * busy) then
+					lean("condenser", f, dress:float(2, math.max(2, f.len - 6)))
+				end
+				if kind == "shop" and dress:chance(0.6 * busy) then
+					lean(dress:pick(LEFT_OUT), f, dress:float(2, math.max(2, f.len - 5)))
+				end
+			end
+			for _, f in sides do
+				if dress:chance(0.3 * busy) then
+					lean(dress:pick(LEFT_OUT), f, dress:float(10, math.max(10, f.len - 5)))
+				end
+			end
+			-- out the front of a shop: a sandwich board on the pavement, crates under the window
+			if kind == "shop" and east then
+				local front = face(shell.x1, shell.front, 1, 0, 0, -1)
+				local width = shell.x2 - shell.x1
+				if dress:chance(0.6) then
+					lean("aBoard", front, width / 2 + (if dress:chance(0.5) then 3.4 else -5.4), 2)
+				end
+				if dress:chance(0.4) then
+					lean("drinksCrates", front, if dress:chance(0.5) then 1.4 else width - 5, 0.3)
+				end
+			end
+
+			-- air conditioners: one low on a back or side wall, then up the storeys above
+			local limit = if kind == "flats" then 5 elseif kind == "tower" then 3 elseif kind == "shop" then 2 else 1
+			if not east then
+				limit = math.ceil(limit / 2)
+			end
+			local hung = 0
+			local low: { Face } = {}
+			for _, f in backs do
+				table.insert(low, f)
+			end
+			for _, f in sides do
+				table.insert(low, f)
+			end
+			if #low > 0 and dress:chance(0.8) then
+				local f = low[dress:int(1, #low)]
+				if f.len > 7 then
+					hung += airCon(f, dress:float(3, f.len - 3), ground + 6.1, f.y2 - 0.2, 1)
+				end
+			end
+			local body = shell.body
+			if body then
+				local upper = {
+					face(body[1], body[6], 1, 0, 0, 1),
+					face(body[1], body[3], 0, 1, -1, 0),
+					face(body[4], body[3], 0, 1, 1, 0),
+				}
+				upper[1].len, upper[2].len, upper[3].len = body[4] - body[1], body[6] - body[3], body[6] - body[3]
+				local y1, y2 = p.cf.Y + body[2] + 0.2, p.cf.Y + body[5] - 0.6
+				for _ = 1, 5 do
+					if hung < limit then
+						local f = upper[dress:int(1, 3)]
+						local from = y1 + dress:float(0, 0.6) * (y2 - y1)
+						local most = math.min(limit - hung, if kind == "shop" then 1 else 3)
+						hung += airCon(f, dress:float(3, f.len - 3), from, y2, most)
+					end
+				end
+			end
+
+			-- the roof: a water tank and an aerial on a shop, aerials and dishes on flats, a mast
+			-- with a red lamp on an office
+			local roof = shell.roof
+			if roof then
+				local top = p.cf.Y + roof[5]
+				local look = p.cf.LookVector
+				local yaw = facing(look.X, look.Z)
+				local function onRoof(name: string, chance: number)
+					if not dress:chance(chance * busy) then
+						return
+					end
+					local a = shapeOf(name).all
+					local rx = (roof[4] - roof[1]) / 2 - 1.8 - (a[4] - a[1]) / 2
+					local rz = (roof[6] - roof[3]) / 2 - 1.8 - (a[6] - a[3]) / 2
+					if rx < 0 or rz < 0 then
+						return
+					end
+					for _ = 1, 10 do
+						local at = p.cf
+							* Vector3.new(
+								(roof[1] + roof[4]) / 2 + dress:float(-rx, rx),
+								0,
+								(roof[3] + roof[6]) / 2 + dress:float(-rz, rz)
+							)
+						if put(name, at.X, top, at.Z, yaw + dress:int(0, 3) * 90) then
+							return
+						end
+					end
+				end
+				if kind == "shop" then
+					onRoof("rooftopTank", 0.5)
+					onRoof("antenna", 0.3)
+					onRoof("satDish", 0.35)
+				elseif kind == "flats" then
+					onRoof("antenna", 0.4)
+					onRoof("satDish", 0.6)
+					onRoof("satDish", 0.3)
+				elseif kind == "tower" then
+					if p.name ~= "skyTower" then
+						onRoof("antennaMast", 0.9)
+					end
+					onRoof("satDish", 0.4)
+				else
+					onRoof("satDish", 0.4)
+				end
+			end
+		end
+	end
+
+	-- Kerbside clutter, scattered along the streets: cones, rails, newspaper boxes, scooters. Not
+	-- at a crossing, by a bus stop or where a player arrives on their plot.
+	local KERB = {
+		"trafficCone",
+		"newsBox",
+		"guardRail",
+		"scooter",
+		"trafficCone",
+		"bollardRow",
+		"newsBox2",
+		"coneBar",
+		"scooter2",
+		"trafficCone",
+		"binBags",
+	}
+	local quiet: { Vector3 } = {}
+	for _, p in standing do
+		if p.name == "busStop" then
+			table.insert(quiet, p.cf.Position)
+		end
+	end
+	for i = 1, Tuning.Plot.Count do
+		table.insert(quiet, Town.plotArrival(i).Position)
+	end
+	local clutter = Rng.new(57)
+	local function kerb(road: any, side: number, from: number, to: number, least: number, most: number)
+		local horizontal = road[2] == road[4]
+		local at = if horizontal then road[2] else road[1]
+		local street = if horizontal then (if side > 0 then 0 else 180) else (if side > 0 then 90 else -90)
+		local u = from + clutter:float(0, most - least)
+		while u < to do
+			local name = clutter:pick(KERB)
+			local off, yaw = 1.6, street
+			if name == "guardRail" or name == "bollardRow" then
+				off = 1
+			elseif name:sub(1, 7) == "scooter" then
+				-- parked along the kerb
+				off, yaw = 1.5, street + (if clutter:chance(0.5) then 90 else -90)
+			elseif name:sub(1, 7) == "newsBox" then
+				-- its window to the people walking by
+				off, yaw = 1.4, street + 180
+			elseif name == "binBags" then
+				off = 2.4
+			end
+			local w = math.floor(u)
+			local v = at + side * (road[5] + off)
+			local x, z = if horizontal then w else v, if horizontal then v else w
+			local calm = atCrossing(road, w)
+			for _, q in quiet do
+				if (q.X - x) ^ 2 + (q.Z - z) ^ 2 < 14 ^ 2 then
+					calm = true
+				end
+			end
+			if not calm then
+				put(name, x, SIDEWALK, z, yaw)
+			end
+			u += clutter:float(least, most)
+		end
+	end
+	-- (thickest in the old town, thinner downtown, thin on the ring road and out west)
+	for _, side in { 1, -1 } do
+		kerb(main, side, -1040, -560, 110, 190)
+		kerb(main, side, -520, 520, 50, 90)
+		kerb(main, side, 560, 1040, 70, 120)
+		kerb(midAvenue, side, -240, 240, 70, 130)
+		kerb(firstAvenue, side, -240, 240, 90, 150)
+		kerb(crossNorth, side, 570, 1040, 80, 140)
+		kerb(crossSouth, side, 570, 1040, 80, 140)
+	end
+	kerb(hill, -1, -520, 1040, 110, 200)
+	kerb(harbour, 1, -520, 1040, 110, 200)
+	kerb(roadAt(-AX[1], -RZ, -AX[1], RZ), 1, -240, 240, 110, 200)
+
+	-- (the boxes were only needed to lay the scene out)
+	table.clear(shapes)
+	table.clear(shells)
+	return added
+end
 
 function TownMap.placements(): { Placement }
 	local out: { Placement } = {}
@@ -1600,6 +2414,13 @@ function TownMap.placements(): { Placement }
 		afloat("seaRocks", p[1], p[2], p[1], 1)
 	end
 	afloat("seaRocks", 1100 + 130, 520, 40, 1)
+
+	-- the street scene goes on last, round everything that is already standing
+	local scene: { Placement } = sceneCache or streetScene(out)
+	sceneCache = scene
+	for _, p in scene do
+		table.insert(out, { name = p.name, cf = p.cf })
+	end
 	return out
 end
 
