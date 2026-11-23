@@ -259,9 +259,13 @@ own saying or a line about their hobby.
 
 `Npc` (`src/server/Npc/Npc.luau`) is one villager's body: animations (their own pack or Roblox's defaults), pathfinding
 walks, sitting, lying in bed, speech bubbles, emotion icons and name tags. `Npc.walkTo` plans with
-`PathfindingService` (agent radius 1.3, height 5, jumping on, water costly, doors cheap), follows the waypoints,
-jumps when stuck for a moment and plans again when stuck longer; with no path it only steps straight when the way is
-short and clear (`Npc.clearLine`). Door leaves carry a `PathfindingModifier` that lets paths through. Villagers go
+`PathfindingService` (agent radius 1.3, height 5, jumping on, water costly, doors cheap) and follows the waypoints
+as one walk: `Npc.nextLeg(list, index, position, reach)` says which waypoint to head for, the next one as soon as
+they are within `Npc.Reach` (1.2 studs, flat) of this one, so they turn for it while still moving; if a move does
+end on a waypoint (`MoveToFinished`) the next starts in that same handler, and a move the engine gave up on (more
+than `Npc.Arrived` away) is taken up again. The `Running` handler waits `Npc.StillAfter` (0.25 s) of standing before
+the idle animation replaces the walk. It jumps when stuck for a moment and plans again when stuck longer; with no
+path it only steps straight when the way is short and clear (`Npc.clearLine`). Door leaves carry a `PathfindingModifier` that lets paths through. Villagers go
 to approach points beside beds and in front of seats, then sit or lie down.
 
 ## Remotes
@@ -437,7 +441,9 @@ clipping (`tools/preview/ui_render.py`).
   `Kit.pad` on a Kit button stretches its face back over the padding. Motion: buttons sink onto their lip when
   pressed, grow and hop their icon on hover and spring back when clicked; one loop sweeps a sheen across a button on
   screen now and then; `Kit.badge(parent)` is a plain red dot that pulses slowly; `popIn`, `popOut`, `slideIn`, `bump` and `flyCoins` animate screens. `Kit.overUI(pos)` says whether the pointer is
-  over our interface, using `GetGuiObjectsAtPosition`, so world clicks never go through a button.
+  over our interface, using `GetGuiObjectsAtPosition`, so world clicks never go through a button. Only what is
+  under a ScreenGui counts: that call also returns what is drawn on a SurfaceGui kept in PlayerGui (the creator's
+  backdrop is one, with `Active` off), which is scenery.
 - `UI/Rewards` (the thank you picker, opened by the HUD when `offers` arrive), `UI/Goals` (the town goals panel;
   `Goals.ready()` feeds the dock badge), `World/Wishes` (a wobbly thought bubble over each villager whose model has a
   `Wish` attribute; a click opens their page).
@@ -598,7 +604,9 @@ clipping (`tools/preview/ui_render.py`).
   adverts are well formed, picks are stable and vary, no dashes or banned words), `Skin` (a painted slab's size
   and its solid middle, which way it leans, its area against a parallelogram's, that it is itself turned half way
   round, a rim that lies inside the slab and is a pixel thick, textures that tile without a seam, a tone that starts at the
-  slab's very end, stays inside it, thins out and leans with it).
+  slab's very end, stays inside it, thins out and leans with it), `Walk` (the real `Npc.walkTo` on a stand-in
+  humanoid: the next leg starts the moment the last ends, a waypoint they are already on is passed, a move the
+  engine gave up on is taken up again, hops where the path asks).
 - The harness stands in for Roblox's image API: `AssetService:CreateEditableImage` returns a table that keeps its
   pixels (listed in `Harness.images`), and `Content.fromObject` gives a real Content with the address
   `rbxeditable://<n>`, which Lune's ImageLabel accepts. `tools/preview/ui_dump.luau` writes each such picture out

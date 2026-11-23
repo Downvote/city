@@ -29,7 +29,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (261, all passing; `Skin`: the painted slabs and textures; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (267, all passing; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off; what kind a bundle
 is, the outfit that holds the body, single body parts, the player's own items and avatars; preview scenes
@@ -100,6 +100,11 @@ rabbits and ducks on each player's own screen. Name a new tree's crown parts `Le
 
 Server start: `init` everything, `start` everything, then `Data.open()` lets players in. Never load a profile
 before every service is listening (a player can be in the server before the town is built).
+
+A villager's path is one walk (the user: "the characters seem to walk stop walk stop instead of one continuous
+walk"): `Npc.walkTo` heads for the next waypoint a little before reaching this one (`Npc.nextLeg`, `Npc.Reach`) and
+starts the next leg inside `MoveToFinished` itself. Never go back to waiting for one waypoint, then looking, then
+starting the next.
 
 The user asked to "interact/chat with villagers by holding e on them": every villager carries a ProximityPrompt
 (`Npc.talkPrompt`, put on in `Villagers.spawn` and answered by `Villagers.talkedTo`), what they say and what a
@@ -182,8 +187,10 @@ On the villagers' screen that is `ModelPreview.fromModel(model, { Stand = true, 
 playing their idle) with a fade to `T.Black` under the stats; in the creator the real mannequin stands in the
 air high over the meadow, with nothing under it ("remove the plate the character stands on in the creation
 screen"), and the client puts the backdrop on a part behind it that follows the camera (no town, no fade: "no need
-for the gradient background or the city background"). Never put a ViewportFrame inside a CanvasGroup: it
-comes out pale. The old header bar and its wave are gone.
+for the gradient background or the city background"). That backdrop is a SurfaceGui kept in PlayerGui, and the
+engine reports what is on it as under the pointer, which once stopped every drag ("you cant drag to rotate in the
+avatar creator"): it is `Active = false`, and `Kit.overUI` counts only what is under a ScreenGui. Never put a
+ViewportFrame inside a CanvasGroup: it comes out pale. The old header bar and its wave are gone.
 Shapes were angular for a while (the user: "Use the format in zenless zone zero for buttons and details in ui
 instead of overusing circles and rounded rectangles"). Two later requests replace that rule. Of the slabs on the
 main screen, with a picture of another game's HUD: "could you make these parallelograms textured like these

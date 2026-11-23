@@ -1030,6 +1030,23 @@ Maplewick's.
 - **Colour.** The dark look's surfaces lost their blue: they are charcoal now, so the accents carry the colour.
   The yellow is stronger. The light look keeps its pale paper, with the same shapes and textures in darker dots.
 
+### Two fixes from play: turning the villager in the creator, and walking without stops
+
+> you cant drag to rotate in the avatar creator
+
+> also, the characters seem to walk stop walk stop instead of one continuous walk
+
+- **Dragging in the creator.** The studio's backdrop is a picture on a part that fills the view, and the engine
+  counts what is on it as lying under the pointer. The creator took every press on it for a press on the
+  interface, so no drag ever started. The backdrop is scenery now: it takes no input, and only what is really on
+  the screen counts as interface. A drag on the empty side turns the villager; a drag that starts on the panel
+  or on a button does not.
+- **Walking.** A path is a string of waypoints about three studs apart. Each used to be a walk of its own: a
+  villager walked onto a waypoint, stood, and set off again a moment later, so a walk across the square was a
+  dozen starts and stops with the walk animation flickering. Now a path is one walk. They turn for the next
+  waypoint a little before reaching this one, and if they do arrive on one the next leg starts in the same
+  moment. The walk animation waits a quarter of a second of real standing before it gives way to the idle one.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

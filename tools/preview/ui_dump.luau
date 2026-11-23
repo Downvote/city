@@ -670,6 +670,7 @@ local PROPS = {
 	"Position",
 	"AnchorPoint",
 	"Visible",
+	"Active",
 	"BackgroundColor3",
 	"BackgroundTransparency",
 	"ZIndex",

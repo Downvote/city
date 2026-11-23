@@ -4217,13 +4217,19 @@ local function shown(o: Instance): boolean
 		if cur:IsA("ScreenGui") and not cur.Enabled then
 			return false
 		end
+		-- a picture on a part in the world (the creator's backdrop is one, kept in PlayerGui) is
+		-- scenery, not interface, though the engine reports what is on it as under the pointer
+		if cur:IsA("SurfaceGui") or cur:IsA("BillboardGui") then
+			return false
+		end
 		cur = cur.Parent
 	end
 	return true
 end
 
 -- Is the pointer over any of our interface (so world clicks should be ignored)? Takes a viewport
--- position (like GetMouseLocation); defaults to the mouse.
+-- position (like GetMouseLocation); defaults to the mouse. Only what is on the screen counts:
+-- GetGuiObjectsAtPosition also returns what is drawn on a SurfaceGui that lives in PlayerGui.
 function Kit.overUI(pos: Vector2?): boolean
 	local p = pos or UserInputService:GetMouseLocation()
 	local inset = GuiService:GetGuiInset()

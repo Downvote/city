@@ -18,6 +18,7 @@ export type Npc = typeof(setmetatable(
 		animator: Animator?,
 		tracks: { [string]: AnimationTrack },
 		moving: number,
+		still: number, -- counts the times they slowed to nothing, so a pause between two legs isn't taken for a stop
 		busy: boolean,
 		seat: Seat?,
 		sleeping: boolean,
@@ -72,6 +73,7 @@ function Npc.new(model: Model, vid: string): Npc
 		animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid),
 		tracks = {},
 		moving = 0,
+		still = 0,
 		busy = false,
 		seat = nil,
 		sleeping = false,
@@ -97,12 +99,20 @@ function Npc.new(model: Model, vid: string): Npc
 		if self.sleeping or self.seat then
 			return
 		end
+		self.still += 1
 		if speed > 0.5 then
 			self:play("walk")
 			self:stop("idle")
 		else
-			self:stop("walk")
-			self:play("idle")
+			-- a walk can pass through a still moment (a corner, a doorstep): only go back to
+			-- standing when they have really stopped, or the walk stutters
+			local mine = self.still
+			task.delay(Npc.StillAfter, function()
+				if self.still == mine and not self.sleeping and not self.seat then
+					self:stop("walk")
+					self:play("idle")
+				end
+			end)
 		end
 	end)
 	return self
@@ -209,6 +219,29 @@ local function computePath(self: Npc, target: Vector3): { PathWaypoint }?
 	return nil
 end
 
+-- The user: "the characters seem to walk stop walk stop instead of one continuous walk". A path
+-- is a string of waypoints a few studs apart, and each used to be a walk of its own: they
+-- walked onto a waypoint, stopped, and only set off for the next when somebody looked. Now a
+-- path is one walk: the next leg starts while they are still moving, a little before the
+-- waypoint (Reach), and if they do arrive on one the next leg starts in that same moment.
+Npc.Reach = 1.2 -- how near a waypoint (flat, in studs) they get before heading for the next
+Npc.Arrived = 2.6 -- how near counts as there when the humanoid says a move is over
+Npc.StillAfter = 0.25 -- seconds of standing before the walk animation gives way to the idle one
+
+-- Which waypoint of `list` to head for from `position`: the one at `index`, or a later one when
+-- they are already as good as on it. Never past the last (that one they walk right onto).
+function Npc.nextLeg(list: { any }, index: number, position: Vector3, reach: number): number
+	while index < #list do
+		local at = list[index].Position
+		local dx, dz = at.X - position.X, at.Z - position.Z
+		if dx * dx + dz * dz > reach * reach then
+			break
+		end
+		index += 1
+	end
+	return index
+end
+
 -- Walks to a world point along a real path round walls and furniture. Returns true if it got
 -- there. A point nothing can reach is refused (no walking into walls). Cancelled by a newer walk.
 function Npc.walkTo(self: Npc, target: Vector3, timeout: number?): boolean
@@ -234,42 +267,66 @@ function Npc.walkTo(self: Npc, target: Vector3, timeout: number?): boolean
 				return false
 			end
 		end
+		local list = waypoints :: any
+		local index = 1 -- the waypoint they are heading for (the first is where they stand)
+		local arrived = #list < 2
 		local stuck = false
-		for i = 2, #(waypoints :: any) do
-			local wp = (waypoints :: any)[i]
-			if self.moving ~= token or not self.model.Parent then
-				return false
-			end
-			if wp.Action == Enum.PathWaypointAction.Jump then
-				self.humanoid.Jump = true
-			end
-			self.humanoid:MoveTo(wp.Position)
-			local arrived = false
-			local conn = self.humanoid.MoveToFinished:Connect(function()
-				arrived = true
-			end)
-			-- watch for being stuck on a corner: no progress for a while means replan
-			local lastPos = self.root.Position
-			local lastMove = os.clock()
-			while not arrived and self.moving == token and os.clock() < deadline do
-				task.wait(0.15)
-				local pos = self.root.Position
-				if (pos - lastPos).Magnitude > 0.4 then
-					lastPos = pos
-					lastMove = os.clock()
-				elseif os.clock() - lastMove > 1.2 then
+		-- sets off for waypoint `to`, hopping wherever a waypoint passed on the way asks for it
+		local function head(to: number)
+			for i = index + 1, to do
+				if list[i].Action == Enum.PathWaypointAction.Jump then
 					self.humanoid.Jump = true
-					if os.clock() - lastMove > 2.4 then
-						stuck = true
-						break
-					end
 				end
 			end
-			conn:Disconnect()
-			if stuck or os.clock() >= deadline then
+			index = to
+			self.humanoid:MoveTo(list[index].Position)
+		end
+		-- a leg that ends starts the next in the same moment, so they never stand between two
+		local conn = self.humanoid.MoveToFinished:Connect(function()
+			if self.moving ~= token or arrived or stuck then
+				return
+			end
+			local pos = self.root.Position
+			local at = list[index].Position
+			if Vector3.new(at.X - pos.X, 0, at.Z - pos.Z).Magnitude > Npc.Arrived then
+				-- the engine gives a move up after eight seconds: set off for the same waypoint
+				-- again (the watch below says when they are really stuck)
+				self.humanoid:MoveTo(at)
+			elseif index < #list then
+				head(index + 1)
+			else
+				arrived = true
+			end
+		end)
+		if not arrived then
+			head(Npc.nextLeg(list, 2, self.root.Position, Npc.Reach))
+		end
+		-- watch for being stuck on a corner: no progress for a while means replan
+		local lastPos = self.root.Position
+		local lastMove = os.clock()
+		while not arrived and self.moving == token and os.clock() < deadline do
+			task.wait(0.1)
+			if arrived or self.moving ~= token then
 				break
 			end
+			local pos = self.root.Position
+			-- nearly on this waypoint: head for the next while they are still moving
+			local to = Npc.nextLeg(list, index, pos, Npc.Reach)
+			if to ~= index then
+				head(to)
+			end
+			if (pos - lastPos).Magnitude > 0.4 then
+				lastPos = pos
+				lastMove = os.clock()
+			elseif os.clock() - lastMove > 1.2 then
+				self.humanoid.Jump = true
+				if os.clock() - lastMove > 2.4 then
+					stuck = true
+					break
+				end
+			end
 		end
+		conn:Disconnect()
 		if self.moving ~= token then
 			return false
 		end

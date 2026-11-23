@@ -879,6 +879,43 @@ run("the creator: a close view in a studio of its own", function()
 	check(ws:FindFirstChild("CreatorLamp") ~= nil, "a lamp by the camera lights them at night")
 	check(bloom.Enabled == false, "the town's bloom is off while you are in the studio")
 	check(gui:FindFirstChild("Fade", true) == nil, "no fade to black over the picture any more")
+	-- dragging turns them round. The backdrop fills the view, and the engine reports what is on
+	-- it as lying under the pointer everywhere (its picture is kept in PlayerGui): that is
+	-- scenery, and a press on it is a press on the empty side of the screen
+	check(face.Active == false, "the backdrop takes no clicks of its own")
+	local MB1, Move = roblox.Enum.UserInputType.MouseButton1, roblox.Enum.UserInputType.MouseMovement
+	local function drag(from, to)
+		Sim.UIS.InputBegan:Fire({ UserInputType = MB1, Position = Vector3.new(from, 300, 0) }, false)
+		Sim.UIS.InputChanged:Fire({ UserInputType = Move, Position = Vector3.new(to, 300, 0) }, false)
+		frames(2)
+		Sim.UIS.InputEnded:Fire({ UserInputType = MB1, Position = Vector3.new(to, 300, 0) }, false)
+	end
+	local function heading()
+		local look = cam.CFrame.LookVector
+		return math.atan2(look.X, look.Z)
+	end
+	Sim.setGuiAt({ drop })
+	local was = heading()
+	drag(300, 400)
+	local turned = heading()
+	check(math.abs(turned - was) > 0.5, "dragging on the empty side turns them round")
+	check(math.abs(off() - home) < 0.01, "at the same distance")
+	-- let go, the mouse moves freely
+	Sim.UIS.InputChanged:Fire({ UserInputType = Move, Position = Vector3.new(700, 300, 0) }, false)
+	frames(2)
+	check(math.abs(heading() - turned) < 0.001, "and stops turning when the button is let go")
+	-- a press on the panel is a press on the panel
+	local panelCard = gui:FindFirstChild("PanelHolder", true)
+	Sim.setGuiAt({ panelCard:FindFirstChild("Cut") })
+	drag(900, 1000)
+	check(math.abs(heading() - turned) < 0.001, "a drag that starts on the panel turns nothing")
+	-- and a press the interface has already taken (a button) starts no drag either
+	Sim.setGuiAt({})
+	Sim.UIS.InputBegan:Fire({ UserInputType = MB1, Position = Vector3.new(300, 300, 0) }, true)
+	Sim.UIS.InputChanged:Fire({ UserInputType = Move, Position = Vector3.new(400, 300, 0) }, false)
+	frames(2)
+	Sim.UIS.InputEnded:Fire({ UserInputType = MB1, Position = Vector3.new(400, 300, 0) }, false)
+	check(math.abs(heading() - turned) < 0.001, "nor does a press a button has taken")
 	-- zooming: the button steps out to the whole of them, in to the face, and back
 	press("Zoom")
 	frames(2)

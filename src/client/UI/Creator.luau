@@ -1793,6 +1793,9 @@ local function openStudio()
 	gui.CanvasSize = Vector2.new(1600, 900)
 	gui.ClipsDescendants = true
 	gui.ResetOnSpawn = false
+	-- scenery: it takes no clicks or drags (the user: "you cant drag to rotate in the avatar
+	-- creator": it filled the view and every press counted as a press on the interface)
+	gui.Active = false
 	gui.Adornee = part
 	gui.Parent = Kit.root().Parent
 	calmLight(true)
