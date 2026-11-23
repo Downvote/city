@@ -996,21 +996,21 @@ local function build()
 		Name = "Header",
 		Parent = panel,
 		Size = UDim2.new(1, 0, 0, 56),
-		Color = T.Pink:Lerp(T.White, 0.86),
+		Color = T.Pink,
 		Radius = 24,
 	})
 	Kit.frame({
 		Parent = header,
 		Size = UDim2.new(1, 0, 0, 24),
 		Position = UDim2.new(0, 0, 1, -24),
-		Color = T.Pink:Lerp(T.White, 0.86),
+		Color = T.Pink,
 		Radius = false,
 	})
 	titleHolder = Kit.box({
 		Name = "Title",
 		Parent = panel,
 		Size = UDim2.new(1, 0, 0, 10),
-		Position = UDim2.fromOffset(0, -22),
+		Position = UDim2.fromOffset(-18, 4),
 	})
 	titleHolder.ZIndex = 3
 	setTitle("Make a villager")

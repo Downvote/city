@@ -1,7 +1,7 @@
--- Tells a random event as it plays out in town, the way life sims do it: the event's name on a
--- banner, the words typed out in a big speech bubble near the top of the screen with the
--- villagers' names picked out in colour, the speaker on a name plate, a little arrow when you
--- can click on, and the choices as speech bubbles down the right. "Watch" points the camera at it.
+-- Tells a random event as it plays out in town: a dialogue card near the bottom of the screen
+-- with the event's name on a tab, the speaker on a name plate, the words typed out with the
+-- villagers' names picked out in colour, a little arrow when you can click on, and the answers
+-- stacked under the words. "Watch" points the camera at it.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -216,9 +216,9 @@ local function play(ev: any)
 			Parent = bannerSlot,
 			Color = T.Coral,
 			TextSize = 22,
-			Position = UDim2.new(0.5, 0, 1, 0),
-			AnchorPoint = Vector2.new(0.5, 1),
-			ZIndex = 21,
+			Position = UDim2.new(0, 22, 1, 0),
+			AnchorPoint = Vector2.new(0, 1),
+			ZIndex = 22,
 		})
 	end
 	if not hidden then
@@ -274,70 +274,60 @@ end
 
 function EventCard.start(_hud: any)
 	local gui = Kit.root()
+	-- a dialogue card near the bottom of the screen, the way town builders' advisers talk: the
+	-- event's name on a tab over its top edge, the words, and the answers stacked under them.
+	-- Everything inside is laid out by lists, so the card is exactly as tall as what's in it.
 	holder = Kit.box({
 		Name = "EventCard",
-		Size = UDim2.fromOffset(620, 0),
+		Size = UDim2.fromOffset(600, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		Position = UDim2.new(0.5, 0, 0, 96),
-		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 1, -124),
+		AnchorPoint = Vector2.new(0.5, 1),
 		Parent = gui,
 		Visible = false,
 	})
 	holder.ZIndex = 20
 	Kit.list(holder, 0, false, Enum.HorizontalAlignment.Center)
-
-	-- the event's name on a banner above the bubble (made in play)
-	bannerSlot = Kit.box({ Name = "Banner", Parent = holder, Size = UDim2.new(1, 0, 0, 50), LayoutOrder = 1 })
-	Kit.box({ Parent = holder, Size = UDim2.fromOffset(10, 14), LayoutOrder = 2 })
-
-	-- the speech bubble, its tail pointing down at the town
-	local page
-	page, card = Kit.bubble({
+	bannerSlot = Kit.box({ Name = "Banner", Parent = holder, Size = UDim2.new(1, 0, 0, 44), LayoutOrder = 1 })
+	bannerSlot.ZIndex = 22
+	Kit.box({ Parent = holder, Size = UDim2.fromOffset(10, 6), LayoutOrder = 2 })
+	card = Kit.frame({
 		Name = "Page",
 		Parent = holder,
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		Radius = 34,
-		Tail = "down",
-		TailAt = 0.5,
-		TailSize = 28,
-		Border = Color3.fromRGB(255, 196, 150),
-		BorderWidth = 4,
-		Estimate = Vector2.new(620, 80),
+		Color = T.Cream,
+		Radius = 28,
 		LayoutOrder = 3,
 	})
-	-- faint doodles behind the words
-	Kit.doodles(page, Color3.fromRGB(255, 236, 222), 7, 6, { 0.08, 0.2, 0.92, 0.8 })
 	local inner = Kit.box({ Parent = card, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y })
-	Kit.pad(inner, 34, 26)
-	Kit.list(inner, 10)
+	Kit.pad(inner, 28, 22)
+	Kit.list(inner, 12)
 
-	-- the speaker's name plate sits on the bubble's top edge
+	-- who's talking, and the button that points the camera at them
+	local top = Kit.box({ Parent = inner, Size = UDim2.new(1, 0, 0, 30), LayoutOrder = 0 })
 	plate = Kit.frame({
-		Parent = card,
-		Size = UDim2.fromOffset(0, 32),
+		Parent = top,
+		Size = UDim2.fromOffset(0, 30),
 		AutomaticSize = Enum.AutomaticSize.X,
-		Position = UDim2.fromOffset(30, -16),
 		Color = T.Blue,
 		Radius = "pill",
 		Visible = false,
-		ZIndex = 2,
 	})
 	Kit.pad(plate, 14, 0)
 	speakerLabel = Kit.title("", {
 		Parent = plate,
-		Size = UDim2.fromOffset(0, 32),
+		Size = UDim2.fromOffset(0, 30),
 		AutomaticSize = Enum.AutomaticSize.X,
-		TextSize = 18,
+		TextSize = 17,
 		Color = T.White,
 		Wrap = false,
 	})
-
 	watchButton = Kit.button("Watch", {
-		Icon = "camera",
-		Parent = card,
-		Size = UDim2.fromOffset(112, 32),
-		Position = UDim2.new(1, -130, 0, -16),
+		Parent = top,
+		Size = UDim2.fromOffset(96, 30),
+		Position = UDim2.new(1, 0, 0, 0),
+		AnchorPoint = Vector2.new(1, 0),
 		TextSize = 14,
 		Color = T.Purple,
 		Radius = "pill",
@@ -354,36 +344,34 @@ function EventCard.start(_hud: any)
 		Parent = inner,
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		TextSize = 24,
+		TextSize = 22,
 		Font = Kit.Fonts.Title,
 		LayoutOrder = 1,
 	})
 	bodyLabel.RichText = true
 	bodyLabel.LineHeight = 1.15
-	moreArrow = Icons.make("down", 22, { Parent = card, Position = UDim2.new(1, -44, 1, -32), Tint = T.Coral })
+	moreArrow = Icons.make("down", 20, {
+		Parent = card,
+		Position = UDim2.new(1, -38, 1, -30),
+		Color = T.Coral,
+	})
 	moreArrow.Visible = false
 	task.spawn(function()
 		local t = 0
 		while true do
 			t += task.wait(0.05)
-			moreArrow.Position = UDim2.new(1, -42, 1, -30 + math.floor(math.sin(t * 6) * 3 + 0.5))
+			moreArrow.Position = UDim2.new(1, -38, 1, -30 + math.floor(math.sin(t * 6) * 3 + 0.5))
 		end
 	end)
-	-- the answers, as speech bubbles down the right side of the screen
+	-- the answers, stacked under the words
 	choiceRow = Kit.box({
 		Name = "Choices",
-		Parent = gui,
-		Size = UDim2.fromOffset(380, 0),
+		Parent = inner,
+		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		Position = UDim2.new(1, -30, 0.5, 40),
-		AnchorPoint = Vector2.new(1, 0.5),
-		Visible = false,
+		LayoutOrder = 2,
 	})
-	choiceRow.ZIndex = 21
-	Kit.list(choiceRow, 12)
-	holder:GetPropertyChangedSignal("Visible"):Connect(function()
-		choiceRow.Visible = holder.Visible
-	end)
+	Kit.list(choiceRow, 8)
 	-- a click on the box finishes the line, or skips to the next one
 	card.InputBegan:Connect(function(input)
 		if

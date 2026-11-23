@@ -14,30 +14,31 @@ local Icons = require(script.Parent.Icons)
 local Kit = {}
 
 Kit.Theme = {
-	Paper = Color3.fromRGB(255, 255, 255), -- cards and buttons
-	Cream = Color3.fromRGB(255, 250, 240), -- panels
-	PaperDark = Color3.fromRGB(239, 243, 247), -- wells, tracks, unpicked tabs
-	Ink = Color3.fromRGB(58, 64, 86), -- text and the few outlines: a soft navy
-	InkSoft = Color3.fromRGB(122, 130, 150),
-	Line = Color3.fromRGB(218, 224, 232),
-	Green = Color3.fromRGB(86, 198, 74),
-	GreenDark = Color3.fromRGB(56, 156, 52),
-	Coral = Color3.fromRGB(255, 108, 98),
-	CoralDark = Color3.fromRGB(214, 70, 66),
-	Blue = Color3.fromRGB(58, 166, 242),
-	BlueDark = Color3.fromRGB(34, 124, 206),
-	Yellow = Color3.fromRGB(255, 202, 58),
-	YellowDark = Color3.fromRGB(236, 156, 28),
-	Purple = Color3.fromRGB(168, 118, 232),
-	Orange = Color3.fromRGB(255, 150, 58),
-	Pink = Color3.fromRGB(255, 126, 178),
-	Teal = Color3.fromRGB(36, 196, 188),
+	-- cozy and soft: warm creams, gentle pastels, warm brown words
+	Paper = Color3.fromRGB(255, 251, 243), -- cards and buttons
+	Cream = Color3.fromRGB(255, 247, 234), -- big panels
+	PaperDark = Color3.fromRGB(246, 236, 222), -- wells, tracks, unpicked tabs
+	Ink = Color3.fromRGB(96, 74, 68), -- words: a warm brown
+	InkSoft = Color3.fromRGB(158, 136, 126),
+	Line = Color3.fromRGB(234, 222, 206),
+	Green = Color3.fromRGB(128, 198, 118),
+	GreenDark = Color3.fromRGB(92, 164, 92),
+	Coral = Color3.fromRGB(250, 140, 128),
+	CoralDark = Color3.fromRGB(222, 104, 98),
+	Blue = Color3.fromRGB(116, 178, 236),
+	BlueDark = Color3.fromRGB(84, 146, 210),
+	Yellow = Color3.fromRGB(255, 206, 104),
+	YellowDark = Color3.fromRGB(240, 170, 70),
+	Purple = Color3.fromRGB(186, 156, 232),
+	Orange = Color3.fromRGB(255, 172, 108),
+	Pink = Color3.fromRGB(250, 156, 186),
+	Teal = Color3.fromRGB(110, 204, 188),
 	White = Color3.fromRGB(255, 255, 255),
-	Shadow = Color3.fromRGB(30, 40, 80), -- soft shadows, see through
-	Glass = Color3.fromRGB(24, 34, 62), -- the dark see-through pills over the 3D view
-	GlassAlpha = 0.38,
-	Wood = Color3.fromRGB(28, 38, 70),
-	WoodLight = Color3.fromRGB(40, 52, 90),
+	Shadow = Color3.fromRGB(90, 60, 50),
+	Glass = Color3.fromRGB(84, 62, 60), -- the dark see-through pills over the 3D view: warm cocoa
+	GlassAlpha = 0.3,
+	Wood = Color3.fromRGB(84, 62, 60),
+	WoodLight = Color3.fromRGB(110, 84, 80),
 }
 
 local T = Kit.Theme
@@ -240,12 +241,10 @@ function Kit.box(props: { [string]: any }?): Frame
 	return Kit.frame(p)
 end
 
--- A card the HUD floats over the 3D view: a cream wobbly bubble with navy words on it. If a list
--- or grid layout is put inside, the bubble's pieces would be lined up too, so it becomes a plain
--- rounded cream back instead.
+-- A white rounded card that floats over the 3D view (Build mode's bars, the creator's tools).
 function Kit.glass(props: { [string]: any }?): Frame
 	local p = table.clone(props or {})
-	local f = Kit.frame({
+	return Kit.frame({
 		Name = p.Name or "Glass",
 		Size = p.Size,
 		Position = p.Position,
@@ -256,31 +255,8 @@ function Kit.glass(props: { [string]: any }?): Frame
 		ZIndex = p.ZIndex,
 		AutomaticSize = p.AutomaticSize,
 		Color = p.Color or T.Paper,
-		Transparency = 1,
-		Radius = false,
-	})
-	local info = Kit.blobInto(f, {
-		Color = p.Color or T.Paper,
 		Radius = p.Radius or 20,
-		Base = false,
-		ZIndex = f.ZIndex,
 	})
-	f.ChildAdded:Connect(function(c)
-		if (c:IsA("UIListLayout") or c:IsA("UIGridLayout")) and not info.dead then
-			info.dead = true
-			for _, name in { "Shape", "Base" } do
-				local layer = f:FindFirstChild(name)
-				if layer then
-					layer:Destroy()
-				end
-			end
-			f.BackgroundTransparency = 0
-			Kit.corner(f, p.Radius or 20)
-			local st = Kit.stroke(f, T.Line, 2)
-			st.Transparency = 0.2
-		end
-	end)
-	return f
 end
 
 function Kit.text(text: string, props: { [string]: any }?): TextLabel
@@ -437,7 +413,7 @@ local function startWobble()
 			end
 			local since = t - w.kick
 			local kick = if since < 0.6 then math.sin(since * 28) * (1 - since / 0.6) else 0
-			local sway = math.sin(t * 2.1 + w.phase)
+			local sway = 0 -- nothing sways on its own any more; buttons still wiggle under the pointer
 			if w.canTurn then
 				g.Rotation = math.floor((sway * w.amount + kick * 5) * 10 + 0.5) / 10
 			elseif w.face then
@@ -1420,48 +1396,77 @@ function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: s
 		Parent = gui,
 	})
 	holder.ZIndex = 5
-	-- a cream wobbly card on its darker copy
-	local _, frame = Kit.blob({
+	-- the rest of the screen dims behind a menu, and clicks don't go through it
+	local dim = Kit.frame({
+		Name = "Dim",
+		Size = UDim2.fromOffset(6000, 6000),
+		Position = UDim2.fromScale(0.5, 0.5),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Color = Color3.fromRGB(70, 46, 40),
+		Transparency = 0.55,
+		Radius = false,
+		ZIndex = 0,
+		Parent = holder,
+	})
+	dim.Active = true
+	local frame = Kit.frame({
 		Name = "Card",
 		Size = UDim2.fromScale(1, 1),
 		Color = T.Cream,
-		Border = headColor:Lerp(T.White, 0.3),
-		BorderWidth = 5,
-		Radius = 64,
-		Bulge = 8,
-		Waves = 3,
-		Estimate = Vector2.new(size.X.Offset, size.Y.Offset),
-		ZIndex = holder.ZIndex,
+		Radius = 28,
 		Parent = holder,
 	})
-	-- faint doodles in the background, a little darker than the card
-	Kit.doodles(frame.Parent :: Frame, T.Cream:Lerp(headColor, 0.16), #titleText * 31, 9)
-	-- (kept for callers that place things by it: a clear strip where the banner sits)
-	local header = Kit.box({
+	-- the header bar: the panel's colour, round at the top and square where it meets the card
+	local header = Kit.frame({
 		Name = "Header",
-		Size = UDim2.new(1, 0, 0, 56),
+		Size = UDim2.new(1, 0, 0, 58),
+		Color = headColor,
+		Radius = 28,
 		Parent = frame,
 	})
-	-- the title on a flat pill banner over the top left edge (no icon: the user asked for plain titles)
-	local _ = icon
-	local _ribbon, title = Kit.ribbon(titleText, {
-		Parent = frame,
+	Kit.frame({
+		Name = "Square",
+		Size = UDim2.new(1, 0, 0, 28),
+		Position = UDim2.new(0, 0, 1, -28),
 		Color = headColor,
-		TextSize = 28,
-		Position = UDim2.new(0, 30, 0, -20),
+		Radius = false,
+		Parent = header,
+	})
+	local _ = icon
+	local title = Kit.title(titleText, {
+		Parent = header,
+		Size = UDim2.new(1, -90, 1, 0),
+		Position = UDim2.fromOffset(24, 0),
+		TextSize = 27,
+		Color = T.White,
+	})
+	title.ZIndex = 2
+	local close = Kit.new("TextButton", {
+		Name = "Close",
+		Text = "",
+		AutoButtonColor = false,
+		BackgroundColor3 = darker(headColor, 0.82),
+		Size = UDim2.fromOffset(40, 40),
+		Position = UDim2.new(1, -12, 0.5, 0),
+		AnchorPoint = Vector2.new(1, 0.5),
+		ZIndex = 2,
+		Parent = header,
+	})
+	close:SetAttribute("KitButton", true)
+	Kit.corner(close, "circle")
+	Icons.make("close", 22, {
+		Name = "IconArt",
+		Parent = close,
+		Position = UDim2.new(0.5, -11, 0.5, -11),
+		Color = T.White,
+		Hole = darker(headColor, 0.82),
 		ZIndex = 3,
 	})
-	local close = Kit.closeButton({
-		Size = UDim2.fromOffset(50, 50),
-		Position = UDim2.new(1, 14, 0, -16),
-		AnchorPoint = Vector2.new(1, 0),
-		Parent = frame,
-		ZIndex = 4,
-	})
+	pressable(close)
 	local body = Kit.box({
 		Name = "Body",
-		Size = UDim2.new(1, -40, 1, -84),
-		Position = UDim2.fromOffset(20, 68),
+		Size = UDim2.new(1, -40, 1, -92),
+		Position = UDim2.fromOffset(20, 74),
 		Parent = frame,
 	})
 	local self = { root = holder, card = frame, body = body, close = close, title = title, header = header }
@@ -1475,281 +1480,55 @@ function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: s
 	return self
 end
 
--- Wobbly blobs ---------------------------------------------------------------------------------------
--- A blob's outline is one smooth curve: a rounded rectangle whose edge drifts in and out in a few
--- slow waves running round the whole shape. It's drawn as many small circles, overlapping so much
--- that the steps between them are under a pixel, threaded along that curve round a filled core;
--- the border is the same circles a little bigger, behind. Round blobs are smooth circles that
--- squash and stretch like jelly. One loop moves every blob on screen, on the frame clock.
-type Dot = { frames: { Frame }, base: UDim2, nx: number, ny: number, u: number }
-type BlobInfo = {
-	holder: Frame,
-	dots: { Dot },
-	amp: number,
-	waves: number,
-	phase: number,
-	jelly: { Frame }?,
-	dead: boolean?,
-}
-local blobs: { BlobInfo } = {}
-local blobLoop = false
-local blobClock = 0
+-- Shapes ---------------------------------------------------------------------------------------------
+-- (These were wobbly bubbles in an earlier look, and the names stayed.) A "blob" is a plain shape
+-- in one flat colour: a rounded rectangle, a pill or a circle, with an optional little tail. It
+-- never moves and nothing in it reaches past the holder's edges, so a holder that sizes itself to
+-- its content stays the right size.
+type BlobInfo = { holder: Frame, dead: boolean? }
 
-local function stepBlob(info: BlobInfo, t: number)
-	if info.jelly then
-		local k = math.sin(t * 2.6 + info.phase) * 0.045
-		local k2 = math.sin(t * 1.7 + info.phase * 2) * 0.02
-		for _, f in info.jelly do
-			local grow = f:GetAttribute("Grow")
-			local g = if type(grow) == "number" then grow else 0
-			f.Size = UDim2.new(1 + k + k2, g * 2, 1 - k + k2, g * 2)
-		end
-		return
-	end
-	local a, n = info.amp, info.waves
-	for _, d in info.dots do
-		-- two slow waves round the shape, drifting opposite ways
-		local w = a
-			* (
-				0.62 * math.sin(2 * math.pi * n * d.u + t * 0.9 + info.phase)
-				+ 0.38 * math.sin(2 * math.pi * (n + 2) * d.u - t * 0.6 + info.phase * 1.7)
-			)
-		local pos = d.base + UDim2.fromOffset(d.nx * w, d.ny * w)
-		for _, f in d.frames do
-			f.Position = pos
-		end
-	end
-end
-
-local function startBlobs()
-	if blobLoop then
-		return
-	end
-	blobLoop = true
-	local acc = 0
-	RunService.Heartbeat:Connect(function(dt)
-		blobClock += dt
-		acc += dt
-		if acc < 1 / 20 then
-			return
-		end
-		acc = 0
-		local i = 1
-		while i <= #blobs do
-			local info = blobs[i]
-			if info.dead or not info.holder.Parent then
-				table.remove(blobs, i)
-				continue
-			end
-			if info.holder.Visible and onScreen(info.holder) then
-				stepBlob(info, blobClock)
-			end
-			i += 1
-		end
-	end)
-end
-
--- The points of a rounded rectangle path inset `inset` px from the holder's edges with corners of
--- radius `r` px, about `spacing` px apart for a holder of about `w` x `h` px: each as a UDim2
--- (scale for the straight runs, so it fits any size), its outward normal and how far round the
--- whole path it is (0..1).
-local function pathPoints(w: number, h: number, inset: number, r: number, spacing: number): { any }
-	local pts = {}
-	local e = inset + r
-	local straightX = math.max(0, w - 2 * e)
-	local straightY = math.max(0, h - 2 * e)
-	local arc = math.pi * r / 2
-	local total = 2 * straightX + 2 * straightY + 4 * arc
-	local walked = 0
-	local function add(pos: UDim2, nx: number, ny: number, step: number)
-		table.insert(pts, { pos = pos, nx = nx, ny = ny, u = walked / math.max(total, 1) })
-		walked += step
-	end
-	local function run(length: number, at: (number) -> UDim2, nx: number, ny: number)
-		local n = math.max(1, math.ceil(length / spacing))
-		for k = 0, n - 1 do
-			add(at(k / n), nx, ny, length / n)
-		end
-	end
-	local function corner(cx: UDim, cy: UDim, from: number)
-		local n = math.max(2, math.ceil(arc / spacing))
-		for k = 0, n - 1 do
-			local a = from + (k / n) * math.pi / 2
-			local c, sn = math.cos(a), math.sin(a)
-			add(UDim2.new(cx.Scale, cx.Offset + c * r, cy.Scale, cy.Offset + sn * r), c, sn, arc / n)
-		end
-	end
-	-- clockwise from the top left corner's end
-	run(straightX, function(t)
-		return UDim2.new(t, (1 - 2 * t) * e, 0, inset)
-	end, 0, -1)
-	corner(UDim.new(1, -e), UDim.new(0, e), -math.pi / 2)
-	run(straightY, function(t)
-		return UDim2.new(1, -inset, t, (1 - 2 * t) * e)
-	end, 1, 0)
-	corner(UDim.new(1, -e), UDim.new(1, -e), 0)
-	run(straightX, function(t)
-		return UDim2.new(1 - t, -(1 - 2 * t) * e, 1, -inset)
-	end, 0, 1)
-	corner(UDim.new(0, e), UDim.new(1, -e), math.pi / 2)
-	run(straightY, function(t)
-		return UDim2.new(0, inset, 1 - t, -(1 - 2 * t) * e)
-	end, -1, 0)
-	corner(UDim.new(0, e), UDim.new(0, e), math.pi)
-	return pts
-end
-
--- Puts a blob's shape (with its border and darker copy) inside an existing frame, behind its other
--- children. props as Kit.blob. Returns the blob's record (set `dead` to stop it moving).
 function Kit.blobInto(holder: Frame, p: { [string]: any }): BlobInfo
 	local color: Color3 = p.Color or T.Paper
 	local z = p.ZIndex or holder.ZIndex
 	holder:SetAttribute("Blob", true)
-	local rng = Random.new(p.Seed or math.random(1, 1e6))
-	local border: Color3? = p.Border
-	local bw = if border then (p.BorderWidth or 4) else 0
-	local baseColor: any = p.Base or false -- flat: no darker copy unless asked for
-	local info: BlobInfo = { holder = holder, dots = {}, amp = 0, waves = 3, phase = rng:NextNumber(0, 6.28) }
-
-	local function layer(name: string): Frame
-		return Kit.new("Frame", {
-			Name = name,
-			BackgroundTransparency = 1,
-			Size = UDim2.fromScale(1, 1),
-			ZIndex = z,
-			Parent = holder,
-		})
-	end
-
-	if p.Round then
-		-- a smooth circle that squashes and stretches
-		info.jelly = {}
-		local function circle(parent: Frame, c: Color3, grow: number): Frame
-			local f = Kit.new("Frame", {
-				Name = "Circle",
-				BackgroundColor3 = c,
-				BorderSizePixel = 0,
-				AnchorPoint = Vector2.new(0.5, 0.5),
-				Position = UDim2.fromScale(0.5, 0.5),
-				Size = UDim2.new(1, grow * 2, 1, grow * 2),
-				ZIndex = z,
-				Parent = parent,
-			})
-			f:SetAttribute("Grow", grow)
-			Kit.corner(f, "circle")
-			table.insert(info.jelly :: { Frame }, f)
-			return f
-		end
-		if baseColor then
-			local base = layer("Base")
-			base.Position = UDim2.fromScale(0, 0.06)
-			circle(base, baseColor, bw)
-		end
-		if border then
-			circle(layer("Border"), border, bw)
-		end
-		circle(layer("Shape"), color, 0)
-	else
-		-- the size it will roughly be (for how many circles to use)
-		local est: Vector2 = p.Estimate
-			or Vector2.new(
-				if holder.Size.X.Scale == 0 then holder.Size.X.Offset else 320,
-				if holder.Size.Y.Scale == 0 and holder.Size.Y.Offset > 0 then holder.Size.Y.Offset else 120
-			)
-		local small = math.min(est.X, est.Y)
-		local amp = p.Bulge or math.clamp(small * 0.035, 2.5, 9)
-		local dot = math.clamp(small * 0.62, 30, 120) -- each circle's diameter: big, for a smooth curve
-		local inset = dot / 2 + amp
-		local radius = if p.Radius == "pill"
-			then math.max(0, small / 2 - inset)
-			else math.max(0, (if type(p.Radius) == "number" then p.Radius else 34) - dot / 2)
-		local spacing = math.max(4, dot * 0.11)
-		info.amp = amp
-		info.waves = p.Waves or (if small < 90 then 2 else 3)
-		local pts = pathPoints(est.X, est.Y, inset, radius, spacing)
-		-- the filled middle, always inside the curve
-		local coreInset = 2 * amp + 2
-		local coreRadius = radius + dot / 2 - amp - 2
-		local layers: { { name: string, color: Color3, grow: number, dy: number } } = {}
-		if baseColor then
-			table.insert(layers, { name = "Base", color = baseColor, grow = bw, dy = 6 })
-		end
-		if border then
-			table.insert(layers, { name = "Border", color = border, grow = bw, dy = 0 })
-		end
-		table.insert(layers, { name = "Shape", color = color, grow = 0, dy = 0 })
-		for _, pt in pts do
-			table.insert(info.dots, { frames = {}, base = pt.pos, nx = pt.nx, ny = pt.ny, u = pt.u })
-		end
-		for _, spec in layers do
-			local l = layer(spec.name)
-			l.Position = UDim2.fromOffset(0, spec.dy)
-			local core = Kit.new("Frame", {
-				Name = "Core",
-				BackgroundColor3 = spec.color,
-				BorderSizePixel = 0,
-				Size = UDim2.new(1, -2 * (coreInset - spec.grow), 1, -2 * (coreInset - spec.grow)),
-				Position = UDim2.fromOffset(coreInset - spec.grow, coreInset - spec.grow),
-				ZIndex = z,
-				Parent = l,
-			})
-			Kit.corner(core, coreRadius + spec.grow)
-			local d = dot + spec.grow * 2
-			for k, pt in pts do
-				local f = Kit.new("Frame", {
-					Name = "Dot",
-					BackgroundColor3 = spec.color,
-					BorderSizePixel = 0,
-					AnchorPoint = Vector2.new(0.5, 0.5),
-					Size = UDim2.fromOffset(d, d),
-					Position = pt.pos,
-					ZIndex = z,
-					Parent = l,
-				})
-				Kit.corner(f, "circle")
-				table.insert(info.dots[k].frames, f)
-			end
-		end
-	end
-
+	local layer = Kit.new("Frame", {
+		Name = "Shape",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = z,
+		Parent = holder,
+	})
+	local core = Kit.new("Frame", {
+		Name = "Core",
+		BackgroundColor3 = color,
+		BorderSizePixel = 0,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = z,
+		Parent = layer,
+	})
+	Kit.corner(core, if p.Round then "circle" else (p.Radius or 20))
 	if p.Tail then
 		local size = p.TailSize or 20
 		local at = p.TailAt or 0.5
 		local tail = p.Tail
 		local inset = size * 0.2
-		local pos = if tail == "down"
-			then UDim2.new(at, 0, 1, -inset)
-			elseif tail == "up" then UDim2.new(at, 0, 0, inset)
-			elseif tail == "left" then UDim2.new(0, inset, at, 0)
-			else UDim2.new(1, -inset, at, 0)
-		local function tailIn(layerName: string, c: Color3, grow: number)
-			local l = holder:FindFirstChild(layerName)
-			if l then
-				Kit.new("Frame", {
-					Name = "Tail",
-					BackgroundColor3 = c,
-					BorderSizePixel = 0,
-					Rotation = 45,
-					Size = UDim2.fromOffset(size + grow * 2, size + grow * 2),
-					AnchorPoint = Vector2.new(0.5, 0.5),
-					Position = pos,
-					ZIndex = z,
-					Parent = l,
-				})
-			end
-		end
-		if border then
-			tailIn("Border", border, bw)
-		end
-		tailIn("Shape", color, 0)
+		Kit.new("Frame", {
+			Name = "Tail",
+			BackgroundColor3 = color,
+			BorderSizePixel = 0,
+			Rotation = 45,
+			Size = UDim2.fromOffset(size, size),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = if tail == "down"
+				then UDim2.new(at, 0, 1, -inset)
+				elseif tail == "up" then UDim2.new(at, 0, 0, inset)
+				elseif tail == "left" then UDim2.new(0, inset, at, 0)
+				else UDim2.new(1, -inset, at, 0),
+			ZIndex = z,
+			Parent = layer,
+		})
 	end
-
-	stepBlob(info, 0)
-	if p.Wobble ~= false then
-		table.insert(blobs, info)
-		startBlobs()
-	end
-	return info
+	return { holder = holder }
 end
 
 -- A wobbly bubble. Returns the holder (size and place it) and its content frame (put things in
@@ -1934,9 +1713,8 @@ function Kit.choice(text: string, props: { [string]: any }?, onClick: (() -> ())
 		Parent = b,
 		Size = UDim2.fromScale(1, 1),
 		Radius = "pill",
-		Tail = "right",
-		TailAt = 0.72,
-		TailSize = 14,
+		Tail = false,
+		Color = T.PaperDark,
 		ZIndex = z,
 	})
 	local core = holder:FindFirstChild("Shape") and (holder :: any).Shape:FindFirstChild("Core")
@@ -1980,7 +1758,7 @@ function Kit.choice(text: string, props: { [string]: any }?, onClick: (() -> ())
 	})
 	local _ = label
 	local function lit(on: boolean)
-		Kit.setBubbleColor(holder, if on and not p.Disabled then Color3.fromRGB(255, 214, 72) else T.White)
+		Kit.setBubbleColor(holder, if on and not p.Disabled then T.Yellow else T.PaperDark)
 		stripes.Enabled = on and not p.Disabled
 	end
 	b.MouseEnter:Connect(function()
@@ -1990,7 +1768,6 @@ function Kit.choice(text: string, props: { [string]: any }?, onClick: (() -> ())
 		lit(false)
 	end)
 	pressable(b)
-	Kit.wobbly(b, 0.9)
 	if onClick then
 		b.Activated:Connect(onClick)
 	end
