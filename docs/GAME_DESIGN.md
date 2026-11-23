@@ -132,10 +132,20 @@ Works like a catalog avatar editor:
 - click to wear or take off; bundles (bodies, heads, animations, shoes) are opened up and worn piece by piece;
 - copy any Roblox user's avatar by username, or your own; shuffle a random outfit; start over; undo and redo;
 - save outfits to reuse;
-- the mannequin on a private stage updates as you go, with a camera you can turn and zoom to the face;
+- the mannequin on a stage in town updates as you go, with a camera you can turn and zoom to the face;
 - then a name (run through Roblox's text filter), a personality, a favourite colour and a birthday.
 
 The server checks every asset is the kind of item its slot expects before dressing anyone in it.
+
+> the character customization looks like this currently. could it be more like catalog avatar creator? also, make
+> the background your current city, in an empty area
+
+The screen takes the catalog editor layout: your villager stands big on the left, the editor fills the right with
+the two steps on top, the categories as tabs across it (an icon over a name, the picked one on a blue pill), then
+the search box and sort, the filter chips and a grid of item cards five across. Under the villager: a row of round
+tool buttons (undo, redo, shuffle, reset, face) and the copy a username box. The stage is a low wooden deck on a
+meadow just north of Hill Road; the villager faces north and the camera looks back south, so the town is behind
+them. (The old stage stood far out of town, where the sky's haze washed everything out.)
 
 ## 7. The city
 

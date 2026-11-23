@@ -2088,7 +2088,7 @@ function Kit.textbox(placeholder: string, props: { [string]: any }?): TextBox
 		TextSize = p.TextSize or 18,
 		TextColor3 = T.Ink,
 		PlaceholderColor3 = T.InkSoft,
-		BackgroundColor3 = T.White,
+		BackgroundColor3 = T.PaperDark,
 		BorderSizePixel = 0,
 		ClearTextOnFocus = false,
 		TextXAlignment = Enum.TextXAlignment.Left,
@@ -2098,9 +2098,8 @@ function Kit.textbox(placeholder: string, props: { [string]: any }?): TextBox
 		Name = p.Name or "TextBox",
 		Parent = p.Parent,
 	})
-	Kit.corner(box, 12)
-	Kit.stroke(box, T.Ink, 2.5)
-	Kit.pad(box, 12, 0)
+	Kit.corner(box, "pill")
+	Kit.pad(box, 16, 0)
 	return box
 end
 
