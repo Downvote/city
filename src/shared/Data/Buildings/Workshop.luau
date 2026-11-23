@@ -45,6 +45,12 @@ local function hang(b: any, id: string, wall: string, t: number, y: number, side
 	})
 end
 
+-- a wall of another style (stone, fence, glass), the same finish both sides
+local function styled(b: any, name: string, x1: number, z1: number, x2: number, z2: number, f: Finish, style: string)
+	b:wall(name, x1, z1, x2, z2, f, f)
+	b.walls[name].style = style
+end
+
 local function put(b: any, id: string, x: number, z: number, r: number?, y: number?, c1: string?, c2: string?)
 	b:item(id, x, z, r or 0, 0, y)
 	if c1 or c2 then
@@ -83,18 +89,11 @@ return function(add: any)
 			b:wall("storeright", 34, 12, 34, 24, SAND, BARN_IN)
 			b:wall("storeback", 34, 24, 20, 24, SAND, BARN_IN)
 			-- the yard's fence, with a gate on the street
-			for _, s in
-				{
-					{ "fence1", 20, 0, 26, 0 },
-					{ "fence2", 30, 0, 36, 0 },
-					{ "fence3", 36, 0, 36, 12 },
-					{ "fence4", 36, 12, 34, 12 },
-					{ "fence5", 20, 10, 20, 0 },
-				}
-			do
-				b:wall(s[1], s[2], s[3], s[4], s[5], PALINGS, PALINGS)
-				b.walls[s[1]].style = "fence"
-			end
+			styled(b, "fence1", 20, 0, 26, 0, PALINGS, "fence")
+			styled(b, "fence2", 30, 0, 36, 0, PALINGS, "fence")
+			styled(b, "fence3", 36, 0, 36, 12, PALINGS, "fence")
+			styled(b, "fence4", 36, 12, 34, 12, PALINGS, "fence")
+			styled(b, "fence5", 20, 10, 20, 0, PALINGS, "fence")
 
 			b:roof(2, 10, 20, 26, "gable", 9, 0, ROSE, SAND, 0, 1.2)
 			b:roof(6, 6, 16, 16, "gable", 5, 1, ROSE, SAND, 0, 0.8)
@@ -172,7 +171,7 @@ return function(add: any)
 			put(b, "timber_rack", 32.5, 18.6, 270, nil, DARK, "E2C9A0")
 			put(b, "plank_stack", 26.6, 16.6, 0, nil, PALE, WALNUT)
 			put(b, "sawhorse", 25.6, 20, 0, nil, OAK, PALE)
-			put(b, "plank_stack", 26.6, 16.6, 0, F + Catalog.get("plank_stack").surface, "E2C9A0", WALNUT)
+			put(b, "plank_stack", 26.6, 16.6, 0, top("plank_stack"), "E2C9A0", WALNUT)
 			put(b, "crate", 31.6, 13.6, 0, nil, OAK, OAK)
 			put(b, "crate", 31.5, 13.5, 15, top("crate"), OAK, OAK)
 			for _, x in { 20.8, 27, 33.2 } do
@@ -190,7 +189,7 @@ return function(add: any)
 			put(b, "crate", 21.4, 1.4, 10, F, OAK, OAK)
 			put(b, "sawhorse", 32.4, 9, 0, F, OAK, PALE)
 			put(b, "crate", 30.9, 6.7, 0, F, OAK, OAK)
-			put(b, "crate", 31, 6.6, 12, F + Catalog.get("crate").surface, OAK, OAK)
+			put(b, "crate", 31, 6.6, 12, top("crate"), OAK, OAK)
 			put(b, "woodpile", 35.1, 9, 90, F, WALNUT, WALNUT)
 			put(b, "tree_pine", 33.4, 2.6, 0, F)
 

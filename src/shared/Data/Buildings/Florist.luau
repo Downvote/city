@@ -50,6 +50,12 @@ local function hang(b: any, id: string, wall: string, t: number, y: number, side
 end
 
 -- a free-standing piece on the ground floor, painted if given
+-- a wall of another style (stone, fence, glass), the same finish both sides
+local function styled(b: any, name: string, x1: number, z1: number, x2: number, z2: number, f: Finish, style: string)
+	b:wall(name, x1, z1, x2, z2, f, f)
+	b.walls[name].style = style
+end
+
 local function put(b: any, id: string, x: number, z: number, r: number?, y: number?, c1: string?, c2: string?)
 	b:item(id, x, z, r or 0, 0, y)
 	if c1 or c2 then
@@ -86,20 +92,14 @@ return function(add: any)
 			b:wall("back", 18, 24, 2, 24, PEACH, SHOP_IN)
 			b:wall("left", 2, 24, 2, 8, PEACH, SHOP_IN)
 			-- the glasshouse: glass all round but for a white piece of wall that takes the door
-			b:wall("glassfront1", 18, 12, 22, 12, TRIM, TRIM)
-			b.walls.glassfront1.style = "glass"
+			styled(b, "glassfront1", 18, 12, 22, 12, TRIM, "glass")
 			b:wall("glassdoor", 22, 12, 28, 12, TRIM, TRIM)
-			b:wall("glassfront2", 28, 12, 32, 12, TRIM, TRIM)
-			b.walls.glassfront2.style = "glass"
-			b:wall("glassright", 32, 12, 32, 24, TRIM, TRIM)
-			b.walls.glassright.style = "glass"
-			b:wall("glassback", 32, 24, 18, 24, TRIM, TRIM)
-			b.walls.glassback.style = "glass"
+			styled(b, "glassfront2", 28, 12, 32, 12, TRIM, "glass")
+			styled(b, "glassright", 32, 12, 32, 24, TRIM, "glass")
+			styled(b, "glassback", 32, 24, 18, 24, TRIM, "glass")
 			-- the picket fence round the garden, open at the right end where the side path comes in
-			b:wall("fenceback", 32, 30, 2, 30, PICKETS, PICKETS)
-			b.walls.fenceback.style = "fence"
-			b:wall("fenceleft", 2, 30, 2, 24, PICKETS, PICKETS)
-			b.walls.fenceleft.style = "fence"
+			styled(b, "fenceback", 32, 30, 2, 30, PICKETS, "fence")
+			styled(b, "fenceleft", 2, 30, 2, 24, PICKETS, "fence")
 
 			-- the shop's steep roof, and the glasshouse's, which dies into the shop's slope
 			b:roof(2, 8, 18, 24, "gable", 9, 1, TEAL, BOARDS, 0, 1.2)

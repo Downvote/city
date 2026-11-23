@@ -37,7 +37,7 @@ local PLASTER = { c = "F6F0E2", m = "Plaster" } -- warm white
 local WHITE = { c = "F7F3EA", m = "SmoothPlastic" }
 local CREAM = { c = "F2E6CC", m = "SmoothPlastic" }
 local BRICK = { c = "D8A48E", m = "Brick" } -- soft brick
-local SIDING_BLUE = { c = "C2D8EC", m = "WoodPlanks" } -- sky
+local SIDING_BLUE = { c = "B4CFEA", m = "WoodPlanks" } -- sky
 local SIDING_MINT = { c = "CFE2D0", m = "WoodPlanks" }
 local SIDING_YELLOW = { c = "F3DFA6", m = "WoodPlanks" } -- butter
 local OAK = { c = "C49A6C", m = "WoodPlanks" }

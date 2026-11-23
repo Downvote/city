@@ -16,7 +16,7 @@ local F = Tuning.Plot.Foundation
 local BOARDS: Finish = { c = "CCDDEA", m = "WoodPlanks" } -- sky blue weatherboards
 local HALL: Finish = { c = "F2E6CC", m = "Plaster" }
 local SORTING: Finish = { c = "DDBE94", m = "WoodPlanks" }
-local CLAY: Finish = { c = "C8785A", m = "ClayRoofTiles" }
+local CLAY: Finish = { c = "C27E63", m = "ClayRoofTiles" }
 local OAK: Finish = { c = "C49A6C", m = "WoodPlanks" }
 local BOARD_FLOOR: Finish = { c = "9A6B48", m = "WoodPlanks" }
 local COBBLES: Finish = { c = "BDB8AE", m = "Cobblestone" }
@@ -40,7 +40,7 @@ return function(add: any)
 		"A counter for letters and parcels, a sorting room at the back and a yard for the bicycle.",
 		"gift",
 		32,
-		26,
+		28,
 		function(b: any)
 			-- the little helpers -------------------------------------------------------------
 			local function paint(c1: string?, c2: string?)
@@ -147,24 +147,26 @@ return function(add: any)
 			end
 
 			-- the shell ----------------------------------------------------------------------
-			-- the counter hall x 2..20, z 6..24 under a steep gable; the sorting room x 20..30,
+			-- the counter hall x 2..20, z 6..26 under a steep gable; the sorting room x 20..30,
 			-- z 14..24 and the open bay in front of it, both under the lean-to
-			b:floor(2, 6, 20, 24, OAK)
+			b:floor(2, 6, 20, 26, OAK)
 			b:floor(20, 14, 30, 24, BOARD_FLOOR)
 			b:floor(20, 2, 30, 14, COBBLES)
 			b:floor(8, 0, 14, 4, PAVING)
-			b:floor(2, 6, 20, 24, OAK, 1) -- the hall's ceiling
+			b:floor(2, 6, 20, 26, OAK, 1) -- the hall's ceiling
 			b:floor(20, 14, 30, 24, OAK, 1)
 			b:wall("front", 2, 6, 20, 6, BOARDS, HALL)
 			b:wall("right1", 20, 6, 20, 14, BOARDS, HALL)
 			b:wall("right2", 20, 14, 20, 24, SORTING, HALL)
-			b:wall("back", 30, 24, 2, 24, BOARDS, HALL)
-			b:wall("left", 2, 24, 2, 6, BOARDS, HALL)
+			b:wall("right3", 20, 24, 20, 26, BOARDS, HALL)
+			b:wall("back", 20, 26, 2, 26, BOARDS, HALL)
+			b:wall("left", 2, 26, 2, 6, BOARDS, HALL)
+			b:wall("sback", 30, 24, 20, 24, BOARDS, SORTING)
 			b:wall("sfront", 20, 14, 30, 14, BOARDS, SORTING)
 			b:wall("sright", 30, 14, 30, 24, BOARDS, SORTING)
-			b:roof(2, 6, 20, 24, "gable", 9, 1, CLAY, BOARDS, 0, 0.8)
+			b:roof(2, 6, 20, 26, "gable", 9, 1, CLAY, BOARDS, 0, 0.8)
 			-- the lean-to leaves the hall's right slope at x 16 and runs on down, shallower,
-			-- to x 30 (its ends share the gable's paint, where they meet it)
+			-- to x 30; the hall runs on two studs past its back
 			b:roof(16, 8, 30, 24, "shed", 4, 3, CLAY, BOARDS, 0, 0.6)
 
 			-- doors and windows
@@ -174,7 +176,7 @@ return function(add: any)
 			hang("awning", "front", 4.8, 7.6, "a", BERRY, TRIM)
 			hang("awning", "front", 17.2, 7.6, "a", BERRY, TRIM)
 			window("left", 10.4, CORAL)
-			window("left", 19.6, MUSTARD)
+			window("left", 21, MUSTARD)
 			window("back", 15, CORAL)
 			window("right1", 10, MUSTARD)
 			open("door_wood", "right2", 19.6, OAK_PAINT, TRIM)
@@ -183,20 +185,22 @@ return function(add: any)
 
 			-- outside: stone at the feet of the walls, boards up the corners, drainpipes, the
 			-- clock in the gable, the sign
-			for _, wall in { "front", "left", "back", "right1", "sright" } do
+			for _, wall in { "front", "left", "back", "right1", "sright", "sback" } do
 				footing(wall)
 			end
 			corner(2, 6, 180)
 			corner(20, 6, 90)
-			corner(2, 24, 270)
+			corner(2, 26, 270)
+			corner(20, 26, 0)
 			corner(30, 24, 0)
 			corner(30, 14, 90)
 			hang("downpipe", "front", 2.7, 0, "a", DARK, DARK)
 			hang("downpipe", "back", 3, 0, "a", DARK, DARK)
+			hang("downpipe", "sback", 21, 0, "a", DARK, DARK)
 			hang("downpipe", "sright", 23.3, 0, "a", DARK, DARK)
 			putAt("gable_clock", 11, 6, 180, Plan.levelBase(1), 1, TRIM, NAVY)
-			putAt("window_attic", 11, 24, 0, Plan.levelBase(1), 1, TRIM, BERRY)
-			putAt("weathervane", 11, 15, 0, Plan.levelBase(1), 1)
+			putAt("window_attic", 11, 26, 0, Plan.levelBase(1), 1, TRIM, BERRY)
+			putAt("weathervane", 11, 16, 0, Plan.levelBase(1), 1)
 			hang("sign_post", "front", 19.4, 8.8, "a", NAVY, TRIM)
 			hang("lantern_wall", "front", 7.4, 5.8, "a")
 			hang("lantern_wall", "front", 14.6, 5.8, "a")
@@ -227,21 +231,21 @@ return function(add: any)
 			-- the counter hall ------------------------------------------------------------
 			-- the postie's desk and two counters across the hall, the staff's way through at
 			-- the left end; pigeonholes, a desk and a cupboard behind
-			put("work_post", 10.2, 15.4, 180, BERRY, TRIM)
-			put("counter", 15.2, 15.4, 180, WALNUT)
-			put("counter", 18.2, 15.4, 180, WALNUT)
-			putAt("plant_small", 18.6, 15.2, 0, top("counter"))
-			putAt("books_stack", 15.4, 15.1, 80, top("counter"))
-			put("sorting_shelves", 4.6, 22.8, 180)
-			put("sorting_shelves", 9.1, 22.8, 180)
-			put("desk", 15, 22.4, 180, WALNUT)
-			putAt("lamp_desk", 16.6, 22.8, 200, top("desk"))
-			putAt("books_stack", 13.8, 22.6, 0, top("desk"))
-			put("chair_wood", 15, 20.1, 0, WALNUT)
-			put("coat_stand", 18.6, 22.8, 0)
-			put("cabinet", 3.2, 19.4, 90, OAK_PAINT)
-			putAt("kettle", 3.2, 18.4, 100, top("cabinet"))
-			putAt("vase_flowers", 3.2, 20.4, 0, top("cabinet"))
+			put("work_post", 10.2, 16.4, 180, BERRY, TRIM)
+			put("counter", 15.2, 16.4, 180, WALNUT)
+			put("counter", 18.2, 16.4, 180, WALNUT)
+			putAt("plant_small", 18.6, 16.2, 0, top("counter"))
+			putAt("books_stack", 15.4, 16.1, 80, top("counter"))
+			put("sorting_shelves", 4.6, 24.8, 180)
+			put("sorting_shelves", 9.1, 24.8, 180)
+			put("desk", 15, 24.4, 180, WALNUT)
+			putAt("lamp_desk", 16.6, 24.8, 200, top("desk"))
+			putAt("books_stack", 13.8, 24.6, 0, top("desk"))
+			put("chair_wood", 15, 22.1, 0, WALNUT)
+			put("coat_stand", 18.6, 24.8, 0)
+			put("cabinet", 3.2, 21, 90, OAK_PAINT)
+			putAt("kettle", 3.2, 20, 100, top("cabinet"))
+			putAt("vase_flowers", 3.2, 22, 0, top("cabinet"))
 			-- the public side: a writing desk, a bench, the queue on a runner
 			put("desk", 3.5, 11, 90, OAK_PAINT)
 			putAt("lamp_desk", 3.3, 12.6, 90, top("desk"))
@@ -250,14 +254,14 @@ return function(add: any)
 			put("rug_long", 11, 10.1, 0, NAVY, MUSTARD)
 			put("plant_big", 16.2, 7.9, 0)
 			hang("clock_wall", "front", 11, 9.3, "b")
-			hang("art_landscape", "left", 15.4, 6.4, "b")
+			hang("art_landscape", "left", 16, 6.4, "b")
 			hang("shelf_wall", "back", 6.9, 8.4, "b")
 			hang("art_flowers", "right1", 7.6, 6, "b")
 			put("light_ceiling", 11, 9.6, 0)
-			put("lamp_pendant", 10.2, 15.4, 0)
-			put("lamp_pendant", 16.7, 15.4, 0)
-			put("light_ceiling", 6, 19.6, 0)
-			put("light_ceiling", 15, 19.6, 0)
+			put("lamp_pendant", 10.2, 16.4, 0)
+			put("lamp_pendant", 16.7, 16.4, 0)
+			put("light_ceiling", 6, 21.4, 0)
+			put("light_ceiling", 15, 21.4, 0)
 
 			-- the sorting room ------------------------------------------------------------
 			put("sorting_shelves", 23, 22.8, 180)

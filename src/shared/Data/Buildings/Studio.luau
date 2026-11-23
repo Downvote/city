@@ -48,6 +48,12 @@ local function hang(b: any, id: string, wall: string, t: number, y: number, side
 	})
 end
 
+-- a wall of another style (stone, fence, glass), the same finish both sides
+local function styled(b: any, name: string, x1: number, z1: number, x2: number, z2: number, f: Finish, style: string)
+	b:wall(name, x1, z1, x2, z2, f, f)
+	b.walls[name].style = style
+end
+
 local function put(b: any, id: string, x: number, z: number, r: number?, y: number?, c1: string?, c2: string?)
 	b:item(id, x, z, r or 0, 0, y)
 	if c1 or c2 then
@@ -92,17 +98,10 @@ return function(add: any)
 			b:wall("gback", 18, 22, 2, 22, WALLS, GALLERY_IN)
 			b:wall("gleft", 2, 22, 2, 10, WALLS, GALLERY_IN)
 			-- the yard's stone wall
-			for _, s in
-				{
-					{ "yard1", 2, 2, 4, 2 },
-					{ "yard2", 8, 2, 18, 2 },
-					{ "yard3", 18, 2, 18, 4 },
-					{ "yard4", 2, 10, 2, 2 },
-				}
-			do
-				b:wall(s[1], s[2], s[3], s[4], s[5], STONE, STONE)
-				b.walls[s[1]].style = "stone"
-			end
+			styled(b, "yard1", 2, 2, 4, 2, STONE, "stone")
+			styled(b, "yard2", 8, 2, 18, 2, STONE, "stone")
+			styled(b, "yard3", 18, 2, 18, 4, STONE, "stone")
+			styled(b, "yard4", 2, 10, 2, 2, STONE, "stone")
 
 			b:roof(18, 4, 32, 22, "shed", 4, 2, COCOA, WALLS, 1, 0.8)
 			b:roof(2, 10, 18, 22, "flat", 0, 0, DECK, PARAPET, 0, 0.2)
