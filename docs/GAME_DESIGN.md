@@ -697,6 +697,23 @@ font and colours, none of their art, logos or patterns.
   and the view switches (roofs, walls, grid) sit at the right, the way out is one big Done button in the bottom
   right corner, and your coins are at the top left. What each part does is unchanged.
 
+### A drawn city
+
+> stylize everything, including the map, to zenless zone zero style. Make shaders, new modelsband textures if
+> necessary. The map should look similar to a city in the game
+
+The direction is taken, not the game: a dense modern city that looks drawn, thick with signs and street
+clutter, all of it Maplewick's own. None of that game's streets, shops, names, logos or art are copied.
+
+- **The look of the light.** Roblox runs no shaders of our own, so the drawn look comes from the lighting and
+  the effects over the picture: shadows with a hard edge like a painted cel, shade that is violet and not grey
+  under warm sun, almost no shine or bounce from the sky so a wall is one flat colour, stronger colours and more
+  contrast, and a bloom on anything bright. Dawn and dusk are a deep orange. Night is blue, with colour and
+  contrast pushed further so lit signs and windows stand out of it.
+- **Ink outlines on people.** You, other players and the villagers wear a thin dark outline, the way a drawn
+  character does. Roblox can only show about thirty at once, so it is the twenty nearest the camera.
+- **The streets and the signs** are being built next: street clutter and overhead wires, shop signs and adverts.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

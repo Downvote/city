@@ -322,6 +322,44 @@ run("a menu takes the screen: a way back, tabs, rows", function()
 	dialog.root:Destroy()
 end)
 
+run("people wear an ink outline", function()
+	local Outlines = Sim.Harness.require(Sim.CLIENT .. "World.Outlines")
+	local New = Sim.env.Instance.new
+	local plots = ws:FindFirstChild("Plots") or New("Folder")
+	plots.Name = "Plots"
+	plots.Parent = ws
+	local plot = New("Folder")
+	plot.Name = "InkTest"
+	plot.Parent = plots
+	local folder = New("Folder")
+	folder.Name = "Villagers"
+	folder.Parent = plot
+	local function person(x)
+		local m = New("Model")
+		m:SetAttribute("Vid", "v" .. x)
+		local root = New("Part")
+		root.Name = "HumanoidRootPart"
+		root.CFrame = roblox.CFrame.new(x, 3, 0)
+		root.Parent = m
+		m.Parent = folder
+		return m
+	end
+	local nearOne, farOne = person(10), person(5000)
+	local n = Outlines.step(Vector3.new(0, 3, 0))
+	local ink = nearOne:FindFirstChild("Ink")
+	check(n >= 1 and ink ~= nil and ink:IsA("Highlight"), "someone near the camera gets a Highlight")
+	check(ink ~= nil and ink.FillTransparency == 1 and ink.OutlineTransparency == 0, "an outline with no fill")
+	check(farOne:FindFirstChild("Ink") == nil, "someone far away does not")
+	Outlines.step(Vector3.new(5000, 3, 0))
+	check(nearOne:FindFirstChild("Ink") == nil and farOne:FindFirstChild("Ink") ~= nil, "it follows the camera")
+	-- never more at once than the engine can show beside Build mode's own
+	for x = 1, 40 do
+		person(4990 + x * 0.1)
+	end
+	check(Outlines.step(Vector3.new(5000, 3, 0)) == Outlines.Most, "and only so many people at once")
+	plot:Destroy()
+end)
+
 run("the alert on a button is a plain red dot", function()
 	local holder = Sim.Kit.box({ Parent = gui, Size = roblox.UDim2.fromOffset(80, 80) })
 	local dot = Sim.Kit.badge(holder)

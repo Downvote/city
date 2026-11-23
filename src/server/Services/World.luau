@@ -256,48 +256,55 @@ local grading: ColorCorrectionEffect? = nil
 -- How thick the air is: a soft haze on a clear day that fades the far end of the island into the
 -- sky, thicker when it's overcast or raining.
 local FOG = {
-	clear = { density = 0.3, haze = 1.5 },
-	dense = { density = 0.44, haze = 2.6 },
+	clear = { density = 0.24, haze = 1 },
+	dense = { density = 0.42, haze = 2.4 },
 }
 
+-- The drawn look. The user: "stylize everything, including the map, to zenless zone zero style.
+-- Make shaders, new models and textures if necessary". Roblox runs no shaders of our own, so the
+-- look of a drawn city comes from the light and from the effects laid over the picture:
+--   shadows with a hard edge, the way a cel is painted, not a soft blur
+--   shade that is a colour (violet) and not grey, under warm sunlight
+--   hardly any shine or bounce from the sky, so a wall is one flat colour
+--   stronger colours and more contrast over the whole picture
+--   a bloom on anything bright, which is what makes the signs glow after dark
+-- People get ink outlines on each player's own screen (the client's World/Outlines).
 local function stylize()
-	-- cozy and soft: warm sunlight, gentle shadows, a glow on anything bright, and enough shine
-	-- from the sky for the textures' normal maps to catch the light
-	Lighting.Brightness = 2.7
-	Lighting.Ambient = Color3.fromRGB(150, 140, 132)
-	Lighting.OutdoorAmbient = Color3.fromRGB(176, 168, 158)
-	Lighting.ColorShift_Top = Color3.fromRGB(255, 232, 196)
-	Lighting.EnvironmentDiffuseScale = 0.9
-	Lighting.EnvironmentSpecularScale = 0.55
-	Lighting.ShadowSoftness = 0.6
+	Lighting.Brightness = 3.1
+	Lighting.Ambient = Color3.fromRGB(126, 118, 158)
+	Lighting.OutdoorAmbient = Color3.fromRGB(152, 146, 186)
+	Lighting.ColorShift_Top = Color3.fromRGB(255, 236, 200)
+	Lighting.EnvironmentDiffuseScale = 0.3
+	Lighting.EnvironmentSpecularScale = 0.12
+	Lighting.ShadowSoftness = 0.06
 	Lighting.GlobalShadows = true
-	Lighting.ExposureCompensation = 0.05
+	Lighting.ExposureCompensation = 0.12
 	local cc = Instance.new("ColorCorrectionEffect")
 	cc.Name = "Grading"
-	cc.Saturation = 0.18
-	cc.Contrast = 0.04
+	cc.Saturation = 0.34
+	cc.Contrast = 0.17
 	cc.Brightness = 0.02
 	cc.Parent = Lighting
 	grading = cc
-	-- bloom you can see: sunlit walls, lamps and lit windows glow softly
+	-- bloom you can see: lamps, lit windows and the signs after dark
 	local bloom = Instance.new("BloomEffect")
 	bloom.Name = "Glow"
-	bloom.Intensity = 0.65
-	bloom.Size = 34
-	bloom.Threshold = 1.05
+	bloom.Intensity = 0.95
+	bloom.Size = 28
+	bloom.Threshold = 0.92
 	bloom.Parent = Lighting
 	local rays = Instance.new("SunRaysEffect")
 	rays.Name = "Rays"
-	rays.Intensity = 0.11
+	rays.Intensity = 0.08
 	rays.Spread = 0.72
 	rays.Parent = Lighting
-	-- far things go a little soft, like a model town seen through a lens
+	-- a drawing is sharp all the way back: only the far distance softens a touch
 	local dof = Instance.new("DepthOfFieldEffect")
 	dof.Name = "Lens"
-	dof.FocusDistance = 90
-	dof.InFocusRadius = 190
+	dof.FocusDistance = 110
+	dof.InFocusRadius = 260
 	dof.NearIntensity = 0
-	dof.FarIntensity = 0.16
+	dof.FarIntensity = 0.05
 	dof.Parent = Lighting
 end
 
@@ -309,8 +316,8 @@ local function air()
 		a.Offset = 0.12
 		a.Haze = FOG.clear.haze
 		a.Glare = 0.3
-		a.Color = Color3.fromRGB(236, 230, 220)
-		a.Decay = Color3.fromRGB(250, 214, 176)
+		a.Color = Color3.fromRGB(226, 230, 246)
+		a.Decay = Color3.fromRGB(255, 198, 170)
 		a.Parent = Lighting
 	end
 	if not Lighting:FindFirstChildOfClass("Sky") then
@@ -328,21 +335,24 @@ local function air()
 	end
 end
 
--- Warm light in the morning and evening, clear white at noon, cool blue at night.
+-- Clear light at noon, a deep orange at dawn and dusk, and a blue night in which the colours
+-- and the contrast are pushed further, so lit signs and windows stand out of it.
 local function grade(h: number)
 	local cc = grading
 	if not cc then
 		return
 	end
-	local tint
+	local tint, saturation, contrast
 	if h >= 7.5 and h <= 16.5 then
-		tint = Color3.fromRGB(255, 248, 236)
+		tint, saturation, contrast = Color3.fromRGB(255, 250, 242), 0.34, 0.17
 	elseif (h > 16.5 and h < 19.5) or (h > 5 and h < 7.5) then
-		tint = Color3.fromRGB(255, 226, 196)
+		tint, saturation, contrast = Color3.fromRGB(255, 212, 184), 0.38, 0.19
 	else
-		tint = Color3.fromRGB(196, 210, 255)
+		tint, saturation, contrast = Color3.fromRGB(176, 190, 255), 0.44, 0.24
 	end
 	cc.TintColor = cc.TintColor:Lerp(tint, 0.08)
+	cc.Saturation += (saturation - cc.Saturation) * 0.08
+	cc.Contrast += (contrast - cc.Contrast) * 0.08
 end
 
 local function clockLoop()
