@@ -689,6 +689,124 @@ run("life around town and the show when you build", function()
 	check(#errors == warned, "no warnings from any of it")
 end)
 
+run("the creator: a close view in a studio of its own", function()
+	local warned = #errors
+	local New = Sim.env.Instance.new
+	local Vector3 = roblox.Vector3
+	Sim.Harness.addService("AvatarEditorService", {
+		SearchCatalogAsync = function()
+			error("no catalog in the sim")
+		end,
+	})
+	Sim.env.CatalogSearchParams = {
+		new = function()
+			return {}
+		end,
+	}
+	local Appearance = Sim.Harness.require("ReplicatedStorage.Shared.Avatar.Appearance")
+	local at = Vector3.new(0, 420, 0)
+	local closes = 0
+	Sim.remoteFn("CreatorSearch").OnServerInvoke = function()
+		return {}
+	end
+	Sim.remoteFn("CreatorOpen").OnServerInvoke = function()
+		return { origin = at, app = Appearance.default() }
+	end
+	Sim.remoteFn("CreatorClose").OnServerInvoke = function()
+		closes += 1
+		return true
+	end
+	if BuildMode.isActive() then
+		press("Done")
+	end
+	local cam = Sim.cam
+	local fovBefore = cam.FieldOfView
+	local Creator = Sim.Harness.require(Sim.CLIENT .. "UI.Creator")
+	Creator.open({ mode = "new" })
+	frames(3)
+	Sim.advance(1)
+	check(Creator.isOpen(), "it opens")
+	check(cam.CameraType == roblox.Enum.CameraType.Scriptable and cam.FieldOfView == 40, "through a long lens")
+	local function off()
+		return (cam.CFrame.Position - at).Magnitude
+	end
+	local home = off()
+	check(home > 6 and home < 10, "close: about seven studs off, where it was eleven")
+	check(cam.CFrame.Position.Y > at.Y + 3 and cam.CFrame.Position.Y < at.Y + 5, "looking at them from chest height")
+	local back = ws:FindFirstChild("CreatorBackdrop")
+	check(back ~= nil and back.CanCollide == false, "a backdrop stands in the world behind them")
+	local behind = (back.CFrame.Position - cam.CFrame.Position):Dot(cam.CFrame.LookVector)
+	check(behind > 15 and behind < 18, "square to the camera, past the mannequin")
+	local wide = 2 * behind * math.tan(math.rad(20)) * (1280 / 720)
+	check(
+		back.Size.X >= wide and back.Size.X < wide * 1.2,
+		"wide enough to fill the view, and no wider than it need be"
+	)
+	local face = Sim.playerGui:FindFirstChild("CreatorBackdrop")
+	check(face ~= nil and face.Adornee == back and face.LightInfluence == 0, "its picture is lit by nothing but itself")
+	local drop = face and face:FindFirstChild("Backdrop")
+	check(
+		drop ~= nil and drop.ClassName == "Frame" and drop:FindFirstChild("Motion") ~= nil,
+		"leaning bands and shapes move on it"
+	)
+	check(
+		face:FindFirstChild("Shade") ~= nil and face.Shade.ClassName == "ViewportFrame",
+		"and their shadow falls on it"
+	)
+	check(ws:FindFirstChild("CreatorLamp") ~= nil, "a lamp by the camera lights them at night")
+	check(gui:FindFirstChild("Fade", true) == nil, "no fade to black over the picture any more")
+	-- zooming: the button steps out to the whole of them, in to the face, and back
+	press("Zoom")
+	frames(2)
+	local whole = off()
+	check(whole > home + 3, "Zoom steps out to the whole of them")
+	check(
+		(back.CFrame.Position - cam.CFrame.Position):Dot(cam.CFrame.LookVector) > behind + 3,
+		"the backdrop steps back with it"
+	)
+	press("Zoom")
+	frames(2)
+	check(off() < home - 2, "then right in to the face")
+	check(cam.CFrame.Position.Y > at.Y + 4.5, "where it looks at the head")
+	press("Zoom")
+	frames(2)
+	check(math.abs(off() - home) < 0.01, "and back to where it started")
+	-- the wheel still zooms, further out than before but not for ever
+	for _ = 1, 40 do
+		Sim.UIS.InputChanged:Fire(
+			{ UserInputType = roblox.Enum.UserInputType.MouseWheel, Position = Vector3.new(0, 0, -1) },
+			false
+		)
+	end
+	frames(2)
+	check(off() > 19 and off() < 23, "the wheel zooms out to twenty studs and stops")
+	-- the look, switched from inside the creator
+	local old = gui:FindFirstChild("Creator")
+	press("Light")
+	frames(3)
+	local Kit = Sim.Kit
+	check(Kit.ThemeName == "light", "the Light button puts the light look on")
+	local fresh = gui:FindFirstChild("Creator")
+	check(fresh ~= nil and fresh ~= old and Creator.isOpen(), "the screen is built again where it was")
+	check(Sim.playerGui.CreatorBackdrop:FindFirstChild("Backdrop") ~= nil, "and the backdrop painted again")
+	press("Dark")
+	frames(3)
+	check(Kit.ThemeName == "dark", "Dark puts it back")
+	Creator.close()
+	frames(2)
+	check(
+		ws:FindFirstChild("CreatorBackdrop") == nil and ws:FindFirstChild("CreatorLamp") == nil,
+		"closing takes the studio down"
+	)
+	check(Sim.playerGui:FindFirstChild("CreatorBackdrop") == nil, "its picture too")
+	check(
+		cam.FieldOfView == fovBefore and cam.CameraType == roblox.Enum.CameraType.Custom,
+		"and gives the camera back as it was"
+	)
+	check(closes == 1, "the server is told")
+	check(#errors == warned, "no warnings from any of it")
+end)
+
 print(
 	string.format(
 		"\nbuild client sim: %s (%d warnings)",
