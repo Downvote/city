@@ -1,9 +1,7 @@
--- The UI toolkit: one theme and the pieces every screen is built from, in the game's own
--- storybook look: cream paper panels with square corners and a warm dark outline, solid drop
--- shadows, wooden bars over the 3D view, round buttons with a paper label under them, square
--- tag buttons that press down into their shadow, ribbon banners for titles, and drawn icons
--- (UI/Icons). Corners are square everywhere; only things that are round on purpose (buttons,
--- badges, colour dots) are circles.
+-- The UI toolkit: one theme and the pieces every screen is built from, in a bright, cozy look of
+-- our own: white rounded cards with soft shadows, titles on bright pill banners, translucent navy
+-- pills over the 3D view, rounded buttons that lift off a soft shadow and press down into it,
+-- round icon buttons with a white rim and a little caption pill, and drawn icons (UI/Icons).
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -15,28 +13,29 @@ local Icons = require(script.Parent.Icons)
 local Kit = {}
 
 Kit.Theme = {
-	Paper = Color3.fromRGB(255, 248, 234), -- cream paper
-	PaperDark = Color3.fromRGB(243, 228, 202),
-	Ink = Color3.fromRGB(74, 50, 42), -- every outline: a warm dark brown
-	InkSoft = Color3.fromRGB(134, 106, 92),
-	Line = Color3.fromRGB(222, 202, 172),
-	Green = Color3.fromRGB(122, 194, 82),
-	GreenDark = Color3.fromRGB(80, 148, 58),
-	Coral = Color3.fromRGB(232, 96, 92),
-	CoralDark = Color3.fromRGB(184, 62, 62),
-	Blue = Color3.fromRGB(82, 164, 226),
-	BlueDark = Color3.fromRGB(52, 118, 184),
-	Yellow = Color3.fromRGB(255, 198, 72),
-	YellowDark = Color3.fromRGB(222, 150, 40),
-	Purple = Color3.fromRGB(160, 118, 210),
-	Orange = Color3.fromRGB(246, 148, 72),
-	Pink = Color3.fromRGB(240, 128, 168),
-	Teal = Color3.fromRGB(70, 182, 170),
+	Paper = Color3.fromRGB(255, 255, 255), -- cards and panels
+	PaperDark = Color3.fromRGB(239, 243, 247), -- wells, tracks, unpicked tabs
+	Ink = Color3.fromRGB(58, 64, 86), -- text and the few outlines: a soft navy
+	InkSoft = Color3.fromRGB(122, 130, 150),
+	Line = Color3.fromRGB(218, 224, 232),
+	Green = Color3.fromRGB(86, 198, 74),
+	GreenDark = Color3.fromRGB(56, 156, 52),
+	Coral = Color3.fromRGB(255, 108, 98),
+	CoralDark = Color3.fromRGB(214, 70, 66),
+	Blue = Color3.fromRGB(58, 166, 242),
+	BlueDark = Color3.fromRGB(34, 124, 206),
+	Yellow = Color3.fromRGB(255, 202, 58),
+	YellowDark = Color3.fromRGB(236, 156, 28),
+	Purple = Color3.fromRGB(168, 118, 232),
+	Orange = Color3.fromRGB(255, 150, 58),
+	Pink = Color3.fromRGB(255, 126, 178),
+	Teal = Color3.fromRGB(36, 196, 188),
 	White = Color3.fromRGB(255, 255, 255),
-	Shadow = Color3.fromRGB(74, 50, 42), -- solid drop shadows, in the ink colour
-	Glass = Color3.fromRGB(128, 88, 62), -- the wooden bars over the 3D view
-	Wood = Color3.fromRGB(128, 88, 62),
-	WoodLight = Color3.fromRGB(160, 116, 82),
+	Shadow = Color3.fromRGB(30, 40, 80), -- soft shadows, see through
+	Glass = Color3.fromRGB(28, 38, 70), -- the translucent pills over the 3D view
+	GlassAlpha = 0.32,
+	Wood = Color3.fromRGB(28, 38, 70),
+	WoodLight = Color3.fromRGB(40, 52, 90),
 }
 
 local T = Kit.Theme
@@ -100,17 +99,20 @@ end
 
 -- Corners are square in this look. Only `"circle"` rounds anything: a square frame becomes a
 -- circle. Any other radius is ignored, so old calls simply give square corners.
-function Kit.corner(inst: Instance, radius: any): UICorner?
-	if radius == "circle" then
-		return Kit.new("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = inst })
-	end
-	return nil
+-- Rounded corners: a radius in pixels, or "circle" / "pill" for fully round ends.
+function Kit.corner(inst: Instance, radius: any): UICorner
+	local r = if radius == "circle" or radius == "pill" then UDim.new(0.5, 0) else UDim.new(0, radius or 12)
+	return Kit.new("UICorner", { CornerRadius = r, Parent = inst })
 end
 
+-- An outline. Outlines are soft in this look: one asked for in the text colour comes out as a
+-- thin see-through line.
 function Kit.stroke(inst: Instance, color: Color3?, thickness: number?): UIStroke
+	local ink = color == T.Ink
 	return Kit.new("UIStroke", {
 		Color = color or T.Line,
-		Thickness = thickness or 1.5,
+		Thickness = if ink then math.min(thickness or 1.5, 2) else thickness or 1.5,
+		Transparency = if ink then 0.72 else 0,
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 		LineJoinMode = Enum.LineJoinMode.Round,
 		Parent = inst,
@@ -212,13 +214,14 @@ function Kit.frame(props: { [string]: any }?): Frame
 		ClipsDescendants = p.Clips or false,
 		Parent = p.Parent,
 	})
-	if p.Radius == "circle" then
-		Kit.corner(f, "circle")
+	if p.Radius ~= false then
+		Kit.corner(f, p.Radius or 14)
 	end
 	if p.Stroke then
-		local color = if typeof(p.Stroke) == "Color3" then p.Stroke else T.Ink
-		local s = Kit.stroke(f, color, p.StrokeThickness or (if color == T.Ink then 3 else 1.5))
-		s.Transparency = if color == T.Ink then 0 else 0.2
+		-- outlines are light in this look: a thin line, softer than the text
+		local color = if typeof(p.Stroke) == "Color3" then p.Stroke else T.Line
+		local s = Kit.stroke(f, color, math.min(p.StrokeThickness or 2, 2.5))
+		s.Transparency = if color == T.Ink then 0.55 else 0
 	end
 	return f
 end
@@ -231,33 +234,16 @@ function Kit.box(props: { [string]: any }?): Frame
 	return Kit.frame(p)
 end
 
--- A wooden bar or card, the kind the HUD floats over the 3D view: warm wood with a lighter top
--- edge and the dark outline.
+-- A translucent navy pill, the kind the HUD floats over the 3D view. White text reads on it.
 function Kit.glass(props: { [string]: any }?): Frame
 	local p = table.clone(props or {})
-	p.Color = p.Color or T.Wood
-	p.Transparency = 0
-	p.Stroke = p.Stroke or T.Ink
-	p.StrokeThickness = p.StrokeThickness or 3
-	p.Radius = false
+	p.Color = p.Color or T.Glass
+	p.Transparency = p.Transparency or T.GlassAlpha
+	p.Stroke = nil
+	p.Radius = p.Radius or 18
 	local f = Kit.frame(p)
-	local s = f:FindFirstChildOfClass("UIStroke")
-	if s then
-		s.Transparency = 0
-	end
-	-- lighter at the top like a lit plank (a gradient, so list layouts inside don't see it)
-	f.BackgroundColor3 = T.WoodLight
-	local r, g, b = T.Wood.R / T.WoodLight.R, T.Wood.G / T.WoodLight.G, T.Wood.B / T.WoodLight.B
-	Kit.new("UIGradient", {
-		Name = "Grain",
-		Color = ColorSequence.new({
-			ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
-			ColorSequenceKeypoint.new(0.35, Color3.new(r, g, b)),
-			ColorSequenceKeypoint.new(1, Color3.new(r * 0.86, g * 0.86, b * 0.86)),
-		}),
-		Rotation = 90,
-		Parent = f,
-	})
+	local s = Kit.stroke(f, T.White, 1.5)
+	s.Transparency = 0.75
 	return f
 end
 
@@ -449,12 +435,11 @@ end
 -- The chunky look shared by buttons and tiles: the button itself is the darker lip, a "Face"
 -- child sits on it with a gradient, a glossy "Shine" and a sweeping "Sheen", and a thick dark
 -- outline goes round.
-local function chunky(b: GuiButton, color: Color3, _radius: any, lip: number, outline: number?)
-	b.BackgroundColor3 = darker(color, 0.62)
+local function chunky(b: GuiButton, color: Color3, radius: any, lip: number, _outline: number?)
+	b.BackgroundColor3 = darker(color, 0.8)
 	b:SetAttribute("KitButton", true)
 	b:SetAttribute("Lip", lip)
-	local st = Kit.stroke(b, T.Ink, outline or 2.5)
-	st.Name = "Outline"
+	Kit.corner(b, radius or 14)
 	local face = Kit.new("Frame", {
 		Name = "Face",
 		BackgroundColor3 = color,
@@ -463,23 +448,24 @@ local function chunky(b: GuiButton, color: Color3, _radius: any, lip: number, ou
 		ZIndex = b.ZIndex,
 		Parent = b,
 	})
-	Kit.gradient(face, 0.12)
+	Kit.corner(face, radius or 14)
+	Kit.gradient(face, 0.06)
 	local shine = Kit.new("Frame", {
 		Name = "Shine",
 		BackgroundColor3 = T.White,
-		BackgroundTransparency = 0.7,
+		BackgroundTransparency = 0.6,
 		BorderSizePixel = 0,
-		Size = UDim2.new(1, -8, 0, 3),
-		Position = UDim2.fromOffset(4, 3),
+		Size = UDim2.new(1, -16, 0, 3),
+		Position = UDim2.fromOffset(8, 3),
 		ZIndex = b.ZIndex,
 		Parent = face,
 	})
-	local _ = shine
-	addSheen(face, nil)
+	Kit.corner(shine, "pill")
+	addSheen(face, radius or 14)
 	return face
 end
 
--- A square tag button sitting on its shadow (the darker "lip"); it presses down into it. props: Size, Position, AnchorPoint, Color, TextColor, TextSize, Font,
+-- A rounded button lifted off a darker base (the "lip"); it presses down into it. props: Size, Position, AnchorPoint, Color, TextColor, TextSize, Font,
 -- Radius, LayoutOrder, Name, ZIndex, AutomaticSize, Icon (an icon name, drawn left of the text).
 -- The returned TextButton's Text and TextColor3 can be set as usual; the label follows them.
 function Kit.button(text: string, props: { [string]: any }?, onClick: (() -> ())?): TextButton
@@ -549,7 +535,7 @@ function Kit.button(text: string, props: { [string]: any }?, onClick: (() -> ())
 	})
 	-- white words get a dark outline; dark words on a light face read fine as they are
 	if textColor == T.White then
-		Kit.outlineText(label, darker(color, 0.42), math.max(1.5, textSize / 9))
+		Kit.outlineText(label, darker(color, 0.62), math.max(1, textSize / 13))
 	end
 	-- the button's own text is invisible and only sizes it; leave room for the icon in it
 	local function spaced(s: string): string
@@ -589,9 +575,9 @@ function Kit.setButtonColor(b: GuiButton, color: Color3, textColor: Color3?)
 	if face and face:IsA("Frame") then
 		face.BackgroundColor3 = color
 		if lip and lip:IsA("Frame") then
-			lip.BackgroundColor3 = darker(color, 0.62)
+			lip.BackgroundColor3 = darker(color, 0.78)
 		else
-			b.BackgroundColor3 = darker(color, 0.62)
+			b.BackgroundColor3 = darker(color, 0.8)
 		end
 	else
 		b.BackgroundColor3 = color
@@ -612,7 +598,7 @@ function Kit.setButtonColor(b: GuiButton, color: Color3, textColor: Color3?)
 					o:Destroy()
 				end
 			else
-				Kit.outlineText(l, darker(color, 0.42), math.max(1.5, l.TextSize / 9))
+				Kit.outlineText(l, darker(color, 0.62), math.max(1, l.TextSize / 13))
 			end
 		end
 	end
@@ -652,7 +638,7 @@ function Kit.iconButton(icon: string, caption: string?, props: { [string]: any }
 	-- the round's shadow, then its face
 	local under = Kit.new("Frame", {
 		Name = "Lip",
-		BackgroundColor3 = darker(color, 0.62),
+		BackgroundColor3 = darker(color, 0.78),
 		BorderSizePixel = 0,
 		Size = UDim2.fromOffset(d, d),
 		Position = UDim2.new(0.5, -d / 2, 0, lip),
@@ -660,7 +646,6 @@ function Kit.iconButton(icon: string, caption: string?, props: { [string]: any }
 		Parent = b,
 	})
 	Kit.corner(under, "circle")
-	Kit.stroke(under, T.Ink, 2.5)
 	local face = Kit.new("Frame", {
 		Name = "Face",
 		BackgroundColor3 = color,
@@ -671,8 +656,9 @@ function Kit.iconButton(icon: string, caption: string?, props: { [string]: any }
 		Parent = b,
 	})
 	Kit.corner(face, "circle")
-	Kit.stroke(face, T.Ink, 2.5)
-	Kit.gradient(face, 0.14)
+	-- a white rim (a light grey one on a white button, so it shows on a white card)
+	Kit.stroke(face, if color == T.White then T.Line else T.White, 3)
+	Kit.gradient(face, 0.08)
 	addSheen(face, "circle")
 	local iconPx = math.floor(d * 0.62)
 	if Icons.has(icon) then
@@ -708,8 +694,9 @@ function Kit.iconButton(icon: string, caption: string?, props: { [string]: any }
 			ZIndex = z + 1,
 			Parent = b,
 		})
-		Kit.stroke(tag, T.Ink, 2)
-		Kit.pad(tag, 6, 0)
+		Kit.corner(tag, "pill")
+		Kit.stroke(tag, T.Line, 1.5)
+		Kit.pad(tag, 8, 0)
 		Kit.new("TextLabel", {
 			Name = "Caption",
 			Text = caption,
@@ -744,9 +731,7 @@ function Kit.bar(props: { [string]: any }, ratio: number, color: Color3): (Frame
 		AnchorPoint = props.AnchorPoint,
 		LayoutOrder = props.LayoutOrder,
 		Color = props.Track or T.PaperDark,
-		Radius = false,
-		Stroke = T.Ink,
-		StrokeThickness = 2,
+		Radius = "pill",
 	})
 	local _ = h
 	local fill = Kit.frame({
@@ -754,7 +739,7 @@ function Kit.bar(props: { [string]: any }, ratio: number, color: Color3): (Frame
 		Parent = track,
 		Size = UDim2.fromScale(math.clamp(ratio, 0, 1), 1),
 		Color = color,
-		Radius = false,
+		Radius = "pill",
 	})
 	Kit.gradient(fill, 0.3)
 	return track, fill
@@ -848,7 +833,7 @@ function Kit.pill(icon: string, props: { [string]: any }?): (Frame, TextLabel)
 		TextTruncate = Enum.TextTruncate.AtEnd,
 		Parent = f,
 	})
-	Kit.outlineText(value, T.Ink, 2)
+	Kit.outlineText(value, T.Glass, 1.2)
 	if p.Plus then
 		Kit.iconButton("plus", nil, {
 			Name = "Plus",
@@ -864,15 +849,15 @@ end
 
 -- A solid drop shadow behind a card, down and to the right: a sibling just under it (children
 -- always draw above their parent).
-function Kit.shadow(card: GuiObject, _radius: any): Frame
+function Kit.shadow(card: GuiObject, radius: any): Frame
 	local s = Kit.frame({
 		Name = card.Name .. "Shadow",
 		Size = card.Size,
-		Position = card.Position + UDim2.fromOffset(5, 6),
+		Position = card.Position + UDim2.fromOffset(0, 6),
 		AnchorPoint = card.AnchorPoint,
 		Color = T.Shadow,
-		Transparency = 0.55,
-		Radius = false,
+		Transparency = 0.82,
+		Radius = radius or 14,
 		ZIndex = math.max(0, card.ZIndex - 1),
 		Parent = card.Parent,
 	})
@@ -880,7 +865,7 @@ function Kit.shadow(card: GuiObject, _radius: any): Frame
 		s.Visible = card.Visible
 	end)
 	card:GetPropertyChangedSignal("Position"):Connect(function()
-		s.Position = card.Position + UDim2.fromOffset(5, 6)
+		s.Position = card.Position + UDim2.fromOffset(0, 6)
 	end)
 	card.Destroying:Connect(function()
 		s:Destroy()
@@ -888,10 +873,10 @@ function Kit.shadow(card: GuiObject, _radius: any): Frame
 	return s
 end
 
--- The red round close button that sits on a panel's corner.
+-- The round close button that sits on a panel's corner: white, with a soft navy cross.
 function Kit.closeButton(props: { [string]: any }, onClick: (() -> ())?): TextButton
 	local p = table.clone(props)
-	p.Color = T.Coral
+	p.Color = T.White
 	p.TextSize = nil
 	return Kit.iconButton("close", nil, p, onClick)
 end
@@ -965,43 +950,47 @@ local function pieces(parent: GuiObject, list: { any }, thick: number, z: number
 end
 Kit.pieces = pieces
 
--- A ribbon banner with the text on it: a band with pointed ends, its tails folded behind it.
--- props: Parent, Position, AnchorPoint, Color, TextSize, LayoutOrder, ZIndex, Name. The banner
--- sizes itself to the text. Returns the frame and the text label.
+-- A title banner: a bright pill with the words on it in white and a soft shadow under it. (Named
+-- ribbon from an earlier look; callers pass the same props.) props: Parent, Position, AnchorPoint,
+-- Color, TextSize, LayoutOrder, ZIndex, Name. It sizes itself to the text. Returns the frame and
+-- the text label.
 function Kit.ribbon(text: string, props: { [string]: any }?): (Frame, TextLabel)
 	local p = props or {}
-	local color: Color3 = p.Color or T.Coral
+	local color: Color3 = p.Color or T.Green
 	local textSize = p.TextSize or 26
-	local h = math.floor(textSize * 1.55)
-	local textW = math.floor(utf8.len(text) or #text) * textSize * 0.56 + textSize
-	local tail = math.floor(h * 0.9)
-	local tip = math.floor(h / 2)
-	local W = textW + tip * 2 + tail * 2
-	local H = h + math.floor(h * 0.35)
+	local h = math.floor(textSize * 1.7)
+	local W = math.floor((utf8.len(text) or #text) * textSize * 0.56 + textSize * 1.6)
 	local z = p.ZIndex or 3
 	local holder = Kit.new("Frame", {
 		Name = p.Name or "Ribbon",
 		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(W, H),
+		Size = UDim2.fromOffset(W, h + 5),
 		Position = p.Position or UDim2.new(),
 		AnchorPoint = p.AnchorPoint or Vector2.zero,
 		LayoutOrder = p.LayoutOrder or 0,
 		ZIndex = z,
 		Parent = p.Parent,
 	})
-	local dark = darker(color, 0.7)
-	local drop = math.floor(h * 0.35)
-	local bandX = tail
-	local bandW = W - tail * 2
-	pieces(holder, {
-		-- the tails behind, lower down, each ending in a point
-		{ "rect", tip, drop, tail, h, dark },
-		{ "tri", 0, drop, h, "left", dark },
-		{ "rect", W - tip - tail, drop, tail, h, dark },
-		{ "tri", W - tip, drop, h, "right", dark },
-		-- the band
-		{ "rect", bandX, 0, bandW, h, color },
-	}, 3, z)
+	local shade = Kit.new("Frame", {
+		Name = "Shade",
+		BackgroundColor3 = darker(color, 0.78),
+		BorderSizePixel = 0,
+		Size = UDim2.fromOffset(W, h),
+		Position = UDim2.fromOffset(0, 5),
+		ZIndex = z,
+		Parent = holder,
+	})
+	Kit.corner(shade, "pill")
+	local band = Kit.new("Frame", {
+		Name = "Band",
+		BackgroundColor3 = color,
+		BorderSizePixel = 0,
+		Size = UDim2.fromOffset(W, h),
+		ZIndex = z,
+		Parent = holder,
+	})
+	Kit.corner(band, "pill")
+	Kit.gradient(band, 0.08)
 	local label = Kit.new("TextLabel", {
 		Name = "Text",
 		Text = text,
@@ -1009,12 +998,11 @@ function Kit.ribbon(text: string, props: { [string]: any }?): (Frame, TextLabel)
 		Font = Kit.Fonts.Title,
 		TextSize = textSize,
 		TextColor3 = T.White,
-		Size = UDim2.fromOffset(bandW, h),
-		Position = UDim2.fromOffset(bandX, 0),
+		Size = UDim2.fromScale(1, 1),
 		ZIndex = z + 1,
-		Parent = holder,
+		Parent = band,
 	})
-	Kit.outlineText(label, darker(color, 0.45), math.max(2, textSize / 10))
+	Kit.outlineText(label, darker(color, 0.62), math.max(1, textSize / 14))
 	return holder, label
 end
 
@@ -1036,34 +1024,32 @@ function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: s
 	Kit.frame({
 		Name = "Shadow",
 		Size = UDim2.fromScale(1, 1),
-		Position = UDim2.fromOffset(7, 8),
+		Position = UDim2.fromOffset(0, 8),
 		Color = T.Shadow,
-		Transparency = 0.5,
-		Radius = false,
+		Transparency = 0.8,
+		Radius = 24,
 		Parent = holder,
 	})
 	local frame = Kit.frame({
 		Name = "Card",
 		Size = UDim2.fromScale(1, 1),
 		Color = T.Paper,
-		Stroke = T.Ink,
-		StrokeThickness = 4,
 		Parent = holder,
-		Radius = false,
+		Radius = 24,
 	})
-	-- a coloured band along the top edge under the ribbon
+	-- a soft tint of the panel's colour across the top, under the banner
 	local header = Kit.frame({
 		Name = "Header",
-		Size = UDim2.new(1, 0, 0, 14),
-		Color = headColor,
-		Radius = false,
+		Size = UDim2.new(1, 0, 0, 56),
+		Color = headColor:Lerp(T.White, 0.86),
+		Radius = 24,
 		Parent = frame,
 	})
 	Kit.frame({
-		Name = "Rule",
-		Size = UDim2.new(1, 0, 0, 3),
-		Position = UDim2.new(0, 0, 1, 0),
-		Color = T.Ink,
+		Name = "Square",
+		Size = UDim2.new(1, 0, 0, 24),
+		Position = UDim2.new(0, 0, 1, -24),
+		Color = headColor:Lerp(T.White, 0.86),
 		Radius = false,
 		Parent = header,
 	})
@@ -1071,28 +1057,27 @@ function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: s
 		Parent = frame,
 		Color = headColor,
 		TextSize = 28,
-		Position = UDim2.new(0.5, 0, 0, -26),
-		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0, if icon then 34 else 22, 0, -22),
 		ZIndex = 3,
 	})
 	if icon and Icons.has(icon) then
-		Icons.make(icon, 52, {
+		Icons.make(icon, 56, {
 			Parent = ribbon,
-			Position = UDim2.new(0, -14, 0, -12),
+			Position = UDim2.new(0, -30, 0, -6),
 			ZIndex = 6,
 		})
 	end
 	local close = Kit.closeButton({
 		Size = UDim2.fromOffset(50, 50),
-		Position = UDim2.new(1, 16, 0, -18),
+		Position = UDim2.new(1, 14, 0, -16),
 		AnchorPoint = Vector2.new(1, 0),
 		Parent = frame,
 		ZIndex = 4,
 	})
 	local body = Kit.box({
 		Name = "Body",
-		Size = UDim2.new(1, -36, 1, -78),
-		Position = UDim2.fromOffset(18, 62),
+		Size = UDim2.new(1, -40, 1, -84),
+		Position = UDim2.fromOffset(20, 68),
 		Parent = frame,
 	})
 	local self = { root = holder, card = frame, body = body, close = close, title = title, header = header }

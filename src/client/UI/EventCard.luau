@@ -278,10 +278,10 @@ function EventCard.start(_hud: any)
 	local shade = Kit.frame({
 		Name = "Shadow",
 		Size = UDim2.fromScale(1, 1),
-		Position = UDim2.fromOffset(6, 7),
+		Position = UDim2.fromOffset(0, 7),
 		Color = T.Shadow,
-		Transparency = 0.5,
-		Radius = false,
+		Transparency = 0.8,
+		Radius = 22,
 		Parent = page,
 	})
 	local _ = shade
@@ -290,20 +290,9 @@ function EventCard.start(_hud: any)
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		Color = T.Paper,
-		Radius = false,
+		Radius = 22,
 		Parent = page,
 	})
-	Kit.stroke(card, T.Ink, 4)
-	-- a thin rule just inside the edge, like a printed page
-	local rule = Kit.frame({
-		Name = "Rule",
-		Size = UDim2.new(1, -14, 1, -14),
-		Position = UDim2.fromOffset(7, 7),
-		Transparency = 1,
-		Radius = false,
-		Parent = card,
-	})
-	Kit.stroke(rule, T.Line, 2)
 	local inner = Kit.box({ Parent = card, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y })
 	Kit.pad(inner, 22, 20)
 	Kit.list(inner, 10)
@@ -315,7 +304,7 @@ function EventCard.start(_hud: any)
 		AutomaticSize = Enum.AutomaticSize.X,
 		Position = UDim2.fromOffset(22, -18),
 		Color = T.Blue,
-		Radius = false,
+		Radius = "pill",
 		Visible = false,
 		ZIndex = 2,
 	})

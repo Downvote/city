@@ -273,6 +273,19 @@ The town is now a sunny island:
   with bright roofs.
 - Stronger, brighter light with livelier colour and a clear cyan haze.
 
+The screens get the same bright, cozy feel, replacing the square storybook look above:
+
+- **Panels** are white rounded cards with a soft shadow and a light tint of their colour across the top. The title
+  sits on a bright pill banner over the top left edge with the panel's icon, and a round white close button sits
+  on the top right corner.
+- **Bars over the 3D view** (money, people, happiness, the level, the clock, Build mode's bars) are translucent
+  navy pills with white words.
+- **Buttons** are rounded, lifted a little off a darker base, and press down into it. Round icon buttons (the dock,
+  Build mode's tools, the creator's categories) have a white rim and their name on a small white pill.
+- **Outlines are soft**: text is a gentle navy, and lines are thin and light.
+- **Events** play on a white rounded page under a pill banner; **notices** are white rounded notes outlined in
+  their colour.
+
 Villagers walk with Roblox's pathfinding with jumping on, so they go round walls, through doorways (doors are free to
 pass and open as they come), round furniture and over low steps. If they get stuck they jump, then plan again.
 

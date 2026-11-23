@@ -42,10 +42,11 @@ The user asked for things to move "where possible": buttons, screens and the tow
 section 10). New buttons get it from `UI/Kit`; new moving scenery goes in `World/Ambience` (client only, one loop,
 `BulkMoveTo`), and the simulation checks it runs.
 
-The user asked for the genre's own layouts (house builders, avatar editors, city builders) with a cozy feel and
-no rounded rectangles; they chose an original storybook look of our own: docs/GAME_DESIGN.md section 10. Build
-screens from `UI/Kit` (cream paper panels with ribbon titles, square tag buttons, round icon buttons with paper
-tags, wooden bars, square corners except true circles) and `UI/Icons` (drawn icons, never emoji in the interface). The user's rule for icons: "make sure there are no overlapping outlines". A new icon is a
+The user asked for the genre's own layouts (house builders, avatar editors, city builders), then for a bright,
+cozy look like the life sims they showed (in our own designs, never copied): docs/GAME_DESIGN.md section 10. Build
+screens from `UI/Kit` (white rounded cards with pill banners and soft shadows, rounded buttons on a soft base,
+round icon buttons with a white rim and a caption pill, translucent navy pills over the 3D view) and `UI/Icons`
+(drawn icons, never emoji in the interface). UI previews look best over an island render as `--bg`. The user's rule for icons: "make sure there are no overlapping outlines". A new icon is a
 shape list in `UI/Icons`; it gets one outline round its silhouette, so tell its parts apart by colour. Look at it
 with `sh tools/preview/ui.sh icons:<name> <png>`.
 

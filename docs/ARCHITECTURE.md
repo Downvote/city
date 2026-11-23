@@ -121,8 +121,9 @@ server, whatever the client did.
 ## Client
 
 - `Controllers/State`: the mirror of the player's state and plan; `State.on(key, fn)`, `State.onPlan(fn)`.
-- `UI/Kit`: theme and helpers in the storybook style, square corners throughout (`Kit.corner` only rounds
-  `"circle"`; any other radius is ignored): `button` (a square face on a darker block it presses into, outlined
+- `UI/Kit`: theme and helpers in the bright cozy style (`Kit.corner(inst, px | "pill" | "circle")`; frames are
+  rounded unless `Radius = false`; `Kit.stroke` in the text colour comes out thin and see through). The pieces
+  below kept their names from the storybook look: `button` (a square face on a darker block it presses into, outlined
   Fredoka label; `Icon` draws an icon left of the text; the TextButton's own Text is invisible and only sizes it,
   the label follows it), `iconButton` (a round button: "Face" and "Lip" discs, the caption on a paper "Tag";
   `setButtonColor` recolours both discs and leaves the tag's ink alone), `pill` (wooden stat plates, `Plus` adds a

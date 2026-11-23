@@ -958,12 +958,11 @@ local function setTitle(text: string)
 		Parent = titleHolder,
 		Color = T.Pink,
 		TextSize = 28,
-		Position = UDim2.new(0.5, 0, 0, 0),
-		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.fromOffset(34, 0),
 		ZIndex = 3,
 	})
 	if Icons.has("shirt") and titleRibbon then
-		Icons.make("shirt", 50, { Parent = titleRibbon, Position = UDim2.fromOffset(-10, -12), ZIndex = 6 })
+		Icons.make("shirt", 56, { Parent = titleRibbon, Position = UDim2.fromOffset(-30, -6), ZIndex = 6 })
 	end
 end
 
@@ -1010,36 +1009,43 @@ local function build()
 	Kit.frame({
 		Name = "Shadow",
 		Size = UDim2.fromScale(1, 1),
-		Position = UDim2.fromOffset(7, 8),
+		Position = UDim2.fromOffset(0, 8),
 		Color = T.Shadow,
-		Transparency = 0.5,
+		Transparency = 0.8,
+		Radius = 24,
 		Parent = holder,
 	})
 	local panel = Kit.frame({
 		Name = "Panel",
 		Size = UDim2.fromScale(1, 1),
 		Color = T.Paper,
-		Stroke = T.Ink,
-		StrokeThickness = 4,
+		Radius = 24,
 		Parent = holder,
 	})
-	-- a pink band along the top edge with the title on a ribbon across it
-	local header = Kit.frame({ Name = "Header", Parent = panel, Size = UDim2.new(1, 0, 0, 14), Color = T.Pink })
+	-- a soft pink tint across the top, with the title on a pink banner over the edge
+	local header = Kit.frame({
+		Name = "Header",
+		Parent = panel,
+		Size = UDim2.new(1, 0, 0, 56),
+		Color = T.Pink:Lerp(T.White, 0.86),
+		Radius = 24,
+	})
 	Kit.frame({
 		Parent = header,
-		Size = UDim2.new(1, 0, 0, 3),
-		Position = UDim2.new(0, 0, 1, 0),
-		Color = T.Ink,
+		Size = UDim2.new(1, 0, 0, 24),
+		Position = UDim2.new(0, 0, 1, -24),
+		Color = T.Pink:Lerp(T.White, 0.86),
+		Radius = false,
 	})
 	titleHolder = Kit.box({
 		Name = "Title",
 		Parent = panel,
 		Size = UDim2.new(1, 0, 0, 10),
-		Position = UDim2.fromOffset(0, -26),
+		Position = UDim2.fromOffset(0, -22),
 	})
 	titleHolder.ZIndex = 3
 	setTitle("Make a villager")
-	local inner = Kit.box({ Parent = panel, Size = UDim2.new(1, -28, 1, -70), Position = UDim2.fromOffset(14, 52) })
+	local inner = Kit.box({ Parent = panel, Size = UDim2.new(1, -28, 1, -82), Position = UDim2.fromOffset(14, 66) })
 	Kit.closeButton({
 		Parent = panel,
 		Size = UDim2.fromOffset(50, 50),
