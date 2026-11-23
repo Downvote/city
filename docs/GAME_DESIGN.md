@@ -26,8 +26,9 @@ is, not sources.
 3. **Watch life happen.** Villagers wander, sit, chat, go to work from 9 to 5, and sleep at night. Every couple of
    minutes something happens: two of them quarrel and look to you to settle it, someone wants a lamp by their bed,
    a birthday party, a prank, a tourist leaves a tip.
-4. **Earn and grow.** Payday at 5 PM pays out for every villager who worked. Events and room requests pay too. The
-   town levels up as it gains people and value, and each level lets you buy more land.
+4. **Earn and grow.** Payday at 5 PM pays out for every villager who worked, and that is where the money comes
+   from: wages are most of what a town earns. Events, room requests and thank yous are small extras. The town
+   levels up as it gains people, people in work and value, and each level lets you buy more land.
 
 ## 3. Villagers
 
@@ -36,10 +37,10 @@ is, not sources.
 - **Personality.** One of eight: Sunny, Gentle, Bold, Dreamy, Easygoing, Proud, Shy, Cheeky. Each has traits
   (social, temper, kind, mischief, lazy, brave, focus) that weight which events they start and how they react, and
   a bank of lines they say.
-- **Mood** (0 to 100). Goes up with a bed, a nice room, favourite food, good events and paydays they enjoy. Goes
-  down with no bed, hated food, quarrels and ignored requests. Mood scales what they earn at work.
-- **Food.** Each villager secretly has a favourite food and one they can't stand. You find out by feeding them, or
-  when an event gives it away. Favourites cheer them up a lot.
+- **Mood** (0 to 100). Goes up with a bed, a nice room, granted wishes, good events and paydays they enjoy. Goes
+  down with no bed, quarrels and ignored requests. Mood scales what they earn at work.
+- **A favourite food.** Each villager has one, and when a craving comes it is for that half the time. There is
+  nothing to feed them by hand: a craving is bought for them there and then (see Wishes).
 - **Job and skill.** A villager takes a free workplace on their own, or you assign one. Skill rises with each day
   worked and makes their pay go up. Jobs a personality enjoys pay a fifth more.
 - **Home.** One bed per villager (double and bunk beds sleep two). Furniture within a few steps of their bed is
@@ -59,8 +60,8 @@ is, not sources.
   screen, where an event is told: their name on a tab in their colour, the line, what the chat did, and three
   answers. Chat gets another line. Profile opens the villagers' screen on them. Bye closes it, and so does
   walking off, keeping them waiting, opening a menu, Build mode or the creator, or an event starting. The first
-  three chats with a villager each day lift their mood by 2 and give one heart point, less than a snack they
-  love, since a chat costs nothing. After that they still answer and nothing is gained. A villager who wished for
+  three chats with a villager each day lift their mood by 2 and give one heart point, less than a granted wish,
+  since a chat costs nothing. After that they still answer and nothing is gained. A villager who wished for
   some cheering up has the wish granted by a chat. A sleeping villager, one in the middle of an event and one
   away on an outing can't be stopped. A visitor in someone else's town can chat, for the line and the bubble
   only.
@@ -72,21 +73,30 @@ is, not sources.
 We can't copy another game's features one for one, so the town grows the way life sims of this kind do, in our
 own design (`Sim/Life`):
 
-- **Hearts.** Each villager has a heart level with you (up to 20). Snacks fill it (only the first two a day count,
-  three points for their favourite), and so do granted wishes and happy romance moments. Each new level they
-  want to thank you, and you pick one of three: coins they saved up, a basket of snacks, a new saying they'll use
-  in their speech bubbles, or a hobby they'll talk about.
-- **Wishes.** Now and then a villager wants something, and a thought bubble with an icon floats over their head:
-  a craving for a food, someone they'd like to get to know, a new look, or a chat because they feel down. Click
-  the bubble (or open their page) to sort it out: feed them, introduce them, restyle them or have a chat. A
-  granted wish lifts their mood, fills their hearts and they give you a few coins. Up to three wishes are open at
-  once; one left a whole day fades and they sulk a little.
+- **Hearts.** Each villager has a heart level with you (up to 20). Granted wishes fill it, and so do chats and
+  happy romance moments. Each new level they want to thank you, and you pick one of three: coins they saved up,
+  some extra practice at their work (skill points, so they earn more), a new saying they'll use in their speech
+  bubbles, or a hobby they'll talk about.
+- **Wishes.** Now and then a villager wants something, and a thought bubble floats over their head: a craving for
+  a food (the bubble shows the food), someone they'd like to get to know, a new look, or a chat because they feel
+  down. Open their page or talk to them to sort it out: introduce them, restyle them or have a chat.
+
+  > remove the shop, buying of things and food and feeding. when a character gets a craving, allow the player to
+  > simply pay to buy it
+
+  A craving has a Buy button with its price on their page ("Buy for 160"), and the same offer is one of the
+  answers when you stop them for a chat. The price is the food's own price two and a half times over, rounded to
+  5 (40 to 300 coins): a small slice of what two workers earn in a day, never free. Without the coins the button
+  is dim and says how many more you need. A bought craving lifts their mood and fills their hearts, a little more
+  when it was their favourite, and gives no coins back (you paid for it). The other wishes still give a few coins.
+  Up to three wishes are open at once; one left a whole day fades and they sulk a little.
 - **Romance.** Good friends can get a crush; you can tell them to say something. Later they work up the nerve to
   confess, and it may or may not go their way. Sweethearts go on dates round the island, and when they're close
   enough one of them asks you to help plan a proposal: partners for life, and the whole town throws a party.
   Friendships and romances show on a villager's page as arrow tags.
 - **Town goals.** A list to work toward (Goals on the dock): neighbours, wishes granted, heart levels, best
-  friends, the first couple, growing into a Town and then a City, a full house. Each pays coins when you claim it.
+  friends, the first couple, growing into a Town and then a City, a full house, and work: two villagers in jobs,
+  six, ten, 5,000 coins earned in wages, a villager at skill 5. Each pays coins when you claim it.
 
 ## 4. Random events
 
@@ -98,11 +108,13 @@ choose (side with one of them, pay for something, let them go out). About forty 
 - between two villagers: chats, quarrels and making up, gifts, outings, pranks, compliments, arm wrestling,
   cooking together, late night secrets, races, jokes, lost things, lessons, shopping at a friend's workplace;
 - three villagers: someone feels left out;
-- one villager: cravings, asking for coins, room requests, no bed, dreams, finding coins, colds, hobbies, wanting
-  a new look, sleepwalking, practising at work, a busy day at work, asking for the day off, looking for work,
-  feeling lonely, birthdays;
-- the whole town: a visitor wants to move in, a travelling merchant (shop sale), a dance party, shooting stars, a
-  thunderstorm, a tourist, the garden inspector.
+- one villager: cravings (pay there and then, or not), asking for coins, room requests, no bed, dreams, finding
+  coins, colds (seen to for free by a villager working as the doctor, or slept off), hobbies, wanting a new look,
+  sleepwalking, practising at work, a busy day at work, asking for the day off, looking for work, feeling lonely,
+  birthdays;
+- the whole town: a visitor wants to move in, a dance party, shooting stars, a thunderstorm, a tourist, the
+  garden inspector. (The travelling merchant went with the shop. Events that gave or used food now give coins,
+  mood or friendship.)
 
 The same kind of event won't come up again for a while. A spec (`tests/specs/Events.spec.luau`) runs 3000 seeded
 events and checks every kind can happen, every line is filled in and every number stays in range.
@@ -236,27 +248,69 @@ come back when it closes.
 The round wooden deck under the mannequin is gone. Nothing is built at the stage now: the villager simply stands
 in front of the backdrop, at the height they stood before, so the framing is unchanged.
 
+> remove this tooltip in character creation. for the left side, the interface for look should be like the second
+> image. for name and personality, the personality should be a slider, the color a pallette bar slider
+
+(The tooltip was "Drag to turn them round. Scroll or pinch to zoom." The second image was the catalog screen of
+another Roblox avatar game. Its layout is taken, drawn our own way.)
+
+- **No tooltip.** Dragging and zooming work as before, with nothing written over the villager. The card of tools
+  under the villager is gone too, so their side of the screen is clear.
+- **The Look step is laid out like a catalog.** The search box sits at the top left. Beside it the sixteen sections
+  are one row of words that slides sideways, with a round arrow at each end and the wheel moving it a word at a
+  time; the one you are in is underlined in yellow and always slid into view. Under it the section's kinds are a
+  second, smaller row of words, the picked one underlined, with the sort as a small pill at its end. The cards
+  are five to a row: the picture on a rounded square, the name in bold on up to two lines, and one small line for
+  what it is ("Hair", "Torso", "Saved avatar"), or "Wearing" with a yellow square and a tick for one that is on.
+  Along the bottom: the copy a username box at the left, and Undo, Redo, Shuffle, Reset, Zoom and Dark or light
+  as rounded square icon buttons at the right, each named in a small line above the row when you point at it or
+  press it. (The sixteen sections were two rows of eight. Grouping them, as that picture does, would have needed a
+  third row of words, since our sections already have kinds of their own.)
+- **Name and personality.** The personality is a slider: one track with eight stops, a dot in each personality's
+  colour with its name under it, and a knob you drag or click along. The picked one's name stands big over it,
+  with its line of description under it in its colour. The favourite colour is a bar of the palette's 48 colours
+  side by side, with a knob on the one picked and a chip beside it; it snaps to the palette's own colours, which
+  the server takes as they are. The name box, the birthday and Move them in stay.
+
 ## 7. The city
 
-- **City level** comes from population and the build's total value: Hamlet, Village, Town, Big town, City. The
-  starting house counts at what the old cottage was worth (2,610), so the bigger one skips no level; everything
-  the owner builds counts in full.
+- **City level** comes from population, villagers in work and the build's total value: Hamlet, Village, Town,
+  Big town, City (people 0, 3, 6, 9, 12; in work 0, 2, 4, 7, 10). City hall shows all three against the next
+  level. The starting house counts at what the old cottage was worth (2,610), so the bigger one skips no level;
+  everything the owner builds counts in full.
 - **Land**: you start with 100 by 100 studs in the middle of a 200 by 200 plot. You can buy 128, 160 and then 200,
   each needing a city level and coins.
 - **Jobs**: twelve workplaces (market stall, café counter, bread oven, flower cart, artist's easel, clinic desk,
   chalkboard, little stage, builder's bench, post office desk, ice cream cart, library desk), one job each.
 - **Payday** at 5 PM pays each working villager `income x mood x skill x liking`.
-- Other income: a daily gift with a streak, events, room requests, customers dropping by staffed shops.
+
+  > also, it seems like money gain from work is too little. balanced it such that progression is much more based on
+  > villagers working
+
+  Every job pays five times what it did (the builder at the starting workshop went from 108 coins a town day to
+  540), skill grows twice as fast, and the coins a thank you gives went down. Played out for the keenest player
+  there could be, wages went from 29% of a day's coins to 72% in a town of three with two in work, and from 51% to
+  87% in a town of thirteen.
+- Other income, all small beside a day's work: a daily gift with a streak, events, room requests, thank yous,
+  customers dropping by staffed workplaces.
 
 ## 8. Economy bounds
 
 Held by `tests/specs/City.spec.luau`:
 
-- a day's pay for one villager at starting mood and skill is 40 to 220 coins, and never more than 700;
-- the starting coins buy a second bed and a workplace;
-- three workers save up for the first land purchase in 3 to 21 town days (a town day is 12 real minutes);
-- the starting workshop's pay alone (108 coins a town day for the first villager, 130 for a bold or proud one) takes
-  more than 21 town days to reach the first land (it takes 37);
+- a day's pay for one villager at starting mood and skill is 300 to 700 coins, and never more than 3,000;
+- the starting coins buy a second bed and a workplace; then a day of the builder's wage (540) buys the cheapest
+  workplace, two the usual one, and none takes three; a workplace pays for itself in one to three days of its job;
+- three workers save up for the first land in 2 to 5 town days (a town day is 12 real minutes); one alone takes
+  more than 5;
+- the daily gift, a wish's coins, an event's, a room request's, a customer's and a busy day's are all held small
+  beside the least paid job's day;
+- every step from one level to the next (the building its worth asks for, then the land it opens, earned by just
+  the workers the levels ask for) takes 3 to 25 town days, and the whole way to a city 4 to 15 hours;
+- ten town days played out for the keenest player: wages are two thirds or more of what comes in once two
+  villagers work, and 72% to 80% or more as the town grows;
+- buying every craving a town of three with two workers gets takes more than a fiftieth of its wages and less
+  than a quarter;
 - the starting house is a gift: selling any of it refunds nothing (only what was paid on top, say a dearer finish),
   so a new town can't be sold for coins.
 
@@ -1192,6 +1246,37 @@ at its top right. The layout is what is taken; the villagers, the shapes and the
 - **Less glow.** The glow over the picture used to start at anything pale, at nearly full strength and spread
   wide, so a white wall in the sun glowed and a lamp at night washed out the whole view. It now starts only above
   white (what gives off light: lamps, lit windows, signs), at well under half the strength and a tighter spread.
+
+### No shop, no map, a quieter lawn, and three fixes on the main screen
+
+> remove the shop, buying of things and food and feeding. ... remove the map button and the map interface. ...
+> remove the butterflies and bunnies.
+
+- **No shop.** The shop, its button under the clock, the bag of food and things, feeding a villager by hand, the
+  party cake, the medicine and the travelling merchant are gone. A craving is bought for the villager there and
+  then (section 3). The shop on the plaza stays as a building, with no prompt.
+- **No map.** The Map button and the map screen are gone, and with them the trip back to a place you have found.
+  Walking up to a place for the first time still pays its few coins. The round buttons under the clock are now
+  Home, City, News and Dark or light.
+- **No butterflies or rabbits.** The ducks still paddle the ponds.
+
+> the weather tab is stretched
+
+The clock's dark slab hung from the very top of the screen, down through the strip Roblox keeps there, to a clock
+placed under that strip: twice as tall as what it held. It now hangs in that strip with the time and the weather
+inside it, and the round buttons come up under it. (The previews painted Roblox's strip black, which hid this; they
+now draw it see-through as the game does.)
+
+> no need for the camera to jump after clicking on watch, just make the characters appear and the dialogue speech
+> appears
+
+Pressing Watch on an event now only slides the villagers in and starts their lines. The camera stays where you had
+it.
+
+> remove the borders
+
+(Of the stats strip.) The thin line inside the edge of every leaning slab is gone, on the main screen and in the
+menus. The halftone at one end stays.
 
 ## 11. Writing
 

@@ -29,7 +29,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (280, all passing; `ShopService`: the shop's server side, a party cake one at a time; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (294, all passing; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off; what kind a bundle
 is, the outfit that holds the body, single body parts, the player's own items and avatars; preview scenes
@@ -97,8 +97,16 @@ Preview the layouts with `sh tools/preview/ui.sh signs <png>` (also `signs:board
 
 The user asked for a lively world ("animated blades of grass, animated details, small creatures, trees with leaves
 that sway with the wind") and a clear sky ("remove clouds and birds from the sky"): leaves are parts named `Leaf`,
-hanging signs `SwingSign`, fountain jets `Jet`, and `World/Ambience` moves them, the grass, the butterflies,
-rabbits and ducks on each player's own screen. Name a new tree's crown parts `Leaf` and it sways.
+hanging signs `SwingSign`, fountain jets `Jet`, and `World/Ambience` moves them, the grass and the ducks on each
+player's own screen. Name a new tree's crown parts `Leaf` and it sways. (The user later: "remove the butterflies
+and bunnies". Don't bring them back.)
+
+The user: "remove the shop, buying of things and food and feeding. when a character gets a craving, allow the
+player to simply pay to buy it" and "remove the map button and the map interface". So there is no shop, no bag
+(`inv`), no feeding and no map screen. A craving is bought from the villager's page or the talk card through
+`WishBuy` at `Life.wishPrice`. Don't add anything for sale but cravings and Build mode's pieces. The user also
+asked that "progression is much more based on villagers working": wages are most of a town's income and town
+levels ask for villagers in work (`Tuning.City.Levels[i].Workers`); the City spec holds that balance.
 
 Server start: `init` everything, `start` everything, then `Data.open()` lets players in. Never load a profile
 before every service is listening (a player can be in the server before the town is built).
@@ -115,7 +123,8 @@ in"): the villagers in it slide in from the sides as busts (`ModelPreview.fromMo
 card and the event card both build it; never write a second dialogue box. A random event must never take the
 screen by itself ("in the cast of random villager text events, make this only happen when the player chooses to
 watch"): `EventShow` brings up only a small prompt with Watch (Answer, with a timer, when a choice is waiting), and
-the scene goes up when the player presses it (`EventCard.isWatching()`). While a scene is up `State`'s `talking`
+the scene goes up when the player presses it (`EventCard.isWatching()`), and the camera stays where the player
+has it ("no need for the camera to jump after clicking on watch"). While a scene is up `State`'s `talking`
 is true and the HUD's bottom bar, Build button and quests slide away. Preview scenes: `event` and `event:talk` (the
 prompt), `event:one`, `event:two`, `event:four`, `event:narration`, `event:answers`, `talk`, `talk:again`.
 
@@ -138,7 +147,9 @@ below it as well"); the clock top right with a row of captioned round buttons un
 that there is a teleport home button": `Hud.goHome`, the `GoHome` remote, the H key); a quick menu of four tiles
 bottom left, starting at the left edge (it had a round portrait button first: "remove this button and flush the
 rest to the left") and a big Build button bottom right, the same dark slab as that menu bar with a yellow hammer
-("make the build button be black as well": it was blue). Those pieces come out of the screen's edges ("these three should
+("make the build button be black as well": it was blue). The clock's slab hangs inside the strip Roblox keeps at
+the top of the screen with the clock in it ("the weather tab is stretched": it ran down through that strip to a
+clock placed under it); the UI previews draw that strip see-through, as the game does. Those pieces come out of the screen's edges ("these three should
 be coming out of the corners of the screen instead of floating. vertically flip the paralleograms of the weather and
 one of the 4 icons. also, the quest tab and currency/stats tab should also be part of the left side edge"): the
 clock's slab hangs from the top right corner and the menu bar comes out of the bottom left, both leaning the other
@@ -220,9 +231,9 @@ replicate the look and feel as much as possible, including the texturing and min
   Build button, the red way out of a menu (`Kit.backButton`), a ribbon, a price tag. `Kit.slant` paints the slab
   (`UI/Skin` paints its two ends, an ImageLabel named `Body` stretches the middle), so recolour a leaning face
   with `Kit.paint` and read it with `Kit.colorOf`, never through its BackgroundColor3 or BackgroundTransparency
-  (the face itself is clear). `Kit.detail` adds the thin line inside its edge and the halftone at one end, which starts at the
-  very end of the slab and is cut to its shape ("the bars are misaligned, they should start from the very end"):
-  never lay a texture on a leaning slab as a loose rectangle.
+  (the face itself is clear). `Kit.detail` adds the halftone at one end, which starts at the very end of the slab
+  and is cut to its shape ("the bars are misaligned, they should start from the very end"): never lay a texture
+  on a leaning slab as a loose rectangle. No line runs inside a slab's edge ("remove the borders").
 - Menus are rounded cards in a thin rim (`Kit.frame({ Cut = n })`, `Kit.rim`), rows and tabs and buttons are pills
   (`Kit.row`, `Kit.segments`, `Kit.button`), a tile is a rounded square with its name on a deeper band
   (`Kit.tile`), markers and small buttons are circles (`Kit.disc`, `Kit.roundButton`, `Kit.badge`; a face is
@@ -268,7 +279,7 @@ solid silhouette in one colour with its details cut out of it (the door out of t
 clock), never an outline: cuts and gaps 1.5 to 2 wide so they last at 16 pixels, signs that are all line (plus,
 cross, tick, arrows) 4 wide with square ends, true circles and firm corners, points that really point, a notch
 in every arrow's tail, 1.5 clear of the edge (the rules are at the top of IconArt, and the Icons spec holds
-them). Food and shop things are shaded pictures in `UI/ItemArt` (`Icons.item`). As with the menus, the style
+them). Foods are shaded pictures in `UI/ItemArt` (`Icons.item`). As with the menus, the style
 is taken and never the pictures: no icon, dish, logo or lettering of that game is copied or traced, and none
 of its files is in the repository. Look at art with `sh tools/preview/art.sh <png> <names>`. A published game only paints them
 with Allow Mesh / Image APIs on (Security, in the game's settings); otherwise each icon falls back to its

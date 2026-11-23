@@ -56,12 +56,16 @@ The contract between the parts of the game. Update it with every change to an AP
 - `Avatar/`: `Appearance` (the saved look, sanitising, which asset types fit which slot), `Categories` (creator tabs,
   catalog filters, wearing and merging).
 - `Sim/`: `Schema` (profile and villager shapes, defaults, migration), `Relationships`, `EventEngine` (picks events,
-  applies their effects, including `bond` and `hearts`), `City` (stats, levels, land, workplaces, paydays), `Life`
-  (hearts and their thank you offers, wishes, romance bonds, goals; all pure).
+  applies their effects, including `bond`, `hearts` and `xpv vid d`, skill for one villager by id; `ctx.cravingPrice`;
+  no food, item or merchant ops since the shop went), `City` (stats, levels, land, workplaces, paydays;
+  `City.level(pop, value, workers?)`, `City.workers(profile)` the villagers with a job, `City.addSkill(v, n)`;
+  `City.stats(profile).employed` is set against `nextLevel.Workers` on the city hall), `Life` (hearts and their
+  thank you offers, wishes, romance bonds, goals; `Life.cravingPrice(foodId)`, `Life.wishPrice(profile, vid)`,
+  `Life.buyWish(profile, vid, rng)`; all pure).
 - `Data/Hills` (the northern hills: `smooth(x, z)`, `at(x, z)` the drawn surface's height, `slope`, `Plateaus`,
   `prims(region)` as flat triangles), `Data/CityModels` (downtown, civic, hill and waterfront buildings and
   landmarks; `lot(w, d, kind, margin)` landscaping, placed by name as `lot:<w>x<d>:<kind>:<margin>`; `parkedCar1..6`; `tower`, `shop` and `house` kinds; spinning parts named `Hub`, `Spin`, `Cabin`), `Data/Places` (places
-  to find: id, name, blurb, pos, radius, coins; `near`, `arrival`).
+  to find: id, name, blurb, pos, radius, coins; `near`).
 - `Data/Goals` (the town goals with their `value(profile, city)`), `Data/Sayings` (sayings and hobbies).
 - `Data/Interiors` (the insides of the map's buildings): `shell(r, spec)` draws a room you can walk into (floor,
   walls, shop window, a door leaf with its own `frame` so it opens like any other door) and returns its `Box`;
@@ -197,20 +201,22 @@ One DataStore key per player, `p_<userId>`, holding `{ data = profile, lock = { 
 ```
 profile = {
   v, coins, plan, villagers = { [vid] = Villager }, order = { vid }, nextVid,
-  rel = { ["a|b"] = { s, q?, n } }, inv = { food = { [id] = n }, items = { [id] = n } },
+  rel = { ["a|b"] = { s, q?, n } },
   requests = { { vid, tag, untilT } }, log = { { t, text } }, outfits = { { name, app } },
   settings, tutorial, daily = { last, streak }, stats, recent = { eventId }, bdays = { [vid] = day },
   lastPayday, calendarDay, offers = { { vid, level, options } }, goals = { [goalId] = true },
   found = { [placeId] = true }, arrived = { [newcomerKey] = true },
 }
-Villager = { id, name, pers, app, color, bday = { s, d }, fav, hate, known, mood, job?, lv, xp, bed?, sick?,
-             dayOff?, isYou?, born, heart, hxp, wish? = { kind, arg?, untilT }, saying?, hobby?, feedDay?, feeds?,
-             from? }
+Villager = { id, name, pers, app, color, bday = { s, d }, fav, mood, job?, lv, xp, bed?, sick?,
+             dayOff?, isYou?, born, heart, hxp, wish? = { kind, arg?, untilT }, saying?, hobby?, from? }
 rel record = { s, q?, n, bond? = "crush" | "sweethearts" | "partners" }
-stats = { events, fed, made, earned, paydays, wishes, hearts, couples, partners }
+stats = { events, made, earned, paydays, wishes, hearts, couples, partners }
 ```
 
-`Schema.migrate` fills in anything missing and drops anything broken, so old saves load.
+`Schema.migrate` fills in anything missing and drops anything broken, so old saves load. Since the shop went it
+also drops an old save's `inv` (the bag of food and things), `stats.fed`, and each villager's `hate`, `known`,
+`feedDay` and `feeds`; mends a `fav` that is no food; and drops a wish of a kind it doesn't know
+(`Schema.WishKinds`) or a craving for something that is no food.
 
 Any plan object may carry `gift`: the coins of it that were given (every piece of the starting house carries its
 own price). `Plan.price(kind, obj)` is its cost less its gift and `Plan.changeCost` charges and refunds by price,
@@ -221,7 +227,7 @@ town's level: `Plan.value` less whatever the gifts come to above `Tuning.City.St
 cottage was worth); `City.stats(...).value` is that number.
 
 A villager also carries `chatDay?` and `chats?` (the day index of their last chat with the owner and how many
-that day, kept like `feedDay` and `feeds`; `Sim/Talk` reads and writes them).
+that day; `Sim/Talk` reads and writes them).
 
 `settings` is `Schema.Settings`: `music`, `sfx` (0 to 1), `bubbles`, `eventCamera` (true or false) and `theme`
 ("dark" or "light", the interface's look). `SettingSet(key, value)` takes a value of the default's type; a number
@@ -245,16 +251,16 @@ The creator's remotes: `CreatorPeople` (the people here and your friends, and th
 | `Plots` | Hands out plots, draws the saved build and the owned land, sells more land (`PlotExpand`). |
 | `Build` | `BuildApply`, `BuildUndo`, `BuildRedo`: checks requests, charges or refunds, keeps history, redraws, syncs the plan to its owner (`PlanSync`). Fires `Changed`. A batch is up to 320 requests (a whole ready-made building); an item's `wall = "@n"` means the wall made by the batch's n-th request. `Build.prepare` is exported for the specs. |
 | `Avatar` | The creator: a private stage (an empty Model `CreatorStage<slot>` with an `Origin` attribute, high over the meadow; nothing is built there) and an anchored mannequin per player, catalog search fallback, bundles, copying users, outfits, asset checks, the text filter. `toDescription`, `buildModel` for everyone else. |
-| `Villagers` | Creating, editing, moving out, beds, jobs, feeding. Spawns NPCs and runs their routine: sleep at night, work 9 to 5, wander, sit, chat, visit shops. Payday at 5 PM. Talking: `Villagers.spawn` puts `Npc.talkPrompt(name)` on each body (a ProximityPrompt `TalkPrompt` on the HumanoidRootPart: E, held `Tuning.Talk.HoldSeconds`, from `Distance` studs, no `Opens` attribute) and `setControl` switches it with `Npc.setTalkable(Talk.free(mode))`; it is off while they sleep. `Villagers.talkedTo(who, owner, vid)` answers it: it refuses a sleeper, someone in an event or away, a player more than `Range` studs off and a second line within `Cooldown`; then holds them (`setControl(owner, vid, "talk")` for `StaySeconds`, `VisitorSeconds` for a visitor, or until the player walks off), turns them with `Npc.face`, and has them say `Talk.line`. The owner also gets `Talk.chat`'s gain and the `Talk` event. |
+| `Villagers` | Creating, editing, moving out, beds, jobs, buying a craving (`Villagers.buyWish`, the `WishBuy` remote). Spawns NPCs and runs their routine: sleep at night, work 9 to 5, wander, sit, chat, visit shops. Payday at 5 PM. Talking: `Villagers.spawn` puts `Npc.talkPrompt(name)` on each body (a ProximityPrompt `TalkPrompt` on the HumanoidRootPart: E, held `Tuning.Talk.HoldSeconds`, from `Distance` studs, no `Opens` attribute) and `setControl` switches it with `Npc.setTalkable(Talk.free(mode))`; it is off while they sleep. `Villagers.talkedTo(who, owner, vid)` answers it: it refuses a sleeper, someone in an event or away, a player more than `Range` studs off and a second line within `Cooldown`; then holds them (`setControl(owner, vid, "talk")` for `StaySeconds`, `VisitorSeconds` for a visitor, or until the player walks off), turns them with `Npc.face`, and has them say `Talk.line`. The owner also gets `Talk.chat`'s gain and the `Talk` event. |
 | `Events` | Picks and plays random events, waits for choices, applies effects, room request rewards, small friendship gains from chats, parties. |
-| `Shop` | Food, medicine and party cakes, cheaper while the merchant is in town. `ShopBuy(kind, id, count)` buys up to 20 of a food or a thing. A cake is one at a time: it is charged and `Events.party` started together, refused with no charge while something else is going on, and a cake already in the bag pays for the party. |
 
 `Villagers` also runs the life sim's server side: every in-game hour wishes fade and new ones turn up (the model's
-`Wish` attribute carries the icon for the client's bubble); feeding fills hearts and answers cravings; a new look
-answers a wish for one; `WishGrant`, `HeartReward` and `GoalClaim` answer the rest. Villagers sometimes say their
+`Wish` attribute carries the icon for the client's bubble); `WishBuy` pays for a craving and grants it
+(`Life.buyWish`: the price from `Life.wishPrice`, hearts and mood, a little more for their favourite, no coins
+back); a new look answers a wish for one; `WishGrant`, `HeartReward` and `GoalClaim` answer the rest. Villagers sometimes say their
 own saying or a line about their hobby.
 | `World` (doors) | Doors stay shut; each gets a `DoorPrompt` (Open or Close, `World.toggleDoor`); a villager within 6.5 studs opens one and it shuts 1.2 s after the last villager leaves, unless a player opened it. |
-| `Explore` | `PlaceFound` checks the player stands at the place, pays its coins once and marks `found`; `Travel` takes them back to a found place (a few seconds between trips). |
+| `Explore` | `PlaceFound` checks the player stands at the place, pays its coins once and marks `found`. (The map and `Travel`, the trip back to a found place, are gone.) |
 | `Materials` | Runs `Textures.install` at start: each uploaded painted texture's MaterialVariant (built into the place) becomes its material's look. Warns when a variant is missing from the place. |
 
 `Npc` (`src/server/Npc/Npc.luau`) is one villager's body: animations (their own pack or Roblox's defaults), pathfinding
@@ -272,10 +278,12 @@ to approach points beside beds and in front of seats, then sit or lie down.
 
 Functions (client asks, server answers): `GetState`, `BuildApply`, `BuildUndo`, `BuildRedo`, `CreatorOpen`,
 `CreatorClose`, `CreatorPreview`, `CreatorBundle`, `CreatorFromUser`, `CreatorSearch`, `CreatorItemInfo`,
-`VillagerCreate`, `VillagerUpdate`, `VillagerRemove`, `VillagerBed`, `VillagerJob`, `VillagerFeed`,
-`VillagerFocus`, `OutfitSave`, `OutfitDelete`, `EventChoose`, `ShopBuy`, `DailyClaim`, `PlotExpand`, `SettingSet`,
-`TutorialStep`, `VisitPlot`, `WishGrant` (`vid, "friend" | "cheer", otherVid?`), `HeartReward` (`choice`),
-`GoalClaim` (`goalId`), `PlaceFound` (`placeId`), `Travel` (`placeId`), `CreatorFromOutfit` (`outfitId` -> appearance or nil: one of the player's own saved Roblox avatars, through
+`VillagerCreate`, `VillagerUpdate`, `VillagerRemove`, `VillagerBed`, `VillagerJob`,
+`VillagerFocus`, `OutfitSave`, `OutfitDelete`, `EventChoose`, `DailyClaim`, `PlotExpand`, `SettingSet`,
+`TutorialStep`, `VisitPlot`, `WishGrant` (`vid, "friend" | "cheer", otherVid?`), `WishBuy` (`vid` -> `ok, message?`:
+buys the villager's craving at `Life.wishPrice`; true with no message, the notices go through `Notify`; refused with
+a plain reason when there is no craving or not enough coins), `HeartReward` (`choice`),
+`GoalClaim` (`goalId`), `PlaceFound` (`placeId`), `CreatorFromOutfit` (`outfitId` -> appearance or nil: one of the player's own saved Roblox avatars, through
 `Players:GetHumanoidDescriptionFromOutfitIdAsync`; a whole number, at most one every 0.5 s a player),
 `CreatorBundle` (`bundleId, kind?`: kind "body", "head", "shoes" or "anim", what the tab asked for; anything else
 counts as not said), `CreatorSearch` (its query may carry `offSale` and `inside`, a bundle's `BundledItems`),
@@ -293,8 +301,8 @@ server, whatever the client did.
 ## Client
 
 `World/Ambience` also runs the life near the player: `Leaf` parts lean with `wind(at, phase)`, `SwingSign` parts
-swing, grass tufts are pooled and moved onto grass found by raycast (`grassAt`), butterflies, rabbits and ducks are
-`AmbientModels` movers, `trafficLight` models take turns by which road their arm hangs over, `buoy`, `sailboat` and
+swing, grass tufts are pooled and moved onto grass found by raycast (`grassAt`), ducks are
+`AmbientModels` movers (the butterflies and rabbits are gone), `trafficLight` models take turns by which road their arm hangs over, `buoy`, `sailboat` and
 `rowboat` models bob, parts named `Jet` spray. `Avatar/Categories` has `bundleWorn` and `unmerge` for sets.
 `UI/Kit` has `wash` (a two colour gradient), `shapes` (simple shapes dotted over a background: cards and pills,
 never a panel's header) and draws the calm wave under a panel's header.
@@ -335,9 +343,9 @@ clipping (`tools/preview/ui_render.py`).
   (BackgroundTransparency 1, attributes `Painted`, `Base` its colour, `Cap`, `Tall`, `Flip`) and an ImageLabel
   named `Body` under everything in it (ZIndex -3) shows `Skin.slab`, nine sliced, in the face's colour. So a
   leaning face is recoloured with `Kit.paint(face, colour?, transparency?)` and read with `Kit.colorOf(face)`,
-  never through its BackgroundColor3. `Kit.detail(face, opts)` adds `Line` (a thin line just inside the edge) and
-  `Tone` (the halftone that starts at one end of the slab, laid over that end pixel for pixel: `Side`, `ToneWidth`), both marked `Tinted` so a change of look maps
-  their colour. Where pictures are off, `Kit.slant` falls back to a sharp wedge on each end (`Kit.wedge(props,
+  never through its BackgroundColor3. `Kit.detail(face, opts)` adds `Tone` (the halftone that starts at one end of
+  the slab, laid over that end pixel for pixel: `Side`, `ToneWidth`), marked `Tinted` so a change of look maps its
+  colour. (It drew a thin line just inside the edge too, until the user asked to "remove the borders".) Where pictures are off, `Kit.slant` falls back to a sharp wedge on each end (`Kit.wedge(props,
   keep)`: a box named `Wedge_<br|tl|tr|bl>` with a UIGradient `Cut` across its diagonal) and `Kit.detail` does
   nothing. `Kit.cutInto(holder, colour, cut)` lays a rounded card under what is in `holder` (a frame named `Cut`;
   `Kit.frame({ Cut = n })` does it and adds a thin rim; `Kit.paintCut` recolours it; the names are from when two
@@ -449,8 +457,7 @@ clipping (`tools/preview/ui_render.py`).
 - `UI/Rewards` (the thank you picker, opened by the HUD when `offers` arrive), `UI/Goals` (the town goals panel;
   `Goals.ready()` feeds the dock badge), `World/Wishes` (a wobbly thought bubble over each villager whose model has a
   `Wish` attribute; a click opens their page).
-- `UI/MapPanel` (the island map, places and travel), `World/Explore` (tells the server when the player reaches a
-  place they haven't found).
+- `World/Explore` (tells the server when the player reaches a place they haven't found). There is no map screen.
 - `World/Ambience` turns the ferris wheel, carousel and windmill (parts named `Spin` round the `Hub`'s X axis;
   `Cabin` parts go round upright) and bobs the marina's boats (parts named `Boat<n>`, one group each).
 - `World/Ambience` (client only): cars and the bus on the street (they stop for anyone on a crossing, the bus waits
@@ -547,16 +554,16 @@ clipping (`tools/preview/ui_render.py`).
 - `UI/Hud`: the level card (its badge a round dial), and four glass slabs that come out of the screen's edges and
   corners: `Pills` (one `Kit.darkPill` flush on the left edge under the level, with a `Row` of the money, people
   and happiness cells and slanted `Divider`s between them; no + on the money), the quests under it (their rows and header start at
-  the left edge too), `ClockTab` (hanging from the top right corner, running up into the top inset, leaning the
-  other way, with the `Clock` box over it), `Menu` at the bottom left (its `MenuBar` out of the corner, leaning the
+  the left edge too), `ClockTab` (hanging from the top right corner in Roblox's top inset, leaning the other way,
+  72 tall with 10 more off the top, and the `Clock` box inside it, placed `-inset` up), `Menu` at the bottom left (its `MenuBar` out of the corner, leaning the
   other way, the four tiles on it packed from the left edge), and the Build button running off the bottom right corner.
-  Under the clock are the captioned round buttons (`HomeCell` with `Home`, then the map, the city hall, the shop,
-  the news and the look). While `State.data.talking` is true (a dialogue scene is up: the talk card, an event the
+  Under the clock are the captioned round buttons in `Corner` (`HomeCell` with `Home`, then `CityPanel`, `News`
+  and the look). While `State.data.talking` is true (a dialogue scene is up: the talk card, an event the
   player chose to watch) the `Menu`, the Build button and the quests slide off their edges, and back when it goes
   false. `Hud.goHome()` shuts the menus, dips the screen
   (a `Veil` frame) and asks `GoHome`; H does the same when the HUD shows and nothing has the keyboard. It opens one
   panel at a time:
-  `Creator`, `Residents`, `CityPanel`, `ShopPanel`, `News`, `Welcome`. `EventCard` (the dialogue box) and `Weather`
+  `Creator`, `Residents`, `CityPanel`, `News`, `Welcome`. `EventCard` (the dialogue box) and `Weather`
   run all the time. The HUD and the event box step aside in Build mode and while the creator is open. The round
   buttons under the clock start with `Look`, which calls `Theme.toggle()` and is drawn again after a switch.
 - `UI/Creator`'s view: a Scriptable camera with a 40 degree lens that orbits the mannequin at `zoom` studs
@@ -641,9 +648,9 @@ clipping (`tools/preview/ui_render.py`).
   round, a rim that lies inside the slab and is a pixel thick, textures that tile without a seam, a tone that starts at the
   slab's very end, stays inside it, thins out and leans with it), `Walk` (the real `Npc.walkTo` on a stand-in
   humanoid: the next leg starts the moment the last ends, a waypoint they are already on is passed, a move the
-  engine gave up on is taken up again, hops where the path asks), `ShopService` (the shop with its neighbours
-  stubbed: food and things by the number, the merchant's prices, one party for one cake's price, no cake sold
-  while something is going on, junk from a client refused). The talk card simulation
+  engine gave up on is taken up again, hops where the path asks), `WishService` (the real Villagers service with its
+  neighbours stubbed and its brain replaced: buying a craving, enough and not enough coins, no wish, a wish that
+  is no craving, junk from a client). The talk card simulation
   (`tests/sim/talk_card.luau`) also drives events both ways: one never watched (the prompt only, nothing slides
   in, `talking` stays false, the prompt turns into Answer with its timer and goes at the end) and one watched
   (the scene, a second and a third villager joining and taking the light, a choice going through `EventChoose`,
