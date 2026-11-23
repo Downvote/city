@@ -84,10 +84,36 @@ describe("Icons", function()
 					error(name .. ": a flat icon has shading")
 				end
 			end
+			-- a dent (the coin's middle) is the same colour a step darker, and nothing else is
+			local dent = Icons.dentOf(glyph):ToHex()
+			local dented = false
+			for _, sh in Icons.defs[name] do
+				dented = dented or sh.dent == true
+			end
 			for hex in colours do
-				expect(hex == glyph:ToHex() or hex == hole:ToHex()).toBeTruthy()
+				expect(hex == glyph:ToHex() or hex == hole:ToHex() or (dented and hex == dent)).toBeTruthy()
 			end
 		end
+	end)
+
+	it("presses a darker circle into the coin", function()
+		local glyph = Color3.fromRGB(236, 162, 28)
+		local icon = Icons.make("coin", 48, { Color = glyph })
+		local found = false
+		for _, d in icon:GetChildren() do
+			if d:IsA("Frame") and d.BackgroundColor3:ToHex() == Icons.dentOf(glyph):ToHex() then
+				found = true
+				-- inside the coin, and smaller than it
+				expect(d.Size.X.Scale < 0.7 and d.Position.X.Scale > 0.1).toBeTruthy()
+			end
+		end
+		expect(found).toBeTruthy()
+		expect(Icons.dentOf(glyph) ~= glyph).toBeTruthy()
+	end)
+
+	it("has a trophy for the Goals button", function()
+		expect(Icons.has("trophy")).toBeTruthy()
+		expect(#Icons.make("trophy", 40):GetChildren() >= 5).toBeTruthy()
 	end)
 
 	it("outlines nothing when asked not to", function()

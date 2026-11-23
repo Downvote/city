@@ -419,7 +419,7 @@ function Hud.start()
 	menuButton("shirt", "Create", T.Pink, 2, function()
 		Hud.open("Creator", { mode = "new" })
 	end)
-	local goalsTile = menuButton("medal", "Goals", T.Orange, 3, function()
+	local goalsTile = menuButton("trophy", "Goals", T.Orange, 3, function()
 		Hud.open("Goals")
 	end)
 	local giftReady = false

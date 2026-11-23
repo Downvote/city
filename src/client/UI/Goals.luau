@@ -151,7 +151,7 @@ function Goals.open()
 	Goals.close()
 	panel = Kit.panel("Town goals", UDim2.fromOffset(680, 500), function()
 		Goals.close()
-	end, "medal", T.Yellow)
+	end, "trophy", T.Yellow)
 	local scroll = Kit.scroll({ Parent = panel.body, Size = UDim2.fromScale(1, 1) })
 	Kit.list(scroll, 10, false, Enum.HorizontalAlignment.Center)
 	list = scroll

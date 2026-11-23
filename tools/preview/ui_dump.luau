@@ -13,6 +13,7 @@
 --   toasts              a few notices
 --   icons               every icon, big and small
 --   icons:<a>,<b>,...   those icons up close
+--   stickers:<a>,<b>    those icons as full colour stickers with their outline (Full = true)
 --   flaticons           every icon flat, white on a dark round button
 --   creator             the villager creator on the hair tab
 
@@ -217,7 +218,8 @@ elseif scene == "flaticons" then
 			AlignX = Enum.TextXAlignment.Center,
 		})
 	end
-elseif scene:sub(1, 6) == "icons:" then
+elseif scene:sub(1, 6) == "icons:" or scene:sub(1, 9) == "stickers:" then
+	local full = scene:sub(1, 9) == "stickers:"
 	local Icons = Harness.require(Sim.CLIENT .. "UI.Icons")
 	local Kit = Sim.Kit
 	local sheet = Kit.frame({
@@ -231,10 +233,10 @@ elseif scene:sub(1, 6) == "icons:" then
 	grid.CellPadding = UDim2.fromOffset(6, 6)
 	grid.Parent = sheet
 	local i = 0
-	for name in scene:sub(7):gmatch("[^,]+") do
+	for name in scene:sub(if full then 10 else 7):gmatch("[^,]+") do
 		i += 1
 		local cell = Kit.box({ Parent = sheet, LayoutOrder = i })
-		Icons.make(name, 150, { Parent = cell, Position = UDim2.new(0.5, -75, 0, 4) })
+		Icons.make(name, 150, { Parent = cell, Position = UDim2.new(0.5, -75, 0, 4), Full = full })
 		Kit.text(name, {
 			Parent = cell,
 			Size = UDim2.new(1, 0, 0, 18),

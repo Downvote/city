@@ -238,7 +238,9 @@ clipping (`tools/preview/ui_render.py`).
   so the only outline is the one round the silhouette and none crosses another part. Above 20 px a second dark copy
   sits a little lower ("InkBase"), so the outline is thicker underneath. The shade is a gradient in
   icon space (each piece's keypoints are the icon's shade at its top and bottom), so overlapping pieces join without
-  a seam. `Icons.names()` lists them. `UI/Toasts`, `UI/ModelPreview` (3D thumbnails in ViewportFrames).
+  a seam. Flat icons (the default) draw every piece in one colour and cut details out in `Hole`; a shape marked
+  `dent = true` is drawn in `Icons.dentOf(colour)` instead, the same colour a step darker (the coin's middle).
+  `Icons.names()` lists them. `UI/Toasts`, `UI/ModelPreview` (3D thumbnails in ViewportFrames).
 - `UI/Hud`: stat pills, the level card, the clock, the icon dock and the daily gift; opens one panel at a time:
   `Creator`, `Residents`, `CityPanel`, `ShopPanel`, `News`, `Welcome`. `EventCard` (the dialogue box) and `Weather`
   run all the time. The HUD and the event box step aside in Build mode and while the creator is open.

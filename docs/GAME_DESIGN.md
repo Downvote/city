@@ -421,7 +421,11 @@ In our own drawing:
   town, villagers' names picked out in a warm orange; the answers are speech bubbles down the right side that turn
   sunny yellow with soft stripes under the pointer. Friendships show as arrow tags.
 - **Icons are flat and one colour**: white on a coloured button, navy on a white one, details like eyes cut out in
-  the colour behind them. A few keep their natural colour: the coin and medal gold, the sun yellow, hearts pink.
+  the colour behind them. A few keep their natural colour: the coin, the trophy and the medal gold, the sun yellow,
+  hearts pink. The Goals button is a trophy (two handles, a bowl, a stem and a foot), and the coin has a circle
+  pressed into its face in a darker shade of its own gold:
+
+  > Change the goals icon to a trophy. Also, the coin icon can have a darker circle inside as an indent.
 
 > Look at Pocket City 2. this should be the ui and graphical direction you should reference from
 

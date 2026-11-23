@@ -24,7 +24,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    simulation (`tests/sim/build_client.luau`: the real Build mode driven by clicks), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (94, all passing): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (96, all passing): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off), Build (catalog, plan rules, field cleaning, shapes, builder), BuildService (the server's
 Build service with stubbed neighbours: charges, syncs, strips junk, refuses land you don't own), Events (3000 seeded
@@ -38,7 +38,7 @@ fills, no stroke on a fill), Textures (every painted texture has its pictures an
 World (hills flat at their edges, on the creator's meadow and their tops, gentle to walk; places on the island and
 off the plots; nothing in any road; no tree within 18 studs of a sidewalk; the pockets clear of each other; downtown
 and civic buildings inside their blocks). The town map previews with `sh tools/preview/render.sh map <png>` (or
-`map:x1,z1,x2,z2`), the cars, bus and bird with `ambient`, a cloud with `cloud`, a ready-made building with
+`map:x1,z1,x2,z2`), the cars and the bus with `ambient`, a ready-made building with
 `preset:<id>` (`preset:<id>:inside` leaves the roof off), any of the map's own models side by side with
 `models:<name>,<name>`. A new ready-made building is a function in
 `Data/Presets` laid out with its little builder; the Presets spec will say where it doesn't fit.
@@ -101,7 +101,9 @@ under a menu's header, then "not that wavy, a calm wave should be enough" (a few
 the villager's face in place of the colour bar in lists.
 The user's rule for icons: "make sure there are no overlapping outlines". A new icon is a
 shape list in `UI/Icons`; it gets one outline round its silhouette, so tell its parts apart by colour. Look at it
-with `sh tools/preview/ui.sh icons:<name> <png>`.
+with `sh tools/preview/ui.sh icons:<name> <png>` (`stickers:<name>` for the outlined version). Flat icons are one
+colour; the one exception the user asked for is a dent ("the coin icon can have a darker circle inside as an
+indent"): mark the shape `dent = true` and it draws a step darker. The Goals button is the `trophy`.
 
 The user asked for custom textures, then for "textures from the roblox library that fits": the materials use
 Creator Store pictures listed in `Data/TextureIds` (find more with `scripts/library_textures.py search`, get the

@@ -7,6 +7,8 @@
 --   { "r", x, y, w, h, colour, r = corner (0..0.5), rot = degrees, o = false (not part of the
 --     outlined silhouette: details inside it), t = transparency }
 --   { "c", x, y, w, h, colour, ... }             an ellipse
+--   dent = true on a shape: pressed into the piece under it. A flat icon draws it in a darker
+--     shade of its one colour (the coin's middle), where other details are cut out
 --   { "t", x, y, base, dir, colour, ... }       a right angled triangle with this base; dir up, down,
 --                                                left or right; its height is half the base
 --   { "ring", x, y, w, h, colour, width }       a hollow ring
@@ -62,12 +64,12 @@ Icons.defs = D
 
 -- money and people ---------------------------------------------------------------------------------
 
+-- The user: "the coin icon can have a darker circle inside as an indent".
 D.coin = {
 	{ "c", 6, 6, 88, 88, C.goldDark },
-	{ "c", 15, 13, 70, 70, C.gold, o = false },
-	{ "ring", 22, 20, 56, 56, C.goldDark, 5, o = false },
-	{ "r", 44, 32, 12, 32, C.goldDark, r = 0.5, o = false },
-	{ "r", 26, 20, 12, 22, C.white, r = 0.5, rot = 35, o = false, t = 0.35 },
+	{ "c", 12, 11, 76, 76, C.gold, o = false },
+	{ "c", 24, 24, 52, 52, C.goldDark, o = false, dent = true },
+	{ "r", 20, 16, 10, 20, C.white, r = 0.5, rot = 35, o = false, t = 0.35 },
 }
 
 D.people = {
@@ -109,6 +111,19 @@ D.medal = {
 	{ "c", 22, 37, 56, 52, C.gold, o = false },
 	{ "ring", 27, 42, 46, 42, C.goldDark, 5, o = false },
 	{ "c", 30, 42, 12, 14, C.white, o = false, t = 0.4 },
+}
+
+-- The Goals button's cup (the user: "Change the goals icon to a trophy"): two handles, a bowl
+-- with a lip, a stem and a foot.
+D.trophy = {
+	{ "ring", 11, 16, 24, 24, C.goldDark, 7 },
+	{ "ring", 65, 16, 24, 24, C.goldDark, 7 },
+	{ "r", 26, 12, 48, 30, C.gold, r = 0.1 },
+	{ "half", 26, 10, 48, 64, C.gold },
+	{ "r", 22, 6, 56, 12, C.gold, r = 0.5 },
+	{ "r", 44, 68, 12, 16, C.goldDark },
+	{ "r", 28, 82, 44, 12, C.goldDark, r = 0.35 },
+	{ "r", 34, 20, 8, 22, C.white, r = 0.5, o = false, t = 0.4 },
 }
 
 -- building and tools -------------------------------------------------------------------------------
@@ -496,11 +511,12 @@ D.road = {
 
 D.coins = {
 	{ "c", 36, 30, 60, 60, C.goldDark },
-	{ "c", 42, 35, 48, 48, C.gold, o = false },
+	{ "c", 41, 34, 50, 50, C.gold, o = false },
+	{ "c", 49, 43, 34, 34, C.goldDark, o = false, dent = true },
 	{ "c", 4, 10, 60, 60, C.goldDark },
-	{ "c", 10, 15, 48, 48, C.gold, o = false },
-	{ "r", 29, 26, 10, 26, C.goldDark, r = 0.5, o = false },
-	{ "r", 16, 18, 10, 18, C.white, r = 0.5, rot = 35, o = false, t = 0.35 },
+	{ "c", 9, 14, 50, 50, C.gold, o = false },
+	{ "c", 17, 23, 34, 34, C.goldDark, o = false, dent = true },
+	{ "r", 14, 17, 8, 16, C.white, r = 0.5, rot = 35, o = false, t = 0.35 },
 }
 
 -- furniture tabs --------------------------------------------------------------------------------------
@@ -1006,7 +1022,8 @@ end
 
 -- Draws icon `name` into a new px x px Frame. Icons are flat and one colour by default (the
 -- user asked for simple icons): every piece in `Color` (or `Tint`; navy if neither), dark
--- details like eyes and lines cut out in `Hole` (white if not given), no outline, no shading,
+-- details like eyes and lines cut out in `Hole` (white if not given), a dent in a darker shade
+-- of `Color`, no outline, no shading,
 -- no shine. `Full = true` draws the old full colour sticker with its outline. props: Parent,
 -- Position, AnchorPoint, LayoutOrder, Name, ZIndex, Color, Hole, Tint, Full, Outline (false for
 -- none, full icons only).
@@ -1076,6 +1093,7 @@ Icons.Colors = {
 	coin = Color3.fromRGB(236, 162, 28),
 	coins = Color3.fromRGB(236, 162, 28),
 	medal = Color3.fromRGB(236, 162, 28),
+	trophy = Color3.fromRGB(236, 162, 28),
 	sun = Color3.fromRGB(255, 176, 30),
 	moon = Color3.fromRGB(236, 190, 60),
 	heart = Color3.fromRGB(255, 104, 150),
@@ -1087,6 +1105,11 @@ Icons.Colors = {
 	leaves = Color3.fromRGB(236, 130, 50),
 	alert = Color3.fromRGB(255, 108, 98),
 }
+
+-- The shade a flat icon draws a dent in: its own colour, a step darker.
+function Icons.dentOf(color: Color3): Color3
+	return color:Lerp(Color3.new(0, 0, 0), 0.2)
+end
 
 -- The flat, one colour drawing of an icon (see Icons.make).
 function Icons.flat(name: string, px: number, p: { [string]: any }): Frame
@@ -1144,7 +1167,7 @@ function Icons.flat(name: string, px: number, p: { [string]: any }): Frame
 		if (s.t or 0) > 0 then
 			continue -- shines and see-through glints
 		end
-		drawShape(root, s, i, false, 0, 0, if cut[i] then hole else glyph, z)
+		drawShape(root, s, i, false, 0, 0, if s.dent then Icons.dentOf(glyph) elseif cut[i] then hole else glyph, z)
 	end
 	flat = false
 	root:SetAttribute("Glyph", glyph:ToHex())
