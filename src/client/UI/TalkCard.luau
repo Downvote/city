@@ -203,7 +203,9 @@ local function build(vid: string, v: any)
 	-- their face, and what they said in a bubble beside it: room for two lines
 	local inner = Kit.box({ Name = "Inner", Parent = body, Size = UDim2.new(1, 0, 0, HEIGHT - BAND) })
 	local face = Kit.portrait({
-		Name = "Face",
+		-- (not "Face": that is what a button's coloured face is called, and the look audit reads
+		-- the words beside one as lying on it)
+		Name = "Portrait",
 		Parent = inner,
 		Size = 46,
 		Position = UDim2.fromOffset(18, 12),
