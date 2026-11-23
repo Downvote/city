@@ -154,7 +154,9 @@ screen"), and the client puts the backdrop on a part behind it that follows the 
 for the gradient background or the city background"). Never put a ViewportFrame inside a CanvasGroup: it
 comes out pale. The old header bar and its wave are gone.
 Shapes are angular (the user: "Use the format in zenless zone zero for buttons and details in ui instead of
-overusing circles and rounded rectangles"): never reach for a circle or a rounded rectangle. `Kit.corner` gives 3
+overusing circles and rounded rectangles"): never reach for a circle or a rounded rectangle. The one exception
+is a face: "make portraits a circle with a border instead of a square" (`Kit.portrait` is the ringed circle,
+`Kit.rounded` cuts the picture in it). `Kit.corner` gives 3
 pixels whatever is asked. Buttons, tabs, rows and bars lean (`Kit.slant` puts a slanted wedge on each end;
 `Kit.button`, `Kit.row`, `Kit.segments`, `Kit.tile` and `Kit.darkPill` already do), panels and cards have two
 corners cut (`Kit.frame({ Cut = n })`), markers are diamonds (a square turned 45 degrees), details are

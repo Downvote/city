@@ -237,7 +237,9 @@ clipping (`tools/preview/ui_render.py`).
 
 - `Controllers/State`: the mirror of the player's state and plan; `State.on(key, fn)`, `State.onPlan(fn)`.
 - `UI/Kit` shapes are angular, drawn with no pictures. `Kit.corner` gives every radius 3 pixels (only `"round"`
-  makes a circle). `Kit.wedge(props, keep)` is a right angled triangle: a box named `Wedge_<br|tl|tr|bl>` with a
+  makes a circle). `Kit.portrait(props)` is the exception: a round frame with a `Rim` stroke for somebody's
+  face (Size in pixels, Color, Border, BorderWidth), and `Kit.rounded(picture)` cuts a ViewportFrame or an
+  ImageLabel in it to the circle. `Kit.wedge(props, keep)` is a right angled triangle: a box named `Wedge_<br|tl|tr|bl>` with a
   UIGradient `Cut` laid square across its diagonal whose Transparency steps half way (it refits when the box's
   AbsoluteSize changes). `Kit.slant(face, height, outside)` makes a rectangle lean by pulling it in and putting a
   wedge on each end (or outside its box); `Kit.paint(face, colour, transparency)` recolours a face with its

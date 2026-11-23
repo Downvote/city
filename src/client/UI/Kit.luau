@@ -165,6 +165,43 @@ function Kit.corner(inst: Instance, radius: any): UICorner
 	return Kit.new("UICorner", { CornerRadius = r, Parent = inst })
 end
 
+-- A round frame with a border for somebody's face. Shapes in this look are cut from straight
+-- lines, with one exception the user asked for: "make portraits a circle with a border instead
+-- of a square". props: Parent, Size (pixels across), Position, AnchorPoint, Color (what shows
+-- behind the face), Border (the ring's colour), BorderWidth, Name, ZIndex, LayoutOrder. Returns
+-- the frame. A picture put in it (a ViewportFrame, an ImageLabel) fills it and is cut to the
+-- circle with Kit.rounded.
+function Kit.portrait(props: { [string]: any }?): Frame
+	local p = props or {}
+	local px: number = p.Size or 46
+	local f = Kit.new("Frame", {
+		Name = p.Name or "Portrait",
+		BackgroundColor3 = p.Color or T.Picture,
+		BorderSizePixel = 0,
+		Size = UDim2.fromOffset(px, px),
+		Position = p.Position or UDim2.new(),
+		AnchorPoint = p.AnchorPoint or Vector2.zero,
+		ZIndex = p.ZIndex or 1,
+		LayoutOrder = p.LayoutOrder or 0,
+		Parent = p.Parent,
+	})
+	Kit.new("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = f })
+	Kit.new("UIStroke", {
+		Name = "Rim",
+		Color = p.Border or T.White,
+		Thickness = p.BorderWidth or 2,
+		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+		Parent = f,
+	})
+	return f
+end
+
+-- Cuts a picture to a circle, to sit in a Kit.portrait.
+function Kit.rounded(picture: GuiObject): GuiObject
+	Kit.new("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = picture })
+	return picture
+end
+
 -- A right angled triangle: half of its box, the half named by `keep` ("br" the bottom right,
 -- "tl", "tr", "bl"). props: Parent, Size, Position, AnchorPoint, Color, Transparency, ZIndex, and
 -- W and H (its size in pixels, for before the engine has measured it). Its name says which half

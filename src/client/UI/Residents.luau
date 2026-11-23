@@ -149,7 +149,7 @@ local function portraitInto(holder: GuiObject, vid: string)
 		if model and holder.Parent then
 			local vp = ModelPreview.fromModel(model, { Parent = holder, Face = true })
 			if vp then
-				Kit.corner(vp, "circle")
+				Kit.rounded(vp)
 			end
 		end
 	end)
@@ -662,13 +662,15 @@ local function refreshList()
 		local _ = row
 		-- the villager's face, on a disc of their own colour (the user: "Put the villager
 		-- portrait in place of the blue lines")
-		local face = Kit.frame({
-			Name = "Portrait",
+		-- (a circle with a border: "make portraits a circle with a border instead of a square")
+		local own = Colors.fromHex(v.color)
+		local face = Kit.portrait({
 			Parent = inner,
-			Size = UDim2.fromOffset(46, 46),
+			Size = 46,
 			Position = UDim2.new(0, 26, 0.5, -23),
-			Color = Colors.fromHex(v.color):Lerp(T.Cream, 0.5),
-			Radius = "circle",
+			Color = own:Lerp(T.Cream, 0.5),
+			Border = own:Lerp(T.White, 0.35),
+			BorderWidth = 2,
 			ZIndex = 3,
 		})
 		portraitInto(face, v.id)

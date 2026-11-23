@@ -202,6 +202,12 @@ backdrop itself is our own, the same one the villagers' screen uses.)
 The villager's shadow falls on the backdrop, up and to the right of them and a little bigger than they are, and it
 moves as they move.
 
+> the bloom is also too heavy in the character creation screen
+
+The glow that makes the town's signs shine after dark was washing out the studio's bright backdrop and pale
+outfits. While the creator is open the bloom and the sun's rays are switched off on that player's own screen, and
+come back when it closes.
+
 > remove the plate the character stands on in the creation screen
 
 The round wooden deck under the mannequin is gone. Nothing is built at the stage now: the villager simply stands
@@ -785,6 +791,12 @@ the right, level with the tools. Done stays in the bottom right corner beside th
   draws them through a layer that bleaches 3D pictures, and the light on them is softer.
 - **A cast shadow.** On both screens the villager's shadow falls on the backdrop behind them, a little bigger
   than they are and off to the right, and keeps their pose.
+
+> also, make portraits a circle with a border instead of a square
+
+Shapes in this look are cut from straight lines, with this one exception: somebody's face sits in a circle with a
+ring round it. That is the villagers in the villagers' list (the ring a lighter shade of their own colour), the
+portrait button at the bottom left of the main screen (a blue ring), and the players' headshots in the creator.
 
 ### A drawn city
 

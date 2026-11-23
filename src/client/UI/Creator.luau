@@ -751,20 +751,21 @@ local function peoplePage()
 			})
 			Kit.corner(card, 18)
 			Kit.softShadow(card, 0.5)
-			local face = Kit.frame({
+			-- a circle with a border ("make portraits a circle with a border instead of a square")
+			local face = Kit.portrait({
 				Parent = card,
-				Size = UDim2.fromOffset(76, 76),
+				Size = 76,
 				Position = UDim2.new(0.5, -38, 0, 8),
 				Color = T.Picture,
-				Radius = "circle",
-				Clips = true,
+				Border = T.Line,
+				BorderWidth = 3,
 			})
-			Kit.new("ImageLabel", {
+			Kit.rounded(Kit.new("ImageLabel", {
 				Image = string.format("rbxthumb://type=AvatarHeadShot&id=%d&w=150&h=150", person.id),
 				BackgroundTransparency = 1,
 				Size = UDim2.fromScale(1, 1),
 				Parent = face,
-			})
+			}))
 			Kit.text(person.name, {
 				Parent = card,
 				Size = UDim2.new(1, -8, 0, 18),
@@ -813,20 +814,20 @@ local function peoplePage()
 				LayoutOrder = i,
 			})
 			Kit.softShadow(r, 0.5)
-			local face = Kit.frame({
+			local face = Kit.portrait({
 				Parent = r,
-				Size = UDim2.fromOffset(44, 44),
+				Size = 44,
 				Position = UDim2.fromOffset(8, 6),
 				Color = T.Picture,
-				Radius = "circle",
-				Clips = true,
+				Border = T.Line,
+				BorderWidth = 2,
 			})
-			Kit.new("ImageLabel", {
+			Kit.rounded(Kit.new("ImageLabel", {
 				Image = string.format("rbxthumb://type=AvatarHeadShot&id=%d&w=150&h=150", look.by),
 				BackgroundTransparency = 1,
 				Size = UDim2.fromScale(1, 1),
 				Parent = face,
-			})
+			}))
 			Kit.text(look.name, {
 				Parent = r,
 				Size = UDim2.new(1, -170, 0, 22),

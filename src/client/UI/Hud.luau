@@ -385,19 +385,19 @@ function Hud.start()
 		AnchorPoint = Vector2.new(0, 1),
 		Parent = hud,
 	})
-	local portrait, portraitInside = Kit.blob({
-		Name = "Portrait",
+	-- (a circle with a border: "make portraits a circle with a border instead of a square")
+	local portrait = Kit.portrait({
 		Parent = menu,
-		Round = true,
+		Size = 92,
+		Position = UDim2.fromOffset(4, 9),
 		Color = T.Paper,
 		Border = T.Blue,
 		BorderWidth = 4,
-		Size = UDim2.fromOffset(98, 98),
-		Position = UDim2.fromOffset(0, 5),
 	})
-	Icons.make("person", 56, {
-		Parent = portraitInside,
-		Position = UDim2.new(0.5, -28, 0.5, -28),
+	Kit.softShadow(portrait, 1)
+	Icons.make("person", 54, {
+		Parent = portrait,
+		Position = UDim2.new(0.5, -27, 0.5, -27),
 		Color = T.Blue,
 		ZIndex = 3,
 	})
