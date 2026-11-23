@@ -139,11 +139,11 @@ local function buildPlots()
 			Name = "Base",
 			Size = Vector3.new(SIZE, 1, SIZE),
 			CFrame = frame * CFrame.new(SIZE / 2, -0.5, SIZE / 2),
-			Color = Color3.fromRGB(128, 196, 98),
+			Color = Color3.fromRGB(112, 188, 84),
 			Material = Enum.Material.Grass,
 		})
 		base.Parent = model
-		base.Color = Color3.fromRGB(112, 170, 86)
+		base.Color = Textures.tint("Grass", Color3.fromRGB(112, 188, 84))
 		local build = Instance.new("Folder")
 		build.Name = "Build"
 		build.Parent = model
@@ -240,20 +240,21 @@ end
 local grading: ColorCorrectionEffect? = nil
 
 local function stylize()
-	-- a bright sunny island: strong light, soft cool shadows, lively colour
-	Lighting.Brightness = 3.2
-	Lighting.Ambient = Color3.fromRGB(140, 146, 160)
-	Lighting.OutdoorAmbient = Color3.fromRGB(176, 184, 200)
-	Lighting.EnvironmentDiffuseScale = 0.7
-	Lighting.EnvironmentSpecularScale = 0.35
-	Lighting.ShadowSoftness = 0.45
+	-- cozy and soft: warm sunlight, gentle shadows, a little glow
+	Lighting.Brightness = 2.6
+	Lighting.Ambient = Color3.fromRGB(150, 140, 132)
+	Lighting.OutdoorAmbient = Color3.fromRGB(176, 168, 158)
+	Lighting.ColorShift_Top = Color3.fromRGB(255, 232, 196)
+	Lighting.EnvironmentDiffuseScale = 0.75
+	Lighting.EnvironmentSpecularScale = 0.2
+	Lighting.ShadowSoftness = 0.7
 	Lighting.GlobalShadows = true
-	Lighting.ExposureCompensation = 0.15
+	Lighting.ExposureCompensation = 0.05
 	local cc = Instance.new("ColorCorrectionEffect")
 	cc.Name = "Grading"
-	cc.Saturation = 0.28
-	cc.Contrast = 0.04
-	cc.Brightness = 0.04
+	cc.Saturation = 0.16
+	cc.Contrast = 0.02
+	cc.Brightness = 0.03
 	cc.Parent = Lighting
 	grading = cc
 	local bloom = Instance.new("BloomEffect")
@@ -275,7 +276,7 @@ local function grade(h: number)
 	end
 	local tint
 	if h >= 7.5 and h <= 16.5 then
-		tint = Color3.fromRGB(255, 252, 246)
+		tint = Color3.fromRGB(255, 248, 236)
 	elseif (h > 16.5 and h < 19.5) or (h > 5 and h < 7.5) then
 		tint = Color3.fromRGB(255, 226, 196)
 	else
@@ -322,8 +323,8 @@ function World.setWeather(kind: string)
 	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
 	if atmosphere then
 		local dense = kind == "rain" or kind == "storm" or kind == "cloudy"
-		atmosphere.Density = if dense then 0.4 else 0.22
-		atmosphere.Haze = if dense then 2.2 else 0.4
+		atmosphere.Density = if dense then 0.4 else 0.24
+		atmosphere.Haze = if dense then 2.2 else 0.9
 	end
 end
 
@@ -493,12 +494,12 @@ function World.init()
 	stylize()
 	if not Lighting:FindFirstChildOfClass("Atmosphere") then
 		local a = Instance.new("Atmosphere")
-		a.Density = 0.22
+		a.Density = 0.24
 		a.Offset = 0.2
-		a.Haze = 0.4
-		a.Glare = 0.25
-		a.Color = Color3.fromRGB(200, 236, 250)
-		a.Decay = Color3.fromRGB(120, 196, 230)
+		a.Haze = 0.9
+		a.Glare = 0.2
+		a.Color = Color3.fromRGB(236, 228, 214)
+		a.Decay = Color3.fromRGB(250, 214, 176)
 		a.Parent = Lighting
 	end
 	if not Lighting:FindFirstChildOfClass("Sky") then

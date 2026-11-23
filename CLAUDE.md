@@ -41,8 +41,9 @@ off the plots; nothing in any road; downtown and civic buildings inside their bl
 The town is a big bright island (docs/GAME_DESIGN.md section 9): the old town and its plots in the middle, a ring of
 roads (`Town.Roads`), downtown east, the civic quarter west, the hills north (`Data/Hills`), the waterfront south.
 `Data/TownMap` lays out the ground and where everything stands, `Data/CityModels` draws the buildings and landmarks,
-`Data/Places` lists the places to find. Keep the whole place round 15,000 parts (light lamps, benches and trees away
-from the old town). The World spec checks the hills, the places and that nothing stands in a road; preview a district
+`Data/Places` lists the places to find. The user wants it detailed like a classic city builder: buildings on
+landscaped lots (`CityModels.lot`), window bays, signs, roof details, parked cars, groves, textured ground, all
+textures from the Roblox library. Keep the whole place under about 20,000 parts. The World spec checks the hills, the places and that nothing stands in a road; preview a district
 with `render.sh map:x1,z1,x2,z2`.
 
 The user asked for things to move "where possible": buttons, screens and the town are animated (docs/GAME_DESIGN.md
@@ -59,7 +60,11 @@ round icon buttons with a white rim and a caption pill, translucent navy pills o
 (drawn icons, never emoji in the interface). The user asked for wobbly bubbles round text, wobbly buttons,
 speech bubble dialogue with names in colour, and simple one colour icons: use `Kit.blob`, `Kit.bubble`,
 `Kit.choice`, and `Icons.make` (flat by default: `Color`, `Hole`; `Full = true` for the old stickers). Everything
-is flat colour (no darker base, gradient or sheen: `Kit.gradient` is switched off) and menus have no decorative icons. UI previews
+is flat colour (no darker base, gradient or sheen: `Kit.gradient` is switched off) and menus have no decorative icons.
+The latest word on menus: follow popular games of the genre (never invent layouts) and keep it cozy and soft, so
+panels are cream cards with a pastel header bar, title, round close button and a dimmed screen behind; events are a
+dialogue card with the answers inside; nothing wobbles (`Kit.blob` draws plain shapes) and nothing inside a
+self-sizing box may reach past its edges. UI previews
 look best over an island render as `--bg`. The user's rule for icons: "make sure there are no overlapping outlines". A new icon is a
 shape list in `UI/Icons`; it gets one outline round its silhouette, so tell its parts apart by colour. Look at it
 with `sh tools/preview/ui.sh icons:<name> <png>`.

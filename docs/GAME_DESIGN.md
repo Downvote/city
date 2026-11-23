@@ -403,6 +403,39 @@ from that game):
 - A marina on the south beach: a boardwalk out over the water on posts, finger piers and moored boats that bob and
   roll on the swell.
 
+> walls overlap each other, and doors should be interactable to be opened and closed. there is a bug with the text
+> boxes sometimes. villagers should be able to open and close doors. also, the entire game should be polished, with
+> the entire map redone to be more detailed and fit the city building aesthetic. use a better grass texture. the
+> third image is how the game should be looking like, with much more detailed models and textures. again, only use
+> textures from the roblox library
+
+> revamp the whole ui and menu designs as well. use popular games of the genre as reference, never try to create
+> your own
+
+> the aesthetic should be cozy and soft
+
+What that changed (these replace the wobbly bubbles and the flat coloured ground above):
+
+- **Menus** follow the layout city builders share: a cream card with a pastel header bar carrying the title and a
+  round close button, the rest of the screen dimmed behind it. Events are a dialogue card near the bottom of the
+  screen with the event's name on a tab, the speaker's name plate, the words, and the answers stacked inside the
+  card. Nothing wobbles; buttons still wiggle under the pointer. The palette is warm and soft: creams, gentle
+  pastels, warm brown words, cocoa see-through pills over the 3D view.
+- **The text box bug**: the old bubbles had edge pieces that reached past a box that sizes itself to its content,
+  so the box kept growing. Boxes are plain shapes now and can't.
+- **Walls** meeting at a corner, a T or a crossing never share space: each bit of the join belongs to one wall, so
+  a two coloured wall's inside layer can't show as a strip on the outside of a corner.
+- **Doors** stay shut until someone opens them. Players get an Open or Close prompt on every door. Villagers open a
+  door as they reach it and shut it behind them; a door a player opened stays as the player left it.
+- **The map** is detailed like a classic city builder: every downtown building stands on a plaza with planters,
+  trees and benches, every civic building and row of houses in its own hedged garden with a path, trees and
+  flowers. Towers have pilasters, window bays, entrance canopies, sign bands, parapets, stair huts and water tanks;
+  flats have balconies; shops have brick walls, framed shopfronts, sills with flower boxes and roof units; houses
+  have chimneys, steps and sills. Cars are parked at the kerbs of the side streets, rows of trees line the old
+  town, and the coast has round capes of sand and grassy headlands instead of straight edges.
+- **Textures** are back on the ground, all from the Roblox library: a finer, softer lawn grass (on the hills
+  too), dark tarmac, paving and concrete. The light is warm and soft.
+
 Villagers walk with Roblox's pathfinding with jumping on, so they go round walls, through doorways (doors are free to
 pass and open as they come), round furniture and over low steps. If they get stuck they jump, then plan again.
 

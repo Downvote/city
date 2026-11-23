@@ -87,7 +87,8 @@ end)
 describe("Roads", function()
 	it("are clear of everything placed", function()
 		for _, p in TownMap.placements() do
-			if p.tag ~= "backdrop" then
+			-- (cars parked at the kerb are meant to be in the road's edge)
+			if p.tag ~= "backdrop" and p.tag ~= "parked" then
 				local pos = p.cf.Position
 				for _, road in Town.Roads do
 					local hw = road[5] - 1

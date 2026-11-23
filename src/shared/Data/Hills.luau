@@ -155,12 +155,12 @@ function Hills.slope(x: number, z: number): number
 end
 
 local GRASS = {
-	Color3.fromRGB(128, 200, 86),
-	Color3.fromRGB(138, 208, 92),
-	Color3.fromRGB(120, 192, 82),
+	Color3.fromRGB(112, 188, 84),
+	Color3.fromRGB(122, 196, 88),
+	Color3.fromRGB(104, 180, 80),
 }
-local HIGH = Color3.fromRGB(176, 214, 104)
-local STEEP = Color3.fromRGB(96, 164, 74)
+local HIGH = Color3.fromRGB(150, 200, 96)
+local STEEP = Color3.fromRGB(84, 150, 70)
 
 -- The hills as flat triangles. `region` { x1, z1, x2, z2 } keeps only the cells inside it.
 function Hills.prims(region: { number }?): { Prim }
@@ -172,7 +172,7 @@ function Hills.prims(region: { number }?): { Prim }
 		local col = GRASS[k % #GRASS + 1]
 		col = col:Lerp(HIGH, math.clamp(avg / 90, 0, 0.6))
 		col = col:Lerp(STEEP, math.clamp(steep * 2.2, 0, 0.7))
-		for _, p in Geometry.triangle(a, b, c, Hills.Thickness, col, "SmoothPlastic") do
+		for _, p in Geometry.triangle(a, b, c, Hills.Thickness, col, "Grass") do
 			p.name = "Hill"
 			table.insert(out, p)
 		end

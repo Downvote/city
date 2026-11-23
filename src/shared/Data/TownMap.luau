@@ -23,8 +23,8 @@ local L = Town.HalfLength
 local HW = Town.StreetHalfWidth
 local SW = Town.SidewalkWidth
 
-local GRASS = Color3.fromRGB(134, 206, 92)
-local ROAD = Color3.fromRGB(122, 128, 142)
+local GRASS = Color3.fromRGB(112, 188, 84)
+local ROAD = Color3.fromRGB(92, 96, 108)
 local LINE_WHITE = Color3.fromRGB(250, 250, 246)
 local LINE_YELLOW = Color3.fromRGB(255, 210, 70)
 local CURB = Color3.fromRGB(246, 246, 242)
@@ -580,9 +580,7 @@ function TownMap.ground(region: Region?): { Prim }
 	)
 		local a, b, c, d = clip(region, x1, z1, x2, z2)
 		if a then
-			-- the ground is smooth flat colour, a clean low poly look (no textures on it)
-			local _ = mat
-			r:block(a, y1, b, c, y2, d, color, "SmoothPlastic")
+			r:block(a, y1, b, c, y2, d, color, if mat == "" then "SmoothPlastic" else mat)
 		end
 	end
 
@@ -602,6 +600,42 @@ function TownMap.ground(region: Region?): { Prim }
 			water.transp = 0.3
 			water.collide = false
 			water.name = "Water"
+		end
+	end
+	-- a softer coastline: round capes of sand out into the shallows, and grassy headlands over the
+	-- sand on the east, west and north shores (the south has the boardwalk)
+	do
+		local coast = Rng.new(73)
+		local function disc(x: number, z: number, radius: number, top: number, color: Color3, mat: string)
+			if
+				region
+				and (
+					x < region[1] - radius
+					or x > region[3] + radius
+					or z < region[2] - radius
+					or z > region[4] + radius
+				)
+			then
+				return
+			end
+			r:cyl(x, top - 1.1, z, 2.2, radius * 2, "y", color, mat)
+		end
+		local x = -IX
+		while x < IX do
+			disc(x, IN + B, coast:float(26, 56), -0.36, SAND, "Sand")
+			disc(x + coast:float(-20, 20), -IS - B, coast:float(22, 44), -0.36, SAND, "Sand")
+			disc(x + coast:float(-20, 20), IN, coast:float(18, 40), -0.11, GRASS, "Grass")
+			x += coast:float(70, 120)
+		end
+		local z = -IS
+		while z < IN do
+			for _, sx in { 1, -1 } do
+				disc(sx * (IX + B), z + coast:float(-20, 20), coast:float(26, 52), -0.36, SAND, "Sand")
+				if z > -200 then
+					disc(sx * IX, z + coast:float(-20, 20), coast:float(16, 34), -0.11, GRASS, "Grass")
+				end
+			end
+			z += coast:float(70, 120)
 		end
 	end
 	-- walls nobody sees at the edge of the shallows, so nobody wanders off into the deep
@@ -634,11 +668,20 @@ function TownMap.ground(region: Region?): { Prim }
 		end
 		local at = if horizontal then road[2] else road[1]
 		-- (x along, z across) to world for this road
-		local function rect(u1: number, v1: number, u2: number, v2: number, y1: number, y2: number, col: Color3)
+		local function rect(
+			u1: number,
+			v1: number,
+			u2: number,
+			v2: number,
+			y1: number,
+			y2: number,
+			col: Color3,
+			mat: string?
+		)
 			if horizontal then
-				slab(u1, at + v1, u2, at + v2, y1, y2, col, "")
+				slab(u1, at + v1, u2, at + v2, y1, y2, col, mat or "")
 			else
-				slab(at + v1, u1, at + v2, u2, y1, y2, col, "")
+				slab(at + v1, u1, at + v2, u2, y1, y2, col, mat or "")
 			end
 		end
 		local cross = crossings(road)
@@ -650,7 +693,7 @@ function TownMap.ground(region: Region?): { Prim }
 			end
 			return false
 		end
-		rect(a1, -hw, a2, hw, -0.15, 0.05, ROAD)
+		rect(a1, -hw, a2, hw, -0.15, 0.05, ROAD, "Asphalt")
 		-- dashes down the middle
 		local step = if main then 14 else 20
 		local u = a1 + 6
@@ -674,9 +717,9 @@ function TownMap.ground(region: Region?): { Prim }
 				local s1, s2 = math.max(stops[k], a1), math.min(stops[k + 1], a2)
 				if s2 > s1 then
 					local v1, v2 = side * hw, side * (hw + sw)
-					rect(s1, math.min(v1, v2), s2, math.max(v1, v2), -0.15, 0.3, WALK)
+					rect(s1, math.min(v1, v2), s2, math.max(v1, v2), -0.15, 0.3, WALK, "Pavement")
 					local c1, c2 = side * hw, side * (hw + 0.6)
-					rect(s1, math.min(c1, c2), s2, math.max(c1, c2), 0.3, 0.42, CURB)
+					rect(s1, math.min(c1, c2), s2, math.max(c1, c2), 0.3, 0.42, CURB, "Concrete")
 				end
 			end
 		end
@@ -715,7 +758,7 @@ function TownMap.ground(region: Region?): { Prim }
 								-0.15,
 								0.3,
 								WALK,
-								""
+								"Pavement"
 							)
 						end
 					end
@@ -1025,6 +1068,24 @@ function TownMap.placements(): { Placement }
 			last.cf = last.cf + Vector3.new(0, y, 0)
 		end
 	end
+	-- a building with its lot: landscaping sized to the building's own footprint
+	local NO_LOT = { carPark = true, cityPark = true, pondPark = true, playground = true, sportsField = true }
+	NO_LOT.basketCourt = true
+	NO_LOT.station = true
+	local plain = on
+	local lotKind = "plaza"
+	on = function(name: string, x: number, z: number, yaw: number, y: number?, extra: { [string]: any }?)
+		plain(name, x, z, yaw, y, extra)
+		if NO_LOT[name] or name:sub(1, 3) == "low" or name == "benchLite" or name == "streetLamp" then
+			return
+		end
+		local lo, hi = Geometry.bounds(TownMap.prims(name))
+		local margin = 5
+		local w = math.ceil(hi.X - lo.X) + margin * 2
+		local d = math.ceil(hi.Z - lo.Z) + margin * 2
+		local cf = out[#out].cf * CFrame.new((lo.X + hi.X) / 2, 0, (lo.Z + hi.Z) / 2)
+		table.insert(out, { name = string.format("lot:%dx%d:%s:%d", w, d, lotKind, margin), cf = cf })
+	end
 	local DT = 0.22 -- downtown's paving
 	on("hotel", 650, 169, 0, DT)
 	on("shopCoral", 735, 165, 0, DT)
@@ -1060,7 +1121,8 @@ function TownMap.placements(): { Placement }
 		on("lowTree", x, -228, 0, DT)
 	end
 
-	-- the civic quarter, west of the old town
+	-- the civic quarter, west of the old town: every building in its own hedged garden
+	lotKind = "garden"
 	on("school", -686, 166, 0)
 	on("playground", -686, 214, 0)
 	on("sportsField", -950, 190, 0)
@@ -1102,6 +1164,62 @@ function TownMap.placements(): { Placement }
 	end
 	for _, p in { { -700, 50, 90 }, { -716, 50, -90 }, { -900, 70, 0 } } do
 		on("benchLite", p[1], p[2], p[3])
+	end
+
+	on = plain
+	-- cars parked at the kerb along the side streets (never on the main street, where cars drive)
+	local parking = Rng.new(41)
+	for k, road in Town.Roads do
+		if k > 1 then
+			local horizontal = road[2] == road[4]
+			local hw = road[5]
+			local a1 = if horizontal then math.min(road[1], road[3]) else math.min(road[2], road[4])
+			local a2 = if horizontal then math.max(road[1], road[3]) else math.max(road[2], road[4])
+			local at = if horizontal then road[2] else road[1]
+			local u = a1 + 40 + parking:float(0, 30)
+			while u < a2 - 40 do
+				local side = if parking:chance(0.5) then 1 else -1
+				local v = side * (hw - 2.8)
+				local x, z = if horizontal then u else at + v, if horizontal then at + v else u
+				-- keep clear of junctions (measured along the road, from every road that crosses)
+				local clear = true
+				for _, c in crossings(road) do
+					if math.abs(u - c[1]) < c[2] + c[3] + 14 then
+						clear = false
+					end
+				end
+				if clear then
+					put("parkedCar" .. parking:int(1, 6), x, z, if horizontal then 90 else 0, { tag = "parked" })
+					local last = out[#out]
+					last.cf = last.cf + Vector3.new(0, 0.05, 0)
+				end
+				u += 70 + parking:float(0, 50)
+			end
+		end
+	end
+	-- rows of trees between the old town's plots and the ring roads, and groves at its ends
+	local rows = Rng.new(57)
+	for _, sz in { 1, -1 } do
+		local x = -516.0
+		while x < 516 do
+			if math.abs(x) > 20 then
+				put(
+					if rows:chance(0.25) then "lowTreeBig" else "lowTree",
+					x,
+					sz * (233 + rows:float(-4, 4)),
+					rows:float(0, 360)
+				)
+			end
+			x += 15 + rows:float(0, 9)
+		end
+	end
+	for _, sx in { 1, -1 } do
+		for _ = 1, 26 do
+			local x, z = sx * rows:float(496, 520), rows:float(-240, 240)
+			if math.abs(z) > 30 then
+				put(if rows:chance(0.4) then "lowPine" else "lowTree", x, z, rows:float(0, 360))
+			end
+		end
 	end
 
 	-- the hills: the farm, the lookout, the observatory, the radio mast and the camp

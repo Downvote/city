@@ -24,7 +24,8 @@ The contract between the parts of the game. Update it with every change to an AP
   - `Recipes/*`: the catalog, one module per group. Each returns a list of item definitions.
   - `Catalog`: loads the recipes, indexes them, `prims(def, c1, c2)` draws one, `Categories`, `Tags`.
   - `Plan`: a plot's build as data and every rule about changing it (see below).
-  - `Shapes`: walls (with openings cut out, corner reach), floors (with stairwells cut out), roofs (five styles).
+  - `Shapes`: walls (with openings cut out; `wallReach` gives each end's reach per layer `{ a, b }` so walls meeting
+    at corners, T junctions and crossings never share space), floors (with stairwells cut out), roofs (five styles).
   - `Builder`: prims to Parts and plan objects to Models; tags night lights, door leaves, seats and beds.
 - `Data/`: `Palette` (paint swatches, materials and the ready-made finishes Build mode shows as tiles), `Personalities`, `Foods`, `Items`, `Jobs`, `Events` (the event list), `Town` (map
   layout and plot frames, the road network `Roads` as `{ x1, z1, x2, z2, half width, sidewalk }`, `Districts`,
@@ -47,7 +48,7 @@ The contract between the parts of the game. Update it with every change to an AP
   (hearts and their thank you offers, wishes, romance bonds, goals; all pure).
 - `Data/Hills` (the northern hills: `smooth(x, z)`, `at(x, z)` the drawn surface's height, `slope`, `Plateaus`,
   `prims(region)` as flat triangles), `Data/CityModels` (downtown, civic, hill and waterfront buildings and
-  landmarks; `tower`, `shop` and `house` kinds; spinning parts named `Hub`, `Spin`, `Cabin`), `Data/Places` (places
+  landmarks; `lot(w, d, kind, margin)` landscaping, placed by name as `lot:<w>x<d>:<kind>:<margin>`; `parkedCar1..6`; `tower`, `shop` and `house` kinds; spinning parts named `Hub`, `Spin`, `Cabin`), `Data/Places` (places
   to find: id, name, blurb, pos, radius, coins; `near`, `arrival`).
 - `Data/Goals` (the town goals with their `value(profile, city)`), `Data/Sayings` (sayings and hobbies).
 
@@ -111,6 +112,7 @@ stats = { events, fed, made, earned, paydays, wishes, hearts, couples, partners 
 `Wish` attribute carries the icon for the client's bubble); feeding fills hearts and answers cravings; a new look
 answers a wish for one; `WishGrant`, `HeartReward` and `GoalClaim` answer the rest. Villagers sometimes say their
 own saying or a line about their hobby.
+| `World` (doors) | Doors stay shut; each gets a `DoorPrompt` (Open or Close, `World.toggleDoor`); a villager within 6.5 studs opens one and it shuts 1.2 s after the last villager leaves, unless a player opened it. |
 | `Explore` | `PlaceFound` checks the player stands at the place, pays its coins once and marks `found`; `Travel` takes them back to a found place (a few seconds between trips). |
 | `Materials` | Runs `Textures.install` at start: each uploaded painted texture's MaterialVariant (built into the place) becomes its material's look. Warns when a variant is missing from the place. |
 
@@ -146,11 +148,9 @@ server, whatever the client did.
   the label follows it), `iconButton` (a round button: "Face" and "Lip" discs, the caption on a paper "Tag";
   `setButtonColor` recolours both discs and leaves the tag's ink alone), `pill` (wooden stat plates, `Plus` adds a
   round green +), `glass` (wooden bars: a gradient, so list layouts inside never see it), `ribbon(text, props)` (a
-  pill banner sized to its text), `blob(props)` / `blobInto(frame, props)` (wobbly bubbles with one smooth outline: many
-  small circles, overlapping so the steps are under a pixel, threaded round a filled core along a rounded path whose
-  edge drifts in slow waves; `Border` repeats the circles a little bigger behind; `Estimate` gives the rough size
-  when Size is in scale; `Round` is a jelly circle; `setBlobColor`), small `Radius = "pill"` bubbles are plain pills
-  with a tail, `bubble(props)` (a blob with a tail), `choice(text, props, fn)` (an answer as a speech bubble,
+  pill banner sized to its text), `blob(props)` / `blobInto(frame, props)` (plain shapes now: a rounded rectangle, pill or
+  circle in one colour with an optional tail; nothing moves or reaches past the holder, so self-sizing holders stay
+  the right size; `setBlobColor`), `panel` is a cream card with a header bar, title, round close and a `Dim` behind, `bubble(props)` (a blob with a tail), `choice(text, props, fn)` (an answer as a speech bubble,
   yellow and striped under the pointer), `arrowTag(text, colour, props)`, `wobbly(g, degrees)` and `wiggle(g)`
   (one loop sways things and wiggles buttons on hover; anything holding clipped icon pieces breathes instead of
   turning), `recolorIcon(icon, glyph, hole)`, `doodles(holder, colour, seed, n?, area?)` (faint

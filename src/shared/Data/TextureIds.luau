@@ -11,7 +11,7 @@
 export type Ids = { color: string?, normal: string?, studs: number?, own: boolean?, decal: number? }
 
 local TextureIds: { [string]: Ids } = {
-	grass = { color = "rbxassetid://133002408799738", studs = 12, own = true, decal = 111021148404125 }, -- "Light Cartoonish Grass" by robloxian40645
+	grass = { color = "rbxassetid://15205950191", studs = 14, own = true, decal = 15205950232 }, -- "grass" by lolacorroblox
 	wood = { color = "rbxassetid://127935223360351", studs = 4, decal = 125695710899534 }, -- "Wood Texture" by conoluz
 	planks = { color = "rbxassetid://126083643168466", studs = 6, decal = 107218328642902 }, -- "Roblox wood planks texture" by TheDanMan2307
 	brick = { color = "rbxassetid://9620643733", studs = 6, decal = 9620643745 }, -- "Sweet_picnic_white-min" by Varzkitt

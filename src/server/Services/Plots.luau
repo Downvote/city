@@ -74,7 +74,7 @@ function Plots.drawLand(i: number, plan: any)
 	grass.Anchored = true
 	grass.Size = Vector3.new(x2 - x1, 0.1, z2 - z1)
 	grass.CFrame = frame * CFrame.new((x1 + x2) / 2, -0.04, (z1 + z2) / 2)
-	grass.Color = Textures.tint("Grass", Color3.fromRGB(132, 200, 100))
+	grass.Color = Textures.tint("Grass", Color3.fromRGB(122, 196, 88))
 	grass.Material = Enum.Material.Grass
 	grass.TopSurface = Enum.SurfaceType.Smooth
 	grass.Parent = land
