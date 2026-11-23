@@ -1012,7 +1012,9 @@ Maplewick's.
 - **Slabs with smooth points.** Every leaning slab has its four points rounded. A box can only cut a sharp slanted
   end, so the slabs are painted: the game paints each slab's two ends once into a small picture and stretches the
   middle between them (`UI/Skin`). A slab over the 3D view is near black glass with a thin pale line just inside
-  its edge and a run of halftone dots that grow toward one end. If a game has Allow Mesh / Image APIs off, the
+  its edge and a tone of halftone dots at one end. The dots start at the very end of the slab and follow its
+  slanted, rounded shape, thinning out toward the middle ("the bars are misaligned, they should start from the
+  very end": the first version laid them on as a loose rectangle short of the end). If a game has Allow Mesh / Image APIs off, the
   slabs fall back to sharp ends and no texture, and everything still works.
 - **Circles.** The round buttons under the clock are discs in a thin ring. The town's level sits on a round dial.
   Quest and row markers are discs with the icon on them, the alert on a button is a red dot, a note starts with a

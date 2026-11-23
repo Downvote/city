@@ -119,22 +119,64 @@ describe("Skin", function()
 		end
 	end)
 
-	it("grows a halftone's dots from nothing to nearly touching", function()
-		local p = Skin.paintFan()
-		local third = p.w // 3
-		local function band(from)
-			local total = 0
-			for y = 0, p.h - 1 do
-				for x = from, from + third - 1 do
-					total += alpha(p, x, y)
+	it("starts a slab's tone at its very end and keeps it inside the slab", function()
+		local h, cap, r, wide = 46, 14, 8, 96
+		local s, pad = Skin.Scale, Skin.Pad
+		local p = Skin.paintTone(h, cap, false, r, wide)
+		expect(p.w).toBe((cap + wide + pad) * s)
+		expect(p.h).toBe((h + pad * 2) * s)
+		-- the same end of the slab itself, to hold the tone against: it lines up pixel for pixel
+		local body = Skin.paintSlab(h, cap, false, r)
+		local outside = 0
+		for y = 0, p.h - 1 do
+			for x = 0, math.min(p.w, body.cap * s) - 1 do
+				if alpha(p, x, y) > 0.05 and alpha(body, x, y) < 0.5 then
+					outside += 1
 				end
 			end
-			return total / (third * p.h)
 		end
-		local a, b, c = band(0), band(third), band(third * 2)
-		expect(a < b and b < c).toBeTruthy()
-		expect(a < 0.03).toBeTruthy()
+		expect(outside).toBe(0)
+		-- how much tone lies in a band of the slab that many pixels in from its slanted end
+		local function band(from, to)
+			local total, area = 0, 0
+			for y = pad * s, p.h - pad * s - 1 do
+				local t = (y + 0.5 - pad * s) / (h * s)
+				local edge = pad * s + cap * s * (1 - t)
+				for x = math.floor(edge + from * s), math.floor(edge + to * s) - 1 do
+					if x >= 0 and x < p.w then
+						total += alpha(p, x, y)
+						area += 1
+					end
+				end
+			end
+			return total / math.max(1, area)
+		end
+		local first, middle, last = band(1, 13), band(40, 52), band(84, 96)
+		-- it is at its fullest right at the end (no gap before it starts), and thins out
+		expect(first > 0.2).toBeTruthy()
+		expect(first > middle and middle > last).toBeTruthy()
+		expect(last < 0.02).toBeTruthy()
 		-- at its fullest the dots still stand apart
-		expect(c < 0.6).toBeTruthy()
+		expect(first < 0.7).toBeTruthy()
+	end)
+
+	it("leans a tone with its slab", function()
+		local p = Skin.paintTone(46, 14, false, 0.01, 60)
+		local q = Skin.paintTone(46, 14, true, 0.01, 60)
+		local s, pad = Skin.Scale, Skin.Pad
+		-- the corner the slab doesn't reach holds no tone: top left for "/", bottom left for "\"
+		local function corner(pic, top)
+			local total = 0
+			for y = 0, 5 * s do
+				for x = pad * s, pad * s + 3 * s do
+					total += alpha(pic, x, if top then pad * s + y else pic.h - 1 - pad * s - y)
+				end
+			end
+			return total
+		end
+		expect(corner(p, true)).toBe(0)
+		expect(corner(p, false) > 0).toBeTruthy()
+		expect(corner(q, false)).toBe(0)
+		expect(corner(q, true) > 0).toBeTruthy()
 	end)
 end)

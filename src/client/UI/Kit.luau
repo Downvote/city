@@ -370,9 +370,10 @@ function Kit.slant(face: GuiObject, height: number?, outside: boolean?, flip: bo
 end
 
 -- The small things that make a painted slab look made: a thin line just inside its edge, and a
--- tone of halftone dots growing toward one end. opts: Line (the line's colour, white by default;
--- false for none), LineAlpha (how see-through, 0.84), Tone (the dots' colour; false for none),
--- ToneAlpha (0.9), Side ("right" or "left": the end the dots grow toward), ToneWidth. Does
+-- tone of halftone dots that starts at one end of the slab, cut to its shape, and thins out
+-- toward the middle. opts: Line (the line's colour, white by default; false for none), LineAlpha
+-- (how see-through, 0.84), Tone (the dots' colour; false for none), ToneAlpha (0.9), Side
+-- ("right" or "left": the end the dots start from), ToneWidth (how far in they reach). Does
 -- nothing where the slab isn't painted.
 function Kit.detail(face: GuiObject, opts: { [string]: any }?)
 	local o = opts or {}
@@ -399,24 +400,23 @@ function Kit.detail(face: GuiObject, opts: { [string]: any }?)
 		end
 	end
 	if o.Tone ~= false then
-		local pic = Skin.texture("fan")
+		-- the halftone starts at the very end of the slab and is cut to its shape
+		local wide = math.clamp(math.floor(o.ToneWidth or 132), 12, 200)
+		local pic = Skin.tone(h, cap, flip, point, wide)
 		if pic then
 			local left = o.Side == "left"
-			local tall = math.max(4, h - 8)
-			local wide = math.min(o.ToneWidth or 132, Skin.FanSize.X)
+			local pad = Skin.Pad
 			local tone = Kit.new("ImageLabel", {
 				Name = "Tone",
 				BackgroundTransparency = 1,
 				BorderSizePixel = 0,
-				Size = UDim2.fromOffset(wide, tall),
-				AnchorPoint = Vector2.new(if left then 0 else 1, 0.5),
-				Position = UDim2.new(if left then 0 else 1, if left then point else -point, 0.5, 0),
-				Rotation = if left then 180 else 0,
+				Size = UDim2.fromOffset(cap + wide + pad, h + pad * 2),
+				AnchorPoint = Vector2.new(if left then 0 else 1, 0),
+				Position = if left then UDim2.fromOffset(-cap - pad, -pad) else UDim2.new(1, cap + pad, 0, -pad),
+				-- painted for a left end; half way round it is the right end's
+				Rotation = if left then 0 else 180,
 				ImageColor3 = if typeof(o.Tone) == "Color3" then o.Tone else Color3.new(1, 1, 1),
 				ImageTransparency = o.ToneAlpha or 0.9,
-				-- the far end of the run, dot for dot (never squashed to fit)
-				ImageRectOffset = Vector2.new((Skin.FanSize.X - wide) * Skin.Scale, 0),
-				ImageRectSize = Vector2.new(wide * Skin.Scale, math.min(tall, Skin.FanSize.Y) * Skin.Scale),
 				ZIndex = -2,
 				Parent = face,
 			});
@@ -2139,7 +2139,12 @@ function Kit.darkPill(props: { [string]: any }?): Frame
 	Kit.slant(f, h, true, p.Flip == true)
 	-- a thin line inside its edge, and dots growing toward one end (Tone = false for none,
 	-- Side = "left" to turn them round)
-	Kit.detail(f, { Tone = if p.Tone == false then false else nil, Side = p.Side, ToneWidth = p.ToneWidth })
+	local w = if p.Size then (p.Size :: UDim2).X.Offset else 0
+	Kit.detail(f, {
+		Tone = if p.Tone == false then false else nil,
+		Side = p.Side,
+		ToneWidth = p.ToneWidth or (if w > 0 then math.min(132, math.floor(w * 0.45)) else nil),
+	})
 	return f
 end
 

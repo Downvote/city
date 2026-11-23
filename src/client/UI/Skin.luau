@@ -10,8 +10,9 @@
 -- A box with a gradient can only cut a sharp slanted end, so a leaning slab with rounded points
 -- is painted: its two ends go into a small picture with a few pixels of straight middle between
 -- them, and an ImageLabel stretches the middle (nine slice) to whatever width it is given. The
--- textures are painted the same way and tiled: a grid of halftone dots, a diagonal hatch, and a
--- run of dots that grow from nothing (the way a printed tone fades out).
+-- textures are painted the same way: a grid of halftone dots and a diagonal hatch, both tiled,
+-- and the tone at a slab's end, dots that are biggest at the very end and shrink away from it
+-- (the way a printed tone fades out), cut to the slab's own shape.
 --
 -- Everything is painted white and tinted by whoever shows it. The shapes, the dots and the hatch
 -- are drawn here from nothing; no picture comes from anywhere else.
@@ -182,33 +183,50 @@ function Skin.paintHatch(): Painted
 	return { pixels = pixels, w = n, h = n }
 end
 
-Skin.FanSize = Vector2.new(168, 60)
-
--- A run of halftone dots that grow from nothing at the left to nearly touching at the right:
--- a tone fading out, for the end of a slab or the corner of a card.
-function Skin.paintFan(): Painted
+-- The halftone at a slab's end: dots that are biggest at the very end and shrink to nothing
+-- `wide` pixels further in, cut to the slab's own shape, so the tone starts where the slab does
+-- and follows its lean and its rounded points (the user: "the bars are misaligned, they should
+-- start from the very end"). Every dot's size goes by how far in from the slanted end it sits,
+-- so the tone thins out along the lean too. Painted for a slab's left end: `cap + wide` across
+-- with the pad on its outer side, top and bottom. Turned half way round it is the right end's.
+function Skin.paintTone(h: number, cap: number, flip: boolean, r: number, wide: number): Painted
 	local s = Skin.Scale
-	local W, H = Skin.FanSize.X * s, Skin.FanSize.Y * s
-	local pitch = Skin.DotPitch * s
+	local pad = Skin.Pad
+	local W, H = (cap + wide + pad) * s, (h + pad * 2) * s
+	-- the slab, long enough that its other end is out of the picture
+	local long = (cap * 2 + wide + r * 2 + 40) * s
+	local rr = math.min(r, h / 2 - 0.5) * s
+	local core = inset(corners(long, h * s, cap * s, flip), rr)
 	local pixels = buffer.create(W * H * 4)
+	local off = pad * s
+	local pitch = Skin.DotPitch * s
 	local top = pitch * 0.5
+	local tall, run, reach = h * s, cap * s, wide * s
 	for y = 0, H - 1 do
 		for x = 0, W - 1 do
-			local cov = 0
-			-- the dots near this pixel: two staggered grids
-			for g = 0, 1 do
-				local ox = g * pitch
-				local cx = math.floor((x - ox) / (pitch * 2) + 0.5) * pitch * 2 + ox
-				local cy = math.floor((y - ox) / (pitch * 2) + 0.5) * pitch * 2 + ox
-				local grow = math.clamp(cx / W, 0, 1)
-				local r = top * grow ^ 1.4
-				if r > 0.2 then
-					local dx, dy = x + 0.5 - cx, y + 0.5 - cy
-					cov = math.max(cov, math.clamp(0.5 - (math.sqrt(dx * dx + dy * dy) - r), 0, 1))
+			local px, py = x + 0.5 - off, y + 0.5 - off
+			-- inside the slab, to within a hair of its edge
+			local inside = math.clamp(0.5 - (distance(core, px, py) - rr + 0.5 * s), 0, 1)
+			if inside > 0 then
+				local cov = 0
+				-- the dots near this pixel: two staggered grids
+				for g = 0, 1 do
+					local o = g * pitch
+					local cx = math.floor((px - o) / (pitch * 2) + 0.5) * pitch * 2 + o
+					local cy = math.floor((py - o) / (pitch * 2) + 0.5) * pitch * 2 + o
+					-- where the slanted end is at this dot's height, and how far in the dot is
+					local t = math.clamp(cy / tall, 0, 1)
+					local edge = if flip then run * t else run * (1 - t)
+					local grow = math.clamp(1 - (cx - edge) / reach, 0, 1)
+					local rad = top * grow ^ 1.4
+					if rad > 0.2 then
+						local dx, dy = px - cx, py - cy
+						cov = math.max(cov, math.clamp(0.5 - (math.sqrt(dx * dx + dy * dy) - rad), 0, 1))
+					end
 				end
-			end
-			if cov > 0 then
-				white(pixels, (y * W + x) * 4, cov)
+				if cov > 0 then
+					white(pixels, (y * W + x) * 4, cov * inside)
+				end
 			end
 		end
 	end
@@ -272,15 +290,21 @@ function Skin.slab(h: number, cap: number, flip: boolean, r: number, gap: number
 	end)
 end
 
--- A texture's picture: "dots", "hatch" or "fan".
+-- The picture of the halftone at a slab's left end (see Skin.paintTone).
+function Skin.tone(h: number, cap: number, flip: boolean, r: number, wide: number): Pic?
+	local key = string.format("tone:%d:%d:%s:%.1f:%d", h, cap, tostring(flip), r, wide)
+	return picture(key, function()
+		return Skin.paintTone(h, cap, flip, r, wide)
+	end)
+end
+
+-- A texture's picture: "dots" or "hatch".
 function Skin.texture(name: string): Pic?
 	return picture("tex:" .. name, function()
-		if name == "dots" then
-			return Skin.paintDots()
-		elseif name == "hatch" then
+		if name == "hatch" then
 			return Skin.paintHatch()
 		end
-		return Skin.paintFan()
+		return Skin.paintDots()
 	end)
 end
 

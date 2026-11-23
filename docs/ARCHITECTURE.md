@@ -310,9 +310,11 @@ clipping (`tools/preview/ui_render.py`).
   tall whose ends run `cap` sideways, its four points rounded by `r` (with `line`, a thin line `gap` in from the
   edge in place of the solid shape); only its two ends and a sliver of middle are painted, and what comes back says
   how wide an end is (`cap`). `Skin.paintDots()` is one tile of a staggered halftone grid, `Skin.paintHatch()` one
-  tile of a diagonal hatch, `Skin.paintFan()` a run of halftone dots growing from nothing. All white, two pixels to
+  tile of a diagonal hatch, `Skin.paintTone(h, cap, flip, r, wide)` the halftone at a slab's left end: dots
+  biggest at the very end and gone `wide` pixels in, each sized by how far in from the slanted end it sits, cut to
+  the slab's own shape (turned half way round it is the right end's). All white, two pixels to
   each pixel of the interface (`Skin.Scale`), with a pixel of clear `Skin.Pad` round a slab. `Skin.slab(...)` and
-  `Skin.texture("dots" | "hatch" | "fan")` put them in EditableImages (one small picture each, kept) and give
+  `Skin.tone(...)` and `Skin.texture("dots" | "hatch")` put them in EditableImages (one small picture each, kept) and give
   `{ content, w, h, cap }`, or nil when the game can't make pictures (`Skin.on()` then says false, once, with a
   warning; `Skin.set(false | nil)` switches them off or lets them be tried again). The painting has no services in
   it, so the Skin spec runs it.
@@ -330,7 +332,7 @@ clipping (`tools/preview/ui_render.py`).
   named `Body` under everything in it (ZIndex -3) shows `Skin.slab`, nine sliced, in the face's colour. So a
   leaning face is recoloured with `Kit.paint(face, colour?, transparency?)` and read with `Kit.colorOf(face)`,
   never through its BackgroundColor3. `Kit.detail(face, opts)` adds `Line` (a thin line just inside the edge) and
-  `Tone` (the halftone run toward one end: `Side`, `ToneWidth`), both marked `Tinted` so a change of look maps
+  `Tone` (the halftone that starts at one end of the slab, laid over that end pixel for pixel: `Side`, `ToneWidth`), both marked `Tinted` so a change of look maps
   their colour. Where pictures are off, `Kit.slant` falls back to a sharp wedge on each end (`Kit.wedge(props,
   keep)`: a box named `Wedge_<br|tl|tr|bl>` with a UIGradient `Cut` across its diagonal) and `Kit.detail` does
   nothing. `Kit.cutInto(holder, colour, cut)` lays a rounded card under what is in `holder` (a frame named `Cut`;
@@ -591,8 +593,8 @@ clipping (`tools/preview/ui_render.py`).
   inside anything else, wires end on poles, the scene keeps to its budget), `Signs` (every kind has names,
   adverts are well formed, picks are stable and vary, no dashes or banned words), `Skin` (a painted slab's size
   and its solid middle, which way it leans, its area against a parallelogram's, that it is itself turned half way
-  round, a rim that lies inside the slab and is a pixel thick, textures that tile without a seam, a halftone that
-  grows).
+  round, a rim that lies inside the slab and is a pixel thick, textures that tile without a seam, a tone that starts at the
+  slab's very end, stays inside it, thins out and leans with it).
 - The harness stands in for Roblox's image API: `AssetService:CreateEditableImage` returns a table that keeps its
   pixels (listed in `Harness.images`), and `Content.fromObject` gives a real Content with the address
   `rbxeditable://<n>`, which Lune's ImageLabel accepts. `tools/preview/ui_dump.luau` writes each such picture out

@@ -29,7 +29,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (260, all passing; `Skin`: the painted slabs and textures; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (261, all passing; `Skin`: the painted slabs and textures; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off; what kind a bundle
 is, the outfit that holds the body, single body parts, the player's own items and avatars; preview scenes
@@ -191,7 +191,9 @@ replicate the look and feel as much as possible, including the texturing and min
   Build button, the red way out of a menu (`Kit.backButton`), a ribbon, a price tag. `Kit.slant` paints the slab
   (`UI/Skin` paints its two ends, an ImageLabel named `Body` stretches the middle), so recolour a leaning face
   with `Kit.paint` and read it with `Kit.colorOf`, never through its BackgroundColor3 or BackgroundTransparency
-  (the face itself is clear). `Kit.detail` adds the thin line inside its edge and the run of halftone dots.
+  (the face itself is clear). `Kit.detail` adds the thin line inside its edge and the halftone at one end, which starts at the
+  very end of the slab and is cut to its shape ("the bars are misaligned, they should start from the very end"):
+  never lay a texture on a leaning slab as a loose rectangle.
 - Menus are rounded cards in a thin rim (`Kit.frame({ Cut = n })`, `Kit.rim`), rows and tabs and buttons are pills
   (`Kit.row`, `Kit.segments`, `Kit.button`), a tile is a rounded square with its name on a deeper band
   (`Kit.tile`), markers and small buttons are circles (`Kit.disc`, `Kit.roundButton`, `Kit.badge`; a face is
