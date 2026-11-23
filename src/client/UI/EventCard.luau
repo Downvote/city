@@ -304,6 +304,7 @@ function EventCard.start(_hud: any)
 		TailSize = 28,
 		Border = Color3.fromRGB(255, 196, 150),
 		BorderWidth = 4,
+		Estimate = Vector2.new(620, 150),
 		LayoutOrder = 3,
 	})
 	local _ = page

@@ -43,7 +43,6 @@ local function show(model: Model, icon: string)
 		Color = T.White,
 		Size = UDim2.fromOffset(68, 68),
 		Position = UDim2.fromOffset(5, 0),
-		Bulge = 0.09,
 	})
 	Icons.make(icon, 36, {
 		Parent = holder,

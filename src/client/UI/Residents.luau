@@ -388,7 +388,6 @@ local function showDetail()
 			TailAt = 0.12,
 			TailSize = 16,
 			Radius = "pill",
-			Bulge = 5,
 		})
 		local row = Kit.box({ Parent = wishBody, Size = UDim2.fromScale(1, 1) })
 		Kit.pad(row, 20, 0)

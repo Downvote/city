@@ -320,7 +320,11 @@ The screens get the same bright, cozy feel, replacing the square storybook look 
 
 In our own drawing:
 
-- **Wobbly bubbles** carry the words everywhere: the HUD's money, people and happiness pills, the level card and
+> it looks too squarish and you can tell it is made by splicing shapes together. it should be more rounded and
+> wobbly, like one connected wobbly outline
+
+- **Wobbly bubbles** have one smooth, connected outline with round corners, whose edge drifts gently in and out in
+  slow waves. They carry the words everywhere: the HUD's money, people and happiness pills, the level card and
   the clock are cream bubbles whose edges gently ripple; panels are big cream wobbly cards on a darker copy, with
   faint doodles in the panel's colour and a tinted pill strip under the title banner.
 - **Buttons wobble**: round buttons and answers sway or breathe on their own, and every button wiggles when the

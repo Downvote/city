@@ -138,9 +138,11 @@ server, whatever the client did.
   the label follows it), `iconButton` (a round button: "Face" and "Lip" discs, the caption on a paper "Tag";
   `setButtonColor` recolours both discs and leaves the tag's ink alone), `pill` (wooden stat plates, `Plus` adds a
   round green +), `glass` (wooden bars: a gradient, so list layouts inside never see it), `ribbon(text, props)` (a
-  pill banner sized to its text), `blob(props)` / `blobInto(frame, props)` (wobbly bubbles: a rounded core with
-  soft pills over its sides that breathe in and out, a darker copy under it; `Round` for wobbly circles;
-  `setBlobColor`), `bubble(props)` (a blob with a tail), `choice(text, props, fn)` (an answer as a speech bubble,
+  pill banner sized to its text), `blob(props)` / `blobInto(frame, props)` (wobbly bubbles with one smooth outline: many
+  small circles, overlapping so the steps are under a pixel, threaded round a filled core along a rounded path whose
+  edge drifts in slow waves; `Border` repeats the circles a little bigger behind; `Estimate` gives the rough size
+  when Size is in scale; `Round` is a jelly circle; `setBlobColor`), small `Radius = "pill"` bubbles are plain pills
+  with a tail, `bubble(props)` (a blob with a tail), `choice(text, props, fn)` (an answer as a speech bubble,
   yellow and striped under the pointer), `arrowTag(text, colour, props)`, `wobbly(g, degrees)` and `wiggle(g)`
   (one loop sways things and wiggles buttons on hover; anything holding clipped icon pieces breathes instead of
   turning), `recolorIcon(icon, glyph, hole)`, `pieces(parent, list, thick, z)` (rects and triangles with one
