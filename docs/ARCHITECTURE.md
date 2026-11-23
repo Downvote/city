@@ -420,6 +420,11 @@ clipping (`tools/preview/ui_render.py`).
 
 ## Tests and tools
 
+- `tools/preview/walk.sh <scene> <png> --eye x,y,z --look x,y,z [--fov 60] [--size 1280x720] [--hour 16]
+  [--textures] [--painted]` draws any `dump.luau` scene as somebody standing in it sees it (`walk.py`: a camera
+  with a lens, the sun where a latitude of 54 puts it at that hour and coloured as `Services/World` grades it,
+  shadows from a shadow map near the camera, a sky and haze). `render.sh` is for a model or a layout seen from
+  above; this is for a street.
 - `tests/harness.luau` loads the game's modules under Lune with Roblox datatypes from `@lune/roblox` and a fake
   instance tree built from the Rojo project. `tests/run.luau` runs `tests/specs/*.spec.luau`.
 - Specs: `Build` (catalog, plan rules, shapes, builder), `BuildService` (the server's Build service with its

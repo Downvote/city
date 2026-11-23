@@ -17,7 +17,9 @@ the contract (update it with every API, remote or saved data change), `src/share
 2. Make the change. Shared logic stays free of services so the specs can run it.
 3. Add or update a spec in `tests/specs/` for any logic you touch (`lune run tests/run.luau <name>` runs one).
 4. For anything visual built from parts (furniture, roofs, walls, plaza buildings), render it and look:
-   `sh tools/preview/render.sh <scene> <png outside the repo>`, then read the PNG. For any screen, render it the
+   `sh tools/preview/render.sh <scene> <png outside the repo>`, then read the PNG. For a place (a street, a
+   square) also stand in it: `sh tools/preview/walk.sh "map:x1,z1,x2,z2" <png> --eye x,y,z --look x,y,z [--hour 16]`
+   draws it through a lens with the game's sun for that hour and cast shadows. For any screen, render it the
    same way: `sh tools/preview/ui.sh <scene> <png> [--bg <png>]` (scenes in `tools/preview/ui_dump.luau`; run
    `sh tools/preview/fonts.sh` once for the font).
 5. `sh scripts/check.sh` must pass: format, types (luau-lsp against Roblox's definitions), specs, the client
