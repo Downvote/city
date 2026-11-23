@@ -610,9 +610,19 @@ clipping (`tools/preview/ui_render.py`).
 
 ## The drawn city
 
-- `Services/World.stylize` sets the look of the light (hard shadows, violet ambient, low environment scales,
-  grading, bloom) and `grade(h)` moves tint, saturation and contrast with the hour. `default.project.json` carries
-  the same Lighting values for Studio's edit view.
+- `Services/World.stylize` sets the light from `Tuning.Look.Light` (Brightness, Exposure, Ambient, OutdoorAmbient,
+  SunTint, Latitude, SkyDiffuse, SkySpecular, ShadowSoftness; `Light.Night` the ambients after dark) and the grade
+  from `Tuning.Look.Grade` (tint, saturation, contrast by the hour, eased toward by `grade(h)`), plus the bloom
+  (`Tuning.Look.Bloom`). It also sets `LightingStyle = Realistic` and `PrioritizeLightingQuality = true`, each in a
+  pcall. `default.project.json` carries the same values for Studio's edit view; rojo 7.4 writes those two only as
+  typed values (`"LightingStyle": {"Enum": 0}`, `"PrioritizeLightingQuality": {"Bool": true}`).
+- The previews draw the game's light and grade from the same numbers: `tools/preview/look.luau` hands `Tuning.Look`
+  to `tools/preview/look.py` (colours to linear light, sun and shade from the ambients and the sky, exposure, a
+  filmic curve, then the colour correction), and `render.py` and `walk.py` use it by default (`--no-grade` leaves the
+  correction off, `render.py --plain` the old flat look). `walk.py` stands the sun where Roblox does for the hour and
+  `GeographicLatitude`: the sun's path is tilted by latitude minus 23.5, so latitude -20 puts it over the harbour at
+  46 degrees at noon. The Palette spec holds the ratios: shade 40 to 60 percent of sunlight, violet, a pale wall
+  below white, readable nights, the grade's saturation and contrast at most 0.15.
 - `client/World/Outlines`: ink outlines on people. `Outlines.step(from)` gives the `Most` (20) nearest players'
   characters and villagers within `Reach` a Highlight named `Ink` (no fill, dark outline) and takes it off the
   rest; `start` runs it every 0.4 s from the camera.

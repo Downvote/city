@@ -85,7 +85,7 @@ previews show the facets (`--smooth` shows the fallback without the kit).
 The user asked for a drawn city ("stylize everything, including the map, to zenless zone zero style. Make
 shaders, new models and textures if necessary. The map should look similar to a city in the game"). Take the
 direction, never the game: none of its streets, shops, names, logos or art. Roblox has no shaders of our own,
-so the look is `World.stylize` (hard shadows, violet shade, flat walls, strong grading, a gentle glow on what
+so the look is `World.stylize` (hard shadows, violet shade, flat walls, a gentle grade, a gentle glow on what
 gives off light: `Tuning.Look.Bloom`, its threshold above white since "the bloom might be too much") and ink outlines
 on people (`client/World/Outlines`: Highlights, the 20 nearest). The street scene is `Data/StreetModels`,
 placed by rule in `TownMap`'s `streetScene` (poles and wires, drinks machines, billboards, clutter). Signs are
@@ -314,6 +314,19 @@ builder, and a fenced garden, all of it ordinary Build mode pieces carrying `gif
 house detail by alot, and add a workspace next to it"). Specs find the bed by "bed" in an item's id, so the
 starter must not use `flower_bed`; the Build mode sim clicks at plot (122, 51) and (124, 64), so the workshop must
 stay shallower than z 44 and low.
+
+The user then asked: "make the colors of the buildings, such as the roof of the buildings, more pleasing to look at.
+make the overall color pallete pleasing to look at as well", and "it seems like shadows dont render on models". So:
+- Colours are soft and a little dusty: light walls, roofs gently coloured (at most 50 saturation; the Palette spec
+  holds every ready-made building's roofs, Build mode's default roof and the roof tiles to it), strong colour only
+  on small things. The palette's soft colours lead `Data/Palette` (and the creator's colour bar).
+- A part's paint decides its colour: the grass and clay tile pictures in `Data/TextureIds` are grey, with `light`
+  where a picture is dark. Never give a material a picture that brings its own strong colour.
+- The light and the grade live in `Tuning.Look` (`Light`, `Light.Night`, `Grade`), read by the game and by the
+  previews alike. Shade is about half of sunlight and violet, so shadows show; the grade only nudges colour. Judge
+  colours in previews with `--textures` (the grade is on by default). Roblox's sun path is tilted by latitude
+  minus 23.5: `Latitude = -20` keeps it over the harbour, on the north plots' fronts.
+- Roblox drops shadow map shadows below graphics quality 4; `PrioritizeLightingQuality` keeps them close by.
 
 ## Rules
 

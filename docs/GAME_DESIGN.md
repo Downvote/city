@@ -1299,6 +1299,33 @@ it.
 (Of the stats strip.) The thin line inside the edge of every leaning slab is gone, on the main screen and in the
 menus. The halftone at one end stays.
 
+### Softer colours, and shade that shows
+
+> make the colors of the buildings, such as the roof of the buildings, more pleasing to look at. make the overall
+> color pallete pleasing to look at as well
+
+> it seems like shadows dont render on models
+
+(With pictures of the starting house in the game: the shaded front as bright as the sunlit side, nothing under
+the eaves.)
+
+- **Why the roofs were harsh.** The clay roof tiles and the grass wore library pictures with strong colours of
+  their own, so a roof came out orange and a lawn olive whatever they were painted, and the picture's colour grade
+  added a third again to every colour's strength. The tile and grass pictures are grey now, so the paint decides
+  the colour, and the grade only nudges it.
+- **The palette.** Walls are light and soft (warm white, cream, butter, peach, blush, mint, sky, lavender, sand),
+  roofs a step or two darker and gently coloured (soft clay, rose brick, slate blue, teal, sage, moss, plum,
+  cocoa), one trim white everywhere, and strong colour only on small things: doors, shutters, awnings, flowers.
+  The starting house is cream with sage gables and a soft clay roof; the ready-made houses, the twelve workplace
+  buildings, Build mode's default paints and the catalog's pieces follow the same rules. The paint swatches
+  start with the soft colours; the old ones are still there, so nothing a player built changes.
+- **Why there were no shadows.** Nothing stopped parts casting shadows. The shade was lit nearly as brightly as
+  the sun (82 percent of it), so a shadow had almost nothing to darken, and the sun stood behind the first
+  player's house all day. The light is now set so shade is about half of sunlight and violet, a pale wall in the
+  sun stays warm and short of white, and the sun rides over the harbour, onto the fronts of the houses on the
+  north side of Main Street. Roblox's own setting that favours lighting quality is on, so close shadows stay as a
+  phone lowers its graphics quality; below quality 4 Roblox still drops them.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no
