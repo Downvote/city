@@ -271,6 +271,7 @@ function Npc.walkTo(self: Npc, target: Vector3, timeout: number?): boolean
 		local index = 1 -- the waypoint they are heading for (the first is where they stand)
 		local arrived = #list < 2
 		local stuck = false
+		local again = false -- the engine gave a move up: set off for the same waypoint once more
 		-- sets off for waypoint `to`, hopping wherever a waypoint passed on the way asks for it
 		local function head(to: number)
 			for i = index + 1, to do
@@ -289,9 +290,10 @@ function Npc.walkTo(self: Npc, target: Vector3, timeout: number?): boolean
 			local pos = self.root.Position
 			local at = list[index].Position
 			if Vector3.new(at.X - pos.X, 0, at.Z - pos.Z).Magnitude > Npc.Arrived then
-				-- the engine gives a move up after eight seconds: set off for the same waypoint
-				-- again (the watch below says when they are really stuck)
-				self.humanoid:MoveTo(at)
+				-- the engine gives a move up after eight seconds. The watch below sets off for
+				-- the same waypoint again (not from in here: a move must never restart itself
+				-- from its own ending), and says when they are really stuck
+				again = true
 			elseif index < #list then
 				head(index + 1)
 			else
@@ -313,7 +315,11 @@ function Npc.walkTo(self: Npc, target: Vector3, timeout: number?): boolean
 			-- nearly on this waypoint: head for the next while they are still moving
 			local to = Npc.nextLeg(list, index, pos, Npc.Reach)
 			if to ~= index then
+				again = false
 				head(to)
+			elseif again then
+				again = false
+				self.humanoid:MoveTo(list[index].Position)
 			end
 			if (pos - lastPos).Magnitude > 0.4 then
 				lastPos = pos

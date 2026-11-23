@@ -164,6 +164,23 @@ describe("Walk", function()
 		expect(npc.humanoid.moves[3]).toBe(list[3].Position)
 	end)
 
+	it("is not thrown when the old move is reported as over the moment a new one starts", function()
+		local list = { point(0, 0), point(3, 0), point(6, 0), point(9, 0) }
+		route(list)
+		local npc = body(Vector3.new(0, 3, 0), function(self, target)
+			-- the old move ends, unreached, before the new one is under way
+			self.humanoid.MoveToFinished:Fire(false)
+			self.root.Position = target
+			self.humanoid.MoveToFinished:Fire(true)
+		end)
+		expect(npc:walkTo(Vector3.new(9, 3, 0), 5)).toBe(true)
+		-- each waypoint asked for once: a move never restarts itself from its own ending
+		expect(#npc.humanoid.moves).toBe(3)
+		for i = 1, 3 do
+			expect(npc.humanoid.moves[i]).toBe(list[i + 1].Position)
+		end
+	end)
+
 	it("hops where the path asks for it", function()
 		local list = { point(0, 0), point(3, 0, Enum.PathWaypointAction.Jump), point(6, 0) }
 		route(list)
