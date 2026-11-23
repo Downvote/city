@@ -46,7 +46,10 @@ The contract between the parts of the game. Update it with every change to an AP
   building, palm, parasol, islet, the marina and piece of street furniture stands; the
   ground slabs are all SmoothPlastic for a clean flat look), `TownModels` (plaza buildings), `AmbientModels` (cars, the bus, birds,
   clouds), `Presets` (ready-made buildings: `requests(id, x, z, rot)` turns one into Build requests, `check(plan,
-  requests)` tries them on a copy of a plan, `price(id)`), `StarterHouse` (every new plot's first build),
+  requests)` tries them on a copy of a plan, `price(id)`; the houses and the park are in it, and one building per
+  workplace is a file of its own, `Data/Buildings/<Name>.luau` returning `function(add)`, loaded in the order of
+  `Presets.Workplaces`; a building added again with the same id replaces the earlier one), `Build/Recipes/
+  ShopFittings`, `CraftFittings` and `PublicFittings` (the trades' own catalog pieces those buildings use), `StarterHouse` (every new plot's first build),
   `Textures` (the painted texture for each material and its studs per tile; `ready()` lists the uploaded ones,
   `install(materialService)` sets each material to its MaterialVariant and makes missing variants where Roblox
   allows it, which is only the command bar and plugins), `TextureIds` (image ids by texture name: Creator Store pictures with their

@@ -53,7 +53,11 @@ and civic buildings inside their blocks). The town map previews with `sh tools/p
 `map:x1,z1,x2,z2`), the cars and the bus with `ambient`, a ready-made building with
 `preset:<id>` (`preset:<id>:inside` leaves the roof off), any of the map's own models side by side with
 `models:<name>,<name>`. A new ready-made building is a function in
-`Data/Presets` laid out with its little builder; the Presets spec will say where it doesn't fit.
+`Data/Presets` laid out with its little builder; the Presets spec will say where it doesn't fit. Every workplace
+has its own building in `Data/Buildings/<Name>.luau` (the user: "make much more buildings, one for each workspace,
+and detail them all to be unique, as much as the starting house"): keep each at that level (the Presets spec wants
+110 to 300 pieces and the workplace inside), its own shape and palette, and clear floor where the worker moves
+round the station (`Sim/Routine`'s loops).
 
 The town is a big bright island (docs/GAME_DESIGN.md section 9): the old town and its plots in the middle, a ring of
 roads (`Town.Roads`), downtown east, the civic quarter west, the hills north (`Data/Hills`), the waterfront south.

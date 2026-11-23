@@ -178,12 +178,47 @@ Bloxburg style, all on a grid and all saved:
 
   > also, make preset buildings like houses, library, other buildings
 
-  a garden cottage, a family house, a two storey townhouse, a library, a café, a bakery, a clinic, a schoolhouse
-  and a little park. Click one, turn it with R, put it down. A ghost of the whole building follows the mouse and
+  a garden cottage, a family house, a two storey townhouse, a little park, and a building for every workplace
+  (below). Click one, turn it with R, put it down. A ghost of the whole building follows the mouse and
   turns red with the reason when it won't fit or you can't afford it. Each is made of ordinary walls, floors,
   roofs, doors, windows and furniture, so it can be changed piece by piece afterwards, and it costs what its pieces
   cost (from about 1,600 coins for the park to 6,400 for the family house). The shops and public buildings come
   with their workplace, so they open a job straight away. One undo takes a whole building back.
+
+  > also, for buildings, make much more buildings, one for each workspace, and detail them all to be unique, as
+  > much as the starting house
+
+  Twelve, one for each job, each its own shape and colours and as finished as the starting house (120 to 170
+  pieces: trim at every window, corner boards, footings, downpipes, lamps, planters, a sign of its trade, and
+  furnished inside down to the clock on the wall), costing about 6,500 to 10,700 coins. Each leaves clear floor
+  where its worker moves round the station.
+  - **Grocer's:** two storeys of brick and cream; the upper floor juts over an arcade where the market stall
+    stands; shelves, crates and a till inside, a sitting room and a stock room upstairs.
+  - **Café:** one mint storey under a wide clay hip roof with a covered corner terrace and a door across the
+    corner; booths, round tables, the coffee counter and a lounge in the bay window.
+  - **Bakery:** a butter shop and a lower stone bakehouse, two gables to the street, a tall chimney behind the oven
+    and a serving hatch; cakes under glass and racks of loaves.
+  - **Ice cream parlour:** a striped kiosk with a giant cone on its flat roof and the cart behind a serving hatch,
+    and a pavilion with a picnic table beside it.
+  - **Flower shop:** a gable to the street, a glasshouse wing, buckets on the pavement and a cutting garden behind a
+    picket fence.
+  - **Artist's studio:** a two storey glass fronted atelier with a low gallery and a walled sculpture yard.
+  - **Music hall:** a tall gabled hall with a stage behind curtains and rows of seats, entered through a low white
+    foyer with a ticket desk.
+  - **Builder's yard:** a long timber barn with big doors under a gable on posts, a lean-to timber store and a fenced
+    yard.
+  - **Clinic:** a low white L with a canopy at its glass door, a waiting room round the doctor's desk and three
+    ward beds behind screens.
+  - **Schoolhouse:** brick, with a bell tower over the door, four double desks facing the board and a fenced
+    playground.
+  - **Post office:** a clock in its tall gable, a counter hall, and a lean-to over the sorting room and a bay for the
+    bicycle and parcels.
+  - **Library:** sandstone with a pillared porch, a two storey reading room with a gallery of books, and a walled
+    reading garden.
+
+  Their trades brought 38 new pieces to the catalog (display cases, bread racks, a freezer of tubs, flower stands,
+  canvases, sculptures, rows of seats, stage curtains, timber racks, ward beds, school desks, a pillar box, sorting
+  shelves, tall bookcases with ladders, hanging signs and more), on sale in Build mode like everything else.
 
 ## 6. The villager creator
 

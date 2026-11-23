@@ -1,6 +1,6 @@
 --!strict
--- Ready-made buildings for Build mode's Buildings tab: houses, a library, a café, a bakery, a
--- clinic, a schoolhouse and a little park. Each is made of ordinary plan pieces (walls, floors,
+-- Ready-made buildings for Build mode's Buildings tab: houses and a little park here, and one
+-- building for every workplace in a file of its own under Data/Buildings (loaded at the bottom). Each is made of ordinary plan pieces (walls, floors,
 -- roofs, doors, windows, furniture), so once it's down it can be repainted, moved, added to or
 -- sold piece by piece like anything else. Shops and public buildings come with their workplace,
 -- so they open a job as soon as they're built.
@@ -38,20 +38,14 @@ local WHITE = { c = "F7F3EA", m = "SmoothPlastic" }
 local CREAM = { c = "F2E6CC", m = "SmoothPlastic" }
 local BRICK = { c = "D8A48E", m = "Brick" } -- soft brick
 local SIDING_BLUE = { c = "B4CFEA", m = "WoodPlanks" } -- sky
-local SIDING_MINT = { c = "CFE2D0", m = "WoodPlanks" }
-local SIDING_YELLOW = { c = "F3DFA6", m = "WoodPlanks" } -- butter
 local OAK = { c = "C49A6C", m = "WoodPlanks" }
 local WALNUT = { c = "9A6B48", m = "WoodPlanks" }
 local TILES = { c = "F7F3EA", m = "CeramicTiles" }
-local CHECKER = { c = "D6D6D6", m = "CeramicTiles" }
 local CARPET_BLUE = { c = "8AA8C8", m = "Carpet" }
 local PAVING = { c = "EAE6DC", m = "Pavement" }
-local CLAY = { c = "C27E63", m = "ClayRoofTiles" } -- the starting house's soft clay
 local SAGE_TILE = { c = "8CAC8A", m = "ClayRoofTiles" }
-local TERRACOTTA = { c = "C98466", m = "ClayRoofTiles" }
 local SLATE = { c = "6E8CA8", m = "Slate" } -- slate blue
 local SHINGLE_BROWN = { c = "B87C64", m = "RoofShingles" } -- a clay brown
-local SHINGLE_GREEN = { c = "6F8F5F", m = "RoofShingles" } -- moss
 
 -- A little builder for laying a preset out.
 local Blueprint = {}
@@ -198,8 +192,7 @@ local function add(id: string, name: string, desc: string, icon: string, w: numb
 	local b = blueprint()
 	build(b)
 	local made = { id = id, name = name, desc = desc, icon = icon, w = w, d = d, objects = b.objects }
-	-- a building defined again takes the place of the one before it (the workplaces' own files
-	-- under Data/Buildings redo the ones that were here first)
+	-- a building defined again takes the place of the one before it
 	for i, old in list do
 		if old.id == id then
 			list[i] = made
@@ -371,153 +364,6 @@ add(
 		b:item("lamp_post", 3, 5.4)
 	end
 )
-
-add("library", "Library", "Shelves of books, reading tables and a desk for the librarian.", "news", 30, 26, function(b)
-	b:floor(2, 6, 28, 24, WALNUT)
-	b:box("", 2, 6, 28, 24, BRICK, CREAM)
-	b:roof(2, 6, 28, 24, "hip", 6, 0, SLATE, CREAM)
-	b:open("door_double", "front", 13)
-	for _, t in { 4, 7, 19, 22 } do
-		b:open("win_tall", "front", t)
-	end
-	for _, t in { 3, 15 } do
-		b:open("win_tall", "right", t)
-		b:open("win_tall", "left", t)
-	end
-	b:open("win_picture", "back", 13)
-	-- shelves round the walls
-	for _, x in { 4.4, 8.2, 21.8, 25.6 } do
-		b:item("bookshelf", x, 22.8, 180)
-	end
-	for _, z in { 13.6, 17.6 } do
-		b:item("bookshelf", 3.2, z, 90)
-		b:item("bookshelf", 26.8, z, 270)
-	end
-	-- reading tables
-	for _, x in { 10, 20 } do
-		b:item("rug_long", x, 15, 90)
-		b:item("table_dining_long", x, 15)
-		for _, dx in { -2.2, 2.2 } do
-			b:item("chair_dining", x + dx, 12.6)
-			b:item("chair_dining", x + dx, 17.4, 180)
-		end
-	end
-	b:item("work_library", 23, 8.6, 180)
-	b:item("clock_grandfather", 4, 7.4)
-	b:item("plant_big", 8.4, 8)
-	for _, p in { { 10, 10 }, { 20, 10 }, { 10, 20 }, { 20, 20 } } do
-		b:item("light_ceiling", p[1], p[2])
-	end
-	-- outside
-	b:item("lamp_post", 9, 2.6)
-	b:item("lamp_post", 21, 2.6)
-	b:item("bench_garden", 4.6, 2.4)
-	b:item("bench_garden", 25.4, 2.4)
-	b:item("path_stones", 15, 3.6)
-	b:item("path_stones", 15, 1.4)
-end)
-
-add("cafe", "Café", "A coffee counter, little round tables and a terrace out front.", "pot", 24, 22, function(b)
-	b:floor(2, 8, 22, 22, CHECKER)
-	b:floor(2, 0, 22, 8, PAVING)
-	b:box("", 2, 8, 22, 22, SIDING_MINT, CREAM)
-	b:roof(2, 8, 22, 22, "gable", 5, 0, TERRACOTTA, CREAM)
-	b:open("door_glass", "front", 10)
-	b:open("win_wide", "front", 4)
-	b:open("win_wide", "front", 16)
-	b:open("win_square", "left", 7)
-	b:open("win_square", "right", 7)
-	b:open("win_small", "back", 4)
-	b:item("work_cafe", 12, 19.4, 180)
-	for _, p in { { 5.6, 12 }, { 18.4, 12 }, { 5.6, 17 } } do
-		b:item("table_round", p[1], p[2])
-		b:item("chair_wood", p[1] - 2.2, p[2], 90)
-		b:item("chair_wood", p[1] + 2.2, p[2], 270)
-	end
-	b:item("plant_big", 19.6, 18.6)
-	b:item("light_ceiling", 7, 14)
-	b:item("light_ceiling", 17, 14)
-	-- the terrace
-	for _, x in { 5.4, 18.6 } do
-		b:item("picnic_table", x, 4, 0, 0, F)
-		b:item("umbrella_sun", x, 4, 0, 0, F)
-	end
-	b:item("planter_box", 12, 1.4, 0, 0, F)
-end)
-
-add("bakery", "Bakery", "A bread oven at the back and counters of fresh loaves.", "store", 22, 20, function(b)
-	b:floor(2, 6, 20, 20, TILES)
-	b:box("", 2, 6, 20, 20, SIDING_YELLOW, CREAM)
-	b:roof(2, 6, 20, 20, "gable", 6, 0, CLAY, SIDING_YELLOW)
-	b:open("door_front", "front", 5)
-	b:open("win_picture", "front", 12.6)
-	b:open("win_square", "left", 7)
-	b:open("win_square", "right", 7)
-	b:item("work_bakery", 11, 17.4, 180)
-	b:item("counter", 6, 12, 180)
-	b:item("counter", 9, 12, 180)
-	b:item("counter_corner", 11.8, 12, 180)
-	b:item("cabinet", 17, 18.6, 180)
-	b:item("plant_big", 17.6, 9)
-	b:item("light_ceiling", 11, 13)
-	b:item("bench_garden", 14, 2.6)
-	b:item("flower_bed", 19.5, 3, 90)
-end)
-
-add("clinic", "Clinic", "A front desk, a waiting corner and two beds behind a screen.", "heart", 26, 24, function(b)
-	b:floor(2, 6, 24, 22, TILES)
-	b:box("", 2, 6, 24, 22, WHITE, WHITE)
-	b:wall("ward", 2, 14, 16, 14, WHITE, WHITE)
-	b:roof(2, 6, 24, 22, "hip", 5, 0, SLATE, WHITE)
-	b:open("door_glass", "front", 16)
-	b:open("win_wide", "front", 6)
-	b:open("win_square", "right", 5)
-	b:open("win_square", "right", 12)
-	b:open("win_square", "left", 4)
-	b:open("win_square", "left", 12)
-	b:open("win_wide", "back", 11)
-	b:open("arch_wide", "ward", 9)
-	b:item("work_clinic", 18, 11, 180)
-	b:item("bench_wood", 6, 8)
-	b:item("bench_wood", 11, 8)
-	b:item("plant_big", 4, 12)
-	b:item("bed_single", 5, 18)
-	b:item("bed_single", 12, 18)
-	b:item("screen_folding", 8.6, 18, 90)
-	b:item("light_ceiling", 9, 10)
-	b:item("light_ceiling", 9, 18)
-	b:item("light_ceiling", 19, 17)
-	b:item("lamp_post", 23, 2.6)
-	b:item("flower_bed", 6, 3)
-end)
-
-add("school", "Schoolhouse", "A chalkboard, rows of desks and a shelf of books.", "blueprint", 28, 24, function(b)
-	b:floor(2, 6, 26, 22, OAK)
-	b:box("", 2, 6, 26, 22, BRICK, CREAM)
-	b:roof(2, 6, 26, 22, "gable", 7, 0, SHINGLE_GREEN, CREAM)
-	-- the door is on the side, so the rows of desks face the board
-	b:open("door_double", "left", 12)
-	b:open("win_tall", "left", 3)
-	for _, t in { 4, 8, 12, 16, 20 } do
-		b:open("win_tall", "front", t)
-	end
-	for _, t in { 4, 8, 12 } do
-		b:open("win_tall", "right", t)
-	end
-	b:item("work_school", 14, 20.4, 180)
-	for _, x in { 7, 14, 21 } do
-		for _, z in { 10.6, 16 } do
-			b:item("desk", x, z, 180)
-			b:item("chair_wood", x, z - 2.2)
-		end
-	end
-	b:item("bookshelf", 3.2, 19, 90)
-	b:item("bookshelf", 24.8, 19, 270)
-	b:item("light_ceiling", 9, 13)
-	b:item("light_ceiling", 19, 13)
-	b:item("swing_set", 5, 2.4, 0)
-	b:item("lamp_post", 22, 2.6)
-end)
 
 add(
 	"park",

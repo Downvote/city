@@ -87,6 +87,39 @@ describe("Presets", function()
 		end
 	end)
 
+	it("has one building for every workplace, from its own file", function()
+		-- the user: "make much more buildings, one for each workspace, and detail them all to be
+		-- unique, as much as the starting house"
+		local jobs = {}
+		for _, def in Catalog.workplaces() do
+			jobs[def.id] = false
+		end
+		for _, p in Presets.list do
+			for _, o in p.objects do
+				if o.obj.id and jobs[o.obj.id] ~= nil then
+					jobs[o.obj.id] = true
+				end
+			end
+		end
+		for id, found in jobs do
+			if not found then
+				error("no ready-made building brings " .. id)
+			end
+		end
+		expect(#Presets.Workplaces).toBe(12)
+		-- and each is a real building, at the starting house's level of detail, under the
+		-- server's batch limit
+		for _, name in Presets.Workplaces do
+			local id = string.lower(name)
+			local p = Presets.get(id)
+			if not p then
+				error("Data/Buildings/" .. name .. " made no building with the id " .. id)
+			end
+			expect(#p.objects >= 110).toBeTruthy()
+			expect(#p.objects <= 300).toBeTruthy()
+		end
+	end)
+
 	it("costs what its pieces cost, and the shops bring their workplace", function()
 		-- one building for every workplace (the user: "make much more buildings, one for each
 		-- workspace"), each with its own file under Data/Buildings
