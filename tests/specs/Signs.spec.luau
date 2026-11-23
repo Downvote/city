@@ -292,9 +292,12 @@ describe("Sign picks", function()
 end)
 
 -- the sign parts of a model: { prim, kind, form } for boards, and the adverts
+local Landmarks = require(Shared .. "Data.Landmarks")
+
 local function boardsOf(name)
 	local signs, ads = {}, {}
-	for _, prim in CityModels.prims(name) do
+	local prims = CityModels.prims(name) or Landmarks.prims(name) or {}
+	for _, prim in prims do
 		local attrs = prim.attrs
 		if attrs and attrs.SignKind then
 			table.insert(signs, prim)
@@ -311,7 +314,15 @@ describe("Sign boards", function()
 	it("name a kind the words know, a layout, and the way back to their building", function()
 		local used = {}
 		local total = 0
+		local names = {}
 		for name in CityModels.Models do
+			table.insert(names, name)
+		end
+		-- the set pieces carry boards too: the market gate, the hall's stalls
+		for name in Landmarks.Models do
+			table.insert(names, name)
+		end
+		for _, name in names do
 			local signs, ads = boardsOf(name)
 			for _, prim in signs do
 				local a = prim.attrs

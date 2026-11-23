@@ -1835,7 +1835,8 @@ function TownMap.placements(): { Placement }
 	onPaving("tailor", S.Tailor.X, S.Tailor.Z, 180, { action = "Make a villager", opens = "creator" })
 	onPaving("shop", S.Shop.X, S.Shop.Z, 0, { action = "Shop", opens = "shop" })
 	onPaving("hall", S.Hall.X, S.Hall.Z, 0, { action = "City hall", opens = "city" })
-	onPaving("sign", 14, 30, 180, { tag = "welcome" })
+	-- (beside the market gate's east bay, not behind it)
+	onPaving("sign", 26, 30, 180, { tag = "welcome" })
 
 	-- benches round the fountain, facing it
 	for i = 0, 5 do

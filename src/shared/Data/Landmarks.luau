@@ -293,10 +293,9 @@ local function onRack(at: CFrame, put: (number, CFrame) -> ())
 end
 
 -- The name board on the gate is made the way the Signs service reads a building's own board
--- (a part named Sign with SignForm and SignHome, both big sides showing), but Data/Signs has no
--- words for a market yet and a board whose kind it doesn't know is left bare. Once Signs.Shops
--- has a `market` entry, name it here and the gate gets its name on both sides.
-local GATE_SIGN: string? = nil
+-- (a part named Sign with SignForm and SignHome, both big sides showing): the town market's
+-- name, from Signs.Shops.market.
+local GATE_SIGN: string? = "market"
 
 -- The market gate ---------------------------------------------------------------------------------------
 
