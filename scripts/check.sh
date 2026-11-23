@@ -52,13 +52,15 @@ if ! lune run tests/sim/build_client.luau >"$SIM_OUT" 2>&1; then
 	exit 1
 fi
 tail -n 1 "$SIM_OUT"
-# the card you get when you hold E on a villager, driven the same way
-if ! lune run tests/sim/talk_card.luau >"$SIM_OUT" 2>&1; then
-	cat "$SIM_OUT"
-	rm -f "$SIM_OUT"
-	exit 1
-fi
-tail -n 1 "$SIM_OUT"
+# the card you get when you hold E on a villager, and the creator's own sections, driven the same way
+for SIM in talk_card creator_sections; do
+	if ! lune run tests/sim/$SIM.luau >"$SIM_OUT" 2>&1; then
+		cat "$SIM_OUT"
+		rm -f "$SIM_OUT"
+		exit 1
+	fi
+	tail -n 1 "$SIM_OUT"
+done
 rm -f "$SIM_OUT"
 
 echo "== the two looks"

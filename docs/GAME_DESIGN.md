@@ -208,6 +208,29 @@ The glow that makes the town's signs shine after dark was washing out the studio
 outfits. While the creator is open the bloom and the sun's rays are switched off on that player's own screen, and
 come back when it closes.
 
+> currently, bodies only changes the head of the character. also, make another section for the torso, legs and
+> arms, player inventory, and player avatars
+
+- **Bodies put the whole body on.** A body sold on Roblox now usually holds two saved outfits: the body itself, and
+  its head alone, listed last. The creator read the last one, so all a body ever brought was a head (and it cleared
+  the old torso and limbs as it went). Now the tab you pick from says what you are after (a body, a head, shoes,
+  animations), the outfit with the most of a body in it is the one worn, anything missing is filled from the
+  bundle's own items, and a body that turns out to hold only a head is worn as a head without stripping the body.
+  The Bodies tab also lists the bodies sold with an animated head.
+- **Body parts** is a section of its own: torsos, left and right arms, left and right legs from the catalog (they
+  are only sold inside bodies, so the search includes those; with nothing typed they come most liked first). Each
+  goes on and comes off by itself, mixed with any head and body.
+- **My items** shows what the player owns on Roblox, by kind (hair, hats and accessories, tops, bottoms, shoes,
+  body parts, heads, animations), worn the same way as anything from the catalog.
+- **My avatars** shows the player's own avatars saved on Roblox (the ones they made, and the ones they bought), each
+  with its picture; picking one puts that whole look on, and Undo takes it back off.
+- Both of the player's own sections need their say first: the page explains, and a button asks Roblox to show the
+  permission prompt. A no is respected and said plainly, with a button to ask again. Nothing is asked just by
+  opening the creator.
+- The creator's sections are now sixteen, in two rows of eight so every one is in reach on a phone and on a
+  desktop: wearing, hair, heads, accessories, tops, bottoms, shoes, bodies, body parts, moves, skin, shape, my
+  items, outfits (this game's saved looks), my avatars, players.
+
 > remove the plate the character stands on in the creation screen
 
 The round wooden deck under the mannequin is gone. Nothing is built at the stage now: the villager simply stands

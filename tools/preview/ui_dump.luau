@@ -20,6 +20,12 @@
 --   flaticons           every icon flat, white on a dark round button
 --   creator             the villager creator on the hair tab
 --   creator:profile     the creator's second step (name and personality)
+--   creator:bodies      the creator's Bodies, one of them on
+--   creator:parts       the creator's Body parts (torsos), one of them on
+--   creator:items       the creator's My items after the player has said yes, one of them on
+--   creator:items:ask   My items before Roblox has asked
+--   creator:items:no    My items after the player has said no
+--   creator:avatars     the creator's My avatars (the player's saved avatars on Roblox), one worn
 --   signs               the town's signs laid flat: a shop fascia in every layout
 --   signs:boards        the boards on canopies and roofs
 --   signs:posters       adverts on posters and billboards, the cinema's posters
@@ -209,10 +215,80 @@ elseif scene == "toasts" then
 	Toasts.show("Not enough coins for that.", "warn")
 	Toasts.show("Ivy wants a lamp by her bed.", "event")
 	Sim.frames(2)
-elseif scene == "creator" or scene == "creator:profile" then
+elseif scene == "creator" or scene:sub(1, 8) == "creator:" then
+	-- The preview has no Roblox to ask, so the catalog, what the player owns and their saved
+	-- avatars are all made up here, and the player's answer to Roblox's question is decided by
+	-- the scene.
+	local page = scene:sub(9)
+	local function pagesOf(rows, more)
+		return {
+			IsFinished = not more,
+			GetCurrentPage = function()
+				return rows
+			end,
+			AdvanceToNextPageAsync = function() end,
+		}
+	end
+	local CATALOG = {
+		HairAccessory = {
+			"Messy bun",
+			"Short curls",
+			"Long waves",
+			"Side part",
+			"Braids",
+			"Spiky top",
+			"Bob cut",
+			"Ponytail",
+		},
+		Torso = { "Woman torso", "Man torso", "Doll torso", "Robot torso", "Knight torso", "Bear torso" },
+		LeftArm = { "Woman left arm", "Robot left arm", "Knight left arm" },
+		RightArm = { "Woman right arm", "Robot right arm", "Knight right arm" },
+		LeftLeg = { "Woman left leg", "Robot left leg", "Knight left leg" },
+		RightLeg = { "Woman right leg", "Robot right leg", "Knight right leg" },
+	}
+	local BUNDLES = {
+		BodyParts = { "City woman", "City man", "Tin robot", "Paper doll", "Old knight", "Honey bear", "Stick figure" },
+		DynamicHead = { "Soft smile", "Wide grin", "Sleepy eyes" },
+		Shoes = { "Canvas shoes", "Rain boots", "Sandals" },
+		Animations = { "Bouncy", "Tired", "Sneaky" },
+	}
+	local OWNED = {
+		HairAccessory = { "Messy bun", "Side part", "Braids" },
+		Hat = { "Straw hat", "Wool cap" },
+		Shirt = { "Striped shirt" },
+		Pants = { "Blue jeans" },
+		Torso = { "Robot torso" },
+		LeftArm = { "Robot left arm" },
+	}
+	local SAVED = {
+		Created = { "Everyday me", "Rainy day", "Beach trip", "Fancy dinner", "Sunday best" },
+		Purchased = { "Tin robot", "Old knight" },
+	}
+	local answered = Fake.signal()
 	Harness.addService("AvatarEditorService", {
 		SearchCatalogAsync = function()
 			error("no catalog in the preview")
+		end,
+		PromptAllowInventoryReadAccessCompleted = answered,
+		PromptAllowInventoryReadAccess = function()
+			local result = if page == "items:no" then "PermissionDenied" else "Success"
+			answered:Fire(Enum.AvatarPromptResult[result])
+		end,
+		GetInventoryAsync = function(_, types)
+			local rows = {}
+			for _, t in types do
+				for _, n in OWNED[t.Name] or {} do
+					table.insert(rows, { AssetId = 5001 + #rows, AssetType = t.Name, Name = n })
+				end
+			end
+			return pagesOf(rows, true)
+		end,
+		GetOutfitsAsync = function(_, source)
+			local rows = {}
+			for i, n in SAVED[source.Name] or {} do
+				table.insert(rows, { Id = 7000 + i, Name = n, IsEditable = source.Name == "Created" })
+			end
+			return pagesOf(rows, false)
 		end,
 	})
 	Sim.env.CatalogSearchParams = {
@@ -220,14 +296,34 @@ elseif scene == "creator" or scene == "creator:profile" then
 			return {}
 		end,
 	}
-	local names =
-		{ "Messy bun", "Short curls", "Long waves", "Side part", "Braids", "Spiky top", "Bob cut", "Ponytail" }
-	Sim.remoteFn("CreatorSearch").OnServerInvoke = function()
+	Sim.remoteFn("CreatorSearch").OnServerInvoke = function(_, query)
 		local items = {}
-		for i, n in names do
-			table.insert(items, { Id = 1000 + i, Name = n, ItemType = "Asset", AssetType = "HairAccessory" })
+		if query.bundles then
+			for i, n in BUNDLES[query.bundles[1]] or {} do
+				table.insert(items, { Id = 2000 + i, Name = n, ItemType = "Bundle", BundleType = query.bundles[1] })
+			end
+		else
+			local kind = query.assets[1]
+			for i, n in CATALOG[kind] or CATALOG.HairAccessory do
+				table.insert(items, { Id = 1000 + i, Name = n, ItemType = "Asset", AssetType = kind })
+			end
 		end
 		return items
+	end
+	Sim.remoteFn("CreatorBundle").OnServerInvoke = function(_, id)
+		local n = id * 10
+		return {
+			kind = "body",
+			body = { head = n, torso = n + 1, la = n + 2, ra = n + 3, ll = n + 4, rl = n + 5 },
+			anim = {},
+			acc = {},
+			scale = { bodyType = 0.6, proportion = 0.3 },
+		}
+	end
+	Sim.remoteFn("CreatorFromOutfit").OnServerInvoke = function(_, id)
+		local look = Appearance.default()
+		look.shirt, look.pants = id * 3, id * 3 + 1
+		return look
 	end
 	-- the stage, so the camera starts and the studio's backdrop goes up
 	Sim.remoteFn("CreatorOpen").OnServerInvoke = function()
@@ -237,10 +333,30 @@ elseif scene == "creator" or scene == "creator:profile" then
 	Hud.open("Creator", { mode = "new" })
 	Sim.frames(3)
 	Sim.advance(1)
-	if scene == "creator:profile" then
+	if page == "profile" then
 		Sim.press("2  Name and personality")
-		Sim.frames(3)
+	elseif page == "bodies" then
+		Sim.press("Bodies")
+		Sim.press("Tin robot")
+	elseif page == "parts" then
+		Sim.press("Body parts")
+		Sim.press("Doll torso")
+	elseif page == "items" or page == "items:ask" or page == "items:no" then
+		Sim.press("My items")
+		if page ~= "items:ask" then
+			Sim.press("Show my items")
+		end
+		if page == "items" then
+			Sim.press("Side part")
+		end
+	elseif page == "avatars" then
+		Sim.press("My avatars")
+		Sim.press("Show my avatars")
+		Sim.press("Rainy day")
+	elseif page ~= "" then
+		error("unknown scene " .. scene)
 	end
+	Sim.frames(3)
 elseif scene == "flaticons" then
 	-- every icon flat, white on a dark round (as the round buttons draw them)
 	local Icons = Harness.require(Sim.CLIENT .. "UI.Icons")

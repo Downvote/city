@@ -1,6 +1,7 @@
 -- The villager creator. Works like a catalog avatar editor: browse or search the whole Roblox
--- catalog by category, click to wear or take off, mix bundles (bodies, heads, animations, shoes),
--- set skin colours and body shape, copy any player's avatar, save outfits, undo and redo.
+-- catalog by category, click to wear or take off, mix bundles (bodies, heads, animations, shoes)
+-- and single body parts, wear what you own on Roblox or an avatar you saved there, set skin
+-- colours and body shape, copy any player's avatar, save outfits, undo and redo.
 -- The look is shown on a mannequin on a private stage; then you give them a name and a personality.
 
 local Players = game:GetService("Players")
@@ -60,14 +61,24 @@ local filterIndex = 1
 local keyword = ""
 local sortId = "Relevance"
 local pages: any = nil
+-- turns a later page of `pages` into rows for cards, where a page isn't catalog results already
+local pageRows: ((any) -> { any })? = nil
 local searchToken = 0
 local itemInfo: { [number]: { name: string, type: string?, bundle: boolean? } } = {}
 local resultCache: { [string]: { any } } = {}
+-- May this game see what the player owns on Roblox and the avatars they saved there? Roblox asks
+-- them, once a session, when they press the button on My items or My avatars:
+-- "unasked", "asking", "yes", "no", or "failed" (the question couldn't be put).
+local access = "unasked"
+local accessConn: RBXScriptConnection? = nil
+-- the looks of the saved avatars that have been worn, so their cards can show a tick
+local outfitLooks: { [number]: any } = {}
 
 -- ui pieces filled in by build()
 local grid: ScrollingFrame
 local content: Frame
 local filterRow: ScrollingFrame
+local searchRow: Frame
 local searchBox: TextBox
 local sortButton: TextButton
 local loadMore: TextButton
@@ -80,9 +91,12 @@ local markTab: ((string) -> ())? = nil
 local profile = { name = "", pers = "sunny", color = "4FA9D9", bday = { s = 1, d = 1 } }
 local paintStudio: () -> ()
 
-local function thumb(id: number, bundle: boolean?): string
-	if bundle then
+-- The picture of a card's item: an asset, a bundle, or one of the player's saved avatars.
+local function thumb(id: number, itemType: string?): string
+	if itemType == "Bundle" then
 		return string.format("rbxthumb://type=BundleThumbnail&id=%d&w=150&h=150", id)
+	elseif itemType == "Outfit" then
+		return string.format("rbxthumb://type=Outfit&id=%d&w=150&h=150", id)
 	end
 	return string.format("rbxthumb://type=Asset&id=%d&w=150&h=150", id)
 end
@@ -143,23 +157,28 @@ end
 
 -- Catalog search ----------------------------------------------------------------------------------
 
+local function currentTab(): any
+	return Categories.tab(tabId)
+end
+
 local function currentFilter(): any
-	for _, t in Categories.Tabs do
-		if t.id == tabId and t.filters then
-			return t.filters[math.clamp(filterIndex, 1, #t.filters)]
-		end
+	local t = currentTab()
+	if t and t.filters then
+		return t.filters[math.clamp(filterIndex, 1, #t.filters)]
 	end
 	return nil
 end
 
 local function remember(items: { any })
 	for _, item in items do
-		local bundle = item.ItemType == "Bundle"
-		itemInfo[item.Id] = {
-			name = item.Name or "Item",
-			type = if bundle then nil else Categories.assetTypeName(item.AssetType),
-			bundle = bundle,
-		}
+		if type(item.Id) == "number" and item.ItemType ~= "Outfit" then
+			local bundle = item.ItemType == "Bundle"
+			itemInfo[item.Id] = {
+				name = item.Name or "Item",
+				type = if bundle then nil else Categories.assetTypeName(item.AssetType),
+				bundle = bundle,
+			}
+		end
 	end
 end
 
@@ -171,25 +190,83 @@ local function clearGrid()
 	end
 end
 
--- what each bundle sets, once it has been looked up: this is how a bundle's card knows it is
--- being worn, and how clicking it again takes it off
-local bundleParts: { [number]: any } = {}
+-- One line over the cards, for when there are none: what is being fetched, that nothing was
+-- found, or that it went wrong (with a button to try again). No text takes it away.
+local function note(text: string?, buttonText: string?, onClick: (() -> ())?)
+	local old = content:FindFirstChild("Note")
+	if old then
+		old:Destroy()
+	end
+	if not text then
+		return
+	end
+	-- on a card of its own: there is nothing behind this panel but the studio's moving backdrop
+	local holder = Kit.frame({
+		Name = "Note",
+		Parent = content,
+		Size = UDim2.new(1, 0, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		Color = T.Paper,
+	})
+	Kit.pad(holder, 14, 12)
+	Kit.list(holder, 10)
+	Kit.text(text, {
+		Parent = holder,
+		Size = UDim2.new(1, 0, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		TextSize = 17,
+		LayoutOrder = 1,
+	})
+	if buttonText and onClick then
+		Kit.button(
+			buttonText,
+			{ Parent = holder, Size = UDim2.fromOffset(220, 42), Color = T.Blue, TextSize = 17, LayoutOrder = 2 },
+			onClick
+		)
+	end
+end
 
-local function wear(item: any)
+-- What each bundle sets, once it has been looked up: this is how a bundle's card knows it is
+-- being worn, and how clicking it again takes it off. A bundle is looked up as what its tab is
+-- for (a whole body, a head, shoes, animations), so the answer is kept under both.
+local bundleParts: { [string]: any } = {}
+
+local function bundleKey(id: number, kind: string?): string
+	return (kind or "") .. ":" .. string.format("%d", id)
+end
+
+local function wear(item: any, kind: string?)
 	local id = item.Id
 	if item.ItemType == "Bundle" then
-		local known = bundleParts[id]
+		local key = bundleKey(id, kind)
+		local known = bundleParts[key]
 		if known and Categories.bundleWorn(app, known) then
 			setApp(Categories.unmerge(app, known))
 			return
 		end
 		task.spawn(function()
-			local part = known or Remotes.fn("CreatorBundle"):InvokeServer(id)
+			local part = known or Remotes.fn("CreatorBundle"):InvokeServer(id, kind)
 			if part then
-				bundleParts[id] = part
+				bundleParts[key] = part
 				setApp(Categories.merge(app, part))
 			else
 				Toasts.show("Couldn't open that bundle just now.", "warn")
+			end
+		end)
+		return
+	end
+	if item.ItemType == "Outfit" then
+		-- one of the player's saved avatars: the whole look goes on (Undo brings the old one back)
+		task.spawn(function()
+			local look = outfitLooks[id] or Remotes.fn("CreatorFromOutfit"):InvokeServer(id)
+			if not look then
+				Toasts.show("Couldn't load that avatar just now.", "warn")
+				return
+			end
+			look = Appearance.sanitize(look)
+			outfitLooks[id] = look
+			if not Appearance.equal(app, look) then
+				setApp(look)
 			end
 		end)
 		return
@@ -202,13 +279,30 @@ local function wear(item: any)
 	setApp(Categories.toggle(app, id, typeName))
 end
 
+-- the cards on show, and what each one is (its item, and the kind its bundle is worn as)
 local cards: { [number]: GuiObject } = {}
+local cardItems: { [number]: { item: any, kind: string? } } = {}
+
+local function forgetCards()
+	cards = {}
+	cardItems = {}
+end
+
+local function isOn(id: number): boolean
+	local c = cardItems[id]
+	if c and c.item.ItemType == "Bundle" then
+		local part = bundleParts[bundleKey(id, c.kind)]
+		return part ~= nil and Categories.bundleWorn(app, part)
+	elseif c and c.item.ItemType == "Outfit" then
+		return outfitLooks[id] ~= nil and Appearance.equal(app, outfitLooks[id])
+	end
+	return Categories.isWorn(app, id)
+end
 
 refreshWorn = function()
 	for id, card in cards do
 		local stroke = card:FindFirstChildOfClass("UIStroke")
-		local worn = Categories.isWorn(app, id)
-			or (bundleParts[id] ~= nil and Categories.bundleWorn(app, bundleParts[id]))
+		local worn = isOn(id)
 		if stroke then
 			stroke.Color = if worn then T.Green else T.Ink
 			stroke.Thickness = if worn then 3.5 else 2
@@ -220,7 +314,7 @@ refreshWorn = function()
 	end
 end
 
-local function itemCard(item: any, order: number, onClick: (() -> ())?): GuiObject
+local function itemCard(item: any, order: number, onClick: (() -> ())?, kind: string?): GuiObject
 	local bundle = item.ItemType == "Bundle"
 	local card = Kit.new("TextButton", {
 		Text = "",
@@ -240,7 +334,7 @@ local function itemCard(item: any, order: number, onClick: (() -> ())?): GuiObje
 		Clips = true, -- the picture is cut to the round corners
 	})
 	Kit.new("ImageLabel", {
-		Image = thumb(item.Id, bundle),
+		Image = thumb(item.Id, item.ItemType),
 		BackgroundTransparency = 1,
 		Size = UDim2.fromScale(1, 1),
 		ScaleType = Enum.ScaleType.Fit,
@@ -290,59 +384,82 @@ local function itemCard(item: any, order: number, onClick: (() -> ())?): GuiObje
 		if onClick then
 			onClick()
 		else
-			wear(item)
+			wear(item, kind)
 		end
 	end)
 	cards[item.Id] = card
+	cardItems[item.Id] = { item = item, kind = kind }
 	return card
+end
+
+-- What to say when a search comes back with nothing, by where the cards come from.
+local function nothingText(tab: any, f: any): string
+	if tab and tab.source == "inventory" then
+		return "You don't own any of these on Roblox."
+	elseif tab and tab.source == "outfits" then
+		return if f and f.outfits == "Purchased"
+			then "You haven't bought a character on Roblox."
+			else "You haven't saved an avatar on Roblox yet."
+	end
+	return "Nothing found. Try another word."
 end
 
 local function showItems(items: { any }, append: boolean?)
 	if not append then
 		clearGrid()
-		cards = {}
+		forgetCards()
 	end
+	note(nil)
 	remember(items)
+	local f = currentFilter()
+	local kind = if f then f.kind else nil
 	local n = #grid:GetChildren()
 	for i, item in items do
 		if type(item.Id) == "number" then
-			itemCard(item, n + i)
+			itemCard(item, n + i, nil, kind)
 		end
 	end
 	refreshWorn()
 	loadMore.Visible = pages ~= nil and not pages.IsFinished
-	if #items == 0 and not append then
-		Kit.text(
-			"Nothing found. Try another word.",
-			{ Parent = grid, Size = UDim2.new(1, 0, 0, 30), TextSize = 17, Color = T.InkSoft }
-		)
+	if next(cards) == nil then
+		note(nothingText(currentTab(), f))
 	end
 end
 
-local function buildParams(f: any): CatalogSearchParams
+-- The sort a search runs in. With nothing typed and no sort picked, a filter may have a better
+-- order to browse in than the catalog's own.
+local function sortFor(f: any): string
+	if f.browse and keyword == "" and sortId == "Relevance" then
+		return f.browse
+	end
+	return sortId
+end
+
+local function enumList(enum: any, names: { string }?): { any }
+	local list = {}
+	local from: { string } = names or {}
+	for _, name in from do
+		local e = enum[name]
+		if e then
+			table.insert(list, e)
+		end
+	end
+	return list
+end
+
+local function buildParams(f: any, bundles: { string }?): CatalogSearchParams
 	local params = CatalogSearchParams.new()
 	params.SearchKeyword = keyword
 	if f.assets then
-		local list = {}
-		for _, name in f.assets do
-			local e = (Enum.AvatarAssetType :: any)[name]
-			if e then
-				table.insert(list, e)
-			end
-		end
-		params.AssetTypes = list
+		params.AssetTypes = enumList(Enum.AvatarAssetType, f.assets)
 	end
-	if f.bundles then
-		local list = {}
-		for _, name in f.bundles do
-			local e = (Enum.BundleType :: any)[name]
-			if e then
-				table.insert(list, e)
-			end
-		end
-		params.BundleTypes = list
+	if bundles then
+		params.BundleTypes = enumList(Enum.BundleType, bundles)
 	end
-	local sort = (Enum.CatalogSortType :: any)[sortId]
+	if f.offSale then
+		params.IncludeOffSale = true
+	end
+	local sort = (Enum.CatalogSortType :: any)[sortFor(f)]
 	if sort then
 		params.SortType = sort
 	end
@@ -350,45 +467,121 @@ local function buildParams(f: any): CatalogSearchParams
 	return params
 end
 
--- Searches the catalog: on the client first, through the server if that fails.
-local function fetch(f: any): ({ any }, any)
-	local ok, result = pcall(function()
-		return AvatarEditorService:SearchCatalogAsync(buildParams(f))
-	end)
-	if ok and result then
-		local okPage, page = pcall(function()
-			return result:GetCurrentPage()
+-- Searches the catalog: on the client first, through the server if that fails. Returns the
+-- first page and, from a search made here, the pages to go on with.
+local function searchCatalog(f: any): ({ any }, any)
+	local function try(bundles: { string }?): ({ any }?, any)
+		local ok, result = pcall(function()
+			return AvatarEditorService:SearchCatalogAsync(buildParams(f, bundles))
 		end)
-		if okPage then
-			return page, result
+		if ok and result then
+			local okPage, page = pcall(function()
+				return result:GetCurrentPage()
+			end)
+			if okPage and type(page) == "table" then
+				return page, result
+			end
 		end
+		return nil, nil
 	end
-	local items = Remotes.fn("CreatorSearch")
-		:InvokeServer({ keyword = keyword, assets = f.assets, bundles = f.bundles, sort = sortId })
+	local page, result = try(f.bundles)
+	if not page and f.bundles and #f.bundles > 1 then
+		-- the search may not take every bundle type there is: ask again for the first alone
+		page, result = try({ f.bundles[1] })
+	end
+	if page then
+		return page, result
+	end
+	local items = Remotes.fn("CreatorSearch"):InvokeServer({
+		keyword = keyword,
+		assets = f.assets,
+		bundles = f.bundles,
+		sort = sortFor(f),
+		offSale = f.offSale,
+		inside = f.inside,
+	})
 	return items or {}, nil
 end
 
+-- A page of something only the player's own screen may ask Roblox for (what they own, the
+-- avatars they saved), as rows for cards. Nil rows mean Roblox didn't answer.
+local function ownPage(call: () -> any, rows: (any) -> { any }): ({ any }?, any, ((any) -> { any })?)
+	local ok, result = pcall(call)
+	if not ok or not result then
+		return nil, nil, nil
+	end
+	local okPage, page = pcall(function()
+		return result:GetCurrentPage()
+	end)
+	if not okPage or type(page) ~= "table" then
+		return nil, nil, nil
+	end
+	return rows(page), result, rows
+end
+
+-- Fetches a filter's first page: the rows for its cards, the pages to go on with (if any), and
+-- what turns a later page into rows (if they aren't rows already). Nil rows: it couldn't be read.
+local function fetch(tab: any, f: any): ({ any }?, any, ((any) -> { any })?)
+	if tab.source == "inventory" then
+		-- AvatarEditorService:GetInventoryAsync(assetTypes) -> InventoryPages of
+		-- { AssetId, AssetType, Name, ... }; only after the player has said yes
+		local only = if f.assets and #f.assets == 1 then f.assets[1] else nil
+		return ownPage(function()
+			return AvatarEditorService:GetInventoryAsync(enumList(Enum.AvatarAssetType, f.assets))
+		end, function(page)
+			return Categories.ownedItems(page, only)
+		end)
+	elseif tab.source == "outfits" then
+		-- AvatarEditorService:GetOutfitsAsync(source, type) -> OutfitPages of { Id, Name, IsEditable };
+		-- the same yes covers it. Whole avatars only: a head or a pair of shoes saved by itself
+		-- isn't a look to put on.
+		return ownPage(function()
+			return AvatarEditorService:GetOutfitsAsync(
+				(Enum.OutfitSource :: any)[f.outfits or "All"],
+				Enum.OutfitType.Avatar
+			)
+		end, Categories.outfitItems)
+	end
+	local items, result = searchCatalog(f)
+	if #items == 0 and f.inBundles then
+		-- none listed singly: take the same part out of the bodies that are for sale
+		local rows = function(page: any): { any }
+			return Categories.partsIn(page, f.assets)
+		end
+		local found, more = searchCatalog({ id = f.id, bundles = f.inBundles, inside = true })
+		return rows(found), more, rows
+	end
+	return items, result, nil
+end
+
+local LOOKING = {
+	inventory = "Looking through your items...",
+	outfits = "Looking for your avatars...",
+}
+
 local function search()
-	local f = currentFilter()
-	if not f then
+	local tab, f = currentTab(), currentFilter()
+	if not tab or not f then
 		return
 	end
 	searchToken += 1
 	local token = searchToken
 	clearGrid()
-	cards = {}
+	forgetCards()
+	pages, pageRows = nil, nil
 	loadMore.Visible = false
-	Kit.text(
-		"Looking through the catalog...",
-		{ Parent = grid, Size = UDim2.new(1, 0, 0, 30), TextSize = 17, Color = T.InkSoft }
-	)
+	note(LOOKING[tab.source] or "Looking through the catalog...")
 	task.spawn(function()
-		local items, p = fetch(f)
+		local items, p, rows = fetch(tab, f)
 		if token ~= searchToken or not isOpen then
 			return
 		end
-		pages = p
-		if keyword == "" then
+		if not items then
+			note("Roblox didn't answer. Give it a moment and try again.", "Try again", search)
+			return
+		end
+		pages, pageRows = p, rows
+		if keyword == "" and not tab.source then
 			resultCache[f.id .. sortId] = items
 		end
 		showItems(items)
@@ -402,13 +595,19 @@ local function more()
 	loadMore.Visible = false
 	local token = searchToken
 	task.spawn(function()
-		local ok = pcall(function()
+		local ok, page = pcall(function()
 			pages:AdvanceToNextPageAsync()
+			return pages:GetCurrentPage()
 		end)
-		if not ok or token ~= searchToken then
+		if token ~= searchToken then
 			return
 		end
-		showItems(pages:GetCurrentPage(), true)
+		if not ok or type(page) ~= "table" then
+			-- left where it was, to press again
+			loadMore.Visible = true
+			return
+		end
+		showItems(if pageRows then pageRows(page) else page, true)
 	end)
 end
 
@@ -427,7 +626,7 @@ local function shuffle()
 		for _, p in picks do
 			local cached = resultCache[p.filter.id .. "Bestselling"]
 			if not cached then
-				cached = fetch(p.filter)
+				cached = searchCatalog(p.filter)
 				resultCache[p.filter.id .. "Bestselling"] = cached
 			end
 			if cached and #cached > 0 then
@@ -472,15 +671,13 @@ end
 local function wearingPage()
 	grid.Visible = true
 	clearGrid()
-	cards = {}
+	forgetCards()
 	local assets = Appearance.assets(app)
 	if #assets == 0 then
-		Kit.text(
-			"Nothing on yet. Pick something from the other tabs.",
-			{ Parent = grid, Size = UDim2.new(1, 0, 0, 30), TextSize = 17, Color = T.InkSoft }
-		)
+		note("Nothing on yet. Pick something from the other tabs.")
 		return
 	end
+	note(nil)
 	local unknown = {}
 	for i, a in assets do
 		local info = itemInfo[a.id]
@@ -505,13 +702,16 @@ local function wearingPage()
 			end
 		end)
 	end
-	Kit.text("Click something to take it off.", {
-		Parent = content,
-		Size = UDim2.new(1, 0, 0, 22),
-		Position = UDim2.new(0, 0, 1, -22),
-		TextSize = 15,
-		Color = T.InkSoft,
-	})
+	if not content:FindFirstChild("Hint") then
+		Kit.text("Click something to take it off.", {
+			Name = "Hint",
+			Parent = content,
+			Size = UDim2.new(1, 0, 0, 22),
+			Position = UDim2.new(0, 0, 1, -22),
+			TextSize = 15,
+			Color = T.InkSoft,
+		})
+	end
 end
 
 local SKIN_PARTS = {
@@ -859,6 +1059,106 @@ local function peoplePage()
 	end)
 end
 
+-- Roblox's question -----------------------------------------------------------------------------------
+--
+-- What a player owns and the avatars they have saved are theirs to show. Roblox asks them
+-- (AvatarEditorService:PromptAllowInventoryReadAccess, answered through
+-- PromptAllowInventoryReadAccessCompleted) and only after a yes does it answer GetInventoryAsync
+-- and GetOutfitsAsync, on their own screen only, until they leave the game. So nothing is asked
+-- until they press the button on My items or My avatars, and a no is said plainly, with a
+-- button to be asked again.
+
+local OWN = {
+	inventory = {
+		unasked = "Put what you own on Roblox on your villager. Roblox will ask you first if this game may see your items.",
+		no = "You said no, so nothing was read. Your items stay hidden from this game.",
+		button = "Show my items",
+	},
+	outfits = {
+		unasked = "Dress your villager in an avatar you saved on Roblox. Roblox will ask you first if this game may see them.",
+		no = "You said no, so nothing was read. Your saved avatars stay hidden from this game.",
+		button = "Show my avatars",
+	},
+}
+
+local asks = 0
+
+-- Shows the answer (or the wait for it) on whichever of the two tabs is open.
+local function showAccess()
+	local tab = currentTab()
+	if isOpen and tab and tab.source then
+		selectTab(tabId)
+	end
+end
+
+local function askAccess()
+	if access == "asking" then
+		return
+	end
+	if not accessConn then
+		local ok, conn = pcall(function()
+			return AvatarEditorService.PromptAllowInventoryReadAccessCompleted:Connect(function(result)
+				access = if result == Enum.AvatarPromptResult.Success then "yes" else "no"
+				showAccess()
+			end)
+		end)
+		accessConn = if ok then conn else nil
+	end
+	-- set before the call: the answer may come back while it runs
+	asks += 1
+	local ask = asks
+	access = "asking"
+	local asked = accessConn ~= nil and pcall(function()
+		AvatarEditorService:PromptAllowInventoryReadAccess()
+	end)
+	if not asked then
+		access = "failed"
+	end
+	if access == "asking" or access == "failed" then
+		showAccess()
+	end
+	-- a question put away without an answer must not leave the page waiting for ever
+	task.delay(45, function()
+		if access == "asking" and ask == asks then
+			access = "unasked"
+			showAccess()
+		end
+	end)
+end
+
+-- The page shown on My items and My avatars until the player has said yes.
+local function askPage(tab: any)
+	local words = OWN[tab.source]
+	local text, button
+	if access == "asking" then
+		text = "Roblox is asking you now. Answer it to carry on."
+	elseif access == "no" then
+		text, button = words.no, "Ask me again"
+	elseif access == "failed" then
+		text, button = "Roblox couldn't be asked just now.", "Try again"
+	else
+		text, button = words.unasked, words.button
+	end
+	note(text, button, if button then askAccess else nil)
+end
+
+-- Lays the search row, the filter row and the cards out under one another, leaving no gap for a
+-- row that isn't there.
+local function layoutBrowse(showSearch: boolean, showFilterRow: boolean)
+	searchRow.Visible = showSearch
+	filterRow.Visible = showFilterRow
+	local y = 0
+	if showSearch then
+		y += 46
+	end
+	filterRow.Position = UDim2.fromOffset(0, y)
+	if showFilterRow then
+		y += 40
+	end
+	content.Position = UDim2.fromOffset(0, y)
+	content.Size = UDim2.new(1, 0, 1, -(y + 2))
+end
+
 local function showFilters(tab: any)
 	for _, c in filterRow:GetChildren() do
 		if c:IsA("GuiButton") then
@@ -866,10 +1166,12 @@ local function showFilters(tab: any)
 		end
 	end
 	local filters = tab and tab.filters
-	filterRow.Visible = filters ~= nil and #filters > 1
-	searchBox.Visible = filters ~= nil
-	sortButton.Visible = filters ~= nil
-	if not filters then
+	-- what the player owns isn't searched by word or sorted: Roblox lists it as it is. And its
+	-- filters wait for their yes.
+	local own = tab ~= nil and tab.source ~= nil
+	local open = filters ~= nil and (not own or access == "yes")
+	layoutBrowse(filters ~= nil and not own, open and #filters > 1)
+	if not filters or not open then
 		return
 	end
 	for i, f in filters do
@@ -898,17 +1200,20 @@ selectTab = function(id: string)
 	if markTab then
 		markTab(id)
 	end
-	local tab
-	for _, t in Categories.Tabs do
-		if t.id == id then
-			tab = t
-		end
-	end
+	local tab = Categories.tab(id)
+	-- whatever was being fetched for the last tab is no longer wanted
+	searchToken += 1
+	pages, pageRows = nil, nil
 	clearContent()
+	forgetCards()
 	showFilters(tab)
 	if tab and tab.filters then
-		grid.Visible = true
-		search()
+		if tab.source and access ~= "yes" then
+			askPage(tab)
+		else
+			grid.Visible = true
+			search()
+		end
 	elseif id == "wearing" then
 		wearingPage()
 	elseif id == "skin" then
@@ -1552,7 +1857,9 @@ local function build()
 	profilePage =
 		Kit.box({ Parent = panel, Size = UDim2.new(1, 0, 1, -58), Position = UDim2.fromOffset(0, 58), Visible = false })
 
-	-- categories across the top, as tabs (an icon over a name; the picked one on a blue pill)
+	-- The sections, as a block of tabs (an icon over a name; the picked one yellow). There are
+	-- more of them than fit across, and a row that scrolled sideways hid the last ones from
+	-- anyone without a touch screen, so they wrap: eight to a row, every one in reach.
 	local ICONS = {
 		wearing = "person",
 		hair = "hair",
@@ -1561,17 +1868,23 @@ local function build()
 		tops = "shirt",
 		bottoms = "pants",
 		shoes = "shoe",
-		bodies = "person",
+		bodies = "figure",
+		parts = "limbs",
 		moves = "music",
 		skin = "brush",
 		shape = "ruler",
-		outfits = "shirt",
+		inventory = "backpack",
+		outfits = "hanger",
+		avatars = "idcard",
 		people = "people",
 	}
-	local rail = Kit.scroll({ Parent = lookPage, Size = UDim2.new(1, 0, 0, 76), Axis = Enum.AutomaticSize.X })
-	rail.ScrollBarThickness = 3
-	rail.ScrollingDirection = Enum.ScrollingDirection.X
-	Kit.list(rail, 2, true)
+	local PER_ROW, CELL_W, CELL_H, GAP_X, GAP_Y = 8, 88, 70, 2, 6
+	local railRows = math.ceil(#Categories.Tabs / PER_ROW)
+	local railH = railRows * CELL_H + (railRows - 1) * GAP_Y
+	local rail = Kit.box({ Name = "Rail", Parent = lookPage, Size = UDim2.new(1, 0, 0, railH) })
+	local railGrid = Kit.grid(rail, UDim2.fromOffset(CELL_W, CELL_H), GAP_X)
+	railGrid.CellPadding = UDim2.fromOffset(GAP_X, GAP_Y)
+	railGrid.FillDirectionMaxCells = PER_ROW
 	local railButtons: { [string]: TextButton } = {}
 	local function markRail(id: string)
 		for bid, b in railButtons do
@@ -1587,7 +1900,8 @@ local function build()
 			end
 			local cap = b:FindFirstChild("Caption")
 			if cap and cap:IsA("TextLabel") then
-				cap.TextColor3 = if on then T.Yellow else T.Ink
+				-- (deepened in the light look, where plain yellow fades into the backdrop)
+				cap.TextColor3 = if on then Kit.tint(T.Yellow) else T.Ink
 			end
 		end
 	end
@@ -1595,7 +1909,7 @@ local function build()
 		local b = Kit.menuButton(ICONS[t.id] or "person", t.name, {
 			Parent = rail,
 			LayoutOrder = i,
-			Size = UDim2.fromOffset(78, 70),
+			Size = UDim2.fromOffset(CELL_W, CELL_H),
 			Color = T.Ink,
 			TextSize = 13,
 		}, function()
@@ -1616,17 +1930,30 @@ local function build()
 	end
 	markRail(tabId)
 	markTab = markRail
-	local browse = Kit.box({ Parent = lookPage, Size = UDim2.new(1, 0, 1, -86), Position = UDim2.fromOffset(0, 86) })
+	local browse = Kit.box({
+		Parent = lookPage,
+		Size = UDim2.new(1, 0, 1, -(railH + 10)),
+		Position = UDim2.fromOffset(0, railH + 10),
+	})
 
-	local searchRow = Kit.box({ Parent = browse, Size = UDim2.new(1, 0, 0, 40) })
-	searchBox = Kit.textbox("Search the catalog", { Parent = searchRow, Size = UDim2.new(1, -150, 1, 0) })
+	-- (what was typed and the sort picked are kept when the screen is built again)
+	searchRow = Kit.box({ Name = "Search", Parent = browse, Size = UDim2.new(1, 0, 0, 40) })
+	searchBox =
+		Kit.textbox("Search the catalog", { Parent = searchRow, Size = UDim2.new(1, -150, 1, 0), Text = keyword })
 	searchBox.FocusLost:Connect(function(enter)
 		keyword = Text.clean(searchBox.Text):sub(1, 50)
 		if enter or true then
 			search()
 		end
 	end)
-	sortButton = Kit.button("Best match", {
+	local sortName = Categories.Sorts[1].name
+	for _, sort in Categories.Sorts do
+		if sort.id == sortId then
+			sortName = sort.name
+		end
+	end
+	sortButton = Kit.button(sortName, {
+		Name = "Sort",
 		Parent = searchRow,
 		Size = UDim2.fromOffset(140, 40),
 		Position = UDim2.new(1, -140, 0, 0),
@@ -1637,8 +1964,8 @@ local function build()
 	})
 	sortButton.Activated:Connect(function()
 		local i = 1
-		for k, s in Categories.Sorts do
-			if s.id == sortId then
+		for k, sort in Categories.Sorts do
+			if sort.id == sortId then
 				i = k
 			end
 		end
@@ -1648,6 +1975,7 @@ local function build()
 		search()
 	end)
 	filterRow = Kit.scroll({
+		Name = "Filters",
 		Parent = browse,
 		Size = UDim2.new(1, 0, 0, 34),
 		Position = UDim2.fromOffset(0, 46),
@@ -1796,6 +2124,10 @@ function Creator.open(arg: any)
 	end
 	isOpen = true
 	history, future = {}, {}
+	if access == "asking" then
+		-- a question left unanswered the last time: it can be put again
+		access = "unasked"
+	end
 	if not root then
 		build()
 	end

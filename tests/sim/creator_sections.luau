@@ -1,0 +1,454 @@
+--!nocheck
+-- The creator's own sections on the client simulation: Body parts (one part at a time), My items
+-- (the player's Roblox inventory, after Roblox asks them) and My avatars (their saved outfits),
+-- and the Bodies tab putting a whole body on. The user: "currently, bodies only changes the head
+-- of the character. also, make another section for the torso, legs and arms, player inventory,
+-- and player avatars". Run from the repository root: lune run tests/sim/creator_sections.luau
+-- (scripts/check.sh does).
+local process = require("@lune/process")
+local roblox = require("@lune/roblox")
+local Sim = require("./client")
+local Fake, Harness = Sim.Fake, Sim.Harness
+local Enum = roblox.Enum
+local check, press, frames = Sim.check, Sim.press, Sim.frames
+local gui = Sim.gui
+
+local Appearance = Harness.require("ReplicatedStorage.Shared.Avatar.Appearance")
+local Bundles = Harness.require("ReplicatedStorage.Shared.Avatar.Bundles")
+local Categories = Harness.require("ReplicatedStorage.Shared.Avatar.Categories")
+
+local function pagesOf(list)
+	local i = 1
+	local p = { IsFinished = #list <= 1 }
+	function p.GetCurrentPage()
+		return list[i]
+	end
+	function p.AdvanceToNextPageAsync()
+		i += 1
+		p.IsFinished = i >= #list
+	end
+	return p
+end
+
+local answered = Fake.signal()
+local prompts, inventoryCalls, outfitCalls = 0, {}, {}
+local inventoryFails = false
+Harness.addService("AvatarEditorService", {
+	SearchCatalogAsync = function()
+		error("no catalog in the sim")
+	end,
+	PromptAllowInventoryReadAccessCompleted = answered,
+	PromptAllowInventoryReadAccess = function()
+		prompts += 1
+	end,
+	GetInventoryAsync = function(_, types)
+		local names = {}
+		for _, t in types do
+			table.insert(names, t.Name)
+		end
+		table.insert(inventoryCalls, names)
+		if inventoryFails then
+			error("HTTP 403")
+		end
+		local first, second = {}, {}
+		for _, t in types do
+			table.insert(first, { AssetId = 5000 + t.Value, AssetType = t.Name, Name = "Owned " .. t.Name })
+			table.insert(second, { AssetId = 6000 + t.Value, AssetType = t.Name, Name = "More " .. t.Name })
+		end
+		return pagesOf({ first, second })
+	end,
+	GetOutfitsAsync = function(_, source, kind)
+		table.insert(outfitCalls, { source.Name, kind.Name })
+		if source.Name == "Created" then
+			return pagesOf({
+				{ { Id = 7001, Name = "Everyday me", IsEditable = true }, { Id = 7002, Name = "Rainy day" } },
+			})
+		end
+		return pagesOf({ {} })
+	end,
+})
+Sim.env.CatalogSearchParams = {
+	new = function()
+		return {}
+	end,
+}
+
+local searches = {}
+local noSingles = false
+Sim.remoteFn("CreatorSearch").OnServerInvoke = function(_, query)
+	table.insert(searches, query)
+	local items = {}
+	if query.bundles then
+		for i = 1, 3 do
+			local id = 2000 + i
+			table.insert(items, {
+				Id = id,
+				Name = "Body " .. i,
+				ItemType = "Bundle",
+				BundleType = "BodyParts",
+				BundledItems = if query.inside
+					then {
+						{ Id = id * 10 + 1, Name = "Body " .. i .. " torso", Type = "Asset", AssetType = "Torso" },
+						{ Id = id * 10 + 2, Name = "Body " .. i .. " left arm", Type = "Asset", AssetType = "LeftArm" },
+						{ Id = id * 10 + 9, Name = "Body " .. i, Type = "UserOutfit" },
+					}
+					else nil,
+			})
+		end
+	elseif not (noSingles and query.offSale) then
+		local kind = query.assets[1]
+		for i = 1, 4 do
+			table.insert(items, { Id = 1000 + i, Name = kind .. " " .. i, ItemType = "Asset", AssetType = kind })
+		end
+	end
+	return items
+end
+
+-- the server's side of a bundle, with a real body's shape: two outfits, the head's own last
+local bundleCalls = {}
+Sim.remoteFn("CreatorBundle").OnServerInvoke = function(_, id, kind)
+	table.insert(bundleCalls, { id, kind })
+	local n = id * 10
+	local whole = Appearance.default()
+	whole.body = { head = n, torso = n + 1, la = n + 2, ra = n + 3, ll = n + 4, rl = n + 5 }
+	whole.scale.bodyType = 0.6
+	local headOnly = Appearance.default()
+	headOnly.body.head = n
+	return Bundles.part({ label = "BodyParts", looks = { whole, headOnly }, assets = {} }, kind)
+end
+local outfitAsks = {}
+Sim.remoteFn("CreatorFromOutfit").OnServerInvoke = function(_, id)
+	table.insert(outfitAsks, id)
+	local look = Appearance.default()
+	look.shirt, look.pants = id * 3, id * 3 + 1
+	look.body.torso = 42
+	return look
+end
+local previews = {}
+Sim.remoteFn("CreatorPreview").OnServerInvoke = function(_, app)
+	table.insert(previews, Appearance.sanitize(app))
+	return Appearance.sanitize(app), {}
+end
+Sim.remoteFn("CreatorOpen").OnServerInvoke = function()
+	return { origin = roblox.Vector3.new(0, 420, 0), app = Appearance.default() }
+end
+Sim.remoteFn("CreatorClose").OnServerInvoke = function()
+	return true
+end
+
+-- the look the creator last sent the server
+local function look()
+	Sim.advance(0.5)
+	return previews[#previews]
+end
+local function cardNames()
+	local out = {}
+	local creator = gui:FindFirstChild("Creator")
+	for _, d in creator:GetDescendants() do
+		if d:IsA("TextButton") and Fake.shown(d) and d.Size.X.Offset == 128 and d.Size.Y.Offset == 160 then
+			for _, l in d:GetChildren() do
+				if l:IsA("TextLabel") then
+					table.insert(out, l.Text)
+				end
+			end
+		end
+	end
+	return out
+end
+local function ticked()
+	local out = {}
+	local creator = gui:FindFirstChild("Creator")
+	for _, d in creator:GetDescendants() do
+		if d.Name == "Worn" and d.Visible and Fake.shown(d) then
+			for _, l in d.Parent:GetChildren() do
+				if l:IsA("TextLabel") then
+					table.insert(out, l.Text)
+				end
+			end
+		end
+	end
+	table.sort(out)
+	return table.concat(out, ",")
+end
+local function noteText()
+	local creator = gui:FindFirstChild("Creator")
+	local n = creator:FindFirstChild("Note", true)
+	if not n or not Fake.shown(n) then
+		return nil
+	end
+	for _, l in n:GetChildren() do
+		if l:IsA("TextLabel") then
+			return l.Text
+		end
+	end
+	return ""
+end
+local function has(text)
+	return #Sim.buttons(function(b)
+		return Sim.labelOf(b):find(text, 1, true) ~= nil
+	end) > 0
+end
+
+local warned = #Sim.errors
+local Creator = Harness.require(Sim.CLIENT .. "UI.Creator")
+
+Sim.run("the rail: every section in reach", function()
+	Creator.open({ mode = "new" })
+	frames(3)
+	Sim.advance(1)
+	local rail = gui:FindFirstChild("Rail", true)
+	check(rail ~= nil and rail.ClassName == "Frame", "the sections are a block that doesn't scroll")
+	local n = 0
+	for _, b in rail:GetChildren() do
+		if b:IsA("TextButton") then
+			n += 1
+		end
+	end
+	check(n == #Categories.Tabs and n == 16, "sixteen sections, a button each (" .. n .. ")")
+	local layout = rail:FindFirstChildOfClass("UIGridLayout")
+	local perRow =
+		math.floor((720 + layout.CellPadding.X.Offset) / (layout.CellSize.X.Offset + layout.CellPadding.X.Offset))
+	check(perRow == 8, "eight fit across the panel")
+	local rows = math.ceil(n / perRow)
+	check(
+		rail.Size.Y.Offset == rows * layout.CellSize.Y.Offset + (rows - 1) * layout.CellPadding.Y.Offset,
+		"and the block is as tall as its rows"
+	)
+	for _, name in { "Body parts", "My items", "My avatars", "Outfits", "Players", "Bodies" } do
+		check(has(name), "there is a " .. name .. " section")
+	end
+end)
+
+Sim.run("bodies: the whole body goes on, and comes off", function()
+	press("Bodies")
+	local q = searches[#searches]
+	check(q.bundles[1] == "BodyParts" and q.bundles[2] == "DynamicHeadAvatar", "the search asks for every kind of body")
+	press("Body 2")
+	local call = bundleCalls[#bundleCalls]
+	check(call[1] == 2002 and call[2] == "body", "the server is told a body is wanted")
+	local app = look()
+	check(app.body.torso == 20021 and app.body.ll == 20024 and app.body.head == 20020, "torso, limbs and head are on")
+	check(app.scale.bodyType > 0.5, "with its build")
+	check(ticked() == "Body 2", "its card is ticked")
+	local before = #bundleCalls
+	press("Body 2")
+	app = look()
+	check(
+		app.body.torso == 0 and app.body.head == 0 and #bundleCalls == before,
+		"picked again, it comes off (no second lookup)"
+	)
+	check(ticked() == "", "and the tick goes")
+	press("Body 1")
+	look()
+end)
+
+Sim.run("body parts: one at a time, over any body", function()
+	press("Body parts")
+	local q = searches[#searches]
+	check(q.assets[1] == "Torso" and #q.assets == 1, "the first filter is torsos")
+	check(q.offSale == true, "what isn't sold by itself is searched too")
+	check(q.sort == "MostFavorited", "browsed by the most liked while nothing is typed")
+	check(table.concat(cardNames(), ",") == "Torso 1,Torso 2,Torso 3,Torso 4", "the torsos are cards")
+	press("Torso 3")
+	local app = look()
+	check(app.body.torso == 1003, "a torso goes on by itself")
+	check(app.body.la == 20012 and app.body.head == 20010, "the rest of the body stays as it was")
+	check(ticked() == "Torso 3", "and shows as worn")
+	press("Left arm")
+	q = searches[#searches]
+	check(q.assets[1] == "LeftArm", "the next filter is left arms")
+	press("LeftArm 2")
+	app = look()
+	check(app.body.la == 1002 and app.body.torso == 1003, "an arm goes on beside the torso")
+	press("LeftArm 2")
+	app = look()
+	check(app.body.la == 0 and app.body.torso == 1003, "and comes off by itself")
+	-- undo and redo
+	press("Undo")
+	app = look()
+	check(app.body.la == 1002, "Undo puts it back")
+	-- where the catalog lists no single parts: out of the bodies
+	noSingles = true
+	press("Torso")
+	local last, lastBut = searches[#searches], searches[#searches - 1]
+	check(
+		lastBut.assets ~= nil and last.bundles ~= nil and last.inside == true,
+		"none listed singly: the bodies are searched"
+	)
+	check(
+		table.concat(cardNames(), ",") == "Body 1 torso,Body 2 torso,Body 3 torso",
+		"and their torsos are the cards (" .. table.concat(cardNames(), ",") .. ")"
+	)
+	press("Body 3 torso")
+	app = look()
+	check(app.body.torso == 20031, "one of them goes on")
+	noSingles = false
+end)
+
+Sim.run("my items: asked first", function()
+	press("My items")
+	check(prompts == 0 and #inventoryCalls == 0, "opening the section asks nothing")
+	check(
+		noteText() ~= nil and noteText():find("Roblox will ask you first", 1, true) ~= nil,
+		"it says what will happen"
+	)
+	check(not has("Hats"), "no filters before the answer")
+	press("Show my items")
+	check(prompts == 1 and #inventoryCalls == 0, "the button puts Roblox's question")
+	check(noteText():find("asking you now", 1, true) ~= nil, "and the page waits for the answer")
+	check(not has("Show my items"), "with no second button to press meanwhile")
+	Sim.advance(46)
+	check(
+		has("Show my items") and noteText():find("Roblox will ask you first", 1, true) ~= nil,
+		"left unanswered for a while, the question can be put again"
+	)
+	press("Show my items")
+	check(prompts == 2 and noteText():find("asking you now", 1, true) ~= nil, "and is")
+	answered:Fire(Enum.AvatarPromptResult.PermissionDenied)
+	frames(2)
+	check(#inventoryCalls == 0, "a no reads nothing")
+	check(noteText():find("You said no", 1, true) ~= nil, "and the page says so")
+	press("Ask me again")
+	check(prompts == 3, "asked again on request")
+	answered:Fire(Enum.AvatarPromptResult.Success)
+	frames(2)
+	check(#inventoryCalls == 1 and inventoryCalls[1][1] == "HairAccessory", "a yes reads the first kind")
+	check(table.concat(cardNames(), ",") == "Owned HairAccessory", "as cards")
+	check(has("Show more"), "with more to show")
+	press("Show more")
+	check(table.concat(cardNames(), ",") == "Owned HairAccessory,More HairAccessory", "the next page is added")
+	check(not has("Show more"), "and that was the last")
+	press("Hats")
+	check(inventoryCalls[#inventoryCalls][1] == "Hat", "a filter reads another kind")
+	press("Owned Hat")
+	local app = look()
+	check(
+		#app.acc == 1 and app.acc[1].t == "Hat" and app.acc[1].id == 5000 + Enum.AvatarAssetType.Hat.Value,
+		"an owned hat goes on"
+	)
+	check(ticked() == "Owned Hat", "and is ticked")
+end)
+
+-- a filter by its name (a section on the rail may have the same one)
+local function pressFilter(name)
+	local filters = gui:FindFirstChild("Filters", true)
+	for _, b in filters:GetChildren() do
+		if b:IsA("TextButton") and Sim.labelOf(b):find(name, 1, true) then
+			b.Activated:Fire()
+			frames(2)
+			return
+		end
+	end
+	error("no filter " .. name)
+end
+
+Sim.run("my items: body parts and a failure", function()
+	press("My items")
+	check(prompts == 3, "the answer is remembered: no new question")
+	pressFilter("Body parts")
+	local call = inventoryCalls[#inventoryCalls]
+	check(#call == 5 and call[1] == "Torso", "the body parts filter reads all five")
+	press("Owned LeftLeg")
+	local app = look()
+	check(app.body.ll == 5000 + Enum.AvatarAssetType.LeftLeg.Value, "an owned leg goes on")
+	inventoryFails = true
+	pressFilter("Moves")
+	check(noteText():find("Roblox didn't answer", 1, true) ~= nil, "a call Roblox turns away says so")
+	inventoryFails = false
+	press("Try again")
+	check(#cardNames() == 7, "and Try again reads it")
+end)
+
+Sim.run("my avatars: a saved avatar goes on whole, and Undo takes it off", function()
+	press("My avatars")
+	check(prompts == 3, "the same yes covers the avatars")
+	local call = outfitCalls[#outfitCalls]
+	check(call[1] == "Created" and call[2] == "Avatar", "the player's own saved avatars are read")
+	check(table.concat(cardNames(), ",") == "Everyday me,Rainy day", "a card each")
+	local card = Sim.buttons(function(b)
+		return Sim.labelOf(b):find("Rainy day", 1, true) ~= nil
+	end)[1]
+	local picture = card:FindFirstChildWhichIsA("ImageLabel", true)
+	check(picture.Image == "rbxthumb://type=Outfit&id=7002&w=150&h=150", "with the outfit's picture")
+	local before = look()
+	press("Rainy day")
+	local app = look()
+	check(outfitAsks[#outfitAsks] == 7002, "the server is asked for that outfit")
+	check(app.shirt == 7002 * 3 and app.body.torso == 42 and #app.acc == 0, "the whole look goes on")
+	check(ticked() == "Rainy day", "and its card is ticked")
+	local asks = #outfitAsks
+	press("Rainy day")
+	check(#outfitAsks == asks, "picking it again asks nothing more")
+	press("Undo")
+	app = look()
+	check(Appearance.equal(app, before), "Undo brings the old look back")
+	check(ticked() == "", "and the tick goes")
+	press("Redo")
+	app = look()
+	check(app.shirt == 7002 * 3, "Redo puts it on again")
+	press("Bought")
+	check(outfitCalls[#outfitCalls][1] == "Purchased", "the other filter reads what was bought")
+	check(noteText() == "You haven't bought a character on Roblox.", "and says when there is none")
+	press("Saved by me")
+end)
+
+Sim.run("a change of look keeps the section, the filter and what was typed", function()
+	press("Body parts")
+	press("Right leg")
+	local box = gui:FindFirstChild("Search", true):FindFirstChildOfClass("TextBox")
+	box.Text = "robot"
+	box.FocusLost:Fire(true)
+	frames(2)
+	check(searches[#searches].keyword == "robot" and searches[#searches].assets[1] == "RightLeg", "a word is searched")
+	press("Sort")
+	check(searches[#searches].sort == "Bestselling", "and a sort picked")
+	local old = gui:FindFirstChild("Creator")
+	press("Light")
+	frames(3)
+	local fresh = gui:FindFirstChild("Creator")
+	check(fresh ~= old and Sim.Kit.ThemeName == "light", "the screen is built again in the light look")
+	local q = searches[#searches]
+	check(q.assets[1] == "RightLeg" and q.keyword == "robot" and q.sort == "Bestselling", "on the same search")
+	box = gui:FindFirstChild("Search", true):FindFirstChildOfClass("TextBox")
+	check(box.Text == "robot", "the word is still in the box")
+	check(Sim.labelOf(gui:FindFirstChild("Sort", true)):find("Popular", 1, true) ~= nil, "and the sort still named")
+	press("My avatars")
+	check(table.concat(cardNames(), ",") == "Everyday me,Rainy day", "my avatars still open without a new question")
+	check(ticked() == "Rainy day", "and the one that is on still ticked")
+	press("Dark")
+	frames(3)
+	check(table.concat(cardNames(), ",") == "Everyday me,Rainy day" and prompts == 3, "and back again")
+	-- the other sections still open
+	for _, name in { "Wearing", "Skin", "Shape", "Outfits", "Players", "Heads", "Shoes", "Moves", "Hair" } do
+		press(name)
+	end
+	check(true, "every other section still opens")
+	Creator.close()
+	frames(2)
+end)
+
+Sim.run("an unanswered question can be put again the next time", function()
+	-- a fresh creator would need a fresh module; this one has its yes, so only check it reopens
+	Creator.open({ mode = "new" })
+	frames(3)
+	Sim.advance(1)
+	check(Creator.isOpen(), "it opens again")
+	press("My items")
+	Sim.advance(60)
+	check(prompts == 3 and #cardNames() > 0, "still allowed, long after")
+	Creator.close()
+	frames(2)
+end)
+
+check(#Sim.errors == warned, "no warnings from any of it (" .. (#Sim.errors - warned) .. ")")
+for i = warned + 1, #Sim.errors do
+	print("  warning: " .. Sim.errors[i]:sub(1, 400))
+end
+print(
+	if Sim.failures() == 0
+		then "\ncreator sections: all passed"
+		else "\ncreator sections: " .. Sim.failures() .. " failed"
+)
+if Sim.failures() > 0 then
+	process.exit(1)
+end

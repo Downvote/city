@@ -263,7 +263,11 @@ Functions (client asks, server answers): `GetState`, `BuildApply`, `BuildUndo`, 
 `VillagerCreate`, `VillagerUpdate`, `VillagerRemove`, `VillagerBed`, `VillagerJob`, `VillagerFeed`,
 `VillagerFocus`, `OutfitSave`, `OutfitDelete`, `EventChoose`, `ShopBuy`, `DailyClaim`, `PlotExpand`, `SettingSet`,
 `TutorialStep`, `VisitPlot`, `WishGrant` (`vid, "friend" | "cheer", otherVid?`), `HeartReward` (`choice`),
-`GoalClaim` (`goalId`), `PlaceFound` (`placeId`), `Travel` (`placeId`), `VillagerTalk` (`vid, bye?` ->
+`GoalClaim` (`goalId`), `PlaceFound` (`placeId`), `Travel` (`placeId`), `CreatorFromOutfit` (`outfitId` -> appearance or nil: one of the player's own saved Roblox avatars, through
+`Players:GetHumanoidDescriptionFromOutfitIdAsync`; a whole number, at most one every 0.5 s a player),
+`CreatorBundle` (`bundleId, kind?`: kind "body", "head", "shoes" or "anim", what the tab asked for; anything else
+counts as not said), `CreatorSearch` (its query may carry `offSale` and `inside`, a bundle's `BundledItems`),
+`VillagerTalk` (`vid, bye?` ->
 `ok, { vid, text, note, model }` or an error: the talk card's Chat, or its Bye).
 
 Events (server pushes): `State` (patches of the client state), `PlanSync` (`{ full }` or `{ ops }`), `Notify`
@@ -415,6 +419,21 @@ clipping (`tools/preview/ui_render.py`).
   a seam. Flat icons (the default) draw every piece in one colour and cut details out in `Hole`; a shape marked
   `dent = true` is drawn in `Icons.dentOf(colour)` instead, the same colour a step darker (the coin's middle).
   `Icons.names()` lists them. `UI/Toasts`, `UI/ModelPreview` (3D thumbnails in ViewportFrames).
+- `Avatar/Bundles` (shared): what a bundle is and what wearing it puts on. `Bundles.kindOfLabel(label)` reads a
+  `BundleType` name, enum item or number (a whole body, "BodyParts" or "DynamicHeadAvatar", before a head);
+  `Bundles.part(details, wanted)` takes `{ label, looks, assets }` (the outfits' looks, the bundle's own assets)
+  and returns the part to merge: it goes by `wanted` (the tab's kind), wears the outfit with the most torso and
+  limbs in it (a body bundle carries a second outfit holding only its head, listed last), fills gaps from the
+  assets, and wears a bundle holding nothing of the kind asked as what it does hold. `Bundles.isKind`,
+  `Bundles.isEmpty`. `Avatar.bundle(bundleId, wanted?)` reads up to four outfits, caches per bundle and kind, and
+  caches nothing after a failed call. `Categories.merge` clears the old torso and limbs only when the part brings
+  one; `unmerge` takes a bundle's face off too.
+- `Avatar/Categories`: tabs with `source` ("catalog", "inventory", "outfits"), filters with `kind`, `offSale`,
+  `browse` (the sort when nothing is typed), `inBundles` (fill from body bundles' items when the search finds
+  none) and `outfits`; `Categories.tab(id)`, `ownedItems`, `outfitItems`, `partsIn`. The client asks
+  `AvatarEditorService:PromptAllowInventoryReadAccess()` from a button and waits for
+  `PromptAllowInventoryReadAccessCompleted` before `GetInventoryAsync` (My items) or `GetOutfitsAsync` (My
+  avatars); a refusal is remembered for the session and offered again from a button.
 - `Sim/Talk` (shared, numbers in `Tuning.Talk`): `Talk.free(mode)` says whether a villager can be stopped (their
   own day, a word with a neighbour, a talk already going; not an event or an outing). `Talk.line(profile, vid,
   rng, ctx)` is what they say back. `Talk.chat(profile, vid, day, rng, notices)` is what a chat with the town's
@@ -537,5 +556,6 @@ clipping (`tools/preview/ui_render.py`).
   manage), reads each decal's image id back and writes `Data/TextureIds`. `scripts/sync_materials.py` writes the
   uploaded ones into `default.project.json` (MaterialVariants under MaterialService and its `<Material>Name`
   overrides): Roblox only lets plugins set a variant's pictures, so they go in when the place is built.
-- `scripts/check.sh`: format, types, specs, the client sims (`tests/sim/build_client.luau`, `tests/sim/talk_card.luau`),
+- `scripts/check.sh`: format, types, specs, the client sims (`tests/sim/build_client.luau`, `tests/sim/talk_card.luau`,
+  `tests/sim/creator_sections.luau`),
   the dark and the light look on every screen, textures in sync with the place file, place build.

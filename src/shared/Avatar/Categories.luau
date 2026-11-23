@@ -3,8 +3,29 @@
 
 local Appearance = require(script.Parent.Appearance)
 
-export type Filter = { id: string, name: string, assets: { string }?, bundles: { string }? }
-export type Tab = { id: string, name: string, filters: { Filter }? }
+-- A filter is one search inside a tab.
+--   assets, bundles  the catalog types it asks for (Enum.AvatarAssetType and Enum.BundleType names)
+--   kind             what a bundle found here is worn as (Avatar/Bundles): "body", "head", "shoes", "anim"
+--   offSale          also show what isn't sold by itself (single body parts only come inside bodies)
+--   browse           the sort to show while nothing has been typed and the sort is still "Best match"
+--   inBundles        bundle types to pull these assets out of when the catalog lists none of them singly
+--   outfits          for the player's own Roblox avatars: which ones (an Enum.OutfitSource name)
+export type Filter = {
+	id: string,
+	name: string,
+	assets: { string }?,
+	bundles: { string }?,
+	kind: string?,
+	offSale: boolean?,
+	browse: string?,
+	inBundles: { string }?,
+	outfits: string?,
+}
+-- A tab with no filters is a page of its own (Wearing, Skin, Shape, Outfits, Players). `source`
+-- says where a tab's cards come from: the catalog (nil), what the player owns on Roblox
+-- ("inventory") or the avatars they have saved there ("outfits"); the last two need the player
+-- to say yes to Roblox's question first.
+export type Tab = { id: string, name: string, filters: { Filter }?, source: string? }
 
 local Categories = {}
 
@@ -12,8 +33,18 @@ local function A(id: string, name: string, assets: { string }): Filter
 	return { id = id, name = name, assets = assets }
 end
 
-local function B(id: string, name: string, bundles: { string }): Filter
-	return { id = id, name = name, bundles = bundles }
+local function B(id: string, name: string, bundles: { string }, kind: string): Filter
+	return { id = id, name = name, bundles = bundles, kind = kind }
+end
+
+-- every bundle type that is a whole body
+local BODIES = { "BodyParts", "DynamicHeadAvatar" }
+
+-- One body part by itself. They are never sold alone, so the search takes in what is off sale,
+-- browses by the most liked (the plain order is a wall of nameless test pieces), and falls back
+-- on the same part taken out of the bodies that are for sale.
+local function P(id: string, name: string, asset: string): Filter
+	return { id = id, name = name, assets = { asset }, offSale = true, browse = "MostFavorited", inBundles = BODIES }
 end
 
 local tabs: { Tab } = {
@@ -22,7 +53,7 @@ local tabs: { Tab } = {
 	{
 		id = "heads",
 		name = "Heads",
-		filters = { A("faces", "Faces", { "Face" }), B("dynheads", "Heads", { "DynamicHead" }) },
+		filters = { A("faces", "Faces", { "Face" }), B("dynheads", "Heads", { "DynamicHead" }, "head") },
 	},
 	{
 		id = "accessories",
@@ -54,17 +85,88 @@ local tabs: { Tab } = {
 			A("layeredbottoms", "3D bottoms", { "PantsAccessory", "ShortsAccessory", "DressSkirtAccessory" }),
 		},
 	},
-	{ id = "shoes", name = "Shoes", filters = { B("shoes", "Shoes", { "Shoes" }) } },
-	{ id = "bodies", name = "Bodies", filters = { B("bodies", "Bodies", { "BodyParts" }) } },
-	{ id = "moves", name = "Moves", filters = { B("moves", "Moves", { "Animations" }) } },
+	{ id = "shoes", name = "Shoes", filters = { B("shoes", "Shoes", { "Shoes" }, "shoes") } },
+	{ id = "bodies", name = "Bodies", filters = { B("bodies", "Bodies", BODIES, "body") } },
+	-- the torso, the arms and the legs one at a time, to mix with any head or body
+	{
+		id = "parts",
+		name = "Body parts",
+		filters = {
+			P("torsos", "Torso", "Torso"),
+			P("leftarms", "Left arm", "LeftArm"),
+			P("rightarms", "Right arm", "RightArm"),
+			P("leftlegs", "Left leg", "LeftLeg"),
+			P("rightlegs", "Right leg", "RightLeg"),
+		},
+	},
+	{ id = "moves", name = "Moves", filters = { B("moves", "Moves", { "Animations" }, "anim") } },
 	{ id = "skin", name = "Skin" },
 	{ id = "shape", name = "Shape" },
+	-- what the player owns on Roblox, by kind
+	{
+		id = "inventory",
+		name = "My items",
+		source = "inventory",
+		filters = {
+			A("ownhair", "Hair", { "HairAccessory" }),
+			A("ownhats", "Hats", { "Hat" }),
+			A("ownextras", "Accessories", {
+				"FaceAccessory",
+				"NeckAccessory",
+				"ShoulderAccessory",
+				"FrontAccessory",
+				"BackAccessory",
+				"WaistAccessory",
+			}),
+			A("owntops", "Tops", {
+				"Shirt",
+				"TShirt",
+				"TShirtAccessory",
+				"ShirtAccessory",
+				"SweaterAccessory",
+				"JacketAccessory",
+			}),
+			A("ownbottoms", "Bottoms", { "Pants", "PantsAccessory", "ShortsAccessory", "DressSkirtAccessory" }),
+			A("ownshoes", "Shoes", { "LeftShoeAccessory", "RightShoeAccessory" }),
+			A("ownheads", "Heads", { "DynamicHead", "Head", "Face", "EyebrowAccessory", "EyelashAccessory" }),
+			A("ownparts", "Body parts", { "Torso", "LeftArm", "RightArm", "LeftLeg", "RightLeg" }),
+			A("ownmoves", "Moves", {
+				"IdleAnimation",
+				"WalkAnimation",
+				"RunAnimation",
+				"JumpAnimation",
+				"FallAnimation",
+				"ClimbAnimation",
+				"SwimAnimation",
+			}),
+		},
+	},
+	-- looks saved in this game
 	{ id = "outfits", name = "Outfits" },
-	-- avatars made by players: the people here, your friends, and looks shared from this creator
+	-- the avatars the player has saved on Roblox, and the characters they have bought there
+	{
+		id = "avatars",
+		name = "My avatars",
+		source = "outfits",
+		filters = {
+			{ id = "saved", name = "Saved by me", outfits = "Created" },
+			{ id = "bought", name = "Bought", outfits = "Purchased" },
+		},
+	},
+	-- avatars made by other players: the people here, your friends, and looks shared from this creator
 	{ id = "people", name = "Players" },
 }
 
 Categories.Tabs = tabs
+
+function Categories.tab(id: string): Tab?
+	for _, t in tabs do
+		if t.id == id then
+			return t
+		end
+	end
+	return nil
+end
 
 Categories.Sorts = {
 	{ id = "Relevance", name = "Best match" },
@@ -94,6 +196,8 @@ local SLOTS: { [string]: { kind: string, key: string } } = {
 	LeftShoeAccessory = { kind = "acc", key = "LeftShoe" },
 	RightShoeAccessory = { kind = "acc", key = "RightShoe" },
 	DressSkirtAccessory = { kind = "acc", key = "DressSkirt" },
+	EyebrowAccessory = { kind = "acc", key = "Eyebrow" },
+	EyelashAccessory = { kind = "acc", key = "Eyelash" },
 	Face = { kind = "face", key = "face" },
 	Shirt = { kind = "field", key = "shirt" },
 	Pants = { kind = "field", key = "pants" },
@@ -238,16 +342,32 @@ function Categories.toggle(app: Appearance.Appearance, id: number, assetTypeName
 	return Appearance.sanitize(out)
 end
 
+local LIMBS = { "torso", "la", "ra", "ll", "rl" }
+
+local function bringsLimbs(part: any): boolean
+	if type(part.body) ~= "table" then
+		return false
+	end
+	for _, k in LIMBS do
+		if type(part.body[k]) == "number" and part.body[k] > 0 then
+			return true
+		end
+	end
+	return false
+end
+
 -- Merges part of an appearance (from a bundle) over a full one.
 function Categories.merge(app: Appearance.Appearance, part: any): Appearance.Appearance
 	local out = Appearance.sanitize(app)
 	if type(part) ~= "table" then
 		return out
 	end
-	if part.kind == "body" then
+	if part.kind == "body" and bringsLimbs(part) then
 		-- a whole body replaces the last one: nothing of the old torso and limbs stays behind
-		-- (the head stays unless the new body brings its own)
-		for _, k in { "torso", "la", "ra", "ll", "rl" } do
+		-- (the head stays unless the new body brings its own). Only a body that has a torso or a
+		-- limb to give does this: one that came through with a head and nothing else must not
+		-- strip the villager down to that head.
+		for _, k in LIMBS do
 			out.body[k] = 0
 		end
 	end
@@ -343,11 +463,102 @@ function Categories.unmerge(app: Appearance.Appearance, part: any): Appearance.A
 	for _, a in if type(part.acc) == "table" then part.acc else {} do
 		out = Appearance.without(out, a.id)
 	end
+	if type(part.face) == "number" and part.face > 0 and out.face == part.face then
+		out.face = 0
+	end
 	if part.kind == "body" and type(part.scale) == "table" then
 		out.scale.bodyType = 0
 		out.scale.proportion = 0
 	end
 	return Appearance.sanitize(out)
+end
+
+-- Cards --------------------------------------------------------------------------------------------
+--
+-- Everything the creator shows as a card is a row shaped like a catalog result: { Id, Name,
+-- ItemType = "Asset" | "Bundle" | "Outfit", AssetType }. These turn what Roblox returns elsewhere
+-- into such rows.
+
+-- A wearable asset type's name as this file spells it, however it was written ("Hair Accessory",
+-- "hairaccessory"), or nil if it isn't one.
+local SPELLED: { [string]: string } = {}
+for name in SLOTS do
+	SPELLED[name:lower()] = name
+end
+
+local function wearable(typeName: string?): string?
+	if not typeName then
+		return nil
+	elseif SLOTS[typeName] then
+		return typeName
+	end
+	return SPELLED[(typeName:gsub("[%s_%-]", "")):lower()]
+end
+
+-- What the player owns (rows of AvatarEditorService:GetInventoryAsync: AssetId, AssetType, Name).
+-- `only` is the one asset type the page was asked for, if it was asked for one: a row that
+-- doesn't say what it is, or says it in words this doesn't know, is that.
+function Categories.ownedItems(rows: any, only: string?): { any }
+	local out = {}
+	local seen = {}
+	for _, row in if type(rows) == "table" then rows else {} do
+		local id = type(row) == "table" and row.AssetId
+		if type(id) == "number" and id > 0 and not seen[id] then
+			seen[id] = true
+			local typeName = wearable(Categories.assetTypeName(row.AssetType)) or only
+			table.insert(out, {
+				Id = id,
+				Name = if type(row.Name) == "string" and row.Name ~= "" then row.Name else "Item",
+				ItemType = "Asset",
+				AssetType = typeName,
+			})
+		end
+	end
+	return out
+end
+
+-- The player's saved avatars (rows of AvatarEditorService:GetOutfitsAsync: Id, Name, IsEditable).
+function Categories.outfitItems(rows: any): { any }
+	local out = {}
+	local seen = {}
+	for _, row in if type(rows) == "table" then rows else {} do
+		local id = type(row) == "table" and row.Id
+		if type(id) == "number" and id > 0 and not seen[id] then
+			seen[id] = true
+			table.insert(out, {
+				Id = id,
+				Name = if type(row.Name) == "string" and row.Name ~= "" then row.Name else "Avatar",
+				ItemType = "Outfit",
+			})
+		end
+	end
+	return out
+end
+
+-- The parts of the given asset types inside catalog results that are bundles (each result lists
+-- what is in it under BundledItems: Id, Name, Type, AssetType). One card a part, in the bundles'
+-- order.
+function Categories.partsIn(results: any, assetTypes: { string }): { any }
+	local out = {}
+	local seen = {}
+	for _, result in if type(results) == "table" then results else {} do
+		local inside = if type(result) == "table" then result.BundledItems else nil
+		for _, item in if type(inside) == "table" then inside else {} do
+			if type(item) == "table" and type(item.Id) == "number" and item.Id > 0 and not seen[item.Id] then
+				local typeName = Categories.assetTypeName(item.AssetType)
+				if typeName and table.find(assetTypes, typeName) then
+					seen[item.Id] = true
+					table.insert(out, {
+						Id = item.Id,
+						Name = if type(item.Name) == "string" and item.Name ~= "" then item.Name else "Item",
+						ItemType = "Asset",
+						AssetType = typeName,
+					})
+				end
+			end
+		end
+	end
+	return out
 end
 
 return Categories

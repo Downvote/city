@@ -13,6 +13,7 @@ local MarketplaceService = game:GetService("MarketplaceService")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Appearance = require(Shared.Avatar.Appearance)
+local Bundles = require(Shared.Avatar.Bundles)
 local Categories = require(Shared.Avatar.Categories)
 local Colors = require(Shared.Util.Colors)
 local Remotes = require(Shared.Net.Remotes)
@@ -26,7 +27,10 @@ local Town = require(Shared.Data.Town)
 local MAX_OUTFITS = 24
 
 local assetTypes: { [number]: string | false } = {} -- id -> AssetType name (false: lookup failed for good)
-local bundleCache: { [number]: any } = {}
+-- what each bundle holds, once all of it has been read, and what wearing it changes for each
+-- kind it has been asked for ("" when nothing was asked)
+local bundleDetails: { [number]: Bundles.Details } = {}
+local bundleCache: { [number]: { [string]: any } } = {}
 local stages: { [Player]: { model: Model, mannequin: Model?, busy: boolean, pending: any?, slot: number } } = {}
 local usedSlots: { [number]: boolean } = {}
 
@@ -208,87 +212,105 @@ end
 
 -- Bundles -----------------------------------------------------------------------------------------
 
--- What wearing a bundle changes: body parts, a head, animations or shoes.
-function Avatar.bundle(bundleId: number): any
-	if bundleCache[bundleId] then
-		return bundleCache[bundleId]
+-- An id a client sent: a whole number Roblox could have given out.
+local function isId(v: any): boolean
+	return type(v) == "number" and v == v and v > 0 and v % 1 == 0 and v < 2 ^ 53
+end
+
+local MAX_BUNDLE_OUTFITS = 4
+local MAX_BUNDLE_LOOKUPS = 20
+
+-- Reads a bundle: its label, its outfits as looks, and its own list of assets. The second value
+-- says whether all of it could be read (only then is it kept, so a call Roblox turned away is
+-- tried again the next time).
+local function readBundle(bundleId: number): (Bundles.Details?, boolean)
+	local known = bundleDetails[bundleId]
+	if known then
+		return known, true
 	end
 	local ok, details = pcall(function()
 		return AssetService:GetBundleDetailsAsync(bundleId)
 	end)
 	if not ok or type(details) ~= "table" then
-		return nil
+		return nil, false
 	end
-	local kindName = tostring(details.BundleType or "")
-	-- what the bundle is: a whole body, a head, a set of animations or a pair of shoes
-	local kind = if kindName:find("Animation")
-		then "anim"
-		elseif kindName:find("Shoe") then "shoes"
-		elseif kindName:find("Head") then "head"
-		else "body"
-	local part: any = { kind = kind, body = {}, anim = {}, acc = {} }
-	local outfitId
-	for _, item in details.Items or {} do
-		if item.Type == "UserOutfit" then
-			outfitId = item.Id
+	local out: Bundles.Details = { label = details.BundleType, looks = {}, assets = {} }
+	local outfits: { number } = {}
+	local untyped: { number } = {}
+	for _, item in if type(details.Items) == "table" then details.Items else {} do
+		if type(item) == "table" and type(item.Id) == "number" then
+			if item.Type == "UserOutfit" then
+				if #outfits < MAX_BUNDLE_OUTFITS then
+					table.insert(outfits, item.Id)
+				end
+			elseif item.Type == "Asset" then
+				local typeName = Categories.assetTypeName(item.AssetType)
+				if typeName then
+					table.insert(out.assets, { id = item.Id, type = typeName })
+					-- Roblox has just said what this asset is, so it needn't be looked up again
+					-- when the look is checked (a body is six lookups otherwise)
+					if assetTypes[item.Id] == nil and Categories.slotFor(typeName) then
+						assetTypes[item.Id] = typeName
+					end
+				else
+					table.insert(untyped, item.Id)
+				end
+			end
 		end
 	end
-	if outfitId then
+	-- Every outfit is read, not only the last one. A body comes with two, its own and one for its
+	-- head alone, and the head's is listed last: reading only that one is how a body came to
+	-- change nothing but the head. Avatar/Bundles picks the right one for what was asked.
+	local whole = true
+	for _, outfitId in outfits do
 		local ok2, desc = pcall(function()
 			return Players:GetHumanoidDescriptionFromOutfitIdAsync(outfitId)
 		end)
 		if ok2 and desc then
-			local app = Avatar.fromDescription(desc)
-			if kind == "anim" then
-				part.anim = app.anim
-			elseif kind == "shoes" then
-				for _, a in app.acc do
-					if a.t == "LeftShoe" or a.t == "RightShoe" then
-						table.insert(part.acc, a)
-					end
-				end
-			elseif kind == "head" then
-				-- only the head, with the brows and lashes that come with it
-				part.body = { head = app.body.head }
-				for _, a in app.acc do
-					if a.t == "Eyebrow" or a.t == "Eyelash" then
-						table.insert(part.acc, a)
-					end
-				end
+			table.insert(out.looks, Avatar.fromDescription(desc))
+		else
+			whole = false
+		end
+	end
+	if #out.looks == 0 then
+		-- no outfit to go by: assets that came without their type are looked up one by one
+		for i, id in untyped do
+			local typeName = if i <= MAX_BUNDLE_LOOKUPS then lookupType(id) else nil
+			if typeName then
+				table.insert(out.assets, { id = id, type = typeName })
 			else
-				part.body = app.body
-				if app.face > 0 then
-					part.face = app.face
-				end
-				-- the build that goes with the body (how tall and wide stays the player's choice)
-				part.scale = { bodyType = app.scale.bodyType, proportion = app.scale.proportion }
+				whole = false
 			end
 		end
 	end
-	if not next(part.body) and not next(part.anim) and #part.acc == 0 then
-		-- no outfit: look at the assets one by one
-		for _, item in details.Items or {} do
-			if item.Type == "Asset" and type(item.Id) == "number" then
-				local typeName = lookupType(item.Id)
-				local slot = typeName and Categories.slotFor(typeName)
-				if slot then
-					if slot.kind == "body" then
-						part.body[slot.key] = item.Id
-					elseif slot.kind == "anim" then
-						part.anim[slot.key] = item.Id
-					elseif slot.kind == "acc" then
-						table.insert(
-							part.acc,
-							{ id = item.Id, t = slot.key, l = Appearance.AccessoryTypes[slot.key] == true }
-						)
-					elseif slot.kind == "face" then
-						part.face = item.Id
-					end
-				end
-			end
-		end
+	if whole then
+		bundleDetails[bundleId] = out
 	end
-	bundleCache[bundleId] = part
+	return out, whole
+end
+
+-- What wearing a bundle changes: body parts, a head, animations or shoes. `wanted` is what the
+-- player was browsing for ("body", "head", "shoes" or "anim": the creator's tab), and the bundle
+-- is worn as that; without it the bundle's own label decides (Avatar/Bundles has the rules).
+-- Nil if the bundle couldn't be read or holds nothing a villager can wear.
+function Avatar.bundle(bundleId: number, wanted: string?): any
+	local key = if Bundles.isKind(wanted) then wanted :: string else ""
+	local cached = bundleCache[bundleId] and bundleCache[bundleId][key]
+	if cached then
+		return cached
+	end
+	local details, whole = readBundle(bundleId)
+	if not details then
+		return nil
+	end
+	local part = Bundles.part(details, if key ~= "" then key else nil)
+	if Bundles.isEmpty(part) then
+		return nil
+	end
+	if whole then
+		bundleCache[bundleId] = bundleCache[bundleId] or {}
+		bundleCache[bundleId][key] = part
+	end
 	return part
 end
 
@@ -297,6 +319,17 @@ end
 function Avatar.fromUserId(userId: number): Appearance.Appearance?
 	local ok, desc = pcall(function()
 		return Players:GetHumanoidDescriptionFromUserIdAsync(userId)
+	end)
+	if ok and desc then
+		return Avatar.fromDescription(desc)
+	end
+	return nil
+end
+
+-- One saved avatar (an outfit on Roblox) as a look.
+function Avatar.fromOutfitId(outfitId: number): Appearance.Appearance?
+	local ok, desc = pcall(function()
+		return Players:GetHumanoidDescriptionFromOutfitIdAsync(outfitId)
 	end)
 	if ok and desc then
 		return Avatar.fromDescription(desc)
@@ -323,6 +356,20 @@ end
 
 -- Catalog search on the server (fallback) ----------------------------------------------------------
 
+-- The enum item of that name, or nil: asking an Enum for a name it hasn't got is an error, and
+-- these names come from a client.
+local function enumNamed(enum: any, name: any): any
+	if type(name) ~= "string" then
+		return nil
+	end
+	local ok, item = pcall(function()
+		return enum[name]
+	end)
+	return if ok then item else nil
+end
+
+-- query: { keyword, assets, bundles, sort, offSale, inside }. offSale also searches what isn't
+-- sold by itself (single body parts); inside sends each bundle's list of parts along.
 function Avatar.search(query: any): { any }
 	if type(query) ~= "table" then
 		return {}
@@ -333,15 +380,15 @@ function Avatar.search(query: any): { any }
 	end
 	local assets = {}
 	for _, name in (if type(query.assets) == "table" then query.assets else {}) do
-		local e = (Enum.AvatarAssetType :: any)[name]
-		if e then
+		local e = enumNamed(Enum.AvatarAssetType, name)
+		if e and #assets < 16 then
 			table.insert(assets, e)
 		end
 	end
 	local bundles = {}
 	for _, name in (if type(query.bundles) == "table" then query.bundles else {}) do
-		local e = (Enum.BundleType :: any)[name]
-		if e then
+		local e = enumNamed(Enum.BundleType, name)
+		if e and #bundles < 8 then
 			table.insert(bundles, e)
 		end
 	end
@@ -351,28 +398,53 @@ function Avatar.search(query: any): { any }
 	if #bundles > 0 then
 		params.BundleTypes = bundles
 	end
-	local sort = type(query.sort) == "string" and (Enum.CatalogSortType :: any)[query.sort]
+	if query.offSale == true then
+		params.IncludeOffSale = true
+	end
+	local sort = enumNamed(Enum.CatalogSortType, query.sort)
 	if sort then
 		params.SortType = sort
 	end
 	params.Limit = 60
-	local ok, pages = pcall(function()
-		return AvatarEditorService:SearchCatalogAsync(params)
-	end)
-	if not ok or not pages then
+	local function run(): CatalogPages?
+		local ok, pages = pcall(function()
+			return AvatarEditorService:SearchCatalogAsync(params)
+		end)
+		return if ok then pages else nil
+	end
+	local pages = run()
+	if not pages and #bundles > 1 then
+		-- the search may not take every bundle type there is: ask again for the first alone
+		params.BundleTypes = { bundles[1] }
+		pages = run()
+	end
+	if not pages then
 		return {}
 	end
 	local page = pages:GetCurrentPage()
 	local out = {}
 	for _, item in page do
-		table.insert(out, {
+		local row: any = {
 			Id = item.Id,
 			Name = item.Name,
 			ItemType = item.ItemType,
 			AssetType = item.AssetType,
 			BundleType = item.BundleType,
 			Price = item.Price,
-		})
+		}
+		if query.inside == true and type(item.BundledItems) == "table" then
+			-- what is in a bundle, for the creator to take single body parts out of
+			row.BundledItems = {}
+			for _, inside in item.BundledItems do
+				if type(inside) == "table" and inside.Type == "Asset" then
+					table.insert(
+						row.BundledItems,
+						{ Id = inside.Id, Name = inside.Name, Type = inside.Type, AssetType = inside.AssetType }
+					)
+				end
+			end
+		end
+		table.insert(out, row)
 	end
 	return out
 end
@@ -741,11 +813,13 @@ function Avatar.start()
 		return app, removed
 	end
 
-	Remotes.fn("CreatorBundle").OnServerInvoke = function(_, bundleId)
-		if type(bundleId) ~= "number" or bundleId <= 0 or bundleId % 1 ~= 0 then
+	-- (bundleId, kind?): kind is what the creator's tab is for. Anything but one of the four
+	-- kinds counts as not said, and the bundle's own label decides.
+	Remotes.fn("CreatorBundle").OnServerInvoke = function(_, bundleId, kind)
+		if not isId(bundleId) then
 			return nil
 		end
-		return Avatar.bundle(bundleId)
+		return Avatar.bundle(bundleId, if Bundles.isKind(kind) then kind else nil)
 	end
 
 	Remotes.fn("CreatorFromUser").OnServerInvoke = function(player, name)
@@ -777,6 +851,22 @@ function Avatar.start()
 		return Avatar.fromUserId(userId)
 	end
 
+	-- The My avatars tab: one of the avatars the player has saved on Roblox, as a look. Their
+	-- own screen reads the list (Roblox asks them first, and only tells their own client); only
+	-- the outfit's id comes here. The look is checked like any other when it is previewed.
+	local lastOutfit: { [Player]: number } = {}
+	Remotes.fn("CreatorFromOutfit").OnServerInvoke = function(player, outfitId)
+		if not isId(outfitId) then
+			return nil
+		end
+		local t = os.clock()
+		if lastOutfit[player] and t - lastOutfit[player] < 0.5 then
+			return nil
+		end
+		lastOutfit[player] = t
+		return Avatar.fromOutfitId(outfitId)
+	end
+
 	Remotes.fn("LookShare").OnServerInvoke = function(player, name, raw)
 		if type(name) ~= "string" then
 			return false, "Give it a name first."
@@ -801,6 +891,7 @@ function Avatar.start()
 
 	Players.PlayerRemoving:Connect(function(player)
 		lastCopy[player] = nil
+		lastOutfit[player] = nil
 		lastShare[player] = nil
 		friendCache[player] = nil
 	end)

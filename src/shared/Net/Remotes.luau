@@ -17,10 +17,12 @@ Remotes.Functions = {
 	"CreatorClose", -- ()
 	"CreatorPreview", -- (appearance) -> cleaned appearance
 	"CreatorBundle", -- (bundleId) -> partial appearance
+	-- (it also takes what the creator's tab is for: (bundleId, kind?), kind "body", "head", "shoes" or "anim")
 	"CreatorFromUser", -- (name or "") -> appearance
 	"CreatorSearch", -- (query) -> items (used when the client can't search the catalog itself)
 	"CreatorPeople", -- () -> { people = { { id, name, kind } }, looks = { { name, by, who, app } } }
 	"CreatorFromUserId", -- (userId) -> appearance
+	"CreatorFromOutfit", -- (outfitId) -> appearance: one of the player's own saved avatars on Roblox
 	"LookShare", -- (name, appearance) -> ok, err
 	"CreatorItemInfo", -- (ids) -> { id = { name, type } }
 	"VillagerCreate", -- (profile) -> ok, vid or err

@@ -695,6 +695,48 @@ D.shoe = {
 	{ "r", 22, 50, 26, 6, C.white, r = 0.5, o = false },
 }
 
+-- a whole body, standing: the creator's Bodies
+D.figure = {
+	{ "c", 37, 4, 26, 26, C.blue },
+	{ "r", 14, 34, 72, 14, C.blue, r = 0.5 },
+	{ "r", 36, 34, 28, 36, C.blue, r = 0.2 },
+	{ "r", 36, 62, 12, 34, C.blueDark, r = 0.4 },
+	{ "r", 52, 62, 12, 34, C.blueDark, r = 0.4 },
+}
+
+-- the torso, the arms and the legs, each by itself: Body parts
+D.limbs = {
+	{ "r", 32, 10, 36, 42, C.blue, r = 0.15 },
+	{ "r", 8, 10, 16, 42, C.skin, r = 0.35 },
+	{ "r", 76, 10, 16, 42, C.skin, r = 0.35 },
+	{ "r", 32, 58, 15, 34, C.blueDark, r = 0.3 },
+	{ "r", 53, 58, 15, 34, C.blueDark, r = 0.3 },
+}
+
+-- what you own: My items
+D.backpack = {
+	{ "ring", 36, 4, 28, 26, C.greenDark, 8 },
+	{ "r", 16, 20, 68, 74, C.green, r = 0.3 },
+	{ "r", 30, 54, 40, 26, C.greenDark, r = 0.25, o = false },
+}
+
+-- a look put away for later: Outfits
+D.hanger = {
+	{ "ring", 38, 4, 24, 24, C.steelDark, 7 },
+	{ "t", 8, 34, 84, "up", C.wood },
+	{ "t", 26, 48, 48, "up", C.cream, o = false },
+	{ "r", 8, 68, 84, 10, C.wood, r = 0.5 },
+}
+
+-- a card with your face on it: My avatars
+D.idcard = {
+	{ "r", 6, 18, 88, 64, C.blueLight, r = 0.14 },
+	{ "c", 20, 30, 22, 22, C.blueDark, o = false },
+	{ "r", 14, 54, 34, 18, C.blueDark, r = 0.45, o = false },
+	{ "r", 56, 34, 28, 8, C.blueDark, r = 0.5, o = false },
+	{ "r", 56, 50, 28, 8, C.blueDark, r = 0.5, o = false },
+}
+
 D.ruler = {
 	{ "r", 4, 34, 92, 32, C.yellow, r = 0.15 },
 }

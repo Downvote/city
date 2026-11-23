@@ -11,7 +11,7 @@ export PATH="$HOME/.local/rbx-tools/bin:$PATH"
 TMP=$(mktemp -d /tmp/audit.XXXXXX)
 SCENES="hud build build:walls build:pick build:paint panel:Residents panel:CityPanel panel:ShopPanel
 panel:News panel:Welcome panel:Goals panel:MapPanel panel:Rewards event event:talk talk toasts creator
-creator:profile"
+creator:profile creator:bodies creator:parts creator:items creator:items:ask creator:items:no creator:avatars"
 COUNT=$(echo $SCENES | wc -w)
 status=0
 for look in dark light; do

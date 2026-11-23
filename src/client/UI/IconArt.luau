@@ -111,6 +111,26 @@ A.shoe = { "M3 18.5 V10.5 L7.5 12.5 L10.5 9 Q13 14 18.5 14.5 Q21 15 21 18.5 Z" }
 A.hat = { "M3.5 16.5 A7.5 7.5 0 0 1 18.5 16.5 Z", "M18.5 16.5 H21.5" }
 -- a comb
 A.hair = { rect(3.5, 6, 17, 4, 1.5), "M6 10 V18", "M9 10 V18", "M12 10 V18", "M15 10 V18", "M18 10 V18" }
+-- a whole body, standing (the creator's Bodies)
+A.figure = { circle(12, 5.5, 2.5), "M6 11.5 H18", "M12 11.5 V16 L8 21", "M12 16 L16 21" }
+-- the torso, the arms and the legs, each by itself (Body parts)
+A.limbs = { rect(8, 3, 8, 9, 1.5), "M4 4 V11", "M20 4 V11", "M10 16 V21", "M14 16 V21" }
+-- what you own (My items)
+A.backpack = {
+	"M5.5 21 V12.5 A6.5 6.5 0 0 1 18.5 12.5 V21 Z",
+	"M9.5 6.6 V5 A2.5 2.5 0 0 1 14.5 5 V6.6",
+	rect(8.5, 14, 7, 4.5, 1.5),
+}
+-- a look put away for later (Outfits)
+A.hanger = { "M9.5 5.5 A2.5 2.5 0 1 1 12 8 V9.5", "M12 9.5 L3.5 16.5 V18.5 H20.5 V16.5 Z" }
+-- a card with your face on it (My avatars)
+A.idcard = {
+	rect(2.5, 5, 19, 14, 2.5),
+	{ circle(8.5, 10, 1.5), fill = true },
+	"M6 16 A2.5 2.5 0 0 1 11 16",
+	"M14.5 10 H18",
+	"M14.5 14 H18",
+}
 
 -- the tools --------------------------------------------------------------------------------------------
 

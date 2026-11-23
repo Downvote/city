@@ -24,13 +24,16 @@ the contract (update it with every API, remote or saved data change), `src/share
    `sh tools/preview/fonts.sh` once for the font).
 5. `sh scripts/check.sh` must pass: format, types (luau-lsp against Roblox's definitions), specs, the client
    simulations (`tests/sim/build_client.luau`: the real Build mode driven by clicks; `tests/sim/talk_card.luau`:
-   the card you get by holding E on a villager), the dark and the light look on every screen
+   the card you get by holding E on a villager; `tests/sim/creator_sections.luau`: the creator's Bodies, Body
+   parts, My items and My avatars), the dark and the light look on every screen
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (169, all passing; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (240, all passing; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
-Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off), Build (catalog, plan rules, field cleaning, shapes, builder), BuildService (the server's
+Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off; what kind a bundle
+is, the outfit that holds the body, single body parts, the player's own items and avatars; preview scenes
+`creator:bodies`, `creator:parts`, `creator:items`, `creator:items:ask`, `creator:items:no`, `creator:avatars`), Build (catalog, plan rules, field cleaning, shapes, builder), BuildService (the server's
 Build service with stubbed neighbours: charges, syncs, strips junk, refuses land you don't own), Events (3000 seeded
 events, every kind reachable, text filled, numbers in range), Newcomers (who moves in: the player's friends first,
 then the town's own twenty, nobody twice), City (starter town valid, levels, land, paydays, save

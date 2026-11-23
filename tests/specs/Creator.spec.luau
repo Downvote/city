@@ -1,10 +1,16 @@
 --!nocheck
--- Bundles in the villager creator (Avatar/Categories): a new body replaces the last one whole,
--- a bundle's card knows when it is being worn, and clicking it again takes it off. The Players
--- tab is in the list.
+-- The villager creator's rules (Avatar/Categories, Avatar/Bundles).
+-- Bundles: a new body replaces the last one whole, a bundle's card knows when it is being worn,
+-- and clicking it again takes it off. What a bundle is: the user found that "bodies only changes
+-- the head of the character", because a body carries two outfits (its own, and one for its head
+-- alone, which comes last) and a label that can have "Head" in it; so the kind is decided from
+-- what the tab asked for, the label read as a body before a head, and what the bundle holds.
+-- Sections: the torso, the arms and the legs one at a time, what the player owns on Roblox, and
+-- the avatars they saved there, beside the Players tab and this game's own outfits.
 
 local Shared = "ReplicatedStorage.Shared."
 local Appearance = require(Shared .. "Avatar.Appearance")
+local Bundles = require(Shared .. "Avatar.Bundles")
 local Categories = require(Shared .. "Avatar.Categories")
 
 local function body(n, head)
@@ -13,6 +19,56 @@ local function body(n, head)
 		body = { head = head or 0, torso = n + 1, la = n + 2, ra = n + 3, ll = n + 4, rl = n + 5 },
 		scale = { bodyType = 1, proportion = 0.5 },
 	}
+end
+
+-- A look as an outfit hands it over: only what it sets.
+local function look(fields)
+	local app = Appearance.default()
+	for k, v in fields.body or {} do
+		app.body[k] = v
+	end
+	for k, v in fields.anim or {} do
+		app.anim[k] = v
+	end
+	for k, v in fields.scale or {} do
+		app.scale[k] = v
+	end
+	app.acc = fields.acc or {}
+	app.face = fields.face or 0
+	return Appearance.sanitize(app)
+end
+
+-- A body as Roblox sells one today (the shape of a real bundle's details: label "BodyParts",
+-- the body's outfit, then an outfit for its head alone, and the assets one by one).
+local function soldBody(n)
+	local whole = look({
+		body = { head = n, torso = n + 1, la = n + 2, ra = n + 3, ll = n + 4, rl = n + 5 },
+		scale = { bodyType = 0.7, proportion = 0.4 },
+		acc = { { id = n + 8, t = "Hair", l = false } },
+	})
+	local headOnly = look({ body = { head = n } })
+	return {
+		label = "BodyParts",
+		looks = { whole, headOnly },
+		assets = {
+			{ id = n + 2, type = "LeftArm" },
+			{ id = n + 3, type = "RightArm" },
+			{ id = n + 4, type = "LeftLeg" },
+			{ id = n + 5, type = "RightLeg" },
+			{ id = n + 1, type = "Torso" },
+			{ id = n + 8, type = "HairAccessory" },
+			{ id = n + 9, type = "MoodAnimation" },
+			{ id = n, type = "DynamicHead" },
+		},
+	}
+end
+
+local function count(t)
+	local n = 0
+	for _ in t do
+		n += 1
+	end
+	return n
 end
 
 describe("Creator", function()
@@ -79,5 +135,505 @@ describe("Creator", function()
 		expect(Categories.bundleWorn(app, shoes)).toBe(true)
 		app = Categories.unmerge(app, shoes)
 		expect(#app.acc).toBe(0)
+	end)
+
+	it("takes a bundle's face off with the rest of it", function()
+		local b = body(600, 9)
+		b.face = 55
+		local app = Categories.merge(Appearance.default(), b)
+		expect(app.face).toBe(55)
+		app = Categories.unmerge(app, b)
+		expect(app.face).toBe(0)
+		-- a face picked since is not the bundle's to take
+		app = Categories.merge(Appearance.default(), b)
+		app.face = 77
+		expect(Categories.unmerge(app, b).face).toBe(77)
+	end)
+end)
+
+describe("Creator bundles", function()
+	it("reads a label as a whole body before it reads it as a head", function()
+		expect(Bundles.kindOfLabel("BodyParts")).toBe("body")
+		-- a body sold with an animated head: "Head" is in its name, and it is still a body
+		expect(Bundles.kindOfLabel("DynamicHeadAvatar")).toBe("body")
+		expect(Bundles.kindOfLabel("DynamicHead")).toBe("head")
+		expect(Bundles.kindOfLabel("Shoes")).toBe("shoes")
+		expect(Bundles.kindOfLabel("Animations")).toBe("anim")
+		expect(Bundles.kindOfLabel("AvatarAnimations")).toBe("anim")
+		-- the enum's own items and numbers say the same
+		local want = {
+			BodyParts = "body",
+			DynamicHeadAvatar = "body",
+			DynamicHead = "head",
+			Shoes = "shoes",
+			Animations = "anim",
+		}
+		for _, item in Enum.BundleType:GetEnumItems() do
+			expect(want[item.Name] ~= nil).toBeTruthy() -- a bundle type this spec has never heard of
+			expect(Bundles.kindOfLabel(item)).toBe(want[item.Name])
+			expect(Bundles.kindOfLabel(item.Value)).toBe(want[item.Name])
+		end
+		-- labels that don't exist yet go by their words, a body first
+		expect(Bundles.kindOfLabel("LayeredHeadAvatar")).toBe("body")
+		expect(Bundles.kindOfLabel("ClassicBody")).toBe("body")
+		expect(Bundles.kindOfLabel("StaticHead")).toBe("head")
+		expect(Bundles.kindOfLabel("Makeup")).toBe(nil)
+		expect(Bundles.kindOfLabel(nil)).toBe(nil)
+		expect(Bundles.kindOfLabel({})).toBe(nil)
+		expect(Bundles.kindOfLabel(99)).toBe(nil)
+	end)
+
+	it("knows the four kinds a tab can ask for and nothing else", function()
+		for _, k in { "body", "head", "shoes", "anim" } do
+			expect(Bundles.isKind(k)).toBe(true)
+		end
+		for _, k in { "Body", "", "all", 1, true, {} } do
+			expect(Bundles.isKind(k)).toBe(false)
+		end
+		expect(Bundles.isKind(nil)).toBe(false)
+	end)
+
+	it("wears a body whole, though the outfit for its head comes last", function()
+		-- this is the bug: the last outfit was the only one read, and it holds the head alone
+		local part = Bundles.part(soldBody(100), "body")
+		expect(part.kind).toBe("body")
+		expect(part.body).toEqual({ head = 100, torso = 101, la = 102, ra = 103, ll = 104, rl = 105 })
+		expect(part.scale.bodyType).toBeNear(0.7)
+		expect(part.scale.proportion).toBeNear(0.4)
+		expect(#part.acc).toBe(0) -- the hair in the body's outfit is not part of the body
+		-- and from the outfits alone, with no list of assets to fall back on
+		local bare = soldBody(100)
+		bare.assets = {}
+		expect(Bundles.part(bare, "body")).toEqual(part)
+		-- a body whose own outfit leaves the head out takes it from the head's outfit
+		local split = soldBody(100)
+		split.assets = {}
+		split.looks[1].body.head = 0
+		expect(Bundles.part(split, "body").body).toEqual(part.body)
+		local app = Categories.merge(Appearance.default(), part)
+		expect(app.body.torso).toBe(101)
+		expect(app.body.rl).toBe(105)
+		expect(app.body.head).toBe(100)
+		expect(Categories.bundleWorn(app, part)).toBe(true)
+		app = Categories.unmerge(app, part)
+		for _, k in Appearance.BodyKeys do
+			expect(app.body[k]).toBe(0)
+		end
+	end)
+
+	it("comes to the same body whatever order the outfits are in, and whatever the label says", function()
+		local want = Bundles.part(soldBody(200), "body")
+		local turned = soldBody(200)
+		turned.looks = { turned.looks[2], turned.looks[1] }
+		expect(Bundles.part(turned, "body")).toEqual(want)
+		for _, label in { "DynamicHeadAvatar", "DynamicHead", "Shoes", "Nonsense", false } do
+			local d = soldBody(200)
+			d.label = label or nil
+			-- a body was asked for and there is a torso in it: it is a body
+			expect(Bundles.part(d, "body")).toEqual(want)
+		end
+		-- nothing asked: the label decides, and the two labels a body can have both say body
+		for _, label in { "BodyParts", "DynamicHeadAvatar", Enum.BundleType.DynamicHeadAvatar, 5 } do
+			local d = soldBody(200)
+			d.label = label
+			expect(Bundles.part(d, nil)).toEqual(want)
+		end
+		-- no label at all: it is what it holds, and it holds a torso
+		local bare = soldBody(200)
+		bare.label = nil
+		expect(Bundles.part(bare, nil)).toEqual(want)
+	end)
+
+	it("gives only the head when a head is what was asked for", function()
+		local part = Bundles.part(soldBody(300), "head")
+		expect(part.kind).toBe("head")
+		expect(part.body).toEqual({ head = 300 })
+		expect(part.scale).toBe(nil)
+		-- on a villager wearing another body, the head changes and the body stays
+		local app = Categories.merge(Appearance.default(), Bundles.part(soldBody(400), "body"))
+		app = Categories.merge(app, part)
+		expect(app.body.head).toBe(300)
+		expect(app.body.torso).toBe(401)
+		expect(app.scale.bodyType).toBeNear(0.7)
+	end)
+
+	it("wears a head with its brows and lashes, and nothing of the body under it", function()
+		local head = {
+			label = "DynamicHead",
+			looks = {
+				look({
+					body = { head = 500 },
+					acc = {
+						{ id = 501, t = "Eyebrow", l = false },
+						{ id = 502, t = "Eyelash", l = false },
+						{ id = 503, t = "Hat", l = false },
+					},
+				}),
+			},
+			assets = { { id = 500, type = "DynamicHead" }, { id = 501, type = "EyebrowAccessory" } },
+		}
+		for _, wanted in { "head", false } do
+			local part = Bundles.part(head, wanted or nil)
+			expect(part.kind).toBe("head")
+			expect(part.body).toEqual({ head = 500 })
+			expect(#part.acc).toBe(2)
+			expect(part.acc[1].t).toBe("Eyebrow")
+			expect(part.acc[2].t).toBe("Eyelash")
+		end
+		-- found among the bodies, a head is still only a head: the torso and limbs are left alone
+		local part = Bundles.part(head, "body")
+		expect(part.kind).toBe("head")
+		local app = Categories.merge(Appearance.default(), body(600, 9))
+		app = Categories.merge(app, part)
+		expect(app.body.head).toBe(500)
+		expect(app.body.torso).toBe(601)
+		expect(app.body.rl).toBe(605)
+	end)
+
+	it("never strips a villager down to a head, even if a body arrives with nothing else in it", function()
+		local broken = { kind = "body", body = { head = 77, torso = 0, la = 0, ra = 0, ll = 0, rl = 0 } }
+		local app = Categories.merge(Appearance.default(), body(700, 9))
+		app = Categories.merge(app, broken)
+		expect(app.body.head).toBe(77)
+		expect(app.body.torso).toBe(701)
+		expect(app.body.ll).toBe(704)
+	end)
+
+	it("falls back on the bundle's own list when no outfit could be read", function()
+		local d = soldBody(800)
+		d.looks = {}
+		table.insert(d.assets, 1, { id = 899, type = "Head" })
+		local part = Bundles.part(d, "body")
+		expect(part.kind).toBe("body")
+		-- the head that can move its face wins over the plain one
+		expect(part.body).toEqual({ head = 800, torso = 801, la = 802, ra = 803, ll = 804, rl = 805 })
+		expect(part.scale).toBe(nil)
+		-- and fills in what an outfit leaves out
+		local short = soldBody(900)
+		short.looks = { look({ body = { head = 900, torso = 901 } }), short.looks[2] }
+		expect(Bundles.part(short, "body").body).toEqual({
+			head = 900,
+			torso = 901,
+			la = 902,
+			ra = 903,
+			ll = 904,
+			rl = 905,
+		})
+		-- junk in the list is passed over
+		local junk = {
+			label = "BodyParts",
+			looks = {},
+			assets = { { id = 1, type = "Gear" }, { id = -4, type = "Torso" }, { id = 2 } },
+		}
+		expect(Bundles.isEmpty(Bundles.part(junk, "body"))).toBe(true)
+	end)
+
+	it("wears shoes as a pair and animations as a set", function()
+		local shoes = {
+			label = "Shoes",
+			looks = {
+				look({
+					body = { head = 5 },
+					acc = {
+						{ id = 21, t = "LeftShoe", l = true, o = 8 },
+						{ id = 22, t = "RightShoe", l = true, o = 8 },
+						{ id = 23, t = "Hat", l = false },
+					},
+				}),
+			},
+			assets = {},
+		}
+		local part = Bundles.part(shoes, "shoes")
+		expect(part.kind).toBe("shoes")
+		expect(#part.acc).toBe(2)
+		expect(count(part.body)).toBe(0)
+		local app = Categories.merge(Appearance.default(), part)
+		expect(Categories.bundleWorn(app, part)).toBe(true)
+		expect(app.body.head).toBe(0)
+		-- from the list of assets, when the outfit can't be read
+		local loose = {
+			label = "Shoes",
+			looks = {},
+			assets = { { id = 31, type = "LeftShoeAccessory" }, { id = 32, type = "RightShoeAccessory" } },
+		}
+		part = Bundles.part(loose, nil)
+		expect(part.kind).toBe("shoes")
+		expect(#part.acc).toBe(2)
+		expect(part.acc[1].l).toBe(true)
+
+		local moves = {
+			label = "Animations",
+			looks = { look({ anim = { idle = 11, walk = 12, run = 13, jump = 14, fall = 15, climb = 16, swim = 17 } }) },
+			assets = {},
+		}
+		for _, wanted in { "anim", false } do
+			part = Bundles.part(moves, wanted or nil)
+			expect(part.kind).toBe("anim")
+			expect(part.anim.walk).toBe(12)
+			expect(count(part.anim)).toBe(7)
+			expect(count(part.body)).toBe(0)
+		end
+		-- a set of animations found under another tab is still worn as animations
+		expect(Bundles.part(moves, "body").kind).toBe("anim")
+		expect(Bundles.part(moves, "head").kind).toBe("anim")
+	end)
+
+	it("says when a bundle holds nothing to wear", function()
+		expect(Bundles.isEmpty(Bundles.part({ label = "BodyParts", looks = {}, assets = {} }, "body"))).toBe(true)
+		expect(Bundles.isEmpty(Bundles.part({ label = nil, looks = { Appearance.default() }, assets = {} }, nil))).toBe(
+			true
+		)
+		expect(Bundles.isEmpty(Bundles.part(soldBody(40), "body"))).toBe(false)
+		expect(Bundles.isEmpty(nil)).toBe(true)
+		expect(Bundles.isEmpty({ kind = "body", body = {}, anim = {}, acc = {}, face = 5 })).toBe(false)
+	end)
+end)
+
+describe("Creator sections", function()
+	local function tab(id)
+		return Categories.tab(id)
+	end
+
+	it("has a section for the torso, arms and legs, for what the player owns and for their saved avatars", function()
+		expect(tab("parts") ~= nil).toBeTruthy()
+		expect(tab("inventory") ~= nil).toBeTruthy()
+		expect(tab("avatars") ~= nil).toBeTruthy()
+		-- beside the ones that were there: other players' avatars, and this game's own outfits
+		expect(tab("people") ~= nil).toBeTruthy()
+		expect(tab("outfits") ~= nil).toBeTruthy()
+		expect(tab("nothing")).toBe(nil)
+		-- no two sections share an id or a name, so nobody takes one for another
+		local ids, names = {}, {}
+		for _, t in Categories.Tabs do
+			expect(ids[t.id]).toBe(nil)
+			expect(names[t.name]).toBe(nil)
+			ids[t.id], names[t.name] = true, true
+		end
+		expect(tab("inventory").source).toBe("inventory")
+		expect(tab("avatars").source).toBe("outfits")
+		expect(tab("parts").source).toBe(nil)
+	end)
+
+	it("asks Roblox only for types it has", function()
+		local filterIds = {}
+		for _, t in Categories.Tabs do
+			for _, f in t.filters or {} do
+				expect(filterIds[f.id]).toBe(nil)
+				filterIds[f.id] = true
+				for _, name in f.assets or {} do
+					expect(Enum.AvatarAssetType[name] ~= nil).toBeTruthy()
+				end
+				for _, name in f.bundles or {} do
+					expect(Enum.BundleType[name] ~= nil).toBeTruthy()
+				end
+				for _, name in f.inBundles or {} do
+					expect(Enum.BundleType[name] ~= nil).toBeTruthy()
+				end
+				if f.outfits then
+					expect(Enum.OutfitSource[f.outfits] ~= nil).toBeTruthy()
+				end
+				if f.browse then
+					expect(Enum.CatalogSortType[f.browse] ~= nil).toBeTruthy()
+				end
+				-- a filter is one thing: catalog assets, catalog bundles, or saved avatars
+				local kinds = (if f.assets then 1 else 0) + (if f.bundles then 1 else 0) + (if f.outfits then 1 else 0)
+				expect(kinds).toBe(1)
+			end
+		end
+	end)
+
+	it("says what each tab of bundles is for, and the Bodies tab asks for every kind of body", function()
+		local want = { dynheads = "head", shoes = "shoes", bodies = "body", moves = "anim" }
+		local seen = 0
+		for _, t in Categories.Tabs do
+			for _, f in t.filters or {} do
+				if f.bundles then
+					seen += 1
+					expect(f.kind).toBe(want[f.id])
+					expect(Bundles.isKind(f.kind)).toBe(true)
+					-- and every bundle type it searches for is labelled as that kind
+					for _, name in f.bundles do
+						expect(Bundles.kindOfLabel(name)).toBe(f.kind)
+					end
+				end
+			end
+		end
+		expect(seen).toBe(4)
+		local bodies = tab("bodies").filters[1].bundles
+		for _, item in Enum.BundleType:GetEnumItems() do
+			expect(table.find(bodies, item.Name) ~= nil).toBe(Bundles.kindOfLabel(item) == "body")
+		end
+	end)
+
+	it("can wear everything its sections show, in a slot the server will allow", function()
+		local slotName = {
+			body = function(key)
+				return "body." .. key
+			end,
+			acc = function(key)
+				return "acc." .. key
+			end,
+			anim = function(key)
+				return "anim." .. key
+			end,
+			face = function()
+				return "face"
+			end,
+			field = function(key)
+				return key
+			end,
+		}
+		local checked = 0
+		for _, t in Categories.Tabs do
+			for _, f in t.filters or {} do
+				for _, typeName in f.assets or {} do
+					local slot = Categories.slotFor(typeName)
+					if not slot then
+						error(typeName .. " is shown under " .. t.name .. " but can't be worn")
+					end
+					if not Appearance.slotAllows(slotName[slot.kind](slot.key), typeName) then
+						error(typeName .. " goes in a slot that refuses it")
+					end
+					-- on, then worn, then off
+					local app = Categories.toggle(Appearance.default(), 4242, typeName)
+					expect(Categories.isWorn(app, 4242)).toBe(true)
+					local used = Appearance.assets(app)
+					expect(#used).toBe(1)
+					expect(Appearance.slotAllows(used[1].slot, typeName)).toBe(true)
+					app = Categories.toggle(app, 4242, typeName)
+					expect(Categories.isWorn(app, 4242)).toBe(false)
+					expect(Appearance.equal(app, Appearance.default())).toBe(true)
+					checked += 1
+				end
+			end
+		end
+		expect(checked > 40).toBeTruthy()
+	end)
+
+	it("puts the torso, arms and legs on one at a time, over any body", function()
+		local parts = tab("parts")
+		expect(#parts.filters).toBe(5)
+		local keys = { Torso = "torso", LeftArm = "la", RightArm = "ra", LeftLeg = "ll", RightLeg = "rl" }
+		local app = Categories.merge(Appearance.default(), Bundles.part(soldBody(100), "body"))
+		for i, f in parts.filters do
+			-- each filter is one part, found among what isn't sold alone, or inside the bodies
+			expect(#f.assets).toBe(1)
+			expect(f.offSale).toBe(true)
+			expect(f.inBundles).toEqual(tab("bodies").filters[1].bundles)
+			local key = keys[f.assets[1]]
+			expect(key ~= nil).toBeTruthy()
+			local id = 9000 + i
+			app = Categories.toggle(app, id, f.assets[1])
+			expect(app.body[key]).toBe(id)
+			expect(Categories.isWorn(app, id)).toBe(true)
+			keys[f.assets[1]] = nil
+		end
+		expect(next(keys)).toBe(nil) -- all five
+		-- the head is still the body's, and the body's card no longer counts as worn
+		expect(app.body.head).toBe(100)
+		expect(Categories.bundleWorn(app, Bundles.part(soldBody(100), "body"))).toBe(false)
+		-- one comes off by itself
+		app = Categories.toggle(app, 9001, "Torso")
+		expect(app.body.torso).toBe(0)
+		expect(app.body.la).toBe(9002)
+		-- a body picked afterwards replaces them all
+		app = Categories.merge(app, Bundles.part(soldBody(300), "body"))
+		expect(app.body).toEqual({ head = 300, torso = 301, la = 302, ra = 303, ll = 304, rl = 305 })
+	end)
+
+	it("turns what the player owns into cards", function()
+		local rows = {
+			{ AssetId = 11, AssetType = "HairAccessory", Name = "Messy bun", Created = "2024" },
+			{ AssetId = 12, AssetType = Enum.AssetType.Hat.Value, Name = "Straw hat" },
+			{ AssetId = 11, AssetType = "HairAccessory", Name = "Messy bun again" },
+			{ AssetId = 13, Name = "" },
+			{ AssetId = "14", AssetType = "Hat", Name = "A string for an id" },
+			{ Name = "No id" },
+			"junk",
+		}
+		local items = Categories.ownedItems(rows, nil)
+		expect(#items).toBe(3)
+		expect(items[1]).toEqual({ Id = 11, Name = "Messy bun", ItemType = "Asset", AssetType = "HairAccessory" })
+		expect(items[2].AssetType).toBe("Hat")
+		expect(items[3].Name).toBe("Item")
+		expect(items[3].AssetType).toBe(nil)
+		-- a page asked for one kind only: a row that doesn't say what it is, is that kind
+		items = Categories.ownedItems(
+			{ { AssetId = 5, Name = "Left leg" }, { AssetId = 6, AssetType = "Leg", Name = "?" } },
+			"LeftLeg"
+		)
+		expect(items[1].AssetType).toBe("LeftLeg")
+		expect(items[2].AssetType).toBe("LeftLeg")
+		expect(#Categories.ownedItems(nil)).toBe(0)
+		-- a type written another way is still known
+		items = Categories.ownedItems({
+			{ AssetId = 8, AssetType = "Hair Accessory" },
+			{ AssetId = 9, AssetType = "tshirt" },
+		})
+		expect(items[1].AssetType).toBe("HairAccessory")
+		expect(items[2].AssetType).toBe("TShirt")
+		-- and each card can be worn
+		for _, item in items do
+			expect(Categories.slotFor(item.AssetType) ~= nil).toBeTruthy()
+		end
+	end)
+
+	it("turns the player's saved avatars into cards", function()
+		local items = Categories.outfitItems({
+			{ Id = 7001, Name = "Everyday me", IsEditable = true },
+			{ Id = 7002, Name = "" },
+			{ Id = 7001, Name = "Twice" },
+			{ Id = 0, Name = "Nothing" },
+			{ Name = "No id" },
+			7,
+		})
+		expect(#items).toBe(2)
+		expect(items[1]).toEqual({ Id = 7001, Name = "Everyday me", ItemType = "Outfit" })
+		expect(items[2].Name).toBe("Avatar")
+		expect(#Categories.outfitItems(nil)).toBe(0)
+		local saved = tab("avatars").filters
+		expect(saved[1].outfits).toBe("Created")
+		expect(saved[2].outfits).toBe("Purchased")
+	end)
+
+	it("takes single parts out of bodies when the catalog lists none by themselves", function()
+		local results = {
+			{
+				Id = 2001,
+				Name = "Tin robot",
+				ItemType = "Bundle",
+				BundledItems = {
+					{ Id = 31, Name = "Tin robot - Torso", Type = "Asset", AssetType = "Torso" },
+					{
+						Id = 32,
+						Name = "Tin robot - Left Arm",
+						Type = "Asset",
+						AssetType = Enum.AssetType.LeftArm.Value,
+					},
+					{ Id = 39, Name = "Tin robot", Type = "UserOutfit" },
+				},
+			},
+			{
+				Id = 2002,
+				Name = "Old knight",
+				ItemType = "Bundle",
+				BundledItems = {
+					{ Id = 41, Name = "", Type = "Asset", AssetType = "Torso" },
+					{ Id = 31, Name = "The same torso twice", Type = "Asset", AssetType = "Torso" },
+					"junk",
+				},
+			},
+			{ Id = 2003, Name = "A hat, not a bundle", ItemType = "Asset", AssetType = "Hat" },
+			"junk",
+		}
+		local torsos = Categories.partsIn(results, { "Torso" })
+		expect(#torsos).toBe(2)
+		expect(torsos[1]).toEqual({ Id = 31, Name = "Tin robot - Torso", ItemType = "Asset", AssetType = "Torso" })
+		expect(torsos[2].Name).toBe("Item")
+		local arms = Categories.partsIn(results, { "LeftArm" })
+		expect(#arms).toBe(1)
+		expect(arms[1].AssetType).toBe("LeftArm")
+		expect(#Categories.partsIn(results, { "RightLeg" })).toBe(0)
+		expect(#Categories.partsIn(nil, { "Torso" })).toBe(0)
 	end)
 end)
