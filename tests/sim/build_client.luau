@@ -689,6 +689,55 @@ run("life around town and the show when you build", function()
 	check(#errors == warned, "no warnings from any of it")
 end)
 
+run("the villagers' screen: somebody standing in front of a moving backdrop", function()
+	local warned = #errors
+	local Schema = Sim.Harness.require("ReplicatedStorage.Shared.Sim.Schema")
+	local Appearance = Sim.Harness.require("ReplicatedStorage.Shared.Avatar.Appearance")
+	local Rng = Sim.Harness.require("ReplicatedStorage.Shared.Util.Rng")
+	local input = Schema.cleanVillagerInput({ name = "Mara", pers = "sunny", app = Appearance.default() })
+	local v = Schema.newVillager("v1", input, Rng.new(1))
+	State.set("villagers", { v1 = v })
+	State.set("order", { "v1" })
+	if BuildMode.isActive() then
+		press("Done")
+	end
+	local Residents = Sim.Harness.require(Sim.CLIENT .. "UI.Residents")
+	Residents.open("v1")
+	frames(3)
+	local stage = gui:FindFirstChild("Stage", true)
+	check(stage ~= nil, "the stage is there")
+	-- a 3D picture drawn inside a CanvasGroup comes out pale: the stage itself must be a plain
+	-- frame that cuts to its box, and only the backdrop behind them a group
+	check(stage.ClassName == "Frame" and stage.ClipsDescendants == true, "it is a plain frame that cuts to its box")
+	local drop = stage:FindFirstChild("Backdrop")
+	check(drop ~= nil and drop.ClassName == "CanvasGroup", "with a backdrop of its own behind them")
+	local motion = drop and drop:FindFirstChild("Motion")
+	check(motion ~= nil and motion:FindFirstChild("Band") ~= nil, "leaning bands and shapes on it")
+	local avatar = stage:FindFirstChild("Avatar")
+	check(
+		avatar ~= nil and avatar.Parent == stage,
+		"the villager stands on the stage, beside the backdrop and not in it"
+	)
+	local shape = nil
+	for _, c in motion:GetChildren() do
+		if c.Name ~= "Band" then
+			shape = c
+			break
+		end
+	end
+	local was = shape.Position
+	frames(6)
+	check(shape.Position ~= was, "the shapes move")
+	local fade = stage:FindFirstChild("Fade")
+	check(
+		fade ~= nil and fade.BackgroundColor3 == Sim.Kit.Theme.Black,
+		"the fade under the stats is the look's own black"
+	)
+	Residents.close()
+	frames(2)
+	check(#errors == warned, "no warnings from any of it")
+end)
+
 run("the creator: a close view in a studio of its own", function()
 	local warned = #errors
 	local New = Sim.env.Instance.new
