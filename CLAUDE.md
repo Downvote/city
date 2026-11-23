@@ -17,8 +17,11 @@ the contract (update it with every API, remote or saved data change), `src/share
 2. Make the change. Shared logic stays free of services so the specs can run it.
 3. Add or update a spec in `tests/specs/` for any logic you touch (`lune run tests/run.luau <name>` runs one).
 4. For anything visual built from parts (furniture, roofs, walls, plaza buildings), render it and look:
-   `sh tools/preview/render.sh <scene> <png outside the repo>`, then read the PNG.
-5. `sh scripts/check.sh` must pass: format, types (luau-lsp against Roblox's definitions), specs, place build.
+   `sh tools/preview/render.sh <scene> <png outside the repo>`, then read the PNG. For any screen, render it the
+   same way: `sh tools/preview/ui.sh <scene> <png> [--bg <png>]` (scenes in `tools/preview/ui_dump.luau`; run
+   `sh tools/preview/fonts.sh` once for the font).
+5. `sh scripts/check.sh` must pass: format, types (luau-lsp against Roblox's definitions), specs, the client
+   simulation (`tests/sim/build_client.luau`: the real Build mode driven by clicks), place build.
 6. Commit on the working branch with a short plain message.
 
 Specs today (39, all passing): Build (catalog, plan rules, field cleaning, shapes, builder), BuildService (the server's
@@ -27,10 +30,13 @@ events, every kind reachable, text filled, numbers in range), City (starter town
 loading, economy bounds), Town (placed models exist, plots and road clear, room to walk, spawn and festival spots
 clear). The town map previews with `sh tools/preview/render.sh map <png>` (or `map:x1,z1,x2,z2`).
 
-The user asked for the genre's own layouts (house builders, avatar editors, city builders) drawn in our own style:
-docs/GAME_DESIGN.md section 10 lists them. Keep new screens to those layouts.
+The user asked for the genre's own layouts (house builders, avatar editors, city builders) and the look of popular
+Roblox games down to the buttons and icons, drawn in our own style: docs/GAME_DESIGN.md section 10. Build screens
+from `UI/Kit` (chunky outlined buttons, glass bars, panels with header bars) and `UI/Icons` (drawn icons, never
+emoji in the interface).
 
-Nothing here runs inside Roblox, so the server services, NPCs and screens are only type checked. A review pass found
+Nothing here runs inside Roblox. Build mode's client runs end to end on the simulation in `tests/sim`; the other
+screens are built on it for the UI previews; the server services and NPCs are only type checked. A review pass found
 and fixed a batch of runtime bugs (starter house never given, walls refused on bought land, camera loops, saves on
 leave, NPC network ownership, spawn races). Playtest in Studio after changing those parts.
 

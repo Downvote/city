@@ -4,6 +4,7 @@
 local TweenService = game:GetService("TweenService")
 
 local Kit = require(script.Parent.Kit)
+local Icons = require(script.Parent.Icons)
 
 local Toasts = {}
 
@@ -15,7 +16,7 @@ local ACCENTS = {
 	warn = Kit.Theme.Coral,
 	event = Kit.Theme.Yellow,
 }
-local ICONS = { info = "💬", good = "✅", warn = "⚠️", event = "📣" }
+local ICONS = { info = "news", good = "check", warn = "alert", event = "people" }
 
 local function getHolder(): Frame
 	if holder and holder.Parent then
@@ -52,15 +53,7 @@ function Toasts.show(text: string, kind: string?)
 	Kit.pad(card, 16, 9)
 	local row =
 		Kit.box({ Parent = card, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, ZIndex = 51 })
-	local icon = Kit.new("TextLabel", {
-		Text = ICONS[k],
-		BackgroundTransparency = 1,
-		TextScaled = true,
-		Font = Enum.Font.BuilderSansBold,
-		Size = UDim2.fromOffset(24, 24),
-		ZIndex = 52,
-		Parent = row,
-	})
+	local icon = Icons.make(ICONS[k], 28, { Parent = row, Position = UDim2.new(0, -2, 0, -2), ZIndex = 52 })
 	local label = Kit.text(text, {
 		Parent = row,
 		Size = UDim2.new(1, -34, 0, 0),
@@ -92,7 +85,7 @@ function Toasts.show(text: string, kind: string?)
 		local info = TweenInfo.new(0.4)
 		TweenService:Create(card, info, { BackgroundTransparency = 1 }):Play()
 		TweenService:Create(label, info, { TextTransparency = 1 }):Play()
-		TweenService:Create(icon, info, { TextTransparency = 1 }):Play()
+		icon.Visible = false
 		TweenService:Create(stroke, info, { Transparency = 1 }):Play()
 		task.wait(0.45)
 		card:Destroy()

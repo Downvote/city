@@ -20,6 +20,7 @@ local Text = require(Shared.Util.Text)
 local Tuning = require(Shared.Config.Tuning)
 
 local Kit = require(script.Parent.Kit)
+local Icons = require(script.Parent.Icons)
 local Toasts = require(script.Parent.Toasts)
 local State = require(script.Parent.Parent.Controllers.State)
 
@@ -190,8 +191,8 @@ refreshWorn = function()
 		local stroke = card:FindFirstChildOfClass("UIStroke")
 		local worn = Categories.isWorn(app, id)
 		if stroke then
-			stroke.Color = if worn then T.GreenDark else T.Line
-			stroke.Thickness = if worn then 3 else 1.5
+			stroke.Color = if worn then T.Green else T.Ink
+			stroke.Thickness = if worn then 3.5 else 2
 		end
 		local badge = card:FindFirstChild("Worn")
 		if badge and badge:IsA("GuiObject") then
@@ -211,7 +212,7 @@ local function itemCard(item: any, order: number, onClick: (() -> ())?): GuiObje
 		Parent = grid,
 	})
 	Kit.corner(card, 12)
-	Kit.stroke(card, T.Line, 1.5)
+	Kit.stroke(card, T.Ink, 2)
 	local picture = Kit.frame({
 		Parent = card,
 		Size = UDim2.fromOffset(102, 100),
@@ -256,14 +257,8 @@ local function itemCard(item: any, order: number, onClick: (() -> ())?): GuiObje
 		Radius = 12,
 		Visible = false,
 	})
-	Kit.stroke(worn, T.White, 2)
-	Kit.title("✓", {
-		Parent = worn,
-		Size = UDim2.fromScale(1, 1),
-		TextSize = 15,
-		Color = T.White,
-		AlignX = Enum.TextXAlignment.Center,
-	})
+	Kit.stroke(worn, T.Ink, 2)
+	Icons.make("check", 18, { Parent = worn, Position = UDim2.fromOffset(3, 3) })
 	Kit.text(item.Name or "", {
 		Parent = card,
 		Size = UDim2.new(1, -8, 0, 30),
@@ -617,7 +612,8 @@ local function outfitsPage()
 			Parent = list,
 			Size = UDim2.new(1, -8, 0, 48),
 			Color = T.White,
-			Stroke = T.Line,
+			Stroke = T.Ink,
+			StrokeThickness = 2,
 			LayoutOrder = i,
 		})
 		Kit.pad(r, 10, 4)
@@ -752,7 +748,7 @@ local function buildProfilePage()
 			{ Text = "", AutoButtonColor = true, BackgroundColor3 = T.White, LayoutOrder = i, Parent = persGrid }
 		)
 		Kit.corner(b, 12)
-		Kit.stroke(b, T.Line, 2)
+		Kit.stroke(b, T.Ink, 2)
 		Kit.title(
 			p.name,
 			{ Parent = b, Size = UDim2.new(1, -16, 0, 24), Position = UDim2.fromOffset(8, 4), TextSize = 18 }
@@ -963,65 +959,95 @@ local function build()
 		Size = UDim2.new(0, 660, 1, -24),
 		Position = UDim2.new(1, -12, 0, 12),
 		AnchorPoint = Vector2.new(1, 0),
-		Stroke = T.Line,
+		Stroke = T.Ink,
+		StrokeThickness = 4,
 		Parent = frame,
-		Radius = 18,
+		Radius = 20,
 	})
-	Kit.pad(panel, 14, 12)
-	titleLabel = Kit.title("Make a villager", { Parent = panel, Size = UDim2.new(1, -60, 0, 32), TextSize = 26 })
-	Kit.button("✕", {
+	-- a pink header bar with the title, the way the other panels have theirs
+	local header =
+		Kit.frame({ Name = "Header", Parent = panel, Size = UDim2.new(1, 0, 0, 56), Color = T.Pink, Radius = 20 })
+	Kit.gradient(header, 0.22)
+	Kit.frame({
+		Parent = header,
+		Size = UDim2.new(1, 0, 0, 20),
+		Position = UDim2.new(0, 0, 1, -20),
+		Color = Kit.darker(T.Pink, 0.84),
+		Radius = false,
+	})
+	Kit.frame({
+		Parent = header,
+		Size = UDim2.new(1, 0, 0, 3),
+		Position = UDim2.new(0, 0, 1, 0),
+		Color = T.Ink,
+		Radius = false,
+	})
+	Icons.make("shirt", 42, { Parent = header, Position = UDim2.new(0, 14, 0.5, -21) })
+	local inner = Kit.box({ Parent = panel, Size = UDim2.new(1, -28, 1, -70), Position = UDim2.fromOffset(14, 66) })
+	titleLabel = Kit.title("Make a villager", {
+		Parent = header,
+		Size = UDim2.new(1, -130, 1, 0),
+		Position = UDim2.fromOffset(64, 0),
+		TextSize = 28,
+		Color = T.White,
+		Outline = Kit.darker(T.Pink, 0.4),
+		OutlineThickness = 3,
+	})
+	Kit.closeButton({
 		Parent = panel,
-		Size = UDim2.fromOffset(36, 36),
-		Position = UDim2.new(1, -36, 0, -2),
-		Color = T.Coral,
-		TextSize = 18,
-		Radius = 18,
+		Size = UDim2.fromOffset(50, 50),
+		Position = UDim2.new(1, 12, 0, -12),
+		AnchorPoint = Vector2.new(1, 0),
+		ZIndex = 3,
 	}, function()
 		Creator.close()
 	end)
+	panel = inner
 	-- the two steps as one segmented control
 	local steps = Kit.frame({
 		Parent = panel,
-		Size = UDim2.new(1, 0, 0, 42),
-		Position = UDim2.fromOffset(0, 40),
+		Size = UDim2.new(1, 0, 0, 48),
+		Position = UDim2.fromOffset(0, 0),
 		Color = T.PaperDark,
-		Radius = 21,
+		Radius = 16,
+		Stroke = T.Ink,
+		StrokeThickness = 2,
 	})
 	Kit.pad(steps, 4, 4)
 	Kit.list(steps, 4, true)
 	stepButtons.look = Kit.button(
-		"👕  Look",
-		{ Parent = steps, Size = UDim2.new(0.5, -2, 1, 0), TextSize = 17, Radius = 17 },
+		"Look",
+		{ Parent = steps, Size = UDim2.new(0.5, -2, 1, 0), TextSize = 18, Radius = 14, Icon = "shirt" },
 		function()
 			showStep("look")
 		end
 	)
 	stepButtons.profile = Kit.button(
-		"📝  Name and personality",
-		{ Parent = steps, Size = UDim2.new(0.5, -2, 1, 0), TextSize = 17, Radius = 17 },
+		"Name and personality",
+		{ Parent = steps, Size = UDim2.new(0.5, -2, 1, 0), TextSize = 18, Radius = 14, Icon = "person" },
 		function()
 			showStep("profile")
 		end
 	)
 
-	lookPage = Kit.box({ Parent = panel, Size = UDim2.new(1, 0, 1, -94), Position = UDim2.fromOffset(0, 92) })
+	lookPage = Kit.box({ Parent = panel, Size = UDim2.new(1, 0, 1, -58), Position = UDim2.fromOffset(0, 58) })
 	profilePage =
-		Kit.box({ Parent = panel, Size = UDim2.new(1, 0, 1, -94), Position = UDim2.fromOffset(0, 92), Visible = false })
+		Kit.box({ Parent = panel, Size = UDim2.new(1, 0, 1, -58), Position = UDim2.fromOffset(0, 58), Visible = false })
 
 	-- categories down the left, as icon tiles
 	local ICONS = {
-		wearing = "👤",
-		hair = "💇",
-		heads = "🙂",
-		accessories = "🎩",
-		tops = "👕",
-		bottoms = "👖",
-		shoes = "👟",
-		bodies = "🧍",
-		moves = "💃",
-		skin = "🎨",
-		shape = "📏",
-		outfits = "👗",
+		wearing = "person",
+		hair = "hair",
+		heads = "smile",
+		accessories = "hat",
+		tops = "shirt",
+		bottoms = "pants",
+		shoes = "shoe",
+		bodies = "person",
+		moves = "music",
+		skin = "brush",
+		shape = "ruler",
+		outfits = "shirt",
 	}
 	local rail = Kit.scroll({ Parent = lookPage, Size = UDim2.new(0, 78, 1, 0) })
 	rail.ScrollBarThickness = 0
@@ -1050,7 +1076,7 @@ local function build()
 	local browse = Kit.box({ Parent = lookPage, Size = UDim2.new(1, -88, 1, 0), Position = UDim2.fromOffset(88, 0) })
 
 	local searchRow = Kit.box({ Parent = browse, Size = UDim2.new(1, 0, 0, 40) })
-	searchBox = Kit.textbox("🔍  Search the catalog", { Parent = searchRow, Size = UDim2.new(1, -150, 1, 0) })
+	searchBox = Kit.textbox("Search the catalog", { Parent = searchRow, Size = UDim2.new(1, -150, 1, 0) })
 	searchBox.FocusLost:Connect(function(enter)
 		keyword = Text.clean(searchBox.Text):sub(1, 50)
 		if enter or true then
@@ -1119,13 +1145,13 @@ local function build()
 			fn
 		)
 	end
-	tool("↩️", "Undo", undo, 1)
-	tool("↪️", "Redo", redo, 2)
-	tool("🎲", "Shuffle", shuffle, 3)
-	tool("🧹", "Reset", function()
+	tool("undo", "Undo", undo, 1)
+	tool("redo", "Redo", redo, 2)
+	tool("dice", "Shuffle", shuffle, 3)
+	tool("trash", "Reset", function()
 		setApp(Appearance.default())
 	end, 4)
-	tool("🔍", "Face", function()
+	tool("smile", "Face", function()
 		if zoom > 6 then
 			zoom, focusY = 4.5, 4.2
 		else
@@ -1138,7 +1164,8 @@ local function build()
 		Size = UDim2.fromOffset(420, 60),
 		Position = UDim2.new(0, 12, 1, -98),
 		AnchorPoint = Vector2.new(0, 1),
-		Stroke = T.Line,
+		Stroke = T.Ink,
+		StrokeThickness = 2,
 		Radius = 16,
 		Parent = frame,
 	})

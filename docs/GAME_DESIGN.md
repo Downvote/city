@@ -140,22 +140,37 @@ ten-day seasons, and weather suited to the season: rain, storms, snow, blossom, 
 
 > also, it seems like villager ai dosent path around walls or other collision objects to get to locations they want
 
-The screens follow the layouts players already know from the genre, drawn in our own style:
+> build mode still dosent let me place anything. also, follow more closely popular game menus and uis, down to the
+> button design, sprites and other details
 
-- **Build mode** works like the house builders on Roblox: a dark bar along the bottom with the main categories
-  (Build, Furniture, Outdoor, Work) and Done, a row of sub categories above it, and a tray of items as 3D pictures
-  with their price. Walls, rooms, floors and roofs show their styles and ready-made finishes as tiles. A tool strip
-  down the left (pick, move, turn, copy, paint, sell, undo, redo), the floor switcher with roof, wall and grid
-  toggles top left, coins top right, a hint above the tray, and a small action bar that floats over whatever you
-  picked with its name, its value and quick buttons.
-- **The main screen** has stat pills top left (coins, people, happiness), the town's level card with a progress bar
-  to the next level, the clock and weather top right, and a dock of big icon buttons down the left. It all steps
-  aside in Build mode.
-- **The creator** has a rail of category icons, item cards with a green tick on what's worn, filter chips, a search
-  box, and a tool bar of icon buttons over the 3D view.
+The screens follow the layouts players already know from the genre, and the look of the big Roblox games, drawn in
+our own style:
+
+- **Buttons** are chunky: a bright face with a soft top-lit gradient and a glossy strip, a darker lip under it so it
+  looks raised, a thick dark outline, and white rounded text (Fredoka One) with an outline in a darker shade of the
+  button. They grow a little under the mouse and squash when pressed.
+- **Icons** are drawn, not emoji: about eighty cartoon icons (coin, people, hammer, sofa, roof, brush, gift...) made
+  of flat shapes with a top-lit shade and a thick dark outline round every piece (`UI/Icons`). They need no uploaded
+  images, so they always show and stay sharp at any size.
+- **Bars over the 3D view** are dark glass with a thick outline: the coin pill with a big coin over its end and a
+  green + button, the people and happiness pills, the level bar with a medal, the clock with the weather's icon.
+- **Panels** are white cards with a thick outline, a coloured header bar with the panel's icon and an outlined title,
+  and a red close button sitting on the top right corner. Progress bars are outlined tracks with a shaded fill.
+  Things waiting for you carry a red badge (the daily gift's "!").
+- **Build mode** works like the house builders on Roblox: a glass bar along the bottom with the main categories
+  (Build, Furniture, Outdoor, Work) and a green Done, a scrolling row of sub categories above it, and a tray of item
+  cards (the 3D picture on a blue ground, the name, a green price tag with a coin). Walls, rooms, floors and roofs
+  show their styles and ready-made finishes as tiles. A tool strip down the left (pick, move, turn, copy, paint,
+  sell, undo, redo), coins and the floor switcher with roof, wall and grid toggles top right, a hint above the tray,
+  and an action bar that floats over whatever you picked with its name, what it sells for and quick buttons.
+- **The main screen** has the pills and level bar top left, the clock top right and a dock of big coloured tiles
+  down the left (Build, Villagers, Create, City, Shop, News, Gift). It all steps aside in Build mode and while the
+  creator is open.
+- **The creator** has a pink header, a rail of category tiles, item cards with a green tick on what's worn, filter
+  chips, a search box, and a tool bar of icon tiles over the 3D view.
 - **Events** play in a dialogue box: the event's name on a banner, the speaker on a name plate, words typed out, a
-  little arrow when you can click on, and the choices stacked underneath.
-- **Panels** are white cards with an icon badge, a soft shadow and a round close button.
+  bouncing arrow when you can click on, and the choices as big buttons underneath.
+- **Notices** pop in at the top as dark pills with an icon and a coloured edge for their kind.
 
 Villagers walk with Roblox's pathfinding with jumping on, so they go round walls, through doorways (doors are free to
 pass and open as they come), round furniture and over low steps. If they get stuck they jump, then plan again.

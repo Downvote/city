@@ -52,14 +52,7 @@ local function moodWord(m: number): string
 end
 
 local function bar(parent: Instance, ratio: number, color: Color3, order: number): Frame
-	local track = Kit.frame({
-		Parent = parent,
-		Size = UDim2.new(1, 0, 0, 10),
-		Color = T.PaperDark,
-		Radius = 5,
-		LayoutOrder = order,
-	})
-	Kit.frame({ Parent = track, Size = UDim2.fromScale(math.clamp(ratio, 0, 1), 1), Color = color, Radius = 5 })
+	local track = Kit.bar({ Parent = parent, Size = UDim2.new(1, -4, 0, 14), LayoutOrder = order }, ratio, color)
 	return track
 end
 
@@ -107,7 +100,7 @@ local function choose(title: string, options: { { label: string, sub: string?, f
 			Parent = scroll,
 		})
 		Kit.corner(b, 10)
-		Kit.stroke(b, T.Line, 2)
+		Kit.stroke(b, T.Ink, 2)
 		Kit.text(o.label, {
 			Parent = b,
 			Size = UDim2.new(1, -16, 0, 22),
@@ -386,20 +379,11 @@ local function showDetail()
 			TextSize = 15,
 			Color = if r.q then T.CoralDark else T.InkSoft,
 		})
-		local track = Kit.frame({
+		Kit.bar({
 			Parent = row,
-			Size = UDim2.new(0.25, -4, 0, 8),
-			Position = UDim2.new(0.75, 0, 0.5, -4),
-			Color = T.PaperDark,
-			Radius = 4,
-		})
-		local ratio = (r.s + 100) / 200
-		Kit.frame({
-			Parent = track,
-			Size = UDim2.fromScale(ratio, 1),
-			Color = if r.s >= 0 then T.Coral else T.BlueDark,
-			Radius = 4,
-		})
+			Size = UDim2.new(0.25, -8, 0, 12),
+			Position = UDim2.new(0.75, 0, 0.5, -6),
+		}, (r.s + 100) / 200, if r.s >= 0 then T.Pink else T.BlueDark)
 	end
 	local _ = Jobs
 	local _2 = Tuning
@@ -430,7 +414,7 @@ local function refreshList()
 			Parent = listFrame,
 		})
 		Kit.corner(card, 12)
-		Kit.stroke(card, if on then T.BlueDark else T.Line, 2)
+		Kit.stroke(card, if on then T.Blue else T.Ink, if on then 3 else 2)
 		Kit.frame({
 			Parent = card,
 			Size = UDim2.fromOffset(10, 46),
@@ -453,19 +437,11 @@ local function refreshList()
 			TextSize = 13,
 			Color = T.InkSoft,
 		})
-		local track = Kit.frame({
+		Kit.bar({
 			Parent = card,
-			Size = UDim2.new(1, -40, 0, 6),
-			Position = UDim2.fromOffset(26, 48),
-			Color = T.PaperDark,
-			Radius = 3,
-		})
-		Kit.frame({
-			Parent = track,
-			Size = UDim2.fromScale(v.mood / 100, 1),
-			Color = if v.mood >= 50 then T.Green else T.Coral,
-			Radius = 3,
-		})
+			Size = UDim2.new(1, -44, 0, 10),
+			Position = UDim2.fromOffset(26, 47),
+		}, v.mood / 100, if v.mood >= 50 then T.Green else T.Coral)
 		card.Activated:Connect(function()
 			selected = v.id
 			refreshList()
@@ -499,7 +475,7 @@ function Residents.open(vid: string?)
 	if vid then
 		selected = vid
 	end
-	panel = Kit.panel("Villagers", UDim2.fromOffset(920, 600), Residents.close, "👥")
+	panel = Kit.panel("Villagers", UDim2.fromOffset(920, 600), Residents.close, "people", Kit.Theme.Green)
 	listFrame = Kit.scroll({ Parent = panel.body, Size = UDim2.new(0, 250, 1, 0) })
 	Kit.list(listFrame, 6)
 	detail = Kit.box({ Parent = panel.body, Size = UDim2.new(1, -266, 1, 0), Position = UDim2.fromOffset(266, 0) })

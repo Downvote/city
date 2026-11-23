@@ -59,7 +59,8 @@ local function card(
 		Parent = parent,
 		Size = UDim2.new(1, -8, 0, 60),
 		Color = T.White,
-		Stroke = T.Line,
+		Stroke = T.Ink,
+		StrokeThickness = 2,
 		LayoutOrder = order,
 	})
 	Kit.pad(c, 10, 6)
@@ -175,7 +176,7 @@ end
 
 function ShopPanel.open()
 	ShopPanel.close()
-	panel = Kit.panel("Shop", UDim2.fromOffset(620, 560), ShopPanel.close, "🛒")
+	panel = Kit.panel("Shop", UDim2.fromOffset(620, 560), ShopPanel.close, "cart", Kit.Theme.Orange)
 	Kit.popIn(panel.root)
 	draw()
 	table.insert(unbind, State.on("inv", draw))

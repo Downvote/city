@@ -11,6 +11,7 @@ local Remotes = require(Shared.Net.Remotes)
 local Text = require(Shared.Util.Text)
 
 local Kit = require(script.Parent.Kit)
+local Icons = require(script.Parent.Icons)
 local State = require(script.Parent.Parent.Controllers.State)
 
 local EventCard = {}
@@ -24,7 +25,7 @@ local titleLabel: TextLabel
 local speakerLabel: TextLabel
 local plate: Frame
 local bodyLabel: TextLabel
-local moreArrow: TextLabel
+local moreArrow: Frame
 local choiceRow: Frame
 local watchButton: TextButton
 local current: any = nil
@@ -50,7 +51,7 @@ local function stopWatching()
 		end
 	end
 	if watchButton then
-		watchButton.Text = "🎥 Watch"
+		watchButton.Text = "Watch"
 	end
 end
 
@@ -64,7 +65,7 @@ local function startWatching()
 		return
 	end
 	watching = true
-	watchButton.Text = "🎥 Stop"
+	watchButton.Text = "Stop"
 	local cam = workspace.CurrentCamera
 	cam.CameraType = Enum.CameraType.Scriptable
 	local angle = 0
@@ -138,7 +139,7 @@ local function showChoices(ev: any)
 		local label = c.text
 		local affordable = c.cost == nil or (State.data.coins or 0) >= c.cost
 		if c.cost then
-			label = Text.fill("{text}  (🪙 {cost})", { text = label, cost = Text.commas(c.cost) })
+			label = Text.fill("{text} ({cost} coins)", { text = label, cost = Text.commas(c.cost) })
 		end
 		local b = Kit.button(label, {
 			Parent = choiceRow,
@@ -290,7 +291,8 @@ function EventCard.start(_hud: any)
 		Wrap = false,
 	})
 
-	watchButton = Kit.button("🎥 Watch", {
+	watchButton = Kit.button("Watch", {
+		Icon = "camera",
 		Parent = card,
 		Size = UDim2.fromOffset(112, 30),
 		Position = UDim2.new(1, -124, 0, -16),
@@ -313,14 +315,7 @@ function EventCard.start(_hud: any)
 		TextSize = 21,
 		LayoutOrder = 1,
 	})
-	moreArrow = Kit.title("▼", {
-		Parent = card,
-		Size = UDim2.fromOffset(20, 20),
-		Position = UDim2.new(1, -34, 1, -28),
-		TextSize = 16,
-		Color = T.Coral,
-		AlignX = Enum.TextXAlignment.Center,
-	})
+	moreArrow = Icons.make("down", 22, { Parent = card, Position = UDim2.new(1, -36, 1, -30), Tint = T.Coral })
 	moreArrow.Visible = false
 	task.spawn(function()
 		local t = 0

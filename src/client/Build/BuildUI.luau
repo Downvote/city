@@ -14,6 +14,7 @@ local Colors = require(Shared.Util.Colors)
 local Text = require(Shared.Util.Text)
 
 local Kit = require(script.Parent.Parent.UI.Kit)
+local Icons = require(script.Parent.Parent.UI.Icons)
 local Toasts = require(script.Parent.Parent.UI.Toasts)
 local ModelPreview = require(script.Parent.Parent.UI.ModelPreview)
 local State = require(script.Parent.Parent.Controllers.State)
@@ -24,79 +25,77 @@ local BuildUI = {}
 local T = Kit.Theme
 local s = BuildMode.state
 
-local GLASS = Color3.fromRGB(24, 31, 46)
-
 local MAIN = {
 	{
 		id = "build",
-		icon = "🧱",
+		icon = "house",
 		name = "Build",
 		subs = {
-			{ id = "walls", icon = "🧱", name = "Walls" },
-			{ id = "rooms", icon = "🏠", name = "Rooms" },
-			{ id = "floors", icon = "🟫", name = "Floors" },
-			{ id = "roofs", icon = "🔺", name = "Roofs" },
-			{ id = "doors", icon = "🚪", name = "Doors" },
-			{ id = "windows", icon = "🪟", name = "Windows" },
-			{ id = "structure", icon = "🪜", name = "Stairs" },
+			{ id = "walls", icon = "wall", name = "Walls" },
+			{ id = "rooms", icon = "room", name = "Rooms" },
+			{ id = "floors", icon = "floor", name = "Floors" },
+			{ id = "roofs", icon = "roof", name = "Roofs" },
+			{ id = "doors", icon = "door", name = "Doors" },
+			{ id = "windows", icon = "window", name = "Windows" },
+			{ id = "structure", icon = "stairs", name = "Stairs" },
 		},
 	},
 	{
 		id = "furniture",
-		icon = "🛋️",
+		icon = "sofa",
 		name = "Furniture",
 		subs = {
-			{ id = "seating", icon = "🪑", name = "Seating" },
-			{ id = "tables", icon = "🍽️", name = "Tables" },
-			{ id = "beds", icon = "🛏️", name = "Beds" },
-			{ id = "storage", icon = "🗄️", name = "Storage" },
-			{ id = "kitchen", icon = "🍳", name = "Kitchen" },
-			{ id = "bath", icon = "🛁", name = "Bathroom" },
-			{ id = "lights", icon = "💡", name = "Lights" },
-			{ id = "fun", icon = "🎮", name = "Fun" },
-			{ id = "decor", icon = "🪴", name = "Decor" },
-			{ id = "walldecor", icon = "🖼️", name = "On walls" },
+			{ id = "seating", icon = "chair", name = "Seating" },
+			{ id = "tables", icon = "table", name = "Tables" },
+			{ id = "beds", icon = "bed", name = "Beds" },
+			{ id = "storage", icon = "cabinet", name = "Storage" },
+			{ id = "kitchen", icon = "pot", name = "Kitchen" },
+			{ id = "bath", icon = "bath", name = "Bathroom" },
+			{ id = "lights", icon = "lamp", name = "Lights" },
+			{ id = "fun", icon = "gamepad", name = "Fun" },
+			{ id = "decor", icon = "plant", name = "Decor" },
+			{ id = "walldecor", icon = "frame", name = "On walls" },
 		},
 	},
 	{
 		id = "outdoor",
-		icon = "🌳",
+		icon = "tree",
 		name = "Outdoor",
 		subs = {
-			{ id = "garden", icon = "🌷", name = "Garden" },
-			{ id = "fences", icon = "🚧", name = "Fences" },
-			{ id = "paths", icon = "🛤️", name = "Paths" },
+			{ id = "garden", icon = "flower", name = "Garden" },
+			{ id = "fences", icon = "fence", name = "Fences" },
+			{ id = "paths", icon = "path", name = "Paths" },
 		},
 	},
 	{
 		id = "work",
-		icon = "💼",
+		icon = "store",
 		name = "Work",
-		subs = { { id = "work", icon = "🏪", name = "Workplaces" } },
+		subs = { { id = "work", icon = "store", name = "Workplaces" } },
 	},
 }
 
 local WALL_STYLES = { "wall", "half", "glass" }
 local FENCE_STYLES = { "fence", "railing", "hedge", "stone" }
 local STYLE_ICONS = {
-	wall = "🧱",
-	half = "▬",
-	glass = "🪟",
-	railing = "🛡️",
-	fence = "🚧",
-	hedge = "🌳",
-	stone = "🪨",
-	gable = "🔺",
-	hip = "⛰️",
-	pyramid = "🔼",
-	shed = "📐",
-	flat = "▭",
+	wall = "wall",
+	half = "wallHalf",
+	glass = "wallGlass",
+	railing = "railing",
+	fence = "fence",
+	hedge = "hedge",
+	stone = "stoneWall",
+	gable = "roof",
+	hip = "roofHip",
+	pyramid = "roofPyramid",
+	shed = "roofShed",
+	flat = "roofFlat",
 }
 
 local ui: Frame
 local tray: Frame
 local trayBody: Frame
-local subBar: Frame
+local subBar: ScrollingFrame
 local mainButtons: { [string]: TextButton } = {}
 local subButtons: { [string]: TextButton } = {}
 local toolButtons: { [string]: TextButton } = {}
@@ -107,6 +106,7 @@ local actionBar: Frame
 local actionTitle: TextLabel
 local actionButtons: Frame
 local viewButtons: { [string]: TextButton } = {}
+local built = false
 local mainTab = "build"
 local subTab = "walls"
 local trayMode = "" -- what the tray shows right now
@@ -126,7 +126,7 @@ local function clear(frame: Instance)
 end
 
 local function trayRow(height: number?): ScrollingFrame
-	local row = Kit.scroll({ Parent = trayBody, Size = UDim2.new(1, 0, 0, height or 134), Axis = Enum.AutomaticSize.X })
+	local row = Kit.scroll({ Parent = trayBody, Size = UDim2.new(1, 0, 0, height or 160), Axis = Enum.AutomaticSize.X })
 	row.ScrollingDirection = Enum.ScrollingDirection.X
 	row.ScrollBarThickness = 4
 	local layout = Kit.list(row, 8, true)
@@ -152,61 +152,74 @@ local function sectionLabel(parent: Instance, text: string, order: number?)
 	})
 end
 
--- A tile for a catalog item: a 3D picture, its name and price.
+-- A card for a catalog item, the way shop grids in Roblox games look: a white card with a dark
+-- outline, the item's 3D picture on a soft blue ground, its name and a green price tag.
 local function itemTile(parent: Instance, def: any, order: number, onPick: () -> ()): TextButton
 	local card = Kit.new("TextButton", {
+		Name = def.id,
 		Text = "",
 		AutoButtonColor = false,
 		BackgroundColor3 = T.White,
-		Size = UDim2.fromOffset(112, 126),
+		Size = UDim2.fromOffset(118, 152),
 		LayoutOrder = order,
 		Parent = parent,
 	})
-	Kit.corner(card, 12)
-	local stroke = Kit.stroke(card, T.Line, 1.5)
+	card:SetAttribute("ItemId", def.id)
+	Kit.corner(card, 14)
+	local stroke = Kit.stroke(card, T.Ink, 2.5)
 	local pic = Kit.frame({
 		Parent = card,
-		Size = UDim2.new(1, -10, 0, 78),
+		Size = UDim2.new(1, -10, 0, 98),
 		Position = UDim2.fromOffset(5, 5),
-		Color = T.PaperDark,
-		Radius = 9,
+		Color = Color3.fromRGB(206, 232, 255),
+		Radius = 10,
 	})
 	task.spawn(function()
 		ModelPreview.fromPrims(Catalog.prims(def), { Parent = pic })
 	end)
-	Kit.text(def.name, {
+	Kit.title(def.name, {
 		Parent = card,
 		Size = UDim2.new(1, -10, 0, 18),
-		Position = UDim2.fromOffset(5, 84),
-		TextSize = 13,
-		Font = Kit.Fonts.Bold,
+		Position = UDim2.fromOffset(5, 105),
+		TextSize = 14,
 		AlignX = Enum.TextXAlignment.Center,
 		Wrap = false,
 	}).TextTruncate =
 		Enum.TextTruncate.AtEnd
 	local price = Kit.frame({
 		Parent = card,
-		Size = UDim2.fromOffset(0, 18),
+		Size = UDim2.fromOffset(0, 20),
 		AutomaticSize = Enum.AutomaticSize.X,
-		Position = UDim2.new(0.5, 0, 0, 103),
+		Position = UDim2.new(0.5, 0, 0, 125),
 		AnchorPoint = Vector2.new(0.5, 0),
-		Color = Color3.fromRGB(232, 248, 238),
-		Radius = 9,
+		Color = T.Green,
+		Radius = 10,
+		Stroke = T.Ink,
+		StrokeThickness = 2,
 	})
-	Kit.pad(price, 8, 0)
-	Kit.text("🪙 " .. Text.commas(def.price), {
-		Parent = price,
-		Size = UDim2.fromOffset(0, 18),
+	Kit.gradient(price, 0.2)
+	Kit.pad(price, 6, 0)
+	local row = Kit.box({ Parent = price, Size = UDim2.fromOffset(0, 20), AutomaticSize = Enum.AutomaticSize.X })
+	Kit.list(row, 3, true)
+	Icons.make("coin", 16, { Parent = row, LayoutOrder = 1 })
+	Kit.title(Text.commas(def.price), {
+		Parent = row,
+		Size = UDim2.fromOffset(0, 20),
 		AutomaticSize = Enum.AutomaticSize.X,
-		TextSize = 13,
-		Font = Kit.Fonts.Bold,
-		Color = T.GreenDark,
+		TextSize = 14,
+		Color = T.White,
+		Wrap = false,
+		LayoutOrder = 2,
+		Outline = Kit.darker(T.Green, 0.42),
 	})
+	local scale = Kit.new("UIScale", { Parent = card })
 	card.MouseEnter:Connect(function()
 		stroke.Color = T.Blue
+		scale.Scale = 1.05
 	end)
 	card.MouseLeave:Connect(function()
-		stroke.Color = T.Line
+		stroke.Color = T.Ink
+		scale.Scale = 1
 	end)
 	card.Activated:Connect(onPick)
 	return card
@@ -227,13 +240,13 @@ local function choiceTile(
 	local card = Kit.new("TextButton", {
 		Text = "",
 		AutoButtonColor = false,
-		BackgroundColor3 = if selected then Color3.fromRGB(226, 237, 255) else T.White,
+		BackgroundColor3 = if selected then Color3.fromRGB(214, 234, 255) else T.White,
 		Size = size,
 		LayoutOrder = order,
 		Parent = parent,
 	})
 	Kit.corner(card, 12)
-	Kit.stroke(card, if selected then T.Blue else T.Line, if selected then 3 else 1.5)
+	Kit.stroke(card, if selected then T.Blue else T.Ink, if selected then 3.5 else 2)
 	if compact and opts.swatch then
 		local sw = Kit.frame({
 			Parent = card,
@@ -263,14 +276,7 @@ local function choiceTile(
 		}).TextTruncate =
 			Enum.TextTruncate.AtEnd
 		if selected then
-			Kit.text("✓", {
-				Parent = sw,
-				Size = UDim2.fromOffset(18, 18),
-				Position = UDim2.new(1, -20, 0, 2),
-				TextSize = 14,
-				Font = Kit.Fonts.Title,
-				Color = if light then T.BlueDark else T.White,
-			})
+			Icons.make("check", 20, { Parent = sw, Position = UDim2.new(1, -22, 0, 2) })
 		end
 	else
 		if opts.swatch then
@@ -294,25 +300,14 @@ local function choiceTile(
 				})
 			end
 		elseif opts.icon then
-			Kit.new("TextLabel", {
-				Text = opts.icon,
-				BackgroundTransparency = 1,
-				TextScaled = true,
-				Font = Enum.Font.BuilderSansBold,
-				TextColor3 = T.Ink,
-				Size = UDim2.fromOffset(44, 44),
-				Position = UDim2.new(0.5, 0, 0, 8),
-				AnchorPoint = Vector2.new(0.5, 0),
-				Parent = card,
-			})
+			Icons.make(opts.icon, 46, { Parent = card, Position = UDim2.new(0.5, -23, 0, 8) })
 		end
 		local bottom = if opts.sub then 30 else 16
-		Kit.text(label, {
+		Kit.title(label, {
 			Parent = card,
 			Size = UDim2.new(1, -8, 0, 16),
 			Position = UDim2.new(0, 4, 1, -bottom - 2),
-			TextSize = 13,
-			Font = Kit.Fonts.Bold,
+			TextSize = 14,
 			AlignX = Enum.TextXAlignment.Center,
 			Wrap = false,
 		})
@@ -328,14 +323,7 @@ local function choiceTile(
 			})
 		end
 		if selected then
-			Kit.text("✓", {
-				Parent = card,
-				Size = UDim2.fromOffset(20, 20),
-				Position = UDim2.new(1, -22, 0, 3),
-				TextSize = 16,
-				Font = Kit.Fonts.Title,
-				Color = T.BlueDark,
-			})
+			Icons.make("check", 24, { Parent = card, Position = UDim2.new(1, -26, 0, 2) })
 		end
 	end
 	card.Activated:Connect(onPick)
@@ -466,7 +454,7 @@ local function wallTray(styles: { string }, room: boolean)
 			row,
 			def.name,
 			i,
-			{ icon = STYLE_ICONS[id], selected = s.wallStyle == id, sub = Text.fill("🪙 {n} a stud", { n = per }) },
+			{ icon = STYLE_ICONS[id], selected = s.wallStyle == id, sub = Text.fill("{n} a stud", { n = per }) },
 			function()
 				armTool()
 				s.wallStyle = id
@@ -546,7 +534,7 @@ local function floorTray()
 			swatch = Colors.fromHex(preset.c),
 			material = preset.m,
 			selected = s.floorPaint.c == preset.c and s.floorPaint.m == preset.m,
-			sub = Text.fill("🪙 {n} a square", { n = Tuning.Prices.FloorPerCell }),
+			sub = Text.fill("{n} a square", { n = Tuning.Prices.FloorPerCell }),
 		}, function()
 			armTool()
 			s.floorPaint.c, s.floorPaint.m = preset.c, preset.m
@@ -578,7 +566,8 @@ local function roofControls(parent: Instance, get: () -> any, set: (string, any)
 	Kit.slider("Overhang", 0, Tuning.Plot.RoofMaxOverhang, get().over, 0.5, function(v)
 		set("over", v)
 	end, { Parent = sliders, Size = UDim2.new(1, 0, 0, 44) })
-	Kit.button("⟳ Turn", {
+	Kit.button("Turn", {
+		Icon = "rotate",
 		Parent = row,
 		Size = UDim2.fromOffset(90, 40),
 		TextSize = 16,
@@ -638,7 +627,8 @@ local function paintTray()
 			refreshTray()
 		end)
 	end
-	Kit.button(if s.paint.pick then "Click something..." else "💧 Copy a colour", {
+	Kit.button(if s.paint.pick then "Click something..." else "Copy a colour", {
+		Icon = "bucket",
 		Parent = top,
 		Size = UDim2.fromOffset(160, 30),
 		TextSize = 14,
@@ -743,7 +733,7 @@ local function selectionTray()
 			)
 		end
 		Kit.text(
-			"Use the Paint tool (🎨) to colour each side.",
+			"Use the Paint tool to colour each side.",
 			{ Parent = stack, TextSize = 14, Color = T.InkSoft, LayoutOrder = 2 }
 		)
 	elseif kind == "floors" then
@@ -771,7 +761,7 @@ refreshTray = function()
 	elseif tool == "delete" then
 		trayMode = "sell"
 		Kit.text(
-			"🗑  Click anything to sell it back for what you paid.",
+			"Click anything to sell it back for what you paid.",
 			{ Parent = trayBody, TextSize = 18, Size = UDim2.new(1, 0, 0, 30) }
 		)
 	elseif tool == "select" and s.selected then
@@ -803,7 +793,7 @@ end
 local function openSub(id: string)
 	subTab = id
 	for sid, b in subButtons do
-		Kit.setButtonColor(b, if sid == id then T.Blue else Color3.fromRGB(44, 54, 76), T.White)
+		Kit.setButtonColor(b, if sid == id then T.Blue else T.White, if sid == id then T.White else T.Ink)
 	end
 	if id == "walls" or id == "fences" then
 		s.wallMode = "line"
@@ -833,7 +823,7 @@ end
 local function openMain(id: string)
 	mainTab = id
 	for mid, b in mainButtons do
-		Kit.setButtonColor(b, if mid == id then T.Blue else Color3.fromRGB(44, 54, 76), T.White)
+		Kit.setButtonColor(b, if mid == id then T.Blue else T.White, if mid == id then T.White else T.Ink)
 	end
 	clear(subBar)
 	subButtons = {}
@@ -844,16 +834,18 @@ local function openMain(id: string)
 		end
 	end
 	for i, sub in main.subs do
-		local b = Kit.button(sub.icon .. "  " .. sub.name, {
+		local b = Kit.button(sub.name, {
+			Icon = sub.icon,
 			Parent = subBar,
-			Size = UDim2.fromOffset(0, 34),
+			Size = UDim2.fromOffset(0, 40),
 			AutomaticSize = Enum.AutomaticSize.X,
-			TextSize = 15,
-			Color = Color3.fromRGB(44, 54, 76),
+			TextSize = 16,
+			Color = T.White,
+			TextColor = T.Ink,
 			LayoutOrder = i,
-			Radius = 17,
+			Radius = 12,
 		})
-		Kit.pad(b, 14, 0)
+		Kit.pad(b, 12, 0)
 		subButtons[sub.id] = b
 		b.Activated:Connect(function()
 			openSub(sub.id)
@@ -876,7 +868,7 @@ end
 local TOOLS = {
 	{
 		id = "select",
-		icon = "👆",
+		icon = "pointer",
 		name = "Pick",
 		run = function()
 			BuildMode.setTool("select")
@@ -884,7 +876,7 @@ local TOOLS = {
 	},
 	{
 		id = "move",
-		icon = "✋",
+		icon = "move",
 		name = "Move",
 		run = function()
 			if needSelection() then
@@ -894,7 +886,7 @@ local TOOLS = {
 	},
 	{
 		id = "rotate",
-		icon = "🔄",
+		icon = "rotate",
 		name = "Turn",
 		run = function()
 			if s.placing then
@@ -906,7 +898,7 @@ local TOOLS = {
 	},
 	{
 		id = "copy",
-		icon = "📋",
+		icon = "copy",
 		name = "Copy",
 		run = function()
 			if needSelection() then
@@ -916,7 +908,7 @@ local TOOLS = {
 	},
 	{
 		id = "paint",
-		icon = "🎨",
+		icon = "brush",
 		name = "Paint",
 		run = function()
 			BuildMode.setTool("paint")
@@ -924,14 +916,14 @@ local TOOLS = {
 	},
 	{
 		id = "delete",
-		icon = "🗑️",
+		icon = "trash",
 		name = "Sell",
 		run = function()
 			BuildMode.setTool("delete")
 		end,
 	},
-	{ id = "undo", icon = "↩️", name = "Undo", run = BuildMode.undo },
-	{ id = "redo", icon = "↪️", name = "Redo", run = BuildMode.redo },
+	{ id = "undo", icon = "undo", name = "Undo", run = BuildMode.undo },
+	{ id = "redo", icon = "redo", name = "Redo", run = BuildMode.redo },
 }
 
 local HINTS = {
@@ -966,9 +958,9 @@ local function refreshChrome()
 		hint = "Pick something from the tray below."
 	end
 	hintLabel.Text = hint
-	viewButtons.roofs.Text = if s.roofsHidden then "🏠 Roofs off" else "🏠 Roofs on"
-	viewButtons.walls.Text = if s.seeThrough then "🧱 Walls clear" else "🧱 Walls solid"
-	viewButtons.snap.Text = if s.snap then "▦ Grid 1 stud" else "▦ Grid fine"
+	viewButtons.roofs.Text = if s.roofsHidden then "Roofs off" else "Roofs on"
+	viewButtons.walls.Text = if s.seeThrough then "Walls clear" else "Walls solid"
+	viewButtons.snap.Text = if s.snap then "Grid 1 stud" else "Grid fine"
 end
 
 -- the action bar over the picked object ---------------------------------------------------------------------
@@ -992,27 +984,28 @@ local function refreshActionBar()
 		name = (Plan.RoofStyles[obj.style] or Plan.RoofStyles.gable).name .. " roof"
 	end
 	local value = -Plan.changeCost(Plan.removeOps(State.plan, kind, key :: string))
-	actionTitle.Text = Text.fill("{name}  ·  🪙 {value}", { name = name, value = Text.commas(value) })
+	actionTitle.Text = Text.fill("{name}, sells for {value}", { name = name, value = Text.commas(value) })
 	local function act(icon: string, fn: () -> (), order: number)
-		Kit.iconButton(
-			icon,
-			nil,
-			{ Parent = actionButtons, Size = UDim2.fromOffset(40, 40), LayoutOrder = order, Radius = 12 },
-			fn
-		)
+		Kit.iconButton(icon, nil, {
+			Parent = actionButtons,
+			Size = UDim2.fromOffset(46, 46),
+			LayoutOrder = order,
+			Radius = 12,
+			Color = if icon == "trash" then T.Coral else T.White,
+		}, fn)
 	end
 	if kind == "items" then
-		act("✋", BuildMode.moveSelected, 1)
-		act("🔄", function()
+		act("move", BuildMode.moveSelected, 1)
+		act("rotate", function()
 			BuildMode.rotate(45)
 		end, 2)
-		act("📋", BuildMode.copySelected, 3)
+		act("copy", BuildMode.copySelected, 3)
 	elseif kind == "roofs" then
-		act("🔄", function()
+		act("rotate", function()
 			BuildMode.rotate(45)
 		end, 2)
 	end
-	act("🗑️", BuildMode.deleteSelected, 9)
+	act("trash", BuildMode.deleteSelected, 9)
 	actionBar.Visible = true
 end
 
@@ -1042,194 +1035,207 @@ end
 
 function BuildUI.init(exitCallback: () -> ())
 	onExit = exitCallback
+	if built then
+		return -- built once; a second call only changes what Done does
+	end
+	built = true
 	local gui = Kit.root()
 	ui = Kit.box({ Name = "BuildUI", Size = UDim2.fromScale(1, 1), Parent = gui, Visible = false })
 
-	-- bottom dock: the main categories and Done
-	local dock = Kit.frame({
+	-- bottom dock: the main categories and Done, chunky buttons on a dark glass bar
+	local dock = Kit.glass({
 		Name = "Dock",
-		Size = UDim2.new(0, 860, 0, 62),
+		Size = UDim2.new(0, 880, 0, 70),
 		Position = UDim2.new(0.5, 0, 1, -10),
 		AnchorPoint = Vector2.new(0.5, 1),
-		Color = GLASS,
-		Transparency = 0.08,
-		Radius = 18,
+		Radius = 20,
 		Parent = ui,
 	})
 	Kit.pad(dock, 10, 8)
-	Kit.list(dock, 8, true)
+	Kit.list(dock, 10, true)
 	for i, m in MAIN do
-		local b = Kit.button(m.icon .. "  " .. m.name, {
+		local b = Kit.button(m.name, {
 			Parent = dock,
-			Size = UDim2.fromOffset(150, 46),
-			TextSize = 18,
-			Color = Color3.fromRGB(44, 54, 76),
+			Size = UDim2.fromOffset(160, 50),
+			TextSize = 20,
+			Color = T.White,
+			TextColor = T.Ink,
 			LayoutOrder = i,
 			Radius = 14,
+			Icon = m.icon,
 		})
 		mainButtons[m.id] = b
 		b.Activated:Connect(function()
 			openMain(m.id)
 		end)
 	end
-	Kit.box({ Parent = dock, Size = UDim2.fromOffset(4, 40), LayoutOrder = 9 })
-	Kit.button("✔  Done", {
+	Kit.box({ Parent = dock, Size = UDim2.fromOffset(2, 40), LayoutOrder = 9 })
+	Kit.button("Done", {
 		Parent = dock,
-		Size = UDim2.fromOffset(150, 46),
-		TextSize = 18,
+		Name = "Done",
+		Size = UDim2.fromOffset(170, 50),
+		TextSize = 22,
 		Color = T.Green,
 		LayoutOrder = 10,
 		Radius = 14,
+		Icon = "check",
 	}, function()
 		if onExit then
 			onExit()
 		end
 	end)
 
-	-- sub categories just above the dock
-	subBar = Kit.frame({
-		Name = "Subs",
-		Size = UDim2.new(0, 860, 0, 46),
-		Position = UDim2.new(0.5, 0, 1, -78),
+	-- sub categories just above the dock, scrolling sideways when there are many
+	local subHolder = Kit.glass({
+		Name = "SubsBar",
+		Size = UDim2.new(0, 880, 0, 54),
+		Position = UDim2.new(0.5, 0, 1, -88),
 		AnchorPoint = Vector2.new(0.5, 1),
-		Color = GLASS,
-		Transparency = 0.15,
-		Radius = 16,
+		Radius = 18,
 		Parent = ui,
 	})
-	Kit.pad(subBar, 8, 6)
+	subBar = Kit.scroll({
+		Name = "Subs",
+		Parent = subHolder,
+		Size = UDim2.new(1, -16, 1, 0),
+		Position = UDim2.fromOffset(8, 0),
+		Axis = Enum.AutomaticSize.X,
+	})
+	subBar.ScrollBarThickness = 0
 	Kit.list(subBar, 6, true)
 
 	-- the tray of items and options
 	tray = Kit.frame({
 		Name = "Tray",
-		Size = UDim2.new(0, 860, 0, 178),
-		Position = UDim2.new(0.5, 0, 1, -130),
+		Size = UDim2.new(0, 880, 0, 182),
+		Position = UDim2.new(0.5, 0, 1, -150),
 		AnchorPoint = Vector2.new(0.5, 1),
-		Color = T.Paper,
-		Radius = 16,
-		Stroke = T.Line,
+		Color = Color3.fromRGB(244, 248, 255),
+		Radius = 18,
+		Stroke = T.Ink,
+		StrokeThickness = 3.5,
 		Parent = ui,
 	})
 	Kit.shadow(tray)
-	trayBody = Kit.box({ Parent = tray, Size = UDim2.new(1, -20, 1, -16), Position = UDim2.fromOffset(10, 8) })
+	trayBody = Kit.box({ Parent = tray, Size = UDim2.new(1, -24, 1, -18), Position = UDim2.fromOffset(12, 9) })
 
 	-- hint above the tray
-	local hint = Kit.frame({
+	local hint = Kit.glass({
 		Name = "Hint",
-		Size = UDim2.fromOffset(0, 30),
+		Size = UDim2.fromOffset(0, 34),
 		AutomaticSize = Enum.AutomaticSize.X,
-		Position = UDim2.new(0.5, 0, 1, -316),
+		Position = UDim2.new(0.5, 0, 1, -344),
 		AnchorPoint = Vector2.new(0.5, 1),
-		Color = GLASS,
-		Transparency = 0.25,
-		Radius = 15,
+		Radius = 17,
 		Parent = ui,
 	})
-	Kit.pad(hint, 14, 0)
-	hintLabel = Kit.text("", {
+	Kit.pad(hint, 16, 0)
+	hintLabel = Kit.title("", {
 		Parent = hint,
-		Size = UDim2.fromOffset(0, 30),
+		Size = UDim2.fromOffset(0, 34),
 		AutomaticSize = Enum.AutomaticSize.X,
-		TextSize = 15,
+		TextSize = 17,
 		Color = T.White,
-		Font = Kit.Fonts.Bold,
 		Wrap = false,
 	})
 
 	-- tool strip down the left
-	local strip = Kit.frame({
+	local strip = Kit.glass({
 		Name = "Tools",
-		Size = UDim2.fromOffset(78, 0),
+		Size = UDim2.fromOffset(84, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		Position = UDim2.new(0, 12, 0.5, -20),
-		AnchorPoint = Vector2.new(0, 0.5),
-		Color = GLASS,
-		Transparency = 0.12,
-		Radius = 18,
+		Position = UDim2.new(0, 14, 0, 14),
+		Radius = 20,
 		Parent = ui,
 	})
-	Kit.pad(strip, 7, 7)
-	Kit.list(strip, 6, false, Enum.HorizontalAlignment.Center)
+	Kit.pad(strip, 8, 8)
+	Kit.list(strip, 7, false, Enum.HorizontalAlignment.Center)
 	for i, tool in TOOLS do
-		local b = Kit.iconButton(
-			tool.icon,
-			tool.name,
-			{ Parent = strip, Size = UDim2.fromOffset(64, 60), LayoutOrder = i, Radius = 12, TextSize = 12 },
-			tool.run
-		)
+		local b = Kit.iconButton(tool.icon, tool.name, {
+			Parent = strip,
+			Size = UDim2.fromOffset(66, 62),
+			LayoutOrder = i,
+			Radius = 14,
+			TextSize = 13,
+		}, tool.run)
 		toolButtons[tool.id] = b
 	end
 
-	-- floor switcher and view toggles, top left
-	local floors = Kit.frame({
+	-- floor switcher and view toggles, top right under the coins
+	local floors = Kit.glass({
 		Name = "Floors",
-		Size = UDim2.fromOffset(180, 0),
+		Size = UDim2.fromOffset(196, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		Position = UDim2.new(1, -12, 0, 66),
+		Position = UDim2.new(1, -14, 0, 72),
 		AnchorPoint = Vector2.new(1, 0),
-		Color = T.Paper,
-		Radius = 16,
-		Stroke = T.Line,
+		Radius = 18,
 		Parent = ui,
 	})
 	Kit.pad(floors, 10, 10)
-	Kit.list(floors, 6, false, Enum.HorizontalAlignment.Center)
-	local levelRow = Kit.box({ Parent = floors, Size = UDim2.new(1, 0, 0, 38), LayoutOrder = 1 })
-	Kit.button(
-		"▼",
-		{ Parent = levelRow, Size = UDim2.fromOffset(38, 38), TextSize = 16, Color = T.Blue, Radius = 19 },
-		function()
-			BuildMode.setLevel(s.level - 1)
-		end
-	)
+	Kit.list(floors, 8, false, Enum.HorizontalAlignment.Center)
+	local levelRow = Kit.box({ Parent = floors, Size = UDim2.new(1, 0, 0, 44), LayoutOrder = 1 })
+	Kit.button("", {
+		Name = "FloorDown",
+		Parent = levelRow,
+		Size = UDim2.fromOffset(44, 44),
+		TextSize = 22,
+		Color = T.Blue,
+		Radius = 12,
+		Icon = "down",
+	}, function()
+		BuildMode.setLevel(s.level - 1)
+	end)
 	levelLabel = Kit.title("Floor 1", {
 		Parent = levelRow,
-		Size = UDim2.new(1, -84, 1, 0),
-		Position = UDim2.fromOffset(42, 0),
-		TextSize = 19,
+		Size = UDim2.new(1, -96, 1, 0),
+		Position = UDim2.fromOffset(48, 0),
+		TextSize = 20,
+		Color = T.White,
 		AlignX = Enum.TextXAlignment.Center,
 	})
-	Kit.button("▲", {
+	Kit.button("", {
+		Name = "FloorUp",
 		Parent = levelRow,
-		Size = UDim2.fromOffset(38, 38),
-		Position = UDim2.new(1, -38, 0, 0),
-		TextSize = 16,
+		Size = UDim2.fromOffset(44, 44),
+		Position = UDim2.new(1, -44, 0, 0),
+		TextSize = 22,
 		Color = T.Blue,
-		Radius = 19,
+		Radius = 12,
+		Icon = "up",
 	}, function()
 		BuildMode.setLevel(s.level + 1)
 	end)
-	local function toggle(id: string, order: number, fn: () -> ())
+	local function toggle(id: string, icon: string, order: number, fn: () -> ())
 		local b = Kit.button("", {
+			Name = id,
 			Parent = floors,
-			Size = UDim2.new(1, 0, 0, 30),
-			TextSize = 14,
-			Color = T.PaperDark,
+			Size = UDim2.new(1, 0, 0, 36),
+			TextSize = 15,
+			Color = T.White,
 			TextColor = T.Ink,
 			LayoutOrder = order,
-			Radius = 15,
+			Radius = 12,
+			Icon = icon,
 		}, fn)
 		viewButtons[id] = b
 	end
-	toggle("roofs", 2, function()
+	toggle("roofs", "roof", 2, function()
 		BuildMode.setRoofsHidden(not s.roofsHidden)
 	end)
-	toggle("walls", 3, function()
+	toggle("walls", "wall", 3, function()
 		BuildMode.setSeeThrough(not s.seeThrough)
 	end)
-	toggle("snap", 4, function()
+	toggle("snap", "grid", 4, function()
 		s.snap = not s.snap
 		BuildMode.notify()
 	end)
 
 	-- coins, top right
-	local coinPill, coinValue = Kit.pill("🪙", {
+	local coinPill, coinValue = Kit.pill("coin", {
 		Parent = ui,
-		Size = UDim2.fromOffset(180, 44),
-		Position = UDim2.new(1, -12, 0, 12),
+		Size = UDim2.fromOffset(196, 46),
+		Position = UDim2.new(1, -14, 0, 14),
 		AnchorPoint = Vector2.new(1, 0),
-		TextSize = 22,
 	})
 	local _ = coinPill
 	coinsLabel = coinValue
@@ -1243,26 +1249,26 @@ function BuildUI.init(exitCallback: () -> ())
 		Size = UDim2.fromOffset(0, 0),
 		AutomaticSize = Enum.AutomaticSize.XY,
 		AnchorPoint = Vector2.new(0.5, 1),
-		Color = T.Paper,
-		Radius = 14,
-		Stroke = T.Line,
+		Color = T.White,
+		Radius = 16,
+		Stroke = T.Ink,
+		StrokeThickness = 3,
 		Parent = ui,
 		Visible = false,
 	})
-	Kit.pad(actionBar, 8, 6)
-	Kit.list(actionBar, 4, false, Enum.HorizontalAlignment.Center)
-	actionTitle = Kit.text("", {
+	Kit.pad(actionBar, 10, 8)
+	Kit.list(actionBar, 6, false, Enum.HorizontalAlignment.Center)
+	actionTitle = Kit.title("", {
 		Parent = actionBar,
-		Size = UDim2.fromOffset(0, 20),
+		Size = UDim2.fromOffset(0, 22),
 		AutomaticSize = Enum.AutomaticSize.X,
-		TextSize = 14,
-		Font = Kit.Fonts.Bold,
+		TextSize = 17,
 		Wrap = false,
 		LayoutOrder = 1,
 	})
 	actionButtons = Kit.box({
 		Parent = actionBar,
-		Size = UDim2.fromOffset(0, 40),
+		Size = UDim2.fromOffset(0, 46),
 		AutomaticSize = Enum.AutomaticSize.X,
 		LayoutOrder = 2,
 	})

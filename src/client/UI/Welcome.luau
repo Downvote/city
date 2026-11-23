@@ -20,7 +20,7 @@ end
 
 function Welcome.open(hud: any)
 	Welcome.close()
-	panel = Kit.panel("Welcome to Maplewick", UDim2.fromOffset(560, 380), Welcome.close, "🏡")
+	panel = Kit.panel("Welcome to Maplewick", UDim2.fromOffset(560, 380), Welcome.close, "house", Kit.Theme.Blue)
 	local body = panel.body
 	Kit.list(body, 10)
 	local lines = {

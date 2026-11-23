@@ -112,14 +112,22 @@ server, whatever the client did.
 ## Client
 
 - `Controllers/State`: the mirror of the player's state and plan; `State.on(key, fn)`, `State.onPlan(fn)`.
-- `UI/Kit`: theme and helpers (panels with icon badges, buttons, icon tiles, stat pills, shadows, tabs, sliders,
-  swatches, scroll lists). `Kit.overUI(pos)` says whether the pointer is over our interface, using
-  `GetGuiObjectsAtPosition`, so world clicks never go through a button. `UI/Toasts`, `UI/ModelPreview` (3D
-  thumbnails in ViewportFrames).
+- `UI/Kit`: theme and helpers in the chunky style: `button` (a face on a darker lip, glossy strip, thick outline,
+  outlined Fredoka label; `Icon` draws an icon left of the text; the TextButton's own Text is invisible and only
+  sizes it, the label follows it), `iconButton` (square tiles), `pill` (glass stat pills, `Plus` adds a green +),
+  `glass` (dark glass bars), `panel` (white card, coloured header, red corner close button), `bar` (outlined
+  progress bars), `badge`, `closeButton`, `outlineText`, `tabs`, `slider`, `swatch`, `textbox`, `scroll`, `shadow`.
+  `Kit.pad` on a Kit button stretches its face back over the padding. `Kit.overUI(pos)` says whether the pointer is
+  over our interface, using `GetGuiObjectsAtPosition`, so world clicks never go through a button.
+- `UI/Icons`: the drawn icons. `Icons.make(name, px, props)` builds one from its shape list (rounded rects, ellipses,
+  right angled triangles made by clipping a turned square, rings, half ellipses), each with a top-lit gradient and a
+  dark outline. `Icons.names()` lists them. `UI/Toasts`, `UI/ModelPreview` (3D thumbnails in ViewportFrames).
 - `UI/Hud`: stat pills, the level card, the clock, the icon dock and the daily gift; opens one panel at a time:
   `Creator`, `Residents`, `CityPanel`, `ShopPanel`, `News`, `Welcome`. `EventCard` (the dialogue box) and `Weather`
   run all the time. The HUD and the event box step aside in Build mode and while the creator is open.
-- `Build/BuildMode` (tools, snapping, ghosts, picking, sending): input checks `Kit.overUI` instead of trusting
+- `Build/BuildMode` (tools, snapping, ghosts, picking, sending): the cursor label and the selection highlight live in
+  their own `BuildMarkers` folder (the grid and ghost folders are cleared all the time; clearing them used to destroy
+  the label and break every tool). Input checks `Kit.overUI` instead of trusting
   `gameProcessedEvent`, every frame's update runs in a `pcall` that reports an error once, and `BuildMode.send` never
   leaves the tools waiting (an eight second timeout, a toast on failure, `BuildMode.Placed` after each answer).
   `Build/BuildUI`: the bottom category bar, sub categories and item tray, the tool strip, the floor card, the coins
@@ -133,6 +141,18 @@ server, whatever the client did.
 - Specs: `Build` (catalog, plan rules, shapes, builder), `BuildService` (the server's Build service with its
   neighbours stubbed: building charges coins, syncs the plan, strips junk, refuses land you don't own), `City`,
   `Events`, `Town` (every placed model exists, plots and road stay clear, room to walk on the sidewalks).
+- `tests/sim/`: the client on fake Roblox instances. `fake.luau` wraps @lune/roblox instances (so property names are
+  checked against Roblox's class data) and adds events, children, attributes, tags, bounding boxes, a camera with
+  rays and projection, and workspace raycasts. `client.luau` boots the real State, BuildMode and BuildUI against the
+  real server Build service (Data and Plots stubbed), with a task scheduler on a fake clock and helpers to move the
+  mouse over the plot, click, drag and press buttons. `build_client.luau` drives Build mode end to end (furniture
+  from the tray, walls, rooms, floors, roofs, doors, paint, pick, turn, copy, move, sell, undo, every tab, the floor
+  switcher, leaving and coming back); `check.sh` runs it. Lune's own `CFrame.lookAt` faces the wrong way, so the sim
+  gives the game a correct one.
 - `tools/preview/` dumps primitives of a scene (catalog tabs, walls, roofs, the starter house, plaza buildings, `map`
-  for the middle of town) and renders them to a PNG with a small rasteriser.
+  for the middle of town) and renders them to a PNG with a small rasteriser. `ui.sh <scene> <png>` builds a screen
+  with the real client code on the simulation (`ui_dump.luau`: hud, build, build:walls, build:pick, panel:<Name>,
+  event, toasts, creator, icons) and `ui_render.py` lays it out and draws it the way Roblox would (sizes, anchors,
+  list and grid layouts, padding, automatic sizes, corners, strokes, gradients, outlined text, clipping, rotation,
+  the UIScale). `fonts.sh` fetches Fredoka One for it.
 - `scripts/check.sh`: format, types, specs, place build.

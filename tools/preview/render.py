@@ -105,6 +105,7 @@ def main():
     ap.add_argument("--pitch", type=float, default=32)
     ap.add_argument("--size", type=int, default=900)
     ap.add_argument("--hide-clear", action="store_true", help="skip invisible parts (default)")
+    ap.add_argument("--transparent", action="store_true", help="no background (for thumbnails)")
     args = ap.parse_args()
 
     prims = json.load(open(args.inp))
@@ -181,7 +182,12 @@ def main():
             a = alphas[i]
             sub = img[y0:y1 + 1, x0:x1 + 1]
             sub[closer] = sub[closer] * (1 - a) + col * a
-    Image.fromarray((np.clip(img, 0, 1) * 255).astype(np.uint8)).save(args.out)
+    rgb8 = (np.clip(img, 0, 1) * 255).astype(np.uint8)
+    if args.transparent:
+        alpha = np.where(np.isfinite(zbuf), 255, 0).astype(np.uint8)
+        Image.fromarray(np.dstack([rgb8, alpha]), "RGBA").save(args.out)
+    else:
+        Image.fromarray(rgb8).save(args.out)
     print("wrote", args.out)
 
 

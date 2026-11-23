@@ -27,19 +27,11 @@ local function progress(parent: Instance, label: string, have: number, need: num
 		Text.fill("{label}: {have} of {need}", { label = label, have = Text.commas(have), need = Text.commas(need) }),
 		{ Parent = row, TextSize = 16, Size = UDim2.new(1, 0, 0, 20) }
 	)
-	local track = Kit.frame({
-		Parent = row,
-		Size = UDim2.new(1, 0, 0, 10),
-		Position = UDim2.fromOffset(0, 24),
-		Color = T.PaperDark,
-		Radius = 5,
-	})
-	Kit.frame({
-		Parent = track,
-		Size = UDim2.fromScale(math.clamp(have / math.max(1, need), 0, 1), 1),
-		Color = if have >= need then T.Green else T.Blue,
-		Radius = 5,
-	})
+	Kit.bar(
+		{ Parent = row, Size = UDim2.new(1, -4, 0, 14), Position = UDim2.fromOffset(2, 23) },
+		have / math.max(1, need),
+		if have >= need then T.Green else T.Blue
+	)
 end
 
 local function draw()
@@ -135,8 +127,8 @@ local function draw()
 	Kit.title("Work", { Parent = right, TextSize = 22, LayoutOrder = 1, Size = UDim2.new(1, 0, 0, 30) })
 	local lines, total = City.payday(p, -1, os.time())
 	Kit.text(
-		Text.fill("{jobs} workplaces, {employed} filled. A payday at 5 PM brings in about {total} coins.", {
-			jobs = stats.jobs,
+		Text.fill("{jobs}, {employed} filled. A payday at 5 PM brings in about {total} coins.", {
+			jobs = if stats.jobs == 1 then "1 workplace" else stats.jobs .. " workplaces",
 			employed = stats.employed,
 			total = Text.commas(total),
 		}),
@@ -159,7 +151,8 @@ local function draw()
 			Parent = right,
 			Size = UDim2.new(1, -8, 0, 52),
 			Color = T.White,
-			Stroke = T.Line,
+			Stroke = T.Ink,
+			StrokeThickness = 2,
 			LayoutOrder = i,
 		})
 		Kit.pad(row, 10, 4)
@@ -211,7 +204,7 @@ end
 
 function CityPanel.open()
 	CityPanel.close()
-	panel = Kit.panel("City hall", UDim2.fromOffset(880, 560), CityPanel.close, "🏛️")
+	panel = Kit.panel("City hall", UDim2.fromOffset(880, 560), CityPanel.close, "hall", Kit.Theme.Purple)
 	Kit.popIn(panel.root)
 	draw()
 	table.insert(unbind, State.on("coins", draw))

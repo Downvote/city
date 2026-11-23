@@ -12,6 +12,7 @@ local City = require(Shared.Sim.City)
 local Schema = require(Shared.Sim.Schema)
 
 local Kit = require(script.Parent.Kit)
+local Icons = require(script.Parent.Icons)
 local Toasts = require(script.Parent.Toasts)
 local State = require(script.Parent.Parent.Controllers.State)
 
@@ -70,13 +71,13 @@ local WEATHER = {
 }
 
 local WEATHER_ICON = {
-	clear = "☀️",
-	cloudy = "☁️",
-	rain = "🌧️",
-	storm = "⛈️",
-	snow = "❄️",
-	blossom = "🌸",
-	leaves = "🍂",
+	clear = "sun",
+	cloudy = "cloud",
+	rain = "rain",
+	storm = "storm",
+	snow = "snow",
+	blossom = "blossom",
+	leaves = "leaves",
 }
 
 -- How far the town is toward its next level: both people and what's built count, so the
@@ -102,60 +103,65 @@ function Hud.start()
 	local gui = Kit.root()
 	local hud = Kit.box({ Name = "Hud", Size = UDim2.fromScale(1, 1), Parent = gui })
 
-	-- stat pills, top left ----------------------------------------------------------------------------
+	-- money and stats, top left: dark glass pills with a big icon over one end -------------------------
 	local pills =
-		Kit.box({ Name = "Pills", Size = UDim2.fromOffset(460, 44), Position = UDim2.fromOffset(12, 12), Parent = hud })
-	Kit.list(pills, 8, true)
-	local coinPill, coins =
-		Kit.pill("🪙", { Parent = pills, Size = UDim2.fromOffset(190, 44), LayoutOrder = 1, TextSize = 22 })
-	local _, popLabel = Kit.pill("👥", { Parent = pills, Size = UDim2.fromOffset(100, 44), LayoutOrder = 2 })
-	local _, moodLabel = Kit.pill("😊", { Parent = pills, Size = UDim2.fromOffset(110, 44), LayoutOrder = 3 })
-	local moodIcon = (moodLabel.Parent :: Instance):FindFirstChild("Icon") :: TextLabel
+		Kit.box({ Name = "Pills", Size = UDim2.fromOffset(520, 46), Position = UDim2.fromOffset(26, 14), Parent = hud })
+	Kit.list(pills, 26, true)
+	local coinPill, coins = Kit.pill("coin", {
+		Parent = pills,
+		Size = UDim2.fromOffset(196, 46),
+		LayoutOrder = 1,
+		Plus = function()
+			Hud.open("ShopPanel")
+		end,
+	})
+	local _, popLabel = Kit.pill("people", { Parent = pills, Size = UDim2.fromOffset(104, 46), LayoutOrder = 2 })
+	local moodPill, moodLabel = Kit.pill("smile", { Parent = pills, Size = UDim2.fromOffset(116, 46), LayoutOrder = 3 })
 
-	-- the town's level card under the pills
-	local card = Kit.frame({
+	-- the town's level under them: a medal, the level's name and a bar to the next one
+	local card = Kit.glass({
 		Name = "CityCard",
-		Size = UDim2.fromOffset(300, 66),
-		Position = UDim2.fromOffset(12, 64),
-		Stroke = T.Line,
-		Radius = 16,
+		Size = UDim2.fromOffset(318, 64),
+		Position = UDim2.fromOffset(26, 72),
+		Radius = 18,
 		Parent = hud,
 	})
-	local badge = Kit.frame({
-		Parent = card,
-		Size = UDim2.fromOffset(46, 46),
-		Position = UDim2.new(0, 10, 0.5, 0),
-		AnchorPoint = Vector2.new(0, 0.5),
-		Color = T.Purple,
-		Radius = 23,
-	})
-	Kit.gradient(badge, 0.12)
+	Icons.make("medal", 64, { Parent = card, Position = UDim2.new(0, -18, 0.5, 0), AnchorPoint = Vector2.new(0, 0.5) })
 	local badgeText = Kit.title("1", {
-		Parent = badge,
-		Size = UDim2.fromScale(1, 1),
-		TextSize = 24,
+		Parent = card,
+		Size = UDim2.fromOffset(30, 30),
+		Position = UDim2.new(0, -1, 0.5, 9),
+		AnchorPoint = Vector2.new(0, 0.5),
+		TextSize = 20,
 		Color = T.White,
 		AlignX = Enum.TextXAlignment.Center,
+		Outline = Kit.darker(T.YellowDark, 0.5),
 	})
-	local cityName = Kit.title(
-		"",
-		{ Parent = card, Size = UDim2.new(1, -78, 0, 24), Position = UDim2.fromOffset(66, 6), TextSize = 20 }
-	)
+	local cityName = Kit.title("", {
+		Parent = card,
+		Size = UDim2.new(1, -70, 0, 24),
+		Position = UDim2.fromOffset(54, 5),
+		TextSize = 22,
+		Color = T.White,
+	})
 	local track = Kit.frame({
 		Parent = card,
-		Size = UDim2.new(1, -80, 0, 10),
-		Position = UDim2.fromOffset(66, 32),
-		Color = T.PaperDark,
-		Radius = 5,
+		Size = UDim2.new(1, -66, 0, 14),
+		Position = UDim2.fromOffset(54, 31),
+		Color = T.Shadow,
+		Radius = 7,
+		Stroke = T.Ink,
+		StrokeThickness = 2,
 	})
-	local fill = Kit.frame({ Parent = track, Size = UDim2.fromScale(0, 1), Color = T.Purple, Radius = 5 })
-	Kit.gradient(fill, 0.15)
+	local fill = Kit.frame({ Parent = track, Size = UDim2.fromScale(0, 1), Color = T.Purple, Radius = 7 })
+	Kit.gradient(fill, 0.3)
 	local nextLine = Kit.text("", {
 		Parent = card,
-		Size = UDim2.new(1, -78, 0, 16),
-		Position = UDim2.fromOffset(66, 45),
+		Size = UDim2.new(1, -66, 0, 14),
+		Position = UDim2.fromOffset(54, 47),
 		TextSize = 12,
-		Color = T.InkSoft,
+		Font = Kit.Fonts.Bold,
+		Color = Color3.fromRGB(214, 208, 236),
 		Wrap = false,
 	})
 	nextLine.TextTruncate = Enum.TextTruncate.AtEnd
@@ -182,33 +188,41 @@ function Hud.start()
 			local gain = n > from
 			local pop = Kit.title((if gain then "+" else "-") .. Text.commas(math.abs(n - from)), {
 				Parent = coinPill,
-				Size = UDim2.fromOffset(120, 24),
-				Position = UDim2.new(1, -100, 1, 4),
-				TextSize = 20,
-				Color = if gain then T.GreenDark else T.CoralDark,
+				Size = UDim2.fromOffset(120, 26),
+				Position = UDim2.new(0, 40, 1, 4),
+				TextSize = 22,
+				Color = if gain then T.Green else T.Coral,
+				Outline = T.Ink,
 			})
-			TweenService:Create(pop, TweenInfo.new(1.2), { Position = UDim2.new(1, -100, 1, 28), TextTransparency = 1 })
+			TweenService:Create(pop, TweenInfo.new(1.2), { Position = UDim2.new(0, 40, 1, 30), TextTransparency = 1 })
 				:Play()
 			task.delay(1.3, function()
 				pop:Destroy()
 			end)
 		end
 	end
+	local moodArt = moodPill:FindFirstChild("IconArt")
+	local moodNow = "smile"
 	local function refreshCity()
 		local stats = Hud.cityStats()
 		popLabel.Text = tostring(stats.population)
 		moodLabel.Text = stats.happiness .. "%"
-		if moodIcon then
-			moodIcon.Text = if stats.population == 0
-				then "😶"
-				elseif stats.happiness >= 70 then "😊"
-				elseif stats.happiness >= 40 then "🙂"
-				else "😟"
+		local want = if stats.population > 0 and stats.happiness < 40 then "heart" else "smile"
+		if want ~= moodNow and moodArt then
+			moodNow = want
+			local h = moodPill.Size.Y.Offset
+			moodArt:Destroy()
+			moodArt = Icons.make(want, math.floor(h * 1.12), {
+				Name = "IconArt",
+				Parent = moodPill,
+				Position = UDim2.new(0, -math.floor(h * 0.3), 0.5, 0),
+				AnchorPoint = Vector2.new(0, 0.5),
+			})
 		end
 		badgeText.Text = tostring(stats.level)
 		cityName.Text = stats.levelName
 		local t, line = levelProgress(stats)
-		TweenService:Create(fill, TweenInfo.new(0.4), { Size = UDim2.fromScale(math.max(t, 0.02), 1) }):Play()
+		TweenService:Create(fill, TweenInfo.new(0.4), { Size = UDim2.fromScale(math.max(t, 0.04), 1) }):Play()
 		nextLine.Text = line
 	end
 	State.on("coins", function(n)
@@ -220,36 +234,45 @@ function Hud.start()
 	end)
 	refreshCity()
 
-	-- clock, top right ------------------------------------------------------------------------------------
-	local clock = Kit.frame({
+	-- the clock, top right ---------------------------------------------------------------------------------
+	local clock = Kit.glass({
 		Name = "Clock",
-		Size = UDim2.fromOffset(220, 60),
-		Position = UDim2.new(1, -12, 0, 12),
+		Size = UDim2.fromOffset(212, 60),
+		Position = UDim2.new(1, -14, 0, 14),
 		AnchorPoint = Vector2.new(1, 0),
-		Stroke = T.Line,
-		Radius = 16,
+		Radius = 18,
 		Parent = hud,
 	})
-	local weatherIcon = Kit.new("TextLabel", {
-		Text = "☀️",
-		BackgroundTransparency = 1,
-		TextScaled = true,
-		Font = Enum.Font.BuilderSansBold,
-		Size = UDim2.fromOffset(38, 38),
-		Position = UDim2.new(0, 12, 0.5, 0),
-		AnchorPoint = Vector2.new(0, 0.5),
+	local weatherArt: Frame? = nil
+	local weatherNow = ""
+	local function setWeatherIcon(name: string)
+		if name == weatherNow then
+			return
+		end
+		weatherNow = name
+		if weatherArt then
+			weatherArt:Destroy()
+		end
+		weatherArt = Icons.make(
+			name,
+			62,
+			{ Parent = clock, Position = UDim2.new(0, -16, 0.5, 0), AnchorPoint = Vector2.new(0, 0.5) }
+		)
+	end
+	local timeLabel = Kit.title("", {
 		Parent = clock,
+		Size = UDim2.new(1, -66, 0, 28),
+		Position = UDim2.fromOffset(54, 5),
+		TextSize = 26,
+		Color = T.White,
 	})
-	local timeLabel = Kit.title(
-		"",
-		{ Parent = clock, Size = UDim2.new(1, -70, 0, 28), Position = UDim2.fromOffset(58, 6), TextSize = 24 }
-	)
 	local dateLabel = Kit.text("", {
 		Parent = clock,
-		Size = UDim2.new(1, -70, 0, 18),
-		Position = UDim2.fromOffset(58, 34),
+		Size = UDim2.new(1, -66, 0, 18),
+		Position = UDim2.fromOffset(54, 34),
 		TextSize = 14,
-		Color = T.InkSoft,
+		Font = Kit.Fonts.Bold,
+		Color = Color3.fromRGB(214, 208, 236),
 		Wrap = false,
 	})
 	task.spawn(function()
@@ -260,9 +283,11 @@ function Hud.start()
 			local day = workspace:GetAttribute("Day")
 			local weather = workspace:GetAttribute("Weather")
 			local night = h < 6 or h >= 19.5
-			weatherIcon.Text = if (weather == nil or weather == "clear") and night
-				then "🌙"
-				else (WEATHER_ICON[weather :: any] or "☀️")
+			setWeatherIcon(
+				if (weather == nil or weather == "clear") and night
+					then "moon"
+					else (WEATHER_ICON[weather :: any] or "sun")
+			)
 			dateLabel.Text = Text.fill("{season} {day}, {weather}", {
 				season = SEASONS[if type(season) == "number" then season else 1],
 				day = if type(day) == "number" then day else 1,
@@ -272,20 +297,15 @@ function Hud.start()
 		end
 	end)
 
-	-- the dock down the left ------------------------------------------------------------------------------
-	local dock = Kit.frame({
+	-- the dock down the left: big coloured tiles -----------------------------------------------------------
+	local dock = Kit.box({
 		Name = "Dock",
-		Size = UDim2.fromOffset(92, 0),
+		Size = UDim2.fromOffset(84, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		Position = UDim2.new(0, 12, 0.5, 30),
-		AnchorPoint = Vector2.new(0, 0.5),
-		Color = T.Glass,
-		Transparency = 0.25,
-		Radius = 20,
+		Position = UDim2.fromOffset(18, 154),
 		Parent = hud,
 	})
-	Kit.pad(dock, 8, 8)
-	Kit.list(dock, 8, false, Enum.HorizontalAlignment.Center)
+	Kit.list(dock, 7, false, Enum.HorizontalAlignment.Center)
 	local BuildMode = require(script.Parent.Parent.Build.BuildMode)
 	local BuildUI = require(script.Parent.Parent.Build.BuildUI)
 	BuildUI.init(function()
@@ -296,9 +316,9 @@ function Hud.start()
 		local creator = panels.Creator
 		local creating = creator ~= nil and creator.isOpen ~= nil and creator.isOpen()
 		hud.Visible = not BuildMode.isActive() and not creating
-		local card = panels.EventCard
-		if card and card.setHidden then
-			card.setHidden(not hud.Visible)
+		local eventCard = panels.EventCard
+		if eventCard and eventCard.setHidden then
+			eventCard.setHidden(not hud.Visible)
 		end
 	end
 	BuildMode.Changed:Connect(function(what)
@@ -314,7 +334,7 @@ function Hud.start()
 	end)
 	local entries = {
 		{
-			"🔨",
+			"hammer",
 			"Build",
 			T.Blue,
 			function()
@@ -323,7 +343,7 @@ function Hud.start()
 			end,
 		},
 		{
-			"👥",
+			"people",
 			"Villagers",
 			T.Green,
 			function()
@@ -331,15 +351,15 @@ function Hud.start()
 			end,
 		},
 		{
-			"✂️",
+			"shirt",
 			"Create",
-			T.Coral,
+			T.Pink,
 			function()
 				Hud.open("Creator", { mode = "new" })
 			end,
 		},
 		{
-			"🏛️",
+			"hall",
 			"City",
 			T.Purple,
 			function()
@@ -347,55 +367,55 @@ function Hud.start()
 			end,
 		},
 		{
-			"🛒",
+			"cart",
 			"Shop",
-			T.YellowDark,
+			T.Orange,
 			function()
 				Hud.open("ShopPanel")
 			end,
 		},
 		{
-			"📰",
+			"news",
 			"News",
-			T.InkSoft,
+			T.Teal,
 			function()
 				Hud.open("News")
 			end,
 		},
 	}
 	for i, e in entries do
-		local b = Kit.iconButton(
-			e[1],
-			e[2],
-			{ Parent = dock, Size = UDim2.fromOffset(76, 72), LayoutOrder = i, Radius = 14 },
-			e[4]
-		)
-		-- a coloured strip along the bottom tells the buttons apart at a glance
-		local strip = Kit.frame({
-			Parent = b,
-			Size = UDim2.new(1, -24, 0, 4),
-			Position = UDim2.new(0.5, 0, 1, -6),
-			AnchorPoint = Vector2.new(0.5, 0),
+		Kit.iconButton(e[1], e[2], {
+			Parent = dock,
+			Size = UDim2.fromOffset(74, 68),
+			LayoutOrder = i,
+			Radius = 16,
 			Color = e[3],
-			Radius = 2,
-		})
-		strip.ZIndex = 3
+			TextSize = 15,
+		}, e[4])
 	end
 
 	-- daily gift ---------------------------------------------------------------------------------------
-	local gift = Kit.iconButton(
-		"🎁",
-		"Gift",
-		{ Parent = dock, Size = UDim2.fromOffset(76, 72), LayoutOrder = 20, Radius = 14, Color = T.Yellow }
-	)
+	local gift = Kit.iconButton("gift", "Gift", {
+		Parent = dock,
+		Size = UDim2.fromOffset(74, 68),
+		LayoutOrder = 20,
+		Radius = 16,
+		Color = T.Yellow,
+		TextColor = T.White,
+		TextSize = 15,
+	})
+	Kit.badge(gift, "!")
 	gift.Visible = false
-	local giftScale = Instance.new("UIScale")
-	giftScale.Parent = gift:FindFirstChild("Icon")
-	TweenService:Create(
-		giftScale,
-		TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
-		{ Scale = 1.15 }
-	):Play()
+	local giftArt = gift:FindFirstChild("IconArt", true)
+	if giftArt then
+		local giftScale = Instance.new("UIScale")
+		giftScale.Parent = giftArt
+		TweenService:Create(
+			giftScale,
+			TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+			{ Scale = 1.15 }
+		):Play()
+	end
 	State.on("daily", function(daily)
 		local today = math.floor(os.time() / 86400)
 		gift.Visible = daily == nil or daily.last ~= today

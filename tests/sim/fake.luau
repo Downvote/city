@@ -276,7 +276,13 @@ FakeMT.__newindex = function(self, key, value)
 		end
 	end
 	propSignal(self, key):Fire()
-	signalOf(self, "Changed"):Fire(key)
+	local class = rawget(self, "_class")
+	if key == "Value" and class:sub(-5) == "Value" then
+		-- a value object's Changed passes the new value, not the property name
+		signalOf(self, "Changed"):Fire(value)
+	else
+		signalOf(self, "Changed"):Fire(key)
+	end
 end
 
 FakeMT.__tostring = function(self)
