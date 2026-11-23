@@ -1408,7 +1408,7 @@ function Icons.vector(name: string, px: number, p: { [string]: any }): Frame?
 end
 
 -- Paints pictures ahead of need, one at a time with a breath between, so the first screen that
--- shows a lot of them at once (the shop's rows of food, each a stack of shaded shapes) doesn't
+-- shows a lot of them at once (several cravings, each a stack of shaded shapes) doesn't
 -- stall while they are all painted together. `names` is which (every piece of art if not given).
 -- Does nothing where the game can't make pictures.
 function Icons.warm(names: { string }?)
@@ -1428,7 +1428,7 @@ function Icons.warm(names: { string }?)
 	end)
 end
 
--- The picture of a thing (a food, something from the shop): its vector art, or where there is
+-- The picture of a food: its vector art, or where there is
 -- none or the game can't make pictures, a disc in `fallback`, the thing's own colour.
 function Icons.item(name: string, px: number, fallback: Color3, props: { [string]: any }?): Frame
 	local p = props or {}

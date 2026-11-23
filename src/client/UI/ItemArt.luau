@@ -1,5 +1,5 @@
 --!strict
--- Vector pictures of things: food and what the shop sells. The user: "make vector art for items
+-- Vector pictures of food: what villagers crave. The user: "make vector art for items
 -- like carrots, cakes, etc.", then "redo the icons, so that it matches the icon style in zenless
 -- zone zero ... this includes the food and things icons". We take that style and none of that
 -- game's pictures or dishes: every thing here is our own design.
@@ -18,14 +18,16 @@
 -- colour go in one layer.
 --
 -- Drawn on the same 24 grid as the icons (UI/IconArt), big in the square with a margin of
--- about 1. The big shapes carry the picture at 24 pixels; the small marks only show in the
--- shop's big card. Look at them on a dark panel and a light one (tools/preview/art.sh, and the
--- shop: tools/preview/ui.sh panel:ShopPanel and light:panel:ShopPanel). The name is the thing's
--- id (Data/Foods, Data/Items).
+-- about 1. The big shapes carry the picture at 24 pixels; the small marks show when one is drawn
+-- big. Look at them on a dark panel and a light one (tools/preview/art.sh, and a craving on the
+-- villagers' screen: tools/preview/ui.sh panel:Residents:craving and
+-- light:panel:Residents:craving). The name is the food's id (Data/Foods). (A party cake and a
+-- bottle of medicine were here for the shop, which is gone: "remove the shop, buying of things and
+-- food and feeding".)
 
 local Vector = require(script.Parent.Vector)
 
-local circle, ellipse, rect = Vector.circle, Vector.ellipse, Vector.rect
+local circle, ellipse = Vector.circle, Vector.ellipse
 
 type Layers = { Vector.Layer }
 
@@ -313,127 +315,6 @@ local function apple(c: Tones): Layers
 end
 
 local Art: { [string]: { Vector.Layer } } = {}
-
--- What the shop sells.
-
--- A party cake on a plate: sponge with cream through the middle, pink icing running down the
--- side, sprinkles and one lit candle.
-Art.cake = join(
-	moved(
-		plate({
-			deep = rgb(104, 118, 160),
-			shade = rgb(172, 186, 214),
-			base = rgb(230, 236, 247),
-			light = rgb(246, 249, 253),
-		}),
-		0,
-		0.4
-	),
-	{
-		{ "M3.6 10 V17.4 A8.4 3.1 0 0 0 20.4 17.4 V10 Z", stroke = rgb(140, 74, 40), w = 0.7 },
-		{ "M3.6 10 V17.4 A8.4 3.1 0 0 0 20.4 17.4 V10 Z", fill = rgb(234, 172, 98) },
-		{ "M3.6 13.3 A8.4 3.1 0 0 0 20.4 13.3 V14.5 A8.4 3.1 0 0 1 3.6 14.5 Z", fill = rgb(255, 240, 212) },
-		{ "M16.6 10 H20.4 V17.4 A8.4 3.1 0 0 1 16.6 19.99 Z", fill = rgb(120, 44, 40), opacity = 0.26 },
-		{ "M19 10 H20.4 V17.4 A8.4 3.1 0 0 1 19 19.11 Z", fill = rgb(120, 44, 40), opacity = 0.26 },
-		{ "M3.6 10 H5.2 V19.2 A8.4 3.1 0 0 1 3.6 17.4 Z", fill = rgb(255, 244, 220), opacity = 0.3 },
-		{
-			"M3.6 10 V11.6 Q3.6 12.9 4.7 12.9 Q5.7 12.9 5.8 12.6 Q6.4 13.2 7.4 13.5 V15 Q7.4 16.3 8.6 16.3 Q9.8 16.3 9.8 15 V14 Q11 14.1 12.6 14 Q12.6 15.2 13.6 15.2 Q14.6 15.2 14.6 14.2 V13.9 Q15.6 13.7 16.4 13.5 V15.6 Q16.4 17 17.5 17 Q18.6 17 18.6 15.6 V12.8 Q19.6 12.2 20.4 11.4 V10 Z",
-			fill = rgb(176, 44, 98),
-			stroke = rgb(176, 44, 98),
-			w = 0.5,
-		},
-		{
-			"M3.6 10 V11.6 Q3.6 12.9 4.7 12.9 Q5.7 12.9 5.8 12.6 Q6.4 13.2 7.4 13.5 V15 Q7.4 16.3 8.6 16.3 Q9.8 16.3 9.8 15 V14 Q11 14.1 12.6 14 Q12.6 15.2 13.6 15.2 Q14.6 15.2 14.6 14.2 V13.9 Q15.6 13.7 16.4 13.5 V15.6 Q16.4 17 17.5 17 Q18.6 17 18.6 15.6 V12.8 Q19.6 12.2 20.4 11.4 V10 Z",
-			fill = rgb(240, 96, 142),
-		},
-		{
-			"M16.4 13.5 V15.6 Q16.4 17 17.5 17 Q18.6 17 18.6 15.6 V12.8 Q19.6 12.2 20.4 11.4 V10 H16.4 Z",
-			fill = rgb(206, 62, 116),
-		},
-		{ ellipse(12, 10, 8.4, 3.1), stroke = rgb(176, 44, 98), w = 0.7 },
-		{ ellipse(12, 10, 8.4, 3.1), fill = rgb(255, 146, 176) },
-		{ ellipse(9.6, 9.3, 5, 1.6), fill = rgb(255, 190, 208), opacity = 0.85 },
-		{ "M5.4 9.4 C6.4 8.4 8 7.8 9.8 7.6", stroke = GLINT, w = 0.5, opacity = 0.9 },
-		{ "M8 14.2 V15.2 M4.4 11.6 V12.1 M13.2 14 V14.5", stroke = rgb(255, 200, 216), w = 0.5 },
-		{ "M6.6 10.6 L7.3 10.9 M10 11.9 L10.7 11.8 M16.6 11.2 L17.2 10.9", stroke = rgb(255, 232, 120), w = 0.45 },
-		{ "M15.2 8.6 L15.9 8.4 M8.4 8.3 L9 8.6 M14 11.8 L14.6 12", stroke = rgb(130, 214, 240), w = 0.45 },
-		{ ellipse(12, 10.2, 1.6, 0.6), fill = rgb(226, 92, 140) },
-		{ rect(11.1, 5.2, 1.8, 5.1, 0.5), fill = rgb(40, 110, 176), stroke = rgb(40, 110, 176), w = 0.5 },
-		{ rect(11.1, 5.2, 1.8, 5.1, 0.5), fill = rgb(104, 192, 236) },
-		{ rect(12.2, 5.2, 0.7, 5.1, 0.35), fill = rgb(58, 140, 204) },
-		{ "M11.3 7.3 L12.7 6.5 M11.3 9.1 L12.7 8.3", stroke = rgb(240, 250, 255), w = 0.45 },
-		{
-			"M12 1.1 C13.5 2.5 13.9 3.4 13.9 4 C13.9 5 13 5.6 12 5.6 C11 5.6 10.1 5 10.1 4 C10.1 3.4 10.5 2.5 12 1.1 Z",
-			fill = rgb(255, 136, 36),
-		},
-		{
-			"M12 2.7 C12.8 3.5 13 3.9 13 4.3 C13 4.9 12.5 5.2 12 5.2 C11.5 5.2 11 4.9 11 4.3 C11 3.9 11.2 3.5 12 2.7 Z",
-			fill = rgb(255, 226, 110),
-		},
-		{ ellipse(12, 4.5, 0.4, 0.5), fill = GLINT },
-	}
-)
-
--- Medicine: a white bottle with a teal screw cap and a red cross on its label, and one
--- capsule lying in front of it.
-Art.medicine = moved({
-	shadow(12.4, 21.9, 8.4, 1.3),
-	{ rect(8.6, 5.4, 6.8, 3.6, 0), stroke = rgb(76, 92, 140), w = 0.7 },
-	{ rect(8.6, 5.4, 6.8, 3.6, 0), fill = rgb(196, 208, 230) },
-	{ rect(13.4, 5.4, 2, 3.6, 0), fill = rgb(150, 166, 204) },
-	{
-		"M5 10.4 C5 8.8 6.6 8 8.4 8 H15.6 C17.4 8 19 8.8 19 10.4 V19.8 C19 21.2 15.8 22.2 12 22.2 C8.2 22.2 5 21.2 5 19.8 Z",
-		stroke = rgb(76, 92, 140),
-		w = 0.7,
-	},
-	{
-		"M5 10.4 C5 8.8 6.6 8 8.4 8 H15.6 C17.4 8 19 8.8 19 10.4 V19.8 C19 21.2 15.8 22.2 12 22.2 C8.2 22.2 5 21.2 5 19.8 Z",
-		fill = rgb(238, 243, 251),
-	},
-	{ "M5 11.6 C7 12.5 17 12.5 19 11.6 V18.8 C17 19.7 7 19.7 5 18.8 Z", fill = rgb(214, 244, 238) },
-	{ "M5.3 12.4 C7.3 13.2 16.7 13.2 18.7 12.4", stroke = rgb(52, 176, 168), w = 0.6 },
-	{ "M5.3 18.1 C7.3 18.9 16.7 18.9 18.7 18.1", stroke = rgb(52, 176, 168), w = 0.6 },
-	{
-		rect(10.7, 12.7, 2.6, 5.4, 0.5) .. rect(9.3, 14.1, 5.4, 2.6, 0.5),
-		fill = rgb(160, 24, 56),
-		stroke = rgb(160, 24, 56),
-		w = 0.4,
-	},
-	{ rect(10.7, 12.7, 2.6, 5.4, 0.5), fill = rgb(232, 62, 74) },
-	{ rect(9.3, 14.1, 5.4, 2.6, 0.5), fill = rgb(232, 62, 74) },
-	{ "M11.2 13.3 V14 M9.9 14.7 H10.6", stroke = rgb(255, 150, 150), w = 0.4 },
-	{
-		"M15 8 H15.6 C17.4 8 19 8.8 19 10.4 V19.8 C19 20.8 17.4 21.6 15 22 Z",
-		fill = rgb(96, 116, 170),
-		opacity = 0.34,
-	},
-	{
-		"M17.4 8.5 C18.4 8.9 19 9.6 19 10.4 V19.8 C19 20.4 18.4 21 17.4 21.4 Z",
-		fill = rgb(96, 116, 170),
-		opacity = 0.4,
-	},
-	{ rect(6.3, 10.2, 1, 9.6, 0.5), fill = rgb(255, 255, 255), opacity = 0.95 },
-	{
-		"M7.2 3 C7.2 2 9.4 1.4 12 1.4 C14.6 1.4 16.8 2 16.8 3 V6.2 C16.8 7.1 14.6 7.7 12 7.7 C9.4 7.7 7.2 7.1 7.2 6.2 Z",
-		stroke = rgb(12, 84, 92),
-		w = 0.7,
-	},
-	{
-		"M7.2 3 C7.2 2 9.4 1.4 12 1.4 C14.6 1.4 16.8 2 16.8 3 V6.2 C16.8 7.1 14.6 7.7 12 7.7 C9.4 7.7 7.2 7.1 7.2 6.2 Z",
-		fill = rgb(46, 168, 162),
-	},
-	{ "M14.4 4.4 C15.8 4.1 16.8 3.6 16.8 3 V6.2 C16.8 6.8 15.8 7.3 14.4 7.5 Z", fill = rgb(24, 124, 130) },
-	{ "M8.7 4.7 V6.9 M10.3 5 V7.2 M12 5.1 V7.3 M13.7 5 V7.2 M15.3 4.7 V6.9", stroke = rgb(18, 108, 116), w = 0.4 },
-	{ ellipse(12, 3, 4.8, 1.5), fill = rgb(116, 218, 202) },
-	{ ellipse(10.4, 2.6, 1.8, 0.45), fill = GLINT, opacity = 0.8 },
-	{ "M15.9 21.3 L21 19.3", stroke = rgb(76, 92, 140), w = 3.1 },
-	{ "M15.9 21.3 L21 19.3", stroke = rgb(244, 246, 251), w = 2.4 },
-	{
-		"M18.89 21.42 L16.34 22.42 A1.2 1.2 0 0 1 15.46 20.18 L18.01 19.18 Z",
-		fill = rgb(232, 62, 74),
-	},
-	{ "M16.1 20.5 L17.6 19.9 M19.2 19.3 L20.6 18.75", stroke = rgb(255, 255, 255), w = 0.4, opacity = 0.8 },
-}, -1.2, 0)
 
 -- Food.
 

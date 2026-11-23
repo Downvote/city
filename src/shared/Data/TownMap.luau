@@ -1833,7 +1833,9 @@ function TownMap.placements(): { Placement }
 	onPaving("fountain", S.Fountain.X, S.Fountain.Z, 0)
 	onPaving("board", S.Board.X, S.Board.Z, 180, { action = "Town news", opens = "news" })
 	onPaving("tailor", S.Tailor.X, S.Tailor.Z, 180, { action = "Make a villager", opens = "creator" })
-	onPaving("shop", S.Shop.X, S.Shop.Z, 0, { action = "Shop", opens = "shop" })
+	-- the shop on the plaza is scenery now (the user: "remove the shop, buying of things and food and
+	-- feeding"), so it carries no prompt
+	onPaving("shop", S.Shop.X, S.Shop.Z, 0)
 	onPaving("hall", S.Hall.X, S.Hall.Z, 0, { action = "City hall", opens = "city" })
 	-- (beside the market gate's east bay, not behind it)
 	onPaving("sign", 26, 30, 180, { tag = "welcome" })

@@ -15,8 +15,8 @@ State.start()
 
 local Hud = require(UI.Hud)
 Hud.start()
--- the pictures of food and things are painted a few at a time in the background once the game
--- is up, so the shop doesn't stall painting them all the first time it opens
+-- the pictures of food are painted a few at a time in the background once the game is up, so the
+-- first screen that shows several cravings doesn't stall painting them all at once
 task.delay(4, function()
 	local names = {}
 	for name in require(UI.ItemArt) :: { [string]: any } do

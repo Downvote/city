@@ -78,9 +78,12 @@ describe("Town", function()
 				opens[p.opens] = true
 			end
 		end
-		for _, need in { "news", "creator", "shop", "city" } do
+		for _, need in { "news", "creator", "city" } do
 			expect(opens[need]).toBe(true)
 		end
+		-- and none for the shop, which is gone (the user: "remove the shop, buying of things and
+		-- food and feeding"); nothing would answer it
+		expect(opens.shop).toBe(nil)
 	end)
 
 	it("keeps the spawn and the festival spot clear", function()

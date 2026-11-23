@@ -32,7 +32,6 @@ local function view(): any
 		goals = d.goals or {},
 		plan = State.plan,
 		coins = d.coins or 0,
-		inv = d.inv or { food = {}, items = {} },
 	}
 end
 
