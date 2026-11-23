@@ -969,18 +969,12 @@ local function openMain(id: string)
 		end
 	end
 	for i, sub in main.subs do
-		local b = Kit.button(sub.name, {
-			Icon = sub.icon,
+		local b = Kit.tile(sub.icon, sub.name, {
 			Parent = subBar,
-			Size = UDim2.fromOffset(0, 40),
-			AutomaticSize = Enum.AutomaticSize.X,
-			TextSize = 16,
-			Color = T.Paper,
-			TextColor = T.Ink,
+			Size = UDim2.fromOffset(88, 70),
 			LayoutOrder = i,
-			Radius = 12,
+			Color = T.Paper,
 		})
-		Kit.pad(b, 12, 0)
 		subButtons[sub.id] = b
 		b.Activated:Connect(function()
 			openSub(sub.id)
@@ -1178,26 +1172,34 @@ function BuildUI.init(exitCallback: () -> ())
 	local gui = Kit.root()
 	ui = Kit.box({ Name = "BuildUI", Size = UDim2.fromScale(1, 1), Parent = gui, Visible = false })
 
-	-- bottom dock: the main categories and Done, chunky buttons on a dark glass bar
-	local dock = Kit.glass({
+	-- Laid out the way the best known house builder on Roblox lays its build mode out (the user:
+	-- "The building ui should be exactly like bloxburg instead of what is shown now"): everything
+	-- to build with is docked in the bottom left corner, the tools in a row on top, then the
+	-- things to place as cards with price tags, then the categories as icon tiles, then the main
+	-- groups; the floors and view switches sit at the right, and the way out is one big button
+	-- in the bottom right corner. Its layout and flow are what is taken, drawn our own way.
+	local LEFT, WIDE = 14, 760
+
+	-- the main groups, along the bottom
+	local dock = Kit.frame({
 		Name = "Dock",
-		Size = UDim2.new(0, 880, 0, 70),
-		Position = UDim2.new(0.5, 0, 1, -10),
-		AnchorPoint = Vector2.new(0.5, 1),
-		Radius = 20,
+		Size = UDim2.fromOffset(648, 60),
+		Position = UDim2.new(0, LEFT, 1, -12),
+		AnchorPoint = Vector2.new(0, 1),
+		Color = T.Paper,
+		Cut = 12,
 		Parent = ui,
 	})
-	Kit.pad(dock, 10, 8)
-	Kit.list(dock, 10, true)
+	local dockRow = Kit.box({ Parent = dock, Size = UDim2.new(1, -16, 1, -12), Position = UDim2.fromOffset(8, 6) })
+	Kit.list(dockRow, 8, true)
 	for i, m in MAIN do
 		local b = Kit.button(m.name, {
-			Parent = dock,
-			Size = UDim2.fromOffset(160, 50),
+			Parent = dockRow,
+			Size = UDim2.fromOffset(152, 48),
 			TextSize = 20,
 			Color = T.Paper,
 			TextColor = T.Ink,
 			LayoutOrder = i,
-			Radius = 14,
 			Icon = m.icon,
 		})
 		mainButtons[m.id] = b
@@ -1205,106 +1207,104 @@ function BuildUI.init(exitCallback: () -> ())
 			openMain(m.id)
 		end)
 	end
-	Kit.box({ Parent = dock, Size = UDim2.fromOffset(2, 40), LayoutOrder = 9 })
+
+	-- the way out: one big button in the bottom right corner
 	Kit.button("Done", {
-		Parent = dock,
+		Parent = ui,
 		Name = "Done",
-		Size = UDim2.fromOffset(170, 50),
-		TextSize = 22,
-		Color = T.Green,
-		LayoutOrder = 10,
-		Radius = 14,
-		Icon = "check",
+		Size = UDim2.fromOffset(196, 64),
+		Position = UDim2.new(1, -14, 1, -12),
+		AnchorPoint = Vector2.new(1, 1),
+		TextSize = 26,
+		Color = T.Coral,
+		Icon = "close",
 	}, function()
 		if onExit then
 			onExit()
 		end
 	end)
 
-	-- sub categories just above the dock, scrolling sideways when there are many
-	local subHolder = Kit.glass({
+	-- the categories just above, as icon tiles, scrolling sideways when there are many
+	local subHolder = Kit.frame({
 		Name = "SubsBar",
-		Size = UDim2.new(0, 880, 0, 54),
-		Position = UDim2.new(0.5, 0, 1, -88),
-		AnchorPoint = Vector2.new(0.5, 1),
-		Radius = 18,
+		Size = UDim2.fromOffset(WIDE, 84),
+		Position = UDim2.new(0, LEFT, 1, -78),
+		AnchorPoint = Vector2.new(0, 1),
+		Color = T.Paper,
+		Cut = 12,
 		Parent = ui,
 	})
 	subBar = Kit.scroll({
 		Name = "Subs",
 		Parent = subHolder,
-		Size = UDim2.new(1, -16, 1, 0),
-		Position = UDim2.fromOffset(8, 0),
+		Size = UDim2.new(1, -20, 1, -14),
+		Position = UDim2.fromOffset(10, 7),
 		Axis = Enum.AutomaticSize.X,
 	})
 	subBar.ScrollBarThickness = 0
-	Kit.list(subBar, 6, true)
+	Kit.list(subBar, 0, true)
 
-	-- the tray of items and options
+	-- the tray of things to place and options
 	tray = Kit.frame({
 		Name = "Tray",
-		Size = UDim2.new(0, 880, 0, 182),
-		Position = UDim2.new(0.5, 0, 1, -150),
-		AnchorPoint = Vector2.new(0.5, 1),
+		Size = UDim2.fromOffset(WIDE, 182),
+		Position = UDim2.new(0, LEFT, 1, -168),
+		AnchorPoint = Vector2.new(0, 1),
 		Color = T.Paper,
-		Radius = 18,
-		Stroke = T.Ink,
-		StrokeThickness = 3.5,
+		Cut = 14,
 		Parent = ui,
 	})
-	Kit.shadow(tray)
-	trayBody = Kit.box({ Parent = tray, Size = UDim2.new(1, -24, 1, -18), Position = UDim2.fromOffset(12, 9) })
+	trayBody = Kit.box({ Parent = tray, Size = UDim2.new(1, -28, 1, -18), Position = UDim2.fromOffset(14, 9) })
 
-	-- hint above the tray
-	local hint = Kit.glass({
-		Name = "Hint",
-		Size = UDim2.fromOffset(0, 34),
-		AutomaticSize = Enum.AutomaticSize.X,
-		Position = UDim2.new(0.5, 0, 1, -344),
-		AnchorPoint = Vector2.new(0.5, 1),
-		Radius = 17,
-		Parent = ui,
-	})
-	Kit.pad(hint, 16, 0)
-	hintLabel = Kit.title("", {
-		Parent = hint,
-		Size = UDim2.fromOffset(0, 34),
-		AutomaticSize = Enum.AutomaticSize.X,
-		TextSize = 17,
-		Color = T.Ink,
-		Wrap = false,
-	})
-
-	-- tool strip down the left
-	local strip = Kit.glass({
+	-- the tools, in a row on top of the tray
+	local strip = Kit.frame({
 		Name = "Tools",
-		Size = UDim2.fromOffset(84, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
-		Position = UDim2.new(0, 14, 0, 14),
-		Radius = 20,
+		Size = UDim2.fromOffset(#TOOLS * 66 + 20, 74),
+		Position = UDim2.new(0, LEFT, 1, -356),
+		AnchorPoint = Vector2.new(0, 1),
+		Color = T.Paper,
+		Cut = 12,
 		Parent = ui,
 	})
-	Kit.pad(strip, 8, 8)
-	Kit.list(strip, 7, false, Enum.HorizontalAlignment.Center)
+	local stripRow = Kit.box({ Parent = strip, Size = UDim2.new(1, -20, 1, -12), Position = UDim2.fromOffset(10, 6) })
+	Kit.list(stripRow, 0, true)
 	for i, tool in TOOLS do
-		local b = Kit.iconButton(tool.icon, tool.name, {
-			Parent = strip,
+		local b = Kit.tile(tool.icon, tool.name, {
+			Parent = stripRow,
 			Size = UDim2.fromOffset(66, 62),
 			LayoutOrder = i,
-			Radius = 14,
-			TextSize = 13,
+			Color = T.Paper,
 		}, tool.run)
 		toolButtons[tool.id] = b
 	end
 
-	-- floor switcher and view toggles, top right under the coins
-	local floors = Kit.glass({
+	-- what the tool in hand does, above the tools
+	local hint = Kit.darkPill({
+		Name = "Hint",
+		Size = UDim2.fromOffset(0, 34),
+		Position = UDim2.new(0, LEFT + 12, 1, -436),
+		AnchorPoint = Vector2.new(0, 1),
+		Parent = ui,
+	})
+	hint.AutomaticSize = Enum.AutomaticSize.X
+	Kit.pad(hint, 12, 0)
+	hintLabel = Kit.title("", {
+		Parent = hint,
+		Size = UDim2.fromOffset(0, 34),
+		AutomaticSize = Enum.AutomaticSize.X,
+		TextSize = 16,
+		Color = T.White,
+		Wrap = false,
+	})
+
+	-- the floors and the view switches, at the right above the way out
+	local floors = Kit.frame({
 		Name = "Floors",
 		Size = UDim2.fromOffset(196, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		Position = UDim2.new(1, -14, 0, 72),
-		AnchorPoint = Vector2.new(1, 0),
-		Radius = 18,
+		Position = UDim2.new(1, -14, 1, -88),
+		AnchorPoint = Vector2.new(1, 1),
+		Color = T.Paper,
 		Parent = ui,
 	})
 	Kit.pad(floors, 10, 10)
@@ -1313,18 +1313,17 @@ function BuildUI.init(exitCallback: () -> ())
 	Kit.button("", {
 		Name = "FloorDown",
 		Parent = levelRow,
-		Size = UDim2.fromOffset(44, 44),
+		Size = UDim2.fromOffset(48, 44),
 		TextSize = 22,
 		Color = T.Blue,
-		Radius = 12,
 		Icon = "down",
 	}, function()
 		BuildMode.setLevel(s.level - 1)
 	end)
 	levelLabel = Kit.title("Floor 1", {
 		Parent = levelRow,
-		Size = UDim2.new(1, -96, 1, 0),
-		Position = UDim2.fromOffset(48, 0),
+		Size = UDim2.new(1, -100, 1, 0),
+		Position = UDim2.fromOffset(50, 0),
 		TextSize = 20,
 		Color = T.Ink,
 		AlignX = Enum.TextXAlignment.Center,
@@ -1332,11 +1331,10 @@ function BuildUI.init(exitCallback: () -> ())
 	Kit.button("", {
 		Name = "FloorUp",
 		Parent = levelRow,
-		Size = UDim2.fromOffset(44, 44),
-		Position = UDim2.new(1, -44, 0, 0),
+		Size = UDim2.fromOffset(48, 44),
+		Position = UDim2.new(1, -48, 0, 0),
 		TextSize = 22,
 		Color = T.Blue,
-		Radius = 12,
 		Icon = "up",
 	}, function()
 		BuildMode.setLevel(s.level + 1)
@@ -1350,7 +1348,6 @@ function BuildUI.init(exitCallback: () -> ())
 			Color = T.Card,
 			TextColor = T.Ink,
 			LayoutOrder = order,
-			Radius = 12,
 			Icon = icon,
 		}, fn)
 		viewButtons[id] = b
@@ -1366,12 +1363,11 @@ function BuildUI.init(exitCallback: () -> ())
 		BuildMode.notify()
 	end)
 
-	-- coins, top right
+	-- coins, top left
 	local coinPill, coinValue = Kit.pill("coin", {
 		Parent = ui,
 		Size = UDim2.fromOffset(196, 46),
-		Position = UDim2.new(1, -14, 0, 14),
-		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.fromOffset(LEFT + 14, 14),
 	})
 	local _ = coinPill
 	coinsLabel = coinValue
@@ -1434,12 +1430,14 @@ function BuildUI.init(exitCallback: () -> ())
 						Kit.slideIn(f, 0, 140, 0)
 					elseif name == "SubsBar" then
 						Kit.slideIn(f, 0, 160, 0.04)
-					elseif name == "Tray" or name == "TrayShadow" then
+					elseif name == "Tray" then
 						Kit.slideIn(f, 0, 260, 0.08)
-					elseif name == "Tools" then
-						Kit.slideIn(f, -140, 0, 0.1)
-					elseif name == "Floors" or name == "Pill" then
+					elseif name == "Tools" or name == "Hint" then
+						Kit.slideIn(f, -260, 0, 0.1)
+					elseif name == "Floors" or name == "Done" then
 						Kit.slideIn(f, 260, 0, 0.12)
+					elseif name == "Pill" then
+						Kit.slideIn(f, 0, -120, 0.12)
 					end
 				end
 			end

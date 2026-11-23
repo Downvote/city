@@ -718,6 +718,28 @@ def draw_picture(cv, node, rect, clip):
     cv.paste(Image.fromarray(a.clip(0, 255).astype(np.uint8), "RGBA"), x, y, clip)
 
 
+def draw_wedge(cv, node, rect, clip):
+    """A right angled triangle (UI/Kit's wedge: a box with a gradient cut across its diagonal).
+    Its name says which half of the box it keeps."""
+    x, y, w, h = [cv.px(v) for v in rect]
+    keep = node["name"][6:]
+    pts = {
+        "br": [(w, 0), (w, h), (0, h)],
+        "tl": [(0, 0), (w, 0), (0, h)],
+        "tr": [(0, 0), (w, 0), (w, h)],
+        "bl": [(0, 0), (w, h), (0, h)],
+    }.get(keep)
+    if not pts or w < 0.5 or h < 0.5:
+        return
+    k = 3
+    im = Image.new("RGBA", (max(1, int(round(w)) * k), max(1, int(round(h)) * k)), (0, 0, 0, 0))
+    sx, sy = im.width / w, im.height / h
+    alpha = 1 - (P(node, "BackgroundTransparency", 0) or 0)
+    ImageDraw.Draw(im).polygon([(px * sx, py * sy) for px, py in pts], fill=rgb(P(node, "BackgroundColor3", [1, 1, 1]), alpha))
+    im = im.resize((im.width // k, im.height // k), Image.LANCZOS)
+    cv.paste(im, x, y, clip)
+
+
 def draw_figure(cv, rect, clip):
     """A stand-in for a villager (the real one is a 3D model in a ViewportFrame): a plain figure
     the height of the frame, so a screen's layout can be judged."""
@@ -778,7 +800,9 @@ def draw_node(cv, node, clip, item_hint=None):
         target = Canvas(cv.im.width / cv.ss, cv.im.height / cv.ss, cv.ss, cv.k / cv.ss)
         target.im = Image.new("RGBA", cv.im.size, (0, 0, 0, 0))
         clip = None
-    if rect:
+    if rect and node["name"].startswith("Wedge_"):
+        draw_wedge(target, node, rect, clip)
+    elif rect:
         draw_box(target, node, rect, clip)
         if node["class"] in TEXT_CLASSES:
             draw_text(target, node, rect, clip)

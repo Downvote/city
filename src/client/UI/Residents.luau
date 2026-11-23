@@ -564,8 +564,8 @@ local function showDetail()
 		Kit.text(wishText, {
 			Name = "Title",
 			Parent = wishInside,
-			Size = UDim2.new(1, -(56 + 156), 1, -8),
-			Position = UDim2.fromOffset(56, 4),
+			Size = UDim2.new(1, -(76 + 170), 1, -8),
+			Position = UDim2.fromOffset(76, 4),
 			TextSize = 15,
 			Font = Kit.Fonts.Bold,
 			ZIndex = 2,
@@ -596,11 +596,10 @@ local function showDetail()
 		Kit.button(label, {
 			Parent = wishInside,
 			Size = UDim2.fromOffset(132, 38),
-			Position = UDim2.new(1, -10, 0.5, 0),
+			Position = UDim2.new(1, -26, 0.5, 0),
 			AnchorPoint = Vector2.new(1, 0.5),
 			Color = T.Orange,
 			TextSize = 15,
-			Radius = "pill",
 			ZIndex = 3,
 		}, fn)
 		bottom += 66
@@ -647,8 +646,8 @@ local function refreshList()
 			Title = v.name,
 			Sub = if w then w.job.name else "No job",
 			TextSize = 18,
-			LeftSpace = 66,
-			RightSpace = 62,
+			LeftSpace = 64,
+			RightSpace = 46,
 			Selected = v.id == selected,
 		}, function()
 			selected = v.id
@@ -662,7 +661,7 @@ local function refreshList()
 			Name = "Portrait",
 			Parent = inner,
 			Size = UDim2.fromOffset(46, 46),
-			Position = UDim2.new(0, 10, 0.5, -23),
+			Position = UDim2.new(0, 26, 0.5, -23),
 			Color = Colors.fromHex(v.color):Lerp(T.Cream, 0.5),
 			Radius = "circle",
 			ZIndex = 3,
@@ -673,11 +672,12 @@ local function refreshList()
 			Name = "Mood",
 			Parent = inner,
 			Size = UDim2.fromOffset(14, 14),
-			Position = UDim2.new(1, -26, 0.5, -7),
+			Position = UDim2.new(1, -40, 0.5, -7),
 			Color = if v.mood >= 60 then T.Green elseif v.mood >= 40 then T.Yellow else T.Coral,
-			Radius = "circle",
+			Radius = 2,
 			ZIndex = 3,
-		})
+		}).Rotation =
+			45 -- a diamond
 	end
 	Kit.text(
 		Text.fill("{n} of {max}", { n = #list, max = Tuning.Villagers.Max }),

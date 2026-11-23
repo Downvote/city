@@ -184,7 +184,7 @@ function MapPanel.open()
 		Parent = body,
 		Size = UDim2.new(0, MAP_W + 32, 1, 0),
 		Color = T.Paper,
-		Radius = 24,
+		Cut = 22,
 	})
 	local count = Kit.title("", {
 		Parent = card,

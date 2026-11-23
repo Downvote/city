@@ -255,14 +255,21 @@ run("a menu takes the screen: a way back, tabs, rows", function()
 	local tabs = header:FindFirstChild("Tabs")
 	check(tabs ~= nil, "its tabs sit in the top strip")
 	local first, second = tabs:FindFirstChild("First", true), tabs:FindFirstChild("Second", true)
+	local function slab(tab)
+		return tab:FindFirstChild("Face")
+	end
+	local function words(tab)
+		return tab:FindFirstChild("Label")
+	end
 	check(
-		first.BackgroundTransparency == 0 and first.BackgroundColor3 == T.Yellow,
-		"the first tab starts picked, in yellow"
+		slab(first).BackgroundTransparency == 0 and slab(first).BackgroundColor3 == T.Yellow,
+		"the first tab starts picked, on a yellow slab"
 	)
-	check(first.TextColor3 == T.Dark and second.TextColor3 == T.Ink, "with dark words, the other light")
+	check(slab(first):FindFirstChild("Wedge_br") ~= nil, "which leans: it has slanted ends")
+	check(words(first).TextColor3 == T.Dark and words(second).TextColor3 == T.Ink, "with dark words, the other light")
 	second.Activated:Fire()
 	check(
-		picked == "b" and second.BackgroundTransparency == 0 and first.BackgroundTransparency == 1,
+		picked == "b" and slab(second).BackgroundTransparency == 0 and slab(first).BackgroundTransparency == 1,
 		"picking the other swaps them"
 	)
 	-- rows
@@ -273,24 +280,45 @@ run("a menu takes the screen: a way back, tabs, rows", function()
 			hit = true
 		end
 	)
-	check(row:FindFirstChild("Marker", true) ~= nil, "a row has its round marker")
+	local marker = row:FindFirstChild("Marker", true)
+	check(marker ~= nil and marker.Rotation == 45, "a row has its diamond marker")
 	local title = row:FindFirstChild("Title", true)
 	check(title.TextColor3 == T.Ink, "its words are light")
+	local fill = row:FindFirstChild("Fill")
 	Sim.Kit.setRowSelected(row, true)
-	check(
-		title.TextColor3 == T.Dark and row:FindFirstChild("Fill"):FindFirstChild("Wash") ~= nil,
-		"picked, it is yellow with dark words"
-	)
+	check(title.TextColor3 == T.Dark and fill.BackgroundColor3 == T.Yellow, "picked, it is yellow with dark words")
+	check(fill:FindFirstChild("Wedge_tl").BackgroundColor3 == T.Yellow, "its slanted ends too")
 	Sim.Kit.setRowSelected(row, false)
-	check(title.TextColor3 == T.Ink and row:FindFirstChild("Fill"):FindFirstChild("Wash") == nil, "and goes back")
+	check(title.TextColor3 == T.Ink and fill.BackgroundColor3 == T.PaperDark, "and goes back")
 	row.Activated:Fire()
 	check(hit, "clicking a row calls back")
+	check(panel.root:FindFirstChild("Motion") ~= nil, "shapes drift across the black behind it")
+	local card0 = panel.root:FindFirstChild("Card", true)
+	check(
+		card0:FindFirstChild("Cut") ~= nil and card0.Cut:FindFirstChild("Wedge_br") ~= nil,
+		"the panel has its corners cut"
+	)
+	local shapes = panel.root.Motion:GetChildren()
+	local before = shapes[1].Position
+	Sim.frames(6)
+	check(shapes[1].Position ~= before, "and they move")
 	panel.root:Destroy()
 	-- a dialog keeps its title and close button inside the panel
 	local dialog = Sim.Kit.panel("A question", roblox.UDim2.fromOffset(500, 300), nil, nil, nil, { Dialog = true })
 	local card = dialog.root:FindFirstChild("Card", true)
 	check(card ~= nil and card:FindFirstChild("Close") ~= nil, "a dialog has its close button on the panel")
 	check(dialog.root:FindFirstChild("Tabs", true) == nil, "and no tabs")
+	check(dialog.root:FindFirstChild("Motion") == nil, "and nothing drifting behind it")
+	-- a button leans, and keeps leaning when it is recoloured
+	local b = Sim.Kit.button("Go", { Parent = dialog.body, Size = roblox.UDim2.fromOffset(120, 40) })
+	local face = b:FindFirstChild("Face")
+	check(
+		face:FindFirstChild("Wedge_br") ~= nil and face:FindFirstChild("Wedge_tl") ~= nil,
+		"a button has slanted ends"
+	)
+	check(face:FindFirstChildOfClass("UICorner") == nil, "and no rounded corners")
+	Sim.Kit.setButtonColor(b, T.Yellow, T.Dark)
+	check(face:FindFirstChild("Wedge_br").BackgroundColor3 == T.Yellow, "recoloured, its ends follow")
 	dialog.root:Destroy()
 end)
 

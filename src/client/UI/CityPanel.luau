@@ -49,7 +49,7 @@ local function draw()
 		Parent = panel.body,
 		Size = UDim2.new(0.46, -10, 1, 0),
 		Color = T.Paper,
-		Radius = 24,
+		Cut = 22,
 	})
 	local left = Kit.scroll({ Parent = card, Size = UDim2.new(1, -44, 1, -40), Position = UDim2.fromOffset(24, 20) })
 	Kit.list(left, 8)

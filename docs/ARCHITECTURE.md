@@ -194,6 +194,18 @@ harness stands in for the newer enums, so the UI previews draw shadows, radial a
 clipping (`tools/preview/ui_render.py`).
 
 - `Controllers/State`: the mirror of the player's state and plan; `State.on(key, fn)`, `State.onPlan(fn)`.
+- `UI/Kit` shapes are angular, drawn with no pictures. `Kit.corner` gives every radius 3 pixels (only `"round"`
+  makes a circle). `Kit.wedge(props, keep)` is a right angled triangle: a box named `Wedge_<br|tl|tr|bl>` with a
+  UIGradient `Cut` laid square across its diagonal whose Transparency steps half way (it refits when the box's
+  AbsoluteSize changes). `Kit.slant(face, height, outside)` makes a rectangle lean by pulling it in and putting a
+  wedge on each end (or outside its box); `Kit.paint(face, colour, transparency)` recolours a face with its
+  wedges. `Kit.cutInto(holder, colour, cut)` lays a rectangle with its top left and bottom right corners cut
+  under what is in `holder` (`Kit.frame({ Cut = n })` does it; `Kit.paintCut`). `Kit.stripes(props)` is a block
+  of slanted stripes, `Kit.tile(icon, caption, props, onClick)` an icon over its name on a small leaning slab,
+  `Kit.motion(parent, accent, seed)` the shapes drifting behind a menu (one Heartbeat connection, dropped when
+  the layer is destroyed). Buttons (`Kit.button`), `Kit.bigButton`, `Kit.darkPill`, `Kit.ribbon`, `Kit.choice`,
+  `Kit.row`, `Kit.segments` and `Kit.backButton` all lean; `Kit.pad` keeps a leaning face inside its button.
+  The previews draw a wedge as its triangle (`ui_render.py`).
 - `UI/Kit` menus: `Kit.panel(title, size, onClose, icon, color, opts)` is a full menu (pass `Kit.MenuSize`): a
   black backdrop, `Kit.backButton` and the title in a strip above the panel, `opts.Tabs` / `opts.OnTab` as
   `Kit.segments` at the top right, the panel in a rim. `opts.Dialog = true` is a small panel in the middle with
@@ -286,7 +298,10 @@ clipping (`tools/preview/ui_render.py`).
   `PivotTo`; `BuildMode.startPreset(id)` picks one up and R turns it a quarter. `Build/BuildUI`: the Buildings tab
   (preset cards), the bottom category bar, sub categories and item tray, the tool strip, the floor card, the coins
   pill, the hint and the action bar over the picked object (placed with `WorldToViewportPoint`, the GUI inset and the
-  UI scale). `Build/BuildCamera` (free camera).
+  UI scale). `Build/BuildCamera` (free camera). The screen's frames, all docked: `Dock` (main groups), `SubsBar`
+  with the scroll `Subs` (category tiles), `Tray` (cards and options) and `Tools` (a row of tiles) up the bottom
+  left, `Hint` above them, `Floors` at the right over the `Done` button in the bottom right corner, the coin
+  `Pill` top left.
 
 ## Tests and tools
 

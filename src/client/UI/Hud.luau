@@ -399,7 +399,7 @@ function Hud.start()
 		Name = "MenuBar",
 		Parent = menu,
 		Color = T.Paper,
-		Radius = 44,
+		Slant = 96,
 		Size = UDim2.fromOffset(356, 96),
 		Position = UDim2.fromOffset(108, 8),
 		Estimate = Vector2.new(356, 96),

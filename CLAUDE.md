@@ -116,12 +116,22 @@ layout and the parts, draw them our own way, never that game's art, slanted tabs
 `Kit.panel(title, Kit.MenuSize, onClose, icon, colour, opts)`: it takes the whole screen over black, the way back
 is a pill at the top left beside the title, `opts.Tabs` are one long pill at the top right, and the content sits
 in one big panel with a rim. `opts.Dialog = true` is the small kind (a welcome, a question). Lists are
-`Kit.row` pills; the usual layout is a card for the picked thing on the left and the rows down the right.
+`Kit.row` slabs; the usual layout is a card for the picked thing on the left and the rows down the right.
 Yellow with dark words (`T.Yellow`, `T.Dark`) means picked, everywhere: tabs, rows, steps, Build mode's tabs.
 Buttons that do something keep their own colour. The villager screen and the creator are character screens:
 the villager stands on the left (`ModelPreview.fromModel(model, { Stand = true })`, or in the town for the
 creator), a fade runs from clear to black toward the right, and the stats or the catalog sit on the black. The
 old header bar and its wave are gone.
+Shapes are angular (the user: "Use the format in zenless zone zero for buttons and details in ui instead of
+overusing circles and rounded rectangles"): never reach for a circle or a rounded rectangle. `Kit.corner` gives 3
+pixels whatever is asked. Buttons, tabs, rows and bars lean (`Kit.slant` puts a slanted wedge on each end;
+`Kit.button`, `Kit.row`, `Kit.segments`, `Kit.tile` and `Kit.darkPill` already do), panels and cards have two
+corners cut (`Kit.frame({ Cut = n })`), markers are diamonds (a square turned 45 degrees), details are
+`Kit.stripes` and ticks. Recolour a leaning face with `Kit.paint`, never by setting its BackgroundColor3, or its
+ends keep the old colour. A full menu has `Kit.motion` behind it ("make an animated background with shapes like
+it in the menus"). Build mode is laid out like the genre's best known builder ("The building ui should be
+exactly like bloxburg"): the catalog docked bottom left (tools row, cards, category tiles, main groups), floors
+at the right, one big Done bottom right, coins top left.
 Icons are vector art (the user: "Alot of the icons arent proper vector art and just shapes spliced together,
 look online to see how vector art should be. Make them as simple as possible"): paths in `UI/IconArt` on a 24
 grid, one line weight, round ends, a margin of 2, as few lines as possible, painted by `UI/Vector` into an

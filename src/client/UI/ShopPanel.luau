@@ -164,7 +164,7 @@ local function draw()
 		Parent = panel.body,
 		Size = UDim2.new(0.46, -10, 1, 0),
 		Color = T.Paper,
-		Radius = 24,
+		Cut = 22,
 	})
 	local scroll = Kit.scroll({
 		Parent = panel.body,

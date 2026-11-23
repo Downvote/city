@@ -671,6 +671,32 @@ Maplewick's own: its font, its pastels, plain rounded shapes, none of that game'
   title inside and a round close button, over a lighter dim.
 - The header bar with its wavy edge went with the old panels. Say so if you want the wave back somewhere.
 
+### Angular shapes, a moving backdrop, and Build mode's layout
+
+> The building ui should be exactly like bloxburg instead of what is shown now
+
+> Use the format in zenless zone zero for buttons and details in ui instead of overusing circles and rounded
+> rectangles Also, make an animated background with shapes like it in the menus.
+
+As before, what is taken from those two games is layout and the kind of shape, drawn our own way: Maplewick's
+font and colours, none of their art, logos or patterns.
+
+- **Shapes are cut from straight lines.** A button, a tab, a row and the dark bars over the town lean: their two
+  ends are slanted. A menu's panel and the cards in it have their top left and bottom right corners cut off. A
+  row's marker, the alert on a button and a villager's mood are diamonds. Round buttons are square tiles. What
+  corners are left are all but square. The progress ring is still a ring.
+- **Details.** A menu's panel carries a small block of slanted stripes in its colour by the cut corner and a row
+  of ticks along its top edge, and the menu's name has a leaning mark in its colour in front of it.
+- **The backdrop moves.** Behind a full menu, leaning bars, triangles, hollow diamonds, plus signs and rows of
+  ticks drift slowly up and to the right across the black, faint, in the menu's colour and white, and come back
+  in at the far edge. A small question (a dialog) has none.
+- **Build mode** is laid out like the best known house builder's. Everything to build with is docked in the
+  bottom left corner, from the top down: a line saying what the tool in hand does, the tools in a row (Pick,
+  Move, Turn, Copy, Paint, Sell, Undo, Redo), the things to place as cards with a picture, a name and a price
+  tag, the categories as icon tiles, and the main groups (Build, Furniture, Outdoor, Work). The floor switcher
+  and the view switches (roofs, walls, grid) sit at the right, the way out is one big Done button in the bottom
+  right corner, and your coins are at the top left. What each part does is unchanged.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no
