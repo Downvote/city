@@ -10,6 +10,8 @@
 --   house              the starter house
 --   town               the plaza's own buildings
 --   town:<name>        one of them (fountain, board, tailor, shop, hall...)
+--   preset:<id>        a ready-made building (cottage, family, townhouse, library, cafe...)
+--   presets            all of them in a row (add :inside to leave the roofs off)
 --   ambient            the cars, the bus and a bird
 --   cloud              a cloud
 --   map                the middle of town: streets, plaza and street furniture
@@ -141,6 +143,36 @@ elseif scene == "map" or scene:sub(1, 4) == "map:" then
 		end
 	end
 	addPrims(TownMap.preview(region))
+elseif scene:sub(1, 7) == "preset:" or scene:sub(1, 7) == "presets" then
+	-- preset:<id> one ready-made building; presets all of them in a row
+	local Presets = R(Shared .. "Data.Presets")
+	local ids = {}
+	local inside = scene:sub(-7) == ":inside" -- leave off roofs and upper floors to see in
+	local name = if inside then scene:sub(1, -8) else scene
+	if name == "presets" then
+		for _, p in Presets.list do
+			table.insert(ids, p.id)
+		end
+	else
+		table.insert(ids, name:sub(8))
+	end
+	local plan = Plan.new(200)
+	plan.size = 200
+	local x = 0
+	for _, id in ids do
+		local p = Presets.get(id)
+		assert(p, "no preset " .. id)
+		local _, why, _, trial, made = Presets.check(plan, Presets.requests(id, x, 0, 0))
+		assert(why == nil, id .. ": " .. tostring(why))
+		for _, m in made do
+			local obj = trial[m.kind][m.key]
+			if not inside or (m.kind ~= "roofs" and (obj.lv or 0) == 0) then
+				addPrims(Builder.primsFor(trial, m.kind, m.key) or {})
+			end
+		end
+		plan = trial
+		x += p.w + 6
+	end
 elseif scene == "ambient" then
 	local AmbientModels = R(Shared .. "Data.AmbientModels")
 	addPrims(AmbientModels.preview())

@@ -9,12 +9,14 @@ local GuiService = game:GetService("GuiService")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Tuning = require(Shared.Config.Tuning)
 local Plan = require(Shared.Build.Plan)
+local Builder = require(Shared.Build.Builder)
 local Catalog = require(Shared.Build.Catalog)
 local Palette = require(Shared.Data.Palette)
 local Colors = require(Shared.Util.Colors)
 local Text = require(Shared.Util.Text)
 
 local Kit = require(script.Parent.Parent.UI.Kit)
+local Presets = require(Shared.Data.Presets)
 local Icons = require(script.Parent.Parent.UI.Icons)
 local Toasts = require(script.Parent.Parent.UI.Toasts)
 local ModelPreview = require(script.Parent.Parent.UI.ModelPreview)
@@ -32,6 +34,7 @@ local MAIN = {
 		icon = "blueprint",
 		name = "Build",
 		subs = {
+			{ id = "buildings", icon = "house", name = "Buildings" },
 			{ id = "walls", icon = "wall", name = "Walls" },
 			{ id = "rooms", icon = "room", name = "Rooms" },
 			{ id = "floors", icon = "floor", name = "Floors" },
@@ -413,6 +416,120 @@ local function armTool()
 	end
 end
 
+-- Ready-made buildings: a card each with the outside of the building, its size and its price.
+local presetPrices: { [string]: number } = {}
+local presetLooks: { [string]: { any } } = {}
+
+local function presetLook(id: string): { any }
+	if presetLooks[id] then
+		return presetLooks[id]
+	end
+	local empty = Plan.new(Tuning.Plot.Size)
+	empty.size = Tuning.Plot.Size
+	local _, _, _, trial, made = Presets.check(empty, Presets.requests(id, 0, 0, 0))
+	local prims = {}
+	for _, m in made do
+		local obj = trial[m.kind][m.key]
+		local def = m.kind == "items" and Catalog.get(obj.id)
+		-- the outside only: walls, roofs, doors and windows, and the garden
+		if m.kind ~= "items" or (def and (def.place == "opening" or def.place == "ground")) then
+			local list = Builder.primsFor(trial, m.kind, m.key)
+			if list then
+				for _, prim in list do
+					table.insert(prims, prim)
+				end
+			end
+		end
+	end
+	presetLooks[id] = prims
+	return prims
+end
+
+local function presetTray()
+	local row = trayRow()
+	for i, preset in Presets.list do
+		local card = Kit.new("TextButton", {
+			Name = preset.id,
+			Text = "",
+			AutoButtonColor = false,
+			BackgroundColor3 = T.White,
+			Size = UDim2.fromOffset(150, 152),
+			LayoutOrder = i,
+			Parent = row,
+		})
+		card:SetAttribute("PresetId", preset.id)
+		local stroke = Kit.stroke(card, T.Ink, 2.5)
+		local pic = Kit.frame({
+			Parent = card,
+			Size = UDim2.new(1, -10, 0, 98),
+			Position = UDim2.fromOffset(5, 5),
+			Color = Color3.fromRGB(206, 232, 255),
+			Radius = false,
+		})
+		task.spawn(function()
+			ModelPreview.fromPrims(presetLook(preset.id), { Parent = pic })
+		end)
+		Kit.title(preset.name, {
+			Parent = card,
+			Size = UDim2.new(1, -10, 0, 18),
+			Position = UDim2.fromOffset(5, 105),
+			TextSize = 15,
+			AlignX = Enum.TextXAlignment.Center,
+			Wrap = false,
+		})
+		if not presetPrices[preset.id] then
+			presetPrices[preset.id] = Presets.price(preset.id)
+		end
+		local tag = Kit.frame({
+			Parent = card,
+			Size = UDim2.fromOffset(0, 20),
+			AutomaticSize = Enum.AutomaticSize.X,
+			Position = UDim2.new(0.5, 0, 0, 126),
+			AnchorPoint = Vector2.new(0.5, 0),
+			Color = T.Green,
+			Radius = false,
+			Stroke = T.Ink,
+			StrokeThickness = 2,
+		})
+		Kit.pad(tag, 6, 0)
+		local tagRow = Kit.box({ Parent = tag, Size = UDim2.fromOffset(0, 20), AutomaticSize = Enum.AutomaticSize.X })
+		Kit.list(tagRow, 3, true)
+		Icons.make("coin", 16, { Parent = tagRow, LayoutOrder = 1 })
+		Kit.title(Text.commas(presetPrices[preset.id]), {
+			Parent = tagRow,
+			Size = UDim2.fromOffset(0, 20),
+			AutomaticSize = Enum.AutomaticSize.X,
+			TextSize = 14,
+			Color = T.White,
+			Wrap = false,
+			LayoutOrder = 2,
+			Outline = Kit.darker(T.Green, 0.42),
+		})
+		Kit.text(Text.fill("{w} x {d}", { w = preset.w, d = preset.d }), {
+			Parent = pic,
+			Size = UDim2.fromOffset(60, 16),
+			Position = UDim2.new(1, -64, 0, 4),
+			TextSize = 12,
+			Font = Kit.Fonts.Bold,
+			AlignX = Enum.TextXAlignment.Right,
+			Color = T.InkSoft,
+		})
+		local scale = Kit.new("UIScale", { Parent = card })
+		card.MouseEnter:Connect(function()
+			stroke.Color = T.Blue
+			hintLabel.Text = preset.desc
+			TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Scale = 1.05 }):Play()
+		end)
+		card.MouseLeave:Connect(function()
+			stroke.Color = T.Ink
+			TweenService:Create(scale, TweenInfo.new(0.15), { Scale = 1 }):Play()
+		end)
+		card.Activated:Connect(function()
+			BuildMode.startPreset(preset.id)
+		end)
+	end
+end
+
 local function catalogTray(cat: string)
 	local row = trayRow()
 	local list = Catalog.list(cat)
@@ -775,6 +892,9 @@ refreshTray = function()
 	elseif tool == "select" and s.selected then
 		trayMode = "select"
 		selectionTray()
+	elseif subTab == "buildings" then
+		trayMode = "buildings"
+		presetTray()
 	elseif subTab == "walls" then
 		trayMode = "walls"
 		wallTray(WALL_STYLES, false)
@@ -941,6 +1061,7 @@ local HINTS = {
 	floor = "Drag across the ground to lay a floor.",
 	roof = "Drag over the walls to put a roof on.",
 	place = "Click to place. R turns it. Right click puts it away.",
+	preset = "Click to put the building down. R turns it. Right click puts it away.",
 	paint = "Click a wall side, floor, roof or item to paint it.",
 	delete = "Click something to sell it back for what you paid.",
 }
@@ -1318,7 +1439,11 @@ function BuildUI.init(exitCallback: () -> ())
 		end
 		refreshChrome()
 		if what == "tool" then
-			if s.tool == "place" and s.placing then
+			if s.tool == "preset" then
+				if trayMode ~= "buildings" then
+					refreshTray()
+				end
+			elseif s.tool == "place" and s.placing then
 				-- keep showing the catalog the item came from
 				if trayMode:sub(1, 8) ~= "catalog:" then
 					refreshTray()

@@ -6,7 +6,8 @@
 --   { type = "remove", kind, key }       takes attached doors and windows along
 --   { type = "set", kind, key, obj }     a move, turn or repaint
 -- A list of requests is one change: it all goes through or none of it does, and undo takes it
--- back as one step.
+-- back as one step. A ready-made building is one such list: its doors and windows name their
+-- wall as "@n", the wall made by the n-th request of the same list.
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Plan = require(Shared.Build.Plan)
@@ -19,7 +20,7 @@ local Plots = require(script.Parent.Plots)
 local Build = {}
 
 local MAX_HISTORY = 60
-local MAX_REQUESTS = 64
+local MAX_REQUESTS = 320 -- a whole ready-made building goes in one batch
 
 local history: { [Player]: { undo: { any }, redo: { any } } } = {}
 local busy: { [Player]: boolean } = {}
@@ -50,19 +51,32 @@ end
 -- On any problem, everything applied so far is rolled back.
 local function prepare(plan: any, requests: { any }): ({ any }?, string?)
 	local applied = {}
+	local made: { [number]: string } = {} -- request index -> the key its object got
 	local function fail(msg: string): (nil, string)
 		if #applied > 0 then
 			Plan.apply(plan, Plan.invert(applied))
 		end
 		return nil, msg
 	end
-	for _, req in requests do
+	for i, req in requests do
 		if type(req) ~= "table" or type(req.kind) ~= "string" or not Plan.KindSet[req.kind] then
 			return fail("bad request")
 		end
 		local ops: { any }
 		if req.type == "add" then
-			local obj = Plan.clean(req.kind, req.obj)
+			local raw = req.obj
+			if req.kind == "items" and type(raw) == "table" and type(raw.wall) == "string" then
+				local n = string.match(raw.wall, "^@(%d+)$")
+				if n then
+					local key = made[tonumber(n) :: number]
+					if not key then
+						return fail("bad request")
+					end
+					raw = table.clone(raw)
+					raw.wall = key
+				end
+			end
+			local obj = Plan.clean(req.kind, raw)
 			local ok, err = Plan.validate(plan, req.kind, obj)
 			if not ok then
 				return fail(err or "can't place that")
@@ -77,7 +91,9 @@ local function prepare(plan: any, requests: { any }): ({ any }?, string?)
 					end
 				end
 			end
-			ops = { { op = "add", kind = req.kind, key = Plan.newKey(plan), obj = Plan.copy(obj) } }
+			local key = Plan.newKey(plan)
+			made[i] = key
+			ops = { { op = "add", kind = req.kind, key = key, obj = Plan.copy(obj) } }
 		elseif req.type == "remove" then
 			if type(req.key) ~= "string" or plan[req.kind][req.key] == nil then
 				return fail("that's already gone")
@@ -204,6 +220,9 @@ function Build.apply(player: Player, requests: any): (boolean, string?)
 	end
 	return result[1], result[2]
 end
+
+-- For the specs: turns requests into ops on a plan, as Build.apply does, without coins or players.
+Build.prepare = prepare
 
 function Build.undo(player: Player): (boolean, string?)
 	local h = hist(player)

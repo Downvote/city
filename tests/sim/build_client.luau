@@ -245,6 +245,60 @@ run("leaving Build mode", function()
 	check(count("items") == before + 1, "placing still works the second time round")
 end)
 
+run("putting down a ready-made building", function()
+	local Presets = Sim.Harness.require("ReplicatedStorage.Shared.Data.Presets")
+	local Catalog = Sim.Harness.require("ReplicatedStorage.Shared.Build.Catalog")
+	if not BuildMode.isActive() then
+		BuildMode.enter()
+		frames(2)
+	end
+	press("Build")
+	press("Buildings")
+	local tray = gui:FindFirstChild("Tray", true)
+	local cards = Fake.find(tray, function(d)
+		return d:IsA("TextButton") and Fake.shown(d) and d:GetAttribute("PresetId") ~= nil
+	end)
+	check(#cards == #Presets.list, "the Buildings tab shows every building (" .. #cards .. ")")
+	local cottage
+	for _, c in cards do
+		if c:GetAttribute("PresetId") == "cottage" then
+			cottage = c
+		end
+	end
+	cottage.Activated:Fire()
+	frames(2)
+	check(BuildMode.state.tool == "preset", "clicking a card picks the building up")
+	local walls, items, coins = count("walls"), count("items"), profile.coins
+	local price = Presets.price("cottage")
+	mouseAtPlot(118, 62)
+	local ghost = ws:FindFirstChild("BuildGhost")
+	check(ghost ~= nil and ghost:FindFirstChild("PresetGhost") ~= nil, "a ghost of the building follows the mouse")
+	input(Enum.UserInputType.Keyboard, true)
+	BuildMode.rotate()
+	BuildMode.rotate()
+	BuildMode.rotate()
+	BuildMode.rotate()
+	frames(2)
+	click()
+	check(count("walls") == walls + 5, "its five walls are built (" .. (count("walls") - walls) .. ")")
+	check(count("items") > items + 20, "and its doors, windows and furniture")
+	check(
+		profile.coins == coins - price,
+		"it costs what its pieces cost (" .. (coins - profile.coins) .. " of " .. price .. ")"
+	)
+	local onWalls = 0
+	for _, item in profile.plan.items do
+		local def = Catalog.get(item.id)
+		if def.place == "opening" and profile.plan.walls[item.wall] then
+			onWalls += 1
+		end
+	end
+	check(onWalls >= 10, "its doors and windows hang on its own walls")
+	check(BuildMode.state.tool == "select", "and you're back to picking")
+	press("Undo")
+	check(count("walls") == walls and profile.coins == coins, "one undo takes the whole building back")
+end)
+
 run("life around town and the show when you build", function()
 	local Harness, env = Sim.Harness, Sim.env
 	local Town = Harness.require("ReplicatedStorage.Shared.Data.Town")

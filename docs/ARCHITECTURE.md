@@ -29,7 +29,8 @@ The contract between the parts of the game. Update it with every change to an AP
 - `Data/`: `Palette` (paint swatches, materials and the ready-made finishes Build mode shows as tiles), `Personalities`, `Foods`, `Items`, `Jobs`, `Events` (the event list), `Town` (map
   layout and plot frames), `TownMap` (the streets, sidewalks, square and market as parts, and where every building
   and piece of street furniture stands), `TownModels` (plaza buildings), `AmbientModels` (cars, the bus, birds,
-  clouds), `StarterHouse` (every new plot's first build).
+  clouds), `Presets` (ready-made buildings: `requests(id, x, z, rot)` turns one into Build requests, `check(plan,
+  requests)` tries them on a copy of a plan, `price(id)`), `StarterHouse` (every new plot's first build).
 - `Avatar/`: `Appearance` (the saved look, sanitising, which asset types fit which slot), `Categories` (creator tabs,
   catalog filters, wearing and merging).
 - `Sim/`: `Schema` (profile and villager shapes, defaults, migration), `Relationships`, `EventEngine` (picks events,
@@ -82,7 +83,7 @@ Villager = { id, name, pers, app, color, bday = { s, d }, fav, hate, known, mood
 | `Data` | Loads with a session lock, autosaves every two minutes, saves on leave and shutdown, pushes state patches (`State`), toasts (`Notify`), coins, the town log, the daily gift. |
 | `World` | Builds the town from `Data/TownMap` (streets, plaza, street furniture, decoration, hills, prompts) and the plot bases; sets the stylised lighting (colour grading tinted by the hour, bloom, sun rays, haze); the clock (real time, 12 minute days) and calendar; night lights; doors that open for anyone walking up; seasonal weather. |
 | `Plots` | Hands out plots, draws the saved build and the owned land, sells more land (`PlotExpand`). |
-| `Build` | `BuildApply`, `BuildUndo`, `BuildRedo`: checks requests, charges or refunds, keeps history, redraws, syncs the plan to its owner (`PlanSync`). Fires `Changed`. |
+| `Build` | `BuildApply`, `BuildUndo`, `BuildRedo`: checks requests, charges or refunds, keeps history, redraws, syncs the plan to its owner (`PlanSync`). Fires `Changed`. A batch is up to 320 requests (a whole ready-made building); an item's `wall = "@n"` means the wall made by the batch's n-th request. `Build.prepare` is exported for the specs. |
 | `Avatar` | The creator: a private stage and mannequin per player, catalog search fallback, bundles, copying users, outfits, asset checks, the text filter. `toDescription`, `buildModel` for everyone else. |
 | `Villagers` | Creating, editing, moving out, beds, jobs, feeding. Spawns NPCs and runs their routine: sleep at night, work 9 to 5, wander, sit, chat, visit shops. Payday at 5 PM. |
 | `Events` | Picks and plays random events, waits for choices, applies effects, room request rewards, small friendship gains from chats, parties. |
@@ -142,7 +143,9 @@ server, whatever the client did.
   the label and break every tool). Input checks `Kit.overUI` instead of trusting
   `gameProcessedEvent`, every frame's update runs in a `pcall` that reports an error once, and `BuildMode.send` never
   leaves the tools waiting (an eight second timeout, a toast on failure, `BuildMode.Placed` after each answer).
-  `Build/BuildUI`: the bottom category bar, sub categories and item tray, the tool strip, the floor card, the coins
+  The `preset` tool places a ready-made building: its ghost is built once per building and turn and slid about with
+  `PivotTo`; `BuildMode.startPreset(id)` picks one up and R turns it a quarter. `Build/BuildUI`: the Buildings tab
+  (preset cards), the bottom category bar, sub categories and item tray, the tool strip, the floor card, the coins
   pill, the hint and the action bar over the picked object (placed with `WorldToViewportPoint`, the GUI inset and the
   UI scale). `Build/BuildCamera` (free camera).
 
@@ -152,7 +155,9 @@ server, whatever the client did.
   instance tree built from the Rojo project. `tests/run.luau` runs `tests/specs/*.spec.luau`.
 - Specs: `Build` (catalog, plan rules, shapes, builder), `BuildService` (the server's Build service with its
   neighbours stubbed: building charges coins, syncs the plan, strips junk, refuses land you don't own), `City`,
-  `Events`, `Town` (every placed model exists, plots and road stay clear, room to walk on the sidewalks), `Icons`
+  `Events`, `Presets` (every building goes down whole turned every way, on the client's check and the server's,
+  inside its footprint, with its workplace), `Town` (every placed model exists, plots and road stay clear, room to
+  walk on the sidewalks), `Icons`
   (every icon builds; outline copies all come before the fills and no fill carries a dark stroke).
 - `tests/sim/`: the client on fake Roblox instances. `fake.luau` wraps @lune/roblox instances (so property names are
   checked against Roblox's class data) and adds events, children, attributes, tags, bounding boxes, a camera with

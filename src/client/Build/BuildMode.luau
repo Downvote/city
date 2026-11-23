@@ -16,6 +16,7 @@ local Catalog = require(Shared.Build.Catalog)
 local Geometry = require(Shared.Build.Geometry)
 local Palette = require(Shared.Data.Palette)
 local Town = require(Shared.Data.Town)
+local Presets = require(Shared.Data.Presets)
 local Remotes = require(Shared.Net.Remotes)
 local Text = require(Shared.Util.Text)
 
@@ -586,6 +587,84 @@ local function placeCandidate(): (any?, string?)
 	return { id = pl.id, x = x, y = y, z = z, r = pl.r % 360, lv = s.level, c1 = pl.c1, c2 = pl.c2 }, nil
 end
 
+-- Placing a ready-made building: its ghost is built once per building and turn (in a model of
+-- its own) and slid about as the mouse moves; whether it fits is checked on a copy of the plan.
+local presetGhost: Model? = nil
+local presetGhostKey = ""
+local presetCheckKey = ""
+local presetCheck: any = nil
+
+local function presetGhostModel(id: string, rot: number, valid: boolean): Model?
+	local key = string.format("%s|%d|%s", id, rot, tostring(valid))
+	if presetGhost and presetGhost.Parent and key == presetGhostKey then
+		return presetGhost
+	end
+	if not ghostFolder then
+		return nil
+	end
+	ghostFolder:ClearAllChildren()
+	lastGhostKey = ""
+	local empty = Plan.new(P.Size)
+	empty.size = P.Size
+	local _, _, _, trial, made = Presets.check(empty, Presets.requests(id, 0, 0, rot))
+	local prims = {}
+	for _, m in made do
+		local obj = (trial :: any)[m.kind][m.key]
+		local def = m.kind == "items" and Catalog.get(obj.id)
+		if not (def and def.place == "ceiling") then
+			Geometry.append(prims, Builder.primsFor(trial, m.kind, m.key) or {})
+		end
+	end
+	local model = Instance.new("Model")
+	model.Name = "PresetGhost"
+	Builder.instantiate(prims, model, CFrame.identity, {
+		ghost = true,
+		tint = if valid then nil else Color3.fromRGB(235, 80, 80),
+	})
+	model.WorldPivot = CFrame.identity
+	model.Parent = ghostFolder
+	presetGhost = model
+	presetGhostKey = key
+	return model
+end
+
+local function presetTool()
+	local pl = s.placing
+	local preset = pl and Presets.get(pl.preset)
+	local p = planePoint(0)
+	if not preset or not p then
+		clearGhost()
+		presetGhost = nil
+		setLabel(nil)
+		candidate = nil
+		return
+	end
+	local fw, fd = Presets.footprint(preset, pl.r)
+	local x1, z1, x2, z2 = Plan.bounds(State.plan)
+	local ox = math.clamp(math.floor((p.X - fw / 2) / P.WallSnap + 0.5) * P.WallSnap, x1, math.max(x1, x2 - fw))
+	local oz = math.clamp(math.floor((p.Z - fd / 2) / P.WallSnap + 0.5) * P.WallSnap, z1, math.max(z1, z2 - fd))
+	local key = string.format("%s|%d|%d|%d", preset.id, ox, oz, pl.r)
+	if key ~= presetCheckKey then
+		presetCheckKey = key
+		local requests = Presets.requests(preset.id, ox, oz, pl.r)
+		local ok, why, cost = Presets.check(State.plan, requests)
+		if ok and cost > coins() then
+			ok, why = false, "not enough coins"
+		end
+		presetCheck = { requests = requests, valid = ok, reason = why, cost = cost }
+	end
+	local c = presetCheck
+	local model = presetGhostModel(preset.id, pl.r, c.valid)
+	if model then
+		model:PivotTo(plotFrame * CFrame.new(ox, 0, oz))
+	end
+	setLabel(
+		if c.valid then string.format("%s   %s", preset.name, costText(c.cost)) else c.reason or "",
+		Vector3.new(ox + fw / 2, 16, oz + fd / 2)
+	)
+	candidate = { requests = c.requests, valid = c.valid, reason = c.reason }
+end
+
 local function placeTool()
 	local item, reason = placeCandidate()
 	if not item then
@@ -746,6 +825,9 @@ local function update()
 	elseif tool == "place" then
 		setHighlight(nil)
 		placeTool()
+	elseif tool == "preset" then
+		setHighlight(nil)
+		presetTool()
 	elseif tool == "paint" then
 		local hit = pickTool(Color3.fromRGB(255, 212, 92))
 		candidate = if hit and not s.paint.pick
@@ -895,6 +977,20 @@ local function primary(released: boolean?)
 	if released then
 		return
 	end
+	if tool == "preset" then
+		if candidate and candidate.valid then
+			presetCheckKey = ""
+			-- a whole building is a big step: once it's down, go back to picking
+			BuildMode.send(candidate.requests, function(ok)
+				if ok and s.tool == "preset" then
+					BuildMode.setTool("select")
+				end
+			end)
+		elseif candidate and candidate.reason then
+			Toasts.show(candidate.reason, "warn")
+		end
+		return
+	end
 	if tool == "place" then
 		if candidate and candidate.valid then
 			local moving = s.placing and s.placing.moveKey
@@ -935,9 +1031,10 @@ local function cancel()
 		lastGhostKey = ""
 		return
 	end
-	if s.tool == "place" then
+	if s.tool == "place" or s.tool == "preset" then
 		s.placing = nil
 		s.tool = "select"
+		clearGhost()
 		changed("tool")
 	elseif s.selected then
 		s.selected = nil
@@ -1059,9 +1156,11 @@ end
 function BuildMode.setTool(tool: string)
 	s.tool = tool
 	wallStart, rectStart, pressPoint = nil, nil, nil
-	if tool ~= "place" then
+	if tool ~= "place" and tool ~= "preset" then
 		s.placing = nil
 	end
+	presetGhost = nil
+	presetCheckKey = ""
 	if tool ~= "select" then
 		s.selected = nil
 	end
@@ -1077,6 +1176,7 @@ function BuildMode.setTool(tool: string)
 		floor = "Click two corners to lay a floor.",
 		roof = "Click two corners over the walls.",
 		place = "Click to place. R turns it.",
+		preset = "Click to put the building down. R turns it.",
 		paint = "Click a wall side, floor, roof or item to paint it.",
 		delete = "Click something to sell it back.",
 	}
@@ -1095,8 +1195,23 @@ function BuildMode.startPlacing(id: string, c1: string?, c2: string?)
 	changed("tool")
 end
 
+-- Picks up a ready-made building to place.
+function BuildMode.startPreset(id: string)
+	if not Presets.get(id) then
+		return
+	end
+	BuildMode.setTool("preset")
+	s.placing = { preset = id, r = 0 }
+	changed("tool")
+end
+
 function BuildMode.rotate(step: number?)
 	local pl = s.placing
+	if pl and pl.preset then
+		pl.r = (pl.r + 90) % 360
+		presetCheckKey = ""
+		return
+	end
 	if pl then
 		local def = Catalog.get(pl.id)
 		local d = step or 45

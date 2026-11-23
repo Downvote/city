@@ -88,6 +88,16 @@ Bloxburg style, all on a grid and all saved:
   (cream plaster, red brick, oak planks, clay tiles...) plus a colour picker, sell, undo and redo (server side, many
   steps), a fine grid, see-through walls, hidden roofs, a free camera.
 - Selling refunds the full price, so experimenting costs nothing.
+- **Ready-made buildings**, first in Build mode's Build tab:
+
+  > also, make preset buildings like houses, library, other buildings
+
+  a garden cottage, a family house, a two storey townhouse, a library, a café, a bakery, a clinic, a schoolhouse
+  and a little park. Click one, turn it with R, put it down. A ghost of the whole building follows the mouse and
+  turns red with the reason when it won't fit or you can't afford it. Each is made of ordinary walls, floors,
+  roofs, doors, windows and furniture, so it can be changed piece by piece afterwards, and it costs what its pieces
+  cost (from about 1,600 coins for the park to 6,400 for the family house). The shops and public buildings come
+  with their workplace, so they open a job straight away. One undo takes a whole building back.
 
 ## 6. The villager creator
 

@@ -155,7 +155,12 @@ elseif scene == "creator" then
 elseif scene:sub(1, 6) == "icons:" then
 	local Icons = Harness.require(Sim.CLIENT .. "UI.Icons")
 	local Kit = Sim.Kit
-	local sheet = Kit.frame({ Parent = Sim.gui, Size = UDim2.fromScale(1, 1), Color = Color3.fromRGB(236, 241, 248), Radius = false })
+	local sheet = Kit.frame({
+		Parent = Sim.gui,
+		Size = UDim2.fromScale(1, 1),
+		Color = Color3.fromRGB(236, 241, 248),
+		Radius = false,
+	})
 	local grid = Instance.new("UIGridLayout")
 	grid.CellSize = UDim2.fromOffset(170, 190)
 	grid.CellPadding = UDim2.fromOffset(6, 6)
@@ -165,7 +170,16 @@ elseif scene:sub(1, 6) == "icons:" then
 		i += 1
 		local cell = Kit.box({ Parent = sheet, LayoutOrder = i })
 		Icons.make(name, 150, { Parent = cell, Position = UDim2.new(0.5, -75, 0, 4) })
-		Kit.text(name, { Parent = cell, Size = UDim2.new(1, 0, 0, 18), Position = UDim2.new(0, 0, 1, -22), TextSize = 15, AlignX = Enum.TextXAlignment.Center })
+		Kit.text(
+			name,
+			{
+				Parent = cell,
+				Size = UDim2.new(1, 0, 0, 18),
+				Position = UDim2.new(0, 0, 1, -22),
+				TextSize = 15,
+				AlignX = Enum.TextXAlignment.Center,
+			}
+		)
 	end
 elseif scene == "icons" then
 	local Icons = Harness.require(Sim.CLIENT .. "UI.Icons")
