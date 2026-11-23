@@ -76,8 +76,8 @@ Town.Spots = {
 	Spawn = Vector3.new(680, 0, -88),
 	Festival = Vector3.new(684, 0, -128),
 	Board = Vector3.new(652, 0, -56),
-	Tailor = Vector3.new(615, 0, -36.6),
-	Hall = Vector3.new(643, 0, 39.5),
+	Tailor = Vector3.new(643.8, 0, -65.4),
+	Hall = Vector3.new(579, 0, 110),
 }
 
 return Town

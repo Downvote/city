@@ -166,11 +166,17 @@ describe("Town", function()
 				end
 			end
 			expect(building ~= nil and building.key == b.key and building.kind == "building").toBeTruthy()
-			-- a step out of its front, facing the street
+			-- a step out of its front, with room to stand there and nothing else in the way
 			local inside = covers(building, door.X, door.Z)
 			local near = covers(building, door.X - out.X * 3, door.Z - out.Z * 3)
 			expect(not inside and near).toBeTruthy()
-			expect(math.sign(out.Z)).toBe(-math.sign(door.Z))
+			for _, p in CityMap.placements() do
+				if p ~= building and stands(p) and p.kind ~= "road" and p.kind ~= "ground" then
+					if door.X > p.lo.X - 2 and door.X < p.hi.X + 2 and door.Z > p.lo.Z - 2 and door.Z < p.hi.Z + 2 then
+						error(p.key .. " stands at the " .. b.name .. "'s door")
+					end
+				end
+			end
 		end
 		for _, p in CityMap.Props do
 			if p.opens then
@@ -243,6 +249,7 @@ describe("Town", function()
 				or reason == "Spawn"
 				or reason == "Festival"
 				or reason == "the sea"
+				or reason == "no junction"
 			for _, b in CityMap.Buildings do
 				known = known or reason == b.name
 			end
@@ -252,6 +259,27 @@ describe("Town", function()
 			expect(known).toBeTruthy()
 		end
 		expect(#CityMap.removed() < 600).toBeTruthy()
+	end)
+
+	it("leaves no hole in the ground where it took something away", function()
+		-- the pack's land has holes where its lots, streets and car parks bring their own ground,
+		-- so the plain ground under the west bank must reach under everything taken away there
+		local cf, size = CityMap.filler()
+		local lo, hi = cf.Position - size / 2, cf.Position + size / 2
+		expect(cf.Position.Y + size.Y / 2).toBeNear(CityMap.FillerTop, 0.001)
+		for _, r in CityMap.removed() do
+			if r.kind == "road" or r.kind == "building" or r.kind == "ground" then
+				local inside = r.lo.X >= lo.X - 0.01
+					and r.hi.X <= hi.X + 0.01
+					and r.lo.Z >= lo.Z - 0.01
+					and r.hi.Z <= hi.Z + 0.01
+				if not inside then
+					error(r.key .. " left a hole at " .. tostring((r.lo + r.hi) / 2))
+				end
+			end
+		end
+		-- and it stays under the land and off the beach
+		expect(CityMap.FillerTop < -CityMap.GroundDrop).toBeTruthy()
 	end)
 
 	it("keeps the whole town to a budget of parts and triangles", function()

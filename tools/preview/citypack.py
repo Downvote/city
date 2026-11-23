@@ -57,17 +57,19 @@ def manifest():
     """The manifest as the converter wrote it: kit {key: (kind, [(piece, size, centre)])} and the
     placements [(key, x, y, z, yaw, rx, rz, sx, sy, sz)]."""
     src = open(MANIFEST).read()
+    kit_block = src[src.index("CityPack.Kit = {"):src.index("CityPack.Placed = {")]
+    placed_block = src[src.index("CityPack.Placed = {"):]
+    flat = re.sub(r"\s+", " ", kit_block)
     kit = {}
-    for m in re.finditer(r'^\t(\w+) = \{ "(\w+)", (.*) \},$', src, re.M):
+    for m in re.finditer(r'(\w+) = \{ "(\w+)", ((?:\{ "\w+",[-\d., ]+\},? ?)+)\}', flat):
         pieces = []
-        for name, nums in re.findall(r'\{ "(\w+)", ([-\d., ]+) \}', m.group(3)):
-            v = [float(x) for x in nums.split(", ")]
+        for name, nums in re.findall(r'\{ "(\w+)", ([-\d., ]+?),? \}', m.group(3)):
+            v = [float(x) for x in nums.split(",")]
             pieces.append((name, np.array(v[0:3]), np.array(v[3:6])))
         kit[m.group(1)] = (m.group(2), pieces)
     placed = []
-    for m in re.finditer(r'^\t\{ "(\w+)", ([-\d., ]+) \},$', src, re.M):
-        v = [float(x) for x in m.group(2).split(", ")]
-        v += [0.0] * (6 - len(v)) if len(v) < 6 else []
+    for m in re.finditer(r'\{ "(\w+)", ([-\d., ]+?),? \}', re.sub(r"\s+", " ", placed_block)):
+        v = [float(x) for x in m.group(2).split(",")]
         rx, rz = (v[4], v[5]) if len(v) >= 6 else (0.0, 0.0)
         sc = v[6:9] if len(v) >= 9 else [1.0, 1.0, 1.0]
         placed.append((m.group(1), v[0], v[1], v[2], v[3], rx, rz, *sc))
@@ -128,6 +130,34 @@ def say_once():
     _said = True
 
 
+def clip_tris(tris, cols, x1, z1, x2, z2):
+    """The triangles cut to the rectangle x1..x2, z1..z2 (seen from above)."""
+    xs, zs = tris[..., 0], tris[..., 2]
+    inside = (xs.min(1) >= x1) & (xs.max(1) <= x2) & (zs.min(1) >= z1) & (zs.max(1) <= z2)
+    outside = (xs.max(1) < x1) | (xs.min(1) > x2) | (zs.max(1) < z1) | (zs.min(1) > z2)
+    out_t, out_c = [tris[inside]], [cols[inside]]
+    for i in np.nonzero(~inside & ~outside)[0]:
+        poly = list(tris[i])
+        for axis, bound, keep_hi in ((0, x1, True), (0, x2, False), (2, z1, True), (2, z2, False)):
+            res = []
+            for j in range(len(poly)):
+                a, b = poly[j], poly[(j + 1) % len(poly)]
+                ina = a[axis] >= bound if keep_hi else a[axis] <= bound
+                inb = b[axis] >= bound if keep_hi else b[axis] <= bound
+                if ina:
+                    res.append(a)
+                if ina != inb:
+                    t = (bound - a[axis]) / (b[axis] - a[axis])
+                    res.append(a + (b - a) * t)
+            poly = res
+            if len(poly) < 3:
+                break
+        for j in range(1, len(poly) - 1):
+            out_t.append(np.array([[poly[0], poly[j], poly[j + 1]]]))
+            out_c.append(cols[i:i + 1])
+    return np.concatenate(out_t), np.concatenate(out_c)
+
+
 def expand(prims, size=None, eye=None, focal=None, far=None):
     """Turns the "Pack" prims of a dumped scene into "Tris" prims, one per object and colour, that
     tools/preview/render.py's prim_tris draws as they are. Triangles too small to see are left out:
@@ -160,11 +190,12 @@ def expand(prims, size=None, eye=None, focal=None, far=None):
         tris, cols = object_tris(p["key"], rot, pos, np.array(p.get("scale", [1, 1, 1])), kit)
         if len(tris) == 0:
             continue
+        if clip is not None:
+            tris, cols = clip_tris(tris, cols, clip[0][0], clip[0][2], clip[1][0], clip[1][2])
+            if len(tris) == 0:
+                continue
         edge = np.linalg.norm(tris[:, 1] - tris[:, 0], axis=1) + np.linalg.norm(tris[:, 2] - tris[:, 0], axis=1)
         keep = np.ones(len(tris), bool)
-        if clip is not None:
-            mid = tris.mean(1)
-            keep &= (mid[:, 0] >= clip[0][0]) & (mid[:, 0] <= clip[1][0]) & (mid[:, 2] >= clip[0][2]) & (mid[:, 2] <= clip[1][2])
         if px is not None:
             keep &= edge > px * 0.5
         if eye is not None and focal is not None:

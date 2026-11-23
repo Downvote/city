@@ -331,11 +331,10 @@ local function buildPlots()
 			Name = "Base",
 			Size = Vector3.new(SIZE, 1, SIZE),
 			CFrame = frame * CFrame.new(SIZE / 2, -0.5, SIZE / 2),
-			Color = Color3.fromRGB(112, 188, 84),
-			Material = Enum.Material.Grass,
+			Color = CityMap.PlotGround,
+			Material = Enum.Material.SmoothPlastic,
 		})
 		base.Parent = model
-		base.Color = Textures.tint("Grass", Color3.fromRGB(138, 192, 112))
 		local build = Instance.new("Folder")
 		build.Name = "Build"
 		build.Parent = model
@@ -789,8 +788,8 @@ function World.init()
 	for _, why in problems do
 		warn("[World] low poly shape not made, keeping Roblox's own: " .. why)
 	end
-	-- where solid modelling works, the town's detail pieces (window frames, awnings, shutters)
-	-- are merged into one mesh each and copied (buildMap merges the town's before it builds)
+	-- where solid modelling works, the detail pieces of what players build (a fitting's frames and
+	-- trims) are merged into one mesh each and copied
 	Builder.cutPieces = Builder.hasKit()
 	buildMap()
 	buildPlots()

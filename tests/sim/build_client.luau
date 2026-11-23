@@ -787,7 +787,7 @@ run("life around town and the show when you build", function()
 			local lo = math.huge
 			for _, part in m:GetDescendants() do
 				if part:IsA("BasePart") then
-					lo = math.min(lo, part.Position.Y - part.Size.Y / 2)
+					lo = math.min(lo, part.CFrame.Position.Y - part.Size.Y / 2)
 				end
 			end
 			local x = m:GetBoundingBox().Position.X

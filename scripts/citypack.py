@@ -692,6 +692,10 @@ def write_manifest(path, keys, placements, source):
     w("")
     w("return CityPack")
     open(path, "w").write("\n".join(lines) + "\n")
+    # in the repository's own format (scripts/check.sh checks it), when stylua is about
+    stylua = shutil.which("stylua") or os.path.expanduser("~/.local/rbx-tools/bin/stylua")
+    if os.path.exists(stylua):
+        subprocess.run([stylua, path], cwd=ROOT, check=False)
 
 
 def write_cache(path, keys, tex):

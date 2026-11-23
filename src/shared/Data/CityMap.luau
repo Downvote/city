@@ -33,9 +33,10 @@ CityMap.SeaLevel = -3.57 -- the surface of the pack's own water
 -- runs under a plot the plot's grass covers it, and behind the plots it is still the houses' lot.
 CityMap.GroundDrop = 0.15
 CityMap.LotTop = -0.08
--- Under the suburb the pack's land has a hole that its lots and streets fill: what the plots take
--- out of it shows this plain ground instead, a little lower ({ x1, z1, x2, z2 } in the pack's frame).
-CityMap.Filler = { -1396, -311, 18, 1203 }
+-- The pack's land has holes where its lots, streets, car parks and the gas station bring their
+-- own ground: what the town takes out shows this plain ground instead, a little lower, under all
+-- of the west bank but the beach ({ x1, z1, x2, z2 } in the pack's frame).
+CityMap.Filler = { -1396, -250, 18, 1203 }
 CityMap.FillerTop = -0.22
 -- A ground slab at least this big (studs², from above) is the land itself and always stays.
 CityMap.LandArea = 150000
@@ -50,6 +51,12 @@ CityMap.Kinds = {
 	vehicle = { collide = true, query = false },
 	prop = { collide = true, query = false },
 }
+
+-- The ground of the plots: the pack's own flat grass, so a plot reads as part of the town's lawn
+-- (it was a paler grass of its own and showed as a pale square in the deeper green round it), and
+-- the land a player owns a step lighter so it still shows.
+CityMap.PlotGround = Color3.fromRGB(76, 129, 51)
+CityMap.OwnedGround = Color3.fromRGB(94, 142, 71)
 
 -- The stand-ins' colours, when the kit isn't there (tools/preview/citypack.py has the same).
 CityMap.StandIn = {
@@ -91,19 +98,38 @@ end
 
 -- The middle of town's buildings, which are pack buildings put where the town needs them:
 -- { key, centre x, centre z of its footprint, yaw in degrees, opens = the panel its door opens,
--- action = the prompt's words }. A building's front (its door and sign) faces its own +Z, so
--- yaw 0 faces the street from the south side and yaw 180 from the north.
+-- action = the prompt's words }. A building's front (its door and sign) faces its own +Z: the
+-- tailor's (yaw 90) looks east over the green where people arrive, and the city hall across Main
+-- Street (yaw -90) looks west onto the side street at its corner.
 CityMap.Buildings = {
-	{ key = "boutique_01", x = 615, z = -65.4, yaw = 0, opens = "creator", action = "Tailor", name = "Tailor" },
-	{ key = "government_a", x = 643, z = 75.6, yaw = 180, opens = "city", action = "City hall", name = "Hall" },
+	{
+		key = "boutique_01",
+		x = 615,
+		z = -65.4,
+		yaw = 90,
+		opens = "creator",
+		action = "Make a villager",
+		name = "Tailor",
+	},
+	{ key = "government_a", x = 615.1, z = 110, yaw = -90, opens = "city", action = "City hall", name = "Hall" },
 }
 
 -- Our own small things in the middle of town (Data/TownModels) by the street, facing the green
 -- where people arrive (the welcome sign's words are on its back): { model, x, z, yaw, opens, action }.
-CityMap.Props = {
-	{ model = "board", x = 652, z = -50, yaw = 180, opens = "news", action = "Read the news", name = "Board" },
-	{ model = "sign", x = 728, z = -48, yaw = 0, tag = "welcome", name = "Welcome" },
+export type Prop = {
+	model: string,
+	x: number,
+	z: number,
+	yaw: number,
+	name: string,
+	opens: string?,
+	action: string?,
+	tag: string?,
 }
+CityMap.Props = {
+	{ model = "board", x = 652, z = -50, yaw = 180, opens = "news", action = "Town news", name = "Board" },
+	{ model = "sign", x = 728, z = -48, yaw = 0, tag = "welcome", name = "Welcome" },
+} :: { Prop }
 
 -- Lawns where grass sways and fireflies come out at night: { centre x, centre z, half width,
 -- half depth }. The green by the river.
@@ -121,6 +147,17 @@ local STRAIGHT = {
 	road_b_04 = "road_b_01",
 }
 local STRAIGHT_FROM, STRAIGHT_TO = -440, 440 -- along the plots' row, game x
+
+-- The pack's traffic lights (on gantries over a carriageway, or on poles): in front of the plots
+-- they stood at junctions that are gone, so they go too.
+local SIGNALS = {
+	streetsigns_03 = true,
+	streetsigns_04 = true,
+	streetsigns_05 = true,
+	streetsigns_06 = true,
+	streetsigns_07 = true,
+	streetsigns_08 = true,
+}
 
 -- Kit keys the town doesn't place, and why. (They are in the kit all the same.)
 CityMap.Unused = {
@@ -207,52 +244,46 @@ function CityMap.standing(key: string, x: number, z: number, yaw: number, y: num
 	return CFrame.new(Vector3.new(x, y or 0, z) - turn:VectorToWorldSpace(foot)) * turn
 end
 
--- The plots' squares and the other places that must be clear, in the world: { x1, z1, x2, z2,
--- keep = what may stay inside }. "land" keeps only the land itself; "street" lets roads stay.
-function CityMap.zones(): { { any } }
-	local out: { { any } } = {}
+-- The plots' squares and the other places that must be clear, in the world, with what may stay
+-- inside: "land" keeps only the land (and the lots, sunk under the plots), "street" lets Main
+-- Street's tiles stay, "notVehicles" takes only the parked cars.
+export type Zone = { x1: number, z1: number, x2: number, z2: number, keep: string, why: string }
+local function zone(x1: number, z1: number, x2: number, z2: number, keep: string, why: string): Zone
+	return { x1 = x1, z1 = z1, x2 = x2, z2 = z2, keep = keep, why = why }
+end
+
+function CityMap.zones(): { Zone }
+	local out: { Zone } = {}
 	for i = 1, Tuning.Plot.Count do
 		local f = Town.plotFrame(i)
 		local a = f * Vector3.new(0, 0, 0)
 		local b = f * Vector3.new(SIZE, 0, SIZE)
-		table.insert(out, {
-			math.min(a.X, b.X),
-			math.min(a.Z, b.Z),
-			math.max(a.X, b.X),
-			math.max(a.Z, b.Z),
-			keep = "land",
-			why = "plot " .. i,
-		})
+		table.insert(
+			out,
+			zone(math.min(a.X, b.X), math.min(a.Z, b.Z), math.max(a.X, b.X), math.max(a.Z, b.Z), "land", "plot " .. i)
+		)
 	end
 	-- where each owner arrives, on the sidewalk in front of their plot, there's room to stand
 	for i = 1, Tuning.Plot.Count do
 		local at = Town.plotArrival(i).Position
-		table.insert(out, { at.X - 4, at.Z - 4, at.X + 4, at.Z + 4, keep = "street", why = "plot " .. i })
+		table.insert(out, zone(at.X - 4, at.Z - 4, at.X + 4, at.Z + 4, "street", "plot " .. i))
 	end
 	-- the parked cars come off Main Street: the game's own cars drive there
 	local hw = Town.StreetHalfWidth
-	table.insert(out, { Town.StreetWest, -hw, Town.StreetEast, hw, keep = "notVehicles", why = "Main Street" })
-	for name, spot in Town.Spots do
-		if name == "Spawn" or name == "Festival" then
-			local r = 12
-			table.insert(out, { spot.X - r, spot.Z - r, spot.X + r, spot.Z + r, keep = "land", why = name })
-		end
+	table.insert(out, zone(Town.StreetWest, -hw, Town.StreetEast, hw, "notVehicles", "Main Street"))
+	for _, name in { "Spawn", "Festival" } do
+		local spot: Vector3 = (Town.Spots :: any)[name]
+		local r = 12
+		table.insert(out, zone(spot.X - r, spot.Z - r, spot.X + r, spot.Z + r, "land", name))
 	end
 	for _, b in CityMap.Buildings do
 		local _, s = CityMap.keyBox(b.key)
 		local turned = math.abs(math.cos(math.rad(b.yaw))) < 0.5
 		local w, d = if turned then s.Z else s.X, if turned then s.X else s.Z
-		table.insert(out, {
-			b.x - w / 2 - 2,
-			b.z - d / 2 - 2,
-			b.x + w / 2 + 2,
-			b.z + d / 2 + 2,
-			keep = "street",
-			why = b.name,
-		})
+		table.insert(out, zone(b.x - w / 2 - 2, b.z - d / 2 - 2, b.x + w / 2 + 2, b.z + d / 2 + 2, "street", b.name))
 	end
 	for _, p in CityMap.Props do
-		table.insert(out, { p.x - 6, p.z - 6, p.x + 6, p.z + 6, keep = "street", why = p.name })
+		table.insert(out, zone(p.x - 6, p.z - 6, p.x + 6, p.z + 6, "street", p.name))
 	end
 	return out
 end
@@ -284,9 +315,9 @@ local function keeps(rule: string, p: Placement): boolean
 	return false
 end
 
-local function touches(z: { any }, p: Placement): boolean
+local function touches(z: Zone, p: Placement): boolean
 	local e = 0.5 -- a hair inside the edge counts, touching from outside doesn't
-	return p.hi.X > z[1] + e and p.lo.X < z[3] - e and p.hi.Z > z[2] + e and p.lo.Z < z[4] - e
+	return p.hi.X > z.x1 + e and p.lo.X < z.x2 - e and p.hi.Z > z.z1 + e and p.lo.Z < z.z2 - e
 end
 
 -- The motorway runs off the pack's land at its north west and south west corners: it goes on
@@ -333,7 +364,7 @@ toSea = function(p: Placement): Placement
 end
 
 local cached: { Placement }? = nil
-local removedList: { { key: string, why: string, lo: Vector3, hi: Vector3 } } = {}
+local removedList: { { key: string, kind: string, why: string, lo: Vector3, hi: Vector3 } } = {}
 
 -- Everything of the pack the town has, in the world, and what was added: the middle of town's
 -- buildings, the plain street tiles in front of the plots, the motorway over the sea.
@@ -343,6 +374,7 @@ function CityMap.placements(): { Placement }
 	end
 	local o = CityMap.Offset
 	local all: { Placement } = {}
+	local dropped: { { key: string, kind: string, why: string, lo: Vector3, hi: Vector3 } } = {}
 	for _, row in CityPack.Placed do
 		local key = row[1]
 		if CityMap.Unused[key] then
@@ -362,6 +394,10 @@ function CityMap.placements(): { Placement }
 			local base = Vector3.new(x, 0, 0) - turn:VectorToWorldSpace(Vector3.new(c.X, c.Y - s.Y / 2, c.Z))
 			p = make(swap, CFrame.new(base) * turn, Vector3.one, true)
 		end
+		if SIGNALS[key] and x > STRAIGHT_FROM and x < STRAIGHT_TO and math.abs(cf.Position.Z) < 45 then
+			table.insert(dropped, { key = key, kind = p.kind, why = "no junction", lo = p.lo, hi = p.hi })
+			continue
+		end
 		if isLand(p) then
 			p = make(key, p.cf - Vector3.new(0, CityMap.GroundDrop, 0), scale)
 		elseif isLot(p) then
@@ -376,6 +412,9 @@ function CityMap.placements(): { Placement }
 	local zones = CityMap.zones()
 	local out: { Placement } = {}
 	table.clear(removedList)
+	for _, d in dropped do
+		table.insert(removedList, d)
+	end
 	for _, p in all do
 		local why = nil
 		for _, z in zones do
@@ -385,7 +424,7 @@ function CityMap.placements(): { Placement }
 			end
 		end
 		if why then
-			table.insert(removedList, { key = p.key, why = why, lo = p.lo, hi = p.hi })
+			table.insert(removedList, { key = p.key, kind = p.kind, why = why, lo = p.lo, hi = p.hi })
 		else
 			table.insert(out, p)
 		end
@@ -401,7 +440,7 @@ function CityMap.placements(): { Placement }
 			local c = (p.lo + p.hi) / 2
 			for _, q in out do
 				if
-					(q.kind == "road" or q.kind == "building" or q.kind == "ground" and not isLand(q))
+					(q.kind == "road" or q.kind == "building")
 					and c.X >= q.lo.X
 					and c.X <= q.hi.X
 					and c.Z >= q.lo.Z
@@ -415,7 +454,7 @@ function CityMap.placements(): { Placement }
 		if under then
 			table.insert(kept, p)
 		else
-			table.insert(removedList, { key = p.key, why = "off the road", lo = p.lo, hi = p.hi })
+			table.insert(removedList, { key = p.key, kind = p.kind, why = "off the road", lo = p.lo, hi = p.hi })
 		end
 	end
 	cached = kept
@@ -423,7 +462,7 @@ function CityMap.placements(): { Placement }
 end
 
 -- What the layout took away, and why (a plot, Main Street, a spot, a building's footprint).
-function CityMap.removed(): { { key: string, why: string, lo: Vector3, hi: Vector3 } }
+function CityMap.removed(): { { key: string, kind: string, why: string, lo: Vector3, hi: Vector3 } }
 	CityMap.placements()
 	return removedList
 end
