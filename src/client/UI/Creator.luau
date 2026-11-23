@@ -1175,7 +1175,7 @@ local function build()
 	-- fades to black toward the right, and everything to choose from sits on the black.
 	local fade = Kit.frame({
 		Name = "Fade",
-		Size = UDim2.new(0, 1010, 1, 400),
+		Size = UDim2.new(0, 1240, 1, 400),
 		Position = UDim2.new(1, 0, 0, -200),
 		AnchorPoint = Vector2.new(1, 0),
 		Color = Color3.fromRGB(9, 10, 16),
@@ -1187,9 +1187,10 @@ local function build()
 		Name = "Clear",
 		Transparency = NumberSequence.new({
 			NumberSequenceKeypoint.new(0, 1),
-			NumberSequenceKeypoint.new(0.12, 0.55),
-			NumberSequenceKeypoint.new(0.22, 0.1),
-			NumberSequenceKeypoint.new(0.28, 0),
+			NumberSequenceKeypoint.new(0.13, 0.76),
+			NumberSequenceKeypoint.new(0.26, 0.34),
+			NumberSequenceKeypoint.new(0.36, 0.06),
+			NumberSequenceKeypoint.new(0.4, 0),
 			NumberSequenceKeypoint.new(1, 0),
 		}),
 		Parent = fade,
