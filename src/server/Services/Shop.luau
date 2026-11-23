@@ -47,19 +47,33 @@ local function buy(player: Player, kind: any, id: any, count: any): (boolean, st
 		if not item then
 			return false, "The shop doesn't sell that."
 		end
+		if id == "cake" then
+			-- A cake is eaten at the party it starts, so it is bought one at a time and only when
+			-- a party can start. (Five used to be charged for and one party thrown; and a cake
+			-- bought while something else was going on sat in the bag for good, with no way to
+			-- use it.) A cake left in the bag from then pays for this party.
+			local held = profile.inv.items.cake or 0
+			local cost = if held > 0 then 0 else Shop.price(player, item.price)
+			if not Data.canAfford(player, cost) then
+				return false, "Not enough coins."
+			end
+			if not Events.party(player) then
+				return false, "Something is already going on in town. Try again when it's over."
+			end
+			if held > 0 then
+				profile.inv.items.cake = held - 1
+			else
+				Data.addCoins(player, -cost)
+			end
+			Data.push(player, "inv")
+			return true, "The party is on."
+		end
 		local cost = Shop.price(player, item.price) * n
 		if not Data.canAfford(player, cost) then
 			return false, "Not enough coins."
 		end
 		Data.addCoins(player, -cost)
-		if id == "cake" then
-			-- a cake starts a party straight away
-			if not Events.party(player) then
-				profile.inv.items.cake = (profile.inv.items.cake or 0) + n
-			end
-		else
-			profile.inv.items[id] = (profile.inv.items[id] or 0) + n
-		end
+		profile.inv.items[id] = (profile.inv.items[id] or 0) + n
 		Data.push(player, "inv")
 		return true, Text.fill("Bought {item}.", { item = item.name:lower() })
 	end

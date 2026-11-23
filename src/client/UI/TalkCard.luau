@@ -207,10 +207,13 @@ local function build(vid: string, v: any)
 		Parent = inner,
 		Size = 46,
 		Position = UDim2.fromOffset(18, 12),
-		Color = own:Lerp(T.Cream, 0.5),
+		-- their own colour toned to a middle grey that suits both looks, so a card that is open
+		-- when the look is switched doesn't keep a tint mixed for the other one
+		Color = own:Lerp(Color3.fromRGB(112, 116, 132), 0.5),
 		Border = own:Lerp(T.White, 0.35),
 		BorderWidth = 2,
 	})
+	face:SetAttribute("KeepColors", true)
 	faceBox = face
 	local bubble, words = MenuParts.speech({
 		Name = "Said",

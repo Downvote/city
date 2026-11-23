@@ -1075,6 +1075,13 @@ category tiles going above the cards; the order is one switch in the code if the
 villagers' screen, which the first tile already does. It is gone: the bar holds Villagers, Create, Goals and Gift,
 starting at the left edge of the screen, and is only as long as they need.
 
+### The party cake, one at a time
+
+The shop offered five party cakes at once, charged for five and threw one party, and a cake bought while an event
+was running went into the bag with no way to use it. A cake is eaten at the party it starts, so the shop now sells
+one at a time and only when a party can start: if something is already going on in town it says so and takes
+nothing. A cake left in the bag from before pays for the next party.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

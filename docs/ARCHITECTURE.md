@@ -247,7 +247,7 @@ The creator's remotes: `CreatorPeople` (the people here and your friends, and th
 | `Avatar` | The creator: a private stage (an empty Model `CreatorStage<slot>` with an `Origin` attribute, high over the meadow; nothing is built there) and an anchored mannequin per player, catalog search fallback, bundles, copying users, outfits, asset checks, the text filter. `toDescription`, `buildModel` for everyone else. |
 | `Villagers` | Creating, editing, moving out, beds, jobs, feeding. Spawns NPCs and runs their routine: sleep at night, work 9 to 5, wander, sit, chat, visit shops. Payday at 5 PM. Talking: `Villagers.spawn` puts `Npc.talkPrompt(name)` on each body (a ProximityPrompt `TalkPrompt` on the HumanoidRootPart: E, held `Tuning.Talk.HoldSeconds`, from `Distance` studs, no `Opens` attribute) and `setControl` switches it with `Npc.setTalkable(Talk.free(mode))`; it is off while they sleep. `Villagers.talkedTo(who, owner, vid)` answers it: it refuses a sleeper, someone in an event or away, a player more than `Range` studs off and a second line within `Cooldown`; then holds them (`setControl(owner, vid, "talk")` for `StaySeconds`, `VisitorSeconds` for a visitor, or until the player walks off), turns them with `Npc.face`, and has them say `Talk.line`. The owner also gets `Talk.chat`'s gain and the `Talk` event. |
 | `Events` | Picks and plays random events, waits for choices, applies effects, room request rewards, small friendship gains from chats, parties. |
-| `Shop` | Food, medicine and party cakes, cheaper while the merchant is in town. |
+| `Shop` | Food, medicine and party cakes, cheaper while the merchant is in town. `ShopBuy(kind, id, count)` buys up to 20 of a food or a thing. A cake is one at a time: it is charged and `Events.party` started together, refused with no charge while something else is going on, and a cake already in the bag pays for the party. |
 
 `Villagers` also runs the life sim's server side: every in-game hour wishes fade and new ones turn up (the model's
 `Wish` attribute carries the icon for the client's bubble); feeding fills hearts and answers cravings; a new look
@@ -607,7 +607,9 @@ clipping (`tools/preview/ui_render.py`).
   round, a rim that lies inside the slab and is a pixel thick, textures that tile without a seam, a tone that starts at the
   slab's very end, stays inside it, thins out and leans with it), `Walk` (the real `Npc.walkTo` on a stand-in
   humanoid: the next leg starts the moment the last ends, a waypoint they are already on is passed, a move the
-  engine gave up on is taken up again, hops where the path asks).
+  engine gave up on is taken up again, hops where the path asks), `ShopService` (the shop with its neighbours
+  stubbed: food and things by the number, the merchant's prices, one party for one cake's price, no cake sold
+  while something is going on, junk from a client refused).
 - The harness stands in for Roblox's image API: `AssetService:CreateEditableImage` returns a table that keeps its
   pixels (listed in `Harness.images`), and `Content.fromObject` gives a real Content with the address
   `rbxeditable://<n>`, which Lune's ImageLabel accepts. `tools/preview/ui_dump.luau` writes each such picture out
