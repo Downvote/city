@@ -17,6 +17,7 @@ local CityModels = require(script.Parent.CityModels)
 local StreetModels = require(script.Parent.StreetModels)
 local Facades = require(script.Parent.Facades)
 local Landmarks = require(script.Parent.Landmarks)
+local Signs = require(script.Parent.Signs)
 local StreetPaint = require(script.Parent.StreetPaint)
 
 type R = Recipe.Recipe
@@ -41,6 +42,7 @@ local WALK = Color3.fromRGB(240, 240, 236)
 local PAVING = Color3.fromRGB(236, 238, 240)
 local PAVING_DARK = Color3.fromRGB(214, 220, 228)
 local PROMENADE = Color3.fromRGB(232, 128, 84) -- warm brick walks
+local SQUARE = Color3.fromRGB(236, 222, 196) -- the market quarter's square
 local HEDGE = Color3.fromRGB(84, 184, 70)
 local SOIL = Color3.fromRGB(122, 90, 62)
 local SAND = Color3.fromRGB(252, 234, 190)
@@ -867,16 +869,25 @@ function TownMap.ground(region: Region?): { Prim }
 	end
 
 	-- downtown's blocks are paved right up to the sidewalks
-	-- with a cobbled lane through the middle of each and a darker band round its edge
+	-- with a cobbled lane through the middle of each (it comes out between the buildings at
+	-- either end) and a darker band round its edge
 	for _, b in TownMap.blocks("east") do
 		slab(b[1], b[2], b[3], b[4], -0.15, 0.22, PAVING, "Pavement")
-		local mid = (b[2] + b[4]) / 2
-		slab(b[1] + 8, mid - 5, b[3] - 8, mid + 5, 0.22, 0.25, LANE, "Cobblestone")
+		local mid = math.floor((b[2] + b[4]) / 2)
+		if b[1] == 559 and b[4] == -22 then
+			-- (the market lane, south of the main street)
+			slab(b[1] + 5.4, -76, b[3] - 5.4, -60, 0.22, 0.25, LANE, "Cobblestone")
+		else
+			slab(b[1] + 5.4, mid - 5, b[3] - 5.4, mid + 6, 0.22, 0.25, LANE, "Cobblestone")
+		end
 		slab(b[1] + 3, b[2] + 3, b[3] - 3, b[2] + 5.4, 0.22, 0.25, PAVING_DARK, "Pavement")
 		slab(b[1] + 3, b[4] - 5.4, b[3] - 3, b[4] - 3, 0.22, 0.25, PAVING_DARK, "Pavement")
 		slab(b[1] + 3, b[2] + 5.4, b[1] + 5.4, b[4] - 5.4, 0.22, 0.25, PAVING_DARK, "Pavement")
 		slab(b[3] - 5.4, b[2] + 5.4, b[3] - 3, b[4] - 5.4, 0.22, 0.25, PAVING_DARK, "Pavement")
 	end
+	-- the market quarter's square, open to the main street: big slabs inside a band of brick
+	slab(660, -62, 712, -22, 0.22, 0.255, PROMENADE, "Brick")
+	slab(662, -60, 710, -24, 0.22, 0.265, SQUARE, "Pavement:Slabs")
 	-- the civic quarter's lawns have gravel paths: one along each block and two across
 	for _, b in TownMap.blocks("west") do
 		local mid = (b[2] + b[4]) / 2
@@ -1358,31 +1369,33 @@ local function streetScene(standing: { Placement }): { Placement }
 	local edge = Town.StreetHalfWidth + Town.SidewalkWidth
 	set("billboardTall", AX[1] - 28, edge + 12, 90)
 	set("billboardTall", -(AX[1] - 28), -(edge + 12), 90)
-	set("billboardTall", AX[2] + 24, -(edge + 9), 90)
-	set("billboardTall", AX[2] + 25, CZ + 27, 90)
+	-- (downtown's stand on the corner of the pavement, in front of the rows)
+	set("billboardTall", AX[2] + 20, -(edge + 4), 90)
+	set("billboardTall", AX[2] + 20, CZ + 21, 90)
 	for _, x in { AX[1] - 2, AX[2] - 6, -(AX[1] - 2) } do
 		set("billboardTall", x, -(RZ + reach + 5), 0)
 	end
 
-	-- Hoardings of posters. Downtown, one beside the mouth of each lane, with a drinks machine
-	-- beside some of them.
+	-- Hoardings of posters. Downtown, one inside the mouth of each lane, against the side wall of
+	-- the building there, with a drinks machine across the lane from some of them.
 	local posters = Rng.new(58)
 	local hoardings = 0
 	for _, b in TownMap.blocks("east") do
-		local mid = (b[2] + b[4]) / 2
-		for _, e in { { b[1] + 2.2, 90, 1 }, { b[3] - 2.2, -90, -1 } } do
+		local mid = math.floor((b[2] + b[4]) / 2)
+		for _, e in { { b[1] + 13, 1 }, { b[3] - 13, -1 } } do
 			-- (not the last avenue, out by the shore)
 			if math.abs(e[1]) < AX[3] - 40 then
 				hoardings += 1
 				local name = if hoardings % 2 == 0 then "posterWall2" else "posterWall"
-				local side = if hoardings % 3 == 0 then -1 else 1
-				local ok = set(name, e[1], mid + side * 12.5, e[2])
+				local north = hoardings % 3 ~= 0
+				local ok = set(name, e[1], if north then mid + 5.6 else mid - 4.6, if north then 0 else 180)
 				if not ok then
-					side = -side
-					ok = set(name, e[1], mid + side * 12.5, e[2])
+					north = not north
+					ok = set(name, e[1], if north then mid + 5.6 else mid - 4.6, if north then 0 else 180)
 				end
-				if ok and posters:chance(0.35) then
-					machines(e[1] - e[3] * 0.9, mid + side * 21.6, e[2], 1, hoardings, posters:chance(0.5))
+				if ok and posters:chance(0.5) then
+					local z = if north then mid - 3.7 else mid + 4.7
+					machines(e[1] - 3, z, if north then 180 else 0, 1, hoardings, posters:chance(0.5))
 				end
 			end
 		end
@@ -1416,7 +1429,7 @@ local function streetScene(standing: { Placement }): { Placement }
 	-- Telephone boxes: by the square, at a crossing, on a downtown corner and on the seafront.
 	set("phoneBooth", -59, edge - 1.9, 0)
 	set("phoneBooth", 287, -(edge - 1.9), 180)
-	set("phoneBooth", AX[2] + 22, edge + 3, 0)
+	set("phoneBooth", AX[2] + 20.2, edge + 3, 0)
 	set("phoneBooth", 334, -(RZ + reach + 9.3), 180)
 	set("phoneBooth", -250, -(RZ + reach + 9.3), 180)
 
@@ -1508,6 +1521,44 @@ local function streetScene(standing: { Placement }): { Placement }
 	end
 	local LEFT_OUT = { "crateStack", "binBags", "drinksCrates", "crateStack" }
 	local dress = Rng.new(64)
+	-- The street buildings (Data/Facades) carry their own air conditioners and roof clutter. What
+	-- they get here is what stands on the ground: a sandwich board out the front of a shop, and
+	-- drinks machines, crates and rubbish against any side wall an alley or a lane leaves bare
+	-- (a thing is only ever put where it is clear of everything, so a wall with a neighbour on it
+	-- gets nothing) and now and then behind.
+	local rows = Rng.new(71)
+	for _, p in standing do
+		local spec = Facades.spec(p.name)
+		if spec then
+			local hw, hd = spec.w / 2, spec.d / 2
+			local function face(x: number, z: number, dx: number, dz: number, nx: number, nz: number, len: number): Face
+				return {
+					at = p.cf * Vector3.new(x, 0, z),
+					dir = p.cf:VectorToWorldSpace(Vector3.new(dx, 0, dz)),
+					n = p.cf:VectorToWorldSpace(Vector3.new(nx, 0, nz)),
+					len = len,
+					y1 = p.cf.Y,
+					y2 = p.cf.Y + Facades.Ground,
+				}
+			end
+			if spec.shop ~= "door" and spec.shop ~= "garage" and rows:chance(0.3) then
+				lean("aBoard", face(-hw, -hd, 1, 0, 0, -1, spec.w), rows:float(2, spec.w - 4), 3.5)
+			end
+			for _, side in { face(-hw, -hd, 0, 1, -1, 0, spec.d), face(hw, -hd, 0, 1, 1, 0, spec.d) } do
+				if rows:chance(0.45) then
+					local s = rows:float(1.5, 4)
+					local what = if rows:chance(0.5) then MACHINES[rows:int(1, #MACHINES)] else rows:pick(LEFT_OUT)
+					if lean(what, side, s, nil, 3) and rows:chance(0.5) then
+						lean(if rows:chance(0.5) then "canBin" else "binBags", side, s + 4.4, nil, 2)
+					end
+				end
+			end
+			if rows:chance(0.14) then
+				local back = face(-hw, hd, 1, 0, 0, 1, spec.w)
+				lean(if rows:chance(0.5) then "condenser" else rows:pick(LEFT_OUT), back, rows:float(2, spec.w - 6))
+			end
+		end
+	end
 	for _, p in standing do
 		local kind = kindOf(p.name)
 		if kind then
@@ -1987,7 +2038,7 @@ function TownMap.placements(): { Placement }
 		end
 	end
 	-- a building with its lot: landscaping sized to the building's own footprint
-	local NO_LOT = { carPark = true, cityPark = true, pondPark = true, playground = true, sportsField = true }
+	local NO_LOT = { pondPark = true, playground = true, sportsField = true }
 	NO_LOT.basketCourt = true
 	NO_LOT.station = true
 	local plain = on
@@ -2004,37 +2055,340 @@ function TownMap.placements(): { Placement }
 		local cf = out[#out].cf * CFrame.new((lo.X + hi.X) / 2, 0, (lo.Z + hi.Z) / 2)
 		table.insert(out, { name = string.format("lot:%dx%d:%s:%d", w, d, lotKind, margin), cf = cf })
 	end
+	-- the ground a placed model covers: { x1, z1, x2, z2 } in the world
+	local boundsOf: { [string]: { Vector3 } } = {}
+	local function footprint(p: Placement): (number, number, number, number)
+		local b = boundsOf[p.name]
+		if not b then
+			local lo, hi = Geometry.bounds(TownMap.prims(p.name))
+			b = { lo, hi }
+			boundsOf[p.name] = b
+		end
+		local x1, z1, x2, z2 = math.huge, math.huge, -math.huge, -math.huge
+		for _, cx in { b[1].X, b[2].X } do
+			for _, cz in { b[1].Z, b[2].Z } do
+				local w = p.cf * Vector3.new(cx, 0, cz)
+				x1, z1, x2, z2 = math.min(x1, w.X), math.min(z1, w.Z), math.max(x2, w.X), math.max(z2, w.Z)
+			end
+		end
+		return x1, z1, x2, z2
+	end
 	local DT = 0.22 -- downtown's paving
-	on("hotel", 650, 169, 0, DT)
-	on("shopCoral", 735, 165, 0, DT)
-	on("shopYellow", 775, 165, 0, DT)
-	on("carPark", 700, 214, 0, DT)
+	local downtownFrom = #out + 1
+	-- The far blocks keep their towers, flats and halls, each on a paved lot with tubs and benches.
 	on("officeBlue", 890, 169, 0, DT)
 	on("officeTeal", 1000, 169, 0, DT)
-	on("deptStore", 630, 48, 0, DT)
-	on("shopBlue", 725, 39, 0, DT)
-	on("shopMint", 772, 39, 0, DT)
 	on("cinema", 920, 48, 0, DT)
 	on("apartmentLilac", 1010, 41, 0, DT)
-	on("cityPark", 686, -68, 0, DT)
 	on("apartmentPeach", 890, -41, 180, DT)
 	on("apartmentMint", 995, -41, 180, DT)
-	on("station", 686, -165, 180, DT)
 	on("skyTower", 950, -173, 180, DT)
-	-- and along the back of each block, facing the street behind
 	on("apartmentPeach", 880, 226, 180, DT)
-	on("shopBlue", 955, 228, 180, DT)
-	on("shopMint", 1012, 228, 180, DT)
-	on("shopOrange", 615, 97, 180, DT)
-	on("shopLilac", 660, 97, 180, DT)
-	on("officeBlue", 745, 93, 180, DT)
 	on("officeTeal", 895, 93, 180, DT)
-	on("shopPink", 990, 97, 180, DT)
 	on("officeBlue", 880, -93, 0, DT)
-	on("shopOrange", 960, -97, 0, DT)
 	on("apartmentLilac", 1020, -95, 0, DT)
-	on("shopPink", 890, -228, 0, DT)
-	on("shopMint", 1012, -228, 0, DT)
+	-- What a row of street buildings has to leave alone: { x1, z1, x2, z2 }.
+	local solid: { { number } } = {}
+	for i = downtownFrom, #out do
+		table.insert(solid, { footprint(out[i]) })
+	end
+	-- The market quarter's big buildings stand in its rows with an alley either side and no lot
+	-- (each with the ground its row must leave it: the station's platform and trains are behind).
+	local ALLEY = 5
+	for _, big in
+		{
+			{ "hotel", 650, 169, 0, 628, 150, 672, 184 },
+			{ "officeBlue", 745, 93, 180, 728, 78, 762, 112 },
+			{ "station", 686, -165, 180, 645, -176, 727, -152 },
+		} :: { { any } }
+	do
+		plain(big[1], big[2], big[3], big[4], DT)
+		table.insert(solid, { big[5] - ALLEY, big[6] - ALLEY, big[7] + ALLEY, big[8] + ALLEY })
+	end
+
+	-- Street buildings (Data/Facades) -----------------------------------------------------------------
+	-- The user asked for the detail of a dense market town: buildings wall to wall along every
+	-- pavement, shop fronts under awnings, things on the walls and the roofs. So every edge of
+	-- every downtown block is a row of them, three to five storeys on the main street and lower on
+	-- the side streets, broken by alleys, by the lanes through the middle of each block and by one
+	-- small square. The shops people can walk into stand in the rows where they always stood.
+	type Lot = { spec: Facades.Spec, x: number, z: number, yaw: number, shop: string }
+	local lots: { Lot } = {}
+	local SETBACK, DEPTH = 6, 14
+	local function claim(spec: Facades.Spec, x: number, z: number, yaw: number, shop: string)
+		table.insert(lots, { spec = spec, x = x, z = z, yaw = yaw, shop = shop })
+		local hw, hd = spec.w / 2, spec.d / 2
+		if yaw == 90 or yaw == -90 then
+			hw, hd = hd, hw
+		end
+		table.insert(solid, { x - hw, z - hd, x + hw, z + hd })
+	end
+	-- the shops with rooms: { what it sells, x, z, yaw, width, storeys, depth }
+	for _, s in
+		{
+			{ "department", 630, 48, 0, 70, 3, 40 },
+			{ "bakery", 735, 165, 0, 30, 3 },
+			{ "grocer", 775, 165, 0, 26, 2 },
+			{ "books", 725, 39, 0, 28, 3 },
+			{ "flowers", 772, 39, 0, 24, 2 },
+			{ "cafe", 615, 97, 180, 30, 3 },
+			{ "toys", 660, 97, 180, 26, 2 },
+			{ "books", 955, 228, 180, 28, 3 },
+			{ "flowers", 1012, 228, 180, 24, 2 },
+			{ "clothes", 990, 97, 180, 28, 2 },
+			{ "cafe", 960, -97, 0, 30, 3 },
+			{ "clothes", 890, -228, 0, 28, 2 },
+			{ "flowers", 1012, -228, 0, 24, 2 },
+		} :: { { any } }
+	do
+		local seed = 4000 + s[2] * 3 + math.abs(s[3])
+		local spec: Facades.Spec =
+			{ w = s[5], d = s[7] or 22, storeys = s[6], seed = seed, inside = s[1], sign = s[1], top = "flat" }
+		claim(spec, s[2], s[3], s[4], "glazed")
+	end
+	-- Ground a row keeps off although nothing stands there: an alley, a lane's mouth, the square.
+	local function leave(x1: number, z1: number, x2: number, z2: number)
+		table.insert(solid, { x1, z1, x2, z2 })
+	end
+	local MAIN = { "glazed", "glazed", "glazed", "glazed", "glazed", "counter", "counter", "shutter", "door", "garage" }
+	local SIDE = { "glazed", "glazed", "glazed", "glazed", "door", "door", "door", "shutter", "counter", "garage" }
+	-- One row: fronts looking `facing` ("s", "n", "w" or "e") on the line `line`, from `from` to
+	-- `to` along it, of `lo` to `hi` storeys. Wherever a stretch of at least 12 studs is free it is
+	-- filled wall to wall. `lowStreet` and `highStreet` say that the row's end is a street corner
+	-- (or the square), so the building there gets a second street face.
+	local function row(
+		facing: string,
+		line: number,
+		from: number,
+		to: number,
+		lo: number,
+		hi: number,
+		lowStreet: boolean,
+		highStreet: boolean,
+		deep: number?,
+		lively: boolean?
+	)
+		local depth = deep or DEPTH
+		local alongX = facing == "s" or facing == "n"
+		local inward = if facing == "s" or facing == "w" then 1 else -1
+		local function rect(a: number, b: number): (number, number, number, number)
+			local v1, v2 = math.min(line, line + inward * depth), math.max(line, line + inward * depth)
+			if alongX then
+				return a, v1, b, v2
+			end
+			return v1, a, v2, b
+		end
+		local runs: { { number } } = {}
+		local start: number? = nil
+		for u = from, to - 1 do
+			local x1, z1, x2, z2 = rect(u, u + 1)
+			local free = true
+			for _, t in solid do
+				if x1 < t[3] - 0.01 and x2 > t[1] + 0.01 and z1 < t[4] - 0.01 and z2 > t[2] + 0.01 then
+					free = false
+					break
+				end
+			end
+			if free and not start then
+				start = u
+			elseif not free and start then
+				table.insert(runs, { start, u })
+				start = nil
+			end
+		end
+		if start then
+			table.insert(runs, { start, to })
+		end
+		local yaw = if facing == "s" then 0 elseif facing == "n" then 180 elseif facing == "w" then 90 else -90
+		-- (which of a building's own sides is toward the row's low end)
+		local lowSide = if facing == "s" or facing == "e" then "left" else "right"
+		local highSide = if lowSide == "left" then "right" else "left"
+		local kinds = if hi >= 4 or lively then MAIN else SIDE
+		for _, run in runs do
+			local len = run[2] - run[1]
+			if len >= 12 then
+				local d = Facades.dice(run[1] * 131 + math.floor(math.abs(line)) * 17 + (if alongX then 1 else 2))
+				local a = run[1]
+				local last = 0
+				while a < run[2] do
+					local rest = run[2] - a
+					local w = rest
+					if rest > 34 then
+						w = 16 + 2 * d.int(0, 7)
+						if rest - w < 16 then
+							w = rest - 16
+						end
+					end
+					local storeys = d.int(lo, hi)
+					if storeys == last and hi > lo then
+						storeys = if storeys == hi then lo else storeys + 1
+					end
+					last = storeys
+					local corner: string? = nil
+					if a == run[1] and a == from and lowStreet then
+						corner = lowSide
+					elseif a + w == run[2] and run[2] == to and highStreet then
+						corner = highSide
+					end
+					local shop = kinds[d.int(1, #kinds)]
+					if w < 13 then
+						shop = "door"
+					elseif w < 15 and shop == "counter" then
+						shop = "glazed"
+					end
+					local mid = a + w / 2
+					local across = line + inward * depth / 2
+					local x, z = if alongX then mid else across, if alongX then across else mid
+					local seed = (math.floor(x) * 73 + math.floor(z + 400) * 151) % 90000 + 1
+					claim(
+						{ w = w, d = depth, storeys = storeys, seed = seed, corner = corner, shop = shop },
+						x,
+						z,
+						yaw,
+						shop
+					)
+					a += w
+				end
+			end
+		end
+	end
+	local LANE = { -76, -60 } -- the market lane through the block south of the main street
+	for i, b in TownMap.blocks("east") do
+		local market = b[1] < Town.AvenueX[2]
+		local mid = math.floor((b[2] + b[4]) / 2)
+		local x1, x2, z1, z2 = b[1] + SETBACK, b[3] - SETBACK, b[2] + SETBACK, b[4] - SETBACK
+		local mainSouth, mainNorth = b[2] == 22, b[4] == -22 -- (the edge on the main street)
+		local tall = if market then 5 else 4
+		local low = 3
+		if i == 3 then
+			-- The block south of the main street is the heart of the market: a square open to the
+			-- main street, a narrow lane of shops through the middle of the block from avenue to
+			-- avenue, and across the lane from the square a pocket of park. Its rows stand back to
+			-- back, so there is no yard.
+			leave(b[1], LANE[1], x1 + DEPTH, LANE[2])
+			leave(x2 - DEPTH, LANE[1], b[3], LANE[2])
+			leave(660, -62, 712, z2)
+			leave(660, z1 + DEPTH, 712, LANE[1])
+			row("n", z2, x1, 660, 3, tall, true, true)
+			row("n", z2, 712, x2, 3, tall, true, true)
+			row("s", z1, x1, x2, 2, low, true, true)
+			row("w", x1, z1, z2, 2, low + 1, true, true)
+			row("e", x2, z1, z2, 2, low + 1, true, true)
+			local deep = LANE[1] - (z1 + DEPTH)
+			row("s", LANE[2], x1 + DEPTH, 660, 2, 3, false, true, z2 - DEPTH - LANE[2], true)
+			row("s", LANE[2], 712, x2 - DEPTH, 2, 3, true, false, z2 - DEPTH - LANE[2], true)
+			row("n", LANE[1], x1 + DEPTH, 660, 2, 3, false, true, deep, true)
+			row("n", LANE[1], 712, x2 - DEPTH, 2, 3, true, false, deep, true)
+		else
+			-- the lane through the middle of the block comes out between the buildings at each end
+			leave(b[1], mid - 5, x1 + DEPTH, mid + 6)
+			leave(x2 - DEPTH, mid - 5, b[3], mid + 6)
+			if market then
+				-- and an alley through each long row that has no big building to break it
+				local cx = math.floor((b[1] + b[3]) / 2)
+				if i == 1 then
+					leave(cx - 3, z2 - DEPTH, cx + 3, z2)
+				elseif i == 4 then
+					leave(cx - 3, z1, cx + 3, z1 + DEPTH)
+				end
+			end
+			row("n", z2, x1, x2, if mainNorth then 3 else 2, if mainNorth then tall else low, true, true)
+			row("s", z1, x1, x2, if mainSouth then 3 else 2, if mainSouth then tall else low, true, true)
+			-- (the avenues are wider streets than the cross streets, and their rows a little taller)
+			row("w", x1, z1, z2, 2, low + 1, true, true)
+			row("e", x2, z1, z2, 2, low + 1, true, true)
+		end
+	end
+	-- Names. A board gets the name Data/Signs gives its kind of place at that spot, and there are
+	-- only a few names of each kind, so a building takes a kind whose name nobody within a street
+	-- or two has yet; when every name near it is taken its board stays bare.
+	local named: { { kind: string, name: string, x: number, z: number } } = {}
+	local function nameAt(kind: string, x: number, z: number): string?
+		local design = Signs.shopAt(kind, x, z)
+		if not design then
+			return nil
+		end
+		for _, n in named do
+			if n.kind == kind and n.name == design.name and (n.x - x) ^ 2 + (n.z - z) ^ 2 < 300 ^ 2 then
+				return nil
+			end
+		end
+		return design.name
+	end
+	local kindOfModel: { [string]: string | boolean } = {}
+	for _, p in out do
+		local kind = kindOfModel[p.name]
+		if kind == nil then
+			kind = false
+			local prims: { any } = CityModels.prims(p.name) or {}
+			for _, prim in prims do
+				if prim.attrs and prim.attrs.SignKind then
+					kind = prim.attrs.SignKind
+					break
+				end
+			end
+			kindOfModel[p.name] = kind
+		end
+		if type(kind) == "string" then
+			local pos = p.cf.Position
+			local design = Signs.shopAt(kind, pos.X, pos.Z)
+			if design then
+				table.insert(named, { kind = kind, name = design.name, x = pos.X, z = pos.Z })
+			end
+		end
+	end
+	for _, lot in lots do
+		if lot.spec.sign then
+			local design = Signs.shopAt(lot.spec.sign, lot.x, lot.z)
+			if design then
+				table.insert(named, { kind = lot.spec.sign, name = design.name, x = lot.x, z = lot.z })
+			end
+		end
+	end
+	local SHOPS = { "bakery", "grocer", "books", "clothes", "cafe", "toys", "flowers" }
+	local FOOD = { "cafe", "bakery", "grocer" }
+	local HOMES = { "flats", "office", "flats" }
+	for i, lot in lots do
+		if not lot.spec.sign and lot.shop ~= "garage" then
+			local kinds = if lot.shop == "counter" then FOOD elseif lot.shop == "door" then HOMES else SHOPS
+			local turn = lot.spec.seed + i
+			for k = 1, #kinds do
+				local kind = kinds[(turn + k) % #kinds + 1]
+				local name = nameAt(kind, lot.x, lot.z)
+				if name then
+					lot.spec.sign = kind
+					table.insert(named, { kind = kind, name = name, x = lot.x, z = lot.z })
+					break
+				end
+			end
+		end
+	end
+	for i, lot in lots do
+		-- a back that another of these buildings stands against is left bare
+		local behind = CFrame.new(lot.x, 0, lot.z) * CFrame.Angles(0, math.rad(lot.yaw), 0)
+		for _, off in { -0.25, 0.25 } do
+			local at = behind * Vector3.new(off * lot.spec.w, 0, lot.spec.d / 2 + 1)
+			for j, other in lots do
+				local hw, hd = other.spec.w / 2, other.spec.d / 2
+				if other.yaw == 90 or other.yaw == -90 then
+					hw, hd = hd, hw
+				end
+				if i ~= j and math.abs(at.X - other.x) < hw and math.abs(at.Z - other.z) < hd then
+					lot.spec.back = false
+				end
+			end
+		end
+		plain(Facades.name(lot.spec), lot.x, lot.z, lot.yaw, DT)
+	end
+	-- the square on the main street, and the park behind it cut down to a pocket
+	plain("pocketFountain", 686, -42, 180, DT)
+	plain("pocketPark", 686, -85, 0, DT)
+	plain("marketStall", 667, -55, 90, DT)
+	plain("marketStall", 705, -55, -90, DT)
+	-- lanterns strung across the lane
+	for _, x in { 592, 612, 632, 652, 720, 740, 760, 780 } do
+		plain(string.format("laneLights:%d", LANE[2] - LANE[1]), x, (LANE[1] + LANE[2]) / 2, 90, DT)
+	end
 
 	-- the civic quarter, west of the old town: every building in its own hedged garden
 	lotKind = "garden"
@@ -2065,23 +2419,6 @@ function TownMap.placements(): { Placement }
 	-- fountain, food trucks, a small car park downtown; gardens, ponds, picnic lawns, allotments
 	-- and playgrounds in the civic quarter). Each goes where a 30 stud square is free, clear of
 	-- every building and its lot, and faces the nearest street.
-	local boundsOf: { [string]: { Vector3 } } = {}
-	local function footprint(p: Placement): (number, number, number, number)
-		local b = boundsOf[p.name]
-		if not b then
-			local lo, hi = Geometry.bounds(TownMap.prims(p.name))
-			b = { lo, hi }
-			boundsOf[p.name] = b
-		end
-		local x1, z1, x2, z2 = math.huge, math.huge, -math.huge, -math.huge
-		for _, cx in { b[1].X, b[2].X } do
-			for _, cz in { b[1].Z, b[2].Z } do
-				local w = p.cf * Vector3.new(cx, 0, cz)
-				x1, z1, x2, z2 = math.min(x1, w.X), math.min(z1, w.Z), math.max(x2, w.X), math.max(z2, w.Z)
-			end
-		end
-		return x1, z1, x2, z2
-	end
 	local INSET = 7
 	local pocketRng = Rng.new(88)
 	-- (`HALF` is half the square each one needs, `GAP` the room left round it)

@@ -111,6 +111,35 @@ The contract between the parts of the game. Update it with every change to an AP
   `Data/TextureIds`, and `scripts/sync_materials.py` writes a MaterialVariant for every look with ids. The
   Textures spec fails on a look a model asks for that `Data/Textures` doesn't have.
 
+## The facade kit
+
+`Data/Facades` draws street buildings from a spec: `{ w, d, storeys, seed, corner?, shop?, top?, wall?, look?, sign?,
+inside?, back? }`. `corner` is `"left"` or `"right"` (a second street face); `shop` one of `Facades.Shops` (glazed,
+shutter, open, door, garage); `top` `"flat"` or `"pitched"`; `wall` an index into `Facades.Walls` (12 treatments
+on the material looks), `look` into `Facades.Looks` (8 trim and awning pairs); `sign` a `Data/Signs` kind for the
+fascia (nil leaves the board bare); `inside` an `Interiors` kind for a furnished room you can walk into behind the
+front; `back = false` leaves off the back wall's detail where another building stands against it. A building's
+name carries its spec: `facade:<w>x<d>:<storeys>:<seed>` then any of `:cl`, `:cr`, `:sign=<kind>`, `:shop=<kind>`,
+`:top=flat|pitched`, `:in=<kind>`, `:nb`, `:wall=<n>`, `:look=<n>`; `Facades.name(spec)` and `Facades.spec(name)`
+go both ways, and there are 14 named presets (`rowBakery`, `rowNoodles`, `rowShutter`, `rowHouse`, `rowGarage`,
+`rowTall`, `rowCorner`, `rowCornerLeft`, `rowWide`, `rowNarrow`, `rowOffice`, `rowTeaHouse`, `rowShop`,
+`rowShopCorner`). `Facades.prims(name)` returns a fresh list (also `"laneLights:<span>"`, a string of lanterns as
+one piece). `Facades.footprint(spec)`, `Facades.height(storeys)`, `Facades.dice(seed)` and `Facades.pieces()` (the
+kit's piece keys) help the map and the specs. Sizes: `Facades.Ground` 8.4 (the shop floor), `Facades.Storey` 4.4,
+`Facades.Reach` 3.4 (how far awnings and signs stand off the front), `Facades.BackReach` 0.9. Every repeated
+detail is a piece; windows have their glass drawn into the piece, and about a third also carry an ordinary `lit`
+pane that lights up at night. Detail is on street faces only; party walls and backs are plain.
+
+`TownMap.placements` fills each downtown block edge with a row 6 studs inside the block, wall to wall wherever 12
+studs or more are free (widths 12 to 34), storeys by the road (3 to 5 on Main Street in the market quarter, 3 to 4
+in the far blocks, 2 to 3 on cross streets and ring roads, 2 to 4 on the avenues). The block south of Main Street
+has the square (x 660 to 712), the market lane (z -76 to -60, with `laneLights`) and `CityModels.pocketPark`.
+`streetScene` dresses facades itself (sandwich boards in front; machines, crates and bins on bare alley walls). A
+building takes a sign kind whose `Signs.shopAt` name no other within 300 studs has yet. The World spec checks each
+block edge is at least 80% built in the market quarter and 65% in the far blocks; the Facades spec covers the kit
+(presets build, names round trip, footprints, detail on street faces only, frames, piece rules, at most 100
+different pieces, sign attributes, lit windows, lane lights).
+
 ## The plan
 
 A plot's build is a `PlanData`:

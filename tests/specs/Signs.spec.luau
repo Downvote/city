@@ -11,6 +11,7 @@ local Signs = require(Shared .. "Data.Signs")
 local Town = require(Shared .. "Data.Town")
 local TownMap = require(Shared .. "Data.TownMap")
 local CityModels = require(Shared .. "Data.CityModels")
+local Facades = require(Shared .. "Data.Facades")
 local Interiors = require(Shared .. "Data.Interiors")
 local Builder = require(Shared .. "Build.Builder")
 
@@ -402,7 +403,15 @@ describe("Sign boards", function()
 		local kindOf = {}
 		local function kindFor(name)
 			if kindOf[name] == nil then
+				-- the old buildings (Data/CityModels) and the street buildings (Data/Facades)
 				local signs = if CityModels.Models[name] then boardsOf(name) else {}
+				if Facades.spec(name) then
+					for _, prim in Facades.prims(name) do
+						if prim.attrs and prim.attrs.SignKind then
+							table.insert(signs, prim)
+						end
+					end
+				end
 				kindOf[name] = if signs[1] then signs[1].attrs.SignKind else false
 			end
 			return kindOf[name]

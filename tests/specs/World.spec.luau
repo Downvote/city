@@ -154,6 +154,62 @@ describe("Roads", function()
 		end
 	end)
 
+	it("have buildings all along every downtown block's edges", function()
+		-- The user asked for a dense town, buildings shoulder to shoulder along the pavement. So
+		-- along each edge of each downtown block, most of the way is built: nearly all of it in
+		-- the market quarter (what is left is alleys, the lanes' mouths and the square), and well
+		-- over half round the towers in the far blocks. What counts is anything a storey or more
+		-- high and more than ten studs each way, standing within 24 studs of the edge.
+		local built = {}
+		for _, p in TownMap.placements() do
+			if p.cf.Position.X > 550 and p.cf.Position.Z > -250 and p.cf.Position.Z < 250 then
+				local lo, hi = Geometry.bounds(Geometry.transform(TownMap.prims(p.name), p.cf))
+				if hi.Y - p.cf.Y > 12 and hi.X - lo.X > 10 and hi.Z - lo.Z > 10 then
+					table.insert(built, { lo.X, lo.Z, hi.X, hi.Z })
+				end
+			end
+		end
+		expect(#built > 120).toBeTruthy()
+		for _, b in TownMap.blocks("east") do
+			local market = b[1] < Town.AvenueX[2]
+			local edges = {
+				{ "south", b[1], b[3], b[2], b[2] + 24, true },
+				{ "north", b[1], b[3], b[4] - 24, b[4], true },
+				{ "west", b[2], b[4], b[1], b[1] + 24, false },
+				{ "east", b[2], b[4], b[3] - 24, b[3], false },
+			}
+			for _, e in edges do
+				local covered, total = 0, 0
+				for u = e[2] + 6, e[3] - 7 do
+					total += 1
+					for _, r in built do
+						local hit
+						if e[6] then
+							hit = r[1] < u + 1 and r[3] > u and r[2] < e[5] and r[4] > e[4]
+						else
+							hit = r[2] < u + 1 and r[4] > u and r[1] < e[5] and r[3] > e[4]
+						end
+						if hit then
+							covered += 1
+							break
+						end
+					end
+				end
+				if covered / total < (if market then 0.8 else 0.65) then
+					error(
+						string.format(
+							"the %s edge of the block at %d, %d is only %d%% built",
+							e[1],
+							b[1],
+							b[2],
+							covered / total * 100
+						)
+					)
+				end
+			end
+		end
+	end)
+
 	it("keep downtown and the civic quarter's buildings inside their blocks", function()
 		local blocks = {}
 		for _, b in TownMap.blocks("east") do

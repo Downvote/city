@@ -239,9 +239,9 @@ Held by `tests/specs/City.spec.luau`:
 The island is now about 2,300 studs across, with the old town (the eight plots, the square and the market, where
 they always were) in the middle of a ring of roads and new districts all round:
 
-- **Downtown** (east): a grid of streets with a hotel, office towers, apartment blocks, a department store, shop rows,
-  a cinema with a lit marquee, a little park with a fountain, the train station with a train at the platform, and
-  Sky Tower, the tallest thing on the island.
+- **Downtown** (east): a grid of streets lined wall to wall with shops and flats (see "A denser, more detailed
+  town" in section 10), a hotel, office towers, a department store, a cinema with a lit marquee, the train station
+  with a train at the platform, and Sky Tower, the tallest thing on the island.
 - **The civic quarter** (west): the school with its sports field and a playground, the library, the museum, the
   clinic, the fire station with its engine, the post office, a basketball court, a park with a pond and a bridge,
   and rows of little houses with gardens.
@@ -863,6 +863,18 @@ None of that game's streets, shops, signs, gate or art: Maplewick's are its own.
   their edge is a touch softer than the hard cel edge it had, and the shade is lifted a little by light off the
   sky. The long morning and afternoon are golden, not white: the picture's tint and the colour of the haze follow
   the hour, from clear at noon through gold to orange at dusk and blue at night.
+- **Downtown is a market quarter.** Every edge of its eight blocks is a row of buildings standing wall to wall,
+  three to five storeys on Main Street, lower on the side streets. At street level they are shops: a glazed front
+  under a striped awning, a roller shutter half down, an open counter with stools and lanterns under a tiled
+  lean-to, a front door with a fanlight, a garage. Above are window bays (pairs, wide ones, balconies with rails,
+  flower boxes, shutters, little awnings), air conditioners, downpipes and string courses, and on top a parapet
+  with a water tank, a stair hut, vents, an aerial and a washing line, or a tiled roof with a chimney. Corner
+  buildings have two fronts. The block south of Main Street opens into a small market square with a fountain and
+  stalls, and a market lane runs right through it from avenue to avenue with shops both sides and strings of
+  lanterns overhead; across the lane is a pocket park. The other blocks keep courtyards with a cobbled lane in from
+  each end and an alley here and there. Every shop and room you could walk into before is still there, in the
+  same spot, now behind a front of the same kind. A building's name comes from the town's list of shop names for
+  its kind, never the same one twice within a few streets; where every name nearby is taken its board is left bare.
 - **Street buildings come from a facade kit** (`Data/Facades`): a ground floor shop front, storeys of window
   bays, a roof with its clutter, in a handful of wall treatments and colours, put together by rule so a street is
   varied and still one town.

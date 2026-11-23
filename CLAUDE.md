@@ -52,9 +52,15 @@ roads (`Town.Roads`), downtown east, the civic quarter west, the hills north (`D
 `Data/TownMap` lays out the ground and where everything stands, `Data/CityModels` draws the buildings and landmarks,
 `Data/Places` lists the places to find. The user wants it detailed like a classic city builder: buildings on
 landscaped lots (`CityModels.lot`), window bays, signs, roof details, parked cars, groves, textured ground, all
-textures from the Roblox library. Keep the whole place under about 26,000 parts (it is about 24,800 with the street scene and the signs; before them about 22,500 with the interiors the user asked for: every shop,
-tower, house and public building is a furnished room from `Data/Interiors`, preview with `render.sh
-inside:<kind>,<kind>`). The user: "remove the trees near the road", so trees keep to the
+textures from the Roblox library. Budgets (the Town spec holds them): the whole town under 30,000 parts with a merged piece counted as one, under
+70,000 with every piece opened into its shapes, and under 220 different pieces (it is about 28,700, 57,500 and 166
+since the redo; every shop, tower, house and public building you can walk into is a furnished room from
+`Data/Interiors`, preview with `render.sh inside:<kind>,<kind>`). Street buildings come from the facade kit
+(`Data/Facades`): a building is a name such as `facade:24x18:4:17:shop=open:cl` (size, storeys, seed and options)
+or one of its presets, so a new one needs only a placement. Downtown is rows of them on every block edge, with a
+market square and a lantern-lit market lane south of Main Street (the user: "emulate the level of detail of these
+shaders, maps and building materials"); preview the presets with `render.sh "models:rowBakery,rowNoodles,rowCorner"
+<png> --yaw 205 --pitch 16`. The user: "remove the trees near the road", so trees keep to the
 parks, the market square, the hills and the beach; streets get flower troughs, benches and shrubs instead
 (`Data/DetailModels`), and the gaps between buildings are filled by rule with pockets (cafe terraces, fountains,
 gardens, ponds: `pockets` in `TownMap.placements`). The World spec checks the hills, the places and that nothing stands in a road; preview a district

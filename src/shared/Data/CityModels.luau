@@ -902,21 +902,28 @@ M.station = function(r: R)
 	end
 end
 
--- A small paved park with trees, a fountain and benches (a downtown block).
-M.cityPark = function(r: R)
-	r:block(-110, 0, -40, 110, 0.3, 40, rgb(140, 210, 96), "SmoothPlastic")
-	r:block(-110, 0.3, -4, 110, 0.34, 4, rgb(236, 236, 232), "SmoothPlastic")
-	r:block(-4, 0.3, -40, 4, 0.34, 40, rgb(236, 236, 232), "SmoothPlastic")
-	r:cyl(0, 0.9, 0, 1.2, 18, "y", STONE, "SmoothPlastic")
-	r:cyl(0, 1.2, 0, 0.4, 15, "y", WATER, "SmoothPlastic")
-	r:cyl(0, 2.6, 0, 3, 2.4, "y", STONE, "SmoothPlastic")
-	for _, p in
-		{ { -60, -20 }, { -80, 18 }, { -30, 20 }, { 40, -20 }, { 70, 18 }, { 86, -16 }, { -88, -20 }, { 25, 20 } }
-	do
-		lowTree(r, p[1], 0.3, p[2], 1.2)
+-- A pocket park on the market lane, across from the square: a lawn in a kerb, open to the lane
+-- (local +Z), with a path along its front, a few trees, flower beds and benches. (The park that
+-- had this whole block was cut down to it when the street buildings went up.)
+M.pocketPark = function(r: R)
+	r:block(-25, 0, -8.5, 25, 0.3, 8.5, rgb(140, 210, 96), "Grass")
+	r:block(-25.5, 0, -9, 25.5, 0.42, -8.5, STONE, "Concrete")
+	r:block(-25.5, 0, -8.5, -25, 0.42, 8.5, STONE, "Concrete")
+	r:block(25, 0, -8.5, 25.5, 0.42, 8.5, STONE, "Concrete")
+	r:block(-25, 0.3, 3, 25, 0.34, 6, rgb(236, 226, 204), "Pavement")
+	r:block(-2.5, 0.3, 3, 2.5, 0.34, 8.5, rgb(236, 226, 204), "Pavement")
+	for _, p in { { -19, -3.5, 1.05 }, { -8, -4.5, 0.95 }, { 8, -4.5, 1 }, { 19, -3.5, 1.1 } } do
+		lowTree(r, p[1], 0.3, p[2], p[3])
 	end
-	for _, p in { { -14, -8, 0 }, { 14, 8, 180 }, { -40, 8, 180 }, { 40, -8, 0 } } do
-		bench(r, p[1], p[2], p[3])
+	for i, x in { -13.5, 0, 13.5 } do
+		r:block(x - 3, 0.3, -1.4, x + 3, 0.55, 1.4, rgb(124, 92, 66), "Ground")
+		for k = 0, 3 do
+			local col = ({ rgb(255, 140, 160), rgb(255, 214, 100), rgb(250, 250, 250), rgb(190, 150, 240) })[(i + k) % 4 + 1]
+			r:ball(x - 2.1 + k * 1.4, 0.85, 0, 1.1, col)
+		end
+	end
+	for _, x in { -16, -6, 6, 16 } do
+		bench(r, x, 7.2, 180)
 	end
 end
 

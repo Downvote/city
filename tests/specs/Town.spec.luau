@@ -98,4 +98,39 @@ describe("Town", function()
 	it("keeps the ground to a sensible number of parts", function()
 		expect(#TownMap.ground()).toBeBetween(100, 9000)
 	end)
+
+	it("keeps the whole town to a budget of parts and of different pieces", function()
+		-- A piece (Geometry.piece) is one part in the game: one merged mesh, copied wherever it
+		-- is used. So the town is counted twice: with each piece as one part, which is what a
+		-- server holds, and with every piece opened into its shapes, which is what a client
+		-- draws where the merge can't be done. Every different piece is a merge when the server
+		-- starts, so there may not be many of those either.
+		local ground = TownMap.ground()
+		local parts, opened = #ground, #Geometry.flatten(ground)
+		local keys, different = {}, 0
+		local function note(prims)
+			for _, prim in prims do
+				if prim.shape == "Piece" and not keys[prim.key] then
+					keys[prim.key] = true
+					different += 1
+				end
+			end
+		end
+		note(ground)
+		local sizes = {}
+		for _, p in TownMap.placements() do
+			local size = sizes[p.name]
+			if not size then
+				local prims = TownMap.prims(p.name)
+				note(prims)
+				size = { #prims, #Geometry.flatten(prims) }
+				sizes[p.name] = size
+			end
+			parts += size[1]
+			opened += size[2]
+		end
+		expect(parts < 30000).toBeTruthy()
+		expect(opened < 70000).toBeTruthy()
+		expect(different < 220).toBeTruthy()
+	end)
 end)
