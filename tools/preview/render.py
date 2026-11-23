@@ -14,6 +14,12 @@ The part's colour is first changed as the game changes it (Textures.shade: lifte
 with its own colour, brightened under a dark one).
 --painted uses our own painted set in art/textures instead (scripts/gen_textures.py).
 
+The picture is lit and graded as the game lights and grades it (tools/preview/look.py, from the
+numbers in Tuning.Look): the sun's strength and colour, the violet shade, the tone map and the
+colour correction for the hour (--hour, 13 by default). The light still comes from the top left
+so a model reads well. --no-grade leaves the colour correction off, --plain draws the old flat
+preview (no light model, no grade): neither is what a player sees.
+
 A part whose material names a look ("Concrete:Panel", Data/Textures) wears the look's picture at
 the look's studs per tile: with --textures its Creator Store picture, with --painted the one in
 art/textures. A look with no id in Data/TextureIds shows its material's picture under --textures,
@@ -29,6 +35,9 @@ import urllib.request
 
 import numpy as np
 from PIL import Image
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import look as game_look  # noqa: E402  (the game's light and grade)
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 TEX_DIR = os.path.join(ROOT, "art", "textures")
@@ -318,6 +327,9 @@ def main():
     ap.add_argument("--textures", action="store_true", help="paint parts with the game's textures")
     ap.add_argument("--painted", action="store_true", help="paint parts with our painted art/textures "
                     "(with --textures: only the looks that have no id yet)")
+    ap.add_argument("--hour", type=float, default=13, help="the game's hour whose light and grade to show")
+    ap.add_argument("--no-grade", action="store_true", help="leave off the game's colour correction")
+    ap.add_argument("--plain", action="store_true", help="the old flat shading, no light model and no grade")
     args = ap.parse_args()
     global USE_KIT
     USE_KIT = not args.smooth
@@ -330,6 +342,7 @@ def main():
     right = np.cross(forward, [0, 1, 0]); right /= np.linalg.norm(right)
     up = np.cross(right, forward)
     light = np.array([-0.45, 0.85, 0.3]); light /= np.linalg.norm(light)
+    game = None if args.plain else game_look.Light(game_look.load(), args.hour)
 
     textures = Textures(painted=args.painted, library=args.textures) if (args.textures or args.painted) else None
     tris, cols, alphas, owners = [], [], [], []
@@ -368,8 +381,12 @@ def main():
         n /= ln
         if n @ forward > 0:
             n = -n
-        shade = 0.55 + 0.45 * max(0, n @ light)
-        col = np.array(cols[i]) * shade
+        if game is None:
+            shade = 0.55 + 0.45 * max(0, n @ light)
+            col = np.array(cols[i]) * shade
+        else:
+            irr = game.irradiance(n, 1.0, toward=light)
+            col = game.shade(np.array(cols[i])[None, :], irr)[0]
         px = (t @ right - cx) * scale + W / 2
         py = H / 2 - (t @ up - cy) * scale
         pz = t @ forward
@@ -417,10 +434,14 @@ def main():
                 if tex is not None:
                     # as the game colours the part: lifted under a picture with its own colour,
                     # brightened under a dark one
-                    tcol = shade_paint(cols[i], textures.by_mat[key][2], textures.by_mat[key][3]) * shade
+                    tcol = shade_paint(cols[i], textures.by_mat[key][2], textures.by_mat[key][3])
+                    if game is None:
+                        texel = tcol * shade * tex
+                    else:
+                        texel = game.shade(tcol[None, :] * tex, irr)
                     if alphas[i] >= 1:
                         region[closer] = z[closer]
-                        img[y0:y1 + 1, x0:x1 + 1][closer] = tcol * tex
+                        img[y0:y1 + 1, x0:x1 + 1][closer] = texel
                     continue
         if alphas[i] >= 1:
             region[closer] = z[closer]
@@ -429,6 +450,8 @@ def main():
             a = alphas[i]
             sub = img[y0:y1 + 1, x0:x1 + 1]
             sub[closer] = sub[closer] * (1 - a) + col * a
+    if game is not None and not args.no_grade:
+        img = game_look.grade(img, game)
     rgb8 = (np.clip(img, 0, 1) * 255).astype(np.uint8)
     if args.transparent:
         alpha = np.where(np.isfinite(zbuf), 255, 0).astype(np.uint8)

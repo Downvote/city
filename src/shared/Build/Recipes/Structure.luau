@@ -77,8 +77,8 @@ local items: { any } = {
 		price = 420,
 		place = "stairs",
 		size = Vector3.new(6, H + 3.5, 14),
-		c1 = "8A5A2E",
-		c2 = "FFFFFF",
+		c1 = "8E6440",
+		c2 = "FAF6EC",
 		tags = { "stairs" },
 		build = function(r: R)
 			stairs(r, 6, 14, true)
@@ -135,8 +135,8 @@ local items: { any } = {
 		price = 50,
 		place = "floor",
 		size = Vector3.new(1, H, 1),
-		c1 = "A8743F",
-		c2 = "A8743F",
+		c1 = "AD7E55",
+		c2 = "AD7E55",
 		build = function(r: R)
 			r:block(-0.5, 0, -0.5, 0.5, H, 0.5, r.c1, "Wood")
 		end,
@@ -148,7 +148,7 @@ local items: { any } = {
 		price = 220,
 		place = "floor",
 		size = Vector3.new(4, 30, 3),
-		c1 = "C7383F",
+		c1 = "B8505A",
 		c2 = "68686E",
 		build = function(r: R)
 			r:block(-2, 0, -1.5, 2, 28.5, 1.5, r.c1, "Brick")
@@ -165,8 +165,8 @@ local items: { any } = {
 		price = 90,
 		place = "floor",
 		size = Vector3.new(8, 1, 8),
-		c1 = "A8743F",
-		c2 = "6B4423",
+		c1 = "AD7E55",
+		c2 = "6E4C34",
 		build = function(r: R)
 			for _, x in { -3.6, 3.6 } do
 				for _, z in { -3.6, 3.6 } do
@@ -231,7 +231,7 @@ local items: { any } = {
 		price = 420,
 		place = "floor",
 		size = Vector3.new(4.4, 23, 3.2),
-		c1 = "B5523B",
+		c1 = "B0624E",
 		c2 = "D6D6D6",
 		build = function(r: R)
 			-- For a house of one storey. It stands inside against a wall (its back is -z) and goes
@@ -366,7 +366,7 @@ local items: { any } = {
 		price = 60,
 		place = "floor",
 		size = Vector3.new(2.4, 13.4, 2.4),
-		c1 = "DEB252",
+		c1 = "D4AE5E",
 		c2 = "2F3B35",
 		build = function(r: R)
 			-- For the ridge of a roof: stand it on the floor above the top storey, where the ridge

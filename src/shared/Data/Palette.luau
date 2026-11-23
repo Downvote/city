@@ -42,8 +42,32 @@ for _, m in Palette.Materials do
 	Palette.MaterialSet[m.id] = true
 end
 
--- Rows of swatches, light to dark, warm to cool.
+-- Rows of swatches, light to dark, warm to cool. The first three rows are the town's own
+-- palette (the user: "make the colors of the buildings, such as the roof of the buildings, more
+-- pleasing to look at"): soft walls, then roofs that go with them, so a player's own buildings
+-- come out well. The rows after them are the older, stronger set; plans keep any hex colour, so a
+-- wall painted with one of them still loads whatever the list holds.
 Palette.Colors = {
+	-- soft walls
+	"F6F0E2",
+	"F2E6CC",
+	"F3DFA6",
+	"F0CDB0",
+	"EBC8C2",
+	"D69A82",
+	"CFE2D0",
+	"CCDDEA",
+	"D8D2E6",
+	"E6D5B4",
+	"DAD4C8",
+	"FAF6EC",
+	-- roofs
+	"C27E63",
+	"B8665C",
+	"6A5C5A",
+	"86A886",
+	"6E8CA8",
+	"4F6488",
 	-- whites and creams
 	"FFFFFF",
 	"F7F3EA",
@@ -105,17 +129,17 @@ Palette.Colors = {
 -- Ready-made finishes shown as tiles in Build mode, the way house builders offer them.
 Palette.Presets = {
 	walls = {
-		{ name = "Cream plaster", c = "F2E8D5", m = "Plaster" },
+		{ name = "Cream plaster", c = "F2E6CC", m = "Plaster" },
 		{ name = "White paint", c = "F7F3EA", m = "SmoothPlastic" },
-		{ name = "Red brick", c = "A34A22", m = "Brick" },
+		{ name = "Red brick", c = "B86A54", m = "Brick" },
 		{ name = "Grey brick", c = "8E8E94", m = "Brick" },
 		{ name = "Wood siding", c = "C99A62", m = "WoodPlanks" },
 		{ name = "Dark wood", c = "6B4423", m = "WoodPlanks" },
 		{ name = "Stone", c = "B4B4B8", m = "Cobblestone" },
 		{ name = "Limestone", c = "EADBC0", m = "Limestone" },
-		{ name = "Sage", c = "A8C79A", m = "SmoothPlastic" },
-		{ name = "Sky blue", c = "8FD3E8", m = "SmoothPlastic" },
-		{ name = "Blush", c = "F5C6CF", m = "SmoothPlastic" },
+		{ name = "Sage", c = "B9CFB2", m = "SmoothPlastic" },
+		{ name = "Sky blue", c = "CCDDEA", m = "SmoothPlastic" },
+		{ name = "Blush", c = "EBC8C2", m = "SmoothPlastic" },
 		{ name = "Charcoal", c = "45454A", m = "SmoothPlastic" },
 		{ name = "White tiles", c = "F7F3EA", m = "CeramicTiles" },
 		{ name = "Concrete", c = "B4B4B8", m = "Concrete" },
@@ -128,36 +152,36 @@ Palette.Presets = {
 		{ name = "Grey tiles", c = "B4B4B8", m = "CeramicTiles" },
 		{ name = "Marble", c = "F7F3EA", m = "Marble" },
 		{ name = "Grey carpet", c = "B4B4B8", m = "Carpet" },
-		{ name = "Blue carpet", c = "4FA9D9", m = "Carpet" },
-		{ name = "Rose carpet", c = "F59EB5", m = "Carpet" },
+		{ name = "Blue carpet", c = "8AA8C8", m = "Carpet" },
+		{ name = "Rose carpet", c = "E8AEB8", m = "Carpet" },
 		{ name = "Concrete", c = "B4B4B8", m = "Concrete" },
 		{ name = "Paving", c = "D9C7A7", m = "Pavement" },
-		{ name = "Brick path", c = "A34A22", m = "Brick" },
+		{ name = "Brick path", c = "C88A6E", m = "Brick" },
 		{ name = "Cobbles", c = "8E8E94", m = "Cobblestone" },
-		{ name = "Grass", c = "78BF5E", m = "Grass" },
+		{ name = "Grass", c = "8AC070", m = "Grass" },
 		{ name = "Sand", c = "EADBC0", m = "Sand" },
 		{ name = "Road", c = "45454A", m = "Asphalt" },
 	},
 	roofs = {
-		{ name = "Red clay", c = "C7383F", m = "ClayRoofTiles" },
-		{ name = "Terracotta", c = "D4622B", m = "ClayRoofTiles" },
+		{ name = "Red clay", c = "C27E63", m = "ClayRoofTiles" },
+		{ name = "Terracotta", c = "C98466", m = "ClayRoofTiles" },
 		{ name = "Grey slate", c = "68686E", m = "Slate" },
 		{ name = "Charcoal shingles", c = "45454A", m = "RoofShingles" },
-		{ name = "Brown shingles", c = "6B4423", m = "RoofShingles" },
-		{ name = "Blue metal", c = "2F7BBF", m = "DiamondPlate" },
-		{ name = "Green", c = "33733A", m = "RoofShingles" },
+		{ name = "Brown shingles", c = "7A5E50", m = "RoofShingles" },
+		{ name = "Blue metal", c = "5A7498", m = "DiamondPlate" },
+		{ name = "Green", c = "6F8F5F", m = "RoofShingles" },
 		{ name = "Thatch", c = "D9C7A7", m = "Grass" },
 	},
 }
 
 Palette.Defaults = {
-	WallOut = { c = "F2E8D5", m = "Plaster" },
+	WallOut = { c = "F2E6CC", m = "Plaster" },
 	WallIn = { c = "F7F3EA", m = "SmoothPlastic" },
-	Floor = { c = "C99A62", m = "WoodPlanks" },
-	Roof = { c = "C7383F", m = "ClayRoofTiles" },
-	RoofGable = { c = "F2E8D5", m = "Plaster" },
-	Fence = { c = "FFFFFF", m = "Wood" },
-	Hedge = { c = "4E9A44", m = "Grass" },
+	Floor = { c = "C49A6C", m = "WoodPlanks" },
+	Roof = { c = "C27E63", m = "ClayRoofTiles" },
+	RoofGable = { c = "F2E6CC", m = "Plaster" },
+	Fence = { c = "FAF6EC", m = "Wood" },
+	Hedge = { c = "6EAA62", m = "Grass" },
 	Stone = { c = "B4B4B8", m = "Cobblestone" },
 	Glass = { c = "CDEEF5", m = "Glass" },
 }

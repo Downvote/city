@@ -31,22 +31,35 @@
     "Lighting": {
       "$properties": {
         "ClockTime": 13,
-        "Brightness": 3.1,
+        "Brightness": 1.7,
+        "ExposureCompensation": 0,
         "GlobalShadows": true,
         "OutdoorAmbient": [
-          0.596,
-          0.573,
-          0.729
+          0.376,
+          0.353,
+          0.486
         ],
         "Ambient": [
-          0.494,
-          0.463,
-          0.62
+          0.329,
+          0.306,
+          0.431
         ],
+        "ColorShift_Top": [
+          1.0,
+          0.933,
+          0.808
+        ],
+        "GeographicLatitude": -20,
         "Technology": "Future",
-        "EnvironmentDiffuseScale": 0.3,
+        "LightingStyle": {
+          "Enum": 0
+        },
+        "PrioritizeLightingQuality": {
+          "Bool": true
+        },
+        "EnvironmentDiffuseScale": 0.24,
         "EnvironmentSpecularScale": 0.12,
-        "ShadowSoftness": 0.06
+        "ShadowSoftness": 0.12
       }
     },
     "Workspace": {
@@ -78,7 +91,7 @@
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Grass",
-          "ColorMap": "rbxassetid://83472971555269",
+          "ColorMap": "rbxassetid://123781418381440",
           "StudsPerTile": 16,
           "MaterialPattern": "Regular",
           "NormalMap": "rbxassetid://74383676401444",
@@ -167,10 +180,9 @@
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "ClayRoofTiles",
-          "ColorMap": "rbxassetid://134089207155554",
-          "StudsPerTile": 6,
-          "MaterialPattern": "Regular",
-          "NormalMap": "rbxassetid://125979461216252"
+          "ColorMap": "rbxassetid://6436676312",
+          "StudsPerTile": 8,
+          "MaterialPattern": "Regular"
         }
       },
       "MaplewickTiles": {

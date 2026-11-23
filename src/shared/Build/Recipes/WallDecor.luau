@@ -77,7 +77,7 @@ local items: { Item } = {
 		price = 60,
 		place = "wall",
 		size = Vector3.new(4, 3, 0.3),
-		c1 = "8A5A2E",
+		c1 = "8E6440",
 		c2 = "9CCBE8",
 		tags = { "art" },
 		build = function(r: R)
@@ -105,7 +105,7 @@ local items: { Item } = {
 		price = 50,
 		place = "wall",
 		size = Vector3.new(2.4, 3, 0.3),
-		c1 = "DEB252",
+		c1 = "D4AE5E",
 		c2 = "3E5A4A",
 		tags = { "art" },
 		build = function(r: R)
@@ -119,7 +119,7 @@ local items: { Item } = {
 			local flowers = {
 				{ x = -0.45, y = 2.0, col = C.Pink },
 				{ x = 0.4, y = 2.15, col = C.Yellow },
-				{ x = 0.0, y = 2.45, col = Color3.fromRGB(230, 110, 90) },
+				{ x = 0.0, y = 2.45, col = Color3.fromRGB(220, 126, 108) },
 				{ x = -0.15, y = 1.75, col = C.White },
 				{ x = 0.3, y = 1.7, col = Color3.fromRGB(196, 160, 230) },
 			}
@@ -144,8 +144,8 @@ local items: { Item } = {
 			frame(r, 3, 3, 0.1, 0.2, r.c1, "SmoothPlastic")
 			r:block(-1.4, 0.1, 0.02, 1.4, 2.9, 0.08, MAT, "SmoothPlastic")
 			r:block(-1.1, 0.4, 0.08, 1.1, 2.6, 0.1, r.c2, "SmoothPlastic")
-			r:cyl(-0.3, 1.85, 0.11, 0.02, 1.1, "z", Color3.fromRGB(232, 180, 80), "SmoothPlastic")
-			r:block(0.05, 0.6, 0.1, 0.9, 1.7, 0.12, Color3.fromRGB(217, 128, 95), "SmoothPlastic")
+			r:cyl(-0.3, 1.85, 0.11, 0.02, 1.1, "z", Color3.fromRGB(224, 180, 102), "SmoothPlastic")
+			r:block(0.05, 0.6, 0.1, 0.9, 1.7, 0.12, Color3.fromRGB(208, 138, 108), "SmoothPlastic")
 			r:block(-0.9, 0.6, 0.1, -0.2, 1.0, 0.13, Color3.fromRGB(90, 130, 160), "SmoothPlastic")
 			r:block(-0.9, 1.2, 0.1, 0.9, 1.26, 0.14, C.Black, "SmoothPlastic")
 			r:cyl(0.55, 2.2, 0.11, 0.02, 0.3, "z", Color3.fromRGB(143, 179, 154), "SmoothPlastic")
@@ -158,7 +158,7 @@ local items: { Item } = {
 		price = 35,
 		place = "wall",
 		size = Vector3.new(1.8, 1.8, 0.4),
-		c1 = "C7383F",
+		c1 = "B8505A",
 		c2 = "F7F3EA",
 		tags = { "clock" },
 		build = function(r: R)
@@ -252,7 +252,7 @@ local items: { Item } = {
 			end
 			-- books, one leaning, a small framed photo and a plant
 			local covers =
-				{ Color3.fromRGB(176, 68, 62), Color3.fromRGB(70, 110, 150), Color3.fromRGB(143, 179, 154), C.Yellow }
+				{ Color3.fromRGB(168, 86, 78), Color3.fromRGB(70, 110, 150), Color3.fromRGB(143, 179, 154), C.Yellow }
 			for i, col in covers do
 				local x = -1.6 + (i - 1) * 0.24
 				r:block(x, 0.55, 0.15, x + 0.21, 0.55 + 0.7 + (i % 2) * 0.15, 0.85, col, "SmoothPlastic")
@@ -287,7 +287,7 @@ local items: { Item } = {
 		place = "wall",
 		size = Vector3.new(1, 2, 1.2),
 		c1 = "F2E1C4",
-		c2 = "B08A4A",
+		c2 = "B08E58",
 		tags = { "light" },
 		build = function(r: R)
 			r:cyl(0, 0.75, 0.03, 0.06, 0.55, "z", r.c2, "Metal")
@@ -372,7 +372,7 @@ local items: { Item } = {
 		price = 90,
 		place = "wall",
 		size = Vector3.new(6, 2, 2.6),
-		c1 = "C7383F",
+		c1 = "B8505A",
 		c2 = "F7F3EA",
 		build = function(r: R)
 			r:block(-3, 1.82, 0, 3, 2.0, 0.14, shade(r.c1, 0.7), "Wood")
@@ -399,7 +399,7 @@ local items: { Item } = {
 		place = "wall",
 		size = Vector3.new(5.6, 6, 0.8),
 		c1 = "8FB39A",
-		c2 = "B08A4A",
+		c2 = "B08E58",
 		build = function(r: R)
 			r:cyl(0, 5.75, 0.55, 5.3, 0.12, "x", r.c2, "Metal")
 			for _, sx in { -1, 1 } do
@@ -485,7 +485,7 @@ local items: { Item } = {
 		price = 45,
 		place = "wall",
 		size = Vector3.new(4, 3, 0.5),
-		c1 = "8A5A2E",
+		c1 = "8E6440",
 		c2 = "D6BE96",
 		build = function(r: R)
 			-- a framed board with tools hung on it and a rack of jars under: c1 the frame and
@@ -519,7 +519,7 @@ local items: { Item } = {
 		place = "wall",
 		size = Vector3.new(0.6, 3.3, 3),
 		c1 = "F2E8D5",
-		c2 = "6B4423",
+		c2 = "6E4C34",
 		build = function(r: R)
 			-- a board with a hammer on it, hung from an iron arm so it stands out square from
 			-- the wall and reads from along the street: c1 the board, c2 its edges

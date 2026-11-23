@@ -104,7 +104,7 @@ local items: { Item } = {
 		price = 300,
 		place = "floor",
 		size = Vector3.new(5, 4.7, 1.8),
-		c1 = "A8743F",
+		c1 = "AD7E55",
 		c2 = "2B282E",
 		tags = { "tv" },
 		build = function(r: R)
@@ -141,7 +141,7 @@ local items: { Item } = {
 			r:block(-0.9, 1.72, -0.45, 0.9, 1.78, 0.1, r.c2, "Metal")
 			r:block(-0.12, 1.78, -0.3, 0.12, 2.25, -0.15, r.c2, "Metal")
 			r:block(-2.15, 2.1, -0.3, 2.15, 4.65, -0.16, r.c2, "SmoothPlastic")
-			r:block(-2.08, 2.17, -0.16, 2.08, 4.58, -0.14, Color3.fromRGB(70, 120, 170), "Glass")
+			r:block(-2.08, 2.17, -0.16, 2.08, 4.58, -0.14, Color3.fromRGB(90, 127, 166), "Glass")
 			r:block(-2.08, 2.17, -0.155, 2.08, 3.0, -0.13, Color3.fromRGB(96, 150, 90), "Glass")
 			r:cyl(1.1, 3.9, -0.13, 0.02, 0.5, "z", Color3.fromRGB(250, 220, 140), "Glass")
 			r:block(-1.3, 1.72, 0.25, 1.3, 1.95, 0.55, C.Black, "Fabric")
@@ -154,8 +154,8 @@ local items: { Item } = {
 		price = 120,
 		place = "surface",
 		size = Vector3.new(1.8, 0.75, 1.6),
-		c1 = "8A5A2E",
-		c2 = "C7383F",
+		c1 = "8E6440",
+		c2 = "B8505A",
 		tags = { "music" },
 		build = function(r: R)
 			for _, sx in { -1, 1 } do
@@ -191,7 +191,7 @@ local items: { Item } = {
 		place = "floor",
 		size = Vector3.new(5, 4.5, 4),
 		c1 = "2B282E",
-		c2 = "8C2F39",
+		c2 = "84424A",
 		tags = { "music" },
 		build = function(r: R)
 			local hi = shade(r.c1, 1.35)
@@ -248,8 +248,8 @@ local items: { Item } = {
 		price = 450,
 		place = "floor",
 		size = Vector3.new(2.4, 6.2, 2.4),
-		c1 = "5C3D8F",
-		c2 = "F2C14E",
+		c1 = "6A5490",
+		c2 = "E8C46C",
 		tags = { "games" },
 		build = function(r: R)
 			-- side panels: deep at the bottom, set back at the screen, out again at the sign
@@ -288,7 +288,7 @@ local items: { Item } = {
 			local scr = CFrame.new(0, 4.25, -0.05) * CFrame.Angles(-0.2, 0, 0)
 			r:boxAt(scr, 2.1, 1.85, 0.2, C.Black, "SmoothPlastic")
 			local screen =
-				r:boxAt(scr * CFrame.new(0, 0, 0.1), 1.8, 1.5, 0.04, Color3.fromRGB(30, 34, 80), "SmoothPlastic")
+				r:boxAt(scr * CFrame.new(0, 0, 0.1), 1.8, 1.5, 0.04, Color3.fromRGB(46, 52, 88), "SmoothPlastic")
 			r:glow(screen, 8, 0.6, Color3.fromRGB(140, 160, 255))
 			r:boxAt(scr * CFrame.new(-0.4, -0.3, 0.13), 0.2, 0.2, 0.03, C.Yellow, "Neon")
 			r:boxAt(scr * CFrame.new(0.3, 0.2, 0.13), 0.2, 0.2, 0.03, C.Pink, "Neon")
@@ -309,8 +309,8 @@ local items: { Item } = {
 		price = 250,
 		place = "floor",
 		size = Vector3.new(5.4, 2.9, 2.8),
-		c1 = "8A5A2E",
-		c2 = "D9805F",
+		c1 = "8E6440",
+		c2 = "D08A6C",
 		tags = { "games" },
 		build = function(r: R)
 			local dk = shade(r.c1, 0.85)
@@ -374,7 +374,7 @@ local items: { Item } = {
 		size = Vector3.new(4.6, 4.9, 2.4),
 		surface = 3,
 		c1 = "F7F3EA",
-		c2 = "4FA9D9",
+		c2 = "6AA2C8",
 		tags = { "desk", "games" },
 		build = function(r: R)
 			local frame = Color3.fromRGB(60, 62, 70)
@@ -392,7 +392,7 @@ local items: { Item } = {
 			r:block(-0.4, 3.0, -0.85, 0.4, 3.04, -0.4, frame, "Metal")
 			r:block(-0.08, 3.04, -0.72, 0.08, 3.65, -0.6, frame, "Metal")
 			r:block(-1.3, 3.3, -0.62, 1.3, 4.85, -0.5, C.Black, "SmoothPlastic")
-			local display = r:block(-1.24, 3.36, -0.5, 1.24, 4.79, -0.48, Color3.fromRGB(40, 60, 110), "SmoothPlastic")
+			local display = r:block(-1.24, 3.36, -0.5, 1.24, 4.79, -0.48, Color3.fromRGB(60, 78, 120), "SmoothPlastic")
 			r:glow(display, 6, 0.5, Color3.fromRGB(170, 210, 255))
 			r:block(-1.0, 3.6, -0.48, 0.0, 4.4, -0.47, r.c2, "SmoothPlastic")
 			r:block(0.2, 3.6, -0.48, 1.0, 3.9, -0.47, C.Yellow, "SmoothPlastic")
@@ -423,7 +423,7 @@ local items: { Item } = {
 		price = 500,
 		place = "floor",
 		size = Vector3.new(4.4, 4.3, 3.6),
-		c1 = "C7383F",
+		c1 = "B8505A",
 		c2 = "C9CCD3",
 		tags = { "music" },
 		build = function(r: R)
@@ -485,7 +485,7 @@ local items: { Item } = {
 		place = "floor",
 		size = Vector3.new(1.4, 3.2, 3.6),
 		c1 = "E9D3B0",
-		c2 = "C7383F",
+		c2 = "B8505A",
 		tags = { "toy" },
 		build = function(r: R)
 			local wood = shade(r.c1, 0.75)

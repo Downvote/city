@@ -98,7 +98,7 @@ local items: { Item } = {
 		place = "floor",
 		size = Vector3.new(3.4, 2.9, 6.2),
 		c1 = "F7F3EA",
-		c2 = "DEB252",
+		c2 = "D4AE5E",
 		tags = { "bath" },
 		build = function(r: R)
 			-- four claw feet
@@ -137,7 +137,7 @@ local items: { Item } = {
 			-- a rubber duck
 			r:ball(0.5, 2.27, 0.8, 0.45, C.Yellow, "Plastic")
 			r:ball(0.5, 2.54, 0.95, 0.3, C.Yellow, "Plastic")
-			r:block(0.44, 2.5, 1.08, 0.56, 2.56, 1.2, Color3.fromRGB(240, 140, 50), "Plastic")
+			r:block(0.44, 2.5, 1.08, 0.56, 2.56, 1.2, Color3.fromRGB(224, 154, 94), "Plastic")
 			-- a tall tap at the back end with a hand shower
 			for _, x in { -0.3, 0.3 } do
 				r:cyl(x, 2.45, -2.88, 0.4, 0.14, "y", r.c2, "Metal")

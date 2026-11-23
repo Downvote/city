@@ -14,13 +14,13 @@ local function shade(c: Color3, k: number): Color3
 end
 
 local BOOK_COLOURS = {
-	Color3.fromRGB(176, 68, 62),
+	Color3.fromRGB(168, 86, 78),
 	Color3.fromRGB(70, 110, 150),
 	Color3.fromRGB(143, 179, 154),
-	Color3.fromRGB(232, 190, 92),
+	Color3.fromRGB(226, 192, 114),
 	Color3.fromRGB(142, 91, 122),
 	C.Cream,
-	Color3.fromRGB(217, 128, 95),
+	Color3.fromRGB(208, 138, 108),
 	Color3.fromRGB(62, 110, 88),
 	Color3.fromRGB(60, 62, 72),
 }
@@ -115,7 +115,7 @@ local items: { Item } = {
 		price = 120,
 		place = "floor",
 		size = Vector3.new(3.6, 6.4, 1.6),
-		c1 = "A8743F",
+		c1 = "AD7E55",
 		c2 = "D9C7A7",
 		tags = { "books", "storage" },
 		build = function(r: R)
@@ -158,7 +158,7 @@ local items: { Item } = {
 			books(r, -1.55, 0.1, 4.92, 1.1, 0.65, 5)
 			r:block(0.4, 4.92, -0.45, 1.45, 5.1, 0.4, Color3.fromRGB(70, 110, 150), "SmoothPlastic")
 			r:block(0.45, 5.1, -0.4, 1.4, 5.27, 0.35, C.Cream, "SmoothPlastic")
-			r:cyl(0.92, 5.42, 0, 0.3, 0.36, "y", Color3.fromRGB(217, 128, 95), "SmoothPlastic")
+			r:cyl(0.92, 5.42, 0, 0.3, 0.36, "y", Color3.fromRGB(208, 138, 108), "SmoothPlastic")
 		end,
 	},
 	{
@@ -203,7 +203,7 @@ local items: { Item } = {
 		price = 220,
 		place = "floor",
 		size = Vector3.new(4, 7.2, 2.2),
-		c1 = "A8743F",
+		c1 = "AD7E55",
 		c2 = "C99A62",
 		tags = { "storage" },
 		build = function(r: R)
@@ -287,7 +287,7 @@ local items: { Item } = {
 				r:cyl(sx * 1.57, 0.92, 0, 0.62, 0.1, "z", C.Cream, "Fabric")
 			end
 			-- letter blocks painted on the front
-			local cols = { C.Red, C.Yellow, Color3.fromRGB(86, 160, 72) }
+			local cols = { C.Red, C.Yellow, Color3.fromRGB(106, 154, 92) }
 			for i, col in cols do
 				local x = -0.9 + (i - 1) * 0.9
 				r:block(x - 0.32, 0.4, 0.85, x + 0.32, 1.04, 0.9, col, "SmoothPlastic")
@@ -307,7 +307,7 @@ local items: { Item } = {
 		size = Vector3.new(3.4, 4.8, 1.5),
 		surface = 4.8,
 		c1 = "F7F3EA",
-		c2 = "D9805F",
+		c2 = "D08A6C",
 		tags = { "storage" },
 		build = function(r: R)
 			local t = 0.15
@@ -340,8 +340,8 @@ local items: { Item } = {
 		price = 50,
 		place = "floor",
 		size = Vector3.new(1.8, 6, 1.8),
-		c1 = "6B4423",
-		c2 = "C7383F",
+		c1 = "6E4C34",
+		c2 = "B8505A",
 		tags = { "storage" },
 		build = function(r: R)
 			-- three splayed feet round a turned pole
@@ -404,7 +404,7 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a packing crate: boards (c1) held by darker battens round every edge
 			r:block(-1, 0.06, -1, 1, 1.94, 1, r.c1, "WoodPlanks")
-			local batten = Color3.fromRGB(122, 84, 50)
+			local batten = Color3.fromRGB(122, 90, 62)
 			r:piece(function(q: R)
 				for _, y in { 0.1, 1.9 } do
 					q:block(-1.1, y - 0.1, -1.1, 1.1, y + 0.1, -0.9, batten, "Wood")

@@ -31,25 +31,27 @@ export type Preset = {
 	objects: { Obj },
 }
 
--- finishes
-local PLASTER = { c = "F2E8D5", m = "Plaster" }
+-- finishes, from the town's palette: light walls, roofs a few steps darker and only gently
+-- coloured, the same trim white on every house
+local PLASTER = { c = "F6F0E2", m = "Plaster" } -- warm white
 local WHITE = { c = "F7F3EA", m = "SmoothPlastic" }
-local CREAM = { c = "FFF4DE", m = "SmoothPlastic" }
-local BRICK = { c = "E9785C", m = "Brick" }
-local SIDING_BLUE = { c = "7FC4F2", m = "WoodPlanks" }
-local SIDING_MINT = { c = "8EE0BE", m = "WoodPlanks" }
-local SIDING_YELLOW = { c = "FFD970", m = "WoodPlanks" }
-local OAK = { c = "C99A62", m = "WoodPlanks" }
-local WALNUT = { c = "8A5A2E", m = "WoodPlanks" }
+local CREAM = { c = "F2E6CC", m = "SmoothPlastic" }
+local BRICK = { c = "D8A48E", m = "Brick" } -- soft brick
+local SIDING_BLUE = { c = "C2D8EC", m = "WoodPlanks" } -- sky
+local SIDING_MINT = { c = "CFE2D0", m = "WoodPlanks" }
+local SIDING_YELLOW = { c = "F3DFA6", m = "WoodPlanks" } -- butter
+local OAK = { c = "C49A6C", m = "WoodPlanks" }
+local WALNUT = { c = "9A6B48", m = "WoodPlanks" }
 local TILES = { c = "F7F3EA", m = "CeramicTiles" }
 local CHECKER = { c = "D6D6D6", m = "CeramicTiles" }
-local CARPET_BLUE = { c = "6FA8DC", m = "Carpet" }
-local PAVING = { c = "F2F0EA", m = "Pavement" }
-local CLAY = { c = "F0584A", m = "ClayRoofTiles" }
-local TERRACOTTA = { c = "D4622B", m = "ClayRoofTiles" }
-local SLATE = { c = "5B8FD6", m = "Slate" }
-local SHINGLE_BROWN = { c = "E07A4F", m = "RoofShingles" }
-local SHINGLE_GREEN = { c = "4FC16E", m = "RoofShingles" }
+local CARPET_BLUE = { c = "8AA8C8", m = "Carpet" }
+local PAVING = { c = "EAE6DC", m = "Pavement" }
+local CLAY = { c = "C27E63", m = "ClayRoofTiles" } -- the starting house's soft clay
+local SAGE_TILE = { c = "8CAC8A", m = "ClayRoofTiles" }
+local TERRACOTTA = { c = "C98466", m = "ClayRoofTiles" }
+local SLATE = { c = "6E8CA8", m = "Slate" } -- slate blue
+local SHINGLE_BROWN = { c = "B87C64", m = "RoofShingles" } -- a clay brown
+local SHINGLE_GREEN = { c = "6F8F5F", m = "RoofShingles" } -- moss
 
 -- A little builder for laying a preset out.
 local Blueprint = {}
@@ -211,7 +213,7 @@ add("cottage", "Garden cottage", "One room to live in, a bedroom and a kitchen c
 	b:floor(2, 6, 22, 22, OAK)
 	b:box("", 2, 6, 22, 22, PLASTER, WHITE)
 	b:wall("inner", 12, 22, 12, 14, WHITE, WHITE)
-	b:roof(2, 6, 22, 22, "gable", 6, 0, CLAY, PLASTER)
+	b:roof(2, 6, 22, 22, "gable", 6, 0, SAGE_TILE, PLASTER)
 	b:open("door_front", "front", 10)
 	b:open("win_shutters", "front", 4)
 	b:open("win_shutters", "front", 16)

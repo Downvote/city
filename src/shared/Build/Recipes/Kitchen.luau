@@ -330,7 +330,7 @@ local items: { Item } = {
 		price = 60,
 		place = "floor",
 		size = Vector3.new(1.6, 3.6, 1.6),
-		c1 = "D9805F",
+		c1 = "D08A6C",
 		c2 = "45454A",
 		tags = { "kitchen", "seat" },
 		build = function(r: R)
@@ -392,7 +392,7 @@ local items: { Item } = {
 			r:block(-1.42, 4.0, 0.7, 1.42, 6.6, 0.96, shade(r.c1, 0.8), "Wood")
 			for _, y in { 4.15, 5.4 } do
 				r:block(-1.42, y - 0.08, 0.3, 1.42, y, 0.96, r.c2, "Wood")
-				for i, col in { C.Yellow, Color3.fromRGB(196, 110, 80), C.Cream, Color3.fromRGB(143, 179, 154) } do
+				for i, col in { C.Yellow, Color3.fromRGB(192, 122, 96), C.Cream, Color3.fromRGB(143, 179, 154) } do
 					local x = -1.08 + (i - 1) * 0.72
 					r:cyl(x, y + 0.4, 0.62, 0.8, 0.46, "y", col, "SmoothPlastic")
 				end
@@ -448,7 +448,7 @@ local items: { Item } = {
 		price = 40,
 		place = "surface",
 		size = Vector3.new(1.2, 1.3, 0.9),
-		c1 = "D9805F",
+		c1 = "D08A6C",
 		c2 = "45454A",
 		tags = { "kitchen" },
 		build = function(r: R)

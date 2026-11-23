@@ -156,13 +156,14 @@ function Hills.slope(x: number, z: number): number
 	return math.sqrt(gx * gx + gz * gz)
 end
 
+-- the island's grass (TownMap's) and two tones either side of it, soft and leaning yellow
 local GRASS = {
-	Color3.fromRGB(112, 188, 84),
-	Color3.fromRGB(122, 196, 88),
-	Color3.fromRGB(104, 180, 80),
+	Color3.fromRGB(138, 192, 112),
+	Color3.fromRGB(146, 198, 118),
+	Color3.fromRGB(130, 184, 106),
 }
-local HIGH = Color3.fromRGB(150, 200, 96)
-local STEEP = Color3.fromRGB(84, 150, 70)
+local HIGH = Color3.fromRGB(164, 200, 120)
+local STEEP = Color3.fromRGB(110, 160, 96)
 
 -- The hills as flat triangles. `region` { x1, z1, x2, z2 } keeps only the cells inside it.
 function Hills.prims(region: { number }?): { Prim }

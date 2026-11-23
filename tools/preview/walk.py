@@ -10,9 +10,10 @@ across the ground and the walls, a sky, and a little haze with distance.
 tools/preview/render.py draws the same scenes from above with no lens, which is right for judging
 a model or a layout. This one is for judging a place: does a street read as a street, how long
 are the shadows, what do you see from the pavement. It is still only a sketch of what Roblox
-draws (no bloom, no reflections, one hard shadow test a pixel), but the sun's height follows the
-game's (Lighting.GeographicLatitude 54) and its colour the hour, as Services/World grades it.
-tools/preview/walk.sh dumps a scene and runs this on it.
+draws (no bloom, no reflections, one hard shadow test a pixel), but the sun stands where Roblox
+puts it for the hour and the latitude, and the light, the shade, the tone map and the colour
+grade come from the game's own numbers in Tuning.Look (tools/preview/look.py says how).
+--no-grade leaves the colour correction off. tools/preview/walk.sh dumps a scene and runs this on it.
 """
 import argparse
 import json
@@ -25,29 +26,20 @@ from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import render  # noqa: E402  (the shapes, the textures)
+import look as game_look  # noqa: E402  (the game's light and grade)
 
-LATITUDE = 54.0
 NEAR = 0.4
 
 
-def sun_at(hour):
-    """Which way the sun is (a unit vector toward it), how strong and what colour, and the
-    colour of the light that isn't the sun's, at an hour of the game's day."""
-    h = min(max(hour, 6.2), 17.8)
-    a = math.pi * (h - 6) / 12
-    lat = math.radians(LATITUDE)
-    s = np.array([math.cos(a), math.sin(a) * math.cos(lat), -math.sin(a) * math.sin(lat)])
-    s /= np.linalg.norm(s)
+def sky_at(hour):
+    """The colour of the sky overhead and of the haze at the horizon at an hour."""
     if 10 <= hour <= 14.5:
-        sun, ambient = np.array([1.0, 0.97, 0.9]) * 0.62, np.array([0.52, 0.51, 0.62])
-        sky, haze = np.array([0.42, 0.62, 0.9]), np.array([0.82, 0.87, 0.95])
-    elif 7.5 <= hour <= 16.5:
-        sun, ambient = np.array([1.0, 0.88, 0.7]) * 0.7, np.array([0.5, 0.47, 0.6])
-        sky, haze = np.array([0.46, 0.62, 0.86]), np.array([0.95, 0.86, 0.74])
-    else:
-        sun, ambient = np.array([1.0, 0.72, 0.5]) * 0.74, np.array([0.46, 0.42, 0.58])
-        sky, haze = np.array([0.5, 0.56, 0.8]), np.array([0.98, 0.76, 0.6])
-    return s, sun, ambient, sky, haze
+        return np.array([0.42, 0.62, 0.9]), np.array([0.82, 0.87, 0.95])
+    if 7.5 <= hour <= 16.5:
+        return np.array([0.46, 0.62, 0.86]), np.array([0.95, 0.86, 0.74])
+    if 5 <= hour <= 19.5:
+        return np.array([0.5, 0.56, 0.8]), np.array([0.98, 0.76, 0.6])
+    return np.array([0.1, 0.13, 0.28]), np.array([0.22, 0.25, 0.42])
 
 
 def vec(text):
@@ -107,7 +99,8 @@ def main():
     ap.add_argument("--look", required=True, help="what it looks at: x,y,z")
     ap.add_argument("--fov", type=float, default=60, help="the lens, degrees top to bottom")
     ap.add_argument("--size", default="1280x720")
-    ap.add_argument("--hour", type=float, default=16, help="the game's hour, 6 to 18")
+    ap.add_argument("--hour", type=float, default=16, help="the game's hour, 0 to 24")
+    ap.add_argument("--no-grade", action="store_true", help="leave off the game's colour correction")
     ap.add_argument("--far", type=float, default=700, help="nothing further off than this is drawn")
     ap.add_argument("--textures", action="store_true")
     ap.add_argument("--painted", action="store_true")
@@ -123,7 +116,9 @@ def main():
     right = np.cross(forward, [0, 1, 0]); right /= np.linalg.norm(right)
     up = np.cross(right, forward)
     focal = (H / 2) / math.tan(math.radians(args.fov) / 2)
-    sun_dir, sun_col, ambient, sky, haze = sun_at(args.hour)
+    light = game_look.Light(game_look.load(), args.hour)
+    sun_dir = light.dir
+    sky, haze = sky_at(args.hour)
 
     prims = json.load(open(args.inp))
     textures = render.Textures(painted=args.painted, library=args.textures) if (args.textures or args.painted) else None
@@ -256,14 +251,12 @@ def main():
                         tu, tv = (lp[:, 0] if nl[2] > 0 else -lp[:, 0]), -lp[:, 1]
                     tex = textures.sample(key, tu, tv, focal / float(z[closer].mean()))
                     if tex is not None:
-                        if textures.by_mat[key][2]:
-                            col = col * (1 - render.LIFT) + render.LIFT
-                        col = col * tex
+                        _, _, own, bright = textures.by_mat[key]
+                        col = render.shade_paint(base, own, bright)[None, :] * tex
             if glow:
                 shaded = col * 1.15
             else:
-                skylight = 0.86 + 0.14 * n[1]
-                shaded = col * (ambient * skylight + sun_col[None, :] * (facing * lit)[:, None])
+                shaded = light.shade(col, light.irradiance(n, lit))
             dist = np.linalg.norm(world - eye, axis=1)
             fog = (1 - np.exp(-dist / 1500.0))[:, None]
             shaded = shaded * (1 - fog) + haze * fog
@@ -274,6 +267,8 @@ def main():
                 sub[closer] = shaded
             else:
                 sub[closer] = sub[closer] * (1 - a) + shaded * a
+    if not args.no_grade:
+        img = game_look.grade(img, light)
     rgb8 = (np.clip(img, 0, 1) * 255).astype(np.uint8)
     Image.fromarray(rgb8).save(args.out)
     print("wrote", args.out)

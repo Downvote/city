@@ -153,7 +153,7 @@ local items: { Item } = {
 		c2 = "8FB39A",
 		tags = { "bed" },
 		build = function(r: R)
-			feet(r, 2.7, 3.5, 0.4, Color3.fromRGB(107, 68, 35))
+			feet(r, 2.7, 3.5, 0.4, Color3.fromRGB(110, 76, 52))
 			-- a padded platform with a recessed base
 			r:block(-2.9, 0.4, -3.6, 2.9, 0.55, 3.6, shade(r.c1, 0.7), "Fabric")
 			r:block(-3, 0.55, -3.6, 3, 1.25, 3.8, r.c1, "Fabric")
@@ -185,8 +185,8 @@ local items: { Item } = {
 		price = 380,
 		place = "floor",
 		size = Vector3.new(4.2, 7.2, 7.2),
-		c1 = "A8743F",
-		c2 = "D9805F",
+		c1 = "AD7E55",
+		c2 = "D08A6C",
 		tags = { "bed" },
 		build = function(r: R)
 			local dk = shade(r.c1, 0.85)
@@ -234,7 +234,7 @@ local items: { Item } = {
 		place = "floor",
 		size = Vector3.new(4.2, 1.8, 7),
 		c1 = "C99A62",
-		c2 = "D9805F",
+		c2 = "D08A6C",
 		tags = { "bed" },
 		build = function(r: R)
 			-- a low wooden platform on a recessed base

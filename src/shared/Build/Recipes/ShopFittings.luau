@@ -386,7 +386,7 @@ local items: { Item } = {
 			r:block(-2.2, 0.3, -1.2, 2.2, 1.5, 1.05, r.c2, "Wood")
 			r:block(-2.15, 1.5, -0.7, 2.15, 1.95, 1.15, r.c1, "Leather")
 			r:block(-2.2, 1.5, -1.2, 2.2, 4.2, -0.9, r.c2, "Wood")
-			r:block(-2.2, 4.2, -1.25, 2.2, 4.36, -0.6, r.c2, "Wood")
+			r:block(-2.2, 4.2, -1.2, 2.2, 4.36, -0.6, r.c2, "Wood")
 			for i = 0, 5 do
 				local x = -2.1 + i * 0.7
 				local deep = i % 2 == 0
@@ -423,7 +423,7 @@ local items: { Item } = {
 		cat = "windows",
 		price = 180,
 		place = "opening",
-		size = Vector3.new(6.8, 5.8, 3.2),
+		size = Vector3.new(6.8, 5.8, 4.2),
 		opening = { w = 6, h = 4.4, sill = 3.2 },
 		c1 = "C49A6C",
 		c2 = "FAF6EC",

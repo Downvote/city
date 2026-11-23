@@ -39,24 +39,27 @@ local FRONT = 6
 -- Finishes. A wall, floor or roof in a plan is painted with a colour and one of Palette's
 -- materials, nothing else (Plan.validate turns away anything more), so these are Roblox's own
 -- materials and take whatever texture the town gives them.
-local CREAM: Finish = { c = "F6E7C8", m = "Plaster" } -- the house outside
-local BOARDS: Finish = { c = "A9C9A4", m = "WoodPlanks" } -- the gable ends and the workshop
-local TILE: Finish = { c = "CE5B3A", m = "ClayRoofTiles" }
+-- The colours follow the town's palette (the user: "make the colors of the buildings, such as the
+-- roof of the buildings, more pleasing to look at"): light walls, a roof a few steps darker and
+-- only gently coloured, white trim, and the strong colour kept for the door and the shutters.
+local CREAM: Finish = { c = "F3E7CF", m = "Plaster" } -- the house outside
+local BOARDS: Finish = { c = "B9CFB2", m = "WoodPlanks" } -- the gable ends and the workshop: sage
+local TILE: Finish = { c = "C27E63", m = "ClayRoofTiles" } -- a soft clay
 local FRONT_ROOM: Finish = { c = "F7F3EA", m = "SmoothPlastic" }
 local BEDROOM: Finish = { c = "E3ECEF", m = "SmoothPlastic" }
 local KITCHEN: Finish = { c = "F6ECCF", m = "SmoothPlastic" }
-local SHOP_IN: Finish = { c = "D9B98A", m = "WoodPlanks" }
-local OAK: Finish = { c = "C99A62", m = "WoodPlanks" }
-local WALNUT: Finish = { c = "A8743F", m = "WoodPlanks" }
+local SHOP_IN: Finish = { c = "DDBE94", m = "WoodPlanks" }
+local OAK: Finish = { c = "C49A6C", m = "WoodPlanks" }
+local WALNUT: Finish = { c = "9A6B48", m = "WoodPlanks" }
 local KITCHEN_TILES: Finish = { c = "EADBC0", m = "CeramicTiles" }
-local DECK: Finish = { c = "B98A5A", m = "WoodPlanks" }
-local PAVING: Finish = { c = "D9C7A7", m = "Pavement" }
-local FLAGS: Finish = { c = "A9A6A0", m = "Cobblestone" }
+local DECK: Finish = { c = "B48C64", m = "WoodPlanks" }
+local PAVING: Finish = { c = "E2D6BE", m = "Pavement" }
+local FLAGS: Finish = { c = "C2BDB2", m = "Cobblestone" }
 -- paint for the pieces that take it
-local GREEN = "3F8F6B" -- the door and the shutters
-local GREEN_DARK = "2F6E52"
-local WHITE = "F7F3EA"
-local ROSE = "E8667A"
+local GREEN = "3F8C86" -- the door and the shutters: teal
+local GREEN_DARK = "2E6B67"
+local WHITE = "FAF6EC"
+local ROSE = "D9707F"
 
 function StarterHouse.plan(): Plan.PlanData
 	local plan = Plan.new()
@@ -181,7 +184,7 @@ function StarterHouse.plan(): Plan.PlanData
 		if shutters then
 			hang("shutters", name, t, sill - 0.15, "a", GREEN, GREEN_DARK)
 		end
-		hang("window_hood", name, t, sill + 4.38, "a", "FFFFFF", TILE.c)
+		hang("window_hood", name, t, sill + 4.38, "a", WHITE, TILE.c)
 		hang("window_box", name, t, sill - 1.35, "a", WHITE, ROSE)
 	end
 
@@ -219,7 +222,7 @@ function StarterHouse.plan(): Plan.PlanData
 	opening("door_front", "porch", 6, GREEN, WHITE)
 	opening("win_tall", "porch", 1.8)
 	opening("win_tall", "porch", 10.2)
-	opening("win_bay", "gable", 6, "FFFFFF", TILE.c)
+	opening("win_bay", "gable", 6, WHITE, TILE.c)
 	opening("win_square", "leftfront", 5)
 	opening("win_square", "leftback", 10)
 	opening("win_small", "back", 4.6)

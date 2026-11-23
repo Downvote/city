@@ -84,7 +84,7 @@ local items: { any } = {
 		place = "opening",
 		size = Vector3.new(4.6, 8.2, 1),
 		opening = { w = 4, h = 8, sill = 0 },
-		c1 = "A8743F",
+		c1 = "AD7E55",
 		c2 = "F7F3EA",
 		build = function(r: R)
 			frame(r, 4, 8, r.c2)
@@ -99,7 +99,7 @@ local items: { any } = {
 		place = "opening",
 		size = Vector3.new(4.6, 8.2, 1),
 		opening = { w = 4, h = 8, sill = 0 },
-		c1 = "FFFFFF",
+		c1 = "FAF6EC",
 		c2 = "F7F3EA",
 		build = function(r: R)
 			frame(r, 4, 8, r.c2)
@@ -152,8 +152,8 @@ local items: { any } = {
 		place = "opening",
 		size = Vector3.new(4.6, 8.2, 1),
 		opening = { w = 4, h = 8, sill = 0 },
-		c1 = "2F7BBF",
-		c2 = "FFFFFF",
+		c1 = "46608E",
+		c2 = "FAF6EC",
 		build = function(r: R)
 			frame(r, 4, 8, r.c2)
 			local hinge = -1.85
@@ -181,7 +181,7 @@ local items: { any } = {
 		place = "opening",
 		size = Vector3.new(6.6, 8.2, 1),
 		opening = { w = 6, h = 8, sill = 0 },
-		c1 = "8A5A2E",
+		c1 = "8E6440",
 		c2 = "F7F3EA",
 		build = function(r: R)
 			frame(r, 6, 8, r.c2)
@@ -197,7 +197,7 @@ local items: { any } = {
 		place = "opening",
 		size = Vector3.new(8.4, 8.8, 1.2),
 		opening = { w = 4, h = 8, sill = 0 },
-		c1 = "9C2A2E",
+		c1 = "8E4048",
 		c2 = "45454A",
 		build = function(r: R)
 			frame(r, 4, 8, C.Cream)
@@ -273,8 +273,8 @@ local items: { any } = {
 		place = "opening",
 		size = Vector3.new(2.6, 2.6, 1.2),
 		opening = { w = 2, h = 2, sill = 5 },
-		c1 = "FFFFFF",
-		c2 = "FFFFFF",
+		c1 = "FAF6EC",
+		c2 = "FAF6EC",
 		build = function(r: R)
 			frame(r, 2, 2, r.c1, nil, true)
 			r:glass(-1, 0, -0.05, 1, 2, 0.05)
@@ -290,8 +290,8 @@ local items: { any } = {
 		place = "opening",
 		size = Vector3.new(4.6, 4.6, 1.2),
 		opening = { w = 4, h = 4, sill = 3 },
-		c1 = "FFFFFF",
-		c2 = "FFFFFF",
+		c1 = "FAF6EC",
+		c2 = "FAF6EC",
 		build = function(r: R)
 			frame(r, 4, 4, r.c1, nil, true)
 			sill(r, 4, r.c2)
@@ -308,8 +308,8 @@ local items: { any } = {
 		place = "opening",
 		size = Vector3.new(6.6, 4.6, 1.2),
 		opening = { w = 6, h = 4, sill = 3 },
-		c1 = "FFFFFF",
-		c2 = "FFFFFF",
+		c1 = "FAF6EC",
+		c2 = "FAF6EC",
 		build = function(r: R)
 			frame(r, 6, 4, r.c1, nil, true)
 			sill(r, 6, r.c2)
@@ -327,8 +327,8 @@ local items: { any } = {
 		place = "opening",
 		size = Vector3.new(2.6, 6.6, 1.2),
 		opening = { w = 2, h = 6, sill = 2 },
-		c1 = "FFFFFF",
-		c2 = "FFFFFF",
+		c1 = "FAF6EC",
+		c2 = "FAF6EC",
 		build = function(r: R)
 			frame(r, 2, 6, r.c1, nil, true)
 			r:glass(-1, 0, -0.05, 1, 6, 0.05)
@@ -360,8 +360,8 @@ local items: { any } = {
 		place = "opening",
 		size = Vector3.new(8.2, 4.6, 1.4),
 		opening = { w = 4, h = 4, sill = 3 },
-		c1 = "4E9A44",
-		c2 = "FFFFFF",
+		c1 = "5E8E5A",
+		c2 = "FAF6EC",
 		build = function(r: R)
 			frame(r, 4, 4, r.c2, nil, true)
 			sill(r, 4, r.c2)
@@ -410,7 +410,7 @@ local items: { any } = {
 		place = "opening",
 		size = Vector3.new(3.4, 3.4, 1.2),
 		opening = { w = 3, h = 3, sill = 4 },
-		c1 = "DEB252",
+		c1 = "D4AE5E",
 		c2 = "F7F3EA",
 		build = function(r: R)
 			-- a square hole with its corners filled, so the glass reads as round, and a brass ring
@@ -455,8 +455,8 @@ local items: { any } = {
 		place = "opening",
 		size = Vector3.new(6.8, 7.4, 4.4),
 		opening = { w = 6, h = 6, sill = 2 },
-		c1 = "FFFFFF",
-		c2 = "C7383F",
+		c1 = "FAF6EC",
+		c2 = "B8505A",
 		build = function(r: R)
 			-- the hole's own frame, then a bay with slanted sides standing out of the wall on the
 			-- side chosen: a seat board, three panes and a little roof of its own (c2)
@@ -510,8 +510,8 @@ local items: { any } = {
 		price = 40,
 		place = "wall",
 		size = Vector3.new(8.2, 4.4, 0.4),
-		c1 = "4E9A44",
-		c2 = "33733A",
+		c1 = "5E8E5A",
+		c2 = "3D6650",
 		build = function(r: R)
 			-- a pair of leaves either side of a window four studs wide: c1 the boards, c2 the slats
 			for _, sx in { -1, 1 } do
@@ -537,8 +537,8 @@ local items: { any } = {
 		price = 35,
 		place = "wall",
 		size = Vector3.new(4.6, 2.1, 1.2),
-		c1 = "8A5A2E",
-		c2 = "E8667A",
+		c1 = "8E6440",
+		c2 = "D9707F",
 		tags = { "plant" },
 		build = function(r: R)
 			-- a planted box on two brackets, to hang under a window: c1 the box, c2 the flowers
@@ -577,8 +577,8 @@ local items: { any } = {
 		price = 15,
 		place = "wall",
 		size = Vector3.new(5, 1, 1),
-		c1 = "FFFFFF",
-		c2 = "C7383F",
+		c1 = "FAF6EC",
+		c2 = "B8505A",
 		build = function(r: R)
 			-- a little pent roof on two brackets, to hang over a window or a door: c1 the
 			-- woodwork, c2 the roof
@@ -596,8 +596,8 @@ local items: { any } = {
 		price = 60,
 		place = "floor",
 		size = Vector3.new(4, 4.8, 1.4),
-		c1 = "FFFFFF",
-		c2 = "4E9A44",
+		c1 = "FAF6EC",
+		c2 = "5E8E5A",
 		build = function(r: R)
 			-- A window for a gable end, where a wall's own windows can't go: stand it on the
 			-- floor above, the middle of its footprint on the wall's line and its back to the

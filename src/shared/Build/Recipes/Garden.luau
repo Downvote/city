@@ -91,7 +91,7 @@ end
 local function flower(r: R, x: number, z: number, y0: number, h: number, head: Color3)
 	r:cyl(x, (y0 + h) / 2, z, h - y0, 0.07, "y", C.DarkLeaf, "SmoothPlastic")
 	r:cyl(x, h, z, 0.1, 0.38, "y", head, "SmoothPlastic")
-	r:ball(x, h + 0.06, z, 0.14, if head == C.Yellow then Color3.fromRGB(200, 120, 40) else C.Yellow, "SmoothPlastic")
+	r:ball(x, h + 0.06, z, 0.14, if head == C.Yellow then Color3.fromRGB(200, 132, 62) else C.Yellow, "SmoothPlastic")
 end
 
 -- One catalog entry (Build/Catalog explains the fields).
@@ -117,7 +117,7 @@ local items: { Item } = {
 		price = 120,
 		place = "ground",
 		size = Vector3.new(8, 12, 8),
-		c1 = "5DAA4A",
+		c1 = "6EA460",
 		c2 = "6E4C30",
 		tags = { "plant" },
 		build = function(r: R)
@@ -145,7 +145,7 @@ local items: { Item } = {
 		price = 100,
 		place = "ground",
 		size = Vector3.new(5, 13, 5),
-		c1 = "3E7F4E",
+		c1 = "4A7F58",
 		c2 = "6E4C30",
 		tags = { "plant" },
 		build = function(r: R)
@@ -200,7 +200,7 @@ local items: { Item } = {
 		price = 30,
 		place = "ground",
 		size = Vector3.new(3, 2.4, 3),
-		c1 = "4E9A44",
+		c1 = "5E8E5A",
 		c2 = "F7F3EA",
 		tags = { "plant" },
 		build = function(r: R)
@@ -232,7 +232,7 @@ local items: { Item } = {
 		place = "ground",
 		size = Vector3.new(4, 1.4, 2),
 		c1 = "F59EB5",
-		c2 = "8A5A2E",
+		c2 = "8E6440",
 		tags = { "plant" },
 		build = function(r: R)
 			-- a raised bed of boards with corner posts
@@ -244,7 +244,7 @@ local items: { Item } = {
 				end
 			end
 			r:block(-1.84, 0, -0.84, 1.84, 0.44, 0.84, C.Soil, "Sand")
-			local heads = { r.c1, C.Yellow, C.White, r.c1, Color3.fromRGB(230, 110, 90), C.Yellow, r.c1, C.White }
+			local heads = { r.c1, C.Yellow, C.White, r.c1, Color3.fromRGB(220, 126, 108), C.Yellow, r.c1, C.White }
 			for i, col in heads do
 				local x = -1.45 + ((i - 1) % 4) * 0.95 + (if i > 4 then 0.4 else 0)
 				local z = if i > 4 then 0.38 else -0.35
@@ -301,7 +301,7 @@ local items: { Item } = {
 		price = 300,
 		place = "ground",
 		size = Vector3.new(7, 1.6, 7),
-		c1 = "5AAADC",
+		c1 = "6CA6CC",
 		c2 = "A0A0A6",
 		build = function(r: R)
 			-- a dark bed with the water over it
@@ -335,7 +335,7 @@ local items: { Item } = {
 		place = "ground",
 		size = Vector3.new(6, 5.4, 6),
 		c1 = "B8B4AC",
-		c2 = "5AAADC",
+		c2 = "6CA6CC",
 		build = function(r: R)
 			local dk = shade(r.c1, 0.9)
 			r:cyl(0, 0.1, 0, 0.2, 6, "y", dk, "Cobblestone")
@@ -380,7 +380,7 @@ local items: { Item } = {
 		price = 90,
 		place = "ground",
 		size = Vector3.new(5, 3.4, 2),
-		c1 = "B07A45",
+		c1 = "B08258",
 		c2 = "2F3B35",
 		tags = { "seat" },
 		build = function(r: R)
@@ -427,8 +427,8 @@ local items: { Item } = {
 		place = "ground",
 		size = Vector3.new(5, 2.8, 5.4),
 		surface = 2.8,
-		c1 = "B07A45",
-		c2 = "8A5A2E",
+		c1 = "B08258",
+		c2 = "8E6440",
 		tags = { "seat", "table" },
 		build = function(r: R)
 			for _, z in { -0.9, -0.3, 0.3, 0.9 } do
@@ -461,7 +461,7 @@ local items: { Item } = {
 		place = "ground",
 		size = Vector3.new(1.2, 3.6, 1.8),
 		c1 = "5C7FA3",
-		c2 = "8A5A2E",
+		c2 = "8E6440",
 		build = function(r: R)
 			r:block(-0.22, 0, -0.22, 0.22, 0.12, 0.22, shade(r.c2, 0.8), "Wood")
 			r:block(-0.15, 0, -0.15, 0.15, 2.6, 0.15, r.c2, "Wood")
@@ -486,8 +486,8 @@ local items: { Item } = {
 		price = 350,
 		place = "ground",
 		size = Vector3.new(7, 7, 4.4),
-		c1 = "C7383F",
-		c2 = "F2C14E",
+		c1 = "B8505A",
+		c2 = "E8C46C",
 		build = function(r: R)
 			for _, x in { -3.2, 3.2 } do
 				rod(r, Vector3.new(x, 0, -2.0), Vector3.new(x, 6.6, 0), 0.32, r.c1, "Metal")
@@ -532,7 +532,7 @@ local items: { Item } = {
 		place = "ground",
 		size = Vector3.new(3, 7.4, 8),
 		c1 = "5C7FA3",
-		c2 = "F2C14E",
+		c2 = "E8C46C",
 		build = function(r: R)
 			-- a deck on four posts with rails round it, under a little peaked roof
 			for _, x in { -1.1, 1.1 } do
@@ -664,7 +664,7 @@ local items: { Item } = {
 		place = "ground",
 		size = Vector3.new(4, 6.6, 4),
 		c1 = "A0A0A6",
-		c2 = "B5523B",
+		c2 = "B0624E",
 		build = function(r: R)
 			r:cyl(0, 1.0, 0, 2.0, 3.4, "y", r.c1, "Cobblestone")
 			r:cyl(0, 0.1, 0, 0.2, 3.6, "y", shade(r.c1, 0.85), "Cobblestone")
@@ -697,8 +697,8 @@ local items: { Item } = {
 		price = 25,
 		place = "ground",
 		size = Vector3.new(1, 2, 1),
-		c1 = "C7383F",
-		c2 = "4F7FBF",
+		c1 = "B8505A",
+		c2 = "5A80B0",
 		build = function(r: R)
 			for _, x in { -0.15, 0.15 } do
 				r:block(x - 0.12, 0, -0.1, x + 0.12, 0.15, 0.22, C.Bark, "SmoothPlastic")
@@ -731,7 +731,7 @@ local items: { Item } = {
 		price = 120,
 		place = "ground",
 		size = Vector3.new(6, 6.6, 6),
-		c1 = "E8735A",
+		c1 = "DC806A",
 		c2 = "F7F3EA",
 		build = function(r: R)
 			r:cyl(0, 0.12, 0, 0.24, 1.3, "y", C.DarkMetal, "Metal")
@@ -777,8 +777,8 @@ local items: { Item } = {
 		price = 50,
 		place = "ground",
 		size = Vector3.new(4, 2.2, 1.6),
-		c1 = "B07A45",
-		c2 = "F2C14E",
+		c1 = "B08258",
+		c2 = "E8C46C",
 		tags = { "plant" },
 		build = function(r: R)
 			for _, sx in { -1, 1 } do
@@ -826,7 +826,7 @@ local items: { Item } = {
 		price = 180,
 		place = "ground",
 		size = Vector3.new(2.6, 3.2, 2.2),
-		c1 = "C7383F",
+		c1 = "B8505A",
 		c2 = "45454A",
 		build = function(r: R)
 			-- three legs, two of them on wheels, with a shelf ring between
@@ -860,7 +860,7 @@ local items: { Item } = {
 				r:block(x - 0.03, 2.95, -0.03, x + 0.03, 3.08, 0.03, r.c2, "Metal")
 			end
 			-- a side shelf with tools hanging under it
-			r:block(0.95, 2.0, -0.5, 1.3, 2.06, 0.5, Color3.fromRGB(176, 122, 69), "Wood")
+			r:block(0.95, 2.0, -0.5, 1.3, 2.06, 0.5, Color3.fromRGB(176, 130, 88), "Wood")
 			r:block(0.9, 1.6, -0.04, 1.0, 2.0, 0.04, r.c2, "Metal")
 			for _, z in { -0.3, 0.3 } do
 				r:block(1.23, 1.4, z - 0.02, 1.27, 2.0, z + 0.02, C.Metal, "Metal")
@@ -875,7 +875,7 @@ local items: { Item } = {
 		price = 70,
 		place = "ground",
 		size = Vector3.new(2.2, 2.8, 3.4),
-		c1 = "4FA9D9",
+		c1 = "6AA2C8",
 		c2 = "C99A62",
 		tags = { "seat" },
 		build = function(r: R)
@@ -905,8 +905,8 @@ local items: { Item } = {
 		price = 40,
 		place = "ground",
 		size = Vector3.new(3.4, 2.7, 1.4),
-		c1 = "6B4423",
-		c2 = "6B4423",
+		c1 = "6E4C34",
+		c2 = "6E4C34",
 		build = function(r: R)
 			-- a rack of two runners and four uprights (c1), stacked with split logs
 			for _, sz in { -1, 1 } do
@@ -939,7 +939,7 @@ local items: { Item } = {
 		price = 35,
 		place = "wall",
 		size = Vector3.new(1.8, 3.4, 2),
-		c1 = "A8743F",
+		c1 = "AD7E55",
 		c2 = "F59EB5",
 		tags = { "plant" },
 		build = function(r: R)
@@ -987,8 +987,8 @@ local items: { Item } = {
 		price = 100,
 		place = "ground",
 		size = Vector3.new(1.4, 3.4, 5.2),
-		c1 = "4FA9D9",
-		c2 = "8A5A2E",
+		c1 = "6AA2C8",
+		c2 = "8E6440",
 		build = function(r: R)
 			-- a town bike on its stand, front wheel to +z: c1 the frame, c2 the saddle and basket
 			local bb = Vector3.new(0, 1.05, -0.25) -- where the pedals turn
@@ -1034,8 +1034,8 @@ local items: { Item } = {
 		price = 8,
 		place = "ground",
 		size = Vector3.new(4, 3.1, 0.4),
-		c1 = "FFFFFF",
-		c2 = "FFFFFF",
+		c1 = "FAF6EC",
+		c2 = "FAF6EC",
 		build = function(r: R)
 			-- four studs of fence, to go with the garden gate: a post each end and two rails
 			-- (c2), five pickets (c1) that rise to the middle
@@ -1058,8 +1058,8 @@ local items: { Item } = {
 		price = 30,
 		place = "ground",
 		size = Vector3.new(4.4, 4, 0.6),
-		c1 = "FFFFFF",
-		c2 = "FFFFFF",
+		c1 = "FAF6EC",
+		c2 = "FAF6EC",
 		build = function(r: R)
 			-- two posts with a ball on top (c2) and a picket gate between them (c1) that swings
 			-- open like a door when somebody comes up to it
@@ -1148,8 +1148,8 @@ local items: { Item } = {
 		price = 50,
 		place = "ground",
 		size = Vector3.new(4, 3.4, 4),
-		c1 = "8A5A2E",
-		c2 = "8A5A2E",
+		c1 = "8E6440",
+		c2 = "8E6440",
 		tags = { "plant" },
 		build = function(r: R)
 			-- a square of dug earth inside four boards (c1): a row of cabbages, a row of carrot
@@ -1166,7 +1166,7 @@ local items: { Item } = {
 				end
 			end)
 			local cabbage = Color3.fromRGB(150, 196, 120)
-			local pumpkin = Color3.fromRGB(232, 132, 44)
+			local pumpkin = Color3.fromRGB(222, 142, 78)
 			r:piece(function(q: R)
 				q:box(-1.3, 0.62, 1.15, 0.5, 0.3, 0.5, C.Leaf, "Grass")
 				for i = 0, 3 do
@@ -1209,7 +1209,7 @@ local items: { Item } = {
 		price = 180,
 		place = "ground",
 		size = Vector3.new(10, 13, 9),
-		c1 = "5DAA4A",
+		c1 = "6EA460",
 		c2 = "6E4C30",
 		tags = { "plant", "seat" },
 		build = function(r: R)
@@ -1245,7 +1245,7 @@ local items: { Item } = {
 		place = "ground",
 		size = Vector3.new(2.2, 3.6, 2.4),
 		c1 = "4E7F5A",
-		c2 = "A34A22",
+		c2 = "A65E42",
 		build = function(r: R)
 			-- a rain barrel (c1) on a stand of bricks (c2), with a lid and a tap at the front
 			r:block(-0.9, 0, -0.9, 0.9, 0.5, 0.9, r.c2, "Brick")
@@ -1267,7 +1267,7 @@ local items: { Item } = {
 		place = "ground",
 		size = Vector3.new(1.6, 7.4, 1.6),
 		c1 = "F2E8D5",
-		c2 = "C7383F",
+		c2 = "B8505A",
 		build = function(r: R)
 			-- a nest box (c1) with a pitched roof (c2) up a pole, and somebody at home
 			r:cyl(0, 2.6, 0, 5.2, 0.26, "y", C.Bark, "Wood")
@@ -1295,8 +1295,8 @@ local items: { Item } = {
 		price = 20,
 		place = "surface",
 		size = Vector3.new(1.4, 2.3, 1.4),
-		c1 = "C4683E",
-		c2 = "E8667A",
+		c1 = "C0765A",
+		c2 = "D9707F",
 		tags = { "plant" },
 		build = function(r: R)
 			-- a clay pot (c1) of flowers (c2), for a step, a porch or a windowsill
@@ -1321,7 +1321,7 @@ local items: { Item } = {
 		place = "wall",
 		size = Vector3.new(3, 8, 1),
 		c1 = "F7F3EA",
-		c2 = "E8667A",
+		c2 = "D9707F",
 		tags = { "plant" },
 		build = function(r: R)
 			-- a lattice against a wall (c1) with a rose climbing it (c2 the flowers)

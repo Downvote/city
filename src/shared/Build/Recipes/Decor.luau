@@ -85,7 +85,7 @@ local items: { Item } = {
 		price = 60,
 		place = "floor",
 		size = Vector3.new(6, 0.1, 6),
-		c1 = "D9805F",
+		c1 = "D08A6C",
 		c2 = "F2E8D5",
 		tags = { "rug" },
 		build = function(r: R)
@@ -160,8 +160,8 @@ local items: { Item } = {
 		price = 20,
 		place = "surface",
 		size = Vector3.new(1, 1.5, 1),
-		c1 = "C46E50",
-		c2 = "56A048",
+		c1 = "C07A60",
+		c2 = "6A9A5C",
 		tags = { "plant" },
 		build = function(r: R)
 			-- a pot on a saucer with a rosette of fat leaves
@@ -195,7 +195,7 @@ local items: { Item } = {
 		place = "floor",
 		size = Vector3.new(3.2, 5.4, 3.2),
 		c1 = "F2E8D5",
-		c2 = "4E9A44",
+		c2 = "5E8E5A",
 		tags = { "plant" },
 		build = function(r: R)
 			-- a tall pot with a band, and a plant of big flat leaves on long stems
@@ -246,7 +246,7 @@ local items: { Item } = {
 					h[2] + 0.1,
 					h[3],
 					0.12,
-					if i % 2 == 0 then Color3.fromRGB(230, 140, 40) else C.Yellow,
+					if i % 2 == 0 then Color3.fromRGB(224, 154, 94) else C.Yellow,
 					"SmoothPlastic"
 				)
 			end
@@ -261,7 +261,7 @@ local items: { Item } = {
 		price = 15,
 		place = "surface",
 		size = Vector3.new(1.4, 0.8, 1.1),
-		c1 = "C7383F",
+		c1 = "B8505A",
 		c2 = "3E6E58",
 		tags = { "books" },
 		build = function(r: R)
@@ -288,7 +288,7 @@ local items: { Item } = {
 		price = 45,
 		place = "surface",
 		size = Vector3.new(1.3, 1.8, 1.2),
-		c1 = "4FA9D9",
+		c1 = "6AA2C8",
 		c2 = "86C060",
 		build = function(r: R)
 			r:cyl(0, 0.05, 0, 0.1, 0.8, "y", C.Bark, "Wood")
@@ -334,7 +334,7 @@ local items: { Item } = {
 		place = "surface",
 		size = Vector3.new(1.2, 1.1, 1.2),
 		c1 = "F7F3EA",
-		c2 = "DEB252",
+		c2 = "D4AE5E",
 		tags = { "light" },
 		build = function(r: R)
 			r:cyl(0, 0.03, 0, 0.06, 1.15, "y", r.c2, "Metal")
@@ -361,7 +361,7 @@ local items: { Item } = {
 		price = 30,
 		place = "surface",
 		size = Vector3.new(1.1, 1.45, 1),
-		c1 = "B07A45",
+		c1 = "B08258",
 		c2 = "E9D3B0",
 		tags = { "toy" },
 		build = function(r: R)
@@ -399,7 +399,7 @@ local items: { Item } = {
 		price = 400,
 		place = "floor",
 		size = Vector3.new(6, 6.4, 2.4),
-		c1 = "B5523B",
+		c1 = "B0624E",
 		c2 = "F2E8D5",
 		build = function(r: R)
 			-- a stone hearth, a brick surround and a dark firebox
@@ -455,7 +455,7 @@ local items: { Item } = {
 		price = 300,
 		place = "floor",
 		size = Vector3.new(4, 4.8, 1.8),
-		c1 = "6B4423",
+		c1 = "6E4C34",
 		c2 = "2B282E",
 		build = function(r: R)
 			-- a cabinet stand with two doors
@@ -485,7 +485,7 @@ local items: { Item } = {
 			-- fish and a few bubbles
 			local fish = {
 				{ x = -0.3, y = 3.5, z = 0.1, col = C.Yellow },
-				{ x = 0.2, y = 3.0, z = 0.2, col = Color3.fromRGB(245, 140, 60) },
+				{ x = 0.2, y = 3.0, z = 0.2, col = Color3.fromRGB(224, 154, 94) },
 				{ x = -0.6, y = 3.95, z = -0.3, col = C.Blue },
 			}
 			for _, f in fish do
@@ -509,8 +509,8 @@ local items: { Item } = {
 		price = 80,
 		place = "floor",
 		size = Vector3.new(2.2, 6.3, 1.2),
-		c1 = "DEB252",
-		c2 = "6B4423",
+		c1 = "D4AE5E",
+		c2 = "6E4C34",
 		tags = { "mirror" },
 		build = function(r: R)
 			-- an arched mirror leaning back against the wall behind it
@@ -553,8 +553,8 @@ local items: { Item } = {
 		price = 250,
 		place = "floor",
 		size = Vector3.new(2, 7.9, 1.4),
-		c1 = "6B4423",
-		c2 = "DEB252",
+		c1 = "6E4C34",
+		c2 = "D4AE5E",
 		tags = { "clock" },
 		build = function(r: R)
 			local dk = shade(r.c1, 0.82)
@@ -614,7 +614,7 @@ local items: { Item } = {
 		price = 90,
 		place = "floor",
 		size = Vector3.new(4.4, 5.2, 1),
-		c1 = "6B4423",
+		c1 = "6E4C34",
 		c2 = "F2E8D5",
 		build = function(r: R)
 			-- three framed panels standing in a zigzag, each with a cloth face and two rails
@@ -646,7 +646,7 @@ local items: { Item } = {
 		place = "floor",
 		size = Vector3.new(3, 0.12, 1.8),
 		c1 = "C8A46A",
-		c2 = "8A5A2E",
+		c2 = "8E6440",
 		build = function(r: R)
 			-- a bristly mat with a border and two stripes: c1 the mat, c2 the border
 			flat(r, r:block(-1.5, 0, -0.9, 1.5, 0.06, 0.9, r.c2, "Fabric"))

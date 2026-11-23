@@ -228,7 +228,7 @@ describe("Textures", function()
 		for _, t in Textures.ready() do
 			if t.own then
 				own = t.material
-			else
+			elseif not t.light then -- a dark picture brightens the paint (the next test)
 				plain = plain or t.material
 			end
 		end

@@ -221,14 +221,14 @@ local items: { Item } = {
 			local amber = Color3.fromRGB(176, 106, 52)
 			local blue = Color3.fromRGB(86, 132, 178)
 			local green = Color3.fromRGB(96, 160, 124)
-			local rows = {
-				{ 2.76, { amber, C.White, blue, amber, green, C.White } },
-				{ 4.02, { C.White, green, amber, blue, C.White } },
-				{ 5.24, { blue, amber, C.White, green } },
+			local rows: { { y: number, cols: { Color3 } } } = {
+				{ y = 2.76, cols = { amber, C.White, blue, amber, green, C.White } },
+				{ y = 4.02, cols = { C.White, green, amber, blue, C.White } },
+				{ y = 5.24, cols = { blue, amber, C.White, green } },
 			}
 			for n, row in rows do
-				local y = row[1] :: number
-				local cols = row[2] :: { Color3 }
+				local y = row.y
+				local cols = row.cols
 				r:piece(function(q: R)
 					for i, col in cols do
 						local x = -1.66 + (i - 0.5) * 3.32 / #cols

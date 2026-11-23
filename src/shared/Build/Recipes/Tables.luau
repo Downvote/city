@@ -121,7 +121,7 @@ local items: { Item } = {
 		size = Vector3.new(4, 1.6, 2.4),
 		surface = 1.6,
 		c1 = "C99A62",
-		c2 = "6B4423",
+		c2 = "6E4C34",
 		tags = { "table" },
 		build = function(r: R)
 			top(r, 4, 2.4, 1.42, 1.6, r.c1, "Wood")
@@ -156,7 +156,7 @@ local items: { Item } = {
 		size = Vector3.new(3.6, 3.1, 3.6),
 		surface = 3.1,
 		c1 = "C99A62",
-		c2 = "A8743F",
+		c2 = "AD7E55",
 		tags = { "table" },
 		build = function(r: R)
 			diningTable(r, 3.6, 3.6, "Wood")
@@ -170,8 +170,8 @@ local items: { Item } = {
 		place = "floor",
 		size = Vector3.new(7.2, 3.15, 3.6),
 		surface = 3.1,
-		c1 = "8A5A2E",
-		c2 = "6B4423",
+		c1 = "8E6440",
+		c2 = "6E4C34",
 		tags = { "table" },
 		build = function(r: R)
 			diningTable(r, 7.2, 3.6, "WoodPlanks")
@@ -195,7 +195,7 @@ local items: { Item } = {
 		size = Vector3.new(3.6, 3.1, 3.6),
 		surface = 3.1,
 		c1 = "F7F3EA",
-		c2 = "A8743F",
+		c2 = "AD7E55",
 		tags = { "table" },
 		build = function(r: R)
 			r:cyl(0, 3.0, 0, 0.2, 3.6, "y", r.c1, "Wood")
@@ -318,7 +318,7 @@ local items: { Item } = {
 		size = Vector3.new(5, 5.2, 2.4),
 		surface = 3.2,
 		c1 = "C99A62",
-		c2 = "6B4423",
+		c2 = "6E4C34",
 		tags = { "table" },
 		build = function(r: R)
 			-- a butcher block top made of strips

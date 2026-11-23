@@ -212,10 +212,10 @@ Tuning.Routine = {
 	BlockedSeconds = 120, -- a spot they found no way to is left out this long, then tried again
 	NoWaySeconds = 60, -- no way to the workplace at all, three times running: they potter this long first
 	-- breaks from work
-	BreakShare = 0.15, -- the part of a work day a middling villager spends on breaks
+	BreakShare = 0.17, -- the part of a work day a middling villager spends on breaks
 	LazyShare = 0.22, -- more of it for each point of lazy over 0.5
 	FocusShare = 0.22, -- less of it for each point of focus over 0.5
-	ShareMin = 0.05, -- the most focused still stop now and then
+	ShareMin = 0.07, -- the most focused still stop most days, once
 	ShareMax = 0.24,
 	BreakMin = 14, -- seconds a break lasts, the walk there and back included
 	BreakMax = 24,
@@ -226,6 +226,9 @@ Tuning.Routine = {
 	GapSpread = 0.3, -- the time between two breaks varies this much either way
 	BreakReach = 60, -- studs: how far from the workplace a break takes them
 	BreakStay = 4, -- seconds they stay at least, once they are where they were going
+	-- studs: a customer walks round to the front of a counter when that is no further than this
+	-- beyond the walk to the worker; else (the front is outside, past a wall) up beside the worker
+	RoundCounter = 16,
 	-- What a break is. A kind's weight is `base` plus `per` for each point of `trait`
 	-- (Personalities): the lazy sit down, the social go and find somebody.
 	Breaks = {
@@ -242,7 +245,9 @@ Tuning.Routine = {
 		{ kind = "sit", base = 1, trait = "lazy", per = 2.5 },
 		{ kind = "chat", base = 0.4, trait = "social", per = 2.4 },
 		{ kind = "look", base = 2.6, trait = "focus", per = -1 }, -- at a plant, a picture, somebody's workplace
-		{ kind = "visit", base = 0.9, trait = "social", per = 0 }, -- in work hours only: about twice a day each
+		-- in work hours only: about twice a work day each, and never past five (Tuning.Jobs.VisitCoins
+		-- is held to that by the City spec)
+		{ kind = "visit", base = 0.7, trait = "social", per = 0 },
 		{ kind = "gesture", base = 0.6, trait = "social", per = 0 },
 		{ kind = "idle", base = 0.3, trait = "lazy", per = 0 }, -- just standing: seldom, and never twice running
 	},
@@ -264,27 +269,42 @@ Tuning.Look = {
 	Bloom = { Intensity = 0.4, Size = 18, Threshold = 1.7 },
 	-- The light (World.stylize puts it on Lighting; colours are 0 to 255). The preview tools read
 	-- these same numbers (tools/preview/look.py), so a render shows the game's light and grade.
+	-- The user: "it seems like shadows dont render on models". They did, but the shade was lit
+	-- nearly as brightly as the sun (ambients of 152 and 126 with light off the sky and extra
+	-- exposure on top), so a shadow had almost nothing to darken. Now shade is about half of
+	-- sunlight at midday (the World spec holds it by look.py's model), still violet, and the sun
+	-- is a little lower so pale walls in it don't wash out to white.
 	Light = {
-		Brightness = 3.1, -- the sun
-		Exposure = 0.12, -- ExposureCompensation: 1 is twice as bright
-		Ambient = { 126, 118, 158 }, -- what lights a place the sky can't see (indoors)
-		OutdoorAmbient = { 152, 146, 186 }, -- what lights the shade outdoors
-		SunTint = { 255, 236, 200 }, -- ColorShift_Top: the sun's colour on what faces it
-		Latitude = 54, -- GeographicLatitude: how high the sun rides
-		SkyDiffuse = 0.38, -- EnvironmentDiffuseScale: light off the sky
-		SkySpecular = 0.18, -- EnvironmentSpecularScale: shine off the sky
-		ShadowSoftness = 0.14,
+		Brightness = 1.7, -- the sun (was 3.1)
+		Exposure = 0, -- ExposureCompensation: 1 is twice as bright (was 0.12)
+		Ambient = { 84, 78, 110 }, -- what lights a place the sky can't see (indoors; was 126, 118, 158)
+		OutdoorAmbient = { 96, 90, 124 }, -- what lights the shade outdoors: violet (was 152, 146, 186)
+		SunTint = { 255, 238, 206 }, -- ColorShift_Top: the sun's colour on what faces it
+		-- GeographicLatitude. Roblox tilts the sun's path by the latitude less the earth's tilt
+		-- (23.5), so at 54 the sun stood 59 degrees up at noon on the +Z side, behind the houses on
+		-- the north side of Main Street, whose fronts face -Z (plot 1, the first player's, is one).
+		-- At -20 it stands 46 degrees up on the -Z side: over the harbour, on those fronts.
+		Latitude = -20,
+		SkyDiffuse = 0.24, -- EnvironmentDiffuseScale: light off the sky (was 0.38)
+		SkySpecular = 0.12, -- EnvironmentSpecularScale: shine off the sky (was 0.18)
+		ShadowSoftness = 0.12, -- a firm edge that isn't a razor (was 0.14)
+		-- after dark, with only the moon, the shade is lifted again so the town stays readable
+		Night = { Ambient = { 104, 108, 150 }, OutdoorAmbient = { 124, 128, 176 } },
 	},
 	-- The colour grade laid over the picture (a ColorCorrectionEffect), by the hour: the first
 	-- entry whose hours hold the clock is used, and Night when none does. World eases toward it.
+	-- It used to add a third again to every colour's saturation (0.34) on top of strong paint,
+	-- which is what made roofs and grass harsh in the game while they looked fine in previews.
+	-- Now the colours on screen are close to the colours in the files.
 	Grade = {
-		Brightness = 0.02,
+		Brightness = 0.01,
 		Hours = {
-			{ From = 10, To = 14.5, Tint = { 255, 250, 242 }, Saturation = 0.34, Contrast = 0.17, Air = "day" },
-			{ From = 7.5, To = 16.5, Tint = { 255, 240, 220 }, Saturation = 0.36, Contrast = 0.18, Air = "gold" },
-			{ From = 5, To = 19.5, Tint = { 255, 212, 184 }, Saturation = 0.38, Contrast = 0.19, Air = "dusk" },
+			{ From = 10, To = 14.5, Tint = { 255, 250, 242 }, Saturation = 0.08, Contrast = 0.06, Air = "day" },
+			{ From = 7.5, To = 16.5, Tint = { 255, 242, 224 }, Saturation = 0.1, Contrast = 0.07, Air = "gold" },
+			{ From = 5, To = 19.5, Tint = { 255, 218, 192 }, Saturation = 0.12, Contrast = 0.08, Air = "dusk" },
 		},
-		Night = { Tint = { 176, 190, 255 }, Saturation = 0.44, Contrast = 0.24, Air = "night" },
+		-- blue, and a little more push, so lit signs and windows stand out of the dark
+		Night = { Tint = { 184, 196, 255 }, Saturation = 0.15, Contrast = 0.12, Air = "night" },
 	},
 }
 

@@ -35,19 +35,19 @@ Recipe.Colors = {
 	Black = Color3.fromRGB(43, 40, 46),
 	Metal = Color3.fromRGB(165, 168, 176),
 	DarkMetal = Color3.fromRGB(88, 90, 98),
-	Gold = Color3.fromRGB(222, 178, 82),
+	Gold = Color3.fromRGB(214, 176, 96),
 	Glass = Color3.fromRGB(196, 230, 242),
-	Leaf = Color3.fromRGB(86, 160, 72),
-	DarkLeaf = Color3.fromRGB(52, 115, 58),
-	Bark = Color3.fromRGB(110, 76, 48),
+	Leaf = Color3.fromRGB(110, 166, 96), -- greens lean yellow and never go neon
+	DarkLeaf = Color3.fromRGB(74, 128, 86),
+	Bark = Color3.fromRGB(112, 84, 60),
 	Soil = Color3.fromRGB(92, 66, 46),
 	Stone = Color3.fromRGB(160, 160, 166),
-	Water = Color3.fromRGB(90, 170, 220),
+	Water = Color3.fromRGB(104, 172, 208),
 	Warm = Color3.fromRGB(255, 214, 150), -- lamp light
 	Pink = Color3.fromRGB(245, 158, 181),
-	Red = Color3.fromRGB(199, 56, 63),
-	Yellow = Color3.fromRGB(255, 212, 92),
-	Blue = Color3.fromRGB(79, 169, 217),
+	Red = Color3.fromRGB(184, 80, 90),
+	Yellow = Color3.fromRGB(240, 204, 110),
+	Blue = Color3.fromRGB(92, 150, 196),
 	Paper = Color3.fromRGB(250, 246, 235),
 }
 

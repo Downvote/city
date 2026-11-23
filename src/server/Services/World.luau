@@ -171,7 +171,7 @@ local function buildPlots()
 			Material = Enum.Material.Grass,
 		})
 		base.Parent = model
-		base.Color = Textures.tint("Grass", Color3.fromRGB(112, 188, 84))
+		base.Color = Textures.tint("Grass", Color3.fromRGB(138, 192, 112))
 		local build = Instance.new("Folder")
 		build.Name = "Build"
 		build.Parent = model
@@ -295,26 +295,45 @@ local FOG = {
 --   stronger colours and more contrast over the whole picture
 --   a bloom on anything bright, which is what makes the signs glow after dark
 -- People get ink outlines on each player's own screen (the client's World/Outlines).
+local function rgb(c: { number }): Color3
+	return Color3.fromRGB(c[1], c[2], c[3])
+end
+
 local function stylize()
-	Lighting.Brightness = 3.1
-	Lighting.Ambient = Color3.fromRGB(126, 118, 158)
-	Lighting.OutdoorAmbient = Color3.fromRGB(152, 146, 186)
-	Lighting.ColorShift_Top = Color3.fromRGB(255, 236, 200)
+	-- The numbers are in Tuning.Look, where the preview tools read them too.
+	local light = Tuning.Look.Light
+	Lighting.Brightness = light.Brightness
+	Lighting.Ambient = rgb(light.Ambient)
+	Lighting.OutdoorAmbient = rgb(light.OutdoorAmbient)
+	Lighting.ColorShift_Top = rgb(light.SunTint)
 	-- The user then showed that game's streets and asked to "emulate the level of detail of these
 	-- shaders": there the sun is low and warm, shadows are long with a slightly soft edge, and the
 	-- shade is lifted by light off the sky. So: a sun that rides lower all day (the latitude), a
 	-- little softness on the shadow's edge, a little more light from the sky.
-	Lighting.GeographicLatitude = 54
-	Lighting.EnvironmentDiffuseScale = 0.38
-	Lighting.EnvironmentSpecularScale = 0.18
-	Lighting.ShadowSoftness = 0.14
+	Lighting.GeographicLatitude = light.Latitude
+	Lighting.EnvironmentDiffuseScale = light.SkyDiffuse
+	Lighting.EnvironmentSpecularScale = light.SkySpecular
+	Lighting.ShadowSoftness = light.ShadowSoftness
 	Lighting.GlobalShadows = true
-	Lighting.ExposureCompensation = 0.12
+	Lighting.ExposureCompensation = light.Exposure
+	-- Shadow maps, kept close by when a player's graphics quality drops. Roblox turns shadow map
+	-- shadows off below quality level 4 and keeps only its voxel shadows, which are 4 studs
+	-- across: too coarse for an eave or a porch roof. Realistic is the style whose shadows have an
+	-- edge we can set (ShadowSoftness), and PrioritizeLightingQuality asks Roblox to give up view
+	-- distance before shadows. In a pcall: a server that doesn't know them keeps the place's own.
+	pcall(function()
+		Lighting.LightingStyle = Enum.LightingStyle.Realistic
+	end)
+	pcall(function()
+		Lighting.PrioritizeLightingQuality = true
+	end)
+	local first = Tuning.Look.Grade.Hours[1]
 	local cc = Instance.new("ColorCorrectionEffect")
 	cc.Name = "Grading"
-	cc.Saturation = 0.34
-	cc.Contrast = 0.17
-	cc.Brightness = 0.02
+	cc.Saturation = first.Saturation
+	cc.Contrast = first.Contrast
+	cc.Brightness = Tuning.Look.Grade.Brightness
+	cc.TintColor = rgb(first.Tint)
 	cc.Parent = Lighting
 	grading = cc
 	-- A glow on what really gives off light: lamps, lit windows and the signs after dark. It
@@ -385,19 +404,22 @@ local function grade(h: number)
 	if not cc then
 		return
 	end
-	local tint, saturation, contrast, air
-	if h >= 10 and h <= 14.5 then
-		tint, saturation, contrast, air = Color3.fromRGB(255, 250, 242), 0.34, 0.17, AIR.day
-	elseif h >= 7.5 and h <= 16.5 then
-		tint, saturation, contrast, air = Color3.fromRGB(255, 240, 220), 0.36, 0.18, AIR.gold
-	elseif (h > 16.5 and h < 19.5) or (h > 5 and h < 7.5) then
-		tint, saturation, contrast, air = Color3.fromRGB(255, 212, 184), 0.38, 0.19, AIR.dusk
-	else
-		tint, saturation, contrast, air = Color3.fromRGB(176, 190, 255), 0.44, 0.24, AIR.night
+	local look = Tuning.Look.Grade.Night
+	for _, g in Tuning.Look.Grade.Hours do
+		if h >= g.From and h <= g.To then
+			look = g
+			break
+		end
 	end
-	cc.TintColor = cc.TintColor:Lerp(tint, 0.08)
-	cc.Saturation += (saturation - cc.Saturation) * 0.08
-	cc.Contrast += (contrast - cc.Contrast) * 0.08
+	local air = AIR[look.Air] or AIR.day
+	cc.TintColor = cc.TintColor:Lerp(rgb(look.Tint), 0.08)
+	cc.Saturation += (look.Saturation - cc.Saturation) * 0.08
+	cc.Contrast += (look.Contrast - cc.Contrast) * 0.08
+	-- the shade is darker by day than it used to be, so after dark it is lifted again
+	local light = Tuning.Look.Light
+	local shade = if look == Tuning.Look.Grade.Night then light.Night else light
+	Lighting.OutdoorAmbient = Lighting.OutdoorAmbient:Lerp(rgb(shade.OutdoorAmbient), 0.08)
+	Lighting.Ambient = Lighting.Ambient:Lerp(rgb(shade.Ambient), 0.08)
 	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
 	if atmosphere then
 		atmosphere.Color = atmosphere.Color:Lerp(air.color, 0.08)
