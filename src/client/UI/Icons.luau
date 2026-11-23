@@ -1,8 +1,16 @@
--- The game's icons, drawn from shapes the way cartoon game icons are: flat fills with a soft
--- top-lit shade and one thick dark outline round the whole silhouette. They need no uploaded images, so
--- they always show, and they stay sharp at any size.
+-- The game's icons.
 --
--- Icons.make(name, px, props) returns a Frame holding the icon, px pixels square.
+-- Icons.make(name, px, props) returns a Frame holding the icon, px pixels square. An icon is
+-- vector art (UI/IconArt: paths with curves on a 24 grid, drawn by UI/Vector) painted into a
+-- picture the game makes itself, so it needs no uploaded image. The user: "Alot of the icons
+-- arent proper vector art and just shapes spliced together ... Make them as simple as possible."
+--
+-- Making a picture in the game needs Roblox's Mesh / Image API. In a published game that is
+-- off until "Allow Mesh / Image APIs" is switched on under Security in the game's settings.
+-- Where it is off (or an icon has no art yet) the icon is built the older way instead: out of
+-- the rounded rectangles, ellipses and triangles listed below, which always works.
+--
+-- The older shape lists:
 -- Each icon is a list of shapes in a 100 x 100 box, drawn in order:
 --   { "r", x, y, w, h, colour, r = corner (0..0.5), rot = degrees, o = false (not part of the
 --     outlined silhouette: details inside it), t = transparency }
@@ -14,6 +22,9 @@
 --   { "ring", x, y, w, h, colour, width }       a hollow ring
 --   { "half", x, y, w, h, colour }               the lower half of an ellipse (a smile)
 --   { "txt", x, y, w, h, text, colour }         outlined text
+
+local Vector = require(script.Parent.Vector)
+local IconArt = require(script.Parent.IconArt)
 
 local Icons = {}
 
@@ -310,6 +321,13 @@ D.up = {
 	arrowHead("up", 10, 10, 80, C.white),
 	{ "r", 32, 46, 36, 44, C.white, r = 0.2 },
 	{ "r", 33, 46, 34, 8, C.white, o = false },
+}
+
+-- the way back out of a menu
+D.back = {
+	arrowHead("left", 10, 10, 80, C.white),
+	{ "r", 46, 32, 44, 36, C.white, r = 0.2 },
+	{ "r", 46, 33, 8, 34, C.white, o = false },
 }
 
 D.down = {
@@ -853,7 +871,7 @@ D.leaves = {
 -- overlapping shapes of one colour join without a seam.
 
 function Icons.has(name: string?): boolean
-	return name ~= nil and D[name] ~= nil
+	return name ~= nil and (D[name] ~= nil or IconArt.art[name] ~= nil)
 end
 
 local SHADE = 0.2 -- how much darker the bottom of an icon is than the top
@@ -1036,7 +1054,7 @@ end
 function Icons.make(name: string, px: number, props: { [string]: any }?): Frame
 	local p = props or {}
 	if not p.Full then
-		return Icons.flat(name, px, p)
+		return Icons.vector(name, px, p) or Icons.flat(name, px, p)
 	end
 	local root = Instance.new("Frame")
 	root.Name = p.Name or "Icon"
@@ -1202,6 +1220,167 @@ function Icons.names(): { string }
 	end
 	table.sort(out)
 	return out
+end
+
+-- Vector icons ---------------------------------------------------------------------------------------
+--
+-- Each icon is painted once at each of two sizes (small ones get a slightly heavier line, the
+-- way type is cut heavier at small sizes) into a sheet of pictures, and shown by an ImageLabel
+-- looking at its square of the sheet. A one colour icon is painted white and tinted by the label.
+
+local SHEET = 512 -- a sheet's width and height in pixels
+local SMALL, BIG = 48, 96 -- the two sizes an icon is painted at
+Icons.Weight = { [SMALL] = 2.5, [BIG] = 2.1 } -- a line's width on the 24 grid
+
+type Sheet = { image: any, content: any, x: number, y: number, row: number }
+type Cell = { content: any, x: number, y: number, n: number, coloured: boolean }
+local sheets: { Sheet } = {}
+local cells: { [string]: Cell } = {}
+local vectorOn: boolean? = nil -- nil until the first icon has been tried
+local broken: { [string]: boolean } = {}
+
+local function newSheet(): Sheet
+	local image = (game:GetService("AssetService") :: any):CreateEditableImage({ Size = Vector2.new(SHEET, SHEET) })
+	if not image then
+		error("no memory left for a sheet of icons")
+	end
+	-- start clear, whatever a new picture holds
+	image:WritePixelsBuffer(Vector2.new(0, 0), Vector2.new(SHEET, SHEET), buffer.create(SHEET * SHEET * 4))
+	local sheet: Sheet = { image = image, content = (Content :: any).fromObject(image), x = 0, y = 0, row = 0 }
+	table.insert(sheets, sheet)
+	return sheet
+end
+
+-- The square of a sheet holding `name` painted n pixels across (painting it first if need be).
+-- Squares sit a pixel apart, so one never bleeds into the next when the picture is scaled.
+local function cellFor(name: string, n: number): Cell
+	local key = name .. ":" .. n
+	local have = cells[key]
+	if have then
+		return have
+	end
+	local pixels, coloured = Vector.raster(IconArt.art[name], n, { Weight = Icons.Weight[n] })
+	local size = n + 2
+	local sheet = sheets[#sheets] or newSheet()
+	if sheet.x + size > SHEET then
+		sheet.x = 0
+		sheet.y += sheet.row
+		sheet.row = 0
+	end
+	if sheet.y + size > SHEET then
+		sheet = newSheet()
+	end
+	sheet.image:WritePixelsBuffer(Vector2.new(sheet.x + 1, sheet.y + 1), Vector2.new(n, n), pixels)
+	local cell: Cell = { content = sheet.content, x = sheet.x + 1, y = sheet.y + 1, n = n, coloured = coloured }
+	sheet.x += size
+	sheet.row = math.max(sheet.row, size)
+	cells[key] = cell
+	return cell
+end
+
+-- Is the game able to make the pictures? (nil before the first icon has been tried.)
+function Icons.vectorOn(): boolean?
+	return vectorOn
+end
+
+-- Switches the drawn icons off (false: every icon is built from shapes, as when the game can't
+-- make pictures) or lets them be tried again (nil).
+function Icons.setVector(on: boolean?)
+	vectorOn = on
+end
+
+-- Does this icon have vector art?
+function Icons.hasArt(name: string?): boolean
+	return name ~= nil and IconArt.art[name] ~= nil
+end
+
+-- Every name with vector art.
+function Icons.artNames(): { string }
+	local out = {}
+	for name in IconArt.art do
+		table.insert(out, name)
+	end
+	table.sort(out)
+	return out
+end
+
+-- The vector drawing of an icon, or nil if there is none or the game can't make pictures. Art
+-- with colours of its own (the coin, food) shows in them; the rest takes `Color`.
+function Icons.vector(name: string, px: number, p: { [string]: any }): Frame?
+	if vectorOn == false or broken[name] or IconArt.art[name] == nil then
+		return nil
+	end
+	local glyph: Color3 = p.Color or p.Tint or Icons.Colors[name] or Icons.Glyph
+	local ok, got = pcall(function(): Frame
+		local cell = cellFor(name, if px <= 30 then SMALL else BIG)
+		local root = Instance.new("Frame")
+		root.Name = p.Name or "Icon"
+		root.BackgroundTransparency = 1
+		root.BorderSizePixel = 0
+		root.Size = UDim2.fromOffset(px, px)
+		root.Position = p.Position or UDim2.new()
+		root.AnchorPoint = p.AnchorPoint or Vector2.zero
+		root.LayoutOrder = p.LayoutOrder or 0
+		local z = p.ZIndex or 1
+		root.ZIndex = z
+		local art = Instance.new("ImageLabel")
+		art.Name = "Art"
+		art.BackgroundTransparency = 1
+		art.BorderSizePixel = 0
+		art.Size = UDim2.fromScale(1, 1)
+		art.ZIndex = z;
+		(art :: any).ImageContent = cell.content
+		art.ImageRectOffset = Vector2.new(cell.x, cell.y)
+		art.ImageRectSize = Vector2.new(cell.n, cell.n)
+		art.ImageColor3 = if cell.coloured then Color3.new(1, 1, 1) else glyph
+		art.Parent = root
+		root:SetAttribute("Vector", true)
+		root:SetAttribute("Mono", not cell.coloured)
+		root:SetAttribute("Glyph", glyph:ToHex())
+		return root
+	end)
+	if not ok then
+		if vectorOn == nil then
+			vectorOn = false
+			warn(
+				"[Icons] the drawn icons are off and the plain ones are showing ("
+					.. tostring(got)
+					.. "). Switch on Allow Mesh / Image APIs under Security in the game's settings."
+			)
+		else
+			broken[name] = true
+			warn("[Icons] could not draw " .. name .. ": " .. tostring(got))
+		end
+		return nil
+	end
+	vectorOn = true
+	local root = got :: Frame
+	root.Parent = p.Parent
+	return root
+end
+
+-- The picture of a thing (a food, something from the shop): its vector art, or where there is
+-- none or the game can't make pictures, a disc in `fallback`, the thing's own colour.
+function Icons.item(name: string, px: number, fallback: Color3, props: { [string]: any }?): Frame
+	local p = props or {}
+	local drawn = Icons.vector(name, px, p)
+	if drawn then
+		return drawn
+	end
+	local disc = Instance.new("Frame")
+	disc.Name = "Swatch"
+	disc.BackgroundColor3 = fallback
+	disc.BorderSizePixel = 0
+	disc.Size = UDim2.fromOffset(px, px)
+	disc.Position = p.Position or UDim2.new()
+	disc.AnchorPoint = p.AnchorPoint or Vector2.zero
+	disc.LayoutOrder = p.LayoutOrder or 0
+	disc.ZIndex = p.ZIndex or 1
+	local round = Instance.new("UICorner")
+	round.CornerRadius = UDim.new(0.5, 0)
+	round.Parent = disc
+	disc.Parent = p.Parent
+	return disc
 end
 
 return Icons

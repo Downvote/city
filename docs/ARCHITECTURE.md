@@ -194,6 +194,14 @@ harness stands in for the newer enums, so the UI previews draw shadows, radial a
 clipping (`tools/preview/ui_render.py`).
 
 - `Controllers/State`: the mirror of the player's state and plan; `State.on(key, fn)`, `State.onPlan(fn)`.
+- `UI/Kit` menus: `Kit.panel(title, size, onClose, icon, color, opts)` is a full menu (pass `Kit.MenuSize`): a
+  black backdrop, `Kit.backButton` and the title in a strip above the panel, `opts.Tabs` / `opts.OnTab` as
+  `Kit.segments` at the top right, the panel in a rim. `opts.Dialog = true` is a small panel in the middle with
+  the title and a round close button inside. Returns `{ root, card, body, close, title, header, selectTab }`.
+  `Kit.row(props, onClick)` is a pill row (Title, Sub, Marker, MarkerColor, Right, LeftSpace, RightSpace, Sunk,
+  Selected) and returns the row and a box filling it; `Kit.setRowSelected(row, on)` turns it yellow with dark
+  words. `Kit.setButtonColor` recolours an icon beside the words too. `UI/ModelPreview.fromModel(model,
+  { Stand = true })` is the whole villager fitted to a tall frame (the viewport is named `Avatar`).
 - `UI/Kit`: theme and helpers. The theme is dark (`Kit.Theme`; the names are from the light look before it):
   surfaces `PaperDark` (wells, tracks, tabs not picked), `Cream` (big panels), `Paper` (cards, buttons, bars over
   the 3D view), `Card` (a row or tile on a panel), `Picture` (the tile behind a catalog picture or a face), `Line`;
@@ -241,7 +249,23 @@ clipping (`tools/preview/ui_render.py`).
   from one Heartbeat loop; nothing is replicated.
 - `World/BuildFx` (client only): listens to `State.onPlan`; a new piece pops up (`Model:ScaleTo` from 0.4 with an
   overshoot) out of a dust puff with sparkles, a removed one leaves a puff.
-- `UI/Icons`: the drawn icons. `Icons.make(name, px, props)` builds one from its shape list (rounded rects, ellipses,
+- `UI/Vector`: the vector painter, plain Luau with no services. `Vector.parse(d)` reads a path in SVG's path
+  language (M L H V C S Q T A Z, either case) into subpaths of lines, cubic curves and arcs;
+  `Vector.raster(layers, n, opts)` paints layers into an n by n RGBA buffer and says whether the art has colours
+  of its own. A layer is a path string (a stroke) or `{ d, w =, fill =, stroke =, cut =, opacity = }`. A stroke is
+  every pixel within half its width of the line (round ends and corners); a fill is even-odd over four lines a
+  pixel row. `Vector.circle`, `ellipse`, `rect` and `dot` write paths.
+- `UI/IconArt`: every interface icon as paths on a 24 grid (`IconArt.art[name]`), plus the coin. `UI/ItemArt`: flat
+  colour pictures of the foods and shop things, by id; IconArt folds them into the same table.
+- `UI/Icons`: `Icons.make(name, px, props)` returns a Frame holding the icon. It tries `Icons.vector` first: the art
+  is painted once at 48 and once at 96 pixels (`Icons.Weight` is the line's width at each) into a 512 square
+  EditableImage sheet, a pixel apart, and shown by an ImageLabel named `Art` through `ImageContent`,
+  `ImageRectOffset` and `ImageRectSize`, tinted with `ImageColor3` (art with its own colours is left white). The
+  root carries the attributes `Vector`, `Mono` and `Glyph`. Any failure (the Mesh / Image API off in a published
+  game, no memory) warns once and returns nil, and `Icons.flat` builds the icon from its older shape list.
+  `Icons.item(id, px, fallback, props)` is a thing's picture, or a disc named `Swatch` in its colour.
+  `Icons.hasArt`, `Icons.artNames`, `Icons.vectorOn`, `Icons.setVector(false | nil)`. A new icon needs both: paths
+  in IconArt and a shape list in `D`. The older build from shapes: `Icons.flat` builds one from its shape list (rounded rects, ellipses,
   right angled triangles made by clipping a turned square, rings, half ellipses) in two passes: first a dark copy of
   every outlined shape grown by the outline's width ("Ink" pieces), then every fill with no stroke ("Fill" pieces),
   so the only outline is the one round the silhouette and none crosses another part. Above 20 px a second dark copy
@@ -274,7 +298,18 @@ clipping (`tools/preview/ui_render.py`).
   well formed ids become variants), `Presets` (every building goes down whole turned every way, on the client's check and the server's,
   inside its footprint, with its workplace), `Town` (every placed model exists, plots and road stay clear, room to
   walk on the sidewalks), `Icons`
-  (every icon builds; outline copies all come before the fills and no fill carries a dark stroke).
+  (every icon builds from shapes; outline copies all come before the fills and no fill carries a dark stroke;
+  every icon has vector art, every piece of art paints inside its square at both sizes, interface icons are
+  one colour, an icon is its square of a sheet and tinted, the fallback to shapes works), `Vector` (the path
+  reader, and painted areas of circles, rings, lines, dots and round rectangles checked against geometry).
+- The harness stands in for Roblox's image API: `AssetService:CreateEditableImage` returns a table that keeps its
+  pixels (listed in `Harness.images`), and `Content.fromObject` gives a real Content with the address
+  `rbxeditable://<n>`, which Lune's ImageLabel accepts. `tools/preview/ui_dump.luau` writes each such picture out
+  as raw pixels beside the JSON and `ui_render.py` draws the ImageLabels from them, so the previews show exactly
+  the pixels the game paints. A ViewportFrame or box named `Avatar` is drawn as a stand-in figure.
+- `sh tools/preview/art.sh <out.png> [names]` is a sheet of the vector art: each icon big over the 24 grid and at
+  the sizes the game shows it (`art_dump.luau`, `art_sheet.py`; `art_names.luau` and `art_missing.luau` list
+  icons). Use it when drawing or changing an icon.
 - `tests/sim/`: the client on fake Roblox instances. `fake.luau` wraps @lune/roblox instances (so property names are
   checked against Roblox's class data) and adds events, children, attributes, tags, bounding boxes, a camera with
   rays and projection, and workspace raycasts. `client.luau` boots the real State, BuildMode and BuildUI against the

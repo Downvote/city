@@ -26,7 +26,7 @@ local alive = false
 -- the part of the world the map shows
 local X1, X2 = -1180, 1180
 local Z1, Z2 = -450, 1010
-local MAP_W = 600
+local MAP_W = 700
 local S = MAP_W / (X2 - X1)
 local MAP_H = math.floor((Z2 - Z1) * S)
 
@@ -173,12 +173,27 @@ end
 
 function MapPanel.open()
 	MapPanel.close()
-	panel = Kit.panel("Map", UDim2.fromOffset(900, MAP_H + 120), function()
+	panel = Kit.panel("Map", Kit.MenuSize, function()
 		MapPanel.close()
 	end, "map", T.Blue)
 	alive = true
 	local body = panel.body
-	local map, markers = drawMap(body)
+	-- the map on a card on the left, the places as rows down the right
+	local card = Kit.frame({
+		Name = "Detail",
+		Parent = body,
+		Size = UDim2.new(0, MAP_W + 32, 1, 0),
+		Color = T.Paper,
+		Radius = 24,
+	})
+	local count = Kit.title("", {
+		Parent = card,
+		Size = UDim2.new(1, -40, 0, 30),
+		Position = UDim2.fromOffset(20, 12),
+		TextSize = 22,
+	})
+	local map, markers = drawMap(card)
+	map.Position = UDim2.new(0, 16, 0, 50)
 	local me = Kit.frame({
 		Name = "You",
 		Parent = map,
@@ -198,14 +213,12 @@ function MapPanel.open()
 	})
 
 	-- the list beside the map
-	local side = Kit.box({
+	local list = Kit.scroll({
 		Parent = body,
-		Size = UDim2.new(1, -(MAP_W + 18), 1, 0),
-		Position = UDim2.fromOffset(MAP_W + 18, 0),
+		Size = UDim2.new(1, -(MAP_W + 52), 1, 0),
+		Position = UDim2.fromOffset(MAP_W + 52, 0),
 	})
-	local count = Kit.title("", { Parent = side, Size = UDim2.new(1, 0, 0, 28), TextSize = 20 })
-	local list = Kit.scroll({ Parent = side, Size = UDim2.new(1, 0, 1, -34), Position = UDim2.fromOffset(0, 34) })
-	Kit.list(list, 6)
+	Kit.list(list, 8)
 
 	local function fill()
 		local found = State.data.found or {}
@@ -226,40 +239,28 @@ function MapPanel.open()
 			if mark and mark:IsA("TextLabel") then
 				mark.Text = if got then "" else "?"
 			end
-			local row = Kit.frame({
+			local _, inner = Kit.row({
 				Parent = list,
-				Size = UDim2.new(1, -10, 0, 50),
-				Color = if got then T.Card else T.PaperDark,
-				Radius = 16,
+				Size = UDim2.new(1, -12, 0, 58),
 				LayoutOrder = if got then i else 100 + i,
+				Title = if got then place.name else "Somewhere out there",
+				Sub = if got then place.blurb else "Keep exploring.",
+				TextSize = 17,
+				Marker = "map",
+				MarkerColor = if got then T.Orange else T.Line,
+				Sunk = not got,
+				RightSpace = if got then 84 else 16,
 			})
-			Kit.text(if got then place.name else "Somewhere out there", {
-				Parent = row,
-				Size = UDim2.new(1, -78, 0, 20),
-				Position = UDim2.fromOffset(12, 6),
-				TextSize = 15,
-				Font = Kit.Fonts.Title,
-				Color = if got then T.Ink else T.InkSoft,
-				Wrap = false,
-			})
-			Kit.text(if got then place.blurb else "Keep exploring.", {
-				Parent = row,
-				Size = UDim2.new(1, -78, 0, 16),
-				Position = UDim2.fromOffset(12, 27),
-				TextSize = 12,
-				Color = T.InkSoft,
-				Wrap = false,
-			}).TextTruncate =
-				Enum.TextTruncate.AtEnd
 			if got then
-				Kit.button("Go", {
-					Parent = row,
-					Size = UDim2.fromOffset(56, 34),
-					Position = UDim2.new(1, -8, 0.5, 0),
+				local go = Kit.button("Go", {
+					Parent = inner,
+					Size = UDim2.fromOffset(60, 36),
+					Position = UDim2.new(1, -12, 0.5, 0),
 					AnchorPoint = Vector2.new(1, 0.5),
 					Color = T.Blue,
 					TextSize = 16,
 					Radius = "pill",
+					ZIndex = 3,
 				}, function()
 					task.spawn(function()
 						local ok, err = Remotes.fn("Travel"):InvokeServer(place.id)
@@ -270,6 +271,7 @@ function MapPanel.open()
 						end
 					end)
 				end)
+				local _ = go
 			end
 		end
 		count.Text = Text.fill("Found {n} of {total}", { n = n, total = #Places.list })

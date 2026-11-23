@@ -11,4 +11,4 @@ SCENE="$1"; OUT="$2"; shift 2
 TMP=$(mktemp /tmp/ui.XXXXXX.json)
 lune run tools/preview/ui_dump.luau "$SCENE" "$TMP"
 python3 tools/preview/ui_render.py "$TMP" "$OUT" "$@"
-rm -f "$TMP"
+rm -f "$TMP" "${TMP%.json}".picture*.rgba

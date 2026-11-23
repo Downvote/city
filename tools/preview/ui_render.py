@@ -685,6 +685,64 @@ def item_thumb(item_id, size):
     return _thumb_cache[key]
 
 
+PICTURES = {}
+
+
+def load_pictures(data):
+    """Pictures the game made itself (the drawn icons' sheets), written as raw pixels by the dump."""
+    for p in data.get("pictures") or []:
+        if os.path.exists(p["file"]):
+            raw = open(p["file"], "rb").read()
+            PICTURES[p["id"]] = Image.frombytes("RGBA", (p["w"], p["h"]), raw)
+
+
+def draw_picture(cv, node, rect, clip):
+    """An ImageLabel showing part of one of those pictures, tinted by ImageColor3."""
+    sheet = PICTURES.get(P(node, "Picture"))
+    if sheet is None:
+        return
+    x, y, w, h = [cv.px(v) for v in rect]
+    off = P(node, "ImageRectOffset", [0, 0])
+    size = P(node, "ImageRectSize", [0, 0])
+    if size[0] > 0 and size[1] > 0:
+        sheet = sheet.crop((int(off[0]), int(off[1]), int(off[0] + size[0]), int(off[1] + size[1])))
+    tw, th = max(1, int(round(w))), max(1, int(round(h)))
+    # shrunk the way a screen does it: plain two by two averaging, no sharpening
+    part = sheet.resize((tw, th), Image.BILINEAR, reducing_gap=None) if tw >= sheet.width else sheet.resize((tw, th), Image.BOX)
+    tint = P(node, "ImageColor3", [1, 1, 1])
+    a = np.array(part, dtype=np.float32)
+    a[..., 0] *= tint[0]
+    a[..., 1] *= tint[1]
+    a[..., 2] *= tint[2]
+    a[..., 3] *= 1 - (P(node, "ImageTransparency", 0) or 0)
+    cv.paste(Image.fromarray(a.clip(0, 255).astype(np.uint8), "RGBA"), x, y, clip)
+
+
+def draw_figure(cv, rect, clip):
+    """A stand-in for a villager (the real one is a 3D model in a ViewportFrame): a plain figure
+    the height of the frame, so a screen's layout can be judged."""
+    x, y, w, h = [cv.px(v) for v in rect]
+    u = h / 100.0
+    im = Image.new("RGBA", (max(1, int(w)), max(1, int(h))), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    cx = w / 2
+    skin, shirt, legs, hair = (244, 200, 164, 255), (112, 170, 226, 255), (74, 84, 120, 255), (96, 70, 60, 255)
+
+    def box(x1, y1, x2, y2, col, r):
+        d.rounded_rectangle([cx + x1 * u, y1 * u, cx + x2 * u, y2 * u], radius=r * u, fill=col)
+
+    box(-11, 66, -1.5, 96, legs, 3)
+    box(1.5, 66, 11, 96, legs, 3)
+    box(-13, 33, 13, 68, shirt, 4)
+    box(-21, 34, -14.5, 62, shirt, 3)
+    box(14.5, 34, 21, 62, shirt, 3)
+    box(-21, 56, -14.5, 64, skin, 3)
+    box(14.5, 56, 21, 64, skin, 3)
+    box(-10, 10, 10, 31, skin, 7)
+    box(-11, 7, 11, 17, hair, 6)
+    cv.paste(im, x, y, clip)
+
+
 def draw_node(cv, node, clip, item_hint=None):
     if not P(node, "Visible", True):
         return
@@ -724,6 +782,10 @@ def draw_node(cv, node, clip, item_hint=None):
         draw_box(target, node, rect, clip)
         if node["class"] in TEXT_CLASSES:
             draw_text(target, node, rect, clip)
+        if node["name"] == "Avatar":
+            draw_figure(target, rect, clip)
+        if node["class"] in ("ImageLabel", "ImageButton") and P(node, "Picture"):
+            draw_picture(target, node, rect, clip)
         if node["class"] in ("ImageLabel", "ImageButton") and str(P(node, "Image", "")).startswith("rbxthumb"):
             # a catalog thumbnail: Roblox draws the item; here, a soft placeholder
             x, y, w, h = [target.px(v) for v in rect]
@@ -774,6 +836,7 @@ def main():
     ap.add_argument("--keep", action="store_true", help="keep the supersampled size")
     args = ap.parse_args()
     data = json.load(open(args.inp))
+    load_pictures(data)
     vw, vh = data["viewport"]
     inset = data.get("inset", 36)
     root = data["root"]

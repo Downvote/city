@@ -251,7 +251,7 @@ local function choiceTile(
 	local card = Kit.new("TextButton", {
 		Text = "",
 		AutoButtonColor = false,
-		BackgroundColor3 = if selected then Kit.mix(T.Card, T.Blue, 0.32) else T.Card,
+		BackgroundColor3 = if selected then Kit.mix(T.Card, T.Yellow, 0.38) else T.Card,
 		Size = size,
 		LayoutOrder = order,
 		Parent = parent,
@@ -383,8 +383,8 @@ local function materialRow(parent: Instance, current: string?, onPick: (string) 
 			Size = UDim2.fromOffset(0, 30),
 			AutomaticSize = Enum.AutomaticSize.X,
 			TextSize = 13,
-			Color = if on then T.Blue else T.PaperDark,
-			TextColor = if on then T.White else T.Ink,
+			Color = if on then T.Yellow else T.PaperDark,
+			TextColor = if on then T.Dark else T.Ink,
 			LayoutOrder = i,
 			Radius = 15,
 		})
@@ -603,8 +603,8 @@ local function wallTray(styles: { string }, room: boolean)
 				Parent = toggles,
 				Size = UDim2.fromOffset(110, 28),
 				TextSize = 14,
-				Color = if on then T.Blue else T.PaperDark,
-				TextColor = if on then T.White else T.Ink,
+				Color = if on then T.Yellow else T.PaperDark,
+				TextColor = if on then T.Dark else T.Ink,
 				Radius = 14,
 			})
 			Kit.frame({
@@ -746,8 +746,8 @@ local function paintTray()
 			Parent = top,
 			Size = UDim2.fromOffset(130, 30),
 			TextSize = 14,
-			Color = if on then T.Blue else T.PaperDark,
-			TextColor = if on then T.White else T.Ink,
+			Color = if on then T.Yellow else T.PaperDark,
+			TextColor = if on then T.Dark else T.Ink,
 			Radius = 15,
 		}, function()
 			s.paint.slot = slot[1]
@@ -928,7 +928,7 @@ end
 local function openSub(id: string)
 	subTab = id
 	for sid, b in subButtons do
-		Kit.setButtonColor(b, if sid == id then T.Blue else T.Paper, if sid == id then T.White else T.Ink)
+		Kit.setButtonColor(b, if sid == id then T.Yellow else T.Paper, if sid == id then T.Dark else T.Ink)
 	end
 	if id == "walls" or id == "fences" then
 		s.wallMode = "line"
@@ -958,7 +958,7 @@ end
 local function openMain(id: string)
 	mainTab = id
 	for mid, b in mainButtons do
-		Kit.setButtonColor(b, if mid == id then T.Blue else T.Paper, if mid == id then T.White else T.Ink)
+		Kit.setButtonColor(b, if mid == id then T.Yellow else T.Paper, if mid == id then T.Dark else T.Ink)
 	end
 	clear(subBar)
 	subButtons = {}
@@ -1079,10 +1079,10 @@ local function refreshChrome()
 			or (id == "paint" and s.tool == "paint")
 			or (id == "delete" and s.tool == "delete")
 			or (id == "move" and s.placing ~= nil and s.placing.moveKey ~= nil)
-		Kit.setButtonColor(b, if on then T.Blue else T.Paper, if on then T.White else T.Ink)
+		Kit.setButtonColor(b, if on then T.Yellow else T.Paper, if on then T.Dark else T.Ink)
 		local icon = b:FindFirstChild("Icon")
 		if icon and icon:IsA("TextLabel") then
-			icon.TextColor3 = if on then T.White else T.Ink
+			icon.TextColor3 = if on then T.Dark else T.Ink
 		end
 	end
 	levelLabel.Text = "Floor " .. (s.level + 1)

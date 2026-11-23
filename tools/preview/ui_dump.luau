@@ -314,6 +314,8 @@ local PROPS = {
 	"Image",
 	"ImageColor3",
 	"ImageTransparency",
+	"ImageRectOffset",
+	"ImageRectSize",
 	"CanvasSize",
 	"AutomaticCanvasSize",
 	"ScrollingDirection",
@@ -382,6 +384,26 @@ local function encode(v)
 	return nil
 end
 
+-- pictures made in the game (the drawn icons' sheets): each is written once, as raw pixels, and
+-- an ImageLabel showing one names it
+local pictures = {}
+local pictureList = {}
+local function pictureOf(content)
+	local ok, uri = pcall(function()
+		return content.Uri
+	end)
+	local id = ok and type(uri) == "string" and tonumber(uri:match("^rbxeditable://(%d+)$"))
+	local image = id and Harness.images[id]
+	if not image then
+		return nil
+	end
+	if not pictures[image] then
+		pictures[image] = true
+		table.insert(pictureList, { id = id, w = image.Width, h = image.Height, image = image })
+	end
+	return id
+end
+
 local function dump(inst)
 	local node = { class = inst.ClassName, name = inst.Name, props = {}, children = {} }
 	for _, prop in PROPS do
@@ -395,6 +417,14 @@ local function dump(inst)
 	-- properties newer than this Lune's copy of the API live on the fake itself
 	for prop, v in rawget(inst, "_props") do
 		node.props[prop] = encode(v)
+	end
+	if inst.ClassName == "ImageLabel" or inst.ClassName == "ImageButton" then
+		local ok, content = pcall(function()
+			return rawget(inst, "_real").ImageContent
+		end)
+		if ok and content then
+			node.props.Picture = pictureOf(content)
+		end
 	end
 	local itemId = inst:GetAttribute("ItemId")
 	if itemId then
@@ -418,14 +448,23 @@ end
 -- an animation: tools/preview/ui_anim.sh
 local frameCount = tonumber(process.args[3] or "")
 local step = tonumber(process.args[4] or "") or 0.2
+local function write(path)
+	local root = dump(Sim.gui)
+	local list = {}
+	for _, p in pictureList do
+		local file = path:gsub("%.json$", "") .. ".picture" .. p.id .. ".rgba"
+		fs.writeFile(file, buffer.tostring(p.image.Pixels))
+		table.insert(list, { id = p.id, w = p.w, h = p.h, file = file })
+	end
+	fs.writeFile(path, serde.encode("json", { viewport = { 1280, 720 }, inset = 36, root = root, pictures = list }))
+end
 if frameCount then
 	for k = 1, frameCount do
-		local path = outPath:gsub("%.json$", "") .. "_" .. k .. ".json"
-		fs.writeFile(path, serde.encode("json", { viewport = { 1280, 720 }, inset = 36, root = dump(Sim.gui) }))
+		write(outPath:gsub("%.json$", "") .. "_" .. k .. ".json")
 		Sim.frames(math.max(1, math.floor(step * 60)))
 	end
 else
-	fs.writeFile(outPath, serde.encode("json", { viewport = { 1280, 720 }, inset = 36, root = dump(Sim.gui) }))
+	write(outPath)
 end
 print(string.format("ui %s -> %s (%d warnings)", scene, outPath, #Sim.errors))
 for _, e in Sim.errors do

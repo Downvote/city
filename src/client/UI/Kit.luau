@@ -1007,6 +1007,15 @@ function Kit.setButtonColor(b: GuiButton, color: Color3, textColor: Color3?)
 	if b:IsA("TextButton") then
 		b.TextColor3 = tc
 	end
+	-- an icon beside the words takes their colour
+	local content = b:FindFirstChild("Content")
+	if content then
+		for _, c in content:GetChildren() do
+			if c:GetAttribute("Glyph") ~= nil then
+				Kit.recolorIcon(c, tc, color)
+			end
+		end
+	end
 	local light = tc ~= T.White
 	for _, name in { "Label", "Caption" } do
 		local l = b:FindFirstChild(name, true)
@@ -1699,161 +1708,450 @@ function Kit.bigButton(text: string, icon: string, props: { [string]: any }?, on
 	return b
 end
 
--- A modal panel: a cream paper card with a thick outline and a solid shadow, its title on a
--- ribbon across the top edge, and a red round close button on the top right corner. Returns
--- { root, card, body, close, title, header }. `root` holds the card and its shadow, so hiding or
--- destroying it takes both.
-function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: string?, color: Color3?): any
+-- Menus ----------------------------------------------------------------------------------------------
+--
+-- The user showed another game's menus as the direction ("Other menus should also have a style
+-- like this"): a menu takes the whole screen over a black backdrop, the way out is a button at
+-- the top left, its sections are tabs at the top right with the picked one in yellow, and what
+-- is in it sits in one big rounded panel, as rows shaped like pills. Those are the layout and
+-- the parts, and they are what is taken; the drawing is Maplewick's own (its font, its colours,
+-- its plain rounded shapes), with none of that game's art, slanted tabs or patterns.
+
+-- The rim round a panel or a row: a frame a few pixels bigger in a different shade, so the
+-- thing sits in a bezel. (A second frame, not a stroke.)
+local RIM = 4
+
+-- A row shaped like a pill, for lists. props: Parent, Size, LayoutOrder, Name, Title, Sub (a
+-- smaller line under the title), Marker (an icon name: a round badge at the left end), MarkerColor,
+-- Right (words at the right end), Selected, Sunk (a row that is over and done with), Height,
+-- LeftSpace and RightSpace (room kept clear of the words at either end, for something of your
+-- own). With onClick it is a button. Returns the row and the box inside it (put more in it: it
+-- fills the row).
+function Kit.row(props: { [string]: any }, onClick: (() -> ())?): (GuiObject, Frame)
+	local p = props
+	local h: number = p.Height or 58
+	local row: GuiObject = Kit.new(if onClick then "TextButton" else "Frame", {
+		Name = p.Name or "Row",
+		BackgroundColor3 = mix(T.PaperDark, T.Line, 0.55),
+		BorderSizePixel = 0,
+		Size = p.Size or UDim2.new(1, 0, 0, h),
+		LayoutOrder = p.LayoutOrder or 0,
+		Parent = p.Parent,
+	})
+	if row:IsA("TextButton") then
+		row.Text = ""
+		row.AutoButtonColor = false
+	end
+	Kit.corner(row, "pill")
+	local face = Kit.new("Frame", {
+		Name = "Fill",
+		BackgroundColor3 = T.PaperDark,
+		BorderSizePixel = 0,
+		Size = UDim2.new(1, -RIM * 2 + 2, 1, -RIM * 2 + 2),
+		Position = UDim2.fromOffset(RIM - 1, RIM - 1),
+		Parent = row,
+	})
+	Kit.corner(face, "pill")
+	local inner = Kit.new("Frame", {
+		Name = "Inside",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 2,
+		Parent = row,
+	})
+	local left = 22
+	if p.Marker then
+		local d = h - 22
+		local badge = Kit.new("Frame", {
+			Name = "Marker",
+			BackgroundColor3 = p.MarkerColor or T.Yellow,
+			BorderSizePixel = 0,
+			Size = UDim2.fromOffset(d, d),
+			Position = UDim2.new(0, 11, 0.5, -d / 2),
+			ZIndex = 2,
+			Parent = inner,
+		})
+		Kit.corner(badge, "circle")
+		if Icons.has(p.Marker) then
+			local ipx = math.floor(d * 0.62)
+			Icons.make(p.Marker, ipx, {
+				Name = "IconArt",
+				Parent = badge,
+				Position = UDim2.new(0.5, -ipx / 2, 0.5, -ipx / 2),
+				Color = T.Dark,
+				Hole = p.MarkerColor or T.Yellow,
+				ZIndex = 3,
+			})
+		end
+		left = d + 22
+	end
+	if p.LeftSpace then
+		left = p.LeftSpace
+	end
+	local right = if p.Right then 150 else 16
+	if p.RightSpace then
+		right = p.RightSpace
+	end
+	local title: TextLabel? = nil
+	if p.Title then
+		title = Kit.new("TextLabel", {
+			Name = "Title",
+			Text = p.Title,
+			BackgroundTransparency = 1,
+			Font = Kit.Fonts.Title,
+			TextSize = p.TextSize or 19,
+			TextColor3 = if p.Sunk then T.InkSoft else T.Ink,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextTruncate = Enum.TextTruncate.AtEnd,
+			Size = UDim2.new(1, -left - right, 0, 24),
+			Position = if p.Sub then UDim2.new(0, left, 0.5, -22) else UDim2.new(0, left, 0.5, -12),
+			ZIndex = 2,
+			Parent = inner,
+		})
+	end
+	if p.Sub then
+		Kit.new("TextLabel", {
+			Name = "Sub",
+			Text = p.Sub,
+			BackgroundTransparency = 1,
+			Font = Kit.Fonts.Body,
+			TextSize = 14,
+			TextColor3 = T.InkSoft,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextTruncate = Enum.TextTruncate.AtEnd,
+			Size = UDim2.new(1, -left - right, 0, 18),
+			Position = UDim2.new(0, left, 0.5, 2),
+			ZIndex = 2,
+			Parent = inner,
+		})
+	end
+	if p.Right then
+		Kit.new("TextLabel", {
+			Name = "Right",
+			Text = p.Right,
+			BackgroundTransparency = 1,
+			Font = Kit.Fonts.Title,
+			TextSize = 16,
+			TextColor3 = p.RightColor or T.InkSoft,
+			TextXAlignment = Enum.TextXAlignment.Right,
+			Size = UDim2.new(0, 130, 1, 0),
+			Position = UDim2.new(1, -150, 0, 0),
+			ZIndex = 2,
+			Parent = inner,
+		})
+	end
+	if p.Selected then
+		Kit.setRowSelected(row, true)
+	end
+	if onClick and row:IsA("TextButton") then
+		row.Activated:Connect(onClick)
+		local scale = Kit.new("UIScale", { Parent = row })
+		row.MouseEnter:Connect(function()
+			TweenService:Create(scale, TweenInfo.new(0.12), { Scale = 1.02 }):Play()
+		end)
+		row.MouseLeave:Connect(function()
+			TweenService:Create(scale, TweenInfo.new(0.12), { Scale = 1 }):Play()
+		end)
+	end
+	local _ = title
+	return row, inner
+end
+
+-- The picked row of a list is yellow, with dark words (and the others go back to dark).
+function Kit.setRowSelected(row: GuiObject, on: boolean)
+	local face = row:FindFirstChild("Fill")
+	if face and face:IsA("Frame") then
+		local wash = face:FindFirstChild("Wash")
+		if wash then
+			wash:Destroy()
+		end
+		if on then
+			Kit.wash(face, T.Yellow, T.Orange, 0)
+		else
+			face.BackgroundColor3 = T.PaperDark
+		end
+	end
+	row.BackgroundColor3 = if on then mix(T.Yellow, T.White, 0.35) else mix(T.PaperDark, T.Line, 0.55)
+	row:SetAttribute("Selected", on)
+	for _, d in row:GetDescendants() do
+		if d:IsA("TextLabel") and (d.Name == "Title" or d.Name == "Sub" or d.Name == "Right") then
+			if d:GetAttribute("Plain") == nil then
+				d:SetAttribute("Plain", d.TextColor3:ToHex())
+			end
+			d.TextColor3 = if on then T.Dark else Color3.fromHex(d:GetAttribute("Plain") :: string)
+		end
+	end
+end
+
+-- Tabs in one long pill: the picked one yellow with dark words. `list` is { { id, name } };
+-- onSelect(id) when one is picked. props: Parent, Position, AnchorPoint, Height, TextSize.
+-- Returns the pill and select(id).
+function Kit.segments(
+	list: { { id: string, name: string } },
+	onSelect: (string) -> (),
+	props: { [string]: any }?
+): (Frame, (string) -> ())
+	local p = props or {}
+	local h: number = p.Height or 46
+	local bar = Kit.new("Frame", {
+		Name = "Tabs",
+		BackgroundColor3 = mix(T.PaperDark, T.Line, 0.55),
+		BorderSizePixel = 0,
+		Size = UDim2.fromOffset(0, h),
+		AutomaticSize = Enum.AutomaticSize.X,
+		Position = p.Position or UDim2.new(),
+		AnchorPoint = p.AnchorPoint or Vector2.zero,
+		LayoutOrder = p.LayoutOrder or 0,
+		Parent = p.Parent,
+	})
+	Kit.corner(bar, "pill")
+	local well = Kit.new("Frame", {
+		Name = "Well",
+		BackgroundColor3 = T.PaperDark,
+		BorderSizePixel = 0,
+		Size = UDim2.new(1, -RIM * 2 + 2, 1, -RIM * 2 + 2),
+		Position = UDim2.fromOffset(RIM - 1, RIM - 1),
+		Parent = bar,
+	})
+	Kit.corner(well, "pill")
+	local holder = Kit.new("Frame", {
+		Name = "Row",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(0, h),
+		AutomaticSize = Enum.AutomaticSize.X,
+		ZIndex = 2,
+		Parent = bar,
+	})
+	Kit.pad(holder, RIM, RIM)
+	Kit.list(holder, 2, true)
+	local buttons: { [string]: TextButton } = {}
+	local function select(id: string)
+		for bid, b in buttons do
+			local on = bid == id
+			b.BackgroundTransparency = if on then 0 else 1
+			b.TextColor3 = if on then T.Dark else T.Ink
+			b:SetAttribute("Selected", on)
+		end
+	end
+	for i, t in list do
+		local b = Kit.new("TextButton", {
+			Name = t.name,
+			Text = t.name,
+			Font = Kit.Fonts.Title,
+			TextSize = p.TextSize or 18,
+			TextColor3 = T.Ink,
+			AutoButtonColor = false,
+			BackgroundColor3 = T.Yellow,
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			Size = UDim2.fromOffset(0, h - RIM * 2),
+			AutomaticSize = Enum.AutomaticSize.X,
+			LayoutOrder = i,
+			ZIndex = 2,
+			Parent = holder,
+		})
+		Kit.corner(b, "pill")
+		Kit.new("UIPadding", { PaddingLeft = UDim.new(0, 22), PaddingRight = UDim.new(0, 22), Parent = b })
+		buttons[t.id] = b
+		b.Activated:Connect(function()
+			select(t.id)
+			onSelect(t.id)
+		end)
+	end
+	if list[1] then
+		select(list[1].id)
+	end
+	return bar, select
+end
+
+-- The way back out of a menu: a pill with an arrow in a coral rim. props: Parent, Position,
+-- AnchorPoint, ZIndex.
+function Kit.backButton(props: { [string]: any }, onClick: (() -> ())?): TextButton
+	local z: number = props.ZIndex or 2
+	local b = Kit.new("TextButton", {
+		Name = "Close",
+		Text = "",
+		AutoButtonColor = false,
+		BackgroundColor3 = mix(T.PaperDark, T.Coral, 0.5),
+		Size = UDim2.fromOffset(72, 46),
+		Position = props.Position or UDim2.new(),
+		AnchorPoint = props.AnchorPoint or Vector2.zero,
+		ZIndex = z,
+		Parent = props.Parent,
+	})
+	Kit.corner(b, "pill")
+	local face = Kit.new("Frame", {
+		Name = "Fill",
+		BackgroundColor3 = T.PaperDark,
+		BorderSizePixel = 0,
+		Size = UDim2.new(1, -RIM * 2 + 2, 1, -RIM * 2 + 2),
+		Position = UDim2.fromOffset(RIM - 1, RIM - 1),
+		ZIndex = z,
+		Parent = b,
+	})
+	Kit.corner(face, "pill")
+	Icons.make("back", 26, {
+		Name = "IconArt",
+		Parent = b,
+		Position = UDim2.new(0.5, -13, 0.5, -13),
+		Color = T.Coral,
+		Hole = T.PaperDark,
+		ZIndex = z + 1,
+	})
+	b:SetAttribute("KitButton", true)
+	pressable(b)
+	if onClick then
+		b.Activated:Connect(onClick)
+	end
+	return b
+end
+
+-- The size every full menu's panel is, so they all sit in the same place.
+Kit.MenuSize = UDim2.fromOffset(1180, 580)
+
+-- A menu. Two kinds:
+--   a full menu (the default) takes the screen: a black backdrop, a back button and the title
+--     across the top left, tabs at the top right (opts.Tabs, opts.OnTab), and the panel under them
+--   a dialog (opts.Dialog) is a small panel in the middle with its title inside and a round
+--     close button, over a lighter dim: a question, a welcome
+-- `color` is the menu's own colour: a faint tint down the panel and in the shapes dotted on it.
+-- Returns { root, card, body, close, title, header, selectTab }. `root` holds everything, so
+-- hiding or destroying it takes the lot.
+function Kit.panel(
+	titleText: string,
+	size: UDim2,
+	onClose: (() -> ())?,
+	icon: string?,
+	color: Color3?,
+	opts: { [string]: any }?
+): any
 	local gui = Kit.root()
-	-- the panel's own colour is its accent; the header is that colour sunk most of the way into
-	-- the dark card, so the bar is dark too and only tinted
+	local o: { [string]: any } = opts or {}
 	local accent = color or T.Blue
-	local headColor = Kit.deep(accent)
+	local dialog = o.Dialog == true
+	local BAR = if dialog then 0 else 62 -- the strip above a full menu's panel
 	local holder = Kit.box({
 		Name = titleText,
-		Size = size,
+		Size = UDim2.fromOffset(size.X.Offset, size.Y.Offset + BAR),
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
 		Parent = gui,
 	})
 	holder.ZIndex = 5
-	-- the rest of the screen dims behind a menu, and clicks don't go through it
+	-- the rest of the screen goes dark behind a menu, and clicks don't go through it
 	local dim = Kit.frame({
 		Name = "Dim",
 		Size = UDim2.fromOffset(6000, 6000),
 		Position = UDim2.fromScale(0.5, 0.5),
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Color = Color3.fromRGB(6, 7, 12),
-		Transparency = 0.5,
+		Transparency = if dialog then 0.45 else 0.08,
 		Radius = false,
 		ZIndex = 0,
 		Parent = holder,
 	})
 	dim.Active = true
-	-- lighter behind the menu, darker toward the screen's edges (the backdrop is far bigger than
-	-- any screen, so the gradient is scaled down to reach its darkest about a screen out)
-	Kit.vignette(dim, 0.62, 0.36, 0.3)
-	local frame = Kit.frame({
-		Name = "Card",
-		Size = UDim2.fromScale(1, 1),
-		Color = T.Cream,
-		Radius = 28,
+	if dialog then
+		-- lighter behind the dialog, darker toward the screen's edges
+		Kit.vignette(dim, 0.6, 0.3, 0.3)
+	end
+	local _ = icon
+	-- the panel in its rim
+	local rim = Kit.frame({
+		Name = "Rim",
+		Size = UDim2.new(1, 0, 1, -BAR),
+		Position = UDim2.fromOffset(0, BAR),
+		Color = mix(T.PaperDark, T.Line, 0.4),
+		Radius = 30,
 		Parent = holder,
 	})
-	Kit.softShadow(frame, 2)
-	-- the header bar: the panel's colour, round at the top and square where it meets the card
-	local header = Kit.frame({
-		Name = "Header",
-		Size = UDim2.new(1, 0, 0, 58),
-		Color = headColor,
-		Radius = 28,
-		Parent = frame,
+	Kit.softShadow(rim, 2)
+	local frame = Kit.frame({
+		Name = "Card",
+		Size = UDim2.new(1, -RIM * 2, 1, -RIM * 2),
+		Position = UDim2.fromOffset(RIM, RIM),
+		Color = T.Cream,
+		Radius = 26,
+		Parent = rim,
 	})
-	Kit.frame({
-		Name = "Square",
-		Size = UDim2.new(1, 0, 0, 28),
-		Position = UDim2.new(0, 0, 1, -28),
-		Color = headColor,
-		Radius = false,
-		Parent = header,
-	})
-	local _ = icon
-	-- life in the background: the header runs from its colour into a lighter one, and the card
-	-- warms a little toward the bottom with shapes in the header's colour scattered faintly
-	-- behind everything on it. The header itself carries no shapes (the user: "No need for
-	-- shapes at the top part seperator of the menu"): the wash and the wave are enough there.
 	local seed = #titleText * 31 + string.byte(titleText, 1)
-	local light = mix(headColor, accent, 0.3)
-	Kit.wash(header, headColor, light, 0)
-	local square = header:FindFirstChild("Square")
-	if square and square:IsA("GuiObject") then
-		Kit.wash(square, headColor, light, 0)
-	end
-	-- The user: "for the top seperator part of the menu, make it a wavy line instead of a
-	-- straight one", then "not that wavy, a calm wave should be enough". So the edge between the
-	-- header and the card is a long, shallow wave: a few pixels up and down over a hundred or
-	-- so across. Each rise and fall is the cap of a big circle, cut off by a clipping strip: the
-	-- header's colour bulging a little below the line, then the card's colour rising a little
-	-- above it, turn about, meeting on the line.
-	do
-		local width = if size.X.Offset > 0 then size.X.Offset else 900
-		local AMP = 5
-		local count = math.max(2, math.floor(width / 130 + 0.5))
-		local period = width / count
-		local chord = period / 2
-		local radius = (chord * chord / 4 + AMP * AMP) / (2 * AMP)
-		local function strip(name: string, y: number): Frame
-			return Kit.new("Frame", {
-				Name = name,
-				BackgroundTransparency = 1,
-				Size = UDim2.new(1, 0, 0, AMP),
-				Position = UDim2.fromOffset(0, y),
-				ClipsDescendants = true,
-				Parent = frame,
-			})
+	Kit.wash(frame, T.Cream, mix(T.Cream, accent, 0.06), 90)
+	Kit.shapes(frame, accent, seed + 7, 22, { Transparency = 0.92, Area = { 0.03, 0.06, 0.97, 0.97 }, Size = 1.2 })
+
+	local title: TextLabel
+	local close: TextButton
+	local header: Frame
+	local selectTab: ((string) -> ())? = nil
+	if dialog then
+		header = Kit.box({ Name = "Header", Parent = frame, Size = UDim2.new(1, 0, 0, 62) })
+		title = Kit.title(titleText, {
+			Parent = header,
+			Size = UDim2.new(1, -96, 1, 0),
+			Position = UDim2.fromOffset(26, 4),
+			TextSize = 26,
+			Color = T.Ink,
+		})
+		close = Kit.new("TextButton", {
+			Name = "Close",
+			Text = "",
+			AutoButtonColor = false,
+			BackgroundColor3 = T.Card,
+			Size = UDim2.fromOffset(40, 40),
+			Position = UDim2.new(1, -14, 0, 14),
+			AnchorPoint = Vector2.new(1, 0),
+			ZIndex = 2,
+			Parent = frame,
+		})
+		Kit.corner(close, "circle")
+		Icons.make("close", 20, {
+			Name = "IconArt",
+			Parent = close,
+			Position = UDim2.new(0.5, -10, 0.5, -10),
+			Color = T.Ink,
+			Hole = T.Card,
+			ZIndex = 3,
+		})
+	else
+		header = Kit.box({ Name = "Header", Parent = holder, Size = UDim2.new(1, 0, 0, BAR - 10) })
+		-- the way back, at the top left
+		close = Kit.backButton({ Parent = header, Position = UDim2.fromOffset(4, 2) })
+		title = Kit.title(titleText, {
+			Parent = header,
+			Size = UDim2.new(0.5, -100, 0, 46),
+			Position = UDim2.fromOffset(92, 2),
+			TextSize = 30,
+			Color = T.White,
+		})
+		if o.Tabs then
+			local _bar, select = Kit.segments(o.Tabs, function(id: string)
+				if o.OnTab then
+					o.OnTab(id)
+				end
+			end, { Parent = header, Position = UDim2.new(1, -4, 0, 2), AnchorPoint = Vector2.new(1, 0) })
+			selectTab = select
 		end
-		local below = strip("WaveDown", 58) -- the header's bulges show here, just under the line
-		local above = strip("WaveUp", 58 - AMP) -- the card's rises show here, just over it
-		for k = 0, count - 1 do
-			for half = 0, 1 do
-				local x = (k + 0.25 + half * 0.5) * period
-				local up = half == 0
-				local cap = Kit.new("Frame", {
-					Name = if up then "Rise" else "Bulge",
-					BackgroundColor3 = if up then T.Cream else mix(headColor, light, x / width),
-					BorderSizePixel = 0,
-					Size = UDim2.fromOffset(radius * 2, radius * 2),
-					AnchorPoint = Vector2.new(0.5, 0.5),
-					-- a rise's circle sits below its strip and pokes up into it; a bulge's sits
-					-- above and pokes down
-					Position = UDim2.new(x / width, 0, 0, if up then radius else AMP - radius),
-					Parent = if up then above else below,
-				})
-				Kit.new("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = cap })
-			end
-		end
 	end
-	-- the card warms a little toward the bottom, with shapes in the header's colour dotted
-	-- faintly behind everything on it
-	Kit.wash(frame, T.Cream, mix(T.Cream, accent, 0.07), 90)
-	Kit.shapes(frame, accent, seed + 7, 26, { Transparency = 0.9, Area = { 0.03, 0.14, 0.97, 0.97 }, Size = 1.2 })
-	local title = Kit.title(titleText, {
-		Parent = header,
-		Size = UDim2.new(1, -90, 1, 0),
-		Position = UDim2.fromOffset(24, 0),
-		TextSize = 27,
-		Color = T.White,
-	})
 	title.ZIndex = 2
-	local close = Kit.new("TextButton", {
-		Name = "Close",
-		Text = "",
-		AutoButtonColor = false,
-		BackgroundColor3 = darker(headColor, 0.82),
-		Size = UDim2.fromOffset(40, 40),
-		Position = UDim2.new(1, -12, 0.5, 0),
-		AnchorPoint = Vector2.new(1, 0.5),
-		ZIndex = 2,
-		Parent = header,
-	})
-	close:SetAttribute("KitButton", true)
-	Kit.corner(close, "circle")
-	Icons.make("close", 22, {
-		Name = "IconArt",
-		Parent = close,
-		Position = UDim2.new(0.5, -11, 0.5, -11),
-		Color = T.White,
-		Hole = darker(headColor, 0.82),
-		ZIndex = 3,
-	})
-	pressable(close)
+	if dialog then
+		close:SetAttribute("KitButton", true)
+		pressable(close)
+	end
+	local top = if dialog then 62 else 22
 	local body = Kit.box({
 		Name = "Body",
-		Size = UDim2.new(1, -40, 1, -92),
-		Position = UDim2.fromOffset(20, 74),
+		Size = UDim2.new(1, -48, 1, -top - 22),
+		Position = UDim2.fromOffset(24, top),
 		Parent = frame,
 	})
-	local self = { root = holder, card = frame, body = body, close = close, title = title, header = header }
+	local self = {
+		root = holder,
+		card = frame,
+		body = body,
+		close = close,
+		title = title,
+		header = header,
+		selectTab = selectTab,
+	}
 	close.Activated:Connect(function()
 		if onClose then
 			onClose()
@@ -1973,6 +2271,15 @@ end
 
 -- Recolours a flat icon drawn by Icons.make: its glyph and its cut out details.
 function Kit.recolorIcon(icon: Instance, glyph: Color3, hole: Color3)
+	if icon:GetAttribute("Vector") then
+		-- a drawn icon is one picture: tint it (art with its own colours keeps them)
+		local art = icon:FindFirstChild("Art")
+		if art and art:IsA("ImageLabel") and icon:GetAttribute("Mono") then
+			art.ImageColor3 = glyph
+		end
+		icon:SetAttribute("Glyph", glyph:ToHex())
+		return
+	end
 	local was = icon:GetAttribute("Glyph")
 	local wasHole = icon:GetAttribute("Hole")
 	for _, d in icon:GetDescendants() do
@@ -2402,7 +2709,8 @@ function Kit.tabs(
 	local function select(id: string)
 		for bid, b in buttons do
 			if bid == id then
-				Kit.setButtonColor(b, p.Active or T.Blue, T.White)
+				-- the picked tab is yellow with dark words
+				Kit.setButtonColor(b, p.Active or T.Yellow, T.Dark)
 			else
 				Kit.setButtonColor(b, T.PaperDark, T.Ink)
 			end

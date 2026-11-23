@@ -36,7 +36,7 @@ function Rewards.open()
 	local name = if v then v.name else "Someone"
 	panel = Kit.panel(Text.fill("{name} feels closer", { name = name }), UDim2.fromOffset(580, 400), function()
 		Rewards.close()
-	end, "heart", T.Pink)
+	end, "heart", T.Pink, { Dialog = true })
 	local body = panel.body
 	Kit.list(body, 12, false, Enum.HorizontalAlignment.Center)
 	local intro = Kit.text(

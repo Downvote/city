@@ -226,13 +226,72 @@ run("every tab and tool opens without an error", function()
 	check(#errors == warned, "no warnings from any of it")
 end)
 
-run("a menu's header carries no shapes", function()
-	local panel = Sim.Kit.panel("Town goals", roblox.UDim2.fromOffset(680, 500), function() end)
+run("a menu takes the screen: a way back, tabs, rows", function()
+	local picked = nil
+	local closed = false
+	local panel = Sim.Kit.panel(
+		"Town goals",
+		Sim.Kit.MenuSize,
+		function()
+			closed = true
+		end,
+		nil,
+		nil,
+		{
+			Tabs = { { id = "a", name = "First" }, { id = "b", name = "Second" } },
+			OnTab = function(id)
+				picked = id
+			end,
+		}
+	)
+	local T = Sim.Kit.Theme
 	local header = panel.root:FindFirstChild("Header", true)
-	check(header ~= nil, "the menu has its header")
+	check(header ~= nil, "the menu has its top strip")
 	check(header ~= nil and header:FindFirstChild("Shapes") == nil, "nothing is dotted over it")
-	check(header ~= nil and header:FindFirstChild("Wash") ~= nil, "it keeps its wash of colour")
+	local back = header and header:FindFirstChild("Close")
+	check(back ~= nil and back:FindFirstChild("IconArt") ~= nil, "the way back is a button at the top left")
+	back.Activated:Fire()
+	check(closed, "and it closes the menu")
+	local tabs = header:FindFirstChild("Tabs")
+	check(tabs ~= nil, "its tabs sit in the top strip")
+	local first, second = tabs:FindFirstChild("First", true), tabs:FindFirstChild("Second", true)
+	check(
+		first.BackgroundTransparency == 0 and first.BackgroundColor3 == T.Yellow,
+		"the first tab starts picked, in yellow"
+	)
+	check(first.TextColor3 == T.Dark and second.TextColor3 == T.Ink, "with dark words, the other light")
+	second.Activated:Fire()
+	check(
+		picked == "b" and second.BackgroundTransparency == 0 and first.BackgroundTransparency == 1,
+		"picking the other swaps them"
+	)
+	-- rows
+	local hit = false
+	local row = Sim.Kit.row(
+		{ Parent = panel.body, Title = "A row", Sub = "with more under it", Marker = "check" },
+		function()
+			hit = true
+		end
+	)
+	check(row:FindFirstChild("Marker", true) ~= nil, "a row has its round marker")
+	local title = row:FindFirstChild("Title", true)
+	check(title.TextColor3 == T.Ink, "its words are light")
+	Sim.Kit.setRowSelected(row, true)
+	check(
+		title.TextColor3 == T.Dark and row:FindFirstChild("Fill"):FindFirstChild("Wash") ~= nil,
+		"picked, it is yellow with dark words"
+	)
+	Sim.Kit.setRowSelected(row, false)
+	check(title.TextColor3 == T.Ink and row:FindFirstChild("Fill"):FindFirstChild("Wash") == nil, "and goes back")
+	row.Activated:Fire()
+	check(hit, "clicking a row calls back")
 	panel.root:Destroy()
+	-- a dialog keeps its title and close button inside the panel
+	local dialog = Sim.Kit.panel("A question", roblox.UDim2.fromOffset(500, 300), nil, nil, nil, { Dialog = true })
+	local card = dialog.root:FindFirstChild("Card", true)
+	check(card ~= nil and card:FindFirstChild("Close") ~= nil, "a dialog has its close button on the panel")
+	check(dialog.root:FindFirstChild("Tabs", true) == nil, "and no tabs")
+	dialog.root:Destroy()
 end)
 
 run("the alert on a button is a plain red dot", function()

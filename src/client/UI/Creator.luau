@@ -67,8 +67,7 @@ local loadMore: TextButton
 local lookPage: Frame
 local profilePage: Frame
 local stepButtons: { [string]: TextButton } = {}
-local titleHolder: Frame
-local titleRibbon: Frame? = nil
+local titleLabel: TextLabel? = nil
 local selectTab: (string) -> ()
 local markTab: ((string) -> ())? = nil
 local profile = { name = "", pers = "sunny", color = "4FA9D9", bday = { s = 1, d = 1 } }
@@ -871,8 +870,8 @@ local function showFilters(tab: any)
 			Size = UDim2.fromOffset(0, 30),
 			AutomaticSize = Enum.AutomaticSize.X,
 			TextSize = 14,
-			Color = if on then T.Blue else T.PaperDark,
-			TextColor = if on then T.White else T.Ink,
+			Color = if on then T.Yellow else T.PaperDark,
+			TextColor = if on then T.Dark else T.Ink,
 			LayoutOrder = i,
 			Radius = 15,
 		})
@@ -1055,7 +1054,8 @@ local function showStep(step: string)
 	lookPage.Visible = step == "look"
 	profilePage.Visible = step == "profile"
 	for id, b in stepButtons do
-		Kit.setButtonColor(b, if id == step then T.Blue else T.PaperDark, if id == step then T.White else T.Ink)
+		-- the picked step is yellow with dark words, like a picked tab on any menu
+		Kit.setButtonColor(b, if id == step then T.Yellow else T.PaperDark, if id == step then T.Dark else T.Ink)
 	end
 	if step == "profile" then
 		buildProfilePage()
@@ -1157,18 +1157,11 @@ end
 
 -- Building the screen ------------------------------------------------------------------------------------
 
--- The title ribbon is cut to the length of its words, so a new title makes a new ribbon.
+-- The title sits at the top left beside the way back, as on every menu.
 local function setTitle(text: string)
-	if titleRibbon then
-		titleRibbon:Destroy()
+	if titleLabel then
+		titleLabel.Text = text
 	end
-	titleRibbon = Kit.ribbon(text, {
-		Parent = titleHolder,
-		Color = T.Pink,
-		TextSize = 28,
-		Position = UDim2.fromOffset(34, 0),
-		ZIndex = 3,
-	})
 end
 
 local function build()
@@ -1177,63 +1170,52 @@ local function build()
 	frame.ZIndex = 10
 	root = frame
 
+	-- Laid out as a character screen, like the villagers' one (the user pointed at another
+	-- game's character menu for both): the villager stands in the town on the left, the screen
+	-- fades to black toward the right, and everything to choose from sits on the black.
+	local fade = Kit.frame({
+		Name = "Fade",
+		Size = UDim2.new(0, 1010, 1, 400),
+		Position = UDim2.new(1, 0, 0, -200),
+		AnchorPoint = Vector2.new(1, 0),
+		Color = Color3.fromRGB(9, 10, 16),
+		Radius = false,
+		ZIndex = 0,
+		Parent = frame,
+	})
+	Kit.new("UIGradient", {
+		Name = "Clear",
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(0.12, 0.55),
+			NumberSequenceKeypoint.new(0.22, 0.1),
+			NumberSequenceKeypoint.new(0.28, 0),
+			NumberSequenceKeypoint.new(1, 0),
+		}),
+		Parent = fade,
+	})
+	-- the way back and the title, at the top left
+	local back = Kit.backButton({ Parent = frame, Position = UDim2.fromOffset(16, 12) }, function()
+		Creator.close()
+	end)
+	local _back = back
+	titleLabel = Kit.title("Make a villager", {
+		Parent = frame,
+		Size = UDim2.fromOffset(520, 46),
+		Position = UDim2.fromOffset(104, 12),
+		TextSize = 30,
+		Color = T.White,
+		Wrap = false,
+	})
+
 	local holder = Kit.box({
 		Name = "PanelHolder",
-		Size = UDim2.new(0, 720, 1, -44),
-		Position = UDim2.new(1, -14, 0, 32),
+		Size = UDim2.new(0, 720, 1, -28),
+		Position = UDim2.new(1, -18, 0, 14),
 		AnchorPoint = Vector2.new(1, 0),
 		Parent = frame,
 	})
-	Kit.frame({
-		Name = "Shadow",
-		Size = UDim2.fromScale(1, 1),
-		Position = UDim2.fromOffset(0, 8),
-		Color = T.Shadow,
-		Transparency = 0.8,
-		Radius = 24,
-		Parent = holder,
-	})
-	local panel = Kit.frame({
-		Name = "Panel",
-		Size = UDim2.fromScale(1, 1),
-		Color = T.Paper,
-		Radius = 24,
-		Parent = holder,
-	})
-	-- a deep pink bar across the top (pink sunk into the dark panel), with the title over it
-	local header = Kit.frame({
-		Name = "Header",
-		Parent = panel,
-		Size = UDim2.new(1, 0, 0, 56),
-		Color = Kit.deep(T.Pink),
-		Radius = 24,
-	})
-	Kit.frame({
-		Parent = header,
-		Size = UDim2.new(1, 0, 0, 24),
-		Position = UDim2.new(0, 0, 1, -24),
-		Color = Kit.deep(T.Pink),
-		Radius = false,
-	})
-	titleHolder = Kit.box({
-		Name = "Title",
-		Parent = panel,
-		Size = UDim2.new(1, 0, 0, 10),
-		Position = UDim2.fromOffset(-18, 4),
-	})
-	titleHolder.ZIndex = 3
-	setTitle("Make a villager")
-	local inner = Kit.box({ Parent = panel, Size = UDim2.new(1, -28, 1, -82), Position = UDim2.fromOffset(14, 66) })
-	Kit.closeButton({
-		Parent = panel,
-		Size = UDim2.fromOffset(50, 50),
-		Position = UDim2.new(1, 12, 0, -12),
-		AnchorPoint = Vector2.new(1, 0),
-		ZIndex = 3,
-	}, function()
-		Creator.close()
-	end)
-	panel = inner
+	local panel = Kit.box({ Name = "Panel", Parent = holder })
 	-- the two steps as one segmented control
 	local steps = Kit.frame({
 		Parent = panel,
@@ -1287,17 +1269,18 @@ local function build()
 	local function markRail(id: string)
 		for bid, b in railButtons do
 			local on = bid == id
+			-- each is a round button: the picked one yellow with a dark icon
 			local sel = b:FindFirstChild("Sel")
 			if sel and sel:IsA("Frame") then
-				sel.BackgroundTransparency = if on then 0 else 1
+				sel.BackgroundColor3 = if on then T.Yellow else T.Card
 			end
 			local art = b:FindFirstChild("IconArt")
 			if art then
-				Kit.recolorIcon(art, if on then T.White else T.Ink, if on then T.Blue else T.Paper)
+				Kit.recolorIcon(art, if on then T.Dark else T.Ink, if on then T.Yellow else T.Card)
 			end
 			local cap = b:FindFirstChild("Caption")
 			if cap and cap:IsA("TextLabel") then
-				cap.TextColor3 = if on then T.White else T.Ink
+				cap.TextColor3 = if on then T.Yellow else T.Ink
 			end
 		end
 	end
@@ -1316,11 +1299,10 @@ local function build()
 		local sel = Kit.frame({
 			Name = "Sel",
 			Parent = b,
-			Size = UDim2.new(1, -4, 1, -4),
-			Position = UDim2.fromOffset(2, 2),
-			Color = T.Blue,
-			Transparency = 1,
-			Radius = 18,
+			Size = UDim2.fromOffset(50, 50),
+			Position = UDim2.new(0.5, -25, 0, -2),
+			Color = T.Card,
+			Radius = "circle",
 		})
 		sel.ZIndex = 0
 		railButtons[t.id] = b
@@ -1341,9 +1323,10 @@ local function build()
 		Parent = searchRow,
 		Size = UDim2.fromOffset(140, 40),
 		Position = UDim2.new(1, -140, 0, 0),
-		Color = T.Yellow,
-		TextColor = T.Dark,
+		Color = T.Card,
+		TextColor = T.Ink,
 		TextSize = 16,
+		Radius = "pill",
 	})
 	sortButton.Activated:Connect(function()
 		local i = 1
@@ -1465,7 +1448,7 @@ local function build()
 	local tip = Kit.darkPill({
 		Parent = frame,
 		Size = UDim2.fromOffset(0, 34),
-		Position = UDim2.fromOffset(14, 14),
+		Position = UDim2.fromOffset(16, 68),
 	})
 	tip.AutomaticSize = Enum.AutomaticSize.X
 	Kit.pad(tip, 14, 0)

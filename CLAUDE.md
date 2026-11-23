@@ -25,7 +25,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    screen (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (97, all passing): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (114, all passing; `Vector` is new: the path reader and painter, areas checked against geometry): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off), Build (catalog, plan rules, field cleaning, shapes, builder), BuildService (the server's
 Build service with stubbed neighbours: charges, syncs, strips junk, refuses land you don't own), Events (3000 seeded
@@ -97,10 +97,9 @@ rounded clipping ("reference this doc an implement as much as possible"): cards,
 `Kit.softShadow` (two UIShadows), backdrops `Kit.vignette`, progress `Kit.ring` (conical) or `Kit.bar`, glows
 `Kit.halo`, and anything that must cut its children to round corners is a `Kit.frame` with `Clips` and a radius (a
 CanvasGroup). Buttons and tabs still have no shading of their own. All of it sits in pcalls and falls back to flat. Then: "add more life to the uis, such as gradients and simple shapes
-dotting the background" (`Kit.wash`, `Kit.shapes`: on cards and pills, not on buttons or tabs, and not on a menu's
-header: "No need for shapes at the top part seperator of the menu", so headers keep only their wash), a wavy edge
-under a menu's header, then "not that wavy, a calm wave should be enough" (a few pixels over a hundred or so), and
-the villager's face in place of the colour bar in lists.
+dotting the background" (`Kit.wash`, `Kit.shapes`: on cards and pills, not on buttons or tabs, and never on the
+strip at the top of a menu: "No need for shapes at the top part seperator of the menu"), and the villager's
+face in place of the colour bar in lists. (A wavy edge under the header came and went with the old panels.)
 The interface is dark (the user: "Make every ui element dark mode, with a dark background"; docs/GAME_DESIGN.md
 section 10, Dark mode). There is one theme and no light version. In `Kit.Theme` the surfaces are `PaperDark`
 (wells, tracks, tabs not picked), `Cream` (big panels), `Paper` (cards and bars over the 3D view), `Card` (a row
@@ -111,12 +110,28 @@ for one: a header or ribbon is `Kit.deep(colour)`. Buttons you press keep their 
 pick from must show its colour, so name it `Swatch` (`Kit.swatch` does). `sh tools/preview/audit.sh` builds every
 screen and fails on a light surface or on words that don't stand out; when a new screen gets a preview scene, add
 it to that script's list.
-The user's rule for icons: "make sure there are no overlapping outlines". A new icon is a
-shape list in `UI/Icons`; it gets one outline round its silhouette, so tell its parts apart by colour. Look at it
-with `sh tools/preview/ui.sh icons:<name> <png>` (`stickers:<name>` for the outlined version). Flat icons are one
-colour; the one exception the user asked for is a dent ("the coin icon can have a darker circle inside as an
-indent"): mark the shape `dent = true` and it draws a step darker. The Goals button is the `trophy`, the Build
-button the `hammer`. A flat icon is only its silhouette, so check a new one reads in one colour.
+Menus follow a reference the user gave ("For reference of the character screen and the character creation
+screen, use zenless zone zero's character menu", "Other menus should also have a style like this"): take the
+layout and the parts, draw them our own way, never that game's art, slanted tabs or patterns. A menu is
+`Kit.panel(title, Kit.MenuSize, onClose, icon, colour, opts)`: it takes the whole screen over black, the way back
+is a pill at the top left beside the title, `opts.Tabs` are one long pill at the top right, and the content sits
+in one big panel with a rim. `opts.Dialog = true` is the small kind (a welcome, a question). Lists are
+`Kit.row` pills; the usual layout is a card for the picked thing on the left and the rows down the right.
+Yellow with dark words (`T.Yellow`, `T.Dark`) means picked, everywhere: tabs, rows, steps, Build mode's tabs.
+Buttons that do something keep their own colour. The villager screen and the creator are character screens:
+the villager stands on the left (`ModelPreview.fromModel(model, { Stand = true })`, or in the town for the
+creator), a fade runs from clear to black toward the right, and the stats or the catalog sit on the black. The
+old header bar and its wave are gone.
+Icons are vector art (the user: "Alot of the icons arent proper vector art and just shapes spliced together,
+look online to see how vector art should be. Make them as simple as possible"): paths in `UI/IconArt` on a 24
+grid, one line weight, round ends, a margin of 2, as few lines as possible, painted by `UI/Vector` into an
+EditableImage sheet when the game runs. Food and shop things are flat colour pictures in `UI/ItemArt`
+(`Icons.item`). Look at art with `sh tools/preview/art.sh <png> <names>`. A published game only paints them
+with Allow Mesh / Image APIs on (Security, in the game's settings); otherwise each icon falls back to its
+shape list in `UI/Icons` (`D`), so a new icon needs both, and the Icons spec fails without the art. The coin
+keeps its gold and its indent ("the coin icon can have a darker circle inside as an indent"). The Goals button
+is the `trophy`, the Build button the `hammer`. The older rule still holds for the shape lists: "make sure
+there are no overlapping outlines".
 
 The user asked for custom textures, then for "textures from the roblox library that fits": the materials use
 Creator Store pictures listed in `Data/TextureIds` (find more with `scripts/library_textures.py search`, get the

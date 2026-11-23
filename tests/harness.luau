@@ -10,6 +10,8 @@ local roblox = require("@lune/roblox")
 local serde = require("@lune/serde")
 
 local Harness = {}
+-- every picture the code under test has made with AssetService:CreateEditableImage
+Harness.images = {}
 
 local DATATYPES = {
 	"Instance",
@@ -332,8 +334,60 @@ function Harness.init(root)
 		end,
 	})
 	addService("Workspace", setmetatable({ Name = "Workspace", ClassName = "Workspace", _children = {} }, Node))
+	-- pictures made in the game (the drawn icons): an EditableImage here is a table that keeps
+	-- its pixels, so the previews can show them
+	stubService("AssetService", {
+		CreateEditableImage = function(_, options)
+			local size = (options and options.Size) or roblox.Vector2.new(512, 512)
+			local w, h = size.X, size.Y
+			local image = {
+				ClassName = "EditableImage",
+				Size = size,
+				Width = w,
+				Height = h,
+				Pixels = buffer.create(w * h * 4),
+				Id = #Harness.images + 1,
+			}
+			function image.WritePixelsBuffer(self, position, area, pixels)
+				for row = 0, area.Y - 1 do
+					buffer.copy(
+						self.Pixels,
+						((position.Y + row) * w + position.X) * 4,
+						pixels,
+						row * area.X * 4,
+						area.X * 4
+					)
+				end
+			end
+			function image.ReadPixelsBuffer(self, position, area)
+				local out = buffer.create(area.X * area.Y * 4)
+				for row = 0, area.Y - 1 do
+					buffer.copy(
+						out,
+						row * area.X * 4,
+						self.Pixels,
+						((position.Y + row) * w + position.X) * 4,
+						area.X * 4
+					)
+				end
+				return out
+			end
+			function image.Destroy() end
+			table.insert(Harness.images, image)
+			return image
+		end,
+	})
 
 	env = {}
+	-- a picture made here goes into an image property under an address that names it
+	-- (Harness.images[n] for "rbxeditable://n"), since Lune's instances only take real Content
+	env.Content = {
+		none = roblox.Content.none,
+		fromObject = function(object)
+			return roblox.Content.fromUri("rbxeditable://" .. tostring(object.Id))
+		end,
+		fromUri = roblox.Content.fromUri,
+	}
 	for _, name in DATATYPES do
 		env[name] = roblox[name]
 	end

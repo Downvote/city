@@ -82,6 +82,20 @@ function ModelPreview.fromModel(source: Model, props: { [string]: any }?): Viewp
 		cam.CFrame = CFrame.lookAt(look.Position + look.LookVector * 5 + Vector3.new(0, 0.3, 0), look.Position)
 		cam.Parent = vp
 		vp.CurrentCamera = cam
+	elseif p.Stand then
+		-- the whole of them standing, fitted to the frame's height (a tall frame): seen from the
+		-- front and a touch to one side, from about chest height
+		local root = copy:FindFirstChild("HumanoidRootPart")
+		local front = if root and root:IsA("BasePart") then root.CFrame.LookVector else Vector3.new(0, 0, -1)
+		local dir = CFrame.fromAxisAngle(Vector3.yAxis, math.rad(p.Yaw or 14)):VectorToWorldSpace(front)
+		local cam = Instance.new("Camera")
+		cam.FieldOfView = 24
+		local half = size.Y / 2 + 0.35
+		local dist = half / math.tan(math.rad(12))
+		cam.CFrame = CFrame.lookAt(cf.Position + dir * dist + Vector3.new(0, 0.4, 0), cf.Position)
+		cam.Parent = vp
+		vp.CurrentCamera = cam
+		vp.Name = "Avatar"
 	else
 		-- look at the model's front, a little from the side
 		local root = copy:FindFirstChild("HumanoidRootPart")

@@ -53,10 +53,11 @@ def in_icon(path):
 
 
 def face_of(node):
-    """A Kit button draws its colour on a child called Face (a blob's is Face/Shape/Core); the
-    words sit beside it, so that is what is behind them."""
+    """A Kit button draws its colour on a child called Face (a blob's is Face/Shape/Core), and a
+    row or a back button on one called Fill; the words sit beside it, so that is what is behind
+    them."""
     for c in node["children"]:
-        if c["name"] == "Face":
+        if c["name"] in ("Face", "Fill"):
             cols = colours(c)
             if cols:
                 return cols

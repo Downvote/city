@@ -1,4 +1,5 @@
--- The town news: what's been happening, and what villagers are waiting for.
+-- The town news: what's been happening, and what villagers are waiting for. A full menu
+-- (Kit.panel) with each piece of news as a row.
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Catalog = require(Shared.Build.Catalog)
@@ -33,7 +34,7 @@ local function draw()
 		c:Destroy()
 	end
 	local scroll = Kit.scroll({ Parent = panel.body, Size = UDim2.fromScale(1, 1) })
-	Kit.list(scroll, 6)
+	Kit.list(scroll, 8)
 	local requests = State.data.requests or {}
 	local order = 1
 	if #requests > 0 then
@@ -42,19 +43,18 @@ local function draw()
 			order += 1
 			local v = State.villager(r.vid)
 			if v then
-				Kit.text(
-					Text.fill(
+				Kit.row({
+					Parent = scroll,
+					Size = UDim2.new(1, -12, 0, 54),
+					Height = 54,
+					LayoutOrder = order,
+					Title = Text.fill(
 						"{name} would like {thing} near their bed.",
 						{ name = v.name, thing = Catalog.Tags[r.tag] or r.tag }
 					),
-					{
-						Parent = scroll,
-						TextSize = 16,
-						LayoutOrder = order,
-						Color = T.CoralDark,
-						Font = Kit.Fonts.Bold,
-					}
-				)
+					Marker = "alert",
+					MarkerColor = T.Coral,
+				})
 			end
 		end
 		order += 1
@@ -70,23 +70,16 @@ local function draw()
 	end
 	for _, entry in log do
 		order += 1
-		local row = Kit.box({
+		Kit.row({
 			Parent = scroll,
-			Size = UDim2.new(1, -8, 0, 0),
-			AutomaticSize = Enum.AutomaticSize.Y,
+			Size = UDim2.new(1, -12, 0, 54),
+			Height = 54,
 			LayoutOrder = order,
-		})
-		Kit.text(
-			entry.text,
-			{ Parent = row, Size = UDim2.new(1, -110, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, TextSize = 16 }
-		)
-		Kit.text(ago(entry.t), {
-			Parent = row,
-			Size = UDim2.new(0, 100, 0, 20),
-			Position = UDim2.new(1, -100, 0, 0),
-			TextSize = 14,
-			Color = T.InkSoft,
-			AlignX = Enum.TextXAlignment.Right,
+			Title = entry.text,
+			TextSize = 17,
+			Marker = "news",
+			MarkerColor = T.Teal,
+			Right = ago(entry.t),
 		})
 	end
 end
@@ -108,7 +101,7 @@ end
 
 function News.open()
 	News.close()
-	panel = Kit.panel("Town news", UDim2.fromOffset(620, 560), News.close, "news", Kit.Theme.Teal)
+	panel = Kit.panel("Town news", Kit.MenuSize, News.close, "news", Kit.Theme.Teal)
 	Kit.popIn(panel.root)
 	draw()
 	table.insert(unbind, State.on("log", draw))

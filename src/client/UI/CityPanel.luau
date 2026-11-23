@@ -43,7 +43,15 @@ local function draw()
 	end
 	local p = profileView()
 	local stats = City.stats(p)
-	local left = Kit.scroll({ Parent = panel.body, Size = UDim2.new(0.5, -8, 1, 0) })
+	-- the town itself on a card on the left, the workplaces as rows down the right
+	local card = Kit.frame({
+		Name = "Detail",
+		Parent = panel.body,
+		Size = UDim2.new(0.46, -10, 1, 0),
+		Color = T.Paper,
+		Radius = 24,
+	})
+	local left = Kit.scroll({ Parent = card, Size = UDim2.new(1, -44, 1, -40), Position = UDim2.fromOffset(24, 20) })
 	Kit.list(left, 8)
 	Kit.title(
 		Text.fill("{name}, level {n}", { name = stats.levelName, n = stats.level }),
@@ -102,6 +110,7 @@ local function draw()
 			Color = if can then T.Green else T.PaperDark,
 			TextColor = if can then T.White else T.InkSoft,
 			LayoutOrder = 13,
+			Radius = "pill",
 		}, function()
 			if not can then
 				Toasts.show(why, "warn")
@@ -122,8 +131,8 @@ local function draw()
 
 	-- jobs on the right
 	local right =
-		Kit.scroll({ Parent = panel.body, Size = UDim2.new(0.5, -8, 1, 0), Position = UDim2.new(0.5, 8, 0, 0) })
-	Kit.list(right, 6)
+		Kit.scroll({ Parent = panel.body, Size = UDim2.new(0.54, -10, 1, 0), Position = UDim2.new(0.46, 10, 0, 0) })
+	Kit.list(right, 8)
 	Kit.title("Work", { Parent = right, TextSize = 22, LayoutOrder = 1, Size = UDim2.new(1, 0, 0, 30) })
 	local lines, total = City.payday(p, -1, os.time())
 	Kit.text(
@@ -147,31 +156,18 @@ local function draw()
 				amount = workers[vid]
 			end
 		end
-		local row = Kit.frame({
+		Kit.row({
 			Parent = right,
-			Size = UDim2.new(1, -8, 0, 52),
-			Color = T.Card,
-			Stroke = T.Ink,
-			StrokeThickness = 2,
+			Size = UDim2.new(1, -12, 0, 60),
+			Height = 60,
 			LayoutOrder = i,
-		})
-		Kit.pad(row, 10, 4)
-		Kit.text(
-			Text.fill("{job}, {place}", { job = w.job.name, place = w.def.name:lower() }),
-			{ Parent = row, Size = UDim2.new(1, 0, 0, 22), TextSize = 16, Font = Kit.Fonts.Bold }
-		)
-		Kit.text(
-			if who
+			Title = Text.fill("{job}, {place}", { job = w.job.name, place = w.def.name:lower() }),
+			Sub = if who
 				then Text.fill("{name}, about {n} coins a day", { name = who, n = amount or w.job.income })
 				else "Nobody works here yet",
-			{
-				Parent = row,
-				Size = UDim2.new(1, 0, 0, 18),
-				Position = UDim2.fromOffset(0, 24),
-				TextSize = 14,
-				Color = if who then T.InkSoft else T.CoralDark,
-			}
-		)
+			Marker = "briefcase",
+			MarkerColor = if who then T.Purple else T.Line,
+		})
 		i += 1
 	end
 	if stats.jobs == 0 then
@@ -204,7 +200,7 @@ end
 
 function CityPanel.open()
 	CityPanel.close()
-	panel = Kit.panel("City hall", UDim2.fromOffset(880, 560), CityPanel.close, "hall", Kit.Theme.Purple)
+	panel = Kit.panel("City hall", Kit.MenuSize, CityPanel.close, "hall", Kit.Theme.Purple)
 	Kit.popIn(panel.root)
 	draw()
 	table.insert(unbind, State.on("coins", draw))

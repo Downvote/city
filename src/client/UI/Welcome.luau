@@ -20,7 +20,14 @@ end
 
 function Welcome.open(hud: any)
 	Welcome.close()
-	panel = Kit.panel("Welcome to Maplewick", UDim2.fromOffset(560, 380), Welcome.close, "house", Kit.Theme.Blue)
+	panel = Kit.panel(
+		"Welcome to Maplewick",
+		UDim2.fromOffset(580, 400),
+		Welcome.close,
+		"house",
+		Kit.Theme.Blue,
+		{ Dialog = true }
+	)
 	local body = panel.body
 	Kit.list(body, 10)
 	local lines = {
@@ -39,13 +46,17 @@ function Welcome.open(hud: any)
 	end
 	local row = Kit.box({ Parent = body, Size = UDim2.new(1, 0, 0, 56), LayoutOrder = 10 })
 	Kit.list(row, 10, true)
-	Kit.button("Make me", { Parent = row, Size = UDim2.fromOffset(200, 50), Color = T.Green, TextSize = 22 }, function()
-		Welcome.close()
-		hud.open("Creator", { mode = "new", start = "me" })
-	end)
+	Kit.button(
+		"Make me",
+		{ Parent = row, Size = UDim2.fromOffset(200, 50), Color = T.Green, TextSize = 22, Radius = "pill" },
+		function()
+			Welcome.close()
+			hud.open("Creator", { mode = "new", start = "me" })
+		end
+	)
 	Kit.button(
 		"Start from scratch",
-		{ Parent = row, Size = UDim2.fromOffset(220, 50), Color = T.Blue, TextSize = 20 },
+		{ Parent = row, Size = UDim2.fromOffset(220, 50), Color = T.Blue, TextSize = 20, Radius = "pill" },
 		function()
 			Welcome.close()
 			hud.open("Creator", { mode = "new" })

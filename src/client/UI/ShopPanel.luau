@@ -1,4 +1,6 @@
--- The plaza shop: food for villagers, medicine and party cakes.
+-- The plaza shop: food for villagers, medicine and party cakes. A full menu (Kit.panel) with a
+-- tab for each shelf: the things as a list of rows down the right, each with its picture and
+-- price, and the picked one big on the left with the buttons to buy it.
 
 local Players = game:GetService("Players")
 
@@ -11,6 +13,7 @@ local Colors = require(Shared.Util.Colors)
 local Text = require(Shared.Util.Text)
 
 local Kit = require(script.Parent.Kit)
+local Icons = require(script.Parent.Icons)
 local Toasts = require(script.Parent.Toasts)
 local State = require(script.Parent.Parent.Controllers.State)
 
@@ -44,65 +47,107 @@ local function buy(kind: string, id: string, n: number)
 	end)
 end
 
-local function card(
-	parent: Instance,
-	name: string,
-	sub: string,
-	color: Color3,
-	cost: number,
-	have: number,
-	kind: string,
-	id: string,
-	order: number
-)
-	local c = Kit.frame({
-		Parent = parent,
-		Size = UDim2.new(1, -8, 0, 60),
-		Color = T.Card,
-		Stroke = T.Ink,
-		StrokeThickness = 2,
-		LayoutOrder = order,
+-- what is being looked at: which shelf, and which thing on it
+local shelf = "food"
+local picked: { [string]: string } = {}
+
+type Ware = { kind: string, id: string, name: string, blurb: string, cost: number, have: number, color: Color3 }
+
+local function wares(): { Ware }
+	local inv = State.data.inv or { food = {}, items = {} }
+	local out: { Ware } = {}
+	if shelf == "things" then
+		for _, item in Items.list do
+			table.insert(out, {
+				kind = "item",
+				id = item.id,
+				name = item.name,
+				blurb = item.blurb,
+				cost = price(item.price),
+				have = inv.items[item.id] or 0,
+				color = if item.id == "cake" then T.Coral else T.Blue,
+			})
+		end
+	else
+		for _, f in Foods.shop() do
+			table.insert(out, {
+				kind = "food",
+				id = f.id,
+				name = f.name,
+				blurb = "Cheers someone up.",
+				cost = price(f.price :: number),
+				have = inv.food[f.id] or 0,
+				color = Colors.fromHex(f.color),
+			})
+		end
+	end
+	return out
+end
+
+-- The left side: the picked thing, big, with what it does, how many you have and the buttons.
+local function showDetail(frame: Frame, w: Ware)
+	for _, c in frame:GetChildren() do
+		if c:IsA("GuiObject") then
+			c:Destroy()
+		end
+	end
+	local stage = Kit.box({ Parent = frame, Size = UDim2.new(1, 0, 0, 220), Position = UDim2.fromOffset(0, 14) })
+	Kit.halo(stage, 250, w.color, 0.3)
+	Icons.item(w.id, 168, w.color, {
+		Parent = stage,
+		Position = UDim2.fromScale(0.5, 0.5),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		ZIndex = 2,
 	})
-	Kit.pad(c, 10, 6)
-	Kit.frame({
-		Name = "Swatch", -- the thing's own colour
-		Parent = c,
-		Size = UDim2.fromOffset(40, 40),
-		Position = UDim2.fromOffset(0, 4),
-		Color = color,
-		Radius = 20,
+	Kit.title(w.name, {
+		Parent = frame,
+		Size = UDim2.new(1, -48, 0, 36),
+		Position = UDim2.fromOffset(24, 240),
+		TextSize = 30,
+		AlignX = Enum.TextXAlignment.Center,
 	})
-	Kit.text(name, {
-		Parent = c,
-		Size = UDim2.new(1, -240, 0, 22),
-		Position = UDim2.fromOffset(50, 2),
+	Kit.text(w.blurb, {
+		Parent = frame,
+		Size = UDim2.new(1, -72, 0, 24),
+		Position = UDim2.fromOffset(36, 280),
 		TextSize = 17,
-		Font = Kit.Fonts.Bold,
-	})
-	Kit.text(Text.fill("{sub} You have {n}.", { sub = sub, n = have }), {
-		Parent = c,
-		Size = UDim2.new(1, -240, 0, 22),
-		Position = UDim2.fromOffset(50, 24),
-		TextSize = 13,
 		Color = T.InkSoft,
+		AlignX = Enum.TextXAlignment.Center,
 	})
-	Kit.button(Text.commas(cost), {
-		Parent = c,
-		Size = UDim2.fromOffset(84, 40),
-		Position = UDim2.new(1, -176, 0, 4),
+	Kit.text(Text.fill("You have {n}.", { n = w.have }), {
+		Parent = frame,
+		Size = UDim2.new(1, -72, 0, 22),
+		Position = UDim2.fromOffset(36, 306),
+		TextSize = 16,
+		Font = Kit.Fonts.Bold,
+		AlignX = Enum.TextXAlignment.Center,
+	})
+	local buttons = Kit.box({
+		Parent = frame,
+		Size = UDim2.new(1, -48, 0, 54),
+		Position = UDim2.new(0, 24, 1, -78),
+	})
+	Kit.list(buttons, 12, true, Enum.HorizontalAlignment.Center)
+	Kit.button(Text.fill("Buy for {n}", { n = Text.commas(w.cost) }), {
+		Parent = buttons,
+		Size = UDim2.fromOffset(240, 54),
 		Color = T.Green,
-		TextSize = 16,
+		TextSize = 21,
+		Radius = "pill",
+		Icon = "coin",
+		LayoutOrder = 1,
 	}, function()
-		buy(kind, id, 1)
+		buy(w.kind, w.id, 1)
 	end)
-	Kit.button("x5", {
-		Parent = c,
-		Size = UDim2.fromOffset(80, 40),
-		Position = UDim2.new(1, -84, 0, 4),
+	Kit.button(Text.fill("5 for {n}", { n = Text.commas(w.cost * 5) }), {
+		Parent = buttons,
+		Size = UDim2.fromOffset(190, 54),
 		Color = T.Blue,
-		TextSize = 16,
+		TextSize = 19,
+		Radius = "pill",
+		LayoutOrder = 2,
 	}, function()
-		buy(kind, id, 5)
+		buy(w.kind, w.id, 5)
 	end)
 end
 
@@ -113,50 +158,92 @@ local function draw()
 	for _, c in panel.body:GetChildren() do
 		c:Destroy()
 	end
-	local scroll = Kit.scroll({ Parent = panel.body, Size = UDim2.fromScale(1, 1) })
-	Kit.list(scroll, 6)
+	-- the picked thing on the left, the shelf down the right
+	local detail = Kit.frame({
+		Name = "Detail",
+		Parent = panel.body,
+		Size = UDim2.new(0.46, -10, 1, 0),
+		Color = T.Paper,
+		Radius = 24,
+	})
+	local scroll = Kit.scroll({
+		Parent = panel.body,
+		Size = UDim2.new(0.54, -10, 1, 0),
+		Position = UDim2.new(0.46, 10, 0, 0),
+	})
+	Kit.list(scroll, 10)
 	if sale() then
 		Kit.text("A travelling merchant is in town. Everything's cheaper for a little while.", {
 			Parent = scroll,
 			TextSize = 16,
-			Color = T.GreenDark,
+			Color = T.Green,
 			Font = Kit.Fonts.Bold,
 			LayoutOrder = 0,
-			Size = UDim2.new(1, 0, 0, 24),
+			Size = UDim2.new(1, -12, 0, 24),
 		})
 	end
-	local inv = State.data.inv or { food = {}, items = {} }
-	local order = 1
-	Kit.title("Things", { Parent = scroll, TextSize = 20, LayoutOrder = order })
-	for _, item in Items.list do
-		order += 1
-		card(
-			scroll,
-			item.name,
-			item.blurb,
-			if item.id == "cake" then T.Coral else T.Blue,
-			price(item.price),
-			inv.items[item.id] or 0,
-			"item",
-			item.id,
-			order
-		)
+	local list = wares()
+	local show: Ware? = nil
+	for _, w in list do
+		if w.id == picked[shelf] then
+			show = w
+		end
 	end
-	order += 1
-	Kit.title("Food", { Parent = scroll, TextSize = 20, LayoutOrder = order })
-	for _, f in Foods.shop() do
-		order += 1
-		card(
-			scroll,
-			f.name,
-			"Cheers someone up.",
-			Colors.fromHex(f.color),
-			price(f.price :: number),
-			inv.food[f.id] or 0,
-			"food",
-			f.id,
-			order
-		)
+	show = show or list[1]
+	local rows: { [string]: GuiObject } = {}
+	for i, w in list do
+		local row, inner = Kit.row({
+			Name = w.id,
+			Parent = scroll,
+			Size = UDim2.new(1, -12, 0, 62),
+			Height = 62,
+			LayoutOrder = i,
+			Title = w.name,
+			Sub = Text.fill("You have {n}", { n = w.have }),
+			LeftSpace = 70,
+			RightSpace = 120,
+		}, function()
+			picked[shelf] = w.id
+			for id, r in rows do
+				Kit.setRowSelected(r, id == w.id)
+			end
+			showDetail(detail, w)
+		end)
+		Icons.item(w.id, 42, w.color, {
+			Parent = inner,
+			Position = UDim2.new(0, 16, 0.5, -21),
+			ZIndex = 3,
+		})
+		-- the price, at the right end
+		local tag = Kit.box({
+			Parent = inner,
+			Size = UDim2.fromOffset(0, 30),
+			AutomaticSize = Enum.AutomaticSize.X,
+			Position = UDim2.new(1, -22, 0.5, 0),
+			AnchorPoint = Vector2.new(1, 0.5),
+		})
+		tag.ZIndex = 2
+		Kit.list(tag, 6, true, Enum.HorizontalAlignment.Right)
+		Icons.make("coin", 22, { Parent = tag, LayoutOrder = 1, ZIndex = 3 })
+		Kit.new("TextLabel", {
+			Name = "Right",
+			Text = Text.commas(w.cost),
+			BackgroundTransparency = 1,
+			Font = Kit.Fonts.Title,
+			TextSize = 19,
+			TextColor3 = T.Ink,
+			Size = UDim2.fromOffset(0, 30),
+			AutomaticSize = Enum.AutomaticSize.X,
+			LayoutOrder = 2,
+			ZIndex = 3,
+			Parent = tag,
+		})
+		rows[w.id] = row
+	end
+	if show then
+		picked[shelf] = show.id
+		Kit.setRowSelected(rows[show.id], true)
+		showDetail(detail, show)
 	end
 end
 
@@ -177,7 +264,14 @@ end
 
 function ShopPanel.open()
 	ShopPanel.close()
-	panel = Kit.panel("Shop", UDim2.fromOffset(620, 560), ShopPanel.close, "cart", Kit.Theme.Orange)
+	shelf = "food"
+	panel = Kit.panel("Shop", Kit.MenuSize, ShopPanel.close, "cart", Kit.Theme.Orange, {
+		Tabs = { { id = "food", name = "Food" }, { id = "things", name = "Things" } },
+		OnTab = function(id: string)
+			shelf = id
+			draw()
+		end,
+	})
 	Kit.popIn(panel.root)
 	draw()
 	table.insert(unbind, State.on("inv", draw))

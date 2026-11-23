@@ -625,6 +625,52 @@ The whole interface is dark now, and there is no light version to switch to.
 `sh tools/preview/audit.sh` builds every screen and fails if a surface is left white, cream or pale grey, or if
 words don't stand out from what is behind them. It is part of the check.
 
+### Vector icons, pictures of things, and the menus' new shape
+
+> Alot of the icons arent proper vector art and just shapes spliced together, look online to see how vector art
+> should be. Make them as simple as possible. Also, for the villager menu, make the selected villager have the
+> whole avatar standing next to the list to the left, and a transparnet gradient covering them fading to black to
+> the right, where stats and other buttons are shown. Also, make vector art for items like carrots, cakes, etc.
+
+> For reference of the character screen and the character creation screen, use zenless zone zero's character menu
+
+> Other menus should also have a style like this
+
+What is taken from that game is how its menus are laid out and what they are made of. The drawing stays
+Maplewick's own: its font, its pastels, plain rounded shapes, none of that game's art, slanted tabs or patterns.
+
+- **Icons are line art.** Every interface icon is redrawn as paths with real curves, the way the line icon sets
+  on the web are made (their published design guides agree, and these follow them): a 24 by 24 grid with a
+  margin of 2, one line weight with round ends and corners, as few lines as still say what the thing is. An
+  icon takes whatever colour its button gives it. The coin keeps its gold and the darker circle in its face.
+- **Things have pictures.** Each food and each thing the shop sells (22 foods, the party cake, the medicine) is a
+  small flat colour picture: a clear outline, one darker shade, one highlight. They show in the shop and when
+  you pick what to feed someone.
+- **How they get on screen.** The game paints the paths itself into a picture when it starts (nothing is
+  uploaded). Roblox only lets a published game do that with **Allow Mesh / Image APIs** switched on under
+  Security in the game's settings. With it off the icons fall back to the older ones built from shapes and
+  the things to coloured dots, and a line in the output says why.
+- **A menu takes the whole screen.** The town goes black behind it. The way back is a pill with an arrow at the
+  top left, beside the menu's name. If it has sections they are tabs in one long pill at the top right, the
+  picked one yellow with dark words. Everything else sits in one big rounded panel with a rim.
+- **Lists are rows shaped like pills,** dark with a rim, a round marker at the left end. The picked row is
+  yellow running to orange with dark words. Most menus put the list down the right and the picked thing in
+  full on a card on the left: a goal with its ring and its Claim button, a thing in the shop with its picture
+  and the buttons to buy it, the map with its places, the town with its workplaces.
+- **Yellow means picked** everywhere now: tabs, rows, the creator's steps and categories, Build mode's tabs and
+  tools. Buttons that do something keep their own colour.
+- **The villager screen** is a character screen. The list of villagers runs down the left. The picked one
+  stands full height beside it on a stage washed in their own colour, with a glow behind them. A fade lies over
+  them, clear on the left and black by the middle, and on the black are their name, heart level and nature,
+  then About (how they feel, work, bed, birthday, food) or Friends (the tabs at the top right), their wish
+  with its button, and round buttons along the bottom for Feed, Job, Bed, Look and Move out.
+- **The creator** is laid out the same way. The villager stands in the town on the left, the screen fades to
+  black toward the right, and the catalog sits on the black. The categories are round buttons, the two steps
+  a pill with the picked one yellow, the way back and the title are at the top left.
+- **Small questions stay small.** The welcome and a villager's thank you are a panel in the middle with the
+  title inside and a round close button, over a lighter dim.
+- The header bar with its wavy edge went with the old panels. Say so if you want the wave back somewhere.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no
