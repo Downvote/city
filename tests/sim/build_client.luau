@@ -45,16 +45,52 @@ run("placing a piece of furniture from the tray", function()
 		return d:IsA("TextButton") and Fake.shown(d) and d:GetAttribute("ItemId") ~= nil
 	end)
 	check(#cards > 0, "the tray shows item cards (" .. #cards .. ")")
+	local ui = gui:FindFirstChild("BuildUI")
+	local homes = {}
+	for _, name in { "Dock", "Catalog", "Tools", "Floors", "Pill", "CameraTip" } do
+		homes[name] = ui:FindFirstChild(name).Position
+	end
 	cards[1].Activated:Fire()
 	frames(2)
 	check(BuildMode.state.tool == "place" and BuildMode.state.placing ~= nil, "clicking a card picks the item up")
 	check(mouseAtPlot(124, 64), "the spot is on screen")
 	local ghost = ws:FindFirstChild("BuildGhost")
 	check(ghost ~= nil and #ghost:GetChildren() > 0, "a ghost follows the mouse")
+	-- while a piece is held, the interface slides away and only the hint stays (the user: "make
+	-- the whole interface slide down other than this tooltip, then reappear once the player puts
+	-- it away")
+	Sim.advance(0.5)
+	local function shown(name)
+		local f = ui:FindFirstChild(name)
+		return f ~= nil and f.Visible
+	end
+	check(
+		not shown("Dock") and not shown("Catalog") and not shown("Tools") and not shown("Floors"),
+		"holding a piece slides the bars away"
+	)
+	check(not shown("Pill") and not shown("CameraTip"), "and the coins and the camera help at the top")
+	local hint = ui:FindFirstChild("Hint")
+	local said = hint:FindFirstChildWhichIsA("TextLabel")
+	check(hint.Visible and said.Text:find("R turns it", 1, true) ~= nil, "the hint stays, saying how to turn it")
+	check(#buttons(function(b)
+		return b:IsDescendantOf(ui) and b.Name ~= "Turn it" and b.Name ~= "Put it away"
+	end) == 0, "and no button is left showing to catch a click")
 	click()
 	check(count("items") == before + 1, "the server's plan has one more item")
 	check(clientCount("items") == count("items"), "the client's copy matches")
 	check(profile.coins < coinsBefore, "it cost coins")
+	frames(2)
+	check(BuildMode.state.placing ~= nil and not shown("Catalog") and hint.Visible, "placing it keeps the bars away")
+	-- a right click puts the piece away, and everything comes back where it was
+	input(Enum.UserInputType.MouseButton2, true)
+	input(Enum.UserInputType.MouseButton2, false)
+	frames(2)
+	local back = BuildMode.state.placing == nil
+	for name, home in homes do
+		back = back and shown(name) and ui:FindFirstChild(name).Position == home
+	end
+	check(back, "putting it away brings every bar back where it was")
+	check(not said.Text:find("R turns it", 1, true), "and the hint goes back to the tool's")
 end)
 
 run("drawing a wall by dragging", function()
@@ -131,6 +167,9 @@ run("picking, turning, copying and moving a piece of furniture", function()
 	mouseAtPlot(130, 72)
 	click()
 	check(count("items") == before + 1, "and places it")
+	-- the copy stays in hand for another; Esc puts it away and the tools come back
+	Sim.UIS.InputBegan:Fire({ UserInputType = Enum.UserInputType.Keyboard, KeyCode = Enum.KeyCode.Escape }, false)
+	frames(2)
 	press("Pick")
 	mouseAtPlot(124, 64, 1)
 	click()

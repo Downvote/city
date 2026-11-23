@@ -1278,7 +1278,7 @@ end
 
 local SHEET = 512 -- a sheet's width and height in pixels
 local SMALL, BIG = 48, 96 -- the two sizes an icon is painted at
-Icons.Weight = { [SMALL] = 2.5, [BIG] = 2.1 } -- a line's width on the 24 grid
+Icons.Weight = { [SMALL] = 3.25, [BIG] = 3 } -- a line's width on the 24 grid
 
 type Sheet = { image: any, content: any, x: number, y: number, row: number }
 type Cell = { content: any, x: number, y: number, n: number, coloured: boolean }

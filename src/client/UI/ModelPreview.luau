@@ -131,7 +131,9 @@ local function heights(copy: Model, cf: CFrame, size: Vector3): (number, number)
 	return lo, hi
 end
 
--- A viewport showing a copy of a model (villagers). With Stand and Shadow the second thing
+-- A viewport showing a copy of a model (villagers): Face (a close-up of the head), Stand (the
+-- whole of them upright), Bust (the same, for a frame cut off at the hips), or the model whole
+-- from a little to the side. With Stand and Shadow the second thing
 -- returned is their shadow on whatever is behind them (the user: "there should also be a shadow
 -- cast on the background in the character customization and character select screen"): the same
 -- copy again, drawn all in black and see-through, a little bigger and off to one side.
@@ -180,9 +182,11 @@ function ModelPreview.fromModel(source: Model, props: { [string]: any }?): (View
 		cam.CFrame = CFrame.lookAt(look.Position + look.LookVector * 5 + Vector3.new(0, 0.3, 0), look.Position)
 		cam.Parent = vp
 		vp.CurrentCamera = cam
-	elseif p.Stand then
+	elseif p.Stand or p.Bust then
 		-- the whole of them standing, fitted to the frame's height (a tall frame): seen from the
-		-- front and a touch to one side, from about chest height
+		-- front and a touch to one side, from about chest height. A bust (UI/Dialogue) is framed
+		-- the same way in a frame its holder cuts off at the hips, turned by Yaw toward the middle
+		-- of the screen (a negative Yaw faces them to the right)
 		local root = copy:FindFirstChild("HumanoidRootPart")
 		local front = if root and root:IsA("BasePart") then root.CFrame.LookVector else Vector3.new(0, 0, -1)
 		local dir = CFrame.fromAxisAngle(Vector3.yAxis, math.rad(p.Yaw or 14)):VectorToWorldSpace(front)
@@ -239,7 +243,7 @@ function ModelPreview.fromModel(source: Model, props: { [string]: any }?): (View
 		end
 		vp.Parent = p.Parent
 	end
-	if p.Stand and p.Still ~= true then
+	if (p.Stand or p.Bust) and p.Still ~= true then
 		-- an animation only loads once the copy is somewhere in the game; the shadow's copy
 		-- starts in the same breath, so the two keep step
 		local function play(model: Model, id: string)

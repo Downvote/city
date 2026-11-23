@@ -1593,6 +1593,14 @@ function BuildMode.exit()
 	changed("active")
 end
 
+-- Puts down what you are holding to place without placing it (the right click and Esc of a
+-- screen with no mouse and no keys: Build mode's round button while the interface is away).
+function BuildMode.putAway()
+	if s.tool == "place" or s.tool == "preset" then
+		cancel()
+	end
+end
+
 function BuildMode.isActive(): boolean
 	return s.active
 end

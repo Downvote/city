@@ -170,6 +170,12 @@ local overView: string? = nil -- the floors card's button under the mouse, which
 local flashText: string? = nil -- what just changed on the floors card, in the hint for a moment
 local flashToken = 0
 local shownLevel = 0
+-- While a piece is held to place, the interface slides out of the way and only the hint stays
+-- (the user: "when placing down things in build mode, make the whole interface slide down other
+-- than this tooltip, then reappear once the player puts it away").
+local holdingNow = false
+local slideToken = 0
+local touchButtons: Frame
 local built = false
 local mainTab = "build"
 local subTab = "walls"
@@ -1314,7 +1320,12 @@ for _, tool in TOOLS do
 	NEEDS[tool.id] = tool.needs == true
 end
 
--- What the tool in hand does, in a line short enough to sit over the tools.
+-- What the tool in hand does, in a line short enough to sit over the tools. (On a touch screen the
+-- held piece is placed with a tap and turned or put away with the round buttons beside the hint.)
+local TOUCH_HINTS = {
+	place = "Tap to place it. The buttons turn it or put it away.",
+	preset = "Tap to put it down. The buttons turn it or put it away.",
+}
 local HINTS = {
 	select = "Click something to pick it.",
 	wall = "Drag to draw a wall. Right click stops.",
@@ -1434,6 +1445,9 @@ refreshChrome = function()
 	elseif s.tool == "place" and not s.placing then
 		hint = "Pick something from the tray below."
 	end
+	if holdingNow and Kit.isTouch() and TOUCH_HINTS[s.tool] then
+		hint = TOUCH_HINTS[s.tool]
+	end
 	if hovering and (s.tool == "place" or s.tool == "preset") then
 		hint = hovering
 	end
@@ -1447,6 +1461,78 @@ refreshChrome = function()
 	end
 	hintLabel.Text = hint
 	hintPill.Visible = not actionBar.Visible or overView ~= nil or flashText ~= nil
+end
+
+-- holding a piece: the interface steps aside --------------------------------------------------------------
+
+-- How far each part goes while a piece is held: the bottom ones down off the screen, the coins
+-- and the camera help at the top left up off it.
+local AWAY: { [string]: number } =
+	{ Dock = 460, Catalog = 460, Tools = 460, Floors = 460, Pill = -140, CameraTip = -140 }
+local HINT_HOME = UDim2.new(0, EDGE + 12, 1, -HINT_AT)
+local TOUCH_W = 2 * 52 + GAP -- the two round buttons beside the hint on a touch screen
+local function hintLow(): UDim2
+	return UDim2.new(0, EDGE + 12 + (if Kit.isTouch() then TOUCH_W + GAP else 0), 1, -(EDGE + 12))
+end
+
+-- Is a piece in hand, following the pointer to be placed (from a card, or picked up to move or
+-- copy)? The tools that draw keep their trays.
+local function isHolding(): boolean
+	return s.active and ((s.tool == "place" and s.placing ~= nil) or s.tool == "preset")
+end
+
+-- Slides the interface away while a piece is held, and back when it is put away. `instant` puts
+-- it straight where it belongs (leaving Build mode). What has gone is hidden as well, so nothing
+-- off the screen is ever counted as under the pointer.
+local function setHolding(on: boolean, instant: boolean?)
+	if on == holdingNow and not instant then
+		return
+	end
+	holdingNow = on
+	slideToken += 1
+	local token = slideToken
+	for _, f in ui:GetChildren() do
+		local dy = AWAY[f.Name]
+		if dy and f:IsA("GuiObject") then
+			local home = f:GetAttribute("Home")
+			if typeof(home) ~= "UDim2" then
+				home = f.Position
+				f:SetAttribute("Home", home)
+			end
+			local away = (home :: UDim2) + UDim2.fromOffset(0, dy)
+			if instant then
+				f.Position = if on then away else home
+				f.Visible = not on
+			elseif on then
+				TweenService:Create(f, TweenInfo.new(0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+					Position = away,
+				}):Play()
+				task.delay(0.3, function()
+					if token == slideToken then
+						f.Visible = false
+					end
+				end)
+			else
+				-- back from wherever it is, with the bars' own spring
+				f.Visible = true
+				TweenService:Create(f, TweenInfo.new(0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+					Position = home,
+				}):Play()
+			end
+		end
+	end
+	-- the hint stays, down where the bars were (and on a touch screen the two round buttons that
+	-- turn the piece and put it away stand beside it)
+	local target = if on then hintLow() else HINT_HOME
+	if instant then
+		hintPill.Position = target
+	else
+		TweenService:Create(hintPill, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+			Position = target,
+		}):Play()
+	end
+	touchButtons.Visible = on and Kit.isTouch()
+	refreshChrome()
 end
 
 -- the action bar over the picked object ---------------------------------------------------------------------
@@ -1752,6 +1838,23 @@ function BuildUI.init(exitCallback: () -> ())
 		Color = T.White,
 		Wrap = false,
 	})
+	-- a touch screen has no R and no right click: while a piece is held, two round buttons beside
+	-- the hint turn it and put it away
+	touchButtons = Kit.box({
+		Name = "Holding",
+		Size = UDim2.fromOffset(TOUCH_W, 52),
+		Position = UDim2.new(0, EDGE + 12, 1, -(EDGE + 3)),
+		AnchorPoint = Vector2.new(0, 1),
+		Visible = false,
+		Parent = ui,
+	})
+	Kit.list(touchButtons, GAP, true)
+	Kit.roundButton("rotate", { Name = "Turn it", Parent = touchButtons, Size = 52, LayoutOrder = 1 }, function()
+		BuildMode.rotate(45)
+	end)
+	Kit.roundButton("close", { Name = "Put it away", Parent = touchButtons, Size = 52, LayoutOrder = 2 }, function()
+		BuildMode.putAway()
+	end)
 
 	-- the floors and the view switches, at the right on top of the catalog (level with the tools):
 	-- one row of icon buttons, the arrows, a quiet line, then the three switches (the user:
@@ -1940,6 +2043,12 @@ function BuildUI.init(exitCallback: () -> ())
 	RunService.RenderStepped:Connect(function()
 		if ui.Visible then
 			followSelection()
+			-- (checked once a frame, so the moment between putting one piece down and picking up the
+			-- next never brings the interface back)
+			local holding = isHolding()
+			if holding ~= holdingNow then
+				setHolding(holding)
+			end
 		end
 	end)
 
@@ -1948,6 +2057,8 @@ function BuildUI.init(exitCallback: () -> ())
 			ui.Visible = false
 			actionBar.Visible = false
 			hovering = nil
+			-- everything back where it belongs for the next visit
+			setHolding(false, true)
 			return
 		end
 		if what == "active" then
