@@ -263,7 +263,11 @@ Harness.addService("ContextActionService", {
 	BindActionAtPriority = function() end,
 	UnbindAction = function() end,
 })
-Harness.addService("Lighting", { ClockTime = 12 })
+-- a real (fake) instance, so the client can look through the effects it holds
+local lighting = Fake.new("Folder")
+lighting.Name = "Lighting"
+Fake.extend(lighting, { ClockTime = 12 })
+Harness.addService("Lighting", lighting)
 Harness.addService("Debris", { AddItem = function() end })
 Harness.addService("ProximityPromptService", { PromptTriggered = Fake.signal() })
 

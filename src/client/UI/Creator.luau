@@ -1246,7 +1246,31 @@ local function syncShadow(cam: Camera)
 	end
 end
 
+-- The town's bloom is what makes lit signs glow after dark. On the studio's flat, bright
+-- backdrop and on a pale outfit it is far too much (the user: "the bloom is also too heavy in the
+-- character creation screen"), so while the creator is open the bloom and the sun's rays are
+-- switched off, on this player's own screen only, and put back when it closes.
+local calmed: { [Instance]: boolean } = {}
+local function calmLight(on: boolean)
+	if on then
+		for _, e in Lighting:GetChildren() do
+			if (e:IsA("BloomEffect") or e:IsA("SunRaysEffect")) and e.Enabled then
+				calmed[e] = true
+				e.Enabled = false
+			end
+		end
+	else
+		for e in calmed do
+			if e.Parent then
+				(e :: any).Enabled = true
+			end
+		end
+		table.clear(calmed)
+	end
+end
+
 local function closeStudio()
+	calmLight(false)
 	local s = studio
 	if s then
 		s.gui:Destroy()
@@ -1291,6 +1315,7 @@ local function openStudio()
 	gui.ResetOnSpawn = false
 	gui.Adornee = part
 	gui.Parent = Kit.root().Parent
+	calmLight(true)
 	studio = {
 		part = part,
 		gui = gui,

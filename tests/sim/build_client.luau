@@ -770,6 +770,10 @@ run("the creator: a close view in a studio of its own", function()
 	end
 	local cam = Sim.cam
 	local fovBefore = cam.FieldOfView
+	local lighting = Sim.env.game:GetService("Lighting")
+	local bloom = New("BloomEffect")
+	bloom.Name = "Glow"
+	bloom.Parent = lighting
 	local Creator = Sim.Harness.require(Sim.CLIENT .. "UI.Creator")
 	Creator.open({ mode = "new" })
 	frames(3)
@@ -803,6 +807,7 @@ run("the creator: a close view in a studio of its own", function()
 		"and their shadow falls on it"
 	)
 	check(ws:FindFirstChild("CreatorLamp") ~= nil, "a lamp by the camera lights them at night")
+	check(bloom.Enabled == false, "the town's bloom is off while you are in the studio")
 	check(gui:FindFirstChild("Fade", true) == nil, "no fade to black over the picture any more")
 	-- zooming: the button steps out to the whole of them, in to the face, and back
 	press("Zoom")
@@ -852,6 +857,7 @@ run("the creator: a close view in a studio of its own", function()
 		cam.FieldOfView == fovBefore and cam.CameraType == roblox.Enum.CameraType.Custom,
 		"and gives the camera back as it was"
 	)
+	check(bloom.Enabled == true, "and the bloom back on")
 	check(closes == 1, "the server is told")
 	check(#errors == warned, "no warnings from any of it")
 end)
