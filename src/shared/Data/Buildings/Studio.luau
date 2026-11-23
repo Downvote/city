@@ -10,7 +10,8 @@ type Finish = { c: string, m: string }
 local F = Tuning.Plot.Foundation
 
 -- finishes (the town's palette)
-local WALLS: Finish = { c = "CCDDEA", m = "Plaster" } -- sky, outside
+local WALLS: Finish = { c = "DAD4C8", m = "Concrete" } -- pale stone, the studio outside
+local GALLERY: Finish = { c = "F6F0E2", m = "Plaster" } -- warm white, the gallery outside
 local STUDIO_IN: Finish = { c = "F6F0E2", m = "SmoothPlastic" }
 local GALLERY_IN: Finish = { c = "FAF6EC", m = "SmoothPlastic" }
 local COCOA: Finish = { c = "6A5C5A", m = "Slate" }
@@ -20,7 +21,7 @@ local CONCRETE: Finish = { c = "DAD4C8", m = "Concrete" } -- the studio floor
 local PALE_WOOD: Finish = { c = "DDBE94", m = "WoodPlanks" } -- the gallery floor
 local PEBBLES: Finish = { c = "D8D2C4", m = "Pebble" } -- the yard
 local PAVING: Finish = { c = "EAE6DC", m = "Pavement" }
-local STONE: Finish = { c = "DAD4C8", m = "Cobblestone" }
+local STONE: Finish = { c = "D8CFBF", m = "Cobblestone" }
 -- paint for the pieces
 local WHITE = "FAF6EC"
 local DARK = "5A5560" -- the window frames
@@ -94,9 +95,9 @@ return function(add: any)
 			b:wall("right1", 32, 4, 32, 22, WALLS, STUDIO_IN, 1)
 			b:wall("back1", 32, 22, 18, 22, WALLS, STUDIO_IN, 1)
 			b:wall("left1", 18, 22, 18, 4, WALLS, STUDIO_IN, 1)
-			b:wall("gfront", 2, 10, 18, 10, WALLS, GALLERY_IN)
-			b:wall("gback", 18, 22, 2, 22, WALLS, GALLERY_IN)
-			b:wall("gleft", 2, 22, 2, 10, WALLS, GALLERY_IN)
+			b:wall("gfront", 2, 10, 18, 10, GALLERY, GALLERY_IN)
+			b:wall("gback", 18, 22, 2, 22, GALLERY, GALLERY_IN)
+			b:wall("gleft", 2, 22, 2, 10, GALLERY, GALLERY_IN)
 			-- the yard's stone wall
 			styled(b, "yard1", 2, 2, 4, 2, STONE, "stone")
 			styled(b, "yard2", 8, 2, 18, 2, STONE, "stone")
