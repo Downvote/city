@@ -195,7 +195,16 @@ local list: { Preset } = {}
 local function add(id: string, name: string, desc: string, icon: string, w: number, d: number, build: (Blueprint) -> ())
 	local b = blueprint()
 	build(b)
-	table.insert(list, { id = id, name = name, desc = desc, icon = icon, w = w, d = d, objects = b.objects })
+	local made = { id = id, name = name, desc = desc, icon = icon, w = w, d = d, objects = b.objects }
+	-- a building defined again takes the place of the one before it (the workplaces' own files
+	-- under Data/Buildings redo the ones that were here first)
+	for i, old in list do
+		if old.id == id then
+			list[i] = made
+			return
+		end
+	end
+	table.insert(list, made)
 end
 
 add("cottage", "Garden cottage", "One room to live in, a bedroom and a kitchen corner.", "house", 24, 24, function(b)
@@ -537,6 +546,34 @@ add(
 		end
 	end
 )
+
+-- One building for every workplace, each in a file of its own under Data/Buildings. The user:
+-- "for buildings, make much more buildings, one for each workspace, and detail them all to be
+-- unique, as much as the starting house". A file returns a function that is handed `add` and
+-- lays its building out with the blueprint, like the ones above.
+Presets.Workplaces = {
+	"Market", -- the shopkeeper's
+	"Cafe", -- the barista's
+	"Bakery", -- the baker's
+	"IceCream", -- the ice cream seller's
+	"Florist",
+	"Studio", -- the artist's
+	"MusicHall", -- the musician's
+	"Workshop", -- the builder's
+	"Clinic", -- the doctor's
+	"School", -- the teacher's
+	"PostOffice", -- the postie's
+	"Library", -- the librarian's
+}
+local buildings = script.Parent:FindFirstChild("Buildings")
+if buildings then
+	for _, name in Presets.Workplaces do
+		local module = buildings:FindFirstChild(name)
+		if module then
+			(require(module) :: any)(add)
+		end
+	end
+end
 
 Presets.list = list
 local byId: { [string]: Preset } = {}
