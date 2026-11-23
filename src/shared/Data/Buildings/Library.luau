@@ -32,7 +32,6 @@ local BERRY = "B8505A"
 local MUSTARD = "D9A93F"
 local LILAC = "9C86B8"
 local WALNUT = "9A6B48"
-local OAK = "C49A6C"
 local DARK = "5A5560"
 
 return function(add: any)
@@ -268,20 +267,19 @@ return function(add: any)
 			-- by the window, the desk under the gallery's edge
 			putAt("stairs_straight", 4.3, 16.3, 180, F, 0, WALNUT, WALNUT)
 			put("work_library", 13, 19.5, 180, WALNUT, "F2E6CC")
-			put("table_dining_long", 17, 12.2, 0, WALNUT)
-			for _, x in { 15.2, 18.8 } do
-				put("chair_dining", x, 9.3, 0, WALNUT)
-				putAt("lamp_desk", x, 12, 0, top("table_dining_long"), 0, FOREST)
+			put("table_dining_long", 17.6, 11.4, 0, WALNUT)
+			for _, x in { 15.2, 17.6, 20 } do
+				put("chair_dining", x, 14.3, 180, WALNUT)
 			end
-			for _, x in { 16, 19.4 } do
-				put("chair_dining", x, 15.1, 180, WALNUT)
+			for _, x in { 15.6, 19.6 } do
+				putAt("lamp_desk", x, 11, 180, top("table_dining_long"), 0, FOREST)
 			end
-			putAt("books_stack", 17, 12.6, 20, top("table_dining_long"))
-			put("clock_grandfather", 21, 9.4, 270)
+			putAt("books_stack", 17.6, 11.8, 20, top("table_dining_long"))
+			hang("clock_wall", "right", 9.6, 7, "b")
 			put("armchair", 8.1, 12.8, 90, BERRY)
 			put("table_side", 7.6, 15.6, 0, WALNUT)
 			putAt("globe", 7.6, 15.6, 0, top("table_side"))
-			put("lamp_floor", 7.4, 9.8, 0)
+			put("lamp_floor", 7.4, 17.6, 0)
 			put("rug_long", 12, 12.4, 0, BERRY, MUSTARD)
 			hang("art_landscape", "front", 12, 9.4, "b")
 			for _, x in { 9, 16 } do

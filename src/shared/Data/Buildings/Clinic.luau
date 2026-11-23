@@ -220,28 +220,30 @@ return function(add: any)
 			-- the waiting hall --------------------------------------------------------------
 			-- the doctor's desk across the middle, its exam bed to the left, the patients'
 			-- chairs in front, the cupboards behind
-			put("work_clinic", 12, 18.4, 180, TRIM, TEAL)
-			put("sofa_two", 3.9, 14.6, 90, "9CCFC4")
-			put("table_coffee", 6.9, 13.6, 90, OAK)
-			putAt("books_stack", 6.9, 13.2, 15, top("table_coffee"))
-			putAt("plant_small", 6.9, 14.6, 0, top("table_coffee"))
+			put("work_clinic", 12, 17, 180, TRIM, TEAL)
+			put("sofa_two", 5, 11.9, 0, "9CCFC4")
+			put("table_coffee", 5, 15.2, 0, OAK)
+			putAt("books_stack", 4.2, 15.1, 15, top("table_coffee"))
+			putAt("plant_small", 5.8, 15.3, 0, top("table_coffee"))
 			put("aquarium", 3.2, 19.4, 90)
 			put("chair_wood", 18.4, 11.5, 0, OAK)
 			put("chair_wood", 20.5, 11.5, 0, OAK)
 			put("plant_big", 15.8, 11.9, 0)
+			-- behind the desk, clear of the doctor's way round it: the medicines, a basin with
+			-- the kettle by it, a cupboard, the coat stand
 			put("medicine_cabinet", 16.6, 22.9, 180)
-			put("counter_sink", 20.2, 22.4, 180, TRIM)
-			put("counter", 5.6, 22.4, 180, TRIM)
-			putAt("kettle", 5.1, 22.5, 160, top("counter"))
-			putAt("vase_flowers", 6.4, 22.4, 0, top("counter"))
+			put("cabinet", 20.4, 22.8, 180, TRIM)
+			putAt("plant_small", 21.2, 22.8, 0, top("cabinet"))
+			put("counter_sink", 5.6, 22.4, 180, TRIM)
+			putAt("kettle", 6.5, 22.6, 160, top("counter_sink"))
 			put("coat_stand", 3.2, 22.8, 0)
-			put("rug_round", 12, 13, 0, "9CCFC4", TEAL)
+			put("rug_round", 12, 12.6, 0, "9CCFC4", TEAL)
 			hang("clock_wall", "front", 12, 9.2, "b")
 			hang("art_landscape", "left", 14, 8.6, "b")
 			hang("art_flowers", "back", 12.4, 6.4, "b")
 			hang("shelf_wall", "back", 16.6, 8.6, "b")
 			hang("mirror_wall", "divide", 12, 4.6, "b")
-			for _, p in { { 7, 13 }, { 17, 14 }, { 12, 21.4 } } do
+			for _, p in { { 6, 13.4 }, { 18, 14 }, { 12, 21.2 } } do
 				put("light_ceiling", p[1], p[2], 0)
 			end
 
