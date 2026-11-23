@@ -49,7 +49,8 @@ screens from `UI/Kit` (white rounded cards with pill banners and soft shadows, r
 round icon buttons with a white rim and a caption pill, translucent navy pills over the 3D view) and `UI/Icons`
 (drawn icons, never emoji in the interface). The user asked for wobbly bubbles round text, wobbly buttons,
 speech bubble dialogue with names in colour, and simple one colour icons: use `Kit.blob`, `Kit.bubble`,
-`Kit.choice`, and `Icons.make` (flat by default: `Color`, `Hole`; `Full = true` for the old stickers). UI previews
+`Kit.choice`, and `Icons.make` (flat by default: `Color`, `Hole`; `Full = true` for the old stickers). Everything
+is flat colour (no darker base, gradient or sheen: `Kit.gradient` is switched off) and menus have no decorative icons. UI previews
 look best over an island render as `--bg`. The user's rule for icons: "make sure there are no overlapping outlines". A new icon is a
 shape list in `UI/Icons`; it gets one outline round its silhouette, so tell its parts apart by colour. Look at it
 with `sh tools/preview/ui.sh icons:<name> <png>`.

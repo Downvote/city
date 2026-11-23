@@ -139,10 +139,12 @@ end
 
 -- A top-to-bottom shading on a frame or button (lighter at the top).
 function Kit.gradient(inst: Instance, strength: number?): UIGradient
+	-- everything is flat colour now: the gradient is kept (callers hold on to it) but switched off
 	local k = 1 - (strength or 0.14)
 	return Kit.new("UIGradient", {
 		Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.new(k, k, k)),
 		Rotation = 90,
+		Enabled = false,
 		Parent = inst,
 	})
 end
@@ -367,6 +369,9 @@ local function startSheens()
 end
 
 local function addSheen(face: GuiObject, radius: any)
+	if true then
+		return -- flat colours: no sheen sweeping across
+	end
 	local sheen = Kit.new("Frame", {
 		Name = "Sheen",
 		BackgroundColor3 = T.White,
@@ -486,7 +491,7 @@ local function pressable(b: GuiButton)
 	local hovering, pressed = false, false
 	local function sink(down: boolean)
 		local lip = b:GetAttribute("Lip")
-		if type(lip) ~= "number" then
+		if type(lip) ~= "number" or lip <= 0 then
 			return
 		end
 		for _, name in { "Face", "Content" } do
@@ -556,10 +561,10 @@ end
 -- child sits on it with a gradient, a glossy "Shine" and a sweeping "Sheen", and a thick dark
 -- outline goes round.
 local function chunky(b: GuiButton, color: Color3, radius: any, lip: number, _outline: number?)
-	b.BackgroundColor3 = darker(color, 0.8)
+	-- a flat face in one colour (the button's own background stays clear)
+	b.BackgroundTransparency = 1
 	b:SetAttribute("KitButton", true)
 	b:SetAttribute("Lip", lip)
-	Kit.corner(b, radius or 14)
 	local face = Kit.new("Frame", {
 		Name = "Face",
 		BackgroundColor3 = color,
@@ -569,19 +574,6 @@ local function chunky(b: GuiButton, color: Color3, radius: any, lip: number, _ou
 		Parent = b,
 	})
 	Kit.corner(face, radius or 14)
-	Kit.gradient(face, 0.06)
-	local shine = Kit.new("Frame", {
-		Name = "Shine",
-		BackgroundColor3 = T.White,
-		BackgroundTransparency = 0.6,
-		BorderSizePixel = 0,
-		Size = UDim2.new(1, -16, 0, 3),
-		Position = UDim2.fromOffset(8, 3),
-		ZIndex = b.ZIndex,
-		Parent = face,
-	})
-	Kit.corner(shine, "pill")
-	addSheen(face, radius or 14)
 	return face
 end
 
@@ -593,7 +585,7 @@ function Kit.button(text: string, props: { [string]: any }?, onClick: (() -> ())
 	local color = p.Color or T.Green
 	local size: UDim2 = p.Size or UDim2.fromOffset(140, 46)
 	local textSize = p.TextSize or 20
-	local lip = if size.Y.Offset > 0 and size.Y.Offset < 34 then 3 else LIP
+	local lip = 0 -- flat: no darker base under the face
 	local textColor: Color3 = p.TextColor or T.White
 	local b = Kit.new("TextButton", {
 		Text = text,
@@ -625,7 +617,7 @@ function Kit.button(text: string, props: { [string]: any }?, onClick: (() -> ())
 	local iconPx = math.floor(textSize * 1.3)
 	if p.Icon then
 		if Icons.has(p.Icon) then
-			Icons.make(p.Icon, iconPx, { Parent = content, LayoutOrder = 1, ZIndex = b.ZIndex })
+			Icons.make(p.Icon, iconPx, { Parent = content, LayoutOrder = 1, ZIndex = b.ZIndex, Color = textColor })
 		else
 			Kit.new("TextLabel", {
 				Name = "Emoji",
@@ -746,8 +738,8 @@ function Kit.iconButton(icon: string, caption: string?, props: { [string]: any }
 	local textSize = p.TextSize or 14
 	local tagH = if hasCaption then textSize + 8 else 0
 	local w, h = size.X.Offset, size.Y.Offset
-	local lip = if h < 46 then 3 else 4
-	local d = math.max(16, math.min(w, h - math.floor(tagH * 0.6)) - lip)
+	local lip = 0
+	local d = math.max(16, math.min(w, h - math.floor(tagH * 0.6)) - 4)
 	local b = Kit.new("TextButton", {
 		Text = "",
 		AutoButtonColor = false,
@@ -765,18 +757,7 @@ function Kit.iconButton(icon: string, caption: string?, props: { [string]: any }
 	b:SetAttribute("Lip", lip)
 	b:SetAttribute("Round", true)
 	local z = b.ZIndex
-	-- a wobbly round face on a darker wobbly round under it
-	local under = Kit.blob({
-		Name = "Lip",
-		Round = true,
-		Color = darker(color, 0.8),
-		Base = false,
-		Size = UDim2.fromOffset(d, d),
-		Position = UDim2.new(0.5, -d / 2, 0, lip),
-		ZIndex = z,
-		Parent = b,
-	})
-	local _ = under
+	-- a flat jelly round face
 	local face, faceContent = Kit.blob({
 		Name = "Face",
 		Round = true,
@@ -1103,23 +1084,13 @@ function Kit.ribbon(text: string, props: { [string]: any }?): (Frame, TextLabel)
 	local holder = Kit.new("Frame", {
 		Name = p.Name or "Ribbon",
 		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(W, h + 5),
+		Size = UDim2.fromOffset(W, h),
 		Position = p.Position or UDim2.new(),
 		AnchorPoint = p.AnchorPoint or Vector2.zero,
 		LayoutOrder = p.LayoutOrder or 0,
 		ZIndex = z,
 		Parent = p.Parent,
 	})
-	local shade = Kit.new("Frame", {
-		Name = "Shade",
-		BackgroundColor3 = darker(color, 0.78),
-		BorderSizePixel = 0,
-		Size = UDim2.fromOffset(W, h),
-		Position = UDim2.fromOffset(0, 5),
-		ZIndex = z,
-		Parent = holder,
-	})
-	Kit.corner(shade, "pill")
 	local band = Kit.new("Frame", {
 		Name = "Band",
 		BackgroundColor3 = color,
@@ -1195,29 +1166,21 @@ function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: s
 			st.Transparency = 0.86
 		end
 	end
-	-- a soft tint of the panel's colour across the top, under the banner
-	local header = Kit.frame({
+	-- (kept for callers that place things by it: a clear strip where the banner sits)
+	local header = Kit.box({
 		Name = "Header",
-		Size = UDim2.new(1, -36, 0, 46),
-		Position = UDim2.fromOffset(18, 16),
-		Color = headColor:Lerp(T.White, 0.82),
-		Radius = "pill",
+		Size = UDim2.new(1, 0, 0, 56),
 		Parent = frame,
 	})
-	local ribbon, title = Kit.ribbon(titleText, {
+	-- the title on a flat pill banner over the top left edge (no icon: the user asked for plain titles)
+	local _ = icon
+	local _ribbon, title = Kit.ribbon(titleText, {
 		Parent = frame,
 		Color = headColor,
 		TextSize = 28,
-		Position = UDim2.new(0, if icon then 34 else 22, 0, -22),
+		Position = UDim2.new(0, 30, 0, -20),
 		ZIndex = 3,
 	})
-	if icon and Icons.has(icon) then
-		Icons.make(icon, 56, {
-			Parent = ribbon,
-			Position = UDim2.new(0, -30, 0, -6),
-			ZIndex = 6,
-		})
-	end
 	local close = Kit.closeButton({
 		Size = UDim2.fromOffset(50, 50),
 		Position = UDim2.new(1, 14, 0, -16),
@@ -1375,10 +1338,7 @@ function Kit.blobInto(holder: Frame, p: { [string]: any }): BlobInfo
 	local rng = Random.new(p.Seed or math.random(1, 1e6))
 	local border: Color3? = p.Border
 	local bw = if border then (p.BorderWidth or 4) else 0
-	local baseColor: any = p.Base
-	if baseColor == nil then
-		baseColor = if border then false else darker(color, 0.86)
-	end
+	local baseColor: any = p.Base or false -- flat: no darker copy unless asked for
 	local info: BlobInfo = { holder = holder, dots = {}, amp = 0, waves = 3, phase = rng:NextNumber(0, 6.28) }
 
 	local function layer(name: string): Frame
@@ -1428,12 +1388,12 @@ function Kit.blobInto(holder: Frame, p: { [string]: any }): BlobInfo
 			)
 		local small = math.min(est.X, est.Y)
 		local amp = p.Bulge or math.clamp(small * 0.035, 2.5, 9)
-		local dot = math.clamp(small * 0.42, 22, 64) -- each circle's diameter
+		local dot = math.clamp(small * 0.62, 30, 120) -- each circle's diameter: big, for a smooth curve
 		local inset = dot / 2 + amp
 		local radius = if p.Radius == "pill"
 			then math.max(0, small / 2 - inset)
 			else math.max(0, (if type(p.Radius) == "number" then p.Radius else 34) - dot / 2)
-		local spacing = math.max(5, dot * (if dot > 40 then 0.2 else 0.3))
+		local spacing = math.max(4, dot * 0.11)
 		info.amp = amp
 		info.waves = p.Waves or (if small < 90 then 2 else 3)
 		local pts = pathPoints(est.X, est.Y, inset, radius, spacing)
@@ -1617,7 +1577,7 @@ function Kit.bubble(props: { [string]: any }?): (Frame, Frame)
 		holder.ZIndex = z
 		holder:SetAttribute("Blob", true)
 		for _, spec in { { "Base", darker(color, 0.86), 5 }, { "Shape", color, 0 } } do
-			if spec[1] == "Base" and p.Shadow == false then
+			if spec[1] == "Base" and p.Shadow ~= true then
 				continue
 			end
 			local l = Kit.new("Frame", {

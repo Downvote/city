@@ -16,7 +16,6 @@ local Colors = require(Shared.Util.Colors)
 local Text = require(Shared.Util.Text)
 
 local Kit = require(script.Parent.Kit)
-local Icons = require(script.Parent.Icons)
 local Toasts = require(script.Parent.Toasts)
 local ModelPreview = require(script.Parent.ModelPreview)
 local State = require(script.Parent.Parent.Controllers.State)
@@ -280,25 +279,18 @@ local function showDetail()
 	local heart = Kit.frame({
 		Name = "Heart",
 		Parent = nameRow,
-		Size = UDim2.fromOffset(116, 30),
+		Size = UDim2.fromOffset(124, 30),
 		Position = UDim2.new(1, 0, 0.5, 0),
 		AnchorPoint = Vector2.new(1, 0.5),
 		Color = T.Pink,
 		Radius = "pill",
 	})
-	Icons.make("heart", 20, {
+	Kit.title(Text.fill("Heart level {n}", { n = v.heart or 1 }), {
 		Parent = heart,
-		Position = UDim2.new(0, 10, 0.5, 0),
-		AnchorPoint = Vector2.new(0, 0.5),
+		Size = UDim2.fromScale(1, 1),
+		TextSize = 15,
 		Color = T.White,
-		Hole = T.Pink,
-	})
-	Kit.title(Text.fill("Level {n}", { n = v.heart or 1 }), {
-		Parent = heart,
-		Size = UDim2.new(1, -36, 1, 0),
-		Position = UDim2.fromOffset(34, 0),
-		TextSize = 16,
-		Color = T.White,
+		AlignX = Enum.TextXAlignment.Center,
 	})
 	Kit.text(
 		if pers then pers.name .. ". " .. pers.blurb else "",
@@ -392,16 +384,10 @@ local function showDetail()
 		local row = Kit.box({ Parent = wishBody, Size = UDim2.fromScale(1, 1) })
 		Kit.pad(row, 20, 0)
 		local kind = v.wish.kind
-		Icons.make(Life.WishIcons[kind] or "smile", 26, {
-			Parent = row,
-			Position = UDim2.new(0, 0, 0.5, 0),
-			AnchorPoint = Vector2.new(0, 0.5),
-			Color = T.Orange,
-		})
 		local wishLabel = Kit.text(wishText, {
 			Parent = row,
-			Size = UDim2.new(1, -176, 1, 0),
-			Position = UDim2.fromOffset(36, 0),
+			Size = UDim2.new(1, -146, 1, 0),
+			Position = UDim2.fromOffset(4, 0),
 			TextSize = 16,
 			Font = Kit.Fonts.Bold,
 		})

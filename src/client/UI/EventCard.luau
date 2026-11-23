@@ -178,7 +178,6 @@ local function showChoices(ev: any)
 			Parent = choiceRow,
 			LayoutOrder = i,
 			Disabled = not affordable,
-			Icon = if c.cost then "coin" else nil,
 		})
 		-- the choices pop up one after another
 		local pop = b:FindFirstChild("Press") :: UIScale

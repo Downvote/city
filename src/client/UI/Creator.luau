@@ -961,9 +961,6 @@ local function setTitle(text: string)
 		Position = UDim2.fromOffset(34, 0),
 		ZIndex = 3,
 	})
-	if Icons.has("shirt") and titleRibbon then
-		Icons.make("shirt", 56, { Parent = titleRibbon, Position = UDim2.fromOffset(-30, -6), ZIndex = 6 })
-	end
 end
 
 local function build()
@@ -1069,14 +1066,14 @@ local function build()
 	Kit.list(steps, 4, true)
 	stepButtons.look = Kit.button(
 		"1  Look",
-		{ Parent = steps, Size = UDim2.new(0.5, -2, 1, 0), TextSize = 18, Radius = 14, Icon = "shirt" },
+		{ Parent = steps, Size = UDim2.new(0.5, -2, 1, 0), TextSize = 18, Radius = "pill" },
 		function()
 			showStep("look")
 		end
 	)
 	stepButtons.profile = Kit.button(
 		"2  Name and personality",
-		{ Parent = steps, Size = UDim2.new(0.5, -2, 1, 0), TextSize = 18, Radius = 14, Icon = "person" },
+		{ Parent = steps, Size = UDim2.new(0.5, -2, 1, 0), TextSize = 18, Radius = "pill" },
 		function()
 			showStep("profile")
 		end

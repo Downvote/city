@@ -14,8 +14,6 @@ local Rewards = {}
 local T = Kit.Theme
 local panel: any = nil
 
-local ICONS = { coins = "coin", basket = "bag", saying = "news", hobby = "music" }
-
 function Rewards.isOpen(): boolean
 	return panel ~= nil
 end
@@ -52,7 +50,6 @@ function Rewards.open()
 			LayoutOrder = i,
 			Size = UDim2.new(1, -24, 0, 60),
 			TextSize = 19,
-			Icon = ICONS[o.kind],
 		}, function()
 			Rewards.close()
 			task.spawn(function()

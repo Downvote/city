@@ -7,7 +7,6 @@ local Life = require(Shared.Sim.Life)
 local Text = require(Shared.Util.Text)
 
 local Kit = require(script.Parent.Kit)
-local Icons = require(script.Parent.Icons)
 local State = require(script.Parent.Parent.Controllers.State)
 
 local Goals = {}
@@ -60,29 +59,23 @@ local function fill()
 			Radius = 24,
 			LayoutOrder = i,
 		})
-		Icons.make(if g.claimed then "check" else "medal", 40, {
-			Parent = row,
-			Position = UDim2.new(0, 16, 0.5, 0),
-			AnchorPoint = Vector2.new(0, 0.5),
-			Color = if g.claimed then T.Green else nil,
-		})
 		Kit.title(g.goal.name, {
 			Parent = row,
-			Size = UDim2.new(1, -230, 0, 24),
-			Position = UDim2.fromOffset(68, 8),
+			Size = UDim2.new(1, -190, 0, 24),
+			Position = UDim2.fromOffset(24, 8),
 			TextSize = 19,
 		})
 		Kit.text(g.goal.desc, {
 			Parent = row,
-			Size = UDim2.new(1, -230, 0, 18),
-			Position = UDim2.fromOffset(68, 32),
+			Size = UDim2.new(1, -190, 0, 18),
+			Position = UDim2.fromOffset(24, 32),
 			TextSize = 14,
 			Color = T.InkSoft,
 		})
 		Kit.bar({
 			Parent = row,
-			Size = UDim2.new(1, -240, 0, 10),
-			Position = UDim2.fromOffset(68, 54),
+			Size = UDim2.new(1, -200, 0, 10),
+			Position = UDim2.fromOffset(24, 54),
 		}, g.value / g.goal.need, if g.done then T.Green else T.Yellow)
 		if g.claimed then
 			Kit.text("Done", {
@@ -104,7 +97,6 @@ local function fill()
 				Color = T.Green,
 				TextSize = 17,
 				Radius = "pill",
-				Icon = "coin",
 			}, function()
 				task.spawn(function()
 					Remotes.fn("GoalClaim"):InvokeServer(g.goal.id)

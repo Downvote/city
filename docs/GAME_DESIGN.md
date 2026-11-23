@@ -323,6 +323,14 @@ In our own drawing:
 > it looks too squarish and you can tell it is made by splicing shapes together. it should be more rounded and
 > wobbly, like one connected wobbly outline
 
+> make the circles bigger. also, a few of these are misaligned. also, no need for the icons in the menu, such as
+> the heart icon, the villagers icon in the villagers tab, etc. also, no need to add shading to the bottom of
+> certain tabs and buttons, they should be a flat color as well
+
+- **Flat colour everywhere**: buttons, tabs, banners and bubbles are one flat colour each, with no darker base,
+  gradient, shine or sheen under or across them (buttons press with a little squash instead of sinking). Menus
+  carry no decorative icons: panel titles, the creator's steps, the heart level tag, wishes, thank yous and goals
+  are words only. The overworld keeps its icons (the dock, the HUD stats, Build mode's tools).
 - **Wobbly bubbles** have one smooth, connected outline with round corners, whose edge drifts gently in and out in
   slow waves. They carry the words everywhere: the HUD's money, people and happiness pills, the level card and
   the clock are cream bubbles whose edges gently ripple; panels are big cream wobbly cards on a darker copy, with
