@@ -3,12 +3,17 @@
 
     python3 scripts/library_textures.py search "<keywords>" --sheet out.png [--limit 24]
     python3 scripts/library_textures.py resolve <decal id> [<decal id> ...]
+    python3 scripts/library_textures.py check
 
 search lists decals for the keywords with a contact sheet: each picture with its decal id, how
 well its opposite edges match (lower tiles better: a seamless texture scores near 0) and how
 coloured it is (lower is greyer; a part's colour tints a material's texture, so grey ones take
 paint best). resolve finds the image a decal shows (a material needs the image's id, not the decal's): the
-Creator Store's item details list it as the decal's textureId.
+Creator Store's item details list it as the decal's textureId. It also says whether Roblox will show
+that image: a decal can be in the store while its image is private or was taken down, and then the
+image's own thumbnail is only a placeholder ("no picture"). Never use one of those: it would not
+load in the game. check asks the same of every image id already in Data/TextureIds (colour, normal
+and roughness maps) and fails if one has gone.
 
 Picked textures go in src/shared/Data/TextureIds.luau (with their decal ids noted), then
 python3 scripts/sync_materials.py puts them in the place.
@@ -144,15 +149,63 @@ def resolve(decal_id):
     return image
 
 
+def shown(image_ids):
+    """image id -> whether Roblox shows the image itself: its thumbnail is the picture ("ok"), is
+    still being made ("pending") or is the placeholder for an image nobody may see ("no picture")."""
+    out = {}
+    ids = [int(i) for i in image_ids]
+    for i in range(0, len(ids), 50):
+        chunk = ",".join(str(x) for x in ids[i:i + 50])
+        for d in get(f"https://thumbnails.roblox.com/v1/assets?assetIds={chunk}&size=420x420&format=Png").get("data", []):
+            if d.get("state") == "Pending":
+                out[d["targetId"]] = "pending"
+            elif d.get("state") == "Completed" and "/Image/" in (d.get("imageUrl") or ""):
+                out[d["targetId"]] = "ok"
+            else:
+                out[d["targetId"]] = "no picture"
+    return out
+
+
 def cmd_resolve(args):
     failed = 0
+    found = {}
     for decal in args.ids:
         try:
-            print(decal, resolve(int(decal)))
+            found[decal] = resolve(int(decal))
         except Exception as e:
             print(decal, "failed:", e)
             failed += 1
+    state = shown(found.values()) if found else {}
+    for decal, image in found.items():
+        how = state.get(int(image), "no picture")
+        print(decal, image, how)
+        if how == "no picture":
+            failed += 1
     if failed:
+        sys.exit(1)
+
+
+def cmd_check(args):
+    import os
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import sync_materials
+    want = {}
+    for name, got in sync_materials.read_ids().items():
+        for field in ("color", "normal", "rough"):
+            if field in got:
+                want[int(got[field].split("//")[1])] = f"{name}.{field}"
+    state = shown(want)
+    for attempt in range(3):  # a thumbnail nobody has asked for yet takes a moment to be made
+        waiting = [i for i in want if state.get(i) == "pending"]
+        if not waiting:
+            break
+        time.sleep(6)
+        state.update(shown(waiting))
+    gone = [(label, i, state.get(i, "no picture")) for i, label in want.items() if state.get(i) != "ok"]
+    for label, i, how in gone:
+        print(f"{label}: image {i}: {how}")
+    print(f"{len(want)} images in Data/TextureIds, {len(gone)} that Roblox shows no picture for")
+    if gone:
         sys.exit(1)
 
 
@@ -166,8 +219,9 @@ def main():
     s.add_argument("--sheet")
     r = sub.add_parser("resolve")
     r.add_argument("ids", nargs="+")
+    sub.add_parser("check")
     args = ap.parse_args()
-    {"search": cmd_search, "resolve": cmd_resolve}[args.cmd](args)
+    {"search": cmd_search, "resolve": cmd_resolve, "check": cmd_check}[args.cmd](args)
 
 
 if __name__ == "__main__":

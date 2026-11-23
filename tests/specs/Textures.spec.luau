@@ -1,9 +1,10 @@
 --!nocheck
--- The painted textures: every material in Data/Textures has its pictures in art/textures with the
--- same studs per tile the painter used, names a real Roblox material, and only well formed
--- uploaded ids turn into MaterialVariants. The looks (a second face for a material, worn only by
--- the parts that ask for it: "Concrete:Panel") have their pictures too, never take a material's
--- place, and every look a model asks for is one we paint.
+-- The textures: every material in Data/Textures has its painted pictures in art/textures with the
+-- same studs per tile the painter used, names a real Roblox material, and only well formed ids
+-- turn into MaterialVariants. The looks (a second face for a material, worn only by the parts
+-- that ask for it: "Concrete:Panel") have their pictures too, never take a material's place, and
+-- every look a model asks for is one we have. The place file holds exactly what Data/TextureIds
+-- says, and a part under a dark picture is painted lighter to make up for it.
 
 local Shared = "ReplicatedStorage.Shared."
 local Textures = require(Shared .. "Data.Textures")
@@ -241,7 +242,45 @@ describe("Textures", function()
 		expect(Textures.tint(nil, green)).toBe(green)
 	end)
 
-	it("colours a look that isn't in the place yet as its material", function()
+	it("brightens the paint under a dark picture, as far as a colour can go", function()
+		local function close(a, b)
+			return math.abs(a.R - b.R) < 1e-4 and math.abs(a.G - b.G) < 1e-4 and math.abs(a.B - b.B) < 1e-4
+		end
+		local dim = Color3.new(0.3, 0.4, 0.2)
+		-- a picture half as light as a texture is taken to be: the paint is doubled, so the wall
+		-- comes out as light as it would under any other texture
+		local up = Textures.shade(dim, false, Textures.Level / 2)
+		expect(close(up, Color3.new(0.6, 0.8, 0.4))).toBeTruthy()
+		-- a colour can't go past 1: the brightest channel stops there and the hue is kept
+		local pale = Color3.new(0.9, 0.6, 0.3)
+		local top = Textures.shade(pale, false, Textures.Level / 2)
+		expect(close(top, Color3.new(1, 0.6 / 0.9, 0.3 / 0.9))).toBeTruthy()
+		-- a picture as light as the rest, or lighter, leaves the paint alone; so does none
+		expect(Textures.shade(dim, false, Textures.Level)).toBe(dim)
+		expect(Textures.shade(dim, false, 0.95)).toBe(dim)
+		expect(Textures.shade(dim, false, nil)).toBe(dim)
+		expect(Textures.shade(dim, false, 0)).toBe(dim)
+		-- white paint has nowhere to go
+		expect(Textures.shade(Color3.new(1, 1, 1), false, 0.4)).toBe(Color3.new(1, 1, 1))
+		-- a picture with its own colour is lifted, whatever its lightness
+		local lifted = Textures.shade(dim, true, 0.4)
+		expect(close(lifted, dim:Lerp(Color3.new(1, 1, 1), Textures.Lift))).toBeTruthy()
+		-- and only a lightness that makes sense is passed on
+		local got = Textures.readyLooks({
+			panel = { color = "rbxassetid://1", light = 0.6 },
+			barrel = { color = "rbxassetid://2", light = 7 },
+			cliff = { color = "rbxassetid://3", light = "dark" },
+		})
+		local byName = {}
+		for _, t in got do
+			byName[t.name] = t
+		end
+		expect(byName.panel.light).toBe(0.6)
+		expect(byName.barrel.light).toBe(nil)
+		expect(byName.cliff.light).toBe(nil)
+	end)
+
+	it("colours a look as its own picture asks, or as its material when it has none", function()
 		local green = Color3.fromRGB(120, 200, 90)
 		local ready = {}
 		for _, t in Textures.readyLooks() do
@@ -254,10 +293,11 @@ describe("Textures", function()
 			if t == nil then
 				-- the part shows the plain material, so it takes the plain material's colour
 				expect(got).toBe(Textures.tint(e.material, green))
-			elseif t.own then
-				expect(got.R > green.R and got.B > green.B).toBeTruthy()
 			else
-				expect(got).toBe(green)
+				expect(got).toBe(Textures.shade(green, t.own, t.light))
+				if t.own then
+					expect(got.R > green.R and got.B > green.B).toBeTruthy()
+				end
 			end
 		end
 		-- a look nobody painted is its material too
@@ -284,7 +324,56 @@ describe("Textures", function()
 			if ids.studs then
 				expect(ids.studs).toBeBetween(0.5, 50)
 			end
+			if ids.light then
+				expect(ids.light).toBeBetween(0.05, 0.99)
+			end
 		end
+	end)
+
+	it("is in the place file as Data/TextureIds has it", function()
+		-- scripts/sync_materials.py writes default.project.json; this is the game's own reading of
+		-- the same table, so the two can't drift apart
+		local project = decodeJson(readFile("default.project.json"))
+		local service = project.tree.MaterialService
+		expect(service ~= nil).toBeTruthy()
+		local overrides = service["$properties"] or {}
+		local count = 0
+		local function same(t)
+			local v = service[t.variant]
+			if v == nil then
+				error(t.variant .. " is not in default.project.json: run python3 scripts/sync_materials.py")
+			end
+			local p = v["$properties"]
+			expect(v["$className"]).toBe("MaterialVariant")
+			expect(p.BaseMaterial).toBe(t.material)
+			expect(p.ColorMap).toBe(t.color)
+			expect(p.NormalMap).toBe(t.normal)
+			expect(p.RoughnessMap).toBe(t.rough)
+			expect(p.StudsPerTile).toBe(t.studs)
+			count += 1
+		end
+		for _, t in Textures.ready() do
+			same(t)
+			expect(overrides[t.material .. "Name"]).toBe(t.variant)
+		end
+		local taken = {}
+		for _, name in overrides do
+			taken[name] = true
+		end
+		for _, t in Textures.readyLooks() do
+			same(t)
+			-- a look takes no material's place
+			if taken[t.variant] then
+				error(t.variant .. " is set as a material's own look in default.project.json")
+			end
+		end
+		local inPlace = 0
+		for _, v in service do
+			if type(v) == "table" and v["$className"] == "MaterialVariant" then
+				inPlace += 1
+			end
+		end
+		expect(inPlace).toBe(count)
 	end)
 
 	it("paints every look the models ask for", function()

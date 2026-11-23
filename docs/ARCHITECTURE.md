@@ -106,10 +106,16 @@ The contract between the parts of the game. Update it with every change to an AP
   name (nil for a plain material, an unknown look or a look on the wrong material), and `Textures.tint` takes the
   whole string. `Textures.ready()` is still the materials only (the client sets an override for each of those);
   `Textures.readyLooks()` is the looks that have ids, and `Textures.install` makes their variants with no
-  override. `scripts/gen_textures.py --looks` paints each look's colour, normal (`_n`) and roughness (`_r`)
-  pictures, `scripts/upload_textures.py --looks` sends them as Image assets and writes the ids into
-  `Data/TextureIds`, and `scripts/sync_materials.py` writes a MaterialVariant for every look with ids. The
-  Textures spec fails on a look a model asks for that `Data/Textures` doesn't have.
+  override. Each look wears a Creator Store picture (ids and credits in `Data/TextureIds`, as the user chose:
+  "use roblox library images that are similar"); `scripts/gen_textures.py --looks` paints our own colour, normal
+  (`_n`) and roughness (`_r`) pictures, kept in art/textures but not used, and `scripts/upload_textures.py` leaves
+  alone any texture whose colour is a library picture. `scripts/sync_materials.py` writes a MaterialVariant for
+  every look with ids. A `TextureIds` line may carry `light` (how bright the picture is on average): then
+  `Textures.tint` brightens the paint under it by `Textures.Level / light` (0.8, keeping its hue, never past
+  white) through `Textures.shade(color, own, light)`, so a dark picture doesn't sink a wall below its paint.
+  `scripts/library_textures.py resolve` prints whether an image shows (`ok`, `pending`, `no picture`) and `check`
+  asks it of every id in `TextureIds`. The Textures spec fails on a look a model asks for that `Data/Textures`
+  doesn't have, and on a place file out of step with `TextureIds`.
 
 ## The facade kit
 

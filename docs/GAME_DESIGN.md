@@ -856,8 +856,11 @@ None of that game's streets, shops, signs, gate or art: Maplewick's are its own.
   > use roblox library images that are similar
 
   So each look wears a Creator Store picture picked to match ours as nearly as the library allows (ids and
-  credits in `Data/TextureIds`), the way the base materials already do. A look with no close match shows its
-  plain material. Our painted set stays in the repository and can replace them later with one upload.
+  credits in `Data/TextureIds`), the way the base materials already do: panels with bolt dots, smooth stucco,
+  brick, small floor tiles, diamond checker tiles, corrugated sheet, roller shutters, upright timber slats in pale
+  oak, barrel roof tiles, square paving slabs, street asphalt, awning canvas, a faceted rock face. Darker pictures
+  have the paint under them lifted so a wall still shows its colour. Our painted set stays in the repository and
+  can replace them later with one upload.
 - **The light.** Roblox still runs no shaders of our own, so this is again the sun, the air and the effects over
   the picture. The sun rides lower all day (the island sits further north: a latitude of 54), so shadows are long;
   their edge is a touch softer than the hard cel edge it had, and the shade is lifted a little by light off the

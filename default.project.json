@@ -222,6 +222,126 @@
           "StudsPerTile": 6,
           "MaterialPattern": "Regular"
         }
+      },
+      "MaplewickPanel": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Concrete",
+          "ColorMap": "rbxassetid://110052141069002",
+          "StudsPerTile": 12,
+          "MaterialPattern": "Regular"
+        }
+      },
+      "MaplewickStucco": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Concrete",
+          "ColorMap": "rbxassetid://16287812455",
+          "StudsPerTile": 10,
+          "MaterialPattern": "Regular"
+        }
+      },
+      "MaplewickMaple": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Brick",
+          "ColorMap": "rbxassetid://9620643733",
+          "StudsPerTile": 6,
+          "MaterialPattern": "Regular"
+        }
+      },
+      "MaplewickMosaic": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "CeramicTiles",
+          "ColorMap": "rbxassetid://5621459779",
+          "StudsPerTile": 5,
+          "MaterialPattern": "Regular"
+        }
+      },
+      "MaplewickChecker": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "CeramicTiles",
+          "ColorMap": "rbxassetid://98785224516028",
+          "StudsPerTile": 4,
+          "MaterialPattern": "Regular"
+        }
+      },
+      "MaplewickCorrugated": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Metal",
+          "ColorMap": "rbxassetid://17452681009",
+          "StudsPerTile": 4,
+          "MaterialPattern": "Regular"
+        }
+      },
+      "MaplewickShutter": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Metal",
+          "ColorMap": "rbxassetid://6723969247",
+          "StudsPerTile": 4,
+          "MaterialPattern": "Regular"
+        }
+      },
+      "MaplewickSlats": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "WoodPlanks",
+          "ColorMap": "rbxassetid://4708950958",
+          "StudsPerTile": 10,
+          "MaterialPattern": "Regular"
+        }
+      },
+      "MaplewickBarrel": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "ClayRoofTiles",
+          "ColorMap": "rbxassetid://6436676312",
+          "StudsPerTile": 10,
+          "MaterialPattern": "Regular"
+        }
+      },
+      "MaplewickSlabs": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Pavement",
+          "ColorMap": "rbxassetid://15005538341",
+          "StudsPerTile": 6,
+          "MaterialPattern": "Regular"
+        }
+      },
+      "MaplewickStreet": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Asphalt",
+          "ColorMap": "rbxassetid://73120610106763",
+          "StudsPerTile": 16,
+          "MaterialPattern": "Regular",
+          "NormalMap": "rbxassetid://11226165423"
+        }
+      },
+      "MaplewickCanvas": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Fabric",
+          "ColorMap": "rbxassetid://106263716160538",
+          "StudsPerTile": 3,
+          "MaterialPattern": "Regular",
+          "NormalMap": "rbxassetid://82442953804931",
+          "RoughnessMap": "rbxassetid://81106618533486"
+        }
+      },
+      "MaplewickCliff": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Rock",
+          "ColorMap": "rbxassetid://92852701550899",
+          "StudsPerTile": 16,
+          "MaterialPattern": "Regular"
+        }
       }
     }
   }

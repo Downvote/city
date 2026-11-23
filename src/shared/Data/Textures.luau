@@ -1,14 +1,15 @@
 --!strict
--- A texture for each material, and the looks. Most of the materials' textures come from the
--- Creator Store (public decals picked with scripts/library_textures.py); for the rest we have our
--- own painted ones in art/textures (scripts/gen_textures.py; the studs per tile here match
--- art/textures/textures.json, the Textures spec checks). A texture shows once its image id is in
--- Data/TextureIds; until then the material keeps Roblox's own look.
+-- A texture for each material, and the looks. The pictures come from the Creator Store (public
+-- decals picked with scripts/library_textures.py, their ids in Data/TextureIds). We also have our
+-- own painted set in art/textures (scripts/gen_textures.py; the studs per tile here are that
+-- set's and match art/textures/textures.json, the Textures spec checks), which the previews can
+-- show and which could be uploaded in a library picture's place. A texture shows once its image
+-- id is in Data/TextureIds; until then the material keeps Roblox's own look.
 --
 -- A look is a second face for a material that only the parts asking for it wear: a primitive
 -- whose material is "Concrete:Panel" is Concrete in the look Panel, and the Builder gives that
--- part the MaterialVariant "MaplewickPanel". Plain Concrete stays as it is. The looks are all our
--- own, painted grey so the part's colour tints them. A look with no id yet shows its material.
+-- part the MaterialVariant "MaplewickPanel". Plain Concrete stays as it is. The looks' pictures
+-- are grey or pale so the part's colour tints them. A look with no id shows its material.
 --
 -- Roblox lets only plugins set a MaterialVariant's pictures, so the variants go into the place
 -- when it's built: scripts/sync_materials.py writes them, and MaterialService's overrides for the
@@ -29,6 +30,7 @@ export type Ready = {
 	normal: string?,
 	rough: string?,
 	own: boolean, -- the picture brings its own colour
+	light: number?, -- how light the picture is, when it is darker than the rest (see `shade`)
 	look: string?, -- a look: worn only by the parts that ask for it, never the material's own face
 }
 
@@ -59,6 +61,8 @@ Textures.list = {
 
 -- The looks. `name` is the picture in art/textures and the key in Data/TextureIds, and is the
 -- look's name in small letters; a part asks for one with the material "<material>:<look>".
+-- `studs` and the notes are our painted picture's. The library picture a look wears in the game
+-- has its own size in Data/TextureIds, and that one wins.
 Textures.looks = {
 	{ name = "panel", material = "Concrete", look = "Panel", studs = 12 }, -- precast panels, 6 by 4 studs, four bolts each
 	{ name = "stucco", material = "Concrete", look = "Stucco", studs = 10 }, -- smooth painted render
@@ -118,6 +122,7 @@ local function collect(list: { Entry }, source: { [string]: TextureIds.Ids }): {
 				normal = if type(got.normal) == "string" and got.normal:match(ID) then got.normal else nil,
 				rough = if type(got.rough) == "string" and got.rough:match(ID) then got.rough else nil,
 				own = got.own == true,
+				light = if type(got.light) == "number" and got.light > 0 and got.light < 1 then got.light else nil,
 				look = e.look,
 			})
 		end
@@ -137,37 +142,50 @@ function Textures.readyLooks(ids: { [string]: TextureIds.Ids }?): { Ready }
 	return collect(Textures.looks, ids or TextureIds)
 end
 
--- Whose texture brings its own colour, from what's in TextureIds now: materials by name, and
--- the looks that are ready by "<material>:<look>" (true or false).
-local ownColour: { [string]: boolean } = {}
-for _, t in Textures.ready() do
-	if t.own then
-		ownColour[t.material] = true
-	end
-end
-local lookOwn: { [string]: boolean } = {}
-for _, t in Textures.readyLooks() do
-	lookOwn[t.material .. ":" .. (t.look :: string)] = t.own
-end
-
 local WHITE = Color3.new(1, 1, 1)
 Textures.Lift = 0.72 -- how far a part's colour moves to white on a texture with its own colour
+Textures.Level = 0.8 -- how light a texture is taken to be; paint on a darker one is brightened
 
--- The colour a part of this material should have. Roblox multiplies a material's texture by the
--- part's colour, so a picture that brings its own colour (green grass) would go muddy under a
--- green part: those parts are lifted most of the way to white and the paint only tints them.
--- A material may name a look ("Concrete:Panel"). A look that is in the place answers for
--- itself; one that isn't yet shows its material, so it is coloured as that material is.
+-- The colour to give a part so it comes out as `color` under a texture. Roblox multiplies a
+-- material's texture by the part's colour. So a picture that brings its own colour (green
+-- grass) would go muddy under a green part: `own` lifts the part most of the way to white and
+-- the paint only tints it. And a grey picture that is a good deal darker than the rest (`light`,
+-- its average, under Textures.Level) would leave the wall darker than it was painted: the paint
+-- is brightened to make up, keeping its hue, as far as a colour can go.
+function Textures.shade(color: Color3, own: boolean?, light: number?): Color3
+	if own then
+		return color:Lerp(WHITE, Textures.Lift)
+	end
+	if light and light > 0 and light < Textures.Level then
+		local top = math.max(color.R, color.G, color.B, 0.001)
+		local gain = math.min(Textures.Level / light, 1 / top)
+		if gain > 1 then
+			return Color3.new(color.R * gain, color.G * gain, color.B * gain)
+		end
+	end
+	return color
+end
+
+-- How each texture in TextureIds now wants its parts painted: the materials by name, the looks
+-- that are ready by "<material>:<look>".
+local painted: { [string]: Ready } = {}
+for _, t in Textures.ready() do
+	painted[t.material] = t
+end
+for _, t in Textures.readyLooks() do
+	painted[t.material .. ":" .. (t.look :: string)] = t
+end
+
+-- The colour a part of this material should have (see `shade`). A material may name a look
+-- ("Concrete:Panel"). A look that is in the place answers for itself; one that isn't shows its
+-- material, so it is coloured as that material is.
 function Textures.tint(material: string?, color: Color3): Color3
 	if not material then
 		return color
 	end
-	local own = lookOwn[material]
-	if own == nil then
-		own = ownColour[(Textures.split(material))] == true
-	end
-	if own then
-		return color:Lerp(WHITE, Textures.Lift)
+	local t = painted[material] or painted[(Textures.split(material))]
+	if t then
+		return Textures.shade(color, t.own, t.light)
 	end
 	return color
 end

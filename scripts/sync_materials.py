@@ -25,20 +25,30 @@ ID = r'"(rbxassetid://\d+)"'
 
 
 HEADER = """--!strict
--- Roblox image ids for the materials' textures and for the looks (Data/Textures). Most of the
--- materials' come from the Creator Store (public decals, found with scripts/library_textures.py;
--- `decal` is the decal they came from, the comment its name and maker); the rest, and every
--- look, are our painted ones in art/textures once uploaded (scripts/upload_textures.py, which
--- starts their comment with "painted"). Fields: `color` the image, `normal` an optional normal
--- map (OpenGL style, the kind Roblox reads) and `rough` an optional roughness map, both from the
--- same set as the colour where the picture has a pattern (bricks, cobbles, tiles), `studs` how
--- many studs one copy covers (else Data/Textures' own), `own` when the picture brings its own
--- colour (the part's paint then only tints it lightly).
+-- Roblox image ids for the materials' textures and for the looks (Data/Textures). They come from
+-- the Creator Store (public decals, found with scripts/library_textures.py; `decal` is the decal
+-- they came from, the comment its name and maker). Our own painted set in art/textures can take a
+-- texture's place once uploaded (scripts/upload_textures.py, which starts the comment with
+-- "painted"). Fields: `color` the image, `normal` an optional normal map (OpenGL style, the kind
+-- Roblox reads) and `rough` an optional roughness map, both from the same set as the colour
+-- where the picture has a pattern (bricks, cobbles, tiles), `studs` how many studs one copy
+-- covers (else Data/Textures' own), `own` when the picture brings its own colour (the part's
+-- paint then only tints it lightly), `light` how light the picture is on average (0 to 1) when
+-- it is a good deal darker than the rest: the part's paint is then brightened to make up for
+-- it, as far as the colour can go (Textures.shade).
 -- After changing this, run python3 scripts/sync_materials.py to put it in the place.
 -- A texture with no colour id here keeps Roblox's own material, and a look with none shows its
 -- material. One texture a line: the scripts and the preview read this file line by line.
 
-export type Ids = { color: string?, normal: string?, rough: string?, studs: number?, own: boolean?, decal: number? }
+export type Ids = {
+\tcolor: string?,
+\tnormal: string?,
+\trough: string?,
+\tstuds: number?,
+\town: boolean?,
+\tlight: number?,
+\tdecal: number?,
+}
 
 -- stylua: ignore
 """
@@ -66,6 +76,9 @@ def read_ids(path=IDS):
         v = re.search(r"\bdecal\s*=\s*(\d+)", body)
         if v:
             ids["decal"] = int(v.group(1))
+        v = re.search(r"\blight\s*=\s*([\d.]+)", body)
+        if v:
+            ids["light"] = float(v.group(1))
         if re.search(r"\bown\s*=\s*true", body):
             ids["own"] = True
         if note.strip():
@@ -89,6 +102,8 @@ def write_ids(ids, order, path=IDS):
             fields.append(f"studs = {got['studs']}")
         if got.get("own"):
             fields.append("own = true")
+        if "light" in got:
+            fields.append(f"light = {got['light']:g}")
         if "decal" in got:
             fields.append(f"decal = {got['decal']}")
         note = f" -- {got['note']}" if got.get("note") else ""

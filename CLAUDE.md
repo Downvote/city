@@ -192,13 +192,14 @@ carry a `normal` map and a `rough` map too (the user asked for normal maps): tak
 colour when the picture has a pattern, and keep one texture to a line in `Data/TextureIds`. Then
 `python3 scripts/sync_materials.py` writes them into the place file (check.sh fails if it's out of date), and
 `render.sh <scene> <png> --textures` shows them. Our own painted set (`scripts/gen_textures.py`, art/textures)
-covers the rest and can be uploaded with `scripts/upload_textures.py`. It also holds the town's looks (the user:
-"you can make your own textures for these too"): a look is a second face for a material that only the parts
-naming it wear (`"Concrete:Panel"`, `"Brick:Maple"`, `"CeramicTiles:Mosaic"` and ten more: `Textures.looks`),
-painted with `python3 scripts/gen_textures.py --looks`. A look overrides nothing and shows its plain material
-until its pictures are uploaded (`ROBLOX_API_KEY=<key> python3 scripts/upload_textures.py --user <id> --looks`,
-which writes the ids into `Data/TextureIds` and runs the sync). See the town as it will be after the upload with
-`render.sh <scene> <png> --textures --painted`.
+covers the rest and can be uploaded with `scripts/upload_textures.py`. The town's looks (the user: "you can make your own textures
+for these too") are second faces for a material that only the parts naming them wear (`"Concrete:Panel"`,
+`"Brick:Maple"`, `"CeramicTiles:Mosaic"` and ten more: `Textures.looks`). We painted our own
+(`python3 scripts/gen_textures.py --looks`), but asked how to get them into the game the user chose "use roblox
+library images that are similar", so each wears a Creator Store picture like the materials do; the painted set
+stays in art/textures, unused. A `light` on a line of `Data/TextureIds` brightens the paint under a dark picture,
+and `python3 scripts/library_textures.py check` confirms every library image still shows (run it now and then:
+pictures can be taken down).
 
 Nothing here runs inside Roblox. Build mode's client runs end to end on the simulation in `tests/sim`; the other
 screens are built on it for the UI previews; the server services and NPCs are only type checked. A review pass found

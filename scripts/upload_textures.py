@@ -1,17 +1,25 @@
 #!/usr/bin/env python3
-"""Uploads the painted textures in art/textures to Roblox through Open Cloud, writes their image ids
-into src/shared/Data/TextureIds.luau and puts them in the place (scripts/sync_materials.py).
+"""Uploads our own painted textures in art/textures to Roblox through Open Cloud, writes their image
+ids into src/shared/Data/TextureIds.luau and puts them in the place (scripts/sync_materials.py).
 
-    ROBLOX_API_KEY=<key> python3 scripts/upload_textures.py --user <your user id> --looks
-    ROBLOX_API_KEY=<key> python3 scripts/upload_textures.py --group <group id> --only panel,barrel
-    python3 scripts/upload_textures.py --user <your user id> --looks --dry-run
+The game does not need this run. Every material and every look wears a Creator Store picture
+today (Data/TextureIds), and this script leaves a texture alone whole when its colour is one of
+those: its other maps belong to that picture's set, not to ours. So as things stand it only has
+the four painted materials with no library picture to send (marble, rock, shingles, slate), and
+--looks finds nothing to do. To put our painted version of a texture in a library picture's
+place, take that texture's line out of Data/TextureIds first, then name it with --only.
 
-    --looks        only the looks (Concrete's Panel, Metal's Shutter and the rest of Data/Textures' looks)
+    ROBLOX_API_KEY=<key> python3 scripts/upload_textures.py --user <your user id> --only panel,barrel
+    ROBLOX_API_KEY=<key> python3 scripts/upload_textures.py --group <group id>
+    python3 scripts/upload_textures.py --user <your user id> --dry-run
+
     --only a,b     only these textures, by their names in art/textures/textures.json
+    --looks        only the looks (Concrete's Panel, Metal's Shutter and the rest of Data/Textures' looks)
     --no-normals   colour maps only: no normal maps, no roughness maps
     --as TYPE      the asset type to upload as: image, decal or auto (the default: image, and decal
                    for the rest of the run if Roblox refuses image)
-    --dry-run      send nothing and need no key: list every request that would be made
+    --dry-run      send nothing and need no key: list every request that would be made, and the
+                   textures left alone
 
 The key is read from the environment variable ROBLOX_API_KEY and is never printed. Make it at
 create.roblox.com, Open Cloud, API Keys, with the Assets API permissions asset:read and
@@ -34,9 +42,9 @@ python3 scripts/library_textures.py resolve <decal id>. Write the id on the text
 Data/TextureIds as "rbxassetid://<image id>" and run python3 scripts/sync_materials.py.
 
 A picture whose id is already in Data/TextureIds is skipped, so a run that failed part way can
-be run again. To send a repainted picture, take its id off its line first. A texture whose
-colour is a Creator Store picture is left alone whole: its other maps belong to that picture's
-set, not to ours. New images go through Roblox's moderation and show once they're approved.
+be run again (the script marks the lines it writes with a comment that starts "painted", which
+is how it knows a texture as its own). To send a repainted picture, take its id off its line
+first. New images go through Roblox's moderation and show once they're approved.
 """
 import argparse
 import json
@@ -148,12 +156,12 @@ def png_size(path):
 
 def plan(names, index, ids, normals=True):
     """What a run would send, in order: (texture, field, file) for every picture that has no id
-    yet. Also the textures left alone because their colour is a Creator Store picture."""
+    yet. Also the textures left alone because their colour is a Creator Store picture: a line of
+    Data/TextureIds with a colour that this script didn't write."""
     jobs, left = [], []
     for name in names:
         got = ids.get(name, {})
-        ours = index[name].get("look") or got.get("note", "").startswith(OURS)  # every look is our own
-        if "color" in got and not ours:
+        if "color" in got and not got.get("note", "").startswith(OURS):
             left.append(name)
             continue
         for field, suffix in MAPS:
@@ -196,6 +204,11 @@ def main():
     jobs, left = plan(names, index, ids, not args.no_normals)
     if left:
         print("left alone (their colour is a Creator Store picture): " + ", ".join(left))
+    if not jobs:
+        print("nothing to upload: every texture asked for has its pictures already.")
+        if left:
+            print("To send our painted version of one in the library picture's place, take its line out of")
+            print("src/shared/Data/TextureIds.luau first, then name it with --only.")
     asset_type = TYPES["decal" if args.kind == "decal" else "image"]
 
     if args.dry_run:
@@ -211,7 +224,8 @@ def main():
             print(f"  fileContent  art/textures/{file} (image/png, {w}x{h}, {size} bytes)")
             print(f"  then         TextureIds {name}.{field}")
         fallback = ", as Decal if Roblox refuses Image" if args.kind == "auto" else ""
-        print(f"{len(jobs)} pictures, {total} bytes, as {asset_type}{fallback}. Nothing was sent.")
+        if jobs:
+            print(f"{len(jobs)} pictures, {total} bytes, as {asset_type}{fallback}. Nothing was sent.")
         sys.exit(1 if failed else 0)
 
     done = 0

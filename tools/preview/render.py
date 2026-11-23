@@ -10,13 +10,14 @@ looks the way its recipe meant.
 --textures paints each part with the texture the game gives its material (Data/TextureIds: the
 Creator Store pictures, fetched once into out/library), tinted by the part's colour and tiled in
 the part's own space along the face's main axis, the way Roblox lays a MaterialVariant on a part.
+The part's colour is first changed as the game changes it (Textures.shade: lifted under a picture
+with its own colour, brightened under a dark one).
 --painted uses our own painted set in art/textures instead (scripts/gen_textures.py).
 
 A part whose material names a look ("Concrete:Panel", Data/Textures) wears the look's picture at
-the look's studs per tile: with --painted the one in art/textures, with --textures the uploaded
-one, and where a look has no id yet its material's picture, which is what the game shows until
-the look is uploaded. --textures --painted together is the game as it will be once they are: the
-materials from their ids, the looks from their ids or else from art/textures.
+the look's studs per tile: with --textures its Creator Store picture, with --painted the one in
+art/textures. A look with no id in Data/TextureIds shows its material's picture under --textures,
+as the game would, or with --textures --painted together our painted one.
 """
 import argparse
 import json
@@ -33,10 +34,26 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 TEX_DIR = os.path.join(ROOT, "art", "textures")
 LIB_DIR = os.path.join(ROOT, "out", "library")
 LIFT = 0.72  # Textures.Lift: how far a part's colour moves to white on a texture with its own colour
+LEVEL = 0.8  # Textures.Level: how light a texture is taken to be; paint on a darker one is brightened
+
+
+def shade_paint(color, own, light):
+    """Textures.shade: the colour a part is given under a texture that brings its own colour, or
+    under one that is darker than the rest."""
+    color = np.array(color, float)
+    if own:
+        return color * (1 - LIFT) + LIFT
+    if light and light < LEVEL:
+        gain = min(LEVEL / light, 1 / max(color.max(), 1e-3))
+        if gain > 1:
+            return color * gain
+    return color
 
 
 def fetch_image(image_id):
-    """An image asset's picture (its 420 px thumbnail), cached under out/library."""
+    """An image asset's picture (its 420 px thumbnail), cached under out/library. None while Roblox
+    is still making the thumbnail, and when it only has a placeholder to show: an image that is
+    private or was taken down, which would not load in the game either."""
     path = os.path.join(LIB_DIR, f"{image_id}.png")
     if not os.path.exists(path):
         os.makedirs(LIB_DIR, exist_ok=True)
@@ -44,6 +61,10 @@ def fetch_image(image_id):
         url = f"https://thumbnails.roblox.com/v1/assets?assetIds={image_id}&size=420x420&format=Png"
         info = json.load(urllib.request.urlopen(urllib.request.Request(url, headers=ua), timeout=30))["data"][0]
         if info.get("state") != "Completed":
+            print(f"image {image_id}: its thumbnail is not ready yet, run again")
+            return None
+        if "/Image/" not in info.get("imageUrl", ""):
+            print(f"image {image_id}: Roblox shows no picture for it (private or taken down)")
             return None
         data = urllib.request.urlopen(urllib.request.Request(info["imageUrl"], headers=ua), timeout=30).read()
         open(path, "wb").write(data)
@@ -52,7 +73,8 @@ def fetch_image(image_id):
 
 class Textures:
     """Textures by Roblox material, and the looks by "<material>:<look>", each as a small mip
-    pyramid (float RGB), its studs per tile and whether it brings its own colour."""
+    pyramid (float RGB), its studs per tile, whether it brings its own colour and how light it is
+    said to be (Data/TextureIds' `light`)."""
 
     def __init__(self, painted=False, library=True):
         self.by_mat = {}
@@ -67,24 +89,24 @@ class Textures:
             ids = sync_materials.read_ids()
         for name, info in index.items():
             look = info.get("look")
-            studs, own, path = info["studs"], False, None
+            studs, own, light, path = info["studs"], False, None, None
             got = ids.get(name)
             if got and "color" in got:
                 try:
                     path = fetch_image(got["color"].split("//")[1])
                 except Exception as e:
                     print("no picture for", name, e)
-                studs, own = got.get("studs", studs), got.get("own", False)
+                studs, own, light = got.get("studs", studs), got.get("own", False), got.get("light")
             elif painted and (look or not library):
                 path = os.path.join(TEX_DIR, name + ".png")
             if not path or not os.path.exists(path):
                 continue
             im = Image.open(path).convert("RGB")
             levels = []
-            while im.width >= 4:
+            while min(im.width, im.height) >= 4:
                 levels.append(np.asarray(im, float) / 255)
                 im = im.resize((im.width // 2, im.height // 2), Image.BOX)
-            self.by_mat[info["material"] + ":" + look if look else info["material"]] = (levels, studs, own)
+            self.by_mat[info["material"] + ":" + look if look else info["material"]] = (levels, studs, own, light)
 
     def key(self, mat):
         """What a part of this material is painted with: its look's picture, else its material's
@@ -101,13 +123,13 @@ class Textures:
         entry = self.by_mat.get(mat)
         if entry is None:
             return None
-        levels, studs, _ = entry
+        levels, studs = entry[0], entry[1]
         texels_per_px = levels[0].shape[0] / studs / max(1e-6, px_per_stud)
         lv = int(np.clip(math.floor(math.log2(max(1.0, texels_per_px))), 0, len(levels) - 1))
         tex = levels[lv]
-        n = tex.shape[0]
-        x = (np.floor(u / studs * n).astype(int)) % n
-        y = (np.floor(v / studs * n).astype(int)) % n
+        ny, nx = tex.shape[0], tex.shape[1]  # a picture that isn't square is stretched over the tile
+        x = (np.floor(u / studs * nx).astype(int)) % nx
+        y = (np.floor(v / studs * ny).astype(int)) % ny
         return tex[y, x]
 
 
@@ -393,9 +415,9 @@ def main():
                     u, v = (lp[:, 0] if nl[2] > 0 else -lp[:, 0]), -lp[:, 1]
                 tex = textures.sample(key, u, v, scale)
                 if tex is not None:
-                    tcol = col
-                    if textures.by_mat[key][2]:  # brings its own colour: the paint only tints it
-                        tcol = (np.array(cols[i]) * (1 - LIFT) + LIFT) * shade
+                    # as the game colours the part: lifted under a picture with its own colour,
+                    # brightened under a dark one
+                    tcol = shade_paint(cols[i], textures.by_mat[key][2], textures.by_mat[key][3]) * shade
                     if alphas[i] >= 1:
                         region[closer] = z[closer]
                         img[y0:y1 + 1, x0:x1 + 1][closer] = tcol * tex
