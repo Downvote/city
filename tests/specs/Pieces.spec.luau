@@ -88,6 +88,31 @@ describe("Pieces", function()
 		end).toThrow()
 	end)
 
+	it("are merged once per kind before the town is built, within a time budget", function()
+		local r = Recipe.new(WHITE, WHITE)
+		window(r, 0)
+		window(r, 30)
+		window(r, 60)
+		r:piece(function(q)
+			q:box(0, 1, 0, 2, 0.4, 2, RED)
+			q:box(0, 2, 0, 0.4, 2, 0.4, RED)
+		end)
+		-- off (a client, the previews): nothing is merged
+		expect(Builder.preparePieces({ r.prims })).toBe(0)
+		-- on: every different piece is tried once, however often it is used. Lune has no solid
+		-- modelling, so each merge fails and the piece is built from plain parts after
+		Builder.cutPieces = true
+		local ok, cut, failed, left = pcall(Builder.preparePieces, { r.prims, r.prims }, 60)
+		Builder.cutPieces = false
+		expect(ok).toBeTruthy()
+		expect(cut + failed + left).toBe(2)
+		local model = Instance.new("Model")
+		Builder.cutPieces = true
+		local parts = Builder.instantiate(r.prims, model)
+		Builder.cutPieces = false
+		expect(#parts).toBe(14) -- 4 shapes a window, three windows, and the two shapes of the other
+	end)
+
 	it("are built as their shapes where nothing is merged", function()
 		local r = Recipe.new(WHITE, WHITE)
 		window(r, 10)

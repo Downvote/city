@@ -95,16 +95,42 @@ local function buildMap()
 	mapFolder.Name = "Town"
 	mapFolder.Parent = workspace
 
+	-- Everything the town is made of, worked out once (a model used in many places is drawn
+	-- once), so its pieces can be merged before anything is built: a building then goes up with
+	-- its windows, awnings and railings already on it.
+	local groundPrims = TownMap.ground()
+	local placements = TownMap.placements()
+	local drawn: { [string]: { any } } = {}
+	local lists = { groundPrims }
+	for _, p in placements do
+		if not drawn[p.name] then
+			drawn[p.name] = TownMap.prims(p.name)
+			table.insert(lists, drawn[p.name])
+		end
+	end
+	local started = os.clock()
+	local cut, failed, left = Builder.preparePieces(lists, 60)
+	if cut + failed + left > 0 then
+		print(
+			("[World] merged %d kinds of detail piece in %.1f s (%d failed, %d left to plain parts)"):format(
+				cut,
+				os.clock() - started,
+				failed,
+				left
+			)
+		)
+	end
+
 	-- streets, sidewalks, the square and the market (Data/TownMap lays them out)
 	local ground = Instance.new("Model")
 	ground.Name = "Streets"
-	Builder.instantiate(TownMap.ground(), ground, CFrame.identity)
+	Builder.instantiate(groundPrims, ground, CFrame.identity)
 	ground.Parent = mapFolder
 
-	for _, p in TownMap.placements() do
+	for _, p in placements do
 		local m = Instance.new("Model")
 		m.Name = p.name
-		Builder.instantiate(TownMap.prims(p.name), m, p.cf)
+		Builder.instantiate(drawn[p.name], m, p.cf)
 		m.Parent = mapFolder
 		if p.action and p.opens then
 			prompt(anchorPart(m), p.action, p.opens)
@@ -575,7 +601,7 @@ function World.init()
 		warn("[World] low poly shape not made, keeping Roblox's own: " .. why)
 	end
 	-- where solid modelling works, the town's detail pieces (window frames, awnings, shutters)
-	-- are merged into one mesh each and copied; they arrive just behind the buildings
+	-- are merged into one mesh each and copied (buildMap merges the town's before it builds)
 	Builder.cutPieces = Builder.hasKit()
 	buildMap()
 	buildPlots()

@@ -88,6 +88,10 @@ The contract between the parts of the game. Update it with every change to an AP
   into their shapes (the previews and the Frames spec use it). A piece's shapes share one material, are not see
   through, carry no name, light, role, effect or attributes, number at most `Geometry.PieceMax` (28), and one of
   them is a box that isn't turned.
+- `Builder.preparePieces(lists, budget)` merges, ahead of time, every different piece in some lists of prims (a
+  frame apart, stopping after `budget` seconds; what is left is built from plain parts); `Services/World` runs it
+  over the whole town (each placed model drawn once) before building anything, so no building stands without its
+  windows while pieces are merged. It returns how many were merged, failed and left, and the server prints it.
 - `Builder.instantiate` makes a piece as one mesh where `Builder.cutPieces` is on (Services/World switches it on
   when the low poly kit was cut, so only on a real server): the first use of a key is queued, one worker merges it
   with `GeometryService:UnionAsync` (the unturned box as the main part; `UsePartColor = false` keeps each shape's

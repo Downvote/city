@@ -364,6 +364,49 @@ local function workPieces()
 	end)
 end
 
+-- Merges, ahead of time, every different piece in these lists of prims (Services/World does it
+-- for the whole town before building it, so no building stands without its windows while its
+-- pieces are merged one by one). Yields; spaces the merges a frame apart, as solid modelling
+-- asks. Stops after `budget` seconds: whatever is left is built from plain parts, so a slow
+-- server still opens in time. Returns how many were merged, failed and left.
+function Builder.preparePieces(lists: { { Prim } }, budget: number?): (number, number, number)
+	if not Builder.cutPieces then
+		return 0, 0, 0
+	end
+	local todo: { Prim } = {}
+	local seen: { [string]: boolean } = {}
+	for _, list in lists do
+		for _, prim in list do
+			local key = prim.key
+			if prim.shape == "Piece" and key and pieceKit[key] == nil and not seen[key] then
+				seen[key] = true
+				table.insert(todo, prim)
+			end
+		end
+	end
+	local stop = os.clock() + (budget or 60)
+	local cut, failed, left = 0, 0, 0
+	for _, prim in todo do
+		local key = prim.key or ""
+		if os.clock() > stop then
+			pieceKit[key] = false
+			left += 1
+		else
+			local template = cutPiece(prim)
+			pieceKit[key] = template or false
+			if template then
+				cut += 1
+			else
+				failed += 1
+			end
+			task.wait()
+		end
+	end
+	Builder.Pieces.cut += cut
+	Builder.Pieces.failed += failed + left
+	return cut, failed, left
+end
+
 -- Makes parts for prims, placed by `frame`, under `parent`. A piece that is still to be merged
 -- (see above) arrives a little later and is not in the list returned.
 function Builder.instantiate(prims: { Prim }, parent: Instance, frame: CFrame?, opts: Options?): { BasePart }
