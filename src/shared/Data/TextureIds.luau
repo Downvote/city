@@ -1,15 +1,16 @@
 --!strict
--- Roblox image ids for the materials' textures. Most come from the Creator Store (public decals,
--- found with scripts/library_textures.py; `decal` is the decal they came from, the comment its
--- name and maker); the rest can be our painted ones in art/textures once uploaded
--- (scripts/upload_textures.py). Fields: `color` the image, `normal` an optional normal map
--- (OpenGL style, the kind Roblox reads) and `rough` an optional roughness map, both from the same
--- set as the colour where the picture has a pattern (bricks, cobbles, tiles), `studs` how many
--- studs one copy covers (else Data/Textures' own), `own` when the picture brings its own colour
--- (the part's paint then only tints it lightly).
+-- Roblox image ids for the materials' textures and for the looks (Data/Textures). Most of the
+-- materials' come from the Creator Store (public decals, found with scripts/library_textures.py;
+-- `decal` is the decal they came from, the comment its name and maker); the rest, and every
+-- look, are our painted ones in art/textures once uploaded (scripts/upload_textures.py, which
+-- starts their comment with "painted"). Fields: `color` the image, `normal` an optional normal
+-- map (OpenGL style, the kind Roblox reads) and `rough` an optional roughness map, both from the
+-- same set as the colour where the picture has a pattern (bricks, cobbles, tiles), `studs` how
+-- many studs one copy covers (else Data/Textures' own), `own` when the picture brings its own
+-- colour (the part's paint then only tints it lightly).
 -- After changing this, run python3 scripts/sync_materials.py to put it in the place.
--- A texture with no colour id here keeps Roblox's own material. One texture a line: the scripts
--- and the preview read this file line by line.
+-- A texture with no colour id here keeps Roblox's own material, and a look with none shows its
+-- material. One texture a line: the scripts and the preview read this file line by line.
 
 export type Ids = { color: string?, normal: string?, rough: string?, studs: number?, own: boolean?, decal: number? }
 

@@ -572,7 +572,7 @@ def maple(rng):
     face = smoothstep(0, 1.5, d)
     tone = rng.normal(0, 0.022, count)
     pick = rng.random(count)
-    tone = np.where(pick < 0.14, tone - 0.085, np.where(pick > 0.9, tone + 0.045, tone))
+    tone = np.where(pick < 0.12, tone - 0.075, np.where(pick > 0.9, tone + 0.04, tone))
     lum = 0.855 + tone[bid] + 0.014 * (0.5 - v / rh) + 0.008 * lowpass(rng, 9, 22)
     h = smoothstep(0, 3.0, d) * 0.6 + 0.2
     lum = lum + lit(h, 0.45)
@@ -585,15 +585,15 @@ def mosaic(rng):
     # small glazed facade tiles, eight by eight, here and there a darker one
     n = 8
     cid, u, v, cw, ch = cells(n, n)
-    d = inside(u, v, cw, ch, 5.0, 5.0)
-    face = smoothstep(0, 1.5, d)
+    d = inside(u, v, cw, ch, 3.4, 4.0)
+    face = smoothstep(0, 1.4, d)
     tone = rng.normal(0, 0.014, n * n)
     pick = rng.random(n * n)
-    tone = np.where(pick < 0.11, tone - 0.12, np.where(pick > 0.93, tone + 0.035, tone))
+    tone = np.where(pick < 0.11, tone - 0.10, np.where(pick > 0.93, tone + 0.035, tone))
     shine = 0.04 * np.exp(-(((u + v) / cw - 0.62) / 0.2) ** 2)
-    h = smoothstep(0, 5.0, d) * 0.55 + 0.2
+    h = smoothstep(0, 4.5, d) * 0.55 + 0.2
     lum = 0.875 + tone[cid] + shine + lit(h, 0.5)
-    lum = mix(0.60, lum, face)
+    lum = mix(0.61, lum, face)
     rough = mix(0.9, 0.32, face)
     return lum, h, 3.0, rough
 
@@ -620,7 +620,7 @@ def corrugated(rng):
     ph = 2 * math.pi * k * XX / N
     crest = np.cos(ph)  # 1 along a ridge's top, -1 down in the furrow
     toward = -np.sin(ph)  # 1 on the side of a ridge that faces the light
-    lum = 0.775 + 0.15 * steps(toward * 0.5 + 0.5, 4, 0.3) - 0.035 * smoothstep(0.2, 1.0, -crest)
+    lum = 0.76 + 0.18 * steps(toward * 0.5 + 0.5, 4, 0.3) - 0.04 * smoothstep(0.2, 1.0, -crest)
     lum += 0.01 * lowpass(rng, 40, 1.4)
     h = 0.5 + 0.4 * crest
     lap = 0.62 * N
@@ -636,7 +636,7 @@ def corrugated(rng):
     lum = mix(lum, 0.52, smoothstep(3.0, 3.8, r) * (1 - smoothstep(4.4, 5.2, r)) * 0.8)
     h = h + 0.25 * head
     rough = np.full((N, N), 0.46) + 0.05 * smoothstep(0.2, 1.0, -crest)
-    return lum, h, 5.0, rough
+    return lum, h, 7.0, rough
 
 
 def shutter(rng):
@@ -684,23 +684,24 @@ def barrel(rng):
     cols, rows = 6, 4
     cid, u, v, cw, ch = cells(cols, rows)
     t = v / ch
-    half = 0.27 + 0.045 * t  # a cover is a little wider at its lower end
+    half = 0.33 + 0.045 * t  # a cover is a little wider at its lower end
     x = (u / cw - 0.5) / half
     edge = (1 - np.abs(x)) * half * cw  # pixels in from the cover's side
     on = smoothstep(-0.7, 0.7, edge)
     up = np.sqrt(np.clip(1 - x * x, 0, 1))
     tone = rng.normal(0, 0.03, cols * rows)
-    cover = 0.60 + tone[cid] + 0.31 * steps(np.clip(0.8 * up - 0.5 * x, 0, 1), 4, 0.32)
+    cover = 0.66 + tone[cid] + 0.27 * steps(np.clip(0.8 * up - 0.5 * x, 0, 1), 4, 0.32)
     cover -= 0.13 * (1 - smoothstep(0.0, 0.14, t))  # the shade of the row above
     cover += 0.03 * smoothstep(0.72, 0.93, t)
     px = ((u / cw + 0.5) % 1 - 0.5) / (0.5 - half)  # across the channel, -1..1
-    pan = 0.50 + 0.16 * smoothstep(-0.6, 0.9, px) - 0.10 * (1 - smoothstep(0.0, 0.14, t))
+    pan = 0.54 + 0.15 * smoothstep(-0.6, 0.9, px) - 0.08 * (1 - smoothstep(0.0, 0.14, t))
     lum = mix(pan, cover, on)
     lum = mix(lum, 0.42, (1 - smoothstep(0.5, 1.6, np.abs(edge))) * 0.7)
     lum = mix(lum, 0.42, smoothstep(ch - 3.4, ch - 2.2, v) * mix(0.5, 1.0, on))
-    h = mix(0.12 + 0.1 * px * px, 0.45 + 0.45 * up, on) + 0.1 * t
+    # heights in pixels here, so the normal map bends the light round each cover as a real one would
+    h = mix(1.5 * px * px, 3.0 + 7.0 * up, on) + 2.5 * t
     rough = mix(np.full((N, N), 0.8), 0.6, on)
-    return lum, h, 4.5, rough
+    return lum, h, 1.0, rough
 
 
 def flags(rng):
@@ -720,7 +721,7 @@ def flags(rng):
 
 def street(rng):
     # street asphalt: fine stones, one mended patch and one hairline crack
-    lum = 0.80 + 0.014 * fbm(rng, 3, 3)
+    lum = 0.80 + 0.008 * fbm(rng, 3, 3)
     im, d = canvas()
     for _ in range(6500):
         x, y = rng.uniform(0, N), rng.uniform(0, N)
@@ -733,9 +734,10 @@ def street(rng):
     qx = np.abs(XX - 300) - 92
     qy = np.abs(YY - 170) - 54
     sd = np.hypot(np.maximum(qx, 0), np.maximum(qy, 0)) + np.minimum(np.maximum(qx, qy), 0) - 10
+    sd = sd + 2.2 * lowpass(rng, 14)
     patch = 1 - smoothstep(-1.0, 1.0, sd)
-    lum -= 0.028 * patch
-    lum -= 0.05 * (1 - smoothstep(0.6, 1.8, np.abs(sd)))
+    lum -= 0.018 * patch
+    lum -= 0.035 * (1 - smoothstep(0.6, 1.8, np.abs(sd)))
     im, d = canvas(0)
     x, y, a = 40.0, 330.0, 0.35
     pts = [(x, y)]
@@ -757,54 +759,62 @@ def canvas_weave(rng):
     u, v = XX * k / N, YY * k / N
     iu, iv = np.floor(u).astype(int), np.floor(v).astype(int)
     over = ((iu + iv) % 2) == 0
-    warp = rng.normal(0, 0.012, k)
-    weft = rng.normal(0, 0.012, k)
+    warp = rng.normal(0, 0.009, k)
+    weft = rng.normal(0, 0.009, k)
     prof = np.where(over, np.sin(math.pi * (u % 1)), np.sin(math.pi * (v % 1)))
     lum = 0.845 + 0.075 * prof ** 0.8 + np.where(over, warp[iu % k], weft[iv % k])
-    lum += 0.012 * lowpass(rng, 3, 30) + 0.012 * lowpass(rng, 30, 3)
+    lum += 0.007 * lowpass(rng, 3, 30) + 0.007 * lowpass(rng, 30, 3)
     h = prof * 0.5
     rough = np.full((N, N), 0.95)
     return lum, h, 1.2, rough
 
 
 def cliff(rng):
-    # beds of rock lying one on another, each broken into blocks by upright cracks: every block
-    # one flat tone with a lit ledge along its top and shade under the bed above
-    wy = (YY + 7 * lowpass(rng, 2, 1.5) + 2.5 * lowpass(rng, 7, 3)) % N
+    # beds of rock lying one on another, thick and thin, each its own shade and broken here and
+    # there by an upright crack: a lit ledge along the top of every bed, shade under the one above
+    wy = (YY + 6 * lowpass(rng, 1.5, 1.2) + 1.6 * lowpass(rng, 5, 2)) % N
     wx = XX + 6 * lowpass(rng, 1.5, 3)
-    beds = np.array(runs(rng, 46, 96) + [N])
-    b = np.searchsorted(beds, wy, side="right") - 1
+    beds = [0.0]
+    while beds[-1] < N - 30:
+        beds.append(beds[-1] + (rng.uniform(20, 34) if len(beds) % 3 == 0 else rng.uniform(52, 96)))
+    beds = np.array(beds) * N / beds[-1]
+    nb = len(beds) - 1
+    b = np.clip(np.searchsorted(beds, wy, side="right") - 1, 0, nb - 1)
     top = wy - beds[b]
     bot = beds[b + 1] - wy
     bid = np.zeros((N, N), int)
     dl = np.zeros((N, N))
     dr = np.zeros((N, N))
     count = 0
-    for i in range(len(beds) - 1):
-        cuts = np.array(runs(rng, 64, 190) + [N])
+    for i in range(nb):
+        thick = beds[i + 1] - beds[i]
+        cuts = np.array(runs(rng, 90, 260) if thick > 40 else runs(rng, 170, 420))
+        cuts = np.append(cuts, N)
         m = b == i
         x = (wx[m] - rng.uniform(0, N)) % N
-        k = np.searchsorted(cuts, x, side="right") - 1
+        k = np.clip(np.searchsorted(cuts, x, side="right") - 1, 0, len(cuts) - 2)
         bid[m] = count + k
         dl[m] = x - cuts[k]
         dr[m] = cuts[k + 1] - x
         count += len(cuts) - 1
     rx, ry = (dl - dr) / 2, (top - bot) / 2
-    tone = rng.normal(0, 0.045, count)
+    bed_tone = rng.normal(0, 0.04, nb)
+    tone = rng.normal(0, 0.018, count)
     # a second face cut across each block at its own angle, a shade apart from the first
-    ang = rng.uniform(0, math.pi, count)
-    off = rng.normal(0, 14, count)
-    turn = rng.choice([-0.05, -0.035, 0.035, 0.05], count)
+    ang = rng.uniform(0.25, math.pi - 0.25, count)
+    off = rng.normal(0, 20, count)
+    turn = rng.choice([-0.045, -0.03, 0.03, 0.045], count)
     cut = smoothstep(-1.0, 1.0, rx * np.cos(ang[bid]) + ry * np.sin(ang[bid]) - off[bid])
-    lum = 0.80 + tone[bid] + turn[bid] * cut
-    lum += 0.075 * (1 - smoothstep(1.5, 6.0, top))
-    lum -= 0.11 * (1 - smoothstep(0.0, 11.0, bot))
-    lum -= 0.05 * (1 - smoothstep(0.0, 7.0, dr))
-    lum += 0.035 * (1 - smoothstep(1.5, 5.0, dl))
-    edge = np.minimum(np.minimum(dl, dr), np.minimum(top, bot * 1.0))
-    lum = mix(0.43, lum, smoothstep(0.9, 2.2, edge))
-    deep = rng.uniform(0, 0.3, count)
-    h = smoothstep(0, 6.0, edge) * 0.5 + deep[bid] + 0.1 * cut * np.sign(turn[bid])
+    lum = 0.80 + bed_tone[b] + tone[bid] + turn[bid] * cut
+    lum += 0.08 * (1 - smoothstep(1.5, 6.5, top))
+    lum -= 0.13 * (1 - smoothstep(0.0, 13.0, bot))
+    lum -= 0.045 * (1 - smoothstep(0.0, 7.0, dr))
+    lum += 0.03 * (1 - smoothstep(1.5, 5.0, dl))
+    lum = mix(0.5, lum, smoothstep(0.5, 1.7, np.minimum(dl, dr)))  # the cracks are finer than the beds' lines
+    lum = mix(0.43, lum, smoothstep(0.9, 2.2, np.minimum(top, bot)))
+    edge = np.minimum(np.minimum(dl, dr), np.minimum(top, bot))
+    deep = rng.uniform(0, 0.3, nb)
+    h = smoothstep(0, 6.0, edge) * 0.5 + deep[b] + 0.1 * cut * np.sign(turn[bid])
     rough = np.full((N, N), 0.92)
     return lum, h, 5.0, rough
 
@@ -837,8 +847,8 @@ TEXTURES = {
 LOOKS = {
     "panel": (panel, "Concrete", 12, "Panel"),
     "stucco": (stucco, "Concrete", 10, "Stucco"),
-    "maple": (maple, "Brick", 8, "Maple"),
-    "mosaic": (mosaic, "CeramicTiles", 6, "Mosaic"),
+    "maple": (maple, "Brick", 6, "Maple"),
+    "mosaic": (mosaic, "CeramicTiles", 4, "Mosaic"),
     "checker": (checker, "CeramicTiles", 4, "Checker"),
     "corrugated": (corrugated, "Metal", 6, "Corrugated"),
     "shutter": (shutter, "Metal", 4, "Shutter"),
@@ -891,12 +901,12 @@ def paint(fn, seed):
 
 
 def seam(color):
-    """How badly a picture's opposite edges disagree, against how its neighbouring rows and columns
-    do inside it: about 1 for a picture that tiles."""
+    """How a picture's opposite edges meet, against the sharpest step between two neighbouring rows
+    or columns inside it: 1 or less for a picture that tiles."""
     c = color.astype(float).mean(-1)
-    wrap = (np.abs(c[0] - c[-1]).mean() + np.abs(c[:, 0] - c[:, -1]).mean()) / 2
-    within = (np.abs(np.diff(c, axis=0)).mean() + np.abs(np.diff(c, axis=1)).mean()) / 2
-    return wrap / (within + 1e-9)
+    rows = np.abs(c - np.roll(c, 1, 0)).mean(1)
+    cols = np.abs(c - np.roll(c, 1, 1)).mean(0)
+    return max(rows[0] / (rows[1:].max() + 1e-9), cols[0] / (cols[1:].max() + 1e-9))
 
 
 def main():

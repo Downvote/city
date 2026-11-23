@@ -74,5 +74,70 @@
   "metal": {
     "material": "Metal",
     "studs": 6
+  },
+  "panel": {
+    "material": "Concrete",
+    "studs": 12,
+    "look": "Panel"
+  },
+  "stucco": {
+    "material": "Concrete",
+    "studs": 10,
+    "look": "Stucco"
+  },
+  "maple": {
+    "material": "Brick",
+    "studs": 6,
+    "look": "Maple"
+  },
+  "mosaic": {
+    "material": "CeramicTiles",
+    "studs": 4,
+    "look": "Mosaic"
+  },
+  "checker": {
+    "material": "CeramicTiles",
+    "studs": 4,
+    "look": "Checker"
+  },
+  "corrugated": {
+    "material": "Metal",
+    "studs": 6,
+    "look": "Corrugated"
+  },
+  "shutter": {
+    "material": "Metal",
+    "studs": 4,
+    "look": "Shutter"
+  },
+  "slats": {
+    "material": "WoodPlanks",
+    "studs": 4,
+    "look": "Slats"
+  },
+  "barrel": {
+    "material": "ClayRoofTiles",
+    "studs": 6,
+    "look": "Barrel"
+  },
+  "slabs": {
+    "material": "Pavement",
+    "studs": 8,
+    "look": "Slabs"
+  },
+  "street": {
+    "material": "Asphalt",
+    "studs": 16,
+    "look": "Street"
+  },
+  "canvas": {
+    "material": "Fabric",
+    "studs": 3,
+    "look": "Canvas"
+  },
+  "cliff": {
+    "material": "Rock",
+    "studs": 16,
+    "look": "Cliff"
   }
 }

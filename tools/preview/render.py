@@ -11,6 +11,12 @@ looks the way its recipe meant.
 Creator Store pictures, fetched once into out/library), tinted by the part's colour and tiled in
 the part's own space along the face's main axis, the way Roblox lays a MaterialVariant on a part.
 --painted uses our own painted set in art/textures instead (scripts/gen_textures.py).
+
+A part whose material names a look ("Concrete:Panel", Data/Textures) wears the look's picture at
+the look's studs per tile: with --painted the one in art/textures, with --textures the uploaded
+one, and where a look has no id yet its material's picture, which is what the game shows until
+the look is uploaded. --textures --painted together is the game as it will be once they are: the
+materials from their ids, the looks from their ids or else from art/textures.
 """
 import argparse
 import json
@@ -45,34 +51,32 @@ def fetch_image(image_id):
 
 
 class Textures:
-    """Textures by Roblox material, each as a small mip pyramid (float RGB), its studs per tile and
-    whether it brings its own colour."""
+    """Textures by Roblox material, and the looks by "<material>:<look>", each as a small mip
+    pyramid (float RGB), its studs per tile and whether it brings its own colour."""
 
-    def __init__(self, painted=False):
+    def __init__(self, painted=False, library=True):
         self.by_mat = {}
         index_path = os.path.join(TEX_DIR, "textures.json")
         if not os.path.exists(index_path):
             return
         index = json.load(open(index_path))
         ids = {}
-        if not painted:
+        if library:
             sys.path.insert(0, os.path.join(ROOT, "scripts"))
             import sync_materials
             ids = sync_materials.read_ids()
         for name, info in index.items():
-            studs, own = info["studs"], False
-            if painted:
-                path = os.path.join(TEX_DIR, name + ".png")
-            else:
-                got = ids.get(name)
-                if not got or "color" not in got:
-                    continue
+            look = info.get("look")
+            studs, own, path = info["studs"], False, None
+            got = ids.get(name)
+            if got and "color" in got:
                 try:
                     path = fetch_image(got["color"].split("//")[1])
                 except Exception as e:
                     print("no picture for", name, e)
-                    path = None
                 studs, own = got.get("studs", studs), got.get("own", False)
+            elif painted and (look or not library):
+                path = os.path.join(TEX_DIR, name + ".png")
             if not path or not os.path.exists(path):
                 continue
             im = Image.open(path).convert("RGB")
@@ -80,7 +84,17 @@ class Textures:
             while im.width >= 4:
                 levels.append(np.asarray(im, float) / 255)
                 im = im.resize((im.width // 2, im.height // 2), Image.BOX)
-            self.by_mat[info["material"]] = (levels, studs, own)
+            self.by_mat[info["material"] + ":" + look if look else info["material"]] = (levels, studs, own)
+
+    def key(self, mat):
+        """What a part of this material is painted with: its look's picture, else its material's
+        (a look with no picture shows the material), else None."""
+        if not mat:
+            return None
+        if mat in self.by_mat:
+            return mat
+        base = mat.split(":")[0]
+        return base if base in self.by_mat else None
 
     def sample(self, mat, u, v, px_per_stud):
         """Colours at stud coordinates u, v (arrays), picking the mip level for the zoom."""
@@ -280,7 +294,8 @@ def main():
     ap.add_argument("--transparent", action="store_true", help="no background (for thumbnails)")
     ap.add_argument("--smooth", action="store_true", help="Roblox's own balls and cylinders, not the low poly kit")
     ap.add_argument("--textures", action="store_true", help="paint parts with the game's textures")
-    ap.add_argument("--painted", action="store_true", help="paint parts with our painted art/textures")
+    ap.add_argument("--painted", action="store_true", help="paint parts with our painted art/textures "
+                    "(with --textures: only the looks that have no id yet)")
     args = ap.parse_args()
     global USE_KIT
     USE_KIT = not args.smooth
@@ -294,7 +309,7 @@ def main():
     up = np.cross(right, forward)
     light = np.array([-0.45, 0.85, 0.3]); light /= np.linalg.norm(light)
 
-    textures = Textures(painted=args.painted) if (args.textures or args.painted) else None
+    textures = Textures(painted=args.painted, library=args.textures) if (args.textures or args.painted) else None
     tris, cols, alphas, owners = [], [], [], []
     for pi, p in enumerate(prims):
         if p.get("transp", 0) >= 0.99:
@@ -356,7 +371,8 @@ def main():
         closer = inside & (z < region - 1e-4)
         if textures is not None and closer.any():
             p = prims[owners[i]]
-            if p.get("mat") in textures.by_mat:
+            key = textures.key(p.get("mat"))
+            if key is not None:
                 # the pixel's place in the part's own space, from the corner, in studs
                 c = p["cf"]
                 ppos = np.array(c[0:3])
@@ -365,17 +381,20 @@ def main():
                 local = (t - ppos) @ rot + half  # the triangle's corners
                 a1, a2, a3 = w1[closer], w2[closer], w3[closer]
                 lp = a1[:, None] * local[0] + a2[:, None] * local[1] + a3[:, None] * local[2]
-                axis = int(np.argmax(np.abs(n @ rot)))
+                nl = n @ rot  # the face's normal in the part's own space
+                axis = int(np.argmax(np.abs(nl)))
+                # a side face reads left to right for whoever stands in front of it, so the light
+                # painted into a picture stays at its top left on every wall
                 if axis == 0:
-                    u, v = lp[:, 2], -lp[:, 1]
+                    u, v = (-lp[:, 2] if nl[0] > 0 else lp[:, 2]), -lp[:, 1]
                 elif axis == 1:
                     u, v = lp[:, 0], lp[:, 2]
                 else:
-                    u, v = lp[:, 0], -lp[:, 1]
-                tex = textures.sample(p["mat"], u, v, scale)
+                    u, v = (lp[:, 0] if nl[2] > 0 else -lp[:, 0]), -lp[:, 1]
+                tex = textures.sample(key, u, v, scale)
                 if tex is not None:
                     tcol = col
-                    if textures.by_mat[p["mat"]][2]:  # brings its own colour: the paint only tints it
+                    if textures.by_mat[key][2]:  # brings its own colour: the paint only tints it
                         tcol = (np.array(cols[i]) * (1 - LIFT) + LIFT) * shade
                     if alphas[i] >= 1:
                         region[closer] = z[closer]

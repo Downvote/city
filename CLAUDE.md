@@ -182,7 +182,13 @@ carry a `normal` map and a `rough` map too (the user asked for normal maps): tak
 colour when the picture has a pattern, and keep one texture to a line in `Data/TextureIds`. Then
 `python3 scripts/sync_materials.py` writes them into the place file (check.sh fails if it's out of date), and
 `render.sh <scene> <png> --textures` shows them. Our own painted set (`scripts/gen_textures.py`, art/textures)
-covers the rest and can be uploaded with `scripts/upload_textures.py`.
+covers the rest and can be uploaded with `scripts/upload_textures.py`. It also holds the town's looks (the user:
+"you can make your own textures for these too"): a look is a second face for a material that only the parts
+naming it wear (`"Concrete:Panel"`, `"Brick:Maple"`, `"CeramicTiles:Mosaic"` and ten more: `Textures.looks`),
+painted with `python3 scripts/gen_textures.py --looks`. A look overrides nothing and shows its plain material
+until its pictures are uploaded (`ROBLOX_API_KEY=<key> python3 scripts/upload_textures.py --user <id> --looks`,
+which writes the ids into `Data/TextureIds` and runs the sync). See the town as it will be after the upload with
+`render.sh <scene> <png> --textures --painted`.
 
 Nothing here runs inside Roblox. Build mode's client runs end to end on the simulation in `tests/sim`; the other
 screens are built on it for the UI previews; the server services and NPCs are only type checked. A review pass found

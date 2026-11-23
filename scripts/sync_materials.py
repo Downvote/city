@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
-"""Puts the painted textures that have uploaded ids into the place file: a MaterialVariant for each
-under MaterialService in default.project.json, and MaterialService's <Material>Name properties
+"""Puts the textures that have uploaded ids into the place file: a MaterialVariant for each under
+MaterialService in default.project.json, and MaterialService's <Material>Name properties
 pointing each material at its variant. Roblox only lets plugins set a variant's maps, so they go
 in at build time rather than from a script while the game runs.
+
+A look (an entry of art/textures/textures.json with a "look", such as Concrete's Panel) gets its
+MaterialVariant too, named Maplewick<Look>, but no <Material>Name property: it takes no
+material's place, and only the parts that name it wear it.
 
     python3 scripts/sync_materials.py          rewrite default.project.json from Data/TextureIds
     python3 scripts/sync_materials.py --check  exit 1 if default.project.json is out of date
@@ -21,17 +25,18 @@ ID = r'"(rbxassetid://\d+)"'
 
 
 HEADER = """--!strict
--- Roblox image ids for the materials' textures. Most come from the Creator Store (public decals,
--- found with scripts/library_textures.py; `decal` is the decal they came from, the comment its
--- name and maker); the rest can be our painted ones in art/textures once uploaded
--- (scripts/upload_textures.py). Fields: `color` the image, `normal` an optional normal map
--- (OpenGL style, the kind Roblox reads) and `rough` an optional roughness map, both from the same
--- set as the colour where the picture has a pattern (bricks, cobbles, tiles), `studs` how many
--- studs one copy covers (else Data/Textures' own), `own` when the picture brings its own colour
--- (the part's paint then only tints it lightly).
+-- Roblox image ids for the materials' textures and for the looks (Data/Textures). Most of the
+-- materials' come from the Creator Store (public decals, found with scripts/library_textures.py;
+-- `decal` is the decal they came from, the comment its name and maker); the rest, and every
+-- look, are our painted ones in art/textures once uploaded (scripts/upload_textures.py, which
+-- starts their comment with "painted"). Fields: `color` the image, `normal` an optional normal
+-- map (OpenGL style, the kind Roblox reads) and `rough` an optional roughness map, both from the
+-- same set as the colour where the picture has a pattern (bricks, cobbles, tiles), `studs` how
+-- many studs one copy covers (else Data/Textures' own), `own` when the picture brings its own
+-- colour (the part's paint then only tints it lightly).
 -- After changing this, run python3 scripts/sync_materials.py to put it in the place.
--- A texture with no colour id here keeps Roblox's own material. One texture a line: the scripts
--- and the preview read this file line by line.
+-- A texture with no colour id here keeps Roblox's own material, and a look with none shows its
+-- material. One texture a line: the scripts and the preview read this file line by line.
 
 export type Ids = { color: string?, normal: string?, rough: string?, studs: number?, own: boolean?, decal: number? }
 
@@ -93,7 +98,10 @@ def write_ids(ids, order, path=IDS):
     open(path, "w").write(text)
 
 
-def variant_name(name):
+def variant_name(name, info=None):
+    """The MaterialVariant a texture becomes: MaplewickGrass for grass, Maplewick<Look> for a look."""
+    if info and info.get("look"):
+        return "Maplewick" + info["look"]
     return "Maplewick" + name[:1].upper() + name[1:]
 
 
@@ -105,7 +113,9 @@ def material_service(ids, index):
         got = ids.get(name, {})
         if "color" not in got:
             continue
-        v = variant_name(name)
+        v = variant_name(name, info)
+        if v in variants:
+            sys.exit(f"two textures would both be the MaterialVariant {v}: rename {name}")
         p = {"BaseMaterial": info["material"], "ColorMap": got["color"], "StudsPerTile": got.get("studs", info["studs"]),
              "MaterialPattern": "Regular"}
         if "normal" in got:
@@ -113,12 +123,23 @@ def material_service(ids, index):
         if "rough" in got:
             p["RoughnessMap"] = got["rough"]
         variants[v] = {"$className": "MaterialVariant", "$properties": p}
-        props[info["material"] + "Name"] = v
+        if not info.get("look"):  # a look takes no material's place
+            props[info["material"] + "Name"] = v
     if not variants:
         return None
-    node["$properties"] = props
+    if props:
+        node["$properties"] = props
     node.update(variants)
     return node
+
+
+def counts(node):
+    """How many MaterialVariants the node holds, and how many of them are looks (no override)."""
+    if not node:
+        return 0, 0
+    variants = [k for k, v in node.items() if isinstance(v, dict) and v.get("$className") == "MaterialVariant"]
+    overrides = set(node.get("$properties", {}).values())
+    return len(variants), len([v for v in variants if v not in overrides])
 
 
 def render(project):
@@ -137,16 +158,17 @@ def main():
     else:
         project["tree"].pop("MaterialService", None)
     wanted = render(project)
-    count = 0 if not node else len(node) - 2
+    count, looks = counts(node)
+    said = f"{count} textures in the place" + (f", {looks} of them looks" if looks else "")
     if args.check:
         if wanted != current:
             print("default.project.json is out of date with Data/TextureIds: run python3 scripts/sync_materials.py")
             sys.exit(1)
-        print(f"materials in sync ({count} textures in the place)")
+        print(f"materials in sync ({said})")
         return
     if wanted != current:
         open(PROJECT, "w").write(wanted)
-    print(f"{count} textures in the place")
+    print(said)
 
 
 if __name__ == "__main__":

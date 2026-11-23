@@ -97,6 +97,19 @@ The contract between the parts of the game. Update it with every change to an AP
   don't collide unless made with `collide = true`. `Builder.Pieces` counts `cut`, `failed`, `placed`, `waiting`.
 - A primitive's `mat` may be `"Base:Look"` (`"Concrete:Panel"`): the Builder sets the part's Material to `Base` and
   its `MaterialVariant` to `Maplewick<Look>`. Where the place has no such variant the plain material shows.
+  `Data/Textures` lists them in `Textures.looks` (`{ name, material, look, studs }`): `Concrete:Panel` (picture
+  `panel`, 12 studs a tile), `Concrete:Stucco` (`stucco`, 10), `Brick:Maple` (`maple`, 6), `CeramicTiles:Mosaic`
+  (`mosaic`, 4), `CeramicTiles:Checker` (`checker`, 4), `Metal:Corrugated` (`corrugated`, 6), `Metal:Shutter`
+  (`shutter`, 4), `WoodPlanks:Slats` (`slats`, 4), `ClayRoofTiles:Barrel` (`barrel`, 6), `Pavement:Slabs`
+  (`slabs`, 8), `Asphalt:Street` (`street`, 16), `Fabric:Canvas` (`canvas`, 3), `Rock:Cliff` (`cliff`, 16).
+  `Textures.split(mat)` gives base and look, `Textures.look(mat)` the entry, `Textures.variant(mat)` the variant's
+  name (nil for a plain material, an unknown look or a look on the wrong material), and `Textures.tint` takes the
+  whole string. `Textures.ready()` is still the materials only (the client sets an override for each of those);
+  `Textures.readyLooks()` is the looks that have ids, and `Textures.install` makes their variants with no
+  override. `scripts/gen_textures.py --looks` paints each look's colour, normal (`_n`) and roughness (`_r`)
+  pictures, `scripts/upload_textures.py --looks` sends them as Image assets and writes the ids into
+  `Data/TextureIds`, and `scripts/sync_materials.py` writes a MaterialVariant for every look with ids. The
+  Textures spec fails on a look a model asks for that `Data/Textures` doesn't have.
 
 ## The plan
 
