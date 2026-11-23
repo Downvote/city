@@ -120,8 +120,11 @@ server, whatever the client did.
   `Kit.pad` on a Kit button stretches its face back over the padding. `Kit.overUI(pos)` says whether the pointer is
   over our interface, using `GetGuiObjectsAtPosition`, so world clicks never go through a button.
 - `UI/Icons`: the drawn icons. `Icons.make(name, px, props)` builds one from its shape list (rounded rects, ellipses,
-  right angled triangles made by clipping a turned square, rings, half ellipses), each with a top-lit gradient and a
-  dark outline. `Icons.names()` lists them. `UI/Toasts`, `UI/ModelPreview` (3D thumbnails in ViewportFrames).
+  right angled triangles made by clipping a turned square, rings, half ellipses) in two passes: first a dark copy of
+  every outlined shape grown by the outline's width ("Ink" pieces), then every fill with no stroke ("Fill" pieces),
+  so the only outline is the one round the silhouette and none crosses another part. The shade is a gradient in
+  icon space (each piece's keypoints are the icon's shade at its top and bottom), so overlapping pieces join without
+  a seam. `Icons.names()` lists them. `UI/Toasts`, `UI/ModelPreview` (3D thumbnails in ViewportFrames).
 - `UI/Hud`: stat pills, the level card, the clock, the icon dock and the daily gift; opens one panel at a time:
   `Creator`, `Residents`, `CityPanel`, `ShopPanel`, `News`, `Welcome`. `EventCard` (the dialogue box) and `Weather`
   run all the time. The HUD and the event box step aside in Build mode and while the creator is open.
@@ -140,15 +143,17 @@ server, whatever the client did.
   instance tree built from the Rojo project. `tests/run.luau` runs `tests/specs/*.spec.luau`.
 - Specs: `Build` (catalog, plan rules, shapes, builder), `BuildService` (the server's Build service with its
   neighbours stubbed: building charges coins, syncs the plan, strips junk, refuses land you don't own), `City`,
-  `Events`, `Town` (every placed model exists, plots and road stay clear, room to walk on the sidewalks).
+  `Events`, `Town` (every placed model exists, plots and road stay clear, room to walk on the sidewalks), `Icons`
+  (every icon builds; outline copies all come before the fills and no fill carries a dark stroke).
 - `tests/sim/`: the client on fake Roblox instances. `fake.luau` wraps @lune/roblox instances (so property names are
   checked against Roblox's class data) and adds events, children, attributes, tags, bounding boxes, a camera with
   rays and projection, and workspace raycasts. `client.luau` boots the real State, BuildMode and BuildUI against the
   real server Build service (Data and Plots stubbed), with a task scheduler on a fake clock and helpers to move the
   mouse over the plot, click, drag and press buttons. `build_client.luau` drives Build mode end to end (furniture
   from the tray, walls, rooms, floors, roofs, doors, paint, pick, turn, copy, move, sell, undo, every tab, the floor
-  switcher, leaving and coming back); `check.sh` runs it. Lune's own `CFrame.lookAt` faces the wrong way, so the sim
-  gives the game a correct one.
+  switcher, leaving and coming back); `check.sh` runs it. Lune's own `CFrame.lookAt` faces the wrong way and its
+  two-value `ColorSequence.new` and `NumberSequence.new` drop the second value, so the sim gives the game correct
+  ones.
 - `tools/preview/` dumps primitives of a scene (catalog tabs, walls, roofs, the starter house, plaza buildings, `map`
   for the middle of town) and renders them to a PNG with a small rasteriser. `ui.sh <scene> <png>` builds a screen
   with the real client code on the simulation (`ui_dump.luau`: hud, build, build:walls, build:pick, panel:<Name>,

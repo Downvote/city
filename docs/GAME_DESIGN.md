@@ -150,8 +150,14 @@ our own style:
   looks raised, a thick dark outline, and white rounded text (Fredoka One) with an outline in a darker shade of the
   button. They grow a little under the mouse and squash when pressed.
 - **Icons** are drawn, not emoji: about eighty cartoon icons (coin, people, hammer, sofa, roof, brush, gift...) made
-  of flat shapes with a top-lit shade and a thick dark outline round every piece (`UI/Icons`). They need no uploaded
-  images, so they always show and stay sharp at any size.
+  of flat shapes with a top-lit shade and one thick dark outline round the whole silhouette (`UI/Icons`).
+
+  > For the icons, make sure there are no overlapping outlines
+
+  No outline is ever drawn over another part: the parts inside an icon are told apart by their colours, and where
+  pieces sit a little apart (bricks, the grid) the gap fills with a line of ink. The shade runs across the whole
+  icon, so overlapping parts of one colour join without a seam. They need no uploaded images, so they always show
+  and stay sharp at any size.
 - **Bars over the 3D view** are dark glass with a thick outline: the coin pill with a big coin over its end and a
   green + button, the people and happiness pills, the level bar with a medal, the clock with the weather's icon.
 - **Panels** are white cards with a thick outline, a coloured header bar with the panel's icon and an outlined title,

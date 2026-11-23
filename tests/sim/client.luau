@@ -112,6 +112,30 @@ env.CFrame = setmetatable({
 		return CFrame.fromMatrix(eye, right, right:Cross(look))
 	end,
 }, { __index = CFrame })
+-- Lune's two-value ColorSequence.new(a, b) and NumberSequence.new(a, b) drop the second value
+-- (every gradient came out flat); Roblox's don't. Build them from keypoints instead.
+env.ColorSequence = setmetatable({
+	new = function(a, b)
+		if rawTypeof(a) == "Color3" then
+			return roblox.ColorSequence.new({
+				roblox.ColorSequenceKeypoint.new(0, a),
+				roblox.ColorSequenceKeypoint.new(1, b or a),
+			})
+		end
+		return roblox.ColorSequence.new(a)
+	end,
+}, { __index = roblox.ColorSequence })
+env.NumberSequence = setmetatable({
+	new = function(a, b)
+		if type(a) == "number" then
+			return roblox.NumberSequence.new({
+				roblox.NumberSequenceKeypoint.new(0, a),
+				roblox.NumberSequenceKeypoint.new(1, b or a),
+			})
+		end
+		return roblox.NumberSequence.new(a)
+	end,
+}, { __index = roblox.NumberSequence })
 env.TweenInfo = {
 	new = function(...)
 		return { ... }

@@ -24,16 +24,19 @@ the contract (update it with every API, remote or saved data change), `src/share
    simulation (`tests/sim/build_client.luau`: the real Build mode driven by clicks), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (39, all passing): Build (catalog, plan rules, field cleaning, shapes, builder), BuildService (the server's
+Specs today (43, all passing): Build (catalog, plan rules, field cleaning, shapes, builder), BuildService (the server's
 Build service with stubbed neighbours: charges, syncs, strips junk, refuses land you don't own), Events (1500 seeded
 events, every kind reachable, text filled, numbers in range), City (starter town valid, levels, land, paydays, save
 loading, economy bounds), Town (placed models exist, plots and road clear, room to walk, spawn and festival spots
-clear). The town map previews with `sh tools/preview/render.sh map <png>` (or `map:x1,z1,x2,z2`).
+clear), Icons (every icon builds with one outline round its silhouette: outline copies before fills, no stroke on
+a fill). The town map previews with `sh tools/preview/render.sh map <png>` (or `map:x1,z1,x2,z2`).
 
 The user asked for the genre's own layouts (house builders, avatar editors, city builders) and the look of popular
 Roblox games down to the buttons and icons, drawn in our own style: docs/GAME_DESIGN.md section 10. Build screens
 from `UI/Kit` (chunky outlined buttons, glass bars, panels with header bars) and `UI/Icons` (drawn icons, never
-emoji in the interface).
+emoji in the interface). The user's rule for icons: "make sure there are no overlapping outlines". A new icon is a
+shape list in `UI/Icons`; it gets one outline round its silhouette, so tell its parts apart by colour. Look at it
+with `sh tools/preview/ui.sh icons:<name> <png>`.
 
 Nothing here runs inside Roblox. Build mode's client runs end to end on the simulation in `tests/sim`; the other
 screens are built on it for the UI previews; the server services and NPCs are only type checked. A review pass found

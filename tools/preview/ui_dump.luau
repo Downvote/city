@@ -11,6 +11,7 @@
 --   event               an event playing in the dialogue box
 --   toasts              a few notices
 --   icons               every icon, big and small
+--   icons:<a>,<b>,...   those icons up close
 --   creator             the villager creator on the hair tab
 
 local fs = require("@lune/fs")
@@ -151,6 +152,21 @@ elseif scene == "creator" then
 	Hud.open("Creator", { mode = "new" })
 	Sim.frames(3)
 	Sim.advance(1)
+elseif scene:sub(1, 6) == "icons:" then
+	local Icons = Harness.require(Sim.CLIENT .. "UI.Icons")
+	local Kit = Sim.Kit
+	local sheet = Kit.frame({ Parent = Sim.gui, Size = UDim2.fromScale(1, 1), Color = Color3.fromRGB(236, 241, 248), Radius = false })
+	local grid = Instance.new("UIGridLayout")
+	grid.CellSize = UDim2.fromOffset(170, 190)
+	grid.CellPadding = UDim2.fromOffset(6, 6)
+	grid.Parent = sheet
+	local i = 0
+	for name in scene:sub(7):gmatch("[^,]+") do
+		i += 1
+		local cell = Kit.box({ Parent = sheet, LayoutOrder = i })
+		Icons.make(name, 150, { Parent = cell, Position = UDim2.new(0.5, -75, 0, 4) })
+		Kit.text(name, { Parent = cell, Size = UDim2.new(1, 0, 0, 18), Position = UDim2.new(0, 0, 1, -22), TextSize = 15, AlignX = Enum.TextXAlignment.Center })
+	end
 elseif scene == "icons" then
 	local Icons = Harness.require(Sim.CLIENT .. "UI.Icons")
 	local Kit = Sim.Kit

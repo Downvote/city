@@ -1,10 +1,11 @@
 -- The game's icons, drawn from shapes the way cartoon game icons are: flat fills with a soft
--- top-lit gradient and a thick dark outline round every piece. They need no uploaded images, so
+-- top-lit shade and one thick dark outline round the whole silhouette. They need no uploaded images, so
 -- they always show, and they stay sharp at any size.
 --
 -- Icons.make(name, px, props) returns a Frame holding the icon, px pixels square.
 -- Each icon is a list of shapes in a 100 x 100 box, drawn in order:
---   { "r", x, y, w, h, colour, r = corner (0..0.5), rot = degrees, o = false (no outline), t = transparency }
+--   { "r", x, y, w, h, colour, r = corner (0..0.5), rot = degrees, o = false (not part of the
+--     outlined silhouette: details inside it), t = transparency }
 --   { "c", x, y, w, h, colour, ... }             an ellipse
 --   { "t", x, y, base, dir, colour, ... }       a right angled triangle with this base; dir up, down,
 --                                                left or right; its height is half the base
@@ -224,7 +225,7 @@ D.redo = {
 }
 
 D.copy = {
-	{ "r", 8, 8, 56, 64, C.greyLight, r = 0.14 },
+	{ "r", 8, 8, 56, 64, C.steel, r = 0.14 },
 	{ "r", 36, 28, 56, 64, C.white, r = 0.14 },
 	{ "r", 46, 42, 34, 7, C.grey, r = 0.5, o = false },
 	{ "r", 46, 56, 34, 7, C.grey, r = 0.5, o = false },
@@ -433,7 +434,7 @@ D.table = {
 D.bed = {
 	{ "r", 4, 20, 18, 72, C.wood, r = 0.35 },
 	{ "r", 16, 46, 80, 28, C.white, r = 0.25 },
-	{ "r", 22, 38, 26, 18, C.white, r = 0.45 },
+	{ "r", 22, 38, 26, 18, C.cream, r = 0.45 },
 	{ "r", 42, 42, 54, 34, C.blue, r = 0.28 },
 	{ "r", 18, 72, 10, 16, C.woodDark, r = 0.2 },
 	{ "r", 84, 72, 10, 16, C.woodDark, r = 0.2 },
@@ -692,11 +693,11 @@ local function cloud(color: Color3, y: number?): { any }
 		{ "c", 6, 40 + dy, 40, 36, color },
 		{ "c", 28, 18 + dy, 48, 48, color },
 		{ "c", 54, 34 + dy, 40, 40, color },
-		{ "r", 12, 52 + dy, 76, 24, color, r = 0.5 },
+		{ "r", 12, 50 + dy, 76, 24, color, r = 0.5 },
 		{ "c", 9, 43 + dy, 34, 30, color, o = false },
 		{ "c", 31, 21 + dy, 42, 42, color, o = false },
 		{ "c", 57, 37 + dy, 34, 34, color, o = false },
-		{ "r", 14, 54 + dy, 72, 19, color, r = 0.5, o = false },
+		{ "r", 14, 52 + dy, 72, 19, color, r = 0.5, o = false },
 	}
 end
 
@@ -731,10 +732,20 @@ D.leaves = {
 }
 
 -- making them -------------------------------------------------------------------------------------
+--
+-- An icon is drawn in two passes so that no outline ever crosses another or runs over a fill:
+-- first every outlined shape goes down as a solid dark copy grown by the outline's width, then
+-- every fill goes on top with no stroke at all. What shows is one outline round the whole
+-- silhouette, and parts that meet inside it are told apart by their colours. Where outlined
+-- shapes sit a little apart, the dark copies fill the gap with a line of ink (brick joints,
+-- the grid's lines). The shading is worked out for the whole icon, not shape by shape, so
+-- overlapping shapes of one colour join without a seam.
 
 function Icons.has(name: string?): boolean
 	return name ~= nil and D[name] ~= nil
 end
+
+local SHADE = 0.2 -- how much darker the bottom of an icon is than the top
 
 local function corner(parent: Instance, scale: number)
 	local c = Instance.new("UICorner")
@@ -742,30 +753,156 @@ local function corner(parent: Instance, scale: number)
 	c.Parent = parent
 end
 
-local function shade(parent: Instance, strength: number)
+-- A top-lit shade in icon space: the object spans icon heights y0..y1 (0..100), turned by `rot`.
+local function shade(parent: Instance, y0: number, y1: number, rot: number)
+	local function k(y: number): Color3
+		local v = 1 - SHADE * math.clamp(y / 100, 0, 1)
+		return Color3.new(v, v, v)
+	end
 	local g = Instance.new("UIGradient")
-	g.Rotation = 90
-	g.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.new(1 - strength, 1 - strength, 1 - strength))
+	g.Rotation = 90 - rot
+	g.Color = ColorSequence.new(k(y0), k(y1))
 	g.Parent = parent
 end
 
-local function outline(parent: Instance, thickness: number)
+local function stroke(parent: Instance, color: Color3, thickness: number)
 	local s = Instance.new("UIStroke")
-	s.Color = INK
+	s.Color = color
 	s.Thickness = thickness
 	s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	s.LineJoinMode = Enum.LineJoinMode.Round
 	s.Parent = parent
 end
 
-local function box(name: string, x: number, y: number, w: number, h: number, parent: Instance): Frame
+local function box(name: string, x: number, y: number, w: number, h: number, parent: Instance, z: number): Frame
 	local f = Instance.new("Frame")
 	f.Name = name
 	f.BorderSizePixel = 0
 	f.Position = UDim2.fromScale(x / 100, y / 100)
 	f.Size = UDim2.fromScale(w / 100, h / 100)
+	f.ZIndex = z
 	f.Parent = parent
 	return f
+end
+
+-- Half the vertical extent of a w x h box turned by rot degrees.
+local function halfHeight(w: number, h: number, rot: number): number
+	local r = math.rad(rot)
+	return (math.abs(w * math.sin(r)) + math.abs(h * math.cos(r))) / 2
+end
+
+-- Draws one shape for one pass. ink: the dark copy, grown by `grow` (in icon units) all round.
+local function drawShape(
+	root: Frame,
+	s: any,
+	i: number,
+	ink: boolean,
+	grow: number,
+	thick: number,
+	tint: Color3?,
+	z: number
+)
+	local kind, x, y = s[1], s[2], s[3]
+	local fillColor: Color3 = tint or s[6]
+	local color = if ink then INK else fillColor
+	if kind == "r" or kind == "c" then
+		local w, h = s[4], s[5]
+		local f = box((if ink then "Ink" else "Fill") .. i, x, y, w, h, root, z)
+		f.BackgroundColor3 = color
+		f.BackgroundTransparency = if ink then 0 else (s.t or 0)
+		f.Rotation = s.rot or 0
+		corner(f, if kind == "c" then 0.5 else (s.r or 0))
+		if ink then
+			stroke(f, INK, thick)
+		elseif (s.t or 0) < 0.3 then
+			local hh = if kind == "c" then h / 2 else halfHeight(w, h, s.rot or 0)
+			local cy = y + h / 2
+			shade(f, cy - hh, cy + hh, if kind == "c" then 0 else (s.rot or 0))
+		end
+	elseif kind == "ring" then
+		-- a thick stroke round an empty circle
+		local width = (s[7] or 10) / 100
+		local f = box((if ink then "Ink" else "Fill") .. i, x, y, s[4], s[5], root, z)
+		f.BackgroundTransparency = 1
+		corner(f, 0.5)
+		f:SetAttribute("RingWidth", width)
+		stroke(f, color, 0) -- thickness is set in pixels below, once the icon's size is known
+	elseif kind == "t" then
+		local base, dir = s[4], s[5]
+		local horizontal = dir == "up" or dir == "down"
+		local w = if horizontal then base else base / 2
+		local h = if horizontal then base / 2 else base
+		-- where the turned square's centre sits, in icon units
+		local cx, cy
+		if dir == "up" then
+			cx, cy = x + w / 2, y + h
+		elseif dir == "down" then
+			cx, cy = x + w / 2, y
+		elseif dir == "left" then
+			cx, cy = x + w, y + h / 2
+		else
+			cx, cy = x, y + h / 2
+		end
+		-- the clip shows half the square; the dark copy's clip is grown to show its outline too
+		local g = if ink then grow else 0
+		local bx, by, bw, bh = x - g, y - g, w + g * 2, h + g * 2
+		local clip = box((if ink then "Ink" else "Fill") .. "Tri" .. i, bx, by, bw, bh, root, z)
+		clip.BackgroundTransparency = 1
+		clip.ClipsDescendants = true
+		local side = base / math.sqrt(2)
+		local sq = Instance.new("Frame")
+		sq.BorderSizePixel = 0
+		sq.BackgroundColor3 = color
+		sq.AnchorPoint = Vector2.new(0.5, 0.5)
+		sq.Rotation = 45
+		sq.ZIndex = z
+		sq.Size = UDim2.fromScale(side / bw, side / bh)
+		sq.Position = UDim2.fromScale((cx - bx) / bw, (cy - by) / bh)
+		sq.Parent = clip
+		if ink then
+			stroke(sq, INK, thick)
+		else
+			shade(sq, cy - base / 2, cy + base / 2, 45)
+		end
+	elseif kind == "half" then
+		local w, h = s[4], s[5]
+		local g = if ink then grow else 0
+		local bx, by, bw, bh = x - g, y + h / 2 - g, w + g * 2, h / 2 + g * 2
+		local clip = box((if ink then "Ink" else "Fill") .. "Half" .. i, bx, by, bw, bh, root, z)
+		clip.BackgroundTransparency = 1
+		clip.ClipsDescendants = true
+		local e = Instance.new("Frame")
+		e.BorderSizePixel = 0
+		e.BackgroundColor3 = color
+		e.ZIndex = z
+		e.Size = UDim2.fromScale(w / bw, h / bh)
+		e.Position = UDim2.fromScale((x - bx) / bw, (y - by) / bh)
+		e.Parent = clip
+		corner(e, 0.5)
+		if ink then
+			stroke(e, INK, thick)
+		else
+			shade(e, y, y + h, 0)
+		end
+	elseif kind == "txt" and not ink then
+		local l = Instance.new("TextLabel")
+		l.Name = "Fill" .. i
+		l.BackgroundTransparency = 1
+		l.Position = UDim2.fromScale(x / 100, y / 100)
+		l.Size = UDim2.fromScale(s[4] / 100, s[5] / 100)
+		l.Text = s[6]
+		l.TextColor3 = s[7]
+		l.TextScaled = true
+		l.Font = Enum.Font.FredokaOne
+		l.ZIndex = z
+		l.Parent = root
+		if s.o ~= false and thick > 0 then
+			local st = Instance.new("UIStroke")
+			st.Color = INK
+			st.Thickness = thick
+			st.Parent = l
+		end
+	end
 end
 
 -- Draws icon `name` into a new px x px Frame. props: Parent, Position, AnchorPoint, LayoutOrder,
@@ -785,108 +922,24 @@ function Icons.make(name: string, px: number, props: { [string]: any }?): Frame
 	root.ZIndex = z
 	local def = D[name] or D.medal
 	local thick = if p.Outline == false then 0 else math.max(1, math.floor(px / 22 + 0.5))
-	local shadeK = 0.16
+	local grow = thick / px * 100 -- the outline's width in icon units
+	if thick > 0 then
+		for i, s in def do
+			if s.o ~= false then
+				drawShape(root, s, i, true, grow, thick, nil, z)
+			end
+		end
+	end
 	for i, s in def do
-		local kind, x, y = s[1], s[2], s[3]
-		local color: Color3 = p.Tint or (if kind == "t" then s[6] else s[6])
-		local wantOutline = s.o ~= false and thick > 0
-		if kind == "r" or kind == "c" then
-			local f = box("S" .. i, x, y, s[4], s[5], root)
-			f.BackgroundColor3 = color
-			f.BackgroundTransparency = s.t or 0
-			f.Rotation = s.rot or 0
-			f.ZIndex = z
-			corner(f, if kind == "c" then 0.5 else (s.r or 0))
-			if (s.t or 0) < 0.3 then
-				shade(f, shadeK)
-			end
-			if wantOutline then
-				outline(f, thick)
-			end
-		elseif kind == "ring" then
-			-- a thick stroke round an empty circle; a wider dark one underneath outlines it
-			local width = (s[7] or 10) / 100 * px
-			local function ring(strokeColor: Color3, thickness: number)
-				local f = box("S" .. i, x, y, s[4], s[5], root)
-				f.BackgroundTransparency = 1
-				f.ZIndex = z
-				corner(f, 0.5)
-				local st = Instance.new("UIStroke")
-				st.Color = strokeColor
-				st.Thickness = thickness
-				st.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-				st.Parent = f
-			end
-			if wantOutline then
-				ring(INK, width + thick * 2)
-			end
-			ring(color, width)
-		elseif kind == "t" then
-			local base, dir = s[4], s[5]
-			local horizontal = dir == "up" or dir == "down"
-			local w = if horizontal then base else base / 2
-			local h = if horizontal then base / 2 else base
-			local clip = box("T" .. i, x, y, w, h, root)
-			clip.BackgroundTransparency = 1
-			clip.ClipsDescendants = true
-			clip.ZIndex = z
-			local sq = Instance.new("Frame")
-			sq.BorderSizePixel = 0
-			sq.BackgroundColor3 = color
-			sq.AnchorPoint = Vector2.new(0.5, 0.5)
-			sq.Rotation = 45
-			sq.ZIndex = z
-			-- a square of side base / sqrt 2 standing on its corner, half of it showing
-			local side = base / math.sqrt(2)
-			sq.Size = UDim2.fromScale(side / w, side / h)
-			if dir == "up" then
-				sq.Position = UDim2.fromScale(0.5, 1)
-			elseif dir == "down" then
-				sq.Position = UDim2.fromScale(0.5, 0)
-			elseif dir == "left" then
-				sq.Position = UDim2.fromScale(1, 0.5)
-			else
-				sq.Position = UDim2.fromScale(0, 0.5)
-			end
-			sq.Parent = clip
-			shade(sq, shadeK * 0.6)
-			if wantOutline then
-				outline(sq, thick)
-			end
-		elseif kind == "half" then
-			local w, h = s[4], s[5]
-			local clip = box("H" .. i, x, y + h / 2, w, h / 2, root)
-			clip.BackgroundTransparency = 1
-			clip.ClipsDescendants = true
-			clip.ZIndex = z
-			local e = Instance.new("Frame")
-			e.BorderSizePixel = 0
-			e.BackgroundColor3 = color
-			e.Size = UDim2.fromScale(1, 2)
-			e.Position = UDim2.fromScale(0, -1)
-			e.ZIndex = z
-			e.Parent = clip
-			corner(e, 0.5)
-			if wantOutline then
-				outline(e, thick)
-			end
-		elseif kind == "txt" then
-			local l = Instance.new("TextLabel")
-			l.Name = "S" .. i
-			l.BackgroundTransparency = 1
-			l.Position = UDim2.fromScale(x / 100, y / 100)
-			l.Size = UDim2.fromScale(s[4] / 100, s[5] / 100)
-			l.Text = s[6]
-			l.TextColor3 = s[7]
-			l.TextScaled = true
-			l.Font = Enum.Font.FredokaOne
-			l.ZIndex = z
-			l.Parent = root
-			if wantOutline then
-				local st = Instance.new("UIStroke")
-				st.Color = INK
-				st.Thickness = thick
-				st.Parent = l
+		drawShape(root, s, i, false, grow, thick, p.Tint, z)
+	end
+	-- rings: their stroke is the ring, so its width is in pixels; the dark copy is wider by the outline
+	for _, f in root:GetChildren() do
+		local width = f:GetAttribute("RingWidth")
+		if type(width) == "number" then
+			local st = f:FindFirstChildOfClass("UIStroke")
+			if st then
+				st.Thickness = width * px + (if f.Name:sub(1, 3) == "Ink" then thick * 2 else 0)
 			end
 		end
 	end
