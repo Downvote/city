@@ -88,12 +88,21 @@ describe("Presets", function()
 	end)
 
 	it("costs what its pieces cost, and the shops bring their workplace", function()
+		-- one building for every workplace (the user: "make much more buildings, one for each
+		-- workspace"), each with its own file under Data/Buildings
 		local shops = {
-			library = "work_library",
+			market = "work_market",
 			cafe = "work_cafe",
 			bakery = "work_bakery",
+			icecream = "work_icecream",
+			florist = "work_flowers",
+			studio = "work_easel",
+			musichall = "work_stage",
+			workshop = "work_builder",
 			clinic = "work_clinic",
 			school = "work_school",
+			postoffice = "work_post",
+			library = "work_library",
 		}
 		for _, p in Presets.list do
 			local price = Presets.price(p.id)
