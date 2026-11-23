@@ -143,14 +143,14 @@ function Kit.outlineText(label: Instance, color: Color3?, thickness: number?): U
 	return st
 end
 
--- A top-to-bottom shading on a frame or button (lighter at the top).
+-- A gentle top-to-bottom shading on a small thing (a slider's fill, a price tag). The user asked
+-- for flat buttons and tabs earlier and then for "more life to the uis, such as gradients", so
+-- backgrounds, headers, pills and little fills are shaded and buttons and tabs are not.
 function Kit.gradient(inst: Instance, strength: number?): UIGradient
-	-- everything is flat colour now: the gradient is kept (callers hold on to it) but switched off
-	local k = 1 - (strength or 0.14)
+	local k = 1 - (strength or 0.14) * 0.7
 	return Kit.new("UIGradient", {
 		Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.new(k, k, k)),
 		Rotation = 90,
-		Enabled = false,
 		Parent = inst,
 	})
 end
@@ -255,6 +255,100 @@ local function shapedGradient(inst: Instance, kind: string, scale: number?): UIG
 	return g
 end
 Kit.shapedGradient = shapedGradient
+
+-- Life in the backgrounds ------------------------------------------------------------------------------
+--
+-- The user: "add more life to the uis, such as gradients and simple shapes dotting the
+-- background". So a card or a header is washed from one colour into another, and little shapes
+-- (dots, rings, plus signs, diamonds, short dashes) are scattered faintly behind what's on it.
+
+local function mix(a: Color3, b: Color3, t: number): Color3
+	return a:Lerp(b, t)
+end
+Kit.mix = mix
+
+-- Washes a frame from colour `a` into colour `b` (left to right, or along `rotation` degrees).
+function Kit.wash(inst: GuiObject, a: Color3, b: Color3, rotation: number?): UIGradient
+	inst.BackgroundColor3 = Color3.new(1, 1, 1)
+	local old = inst:FindFirstChild("Wash")
+	if old then
+		old:Destroy()
+	end
+	return Kit.new("UIGradient", {
+		Name = "Wash",
+		Color = ColorSequence.new(a, b),
+		Rotation = rotation or 0,
+		Parent = inst,
+	})
+end
+
+-- Scatters simple shapes faintly over `parent`'s background, under everything else on it.
+-- opts: Transparency (how faint, 0.86 by default), Area ({ x1, y1, x2, y2 } as shares of the
+-- parent, to keep them clear of a header or the edges), Size (a scale for the shapes).
+function Kit.shapes(parent: GuiObject, color: Color3, seed: number, count: number?, opts: { [string]: any }?): Frame
+	local o = opts or {}
+	local rng = Random.new(seed)
+	local area = o.Area or { 0.04, 0.06, 0.96, 0.94 }
+	local faint = o.Transparency or 0.86
+	local scale = o.Size or 1
+	local layer = Kit.new("Frame", {
+		Name = "Shapes",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 0,
+		Parent = parent,
+	})
+	local function piece(holder: Instance, w: number, h: number, rot: number, round: boolean): Frame
+		local f = Kit.new("Frame", {
+			BackgroundColor3 = color,
+			BackgroundTransparency = faint,
+			BorderSizePixel = 0,
+			Size = UDim2.fromOffset(w, h),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.fromScale(0.5, 0.5),
+			Rotation = rot,
+			ZIndex = 0,
+			Parent = holder,
+		})
+		Kit.new("UICorner", { CornerRadius = if round then UDim.new(0.5, 0) else UDim.new(0, 3), Parent = f })
+		return f
+	end
+	local kinds = { "dot", "ring", "plus", "diamond", "dash", "dot", "ring" }
+	for k = 1, count or 14 do
+		local kind = kinds[(k - 1) % #kinds + 1]
+		local size = math.floor(rng:NextNumber(9, 20) * scale)
+		local holder = Kit.new("Frame", {
+			Name = kind,
+			BackgroundTransparency = 1,
+			Size = UDim2.fromOffset(size, size),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.fromScale(rng:NextNumber(area[1], area[3]), rng:NextNumber(area[2], area[4])),
+			ZIndex = 0,
+			Parent = layer,
+		})
+		if kind == "dot" then
+			piece(holder, size * 0.7, size * 0.7, 0, true)
+		elseif kind == "ring" then
+			local ring = piece(holder, size, size, 0, true)
+			ring.BackgroundTransparency = 1
+			Kit.new("UIStroke", {
+				Color = color,
+				Transparency = faint,
+				Thickness = math.max(2, size / 6),
+				Parent = ring,
+			})
+		elseif kind == "plus" then
+			local turn = rng:NextInteger(0, 40)
+			piece(holder, size, size * 0.28, turn, true)
+			piece(holder, size, size * 0.28, turn + 90, true)
+		elseif kind == "diamond" then
+			piece(holder, size * 0.62, size * 0.62, 45, false)
+		else
+			piece(holder, size * 1.2, size * 0.32, rng:NextInteger(-50, 50), true)
+		end
+	end
+	return layer
+end
 
 -- Dims a backdrop like a vignette: lighter behind the middle of the screen, where the menu sits,
 -- and darker toward the edges. `middle` and `edge` are transparencies. `scale` shrinks the
@@ -465,6 +559,10 @@ function Kit.glass(props: { [string]: any }?): Frame
 		Radius = p.Radius or 20,
 	})
 	Kit.softShadow(f, 1)
+	if p.Color == nil then
+		-- white at the top into the palest cream
+		Kit.wash(f, T.White, T.Cream, 90)
+	end
 	return f
 end
 
@@ -1102,6 +1200,8 @@ function Kit.darkPill(props: { [string]: any }?): Frame
 		Radius = p.Radius or "pill",
 	})
 	Kit.softShadow(f, 0.6)
+	-- a little lighter toward the right, so the pills over the town aren't flat slabs
+	Kit.wash(f, T.Glass, mix(T.Glass, T.White, 0.2), 0)
 	return f
 end
 
@@ -1656,6 +1756,19 @@ function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: s
 		Parent = header,
 	})
 	local _ = icon
+	-- life in the background: the header runs from its colour into a lighter one with white
+	-- shapes dotted over it, and the card warms a little toward the bottom with shapes in the
+	-- header's colour scattered faintly behind everything on it
+	local seed = #titleText * 31 + string.byte(titleText, 1)
+	local light = mix(headColor, T.White, 0.28)
+	Kit.wash(header, headColor, light, 0)
+	local square = header:FindFirstChild("Square")
+	if square and square:IsA("GuiObject") then
+		Kit.wash(square, headColor, light, 0)
+	end
+	Kit.shapes(header, T.White, seed, 12, { Transparency = 0.6, Area = { 0.28, 0.14, 0.9, 0.86 } })
+	Kit.wash(frame, T.Cream, mix(T.Cream, headColor, 0.16), 90)
+	Kit.shapes(frame, headColor, seed + 7, 26, { Transparency = 0.76, Area = { 0.03, 0.14, 0.97, 0.97 }, Size = 1.2 })
 	local title = Kit.title(titleText, {
 		Parent = header,
 		Size = UDim2.new(1, -90, 1, 0),

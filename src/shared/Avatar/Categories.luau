@@ -60,6 +60,8 @@ local tabs: { Tab } = {
 	{ id = "skin", name = "Skin" },
 	{ id = "shape", name = "Shape" },
 	{ id = "outfits", name = "Outfits" },
+	-- avatars made by players: the people here, your friends, and looks shared from this creator
+	{ id = "people", name = "Players" },
 }
 
 Categories.Tabs = tabs
@@ -242,6 +244,13 @@ function Categories.merge(app: Appearance.Appearance, part: any): Appearance.App
 	if type(part) ~= "table" then
 		return out
 	end
+	if part.kind == "body" then
+		-- a whole body replaces the last one: nothing of the old torso and limbs stays behind
+		-- (the head stays unless the new body brings its own)
+		for _, k in { "torso", "la", "ra", "ll", "rl" } do
+			out.body[k] = 0
+		end
+	end
 	if type(part.body) == "table" then
 		for _, k in Appearance.BodyKeys do
 			if type(part.body[k]) == "number" and part.body[k] > 0 then
@@ -278,6 +287,65 @@ function Categories.merge(app: Appearance.Appearance, part: any): Appearance.App
 				out.scale[k] = part.scale[k]
 			end
 		end
+	end
+	return Appearance.sanitize(out)
+end
+
+-- Is everything a bundle sets being worn? (A bundle has no id of its own in a look.)
+function Categories.bundleWorn(app: Appearance.Appearance, part: any): boolean
+	if type(part) ~= "table" then
+		return false
+	end
+	local any = false
+	for _, k in Appearance.BodyKeys do
+		local id = type(part.body) == "table" and part.body[k]
+		if type(id) == "number" and id > 0 then
+			any = true
+			if app.body[k] ~= id then
+				return false
+			end
+		end
+	end
+	for _, k in Appearance.AnimKeys do
+		local id = type(part.anim) == "table" and part.anim[k]
+		if type(id) == "number" and id > 0 then
+			any = true
+			if app.anim[k] ~= id then
+				return false
+			end
+		end
+	end
+	for _, a in if type(part.acc) == "table" then part.acc else {} do
+		any = true
+		if not Categories.isWorn(app, a.id) then
+			return false
+		end
+	end
+	return any
+end
+
+-- Takes a bundle off again: its body parts, animations and accessories go back to none.
+function Categories.unmerge(app: Appearance.Appearance, part: any): Appearance.Appearance
+	local out = Appearance.sanitize(app)
+	if type(part) ~= "table" then
+		return out
+	end
+	for _, k in Appearance.BodyKeys do
+		if type(part.body) == "table" and part.body[k] == out.body[k] then
+			out.body[k] = 0
+		end
+	end
+	for _, k in Appearance.AnimKeys do
+		if type(part.anim) == "table" and part.anim[k] == out.anim[k] then
+			out.anim[k] = 0
+		end
+	end
+	for _, a in if type(part.acc) == "table" then part.acc else {} do
+		out = Appearance.without(out, a.id)
+	end
+	if part.kind == "body" and type(part.scale) == "table" then
+		out.scale.bodyType = 0
+		out.scale.proportion = 0
 	end
 	return Appearance.sanitize(out)
 end

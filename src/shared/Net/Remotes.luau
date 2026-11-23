@@ -19,6 +19,9 @@ Remotes.Functions = {
 	"CreatorBundle", -- (bundleId) -> partial appearance
 	"CreatorFromUser", -- (name or "") -> appearance
 	"CreatorSearch", -- (query) -> items (used when the client can't search the catalog itself)
+	"CreatorPeople", -- () -> { people = { { id, name, kind } }, looks = { { name, by, who, app } } }
+	"CreatorFromUserId", -- (userId) -> appearance
+	"LookShare", -- (name, appearance) -> ok, err
 	"CreatorItemInfo", -- (ids) -> { id = { name, type } }
 	"VillagerCreate", -- (profile) -> ok, vid or err
 	"VillagerUpdate", -- (vid, fields) -> ok, err

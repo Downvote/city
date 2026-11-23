@@ -218,7 +218,14 @@ function Avatar.bundle(bundleId: number): any
 	if not ok or type(details) ~= "table" then
 		return nil
 	end
-	local part: any = { body = {}, anim = {}, acc = {} }
+	local kindName = tostring(details.BundleType or "")
+	-- what the bundle is: a whole body, a head, a set of animations or a pair of shoes
+	local kind = if kindName:find("Animation")
+		then "anim"
+		elseif kindName:find("Shoe") then "shoes"
+		elseif kindName:find("Head") then "head"
+		else "body"
+	local part: any = { kind = kind, body = {}, anim = {}, acc = {} }
 	local outfitId
 	for _, item in details.Items or {} do
 		if item.Type == "UserOutfit" then
@@ -231,12 +238,19 @@ function Avatar.bundle(bundleId: number): any
 		end)
 		if ok2 and desc then
 			local app = Avatar.fromDescription(desc)
-			local kind = tostring(details.BundleType or "")
-			if kind:find("Animation") then
+			if kind == "anim" then
 				part.anim = app.anim
-			elseif kind:find("Shoe") then
+			elseif kind == "shoes" then
 				for _, a in app.acc do
 					if a.t == "LeftShoe" or a.t == "RightShoe" then
+						table.insert(part.acc, a)
+					end
+				end
+			elseif kind == "head" then
+				-- only the head, with the brows and lashes that come with it
+				part.body = { head = app.body.head }
+				for _, a in app.acc do
+					if a.t == "Eyebrow" or a.t == "Eyelash" then
 						table.insert(part.acc, a)
 					end
 				end
@@ -245,9 +259,8 @@ function Avatar.bundle(bundleId: number): any
 				if app.face > 0 then
 					part.face = app.face
 				end
-				if kind:find("Body") then
-					part.scale = app.scale
-				end
+				-- the build that goes with the body (how tall and wide stays the player's choice)
+				part.scale = { bodyType = app.scale.bodyType, proportion = app.scale.proportion }
 			end
 		end
 	end
@@ -391,34 +404,68 @@ local function buildStage(slot: number): Model
 	return model
 end
 
-local function idle(model: Model)
-	local hum = model:FindFirstChildOfClass("Humanoid")
-	local animator = hum and hum:FindFirstChildOfClass("Animator")
-	if not animator then
+-- The animation the character's own Animate script holds for an action ("idle", "walk", ...):
+-- wearing an animation pack swaps these.
+local STOCK = {
+	idle = "rbxassetid://507766388",
+	walk = "rbxassetid://507777826",
+	run = "rbxassetid://507767714",
+	jump = "rbxassetid://507765000",
+	fall = "rbxassetid://507767968",
+	climb = "rbxassetid://507765644",
+	swim = "rbxassetid://507784897",
+}
+
+local function animationOf(model: Model, action: string): string
+	local animate = model:FindFirstChild("Animate")
+	local holder = animate and animate:FindFirstChild(action)
+	if holder then
+		for _, a in holder:GetChildren() do
+			if a:IsA("Animation") and a.AnimationId ~= "" then
+				return a.AnimationId
+			end
+		end
+	end
+	return STOCK[action] or STOCK.idle
+end
+
+-- Plays one of the mannequin's animations on the spot (its root is anchored, so a walk is a walk
+-- in place). Whatever was playing stops first: after a change of animation pack the old idle
+-- would otherwise carry on and nothing would seem to have happened.
+local function act(stage: any, action: string)
+	local model: Model? = stage.mannequin
+	local hum = model and model:FindFirstChildOfClass("Humanoid")
+	if not model or not hum then
 		return
 	end
-	local anim = Instance.new("Animation")
-	anim.AnimationId = "rbxassetid://507766388"
-	local animate = model:FindFirstChild("Animate")
-	local idleFolder = animate and animate:FindFirstChild("idle")
-	local custom = idleFolder and idleFolder:FindFirstChildOfClass("Animation")
-	if custom and custom.AnimationId ~= "" then
-		anim.AnimationId = custom.AnimationId
+	local animator = hum:FindFirstChildOfClass("Animator")
+	if not animator then
+		animator = Instance.new("Animator")
+		animator.Parent = hum
 	end
+	for _, track in (animator :: Animator):GetPlayingAnimationTracks() do
+		track:Stop(0.15)
+	end
+	local anim = Instance.new("Animation")
+	anim.AnimationId = animationOf(model, action)
 	local ok, track = pcall(function()
-		return animator:LoadAnimation(anim)
+		return (animator :: Animator):LoadAnimation(anim)
 	end)
 	if ok and track then
 		track.Looped = true
-		track:Play()
+		track:Play(0.15)
 	end
+	stage.action = action
 end
 
-local function placeMannequin(stage: any, model: Model)
-	local origin = stage.model:GetAttribute("Origin") :: Vector3
-	if stage.mannequin then
-		stage.mannequin:Destroy()
+-- Stands the mannequin on its pedestal. A new body or a new height changes how long its legs
+-- are, so this runs after every change, not only when it is first put there.
+local function stand(stage: any)
+	local model: Model? = stage.mannequin
+	if not model then
+		return
 	end
+	local origin = stage.model:GetAttribute("Origin") :: Vector3
 	local root = model:FindFirstChild("HumanoidRootPart")
 	if root and root:IsA("BasePart") then
 		root.Anchored = true
@@ -427,9 +474,30 @@ local function placeMannequin(stage: any, model: Model)
 	local hip = if hum then hum.HipHeight else 2
 	local rootHalf = if root and root:IsA("BasePart") then root.Size.Y / 2 else 1
 	model:PivotTo(CFrame.new(origin + Vector3.new(0, 0.42 + hip + rootHalf, 0)) * CFrame.Angles(0, math.pi, 0))
-	model.Parent = stage.model
+end
+
+local function placeMannequin(stage: any, model: Model)
+	if stage.mannequin then
+		stage.mannequin:Destroy()
+	end
 	stage.mannequin = model
-	idle(model)
+	stand(stage)
+	model.Parent = stage.model
+	act(stage, "idle")
+end
+
+-- Which animation to show off after a change of look: the first one that is different.
+local SHOW_ORDER = { "walk", "run", "jump", "idle", "fall", "climb", "swim" }
+local function changedMove(before: Appearance.Appearance?, after: Appearance.Appearance): string?
+	if not before then
+		return nil
+	end
+	for _, k in SHOW_ORDER do
+		if before.anim[k] ~= after.anim[k] then
+			return k
+		end
+	end
+	return nil
 end
 
 local function openStage(player: Player): any
@@ -483,10 +551,156 @@ local function dress(player: Player, app: Appearance.Appearance)
 			if model and stages[player] then
 				placeMannequin(stage, model)
 			end
+		elseif stages[player] == stage then
+			stand(stage)
+		end
+		if stages[player] == stage and stage.mannequin then
+			-- show the change: a new walk, run or jump plays on the spot for a few seconds, then
+			-- the mannequin goes back to standing (with its new idle, if that changed)
+			local move = changedMove(stage.look, current)
+			stage.look = current
+			stage.turn = (stage.turn or 0) + 1
+			local turn = stage.turn
+			act(stage, move or "idle")
+			if move and move ~= "idle" then
+				task.delay(4, function()
+					if stages[player] == stage and stage.turn == turn then
+						act(stage, "idle")
+					end
+				end)
+			end
 		end
 		current = stage.pending
 	end
 	stage.busy = false
+end
+
+-- Avatars made by players ----------------------------------------------------------------------------
+--
+-- The user: "add another tab for player created avatars in the character creation". Two kinds:
+-- the Roblox avatars of the people here and of your friends, and looks that players of this game
+-- have shared from the creator (kept in one small list in a data store, newest first).
+
+type Person = { id: number, name: string, kind: string }
+local friendCache: { [Player]: { Person } } = {}
+local lastShare: { [Player]: number } = {}
+local MAX_PEOPLE = 48
+local MAX_SHARED = 48
+local SHARED_KEY = "recent"
+
+local function people(player: Player): { Person }
+	local out: { Person } = { { id = player.UserId, name = player.DisplayName, kind = "you" } }
+	local seen = { [player.UserId] = true }
+	for _, other in Players:GetPlayers() do
+		if not seen[other.UserId] and other.UserId > 0 then
+			seen[other.UserId] = true
+			table.insert(out, { id = other.UserId, name = other.DisplayName, kind = "here" })
+		end
+	end
+	local friends = friendCache[player]
+	if not friends then
+		friends = {}
+		pcall(function()
+			local pages = Players:GetFriendsAsync(player.UserId)
+			while #friends < MAX_PEOPLE do
+				for _, f in pages:GetCurrentPage() do
+					local name = if type(f.DisplayName) == "string" and f.DisplayName ~= ""
+						then f.DisplayName
+						else f.Username
+					table.insert(friends, { id = f.Id, name = name, kind = "friend" })
+				end
+				if pages.IsFinished then
+					break
+				end
+				pages:AdvanceToNextPageAsync()
+			end
+		end)
+		friendCache[player] = friends
+	end
+	for _, f in friends do
+		if not seen[f.id] and #out < MAX_PEOPLE then
+			seen[f.id] = true
+			table.insert(out, f)
+		end
+	end
+	return out
+end
+
+-- Shared looks: { { name, by (user id), who (their name), app } }, newest first.
+local sharedStore: DataStore? = nil
+local sharedCache: { any } = {}
+local sharedAt = -1e9
+
+local function sharedData(): DataStore?
+	if sharedStore == nil then
+		pcall(function()
+			sharedStore = game:GetService("DataStoreService"):GetDataStore(Tuning.Game.DataStoreName .. "_Looks")
+		end)
+	end
+	return sharedStore
+end
+
+local function cleanShared(list: any): { any }
+	local out = {}
+	if type(list) == "table" then
+		for _, e in list do
+			if type(e) == "table" and type(e.name) == "string" and type(e.by) == "number" and #out < MAX_SHARED then
+				table.insert(out, {
+					name = e.name:sub(1, 40),
+					by = e.by,
+					who = if type(e.who) == "string" then e.who:sub(1, 40) else "",
+					app = Appearance.sanitize(e.app),
+				})
+			end
+		end
+	end
+	return out
+end
+
+local function sharedLooks(): { any }
+	if os.clock() - sharedAt < 60 then
+		return sharedCache
+	end
+	sharedAt = os.clock()
+	local store = sharedData()
+	if store then
+		local ok, list = pcall(function()
+			return store:GetAsync(SHARED_KEY)
+		end)
+		if ok then
+			sharedCache = cleanShared(list)
+		end
+	end
+	return sharedCache
+end
+
+local function shareLook(player: Player, name: string, app: Appearance.Appearance): (boolean, string?)
+	local store = sharedData()
+	if not store then
+		return false, "Sharing is off in this server."
+	end
+	local entry = { name = name, by = player.UserId, who = player.DisplayName, app = app }
+	local ok = pcall(function()
+		store:UpdateAsync(SHARED_KEY, function(old)
+			local list = cleanShared(old)
+			-- one look a player: sharing again replaces their last one
+			for i = #list, 1, -1 do
+				if list[i].by == player.UserId then
+					table.remove(list, i)
+				end
+			end
+			table.insert(list, 1, entry)
+			while #list > MAX_SHARED do
+				table.remove(list)
+			end
+			return list
+		end)
+	end)
+	if not ok then
+		return false, "Couldn't share it just now."
+	end
+	sharedAt = -1e9
+	return true, nil
 end
 
 -- Remotes ------------------------------------------------------------------------------------------
@@ -512,6 +726,7 @@ function Avatar.start()
 		local model = Avatar.buildModel(app, "Mannequin")
 		if model then
 			placeMannequin(stage, model)
+			stage.look = app
 		end
 		return {
 			origin = stage.model:GetAttribute("Origin"),
@@ -552,6 +767,53 @@ function Avatar.start()
 		end
 		return Avatar.fromUserName(name)
 	end
+
+	-- The Players tab: avatars made by players. The people in this server and your friends, as
+	-- they look on Roblox, and looks players of this game have shared.
+	Remotes.fn("CreatorPeople").OnServerInvoke = function(player)
+		return { people = people(player), looks = sharedLooks() }
+	end
+
+	local lastCopy: { [Player]: number } = {}
+	Remotes.fn("CreatorFromUserId").OnServerInvoke = function(player, userId)
+		if type(userId) ~= "number" or userId <= 0 or userId % 1 ~= 0 then
+			return nil
+		end
+		local t = os.clock()
+		if lastCopy[player] and t - lastCopy[player] < 0.5 then
+			return nil
+		end
+		lastCopy[player] = t
+		return Avatar.fromUserId(userId)
+	end
+
+	Remotes.fn("LookShare").OnServerInvoke = function(player, name, raw)
+		if type(name) ~= "string" then
+			return false, "Give it a name first."
+		end
+		local t = os.clock()
+		if lastShare[player] and t - lastShare[player] < 30 then
+			return false, "Give it a moment before sharing another."
+		end
+		local clean = name:gsub("[%c]", ""):gsub("^%s+", ""):gsub("%s+$", ""):sub(1, Tuning.Villagers.NameMaxLength)
+		if #clean < 1 then
+			return false, "Give it a name first."
+		end
+		-- a shared name is shown to everyone, so it goes through Roblox's filter first
+		local filtered = Avatar.filterText(player, clean)
+		if not filtered then
+			return false, "That name couldn't be checked just now."
+		end
+		local app = Avatar.validate(Appearance.sanitize(raw), 12)
+		lastShare[player] = t
+		return shareLook(player, filtered, app)
+	end
+
+	Players.PlayerRemoving:Connect(function(player)
+		lastCopy[player] = nil
+		lastShare[player] = nil
+		friendCache[player] = nil
+	end)
 
 	Remotes.fn("CreatorSearch").OnServerInvoke = function(_, query)
 		return Avatar.search(query)
