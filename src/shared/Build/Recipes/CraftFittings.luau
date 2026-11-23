@@ -17,7 +17,7 @@ local function shade(c: Color3, k: number): Color3
 end
 
 local LILAC = Color3.fromRGB(156, 122, 214)
-local ORANGE = Color3.fromRGB(240, 138, 46)
+local ORANGE = Color3.fromRGB(232, 150, 88)
 local TERRACOTTA = Color3.fromRGB(196, 104, 62)
 local ZINC = Color3.fromRGB(176, 182, 188)
 
@@ -137,8 +137,8 @@ local items: { Item } = {
 		price = 120,
 		place = "floor",
 		size = Vector3.new(6, 5.4, 2.4),
-		c1 = "B98A5A",
-		c2 = "E8667A",
+		c1 = "C49A6C",
+		c2 = "F59EB5",
 		tags = { "plant" },
 		build = function(r: R)
 			-- A slatted bench for a glasshouse: a tray of seedlings, pots at every stage and a
@@ -216,8 +216,8 @@ local items: { Item } = {
 		price = 40,
 		place = "wall",
 		size = Vector3.new(0.6, 3.3, 3),
-		c1 = "F7F3EA",
-		c2 = "3F8F6B",
+		c1 = "FAF6EC",
+		c2 = "4E7F62",
 		build = function(r: R)
 			-- a round board with a flower on both faces, hung square from the wall so it reads
 			-- from along the street: c1 the board, c2 its rim and the leaves
@@ -271,8 +271,8 @@ local items: { Item } = {
 		price = 40,
 		place = "wall",
 		size = Vector3.new(0.6, 3.3, 3),
-		c1 = "E3C08D",
-		c2 = "6B4423",
+		c1 = "DDBE94",
+		c2 = "9A6B48",
 		tags = { "art" },
 		build = function(r: R)
 			-- a painter's palette with its dabs of paint and a brush across it, the same on both
@@ -306,7 +306,7 @@ local items: { Item } = {
 		place = "floor",
 		size = Vector3.new(3.6, 4.4, 2),
 		c1 = "7FB8D9",
-		c2 = "C99A62",
+		c2 = "C49A6C",
 		tags = { "art" },
 		build = function(r: R)
 			-- Three canvases leaning on the wall behind them, a big blank one at the back, a
@@ -339,7 +339,7 @@ local items: { Item } = {
 		price = 220,
 		place = "floor",
 		size = Vector3.new(2.4, 6.6, 2.4),
-		c1 = "B4B4B8",
+		c1 = "BDB8AE",
 		c2 = "F2EFE8",
 		tags = { "art" },
 		build = function(r: R)
@@ -368,7 +368,7 @@ local items: { Item } = {
 		price = 260,
 		place = "floor",
 		size = Vector3.new(4, 6, 1.6),
-		c1 = "8E8E94",
+		c1 = "BDB8AE",
 		c2 = "5E8C7A",
 		tags = { "art" },
 		build = function(r: R)
@@ -399,8 +399,8 @@ local items: { Item } = {
 		price = 40,
 		place = "wall",
 		size = Vector3.new(0.6, 3.3, 3),
-		c1 = "F2E8D5",
-		c2 = "6B3A5B",
+		c1 = "FAF6EC",
+		c2 = "6F5676",
 		tags = { "music" },
 		build = function(r: R)
 			-- a board with two notes joined at the top, the same on both faces: c1 the board,
@@ -428,8 +428,8 @@ local items: { Item } = {
 		price = 150,
 		place = "floor",
 		size = Vector3.new(6.2, 3.8, 2.4),
-		c1 = "9C2A2E",
-		c2 = "4A2E18",
+		c1 = "B8505A",
+		c2 = "8A5E40",
 		tags = { "seat" },
 		build = function(r: R)
 			-- three seats in a row, the kind a hall or a little cinema has: c1 the cloth, c2 the
@@ -464,8 +464,8 @@ local items: { Item } = {
 		price = 180,
 		place = "floor",
 		size = Vector3.new(11.2, 10.8, 1.2),
-		c1 = "9C2A2E",
-		c2 = "DEB252",
+		c1 = "B8505A",
+		c2 = "D9A93F",
 		build = function(r: R)
 			-- A pelmet with a row of swags and a drape drawn back at each side, to stand across
 			-- the front of a stage (the middle is open to walk through): c1 the cloth, c2 the
@@ -512,8 +512,8 @@ local items: { Item } = {
 		price = 140,
 		place = "floor",
 		size = Vector3.new(7.2, 6.6, 2.4),
-		c1 = "45454A",
-		c2 = "D9B57E",
+		c1 = "5A5560",
+		c2 = "DDBE94",
 		tags = { "storage" },
 		build = function(r: R)
 			-- Three posts with arms, and timber laid along them: beams at the bottom, planks in
@@ -589,8 +589,8 @@ local items: { Item } = {
 		place = "floor",
 		size = Vector3.new(6.4, 2.3, 2.8),
 		surface = 2.04,
-		c1 = "D9B57E",
-		c2 = "8A5A2E",
+		c1 = "DDBE94",
+		c2 = "9A6B48",
 		tags = { "storage" },
 		build = function(r: R)
 			-- sawn planks piled on three bearers with sticks between the layers, so the air gets
@@ -626,8 +626,8 @@ local items: { Item } = {
 		place = "opening",
 		size = Vector3.new(8.6, 10.4, 1.2),
 		opening = { w = 8, h = 10, sill = 0 },
-		c1 = "9C2A2E",
-		c2 = "F7F3EA",
+		c1 = "B8505A",
+		c2 = "FAF6EC",
 		build = function(r: R)
 			-- A pair of boarded doors eight studs wide and ten tall, each braced with a Z and hung
 			-- on long iron straps; they swing open like any door. c1 the boards, c2 the braces
