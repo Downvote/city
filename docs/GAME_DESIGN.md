@@ -486,6 +486,24 @@ What that changed (these replace the wobbly bubbles and the flat coloured ground
   island into the sky and thickens when it rains; sun rays; a gentle depth of field so far things go soft; high
   clouds that spread and darken with the weather; more shine from the sky so the normal maps catch the light; and
   the place asks for Roblox's most detailed lighting.
+- **One low poly style for every model.**
+
+  > currently, the models are simply shapes put together to form objects, like the trees. could you reference low
+  > poly models online and replicate them in a distinct shared style across all objects, or use the roblox library
+  > to replace models?
+
+  Library models can't be fetched from where this game is built (Roblox asks for a login to download a model or a
+  mesh), so they couldn't be looked at, sized or checked, and the first way was taken. Low poly packs share a
+  look: flat shaded facets, chunky polygonal forms, nothing smoothly round. Trunks and poles are prisms, crowns
+  and rocks are faceted lumps, pines are stacked cones. The game now has a kit of exactly those shapes, cut with
+  Roblox's own solid modelling when the server starts: a gem (a cube with every edge cut, eighteen faces) for
+  every ball, an eight sided prism for every cylinder, a sixteen sided disc for wide ones like ponds, and an eight
+  sided cone. The builder swaps them in wherever any model asks for a ball, a cylinder or a cone, so the map, the
+  catalog's furniture, the cars and the clouds are all drawn in the same facets, for the same number of parts.
+  Each round gem is turned its own way, so a clump of them (a crown, a bush, a cloud) looks grown and not stacked.
+  On top of that the trees are redrawn as stretched lumps in four greens on an eight sided trunk, pines as three
+  stacked cones, and boulders and sea rocks as faceted lumps. If solid modelling fails in a place, the kit is
+  missing and everything falls back to Roblox's own smooth shapes.
 - **Windows light up at night.** About a third of every tower's floors, every shopfront and half the windows above
   it, kiosk hatches and the little houses' windows turn to warm lamplight when the street lamps come on.
 

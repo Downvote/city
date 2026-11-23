@@ -7,6 +7,7 @@ local Plan = require(script.Parent.Plan)
 local Shapes = require(script.Parent.Shapes)
 local Catalog = require(script.Parent.Catalog)
 local Textures = require(script.Parent.Parent.Data.Textures)
+local LowPoly = require(script.Parent.LowPoly)
 
 type Prim = Geometry.Prim
 
@@ -18,6 +19,27 @@ Builder.Tags = {
 	SeatSpot = "SeatSpot",
 	BedSpot = "BedSpot",
 }
+
+-- The low poly kit (Build/LowPoly): a folder of shapes the server cuts when it starts. With it,
+-- balls, cylinders and cones are drawn as faceted copies of its shapes; without it (the specs, or
+-- a place where solid modelling failed) they are Roblox's own smooth ones.
+local kit: { [string]: BasePart } = {}
+
+function Builder.useKit(folder: Instance?)
+	kit = {}
+	if folder then
+		for _, name in LowPoly.Shapes do
+			local shape = folder:FindFirstChild(name)
+			if shape and shape:IsA("BasePart") then
+				kit[name] = shape
+			end
+		end
+	end
+end
+
+function Builder.hasKit(): boolean
+	return next(kit) ~= nil
+end
 
 export type Options = {
 	ghost: boolean?, -- see-through, no collisions, no lights (placement previews)
@@ -36,16 +58,38 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 	elseif prim.shape == "CornerWedge" then
 		part = Instance.new("CornerWedgePart")
 	else
-		local p = Instance.new("Part")
-		if prim.shape == "Cylinder" then
-			p.Shape = Enum.PartType.Cylinder
-		elseif prim.shape == "Ball" then
-			p.Shape = Enum.PartType.Ball
+		local name = LowPoly.shapeFor(prim.shape, prim.size)
+		local shape = name and kit[name]
+		if shape then
+			part = shape:Clone()
+			part.Name = "Part"
+			part:SetAttribute("Kit", name)
+		else
+			local p = Instance.new("Part")
+			if prim.shape == "Cylinder" then
+				p.Shape = Enum.PartType.Cylinder
+			elseif prim.shape == "Ball" then
+				p.Shape = Enum.PartType.Ball
+			end
+			part = p
 		end
-		part = p
+	end
+	local cf = frame * prim.cf
+	local round = prim.size.X == prim.size.Y and prim.size.Y == prim.size.Z
+	if part:GetAttribute("Kit") == "Gem" and round then
+		-- every gem turned its own way, so clumps of them look grown rather than stacked (a lump
+		-- stretched and turned on purpose keeps the turn it was given)
+		cf = cf * LowPoly.turn(prim.cf.Position)
+	elseif prim.shape == "Cone" and part:GetAttribute("Kit") == nil then
+		-- no kit: a cone falls back to a cylinder standing on its end
+		cf = cf * CFrame.Angles(0, 0, math.pi / 2)
+		local p = part :: Part
+		p.Shape = Enum.PartType.Cylinder
+		prim = table.clone(prim)
+		prim.size = Vector3.new(prim.size.Y, prim.size.X, prim.size.Z)
 	end
 	part.Size = prim.size
-	part.CFrame = frame * prim.cf
+	part.CFrame = cf
 	part.Anchored = true
 	part.TopSurface = Enum.SurfaceType.Smooth
 	part.BottomSurface = Enum.SurfaceType.Smooth

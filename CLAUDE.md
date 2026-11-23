@@ -52,6 +52,14 @@ parks, the market square, the hills and the beach; streets get flower troughs, b
 gardens, ponds: `pockets` in `TownMap.placements`). The World spec checks the hills, the places and that nothing stands in a road; preview a district
 with `render.sh map:x1,z1,x2,z2`.
 
+The user asked for real low poly models in "a distinct shared style across all objects" (the trees were "simply
+shapes put together"). Library models can't be downloaded here (Roblox wants a login), so the style is made in the
+engine: `Build/LowPoly` cuts a kit of faceted shapes with solid modelling when the server starts, and the Builder
+draws every ball as a gem, every cylinder as an eight sided prism (sixteen when wide) and every cone as an eight
+sided one, flat shaded. So never rely on a part being smoothly round. Draw organic things with `r:lump` (a ball
+stretched and turned: crowns, rocks, bushes) and `r:cone` (pines, spires), poles and trunks with `r:cyl`; the
+previews show the facets (`--smooth` shows the fallback without the kit).
+
 The user asked for things to move "where possible": buttons, screens and the town are animated (docs/GAME_DESIGN.md
 section 10). New buttons get it from `UI/Kit`; new moving scenery goes in `World/Ambience` (client only, one loop,
 `BulkMoveTo`), and the simulation checks it runs.

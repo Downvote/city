@@ -3,6 +3,13 @@
 local Controllers = script.Parent.Controllers
 local UI = script.Parent.UI
 
+-- the low poly kit the server cut (Build/LowPoly): whatever this client draws itself (placement
+-- ghosts, catalog pictures, the cars and clouds) uses the same faceted shapes
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Build = ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Build")
+local LowPoly = require(Build.LowPoly)
+require(Build.Builder).useKit(ReplicatedStorage:WaitForChild(LowPoly.FolderName, 15))
+
 local State = require(Controllers.State)
 State.start()
 

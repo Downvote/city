@@ -502,16 +502,16 @@ end
 -- The hills -------------------------------------------------------------------------------------------
 
 M.boulder = function(r: R)
-	r:boxAt(CFrame.new(0, 1.6, 0) * CFrame.Angles(0.2, 0.5, 0.15), 5, 3.6, 4.2, ROCK, "Slate")
-	r:boxAt(CFrame.new(2.4, 0.9, 1.6) * CFrame.Angles(-0.2, 1.1, 0.3), 2.8, 2, 2.4, shade(ROCK, 1.1), "Slate")
-	r:boxAt(CFrame.new(-2.2, 0.7, -1.4) * CFrame.Angles(0.3, 0.2, -0.2), 2.2, 1.6, 2, shade(ROCK, 0.9), "Slate")
+	r:lump(CFrame.new(0, 1.5, 0) * CFrame.Angles(0.2, 0.5, 0.15), 5.4, 3.8, 4.6, ROCK, "Slate")
+	r:lump(CFrame.new(2.6, 0.9, 1.7) * CFrame.Angles(-0.2, 1.1, 0.3), 3, 2.2, 2.6, shade(ROCK, 1.1), "Slate")
+	r:lump(CFrame.new(-2.3, 0.7, -1.5) * CFrame.Angles(0.3, 0.2, -0.2), 2.4, 1.7, 2.2, shade(ROCK, 0.9), "Slate")
 end
 
 M.boulderBig = function(r: R)
-	r:boxAt(CFrame.new(0, 3, 0) * CFrame.Angles(0.15, 0.7, 0.1), 9, 7, 8, ROCK, "Slate")
-	r:boxAt(CFrame.new(4.6, 1.6, 2.6) * CFrame.Angles(-0.2, 0.3, 0.3), 5, 3.6, 4.4, shade(ROCK, 1.1), "Slate")
-	r:boxAt(CFrame.new(-4, 1.2, -3) * CFrame.Angles(0.25, 1.2, -0.15), 4, 2.8, 3.6, shade(ROCK, 0.9), "Slate")
-	r:ball(1, 6.4, -1, 2.6, rgb(120, 180, 90), "SmoothPlastic")
+	r:lump(CFrame.new(0, 3, 0) * CFrame.Angles(0.15, 0.7, 0.1), 10, 7.4, 8.6, ROCK, "Slate")
+	r:lump(CFrame.new(4.8, 1.6, 2.8) * CFrame.Angles(-0.2, 0.3, 0.3), 5.4, 3.8, 4.8, shade(ROCK, 1.1), "Slate")
+	r:lump(CFrame.new(-4.2, 1.2, -3.2) * CFrame.Angles(0.25, 1.2, -0.15), 4.4, 3, 4, shade(ROCK, 0.9), "Slate")
+	r:lump(CFrame.new(1, 6.2, -1) * CFrame.Angles(0.1, 0.4, 0), 3.4, 1.4, 3, rgb(120, 180, 90))
 end
 
 M.log = function(r: R)
@@ -582,8 +582,8 @@ M.tarn = function(r: R)
 		r:cyl(p[1], 0.38, p[2], 0.08, 3, "y", rgb(96, 180, 90), "SmoothPlastic")
 	end
 	r:ball(-13.4, 0.7, 2.4, 0.9, PINK, "SmoothPlastic")
-	r:boxAt(CFrame.new(-28, 1.2, -14) * CFrame.Angles(0.2, 0.4, 0.1), 5, 3, 4, ROCK, "Slate")
-	r:boxAt(CFrame.new(26, 1, -18) * CFrame.Angles(-0.1, 1, 0.2), 4, 2.6, 3.4, shade(ROCK, 1.1), "Slate")
+	r:lump(CFrame.new(-28, 1.2, -14) * CFrame.Angles(0.2, 0.4, 0.1), 5.6, 3.4, 4.4, ROCK, "Slate")
+	r:lump(CFrame.new(26, 1, -18) * CFrame.Angles(-0.1, 1, 0.2), 4.4, 2.8, 3.8, shade(ROCK, 1.1), "Slate")
 	bench(r, -8, -34, 180)
 end
 
@@ -722,9 +722,9 @@ end
 
 -- Rocks breaking the surface, with a gull on the tallest.
 M.seaRocks = function(r: R)
-	r:boxAt(CFrame.new(0, 0.6, 0) * CFrame.Angles(0.15, 0.6, 0.1), 9, 6, 8, ROCK, "Slate")
-	r:boxAt(CFrame.new(6, -0.4, 3) * CFrame.Angles(-0.2, 0.2, 0.3), 6, 4, 5, shade(ROCK, 0.9), "Slate")
-	r:boxAt(CFrame.new(-5, -0.6, -4) * CFrame.Angles(0.2, 1.2, -0.2), 5, 3.6, 4.4, shade(ROCK, 1.1), "Slate")
+	r:lump(CFrame.new(0, 0.6, 0) * CFrame.Angles(0.15, 0.6, 0.1), 10, 6.6, 8.6, ROCK, "Slate")
+	r:lump(CFrame.new(6, -0.4, 3) * CFrame.Angles(-0.2, 0.2, 0.3), 6.6, 4.4, 5.4, shade(ROCK, 0.9), "Slate")
+	r:lump(CFrame.new(-5, -0.6, -4) * CFrame.Angles(0.2, 1.2, -0.2), 5.4, 4, 4.8, shade(ROCK, 1.1), "Slate")
 	r:ball(0.4, 4.2, 0.2, 1.1, WHITE, "SmoothPlastic")
 	r:ball(0.9, 4.7, 0.2, 0.6, WHITE, "SmoothPlastic")
 end

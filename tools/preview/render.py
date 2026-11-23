@@ -163,7 +163,84 @@ def ball_tris(n=10, m=8):
     return tris
 
 
+def polytope_tris(planes):
+    """Triangles of the convex shape { p : n.p <= d for every (n, d) }: the low poly kit's shapes
+    (Build/LowPoly) are all cut this way, so the preview draws exactly what the game does."""
+    planes = [(np.array(n, float) / np.linalg.norm(n), d / np.linalg.norm(n)) for n, d in planes]
+    verts = []
+    m = len(planes)
+    for i in range(m):
+        for j in range(i + 1, m):
+            for k in range(j + 1, m):
+                A = np.array([planes[i][0], planes[j][0], planes[k][0]])
+                if abs(np.linalg.det(A)) < 1e-9:
+                    continue
+                v = np.linalg.solve(A, np.array([planes[i][1], planes[j][1], planes[k][1]]))
+                if all(n @ v <= d + 1e-7 for n, d in planes):
+                    if not any(np.linalg.norm(v - w) < 1e-6 for w in verts):
+                        verts.append(v)
+    tris = []
+    for n, d in planes:
+        face = [v for v in verts if abs(n @ v - d) < 1e-6]
+        if len(face) < 3:
+            continue
+        c = np.mean(face, axis=0)
+        u = face[0] - c
+        u /= np.linalg.norm(u)
+        w = np.cross(n, u)
+        face.sort(key=lambda v: math.atan2((v - c) @ w, (v - c) @ u))
+        for i in range(1, len(face) - 1):
+            tris.append(np.array([face[0], face[i], face[i + 1]]))
+    return tris
+
+
+def gem_tris():
+    planes = []
+    for a in range(3):
+        for sgn in (-1, 1):
+            n = [0, 0, 0]; n[a] = sgn
+            planes.append((n, 0.5))
+    for a, b in ((0, 1), (0, 2), (1, 2)):
+        for s1 in (-1, 1):
+            for s2 in (-1, 1):
+                n = [0, 0, 0]; n[a] = s1; n[b] = s2
+                planes.append((n, 0.5 * math.sqrt(2)))
+    return polytope_tris(planes)
+
+
+def prism_tris(sides):
+    planes = [((1, 0, 0), 0.5), ((-1, 0, 0), 0.5)]
+    for i in range(sides):
+        a = 2 * math.pi * i / sides
+        planes.append(((0, math.cos(a), math.sin(a)), 0.5))
+    return polytope_tris(planes)
+
+
+def cone_tris(sides=8):
+    planes = [((0, -1, 0), 0.5)]
+    for i in range(sides):
+        a = 2 * math.pi * i / sides
+        # y <= 0.5 - 2 (u.p): the slope from the base's edge to the tip
+        planes.append(((2 * math.cos(a), 1, 2 * math.sin(a)), 0.5))
+    return polytope_tris(planes)
+
+
+# Balls, cylinders and cones are drawn with the low poly kit's shapes, as the game draws them
+# (pass --smooth to see Roblox's own, which the game falls back to without the kit).
 SHAPES = {"Block": box_tris(), "Wedge": wedge_tris(), "Cylinder": cylinder_tris(), "Ball": ball_tris()}
+KIT = {"Gem": gem_tris(), "Prism": prism_tris(8), "Disc": prism_tris(16), "Cone": cone_tris()}
+USE_KIT = True
+DISC_FROM = 9
+
+
+def gem_turn(pos):
+    """The turn Build/LowPoly gives a gem at `pos` (CFrame.Angles(a, b, c) = Rx(a) Ry(b) Rz(c))."""
+    h = abs(pos[0] * 12.9898 + pos[1] * 78.233 + pos[2] * 37.719)
+    a, b, c = (h % 1) * 2 * math.pi, ((h * 1.618) % 1) * 2 * math.pi, ((h * 2.414) % 1) * 2 * math.pi
+    rx = np.array([[1, 0, 0], [0, math.cos(a), -math.sin(a)], [0, math.sin(a), math.cos(a)]])
+    ry = np.array([[math.cos(b), 0, math.sin(b)], [0, 1, 0], [-math.sin(b), 0, math.cos(b)]])
+    rz = np.array([[math.cos(c), -math.sin(c), 0], [math.sin(c), math.cos(c), 0], [0, 0, 1]])
+    return rx @ ry @ rz
 
 
 def prim_tris(p):
@@ -172,6 +249,19 @@ def prim_tris(p):
     rot = np.array([[c[3], c[4], c[5]], [c[6], c[7], c[8]], [c[9], c[10], c[11]]])
     size = np.array(p["size"])
     base = SHAPES.get(p["shape"], SHAPES["Block"])
+    if USE_KIT:
+        if p["shape"] == "Ball":
+            base = KIT["Gem"]
+            if size[0] == size[1] == size[2]:
+                rot = rot @ gem_turn(p.get("local", pos))
+        elif p["shape"] == "Cylinder":
+            base = KIT["Disc"] if max(size[1], size[2]) >= DISC_FROM else KIT["Prism"]
+        elif p["shape"] == "Cone":
+            base = KIT["Cone"]
+    elif p["shape"] == "Cone":
+        base = SHAPES["Cylinder"]
+        rot = rot @ np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
+        size = np.array([size[1], size[0], size[2]])
     out = []
     for t in base:
         v = (t * size) @ rot.T + pos
@@ -188,9 +278,12 @@ def main():
     ap.add_argument("--size", type=int, default=900)
     ap.add_argument("--hide-clear", action="store_true", help="skip invisible parts (default)")
     ap.add_argument("--transparent", action="store_true", help="no background (for thumbnails)")
+    ap.add_argument("--smooth", action="store_true", help="Roblox's own balls and cylinders, not the low poly kit")
     ap.add_argument("--textures", action="store_true", help="paint parts with the game's textures")
     ap.add_argument("--painted", action="store_true", help="paint parts with our painted art/textures")
     args = ap.parse_args()
+    global USE_KIT
+    USE_KIT = not args.smooth
 
     prims = json.load(open(args.inp))
     yaw = math.radians(args.yaw)

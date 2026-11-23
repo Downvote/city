@@ -536,6 +536,58 @@ describe("Builder", function()
 		expect(#folder:GetChildren()).toBe(7)
 	end)
 
+	it("draws balls, cylinders and cones with the low poly kit when there is one", function()
+		local LowPoly = require(Shared .. "Build.LowPoly")
+		expect(LowPoly.shapeFor("Ball", Vector3.new(2, 2, 2))).toBe("Gem")
+		expect(LowPoly.shapeFor("Cylinder", Vector3.new(4, 1, 1))).toBe("Prism")
+		expect(LowPoly.shapeFor("Cylinder", Vector3.new(0.3, 12, 12))).toBe("Disc")
+		expect(LowPoly.shapeFor("Cone", Vector3.new(3, 5, 3))).toBe("Cone")
+		expect(LowPoly.shapeFor("Block", Vector3.new(1, 1, 1))).toBe(nil)
+		expect(LowPoly.shapeFor("Wedge", Vector3.new(1, 1, 1))).toBe(nil)
+		local function prim(shape, size)
+			return { shape = shape, cf = CFrame.new(1, 2, 3), size = size, color = Color3.new(1, 0, 0), mat = "Wood" }
+		end
+		local prims = {
+			prim("Ball", Vector3.new(2, 2, 2)),
+			prim("Cylinder", Vector3.new(4, 1, 1)),
+			prim("Cylinder", Vector3.new(0.3, 12, 12)),
+			prim("Cone", Vector3.new(3, 5, 3)),
+			prim("Block", Vector3.new(1, 2, 3)),
+		}
+		-- stand-ins for the shapes the server cuts
+		local kit = Instance.new("Folder")
+		for _, name in LowPoly.Shapes do
+			local shape = Instance.new("Part")
+			shape.Name = name
+			shape.Parent = kit
+		end
+		Builder.useKit(kit)
+		expect(Builder.hasKit()).toBe(true)
+		local holder = Instance.new("Folder")
+		local parts = Builder.instantiate(prims, holder)
+		local want = { "Gem", "Prism", "Disc", "Cone" }
+		for i, name in want do
+			expect(parts[i]:GetAttribute("Kit")).toBe(name)
+			expect((parts[i].Size - prims[i].size).Magnitude < 1e-3).toBeTruthy()
+			expect(parts[i].Material).toBe(Enum.Material.Wood)
+			expect(parts[i].Anchored).toBe(true)
+		end
+		expect(parts[5]:GetAttribute("Kit")).toBe(nil)
+		-- a cone keeps its place and its point up; a round gem is turned but stays where it was
+		expect((parts[4].CFrame.Position - Vector3.new(1, 2, 3)).Magnitude < 1e-4).toBeTruthy()
+		expect(parts[4].CFrame.UpVector.Y > 0.999).toBeTruthy()
+		expect((parts[1].CFrame.Position - Vector3.new(1, 2, 3)).Magnitude < 1e-4).toBeTruthy()
+		-- and without a kit everything is Roblox's own again
+		Builder.useKit(nil)
+		expect(Builder.hasKit()).toBe(false)
+		local plain = Builder.instantiate(prims, holder)
+		for i = 1, 5 do
+			expect(plain[i]:GetAttribute("Kit")).toBe(nil)
+		end
+		expect(plain[1].Shape).toBe(Enum.PartType.Ball)
+		expect(plain[4].Shape).toBe(Enum.PartType.Cylinder)
+	end)
+
 	it("only offers materials Roblox has", function()
 		for _, m in Palette.Materials do
 			expect((Enum.Material :: any)[m.id] ~= nil).toBeTruthy()

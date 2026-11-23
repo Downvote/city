@@ -161,6 +161,37 @@ function Recipe.cyl(
 	})
 end
 
+-- A cone standing on its base, point up: (cx, cy, cz) is its middle.
+function Recipe.cone(
+	self: Recipe,
+	cx: number,
+	cy: number,
+	cz: number,
+	height: number,
+	diameter: number,
+	color: Color3,
+	mat: string?
+): Prim
+	return self:add({
+		shape = "Cone",
+		cf = CFrame.new(cx, cy, cz),
+		size = Vector3.new(diameter, height, diameter),
+		color = color,
+		mat = mat or "SmoothPlastic",
+	})
+end
+
+-- A faceted lump (a rock, a clump of leaves): a ball stretched to any size and turned any way.
+function Recipe.lump(self: Recipe, cf: CFrame, sx: number, sy: number, sz: number, color: Color3, mat: string?): Prim
+	return self:add({
+		shape = "Ball",
+		cf = cf,
+		size = Vector3.new(sx, sy, sz),
+		color = color,
+		mat = mat or "SmoothPlastic",
+	})
+end
+
 function Recipe.ball(
 	self: Recipe,
 	cx: number,

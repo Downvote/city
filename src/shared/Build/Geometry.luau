@@ -12,7 +12,7 @@ export type Light = {
 }
 
 export type Prim = {
-	shape: string, -- "Block" | "Wedge" | "CornerWedge" | "Cylinder" | "Ball"
+	shape: string, -- "Block" | "Wedge" | "CornerWedge" | "Cylinder" | "Ball" | "Cone" (point up, +Y)
 	cf: CFrame,
 	size: Vector3,
 	color: Color3,

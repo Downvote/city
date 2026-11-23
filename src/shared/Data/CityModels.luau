@@ -275,22 +275,43 @@ local function house(r: R, x: number, z: number, w: number, d: number, wall: Col
 end
 CityModels.house = house
 
--- A low poly tree: a trunk and a couple of round crowns.
+-- A low poly tree: an eight sided trunk under a crown of faceted lumps, each a different green and
+-- turned its own way (Build/LowPoly cuts the shapes).
 local function lowTree(r: R, x: number, y: number, z: number, s: number)
-	r:cyl(x, y + 2 * s, z, 4 * s, 0.9 * s, "y", BARK, "Wood")
-	r:ball(x, y + 5.2 * s, z, 5.6 * s, LEAF, "SmoothPlastic")
-	r:ball(x + 1.7 * s, y + 6.3 * s, z - 0.8 * s, 4.2 * s, shade(LEAF, 1.1), "SmoothPlastic")
-	r:ball(x - 1.6 * s, y + 5.9 * s, z + 1 * s, 4.4 * s, shade(LEAF, 0.88), "SmoothPlastic")
-	r:ball(x + 0.2 * s, y + 7.6 * s, z + 0.5 * s, 3.4 * s, shade(LEAF, 1.2), "SmoothPlastic")
+	r:cyl(x, y + 2 * s, z, 4 * s, 1.1 * s, "y", BARK, "Wood")
+	r:lump(CFrame.new(x, y + 5.2 * s, z) * CFrame.Angles(0.2, 0.6, 0.1), 6.4 * s, 5 * s, 6 * s, LEAF)
+	r:lump(
+		CFrame.new(x + 1.9 * s, y + 6.4 * s, z - 0.9 * s) * CFrame.Angles(0.5, 1.3, 0.3),
+		4.6 * s,
+		3.8 * s,
+		4.4 * s,
+		shade(LEAF, 1.1)
+	)
+	r:lump(
+		CFrame.new(x - 1.8 * s, y + 6 * s, z + 1.1 * s) * CFrame.Angles(-0.3, 2.2, 0.4),
+		4.8 * s,
+		4 * s,
+		4.6 * s,
+		shade(LEAF, 0.88)
+	)
+	r:lump(
+		CFrame.new(x + 0.2 * s, y + 7.9 * s, z + 0.5 * s) * CFrame.Angles(0.4, 0.2, -0.5),
+		3.8 * s,
+		3 * s,
+		3.6 * s,
+		shade(LEAF, 1.2)
+	)
 end
 CityModels.lowTree = lowTree
 
--- A low poly pine: a trunk under three stacked tiers.
+-- A low poly pine: a trunk under three stacked cones, each a little smaller and turned a little.
 local function lowPine(r: R, x: number, y: number, z: number, s: number)
-	r:cyl(x, y + 1.5 * s, z, 3 * s, 0.8 * s, "y", BARK, "SmoothPlastic")
-	r:cyl(x, y + 3.6 * s, z, 2.6 * s, 6 * s, "y", LEAF_DARK, "SmoothPlastic")
-	r:cyl(x, y + 6 * s, z, 2.4 * s, 4.4 * s, "y", shade(LEAF_DARK, 1.08), "SmoothPlastic")
-	r:cyl(x, y + 8.2 * s, z, 2.2 * s, 2.8 * s, "y", shade(LEAF_DARK, 1.16), "SmoothPlastic")
+	r:cyl(x, y + 1.3 * s, z, 2.6 * s, 0.9 * s, "y", BARK, "Wood")
+	local tiers = { { 4.3, 4.6, 6.4, 1 }, { 6.5, 4, 5, 1.08 }, { 8.7, 3.6, 3.4, 1.16 } }
+	for i, t in tiers do
+		local cone = r:cone(x, y + t[1] * s, z, t[2] * s, t[3] * s, shade(LEAF_DARK, t[4]))
+		cone.cf = cone.cf * CFrame.Angles(0, math.rad(i * 22.5), 0)
+	end
 end
 CityModels.lowPine = lowPine
 

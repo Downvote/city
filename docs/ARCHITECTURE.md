@@ -19,8 +19,16 @@ The contract between the parts of the game. Update it with every change to an AP
 - `Build/`
   - `Geometry`: primitives as data (`Prim`: shape, frame, size, colour, material, plus roles like `seat`, `bed`,
     `door`, `glow`), triangles from two wedges, quads, bounds.
-  - `Recipe`: the drawing API catalog items use (`box`, `block`, `cyl`, `ball`, `beam`, `tri`, `quad`, `ramp`,
-    `glass`, `glow`, `fire`, `smoke`, `seat`, `sleep`, `door`, `legs`).
+  - `Recipe`: the drawing API catalog items use (`box`, `block`, `cyl`, `ball`, `cone` (point up), `lump` (a
+    ball stretched and turned: rocks, crowns), `beam`, `tri`, `quad`, `ramp`, `glass`, `glow`, `fire`, `smoke`,
+    `seat`, `sleep`, `door`, `legs`).
+  - `LowPoly`: the one low poly style. `make()` (server) cuts the kit with `GeometryService:IntersectAsync`: `Gem`,
+    `Prism`, `Disc` and `Cone`, each filling the unit box, flat shaded, taking the part's colour; the World service
+    puts the folder `LowPolyKit` in ReplicatedStorage and the client picks it up in `Main`. `shapeFor(shape, size)`
+    says which kit shape draws a prim, `turn(at)` gives each round gem its own turn. `Builder.useKit(folder)`
+    switches it on: a `Ball`, `Cylinder` or `Cone` prim becomes a copy of the kit's shape (attribute `Kit`), sized
+    to the prim; with no kit they are Roblox's own smooth ones. The preview draws the kit's shapes too
+    (`render.sh ... --smooth` shows the fallback).
   - `Recipes/*`: the catalog, one module per group. Each returns a list of item definitions.
   - `Catalog`: loads the recipes, indexes them, `prims(def, c1, c2)` draws one, `Categories`, `Tags`.
   - `Plan`: a plot's build as data and every rule about changing it (see below).
