@@ -1,7 +1,8 @@
 -- The villager creator on the server, and everything that turns a saved look into a character.
 --
--- While someone is making a villager they get a small stage on the meadow north of Hill Road
--- (Town.CreatorSpot), the town behind it, with a mannequin on it. Their client edits a look (Avatar/Appearance) and sends it here; the server
+-- While someone is making a villager they get a spot of their own high over the meadow north of
+-- Hill Road (Town.CreatorSpot, Town.CreatorHeight) with a mannequin standing in the air at it;
+-- their own screen puts a backdrop behind it. Their client edits a look (Avatar/Appearance) and sends it here; the server
 -- checks every asset id is the kind of item its slot expects, then dresses the mannequin.
 -- Catalog searches normally run on the client; CreatorSearch is the fallback.
 
@@ -379,27 +380,14 @@ end
 -- The creator stage --------------------------------------------------------------------------------
 
 local function buildStage(slot: number): Model
-	-- a low round deck high over the meadow north of Hill Road, out of sight of the town: the
-	-- player's own screen stands a backdrop behind it (the user: "no need for the gradient
-	-- background or the city background")
+	-- A spot high over the meadow north of Hill Road, out of sight of the town: the player's own
+	-- screen stands a backdrop behind it (the user: "no need for the gradient background or the
+	-- city background"). Nothing is built there. The mannequin used to stand on a round wooden
+	-- deck; the user: "remove the plate the character stands on in the creation screen". So the
+	-- stage is only a holder for the mannequin, which is anchored and stands in the air.
 	local origin = Town.CreatorSpot + Vector3.new(-(slot - 1) * Town.CreatorGap, Town.CreatorHeight, 0)
 	local model = Instance.new("Model")
 	model.Name = "CreatorStage" .. slot
-	local function disc(diameter: number, y: number, height: number, color: Color3)
-		local p = Instance.new("Part")
-		p.Shape = Enum.PartType.Cylinder
-		p.Anchored = true
-		p.Size = Vector3.new(height, diameter, diameter)
-		p.CFrame = CFrame.new(origin + Vector3.new(0, y, 0)) * CFrame.Angles(0, 0, math.pi / 2)
-		p.Color = color
-		p.Material = Enum.Material.SmoothPlastic
-		p.TopSurface = Enum.SurfaceType.Smooth
-		p.Parent = model
-		return p
-	end
-	-- just wide enough to stand on (the user: "make the double circle pedestal ... smaller")
-	disc(7.6, 0.12, 0.24, Color3.fromRGB(214, 172, 124))
-	disc(6, 0.3, 0.24, Color3.fromRGB(236, 200, 150))
 	model:SetAttribute("Origin", origin)
 	model.Parent = workspace
 	return model
@@ -459,7 +447,8 @@ local function act(stage: any, action: string)
 	stage.action = action
 end
 
--- Stands the mannequin on its pedestal. A new body or a new height changes how long its legs
+-- Stands the mannequin at its spot (its feet a little above the stage's origin, where the deck's
+-- top used to be, so the creator's camera needs no change). A new body or a new height changes how long its legs
 -- are, so this runs after every change, not only when it is first put there.
 local function stand(stage: any)
 	local model: Model? = stage.mannequin

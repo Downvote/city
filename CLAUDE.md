@@ -146,9 +146,10 @@ Buttons that do something keep their own colour. The villager screen and the cre
 the villager stands on the left in front of a moving backdrop (`Kit.backdrop`: their colour, leaning bands,
 shapes sliding up and to the right) with their shadow cast on it, and the stats or the catalog sit on the right.
 On the villagers' screen that is `ModelPreview.fromModel(model, { Stand = true, Shadow = true })` (stood upright,
-playing their idle) with a fade to `T.Black` under the stats; in the creator the real mannequin stands on a stage
-high in the sky and the client puts the backdrop on a part behind it that follows the camera (no town, no fade:
-"no need for the gradient background or the city background"). Never put a ViewportFrame inside a CanvasGroup: it
+playing their idle) with a fade to `T.Black` under the stats; in the creator the real mannequin stands in the
+air high over the meadow, with nothing under it ("remove the plate the character stands on in the creation
+screen"), and the client puts the backdrop on a part behind it that follows the camera (no town, no fade: "no need
+for the gradient background or the city background"). Never put a ViewportFrame inside a CanvasGroup: it
 comes out pale. The old header bar and its wave are gone.
 Shapes are angular (the user: "Use the format in zenless zone zero for buttons and details in ui instead of
 overusing circles and rounded rectangles"): never reach for a circle or a rounded rectangle. `Kit.corner` gives 3

@@ -189,7 +189,7 @@ backdrop itself is our own, the same one the villagers' screen uses.)
   at the face out to the whole of them with room to spare, and the Zoom button under them steps through three
   distances for whoever has neither. The camera looks at the head from close up and at the middle of them from
   far off.
-- **The studio.** The town and the fade to black are gone. The stage now floats high over the meadow, out of
+- **The studio.** The town and the fade to black are gone. The stage is now a spot high over the meadow, out of
   sight of the town, and the player's own screen stands a backdrop behind the mannequin: the villager's favourite
   colour sinking into the dark, leaning bands of it, and shapes sliding up and to the right. It follows the
   camera, so dragging turns the villager while the backdrop stays put. A lamp by the camera keeps them lit at
@@ -201,6 +201,11 @@ backdrop itself is our own, the same one the villagers' screen uses.)
 
 The villager's shadow falls on the backdrop, up and to the right of them and a little bigger than they are, and it
 moves as they move.
+
+> remove the plate the character stands on in the creation screen
+
+The round wooden deck under the mannequin is gone. Nothing is built at the stage now: the villager simply stands
+in front of the backdrop, at the height they stood before, so the framing is unchanged.
 
 ## 7. The city
 
