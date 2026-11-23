@@ -1,5 +1,5 @@
--- Short notices that pop in at the top of the screen and fade away: dark rounded pills with an
--- icon and an accent colour for the kind of notice.
+-- Short notices that pop in at the top of the screen and fade away: little paper notes with an
+-- icon, and a coloured edge for the kind of notice.
 
 local TweenService = game:GetService("TweenService")
 
@@ -41,16 +41,24 @@ function Toasts.show(text: string, kind: string?)
 	local card = Kit.frame({
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		Color = Kit.Theme.Glass,
-		Transparency = 0.08,
-		Radius = 18,
+		Color = Kit.Theme.Paper,
+		Radius = false,
 		Parent = h,
 		ZIndex = 50,
 	})
-	local stroke = Kit.stroke(card, ACCENTS[k], 2)
-	stroke.Transparency = 0.1
+	local stroke = Kit.stroke(card, Kit.Theme.Ink, 2.5)
+	-- the coloured edge down the left (outside the padding)
+	local edge = Kit.frame({
+		Name = "Edge",
+		Size = UDim2.new(0, 7, 1, 18),
+		Position = UDim2.fromOffset(-18, -9),
+		Color = ACCENTS[k],
+		Radius = false,
+		Parent = card,
+		ZIndex = 51,
+	})
 	card.LayoutOrder = -math.floor(os.clock() * 100)
-	Kit.pad(card, 16, 9)
+	Kit.pad(card, 18, 9)
 	local row =
 		Kit.box({ Parent = card, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, ZIndex = 51 })
 	local icon = Icons.make(ICONS[k], 28, { Parent = row, Position = UDim2.new(0, -2, 0, -2), ZIndex = 52 })
@@ -60,7 +68,7 @@ function Toasts.show(text: string, kind: string?)
 		Position = UDim2.fromOffset(34, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		TextSize = 17,
-		Color = Kit.Theme.White,
+		Color = Kit.Theme.Ink,
 		ZIndex = 52,
 		Font = Kit.Fonts.Bold,
 	})
@@ -86,6 +94,7 @@ function Toasts.show(text: string, kind: string?)
 		TweenService:Create(card, info, { BackgroundTransparency = 1 }):Play()
 		TweenService:Create(label, info, { TextTransparency = 1 }):Play()
 		icon.Visible = false
+		edge.Visible = false
 		TweenService:Create(stroke, info, { Transparency = 1 }):Play()
 		task.wait(0.45)
 		card:Destroy()

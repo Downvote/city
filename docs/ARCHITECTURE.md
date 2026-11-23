@@ -113,11 +113,16 @@ server, whatever the client did.
 ## Client
 
 - `Controllers/State`: the mirror of the player's state and plan; `State.on(key, fn)`, `State.onPlan(fn)`.
-- `UI/Kit`: theme and helpers in the chunky style: `button` (a face on a darker lip, glossy strip, thick outline,
-  outlined Fredoka label; `Icon` draws an icon left of the text; the TextButton's own Text is invisible and only
-  sizes it, the label follows it), `iconButton` (square tiles), `pill` (glass stat pills, `Plus` adds a green +),
-  `glass` (dark glass bars), `panel` (white card, coloured header, red corner close button), `bar` (outlined
-  progress bars), `badge`, `closeButton`, `outlineText`, `tabs`, `slider`, `swatch`, `textbox`, `scroll`, `shadow`.
+- `UI/Kit`: theme and helpers in the storybook style, square corners throughout (`Kit.corner` only rounds
+  `"circle"`; any other radius is ignored): `button` (a square face on a darker block it presses into, outlined
+  Fredoka label; `Icon` draws an icon left of the text; the TextButton's own Text is invisible and only sizes it,
+  the label follows it), `iconButton` (a round button: "Face" and "Lip" discs, the caption on a paper "Tag";
+  `setButtonColor` recolours both discs and leaves the tag's ink alone), `pill` (wooden stat plates, `Plus` adds a
+  round green +), `glass` (wooden bars: a gradient, so list layouts inside never see it), `ribbon(text, props)` (a
+  banner cut to its text, drawn with `Kit.pieces`), `pieces(parent, list, thick, z)` (rects and triangles with one
+  shared outline: every dark copy first, then every fill), `panel` (cream card, solid shadow, top band, ribbon title,
+  round red close; `root` holds the card and its shadow), `bar` (outlined progress bars), `badge`, `closeButton`,
+  `outlineText`, `tabs`, `slider`, `swatch`, `textbox`, `scroll`, `shadow` (a solid offset shadow).
   `Kit.pad` on a Kit button stretches its face back over the padding. Motion: buttons sink onto their lip when
   pressed, grow and hop their icon on hover and spring back when clicked; one loop sweeps a sheen across a button on
   screen now and then; `Kit.badge` pulses; `popIn`, `popOut`, `slideIn`, `bump` and `flyCoins` animate screens. `Kit.overUI(pos)` says whether the pointer is

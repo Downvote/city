@@ -380,10 +380,10 @@ def gradient_layer(w, h, color, alpha, grad):
     t = ((xs - w / 2) * cos + (ys - h / 2) * sin) / max(1e-6, ext) + 0.5 - (off[0] * cos + off[1] * sin)
     cseq = P(grad, "Color", [[0, 1, 1, 1], [1, 1, 1, 1]])
     tseq = P(grad, "Transparency", [[0, 0], [1, 0]])
-    times = np.linspace(0, 1, 64)
+    times = np.linspace(0, 1, 256)
     ctab = np.array([seq_at(cseq, tt, 3) for tt in times])
     ttab = np.array([seq_at(tseq, tt, 1)[0] for tt in times])
-    idx = np.clip((t * 63).astype(int), 0, 63)
+    idx = np.clip((t * 255).astype(int), 0, 255)
     r = np.clip(ctab[idx, 0] * color[0], 0, 1)
     g = np.clip(ctab[idx, 1] * color[1], 0, 1)
     b = np.clip(ctab[idx, 2] * color[2], 0, 1)
@@ -546,10 +546,12 @@ def item_thumb(item_id, size):
     """A picture of a catalog item from the 3D preview renderer, cached under out/ui_thumbs."""
     cache_dir = os.path.join(HERE, "..", "..", "out", "ui_thumbs")
     os.makedirs(cache_dir, exist_ok=True)
-    path = os.path.join(cache_dir, item_id + ".png")
+    # a ready-made building comes as "preset:<id>"; anything else is a catalog item
+    scene = item_id if item_id.startswith("preset:") else "item:" + item_id
+    path = os.path.join(cache_dir, item_id.replace(":", "_") + ".png")
     if not os.path.exists(path):
         try:
-            subprocess.run(["sh", os.path.join(HERE, "render.sh"), "item:" + item_id, path, "--size", "220",
+            subprocess.run(["sh", os.path.join(HERE, "render.sh"), scene, path, "--size", "220",
                             "--transparent"], check=True, capture_output=True, cwd=os.path.join(HERE, "..", ".."))
         except Exception:
             return None

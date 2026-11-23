@@ -211,6 +211,29 @@ our own style:
 - **Building has a show**: a new piece springs up out of a puff of dust with a few sparkles, and a piece you sell
   vanishes in a puff.
 
+> make the creation screen alot more like miitopia, the home UI and icons replicating miitopia as much as possible,
+> the build menu as close to bloxburg as possible, along with the models. it should have the same vibe. try not to
+> use your own ui designs, and avoid rounded rectangles if possible
+
+We can't copy another game's screens, so the user chose an original look with the same cozy feel: a storybook
+style of our own, with square corners everywhere. These replace the points above where they differ:
+
+- **Corners are square.** The only round things are round on purpose: round buttons, badges, colour dots, slider
+  knobs, the green tick on worn items.
+- **Panels** are cream paper with a thick warm brown outline (no pure black anywhere) and a solid shadow down and
+  to the right. A coloured band runs along the top edge, the title sits on a ribbon banner across it (a band with
+  its tails folded behind, one shared outline), the panel's icon overlaps the ribbon's end and a red round close
+  button sits on the corner.
+- **Round buttons** carry the dock, Build mode's tools and the creator's categories and tools: a coloured disc with
+  its icon on a darker disc for depth, and the name on a little paper tag overlapping its bottom edge.
+- **Tag buttons** (everything with words on it) are square: a coloured face on a darker block it presses down into.
+- **Bars over the 3D view** are warm wood, lighter at the top, with the dark outline: the money, people and
+  happiness plates, the level bar, the clock, Build mode's bars.
+- **The creator** has its title on a pink ribbon, numbered steps (1 Look, 2 Name and personality), and a cream
+  picture frame round the stage where the villager stands, like a portrait.
+- **Events** play on a cream page with a thin rule inside its edge; the event's name is on a ribbon above it.
+- **Notices** are small paper notes with a coloured edge for their kind.
+
 Villagers walk with Roblox's pathfinding with jumping on, so they go round walls, through doorways (doors are free to
 pass and open as they come), round furniture and over low steps. If they get stuck they jump, then plan again.
 

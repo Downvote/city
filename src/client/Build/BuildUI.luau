@@ -163,7 +163,7 @@ local function itemTile(parent: Instance, def: any, order: number, onPick: () ->
 		Name = def.id,
 		Text = "",
 		AutoButtonColor = false,
-		BackgroundColor3 = T.White,
+		BackgroundColor3 = T.Paper,
 		Size = UDim2.fromOffset(118, 152),
 		LayoutOrder = order,
 		Parent = parent,
@@ -251,7 +251,7 @@ local function choiceTile(
 	local card = Kit.new("TextButton", {
 		Text = "",
 		AutoButtonColor = false,
-		BackgroundColor3 = if selected then Color3.fromRGB(214, 234, 255) else T.White,
+		BackgroundColor3 = if selected then Color3.fromRGB(214, 234, 255) else T.Paper,
 		Size = size,
 		LayoutOrder = order,
 		Parent = parent,
@@ -452,7 +452,7 @@ local function presetTray()
 			Name = preset.id,
 			Text = "",
 			AutoButtonColor = false,
-			BackgroundColor3 = T.White,
+			BackgroundColor3 = T.Paper,
 			Size = UDim2.fromOffset(150, 152),
 			LayoutOrder = i,
 			Parent = row,
@@ -921,7 +921,7 @@ end
 local function openSub(id: string)
 	subTab = id
 	for sid, b in subButtons do
-		Kit.setButtonColor(b, if sid == id then T.Blue else T.White, if sid == id then T.White else T.Ink)
+		Kit.setButtonColor(b, if sid == id then T.Blue else T.Paper, if sid == id then T.White else T.Ink)
 	end
 	if id == "walls" or id == "fences" then
 		s.wallMode = "line"
@@ -951,7 +951,7 @@ end
 local function openMain(id: string)
 	mainTab = id
 	for mid, b in mainButtons do
-		Kit.setButtonColor(b, if mid == id then T.Blue else T.White, if mid == id then T.White else T.Ink)
+		Kit.setButtonColor(b, if mid == id then T.Blue else T.Paper, if mid == id then T.White else T.Ink)
 	end
 	clear(subBar)
 	subButtons = {}
@@ -968,7 +968,7 @@ local function openMain(id: string)
 			Size = UDim2.fromOffset(0, 40),
 			AutomaticSize = Enum.AutomaticSize.X,
 			TextSize = 16,
-			Color = T.White,
+			Color = T.Paper,
 			TextColor = T.Ink,
 			LayoutOrder = i,
 			Radius = 12,
@@ -1187,7 +1187,7 @@ function BuildUI.init(exitCallback: () -> ())
 			Parent = dock,
 			Size = UDim2.fromOffset(160, 50),
 			TextSize = 20,
-			Color = T.White,
+			Color = T.Paper,
 			TextColor = T.Ink,
 			LayoutOrder = i,
 			Radius = 14,
@@ -1239,7 +1239,7 @@ function BuildUI.init(exitCallback: () -> ())
 		Size = UDim2.new(0, 880, 0, 182),
 		Position = UDim2.new(0.5, 0, 1, -150),
 		AnchorPoint = Vector2.new(0.5, 1),
-		Color = Color3.fromRGB(244, 248, 255),
+		Color = T.Paper,
 		Radius = 18,
 		Stroke = T.Ink,
 		StrokeThickness = 3.5,

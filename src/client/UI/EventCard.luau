@@ -1,7 +1,7 @@
 -- The dialogue box at the bottom of the screen that tells a random event as it plays out in
--- town, the way life sims do it: the event's name on a banner, the speaker on a name plate, the
--- words typed out, a little arrow when you can click on, and the choices stacked under it.
--- "Watch" points the camera at it.
+-- town, the way life sims do it: the event's name on a ribbon, the speaker on a name plate, the
+-- words typed out on a cream page, a little arrow when you can click on, and the choices stacked
+-- under it. "Watch" points the camera at it.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -22,7 +22,8 @@ local player = Players.LocalPlayer
 
 local holder: Frame
 local card: Frame
-local titleLabel: TextLabel
+local bannerSlot: Frame
+local ribbon: Frame? = nil
 local speakerLabel: TextLabel
 local plate: Frame
 local bodyLabel: TextLabel
@@ -182,7 +183,21 @@ local function play(ev: any)
 	playing = true
 	current = ev
 	clearChoices()
-	titleLabel.Text = ev.title or ""
+	-- a fresh ribbon each time: it's cut to the length of the event's name
+	if ribbon then
+		ribbon:Destroy()
+		ribbon = nil
+	end
+	if ev.title and ev.title ~= "" then
+		ribbon = Kit.ribbon(ev.title, {
+			Parent = bannerSlot,
+			Color = T.Coral,
+			TextSize = 22,
+			Position = UDim2.new(0.5, 0, 1, 0),
+			AnchorPoint = Vector2.new(0.5, 1),
+			ZIndex = 21,
+		})
+	end
 	if not hidden then
 		Kit.popIn(holder)
 	end
@@ -248,37 +263,47 @@ function EventCard.start(_hud: any)
 	holder.ZIndex = 20
 	Kit.list(holder, 0, false, Enum.HorizontalAlignment.Center)
 
-	-- the event's name on a banner above the box
-	local banner = Kit.frame({
-		Parent = holder,
-		Size = UDim2.fromOffset(0, 34),
-		AutomaticSize = Enum.AutomaticSize.X,
-		Color = T.Coral,
-		Radius = 17,
-		LayoutOrder = 1,
-	})
-	Kit.gradient(banner, 0.12)
-	Kit.pad(banner, 18, 0)
-	titleLabel = Kit.title("", {
-		Parent = banner,
-		Size = UDim2.fromOffset(0, 34),
-		AutomaticSize = Enum.AutomaticSize.X,
-		TextSize = 19,
-		Color = T.White,
-		Wrap = false,
-	})
-	Kit.box({ Parent = holder, Size = UDim2.fromOffset(10, 22), LayoutOrder = 2 })
+	-- the event's name on a ribbon above the box (made in play)
+	bannerSlot = Kit.box({ Name = "Banner", Parent = holder, Size = UDim2.new(1, 0, 0, 48), LayoutOrder = 1 })
+	Kit.box({ Parent = holder, Size = UDim2.fromOffset(10, 18), LayoutOrder = 2 })
 
+	-- the page and its solid shadow
+	local page = Kit.box({
+		Name = "Page",
+		Size = UDim2.new(1, 0, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		LayoutOrder = 3,
+		Parent = holder,
+	})
+	local shade = Kit.frame({
+		Name = "Shadow",
+		Size = UDim2.fromScale(1, 1),
+		Position = UDim2.fromOffset(6, 7),
+		Color = T.Shadow,
+		Transparency = 0.5,
+		Radius = false,
+		Parent = page,
+	})
+	local _ = shade
 	card = Kit.frame({
 		Name = "Box",
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		Color = T.White,
-		Radius = 18,
-		LayoutOrder = 3,
-		Parent = holder,
+		Color = T.Paper,
+		Radius = false,
+		Parent = page,
 	})
-	Kit.stroke(card, T.Ink, 3)
+	Kit.stroke(card, T.Ink, 4)
+	-- a thin rule just inside the edge, like a printed page
+	local rule = Kit.frame({
+		Name = "Rule",
+		Size = UDim2.new(1, -14, 1, -14),
+		Position = UDim2.fromOffset(7, 7),
+		Transparency = 1,
+		Radius = false,
+		Parent = card,
+	})
+	Kit.stroke(rule, T.Line, 2)
 	local inner = Kit.box({ Parent = card, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y })
 	Kit.pad(inner, 22, 20)
 	Kit.list(inner, 10)
@@ -290,8 +315,9 @@ function EventCard.start(_hud: any)
 		AutomaticSize = Enum.AutomaticSize.X,
 		Position = UDim2.fromOffset(22, -18),
 		Color = T.Blue,
-		Radius = 10,
+		Radius = false,
 		Visible = false,
+		ZIndex = 2,
 	})
 	Kit.stroke(plate, T.Ink, 2.5)
 	Kit.pad(plate, 14, 0)

@@ -170,16 +170,13 @@ elseif scene:sub(1, 6) == "icons:" then
 		i += 1
 		local cell = Kit.box({ Parent = sheet, LayoutOrder = i })
 		Icons.make(name, 150, { Parent = cell, Position = UDim2.new(0.5, -75, 0, 4) })
-		Kit.text(
-			name,
-			{
-				Parent = cell,
-				Size = UDim2.new(1, 0, 0, 18),
-				Position = UDim2.new(0, 0, 1, -22),
-				TextSize = 15,
-				AlignX = Enum.TextXAlignment.Center,
-			}
-		)
+		Kit.text(name, {
+			Parent = cell,
+			Size = UDim2.new(1, 0, 0, 18),
+			Position = UDim2.new(0, 0, 1, -22),
+			TextSize = 15,
+			AlignX = Enum.TextXAlignment.Center,
+		})
 	end
 elseif scene == "icons" then
 	local Icons = Harness.require(Sim.CLIENT .. "UI.Icons")
@@ -315,6 +312,10 @@ local function dump(inst)
 	local itemId = inst:GetAttribute("ItemId")
 	if itemId then
 		node.itemId = itemId
+	end
+	local presetId = inst:GetAttribute("PresetId")
+	if presetId then
+		node.itemId = "preset:" .. presetId
 	end
 	for _, c in rawget(inst, "_children") do
 		table.insert(node.children, dump(c))

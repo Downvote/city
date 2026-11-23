@@ -67,7 +67,8 @@ local loadMore: TextButton
 local lookPage: Frame
 local profilePage: Frame
 local stepButtons: { [string]: TextButton } = {}
-local titleLabel: TextLabel
+local titleHolder: Frame
+local titleRibbon: Frame? = nil
 local selectTab: (string) -> ()
 local markTab: ((string) -> ())? = nil
 local profile = { name = "", pers = "sunny", color = "4FA9D9", bday = { s = 1, d = 1 } }
@@ -206,7 +207,7 @@ local function itemCard(item: any, order: number, onClick: (() -> ())?): GuiObje
 	local card = Kit.new("TextButton", {
 		Text = "",
 		AutoButtonColor = true,
-		BackgroundColor3 = T.White,
+		BackgroundColor3 = T.Paper,
 		Size = UDim2.fromOffset(112, 140),
 		LayoutOrder = order,
 		Parent = grid,
@@ -254,7 +255,7 @@ local function itemCard(item: any, order: number, onClick: (() -> ())?): GuiObje
 		Size = UDim2.fromOffset(24, 24),
 		Position = UDim2.new(1, -28, 0, 4),
 		Color = T.Green,
-		Radius = 12,
+		Radius = "circle",
 		Visible = false,
 	})
 	Kit.stroke(worn, T.Ink, 2)
@@ -948,51 +949,97 @@ end
 
 -- Building the screen ------------------------------------------------------------------------------------
 
+-- The title ribbon is cut to the length of its words, so a new title makes a new ribbon.
+local function setTitle(text: string)
+	if titleRibbon then
+		titleRibbon:Destroy()
+	end
+	titleRibbon = Kit.ribbon(text, {
+		Parent = titleHolder,
+		Color = T.Pink,
+		TextSize = 28,
+		Position = UDim2.new(0.5, 0, 0, 0),
+		AnchorPoint = Vector2.new(0.5, 0),
+		ZIndex = 3,
+	})
+	if Icons.has("shirt") and titleRibbon then
+		Icons.make("shirt", 50, { Parent = titleRibbon, Position = UDim2.fromOffset(-10, -12), ZIndex = 6 })
+	end
+end
+
 local function build()
 	local gui = Kit.root()
 	local frame = Kit.box({ Name = "Creator", Size = UDim2.fromScale(1, 1), Parent = gui })
 	frame.ZIndex = 10
 	root = frame
 
+	-- the portrait frame round the stage, where the villager stands in the 3D view: a cream mat
+	-- with an outline inside and out (each stroke sits just outside its frame)
+	local stage = Kit.box({
+		Name = "Stage",
+		Size = UDim2.new(1, -(660 + 24 + 44), 1, -(60 + 196)),
+		Position = UDim2.fromOffset(28, 66),
+		Parent = frame,
+	})
+	local inkIn = Kit.frame({ Name = "InkIn", Size = UDim2.fromScale(1, 1), Transparency = 1, Parent = stage })
+	Kit.stroke(inkIn, T.Ink, 2.5)
+	local mat = Kit.frame({
+		Name = "Mat",
+		Size = UDim2.new(1, 5, 1, 5),
+		Position = UDim2.fromOffset(-2.5, -2.5),
+		Transparency = 1,
+		Parent = stage,
+	})
+	Kit.stroke(mat, T.Paper, 12)
+	local inkOut = Kit.frame({
+		Name = "InkOut",
+		Size = UDim2.new(1, 29, 1, 29),
+		Position = UDim2.fromOffset(-14.5, -14.5),
+		Transparency = 1,
+		Parent = stage,
+	})
+	Kit.stroke(inkOut, T.Ink, 3)
+
+	local holder = Kit.box({
+		Name = "PanelHolder",
+		Size = UDim2.new(0, 660, 1, -48),
+		Position = UDim2.new(1, -16, 0, 34),
+		AnchorPoint = Vector2.new(1, 0),
+		Parent = frame,
+	})
+	Kit.frame({
+		Name = "Shadow",
+		Size = UDim2.fromScale(1, 1),
+		Position = UDim2.fromOffset(7, 8),
+		Color = T.Shadow,
+		Transparency = 0.5,
+		Parent = holder,
+	})
 	local panel = Kit.frame({
 		Name = "Panel",
-		Size = UDim2.new(0, 660, 1, -24),
-		Position = UDim2.new(1, -12, 0, 12),
-		AnchorPoint = Vector2.new(1, 0),
+		Size = UDim2.fromScale(1, 1),
+		Color = T.Paper,
 		Stroke = T.Ink,
 		StrokeThickness = 4,
-		Parent = frame,
-		Radius = 20,
+		Parent = holder,
 	})
-	-- a pink header bar with the title, the way the other panels have theirs
-	local header =
-		Kit.frame({ Name = "Header", Parent = panel, Size = UDim2.new(1, 0, 0, 56), Color = T.Pink, Radius = 20 })
-	Kit.gradient(header, 0.22)
-	Kit.frame({
-		Parent = header,
-		Size = UDim2.new(1, 0, 0, 20),
-		Position = UDim2.new(0, 0, 1, -20),
-		Color = Kit.darker(T.Pink, 0.84),
-		Radius = false,
-	})
+	-- a pink band along the top edge with the title on a ribbon across it
+	local header = Kit.frame({ Name = "Header", Parent = panel, Size = UDim2.new(1, 0, 0, 14), Color = T.Pink })
 	Kit.frame({
 		Parent = header,
 		Size = UDim2.new(1, 0, 0, 3),
 		Position = UDim2.new(0, 0, 1, 0),
 		Color = T.Ink,
-		Radius = false,
 	})
-	Icons.make("shirt", 42, { Parent = header, Position = UDim2.new(0, 14, 0.5, -21) })
-	local inner = Kit.box({ Parent = panel, Size = UDim2.new(1, -28, 1, -70), Position = UDim2.fromOffset(14, 66) })
-	titleLabel = Kit.title("Make a villager", {
-		Parent = header,
-		Size = UDim2.new(1, -130, 1, 0),
-		Position = UDim2.fromOffset(64, 0),
-		TextSize = 28,
-		Color = T.White,
-		Outline = Kit.darker(T.Pink, 0.4),
-		OutlineThickness = 3,
+	titleHolder = Kit.box({
+		Name = "Title",
+		Parent = panel,
+		Size = UDim2.new(1, 0, 0, 10),
+		Position = UDim2.fromOffset(0, -26),
 	})
+	titleHolder.ZIndex = 3
+	setTitle("Make a villager")
+	local inner = Kit.box({ Parent = panel, Size = UDim2.new(1, -28, 1, -70), Position = UDim2.fromOffset(14, 52) })
 	Kit.closeButton({
 		Parent = panel,
 		Size = UDim2.fromOffset(50, 50),
@@ -1009,21 +1056,20 @@ local function build()
 		Size = UDim2.new(1, 0, 0, 48),
 		Position = UDim2.fromOffset(0, 0),
 		Color = T.PaperDark,
-		Radius = 16,
 		Stroke = T.Ink,
 		StrokeThickness = 2,
 	})
 	Kit.pad(steps, 4, 4)
 	Kit.list(steps, 4, true)
 	stepButtons.look = Kit.button(
-		"Look",
+		"1  Look",
 		{ Parent = steps, Size = UDim2.new(0.5, -2, 1, 0), TextSize = 18, Radius = 14, Icon = "shirt" },
 		function()
 			showStep("look")
 		end
 	)
 	stepButtons.profile = Kit.button(
-		"Name and personality",
+		"2  Name and personality",
 		{ Parent = steps, Size = UDim2.new(0.5, -2, 1, 0), TextSize = 18, Radius = 14, Icon = "person" },
 		function()
 			showStep("profile")
@@ -1124,15 +1170,12 @@ local function build()
 	}, more)
 
 	-- the tools over the 3D view
-	local tools = Kit.frame({
+	local tools = Kit.glass({
 		Name = "Tools",
 		Size = UDim2.fromOffset(0, 76),
 		AutomaticSize = Enum.AutomaticSize.X,
 		Position = UDim2.new(0, 12, 1, -12),
 		AnchorPoint = Vector2.new(0, 1),
-		Color = T.Glass,
-		Transparency = 0.25,
-		Radius = 18,
 		Parent = frame,
 	})
 	Kit.pad(tools, 8, 8)
@@ -1164,9 +1207,9 @@ local function build()
 		Size = UDim2.fromOffset(420, 60),
 		Position = UDim2.new(0, 12, 1, -98),
 		AnchorPoint = Vector2.new(0, 1),
+		Color = T.Paper,
 		Stroke = T.Ink,
-		StrokeThickness = 2,
-		Radius = 16,
+		StrokeThickness = 3,
 		Parent = frame,
 	})
 	Kit.pad(copy, 8, 8)
@@ -1205,14 +1248,11 @@ local function build()
 			end
 		end)
 	end)
-	local tip = Kit.frame({
+	local tip = Kit.glass({
 		Parent = frame,
-		Size = UDim2.fromOffset(0, 30),
+		Size = UDim2.fromOffset(0, 32),
 		AutomaticSize = Enum.AutomaticSize.X,
 		Position = UDim2.fromOffset(12, 12),
-		Color = T.Glass,
-		Transparency = 0.3,
-		Radius = 15,
 	})
 	Kit.pad(tip, 14, 0)
 	Kit.text("Drag to turn them round. Scroll to zoom.", {
@@ -1253,10 +1293,10 @@ function Creator.open(arg: any)
 	r.Visible = true
 	local v = editVid and State.villager(editVid)
 	if mode == "edit" and v then
-		titleLabel.Text = Text.fill("{name}'s look", { name = v.name })
+		setTitle(Text.fill("{name}'s look", { name = v.name }))
 		profile = { name = v.name, pers = v.pers, color = v.color, bday = table.clone(v.bday) }
 	else
-		titleLabel.Text = "Make a villager"
+		setTitle("Make a villager")
 		profile = {
 			name = if a.start == "me" then player.DisplayName else "",
 			pers = "sunny",
