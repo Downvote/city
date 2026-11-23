@@ -140,6 +140,24 @@ block edge is at least 80% built in the market quarter and 65% in the far blocks
 (presets build, names round trip, footprints, detail on street faces only, frames, piece rules, at most 100
 different pieces, sign attributes, lit windows, lane lights).
 
+## Set pieces and street paint
+
+`Data/Landmarks` holds the set pieces (`Landmarks.Models`, `Landmarks.prims(name)`, `Landmarks.placements()`, added
+by `TownMap.placements` before the street scene): `marketGate` at (0, 24.5) facing Main Street, two `marketMast`s,
+`marketHall` at (-43.5, 73) opening east, `marketGoods`, `marketTentA`, `marketCart`, `marketTentB`, `footbridge`
+over Main Street at x 274.25 (`Landmarks.Bridge = { x, foot, deck, clear }`: the deck's top at 13.2, nothing lower
+than 11.1 over the road), `hillStair` from (0, 279) north to z 404.5 and `lookoutBluff` / `lookoutShelter` on the
+terrace beside its top, pines and outcrops. `Landmarks.stair()` gives `{ x, half, steps = { { z1, z2, y, kind } },
+top }`, cut to `Hills.at`; `Landmarks.terrace()` the lookout's `{ x1, z1, x2, z2, y, neck, neckX, rock }`. Flights
+are visual pieces with an invisible ramp along their noses. `Data/StreetPaint` lays the flat things on the ground
+by rule from `Town.Roads` (`StreetPaint.ground(region)`, added by `TownMap.ground`): stop lines, arrows, tactile
+strips and yellow kerbs at zebras, manhole covers and gratings, Main Street's cycle lanes, the bus bay, box
+junctions, parking bays (`StreetPaint.parked()` follows TownMap's seeded parking), the square's rings and aprons,
+and a zebra on Hill Road at the stair's foot (`StreetPaint.StairCrossing`). It lies a hair above TownMap's own lines
+(`StreetPaint.Heights`). The Landmarks spec checks frames and piece rules, that everything is on the island, off
+the roads and the plots, that the stair follows the hill with walkable rises, that the paint lies flat inside what
+it belongs to, and the budgets (set pieces at most 1,400 parts, paint at most 1,600, a piece as one).
+
 ## The plan
 
 A plot's build is a `PlanData`:

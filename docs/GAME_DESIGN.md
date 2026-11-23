@@ -875,6 +875,20 @@ None of that game's streets, shops, signs, gate or art: Maplewick's are its own.
   each end and an alley here and there. Every shop and room you could walk into before is still there, in the
   same spot, now behind a front of the same kind. A building's name comes from the town's list of shop names for
   its kind, never the same one twice within a few streets; where every name nearby is taken its board is left bare.
+- **The town's centre and the hills.** The way into the square from Main Street is a market gate: brick piers, a
+  timber beam with knee braces, a tiled roof over each of its three bays, a clock turret that lights up at night,
+  lanterns and banners, and two banner masts at the kerb. On the square's west side stands a covered market hall
+  open toward the fountain: iron columns and trusses under one tiled roof, five stalls (greengrocer, fish, baker,
+  florist, dry goods) under striped awnings, lamps hanging in each bay. Two tents and a cart line the east side.
+  East of the square a footbridge with switchback stairs crosses Main Street, high enough for the bus. On the
+  hills a stepped street climbs from Hill Road: a court, broad steps, four flights with landings, iron railings
+  and stone lanterns, up to a lookout terrace on a rock bluff with a shelter, benches and a telescope, pines on the
+  knoll behind.
+- **Painted streets.** Every road carries markings by rule: a stop line, an arrow, yellow tactile strips and a
+  yellow kerb at every zebra crossing; manhole covers and kerb gratings all along; a red cycle lane each side of
+  Main Street with bicycle marks; a bus bay; yellow box junctions where the avenues cross Main Street; parking bays
+  under the parked cars. The square is paved in stepped rings round the fountain, with checker aprons in front of
+  the tailor, the notice board and the shop.
 - **Street buildings come from a facade kit** (`Data/Facades`): a ground floor shop front, storeys of window
   bays, a roof with its clutter, in a handful of wall treatments and colours, put together by rule so a street is
   varied and still one town.

@@ -28,7 +28,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (169, all passing; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (169, all passing; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off), Build (catalog, plan rules, field cleaning, shapes, builder), BuildService (the server's
 Build service with stubbed neighbours: charges, syncs, strips junk, refuses land you don't own), Events (3000 seeded
