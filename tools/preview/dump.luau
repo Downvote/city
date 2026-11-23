@@ -132,6 +132,24 @@ elseif scene == "house" then
 elseif scene:sub(1, 5) == "town:" then
 	local TownModels = R(Shared .. "Data.TownModels")
 	addPrims(TownModels.prims(scene:sub(6)))
+elseif scene:sub(1, 7) == "models:" then
+	-- models:<name>,<name>... : the map's own models side by side, by the names placements use
+	local TownMap = R(Shared .. "Data.TownMap")
+	local Geometry = R(Shared .. "Build.Geometry")
+	local x, z, depth, n = 0, 0, 0, 0
+	for name in scene:sub(8):gmatch("[^,]+") do
+		local list = TownMap.prims(name)
+		local lo, hi = Geometry.bounds(list)
+		addPrims(list, CFrame.new(x - lo.X, 0, z - lo.Z))
+		x += (hi.X - lo.X) + 4
+		depth = math.max(depth, hi.Z - lo.Z)
+		n += 1
+		if n % 6 == 0 then
+			x = 0
+			z += depth + 5
+			depth = 0
+		end
+	end
 elseif scene == "map" or scene:sub(1, 4) == "map:" then
 	-- map or map:x1,z1,x2,z2 (the middle of town by default)
 	local TownMap = R(Shared .. "Data.TownMap")

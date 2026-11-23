@@ -88,30 +88,6 @@ local SKILLS =
 
 local WANTS = { "a new pair of boots", "a fancy hat", "a fishing rod", "a set of paints", "a kite", "a guitar" }
 
-local NAMES = {
-	"Pip",
-	"Juno",
-	"Basil",
-	"Wren",
-	"Otto",
-	"Mabel",
-	"Rufus",
-	"Ivy",
-	"Hugo",
-	"Clover",
-	"Milo",
-	"Hazel",
-	"Fern",
-	"Toby",
-	"Nell",
-	"Ziggy",
-	"Poppy",
-	"Arlo",
-	"Daisy",
-	"Remy",
-}
-Events.VisitorNames = NAMES
-
 local function trait(ctx: Ctx, vid: string, t: string): number
 	return Personalities.trait(ctx.v(vid).pers, t)
 end
@@ -1117,25 +1093,30 @@ event({
 	actors = 0,
 	when = "day",
 	weight = function(ctx: Ctx)
-		if ctx.freeSlots <= 0 then
+		-- friends first, then the town's own newcomers, nobody twice (Sim/Newcomers)
+		if ctx.freeSlots <= 0 or not ctx.newcomer() then
 			return 0
 		end
 		local count = #ctx.present
 		return Tuning.Events.VisitorChance * (if count < 3 then 3 else 1)
 	end,
 	scene = function(ctx: Ctx): Scene
-		local name = ctx.rng:pick(NAMES)
+		local who = ctx.newcomer()
+		local name = who.name
+		local hello = if who.userId
+			then "Your friend {name} has turned up at the edge of town with a suitcase."
+			else "A traveller called {name} is passing through town."
 		return {
 			title = "A visitor",
 			lines = {
-				line(nil, ctx.f("A traveller called {name} is passing through town.", { name = name })),
+				line(nil, ctx.f(hello, { name = name })),
 				line(nil, ctx.f("{name} likes it here and asks if there's room for one more.", { name = name })),
 			},
 			choices = {
 				{
 					text = ctx.f("Welcome, {name}!", { name = name }),
 					lines = { line(nil, ctx.f("{name} is moving in.", { name = name })) },
-					effects = { { t = "visitor", name = name } },
+					effects = { { t = "visitor", name = name, key = who.key } },
 				},
 				{
 					text = "Make your own villager instead",

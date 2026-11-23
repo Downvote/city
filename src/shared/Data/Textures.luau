@@ -22,6 +22,7 @@ export type Ready = {
 	studs: number,
 	color: string,
 	normal: string?,
+	rough: string?,
 	own: boolean, -- the picture brings its own colour
 }
 
@@ -65,6 +66,7 @@ function Textures.ready(ids: { [string]: TextureIds.Ids }?): { Ready }
 				studs = if type(got.studs) == "number" and got.studs > 0 then got.studs else e.studs,
 				color = got.color,
 				normal = if type(got.normal) == "string" and got.normal:match(ID) then got.normal else nil,
+				rough = if type(got.rough) == "string" and got.rough:match(ID) then got.rough else nil,
 				own = got.own == true,
 			})
 		end
@@ -109,6 +111,9 @@ function Textures.install(materialService: any): (number, { string })
 				v.ColorMap = t.color
 				if t.normal then
 					v.NormalMap = t.normal
+				end
+				if t.rough then
+					v.RoughnessMap = t.rough
 				end
 				v.StudsPerTile = t.studs
 				v.MaterialPattern = Enum.MaterialPattern.Regular

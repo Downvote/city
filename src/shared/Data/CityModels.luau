@@ -38,6 +38,16 @@ local function shade(c: Color3, k: number): Color3
 	return Color3.new(math.min(1, c.R * k), math.min(1, c.G * k), math.min(1, c.B * k))
 end
 
+-- A window that's lit after dark: glass by day, warm lamplight at night (the World service swaps
+-- its colour and material when the lamps come on).
+local LAMPLIGHT = rgb(255, 224, 156)
+local function lit(r: R, pane: Recipe.Prim): Recipe.Prim
+	r:glow(pane, 0)
+	pane.attrs = { NightColor = LAMPLIGHT }
+	return pane
+end
+CityModels.lit = lit
+
 -- Kinds of building ---------------------------------------------------------------------------------
 
 export type TowerSpec = {
@@ -118,10 +128,18 @@ function CityModels.tower(spec: TowerSpec): (R) -> ()
 		end
 		for k = 0, spec.floors - 1 do
 			local y1, y2 = g + k * fh + 1.1, g + (k + 1) * fh - 0.7
-			r:block(-w / 2 + 1, y1, -d / 2 - 0.12, w / 2 - 1, y2, -d / 2, glass, "Glass")
-			r:block(-w / 2 + 1, y1, d / 2, w / 2 - 1, y2, d / 2 + 0.12, glass, "Glass")
-			r:block(-w / 2 - 0.12, y1, -d / 2 + 1, -w / 2, y2, d / 2 - 1, glass, "Glass")
-			r:block(w / 2, y1, -d / 2 + 1, w / 2 + 0.12, y2, d / 2 - 1, glass, "Glass")
+			local bands = {
+				r:block(-w / 2 + 1, y1, -d / 2 - 0.12, w / 2 - 1, y2, -d / 2, glass, "Glass"),
+				r:block(-w / 2 + 1, y1, d / 2, w / 2 - 1, y2, d / 2 + 0.12, glass, "Glass"),
+				r:block(-w / 2 - 0.12, y1, -d / 2 + 1, -w / 2, y2, d / 2 - 1, glass, "Glass"),
+				r:block(w / 2, y1, -d / 2 + 1, w / 2 + 0.12, y2, d / 2 - 1, glass, "Glass"),
+			}
+			-- somebody is always working late: about a third of the floors stay lit after dark
+			for side, band in bands do
+				if (k * 5 + side * 3 + spec.floors) % 3 == 0 then
+					lit(r, band)
+				end
+			end
 		end
 		r:block(-w / 2 - 0.4, h, -d / 2 - 0.4, w / 2 + 0.4, h + 1, d / 2 + 0.4, trim, "SmoothPlastic")
 		-- a parapet round the roof, a stair hut and a water tank on legs
@@ -179,7 +197,7 @@ function CityModels.shop(spec: ShopSpec): (R) -> ()
 		local trim = spec.trim or WHITE
 		r:block(-w / 2, 0, -d / 2, w / 2, h, d / 2, spec.wall, "Brick")
 		r:block(-w / 2 - 0.2, 0, -d / 2 - 0.2, w / 2 + 0.2, 0.8, d / 2 + 0.2, shade(spec.wall, 0.78), "Concrete")
-		r:block(-w / 2 + 1.2, 0.8, -d / 2 - 0.15, w / 2 - 1.2, fh - 0.8, -d / 2, GLASS, "Glass")
+		lit(r, r:block(-w / 2 + 1.2, 0.8, -d / 2 - 0.15, w / 2 - 1.2, fh - 0.8, -d / 2, GLASS, "Glass"))
 		-- the shopfront's frame, and the door with its own frame and a step
 		r:block(-w / 2 + 0.9, 0.8, -d / 2 - 0.22, -w / 2 + 1.3, fh - 0.6, -d / 2, trim, "SmoothPlastic")
 		r:block(w / 2 - 1.3, 0.8, -d / 2 - 0.22, w / 2 - 0.9, fh - 0.6, -d / 2, trim, "SmoothPlastic")
@@ -207,7 +225,10 @@ function CityModels.shop(spec: ShopSpec): (R) -> ()
 			local y1 = f * fh + 1
 			for c = 0, cols - 1 do
 				local x = -w / 2 + (c + 0.5) * w / cols
-				r:block(x - 1.2, y1, -d / 2 - 0.12, x + 1.2, y1 + 2.4, -d / 2, GLASS, "Glass")
+				local pane = r:block(x - 1.2, y1, -d / 2 - 0.12, x + 1.2, y1 + 2.4, -d / 2, GLASS, "Glass")
+				if (c + f) % 2 == 0 then
+					lit(r, pane)
+				end
 				-- a sill with a flower box under each window
 				r:block(x - 1.5, y1 - 0.5, -d / 2 - 0.7, x + 1.5, y1, -d / 2, trim, "SmoothPlastic")
 				local flowers = if c % 2 == 0 then rgb(250, 130, 150) else rgb(255, 210, 90)
@@ -248,7 +269,7 @@ local function house(r: R, x: number, z: number, w: number, d: number, wall: Col
 	r:boxAt(f * CFrame.new(0, 1.7, -d / 2 - 0.14), 1.8, 3.4, 0.16, DOOR, "SmoothPlastic")
 	r:boxAt(f * CFrame.new(0, 0.15, -d / 2 - 0.9), 2.6, 0.3, 1.6, STONE, "Concrete")
 	for _, sx in { -1, 1 } do
-		r:boxAt(f * CFrame.new(sx * w / 4 + sx * 0.6, 3, -d / 2 - 0.08), 1.6, 1.6, 0.16, GLASS, "Glass")
+		lit(r, r:boxAt(f * CFrame.new(sx * w / 4 + sx * 0.6, 3, -d / 2 - 0.08), 1.6, 1.6, 0.16, GLASS, "Glass"))
 		r:boxAt(f * CFrame.new(sx * w / 4 + sx * 0.6, 2.05, -d / 2 - 0.2), 2, 0.25, 0.4, WHITE, "SmoothPlastic")
 	end
 end
@@ -328,12 +349,14 @@ end
 
 -- The landscaping round a building `w` by `d` (the building's footprint plus `margin` each side),
 -- front to local -Z. "garden": a lawn pad, a clipped hedge round the edge with a gap for the path,
--- a paved path to the door, trees in the back corners and flowers by the path. "plaza": stone
--- planters with a tree at the corners, and benches by the door.
+-- gate posts with lamps, a paved path to the door, shrubs in the back corners and flower beds by
+-- the path. "plaza": stone tubs of flowers at the corners, and benches by the door. No trees: the
+-- user asked for none near the roads, and every lot fronts one.
 function CityModels.lot(w: number, d: number, kind: string, margin: number): (R) -> ()
 	return function(r: R)
 		local hw, hd = w / 2, d / 2
 		local hedge = rgb(60, 136, 66)
+		local blooms = { rgb(255, 140, 160), rgb(255, 214, 100), rgb(250, 250, 250), rgb(190, 150, 240) }
 		if kind == "garden" then
 			r:block(-hw, 0, -hd, hw, 0.16, hd, rgb(122, 196, 88), "Grass")
 			r:block(-hw, 0, hd - 1.5, hw, 2.2, hd, hedge, "SmoothPlastic")
@@ -342,21 +365,36 @@ function CityModels.lot(w: number, d: number, kind: string, margin: number): (R)
 			r:block(-hw + 1.5, 0, -hd, -4, 2.2, -hd + 1.5, hedge, "SmoothPlastic")
 			r:block(4, 0, -hd, hw - 1.5, 2.2, -hd + 1.5, hedge, "SmoothPlastic")
 			r:block(-2.6, 0.16, -hd, 2.6, 0.22, -hd + margin, rgb(232, 226, 214), "Pavement")
+			-- gate posts either side of the path, with a lamp on each
 			for _, sx in { -1, 1 } do
-				lowTree(r, sx * (hw - 5), 0.16, hd - 5, 0.9)
-				-- flowers either side of the path
+				r:block(sx * 3.3 - 0.5, 0, -hd - 0.1, sx * 3.3 + 0.5, 3, -hd + 0.9, rgb(226, 222, 214), "Concrete")
+				r:glow(r:ball(sx * 3.3, 3.5, -hd + 0.4, 1, rgb(255, 236, 190), "SmoothPlastic"), 10, 0.8)
+				-- round shrubs in the back corners (no trees this close to a road)
+				r:ball(sx * (hw - 4), 1.6, hd - 4, 4, LEAF, "SmoothPlastic")
+				r:ball(sx * (hw - 6.4), 1.1, hd - 3.4, 2.6, shade(LEAF, 1.14), "SmoothPlastic")
+				-- a flower bed either side of the path
+				r:block(sx * 3.4, 0.16, -hd + 2, sx * 8.6, 0.4, -hd + 4, rgb(124, 92, 66), "Ground")
 				for k = 0, 2 do
-					local col = ({ rgb(255, 140, 160), rgb(255, 214, 100), rgb(250, 250, 250) })[k + 1]
-					r:ball(sx * (4 + k * 1.6), 0.6, -hd + 3, 1, col, "SmoothPlastic")
+					r:ball(
+						sx * (4.2 + k * 1.7),
+						0.7,
+						-hd + 3,
+						1.1,
+						blooms[(k + (if sx > 0 then 1 else 0)) % #blooms + 1]
+					)
 				end
 			end
 		else
+			-- a paved forecourt: flower tubs at the corners, benches by the door, a bike rack
 			for _, sx in { -1, 1 } do
 				for _, sz in { -1, 1 } do
 					local x, z = sx * (hw - 3), sz * (hd - 3)
 					r:block(x - 2.2, 0, z - 2.2, x + 2.2, 1.1, z + 2.2, rgb(226, 222, 214), "Concrete")
-					r:block(x - 1.8, 1.1, z - 1.8, x + 1.8, 1.3, z + 1.8, rgb(110, 84, 62), "SmoothPlastic")
-					lowTree(r, x, 1.2, z, 0.8)
+					r:block(x - 1.8, 1.1, z - 1.8, x + 1.8, 1.3, z + 1.8, rgb(110, 84, 62), "Ground")
+					r:ball(x, 1.9, z, 2.8, LEAF, "SmoothPlastic")
+					local col = blooms[(if sx > 0 then 1 else 0) * 2 + (if sz > 0 then 1 else 0) + 1]
+					r:ball(x + 0.9, 2.5, z - 0.8, 1.1, col, "SmoothPlastic")
+					r:ball(x - 0.8, 2.6, z + 0.7, 1, col, "SmoothPlastic")
 				end
 				bench(r, sx * 8, -hd + 2, 180)
 			end
@@ -529,7 +567,7 @@ M.cityPark = function(r: R)
 	r:cyl(0, 1.2, 0, 0.4, 15, "y", WATER, "SmoothPlastic")
 	r:cyl(0, 2.6, 0, 3, 2.4, "y", STONE, "SmoothPlastic")
 	for _, p in
-		{ { -60, -22 }, { -80, 20 }, { -30, 24 }, { 40, -24 }, { 70, 22 }, { 90, -18 }, { -95, -24 }, { 25, 26 } }
+		{ { -60, -20 }, { -80, 18 }, { -30, 20 }, { 40, -20 }, { 70, 18 }, { 86, -16 }, { -88, -20 }, { 25, 20 } }
 	do
 		lowTree(r, p[1], 0.3, p[2], 1.2)
 	end
@@ -676,7 +714,7 @@ M.fireStation = function(r: R)
 	end
 end
 
--- A row of four little houses, each with a garden hedge and a tree.
+-- A row of four little houses, each with a garden hedge and a shrub.
 M.houseRow = function(r: R)
 	local walls = { rgb(255, 214, 186), rgb(186, 226, 250), rgb(255, 236, 170), rgb(206, 238, 196) }
 	local roofs = { rgb(236, 110, 90), rgb(86, 150, 220), rgb(236, 150, 70), rgb(100, 180, 120) }
@@ -684,7 +722,9 @@ M.houseRow = function(r: R)
 		local x = -27 + k * 18
 		house(r, x, 0, 11, 9, walls[k + 1], roofs[k + 1], 0)
 		r:block(x - 8, 0, -9, x + 8, 1.2, -8.2, LEAF_DARK, "SmoothPlastic")
-		lowTree(r, x + 6, 0, 6, 0.8)
+		-- a shrub in each back garden (no trees this close to the road)
+		r:ball(x + 6, 1.3, 6, 3, LEAF, "SmoothPlastic")
+		r:ball(x + 4.4, 0.9, 6.6, 2, shade(LEAF, 1.15), "SmoothPlastic")
 	end
 end
 
@@ -713,7 +753,7 @@ M.pondPark = function(r: R)
 		r:ball(p[1] - 0.7, 1.5, p[2], 0.7, WHITE, "SmoothPlastic")
 	end
 	for _, p in
-		{ { 50, -26 }, { 70, 24 }, { 90, -10 }, { -70, 28 }, { -90, -24 }, { 40, 30 }, { -60, -30 }, { 100, 28 } }
+		{ { 50, -20 }, { 70, 18 }, { 86, -10 }, { -70, 20 }, { -86, -18 }, { 40, 20 }, { -60, -20 }, { 88, 20 } }
 	do
 		lowTree(r, p[1], 0.3, p[2], 1.3)
 	end

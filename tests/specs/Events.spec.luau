@@ -87,7 +87,7 @@ describe("Event engine", function()
 	it("reaches every event and keeps the numbers in range", function()
 		local seen = {}
 		local weathers = { "clear", "rain", "storm", "snow" }
-		for seed = 1, 1500 do
+		for seed = 1, 3000 do
 			local rng = Rng.new(seed)
 			local count = rng:int(1, 7)
 			local p = makeProfile(rng, count, rng:chance(0.6))
@@ -119,6 +119,7 @@ describe("Event engine", function()
 				present = present,
 				freeSlots = Tuning.Villagers.Max - count,
 				merchantActive = false,
+				friends = if rng:chance(0.5) then { { id = 77, name = "Sam" } } else {},
 			})
 			local ev = EventEngine.pick(ctx, {})
 			if ev then

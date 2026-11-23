@@ -24,6 +24,7 @@ export type Prim = {
 	effect: string?, -- "fire" | "smoke" | "sparkles"
 	role: string?, -- "door" (the swinging leaf), "seat", "bed", "glow" (switched on at night)
 	attrs: { [string]: any }?,
+	frame: CFrame?, -- a door leaf's own doorway (where its hinge is measured from), set by the Builder
 }
 
 local Geometry = {}

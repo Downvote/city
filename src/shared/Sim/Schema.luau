@@ -48,6 +48,7 @@ export type Villager = {
 	hobby: string?,
 	feedDay: number?,
 	feeds: number?,
+	from: string?, -- who they came as when they moved in from the road (Sim/Newcomers)
 }
 
 function Schema.newProfile(): any
@@ -81,6 +82,7 @@ function Schema.newProfile(): any
 		offers = {}, -- heart level thank yous waiting to be picked (Sim/Life)
 		found = {}, -- places on the island found, by id (Data/Places)
 		goals = {}, -- town goals claimed, by id
+		arrived = {}, -- everyone who has ever moved in from the road, by key (Sim/Newcomers)
 		recent = {},
 		calendar = { s = 1, d = 1, y = 1 },
 	}

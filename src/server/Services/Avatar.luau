@@ -383,8 +383,9 @@ local function buildStage(slot: number): Model
 		p.Parent = model
 		return p
 	end
-	disc(16, 0.15, 0.3, Color3.fromRGB(214, 172, 124))
-	disc(13, 0.35, 0.3, Color3.fromRGB(236, 200, 150))
+	-- just wide enough to stand on (the user: "make the double circle pedestal ... smaller")
+	disc(7.6, 0.12, 0.24, Color3.fromRGB(214, 172, 124))
+	disc(6, 0.3, 0.24, Color3.fromRGB(236, 200, 150))
 	model:SetAttribute("Origin", origin)
 	model.Parent = workspace
 	return model
@@ -425,7 +426,7 @@ local function placeMannequin(stage: any, model: Model)
 	local hum = model:FindFirstChildOfClass("Humanoid")
 	local hip = if hum then hum.HipHeight else 2
 	local rootHalf = if root and root:IsA("BasePart") then root.Size.Y / 2 else 1
-	model:PivotTo(CFrame.new(origin + Vector3.new(0, 0.5 + hip + rootHalf, 0)) * CFrame.Angles(0, math.pi, 0))
+	model:PivotTo(CFrame.new(origin + Vector3.new(0, 0.42 + hip + rootHalf, 0)) * CFrame.Angles(0, math.pi, 0))
 	model.Parent = stage.model
 	stage.mannequin = model
 	idle(model)

@@ -99,6 +99,9 @@ describe("Textures", function()
 			if ids.normal then
 				expect(ids.normal:match("^rbxassetid://%d+$") ~= nil).toBeTruthy()
 			end
+			if ids.rough then
+				expect(ids.rough:match("^rbxassetid://%d+$") ~= nil).toBeTruthy()
+			end
 			if ids.studs then
 				expect(ids.studs).toBeBetween(0.5, 50)
 			end

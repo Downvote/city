@@ -38,6 +38,8 @@ Hills.Plateaus = {
 	{ name = "farm", x = -700, z = 480, r = 130 },
 	{ name = "camp", x = 650, z = 520, r = 86 },
 	{ name = "radio", x = 380, z = 760, r = 30 },
+	{ name = "tarn", x = 860, z = 720, r = 46 }, -- a mountain lake
+	{ name = "stones", x = -860, z = 720, r = 34 }, -- a ring of standing stones
 }
 
 -- ground kept flat (at 0): { x1, z1, x2, z2 } with a soft edge. The creator's meadow.

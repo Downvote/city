@@ -24,14 +24,18 @@ HEADER = """--!strict
 -- Roblox image ids for the materials' textures. Most come from the Creator Store (public decals,
 -- found with scripts/library_textures.py; `decal` is the decal they came from, the comment its
 -- name and maker); the rest can be our painted ones in art/textures once uploaded
--- (scripts/upload_textures.py). Fields: `color` the image, `normal` an optional normal map,
--- `studs` how many studs one copy covers (else Data/Textures' own), `own` when the picture
--- brings its own colour (the part's paint then only tints it lightly).
+-- (scripts/upload_textures.py). Fields: `color` the image, `normal` an optional normal map
+-- (OpenGL style, the kind Roblox reads) and `rough` an optional roughness map, both from the same
+-- set as the colour where the picture has a pattern (bricks, cobbles, tiles), `studs` how many
+-- studs one copy covers (else Data/Textures' own), `own` when the picture brings its own colour
+-- (the part's paint then only tints it lightly).
 -- After changing this, run python3 scripts/sync_materials.py to put it in the place.
--- A texture with no colour id here keeps Roblox's own material.
+-- A texture with no colour id here keeps Roblox's own material. One texture a line: the scripts
+-- and the preview read this file line by line.
 
-export type Ids = { color: string?, normal: string?, studs: number?, own: boolean?, decal: number? }
+export type Ids = { color: string?, normal: string?, rough: string?, studs: number?, own: boolean?, decal: number? }
 
+-- stylua: ignore
 """
 
 
@@ -47,7 +51,7 @@ def read_ids(path=IDS):
             continue
         name, body = m.groups()
         ids = {}
-        for key in ("color", "normal"):
+        for key in ("color", "normal", "rough"):
             v = re.search(r"\b" + key + r"\s*=\s*" + ID, body)
             if v:
                 ids[key] = v.group(1)
@@ -73,7 +77,7 @@ def write_ids(ids, order, path=IDS):
         if not got or "color" not in got:
             continue
         fields = []
-        for k in ("color", "normal"):
+        for k in ("color", "normal", "rough"):
             if k in got:
                 fields.append(f'{k} = "{got[k]}"')
         if "studs" in got:
@@ -106,6 +110,8 @@ def material_service(ids, index):
              "MaterialPattern": "Regular"}
         if "normal" in got:
             p["NormalMap"] = got["normal"]
+        if "rough" in got:
+            p["RoughnessMap"] = got["rough"]
         variants[v] = {"$className": "MaterialVariant", "$properties": p}
         props[info["material"] + "Name"] = v
     if not variants:

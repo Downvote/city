@@ -521,6 +521,16 @@ describe("Builder", function()
 		end
 		expect(parts > 20).toBeTruthy()
 		expect(doors > 0).toBeTruthy()
+		-- an open door stays in its doorway: swung round its own hinge, not round the plot's corner
+		for _, d in folder:GetDescendants() do
+			if d:IsA("BasePart") and d:HasTag(Builder.Tags.DoorLeaf) then
+				local open = Builder.doorOpen(d)
+				expect(open ~= nil).toBeTruthy()
+				local from = d.CFrame.Position
+				expect((open.Position - from).Magnitude < 9).toBeTruthy()
+				expect(math.abs(open.Position.Y - from.Y) < 0.01).toBeTruthy()
+			end
+		end
 		-- rebuilding a wall replaces its model
 		Builder.render(plan, "walls", w1, folder, CFrame.new(100, 0, 100))
 		expect(#folder:GetChildren()).toBe(7)

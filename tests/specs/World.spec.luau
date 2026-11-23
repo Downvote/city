@@ -102,6 +102,58 @@ describe("Roads", function()
 		end
 	end)
 
+	it("have no trees beside them", function()
+		-- the user: "remove the trees near the road". Trees keep to the parks, the hills, the
+		-- market square and the beach: none within 18 studs of a sidewalk's outer edge.
+		local TREES = {
+			lowTree = true,
+			lowTreeBig = true,
+			lowPine = true,
+			lowPineBig = true,
+			streetTree = true,
+			streetTreeLow = true,
+			palm = true,
+			palmTall = true,
+			tree = true,
+			pine = true,
+		}
+		local trees = 0
+		for _, p in TownMap.placements() do
+			if TREES[p.name] then
+				trees += 1
+				local pos = p.cf.Position
+				for _, road in Town.Roads do
+					local reach = road[5] + road[6]
+					local x1, x2 = math.min(road[1], road[3]) - reach, math.max(road[1], road[3]) + reach
+					local z1, z2 = math.min(road[2], road[4]) - reach, math.max(road[2], road[4]) + reach
+					local dx = math.max(x1 - pos.X, 0, pos.X - x2)
+					local dz = math.max(z1 - pos.Z, 0, pos.Z - z2)
+					if math.sqrt(dx * dx + dz * dz) < 18 then
+						error(p.name .. " stands by a road at " .. tostring(pos))
+					end
+				end
+			end
+		end
+		expect(trees > 100).toBeTruthy()
+	end)
+
+	it("fill the gaps between buildings with little places, clear of everything else", function()
+		local pockets = {}
+		for _, p in TownMap.placements() do
+			if p.name:sub(1, 6) == "pocket" then
+				table.insert(pockets, p.cf.Position)
+			end
+		end
+		expect(#pockets >= 24).toBeTruthy()
+		for i, a in pockets do
+			for j, b in pockets do
+				if i < j then
+					expect(math.abs(a.X - b.X) >= 30 or math.abs(a.Z - b.Z) >= 30).toBeTruthy()
+				end
+			end
+		end
+	end)
+
 	it("keep downtown and the civic quarter's buildings inside their blocks", function()
 		local blocks = {}
 		for _, b in TownMap.blocks("east") do

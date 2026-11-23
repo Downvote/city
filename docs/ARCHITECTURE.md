@@ -26,7 +26,10 @@ The contract between the parts of the game. Update it with every change to an AP
   - `Plan`: a plot's build as data and every rule about changing it (see below).
   - `Shapes`: walls (with openings cut out; `wallReach` gives each end's reach per layer `{ a, b }` so walls meeting
     at corners, T junctions and crossings never share space), floors (with stairwells cut out), roofs (five styles).
-  - `Builder`: prims to Parts and plan objects to Models; tags night lights, door leaves, seats and beds.
+  - `Builder`: prims to Parts and plan objects to Models; tags night lights, door leaves, seats and beds. A door
+    leaf carries `Closed` (its shut CFrame) and `Frame` (its own doorway in the world: `primsFor` notes the item's
+    frame on the prim as `frame`); `Builder.doorOpen(leaf)` is where it stands open (swung round `HingeX`, slid by
+    `Slide` or raised by `Lift`, all measured in that doorway).
 - `Data/`: `Palette` (paint swatches, materials and the ready-made finishes Build mode shows as tiles), `Personalities`, `Foods`, `Items`, `Jobs`, `Events` (the event list), `Town` (map
   layout and plot frames, the road network `Roads` as `{ x1, z1, x2, z2, half width, sidewalk }`, `Districts`,
   `CreatorSpot`), `TownMap` (the island as parts: grass, beach, shallows, deep sea floor, see-through
@@ -51,6 +54,14 @@ The contract between the parts of the game. Update it with every change to an AP
   landmarks; `lot(w, d, kind, margin)` landscaping, placed by name as `lot:<w>x<d>:<kind>:<margin>`; `parkedCar1..6`; `tower`, `shop` and `house` kinds; spinning parts named `Hub`, `Spin`, `Cabin`), `Data/Places` (places
   to find: id, name, blurb, pos, radius, coins; `near`, `arrival`).
 - `Data/Goals` (the town goals with their `value(profile, city)`), `Data/Sayings` (sayings and hobbies).
+- `Data/DetailModels` (street furniture, the pockets that fill the gaps between buildings, and props for the
+  hills, the beach and the sea; `TownMap.prims` looks here after `CityModels`). `TownMap.placements` puts the
+  pockets down by rule: `pockets(block, kinds, y, most, half, gap)` finds squares clear of every footprint.
+- `Sim/Newcomers` (who moves in from the road: `list` the town's own twenty, `next(profile, friends, rng)` friends
+  first then the town's own and nobody twice, `arrive(profile, villager, key)`, `look(own)`, keys `u<userId>` and
+  `d:<id>`). `EventEngine.context` takes `friends` and offers `ctx.newcomer()`; with no `friends` nobody moves in.
+- A prim with `attrs.NightColor` on a `glow` role is a window: the World service gives it that colour (and Neon)
+  at night and its own back in the morning (`CityModels.lit`).
 
 ## The plan
 
@@ -85,10 +96,11 @@ profile = {
   requests = { { vid, tag, untilT } }, log = { { t, text } }, outfits = { { name, app } },
   settings, tutorial, daily = { last, streak }, stats, recent = { eventId }, bdays = { [vid] = day },
   lastPayday, calendarDay, offers = { { vid, level, options } }, goals = { [goalId] = true },
-  found = { [placeId] = true },
+  found = { [placeId] = true }, arrived = { [newcomerKey] = true },
 }
 Villager = { id, name, pers, app, color, bday = { s, d }, fav, hate, known, mood, job?, lv, xp, bed?, sick?,
-             dayOff?, isYou?, born, heart, hxp, wish? = { kind, arg?, untilT }, saying?, hobby?, feedDay?, feeds? }
+             dayOff?, isYou?, born, heart, hxp, wish? = { kind, arg?, untilT }, saying?, hobby?, feedDay?, feeds?,
+             from? }
 rel record = { s, q?, n, bond? = "crush" | "sweethearts" | "partners" }
 stats = { events, fed, made, earned, paydays, wishes, hearts, couples, partners }
 ```

@@ -31,7 +31,7 @@
     "Lighting": {
       "$properties": {
         "ClockTime": 13,
-        "Brightness": 2.2,
+        "Brightness": 2.7,
         "GlobalShadows": true,
         "OutdoorAmbient": [
           0.55,
@@ -42,7 +42,10 @@
           0.35,
           0.35,
           0.4
-        ]
+        ],
+        "Technology": "Future",
+        "EnvironmentDiffuseScale": 0.9,
+        "EnvironmentSpecularScale": 0.55
       }
     },
     "Workspace": {
@@ -74,9 +77,11 @@
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Grass",
-          "ColorMap": "rbxassetid://15205950191",
-          "StudsPerTile": 14,
-          "MaterialPattern": "Regular"
+          "ColorMap": "rbxassetid://83472971555269",
+          "StudsPerTile": 16,
+          "MaterialPattern": "Regular",
+          "NormalMap": "rbxassetid://74383676401444",
+          "RoughnessMap": "rbxassetid://123781418381440"
         }
       },
       "MaplewickWood": {
@@ -85,7 +90,8 @@
           "BaseMaterial": "Wood",
           "ColorMap": "rbxassetid://127935223360351",
           "StudsPerTile": 4,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "NormalMap": "rbxassetid://82700223149662"
         }
       },
       "MaplewickPlanks": {
@@ -101,18 +107,20 @@
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Brick",
-          "ColorMap": "rbxassetid://9620643733",
-          "StudsPerTile": 6,
-          "MaterialPattern": "Regular"
+          "ColorMap": "rbxassetid://15826262054",
+          "StudsPerTile": 8,
+          "MaterialPattern": "Regular",
+          "NormalMap": "rbxassetid://15826267601"
         }
       },
       "MaplewickCobble": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Cobblestone",
-          "ColorMap": "rbxassetid://10953335350",
-          "StudsPerTile": 6,
-          "MaterialPattern": "Regular"
+          "ColorMap": "rbxassetid://79170514243126",
+          "StudsPerTile": 8,
+          "MaterialPattern": "Regular",
+          "NormalMap": "rbxassetid://135713644746103"
         }
       },
       "MaplewickPaving": {
@@ -130,7 +138,8 @@
           "BaseMaterial": "Concrete",
           "ColorMap": "rbxassetid://17528667950",
           "StudsPerTile": 12,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "NormalMap": "rbxassetid://10266817549"
         }
       },
       "MaplewickAsphalt": {
@@ -139,7 +148,8 @@
           "BaseMaterial": "Asphalt",
           "ColorMap": "rbxassetid://74051293306053",
           "StudsPerTile": 12,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "NormalMap": "rbxassetid://11226165423"
         }
       },
       "MaplewickPlaster": {
@@ -148,7 +158,8 @@
           "BaseMaterial": "Plaster",
           "ColorMap": "rbxassetid://7339363282",
           "StudsPerTile": 8,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "NormalMap": "rbxassetid://5437994223"
         }
       },
       "MaplewickClay": {
@@ -157,16 +168,18 @@
           "BaseMaterial": "ClayRoofTiles",
           "ColorMap": "rbxassetid://134089207155554",
           "StudsPerTile": 6,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "NormalMap": "rbxassetid://125979461216252"
         }
       },
       "MaplewickTiles": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "CeramicTiles",
-          "ColorMap": "rbxassetid://9900590993",
-          "StudsPerTile": 5,
-          "MaterialPattern": "Regular"
+          "ColorMap": "rbxassetid://15246763549",
+          "StudsPerTile": 6,
+          "MaterialPattern": "Regular",
+          "NormalMap": "rbxassetid://12477337856"
         }
       },
       "MaplewickCarpet": {
@@ -175,7 +188,8 @@
           "BaseMaterial": "Carpet",
           "ColorMap": "rbxassetid://10538536313",
           "StudsPerTile": 4,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "NormalMap": "rbxassetid://108650587944937"
         }
       },
       "MaplewickFabric": {
@@ -184,7 +198,8 @@
           "BaseMaterial": "Fabric",
           "ColorMap": "rbxassetid://234307070",
           "StudsPerTile": 3,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "NormalMap": "rbxassetid://83181758798164"
         }
       },
       "MaplewickSand": {
@@ -193,7 +208,9 @@
           "BaseMaterial": "Sand",
           "ColorMap": "rbxassetid://95114690737752",
           "StudsPerTile": 10,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "NormalMap": "rbxassetid://102990337355056",
+          "RoughnessMap": "rbxassetid://76767113118953"
         }
       },
       "MaplewickMetal": {

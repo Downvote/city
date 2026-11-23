@@ -10,6 +10,7 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Tuning = require(Shared.Config.Tuning)
 local EventEngine = require(Shared.Sim.EventEngine)
 local Relationships = require(Shared.Sim.Relationships)
+local Newcomers = require(Shared.Sim.Newcomers)
 local Schema = require(Shared.Sim.Schema)
 local Personalities = require(Shared.Data.Personalities)
 local Catalog = require(Shared.Build.Catalog)
@@ -147,45 +148,80 @@ local function festival(player: Player)
 	end
 end
 
--- A new villager from the road: they look like one of your friends if we can find one.
-local function visitor(player: Player, name: string)
+-- The player's Roblox friends, fetched once when they join: who moves in from the road first
+-- (Sim/Newcomers). Nil until the list is in, so nobody else jumps the queue while it loads; empty
+-- when they have none or Roblox won't say.
+local friendsOf: { [Player]: { Newcomers.Friend } } = {}
+local FRIEND_LIMIT = 200
+
+local function loadFriends(player: Player)
+	local list: { Newcomers.Friend } = {}
+	for attempt = 1, 3 do
+		local ok = pcall(function()
+			local pages = Players:GetFriendsAsync(player.UserId)
+			while true do
+				for _, f in pages:GetCurrentPage() do
+					local name = if type(f.DisplayName) == "string" and f.DisplayName ~= ""
+						then f.DisplayName
+						else f.Username
+					-- a display name that can't be a villager's name falls back to the username
+					if not Newcomers.cleanName(name) then
+						name = f.Username
+					end
+					table.insert(list, { id = f.Id, name = name })
+				end
+				if pages.IsFinished or #list >= FRIEND_LIMIT then
+					break
+				end
+				pages:AdvanceToNextPageAsync()
+			end
+		end)
+		if ok or #list > 0 then
+			break
+		end
+		task.wait(2 * attempt)
+	end
+	if player.Parent then
+		friendsOf[player] = list
+	end
+end
+
+-- A new villager from the road: the friend or the newcomer the event named, with their own look.
+local function visitor(player: Player, name: string, key: any)
 	local profile = Data.get(player)
 	if not profile or #profile.order >= Tuning.Villagers.Max then
 		return
 	end
+	local own = Newcomers.own(key)
+	local userId = Newcomers.userId(key)
+	if (not own and not userId) or Newcomers.inTown(profile, key) then
+		return -- nobody we know, or they live here already: no repeats
+	end
 	local app: any = nil
-	local ok, pages = pcall(function()
-		return Players:GetFriendsAsync(player.UserId)
-	end)
-	if ok and pages then
-		local friends = {}
-		local okPage, page = pcall(function()
-			return pages:GetCurrentPage()
-		end)
-		if okPage then
-			for _, f in page do
-				table.insert(friends, f.Id)
-			end
-		end
-		if #friends > 0 then
-			app = Avatar.fromUserId(rng:pick(friends))
+	local pers = rng:pick(Personalities.list)
+	if own then
+		name = own.name
+		app = Newcomers.look(own)
+		pers = Personalities.get(own.pers) or pers
+	elseif userId then
+		app = Avatar.fromUserId(userId)
+		if not app then
+			task.wait(1)
+			app = Avatar.fromUserId(userId)
 		end
 	end
 	if not app then
-		-- someone else in the server lends their look
-		local others = Players:GetPlayers()
-		local pick = rng:pick(others)
-		app = Avatar.fromUserId(pick.UserId)
-	end
-	if not app then
+		-- Roblox wouldn't hand over the avatar: they arrive in plain clothes
 		app = Appearance.default()
-		local tones = Appearance.SkinTones
-		local skin = rng:pick(tones)
+		local skin = rng:pick(Appearance.SkinTones)
 		for _, k in { "head", "la", "ra" } do
 			app.colors[k] = skin
 		end
 	end
-	local pers = rng:pick(Personalities.list)
+	-- loading an avatar takes a moment: the town may have filled up, or they may be in by now
+	if #profile.order >= Tuning.Villagers.Max or Newcomers.inTown(profile, key) then
+		return
+	end
 	local vid = "v" .. profile.nextVid
 	profile.nextVid += 1
 	local input = Schema.cleanVillagerInput({
@@ -199,6 +235,7 @@ local function visitor(player: Player, name: string)
 		return
 	end
 	local v = Schema.newVillager(vid, input, rng)
+	Newcomers.arrive(profile, v, key)
 	profile.villagers[vid] = v
 	table.insert(profile.order, vid)
 	Data.push(player, "villagers", "order")
@@ -225,7 +262,7 @@ local function serviceEffects(player: Player, ev: any, list: { any })
 				Data.notify(player, "Your villagers are back from their outing.", "info")
 			end)
 		elseif e.t == "visitor" then
-			task.spawn(visitor, player, e.name or "Pip")
+			task.spawn(visitor, player, e.name or "Pip", e.key)
 		elseif e.t == "merchant" then
 			merchantUntil[player] = os.time() + E.MerchantSeconds
 			player:SetAttribute("MerchantUntil", merchantUntil[player])
@@ -370,6 +407,7 @@ function Events.trigger(player: Player, forceId: string?): boolean
 		present = present,
 		freeSlots = Tuning.Villagers.Max - #profile.order,
 		merchantActive = Events.merchantActive(player),
+		friends = friendsOf[player],
 	})
 	profile.calendarDay = World.dayIndex()
 	local ev
@@ -533,7 +571,14 @@ function Events.start()
 		nextAt[player] = nil
 		merchantUntil[player] = nil
 		paused[player] = nil
+		friendsOf[player] = nil
 	end)
+	Players.PlayerAdded:Connect(function(player)
+		task.spawn(loadFriends, player)
+	end)
+	for _, player in Players:GetPlayers() do
+		task.spawn(loadFriends, player)
+	end
 
 	task.spawn(function()
 		while true do

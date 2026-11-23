@@ -85,11 +85,25 @@ choose (side with one of them, pay for something, let them go out). About forty 
 - one villager: cravings, asking for coins, room requests, no bed, dreams, finding coins, colds, hobbies, wanting
   a new look, sleepwalking, practising at work, a busy day at work, asking for the day off, looking for work,
   feeling lonely, birthdays;
-- the whole town: a visitor wants to move in (they look like one of your Roblox friends when possible), a
-  travelling merchant (shop sale), a dance party, shooting stars, a thunderstorm, a tourist, the garden inspector.
+- the whole town: a visitor wants to move in, a travelling merchant (shop sale), a dance party, shooting stars, a
+  thunderstorm, a tourist, the garden inspector.
 
-The same kind of event won't come up again for a while. A spec (`tests/specs/Events.spec.luau`) runs 1500 seeded
+The same kind of event won't come up again for a while. A spec (`tests/specs/Events.spec.luau`) runs 3000 seeded
 events and checks every kind can happen, every line is filled in and every number stays in range.
+
+**Who moves in.**
+
+> also, make the random villagers that move in the player's friends first, then default ones if all of them are
+> already in. no repeats
+
+The visitor is one of your Roblox friends, with their own avatar and display name, until every friend has moved
+in. After that the town's own newcomers come: twenty of them (Pip, Juno, Basil, Wren and the rest), each with a
+name, a nature and a look of their own, dressed in free hair and clothes made by Roblox. Nobody comes twice. A
+villager remembers who they came as and the save remembers everyone who has ever arrived, so somebody who moved
+out only comes back once every friend and every newcomer has had a turn (friends first again). A newcomer whose
+name one of your own villagers already has stays away. The server reads the friends list when you join and
+nobody turns up until it has it, so a newcomer can't jump the queue while it loads (`Sim/Newcomers`, with its own
+spec).
 
 ## 5. Building
 
@@ -187,6 +201,32 @@ they always were) in the middle of a ring of roads and new districts all round:
 - **The waterfront** (south): a boardwalk along the whole shore, the beach with palms and parasols, beach huts, a
   lifeguard tower, the marina, a fairground pier with a ferris wheel and a carousel that go round, and a
   lighthouse out on the rocks at the end of a jetty.
+
+**More detail everywhere.**
+
+> opening doors seem to fling them away. also, use a softer grass texture, and make the double circle pedestal when
+> making a new villager smaller. remove the trees near the road. detail the entire map more. add bloom, fog, normal
+> maps and other details that would polish the game even further
+
+- No trees stand by a road any more. The main street's kerb has troughs of flowers, benches, potted shrubs, bike
+  racks and post boxes; the other streets have the same between their lamps; clipped hedges and flower beds run
+  between the old town's plots and the ring roads. Lots have shrubs and flower tubs instead of trees, with lamps on
+  the garden gateposts. Trees keep to the parks, the market square, the hills and the beach, and a spec holds them
+  18 studs back from any sidewalk.
+- Every junction has traffic lights, there are six more bus stops, and the roads have manhole covers and drains.
+- Every gap between downtown's buildings is a little place of its own: a cafe terrace with a kiosk and parasols, a
+  fountain ringed by benches, food trucks under bunting, a statue in a ring of flowers, a small car park or a
+  pocket garden, and single kiosks, statues and tables in the smaller gaps. A cobbled lane runs through each block.
+  The civic quarter's lawns get hedged gardens, duck ponds, picnic lawns with a barbecue, allotments with a shed
+  and playgrounds, joined by gravel paths. They are placed by rule (wherever a 30 stud square is free of every
+  building and lot), so new buildings push them out of the way.
+- The hills have a mountain lake on the east peak (a jetty, a rowing boat, reeds and lily pads) and a ring of
+  standing stones on the west one, a rail along the lookout's edge, picnic tables, signposts, hay bales at the
+  farm, and boulders, fallen logs, wild flowers and mushrooms over the slopes.
+- The beach has towels, sandcastles, beach balls, driftwood, surfboards on racks, two volleyball nets and rowing
+  boats at the water's edge. Out in the bay sailing boats lie at anchor, buoys with lights mark the way into the
+  marina, and rocks break the surface.
+- The creator's pedestal is half the size, just wide enough to stand on.
 
 **Places to find.** Sixteen places round the island (the lookout, the farm, the camp, the observatory, the radio
 mast, the pier, the marina, the lighthouse, the station, Sky Tower, the cinema, the pond, the school field, the
@@ -435,6 +475,19 @@ What that changed (these replace the wobbly bubbles and the flat coloured ground
   town, and the coast has round capes of sand and grassy headlands instead of straight edges.
 - **Textures** are back on the ground, all from the Roblox library: a finer, softer lawn grass (on the hills
   too), dark tarmac, paving and concrete. The light is warm and soft.
+- **Doors swing in their own doorway.** The hinge was being measured from the corner of the plot, so an opened
+  leaf swung round in a huge arc and ended up far from the house. It is measured from the doorway now, wherever
+  the wall stands (and villagers open the door they are actually next to).
+- **A softer lawn, and normal maps.** The grass is a fine, even lawn with no hard blades (a public domain set from
+  the library, with its own normal and roughness maps). Twelve materials now have a normal map from the library:
+  grass, sand and roof tiles from the same set as their colour, a white brick, cobbles and tiles swapped for
+  matched colour and normal pairs, and fine grain maps for tarmac, concrete, plaster, wood, carpet and fabric.
+- **Light.** Bloom you can see on sunlit walls, lamps and lit windows; a soft haze that fades the far end of the
+  island into the sky and thickens when it rains; sun rays; a gentle depth of field so far things go soft; high
+  clouds that spread and darken with the weather; more shine from the sky so the normal maps catch the light; and
+  the place asks for Roblox's most detailed lighting.
+- **Windows light up at night.** About a third of every tower's floors, every shopfront and half the windows above
+  it, kiosk hatches and the little houses' windows turn to warm lamplight when the street lamps come on.
 
 Villagers walk with Roblox's pathfinding with jumping on, so they go round walls, through doorways (doors are free to
 pass and open as they come), round furniture and over low steps. If they get stuck they jump, then plan again.

@@ -218,12 +218,24 @@ local function setLight(p: Instance, on: boolean)
 			l.Enabled = on
 		end
 	end
+	-- a window with a NightColor is glass by day and warm lamplight after dark
+	local nightColor = p:GetAttribute("NightColor")
 	if on then
 		p.Material = Enum.Material.Neon
+		if typeof(nightColor) == "Color3" then
+			if p:GetAttribute("DayColor") == nil then
+				p:SetAttribute("DayColor", p.Color)
+			end
+			p.Color = nightColor
+		end
 	else
 		local day = p:GetAttribute("DayMaterial")
 		local mat = type(day) == "string" and (Enum.Material :: any)[day]
 		p.Material = mat or Enum.Material.SmoothPlastic
+		local dayColor = p:GetAttribute("DayColor")
+		if typeof(dayColor) == "Color3" then
+			p.Color = dayColor
+		end
 	end
 end
 
@@ -239,33 +251,81 @@ end
 -- grading follows the time of day (see `grade`).
 local grading: ColorCorrectionEffect? = nil
 
+-- How thick the air is: a soft haze on a clear day that fades the far end of the island into the
+-- sky, thicker when it's overcast or raining.
+local FOG = {
+	clear = { density = 0.3, haze = 1.5 },
+	dense = { density = 0.44, haze = 2.6 },
+}
+
 local function stylize()
-	-- cozy and soft: warm sunlight, gentle shadows, a little glow
-	Lighting.Brightness = 2.6
+	-- cozy and soft: warm sunlight, gentle shadows, a glow on anything bright, and enough shine
+	-- from the sky for the textures' normal maps to catch the light
+	Lighting.Brightness = 2.7
 	Lighting.Ambient = Color3.fromRGB(150, 140, 132)
 	Lighting.OutdoorAmbient = Color3.fromRGB(176, 168, 158)
 	Lighting.ColorShift_Top = Color3.fromRGB(255, 232, 196)
-	Lighting.EnvironmentDiffuseScale = 0.75
-	Lighting.EnvironmentSpecularScale = 0.2
-	Lighting.ShadowSoftness = 0.7
+	Lighting.EnvironmentDiffuseScale = 0.9
+	Lighting.EnvironmentSpecularScale = 0.55
+	Lighting.ShadowSoftness = 0.6
 	Lighting.GlobalShadows = true
 	Lighting.ExposureCompensation = 0.05
 	local cc = Instance.new("ColorCorrectionEffect")
 	cc.Name = "Grading"
-	cc.Saturation = 0.16
-	cc.Contrast = 0.02
-	cc.Brightness = 0.03
+	cc.Saturation = 0.18
+	cc.Contrast = 0.04
+	cc.Brightness = 0.02
 	cc.Parent = Lighting
 	grading = cc
+	-- bloom you can see: sunlit walls, lamps and lit windows glow softly
 	local bloom = Instance.new("BloomEffect")
-	bloom.Intensity = 0.35
-	bloom.Size = 24
-	bloom.Threshold = 1.5
+	bloom.Name = "Glow"
+	bloom.Intensity = 0.65
+	bloom.Size = 34
+	bloom.Threshold = 1.05
 	bloom.Parent = Lighting
 	local rays = Instance.new("SunRaysEffect")
-	rays.Intensity = 0.05
-	rays.Spread = 0.55
+	rays.Name = "Rays"
+	rays.Intensity = 0.11
+	rays.Spread = 0.72
 	rays.Parent = Lighting
+	-- far things go a little soft, like a model town seen through a lens
+	local dof = Instance.new("DepthOfFieldEffect")
+	dof.Name = "Lens"
+	dof.FocusDistance = 90
+	dof.InFocusRadius = 190
+	dof.NearIntensity = 0
+	dof.FarIntensity = 0.16
+	dof.Parent = Lighting
+end
+
+-- Fog, a sky and clouds, unless the place already has its own.
+local function air()
+	if not Lighting:FindFirstChildOfClass("Atmosphere") then
+		local a = Instance.new("Atmosphere")
+		a.Density = FOG.clear.density
+		a.Offset = 0.12
+		a.Haze = FOG.clear.haze
+		a.Glare = 0.3
+		a.Color = Color3.fromRGB(236, 230, 220)
+		a.Decay = Color3.fromRGB(250, 214, 176)
+		a.Parent = Lighting
+	end
+	if not Lighting:FindFirstChildOfClass("Sky") then
+		local sky = Instance.new("Sky")
+		sky.SunAngularSize = 14
+		sky.MoonAngularSize = 9
+		sky.Parent = Lighting
+	end
+	-- soft clouds high over the island (the little ones that drift by are the client's)
+	local terrain = workspace:FindFirstChildOfClass("Terrain")
+	if terrain and not terrain:FindFirstChildOfClass("Clouds") then
+		local clouds = Instance.new("Clouds")
+		clouds.Cover = 0.5
+		clouds.Density = 0.42
+		clouds.Color = Color3.fromRGB(255, 250, 244)
+		clouds.Parent = terrain
+	end
 end
 
 -- Warm light in the morning and evening, clear white at noon, cool blue at night.
@@ -322,9 +382,17 @@ function World.setWeather(kind: string)
 	workspace:SetAttribute("Weather", kind)
 	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
 	if atmosphere then
-		local dense = kind == "rain" or kind == "storm" or kind == "cloudy"
-		atmosphere.Density = if dense then 0.4 else 0.24
-		atmosphere.Haze = if dense then 2.2 else 0.9
+		local fog = if kind == "rain" or kind == "storm" or kind == "cloudy" then FOG.dense else FOG.clear
+		atmosphere.Density = fog.density
+		atmosphere.Haze = fog.haze
+	end
+	local terrain = workspace:FindFirstChildOfClass("Terrain")
+	local clouds = terrain and terrain:FindFirstChildOfClass("Clouds")
+	if clouds then
+		clouds.Cover = if kind == "storm" then 0.86 elseif kind == "rain" or kind == "cloudy" then 0.74 else 0.5
+		clouds.Color = if kind == "storm" or kind == "rain"
+			then Color3.fromRGB(196, 200, 210)
+			else Color3.fromRGB(255, 250, 244)
 	end
 end
 
@@ -362,23 +430,6 @@ type Door = { open: boolean, byVillager: boolean, lastNear: number }
 local doorState: { [Instance]: Door } = {}
 local DOOR_TWEEN = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
-local function openFrame(leaf: BasePart): CFrame
-	local closed = leaf:GetAttribute("Closed") :: CFrame
-	local frame = leaf:GetAttribute("Frame") :: CFrame
-	local slide = leaf:GetAttribute("Slide")
-	local lift = leaf:GetAttribute("Lift")
-	if type(slide) == "number" then
-		return closed + frame.RightVector * slide
-	elseif type(lift) == "number" then
-		return closed + Vector3.new(0, lift, 0)
-	end
-	local hx = leaf:GetAttribute("HingeX")
-	hx = if type(hx) == "number" then hx else 0
-	local angle = if hx < 0 then -math.rad(95) else math.rad(95)
-	local pivot = frame * CFrame.new(hx, 0, 0)
-	return pivot * CFrame.Angles(0, angle, 0) * pivot:Inverse() * closed
-end
-
 local function leavesOf(model: Instance): { BasePart }
 	local out = {}
 	for _, leaf in model:GetChildren() do
@@ -396,7 +447,7 @@ local function setDoor(model: Instance, open: boolean)
 	end
 	st.open = open
 	for _, leaf in leavesOf(model) do
-		local goal = if open then openFrame(leaf) else leaf:GetAttribute("Closed")
+		local goal = if open then Builder.doorOpen(leaf) else leaf:GetAttribute("Closed")
 		if typeof(goal) == "CFrame" then
 			TweenService:Create(leaf, DOOR_TWEEN, { CFrame = goal }):Play()
 		end
@@ -492,22 +543,7 @@ end
 function World.init()
 	Lighting.ClockTime = World.hour()
 	stylize()
-	if not Lighting:FindFirstChildOfClass("Atmosphere") then
-		local a = Instance.new("Atmosphere")
-		a.Density = 0.24
-		a.Offset = 0.2
-		a.Haze = 0.9
-		a.Glare = 0.2
-		a.Color = Color3.fromRGB(236, 228, 214)
-		a.Decay = Color3.fromRGB(250, 214, 176)
-		a.Parent = Lighting
-	end
-	if not Lighting:FindFirstChildOfClass("Sky") then
-		local sky = Instance.new("Sky")
-		sky.SunAngularSize = 14
-		sky.MoonAngularSize = 9
-		sky.Parent = Lighting
-	end
+	air()
 	buildMap()
 	buildPlots()
 	local cal = World.calendar()

@@ -83,7 +83,8 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 	elseif prim.role == "door" then
 		part:AddTag(Builder.Tags.DoorLeaf)
 		part:SetAttribute("Closed", part.CFrame)
-		part:SetAttribute("Frame", frame)
+		-- the doorway's own frame in the world: the hinge and the slide are measured in it
+		part:SetAttribute("Frame", frame * (prim.frame or CFrame.identity))
 		-- villagers path straight through doors (they open them on their way: Services/World)
 		pcall(function()
 			local modifier = Instance.new("PathfindingModifier")
@@ -183,9 +184,38 @@ function Builder.primsFor(plan: Plan.PlanData, kind: string, key: string): { Pri
 		if not def or not frame then
 			return nil
 		end
-		return Geometry.transform(Catalog.prims(def, item.c1, item.c2), frame)
+		local prims = Catalog.prims(def, item.c1, item.c2)
+		for _, p in prims do
+			if p.role == "door" then
+				p.frame = frame
+			end
+		end
+		return Geometry.transform(prims, frame)
 	end
 	return nil
+end
+
+-- Where a door leaf stands when it's open: swung round its hinge (HingeX along its doorway),
+-- slid along the wall (Slide) or lifted (Lift). The hinge is the doorway's own, wherever the
+-- plot and the wall put it.
+function Builder.doorOpen(leaf: BasePart): CFrame?
+	local closed = leaf:GetAttribute("Closed")
+	local frame = leaf:GetAttribute("Frame")
+	if typeof(closed) ~= "CFrame" or typeof(frame) ~= "CFrame" then
+		return nil
+	end
+	local slide = leaf:GetAttribute("Slide")
+	local lift = leaf:GetAttribute("Lift")
+	if type(slide) == "number" then
+		return closed + frame.RightVector * slide
+	elseif type(lift) == "number" then
+		return closed + Vector3.new(0, lift, 0)
+	end
+	local hx = leaf:GetAttribute("HingeX")
+	local hinge: number = if type(hx) == "number" then hx else 0
+	local angle = if hinge < 0 then -math.rad(95) else math.rad(95)
+	local pivot = frame * CFrame.new(hinge, 0, 0)
+	return pivot * CFrame.Angles(0, angle, 0) * pivot:Inverse() * closed
 end
 
 function Builder.modelName(kind: string, key: string): string
