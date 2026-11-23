@@ -25,6 +25,9 @@ Schema.SettingChoices = {
 	theme = { dark = true, light = true },
 }
 
+-- What a villager can wish for (Sim/Life): a craving, someone to meet, a new look, a chat.
+Schema.WishKinds = { food = true, friend = true, look = true, cheer = true }
+
 Schema.Seasons = { "Spring", "Summer", "Autumn", "Winter" }
 Schema.DaysPerSeason = 10
 
@@ -35,9 +38,7 @@ export type Villager = {
 	app: Appearance.Appearance,
 	color: string,
 	bday: { s: number, d: number },
-	fav: string,
-	hate: string,
-	known: { [string]: string },
+	fav: string, -- the food (Data/Foods) they crave half the time
 	mood: number,
 	job: string?, -- the plan key of their workplace
 	lv: number, -- skill at their job
@@ -52,8 +53,6 @@ export type Villager = {
 	wish: any?, -- { kind, arg?, untilT }
 	saying: string?, -- a Data/Sayings id
 	hobby: string?,
-	feedDay: number?,
-	feeds: number?,
 	chatDay: number?, -- the day index of their last chat with you, and how many that day (Sim/Talk)
 	chats: number?,
 	from: string?, -- who they came as when they moved in from the road (Sim/Newcomers)
@@ -68,7 +67,6 @@ function Schema.newProfile(): any
 		order = {},
 		nextVid = 1,
 		rel = {},
-		inv = { food = { apple = 3, bread = 2 }, items = {} },
 		requests = {},
 		log = {},
 		outfits = {},
@@ -77,7 +75,6 @@ function Schema.newProfile(): any
 		daily = { last = 0, streak = 0 },
 		stats = {
 			events = 0,
-			fed = 0,
 			made = 0,
 			earned = 0,
 			paydays = 0,
@@ -96,8 +93,7 @@ function Schema.newProfile(): any
 	}
 end
 
--- Puts back missing keys. Goes one level into tables (settings, stats...) but no deeper, so
--- inventory counts that ran out aren't refilled with the starting food.
+-- Puts back missing keys. Goes one level into tables (settings, stats...) but no deeper.
 local function fill(target: any, defaults: any, deep: boolean?)
 	for k, v in defaults do
 		if target[k] == nil then
@@ -124,12 +120,31 @@ function Schema.migrate(raw: any): any
 	if type(profile.coins) ~= "number" or profile.coins ~= profile.coins then
 		profile.coins = Tuning.Economy.StartCoins
 	end
+	-- The shop, the bag of food and feeding are gone (the user: "remove the shop, buying of things
+	-- and food and feeding"): an old save's bag and what it had learnt of each villager's tastes
+	-- are dropped here.
+	profile.inv = nil
+	if type(profile.stats) == "table" then
+		profile.stats.fed = nil
+	end
 	-- villagers: drop anything that isn't one, re-check looks
 	local clean = {}
 	for vid, v in profile.villagers do
 		if type(vid) == "string" and type(v) == "table" and type(v.name) == "string" then
 			v.app = Appearance.sanitize(v.app)
 			fill(v, Schema.villagerDefaults(v.pers), true)
+			v.hate, v.known, v.feedDay, v.feeds = nil, nil, nil, nil
+			if type(v.fav) ~= "string" or not Foods.get(v.fav) then
+				v.fav = Foods.list[1].id
+			end
+			-- a wish must be a table of a kind we know; a craving must be for a food there is
+			local w = v.wish
+			if w ~= nil then
+				local known = type(w) == "table" and Schema.WishKinds[w.kind] == true
+				if not known or (w.kind == "food" and (type(w.arg) ~= "string" or not Foods.get(w.arg))) then
+					v.wish = nil
+				end
+			end
 			clean[vid] = v
 		end
 	end
@@ -159,8 +174,6 @@ function Schema.villagerDefaults(_pers: string?): any
 		color = "4FA9D9",
 		bday = { s = 1, d = 1 },
 		fav = "apple",
-		hate = "pickles",
-		known = {},
 		mood = Tuning.Villagers.StartMood,
 		lv = 1,
 		xp = 0,
@@ -204,7 +217,7 @@ function Schema.cleanVillagerInput(raw: any): (any?, string?)
 	}
 end
 
--- Makes a new villager from clean input. `rng` decides their secret food likes.
+-- Makes a new villager from clean input. `rng` decides the food they like best.
 function Schema.newVillager(id: string, input: any, rng: any): Villager
 	local v = Schema.villagerDefaults(input.pers)
 	v.id = id
@@ -213,16 +226,7 @@ function Schema.newVillager(id: string, input: any, rng: any): Villager
 	v.app = input.app
 	v.color = input.color
 	v.bday = input.bday
-	local foods = Foods.list
-	local fav = rng:pick(foods)
-	local hate = rng:pick(foods)
-	local tries = 0
-	while hate.id == fav.id and tries < 10 do
-		hate = rng:pick(foods)
-		tries += 1
-	end
-	v.fav = fav.id
-	v.hate = hate.id
+	v.fav = rng:pick(Foods.list).id
 	v.born = os.time()
 	return v :: any
 end

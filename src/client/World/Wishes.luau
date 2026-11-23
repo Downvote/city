@@ -1,11 +1,17 @@
 -- A thought bubble over every villager with a wish (the server marks their model's "Wish"
--- attribute with the wish's icon): a white wobbly bubble with the icon in it, two little dots
--- under it, and a click opens their page to see what they want.
+-- attribute with the wish's icon): a bubble with the icon in it, two little dots under it, and a
+-- click opens their page to see what they want. A craving shows the very thing they crave, which
+-- the player can buy for them from their page (the Villagers screen) or by talking to them.
 
 local Players = game:GetService("Players")
 
+local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+local Foods = require(Shared.Data.Foods)
+local Colors = require(Shared.Util.Colors)
+
 local Kit = require(script.Parent.Parent.UI.Kit)
 local Icons = require(script.Parent.Parent.UI.Icons)
+local State = require(script.Parent.Parent.Controllers.State)
 
 local Wishes = {}
 
@@ -44,13 +50,26 @@ local function show(model: Model, icon: string)
 		Size = UDim2.fromOffset(68, 68),
 		Position = UDim2.fromOffset(5, 0),
 	})
-	Icons.make(icon, 36, {
-		Parent = holder,
-		Position = UDim2.fromScale(0.5, 0.5),
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		ZIndex = 3,
-		Color = T.Orange,
-	})
+	-- what they crave, if it's a craving; otherwise the wish's own icon
+	local vid = model:GetAttribute("Vid")
+	local v = if type(vid) == "string" then State.villager(vid) else nil
+	local food = v and v.wish and v.wish.kind == "food" and Foods.get(v.wish.arg)
+	if food then
+		Icons.item(food.id, 44, Colors.fromHex(food.color), {
+			Parent = holder,
+			Position = UDim2.fromScale(0.5, 0.5),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			ZIndex = 3,
+		})
+	else
+		Icons.make(icon, 36, {
+			Parent = holder,
+			Position = UDim2.fromScale(0.5, 0.5),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			ZIndex = 3,
+			Color = T.Orange,
+		})
+	end
 	-- the thought bubble's little dots
 	for k, d in { 14, 9 } do
 		Kit.frame({
@@ -80,6 +99,8 @@ local function show(model: Model, icon: string)
 	bubbles[model] = bb
 end
 
+local refreshers: { [Model]: () -> () } = {}
+
 local function watch(model: Model)
 	local function refresh()
 		local icon = model:GetAttribute("Wish")
@@ -89,16 +110,24 @@ local function watch(model: Model)
 			clear(model)
 		end
 	end
+	refreshers[model] = refresh
 	model:GetAttributeChangedSignal("Wish"):Connect(refresh)
 	model.AncestryChanged:Connect(function()
 		if not model.Parent then
 			clear(model)
+			refreshers[model] = nil
 		end
 	end)
 	refresh()
 end
 
 function Wishes.start()
+	-- a new craving (or one bought) shows on the bubbles as soon as the client hears of it
+	State.on("villagers", function()
+		for _, refresh in refreshers do
+			refresh()
+		end
+	end)
 	local seen: { [Model]: boolean } = {}
 	task.spawn(function()
 		while true do

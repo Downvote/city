@@ -29,12 +29,10 @@ Remotes.Functions = {
 	"VillagerUpdate", -- (vid, fields) -> ok, err
 	"VillagerRemove", -- (vid) -> ok
 	"VillagerBed", -- (vid, itemKey?) -> ok, err
-	"VillagerFeed", -- (vid, foodId) -> ok, result
 	"VillagerFocus", -- (vid) -> the villager's model, to point the camera at
 	"OutfitSave", -- (name, appearance) -> ok
 	"OutfitDelete", -- (index) -> ok
 	"EventChoose", -- (token, choice) -> ok
-	"ShopBuy", -- (kind, id, count) -> ok, err
 	"DailyClaim", -- () -> ok, coins
 	"VillagerJob", -- (vid, workplaceKey?) -> ok, err
 	"PlotExpand", -- () -> ok, err
@@ -42,10 +40,10 @@ Remotes.Functions = {
 	"TutorialStep", -- (step) -> ok
 	"VisitPlot", -- (plotIndex) -> ok
 	"WishGrant", -- (vid, "friend" | "cheer", otherVid?) -> ok, err
+	"WishBuy", -- (vid) -> ok, message: pays Life.wishPrice for the food a villager is craving and grants the wish
 	"HeartReward", -- (choice 1..3) -> ok, notice: picks a thank you from the oldest heart level up
 	"GoalClaim", -- (goalId) -> ok, coins
 	"PlaceFound", -- (placeId) -> ok: the player is at a place (checked against where they stand)
-	"Travel", -- (placeId) -> ok, err: back to a place they've found
 	"GoHome", -- () -> ok, err: to the player's own plot
 	"VillagerTalk", -- (vid, bye?) -> ok, { vid, text, note, model } or err: the talk card's Chat, or its Bye
 }

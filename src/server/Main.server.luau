@@ -15,7 +15,6 @@ local order = {
 	"Avatar",
 	"Villagers",
 	"Events",
-	"Shop",
 	"Explore",
 	"Signs",
 }

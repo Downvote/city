@@ -127,14 +127,15 @@ Tuning.Jobs = {
 	VisitCoins = 6, -- what a villager spends when they drop by a staffed shop
 }
 
--- City levels: reached by having enough villagers and enough built. Each level lets you buy more land.
+-- City levels: reached by having enough villagers, enough of them in work and enough built. Each
+-- level lets you buy more land. Workers is how many villagers must have a job (never more than Pop).
 Tuning.City = {
 	Levels = {
-		{ Name = "Hamlet", Pop = 0, Value = 0 },
-		{ Name = "Village", Pop = 3, Value = 3000 },
-		{ Name = "Town", Pop = 6, Value = 10000 },
-		{ Name = "Big town", Pop = 9, Value = 25000 },
-		{ Name = "City", Pop = 12, Value = 50000 },
+		{ Name = "Hamlet", Pop = 0, Workers = 0, Value = 0 },
+		{ Name = "Village", Pop = 3, Workers = 2, Value = 3000 },
+		{ Name = "Town", Pop = 6, Workers = 4, Value = 10000 },
+		{ Name = "Big town", Pop = 9, Workers = 7, Value = 25000 },
+		{ Name = "City", Pop = 12, Workers = 10, Value = 50000 },
 	},
 	-- how much of the starting house counts toward the town's level (Sim/City.worth): what the
 	-- small cottage it replaced was worth, so the bigger house skips no level
@@ -153,19 +154,22 @@ Tuning.Life = {
 	HeartMax = 20,
 	HeartBase = 4, -- points for the next heart level: HeartBase + HeartStep * level
 	HeartStep = 2,
-	FeedHearts = 1, -- a snack they like well enough
-	FavHearts = 3, -- their favourite
-	FeedsPerDay = 2, -- only the first few snacks a day count toward hearts
 	WishHearts = 4,
 	WishMood = 12,
-	WishCoinsMin = 20,
+	WishCoinsMin = 20, -- what they give you for a wish that cost you nothing (a craving you paid for gives none)
 	WishCoinsMax = 60,
+	-- A craving is bought for them (Life.wishPrice): the food's price in Data/Foods times this,
+	-- rounded to CravingStep coins.
+	CravingMarkup = 2,
+	CravingStep = 5,
+	FavWishHearts = 2, -- on top of WishHearts and WishMood when the craving was for their favourite
+	FavWishMood = 8,
 	WishChance = 0.12, -- per villager without a wish, each in-game hour
 	MaxWishes = 3, -- open at once across the town
 	WishHours = 24, -- in-game hours before an unanswered wish fades
 	WishFadeMood = -5,
-	RewardCoinsPerLevel = 40,
-	BasketSize = 4,
+	RewardCoinsPerLevel = 40, -- a thank you of coins they saved up: this times the new heart level
+	RewardSkillPerLevel = 6, -- a thank you of practice at their work: skill points, times the new heart level
 	CrushScore = 55, -- friendship before a crush can start
 	ProposeScore = 80,
 	IntroduceGain = 18,

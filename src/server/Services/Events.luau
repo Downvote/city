@@ -32,16 +32,11 @@ local rng = Rng.new()
 
 local running: { [Player]: any } = {} -- the scene being played
 local nextAt: { [Player]: number } = {}
-local merchantUntil: { [Player]: number } = {}
 local paused: { [Player]: boolean } = {}
 
 local showEvent: RemoteEvent
 local lineEvent: RemoteEvent
 local endEvent: RemoteEvent
-
-function Events.merchantActive(player: Player): boolean
-	return (merchantUntil[player] or 0) > os.time()
-end
 
 -- Pauses town events (while the owner is busy in a menu that can't be interrupted).
 function Events.pause(player: Player, on: boolean)
@@ -247,9 +242,7 @@ end
 -- Carries out the effects the engine leaves to the server.
 local function serviceEffects(player: Player, ev: any, list: { any })
 	for _, e in list do
-		if e.t == "eat" and e.vid then
-			Villagers.feed(player, e.vid, e.food)
-		elseif e.t == "away" and e.vids then
+		if e.t == "away" and e.vids then
 			for _, vid in e.vids do
 				Villagers.setControl(player, vid, "away")
 			end
@@ -263,9 +256,6 @@ local function serviceEffects(player: Player, ev: any, list: { any })
 			end)
 		elseif e.t == "visitor" then
 			task.spawn(visitor, player, e.name or "Pip", e.key)
-		elseif e.t == "merchant" then
-			merchantUntil[player] = os.time() + E.MerchantSeconds
-			player:SetAttribute("MerchantUntil", merchantUntil[player])
 		elseif e.t == "festival" then
 			festival(player)
 		elseif e.t == "dayoff" and e.vid then
@@ -350,7 +340,7 @@ local function play(player: Player, ev: any)
 		Data.notify(player, n, "event")
 	end
 	player:SetAttribute("Coins", profile.coins)
-	Data.push(player, "coins", "villagers", "rel", "inv", "requests", "stats")
+	Data.push(player, "coins", "villagers", "rel", "requests", "stats", "offers")
 	for _, vid in ev.order do
 		if Villagers.control(player, vid) == "event" then
 			Villagers.setControl(player, vid, nil)
@@ -359,7 +349,7 @@ local function play(player: Player, ev: any)
 	running[player] = nil
 end
 
--- A party right now (from a cake). False if a scene is already playing.
+-- A party right now (an event's or a birthday's). False if a scene is already playing.
 function Events.party(player: Player): boolean
 	if running[player] then
 		return false
@@ -406,7 +396,6 @@ function Events.trigger(player: Player, forceId: string?): boolean
 		rng = rng,
 		present = present,
 		freeSlots = Tuning.Villagers.Max - #profile.order,
-		merchantActive = Events.merchantActive(player),
 		friends = friendsOf[player],
 	})
 	profile.calendarDay = World.dayIndex()
@@ -569,7 +558,6 @@ function Events.start()
 	Players.PlayerRemoving:Connect(function(player)
 		running[player] = nil
 		nextAt[player] = nil
-		merchantUntil[player] = nil
 		paused[player] = nil
 		friendsOf[player] = nil
 	end)

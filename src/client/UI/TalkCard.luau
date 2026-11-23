@@ -5,7 +5,9 @@
 -- appears, make the character talking slide into view at the side with a textbox as such"): the
 -- villager slides in at the left as a big bust, their name on a tag on the textbox's edge, what
 -- they said typed into the box, what the chat did under it, and three answers at the box's foot:
--- Chat (they say something else), Profile (their page in the Villagers menu) and Bye.
+-- Chat (they say something else), Profile (their page in the Villagers menu) and Bye. When they
+-- are craving something, an answer under the words buys it for them, with its price (the user:
+-- "when a character gets a craving, allow the player to simply pay to buy it").
 --
 -- It is built when it opens and goes when it closes. It closes when you say bye, walk off, keep
 -- them waiting too long, open a menu, Build mode or the creator, and the moment an event starts
@@ -17,6 +19,9 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Remotes = require(Shared.Net.Remotes)
 local Tuning = require(Shared.Config.Tuning)
 local Colors = require(Shared.Util.Colors)
+local Text = require(Shared.Util.Text)
+local Foods = require(Shared.Data.Foods)
+local Life = require(Shared.Sim.Life)
 
 local Kit = require(script.Parent.Kit)
 local Dialogue = require(script.Parent.Dialogue)
@@ -167,6 +172,65 @@ local function chat()
 	end)
 end
 
+-- When they crave something: an answer that buys it for them, with the price. Without the coins
+-- it is dim and the note says how many more it takes. Bought, the answer goes and they say so.
+local buying = false
+local function craving(s: any, vid: string, v: any)
+	local food = v.wish and v.wish.kind == "food" and Foods.get(v.wish.arg)
+	if not food then
+		return
+	end
+	local profile = { villagers = State.data.villagers or {}, coins = State.data.coins or 0, plan = State.plan }
+	local price = Life.wishPrice(profile, vid)
+	if not price then
+		return
+	end
+	local short = math.max(0, price - (State.data.coins or 0))
+	Kit.list(s.answers, 8, true)
+	local button: TextButton
+	button = Dialogue.answer(Text.fill("Buy {food} for {n}", { food = food.name:lower(), n = Text.commas(price) }), {
+		Name = "BuyWish",
+		Parent = s.answers,
+		Size = UDim2.fromOffset(320, 40),
+		TextSize = 17,
+		Icon = "coin",
+		Disabled = short > 0,
+	}, function()
+		if short > 0 then
+			s.note.Text = Text.fill("You need {n} more coins.", { n = Text.commas(short) })
+			return
+		end
+		if buying then
+			return
+		end
+		buying = true
+		local mine = serial
+		task.spawn(function()
+			local sent, ok, msg = pcall(function()
+				return Remotes.fn("WishBuy"):InvokeServer(vid)
+			end)
+			buying = false
+			if serial ~= mine or scene ~= s then
+				return
+			end
+			if sent and ok then
+				button:Destroy()
+				typeOut(
+					s.words,
+					Text.fill("{food}. That's just what I wanted. Thank you.", {
+						food = food.name:sub(1, 1):upper() .. food.name:sub(2),
+					})
+				)
+				s.note.Text = if type(msg) == "string" then msg else ""
+				current.at = os.clock()
+			elseif sent and type(msg) == "string" then
+				s.note.Text = msg
+			end
+		end)
+	end)
+	button:SetAttribute("Disabled", short > 0)
+end
+
 local function build(vid: string, v: any, model: Model?)
 	local s = Dialogue.open({ Name = "TalkCard" })
 	scene = s
@@ -178,6 +242,8 @@ local function build(vid: string, v: any, model: Model?)
 		vid = vid,
 	})
 	s.speak(vid)
+	-- what they crave, to buy for them, under the words
+	craving(s, vid, v)
 	-- the answers, side by side at the box's foot
 	local function answer(text: string, order: number, fn: () -> ())
 		Dialogue.answer(text, {

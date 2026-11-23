@@ -1,11 +1,15 @@
 --!strict
 -- The life sim's progression, as pure data in and out so the specs can run it:
---   hearts   how close each villager is to you. Snacks, granted wishes and room requests fill
---            their hearts; each new heart level lets you pick a thank you (coins they saved, a
---            basket of snacks, a new saying, a hobby).
+--   hearts   how close each villager is to you. Granted wishes and chats fill their hearts;
+--            each new heart level lets you pick a thank you (coins they saved, some practice
+--            at their work, a new saying, a hobby).
 --   wishes   one at a time per villager, shown over their head: a craving, someone they'd like
---            to meet, a new look, or a chat to cheer them up. Granting one fills hearts, lifts
---            their mood and they give you a few coins. Unanswered wishes fade after a day.
+--            to meet, a new look, or a chat to cheer them up. Granting one fills hearts and
+--            lifts their mood. A craving is bought for them (Life.wishPrice, Life.buyWish); the
+--            other wishes cost nothing and they give you a few coins. Unanswered wishes fade
+--            after a day. There is no shop and no food to keep: the user asked to "remove the
+--            shop, buying of things and food and feeding. when a character gets a craving,
+--            allow the player to simply pay to buy it".
 --   romance  pairs of good friends can get a crush, become sweethearts, then partners for life
 --            (the events in Data/Events play it out; this keeps the bonds).
 --   goals    the town's list of things to work toward (Data/Goals), claimed for coins.
@@ -42,7 +46,8 @@ end
 function Life.rewardOptions(profile: any, vid: string, level: number, rng: any): { any }
 	local v = profile.villagers[vid]
 	local options: { any } = { { kind = "coins", n = L.RewardCoinsPerLevel * level } }
-	local pool: { any } = { { kind = "basket" } }
+	-- (a basket of snacks stood here until the food went; some practice at work needs no bag)
+	local pool: { any } = { { kind = "practice", n = L.RewardSkillPerLevel * level } }
 	local saying = rng:pick(Sayings.list)
 	if v and saying.id ~= v.saying then
 		table.insert(pool, { kind = "saying", id = saying.id })
@@ -61,8 +66,8 @@ end
 function Life.rewardText(option: any): string
 	if option.kind == "coins" then
 		return Text.fill("{n} coins they saved up", { n = Text.commas(option.n) })
-	elseif option.kind == "basket" then
-		return "A basket of snacks"
+	elseif option.kind == "practice" then
+		return "Some extra practice at their work"
 	elseif option.kind == "saying" then
 		local s = Sayings.get(option.id)
 		return Text.fill('A new saying: "{s}"', { s = if s then s.text else "?" })
@@ -117,18 +122,12 @@ function Life.claimReward(profile: any, choice: any, rng: any): (boolean, string
 	if option.kind == "coins" then
 		profile.coins = math.clamp(profile.coins + option.n, 0, Tuning.Economy.MaxCoins)
 		return true, Text.fill("{x} gave you {n} coins.", { x = v.name, n = Text.commas(option.n) })
-	elseif option.kind == "basket" then
-		-- their favourite and a few others
-		local got = { v.fav }
-		for _ = 2, L.BasketSize do
-			table.insert(got, rng:pick(Foods.list).id)
+	elseif option.kind == "practice" and type(option.n) == "number" then
+		local gained = City.addSkill(v, option.n)
+		if gained > 0 then
+			return true, Text.fill("{x} put in the practice. Skill {n} now.", { x = v.name, n = v.lv })
 		end
-		for _, id in got do
-			if Foods.get(id) then
-				profile.inv.food[id] = (profile.inv.food[id] or 0) + 1
-			end
-		end
-		return true, Text.fill("{x} packed you a basket of snacks.", { x = v.name })
+		return true, Text.fill("{x} put in the practice.", { x = v.name })
 	elseif option.kind == "saying" and Sayings.get(option.id) then
 		v.saying = option.id
 		return true, Text.fill("{x} has a new saying.", { x = v.name })
@@ -137,25 +136,6 @@ function Life.claimReward(profile: any, choice: any, rng: any): (boolean, string
 		return true, Text.fill("{x} took up {h}.", { x = v.name, h = Sayings.hobby(option.id).name })
 	end
 	return false, "That thank you is gone."
-end
-
--- Hearts for a snack: only the first few a day count, more for their favourite.
-function Life.fedHearts(profile: any, vid: string, foodId: string, day: number, rng: any): number
-	local v = profile.villagers[vid]
-	if not v then
-		return 0
-	end
-	if v.feedDay ~= day then
-		v.feedDay = day
-		v.feeds = 0
-	end
-	if (v.feeds or 0) >= L.FeedsPerDay or foodId == v.hate then
-		return 0
-	end
-	v.feeds = (v.feeds or 0) + 1
-	local n = if foodId == v.fav then L.FavHearts else L.FeedHearts
-	Life.addHearts(profile, vid, n, rng)
-	return n
 end
 
 -- Wishes --------------------------------------------------------------------------------------------
@@ -196,9 +176,10 @@ function Life.maybeWish(profile: any, vid: string, rng: any, now: number): any
 	local kind = rng:pick(kinds)
 	local wish: any = { kind = kind, untilT = now + L.WishHours * Tuning.Day.Length / 24 }
 	if kind == "food" then
+		-- their favourite half the time
 		wish.arg = if rng:chance(0.5) then v.fav else rng:pick(Foods.list).id
-		if wish.arg == v.hate then
-			wish.arg = v.fav
+		if not Foods.get(wish.arg) then
+			wish.arg = Foods.list[1].id
 		end
 	elseif kind == "friend" then
 		wish.arg = rng:pick(strangers)
@@ -227,8 +208,32 @@ function Life.wishText(profile: any, vid: string): string?
 	return nil
 end
 
+-- What it costs to buy a villager a food they are craving: its price in Data/Foods times
+-- Tuning.Life.CravingMarkup, rounded to CravingStep coins. Nil for something that is not a food.
+function Life.cravingPrice(foodId: any): number?
+	local food = if type(foodId) == "string" then Foods.get(foodId) else nil
+	if not food then
+		return nil
+	end
+	local step = L.CravingStep
+	return math.max(step, math.floor(food.price * L.CravingMarkup / step + 0.5) * step)
+end
+
+-- What granting a villager's wish costs. A craving is bought for them; nil when they have no
+-- wish or it is not one you pay for (someone to meet, a new look, a chat).
+function Life.wishPrice(profile: any, vid: string): number?
+	local v = profile.villagers[vid]
+	local w = v and v.wish
+	if type(w) ~= "table" or w.kind ~= "food" then
+		return nil
+	end
+	return Life.cravingPrice(w.arg)
+end
+
 -- Grants a villager's wish if `how` (and `arg`) answer it: "food" with the food id, "friend"
 -- with the other villager, "look", or "cheer". Returns ok, the coins they gave and notices.
+-- A craving gives no coins back (it was paid for: see Life.buyWish), and a little more mood
+-- and hearts when it was for their favourite.
 function Life.grantWish(profile: any, vid: string, how: string, arg: any, rng: any): (boolean, number, { string })
 	local notices = {}
 	local v = profile.villagers[vid]
@@ -250,13 +255,46 @@ function Life.grantWish(profile: any, vid: string, how: string, arg: any, rng: a
 		table.insert(notices, Text.fill("{x} and {y} got talking.", { x = v.name, y = other.name }))
 	end
 	v.wish = nil
+	profile.stats.wishes = (profile.stats.wishes or 0) + 1
+	if how == "food" then
+		local fav = arg == v.fav
+		mood(v, L.WishMood + (if fav then L.FavWishMood else 0))
+		table.insert(
+			notices,
+			Text.fill(if fav then "{x} got their favourite and is so pleased." else "{x} is so pleased.", { x = v.name })
+		)
+		Life.addHearts(profile, vid, L.WishHearts + (if fav then L.FavWishHearts else 0), rng, notices)
+		return true, 0, notices
+	end
 	mood(v, L.WishMood)
 	local coins = rng:int(L.WishCoinsMin, L.WishCoinsMax)
 	profile.coins = math.clamp(profile.coins + coins, 0, Tuning.Economy.MaxCoins)
-	profile.stats.wishes = (profile.stats.wishes or 0) + 1
 	table.insert(notices, Text.fill("{x} is so pleased. +{n} coins", { x = v.name, n = coins }))
 	Life.addHearts(profile, vid, L.WishHearts, rng, notices)
 	return true, coins, notices
+end
+
+-- Buys a villager the food they are craving: takes Life.wishPrice from the town's coins and
+-- grants the wish. Returns ok, what it cost, the notices and, when it was refused, why.
+function Life.buyWish(profile: any, vid: any, rng: any): (boolean, number, { string }, string?)
+	local v = if type(vid) == "string" then profile.villagers[vid] else nil
+	local w = v and v.wish
+	if type(w) ~= "table" then
+		return false, 0, {}, "They aren't wishing for anything right now."
+	end
+	local price = Life.wishPrice(profile, vid)
+	if not price then
+		return false, 0, {}, "That isn't something you can buy for them."
+	end
+	if type(profile.coins) ~= "number" or profile.coins < price then
+		return false, price, {}, "Not enough coins."
+	end
+	local granted, _, notices = Life.grantWish(profile, vid, "food", w.arg, rng)
+	if not granted then
+		return false, 0, {}, "That isn't something you can buy for them."
+	end
+	profile.coins -= price
+	return true, price, notices, nil
 end
 
 -- Lets unanswered wishes fade. Returns notices.

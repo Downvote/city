@@ -228,8 +228,8 @@ function Hud.start()
 		})
 		d:SetAttribute("KeepColors", true)
 	end
-	-- (the money had a green + beside it that opened the shop, which has its own button under the
-	-- clock. The user: "remove the + button next to coins".)
+	-- (the money had a green + beside it that opened the shop. The user: "remove the + button next
+	-- to coins". The shop itself went later.)
 	local coinPill, coins = cell("coin", 134, 1)
 	divider(2)
 	local _, popLabel = cell("people", 82, 3)
@@ -335,11 +335,12 @@ function Hud.start()
 		Parent = hud,
 	})
 	clock.ZIndex = 2
-	-- round buttons under the clock, each with its name under it: home, the map, the city hall,
-	-- the shop, the news, and dark or light
+	-- round buttons under the clock, each with its name under it: home, the city hall, the news,
+	-- and dark or light. (A Map and a Shop button stood here too. The user: "remove the shop,
+	-- buying of things and food and feeding" and "remove the map button and the map interface".)
 	local corner = Kit.box({
 		Name = "Corner",
-		Size = UDim2.fromOffset(372, 76),
+		Size = UDim2.fromOffset(248, 76),
 		Position = UDim2.new(1, -14, 0, 88),
 		AnchorPoint = Vector2.new(1, 0),
 		Parent = hud,
@@ -385,9 +386,7 @@ function Hud.start()
 	end
 	for i, e in
 		{
-			{ "map", "MapPanel", "Map" },
 			{ "city", "CityPanel", "City" },
-			{ "cart", "ShopPanel", "Shop" },
 			{ "news", "News", "News" },
 		}
 	do
@@ -709,8 +708,6 @@ function Hud.start()
 		local opens = prompt:GetAttribute("Opens")
 		if opens == "creator" then
 			Hud.open("Creator", { mode = "new" })
-		elseif opens == "shop" then
-			Hud.open("ShopPanel")
 		elseif opens == "news" then
 			Hud.open("News")
 		elseif opens == "city" then

@@ -6,23 +6,22 @@
 --   rel a b d | relv a b d       friendship change
 --   mood who d | moodv vid d     mood change
 --   coins d                      coins (negative spends)
---   food id n | item id n        inventory
 --   quarrel a b | makeup a b     start or end a quarrel
 --   request who tag              wants furniture with that tag near their bed
 --   sick who minutes             stays in bed
---   xp who d (skill at their job) | known who food r | bday who
+--   xp who d (skill at their job) | bday who
 --   bond a b to                  romance: to = "crush" | "sweethearts" | "partners" | nil (over)
 --   hearts who n                 fills their hearts with you (Sim/Life)
 -- Handled by the service (returned in `service`):
---   eat who food | away who seconds | visitor name | merchant | festival | creator who? | dayoff who
+--   away who seconds | visitor name | festival | creator who? | dayoff who
+-- (There is no food to give, take, count or eat and no shop things: the shop and feeding went.
+-- A craving is paid for there and then, at ctx.cravingPrice(foodId).)
 
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Events = require(script.Parent.Parent.Data.Events)
 local Newcomers = require(script.Parent.Newcomers)
 local Relationships = require(script.Parent.Relationships)
-local Jobs = require(script.Parent.Parent.Data.Jobs)
 local City = require(script.Parent.City)
-local Foods = require(script.Parent.Parent.Data.Foods)
 local Catalog = require(script.Parent.Parent.Build.Catalog)
 local Plan = require(script.Parent.Parent.Build.Plan)
 local Text = require(script.Parent.Parent.Util.Text)
@@ -74,7 +73,6 @@ export type Options = {
 	rng: any,
 	present: { string },
 	freeSlots: number,
-	merchantActive: boolean?,
 	-- the player's Roblox friends, for who moves in next (Sim/Newcomers). Left out, nobody moves
 	-- in yet: the server leaves it out until it has the list, so friends really do come first.
 	friends: { Newcomers.Friend }?,
@@ -92,7 +90,6 @@ function EventEngine.context(profile: any, o: Options): any
 		rng = o.rng,
 		present = o.present,
 		freeSlots = o.freeSlots,
-		merchantActive = o.merchantActive == true,
 		names = {},
 	}
 	function ctx.v(vid: string)
@@ -113,11 +110,9 @@ function EventEngine.context(profile: any, o: Options): any
 	function ctx.quarreling(a: string, b: string): boolean
 		return Relationships.quarreling(profile, a, b, o.now)
 	end
-	function ctx.count(foodId: string): number
-		return profile.inv.food[foodId] or 0
-	end
-	function ctx.itemCount(id: string): number
-		return profile.inv.items[id] or 0
+	-- what buying a villager that food costs (Life.cravingPrice)
+	function ctx.cravingPrice(foodId: string): number
+		return Life.cravingPrice(foodId) or 0
 	end
 	function ctx.requests(vid: string): number
 		local n = 0
@@ -302,22 +297,6 @@ function EventEngine.apply(profile: any, ev: any, effects: { any }, now: number)
 			if e.d > 0 then
 				table.insert(notices, Text.fill("+{n} coins", { n = Text.commas(e.d) }))
 			end
-		elseif t == "food" then
-			local f = Foods.get(e.id)
-			if f then
-				profile.inv.food[e.id] = math.max(0, (profile.inv.food[e.id] or 0) + e.n)
-				if profile.inv.food[e.id] == 0 then
-					profile.inv.food[e.id] = nil
-				end
-				if e.n > 0 then
-					table.insert(notices, Text.fill("Got {food}", { food = f.name:lower() }))
-				end
-			end
-		elseif t == "item" then
-			profile.inv.items[e.id] = math.max(0, (profile.inv.items[e.id] or 0) + e.n)
-			if profile.inv.items[e.id] == 0 then
-				profile.inv.items[e.id] = nil
-			end
 		elseif t == "quarrel" then
 			local a, b = vid(e.a), vid(e.b)
 			if a and b then
@@ -344,11 +323,6 @@ function EventEngine.apply(profile: any, ev: any, effects: { any }, now: number)
 			if v then
 				EventEngine.addXp(v, e.d, notices)
 			end
-		elseif t == "known" then
-			local v = profile.villagers[vid(e.who) or ""]
-			if v then
-				v.known[e.food] = e.r
-			end
 		elseif t == "bond" then
 			local a, b = vid(e.a), vid(e.b)
 			if a and b and a ~= b then
@@ -366,7 +340,7 @@ function EventEngine.apply(profile: any, ev: any, effects: { any }, now: number)
 				profile.bdays[who] = profile.calendarDay or 0
 			end
 		else
-			-- eat, away, visitor, merchant, festival, creator
+			-- away, visitor, festival, creator, dayoff
 			local copy = table.clone(e)
 			if type(e.who) == "string" then
 				copy.vid = vid(e.who)
@@ -388,16 +362,7 @@ end
 
 -- Adds XP and handles level ups. Returns how many levels were gained.
 function EventEngine.addXp(v: any, amount: number, notices: { string }?): number
-	local gained = 0
-	v.xp = (v.xp or 0) + amount
-	while v.lv < Tuning.Jobs.SkillCap and v.xp >= Jobs.xpToNext(v.lv) do
-		v.xp -= Jobs.xpToNext(v.lv)
-		v.lv += 1
-		gained += 1
-	end
-	if v.lv >= Tuning.Jobs.SkillCap then
-		v.xp = 0
-	end
+	local gained = City.addSkill(v, amount)
 	if gained > 0 and notices then
 		table.insert(notices, Text.fill("{x} got better at their work (skill {n}).", { x = v.name, n = v.lv }))
 	end

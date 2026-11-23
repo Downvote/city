@@ -179,7 +179,6 @@ function Data.clientState(player: Player): any
 		villagers = p.villagers,
 		order = p.order,
 		rel = p.rel,
-		inv = p.inv,
 		requests = p.requests,
 		log = p.log,
 		outfits = p.outfits,

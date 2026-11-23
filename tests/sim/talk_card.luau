@@ -4,7 +4,8 @@
 -- stood in for here. The server tells the client a villager spoke (the "Talk" remote), the card
 -- opens, and its answers and every way it closes are tried. Then events: one nobody watches
 -- (only the small prompt, nothing slides in) and one that is watched (the scene, a second and a
--- third villager joining, the one talking lit, an answer sent).
+-- third villager joining, the one talking lit, an answer sent). Then a craving, bought for the
+-- villager from the talk card and from the Villagers screen, with and without the coins.
 --   lune run tests/sim/talk_card.luau          (from the repository root)
 
 local process = require("@lune/process")
@@ -16,6 +17,7 @@ local Harness, Fake, gui, errors = Sim.Harness, Sim.Fake, Sim.gui, Sim.errors
 local frames, advance, press, check, run = Sim.frames, Sim.advance, Sim.press, Sim.check, Sim.run
 
 local Tuning = Harness.require("ReplicatedStorage.Shared.Config.Tuning")
+local Text = Harness.require("ReplicatedStorage.Shared.Util.Text")
 local Schema = Harness.require("ReplicatedStorage.Shared.Sim.Schema")
 local Appearance = Harness.require("ReplicatedStorage.Shared.Avatar.Appearance")
 local Rng = Harness.require("ReplicatedStorage.Shared.Util.Rng")
@@ -338,6 +340,107 @@ run("an event you watch", function()
 	Sim.remoteEvent("EventEnd"):FireClient(Sim.player, { token = "e3", notices = {} })
 	advance(8)
 	check(prompt() == nil, "the prompt goes when it ends")
+	check(#errors == warned, "no warnings from any of it")
+end)
+
+-- cravings ------------------------------------------------------------------------------------------------
+
+local Life = Harness.require("ReplicatedStorage.Shared.Sim.Life")
+local bought = {}
+local coins = 500
+local function push(t)
+	Sim.remoteEvent("State"):FireClient(Sim.player, t)
+	frames(2)
+end
+-- (a fresh table each time, as a remote hands the client one)
+local function crave(vid, food)
+	villagers[vid].wish = { kind = "food", arg = food, untilT = os.time() + 9999 }
+	push({ villagers = table.clone(villagers) })
+end
+local function onCard(name)
+	local c = card()
+	local label = c and c:FindFirstChild(name, true)
+	return label and label.Text or ""
+end
+-- the server's side of WishBuy, as the contract has it: the coins go and the wish is granted
+Sim.remoteFn("WishBuy").OnServerInvoke = function(_, vid)
+	table.insert(bought, vid)
+	local price = Life.wishPrice({ villagers = villagers }, vid)
+	if not price then
+		return false, "They don't want anything right now."
+	end
+	if coins < price then
+		return false, "Not enough coins."
+	end
+	coins -= price
+	villagers[vid].wish = nil
+	push({ coins = coins, villagers = table.clone(villagers) })
+	return true, "Mara loved it. A heart closer."
+end
+
+run("a craving, bought from the talk card", function()
+	local warned = #errors
+	coins = 500
+	push({ coins = coins })
+	crave("v1", "curry")
+	local price = Life.wishPrice({ villagers = villagers }, "v1")
+	check(type(price) == "number" and price > 0, "a craving has a price")
+	heldE("v1")
+	local c = card()
+	local buy = c and c:FindFirstChild("BuyWish", true)
+	check(buy ~= nil, "the talk card has an answer that buys it")
+	check(buy and buy:GetAttribute("Disabled") ~= true, "lit, with the coins to pay")
+	check(buy and Sim.labelOf(buy):find(Text.commas(price), 1, true) ~= nil, "showing the price")
+	press("BuyWish")
+	check(#bought == 1 and bought[1] == "v1", "it asks the server to buy it for the right villager")
+	check(card() and card():FindFirstChild("BuyWish", true) == nil, "and the answer goes once it's bought")
+	check(onCard("Note") == "Mara loved it. A heart closer.", "the note says what it did")
+	check(onCard("Line"):find("Thank you", 1, true) ~= nil, "and they say thank you")
+	press("Bye")
+
+	coins = 10
+	push({ coins = coins })
+	crave("v1", "curry")
+	heldE("v1")
+	buy = card() and card():FindFirstChild("BuyWish", true)
+	check(buy ~= nil and buy:GetAttribute("Disabled") == true, "without the coins the answer is dim")
+	buy.Activated:Fire()
+	frames(2)
+	check(#bought == 1, "and pressing it asks nothing of the server")
+	check(onCard("Note"):find("more coins", 1, true) ~= nil, "the note says how many more it takes")
+	press("Bye")
+	check(#errors == warned, "no warnings from any of it")
+end)
+
+run("a craving, bought from the Villagers screen", function()
+	local warned = #errors
+	coins = 10
+	push({ coins = coins })
+	crave("v1", "curry")
+	Hud.open("Residents", "v1")
+	frames(3)
+	local stage = gui:FindFirstChild("Stage", true)
+	local function wish()
+		return stage and stage:FindFirstChild("Wish", true)
+	end
+	local buy = wish() and wish():FindFirstChild("BuyWish", true)
+	check(buy ~= nil, "the wish row has a Buy button")
+	check(wish() and wish():FindFirstChild("Craving", true) ~= nil, "beside the picture of what they crave")
+	check(buy and buy:GetAttribute("Disabled") == true, "dim without the coins")
+	check(wish() and wish():FindFirstChild("Short", true) ~= nil, "with a line saying how many more it takes")
+	buy.Activated:Fire()
+	frames(2)
+	check(#bought == 1, "pressed, it asks nothing of the server")
+	coins = 500
+	push({ coins = coins })
+	buy = wish() and wish():FindFirstChild("BuyWish", true)
+	check(buy and buy:GetAttribute("Disabled") ~= true, "the coins come in and it lights up")
+	buy.Activated:Fire()
+	frames(3)
+	check(#bought == 2 and bought[2] == "v1", "pressed, it buys it for the right villager")
+	check(wish() == nil, "and the wish row goes once the craving is granted")
+	Hud.closeAll()
+	frames(2)
 	check(#errors == warned, "no warnings from any of it")
 end)
 

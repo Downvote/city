@@ -1,7 +1,7 @@
 --!strict
--- Places to find round the island. Walking up to one for the first time pays a few coins and
--- marks it on the map, and once found you can travel back to it from the map. Positions are on
--- the ground (on the hills, at the hills' height).
+-- Places to find round the island. Walking up to one for the first time pays a few coins, once.
+-- (They were marked on a map you could travel from; the user: "remove the map button and the map
+-- interface".) Positions are on the ground (on the hills, at the hills' height).
 
 local Hills = require(script.Parent.Hills)
 
@@ -165,12 +165,6 @@ end
 function Places.near(place: Place, pos: Vector3): boolean
 	local flat = Vector3.new(pos.X - place.pos.X, 0, pos.Z - place.pos.Z).Magnitude
 	return flat <= place.radius and math.abs(pos.Y - place.pos.Y) < 40
-end
-
--- Where you arrive when you travel to a place: just beside it, a little above the ground.
-function Places.arrival(place: Place): CFrame
-	local p = place.pos + Vector3.new(0, 4, 0)
-	return CFrame.new(p)
 end
 
 return Places

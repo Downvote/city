@@ -49,6 +49,35 @@ run("the stats sit in a strip under the town's level", function()
 	check(pills:FindFirstChild("Plus", true) == nil, "with no + beside the money any more")
 end)
 
+run("the round buttons under the clock: home, the city hall, the news and the look", function()
+	-- the user: "remove the shop, buying of things and food and feeding" and "remove the map
+	-- button and the map interface"
+	local corner = gui:FindFirstChild("Corner", true)
+	check(corner ~= nil, "the row is there")
+	local names = {}
+	for _, c in corner:GetChildren() do
+		if c:IsA("GuiObject") then
+			table.insert(names, c)
+		end
+	end
+	table.sort(names, function(a, b)
+		return a.LayoutOrder < b.LayoutOrder
+	end)
+	local order = {}
+	for _, c in names do
+		table.insert(order, (c.Name:gsub("Cell$", "")))
+	end
+	check(table.concat(order, " ") == "Home CityPanel News Look", "four of them, in that order")
+	check(corner:FindFirstChild("MapPanel", true) == nil, "no Map button")
+	check(corner:FindFirstChild("ShopPanel", true) == nil, "and no Shop button")
+	check(Hud.panel("MapPanel") == nil, "there is no map screen to open")
+	check(Hud.panel("ShopPanel") == nil, "and no shop screen")
+	-- the row is no wider than its four buttons need, and still hangs from the right edge
+	local need = 4 * 54 + 3 * 8
+	check(corner.Size.X.Offset >= need and corner.Size.X.Offset <= need + 16, "the row is as wide as four buttons")
+	check(corner.AnchorPoint.X == 1 and corner.Position.X.Scale == 1, "at the right edge")
+end)
+
 run("the quests sit under the strip, the next few goals", function()
 	State.set("stats", { wishes = 3 })
 	State.set("goals", {})

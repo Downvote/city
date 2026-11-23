@@ -14,13 +14,14 @@
 --   build:view          Build mode just after the up arrow and See-through walls (the hint says so)
 --   build:placing       Build mode holding an armchair to place: the bars away, the hint left
 --                       (build:placing:touch on a touch screen, with its two round buttons)
---   panel:<Name>        a panel over the main screen (Residents, CityPanel, ShopPanel, News, Goals,
---                       MapPanel, Welcome, Rewards)
+--   panel:<Name>        a panel over the main screen (Residents, CityPanel, News, Goals,
+--                       Welcome, Rewards)
 --   panel:<Name>:<state> a menu in one of its states: Residents:friends, Residents:empty (nobody
---                       lives here), ShopPanel:things, News:empty, News:busy (news from several
---                       days and a request), Goals:claimed (a claimed goal picked), MapPanel:new
---                       (one place found), MapPanel:picked (a place picked in the list), CityPanel:ready
+--                       lives here), Residents:craving (Mara craves something: the Buy button),
+--                       Residents:short (the same without the coins), News:empty, News:busy (news from several
+--                       days and a request), Goals:claimed (a claimed goal picked), CityPanel:ready
 --                       (the next land can be bought)
+--   talk:craving        the talk card with a villager who craves something: the answer that buys it
 --   event               an event at its choices, not watched: the small prompt says they want your say
 --   event:talk          an event part way through its lines, not watched: the prompt and Watch
 --   event:one           a watched event's scene with one villager talking
@@ -292,8 +293,9 @@ elseif scene:sub(1, 6) == "panel:" then
 		})
 	elseif state == "empty" and name == "Residents" then
 		patch({ villagers = {}, order = {} })
-	elseif state == "new" and name == "MapPanel" then
-		patch({ found = { square = true } })
+	elseif (state == "craving" or state == "short") and name == "Residents" then
+		first.wish = { kind = "food", arg = "curry", untilT = os.time() + 9999 }
+		patch({ villagers = villagers, coins = if state == "short" then 30 else Sim.profile.coins })
 	elseif state == "ready" and name == "CityPanel" then
 		-- the next piece of land open to a hamlet, to see the button that buys it
 		local Tuning = Harness.require("ReplicatedStorage.Shared.Config.Tuning")
@@ -308,11 +310,6 @@ elseif scene:sub(1, 6) == "panel:" then
 	Sim.frames(3)
 	if state == "friends" then
 		Sim.press("Friends")
-	elseif state == "things" then
-		Sim.press("Things")
-	elseif state == "picked" then
-		-- the lookout picked in the list
-		Sim.gui:FindFirstChild("Row_lookout", true).Activated:Fire()
 	elseif state == "claimed" then
 		-- the first goal, claimed already
 		local row = Sim.gui:FindFirstChild("settlers", true)
@@ -379,9 +376,15 @@ elseif scene == "event" or scene:sub(1, 6) == "event:" then
 	if watch then
 		Sim.frames(60) -- a second at the game's own pace, so the line being typed is all there
 	end
-elseif scene == "talk" or scene == "talk:again" then
+elseif scene == "talk" or scene == "talk:again" or scene == "talk:craving" then
 	-- the talk card (UI/TalkCard), in the words Sim/Talk gives the villagers: Mara is walked up
-	-- to and tells her wish; Ivy is asked for one more line once the day's chats are used up
+	-- to and tells her wish; Ivy is asked for one more line once the day's chats are used up;
+	-- talk:craving, Mara craves something and an answer buys it for her
+	if scene == "talk:craving" then
+		first.wish = { kind = "food", arg = "curry", untilT = os.time() + 9999 }
+		Sim.remoteEvent("State"):FireClient(Sim.player, { villagers = villagers })
+		Sim.frames(2)
+	end
 	villagerModels()
 	startHud()
 	local Talk = Harness.require("ReplicatedStorage.Shared.Sim.Talk")

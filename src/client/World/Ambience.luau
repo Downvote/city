@@ -1,8 +1,9 @@
 -- Life around town that nobody builds: cars and a bus on the street (they stop at the
 -- crossings for anyone walking over), leaves and grass leaning with the wind, flags waving,
--- fountains spraying, traffic lights changing, boats bobbing, butterflies, rabbits and ducks,
--- and fireflies over the lawns at night. All of it is local to each player's screen: nothing
--- here is sent to the server or seen by anyone else.
+-- fountains spraying, traffic lights changing, boats bobbing, ducks on the ponds, and fireflies
+-- over the lawns at night. (Butterflies and rabbits were here too until the user said "remove
+-- the butterflies and bunnies".) All of it is local to each player's screen: nothing here is
+-- sent to the server or seen by anyone else.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -31,14 +32,13 @@ type Mover = {
 	parts: { BasePart },
 	locals: { CFrame },
 	wheels: { [number]: boolean }, -- indexes into parts
-	wings: { [number]: Vector3 }, -- wing parts and the point they hinge on
 }
 
 local function mover(name: string, c1: Color3?, c2: Color3?, shadow: boolean): Mover
 	local model = Instance.new("Model")
 	model.Name = name
 	local parts = Builder.instantiate(AmbientModels.prims(name, c1, c2), model, CFrame.identity)
-	local m: Mover = { parts = {}, locals = {}, wheels = {}, wings = {} }
+	local m: Mover = { parts = {}, locals = {}, wheels = {} }
 	for i, p in parts do
 		p.Anchored = true
 		p.CanCollide = false
@@ -49,10 +49,6 @@ local function mover(name: string, c1: Color3?, c2: Color3?, shadow: boolean): M
 		m.locals[i] = p.CFrame
 		if p.Name == "Wheel" then
 			m.wheels[i] = true
-		elseif p.Name == "WingL" then
-			m.wings[i] = Vector3.new(-0.3, 0, 0)
-		elseif p.Name == "WingR" then
-			m.wings[i] = Vector3.new(0.3, 0, 0)
 		end
 	end
 	model.Parent = folder
@@ -62,16 +58,12 @@ end
 local moveParts: { BasePart } = {}
 local moveFrames: { CFrame } = {}
 
--- Queues a mover's parts at frame `cf`; wheels turn by `spin`, wings flap by `flap` radians.
-local function place(m: Mover, cf: CFrame, spin: number?, flap: number?)
+-- Queues a mover's parts at frame `cf`; wheels turn by `spin`.
+local function place(m: Mover, cf: CFrame, spin: number?)
 	for i, p in m.parts do
 		local l = m.locals[i]
 		if spin and m.wheels[i] then
 			l = l * CFrame.Angles(spin, 0, 0)
-		elseif flap and m.wings[i] then
-			local hinge = m.wings[i]
-			local a = if hinge.X < 0 then flap else -flap
-			l = CFrame.new(hinge) * CFrame.Angles(0, 0, a) * CFrame.new(-hinge) * l
 		end
 		table.insert(moveParts, p)
 		table.insert(moveFrames, cf * l)
@@ -770,89 +762,6 @@ local function stepGrass(dt: number)
 	end
 end
 
--- Butterflies: a handful near the player, each wandering round a spot of grass, wings going.
-type Butterfly = { m: Mover, home: Vector3, phase: number, speed: number, reach: number }
-local butterflies: { Butterfly } = {}
-local WINGS = {
-	Color3.fromRGB(255, 196, 70),
-	Color3.fromRGB(255, 140, 170),
-	Color3.fromRGB(130, 190, 255),
-	Color3.fromRGB(250, 250, 250),
-	Color3.fromRGB(190, 150, 240),
-}
-
-local function stepButterflies()
-	local eye = here()
-	local day = Lighting.ClockTime > 6 and Lighting.ClockTime < 19
-	for i, b in butterflies do
-		local d = b.home - eye
-		if d.X * d.X + d.Z * d.Z > 70 * 70 then
-			-- too far behind: find it a new patch of grass near the player
-			local a, r = rng:float(0, math.pi * 2), rng:float(10, 45)
-			local spot = grassAt(eye.X + math.cos(a) * r, eye.Z + math.sin(a) * r, eye.Y)
-			if spot then
-				b.home = spot
-			end
-		end
-		local t = clock * b.speed + b.phase
-		-- a wandering loop with a bob in it; gone to bed at night
-		local pos = b.home
-			+ Vector3.new(
-				math.sin(t) * b.reach + math.sin(t * 2.7) * 1.2,
-				2 + math.sin(t * 3.1) * 0.8 + (if day then 0 else -300),
-				math.cos(t * 0.8) * b.reach + math.cos(t * 2.3) * 1.2
-			)
-		local ahead = Vector3.new(math.cos(t) * b.reach, 0, -math.sin(t * 0.8) * b.reach * 0.8)
-		local cf = if ahead.Magnitude > 0.01 then CFrame.lookAt(pos, pos - ahead) else CFrame.new(pos)
-		place(b.m, cf, nil, 0.25 + math.abs(math.sin(clock * 16 + i)) * 1.1)
-	end
-end
-
--- Rabbits: they sit, look about, then hop a little way across the grass.
-type Rabbit = { m: Mover, at: Vector3, from: Vector3, to: Vector3, t: number, wait: number, yaw: number }
-local rabbits: { Rabbit } = {}
-local FUR = { Color3.fromRGB(214, 190, 160), Color3.fromRGB(240, 236, 228), Color3.fromRGB(150, 130, 116) }
-
-local function stepRabbits(dt: number)
-	local eye = here()
-	for i, r in rabbits do
-		local d = r.at - eye
-		local far = d.X * d.X + d.Z * d.Z
-		if far > 110 * 110 or r.at.Y < -100 then
-			-- left behind: turn up again somewhere on the grass near the player, out of the way
-			local a, dist = rng:float(0, math.pi * 2), rng:float(35, 70)
-			local spot = grassAt(eye.X + math.cos(a) * dist, eye.Z + math.sin(a) * dist, eye.Y)
-			if spot then
-				r.at, r.from, r.to, r.t, r.wait = spot, spot, spot, 1, rng:float(0.5, 3)
-			end
-		elseif r.t >= 1 then
-			r.wait -= dt
-			if r.wait <= 0 then
-				-- away from the player if they are close, anywhere otherwise
-				local a = if far < 14 * 14
-					then math.atan2(d.Z, d.X) + rng:float(-0.6, 0.6)
-					else rng:float(0, math.pi * 2)
-				local hop = rng:float(3, 5.5)
-				local spot = grassAt(r.at.X + math.cos(a) * hop, r.at.Z + math.sin(a) * hop, r.at.Y)
-				if spot and math.abs(spot.Y - r.at.Y) < 2.5 then
-					r.from, r.to, r.t = r.at, spot, 0
-					r.yaw = math.atan2(spot.X - r.at.X, spot.Z - r.at.Z)
-					r.wait = if far < 14 * 14 then 0.05 else rng:float(0.2, 2.6)
-				else
-					r.wait = 0.4
-				end
-			end
-		else
-			r.t = math.min(1, r.t + dt * 3.2)
-			r.at = r.from:Lerp(r.to, r.t)
-		end
-		local up = math.sin(math.clamp(r.t, 0, 1) * math.pi) * 1.1
-		-- nose twitching while it sits: a tiny nod
-		local nod = if r.t >= 1 then math.sin(clock * 5 + i) * 0.05 else -0.25
-		place(r.m, CFrame.new(r.at + Vector3.new(0, up, 0)) * CFrame.Angles(0, r.yaw, 0) * CFrame.Angles(nod, 0, 0))
-	end
-end
-
 -- Ducks: a few on the pond in the park and the lake in the hills, paddling slow circles.
 type Duck = { m: Mover, center: Vector3, radius: number, angle: number, speed: number }
 local ducks: { Duck } = {}
@@ -910,36 +819,10 @@ local function stepDucks(dt: number)
 	end
 end
 
-local function startCreatures()
-	for i = 1, 14 do
-		table.insert(butterflies, {
-			m = mover("butterfly", WINGS[i % #WINGS + 1], nil, false),
-			home = Vector3.new(0, -500, 0),
-			phase = rng:float(0, 20),
-			speed = rng:float(0.5, 0.9),
-			reach = rng:float(3, 7),
-		})
-	end
-	for i = 1, 7 do
-		local away = Vector3.new(0, -500, 0)
-		table.insert(rabbits, {
-			m = mover("rabbit", FUR[i % #FUR + 1], nil, false),
-			at = away,
-			from = away,
-			to = away,
-			t = 1,
-			wait = 0,
-			yaw = 0,
-		})
-	end
-end
-
 local function stepLife(dt: number)
 	stepLeaves(dt)
 	stepSignals()
 	stepGrass(dt)
-	stepButterflies()
-	stepRabbits(dt)
 	stepDucks(dt)
 end
 
@@ -973,7 +856,6 @@ function Ambience.start()
 		collectJets(town)
 		collectDucks(town)
 	end)
-	startCreatures()
 
 	local crossingClock = 0
 	local nightClock = 0

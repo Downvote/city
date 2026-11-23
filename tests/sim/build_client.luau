@@ -780,10 +780,9 @@ run("life around town and the show when you build", function()
 	local leafy = town:FindFirstChild("lowTree")
 	local leaf = leafy and leafy:FindFirstChild("Leaf")
 	check(leaf ~= nil and moves(leaf), "every clump of leaves leans with the wind")
-	local butterfly = folder:FindFirstChild("butterfly")
-	local wing = butterfly and butterfly:FindFirstChild("WingL")
-	check(wing ~= nil and moves(wing, 3), "butterflies are about, wings going")
-	check(folder:FindFirstChild("rabbit") ~= nil, "and rabbits")
+	-- the user, later: "remove the butterflies and bunnies"
+	check(folder:FindFirstChild("butterfly") == nil, "no butterflies are about")
+	check(folder:FindFirstChild("rabbit") == nil, "and no rabbits")
 	local buoy = town:FindFirstChild("buoy")
 	check(buoy ~= nil and moves(buoy:FindFirstChildWhichIsA("BasePart")), "buoys bob on the water")
 	-- the two lights at a junction never show green together, and they change

@@ -116,7 +116,37 @@ end
 local paintStudio: () -> ()
 local panelFrame: Frame? = nil -- the panel on the right, which glows in their favourite colour
 local PANEL_W, PANEL_PAD = 720, 12 -- what the panel holds is this wide, inside this margin
-local ROW_H = 36 -- the search box, the sort, the filters and the copy box are this tall
+local ROW_H = 36 -- the boxes to type in on the pages are this tall
+-- the Look step: the search box and the row of sections, the row of kinds under them, the copy
+-- box and the tools along the bottom
+local SEARCH_W, SECTION_H, FILTER_H = 200, 36, 28
+local SORT_W = 168
+local ARROW = 26 -- the round arrows at each end of the row of sections
+local WORD_PAD = 12 -- room each side of a word in the rows
+local BOTTOM_H, CAPTION_H, TOOL_SQ = 40, 16, 40
+
+-- How wide a line of words is in the title font, for laying the row of sections out. (The engine
+-- measures it; a reckoning by its letters stands in where it can't.)
+local function textWidth(text: string, size: number): number
+	local ok, bounds = pcall(function()
+		return game:GetService("TextService"):GetTextSize(text, size, Kit.Fonts.Title, Vector2.new(2000, 200))
+	end)
+	if ok and typeof(bounds) == "Vector2" and bounds.X > 0 then
+		return math.ceil(bounds.X)
+	end
+	return math.ceil(#text * size * 0.56)
+end
+
+-- The sort button's words.
+local function sortWords(id: string): string
+	local name = Categories.Sorts[1].name
+	for _, sort in Categories.Sorts do
+		if sort.id == id then
+			name = sort.name
+		end
+	end
+	return Text.fill("Sort: {name}", { name = name })
+end
 
 -- The picture of a card's item: an asset, a bundle, or one of the player's saved avatars.
 local function thumb(id: number, itemType: string?): string
@@ -328,19 +358,75 @@ local function isOn(id: number): boolean
 	return Categories.isWorn(app, id)
 end
 
--- What they have on is picked, so its card is yellow with dark words and a tick on its corner
--- (on Wearing everything is on, so there only the tick shows).
+-- What a card's small line says it is.
+local KINDS: { [string]: string } = {
+	HairAccessory = "Hair",
+	Hat = "Hat",
+	FaceAccessory = "Glasses",
+	NeckAccessory = "Neck",
+	ShoulderAccessory = "Shoulder",
+	FrontAccessory = "Front",
+	BackAccessory = "Back",
+	WaistAccessory = "Waist",
+	Shirt = "Shirt",
+	TShirt = "T-shirt",
+	TShirtAccessory = "3D top",
+	ShirtAccessory = "3D top",
+	SweaterAccessory = "3D top",
+	JacketAccessory = "3D top",
+	Pants = "Pants",
+	PantsAccessory = "3D bottom",
+	ShortsAccessory = "3D bottom",
+	DressSkirtAccessory = "3D bottom",
+	LeftShoeAccessory = "Shoe",
+	RightShoeAccessory = "Shoe",
+	Face = "Face",
+	Head = "Head",
+	DynamicHead = "Head",
+	EyebrowAccessory = "Brows",
+	EyelashAccessory = "Lashes",
+	Torso = "Torso",
+	LeftArm = "Left arm",
+	RightArm = "Right arm",
+	LeftLeg = "Left leg",
+	RightLeg = "Right leg",
+}
+local SET_KINDS: { [string]: string } = { body = "Whole body", head = "Head set", shoes = "Pair of shoes", anim = "Set of moves" }
+
+local function kindOf(item: any, kind: string?): string
+	if item.ItemType == "Outfit" then
+		return "Saved avatar"
+	elseif item.ItemType == "Bundle" then
+		return SET_KINDS[kind or ""] or "Set"
+	end
+	local typeName = Categories.assetTypeName(item.AssetType)
+	if typeName and KINDS[typeName] then
+		return KINDS[typeName]
+	elseif typeName and typeName:find("Animation") then
+		return "Move"
+	end
+	return "Item"
+end
+
+-- What they have on is picked, so its picture's square is yellow with a tick on its corner and
+-- its small line says "Wearing" (on Wearing everything is on, so there only the tick shows).
 refreshWorn = function()
 	for id, card in cards do
 		local worn = isOn(id)
 		local lit = worn and tabId ~= "wearing"
 		local face = card:FindFirstChild("Face")
 		if face and face:IsA("Frame") then
-			Kit.paint(face, if lit then T.Yellow else T.Card)
+			face.BackgroundColor3 = if lit then T.Yellow else T.Card
+			local rim = face:FindFirstChild("Rim")
+			if rim and rim:IsA("UIStroke") then
+				rim.Color = if lit then T.YellowDark else T.Line
+			end
 		end
-		local name = card:FindFirstChild("Name")
-		if name and name:IsA("TextLabel") then
-			name.TextColor3 = if lit then T.Dark else T.Ink
+		local sub = card:FindFirstChild("Sub")
+		if sub and sub:IsA("TextLabel") then
+			local plain = card:GetAttribute("Kind")
+			sub.Text = if worn and tabId ~= "wearing" then "Wearing" else (if type(plain) == "string" then plain else "")
+			sub.TextColor3 = if worn and tabId ~= "wearing" then Kit.tint(T.Yellow) else T.InkSoft
 		end
 		local badge = card:FindFirstChild("Worn")
 		if badge and badge:IsA("GuiObject") then
@@ -349,14 +435,15 @@ refreshWorn = function()
 	end
 end
 
--- A card for something to wear, drawn as the toolkit's tiles are: a rounded square in a thin rim,
--- the picture on its upper face and the name on the deeper band along the bottom (on one or two
--- lines). A set (a bundle) says so on a tag; what they have on is yellow and ticked.
-local CARD_W, CARD_H = 128, 160
-local CARD_FOOT = math.floor((CARD_H - 2) * 0.66 + 0.5) + 1 -- where the band starts (Kit.tile's third)
+-- A card for something to wear, laid out as catalog screens lay theirs: the picture on a rounded
+-- dark square in a thin rim, under it the name in bold on up to two lines, and under that one
+-- small line saying what it is ("Hat", "Whole body", "Wearing" for what they have on). What they
+-- have on has its square yellow and a tick on its corner. Five to a row.
+local CARD_W, CARD_PIC = 136, 136
+local CARD_H = CARD_PIC + 4 + 34 + 16
 local function itemCard(item: any, order: number, onClick: (() -> ())?, kind: string?): GuiObject
-	local bundle = item.ItemType == "Bundle"
 	local card = Kit.new("TextButton", {
+		Name = "Item",
 		Text = "",
 		AutoButtonColor = false,
 		BackgroundTransparency = 1,
@@ -364,26 +451,23 @@ local function itemCard(item: any, order: number, onClick: (() -> ())?, kind: st
 		LayoutOrder = order,
 		Parent = grid,
 	})
-	local face = Kit.new("Frame", {
+	card:SetAttribute("ItemCard", true)
+	card:SetAttribute("Kind", kindOf(item, kind))
+	local face = Kit.frame({
 		Name = "Face",
-		BackgroundColor3 = T.Card,
-		BorderSizePixel = 0,
-		Size = UDim2.new(1, -2, 1, -2),
-		Position = UDim2.fromOffset(1, 1),
 		Parent = card,
+		Size = UDim2.fromOffset(CARD_W, CARD_PIC),
+		Color = T.Card,
+		Radius = 12,
 	})
-	Kit.corner(face, 9)
-	-- (a face with a Foot gradient is a tile's: Kit.paint gives it its band)
-	Kit.new("UIGradient", { Name = "Foot", Rotation = 90, Parent = face })
-	Kit.paint(face, T.Card)
-	Kit.rim(face, Kit.edgeOf(T.Card), 1):SetAttribute("Follow", true)
+	Kit.rim(face, T.Line, 1)
 	local picture = Kit.frame({
 		Name = "Picture",
-		Parent = card,
-		Size = UDim2.fromOffset(CARD_W - 12, CARD_FOOT - 11),
-		Position = UDim2.fromOffset(6, 6),
+		Parent = face,
+		Size = UDim2.new(1, -16, 1, -16),
+		Position = UDim2.fromOffset(8, 8),
 		Color = T.Picture,
-		Radius = 6,
+		Radius = 8,
 		Clips = true,
 		ZIndex = 2,
 	})
@@ -394,33 +478,12 @@ local function itemCard(item: any, order: number, onClick: (() -> ())?, kind: st
 		ScaleType = Enum.ScaleType.Fit,
 		Parent = picture,
 	})
-	if bundle then
-		local tag = Kit.frame({
-			Name = "Set",
-			Parent = picture,
-			Size = UDim2.fromOffset(0, 18),
-			AutomaticSize = Enum.AutomaticSize.X,
-			Position = UDim2.fromOffset(5, 5),
-			Color = T.Purple,
-			Radius = "pill",
-		})
-		Kit.pad(tag, 8, 0)
-		Kit.text("Set", {
-			Parent = tag,
-			Size = UDim2.fromOffset(0, 18),
-			AutomaticSize = Enum.AutomaticSize.X,
-			TextSize = 12,
-			Font = Kit.Fonts.Bold,
-			Color = T.Dark,
-			Wrap = false,
-		})
-	end
-	-- the tick on what they have on: a dark disc with a yellow check, on the picture's corner
+	-- the tick on what they have on: a dark disc with a yellow check, on the square's corner
 	local worn = Kit.disc({
 		Name = "Worn",
 		Parent = card,
 		Size = 24,
-		Position = UDim2.new(1, -9, 0, 9),
+		Position = UDim2.fromOffset(CARD_W - 6, 6),
 		AnchorPoint = Vector2.new(1, 0),
 		Color = T.Dark,
 		Icon = "check",
@@ -432,16 +495,27 @@ local function itemCard(item: any, order: number, onClick: (() -> ())?, kind: st
 	Kit.title(item.Name or "", {
 		Name = "Name",
 		Parent = card,
-		Size = UDim2.new(1, -12, 0, 38),
-		Position = UDim2.fromOffset(6, CARD_FOOT + math.floor((CARD_H - CARD_FOOT - 38) / 2)),
-		TextSize = 15,
-		AlignX = Enum.TextXAlignment.Center,
+		Size = UDim2.new(1, -4, 0, 34),
+		Position = UDim2.fromOffset(2, CARD_PIC + 4),
+		TextSize = 14,
+		AlignY = Enum.TextYAlignment.Top,
 		ZIndex = 2,
 	}).TextTruncate =
 		Enum.TextTruncate.AtEnd
+	Kit.text(card:GetAttribute("Kind") :: string, {
+		Name = "Sub",
+		Parent = card,
+		Size = UDim2.new(1, -4, 0, 16),
+		Position = UDim2.fromOffset(2, CARD_PIC + 4 + 34),
+		TextSize = 13,
+		Font = Kit.Fonts.Bold,
+		Color = T.InkSoft,
+		Wrap = false,
+		ZIndex = 2,
+	})
 	local scale = Kit.new("UIScale", { Parent = card })
 	card.MouseEnter:Connect(function()
-		TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Scale = 1.05 }):Play()
+		TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Scale = 1.04 }):Play()
 	end)
 	card.MouseLeave:Connect(function()
 		TweenService:Create(scale, TweenInfo.new(0.15), { Scale = 1 }):Play()
@@ -1308,21 +1382,20 @@ local function askPage(tab: any)
 	note(text, button, if button then askAccess else nil)
 end
 
--- Lays the search row, the filter row and the cards out under one another, leaving no gap for a
--- row that isn't there.
+-- Shows what the header offers for the section you are in: the search box and the sort only
+-- where the catalog is searched (dimmed, and taking no words, where it isn't), the row of kinds
+-- only where there is more than one.
 local function layoutBrowse(showSearch: boolean, showFilterRow: boolean)
-	searchRow.Visible = showSearch
+	searchBox.TextEditable = showSearch
+	searchBox.PlaceholderText = if showSearch then "Search" else "Nothing to search here"
+	searchRow:SetAttribute("Off", not showSearch)
+	local glass = searchRow:FindFirstChild("Glass")
+	if glass then
+		Kit.recolorIcon(glass, if showSearch then T.InkSoft else T.Line, T.PaperDark)
+	end
+	sortButton.Visible = showSearch
 	filterRow.Visible = showFilterRow
-	local y = 0
-	if showSearch then
-		y += ROW_H + 8
-	end
-	filterRow.Position = UDim2.fromOffset(0, y)
-	if showFilterRow then
-		y += ROW_H + 8
-	end
-	content.Position = UDim2.fromOffset(0, y)
-	content.Size = UDim2.new(1, 0, 1, -y)
+	filterRow.Size = UDim2.new(1, if showSearch then -(SORT_W + 8) else 0, 0, FILTER_H)
 end
 
 local function showFilters(tab: any)
@@ -1340,18 +1413,30 @@ local function showFilters(tab: any)
 	if not filters or not open then
 		return
 	end
+	-- smaller words than the sections', the picked one underlined
 	for i, f in filters do
 		local on = i == filterIndex
-		local b = Kit.button(f.name, {
-			Parent = filterRow,
-			Size = UDim2.fromOffset(0, ROW_H),
-			AutomaticSize = Enum.AutomaticSize.X,
-			TextSize = 14,
-			Color = if on then T.Yellow else T.Card,
-			TextColor = if on then T.Dark else T.Ink,
+		local b = Kit.new("TextButton", {
+			Name = f.name,
+			Text = f.name,
+			Font = Kit.Fonts.Title,
+			TextSize = 15,
+			TextColor3 = if on then T.Ink else T.InkSoft,
+			AutoButtonColor = false,
+			BackgroundTransparency = 1,
+			Size = UDim2.fromOffset(textWidth(f.name, 15) + WORD_PAD * 2, FILTER_H),
 			LayoutOrder = i,
+			Parent = filterRow,
 		})
-		Kit.pad(b, 12, 0)
+		Kit.frame({
+			Name = "Underline",
+			Parent = b,
+			Size = UDim2.new(1, -WORD_PAD * 2 + 6, 0, 2),
+			Position = UDim2.new(0, WORD_PAD - 3, 1, -3),
+			Color = T.Yellow,
+			Radius = "pill",
+			Visible = on,
+		})
 		b.Activated:Connect(function()
 			filterIndex = i
 			showFilters(tab)
@@ -1394,6 +1479,202 @@ end
 
 -- Profile page ---------------------------------------------------------------------------------------
 
+-- Follows a press on `hit` and a drag that starts there, calling `at(t)` with how far along it is
+-- (0 at the left end, 1 at the right) until the button or finger is let go.
+local function dragAlong(hit: GuiButton, at: (number) -> ())
+	local dragging = false
+	local function fromX(x: number)
+		local w = math.max(1, hit.AbsoluteSize.X)
+		at(math.clamp((x - hit.AbsolutePosition.X) / w, 0, 1))
+	end
+	hit.InputBegan:Connect(function(input)
+		if
+			input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch
+		then
+			dragging = true
+			fromX(input.Position.X)
+		end
+	end)
+	local moved, ended
+	moved = UserInputService.InputChanged:Connect(function(input)
+		if not hit.Parent then
+			moved:Disconnect()
+			return
+		end
+		if
+			dragging
+			and (
+				input.UserInputType == Enum.UserInputType.MouseMovement
+				or input.UserInputType == Enum.UserInputType.Touch
+			)
+		then
+			fromX(input.Position.X)
+		end
+	end)
+	ended = UserInputService.InputEnded:Connect(function(input)
+		if not hit.Parent then
+			ended:Disconnect()
+			return
+		end
+		if
+			input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch
+		then
+			dragging = false
+		end
+	end)
+end
+
+-- A slider with `count` stops along one track, each marked by a small disc in its own colour, a
+-- knob on the picked one and the track filled up to it. A click or a tap anywhere on it picks the
+-- nearest stop; dragging slides the knob from stop to stop. `y` is where the track runs, in the
+-- holder. Returns { set(i), onPick(i) }.
+local function stopSlider(
+	holder: Frame,
+	count: number,
+	y: number,
+	colorOf: (number) -> Color3,
+	nameOf: (number) -> string
+): { set: (number) -> (), onPick: (number) -> () }
+	local api = { onPick = function(_: number) end } :: any
+	local inset = 14 -- the first and last stop stand this far in from the ends
+	local track = Kit.frame({
+		Name = "Track",
+		Parent = holder,
+		Size = UDim2.new(1, -inset * 2, 0, 8),
+		Position = UDim2.fromOffset(inset, y - 4),
+		Color = T.PaperDark,
+		Radius = "pill",
+	})
+	Kit.rim(track, T.Line, 1)
+	local fill = Kit.frame({ Name = "Fill", Parent = track, Size = UDim2.fromScale(0, 1), Color = T.Yellow, Radius = "pill" })
+	for i = 1, count do
+		local t = (i - 1) / (count - 1)
+		local stop = Kit.disc({
+			Name = "Swatch",
+			Parent = holder,
+			Size = 14,
+			Position = UDim2.new(t, inset - 7 - math.floor(inset * 2 * t), 0, y - 7),
+			Color = colorOf(i),
+			Ring = T.Dark,
+			ZIndex = 2,
+		})
+		stop:SetAttribute("Stop", nameOf(i))
+		Kit.text(nameOf(i), {
+			Name = "StopName",
+			Parent = holder,
+			Size = UDim2.fromOffset(90, 16),
+			Position = UDim2.new(t, inset - 45 - math.floor(inset * 2 * t), 0, y + 14),
+			TextSize = 12,
+			Font = Kit.Fonts.Bold,
+			Color = T.InkSoft,
+			AlignX = Enum.TextXAlignment.Center,
+			Wrap = false,
+		})
+	end
+	local knob = Kit.frame({
+		Name = "Knob",
+		Parent = holder,
+		Size = UDim2.fromOffset(26, 26),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Color = T.Yellow,
+		Radius = "round",
+		ZIndex = 3,
+	})
+	Kit.rim(knob, T.Dark, 2.5)
+	local hit = Kit.new("TextButton", {
+		Name = "Slide",
+		Text = "",
+		BackgroundTransparency = 1,
+		Size = UDim2.new(1, 0, 0, 44),
+		Position = UDim2.fromOffset(0, y - 22),
+		ZIndex = 4,
+		Parent = holder,
+	})
+	local current = 0
+	function api.set(i: number)
+		current = i
+		local t = (i - 1) / (count - 1)
+		knob.Position = UDim2.new(t, inset - math.floor(inset * 2 * t), 0, y)
+		fill.Size = UDim2.fromScale(t, 1)
+		holder:SetAttribute("Picked", i)
+	end
+	dragAlong(hit, function(t)
+		-- the stops stand `inset` in from each end: measure along the run between them
+		local w = math.max(1, hit.AbsoluteSize.X)
+		local run = (t * w - inset) / math.max(1, w - inset * 2)
+		local i = math.clamp(math.floor(run * (count - 1) + 0.5) + 1, 1, count)
+		if i ~= current then
+			api.onPick(i)
+		end
+	end)
+	return api
+end
+
+-- The palette as one bar of colours side by side, a knob on the picked one. A click picks the
+-- colour under it; dragging slides along. Returns { set(i), onPick(i) }.
+local function paletteBar(holder: Frame, size: UDim2): { set: (number) -> (), onPick: (number) -> () }
+	local api = { onPick = function(_: number) end } :: any
+	local n = #Palette.Colors
+	local bar = Kit.frame({
+		Name = "Palette",
+		Parent = holder,
+		Size = size,
+		Color = T.PaperDark,
+		Radius = 10,
+		Clips = true,
+	})
+	Kit.rim(bar, T.Line, 1)
+	local strip = Kit.box({ Parent = bar, Size = UDim2.fromScale(1, 1) })
+	Kit.list(strip, 0, true)
+	for i, hex in Palette.Colors do
+		Kit.frame({
+			Name = "Swatch",
+			Parent = strip,
+			Size = UDim2.new(1 / n, 0, 1, 0),
+			Color = Colors.fromHex(hex),
+			Radius = false,
+			LayoutOrder = i,
+		})
+	end
+	-- the knob: a ring round the picked colour, standing a little proud of the bar
+	local knob = Kit.frame({
+		Name = "Knob",
+		Parent = holder,
+		Size = UDim2.new(0, 16, 0, size.Y.Offset + 8),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Color = T.White,
+		Transparency = 1,
+		Radius = 6,
+		ZIndex = 3,
+	})
+	Kit.rim(knob, T.Dark, 4)
+	local inner = Kit.frame({ Name = "Knob", Parent = knob, Color = T.White, Transparency = 1, Radius = 5 })
+	Kit.rim(inner, T.White, 2)
+	local hit = Kit.new("TextButton", {
+		Name = "Slide",
+		Text = "",
+		BackgroundTransparency = 1,
+		Size = size,
+		ZIndex = 4,
+		Parent = holder,
+	})
+	function api.set(i: number)
+		local scaleW = size.X.Scale
+		local offW = size.X.Offset
+		local t = (i - 0.5) / n
+		knob.Position = UDim2.new(scaleW * t, offW * t, 0, size.Y.Offset / 2)
+		holder:SetAttribute("Picked", i)
+	end
+	dragAlong(hit, function(t)
+		local i = math.clamp(math.floor(t * n) + 1, 1, n)
+		api.onPick(i)
+	end)
+	return api
+end
+
+
 local function buildProfilePage()
 	for _, c in profilePage:GetChildren() do
 		if c:IsA("GuiObject") then
@@ -1429,75 +1710,73 @@ local function buildProfilePage()
 		profile.name = nameBox.Text
 	end)
 	heading("Personality", 3)
-	local persGrid = Kit.box({
-		Parent = scroll,
-		Size = UDim2.new(1, -10, 0, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
-		LayoutOrder = 4,
+	-- One track with a stop for each personality (the user: "the personality should be a
+	-- slider"): the one picked big over it with its line under it in its own colour; click or tap
+	-- a stop, or drag the knob along.
+	local pers = Kit.box({ Name = "Personality", Parent = scroll, Size = UDim2.new(1, -10, 0, 108), LayoutOrder = 4 })
+	local persName = Kit.title("", {
+		Name = "Picked",
+		Parent = pers,
+		Size = UDim2.new(1, 0, 0, 28),
+		TextSize = 24,
+		Wrap = false,
 	})
-	Kit.grid(persGrid, UDim2.new(0.5, -4, 0, 64), 8)
-	-- a card each: a disc in the personality's own colour, its name and what they are like; the
-	-- one they are is yellow with dark words, like anything picked
-	local persButtons: { [string]: TextButton } = {}
-	local function refreshPers()
-		for id, b in persButtons do
-			local on = id == profile.pers
-			Kit.paintCut(b, if on then T.Yellow else T.Card)
-			for _, l in b:GetChildren() do
-				if l:IsA("TextLabel") then
-					l.TextColor3 = if on then T.Dark elseif l.Name == "Blurb" then T.InkSoft else T.Ink
-				end
-			end
+	local persBlurb = Kit.text("", {
+		Name = "Blurb",
+		Parent = pers,
+		Size = UDim2.new(1, 0, 0, 20),
+		Position = UDim2.fromOffset(0, 30),
+		TextSize = 15,
+		Wrap = false,
+	})
+	local list = Personalities.list
+	local stops = stopSlider(pers, #list, 62, function(i)
+		return Colors.fromHex(list[i].color)
+	end, function(i)
+		return list[i].name
+	end)
+	local function showPers(i: number)
+		local p = list[i]
+		profile.pers = p.id
+		persName.Text = p.name
+		persBlurb.Text = p.blurb
+		persBlurb.TextColor3 = Kit.tint(Colors.fromHex(p.color))
+		persBlurb:SetAttribute("Tint", p.color)
+		stops.set(i)
+	end
+	local at = 1
+	for i, p in list do
+		if p.id == profile.pers then
+			at = i
 		end
 	end
-	for i, p in Personalities.list do
-		local b = Kit.new("TextButton", {
-			Name = p.name,
-			Text = "",
-			AutoButtonColor = false,
-			BackgroundTransparency = 1,
-			LayoutOrder = i,
-			Parent = persGrid,
-		})
-		local shape = Kit.cutInto(b, T.Card, 12)
-		Kit.rim(shape, T.Line, 1)
-		-- its colour as a round mark in a dark ring (so a yellow one still shows on the yellow card)
-		Kit.disc({
-			Name = "Swatch",
-			Parent = b,
-			Size = 28,
-			Position = UDim2.fromOffset(10, 18),
-			Color = Colors.fromHex(p.color),
-			Ring = T.Dark,
-		})
-		Kit.title(p.name, {
-			Name = "Title",
-			Parent = b,
-			Size = UDim2.new(1, -60, 0, 24),
-			Position = UDim2.fromOffset(48, 6),
-			TextSize = 18,
-			Wrap = false,
-		})
-		Kit.text(p.blurb, {
-			Name = "Blurb",
-			Parent = b,
-			Size = UDim2.new(1, -60, 0, 32),
-			Position = UDim2.fromOffset(48, 29),
-			TextSize = 13,
-			AlignY = Enum.TextYAlignment.Top,
-		})
-		persButtons[p.id] = b
-		b.Activated:Connect(function()
-			profile.pers = p.id
-			refreshPers()
-		end)
-	end
-	refreshPers()
+	stops.onPick = showPers
+	showPers(at)
+
 	heading("Favourite colour", 5)
-	colourGrid(scroll, Palette.Colors, 26, profile.color, function(hex)
+	-- One bar of the palette's colours side by side (the user: "the color a pallette bar
+	-- slider"), a knob on the one picked and a chip beside it showing it. It snaps to the
+	-- palette's own colours: the ones the rest of the game paints with.
+	local colours = Kit.box({ Name = "Colour", Parent = scroll, Size = UDim2.new(1, -10, 0, 40), LayoutOrder = 6 })
+	local chip = Kit.frame({
+		Name = "Swatch",
+		Parent = colours,
+		Size = UDim2.fromOffset(40, 40),
+		Position = UDim2.new(1, -40, 0, 0),
+		Color = studioColor(),
+		Radius = 10,
+	})
+	Kit.rim(chip, T.Line, 1.5)
+	local bar = paletteBar(colours, UDim2.new(1, -52, 0, 40))
+	local index = table.find(Palette.Colors, (profile.color or ""):upper()) or 1
+	bar.onPick = function(i: number)
+		local hex = Palette.Colors[i]
 		profile.color = hex
+		chip.BackgroundColor3 = Colors.fromHex(hex)
+		bar.set(i)
 		paintStudio()
-	end, 6)
+	end
+	bar.set(index)
 	heading("Birthday", 7)
 	local seasons = {}
 	for i, name in Schema.Seasons do
@@ -2022,9 +2301,10 @@ local function build()
 		Wrap = false,
 	})
 
-	-- Everything to choose from is one panel on the right, a slab with two corners cut, its
-	-- villager's favourite colour glowing in from the top right (paintStudio). The villager's
-	-- side of the screen stays clear but for the tools in one card at the bottom left.
+	-- Everything to choose from is one panel on the right, a rounded card, its villager's
+	-- favourite colour glowing in from the top right (paintStudio). The villager's side of the
+	-- screen stays clear (the user: "remove this tooltip in character creation": dragging turns
+	-- them and the wheel or a pinch zooms, as before, without a line saying so).
 	local holder = Kit.frame({
 		Name = "PanelHolder",
 		Size = UDim2.new(0, PANEL_W + PANEL_PAD * 2, 1, -28),
@@ -2075,131 +2355,221 @@ local function build()
 	profilePage =
 		Kit.box({ Parent = panel, Size = UDim2.new(1, 0, 1, -58), Position = UDim2.fromOffset(0, 58), Visible = false })
 
-	-- The sections, as a block of tiles in a dark well of their own (an icon over a name on the
-	-- tile's band; the picked one yellow with dark words, as in Build mode's categories). There
-	-- are more of them than fit across, and a row that scrolled sideways hid the last ones from
-	-- anyone without a touch screen, so they wrap: eight to a row, every one in reach.
-	local ICONS = {
-		wearing = "person",
-		hair = "hair",
-		heads = "smile",
-		accessories = "hat",
-		tops = "shirt",
-		bottoms = "pants",
-		shoes = "shoe",
-		bodies = "figure",
-		parts = "limbs",
-		moves = "music",
-		skin = "brush",
-		shape = "ruler",
-		inventory = "backpack",
-		outfits = "hanger",
-		avatars = "idcard",
-		people = "people",
-	}
-	local PER_ROW, CELL_W, CELL_H, GAP_X, GAP_Y, WELL = 8, 87, 60, 2, 4, 5
-	local railRows = math.ceil(#Categories.Tabs / PER_ROW)
-	local railH = railRows * CELL_H + (railRows - 1) * GAP_Y
-	local railWell = Kit.frame({
-		Name = "RailWell",
-		Parent = lookPage,
-		Size = UDim2.new(1, 0, 0, railH + WELL * 2),
-		Color = T.PaperDark,
-		Radius = 14,
-	})
-	Kit.rim(railWell, T.Line, 1)
-	local rail = Kit.box({
-		Name = "Rail",
-		Parent = railWell,
-		Size = UDim2.new(1, -WELL * 2, 0, railH),
-		Position = UDim2.fromOffset(WELL, WELL),
-	})
-	local railGrid = Kit.grid(rail, UDim2.fromOffset(CELL_W, CELL_H), GAP_X)
-	railGrid.CellPadding = UDim2.fromOffset(GAP_X, GAP_Y)
-	railGrid.FillDirectionMaxCells = PER_ROW
-	local railButtons: { [string]: TextButton } = {}
-	local function markRail(id: string)
-		for bid, b in railButtons do
-			local on = bid == id
-			Kit.setButtonColor(b, if on then T.Yellow else T.Card, if on then T.Dark else T.Ink)
-		end
-	end
-	for i, t in Categories.Tabs do
-		local b = Kit.tile(ICONS[t.id] or "person", t.name, {
-			Parent = rail,
-			LayoutOrder = i,
-			Size = UDim2.fromOffset(CELL_W, CELL_H),
-			Color = T.Card,
-			TextSize = 13,
-		}, function()
-			filterIndex = 1
-			markRail(t.id)
-			selectTab(t.id)
-		end)
-		railButtons[t.id] = b
-	end
-	markRail(tabId)
-	markTab = markRail
-	local browse = Kit.box({
-		Parent = lookPage,
-		Size = UDim2.new(1, 0, 1, -(railH + WELL * 2 + 12)),
-		Position = UDim2.fromOffset(0, railH + WELL * 2 + 12),
-	})
+	-- The Look step is laid out the way avatar catalog screens are (the user, with a picture of
+	-- one: "for the left side, the interface for look should be like the second image"): the
+	-- search box at the top left, the sections as a row of words beside it with the one you are in
+	-- underlined, the kinds inside that section as a second row of smaller words, the cards five
+	-- to a row, and along the bottom the box to copy someone's avatar at the left and a row of
+	-- square icon buttons at the right. Drawn our own way.
+	local HEAD_H = SECTION_H + 6 + FILTER_H
+	local header = Kit.box({ Name = "Header", Parent = lookPage, Size = UDim2.new(1, 0, 0, HEAD_H) })
 
-	-- the search box and the sort, one row the width of the panel, as tall as the filters under
-	-- it (what was typed and the sort picked are kept when the screen is built again)
-	local SORT_W = 170
-	searchRow = Kit.box({ Name = "Search", Parent = browse, Size = UDim2.new(1, 0, 0, ROW_H) })
+	-- the search box, at the top left (what was typed is kept when the screen is built again)
+	searchRow = Kit.box({ Name = "Search", Parent = header, Size = UDim2.fromOffset(SEARCH_W, SECTION_H) })
 	local well = Kit.frame({
 		Name = "Well",
 		Parent = searchRow,
-		Size = UDim2.new(1, -(SORT_W + 8), 1, 0),
 		Color = T.PaperDark,
 		Radius = "pill",
 	})
 	Kit.rim(well, T.Line, 1)
-	local lean = 6 -- clear of its round end
 	Icons.make("zoom", 18, {
+		Name = "Glass",
 		Parent = searchRow,
-		Position = UDim2.new(0, lean + 8, 0.5, -9),
+		Position = UDim2.new(0, 14, 0.5, -9),
 		Color = T.InkSoft,
 		Hole = T.PaperDark,
 		ZIndex = 2,
 	})
-	searchBox = Kit.textbox("Search the catalog", {
+	searchBox = Kit.textbox("Search", {
 		Parent = searchRow,
-		Size = UDim2.new(1, -(SORT_W + 8 + lean * 2 + 32), 1, 0),
+		Size = UDim2.new(1, -52, 1, 0),
 		Text = keyword,
 		TextSize = 16,
 	})
-	searchBox.Position = UDim2.fromOffset(lean + 32, 0)
+	searchBox.Position = UDim2.fromOffset(38, 0)
 	searchBox.BackgroundTransparency = 1
 	searchBox.ZIndex = 2
 	local boxPad = searchBox:FindFirstChildOfClass("UIPadding")
 	if boxPad then
-		boxPad.PaddingLeft = UDim.new(0, 4)
+		boxPad.PaddingLeft = UDim.new(0, 2)
 	end
 	searchBox.FocusLost:Connect(function()
+		if not searchBox.TextEditable then
+			return
+		end
 		keyword = Text.clean(searchBox.Text):sub(1, 50)
 		search()
 	end)
-	local function sortWords(id: string): string
-		local name = Categories.Sorts[1].name
-		for _, sort in Categories.Sorts do
-			if sort.id == id then
-				name = sort.name
+
+	-- the sections, as a row of words beside it: more than fit, so it scrolls sideways, with an
+	-- arrow at each end (and the wheel) to bring the rest into view
+	local sectionsW = PANEL_W - SEARCH_W - 12
+	local strip = Kit.box({
+		Name = "SectionsStrip",
+		Parent = header,
+		Size = UDim2.fromOffset(sectionsW, SECTION_H),
+		Position = UDim2.fromOffset(SEARCH_W + 12, 0),
+	})
+	local viewW = sectionsW - ARROW * 2 - 8
+	local sections = Kit.new("ScrollingFrame", {
+		Name = "Sections",
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Size = UDim2.fromOffset(viewW, SECTION_H),
+		Position = UDim2.fromOffset(ARROW + 4, 0),
+		ScrollingDirection = Enum.ScrollingDirection.X,
+		ScrollBarThickness = 0,
+		ElasticBehavior = Enum.ElasticBehavior.Never,
+		Parent = strip,
+	})
+	local words: { TextButton } = {}
+	local wordAt: { number } = {}
+	local wordW: { number } = {}
+	local wordIndex: { [string]: number } = {}
+	local x = 0
+	for i, t in Categories.Tabs do
+		local w = textWidth(t.name, 17) + WORD_PAD * 2
+		local b = Kit.new("TextButton", {
+			Name = t.name,
+			Text = t.name,
+			Font = Kit.Fonts.Title,
+			TextSize = 17,
+			TextColor3 = T.InkSoft,
+			AutoButtonColor = false,
+			BackgroundTransparency = 1,
+			Size = UDim2.fromOffset(w, SECTION_H),
+			Position = UDim2.fromOffset(x, 0),
+			Parent = sections,
+		})
+		-- the line under the one you are in
+		Kit.frame({
+			Name = "Underline",
+			Parent = b,
+			Size = UDim2.new(1, -WORD_PAD * 2 + 8, 0, 3),
+			Position = UDim2.new(0, WORD_PAD - 4, 1, -4),
+			Color = T.Yellow,
+			Radius = "pill",
+			Visible = false,
+		})
+		b.Activated:Connect(function()
+			filterIndex = 1
+			selectTab(t.id)
+		end)
+		words[i], wordAt[i], wordW[i], wordIndex[t.id] = b, x, w, i
+		x += w
+	end
+	local total = x
+	sections.CanvasSize = UDim2.fromOffset(total, 0)
+	-- the first word in view; the row starts at it
+	local first = 1
+	local function lastShown(from: number): number
+		local last = from
+		for i = from, #words do
+			if wordAt[i] + wordW[i] - wordAt[from] <= viewW + 0.5 then
+				last = i
 			end
 		end
-		return Text.fill("Sort: {name}", { name = name })
+		return last
 	end
+	-- the furthest the row can go: the start that still ends with the last word in view
+	local maxFirst = #words
+	for i = #words, 1, -1 do
+		if total - wordAt[i] <= viewW then
+			maxFirst = i
+		end
+	end
+	local back, ahead
+	local function scrollTo(i: number)
+		first = math.clamp(i, 1, maxFirst)
+		sections.CanvasPosition = Vector2.new(wordAt[first], 0)
+		sections:SetAttribute("First", first)
+		sections:SetAttribute("LastShown", lastShown(first))
+		-- an arrow is dim when there is nothing more that way
+		for _, pair in { { back, first > 1 }, { ahead, first < maxFirst } } do
+			local art = pair[1]:FindFirstChild("IconArt", true)
+			if art then
+				Kit.recolorIcon(art, if pair[2] then T.Ink else T.Line, T.Card)
+			end
+		end
+	end
+	local function arrow(name: string, flip: boolean, onClick: () -> ()): TextButton
+		local b = Kit.new("TextButton", {
+			Name = name,
+			Text = "",
+			AutoButtonColor = false,
+			BackgroundColor3 = T.Card,
+			Size = UDim2.fromOffset(ARROW, ARROW),
+			Position = if flip then UDim2.new(1, -ARROW, 0.5, -ARROW / 2) else UDim2.new(0, 0, 0.5, -ARROW / 2),
+			Parent = strip,
+		})
+		Kit.corner(b, "round")
+		Kit.rim(b, T.Line, 1)
+		local art = Icons.make("back", 16, {
+			Name = "IconArt",
+			Parent = b,
+			Position = UDim2.new(0.5, -8, 0.5, -8),
+			Color = T.Ink,
+			Hole = T.Card,
+		})
+		if flip then
+			art.Rotation = 180
+		end
+		b.Activated:Connect(onClick)
+		return b
+	end
+	back = arrow("Earlier sections", false, function()
+		-- back a page: the earliest start that still shows the word now first
+		local i = first
+		while i > 1 and wordAt[first] + wordW[first] - wordAt[i - 1] <= viewW do
+			i -= 1
+		end
+		scrollTo(if i == first then first - 1 else i)
+	end)
+	ahead = arrow("More sections", true, function()
+		-- on a page: the first word not wholly in view starts the next one
+		scrollTo(lastShown(first) + 1)
+	end)
+	-- the wheel over the row moves it a word at a time
+	sections.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseWheel then
+			scrollTo(first + (if input.Position.Z < 0 then 1 else -1))
+		end
+	end)
+	local function markSection(id: string)
+		for i, b in words do
+			local on = Categories.Tabs[i].id == id
+			b.TextColor3 = if on then T.Ink else T.InkSoft
+			local line = b:FindFirstChild("Underline")
+			if line and line:IsA("GuiObject") then
+				line.Visible = on
+			end
+		end
+		-- the one you are in is always in view
+		local i = wordIndex[id]
+		if i and (i < first or i > lastShown(first)) then
+			local start = i
+			while start > 1 and wordAt[i] + wordW[i] - wordAt[start - 1] <= viewW do
+				start -= 1
+			end
+			scrollTo(if i < first then i else start)
+		end
+	end
+	scrollTo(1)
+	markSection(tabId)
+	markTab = markSection
+
+	-- the kinds inside the section, as a second row of smaller words under it, and the sort at
+	-- the row's end
 	sortButton = Kit.button(sortWords(sortId), {
 		Name = "Sort",
-		Parent = searchRow,
-		Size = UDim2.fromOffset(SORT_W, ROW_H),
-		Position = UDim2.new(1, -SORT_W, 0, 0),
+		Parent = header,
+		Size = UDim2.fromOffset(SORT_W, FILTER_H),
+		Position = UDim2.new(1, -SORT_W, 0, SECTION_H + 6),
 		Color = T.Card,
 		TextColor = T.Ink,
-		TextSize = 15,
+		TextSize = 14,
+		Icon = "layers",
 	})
 	sortButton.Activated:Connect(function()
 		local i = 1
@@ -2215,25 +2585,38 @@ local function build()
 	end)
 	filterRow = Kit.scroll({
 		Name = "Filters",
-		Parent = browse,
-		Size = UDim2.new(1, 0, 0, ROW_H),
-		Position = UDim2.fromOffset(0, ROW_H + 8),
+		Parent = header,
+		Size = UDim2.new(1, -(SORT_W + 8), 0, FILTER_H),
+		Position = UDim2.fromOffset(0, SECTION_H + 6),
 		Axis = Enum.AutomaticSize.X,
 	})
-	filterRow.ScrollBarThickness = 3
-	Kit.list(filterRow, 4, true)
+	filterRow.ScrollBarThickness = 0
+	Kit.list(filterRow, 0, true)
+	-- a quiet line under the two rows
+	Kit.frame({
+		Name = "Divider",
+		Parent = lookPage,
+		Size = UDim2.new(1, 0, 0, 1),
+		Position = UDim2.fromOffset(0, HEAD_H + 6),
+		Color = T.Line,
+		Radius = false,
+	})
 
+	-- the cards, or the page the section is (skin, shape, outfits, players...)
+	local top = HEAD_H + 14
+	local bottom = BOTTOM_H + 6 + CAPTION_H
 	content = Kit.box({
-		Parent = browse,
-		Size = UDim2.new(1, 0, 1, -(ROW_H + 8) * 2),
-		Position = UDim2.fromOffset(0, (ROW_H + 8) * 2),
+		Name = "Content",
+		Parent = lookPage,
+		Size = UDim2.new(1, 0, 1, -(top + bottom + 6)),
+		Position = UDim2.fromOffset(0, top),
 	})
 	grid = Kit.scroll({ Parent = content, Size = UDim2.new(1, 0, 1, -48) })
 	grid.ScrollBarThickness = 4
 	grid.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
 	-- five cards to a row, spaced to fill the panel's width
-	local cardGrid = Kit.grid(grid, UDim2.fromOffset(128, 160), 12)
-	cardGrid.CellPadding = UDim2.fromOffset(math.floor((PANEL_W - 4 - 5 * 128) / 4), 12)
+	local cardGrid = Kit.grid(grid, UDim2.fromOffset(CARD_W, CARD_H), 12)
+	cardGrid.CellPadding = UDim2.fromOffset(math.floor((PANEL_W - 4 - 5 * CARD_W) / 4), 14)
 	loadMore = Kit.button("Show more", {
 		Parent = content,
 		Size = UDim2.new(1, 0, 0, 40),
@@ -2243,17 +2626,22 @@ local function build()
 		Icon = "down",
 	}, more)
 
-	-- the tools under the villager, in one card at the bottom left: copy someone's avatar, then
-	-- a row of tiles (an icon over its name, as in Build mode's tools), each part under a dim
-	-- caption of its own
-	local TOOL_W, TOOL_H, CARD_PAD, CAP_H = 64, 60, 12, 20
+	-- along the bottom: copy somebody's avatar at the left, and the tools at the right as square
+	-- icon buttons; what the one under the pointer does is said in a small line over them
+	local foot = Kit.box({
+		Name = "Footer",
+		Parent = lookPage,
+		Size = UDim2.new(1, 0, 0, BOTTOM_H),
+		Position = UDim2.new(0, 0, 1, -BOTTOM_H),
+	})
 	local toolList = {
-		{ "undo", "Undo", undo },
-		{ "redo", "Redo", redo },
-		{ "dice", "Shuffle", shuffle },
+		{ "undo", "Undo", "Undo", undo },
+		{ "redo", "Redo", "Redo", redo },
+		{ "dice", "Shuffle", "Shuffle: a random look", shuffle },
 		{
 			"trash",
 			"Reset",
+			"Reset to a plain look",
 			function()
 				setApp(Appearance.default())
 			end,
@@ -2262,6 +2650,7 @@ local function build()
 		{
 			"zoom",
 			"Zoom",
+			"Zoom: the face, close up, or all of them",
 			function()
 				if zoom > (ZOOM_HOME + ZOOM_WHOLE) / 2 then
 					zoom = ZOOM_FACE
@@ -2273,44 +2662,95 @@ local function build()
 			end,
 		},
 		-- dark or light, here as well as on the main screen (the user asked for it with this
-		-- screen: "along with the option to change to light mode"); it names the look you would get
-		{ Theme.icon(), if Theme.name() == "dark" then "Light" else "Dark", Theme.toggle },
+		-- screen: "along with the option to change to light mode"); it is named for the look you
+		-- would get
+		{
+			Theme.icon(),
+			if Theme.name() == "dark" then "Light" else "Dark",
+			if Theme.name() == "dark" then "Switch to the light look" else "Switch to the dark look",
+			Theme.toggle,
+		},
 	}
-	local cardW = #toolList * TOOL_W + CARD_PAD * 2
-	local toolCard = Kit.frame({
+	local toolsW = #toolList * TOOL_SQ + (#toolList - 1) * 6
+	local tools = Kit.box({
 		Name = "Tools",
-		Size = UDim2.fromOffset(cardW, CARD_PAD * 2 + CAP_H * 2 + ROW_H + 12 + TOOL_H),
-		Position = UDim2.new(0, 16, 1, -14),
-		AnchorPoint = Vector2.new(0, 1),
-		Color = T.Paper,
-		Cut = 12,
-		Parent = frame,
+		Parent = foot,
+		Size = UDim2.fromOffset(toolsW, BOTTOM_H),
+		Position = UDim2.new(1, -toolsW, 0, 0),
 	})
-	Kit.softShadow(toolCard, 1)
-	local function caption(text: string, y: number)
-		Kit.text(text, {
-			Name = "Caption",
-			Parent = toolCard,
-			Size = UDim2.new(1, -CARD_PAD * 2 - 8, 0, CAP_H - 4),
-			Position = UDim2.fromOffset(CARD_PAD + 4, y),
-			TextSize = 13,
-			Font = Kit.Fonts.Bold,
-			Color = T.InkSoft,
+	Kit.list(tools, 6, true)
+	local caption = Kit.text("", {
+		Name = "ToolCaption",
+		Parent = lookPage,
+		Size = UDim2.new(0, 360, 0, CAPTION_H),
+		Position = UDim2.new(1, -360, 1, -(BOTTOM_H + 4 + CAPTION_H)),
+		TextSize = 13,
+		Font = Kit.Fonts.Bold,
+		Color = T.InkSoft,
+		AlignX = Enum.TextXAlignment.Right,
+		Wrap = false,
+	})
+	local captionToken = 0
+	for i, t in toolList do
+		local b = Kit.new("TextButton", {
+			Name = t[2],
+			Text = "",
+			AutoButtonColor = false,
+			BackgroundColor3 = T.Card,
+			Size = UDim2.fromOffset(TOOL_SQ, TOOL_SQ),
+			LayoutOrder = i,
+			Parent = tools,
 		})
+		b:SetAttribute("Caption", t[3])
+		Kit.corner(b, 10)
+		Kit.rim(b, T.Line, 1)
+		Icons.make(t[1], 22, {
+			Name = "IconArt",
+			Parent = b,
+			Position = UDim2.new(0.5, -11, 0.5, -11),
+			Color = T.Ink,
+			Hole = T.Card,
+		})
+		local scale = Kit.new("UIScale", { Parent = b })
+		b.MouseEnter:Connect(function()
+			captionToken += 1
+			caption.Text = t[3]
+			TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Scale = 1.08 }):Play()
+		end)
+		b.MouseLeave:Connect(function()
+			if caption.Text == t[3] then
+				caption.Text = ""
+			end
+			TweenService:Create(scale, TweenInfo.new(0.15), { Scale = 1 }):Play()
+		end)
+		b.Activated:Connect(function()
+			-- (said on a press too, for a touch screen, where nothing hovers)
+			captionToken += 1
+			local token = captionToken
+			caption.Text = t[3]
+			task.delay(1.6, function()
+				if token == captionToken and caption.Parent then
+					caption.Text = ""
+				end
+			end)
+			scale.Scale = 0.92
+			TweenService:Create(scale, TweenInfo.new(0.3, Enum.EasingStyle.Back), { Scale = 1 }):Play()
+			t[4]()
+		end)
 	end
-	caption("Copy an avatar", CARD_PAD - 2)
 	local copy = Kit.box({
 		Name = "Copy",
-		Parent = toolCard,
-		Size = UDim2.new(1, -CARD_PAD * 2, 0, ROW_H),
-		Position = UDim2.fromOffset(CARD_PAD, CARD_PAD + CAP_H),
+		Parent = foot,
+		Size = UDim2.new(1, -(toolsW + 16), 1, 0),
 	})
-	local userBox =
-		inputWell("A Roblox username", { Parent = copy, Size = UDim2.new(1, -168, 0, ROW_H), TextSize = 15 })
+	local userBox = inputWell(
+		"Copy an avatar: a Roblox username",
+		{ Parent = copy, Size = UDim2.new(1, -156, 0, BOTTOM_H), TextSize = 15 }
+	)
 	Kit.button("Copy", {
 		Parent = copy,
-		Size = UDim2.fromOffset(84, ROW_H),
-		Position = UDim2.new(1, -164, 0, 0),
+		Size = UDim2.fromOffset(80, BOTTOM_H),
+		Position = UDim2.new(1, -148, 0, 0),
 		Color = T.Blue,
 		TextSize = 16,
 	}, function()
@@ -2330,8 +2770,8 @@ local function build()
 	end)
 	Kit.button("Me", {
 		Parent = copy,
-		Size = UDim2.fromOffset(76, ROW_H),
-		Position = UDim2.new(1, -76, 0, 0),
+		Size = UDim2.fromOffset(64, BOTTOM_H),
+		Position = UDim2.new(1, -64, 0, 0),
 		Color = T.Green,
 		TextSize = 16,
 	}, function()
@@ -2342,46 +2782,6 @@ local function build()
 			end
 		end)
 	end)
-	-- a quiet line between the two parts
-	Kit.frame({
-		Name = "Divider",
-		Parent = toolCard,
-		Size = UDim2.new(1, -CARD_PAD * 2, 0, 1),
-		Position = UDim2.fromOffset(CARD_PAD, CARD_PAD + CAP_H + ROW_H + 6),
-		Color = T.Line,
-		Radius = false,
-	})
-	caption("Tools", CARD_PAD + CAP_H + ROW_H + 10)
-	local toolRow = Kit.box({
-		Parent = toolCard,
-		Size = UDim2.new(1, -CARD_PAD * 2, 0, TOOL_H),
-		Position = UDim2.fromOffset(CARD_PAD, CARD_PAD + CAP_H * 2 + ROW_H + 12),
-	})
-	Kit.list(toolRow, 0, true)
-	for i, t in toolList do
-		Kit.tile(t[1], t[2], {
-			Parent = toolRow,
-			Size = UDim2.fromOffset(TOOL_W, TOOL_H),
-			LayoutOrder = i,
-			Color = T.Paper,
-		}, t[3])
-	end
-	local tip = Kit.darkPill({
-		Parent = frame,
-		Size = UDim2.fromOffset(0, 34),
-		Position = UDim2.fromOffset(16, 68),
-	})
-	tip.AutomaticSize = Enum.AutomaticSize.X
-	Kit.pad(tip, 8, 0)
-	Kit.text("Drag to turn them round. Scroll or pinch to zoom.", {
-		Parent = tip,
-		Size = UDim2.fromOffset(0, 34),
-		AutomaticSize = Enum.AutomaticSize.X,
-		TextSize = 15,
-		Color = T.White,
-		Font = Kit.Fonts.Bold,
-		Wrap = false,
-	})
 end
 
 -- Opening and closing -----------------------------------------------------------------------------------

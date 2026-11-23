@@ -59,32 +59,48 @@ local function town(inside: Frame, stats: any, payday: number)
 		Color = T.InkSoft,
 	})
 
-	-- what the next level needs, as two bars, and what it brings
+	-- what the next level needs, as a bar for each thing it asks (villagers, worth and, from some
+	-- levels on, villagers at work), and what it brings
 	local nextLevel = stats.nextLevel
+	local STEP = 48
 	if nextLevel then
 		local name = nextLevel.Name:lower()
 		Kit.text(Text.fill("To become {a}", { a = Text.an(name) }), {
 			Name = "Next",
 			Parent = inside,
 			Size = UDim2.new(1, 0, 0, 22),
-			Position = UDim2.fromOffset(0, 92),
+			Position = UDim2.fromOffset(0, 86),
 			TextSize = 17,
 			Font = Kit.Fonts.Bold,
 		})
+		local y = 116
 		local pop, need = stats.population, nextLevel.Pop
 		MenuParts.progress(
 			"Villagers",
 			Text.fill("{a} of {b}", { a = math.min(pop, need), b = need }),
 			pop / math.max(1, need),
-			{ Name = "Villagers", Parent = inside, Position = UDim2.fromOffset(0, 124), Color = accent }
+			{ Name = "Villagers", Parent = inside, Position = UDim2.fromOffset(0, y), Color = accent }
 		)
+		y += STEP
 		local worth, wneed = stats.value, nextLevel.Value
 		MenuParts.progress(
 			"Worth",
 			Text.fill("{a} of {b}", { a = Text.commas(math.min(worth, wneed)), b = Text.commas(wneed) }),
 			worth / math.max(1, wneed),
-			{ Name = "Worth", Parent = inside, Position = UDim2.fromOffset(0, 176), Color = accent, Coin = true }
+			{ Name = "Worth", Parent = inside, Position = UDim2.fromOffset(0, y), Color = accent, Coin = true }
 		)
+		y += STEP
+		local workers = nextLevel.Workers
+		if type(workers) == "number" and workers > 0 then
+			local at = stats.employed or 0
+			MenuParts.progress(
+				"At work",
+				Text.fill("{a} of {b}", { a = math.min(at, workers), b = workers }),
+				at / workers,
+				{ Name = "AtWork", Parent = inside, Position = UDim2.fromOffset(0, y), Color = accent }
+			)
+			y += STEP
+		end
 		local land = landAt(stats.level + 1)
 		MenuParts.note(
 			if land
@@ -94,21 +110,21 @@ local function town(inside: Frame, stats: any, payday: number)
 				})
 				else "Worth goes up with everything you build.",
 			accent,
-			{ Name = "Unlocks", Parent = inside, Position = UDim2.fromOffset(0, 232), Height = 44 }
+			{ Name = "Unlocks", Parent = inside, Position = UDim2.fromOffset(0, y + 4), Height = 24 }
 		)
 	else
 		Kit.text("Your town is as big as towns get.", {
 			Name = "Next",
 			Parent = inside,
 			Size = UDim2.new(1, 0, 0, 22),
-			Position = UDim2.fromOffset(0, 92),
+			Position = UDim2.fromOffset(0, 86),
 			TextSize = 17,
 			Font = Kit.Fonts.Bold,
 		})
 		MenuParts.note(
 			"There's no level after this one. Build whatever you like.",
 			accent,
-			{ Name = "Unlocks", Parent = inside, Position = UDim2.fromOffset(0, 124), Height = 44 }
+			{ Name = "Unlocks", Parent = inside, Position = UDim2.fromOffset(0, 116), Height = 44 }
 		)
 	end
 
@@ -116,10 +132,10 @@ local function town(inside: Frame, stats: any, payday: number)
 	local grid = Kit.box({
 		Name = "Stats",
 		Parent = inside,
-		Size = UDim2.new(1, 0, 0, 82 * 2 + 12),
-		Position = UDim2.new(0, 0, 1, -(82 * 2 + 12)),
+		Size = UDim2.new(1, 0, 0, 76 * 2 + 10),
+		Position = UDim2.new(0, 0, 1, -(76 * 2 + 10)),
 	})
-	Kit.grid(grid, UDim2.new(0.5, -6, 0, 82), 12)
+	Kit.grid(grid, UDim2.new(0.5, -5, 0, 76), 10)
 	MenuParts.stat("people", "Villagers", tostring(stats.population), T.Green, {
 		Name = "People",
 		Parent = grid,

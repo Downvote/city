@@ -1,5 +1,5 @@
--- Pieces the full menus share (City hall, Town goals, the shop, the town news, the map and the
--- villagers), so the six read as one set: the card on the left that shows the picked thing, the
+-- Pieces the full menus share (City hall, Town goals, the town news and the villagers), so they
+-- read as one set: the card on the left that shows the picked thing, the
 -- list down the right, a dim caption over a group of rows, stat tiles for the numbers that
 -- matter, a round dial, what a list says when it is empty, a dim slot for something not there
 -- yet, hint strips and soft one line notes. Built from UI/Kit in the menus' look (charcoal

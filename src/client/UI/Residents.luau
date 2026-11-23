@@ -1,5 +1,7 @@
 -- The villagers screen: everyone in town, how they feel, where they work and sleep, who their
--- friends are, what they like to eat. Change their job or bed, feed them, restyle them.
+-- friends are, what they wish for. Change their job or bed, restyle them, and when one of them
+-- craves something, buy it for them (the user: "when a character gets a craving, allow the
+-- player to simply pay to buy it").
 --
 -- It is laid out as a character screen. The user: "for the villager menu, make the selected
 -- villager have the whole avatar standing next to the list to the left, and a transparnet
@@ -222,61 +224,12 @@ local function pickBed(vid: string)
 	choose("Pick a bed", options)
 end
 
-local function feed(vid: string)
-	local inv = State.data.inv and State.data.inv.food or {}
-	local options = {}
-	local v = State.villager(vid)
-	for _, f in Foods.list do
-		local n = inv[f.id]
-		if n and n > 0 then
-			local known = v and v.known[f.id]
-			local sub = Text.fill("You have {n}", { n = n })
-			if known == "love" then
-				sub ..= ". Their favourite!"
-			elseif known == "hate" then
-				sub ..= ". They can't stand it."
-			end
-			table.insert(options, {
-				label = f.name,
-				sub = sub,
-				item = f.id,
-				color = Colors.fromHex(f.color),
-				fn = function()
-					task.spawn(function()
-						local ok, result = Remotes.fn("VillagerFeed"):InvokeServer(vid, f.id)
-						if ok and v then
-							if result.reaction == "love" then
-								Toasts.show(
-									Text.fill("{name} loves {food}!", { name = v.name, food = f.name:lower() }),
-									"good"
-								)
-							elseif result.reaction == "hate" then
-								Toasts.show(
-									Text.fill("{name} can't stand {food}.", { name = v.name, food = f.name:lower() }),
-									"warn"
-								)
-							else
-								Toasts.show(Text.fill("{name} enjoyed that.", { name = v.name }), "info")
-							end
-						elseif not ok and result then
-							Toasts.show(result, "warn")
-						end
-					end)
-				end,
-			})
-		end
-	end
-	if #options == 0 then
-		Toasts.show("You have no food. The shop in the plaza sells some.", "info")
-		return
-	end
-	choose("Feed them", options)
-end
-
 -- where the stats start on the stage: the villager stands to the left of this
 local INFO_X = 400
 
 -- How they feel, as a colour: the same green, yellow and coral as the dot by their name.
+local wishRow: (Frame, string, any, any, string, number) -> number
+
 local function moodColor(m: number): Color3
 	return if m >= 60 then T.Green elseif m >= 40 then T.Yellow else T.Coral
 end
@@ -298,7 +251,7 @@ local function fact(parent: Instance, label: string, value: string, order: numbe
 end
 
 -- The About tab: how they feel and how close they are to you as two tiles with bars, then where
--- they work and sleep, their birthday and what they eat.
+-- they work and sleep, their birthday and who they're closest to.
 local function about(parent: Frame, vid: string, v: any, p: any)
 	local tiles = Kit.box({ Name = "Tiles", Parent = parent, Size = UDim2.new(1, 0, 0, 90) })
 	Kit.grid(tiles, UDim2.new(0.5, -6, 0, 90), 12)
@@ -353,16 +306,22 @@ local function about(parent: Frame, vid: string, v: any, p: any)
 		Text.fill("{season} {day}", { season = Schema.Seasons[v.bday.s] or "Spring", day = v.bday.d }),
 		3
 	)
-	local likes = {}
-	for food, r in v.known or {} do
-		local f = Foods.get(food)
-		if f and r == "love" then
-			table.insert(likes, "loves " .. f.name:lower())
-		elseif f and r == "hate" then
-			table.insert(likes, "can't stand " .. f.name:lower())
+	-- who they're closest to in town (the Friends tab has the rest)
+	local best, bestScore = nil, -math.huge
+	for other, o in p.villagers do
+		if other ~= vid then
+			local score = Relationships.peek(p, vid, other)
+			if score > bestScore then
+				best, bestScore = o, score
+			end
 		end
 	end
-	fact(grid, "Food", if #likes > 0 then table.concat(likes, ", ") else "Feed them to find out", 4)
+	local closest = "Nobody yet"
+	if best and bestScore >= 10 then
+		local _, levelName = Relationships.level(bestScore)
+		closest = Text.fill("{name}, {how}", { name = best.name, how = levelName:lower() })
+	end
+	fact(grid, "Closest to", closest, 4)
 end
 
 -- The Friends tab: everyone else in town as a row, closest first: how they get on (their
@@ -434,6 +393,146 @@ local function friendsOf(parent: Frame, vid: string, p: any)
 			AnchorPoint = Vector2.new(1, 0.5),
 		}, (r.s + 100) / 200, col)
 	end
+end
+
+-- Buying what a villager craves: the coins go and the wish is granted on the server.
+local buying = false
+local function buyWish(vid: string)
+	if buying then
+		return
+	end
+	buying = true
+	task.spawn(function()
+		local sent, ok, msg = pcall(function()
+			return Remotes.fn("WishBuy"):InvokeServer(vid)
+		end)
+		buying = false
+		if sent and ok then
+			local v = State.villager(vid)
+			Toasts.show(
+				if type(msg) == "string" and msg ~= ""
+					then msg
+					else Text.fill("{name} is pleased.", { name = if v then v.name else "They" }),
+				"good"
+			)
+		elseif sent and type(msg) == "string" then
+			Toasts.show(msg, "warn")
+		end
+	end)
+end
+
+-- A villager's wish, as a row above their buttons, with what you can do about it. A craving
+-- shows the food's picture and a Buy button with its price; without the coins the button is
+-- dim and the row says how many more are needed. Returns the row's height.
+wishRow = function(info: Frame, vid: string, v: any, p: any, wishText: string, bottom: number): number
+	local kind = v.wish.kind
+	local food = if kind == "food" then Foods.get(v.wish.arg) else nil
+	local price = if kind == "food" then Life.wishPrice(p, vid) else nil
+	local coins = State.data.coins or 0
+	local short = if price then math.max(0, price - coins) else 0
+	local h = if food then 62 else 56
+	local row, inside = Kit.row({
+		Name = "Wish",
+		Parent = info,
+		Size = UDim2.new(1, 0, 0, h),
+		Height = h,
+		Marker = if food then nil else "heart",
+		MarkerColor = T.Orange,
+	})
+	row.Position = UDim2.new(0, 0, 1, -(bottom + h))
+	local lean: number = row:GetAttribute("Lean") or 6
+	local textX = lean + h - 2
+	if food then
+		-- the thing they crave, and (when the coins are short) how many more it takes
+		Icons.item(food.id, 44, Colors.fromHex(food.color), {
+			Name = "Craving",
+			Parent = inside,
+			Position = UDim2.new(0, lean + 6, 0.5, -22),
+			ZIndex = 3,
+		})
+		Kit.new("TextLabel", {
+			Name = "Title",
+			Text = Text.fill("Craving {food}", { food = food.name:lower() }),
+			BackgroundTransparency = 1,
+			Font = Kit.Fonts.Title,
+			TextSize = 17,
+			TextColor3 = T.Ink,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextTruncate = Enum.TextTruncate.AtEnd,
+			Size = UDim2.new(1, -(textX + 160), 0, 22),
+			Position = if short > 0 then UDim2.new(0, textX, 0.5, -21) else UDim2.new(0, textX, 0.5, -11),
+			ZIndex = 2,
+			Parent = inside,
+		})
+		if short > 0 then
+			Kit.new("TextLabel", {
+				Name = "Short",
+				Text = Text.fill("You need {n} more coins.", { n = Text.commas(short) }),
+				BackgroundTransparency = 1,
+				Font = Kit.Fonts.Body,
+				TextSize = 14,
+				TextColor3 = T.InkSoft,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextTruncate = Enum.TextTruncate.AtEnd,
+				Size = UDim2.new(1, -(textX + 160), 0, 18),
+				Position = UDim2.new(0, textX, 0.5, 2),
+				ZIndex = 2,
+				Parent = inside,
+			})
+		end
+	else
+		-- the wish can run to two lines
+		Kit.text(wishText, {
+			Name = "Title",
+			Parent = inside,
+			Size = UDim2.new(1, -(textX + 160), 1, -8),
+			Position = UDim2.fromOffset(textX, 4),
+			TextSize = 15,
+			Font = Kit.Fonts.Bold,
+			ZIndex = 2,
+		})
+	end
+	local label, fn, color, icon = nil, nil, T.Orange, nil
+	if food then
+		local afford = short <= 0
+		label = Text.fill("Buy for {n}", { n = Text.commas(price or 0) })
+		color, icon = if afford then T.Green else T.PaperDark, "coin"
+		fn = function()
+			if not afford then
+				Toasts.show(Text.fill("You need {n} more coins.", { n = Text.commas(short) }), "warn")
+				return
+			end
+			buyWish(vid)
+		end
+	elseif kind == "friend" then
+		label, fn = "Introduce", function()
+			call("WishGrant", vid, "friend", v.wish.arg)
+		end
+	elseif kind == "look" then
+		label, fn =
+			"New look", function()
+				local Hud = require(script.Parent.Hud)
+				Hud.open("Creator", { mode = "edit", vid = vid })
+			end
+	else
+		label, fn = "Have a chat", function()
+			call("WishGrant", vid, "cheer")
+		end
+	end
+	local button = Kit.button(label, {
+		Name = if food then "BuyWish" else "WishAnswer",
+		Parent = inside,
+		Size = UDim2.fromOffset(142, 40),
+		Position = UDim2.new(1, -(lean + 10), 0.5, 0),
+		AnchorPoint = Vector2.new(1, 0.5),
+		Color = color,
+		TextColor = if food and short > 0 then T.InkSoft else T.White,
+		TextSize = 15,
+		Icon = icon,
+		ZIndex = 3,
+	}, fn)
+	button:SetAttribute("Disabled", food ~= nil and short > 0)
+	return h
 end
 
 local function showDetail()
@@ -574,21 +673,18 @@ local function showDetail()
 			Wobble = 0,
 		}, fn)
 	end
-	action("pot", "Feed", T.Green, 1, function()
-		feed(vid)
-	end)
-	action("briefcase", "Job", T.Blue, 2, function()
+	action("briefcase", "Job", T.Blue, 1, function()
 		pickJob(vid)
 	end)
-	action("bed", "Bed", T.Purple, 3, function()
+	action("bed", "Bed", T.Purple, 2, function()
 		pickBed(vid)
 	end)
-	action("shirt", "Look", T.Orange, 4, function()
+	action("shirt", "Look", T.Orange, 3, function()
 		local Hud = require(script.Parent.Hud)
 		Hud.open("Creator", { mode = "edit", vid = vid })
 	end)
 	local confirm = false
-	action("door", "Move out", T.Coral, 5, function()
+	action("door", "Move out", T.Coral, 4, function()
 		if not confirm then
 			confirm = true
 			Toasts.show(Text.fill("Press Move out again to say goodbye to {name}.", { name = v.name }), "warn")
@@ -605,58 +701,7 @@ local function showDetail()
 	local bottom = ACT + 12
 	local wishText = Life.wishText(p, vid)
 	if wishText and v.wish then
-		local _, wishInside = Kit.row({
-			Name = "Wish",
-			Parent = info,
-			Size = UDim2.new(1, 0, 0, 56),
-			Height = 56,
-			Marker = "heart",
-			MarkerColor = T.Orange,
-		})
-		-- the wish can run to two lines
-		Kit.text(wishText, {
-			Name = "Title",
-			Parent = wishInside,
-			Size = UDim2.new(1, -(76 + 170), 1, -8),
-			Position = UDim2.fromOffset(76, 4),
-			TextSize = 15,
-			Font = Kit.Fonts.Bold,
-			ZIndex = 2,
-		})
-		local wishRow = wishInside.Parent :: GuiObject
-		wishRow.Position = UDim2.new(0, 0, 1, -(bottom + 56))
-		wishRow.Size = UDim2.new(1, 0, 0, 56)
-		local kind = v.wish.kind
-		local label, fn
-		if kind == "food" then
-			label, fn = "Feed", function()
-				feed(vid)
-			end
-		elseif kind == "friend" then
-			label, fn = "Introduce", function()
-				call("WishGrant", vid, "friend", v.wish.arg)
-			end
-		elseif kind == "look" then
-			label, fn =
-				"New look", function()
-					local Hud = require(script.Parent.Hud)
-					Hud.open("Creator", { mode = "edit", vid = vid })
-				end
-		else
-			label, fn = "Have a chat", function()
-				call("WishGrant", vid, "cheer")
-			end
-		end
-		Kit.button(label, {
-			Parent = wishInside,
-			Size = UDim2.fromOffset(132, 38),
-			Position = UDim2.new(1, -26, 0.5, 0),
-			AnchorPoint = Vector2.new(1, 0.5),
-			Color = T.Orange,
-			TextSize = 15,
-			ZIndex = 3,
-		}, fn)
-		bottom += 56 + 12
+		bottom += wishRow(info, vid, v, p, wishText, bottom) + 12
 	end
 
 	-- the tab's own part, between the name and the buttons
@@ -851,6 +896,24 @@ function Residents.open(vid: string?)
 		unbind,
 		State.on("rel", function()
 			showDetail()
+		end)
+	)
+	-- a craving's Buy button wakes up (or dims) as the coins come and go
+	local lastShort: boolean? = nil
+	table.insert(
+		unbind,
+		State.on("coins", function()
+			local v = selected and State.villager(selected)
+			if not v or not v.wish or v.wish.kind ~= "food" then
+				lastShort = nil
+				return
+			end
+			local price = Life.wishPrice(profileView(), selected :: string) or 0
+			local short = (State.data.coins or 0) < price
+			if lastShort ~= nil and short ~= lastShort then
+				showDetail()
+			end
+			lastShort = short
 		end)
 	)
 end

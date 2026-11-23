@@ -1,8 +1,7 @@
 -- Places to find round the island (Data/Places). The client says when its player reaches one;
--- the server checks they're really standing there, pays the coins once and marks it found. Found
--- places can be travelled back to from the map.
+-- the server checks they're really standing there, pays the coins once and marks it found. (There
+-- was a map to travel back to them from; the user: "remove the map button and the map interface".)
 
-local Players = game:GetService("Players")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Places = require(Shared.Data.Places)
 local Remotes = require(Shared.Net.Remotes)
@@ -12,8 +11,6 @@ local Tuning = require(Shared.Config.Tuning)
 local Data = require(script.Parent.Data)
 
 local Explore = {}
-
-local lastTravel: { [Player]: number } = {}
 
 local function rootOf(player: Player): BasePart?
 	local char = player.Character
@@ -50,30 +47,6 @@ function Explore.start()
 	Remotes.fn("PlaceFound").OnServerInvoke = function(player, id)
 		return Explore.found(player, id)
 	end
-	Remotes.fn("Travel").OnServerInvoke = function(player, id)
-		local profile = Data.get(player)
-		local place = Places.get(id)
-		local root = rootOf(player)
-		if not profile or not place or not root then
-			return false, "Can't travel right now."
-		end
-		if not profile.found[place.id] then
-			return false, "Find it first."
-		end
-		local now = os.clock()
-		if lastTravel[player] and now - lastTravel[player] < 3 then
-			return false, "Hang on a moment."
-		end
-		lastTravel[player] = now
-		local char = player.Character
-		if char then
-			char:PivotTo(Places.arrival(place))
-		end
-		return true
-	end
-	Players.PlayerRemoving:Connect(function(player)
-		lastTravel[player] = nil
-	end)
 end
 
 return Explore

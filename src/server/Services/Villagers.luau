@@ -1,5 +1,5 @@
 -- Villagers: their saved data (made in the creator), their bodies walking round the owner's plot,
--- and their days: wandering, sitting, chatting with each other, going to bed at night.
+-- and their days: working, wandering, sitting, chatting with each other, going to bed at night.
 -- Random events (Services/Events) borrow villagers by taking control of them for a scene.
 -- Players stop one for a talk by holding E on them (the prompt on every body; see "Talking to a
 -- villager" below).
@@ -1007,59 +1007,47 @@ function Villagers.payday(player: Player)
 	Data.push(player, "coins", "villagers", "stats")
 end
 
--- Feeding: favourites count double, the food they hate does nothing but sour their mood.
-function Villagers.feed(player: Player, vid: string, foodId: string): (boolean, any)
+-- A craving is bought for them. The user: "remove the shop, buying of things and food and
+-- feeding. when a character gets a craving, allow the player to simply pay to buy it". So there
+-- is no bag and nothing to feed: the wish's Buy button asks for this, Life.buyWish takes
+-- Life.wishPrice from the town's coins and grants the wish (hearts, mood, a thank you at a new
+-- heart level). Everything a client sends is checked here and in Life.
+function Villagers.buyWish(player: Player, vid: any): (boolean, string?)
+	if type(vid) ~= "string" then
+		return false, "Who?"
+	end
 	local profile = Data.get(player)
-	local v = profile and profile.villagers[vid]
-	local food = Foods.get(foodId)
-	if not v or not food then
-		return false, "Can't feed that."
+	if not profile then
+		return false, "Not ready yet."
 	end
-	local have = profile.inv.food[foodId] or 0
-	if have <= 0 then
-		return false, "You don't have any."
+	local v = profile.villagers[vid]
+	if not v then
+		return false, "Who?"
 	end
-	profile.inv.food[foodId] = have - 1
-	if profile.inv.food[foodId] == 0 then
-		profile.inv.food[foodId] = nil
+	local wish = v.wish
+	local food = if type(wish) == "table" and wish.kind == "food" then Foods.get(wish.arg) else nil
+	local ok, _, notices, why = Life.buyWish(profile, vid, rng)
+	if not ok then
+		return false, why
 	end
-	local reaction = "ok"
-	if v.fav == foodId then
-		reaction = "love"
-	elseif v.hate == foodId then
-		reaction = "hate"
-	end
-	v.known[foodId] = reaction
-	local mood = if reaction == "love" then food.joy * 2 + 6 elseif reaction == "hate" then -10 else food.joy
-	Villagers.addMood(player, vid, mood)
-	profile.stats.fed += 1
-	-- hearts for a snack, and a craving answered
-	Life.fedHearts(profile, vid, foodId, World.dayIndex(), rng)
-	if v.wish and v.wish.kind == "food" then
-		local granted, _, notices = Life.grantWish(profile, vid, "food", foodId, rng)
-		if granted then
-			for _, n in notices do
-				Data.notify(player, n, "good")
-			end
-			syncWishes(player)
-		end
+	player:SetAttribute("Coins", profile.coins)
+	for _, n in notices do
+		Data.notify(player, n, "good")
 	end
 	local npc = Villagers.get(player, vid)
-	if npc then
-		if reaction == "love" then
+	if npc and food then
+		if food.id == v.fav then
 			npc:say(Text.fill("{food}! My favourite!", { food = food.name }))
 			npc:icon("heart")
 			npc:gesture("cheer")
-		elseif reaction == "hate" then
-			npc:say(Text.fill("Ugh, {food}. No thank you.", { food = food.name:lower() }))
-			npc:icon("anger")
 		else
-			npc:say("Mm, tasty.")
+			npc:say(Text.fill("{food}. Just what I wanted.", { food = food.name }))
 			npc:icon("sparkle")
 		end
 	end
-	Data.push(player, "villagers", "inv", "stats", "offers", "coins")
-	return true, { reaction = reaction, mood = mood }
+	syncWishes(player)
+	Data.push(player, "villagers", "coins", "stats", "offers")
+	return true
 end
 
 -- Talking to a villager --------------------------------------------------------------------------
@@ -1255,7 +1243,7 @@ function Villagers.start()
 		if ok and notice then
 			Data.notify(player, notice, "good")
 		end
-		Data.push(player, "offers", "coins", "inv", "villagers")
+		Data.push(player, "offers", "coins", "villagers")
 		return ok, notice
 	end
 	Remotes.fn("GoalClaim").OnServerInvoke = function(player, id)
@@ -1280,11 +1268,8 @@ function Villagers.start()
 			end
 		end
 	end)
-	Remotes.fn("VillagerFeed").OnServerInvoke = function(player, vid, foodId)
-		if type(vid) ~= "string" or type(foodId) ~= "string" then
-			return false, "Can't feed that."
-		end
-		return Villagers.feed(player, vid, foodId)
+	Remotes.fn("WishBuy").OnServerInvoke = function(player, vid)
+		return Villagers.buyWish(player, vid)
 	end
 	Remotes.fn("VillagerFocus").OnServerInvoke = function(player, vid)
 		local npc = type(vid) == "string" and Villagers.get(player, vid)

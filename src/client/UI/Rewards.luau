@@ -1,5 +1,5 @@
 -- When a villager's heart level goes up they want to thank you: three answers to pick from, as
--- speech bubbles (coins they saved up, a basket of snacks, a new saying, a hobby).
+-- rows (coins they saved up, a new saying, a hobby, or whatever else Sim/Life offers).
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Remotes = require(Shared.Net.Remotes)
@@ -64,10 +64,11 @@ function Rewards.open()
 		Color = T.InkSoft,
 		Wrap = false,
 	})
-	-- the thank yous, as rows with a round mark for the kind of thing
+	-- the thank yous, as rows with a round mark for the kind of thing (a kind not named here gets
+	-- the gift)
 	local MARKS = {
 		coins = { "coins", T.Yellow },
-		basket = { "pot", T.Green },
+		practice = { "briefcase", T.Green },
 		saying = { "news", T.Blue },
 		hobby = { "medal", T.Purple },
 	}
