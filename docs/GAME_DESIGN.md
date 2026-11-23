@@ -444,8 +444,11 @@ from that game):
 
   > Change the hardhat icon for buils to a hammer
 
-  The hammer was redrawn for it: the head sits across the end of the handle, a square face on one side and a
-  thinner peen on the other. The old one had its head off to one side and read as an arrow in one colour.
+  > That looks like a hoe, make it more like a hammer
+
+  So the hammer is chunky: a thick handle and a heavy block of a head sitting square across its end, as far out on
+  one side as the other, with a short narrower peen at the back. (The first one had its head off to one side and
+  read as an arrow; the second had a thin handle and a long thin peen, and read as a hoe.)
 - No rounded rectangle has an outline anywhere. Big wobbly shapes (panels, the event bubble) carry faint doodles in
   their background: squiggles, rings, little bar charts and crossed lines.
 - The town's ground is smooth flat colour in a clean low poly look: bright green lawns, mid grey roads, white
