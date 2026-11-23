@@ -10,6 +10,8 @@ local Geometry = require(script.Parent.Parent.Build.Geometry)
 local Town = require(script.Parent.Town)
 local TownModels = require(script.Parent.TownModels)
 local Rng = require(script.Parent.Parent.Util.Rng)
+local Hills = require(script.Parent.Hills)
+local CityModels = require(script.Parent.CityModels)
 
 type R = Recipe.Recipe
 type Prim = Geometry.Prim
@@ -23,12 +25,10 @@ local SW = Town.SidewalkWidth
 
 local GRASS = Color3.fromRGB(134, 206, 92)
 local ROAD = Color3.fromRGB(122, 128, 142)
-local ROAD_EDGE = Color3.fromRGB(108, 114, 128)
 local LINE_WHITE = Color3.fromRGB(250, 250, 246)
 local LINE_YELLOW = Color3.fromRGB(255, 210, 70)
 local CURB = Color3.fromRGB(246, 246, 242)
 local WALK = Color3.fromRGB(240, 240, 236)
-local JOINT = Color3.fromRGB(218, 220, 216)
 local PAVING = Color3.fromRGB(236, 238, 240)
 local PAVING_DARK = Color3.fromRGB(214, 220, 228)
 local PROMENADE = Color3.fromRGB(232, 128, 84) -- warm brick walks
@@ -44,10 +44,11 @@ local LEAF = Color3.fromRGB(84, 192, 70)
 local LEAF_LIGHT = Color3.fromRGB(132, 218, 92)
 
 -- The island: grass out to here, then the beach, then the shallows, then the deep sea.
-TownMap.IslandX = L + 120
-TownMap.IslandZ = 262
-TownMap.Beach = 34
-TownMap.Shallows = 90
+TownMap.IslandX = 1100 -- grass from -IslandX to IslandX
+TownMap.IslandN = 940 -- and from -IslandS to IslandN (the hills run up to the north shore)
+TownMap.IslandS = 292
+TownMap.Beach = 38
+TownMap.Shallows = 92
 TownMap.WaterY = -1.2
 
 -- A region the preview crops to: { x1, z1, x2, z2 }. Nil builds the whole town.
@@ -67,7 +68,7 @@ end
 -- `spread` scales how far the fronds reach.
 local function palm(r: R, ox: number, oy: number, oz: number, h: number, lean: number, yaw: number, spread: number?)
 	local dir = Vector3.new(math.cos(math.rad(yaw)), 0, math.sin(math.rad(yaw)))
-	local segs = 7
+	local segs = 5
 	local prev = Vector3.new(ox, oy, oz)
 	local top = prev
 	for i = 1, segs do
@@ -78,20 +79,20 @@ local function palm(r: R, ox: number, oy: number, oz: number, h: number, lean: n
 		top = pos
 	end
 	r:ball(top.X, top.Y + 0.3, top.Z, 1.6, LEAF, "SmoothPlastic")
-	for k = 0, 2 do
-		local a = math.rad(yaw + 60 + k * 120)
+	for k = 0, 1 do
+		local a = math.rad(yaw + 60 + k * 180)
 		r:ball(top.X + math.cos(a) * 0.7, top.Y - 0.5, top.Z + math.sin(a) * 0.7, 0.85, BARK_DARK, "SmoothPlastic")
 	end
-	local fronds = 8
+	local fronds = 7
 	for f = 0, fronds - 1 do
 		local a = math.rad(yaw + f * 360 / fronds + (f % 2) * 12)
 		local out = Vector3.new(math.cos(a), 0, math.sin(a))
 		local color = if f % 2 == 0 then LEAF else LEAF_LIGHT
 		local reach = (if f % 2 == 0 then 2.3 else 1.9) * (spread or 1)
 		local p0 = top + Vector3.new(0, 0.4, 0)
-		for k = 1, 4 do
-			local p1 = top + out * (k * reach) + Vector3.new(0, 0.9 * k - 0.42 * k * k + 0.4, 0)
-			r:beam(p0, p1, 2.4 - k * 0.42, 0.26, color, "SmoothPlastic")
+		for k = 1, 3 do
+			local p1 = top + out * (k * reach * 1.3) + Vector3.new(0, 1.1 * k - 0.62 * k * k + 0.4, 0)
+			r:beam(p0, p1, 2.6 - k * 0.55, 0.26, color, "SmoothPlastic")
 			p0 = p1
 		end
 	end
@@ -205,7 +206,6 @@ TownMap.Models.islet = function(r: R)
 	r:cyl(0, 2.1, 0, 0.4, 44, "y", GRASS, "Grass")
 	palm(r, -6, 2.3, 4, 16, 3, 140)
 	palm(r, 7, 2.3, -3, 13, 2.6, 330)
-	palm(r, 2, 2.3, 9, 18, 3.6, 70)
 end
 
 TownMap.Models.hydrant = function(r: R)
@@ -247,6 +247,16 @@ TownMap.Models.streetTree = function(r: R)
 	r:block(-1.4, 0, -1.4, 1.4, 0.3, 1.4, SOIL, "Ground")
 	-- leaning out over the street (local -Z), with a smaller crown that stays off the plots
 	palm(r, 0, 0.3, 0, 14, 1.8, 270, 0.68)
+end
+
+TownMap.Models.streetTreeLow = function(r: R)
+	-- a square planter with a white kerb and a round low poly tree
+	r:block(-1.8, 0, -1.8, 1.8, 0.45, -1.4, CURB, "Concrete")
+	r:block(-1.8, 0, 1.4, 1.8, 0.45, 1.8, CURB, "Concrete")
+	r:block(-1.8, 0, -1.4, -1.4, 0.45, 1.4, CURB, "Concrete")
+	r:block(1.4, 0, -1.4, 1.8, 0.45, 1.4, CURB, "Concrete")
+	r:block(-1.4, 0, -1.4, 1.4, 0.3, 1.4, SOIL, "Ground")
+	CityModels.lowTree(r, 0, 0.3, 0, 1)
 end
 
 TownMap.Models.busStop = function(r: R)
@@ -478,6 +488,10 @@ TownMap.Models.hillL = hill(110, 30)
 function TownMap.prims(name: string): { Prim }
 	local build = TownMap.Models[name]
 	if not build then
+		local city = CityModels.prims(name)
+		if city then
+			return city
+		end
 		return TownModels.prims(name)
 	end
 	local r = Recipe.new(C.White, C.White)
@@ -506,7 +520,52 @@ function TownMap.lawns(): { { number } }
 	return { { sq.X - 30, sq.Z + 30, 12, 15 }, { sq.X + 30, sq.Z + 30, 12, 15 } }
 end
 
--- The street, curbs, sidewalks, the square and the market, as one list of flat parts.
+-- Which roads cross a road, and where: for a road along x, the x of every road along z whose run
+-- covers its z (and the other way round), as { at, half width, sidewalk, neg = the other road goes
+-- on to the negative side, pos = to the positive side }.
+local function crossings(road: any): { any }
+	local out: { any } = {}
+	local horizontal = road[2] == road[4]
+	for _, o in Town.Roads do
+		if o ~= road then
+			local oh = o[2] == o[4]
+			if oh ~= horizontal then
+				if horizontal then
+					local x, z = o[1], road[2]
+					if
+						x >= math.min(road[1], road[3]) - 1
+						and x <= math.max(road[1], road[3]) + 1
+						and z >= math.min(o[2], o[4]) - 1
+						and z <= math.max(o[2], o[4]) + 1
+					then
+						local lo, hi = math.min(o[2], o[4]), math.max(o[2], o[4])
+						table.insert(out, { x, o[5], o[6], neg = lo < z - 1, pos = hi > z + 1 })
+					end
+				else
+					local z, x = o[2], road[1]
+					if
+						z >= math.min(road[2], road[4]) - 1
+						and z <= math.max(road[2], road[4]) + 1
+						and x >= math.min(o[1], o[3]) - 1
+						and x <= math.max(o[1], o[3]) + 1
+					then
+						local lo, hi = math.min(o[1], o[3]), math.max(o[1], o[3])
+						table.insert(out, { z, o[5], o[6], neg = lo < x - 1, pos = hi > x + 1 })
+					end
+				end
+			end
+		end
+	end
+	table.sort(out, function(a, b)
+		return a[1] < b[1]
+	end)
+	return out
+end
+TownMap.crossings = crossings
+
+-- The whole island as one list of flat parts: the sea, the beach and the grass; every road with
+-- its sidewalks, lane lines and crossings; the square and the market; the boardwalk; downtown's
+-- paved blocks; the path up the hills; and the hills themselves.
 function TownMap.ground(region: Region?): { Prim }
 	local r = Recipe.new(C.White, C.White)
 	local function slab(
@@ -529,12 +588,12 @@ function TownMap.ground(region: Region?): { Prim }
 
 	-- the island: grass, a sandy beach round it, sand under the shallows, the deep sea floor, and
 	-- the water over all of it (see through, so the shallows show light and the deep sea dark)
-	local IX, IZ, B, SH = TownMap.IslandX, TownMap.IslandZ, TownMap.Beach, TownMap.Shallows
+	local IX, IN, IS, B, SH = TownMap.IslandX, TownMap.IslandN, TownMap.IslandS, TownMap.Beach, TownMap.Shallows
 	local WY = TownMap.WaterY
-	slab(-IX, -IZ, IX, IZ, -2.1, -0.1, GRASS, "Grass")
-	slab(-IX - B, -IZ - B, IX + B, IZ + B, -2.6, -0.35, SAND, "Sand")
-	slab(-IX - B - SH, -IZ - B - SH, IX + B + SH, IZ + B + SH, -4, -2.5, SEABED, "Sand")
-	local FAR = 2400
+	slab(-IX, -IS, IX, IN, -2.1, -0.1, GRASS, "Grass")
+	slab(-IX - B, -IS - B, IX + B, IN + B, -2.6, -0.35, SAND, "Sand")
+	slab(-IX - B - SH, -IS - B - SH, IX + B + SH, IN + B + SH, -4, -2.5, SEABED, "Sand")
+	local FAR = 3000
 	slab(-FAR, -FAR, FAR, FAR, -18, -16, DEEP, "SmoothPlastic")
 	do
 		local a, b, c, d = clip(region, -FAR, -FAR, FAR, FAR)
@@ -546,157 +605,222 @@ function TownMap.ground(region: Region?): { Prim }
 		end
 	end
 	-- walls nobody sees at the edge of the shallows, so nobody wanders off into the deep
-	local EX, EZ = IX + B + SH, IZ + B + SH
+	local EX, EN, ES = IX + B + SH, IN + B + SH, IS + B + SH
 	for _, w in
 		{
-			{ -EX - 2, -EZ - 2, EX + 2, -EZ },
-			{ -EX - 2, EZ, EX + 2, EZ + 2 },
-			{ -EX - 2, -EZ, -EX, EZ },
-			{ EX, -EZ, EX + 2, EZ },
+			{ -EX - 2, -ES - 2, EX + 2, -ES },
+			{ -EX - 2, EN, EX + 2, EN + 2 },
+			{ -EX - 2, -ES, -EX, EN },
+			{ EX, -ES, EX + 2, EN },
 		}
 	do
 		local a, b, c, d = clip(region, w[1], w[2], w[3], w[4])
 		if a then
-			local wall = r:block(a, -4, b, c, 30, d, WATER, "SmoothPlastic")
+			local wall = r:block(a, -4, b, c, 60, d, WATER, "SmoothPlastic")
 			wall.transp = 1
 			wall.name = "SeaWall"
 		end
 	end
-	-- the road, with a darker gutter strip along each edge
-	slab(-L, -HW + 1, L, HW - 1, -0.15, 0.05, ROAD, "Asphalt")
-	for _, side in { 1, -1 } do
-		local z1, z2 = side * (HW - 1), side * HW
-		slab(-L, math.min(z1, z2), L, math.max(z1, z2), -0.15, 0.05, ROAD_EDGE, "Asphalt")
-	end
 
-	-- crosswalk places: in front of the square and the market, and between the plot pairs
-	local crossings = { 0, -274, 274 }
-	local ordered = table.clone(crossings)
-	table.sort(ordered)
-	local function nearCrossing(x: number, gap: number): boolean
-		for _, cx in crossings do
-			if math.abs(x - cx) < gap then
-				return true
+	-- the roads: tarmac, a dashed middle line (yellow on the main street), sidewalks with a curb,
+	-- cut where another road crosses, corner squares at every junction, zebra crossings by them
+	for _, road in Town.Roads do
+		local hw, sw = road[5], road[6]
+		local horizontal = road[2] == road[4]
+		local main = road.name == "Main Street"
+		local a1, a2 = math.min(road[1], road[3]), math.max(road[1], road[3])
+		if not horizontal then
+			a1, a2 = math.min(road[2], road[4]), math.max(road[2], road[4])
+		end
+		local at = if horizontal then road[2] else road[1]
+		-- (x along, z across) to world for this road
+		local function rect(u1: number, v1: number, u2: number, v2: number, y1: number, y2: number, col: Color3)
+			if horizontal then
+				slab(u1, at + v1, u2, at + v2, y1, y2, col, "")
+			else
+				slab(at + v1, u1, at + v2, u2, y1, y2, col, "")
 			end
 		end
-		return false
-	end
-
-	-- solid edge lines and the dashed middle line
-	for _, side in { 1, -1 } do
-		local z = side * (HW - 1.8)
-		local x = -L + 4
-		while x < L - 4 do
-			local x2 = math.min(L - 4, x + 40)
-			if not nearCrossing((x + x2) / 2, 30) then
-				slab(x, z - 0.2, x2, z + 0.2, 0.05, 0.08, LINE_WHITE, "SmoothPlastic")
+		local cross = crossings(road)
+		local function nearCross(u: number, extra: number): boolean
+			for _, c in cross do
+				if math.abs(u - c[1]) < c[2] + c[3] + extra then
+					return true
+				end
 			end
-			x = x2
+			return false
 		end
-	end
-	for x = -L + 6, L - 14, 14 do
-		if not nearCrossing(x + 3.5, 14) then
-			slab(x, -0.3, x + 7, 0.3, 0.05, 0.08, LINE_YELLOW, "SmoothPlastic")
+		rect(a1, -hw, a2, hw, -0.15, 0.05, ROAD)
+		-- dashes down the middle
+		local step = if main then 14 else 20
+		local u = a1 + 6
+		while u < a2 - 10 do
+			if not nearCross(u + 3.5, 6) and not (main and (math.abs(u) < 14 or math.abs(math.abs(u) - 274) < 14)) then
+				rect(u, -0.3, u + 7, 0.3, 0.05, 0.08, if main then LINE_YELLOW else LINE_WHITE)
+			end
+			u += step
 		end
-	end
-	-- zebra crossings with stop lines
-	for _, cx in crossings do
-		for z = -HW + 2.2, HW - 2.6, 2.8 do
-			slab(cx - 6, z, cx + 6, z + 1.6, 0.05, 0.08, LINE_WHITE, "SmoothPlastic")
-		end
+		-- sidewalks, cut at junctions on the side the other road goes on to
 		for _, side in { 1, -1 } do
-			local sx = cx + side * 8.5
-			slab(
-				sx - 0.4,
-				if side > 0 then -HW + 1.5 else 0.6,
-				sx + 0.4,
-				if side > 0 then -0.6 else HW - 1.5,
-				0.05,
-				0.08,
-				LINE_WHITE,
-				"SmoothPlastic"
-			)
+			local stops = { a1 }
+			for _, c in cross do
+				if (side > 0 and c.pos) or (side < 0 and c.neg) then
+					table.insert(stops, c[1] - c[2] - c[3])
+					table.insert(stops, c[1] + c[2] + c[3])
+				end
+			end
+			table.insert(stops, a2)
+			for k = 1, #stops - 1, 2 do
+				local s1, s2 = math.max(stops[k], a1), math.min(stops[k + 1], a2)
+				if s2 > s1 then
+					local v1, v2 = side * hw, side * (hw + sw)
+					rect(s1, math.min(v1, v2), s2, math.max(v1, v2), -0.15, 0.3, WALK)
+					local c1, c2 = side * hw, side * (hw + 0.6)
+					rect(s1, math.min(c1, c2), s2, math.max(c1, c2), 0.3, 0.42, CURB)
+				end
+			end
+		end
+		-- zebra crossings just outside each junction, and corner squares (drawn once, by roads along x)
+		for _, c in cross do
+			for _, dir in { -1, 1 } do
+				local u0 = c[1] + dir * (c[2] + c[3] + 4)
+				if u0 > a1 + 4 and u0 < a2 - 4 then
+					local v = -hw + 1.6
+					while v < hw - 2.6 do
+						if horizontal then
+							slab(u0 - 3, at + v, u0 + 3, at + v + 1.6, 0.05, 0.08, LINE_WHITE, "")
+						else
+							slab(at + v, u0 - 3, at + v + 1.6, u0 + 3, 0.05, 0.08, LINE_WHITE, "")
+						end
+						v += 2.8
+					end
+				end
+			end
+			if horizontal then
+				for _, dx in { -1, 1 } do
+					for _, dz in { -1, 1 } do
+						if (dz > 0 and not c.pos) or (dz < 0 and not c.neg) then
+							continue
+						end
+						local x1 = c[1] + dx * c[2]
+						local x2 = c[1] + dx * (c[2] + c[3])
+						local z1 = at + dz * hw
+						local z2 = at + dz * (hw + sw)
+						if c[1] + dx * c[2] > a1 - 1 and c[1] + dx * c[2] < a2 + 1 then
+							slab(
+								math.min(x1, x2),
+								math.min(z1, z2),
+								math.max(x1, x2),
+								math.max(z1, z2),
+								-0.15,
+								0.3,
+								WALK,
+								""
+							)
+						end
+					end
+				end
+			end
+		end
+		-- the main street's own crossings in front of the square, the market and between the plots
+		if main then
+			for _, cx in { 0, -274, 274 } do
+				local v = -hw + 2.2
+				while v < hw - 2.6 do
+					slab(cx - 6, v, cx + 6, v + 1.6, 0.05, 0.08, LINE_WHITE, "")
+					v += 2.8
+				end
+			end
 		end
 	end
 
-	-- curbs and sidewalks
-	for _, side in { 1, -1 } do
-		local inner = side * HW
-		local curbOuter = side * (HW + 0.8)
-		local outer = side * (HW + SW)
-		local function zs(a: number, b: number): (number, number)
-			return math.min(a, b), math.max(a, b)
-		end
-		local cz1, cz2 = zs(inner, curbOuter)
-		local wz1, wz2 = zs(curbOuter, outer)
-		-- curbs drop to the road at the crossings so prams and villagers roll straight across
-		local x = -L
-		for _, cx in ordered do
-			slab(x, cz1, cx - 6, cz2, -0.15, 0.4, CURB, "Concrete")
-			slab(cx - 6, cz1, cx + 6, cz2, -0.15, 0.12, CURB, "Concrete")
-			x = cx + 6
-		end
-		slab(x, cz1, L, cz2, -0.15, 0.4, CURB, "Concrete")
-		slab(-L, wz1, L, wz2, -0.15, 0.3, WALK, "Pavement")
-		-- joints across the sidewalk every 8 studs
-		for jx = -L + 8, L - 8, 8 do
-			slab(jx - 0.1, wz1, jx + 0.1, wz2, 0.3, 0.32, JOINT, "Concrete")
-		end
-	end
-
-	-- the square (north) and the market (south): paving with a darker border
+	-- the square (north) and the market (south): paving with a border and a grid of joints
 	for _, center in { Town.SquareCenter, Town.MarketCenter } do
 		local x1, x2 = center.X - 50, center.X + 50
-		-- the paving runs right up to the sidewalk
 		local z1 = if center.Z > 0 then HW + SW else center.Z - 60
 		local z2 = if center.Z > 0 then center.Z + 60 else -(HW + SW)
 		slab(x1, z1, x2, z2, -0.15, 0.25, PAVING_DARK, "Pavement")
 		slab(x1 + 1.2, z1 + 1.2, x2 - 1.2, z2 - 1.2, -0.15, 0.27, PAVING, "Pavement")
-	end
-	-- a grid of joints in the paving, and lighter walkways from the crossing to the fountain
-	-- and to the hall
-	local LIGHT = Color3.fromRGB(236, 224, 202)
-	for _, center in { Town.SquareCenter, Town.MarketCenter } do
-		local z1 = if center.Z > 0 then HW + SW + 1.2 else center.Z - 58.8
-		local z2 = if center.Z > 0 then center.Z + 58.8 else -(HW + SW + 1.2)
+		local jz1 = if center.Z > 0 then HW + SW + 1.2 else center.Z - 58.8
+		local jz2 = if center.Z > 0 then center.Z + 58.8 else -(HW + SW + 1.2)
 		for gx = center.X - 48, center.X + 48, 12 do
-			slab(gx - 0.12, z1, gx + 0.12, z2, 0.27, 0.28, PAVING_DARK, "Pavement")
+			slab(gx - 0.12, jz1, gx + 0.12, jz2, 0.27, 0.28, PAVING_DARK, "Pavement")
 		end
-		for gz = center.Z - 60 + 12, center.Z + 60 - 12, 12 do
-			if gz > z1 and gz < z2 then
-				slab(center.X - 48.8, gz - 0.12, center.X + 48.8, gz + 0.12, 0.27, 0.28, PAVING_DARK, "Pavement")
-			end
-		end
-	end
-	local _ = LIGHT
-	slab(-5, HW + SW, 5, Town.Spots.Fountain.Z - 16, 0.27, 0.29, PROMENADE, "Brick")
-	slab(-5, Town.Spots.Hall.Z + 14, 5, -(HW + SW), 0.27, 0.29, PROMENADE, "Brick")
-	-- and a brick walk round the square's edge
-	for _, center in { Town.SquareCenter, Town.MarketCenter } do
-		local z1 = if center.Z > 0 then HW + SW + 1.2 else center.Z - 58.8
-		local z2 = if center.Z > 0 then center.Z + 58.8 else -(HW + SW + 1.2)
 		for _, sx in { -1, 1 } do
 			local x = center.X + sx * 45
-			slab(x - 3, z1, x + 3, z2, 0.27, 0.285, PROMENADE, "Brick")
+			slab(x - 3, jz1, x + 3, jz2, 0.27, 0.285, PROMENADE, "Brick")
 		end
 	end
+	-- brick walks from the crossing to the fountain and to the hall, and on to the ring roads
+	slab(-5, HW + SW, 5, Town.Spots.Fountain.Z - 16, 0.27, 0.29, PROMENADE, "Brick")
+	slab(-5, Town.Spots.Hall.Z + 14, 5, -(HW + SW), 0.27, 0.29, PROMENADE, "Brick")
+	local RZ = Town.RingZ
+	slab(-6, Town.SquareCenter.Z + 60, 6, RZ - 17, -0.15, 0.27, PAVING, "Pavement")
+	slab(-6, -(RZ - 17), 6, Town.MarketCenter.Z - 60, -0.15, 0.27, PAVING, "Pavement")
+	slab(-3, Town.SquareCenter.Z + 60, 3, RZ - 17, 0.27, 0.29, PROMENADE, "Brick")
+	slab(-3, -(RZ - 17), 3, Town.MarketCenter.Z - 60, 0.27, 0.29, PROMENADE, "Brick")
 	-- a round of lighter paving and a ring of dark stone around the fountain
 	if not region or (region[1] < 20 and region[3] > -20 and region[2] < 100 and region[4] > 60) then
 		local f = Town.Spots.Fountain
 		r:cyl(f.X, 0.28, f.Z, 0.04, 36, "y", PAVING_DARK, "Pavement")
 		r:cyl(f.X, 0.29, f.Z, 0.04, 34, "y", Color3.fromRGB(234, 222, 200), "Pavement")
 	end
-	-- lawns in the square's four corners
+	-- lawns in the square's corners
 	for _, l in TownMap.lawns() do
 		local cx, cz, hx, hz = l[1], l[2], l[3], l[4]
 		slab(cx - hx, cz - hz, cx + hx, cz + hz, -0.15, 0.32, GRASS, "Grass")
-		-- a kerb round the lawn
 		slab(cx - hx - 0.5, cz - hz - 0.5, cx + hx + 0.5, cz - hz, -0.15, 0.6, CURB, "Concrete")
 		slab(cx - hx - 0.5, cz + hz, cx + hx + 0.5, cz + hz + 0.5, -0.15, 0.6, CURB, "Concrete")
 		slab(cx - hx - 0.5, cz - hz, cx - hx, cz + hz, -0.15, 0.6, CURB, "Concrete")
 		slab(cx + hx, cz - hz, cx + hx + 0.5, cz + hz, -0.15, 0.6, CURB, "Concrete")
 	end
+
+	-- downtown's blocks are paved right up to the sidewalks
+	for _, b in TownMap.blocks("east") do
+		slab(b[1], b[2], b[3], b[4], -0.15, 0.22, PAVING, "Pavement")
+	end
+
+	-- the boardwalk along the south shore, with a rail on the sea side
+	local bz1, bz2 = -IS, -(RZ + 11 + 6)
+	slab(-IX + 30, bz1, IX - 30, bz2, -0.15, 0.32, Color3.fromRGB(214, 172, 124), "WoodPlanks")
+	slab(-IX + 30, bz1, IX - 30, bz1 + 0.5, 0.32, 2.6, Color3.fromRGB(250, 250, 246), "SmoothPlastic")
+
+	-- a path of flat stones up the hills from Hill Road to the lookout, winding a little
+	do
+		local z = RZ + 18
+		local top = Hills.Plateaus[1]
+		while z < top.z - top.r do
+			local t = (z - RZ) / (top.z - RZ)
+			local x = math.sin(t * math.pi * 2.2) * 40 * (1 - t)
+			if not region or (x >= region[1] and x <= region[3] and z >= region[2] and z <= region[4]) then
+				local y = math.max(Hills.at(x, z), 0) + 0.05
+				r:cyl(x, y, z, 0.3, 4.2, "y", Color3.fromRGB(226, 216, 196), "SmoothPlastic")
+			end
+			z += 7
+		end
+	end
+
+	-- and the hills themselves
+	for _, p in Hills.prims(region) do
+		r:add(p)
+	end
 	return r.prims
+end
+
+-- The city blocks between the roads east (downtown) or west (the civic quarter) of the old town:
+-- { x1, z1, x2, z2 } inside the sidewalks.
+function TownMap.blocks(side: string): { { number } }
+	local sx = if side == "east" then 1 else -1
+	local xs = { { 559, 813 }, { 847, 1053 } }
+	local zs = { { 148, 245 }, { 22, 114 }, { -114, -22 }, { -245, -148 } }
+	local out = {}
+	for _, x in xs do
+		for _, z in zs do
+			local x1, x2 = sx * x[1], sx * x[2]
+			table.insert(out, { math.min(x1, x2), z[1], math.max(x1, x2), z[2] })
+		end
+	end
+	return out
 end
 
 -- What stands on the ground ---------------------------------------------------------------------------
@@ -713,6 +837,20 @@ function TownMap.placements(): { Placement }
 			p.tag = extra.tag
 		end
 		table.insert(out, p)
+	end
+	-- is x, z inside a road or its junction (other than `skip`)? Things standing by a road keep out.
+	local function nearRoad(x: number, z: number, skip: any?): boolean
+		for _, road in Town.Roads do
+			if road ~= skip then
+				local hw = road[5] + 2
+				local x1, x2 = math.min(road[1], road[3]) - hw, math.max(road[1], road[3]) + hw
+				local z1, z2 = math.min(road[2], road[4]) - hw, math.max(road[2], road[4]) + hw
+				if x > x1 and x < x2 and z > z1 and z < z2 then
+					return true
+				end
+			end
+		end
+		return false
 	end
 	local S = Town.Spots
 	local PAVE_Y = 0.27
@@ -789,19 +927,26 @@ function TownMap.placements(): { Placement }
 		onPaving("lamp", p[1], p[2], 0)
 	end
 
-	-- along the street: lamps, street trees, hydrants and signs on both sidewalks
+	-- along the main street: lamps, trees in planters (palms in the old town), hydrants and signs
 	local walkZ = HW + 3 -- tree pits near the curb leave room to walk behind them
 	for x = -L + 40, L - 40, 68 do
-		for _, side in { 1, -1 } do
-			put("lamp", x, side * (HW + 1.6), if side > 0 then 0 else 180)
+		if not nearRoad(x, HW + 1.6) then
+			for _, side in { 1, -1 } do
+				put("lamp", x, side * (HW + 1.6), if side > 0 then 0 else 180)
+			end
 		end
 	end
 	for x = -L + 20, L - 20, 34 do
 		local onPlaza = math.abs(x) < 54
 		local nearCross = math.abs(x - 274) < 14 or math.abs(x + 274) < 14
-		if not onPlaza and not nearCross then
+		if not onPlaza and not nearCross and not nearRoad(x, walkZ) then
 			for _, side in { 1, -1 } do
-				put("streetTree", x, side * walkZ, if side > 0 then 0 else 180)
+				put(
+					if math.abs(x) < 520 then "streetTree" else "streetTreeLow",
+					x,
+					side * walkZ,
+					if side > 0 then 0 else 180
+				)
 				local last = out[#out]
 				last.cf = last.cf + Vector3.new(0, 0.3, 0)
 			end
@@ -823,16 +968,41 @@ function TownMap.placements(): { Placement }
 	put("busStop", 96, -(HW + SW - 2.2), 0)
 	put("bin", 88, -(HW + 2), 0)
 
-	-- bushes along the plaza's sides, on the grass between it and the plots
+	-- lamps and trees along the other roads
+	for k, road in Town.Roads do
+		if k > 1 then
+			local horizontal = road[2] == road[4]
+			local hw = road[5]
+			local a1 = if horizontal then math.min(road[1], road[3]) else math.min(road[2], road[4])
+			local a2 = if horizontal then math.max(road[1], road[3]) else math.max(road[2], road[4])
+			local at = if horizontal then road[2] else road[1]
+			local u = a1 + 30
+			local n = 0
+			while u < a2 - 30 do
+				n += 1
+				local side = if n % 2 == 0 then 1 else -1
+				local v = side * (hw + 1.6)
+				local x, z = if horizontal then u else at + v, if horizontal then at + v else u
+				if not nearRoad(x, z, road) then
+					local yaw = if horizontal then (if side > 0 then 0 else 180) else (if side > 0 then -90 else 90)
+					put(if n % 3 == 0 then "streetLamp" else "lowTree", x, z, yaw)
+				end
+				u += 46
+			end
+		end
+	end
+
+	-- bushes along the old town's ring and the promenades up to the hills and down to the sea
 	for _, sx in { -1, 1 } do
 		for z = 30, 136, 13 do
 			put("bush", sx * 58, z, z * 7)
+			put("bush", sx * 58, -z, z * 11)
 		end
-		for z = -136, -30, 13 do
-			put("bush", sx * 58, z, z * 11)
+		for z = 160, 236, 19 do
+			put("lowTree", sx * 14, z, z)
+			put("lowTree", sx * 14, -z, z * 3)
 		end
 	end
-	-- flowers in the square's lawns
 	for _, l in TownMap.lawns() do
 		local cx, cz = l[1], l[2]
 		for _, d in { { -6, 6 }, { 6, -4 } } do
@@ -846,72 +1016,198 @@ function TownMap.placements(): { Placement }
 			last.cf = last.cf + Vector3.new(0, 0.32, 0)
 		end
 	end
-	-- out at sea: little islets on the horizon
-	local sea = Rng.new(19)
-	local IX, IZ, B = TownMap.IslandX, TownMap.IslandZ, TownMap.Beach
-	for x = -L - 200, L + 200, 210 do
-		for _, side in { 1, -1 } do
-			put("islet", x + sea:float(-60, 60), side * sea:float(470, 560), sea:float(0, 360), { tag = "backdrop" })
+
+	-- downtown, east of the old town
+	local function on(name: string, x: number, z: number, yaw: number, y: number?, extra: { [string]: any }?)
+		put(name, x, z, yaw, extra)
+		if y and y ~= 0 then
+			local last = out[#out]
+			last.cf = last.cf + Vector3.new(0, y, 0)
 		end
 	end
-	for _, side in { 1, -1 } do
-		put("islet", side * (IX + 260), sea:float(-120, 120), sea:float(0, 360), { tag = "backdrop" })
+	local DT = 0.22 -- downtown's paving
+	on("hotel", 650, 169, 0, DT)
+	on("shopCoral", 735, 165, 0, DT)
+	on("shopYellow", 775, 165, 0, DT)
+	on("carPark", 700, 214, 0, DT)
+	on("officeBlue", 890, 169, 0, DT)
+	on("officeTeal", 1000, 169, 0, DT)
+	on("deptStore", 630, 48, 0, DT)
+	on("shopBlue", 725, 39, 0, DT)
+	on("shopMint", 772, 39, 0, DT)
+	on("cinema", 920, 48, 0, DT)
+	on("apartmentLilac", 1010, 41, 0, DT)
+	on("cityPark", 686, -68, 0, DT)
+	on("apartmentPeach", 890, -41, 180, DT)
+	on("apartmentMint", 995, -41, 180, DT)
+	on("station", 686, -165, 180, DT)
+	on("skyTower", 950, -173, 180, DT)
+	-- and along the back of each block, facing the street behind
+	on("apartmentPeach", 880, 226, 180, DT)
+	on("shopBlue", 955, 228, 180, DT)
+	on("shopMint", 1012, 228, 180, DT)
+	on("shopCoral", 615, 97, 180, DT)
+	on("shopYellow", 660, 97, 180, DT)
+	on("officeBlue", 745, 93, 180, DT)
+	on("officeTeal", 895, 93, 180, DT)
+	on("shopYellow", 990, 97, 180, DT)
+	on("officeBlue", 880, -93, 0, DT)
+	on("shopCoral", 960, -97, 0, DT)
+	on("apartmentLilac", 1020, -95, 0, DT)
+	on("shopBlue", 890, -228, 0, DT)
+	on("shopMint", 1012, -228, 0, DT)
+	for _, x in { 600, 640, 735, 775 } do
+		on("lowTree", x, -228, 0, DT)
 	end
-	-- flowers and a few rocks in the grass round the edge of town
-	for _ = 1, 70 do
-		local x = sea:float(-IX + 10, IX - 10)
-		local z = sea:float(-IZ + 6, IZ - 6)
-		local inTown = math.abs(z) < 238 and math.abs(x) < L + 14
-		local onSquare = math.abs(x) < 70 and math.abs(z) < 150
-		if not inTown and not onSquare then
-			put(if sea:chance(0.75) then "flowerPatch" else "rock", x, z, sea:float(0, 360))
+
+	-- the civic quarter, west of the old town
+	on("school", -686, 166, 0)
+	on("playground", -686, 214, 0)
+	on("sportsField", -950, 190, 0)
+	on("library", -640, 42, 0)
+	on("museum", -760, 52, 0)
+	on("clinic", -960, 42, 0)
+	on("basketCourt", -960, 92, 0)
+	on("pondPark", -686, -68, 0)
+	on("fireStation", -960, -60, 180)
+	on("postOffice", -640, -166, 180)
+	on("shopCoral", -700, -165, 180)
+	on("shopYellow", -760, -165, 180)
+	on("apartmentMint", -990, -167, 180)
+	on("apartmentLilac", -900, -167, 180)
+	on("houseRow", -888, -45, 180)
+	on("houseRow", -950, -228, 0)
+	on("houseRow", -1010, 60, -90)
+	on("houseRow", -686, -222, 0)
+	for _, p in
+		{
+			{ -1000, -100 },
+			{ -1030, -200 },
+			{ -870, -200 },
+			{ -700, 30 },
+			{ -700, 70 },
+			{ -580, 90 },
+			{ -820, 100 },
+			{ -1030, 100 },
+			{ -870, 30 },
+			{ -580, 190 },
+			{ -790, 190 },
+			{ -580, -200 },
+			{ -810, -200 },
+			{ -870, 230 },
+			{ -1030, 230 },
+		}
+	do
+		on("lowTree", p[1], p[2], 0)
+	end
+	for _, p in { { -700, 50, 90 }, { -716, 50, -90 }, { -900, 70, 0 } } do
+		on("benchLite", p[1], p[2], p[3])
+	end
+
+	-- the hills: the farm, the lookout, the observatory, the radio mast and the camp
+	local function hill(name: string, x: number, z: number, yaw: number, extra: { [string]: any }?)
+		on(name, x, z, yaw, Hills.at(x, z) - 0.1, extra)
+	end
+	hill("farmyard", -720, 490, 0)
+	hill("barn", -610, 445, 200)
+	hill("windmill", -640, 548, 0)
+	hill("lookout", 0, 640, 0)
+	hill("observatory", -380, 760, 0)
+	hill("radioMast", 380, 760, 0)
+	hill("camp", 650, 520, 0)
+	for _, p in { { -630, 520 }, { -770, 430 }, { -800, 540 } } do
+		hill("lowTree", p[1], p[2], 0)
+	end
+	-- trees over the slopes, clear of the flat tops and the path, thicker in the north east
+	local woods = Rng.new(23)
+	for _ = 1, 240 do
+		local x = woods:float(Hills.X1 + 60, Hills.X2 - 60)
+		local z = woods:float(Hills.Z1 + 50, Hills.Z2 - 60)
+		local clear = true
+		for _, pl in Hills.Plateaus do
+			if math.sqrt((x - pl.x) ^ 2 + (z - pl.z) ^ 2) < pl.r + 14 then
+				clear = false
+			end
+		end
+		if math.abs(x) < 60 and z < 600 then
+			clear = false -- the path up to the lookout
+		end
+		if x > -620 and x < -100 and z < 400 then
+			clear = false -- the creator's meadow
+		end
+		if clear and Hills.slope(x, z) < 0.8 then
+			local pine = x > 300 or woods:chance(0.35)
+			local name = if pine
+				then (if woods:chance(0.4) then "lowPineBig" else "lowPine")
+				else (if woods:chance(0.3) then "lowTreeBig" else "lowTree")
+			hill(name, x, z, woods:float(0, 360))
+		end
+	end
+	for _ = 1, 16 do
+		local x = woods:float(Hills.X1 + 80, Hills.X2 - 80)
+		local z = woods:float(Hills.Z1 + 30, Hills.Z2 - 80)
+		if Hills.slope(x, z) < 0.5 then
+			hill(if woods:chance(0.8) then "flowerPatch" else "rock", x, z, woods:float(0, 360))
 		end
 	end
 
-	-- palms and round trees round the edge of town, clear of the street, the square and every plot
-	local trees = Rng.new(7)
-	for _ = 1, 120 do
-		local x = trees:float(-IX + 8, IX - 8)
-		local z = trees:float(-IZ + 4, IZ - 4)
-		local inTown = math.abs(z) < 236 and math.abs(x) < L + 12
-		local onSquare = math.abs(x) < 54 and math.abs(z) < 150
-		if not inTown and not onSquare then
-			local kind = if trees:chance(0.6) then (if trees:chance(0.5) then "palm" else "palmTall") else "tree"
-			put(kind, x, z, trees:float(0, 360))
+	-- the waterfront: lamps and benches on the boardwalk, palms and parasols on the sand, the
+	-- marina, the fairground pier, the beach huts, the lifeguard and the lighthouse
+	local IX, IN, IS, B = TownMap.IslandX, TownMap.IslandN, TownMap.IslandS, TownMap.Beach
+	local bwz = -(Town.RingZ + 11 + 6) - 6.5
+	for x = -IX + 60, IX - 60, 80 do
+		on("streetLamp", x, bwz + 5, 180, 0.32)
+		if math.abs(x + 320) > 30 and math.abs(x - 300) > 30 then
+			on("benchLite", x + 40, bwz - 3.5, 180, 0.32)
 		end
 	end
-	-- the marina on the south beach, its walk running out to sea
-	put("marina", 300, -(IZ + 2), 0)
-	-- the beach: palms leaning out to sea, and parasols on the sand
+	local function clearOfPiers(x: number): boolean
+		return math.abs(x - 300) > 34 and math.abs(x + 320) > 64 and math.abs(x - 640) > 40 and math.abs(x - 1000) > 30
+	end
+	on("marina", 300, -(IS + 2), 0)
+	on("fairPier", -320, -IS, 0)
+	on("ferrisWheel", -300, -IS - 92, 0, 0.4)
+	on("carousel", -352, -IS - 62, 0, 0.4)
+	on("stall", -368, -IS - 108, 30, 0.4)
+	on("stall", -278, -IS - 55, -20, 0.4)
+	on("stall", -272, -IS - 112, -60, 0.4)
+	on("beachHuts", 640, -IS - 14, 0, -0.35)
+	on("lifeguard", 0, -IS - 20, 0, -0.35)
+	on("lighthouse", 1000, -IS - 80, 180)
 	local beach = Rng.new(31)
-	for _, side in { 1, -1 } do
-		local z0 = side * (IZ + B * 0.45)
-		for x = -IX + 20, IX - 20, 26 do
-			local px, pz = x + beach:float(-8, 8), z0 + beach:float(-6, 6)
-			local kind = if beach:chance(0.5) then "palm" else "palmTall"
-			if side < 0 and math.abs(px - 300) < 34 then
-				continue -- the marina's walk comes ashore here
-			end
-			put(kind, px, pz, if side > 0 then 90 else 270)
-			local last = out[#out]
-			last.cf = last.cf + Vector3.new(0, -0.25, 0)
-		end
-		for x = -IX + 60, IX - 60, 70 do
-			local px = x + beach:float(-10, 10)
-			if side < 0 and math.abs(px - 300) < 34 then
-				continue
-			end
-			put("parasol", px, side * (IZ + B * 0.7), beach:float(-20, 20))
-			local last = out[#out]
-			last.cf = last.cf + Vector3.new(0, -0.35, 0)
+	for x = -IX + 30, IX - 30, 58 do
+		local px = x + beach:float(-10, 10)
+		if clearOfPiers(px) and math.abs(px) > 12 then
+			on(if beach:chance(0.5) then "palm" else "palmTall", px, -IS - B * 0.45 + beach:float(-5, 5), 270, -0.6)
 		end
 	end
-	for _, side in { 1, -1 } do
-		for z = -IZ + 20, IZ - 20, 30 do
-			put("palm", side * (IX + B * 0.45), z + beach:float(-8, 8), if side > 0 then 0 else 180)
-			local last = out[#out]
-			last.cf = last.cf + Vector3.new(0, -0.25, 0)
+	for x = -IX + 80, IX - 80, 110 do
+		local px = x + beach:float(-12, 12)
+		if clearOfPiers(px) and math.abs(px) > 20 then
+			on("parasol", px, -IS - B * 0.7, beach:float(-20, 20), -0.7)
 		end
+	end
+	-- palms along the east and west shores, and a quiet cove on the north shore
+	for _, side in { 1, -1 } do
+		for z = -IS + 30, IN - 30, 120 do
+			on("palm", side * (IX + B * 0.45), z + beach:float(-10, 10), if side > 0 then 0 else 180, -0.6)
+		end
+	end
+	for _, x in { 160, 200, 250 } do
+		on("parasol", x, IN + B * 0.55, beach:float(0, 360), -0.7)
+	end
+	for _, x in { 120, 300, -200, -500, 520, 800 } do
+		on("palm", x, IN + B * 0.4, 90, -0.6)
+	end
+
+	-- out at sea: little islets on the horizon
+	local sea = Rng.new(19)
+	for x = -IX - 100, IX + 100, 520 do
+		put("islet", x + sea:float(-60, 60), -IS - sea:float(330, 420), sea:float(0, 360), { tag = "backdrop" })
+		put("islet", x + sea:float(-60, 60), IN + sea:float(330, 420), sea:float(0, 360), { tag = "backdrop" })
+	end
+	for _, side in { 1, -1 } do
+		put("islet", side * (IX + 380), sea:float(0, 600), sea:float(0, 360), { tag = "backdrop" })
 	end
 	return out
 end

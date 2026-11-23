@@ -16,6 +16,7 @@ local order = {
 	"Villagers",
 	"Events",
 	"Shop",
+	"Explore",
 }
 
 local loaded = {}

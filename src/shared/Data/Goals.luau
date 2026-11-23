@@ -95,6 +95,14 @@ Goals.list = {
 		end,
 	},
 	{
+		id = "explore5",
+		name = "Out and about",
+		desc = "Find 5 places round the island.",
+		need = 5,
+		reward = 400,
+		value = stat("found"),
+	},
+	{
 		id = "wishes15",
 		name = "Wish granter",
 		desc = "Grant 15 wishes.",
@@ -129,6 +137,14 @@ Goals.list = {
 		value = function(p, _city)
 			return bestHeart(p)
 		end,
+	},
+	{
+		id = "exploreAll",
+		name = "Know every corner",
+		desc = "Find every place on the island.",
+		need = 16,
+		reward = 2000,
+		value = stat("found"),
 	},
 	{
 		id = "city",

@@ -39,6 +39,8 @@ Remotes.Functions = {
 	"WishGrant", -- (vid, "friend" | "cheer", otherVid?) -> ok, err
 	"HeartReward", -- (choice 1..3) -> ok, notice: picks a thank you from the oldest heart level up
 	"GoalClaim", -- (goalId) -> ok, coins
+	"PlaceFound", -- (placeId) -> ok: the player is at a place (checked against where they stand)
+	"Travel", -- (placeId) -> ok, err: back to a place they've found
 }
 
 Remotes.Events = {

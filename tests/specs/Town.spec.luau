@@ -96,6 +96,6 @@ describe("Town", function()
 	end)
 
 	it("keeps the ground to a sensible number of parts", function()
-		expect(#TownMap.ground()).toBeBetween(100, 2500)
+		expect(#TownMap.ground()).toBeBetween(100, 9000)
 	end)
 end)

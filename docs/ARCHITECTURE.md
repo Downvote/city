@@ -27,7 +27,8 @@ The contract between the parts of the game. Update it with every change to an AP
   - `Shapes`: walls (with openings cut out, corner reach), floors (with stairwells cut out), roofs (five styles).
   - `Builder`: prims to Parts and plan objects to Models; tags night lights, door leaves, seats and beds.
 - `Data/`: `Palette` (paint swatches, materials and the ready-made finishes Build mode shows as tiles), `Personalities`, `Foods`, `Items`, `Jobs`, `Events` (the event list), `Town` (map
-  layout and plot frames), `TownMap` (the island as parts: grass, beach, shallows, deep sea floor, see-through
+  layout and plot frames, the road network `Roads` as `{ x1, z1, x2, z2, half width, sidewalk }`, `Districts`,
+  `CreatorSpot`), `TownMap` (the island as parts: grass, beach, shallows, deep sea floor, see-through
   water and invisible walls at the shallows' edge; the streets, sidewalks, square and market; and where every
   building, palm, parasol, islet, the marina and piece of street furniture stands; the
   ground slabs are all SmoothPlastic for a clean flat look), `TownModels` (plaza buildings), `AmbientModels` (cars, the bus, birds,
@@ -44,6 +45,10 @@ The contract between the parts of the game. Update it with every change to an AP
 - `Sim/`: `Schema` (profile and villager shapes, defaults, migration), `Relationships`, `EventEngine` (picks events,
   applies their effects, including `bond` and `hearts`), `City` (stats, levels, land, workplaces, paydays), `Life`
   (hearts and their thank you offers, wishes, romance bonds, goals; all pure).
+- `Data/Hills` (the northern hills: `smooth(x, z)`, `at(x, z)` the drawn surface's height, `slope`, `Plateaus`,
+  `prims(region)` as flat triangles), `Data/CityModels` (downtown, civic, hill and waterfront buildings and
+  landmarks; `tower`, `shop` and `house` kinds; spinning parts named `Hub`, `Spin`, `Cabin`), `Data/Places` (places
+  to find: id, name, blurb, pos, radius, coins; `near`, `arrival`).
 - `Data/Goals` (the town goals with their `value(profile, city)`), `Data/Sayings` (sayings and hobbies).
 
 ## The plan
@@ -79,6 +84,7 @@ profile = {
   requests = { { vid, tag, untilT } }, log = { { t, text } }, outfits = { { name, app } },
   settings, tutorial, daily = { last, streak }, stats, recent = { eventId }, bdays = { [vid] = day },
   lastPayday, calendarDay, offers = { { vid, level, options } }, goals = { [goalId] = true },
+  found = { [placeId] = true },
 }
 Villager = { id, name, pers, app, color, bday = { s, d }, fav, hate, known, mood, job?, lv, xp, bed?, sick?,
              dayOff?, isYou?, born, heart, hxp, wish? = { kind, arg?, untilT }, saying?, hobby?, feedDay?, feeds? }
@@ -105,6 +111,7 @@ stats = { events, fed, made, earned, paydays, wishes, hearts, couples, partners 
 `Wish` attribute carries the icon for the client's bubble); feeding fills hearts and answers cravings; a new look
 answers a wish for one; `WishGrant`, `HeartReward` and `GoalClaim` answer the rest. Villagers sometimes say their
 own saying or a line about their hobby.
+| `Explore` | `PlaceFound` checks the player stands at the place, pays its coins once and marks `found`; `Travel` takes them back to a found place (a few seconds between trips). |
 | `Materials` | Runs `Textures.install` at start: each uploaded painted texture's MaterialVariant (built into the place) becomes its material's look. Warns when a variant is missing from the place. |
 
 `Npc` (`src/server/Npc/Npc.luau`) is one villager's body: animations (their own pack or Roblox's defaults), pathfinding
@@ -121,7 +128,7 @@ Functions (client asks, server answers): `GetState`, `BuildApply`, `BuildUndo`, 
 `VillagerCreate`, `VillagerUpdate`, `VillagerRemove`, `VillagerBed`, `VillagerJob`, `VillagerFeed`,
 `VillagerFocus`, `OutfitSave`, `OutfitDelete`, `EventChoose`, `ShopBuy`, `DailyClaim`, `PlotExpand`, `SettingSet`,
 `TutorialStep`, `VisitPlot`, `WishGrant` (`vid, "friend" | "cheer", otherVid?`), `HeartReward` (`choice`),
-`GoalClaim` (`goalId`).
+`GoalClaim` (`goalId`), `PlaceFound` (`placeId`), `Travel` (`placeId`).
 
 Events (server pushes): `State` (patches of the client state), `PlanSync` (`{ full }` or `{ ops }`), `Notify`
 (`text, kind`; kind `action` carries `open:creator:<vid>`), `EventShow`, `EventLine`, `EventEnd`, `Payday`, `Say`.
@@ -162,7 +169,10 @@ server, whatever the client did.
 - `UI/Rewards` (the thank you picker, opened by the HUD when `offers` arrive), `UI/Goals` (the town goals panel;
   `Goals.ready()` feeds the dock badge), `World/Wishes` (a wobbly thought bubble over each villager whose model has a
   `Wish` attribute; a click opens their page).
-- `World/Ambience` also bobs the marina's boats (parts named `Boat<n>`, one group each).
+- `UI/MapPanel` (the island map, places and travel), `World/Explore` (tells the server when the player reaches a
+  place they haven't found).
+- `World/Ambience` turns the ferris wheel, carousel and windmill (parts named `Spin` round the `Hub`'s X axis;
+  `Cabin` parts go round upright) and bobs the marina's boats (parts named `Boat<n>`, one group each).
 - `World/Ambience` (client only): cars and the bus on the street (they stop for anyone on a crossing, the bus waits
   at its stop), drifting clouds with shadows, circling birds with flapping wings, swaying trees and waving flags
   (only near the camera), the fountain's spray, fireflies at night. Everything moves with `workspace:BulkMoveTo`

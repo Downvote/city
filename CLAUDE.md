@@ -24,20 +24,26 @@ the contract (update it with every API, remote or saved data change), `src/share
    simulation (`tests/sim/build_client.luau`: the real Build mode driven by clicks), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (65, all passing): Build (catalog, plan rules, field cleaning, shapes, builder), BuildService (the server's
+Specs today (73, all passing): Build (catalog, plan rules, field cleaning, shapes, builder), BuildService (the server's
 Build service with stubbed neighbours: charges, syncs, strips junk, refuses land you don't own), Events (1500 seeded
 events, every kind reachable, text filled, numbers in range), City (starter town valid, levels, land, paydays, save
 loading, economy bounds), Town (placed models exist, plots and road clear, room to walk, spawn and festival spots
 clear, the islets out at sea off the plots), Presets (every ready-made building goes down whole turned every way, on the client and
 the server, inside its footprint, with its workplace), Icons (every icon builds with one outline round its silhouette: outline copies before
 fills, no stroke on a fill), Textures (every painted texture has its pictures and matching studs, ids well formed), Life
-(hearts and thank yous, snacks a day, wishes granted only by the right answer and fading, bonds, goals pay once). The town map previews with `sh tools/preview/render.sh map <png>` (or
+(hearts and thank yous, snacks a day, wishes granted only by the right answer and fading, bonds, goals pay once),
+World (hills flat at their edges, on the creator's meadow and their tops, gentle to walk; places on the island and
+off the plots; nothing in any road; downtown and civic buildings inside their blocks). The town map previews with `sh tools/preview/render.sh map <png>` (or
 `map:x1,z1,x2,z2`), the cars, bus and bird with `ambient`, a cloud with `cloud`, a ready-made building with
 `preset:<id>` (`preset:<id>:inside` leaves the roof off). A new ready-made building is a function in
 `Data/Presets` laid out with its little builder; the Presets spec will say where it doesn't fit.
 
-The town is a bright island in a turquoise sea (the user's reference: a cozy, bright life sim; our own designs, never
-copied): `Data/TownMap` has the island, beach, water, palms and parasols. Keep new scenery bright and candy coloured.
+The town is a big bright island (docs/GAME_DESIGN.md section 9): the old town and its plots in the middle, a ring of
+roads (`Town.Roads`), downtown east, the civic quarter west, the hills north (`Data/Hills`), the waterfront south.
+`Data/TownMap` lays out the ground and where everything stands, `Data/CityModels` draws the buildings and landmarks,
+`Data/Places` lists the places to find. Keep the whole place round 15,000 parts (light lamps, benches and trees away
+from the old town). The World spec checks the hills, the places and that nothing stands in a road; preview a district
+with `render.sh map:x1,z1,x2,z2`.
 
 The user asked for things to move "where possible": buttons, screens and the town are animated (docs/GAME_DESIGN.md
 section 10). New buttons get it from `UI/Kit`; new moving scenery goes in `World/Ambience` (client only, one loop,

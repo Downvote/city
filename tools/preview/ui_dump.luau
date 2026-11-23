@@ -80,6 +80,7 @@ local function pushState()
 			partners = 0,
 		},
 		goals = { settlers = true },
+		found = { square = true, lookout = true, pier = true, marina = true, station = true },
 		offers = if scene == "panel:Rewards"
 			then {
 				{

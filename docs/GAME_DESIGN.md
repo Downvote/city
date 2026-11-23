@@ -157,6 +157,35 @@ Held by `tests/specs/City.spec.luau`:
 
 ## 9. The town
 
+> can you redo the entirety of the city/overworld? make it detailed and big with a lot to explore, with hills, other
+> buildings, etc.
+
+The island is now about 2,300 studs across, with the old town (the eight plots, the square and the market, where
+they always were) in the middle of a ring of roads and new districts all round:
+
+- **Downtown** (east): a grid of streets with a hotel, office towers, apartment blocks, a department store, shop rows,
+  a cinema with a lit marquee, a little park with a fountain, the train station with a train at the platform, and
+  Sky Tower, the tallest thing on the island.
+- **The civic quarter** (west): the school with its sports field and a playground, the library, the museum, the
+  clinic, the fire station with its engine, the post office, a basketball court, a park with a pond and a bridge,
+  and rows of little houses with gardens.
+- **The hills** (north): faceted low poly hills you can walk all over, wooded thicker to the east. A path of
+  stepping stones climbs from Hill Road to the lookout on the top, a platform with ramps up to it and a telescope.
+  There's a farm on a terrace (barn, silo, fields, hay and cows, and a windmill that turns), an observatory, a
+  radio mast, and a camp in the pines with tents round a fire and a log cabin. A quiet cove waits on the north
+  shore.
+- **The waterfront** (south): a boardwalk along the whole shore, the beach with palms and parasols, beach huts, a
+  lifeguard tower, the marina, a fairground pier with a ferris wheel and a carousel that go round, and a
+  lighthouse out on the rocks at the end of a jetty.
+
+**Places to find.** Sixteen places round the island (the lookout, the farm, the camp, the observatory, the radio
+mast, the pier, the marina, the lighthouse, the station, Sky Tower, the cinema, the pond, the school field, the
+museum, the north cove and the square). Walking up to one the first time pays a few coins and marks it on the map;
+two town goals count them. **The map** (the pin on the HUD) shows the whole island, every road and district, the
+places found and not yet found, and where you are; found places have a Go button that takes you straight there, so
+the big island never means a long walk back.
+
+
 Up to eight players share a server. The street runs east to west with four plots on each side: asphalt with lane
 lines, curbs that drop at the zebra crossings, wide paved sidewalks with street trees, lamps, hydrants and a bus
 stop. In the middle: the square with the fountain ringed by benches, two lawns, a bandstand for festivals, the notice

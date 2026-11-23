@@ -249,7 +249,7 @@ function Hud.start()
 	-- round buttons under the clock: the city, the shop, the news
 	local corner = Kit.box({
 		Name = "Corner",
-		Size = UDim2.fromOffset(226, 52),
+		Size = UDim2.fromOffset(240, 52),
 		Position = UDim2.new(1, -14, 0, 86),
 		AnchorPoint = Vector2.new(1, 0),
 		Parent = hud,
@@ -258,6 +258,7 @@ function Hud.start()
 	local _ = cornerList
 	for i, e in
 		{
+			{ "map", "MapPanel" },
 			{ "city", "CityPanel" },
 			{ "cart", "ShopPanel" },
 			{ "news", "News" },

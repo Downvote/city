@@ -76,8 +76,10 @@ function Schema.newProfile(): any
 			hearts = 0,
 			couples = 0,
 			partners = 0,
+			found = 0,
 		},
 		offers = {}, -- heart level thank yous waiting to be picked (Sim/Life)
+		found = {}, -- places on the island found, by id (Data/Places)
 		goals = {}, -- town goals claimed, by id
 		recent = {},
 		calendar = { s = 1, d = 1, y = 1 },

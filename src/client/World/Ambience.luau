@@ -256,8 +256,70 @@ end
 type Sway = { parts: { BasePart }, locals: { CFrame }, base: CFrame, phase: number, amount: number, axis: string }
 local sways: { Sway } = {}
 
+-- spinning rides and the windmill: parts named "Spin" turn round the model's "Hub" (its X axis);
+-- parts named "Cabin" go round with it but stay upright
+type Spinner = {
+	hub: CFrame,
+	spin: { BasePart },
+	spinLocal: { CFrame },
+	cabins: { BasePart },
+	cabinLocal: { Vector3 },
+	cabinRot: { CFrame },
+	speed: number,
+}
+local spinners: { Spinner } = {}
+local SPEEDS = { ferrisWheel = 0.12, carousel = 0.5, windmill = 0.7 }
+
+local function collectSpinner(model: Model)
+	local hub = model:FindFirstChild("Hub", true)
+	if not (hub and hub:IsA("BasePart")) then
+		return
+	end
+	local s: Spinner = {
+		hub = hub.CFrame,
+		spin = {},
+		spinLocal = {},
+		cabins = {},
+		cabinLocal = {},
+		cabinRot = {},
+		speed = SPEEDS[model.Name] or 0.3,
+	}
+	for _, p in model:GetDescendants() do
+		if p:IsA("BasePart") then
+			if p.Name == "Spin" then
+				table.insert(s.spin, p)
+				table.insert(s.spinLocal, hub.CFrame:ToObjectSpace(p.CFrame))
+			elseif p.Name == "Cabin" then
+				table.insert(s.cabins, p)
+				table.insert(s.cabinLocal, hub.CFrame:PointToObjectSpace(p.Position))
+				table.insert(s.cabinRot, p.CFrame - p.Position)
+			end
+		end
+	end
+	table.insert(spinners, s)
+end
+
+local function stepSpinners()
+	local cam = workspace.CurrentCamera
+	local eye = if cam then cam.CFrame.Position else Vector3.zero
+	for _, s in spinners do
+		if (s.hub.Position - eye).Magnitude < 400 then
+			local turned = s.hub * CFrame.Angles(clock * s.speed, 0, 0)
+			for i, p in s.spin do
+				table.insert(moveParts, p)
+				table.insert(moveFrames, turned * s.spinLocal[i])
+			end
+			for i, p in s.cabins do
+				table.insert(moveParts, p)
+				table.insert(moveFrames, CFrame.new(turned:PointToWorldSpace(s.cabinLocal[i])) * s.cabinRot[i])
+			end
+		end
+	end
+end
+
 local function collectTown()
 	table.clear(sways)
+	table.clear(spinners)
 	local town = workspace:FindFirstChild("Town")
 	if not town then
 		return
@@ -265,6 +327,9 @@ local function collectTown()
 	for _, model in town:GetChildren() do
 		if model:IsA("Model") then
 			local name = model.Name
+			if SPEEDS[name] then
+				collectSpinner(model)
+			end
 			if name == "tree" or name == "pine" or name == "streetTree" or name == "palm" or name == "palmTall" then
 				local pivot = model:GetPivot()
 				local base = CFrame.new(pivot.Position)
@@ -521,6 +586,7 @@ function Ambience.start()
 		stepClouds(dt)
 		stepBirds(dt)
 		stepSway(dt)
+		stepSpinners()
 		flush()
 	end)
 end

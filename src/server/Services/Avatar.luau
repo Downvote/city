@@ -1,7 +1,7 @@
 -- The villager creator on the server, and everything that turns a saved look into a character.
 --
--- While someone is making a villager they get a small private stage away from town with a
--- mannequin on it. Their client edits a look (Avatar/Appearance) and sends it here; the server
+-- While someone is making a villager they get a small stage on the meadow north of Hill Road
+-- (Town.CreatorSpot), the town behind it, with a mannequin on it. Their client edits a look (Avatar/Appearance) and sends it here; the server
 -- checks every asset id is the kind of item its slot expects, then dresses the mannequin.
 -- Catalog searches normally run on the client; CreatorSearch is the fallback.
 
@@ -21,7 +21,7 @@ local Data = require(script.Parent.Data)
 
 local Avatar = {}
 
-local STAGE_ORIGIN = Vector3.new(1600, 40, 1600)
+local Town = require(Shared.Data.Town)
 local MAX_OUTFITS = 24
 
 local assetTypes: { [number]: string | false } = {} -- id -> AssetType name (false: lookup failed for good)
@@ -366,48 +366,25 @@ end
 -- The creator stage --------------------------------------------------------------------------------
 
 local function buildStage(slot: number): Model
-	local origin = STAGE_ORIGIN + Vector3.new(slot * 70, 0, 0)
+	-- a low round deck on the meadow north of Hill Road; the villager faces north, so the camera
+	-- looks back south and the town is behind them
+	local origin = Town.CreatorSpot + Vector3.new(-(slot - 1) * Town.CreatorGap, 0, 0)
 	local model = Instance.new("Model")
 	model.Name = "CreatorStage" .. slot
-	local function block(size: Vector3, cf: CFrame, color: Color3, mat: Enum.Material?)
+	local function disc(diameter: number, y: number, height: number, color: Color3)
 		local p = Instance.new("Part")
+		p.Shape = Enum.PartType.Cylinder
 		p.Anchored = true
-		p.Size = size
-		p.CFrame = cf
+		p.Size = Vector3.new(height, diameter, diameter)
+		p.CFrame = CFrame.new(origin + Vector3.new(0, y, 0)) * CFrame.Angles(0, 0, math.pi / 2)
 		p.Color = color
-		p.Material = mat or Enum.Material.SmoothPlastic
+		p.Material = Enum.Material.SmoothPlastic
 		p.TopSurface = Enum.SurfaceType.Smooth
 		p.Parent = model
 		return p
 	end
-	local floor = Instance.new("Part")
-	floor.Shape = Enum.PartType.Cylinder
-	floor.Anchored = true
-	floor.Size = Vector3.new(1, 18, 18)
-	floor.CFrame = CFrame.new(origin) * CFrame.Angles(0, 0, math.pi / 2)
-	floor.Color = Color3.fromRGB(255, 240, 220)
-	floor.Material = Enum.Material.SmoothPlastic
-	floor.Parent = model
-	block(
-		Vector3.new(40, 30, 1),
-		CFrame.new(origin + Vector3.new(0, 14, -10)),
-		Color3.fromRGB(255, 224, 214),
-		Enum.Material.SmoothPlastic
-	)
-	block(
-		Vector3.new(40, 1, 30),
-		CFrame.new(origin + Vector3.new(0, -1, 0)),
-		Color3.fromRGB(246, 214, 200),
-		Enum.Material.Fabric
-	)
-	local lamp = block(Vector3.new(1, 1, 1), CFrame.new(origin + Vector3.new(0, 12, 8)), Color3.new(1, 1, 1))
-	lamp.Transparency = 1
-	lamp.CanCollide = false
-	local light = Instance.new("PointLight")
-	light.Range = 30
-	light.Brightness = 1.6
-	light.Color = Color3.fromRGB(255, 244, 230)
-	light.Parent = lamp
+	disc(16, 0.15, 0.3, Color3.fromRGB(214, 172, 124))
+	disc(13, 0.35, 0.3, Color3.fromRGB(236, 200, 150))
 	model:SetAttribute("Origin", origin)
 	model.Parent = workspace
 	return model
@@ -448,7 +425,7 @@ local function placeMannequin(stage: any, model: Model)
 	local hum = model:FindFirstChildOfClass("Humanoid")
 	local hip = if hum then hum.HipHeight else 2
 	local rootHalf = if root and root:IsA("BasePart") then root.Size.Y / 2 else 1
-	model:PivotTo(CFrame.new(origin + Vector3.new(0, 0.5 + hip + rootHalf, 0)) * CFrame.Angles(0, 0, 0))
+	model:PivotTo(CFrame.new(origin + Vector3.new(0, 0.5 + hip + rootHalf, 0)) * CFrame.Angles(0, math.pi, 0))
 	model.Parent = stage.model
 	stage.mannequin = model
 	idle(model)

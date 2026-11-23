@@ -119,6 +119,14 @@ D.hammer = {
 	{ "r", 30, 18, 16, 10, C.white, r = 0.5, rot = 40, o = false, t = 0.4 },
 }
 
+-- A map pin.
+D.map = {
+	{ "c", 28, 84, 44, 12, C.greyLight },
+	{ "c", 22, 4, 56, 56, C.red },
+	{ "t", 24, 40, 52, "down", C.red },
+	{ "c", 37, 19, 26, 26, C.white },
+}
+
 D.house = {
 	{ "c", 66, 0, 16, 14, C.white, t = 0.25 },
 	{ "r", 66, 14, 12, 28, C.brick, r = 0.1 },
