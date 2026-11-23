@@ -317,12 +317,15 @@ local function stylize()
 	cc.Brightness = 0.02
 	cc.Parent = Lighting
 	grading = cc
-	-- bloom you can see: lamps, lit windows and the signs after dark
+	-- A glow on what really gives off light: lamps, lit windows and the signs after dark. It
+	-- used to start at anything pale (a threshold of 0.92, with nearly full strength and a wide
+	-- spread), so a white wall or a lamp at night washed the whole picture out. The user: "the
+	-- bloom might be too much". Now only what is brighter than white glows, and gently.
 	local bloom = Instance.new("BloomEffect")
 	bloom.Name = "Glow"
-	bloom.Intensity = 0.95
-	bloom.Size = 28
-	bloom.Threshold = 0.92
+	bloom.Intensity = Tuning.Look.Bloom.Intensity
+	bloom.Size = Tuning.Look.Bloom.Size
+	bloom.Threshold = Tuning.Look.Bloom.Threshold
 	bloom.Parent = Lighting
 	local rays = Instance.new("SunRaysEffect")
 	rays.Name = "Rays"

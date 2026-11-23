@@ -90,6 +90,29 @@ local titleLabel: TextLabel? = nil
 local selectTab: (string) -> ()
 local markTab: ((string) -> ())? = nil
 local profile = { name = "", pers = "sunny", color = "4FA9D9", bday = { s = 1, d = 1 } }
+local nameField: TextBox? = nil -- the name box on the second step, once that step has been built
+
+-- A villager made to look like somebody takes their name too, ready to change on the next step.
+-- The user: "when selecting friend, also add their name to the name field". One who is being
+-- edited and already has a name keeps it: picking a friend's look must not rename them unseen.
+local function takeName(name: string)
+	if mode == "edit" and Text.clean(profile.name) ~= "" then
+		return
+	end
+	local short = Text.clean(name)
+	local cut = utf8.offset(short, Tuning.Villagers.NameMaxLength + 1)
+	if cut then
+		short = short:sub(1, cut - 1)
+	end
+	if short == "" then
+		return
+	end
+	profile.name = short
+	local box = nameField
+	if box and box.Parent then
+		box.Text = short
+	end
+end
 local paintStudio: () -> ()
 local panelFrame: Frame? = nil -- the panel on the right, which glows in their favourite colour
 local PANEL_W, PANEL_PAD = 720, 12 -- what the panel holds is this wide, inside this margin
@@ -1145,6 +1168,7 @@ local function peoplePage()
 					local look = Remotes.fn("CreatorFromUserId"):InvokeServer(person.id)
 					if look then
 						setApp(look)
+						takeName(person.name)
 					else
 						Toasts.show("Couldn't load that avatar just now.", "warn")
 					end
@@ -1397,6 +1421,7 @@ local function buildProfilePage()
 	nameBox.Font = Kit.Fonts.Title
 	nameBox.TextSize = 20
 	Kit.rim(nameBox, T.Line, 1)
+	nameField = nameBox
 	nameBox:GetPropertyChangedSignal("Text"):Connect(function()
 		if utf8.len(nameBox.Text) and (utf8.len(nameBox.Text) :: number) > Tuning.Villagers.NameMaxLength then
 			nameBox.Text = nameBox.Text:sub(1, Tuning.Villagers.NameMaxLength)

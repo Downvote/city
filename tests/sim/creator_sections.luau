@@ -440,6 +440,97 @@ Sim.run("an unanswered question can be put again the next time", function()
 	frames(2)
 end)
 
+Sim.run("picking somebody takes their look and their name", function()
+	-- the user: "when selecting friend, also add their name to the name field"
+	local asked = {}
+	Sim.remoteFn("CreatorPeople").OnServerInvoke = function()
+		return {
+			people = {
+				{ id = 11, name = "Juniper", kind = "friend" },
+				{ id = 12, name = "A very long display name indeed", kind = "here" },
+			},
+			looks = {},
+		}
+	end
+	Sim.remoteFn("CreatorFromUserId").OnServerInvoke = function(_, id)
+		table.insert(asked, id)
+		return Appearance.default()
+	end
+	local Tuning = Harness.require("ReplicatedStorage.Shared.Config.Tuning")
+	local function people()
+		return Fake.find(gui, function(d)
+			return d.Name == "Person" and d:IsA("TextButton")
+		end)
+	end
+	local function nameBox()
+		local found = Fake.find(gui, function(d)
+			return d:IsA("TextBox") and d.PlaceholderText == "What are they called?"
+		end)
+		return found[1]
+	end
+	Creator.open({ mode = "new" })
+	frames(3)
+	Sim.advance(1)
+	press("Players")
+	Sim.advance(1)
+	frames(2)
+	local cards = people()
+	check(#cards == 2, "your friends and the people here are on the Players tab")
+	cards[1].Activated:Fire()
+	Sim.advance(1)
+	check(asked[1] == 11, "picking one asks for their look")
+	press("Name and personality")
+	local box = nameBox()
+	check(box ~= nil and box.Text == "Juniper", "and their name is in the name box on the next step")
+	-- it is only a start: the player can still change it
+	box.Text = "June"
+	press("Look")
+	press("Players")
+	Sim.advance(1)
+	frames(2)
+	people()[2].Activated:Fire()
+	Sim.advance(1)
+	press("Name and personality")
+	box = nameBox()
+	check(
+		utf8.len(box.Text) == Tuning.Villagers.NameMaxLength
+			and box.Text == ("A very long display name indeed"):sub(1, 20),
+		"picking somebody else takes their name instead, cut to the longest a name may be"
+	)
+	Creator.close()
+	frames(2)
+	-- a villager who already has a name keeps it when given a friend's look
+	local State = Sim.State
+	local order = State.data.order or {}
+	local vid = order[1]
+	if not vid then
+		vid = "v_named"
+		local villagers = table.clone(State.data.villagers or {})
+		villagers[vid] = {
+			name = "Mara",
+			pers = "sunny",
+			color = "4FA9D9",
+			bday = { s = 1, d = 1 },
+			app = Appearance.default(),
+		}
+		State.set("villagers", villagers)
+		State.set("order", { vid })
+	end
+	local was = State.villager(vid).name
+	Creator.open({ mode = "edit", vid = vid })
+	frames(3)
+	Sim.advance(1)
+	press("Players")
+	Sim.advance(1)
+	frames(2)
+	people()[1].Activated:Fire()
+	Sim.advance(1)
+	press("Name and personality")
+	check(nameBox().Text == was, "a villager being edited keeps the name they have")
+	Creator.close()
+	frames(2)
+end)
+
 check(#Sim.errors == warned, "no warnings from any of it (" .. (#Sim.errors - warned) .. ")")
 for i = warned + 1, #Sim.errors do
 	print("  warning: " .. Sim.errors[i]:sub(1, 400))

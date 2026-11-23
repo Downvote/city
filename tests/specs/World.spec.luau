@@ -13,6 +13,18 @@ local Places = require(Shared .. "Data.Places")
 local Goals = require(Shared .. "Data.Goals")
 local Geometry = require(Shared .. "Build.Geometry")
 
+describe("The glow", function()
+	it("starts above white, and is gentle", function()
+		-- the user: "the bloom might be too much". With a threshold under 1 anything pale glowed
+		-- (a white wall in the sun), and at nearly full strength a lamp washed the view out
+		local bloom = Tuning.Look.Bloom
+		expect(bloom.Threshold >= 1.5).toBeTruthy()
+		expect(bloom.Threshold <= 2.5).toBeTruthy() -- lamps and signs still glow after dark
+		expect(bloom.Intensity > 0 and bloom.Intensity <= 0.5).toBeTruthy()
+		expect(bloom.Size >= 8 and bloom.Size <= 24).toBeTruthy()
+	end)
+end)
+
 describe("Hills", function()
 	it("start and end at ground level", function()
 		for x = Hills.X1, Hills.X2 - 1, 50 do

@@ -1179,6 +1179,20 @@ at its top right. The layout is what is taken; the villagers, the shapes and the
 - **The main screen steps aside** while a scene is up: the menu bar, the Build button and the quests slide off
   their edges and come back after.
 
+### A friend's name, and less glow
+
+> when selecting friend, also add their name to the name field. also, the bloom might be too much
+
+(With a screenshot of the town at night, washed out white round a lamp and a door.)
+
+- **A friend's name.** On the creator's Players tab, picking somebody (a friend, someone in the server, yourself)
+  gives the villager their look. For a new villager it now puts their name in the name box on the next step as
+  well, cut to the longest a name may be and ready to change. A villager who is being edited and already has a
+  name keeps it, so giving them a friend's look never renames them unseen.
+- **Less glow.** The glow over the picture used to start at anything pale, at nearly full strength and spread
+  wide, so a white wall in the sun glowed and a lamp at night washed out the whole view. It now starts only above
+  white (what gives off light: lamps, lit windows, signs), at well under half the strength and a tighter spread.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

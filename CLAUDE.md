@@ -29,7 +29,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (279, all passing; `ShopService`: the shop's server side, a party cake one at a time; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (280, all passing; `ShopService`: the shop's server side, a party cake one at a time; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off; what kind a bundle
 is, the outfit that holds the body, single body parts, the player's own items and avatars; preview scenes
@@ -85,7 +85,8 @@ previews show the facets (`--smooth` shows the fallback without the kit).
 The user asked for a drawn city ("stylize everything, including the map, to zenless zone zero style. Make
 shaders, new models and textures if necessary. The map should look similar to a city in the game"). Take the
 direction, never the game: none of its streets, shops, names, logos or art. Roblox has no shaders of our own,
-so the look is `World.stylize` (hard shadows, violet shade, flat walls, strong grading, bloom) and ink outlines
+so the look is `World.stylize` (hard shadows, violet shade, flat walls, strong grading, a gentle glow on what
+gives off light: `Tuning.Look.Bloom`, its threshold above white since "the bloom might be too much") and ink outlines
 on people (`client/World/Outlines`: Highlights, the 20 nearest). The street scene is `Data/StreetModels`,
 placed by rule in `TownMap`'s `streetScene` (poles and wires, drinks machines, billboards, clutter). Signs are
 drawn in the game by `Services/Signs` from `Data/Signs` onto parts named `Sign` / `SwingSign` (attributes
@@ -202,7 +203,9 @@ On the villagers' screen that is `ModelPreview.fromModel(model, { Stand = true, 
 playing their idle) with a fade to `T.Black` under the stats; in the creator the real mannequin stands in the
 air high over the meadow, with nothing under it ("remove the plate the character stands on in the creation
 screen"), and the client puts the backdrop on a part behind it that follows the camera (no town, no fade: "no need
-for the gradient background or the city background"). That backdrop is a SurfaceGui kept in PlayerGui, and the
+for the gradient background or the city background"). Picking somebody on its Players tab takes their look and,
+for a new villager, their name too ("when selecting friend, also add their name to the name field"); one being
+edited keeps the name they have. That backdrop is a SurfaceGui kept in PlayerGui, and the
 engine reports what is on it as under the pointer, which once stopped every drag ("you cant drag to rotate in the
 avatar creator"): it is `Active = false`, and `Kit.overUI` counts only what is under a ScreenGui. Never put a
 ViewportFrame inside a CanvasGroup: it comes out pale. The old header bar and its wave are gone.

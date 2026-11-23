@@ -191,4 +191,13 @@ Tuning.Talk = {
 	Cooldown = 0.4, -- seconds between two lines to one player: shorter than the hold, it only stops a flood
 }
 
+-- The look of the world ----------------------------------------------------
+Tuning.Look = {
+	-- The glow over the picture (Roblox's own defaults are 1, 24 and 2). The threshold is how
+	-- bright a thing must be before it glows: above white, so only what gives off light does.
+	-- It was 0.92 at nearly full strength and a pale wall or a lamp at night washed the whole
+	-- view out (the user: "the bloom might be too much").
+	Bloom = { Intensity = 0.4, Size = 18, Threshold = 1.7 },
+}
+
 return Tuning
