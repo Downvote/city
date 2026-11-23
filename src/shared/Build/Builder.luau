@@ -210,6 +210,8 @@ Builder.cutPieces = false
 Builder.Pieces = { cut = 0, failed = 0, placed = 0, waiting = 0 }
 
 local pieceKit: { [string]: BasePart | false } = {}
+-- where each mesh's own middle sits in its piece's frame (the merge decides; usually the origin)
+local pieceAt: { [string]: CFrame } = {}
 type Waiting = { prim: Prim, frame: CFrame, parent: Instance }
 local pieceQueue: { Waiting } = {}
 local pieceWorker = false
@@ -234,8 +236,10 @@ local function expandPiece(prim: Prim, frame: CFrame, parent: Instance, opts: Op
 	end
 end
 
--- Merges a piece's shapes into one mesh the size of its box, standing on its own origin. Yields.
--- Returns nil when it can't be done or didn't come out as the box says, so the caller falls back.
+-- Merges a piece's shapes into one mesh. Yields. The shapes are made where they stand in the
+-- piece's own frame, so wherever the merge puts the mesh's middle, that frame is what a copy is
+-- placed by (pieceAt). Returns nil when it can't be done or the mesh isn't the size of the
+-- piece's box, so the caller falls back to plain parts.
 local function cutPiece(prim: Prim): BasePart?
 	local subs: { Prim } = prim.parts or {}
 	local main: BasePart? = nil
@@ -249,15 +253,20 @@ local function cutPiece(prim: Prim): BasePart?
 		end
 	end
 	local shape: BasePart? = nil
+	local material, look = Enum.Material.SmoothPlastic, ""
+	if main then
+		material, look = main.Material, main.MaterialVariant
+	end
 	if main and #rest == 0 then
 		shape = main
 		main = nil
 	elseif main then
 		local ok, result = pcall(function()
 			local geometry = game:GetService("GeometryService") :: any
+			-- Precise: a frame simplified at a distance would close over the pane inside it
 			return geometry:UnionAsync(main, rest, {
 				CollisionFidelity = Enum.CollisionFidelity.Box,
-				RenderFidelity = Enum.RenderFidelity.Automatic,
+				RenderFidelity = Enum.RenderFidelity.Precise,
 				SplitApart = false,
 			})
 		end)
@@ -275,22 +284,24 @@ local function cutPiece(prim: Prim): BasePart?
 	if not shape then
 		return nil
 	end
-	-- a copy is placed by the box the piece says it is: the mesh has to be that box, the right
-	-- way up, with its middle where the piece's is
-	local d = shape.Size - prim.size
-	if
-		math.abs(d.X) > 0.06
-		or math.abs(d.Y) > 0.06
-		or math.abs(d.Z) > 0.06
-		or shape.Position.Magnitude > 0.06
-		or not upright(shape.CFrame)
-	then
-		shape:Destroy()
-		return nil
+	-- a sanity check on what came back: standing square, it has to be the piece's box
+	if upright(shape.CFrame) then
+		local d = shape.Size - prim.size
+		if
+			math.abs(d.X) > 0.1
+			or math.abs(d.Y) > 0.1
+			or math.abs(d.Z) > 0.1
+			or shape.CFrame.Position.Magnitude > math.max(1, prim.size.Magnitude)
+		then
+			shape:Destroy()
+			return nil
+		end
 	end
+	pieceAt[prim.key or ""] = shape.CFrame
 	shape.Name = "Piece"
 	shape.Anchored = true
-	shape.CFrame = CFrame.identity
+	shape.Material = material
+	shape.MaterialVariant = look
 	shape.CanCollide = prim.collide == true
 	shape.CanTouch = false
 	pcall(function()
@@ -303,7 +314,7 @@ end
 
 local function placePiece(template: BasePart, prim: Prim, frame: CFrame, parent: Instance): BasePart
 	local part = template:Clone()
-	part.CFrame = frame * prim.cf
+	part.CFrame = frame * prim.cf * (pieceAt[prim.key or ""] or CFrame.identity)
 	part.Parent = parent
 	Builder.Pieces.placed += 1
 	return part

@@ -835,6 +835,11 @@ None of that game's streets, shops, signs, gate or art: Maplewick's are its own.
   timber slats, barrel roof tiles, paving slabs, street asphalt, awning canvas. A part asks for one by name
   (`"Concrete:Panel"`). They show once their pictures are uploaded and their ids are in `Data/TextureIds`; until
   then the part shows Roblox's plain material.
+- **The light.** Roblox still runs no shaders of our own, so this is again the sun, the air and the effects over
+  the picture. The sun rides lower all day (the island sits further north: a latitude of 54), so shadows are long;
+  their edge is a touch softer than the hard cel edge it had, and the shade is lifted a little by light off the
+  sky. The long morning and afternoon are golden, not white: the picture's tint and the colour of the haze follow
+  the hour, from clear at noon through gold to orange at dusk and blue at night.
 - **Street buildings come from a facade kit** (`Data/Facades`): a ground floor shop front, storeys of window
   bays, a roof with its clutter, in a handful of wall treatments and colours, put together by rule so a street is
   varied and still one town.

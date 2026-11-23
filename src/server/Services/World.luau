@@ -274,9 +274,14 @@ local function stylize()
 	Lighting.Ambient = Color3.fromRGB(126, 118, 158)
 	Lighting.OutdoorAmbient = Color3.fromRGB(152, 146, 186)
 	Lighting.ColorShift_Top = Color3.fromRGB(255, 236, 200)
-	Lighting.EnvironmentDiffuseScale = 0.3
-	Lighting.EnvironmentSpecularScale = 0.12
-	Lighting.ShadowSoftness = 0.06
+	-- The user then showed that game's streets and asked to "emulate the level of detail of these
+	-- shaders": there the sun is low and warm, shadows are long with a slightly soft edge, and the
+	-- shade is lifted by light off the sky. So: a sun that rides lower all day (the latitude), a
+	-- little softness on the shadow's edge, a little more light from the sky.
+	Lighting.GeographicLatitude = 54
+	Lighting.EnvironmentDiffuseScale = 0.38
+	Lighting.EnvironmentSpecularScale = 0.18
+	Lighting.ShadowSoftness = 0.14
 	Lighting.GlobalShadows = true
 	Lighting.ExposureCompensation = 0.12
 	local cc = Instance.new("ColorCorrectionEffect")
@@ -335,24 +340,40 @@ local function air()
 	end
 end
 
--- Clear light at noon, a deep orange at dawn and dusk, and a blue night in which the colours
--- and the contrast are pushed further, so lit signs and windows stand out of it.
+-- Clear light round noon, gold through the long morning and afternoon, a deep orange at dawn
+-- and dusk, and a blue night in which the colours and the contrast are pushed further, so lit
+-- signs and windows stand out of it. The air takes the hour's colour too: a golden haze toward
+-- evening, a cool one at night.
+local AIR = {
+	day = { color = Color3.fromRGB(226, 230, 246), decay = Color3.fromRGB(255, 198, 170) },
+	gold = { color = Color3.fromRGB(255, 226, 190), decay = Color3.fromRGB(255, 176, 128) },
+	dusk = { color = Color3.fromRGB(255, 200, 160), decay = Color3.fromRGB(255, 140, 100) },
+	night = { color = Color3.fromRGB(150, 162, 214), decay = Color3.fromRGB(70, 80, 130) },
+}
+
 local function grade(h: number)
 	local cc = grading
 	if not cc then
 		return
 	end
-	local tint, saturation, contrast
-	if h >= 7.5 and h <= 16.5 then
-		tint, saturation, contrast = Color3.fromRGB(255, 250, 242), 0.34, 0.17
+	local tint, saturation, contrast, air
+	if h >= 10 and h <= 14.5 then
+		tint, saturation, contrast, air = Color3.fromRGB(255, 250, 242), 0.34, 0.17, AIR.day
+	elseif h >= 7.5 and h <= 16.5 then
+		tint, saturation, contrast, air = Color3.fromRGB(255, 240, 220), 0.36, 0.18, AIR.gold
 	elseif (h > 16.5 and h < 19.5) or (h > 5 and h < 7.5) then
-		tint, saturation, contrast = Color3.fromRGB(255, 212, 184), 0.38, 0.19
+		tint, saturation, contrast, air = Color3.fromRGB(255, 212, 184), 0.38, 0.19, AIR.dusk
 	else
-		tint, saturation, contrast = Color3.fromRGB(176, 190, 255), 0.44, 0.24
+		tint, saturation, contrast, air = Color3.fromRGB(176, 190, 255), 0.44, 0.24, AIR.night
 	end
 	cc.TintColor = cc.TintColor:Lerp(tint, 0.08)
 	cc.Saturation += (saturation - cc.Saturation) * 0.08
 	cc.Contrast += (contrast - cc.Contrast) * 0.08
+	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
+	if atmosphere then
+		atmosphere.Color = atmosphere.Color:Lerp(air.color, 0.08)
+		atmosphere.Decay = atmosphere.Decay:Lerp(air.decay, 0.08)
+	end
 end
 
 local function clockLoop()
