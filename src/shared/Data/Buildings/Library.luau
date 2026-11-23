@@ -307,7 +307,6 @@ return function(add: any)
 			putAt("chair_wood", 13.4, 23, 0, Plan.levelBase(1), 1, WALNUT)
 			putAt("armchair", 20, 20.8, 270, Plan.levelBase(1), 1, FOREST)
 			putAt("lamp_floor", 20.6, 24.4, 0, Plan.levelBase(1), 1)
-			putAt("plant_big", 7.6, 20.2, 0, Plan.levelBase(1), 1)
 			for _, x in { 7, 13.4, 19 } do
 				putAt("light_ceiling", x, 22, 0, Plan.levelTop(1) - 1, 1)
 			end

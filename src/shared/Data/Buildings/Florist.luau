@@ -125,7 +125,7 @@ return function(add: any)
 			hang(b, "awning", "front", 9.2, 8.8, "a", FOREST, WHITE)
 			hang(b, "sign_flowers", "side", 0.9, 8.6, "a")
 			hang(b, "lantern_wall", "side", 2.8, 5.6, "a")
-			hang(b, "hanging_basket", "side", 0.9, 4.8, "a", WALNUT, BUTTER)
+			hang(b, "hanging_basket", "side", 0.9, 5.2, "a", WALNUT, BUTTER)
 			for _, t in { 4.6, 11.4 } do
 				hang(b, "window_hood", "left", t, 7.78, "a", WHITE, TEAL.c)
 				hang(b, "window_box", "left", t, 2.05, "a", WHITE, PINK)
