@@ -58,13 +58,14 @@ local function card(
 	local c = Kit.frame({
 		Parent = parent,
 		Size = UDim2.new(1, -8, 0, 60),
-		Color = T.White,
+		Color = T.Card,
 		Stroke = T.Ink,
 		StrokeThickness = 2,
 		LayoutOrder = order,
 	})
 	Kit.pad(c, 10, 6)
 	Kit.frame({
+		Name = "Swatch", -- the thing's own colour
 		Parent = c,
 		Size = UDim2.fromOffset(40, 40),
 		Position = UDim2.fromOffset(0, 4),

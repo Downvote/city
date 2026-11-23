@@ -194,7 +194,16 @@ harness stands in for the newer enums, so the UI previews draw shadows, radial a
 clipping (`tools/preview/ui_render.py`).
 
 - `Controllers/State`: the mirror of the player's state and plan; `State.on(key, fn)`, `State.onPlan(fn)`.
-- `UI/Kit`: theme and helpers in the bright cozy style (`Kit.corner(inst, px | "pill" | "circle")`; frames are
+- `UI/Kit`: theme and helpers. The theme is dark (`Kit.Theme`; the names are from the light look before it):
+  surfaces `PaperDark` (wells, tracks, tabs not picked), `Cream` (big panels), `Paper` (cards, buttons, bars over
+  the 3D view), `Card` (a row or tile on a panel), `Picture` (the tile behind a catalog picture or a face), `Line`;
+  words `Ink` and `InkSoft` on those surfaces, `White` on a coloured button, `Dark` for outlines round letters
+  and for words on a bright face (yellow); the pastel accents; `Glass` for the see-through pills. `Kit.deep(colour)`
+  is an accent sunk into the panel colour (header bars, `ribbon`). A colour chip to pick from is named `Swatch`
+  (`Kit.swatch` does it), which is what lets it be light. `UI/Icons` has `Icons.Glyph` (light) and `Icons.Hole`
+  (the dark card colour) as its defaults. `tools/preview/audit.sh` dumps every screen and
+  `tools/preview/ui_audit.py` fails on a light surface or on words that don't stand out; `scripts/check.sh` runs it.
+  Helpers (`Kit.corner(inst, px | "pill" | "circle")`; frames are
   rounded unless `Radius = false`; `Kit.stroke` in the text colour comes out thin and see through). The pieces
   below kept their names from the storybook look: `button` (a square face on a darker block it presses into, outlined
   Fredoka label; `Icon` draws an icon left of the text; the TextButton's own Text is invisible and only sizes it,

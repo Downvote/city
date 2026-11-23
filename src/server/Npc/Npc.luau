@@ -400,13 +400,14 @@ local function makeBubble(self: Npc): BillboardGui
 	frame.Position = UDim2.fromScale(0.5, 1)
 	frame.Size = UDim2.fromScale(0, 0)
 	frame.AutomaticSize = Enum.AutomaticSize.XY
-	frame.BackgroundColor3 = Color3.fromRGB(255, 252, 245)
+	-- dark like the rest of the interface (the client's UI/Kit: Paper, Line and Ink)
+	frame.BackgroundColor3 = Color3.fromRGB(37, 40, 54)
 	frame.Parent = gui
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 12)
 	corner.Parent = frame
 	local stroke = Instance.new("UIStroke")
-	stroke.Color = Color3.fromRGB(214, 190, 160)
+	stroke.Color = Color3.fromRGB(66, 71, 93)
 	stroke.Thickness = 2
 	stroke.Parent = frame
 	local pad = Instance.new("UIPadding")
@@ -423,7 +424,7 @@ local function makeBubble(self: Npc): BillboardGui
 	label.Font = Enum.Font.BuilderSansMedium
 	label.TextSize = 18
 	label.TextWrapped = true
-	label.TextColor3 = Color3.fromRGB(74, 52, 38)
+	label.TextColor3 = Color3.fromRGB(236, 238, 246)
 	label.Parent = frame
 	local limit = Instance.new("UISizeConstraint")
 	limit.MaxSize = Vector2.new(230, 200)
@@ -493,7 +494,7 @@ function Npc.icon(self: Npc, kind: string, seconds: number?)
 	label.Text = ICONS[kind] or kind
 	label.TextColor3 = ICON_COLORS[kind] or Color3.new(1, 1, 1)
 	label.TextStrokeTransparency = 0.4
-	label.TextStrokeColor3 = Color3.new(1, 1, 1)
+	label.TextStrokeColor3 = Color3.fromRGB(16, 18, 26)
 	label.Parent = gui
 	gui.Parent = self.model
 	TweenService

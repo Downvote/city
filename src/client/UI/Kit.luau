@@ -1,7 +1,11 @@
--- The UI toolkit: one theme and the pieces every screen is built from, in a bright, cozy look of
--- our own: white rounded cards with soft shadows, titles on bright pill banners, translucent navy
+-- The UI toolkit: one theme and the pieces every screen is built from, in a dark, cozy look of
+-- our own: dark rounded cards with soft shadows, light words, pastel accents, dark see-through
 -- pills over the 3D view, rounded buttons that lift off a soft shadow and press down into it,
--- round icon buttons with a white rim and a little caption pill, and drawn icons (UI/Icons).
+-- round icon buttons with a little caption pill, and drawn icons (UI/Icons).
+--
+-- The user: "Make every ui element dark mode, with a dark background". So every surface is one
+-- of the dark shades below and every word on them is light. The token names are from the light
+-- look that came before (Paper, Cream), and they stay so the screens need no renaming.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -14,13 +18,19 @@ local Icons = require(script.Parent.Icons)
 local Kit = {}
 
 Kit.Theme = {
-	-- cozy and soft: warm creams, gentle pastels, warm brown words
-	Paper = Color3.fromRGB(255, 251, 243), -- cards and buttons
-	Cream = Color3.fromRGB(255, 247, 234), -- big panels
-	PaperDark = Color3.fromRGB(246, 236, 222), -- wells, tracks, unpicked tabs
-	Ink = Color3.fromRGB(96, 74, 68), -- words: a warm brown
-	InkSoft = Color3.fromRGB(158, 136, 126),
-	Line = Color3.fromRGB(234, 222, 206),
+	-- surfaces, darkest to lightest: a well sinks into a panel, a card stands up off it
+	PaperDark = Color3.fromRGB(20, 22, 31), -- wells, tracks, unpicked tabs
+	Cream = Color3.fromRGB(29, 31, 42), -- big panels
+	Paper = Color3.fromRGB(37, 40, 54), -- cards and buttons, the bars over the 3D view
+	Card = Color3.fromRGB(47, 51, 68), -- a row or a tile on a panel
+	Picture = Color3.fromRGB(74, 80, 104), -- behind a catalog picture or a face: light enough that dark hair shows
+	Line = Color3.fromRGB(66, 71, 93),
+	-- words
+	Ink = Color3.fromRGB(236, 238, 246), -- words on any of the surfaces above
+	InkSoft = Color3.fromRGB(158, 164, 187),
+	White = Color3.fromRGB(255, 255, 255), -- words and icons on a coloured button
+	Dark = Color3.fromRGB(16, 18, 26), -- outlines round letters, and words on a bright face
+	-- accents: the same pastels as before, they carry the colour now
 	Green = Color3.fromRGB(128, 198, 118),
 	GreenDark = Color3.fromRGB(92, 164, 92),
 	Coral = Color3.fromRGB(250, 140, 128),
@@ -33,12 +43,9 @@ Kit.Theme = {
 	Orange = Color3.fromRGB(255, 172, 108),
 	Pink = Color3.fromRGB(250, 156, 186),
 	Teal = Color3.fromRGB(110, 204, 188),
-	White = Color3.fromRGB(255, 255, 255),
-	Shadow = Color3.fromRGB(90, 60, 50),
-	Glass = Color3.fromRGB(84, 62, 60), -- the dark see-through pills over the 3D view: warm cocoa
-	GlassAlpha = 0.3,
-	Wood = Color3.fromRGB(84, 62, 60),
-	WoodLight = Color3.fromRGB(110, 84, 80),
+	Shadow = Color3.fromRGB(0, 0, 0),
+	Glass = Color3.fromRGB(14, 16, 24), -- the dark see-through pills over the 3D view
+	GlassAlpha = 0.26,
 }
 
 local T = Kit.Theme
@@ -112,7 +119,7 @@ end
 -- the stroke is still made (callers keep and tween it) but never shows. Doodles and icons make
 -- their own strokes.
 function Kit.stroke(inst: Instance, color: Color3?, thickness: number?): UIStroke
-	local ink = color == T.Ink
+	local ink = color == T.Ink or color == T.Dark
 	return Kit.new("UIStroke", {
 		Enabled = false,
 		Color = color or T.Line,
@@ -134,7 +141,7 @@ function Kit.outlineText(label: Instance, color: Color3?, thickness: number?): U
 		)
 	end
 	local st = s :: UIStroke
-	st.Color = color or T.Ink
+	st.Color = color or T.Dark
 	st.Thickness = thickness or 2
 	st.LineJoinMode = Enum.LineJoinMode.Round
 	if label:IsA("GuiObject") and not label:FindFirstChild("TextShadow") then
@@ -266,6 +273,12 @@ local function mix(a: Color3, b: Color3, t: number): Color3
 	return a:Lerp(b, t)
 end
 Kit.mix = mix
+
+-- An accent sunk most of the way into the dark panel colour: what a header bar or a title
+-- ribbon is drawn in, so those are dark too and only tinted with their colour.
+function Kit.deep(color: Color3): Color3
+	return color:Lerp(T.Cream, 0.58)
+end
 
 -- Washes a frame from colour `a` into colour `b` (left to right, or along `rotation` degrees).
 function Kit.wash(inst: GuiObject, a: Color3, b: Color3, rotation: number?): UIGradient
@@ -529,7 +542,7 @@ function Kit.frame(props: { [string]: any }?): Frame
 		-- outlines are light in this look: a thin line, softer than the text
 		local color = if typeof(p.Stroke) == "Color3" then p.Stroke else T.Line
 		local s = Kit.stroke(f, color, math.min(p.StrokeThickness or 2, 2.5))
-		s.Transparency = if color == T.Ink then 0.55 else 0
+		s.Transparency = if color == T.Ink or color == T.Dark then 0.55 else 0
 	end
 	return f
 end
@@ -542,7 +555,7 @@ function Kit.box(props: { [string]: any }?): Frame
 	return Kit.frame(p)
 end
 
--- A white rounded card that floats over the 3D view (Build mode's bars, the creator's tools).
+-- A dark rounded card that floats over the 3D view (Build mode's bars, the creator's tools).
 function Kit.glass(props: { [string]: any }?): Frame
 	local p = table.clone(props or {})
 	local f = Kit.frame({
@@ -560,8 +573,8 @@ function Kit.glass(props: { [string]: any }?): Frame
 	})
 	Kit.softShadow(f, 1)
 	if p.Color == nil then
-		-- white at the top into the palest cream
-		Kit.wash(f, T.White, T.Cream, 90)
+		-- a touch lighter at the top
+		Kit.wash(f, mix(T.Paper, T.White, 0.06), T.Paper, 90)
 	end
 	return f
 end
@@ -589,7 +602,7 @@ function Kit.text(text: string, props: { [string]: any }?): TextLabel
 		Parent = p.Parent,
 	})
 	if p.Outline then
-		Kit.outlineText(label, if typeof(p.Outline) == "Color3" then p.Outline else T.Ink, p.OutlineThickness)
+		Kit.outlineText(label, if typeof(p.Outline) == "Color3" then p.Outline else T.Dark, p.OutlineThickness)
 	end
 	return label
 end
@@ -600,7 +613,7 @@ function Kit.title(text: string, props: { [string]: any }?): TextLabel
 	p.Font = Kit.Fonts.Title
 	p.TextSize = p.TextSize or 26
 	if p.Outline == nil and p.Color == T.White then
-		p.Outline = T.Ink
+		p.Outline = T.Dark
 	end
 	return Kit.text(text, p)
 end
@@ -978,7 +991,7 @@ function Kit.setButtonColor(b: GuiButton, color: Color3, textColor: Color3?)
 		local art = face:FindFirstChild("IconArt")
 		if art then
 			local light = color.R * 0.3 + color.G * 0.59 + color.B * 0.11 > 0.86
-			Kit.recolorIcon(art, if light then T.Ink else T.White, color)
+			Kit.recolorIcon(art, if light then T.Dark else T.White, color)
 		end
 	elseif face and face:IsA("Frame") then
 		face.BackgroundColor3 = color
@@ -1057,14 +1070,14 @@ function Kit.iconButton(icon: string, caption: string?, props: { [string]: any }
 	local _2 = faceContent
 	local iconPx = math.floor(d * 0.6)
 	if Icons.has(icon) then
-		-- one colour: white on a coloured button, navy on a white one, details cut out in the face's colour
+		-- one colour: white on a dark or coloured button, dark on a bright one, details cut out in the face's colour
 		local light = color.R * 0.3 + color.G * 0.59 + color.B * 0.11 > 0.86
 		Icons.make(icon, iconPx, {
 			Name = "IconArt",
 			Parent = face,
 			Position = UDim2.new(0.5, -iconPx / 2, 0.5, -iconPx / 2),
 			ZIndex = z + 1,
-			Color = p.IconColor or (if light then T.Ink else T.White),
+			Color = p.IconColor or (if light then T.Dark else T.White),
 			Hole = color,
 		})
 	else
@@ -1186,7 +1199,7 @@ function Kit.darkPill(props: { [string]: any }?): Frame
 	})
 	Kit.softShadow(f, 0.6)
 	-- a little lighter toward the right, so the pills over the town aren't flat slabs
-	Kit.wash(f, T.Glass, mix(T.Glass, T.White, 0.2), 0)
+	Kit.wash(f, T.Glass, mix(T.Glass, T.White, 0.1), 0)
 	return f
 end
 
@@ -1286,10 +1299,10 @@ function Kit.shadow(card: GuiObject, radius: any): Frame
 	return s
 end
 
--- The round close button that sits on a panel's corner: white, with a soft navy cross.
+-- The round close button that sits on a panel's corner: a dark disc with a white cross.
 function Kit.closeButton(props: { [string]: any }, onClick: (() -> ())?): TextButton
 	local p = table.clone(props)
-	p.Color = T.White
+	p.Color = T.Card
 	p.TextSize = nil
 	return Kit.iconButton("close", nil, p, onClick)
 end
@@ -1300,7 +1313,7 @@ end
 --   its height is half the base)
 local function pieces(parent: GuiObject, list: { any }, thick: number, z: number)
 	local function draw(piece: any, ink: boolean)
-		local color = if ink then T.Ink else piece[6]
+		local color = if ink then T.Dark else piece[6]
 		local g = if ink then thick else 0
 		if piece[1] == "rect" then
 			local f = Kit.new("Frame", {
@@ -1369,7 +1382,7 @@ Kit.pieces = pieces
 -- the text label.
 function Kit.ribbon(text: string, props: { [string]: any }?): (Frame, TextLabel)
 	local p = props or {}
-	local color: Color3 = p.Color or T.Green
+	local color: Color3 = Kit.deep(p.Color or T.Green)
 	local textSize = p.TextSize or 26
 	local h = math.floor(textSize * 1.7)
 	local W = math.floor((utf8.len(text) or #text) * textSize * 0.56 + textSize * 1.6)
@@ -1488,7 +1501,8 @@ function Kit.doodles(parent: GuiObject, color: Color3, seed: number, count: numb
 end
 
 -- A hexagon badge with a small word over a big number (the town's level). It's three rounded
--- bars turned 60 degrees apart, on a white one a little bigger. props: Parent, Position, Size (px),
+-- bars turned 60 degrees apart in the dark surface colour, on one a little bigger in the accent
+-- (its rim). props: Parent, Position, Size (px),
 -- Color, Label, ZIndex. Returns the badge and its number label.
 function Kit.hexBadge(value: string, props: { [string]: any }?): (Frame, TextLabel)
 	local p = props or {}
@@ -1519,8 +1533,8 @@ function Kit.hexBadge(value: string, props: { [string]: any }?): (Frame, TextLab
 			Kit.corner(f, math.floor(w * 0.08))
 		end
 	end
-	hex(T.White, px)
-	hex(p.Color or T.Blue, px - 10)
+	hex(p.Color or T.Blue, px)
+	hex(T.Paper, px - 10)
 	Kit.new("TextLabel", {
 		Name = "Label",
 		Text = p.Label or "LEVEL",
@@ -1568,7 +1582,7 @@ function Kit.menuButton(icon: string, caption: string, props: { [string]: any }?
 		Parent = b,
 		Position = UDim2.new(0.5, -px / 2, 0, 4),
 		Color = p.Color,
-		Hole = T.White,
+		Hole = T.Paper,
 	})
 	Kit.new("TextLabel", {
 		Name = "Caption",
@@ -1691,7 +1705,10 @@ end
 -- destroying it takes both.
 function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: string?, color: Color3?): any
 	local gui = Kit.root()
-	local headColor = color or T.Blue
+	-- the panel's own colour is its accent; the header is that colour sunk most of the way into
+	-- the dark card, so the bar is dark too and only tinted
+	local accent = color or T.Blue
+	local headColor = Kit.deep(accent)
 	local holder = Kit.box({
 		Name = titleText,
 		Size = size,
@@ -1706,8 +1723,8 @@ function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: s
 		Size = UDim2.fromOffset(6000, 6000),
 		Position = UDim2.fromScale(0.5, 0.5),
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Color = Color3.fromRGB(70, 46, 40),
-		Transparency = 0.55,
+		Color = Color3.fromRGB(6, 7, 12),
+		Transparency = 0.5,
 		Radius = false,
 		ZIndex = 0,
 		Parent = holder,
@@ -1746,7 +1763,7 @@ function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: s
 	-- behind everything on it. The header itself carries no shapes (the user: "No need for
 	-- shapes at the top part seperator of the menu"): the wash and the wave are enough there.
 	local seed = #titleText * 31 + string.byte(titleText, 1)
-	local light = mix(headColor, T.White, 0.28)
+	local light = mix(headColor, accent, 0.3)
 	Kit.wash(header, headColor, light, 0)
 	local square = header:FindFirstChild("Square")
 	if square and square:IsA("GuiObject") then
@@ -1798,8 +1815,8 @@ function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: s
 	end
 	-- the card warms a little toward the bottom, with shapes in the header's colour dotted
 	-- faintly behind everything on it
-	Kit.wash(frame, T.Cream, mix(T.Cream, headColor, 0.16), 90)
-	Kit.shapes(frame, headColor, seed + 7, 26, { Transparency = 0.76, Area = { 0.03, 0.14, 0.97, 0.97 }, Size = 1.2 })
+	Kit.wash(frame, T.Cream, mix(T.Cream, accent, 0.07), 90)
+	Kit.shapes(frame, accent, seed + 7, 26, { Transparency = 0.9, Area = { 0.03, 0.14, 0.97, 0.97 }, Size = 1.2 })
 	local title = Kit.title(titleText, {
 		Parent = header,
 		Size = UDim2.new(1, -90, 1, 0),
@@ -1982,7 +1999,7 @@ function Kit.bubble(props: { [string]: any }?): (Frame, Frame)
 	if tail == nil then
 		tail = "down"
 	end
-	local color: Color3 = p.Color or T.White
+	local color: Color3 = p.Color or T.Paper
 	if p.Radius == "pill" then
 		-- a small pill: a plain smooth pill with its tail (and a darker copy under it)
 		local z = p.ZIndex or 1
@@ -2095,13 +2112,13 @@ function Kit.choice(text: string, props: { [string]: any }?, onClick: (() -> ())
 		Rotation = 24,
 		Color = ColorSequence.new({
 			ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
-			ColorSequenceKeypoint.new(0.12, Color3.new(0.93, 0.9, 0.84)),
+			ColorSequenceKeypoint.new(0.12, Color3.new(0.9, 0.9, 0.93)),
 			ColorSequenceKeypoint.new(0.25, Color3.new(1, 1, 1)),
-			ColorSequenceKeypoint.new(0.37, Color3.new(0.93, 0.9, 0.84)),
+			ColorSequenceKeypoint.new(0.37, Color3.new(0.9, 0.9, 0.93)),
 			ColorSequenceKeypoint.new(0.5, Color3.new(1, 1, 1)),
-			ColorSequenceKeypoint.new(0.62, Color3.new(0.93, 0.9, 0.84)),
+			ColorSequenceKeypoint.new(0.62, Color3.new(0.9, 0.9, 0.93)),
 			ColorSequenceKeypoint.new(0.75, Color3.new(1, 1, 1)),
-			ColorSequenceKeypoint.new(0.87, Color3.new(0.93, 0.9, 0.84)),
+			ColorSequenceKeypoint.new(0.87, Color3.new(0.9, 0.9, 0.93)),
 			ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1)),
 		}),
 		Parent = core or body,
@@ -2129,7 +2146,7 @@ function Kit.choice(text: string, props: { [string]: any }?, onClick: (() -> ())
 	})
 	local _ = label
 	local function lit(on: boolean)
-		Kit.setBubbleColor(holder, if on and not p.Disabled then T.Yellow else T.PaperDark)
+		Kit.setBubbleColor(holder, if on and not p.Disabled then T.Line else T.PaperDark)
 		stripes.Enabled = on and not p.Disabled
 	end
 	b.MouseEnter:Connect(function()
@@ -2184,7 +2201,7 @@ function Kit.arrowTag(text: string, color: Color3?, props: { [string]: any }?): 
 		BackgroundTransparency = 1,
 		Font = Kit.Fonts.Title,
 		TextSize = math.floor(h * 0.6),
-		TextColor3 = T.Ink,
+		TextColor3 = T.Dark,
 		Size = UDim2.fromOffset(0, h),
 		AutomaticSize = Enum.AutomaticSize.X,
 		ZIndex = z + 1,
@@ -2416,6 +2433,7 @@ end
 function Kit.swatch(color: Color3, size: number?, onClick: (() -> ())?, props: { [string]: any }?): TextButton
 	local p = props or {}
 	local b = Kit.new("TextButton", {
+		Name = "Swatch", -- a colour to pick: the one kind of thing that may be light (tools/preview/ui_audit.py)
 		Text = "",
 		AutoButtonColor = true,
 		BackgroundColor3 = color,

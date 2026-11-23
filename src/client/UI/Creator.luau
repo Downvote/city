@@ -228,7 +228,7 @@ local function itemCard(item: any, order: number, onClick: (() -> ())?): GuiObje
 		Parent = card,
 		Size = UDim2.fromOffset(118, 116),
 		Position = UDim2.fromOffset(5, 5),
-		Color = Color3.fromRGB(226, 238, 250),
+		Color = T.Picture,
 		Radius = 14,
 		Clips = true, -- the picture is cut to the round corners
 	})
@@ -574,7 +574,7 @@ local function shapePage()
 	end
 	Kit.button(
 		"Back to normal",
-		{ Parent = holder, Size = UDim2.fromOffset(180, 40), Color = T.Yellow, TextColor = T.Ink, LayoutOrder = 20 },
+		{ Parent = holder, Size = UDim2.fromOffset(180, 40), Color = T.Yellow, TextColor = T.Dark, LayoutOrder = 20 },
 		function()
 			local new = Appearance.sanitize(app)
 			for _, k in Appearance.ScaleKeys do
@@ -623,7 +623,7 @@ local function outfitsPage()
 		local r = Kit.frame({
 			Parent = list,
 			Size = UDim2.new(1, -8, 0, 48),
-			Color = T.White,
+			Color = T.Card,
 			Stroke = T.Ink,
 			StrokeThickness = 2,
 			LayoutOrder = i,
@@ -738,7 +738,7 @@ local function peoplePage()
 				Name = "Person",
 				Text = "",
 				AutoButtonColor = true,
-				BackgroundColor3 = T.White,
+				BackgroundColor3 = T.Card,
 				LayoutOrder = i,
 				Parent = faces,
 			})
@@ -748,7 +748,7 @@ local function peoplePage()
 				Parent = card,
 				Size = UDim2.fromOffset(76, 76),
 				Position = UDim2.new(0.5, -38, 0, 8),
-				Color = Color3.fromRGB(226, 238, 250),
+				Color = T.Picture,
 				Radius = "circle",
 				Clips = true,
 			})
@@ -801,7 +801,7 @@ local function peoplePage()
 			local r = Kit.frame({
 				Parent = looks,
 				Size = UDim2.new(1, 0, 0, 56),
-				Color = T.White,
+				Color = T.Card,
 				Radius = 18,
 				LayoutOrder = i,
 			})
@@ -810,7 +810,7 @@ local function peoplePage()
 				Parent = r,
 				Size = UDim2.fromOffset(44, 44),
 				Position = UDim2.fromOffset(8, 6),
-				Color = Color3.fromRGB(226, 238, 250),
+				Color = T.Picture,
 				Radius = "circle",
 				Clips = true,
 			})
@@ -871,7 +871,7 @@ local function showFilters(tab: any)
 			Size = UDim2.fromOffset(0, 30),
 			AutomaticSize = Enum.AutomaticSize.X,
 			TextSize = 14,
-			Color = if on then T.Ink else T.PaperDark,
+			Color = if on then T.Blue else T.PaperDark,
 			TextColor = if on then T.White else T.Ink,
 			LayoutOrder = i,
 			Radius = 15,
@@ -947,13 +947,14 @@ local function buildProfilePage()
 	local function refreshPers()
 		for id, b in persButtons do
 			local p = Personalities.get(id) :: any
-			Kit.setButtonColor(b, if id == profile.pers then Colors.fromHex(p.color) else T.White)
+			-- the one they are: its own colour, sunk into the dark so the light words still read
+			Kit.setButtonColor(b, if id == profile.pers then Colors.fromHex(p.color):Lerp(T.Cream, 0.6) else T.Card)
 		end
 	end
 	for i, p in Personalities.list do
 		local b = Kit.new(
 			"TextButton",
-			{ Text = "", AutoButtonColor = true, BackgroundColor3 = T.White, LayoutOrder = i, Parent = persGrid }
+			{ Text = "", AutoButtonColor = true, BackgroundColor3 = T.Card, LayoutOrder = i, Parent = persGrid }
 		)
 		Kit.corner(b, 12)
 		Kit.stroke(b, T.Ink, 2)
@@ -1199,19 +1200,19 @@ local function build()
 		Radius = 24,
 		Parent = holder,
 	})
-	-- a soft pink tint across the top, with the title on a pink banner over the edge
+	-- a deep pink bar across the top (pink sunk into the dark panel), with the title over it
 	local header = Kit.frame({
 		Name = "Header",
 		Parent = panel,
 		Size = UDim2.new(1, 0, 0, 56),
-		Color = T.Pink,
+		Color = Kit.deep(T.Pink),
 		Radius = 24,
 	})
 	Kit.frame({
 		Parent = header,
 		Size = UDim2.new(1, 0, 0, 24),
 		Position = UDim2.new(0, 0, 1, -24),
-		Color = T.Pink,
+		Color = Kit.deep(T.Pink),
 		Radius = false,
 	})
 	titleHolder = Kit.box({
@@ -1292,7 +1293,7 @@ local function build()
 			end
 			local art = b:FindFirstChild("IconArt")
 			if art then
-				Kit.recolorIcon(art, if on then T.White else T.Ink, if on then T.Blue else T.White)
+				Kit.recolorIcon(art, if on then T.White else T.Ink, if on then T.Blue else T.Paper)
 			end
 			local cap = b:FindFirstChild("Caption")
 			if cap and cap:IsA("TextLabel") then
@@ -1341,7 +1342,7 @@ local function build()
 		Size = UDim2.fromOffset(140, 40),
 		Position = UDim2.new(1, -140, 0, 0),
 		Color = T.Yellow,
-		TextColor = T.Ink,
+		TextColor = T.Dark,
 		TextSize = 16,
 	})
 	sortButton.Activated:Connect(function()

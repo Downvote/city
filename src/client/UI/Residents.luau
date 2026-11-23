@@ -95,7 +95,7 @@ local function choose(title: string, options: { { label: string, sub: string?, f
 		local b = Kit.new("TextButton", {
 			Text = "",
 			AutoButtonColor = true,
-			BackgroundColor3 = T.White,
+			BackgroundColor3 = T.Card,
 			Size = UDim2.new(1, -8, 0, if o.sub then 52 else 38),
 			LayoutOrder = i,
 			Parent = scroll,
@@ -379,7 +379,7 @@ local function showDetail()
 	action("Change look", T.Yellow, function()
 		local Hud = require(script.Parent.Hud)
 		Hud.open("Creator", { mode = "edit", vid = vid })
-	end, T.Ink)
+	end, T.Dark)
 	local confirm = false
 	action("Move out", T.Coral, function()
 		if not confirm then
@@ -531,7 +531,7 @@ local function refreshList()
 		local card = Kit.new("TextButton", {
 			Text = "",
 			AutoButtonColor = true,
-			BackgroundColor3 = if on then T.PaperDark else T.White,
+			BackgroundColor3 = if on then T.PaperDark else T.Card,
 			Size = UDim2.new(1, -8, 0, 62),
 			LayoutOrder = i,
 			Parent = listFrame,
@@ -545,7 +545,7 @@ local function refreshList()
 			Parent = card,
 			Size = UDim2.fromOffset(46, 46),
 			Position = UDim2.fromOffset(8, 8),
-			Color = Colors.fromHex(v.color):Lerp(T.White, 0.55),
+			Color = Colors.fromHex(v.color):Lerp(T.Cream, 0.5),
 			Radius = "circle",
 		})
 		portraitInto(face, v.id)

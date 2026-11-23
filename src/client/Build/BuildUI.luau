@@ -163,7 +163,7 @@ local function itemTile(parent: Instance, def: any, order: number, onPick: () ->
 		Name = def.id,
 		Text = "",
 		AutoButtonColor = false,
-		BackgroundColor3 = T.Paper,
+		BackgroundColor3 = T.Card,
 		Size = UDim2.fromOffset(118, 152),
 		LayoutOrder = order,
 		Parent = parent,
@@ -175,7 +175,7 @@ local function itemTile(parent: Instance, def: any, order: number, onPick: () ->
 		Parent = card,
 		Size = UDim2.new(1, -10, 0, 98),
 		Position = UDim2.fromOffset(5, 5),
-		Color = Color3.fromRGB(206, 232, 255),
+		Color = T.Picture,
 		Radius = 10,
 	})
 	task.spawn(function()
@@ -251,7 +251,7 @@ local function choiceTile(
 	local card = Kit.new("TextButton", {
 		Text = "",
 		AutoButtonColor = false,
-		BackgroundColor3 = if selected then Color3.fromRGB(214, 234, 255) else T.Paper,
+		BackgroundColor3 = if selected then Kit.mix(T.Card, T.Blue, 0.32) else T.Card,
 		Size = size,
 		LayoutOrder = order,
 		Parent = parent,
@@ -260,6 +260,7 @@ local function choiceTile(
 	Kit.stroke(card, if selected then T.Blue else T.Ink, if selected then 3.5 else 2)
 	if compact and opts.swatch then
 		local sw = Kit.frame({
+			Name = "Swatch",
 			Parent = card,
 			Size = UDim2.new(1, -6, 1, -6),
 			Position = UDim2.fromOffset(3, 3),
@@ -281,7 +282,7 @@ local function choiceTile(
 			Size = UDim2.fromScale(1, 1),
 			TextSize = 11,
 			Font = Kit.Fonts.Bold,
-			Color = if light then T.Ink else T.White,
+			Color = if light then T.Dark else T.White,
 			AlignX = Enum.TextXAlignment.Center,
 			Wrap = false,
 		}).TextTruncate =
@@ -292,6 +293,7 @@ local function choiceTile(
 	else
 		if opts.swatch then
 			local sw = Kit.frame({
+				Name = "Swatch",
 				Parent = card,
 				Size = UDim2.new(1, -16, 0, 52),
 				Position = UDim2.fromOffset(8, 8),
@@ -307,7 +309,7 @@ local function choiceTile(
 					Position = UDim2.new(0, 4, 1, -16),
 					TextSize = 11,
 					Font = Kit.Fonts.Bold,
-					Color = if light then T.Ink else T.White,
+					Color = if light then T.Dark else T.White,
 				})
 			end
 		elseif opts.icon then
@@ -452,7 +454,7 @@ local function presetTray()
 			Name = preset.id,
 			Text = "",
 			AutoButtonColor = false,
-			BackgroundColor3 = T.Paper,
+			BackgroundColor3 = T.Card,
 			Size = UDim2.fromOffset(150, 152),
 			LayoutOrder = i,
 			Parent = row,
@@ -463,7 +465,7 @@ local function presetTray()
 			Parent = card,
 			Size = UDim2.new(1, -10, 0, 98),
 			Position = UDim2.fromOffset(5, 5),
-			Color = Color3.fromRGB(206, 232, 255),
+			Color = T.Picture,
 			Radius = false,
 		})
 		task.spawn(function()
@@ -697,7 +699,7 @@ local function roofControls(parent: Instance, get: () -> any, set: (string, any)
 		Size = UDim2.fromOffset(90, 40),
 		TextSize = 16,
 		Color = T.Yellow,
-		TextColor = T.Ink,
+		TextColor = T.Dark,
 		LayoutOrder = 11,
 	}, function()
 		set("dir", (get().dir + 1) % 4)
@@ -758,14 +760,19 @@ local function paintTray()
 		Size = UDim2.fromOffset(160, 30),
 		TextSize = 14,
 		Color = T.Yellow,
-		TextColor = T.Ink,
+		TextColor = T.Dark,
 		Radius = 15,
 	}, function()
 		s.paint.pick = true
 		refreshTray()
 	end)
-	local current =
-		Kit.frame({ Parent = top, Size = UDim2.fromOffset(30, 30), Color = Colors.fromHex(s.paint.c), Radius = 15 })
+	local current = Kit.frame({
+		Name = "Swatch",
+		Parent = top,
+		Size = UDim2.fromOffset(30, 30),
+		Color = Colors.fromHex(s.paint.c),
+		Radius = 15,
+	})
 	Kit.stroke(current, T.Ink, 2)
 	sectionLabel(stack, "Finishes", 2)
 	local presets = trayRow(60)
@@ -1120,7 +1127,7 @@ local function refreshActionBar()
 			Size = UDim2.fromOffset(46, 46),
 			LayoutOrder = order,
 			Radius = 12,
-			Color = if icon == "trash" then T.Coral else T.White,
+			Color = if icon == "trash" then T.Coral else T.Card,
 		}, fn)
 	end
 	if kind == "items" then
@@ -1340,7 +1347,7 @@ function BuildUI.init(exitCallback: () -> ())
 			Parent = floors,
 			Size = UDim2.new(1, 0, 0, 36),
 			TextSize = 15,
-			Color = T.White,
+			Color = T.Card,
 			TextColor = T.Ink,
 			LayoutOrder = order,
 			Radius = 12,
@@ -1378,7 +1385,7 @@ function BuildUI.init(exitCallback: () -> ())
 		Size = UDim2.fromOffset(0, 0),
 		AutomaticSize = Enum.AutomaticSize.XY,
 		AnchorPoint = Vector2.new(0.5, 1),
-		Color = T.White,
+		Color = T.Paper,
 		Radius = 16,
 		Stroke = T.Ink,
 		StrokeThickness = 3,

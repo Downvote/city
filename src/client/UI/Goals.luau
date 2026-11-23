@@ -55,7 +55,7 @@ local function fill()
 			Name = g.goal.id,
 			Parent = frame,
 			Size = UDim2.new(1, -14, 0, 74),
-			Color = if g.claimed then T.PaperDark else T.White,
+			Color = if g.claimed then T.PaperDark else T.Card,
 			Radius = 24,
 			LayoutOrder = i,
 		})
@@ -67,7 +67,7 @@ local function fill()
 			Position = UDim2.fromOffset(12, 11),
 			Thickness = 6,
 			Track = if g.claimed then T.Line else T.PaperDark,
-			Hole = if g.claimed then T.PaperDark else T.White,
+			Hole = if g.claimed then T.PaperDark else T.Card,
 		}, g.value / g.goal.need, if g.done then T.Green else T.Yellow)
 		local shown = math.min(g.value, g.goal.need)
 		-- big numbers (coins) as a share, small ones as a count

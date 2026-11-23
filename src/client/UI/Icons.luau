@@ -1027,8 +1027,8 @@ local function luminance(c: Color3): number
 end
 
 -- Draws icon `name` into a new px x px Frame. Icons are flat and one colour by default (the
--- user asked for simple icons): every piece in `Color` (or `Tint`; navy if neither), dark
--- details like eyes and lines cut out in `Hole` (white if not given), a dent in a darker shade
+-- user asked for simple icons): every piece in `Color` (or `Tint`; light if neither), dark
+-- details like eyes and lines cut out in `Hole` (the dark card colour if not given), a dent in a darker shade
 -- of `Color`, no outline, no shading,
 -- no shine. `Full = true` draws the old full colour sticker with its outline. props: Parent,
 -- Position, AnchorPoint, LayoutOrder, Name, ZIndex, Color, Hole, Tint, Full, Outline (false for
@@ -1092,7 +1092,10 @@ function Icons.make(name: string, px: number, props: { [string]: any }?): Frame
 	return root
 end
 
-Icons.Glyph = Color3.fromRGB(58, 64, 86)
+-- The interface is dark: with no colour asked for an icon is light, and its cut out details take
+-- the dark card colour behind it (UI/Kit's Paper).
+Icons.Glyph = Color3.fromRGB(236, 238, 246)
+Icons.Hole = Color3.fromRGB(37, 40, 54)
 
 -- Icons that read best in their own colour when nobody asks for one.
 Icons.Colors = {
@@ -1130,7 +1133,7 @@ function Icons.flat(name: string, px: number, p: { [string]: any }): Frame
 	local z = p.ZIndex or 1
 	root.ZIndex = z
 	local glyph: Color3 = p.Color or p.Tint or Icons.Colors[name] or Icons.Glyph
-	local hole: Color3 = p.Hole or Color3.new(1, 1, 1)
+	local hole: Color3 = p.Hole or Icons.Hole
 	local def = D[name] or D.medal
 	-- which pieces are cut out: a piece inside a bigger one, in a clearly different colour, is a
 	-- detail and takes the other colour (a detail inside a cut out flips back); a piece inside

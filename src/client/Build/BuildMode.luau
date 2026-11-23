@@ -1474,9 +1474,10 @@ function BuildMode.enter(): boolean
 	local t = Instance.new("TextLabel")
 	t.Name = "Text"
 	t.Size = UDim2.fromScale(1, 1)
-	t.BackgroundColor3 = Color3.fromRGB(255, 249, 238)
+	-- dark like the rest of the interface (UI/Kit's Paper and Ink)
+	t.BackgroundColor3 = Color3.fromRGB(37, 40, 54)
 	t.BackgroundTransparency = 0.1
-	t.TextColor3 = Color3.fromRGB(74, 52, 38)
+	t.TextColor3 = Color3.fromRGB(236, 238, 246)
 	t.Font = Enum.Font.FredokaOne
 	t.TextSize = 18
 	t.Parent = bb

@@ -21,7 +21,8 @@ the contract (update it with every API, remote or saved data change), `src/share
    same way: `sh tools/preview/ui.sh <scene> <png> [--bg <png>]` (scenes in `tools/preview/ui_dump.luau`; run
    `sh tools/preview/fonts.sh` once for the font).
 5. `sh scripts/check.sh` must pass: format, types (luau-lsp against Roblox's definitions), specs, the client
-   simulation (`tests/sim/build_client.luau`: the real Build mode driven by clicks), place build.
+   simulation (`tests/sim/build_client.luau`: the real Build mode driven by clicks), the dark look on every
+   screen (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
 Specs today (97, all passing): Frames (every part of every model has a right-handed frame: Roblox can't hold a
@@ -81,14 +82,14 @@ cozy look like the life sims they showed, then named a mobile city builder (Pock
 direction: its layout and clean low poly feel, in our own designs, never copied (docs/GAME_DESIGN.md section 10).
 The HUD is a level hexagon top left, dark pills top middle, clock and round buttons top right, a portrait and quick
 menu bottom left and a big Build button bottom right; no outlines on rounded rectangles; the ground is flat colour. Build
-screens from `UI/Kit` (white rounded cards with pill banners and soft shadows, rounded buttons on a soft base,
-round icon buttons with a white rim and a caption pill, translucent navy pills over the 3D view) and `UI/Icons`
+screens from `UI/Kit` (rounded cards with pill banners and soft shadows, rounded buttons on a soft base,
+round icon buttons with a caption pill, translucent dark pills over the 3D view) and `UI/Icons`
 (drawn icons, never emoji in the interface). The user asked for wobbly bubbles round text, wobbly buttons,
 speech bubble dialogue with names in colour, and simple one colour icons: use `Kit.blob`, `Kit.bubble`,
 `Kit.choice`, and `Icons.make` (flat by default: `Color`, `Hole`; `Full = true` for the old stickers). Everything
 is flat colour (no darker base, gradient or sheen: `Kit.gradient` is switched off) and menus have no decorative icons.
 The latest word on menus: follow popular games of the genre (never invent layouts) and keep it cozy and soft, so
-panels are cream cards with a pastel header bar, title, round close button and a dimmed screen behind; events are a
+panels are cards with a tinted header bar, title, round close button and a dimmed screen behind; events are a
 dialogue card with the answers inside; nothing wobbles (`Kit.blob` draws plain shapes) and nothing inside a
 self-sizing box may reach past its edges. UI previews
 look best over an island render as `--bg`. The user then pointed at Roblox's write-up of native shadows, gradients and
@@ -100,6 +101,16 @@ dotting the background" (`Kit.wash`, `Kit.shapes`: on cards and pills, not on bu
 header: "No need for shapes at the top part seperator of the menu", so headers keep only their wash), a wavy edge
 under a menu's header, then "not that wavy, a calm wave should be enough" (a few pixels over a hundred or so), and
 the villager's face in place of the colour bar in lists.
+The interface is dark (the user: "Make every ui element dark mode, with a dark background"; docs/GAME_DESIGN.md
+section 10, Dark mode). There is one theme and no light version. In `Kit.Theme` the surfaces are `PaperDark`
+(wells, tracks, tabs not picked), `Cream` (big panels), `Paper` (cards and bars over the 3D view), `Card` (a row
+or tile on a panel) and `Picture` (behind a catalog picture or a face); words are `Ink` and `InkSoft` on those,
+`White` on a coloured button, and `Dark` for outlines round letters and for words on a bright face (yellow). The
+names are left over from the light look. Never write a white, cream or pale grey surface, and never use `White`
+for one: a header or ribbon is `Kit.deep(colour)`. Buttons you press keep their pastel colour. A colour chip to
+pick from must show its colour, so name it `Swatch` (`Kit.swatch` does). `sh tools/preview/audit.sh` builds every
+screen and fails on a light surface or on words that don't stand out; when a new screen gets a preview scene, add
+it to that script's list.
 The user's rule for icons: "make sure there are no overlapping outlines". A new icon is a
 shape list in `UI/Icons`; it gets one outline round its silhouette, so tell its parts apart by colour. Look at it
 with `sh tools/preview/ui.sh icons:<name> <png>` (`stickers:<name>` for the outlined version). Flat icons are one

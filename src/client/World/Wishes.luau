@@ -40,7 +40,7 @@ local function show(model: Model, icon: string)
 	local holder = Kit.blob({
 		Parent = bb,
 		Round = true,
-		Color = T.White,
+		Color = T.Paper,
 		Size = UDim2.fromOffset(68, 68),
 		Position = UDim2.fromOffset(5, 0),
 	})
@@ -57,7 +57,7 @@ local function show(model: Model, icon: string)
 			Parent = bb,
 			Size = UDim2.fromOffset(d, d),
 			Position = UDim2.fromOffset(28 - k * 4, 66 + k * 9),
-			Color = T.White,
+			Color = T.Paper,
 			Radius = "circle",
 		})
 	end

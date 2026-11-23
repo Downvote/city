@@ -150,7 +150,7 @@ local function draw()
 		local row = Kit.frame({
 			Parent = right,
 			Size = UDim2.new(1, -8, 0, 52),
-			Color = T.White,
+			Color = T.Card,
 			Stroke = T.Ink,
 			StrokeThickness = 2,
 			LayoutOrder = i,

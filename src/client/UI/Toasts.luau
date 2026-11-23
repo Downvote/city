@@ -47,7 +47,7 @@ function Toasts.show(text: string, kind: string?)
 		ZIndex = 50,
 	})
 	Kit.softShadow(card, 0.8)
-	Kit.wash(card, Kit.Theme.White, Kit.Theme.Cream, 0)
+	Kit.wash(card, Kit.Theme.Card, Kit.Theme.Paper, 0)
 	local stroke = Kit.stroke(card, ACCENTS[k], 2.5)
 	card.LayoutOrder = -math.floor(os.clock() * 100)
 	Kit.pad(card, 18, 9)

@@ -7,6 +7,7 @@
 --   build               Build mode on the Furniture tab
 --   build:walls         Build mode on Walls
 --   build:pick          Build mode with a piece of furniture picked (the action bar)
+--   build:paint         Build mode on the Paint tool (finishes and colours)
 --   panel:<Name>        a panel over the main screen (Residents, CityPanel, ShopPanel, News, Welcome)
 --   event               an event at its choices
 --   event:talk          an event part way through its lines
@@ -16,6 +17,7 @@
 --   stickers:<a>,<b>    those icons as full colour stickers with their outline (Full = true)
 --   flaticons           every icon flat, white on a dark round button
 --   creator             the villager creator on the hair tab
+--   creator:profile     the creator's second step (name and personality)
 
 local fs = require("@lune/fs")
 local process = require("@lune/process")
@@ -136,6 +138,9 @@ elseif scene:sub(1, 5) == "build" then
 		Sim.click()
 		Sim.mouseAtPlot(140, 90)
 	end
+	if scene == "build:paint" then
+		Sim.press("Paint")
+	end
 	Sim.frames(3)
 elseif scene:sub(1, 6) == "panel:" then
 	startHud()
@@ -169,7 +174,7 @@ elseif scene == "toasts" then
 	Toasts.show("Not enough coins for that.", "warn")
 	Toasts.show("Ivy wants a lamp by her bed.", "event")
 	Sim.frames(2)
-elseif scene == "creator" then
+elseif scene == "creator" or scene == "creator:profile" then
 	Harness.addService("AvatarEditorService", {
 		SearchCatalogAsync = function()
 			error("no catalog in the preview")
@@ -193,6 +198,10 @@ elseif scene == "creator" then
 	Hud.open("Creator", { mode = "new" })
 	Sim.frames(3)
 	Sim.advance(1)
+	if scene == "creator:profile" then
+		Sim.press("2  Name and personality")
+		Sim.frames(3)
+	end
 elseif scene == "flaticons" then
 	-- every icon flat, white on a dark round (as the round buttons draw them)
 	local Icons = Harness.require(Sim.CLIENT .. "UI.Icons")
@@ -225,7 +234,7 @@ elseif scene:sub(1, 6) == "icons:" or scene:sub(1, 9) == "stickers:" then
 	local sheet = Kit.frame({
 		Parent = Sim.gui,
 		Size = UDim2.fromScale(1, 1),
-		Color = Color3.fromRGB(236, 241, 248),
+		Color = Kit.Theme.Cream, -- the dark panel colour the icons are seen on
 		Radius = false,
 	})
 	local grid = Instance.new("UIGridLayout")
@@ -251,7 +260,7 @@ elseif scene == "icons" then
 	local sheet = Kit.frame({
 		Parent = Sim.gui,
 		Size = UDim2.fromScale(1, 1),
-		Color = Color3.fromRGB(236, 241, 248),
+		Color = Kit.Theme.Cream, -- the dark panel colour the icons are seen on
 		Radius = false,
 	})
 	local grid = Instance.new("UIGridLayout")

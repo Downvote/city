@@ -54,20 +54,22 @@ local function rect(
 	})
 end
 
+-- The map is drawn in night colours, like the rest of the interface: a deep sea, dark land and
+-- lighter roads.
 local function drawMap(holder: Frame): (Frame, { [string]: Frame })
 	local map = Kit.frame({
 		Name = "Map",
 		Parent = holder,
 		Size = UDim2.fromOffset(MAP_W, MAP_H),
-		Color = Color3.fromRGB(86, 164, 232),
+		Color = Color3.fromRGB(24, 40, 66),
 		Radius = 18,
 		Clips = true,
 	})
 	local IX, IN, IS, B = TownMap.IslandX, TownMap.IslandN, TownMap.IslandS, TownMap.Beach
-	rect(map, -IX - B, -IS - B, IX + B, IN + B, Color3.fromRGB(250, 232, 186), 10)
-	rect(map, -IX, -IS, IX, IN, Color3.fromRGB(140, 210, 96), 6)
+	rect(map, -IX - B, -IS - B, IX + B, IN + B, Color3.fromRGB(92, 84, 64), 10)
+	rect(map, -IX, -IS, IX, IN, Color3.fromRGB(42, 80, 54), 6)
 	-- the hills, darker toward their tops
-	rect(map, Hills.X1 + 40, Hills.Z1 + 30, Hills.X2 - 40, Hills.Z2 - 30, Color3.fromRGB(122, 194, 84), 18)
+	rect(map, Hills.X1 + 40, Hills.Z1 + 30, Hills.X2 - 40, Hills.Z2 - 30, Color3.fromRGB(36, 70, 48), 18)
 	for _, p in Hills.Plateaus do
 		local h = Hills.plateau(p.name)
 		local d = (p.r + 80) * 2 * S
@@ -77,38 +79,38 @@ local function drawMap(holder: Frame): (Frame, { [string]: Frame })
 			Size = UDim2.fromOffset(d, d),
 			Position = UDim2.fromOffset(cx, cy),
 			AnchorPoint = Vector2.new(0.5, 0.5),
-			Color = Color3.fromRGB(122, 194, 84):Lerp(Color3.fromRGB(176, 214, 110), math.clamp(h / 90, 0, 1)),
+			Color = Color3.fromRGB(36, 70, 48):Lerp(Color3.fromRGB(70, 106, 64), math.clamp(h / 90, 0, 1)),
 			Radius = "circle",
 		})
 	end
 	-- downtown's paved blocks, the square and the market, the plots
 	for _, b in TownMap.blocks("east") do
-		rect(map, b[1], b[2], b[3], b[4], Color3.fromRGB(226, 230, 236), 3)
+		rect(map, b[1], b[2], b[3], b[4], Color3.fromRGB(60, 64, 82), 3)
 	end
 	for _, c in { Town.SquareCenter, Town.MarketCenter } do
-		rect(map, c.X - 50, c.Z - 60, c.X + 50, c.Z + 60, Color3.fromRGB(236, 238, 240), 3)
+		rect(map, c.X - 50, c.Z - 60, c.X + 50, c.Z + 60, Color3.fromRGB(74, 78, 98), 3)
 	end
 	local size = Tuning.Plot.Size
 	for i = 1, Tuning.Plot.Count do
 		local f = Town.plotFrame(i)
 		local a = f * Vector3.new(0, 0, 0)
 		local b = f * Vector3.new(size, 0, size)
-		rect(map, a.X, a.Z, b.X, b.Z, Color3.fromRGB(176, 226, 140), 4)
+		rect(map, a.X, a.Z, b.X, b.Z, Color3.fromRGB(56, 102, 66), 4)
 	end
 	-- the roads
 	for _, road in Town.Roads do
 		local hw = road[5] + 2
 		if road[2] == road[4] then
-			rect(map, road[1], road[2] - hw, road[3], road[2] + hw, Color3.fromRGB(120, 128, 146))
+			rect(map, road[1], road[2] - hw, road[3], road[2] + hw, Color3.fromRGB(104, 110, 132))
 		else
-			rect(map, road[1] - hw, road[2], road[1] + hw, road[4], Color3.fromRGB(120, 128, 146))
+			rect(map, road[1] - hw, road[2], road[1] + hw, road[4], Color3.fromRGB(104, 110, 132))
 		end
 	end
 	-- the boardwalk and the piers
-	rect(map, -IX + 30, -IS, IX - 30, -(Town.RingZ + 17), Color3.fromRGB(214, 172, 124))
-	rect(map, 296, -IS, 304, -IS - 78, Color3.fromRGB(214, 172, 124))
-	rect(map, -380, -IS - 40, -260, -IS - 130, Color3.fromRGB(214, 172, 124), 3)
-	rect(map, 998, -IS - 20, 1002, -IS - 74, Color3.fromRGB(214, 172, 124))
+	rect(map, -IX + 30, -IS, IX - 30, -(Town.RingZ + 17), Color3.fromRGB(120, 94, 66))
+	rect(map, 296, -IS, 304, -IS - 78, Color3.fromRGB(120, 94, 66))
+	rect(map, -380, -IS - 40, -260, -IS - 130, Color3.fromRGB(120, 94, 66), 3)
+	rect(map, 998, -IS - 20, 1002, -IS - 74, Color3.fromRGB(120, 94, 66))
 	-- district names
 	for _, d in Town.Districts do
 		local cx, cy = toMap((d.x1 + d.x2) / 2, (d.z1 + d.z2) / 2)
@@ -124,7 +126,7 @@ local function drawMap(holder: Frame): (Frame, { [string]: Frame })
 			TextSize = 14,
 			Font = Kit.Fonts.Title,
 			Color = T.White,
-			Outline = Color3.fromRGB(40, 60, 90),
+			Outline = T.Dark,
 			AlignX = Enum.TextXAlignment.Center,
 		})
 	end
@@ -227,7 +229,7 @@ function MapPanel.open()
 			local row = Kit.frame({
 				Parent = list,
 				Size = UDim2.new(1, -10, 0, 50),
-				Color = if got then T.White else T.PaperDark,
+				Color = if got then T.Card else T.PaperDark,
 				Radius = 16,
 				LayoutOrder = if got then i else 100 + i,
 			})

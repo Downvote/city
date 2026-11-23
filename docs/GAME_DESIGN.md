@@ -440,7 +440,7 @@ from that game):
   clock with the weather in a dark pill, and round dark buttons under it for the city, the shop and the news.
 - Bottom left, a round portrait (it opens the villagers) beside a white wobbly menu of the town's people, the
   creator, goals and the daily gift, each a coloured icon over its name. Bottom right, a big blue wobbly Build
-  button with a yellow hammer (it was a hard hat):
+  button with a yellow hammer (it was a hard hat). (The menu and the portrait are dark now: see Dark mode below.)
 
   > Change the hardhat icon for buils to a hammer
 
@@ -586,14 +586,44 @@ pass and open as they come), round furniture and over low steps. If they get stu
   under a menu's header is a long calm wave, a few pixels up and down, and the header itself is left clear:
 
   > No need for shapes at the top part seperator of the menu
- In the villager list each row shows the villager's
-  face where the blue bar was.
+
+  In the villager list each row shows the villager's face where the blue bar was.
 - **A livelier world**, all on each player's own screen and only near them. Every clump of leaves in town leans
   with a wind that crosses the island as a slow wave, so trees move one after another. Tufts of grass blades stand
   on the lawns round you and lean with it too, a flower in one tuft of five. Butterflies wander over the grass by
   day, rabbits sit, twitch and hop away when you come close, ducks paddle the pond, the mountain lake and the
   little garden ponds. Traffic lights take turns at every junction, shop boards swing, buoys and boats bob, small
   fountains spray, chimneys smoke.
+
+### Dark mode
+
+> Make every ui element dark mode, with a dark background
+
+The whole interface is dark now, and there is no light version to switch to.
+
+- **Surfaces** are four dark slate shades. A big panel is the base, a card or a bar over the 3D view is a step
+  lighter, a row or a tile on a panel a step lighter again, and wells (bar tracks, text boxes, tabs not picked,
+  a goal already claimed) are the darkest, so they read as sunk in.
+- **Words** are near white on all of those, with a softer grey for small print. Words drawn straight over the
+  town keep a dark outline.
+- **Colour** comes from the same pastels as before. Buttons you press (Build, Claim, Go, Feed, Done, the picked
+  tab) stay in their colour with white words, and progress bars and rings fill in colour. Yellow buttons carry
+  dark words, since white is lost on yellow.
+- **Headers and title ribbons** are their colour sunk most of the way into the panel, so a menu's top bar is dark
+  with a tint (green for villagers, purple for the city hall) and its title is white.
+- **The HUD**: the menu bar and the portrait at the bottom left are dark, the level badge is a dark hexagon with
+  a blue rim, and the pills over the town were dark already.
+- **Icons** with no colour of their own are light, and their cut out details take the dark card colour.
+- **The map** is drawn in night colours: a deep sea, dark land, lighter roads.
+- **Pictures** of catalog items, furniture and faces sit on a mid slate tile, lighter than the cards, so dark
+  hair and dark furniture still show.
+- **Over the town**: a villager's thought bubble, their speech bubble and the label on Build mode's marker are
+  dark with light words.
+- **What stays light on purpose**: colour chips you pick from (paint colours, finishes, a favourite colour, a
+  food's dot), since they have to show the colour itself, the slider's knob and the dot that marks you on the map.
+
+`sh tools/preview/audit.sh` builds every screen and fails if a surface is left white, cream or pale grey, or if
+words don't stand out from what is behind them. It is part of the check.
 
 ## 11. Writing
 

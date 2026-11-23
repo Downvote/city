@@ -191,7 +191,7 @@ function Hud.start()
 				Position = UDim2.new(0, 40, 1, 4),
 				TextSize = 22,
 				Color = if gain then T.Green else T.Coral,
-				Outline = T.Ink,
+				Outline = T.Dark,
 			})
 			TweenService:Create(pop, TweenInfo.new(1.2), { Position = UDim2.new(0, 40, 1, 30), TextTransparency = 1 })
 				:Play()
@@ -376,7 +376,7 @@ function Hud.start()
 		Name = "Portrait",
 		Parent = menu,
 		Round = true,
-		Color = T.White,
+		Color = T.Paper,
 		Border = T.Blue,
 		BorderWidth = 4,
 		Size = UDim2.fromOffset(98, 98),
@@ -398,7 +398,7 @@ function Hud.start()
 	local _bar, barInside = Kit.blob({
 		Name = "MenuBar",
 		Parent = menu,
-		Color = T.White,
+		Color = T.Paper,
 		Radius = 44,
 		Size = UDim2.fromOffset(356, 96),
 		Position = UDim2.fromOffset(108, 8),
