@@ -98,17 +98,17 @@ local STYLE_ICONS = {
 }
 
 -- One rhythm for the whole screen: every bar keeps the same distance from the screen's edges and
--- from the next bar, the same room inside and the same cut corners, and the tiles in the tool row
--- and the category row are the same height.
+-- from the next bar, the same room inside and the same round corners, and the tiles in the tool
+-- row and the category row are the same height.
 local EDGE = 12 -- from the screen's edges
 local GAP = 8 -- between bars, and between things side by side
 local PAD = 8 -- inside a bar, above and below
-local SIDE = 12 -- inside a bar, left and right (clear of its cut corners)
+local SIDE = 12 -- inside a bar, left and right (clear of its round corners)
 local CUT = 12
 local DOCK_H, SUBS_H, TRAY_H, TOOLS_H = 60, 80, 176, 80
 local TILE_H = SUBS_H - PAD * 2 -- a category or a tool
 local TOOL_W = 64
-local FLOORS_W, FLOORS_H = 248, 194
+local FLOORS_W, FLOORS_H = 248, 216
 local LABEL_W = 124 -- the name at the left of a labelled row in the tray
 local INNER_H = TRAY_H - PAD * 2 -- what the tray holds
 -- the bars' bottoms, measured up from the bottom of the screen
@@ -120,9 +120,9 @@ local HINT_AT = TOOLS_AT + TOOLS_H + GAP
 local COINS_H, TIP_H = 46, 28
 local TOP_LEFT_W, TOP_LEFT_H = 380, EDGE + COINS_H + GAP + TIP_H
 
--- the cards in the tray
-local CARD_W, CARD_H, CARD_CUT = 120, 152, 8
-local PIC_H = 80
+-- the cards in the tray: a picture on the upper face, the name and the price on the deeper band
+-- along the bottom (a third of the card, as on Kit.tile)
+local CARD_W, CARD_H = 120, 156
 local CHIP_W, CHIP_H = 92, 50 -- a finish to paint with
 local STYLE_W, STYLE_H = 92, 92 -- a kind of wall, fence or roof
 local SWATCH = 26 -- a colour to paint with, in a cell this much bigger
@@ -248,90 +248,81 @@ local function coinLine(parent: Instance, text: string, props: { [string]: any }
 	return box
 end
 
--- The price on a card: a leaning green tag with the coin and the number, coral while the card
--- costs more than you have.
+-- The face of a card or a tile in the tray, drawn as Kit.tile draws its own: a rounded square in
+-- `color` with a thin line round it and a deeper band across its bottom third, where the name
+-- goes. (Kit.paint recolours it, band and all, and a change of look does too.) Returns the face
+-- and where the band starts, in pixels from the top.
+local function tileFace(holder: GuiObject, color: Color3, h: number): (Frame, number)
+	local face = Kit.new("Frame", {
+		Name = "Face",
+		BackgroundColor3 = color,
+		BorderSizePixel = 0,
+		Size = UDim2.new(1, -2, 1, -2),
+		Position = UDim2.fromOffset(1, 1),
+		Parent = holder,
+	})
+	Kit.corner(face, 9)
+	Kit.new("UIGradient", { Name = "Foot", Rotation = 90, Parent = face })
+	Kit.paint(face, color)
+	Kit.rim(face, Kit.edgeOf(color), 1):SetAttribute("Follow", true)
+	return face, math.floor((h - 2) * 0.66 + 0.5) + 1
+end
+
+-- A dark disc with a yellow tick on the corner of what is picked.
+local function pickedMark(parent: Instance, x: number, y: number)
+	Kit.disc({
+		Name = "Picked",
+		Parent = parent,
+		Size = 18,
+		Position = UDim2.fromOffset(x, y),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Color = T.Dark,
+		Icon = "check",
+		IconColor = T.Yellow,
+		Ring = T.Yellow,
+		ZIndex = 4,
+	})
+end
+
+-- The price on a card: the coin and the number, coral while the card costs more than you have.
 local function paintTag(tag: Frame, price: number)
-	local short = price > coinsNow
-	local color = if short then T.Coral else T.Green
-	Kit.paint(tag, color)
-	local label = tag:FindFirstChild("Amount", true)
+	local label = tag:FindFirstChild("Amount")
 	if label and label:IsA("TextLabel") then
-		Kit.outlineText(label, Kit.darker(color, 0.42), 1.5)
+		local short = price > coinsNow
+		label.TextColor3 = if short then Kit.tint(T.Coral) else T.Ink
+		label:SetAttribute("Tint", if short then T.Coral:ToHex() else nil)
 	end
 end
 
 local function priceTag(parent: Instance, price: number, y: number): Frame
-	local tag = Kit.frame({
-		Name = "Price",
-		Parent = parent,
-		Size = UDim2.fromOffset(0, 24),
-		AutomaticSize = Enum.AutomaticSize.X,
-		Position = UDim2.new(0.5, 0, 0, y),
-		AnchorPoint = Vector2.new(0.5, 0),
-		Color = T.Green,
-		Radius = false,
-	})
-	Kit.slant(tag, 24, true)
-	Kit.shade(tag)
-	Kit.pad(tag, 2, 0)
-	local row = Kit.box({ Parent = tag, Size = UDim2.fromOffset(0, 24), AutomaticSize = Enum.AutomaticSize.X })
-	Kit.list(row, 4, true)
-	Icons.make("coin", 18, { Parent = row, LayoutOrder = 1 })
+	local tag =
+		Kit.box({ Name = "Price", Parent = parent, Size = UDim2.new(1, 0, 0, 18), Position = UDim2.fromOffset(0, y) })
+	Kit.list(tag, 4, true, Enum.HorizontalAlignment.Center)
+	Icons.make("coin", 17, { Parent = tag, LayoutOrder = 1 })
 	Kit.title(Text.commas(price), {
 		Name = "Amount",
-		Parent = row,
-		Size = UDim2.fromOffset(0, 24),
+		Parent = tag,
+		Size = UDim2.fromOffset(0, 18),
 		AutomaticSize = Enum.AutomaticSize.X,
-		TextSize = 17,
-		Color = T.White,
+		TextSize = 16,
 		Wrap = false,
 		LayoutOrder = 2,
-		Outline = Kit.darker(T.Green, 0.42),
 	})
 	priceTags[tag] = price
 	paintTag(tag, price)
 	return tag
 end
 
--- A small dark diamond with a yellow tick, on the corner of what is picked.
-local function pickedMark(parent: Instance, x: number, y: number)
-	local mark = Kit.frame({
-		Name = "Picked",
-		Parent = parent,
-		Size = UDim2.fromOffset(14, 14),
-		Position = UDim2.fromOffset(x, y),
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Color = T.Dark,
-		Radius = false,
-		ZIndex = 3,
-	})
-	mark.Rotation = 45
-	Icons.make("check", 12, {
-		Parent = parent,
-		Position = UDim2.fromOffset(x - 6, y - 6),
-		Color = T.Yellow,
-		Hole = T.Dark,
-		ZIndex = 4,
-	})
-end
-
--- What a card does under the mouse: it lifts a little and sinks when pressed. With `rest` (the
--- colour it has when the mouse is away) its colour cools toward blue as well.
-local function hoverable(card: GuiButton, rest: (() -> Color3)?): UIScale
+-- What a card does under the mouse: it lifts a little and sinks when pressed.
+local function hoverable(card: GuiButton): UIScale
 	local scale = Kit.new("UIScale", { Parent = card })
 	local over = false
 	card.MouseEnter:Connect(function()
 		over = true
-		if rest then
-			Kit.paintCut(card, Kit.mix(rest(), T.Blue, 0.22))
-		end
 		TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Scale = 1.05 }):Play()
 	end)
 	card.MouseLeave:Connect(function()
 		over = false
-		if rest then
-			Kit.paintCut(card, rest())
-		end
 		TweenService:Create(scale, TweenInfo.new(0.15), { Scale = 1 }):Play()
 	end)
 	card.MouseButton1Down:Connect(function()
@@ -344,9 +335,15 @@ local function hoverable(card: GuiButton, rest: (() -> Color3)?): UIScale
 	return scale
 end
 
--- A card in the tray: a dark slab with two corners cut, a picture at the top, the name and the
--- price under it. Returns the card and the picture's frame.
-local function card(parent: Instance, name: string, order: number, width: number, onPick: () -> ()): (TextButton, Frame)
+-- A card in the tray: a picture on the upper face, its name and price on the band under it.
+-- Returns the card, the picture's frame and where the band starts.
+local function card(
+	parent: Instance,
+	name: string,
+	order: number,
+	width: number,
+	onPick: () -> ()
+): (TextButton, Frame, number)
 	local b = Kit.new("TextButton", {
 		Name = name,
 		Text = "",
@@ -356,18 +353,17 @@ local function card(parent: Instance, name: string, order: number, width: number
 		LayoutOrder = order,
 		Parent = parent,
 	})
-	Kit.cutInto(b, T.Card, CARD_CUT)
+	local _, foot = tileFace(b, T.Card, CARD_H)
 	local pic = Kit.frame({
 		Name = "Picture",
 		Parent = b,
-		Size = UDim2.new(1, -12, 0, PIC_H),
+		Size = UDim2.new(1, -12, 0, foot - 10),
 		Position = UDim2.fromOffset(6, 6),
 		Color = T.Picture,
-		Radius = false,
+		Radius = 6,
+		ZIndex = 2,
 	})
-	local scale = hoverable(b, function()
-		return T.Card
-	end)
+	local scale = hoverable(b)
 	b.Activated:Connect(onPick)
 	-- cards pop into the tray one after another
 	scale.Scale = 0.4
@@ -376,31 +372,38 @@ local function card(parent: Instance, name: string, order: number, width: number
 		TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, math.min(order, 14) * 0.025),
 		{ Scale = 1 }
 	):Play()
-	return b, pic
+	return b, pic, foot
 end
 
--- A catalog item's card: its 3D picture, its name (on two lines if it needs them) and its price.
+-- A card's name on its band: on two lines if it needs them, over the price.
+local function cardName(b: GuiObject, text: string, foot: number, size: number)
+	Kit.title(text, {
+		Name = "Name",
+		Parent = b,
+		Size = UDim2.new(1, -12, 0, 30),
+		Position = UDim2.fromOffset(6, foot + 2),
+		TextSize = size,
+		AlignX = Enum.TextXAlignment.Center,
+		ZIndex = 2,
+	})
+end
+
+-- A catalog item's card: its 3D picture, and its name and price on the band.
 local function itemTile(parent: Instance, def: any, order: number, onPick: () -> ()): TextButton
-	local b, pic = card(parent, def.id, order, CARD_W, onPick)
+	local b, pic, foot = card(parent, def.id, order, CARD_W, onPick)
 	b:SetAttribute("ItemId", def.id)
 	task.spawn(function()
 		ModelPreview.fromPrims(Catalog.prims(def), { Parent = pic })
 	end)
-	Kit.title(def.name, {
-		Name = "Name",
-		Parent = b,
-		Size = UDim2.new(1, -12, 0, 32),
-		Position = UDim2.fromOffset(6, PIC_H + 8),
-		TextSize = 14,
-		AlignX = Enum.TextXAlignment.Center,
-	})
-	priceTag(b, def.price, CARD_H - 30)
+	cardName(b, def.name, foot, 13)
+	priceTag(b, def.price, CARD_H - 22)
 	return b
 end
 
--- A finish (a colour and a material) to build or paint with. Small, it is a swatch with the name
--- under it; big (opts.h over 60), the swatch carries the material's name and a line goes under the
--- name (opts.sub, with a coin when opts.coin). The picked one is yellow with a tick.
+-- A finish (a colour and a material) to build or paint with: a tile with the colour on its upper
+-- face and the name on its band. Big (opts.h over 60), the colour carries the material's name and
+-- a line goes under the name (opts.sub, with a coin when opts.coin). The picked one is yellow
+-- with a tick.
 local function finishTile(
 	parent: Instance,
 	preset: { name: string, c: string, m: string },
@@ -422,19 +425,17 @@ local function finishTile(
 		LayoutOrder = order,
 		Parent = parent,
 	})
-	local function rest(): Color3
-		return if picked then T.Yellow else T.Card
-	end
-	Kit.cutInto(b, rest(), if big then CARD_CUT else 6)
-	local swH = if big then h - (if opts.sub then 50 else 32) else h - 24
+	local _, foot = tileFace(b, if picked then T.Yellow else T.Card, h)
+	local inset = if big then 6 else 4
 	local color = Colors.fromHex(preset.c)
 	local sw = Kit.frame({
 		Name = "Swatch",
 		Parent = b,
-		Size = UDim2.new(1, -8, 0, swH),
-		Position = UDim2.fromOffset(4, 4),
+		Size = UDim2.new(1, -inset * 2, 0, foot - inset - 3),
+		Position = UDim2.fromOffset(inset, inset),
 		Color = color,
-		Radius = false,
+		Radius = if big then 6 else 5,
+		ZIndex = 2,
 	})
 	if big and preset.m and materialName(preset.m) ~= preset.name then
 		local light = color.R * 0.3 + color.G * 0.59 + color.B * 0.11 > 0.6
@@ -449,26 +450,29 @@ local function finishTile(
 		})
 	end
 	local ink = if picked then T.Dark else T.Ink
+	local band = h - foot - 1
+	local nameH = if opts.sub then 16 else band
 	Kit.title(preset.name, {
 		Name = "Name",
 		Parent = b,
-		Size = UDim2.new(1, -8, 0, if big then 18 else 16),
-		Position = UDim2.fromOffset(4, swH + (if big then 8 else 5)),
+		Size = UDim2.new(1, -8, 0, nameH),
+		Position = UDim2.fromOffset(4, foot + (if opts.sub then 2 else 0)),
 		TextSize = if big then 14 else 12,
 		Color = ink,
 		AlignX = Enum.TextXAlignment.Center,
 		Wrap = false,
+		ZIndex = 2,
 	}).TextTruncate =
 		Enum.TextTruncate.AtEnd
 	if opts.sub then
 		local soft = if picked then T.Dark else T.InkSoft
 		if opts.coin then
-			coinLine(b, opts.sub, { Position = UDim2.new(0, 0, 1, -22), Color = soft })
+			coinLine(b, opts.sub, { Position = UDim2.new(0, 0, 1, -19), Color = soft })
 		else
 			Kit.text(opts.sub, {
 				Parent = b,
 				Size = UDim2.new(1, -8, 0, 16),
-				Position = UDim2.new(0, 4, 1, -22),
+				Position = UDim2.new(0, 4, 1, -19),
 				TextSize = 12,
 				Font = Kit.Fonts.Bold,
 				Color = soft,
@@ -478,7 +482,7 @@ local function finishTile(
 		end
 	end
 	if picked then
-		pickedMark(b, w - 10, 10)
+		pickedMark(b, w - 9, 9)
 	end
 	hoverable(b)
 	b.Activated:Connect(onPick)
@@ -504,34 +508,41 @@ local function styleTile(
 		LayoutOrder = order,
 		Parent = parent,
 	})
-	local function rest(): Color3
-		return if picked then T.Yellow else T.Card
-	end
-	Kit.cutInto(b, rest(), CARD_CUT)
+	local color = if picked then T.Yellow else T.Card
+	local _, foot = tileFace(b, color, STYLE_H)
 	local ink = if picked then T.Dark else T.Ink
-	local top = if sub then 8 else 14
-	Icons.make(icon, 40, {
+	-- the icon on the upper face (with what it costs under it), the name on the band
+	local ipx = if sub then 30 else 36
+	local top = if sub then 7 else math.floor((foot - ipx) / 2)
+	Icons.make(icon, ipx, {
 		Name = "IconArt",
 		Parent = b,
-		Position = UDim2.new(0.5, -20, 0, top),
+		Position = UDim2.new(0.5, -ipx / 2, 0, top),
 		Color = ink,
-		Hole = rest(),
+		Hole = color,
+		ZIndex = 2,
 	})
+	if sub then
+		local cost = coinLine(
+			b,
+			sub,
+			{ Position = UDim2.fromOffset(0, top + ipx + 3), Color = if picked then T.Dark else T.InkSoft }
+		)
+		cost.ZIndex = 2
+	end
 	Kit.title(label, {
 		Name = "Name",
 		Parent = b,
-		Size = UDim2.new(1, -8, 0, 18),
-		Position = UDim2.fromOffset(4, top + 46),
+		Size = UDim2.new(1, -8, 0, STYLE_H - foot - 1),
+		Position = UDim2.fromOffset(4, foot),
 		TextSize = 14,
 		Color = ink,
 		AlignX = Enum.TextXAlignment.Center,
 		Wrap = false,
+		ZIndex = 2,
 	})
-	if sub then
-		coinLine(b, sub, { Position = UDim2.fromOffset(0, top + 66), Color = if picked then T.Dark else T.InkSoft })
-	end
 	if picked then
-		pickedMark(b, STYLE_W - 12, 12)
+		pickedMark(b, STYLE_W - 10, 10)
 	end
 	hoverable(b)
 	b.Activated:Connect(onPick)
@@ -551,7 +562,7 @@ local function swatchRow(parent: Instance, label: string, current: string?, onPi
 		local cell =
 			Kit.box({ Parent = row, Size = UDim2.fromOffset(SWATCH + RING * 2, SWATCH + RING * 2), LayoutOrder = i })
 		if hex == current then
-			Kit.frame({ Name = "Ring", Parent = cell, Size = UDim2.fromScale(1, 1), Color = T.Yellow, Radius = false })
+			Kit.frame({ Name = "Ring", Parent = cell, Size = UDim2.fromScale(1, 1), Color = T.Yellow, Radius = "round" })
 		end
 		local b = Kit.swatch(Colors.fromHex(hex), SWATCH, function()
 			onPick(hex)
@@ -613,14 +624,15 @@ local function finishChip(parent: Instance, label: string, c: string, m: string,
 		Wrap = false,
 		LayoutOrder = 1,
 	})
-	Kit.frame({
+	local dot = Kit.frame({
 		Name = "Swatch",
 		Parent = box,
 		Size = UDim2.fromOffset(22, 22),
 		Color = Colors.fromHex(c),
-		Radius = false,
+		Radius = "round",
 		LayoutOrder = 2,
 	})
+	Kit.rim(dot, T.Line, 1.5)
 	Kit.title(finishName(c, m), {
 		Parent = box,
 		Size = UDim2.fromOffset(0, 30),
@@ -641,29 +653,12 @@ local function trayNote(parent: Instance, icon: string, color: Color3, title: st
 		AutomaticSize = Enum.AutomaticSize.Y,
 		LayoutOrder = order or 0,
 	})
-	-- a diamond with the icon upright on it, at the left
-	local d = 44
-	local badge = Kit.frame({
-		Name = "Marker",
-		Parent = box,
-		Size = UDim2.fromOffset(d, d),
-		Position = UDim2.fromOffset(10, 6),
-		Color = color,
-		Radius = false,
-	})
-	badge.Rotation = 45
-	Icons.make(icon, 30, {
-		Name = "IconArt",
-		Parent = box,
-		Position = UDim2.fromOffset(10 + (d - 30) / 2, 6 + (d - 30) / 2),
-		Color = T.Dark,
-		Hole = color,
-		ZIndex = 2,
-	})
+	-- a round marker with the icon on it, at the left
+	Kit.disc({ Parent = box, Size = 48, Position = UDim2.fromOffset(4, 0), Color = color, Icon = icon })
 	local words = Kit.box({
 		Parent = box,
-		Size = UDim2.new(1, -84, 0, 0),
-		Position = UDim2.fromOffset(84, 0),
+		Size = UDim2.new(1, -68, 0, 0),
+		Position = UDim2.fromOffset(68, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 	})
 	Kit.list(words, 4)
@@ -742,26 +737,19 @@ end
 local function presetTray()
 	local row = trayRow()
 	for i, preset in Presets.list do
-		local b, pic = card(row, preset.id, i, 150, function()
+		local b, pic, foot = card(row, preset.id, i, 150, function()
 			BuildMode.startPreset(preset.id)
 		end)
 		b:SetAttribute("PresetId", preset.id)
 		task.spawn(function()
 			ModelPreview.fromPrims(presetLook(preset.id), { Parent = pic })
 		end)
-		Kit.title(preset.name, {
-			Name = "Name",
-			Parent = b,
-			Size = UDim2.new(1, -12, 0, 32),
-			Position = UDim2.fromOffset(6, PIC_H + 8),
-			TextSize = 15,
-			AlignX = Enum.TextXAlignment.Center,
-		})
+		cardName(b, preset.name, foot, 14)
 		if not presetPrices[preset.id] then
 			presetPrices[preset.id] = Presets.price(preset.id)
 		end
-		priceTag(b, presetPrices[preset.id], CARD_H - 30)
-		-- its size, in a dark chip on the picture's corner
+		priceTag(b, presetPrices[preset.id], CARD_H - 22)
+		-- its size, in a dark pill on the picture's corner
 		local size = Kit.frame({
 			Name = "Size",
 			Parent = pic,
@@ -770,7 +758,8 @@ local function presetTray()
 			Position = UDim2.new(1, -4, 0, 4),
 			AnchorPoint = Vector2.new(1, 0),
 			Color = T.Paper,
-			Radius = false,
+			Radius = "pill",
+			ZIndex = 3,
 		})
 		Kit.pad(size, 6, 0)
 		Kit.text(Text.fill("{w} x {d}", { w = preset.w, d = preset.d }), {
@@ -781,6 +770,7 @@ local function presetTray()
 			Font = Kit.Fonts.Bold,
 			Color = T.InkSoft,
 			Wrap = false,
+			ZIndex = 3,
 		})
 		-- what is inside, in the hint while the mouse is on it
 		b.MouseEnter:Connect(function()
@@ -851,11 +841,13 @@ local function wallTray(styles: { string }, room: boolean)
 	end
 	local taken = #styles * (STYLE_W + GAP) + GAP
 	if Plan.WallStyles[s.wallStyle].fence then
+		-- how fences are coloured, in a hint strip level with the middle of the tiles
 		local note = Kit.box({ Parent = row, Size = UDim2.new(1, -taken, 0, STYLE_H), LayoutOrder = 20 })
-		trayNote(note, "brush", T.Yellow, "Fences come in their own colours", {
-			"Paint one with the Paint tool once it is up.",
-		}).Position =
-			UDim2.fromOffset(0, 18)
+		Kit.list(note, 0).VerticalAlignment = Enum.VerticalAlignment.Center
+		Kit.hint("Fences come in their own colours. Paint one with the Paint tool once it is up.", {
+			Parent = note,
+			Size = UDim2.new(1, -8, 0, 0),
+		})
 		return
 	end
 	-- the finish for new walls: it takes the rest of the row, whatever the screen's width, so a
@@ -897,11 +889,11 @@ end
 
 local function floorTray()
 	local stack = trayStack()
-	local row = trayRow(112, stack, 1)
+	local row = trayRow(122, stack, 1)
 	for i, preset in Palette.Presets.floors do
 		finishTile(row, preset, i, {
 			w = 108,
-			h = 108,
+			h = 120,
 			selected = s.floorPaint.c == preset.c and s.floorPaint.m == preset.m,
 			sub = Text.fill("{n} a square", { n = Tuning.Prices.FloorPerCell }),
 			coin = true,
@@ -1029,8 +1021,13 @@ local function selectionTray()
 	local stack = trayStack()
 	if not kind or not obj then
 		trayNote(stack, "pointer", T.Blue, "Click something to pick it", {
-			"A wall, a floor, a roof or a piece of furniture. R turns what you hold, Ctrl+Z undoes.",
+			"A wall, a floor, a roof or a piece of furniture.",
 		}, 1)
+		Kit.hint("R turns what you hold, right click puts it away and Ctrl+Z undoes.", {
+			Parent = stack,
+			Size = UDim2.new(1, -8, 0, 0),
+			LayoutOrder = 2,
+		})
 		return
 	end
 	if kind == "items" then
@@ -1093,10 +1090,11 @@ local function selectionTray()
 		end
 		local taken = #Plan.WallStyleOrder * (STYLE_W + GAP) + GAP
 		local note = Kit.box({ Parent = row, Size = UDim2.new(1, -taken, 0, STYLE_H), LayoutOrder = 20 })
-		trayNote(note, "brush", T.Yellow, "Each side has its own paint", {
-			"Use the Paint tool to colour the inside and the outside.",
-		}).Position =
-			UDim2.fromOffset(0, 18)
+		Kit.list(note, 0).VerticalAlignment = Enum.VerticalAlignment.Center
+		Kit.hint("Each side of a wall has its own paint. Use the Paint tool to colour the inside and the outside.", {
+			Parent = note,
+			Size = UDim2.new(1, -8, 0, 0),
+		})
 	elseif kind == "floors" then
 		local row = labelledRow(stack, "Finish", CHIP_H, 1)
 		for i, preset in Palette.Presets.floors do
@@ -1110,9 +1108,13 @@ end
 local function sellTray()
 	local stack = trayStack()
 	trayNote(stack, "trash", T.Coral, "Click something to sell it", {
-		"You get back what you paid for it. The starting house was a gift, so its pieces sell for nothing.",
-		"Sold the wrong thing? Undo puts it back.",
+		"You get back what you paid for it. Sold the wrong thing? Undo puts it back.",
 	}, 1)
+	Kit.hint("The starting house was a gift, so its pieces sell for nothing.", {
+		Parent = stack,
+		Size = UDim2.new(1, -8, 0, 0),
+		LayoutOrder = 2,
+	})
 end
 
 refreshTray = function()
@@ -1330,11 +1332,11 @@ local function paintToggle(id: string)
 	Kit.setRowSelected(row, on)
 	local art = row:FindFirstChild("IconArt", true)
 	if art then
-		Kit.recolorIcon(art, if on then T.Dark else T.Ink, if on then T.Yellow else T.PaperDark)
+		Kit.recolorIcon(art, if on then T.Dark else T.Ink, if on then T.Yellow else T.Card)
 	end
 	local chip = row:FindFirstChild("State", true)
 	if chip and chip:IsA("Frame") then
-		Kit.paint(chip, if on then T.Dark else T.Card)
+		Kit.paint(chip, if on then T.Dark else T.PaperDark)
 		local word = chip:FindFirstChild("Word")
 		if word and word:IsA("TextLabel") then
 			word.Text = if on then "On" else "Off"
@@ -1572,7 +1574,7 @@ function BuildUI.init(exitCallback: () -> ())
 	end
 
 	-- the way out: one big button in the bottom right corner, as tall as the main groups' bar
-	-- beside it so it stays clear of the categories above
+	-- beside it so it stays clear of the categories above, red as every way out is
 	Kit.button("Done", {
 		Parent = ui,
 		Name = "Done",
@@ -1580,7 +1582,7 @@ function BuildUI.init(exitCallback: () -> ())
 		Position = UDim2.new(1, -EDGE, 1, -EDGE),
 		AnchorPoint = Vector2.new(1, 1),
 		TextSize = 26,
-		Color = T.Coral,
+		Color = T.Red,
 		Icon = "close",
 	}, function()
 		if onExit then
@@ -1689,6 +1691,16 @@ function BuildUI.init(exitCallback: () -> ())
 	})
 	Kit.list(floorsBody, 6, false, Enum.HorizontalAlignment.Center)
 	local levelRow = Kit.box({ Parent = floorsBody, Size = UDim2.new(1, 0, 0, 44), LayoutOrder = 1 })
+	-- a dim caption over the view switches, the way groups of rows are named in menus
+	Kit.text("View", {
+		Name = "Caption",
+		Parent = floorsBody,
+		Size = UDim2.new(1, -8, 0, 16),
+		TextSize = 13,
+		Font = Kit.Fonts.Bold,
+		Color = T.InkSoft,
+		LayoutOrder = 2,
+	})
 	levelDown = Kit.button("", {
 		Name = "FloorDown",
 		Parent = levelRow,
@@ -1737,7 +1749,7 @@ function BuildUI.init(exitCallback: () -> ())
 			Height = 36,
 			Title = v.name,
 			TextSize = 14,
-			LayoutOrder = 1 + i,
+			LayoutOrder = 2 + i,
 			LeftSpace = 32,
 			RightSpace = 42,
 		}, VIEW_RUN[v.id])
@@ -1747,16 +1759,16 @@ function BuildUI.init(exitCallback: () -> ())
 			Parent = inner,
 			Position = UDim2.new(0, lean + 8, 0.5, -9),
 			Color = T.Ink,
-			Hole = T.PaperDark,
+			Hole = T.Card,
 			ZIndex = 3,
 		})
 		local chip = Kit.frame({
 			Name = "State",
 			Parent = inner,
-			Size = UDim2.fromOffset(32, 20),
-			Position = UDim2.new(1, -(lean + 38), 0.5, -10),
-			Color = T.Card,
-			Radius = false,
+			Size = UDim2.fromOffset(34, 20),
+			Position = UDim2.new(1, -(lean + 40), 0.5, -10),
+			Color = T.PaperDark,
+			Radius = "pill",
 			ZIndex = 3,
 		})
 		Kit.text("Off", {
@@ -1821,10 +1833,11 @@ function BuildUI.init(exitCallback: () -> ())
 		AutomaticSize = Enum.AutomaticSize.XY,
 		AnchorPoint = Vector2.new(0.5, 1),
 		Color = T.Paper,
-		Radius = false,
+		Radius = 12,
 		Parent = ui,
 		Visible = false,
 	})
+	Kit.rim(actionBar, T.Line, 1)
 	Kit.softShadow(actionBar, 1)
 	Kit.pad(actionBar, SIDE, 10)
 	Kit.list(actionBar, 4, false, Enum.HorizontalAlignment.Center)

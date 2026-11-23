@@ -1,7 +1,8 @@
 -- Tells a random event as it plays out in town: a dialogue card near the bottom of the screen
--- with the event's name on a tab, the speaker on a name plate, the words typed out with the
--- villagers' names picked out in colour, a little arrow when you can click on, and the answers
--- stacked under the words. "Watch" points the camera at it.
+-- with the event's name on its darker band (and Watch, which points the camera at it), the
+-- speaker on a name plate over a speech bubble, the words typed out with the villagers' names
+-- picked out in colour, a little arrow when you can click on, and the answers stacked under the
+-- words.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -13,6 +14,7 @@ local Text = require(Shared.Util.Text)
 
 local Kit = require(script.Parent.Kit)
 local Icons = require(script.Parent.Icons)
+local MenuParts = require(script.Parent.MenuParts)
 local State = require(script.Parent.Parent.Controllers.State)
 
 local EventCard = {}
@@ -22,8 +24,7 @@ local player = Players.LocalPlayer
 
 local holder: Frame
 local card: Frame
-local bannerSlot: Frame
-local ribbon: Frame? = nil
+local titleLabel: TextLabel
 local speakerLabel: TextLabel
 local plate: Frame
 local bodyLabel: TextLabel
@@ -97,10 +98,10 @@ end
 local skip = false
 local typing = false
 local topRow: Frame? = nil
--- The strip over the words (who speaks, and Watch) takes no room when it holds nothing.
+-- The strip over the words (who speaks) takes no room when it holds nothing.
 local function fitTop()
 	if topRow then
-		topRow.Visible = plate.Visible or watchButton.Visible
+		topRow.Visible = plate.Visible
 	end
 end
 
@@ -215,21 +216,8 @@ local function play(ev: any)
 	playing = true
 	current = ev
 	clearChoices()
-	-- a fresh ribbon each time: it's cut to the length of the event's name
-	if ribbon then
-		ribbon:Destroy()
-		ribbon = nil
-	end
-	if ev.title and ev.title ~= "" then
-		ribbon = Kit.ribbon(ev.title, {
-			Parent = bannerSlot,
-			Color = T.Coral,
-			TextSize = 22,
-			Position = UDim2.new(0, 22, 1, 0),
-			AnchorPoint = Vector2.new(0, 1),
-			ZIndex = 22,
-		})
-	end
+	-- the event's name on the band
+	titleLabel.Text = if type(ev.title) == "string" then ev.title else ""
 	if not hidden then
 		Kit.popIn(holder)
 	end
@@ -302,56 +290,40 @@ function EventCard.start(_hud: any)
 		Visible = false,
 	})
 	holder.ZIndex = 20
-	Kit.list(holder, 0, false, Enum.HorizontalAlignment.Center)
-	bannerSlot = Kit.box({ Name = "Banner", Parent = holder, Size = UDim2.new(1, 0, 0, 44), LayoutOrder = 1 })
-	bannerSlot.ZIndex = 22
-	Kit.box({ Parent = holder, Size = UDim2.fromOffset(10, 6), LayoutOrder = 2 })
-	card = Kit.frame({
-		Name = "Page",
-		Parent = holder,
-		Size = UDim2.new(1, 0, 0, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
-		Color = T.Cream,
-		Radius = 28,
-		LayoutOrder = 3,
+	local band, body
+	card, band, body = MenuParts.sheet(T.Orange, { Parent = holder, Band = 48 })
+	-- the event's name on the band, a mark in the town's warm colour before it, Watch at the right
+	local mark = Kit.new("Frame", {
+		Name = "Mark",
+		BackgroundColor3 = T.Orange,
+		BorderSizePixel = 0,
+		Size = UDim2.fromOffset(6, 22),
+		Position = UDim2.new(0, 22, 0.5, -11),
+		ZIndex = 3,
+		Parent = band,
 	})
-	Kit.softShadow(card, 1.4)
-	Kit.wash(card, T.Paper, T.Cream, 90)
-	-- a warm glow from the top right, as on the menus
-	Kit.glow(card, T.Orange, 0.2, "tr")
-	Kit.shapes(card, T.Orange, 41, 12, { Transparency = 0.9, Area = { 0.04, 0.1, 0.96, 0.9 } })
-	local inner = Kit.box({ Parent = card, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y })
-	Kit.pad(inner, 28, 22)
-	Kit.list(inner, 12)
-
-	-- who's talking, and the button that points the camera at them
-	local top = Kit.box({ Name = "Top", Parent = inner, Size = UDim2.new(1, 0, 0, 30), LayoutOrder = 0 })
-	topRow = top
-	plate = Kit.frame({
-		Parent = top,
-		Size = UDim2.fromOffset(0, 30),
-		AutomaticSize = Enum.AutomaticSize.X,
-		Color = T.Blue,
-		Radius = "pill",
-		Visible = false,
-	})
-	Kit.pad(plate, 14, 0)
-	speakerLabel = Kit.title("", {
-		Parent = plate,
-		Size = UDim2.fromOffset(0, 30),
-		AutomaticSize = Enum.AutomaticSize.X,
-		TextSize = 17,
-		Color = T.White,
+	mark:SetAttribute("KeepColors", true)
+	Kit.corner(mark, 3)
+	titleLabel = Kit.title("", {
+		Name = "Banner",
+		Parent = band,
+		Size = UDim2.new(1, -170, 1, 0),
+		Position = UDim2.fromOffset(38, 0),
+		TextSize = 21,
 		Wrap = false,
+		ZIndex = 3,
 	})
+	titleLabel.TextTruncate = Enum.TextTruncate.AtEnd
 	watchButton = Kit.button("Watch", {
-		Parent = top,
+		Parent = band,
 		Size = UDim2.fromOffset(96, 30),
-		Position = UDim2.new(1, 0, 0, 0),
-		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -16, 0.5, 0),
+		AnchorPoint = Vector2.new(1, 0.5),
 		TextSize = 14,
 		Color = T.Purple,
 		Radius = "pill",
+		Icon = "eye",
+		ZIndex = 3,
 	})
 	watchButton.Activated:Connect(function()
 		if watching then
@@ -360,28 +332,54 @@ function EventCard.start(_hud: any)
 			startWatching()
 		end
 	end)
+	local inner = Kit.box({ Parent = body, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y })
+	Kit.pad(inner, 22, 16)
+	Kit.list(inner, 10)
 
+	-- who's talking, on a plate over the bubble
+	local top = Kit.box({ Name = "Top", Parent = inner, Size = UDim2.new(1, 0, 0, 28), LayoutOrder = 0 })
+	topRow = top
+	plate = Kit.frame({
+		Parent = top,
+		Size = UDim2.fromOffset(0, 28),
+		AutomaticSize = Enum.AutomaticSize.X,
+		Color = T.Blue,
+		Radius = "pill",
+		Visible = false,
+	})
+	Kit.pad(plate, 14, 0)
+	speakerLabel = Kit.title("", {
+		Parent = plate,
+		Size = UDim2.fromOffset(0, 28),
+		AutomaticSize = Enum.AutomaticSize.X,
+		TextSize = 16,
+		Color = T.Dark,
+		Wrap = false,
+	})
+	-- the words, in a speech bubble
+	local bubble, words = MenuParts.speech({ Name = "Said", Parent = inner, LayoutOrder = 1, Point = false })
 	bodyLabel = Kit.text("", {
-		Parent = inner,
-		Size = UDim2.new(1, 0, 0, 0),
+		Parent = words,
+		Size = UDim2.new(1, -24, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		TextSize = 22,
+		TextSize = 21,
 		Font = Kit.Fonts.Title,
-		LayoutOrder = 1,
+		AlignY = Enum.TextYAlignment.Top,
 	})
 	bodyLabel.RichText = true
 	bodyLabel.LineHeight = 1.15
-	moreArrow = Icons.make("down", 20, {
-		Parent = card,
-		Position = UDim2.new(1, -38, 1, -30),
-		Color = T.Coral,
+	moreArrow = Icons.make("down", 18, {
+		Parent = bubble,
+		Position = UDim2.new(1, -30, 1, -26),
+		Color = T.Yellow,
+		ZIndex = 3,
 	})
 	moreArrow.Visible = false
 	task.spawn(function()
 		local t = 0
 		while true do
 			t += task.wait(0.05)
-			moreArrow.Position = UDim2.new(1, -38, 1, -30 + math.floor(math.sin(t * 6) * 3 + 0.5))
+			moreArrow.Position = UDim2.new(1, -30, 1, -26 + math.floor(math.sin(t * 6) * 3 + 0.5))
 		end
 	end)
 	-- the answers, stacked under the words

@@ -126,8 +126,9 @@ local function showDetail(frame: Frame, w: Ware)
 		Position = UDim2.new(0.5, 0, 0, 282),
 		AnchorPoint = Vector2.new(0.5, 0),
 		Color = T.PaperDark,
-		Cut = 8,
+		Radius = "pill",
 	})
+	Kit.rim(have, T.Line, 1, 0.4)
 	Kit.text(Text.fill("You have {n}", { n = w.have }), {
 		Parent = have,
 		Size = UDim2.fromScale(1, 1),
@@ -272,21 +273,18 @@ local function draw()
 	-- a word on what to do with them, under the shelf
 	if shelf == "things" then
 		MenuParts.heading(scroll, "What they do", T.Orange, 900)
-		MenuParts.note(
+		MenuParts.hint(
 			"A party cake cheers the whole town up and brings everyone a little closer. The party starts the moment you buy it.",
-			T.Orange,
-			{ Name = "Cake", Parent = scroll, LayoutOrder = 901, Height = 44 }
+			{ Name = "Cake", Parent = scroll, LayoutOrder = 901 }
 		)
-		MenuParts.note(
+		MenuParts.hint(
 			"When someone catches a cold you can give them medicine. A villager who's ill misses their pay.",
-			T.Orange,
-			{ Name = "Medicine", Parent = scroll, LayoutOrder = 902, Height = 44 }
+			{ Name = "Medicine", Parent = scroll, LayoutOrder = 902 }
 		)
 	else
-		MenuParts.note(
+		MenuParts.hint(
 			"Everyone has a favourite food. Feed them on the Villagers screen to find out what it is.",
-			T.Orange,
-			{ Name = "Hint", Parent = scroll, LayoutOrder = 999, Height = 44 }
+			{ Name = "Hint", Parent = scroll, LayoutOrder = 999 }
 		)
 	end
 	if show then

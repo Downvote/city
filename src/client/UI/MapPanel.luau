@@ -2,8 +2,9 @@
 -- every road, the old town's plots, square and market, downtown's blocks with their rows of
 -- buildings, the lanes through them and the market square, the civic quarter's lawns, the
 -- boardwalk and the piers. All drawn from the same data the world is built from, in simple flat
--- shapes of our own. A diamond marks every place to find (orange once found, grey with a
--- question mark until then) and a white one marks you. District names go where no marker is.
+-- shapes of our own. A round pin marks every place to find (orange once found, grey with a
+-- question mark until then) and a blue dot in a white ring marks you. District names go where no
+-- marker is.
 -- Beside it, the places in a list: pick one to see it on the map, or press Go to travel there.
 
 local Players = game:GetService("Players")
@@ -32,11 +33,11 @@ local alive = false
 
 -- the part of the world the map shows
 local X1, X2 = -1180, 1180
-local Z1, Z2 = -450, 1010
+local Z1, Z2 = -440, 1040 -- (room over the north cove for its pin)
 local MAP_W = 660
 local S = MAP_W / (X2 - X1)
 local MAP_H = math.floor((Z2 - Z1) * S)
-local MARK = 16 -- a place's diamond, across
+local MARK = 16 -- a place's pin head, across
 
 local function toMap(x: number, z: number): (number, number)
 	return (x - X1) * S, (Z2 - z) * S
@@ -168,15 +169,65 @@ local function mountain(parent: Instance, x: number, z: number, size: number, pa
 	}, "bl")
 end
 
+-- A pin: a round head in a light ring with a short point under it, standing on (x, y). Its
+-- head is named Face (the colour says found or not) and carries the "?" while it isn't found.
+local PIN_H = MARK + 6
+local function pin(parent: Instance, name: string, x: number, y: number): Frame
+	local m = Kit.box({
+		Name = name,
+		Parent = parent,
+		Size = UDim2.fromOffset(MARK + 4, PIN_H),
+		Position = UDim2.fromOffset(math.floor(x), math.floor(y)),
+		AnchorPoint = Vector2.new(0.5, 1),
+	})
+	m.ZIndex = 4
+	local face = Kit.new("Frame", {
+		Name = "Face",
+		BackgroundColor3 = T.InkSoft,
+		BorderSizePixel = 0,
+		Size = UDim2.fromOffset(MARK, MARK),
+		Position = UDim2.fromOffset(2, 0),
+		ZIndex = 5,
+		Parent = m,
+	})
+	Kit.corner(face, "round")
+	Kit.rim(face, Color3.fromRGB(244, 244, 246), 2)
+	-- the point: two halves of a small triangle, under the head
+	for _, side in { { "tr", 0 }, { "tl", 1 } } do
+		Kit.wedge({
+			Name = "Point",
+			Parent = m,
+			Color = Color3.fromRGB(244, 244, 246),
+			Size = UDim2.fromOffset(4, 8),
+			Position = UDim2.new(0.5, side[2] * 4 - 4, 1, -8),
+			ZIndex = 4,
+			W = 4,
+			H = 8,
+		}, side[1])
+	end
+	Kit.text("?", {
+		Name = "Mark",
+		Parent = face,
+		Size = UDim2.fromScale(1, 1),
+		TextSize = 11,
+		Font = Kit.Fonts.Title,
+		Color = T.White,
+		AlignX = Enum.TextXAlignment.Center,
+		ZIndex = 6,
+	})
+	return m
+end
+
 -- The whole map in the given colours. Returns the map frame and the place markers by id.
 local function drawMap(holder: Frame, pal: Palette): (Frame, { [string]: Frame })
+	-- (a rounded frame that cuts what is in it to its corners: a CanvasGroup)
 	local map = Kit.frame({
 		Name = "Map",
 		Parent = holder,
 		Size = UDim2.fromOffset(MAP_W, MAP_H),
 		Color = pal.sea,
 		Clips = true,
-		Radius = false,
+		Radius = 12,
 	})
 	map:SetAttribute("KeepColors", true)
 	local IX, IN, IS, B = TownMap.IslandX, TownMap.IslandN, TownMap.IslandS, TownMap.Beach
@@ -277,41 +328,11 @@ local function drawMap(holder: Frame, pal: Palette): (Frame, { [string]: Frame }
 	rect(map, -380, -IS - 40, -260, -IS - 130, pal.wood, "Pier")
 	rect(map, 996, -IS - 20, 1004, -IS - 74, pal.wood, "Pier")
 
-	-- the places
+	-- the places: a round pin each, its point on the spot
 	local markers: { [string]: Frame } = {}
 	for _, place in Places.list do
 		local cx, cy = toMap(place.pos.X, place.pos.Z)
-		local m = Kit.box({
-			Name = place.id,
-			Parent = map,
-			Size = UDim2.fromOffset(MARK + 6, MARK + 6),
-			Position = UDim2.fromOffset(math.floor(cx), math.floor(cy)),
-			AnchorPoint = Vector2.new(0.5, 0.5),
-		})
-		m.ZIndex = 4
-		local face = Kit.new("Frame", {
-			Name = "Face",
-			BackgroundColor3 = T.InkSoft,
-			BorderSizePixel = 0,
-			Rotation = 45,
-			Size = UDim2.fromOffset(MARK - 2, MARK - 2),
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = UDim2.fromScale(0.5, 0.5),
-			ZIndex = 4,
-			Parent = m,
-		})
-		Kit.corner(face, 2)
-		Kit.text("?", {
-			Name = "Mark",
-			Parent = m,
-			Size = UDim2.fromScale(1, 1),
-			TextSize = 12,
-			Font = Kit.Fonts.Title,
-			Color = T.White,
-			AlignX = Enum.TextXAlignment.Center,
-			ZIndex = 5,
-		})
-		markers[place.id] = m
+		markers[place.id] = pin(map, place.id, cx, cy)
 	end
 
 	-- district names, each on the first of its spots that keeps clear of every marker
@@ -319,7 +340,7 @@ local function drawMap(holder: Frame, pal: Palette): (Frame, { [string]: Frame }
 	for _, place in Places.list do
 		local cx, cy = toMap(place.pos.X, place.pos.Z)
 		local r = MARK / 2 + 4
-		table.insert(taken, { cx - r, cy - r, cx + r, cy + r })
+		table.insert(taken, { cx - r, cy - PIN_H - 4, cx + r, cy + 4 })
 	end
 	for _, l in LABELS do
 		local name: string = l[1]
@@ -359,7 +380,7 @@ local function drawMap(holder: Frame, pal: Palette): (Frame, { [string]: Frame }
 	return map, markers
 end
 
--- A small key under the map: what the three diamonds mean.
+-- A small key under the map: what the three marks mean.
 local function legend(parent: Instance)
 	local key = Kit.box({
 		Name = "Legend",
@@ -372,16 +393,7 @@ local function legend(parent: Instance)
 		local item = Kit.box({ Parent = key, Size = UDim2.fromOffset(0, 20), LayoutOrder = i })
 		item.AutomaticSize = Enum.AutomaticSize.X
 		Kit.list(item, 8, true)
-		local d = Kit.new("Frame", {
-			Name = "Key",
-			BackgroundColor3 = k[2],
-			BorderSizePixel = 0,
-			Rotation = 45,
-			Size = UDim2.fromOffset(10, 10),
-			LayoutOrder = 1,
-			Parent = item,
-		})
-		local _ = d
+		Kit.disc({ Name = "Key", Parent = item, Size = 12, Color = k[2], LayoutOrder = 1 })
 		Kit.text(k[1], {
 			Parent = item,
 			Size = UDim2.fromOffset(0, 20),
@@ -449,7 +461,7 @@ function MapPanel.open()
 		end
 		local map
 		map, markers = drawMap(mapHolder, if Kit.ThemeName == "light" then DAY else NIGHT)
-		-- you: a white diamond with a blue one in it
+		-- you: a blue dot in a white ring
 		me = Kit.box({
 			Name = "Me",
 			Parent = map,
@@ -458,19 +470,18 @@ function MapPanel.open()
 			AnchorPoint = Vector2.new(0.5, 0.5),
 		})
 		me.ZIndex = 6
-		for i, k in { { "You", T.White, 16 }, { "YouDot", T.Blue, 9 } } do
+		for i, k in { { "You", T.White, 18 }, { "YouDot", T.Blue, 10 } } do
 			local f = Kit.new("Frame", {
 				Name = k[1],
 				BackgroundColor3 = k[2],
 				BorderSizePixel = 0,
-				Rotation = 45,
 				Size = UDim2.fromOffset(k[3], k[3]),
 				AnchorPoint = Vector2.new(0.5, 0.5),
 				Position = UDim2.fromScale(0.5, 0.5),
 				ZIndex = 6 + i,
 				Parent = me,
 			})
-			Kit.corner(f, 2)
+			Kit.corner(f, "round")
 		end
 	end
 	paintMap()
@@ -486,10 +497,11 @@ function MapPanel.open()
 	local function showPicked()
 		for id, m in markers do
 			local on = id == picked
-			m.Size = if on then UDim2.fromOffset(MARK + 12, MARK + 12) else UDim2.fromOffset(MARK + 6, MARK + 6)
+			local grow = if on then 6 else 0
+			m.Size = UDim2.fromOffset(MARK + 4 + grow, PIN_H + grow)
 			local face = m:FindFirstChild("Face")
 			if face and face:IsA("Frame") then
-				face.Size = if on then UDim2.fromOffset(MARK + 6, MARK + 6) else UDim2.fromOffset(MARK - 2, MARK - 2)
+				face.Size = UDim2.fromOffset(MARK + grow, MARK + grow)
 			end
 			m.ZIndex = if on then 8 else 4
 			local tag = m:FindFirstChild("Tag")
@@ -504,16 +516,16 @@ function MapPanel.open()
 					end
 				end
 				if place then
-					local w = #place.name * 8 + 20
+					local w = #place.name * 8 + 24
 					local t = Kit.frame({
 						Name = "Tag",
 						Parent = m,
 						Size = UDim2.fromOffset(w, 24),
-						Position = UDim2.new(0.5, 0, 0, -6),
+						Position = UDim2.new(0.5, 0, 0, -4),
 						AnchorPoint = Vector2.new(0.5, 1),
 						Color = rgb(16, 18, 26),
-						Transparency = 0.15,
-						Radius = 3,
+						Transparency = 0.1,
+						Radius = "pill",
 						ZIndex = 9,
 					})
 					Kit.text(place.name, {
@@ -532,7 +544,7 @@ function MapPanel.open()
 		end
 	end
 
-	-- a row with a diamond, a name and a line under it on up to two lines
+	-- a row with a round mark, a name and a line under it on up to two lines
 	local function placeRow(
 		name: string,
 		title: string,
@@ -551,12 +563,17 @@ function MapPanel.open()
 			LayoutOrder = order,
 			Sunk = sunk,
 		}, onClick)
-		local lean = row:GetAttribute("Lean") or 17
-		MenuParts.diamond(inner, "map", color, 36, {
-			Position = UDim2.new(0, lean + 8, 0.5, -18),
+		local lean = row:GetAttribute("Lean") or 6
+		Kit.disc({
+			Name = "Marker",
+			Parent = inner,
+			Size = 40,
+			Position = UDim2.new(0, lean + 6, 0.5, -20),
+			Color = color,
+			Icon = "map",
 			ZIndex = 2,
 		})
-		local textX = lean + 58
+		local textX = lean + 62
 		local w = -(textX + rightSpace + lean)
 		Kit.new("TextLabel", {
 			Name = "Title",
@@ -607,7 +624,7 @@ function MapPanel.open()
 			if face and face:IsA("Frame") then
 				face.BackgroundColor3 = if got then T.Orange else T.InkSoft
 			end
-			local mark = m and m:FindFirstChild("Mark")
+			local mark = m and m:FindFirstChild("Mark", true)
 			if mark and mark:IsA("TextLabel") then
 				mark.Text = if got then "" else "?"
 			end
@@ -656,7 +673,7 @@ function MapPanel.open()
 				if place.id == picked then
 					Kit.setRowSelected(row, true)
 				end
-				local lean = row:GetAttribute("Lean") or 17
+				local lean = row:GetAttribute("Lean") or 6
 				Kit.button("Go", {
 					Name = "Go",
 					Parent = inner,
@@ -682,7 +699,7 @@ function MapPanel.open()
 		if n == 0 then
 			order += 1
 			MenuParts.note(
-				"Nothing found yet. Walk up to a grey diamond to put it on the map.",
+				"Nothing found yet. Walk up to a grey pin to put it on the map.",
 				T.Blue,
 				{ Parent = list, LayoutOrder = order, Height = 44 }
 			)

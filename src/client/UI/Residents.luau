@@ -41,6 +41,8 @@ local detail: Frame -- the stage the picked villager stands on
 local tab = "about"
 local unbind: { () -> () } = {}
 local popup: Frame? = nil
+local count: TextLabel? = nil -- how many live here, over the list
+local STAGE_ROUND = 14
 
 local function profileView(): any
 	return {
@@ -274,7 +276,7 @@ end
 -- where the stats start on the stage: the villager stands to the left of this
 local INFO_X = 400
 
--- How they feel, as a colour: the same green, yellow and coral as the diamond by their name.
+-- How they feel, as a colour: the same green, yellow and coral as the dot by their name.
 local function moodColor(m: number): Color3
 	return if m >= 60 then T.Green elseif m >= 40 then T.Yellow else T.Coral
 end
@@ -401,7 +403,7 @@ local function friendsOf(parent: Frame, vid: string, p: any)
 			elseif r.s >= 10 then T.Green
 			elseif r.s > -10 then T.Blue
 			else T.Purple
-		local _, inner = Kit.row({
+		local row, inner = Kit.row({
 			Name = r.id,
 			Parent = friends,
 			Size = UDim2.new(1, -12, 0, 52),
@@ -410,10 +412,21 @@ local function friendsOf(parent: Frame, vid: string, p: any)
 			Title = r.o.name,
 			Sub = how,
 			TextSize = 17,
-			Marker = if r.q then "alert" else "heart",
-			MarkerColor = col,
+			LeftSpace = 48,
 			RightSpace = 128,
 		})
+		-- their face, in a ring the colour of how they get on
+		local lean: number = row:GetAttribute("Lean") or 6
+		local face = Kit.portrait({
+			Parent = inner,
+			Size = 40,
+			Position = UDim2.new(0, lean, 0.5, -20),
+			Color = Colors.fromHex(r.o.color):Lerp(T.Cream, 0.5),
+			Border = col,
+			BorderWidth = 2.5,
+			ZIndex = 3,
+		})
+		portraitInto(face, r.id)
 		Kit.bar({
 			Parent = inner,
 			Size = UDim2.fromOffset(96, 8),
@@ -467,6 +480,7 @@ local function showDetail()
 	local backdrop =
 		Kit.backdrop(detail, own, #vid * 17 + (string.byte(vid, #vid) or 0), { W = 1300, H = 820, Count = 16 })
 	Kit.halo(backdrop, 620, own:Lerp(T.White, 0.25), 0.3)
+	Kit.corner(backdrop, STAGE_ROUND)
 	local stand = Kit.box({
 		Name = "Avatar",
 		Parent = detail,
@@ -502,7 +516,7 @@ local function showDetail()
 		Size = UDim2.new(1, -150, 1, 0),
 		Position = UDim2.fromOffset(150, 0),
 		Color = T.Black,
-		Radius = false,
+		Radius = STAGE_ROUND,
 		ZIndex = 3,
 	})
 	Kit.new("UIGradient", {
@@ -687,23 +701,23 @@ local function refreshList()
 			Title = v.name,
 			Sub = if w then w.job.name else "No job",
 			TextSize = 18,
-			LeftSpace = 64,
-			RightSpace = 46,
+			LeftSpace = 58,
+			RightSpace = 30,
 			Selected = v.id == selected,
 		}, function()
 			selected = v.id
 			refreshList()
 			showDetail()
 		end)
-		local _ = row
-		-- the villager's face, on a disc of their own colour (the user: "Put the villager
-		-- portrait in place of the blue lines")
-		-- (a circle with a border: "make portraits a circle with a border instead of a square")
+		local lean: number = row:GetAttribute("Lean") or 6
+		-- the villager's face in a ring of their own colour, at the round end of the row (the
+		-- user: "Put the villager portrait in place of the blue lines", and "make portraits a
+		-- circle with a border instead of a square")
 		local own = Colors.fromHex(v.color)
 		local face = Kit.portrait({
 			Parent = inner,
-			Size = 46,
-			Position = UDim2.new(0, 26, 0.5, -23),
+			Size = 48,
+			Position = UDim2.new(0, lean + 1, 0.5, -24),
 			Color = own:Lerp(T.Cream, 0.5),
 			Border = own:Lerp(T.White, 0.35),
 			BorderWidth = 2,
@@ -711,21 +725,30 @@ local function refreshList()
 		})
 		portraitInto(face, v.id)
 		-- how they feel, as a dot at the right end
-		Kit.frame({
+		Kit.disc({
 			Name = "Mood",
 			Parent = inner,
-			Size = UDim2.fromOffset(14, 14),
-			Position = UDim2.new(1, -40, 0.5, -7),
-			Color = if v.mood >= 60 then T.Green elseif v.mood >= 40 then T.Yellow else T.Coral,
-			Radius = 2,
+			Size = 12,
+			Position = UDim2.new(1, -(lean + 18), 0.5, -6),
+			Color = moodColor(v.mood),
 			ZIndex = 3,
-		}).Rotation =
-			45 -- a diamond
+		})
 	end
-	Kit.text(
-		Text.fill("{n} of {max}", { n = #list, max = Tuning.Villagers.Max }),
-		{ Parent = listFrame, TextSize = 14, Color = T.InkSoft, LayoutOrder = 999, AlignX = Enum.TextXAlignment.Center }
-	)
+	-- the room left in town, as a dim slot that opens the creator
+	local room = Tuning.Villagers.Max - #list
+	if room > 0 and #list > 0 then
+		MenuParts.slot(
+			if room == 1 then "Room for one more" else Text.fill("Room for {n} more", { n = room }),
+			{ Name = "Room", Parent = listFrame, LayoutOrder = 998, Height = 62, Icon = "plus", Sub = "Make a villager" },
+			function()
+				local Hud = require(script.Parent.Hud)
+				Hud.open("Creator", { mode = "new" })
+			end
+		)
+	end
+	if count then
+		count.Text = Text.fill("{n} of {max}", { n = #list, max = Tuning.Villagers.Max })
+	end
 end
 
 function Residents.isOpen(): boolean
@@ -757,10 +780,45 @@ function Residents.open(vid: string?)
 			showDetail()
 		end,
 	})
-	listFrame = Kit.scroll({ Parent = panel.body, Size = UDim2.new(0, 262, 1, 0) })
+	-- everyone in town, in a well of their own down the left: a dim caption and the count over
+	-- the rows
+	local well = Kit.frame({
+		Name = "Roster",
+		Parent = panel.body,
+		Size = UDim2.new(0, 262, 1, 0),
+		Color = T.PaperDark,
+		Cut = 14,
+	})
+	Kit.text("In town", {
+		Name = "Caption",
+		Parent = well,
+		Size = UDim2.new(1, -28, 0, 18),
+		Position = UDim2.fromOffset(14, 10),
+		TextSize = 14,
+		Font = Kit.Fonts.Bold,
+		Color = T.InkSoft,
+		Wrap = false,
+	})
+	count = Kit.text("", {
+		Name = "Count",
+		Parent = well,
+		Size = UDim2.new(1, -28, 0, 18),
+		Position = UDim2.fromOffset(14, 10),
+		TextSize = 14,
+		Font = Kit.Fonts.Bold,
+		Color = T.InkSoft,
+		AlignX = Enum.TextXAlignment.Right,
+		Wrap = false,
+	})
+	listFrame = Kit.scroll({
+		Parent = well,
+		Size = UDim2.new(1, -12, 1, -44),
+		Position = UDim2.fromOffset(8, 36),
+	})
 	Kit.list(listFrame, 8)
 	-- the stage cuts the villager and the fade to its box. A plain frame: inside a CanvasGroup
-	-- the villager's 3D picture comes out pale (the moving backdrop has its own, behind them)
+	-- the villager's 3D picture comes out pale (the moving backdrop has its own, behind them,
+	-- rounded to the stage's corners)
 	detail = Kit.frame({
 		Name = "Stage",
 		Parent = panel.body,
@@ -770,6 +828,8 @@ function Residents.open(vid: string?)
 		Radius = false,
 		Clips = true,
 	})
+	Kit.corner(detail, STAGE_ROUND)
+	Kit.rim(detail, T.Line, 1, 0.3)
 	Kit.popIn(panel.root)
 	refreshList()
 	showDetail()

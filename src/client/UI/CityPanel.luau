@@ -40,17 +40,8 @@ end
 -- town's numbers as tiles along the bottom.
 local function town(inside: Frame, stats: any, payday: number)
 	local accent = T.Purple
-	-- the level: a diamond with its number, the name big beside it
-	local mark = MenuParts.diamond(inside, nil, accent, 72, { Name = "Level" })
-	Kit.title(tostring(stats.level), {
-		Name = "Number",
-		Parent = mark,
-		Size = UDim2.fromScale(1, 1),
-		TextSize = 28,
-		Color = T.Dark,
-		AlignX = Enum.TextXAlignment.Center,
-		ZIndex = 4,
-	})
+	-- the level: a round dial with its number, the name big beside it
+	MenuParts.dial(tostring(stats.level), "LEVEL", accent, { Name = "Level", Parent = inside, Size = 72 })
 	Kit.title(stats.levelName, {
 		Name = "LevelName",
 		Parent = inside,
@@ -242,7 +233,7 @@ local function landRow(list: ScrollingFrame, stats: any, coins: number, order: n
 			Size = UDim2.fromOffset(176, 42),
 			Position = UDim2.new(1, -28, 0.5, 0),
 			AnchorPoint = Vector2.new(1, 0.5),
-			Color = if can then T.Green else T.Card,
+			Color = if can then T.Green else T.PaperDark,
 			TextColor = if can then T.White else T.InkSoft,
 			TextSize = 17,
 			Icon = if can or stats.level >= land.Level then "coin" else nil,
@@ -268,7 +259,7 @@ local function landRow(list: ScrollingFrame, stats: any, coins: number, order: n
 	button:SetAttribute("Disabled", not can)
 	if why then
 		-- what's in the way, right under the row
-		MenuParts.note(why, T.Coral, { Name = "LandWhy", Parent = list, LayoutOrder = order + 1 })
+		MenuParts.note(why, T.Red, { Name = "LandWhy", Parent = list, LayoutOrder = order + 1 })
 	end
 end
 
@@ -333,10 +324,9 @@ function draw()
 			{ Parent = list, LayoutOrder = 11 }
 		)
 	else
-		MenuParts.note(
+		MenuParts.hint(
 			"More workplaces are under Work in Build mode. Each one is a job for a villager.",
-			T.Purple,
-			{ Name = "More", Parent = list, LayoutOrder = 900, Height = 44 }
+			{ Name = "More", Parent = list, LayoutOrder = 1000 }
 		)
 	end
 	-- what work has brought in so far, at the foot of the list

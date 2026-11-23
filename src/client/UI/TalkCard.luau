@@ -2,9 +2,10 @@
 -- them". Hold E on one of your own villagers and they stop, turn to you and say something (the
 -- server's Services/Villagers does that, and everyone nearby sees their bubble). This is the
 -- owner's side of it: a small dialogue card at the bottom of the screen, where an event is told
--- (UI/EventCard), with the villager's name on a tab in their own colour, what they said, what the
--- chat did, and a few answers: Chat (they say something else), Profile (their page in the
--- Villagers menu) and Bye.
+-- (UI/EventCard): the villager's name on the card's darker band with a mark in their own colour,
+-- their round face beside what they said in a speech bubble, what the chat did under it, and a
+-- few answers: Chat (they say something else), Profile (their page in the Villagers menu) and
+-- Bye.
 --
 -- It is built when it opens and thrown away when it closes. It closes when you say bye, walk
 -- off, keep them waiting too long, open a menu, Build mode or the creator, and the moment an
@@ -18,6 +19,8 @@ local Tuning = require(Shared.Config.Tuning)
 local Colors = require(Shared.Util.Colors)
 
 local Kit = require(script.Parent.Kit)
+local MenuParts = require(script.Parent.MenuParts)
+local ModelPreview = require(script.Parent.ModelPreview)
 local EventCard = require(script.Parent.EventCard)
 local State = require(script.Parent.Parent.Controllers.State)
 
@@ -27,14 +30,16 @@ local T = Kit.Theme
 local K = Tuning.Talk
 local player = Players.LocalPlayer
 
-local WIDTH = 520
-local TAB = 34 -- the name tab's height
-local HEIGHT = 152 -- the card under it
+local WIDTH = 540
+local BAND = 44 -- the band with their name
+local HEIGHT = 222 -- the whole card
 
 local holder: Frame? = nil
 local card: Frame
 local lineLabel: TextLabel
 local noteLabel: TextLabel
+local faceBox: Frame? = nil -- the round frame their face goes in
+local faceOf: Model? = nil -- whose face is in it
 -- who is being talked to: { vid, model, at (when they last spoke) }
 local current: any = nil
 local serial = 0 -- goes up whenever the card opens or closes, so what belonged to an old one stops
@@ -52,6 +57,8 @@ function TalkCard.close()
 		holder:Destroy()
 		holder = nil
 	end
+	faceBox = nil
+	faceOf = nil
 end
 
 -- Does something else have the screen: an event being told, a menu, Build mode, the creator?
@@ -98,6 +105,22 @@ local function say(msg: any)
 	current.at = os.clock()
 	if typeof(msg.model) == "Instance" and msg.model:IsA("Model") then
 		current.model = msg.model
+		-- their face in the round frame, once (a close-up of their head, as in the Villagers menu)
+		local box = faceBox
+		if box and faceOf ~= msg.model then
+			faceOf = msg.model
+			for _, c in box:GetChildren() do
+				if c:IsA("ViewportFrame") then
+					c:Destroy()
+				end
+			end
+			pcall(function()
+				local vp = ModelPreview.fromModel(msg.model, { Parent = box, Face = true })
+				if vp then
+					Kit.rounded(vp)
+				end
+			end)
+		end
 	end
 	Kit.bump(card, 0.03)
 end
@@ -139,7 +162,7 @@ local function build(vid: string, v: any)
 	local own = Colors.fromHex(v.color, T.Blue)
 	local root = Kit.box({
 		Name = "TalkCard",
-		Size = UDim2.fromOffset(WIDTH, TAB + 6 + HEIGHT),
+		Size = UDim2.fromOffset(WIDTH, HEIGHT),
 		Position = UDim2.new(0.5, 0, 1, -124),
 		AnchorPoint = Vector2.new(0.5, 1),
 		Parent = Kit.root(),
@@ -147,55 +170,80 @@ local function build(vid: string, v: any)
 	})
 	root.ZIndex = 20
 	holder = root
-	-- who is talking, on a tab over the card's top edge in their own colour
-	Kit.ribbon(v.name, {
-		Name = "Speaker",
+	local page, band, body = MenuParts.sheet(own, {
 		Parent = root,
-		Color = own,
-		TextSize = 20,
-		Position = UDim2.fromOffset(20, 0),
-		ZIndex = 22,
+		Size = UDim2.fromScale(1, 1),
+		Band = BAND,
 	})
-	card = Kit.frame({
-		Name = "Page",
-		Parent = root,
-		Size = UDim2.new(1, 0, 0, HEIGHT),
-		Position = UDim2.fromOffset(0, TAB + 6),
-		Color = T.Cream,
-		Radius = 28,
+	card = page
+	-- who is talking, on the band: a mark in their own colour and their name
+	local speaker = Kit.box({ Name = "Speaker", Parent = band, Size = UDim2.fromScale(1, 1) })
+	speaker.ZIndex = 3
+	local mark = Kit.new("Frame", {
+		Name = "Mark",
+		BackgroundColor3 = own,
+		BorderSizePixel = 0,
+		Size = UDim2.fromOffset(6, 22),
+		Position = UDim2.new(0, 20, 0.5, -11),
+		ZIndex = 3,
+		Parent = speaker,
 	})
-	Kit.softShadow(card, 1.4)
-	Kit.wash(card, T.Paper, T.Cream, 90)
-	-- their own colour glowing in from the top right, as on the menus
-	Kit.glow(card, own, 0.22, "tr")
-	Kit.shapes(card, own, #v.name * 7 + 3, 8, { Transparency = 0.9, Area = { 0.04, 0.1, 0.96, 0.6 } })
-	-- what they said: room for two lines
+	mark:SetAttribute("KeepColors", true)
+	Kit.corner(mark, 3)
+	Kit.title(v.name, {
+		Name = "Text",
+		Parent = speaker,
+		Size = UDim2.new(1, -60, 1, 0),
+		Position = UDim2.fromOffset(36, 0),
+		TextSize = 21,
+		Wrap = false,
+		ZIndex = 3,
+	})
+	-- their face, and what they said in a bubble beside it: room for two lines
+	local inner = Kit.box({ Name = "Inner", Parent = body, Size = UDim2.new(1, 0, 0, HEIGHT - BAND) })
+	local face = Kit.portrait({
+		Name = "Face",
+		Parent = inner,
+		Size = 46,
+		Position = UDim2.fromOffset(18, 12),
+		Color = own:Lerp(T.Cream, 0.5),
+		Border = own:Lerp(T.White, 0.35),
+		BorderWidth = 2,
+	})
+	faceBox = face
+	local bubble, words = MenuParts.speech({
+		Name = "Said",
+		Parent = inner,
+		Size = UDim2.new(1, -94, 0, 0),
+		Position = UDim2.fromOffset(76, 12),
+	})
+	local _ = bubble
 	lineLabel = Kit.text("", {
 		Name = "Line",
-		Parent = card,
-		Size = UDim2.new(1, -48, 0, 50),
-		Position = UDim2.fromOffset(24, 12),
-		TextSize = 20,
+		Parent = words,
+		Size = UDim2.new(1, 0, 0, 44),
+		TextSize = 18,
 		Font = Kit.Fonts.Title,
+		AlignY = Enum.TextYAlignment.Top,
 	})
-	lineLabel.LineHeight = 1.15
+	lineLabel.LineHeight = 1.1
 	-- what the chat did
 	noteLabel = Kit.text("", {
 		Name = "Note",
-		Parent = card,
-		Size = UDim2.new(1, -48, 0, 18),
-		Position = UDim2.fromOffset(24, 66),
+		Parent = inner,
+		Size = UDim2.new(1, -94, 0, 18),
+		Position = UDim2.fromOffset(78, 88),
 		TextSize = 14,
 		Color = T.InkSoft,
 		Wrap = false,
 	})
 	noteLabel.TextTruncate = Enum.TextTruncate.AtEnd
-	-- the answers, side by side
+	-- the answers, side by side along the foot
 	local answers = Kit.box({
 		Name = "Answers",
-		Parent = card,
-		Size = UDim2.new(1, -40, 0, 44),
-		Position = UDim2.fromOffset(20, 94),
+		Parent = inner,
+		Size = UDim2.new(1, -36, 0, 44),
+		Position = UDim2.new(0, 18, 1, -58),
 	})
 	Kit.list(answers, 8, true, Enum.HorizontalAlignment.Center)
 	local function answer(text: string, order: number, fn: () -> ())

@@ -61,6 +61,16 @@ local function showDetail(g: any)
 	end
 	local ready = g.done and not g.claimed
 	local ratio = math.clamp(g.value / g.goal.need, 0, 1)
+	-- a faint line round the ring, the way a dial is drawn
+	local outline = Kit.new("Frame", {
+		Name = "Outline",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(186, 186),
+		Position = UDim2.new(0.5, -93, 0, 19),
+		Parent = frame,
+	})
+	Kit.corner(outline, "round")
+	Kit.rim(outline, T.Line, 1, 0.3)
 	local _, middle = Kit.ring({
 		Name = "Ring",
 		Parent = frame,
@@ -72,10 +82,14 @@ local function showDetail(g: any)
 	}, ratio, if g.done then T.Green else T.Yellow)
 	if g.claimed then
 		-- a claimed goal is ticked off in the middle of its ring
-		MenuParts.diamond(middle, "check", T.Green, 76, {
+		Kit.disc({
 			Name = "Tick",
+			Parent = middle,
+			Size = 72,
 			Position = UDim2.fromScale(0.5, 0.5),
 			AnchorPoint = Vector2.new(0.5, 0.5),
+			Color = T.Green,
+			Icon = "check",
 			ZIndex = 4,
 		})
 	else
@@ -111,14 +125,18 @@ local function showDetail(g: any)
 		AlignY = Enum.TextYAlignment.Top,
 	})
 	-- what it pays
-	local pay = Kit.box({
+	local pay = Kit.frame({
 		Name = "Reward",
 		Parent = frame,
-		Size = UDim2.fromOffset(0, 34),
+		Size = UDim2.fromOffset(0, 40),
 		AutomaticSize = Enum.AutomaticSize.X,
-		Position = UDim2.new(0.5, 0, 0, 310),
+		Position = UDim2.new(0.5, 0, 0, 306),
 		AnchorPoint = Vector2.new(0.5, 0),
+		Color = T.PaperDark,
+		Radius = "pill",
 	})
+	Kit.rim(pay, T.Line, 1, 0.4)
+	Kit.pad(pay, 18, 3)
 	Kit.list(pay, 8, true, Enum.HorizontalAlignment.Center)
 	Kit.text(if g.claimed then "Paid" else "Pays", {
 		Parent = pay,

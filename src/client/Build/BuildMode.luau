@@ -1497,20 +1497,25 @@ function BuildMode.enter(): boolean
 	t.AutomaticSize = Enum.AutomaticSize.X
 	t.AnchorPoint = Vector2.new(0.5, 0)
 	t.Position = UDim2.fromScale(0.5, 0)
-	-- dark like the rest of the interface (UI/Kit's Paper and Ink)
-	t.BackgroundColor3 = Color3.fromRGB(37, 40, 54)
-	t.BackgroundTransparency = 0.1
-	t.TextColor3 = Color3.fromRGB(236, 238, 246)
+	-- a charcoal pill in a thin warm rim, like the glass over the 3D view in both looks
+	t.BackgroundColor3 = Color3.fromRGB(23, 23, 27)
+	t.BackgroundTransparency = 0.08
+	t.TextColor3 = Color3.fromRGB(255, 255, 255)
 	t.Font = Enum.Font.FredokaOne
 	t.TextSize = 18
 	t.Parent = bb
 	local pad = Instance.new("UIPadding")
-	pad.PaddingLeft = UDim.new(0, 12)
-	pad.PaddingRight = UDim.new(0, 12)
+	pad.PaddingLeft = UDim.new(0, 14)
+	pad.PaddingRight = UDim.new(0, 14)
 	pad.Parent = t
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 3)
+	corner.CornerRadius = UDim.new(0.5, 0)
 	corner.Parent = t
+	local rim = Instance.new("UIStroke")
+	rim.Color = Color3.fromRGB(82, 80, 72)
+	rim.Thickness = 1.5
+	rim.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	rim.Parent = t
 	label = bb
 	local h = Instance.new("Highlight")
 	h.FillTransparency = 0.75

@@ -1,10 +1,9 @@
--- Short notices that pop in at the top of the screen and fade away: white rounded notes with an
--- icon, outlined in a colour for the kind of notice.
+-- Short notices that pop in at the top of the screen and fade away: charcoal rounded notes in a
+-- thin rim, with a round mark in the colour of the kind of notice and its icon on it.
 
 local TweenService = game:GetService("TweenService")
 
 local Kit = require(script.Parent.Kit)
-local Icons = require(script.Parent.Icons)
 
 local Toasts = {}
 
@@ -13,7 +12,7 @@ local holder: Frame? = nil
 local ACCENTS = {
 	info = Kit.Theme.Blue,
 	good = Kit.Theme.Green,
-	warn = Kit.Theme.Coral,
+	warn = Kit.Theme.Red,
 	event = Kit.Theme.Yellow,
 }
 local ICONS = { info = "news", good = "check", warn = "alert", event = "people" }
@@ -42,22 +41,29 @@ function Toasts.show(text: string, kind: string?)
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		Color = Kit.Theme.Paper,
-		Radius = 20,
+		Radius = 16,
 		Parent = h,
 		ZIndex = 50,
 	})
 	Kit.softShadow(card, 0.8)
-	Kit.wash(card, Kit.Theme.Card, Kit.Theme.Paper, 0)
-	local stroke = Kit.stroke(card, ACCENTS[k], 2.5)
+	local stroke = Kit.rim(card, Kit.Theme.Line, 1.5)
 	card.LayoutOrder = -math.floor(os.clock() * 100)
-	Kit.pad(card, 18, 9)
+	Kit.pad(card, 12, 9)
 	local row =
 		Kit.box({ Parent = card, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, ZIndex = 51 })
-	local icon = Icons.make(ICONS[k], 28, { Parent = row, Position = UDim2.new(0, -2, 0, -2), ZIndex = 52 })
+	local icon = Kit.disc({
+		Name = "Mark",
+		Parent = row,
+		Size = 28,
+		Position = UDim2.fromOffset(0, -2),
+		Color = ACCENTS[k],
+		Icon = ICONS[k],
+		ZIndex = 52,
+	})
 	local label = Kit.text(text, {
 		Parent = row,
-		Size = UDim2.new(1, -34, 0, 0),
-		Position = UDim2.fromOffset(34, 0),
+		Size = UDim2.new(1, -40, 0, 0),
+		Position = UDim2.fromOffset(40, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		TextSize = 17,
 		Color = Kit.Theme.Ink,

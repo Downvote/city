@@ -22,7 +22,7 @@ function Welcome.open(hud: any)
 	Welcome.close()
 	panel = Kit.panel(
 		"Welcome to Maplewick",
-		UDim2.fromOffset(580, 326),
+		UDim2.fromOffset(600, 432),
 		Welcome.close,
 		"house",
 		Kit.Theme.Blue,
@@ -33,35 +33,55 @@ function Welcome.open(hud: any)
 	local lines = {
 		"This little town is yours to build. Put up houses, shops and gardens on your land, wall by wall or room by room.",
 		"Fill it with villagers you dress up from the whole Roblox catalog. They get jobs, make friends, fall out, cook, pull pranks and ask you for things.",
-		"Start with someone you know well: you.",
 	}
 	for i, l in lines do
 		Kit.text(l, {
 			Parent = body,
 			Size = UDim2.new(1, 0, 0, 0),
 			AutomaticSize = Enum.AutomaticSize.Y,
-			TextSize = 19,
+			TextSize = 18,
 			LayoutOrder = i,
 		})
 	end
-	local row = Kit.box({ Parent = body, Size = UDim2.new(1, 0, 0, 56), LayoutOrder = 10 })
-	Kit.list(row, 10, true)
-	Kit.button(
-		"Make me",
-		{ Parent = row, Size = UDim2.fromOffset(200, 50), Color = T.Green, TextSize = 22, Radius = "pill" },
-		function()
-			Welcome.close()
-			hud.open("Creator", { mode = "new", start = "me" })
-		end
-	)
-	Kit.button(
-		"Start from scratch",
-		{ Parent = row, Size = UDim2.fromOffset(220, 50), Color = T.Blue, TextSize = 20, Radius = "pill" },
-		function()
-			Welcome.close()
-			hud.open("Creator", { mode = "new" })
-		end
-	)
+	-- the two ways in, as tiles with their names on a band, under a dim caption
+	Kit.text("Start with someone you know well: you.", {
+		Name = "Caption",
+		Parent = body,
+		Size = UDim2.new(1, 0, 0, 22),
+		TextSize = 15,
+		Font = Kit.Fonts.Bold,
+		Color = T.InkSoft,
+		LayoutOrder = 5,
+	})
+	local row = Kit.box({ Name = "Ways", Parent = body, Size = UDim2.new(1, 0, 0, 120), LayoutOrder = 6 })
+	Kit.list(row, 12, true)
+	Kit.tile("person", "Make me", {
+		Name = "Make me",
+		Parent = row,
+		Size = UDim2.new(0.5, -6, 0, 120),
+		Color = T.Green,
+		TextColor = T.Dark,
+		TextSize = 16,
+		LayoutOrder = 1,
+	}, function()
+		Welcome.close()
+		hud.open("Creator", { mode = "new", start = "me" })
+	end)
+	Kit.tile("shirt", "Start from scratch", {
+		Name = "Start from scratch",
+		Parent = row,
+		Size = UDim2.new(0.5, -6, 0, 120),
+		TextSize = 16,
+		LayoutOrder = 2,
+	}, function()
+		Welcome.close()
+		hud.open("Creator", { mode = "new" })
+	end)
+	Kit.hint("You can make more villagers any time from Create, at the bottom of the screen.", {
+		Parent = body,
+		Size = UDim2.new(1, 0, 0, 0),
+		LayoutOrder = 7,
+	})
 	Kit.popIn(panel.root)
 end
 
