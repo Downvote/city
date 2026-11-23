@@ -29,7 +29,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (277, all passing; `ShopService`: the shop's server side, a party cake one at a time; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (279, all passing; `ShopService`: the shop's server side, a party cake one at a time; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off; what kind a bundle
 is, the outfit that holds the body, single body parts, the player's own items and avatars; preview scenes
@@ -106,6 +106,17 @@ A villager's path is one walk (the user: "the characters seem to walk stop walk 
 walk"): `Npc.walkTo` heads for the next waypoint a little before reaching this one (`Npc.nextLeg`, `Npc.Reach`) and
 starts the next leg inside `MoveToFinished` itself. Never go back to waiting for one waypoint, then looking, then
 starting the next.
+
+A conversation is a scene (`UI/Dialogue`; the user: "when text from a villager appears, make the character
+talking slide into view at the side with a textbox as such. if there are more than one character, slide multiple
+in"): the villagers in it slide in from the sides as busts (`ModelPreview.fromModel` with `Bust`, in holders named
+`Avatar`), the one talking lit and the others dimmed, over one wide dark textbox with their names on tags. The talk
+card and the event card both build it; never write a second dialogue box. A random event must never take the
+screen by itself ("in the cast of random villager text events, make this only happen when the player chooses to
+watch"): `EventShow` brings up only a small prompt with Watch (Answer, with a timer, when a choice is waiting), and
+the scene goes up when the player presses it (`EventCard.isWatching()`). While a scene is up `State`'s `talking`
+is true and the HUD's bottom bar, Build button and quests slide away. Preview scenes: `event` and `event:talk` (the
+prompt), `event:one`, `event:two`, `event:four`, `event:narration`, `event:answers`, `talk`, `talk:again`.
 
 The user asked to "interact/chat with villagers by holding e on them": every villager carries a ProximityPrompt
 (`Npc.talkPrompt`, put on in `Villagers.spawn` and answered by `Villagers.talkedTo`), what they say and what a

@@ -242,6 +242,26 @@ describe("Icons", function()
 		expect(#icon:GetChildren() >= 2).toBeTruthy()
 	end)
 
+	it("paints pictures ahead of need, and what is asked for after is already there", function()
+		local made = #Harness.images
+		Icons.warm({ "tart", "soup", "no such picture" })
+		-- painted now, into the sheets the icons share (no picture of its own for each)
+		local tart = Icons.item("tart", 40, Color3.new(1, 0, 0), {})
+		local art = tart:FindFirstChild("Art")
+		expect(art ~= nil).toBeTruthy()
+		local sheets = #Harness.images
+		-- asking again, at either size, paints nothing new
+		Icons.item("tart", 24, Color3.new(1, 0, 0), {})
+		Icons.item("soup", 96, Color3.new(1, 0, 0), {})
+		expect(#Harness.images).toBe(sheets)
+		expect(sheets - made <= 2).toBeTruthy()
+		-- where the game can't make pictures it does nothing, and nothing breaks
+		Icons.setVector(false)
+		Icons.warm({ "apple" })
+		Icons.setVector(nil)
+		expect(#Harness.images).toBe(sheets)
+	end)
+
 	it("draws a disc for a thing with no picture", function()
 		local disc = Icons.item("nothing of the kind", 40, Color3.new(1, 0, 0), {})
 		expect(disc.Name).toBe("Swatch")

@@ -1151,6 +1151,34 @@ here is still a drawing of our own subject (our house, our hammer, our apple).
 - A few subjects changed where the old one did not read as a solid shape: the hat is a round hat with a brim, the
   tree is one crown with branches cut into it, the path is three stepping stones.
 
+### Conversations as a scene
+
+> when text from a villager appears, make the character talking slide into view at the side with a textbox as
+> such. if there are more than one character, slide multiple in
+
+> in the cast of random villager text events, make this only happen when the player chooses to watch
+
+(The first came with a picture of another game's dialogue scene: two characters from the waist up at the sides, a
+wide near black textbox across the bottom with the speaker's name on a tag at its top left and the other's, dimmed,
+at its top right. The layout is what is taken; the villagers, the shapes and the words are ours.)
+
+- **The scene.** One wide dark textbox runs across the bottom of the screen, the words typed out large and white
+  with names in colour. The villager who is talking slides in from the side as a large figure from the hips up,
+  standing behind the box. A second villager slides in at the right, facing in; a third and a fourth come in
+  further toward the middle, a little smaller and set back, so nobody hides a face. Whoever is talking is in full
+  colour and a touch forward, the others dimmed and a touch back, and their name tags on the box's top edge swap
+  emphasis with them. A line nobody in particular says shows everyone dimmed and no tag. When it is over everyone
+  slides out. A click on the box finishes a line that is still being typed, and then moves on.
+- **Stopping a villager** (hold E) is the player's own choice, so the scene goes up at once, with Chat, Profile
+  and Bye as pills at the box's foot and what the chat did written under the line.
+- **A random event never takes the screen by itself.** It shows a small prompt at the bottom middle with the
+  event's name and a Watch button, and carries on in the world. Press Watch and the camera goes to it and the
+  scene goes up, from the line being said now. If the event wants an answer while nobody is watching, the prompt
+  says "They want your say", the button becomes Answer and a thin bar runs down the 45 seconds; after that the
+  town settles it the gentle way, as before. "Stop watching" puts the scene away and gives the camera back.
+- **The main screen steps aside** while a scene is up: the menu bar, the Build button and the quests slide off
+  their edges and come back after.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

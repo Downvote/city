@@ -12,9 +12,16 @@
 -- yellow to amber, never to grey). A dish sits in or on something, seen a little from above:
 -- `bowl` and `plate` below are the one bowl and the one plate, recoloured.
 --
+-- The edge is a stroke 0.7 wide laid under the shape. It carries a fill as well only where the
+-- shape on top is made of several pieces (a wedge's faces) or the edge is very thin, so nothing
+-- shows through the joins. Every layer is painted across the whole square, so marks that share a
+-- colour go in one layer.
+--
 -- Drawn on the same 24 grid as the icons (UI/IconArt), big in the square with a margin of
 -- about 1. The big shapes carry the picture at 24 pixels; the small marks only show in the
--- shop's big card. The name is the thing's id (Data/Foods, Data/Items).
+-- shop's big card. Look at them on a dark panel and a light one (tools/preview/art.sh, and the
+-- shop: tools/preview/ui.sh panel:ShopPanel and light:panel:ShopPanel). The name is the thing's
+-- id (Data/Foods, Data/Items).
 
 local Vector = require(script.Parent.Vector)
 
@@ -438,31 +445,6 @@ Art.apple = apple({
 	light = rgb(248, 104, 84),
 })
 
--- Cheese: a wedge with a paler top, a rind down its far end and holes in the cut side.
-Art.cheese = {
-	shadow(12.6, 20.4, 10.2, 1.7),
-	{ "M1.6 11.8 L14.4 3.2 L22.4 9.4 V18 L1.6 20.4 Z", fill = rgb(160, 86, 16), stroke = rgb(160, 86, 16), w = 0.7 },
-	{ "M1.6 11.8 L22.4 9.4 V18 L1.6 20.4 Z", fill = rgb(255, 198, 56) },
-	{ "M21 12 V18.16 L5 20 Z", fill = rgb(234, 150, 34), opacity = 0.55 },
-	{ "M21 15.4 V18.16 L11 19.3 Z", fill = rgb(214, 124, 26), opacity = 0.5 },
-	{ "M21 9.56 L22.4 9.4 V18 L21 18.16 Z", fill = rgb(206, 112, 24) },
-	{ "M1.6 11.8 L14.4 3.2 L22.4 9.4 Z", fill = rgb(255, 228, 118) },
-	{ "M3.4 10.9 L14.3 3.9 L15.7 5 L7.4 10.4 Z", fill = rgb(255, 244, 176), opacity = 0.85 },
-	{ "M14.4 3.2 L22.4 9.4 L21 9.56 L13.5 3.8 Z", fill = rgb(232, 150, 40) },
-	{ ellipse(12.2, 7.6, 1.6, 0.8), fill = rgb(240, 180, 60) },
-	{ ellipse(12.5, 7.8, 1.1, 0.5), fill = rgb(250, 208, 90) },
-	{ ellipse(16.8, 8.3, 0.9, 0.45), fill = rgb(240, 180, 60) },
-	{ circle(7.4, 15.8, 2.1), fill = rgb(196, 112, 20) },
-	{ circle(7.8, 16.2, 1.5), fill = rgb(236, 160, 40) },
-	{ circle(13.8, 13.4, 1.3), fill = rgb(196, 112, 20) },
-	{ circle(14.05, 13.65, 0.9), fill = rgb(236, 160, 40) },
-	{ circle(17.3, 15.9, 1.6), fill = rgb(186, 104, 18) },
-	{ circle(17.6, 16.2, 1.1), fill = rgb(226, 146, 34) },
-	{ circle(3.6, 17.6, 0.8), fill = rgb(196, 112, 20) },
-	{ circle(11.8, 17.6, 0.7), fill = rgb(196, 112, 20) },
-	{ "M2.3 11.76 L21.7 9.52", stroke = GLINT, w = 0.45, opacity = 0.9 },
-}
-
 -- A bread roll: a round golden crust with three cuts across the top showing the crumb.
 Art.bread = {
 	shadow(12, 20.7, 9.6, 1.6),
@@ -553,6 +535,31 @@ Art.carrot = {
 		w = 0.55,
 	},
 	{ "M12.5 6.9 C13.1 6.4 13.8 6.2 14.5 6.2", stroke = GLINT, w = 0.5, opacity = 0.85 },
+}
+
+-- Cheese: a wedge with a paler top, a rind down its far end and holes in the cut side.
+Art.cheese = {
+	shadow(12.6, 20.4, 10.2, 1.7),
+	{ "M1.6 11.8 L14.4 3.2 L22.4 9.4 V18 L1.6 20.4 Z", fill = rgb(160, 86, 16), stroke = rgb(160, 86, 16), w = 0.7 },
+	{ "M1.6 11.8 L22.4 9.4 V18 L1.6 20.4 Z", fill = rgb(255, 198, 56) },
+	{ "M21 12 V18.16 L5 20 Z", fill = rgb(234, 150, 34), opacity = 0.55 },
+	{ "M21 15.4 V18.16 L11 19.3 Z", fill = rgb(214, 124, 26), opacity = 0.5 },
+	{ "M21 9.56 L22.4 9.4 V18 L21 18.16 Z", fill = rgb(206, 112, 24) },
+	{ "M1.6 11.8 L14.4 3.2 L22.4 9.4 Z", fill = rgb(255, 228, 118) },
+	{ "M3.4 10.9 L14.3 3.9 L15.7 5 L7.4 10.4 Z", fill = rgb(255, 244, 176), opacity = 0.85 },
+	{ "M14.4 3.2 L22.4 9.4 L21 9.56 L13.5 3.8 Z", fill = rgb(232, 150, 40) },
+	{ ellipse(12.2, 7.6, 1.6, 0.8), fill = rgb(240, 180, 60) },
+	{ ellipse(12.5, 7.8, 1.1, 0.5), fill = rgb(250, 208, 90) },
+	{ ellipse(16.8, 8.3, 0.9, 0.45), fill = rgb(240, 180, 60) },
+	{ circle(7.4, 15.8, 2.1), fill = rgb(196, 112, 20) },
+	{ circle(7.8, 16.2, 1.5), fill = rgb(236, 160, 40) },
+	{ circle(13.8, 13.4, 1.3), fill = rgb(196, 112, 20) },
+	{ circle(14.05, 13.65, 0.9), fill = rgb(236, 160, 40) },
+	{ circle(17.3, 15.9, 1.6), fill = rgb(186, 104, 18) },
+	{ circle(17.6, 16.2, 1.1), fill = rgb(226, 146, 34) },
+	{ circle(3.6, 17.6, 0.8), fill = rgb(196, 112, 20) },
+	{ circle(11.8, 17.6, 0.7), fill = rgb(196, 112, 20) },
+	{ "M2.3 11.76 L21.7 9.52", stroke = GLINT, w = 0.45, opacity = 0.9 },
 }
 
 -- Mushroom soup: a blue bowl of creamy soup with slices of mushroom and a sprig of parsley on
@@ -882,8 +889,8 @@ Art.riceball = join(
 	)
 )
 
--- Pancakes: a stack of three on a plate, syrup running over the edge and a pat of butter
--- melting on top.
+-- Pancakes: a stack of three on a plate, syrup running over the edge and a pat of butter on
+-- top.
 Art.pancakes = join(
 	moved(
 		plate({
@@ -1128,7 +1135,8 @@ Art.icecream = {
 	{ "M12.4 6.4 L12.9 5.9 M15 9.4 L15.6 9.6 M8.4 12 L9 12.2", stroke = rgb(255, 255, 255), w = 0.5 },
 }
 
--- A garden salad: a wooden bowl heaped with leaves, wedges of tomato and slices of cucumber.
+-- A garden salad: a wooden bowl heaped with leaves, wedges of tomato, slices of cucumber and
+-- shreds of carrot.
 Art.salad = join(
 	bowl({
 		deep = rgb(84, 40, 14),

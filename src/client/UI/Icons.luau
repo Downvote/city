@@ -1407,6 +1407,27 @@ function Icons.vector(name: string, px: number, p: { [string]: any }): Frame?
 	return root
 end
 
+-- Paints pictures ahead of need, one at a time with a breath between, so the first screen that
+-- shows a lot of them at once (the shop's rows of food, each a stack of shaded shapes) doesn't
+-- stall while they are all painted together. `names` is which (every piece of art if not given).
+-- Does nothing where the game can't make pictures.
+function Icons.warm(names: { string }?)
+	task.spawn(function()
+		for _, name in names or Icons.artNames() do
+			for _, n in { SMALL, BIG } do
+				if vectorOn == false or broken[name] or IconArt.art[name] == nil then
+					break
+				end
+				if not pcall(cellFor, name, n) then
+					-- whoever asks for it next finds out why, and says so
+					return
+				end
+				task.wait(0.03)
+			end
+		end
+	end)
+end
+
 -- The picture of a thing (a food, something from the shop): its vector art, or where there is
 -- none or the game can't make pictures, a disc in `fallback`, the thing's own colour.
 function Icons.item(name: string, px: number, fallback: Color3, props: { [string]: any }?): Frame

@@ -15,6 +15,16 @@ State.start()
 
 local Hud = require(UI.Hud)
 Hud.start()
+-- the pictures of food and things are painted a few at a time in the background once the game
+-- is up, so the shop doesn't stall painting them all the first time it opens
+task.delay(4, function()
+	local names = {}
+	for name in require(UI.ItemArt) :: { [string]: any } do
+		table.insert(names, name)
+	end
+	table.sort(names)
+	require(UI.Icons).warm(names)
+end)
 require(UI.TalkCard).start() -- hold E on a villager: what they say back, and your answers
 
 -- life around town, and the show when you build

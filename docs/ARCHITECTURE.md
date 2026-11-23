@@ -374,7 +374,9 @@ clipping (`tools/preview/ui_render.py`).
   stood upright at the origin with every Motor6D's Transform cleared (a sleeping villager lies on their back),
   framed from the feet to the top of the head, and plays its idle animation unless `Still = true`. With
   `Shadow = true` it returns a second viewport, `AvatarShadow`: the same copy again, `ImageColor3` black and see
-  through, a little bigger and off to the right, playing the same animation.
+  through, a little bigger and off to the right, playing the same animation. `Bust = true` frames them the same
+  way for a holder that cuts the picture off at the hips (the dialogue scene), and `Yaw` turns them toward the
+  middle of the screen.
 - `UI/Kit` gradients: `Kit.shade(face, colour?)` shades a face across (a UIGradient `Shade` from the colour
   to `Kit.shadeEnd(colour)`: 16% toward black, 7% for a pale surface, yellow toward amber) and keeps the colour in
   the face's `Base` attribute. On a plain face the gradient is on the face (its BackgroundColor3 white); on a
@@ -463,6 +465,9 @@ clipping (`tools/preview/ui_render.py`).
   of its own. A layer is a path string (a stroke) or `{ d, w =, fill =, stroke =, cut =, opacity = }`. A stroke is
   every pixel within half its width of the line (round ends and corners); a fill is even-odd over four lines a
   pixel row. `Vector.circle`, `ellipse`, `rect` and `dot` write paths.
+- `Icons.warm(names?)` paints art ahead of need, one piece at a time with a breath between; `Main.client` warms
+  the food and things a few seconds after the game is up, so the shop's rows are not all painted in the frame it
+  opens.
 - `UI/IconArt`: every interface icon as paths on a 24 grid (`IconArt.art[name]`), plus the coin. Each is a solid
   silhouette with its details cut out (its own helpers `solid`, `flat`, `hole`, `gap`, `clear`, `line` build the
   layers). `UI/ItemArt`: shaded pictures of the foods and shop things, by id; IconArt folds them into the same
@@ -505,7 +510,7 @@ clipping (`tools/preview/ui_render.py`).
   owner does: a wish for cheering up is granted (`Life.grantWish`), and the first `ChatsPerDay` (3) a day for each
   villager give `ChatMood` (2) and `ChatHearts` (1, through `Life.addHearts`); it returns `{ counted, hearts,
   mood, left, wish, coins }`. `Talk.note` words that for the card. `UI/TalkCard` (started from `Main.client`) is
-  the card: it opens on the `Talk` event unless an event is being told (`EventCard.isPlaying()`), sits where the
+  the card, a `UI/Dialogue` scene now: it opens on the `Talk` event unless an event is being told (`EventCard.isPlaying()`), sits where the
   event's dialogue card does, offers Chat (`VillagerTalk`), Profile (`Hud.open("Residents", vid)`) and Bye, and
   closes on Bye, walking out of `Range`, waiting too long, a menu, Build mode, the creator or an event.
 - `UI/MenuParts`: what the full menus and the cards are built from, so they match: `card` (the left card: a
@@ -513,9 +518,28 @@ clipping (`tools/preview/ui_render.py`).
   on the right), `heading` (a dim small caption with a hairline and a count), `stat` (a rounded well with a round
   mark, a label and a big number), `dial` (a round level dial), `empty` (a disc in a faint ring, a title and what to
   do), `slot` (a dim sunk pill with a ringed + or x, for something not there yet), `hint` (`Kit.hint`), `note`
-  (a round dot and a line), `progress` (a label, numbers and a bar), `sheet` (a floating card with a darker title
-  band: the event and talk cards) and `speech` (a speech bubble). A menu rebuilds itself when the look switches.
+  (a round dot and a line), `progress` (a label, numbers and a bar). A menu rebuilds itself when the look switches.
   Its states are previewed as `panel:<Name>:<state>` (`ui_dump.luau`).
+- `UI/Dialogue`: the scene a conversation plays in, one at a time. `Dialogue.open(opts)` (Name, OnClick, Caption)
+  puts up a wide dark glass textbox across the bottom (about three quarters of the width, `KeepColors`, white
+  words) and returns the scene: `{ root, box, words, note, answers, tools, more }` with `join(actor)`,
+  `speak(key?)`, `has(key)` and `close()`. An actor is `{ key, name, color, model?, vid? }`. The first to join
+  stands at the left, the second at the right, a third and fourth further in, smaller and set back; each is a
+  bust from `ModelPreview.fromModel(model, { Bust = true, Yaw })` in a holder named `Avatar` cut off at the hips,
+  sliding in from its side. `speak(key)` lights that actor (full colour, a touch forward) and dims the rest with a
+  short tween, and moves the emphasis between the name tags on the box's top left and top right edges;
+  `speak(nil)` is narration, everyone dimmed and no tags. With no model there is no bust, only a ringed mark on the
+  tag. `Dialogue.modelOf(vid)` finds a villager's model in the player's plot, `Dialogue.answer(text, props,
+  onClick)` is a pill for the answers row, `Dialogue.isOpen()` says whether a scene is up. While one is,
+  `State.data.talking` is true.
+- `UI/EventCard`: an event never takes the screen by itself. `EventShow` brings up a small dark glass prompt at
+  the bottom middle (the event's name and Watch). At a choice it reads "They want your say", Watch becomes a yellow
+  Answer and a thin bar runs down `Tuning.Events.ChoiceTimeout`; the server still picks the gentle option when it
+  runs out. Watch or Answer points the camera at the event when it has a focus and opens the `Dialogue` scene
+  with whoever has been seen so far, from the line that is current; later lines and the choices (pills in the
+  box, sent with `EventChoose`) show in it. "Stop watching" puts the scene away and leaves the prompt until
+  `EventEnd`. `EventCard.isPlaying()` is true while an event is going on, `EventCard.isWatching()` while its scene
+  is up. The prompt and the scene give way to a full menu.
 - `UI/Quests`: the quest list on the main screen. `Quests.mount(parent, position, open)` builds it (a header that
   folds it, a list of at most `Quests.Shown` (3) quests) and refreshes it on any state that moves a goal;
   `Quests.next(profile, count)` picks them (done and unclaimed first, then by how far along). A finished one claims
@@ -619,7 +643,11 @@ clipping (`tools/preview/ui_render.py`).
   humanoid: the next leg starts the moment the last ends, a waypoint they are already on is passed, a move the
   engine gave up on is taken up again, hops where the path asks), `ShopService` (the shop with its neighbours
   stubbed: food and things by the number, the merchant's prices, one party for one cake's price, no cake sold
-  while something is going on, junk from a client refused).
+  while something is going on, junk from a client refused). The talk card simulation
+  (`tests/sim/talk_card.luau`) also drives events both ways: one never watched (the prompt only, nothing slides
+  in, `talking` stays false, the prompt turns into Answer with its timer and goes at the end) and one watched
+  (the scene, a second and a third villager joining and taking the light, a choice going through `EventChoose`,
+  Stop leaving the prompt).
 - The harness stands in for Roblox's image API: `AssetService:CreateEditableImage` returns a table that keeps its
   pixels (listed in `Harness.images`), and `Content.fromObject` gives a real Content with the address
   `rbxeditable://<n>`, which Lune's ImageLabel accepts. `tools/preview/ui_dump.luau` writes each such picture out
