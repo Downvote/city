@@ -1,4 +1,4 @@
--- Starts every server service in order: init (set up, no waiting on others), then start.
+-- Starts every server service in order: init (set up), then start (listen), then lets players in.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Remotes = require(ReplicatedStorage:WaitForChild("Shared").Net.Remotes)
@@ -38,4 +38,8 @@ for _, name in order do
 		task.spawn(s.start)
 	end
 end
+-- Only now are players let in. Building the town takes a moment (the low poly kit is cut first),
+-- and in Studio you are in the server before it is done: every service has to be listening
+-- before the first profile loads, or that player never gets a plot.
+loaded.Data.open()
 print("[Maplewick] server ready")

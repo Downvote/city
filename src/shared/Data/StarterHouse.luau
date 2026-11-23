@@ -1,5 +1,6 @@
 --!strict
--- The cottage every new plot starts with, so the first villager has a bed on day one.
+-- The cottage every new plot starts with, alone in the middle of the land, so the first villager
+-- has a bed on day one.
 -- The street runs along the plot's front edge (z = 0).
 
 local Plan = require(script.Parent.Parent.Build.Plan)
@@ -12,8 +13,13 @@ local StarterHouse = {}
 local OUT = Palette.Defaults.WallOut
 local IN = Palette.Defaults.WallIn
 
--- the house was laid out on a 120 stud lot; this moves it onto the starting land in the middle
-local OX = (Tuning.Plot.Size - Tuning.City.Land[1].Size) / 2 - 10
+-- The user: "players should spawn at their plot, which starts out with a single house in the
+-- middle". The cottage was laid out with its walls from x 40 to 64 and z 24 to 44; these move it
+-- so its middle is the middle of the land a new player owns (which starts at the street, z = 0,
+-- in the middle of the plot's width).
+local LAND = Tuning.City.Land[1].Size
+local OX = Tuning.Plot.Size / 2 - 52
+local OZ = LAND / 2 - 34
 
 function StarterHouse.plan(): Plan.PlanData
 	local plan = Plan.new()
@@ -28,9 +34,9 @@ function StarterHouse.plan(): Plan.PlanData
 	local function wall(x1: number, z1: number, x2: number, z2: number, inner: boolean?): string
 		return add("walls", {
 			x1 = x1 + OX,
-			z1 = z1,
+			z1 = z1 + OZ,
 			x2 = x2 + OX,
-			z2 = z2,
+			z2 = z2 + OZ,
 			lv = 0,
 			style = "wall",
 			a = if inner then { c = IN.c, m = IN.m } else { c = OUT.c, m = OUT.m },
@@ -61,12 +67,12 @@ function StarterHouse.plan(): Plan.PlanData
 		if not Catalog.get(id) then
 			return -- the starter house only uses what the catalog has
 		end
-		add("items", { id = id, x = x + OX, y = y or Tuning.Plot.Foundation, z = z, r = r, lv = 0 })
+		add("items", { id = id, x = x + OX, y = y or Tuning.Plot.Foundation, z = z + OZ, r = r, lv = 0 })
 	end
 
 	-- the cottage: 24 x 20, front door to the street
-	add("floors", { x1 = 40 + OX, z1 = 24, x2 = 64 + OX, z2 = 44, lv = 0, c = "C99A62", m = "WoodPlanks" })
-	add("floors", { x1 = 52 + OX, z1 = 18, x2 = 64 + OX, z2 = 24, lv = 0, c = "B4B4B8", m = "Concrete" })
+	add("floors", { x1 = 40 + OX, z1 = 24 + OZ, x2 = 64 + OX, z2 = 44 + OZ, lv = 0, c = "C99A62", m = "WoodPlanks" })
+	add("floors", { x1 = 52 + OX, z1 = 18 + OZ, x2 = 64 + OX, z2 = 24 + OZ, lv = 0, c = "B4B4B8", m = "Concrete" })
 	local front = wall(40, 24, 64, 24)
 	local right = wall(64, 24, 64, 44)
 	local back = wall(64, 44, 40, 44)
@@ -74,9 +80,9 @@ function StarterHouse.plan(): Plan.PlanData
 	local inner = wall(52, 44, 52, 30, true)
 	add("roofs", {
 		x1 = 40 + OX,
-		z1 = 24,
+		z1 = 24 + OZ,
 		x2 = 64 + OX,
-		z2 = 44,
+		z2 = 44 + OZ,
 		lv = 0,
 		style = "gable",
 		rise = 7,
@@ -90,9 +96,9 @@ function StarterHouse.plan(): Plan.PlanData
 	-- a little porch roof over the front step
 	add("roofs", {
 		x1 = 54 + OX,
-		z1 = 18,
+		z1 = 18 + OZ,
 		x2 = 62 + OX,
-		z2 = 24,
+		z2 = 24 + OZ,
 		lv = 0,
 		style = "shed",
 		rise = 2,
@@ -125,38 +131,10 @@ function StarterHouse.plan(): Plan.PlanData
 	item("counter", 61.5, 27.5, 270)
 	item("stove", 61.5, 31.5, 270)
 	item("plant_big", 42, 27, 0)
-	item("mailbox", 52, 1.5, 0, 0)
 
-	-- the front garden: a stone path from the street to the porch, a low picket fence either
-	-- side of it, a lamp by the path, bushes and a flower bed along the front of the house
-	add("floors", { x1 = 56 + OX, z1 = 0, x2 = 60 + OX, z2 = 18, lv = 0, c = "D9C7A7", m = "Pavement" })
-	local function fence(x1: number, z1: number, x2: number, z2: number)
-		add("walls", {
-			x1 = x1 + OX,
-			z1 = z1,
-			x2 = x2 + OX,
-			z2 = z2,
-			lv = 0,
-			style = "fence",
-			a = { c = Palette.Defaults.Fence.c, m = Palette.Defaults.Fence.m },
-			b = { c = Palette.Defaults.Fence.c, m = Palette.Defaults.Fence.m },
-		})
-	end
-	fence(42, 4, 54, 4)
-	fence(62, 4, 70, 4)
-	fence(42, 4, 42, 18)
-	fence(70, 4, 70, 18)
-	item("lamp_post", 54, 7, 0, 0)
-	item("flower_bed", 46, 21.5, 0, 0)
-	item("bush", 42, 21, 0, 0)
-	item("bush", 50.5, 21, 0, 0)
-	item("bush", 66, 21, 0, 0)
-	item("flower_bed", 46, 8, 0, 0)
-	item("flower_bed", 66, 8, 0, 0)
-	-- a market stall by the street, so the first villager has a job
-	item("work_market", 82, 10, 180, 0)
-	item("tree_oak", 20, 30, 0, 0)
-	item("tree_pine", 100, 70, 0, 0)
+	-- nothing else: no fence, no garden, no stall. One house, and the rest of the land is the
+	-- player's to fill. (A stone path runs from the street to the porch so the door is easy to find.)
+	add("floors", { x1 = 56 + OX, z1 = 0, x2 = 60 + OX, z2 = 18 + OZ, lv = 0, c = "D9C7A7", m = "Pavement" })
 
 	return plan
 end

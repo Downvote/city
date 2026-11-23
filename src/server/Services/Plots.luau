@@ -157,19 +157,28 @@ local function release(player: Player)
 end
 
 function Plots.start()
-	Data.Loaded:Connect(assign)
-	Players.PlayerRemoving:Connect(release)
-	Players.PlayerAdded:Connect(function(player)
-		player.CharacterAdded:Connect(function(char)
-			task.wait(0.2)
-			Plots.sendTo(player, char)
-		end)
+	Data.Loaded:Connect(function(player, profile)
+		if not Plots.indexOf(player) then
+			assign(player, profile)
+		end
 	end)
-	for _, player in Players:GetPlayers() do
+	Players.PlayerRemoving:Connect(release)
+	-- you always arrive at your own plot: when you first get it, and every time you respawn
+	local function watch(player: Player)
 		player.CharacterAdded:Connect(function(char)
-			task.wait(0.2)
+			char:WaitForChild("HumanoidRootPart", 5)
+			task.wait(0.1)
 			Plots.sendTo(player, char)
 		end)
+	end
+	Players.PlayerAdded:Connect(watch)
+	for _, player in Players:GetPlayers() do
+		watch(player)
+		-- anyone whose profile is already in (they joined while the server was starting)
+		local profile = Data.get(player)
+		if profile and not Plots.indexOf(player) then
+			task.spawn(assign, player, profile)
+		end
 	end
 
 	Remotes.fn("PlotExpand").OnServerInvoke = function(player)

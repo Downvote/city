@@ -301,7 +301,7 @@ local function stylize()
 	dof.Parent = Lighting
 end
 
--- Fog, a sky and clouds, unless the place already has its own.
+-- Fog and a sky, unless the place already has its own.
 local function air()
 	if not Lighting:FindFirstChildOfClass("Atmosphere") then
 		local a = Instance.new("Atmosphere")
@@ -319,14 +319,12 @@ local function air()
 		sky.MoonAngularSize = 9
 		sky.Parent = Lighting
 	end
-	-- soft clouds high over the island (the little ones that drift by are the client's)
+	-- no clouds: the user asked for a clear sky ("remove clouds and birds from the sky"). Take
+	-- out any the place came with too.
 	local terrain = workspace:FindFirstChildOfClass("Terrain")
-	if terrain and not terrain:FindFirstChildOfClass("Clouds") then
-		local clouds = Instance.new("Clouds")
-		clouds.Cover = 0.5
-		clouds.Density = 0.42
-		clouds.Color = Color3.fromRGB(255, 250, 244)
-		clouds.Parent = terrain
+	local clouds = terrain and terrain:FindFirstChildOfClass("Clouds")
+	if clouds then
+		clouds:Destroy()
 	end
 end
 
@@ -387,14 +385,6 @@ function World.setWeather(kind: string)
 		local fog = if kind == "rain" or kind == "storm" or kind == "cloudy" then FOG.dense else FOG.clear
 		atmosphere.Density = fog.density
 		atmosphere.Haze = fog.haze
-	end
-	local terrain = workspace:FindFirstChildOfClass("Terrain")
-	local clouds = terrain and terrain:FindFirstChildOfClass("Clouds")
-	if clouds then
-		clouds.Cover = if kind == "storm" then 0.86 elseif kind == "rain" or kind == "cloudy" then 0.74 else 0.5
-		clouds.Color = if kind == "storm" or kind == "rain"
-			then Color3.fromRGB(196, 200, 210)
-			else Color3.fromRGB(255, 250, 244)
 	end
 end
 

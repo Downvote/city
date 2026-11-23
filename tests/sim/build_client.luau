@@ -333,7 +333,9 @@ run("life around town and the show when you build", function()
 	frames(5)
 	local folder = ws:FindFirstChild("Ambience")
 	local n = folder and #folder:GetChildren() or 0
-	check(n > 20, "cars, clouds and birds are out (" .. n .. ")")
+	check(n >= 9, "the cars and the bus are out (" .. n .. ")")
+	-- the user: "remove clouds and birds from the sky"
+	check(folder:FindFirstChild("cloud") == nil and folder:FindFirstChild("bird") == nil, "no clouds or birds")
 	local car = folder:FindFirstChild("car")
 	local wheel = car and car:FindFirstChild("Wheel")
 	local before = car and car:GetBoundingBox().Position
@@ -342,11 +344,6 @@ run("life around town and the show when you build", function()
 	local after = car and car:GetBoundingBox().Position
 	check(before ~= nil and (after - before).Magnitude > 1, "a car drives along the street")
 	check(wheel ~= nil and wheel.CFrame ~= wheelBefore, "its wheels turn")
-	local bird = folder:FindFirstChild("bird")
-	local wing = bird and bird:FindFirstChild("WingL")
-	local wingBefore = wing and wing.CFrame
-	frames(3)
-	check(wing ~= nil and wing.CFrame ~= wingBefore, "birds flap their wings")
 	Sim.advance(4)
 	frames(10)
 	local flagMoved = false

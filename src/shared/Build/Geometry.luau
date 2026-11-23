@@ -55,9 +55,11 @@ function Geometry.beam(p1: Vector3, p2: Vector3, width: number, height: number, 
 	if math.abs(dir:Dot(up)) > 0.999 then
 		up = Vector3.zAxis
 	end
-	-- X across, Y up-ish, Z along the beam
-	local right = up:Cross(dir).Unit
-	local trueUp = dir:Cross(right).Unit
+	-- X across, Y up-ish, Z back along the beam. The three must be a right-handed set (X cross Y
+	-- is Z): Roblox can't hold a mirrored frame and turns the part some other way instead, which
+	-- is how the palms' trunks came to lie on their sides.
+	local right = dir:Cross(up).Unit
+	local trueUp = right:Cross(dir).Unit
 	local cf = CFrame.fromMatrix((p1 + p2) / 2, right, trueUp, -dir)
 	return Geometry.box(cf, Vector3.new(width, height, len), color, mat)
 end

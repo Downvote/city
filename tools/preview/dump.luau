@@ -12,8 +12,7 @@
 --   town:<name>        one of them (fountain, board, tailor, shop, hall...)
 --   preset:<id>        a ready-made building (cottage, family, townhouse, library, cafe...)
 --   presets            all of them in a row (add :inside to leave the roofs off)
---   ambient            the cars, the bus and a bird
---   cloud              a cloud
+--   ambient            the cars and the bus
 --   map                the middle of town: streets, plaza and street furniture
 --   map:x1,z1,x2,z2    another part of town
 
@@ -198,9 +197,6 @@ elseif scene:sub(1, 7) == "preset:" or scene:sub(1, 7) == "presets" then
 elseif scene == "ambient" then
 	local AmbientModels = R(Shared .. "Data.AmbientModels")
 	addPrims(AmbientModels.preview())
-elseif scene == "cloud" then
-	local AmbientModels = R(Shared .. "Data.AmbientModels")
-	addPrims(AmbientModels.prims("cloud"))
 elseif scene == "town" then
 	local TownModels = R(Shared .. "Data.TownModels")
 	addPrims(TownModels.preview())

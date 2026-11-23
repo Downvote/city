@@ -22,7 +22,9 @@ local function villager(p, i, pers)
 end
 
 describe("City", function()
-	it("starts with a valid town on the starting land, with a bed and a job", function()
+	it("starts with one valid house, with a bed, in the middle of the starting land", function()
+		-- the user: "players should spawn at their plot, which starts out with a single house in
+		-- the middle"
 		local plan = StarterHouse.plan()
 		for kind in Plan.KindSet do
 			for key, obj in plan[kind] do
@@ -32,10 +34,31 @@ describe("City", function()
 				end
 			end
 		end
-		local p = Schema.newProfile()
-		p.plan = plan
-		expect(#City.workplaces(plan) >= 1).toBeTruthy()
-		expect(City.freeWorkplace(p) ~= nil).toBeTruthy()
+		local x1, z1, x2, z2 = Plan.bounds(plan)
+		local lo, hi = Vector3.new(1e9, 0, 1e9), Vector3.new(-1e9, 0, -1e9)
+		local walls = 0
+		for _, w in plan.walls do
+			walls += 1
+			expect(w.style).toBe("wall") -- no fences: just the house
+			for _, p in { Vector3.new(w.x1, 0, w.z1), Vector3.new(w.x2, 0, w.z2) } do
+				lo, hi = lo:Min(p), hi:Max(p)
+			end
+		end
+		expect(walls >= 4).toBeTruthy()
+		-- its middle is the land's middle
+		expect(math.abs((lo.X + hi.X) / 2 - (x1 + x2) / 2) < 0.01).toBeTruthy()
+		expect(math.abs((lo.Z + hi.Z) / 2 - (z1 + z2) / 2) < 0.01).toBeTruthy()
+		-- and everything it starts with is inside it (a bed among them); nothing out in the garden
+		local bed = false
+		for _, item in plan.items do
+			bed = bed or item.id:find("bed") ~= nil
+			if not item.wall then
+				expect(item.x >= lo.X and item.x <= hi.X + 0.01).toBeTruthy()
+				expect(item.z >= lo.Z - 6.5 and item.z <= hi.Z + 0.01).toBeTruthy() -- the porch's two posts
+			end
+		end
+		expect(bed).toBe(true)
+		expect(#City.workplaces(plan)).toBe(0)
 	end)
 
 	it("has a workplace in the catalog for every job", function()
@@ -118,6 +141,8 @@ describe("City", function()
 	it("pays workers, but not on a day off or while sick", function()
 		local p = Schema.newProfile()
 		p.plan = StarterHouse.plan()
+		-- the house comes without a workplace: put a market stall in the front garden
+		p.plan.items.stall = { id = "work_market", x = 130, y = 0, z = 12, r = 180, lv = 0 }
 		local a = villager(p, 1, "sunny")
 		local b = villager(p, 2, "shy")
 		a.job = City.freeWorkplace(p)

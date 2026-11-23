@@ -1123,7 +1123,12 @@ function Villagers.start()
 		return npc and npc.model or nil
 	end
 
-	Plots.Ready:Connect(function(player)
+	local settled: { [Player]: boolean } = {}
+	local function settle(player: Player)
+		if settled[player] then
+			return
+		end
+		settled[player] = true
 		local profile = Data.get(player)
 		if not profile then
 			return
@@ -1135,7 +1140,17 @@ function Villagers.start()
 			task.wait(0.3)
 		end
 		task.delay(2, syncWishes, player)
+	end
+	Plots.Ready:Connect(settle)
+	Players.PlayerRemoving:Connect(function(player)
+		settled[player] = nil
 	end)
+	-- anyone who already has their plot (it was drawn before this service started listening)
+	for _, player in Players:GetPlayers() do
+		if Plots.indexOf(player) then
+			task.spawn(settle, player)
+		end
+	end
 	Build.Changed:Connect(onBuildChanged)
 	World.NewDay.Event:Connect(function()
 		for _, player in Players:GetPlayers() do

@@ -130,17 +130,20 @@ function Plan.wallNormal(w: Wall): Vector3
 	return Vector3.new(d.Z, 0, -d.X)
 end
 
--- A frame on the wall: X runs along the wall (as seen from that side), Y up, Z out of that side.
--- Origin at distance t from the wall's start, height y above the wall bottom, in the wall's middle plane.
+-- A frame on the wall: Z points out of that side, Y up, and X runs along the wall to the right of
+-- someone looking at that side. Origin at distance t from the wall's start, height y above the
+-- wall bottom, in the wall's middle plane.
+-- (X, Y and Z have to be a right-handed set. They used to be mirrored, which Roblox can't hold: it
+-- turns such a part some other way, so doors and windows could sit wrongly in their walls.)
 function Plan.wallFrame(w: Wall, t: number, y: number, side: string?): CFrame
 	local d = Plan.wallDir(w)
 	local n = Plan.wallNormal(w)
 	local bottom = Plan.wallSpan(w.style, w.lv)
 	local pos = Vector3.new(w.x1, 0, w.z1) + d * t + Vector3.new(0, bottom + y, 0)
 	if side == "b" then
-		return CFrame.fromMatrix(pos, -d, Vector3.yAxis, -n)
+		return CFrame.fromMatrix(pos, d, Vector3.yAxis, -n)
 	end
-	return CFrame.fromMatrix(pos, d, Vector3.yAxis, n)
+	return CFrame.fromMatrix(pos, -d, Vector3.yAxis, n)
 end
 
 -- The frame an item is built in.

@@ -17,6 +17,8 @@ local Rng = require(Shared .. "Util.Rng")
 local function makeProfile(rng, count, withBeds)
 	local p = Schema.newProfile()
 	p.plan = StarterHouse.plan()
+	-- the starter house is just a house: give the town a stall to work at
+	p.plan.items.stall = { id = "work_market", x = 130, y = 0, z = 12, r = 180, lv = 0 }
 	local bedKey, workKey
 	for key, item in p.plan.items do
 		if item.id:find("bed") then
@@ -27,8 +29,8 @@ local function makeProfile(rng, count, withBeds)
 	end
 	if rng:chance(0.5) then
 		-- a few more garden pieces, so the inspector has something to look at
-		for k = 1, 3 do
-			p.plan.items["g" .. k] = { id = "flower_bed", x = 60 + k * 6, y = 0, z = 80, r = 0, lv = 0 }
+		for k = 1, 8 do
+			p.plan.items["g" .. k] = { id = "flower_bed", x = 56 + k * 6, y = 0, z = 84, r = 0, lv = 0 }
 		end
 	end
 	for i = 1, count do

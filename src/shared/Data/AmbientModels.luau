@@ -1,6 +1,5 @@
 --!strict
--- The things that move around town but aren't anyone's to build: cars, the bus, birds and
--- clouds. Drawn with the Recipe API like everything else, each facing +Z at the origin. The
+-- The things that move around town but aren't anyone's to build: cars and the bus. Drawn with the Recipe API like everything else, each facing +Z at the origin. The
 -- client's Ambience moves them; the parts named here (wheels, wings) are the ones it animates.
 
 local Recipe = require(script.Parent.Parent.Build.Recipe)
@@ -83,40 +82,9 @@ local function bus(r: R)
 	end
 end
 
--- A little bird: a round body, a beak and two wings the client flaps.
-local function bird(r: R)
-	r:ball(0, 0, 0, 0.9, r.c1, "SmoothPlastic")
-	r:ball(0, 0.35, 0.45, 0.6, r.c1, "SmoothPlastic")
-	r:block(-0.08, 0.25, 0.75, 0.08, 0.4, 1, C.Yellow, "SmoothPlastic")
-	local wl = r:block(-1.5, -0.05, -0.3, -0.3, 0.05, 0.3, r.c2, "SmoothPlastic")
-	wl.name = "WingL"
-	local wr = r:block(0.3, -0.05, -0.3, 1.5, 0.05, 0.3, r.c2, "SmoothPlastic")
-	wr.name = "WingR"
-	r:block(-0.25, -0.05, -0.9, 0.25, 0.05, -0.4, r.c2, "SmoothPlastic")
-end
-
--- A puffy cloud of white balls.
-local function cloud(r: R)
-	local white = Color3.fromRGB(255, 255, 255)
-	local puffs = {
-		{ 0, 0, 0, 22 },
-		{ -14, -2, 3, 16 },
-		{ 14, -3, -2, 17 },
-		{ -6, 6, -4, 16 },
-		{ 8, 5, 5, 15 },
-		{ -24, -5, 0, 11 },
-		{ 25, -6, 2, 11 },
-	}
-	for _, p in puffs do
-		r:ball(p[1], p[2], p[3], p[4], white, "SmoothPlastic")
-	end
-end
-
 AmbientModels.Models = {
 	car = car,
 	bus = bus,
-	bird = bird,
-	cloud = cloud,
 } :: { [string]: (R) -> () }
 
 function AmbientModels.prims(name: string, c1: Color3?, c2: Color3?): { Geometry.Prim }
@@ -137,7 +105,6 @@ function AmbientModels.preview(): { Geometry.Prim }
 		{ name = "car", c1 = AmbientModels.CarColors[2] },
 		{ name = "car", c1 = AmbientModels.CarColors[3] },
 		{ name = "bus" },
-		{ name = "bird", c1 = Color3.fromRGB(90, 150, 230), c2 = Color3.fromRGB(60, 110, 190) },
 	}
 	for _, e in list do
 		for _, p in AmbientModels.prims(e.name, e.c1, e.c2) do

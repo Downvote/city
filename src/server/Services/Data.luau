@@ -282,6 +282,21 @@ local function onLeave(player: Player)
 	unsaved[player] = nil
 end
 
+-- Lets players in: loads the profile of everyone already here and of everyone who joins from now
+-- on. Called once, after every service has started listening (see Main), so nobody who joined
+-- while the server was still setting up is missed.
+local opened = false
+function Data.open()
+	if opened then
+		return
+	end
+	opened = true
+	Players.PlayerAdded:Connect(onJoin)
+	for _, player in Players:GetPlayers() do
+		task.spawn(onJoin, player)
+	end
+end
+
 function Data.start()
 	stateEvent = Remotes.event("State")
 	notifyEvent = Remotes.event("Notify")
@@ -336,11 +351,7 @@ function Data.start()
 		return true, amount
 	end
 
-	Players.PlayerAdded:Connect(onJoin)
 	Players.PlayerRemoving:Connect(onLeave)
-	for _, player in Players:GetPlayers() do
-		task.spawn(onJoin, player)
-	end
 
 	task.spawn(function()
 		while true do

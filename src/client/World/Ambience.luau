@@ -1,6 +1,5 @@
 -- Life around town that nobody builds: cars and a bus on the street (they stop at the
--- crossings for anyone walking over), clouds drifting overhead with their shadows sliding
--- across town, birds circling the square, trees swaying, flags waving, the fountain spraying
+-- crossings for anyone walking over), trees swaying, flags waving, the fountain spraying
 -- and fireflies over the lawns at night. All of it is local to each player's screen: nothing
 -- here is sent to the server or seen by anyone else.
 
@@ -203,53 +202,8 @@ local function stepCars(dt: number)
 	end
 end
 
--- clouds and birds ------------------------------------------------------------------------------------
-
-type Cloud = { m: Mover, x: number, y: number, z: number, speed: number }
-local clouds: { Cloud } = {}
-
-local function stepClouds(dt: number)
-	for _, c in clouds do
-		c.x += c.speed * dt
-		if c.x > L + 260 then
-			c.x = -L - 260
-		end
-		place(c.m, CFrame.new(c.x, c.y, c.z))
-	end
-end
-
-local function tintClouds()
-	local w = workspace:GetAttribute("Weather")
-	local grey = w == "rain" or w == "storm" or w == "cloudy"
-	local color = if w == "storm"
-		then Color3.fromRGB(150, 150, 165)
-		elseif grey then Color3.fromRGB(205, 208, 218)
-		else Color3.fromRGB(255, 255, 255)
-	for _, c in clouds do
-		for _, p in c.m.parts do
-			p.Color = color
-		end
-	end
-end
-
-type Bird = { m: Mover, center: Vector3, radius: number, angle: number, speed: number, height: number, phase: number }
-local birds: { Bird } = {}
-
-local function stepBirds(dt: number)
-	for _, b in birds do
-		b.angle += b.speed * dt
-		local x = b.center.X + math.cos(b.angle) * b.radius
-		local z = b.center.Z + math.sin(b.angle) * b.radius
-		local y = b.height + math.sin(clock * 0.8 + b.phase) * 2
-		-- facing along the circle
-		local ahead = Vector3.new(-math.sin(b.angle), 0, math.cos(b.angle)) * math.sign(b.speed)
-		local pos = Vector3.new(x, y, z)
-		local cf = CFrame.lookAt(pos, pos + ahead)
-			* CFrame.Angles(0, math.pi, 0)
-			* CFrame.Angles(0, 0, 0.25 * math.sign(b.speed))
-		place(b.m, cf, nil, math.sin(clock * 14 + b.phase) * 0.6)
-	end
-end
+-- (Clouds drifted overhead and birds circled the square until the user asked: "remove clouds
+-- and birds from the sky".)
 
 -- swaying trees and waving flags ------------------------------------------------------------------------
 
@@ -517,46 +471,6 @@ function Ambience.start()
 	end
 	addCar(L - 60, -1, true)
 
-	for _ = 1, 12 do
-		local c = {
-			m = mover("cloud", nil, nil, true),
-			x = rng:float(-L - 260, L + 260),
-			y = rng:float(150, 200),
-			z = rng:float(-320, 320),
-			speed = rng:float(2.5, 5),
-		}
-		local scale = rng:float(0.9, 1.6)
-		for i, l in c.m.locals do
-			c.m.locals[i] = CFrame.new(l.Position * scale) * l.Rotation
-			local p = c.m.parts[i]
-			p.Size *= scale
-		end
-		table.insert(clouds, c)
-	end
-	tintClouds()
-	workspace:GetAttributeChangedSignal("Weather"):Connect(tintClouds)
-
-	local birdColors = {
-		{ Color3.fromRGB(90, 150, 230), Color3.fromRGB(60, 110, 190) },
-		{ Color3.fromRGB(240, 120, 90), Color3.fromRGB(200, 80, 60) },
-		{ Color3.fromRGB(250, 250, 250), Color3.fromRGB(200, 205, 215) },
-	}
-	for flock = 1, 2 do
-		local center = if flock == 1 then Town.SquareCenter + Vector3.new(0, 0, 10) else Town.MarketCenter
-		for i = 1, 5 do
-			local col = birdColors[(i + flock) % #birdColors + 1]
-			table.insert(birds, {
-				m = mover("bird", col[1], col[2], false),
-				center = center + Vector3.new(rng:float(-6, 6), 0, rng:float(-6, 6)),
-				radius = rng:float(34, 58),
-				angle = rng:float(0, math.pi * 2),
-				speed = (if flock == 1 then 1 else -1) * rng:float(0.35, 0.5),
-				height = rng:float(38, 52),
-				phase = rng:float(0, 10),
-			})
-		end
-	end
-
 	-- the town's trees, flags and fountain arrive from the server: gather them once it's here
 	task.spawn(function()
 		local town = workspace:WaitForChild("Town", 30)
@@ -583,8 +497,6 @@ function Ambience.start()
 			nightEffects()
 		end
 		stepCars(dt)
-		stepClouds(dt)
-		stepBirds(dt)
 		stepSway(dt)
 		stepSpinners()
 		flush()
