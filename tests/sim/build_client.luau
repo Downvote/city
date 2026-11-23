@@ -612,12 +612,33 @@ run("leaving Build mode", function()
 	local cards = Fake.find(tray, function(d)
 		return d:IsA("TextButton") and Fake.shown(d) and d:GetAttribute("ItemId") ~= nil
 	end)
+	local ui = gui:FindFirstChild("BuildUI")
+	local hint = ui:FindFirstChild("Hint")
+	local homes = { Hint = hint.Position }
+	for _, name in { "Dock", "Catalog", "Tools", "Floors", "Pill", "CameraTip" } do
+		homes[name] = ui:FindFirstChild(name).Position
+	end
 	cards[2].Activated:Fire()
 	frames(2)
 	local before = count("items")
 	mouseAtPlot(136, 88)
 	click()
 	check(count("items") == before + 1, "placing still works the second time round")
+	-- leaving while a piece is still held (anything that ends Build mode) puts it all right for
+	-- the next visit
+	Sim.advance(0.5)
+	check(not ui:FindFirstChild("Catalog").Visible, "the bars are away while it is held")
+	BuildMode.exit()
+	frames(2)
+	check(BuildMode.enter(), "Build mode opens again after leaving with a piece in hand")
+	frames(2)
+	Sim.advance(1)
+	local right = true
+	for name, home in homes do
+		local f = ui:FindFirstChild(name)
+		right = right and f.Visible and f.Position == home
+	end
+	check(right, "with every bar and the hint back where they were")
 end)
 
 run("putting down a ready-made building", function()
@@ -803,6 +824,10 @@ run("life around town and the show when you build", function()
 		end
 	end
 	check(newest ~= nil and math.abs(newest:GetScale() - 1) < 1e-6, "the piece springs up and ends at full size")
+	-- (put the next copy away, so Done is back for the screens that follow)
+	input(Enum.UserInputType.MouseButton2, true)
+	input(Enum.UserInputType.MouseButton2, false)
+	frames(2)
 	check(#errors == warned, "no warnings from any of it")
 end)
 

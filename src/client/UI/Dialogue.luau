@@ -310,7 +310,7 @@ function Dialogue.open(opts: { [string]: any }?): any
 	answers.LayoutOrder = 2
 	answers.ZIndex = 6
 	-- the foot: a dim note at the left, small buttons at the right
-	local foot = Kit.box({ Name = "Foot", Parent = inner, Size = UDim2.new(1, 0, 0, 32) })
+	local foot = Kit.box({ Name = "Foot", Parent = inner, Size = UDim2.new(1, 0, 0, 36) })
 	foot.LayoutOrder = 3
 	foot.ZIndex = 6
 	local note = Kit.new("TextLabel", {

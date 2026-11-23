@@ -19,8 +19,13 @@
 --                       days and a request), Goals:claimed (a claimed goal picked), MapPanel:new
 --                       (one place found), MapPanel:picked (a place picked in the list), CityPanel:ready
 --                       (the next land can be bought)
---   event               an event at its choices
---   event:talk          an event part way through its lines
+--   event               an event at its choices, not watched: the small prompt says they want your say
+--   event:talk          an event part way through its lines, not watched: the prompt and Watch
+--   event:one           a watched event's scene with one villager talking
+--   event:two           a watched event's scene, the second villager talking
+--   event:four          four villagers in the scene, the third talking
+--   event:narration     a line nobody in particular says: both villagers in, dimmed
+--   event:answers       a watched event at its choices: the answers in the textbox
 --   talk                the talk card: a villager you held E on tells you their wish
 --   talk:again          the talk card after the day's chats are used up
 --   toasts              a few notices
@@ -153,6 +158,25 @@ if look then
 end
 
 local Hud
+-- the villagers standing in the player's plot, each marked with its id (UI/Dialogue finds a
+-- talking villager's model there for their bust)
+local function villagerModels()
+	local plot = Sim.ws:FindFirstChild("Plots"):FindFirstChild("Plot1")
+	local folder = plot:FindFirstChild("Villagers") or Fake.new("Folder", plot)
+	folder.Name = "Villagers"
+	for i, vid in order do
+		local model = Fake.new("Model", folder)
+		model.Name = villagers[vid].name
+		model:SetAttribute("Vid", vid)
+		local root = Fake.new("Part", model)
+		root.Name = "HumanoidRootPart"
+		root.Position = roblox.Vector3.new(i * 4, 3, 0)
+		local head = Fake.new("Part", model)
+		head.Name = "Head"
+		head.Position = roblox.Vector3.new(i * 4, 4.5, 0)
+	end
+end
+
 local function startHud()
 	Hud = Harness.require(Sim.CLIENT .. "UI.Hud")
 	Hud.start()
@@ -270,12 +294,18 @@ elseif scene:sub(1, 6) == "panel:" then
 		row.Activated:Fire()
 	end
 	Sim.frames(3)
-elseif scene == "event" or scene == "event:talk" then
+elseif scene == "event" or scene:sub(1, 6) == "event:" then
+	-- an event: the small prompt while nobody watches it (event: at its choices, event:talk part
+	-- way through its lines), or its scene once Watch is pressed (event:one, event:two,
+	-- event:four, event:narration, event:answers)
+	villagerModels()
 	startHud()
-	Sim.remoteEvent("EventShow"):FireClient(Sim.player, {
+	local page = scene:sub(7)
+	local ev = {
 		token = "e1",
 		title = "A quarrel by the fountain",
 		names = { a = "Mara", b = "Tobin" },
+		actors = { a = order[1], b = order[2] },
 		lines = {
 			{ text = "Mara and Tobin are arguing by the fountain. Tobin looks like he might cry." },
 			{ who = "a", text = "You took the last bun from the bakery again." },
@@ -285,11 +315,46 @@ elseif scene == "event" or scene == "event:talk" then
 			{ text = "Side with Tobin" },
 			{ text = "Buy them both a bun", cost = 40 },
 		},
-	})
-	Sim.advance(if scene == "event:talk" then 2.5 else 24)
+	}
+	local watch, wait = false, 24
+	if page == "talk" then
+		wait = 2.5
+	elseif page == "narration" then
+		watch, wait = true, 1.6
+	elseif page == "one" then
+		ev.title, ev.names, ev.actors = "Lost scissors", { a = "Mara" }, { a = order[1] }
+		ev.lines = { { who = "a", text = "Has anyone seen my good scissors? I put them down for one minute." } }
+		ev.choices = nil
+		watch, wait = true, 1.6
+	elseif page == "two" then
+		ev.lines = {
+			{ who = "a", text = "You took the last bun from the bakery again." },
+			{ who = "b", text = "It had my name on it. Well, it would have." },
+		}
+		watch, wait = true, 4.2
+	elseif page == "four" then
+		ev.title = "Too many cooks"
+		ev.names = { a = "Mara", b = "Tobin", c = "Ivy", d = "Pell" }
+		ev.actors = { a = order[1], b = order[2], c = order[3], d = order[4] }
+		ev.lines = {
+			{ who = "a", text = "Tobin, Ivy, Pell, come and taste this before I add more salt." },
+			{ who = "c", text = "It needs more salt." },
+		}
+		ev.choices = nil
+		watch, wait = true, 5.2
+	elseif page == "answers" then
+		watch, wait = true, 24
+	end
+	Sim.remoteEvent("EventShow"):FireClient(Sim.player, ev)
+	Sim.frames(2)
+	if watch then
+		Sim.press("Watch")
+	end
+	Sim.advance(wait)
 elseif scene == "talk" or scene == "talk:again" then
 	-- the talk card (UI/TalkCard), in the words Sim/Talk gives the villagers: Mara is walked up
 	-- to and tells her wish; Ivy is asked for one more line once the day's chats are used up
+	villagerModels()
 	startHud()
 	local Talk = Harness.require("ReplicatedStorage.Shared.Sim.Talk")
 	Harness.require(Sim.CLIENT .. "UI.TalkCard").start()
@@ -302,7 +367,7 @@ elseif scene == "talk" or scene == "talk:again" then
 		text = Talk.line(town, vid, Rng.new(4), { first = not again, now = os.time() }),
 		note = Talk.note(town, vid, chat),
 	})
-	Sim.frames(3)
+	Sim.advance(2)
 elseif scene == "toasts" then
 	startHud()
 	local Toasts = Harness.require(Sim.CLIENT .. "UI.Toasts")

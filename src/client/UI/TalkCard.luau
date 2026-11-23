@@ -1,15 +1,15 @@
 -- The talk card. The user: "allow the option to interact/chat with villagers by holding e on
 -- them". Hold E on one of your own villagers and they stop, turn to you and say something (the
 -- server's Services/Villagers does that, and everyone nearby sees their bubble). This is the
--- owner's side of it: a small dialogue card at the bottom of the screen, where an event is told
--- (UI/EventCard): the villager's name on the card's darker band with a mark in their own colour,
--- their round face beside what they said in a speech bubble, what the chat did under it, and a
--- few answers: Chat (they say something else), Profile (their page in the Villagers menu) and
--- Bye.
+-- owner's side of it, in the dialogue scene (UI/Dialogue; the user: "when text from a villager
+-- appears, make the character talking slide into view at the side with a textbox as such"): the
+-- villager slides in at the left as a big bust, their name on a tag on the textbox's edge, what
+-- they said typed into the box, what the chat did under it, and three answers at the box's foot:
+-- Chat (they say something else), Profile (their page in the Villagers menu) and Bye.
 --
--- It is built when it opens and thrown away when it closes. It closes when you say bye, walk
--- off, keep them waiting too long, open a menu, Build mode or the creator, and the moment an
--- event starts: the event's card has that spot on the screen, and no talk card opens over it.
+-- It is built when it opens and goes when it closes. It closes when you say bye, walk off, keep
+-- them waiting too long, open a menu, Build mode or the creator, and the moment an event starts
+-- (no talk card opens while one is going on).
 
 local Players = game:GetService("Players")
 
@@ -19,8 +19,7 @@ local Tuning = require(Shared.Config.Tuning)
 local Colors = require(Shared.Util.Colors)
 
 local Kit = require(script.Parent.Kit)
-local MenuParts = require(script.Parent.MenuParts)
-local ModelPreview = require(script.Parent.ModelPreview)
+local Dialogue = require(script.Parent.Dialogue)
 local EventCard = require(script.Parent.EventCard)
 local State = require(script.Parent.Parent.Controllers.State)
 
@@ -30,16 +29,7 @@ local T = Kit.Theme
 local K = Tuning.Talk
 local player = Players.LocalPlayer
 
-local WIDTH = 540
-local BAND = 44 -- the band with their name
-local HEIGHT = 222 -- the whole card
-
-local holder: Frame? = nil
-local card: Frame
-local lineLabel: TextLabel
-local noteLabel: TextLabel
-local faceBox: Frame? = nil -- the round frame their face goes in
-local faceOf: Model? = nil -- whose face is in it
+local scene: any = nil -- the dialogue scene the talk is in
 -- who is being talked to: { vid, model, at (when they last spoke) }
 local current: any = nil
 local serial = 0 -- goes up whenever the card opens or closes, so what belonged to an old one stops
@@ -53,12 +43,10 @@ function TalkCard.close()
 	serial += 1
 	current = nil
 	asking = false
-	if holder then
-		holder:Destroy()
-		holder = nil
+	if scene then
+		scene.close()
+		scene = nil
 	end
-	faceBox = nil
-	faceOf = nil
 end
 
 -- Does something else have the screen: an event being told, a menu, Build mode, the creator?
@@ -67,9 +55,18 @@ local function blocked(): boolean
 		return true
 	end
 	local gui = Kit.root()
-	-- the HUD steps aside for Build mode and the creator
+	local BuildMode = require(script.Parent.Parent.Build.BuildMode) :: any
+	if BuildMode.isActive() then
+		return true
+	end
+	local creator = gui:FindFirstChild("Creator")
+	if creator and creator:IsA("GuiObject") and creator.Visible then
+		return true
+	end
+	-- the HUD steps aside for Build mode and the creator (and slides some of itself away for a
+	-- talk, which is no reason to stop it)
 	local hud = gui:FindFirstChild("Hud")
-	if hud and hud:IsA("GuiObject") and not hud.Visible then
+	if hud and hud:IsA("GuiObject") and not hud.Visible and not State.data.talking then
 		return true
 	end
 	-- a menu or a dialog (Kit.panel) dims the screen behind it
@@ -98,31 +95,41 @@ local function apart(model: Model?): boolean
 	return false
 end
 
+-- Types what they said into the box, a couple of letters at a time.
+local typing = 0
+local function typeOut(label: TextLabel, text: string)
+	typing += 1
+	local mine = typing
+	label.Text = text
+	label.MaxVisibleGraphemes = 0
+	task.spawn(function()
+		local count = utf8.len(text) or #text
+		local shown = 0
+		while shown < count and typing == mine and label.Parent do
+			shown = math.min(count, shown + 2)
+			label.MaxVisibleGraphemes = shown
+			task.wait(0.03)
+		end
+		if typing == mine then
+			label.MaxVisibleGraphemes = -1
+		end
+	end)
+end
+
 -- Puts what they said on the card.
 local function say(msg: any)
-	lineLabel.Text = msg.text
-	noteLabel.Text = if type(msg.note) == "string" then msg.note else ""
+	local s = scene
+	if not s then
+		return
+	end
+	typeOut(s.words, msg.text)
+	s.note.Text = if type(msg.note) == "string" then msg.note else ""
 	current.at = os.clock()
 	if typeof(msg.model) == "Instance" and msg.model:IsA("Model") then
 		current.model = msg.model
-		-- their face in the round frame, once (a close-up of their head, as in the Villagers menu)
-		local box = faceBox
-		if box and faceOf ~= msg.model then
-			faceOf = msg.model
-			for _, c in box:GetChildren() do
-				if c:IsA("ViewportFrame") then
-					c:Destroy()
-				end
-			end
-			pcall(function()
-				local vp = ModelPreview.fromModel(msg.model, { Parent = box, Face = true })
-				if vp then
-					Kit.rounded(vp)
-				end
-			end)
-		end
+		-- the model the server sent, when the client couldn't find one: their bust slides in now
+		s.found(current.vid, msg.model)
 	end
-	Kit.bump(card, 0.03)
 end
 
 -- Tells the server the talk is over, so the villager goes back to their day.
@@ -153,112 +160,32 @@ local function chat()
 			say(said)
 		elseif sent and not ok and type(said) == "string" then
 			-- they were taken by an event, or you stepped too far back
-			noteLabel.Text = said
+			if scene then
+				scene.note.Text = said
+			end
 		end
 	end)
 end
 
-local function build(vid: string, v: any)
-	local own = Colors.fromHex(v.color, T.Blue)
-	local root = Kit.box({
-		Name = "TalkCard",
-		Size = UDim2.fromOffset(WIDTH, HEIGHT),
-		Position = UDim2.new(0.5, 0, 1, -124),
-		AnchorPoint = Vector2.new(0.5, 1),
-		Parent = Kit.root(),
-		Visible = false,
+local function build(vid: string, v: any, model: Model?)
+	local s = Dialogue.open({ Name = "TalkCard" })
+	scene = s
+	s.join({
+		key = vid,
+		name = v.name,
+		color = Colors.fromHex(v.color, T.Blue),
+		model = model or Dialogue.modelOf(vid),
+		vid = vid,
 	})
-	root.ZIndex = 20
-	holder = root
-	local page, band, body = MenuParts.sheet(own, {
-		Parent = root,
-		Size = UDim2.fromScale(1, 1),
-		Band = BAND,
-	})
-	card = page
-	-- who is talking, over the band: a mark in their own colour and their name
-	local _ = band
-	local speaker = Kit.box({ Name = "Speaker", Parent = root, Size = UDim2.new(1, 0, 0, BAND) })
-	speaker.ZIndex = 3
-	local mark = Kit.new("Frame", {
-		Name = "Mark",
-		BackgroundColor3 = own,
-		BorderSizePixel = 0,
-		Size = UDim2.fromOffset(6, 22),
-		Position = UDim2.new(0, 20, 0.5, -11),
-		ZIndex = 3,
-		Parent = speaker,
-	})
-	mark:SetAttribute("KeepColors", true)
-	Kit.corner(mark, 3)
-	Kit.title(v.name, {
-		Name = "Text",
-		Parent = speaker,
-		Size = UDim2.new(1, -60, 1, 0),
-		Position = UDim2.fromOffset(36, 0),
-		TextSize = 21,
-		Wrap = false,
-		ZIndex = 3,
-	})
-	-- their face, and what they said in a bubble beside it: room for two lines
-	local inner = Kit.box({ Name = "Inner", Parent = body, Size = UDim2.new(1, 0, 0, HEIGHT - BAND) })
-	local face = Kit.portrait({
-		-- (not "Face": that is what a button's coloured face is called, and the look audit reads
-		-- the words beside one as lying on it)
-		Name = "Portrait",
-		Parent = inner,
-		Size = 46,
-		Position = UDim2.fromOffset(18, 12),
-		-- their own colour toned to a middle grey that suits both looks, so a card that is open
-		-- when the look is switched doesn't keep a tint mixed for the other one
-		Color = own:Lerp(Color3.fromRGB(112, 116, 132), 0.5),
-		Border = own:Lerp(T.White, 0.35),
-		BorderWidth = 2,
-	})
-	face:SetAttribute("KeepColors", true)
-	faceBox = face
-	local bubble, words = MenuParts.speech({
-		Name = "Said",
-		Parent = inner,
-		Size = UDim2.new(1, -94, 0, 0),
-		Position = UDim2.fromOffset(76, 12),
-	})
-	local _ = bubble
-	lineLabel = Kit.text("", {
-		Name = "Line",
-		Parent = words,
-		Size = UDim2.new(1, 0, 0, 44),
-		TextSize = 18,
-		Font = Kit.Fonts.Title,
-		AlignY = Enum.TextYAlignment.Top,
-	})
-	lineLabel.LineHeight = 1.1
-	-- what the chat did
-	noteLabel = Kit.text("", {
-		Name = "Note",
-		Parent = inner,
-		Size = UDim2.new(1, -94, 0, 18),
-		Position = UDim2.fromOffset(78, 88),
-		TextSize = 14,
-		Color = T.InkSoft,
-		Wrap = false,
-	})
-	noteLabel.TextTruncate = Enum.TextTruncate.AtEnd
-	-- the answers, side by side along the foot
-	local answers = Kit.box({
-		Name = "Answers",
-		Parent = inner,
-		Size = UDim2.new(1, -36, 0, 44),
-		Position = UDim2.new(0, 18, 1, -58),
-	})
-	Kit.list(answers, 8, true, Enum.HorizontalAlignment.Center)
+	s.speak(vid)
+	-- the answers, side by side at the box's foot
 	local function answer(text: string, order: number, fn: () -> ())
-		Kit.choice(text, {
+		Dialogue.answer(text, {
 			Name = text,
-			Parent = answers,
-			Size = UDim2.new(1 / 3, -6, 1, 0),
+			Parent = s.tools,
+			Size = UDim2.fromOffset(112, 34),
 			LayoutOrder = order,
-			TextSize = 18,
+			TextSize = 16,
 		}, fn)
 	end
 	answer("Chat", 1, chat)
@@ -298,18 +225,16 @@ function TalkCard.show(msg: any)
 	if not v or blocked() then
 		return -- their bubble still shows over their head
 	end
-	if current and current.vid == msg.vid and holder then
+	if current and current.vid == msg.vid and scene then
 		-- E held on them again: the card stays and the words change
 		say(msg)
 		return
 	end
 	TalkCard.close()
 	current = { vid = msg.vid, model = nil, at = os.clock() }
-	build(msg.vid, v)
+	local model = if typeof(msg.model) == "Instance" and msg.model:IsA("Model") then msg.model else nil
+	build(msg.vid, v, model)
 	say(msg)
-	if holder then
-		Kit.popIn(holder)
-	end
 	task.spawn(watch, serial)
 end
 
