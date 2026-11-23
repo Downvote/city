@@ -1109,6 +1109,25 @@ pressing it would do.
 The Build button was a blue slab. It is the same dark slab as the menu bar across the bottom from it now, with the
 hammer still yellow and the halftone starting from its slanted end.
 
+### A clear view while placing
+
+> also, when placing down things in build mode, make the whole interface slide down other than this tooltip, then
+> reappear once the player puts it away
+
+(With a screenshot of the hint: "Click to place it. R turns it, right click puts it away.") While you hold a piece
+to place, Build mode gets out of the way. The catalog, the bottom bar, the tools row and the floors card slide down
+off the screen, the coins and the camera help slide up off the top, and only the hint stays, settled in the bottom
+left corner. Place a piece and carry on with another copy and it all stays away; put the piece away (right click,
+Esc or Backspace) or leave Build mode and it slides back where it was.
+
+- It counts as holding when the piece came from a card, is a ready-made building, a door or a window, or is being
+  moved or copied. The tools that draw (walls, rooms, floors, roofs, fences, paths, paint, sell) keep their trays.
+- R, Ctrl+Z and PageUp and PageDown still work, and a floor change still says "Floor 2" in the hint.
+- The hint reads "Click to place it. R turns it, right click puts it away." for a piece and "Click to put it down.
+  R turns it, right click puts it away." for a ready-made building.
+- On a touch screen two round buttons sit beside the hint, to turn the piece and to put it away, and the hint
+  reads "Tap to place it. The buttons turn it or put it away."
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

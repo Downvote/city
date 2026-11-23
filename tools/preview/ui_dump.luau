@@ -12,6 +12,8 @@
 --   build:paint         Build mode on the Paint tool (finishes and colours)
 --   build:sell          Build mode on the Sell tool
 --   build:view          Build mode just after the up arrow and See-through walls (the hint says so)
+--   build:placing       Build mode holding an armchair to place: the bars away, the hint left
+--                       (build:placing:touch on a touch screen, with its two round buttons)
 --   panel:<Name>        a panel over the main screen (Residents, CityPanel, ShopPanel, News, Goals,
 --                       MapPanel, Welcome, Rewards)
 --   panel:<Name>:<state> a menu in one of its states: Residents:friends, Residents:empty (nobody
@@ -192,8 +194,23 @@ elseif scene:sub(1, 5) == "build" then
 	startHud()
 	Sim.BuildMode.enter()
 	Sim.frames(3)
-	if scene == "build" or scene == "build:pick" or scene == "build:bought" then
+	if scene:sub(1, 13) == "build:placing" and scene:sub(15) == "touch" then
+		Sim.UIS.TouchEnabled, Sim.UIS.MouseEnabled = true, false
+	end
+	if scene == "build" or scene == "build:pick" or scene == "build:bought" or scene:sub(1, 13) == "build:placing" then
 		Sim.press("Furniture")
+	end
+	if scene:sub(1, 13) == "build:placing" then
+		-- an armchair picked from its card and held over the plot
+		local tray = Sim.gui:FindFirstChild("Tray", true)
+		local cards = Fake.find(tray, function(d)
+			return d:IsA("TextButton") and Fake.shown(d) and d:GetAttribute("ItemId") == "armchair"
+		end)
+		cards[1].Activated:Fire()
+		Sim.frames(2)
+		Sim.mouseAtPlot(124, 64)
+		Sim.frames(2)
+		Sim.advance(0.5)
 	end
 	-- the other trays, by the tabs that open them
 	local TABS = {
@@ -220,6 +237,10 @@ elseif scene:sub(1, 5) == "build" then
 		Sim.frames(2)
 		Sim.mouseAtPlot(124, 64)
 		Sim.click()
+		-- (a right click puts the next copy away, and the tools come back)
+		Sim.input(Enum.UserInputType.MouseButton2, true)
+		Sim.input(Enum.UserInputType.MouseButton2, false)
+		Sim.frames(2)
 		Sim.press("Pick")
 		Sim.mouseAtPlot(124, 64, 1)
 		Sim.click()
@@ -234,6 +255,10 @@ elseif scene:sub(1, 5) == "build" then
 		Sim.frames(2)
 		Sim.mouseAtPlot(118, 60)
 		Sim.click()
+		-- (a right click puts the next copy away, and the tools come back)
+		Sim.input(Enum.UserInputType.MouseButton2, true)
+		Sim.input(Enum.UserInputType.MouseButton2, false)
+		Sim.frames(2)
 		Sim.press("Pick")
 		Sim.mouseAtPlot(118, 60, 1)
 		Sim.click()
@@ -320,18 +345,18 @@ elseif scene == "event" or scene:sub(1, 6) == "event:" then
 	if page == "talk" then
 		wait = 2.5
 	elseif page == "narration" then
-		watch, wait = true, 1.6
+		watch, wait = true, 2
 	elseif page == "one" then
 		ev.title, ev.names, ev.actors = "Lost scissors", { a = "Mara" }, { a = order[1] }
 		ev.lines = { { who = "a", text = "Has anyone seen my good scissors? I put them down for one minute." } }
 		ev.choices = nil
-		watch, wait = true, 1.6
+		watch, wait = true, 1.5
 	elseif page == "two" then
 		ev.lines = {
 			{ who = "a", text = "You took the last bun from the bakery again." },
 			{ who = "b", text = "It had my name on it. Well, it would have." },
 		}
-		watch, wait = true, 4.2
+		watch, wait = true, 3
 	elseif page == "four" then
 		ev.title = "Too many cooks"
 		ev.names = { a = "Mara", b = "Tobin", c = "Ivy", d = "Pell" }
@@ -341,7 +366,7 @@ elseif scene == "event" or scene:sub(1, 6) == "event:" then
 			{ who = "c", text = "It needs more salt." },
 		}
 		ev.choices = nil
-		watch, wait = true, 5.2
+		watch, wait = true, 3.6
 	elseif page == "answers" then
 		watch, wait = true, 24
 	end
@@ -351,6 +376,9 @@ elseif scene == "event" or scene:sub(1, 6) == "event:" then
 		Sim.press("Watch")
 	end
 	Sim.advance(wait)
+	if watch then
+		Sim.frames(60) -- a second at the game's own pace, so the line being typed is all there
+	end
 elseif scene == "talk" or scene == "talk:again" then
 	-- the talk card (UI/TalkCard), in the words Sim/Talk gives the villagers: Mara is walked up
 	-- to and tells her wish; Ivy is asked for one more line once the day's chats are used up
@@ -367,7 +395,7 @@ elseif scene == "talk" or scene == "talk:again" then
 		text = Talk.line(town, vid, Rng.new(4), { first = not again, now = os.time() }),
 		note = Talk.note(town, vid, chat),
 	})
-	Sim.advance(2)
+	Sim.advance(4)
 elseif scene == "toasts" then
 	startHud()
 	local Toasts = Harness.require(Sim.CLIENT .. "UI.Toasts")

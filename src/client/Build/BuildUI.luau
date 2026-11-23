@@ -1491,6 +1491,10 @@ local function setHolding(on: boolean, instant: boolean?)
 	holdingNow = on
 	slideToken += 1
 	local token = slideToken
+	if on then
+		-- a card or a button the mouse was on has gone from under it
+		overView, hovering = nil, nil
+	end
 	for _, f in ui:GetChildren() do
 		local dy = AWAY[f.Name]
 		if dy and f:IsA("GuiObject") then

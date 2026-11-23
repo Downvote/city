@@ -559,7 +559,10 @@ clipping (`tools/preview/ui_render.py`).
   when `CATEGORIES_ON_TOP` is true, the other way up when false; `Tools` (a row of tiles) above the catalog at
   the left with `Hint` over it, `Floors` above it at the right (a row of five icon buttons named `FloorDown`,
   `FloorUp`, `Hide roofs`, `See-through walls` and `Snap to grid`; the hint line says what a press did), the coin
-  `Pill` top left.
+  `Pill` top left. While a piece is held to place, every one of them but `Hint` slides off the screen (down, or up
+  for the pill and the camera help) and is hidden once gone; a check once a frame decides it, and they slide back
+  when the holding ends or Build mode closes. `BuildMode.putAway()` ends holding (the touch buttons beside the hint
+  call it).
 
 ## The drawn city
 

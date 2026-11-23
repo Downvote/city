@@ -641,6 +641,30 @@ run("leaving Build mode", function()
 	check(right, "with every bar and the hint back where they were")
 end)
 
+run("a touch screen turns and puts away a held piece with round buttons", function()
+	local UIS = Sim.UIS
+	UIS.TouchEnabled, UIS.MouseEnabled = true, false
+	press("Furniture")
+	local tray = gui:FindFirstChild("Tray", true)
+	local cards = Fake.find(tray, function(d)
+		return d:IsA("TextButton") and Fake.shown(d) and d:GetAttribute("ItemId") ~= nil
+	end)
+	cards[1].Activated:Fire()
+	frames(2)
+	Sim.advance(0.5)
+	local said = gui:FindFirstChild("Hint", true):FindFirstChildWhichIsA("TextLabel")
+	check(said.Text:find("Tap to place it", 1, true) ~= nil, "the hint says to tap")
+	local r0 = BuildMode.state.placing and BuildMode.state.placing.r
+	press("Turn it")
+	check(BuildMode.state.placing ~= nil and BuildMode.state.placing.r ~= r0, "one round button turns it")
+	press("Put it away")
+	check(BuildMode.state.placing == nil, "the other puts it away")
+	frames(2)
+	check(gui:FindFirstChild("Catalog", true).Visible, "and the bars come back")
+	check(not gui:FindFirstChild("Holding", true).Visible, "the round buttons go with the piece")
+	UIS.TouchEnabled, UIS.MouseEnabled = false, true
+end)
+
 run("putting down a ready-made building", function()
 	local Presets = Sim.Harness.require("ReplicatedStorage.Shared.Data.Presets")
 	local Catalog = Sim.Harness.require("ReplicatedStorage.Shared.Build.Catalog")

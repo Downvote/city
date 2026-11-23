@@ -36,7 +36,8 @@ is, the outfit that holds the body, single body parts, the player's own items an
 `creator:bodies`, `creator:parts`, `creator:items`, `creator:items:ask`, `creator:items:no`, `creator:avatars`,
 `creator:wearing`, `creator:skin`, `creator:shape`, `creator:outfits`, `creator:outfits:saved`, `creator:people`;
 Build mode's are `build`, `build:walls`, `build:rooms`, `build:floors`, `build:roofs`, `build:fences`,
-`build:paths`, `build:buildings`, `build:bought`, `build:pick`, `build:paint`, `build:sell`, `build:view`; any scene takes the
+`build:paths`, `build:buildings`, `build:bought`, `build:pick`, `build:paint`, `build:sell`, `build:view`,
+`build:placing`, `build:placing:touch`; any scene takes the
 prefix `plain:` to show it with the painted shapes off), Build (catalog, plan rules, field cleaning, shapes, builder), BuildService (the server's
 Build service with stubbed neighbours: charges, syncs, strips junk, refuses land you don't own), Events (3000 seeded
 events, every kind reachable, text filled, numbers in range), Newcomers (who moves in: the player's friends first,
@@ -237,7 +238,13 @@ moved up"): size those bars by scale (`UDim2.new(1, -28, 0, h)`), never to a fix
 row of five icon buttons with no words ("change this part to 5 icons, 2 arrows, 3 toggleable icons in a row with
 no need for text"): floor down, floor up, then Hide roofs, See-through walls and Snap to grid, yellow when on. What
 a press did, and what a button under the pointer would do, is said in the hint line over the tools ("Floor 2",
-"Roofs hidden"); never put words back on the card.
+"Roofs hidden"); never put words back on the card. While a piece is held to place (picked from a card, a ready-made
+building, a door or window, a piece being moved or copied), the whole interface slides off the screen and only
+the hint stays, at the bottom left ("when placing down things in build mode, make the whole interface slide down
+other than this tooltip, then reappear once the player puts it away"); it comes back when the piece is put away
+or Build mode is left. `BuildUI`'s holding check, once a frame, is the one place that decides it, and what has slid
+off is hidden so it can't catch a click. The tools that draw keep their trays. A touch player gets two round
+buttons beside the hint, "Turn it" and "Put it away" (`BuildMode.putAway`).
 Icons are vector art (the user: "Alot of the icons arent proper vector art and just shapes spliced together,
 look online to see how vector art should be. Make them as simple as possible"): paths in `UI/IconArt` on a 24
 grid, one line weight, round ends, a margin of 2, as few lines as possible, painted by `UI/Vector` into an
