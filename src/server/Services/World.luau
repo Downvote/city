@@ -12,6 +12,7 @@ local Town = require(Shared.Data.Town)
 local TownModels = require(Shared.Data.TownModels)
 local TownMap = require(Shared.Data.TownMap)
 local Builder = require(Shared.Build.Builder)
+local Textures = require(Shared.Data.Textures)
 local Rng = require(Shared.Util.Rng)
 local Schema = require(Shared.Sim.Schema)
 
@@ -34,6 +35,7 @@ local function part(props: { [string]: any }): Part
 	for k, v in props do
 		(p :: any)[k] = v
 	end
+	p.Color = Textures.tint(p.Material.Name, p.Color)
 	return p
 end
 

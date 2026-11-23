@@ -244,7 +244,17 @@ paving slabs, concrete, asphalt, plaster, clay roof tiles, shingles, slate, bath
 marble, sand, rock and brushed metal.
 They are nearly grey, so every paint colour in Build mode still works on them: the part's colour tints the
 texture. Each one replaces Roblox's own look for that material everywhere in the place, the town and every build
-alike. They need uploading to Roblox before they show; until then each material keeps Roblox's look.
+alike.
+
+> Use textures from the roblox library that fits.
+
+So the materials now use public textures from the Creator Store, picked to suit the town: white brick, grey
+cartoon planks and wood grain, herringbone paving, grey cobbles, light concrete and plaster, worn asphalt,
+terracotta roof tiles, white tiles, grey carpet and linen, pale sand, brushed steel and a soft light grass.
+Greys were picked where they exist so paint still works; the grass and the roof tiles bring their own colour,
+so parts of those materials are lifted most of the way to white and the paint only tints them. Shingles,
+slate, marble and rock had nothing that fit and keep Roblox's look (our painted ones can go up for those).
+Each one's maker is credited in `Data/TextureIds`.
 
 Villagers walk with Roblox's pathfinding with jumping on, so they go round walls, through doorways (doors are free to
 pass and open as they come), round furniture and over low steps. If they get stuck they jump, then plan again.

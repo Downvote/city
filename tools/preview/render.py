@@ -7,47 +7,87 @@ A small z-buffered rasteriser: boxes, wedges, cylinders and balls, flat shaded w
 the top left, an orthographic camera fitted to the scene. Good enough to see whether a model
 looks the way its recipe meant.
 
---textures paints each part with its material's texture from art/textures (scripts/gen_textures.py),
-tinted by the part's colour and tiled in the part's own space along the face's main axis, the
-way Roblox lays a MaterialVariant on a part.
+--textures paints each part with the texture the game gives its material (Data/TextureIds: the
+Creator Store pictures, fetched once into out/library), tinted by the part's colour and tiled in
+the part's own space along the face's main axis, the way Roblox lays a MaterialVariant on a part.
+--painted uses our own painted set in art/textures instead (scripts/gen_textures.py).
 """
 import argparse
 import json
 import math
 
 import os
+import sys
+import urllib.request
 
 import numpy as np
 from PIL import Image
 
-TEX_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "art", "textures")
+ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
+TEX_DIR = os.path.join(ROOT, "art", "textures")
+LIB_DIR = os.path.join(ROOT, "out", "library")
+LIFT = 0.72  # Textures.Lift: how far a part's colour moves to white on a texture with its own colour
+
+
+def fetch_image(image_id):
+    """An image asset's picture (its 420 px thumbnail), cached under out/library."""
+    path = os.path.join(LIB_DIR, f"{image_id}.png")
+    if not os.path.exists(path):
+        os.makedirs(LIB_DIR, exist_ok=True)
+        ua = {"User-Agent": "preview"}
+        url = f"https://thumbnails.roblox.com/v1/assets?assetIds={image_id}&size=420x420&format=Png"
+        info = json.load(urllib.request.urlopen(urllib.request.Request(url, headers=ua), timeout=30))["data"][0]
+        if info.get("state") != "Completed":
+            return None
+        data = urllib.request.urlopen(urllib.request.Request(info["imageUrl"], headers=ua), timeout=30).read()
+        open(path, "wb").write(data)
+    return path
 
 
 class Textures:
-    """The painted textures by Roblox material, each as a small mip pyramid (float RGB)."""
+    """Textures by Roblox material, each as a small mip pyramid (float RGB), its studs per tile and
+    whether it brings its own colour."""
 
-    def __init__(self):
+    def __init__(self, painted=False):
         self.by_mat = {}
         index_path = os.path.join(TEX_DIR, "textures.json")
         if not os.path.exists(index_path):
             return
-        for name, info in json.load(open(index_path)).items():
-            path = os.path.join(TEX_DIR, name + ".png")
-            if not os.path.exists(path):
+        index = json.load(open(index_path))
+        ids = {}
+        if not painted:
+            sys.path.insert(0, os.path.join(ROOT, "scripts"))
+            import sync_materials
+            ids = sync_materials.read_ids()
+        for name, info in index.items():
+            studs, own = info["studs"], False
+            if painted:
+                path = os.path.join(TEX_DIR, name + ".png")
+            else:
+                got = ids.get(name)
+                if not got or "color" not in got:
+                    continue
+                try:
+                    path = fetch_image(got["color"].split("//")[1])
+                except Exception as e:
+                    print("no picture for", name, e)
+                    path = None
+                studs, own = got.get("studs", studs), got.get("own", False)
+            if not path or not os.path.exists(path):
                 continue
             im = Image.open(path).convert("RGB")
             levels = []
             while im.width >= 4:
                 levels.append(np.asarray(im, float) / 255)
                 im = im.resize((im.width // 2, im.height // 2), Image.BOX)
-            self.by_mat[info["material"]] = (levels, info["studs"])
+            self.by_mat[info["material"]] = (levels, studs, own)
 
     def sample(self, mat, u, v, px_per_stud):
         """Colours at stud coordinates u, v (arrays), picking the mip level for the zoom."""
         entry = self.by_mat.get(mat)
         if entry is None:
             return None
-        levels, studs = entry
+        levels, studs, _ = entry
         texels_per_px = levels[0].shape[0] / studs / max(1e-6, px_per_stud)
         lv = int(np.clip(math.floor(math.log2(max(1.0, texels_per_px))), 0, len(levels) - 1))
         tex = levels[lv]
@@ -148,7 +188,8 @@ def main():
     ap.add_argument("--size", type=int, default=900)
     ap.add_argument("--hide-clear", action="store_true", help="skip invisible parts (default)")
     ap.add_argument("--transparent", action="store_true", help="no background (for thumbnails)")
-    ap.add_argument("--textures", action="store_true", help="paint parts with art/textures")
+    ap.add_argument("--textures", action="store_true", help="paint parts with the game's textures")
+    ap.add_argument("--painted", action="store_true", help="paint parts with our painted art/textures")
     args = ap.parse_args()
 
     prims = json.load(open(args.inp))
@@ -160,7 +201,7 @@ def main():
     up = np.cross(right, forward)
     light = np.array([-0.45, 0.85, 0.3]); light /= np.linalg.norm(light)
 
-    textures = Textures() if args.textures else None
+    textures = Textures(painted=args.painted) if (args.textures or args.painted) else None
     tris, cols, alphas, owners = [], [], [], []
     for pi, p in enumerate(prims):
         if p.get("transp", 0) >= 0.99:
@@ -240,9 +281,12 @@ def main():
                     u, v = lp[:, 0], -lp[:, 1]
                 tex = textures.sample(p["mat"], u, v, scale)
                 if tex is not None:
+                    tcol = col
+                    if textures.by_mat[p["mat"]][2]:  # brings its own colour: the paint only tints it
+                        tcol = (np.array(cols[i]) * (1 - LIFT) + LIFT) * shade
                     if alphas[i] >= 1:
                         region[closer] = z[closer]
-                        img[y0:y1 + 1, x0:x1 + 1][closer] = col * tex
+                        img[y0:y1 + 1, x0:x1 + 1][closer] = tcol * tex
                     continue
         if alphas[i] >= 1:
             region[closer] = z[closer]

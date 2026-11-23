@@ -6,6 +6,7 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Tuning = require(Shared.Config.Tuning)
 local Town = require(Shared.Data.Town)
 local Builder = require(Shared.Build.Builder)
+local Textures = require(Shared.Data.Textures)
 local StarterHouse = require(Shared.Data.StarterHouse)
 local Remotes = require(Shared.Net.Remotes)
 local Plan = require(Shared.Build.Plan)
@@ -73,7 +74,7 @@ function Plots.drawLand(i: number, plan: any)
 	grass.Anchored = true
 	grass.Size = Vector3.new(x2 - x1, 0.1, z2 - z1)
 	grass.CFrame = frame * CFrame.new((x1 + x2) / 2, -0.04, (z1 + z2) / 2)
-	grass.Color = Color3.fromRGB(132, 200, 100)
+	grass.Color = Textures.tint("Grass", Color3.fromRGB(132, 200, 100))
 	grass.Material = Enum.Material.Grass
 	grass.TopSurface = Enum.SurfaceType.Smooth
 	grass.Parent = land

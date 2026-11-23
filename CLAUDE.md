@@ -24,7 +24,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    simulation (`tests/sim/build_client.luau`: the real Build mode driven by clicks), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (53, all passing): Build (catalog, plan rules, field cleaning, shapes, builder), BuildService (the server's
+Specs today (54, all passing): Build (catalog, plan rules, field cleaning, shapes, builder), BuildService (the server's
 Build service with stubbed neighbours: charges, syncs, strips junk, refuses land you don't own), Events (1500 seeded
 events, every kind reachable, text filled, numbers in range), City (starter town valid, levels, land, paydays, save
 loading, economy bounds), Town (placed models exist, plots and road clear, room to walk, spawn and festival spots
@@ -46,12 +46,12 @@ tags, wooden bars, square corners except true circles) and `UI/Icons` (drawn ico
 shape list in `UI/Icons`; it gets one outline round its silhouette, so tell its parts apart by colour. Look at it
 with `sh tools/preview/ui.sh icons:<name> <png>`.
 
-The user asked for custom textures for the environment and everything; they're our own, painted by
-`scripts/gen_textures.py` into art/textures (nearly grey, since a part's colour tints them). After changing one,
-run it (`--sheet <png>` to look) and render with `--textures`. Uploading needs the user's Roblox account:
-`scripts/upload_textures.py` (an Open Cloud key) or a Studio bulk import with the ids pasted into
-`Data/TextureIds`; then `python3 scripts/sync_materials.py` writes them into the place file (check.sh fails if
-it's out of date).
+The user asked for custom textures, then for "textures from the roblox library that fits": the materials use
+Creator Store pictures listed in `Data/TextureIds` (find more with `scripts/library_textures.py search`, get the
+image id with `resolve`; prefer greys, mark ones with their own colour `own = true`, credit the maker). Then
+`python3 scripts/sync_materials.py` writes them into the place file (check.sh fails if it's out of date), and
+`render.sh <scene> <png> --textures` shows them. Our own painted set (`scripts/gen_textures.py`, art/textures)
+covers the rest and can be uploaded with `scripts/upload_textures.py`.
 
 Nothing here runs inside Roblox. Build mode's client runs end to end on the simulation in `tests/sim`; the other
 screens are built on it for the UI previews; the server services and NPCs are only type checked. A review pass found

@@ -33,8 +33,10 @@ The contract between the parts of the game. Update it with every change to an AP
   requests)` tries them on a copy of a plan, `price(id)`), `StarterHouse` (every new plot's first build),
   `Textures` (the painted texture for each material and its studs per tile; `ready()` lists the uploaded ones,
   `install(materialService)` sets each material to its MaterialVariant and makes missing variants where Roblox
-  allows it, which is only the command bar and plugins), `TextureIds` (uploaded image ids by texture name, written
-  by `scripts/upload_textures.py`).
+  allows it, which is only the command bar and plugins), `TextureIds` (image ids by texture name: Creator Store pictures with their
+  decal and maker, or our uploaded ones; `studs` and `own` per texture). `Textures.tint(material, colour)` is the
+  colour a part of that material gets: lifted most of the way to white when its texture brings its own colour
+  (Builder, World and Plots all use it).
 - `Avatar/`: `Appearance` (the saved look, sanitising, which asset types fit which slot), `Categories` (creator tabs,
   catalog filters, wearing and merging).
 - `Sim/`: `Schema` (profile and villager shapes, defaults, migration), `Relationships`, `EventEngine` (picks events,
@@ -186,8 +188,12 @@ server, whatever the client did.
   event, toasts, creator, icons) and `ui_render.py` lays it out and draws it the way Roblox would (sizes, anchors,
   list and grid layouts, padding, automatic sizes, corners, strokes, gradients, outlined text, clipping, rotation,
   the UIScale). `fonts.sh` fetches Fredoka One for it.
-  `render.sh <scene> <png> --textures` paints each part with its material's texture, tinted by its colour and
-  tiled in the part's own space along the face's main axis, the way Roblox lays a MaterialVariant on a part.
+  `render.sh <scene> <png> --textures` paints each part with the texture the game gives its material (the
+  pictures are fetched once into out/library; `--painted` uses art/textures), tinted by its colour and tiled in
+  the part's own space along the face's main axis, the way Roblox lays a MaterialVariant on a part.
+- `scripts/library_textures.py search "<words>" --sheet <png>` lists Creator Store decals with a 2x2 contact sheet,
+  a seam score (opposite edges against neighbouring pixels) and how coloured each is; `resolve <decal>` gives the
+  image id (the Creator Store's item details list it as `textureId`).
 - `scripts/gen_textures.py` paints the textures (art/textures: `<name>.png`, `<name>_n.png`, `textures.json`):
   nearly grey so a part's colour tints them, lit from the top left, and tiling exactly (noise made in frequency
   space, shapes drawn again across the edges). `--sheet <png>` writes a tinted contact sheet.

@@ -6,6 +6,7 @@ local Geometry = require(script.Parent.Geometry)
 local Plan = require(script.Parent.Plan)
 local Shapes = require(script.Parent.Shapes)
 local Catalog = require(script.Parent.Catalog)
+local Textures = require(script.Parent.Parent.Data.Textures)
 
 type Prim = Geometry.Prim
 
@@ -50,7 +51,7 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 	part.BottomSurface = Enum.SurfaceType.Smooth
 	local mat = (Enum.Material :: any)[prim.mat]
 	part.Material = mat or Enum.Material.SmoothPlastic
-	part.Color = prim.color
+	part.Color = Textures.tint(prim.mat, prim.color)
 	part.Transparency = prim.transp or 0
 	part.CanCollide = prim.collide ~= false
 	if prim.name then

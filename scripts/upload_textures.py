@@ -29,19 +29,6 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 TEX = os.path.join(ROOT, "art", "textures")
 API = "https://apis.roblox.com"
 
-HEADER = """--!strict
--- Roblox image ids for the painted textures in art/textures, once they're uploaded. One entry per
--- texture name from Data/Textures: `color` for <name>.png, `normal` for <name>_n.png (optional).
--- scripts/upload_textures.py fills this in; after a Studio bulk import, paste the ids by hand:
---   grass = { color = "rbxassetid://123", normal = "rbxassetid://456" },
--- then run python3 scripts/sync_materials.py to put them in the place.
--- A texture with no colour id here keeps Roblox's own material.
-
-export type Ids = { color: string?, normal: string? }
-
-"""
-
-
 def request(method, url, key, body=None, content_type=None):
     headers = {"x-api-key": key}
     if content_type:
@@ -89,15 +76,7 @@ def image_id(decal_id, key):
 
 
 def write_ids(ids, order):
-    rows = []
-    for name in order:
-        got = ids.get(name)
-        if got:
-            fields = ", ".join(f'{k} = "{got[k]}"' for k in ("color", "normal") if k in got)
-            rows.append(f"\t{name} = {{ {fields} }},\n")
-    table = "{\n" + "".join(rows) + "}" if rows else "{}"
-    text = HEADER + f"local TextureIds: {{ [string]: Ids }} = {table}\n\nreturn TextureIds\n"
-    open(sync_materials.IDS, "w").write(text)
+    sync_materials.write_ids(ids, order)
 
 
 def main():

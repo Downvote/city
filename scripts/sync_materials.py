@@ -20,21 +20,73 @@ INDEX = os.path.join(ROOT, "art", "textures", "textures.json")
 ID = r'"(rbxassetid://\d+)"'
 
 
+HEADER = """--!strict
+-- Roblox image ids for the materials' textures. Most come from the Creator Store (public decals,
+-- found with scripts/library_textures.py; `decal` is the decal they came from, the comment its
+-- name and maker); the rest can be our painted ones in art/textures once uploaded
+-- (scripts/upload_textures.py). Fields: `color` the image, `normal` an optional normal map,
+-- `studs` how many studs one copy covers (else Data/Textures' own), `own` when the picture
+-- brings its own colour (the part's paint then only tints it lightly).
+-- After changing this, run python3 scripts/sync_materials.py to put it in the place.
+-- A texture with no colour id here keeps Roblox's own material.
+
+export type Ids = { color: string?, normal: string?, studs: number?, own: boolean?, decal: number? }
+
+"""
+
+
 def read_ids(path=IDS):
-    """name -> {"color": id, "normal": id} from the Luau table (entries look like
-    `grass = { color = "rbxassetid://1", normal = "rbxassetid://2" },`)."""
+    """name -> fields from the Luau table (entries look like
+    `grass = { color = "rbxassetid://1", studs = 10, own = true, decal = 2 }, -- note`)."""
     text = open(path).read()
-    text = re.sub(r"--[^\n]*", "", text)  # comments hold an example entry
     out = {}
-    for name, body in re.findall(r"\b(\w+)\s*=\s*\{([^{}]*)\}", text):
+    for line in text.splitlines():
+        code, _, note = line.partition("--")
+        m = re.match(r"\s*(\w+)\s*=\s*\{([^{}]*)\}", code)
+        if not m:
+            continue
+        name, body = m.groups()
         ids = {}
         for key in ("color", "normal"):
-            m = re.search(r"\b" + key + r"\s*=\s*" + ID, body)
-            if m:
-                ids[key] = m.group(1)
+            v = re.search(r"\b" + key + r"\s*=\s*" + ID, body)
+            if v:
+                ids[key] = v.group(1)
+        v = re.search(r"\bstuds\s*=\s*([\d.]+)", body)
+        if v:
+            ids["studs"] = float(v.group(1)) if "." in v.group(1) else int(v.group(1))
+        v = re.search(r"\bdecal\s*=\s*(\d+)", body)
+        if v:
+            ids["decal"] = int(v.group(1))
+        if re.search(r"\bown\s*=\s*true", body):
+            ids["own"] = True
+        if note.strip():
+            ids["note"] = note.strip()
         if ids:
             out[name] = ids
     return out
+
+
+def write_ids(ids, order, path=IDS):
+    rows = []
+    for name in order:
+        got = ids.get(name)
+        if not got or "color" not in got:
+            continue
+        fields = []
+        for k in ("color", "normal"):
+            if k in got:
+                fields.append(f'{k} = "{got[k]}"')
+        if "studs" in got:
+            fields.append(f"studs = {got['studs']}")
+        if got.get("own"):
+            fields.append("own = true")
+        if "decal" in got:
+            fields.append(f"decal = {got['decal']}")
+        note = f" -- {got['note']}" if got.get("note") else ""
+        rows.append(f"\t{name} = {{ {', '.join(fields)} }},{note}\n")
+    table = "{\n" + "".join(rows) + "}" if rows else "{}"
+    text = HEADER + f"local TextureIds: {{ [string]: Ids }} = {table}\n\nreturn TextureIds\n"
+    open(path, "w").write(text)
 
 
 def variant_name(name):
@@ -50,7 +102,7 @@ def material_service(ids, index):
         if "color" not in got:
             continue
         v = variant_name(name)
-        p = {"BaseMaterial": info["material"], "ColorMap": got["color"], "StudsPerTile": info["studs"],
+        p = {"BaseMaterial": info["material"], "ColorMap": got["color"], "StudsPerTile": got.get("studs", info["studs"]),
              "MaterialPattern": "Regular"}
         if "normal" in got:
             p["NormalMap"] = got["normal"]
@@ -84,11 +136,11 @@ def main():
         if wanted != current:
             print("default.project.json is out of date with Data/TextureIds: run python3 scripts/sync_materials.py")
             sys.exit(1)
-        print(f"materials in sync ({count} painted textures in the place)")
+        print(f"materials in sync ({count} textures in the place)")
         return
     if wanted != current:
         open(PROJECT, "w").write(wanted)
-    print(f"{count} painted textures in the place")
+    print(f"{count} textures in the place")
 
 
 if __name__ == "__main__":

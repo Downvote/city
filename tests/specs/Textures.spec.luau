@@ -66,6 +66,26 @@ describe("Textures", function()
 		expect(byName.wood).toBe(nil)
 	end)
 
+	it("lifts the paint on textures that bring their own colour", function()
+		local green = Color3.fromRGB(120, 200, 90)
+		local own, plain
+		for _, t in Textures.ready() do
+			if t.own then
+				own = t.material
+			else
+				plain = plain or t.material
+			end
+		end
+		if own then
+			local lifted = Textures.tint(own, green)
+			expect(lifted.R > green.R and lifted.B > green.B).toBeTruthy()
+		end
+		if plain then
+			expect(Textures.tint(plain, green)).toBe(green)
+		end
+		expect(Textures.tint(nil, green)).toBe(green)
+	end)
+
 	it("keeps the uploaded ids table tidy", function()
 		for name, ids in TextureIds do
 			local known = false
@@ -78,6 +98,9 @@ describe("Textures", function()
 			end
 			if ids.normal then
 				expect(ids.normal:match("^rbxassetid://%d+$") ~= nil).toBeTruthy()
+			end
+			if ids.studs then
+				expect(ids.studs).toBeBetween(0.5, 50)
 			end
 		end
 	end)

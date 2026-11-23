@@ -1,8 +1,9 @@
 --!strict
--- The game's own painted textures, one per material: art/textures/<name>.png, painted by
--- scripts/gen_textures.py (the studs per tile here match art/textures/textures.json; the
--- Textures spec checks). A texture shows in game once its picture is uploaded and its id is in
--- Data/TextureIds. Until then the material keeps Roblox's own look.
+-- A texture for each material. Most come from the Creator Store (public decals picked with
+-- scripts/library_textures.py); for the rest we have our own painted ones in art/textures
+-- (scripts/gen_textures.py; the studs per tile here match art/textures/textures.json, the
+-- Textures spec checks). A texture shows once its image id is in Data/TextureIds; until then
+-- the material keeps Roblox's own look.
 --
 -- Roblox lets only plugins set a MaterialVariant's pictures, so the variants go into the place
 -- when it's built: scripts/sync_materials.py writes them, and MaterialService's overrides, into
@@ -21,6 +22,7 @@ export type Ready = {
 	studs: number,
 	color: string,
 	normal: string?,
+	own: boolean, -- the picture brings its own colour
 }
 
 local Textures = {}
@@ -60,13 +62,35 @@ function Textures.ready(ids: { [string]: TextureIds.Ids }?): { Ready }
 				name = e.name,
 				variant = "Maplewick" .. e.name:sub(1, 1):upper() .. e.name:sub(2),
 				material = e.material,
-				studs = e.studs,
+				studs = if type(got.studs) == "number" and got.studs > 0 then got.studs else e.studs,
 				color = got.color,
 				normal = if type(got.normal) == "string" and got.normal:match(ID) then got.normal else nil,
+				own = got.own == true,
 			})
 		end
 	end
 	return out
+end
+
+-- Materials whose texture brings its own colour, from what's in TextureIds now.
+local ownColour: { [string]: boolean } = {}
+for _, t in Textures.ready() do
+	if t.own then
+		ownColour[t.material] = true
+	end
+end
+
+local WHITE = Color3.new(1, 1, 1)
+Textures.Lift = 0.72 -- how far a part's colour moves to white on a texture with its own colour
+
+-- The colour a part of this material should have. Roblox multiplies a material's texture by the
+-- part's colour, so a picture that brings its own colour (green grass) would go muddy under a
+-- green part: those parts are lifted most of the way to white and the paint only tints them.
+function Textures.tint(material: string?, color: Color3): Color3
+	if material and ownColour[material] then
+		return color:Lerp(WHITE, Textures.Lift)
+	end
+	return color
 end
 
 -- Sets each ready texture's material to its MaterialVariant under `materialService`, making the
