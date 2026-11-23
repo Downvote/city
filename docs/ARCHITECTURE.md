@@ -463,10 +463,12 @@ clipping (`tools/preview/ui_render.py`).
   of its own. A layer is a path string (a stroke) or `{ d, w =, fill =, stroke =, cut =, opacity = }`. A stroke is
   every pixel within half its width of the line (round ends and corners); a fill is even-odd over four lines a
   pixel row. `Vector.circle`, `ellipse`, `rect` and `dot` write paths.
-- `UI/IconArt`: every interface icon as paths on a 24 grid (`IconArt.art[name]`), plus the coin. `UI/ItemArt`: flat
-  colour pictures of the foods and shop things, by id; IconArt folds them into the same table.
+- `UI/IconArt`: every interface icon as paths on a 24 grid (`IconArt.art[name]`), plus the coin. Each is a solid
+  silhouette with its details cut out (its own helpers `solid`, `flat`, `hole`, `gap`, `clear`, `line` build the
+  layers). `UI/ItemArt`: shaded pictures of the foods and shop things, by id; IconArt folds them into the same
+  table.
 - `UI/Icons`: `Icons.make(name, px, props)` returns a Frame holding the icon. It tries `Icons.vector` first: the art
-  is painted once at 48 and once at 96 pixels (`Icons.Weight` is the line's width at each) into a 512 square
+  is painted once at 48 and once at 96 pixels (`Icons.Weight`, 3.25 and 3, is the width of a line that names none, at each) into a 512 square
   EditableImage sheet, a pixel apart, and shown by an ImageLabel named `Art` through `ImageContent`,
   `ImageRectOffset` and `ImageRectSize`, tinted with `ImageColor3` (art with its own colours is left white). The
   root carries the attributes `Vector`, `Mono` and `Glyph`. Any failure (the Mesh / Image API off in a published
@@ -604,7 +606,8 @@ clipping (`tools/preview/ui_render.py`).
   inside its footprint, with its workplace), `Town` (every placed model exists, plots and road stay clear, room to
   walk on the sidewalks), `Icons`
   (every icon builds from shapes; outline copies all come before the fills and no fill carries a dark stroke;
-  every icon has vector art, every piece of art paints inside its square at both sizes, interface icons are
+  every icon has vector art, every piece of art paints inside its square at both sizes, every interface icon is
+  a solid shape with no line or cut thinner than 1.5 and nothing within 1 of the edge, interface icons are
   one colour, an icon is its square of a sheet and tinted, the fallback to shapes works), `Vector` (the path
   reader, and painted areas of circles, rings, lines, dots and round rectangles checked against geometry),
   `Street` (street models are cheap, sign faces are marked, overhead parts can't be bumped into, nothing stands

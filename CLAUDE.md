@@ -247,9 +247,16 @@ off is hidden so it can't catch a click. The tools that draw keep their trays. A
 buttons beside the hint, "Turn it" and "Put it away" (`BuildMode.putAway`).
 Icons are vector art (the user: "Alot of the icons arent proper vector art and just shapes spliced together,
 look online to see how vector art should be. Make them as simple as possible"): paths in `UI/IconArt` on a 24
-grid, one line weight, round ends, a margin of 2, as few lines as possible, painted by `UI/Vector` into an
-EditableImage sheet when the game runs. Food and shop things are flat colour pictures in `UI/ItemArt`
-(`Icons.item`). Look at art with `sh tools/preview/art.sh <png> <names>`. A published game only paints them
+grid, painted by `UI/Vector` into an EditableImage sheet when the game runs. They were thin line art; then the
+user: "also, redo the icons, so that it matches the icon style in zenless zone zero.
+https://skowt.cc/games/zenless-zone-zero this includes the food and things icons". So an interface icon is a
+solid silhouette in one colour with its details cut out of it (the door out of the house, the hands out of the
+clock), never an outline: cuts and gaps 1.5 to 2 wide so they last at 16 pixels, signs that are all line (plus,
+cross, tick, arrows) 4 wide with square ends, true circles and firm corners, points that really point, a notch
+in every arrow's tail, 1.5 clear of the edge (the rules are at the top of IconArt, and the Icons spec holds
+them). Food and shop things are shaded pictures in `UI/ItemArt` (`Icons.item`). As with the menus, the style
+is taken and never the pictures: no icon, dish, logo or lettering of that game is copied or traced, and none
+of its files is in the repository. Look at art with `sh tools/preview/art.sh <png> <names>`. A published game only paints them
 with Allow Mesh / Image APIs on (Security, in the game's settings); otherwise each icon falls back to its
 shape list in `UI/Icons` (`D`), so a new icon needs both, and the Icons spec fails without the art. The coin
 keeps its gold and its indent ("the coin icon can have a darker circle inside as an indent"). The Goals button

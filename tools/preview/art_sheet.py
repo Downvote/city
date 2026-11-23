@@ -37,9 +37,13 @@ except OSError:
 for i, item in enumerate(items):
     x, y = (i % cols) * W, (i // cols) * H
     big = tinted(load(item["name"], 192), item)
-    # the 24 grid behind the big one, faintly, with the 2 unit margin marked
+    # the 24 grid behind the big one, faintly, with the margin an icon keeps clear (1.5) marked
     for k in range(0, 25, 2):
-        c = (52, 56, 74) if k not in (2, 22) else (84, 90, 116)
+        c = (52, 56, 74)
+        draw.line([x + 8 + k * 8, y + 8, x + 8 + k * 8, y + 200], fill=c)
+        draw.line([x + 8, y + 8 + k * 8, x + 200, y + 8 + k * 8], fill=c)
+    for k in (1.5, 22.5):
+        c = (84, 90, 116)
         draw.line([x + 8 + k * 8, y + 8, x + 8 + k * 8, y + 200], fill=c)
         draw.line([x + 8, y + 8 + k * 8, x + 200, y + 8 + k * 8], fill=c)
     sheet.paste(big, (x + 8, y + 8), big)

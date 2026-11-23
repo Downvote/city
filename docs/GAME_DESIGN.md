@@ -1128,6 +1128,29 @@ Esc or Backspace) or leave Build mode and it slides back where it was.
 - On a touch screen two round buttons sit beside the hint, to turn the piece and to put it away, and the hint
   reads "Tap to place it. The buttons turn it or put it away."
 
+### Solid icons, shaded food
+
+> also, redo the icons, so that it matches the icon style in zenless zone zero.
+> https://skowt.cc/games/zenless-zone-zero this includes the food and things icons
+
+That link is a gallery of that game's own pictures. We looked at it for the style and took nothing else: no icon,
+dish, logo or lettering of theirs is copied or traced, nothing was downloaded into the game, and every picture
+here is still a drawing of our own subject (our house, our hammer, our apple).
+
+- **Interface icons are solid.** The thin line drawings are gone. Each icon is a filled shape in one colour with
+  its details cut out of it: the door out of the house, the hands out of the clock, the spokes out of the wheel.
+  Cuts and gaps are wide enough to last at 16 pixels. Signs that are all line (plus, cross, tick, the arrows) are
+  heavy bars with square ends, and every arrow has a notch in its tail. Shapes are true circles and straight
+  edges with firm corners, things that point come to a real point, and an icon fills its box to within a sliver
+  of the edge. An icon still takes whatever colour its button gives it; the coin keeps its gold and the darker
+  circle in its face.
+- **Food and things are shaded.** Each food and each thing the shop sells is drawn with volume: lit from the top
+  left, a deeper tone of its own colour on the far side, a lighter one where the light lands, and small bright
+  glints on anything glossy. A dish sits in a bowl or on a plate of our own plain design. They are built from flat
+  shapes laid over each other, so they are bolder and rounder than before without being paintings.
+- A few subjects changed where the old one did not read as a solid shape: the hat is a round hat with a brim, the
+  tree is one crown with branches cut into it, the path is three stepping stones.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no
