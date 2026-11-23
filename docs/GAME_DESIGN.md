@@ -1082,6 +1082,17 @@ was running went into the bag with no way to use it. A cake is eaten at the part
 one at a time and only when a party can start: if something is already going on in town it says so and takes
 nothing. A cake left in the bag from before pays for the next party.
 
+### The floors card as five icons
+
+> change this part to 5 icons, 2 arrows, 3 toggleable icons in a row with no need for text
+
+(With a screenshot of the Floors card: the two arrows round "Floor 1", and three rows of words with On and Off.)
+The card is one row of five icon buttons now, the height of the tools row: floor down, floor up, a thin divider,
+then Hide roofs, See-through walls and Snap to grid. A switch that is on is yellow with a dark icon; an arrow that
+can go no further is dim. With the words gone, the hint line over the tools says what a press did for a moment
+("Floor 2", "Roofs hidden", "Walls see-through", "Snap to grid off") and, while the pointer is on a button, what
+pressing it would do.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

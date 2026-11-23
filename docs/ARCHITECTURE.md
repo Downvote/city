@@ -525,7 +525,9 @@ clipping (`tools/preview/ui_render.py`).
   other way, with the `Clock` box over it), `Menu` at the bottom left (its `MenuBar` out of the corner, leaning the
   other way, the four tiles on it packed from the left edge), and the Build button running off the bottom right corner.
   Under the clock are the captioned round buttons (`HomeCell` with `Home`, then the map, the city hall, the shop,
-  the news and the look). `Hud.goHome()` shuts the menus, dips the screen
+  the news and the look). While `State.data.talking` is true (a dialogue scene is up: the talk card, an event the
+  player chose to watch) the `Menu`, the Build button and the quests slide off their edges, and back when it goes
+  false. `Hud.goHome()` shuts the menus, dips the screen
   (a `Veil` frame) and asks `GoHome`; H does the same when the HUD shows and nothing has the keyboard. It opens one
   panel at a time:
   `Creator`, `Residents`, `CityPanel`, `ShopPanel`, `News`, `Welcome`. `EventCard` (the dialogue box) and `Weather`
@@ -555,7 +557,9 @@ clipping (`tools/preview/ui_render.py`).
   screen holding the main groups at its left end and `Done` at its right; above it `Catalog`, one rounded card
   the whole width holding the scroll `Subs` (category tiles, in a deeper well) over `Tray` (cards and options)
   when `CATEGORIES_ON_TOP` is true, the other way up when false; `Tools` (a row of tiles) above the catalog at
-  the left with `Hint` over it, `Floors` above it at the right, the coin `Pill` top left.
+  the left with `Hint` over it, `Floors` above it at the right (a row of five icon buttons named `FloorDown`,
+  `FloorUp`, `Hide roofs`, `See-through walls` and `Snap to grid`; the hint line says what a press did), the coin
+  `Pill` top left.
 
 ## The drawn city
 

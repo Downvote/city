@@ -151,6 +151,28 @@ run("the quick menu comes out of the bottom left corner, its tiles from the left
 	check(menu.Size.X.Offset < wide + 80, "and the bar is no longer than they need")
 end)
 
+run("the main screen steps aside while somebody is talking in a scene", function()
+	local menu = gui:FindFirstChild("Menu", true)
+	-- (the main screen's own Build button: Build mode has a tab of the same name)
+	local build = menu.Parent:FindFirstChild("Build")
+	local quests = gui:FindFirstChild("Quests", true)
+	local pills = gui:FindFirstChild("Pills", true)
+	check(menu ~= nil and build ~= nil and quests ~= nil, "the pieces are there")
+	local homeMenu, homeBuild, homeQuests = menu.Position, build.Position, quests.Position
+	State.set("talking", true)
+	Sim.advance(1)
+	check(menu.Position.X.Offset <= -menu.Size.X.Offset, "the menu bar slides off the left")
+	check(build.Position.X.Offset >= build.Size.X.Offset, "the Build button off the right")
+	check(quests.Position.X.Offset <= -quests.Size.X.Offset, "and the quests off the left")
+	check(pills.Position.X.Offset == 0, "the stats stay")
+	State.set("talking", false)
+	Sim.advance(1)
+	check(
+		menu.Position == homeMenu and build.Position == homeBuild and quests.Position == homeQuests,
+		"and they all come back where they were when the talk is over"
+	)
+end)
+
 print(
 	string.format(
 		"\nhud sim: %s (%d warnings)",

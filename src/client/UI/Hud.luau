@@ -614,6 +614,29 @@ function Hud.start()
 		giftBadge.Visible = giftReady
 	end)
 
+	-- While somebody is talking in a scene (a villager you stopped, an event you chose to watch:
+	-- the user, "when text from a villager appears, make the character talking slide into view
+	-- at the side with a textbox"), the bottom of the screen and its left side are theirs. The
+	-- menu bar, the Build button and the quests slide out of the way and come back after. The
+	-- cards say so with State.set("talking", true / false).
+	local aside = false
+	local function stepAside(on: boolean)
+		if on == aside then
+			return
+		end
+		aside = on
+		local ease = TweenInfo.new(0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		TweenService:Create(menu, ease, { Position = UDim2.new(0, if on then -460 else 0, 1, 0) }):Play()
+		TweenService:Create(buildButton, ease, { Position = UDim2.new(1, if on then 320 else 20, 1, 0) }):Play()
+		local quests = Quests.root()
+		if quests then
+			TweenService:Create(quests, ease, { Position = UDim2.fromOffset(if on then -440 else 0, 152) }):Play()
+		end
+	end
+	State.on("talking", function(v)
+		stepAside(v == true)
+	end)
+
 	-- everything slides into place when the game starts, one piece after another
 	Kit.slideIn(pills, -420, 0, 0.1)
 	Kit.slideIn(card, -360, 0, 0.2)

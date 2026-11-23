@@ -36,7 +36,7 @@ is, the outfit that holds the body, single body parts, the player's own items an
 `creator:bodies`, `creator:parts`, `creator:items`, `creator:items:ask`, `creator:items:no`, `creator:avatars`,
 `creator:wearing`, `creator:skin`, `creator:shape`, `creator:outfits`, `creator:outfits:saved`, `creator:people`;
 Build mode's are `build`, `build:walls`, `build:rooms`, `build:floors`, `build:roofs`, `build:fences`,
-`build:paths`, `build:buildings`, `build:bought`, `build:pick`, `build:paint`, `build:sell`; any scene takes the
+`build:paths`, `build:buildings`, `build:bought`, `build:pick`, `build:paint`, `build:sell`, `build:view`; any scene takes the
 prefix `plain:` to show it with the painted shapes off), Build (catalog, plan rules, field cleaning, shapes, builder), BuildService (the server's
 Build service with stubbed neighbours: charges, syncs, strips junk, refuses land you don't own), Events (3000 seeded
 events, every kind reachable, text filled, numbers in range), Newcomers (who moves in: the player's friends first,
@@ -231,7 +231,11 @@ they share the same rectangle background with each other" (`CATEGORIES_ON_TOP` i
 should they have meant the other one). Never leave scenery showing between two parts of the tray. The catalog
 runs the whole width of the screen and the floor card sits on top of it at the right ("build mode should have the
 right part with all the decor and details filling the whole screen horizontally, and the right side should be
-moved up"): size those bars by scale (`UDim2.new(1, -28, 0, h)`), never to a fixed width.
+moved up"): size those bars by scale (`UDim2.new(1, -28, 0, h)`), never to a fixed width. The floor card is one
+row of five icon buttons with no words ("change this part to 5 icons, 2 arrows, 3 toggleable icons in a row with
+no need for text"): floor down, floor up, then Hide roofs, See-through walls and Snap to grid, yellow when on. What
+a press did, and what a button under the pointer would do, is said in the hint line over the tools ("Floor 2",
+"Roofs hidden"); never put words back on the card.
 Icons are vector art (the user: "Alot of the icons arent proper vector art and just shapes spliced together,
 look online to see how vector art should be. Make them as simple as possible"): paths in `UI/IconArt` on a 24
 grid, one line weight, round ends, a margin of 2, as few lines as possible, painted by `UI/Vector` into an
