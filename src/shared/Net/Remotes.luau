@@ -36,6 +36,9 @@ Remotes.Functions = {
 	"SettingSet", -- (key, value) -> ok
 	"TutorialStep", -- (step) -> ok
 	"VisitPlot", -- (plotIndex) -> ok
+	"WishGrant", -- (vid, "friend" | "cheer", otherVid?) -> ok, err
+	"HeartReward", -- (choice 1..3) -> ok, notice: picks a thank you from the oldest heart level up
+	"GoalClaim", -- (goalId) -> ok, coins
 }
 
 Remotes.Events = {

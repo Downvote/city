@@ -14,3 +14,4 @@ local World = script.Parent.World
 require(World.Ambience).start()
 require(World.BuildFx).start()
 require(World.Materials).start()
+require(World.Wishes).start()

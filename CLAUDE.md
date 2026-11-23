@@ -30,7 +30,8 @@ events, every kind reachable, text filled, numbers in range), City (starter town
 loading, economy bounds), Town (placed models exist, plots and road clear, room to walk, spawn and festival spots
 clear, the islets out at sea off the plots), Presets (every ready-made building goes down whole turned every way, on the client and
 the server, inside its footprint, with its workplace), Icons (every icon builds with one outline round its silhouette: outline copies before
-fills, no stroke on a fill), Textures (every painted texture has its pictures and matching studs, ids well formed). The town map previews with `sh tools/preview/render.sh map <png>` (or
+fills, no stroke on a fill), Textures (every painted texture has its pictures and matching studs, ids well formed), Life
+(hearts and thank yous, snacks a day, wishes granted only by the right answer and fading, bonds, goals pay once). The town map previews with `sh tools/preview/render.sh map <png>` (or
 `map:x1,z1,x2,z2`), the cars, bus and bird with `ambient`, a cloud with `cloud`, a ready-made building with
 `preset:<id>` (`preset:<id>:inside` leaves the roof off). A new ready-made building is a function in
 `Data/Presets` laid out with its little builder; the Presets spec will say where it doesn't fit.

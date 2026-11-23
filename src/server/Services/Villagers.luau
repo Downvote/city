@@ -17,6 +17,8 @@ local Town = require(Shared.Data.Town)
 local Colors = require(Shared.Util.Colors)
 local City = require(Shared.Sim.City)
 local EventEngine = require(Shared.Sim.EventEngine)
+local Life = require(Shared.Sim.Life)
+local Sayings = require(Shared.Data.Sayings)
 local Rng = require(Shared.Util.Rng)
 local Text = require(Shared.Util.Text)
 local Remotes = require(Shared.Net.Remotes)
@@ -347,6 +349,62 @@ local function line(pers: string, kind: string): string
 	end
 	return rng:pick(lines)
 end
+
+-- What a villager says: now and then their own saying or a line about their hobby.
+local function ownLine(v: any, kind: string): string
+	local saying = Sayings.get(v.saying)
+	if saying and rng:chance(0.3) then
+		return saying.text
+	end
+	local hobby = Sayings.hobby(v.hobby)
+	if hobby and rng:chance(0.2) then
+		return hobby.line
+	end
+	return line(v.pers, kind)
+end
+
+-- Marks each villager's model with their wish's icon, for the bubble over their head.
+local function syncWishes(player: Player)
+	local profile = Data.get(player)
+	local list = npcs[player]
+	if not profile or not list then
+		return
+	end
+	for vid, npc in list do
+		local v = profile.villagers[vid]
+		local wish = v and v.wish
+		if npc.model then
+			npc.model:SetAttribute("Wish", if wish then Life.WishIcons[wish.kind] else nil)
+		end
+	end
+end
+Villagers.syncWishes = syncWishes
+
+-- Every in-game hour: old wishes fade and new ones turn up.
+local function lifeHour(player: Player)
+	local profile = Data.get(player)
+	if not profile then
+		return
+	end
+	local now = os.time()
+	for _, n in Life.fadeWishes(profile, now) do
+		Data.notify(player, n, "info")
+	end
+	for _, vid in profile.order do
+		if Life.maybeWish(profile, vid, rng, now) then
+			local text = Life.wishText(profile, vid)
+			if text then
+				Data.notify(player, text, "event")
+			end
+			local npc = Villagers.get(player, vid)
+			if npc then
+				npc:icon("question")
+			end
+		end
+	end
+	syncWishes(player)
+	Data.push(player, "villagers")
+end
 Villagers.line = line
 
 local function chat(player: Player, vid: string, npc: any): boolean
@@ -382,10 +440,10 @@ local function chat(player: Player, vid: string, npc: any): boolean
 		fnpc:face(npc:position())
 		local va, vb = profile.villagers[vid], profile.villagers[friend]
 		if va and vb then
-			npc:say(line(va.pers, "hello"))
+			npc:say(ownLine(va, "hello"))
 			npc:gesture("wave")
 			task.wait(2.2)
-			fnpc:say(line(vb.pers, "hello"))
+			fnpc:say(ownLine(vb, "hello"))
 			task.wait(2.2)
 			local key = Schema.pairKey(vid, friend)
 			local rel = profile.rel[key]
@@ -791,6 +849,16 @@ local function update(player: Player, vid: any, fields: any): (boolean, string?)
 	if fields.app then
 		v.app = Avatar.validate(input.app, 30)
 		respawn = true
+		-- a new look answers a wish for one
+		if v.wish and v.wish.kind == "look" then
+			local granted, _, notices = Life.grantWish(profile, vid, "look", nil, rng)
+			if granted then
+				for _, n in notices do
+					Data.notify(player, n, "good")
+				end
+				Data.push(player, "offers", "coins", "stats")
+			end
+		end
 	end
 	v.pers = input.pers
 	v.color = input.color
@@ -948,6 +1016,17 @@ function Villagers.feed(player: Player, vid: string, foodId: string): (boolean, 
 	local mood = if reaction == "love" then food.joy * 2 + 6 elseif reaction == "hate" then -10 else food.joy
 	Villagers.addMood(player, vid, mood)
 	profile.stats.fed += 1
+	-- hearts for a snack, and a craving answered
+	Life.fedHearts(profile, vid, foodId, World.dayIndex(), rng)
+	if v.wish and v.wish.kind == "food" then
+		local granted, _, notices = Life.grantWish(profile, vid, "food", foodId, rng)
+		if granted then
+			for _, n in notices do
+				Data.notify(player, n, "good")
+			end
+			syncWishes(player)
+		end
+	end
 	local npc = Villagers.get(player, vid)
 	if npc then
 		if reaction == "love" then
@@ -962,7 +1041,7 @@ function Villagers.feed(player: Player, vid: string, foodId: string): (boolean, 
 			npc:icon("sparkle")
 		end
 	end
-	Data.push(player, "villagers", "inv", "stats")
+	Data.push(player, "villagers", "inv", "stats", "offers", "coins")
 	return true, { reaction = reaction, mood = mood }
 end
 
@@ -972,7 +1051,61 @@ function Villagers.start()
 	Remotes.fn("VillagerRemove").OnServerInvoke = remove
 	Remotes.fn("VillagerBed").OnServerInvoke = setBed
 	Remotes.fn("VillagerJob").OnServerInvoke = setJob
+	Remotes.fn("WishGrant").OnServerInvoke = function(player, vid, how, arg)
+		if type(vid) ~= "string" or (how ~= "friend" and how ~= "cheer") then
+			return false, "Can't do that."
+		end
+		if how == "friend" and type(arg) ~= "string" then
+			return false, "Who should they meet?"
+		end
+		local profile = Data.get(player)
+		if not profile then
+			return false, "Not ready yet."
+		end
+		local granted, _, notices = Life.grantWish(profile, vid, how, if how == "friend" then arg else nil, rng)
+		if not granted then
+			return false, "That's not what they wished for."
+		end
+		for _, n in notices do
+			Data.notify(player, n, "good")
+		end
+		local npc = Villagers.get(player, vid)
+		if npc then
+			npc:say(if how == "cheer" then "Thanks. I feel better already." else "Nice to meet you properly.")
+			npc:icon("heart")
+		end
+		syncWishes(player)
+		Data.push(player, "villagers", "rel", "coins", "stats", "offers")
+		return true
+	end
+	Remotes.fn("HeartReward").OnServerInvoke = function(player, choice)
+		local profile = Data.get(player)
+		if not profile then
+			return false, "Not ready yet."
+		end
+		local ok, notice = Life.claimReward(profile, choice, rng)
+		if ok and notice then
+			Data.notify(player, notice, "good")
+		end
+		Data.push(player, "offers", "coins", "inv", "villagers")
+		return ok, notice
+	end
+	Remotes.fn("GoalClaim").OnServerInvoke = function(player, id)
+		local profile = Data.get(player)
+		if not profile then
+			return false, 0
+		end
+		local ok, coins = Life.claimGoal(profile, id)
+		if ok then
+			Data.notify(player, Text.fill("Goal done. +{n} coins", { n = Text.commas(coins) }), "good")
+		end
+		Data.push(player, "goals", "coins")
+		return ok, coins
+	end
 	World.ClockChanged.Event:Connect(function(hour)
+		for _, player in Players:GetPlayers() do
+			task.spawn(lifeHour, player)
+		end
 		if math.floor(hour) == Tuning.Day.WorkEnd then
 			for _, player in Players:GetPlayers() do
 				task.spawn(Villagers.payday, player)
@@ -1001,6 +1134,7 @@ function Villagers.start()
 			task.spawn(Villagers.spawn, player, vid)
 			task.wait(0.3)
 		end
+		task.delay(2, syncWishes, player)
 	end)
 	Build.Changed:Connect(onBuildChanged)
 	World.NewDay.Event:Connect(function()

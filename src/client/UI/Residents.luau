@@ -10,11 +10,13 @@ local Tuning = require(Shared.Config.Tuning)
 local Schema = require(Shared.Sim.Schema)
 local City = require(Shared.Sim.City)
 local Relationships = require(Shared.Sim.Relationships)
+local Life = require(Shared.Sim.Life)
 local Jobs = require(Shared.Data.Jobs)
 local Colors = require(Shared.Util.Colors)
 local Text = require(Shared.Util.Text)
 
 local Kit = require(script.Parent.Kit)
+local Icons = require(script.Parent.Icons)
 local Toasts = require(script.Parent.Toasts)
 local ModelPreview = require(script.Parent.ModelPreview)
 local State = require(script.Parent.Parent.Controllers.State)
@@ -269,10 +271,35 @@ local function showDetail()
 	end)
 	local info = Kit.box({ Parent = detail, Size = UDim2.new(1, -186, 0, 220), Position = UDim2.fromOffset(186, 0) })
 	Kit.list(info, 4)
+	-- the name, and how close they are to you
+	local nameRow = Kit.box({ Parent = info, Size = UDim2.new(1, 0, 0, 34), LayoutOrder = 1 })
 	Kit.title(
 		v.name .. (if v.isYou then "  (you)" else ""),
-		{ Parent = info, TextSize = 28, LayoutOrder = 1, Size = UDim2.new(1, 0, 0, 34) }
+		{ Parent = nameRow, TextSize = 28, Size = UDim2.new(1, -124, 1, 0) }
 	)
+	local heart = Kit.frame({
+		Name = "Heart",
+		Parent = nameRow,
+		Size = UDim2.fromOffset(116, 30),
+		Position = UDim2.new(1, 0, 0.5, 0),
+		AnchorPoint = Vector2.new(1, 0.5),
+		Color = T.Pink,
+		Radius = "pill",
+	})
+	Icons.make("heart", 20, {
+		Parent = heart,
+		Position = UDim2.new(0, 10, 0.5, 0),
+		AnchorPoint = Vector2.new(0, 0.5),
+		Color = T.White,
+		Hole = T.Pink,
+	})
+	Kit.title(Text.fill("Level {n}", { n = v.heart or 1 }), {
+		Parent = heart,
+		Size = UDim2.new(1, -36, 1, 0),
+		Position = UDim2.fromOffset(34, 0),
+		TextSize = 16,
+		Color = T.White,
+	})
 	Kit.text(
 		if pers then pers.name .. ". " .. pers.blurb else "",
 		{ Parent = info, TextSize = 15, Color = T.InkSoft, LayoutOrder = 2, Size = UDim2.new(1, 0, 0, 36) }
@@ -348,18 +375,87 @@ local function showDetail()
 		selected = nil
 	end)
 
+	-- their wish, in a speech bubble, with what you can do about it
+	local friendsTop = 284
+	local wishText = Life.wishText(p, vid)
+	if wishText and v.wish then
+		local _, wishBody = Kit.bubble({
+			Name = "Wish",
+			Parent = detail,
+			Size = UDim2.new(1, -8, 0, 58),
+			Position = UDim2.fromOffset(4, 286),
+			Tail = "up",
+			TailAt = 0.12,
+			TailSize = 16,
+			Radius = "pill",
+			Bulge = 5,
+		})
+		local row = Kit.box({ Parent = wishBody, Size = UDim2.fromScale(1, 1) })
+		Kit.pad(row, 20, 0)
+		local kind = v.wish.kind
+		Icons.make(Life.WishIcons[kind] or "smile", 26, {
+			Parent = row,
+			Position = UDim2.new(0, 0, 0.5, 0),
+			AnchorPoint = Vector2.new(0, 0.5),
+			Color = T.Orange,
+		})
+		local wishLabel = Kit.text(wishText, {
+			Parent = row,
+			Size = UDim2.new(1, -176, 1, 0),
+			Position = UDim2.fromOffset(36, 0),
+			TextSize = 16,
+			Font = Kit.Fonts.Bold,
+		})
+		wishLabel.TextYAlignment = Enum.TextYAlignment.Center
+		local label, fn
+		if kind == "food" then
+			label, fn = "Feed", function()
+				feed(vid)
+			end
+		elseif kind == "friend" then
+			label, fn = "Introduce", function()
+				call("WishGrant", vid, "friend", v.wish.arg)
+			end
+		elseif kind == "look" then
+			label, fn =
+				"New look", function()
+					local Hud = require(script.Parent.Hud)
+					Hud.open("Creator", { mode = "edit", vid = vid })
+				end
+		else
+			label, fn = "Have a chat", function()
+				call("WishGrant", vid, "cheer")
+			end
+		end
+		Kit.button(label, {
+			Parent = row,
+			Size = UDim2.fromOffset(132, 38),
+			Position = UDim2.new(1, 0, 0.5, 0),
+			AnchorPoint = Vector2.new(1, 0.5),
+			Color = T.Orange,
+			TextSize = 15,
+			Radius = "pill",
+		}, fn)
+		friendsTop = 356
+	end
+
 	-- friends and quarrels
-	local friends =
-		Kit.scroll({ Parent = detail, Size = UDim2.new(1, 0, 1, -286), Position = UDim2.fromOffset(0, 284) })
+	local friends = Kit.scroll({
+		Parent = detail,
+		Size = UDim2.new(1, 0, 1, -(friendsTop + 2)),
+		Position = UDim2.fromOffset(0, friendsTop),
+	})
 	Kit.list(friends, 4)
 	Kit.title("Friends", { Parent = friends, TextSize = 20, LayoutOrder = 0, Size = UDim2.new(1, 0, 0, 26) })
 	local rows = {}
 	for other, o in p.villagers do
 		if other ~= vid then
-			table.insert(
-				rows,
-				{ o = o, s = Relationships.peek(p, vid, other), q = Relationships.quarreling(p, vid, other, os.time()) }
-			)
+			table.insert(rows, {
+				id = other,
+				o = o,
+				s = Relationships.peek(p, vid, other),
+				q = Relationships.quarreling(p, vid, other, os.time()),
+			})
 		end
 	end
 	table.sort(rows, function(a, b)
@@ -368,21 +464,36 @@ local function showDetail()
 	if #rows == 0 then
 		Kit.text("Nobody else lives here yet.", { Parent = friends, TextSize = 15, Color = T.InkSoft, LayoutOrder = 1 })
 	end
+	-- each friendship as an arrow tag pointing at them: how close they are, or their romance
 	for i, r in rows do
 		local _, levelName = Relationships.level(r.s)
-		local row = Kit.box({ Parent = friends, Size = UDim2.new(1, -8, 0, 22), LayoutOrder = i })
-		Kit.text(r.o.name, { Parent = row, Size = UDim2.new(0.35, 0, 1, 0), TextSize = 15, Font = Kit.Fonts.Bold })
-		Kit.text(levelName .. (if r.q then ", not speaking right now" else ""), {
+		local bond = Life.bond(p, vid, r.id)
+		local row = Kit.box({ Parent = friends, Size = UDim2.new(1, -8, 0, 32), LayoutOrder = i })
+		local tagText = if r.q then "Not speaking" elseif bond then Life.BondNames[bond] else levelName
+		local col = if r.q
+			then Color3.fromRGB(255, 176, 166)
+			elseif bond then Color3.fromRGB(255, 168, 204)
+			elseif r.s >= 55 then Color3.fromRGB(255, 214, 72)
+			elseif r.s >= 10 then Color3.fromRGB(176, 228, 146)
+			elseif r.s > -10 then Color3.fromRGB(214, 226, 240)
+			else Color3.fromRGB(204, 192, 240)
+		Kit.arrowTag(tagText, col, {
 			Parent = row,
-			Size = UDim2.new(0.4, 0, 1, 0),
-			Position = UDim2.fromScale(0.35, 0),
-			TextSize = 15,
-			Color = if r.q then T.CoralDark else T.InkSoft,
+			Height = 26,
+			Position = UDim2.new(0, 0, 0.5, 0),
+			AnchorPoint = Vector2.new(0, 0.5),
+		})
+		Kit.text(r.o.name, {
+			Parent = row,
+			Size = UDim2.new(0.34, 0, 1, 0),
+			Position = UDim2.fromScale(0.44, 0),
+			TextSize = 16,
+			Font = Kit.Fonts.Bold,
 		})
 		Kit.bar({
 			Parent = row,
-			Size = UDim2.new(0.25, -8, 0, 12),
-			Position = UDim2.new(0.75, 0, 0.5, -6),
+			Size = UDim2.new(0.22, -8, 0, 12),
+			Position = UDim2.new(0.78, 0, 0.5, -6),
 		}, (r.s + 100) / 200, if r.s >= 0 then T.Pink else T.BlueDark)
 	end
 	local _ = Jobs

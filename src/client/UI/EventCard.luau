@@ -298,10 +298,12 @@ function EventCard.start(_hud: any)
 		Parent = holder,
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		Radius = 34,
+		Radius = 38,
 		Tail = "down",
 		TailAt = 0.5,
 		TailSize = 28,
+		Border = Color3.fromRGB(255, 196, 150),
+		BorderWidth = 4,
 		LayoutOrder = 3,
 	})
 	local _ = page

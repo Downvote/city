@@ -46,6 +46,12 @@ for i, n in names do
 end
 local first = villagers[order[1]]
 first.job = City.freeWorkplace({ plan = Sim.State.plan, villagers = villagers })
+first.heart = 3
+first.wish = { kind = "friend", arg = order[2], untilT = os.time() + 9999 }
+local rel = {}
+rel[Schema.pairKey(order[1], order[3])] = { s = 62, n = 4 }
+rel[Schema.pairKey(order[3], order[4])] = { s = 84, n = 9, bond = "sweethearts" }
+rel[Schema.pairKey(order[1], order[4])] = { s = 18, n = 2 }
 Sim.profile.villagers = villagers
 Sim.profile.order = order
 Sim.profile.coins = 12450
@@ -60,6 +66,32 @@ local function pushState()
 			{ t = os.time(), text = "Mara and Tobin made up after their quarrel." },
 			{ t = os.time(), text = "Ivy found 40 coins by the fountain." },
 		},
+		rel = rel,
+		stats = {
+			events = 9,
+			fed = 6,
+			made = 4,
+			earned = 300,
+			paydays = 2,
+			wishes = 3,
+			hearts = 2,
+			couples = 1,
+			partners = 0,
+		},
+		goals = { settlers = true },
+		offers = if scene == "panel:Rewards"
+			then {
+				{
+					vid = order[1],
+					level = 3,
+					options = {
+						{ kind = "coins", n = 120 },
+						{ kind = "saying", id = "breeze" },
+						{ kind = "hobby", id = "fishing" },
+					},
+				},
+			}
+			else {},
 	})
 	Sim.frames(2)
 end
@@ -104,7 +136,11 @@ elseif scene:sub(1, 5) == "build" then
 	Sim.frames(3)
 elseif scene:sub(1, 6) == "panel:" then
 	startHud()
-	Hud.open(scene:sub(7))
+	if scene == "panel:Rewards" then
+		Sim.advance(2.5) -- the thank you picker opens by itself when an offer is waiting
+	else
+		Hud.open(scene:sub(7))
+	end
 	Sim.frames(3)
 elseif scene == "event" or scene == "event:talk" then
 	startHud()
@@ -326,12 +362,23 @@ local function dump(inst)
 	return node
 end
 
-local root = dump(Sim.gui)
 local dir = outPath:match("^(.*)/[^/]*$")
 if dir and not fs.isDir(dir) then
 	fs.writeDir(dir)
 end
-fs.writeFile(outPath, serde.encode("json", { viewport = { 1280, 720 }, inset = 36, root = root }))
+-- one picture, or with a frame count and a step in seconds, a run of them (out_1.json, ...) for
+-- an animation: tools/preview/ui_anim.sh
+local frameCount = tonumber(process.args[3] or "")
+local step = tonumber(process.args[4] or "") or 0.2
+if frameCount then
+	for k = 1, frameCount do
+		local path = outPath:gsub("%.json$", "") .. "_" .. k .. ".json"
+		fs.writeFile(path, serde.encode("json", { viewport = { 1280, 720 }, inset = 36, root = dump(Sim.gui) }))
+		Sim.frames(math.max(1, math.floor(step * 60)))
+	end
+else
+	fs.writeFile(outPath, serde.encode("json", { viewport = { 1280, 720 }, inset = 36, root = dump(Sim.gui) }))
+end
 print(string.format("ui %s -> %s (%d warnings)", scene, outPath, #Sim.errors))
 for _, e in Sim.errors do
 	print("  warning: " .. e:sub(1, 300))

@@ -240,8 +240,8 @@ function Hud.start()
 	-- the clock, top right ---------------------------------------------------------------------------------
 	local clock = Kit.glass({
 		Name = "Clock",
-		Size = UDim2.fromOffset(212, 60),
-		Position = UDim2.new(1, -14, 0, 14),
+		Size = UDim2.fromOffset(226, 64),
+		Position = UDim2.new(1, -14, 0, 12),
 		AnchorPoint = Vector2.new(1, 0),
 		Radius = 18,
 		Parent = hud,
@@ -258,8 +258,8 @@ function Hud.start()
 		end
 		local art = Icons.make(
 			name,
-			62,
-			{ Parent = clock, Position = UDim2.new(0, 15, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5) }
+			40,
+			{ Parent = clock, Position = UDim2.new(0, 36, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5), ZIndex = 2 }
 		)
 		weatherArt = art
 		if name == "sun" then
@@ -278,15 +278,15 @@ function Hud.start()
 	end
 	local timeLabel = Kit.title("", {
 		Parent = clock,
-		Size = UDim2.new(1, -66, 0, 28),
-		Position = UDim2.fromOffset(54, 5),
+		Size = UDim2.new(1, -78, 0, 28),
+		Position = UDim2.fromOffset(64, 6),
 		TextSize = 26,
 		Color = T.Ink,
 	})
 	local dateLabel = Kit.text("", {
 		Parent = clock,
-		Size = UDim2.new(1, -66, 0, 18),
-		Position = UDim2.fromOffset(54, 34),
+		Size = UDim2.new(1, -78, 0, 18),
+		Position = UDim2.fromOffset(64, 35),
 		TextSize = 14,
 		Font = Kit.Fonts.Bold,
 		Color = T.InkSoft,
@@ -322,7 +322,7 @@ function Hud.start()
 		Position = UDim2.fromOffset(18, 154),
 		Parent = hud,
 	})
-	Kit.list(dock, 7, false, Enum.HorizontalAlignment.Center)
+	Kit.list(dock, 4, false, Enum.HorizontalAlignment.Center)
 	local BuildMode = require(script.Parent.Parent.Build.BuildMode)
 	local BuildUI = require(script.Parent.Parent.Build.BuildUI)
 	BuildUI.init(function()
@@ -399,6 +399,14 @@ function Hud.start()
 				Hud.open("News")
 			end,
 		},
+		{
+			"medal",
+			"Goals",
+			T.Orange,
+			function()
+				Hud.open("Goals")
+			end,
+		},
 	}
 	local tiles = {}
 	for i, e in entries do
@@ -406,7 +414,7 @@ function Hud.start()
 			tiles,
 			Kit.iconButton(e[1], e[2], {
 				Parent = dock,
-				Size = UDim2.fromOffset(74, 68),
+				Size = UDim2.fromOffset(74, 62),
 				LayoutOrder = i,
 				Radius = 16,
 				Color = e[3],
@@ -416,9 +424,32 @@ function Hud.start()
 	end
 
 	-- daily gift ---------------------------------------------------------------------------------------
+	-- a badge on Goals while there's something to claim, and the thank you picker when a
+	-- villager's heart level goes up
+	local goalsTile = tiles[#tiles]
+	local goalsBadge = Kit.badge(goalsTile, "!")
+	local Goals = Hud.panel("Goals")
+	local function refreshGoals()
+		goalsBadge.Visible = Goals.ready() > 0
+	end
+	for _, key in { "goals", "stats", "villagers", "rel", "coins" } do
+		State.on(key, refreshGoals)
+	end
+	refreshGoals()
+	State.on("offers", function(offers)
+		if type(offers) == "table" and #offers > 0 then
+			task.delay(1.5, function()
+				local Rewards = Hud.panel("Rewards")
+				if not Rewards.isOpen() and not BuildMode.isActive() then
+					Hud.open("Rewards")
+				end
+			end)
+		end
+	end)
+
 	local gift = Kit.iconButton("gift", "Gift", {
 		Parent = dock,
-		Size = UDim2.fromOffset(74, 68),
+		Size = UDim2.fromOffset(74, 62),
 		LayoutOrder = 20,
 		Radius = 16,
 		Color = T.Yellow,

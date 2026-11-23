@@ -49,6 +49,29 @@ is, not sources.
   Chats, gifts, outings and parties raise it; quarrels and pranks gone wrong lower it. A quarrel lasts a while
   unless someone makes up.
 
+### Hearts, wishes, romance and town goals
+
+> use tomodachi life's aesthetic even more, with identical vibes and ui and features and progression
+
+We can't copy another game's features one for one, so the town grows the way life sims of this kind do, in our
+own design (`Sim/Life`):
+
+- **Hearts.** Each villager has a heart level with you (up to 20). Snacks fill it (only the first two a day count,
+  three points for their favourite), and so do granted wishes and happy romance moments. Each new level they
+  want to thank you, and you pick one of three: coins they saved up, a basket of snacks, a new saying they'll use
+  in their speech bubbles, or a hobby they'll talk about.
+- **Wishes.** Now and then a villager wants something, and a thought bubble with an icon floats over their head:
+  a craving for a food, someone they'd like to get to know, a new look, or a chat because they feel down. Click
+  the bubble (or open their page) to sort it out: feed them, introduce them, restyle them or have a chat. A
+  granted wish lifts their mood, fills their hearts and they give you a few coins. Up to three wishes are open at
+  once; one left a whole day fades and they sulk a little.
+- **Romance.** Good friends can get a crush; you can tell them to say something. Later they work up the nerve to
+  confess, and it may or may not go their way. Sweethearts go on dates round the island, and when they're close
+  enough one of them asks you to help plan a proposal: partners for life, and the whole town throws a party.
+  Friendships and romances show on a villager's page as arrow tags.
+- **Town goals.** A list to work toward (Goals on the dock): neighbours, wishes granted, heart levels, best
+  friends, the first couple, growing into a Town and then a City, a full house. Each pays coins when you claim it.
+
 ## 4. Random events
 
 Every 75 to 150 seconds the town picks an event, weighted by who is around, their personalities, their

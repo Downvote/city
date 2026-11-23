@@ -187,6 +187,8 @@ function Data.clientState(player: Player): any
 		tutorial = p.tutorial,
 		daily = p.daily,
 		stats = p.stats,
+		offers = p.offers,
+		goals = p.goals,
 		unsaved = unsaved[player] == true,
 		plot = player:GetAttribute("Plot"),
 		plan = p.plan,

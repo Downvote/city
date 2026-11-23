@@ -41,7 +41,9 @@ The contract between the parts of the game. Update it with every change to an AP
 - `Avatar/`: `Appearance` (the saved look, sanitising, which asset types fit which slot), `Categories` (creator tabs,
   catalog filters, wearing and merging).
 - `Sim/`: `Schema` (profile and villager shapes, defaults, migration), `Relationships`, `EventEngine` (picks events,
-  applies their effects), `City` (stats, levels, land, workplaces, paydays).
+  applies their effects, including `bond` and `hearts`), `City` (stats, levels, land, workplaces, paydays), `Life`
+  (hearts and their thank you offers, wishes, romance bonds, goals; all pure).
+- `Data/Goals` (the town goals with their `value(profile, city)`), `Data/Sayings` (sayings and hobbies).
 
 ## The plan
 
@@ -75,10 +77,12 @@ profile = {
   rel = { ["a|b"] = { s, q?, n } }, inv = { food = { [id] = n }, items = { [id] = n } },
   requests = { { vid, tag, untilT } }, log = { { t, text } }, outfits = { { name, app } },
   settings, tutorial, daily = { last, streak }, stats, recent = { eventId }, bdays = { [vid] = day },
-  lastPayday, calendarDay,
+  lastPayday, calendarDay, offers = { { vid, level, options } }, goals = { [goalId] = true },
 }
 Villager = { id, name, pers, app, color, bday = { s, d }, fav, hate, known, mood, job?, lv, xp, bed?, sick?,
-             dayOff?, isYou?, born }
+             dayOff?, isYou?, born, heart, hxp, wish? = { kind, arg?, untilT }, saying?, hobby?, feedDay?, feeds? }
+rel record = { s, q?, n, bond? = "crush" | "sweethearts" | "partners" }
+stats = { events, fed, made, earned, paydays, wishes, hearts, couples, partners }
 ```
 
 `Schema.migrate` fills in anything missing and drops anything broken, so old saves load.
@@ -95,6 +99,11 @@ Villager = { id, name, pers, app, color, bday = { s, d }, fav, hate, known, mood
 | `Villagers` | Creating, editing, moving out, beds, jobs, feeding. Spawns NPCs and runs their routine: sleep at night, work 9 to 5, wander, sit, chat, visit shops. Payday at 5 PM. |
 | `Events` | Picks and plays random events, waits for choices, applies effects, room request rewards, small friendship gains from chats, parties. |
 | `Shop` | Food, medicine and party cakes, cheaper while the merchant is in town. |
+
+`Villagers` also runs the life sim's server side: every in-game hour wishes fade and new ones turn up (the model's
+`Wish` attribute carries the icon for the client's bubble); feeding fills hearts and answers cravings; a new look
+answers a wish for one; `WishGrant`, `HeartReward` and `GoalClaim` answer the rest. Villagers sometimes say their
+own saying or a line about their hobby.
 | `Materials` | Runs `Textures.install` at start: each uploaded painted texture's MaterialVariant (built into the place) becomes its material's look. Warns when a variant is missing from the place. |
 
 `Npc` (`src/server/Npc/Npc.luau`) is one villager's body: animations (their own pack or Roblox's defaults), pathfinding
@@ -110,7 +119,8 @@ Functions (client asks, server answers): `GetState`, `BuildApply`, `BuildUndo`, 
 `CreatorClose`, `CreatorPreview`, `CreatorBundle`, `CreatorFromUser`, `CreatorSearch`, `CreatorItemInfo`,
 `VillagerCreate`, `VillagerUpdate`, `VillagerRemove`, `VillagerBed`, `VillagerJob`, `VillagerFeed`,
 `VillagerFocus`, `OutfitSave`, `OutfitDelete`, `EventChoose`, `ShopBuy`, `DailyClaim`, `PlotExpand`, `SettingSet`,
-`TutorialStep`, `VisitPlot`.
+`TutorialStep`, `VisitPlot`, `WishGrant` (`vid, "friend" | "cheer", otherVid?`), `HeartReward` (`choice`),
+`GoalClaim` (`goalId`).
 
 Events (server pushes): `State` (patches of the client state), `PlanSync` (`{ full }` or `{ ops }`), `Notify`
 (`text, kind`; kind `action` carries `open:creator:<vid>`), `EventShow`, `EventLine`, `EventEnd`, `Payday`, `Say`.
@@ -141,6 +151,9 @@ server, whatever the client did.
   pressed, grow and hop their icon on hover and spring back when clicked; one loop sweeps a sheen across a button on
   screen now and then; `Kit.badge` pulses; `popIn`, `popOut`, `slideIn`, `bump` and `flyCoins` animate screens. `Kit.overUI(pos)` says whether the pointer is
   over our interface, using `GetGuiObjectsAtPosition`, so world clicks never go through a button.
+- `UI/Rewards` (the thank you picker, opened by the HUD when `offers` arrive), `UI/Goals` (the town goals panel;
+  `Goals.ready()` feeds the dock badge), `World/Wishes` (a wobbly thought bubble over each villager whose model has a
+  `Wish` attribute; a click opens their page).
 - `World/Ambience` (client only): cars and the bus on the street (they stop for anyone on a crossing, the bus waits
   at its stop), drifting clouds with shadows, circling birds with flapping wings, swaying trees and waving flags
   (only near the camera), the fountain's spray, fireflies at night. Everything moves with `workspace:BulkMoveTo`
@@ -194,7 +207,8 @@ server, whatever the client did.
   with the real client code on the simulation (`ui_dump.luau`: hud, build, build:walls, build:pick, panel:<Name>,
   event, toasts, creator, icons) and `ui_render.py` lays it out and draws it the way Roblox would (sizes, anchors,
   list and grid layouts, padding, automatic sizes, corners, strokes, gradients, outlined text, clipping, rotation,
-  the UIScale). `fonts.sh` fetches Fredoka One for it.
+  the UIScale). `fonts.sh` fetches Fredoka One for it. `ui_anim.sh <scene> <gif> [frames] [step]` renders a few moments
+  as an animated GIF (the wobble and sway run on the frame clock, so they step with the simulation).
   `render.sh <scene> <png> --textures` paints each part with the texture the game gives its material (the
   pictures are fetched once into out/library; `--painted` uses art/textures), tinted by its colour and tiled in
   the part's own space along the face's main axis, the way Roblox lays a MaterialVariant on a part.

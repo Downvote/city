@@ -402,6 +402,7 @@ end
 type Wob = { amount: number, phase: number, kick: number, canTurn: boolean, face: GuiObject?, faceScale: UIScale? }
 local wobbles: { [GuiObject]: Wob } = {}
 local wobbleLoop = false
+local wobbleClock = 0
 
 local function canTurn(g: GuiObject): boolean
 	for _, d in g:GetDescendants() do
@@ -417,8 +418,9 @@ local function startWobble()
 		return
 	end
 	wobbleLoop = true
-	RunService.Heartbeat:Connect(function()
-		local t = os.clock()
+	RunService.Heartbeat:Connect(function(dt)
+		wobbleClock += dt
+		local t = wobbleClock
 		for g, w in wobbles do
 			if not g.Parent then
 				wobbles[g] = nil
@@ -476,7 +478,7 @@ function Kit.wiggle(g: GuiObject)
 	end
 	local w = wobbles[g]
 	if w then
-		w.kick = os.clock()
+		w.kick = wobbleClock
 	end
 end
 
@@ -1164,8 +1166,10 @@ function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: s
 		Name = "Card",
 		Size = UDim2.fromScale(1, 1),
 		Color = T.Cream,
-		Radius = 30,
-		Bulge = 12,
+		Border = headColor:Lerp(T.White, 0.3),
+		BorderWidth = 5,
+		Radius = 40,
+		Bulge = 16,
 		Bumps = 3,
 		ZIndex = holder.ZIndex,
 		Parent = holder,
@@ -1239,33 +1243,49 @@ function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: s
 end
 
 -- Wobbly blobs ---------------------------------------------------------------------------------------
--- A blob is a rounded core with soft pills overlapping its sides; the pills push out by
--- different amounts and slowly breathe in and out, so the edge ripples like a soap bubble. A
--- darker copy sits a few pixels lower for depth (no see-through shadow: see-through pieces would
--- darken where they overlap). One loop moves every blob on screen.
-type Bump = { frame: Frame, side: string, at: number, phase: number }
+-- A blob is a rounded core with big round lobes overlapping its sides. The lobes push out by
+-- different amounts and slowly swell, shrink and slide along the edge, so the outline ripples
+-- softly. Big menus get a border: every piece again, a few pixels bigger, in the border colour,
+-- drawn behind the face, so the border follows the wavy edge. A darker copy sits a few pixels
+-- lower for depth. (No see-through shadow: see-through pieces darken where they overlap.) One
+-- loop moves every blob on screen, on the frame clock.
+type Piece = { frame: Frame, grow: number }
+type Bump = { pieces: { Piece }, side: string, at: number, phase: number, speed: number }
 type BlobInfo = { holder: Frame, bulge: number, bumps: { Bump }, round: boolean, dead: boolean? }
 local blobs: { BlobInfo } = {}
 local blobLoop = false
+local blobClock = 0
 
-local function placeBump(b: Bump, bulge: number, out: number, round: boolean)
-	local f = b.frame
-	if round then
-		-- out is how far past the core's edge, as a share of the holder
-		local d = 0.5 - bulge + out - 0.23
-		local a = b.at
-		f.Position = UDim2.fromScale(0.5 + math.cos(a) * d, 0.5 + math.sin(a) * d)
-		return
+local function placeBump(b: Bump, bulge: number, out: number, slide: number, round: boolean)
+	for _, piece in b.pieces do
+		local f, g = piece.frame, piece.grow
+		if round then
+			-- as shares of the holder: the lobe's centre sits on a ring just inside the edge
+			local d = 0.5 - bulge + out - 0.25
+			local a = b.at + slide
+			f.Position = UDim2.fromScale(0.5 + math.cos(a) * d, 0.5 + math.sin(a) * d)
+		else
+			local inset = bulge - out - g
+			local at = b.at + slide
+			if b.side == "top" then
+				f.Position = UDim2.new(at, 0, 0, inset)
+			elseif b.side == "bottom" then
+				f.Position = UDim2.new(at, 0, 1, -inset)
+			elseif b.side == "left" then
+				f.Position = UDim2.new(0, inset, at, 0)
+			else
+				f.Position = UDim2.new(1, -inset, at, 0)
+			end
+		end
 	end
-	local inset = bulge - out
-	if b.side == "top" then
-		f.Position = UDim2.new(b.at, 0, 0, inset)
-	elseif b.side == "bottom" then
-		f.Position = UDim2.new(b.at, 0, 1, -inset)
-	elseif b.side == "left" then
-		f.Position = UDim2.new(0, inset, b.at, 0)
-	else
-		f.Position = UDim2.new(1, -inset, b.at, 0)
+end
+
+local function stepBlob(info: BlobInfo, t: number)
+	for _, b in info.bumps do
+		local w = t * b.speed + b.phase
+		local out = info.bulge * (0.55 + 0.45 * math.sin(w))
+		local slide = (if info.round then 0.12 else 0.035) * math.sin(w * 0.7 + 1.3)
+		placeBump(b, info.bulge, out, slide, info.round)
 	end
 end
 
@@ -1276,12 +1296,12 @@ local function startBlobs()
 	blobLoop = true
 	local acc = 0
 	RunService.Heartbeat:Connect(function(dt)
+		blobClock += dt
 		acc += dt
-		if acc < 1 / 24 then
+		if acc < 1 / 30 then
 			return
 		end
 		acc = 0
-		local t = os.clock()
 		local i = 1
 		while i <= #blobs do
 			local info = blobs[i]
@@ -1290,17 +1310,15 @@ local function startBlobs()
 				continue
 			end
 			if info.holder.Visible and onScreen(info.holder) then
-				for _, b in info.bumps do
-					local out = info.bulge * (0.5 + 0.42 * math.sin(t * 1.4 + b.phase))
-					placeBump(b, info.bulge, out, info.round)
-				end
+				stepBlob(info, blobClock)
 			end
 			i += 1
 		end
 	end)
 end
 
--- One layer of a blob's shape (the face, or the darker copy under it).
+-- One layer of a blob: the face, its border (pieces grown by `grow` pixels) or its darker copy.
+-- Adds the layer's frames to `bumps` (one entry per lobe, shared by every layer).
 local function blobLayer(
 	holder: Frame,
 	name: string,
@@ -1310,8 +1328,10 @@ local function blobLayer(
 	bulge: number,
 	per: number,
 	round: boolean,
-	seed: number
-): (Frame, { Bump })
+	seed: number,
+	grow: number,
+	bumps: { Bump }
+): Frame
 	local layer = Kit.new("Frame", {
 		Name = name,
 		BackgroundTransparency = 1,
@@ -1319,107 +1339,141 @@ local function blobLayer(
 		ZIndex = z,
 		Parent = holder,
 	})
-	local bumps: { Bump } = {}
 	local rng = Random.new(seed)
+	local first = #bumps == 0
+	local function piece(k: number, f: Frame, side: string, at: number)
+		if first then
+			table.insert(bumps, {
+				pieces = {},
+				side = side,
+				at = at,
+				phase = rng:NextNumber(0, 6.28),
+				speed = rng:NextNumber(0.9, 1.5),
+			})
+		end
+		table.insert(bumps[k].pieces, { frame = f, grow = grow })
+	end
 	if round then
 		local core = Kit.new("Frame", {
 			Name = "Core",
 			BackgroundColor3 = color,
 			BorderSizePixel = 0,
-			Size = UDim2.fromScale(1 - bulge * 2, 1 - bulge * 2),
-			Position = UDim2.fromScale(bulge, bulge),
+			Size = UDim2.new(1 - bulge * 2, grow * 2, 1 - bulge * 2, grow * 2),
+			Position = UDim2.new(bulge, -grow, bulge, -grow),
 			ZIndex = z,
 			Parent = layer,
 		})
 		Kit.corner(core, "circle")
-		local n = 7
+		local n = 6
 		for k = 1, n do
 			local f = Kit.new("Frame", {
-				Name = "Bump",
+				Name = "Lobe",
 				BackgroundColor3 = color,
 				BorderSizePixel = 0,
-				Size = UDim2.fromScale(0.46, 0.46),
+				Size = UDim2.new(0.5, grow * 2, 0.5, grow * 2),
 				AnchorPoint = Vector2.new(0.5, 0.5),
 				ZIndex = z,
 				Parent = layer,
 			})
 			Kit.corner(f, "circle")
-			local b: Bump = {
-				frame = f,
-				side = "round",
-				at = (k / n) * math.pi * 2 + rng:NextNumber(-0.3, 0.3),
-				phase = rng:NextNumber(0, 6.28),
-			}
-			placeBump(b, bulge, bulge * 0.5, true)
-			table.insert(bumps, b)
+			piece(k, f, "round", (k / n) * math.pi * 2 + rng:NextNumber(-0.25, 0.25))
 		end
-		return layer, bumps
-	end
-	local core = Kit.new("Frame", {
-		Name = "Core",
-		BackgroundColor3 = color,
-		BorderSizePixel = 0,
-		Size = UDim2.new(1, -bulge * 2, 1, -bulge * 2),
-		Position = UDim2.fromOffset(bulge, bulge),
-		ZIndex = z,
-		Parent = layer,
-	})
-	Kit.corner(core, radius)
-	local thick = 40
-	for _, side in { "top", "bottom", "left", "right" } do
-		local horizontal = side == "top" or side == "bottom"
-		for k = 1, per do
-			local at = 0.2 + 0.6 * (k - 0.5) / per + rng:NextNumber(-0.05, 0.05)
-			local length = 0.6 / per + 0.14 + rng:NextNumber(-0.04, 0.06)
-			local f = Kit.new("Frame", {
-				Name = "Bump",
-				BackgroundColor3 = color,
-				BorderSizePixel = 0,
-				Size = if horizontal then UDim2.new(length, 0, 0, thick) else UDim2.new(0, thick, length, 0),
-				AnchorPoint = if side == "top"
-					then Vector2.new(0.5, 0)
-					elseif side == "bottom" then Vector2.new(0.5, 1)
-					elseif side == "left" then Vector2.new(0, 0.5)
-					else Vector2.new(1, 0.5),
-				ZIndex = z,
-				Parent = layer,
-			})
-			Kit.corner(f, "pill")
-			local b: Bump = { frame = f, side = side, at = at, phase = rng:NextNumber(0, 6.28) }
-			placeBump(b, bulge, bulge * 0.5, false)
-			table.insert(bumps, b)
+	else
+		local core = Kit.new("Frame", {
+			Name = "Core",
+			BackgroundColor3 = color,
+			BorderSizePixel = 0,
+			Size = UDim2.new(1, -bulge * 2 + grow * 2, 1, -bulge * 2 + grow * 2),
+			Position = UDim2.fromOffset(bulge - grow, bulge - grow),
+			ZIndex = z,
+			Parent = layer,
+		})
+		Kit.corner(core, radius)
+		-- big round lobes: as thick as the corners are round
+		local thick = if type(radius) == "number" then math.max(28, radius * 1.6) else 44
+		local k = 0
+		for _, side in { "top", "bottom", "left", "right" } do
+			local horizontal = side == "top" or side == "bottom"
+			for n = 1, per do
+				k += 1
+				local at = 0.18 + 0.64 * (n - 0.5) / per + rng:NextNumber(-0.04, 0.04)
+				local length = 0.64 / per + 0.16 + rng:NextNumber(-0.03, 0.05)
+				local f = Kit.new("Frame", {
+					Name = "Lobe",
+					BackgroundColor3 = color,
+					BorderSizePixel = 0,
+					Size = if horizontal
+						then UDim2.new(length, grow * 2, 0, thick + grow * 2)
+						else UDim2.new(0, thick + grow * 2, length, grow * 2),
+					AnchorPoint = if side == "top"
+						then Vector2.new(0.5, 0)
+						elseif side == "bottom" then Vector2.new(0.5, 1)
+						elseif side == "left" then Vector2.new(0, 0.5)
+						else Vector2.new(1, 0.5),
+					ZIndex = z,
+					Parent = layer,
+				})
+				Kit.corner(f, "pill")
+				piece(k, f, side, at)
+			end
 		end
 	end
-	return layer, bumps
+	return layer
 end
 
--- Puts a blob's shape (and the darker copy under it) inside an existing frame, behind its
--- other children. props as Kit.blob (Color, Base, Radius, Bulge, Bumps, Round, Wobble, Tail,
--- TailAt, TailSize, Seed, ZIndex). Returns the blob's record (set `dead` to stop it moving).
+-- Puts a blob's shape (with its border and darker copy) inside an existing frame, behind its
+-- other children. props as Kit.blob (Color, Base, Border, BorderWidth, Radius, Bulge, Bumps,
+-- Round, Wobble, Tail, TailAt, TailSize, Seed, ZIndex). Returns the blob's record (set `dead` to
+-- stop it moving).
 function Kit.blobInto(holder: Frame, p: { [string]: any }): BlobInfo
 	local color: Color3 = p.Color or T.Paper
 	local z = p.ZIndex or holder.ZIndex
 	local round = p.Round == true
-	local bulge = p.Bulge or (if round then 0.06 else 6)
+	local bulge = p.Bulge or (if round then 0.07 else 8)
 	local per = p.Bumps or 3
 	holder:SetAttribute("Blob", true)
 	local seed = p.Seed or math.random(1, 1e6)
-	local radius = p.Radius or 26
+	local radius = p.Radius or 30
+	local bumps: { Bump } = {}
 	local baseColor: any = p.Base
 	if baseColor == nil then
 		baseColor = darker(color, 0.86)
 	end
+	local border: Color3? = p.Border
+	local bw = if border then (p.BorderWidth or 4) else 0
 	if baseColor then
-		local base = blobLayer(holder, "Base", baseColor, z, radius, bulge, per, round, seed)
-		base.Position = if round then UDim2.fromScale(0, 0.05) else UDim2.fromOffset(0, 5)
+		local base = blobLayer(holder, "Base", baseColor, z, radius, bulge, per, round, seed, bw, bumps)
+		base.Position = if round then UDim2.fromScale(0, 0.05) else UDim2.fromOffset(0, 6)
 	end
-	local face, bumps = blobLayer(holder, "Shape", color, z, radius, bulge, per, round, seed)
+	if border then
+		blobLayer(holder, "Border", border, z, radius, bulge, per, round, seed, bw, bumps)
+	end
+	local face = blobLayer(holder, "Shape", color, z, radius, bulge, per, round, seed, 0, bumps)
 	if p.Tail then
 		local size = p.TailSize or 20
 		local at = p.TailAt or 0.5
 		local tail = p.Tail
 		local edge = if round then 0 else bulge
 		local inset = edge + size * 0.15
+		local pos = if tail == "down"
+			then UDim2.new(at, 0, 1, -inset)
+			elseif tail == "up" then UDim2.new(at, 0, 0, inset)
+			elseif tail == "left" then UDim2.new(0, inset, at, 0)
+			else UDim2.new(1, -inset, at, 0)
+		if border then
+			local layer = holder:FindFirstChild("Border")
+			Kit.new("Frame", {
+				Name = "Tail",
+				BackgroundColor3 = border,
+				BorderSizePixel = 0,
+				Rotation = 45,
+				Size = UDim2.fromOffset(size + bw * 2, size + bw * 2),
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Position = pos,
+				ZIndex = z,
+				Parent = layer,
+			})
+		end
 		Kit.new("Frame", {
 			Name = "Tail",
 			BackgroundColor3 = color,
@@ -1427,16 +1481,13 @@ function Kit.blobInto(holder: Frame, p: { [string]: any }): BlobInfo
 			Rotation = 45,
 			Size = UDim2.fromOffset(size, size),
 			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = if tail == "down"
-				then UDim2.new(at, 0, 1, -inset)
-				elseif tail == "up" then UDim2.new(at, 0, 0, inset)
-				elseif tail == "left" then UDim2.new(0, inset, at, 0)
-				else UDim2.new(1, -inset, at, 0),
+			Position = pos,
 			ZIndex = z,
 			Parent = face,
 		})
 	end
 	local info: BlobInfo = { holder = holder, bulge = bulge, bumps = bumps, round = round }
+	stepBlob(info, 0)
 	if p.Wobble ~= false then
 		table.insert(blobs, info)
 		startBlobs()
@@ -1533,6 +1584,8 @@ function Kit.bubble(props: { [string]: any }?): (Frame, Frame)
 		ZIndex = p.ZIndex,
 		Color = p.Color or T.White,
 		Base = if p.Shadow == false then false else nil,
+		Border = p.Border,
+		BorderWidth = p.BorderWidth,
 		Radius = p.Radius or 26,
 		Bulge = p.Bulge or 9,
 		Bumps = p.Bumps,
