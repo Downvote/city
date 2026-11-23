@@ -379,7 +379,7 @@ describe("Textures", function()
 	it("paints every look the models ask for", function()
 		-- a look we don't paint would only ever show the plain material, so a slip in a name
 		-- ("Concrete:Panels") is caught here
-		local TownMap = require(Shared .. "Data.TownMap")
+		local TownModels = require(Shared .. "Data.TownModels")
 		local Catalog = require(Shared .. "Build.Catalog")
 		local StarterHouse = require(Shared .. "Data.StarterHouse")
 		local Plan = require(Shared .. "Build.Plan")
@@ -396,13 +396,8 @@ describe("Textures", function()
 				end
 			end
 		end
-		check("the ground", TownMap.ground())
-		local seen = {}
-		for _, p in TownMap.placements() do
-			if not seen[p.name] then
-				seen[p.name] = true
-				check(p.name, TownMap.prims(p.name))
-			end
+		for name in TownModels.Models do
+			check("town model " .. name, TownModels.prims(name))
 		end
 		for _, def in Catalog.all() do
 			check("item " .. def.id, Catalog.prims(def))

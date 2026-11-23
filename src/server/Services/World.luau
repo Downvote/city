@@ -7,11 +7,13 @@ local CollectionService = game:GetService("CollectionService")
 local TweenService = game:GetService("TweenService")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
+local InsertService = game:GetService("InsertService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Tuning = require(Shared.Config.Tuning)
 local Town = require(Shared.Data.Town)
 local TownModels = require(Shared.Data.TownModels)
-local TownMap = require(Shared.Data.TownMap)
+local CityMap = require(Shared.Data.CityMap)
 local Builder = require(Shared.Build.Builder)
 local LowPoly = require(Shared.Build.LowPoly)
 local Textures = require(Shared.Data.Textures)
@@ -90,49 +92,211 @@ local function signText(board: BasePart, text: string, face: Enum.NormalId?)
 	return label
 end
 
+-- The city kit: the user's pack, imported in Studio (out/citypack/kit/IMPORT.md). A CityKit
+-- model in ServerStorage when the place has one, else the models at Tuning.City.KitAssetIds.
+-- Every MeshPart in them by its name (the kit's piece names).
+local function findKit(): { [string]: MeshPart }
+	local roots: { Instance } = {}
+	local inPlace = ServerStorage:FindFirstChild("CityKit")
+	if inPlace then
+		table.insert(roots, inPlace)
+	else
+		for _, id in Tuning.City.KitAssetIds do
+			local ok, model = pcall(InsertService.LoadAsset, InsertService, id)
+			if ok and model then
+				table.insert(roots, model)
+			else
+				warn(("[World] couldn't load the city kit's model %d: %s"):format(id, tostring(model)))
+			end
+		end
+	end
+	local found: { [string]: MeshPart } = {}
+	for _, root in roots do
+		for _, d in root:GetDescendants() do
+			if d:IsA("MeshPart") then
+				found[d.Name] = d
+			end
+		end
+	end
+	return found
+end
+
+-- The town: every piece of the city pack where Data/CityMap puts it, the sea round it, the middle
+-- of town's doors, the news board and the spawn. Placed a batch at a time so the server keeps
+-- breathing; this all happens before Data.open() lets anyone in.
 local function buildMap()
 	mapFolder = Instance.new("Folder")
 	mapFolder.Name = "Town"
 	mapFolder.Parent = workspace
 
-	-- Everything the town is made of, worked out once (a model used in many places is drawn
-	-- once), so its pieces can be merged before anything is built: a building then goes up with
-	-- its windows, awnings and railings already on it.
-	local groundPrims = TownMap.ground()
-	local placements = TownMap.placements()
-	local drawn: { [string]: { any } } = {}
-	local lists = { groundPrims }
-	for _, p in placements do
-		if not drawn[p.name] then
-			drawn[p.name] = TownMap.prims(p.name)
-			table.insert(lists, drawn[p.name])
+	local kitParts = findKit()
+	local sizes: { [string]: { size: Vector3, cf: CFrame } } = {}
+	for name, part in kitParts do
+		sizes[name] = { size = part.Size, cf = part.CFrame }
+	end
+	local turn, scale, problems = CityMap.fit(sizes)
+	if next(kitParts) == nil then
+		warn("[World] the city kit isn't in the game yet: the town is plain boxes the size of each piece")
+	else
+		if turn ~= 0 then
+			print(("[World] the city kit came in turned %d degrees: turning it back"):format(turn * 90))
+		end
+		if math.abs(scale - 1) > 0.02 then
+			print(("[World] the city kit came in at %.3f times its size: each piece is resized"):format(scale))
+		end
+		if #problems > 0 then
+			warn(
+				"[World] the city kit doesn't match its manifest: "
+					.. table.concat(problems, "; ", 1, math.min(#problems, 12))
+			)
 		end
 	end
-	local started = os.clock()
-	local cut, failed, left = Builder.preparePieces(lists, 60)
-	if cut + failed + left > 0 then
-		print(
-			("[World] merged %d kinds of detail piece in %.1f s (%d failed, %d left to plain parts)"):format(
-				cut,
-				os.clock() - started,
-				failed,
-				left
-			)
+	local undo = CFrame.Angles(0, -turn * math.pi / 2, 0)
+
+	local folders: { [string]: Folder } = {}
+	local function folderFor(kind: string): Folder
+		local f = folders[kind]
+		if not f then
+			f = Instance.new("Folder")
+			f.Name = kind
+			f.Parent = mapFolder
+			folders[kind] = f
+		end
+		return f
+	end
+	local missing: { [string]: boolean } = {}
+	local placed = 0
+	local function breathe()
+		placed += 1
+		if placed % Tuning.City.KitBatch == 0 then
+			task.wait()
+		end
+	end
+	for _, p in CityMap.placements() do
+		local def = CityMap.kit(p.key)
+		if not def then
+			continue
+		end
+		local rules = CityMap.Kinds[p.kind] or CityMap.Kinds.prop
+		local parent = folderFor(p.kind)
+		for _, piece in def.pieces do
+			local cf, size = CityMap.pieceFrame(p, piece)
+			local src = kitParts[piece.name]
+			local part: BasePart
+			if src then
+				local m = src:Clone()
+				m.RenderFidelity = Enum.RenderFidelity.Automatic
+				if turn % 2 == 1 then
+					m.Size = Vector3.new(size.Z, size.Y, size.X)
+				else
+					m.Size = size
+				end
+				m.CFrame = cf * undo
+				part = m
+			else
+				if next(kitParts) ~= nil then
+					missing[piece.name] = true
+				end
+				local box = Instance.new("Part")
+				box.Size = Vector3.new(math.max(size.X, 0.05), math.max(size.Y, 0.2), math.max(size.Z, 0.05))
+				box.CFrame = cf
+				box.Color = CityMap.StandIn[p.kind] or CityMap.StandIn.prop
+				box.Material = Enum.Material.SmoothPlastic
+				box.TopSurface = Enum.SurfaceType.Smooth
+				box.BottomSurface = Enum.SurfaceType.Smooth
+				part = box
+			end
+			part.Name = piece.name
+			part.Anchored = true
+			part.CanCollide = rules.collide
+			part.CanQuery = rules.query
+			part.CanTouch = false
+			part.CastShadow = true
+			if p.name then
+				part:SetAttribute("Place", p.name)
+			end
+			part.Parent = parent
+			breathe()
+		end
+		local tcf, tsize = CityMap.trunk(p)
+		if tcf and tsize then
+			local trunk = Instance.new("Part")
+			trunk.Name = "Trunk"
+			trunk.Size = tsize
+			trunk.CFrame = tcf
+			trunk.Anchored = true
+			trunk.Transparency = 1
+			trunk.CanQuery = false
+			trunk.CanTouch = false
+			trunk.CastShadow = false
+			trunk.Parent = parent
+		end
+	end
+	if next(missing) then
+		local names = {}
+		for name in missing do
+			table.insert(names, name)
+		end
+		table.sort(names)
+		warn(
+			"[World] these city kit pieces are missing and stand as boxes: "
+				.. table.concat(names, ", ", 1, math.min(#names, 20))
 		)
 	end
 
-	-- streets, sidewalks, the square and the market (Data/TownMap lays them out)
-	local ground = Instance.new("Model")
-	ground.Name = "Streets"
-	Builder.instantiate(groundPrims, ground, CFrame.identity)
-	ground.Parent = mapFolder
+	-- the sea round the pack's land, the plain ground under the suburb's hole, the walls far out
+	local sea = folderFor("sea")
+	for _, s in CityMap.sea() do
+		local w = part({ Name = s.name, Size = s.size, CFrame = s.cf, Material = Enum.Material.SmoothPlastic })
+		if s.name == "Water" then
+			w.Color = CityMap.StandIn.water
+			w.Transparency = 0.15
+			w.CanCollide = false
+			w.CastShadow = false
+		elseif s.name == "SeaFloor" then
+			w.Color = Color3.fromRGB(38, 70, 86)
+			w.CastShadow = false
+		else
+			w.Transparency = 1
+			w.CastShadow = false
+		end
+		w.CanTouch = false
+		w.Parent = sea
+	end
+	do
+		local cf, size = CityMap.filler()
+		local g = part({ Name = "Ground", Size = size, CFrame = cf, Material = Enum.Material.SmoothPlastic })
+		g.Color = CityMap.StandIn.ground
+		g.CanTouch = false
+		g.Parent = sea
+	end
 
-	for _, p in placements do
+	-- the doors of the middle of town's buildings, each with the panel it opens
+	for _, b in CityMap.Buildings do
+		local at, out = CityMap.door(b.name)
+		local door = part({
+			Name = b.name .. "Door",
+			Size = Vector3.new(6, 7, 1),
+			CFrame = CFrame.lookAt(at + Vector3.new(0, 3.5, 0), at + Vector3.new(0, 3.5, 0) + out),
+			Transparency = 1,
+			CanCollide = false,
+			CanTouch = false,
+			CastShadow = false,
+		})
+		door.Parent = mapFolder
+		prompt(door, b.action, b.opens)
+	end
+	-- the news board and the welcome sign (our own models)
+	for _, p in CityMap.Props do
 		local m = Instance.new("Model")
 		m.Name = p.name
-		Builder.instantiate(drawn[p.name], m, p.cf)
+		Builder.instantiate(
+			TownModels.prims(p.model),
+			m,
+			CFrame.new(p.x, 0, p.z) * CFrame.Angles(0, math.rad(p.yaw), 0)
+		)
 		m.Parent = mapFolder
-		if p.action and p.opens then
+		if p.opens then
 			prompt(anchorPart(m), p.action, p.opens)
 		end
 		if p.tag == "welcome" then

@@ -151,6 +151,12 @@ Tuning.City = {
 		{ Size = 160, Price = 12000, Level = 3 },
 		{ Size = 200, Price = 30000, Level = 4 },
 	},
+	-- The city kit's models, uploaded from Studio (out/citypack/kit/IMPORT.md): the asset ids the
+	-- import gave, or the one id of a CityKit model holding them all. Empty until the user sends
+	-- them; a CityKit model in ServerStorage is used first. Without either the town is built of
+	-- plain boxes the size of each piece.
+	KitAssetIds = {} :: { number },
+	KitBatch = 250, -- parts placed between two waits while the town goes up
 }
 
 -- Hearts, wishes and romance ---------------------------------------------------

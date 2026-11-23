@@ -38,6 +38,7 @@ from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import look as game_look  # noqa: E402  (the game's light and grade)
+import citypack  # noqa: E402  (the city pack's objects, from its preview cache)
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 TEX_DIR = os.path.join(ROOT, "art", "textures")
@@ -289,6 +290,8 @@ def gem_turn(pos):
 
 
 def prim_tris(p):
+    if p["shape"] == "Tris":  # a city pack object's triangles of one colour (citypack.expand)
+        return p["tris"]
     c = p["cf"]
     pos = np.array(c[0:3])
     rot = np.array([[c[3], c[4], c[5]], [c[6], c[7], c[8]], [c[9], c[10], c[11]]])
@@ -334,7 +337,7 @@ def main():
     global USE_KIT
     USE_KIT = not args.smooth
 
-    prims = json.load(open(args.inp))
+    prims = citypack.expand(json.load(open(args.inp)), size=args.size)
     yaw = math.radians(args.yaw)
     pitch = math.radians(args.pitch)
     # camera looks from +x+z, down at the pitch

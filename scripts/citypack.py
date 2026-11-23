@@ -645,14 +645,15 @@ def fmt(x, nd=2):
 def write_manifest(path, keys, placements, source):
     lines = []
     w = lines.append
-    w("--!strict")
+    w("--!nocheck")
+    w("-- (Generated data with names and numbers in one list, which the type checker can't follow.)")
     w("-- The city pack's kit and where the pack puts each piece. Written by scripts/citypack.py from the")
     w("-- user's low poly city pack; never edit it by hand. It holds names, sizes and positions only: the")
     w("-- pack's meshes are imported in Studio (out/citypack/kit/IMPORT.md) and never kept in the repository.")
     w("--")
-    w("-- Kit[key] = { kind, { piece, size x, y, z, centre x, y, z }, ... }: a key's pieces, each a MeshPart")
-    w("-- named by the piece (the key itself when it has one), with the size Studio gives it and the centre")
-    w("-- of its box in the key's own frame (studs).")
+    w("-- Kit[key] = { kind, { piece, size x, y, z, centre x, y, z, triangles }, ... }: a key's pieces, each a")
+    w("-- MeshPart named by the piece (the key itself when it has one), with the size Studio gives it, the")
+    w("-- centre of its box in the key's own frame (studs) and how many triangles it has.")
     w("-- Placed = { key, x, y, z, yaw [, rx, rz] [, sx, sy, sz] }: where the pack puts a key, in the pack's")
     w("-- own frame and in studs, turned yaw degrees about the vertical (and rx, rz degrees as")
     w("-- CFrame.fromEulerAnglesYXZ takes them, for the few that lean) and stretched along its own axes.")
@@ -669,7 +670,8 @@ def write_manifest(path, keys, placements, source):
         parts = []
         for pname, ix in k.pieces:
             c, s = k.piece_box(ix)
-            parts.append("{ " + ", ".join([json.dumps(pname)] + [fmt(v, 3) for v in s] + [fmt(v, 3) for v in c]) + " }")
+            parts.append("{ " + ", ".join([json.dumps(pname)] + [fmt(v, 3) for v in s] + [fmt(v, 3) for v in c]
+                                          + [str(len(ix))]) + " }")
         w(f"\t{name} = {{ {json.dumps(k.kind)}, " + ", ".join(parts) + " },")
     w("} :: { [string]: { any } }")
     w("")
@@ -734,6 +736,9 @@ Keep them all in one folder: the importer finds the picture next to the FBX file
 4. Before importing, look at the queue: no red errors, and each preview shows the models in
    colour. A plain grey preview means the picture wasn't found: put `{palette}` in the same folder
    as the FBX files and add them again.
+   One model is bigger than Roblox lets a part be: `water_a_06` in `CityKit_Ground`, the sea north
+   of town, 3,500 studs across. If Studio warns about it or shrinks it, that's fine: the game
+   doesn't use it and draws that sea itself. If it stops the import, untick that one model.
 5. Click **Import**. It uploads about {meshes} meshes and can take a few minutes. A model per file
    appears in the Workspace.
 6. One check: in `CityKit_Buildings`, find the bank (two pieces, `bank__1` and `bank__2`, one

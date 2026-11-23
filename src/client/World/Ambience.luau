@@ -1,7 +1,6 @@
--- Life around town that nobody builds: cars and a bus on the street (they stop at the
--- crossings for anyone walking over), leaves and grass leaning with the wind, flags waving,
--- fountains spraying, traffic lights changing, boats bobbing, ducks on the ponds, and fireflies
--- over the lawns at night. (Butterflies and rabbits were here too until the user said "remove
+-- Life around town that nobody builds: cars and a bus on Main Street (up the ramps and over the
+-- bridge; they stop at the crossings for anyone walking over), leaves and grass leaning with the
+-- wind, small fountains spraying, ducks on the river, and fireflies over the green at night. (Butterflies and rabbits were here too until the user said "remove
 -- the butterflies and bunnies".) All of it is local to each player's screen: nothing here is
 -- sent to the server or seen by anyone else.
 
@@ -12,16 +11,18 @@ local Lighting = game:GetService("Lighting")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Builder = require(Shared.Build.Builder)
 local Town = require(Shared.Data.Town)
-local TownMap = require(Shared.Data.TownMap)
+local CityMap = require(Shared.Data.CityMap)
 local AmbientModels = require(Shared.Data.AmbientModels)
 local Rng = require(Shared.Util.Rng)
 
 local Ambience = {}
 
-local L = Town.HalfLength
-local LANE = 6.5
-local CROSSINGS = { -274, 0, 274 }
-local BUS_STOP_X = 96
+-- Main Street (Data/Town, Data/CityMap): from the top of the motorway ramp to downtown, two lanes
+-- each way. Cars keep to the inner lane, the bus to the outer one and its stop by the green.
+local WEST, EAST = Town.StreetWest, Town.StreetEast
+local LANE, BUS_LANE = 10.1, 23
+local CROSSINGS = Town.Crossings
+local BUS_STOP_X = 640
 
 local folder: Folder
 local rng = Rng.new(31)
@@ -183,14 +184,19 @@ local function stepCars(dt: number)
 			car.speed += (target - car.speed) * math.min(1, dt * 2.5)
 			car.x += car.dir * car.speed * dt
 		end
-		if car.dir > 0 and car.x > L + 30 then
-			car.x = -L - 30
-		elseif car.dir < 0 and car.x < -L - 30 then
-			car.x = L + 30
+		if car.dir > 0 and car.x > EAST then
+			car.x = WEST
+		elseif car.dir < 0 and car.x < WEST then
+			car.x = EAST
 		end
 		car.spin -= car.speed * dt / 0.8
-		local z = car.dir * LANE
-		local cf = CFrame.new(car.x, 0.05, z) * CFrame.Angles(0, if car.dir > 0 then math.pi / 2 else -math.pi / 2, 0)
+		local z = car.dir * (if car.bus then BUS_LANE else LANE)
+		-- up the ramps and over the bridge: the road's height, and the nose up the slope
+		local y = CityMap.streetY(car.x)
+		local slope = (CityMap.streetY(car.x + 2) - CityMap.streetY(car.x - 2)) / 4
+		local cf = CFrame.new(car.x, y + 0.02, z)
+			* CFrame.Angles(0, if car.dir > 0 then math.pi / 2 else -math.pi / 2, 0)
+			* CFrame.Angles(-math.atan(slope * car.dir), 0, 0)
 		place(car.m, cf, car.spin)
 	end
 end
@@ -198,220 +204,12 @@ end
 -- (Clouds drifted overhead and birds circled the square until the user asked: "remove clouds
 -- and birds from the sky".)
 
--- swaying trees and waving flags ------------------------------------------------------------------------
-
-type Sway = { parts: { BasePart }, locals: { CFrame }, base: CFrame, phase: number, amount: number, axis: string }
-local sways: { Sway } = {}
-
--- spinning rides and the windmill: parts named "Spin" turn round the model's "Hub" (its X axis);
--- parts named "Cabin" go round with it but stay upright
-type Spinner = {
-	hub: CFrame,
-	spin: { BasePart },
-	spinLocal: { CFrame },
-	cabins: { BasePart },
-	cabinLocal: { Vector3 },
-	cabinRot: { CFrame },
-	speed: number,
-}
-local spinners: { Spinner } = {}
-local SPEEDS = { ferrisWheel = 0.12, carousel = 0.5, windmill = 0.7 }
-
-local function collectSpinner(model: Model)
-	local hub = model:FindFirstChild("Hub", true)
-	if not (hub and hub:IsA("BasePart")) then
-		return
-	end
-	local s: Spinner = {
-		hub = hub.CFrame,
-		spin = {},
-		spinLocal = {},
-		cabins = {},
-		cabinLocal = {},
-		cabinRot = {},
-		speed = SPEEDS[model.Name] or 0.3,
-	}
-	for _, p in model:GetDescendants() do
-		if p:IsA("BasePart") then
-			if p.Name == "Spin" then
-				table.insert(s.spin, p)
-				table.insert(s.spinLocal, hub.CFrame:ToObjectSpace(p.CFrame))
-			elseif p.Name == "Cabin" then
-				table.insert(s.cabins, p)
-				table.insert(s.cabinLocal, hub.CFrame:PointToObjectSpace(p.Position))
-				table.insert(s.cabinRot, p.CFrame - p.Position)
-			end
-		end
-	end
-	table.insert(spinners, s)
-end
-
-local function stepSpinners()
-	local cam = workspace.CurrentCamera
-	local eye = if cam then cam.CFrame.Position else Vector3.zero
-	for _, s in spinners do
-		if (s.hub.Position - eye).Magnitude < 400 then
-			local turned = s.hub * CFrame.Angles(clock * s.speed, 0, 0)
-			for i, p in s.spin do
-				table.insert(moveParts, p)
-				table.insert(moveFrames, turned * s.spinLocal[i])
-			end
-			for i, p in s.cabins do
-				table.insert(moveParts, p)
-				table.insert(moveFrames, CFrame.new(turned:PointToWorldSpace(s.cabinLocal[i])) * s.cabinRot[i])
-			end
-		end
-	end
-end
-
-local function collectTown()
-	table.clear(sways)
-	table.clear(spinners)
-	local town = workspace:FindFirstChild("Town")
-	if not town then
-		return
-	end
-	for _, model in town:GetChildren() do
-		if model:IsA("Model") then
-			local name = model.Name
-			if SPEEDS[name] then
-				collectSpinner(model)
-			end
-			if name == "tree" or name == "pine" or name == "streetTree" or name == "palm" or name == "palmTall" then
-				local pivot = model:GetPivot()
-				local base = CFrame.new(pivot.Position)
-				local parts, locals = {}, {}
-				for _, p in model:GetDescendants() do
-					-- leaves sway; the trunk stays put
-					if p:IsA("BasePart") and p.Position.Y > pivot.Position.Y + 4.5 then
-						table.insert(parts, p)
-						table.insert(locals, base:ToObjectSpace(p.CFrame))
-					end
-				end
-				if #parts > 0 then
-					table.insert(sways, {
-						parts = parts,
-						locals = locals,
-						base = base,
-						phase = rng:float(0, math.pi * 2),
-						amount = if name == "pine" then 0.018 else 0.03,
-						axis = "tree",
-					})
-				end
-			elseif name == "marina" then
-				-- each moored boat bobs on its own
-				local groups: { [string]: { BasePart } } = {}
-				for _, p in model:GetDescendants() do
-					if p:IsA("BasePart") and p.Name:match("^Boat%d+$") then
-						groups[p.Name] = groups[p.Name] or {}
-						table.insert(groups[p.Name], p)
-					end
-				end
-				for _, parts in groups do
-					local centre = Vector3.zero
-					for _, p in parts do
-						centre += p.Position
-					end
-					local base = CFrame.new(centre / #parts)
-					local locals = {}
-					for _, p in parts do
-						table.insert(locals, base:ToObjectSpace(p.CFrame))
-					end
-					table.insert(sways, {
-						parts = parts,
-						locals = locals,
-						base = base,
-						phase = rng:float(0, math.pi * 2),
-						amount = 0.035,
-						axis = "bob",
-					})
-				end
-			elseif name == "flagpole" then
-				local pivot = model:GetPivot()
-				local parts, locals = {}, {}
-				for _, p in model:GetDescendants() do
-					if p:IsA("BasePart") and p.Name == "Flag" then
-						table.insert(parts, p)
-						table.insert(locals, pivot:ToObjectSpace(p.CFrame))
-					end
-				end
-				if #parts > 0 then
-					table.insert(sways, {
-						parts = parts,
-						locals = locals,
-						base = pivot,
-						phase = rng:float(0, math.pi * 2),
-						amount = 0.25,
-						axis = "flag",
-					})
-				end
-			end
-		end
-	end
-end
-
-local swayClock = 0
-local function stepSway(dt: number)
-	swayClock += dt
-	if swayClock < 1 / 15 then
-		return
-	end
-	swayClock = 0
-	local cam = workspace.CurrentCamera
-	local eye = if cam then cam.CFrame.Position else Vector3.zero
-	local breeze = if workspace:GetAttribute("Weather") == "storm" then 2.5 else 1
-	for _, s in sways do
-		if (s.base.Position - eye).Magnitude < 260 then
-			local a = math.sin(clock * 1.4 + s.phase) * s.amount * breeze
-			local rot
-			if s.axis == "flag" then
-				rot = CFrame.Angles(0, a + math.sin(clock * 3.1 + s.phase) * 0.08, 0)
-			elseif s.axis == "bob" then
-				-- up and down on the swell, rolling a little
-				rot = CFrame.new(0, math.sin(clock * 1.1 + s.phase) * 0.18, 0)
-					* CFrame.Angles(a * 0.4, 0, math.sin(clock * 0.9 + s.phase * 2) * 0.05)
-			else
-				rot = CFrame.Angles(a, 0, a * 0.6)
-			end
-			for i, p in s.parts do
-				table.insert(moveParts, p)
-				table.insert(moveFrames, s.base * rot * s.locals[i])
-			end
-		end
-	end
-end
-
--- the fountain and the fireflies ----------------------------------------------------------------------
+-- the fireflies ----------------------------------------------------------------------
 
 local fireflies: { ParticleEmitter } = {}
 
 local function addEffects()
-	local town = workspace:FindFirstChild("Town")
-	local fountain = town and town:FindFirstChild("fountain")
-	local spout = fountain and fountain:FindFirstChild("Spout", true)
-	if spout and spout:IsA("BasePart") then
-		local spray = Instance.new("ParticleEmitter")
-		spray.Name = "Spray"
-		spray.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-		spray.Color = ColorSequence.new(Color3.fromRGB(200, 235, 255), Color3.fromRGB(150, 210, 250))
-		spray.Size = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 0.5),
-			NumberSequenceKeypoint.new(1, 0.15),
-		})
-		spray.Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 0.2),
-			NumberSequenceKeypoint.new(1, 1),
-		})
-		spray.Lifetime = NumberRange.new(0.9, 1.3)
-		spray.Rate = 70
-		spray.Speed = NumberRange.new(9, 13)
-		spray.SpreadAngle = Vector2.new(14, 14)
-		spray.Acceleration = Vector3.new(0, -26, 0)
-		spray.EmissionDirection = Enum.NormalId.Top
-		spray.LightEmission = 0.4
-		spray.Parent = spout
-	end
-	for _, l in TownMap.lawns() do
+	for _, l in CityMap.Lawns do
 		local p = Instance.new("Part")
 		p.Name = "Fireflies"
 		p.Anchored = true
@@ -519,81 +317,6 @@ local function stepLeaves(dt: number)
 			local turn = CFrame.new(l.pivot) * CFrame.Angles(a, 0, a * 0.7) * CFrame.new(-l.pivot)
 			table.insert(moveParts, l.part)
 			table.insert(moveFrames, turn * l.rest)
-		end
-	end
-end
-
--- Traffic lights: the two at a junction take turns (one hangs over each road). Green, a moment
--- of amber, then red while the other road goes.
-type Signal = { red: BasePart, amber: BasePart, green: BasePart, across: boolean }
-local signals: { Signal } = {}
-local RED, AMBER, GREEN = Color3.fromRGB(240, 80, 70), Color3.fromRGB(250, 200, 80), Color3.fromRGB(90, 220, 120)
-local DIM = 0.28
-
-local function collectSignals(town: Instance)
-	table.clear(signals)
-	for _, model in town:GetChildren() do
-		if model.Name == "trafficLight" then
-			local red, amber, green =
-				model:FindFirstChild("Red"), model:FindFirstChild("Amber"), model:FindFirstChild("Green")
-			if red and amber and green and red:IsA("BasePart") and amber:IsA("BasePart") and green:IsA("BasePart") then
-				-- which road it hangs over: its arm reaches from the pole toward the lamps
-				local arm = red.CFrame.Position - (model :: Model):GetPivot().Position
-				table.insert(
-					signals,
-					{ red = red, amber = amber, green = green, across = math.abs(arm.X) > math.abs(arm.Z) }
-				)
-			end
-		end
-	end
-end
-
-local function lamp(p: BasePart, color: Color3, on: boolean)
-	p.Material = if on then Enum.Material.Neon else Enum.Material.SmoothPlastic
-	p.Color = if on then color else Color3.new(color.R * DIM, color.G * DIM, color.B * DIM)
-end
-
-local signalStep = -1
-local function stepSignals()
-	local CYCLE = 24
-	local t = clock % CYCLE
-	-- 0..10 one road green, 10..12 amber, 12..22 the other green, 22..24 amber
-	local step = if t < 10 then 0 elseif t < 12 then 1 elseif t < 22 then 2 else 3
-	if step == signalStep then
-		return
-	end
-	signalStep = step
-	for _, s in signals do
-		local mine = if s.across then step else (step + 2) % 4
-		lamp(s.green, GREEN, mine == 0)
-		lamp(s.amber, AMBER, mine == 1)
-		lamp(s.red, RED, mine >= 2)
-	end
-end
-
--- Things on the water bob: buoys, boats at anchor, rowing boats pulled half up the sand.
-local FLOATS = { buoy = 0.3, sailboat = 0.22, sailboat2 = 0.22, rowboat = 0.08 }
-
-local function collectFloats(town: Instance)
-	for _, model in town:GetChildren() do
-		local rise = FLOATS[model.Name]
-		if rise and model:IsA("Model") then
-			local base = CFrame.new(model:GetPivot().Position)
-			local parts, locals = {}, {}
-			for _, p in model:GetDescendants() do
-				if p:IsA("BasePart") then
-					table.insert(parts, p)
-					table.insert(locals, base:ToObjectSpace(p.CFrame))
-				end
-			end
-			table.insert(sways, {
-				parts = parts,
-				locals = locals,
-				base = base,
-				phase = rng:float(0, math.pi * 2),
-				amount = rise * 0.16,
-				axis = "bob",
-			})
 		end
 	end
 end
@@ -762,29 +485,17 @@ local function stepGrass(dt: number)
 	end
 end
 
--- Ducks: a few on the pond in the park and the lake in the hills, paddling slow circles.
+-- Ducks: a few on the river by the green, paddling slow circles.
 type Duck = { m: Mover, center: Vector3, radius: number, angle: number, speed: number }
 local ducks: { Duck } = {}
 
-local function collectDucks(town: Instance)
+local function collectDucks()
 	if #ducks > 0 then
 		return
 	end
-	local ponds: { { any } } = {}
-	for _, model in town:GetChildren() do
-		if model:IsA("Model") then
-			local pivot = model:GetPivot()
-			if model.Name == "pondPark" then
-				table.insert(ponds, { pivot * Vector3.new(-10, 0.5, 0), 24, 4 })
-			elseif model.Name == "tarn" then
-				table.insert(ponds, { pivot * Vector3.new(0, 0.5, 0), 22, 3 })
-			elseif model.Name == "pocketPond" then
-				table.insert(ponds, { pivot * Vector3.new(0, 0.42, 0), 6, 1 })
-			end
-		end
-	end
-	for _, pond in ponds do
-		for k = 1, pond[3] do
+	for _, pond in CityMap.Ponds do
+		local centre = Vector3.new(pond[1], CityMap.SeaLevel + 0.1, pond[2])
+		for k = 1, 3 do
 			local white = (k + #ducks) % 3 == 0
 			table.insert(ducks, {
 				m = mover(
@@ -793,11 +504,14 @@ local function collectDucks(town: Instance)
 					if white then Color3.fromRGB(250, 250, 246) else Color3.fromRGB(56, 130, 96),
 					false
 				),
-				center = pond[1],
-				radius = pond[2] * rng:float(0.35, 0.8),
+				center = centre,
+				radius = pond[3] * rng:float(0.35, 0.8),
 				angle = rng:float(0, math.pi * 2),
 				speed = rng:float(0.12, 0.22) * (if k % 2 == 0 then 1 else -1),
 			})
+			-- on the water from the start, wherever the player is
+			local d = ducks[#ducks]
+			place(d.m, CFrame.new(d.center + Vector3.new(math.cos(d.angle), 0, math.sin(d.angle)) * d.radius))
 		end
 	end
 end
@@ -821,7 +535,6 @@ end
 
 local function stepLife(dt: number)
 	stepLeaves(dt)
-	stepSignals()
 	stepGrass(dt)
 	stepDucks(dt)
 end
@@ -835,26 +548,24 @@ function Ambience.start()
 
 	-- traffic both ways, and the bus
 	local colors = AmbientModels.CarColors
-	for i = 1, 4 do
-		addCar(-L + i * 240 + rng:float(-40, 40), 1, false, colors[(i - 1) % #colors + 1])
-		addCar(L - i * 240 + rng:float(-40, 40), -1, false, colors[(i + 2) % #colors + 1])
+	local span = EAST - WEST
+	for i = 1, 5 do
+		addCar(WEST + (i - 0.5) * span / 5 + rng:float(-40, 40), 1, false, colors[(i - 1) % #colors + 1])
+		addCar(EAST - (i - 0.5) * span / 5 + rng:float(-40, 40), -1, false, colors[(i + 2) % #colors + 1])
 	end
-	addCar(L - 60, -1, true)
+	addCar(EAST - 60, -1, true)
 
-	-- the town's trees, flags and fountain arrive from the server: gather them once it's here
+	-- the town arrives from the server: gather what moves in it once it's here
 	task.spawn(function()
 		local town = workspace:WaitForChild("Town", 30)
 		if not town then
 			return
 		end
 		task.wait(3)
-		collectTown()
 		addEffects()
 		collectLeaves(town)
-		collectSignals(town)
-		collectFloats(town)
 		collectJets(town)
-		collectDucks(town)
+		collectDucks()
 	end)
 
 	local crossingClock = 0
@@ -872,8 +583,6 @@ function Ambience.start()
 			nightEffects()
 		end
 		stepCars(dt)
-		stepSway(dt)
-		stepSpinners()
 		stepLife(dt)
 		flush()
 	end)

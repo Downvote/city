@@ -1,9 +1,7 @@
 --!strict
--- Places to find round the island. Walking up to one for the first time pays a few coins, once.
+-- Places to find round the town. Walking up to one for the first time pays a few coins, once.
 -- (They were marked on a map you could travel from; the user: "remove the map button and the map
--- interface".) Positions are on the ground (on the hills, at the hills' height).
-
-local Hills = require(script.Parent.Hills)
+-- interface".) Positions are on what you stand on there, in the world (Data/CityMap's town).
 
 local Places = {}
 
@@ -16,138 +14,102 @@ export type Place = {
 	coins: number,
 }
 
-local function at(x: number, z: number): Vector3
-	return Vector3.new(x, Hills.at(x, z), z)
-end
-
 Places.list = {
 	{
-		id = "square",
-		name = "The town square",
-		blurb = "Where everyone ends up sooner or later.",
-		pos = Vector3.new(0, 0, 70),
-		radius = 30,
+		id = "green",
+		name = "The green",
+		blurb = "Where the bus stops and everybody gets off.",
+		pos = Vector3.new(690, 0, -100),
+		radius = 34,
 		coins = 0,
 	},
 	{
-		id = "lookout",
-		name = "The lookout",
-		blurb = "The best view on the island, if you don't mind the climb.",
-		pos = at(0, 640),
-		radius = 26,
-		coins = 80,
+		id = "bridge",
+		name = "The red bridge",
+		blurb = "Two red towers and a long way down to the river.",
+		pos = Vector3.new(931, 21.4, 0),
+		radius = 40,
+		coins = 40,
+	},
+	{
+		id = "beach",
+		name = "Balloon beach",
+		blurb = "Hot air balloons parked on the sand. Nobody has seen one go up.",
+		pos = Vector3.new(488, 0, -568),
+		radius = 50,
+		coins = 50,
 	},
 	{
 		id = "farm",
-		name = "Hilltop farm",
-		blurb = "Cows, corn and a windmill that never stops.",
-		pos = at(-680, 490),
-		radius = 50,
-		coins = 60,
-	},
-	{
-		id = "camp",
-		name = "Pine camp",
-		blurb = "Tents round a fire that somebody always keeps going.",
-		pos = at(650, 520),
-		radius = 34,
-		coins = 60,
-	},
-	{
-		id = "observatory",
-		name = "The observatory",
-		blurb = "On clear nights you can count the moons. There's one.",
-		pos = at(-380, 748),
-		radius = 30,
-		coins = 70,
-	},
-	{
-		id = "radio",
-		name = "The radio mast",
-		blurb = "Plays the same three songs, very far.",
-		pos = at(380, 760),
-		radius = 24,
+		name = "Farm park",
+		blurb = "Two barns, a picnic lawn and paths that go round in circles.",
+		pos = Vector3.new(564, 0.4, -330),
+		radius = 60,
 		coins = 50,
 	},
 	{
-		id = "pier",
-		name = "Fairground pier",
-		blurb = "A ferris wheel, a carousel and a smell of doughnuts.",
-		pos = Vector3.new(-320, 0.4, -360),
-		radius = 40,
-		coins = 50,
-	},
-	{
-		id = "marina",
-		name = "The marina",
-		blurb = "Boats nobody seems to take out.",
-		pos = Vector3.new(300, 0.3, -330),
+		id = "lookout",
+		name = "Hill lookout",
+		blurb = "The whole town from up here, if your legs hold out.",
+		pos = Vector3.new(650, 133.3, 683),
 		radius = 30,
-		coins = 40,
-	},
-	{
-		id = "lighthouse",
-		name = "The lighthouse",
-		blurb = "Out on the rocks at the end of the jetty.",
-		pos = Vector3.new(1000, 0.6, -330),
-		radius = 24,
-		coins = 60,
-	},
-	{
-		id = "station",
-		name = "The train station",
-		blurb = "The train is always about to leave.",
-		pos = Vector3.new(686, 0.22, -146),
-		radius = 30,
-		coins = 40,
-	},
-	{
-		id = "skytower",
-		name = "Sky Tower",
-		blurb = "The tallest thing for miles. Or metres.",
-		pos = Vector3.new(950, 0.22, -146),
-		radius = 26,
-		coins = 40,
-	},
-	{
-		id = "cinema",
-		name = "The cinema",
-		blurb = "Showing the same film as last week, and loving it.",
-		pos = Vector3.new(920, 0.22, 24),
-		radius = 26,
-		coins = 40,
-	},
-	{
-		id = "pond",
-		name = "Pond park",
-		blurb = "Three ducks, one bridge and a lot of benches.",
-		pos = Vector3.new(-750, 0.3, -68),
-		radius = 40,
-		coins = 40,
+		coins = 80,
 	},
 	{
 		id = "school",
-		name = "School field",
-		blurb = "Goals at both ends and a track round it.",
-		pos = Vector3.new(-950, 0.3, 190),
-		radius = 44,
+		name = "The school",
+		blurb = "A running track and a bell you can hear from the plots.",
+		pos = Vector3.new(452, 0, 416),
+		radius = 50,
 		coins = 40,
 	},
 	{
-		id = "museum",
-		name = "The museum",
-		blurb = "Mostly old rocks. Very nice rocks.",
-		pos = Vector3.new(-760, 0, 20),
-		radius = 26,
-		coins = 40,
-	},
-	{
-		id = "cove",
-		name = "North cove",
-		blurb = "A quiet beach on the far side of the hills.",
-		pos = Vector3.new(200, -0.3, 958),
+		id = "motorway",
+		name = "Under the motorway",
+		blurb = "Cars overhead all day. Down here it's quiet.",
+		pos = Vector3.new(-562, 0, 0),
 		radius = 40,
-		coins = 70,
+		coins = 40,
+	},
+	{
+		id = "towers",
+		name = "The tall towers",
+		blurb = "Glass all the way up. You get a sore neck looking.",
+		pos = Vector3.new(1538, 0.4, 30),
+		radius = 50,
+		coins = 40,
+	},
+	{
+		id = "hospital",
+		name = "The hospital",
+		blurb = "Very clean, very quiet, and the coffee isn't bad.",
+		pos = Vector3.new(1556, 0.4, -330),
+		radius = 50,
+		coins = 40,
+	},
+	{
+		id = "stadium",
+		name = "The stadium",
+		blurb = "Home games on Saturdays. You can hear the crowd from the bridge.",
+		pos = Vector3.new(1890, 0.4, 341),
+		radius = 60,
+		coins = 60,
+	},
+	{
+		id = "works",
+		name = "The works",
+		blurb = "Big sheds and tall tanks behind a long wall.",
+		pos = Vector3.new(2156, 0.4, -309),
+		radius = 60,
+		coins = 60,
+	},
+	{
+		id = "eastend",
+		name = "East End",
+		blurb = "Rows of houses with the hills behind them.",
+		pos = Vector3.new(2498, 0.4, -69),
+		radius = 80,
+		coins = 40,
 	},
 } :: { Place }
 
@@ -161,7 +123,7 @@ function Places.get(id: any): Place?
 end
 
 -- Is a position close enough to a place to count as being there? (Height counts less: the
--- hills' paths wander up and down.)
+-- hill's slopes go up and down.)
 function Places.near(place: Place, pos: Vector3): boolean
 	local flat = Vector3.new(pos.X - place.pos.X, 0, pos.Z - place.pos.Z).Magnitude
 	return flat <= place.radius and math.abs(pos.Y - place.pos.Y) < 40
