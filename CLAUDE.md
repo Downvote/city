@@ -29,7 +29,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (294 at the last full run, more since; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (264, all passing; `Palette`: the light's ratios, the grade, roofs at most 50 saturation, the soft swatches; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off; what kind a bundle
 is, the outfit that holds the body, single body parts, the player's own items and avatars; preview scenes
@@ -42,41 +42,45 @@ prefix `plain:` to show it with the painted shapes off), Build (catalog, plan ru
 Build service with stubbed neighbours: charges, syncs, strips junk, refuses land you don't own), Events (3000 seeded
 events, every kind reachable, text filled, numbers in range), Newcomers (who moves in: the player's friends first,
 then the town's own twenty, nobody twice), City (starter town valid, levels, land, paydays, save
-loading, economy bounds), Town (placed models exist, plots and road clear, room to walk, spawn and festival spots
-clear, the islets out at sea off the plots), Presets (every ready-made building goes down whole turned every way, on the client and
+loading, economy bounds), Town (the city pack's manifest well formed and every placement's model in the kit, the
+plots, their land and Main Street in front of them clear of the pack, the cars on the pack's own road at its height,
+spawn and festival spot clear on the green, the three panels opened from doors of real buildings, the creator's
+stage over open ground, the sea to the horizon, nothing taken away that isn't replaced, no hole in the ground, a
+budget of parts and triangles), Presets (every ready-made building goes down whole turned every way, on the client and
 the server, inside its footprint, with its workplace), Icons (every icon builds with one outline round its silhouette: outline copies before
 fills, no stroke on a fill), Textures (every painted texture has its pictures and matching studs, ids well formed), Life
 (hearts and thank yous, snacks a day, wishes granted only by the right answer and fading, bonds, goals pay once),
-World (hills flat at their edges, on the creator's meadow and their tops, gentle to walk; places on the island and
-off the plots; nothing in any road; no tree within 18 studs of a sidewalk; the pockets clear of each other; downtown
-and civic buildings inside their blocks). The town map previews with `sh tools/preview/render.sh map <png>` (or
-`map:x1,z1,x2,z2`), the cars and the bus with `ambient`, a ready-made building with
-`preset:<id>` (`preset:<id>:inside` leaves the roof off), any of the map's own models side by side with
-`models:<name>,<name>`. A new ready-made building is a function in
+World (the glow starts above white; the places to find are in the town, off the plots, on something to stand on
+and out of the buildings, and the explorer goal counts them all). The town map previews with `sh
+tools/preview/render.sh map <png>` (or `map:x1,z1,x2,z2`), the cars and the bus with `ambient`, a ready-made
+building with `preset:<id>` (`preset:<id>:inside` leaves the roof off), the city pack's models side by side with
+`models:<key>,<key>`. A new ready-made building is a function in
 `Data/Presets` laid out with its little builder; the Presets spec will say where it doesn't fit. Every workplace
 has its own building in `Data/Buildings/<Name>.luau` (the user: "make much more buildings, one for each workspace,
 and detail them all to be unique, as much as the starting house"): keep each at that level (the Presets spec wants
 110 to 300 pieces and the workplace inside), its own shape and palette, and clear floor where the worker moves
 round the station (`Sim/Routine`'s loops).
 
-The town is a big bright island (docs/GAME_DESIGN.md section 9): the old town and its plots in the middle, a ring of
-roads (`Town.Roads`), downtown east, the civic quarter west, the hills north (`Data/Hills`), the waterfront south.
-`Data/TownMap` lays out the ground and where everything stands, `Data/CityModels` draws the buildings and landmarks,
-`Data/Places` lists the places to find. The user wants it detailed like a classic city builder: buildings on
-landscaped lots (`CityModels.lot`), window bays, signs, roof details, parked cars, groves, textured ground, all
-textures from the Roblox library. Budgets (the Town spec holds them): the whole town under 30,000 parts with a merged piece counted as one, under
-70,000 with every piece opened into its shapes, and under 220 different pieces (it is about 28,700, 57,500 and 166
-since the redo; every shop, tower, house and public building you can walk into is a furnished room from
-`Data/Interiors`, preview with `render.sh inside:<kind>,<kind>`). Street buildings come from the facade kit
-(`Data/Facades`): a building is a name such as `facade:24x18:4:17:shop=open:cl` (size, storeys, seed and options)
-or one of its presets, so a new one needs only a placement. Downtown is rows of them on every block edge, with a
-market square and a lantern-lit market lane south of Main Street (the user: "emulate the level of detail of these
-shaders, maps and building materials"); preview the presets with `render.sh "models:rowBakery,rowNoodles,rowCorner"
-<png> --yaw 205 --pitch 16`. The user: "remove the trees near the road", so trees keep to the
-parks, the market square, the hills and the beach; streets get flower troughs, benches and shrubs instead
-(`Data/DetailModels`), and the gaps between buildings are filled by rule with pockets (cafe terraces, fountains,
-gardens, ponds: `pockets` in `TownMap.placements`). The World spec checks the hills, the places and that nothing stands in a road; preview a district
-with `render.sh map:x1,z1,x2,z2`.
+The town is the user's own low poly city pack (docs/GAME_DESIGN.md section 9; the user: "redo the map with these
+models and city"). The repository is public, so the pack never goes in it: not its FBX, its textures, the kit or
+any mesh data made from them. `python3 -I scripts/citypack.py <LowPoly_City_01Ready.fbx> --textures <dir>` turns
+the pack (kept anywhere outside the repository) into, under the git-ignored `out/citypack/`: the kit for Studio
+(five FBX files of its 330 models in studs, cut under the importer's 20,000 triangles, the palette beside them and
+`IMPORT.md`), the preview cache (`meshes.npz`) and the scene; and it writes `Data/CityPack`, the manifest (each
+model's pieces and sizes, each of the 3,149 placements), which is layout data and is committed. The user imports
+the kit in Studio, which puts the meshes on their account, and gives us asset ids for `Tuning.City.KitAssetIds`
+(or puts the kit in `ServerStorage.CityKit`). `World.buildMap` finds the kit, checks it against the manifest
+(`CityMap.fit`: scale, a quarter or half turn, a mirror), sizes and places every model; without the kit it puts
+a plain box per piece, so the game runs and the specs and sims run on that. `Data/CityMap` lays the pack out round
+our plots: the suburb's road to the bridge is Main Street (`Town`), the eight plots replace its houses, the middle
+of town is by the river (spawn and festival on the green, the tailor's at a boutique's door, the news board, City
+hall at the government building across the street: `CityMap.Buildings` and `door`), what touched a plot or the
+street is taken away (`removed()` says why), our own sea runs to the horizon and the motorway carries on over it.
+The plots' ground is the pack's own flat grass (`CityMap.PlotGround`), owned land a step lighter. `Data/Places`
+holds twelve places in the new city. Cars and the bus drive Main Street (`Town.Roads`, following `CityMap.streetY`
+up the ramps). The previews draw the pack's models from the cache (`tools/preview/citypack.py`, hooked into
+`render.py` and `walk.py`) and stand-in boxes without it. The old town's modules (TownMap, CityModels, Facades,
+Landmarks, StreetModels, DetailModels, Interiors, Signs, Hills) are gone; don't bring them back.
 
 The user asked for real low poly models in "a distinct shared style across all objects" (the trees were "simply
 shapes put together"). Library models can't be downloaded here (Roblox wants a login), so the style is made in the
@@ -91,18 +95,12 @@ shaders, new models and textures if necessary. The map should look similar to a 
 direction, never the game: none of its streets, shops, names, logos or art. Roblox has no shaders of our own,
 so the look is `World.stylize` (hard shadows, violet shade, flat walls, a gentle grade, a gentle glow on what
 gives off light: `Tuning.Look.Bloom`, its threshold above white since "the bloom might be too much") and ink outlines
-on people (`client/World/Outlines`: Highlights, the 20 nearest). The street scene is `Data/StreetModels`,
-placed by rule in `TownMap`'s `streetScene` (poles and wires, drinks machines, billboards, clutter). Signs are
-drawn in the game by `Services/Signs` from `Data/Signs` onto parts named `Sign` / `SwingSign` (attributes
-`SignKind`, `SignForm`, `SignFace`, `SignHome`), `Ad`, `Vend` and `Plate`: a new shop or billboard only needs
-those parts and, for a new kind, names in `Data/Signs`. Shop names and adverts are made up, plain and human.
-Preview the layouts with `sh tools/preview/ui.sh signs <png>` (also `signs:boards`, `signs:posters`,
-`signs:blades`); the 3D previews show boards blank.
+on people (`client/World/Outlines`: Highlights, the 20 nearest).
 
 The user asked for a lively world ("animated blades of grass, animated details, small creatures, trees with leaves
 that sway with the wind") and a clear sky ("remove clouds and birds from the sky"): leaves are parts named `Leaf`,
 hanging signs `SwingSign`, fountain jets `Jet`, and `World/Ambience` moves them, the grass and the ducks on each
-player's own screen. Name a new tree's crown parts `Leaf` and it sways. (The user later: "remove the butterflies
+player's own screen. Name a new tree's crown parts `Leaf` and it sways (the city pack's own trees don't). (The user later: "remove the butterflies
 and bunnies". Don't bring them back.)
 
 The user: "remove the shop, buying of things and food and feeding. when a character gets a craving, allow the
