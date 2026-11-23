@@ -3,6 +3,7 @@
 -- switcher with view toggles top right, and a little action bar over whatever you pick.
 
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 local GuiService = game:GetService("GuiService")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
@@ -28,7 +29,7 @@ local s = BuildMode.state
 local MAIN = {
 	{
 		id = "build",
-		icon = "house",
+		icon = "blueprint",
 		name = "Build",
 		subs = {
 			{ id = "walls", icon = "wall", name = "Walls" },
@@ -215,13 +216,20 @@ local function itemTile(parent: Instance, def: any, order: number, onPick: () ->
 	local scale = Kit.new("UIScale", { Parent = card })
 	card.MouseEnter:Connect(function()
 		stroke.Color = T.Blue
-		scale.Scale = 1.05
+		TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Scale = 1.07 }):Play()
 	end)
 	card.MouseLeave:Connect(function()
 		stroke.Color = T.Ink
-		scale.Scale = 1
+		TweenService:Create(scale, TweenInfo.new(0.15), { Scale = 1 }):Play()
 	end)
 	card.Activated:Connect(onPick)
+	-- cards pop into the tray one after another
+	scale.Scale = 0.4
+	TweenService:Create(
+		scale,
+		TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, math.min(order, 14) * 0.025),
+		{ Scale = 1 }
+	):Play()
 	return card
 end
 
@@ -1290,6 +1298,23 @@ function BuildUI.init(exitCallback: () -> ())
 			ui.Visible = true
 			openMain(mainTab)
 			BuildMode.setTool("select")
+			-- the bars slide in from the edges
+			for _, f in ui:GetChildren() do
+				if f:IsA("GuiObject") then
+					local name = f.Name
+					if name == "Dock" then
+						Kit.slideIn(f, 0, 140, 0)
+					elseif name == "SubsBar" then
+						Kit.slideIn(f, 0, 160, 0.04)
+					elseif name == "Tray" or name == "TrayShadow" then
+						Kit.slideIn(f, 0, 260, 0.08)
+					elseif name == "Tools" then
+						Kit.slideIn(f, -140, 0, 0.1)
+					elseif name == "Floors" or name == "Pill" then
+						Kit.slideIn(f, 260, 0, 0.12)
+					end
+				end
+			end
 		end
 		refreshChrome()
 		if what == "tool" then

@@ -186,6 +186,10 @@ function Hud.start()
 		end)
 		if n ~= from and from > 0 then
 			local gain = n > from
+			Kit.bump(coinPill, 0.12)
+			if gain and n - from >= 10 then
+				Kit.flyCoins(nil, coinPill, math.clamp(math.floor((n - from) / 25), 3, 10))
+			end
 			local pop = Kit.title((if gain then "+" else "-") .. Text.commas(math.abs(n - from)), {
 				Parent = coinPill,
 				Size = UDim2.fromOffset(120, 26),
@@ -212,11 +216,12 @@ function Hud.start()
 			moodNow = want
 			local h = moodPill.Size.Y.Offset
 			moodArt:Destroy()
-			moodArt = Icons.make(want, math.floor(h * 1.12), {
+			local px = math.floor(h * 1.12)
+			moodArt = Icons.make(want, px, {
 				Name = "IconArt",
 				Parent = moodPill,
-				Position = UDim2.new(0, -math.floor(h * 0.3), 0.5, 0),
-				AnchorPoint = Vector2.new(0, 0.5),
+				Position = UDim2.new(0, -math.floor(h * 0.3) + px / 2, 0.5, 0),
+				AnchorPoint = Vector2.new(0.5, 0.5),
 			})
 		end
 		badgeText.Text = tostring(stats.level)
@@ -253,11 +258,25 @@ function Hud.start()
 		if weatherArt then
 			weatherArt:Destroy()
 		end
-		weatherArt = Icons.make(
+		local art = Icons.make(
 			name,
 			62,
-			{ Parent = clock, Position = UDim2.new(0, -16, 0.5, 0), AnchorPoint = Vector2.new(0, 0.5) }
+			{ Parent = clock, Position = UDim2.new(0, 15, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5) }
 		)
+		weatherArt = art
+		if name == "sun" then
+			-- the sun turns slowly (it has no clipped parts, so turning it is safe)
+			TweenService:Create(art, TweenInfo.new(24, Enum.EasingStyle.Linear, Enum.EasingDirection.In, -1), {
+				Rotation = 360,
+			}):Play()
+		else
+			-- clouds and the moon bob gently
+			TweenService:Create(
+				art,
+				TweenInfo.new(1.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+				{ Position = UDim2.new(0, 15, 0.5, -3) }
+			):Play()
+		end
 	end
 	local timeLabel = Kit.title("", {
 		Parent = clock,
@@ -334,7 +353,7 @@ function Hud.start()
 	end)
 	local entries = {
 		{
-			"hammer",
+			"crane",
 			"Build",
 			T.Blue,
 			function()
@@ -359,7 +378,7 @@ function Hud.start()
 			end,
 		},
 		{
-			"hall",
+			"city",
 			"City",
 			T.Purple,
 			function()
@@ -383,15 +402,19 @@ function Hud.start()
 			end,
 		},
 	}
+	local tiles = {}
 	for i, e in entries do
-		Kit.iconButton(e[1], e[2], {
-			Parent = dock,
-			Size = UDim2.fromOffset(74, 68),
-			LayoutOrder = i,
-			Radius = 16,
-			Color = e[3],
-			TextSize = 15,
-		}, e[4])
+		table.insert(
+			tiles,
+			Kit.iconButton(e[1], e[2], {
+				Parent = dock,
+				Size = UDim2.fromOffset(74, 68),
+				LayoutOrder = i,
+				Radius = 16,
+				Color = e[3],
+				TextSize = 15,
+			}, e[4])
+		)
 	end
 
 	-- daily gift ---------------------------------------------------------------------------------------
@@ -427,6 +450,38 @@ function Hud.start()
 			Toasts.show(Text.fill("Daily gift: {n} coins. Come back tomorrow for more.", { n = amount }), "good")
 		end
 	end)
+
+	-- everything slides into place when the game starts, one piece after another
+	Kit.slideIn(pills, 0, -90, 0.1)
+	Kit.slideIn(card, -360, 0, 0.2)
+	Kit.slideIn(clock, 240, 0, 0.15)
+	for i, tile in tiles do
+		local bounce = Kit.new("UIScale", { Name = "Intro", Parent = tile })
+		bounce.Scale = 0
+		TweenService:Create(
+			bounce,
+			TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, 0.25 + i * 0.06),
+			{ Scale = 1 }
+		):Play()
+	end
+
+	-- now and then the coin on the money pill flips over
+	local coinArt = coinPill:FindFirstChild("IconArt")
+	if coinArt and coinArt:IsA("GuiObject") then
+		task.spawn(function()
+			local full = coinArt.Size
+			while coinArt.Parent do
+				task.wait(6 + math.random() * 4)
+				TweenService:Create(coinArt, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+					Size = UDim2.fromOffset(2, full.Y.Offset),
+				}):Play()
+				task.wait(0.15)
+				TweenService:Create(coinArt, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+					Size = full,
+				}):Play()
+			end
+		end)
+	end
 
 	-- the unsaved warning
 	State.on("unsaved", function(v)

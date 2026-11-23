@@ -120,13 +120,19 @@ D.hammer = {
 }
 
 D.house = {
+	{ "c", 66, 0, 16, 14, C.white, t = 0.25 },
 	{ "r", 66, 14, 12, 28, C.brick, r = 0.1 },
 	{ "r", 16, 44, 68, 48, C.cream, r = 0.06 },
 	{ "t", 6, 6, 88, "up", C.red },
 	{ "r", 4, 47, 92, 8, C.redDark, r = 0.5 },
-	{ "r", 41, 62, 18, 30, C.wood, r = 0.2 },
-	{ "r", 22, 60, 14, 14, C.sky, r = 0.15 },
-	{ "r", 64, 60, 14, 14, C.sky, r = 0.15 },
+	{ "r", 40, 60, 20, 32, C.wood, r = 0.2, o = false },
+	{ "c", 54, 74, 4, 4, C.gold, o = false },
+	{ "r", 21, 59, 15, 15, C.white, r = 0.15, o = false },
+	{ "r", 23, 61, 11, 11, C.sky, r = 0.1, o = false },
+	{ "r", 64, 59, 15, 15, C.white, r = 0.15, o = false },
+	{ "r", 66, 61, 11, 11, C.sky, r = 0.1, o = false },
+	{ "r", 46, 24, 8, 12, C.cream, r = 0.3, o = false },
+	{ "r", 14, 32, 18, 6, C.white, r = 0.5, rot = -45, o = false, t = 0.5 },
 }
 
 D.wall = {
@@ -196,14 +202,12 @@ local function arrowHead(dir: string, x: number, y: number, base: number, color:
 end
 
 D.move = {
-	{ "r", 44, 14, 12, 72, C.blue, r = 0.3 },
-	{ "r", 14, 44, 72, 12, C.blue, r = 0.3 },
-	arrowHead("up", 30, 4, 40, C.blue),
-	arrowHead("down", 30, 76, 40, C.blue),
-	arrowHead("left", 4, 30, 40, C.blue),
-	arrowHead("right", 76, 30, 40, C.blue),
-	{ "r", 45, 30, 10, 40, C.blue, o = false },
-	{ "r", 30, 45, 40, 10, C.blue, o = false },
+	{ "r", 43, 16, 14, 68, C.blue, r = 0.3 },
+	{ "r", 16, 43, 68, 14, C.blue, r = 0.3 },
+	arrowHead("up", 33, 2, 34, C.blue),
+	arrowHead("down", 33, 81, 34, C.blue),
+	arrowHead("left", 2, 33, 34, C.blue),
+	arrowHead("right", 81, 33, 34, C.blue),
 }
 
 D.rotate = {
@@ -412,6 +416,83 @@ D.store = {
 	{ "r", 40, 58, 20, 34, C.wood, r = 0.15 },
 	{ "r", 18, 54, 16, 18, C.sky, r = 0.15 },
 	{ "r", 66, 54, 16, 18, C.sky, r = 0.15 },
+}
+
+-- city building ------------------------------------------------------------------------------------
+
+D.crane = {
+	{ "r", 30, 86, 40, 10, C.greyDark, r = 0.4 },
+	{ "r", 40, 22, 16, 68, C.yellow, r = 0.08 },
+	{ "r", 6, 14, 88, 12, C.yellow, r = 0.3 },
+	{ "t", 36, 0, 24, "up", C.orange },
+	{ "r", 8, 26, 18, 14, C.greyDark, r = 0.2 },
+	{ "r", 76, 26, 4, 26, C.greyDark, o = false },
+	{ "r", 66, 50, 24, 18, C.orange, r = 0.15 },
+	{ "r", 43, 32, 10, 4, C.orangeDark, rot = 40, o = false },
+	{ "r", 43, 48, 10, 4, C.orangeDark, rot = -40, o = false },
+	{ "r", 43, 64, 10, 4, C.orangeDark, rot = 40, o = false },
+	{ "r", 43, 78, 10, 4, C.orangeDark, rot = -40, o = false },
+	{ "r", 18, 17, 12, 4, C.orangeDark, rot = 40, o = false },
+	{ "r", 62, 17, 12, 4, C.orangeDark, rot = -40, o = false },
+}
+
+D.hardhat = {
+	{ "half", 16, 18, 68, 76, C.yellow, dir = "up" },
+	{ "r", 4, 52, 92, 16, C.orange, r = 0.5 },
+	{ "r", 44, 18, 12, 36, C.goldLight, r = 0.4, o = false },
+	{ "r", 26, 30, 8, 14, C.white, r = 0.5, rot = -25, o = false, t = 0.4 },
+}
+
+D.blueprint = {
+	{ "r", 8, 12, 84, 76, C.blue, r = 0.08 },
+	{ "r", 8, 12, 12, 76, C.blueDark, r = 0.2 },
+	{ "r", 30, 46, 46, 32, C.blue, o = false },
+	{ "r", 30, 46, 46, 4, C.white, o = false },
+	{ "r", 30, 74, 46, 4, C.white, o = false },
+	{ "r", 30, 46, 4, 32, C.white, o = false },
+	{ "r", 72, 46, 4, 32, C.white, o = false },
+	{ "r", 44, 26, 4, 30, C.white, rot = -50, o = false },
+	{ "r", 58, 26, 4, 30, C.white, rot = 50, o = false },
+	{ "r", 47, 62, 12, 16, C.white, o = false },
+}
+
+D.city = {
+	{ "r", 4, 40, 28, 54, C.blueLight, r = 0.08 },
+	{ "r", 34, 12, 30, 82, C.blue, r = 0.08 },
+	{ "r", 66, 30, 28, 64, C.purple, r = 0.08 },
+	{ "r", 46, 4, 6, 10, C.greyDark, o = false },
+}
+do
+	-- lit windows in rows
+	for row = 0, 5 do
+		for col = 0, 1 do
+			table.insert(D.city, { "r", 40 + col * 11, 20 + row * 11, 7, 6, C.goldLight, o = false })
+		end
+	end
+	for row = 0, 3 do
+		table.insert(D.city, { "r", 10, 48 + row * 11, 7, 6, C.white, o = false })
+		table.insert(D.city, { "r", 19, 48 + row * 11, 7, 6, C.white, o = false })
+		table.insert(D.city, { "r", 72, 38 + row * 13, 7, 7, C.goldLight, o = false })
+		table.insert(D.city, { "r", 82, 38 + row * 13, 7, 7, C.goldLight, o = false })
+	end
+end
+
+D.road = {
+	{ "r", 18, 4, 64, 92, C.greyDark, r = 0.1 },
+	{ "r", 46, 10, 8, 16, C.yellow, r = 0.3, o = false },
+	{ "r", 46, 42, 8, 16, C.yellow, r = 0.3, o = false },
+	{ "r", 46, 74, 8, 16, C.yellow, r = 0.3, o = false },
+	{ "r", 22, 4, 4, 92, C.white, o = false },
+	{ "r", 74, 4, 4, 92, C.white, o = false },
+}
+
+D.coins = {
+	{ "c", 36, 30, 60, 60, C.goldDark },
+	{ "c", 42, 35, 48, 48, C.gold, o = false },
+	{ "c", 4, 10, 60, 60, C.goldDark },
+	{ "c", 10, 15, 48, 48, C.gold, o = false },
+	{ "r", 29, 26, 10, 26, C.goldDark, r = 0.5, o = false },
+	{ "r", 16, 18, 10, 18, C.white, r = 0.5, rot = 35, o = false, t = 0.35 },
 }
 
 -- furniture tabs --------------------------------------------------------------------------------------
@@ -867,7 +948,8 @@ local function drawShape(
 	elseif kind == "half" then
 		local w, h = s[4], s[5]
 		local g = if ink then grow else 0
-		local bx, by, bw, bh = x - g, y + h / 2 - g, w + g * 2, h / 2 + g * 2
+		local top = if s.dir == "up" then y else y + h / 2
+		local bx, by, bw, bh = x - g, top - g, w + g * 2, h / 2 + g * 2
 		local clip = box((if ink then "Ink" else "Fill") .. "Half" .. i, bx, by, bw, bh, root, z)
 		clip.BackgroundTransparency = 1
 		clip.ClipsDescendants = true
@@ -924,6 +1006,23 @@ function Icons.make(name: string, px: number, props: { [string]: any }?): Frame
 	local thick = if p.Outline == false then 0 else math.max(1, math.floor(px / 22 + 0.5))
 	local grow = thick / px * 100 -- the outline's width in icon units
 	if thick > 0 then
+		-- the base: the silhouette's dark copy again, a little lower, so the outline is thicker
+		-- underneath and the icon stands up off the screen like a sticker
+		local depth = math.max(1, math.floor(thick * 0.9 + 0.5)) / px * 100
+		if px >= 20 then
+			for i, s in def do
+				if s.o ~= false then
+					local before = #root:GetChildren()
+					drawShape(root, s, i, true, grow, thick, nil, z)
+					local kids = root:GetChildren()
+					for k = before + 1, #kids do
+						local piece = kids[k] :: GuiObject
+						piece.Position += UDim2.fromScale(0, depth / 100)
+						piece.Name = "InkBase" .. piece.Name:sub(4)
+					end
+				end
+			end
+		end
 		for i, s in def do
 			if s.o ~= false then
 				drawShape(root, s, i, true, grow, thick, nil, z)

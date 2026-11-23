@@ -280,24 +280,155 @@ function Kit.title(text: string, props: { [string]: any }?): TextLabel
 	return Kit.text(text, p)
 end
 
+-- Is this object on screen: it and every parent visible, under a ScreenGui that's enabled?
+local function onScreen(o: Instance): boolean
+	local cur: Instance? = o
+	while cur do
+		if cur:IsA("GuiObject") and not cur.Visible then
+			return false
+		end
+		if cur:IsA("ScreenGui") then
+			return cur.Enabled
+		end
+		cur = cur.Parent
+	end
+	return false
+end
+Kit.onScreen = onScreen
+
+-- The glossy sheen that sweeps across buttons now and then. One loop for the whole interface
+-- picks a button on screen every so often and runs the sweep across it.
+local sheens: { [any]: number } = setmetatable({}, { __mode = "k" }) :: any
+local sheenLoop = false
+local function startSheens()
+	if sheenLoop then
+		return
+	end
+	sheenLoop = true
+	task.spawn(function()
+		while true do
+			task.wait(0.7)
+			local ready = {}
+			local now = os.clock()
+			for grad, last in sheens do
+				local holder = grad.Parent
+				if holder and holder.Parent and now - last > 5 and onScreen(holder) then
+					table.insert(ready, grad)
+				end
+			end
+			if #ready > 0 then
+				local g = ready[math.random(1, #ready)] :: any
+				sheens[g] = now
+				g.Offset = Vector2.new(-1.3, 0)
+				TweenService:Create(g, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					Offset = Vector2.new(1.3, 0),
+				}):Play()
+			end
+		end
+	end)
+end
+
+local function addSheen(face: GuiObject, radius: number)
+	local sheen = Kit.new("Frame", {
+		Name = "Sheen",
+		BackgroundColor3 = T.White,
+		BorderSizePixel = 0,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = face.ZIndex,
+		Parent = face,
+	})
+	Kit.corner(sheen, radius)
+	local g = Kit.new("UIGradient", {
+		Rotation = 20,
+		Offset = Vector2.new(-1.3, 0),
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(0.4, 1),
+			NumberSequenceKeypoint.new(0.5, 0.45),
+			NumberSequenceKeypoint.new(0.6, 1),
+			NumberSequenceKeypoint.new(1, 1),
+		}),
+		Parent = sheen,
+	})
+	sheens[g] = os.clock() - math.random() * 4
+	startSheens()
+end
+
+-- What a Kit button does under the pointer: grows when hovered (its icon hops), sinks onto its
+-- lip when pressed, and springs back with a little bounce when let go.
 local function pressable(b: GuiButton)
 	local scale = Kit.new("UIScale", { Name = "Press", Parent = b })
+	local hovering, pressed = false, false
+	local function sink(down: boolean)
+		local lip = b:GetAttribute("Lip")
+		if type(lip) ~= "number" then
+			return
+		end
+		for _, name in { "Face", "Content" } do
+			local f = b:FindFirstChild(name)
+			if f and f:IsA("GuiObject") then
+				local baseY = f:GetAttribute("BaseY")
+				if type(baseY) ~= "number" then
+					baseY = f.Position.Y.Offset
+					f:SetAttribute("BaseY", baseY)
+				end
+				local p = f.Position
+				f.Position =
+					UDim2.new(p.X.Scale, p.X.Offset, p.Y.Scale, (baseY :: number) + (if down then lip - 1 else 0))
+			end
+		end
+	end
+	local function hop()
+		local art = b:FindFirstChild("IconArt", true)
+		if art and art:IsA("GuiObject") then
+			local baseY = art:GetAttribute("BaseY")
+			if type(baseY) ~= "number" then
+				baseY = art.Position.Y.Offset
+				art:SetAttribute("BaseY", baseY)
+			end
+			local p = art.Position
+			art.Position = UDim2.new(p.X.Scale, p.X.Offset, p.Y.Scale, (baseY :: number) - 4)
+			TweenService:Create(art, TweenInfo.new(0.35, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out), {
+				Position = UDim2.new(p.X.Scale, p.X.Offset, p.Y.Scale, baseY :: number),
+			}):Play()
+		end
+	end
 	b.MouseEnter:Connect(function()
-		TweenService:Create(scale, TweenInfo.new(0.12, Enum.EasingStyle.Back), { Scale = 1.06 }):Play()
+		hovering = true
+		TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Scale = 1.06 }):Play()
+		hop()
 	end)
 	b.MouseLeave:Connect(function()
-		TweenService:Create(scale, TweenInfo.new(0.12), { Scale = 1 }):Play()
+		hovering = false
+		if pressed then
+			pressed = false
+			sink(false)
+		end
+		TweenService:Create(scale, TweenInfo.new(0.15), { Scale = 1 }):Play()
 	end)
 	b.MouseButton1Down:Connect(function()
-		TweenService:Create(scale, TweenInfo.new(0.06), { Scale = 0.92 }):Play()
+		pressed = true
+		sink(true)
+		TweenService:Create(scale, TweenInfo.new(0.06), { Scale = 0.96 }):Play()
 	end)
 	b.MouseButton1Up:Connect(function()
-		TweenService:Create(scale, TweenInfo.new(0.14, Enum.EasingStyle.Back), { Scale = 1 }):Play()
+		if pressed then
+			pressed = false
+			sink(false)
+		end
+	end)
+	b.Activated:Connect(function()
+		-- a squash and a springy rebound
+		scale.Scale = 0.9
+		TweenService:Create(scale, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+			Scale = if hovering then 1.06 else 1,
+		}):Play()
 	end)
 end
 
 -- The chunky look shared by buttons and tiles: the button itself is the darker lip, a "Face"
--- child sits on it with a gradient and a glossy "Shine", and a thick dark outline goes round.
+-- child sits on it with a gradient, a glossy "Shine" and a sweeping "Sheen", and a thick dark
+-- outline goes round.
 local function chunky(b: GuiButton, color: Color3, radius: number, lip: number, outline: number?)
 	b.BackgroundColor3 = darker(color, 0.7)
 	b:SetAttribute("KitButton", true)
@@ -326,6 +457,7 @@ local function chunky(b: GuiButton, color: Color3, radius: number, lip: number, 
 		Parent = face,
 	})
 	Kit.corner(shine, math.max(2, radius - 4))
+	addSheen(face, radius)
 	return face
 end
 
@@ -587,6 +719,15 @@ function Kit.badge(parent: GuiObject, text: string): Frame
 		Wrap = false,
 		ZIndex = f.ZIndex,
 	})
+	-- a gentle pulse so it gets noticed
+	local pulse = Kit.new("UIScale", { Name = "Pulse", Parent = f })
+	TweenService
+		:Create(
+			pulse,
+			TweenInfo.new(0.55, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+			{ Scale = 1.18 }
+		)
+		:Play()
 	return f
 end
 
@@ -611,8 +752,8 @@ function Kit.pill(icon: string, props: { [string]: any }?): (Frame, TextLabel)
 		Icons.make(icon, iconPx, {
 			Name = "IconArt",
 			Parent = f,
-			Position = UDim2.new(0, -math.floor(h * 0.3), 0.5, 0),
-			AnchorPoint = Vector2.new(0, 0.5),
+			Position = UDim2.new(0, -math.floor(h * 0.3) + iconPx / 2, 0.5, 0),
+			AnchorPoint = Vector2.new(0.5, 0.5),
 		})
 	else
 		Kit.new("TextLabel", {
@@ -1025,12 +1166,84 @@ function Kit.swatch(color: Color3, size: number?, onClick: (() -> ())?, props: {
 	return b
 end
 
--- Brief pop-in for panels.
+-- A panel or card springs into view.
 function Kit.popIn(frame: GuiObject)
 	local s = frame:FindFirstChild("PopScale") or Kit.new("UIScale", { Name = "PopScale", Parent = frame })
-	s.Scale = 0.85
+	s.Scale = 0.6
 	frame.Visible = true
-	TweenService:Create(s, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	TweenService:Create(s, TweenInfo.new(0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+end
+
+-- Shrinks a frame away, then runs `done` (which usually hides or destroys it).
+function Kit.popOut(frame: GuiObject, done: (() -> ())?)
+	local s = frame:FindFirstChild("PopScale") or Kit.new("UIScale", { Name = "PopScale", Parent = frame })
+	TweenService:Create(s, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Scale = 0.7 }):Play()
+	task.delay(0.15, function()
+		if done then
+			done()
+		end
+	end)
+end
+
+-- Slides a frame in from (dx, dy) pixels away, after `delay` seconds.
+function Kit.slideIn(frame: GuiObject, dx: number, dy: number, delay: number?)
+	local home = frame:GetAttribute("Home")
+	local target: UDim2
+	if typeof(home) == "UDim2" then
+		target = home
+	else
+		target = frame.Position
+		frame:SetAttribute("Home", target)
+	end
+	frame.Position = target + UDim2.fromOffset(dx, dy)
+	local tween = TweenService:Create(
+		frame,
+		TweenInfo.new(0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, delay or 0),
+		{ Position = target }
+	)
+	tween:Play()
+end
+
+-- A quick swell, for a number that just changed.
+function Kit.bump(frame: GuiObject, amount: number?)
+	local s = frame:FindFirstChild("Bump") or Kit.new("UIScale", { Name = "Bump", Parent = frame })
+	s.Scale = 1 + (amount or 0.15)
+	TweenService:Create(s, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+end
+
+-- Coins that fly from a point on screen into a counter, the way games show money coming in.
+-- `from` is in screen pixels (or nil for the middle of the screen); `to` is the counter.
+function Kit.flyCoins(from: Vector2?, to: GuiObject, count: number?)
+	local gui = Kit.root()
+	local scale = gui:FindFirstChild("Scale") :: UIScale?
+	local k = if scale then scale.Scale else 1
+	local cam = workspace.CurrentCamera
+	local view = if cam then cam.ViewportSize else Vector2.new(1280, 720)
+	local start = (from or Vector2.new(view.X / 2, view.Y / 2 - 40)) / k
+	local goal = (to.AbsolutePosition + Vector2.new(24, to.AbsoluteSize.Y / 2)) / k
+	for i = 1, count or 6 do
+		local coin = Icons.make("coin", 34, {
+			Parent = gui,
+			Position = UDim2.fromOffset(start.X - 17, start.Y - 17),
+			ZIndex = 60,
+		})
+		local spread = Vector2.new(math.random(-70, 70), math.random(-60, 10))
+		local mid = start + spread
+		TweenService
+			:Create(coin, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, i * 0.05), {
+				Position = UDim2.fromOffset(mid.X - 17, mid.Y - 17),
+			})
+			:Play()
+		task.delay(0.3 + i * 0.05, function()
+			TweenService:Create(coin, TweenInfo.new(0.45, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+				Position = UDim2.fromOffset(goal.X - 17, goal.Y - 17),
+			}):Play()
+			task.delay(0.46, function()
+				coin:Destroy()
+				Kit.bump(to, 0.08)
+			end)
+		end)
+	end
 end
 
 function Kit.isTouch(): boolean

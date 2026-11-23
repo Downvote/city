@@ -5,6 +5,7 @@
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Remotes = require(Shared.Net.Remotes)
@@ -95,8 +96,12 @@ end
 local skip = false
 local typing = false
 local function setSpeaker(name: string?)
+	local changed = speakerLabel.Text ~= (name or "")
 	speakerLabel.Text = name or ""
 	plate.Visible = name ~= nil and name ~= ""
+	if changed and plate.Visible then
+		Kit.bump(plate, 0.25)
+	end
 end
 
 local function typeOut(text: string)
@@ -150,6 +155,14 @@ local function showChoices(ev: any)
 			LayoutOrder = i,
 			Radius = 12,
 		})
+		-- the choices pop up one after another
+		local pop = Kit.new("UIScale", { Parent = b })
+		pop.Scale = 0.5
+		TweenService:Create(
+			pop,
+			TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, i * 0.07),
+			{ Scale = 1 }
+		):Play()
 		b.Activated:Connect(function()
 			if not affordable then
 				return

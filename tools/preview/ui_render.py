@@ -376,7 +376,8 @@ def gradient_layer(w, h, color, alpha, grad):
     cos, sin = math.cos(rot), math.sin(rot)
     ys, xs = np.mgrid[0:h, 0:w]
     ext = abs(w * cos) + abs(h * sin)
-    t = ((xs - w / 2) * cos + (ys - h / 2) * sin) / max(1e-6, ext) + 0.5
+    off = P(grad, "Offset", [0, 0]) or [0, 0]
+    t = ((xs - w / 2) * cos + (ys - h / 2) * sin) / max(1e-6, ext) + 0.5 - (off[0] * cos + off[1] * sin)
     cseq = P(grad, "Color", [[0, 1, 1, 1], [1, 1, 1, 1]])
     tseq = P(grad, "Transparency", [[0, 0], [1, 0]])
     times = np.linspace(0, 1, 64)
@@ -571,9 +572,12 @@ def draw_node(cv, node, clip, item_hint=None):
     rect = node.get("_rect")
     rot = P(node, "Rotation", 0) or 0
     target = cv
+    outer_clip = clip
     if rot and rect:
+        # a turned object is drawn upright on its own layer, turned, and only then clipped
         target = Canvas(cv.im.width / cv.ss, cv.im.height / cv.ss, cv.ss, cv.k / cv.ss)
         target.im = Image.new("RGBA", cv.im.size, (0, 0, 0, 0))
+        clip = None
     if rect:
         draw_box(target, node, rect, clip)
         if node["class"] in TEXT_CLASSES:
@@ -601,7 +605,7 @@ def draw_node(cv, node, clip, item_hint=None):
     if target is not cv:
         x, y, w, h = [cv.px(v) for v in rect]
         rotated = target.im.rotate(-rot, resample=Image.BICUBIC, center=(x + w / 2, y + h / 2))
-        cv.paste(rotated, 0, 0, clip)
+        cv.paste(rotated, 0, 0, outer_clip)
 
 
 def backdrop(w, h, path):
