@@ -124,7 +124,8 @@ the money: "remove the + button next to coins") and the quests
 below it as well"); the clock top right with a row of captioned round buttons under it, Home first ("make it such
 that there is a teleport home button": `Hud.goHome`, the `GoHome` remote, the H key); a quick menu of four tiles
 bottom left, starting at the left edge (it had a round portrait button first: "remove this button and flush the
-rest to the left") and a big Build button bottom right. Those pieces come out of the screen's edges ("these three should
+rest to the left") and a big Build button bottom right, the same dark slab as that menu bar with a yellow hammer
+("make the build button be black as well": it was blue). Those pieces come out of the screen's edges ("these three should
 be coming out of the corners of the screen instead of floating. vertically flip the paralleograms of the weather and
 one of the 4 icons. also, the quest tab and currency/stats tab should also be part of the left side edge"): the
 clock's slab hangs from the top right corner and the menu bar comes out of the bottom left, both leaning the other

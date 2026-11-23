@@ -1102,6 +1102,13 @@ pressing it would do.
 - The weather's icon on the clock bobs up and down on the spot. Its bob used to aim at a place 21 pixels to the
   left, left over from an older layout, so a cloud or the moon slid across the clock and back.
 
+### A black Build button
+
+> make the build button be black as well
+
+The Build button was a blue slab. It is the same dark slab as the menu bar across the bottom from it now, with the
+hammer still yellow and the halftone starting from its slanted end.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

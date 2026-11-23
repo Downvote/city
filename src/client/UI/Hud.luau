@@ -578,13 +578,17 @@ function Hud.start()
 
 	-- the big Build button, bottom right
 	-- (its right end runs off the screen: it comes out of the corner)
+	-- It was blue. The user: "make the build button be black as well": it is the same slab as the
+	-- menu bar across from it now, with the hammer still yellow.
 	local buildButton = Kit.bigButton("Build", "hammer", {
 		Parent = hud,
 		Size = UDim2.fromOffset(268, 96),
 		Position = UDim2.new(1, 20, 1, 0),
 		AnchorPoint = Vector2.new(1, 1),
-		Color = T.Blue,
+		Color = T.Paper,
+		TextColor = T.Ink,
 		IconColor = T.Yellow,
+		Detail = { Line = T.Ink, LineAlpha = 0.86, Tone = T.Ink, ToneAlpha = 0.92, Side = "left", ToneWidth = 96 },
 	}, function()
 		Hud.closeAll()
 		BuildMode.enter()

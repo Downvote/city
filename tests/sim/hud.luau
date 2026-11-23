@@ -149,6 +149,17 @@ run("the quick menu comes out of the bottom left corner, its tiles from the left
 		wide += menu:FindFirstChild(name, true).Size.X.Offset
 	end
 	check(menu.Size.X.Offset < wide + 80, "and the bar is no longer than they need")
+	-- the user: "make the build button be black as well"
+	local build = menu.Parent:FindFirstChild("Build")
+	local bar = menu:FindFirstChild("Core", true)
+	local slab = build and build:FindFirstChild("Core", true)
+	check(
+		bar ~= nil and slab ~= nil and Sim.Kit.colorOf(slab) == Sim.Kit.colorOf(bar),
+		"the Build button across from it is the same dark slab"
+	)
+	check(Sim.Kit.colorOf(slab) == Sim.Kit.Theme.Paper, "a surface colour, not blue any more")
+	local words = build:FindFirstChild("Label")
+	check(words ~= nil and words.TextColor3 == Sim.Kit.Theme.Ink, "with light words on it")
 end)
 
 run("the main screen steps aside while somebody is talking in a scene", function()

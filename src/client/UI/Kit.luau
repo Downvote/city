@@ -2600,8 +2600,10 @@ function Kit.roundButton(icon: string, props: { [string]: any }?, onClick: (() -
 	return b
 end
 
--- The big main action button: a bright wobbly pill with a big icon in its own colour and bold
--- white words (Build). props: Parent, Size, Position, AnchorPoint, Color, IconColor, TextSize.
+-- The big main action button: a leaning slab with a big icon in its own colour and bold words
+-- (Build). props: Parent, Size, Position, AnchorPoint, Color, IconColor, TextSize, TextColor
+-- (white with an outline by default; give the words' own colour for a slab in a surface colour,
+-- and they get no outline), Detail (what Kit.detail puts on the slab).
 function Kit.bigButton(text: string, icon: string, props: { [string]: any }?, onClick: (() -> ())?): TextButton
 	local p = props or {}
 	local size: UDim2 = p.Size or UDim2.fromOffset(230, 76)
@@ -2629,7 +2631,7 @@ function Kit.bigButton(text: string, icon: string, props: { [string]: any }?, on
 	if core and core:IsA("Frame") then
 		-- shaded across, a pale line inside its edge and dots toward its far end
 		Kit.shade(core, color)
-		Kit.detail(core, { LineAlpha = 0.55, Tone = T.Dark, ToneAlpha = 0.86, ToneWidth = 150 })
+		Kit.detail(core, p.Detail or { LineAlpha = 0.55, Tone = T.Dark, ToneAlpha = 0.86, ToneWidth = 150 })
 	end
 	local h = size.Y.Offset
 	local ipx = math.floor(h * 0.7)
@@ -2647,14 +2649,16 @@ function Kit.bigButton(text: string, icon: string, props: { [string]: any }?, on
 		BackgroundTransparency = 1,
 		Font = Kit.Fonts.Title,
 		TextSize = p.TextSize or math.floor(h * 0.44),
-		TextColor3 = T.White,
+		TextColor3 = p.TextColor or T.White,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Size = UDim2.new(1, -(ipx + h * 0.5), 1, 0),
 		Position = UDim2.fromOffset(ipx + math.floor(h * 0.5), 0),
 		ZIndex = 3,
 		Parent = b,
 	})
-	Kit.outlineText(label, darker(color, 0.62), 1.5)
+	if not p.TextColor then
+		Kit.outlineText(label, darker(color, 0.62), 1.5)
+	end
 	pressable(b)
 	if onClick then
 		b.Activated:Connect(onClick)
