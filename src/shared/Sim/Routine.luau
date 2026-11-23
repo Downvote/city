@@ -75,7 +75,14 @@ local LOOPS: { [string]: { Step } } = {
 	-- Cafe counter: take the order, make it at the machine, hand it over, see to the cakes.
 	barista = {
 		{ name = "till", stay = { 6, 9 }, act = "wave", say = 0.4 },
-		{ name = "machine", at = V(-2.3, 0, -2.8), look = V(-2.3, 4.4, -0.2), stay = { 5, 8 }, act = "point", beat = 4 },
+		{
+			name = "machine",
+			at = V(-2.3, 0, -2.8),
+			look = V(-2.3, 4.4, -0.2),
+			stay = { 5, 8 },
+			act = "point",
+			beat = 4,
+		},
 		{ name = "till", stay = { 4, 6 }, say = 0.5 },
 		{ name = "cakes", at = V(2.6, 0, -2.8), look = V(2.6, 4, 0), stay = { 4, 6 } },
 	},
@@ -115,16 +122,44 @@ local LOOPS: { [string]: { Step } } = {
 	-- talk, write on the other half.
 	teacher = {
 		{ name = "class", stay = { 6, 9 }, say = 0.6 },
-		{ name = "board left", at = V(-2.5, 0, 1.1), look = V(-2.5, 4.6, -0.6), stay = { 5, 8 }, act = "point", beat = 3 },
+		{
+			name = "board left",
+			at = V(-2.5, 0, 1.1),
+			look = V(-2.5, 4.6, -0.6),
+			stay = { 5, 8 },
+			act = "point",
+			beat = 3,
+		},
 		{ name = "class", stay = { 4, 6 }, act = "point", say = 0.4 },
-		{ name = "board right", at = V(2.5, 0, 1.1), look = V(2.5, 4.6, -0.6), stay = { 5, 8 }, act = "point", beat = 3 },
+		{
+			name = "board right",
+			at = V(2.5, 0, 1.1),
+			look = V(2.5, 4.6, -0.6),
+			stay = { 5, 8 },
+			act = "point",
+			beat = 3,
+		},
 	},
 	-- Little stage: a song at the mic, a turn to each side of the crowd, a bow, and a fiddle
 	-- with the speaker before the next one.
 	musician = {
 		{ name = "mic", stay = { 9, 13 }, act = "dance", icon = "music", say = 0.4 },
-		{ name = "stage left", at = V(-1.9, 0.5, 0.5), look = V(-5, 0.5, 12), stay = { 5, 7 }, act = "dance2", icon = "music" },
-		{ name = "stage right", at = V(1.9, 0.5, 0.5), look = V(5, 0.5, 12), stay = { 5, 7 }, act = "dance2", icon = "music" },
+		{
+			name = "stage left",
+			at = V(-1.9, 0.5, 0.5),
+			look = V(-5, 0.5, 12),
+			stay = { 5, 7 },
+			act = "dance2",
+			icon = "music",
+		},
+		{
+			name = "stage right",
+			at = V(1.9, 0.5, 0.5),
+			look = V(5, 0.5, 12),
+			stay = { 5, 7 },
+			act = "dance2",
+			icon = "music",
+		},
 		{ name = "bow", stay = { 3, 5 }, act = "cheer", say = 0.6 },
 		{ name = "speaker", at = V(1.3, 0.5, -1.7), look = V(3.3, 2, -2.2), stay = { 3, 5 } },
 	},
@@ -223,11 +258,7 @@ end
 function Routine.breakShare(pers: string): number
 	local lazy = Personalities.trait(pers, "lazy")
 	local focus = Personalities.trait(pers, "focus")
-	return math.clamp(
-		K.BreakShare + K.LazyShare * (lazy - 0.5) - K.FocusShare * (focus - 0.5),
-		K.ShareMin,
-		K.ShareMax
-	)
+	return math.clamp(K.BreakShare + K.LazyShare * (lazy - 0.5) - K.FocusShare * (focus - 0.5), K.ShareMin, K.ShareMax)
 end
 
 -- How long one of their breaks lasts: the least and the most seconds.
