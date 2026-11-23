@@ -553,8 +553,26 @@ function World.init()
 	for _, why in problems do
 		warn("[World] low poly shape not made, keeping Roblox's own: " .. why)
 	end
+	-- where solid modelling works, the town's detail pieces (window frames, awnings, shutters)
+	-- are merged into one mesh each and copied; they arrive just behind the buildings
+	Builder.cutPieces = Builder.hasKit()
 	buildMap()
 	buildPlots()
+	task.spawn(function()
+		task.wait(2)
+		while Builder.Pieces.waiting > 0 do
+			task.wait(1)
+		end
+		local n = Builder.Pieces
+		if n.failed > 0 then
+			warn(
+				("[World] %d kinds of detail piece couldn't be merged and are built from parts (%d merged)"):format(
+					n.failed,
+					n.cut
+				)
+			)
+		end
+	end)
 	local cal = World.calendar()
 	workspace:SetAttribute("Season", cal.s)
 	workspace:SetAttribute("Day", cal.d)

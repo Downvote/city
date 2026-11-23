@@ -12,7 +12,7 @@ export type Light = {
 }
 
 export type Prim = {
-	shape: string, -- "Block" | "Wedge" | "CornerWedge" | "Cylinder" | "Ball" | "Cone" (point up, +Y)
+	shape: string, -- "Block" | "Wedge" | "CornerWedge" | "Cylinder" | "Ball" | "Cone" (point up, +Y) | "Piece"
 	cf: CFrame,
 	size: Vector3,
 	color: Color3,
@@ -25,6 +25,10 @@ export type Prim = {
 	role: string?, -- "door" (the swinging leaf), "seat", "bed", "glow" (switched on at night)
 	attrs: { [string]: any }?,
 	frame: CFrame?, -- a door leaf's own doorway (where its hinge is measured from), set by the Builder
+	-- a "Piece" only: the shapes it is made of, in its own frame (its box's middle), and a key
+	-- that is the same for every piece made of the same shapes (Geometry.piece)
+	parts: { Prim }?,
+	key: string?,
 }
 
 local Geometry = {}
@@ -202,6 +206,104 @@ function Geometry.append(into: { Prim }, list: { Prim })
 	for _, p in list do
 		table.insert(into, p)
 	end
+end
+
+-- Pieces ------------------------------------------------------------------------------------------
+--
+-- The user: "try to use meshes instead of shapes. keep it low poly as possible". A piece is a
+-- handful of small shapes that make one thing (a window's frame, sill and bars; an awning; a
+-- shutter) and are used again and again across the town. As data it is one primitive, a box the
+-- size of the whole thing with the shapes listed inside it. The Builder merges each different
+-- piece into a single mesh once (solid modelling, the way Build/LowPoly cuts its shapes) and
+-- puts a copy wherever it is used, so a window is one part and not seven; where that can't be
+-- done (the specs, the previews, a failed merge) the shapes are simply made as parts. Either
+-- way it looks the same. Everything that only needs to know what room a thing takes up
+-- (bounds, clearances, counting parts) can treat a piece as its box.
+
+Geometry.PieceMax = 28 -- shapes in one piece, at most
+
+local function r3(n: number): string
+	return string.format("%.3f", n)
+end
+
+-- One piece from shapes drawn in any frame of their own. Returns the primitive: its `cf` is the
+-- middle of the box round them (still in that frame, so place it like any other primitive), and
+-- the shapes are kept relative to it. They must all be plain: one material, nothing see-through,
+-- no name, light, role or effect (those need a part of their own), and at least one must be a
+-- box that isn't turned, for the merge to hang the others on.
+function Geometry.piece(shapes: { Prim }, collide: boolean?): Prim
+	assert(#shapes >= 1 and #shapes <= Geometry.PieceMax, "a piece is 1 to " .. Geometry.PieceMax .. " shapes")
+	local lo, hi = Geometry.bounds(shapes)
+	local mid = (lo + hi) / 2
+	local back = CFrame.new(-mid)
+	local mat = shapes[1].mat
+	local upright = false
+	local keys = table.create(#shapes)
+	local parts = table.create(#shapes)
+	for i, p in shapes do
+		assert(p.shape ~= "Piece", "a piece can't hold a piece")
+		assert(p.mat == mat, "a piece is one material")
+		assert(
+			(p.transp or 0) == 0 and not p.name and not p.light and not p.role and not p.effect and not p.attrs,
+			"a piece's shapes are plain"
+		)
+		local q = table.clone(p)
+		q.cf = back * p.cf
+		parts[i] = q
+		local x, y, z, a, b, c, d, e, f, g, h, k = q.cf:GetComponents()
+		if p.shape == "Block" and math.abs(a - 1) < 1e-4 and math.abs(e - 1) < 1e-4 and math.abs(k - 1) < 1e-4 then
+			upright = true
+		end
+		keys[i] = table.concat({
+			p.shape,
+			r3(p.size.X),
+			r3(p.size.Y),
+			r3(p.size.Z),
+			r3(x),
+			r3(y),
+			r3(z),
+			r3(a),
+			r3(b),
+			r3(c),
+			r3(d),
+			r3(e),
+			r3(f),
+			r3(g),
+			r3(h),
+			r3(k),
+			p.color:ToHex(),
+		}, ",")
+	end
+	assert(upright, "a piece needs one box that isn't turned")
+	return {
+		shape = "Piece",
+		cf = CFrame.new(mid),
+		size = hi - lo,
+		color = shapes[1].color,
+		mat = mat,
+		collide = collide == true,
+		parts = parts,
+		key = mat .. (if collide then "+" else "-") .. table.concat(keys, ";"),
+	}
+end
+
+-- The same list with every piece opened into its shapes, each in the list's own frame: what the
+-- previews draw and what a spec that looks at every part needs.
+function Geometry.flatten(prims: { Prim }): { Prim }
+	local out = table.create(#prims)
+	for _, p in prims do
+		if p.shape == "Piece" and p.parts then
+			for _, q in p.parts do
+				local c = table.clone(q)
+				c.cf = p.cf * q.cf
+				c.collide = p.collide
+				table.insert(out, c)
+			end
+		else
+			table.insert(out, p)
+		end
+	end
+	return out
 end
 
 -- Corners of a prim's box, for bounds checks.

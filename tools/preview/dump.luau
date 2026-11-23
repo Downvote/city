@@ -42,7 +42,8 @@ local outPath = process.args[2] or "out/preview.json"
 local prims = {}
 
 local function addPrims(list, frame)
-	for _, p in list do
+	-- a piece (Geometry.piece) is drawn as the shapes it is made of
+	for _, p in Geometry.flatten(list) do
 		local q = table.clone(p)
 		if frame then
 			q.cf = frame * p.cf

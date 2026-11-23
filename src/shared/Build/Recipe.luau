@@ -60,6 +60,17 @@ function Recipe.add(self: Recipe, prim: Prim): Prim
 	return prim
 end
 
+-- Draws a handful of small shapes as one piece (Geometry.piece): `draw` gets a recipe of its own
+-- to draw them on, in this recipe's space, and they come back as a single primitive that the
+-- Builder makes as one mesh. For details used over and over: a window's frame, an awning, a
+-- shutter. Keep them plain (one material, no names, lights or see-through) and start with a box
+-- that isn't turned. `collide` lets people bump into it (off by default: details are for show).
+function Recipe.piece(self: Recipe, draw: (Recipe) -> (), collide: boolean?): Prim
+	local q = Recipe.new(self.c1, self.c2)
+	draw(q)
+	return self:add(Geometry.piece(q.prims, collide))
+end
+
 -- An axis aligned box by its centre and size.
 function Recipe.box(
 	self: Recipe,

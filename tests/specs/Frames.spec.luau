@@ -31,7 +31,17 @@ local function wrong(cf)
 	return nil
 end
 
+local Geometry = require(Shared .. "Build.Geometry")
+
 local function check(name, prims)
+	-- a piece's own frame and that of every shape inside it
+	local inside = Geometry.flatten(prims)
+	for i, p in inside do
+		local why = wrong(p.cf)
+		if why then
+			error(name .. ": a shape in a piece, " .. i .. " (" .. p.shape .. "), is " .. why)
+		end
+	end
 	for i, p in prims do
 		local why = wrong(p.cf)
 		if why then

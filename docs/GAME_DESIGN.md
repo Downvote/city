@@ -813,6 +813,32 @@ clutter, all of it Maplewick's own. None of that game's streets, shops, names, l
   time, and no two shops of a kind near each other share a name.
 - The plaza's tailor, shop and hall have no boards yet.
 
+### A denser, more detailed town
+
+> could you emulate the level of detail of these shaders, maps and building materials? redo our map, and our
+> starting house as well. you can make your own textures for these too, try to use meshes instead of shapes. keep
+> it low poly as possible
+
+(Sent with three pictures of another game's city: a narrow shopping street at sunset, a big crossing by a
+department store, and a market gate under a cliff.) What is taken is the level of detail and the kind of place:
+buildings shoulder to shoulder along the pavement, shop fronts under awnings, tiled and panelled walls, window
+bays with frames and sills, things on the walls and roofs, patterned paving and painted roads, warm low light.
+None of that game's streets, shops, signs, gate or art: Maplewick's are its own.
+
+- **Pieces are meshes.** A detail that is used over and over (a window's frame and sill, an awning, a shutter, a
+  balcony rail) is drawn once as a handful of small shapes and built as a single mesh, which the server merges by
+  solid modelling when it starts and then copies wherever it is used. So a building can carry many times the
+  detail for the same number of parts. Where merging isn't possible the same shapes are built as plain parts and
+  look the same.
+- **Our own materials.** Walls, roofs and ground take painted textures of our own (`scripts/gen_textures.py`):
+  panelled concrete, stucco, brick, small facade tiles, checker floor tiles, corrugated sheet, shutter slats,
+  timber slats, barrel roof tiles, paving slabs, street asphalt, awning canvas. A part asks for one by name
+  (`"Concrete:Panel"`). They show once their pictures are uploaded and their ids are in `Data/TextureIds`; until
+  then the part shows Roblox's plain material.
+- **Street buildings come from a facade kit** (`Data/Facades`): a ground floor shop front, storeys of window
+  bays, a roof with its clutter, in a handful of wall treatments and colours, put together by rule so a street is
+  varied and still one town.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

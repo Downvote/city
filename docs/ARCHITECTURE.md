@@ -79,6 +79,25 @@ The contract between the parts of the game. Update it with every change to an AP
 - A prim with `attrs.NightColor` on a `glow` role is a window: the World service gives it that colour (and Neon)
   at night and its own back in the morning (`CityModels.lit`).
 
+## Pieces and material looks
+
+- A primitive of shape `"Piece"` (`Geometry.piece(shapes, collide)`, drawn with `Recipe.piece(function(q) ... end)`)
+  is a handful of plain shapes that make one detail. Its `cf` and `size` are the box round them, `parts` the shapes
+  in that box's frame and `key` a string that is the same for every piece made of the same shapes, so code that
+  only needs room (bounds, clearances, counting) treats it as a box. `Geometry.flatten(prims)` opens pieces back
+  into their shapes (the previews and the Frames spec use it). A piece's shapes share one material, are not see
+  through, carry no name, light, role, effect or attributes, number at most `Geometry.PieceMax` (28), and one of
+  them is a box that isn't turned.
+- `Builder.instantiate` makes a piece as one mesh where `Builder.cutPieces` is on (Services/World switches it on
+  when the low poly kit was cut, so only on a real server): the first use of a key is queued, one worker merges it
+  with `GeometryService:UnionAsync` (the unturned box as the main part; `UsePartColor = false` keeps each shape's
+  colour) and checks the result is the piece's box standing on its origin, and every use is a `Clone` placed at
+  `frame * prim.cf`. Queued pieces arrive just after the rest of a model and are not in the list `instantiate`
+  returns. A failed or mis-sized merge, a ghost, a client and the specs get the shapes as plain parts. Pieces
+  don't collide unless made with `collide = true`. `Builder.Pieces` counts `cut`, `failed`, `placed`, `waiting`.
+- A primitive's `mat` may be `"Base:Look"` (`"Concrete:Panel"`): the Builder sets the part's Material to `Base` and
+  its `MaterialVariant` to `Maplewick<Look>`. Where the place has no such variant the plain material shows.
+
 ## The plan
 
 A plot's build is a `PlanData`:

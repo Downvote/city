@@ -93,8 +93,19 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 	part.Anchored = true
 	part.TopSurface = Enum.SurfaceType.Smooth
 	part.BottomSurface = Enum.SurfaceType.Smooth
-	local mat = (Enum.Material :: any)[prim.mat]
+	-- "Concrete" is Roblox's material; "Concrete:Panel" is that material in one of our own
+	-- looks (a MaterialVariant named MaplewickPanel, Data/Textures). Where the place has no such
+	-- variant the part simply shows the plain material.
+	local base, look = prim.mat, nil
+	local colon = string.find(prim.mat, ":", 1, true)
+	if colon then
+		base, look = string.sub(prim.mat, 1, colon - 1), string.sub(prim.mat, colon + 1)
+	end
+	local mat = (Enum.Material :: any)[base]
 	part.Material = mat or Enum.Material.SmoothPlastic
+	if look then
+		part.MaterialVariant = "Maplewick" .. look
+	end
 	part.Color = Textures.tint(prim.mat, prim.color)
 	part.Transparency = prim.transp or 0
 	part.CanCollide = prim.collide ~= false
@@ -185,14 +196,186 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 	return part
 end
 
--- Makes parts for prims, placed by `frame`, under `parent`.
+-- Pieces ------------------------------------------------------------------------------------------
+--
+-- A "Piece" primitive (Geometry.piece) is a handful of small shapes that make one thing. On a
+-- server that has switched it on (Builder.cutPieces, set by Services/World) each different piece
+-- is merged into one mesh the first time it is met, by solid modelling, and every use after that
+-- is a copy of it. Merging takes a moment each, so pieces don't hold the town up: a piece that
+-- isn't ready is queued, and one worker makes and places them behind the rest of the build.
+-- Anywhere else (a client, the specs, the previews), and for a piece whose merge failed or came
+-- out the wrong size, the shapes are made as ordinary parts. It looks the same either way.
+
+Builder.cutPieces = false
+Builder.Pieces = { cut = 0, failed = 0, placed = 0, waiting = 0 }
+
+local pieceKit: { [string]: BasePart | false } = {}
+type Waiting = { prim: Prim, frame: CFrame, parent: Instance }
+local pieceQueue: { Waiting } = {}
+local pieceWorker = false
+
+local function upright(cf: CFrame): boolean
+	local _, _, _, a, _, _, _, e, _, _, _, k = cf:GetComponents()
+	return math.abs(a - 1) < 1e-4 and math.abs(e - 1) < 1e-4 and math.abs(k - 1) < 1e-4
+end
+
+local function expandPiece(prim: Prim, frame: CFrame, parent: Instance, opts: Options?, out: { BasePart }?)
+	local f = frame * prim.cf
+	local subs: { Prim } = prim.parts or {}
+	for _, sub in subs do
+		local part = makePart(sub, f, opts)
+		if prim.collide ~= true then
+			part.CanCollide = false
+		end
+		part.Parent = parent
+		if out then
+			table.insert(out, part)
+		end
+	end
+end
+
+-- Merges a piece's shapes into one mesh the size of its box, standing on its own origin. Yields.
+-- Returns nil when it can't be done or didn't come out as the box says, so the caller falls back.
+local function cutPiece(prim: Prim): BasePart?
+	local subs: { Prim } = prim.parts or {}
+	local main: BasePart? = nil
+	local rest: { BasePart } = {}
+	for _, sub in subs do
+		local part = makePart(sub, CFrame.identity, nil)
+		if not main and sub.shape == "Block" and upright(sub.cf) then
+			main = part
+		else
+			table.insert(rest, part)
+		end
+	end
+	local shape: BasePart? = nil
+	if main and #rest == 0 then
+		shape = main
+		main = nil
+	elseif main then
+		local ok, result = pcall(function()
+			local geometry = game:GetService("GeometryService") :: any
+			return geometry:UnionAsync(main, rest, {
+				CollisionFidelity = Enum.CollisionFidelity.Box,
+				RenderFidelity = Enum.RenderFidelity.Automatic,
+				SplitApart = false,
+			})
+		end)
+		local made = if ok then (if type(result) == "table" then result[1] else result) else nil
+		if typeof(made) == "Instance" and made:IsA("BasePart") then
+			shape = made
+		end
+	end
+	if main then
+		main:Destroy()
+	end
+	for _, part in rest do
+		part:Destroy()
+	end
+	if not shape then
+		return nil
+	end
+	-- a copy is placed by the box the piece says it is: the mesh has to be that box, the right
+	-- way up, with its middle where the piece's is
+	local d = shape.Size - prim.size
+	if
+		math.abs(d.X) > 0.06
+		or math.abs(d.Y) > 0.06
+		or math.abs(d.Z) > 0.06
+		or shape.Position.Magnitude > 0.06
+		or not upright(shape.CFrame)
+	then
+		shape:Destroy()
+		return nil
+	end
+	shape.Name = "Piece"
+	shape.Anchored = true
+	shape.CFrame = CFrame.identity
+	shape.CanCollide = prim.collide == true
+	shape.CanTouch = false
+	pcall(function()
+		local op = shape :: any
+		op.UsePartColor = false -- each shape keeps the colour it was drawn in
+		op.SmoothingAngle = 0 -- flat facets
+	end)
+	return shape
+end
+
+local function placePiece(template: BasePart, prim: Prim, frame: CFrame, parent: Instance): BasePart
+	local part = template:Clone()
+	part.CFrame = frame * prim.cf
+	part.Parent = parent
+	Builder.Pieces.placed += 1
+	return part
+end
+
+local function workPieces()
+	if pieceWorker then
+		return
+	end
+	pieceWorker = true
+	task.spawn(function()
+		local done = 0
+		local at = 1
+		while at <= #pieceQueue do
+			local job = pieceQueue[at]
+			at += 1
+			Builder.Pieces.waiting = #pieceQueue - at + 1
+			local key = job.prim.key or ""
+			local known = pieceKit[key]
+			local template: BasePart? = if known then known :: BasePart else nil
+			if known == nil then
+				template = cutPiece(job.prim)
+				pieceKit[key] = template or false
+				if template then
+					Builder.Pieces.cut += 1
+				else
+					Builder.Pieces.failed += 1
+				end
+				task.wait() -- solid modelling isn't to be called in a rush
+			end
+			-- whatever it was for may have been taken down while it waited
+			if job.parent.Parent ~= nil then
+				if template then
+					placePiece(template, job.prim, job.frame, job.parent)
+				else
+					expandPiece(job.prim, job.frame, job.parent, nil, nil)
+				end
+			end
+			done += 1
+			if done % 60 == 0 then
+				task.wait()
+			end
+		end
+		table.clear(pieceQueue)
+		Builder.Pieces.waiting = 0
+		pieceWorker = false
+	end)
+end
+
+-- Makes parts for prims, placed by `frame`, under `parent`. A piece that is still to be merged
+-- (see above) arrives a little later and is not in the list returned.
 function Builder.instantiate(prims: { Prim }, parent: Instance, frame: CFrame?, opts: Options?): { BasePart }
 	local f = frame or CFrame.identity
 	local out = table.create(#prims)
 	for _, prim in prims do
-		local part = makePart(prim, f, opts)
-		part.Parent = parent
-		table.insert(out, part)
+		if prim.shape == "Piece" then
+			local cutting = Builder.cutPieces and not (opts and opts.ghost)
+			local known = if cutting then pieceKit[prim.key or ""] else false
+			if known == nil then
+				table.insert(pieceQueue, { prim = prim, frame = f, parent = parent })
+				Builder.Pieces.waiting = #pieceQueue
+				workPieces()
+			elseif known then
+				table.insert(out, placePiece(known :: BasePart, prim, f, parent))
+			else
+				expandPiece(prim, f, parent, opts, out)
+			end
+		else
+			local part = makePart(prim, f, opts)
+			part.Parent = parent
+			table.insert(out, part)
+		end
 	end
 	return out
 end

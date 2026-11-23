@@ -15,6 +15,9 @@ local Hills = require(script.Parent.Hills)
 local DetailModels = require(script.Parent.DetailModels)
 local CityModels = require(script.Parent.CityModels)
 local StreetModels = require(script.Parent.StreetModels)
+local Facades = require(script.Parent.Facades)
+local Landmarks = require(script.Parent.Landmarks)
+local StreetPaint = require(script.Parent.StreetPaint)
 
 type R = Recipe.Recipe
 type Prim = Geometry.Prim
@@ -508,6 +511,11 @@ TownMap.Models.hillL = hill(110, 30)
 function TownMap.prims(name: string): { Prim }
 	local build = TownMap.Models[name]
 	if not build then
+		-- the newer kits first: street buildings from the facade kit, then the set pieces
+		local made = Facades.prims(name) or Landmarks.prims(name)
+		if made then
+			return made
+		end
 		-- (the street scene first: its billboard takes the place of the older one)
 		local street = StreetModels.prims(name)
 		if street then
@@ -901,6 +909,10 @@ function TownMap.ground(region: Region?): { Prim }
 
 	-- and the hills themselves
 	for _, p in Hills.prims(region) do
+		r:add(p)
+	end
+	-- what is laid flat on top: paving patterns, markings, covers
+	for _, p in StreetPaint.ground(region) do
 		r:add(p)
 	end
 	return r.prims
@@ -2414,6 +2426,11 @@ function TownMap.placements(): { Placement }
 		afloat("seaRocks", p[1], p[2], p[1], 1)
 	end
 	afloat("seaRocks", 1100 + 130, 520, 40, 1)
+
+	-- the set pieces (Data/Landmarks)
+	for _, p in Landmarks.placements() do
+		table.insert(out, p)
+	end
 
 	-- the street scene goes on last, round everything that is already standing
 	local scene: { Placement } = sceneCache or streetScene(out)
