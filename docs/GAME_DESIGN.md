@@ -794,7 +794,7 @@ font and colours, none of their art, logos or patterns.
   corners are left are all but square. The progress ring is still a ring.
 - **Details.** A menu's panel carries a small block of slanted stripes in its colour by the cut corner and a row
   of ticks along its top edge, and the menu's name has a leaning mark in its colour in front of it.
-- **The backdrop moves.** Behind a full menu, leaning bars, triangles, hollow diamonds, plus signs and rows of
+- **The backdrop moves.** Behind a full menu, leaning bars, triangles, hollow rings (diamonds at first), plus signs and rows of
   ticks drift slowly up and to the right across the black, faint, in the menu's colour and white, and come back
   in at the far edge. A small question (a dialog) has none.
 - **Build mode** is laid out like the best known house builder's. Everything to build with is docked in the

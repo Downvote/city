@@ -500,10 +500,14 @@ clipping (`tools/preview/ui_render.py`).
   the card: it opens on the `Talk` event unless an event is being told (`EventCard.isPlaying()`), sits where the
   event's dialogue card does, offers Chat (`VillagerTalk`), Profile (`Hud.open("Residents", vid)`) and Bye, and
   closes on Bye, walking out of `Range`, waiting too long, a menu, Build mode, the creator or an event.
-- `UI/MenuParts`: what the full menus are built from, so they match: the left card (`Kit.frame` with `Cut`, a glow
-  of the menu's colour, an inner box the caller fills), the list on the right, section headings with a count, stat
-  tiles, empty states, notes and progress lines. A menu rebuilds itself when the look switches. Its states are
-  previewed as `panel:<Name>:<state>` (`ui_dump.luau`).
+- `UI/MenuParts`: what the full menus and the cards are built from, so they match: `card` (the left card: a
+  rounded card in a thin rim with a glow of the menu's colour and an inner box the caller fills), `list` (the rows
+  on the right), `heading` (a dim small caption with a hairline and a count), `stat` (a rounded well with a round
+  mark, a label and a big number), `dial` (a round level dial), `empty` (a disc in a faint ring, a title and what to
+  do), `slot` (a dim sunk pill with a ringed + or x, for something not there yet), `hint` (`Kit.hint`), `note`
+  (a round dot and a line), `progress` (a label, numbers and a bar), `sheet` (a floating card with a darker title
+  band: the event and talk cards) and `speech` (a speech bubble). A menu rebuilds itself when the look switches.
+  Its states are previewed as `panel:<Name>:<state>` (`ui_dump.luau`).
 - `UI/Quests`: the quest list on the main screen. `Quests.mount(parent, position, open)` builds it (a header that
   folds it, a list of at most `Quests.Shown` (3) quests) and refreshes it on any state that moves a goal;
   `Quests.next(profile, count)` picks them (done and unclaimed first, then by how far along). A finished one claims

@@ -947,7 +947,15 @@ local function turnOver(c: Color3): Color3
 end
 
 local function repaint(inst: Instance, map: (Color3) -> Color3)
-	if inst.Name == "Swatch" or inst:GetAttribute("KeepColors") or inst:IsA("ViewportFrame") then
+	if inst.Name == "Swatch" then
+		-- a colour chip keeps its colour; only the thin line round it follows the look
+		local rim = inst:FindFirstChild("Rim")
+		if rim and rim:IsA("UIStroke") and not rim:GetAttribute("Follow") then
+			rim.Color = map(rim.Color)
+		end
+		return
+	end
+	if inst:GetAttribute("KeepColors") or inst:IsA("ViewportFrame") then
 		return
 	end
 	local any = inst :: any
@@ -959,6 +967,9 @@ local function repaint(inst: Instance, map: (Color3) -> Color3)
 		if type(base) == "string" then
 			-- (a painted slab's colour is on its picture, a tile's in its two tones)
 			Kit.paint(inst, map(Color3.fromHex(base)))
+		else
+			-- a plain face's thin line takes a deeper tone of its new colour
+			follow(inst)
 		end
 		-- a row remembers the colour its words go back to when it is no longer picked
 		local plain = inst:GetAttribute("Plain")
@@ -3063,7 +3074,7 @@ function Kit.backButton(props: { [string]: any }, onClick: (() -> ())?): TextBut
 end
 
 -- Shapes drifting slowly across the black behind a menu. The user: "make an animated
--- background with shapes like it in the menus". Leaning bars, triangles, hollow diamonds, plus
+-- background with shapes like it in the menus". Leaning bars, triangles, hollow rings, plus
 -- signs and rows of ticks, faint, in the menu's colour and white, all sliding the same way at
 -- their own speeds and coming round again. One loop moves them, and it stops when the menu goes.
 -- opts: W, H (the layer's size), Count, Faint ({ from, to } transparency), Second (the colour of
@@ -3153,9 +3164,10 @@ function Kit.motion(parent: GuiObject, accent: Color3, seed: number, opts: { [st
 				H = size,
 			}, if k % 2 == 0 then "br" else "tl")
 		elseif kind == "diamond" then
-			local d = block(holder, size * 0.7, size * 0.7, 45, color, 1)
+			-- a hollow ring (it was a hollow diamond when the look was cut from straight lines)
+			local d = block(holder, size * 0.7, size * 0.7, 0, color, 1)
+			Kit.new("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = d })
 			Kit.new("UIStroke", { Color = color, Transparency = faint, Thickness = math.max(3, size / 14), Parent = d })
-			spin = rng:NextNumber(-10, 10)
 		elseif kind == "plus" then
 			block(holder, size, size * 0.2, 0, color, faint)
 			block(holder, size * 0.2, size, 0, color, faint)

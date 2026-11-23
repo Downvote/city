@@ -408,6 +408,8 @@ run("the look switches between dark and light, and back", function()
 	local onGlass = Kit.text("on glass", { Parent = pill, Color = roblox.Color3.fromRGB(206, 218, 240) })
 	local button = Kit.button("Go", { Parent = panel.body, Color = T.Paper, TextColor = T.Ink })
 	local swatch = Kit.swatch(roblox.Color3.fromRGB(30, 30, 34), 30, nil, { Parent = panel.body })
+	local chipLine = Kit.rim(swatch, T.Line, 1)
+	local answer = Kit.choice("An answer", { Parent = panel.body })
 	local before = snapshot()
 	local green, glass = T.Green, T.Glass
 	local told = nil
@@ -433,6 +435,12 @@ run("the look switches between dark and light, and back", function()
 		"what is on the dark glass keeps its colours"
 	)
 	check(swatch.BackgroundColor3 == roblox.Color3.fromRGB(30, 30, 34), "a colour chip keeps its colour")
+	check(chipLine.Color == T.Line, "and the thin line round it follows the look")
+	local core = answer:FindFirstChild("Core", true)
+	check(
+		core.BackgroundColor3 == T.Card and core:FindFirstChild("Rim").Color == Kit.edgeOf(T.Card),
+		"an answer's pill and the line round it follow too"
+	)
 	local right = row:FindFirstChild("Right", true)
 	check(
 		right.TextColor3 == Kit.tint(T.Green) and right.TextColor3 ~= T.Green,
