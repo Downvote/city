@@ -9,6 +9,7 @@
 -- it and parts named "Cabin" go round with it but stay upright (World/Ambience moves them).
 
 local Recipe = require(script.Parent.Parent.Build.Recipe)
+local Interiors = require(script.Parent.Interiors)
 
 type R = Recipe.Recipe
 
@@ -48,6 +49,20 @@ local function lit(r: R, pane: Recipe.Prim): Recipe.Prim
 end
 CityModels.lit = lit
 
+-- Draws something (a room, its furniture) as if `f` were the model's middle: whatever `draw`
+-- adds to the recipe is moved by `f` afterwards, doors' own frames included.
+local function placed(r: R, f: CFrame, draw: () -> ())
+	local from = #r.prims
+	draw()
+	for i = from + 1, #r.prims do
+		local p = r.prims[i]
+		p.cf = f * p.cf
+		if p.frame then
+			p.frame = f * p.frame
+		end
+	end
+end
+
 -- Kinds of building ---------------------------------------------------------------------------------
 
 export type TowerSpec = {
@@ -69,21 +84,29 @@ function CityModels.tower(spec: TowerSpec): (R) -> ()
 	return function(r: R)
 		local w, d = spec.w, spec.d
 		local fh = 4.2
-		local g = fh * 1.3
+		-- the ground floor is a lobby you can walk into, so it is tall enough for a person
+		local g = 8.4
 		local h = g + spec.floors * fh
 		local glass = spec.glass or GLASS
 		local trim = spec.trim or WHITE
 		local base = spec.base or shade(spec.wall, 0.9)
-		r:block(-w / 2, 0, -d / 2, w / 2, g, d / 2, base, "Plaster")
-		r:block(-w / 2 - 0.3, 0, -d / 2 - 0.3, w / 2 + 0.3, 0.9, d / 2 + 0.3, shade(base, 0.8), "Concrete")
-		r:block(-w / 2 + 1.6, 0.9, -d / 2 - 0.15, w / 2 - 1.6, g - 0.9, -d / 2, glass, "Glass")
-		-- the way in: a canopy on two columns, double doors, and a sign band over the ground floor
-		r:block(-5, g - 0.9, -d / 2 - 4, 5, g - 0.4, -d / 2, trim, "SmoothPlastic")
-		for _, cx in { -4.4, 4.4 } do
+		local box = Interiors.shell(r, {
+			w = w,
+			d = d,
+			h = g,
+			wall = base,
+			trim = trim,
+			doorW = 5,
+			door = shade(spec.wall, 0.7),
+			floor = rgb(232, 226, 214),
+			floorMat = "Marble",
+		})
+		Interiors.fill(r, if spec.balconies then "flats" else "lobby", box, spec.wall)
+		-- the way in: a canopy on two columns, and a sign band over the ground floor
+		r:block(-5.4, g - 0.9, -d / 2 - 4, 5.4, g - 0.4, -d / 2, trim, "SmoothPlastic")
+		for _, cx in { -4.8, 4.8 } do
 			r:cyl(cx, (g - 0.9) / 2, -d / 2 - 3.4, g - 0.9, 0.6, "y", trim, "SmoothPlastic")
 		end
-		r:block(-2.4, 0.2, -d / 2 - 0.3, 2.4, g - 1.6, -d / 2 - 0.1, DOOR, "SmoothPlastic")
-		r:block(-0.1, 0.2, -d / 2 - 0.34, 0.1, g - 1.6, -d / 2 - 0.3, trim, "SmoothPlastic")
 		r:block(
 			-w / 2 - 0.2,
 			g - 0.4,
@@ -185,6 +208,7 @@ export type ShopSpec = {
 	trim: Color3?,
 	cols: number?,
 	sign: Color3?,
+	kind: string?, -- what it sells, which furnishes it (Data/Interiors)
 }
 
 -- A shop row building: a shopfront and striped awning at the bottom, rows of windows above, a
@@ -192,27 +216,31 @@ export type ShopSpec = {
 function CityModels.shop(spec: ShopSpec): (R) -> ()
 	return function(r: R)
 		local w, d = spec.w, spec.d
+		-- the shop itself is a tall ground floor you can walk into; the storeys above are flats
+		local G = 8.4
 		local fh = 4.4
-		local h = spec.floors * fh + 0.6
+		local h = G + (spec.floors - 1) * fh + 0.6
 		local trim = spec.trim or WHITE
-		r:block(-w / 2, 0, -d / 2, w / 2, h, d / 2, spec.wall, "Brick")
-		r:block(-w / 2 - 0.2, 0, -d / 2 - 0.2, w / 2 + 0.2, 0.8, d / 2 + 0.2, shade(spec.wall, 0.78), "Concrete")
-		lit(r, r:block(-w / 2 + 1.2, 0.8, -d / 2 - 0.15, w / 2 - 1.2, fh - 0.8, -d / 2, GLASS, "Glass"))
-		-- the shopfront's frame, and the door with its own frame and a step
-		r:block(-w / 2 + 0.9, 0.8, -d / 2 - 0.22, -w / 2 + 1.3, fh - 0.6, -d / 2, trim, "SmoothPlastic")
-		r:block(w / 2 - 1.3, 0.8, -d / 2 - 0.22, w / 2 - 0.9, fh - 0.6, -d / 2, trim, "SmoothPlastic")
-		r:block(-1.8, 0.2, -d / 2 - 0.26, 1.8, 4, -d / 2 - 0.1, trim, "SmoothPlastic")
-		r:block(-1.4, 0.2, -d / 2 - 0.32, 1.4, 3.6, -d / 2 - 0.2, DOOR, "SmoothPlastic")
-		r:block(-2.2, 0, -d / 2 - 1.4, 2.2, 0.2, -d / 2, STONE, "Concrete")
-		-- the striped awning, sloping out
-		local stripes = 6
 		local awning = spec.awning or rgb(255, 110, 100)
+		local box = Interiors.shell(r, {
+			w = w,
+			d = d,
+			h = G,
+			wall = spec.wall,
+			mat = "Brick",
+			trim = trim,
+			door = shade(awning, 0.82),
+		})
+		Interiors.fill(r, spec.kind or "grocer", box, spec.wall)
+		r:block(-w / 2, G, -d / 2, w / 2, h, d / 2, spec.wall, "Brick")
+		-- the striped awning, sloping out over the window and the door
+		local stripes = math.max(6, math.floor(w / 5))
 		for k = 0, stripes - 1 do
 			local x1 = -w / 2 + 1 + k * (w - 2) / stripes
 			local x2 = x1 + (w - 2) / stripes
 			local col = if k % 2 == 0 then awning else WHITE
 			r:boxAt(
-				CFrame.new((x1 + x2) / 2, fh - 0.3, -d / 2 - 1.6) * CFrame.Angles(math.rad(22), 0, 0),
+				CFrame.new((x1 + x2) / 2, G - 0.1, -d / 2 - 1.6) * CFrame.Angles(math.rad(22), 0, 0),
 				x2 - x1,
 				0.2,
 				3.4,
@@ -220,16 +248,24 @@ function CityModels.shop(spec: ShopSpec): (R) -> ()
 				"Fabric"
 			)
 		end
+		-- a lamp on the wall either side of the front, and a board hanging by the door
+		for _, sx in { -1, 1 } do
+			r:block(sx * (w / 2 - 0.5) - 0.15, 5.4, -d / 2 - 0.9, sx * (w / 2 - 0.5) + 0.15, 5.7, -d / 2, DARK, "Metal")
+			r:glow(r:ball(sx * (w / 2 - 0.5), 5.1, -d / 2 - 0.9, 0.9, rgb(255, 236, 190), "SmoothPlastic"), 0)
+		end
+		r:block(-3.6, 6.3, -d / 2 - 2.2, -3.3, 6.6, -d / 2, DARK, "Metal")
+		r:block(-4.4, 4.6, -d / 2 - 2.1, -2.5, 6.3, -d / 2 - 1.9, spec.sign or awning, "Wood").name = "SwingSign"
 		local cols = spec.cols or math.max(2, math.floor(w / 6))
 		for f = 1, spec.floors - 1 do
-			local y1 = f * fh + 1
+			local y1 = G + (f - 1) * fh + 1
 			for c = 0, cols - 1 do
 				local x = -w / 2 + (c + 0.5) * w / cols
 				local pane = r:block(x - 1.2, y1, -d / 2 - 0.12, x + 1.2, y1 + 2.4, -d / 2, GLASS, "Glass")
 				if (c + f) % 2 == 0 then
 					lit(r, pane)
 				end
-				-- a sill with a flower box under each window
+				-- a frame round each window, and a sill with a flower box under it
+				r:block(x - 1.4, y1 + 2.4, -d / 2 - 0.2, x + 1.4, y1 + 2.7, -d / 2, trim, "SmoothPlastic")
 				r:block(x - 1.5, y1 - 0.5, -d / 2 - 0.7, x + 1.5, y1, -d / 2, trim, "SmoothPlastic")
 				local flowers = if c % 2 == 0 then rgb(250, 130, 150) else rgb(255, 210, 90)
 				r:block(x - 1.3, y1, -d / 2 - 0.6, x + 1.3, y1 + 0.5, -d / 2 - 0.15, flowers, "SmoothPlastic")
@@ -241,37 +277,57 @@ function CityModels.shop(spec: ShopSpec): (R) -> ()
 		if spec.sign then
 			r:block(-w / 4, h + 0.3, -d / 2 + 0.2, w / 4, h + 2.6, -d / 2 + 0.8, spec.sign, "SmoothPlastic")
 		end
-		-- on the roof: an air unit and a vent
+		-- on the roof: an air unit, a vent and a chimney stack
 		r:block(w / 2 - 7, h + 0.3, d / 2 - 6, w / 2 - 3, h + 1.9, d / 2 - 2.5, METAL, "Metal")
 		r:cyl(-w / 2 + 4, h + 1.1, d / 2 - 4, 1.6, 1.2, "y", METAL, "Metal")
+		r:block(-w / 2 + 7, h + 0.3, d / 2 - 3, -w / 2 + 9, h + 3, d / 2 - 1.4, rgb(196, 120, 100), "Brick")
 	end
 end
 
--- A small house with a gable roof, a door and two windows.
-local function house(r: R, x: number, z: number, w: number, d: number, wall: Color3, roof: Color3, yaw: number?)
+-- A small house with a gable roof and a chimney: one room inside, with a bed, a table, a rug and
+-- a lamp, a window either side of a door that opens.
+local function house(
+	r: R,
+	x: number,
+	z: number,
+	w: number,
+	d: number,
+	wall: Color3,
+	roof: Color3,
+	yaw: number?,
+	inside: string?
+)
 	local f = CFrame.new(x, 0, z) * CFrame.Angles(0, math.rad(yaw or 0), 0)
-	local h = 5.4
-	r:boxAt(f * CFrame.new(0, h / 2, 0), w, h, d, wall, "Plaster")
-	r:boxAt(f * CFrame.new(0, 0.3, 0), w + 0.3, 0.6, d + 0.3, shade(wall, 0.8), "Concrete")
-	local rh = 3.4
-	r:wedge(f * CFrame.new(0, h + rh / 2, -d / 4 - 0.25), w + 1, rh, d / 2 + 0.5, roof, "RoofShingles")
+	local h = 7.2
+	placed(r, f, function()
+		local box = Interiors.shell(r, {
+			w = w,
+			d = d,
+			h = h,
+			wall = wall,
+			doorW = 3,
+			doorH = 6,
+			sill = 2.4,
+			door = shade(roof, 0.8),
+		})
+		Interiors.fill(r, inside or "home", box, roof)
+	end)
+	-- the ceiling, then the roof over it
+	r:boxAt(f * CFrame.new(0, h + 0.15, 0), w + 0.4, 0.3, d + 0.4, WHITE, "SmoothPlastic")
+	local rh = 3.8
+	r:wedge(f * CFrame.new(0, h + 0.3 + rh / 2, -d / 4 - 0.25), w + 1, rh, d / 2 + 0.5, roof, "RoofShingles")
 	r:wedge(
-		f * CFrame.new(0, h + rh / 2, d / 4 + 0.25) * CFrame.Angles(0, math.pi, 0),
+		f * CFrame.new(0, h + 0.3 + rh / 2, d / 4 + 0.25) * CFrame.Angles(0, math.pi, 0),
 		w + 1,
 		rh,
 		d / 2 + 0.5,
 		roof,
 		"RoofShingles"
 	)
-	-- a chimney, a framed door on a step, and a sill under each window
-	r:boxAt(f * CFrame.new(w / 4, h + rh * 0.8, d / 5), 1.4, 3, 1.4, rgb(196, 120, 100), "Brick")
-	r:boxAt(f * CFrame.new(0, 1.9, -d / 2 - 0.08), 2.2, 3.8, 0.16, WHITE, "SmoothPlastic")
-	r:boxAt(f * CFrame.new(0, 1.7, -d / 2 - 0.14), 1.8, 3.4, 0.16, DOOR, "SmoothPlastic")
-	r:boxAt(f * CFrame.new(0, 0.15, -d / 2 - 0.9), 2.6, 0.3, 1.6, STONE, "Concrete")
-	for _, sx in { -1, 1 } do
-		lit(r, r:boxAt(f * CFrame.new(sx * w / 4 + sx * 0.6, 3, -d / 2 - 0.08), 1.6, 1.6, 0.16, GLASS, "Glass"))
-		r:boxAt(f * CFrame.new(sx * w / 4 + sx * 0.6, 2.05, -d / 2 - 0.2), 2, 0.25, 0.4, WHITE, "SmoothPlastic")
-	end
+	-- a chimney with its pot, and a lamp by the door
+	r:boxAt(f * CFrame.new(w / 4, h + rh * 0.9, d / 5), 1.4, 3.4, 1.4, rgb(196, 120, 100), "Brick")
+	r:smoke(r:boxAt(f * CFrame.new(w / 4, h + rh * 0.9 + 1.9, d / 5), 1, 0.5, 1, DARK, "SmoothPlastic"))
+	r:glow(r:lump(f * CFrame.new(2.6, 5.6, -d / 2 - 0.5), 0.8, 0.8, 0.8, rgb(255, 236, 190)), 0)
 end
 CityModels.house = house
 
@@ -279,28 +335,23 @@ CityModels.house = house
 -- turned its own way (Build/LowPoly cuts the shapes).
 local function lowTree(r: R, x: number, y: number, z: number, s: number)
 	r:cyl(x, y + 2 * s, z, 4 * s, 1.1 * s, "y", BARK, "Wood")
-	r:lump(CFrame.new(x, y + 5.2 * s, z) * CFrame.Angles(0.2, 0.6, 0.1), 6.4 * s, 5 * s, 6 * s, LEAF)
-	r:lump(
-		CFrame.new(x + 1.9 * s, y + 6.4 * s, z - 0.9 * s) * CFrame.Angles(0.5, 1.3, 0.3),
-		4.6 * s,
-		3.8 * s,
-		4.4 * s,
-		shade(LEAF, 1.1)
-	)
-	r:lump(
-		CFrame.new(x - 1.8 * s, y + 6 * s, z + 1.1 * s) * CFrame.Angles(-0.3, 2.2, 0.4),
-		4.8 * s,
-		4 * s,
-		4.6 * s,
-		shade(LEAF, 0.88)
-	)
-	r:lump(
-		CFrame.new(x + 0.2 * s, y + 7.9 * s, z + 0.5 * s) * CFrame.Angles(0.4, 0.2, -0.5),
-		3.8 * s,
-		3 * s,
-		3.6 * s,
-		shade(LEAF, 1.2)
-	)
+	-- (every clump is named Leaf: the client sways each one in the wind, World/Ambience)
+	local clumps = {
+		{ 0, 5.2, 0, 6.4, 5, 6, 1, 0.2, 0.6, 0.1 },
+		{ 1.9, 6.4, -0.9, 4.6, 3.8, 4.4, 1.1, 0.5, 1.3, 0.3 },
+		{ -1.8, 6, 1.1, 4.8, 4, 4.6, 0.88, -0.3, 2.2, 0.4 },
+		{ 0.2, 7.9, 0.5, 3.8, 3, 3.6, 1.2, 0.4, 0.2, -0.5 },
+	}
+	for _, c in clumps do
+		local leaf = r:lump(
+			CFrame.new(x + c[1] * s, y + c[2] * s, z + c[3] * s) * CFrame.Angles(c[8], c[9], c[10]),
+			c[4] * s,
+			c[5] * s,
+			c[6] * s,
+			shade(LEAF, c[7])
+		)
+		leaf.name = "Leaf"
+	end
 end
 CityModels.lowTree = lowTree
 
@@ -311,6 +362,7 @@ local function lowPine(r: R, x: number, y: number, z: number, s: number)
 	for i, t in tiers do
 		local cone = r:cone(x, y + t[1] * s, z, t[2] * s, t[3] * s, shade(LEAF_DARK, t[4]))
 		cone.cf = cone.cf * CFrame.Angles(0, math.rad(i * 22.5), 0)
+		cone.name = "Leaf"
 	end
 end
 CityModels.lowPine = lowPine
@@ -391,8 +443,8 @@ function CityModels.lot(w: number, d: number, kind: string, margin: number): (R)
 				r:block(sx * 3.3 - 0.5, 0, -hd - 0.1, sx * 3.3 + 0.5, 3, -hd + 0.9, rgb(226, 222, 214), "Concrete")
 				r:glow(r:ball(sx * 3.3, 3.5, -hd + 0.4, 1, rgb(255, 236, 190), "SmoothPlastic"), 10, 0.8)
 				-- round shrubs in the back corners (no trees this close to a road)
-				r:ball(sx * (hw - 4), 1.6, hd - 4, 4, LEAF, "SmoothPlastic")
-				r:ball(sx * (hw - 6.4), 1.1, hd - 3.4, 2.6, shade(LEAF, 1.14), "SmoothPlastic")
+				r:ball(sx * (hw - 4), 1.6, hd - 4, 4, LEAF, "SmoothPlastic").name = "Leaf"
+				r:ball(sx * (hw - 6.4), 1.1, hd - 3.4, 2.6, shade(LEAF, 1.14), "SmoothPlastic").name = "Leaf"
 				-- a flower bed either side of the path
 				r:block(sx * 3.4, 0.16, -hd + 2, sx * 8.6, 0.4, -hd + 4, rgb(124, 92, 66), "Ground")
 				for k = 0, 2 do
@@ -412,7 +464,7 @@ function CityModels.lot(w: number, d: number, kind: string, margin: number): (R)
 					local x, z = sx * (hw - 3), sz * (hd - 3)
 					r:block(x - 2.2, 0, z - 2.2, x + 2.2, 1.1, z + 2.2, rgb(226, 222, 214), "Concrete")
 					r:block(x - 1.8, 1.1, z - 1.8, x + 1.8, 1.3, z + 1.8, rgb(110, 84, 62), "Ground")
-					r:ball(x, 1.9, z, 2.8, LEAF, "SmoothPlastic")
+					r:ball(x, 1.9, z, 2.8, LEAF, "SmoothPlastic").name = "Leaf"
 					local col = blooms[(if sx > 0 then 1 else 0) * 2 + (if sz > 0 then 1 else 0) + 1]
 					r:ball(x + 0.9, 2.5, z - 0.8, 1.1, col, "SmoothPlastic")
 					r:ball(x - 0.8, 2.6, z + 0.7, 1, col, "SmoothPlastic")
@@ -497,6 +549,7 @@ M.apartmentLilac = CityModels.tower({
 	top = "garden",
 })
 M.shopCoral = CityModels.shop({
+	kind = "bakery",
 	w = 30,
 	d = 22,
 	floors = 3,
@@ -505,6 +558,7 @@ M.shopCoral = CityModels.shop({
 	sign = rgb(60, 170, 240),
 })
 M.shopYellow = CityModels.shop({
+	kind = "grocer",
 	w = 26,
 	d = 22,
 	floors = 2,
@@ -512,9 +566,45 @@ M.shopYellow = CityModels.shop({
 	awning = rgb(64, 186, 104),
 	sign = rgb(255, 110, 100),
 })
-M.shopBlue =
-	CityModels.shop({ w = 28, d = 22, floors = 3, wall = rgb(130, 196, 250), awning = rgb(255, 196, 70), sign = WHITE })
+M.shopBlue = CityModels.shop({
+	kind = "books",
+	w = 28,
+	d = 22,
+	floors = 3,
+	wall = rgb(130, 196, 250),
+	awning = rgb(255, 196, 70),
+	sign = WHITE,
+})
+-- three more shops, so a street isn't the same four over and over
+M.shopPink = CityModels.shop({
+	kind = "clothes",
+	w = 28,
+	d = 22,
+	floors = 2,
+	wall = rgb(255, 186, 206),
+	awning = rgb(120, 92, 200),
+	sign = rgb(120, 92, 200),
+})
+M.shopOrange = CityModels.shop({
+	kind = "cafe",
+	w = 30,
+	d = 22,
+	floors = 3,
+	wall = rgb(255, 190, 130),
+	awning = rgb(110, 70, 50),
+	sign = rgb(110, 70, 50),
+})
+M.shopLilac = CityModels.shop({
+	kind = "toys",
+	w = 26,
+	d = 22,
+	floors = 2,
+	wall = rgb(206, 190, 246),
+	awning = rgb(255, 208, 90),
+	sign = rgb(255, 120, 160),
+})
 M.shopMint = CityModels.shop({
+	kind = "flowers",
 	w = 24,
 	d = 22,
 	floors = 2,
@@ -523,6 +613,7 @@ M.shopMint = CityModels.shop({
 	sign = rgb(255, 196, 70),
 })
 M.deptStore = CityModels.shop({
+	kind = "department",
 	w = 70,
 	d = 40,
 	floors = 3,
@@ -535,11 +626,41 @@ M.deptStore = CityModels.shop({
 M.cinema = function(r: R)
 	local w, d, h = 56, 40, 14
 	local wall = rgb(120, 92, 200)
-	r:block(-w / 2, 0, -d / 2, w / 2, h, d / 2, wall, "SmoothPlastic")
-	r:block(-w / 2 + 2, 0.3, -d / 2 - 0.15, w / 2 - 2, 5, -d / 2, GLASS, "Glass")
+	-- the hall inside: rows of seats, the screen, popcorn by the door
+	local box = Interiors.shell(r, {
+		w = w,
+		d = d,
+		h = h,
+		wall = wall,
+		mat = "SmoothPlastic",
+		windows = false,
+		doorW = 5,
+		door = rgb(255, 214, 90),
+		floor = rgb(96, 70, 120),
+		floorMat = "Fabric",
+	})
+	Interiors.fill(r, "cinema", box, wall)
+	-- glass poster cases either side of the doors
+	for _, sx in { -1, 1 } do
+		r:block(sx * 10 - 3, 1.4, -d / 2 - 0.2, sx * 10 + 3, 6, -d / 2, rgb(255, 196, 70), "SmoothPlastic")
+		r:block(
+			sx * 10 - 2.6,
+			1.8,
+			-d / 2 - 0.3,
+			sx * 10 + 2.6,
+			5.6,
+			-d / 2 - 0.2,
+			if sx < 0 then rgb(240, 110, 120) else rgb(90, 170, 240),
+			"SmoothPlastic"
+		)
+	end
 	-- the marquee over the doors, lit
-	r:glow(r:block(-18, 5.4, -d / 2 - 4, 18, 8.6, -d / 2, rgb(255, 214, 90), "Neon"), 18, 1.2)
-	r:block(-17, 5.8, -d / 2 - 4.15, 17, 8.2, -d / 2 - 4, WHITE, "SmoothPlastic")
+	r:glow(r:block(-18, 7.6, -d / 2 - 4, 18, 10.8, -d / 2, rgb(255, 214, 90), "Neon"), 18, 1.2)
+	r:block(-17, 8, -d / 2 - 4.15, 17, 10.4, -d / 2 - 4, WHITE, "SmoothPlastic")
+	-- the film's name in lights: a row of bulbs along the marquee's lower edge
+	for k = -8, 8 do
+		r:glow(r:ball(k * 2, 7.7, -d / 2 - 4.1, 0.6, rgb(255, 250, 220), "SmoothPlastic"), 0)
+	end
 	-- the tall sign blade on the corner
 	r:glow(r:block(w / 2 - 3, 7, -d / 2 - 2.5, w / 2 - 1.8, h + 8, -d / 2 + 0.5, rgb(255, 110, 120), "Neon"), 0)
 	-- poster frames
@@ -550,15 +671,32 @@ M.cinema = function(r: R)
 end
 
 M.station = function(r: R)
-	local w, d, h = 80, 22, 8
+	local w, d, h = 80, 22, 9
 	local wall = rgb(250, 240, 222)
-	r:block(-w / 2, 0, -d / 2, w / 2, h, d / 2, wall, "SmoothPlastic")
-	-- the long arched roof
-	r:cyl(0, h, 0, w + 4, d + 4, "x", rgb(255, 128, 100), "SmoothPlastic")
-	r:block(-w / 2 + 2, 0.3, -d / 2 - 0.15, w / 2 - 2, 5.5, -d / 2, GLASS, "Glass")
-	-- the clock over the doors
-	r:cyl(0, h + 7, -d / 2 - 1.8, 0.6, 6, "z", WHITE, "SmoothPlastic")
-	r:cyl(0, h + 7, -d / 2 - 2.15, 0.2, 4.6, "z", DARK, "SmoothPlastic")
+	-- the hall inside: the ticket office, benches, the board of departures
+	local box = Interiors.shell(r, {
+		w = w,
+		d = d,
+		h = h,
+		wall = wall,
+		mat = "SmoothPlastic",
+		doorW = 6,
+		door = rgb(255, 128, 100),
+		floor = rgb(226, 222, 214),
+		floorMat = "Marble",
+	})
+	Interiors.fill(r, "station", box, wall)
+	-- a way through to the platform at the back
+	-- the ceiling and the long pitched roof over it, with a clock gable over the doors
+	local roof = rgb(255, 128, 100)
+	r:block(-w / 2 - 1, h, -d / 2 - 1, w / 2 + 1, h + 0.5, d / 2 + 1, WHITE, "SmoothPlastic")
+	r:wedge(CFrame.new(0, h + 3, -d / 4 - 0.5), w + 4, 5, d / 2 + 1, roof, "RoofShingles")
+	r:wedge(CFrame.new(0, h + 3, d / 4 + 0.5) * CFrame.Angles(0, math.pi, 0), w + 4, 5, d / 2 + 1, roof, "RoofShingles")
+	r:block(-5, h + 0.5, -d / 2 - 1.6, 5, h + 8, -d / 2 - 0.6, wall, "SmoothPlastic")
+	r:cyl(0, h + 4.6, -d / 2 - 1.8, 0.6, 6, "z", WHITE, "SmoothPlastic")
+	r:cyl(0, h + 4.6, -d / 2 - 2.15, 0.2, 4.6, "z", DARK, "SmoothPlastic")
+	r:block(-0.15, h + 4.6, -d / 2 - 2.3, 0.15, h + 6.4, -d / 2 - 2.15, WHITE, "SmoothPlastic")
+	r:block(-0.15, h + 4.45, -d / 2 - 2.3, 1.3, h + 4.75, -d / 2 - 2.15, WHITE, "SmoothPlastic")
 	-- the platform and the line behind, with a train waiting
 	r:block(-w / 2 - 10, 0, d / 2, w / 2 + 10, 1.2, d / 2 + 12, STONE, "SmoothPlastic")
 	r:block(-w / 2 - 10, 1.2, d / 2 + 11, w / 2 + 10, 1.3, d / 2 + 12, rgb(255, 214, 90), "SmoothPlastic")
@@ -612,6 +750,7 @@ end
 M.school = function(r: R)
 	local wall = rgb(255, 214, 150)
 	CityModels.shop({
+		kind = "school",
 		w = 70,
 		d = 24,
 		floors = 2,
@@ -620,12 +759,14 @@ M.school = function(r: R)
 		cols = 10,
 		sign = rgb(64, 160, 236),
 	})(r)
-	-- a clock tower over the middle
-	r:block(-6, 9, -10, 6, 20, 2, wall, "SmoothPlastic")
-	r:wedge(CFrame.new(0, 22, -7), 13, 4, 6, rgb(255, 110, 100), "SmoothPlastic")
-	r:wedge(CFrame.new(0, 22, -1) * CFrame.Angles(0, math.pi, 0), 13, 4, 6, rgb(255, 110, 100), "SmoothPlastic")
-	r:cyl(0, 16, -10.2, 0.4, 6, "z", WHITE, "SmoothPlastic")
-	r:cyl(0, 16, -10.45, 0.2, 4.4, "z", DARK, "SmoothPlastic")
+	-- a clock tower over the middle, with a bell under its roof
+	r:block(-6, 13.4, -10, 6, 24, 2, wall, "SmoothPlastic")
+	r:wedge(CFrame.new(0, 26, -7), 13, 4, 6, rgb(255, 110, 100), "SmoothPlastic")
+	r:wedge(CFrame.new(0, 26, -1) * CFrame.Angles(0, math.pi, 0), 13, 4, 6, rgb(255, 110, 100), "SmoothPlastic")
+	r:cyl(0, 20, -10.2, 0.4, 6, "z", WHITE, "SmoothPlastic")
+	r:cyl(0, 20, -10.45, 0.2, 4.4, "z", DARK, "SmoothPlastic")
+	r:block(-0.15, 20, -10.6, 0.15, 22, -10.45, WHITE, "SmoothPlastic")
+	r:block(-0.15, 19.85, -10.6, 1.4, 20.15, -10.45, WHITE, "SmoothPlastic")
 end
 
 -- A sports field: a pitch with lines and goals, a running track round it and seats along a side.
@@ -664,44 +805,93 @@ M.sportsField = function(r: R)
 end
 
 M.clinic = function(r: R)
-	CityModels.shop({ w = 46, d = 28, floors = 3, wall = WHITE, awning = rgb(70, 196, 170), cols = 7 })(r)
+	CityModels.shop({
+		kind = "clinic",
+		w = 46,
+		d = 28,
+		floors = 3,
+		wall = WHITE,
+		awning = rgb(70, 196, 170),
+		cols = 7,
+	})(r)
 	-- the cross on the front
-	r:block(-1.6, 9, -14.6, 1.6, 15, -14.2, rgb(255, 96, 96), "SmoothPlastic")
-	r:block(-4.6, 10.4, -14.6, 4.6, 13.6, -14.2, rgb(255, 96, 96), "SmoothPlastic")
-	-- a canopy over the ambulance bay on the side
-	r:block(23, 4.4, -12, 33, 5, 4, rgb(70, 196, 170), "SmoothPlastic")
+	r:block(-1.6, 18.6, -14.6, 1.6, 24.6, -14.2, rgb(255, 96, 96), "SmoothPlastic")
+	r:block(-4.6, 20, -14.6, 4.6, 23.2, -14.2, rgb(255, 96, 96), "SmoothPlastic")
+	-- a canopy over the ambulance bay on the side, with the ambulance under it
+	r:block(23, 8.4, -12, 33, 9, 4, rgb(70, 196, 170), "SmoothPlastic")
 	for _, z in { -11, 3 } do
-		r:block(32.4, 0, z - 0.3, 33, 4.4, z + 0.3, WHITE, "SmoothPlastic")
+		r:block(32.4, 0, z - 0.3, 33, 8.4, z + 0.3, WHITE, "SmoothPlastic")
 	end
+	car(r, 28, 0.1, -4, 0, WHITE)
+	r:block(26, 2.6, -8.4, 30, 5.6, -1, WHITE, "SmoothPlastic")
+	r:block(27.4, 3.6, -8.5, 28.6, 4.6, -8.4, rgb(255, 96, 96), "SmoothPlastic")
+	r:glow(r:block(27.6, 5.6, -6, 28.4, 6, -5, rgb(90, 160, 255), "SmoothPlastic"), 0)
 end
 
 M.library = function(r: R)
 	local wall = rgb(214, 128, 100)
-	r:block(-28, 0, -14, 28, 12, 14, wall, "Brick")
+	-- inside: bookcases round the walls, reading tables, the desk by the door
+	local box = Interiors.shell(r, {
+		w = 56,
+		d = 28,
+		h = 12,
+		wall = wall,
+		mat = "Brick",
+		windows = false,
+		doorW = 5,
+		door = DOOR,
+		floor = rgb(196, 146, 96),
+	})
+	Interiors.fill(r, "library", box, wall)
+	-- tall windows along the front, each with a stone sill and a keystone over it
 	for x = -22, 22, 8.8 do
-		r:block(x - 1.6, 2, -14.15, x + 1.6, 10, -14, GLASS, "Glass")
+		if math.abs(x) > 4 then
+			lit(r, r:block(x - 1.6, 2.4, -14.15, x + 1.6, 10, -14, GLASS, "Glass"))
+			r:block(x - 2, 2, -14.5, x + 2, 2.4, -14, WHITE, "SmoothPlastic")
+			r:block(x - 0.6, 10, -14.3, x + 0.6, 10.9, -14, WHITE, "SmoothPlastic")
+		end
 	end
 	r:block(-29, 12, -15, 29, 13.2, 15, WHITE, "SmoothPlastic")
-	for k = 0, 2 do
-		r:block(-8 - k, 0, -15 - k * 1.4, 8 + k, 0.6 * (3 - k), -14 - k * 1.4, STONE, "SmoothPlastic")
+	-- the name over the door on a stone band, and a lamp either side
+	r:block(-7, 8.4, -14.5, 7, 10.4, -14, WHITE, "SmoothPlastic")
+	r:block(-5.4, 9, -14.6, 5.4, 9.8, -14.5, shade(wall, 0.7), "SmoothPlastic")
+	for _, sx in { -1, 1 } do
+		r:glow(r:ball(sx * 4.4, 6.4, -14.6, 1, rgb(255, 236, 190), "SmoothPlastic"), 0)
 	end
-	r:block(-2, 0.2, -14.3, 2, 5, -14.1, DOOR, "SmoothPlastic")
 end
 
 M.museum = function(r: R)
 	local stone = rgb(244, 240, 230)
-	r:block(-30, 0, -14, 30, 13, 16, stone, "Marble")
-	-- steps, columns and a pediment over them
+	-- inside: things on plinths, paintings round the walls, old bones in the middle
+	placed(r, CFrame.new(0, 0, 1), function()
+		local box = Interiors.shell(r, {
+			w = 60,
+			d = 30,
+			h = 13,
+			wall = stone,
+			mat = "Marble",
+			windows = false,
+			doorW = 6,
+			doorH = 8,
+			door = DOOR,
+			floor = rgb(214, 206, 190),
+			floorMat = "Marble",
+		})
+		Interiors.fill(r, "museum", box, stone)
+	end)
+	r:block(-30.4, 13, -14.4, 30.4, 13.6, 16.4, stone, "Marble")
+	-- a low terrace of steps, columns with a base and a cap each, and a pediment over them
 	for k = 0, 2 do
-		r:block(-24, k * 0.7, -24 + k * 1.6, 24, (k + 1) * 0.7, -14, shade(stone, 0.95), "SmoothPlastic")
+		r:block(-24 - k, 0, -24 - k * 1.2, 24 + k, 0.3 - k * 0.1, -14, shade(stone, 0.95), "SmoothPlastic")
 	end
 	for x = -20, 20, 8 do
-		r:cyl(x, 8, -20, 11.8, 2.2, "y", WHITE, "SmoothPlastic")
+		r:cyl(x, 7.1, -20, 13.6, 2.2, "y", WHITE, "SmoothPlastic")
+		r:block(x - 1.5, 0.3, -21.5, x + 1.5, 1, -18.5, WHITE, "SmoothPlastic")
+		r:block(x - 1.5, 13.2, -21.5, x + 1.5, 13.9, -18.5, WHITE, "SmoothPlastic")
 	end
 	r:block(-24, 13.9, -22, 24, 15, -14, stone, "SmoothPlastic")
 	r:wedge(CFrame.new(-12, 17.5, -18) * CFrame.Angles(0, math.rad(90), 0), 8, 5, 24, stone, "SmoothPlastic")
 	r:wedge(CFrame.new(12, 17.5, -18) * CFrame.Angles(0, math.rad(-90), 0), 8, 5, 24, stone, "SmoothPlastic")
-	r:block(-3, 2, -14.2, 3, 9, -14, DOOR, "SmoothPlastic")
 	-- banners
 	for _, x in { -25, 25 } do
 		r:block(x - 1.4, 4, -14.3, x + 1.4, 11, -14.1, rgb(255, 110, 100), "Fabric")
@@ -741,7 +931,7 @@ M.houseRow = function(r: R)
 	local roofs = { rgb(236, 110, 90), rgb(86, 150, 220), rgb(236, 150, 70), rgb(100, 180, 120) }
 	for k = 0, 3 do
 		local x = -27 + k * 18
-		house(r, x, 0, 11, 9, walls[k + 1], roofs[k + 1], 0)
+		house(r, x, 0, 13, 11, walls[k + 1], roofs[k + 1], 0)
 		r:block(x - 8, 0, -9, x + 8, 1.2, -8.2, LEAF_DARK, "SmoothPlastic")
 		-- a shrub in each back garden (no trees this close to the road)
 		r:ball(x + 6, 1.3, 6, 3, LEAF, "SmoothPlastic")
@@ -750,6 +940,7 @@ M.houseRow = function(r: R)
 end
 
 M.postOffice = CityModels.shop({
+	kind = "post",
 	w = 34,
 	d = 24,
 	floors = 2,
@@ -1107,7 +1298,7 @@ end
 M.beachHuts = function(r: R)
 	local cols = { rgb(255, 120, 120), rgb(110, 196, 250), rgb(255, 214, 90), rgb(130, 220, 170), rgb(206, 170, 250) }
 	for k = 0, 4 do
-		house(r, -24 + k * 12, 0, 8, 7, cols[k + 1], WHITE, 0)
+		house(r, -24 + k * 12, 0, 8, 7, cols[k + 1], WHITE, 0, "hut")
 	end
 end
 

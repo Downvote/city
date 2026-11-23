@@ -82,7 +82,39 @@ local function bus(r: R)
 	end
 end
 
+-- Small creatures (the user: "small creatures"). Each faces +Z at the origin, feet on y = 0.
+
+-- A butterfly: a little body and two wings the client flaps (c1 the wings' colour).
+local function butterfly(r: R)
+	r:block(-0.08, 0, -0.35, 0.08, 0.16, 0.35, C.Black, "SmoothPlastic")
+	local wl = r:block(-0.75, 0.06, -0.3, -0.06, 0.1, 0.34, r.c1, "SmoothPlastic")
+	wl.name = "WingL"
+	local wr = r:block(0.06, 0.06, -0.3, 0.75, 0.1, 0.34, r.c1, "SmoothPlastic")
+	wr.name = "WingR"
+end
+
+-- A rabbit: a round body, a head with two long ears, and a white tail.
+local function rabbit(r: R)
+	r:lump(CFrame.new(0, 0.75, 0), 1.1, 1.1, 1.5, r.c1)
+	r:ball(0, 1.3, 0.75, 0.85, r.c1, "SmoothPlastic")
+	r:block(-0.3, 1.6, 0.6, -0.12, 2.5, 0.8, r.c1, "SmoothPlastic")
+	r:block(0.12, 1.6, 0.6, 0.3, 2.5, 0.8, r.c1, "SmoothPlastic")
+	r:ball(0, 0.85, -0.8, 0.45, C.White, "SmoothPlastic")
+	r:ball(0, 1.3, 1.15, 0.2, Color3.fromRGB(240, 150, 160), "SmoothPlastic")
+end
+
+-- A duck that sits on the water: a body, a head, an orange beak and a little tail.
+local function duck(r: R)
+	r:lump(CFrame.new(0, 0.4, 0), 1.2, 0.9, 1.7, r.c1)
+	r:ball(0, 1.05, 0.7, 0.8, r.c2, "SmoothPlastic")
+	r:block(-0.15, 0.95, 1.05, 0.15, 1.1, 1.4, Color3.fromRGB(250, 160, 60), "SmoothPlastic")
+	r:block(-0.2, 0.5, -1.1, 0.2, 0.9, -0.75, r.c1, "SmoothPlastic")
+end
+
 AmbientModels.Models = {
+	butterfly = butterfly,
+	rabbit = rabbit,
+	duck = duck,
 	car = car,
 	bus = bus,
 } :: { [string]: (R) -> () }

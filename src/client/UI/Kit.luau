@@ -1766,7 +1766,53 @@ function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: s
 	if square and square:IsA("GuiObject") then
 		Kit.wash(square, headColor, light, 0)
 	end
-	Kit.shapes(header, T.White, seed, 12, { Transparency = 0.6, Area = { 0.28, 0.14, 0.9, 0.86 } })
+	Kit.shapes(header, T.White, seed, 12, { Transparency = 0.6, Area = { 0.28, 0.14, 0.8, 0.7 } })
+	-- The user: "for the top seperator part of the menu, make it a wavy line instead of a
+	-- straight one", then "not that wavy, a calm wave should be enough". So the edge between the
+	-- header and the card is a long, shallow wave: a few pixels up and down over a hundred or
+	-- so across. Each rise and fall is the cap of a big circle, cut off by a clipping strip: the
+	-- header's colour bulging a little below the line, then the card's colour rising a little
+	-- above it, turn about, meeting on the line.
+	do
+		local width = if size.X.Offset > 0 then size.X.Offset else 900
+		local AMP = 5
+		local count = math.max(2, math.floor(width / 130 + 0.5))
+		local period = width / count
+		local chord = period / 2
+		local radius = (chord * chord / 4 + AMP * AMP) / (2 * AMP)
+		local function strip(name: string, y: number): Frame
+			return Kit.new("Frame", {
+				Name = name,
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, 0, 0, AMP),
+				Position = UDim2.fromOffset(0, y),
+				ClipsDescendants = true,
+				Parent = frame,
+			})
+		end
+		local below = strip("WaveDown", 58) -- the header's bulges show here, just under the line
+		local above = strip("WaveUp", 58 - AMP) -- the card's rises show here, just over it
+		for k = 0, count - 1 do
+			for half = 0, 1 do
+				local x = (k + 0.25 + half * 0.5) * period
+				local up = half == 0
+				local cap = Kit.new("Frame", {
+					Name = if up then "Rise" else "Bulge",
+					BackgroundColor3 = if up then T.Cream else mix(headColor, light, x / width),
+					BorderSizePixel = 0,
+					Size = UDim2.fromOffset(radius * 2, radius * 2),
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					-- a rise's circle sits below its strip and pokes up into it; a bulge's sits
+					-- above and pokes down
+					Position = UDim2.new(x / width, 0, 0, if up then radius else AMP - radius),
+					Parent = if up then above else below,
+				})
+				Kit.new("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = cap })
+			end
+		end
+	end
+	-- the card warms a little toward the bottom, with shapes in the header's colour dotted
+	-- faintly behind everything on it
 	Kit.wash(frame, T.Cream, mix(T.Cream, headColor, 0.16), 90)
 	Kit.shapes(frame, headColor, seed + 7, 26, { Transparency = 0.76, Area = { 0.03, 0.14, 0.97, 0.97 }, Size = 1.2 })
 	local title = Kit.title(titleText, {

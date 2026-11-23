@@ -382,11 +382,13 @@ local function check(cond, what)
 	end
 end
 
-local function frames(n)
+-- Runs n frames. `dt` (a sixtieth of a second by default) lets a test run the clock on faster.
+local function frames(n, dt)
+	local step = dt or 1 / 60
 	for _ = 1, n or 2 do
-		now += 1 / 60
-		RS.RenderStepped:Fire(1 / 60)
-		RS.Heartbeat:Fire(1 / 60)
+		now += step
+		RS.RenderStepped:Fire(step)
+		RS.Heartbeat:Fire(step)
 		wake()
 	end
 end

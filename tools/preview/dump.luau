@@ -13,6 +13,9 @@
 --   preset:<id>        a ready-made building (cottage, family, townhouse, library, cafe...)
 --   presets            all of them in a row (add :inside to leave the roofs off)
 --   ambient            the cars and the bus
+--   inside:<kind>,...  furnished rooms with the roof off (bakery, grocer, books, clothes, cafe,
+--                      toys, flowers, post, lobby, flats, home, library, museum, cinema, station,
+--                      school, clinic, department); a kind may carry a size: library=56x28x12
 --   map                the middle of town: streets, plaza and street furniture
 --   map:x1,z1,x2,z2    another part of town
 
@@ -131,6 +134,23 @@ elseif scene == "house" then
 elseif scene:sub(1, 5) == "town:" then
 	local TownModels = R(Shared .. "Data.TownModels")
 	addPrims(TownModels.prims(scene:sub(6)))
+elseif scene:sub(1, 7) == "inside:" then
+	-- inside:<kind>,<kind>... : furnished rooms with the roof off (Data/Interiors). A kind may
+	-- give its own size as kind=WxDxH.
+	local Interiors = R(Shared .. "Data.Interiors")
+	local Recipe = R(Shared .. "Build.Recipe")
+	local x = 0
+	for entry in scene:sub(8):gmatch("[^,]+") do
+		local kind, w, d, h = entry:match("^(%a+)=(%d+)x(%d+)x(%d+)$")
+		kind = kind or entry
+		local W, D, H = tonumber(w) or 28, tonumber(d) or 22, tonumber(h) or 8.4
+		local C3 = roblox.Color3
+		local r = Recipe.new(C3.new(1, 1, 1), C3.new(1, 1, 1))
+		local box = Interiors.shell(r, { w = W, d = D, h = H, wall = C3.fromRGB(250, 214, 170), mat = "Brick" })
+		Interiors.fill(r, kind, box, C3.fromRGB(110, 160, 230))
+		addPrims(r.prims, CFrame.new(x + W / 2, 0, 0))
+		x += W + 6
+	end
 elseif scene:sub(1, 7) == "models:" then
 	-- models:<name>,<name>... : the map's own models side by side, by the names placements use
 	local TownMap = R(Shared .. "Data.TownMap")

@@ -24,7 +24,9 @@ the contract (update it with every API, remote or saved data change), `src/share
    simulation (`tests/sim/build_client.luau`: the real Build mode driven by clicks), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (84, all passing): Build (catalog, plan rules, field cleaning, shapes, builder), BuildService (the server's
+Specs today (94, all passing): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
+Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off), Build (catalog, plan rules, field cleaning, shapes, builder), BuildService (the server's
 Build service with stubbed neighbours: charges, syncs, strips junk, refuses land you don't own), Events (3000 seeded
 events, every kind reachable, text filled, numbers in range), Newcomers (who moves in: the player's friends first,
 then the town's own twenty, nobody twice), City (starter town valid, levels, land, paydays, save
@@ -46,7 +48,9 @@ roads (`Town.Roads`), downtown east, the civic quarter west, the hills north (`D
 `Data/TownMap` lays out the ground and where everything stands, `Data/CityModels` draws the buildings and landmarks,
 `Data/Places` lists the places to find. The user wants it detailed like a classic city builder: buildings on
 landscaped lots (`CityModels.lot`), window bays, signs, roof details, parked cars, groves, textured ground, all
-textures from the Roblox library. Keep the whole place under about 20,000 parts. The user: "remove the trees near the road", so trees keep to the
+textures from the Roblox library. Keep the whole place under about 26,000 parts (it is about 22,500 with the interiors the user asked for: every shop,
+tower, house and public building is a furnished room from `Data/Interiors`, preview with `render.sh
+inside:<kind>,<kind>`). The user: "remove the trees near the road", so trees keep to the
 parks, the market square, the hills and the beach; streets get flower troughs, benches and shrubs instead
 (`Data/DetailModels`), and the gaps between buildings are filled by rule with pockets (cafe terraces, fountains,
 gardens, ponds: `pockets` in `TownMap.placements`). The World spec checks the hills, the places and that nothing stands in a road; preview a district
@@ -59,6 +63,14 @@ draws every ball as a gem, every cylinder as an eight sided prism (sixteen when 
 sided one, flat shaded. So never rely on a part being smoothly round. Draw organic things with `r:lump` (a ball
 stretched and turned: crowns, rocks, bushes) and `r:cone` (pines, spires), poles and trunks with `r:cyl`; the
 previews show the facets (`--smooth` shows the fallback without the kit).
+
+The user asked for a lively world ("animated blades of grass, animated details, small creatures, trees with leaves
+that sway with the wind") and a clear sky ("remove clouds and birds from the sky"): leaves are parts named `Leaf`,
+hanging signs `SwingSign`, fountain jets `Jet`, and `World/Ambience` moves them, the grass, the butterflies,
+rabbits and ducks on each player's own screen. Name a new tree's crown parts `Leaf` and it sways.
+
+Server start: `init` everything, `start` everything, then `Data.open()` lets players in. Never load a profile
+before every service is listening (a player can be in the server before the town is built).
 
 The user asked for things to move "where possible": buttons, screens and the town are animated (docs/GAME_DESIGN.md
 section 10). New buttons get it from `UI/Kit`; new moving scenery goes in `World/Ambience` (client only, one loop,
@@ -83,7 +95,10 @@ look best over an island render as `--bg`. The user then pointed at Roblox's wri
 rounded clipping ("reference this doc an implement as much as possible"): cards, pills, buttons and menus get
 `Kit.softShadow` (two UIShadows), backdrops `Kit.vignette`, progress `Kit.ring` (conical) or `Kit.bar`, glows
 `Kit.halo`, and anything that must cut its children to round corners is a `Kit.frame` with `Clips` and a radius (a
-CanvasGroup). Buttons and tabs still have no shading of their own. All of it sits in pcalls and falls back to flat.
+CanvasGroup). Buttons and tabs still have no shading of their own. All of it sits in pcalls and falls back to flat. Then: "add more life to the uis, such as gradients and simple shapes
+dotting the background" (`Kit.wash`, `Kit.shapes`: on headers, cards and pills, not on buttons or tabs), a wavy edge
+under a menu's header, then "not that wavy, a calm wave should be enough" (a few pixels over a hundred or so), and
+the villager's face in place of the colour bar in lists.
 The user's rule for icons: "make sure there are no overlapping outlines". A new icon is a
 shape list in `UI/Icons`; it gets one outline round its silhouette, so tell its parts apart by colour. Look at it
 with `sh tools/preview/ui.sh icons:<name> <png>`.

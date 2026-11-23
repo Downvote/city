@@ -319,10 +319,14 @@ run("life around town and the show when you build", function()
 			m.Parent = town
 		end
 	end
-	for i, name in { "flagpole", "tree", "tree" } do
+	for i, name in { "flagpole", "tree", "tree", "lowTree", "trafficLight", "trafficLight", "buoy" } do
 		local m = env.Instance.new("Model")
 		m.Name = name
-		Builder.instantiate(TownMap.prims(name), m, CFrame.new(near + Vector3.new(i * 12, 0, -20)))
+		local at = CFrame.new(near + Vector3.new(i * 12, 0, -20))
+		if i == 6 then
+			at = at * CFrame.Angles(0, math.pi / 2, 0) -- the second light hangs over the other road
+		end
+		Builder.instantiate(TownMap.prims(name), m, at)
 		m.Parent = town
 	end
 	local warned = #errors
@@ -346,6 +350,37 @@ run("life around town and the show when you build", function()
 	check(wheel ~= nil and wheel.CFrame ~= wheelBefore, "its wheels turn")
 	Sim.advance(4)
 	frames(10)
+	-- the user: "Make the world alot more lively, such as animated blades of grass, animated
+	-- details, small creatures, trees with leaves that sway with the wind"
+	local function moves(part, n)
+		local was = part.CFrame
+		frames(n or 8)
+		return part.CFrame ~= was
+	end
+	local leafy = town:FindFirstChild("lowTree")
+	local leaf = leafy and leafy:FindFirstChild("Leaf")
+	check(leaf ~= nil and moves(leaf), "every clump of leaves leans with the wind")
+	local butterfly = folder:FindFirstChild("butterfly")
+	local wing = butterfly and butterfly:FindFirstChild("WingL")
+	check(wing ~= nil and moves(wing, 3), "butterflies are about, wings going")
+	check(folder:FindFirstChild("rabbit") ~= nil, "and rabbits")
+	local buoy = town:FindFirstChild("buoy")
+	check(buoy ~= nil and moves(buoy:FindFirstChildWhichIsA("BasePart")), "buoys bob on the water")
+	-- the two lights at a junction never show green together, and they change
+	local greens, lit = {}, 0
+	for _, m in town:GetChildren() do
+		if m.Name == "trafficLight" then
+			local g = m:FindFirstChild("Green")
+			table.insert(greens, g)
+			if g.Material == Enum.Material.Neon then
+				lit += 1
+			end
+		end
+	end
+	check(#greens == 2 and lit <= 1, "the traffic lights take turns")
+	local was1, was2 = greens[1].Material, greens[2].Material
+	frames(64, 0.2) -- a little over twelve seconds: one of them has changed by then
+	check(greens[1].Material ~= was1 or greens[2].Material ~= was2, "and they change")
 	local flagMoved = false
 	for _, m in town:GetChildren() do
 		if m.Name == "flagpole" and not flagMoved then

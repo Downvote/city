@@ -62,6 +62,13 @@ The contract between the parts of the game. Update it with every change to an AP
   landmarks; `lot(w, d, kind, margin)` landscaping, placed by name as `lot:<w>x<d>:<kind>:<margin>`; `parkedCar1..6`; `tower`, `shop` and `house` kinds; spinning parts named `Hub`, `Spin`, `Cabin`), `Data/Places` (places
   to find: id, name, blurb, pos, radius, coins; `near`, `arrival`).
 - `Data/Goals` (the town goals with their `value(profile, city)`), `Data/Sayings` (sayings and hobbies).
+- `Data/Interiors` (the insides of the map's buildings): `shell(r, spec)` draws a room you can walk into (floor,
+  walls, shop window, a door leaf with its own `frame` so it opens like any other door) and returns its `Box`;
+  `fill(r, kind, box, tint)` furnishes it (`bakery grocer books clothes cafe toys flowers post department lobby
+  flats home hut library museum cinema station school clinic`). `CityModels.shop`, `tower` and `house` are built
+  on it; a shop's `kind` picks its furniture.
+- Frames must be right-handed. `Geometry.beam` and `Plan.wallFrame` build theirs from three axes; the Frames spec
+  checks every primitive of every model for a proper rotation, because Roblox turns a mirrored one some other way.
 - `Data/DetailModels` (street furniture, the pockets that fill the gaps between buildings, and props for the
   hills, the beach and the sea; `TownMap.prims` looks here after `CityModels`). `TownMap.placements` puts the
   pockets down by rule: `pockets(block, kinds, y, most, half, gap)` finds squares clear of every footprint.
@@ -117,6 +124,15 @@ stats = { events, fed, made, earned, paydays, wishes, hearts, couples, partners 
 
 ## Server services
 
+Start order (`Main.server`): every service's `init`, then every `start`, and only then `Data.open()`, which loads
+the profile of everyone already in the server and of everyone who joins later. Building the town yields (the low
+poly kit), so a player can be in before the services are listening; nothing may load a profile before they are.
+`Plots.start` and `Villagers.start` also pick up players whose profile or plot is already there.
+
+The creator's remotes: `CreatorPeople` (the people here and your friends, and the shared looks), `CreatorFromUserId`,
+`LookShare` (name filtered; kept newest first, 48 at most, one a player, in the data store `<name>_Looks` under
+`recent`). The mannequin is stood again (`stand`) and plays its own Animate animations (`act`) after every change.
+
 | Service | Job |
 |---|---|
 | `Data` | Loads with a session lock, autosaves every two minutes, saves on leave and shutdown, pushes state patches (`State`), toasts (`Notify`), coins, the town log, the daily gift. |
@@ -159,6 +175,13 @@ Every handler checks its arguments: types, ranges, ownership. Build requests go 
 server, whatever the client did.
 
 ## Client
+
+`World/Ambience` also runs the life near the player: `Leaf` parts lean with `wind(at, phase)`, `SwingSign` parts
+swing, grass tufts are pooled and moved onto grass found by raycast (`grassAt`), butterflies, rabbits and ducks are
+`AmbientModels` movers, `trafficLight` models take turns by which road their arm hangs over, `buoy`, `sailboat` and
+`rowboat` models bob, parts named `Jet` spray. `Avatar/Categories` has `bundleWorn` and `unmerge` for sets.
+`UI/Kit` has `wash` (a two colour gradient), `shapes` (simple shapes dotted over a background) and draws the calm
+wave under a panel's header.
 
 `UI/Kit` draws with the engine's own shadows, shaped gradients and rounded clipping (after Roblox's write-up of
 them): `softShadow(gui, depth, color)` (two UIShadows, near and far), `glowShadow(gui, color, size)`,

@@ -125,6 +125,31 @@ local function choose(title: string, options: { { label: string, sub: string?, f
 	end
 end
 
+-- A villager's face in a round frame: a close-up of their head in a little viewport. The model
+-- is asked for once and kept while the panel is open.
+local faceModels: { [string]: Model } = {}
+
+local function portraitInto(holder: GuiObject, vid: string)
+	task.spawn(function()
+		local model = faceModels[vid]
+		if not model or not model.Parent then
+			local ok, found = pcall(function()
+				return Remotes.fn("VillagerFocus"):InvokeServer(vid)
+			end)
+			model = if ok and typeof(found) == "Instance" and found:IsA("Model") then found else nil
+			if model then
+				faceModels[vid] = model
+			end
+		end
+		if model and holder.Parent then
+			local vp = ModelPreview.fromModel(model, { Parent = holder, Face = true })
+			if vp then
+				Kit.corner(vp, "circle")
+			end
+		end
+	end)
+end
+
 local function call(remote: string, ...: any)
 	local args = table.pack(...)
 	task.spawn(function()
@@ -513,32 +538,36 @@ local function refreshList()
 		})
 		Kit.corner(card, 12)
 		Kit.stroke(card, if on then T.Blue else T.Ink, if on then 3 else 2)
-		Kit.frame({
+		-- the villager's face, on a disc of their own colour (the user: "Put the villager
+		-- portrait in place of the blue lines")
+		local face = Kit.frame({
+			Name = "Face",
 			Parent = card,
-			Size = UDim2.fromOffset(10, 46),
+			Size = UDim2.fromOffset(46, 46),
 			Position = UDim2.fromOffset(8, 8),
-			Color = Colors.fromHex(v.color),
-			Radius = 5,
+			Color = Colors.fromHex(v.color):Lerp(T.White, 0.55),
+			Radius = "circle",
 		})
+		portraitInto(face, v.id)
 		Kit.text(v.name, {
 			Parent = card,
-			Size = UDim2.new(1, -30, 0, 22),
-			Position = UDim2.fromOffset(26, 6),
+			Size = UDim2.new(1, -70, 0, 22),
+			Position = UDim2.fromOffset(62, 6),
 			TextSize = 17,
 			Font = Kit.Fonts.Bold,
 		})
 		local w = City.jobOf(p, v.id)
 		Kit.text(if w then w.job.name else "No job", {
 			Parent = card,
-			Size = UDim2.new(1, -30, 0, 16),
-			Position = UDim2.fromOffset(26, 28),
+			Size = UDim2.new(1, -70, 0, 16),
+			Position = UDim2.fromOffset(62, 28),
 			TextSize = 13,
 			Color = T.InkSoft,
 		})
 		Kit.bar({
 			Parent = card,
-			Size = UDim2.new(1, -44, 0, 10),
-			Position = UDim2.fromOffset(26, 47),
+			Size = UDim2.new(1, -74, 0, 10),
+			Position = UDim2.fromOffset(62, 47),
 		}, v.mood / 100, if v.mood >= 50 then T.Green else T.Coral)
 		card.Activated:Connect(function()
 			selected = v.id

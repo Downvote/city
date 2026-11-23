@@ -70,8 +70,8 @@ end
 -- A clipped shrub in a clay pot.
 local function shrub(r: R, x: number, y: number, z: number)
 	r:cyl(x, y + 0.8, z, 1.6, 2.2, "y", rgb(196, 120, 90), "SmoothPlastic")
-	r:ball(x, y + 2.6, z, 3, LEAF, "SmoothPlastic")
-	r:ball(x + 0.7, y + 3.4, z - 0.4, 1.8, shade(LEAF, 1.15), "SmoothPlastic")
+	r:ball(x, y + 2.6, z, 3, LEAF, "SmoothPlastic").name = "Leaf"
+	r:ball(x + 0.7, y + 3.4, z - 0.4, 1.8, shade(LEAF, 1.15), "SmoothPlastic").name = "Leaf"
 end
 
 -- A round table under a parasol, with two stools.
@@ -173,9 +173,10 @@ M.trafficLight = function(r: R)
 	r:cyl(0, 5.6, 0, 11.2, 0.5, "y", DARK, "Metal")
 	r:block(-0.2, 10.5, -7, 0.2, 10.9, 0, DARK, "Metal")
 	r:block(-0.7, 8.3, -7.6, 0.7, 11.3, -6.6, rgb(50, 54, 66), "Metal")
-	r:glow(r:ball(0, 10.6, -7.66, 0.7, rgb(240, 80, 70), "SmoothPlastic"), 0)
-	r:ball(0, 9.8, -7.66, 0.7, rgb(250, 200, 80), "SmoothPlastic")
-	r:glow(r:ball(0, 9, -7.66, 0.7, rgb(90, 220, 120), "SmoothPlastic"), 0)
+	-- (the client changes the lights: red, green, amber, turn about with the other road's)
+	r:ball(0, 10.6, -7.66, 0.7, rgb(240, 80, 70), "SmoothPlastic").name = "Red"
+	r:ball(0, 9.8, -7.66, 0.7, rgb(250, 200, 80), "SmoothPlastic").name = "Amber"
+	r:ball(0, 9, -7.66, 0.7, rgb(90, 220, 120), "SmoothPlastic").name = "Green"
 end
 
 -- A kiosk selling papers and snacks under a striped awning.
@@ -258,6 +259,7 @@ local function fountain(r: R, x: number, y: number, z: number)
 	local jet = r:cyl(x, y + 5, z, 2, 0.5, "y", rgb(214, 240, 255), "Glass")
 	jet.transp = 0.35
 	jet.collide = false
+	jet.name = "Jet" -- the client sprays water from it
 end
 
 M.fountainSmall = function(r: R)

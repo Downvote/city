@@ -240,8 +240,9 @@ Up to eight players share a server. The street runs east to west with four plots
 lines, curbs that drop at the zebra crossings, wide paved sidewalks with street trees, lamps, hydrants and a bus
 stop. In the middle: the square with the fountain ringed by benches, two lawns, a bandstand for festivals, the notice
 board (town news) and the tailor (the creator), and across the street the market with its stalls and café tables,
-the shop and the town hall (city stats and land). Every plot starts with a cottage behind a picket fence, a path to
-the porch and a market stall by the street. Time follows a 12 minute day with a calendar of four
+the shop and the town hall (city stats and land). Every plot starts with one cottage in the middle of its land and
+a stone path to the porch, nothing else (the user: "players should spawn at their plot, which starts out with a single
+house in the middle"), and you arrive at your own plot when you join and whenever you respawn. Time follows a 12 minute day with a calendar of four
 ten-day seasons, and weather suited to the season: rain, storms, snow, blossom, falling leaves.
 
 ## 10. Look and feel
@@ -527,6 +528,57 @@ What that changed (these replace the wobbly bubbles and the flat coloured ground
 
 Villagers walk with Roblox's pathfinding with jumping on, so they go round walls, through doorways (doors are free to
 pass and open as they come), round furniture and over low steps. If they get stuck they jump, then plan again.
+
+### The round of fixes and life (after the first playtest pictures)
+
+> remove clouds and birds from the sky. also, some models are messed up. also, could you detail each model much
+> more, with more attention to detail? for example, the interiors of buildings. also, it says your plot isnt ready
+> yet when trying to build, and i cant see my plot anywhere. players should spawn at their plot, which starts out
+> with a single house in the middle. also, add more life to the uis, such as gradients and simple shapes dotting
+> the background. add another tab for player created avatars in the character creation, also, some of the
+> customization dosent work properly, like the animations and the bodies.
+
+> Put the villager portrait in place of the blue lines. Also, for the top seperator part of the menu, make it a
+> wavy line instead of a straight one
+
+> Make the world alot more lively, such as animated blades of grass, animated details, small creatures, trees with
+> leaves that sway with the wind, etc.
+> not that wavy, a calm wave should be enough
+
+- **No plot.** Building the town takes a moment now (the low poly kit is cut first), and in Studio you are in the
+  server before it is done. The services that hand out plots were not listening yet when your profile loaded, so
+  you never got one. Players are now let in only after every service has started, and the plot and villager
+  services also pick up anyone who is already there.
+- **Messed up models.** Beams (the palms' trunks and fronds, rails, braces) and the frames that doors and windows
+  sit in were built on mirrored axes. The preview tools draw that happily; Roblox can't hold a mirrored frame and
+  turns the part some other way. Both are right-handed now, and a spec checks every part of every model the game
+  can build, the map's, the catalog's and whole houses.
+- **The sky** is empty: no drifting clouds, no birds, no cloud layer.
+- **Interiors.** Every shop, tower, little house and public building on the map is a real room: a doorway tall
+  enough to walk through, a door that opens, a shop window you can see in at, and furniture for what the place is.
+  Seven kinds of shop (bakery, grocer, bookshop, clothes, cafe, toys, flowers), the post office, the department
+  store, the clinic, the school, tower lobbies with lifts, blocks of flats with letter boxes, cottages with a bed
+  and a table, beach huts, the library (bookcases and reading tables), the museum (plinths, paintings, old bones),
+  the cinema (rows of seats facing a lit screen) and the station (a ticket office, benches, a departures board).
+  Ground floors are taller for it. Outside, shops gained wall lamps and a hanging board, houses a chimney pot that
+  smokes and a lamp by the door, the library a name band, the cinema a row of bulbs, the school a bell clock. The
+  town has about 22,500 parts now.
+- **The creator.** After any change the figure is stood on its pedestal again (a new body or height changes how
+  long its legs are) and plays its own animations: a new walk, run or jump shows on the spot for a few seconds, a
+  new idle straight away. Wearing a body replaces the last one whole. A set's card shows a tick while it is worn
+  and clicking it again takes it off. A new **Players** tab lists the people in the server and your friends as they
+  look on Roblox (click one to wear it), and looks players have shared from the creator, with a box to share yours
+  (one per player, its name filtered, the newest 48 kept).
+- **Menus.** Headers and cards are washed from one colour into another and little shapes (dots, rings, plus
+  signs, diamonds, dashes) are dotted faintly over their backgrounds. Buttons and tabs stay flat. The edge under a
+  menu's header is a long calm wave, a few pixels up and down. In the villager list each row shows the villager's
+  face where the blue bar was.
+- **A livelier world**, all on each player's own screen and only near them. Every clump of leaves in town leans
+  with a wind that crosses the island as a slow wave, so trees move one after another. Tufts of grass blades stand
+  on the lawns round you and lean with it too, a flower in one tuft of five. Butterflies wander over the grass by
+  day, rabbits sit, twitch and hop away when you come close, ducks paddle the pond, the mountain lake and the
+  little garden ponds. Traffic lights take turns at every junction, shop boards swing, buoys and boats bob, small
+  fountains spray, chimneys smoke.
 
 ## 11. Writing
 
