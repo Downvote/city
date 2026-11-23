@@ -59,24 +59,42 @@ local function fill()
 			Radius = 24,
 			LayoutOrder = i,
 		})
+		Kit.softShadow(row, 0.5)
+		-- how far along, as a ring that fills clockwise, with the count in the middle
+		local _, middle = Kit.ring({
+			Parent = row,
+			Size = 52,
+			Position = UDim2.fromOffset(12, 11),
+			Thickness = 6,
+			Track = if g.claimed then T.Line else T.PaperDark,
+			Hole = if g.claimed then T.PaperDark else T.White,
+		}, g.value / g.goal.need, if g.done then T.Green else T.Yellow)
+		local shown = math.min(g.value, g.goal.need)
+		-- big numbers (coins) as a share, small ones as a count
+		local progress = if g.goal.need >= 100
+			then Text.fill("{n}%", { n = math.floor(shown / g.goal.need * 100) })
+			else Text.fill("{n}/{need}", { n = shown, need = g.goal.need })
+		Kit.text(progress, {
+			Parent = middle,
+			Size = UDim2.fromScale(1, 1),
+			TextSize = 13,
+			Font = Kit.Fonts.Title,
+			Color = T.InkSoft,
+			AlignX = Enum.TextXAlignment.Center,
+		})
 		Kit.title(g.goal.name, {
 			Parent = row,
-			Size = UDim2.new(1, -190, 0, 24),
-			Position = UDim2.fromOffset(24, 8),
+			Size = UDim2.new(1, -244, 0, 24),
+			Position = UDim2.fromOffset(78, 12),
 			TextSize = 19,
 		})
 		Kit.text(g.goal.desc, {
 			Parent = row,
-			Size = UDim2.new(1, -190, 0, 18),
-			Position = UDim2.fromOffset(24, 32),
+			Size = UDim2.new(1, -244, 0, 18),
+			Position = UDim2.fromOffset(78, 38),
 			TextSize = 14,
 			Color = T.InkSoft,
 		})
-		Kit.bar({
-			Parent = row,
-			Size = UDim2.new(1, -200, 0, 10),
-			Position = UDim2.fromOffset(24, 54),
-		}, g.value / g.goal.need, if g.done then T.Green else T.Yellow)
 		if g.claimed then
 			Kit.text("Done", {
 				Parent = row,

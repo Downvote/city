@@ -160,6 +160,16 @@ server, whatever the client did.
 
 ## Client
 
+`UI/Kit` draws with the engine's own shadows, shaped gradients and rounded clipping (after Roblox's write-up of
+them): `softShadow(gui, depth, color)` (two UIShadows, near and far), `glowShadow(gui, color, size)`,
+`textShadow(label)`, `shapedGradient(inst, kind, scale)` (Radial, Conical or Elliptical; nil where the engine has
+only straight ones), `vignette(backdrop, middle, edge, scale)`, `halo(parent, size, color, strength)`,
+`ring(props, ratio, color)` (a conical progress ring: returns the holder, its middle and a setter). `Kit.frame`
+with `Clips` and a radius is a CanvasGroup, which cuts its children to the round corners; `Kit.bar` uses that.
+The test environment keeps the newer classes' properties on its fakes (`tests/sim/fake.luau`, `NEWER`) and the
+harness stands in for the newer enums, so the UI previews draw shadows, radial and conical gradients and rounded
+clipping (`tools/preview/ui_render.py`).
+
 - `Controllers/State`: the mirror of the player's state and plan; `State.on(key, fn)`, `State.onPlan(fn)`.
 - `UI/Kit`: theme and helpers in the bright cozy style (`Kit.corner(inst, px | "pill" | "circle")`; frames are
   rounded unless `Radius = false`; `Kit.stroke` in the text colour comes out thin and see through). The pieces

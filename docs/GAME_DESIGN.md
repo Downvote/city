@@ -504,6 +504,24 @@ What that changed (these replace the wobbly bubbles and the flat coloured ground
   On top of that the trees are redrawn as stretched lumps in four greens on an eight sided trunk, pines as three
   stacked cones, and boulders and sea rocks as faceted lumps. If solid modelling fails in a place, the kit is
   missing and everything falls back to Roblox's own smooth shapes.
+- **Native shadows, shaped gradients and rounded clipping.**
+
+  > https://create.roblox.com/docs/learn/more/rounded-corners also, reference this doc an implement as much as
+  > possible
+
+  That write-up is about three things the engine now draws itself, and the screens use all three.
+  *Shadows:* every card, menu, pill, button, toast, speech bubble and the event card has a soft drop shadow made of
+  two UIShadows, as the write-up builds them: a tight one close under the edge and a wide faint one behind it. They
+  follow the corner radius and never show through a see-through pill. The big Build button glows in its own colour,
+  and words drawn straight over the town get a soft shadow under the letters. *Gradients:* the backdrop behind a
+  menu is a radial vignette (lighter behind the menu, darker toward the screen's edges), the level badge sits on a
+  soft radial glow, and town goals show their progress as a ring that fills clockwise, drawn with a conical
+  gradient. Buttons and tabs stay flat colour, as asked before. *Clipping:* a frame that clips and has round
+  corners is a CanvasGroup with a UICorner, so the map, a villager's picture and every progress bar's fill are cut
+  to the rounded shape (a nearly empty bar is a sliver of the pill, not a squashed dot). Each piece is made
+  inside a pcall: where an engine doesn't have it yet (in Studio, shaped gradients and some shadow features are
+  behind the beta features Upgraded UIGradients and Upgraded UIShadows) that piece is left out and the screen is
+  as flat as before, with rings that fill only when complete.
 - **Windows light up at night.** About a third of every tower's floors, every shopfront and half the windows above
   it, kiosk hatches and the little houses' windows turn to warm lamplight when the street lamps come on.
 

@@ -300,6 +300,7 @@ function EventCard.start(_hud: any)
 		Radius = 28,
 		LayoutOrder = 3,
 	})
+	Kit.softShadow(card, 1.4)
 	local inner = Kit.box({ Parent = card, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y })
 	Kit.pad(inner, 28, 22)
 	Kit.list(inner, 12)

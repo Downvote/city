@@ -260,7 +260,9 @@ local function showDetail()
 		Size = UDim2.fromOffset(170, 220),
 		Color = Colors.fromHex(v.color),
 		Transparency = 0.6,
-		Radius = 14,
+		Radius = 18,
+		-- rounded clipping: the villager's picture is cut to the card's round corners
+		Clips = true,
 	})
 	task.spawn(function()
 		local model = Remotes.fn("VillagerFocus"):InvokeServer(vid)

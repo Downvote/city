@@ -104,6 +104,25 @@ local function isFake(v)
 end
 Fake.isFake = isFake
 
+-- Classes and properties newer than this Lune's copy of Roblox's API (native shadows, shaped
+-- gradients). The fake keeps them itself, so the screens can use them and the previews draw them.
+local NEWER = {
+	UIShadow = {
+		BlurRadius = true,
+		Color = true,
+		Enabled = true,
+		Inset = true,
+		Mode = true,
+		Offset = true,
+		ShowBehindParent = true,
+		Spread = true,
+		Transparency = true,
+		ZIndex = true,
+	},
+	UIGradient = { Type = true, Scale = true, TileMode = true },
+}
+Fake.Newer = NEWER
+
 local function realOf(class)
 	local ok, inst = pcall(roblox.Instance.new, class)
 	if ok then
@@ -174,6 +193,10 @@ FakeMT.__index = function(self, key)
 	end
 	if EVENTS[key] then
 		return signalOf(self, key)
+	end
+	local newer = NEWER[rawget(self, "_class")]
+	if newer and newer[key] then
+		return rawget(self, "_props")[key]
 	end
 	local refs = rawget(self, "_refs")
 	local ref = refs[key]
@@ -249,6 +272,12 @@ FakeMT.__newindex = function(self, key, value)
 		pcall(function()
 			real.Name = value
 		end)
+		return
+	end
+	local newer = NEWER[rawget(self, "_class")]
+	if newer and newer[key] then
+		rawget(self, "_props")[key] = value
+		propSignal(self, key):Fire()
 		return
 	end
 	if isFake(value) or (value == nil and rawget(self, "_refs")[key] ~= nil) then

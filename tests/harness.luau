@@ -337,6 +337,24 @@ function Harness.init(root)
 	for _, name in DATATYPES do
 		env[name] = roblox[name]
 	end
+	-- enums newer than this Lune's copy of Roblox's API (shaped gradients, native shadows): their
+	-- items stand in as plain names
+	local newer = {
+		GradientType = { Linear = "Linear", Radial = "Radial", Conical = "Conical", Elliptical = "Elliptical" },
+		GradientTileMode = { Clamp = "Clamp", Mirror = "Mirror", Repeat = "Repeat" },
+		ApplyShadowMode = { Shape = "Shape", Text = "Text" },
+	}
+	env.Enum = setmetatable({}, {
+		__index = function(_, key)
+			local ok, found = pcall(function()
+				return roblox.Enum[key]
+			end)
+			if ok and found ~= nil then
+				return found
+			end
+			return newer[key]
+		end,
+	})
 	-- Lune has no BindableEvent signals; services use them, so give them a small Lua one
 	local function signal()
 		local handlers = {}

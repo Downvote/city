@@ -238,6 +238,7 @@ function MapPanel.open()
 				TextSize = 15,
 				Font = Kit.Fonts.Title,
 				Color = if got then T.Ink else T.InkSoft,
+				Wrap = false,
 			})
 			Kit.text(if got then place.blurb else "Keep exploring.", {
 				Parent = row,

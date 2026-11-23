@@ -137,6 +137,9 @@ function Kit.outlineText(label: Instance, color: Color3?, thickness: number?): U
 	st.Color = color or T.Ink
 	st.Thickness = thickness or 2
 	st.LineJoinMode = Enum.LineJoinMode.Round
+	if label:IsA("GuiObject") and not label:FindFirstChild("TextShadow") then
+		Kit.textShadow(label, st.Color)
+	end
 	return st
 end
 
@@ -157,6 +160,207 @@ local function darker(c: Color3, k: number?): Color3
 	return Color3.new(c.R * m, c.G * m, c.B * m)
 end
 Kit.darker = darker
+
+-- Native shadows, shaped gradients and rounded clipping ---------------------------------------------
+--
+-- The user: "https://create.roblox.com/docs/learn/more/rounded-corners also, reference this doc an
+-- implement as much as possible". That write-up is about three things the engine now draws
+-- itself, and the kit uses all three:
+--   shadows   a UIShadow under a frame follows its corners, size and turn; no picture, no stroke
+--   gradients a UIGradient can be Radial or Conical as well as straight, with a Scale
+--   clipping  a CanvasGroup with a UICorner cuts its children to the rounded shape
+-- Each is made inside a pcall: where an engine doesn't have one yet, that piece is simply left
+-- out and the screen is as flat as before.
+
+-- A soft drop shadow under a card, a pill or a button. Two layers, as the write-up builds them:
+-- a tight one close under the edge and a wide faint one behind it (its ZIndex is lower, so it
+-- draws first). `depth` scales both: about 0.5 for a button, 1 for a card, 2 for a menu.
+function Kit.softShadow(gui: GuiObject, depth: number?, color: Color3?): { Instance }
+	local d = depth or 1
+	local made: { Instance } = {}
+	pcall(function()
+		local layers = {
+			{ name = "ShadowNear", blur = 5, drop = 2, fade = 0.8, spread = 0, z = -1 },
+			{ name = "ShadowFar", blur = 22, drop = 9, fade = 0.86, spread = -3, z = -2 },
+		}
+		for _, layer in layers do
+			local s = Instance.new("UIShadow")
+			s.Name = layer.name
+			s.Color = color or T.Shadow
+			s.Transparency = layer.fade
+			s.BlurRadius = UDim.new(0, layer.blur * d)
+			s.Offset = UDim2.fromOffset(0, layer.drop * d)
+			s.Spread = UDim2.fromOffset(layer.spread * d, layer.spread * d)
+			-- a see-through pill mustn't show its own shadow through itself
+			s.ShowBehindParent = false
+			s.ZIndex = layer.z
+			s.Parent = gui
+			table.insert(made, s)
+		end
+	end)
+	return made
+end
+
+-- A glow in a button's own colour, spreading out from under it.
+function Kit.glowShadow(gui: GuiObject, color: Color3, size: number?): Instance?
+	local made: Instance? = nil
+	pcall(function()
+		local s = Instance.new("UIShadow")
+		s.Name = "Glow"
+		s.Color = color
+		s.Transparency = 0.5
+		s.BlurRadius = UDim.new(0, size or 18)
+		s.Offset = UDim2.fromOffset(0, 4)
+		s.Spread = UDim2.fromOffset(2, 2)
+		s.ShowBehindParent = false
+		s.ZIndex = -3
+		s.Parent = gui
+		made = s
+	end)
+	return made
+end
+
+-- A soft shadow under the letters themselves, for words drawn straight over the town.
+function Kit.textShadow(label: GuiObject, color: Color3?): Instance?
+	local made: Instance? = nil
+	pcall(function()
+		local s = Instance.new("UIShadow")
+		s.Name = "TextShadow"
+		s.Mode = Enum.ApplyShadowMode.Text
+		s.Color = color or T.Shadow
+		s.Transparency = 0.5
+		s.BlurRadius = UDim.new(0, 3)
+		s.Offset = UDim2.fromOffset(0, 2)
+		s.Parent = label
+		made = s
+	end)
+	return made
+end
+
+-- A gradient of one of the shaped kinds ("Radial", "Conical", "Elliptical"), or nil where the
+-- engine only draws straight ones (a straight one in its place would shade the wrong way).
+local function shapedGradient(inst: Instance, kind: string, scale: number?): UIGradient?
+	local g = Instance.new("UIGradient")
+	local ok = pcall(function()
+		g.Type = (Enum.GradientType :: any)[kind]
+		if scale then
+			g.Scale = scale
+		end
+	end)
+	if not ok then
+		g:Destroy()
+		return nil
+	end
+	g.Parent = inst
+	return g
+end
+Kit.shapedGradient = shapedGradient
+
+-- Dims a backdrop like a vignette: lighter behind the middle of the screen, where the menu sits,
+-- and darker toward the edges. `middle` and `edge` are transparencies. `scale` shrinks the
+-- gradient when the backdrop is much bigger than the screen.
+function Kit.vignette(backdrop: GuiObject, middle: number, edge: number, scale: number?)
+	local g = shapedGradient(backdrop, "Radial", scale)
+	if g then
+		backdrop.BackgroundTransparency = 0
+		g.Transparency = NumberSequence.new(middle, edge)
+	end
+end
+
+-- A soft round glow, brightest in the middle and gone at its rim, to sit behind something worth
+-- noticing. It goes into `parent` under everything else there (ZIndex 0). Nil without radial
+-- gradients.
+function Kit.halo(parent: GuiObject, size: number, color: Color3, strength: number?): Frame?
+	local f = Kit.new("Frame", {
+		Name = "Halo",
+		BackgroundColor3 = color,
+		BorderSizePixel = 0,
+		Size = UDim2.fromOffset(size, size),
+		Position = UDim2.fromScale(0.5, 0.5),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		ZIndex = 0,
+		Parent = parent,
+	})
+	Kit.new("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = f })
+	local g = shapedGradient(f, "Radial")
+	if not g then
+		f:Destroy()
+		return nil
+	end
+	local k = 1 - (strength or 0.5)
+	g.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, k),
+		NumberSequenceKeypoint.new(0.55, k + (1 - k) * 0.6),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	return f
+end
+
+-- A progress ring: `ratio` of the way round, clockwise from the top, drawn with a conical
+-- gradient. props: Parent, Size (pixels across), Position, AnchorPoint, LayoutOrder, Name,
+-- Thickness, Track (the empty ring's colour), Hole (the colour inside, false for none).
+-- Returns the holder, the middle (put a number or an icon in it) and a function to set it.
+function Kit.ring(props: { [string]: any }, ratio: number, color: Color3): (Frame, Frame, (number) -> ())
+	local size: number = props.Size or 44
+	local thick: number = props.Thickness or math.max(4, math.floor(size / 8))
+	local holder = Kit.new("Frame", {
+		Name = props.Name or "Ring",
+		BackgroundColor3 = props.Track or T.PaperDark,
+		BorderSizePixel = 0,
+		Size = UDim2.fromOffset(size, size),
+		Position = props.Position or UDim2.new(),
+		AnchorPoint = props.AnchorPoint or Vector2.zero,
+		LayoutOrder = props.LayoutOrder or 0,
+		Parent = props.Parent,
+	})
+	Kit.new("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = holder })
+	local sweep = Kit.new("Frame", {
+		Name = "Sweep",
+		BackgroundColor3 = color,
+		BorderSizePixel = 0,
+		Size = UDim2.fromScale(1, 1),
+		Parent = holder,
+	})
+	Kit.new("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = sweep })
+	local g = shapedGradient(sweep, "Conical")
+	if g then
+		g.Rotation = -90 -- start at the top
+	end
+	local middle = Kit.new("Frame", {
+		Name = "Middle",
+		BackgroundColor3 = if props.Hole == nil or props.Hole == false then T.Paper else props.Hole,
+		BackgroundTransparency = if props.Hole == false then 1 else 0,
+		BorderSizePixel = 0,
+		Size = UDim2.new(1, -2 * thick, 1, -2 * thick),
+		Position = UDim2.fromOffset(thick, thick),
+		ZIndex = 2,
+		Parent = holder,
+	})
+	Kit.new("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = middle })
+	local function set(r: number)
+		local v = math.clamp(r, 0, 1)
+		holder:SetAttribute("Ratio", v)
+		if not g then
+			-- no conical gradients here: the ring only fills once it's complete
+			sweep.Visible = v >= 1
+		elseif v <= 0.002 then
+			sweep.Visible = false
+		elseif v >= 0.998 then
+			sweep.Visible = true
+			g.Transparency = NumberSequence.new(0)
+		else
+			sweep.Visible = true
+			g.Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0),
+				NumberSequenceKeypoint.new(v, 0),
+				NumberSequenceKeypoint.new(math.min(v + 0.001, 1), 1),
+				NumberSequenceKeypoint.new(1, 1),
+			})
+		end
+	end
+	set(ratio)
+	return holder, middle, set
+end
 
 local LIP = 4
 
@@ -206,7 +410,10 @@ end
 
 function Kit.frame(props: { [string]: any }?): Frame
 	local p = props or {}
-	local f = Kit.new("Frame", {
+	-- a frame that clips and has round corners is a CanvasGroup: with a UICorner it cuts its
+	-- children to the rounded shape, where a plain frame only clips to its box
+	local class = if p.Clips and p.Radius ~= false then "CanvasGroup" else "Frame"
+	local f = Kit.new(class, {
 		BackgroundColor3 = p.Color or T.Paper,
 		BackgroundTransparency = p.Transparency or 0,
 		BorderSizePixel = 0,
@@ -244,7 +451,7 @@ end
 -- A white rounded card that floats over the 3D view (Build mode's bars, the creator's tools).
 function Kit.glass(props: { [string]: any }?): Frame
 	local p = table.clone(props or {})
-	return Kit.frame({
+	local f = Kit.frame({
 		Name = p.Name or "Glass",
 		Size = p.Size,
 		Position = p.Position,
@@ -257,6 +464,8 @@ function Kit.glass(props: { [string]: any }?): Frame
 		Color = p.Color or T.Paper,
 		Radius = p.Radius or 20,
 	})
+	Kit.softShadow(f, 1)
+	return f
 end
 
 function Kit.text(text: string, props: { [string]: any }?): TextLabel
@@ -552,6 +761,7 @@ local function chunky(b: GuiButton, color: Color3, radius: any, lip: number, _ou
 		Parent = b,
 	})
 	Kit.corner(face, radius or 14)
+	Kit.softShadow(face, 0.5)
 	return face
 end
 
@@ -824,6 +1034,9 @@ function Kit.bar(props: { [string]: any }, ratio: number, color: Color3): (Frame
 		LayoutOrder = props.LayoutOrder,
 		Color = props.Track or T.PaperDark,
 		Radius = "pill",
+		-- rounded clipping: the track cuts the fill to its own round ends, so a nearly empty
+		-- bar is a sliver of the pill and not a squashed dot
+		Clips = true,
 	})
 	local _ = h
 	local fill = Kit.frame({
@@ -831,9 +1044,8 @@ function Kit.bar(props: { [string]: any }, ratio: number, color: Color3): (Frame
 		Parent = track,
 		Size = UDim2.fromScale(math.clamp(ratio, 0, 1), 1),
 		Color = color,
-		Radius = "pill",
+		Radius = false,
 	})
-	Kit.gradient(fill, 0.3)
 	return track, fill
 end
 
@@ -889,6 +1101,7 @@ function Kit.darkPill(props: { [string]: any }?): Frame
 		Transparency = T.GlassAlpha,
 		Radius = p.Radius or "pill",
 	})
+	Kit.softShadow(f, 0.6)
 	return f
 end
 
@@ -1204,6 +1417,8 @@ function Kit.hexBadge(value: string, props: { [string]: any }?): (Frame, TextLab
 		Parent = p.Parent,
 	})
 	holder.ZIndex = z
+	-- a soft glow behind the badge (a radial gradient), so the town's level catches the eye
+	Kit.halo(holder, math.floor(px * 1.7), p.Glow or T.Yellow, 0.5)
 	local function hex(color: Color3, w: number)
 		for _, rot in { 0, 60, 120 } do
 			local f = Kit.new("Frame", {
@@ -1349,7 +1564,11 @@ function Kit.bigButton(text: string, icon: string, props: { [string]: any }?, on
 		BorderWidth = 4,
 		Estimate = Vector2.new(size.X.Offset, size.Y.Offset),
 	})
-	local _ = face
+	-- the one big button glows in its own colour
+	local core = face:FindFirstChild("Core", true)
+	if core and core:IsA("GuiObject") then
+		Kit.glowShadow(core, color, 20)
+	end
 	local h = size.Y.Offset
 	local ipx = math.floor(h * 0.7)
 	Icons.make(icon, ipx, {
@@ -1409,6 +1628,9 @@ function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: s
 		Parent = holder,
 	})
 	dim.Active = true
+	-- lighter behind the menu, darker toward the screen's edges (the backdrop is far bigger than
+	-- any screen, so the gradient is scaled down to reach its darkest about a screen out)
+	Kit.vignette(dim, 0.62, 0.36, 0.3)
 	local frame = Kit.frame({
 		Name = "Card",
 		Size = UDim2.fromScale(1, 1),
@@ -1416,6 +1638,7 @@ function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: s
 		Radius = 28,
 		Parent = holder,
 	})
+	Kit.softShadow(frame, 2)
 	-- the header bar: the panel's colour, round at the top and square where it meets the card
 	local header = Kit.frame({
 		Name = "Header",
@@ -1507,6 +1730,10 @@ function Kit.blobInto(holder: Frame, p: { [string]: any }): BlobInfo
 		Parent = layer,
 	})
 	Kit.corner(core, if p.Round then "circle" else (p.Radius or 20))
+	-- a soft shadow under the shape (Lift = false for none, or how deep)
+	if p.Lift ~= false then
+		Kit.softShadow(core, if type(p.Lift) == "number" then p.Lift else 0.6)
+	end
 	if p.Tail then
 		local size = p.TailSize or 20
 		local at = p.TailAt or 0.5

@@ -17,7 +17,7 @@ import re
 import subprocess
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FONT_DIRS = [os.path.expanduser("~/.local/share/fonts-preview"), "/usr/share/fonts/opentype/inter",
@@ -366,18 +366,36 @@ def seq_at(seq, t, n):
     return list(seq[-1][1:n + 1])
 
 
-def gradient_layer(w, h, color, alpha, grad):
-    """An RGBA image w x h: colour times the gradient's colours, alpha times its transparency."""
+def gradient_layer(w, h, color, alpha, grad, region=None):
+    """An RGBA image w x h: colour times the gradient's colours, alpha times its transparency.
+    `region` (x, y, w, h in pixels) makes only that part of it (a backdrop far bigger than the
+    screen would not fit in memory whole)."""
     w, h = max(1, int(w)), max(1, int(h))
+    rx, ry, rw, rh = region if region else (0, 0, w, h)
     if not grad or not P(grad, "Enabled", True):
-        im = Image.new("RGBA", (w, h), rgb(color, alpha))
+        im = Image.new("RGBA", (rw, rh), rgb(color, alpha))
         return im
     rot = math.radians(P(grad, "Rotation", 0))
     cos, sin = math.cos(rot), math.sin(rot)
-    ys, xs = np.mgrid[0:h, 0:w]
+    ys, xs = np.mgrid[ry:ry + rh, rx:rx + rw]
     ext = abs(w * cos) + abs(h * sin)
     off = P(grad, "Offset", [0, 0]) or [0, 0]
-    t = ((xs - w / 2) * cos + (ys - h / 2) * sin) / max(1e-6, ext) + 0.5 - (off[0] * cos + off[1] * sin)
+    kind = str(P(grad, "Type", "Linear"))
+    scale = P(grad, "Scale", 1) or 1
+    if kind == "Radial":
+        # centred on the frame, its radius a quarter of width plus height
+        dx, dy = xs + 0.5 - w / 2 - off[0] * w, ys + 0.5 - h / 2 - off[1] * h
+        t = np.sqrt(dx * dx + dy * dy) / max(1e-6, (w + h) / 4) / scale
+    elif kind == "Elliptical":
+        dx, dy = (xs + 0.5 - w / 2 - off[0] * w) / (w / 2), (ys + 0.5 - h / 2 - off[1] * h) / (h / 2)
+        t = np.sqrt(dx * dx + dy * dy) / scale
+    elif kind == "Conical":
+        # sweeps clockwise from the direction Rotation gives (0 points right)
+        dx, dy = xs + 0.5 - w / 2 - off[0] * w, ys + 0.5 - h / 2 - off[1] * h
+        ang = (np.arctan2(dy, dx) - rot) % (2 * math.pi)
+        t = ang / (2 * math.pi) / scale
+    else:
+        t = ((xs - w / 2) * cos + (ys - h / 2) * sin) / max(1e-6, ext) / scale + 0.5 - (off[0] * cos + off[1] * sin)
     cseq = P(grad, "Color", [[0, 1, 1, 1], [1, 1, 1, 1]])
     tseq = P(grad, "Transparency", [[0, 0], [1, 0]])
     times = np.linspace(0, 1, 256)
@@ -425,7 +443,48 @@ def rounded_mask(w, h, r):
     return m
 
 
+def draw_shadows(cv, node, rect, clip):
+    """The node's UIShadows (shape mode): the frame's rounded shape, spread, blurred and offset,
+    lower ZIndex first. The blur's reach is one and a half times the blur radius, three standard
+    deviations, as Roblox's write-up of them says."""
+    shadows = [c for c in node["children"] if c["class"] == "UIShadow" and P(c, "Enabled", True)
+               and str(P(c, "Mode", "Shape")) != "Text"]
+    if not shadows:
+        return
+    x, y, w, h = [cv.px(v) for v in rect]
+    if w < 1 or h < 1:
+        return
+    r = corner_radius(node, w / cv.k, h / cv.k) * cv.k
+    for sh in sorted(shadows, key=lambda c: P(c, "ZIndex", -1)):
+        alpha = 1 - P(sh, "Transparency", 0.5)
+        if alpha <= 0:
+            continue
+        blur_u = P(sh, "BlurRadius", [0, 8])
+        blur = (blur_u[0] * min(w, h) / cv.k + blur_u[1]) * cv.k
+        sp = P(sh, "Spread", [0, 0, 0, 0]) or [0, 0, 0, 0]
+        of = P(sh, "Offset", [0, 0, 0, 0]) or [0, 0, 0, 0]
+        sx, sy = sp[0] * w + sp[1] * cv.k, sp[2] * h + sp[3] * cv.k
+        ox, oy = of[0] * w + of[1] * cv.k, of[2] * h + of[3] * cv.k
+        pad = int(blur * 1.5) + 2
+        sw, shh = max(1, int(w + 2 * sx)), max(1, int(h + 2 * sy))
+        mask = Image.new("L", (sw + 2 * pad, shh + 2 * pad), 0)
+        mask.paste(rounded_mask(sw, shh, max(0, r + min(sx, sy))), (pad, pad))
+        if blur > 0.5:
+            mask = mask.filter(ImageFilter.GaussianBlur(blur / 2))
+        px0, py0 = x - sx + ox - pad, y - sy + oy - pad
+        if not P(sh, "ShowBehindParent", True):
+            # not under the frame itself (it may be see-through)
+            hole = Image.new("L", mask.size, 255)
+            hole.paste(Image.eval(rounded_mask(w, h, r), lambda v: 255 - v), (int(round(x - px0)), int(round(y - py0))))
+            mask = Image.fromarray((np.array(mask, dtype=np.uint16) * np.array(hole) // 255).astype(np.uint8))
+        col = P(sh, "Color", [0, 0, 0])
+        layer = Image.new("RGBA", mask.size, rgb(col, 1))
+        layer.putalpha(Image.fromarray((np.array(mask, dtype=np.float32) * alpha).astype(np.uint8)))
+        cv.paste(layer, px0, py0, clip)
+
+
 def draw_box(cv, node, rect, clip):
+    draw_shadows(cv, node, rect, clip)
     x, y, w, h = [cv.px(v) for v in rect]
     if w < 1 or h < 1:
         return
@@ -453,11 +512,22 @@ def draw_box(cv, node, rect, clip):
             col.putalpha(Image.fromarray((np.array(col.getchannel("A"), dtype=np.uint16) * np.array(ring) // 255).astype(np.uint8)))
             cv.paste(col, x - t, y - t, clip)
     if bgt < 1:
-        layer = gradient_layer(w, h, P(node, "BackgroundColor3", [1, 1, 1]), 1 - bgt, m.get("UIGradient"))
-        mask = rounded_mask(w, h, r)
-        a = np.array(layer.getchannel("A"), dtype=np.uint16) * np.array(mask) // 255
-        layer.putalpha(Image.fromarray(a.astype(np.uint8)))
-        cv.paste(layer, x, y, clip)
+        # only the part of the box that can be seen
+        vx1, vy1, vx2, vy2 = 0, 0, cv.im.width, cv.im.height
+        if clip:
+            vx1, vy1, vx2, vy2 = max(vx1, clip[0]), max(vy1, clip[1]), min(vx2, clip[2]), min(vy2, clip[3])
+        ix, iy = int(round(x)), int(round(y))
+        rx1, ry1 = int(max(0, math.floor(vx1 - ix))), int(max(0, math.floor(vy1 - iy)))
+        rx2, ry2 = int(min(int(w), math.ceil(vx2 - ix))), int(min(int(h), math.ceil(vy2 - iy)))
+        if rx2 <= rx1 or ry2 <= ry1:
+            return
+        region = (rx1, ry1, rx2 - rx1, ry2 - ry1)
+        layer = gradient_layer(w, h, P(node, "BackgroundColor3", [1, 1, 1]), 1 - bgt, m.get("UIGradient"), region)
+        if r > 0:
+            mask = rounded_mask(w, h, r).crop((rx1, ry1, rx2, ry2))
+            a = np.array(layer.getchannel("A"), dtype=np.uint16) * np.array(mask) // 255
+            layer.putalpha(Image.fromarray(a.astype(np.uint8)))
+        cv.paste(layer, ix + rx1, iy + ry1, clip)
 
 
 RICH_TAG = re.compile(r'<font\s+color="#([0-9a-fA-F]{6})">|</font>|<b>|</b>|<i>|</i>')
@@ -624,6 +694,27 @@ def draw_node(cv, node, clip, item_hint=None):
     rot = P(node, "Rotation", 0) or 0
     target = cv
     outer_clip = clip
+    # a CanvasGroup with round corners cuts its children to the rounded shape
+    group = (rect and not rot and node["class"] == "CanvasGroup" and P(node, "ClipsDescendants", False)
+             and mods(node).get("UICorner"))
+    if group:
+        draw_shadows(cv, node, rect, clip)
+        x, y, w, h = [cv.px(v) for v in rect]
+        r = corner_radius(node, w / cv.k, h / cv.k) * cv.k
+        inner = Canvas(cv.im.width / cv.ss, cv.im.height / cv.ss, cv.ss, cv.k / cv.ss)
+        inner.im = Image.new("RGBA", cv.im.size, (0, 0, 0, 0))
+        plain = dict(node)
+        plain["children"] = [c for c in node["children"] if c["class"] != "UIShadow"]
+        draw_box(inner, plain, rect, None)
+        kids = sorted(enumerate(gui_children(node)), key=lambda e: (P(e[1], "ZIndex", 1), e[0]))
+        for _, c in kids:
+            draw_node(inner, c, (x, y, x + w, y + h), item_hint)
+        cut = Image.new("L", cv.im.size, 0)
+        cut.paste(rounded_mask(w, h, r), (int(round(x)), int(round(y))))
+        a_ = np.array(inner.im.getchannel("A"), dtype=np.uint16) * np.array(cut) // 255
+        inner.im.putalpha(Image.fromarray(a_.astype(np.uint8)))
+        cv.paste(inner.im, 0, 0, outer_clip)
+        return
     if rot and rect:
         # a turned object is drawn upright on its own layer, turned, and only then clipped
         target = Canvas(cv.im.width / cv.ss, cv.im.height / cv.ss, cv.ss, cv.k / cv.ss)

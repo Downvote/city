@@ -328,6 +328,12 @@ local PROPS = {
 	"CellPadding",
 	"Scale",
 	"AspectRatio",
+	-- native shadows and shaped gradients
+	"BlurRadius",
+	"Spread",
+	"Mode",
+	"ShowBehindParent",
+	"Type",
 	"MaxSize",
 	"MinSize",
 	"IgnoreGuiInset",
@@ -374,6 +380,10 @@ local function dump(inst)
 		if ok and v ~= nil then
 			node.props[prop] = encode(v)
 		end
+	end
+	-- properties newer than this Lune's copy of the API live on the fake itself
+	for prop, v in rawget(inst, "_props") do
+		node.props[prop] = encode(v)
 	end
 	local itemId = inst:GetAttribute("ItemId")
 	if itemId then

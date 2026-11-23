@@ -79,7 +79,12 @@ The latest word on menus: follow popular games of the genre (never invent layout
 panels are cream cards with a pastel header bar, title, round close button and a dimmed screen behind; events are a
 dialogue card with the answers inside; nothing wobbles (`Kit.blob` draws plain shapes) and nothing inside a
 self-sizing box may reach past its edges. UI previews
-look best over an island render as `--bg`. The user's rule for icons: "make sure there are no overlapping outlines". A new icon is a
+look best over an island render as `--bg`. The user then pointed at Roblox's write-up of native shadows, gradients and
+rounded clipping ("reference this doc an implement as much as possible"): cards, pills, buttons and menus get
+`Kit.softShadow` (two UIShadows), backdrops `Kit.vignette`, progress `Kit.ring` (conical) or `Kit.bar`, glows
+`Kit.halo`, and anything that must cut its children to round corners is a `Kit.frame` with `Clips` and a radius (a
+CanvasGroup). Buttons and tabs still have no shading of their own. All of it sits in pcalls and falls back to flat.
+The user's rule for icons: "make sure there are no overlapping outlines". A new icon is a
 shape list in `UI/Icons`; it gets one outline round its silhouette, so tell its parts apart by colour. Look at it
 with `sh tools/preview/ui.sh icons:<name> <png>`.
 
