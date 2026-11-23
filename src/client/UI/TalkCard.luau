@@ -105,7 +105,7 @@ local function typeOut(label: TextLabel, text: string)
 	task.spawn(function()
 		local count = utf8.len(text) or #text
 		local shown = 0
-		while shown < count and typing == mine and label.Parent do
+		while shown < count and typing == mine and label.Parent and label.MaxVisibleGraphemes ~= -1 do
 			shown = math.min(count, shown + 2)
 			label.MaxVisibleGraphemes = shown
 			task.wait(0.03)

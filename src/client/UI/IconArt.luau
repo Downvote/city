@@ -1,24 +1,29 @@
 --!strict
 -- The icons' vector art. The user: "Alot of the icons arent proper vector art and just shapes
 -- spliced together, look online to see how vector art should be. Make them as simple as possible."
--- Then, pointing at another game's interface: "also, redo the icons, so that it matches the icon
--- style in zenless zone zero". We take the style from that game and nothing else: every icon
--- here is a drawing of our own, of our own subject.
+-- Then: "also, redo the icons, so that it matches the icon style in zenless zone zero". We take
+-- that game's style and nothing else: every icon here is our own drawing of our own subject, and
+-- none is copied or traced from one of theirs.
 --
--- The style, as rules:
---   a 24 by 24 grid, the shape filling most of it, nothing nearer than 1.5 to the edge
---   solid, not outlined: an icon is a filled silhouette, in one colour
---   details are cut out of it (a door out of a house, hands out of a clock face), never drawn on it
---   a cut is 1.75 to 2 wide, so it still shows at 16 pixels; so is the space between two parts
---   where a line can't be helped (a handle, a hook) it is heavy, 2 to 3 wide
---   true circles and straight edges, with only the points taken off the corners (half a unit)
---   the angles are 45 and 90 degrees where the subject allows it; things that point come to a
---   real point (an arrow, a roof, a picket, a pin), and slashes cut across a face all lean the
---   same way, up to the right
+-- The style, as rules (the Icons spec holds the ones that can be measured):
+--   a 24 by 24 grid; the shape fills most of it and keeps 1.5 clear of the edge
+--   solid: an icon is a filled silhouette in one colour, never an outline
+--   details are cut out of the silhouette (the door out of a house, the hands out of a clock),
+--   and parts stand apart with clear space between them; nothing is drawn on in a second tone
+--   a cut or a space is 1.5 to 2 wide, so it still shows when the icon is 16 pixels across
+--   a part that has to be a line (a handle, a hook, a stem) is 1.75 to 2.25 wide, with round
+--   ends; a sign that is all lines (the plus, the cross, the tick, an arrow) is 4 wide, with
+--   square ends
+--   true circles and straight edges; a corner keeps its angle and loses only its point (a
+--   rounding of half a unit)
+--   45 and 90 degrees wherever the subject allows; what points comes to a real point (an arrow,
+--   a roof, a picket, the pin), every arrow has a notch in its tail, and a slash cut across a
+--   face always leans the same way, up to the right
 --   whole numbers and halves, so edges land cleanly on pixels
--- Each icon is a list of layers in SVG's path language (see UI/Vector), laid one over the other.
--- A plain string is a heavy line with round ends; the helpers below make the rest. Colours make
--- coloured art (the coin).
+--   centred on the grid by eye; a thing that stands on the ground may sit a little low
+-- Each icon is a list of layers in SVG's path language (see UI/Vector), laid one over the other
+-- and made with the helpers below. A plain string would be a line of the usual width
+-- (Icons.Weight). Colours make coloured art (the coin).
 
 local Vector = require(script.Parent.Vector)
 local ItemArt = require(script.Parent.ItemArt)
@@ -78,13 +83,13 @@ A.eye = { flat("M1.5 12 A11.25 11.25 0 0 1 22.5 12 A11.25 11.25 0 0 1 1.5 12 Z")
 A.zoom = { flat(circle(10, 10, 8.25) .. " " .. circle(10, 10, 4.75)), solid("M14.5 16.5 L16.5 14.5 L22 20 L20 22 Z") }
 A.grid = {
 	flat(
-		rect(1.75, 1.75, 9.25, 9.25, 1.5)
+		rect(1.75, 1.75, 9.25, 9.25, 1.25)
 			.. " "
-			.. rect(13, 1.75, 9.25, 9.25, 1.5)
+			.. rect(13, 1.75, 9.25, 9.25, 1.25)
 			.. " "
-			.. rect(1.75, 13, 9.25, 9.25, 1.5)
+			.. rect(1.75, 13, 9.25, 9.25, 1.25)
 			.. " "
-			.. rect(13, 13, 9.25, 9.25, 1.5)
+			.. rect(13, 13, 9.25, 9.25, 1.25)
 	),
 }
 -- three sheets, one over the other
@@ -95,7 +100,7 @@ A.layers = { solid(sheet(17)), clear(sheet(12), 2.5), solid(sheet(12)), clear(sh
 A.clock = { flat(circle(12, 12, 10.25)), gap("M12 6 V12 L16 14.5", 2.25) }
 A.camera = { solid("M2 6.5 H7.5 L9 3.5 H15 L16.5 6.5 H22 V20.5 H2 Z"), gap(circle(12, 13.25, 4.25)) }
 A.dice = {
-	flat(rect(1.75, 1.75, 20.5, 20.5, 3.5)),
+	flat(rect(1.75, 1.75, 20.5, 20.5, 2.5)),
 	hole(
 		circle(7.25, 7.25, 1.9)
 			.. " "
@@ -110,9 +115,9 @@ A.dice = {
 }
 -- two notes under one leaning beam
 A.music = {
-	solid("M7 4.5 L20.5 2.25 V16 H18 V6.7 L9.5 8.1 V18 H7 Z"),
-	flat(ellipse(6, 18.25, 3.75, 3.1)),
-	flat(ellipse(17, 16.25, 3.75, 3.1)),
+	solid("M7.5 4.5 L21 2.25 V16 H18.5 V6.7 L10 8.1 V18 H7.5 Z"),
+	flat(ellipse(6.5, 18.25, 3.75, 3.1)),
+	flat(ellipse(17.5, 16.25, 3.75, 3.1)),
 }
 A.ruler = {
 	solid("M2 15.5 L15.5 2 L22 8.5 L8.5 22 Z"),
@@ -134,7 +139,7 @@ A.cart = {
 }
 -- a shopping bag, its handle hanging down the front
 A.bag = {
-	line("M8 7 A4 4 0 0 1 16 7", 1.75),
+	line("M8 7 A4 4 0 0 1 16 7", 2),
 	solid("M4 7 H20 L21.5 21.5 H2.5 Z"),
 	gap("M8 10 V10.5 A4 4 0 0 0 16 10.5 V10", 1.75),
 }
@@ -142,11 +147,11 @@ A.gift = {
 	flat(rect(2, 7.5, 20, 4.5, 1)),
 	flat(rect(3.5, 13.5, 17, 8.5, 1)),
 	gap("M12 7 V23"),
-	solid("M12 7.5 L4.5 7 L7.5 2.5 Z", 1.5),
-	solid("M12 7.5 L19.5 7 L16.5 2.5 Z", 1.5),
+	flat("M12 7.5 L7.11 7.25 A2.75 2.75 0 1 1 9.67 3.19 Z"),
+	flat("M12 7.5 L16.89 7.25 A2.75 2.75 0 1 0 14.33 3.19 Z"),
 }
 A.briefcase = {
-	flat(rect(2, 7.5, 20, 14, 2)),
+	flat(rect(2, 7.5, 20, 14, 1.5)),
 	line("M8.5 7.5 V5 A1.5 1.5 0 0 1 10 3.5 H14 A1.5 1.5 0 0 1 15.5 5 V7.5", 2.25),
 	gap("M1 13.5 H8.75", 1.75),
 	gap("M15.25 13.5 H23", 1.75),
@@ -155,16 +160,17 @@ A.briefcase = {
 -- people -----------------------------------------------------------------------------------------------
 
 A.person = {
-	flat(circle(12, 7, 4.75)),
-	solid("M3 22 V20.5 A6.5 6.5 0 0 1 9.5 14 H14.5 A6.5 6.5 0 0 1 21 20.5 V22 Z"),
+	flat(circle(12, 6.75, 4.75)),
+	solid("M3 21.5 V20 A6.5 6.5 0 0 1 9.5 13.5 H14.5 A6.5 6.5 0 0 1 21 20 V21.5 Z"),
 }
-local FRONT = "M2 22 V20.5 A6 6 0 0 1 8 14.5 H9 A6 6 0 0 1 15 20.5 V22 Z"
+-- two of them, one a step behind
+local FRONT = "M2 21.5 V20 A6 6 0 0 1 8 14 H9 A6 6 0 0 1 15 20 V21.5 Z"
 A.people = {
-	flat(circle(17.5, 6.5, 3.5)),
-	solid("M11 22 V18 A5.5 5.5 0 0 1 16.5 12.5 H17 A5 5 0 0 1 22 17.5 V22 Z"),
-	clear(circle(8.5, 8, 4.25), 1.75),
+	flat(circle(17.5, 6, 3.5)),
+	solid("M11 21.5 V17.5 A5.5 5.5 0 0 1 16.5 12 H17 A5 5 0 0 1 22 17 V21.5 Z"),
+	clear(circle(8.5, 7.5, 4.25), 1.75),
 	clear(FRONT, 2.25),
-	flat(circle(8.5, 8, 4.25)),
+	flat(circle(8.5, 7.5, 4.25)),
 	solid(FRONT),
 }
 A.smile = {
@@ -213,17 +219,16 @@ A.shirt = {
 }
 A.pants = { solid("M5.5 2.5 H18.5 L20 21.5 H13.75 L12 9.5 L10.25 21.5 H4 Z"), gap("M3 6.5 H21", 1.5) }
 A.shoe = {
-	solid("M2.5 5.5 H7.5 L9.5 9.5 L17.5 11.5 A4.25 4.25 0 0 1 21.5 15.5 H2.5 Z"),
-	gap("M11.5 8 L10.25 12", 1.5),
-	gap("M15 9 L13.75 13", 1.5),
-	flat(rect(2, 17.5, 20, 3.5, 1.25)),
+	solid("M2.5 4.5 H7.5 L9.5 8.5 L17.5 10.5 A4.25 4.25 0 0 1 21.5 14.5 H2.5 Z"),
+	gap("M11.5 7 L10.25 11", 1.5),
+	gap("M15 8 L13.75 12", 1.5),
+	flat(rect(2, 16.5, 20, 3.5, 1.25)),
 }
--- a cap, its peak to the right
+-- a round hat with a band and a brim
 A.hat = {
-	flat(rect(8.75, 3.5, 2.5, 3, 1)),
-	flat("M2 16 A8 10 0 0 1 18 16 Z"),
-	gap("M10 5 Q14 9.5 13.75 17", 1.5),
-	solid("M9 18.5 H18.5 A3.5 2.5 0 0 1 22 21 H9 Z"),
+	flat("M5.5 14.5 V10 A6.5 6.5 0 0 1 18.5 10 V14.5 Z"),
+	gap("M4.5 11.5 H19.5", 1.75),
+	solid("M3 17 H21 L22 20 H2 Z"),
 }
 -- a comb
 A.hair = {
@@ -233,10 +238,8 @@ A.hair = {
 -- a whole body, standing (the creator's Bodies)
 A.figure = {
 	flat(circle(12, 4.5, 3)),
-	solid("M6 9.5 H18 V17 H14.5 V22 H9.5 V17 H6 Z"),
-	gap("M8.25 12.5 V18", 1.5),
-	gap("M15.75 12.5 V18", 1.5),
-	gap("M12 17 V23", 1.75),
+	solid("M8 9.5 H16 L21.5 15 L19.5 17 L15.5 13 V22 H8.5 V13 L4.5 17 L2.5 15 Z"),
+	gap("M12 16 V23"),
 }
 -- the torso, the arms and the legs, each by itself (Body parts)
 A.limbs = {
@@ -260,12 +263,12 @@ A.backpack = {
 }
 -- a look put away for later (Outfits)
 A.hanger = {
-	line("M9.25 5 A2.75 2.75 0 1 1 12 7.75 V9.5", 2.25),
-	solid("M12 8.5 L22 17 V20 H2 V17 Z M12 12.5 L17.25 17 H6.75 Z"),
+	line("M9.25 6 A2.75 2.75 0 1 1 12 8.75 V10.5", 2.25),
+	solid("M12 9.5 L22 18 V21 H2 V18 Z M12 13.5 L17.25 18 H6.75 Z"),
 }
 -- a card with your face on it (My avatars)
 A.idcard = {
-	flat(rect(1.5, 4, 21, 16, 2.5)),
+	flat(rect(1.5, 4, 21, 16, 1.5)),
 	hole(circle(8, 10, 2.4)),
 	hole("M4.25 16.75 A3.75 3.75 0 0 1 11.75 16.75 Z"),
 	gap("M15 9.5 H19"),
@@ -282,13 +285,18 @@ A.move = {
 		"M12 2 L16 6.5 H13.5 V10.5 H17.5 V8 L22 12 L17.5 16 V13.5 H13.5 V17.5 H16 L12 22 L8 17.5 H10.5 V13.5 H6.5 V16 L2 12 L6.5 8 V10.5 H10.5 V6.5 H8 Z"
 	),
 }
-A.rotate = { "M19 13 A7 7 0 1 1 12 6", solid("M11.5 2 L17.5 6 L11.5 10 Z") }
-A.undo = { solid("M2.5 8.5 L9 3.5 V7 H14.5 A7 7 0 0 1 14.5 21 H7.5 V18 H14.5 A4 4 0 0 0 14.5 10 H9 V13.5 Z") }
-A.redo = { solid("M21.5 8.5 L15 3.5 V7 H9.5 A7 7 0 0 0 9.5 21 H16.5 V18 H9.5 A4 4 0 0 1 9.5 10 H15 V13.5 Z") }
+A.rotate = {
+	solid("M20.25 13.5 A8.25 8.25 0 1 1 12 5.25 V7.75 A5.75 5.75 0 1 0 17.75 13.5 L19 14.75 Z"),
+	solid("M11.5 2.5 L17.5 6.5 L11.5 10.5 Z"),
+}
+A.undo =
+	{ solid("M2.5 8.5 L9 3.5 V7 H14.5 A7 7 0 0 1 14.5 21 H7.5 L9 19.5 L7.5 18 H14.5 A4 4 0 0 0 14.5 10 H9 V13.5 Z") }
+A.redo =
+	{ solid("M21.5 8.5 L15 3.5 V7 H9.5 A7 7 0 0 0 9.5 21 H16.5 L15 19.5 L16.5 18 H9.5 A4 4 0 0 1 9.5 10 H15 V13.5 Z") }
 A.copy = {
-	flat(rect(2, 2, 13.5, 13.5, 2)),
-	clear(rect(8.5, 8.5, 13.5, 13.5, 2)),
-	flat(rect(8.5, 8.5, 13.5, 13.5, 2)),
+	flat(rect(2, 2, 13.5, 13.5, 1.5)),
+	clear(rect(8.5, 8.5, 13.5, 13.5, 1.5)),
+	flat(rect(8.5, 8.5, 13.5, 13.5, 1.5)),
 }
 A.brush = {
 	solid("M20 2 L22 4 L13.5 12.5 L11.5 10.5 Z"),
@@ -315,13 +323,13 @@ A.hardhat = {
 }
 -- a tower crane with a load on its hook
 A.crane = {
-	solid("M6.5 2 H9.5 L22 5 V7.5 H9.5 V22 H6.5 V7.5 H5.5 V11 H2 V4.5 H6.5 Z"),
+	solid("M6.5 2 H9.5 L22 5 V7.5 H9.5 V21.5 H6.5 V7.5 H5.5 V11 H2 V4.5 H6.5 Z"),
 	flat(rect(3.5, 19.5, 9, 2.5, 0.75)),
-	line("M18.5 7.5 V12.5", 1.5),
+	line("M18.5 7.5 V12.5", 1.75),
 	flat(rect(15.5, 12.5, 6, 4.5, 0.75)),
 }
 A.blueprint = {
-	flat(rect(2, 3.5, 20, 17, 2)),
+	flat(rect(2, 3.5, 20, 17, 1.5)),
 	gap("M11.5 2.5 V11.5 H1", 1.75),
 	gap("M15.5 21.5 V15.5", 1.75),
 }
@@ -362,9 +370,9 @@ A.road = {
 }
 -- stepping stones
 A.path = {
-	solid("M4.5 16.5 H10.5 L12 18.5 L10.5 20.5 H4 L3 18.5 Z", 2),
-	solid("M13 10 H19.5 L21 12 L20 14 H13.5 L12 12 Z", 2),
-	solid("M4 3.5 H10 L11.5 5.5 L10.5 7.5 H4.5 L3 5.5 Z", 2),
+	solid("M3.5 17 L11 16 L13 19 L10.5 21 H4.5 L3 19.5 Z", 2),
+	solid("M12 9.5 L18.5 9 L20 11.5 L18.5 13.5 L13 13 L11.5 11.5 Z", 2),
+	solid("M7.5 3.5 L12 3 L13 5 L11.5 6.5 L7.5 6 L6.5 4.5 Z", 2),
 }
 
 -- building pieces --------------------------------------------------------------------------------------
@@ -410,11 +418,13 @@ A.room = {
 	flat("M15 19.5 L13.5 21 L8.5 16 L10 14.5 Z"),
 }
 A.floor = { solid("M12 3 L22 12 L12 21 L2 12 Z"), gap("M6 6.6 L18 17.4", 1.75), gap("M18 6.6 L6 17.4", 1.75) }
-A.roof = { solid("M2 19 L6.5 6 L11 19 Z"), solid("M9.6 6 H17.5 L22 19 H14.1 Z") }
-A.roofHip = { solid("M2 19 L7.5 6 H16.5 L22 19 Z") }
-A.roofPyramid = { solid("M12 5 L22 17.5 L9 20 L2 17.5 Z"), gap("M12.2 4 L8.8 21", 1.75) }
-A.roofShed = { solid("M2 19 L22 7 V19 Z") }
-A.roofFlat = { solid("M2 11.5 H22 V15 H20 V19 H4 V15 H2 Z") }
+-- the roofs stand on one line, so they can be told apart side by side
+A.roof = { solid("M2 18.5 L6.5 5.5 L11 18.5 Z"), solid("M9.6 5.5 H17.5 L22 18.5 H14.1 Z") }
+A.roofHip =
+	{ solid("M2 18.5 L7.5 5.5 H16.5 L22 18.5 Z"), gap("M7.75 4.5 L9.25 20", 1.75), gap("M16.25 4.5 L14.75 20", 1.75) }
+A.roofPyramid = { solid("M12 4.5 L22 17 L9 19.5 L2 17 Z"), gap("M12.2 3.5 L8.8 20.5", 1.75) }
+A.roofShed = { solid("M2 18.5 L22 6.5 V18.5 Z") }
+A.roofFlat = { solid("M2 9.5 H22 V13.5 H20 V18.5 H4 V13.5 H2 Z") }
 A.door = {
 	flat(rect(5, 2, 14, 20, 1)),
 	hole("M8 5 H16 V10.5 H8 Z"),
@@ -433,12 +443,12 @@ A.stairs = { solid("M2 22 V17 H7 V12 H12 V7 H17 V2 H22 V22 Z") }
 
 A.chair = { solid("M5 2 H8.5 L9 11 H18.5 V22 H15 V14.5 H9 V22 H5.5 Z") }
 A.table = { solid("M2 4.5 H22 V8 H19 L20.5 20.5 H17.5 L16 8 H8 L6.5 20.5 H3.5 L5 8 H2 Z") }
-local SEAT = "M2 11 A1.75 1.75 0 0 1 5.5 11 V14.5 H18.5 V11 A1.75 1.75 0 0 1 22 11 V20 H2 Z"
+local SEAT = "M2 10 A1.75 1.75 0 0 1 5.5 10 V13.5 H18.5 V10 A1.75 1.75 0 0 1 22 10 V19 H2 Z"
 A.sofa = {
-	flat(rect(4.5, 4, 15, 10, 2.5)),
+	flat(rect(4.5, 3, 15, 10, 2.5)),
 	clear(SEAT, 2.25),
 	solid(SEAT),
-	flat(rect(3.5, 20, 2.5, 2.25, 0.5) .. " " .. rect(18, 20, 2.5, 2.25, 0.5)),
+	flat(rect(3.5, 19, 2.5, 2.25, 0.5) .. " " .. rect(18, 19, 2.5, 2.25, 0.5)),
 }
 A.bed = {
 	flat(rect(2, 3.5, 3.5, 18.5, 1)),
@@ -458,10 +468,13 @@ A.pot = {
 	flat("M4 11.5 H20 V17 A4.5 4.5 0 0 1 15.5 21.5 H8.5 A4.5 4.5 0 0 1 4 17 Z"),
 	flat(rect(1.5, 12, 3.5, 3, 1) .. " " .. rect(19, 12, 3.5, 3, 1)),
 }
+-- a tub on its feet, the tap running, two bubbles
 A.bath = {
-	line("M5.5 11.5 V6.5 A2.5 2.5 0 0 1 10.5 6.5 V7.5", 2),
-	flat("M2 11.5 H22 V13.5 A6.5 6.5 0 0 1 15.5 20 H8.5 A6.5 6.5 0 0 1 2 13.5 Z"),
-	flat(rect(6, 19.5, 2.5, 2.5, 0.5) .. " " .. rect(15.5, 19.5, 2.5, 2.5, 0.5)),
+	flat(rect(1.5, 10, 21, 3, 1.5)),
+	flat("M3.5 14.5 H20.5 A6 6 0 0 1 14.5 20.5 H9.5 A6 6 0 0 1 3.5 14.5 Z"),
+	flat("M6.5 20 H9 L8 22.5 H5.5 Z M15 20 H17.5 L18.5 22.5 H16 Z"),
+	line("M6 10 V5.75 A2.25 2.25 0 0 1 10.5 5.75 V6.5", 2.25),
+	flat(circle(15.75, 6, 2.1) .. " " .. circle(19.5, 3.5, 1.4)),
 }
 A.lamp = {
 	solid("M8 2 H16 L19.5 11.5 H4.5 Z"),
@@ -520,25 +533,24 @@ A.cloud = {
 	flat(circle(17.75, 14.75, 4.75)),
 	flat(rect(6.5, 14.5, 11.25, 5)),
 }
--- the smaller cloud the weather falls from
-local function smallCloud(): { Vector.Layer }
-	return {
+-- the smaller cloud the weather falls from, and what falls
+local function weather(...: Vector.Layer): { Vector.Layer }
+	local art: { Vector.Layer } = {
 		flat(circle(6.5, 10.5, 4.25)),
 		flat(circle(12, 7.75, 5.5)),
 		flat(circle(17.5, 10.75, 4)),
 		flat(rect(6.5, 9.5, 11, 5.25)),
 	}
+	for _, layer in { ... } do
+		table.insert(art, layer)
+	end
+	return art
 end
-A.rain = smallCloud()
-table.insert(A.rain, line("M8.25 17.5 L6.75 21", 2.25))
-table.insert(A.rain, line("M12.75 17.5 L11.25 21", 2.25))
-table.insert(A.rain, line("M17.25 17.5 L15.75 21", 2.25))
+A.rain =
+	weather(line("M8.25 17.5 L6.75 21", 2.25), line("M12.75 17.5 L11.25 21", 2.25), line("M17.25 17.5 L15.75 21", 2.25))
 local BOLT = "M12.5 11 H16.5 L14.25 15.5 H17.5 L10 22.5 L11.75 17.5 H8.5 Z"
-A.storm = smallCloud()
-table.insert(A.storm, clear(BOLT, 1.75))
-table.insert(A.storm, flat(BOLT))
-A.snow = smallCloud()
-table.insert(A.snow, flat(circle(7.5, 18.25, 1.5) .. " " .. circle(12, 20.75, 1.5) .. " " .. circle(16.5, 18.25, 1.5)))
+A.storm = weather(clear(BOLT, 1.75), flat(BOLT))
+A.snow = weather(flat(circle(7.5, 18.25, 1.5) .. " " .. circle(12, 20.75, 1.5) .. " " .. circle(16.5, 18.25, 1.5)))
 A.blossom = {
 	flat(circle(12, 6, 3.75)),
 	flat(circle(17.94, 10.32, 3.75)),

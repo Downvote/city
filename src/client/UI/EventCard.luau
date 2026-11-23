@@ -120,16 +120,29 @@ end
 
 -- The prompt ---------------------------------------------------------------------------------------------
 
+-- Is a menu or a dialog up (a Kit.panel dims the screen behind it)? The prompt and the scene
+-- make way for it.
+local function menuUp(): boolean
+	for _, child in Kit.root():GetChildren() do
+		if child:IsA("GuiObject") and child.Visible and child:FindFirstChild("Dim") then
+			return true
+		end
+	end
+	return false
+end
+
 -- What the prompt says: what's going on, or that they want your say (with the time left).
 local function updatePrompt()
 	if not holder then
 		return
 	end
-	holder.Visible = playing and not hidden and scene == nil
+	holder.Visible = playing and not hidden and scene == nil and not menuUp()
 	if not current then
 		return
 	end
-	titleLabel.Text = if type(current.title) == "string" and current.title ~= "" then current.title else "Something's up"
+	titleLabel.Text = if type(current.title) == "string" and current.title ~= ""
+		then current.title
+		else "Something's up"
 	if asking then
 		subLabel.Text = "They want your say"
 		watchButton.Text = "Answer"
@@ -192,13 +205,30 @@ local function cast(l: any): { string }
 	return out
 end
 
--- Brings in whoever a line needs, and asks the server for a model the client can't find.
+-- Everyone the event has brought in so far, in order, watched or not.
+local seen: { string } = {}
+local function note(l: any)
+	for _, letter in cast(l) do
+		if not table.find(seen, letter) then
+			table.insert(seen, letter)
+		end
+	end
+end
+
+-- Brings in whoever a line needs (and, the first time, whoever came before it), and asks the
+-- server for a model the client can't find.
 local function bring(l: any)
 	local s = scene
 	if not s then
 		return
 	end
+	local need = table.clone(seen)
 	for _, letter in cast(l) do
+		if not table.find(need, letter) then
+			table.insert(need, letter)
+		end
+	end
+	for _, letter in need do
 		if not s.has(letter) then
 			local actor = actorOf(letter)
 			if actor then
@@ -233,7 +263,7 @@ local function typeOut(text: string)
 	task.spawn(function()
 		local count = utf8.len(text) or #text
 		local shown = 0
-		while shown < count and typing == mine and label.Parent do
+		while shown < count and typing == mine and label.Parent and label.MaxVisibleGraphemes ~= -1 do
 			shown = math.min(count, shown + 2)
 			label.MaxVisibleGraphemes = shown
 			task.wait(0.03)
@@ -366,6 +396,7 @@ end
 -- "now" moves on whether or not anyone watches. A click on the box moves on sooner.
 local function say(l: any)
 	lineNow = l
+	note(l)
 	if scene then
 		showLine(l)
 	end
@@ -391,6 +422,7 @@ local function play(ev: any)
 	current = ev
 	asking = false
 	lineNow = nil
+	seen = {}
 	updatePrompt()
 	if not hidden then
 		Kit.popIn(holder)
@@ -555,6 +587,16 @@ function EventCard.start(_hud: any)
 	task.spawn(function()
 		while true do
 			task.wait(0.2)
+			if playing then
+				-- a menu opening puts the scene away; the prompt waits under it
+				if scene and menuUp() then
+					closeScene()
+				end
+				local show = not hidden and scene == nil and not menuUp()
+				if holder.Visible ~= show then
+					updatePrompt()
+				end
+			end
 			if asking then
 				local left = 1 - (os.clock() - askedAt) / Tuning.Events.ChoiceTimeout
 				timeFill.Size = UDim2.fromScale(math.clamp(left, 0, 1), 1)

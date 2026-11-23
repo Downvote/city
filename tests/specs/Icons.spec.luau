@@ -182,6 +182,40 @@ describe("Icons", function()
 		end
 	end)
 
+	it("draws the interface icons solid, with a margin, and nothing too fine to show small", function()
+		-- the style (UI/IconArt): a filled silhouette with its details cut out of it. So every
+		-- icon has a solid shape, no line (drawn or rubbed out) is thinner than 1.5 of the 24
+		-- grid, which is one pixel at 16 across, and nothing comes nearer than 1 to the edge
+		local Vector = require("StarterPlayer.StarterPlayerScripts.Client.UI.Vector")
+		local IconArt = require("StarterPlayer.StarterPlayerScripts.Client.UI.IconArt")
+		for _, name in Icons.names() do
+			local solid = false
+			for _, layer in IconArt.art[name] do
+				local l = if type(layer) == "string" then { layer } else layer
+				local filled = l.fill ~= nil and l.fill ~= false
+				if filled and not l.cut then
+					solid = true
+				elseif not filled and (l.w or Icons.Weight[96]) < 1.5 then
+					error(name .. " has a line too fine to show at 16 pixels")
+				end
+			end
+			if not solid then
+				error(name .. " has no solid shape: it is drawn in lines")
+			end
+			local n = 96
+			local rim = n // Vector.Grid -- one grid unit, in pixels
+			local pixels = Vector.raster(IconArt.art[name], n, { Weight = Icons.Weight[n] })
+			for y = 0, n - 1 do
+				for x = 0, n - 1 do
+					local inRim = x < rim or y < rim or x >= n - rim or y >= n - rim
+					if inRim and buffer.readu8(pixels, (y * n + x) * 4 + 3) > 0 then
+						error(name .. " comes too near the edge of its square")
+					end
+				end
+			end
+		end
+	end)
+
 	it("shows an icon as its square of a sheet, tinted", function()
 		local tint = Color3.fromRGB(10, 200, 30)
 		local small = Icons.make("hammer", 24, { Color = tint })

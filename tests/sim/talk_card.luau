@@ -2,14 +2,16 @@
 -- Runs the talk card end to end under Lune: the client's real UI/TalkCard, Hud and EventCard on
 -- fake Roblox instances (tests/sim/client.luau sets that up), with the server's side of a talk
 -- stood in for here. The server tells the client a villager spoke (the "Talk" remote), the card
--- opens, and its answers and every way it closes are tried.
+-- opens, and its answers and every way it closes are tried. Then events: one nobody watches
+-- (only the small prompt, nothing slides in) and one that is watched (the scene, a second and a
+-- third villager joining, the one talking lit, an answer sent).
 --   lune run tests/sim/talk_card.luau          (from the repository root)
 
 local process = require("@lune/process")
 local roblox = require("@lune/roblox")
 local Sim = require("./client")
 
-local Vector3 = roblox.Vector3
+local Vector3, Color3 = roblox.Vector3, roblox.Color3
 local Harness, Fake, gui, errors = Sim.Harness, Sim.Fake, Sim.gui, Sim.errors
 local frames, advance, press, check, run = Sim.frames, Sim.advance, Sim.press, Sim.check, Sim.run
 
@@ -22,7 +24,7 @@ local K = Tuning.Talk
 -- the town, as the client knows it -------------------------------------------------------------------
 
 local villagers, order = {}, {}
-for i, name in { "Mara", "Tobin" } do
+for i, name in { "Mara", "Tobin", "Ivy" } do
 	local input = Schema.cleanVillagerInput({ name = name, pers = "sunny", app = Appearance.default() })
 	local v = Schema.newVillager("v" .. i, input, Rng.new(i))
 	villagers[v.id] = v
@@ -225,6 +227,118 @@ run("an event has the spot", function()
 	heldE("v1")
 	check(card() ~= nil, "and you can talk again")
 	press("Bye")
+end)
+
+-- events ---------------------------------------------------------------------------------------------------
+
+local chosen = {}
+Sim.remoteFn("EventChoose").OnServerInvoke = function(_, token, i)
+	table.insert(chosen, { token = token, i = i })
+	return true
+end
+local function scene()
+	local found = gui:FindFirstChild("EventScene")
+	return if found and Fake.shown(found) then found else nil
+end
+local function prompt()
+	local found = gui:FindFirstChild("EventCard")
+	return if found and Fake.shown(found) then found else nil
+end
+local function words(root, name)
+	local label = root and root:FindFirstChild(name, true)
+	return label and label.Text
+end
+local function quarrel(token)
+	return {
+		token = token,
+		title = "A quarrel by the fountain",
+		names = { a = "Mara", b = "Tobin", c = "Ivy" },
+		actors = { a = "v1", b = "v2", c = "v3" },
+		lines = {
+			{ text = "Mara is pacing by the fountain." },
+			{ who = "b", text = "I only took one bun." },
+			{ who = "c", text = "You took three. I counted." },
+		},
+		choices = { { text = "Side with Mara" }, { text = "Side with Tobin" } },
+	}
+end
+
+run("an event nobody watches", function()
+	local warned = #errors
+	Sim.remoteEvent("EventShow"):FireClient(Sim.player, quarrel("e2"))
+	frames(2)
+	check(prompt() ~= nil, "a small prompt comes up")
+	check(words(prompt(), "Title") == "A quarrel by the fountain", "with the event's name")
+	check(scene() == nil, "and nothing slides in")
+	check(Sim.State.data.talking ~= true, "the main screen keeps its place")
+	advance(14)
+	check(scene() == nil, "still nothing while the lines are said")
+	check(words(prompt(), "Sub") == "They want your say", "the prompt says when they want your say")
+	check(prompt():FindFirstChild("Watch").Text:find("Answer") ~= nil, "Watch turns into Answer")
+	check(prompt():FindFirstChild("TimeLeft").Visible, "with the time left running down")
+	check(#chosen == 0, "and nothing is answered for you here")
+	Hud.open("CityPanel")
+	advance(0.5)
+	check(prompt() == nil, "a menu opening hides the prompt")
+	Hud.closeAll()
+	advance(0.5)
+	check(prompt() ~= nil, "and it comes back when the menu shuts")
+	Sim.remoteEvent("EventLine"):FireClient(Sim.player, { token = "e2", lines = { { text = "They shook hands." } } })
+	Sim.remoteEvent("EventEnd"):FireClient(Sim.player, { token = "e2", notices = {} })
+	advance(8)
+	check(prompt() == nil, "the prompt goes when it ends")
+	check(scene() == nil and Sim.State.data.talking ~= true, "and the scene never went up")
+	check(#errors == warned, "no warnings from any of it")
+end)
+
+run("an event you watch", function()
+	local warned = #errors
+	Sim.remoteEvent("EventShow"):FireClient(Sim.player, quarrel("e3"))
+	frames(2)
+	press("Watch")
+	local s = scene()
+	check(s ~= nil, "Watch puts the scene up")
+	check(prompt() == nil, "in place of the prompt")
+	check(Sim.State.data.talking == true, "and the main screen steps aside")
+	check(s and s:FindFirstChild("Bust_a", true) ~= nil, "the villager in the line slides in")
+	local said = (words(s, "Line") or ""):gsub("<[^>]+>", "")
+	check(said == "Mara is pacing by the fountain.", "the line being said now is typed")
+	check((words(s, "Line") or ""):find('<font color="#F07A3A">Mara</font>', 1, true) ~= nil, "her name in colour")
+	check(s and not s:FindFirstChild("Speaker", true).Visible, "a line nobody says has no name up")
+	advance(3)
+	local a, b = s:FindFirstChild("Bust_a", true), s:FindFirstChild("Bust_b", true)
+	check(b ~= nil, "a second villager joins when they speak")
+	local function lit(bust)
+		local fig = bust and bust:FindFirstChild("Avatar")
+		return fig ~= nil and fig.ImageColor3 == Color3.new(1, 1, 1)
+	end
+	check(lit(b) and not lit(a), "whoever is talking is lit, the other dimmed")
+	check(
+		a and b and a.Position.X.Scale < 0.5 and b.Position.X.Scale > 0.5,
+		"the first at the left, the second at the right"
+	)
+	check(words(s:FindFirstChild("Other", true), "Text") == "Tobin", "his name on the tag at the right")
+	advance(3)
+	local c = s:FindFirstChild("Bust_c", true)
+	check(c ~= nil, "a third villager joins")
+	check(lit(c) and not lit(b) and not lit(a), "and the light moves to her")
+	check(c and c.Position.X.Scale > 0.2 and c.Position.X.Scale < 0.8, "further in toward the middle")
+	advance(5)
+	check(s:FindFirstChild("Choice1", true) ~= nil, "the answers come up in the scene")
+	press("Choice2")
+	check(#chosen == 1 and chosen[1].token == "e3" and chosen[1].i == 2, "an answer goes to the server")
+	check(s:FindFirstChild("Choice1", true) == nil, "and the answers go")
+	Sim.remoteEvent("EventLine")
+		:FireClient(Sim.player, { token = "e3", lines = { { who = "b", text = "Fine. Sorry." } } })
+	advance(1)
+	check(words(s, "Line"):find("Fine") ~= nil, "the lines after the answer are said in the scene")
+	press("Stop watching")
+	check(scene() == nil and prompt() ~= nil, "Stop puts the scene away and leaves the prompt")
+	check(Sim.State.data.talking == false, "and the main screen comes back")
+	Sim.remoteEvent("EventEnd"):FireClient(Sim.player, { token = "e3", notices = {} })
+	advance(8)
+	check(prompt() == nil, "the prompt goes when it ends")
+	check(#errors == warned, "no warnings from any of it")
 end)
 
 run("junk from the server", function()

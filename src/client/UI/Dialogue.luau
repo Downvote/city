@@ -37,15 +37,16 @@ export type Actor = { key: string, name: string, color: Color3, model: Model?, v
 -- the layout, in the interface's own pixels (a 1280 by 720 screen is about 1350 by 720 of them)
 local BOX_W = 0.74 -- the textbox's share of the screen's width
 local BOX_GAP = 20 -- under the box
-local SHOW = 430 -- how much of a bust shows: hips to over the head
-local FIGURE = 632 -- the whole of them, head to foot, in the frame the holder cuts off
+local SHOW = 470 -- how much of a bust shows: hips to over the head (about 60% of the screen)
+local FIGURE = 660 -- the whole of them, head to foot, in the frame the holder cuts off
 local WIDE = 340
--- where each of up to four stands: share of the width across, size, which way they face, depth
+-- where each of up to four stands: share of the width across, size, which way they face, depth,
+-- and how far up the screen (the two further in stand further back, so a little higher)
 local SLOTS = {
-	{ x = 0.15, size = 1, yaw = -18, z = 4, side = "left" },
-	{ x = 0.85, size = 1, yaw = 18, z = 4, side = "right" },
-	{ x = 0.33, size = 0.86, yaw = -12, z = 2, side = "left" },
-	{ x = 0.67, size = 0.86, yaw = 12, z = 2, side = "right" },
+	{ x = 0.15, size = 1, yaw = -18, z = 4, side = "left", lift = 0 },
+	{ x = 0.85, size = 1, yaw = 18, z = 4, side = "right", lift = 0 },
+	{ x = 0.33, size = 0.86, yaw = -12, z = 2, side = "left", lift = 44 },
+	{ x = 0.67, size = 0.86, yaw = 12, z = 2, side = "right", lift = 44 },
 }
 local DIM = Color3.fromRGB(112, 112, 122) -- a bust that isn't talking, multiplied in
 local BACK = 14 -- how far down a dimmed bust sits
@@ -142,7 +143,7 @@ local function bust(layer: Frame, actor: Actor, slotIndex: number): any
 		ClipsDescendants = true,
 		Size = UDim2.fromOffset(w, show),
 		AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(if slot.side == "left" then 0 else 1, off, 1, BACK),
+		Position = UDim2.new(if slot.side == "left" then 0 else 1, off, 1, BACK - slot.lift),
 		ZIndex = slot.z,
 		Parent = layer,
 	})
@@ -180,7 +181,12 @@ end
 -- Moves a bust to where it rests, lit or dimmed.
 local function place(b: any, lit: boolean, instant: boolean?)
 	local slot = b.slot
-	local target = UDim2.new(slot.x, if lit then 0 else (if slot.side == "left" then -10 else 10), 1, if lit then 0 else BACK)
+	local target = UDim2.new(
+		slot.x,
+		if lit then 0 else (if slot.side == "left" then -10 else 10),
+		1,
+		(if lit then 0 else BACK) - slot.lift
+	)
 	local tint = if lit then T.White else DIM
 	local info = TweenInfo.new(if instant then 0 else 0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 	if b.lit == nil then
@@ -223,7 +229,7 @@ function Dialogue.isOpen(): boolean
 end
 
 -- Opens a scene, putting away any other at once. opts: Name (the root's name), OnClick (a click
--- on the box: finish typing, move on), Caption (dim words at the box's foot, left). Returns the
+-- on the box once the line is all there: move on), Caption (dim words at the box's foot, left). Returns the
 -- scene: { root, box, words (the line, "Line"), note ("Note", at the foot), answers (a box under
 -- the words for buttons), tools (a row at the foot's right for small buttons), more (the arrow) }
 -- and its methods join(actor), speak(key?), has(key), close().
@@ -348,16 +354,20 @@ function Dialogue.open(opts: { [string]: any }?): any
 	-- the name tags on the box's top edge
 	local left = tag(box, "Speaker", false)
 	local right = tag(box, "Other", true)
-	if o.OnClick then
-		box.InputBegan:Connect(function(input)
-			if
-				input.UserInputType == Enum.UserInputType.MouseButton1
-				or input.UserInputType == Enum.UserInputType.Touch
-			then
-				o.OnClick()
-			end
-		end)
-	end
+	-- a click on the box shows the rest of a line being typed, or (once it is all there) moves on
+	box.InputBegan:Connect(function(input)
+		if
+			input.UserInputType ~= Enum.UserInputType.MouseButton1
+			and input.UserInputType ~= Enum.UserInputType.Touch
+		then
+			return
+		end
+		if words.MaxVisibleGraphemes ~= -1 then
+			words.MaxVisibleGraphemes = -1
+		elseif o.OnClick then
+			o.OnClick()
+		end
+	end)
 
 	local cast: { any } = {} -- { actor, bust? } in the order they joined
 	local speaking: string? = nil
@@ -395,6 +405,12 @@ function Dialogue.open(opts: { [string]: any }?): any
 		end
 		if speaking and sideOf[speaking] then
 			shown[sideOf[speaking]] = speaking
+		end
+		if not speaking then
+			-- a line nobody in particular says: everyone dimmed and no names up
+			fillTag(left, nil, false, false)
+			fillTag(right, nil, false, false)
+			return
 		end
 		for _, side in { "left", "right" } do
 			local key = shown[side]
@@ -472,7 +488,12 @@ function Dialogue.open(opts: { [string]: any }?): any
 				local slot = e.bust.slot
 				local w = e.bust.holder.Size.X.Offset
 				TweenService:Create(e.bust.holder, info, {
-					Position = UDim2.new(if slot.side == "left" then 0 else 1, if slot.side == "left" then -(w + 80) else w + 80, 1, BACK),
+					Position = UDim2.new(
+						if slot.side == "left" then 0 else 1,
+						if slot.side == "left" then -(w + 80) else w + 80,
+						1,
+						BACK - slot.lift
+					),
 				}):Play()
 			end
 		end
@@ -487,11 +508,9 @@ function Dialogue.open(opts: { [string]: any }?): any
 	State.set("talking", true)
 	-- the box rises into place
 	box.Position = UDim2.new(0.5, 0, 1, 200)
-	TweenService
-		:Create(box, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-			Position = UDim2.new(0.5, 0, 1, -BOX_GAP),
-		})
-		:Play()
+	TweenService:Create(box, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+		Position = UDim2.new(0.5, 0, 1, -BOX_GAP),
+	}):Play()
 	return self
 end
 
