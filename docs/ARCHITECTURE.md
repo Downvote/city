@@ -217,7 +217,7 @@ clipping (`tools/preview/ui_render.py`).
   `outlineText`, `tabs`, `slider`, `swatch`, `textbox`, `scroll`, `shadow` (a solid offset shadow).
   `Kit.pad` on a Kit button stretches its face back over the padding. Motion: buttons sink onto their lip when
   pressed, grow and hop their icon on hover and spring back when clicked; one loop sweeps a sheen across a button on
-  screen now and then; `Kit.badge` pulses; `popIn`, `popOut`, `slideIn`, `bump` and `flyCoins` animate screens. `Kit.overUI(pos)` says whether the pointer is
+  screen now and then; `Kit.badge(parent)` is a plain red dot that pulses slowly; `popIn`, `popOut`, `slideIn`, `bump` and `flyCoins` animate screens. `Kit.overUI(pos)` says whether the pointer is
   over our interface, using `GetGuiObjectsAtPosition`, so world clicks never go through a button.
 - `UI/Rewards` (the thank you picker, opened by the HUD when `offers` arrive), `UI/Goals` (the town goals panel;
   `Goals.ready()` feeds the dock badge), `World/Wishes` (a wobbly thought bubble over each villager whose model has a

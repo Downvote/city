@@ -452,7 +452,7 @@ function Hud.start()
 
 	-- badges: Goals while there's something to claim, the gift while today's is waiting; and the
 	-- thank you picker when a villager's heart level goes up
-	local goalsBadge = Kit.badge(goalsTile, "!")
+	local goalsBadge = Kit.badge(goalsTile)
 	local Goals = Hud.panel("Goals")
 	local function refreshGoals()
 		goalsBadge.Visible = Goals.ready() > 0
@@ -471,7 +471,7 @@ function Hud.start()
 			end)
 		end
 	end)
-	local giftBadge = Kit.badge(gift, "!")
+	local giftBadge = Kit.badge(gift)
 	State.on("daily", function(daily)
 		local today = math.floor(os.time() / 86400)
 		giftReady = daily == nil or daily.last ~= today

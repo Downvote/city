@@ -1147,39 +1147,24 @@ function Kit.bar(props: { [string]: any }, ratio: number, color: Color3): (Frame
 	return track, fill
 end
 
--- A small red bubble with a number or a "!" on a corner, for things waiting to be seen.
-function Kit.badge(parent: GuiObject, text: string): Frame
+-- A red dot on a button's corner, for something waiting to be seen. The user: "Remove the ! In
+-- the alert, just the red dot is enough. Make the red dot pulse slowly". So no mark, no number
+-- and no rim.
+function Kit.badge(parent: GuiObject): Frame
 	local f = Kit.frame({
 		Name = "Badge",
 		Parent = parent,
-		Size = UDim2.fromOffset(24, 24),
-		AutomaticSize = Enum.AutomaticSize.X,
-		Position = UDim2.new(1, 4, 0, -6),
-		AnchorPoint = Vector2.new(1, 0),
-		Color = T.Coral,
+		Size = UDim2.fromOffset(14, 14),
+		Position = UDim2.new(1, -8, 0, 6),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Color = Color3.fromRGB(240, 72, 78), -- redder than the coral buttons, so it shows on the gift
 		Radius = "circle",
 		ZIndex = (parent.ZIndex or 1) + 5,
-		Stroke = T.Ink,
-		StrokeThickness = 2,
 	})
-	Kit.pad(f, 6, 0)
-	Kit.title(text, {
-		Parent = f,
-		Size = UDim2.new(0, 0, 1, 0),
-		AutomaticSize = Enum.AutomaticSize.X,
-		TextSize = 15,
-		Color = T.White,
-		Wrap = false,
-		ZIndex = f.ZIndex,
-	})
-	-- a gentle pulse so it gets noticed
+	-- a slow pulse about its middle: it swells and settles, a couple of seconds a beat
 	local pulse = Kit.new("UIScale", { Name = "Pulse", Parent = f })
 	TweenService
-		:Create(
-			pulse,
-			TweenInfo.new(0.55, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
-			{ Scale = 1.18 }
-		)
+		:Create(pulse, TweenInfo.new(1.1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Scale = 1.3 })
 		:Play()
 	return f
 end

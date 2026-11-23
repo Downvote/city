@@ -275,7 +275,7 @@ our own style:
   green + button, the people and happiness pills, the level bar with a medal, the clock with the weather's icon.
 - **Panels** are white cards with a thick outline, a coloured header bar with the panel's icon and an outlined title,
   and a red close button sitting on the top right corner. Progress bars are outlined tracks with a shaded fill.
-  Things waiting for you carry a red badge (the daily gift's "!").
+  Things waiting for you carry a small red dot that pulses slowly (the daily gift, a goal to claim).
 - **Build mode** works like the house builders on Roblox: a glass bar along the bottom with the main categories
   (Build, Furniture, Outdoor, Work) and a green Done, a scrolling row of sub categories above it, and a tray of item
   cards (the 3D picture on a blue ground, the name, a green price tag with a coin). Walls, rooms, floors and roofs
