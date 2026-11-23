@@ -267,9 +267,9 @@ return function(add: any)
 			put("flower_border", 22, 11, 0, PALE_STONE, MUSTARD)
 			put("tree_blossom", 5, 4.5, 0)
 			put("bench_garden", 22, 3.2, 180)
-			put("bush", 2.6, 10.4, 0)
+			put("bush", 2.6, 10.1, 0)
 			put("bush", 25.4, 9.4, 0)
-			put("bicycle", 19.6, 8.6, 75)
+			put("bicycle", 21.2, 9, 90)
 
 			-- the playground ------------------------------------------------------------------
 			-- picket fence round it, the gate by the side door

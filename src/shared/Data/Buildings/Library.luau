@@ -15,7 +15,7 @@ local F = Tuning.Plot.Foundation
 -- finishes (Data/Palette's materials; colours from the town's palette)
 local SANDSTONE: Finish = { c = "E6D5B4", m = "Sandstone" }
 local INSIDE: Finish = { c = "F2E6CC", m = "Plaster" }
-local MOSS: Finish = { c = "6F8F5F", m = "RoofShingles" }
+local ROOF: Finish = { c = "6A5C5A", m = "Slate" } -- cocoa slate
 local PEDIMENT: Finish = { c = "DAD4C8", m = "Limestone" }
 local WALNUT_FLOOR: Finish = { c = "9A6B48", m = "WoodPlanks" }
 local OAK_FLOOR: Finish = { c = "C49A6C", m = "WoodPlanks" }
@@ -145,7 +145,7 @@ return function(add: any)
 			local function window(wall: string, p: number)
 				open("win_tall", wall, p, TRIM, TRIM)
 				local sill = Plan.openingY(b.walls[wall], 2)
-				hang("window_hood", wall, p, sill + 6 + 0.38, "a", TRIM, MOSS.c)
+				hang("window_hood", wall, p, sill + 6 + 0.38, "a", TRIM, ROOF.c)
 			end
 			-- a low wall of another style (the garden's), free of the building's corners
 			local function lowWall(name: string, x1: number, z1: number, x2: number, z2: number)
@@ -186,11 +186,11 @@ return function(add: any)
 				},
 				name = "rail",
 			})
-			b:roof(2, 8, 22, 26, "hip", 7, 0, MOSS, SANDSTONE, 1, 1)
+			b:roof(2, 8, 22, 26, "hip", 7, 0, ROOF, SANDSTONE, 1, 1)
 			-- the pediment: a gable to the street on the pillars, dying into the upper wall
-			b:roof(4, 2, 20, 8, "gable", 4, 1, MOSS, PEDIMENT, 0, 0.3)
+			b:roof(4, 2, 20, 8, "gable", 4, 1, ROOF, PEDIMENT, 0, 0.3)
 			for _, x in { 5.2, 9.2, 14.8, 18.8 } do
-				putAt("pillar_round", x, 3.2, 0, F, 0, PALE_STONE, PALE_STONE)
+				putAt("pillar_round", x, 3.4, 0, F, 0, PALE_STONE, PALE_STONE)
 			end
 
 			-- doors and windows
@@ -256,9 +256,9 @@ return function(add: any)
 			for _, p in { { 28, 12.2, 0 }, { 26.8, 14.3, 30 }, { 25, 16, 70 }, { 23.4, 17, 90 } } do
 				put("path_stones", p[1], p[2], p[3])
 			end
-			put("flower_border", 24.1, 11.4, 0, STONE, LILAC)
-			put("bird_house", 32.6, 11.6, 0)
-			put("lamp_post", 23.2, 20.6, 0)
+			put("flower_border", 24.4, 11.4, 0, STONE, LILAC)
+			put("bird_house", 32.4, 20.4, 0)
+			put("lamp_post", 23.1, 13.2, 0)
 			put("bush", 33.4, 25.6, 0)
 			put("bush", 27, 24.4, 0)
 
@@ -266,10 +266,10 @@ return function(add: any)
 			-- the stair up the left wall, a long reading table with green lamps, armchairs
 			-- by the window, the desk under the gallery's edge
 			putAt("stairs_straight", 4.3, 16.3, 180, F, 0, WALNUT, WALNUT)
-			put("work_library", 13, 19.5, 180, WALNUT, "F2E6CC")
+			put("work_library", 13, 18.9, 180, WALNUT, "F2E6CC")
 			put("table_dining_long", 17.6, 11.4, 0, WALNUT)
 			for _, x in { 15.2, 17.6, 20 } do
-				put("chair_dining", x, 14.3, 180, WALNUT)
+				put("chair_dining", x, 13.9, 180, WALNUT)
 			end
 			for _, x in { 15.6, 19.6 } do
 				putAt("lamp_desk", x, 11, 180, top("table_dining_long"), 0, FOREST)
@@ -290,9 +290,8 @@ return function(add: any)
 			for _, x in { 9, 14, 19 } do
 				put("bookcase_tall", x, 24.4, 180)
 			end
-			put("table_side", 20.7, 22, 0, WALNUT)
-			putAt("kettle", 20.7, 22, 200, top("table_side"))
-			put("coat_stand", 20.7, 20, 0)
+			put("table_side", 20.8, 22.2, 0, WALNUT)
+			putAt("kettle", 20.8, 22.2, 200, top("table_side"))
 			for _, x in { 8, 13, 19 } do
 				put("light_ceiling", x, 22, 0)
 			end
