@@ -41,7 +41,14 @@ function Rewards.open()
 	Kit.list(body, 8)
 	-- the new heart level, and what to do
 	local intro = Kit.box({ Name = "Intro", Parent = body, Size = UDim2.new(1, 0, 0, 48), LayoutOrder = 0 })
-	Kit.disc({ Name = "Heart", Parent = intro, Size = 40, Position = UDim2.fromOffset(8, 2), Color = T.Pink, Icon = "heart" })
+	Kit.disc({
+		Name = "Heart",
+		Parent = intro,
+		Size = 40,
+		Position = UDim2.fromOffset(8, 2),
+		Color = T.Pink,
+		Icon = "heart",
+	})
 	Kit.title(Text.fill("Heart level {n}", { n = offer.level }), {
 		Parent = intro,
 		Size = UDim2.new(1, -60, 0, 22),

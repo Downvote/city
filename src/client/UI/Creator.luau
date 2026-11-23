@@ -828,6 +828,12 @@ local function colourGrid(
 			onPick(hex)
 		end, { Parent = cell })
 		b.Position = UDim2.fromOffset(ring, ring)
+		-- a thin rim, so a white or a charcoal one still shows on the panel in either look (the
+		-- swatch's own stroke, switched on: an object draws only one)
+		local edge = b:FindFirstChildOfClass("UIStroke")
+		if edge then
+			edge.Enabled, edge.Color, edge.Thickness, edge.Transparency = true, T.Line, 1, 0
+		end
 	end
 	mark(current)
 	return g, mark

@@ -568,6 +568,12 @@ local function swatchRow(parent: Instance, label: string, current: string?, onPi
 			onPick(hex)
 		end, { Parent = cell })
 		b.Position = UDim2.fromOffset(RING, RING)
+		-- a thin rim, so a white or a charcoal one still shows on the tray in either look (the
+		-- swatch's own stroke, switched on: an object draws only one)
+		local edge = b:FindFirstChildOfClass("UIStroke")
+		if edge then
+			edge.Enabled, edge.Color, edge.Thickness, edge.Transparency = true, T.Line, 1, 0
+		end
 	end
 	return row
 end

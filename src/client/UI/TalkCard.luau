@@ -176,8 +176,9 @@ local function build(vid: string, v: any)
 		Band = BAND,
 	})
 	card = page
-	-- who is talking, on the band: a mark in their own colour and their name
-	local speaker = Kit.box({ Name = "Speaker", Parent = band, Size = UDim2.fromScale(1, 1) })
+	-- who is talking, over the band: a mark in their own colour and their name
+	local _ = band
+	local speaker = Kit.box({ Name = "Speaker", Parent = root, Size = UDim2.new(1, 0, 0, BAND) })
 	speaker.ZIndex = 3
 	local mark = Kit.new("Frame", {
 		Name = "Mark",

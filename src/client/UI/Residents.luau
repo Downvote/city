@@ -736,15 +736,18 @@ local function refreshList()
 	end
 	-- the room left in town, as a dim slot that opens the creator
 	local room = Tuning.Villagers.Max - #list
-	if room > 0 and #list > 0 then
-		MenuParts.slot(
-			if room == 1 then "Room for one more" else Text.fill("Room for {n} more", { n = room }),
-			{ Name = "Room", Parent = listFrame, LayoutOrder = 998, Height = 62, Icon = "plus", Sub = "Make a villager" },
-			function()
-				local Hud = require(script.Parent.Hud)
-				Hud.open("Creator", { mode = "new" })
-			end
-		)
+	if room > 0 then
+		MenuParts.slot("Make a villager", {
+			Name = "Room",
+			Parent = listFrame,
+			LayoutOrder = 998,
+			Height = 62,
+			Icon = "plus",
+			Sub = if room == 1 then "Room for one more" else Text.fill("Room for {n} more", { n = room }),
+		}, function()
+			local Hud = require(script.Parent.Hud)
+			Hud.open("Creator", { mode = "new" })
+		end)
 	end
 	if count then
 		count.Text = Text.fill("{n} of {max}", { n = #list, max = Tuning.Villagers.Max })
