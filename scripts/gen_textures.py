@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""Paints the game's own textures: one tileable picture per material, in a soft hand-painted style.
+"""Paints the game's own textures: one tileable picture per material, in a soft hand-painted style,
+and the looks (named variants of a material that only the parts asking for them wear: precast
+panels, roller shutters, barrel roof tiles and so on).
 
-    python3 scripts/gen_textures.py [--only grass,brick] [--sheet out.png]
+    python3 scripts/gen_textures.py [--only grass,brick] [--looks] [--sheet out.png] [--tiles 3] [--cell 384]
 
-Writes art/textures/<name>.png (the colour map), <name>_n.png (a normal map) and textures.json
-(each texture's material and studs per tile, which src/shared/Data/Textures.luau must match).
+Writes art/textures/<name>.png (the colour map), <name>_n.png (a normal map), for the looks
+<name>_r.png (a roughness map: white is matt, dark is glossy) and textures.json (each texture's
+material and studs per tile, and a look's name, which src/shared/Data/Textures.luau must match).
+--looks paints only the looks; --out writes somewhere else than art/textures.
 
 Roblox tints a material's colour map by the part's colour, and players paint anything any
 colour, so every map here is nearly grey: light faces, darker cracks and edges, highlights on
@@ -464,6 +468,347 @@ def metal(rng):
     return lum, h, 0.6
 
 
+# the looks --------------------------------------------------------------------------------------------
+# Drawn rather than photographed: flat faces, clear joints, a thin light on the edges that face the
+# top left and a thin shade on the others, hardly any noise. Each returns a roughness map too.
+
+def mix(a, b, t):
+    return a + (b - a) * t
+
+
+def brushed(rng, along, across, angle):
+    """Tiling noise drawn out in one direction (an angle in radians), like the marks of a trowel:
+    about `along` changes across the tile the long way and `across` the short way."""
+    F = np.fft.fft2(rng.standard_normal((N, N)))
+    fy = np.fft.fftfreq(N)[:, None] * N
+    fx = np.fft.fftfreq(N)[None, :] * N
+    ca, sa = math.cos(angle), math.sin(angle)
+    F *= np.exp(-(((fx * ca + fy * sa) / along) ** 2 + ((fy * ca - fx * sa) / across) ** 2))
+    r = np.real(np.fft.ifft2(F))
+    return (r - r.mean()) / (r.std() + 1e-9)
+
+
+def cells(nx, ny, stagger=0.0):
+    """A grid of nx by ny cells, every other row moved along by `stagger` of a cell: each pixel's
+    cell id, how far it is from the cell's left and top in pixels, and the cell's size."""
+    cw, ch = N / nx, N / ny
+    row = np.floor(YY / ch).astype(int)
+    x = (XX + (row % 2) * cw * stagger) % N
+    col = np.floor(x / cw).astype(int) % nx
+    return row * nx + col, x - col * cw, YY - row * ch, cw, ch
+
+
+def corner(a, b, r):
+    """How far inside a corner a pixel is, its two edges a and b away, the corner rounded to r."""
+    return np.where((a < r) & (b < r), r - np.hypot(r - a, r - b), np.minimum(a, b))
+
+
+def inside(u, v, cw, ch, gap, r=0.0):
+    """How far a pixel is inside its cell's face, the joint between faces being `gap` wide."""
+    a = np.minimum(u, cw - u) - gap / 2
+    b = np.minimum(v, ch - v) - gap / 2
+    return corner(a, b, r) if r else np.minimum(a, b)
+
+
+def panel(rng):
+    # precast panels, two across and three down: a groove between them, four bolt holes a panel
+    nx, ny = 2, 3
+    cid, u, v, cw, ch = cells(nx, ny)
+    d = inside(u, v, cw, ch, 5.0)
+    face = smoothstep(0, 1.6, d)
+    tone = rng.normal(0, 0.011, nx * ny)
+    # marks the rain leaves, running down from each panel's top edge and fading
+    runs_down = lowpass(rng, 34, 1.3)
+    lum = 0.885 + tone[cid] + 0.013 * runs_down * (1 - 0.6 * v / ch) + 0.008 * lowpass(rng, 3)
+    bx = np.minimum(u, cw - u) - cw * 0.13
+    by = np.minimum(v, ch - v) - ch * 0.2
+    r = np.hypot(bx, by)
+    hole = 1 - smoothstep(4.6, 6.0, r)
+    h = smoothstep(0, 2.5, d) * 0.5 - hole * 0.45 + 0.3
+    lum = lum + lit(h, 0.42)
+    lum = mix(0.60, lum, face)
+    lum = mix(lum, 0.63, (1 - smoothstep(3.4, 4.8, r)) * 0.9)
+    rough = mix(0.96, 0.84, face)
+    return lum, h, 3.0, rough
+
+
+def stucco(rng):
+    # painted render: broad sweeps of the trowel, each patch worked in its own direction
+    lum = 0.905 + 0.008 * lowpass(rng, 2)
+    marks = np.zeros((N, N))
+    for angle in (0.5, 1.9, 2.8):
+        patch = smoothstep(-0.2, 0.9, lowpass(rng, 2))
+        marks += brushed(rng, 5, 22, angle) * patch
+    marks /= 1.6
+    soft = steps(np.clip(marks * 0.22 + 0.5, 0, 1), 5, 0.42) - 0.5
+    lum += 0.034 * soft
+    h = 0.5 + 0.16 * soft
+    rough = np.full((N, N), 0.92) + 0.03 * soft
+    return lum, h, 2.2, rough
+
+
+def maple(rng):
+    # brick in running bond: no two bricks quite the same length or the same shade
+    rows, per = 12, 4
+    rh, bw = N / rows, N / per
+    row = np.floor(YY / rh).astype(int)
+    v = YY - row * rh
+    bid = np.zeros((N, N), int)
+    dl = np.zeros((N, N))
+    dr = np.zeros((N, N))
+    for r in range(rows):
+        edges = (np.arange(per) + 0.5 * (r % 2)) * bw + rng.uniform(-5, 5, per)
+        m = row == r
+        x = (XX[m] - edges[0]) % N
+        rel = np.append(edges - edges[0], N)
+        k = np.searchsorted(rel, x, side="right") - 1
+        bid[m] = r * per + k
+        dl[m] = x - rel[k]
+        dr[m] = rel[k + 1] - x
+    count = rows * per
+    side = rng.uniform(1.8, 3.4, count)
+    bed = rng.uniform(1.8, 3.0, count)
+    d = corner(np.minimum(dl, dr) - side[bid], np.minimum(v, rh - v) - bed[bid], 4.0)
+    face = smoothstep(0, 1.5, d)
+    tone = rng.normal(0, 0.022, count)
+    pick = rng.random(count)
+    tone = np.where(pick < 0.14, tone - 0.085, np.where(pick > 0.9, tone + 0.045, tone))
+    lum = 0.855 + tone[bid] + 0.014 * (0.5 - v / rh) + 0.008 * lowpass(rng, 9, 22)
+    h = smoothstep(0, 3.0, d) * 0.6 + 0.2
+    lum = lum + lit(h, 0.45)
+    lum = mix(0.58 + 0.01 * lowpass(rng, 40), lum, face)
+    rough = mix(0.97, 0.82, face)
+    return lum, h, 3.5, rough
+
+
+def mosaic(rng):
+    # small glazed facade tiles, eight by eight, here and there a darker one
+    n = 8
+    cid, u, v, cw, ch = cells(n, n)
+    d = inside(u, v, cw, ch, 5.0, 5.0)
+    face = smoothstep(0, 1.5, d)
+    tone = rng.normal(0, 0.014, n * n)
+    pick = rng.random(n * n)
+    tone = np.where(pick < 0.11, tone - 0.12, np.where(pick > 0.93, tone + 0.035, tone))
+    shine = 0.04 * np.exp(-(((u + v) / cw - 0.62) / 0.2) ** 2)
+    h = smoothstep(0, 5.0, d) * 0.55 + 0.2
+    lum = 0.875 + tone[cid] + shine + lit(h, 0.5)
+    lum = mix(0.60, lum, face)
+    rough = mix(0.9, 0.32, face)
+    return lum, h, 3.0, rough
+
+
+def checker(rng):
+    # floor tiles laid light and mid grey by turns, so one colour paints both
+    n = 4
+    cid, u, v, cw, ch = cells(n, n)
+    mid = ((cid % n) + (cid // n)) % 2 == 1
+    d = inside(u, v, cw, ch, 3.6)
+    face = smoothstep(0, 1.4, d)
+    tone = rng.normal(0, 0.008, n * n)
+    shine = 0.028 * np.exp(-(((u + v) / cw - 0.7) / 0.24) ** 2)
+    h = smoothstep(0, 3.0, d) * 0.45 + 0.25
+    lum = np.where(mid, 0.60, 0.95) + tone[cid] + shine + lit(h, 0.3)
+    lum = mix(0.44, lum, face)
+    rough = mix(0.88, 0.26, face)
+    return lum, h, 2.2, rough
+
+
+def corrugated(rng):
+    # corrugated sheet, the ridges upright; one lap where two sheets meet, with its screws
+    k = 16
+    ph = 2 * math.pi * k * XX / N
+    crest = np.cos(ph)  # 1 along a ridge's top, -1 down in the furrow
+    toward = -np.sin(ph)  # 1 on the side of a ridge that faces the light
+    lum = 0.775 + 0.15 * steps(toward * 0.5 + 0.5, 4, 0.3) - 0.035 * smoothstep(0.2, 1.0, -crest)
+    lum += 0.01 * lowpass(rng, 40, 1.4)
+    h = 0.5 + 0.4 * crest
+    lap = 0.62 * N
+    below = YY - lap
+    lum -= 0.11 * smoothstep(-1.2, 0.0, below) * (1 - smoothstep(0.0, 7.0, below))  # the upper sheet's shade
+    lum = mix(lum, 0.5, smoothstep(-1.4, -0.4, below) * (1 - smoothstep(0.4, 1.4, below)))
+    h = h + 0.12 * (1 - smoothstep(-1.0, 1.0, below))
+    pitch = N / k
+    sx = (XX + pitch) % (2 * pitch) - pitch  # a screw on every other ridge
+    r = np.hypot(sx, YY - (lap - 13))
+    head = 1 - smoothstep(2.6, 3.8, r)
+    lum = mix(lum, 0.9 - 0.2 * smoothstep(-2.0, 3.0, sx + (YY - (lap - 13))), head)
+    lum = mix(lum, 0.52, smoothstep(3.0, 3.8, r) * (1 - smoothstep(4.4, 5.2, r)) * 0.8)
+    h = h + 0.25 * head
+    rough = np.full((N, N), 0.46) + 0.05 * smoothstep(0.2, 1.0, -crest)
+    return lum, h, 5.0, rough
+
+
+def shutter(rng):
+    # a roller shutter: slats running across, each one curved, lit above and shaded at its lip
+    k = 10
+    v = (YY * k / N) % 1
+    lum = 0.85 + 0.05 * np.exp(-((v - 0.2) / 0.1) ** 2) - 0.10 * smoothstep(0.5, 0.9, v)
+    lum += 0.007 * lowpass(rng, 1.5, 70)
+    lip = smoothstep(0.895, 0.93, v)
+    lum = mix(lum, 0.5, lip)
+    lum -= 0.06 * (1 - smoothstep(0.0, 0.07, v))  # the lip above throws a little shade
+    h = np.sin(math.pi * np.clip(v / 0.92, 0, 1)) ** 0.7 * 0.6 + 0.1
+    rough = mix(np.full((N, N), 0.5), 0.9, lip)
+    return lum, h, 4.0, rough
+
+
+def slats(rng):
+    # upright timber slats with a gap between each and the next
+    k = 8
+    pw = N / k
+    col = np.floor(XX / pw).astype(int)
+    u = XX - col * pw
+    d = np.minimum(u, pw - u) - 6.5
+    face = smoothstep(0, 1.5, d)
+    grain = lowpass(rng, 46, 1.6)
+    late = lowpass(rng, 90, 2.4)
+    shift = rng.integers(0, N, k)
+    gy = (YY.astype(int) + shift[col]) % N
+    gx = XX.astype(int)
+    tone = rng.normal(0, 0.024, k)
+    lum = 0.87 + tone[col] + 0.022 * (steps(grain[gy, gx] * 0.25 + 0.5, 3, 0.3) - 0.5)
+    lum -= 0.03 * smoothstep(1.3, 2.1, late[gy, gx])  # a few darker lines of grain
+    h = smoothstep(0, 3.5, d) * 0.7 + 0.1
+    lum = lum + lit(h, 0.4)
+    # the gap is in shade, deepest beside the slat that stands between it and the light
+    gap = 0.3 + 0.1 * smoothstep(0.0, 13.0, (u + 6.5) % pw)
+    lum = mix(gap, lum, face)
+    rough = mix(1.0, 0.72, face)
+    return lum, h, 5.0, rough
+
+
+def barrel(rng):
+    # barrel roof tiles: rounded covers running down the roof over the channels between them,
+    # each row's lower end lapping the row below
+    cols, rows = 6, 4
+    cid, u, v, cw, ch = cells(cols, rows)
+    t = v / ch
+    half = 0.27 + 0.045 * t  # a cover is a little wider at its lower end
+    x = (u / cw - 0.5) / half
+    edge = (1 - np.abs(x)) * half * cw  # pixels in from the cover's side
+    on = smoothstep(-0.7, 0.7, edge)
+    up = np.sqrt(np.clip(1 - x * x, 0, 1))
+    tone = rng.normal(0, 0.03, cols * rows)
+    cover = 0.60 + tone[cid] + 0.31 * steps(np.clip(0.8 * up - 0.5 * x, 0, 1), 4, 0.32)
+    cover -= 0.13 * (1 - smoothstep(0.0, 0.14, t))  # the shade of the row above
+    cover += 0.03 * smoothstep(0.72, 0.93, t)
+    px = ((u / cw + 0.5) % 1 - 0.5) / (0.5 - half)  # across the channel, -1..1
+    pan = 0.50 + 0.16 * smoothstep(-0.6, 0.9, px) - 0.10 * (1 - smoothstep(0.0, 0.14, t))
+    lum = mix(pan, cover, on)
+    lum = mix(lum, 0.42, (1 - smoothstep(0.5, 1.6, np.abs(edge))) * 0.7)
+    lum = mix(lum, 0.42, smoothstep(ch - 3.4, ch - 2.2, v) * mix(0.5, 1.0, on))
+    h = mix(0.12 + 0.1 * px * px, 0.45 + 0.45 * up, on) + 0.1 * t
+    rough = mix(np.full((N, N), 0.8), 0.6, on)
+    return lum, h, 4.5, rough
+
+
+def flags(rng):
+    # big paving slabs, each row laid half a slab along from the last
+    cols, rows = 2, 4
+    cid, u, v, cw, ch = cells(cols, rows, 0.5)
+    d = inside(u, v, cw, ch, 5.0, 4.0) + 0.45 * lowpass(rng, 40)
+    face = smoothstep(0, 1.6, d)
+    tone = rng.normal(0, 0.02, cols * rows)
+    lum = 0.88 + tone[cid] + 0.014 * (steps(lowpass(rng, 3) * 0.25 + 0.5, 3, 0.4) - 0.5)
+    h = smoothstep(0, 3.5, d) * 0.55 + 0.2
+    lum = lum + lit(h, 0.45)
+    lum = mix(0.57, lum, face)
+    rough = mix(0.97, 0.86, face)
+    return lum, h, 3.0, rough
+
+
+def street(rng):
+    # street asphalt: fine stones, one mended patch and one hairline crack
+    lum = 0.80 + 0.014 * fbm(rng, 3, 3)
+    im, d = canvas()
+    for _ in range(6500):
+        x, y = rng.uniform(0, N), rng.uniform(0, N)
+        r = rng.uniform(0.5, 1.15)
+        ellipse(d, x, y, r, r * rng.uniform(0.75, 1.0), rng.choice([84, 100, 158, 172, 190]))
+    stones = done(im)
+    lum = lum + stones * 0.085
+    h = 0.5 + stones * 0.3
+    # the patch: an oblong a shade darker with a sealed edge, wholly inside the tile
+    qx = np.abs(XX - 300) - 92
+    qy = np.abs(YY - 170) - 54
+    sd = np.hypot(np.maximum(qx, 0), np.maximum(qy, 0)) + np.minimum(np.maximum(qx, qy), 0) - 10
+    patch = 1 - smoothstep(-1.0, 1.0, sd)
+    lum -= 0.028 * patch
+    lum -= 0.05 * (1 - smoothstep(0.6, 1.8, np.abs(sd)))
+    im, d = canvas(0)
+    x, y, a = 40.0, 330.0, 0.35
+    pts = [(x, y)]
+    for _ in range(26):
+        a = 0.35 + rng.normal(0, 0.55)
+        x, y = x + math.cos(a) * 10, y + math.sin(a) * 10
+        pts.append((x, y))
+    line(d, pts, 1.1, 255)
+    crack = np.asarray(im.resize((N, N), Image.BOX), float) / 255
+    lum -= crack * 0.12
+    h = h - crack * 0.25 - 0.04 * patch
+    rough = np.full((N, N), 0.93) - 0.06 * patch
+    return lum, h, 1.6, rough
+
+
+def canvas_weave(rng):
+    # awning canvas: a plain weave of thick threads, some a little heavier than the rest
+    k = 40
+    u, v = XX * k / N, YY * k / N
+    iu, iv = np.floor(u).astype(int), np.floor(v).astype(int)
+    over = ((iu + iv) % 2) == 0
+    warp = rng.normal(0, 0.012, k)
+    weft = rng.normal(0, 0.012, k)
+    prof = np.where(over, np.sin(math.pi * (u % 1)), np.sin(math.pi * (v % 1)))
+    lum = 0.845 + 0.075 * prof ** 0.8 + np.where(over, warp[iu % k], weft[iv % k])
+    lum += 0.012 * lowpass(rng, 3, 30) + 0.012 * lowpass(rng, 30, 3)
+    h = prof * 0.5
+    rough = np.full((N, N), 0.95)
+    return lum, h, 1.2, rough
+
+
+def cliff(rng):
+    # beds of rock lying one on another, each broken into blocks by upright cracks: every block
+    # one flat tone with a lit ledge along its top and shade under the bed above
+    wy = (YY + 7 * lowpass(rng, 2, 1.5) + 2.5 * lowpass(rng, 7, 3)) % N
+    wx = XX + 6 * lowpass(rng, 1.5, 3)
+    beds = np.array(runs(rng, 46, 96) + [N])
+    b = np.searchsorted(beds, wy, side="right") - 1
+    top = wy - beds[b]
+    bot = beds[b + 1] - wy
+    bid = np.zeros((N, N), int)
+    dl = np.zeros((N, N))
+    dr = np.zeros((N, N))
+    count = 0
+    for i in range(len(beds) - 1):
+        cuts = np.array(runs(rng, 64, 190) + [N])
+        m = b == i
+        x = (wx[m] - rng.uniform(0, N)) % N
+        k = np.searchsorted(cuts, x, side="right") - 1
+        bid[m] = count + k
+        dl[m] = x - cuts[k]
+        dr[m] = cuts[k + 1] - x
+        count += len(cuts) - 1
+    rx, ry = (dl - dr) / 2, (top - bot) / 2
+    tone = rng.normal(0, 0.045, count)
+    # a second face cut across each block at its own angle, a shade apart from the first
+    ang = rng.uniform(0, math.pi, count)
+    off = rng.normal(0, 14, count)
+    turn = rng.choice([-0.05, -0.035, 0.035, 0.05], count)
+    cut = smoothstep(-1.0, 1.0, rx * np.cos(ang[bid]) + ry * np.sin(ang[bid]) - off[bid])
+    lum = 0.80 + tone[bid] + turn[bid] * cut
+    lum += 0.075 * (1 - smoothstep(1.5, 6.0, top))
+    lum -= 0.11 * (1 - smoothstep(0.0, 11.0, bot))
+    lum -= 0.05 * (1 - smoothstep(0.0, 7.0, dr))
+    lum += 0.035 * (1 - smoothstep(1.5, 5.0, dl))
+    edge = np.minimum(np.minimum(dl, dr), np.minimum(top, bot * 1.0))
+    lum = mix(0.43, lum, smoothstep(0.9, 2.2, edge))
+    deep = rng.uniform(0, 0.3, count)
+    h = smoothstep(0, 6.0, edge) * 0.5 + deep[bid] + 0.1 * cut * np.sign(turn[bid])
+    rough = np.full((N, N), 0.92)
+    return lum, h, 5.0, rough
+
+
 # name -> (painter, Roblox material, studs per tile)
 TEXTURES = {
     "grass": (grass, "Grass", 8),
@@ -487,6 +832,24 @@ TEXTURES = {
     "metal": (metal, "Metal", 6),
 }
 
+# name -> (painter, Roblox material, studs per tile, the look's name): a part whose material is
+# "Concrete:Panel" wears the look Panel of Concrete; nothing else does
+LOOKS = {
+    "panel": (panel, "Concrete", 12, "Panel"),
+    "stucco": (stucco, "Concrete", 10, "Stucco"),
+    "maple": (maple, "Brick", 8, "Maple"),
+    "mosaic": (mosaic, "CeramicTiles", 6, "Mosaic"),
+    "checker": (checker, "CeramicTiles", 4, "Checker"),
+    "corrugated": (corrugated, "Metal", 6, "Corrugated"),
+    "shutter": (shutter, "Metal", 4, "Shutter"),
+    "slats": (slats, "WoodPlanks", 4, "Slats"),
+    "barrel": (barrel, "ClayRoofTiles", 6, "Barrel"),
+    "slabs": (flags, "Pavement", 8, "Slabs"),
+    "street": (street, "Asphalt", 16, "Street"),
+    "canvas": (canvas_weave, "Fabric", 3, "Canvas"),
+    "cliff": (cliff, "Rock", 16, "Cliff"),
+}
+
 # a colour for each in the contact sheet, close to how the town uses it
 SAMPLE = {
     "grass": (0.42, 0.72, 0.30), "wood": (0.66, 0.45, 0.28), "planks": (0.78, 0.58, 0.38),
@@ -496,50 +859,92 @@ SAMPLE = {
     "tiles": (0.86, 0.92, 0.95), "carpet": (0.72, 0.40, 0.44), "fabric": (0.40, 0.56, 0.70),
     "marble": (0.95, 0.94, 0.92), "sand": (0.92, 0.84, 0.64), "rock": (0.58, 0.56, 0.54),
     "metal": (0.70, 0.72, 0.76),
+    "panel": (0.80, 0.79, 0.76), "stucco": (0.96, 0.87, 0.72), "maple": (0.78, 0.40, 0.30),
+    "mosaic": (0.92, 0.58, 0.30), "checker": (0.86, 0.34, 0.30), "corrugated": (0.50, 0.66, 0.74),
+    "shutter": (0.74, 0.76, 0.78), "slats": (0.74, 0.54, 0.36), "barrel": (0.34, 0.47, 0.58),
+    "slabs": (0.84, 0.80, 0.73), "street": (0.36, 0.36, 0.40), "canvas": (0.82, 0.26, 0.22),
+    "cliff": (0.66, 0.58, 0.50),
 }
 
 
-def paint(name, seed):
-    fn, material, studs = TEXTURES[name]
+def entries():
+    """Every texture in order: name, painter, material, studs per tile, look (None for a
+    material's own texture) and the seed it is painted from."""
+    out = [(name, fn, material, studs, None, 1000 + i) for i, (name, (fn, material, studs)) in enumerate(TEXTURES.items())]
+    out += [(name, fn, material, studs, look, 2000 + i)
+            for i, (name, (fn, material, studs, look)) in enumerate(LOOKS.items())]
+    return out
+
+
+def paint(fn, seed):
+    """A painter's colour map, normal map and roughness map (None when it paints none)."""
     rng = np.random.default_rng(seed)
-    lum, h, depth = fn(rng)
+    got = fn(rng)
+    lum, h, depth = got[:3]
     lum = np.clip(lum, 0, 1)
     rgb = np.clip(lum[..., None] * WARM, 0, 1)
-    return (rgb * 255 + 0.5).astype(np.uint8), normal_map(h, depth), material, studs
+    rough = None
+    if len(got) > 3:
+        r = (np.clip(got[3], 0, 1) * 255 + 0.5).astype(np.uint8)
+        rough = np.stack([r, r, r], -1)
+    return (rgb * 255 + 0.5).astype(np.uint8), normal_map(h, depth), rough
+
+
+def seam(color):
+    """How badly a picture's opposite edges disagree, against how its neighbouring rows and columns
+    do inside it: about 1 for a picture that tiles."""
+    c = color.astype(float).mean(-1)
+    wrap = (np.abs(c[0] - c[-1]).mean() + np.abs(c[:, 0] - c[:, -1]).mean()) / 2
+    within = (np.abs(np.diff(c, axis=0)).mean() + np.abs(np.diff(c, axis=1)).mean()) / 2
+    return wrap / (within + 1e-9)
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", help="comma separated names")
-    ap.add_argument("--sheet", help="also write a contact sheet PNG here (tinted, 2x2 tiles each)")
+    ap.add_argument("--looks", action="store_true", help="only the looks")
+    ap.add_argument("--sheet", help="also write a contact sheet PNG here (tinted, each tiled)")
+    ap.add_argument("--tiles", type=int, default=2, help="copies each way in a cell of the sheet")
+    ap.add_argument("--cell", type=int, default=256, help="pixels a cell of the sheet")
+    ap.add_argument("--plain", action="store_true", help="the sheet untinted, as painted")
+    ap.add_argument("--out", default=OUT, help="where to write (default art/textures)")
     args = ap.parse_args()
-    os.makedirs(OUT, exist_ok=True)
-    names = args.only.split(",") if args.only else list(TEXTURES)
-    index_path = os.path.join(OUT, "textures.json")
+    os.makedirs(args.out, exist_ok=True)
+    every = entries()
+    known = [e[0] for e in every]
+    names = args.only.split(",") if args.only else [e[0] for e in every if e[4] or not args.looks]
+    for name in names:
+        if name not in known:
+            raise SystemExit(f"no texture called {name}")
+    index_path = os.path.join(args.out, "textures.json")
     index = json.load(open(index_path)) if os.path.exists(index_path) else {}
-    cells = []
-    for i, name in enumerate(TEXTURES):
+    shown = []
+    for name, fn, material, studs, look, seed in every:
         if name not in names:
             continue
-        color, normal, material, studs = paint(name, 1000 + i)
-        Image.fromarray(color, "RGB").save(os.path.join(OUT, name + ".png"), optimize=True)
-        Image.fromarray(normal, "RGB").save(os.path.join(OUT, name + "_n.png"), optimize=True)
+        color, normal, rough = paint(fn, seed)
+        Image.fromarray(color, "RGB").save(os.path.join(args.out, name + ".png"), optimize=True)
+        Image.fromarray(normal, "RGB").save(os.path.join(args.out, name + "_n.png"), optimize=True)
+        if rough is not None:
+            Image.fromarray(rough, "RGB").save(os.path.join(args.out, name + "_r.png"), optimize=True)
         index[name] = {"material": material, "studs": studs}
-        print(f"{name:9s} {material:14s} mean {color.mean() / 255:.2f}")
-        cells.append((name, color))
-    index = {k: index[k] for k in TEXTURES if k in index}
+        if look:
+            index[name]["look"] = look
+        print(f"{name:10s} {material + (':' + look if look else ''):24s} mean {color.mean() / 255:.2f}  seam {seam(color):.2f}")
+        shown.append((name, color))
+    index = {k: index[k] for k in known if k in index}
     with open(index_path, "w") as f:
         json.dump(index, f, indent=2)
         f.write("\n")
-    if args.sheet and cells:
-        cell = 256
-        cols = 5
-        rows = math.ceil(len(cells) / cols)
+    if args.sheet and shown:
+        cell = args.cell
+        cols = min(5, len(shown))
+        rows = math.ceil(len(shown) / cols)
         sheet = Image.new("RGB", (cols * cell, rows * (cell + 20)), (250, 246, 236))
         draw = ImageDraw.Draw(sheet)
-        for k, (name, color) in enumerate(cells):
-            tint = np.array(SAMPLE.get(name, (0.8, 0.8, 0.8)))
-            tiled = np.tile(color, (2, 2, 1)).astype(float) * tint
+        for k, (name, color) in enumerate(shown):
+            tint = np.ones(3) if args.plain else np.array(SAMPLE.get(name, (0.8, 0.8, 0.8)))
+            tiled = np.tile(color, (args.tiles, args.tiles, 1)).astype(float) * tint
             im = Image.fromarray(np.clip(tiled, 0, 255).astype(np.uint8)).resize((cell - 8, cell - 8), Image.LANCZOS)
             x, y = (k % cols) * cell, (k // cols) * (cell + 20)
             sheet.paste(im, (x + 4, y + 4))
