@@ -262,6 +262,30 @@ Tuning.Look = {
 	-- It was 0.92 at nearly full strength and a pale wall or a lamp at night washed the whole
 	-- view out (the user: "the bloom might be too much").
 	Bloom = { Intensity = 0.4, Size = 18, Threshold = 1.7 },
+	-- The light (World.stylize puts it on Lighting; colours are 0 to 255). The preview tools read
+	-- these same numbers (tools/preview/look.py), so a render shows the game's light and grade.
+	Light = {
+		Brightness = 3.1, -- the sun
+		Exposure = 0.12, -- ExposureCompensation: 1 is twice as bright
+		Ambient = { 126, 118, 158 }, -- what lights a place the sky can't see (indoors)
+		OutdoorAmbient = { 152, 146, 186 }, -- what lights the shade outdoors
+		SunTint = { 255, 236, 200 }, -- ColorShift_Top: the sun's colour on what faces it
+		Latitude = 54, -- GeographicLatitude: how high the sun rides
+		SkyDiffuse = 0.38, -- EnvironmentDiffuseScale: light off the sky
+		SkySpecular = 0.18, -- EnvironmentSpecularScale: shine off the sky
+		ShadowSoftness = 0.14,
+	},
+	-- The colour grade laid over the picture (a ColorCorrectionEffect), by the hour: the first
+	-- entry whose hours hold the clock is used, and Night when none does. World eases toward it.
+	Grade = {
+		Brightness = 0.02,
+		Hours = {
+			{ From = 10, To = 14.5, Tint = { 255, 250, 242 }, Saturation = 0.34, Contrast = 0.17, Air = "day" },
+			{ From = 7.5, To = 16.5, Tint = { 255, 240, 220 }, Saturation = 0.36, Contrast = 0.18, Air = "gold" },
+			{ From = 5, To = 19.5, Tint = { 255, 212, 184 }, Saturation = 0.38, Contrast = 0.19, Air = "dusk" },
+		},
+		Night = { Tint = { 176, 190, 255 }, Saturation = 0.44, Contrast = 0.24, Air = "night" },
+	},
 }
 
 return Tuning
