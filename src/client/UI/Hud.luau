@@ -196,7 +196,7 @@ function Hud.start()
 	-- currency/stats tab should also be part of the left side edge"), the three side by side in it.
 	local pills = Kit.darkPill({
 		Name = "Pills",
-		Size = UDim2.fromOffset(396, 46),
+		Size = UDim2.fromOffset(350, 46),
 		Position = UDim2.fromOffset(0, 96),
 		Parent = hud,
 	})
@@ -228,9 +228,9 @@ function Hud.start()
 		})
 		d:SetAttribute("KeepColors", true)
 	end
-	local coinPill, coins = cell("coin", 180, 1, function()
-		Hud.open("ShopPanel")
-	end)
+	-- (the money had a green + beside it that opened the shop, which has its own button under the
+	-- clock. The user: "remove the + button next to coins".)
+	local coinPill, coins = cell("coin", 134, 1)
 	divider(2)
 	local _, popLabel = cell("people", 82, 3)
 	divider(4)
@@ -413,6 +413,7 @@ function Hud.start()
 			Hud.goHome()
 		end
 	end)
+	local WEATHER_X = 36 -- where the weather's icon sits on the clock, from its left
 	local weatherArt: Frame? = nil
 	local weatherNow = ""
 	local function setWeatherIcon(name: string)
@@ -425,7 +426,7 @@ function Hud.start()
 		end
 		local art = Icons.make(name, 40, {
 			Parent = clock,
-			Position = UDim2.new(0, 36, 0.5, 0),
+			Position = UDim2.new(0, WEATHER_X, 0.5, 0),
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			ZIndex = 2,
 			Hole = T.Glass,
@@ -437,11 +438,14 @@ function Hud.start()
 				Rotation = 360,
 			}):Play()
 		else
-			-- clouds and the moon bob gently
+			-- clouds and the moon bob gently: up and down only, on the spot. (The bob used to aim
+			-- at a place 21 pixels to the left, left over from an older layout, so the icon slid
+			-- across the clock and back. The user: "the weather icon drifts left and right
+			-- randomly, fix this".)
 			TweenService:Create(
 				art,
 				TweenInfo.new(1.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
-				{ Position = UDim2.new(0, 15, 0.5, -3) }
+				{ Position = UDim2.new(0, WEATHER_X, 0.5, -3) }
 			):Play()
 		end
 	end

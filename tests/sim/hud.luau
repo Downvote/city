@@ -46,7 +46,7 @@ run("the stats sit in a strip under the town's level", function()
 		pills:FindFirstChild("Body") ~= nil and pills:FindFirstChild("Tone") ~= nil,
 		"on one painted slab with a tone of dots on it"
 	)
-	check(pills:FindFirstChild("Plus", true) ~= nil, "and the money's + to the shop")
+	check(pills:FindFirstChild("Plus", true) == nil, "with no + beside the money any more")
 end)
 
 run("the quests sit under the strip, the next few goals", function()
@@ -171,6 +171,44 @@ run("the main screen steps aside while somebody is talking in a scene", function
 		menu.Position == homeMenu and build.Position == homeBuild and quests.Position == homeQuests,
 		"and they all come back where they were when the talk is over"
 	)
+end)
+
+run("the weather's icon keeps its place on the clock", function()
+	local clock = gui:FindFirstChild("Clock", true)
+	local function icon()
+		for _, c in clock:GetChildren() do
+			if c:GetAttribute("Vector") ~= nil or c.Name == "Icon" then
+				return c
+			end
+		end
+		return nil
+	end
+	local function inPlace(art)
+		-- wholly on the clock, left of the time, and no more than a few pixels off its middle line
+		local half = art.Size.X.Offset / 2
+		return art.Position.X.Scale == 0
+			and art.Position.X.Offset - half >= 0
+			and art.Position.X.Offset + half <= 64
+			and math.abs(art.Position.Y.Offset) <= 4
+	end
+	Sim.env.workspace:SetAttribute("Weather", "clear")
+	Sim.advance(2)
+	local fair = icon()
+	check(fair ~= nil and inPlace(fair), "the icon is on the clock, left of the time")
+	local home = fair.Position.X.Offset
+	-- rain: a cloud, which bobs. It bobs on the spot: up and down a few pixels, never sideways
+	-- (it used to aim 21 pixels to the left and slide across the clock and back)
+	for _, weather in { "rain", "storm", "snow", "cloudy" } do
+		Sim.env.workspace:SetAttribute("Weather", weather)
+		Sim.advance(2)
+		local art = icon()
+		check(
+			art ~= nil and inPlace(art) and art.Position.X.Offset == home,
+			weather .. ": its icon stays put, left to right"
+		)
+	end
+	Sim.env.workspace:SetAttribute("Weather", "clear")
+	Sim.advance(2)
 end)
 
 print(

@@ -118,7 +118,8 @@ section 10). New buttons get it from `UI/Kit`; new moving scenery goes in `World
 The user asked for the genre's own layouts (house builders, avatar editors, city builders), then for a bright,
 cozy look like the life sims they showed, then named a mobile city builder (Pocket City 2) as the UI and graphics
 direction: its layout and clean low poly feel, in our own designs, never copied (docs/GAME_DESIGN.md section 10).
-The HUD is a round level dial top left with the money, people and happiness in one strip under it and the quests
+The HUD is a round level dial top left with the money, people and happiness in one strip under it (no + beside
+the money: "remove the + button next to coins") and the quests
 (`UI/Quests`: the next town goals, claimable there) under that ("put these as a tab below the level, then add quests
 below it as well"); the clock top right with a row of captioned round buttons under it, Home first ("make it such
 that there is a teleport home button": `Hud.goHome`, the `GoHome` remote, the H key); a quick menu of four tiles

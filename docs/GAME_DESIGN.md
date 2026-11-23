@@ -1093,6 +1093,15 @@ can go no further is dim. With the words gone, the hint line over the tools says
 ("Floor 2", "Roofs hidden", "Walls see-through", "Snap to grid off") and, while the pointer is on a button, what
 pressing it would do.
 
+### Two small things on the main screen
+
+> remove the + button next to coins. also, the weather icon drifts left and right randomly, fix this
+
+- The green + beside the money is gone (it opened the shop, which has its own button under the clock), and the
+  stats strip is that much shorter.
+- The weather's icon on the clock bobs up and down on the spot. Its bob used to aim at a place 21 pixels to the
+  left, left over from an older layout, so a cloud or the moon slid across the clock and back.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

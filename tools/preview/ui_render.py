@@ -808,10 +808,13 @@ def draw_wedge(cv, node, rect, clip):
     cv.paste(im, x, y, clip)
 
 
-def draw_figure(cv, rect, clip, shadow=None):
+def draw_figure(cv, rect, clip, shadow=None, tint=None, fade=0):
     """A stand-in for a villager (the real one is a 3D model in a ViewportFrame): a plain figure
     the height of the frame, so a screen's layout can be judged. With `shadow` (0..1, how
-    see-through) it is their shadow instead: the same figure all in black."""
+    see-through) it is their shadow instead: the same figure all in black. `tint` (the frame's
+    ImageColor3) multiplies its colours, as Roblox does to a ViewportFrame's picture, and `fade`
+    (its ImageTransparency) lets what is behind show through: a villager who isn't the one
+    talking is dimmed that way."""
     x, y, w, h = [cv.px(v) for v in rect]
     u = h / 100.0
     im = Image.new("RGBA", (max(1, int(w)), max(1, int(h))), (0, 0, 0, 0))
@@ -833,6 +836,14 @@ def draw_figure(cv, rect, clip, shadow=None):
     box(14.5, 56, 21, 64, skin, 3)
     box(-10, 10, 10, 31, skin, 7)
     box(-11, 7, 11, 17, hair, 6)
+    if shadow is None and (tint is not None or fade):
+        a = np.array(im, dtype=np.float32)
+        if tint is not None:
+            a[..., 0] *= tint[0]
+            a[..., 1] *= tint[1]
+            a[..., 2] *= tint[2]
+        a[..., 3] *= 1 - min(1, max(0, fade or 0))
+        im = Image.fromarray(a.clip(0, 255).astype(np.uint8), "RGBA")
     cv.paste(im, x, y, clip)
 
 
@@ -877,8 +888,9 @@ def draw_node(cv, node, clip, item_hint=None):
         draw_box(target, node, rect, clip)
         if node["class"] in TEXT_CLASSES:
             draw_text(target, node, rect, clip)
-        if node["name"] == "Avatar":
-            draw_figure(target, rect, clip)
+        if node["name"] == "Avatar" and not node.get("_in_avatar"):
+            # (a holder named Avatar with the real viewport, also Avatar, inside it is one figure)
+            draw_figure(target, rect, clip, None, P(node, "ImageColor3", None), P(node, "ImageTransparency", 0) or 0)
         elif node["name"] == "AvatarShadow":
             draw_figure(target, rect, clip, P(node, "ImageTransparency", 0.66))
         if node["class"] in ("ImageLabel", "ImageButton") and P(node, "Picture"):
@@ -902,6 +914,8 @@ def draw_node(cv, node, clip, item_hint=None):
     kids = [c for c in gui_children(node)]
     kids = sorted(enumerate(kids), key=lambda e: (P(e[1], "ZIndex", 1), e[0]))
     for _, c in kids:
+        if node["name"] == "Avatar" or node.get("_in_avatar"):
+            c["_in_avatar"] = True
         draw_node(target, c, child_clip, item_hint)
     if target is not cv:
         x, y, w, h = [cv.px(v) for v in rect]

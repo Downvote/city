@@ -520,7 +520,7 @@ clipping (`tools/preview/ui_render.py`).
   through `GoalClaim`; a click elsewhere calls `open` (the Hud opens the goals menu).
 - `UI/Hud`: the level card (its badge a round dial), and four glass slabs that come out of the screen's edges and
   corners: `Pills` (one `Kit.darkPill` flush on the left edge under the level, with a `Row` of the money, people
-  and happiness cells and slanted `Divider`s between them), the quests under it (their rows and header start at
+  and happiness cells and slanted `Divider`s between them; no + on the money), the quests under it (their rows and header start at
   the left edge too), `ClockTab` (hanging from the top right corner, running up into the top inset, leaning the
   other way, with the `Clock` box over it), `Menu` at the bottom left (its `MenuBar` out of the corner, leaning the
   other way, the four tiles on it packed from the left edge), and the Build button running off the bottom right corner.
