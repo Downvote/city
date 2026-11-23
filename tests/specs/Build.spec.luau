@@ -305,18 +305,113 @@ describe("Shapes", function()
 		expect(total).toBeNear(2 * (12 * height - 16), 1e-3)
 	end)
 
-	it("closes corners but not straight runs", function()
-		local plan = Plan.new()
-		plan.walls["1"] = wall(0, 0, 10, 0)
-		plan.walls["2"] = wall(10, 0, 10, 10)
-		plan.walls["3"] = wall(10, 10, 20, 10)
-		plan.walls["4"] = wall(20, 10, 30, 10)
-		local a1, a2 = Shapes.wallReach(plan, "1")
-		expect(a1).toBe(0)
-		expect(a2).toBeNear(P.WallThickness / 2)
-		local c1, c2 = Shapes.wallReach(plan, "3")
-		expect(c1).toBeNear(P.WallThickness / 2)
-		expect(c2).toBe(0)
+	it("joins walls without any two sharing space, and closes corners", function()
+		-- every piece of two walls, as boxes on the ground plan (the walls here run along x or z)
+		local function boxes(plan, key)
+			local r1, r2 = Shapes.wallReach(plan, key)
+			local out = {}
+			for _, p in Shapes.wall(plan.walls[key], {}, r1, r2) do
+				local right = p.cf.RightVector
+				local sx = math.abs(right.X) * p.size.X + math.abs(right.Z) * p.size.Z
+				local sz = math.abs(right.Z) * p.size.X + math.abs(right.X) * p.size.Z
+				table.insert(out, {
+					p.cf.Position.X - sx / 2,
+					p.cf.Position.Z - sz / 2,
+					p.cf.Position.X + sx / 2,
+					p.cf.Position.Z + sz / 2,
+				})
+			end
+			return out
+		end
+		local function check(plan, corners)
+			local all = {}
+			for key in plan.walls do
+				all[key] = boxes(plan, key)
+			end
+			for ka, a in all do
+				for kb, b in all do
+					if ka < kb then
+						for _, p in a do
+							for _, q in b do
+								local ox = math.min(p[3], q[3]) - math.max(p[1], q[1])
+								local oz = math.min(p[4], q[4]) - math.max(p[2], q[2])
+								if ox > 1e-3 and oz > 1e-3 then
+									error("walls " .. ka .. " and " .. kb .. " share space")
+								end
+							end
+						end
+					end
+				end
+			end
+			-- every spot just inside a corner's four quarters is filled by something
+			for _, c in corners do
+				for _, d in { { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 } } do
+					local x = c[1] + X0 + d[1] * P.WallThickness * 0.25
+					local z = c[2] + d[2] * P.WallThickness * 0.25
+					local filled = false
+					for _, list in all do
+						for _, p in list do
+							if x > p[1] and x < p[3] and z > p[2] and z < p[4] then
+								filled = true
+							end
+						end
+					end
+					if not filled then
+						error("a gap at the corner " .. c[1] .. ", " .. c[2])
+					end
+				end
+			end
+		end
+		local function two(w)
+			return w -- the helper's walls already have two different sides
+		end
+		local function one(w)
+			w.b = table.clone(w.a) -- one colour through and through
+			return w
+		end
+		-- an L, with each wall in turn two sided, and both ways round for who owns the corner
+		for _, case in { { false, false }, { true, false }, { false, true }, { true, true } } do
+			for _, flip in { false, true } do
+				local plan = Plan.new()
+				local a, b = wall(0, 0, 10, 0), wall(10, 0, 10, 10)
+				if not case[1] then
+					one(a)
+				end
+				if not case[2] then
+					one(b)
+				end
+				plan.walls[if flip then "2" else "1"] = a
+				plan.walls[if flip then "1" else "2"] = b
+				check(plan, { { 10, 0 } })
+			end
+		end
+		-- a room of two sided walls: four corners
+		local room = Plan.new()
+		room.walls["1"] = two(wall(0, 0, 10, 0))
+		room.walls["2"] = two(wall(10, 0, 10, 10))
+		room.walls["3"] = two(wall(10, 10, 0, 10))
+		room.walls["4"] = two(wall(0, 10, 0, 0))
+		check(room, { { 0, 0 }, { 10, 0 }, { 10, 10 }, { 0, 10 } })
+		-- a T (a stem against two walls in line), a cross, and a stem against a wall's middle
+		local t = Plan.new()
+		t.walls["1"] = wall(0, 0, 10, 0)
+		t.walls["2"] = wall(10, 0, 20, 0)
+		t.walls["3"] = two(wall(10, 0, 10, 10))
+		check(t, {})
+		t.walls["4"] = wall(10, 0, 10, -10)
+		check(t, {})
+		local mid = Plan.new()
+		mid.walls["1"] = wall(0, 0, 20, 0)
+		mid.walls["2"] = two(wall(10, 0, 10, 10))
+		check(mid, {})
+		-- a straight run doesn't reach at all
+		local run = Plan.new()
+		run.walls["1"] = wall(0, 0, 10, 0)
+		run.walls["2"] = wall(10, 0, 20, 0)
+		local r1, r2 = Shapes.wallReach(run, "1")
+		expect(r1[1]).toBe(0)
+		expect(r2[1]).toBe(0)
+		expect(r2[2]).toBe(0)
 	end)
 
 	it("draws every wall style", function()

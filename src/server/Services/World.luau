@@ -1,10 +1,10 @@
 -- The town itself: ground, street, plaza buildings and plot bases; the clock and calendar;
--- lights that come on at night; doors that swing open for whoever walks up; the weather.
+-- lights that come on at night; doors that players open and close and villagers open on their
+-- way; the weather.
 
 local Lighting = game:GetService("Lighting")
 local CollectionService = game:GetService("CollectionService")
 local TweenService = game:GetService("TweenService")
-local Players = game:GetService("Players")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Tuning = require(Shared.Config.Tuning)
@@ -354,7 +354,12 @@ end
 
 -- Doors -------------------------------------------------------------------------------------------
 
-local doorState: { [Instance]: boolean } = {}
+-- Doors stay shut until someone opens them. A player uses the door's prompt (Open, then Close).
+-- A villager opens a door as they come up to it and shuts it behind them a moment after they've
+-- gone through; a door a player opened is left the way the player left it.
+type Door = { open: boolean, byVillager: boolean, lastNear: number }
+local doorState: { [Instance]: Door } = {}
+local DOOR_TWEEN = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
 local function openFrame(leaf: BasePart): CFrame
 	local closed = leaf:GetAttribute("Closed") :: CFrame
@@ -373,58 +378,105 @@ local function openFrame(leaf: BasePart): CFrame
 	return pivot * CFrame.Angles(0, angle, 0) * pivot:Inverse() * closed
 end
 
-local function doorLoop()
-	local info = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-	while true do
-		task.wait(0.25)
-		-- everyone who can walk through a door
-		local walkers = {}
-		for _, player in Players:GetPlayers() do
-			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-			if root and root:IsA("BasePart") then
-				table.insert(walkers, root.Position)
-			end
+local function leavesOf(model: Instance): { BasePart }
+	local out = {}
+	for _, leaf in model:GetChildren() do
+		if leaf:IsA("BasePart") and leaf:HasTag(Builder.Tags.DoorLeaf) then
+			table.insert(out, leaf)
 		end
+	end
+	return out
+end
+
+local function setDoor(model: Instance, open: boolean)
+	local st = doorState[model]
+	if not st or st.open == open then
+		return
+	end
+	st.open = open
+	for _, leaf in leavesOf(model) do
+		local goal = if open then openFrame(leaf) else leaf:GetAttribute("Closed")
+		if typeof(goal) == "CFrame" then
+			TweenService:Create(leaf, DOOR_TWEEN, { CFrame = goal }):Play()
+		end
+		local prompt = leaf:FindFirstChild("DoorPrompt")
+		if prompt and prompt:IsA("ProximityPrompt") then
+			prompt.ActionText = if open then "Close" else "Open"
+		end
+	end
+end
+
+-- Opens or closes a door for a player or a script. Returns whether it's open now.
+function World.toggleDoor(model: Instance): boolean
+	local st = doorState[model]
+	if not st then
+		return false
+	end
+	st.byVillager = false
+	setDoor(model, not st.open)
+	return st.open
+end
+
+local function doorLoop()
+	while true do
+		task.wait(0.2)
+		-- where the villagers are
+		local villagers = {}
 		for _, plot in plotsFolder:GetChildren() do
 			local npcs = plot:FindFirstChild("Villagers")
 			if npcs then
 				for _, npc in npcs:GetChildren() do
 					local root = npc:FindFirstChild("HumanoidRootPart")
 					if root and root:IsA("BasePart") then
-						table.insert(walkers, root.Position)
+						table.insert(villagers, root.Position)
 					end
 				end
 			end
 		end
-		-- group leaves by their door model
-		local doors: { [Instance]: { BasePart } } = {}
+		-- every door, by its model
+		local doors: { [Instance]: BasePart } = {}
 		for _, leaf in CollectionService:GetTagged(Builder.Tags.DoorLeaf) do
-			if leaf:IsA("BasePart") and leaf.Parent then
-				local list = doors[leaf.Parent]
-				if not list then
-					list = {}
-					doors[leaf.Parent] = list
-				end
-				table.insert(list, leaf)
+			if leaf:IsA("BasePart") and leaf.Parent and leaf:IsDescendantOf(workspace) and not doors[leaf.Parent] then
+				doors[leaf.Parent] = leaf
 			end
 		end
-		for model, leaves in doors do
-			local frame = leaves[1]:GetAttribute("Frame")
+		local now = os.clock()
+		for model, first in doors do
+			local st = doorState[model]
+			if not st then
+				st = { open = false, byVillager = false, lastNear = 0 }
+				doorState[model] = st
+				local prompt = Instance.new("ProximityPrompt")
+				prompt.Name = "DoorPrompt"
+				prompt.ActionText = "Open"
+				prompt.ObjectText = ""
+				prompt.HoldDuration = 0
+				prompt.MaxActivationDistance = 9
+				prompt.RequiresLineOfSight = false
+				prompt.Parent = first
+				prompt.Triggered:Connect(function()
+					World.toggleDoor(model)
+				end)
+			end
+			local frame = first:GetAttribute("Frame")
 			if typeof(frame) == "CFrame" then
 				local center = (frame :: CFrame).Position + Vector3.new(0, 3, 0)
 				local near = false
-				for _, pos in walkers do
-					if (pos - center).Magnitude < 7 then
+				for _, pos in villagers do
+					if (pos - center).Magnitude < 6.5 then
 						near = true
 						break
 					end
 				end
-				if doorState[model] ~= near then
-					doorState[model] = near
-					for _, leaf in leaves do
-						local goal = if near then openFrame(leaf) else leaf:GetAttribute("Closed")
-						TweenService:Create(leaf, info, { CFrame = goal }):Play()
+				if near then
+					st.lastNear = now
+					if not st.open then
+						st.byVillager = true
+						setDoor(model, true)
 					end
+				elseif st.open and st.byVillager and now - st.lastNear > 1.2 then
+					st.byVillager = false
+					setDoor(model, false)
 				end
 			end
 		end

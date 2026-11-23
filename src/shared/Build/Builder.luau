@@ -84,7 +84,7 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 		part:AddTag(Builder.Tags.DoorLeaf)
 		part:SetAttribute("Closed", part.CFrame)
 		part:SetAttribute("Frame", frame)
-		-- villagers path straight through doors (they swing open as anyone walks up)
+		-- villagers path straight through doors (they open them on their way: Services/World)
 		pcall(function()
 			local modifier = Instance.new("PathfindingModifier")
 			modifier.Label = "Door"

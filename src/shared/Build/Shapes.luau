@@ -19,32 +19,110 @@ local function sameSpot(ax: number, az: number, bx: number, bz: number): boolean
 	return math.abs(ax - bx) < EPS and math.abs(az - bz) < EPS
 end
 
--- How far each end of a wall reaches past its end point. Ends that meet another wall at an angle
--- reach half a thickness so corners close; free ends and straight continuations don't, so nothing
--- overlaps there.
-function Shapes.wallReach(plan: Plan.PlanData, key: string): (number, number)
+-- How far each end of a wall reaches past its end point (negative: it stops short), so that
+-- walls meeting at a point never share any space:
+--   a free end, or one wall carrying straight on from another: 0;
+--   a stem (a wall ending against a line of walls that runs through, or against the middle of
+--   another wall): it stops at that wall's face;
+--   a corner of two walls: one of them (the smaller key) is the corner's owner. If the owner is
+--   one colour through and through it runs on to the far face and the other wall stops at its
+--   face. If it has two different sides, its outside layer runs on to the far face, its inside
+--   layer stops at the other wall's near face, and the other wall starts on the owner's middle line.
+-- Each end comes back as { a, b }: the reach of the wall's side a layer and its side b layer.
+export type Reach = { number }
+
+local function sameSides(w: Plan.Wall): boolean
+	return w.a.c == w.b.c and w.a.m == w.b.m
+end
+
+function Shapes.wallReach(plan: Plan.PlanData, key: string): (Reach, Reach)
 	local w = plan.walls[key]
-	local half = Plan.wallThickness(w.style) / 2
 	local d = Plan.wallDir(w)
-	local function reach(x: number, z: number): number
+	local n = Plan.wallNormal(w)
+	local function reach(x: number, z: number): Reach
+		local continues = false -- a wall carries straight on from here
+		local lineKey = key -- the smallest key along this wall's own line here
+		local angled: { { key: string, wall: Plan.Wall, away: Vector3 } } = {}
 		for otherKey, o in plan.walls do
 			if otherKey ~= key and o.lv == w.lv then
-				local touches = sameSpot(o.x1, o.z1, x, z) or sameSpot(o.x2, o.z2, x, z)
-				if touches then
-					local od = Plan.wallDir(o)
-					if math.abs(od:Dot(d)) < 0.999 then
-						return half
+				local at1, at2 = sameSpot(o.x1, o.z1, x, z), sameSpot(o.x2, o.z2, x, z)
+				local od = Plan.wallDir(o)
+				local straight = math.abs(od:Dot(d)) >= 0.999
+				if at1 or at2 then
+					if straight then
+						continues = true
+						if otherKey < lineKey then
+							lineKey = otherKey
+						end
+					else
+						table.insert(angled, { key = otherKey, wall = o, away = if at1 then od else -od })
+					end
+				elseif not straight then
+					-- does this end sit on the middle of that wall?
+					local len = Plan.wallLength(o)
+					local rel = Vector3.new(x - o.x1, 0, z - o.z1)
+					local along = rel:Dot(od)
+					local off = math.abs(rel:Dot(Plan.wallNormal(o)))
+					if along > EPS and along < len - EPS and off < EPS then
+						local back = -Plan.wallThickness(o.style) / 2
+						return { back, back }
 					end
 				end
 			end
 		end
-		return 0
+		if #angled == 0 then
+			return { 0, 0 }
+		end
+		-- is one of the others part of a line running through (two of them straight with each other)?
+		for i, p in angled do
+			for k, q in angled do
+				if i ~= k and math.abs(p.away:Dot(q.away)) >= 0.999 then
+					-- at a crossing of two lines, the line with the smaller key runs through
+					local theirs = if p.key < q.key then p.key else q.key
+					if continues and lineKey < theirs then
+						return { 0, 0 }
+					end
+					local back = -Plan.wallThickness(p.wall.style) / 2
+					return { back, back }
+				end
+			end
+		end
+		if continues then
+			return { 0, 0 }
+		end
+		-- a corner: who owns it?
+		local owner, ownerWall = key, w
+		for _, p in angled do
+			if p.key < owner then
+				owner, ownerWall = p.key, p.wall
+			end
+		end
+		if owner ~= key then
+			if sameSides(ownerWall) or #angled > 1 then
+				local back = -Plan.wallThickness(ownerWall.style) / 2
+				return { back, back }
+			end
+			return { 0, 0 }
+		end
+		if #angled > 1 then
+			return { 0, 0 }
+		end
+		local other = angled[1]
+		local t = Plan.wallThickness(other.wall.style) / 2
+		if sameSides(w) then
+			return { t, t }
+		end
+		-- the layer on the other wall's side is the inside of the corner
+		if other.away:Dot(n) > 0 then
+			return { -t, t }
+		end
+		return { t, -t }
 	end
 	return reach(w.x1, w.z1), reach(w.x2, w.z2)
 end
 
 -- Draws one wall. `openings` are { t, w, y0, y1 } (see Plan.openings); reach1/reach2 from wallReach.
-function Shapes.wall(w: Plan.Wall, openings: { { number } }?, reach1: number?, reach2: number?): { Prim }
+function Shapes.wall(w: Plan.Wall, openings: { { number } }?, reach1: any, reach2: any): { Prim }
 	local out: { Prim } = {}
 	local style = Plan.WallStyles[w.style] or Plan.WallStyles.wall
 	local len = Plan.wallLength(w)
@@ -56,7 +134,11 @@ function Shapes.wall(w: Plan.Wall, openings: { { number } }?, reach1: number?, r
 	local ca, cb = Colors.fromHex(w.a.c), Colors.fromHex(w.b.c)
 	local ma, mb = w.a.m, w.b.m
 	local same = w.a.c == w.b.c and w.a.m == w.b.m
-	local e1, e2 = reach1 or 0, reach2 or 0
+	-- each end's reach, per layer (a plain number means both layers)
+	local r1: Reach = if type(reach1) == "table" then reach1 else { reach1 or 0, reach1 or 0 }
+	local r2: Reach = if type(reach2) == "table" then reach2 else { reach2 or 0, reach2 or 0 }
+	local e1a, e1b, e2a, e2b = r1[1], r1[2], r2[1], r2[2]
+	local e1, e2 = math.max(e1a, e1b), math.max(e2a, e2b)
 
 	-- a slab along the wall from s0 to s1, heights y0..y1 above the bottom, offset across the wall
 	local function slab(
@@ -79,26 +161,29 @@ function Shapes.wall(w: Plan.Wall, openings: { { number } }?, reach1: number?, r
 		return prim
 	end
 
-	local function piece(s0: number, s1: number, y0: number, y1: number)
+	-- a piece of the wall's run; the first and last pieces take each layer's own reach
+	local function piece(s0: number, s1: number, y0: number, y1: number, first: boolean?, last: boolean?)
 		if same then
-			slab(s0, s1, y0, y1, 0, thick, ca, ma)
+			slab(if first then -e1a else s0, if last then len + e2a else s1, y0, y1, 0, thick, ca, ma)
 		else
-			slab(s0, s1, y0, y1, thick / 4, thick / 2, ca, ma)
-			slab(s0, s1, y0, y1, -thick / 4, thick / 2, cb, mb)
+			slab(if first then -e1a else s0, if last then len + e2a else s1, y0, y1, thick / 4, thick / 2, ca, ma)
+			slab(if first then -e1b else s0, if last then len + e2b else s1, y0, y1, -thick / 4, thick / 2, cb, mb)
 		end
 	end
 
 	if w.style == "wall" or w.style == "half" then
-		local s = -e1
+		local s = 0
+		local first = true
 		local cuts: { { number } } = openings or {}
 		for _, o in cuts do
 			local o0, o1 = o[1] - o[2] / 2, o[1] + o[2] / 2
-			piece(s, o0, 0, height)
+			piece(s, o0, 0, height, first, false)
 			piece(o0, o1, 0, o[3])
 			piece(o0, o1, o[4], height)
 			s = o1
+			first = false
 		end
-		piece(s, len + e2, 0, height)
+		piece(s, len, 0, height, first, true)
 		if w.style == "half" then
 			-- a cap board on top
 			slab(-e1, len + e2, height, height + 0.3, 0, thick + 0.3, Colors.shade(ca, 0.92), ma)
