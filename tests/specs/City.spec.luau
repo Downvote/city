@@ -1,6 +1,10 @@
 --!nocheck
 -- The city: the starter town fits its land, levels and land go up in sensible steps, paydays pay
 -- what Data/Jobs says, and the economy stays inside the bounds docs/GAME_DESIGN.md promises.
+-- The user: "it seems like money gain from work is too little. balanced it such that progression
+-- is much more based on villagers working". So the bounds here are about work: what a day's pay
+-- buys, wages against everything else a keen player can collect in a day (played out below over
+-- seeded town days), and what each level of the town takes in workers and in days of their pay.
 
 local Shared = "ReplicatedStorage.Shared."
 local Tuning = require(Shared .. "Config.Tuning")
@@ -14,6 +18,160 @@ local Schema = require(Shared .. "Sim.Schema")
 local StarterHouse = require(Shared .. "Data.StarterHouse")
 local Appearance = require(Shared .. "Avatar.Appearance")
 local Rng = require(Shared .. "Util.Rng")
+local Life = require(Shared .. "Sim.Life")
+local Talk = require(Shared .. "Sim.Talk")
+local EventEngine = require(Shared .. "Sim.EventEngine")
+local Personalities = require(Shared .. "Data.Personalities")
+local Foods = require(Shared .. "Data.Foods")
+
+local START = Tuning.Villagers.StartMood
+
+-- A day's pay at the mood and skill a villager starts with, in a job that is nothing special to them.
+local function startPay(job)
+	return Jobs.pay(job, 1, START, "none")
+end
+
+local function meanStartPay()
+	local sum = 0
+	for _, job in Jobs.list do
+		sum += startPay(job)
+	end
+	return sum / #Jobs.list
+end
+
+-- A town for the days played out below: `pop` villagers with a bed each, the first `workers` of
+-- them in a job (the starter's builder, then one workplace of each kind in turn).
+local WORK = {
+	"work_market",
+	"work_cafe",
+	"work_flowers",
+	"work_bakery",
+	"work_post",
+	"work_icecream",
+	"work_stage",
+	"work_library",
+	"work_easel",
+	"work_school",
+	"work_clinic",
+}
+local function workingTown(pop, workers, seed)
+	local rng = Rng.new(seed)
+	local p = Schema.newProfile()
+	p.plan = StarterHouse.plan()
+	local keys = { City.workplaces(p.plan)[1].key }
+	for i = 2, workers do
+		p.plan.items["w" .. i] = { id = WORK[(i - 2) % #WORK + 1], x = 60 + i * 5, y = 0, z = 20, r = 0, lv = 0 }
+		table.insert(keys, "w" .. i)
+	end
+	for i = 1, pop do
+		p.plan.items["b" .. i] = { id = "bed_single", x = 60 + i * 5, y = 0, z = 150, r = 0, lv = 0 }
+		local input = Schema.cleanVillagerInput({
+			name = "V" .. i,
+			pers = Personalities.list[(i - 1) % #Personalities.list + 1].id,
+			app = Appearance.default(),
+			bday = { s = rng:int(1, 4), d = rng:int(1, Schema.DaysPerSeason) },
+		})
+		local v = Schema.newVillager("v" .. i, input, rng)
+		v.bed = "b" .. i
+		v.job = keys[i]
+		v.isYou = i == 1 or nil
+		p.villagers[v.id] = v
+		table.insert(p.order, v.id)
+	end
+	return p, rng
+end
+
+-- Plays `days` town days the way the server does (Services/Villagers and Services/Events), for
+-- the keenest player there could be: every wish answered within the hour (a craving bought),
+-- three chats a day with everyone, the generous answer to every event, every room request met
+-- and paid, and the coins taken at every thank you. Returns what came in, by source.
+local function playDays(p, rng, days)
+	local got = { wages = 0, events = 0, requests = 0, wishes = 0, thanks = 0, cravings = 0 }
+	local hourLength = Tuning.Day.Length / 24
+	local now = 100000
+	local nextEvent = now + Tuning.Events.FirstDelay
+	local recent = {}
+	local weathers = { "clear", "clear", "clear", "clear", "clear", "clear", "clear", "rain", "rain", "storm" }
+	for day = 1, days do
+		local weather = rng:pick(weathers)
+		for step = 0, 23 do
+			local hour = (Tuning.Day.StartClock + step) % 24
+			while nextEvent < now + hourLength do
+				local ctx = EventEngine.context(p, {
+					now = nextEvent,
+					hour = hour + 0.5,
+					season = math.floor((day - 1) / Schema.DaysPerSeason) % #Schema.Seasons + 1,
+					dayOfSeason = (day - 1) % Schema.DaysPerSeason + 1,
+					day = day,
+					weather = weather,
+					rng = rng,
+					present = table.clone(p.order),
+					freeSlots = 0,
+					friends = {},
+				})
+				p.calendarDay = day
+				local ev = EventEngine.pick(ctx, recent)
+				if ev then
+					local effects = ev.scene.effects or {}
+					if ev.scene.choices then
+						local _, c = EventEngine.choice(ev.scene, 1, p.coins)
+						effects = c.effects or {}
+					end
+					for _, e in effects do
+						if e.t == "coins" and e.d > 0 then
+							got.events += e.d
+						elseif e.t == "request" then
+							got.requests += Tuning.Rewards.RequestCoins
+						end
+					end
+					EventEngine.apply(p, ev, effects, nextEvent)
+					p.requests = {}
+					table.insert(recent, 1, ev.id)
+					while #recent > Tuning.Events.RecentMemory do
+						table.remove(recent)
+					end
+				end
+				nextEvent += rng:int(Tuning.Events.MinGap, Tuning.Events.MaxGap)
+			end
+			now += hourLength
+			Life.fadeWishes(p, now)
+			for _, vid in p.order do
+				Life.maybeWish(p, vid, rng, now)
+			end
+			for _, vid in p.order do
+				local w = p.villagers[vid].wish
+				if w and w.kind == "food" then
+					local ok, price = Life.buyWish(p, vid, rng)
+					got.cravings += if ok then price else 0
+				elseif w and w.kind ~= "cheer" then
+					local _, coins = Life.grantWish(p, vid, w.kind, w.arg, rng)
+					got.wishes += coins
+				end
+			end
+			if hour == Tuning.Day.WorkEnd then
+				local lines, total = City.payday(p, day, now)
+				got.wages += total
+				for _, l in lines do
+					EventEngine.addXp(p.villagers[l.vid], Tuning.Jobs.XpPerDay)
+				end
+			end
+		end
+		for _, vid in p.order do
+			for _ = 1, Tuning.Talk.ChatsPerDay do
+				got.wishes += Talk.chat(p, vid, day, rng).coins
+			end
+		end
+		while #p.offers > 0 do
+			got.thanks += p.offers[1].options[1].n
+			Life.claimReward(p, 1, rng)
+		end
+		for _, v in p.villagers do
+			v.mood = math.clamp(v.mood + Tuning.Villagers.BedMoodPerNight, 0, Tuning.Villagers.MoodMax)
+		end
+	end
+	got.other = got.events + got.requests + got.wishes + got.thanks
+	return got
+end
 
 local function villager(p, i, pers)
 	local input = Schema.cleanVillagerInput({ name = "V" .. i, pers = pers or "sunny", app = Appearance.default() })
@@ -125,10 +283,10 @@ describe("City", function()
 		expect(v.mood).toBe(Tuning.Villagers.StartMood)
 		local _, total = City.payday(p, 1, 0)
 		expect(total).toBe(Jobs.pay(w.job, 1, Tuning.Villagers.StartMood, v.pers))
-		-- which is a day's pay inside the bounds below, and no way to the first land on its own
-		-- in under three weeks of town days
-		expect(total).toBeBetween(40, 220)
-		expect(Tuning.City.Land[2].Price / total > 21).toBeTruthy()
+		-- which is a day's pay inside the bounds below: one wage gets a new player going (the
+		-- second workplace within a day or two) and is still no quick way to the first land
+		expect(total).toBeBetween(300, 700)
+		expect(Tuning.City.Land[2].Price / total > 5).toBeTruthy()
 	end)
 
 	it("lets a villager walk from the street into every room, to the bed and to the workbench", function()
@@ -274,16 +432,64 @@ describe("City", function()
 		end
 	end)
 
-	it("goes up a level with more people and more built", function()
+	it("goes up a level with more people, more of them in work and more built", function()
 		expect(City.level(0, 0)).toBe(1)
+		expect(City.level(0, 0, 0)).toBe(1)
 		local levels = Tuning.City.Levels
+		expect(levels[1].Workers).toBe(0)
 		for i = 2, #levels do
-			expect(City.level(levels[i].Pop, levels[i].Value)).toBe(i)
-			expect(City.level(levels[i].Pop - 1, levels[i].Value)).toBe(i - 1)
-			expect(levels[i].Pop > levels[i - 1].Pop).toBeTruthy()
-			expect(levels[i].Value > levels[i - 1].Value).toBeTruthy()
+			local lv = levels[i]
+			expect(City.level(lv.Pop, lv.Value)).toBe(i)
+			expect(City.level(lv.Pop - 1, lv.Value)).toBe(i - 1)
+			expect(lv.Pop > levels[i - 1].Pop).toBeTruthy()
+			expect(lv.Value > levels[i - 1].Value).toBeTruthy()
+			-- a level asks for villagers in work too: all three, and one short of any of them
+			-- is the level below
+			expect(City.level(lv.Pop, lv.Value, lv.Workers)).toBe(i)
+			expect(City.level(lv.Pop, lv.Value, lv.Workers - 1)).toBe(i - 1)
+			expect(City.level(lv.Pop, lv.Value - 1, lv.Workers)).toBe(i - 1)
+			expect(City.level(lv.Pop - 1, lv.Value, lv.Workers)).toBe(i - 1)
+			expect(lv.Workers > levels[i - 1].Workers).toBeTruthy()
+			-- never more workers than villagers, and most of the town at work
+			expect(lv.Workers <= lv.Pop).toBeTruthy()
+			expect(lv.Workers * 2 >= lv.Pop).toBeTruthy()
 		end
 		expect(levels[#levels].Pop <= Tuning.Villagers.Max).toBeTruthy()
+		-- a full town with nothing built or nobody working is still a hamlet
+		expect(City.level(Tuning.Villagers.Max, 1e9, 0)).toBe(1)
+	end)
+
+	it("counts who has a job for the city hall, and a town of idlers stays small", function()
+		local p = Schema.newProfile()
+		p.plan = StarterHouse.plan()
+		p.plan.items.stall = { id = "work_market", x = 130, y = 0, z = 12, r = 180, lv = 0 }
+		for k = 1, 12 do
+			p.plan.items["x" .. k] = { id = "fountain", x = 60 + k * 6, y = 0, z = 90, r = 0, lv = 0 }
+		end
+		local village = Tuning.City.Levels[2]
+		for i = 1, village.Pop do
+			villager(p, i)
+		end
+		local stats = City.stats(p)
+		expect(stats.value >= village.Value).toBeTruthy()
+		expect(stats.employed).toBe(0)
+		expect(City.workers(p)).toBe(0)
+		expect(stats.level).toBe(1)
+		-- the next level says what it asks for, workers among it
+		expect(stats.nextLevel.Workers).toBe(village.Workers)
+		expect(stats.nextLevel.Pop).toBe(village.Pop)
+		-- one in work is not enough for a village; two are
+		p.villagers.v1.job = City.freeWorkplace(p)
+		expect(City.stats(p).employed).toBe(1)
+		expect(City.stats(p).level).toBe(1)
+		p.villagers.v2.job = City.freeWorkplace(p)
+		expect(City.stats(p).employed).toBe(2)
+		expect(City.workers(p)).toBe(2)
+		expect(City.stats(p).level).toBe(2)
+		-- a job at a workplace that has been sold is no job
+		p.plan.items.stall = nil
+		expect(City.stats(p).employed).toBe(1)
+		expect(City.stats(p).level).toBe(1)
 	end)
 
 	it("sells land in growing steps that fit the plot", function()
@@ -319,19 +525,44 @@ describe("City", function()
 		for k = 1, 12 do
 			p.plan.items["x" .. k] = { id = "fountain", x = 60 + k * 6, y = 0, z = 90, r = 0, lv = 0 }
 		end
+		-- and still no land: a village needs two of them in work
+		expect(City.canExpand(p)).toBe(nil)
+		p.plan.items.stall = { id = "work_market", x = 130, y = 0, z = 12, r = 180, lv = 0 }
+		p.villagers.v1.job = City.freeWorkplace(p)
+		p.villagers.v2.job = City.freeWorkplace(p)
 		local stats = City.stats(p)
 		expect(stats.level >= 2).toBeTruthy()
 		expect(City.canExpand(p) ~= nil).toBeTruthy()
 	end)
 
-	it("doesn't refill food that ran out when a save loads", function()
+	it("loads an old save without its bag of food, and fills in what is missing", function()
+		-- the shop, the food and feeding are gone: a save from before still loads, and the bag
+		-- and what it knew of each villager's tastes are dropped
 		local p = Schema.newProfile()
-		p.inv.food = {}
+		expect(p.inv).toBe(nil)
+		p.inv = { food = { apple = 3, bread = 2 }, items = { cake = 1, medicine = 2 } }
+		p.stats.fed = 14
 		p.settings = nil
+		local v = villager(p, 1)
+		v.hate, v.known, v.feedDay, v.feeds = "pickles", { apple = "love" }, 4, 2
+		local fav = v.fav
 		local loaded = Schema.migrate(p)
-		expect(next(loaded.inv.food)).toBe(nil)
+		expect(loaded.inv).toBe(nil)
+		expect(loaded.stats.fed).toBe(nil)
 		expect(loaded.settings ~= nil).toBeTruthy()
 		expect(loaded.settings.sfx).toBe(Schema.Settings.sfx)
+		local lv = loaded.villagers.v1
+		expect(lv.hate).toBe(nil)
+		expect(lv.known).toBe(nil)
+		expect(lv.feedDay).toBe(nil)
+		expect(lv.feeds).toBe(nil)
+		expect(lv.fav).toBe(fav)
+		-- a favourite that is no food any more becomes one that is
+		lv.fav = "nonsense"
+		expect(Foods.get(Schema.migrate(loaded).villagers.v1.fav) ~= nil).toBeTruthy()
+		-- a new villager has a favourite and nothing they can't stand
+		expect(Foods.get(villager(Schema.newProfile(), 2).fav) ~= nil).toBeTruthy()
+		expect(villager(Schema.newProfile(), 3).hate).toBe(nil)
 	end)
 
 	it("pays workers, but not on a day off or while sick", function()
@@ -357,25 +588,183 @@ describe("City", function()
 		local _ = b
 	end)
 
-	it("keeps the economy in its bounds", function()
-		-- a day's pay at a middling mood is worth having but doesn't buy the town outright
+	it("pays more for a better mood, more skill and work that suits them", function()
 		for _, job in Jobs.list do
-			local pay = Jobs.pay(job, 1, Tuning.Villagers.StartMood, "none")
-			expect(pay).toBeBetween(40, 220)
+			local base = Jobs.pay(job, 1, 50, "none")
+			expect(base).toBe(job.income)
+			-- mood: half at rock bottom, half as much again when delighted
+			expect(Jobs.pay(job, 1, 0, "none")).toBeNear(job.income * 0.5, 0.51)
+			expect(Jobs.pay(job, 1, 100, "none")).toBeNear(job.income * 1.5, 0.51)
+			-- skill: every level is worth a rise, and ten of them at least half as much again
+			local last = base
+			for skill = 2, Tuning.Jobs.SkillCap do
+				local pay = Jobs.pay(job, skill, 50, "none")
+				expect(pay > last).toBeTruthy()
+				last = pay
+			end
+			expect(Jobs.pay(job, 11, 50, "none") >= base * 1.5).toBeTruthy()
+			expect(Jobs.pay(job, 1, 50, job.likes[1]) > base).toBeTruthy()
+		end
+		-- a day's work teaches enough that skill moves in the first days: a level inside two
+		-- days, the next inside a week
+		expect(Jobs.xpToNext(1) / Tuning.Jobs.XpPerDay <= 2).toBeTruthy()
+		expect((Jobs.xpToNext(1) + Jobs.xpToNext(2)) / Tuning.Jobs.XpPerDay <= 7).toBeTruthy()
+		local v = { name = "Test", lv = 1, xp = 0 }
+		expect(City.addSkill(v, Jobs.xpToNext(1))).toBe(1)
+		expect(v.lv).toBe(2)
+		expect(v.xp).toBe(0)
+		expect(City.addSkill(v, 1e9)).toBe(Tuning.Jobs.SkillCap - 2)
+		expect(v.lv).toBe(Tuning.Jobs.SkillCap)
+	end)
+
+	it("keeps the economy in its bounds", function()
+		-- a day's pay at the mood and skill a villager starts with buys something real (a bed, a
+		-- cheap workplace) but not the town, and the best there is stays in sight of it
+		for _, job in Jobs.list do
+			local pay = startPay(job)
+			expect(pay).toBeBetween(300, 700)
 			local best = Jobs.pay(job, Tuning.Jobs.SkillCap, 100, job.likes[1])
-			expect(best).toBeBetween(pay, 700)
+			expect(best).toBeBetween(pay, 3000)
 		end
 		-- the starting coins buy a bed and a workplace for the second villager
 		local bed = Catalog.get("bed_single")
-		local cheapestWork = math.huge
+		local cheapestWork, dearestWork = math.huge, 0
 		for _, def in Catalog.workplaces() do
 			cheapestWork = math.min(cheapestWork, def.price)
+			dearestWork = math.max(dearestWork, def.price)
 		end
 		expect(bed.price + cheapestWork < Tuning.Economy.StartCoins).toBeTruthy()
-		-- three workers save up for the first land in under three weeks of town days
+		-- and from then on the builder's wage from the starting workshop is enough to get going:
+		-- a day of it buys the cheapest workplace, two the usual one, and none takes three
+		local builder = startPay(Jobs.get("builder"))
+		expect(cheapestWork <= builder).toBeTruthy()
+		local prices = {}
+		for _, def in Catalog.workplaces() do
+			table.insert(prices, def.price)
+		end
+		table.sort(prices)
+		expect(prices[math.ceil(#prices / 2)] <= builder * 2).toBeTruthy()
+		expect(dearestWork < builder * 3).toBeTruthy()
+		-- a workplace pays for itself in a day or two of the job it opens, and never in hours
+		for _, def in Catalog.workplaces() do
+			expect(def.price / startPay(Jobs.get(def.job))).toBeBetween(0.6, 3)
+		end
+		-- three workers save up for the first land in well under an hour of play (a town day is
+		-- 12 minutes); one alone takes more than an hour
 		local job = Jobs.get("shopkeeper")
-		local perDay = 3 * Jobs.pay(job, 3, 70, "none")
-		local days = Tuning.City.Land[2].Price / perDay
-		expect(days).toBeBetween(3, 21)
+		local perDay = 3 * Jobs.pay(job, 3, START, "none")
+		expect(Tuning.City.Land[2].Price / perDay).toBeBetween(2, 5)
+		expect(Tuning.City.Land[2].Price / Jobs.pay(job, 3, START, "none") > 5).toBeTruthy()
+		-- the daily gift is a welcome, not a wage: the first one is less than the builder's first
+		-- day, and at its biggest it is less than two workers earn in a town day
+		local E = Tuning.Economy
+		expect(E.DailyGift < builder).toBeTruthy()
+		expect(E.DailyGift + (E.DailyStreakCap - 1) * E.DailyStreakBonus < 2 * meanStartPay()).toBeTruthy()
+		-- what the small things pay stays small beside a day's work: a wish, a find in the
+		-- grass, a room request, a customer dropping by, a busy day
+		local least = math.huge
+		for _, j in Jobs.list do
+			least = math.min(least, startPay(j))
+		end
+		expect(Tuning.Life.WishCoinsMax <= least / 4).toBeTruthy()
+		expect(Tuning.Rewards.EventCoinsMax <= least / 2).toBeTruthy()
+		expect(Tuning.Rewards.RequestCoins <= least / 1.5).toBeTruthy()
+		expect(Tuning.Jobs.VisitCoins * 5 <= least / 4).toBeTruthy()
+		expect(Tuning.Jobs.BusyDayShare <= 0.5).toBeTruthy()
+	end)
+
+	it("asks of each level what its own workers can earn in a sensible time", function()
+		-- What a level takes: the building its worth asks for on top of the level before (saved
+		-- up by the workers that level had to have), then the land it unlocks (saved up by the
+		-- workers it has to have itself). At starting mood and skill, with no more workers than
+		-- the levels ask for, every step is days of work and none is weeks. A town day is 12
+		-- minutes; a town that keeps everyone in work, happy and learning does it in about half.
+		local levels, land = Tuning.City.Levels, Tuning.City.Land
+		local pay = meanStartPay()
+		local total = 0
+		for i = 2, #levels do
+			local build = levels[i].Value - math.max(levels[i - 1].Value, Tuning.City.StarterWorth)
+			local days = build / (math.max(1, levels[i - 1].Workers) * pay)
+			for _, l in land do
+				if l.Level == i then
+					days += l.Price / (levels[i].Workers * pay)
+				end
+			end
+			expect(days).toBeBetween(3, 25)
+			total += days
+		end
+		-- the whole way from a hamlet to a city, every land bought: more than a few hours of
+		-- play and not dozens
+		expect(total * Tuning.Day.Length / 3600).toBeBetween(4, 15)
+	end)
+
+	it("earns at least two thirds of a keen player's coins from wages once two villagers work", function()
+		-- Ten town days from the start of each stage, played out for the keenest player there
+		-- could be (see playDays), over several seeds. Wages must be two thirds of everything
+		-- that comes in at the smallest of them (three villagers, two in work: what a village
+		-- asks for), and more as the town grows. Before the rebalance wages were 29% of it there
+		-- and half of it in a city, and the thank yous alone paid more than work did.
+		local stages = {
+			{ pop = 3, workers = 2, share = 2 / 3 },
+			{ pop = 4, workers = 4, share = 0.72 },
+			{ pop = 7, workers = 6, share = 0.72 },
+			{ pop = 13, workers = 12, share = 0.8 },
+		}
+		for _, stage in stages do
+			local wages, other = 0, 0
+			local seeds = 6
+			for seed = 1, seeds do
+				local p, rng = workingTown(stage.pop, stage.workers, seed * 31 + stage.pop)
+				p.coins = 1e6 -- so that no generous answer is turned down for want of coins
+				local got = playDays(p, rng, 10)
+				wages += got.wages
+				other += got.other
+			end
+			local share = wages / (wages + other)
+			if share < stage.share then
+				error(
+					string.format(
+						"%d villagers, %d in work: wages are %d%% of a keen player's coins (%d a day against %d from everything else); they should be %d%% or more",
+						stage.pop,
+						stage.workers,
+						math.floor(share * 100),
+						wages / (seeds * 10),
+						other / (seeds * 10),
+						math.floor(stage.share * 100)
+					)
+				)
+			end
+			-- and a day's wages are real money by then: more than the dearest workplace
+			expect(wages / (seeds * 10) > 1000).toBeTruthy()
+		end
+	end)
+
+	it("lets a town with two workers afford the cravings it gets, though they are not free", function()
+		-- the user: "when a character gets a craving, allow the player to simply pay to buy it"
+		local twoWorkers = 2 * meanStartPay()
+		local sum, dearest, cheapest = 0, 0, math.huge
+		for _, food in Foods.list do
+			local price = Life.cravingPrice(food.id)
+			sum += price
+			dearest = math.max(dearest, price)
+			cheapest = math.min(cheapest, price)
+		end
+		expect(cheapest >= 20).toBeTruthy()
+		-- the usual craving is a small slice of two workers' day, and even the dearest is
+		-- less than half of it
+		expect(sum / #Foods.list < twoWorkers / 5).toBeTruthy()
+		expect(dearest < twoWorkers / 2).toBeTruthy()
+		-- over ten keen days in a town of three with two in work, buying every craving takes
+		-- a real bite out of the wages (more than a fiftieth) and never most of them
+		local wages, spent = 0, 0
+		for seed = 1, 6 do
+			local p, rng = workingTown(3, 2, seed * 17)
+			p.coins = 1e6
+			local got = playDays(p, rng, 10)
+			wages += got.wages
+			spent += got.cravings
+		end
+		expect(spent > wages / 50).toBeTruthy()
+		expect(spent < wages / 4).toBeTruthy()
 	end)
 end)

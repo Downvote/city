@@ -295,11 +295,20 @@ end)
 
 run("an event you watch", function()
 	local warned = #errors
-	Sim.remoteEvent("EventShow"):FireClient(Sim.player, quarrel("e3"))
+	-- the event names the villager it is about, as the server does
+	local ev = quarrel("e3")
+	ev.focus = Sim.env.workspace:FindFirstChild("Mara", true)
+	Sim.remoteEvent("EventShow"):FireClient(Sim.player, ev)
 	frames(2)
+	local cam = Sim.cam
+	local camType, camAt = cam.CameraType, cam.CFrame
 	press("Watch")
 	local s = scene()
 	check(s ~= nil, "Watch puts the scene up")
+	-- the user: "no need for the camera to jump after clicking on watch, just make the characters
+	-- appear and the dialogue speech appears"
+	frames(20)
+	check(cam.CameraType == camType and cam.CFrame == camAt, "and the camera stays where the player had it")
 	check(prompt() == nil, "in place of the prompt")
 	check(Sim.State.data.talking == true, "and the main screen steps aside")
 	check(s and s:FindFirstChild("Bust_a", true) ~= nil, "the villager in the line slides in")
@@ -375,7 +384,7 @@ Sim.remoteFn("WishBuy").OnServerInvoke = function(_, vid)
 	coins -= price
 	villagers[vid].wish = nil
 	push({ coins = coins, villagers = table.clone(villagers) })
-	return true, "Mara loved it. A heart closer."
+	return true
 end
 
 run("a craving, bought from the talk card", function()
@@ -394,7 +403,7 @@ run("a craving, bought from the talk card", function()
 	press("BuyWish")
 	check(#bought == 1 and bought[1] == "v1", "it asks the server to buy it for the right villager")
 	check(card() and card():FindFirstChild("BuyWish", true) == nil, "and the answer goes once it's bought")
-	check(onCard("Note") == "Mara loved it. A heart closer.", "the note says what it did")
+	check(onCard("Note") == "You bought it for " .. Text.commas(price) .. " coins.", "the note says what it did")
 	check(onCard("Line"):find("Thank you", 1, true) ~= nil, "and they say thank you")
 	press("Bye")
 

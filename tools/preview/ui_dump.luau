@@ -38,6 +38,8 @@
 --   flaticons           every icon flat, white on a dark round button
 --   creator             the villager creator on the hair tab
 --   creator:profile     the creator's second step (name and personality)
+--   creator:profile:set the second step with a name typed, Bold on the slider and a green picked
+--   creator:end         the Look step with the row of sections moved on to its last page
 --   creator:bodies      the creator's Bodies, one of them on
 --   creator:parts       the creator's Body parts (torsos), one of them on
 --   creator:items       the creator's My items after the player has said yes, one of them on
@@ -526,6 +528,25 @@ elseif scene == "creator" or scene:sub(1, 8) == "creator:" then
 	Sim.advance(1)
 	if page == "profile" then
 		Sim.press("2  Name and personality")
+	elseif page == "profile:set" then
+		Sim.press("2  Name and personality")
+		-- (the sim's engine puts every box at 100 across and 100 wide: a press at x is that far along)
+		local creator = Sim.gui:FindFirstChild("Creator")
+		local MB1 = Enum.UserInputType.MouseButton1
+		local function pressAt(holder, x)
+			holder:FindFirstChild("Slide").InputBegan:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(x, 0, 0) })
+			Sim.UIS.InputEnded:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(x, 0, 0) }, false)
+		end
+		pressAt(creator:FindFirstChild("Personality", true), 100 + 14 + 72 * 2 / 7)
+		pressAt(creator:FindFirstChild("Colour", true), 100 + 100 * 34.5 / 48)
+		Fake.find(creator, function(d)
+			return d:IsA("TextBox") and d.PlaceholderText == "What are they called?"
+		end)[1].Text =
+			"Wren"
+	elseif page == "end" then
+		for _ = 1, 4 do
+			Sim.press("More sections")
+		end
 	elseif page == "bodies" then
 		Sim.press("Bodies")
 		Sim.press("Tin robot")

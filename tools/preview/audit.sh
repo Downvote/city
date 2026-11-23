@@ -14,7 +14,7 @@ panel:News panel:Welcome panel:Goals panel:Rewards panel:Residents:friends panel
 panel:Residents:craving panel:Residents:short panel:News:empty panel:News:busy panel:Goals:claimed
 panel:CityPanel:ready event event:talk event:one event:two event:four event:narration event:answers talk talk:again talk:craving toasts creator
 creator:profile creator:bodies creator:parts creator:items creator:items:ask creator:items:no creator:avatars
-creator:wearing creator:skin creator:shape creator:outfits creator:outfits:saved creator:people build:rooms build:floors build:roofs build:fences
+creator:wearing creator:skin creator:shape creator:outfits creator:outfits:saved creator:people creator:profile:set creator:end build:rooms build:floors build:roofs build:fences
 build:paths build:buildings build:bought build:sell build:view build:placing build:placing:touch"
 COUNT=$(echo $SCENES | wc -w)
 status=0

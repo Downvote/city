@@ -1,6 +1,9 @@
 --!nocheck
 -- Random events: every event can happen, every line is filled in, every choice resolves,
--- and the numbers stay in range over thousands of seeded runs.
+-- and the numbers stay in range over thousands of seeded runs. No event gives, takes, counts or
+-- feeds food or shop things (the user: "remove the shop, buying of things and food and feeding"):
+-- a craving is paid for there and then, a cold is seen to by the town's doctor or slept off, and
+-- the travelling merchant is gone.
 
 local Shared = "ReplicatedStorage.Shared."
 local Tuning = require(Shared .. "Config.Tuning")
@@ -10,6 +13,7 @@ local Schema = require(Shared .. "Sim.Schema")
 local Relationships = require(Shared .. "Sim.Relationships")
 local Life = require(Shared .. "Sim.Life")
 local Personalities = require(Shared .. "Data.Personalities")
+local Foods = require(Shared .. "Data.Foods")
 local StarterHouse = require(Shared .. "Data.StarterHouse")
 local Appearance = require(Shared .. "Avatar.Appearance")
 local Rng = require(Shared .. "Util.Rng")
@@ -26,6 +30,11 @@ local function makeProfile(rng, count, withBeds)
 		elseif item.id:find("work_") then
 			workKey = key
 		end
+	end
+	-- and, in some towns, a clinic with a doctor at its desk
+	local clinic = rng:chance(0.4)
+	if clinic then
+		p.plan.items.clinic = { id = "work_clinic", x = 140, y = 0, z = 12, r = 180, lv = 0 }
 	end
 	if rng:chance(0.5) then
 		-- a few more garden pieces, so the inspector has something to look at
@@ -49,6 +58,9 @@ local function makeProfile(rng, count, withBeds)
 		end
 		if i == 2 and workKey and rng:chance(0.7) then
 			v.job = workKey
+		end
+		if i == 3 and clinic then
+			v.job = "clinic"
 		end
 		p.villagers[vid] = v
 		table.insert(p.order, vid)
@@ -85,9 +97,67 @@ local function checkText(scene, where)
 	end
 end
 
+-- Every effect an event may have (Sim/EventEngine). Nothing here touches a bag of food or things:
+-- "food", "item", "eat", "known" and "merchant" went with the shop.
+local OPS = {}
+for _, t in
+	{
+		"rel",
+		"relv",
+		"mood",
+		"moodv",
+		"coins",
+		"quarrel",
+		"makeup",
+		"request",
+		"sick",
+		"xp",
+		"xpv",
+		"bond",
+		"hearts",
+		"bday",
+		"away",
+		"visitor",
+		"festival",
+		"creator",
+		"dayoff",
+	}
+do
+	OPS[t] = true
+end
+
+local function checkOps(scene, where)
+	local lists = { scene.effects or {} }
+	for _, c in scene.choices or {} do
+		table.insert(lists, c.effects or {})
+	end
+	for _, list in lists do
+		for _, e in list do
+			if not OPS[e.t] then
+				error(where .. ": an effect the game no longer has: " .. tostring(e.t))
+			end
+		end
+	end
+end
+
+local function hasOp(effects, t)
+	for _, e in effects or {} do
+		if e.t == t then
+			return e
+		end
+	end
+	return nil
+end
+
+local cravingPrices = {}
+for _, food in Foods.list do
+	cravingPrices[Life.cravingPrice(food.id)] = true
+end
+
 describe("Event engine", function()
 	it("reaches every event and keeps the numbers in range", function()
 		local seen = {}
+		local cravings, coldsSeen, coldsSlept = 0, 0, 0
 		local weathers = { "clear", "rain", "storm", "snow" }
 		for seed = 1, 3000 do
 			local rng = Rng.new(seed)
@@ -105,9 +175,6 @@ describe("Event engine", function()
 				Relationships.add(p, "v1", "v2", 85)
 				Life.setBond(p, "v1", "v2", rng:pick({ "crush", "sweethearts", "sweethearts" }))
 			end
-			if rng:chance(0.3) then
-				p.inv.items.medicine = 1
-			end
 			local present = table.clone(p.order)
 			local first = p.villagers.v1
 			local ctx = EventEngine.context(p, {
@@ -120,14 +187,49 @@ describe("Event engine", function()
 				rng = rng,
 				present = present,
 				freeSlots = Tuning.Villagers.Max - count,
-				merchantActive = false,
 				friends = if rng:chance(0.5) then { { id = 77, name = "Sam" } } else {},
 			})
 			local ev = EventEngine.pick(ctx, {})
 			if ev then
 				seen[ev.id] = true
 				checkText(ev.scene, ev.id)
+				checkOps(ev.scene, ev.id)
 				local scene = ev.scene
+				if ev.id == "craving" then
+					-- "when a character gets a craving, allow the player to simply pay to buy
+					-- it": one answer pays what a craving costs and does a granted wish's good,
+					-- the other costs nothing and they sulk. Nothing is given from a bag.
+					cravings += 1
+					expect(#scene.choices).toBe(2)
+					local buy, no = scene.choices[1], scene.choices[2]
+					expect(cravingPrices[buy.cost]).toBe(true)
+					expect(buy.text:find(tostring(buy.cost), 1, true) ~= nil).toBeTruthy()
+					expect(hasOp(buy.effects, "coins").d).toBe(-buy.cost)
+					expect(hasOp(buy.effects, "mood").d >= Tuning.Life.WishMood).toBeTruthy()
+					expect(hasOp(buy.effects, "hearts").n >= Tuning.Life.WishHearts).toBeTruthy()
+					expect(no.cost).toBe(nil)
+					expect(hasOp(no.effects, "mood").d < 0).toBeTruthy()
+					expect(scene.default).toBe(2)
+					-- and never while their craving is already up as a wish
+					local wish = p.villagers[ev.actors.a].wish
+					expect(wish == nil or wish.kind ~= "food").toBeTruthy()
+				elseif ev.id == "cold" then
+					-- no medicine to buy: the town's doctor sees to it, or it is slept off
+					for _, c in scene.choices do
+						expect(c.cost).toBe(nil)
+						expect(hasOp(c.effects, "coins")).toBe(nil)
+					end
+					local doctor = hasOp(scene.choices[1].effects, "xpv")
+					if doctor then
+						coldsSeen += 1
+						expect(doctor.vid ~= ev.actors.a).toBeTruthy()
+						expect(p.villagers[doctor.vid].job).toBe("clinic")
+						expect(hasOp(scene.choices[1].effects, "sick")).toBe(nil)
+					else
+						coldsSlept += 1
+					end
+					expect(hasOp(scene.choices[scene.default].effects, "sick") ~= nil).toBeTruthy()
+				end
 				local effects = scene.effects or {}
 				if scene.choices then
 					local i, c = EventEngine.choice(scene, rng:int(1, #scene.choices), p.coins)
@@ -160,6 +262,49 @@ describe("Event engine", function()
 		if #missing > 0 then
 			error("never picked: " .. table.concat(missing, ", "))
 		end
+		-- the rewritten ones came up, a cold both with a doctor in town and without
+		expect(cravings > 5).toBeTruthy()
+		expect(coldsSeen > 0).toBeTruthy()
+		expect(coldsSlept > 0).toBeTruthy()
+		-- and the travelling merchant, who made the shop cheaper, is gone with it
+		expect(seen.merchant).toBe(nil)
+		for _, def in Events.list do
+			expect(def.id ~= "merchant").toBeTruthy()
+		end
+	end)
+
+	it("skips a craving for someone whose craving is already up as a wish", function()
+		local rng = Rng.new(7)
+		local p = makeProfile(rng, 1, true)
+		p.villagers.v1.wish = { kind = "food", arg = "apple", untilT = 1e9 }
+		for _ = 1, 400 do
+			local ctx = EventEngine.context(p, {
+				now = 1000,
+				hour = 12,
+				season = 1,
+				dayOfSeason = 99,
+				day = 5,
+				weather = "clear",
+				rng = rng,
+				present = { "v1" },
+				freeSlots = 0,
+			})
+			local ev = EventEngine.pick(ctx, {})
+			expect(ev == nil or ev.id ~= "craving").toBeTruthy()
+		end
+	end)
+
+	it("gives skill to a villager by id, for the doctor who saw to a cold", function()
+		local rng = Rng.new(3)
+		local p = makeProfile(rng, 3, true)
+		local v = p.villagers.v3
+		v.lv, v.xp = 1, 0
+		local notices = EventEngine.apply(p, { actors = { a = "v1" } }, { { t = "xpv", vid = "v3", d = 10 } }, 1000)
+		expect(v.xp).toBe(10)
+		expect(#notices).toBe(0)
+		-- somebody who isn't there is nobody's problem
+		EventEngine.apply(p, { actors = { a = "v1" } }, { { t = "xpv", vid = "gone", d = 10 } }, 1000)
+		EventEngine.apply(p, { actors = { a = "v1" } }, { { t = "xpv", d = 10 } }, 1000)
 	end)
 
 	it("never repeats the last few events too often", function()

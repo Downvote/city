@@ -221,7 +221,9 @@ local function craving(s: any, vid: string, v: any)
 						food = food.name:sub(1, 1):upper() .. food.name:sub(2),
 					})
 				)
-				s.note.Text = if type(msg) == "string" then msg else ""
+				s.note.Text = if type(msg) == "string" and msg ~= ""
+					then msg
+					else Text.fill("You bought it for {n} coins.", { n = Text.commas(price) })
 				current.at = os.clock()
 			elseif sent and type(msg) == "string" then
 				s.note.Text = msg

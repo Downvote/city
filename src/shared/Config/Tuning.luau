@@ -116,15 +116,19 @@ Tuning.Events = {
 	RecentMemory = 6, -- the same event kind won't repeat inside this many events
 	MaxPendingRequests = 3,
 	RequestHours = 36, -- in-game hours a room request stays open
-	MerchantSeconds = 180,
 	VisitorChance = 0.35, -- weight scale for "someone wants to move in" while there is room
 }
 
 -- Work and the city -------------------------------------------------------
+-- Wages (Data/Jobs, Jobs.pay) are the town's main income: the City spec holds them to two thirds
+-- of a day's coins or more once two villagers have jobs.
 Tuning.Jobs = {
 	SkillCap = 30,
-	XpPerDay = 12, -- skill points for a day's work
-	VisitCoins = 6, -- what a villager spends when they drop by a staffed shop
+	SkillPay = 0.06, -- each skill level above the first adds this share of the job's income
+	LikePay = 1.2, -- a personality that enjoys the job earns this many times its pay
+	XpPerDay = 25, -- skill points for a day's work (it was 12, and skill hardly moved)
+	VisitCoins = 10, -- what a villager spends when they drop by a staffed shop
+	BusyDayShare = 0.3, -- a busy day at work (an event) brings in this share of the job's income on top
 }
 
 -- City levels: reached by having enough villagers, enough of them in work and enough built. Each
@@ -160,7 +164,7 @@ Tuning.Life = {
 	WishCoinsMax = 60,
 	-- A craving is bought for them (Life.wishPrice): the food's price in Data/Foods times this,
 	-- rounded to CravingStep coins.
-	CravingMarkup = 2,
+	CravingMarkup = 2.5,
 	CravingStep = 5,
 	FavWishHearts = 2, -- on top of WishHearts and WishMood when the craving was for their favourite
 	FavWishMood = 8,
@@ -168,8 +172,8 @@ Tuning.Life = {
 	MaxWishes = 3, -- open at once across the town
 	WishHours = 24, -- in-game hours before an unanswered wish fades
 	WishFadeMood = -5,
-	RewardCoinsPerLevel = 40, -- a thank you of coins they saved up: this times the new heart level
-	RewardSkillPerLevel = 6, -- a thank you of practice at their work: skill points, times the new heart level
+	RewardCoinsPerLevel = 25, -- a thank you of coins they saved up: this times the new heart level (it was 40)
+	RewardSkillPerLevel = 10, -- a thank you of practice at their work: skill points, times the new heart level
 	CrushScore = 55, -- friendship before a crush can start
 	ProposeScore = 80,
 	IntroduceGain = 18,
@@ -179,7 +183,6 @@ Tuning.Rewards = {
 	EventCoinsMin = 20,
 	EventCoinsMax = 120,
 	RequestCoins = 150,
-	MerchantDiscount = 0.6,
 }
 
 -- Talking to a villager: hold E on them (Sim/Talk) ------------------------------
@@ -188,11 +191,68 @@ Tuning.Talk = {
 	Distance = 9, -- studs: how close you stand for the prompt to show
 	Range = 16, -- studs: walk further off than this and the talk is over
 	ChatsPerDay = 3, -- per villager: only the first few chats a day lift their mood and fill hearts
-	ChatHearts = 1, -- less than a snack they love: a chat costs nothing
+	ChatHearts = 1, -- far less than a granted wish: a chat costs nothing
 	ChatMood = 2,
 	StaySeconds = 12, -- how long they wait for the owner's next answer before going back to their day
 	VisitorSeconds = 5, -- how long they stop for somebody visiting
 	Cooldown = 0.4, -- seconds between two lines to one player: shorter than the hold, it only stops a flood
+}
+
+-- A villager's day (Sim/Routine) ---------------------------------------------
+-- The user: "villagers seem to stand around doing nothing. they should be at their work stations
+-- instead, and taking breaks sometimes to do different things". Seconds here are real ones: a work
+-- day is a third of Day.Length (240 of them), so a break of 20 is 40 minutes on the town's clock.
+-- tests/specs/Routine.spec.luau holds what these promise: a worker at the workplace for two thirds
+-- of the work day or more, a break on most days, none that empties the place for hours.
+Tuning.Routine = {
+	-- at the workplace (each job's loop of spots is in Sim/Routine)
+	StationRadius = 12, -- studs from where they work: nearer than this they are at the workplace
+	HopPath = 24, -- studs: a way to the next spot longer than this goes round a wall, so the spot is left out
+	HopSeconds = 8, -- how long a hop between two spots may take
+	BlockedSeconds = 120, -- a spot they found no way to is left out this long, then tried again
+	NoWaySeconds = 60, -- no way to the workplace at all, three times running: they potter this long first
+	-- breaks from work
+	BreakShare = 0.15, -- the part of a work day a middling villager spends on breaks
+	LazyShare = 0.22, -- more of it for each point of lazy over 0.5
+	FocusShare = 0.22, -- less of it for each point of focus over 0.5
+	ShareMin = 0.05, -- the most focused still stop now and then
+	ShareMax = 0.24,
+	BreakMin = 14, -- seconds a break lasts, the walk there and back included
+	BreakMax = 24,
+	LazyLonger = 0.6, -- a lazy villager's breaks are this much longer (at lazy 1)
+	BreakCap = 40, -- nobody's break is longer than this
+	AwayCap = 0.26, -- the part of a work day breaks may take in all: after that they stay at work
+	FirstBreak = 0.35, -- the day's first break comes after this much of their usual gap at the earliest
+	GapSpread = 0.3, -- the time between two breaks varies this much either way
+	BreakReach = 60, -- studs: how far from the workplace a break takes them
+	BreakStay = 4, -- seconds they stay at least, once they are where they were going
+	-- What a break is. A kind's weight is `base` plus `per` for each point of `trait`
+	-- (Personalities): the lazy sit down, the social go and find somebody.
+	Breaks = {
+		{ kind = "sit", base = 0.8, trait = "lazy", per = 2.4 },
+		{ kind = "chat", base = 0.3, trait = "social", per = 2.6 },
+		{ kind = "stroll", base = 2, trait = "focus", per = -1 },
+		{ kind = "visit", base = 0.4, trait = "social", per = 1.2 }, -- a call at somebody else's workplace
+		{ kind = "stretch", base = 1, trait = "lazy", per = 0 }, -- a few steps off, arms up, a look at the view
+	},
+	Repeat = 0.3, -- the same thing twice running is this much less likely
+	-- off work, and all day for a villager with no job: the same way of weighing
+	Potter = {
+		{ kind = "stroll", base = 3, trait = "focus", per = 0 },
+		{ kind = "sit", base = 1, trait = "lazy", per = 2.5 },
+		{ kind = "chat", base = 0.4, trait = "social", per = 2.4 },
+		{ kind = "look", base = 2.6, trait = "focus", per = -1 }, -- at a plant, a picture, somebody's workplace
+		{ kind = "visit", base = 0.9, trait = "social", per = 0 }, -- in work hours only: about twice a day each
+		{ kind = "gesture", base = 0.6, trait = "social", per = 0 },
+		{ kind = "idle", base = 0.3, trait = "lazy", per = 0 }, -- just standing: seldom, and never twice running
+	},
+	Pause = { 0.5, 1.5 }, -- seconds between one thing and the next
+	Sit = { 8, 18 }, -- seconds on a seat
+	LazySit = 0.5, -- a lazy villager sits this much longer (at lazy 1)
+	Look = { 4, 8 }, -- seconds looking at something
+	Stroll = { 1.5, 3.5 }, -- the stop at the end of a stroll
+	Gesture = 3, -- seconds a wave or a little dance takes
+	Idle = { 2, 4 }, -- seconds of just standing there
 }
 
 -- The look of the world ----------------------------------------------------

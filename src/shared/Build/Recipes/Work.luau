@@ -1,6 +1,9 @@
 --!strict
 -- Workplaces. Each one opens a job (Data/Jobs) for one villager. The worker stands at `workSpot`
--- (item space) facing `workYaw` degrees (0 faces +Z, the customer side) during work hours.
+-- (item space) facing `workYaw` degrees (0 faces +Z, the customer side) during work hours, and
+-- from there goes round the job's loop of spots (Sim/Routine: the crates, the machine, the
+-- board). Those spots name parts drawn here: move a part and its spot moves with it, or the
+-- Routine spec will say it stands in something.
 
 local Recipe = require(script.Parent.Parent.Recipe)
 
@@ -224,7 +227,8 @@ local items: { any } = {
 		c1 = "2F4F3A",
 		c2 = "A8743F",
 		tags = { "work", "books" },
-		workSpot = Vector3.new(0, 0, 1.8),
+		-- in front of the little desk with room to stand (it was 1.8, right up against the desk)
+		workSpot = Vector3.new(0, 0, 2.9),
 		workYaw = 0,
 		build = function(r: R)
 			for _, x in { -3.6, 3.6 } do

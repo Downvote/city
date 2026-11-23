@@ -78,6 +78,39 @@ run("the round buttons under the clock: home, the city hall, the news and the lo
 	check(corner.AnchorPoint.X == 1 and corner.Position.X.Scale == 1, "at the right edge")
 end)
 
+run("the clock's glass hangs from the corner, no taller than what it holds", function()
+	-- the user: "the weather tab is stretched". The glass ran from the top of the screen down
+	-- through the strip Roblox keeps there to a clock placed under it.
+	local tab = gui:FindFirstChild("ClockTab", true)
+	local clock = gui:FindFirstChild("Clock", true)
+	local corner = gui:FindFirstChild("Corner", true)
+	local inset = 36 -- what the simulation's GuiService says the strip is
+	check(tab ~= nil and clock ~= nil, "both are there")
+	local top = tab.Position.Y.Offset
+	local bottom = top + tab.Size.Y.Offset
+	check(top <= -inset, "it starts at the very top of the screen (or just off it)")
+	check(bottom + inset <= 76, "and ends a clock's height down, not a strip lower")
+	local clockTop = clock.Position.Y.Offset
+	check(clockTop >= top and clockTop + clock.Size.Y.Offset <= bottom, "the time and the weather sit inside it")
+	check(clockTop + inset >= 0, "wholly on the screen")
+	local gap = corner.Position.Y.Offset - bottom
+	check(gap >= 8 and gap <= 24, "and the round buttons come right under it")
+	check(tab:FindFirstChild("Line") == nil, "no line runs inside its edge")
+end)
+
+run("the slabs on the main screen have no line inside their edges", function()
+	-- the user, of the stats strip: "remove the borders"
+	local lines = 0
+	for _, d in gui:GetDescendants() do
+		if d.Name == "Line" and d.ClassName == "ImageLabel" then
+			lines += 1
+		end
+	end
+	check(lines == 0, "none of them")
+	local pills = gui:FindFirstChild("Pills", true)
+	check(pills:FindFirstChild("Tone") ~= nil, "the strip keeps its dots")
+end)
+
 run("the quests sit under the strip, the next few goals", function()
 	State.set("stats", { wishes = 3 })
 	State.set("goals", {})

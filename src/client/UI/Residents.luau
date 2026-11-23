@@ -407,14 +407,11 @@ local function buyWish(vid: string)
 			return Remotes.fn("WishBuy"):InvokeServer(vid)
 		end)
 		buying = false
+		-- bought: the server says how pleased they are (its own notices) and clears the wish
 		if sent and ok then
-			local v = State.villager(vid)
-			Toasts.show(
-				if type(msg) == "string" and msg ~= ""
-					then msg
-					else Text.fill("{name} is pleased.", { name = if v then v.name else "They" }),
-				"good"
-			)
+			if type(msg) == "string" and msg ~= "" then
+				Toasts.show(msg, "good")
+			end
 		elseif sent and type(msg) == "string" then
 			Toasts.show(msg, "warn")
 		end

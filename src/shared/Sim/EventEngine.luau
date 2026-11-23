@@ -9,7 +9,8 @@
 --   quarrel a b | makeup a b     start or end a quarrel
 --   request who tag              wants furniture with that tag near their bed
 --   sick who minutes             stays in bed
---   xp who d (skill at their job) | bday who
+--   xp who d | xpv vid d         skill at their job
+--   bday who
 --   bond a b to                  romance: to = "crush" | "sweethearts" | "partners" | nil (over)
 --   hearts who n                 fills their hearts with you (Sim/Life)
 -- Handled by the service (returned in `service`):
@@ -320,6 +321,11 @@ function EventEngine.apply(profile: any, ev: any, effects: { any }, now: number)
 			end
 		elseif t == "xp" then
 			local v = profile.villagers[vid(e.who) or ""]
+			if v then
+				EventEngine.addXp(v, e.d, notices)
+			end
+		elseif t == "xpv" then
+			local v = profile.villagers[e.vid or ""]
 			if v then
 				EventEngine.addXp(v, e.d, notices)
 			end

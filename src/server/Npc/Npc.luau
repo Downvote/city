@@ -27,6 +27,7 @@ export type Npc = typeof(setmetatable(
 		vid: string,
 		prompt: ProximityPrompt?, -- "Talk": hold E on them
 		talkable: boolean, -- false while something else has them (an event's scene, an outing)
+		atWork: boolean, -- at their workplace, working (Services/Villagers' routine keeps it)
 	},
 	Npc
 ))
@@ -45,9 +46,16 @@ local DEFAULT_ANIMS = {
 	dance2 = "rbxassetid://507776043",
 	laugh = "rbxassetid://507770818",
 	cheer = "rbxassetid://507770677",
+	-- the swing of a held tool, which the Animate script keeps under this name: a hammer blow
+	-- at the builder's bench (Sim/Routine)
+	toolslash = "rbxassetid://522635514",
 }
 
 local LOOPED = { idle = true, walk = true, run = true, sit = true, dance = true, dance2 = true }
+
+-- Roblox plays the tool swing over whatever else the body is doing, by giving it this priority
+-- itself each time. So do we, or the idle animation would hide it.
+local PRIORITY: { [string]: Enum.AnimationPriority } = { toolslash = Enum.AnimationPriority.Action }
 
 -- Reads the animation id the character's Animate script would use for an action.
 local function animId(model: Model, action: string): string
@@ -82,6 +90,7 @@ function Npc.new(model: Model, vid: string): Npc
 		vid = vid,
 		prompt = nil,
 		talkable = true,
+		atWork = false,
 	}, Npc)
 	humanoid.WalkSpeed = Tuning.Villagers.WalkSpeed
 	humanoid.AutoRotate = true
@@ -139,6 +148,9 @@ function Npc.track(self: Npc, action: string): AnimationTrack?
 		return nil
 	end
 	track.Looped = LOOPED[action] == true
+	if PRIORITY[action] then
+		track.Priority = PRIORITY[action]
+	end
 	self.tracks[action] = track
 	return track
 end
@@ -242,9 +254,22 @@ function Npc.nextLeg(list: { any }, index: number, position: Vector3, reach: num
 	return index
 end
 
+-- How far a path runs over the ground, waypoint to waypoint.
+function Npc.pathLength(list: { any }): number
+	local total = 0
+	for i = 2, #list do
+		local a, b = list[i - 1].Position, list[i].Position
+		total += Vector3.new(b.X - a.X, 0, b.Z - a.Z).Magnitude
+	end
+	return total
+end
+
 -- Walks to a world point along a real path round walls and furniture. Returns true if it got
--- there. A point nothing can reach is refused (no walking into walls). Cancelled by a newer walk.
-function Npc.walkTo(self: Npc, target: Vector3, timeout: number?): boolean
+-- there, or false and why not: "noroute" (a point nothing can reach is refused: no walking into
+-- walls), "far" (the way there is longer than `maxPath` studs: for a spot that should be a few
+-- steps off, a long way means it lies behind a wall), "cancelled" (a newer walk, a halt, the
+-- body gone) or "stuck".
+function Npc.walkTo(self: Npc, target: Vector3, timeout: number?, maxPath: number?): (boolean, string?)
 	self:standUp()
 	self.moving += 1
 	local token = self.moving
@@ -253,7 +278,7 @@ function Npc.walkTo(self: Npc, target: Vector3, timeout: number?): boolean
 	while tries < 3 do
 		tries += 1
 		if self.moving ~= token or not self.model.Parent then
-			return false
+			return false, "cancelled"
 		end
 		local waypoints = computePath(self, target)
 		if not waypoints then
@@ -264,10 +289,13 @@ function Npc.walkTo(self: Npc, target: Vector3, timeout: number?): boolean
 					{ Position = target, Action = Enum.PathWaypointAction.Walk },
 				} :: any
 			else
-				return false
+				return false, "noroute"
 			end
 		end
 		local list = waypoints :: any
+		if maxPath and Npc.pathLength(list) > maxPath then
+			return false, "far"
+		end
 		local index = 1 -- the waypoint they are heading for (the first is where they stand)
 		local arrived = #list < 2
 		local stuck = false
@@ -334,7 +362,7 @@ function Npc.walkTo(self: Npc, target: Vector3, timeout: number?): boolean
 		end
 		conn:Disconnect()
 		if self.moving ~= token then
-			return false
+			return false, "cancelled"
 		end
 		if (self.root.Position - target).Magnitude < 3.5 then
 			return true
@@ -344,7 +372,10 @@ function Npc.walkTo(self: Npc, target: Vector3, timeout: number?): boolean
 		end
 	end
 	self:halt()
-	return (self.root.Position - target).Magnitude < 3.5
+	if (self.root.Position - target).Magnitude < 3.5 then
+		return true
+	end
+	return false, "stuck"
 end
 
 -- Stops walking and turns to face a point.

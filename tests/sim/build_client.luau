@@ -382,7 +382,8 @@ run("a menu takes the screen: a way back, tabs, rows", function()
 		out:FindFirstChild("Body") ~= nil and out.BackgroundTransparency == 1,
 		"a painted slab: the picture draws its shape and the box itself is clear"
 	)
-	check(out:FindFirstChild("Line") ~= nil, "with a thin line just inside its edge")
+	-- the user, of the stats strip: "remove the borders"
+	check(out:FindFirstChild("Line") == nil, "with no line inside its edge")
 	local shapes = panel.root.Motion:GetChildren()
 	local before = shapes[1].Position
 	Sim.frames(6)
@@ -410,7 +411,8 @@ run("a menu takes the screen: a way back, tabs, rows", function()
 	local body = glass:FindFirstChild("Body")
 	check(body ~= nil and body.ClassName == "ImageLabel", "a slab over the 3D view is a painted picture")
 	check(body.ScaleType == roblox.Enum.ScaleType.Slice, "stretched between its two ends")
-	check(glass:FindFirstChild("Line") ~= nil and glass:FindFirstChild("Tone") ~= nil, "with its line and its dots")
+	check(glass:FindFirstChild("Tone") ~= nil, "with its dots toward one end")
+	check(glass:FindFirstChild("Line") == nil, "and no line inside its edge")
 	Sim.Kit.paint(glass, T.Blue)
 	check(body.ImageColor3 == T.Blue and Sim.Kit.colorOf(glass) == T.Blue, "painting it recolours the picture")
 	-- where the game can't make pictures, the plain wedges are back

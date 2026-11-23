@@ -1,7 +1,9 @@
 --!nocheck
 -- Hearts, wishes, romance and town goals (Sim/Life): heart levels queue thank yous that pay out
--- once, snacks only count a few times a day, wishes are granted only by the right answer and
--- fade when ignored, bonds count couples once, and goals pay once when they're done.
+-- once, wishes are granted only by the right answer and fade when ignored, a craving is bought
+-- for them at Life.wishPrice (the user: "remove the shop, buying of things and food and feeding.
+-- when a character gets a craving, allow the player to simply pay to buy it"), bonds count
+-- couples once, and goals pay once when they're done.
 
 local Shared = "ReplicatedStorage.Shared."
 local Tuning = require(Shared .. "Config.Tuning")
@@ -11,6 +13,10 @@ local Relationships = require(Shared .. "Sim.Relationships")
 local Appearance = require(Shared .. "Avatar.Appearance")
 local Foods = require(Shared .. "Data.Foods")
 local Goals = require(Shared .. "Data.Goals")
+local Jobs = require(Shared .. "Data.Jobs")
+local Sayings = require(Shared .. "Data.Sayings")
+local City = require(Shared .. "Sim.City")
+local StarterHouse = require(Shared .. "Data.StarterHouse")
 local Rng = require(Shared .. "Util.Rng")
 
 local L = Tuning.Life
@@ -54,16 +60,212 @@ describe("Life", function()
 		expect(Life.claimReward(p, 1, Rng.new(3))).toBe(false)
 	end)
 
-	it("only counts the first few snacks a day", function()
+	it("offers coins, practice, a saying or a hobby, and nothing that needs a bag", function()
+		-- the basket of snacks went with the food: some practice at their work stands in its place
+		local kinds = {}
+		for seed = 1, 200 do
+			local p = town(1)
+			for _, o in Life.rewardOptions(p, "v1", 2 + seed % 5, Rng.new(seed)) do
+				kinds[o.kind] = true
+				expect(o.kind ~= "basket").toBeTruthy()
+				local text = Life.rewardText(o)
+				expect(text ~= "?" and not text:find("{")).toBeTruthy()
+				expect(text:lower():find("basket") == nil).toBeTruthy()
+			end
+		end
+		for _, kind in { "coins", "practice", "saying", "hobby" } do
+			expect(kinds[kind]).toBe(true)
+		end
+		expect(Sayings.list[1] ~= nil).toBeTruthy()
+	end)
+
+	it("turns a thank you of practice into skill at their work", function()
 		local p = town(1)
 		local v = p.villagers.v1
-		local food = if Foods.list[1].id == v.hate then Foods.list[2].id else Foods.list[1].id
-		local total = 0
-		for _ = 1, 5 do
-			total += Life.fedHearts(p, "v1", food, 7, Rng.new(4))
+		local level = 4
+		table.insert(p.offers, {
+			vid = "v1",
+			level = level,
+			options = { { kind = "coins", n = 1 }, { kind = "practice", n = L.RewardSkillPerLevel * level } },
+		})
+		local coins = p.coins
+		local ok, notice = Life.claimReward(p, 2, Rng.new(1))
+		expect(ok).toBe(true)
+		expect(type(notice) == "string" and not notice:find("{")).toBeTruthy()
+		expect(p.coins).toBe(coins)
+		expect(#p.offers).toBe(0)
+		-- the points went into their skill, the way a day's work does
+		local want = { name = "Twin", lv = 1, xp = 0 }
+		City.addSkill(want, L.RewardSkillPerLevel * level)
+		expect(v.lv).toBe(want.lv)
+		expect(v.xp).toBe(want.xp)
+		expect(v.lv > 1 or v.xp > 0).toBeTruthy()
+		-- worth about a day's work at a new heart level, not a week's
+		expect(L.RewardSkillPerLevel * 2).toBeBetween(Tuning.Jobs.XpPerDay / 2, Tuning.Jobs.XpPerDay * 2)
+		-- junk in a saved offer does nothing and still clears it
+		table.insert(p.offers, { vid = "v1", level = 2, options = { { kind = "practice" }, { kind = "basket" } } })
+		table.insert(p.offers, { vid = "v1", level = 2, options = { { kind = "practice" }, { kind = "basket" } } })
+		expect((Life.claimReward(p, 1, Rng.new(1)))).toBe(false)
+		expect((Life.claimReward(p, 2, Rng.new(1)))).toBe(false)
+		expect(#p.offers).toBe(0)
+		expect(p.inv).toBe(nil)
+	end)
+
+	it("prices a craving from the food, and nothing else", function()
+		local p = town(2)
+		local v = p.villagers.v1
+		-- no wish, no price
+		expect(Life.wishPrice(p, "v1")).toBe(nil)
+		expect(Life.wishPrice(p, "nobody")).toBe(nil)
+		-- every food can be craved, and each has its price: the food's own times the markup,
+		-- in whole steps, never nothing
+		for _, food in Foods.list do
+			v.wish = { kind = "food", arg = food.id, untilT = 1e9 }
+			local price = Life.wishPrice(p, "v1")
+			expect(type(price)).toBe("number")
+			expect(price).toBe(Life.cravingPrice(food.id))
+			expect(price % L.CravingStep).toBe(0)
+			expect(price >= L.CravingStep).toBeTruthy()
+			expect(math.abs(price - food.price * L.CravingMarkup) <= L.CravingStep / 2).toBeTruthy()
+			expect(price >= food.price).toBeTruthy()
 		end
-		expect(total <= L.FeedsPerDay * L.FavHearts).toBeTruthy()
-		expect(Life.fedHearts(p, "v1", food, 8, Rng.new(4)) > 0).toBeTruthy()
+		-- a dearer food is a dearer craving
+		expect(Life.cravingPrice("goldapple") > Life.cravingPrice("apple")).toBeTruthy()
+		-- the wishes you don't pay for have no price
+		for _, wish in { { kind = "friend", arg = "v2" }, { kind = "look" }, { kind = "cheer" } } do
+			v.wish = wish
+			expect(Life.wishPrice(p, "v1")).toBe(nil)
+		end
+		-- nor does a craving for something that isn't a food, or a wish that isn't one
+		for _, wish in { { kind = "food", arg = "nonsense" }, { kind = "food" }, { kind = "food", arg = 7 }, "food", 3 } do
+			v.wish = wish
+			expect(Life.wishPrice(p, "v1")).toBe(nil)
+		end
+		expect(Life.cravingPrice(nil)).toBe(nil)
+		expect(Life.cravingPrice({})).toBe(nil)
+		-- not free, and never out of reach of a day's work: the dearest craving is less than
+		-- the worst paid job brings in at the mood a villager starts with
+		local dearest, least = 0, math.huge
+		for _, food in Foods.list do
+			dearest = math.max(dearest, Life.cravingPrice(food.id))
+		end
+		for _, job in Jobs.list do
+			least = math.min(least, Jobs.pay(job, 1, Tuning.Villagers.StartMood, "none"))
+		end
+		expect(dearest < least).toBeTruthy()
+	end)
+
+	it("buys a craving: takes the coins, grants the wish, gives none back", function()
+		local p = town(2)
+		local v = p.villagers.v1
+		local food = if v.fav == "apple" then "bread" else "apple"
+		v.wish = { kind = "food", arg = food, untilT = 1e9 }
+		local price = Life.wishPrice(p, "v1")
+		p.coins = price + 7
+		local mood, wishes = v.mood, p.stats.wishes
+		local ok, cost, notices, why = Life.buyWish(p, "v1", Rng.new(1))
+		expect(ok).toBe(true)
+		expect(cost).toBe(price)
+		expect(why).toBe(nil)
+		expect(p.coins).toBe(7)
+		expect(v.wish).toBe(nil)
+		expect(p.stats.wishes).toBe(wishes + 1)
+		expect(v.mood).toBe(math.min(Tuning.Villagers.MoodMax, mood + L.WishMood))
+		expect(v.hxp + (v.heart - 1) * Life.heartNeed(1)).toBe(L.WishHearts)
+		expect(#notices >= 1).toBeTruthy()
+		for _, n in notices do
+			expect(n:find("{") == nil and n:find("coins") == nil).toBeTruthy()
+		end
+		expect(p.inv).toBe(nil)
+		-- once: there is nothing to buy a second time
+		local again, _, _, reason = Life.buyWish(p, "v1", Rng.new(1))
+		expect(again).toBe(false)
+		expect(type(reason)).toBe("string")
+		expect(p.coins).toBe(7)
+	end)
+
+	it("gives a little more when the craving was for their favourite", function()
+		local p = town(2)
+		local a, b = p.villagers.v1, p.villagers.v2
+		a.wish = { kind = "food", arg = a.fav, untilT = 1e9 }
+		local plain = if b.fav == "apple" then "bread" else "apple"
+		b.wish = { kind = "food", arg = plain, untilT = 1e9 }
+		p.coins = 1e5
+		local moodA, moodB = a.mood, b.mood
+		expect((Life.buyWish(p, "v1", Rng.new(1)))).toBe(true)
+		expect((Life.buyWish(p, "v2", Rng.new(1)))).toBe(true)
+		expect(a.mood - moodA).toBe(L.WishMood + L.FavWishMood)
+		expect(b.mood - moodB).toBe(L.WishMood)
+		local function points(v)
+			local n = v.hxp
+			for level = 1, v.heart - 1 do
+				n += Life.heartNeed(level)
+			end
+			return n
+		end
+		expect(points(a)).toBe(L.WishHearts + L.FavWishHearts)
+		expect(points(b)).toBe(L.WishHearts)
+	end)
+
+	it("won't buy a craving without the coins, and leaves everything as it was", function()
+		local p = town(1)
+		local v = p.villagers.v1
+		v.wish = { kind = "food", arg = "honeycake", untilT = 1e9 }
+		local price = Life.wishPrice(p, "v1")
+		for _, coins in { 0, 1, price - 1 } do
+			p.coins = coins
+			local mood, hxp = v.mood, v.hxp
+			local ok, cost, notices, why = Life.buyWish(p, "v1", Rng.new(1))
+			expect(ok).toBe(false)
+			expect(cost).toBe(price)
+			expect(why).toBe("Not enough coins.")
+			expect(#notices).toBe(0)
+			expect(p.coins).toBe(coins)
+			expect(v.wish ~= nil and v.wish.arg == "honeycake").toBeTruthy()
+			expect(v.mood).toBe(mood)
+			expect(v.hxp).toBe(hxp)
+			expect(p.stats.wishes).toBe(0)
+		end
+		-- exactly enough is enough
+		p.coins = price
+		expect((Life.buyWish(p, "v1", Rng.new(1)))).toBe(true)
+		expect(p.coins).toBe(0)
+	end)
+
+	it("won't buy what isn't a craving: no wish, another kind of wish, nobody, junk", function()
+		local p = town(2)
+		local v = p.villagers.v1
+		p.coins = 5000
+		local function refused(vid)
+			local ok, cost, notices, why = Life.buyWish(p, vid, Rng.new(1))
+			expect(ok).toBe(false)
+			expect(cost).toBe(0)
+			expect(#notices).toBe(0)
+			expect(type(why) == "string" and #why > 0).toBeTruthy()
+			expect(p.coins).toBe(5000)
+			expect(p.stats.wishes).toBe(0)
+		end
+		refused("v1") -- no wish at all
+		for _, wish in
+			{
+				{ kind = "friend", arg = "v2", untilT = 1e9 },
+				{ kind = "look", untilT = 1e9 },
+				{ kind = "cheer", untilT = 1e9 },
+			}
+		do
+			v.wish = wish
+			refused("v1")
+			-- and the wish is still there to be granted the right way
+			expect(v.wish).toBe(wish)
+		end
+		v.wish = { kind = "food", arg = "nonsense", untilT = 1e9 }
+		refused("v1")
+		v.wish = { kind = "food", arg = "apple", untilT = 1e9 }
+		for _, junk in { "nobody", "", 7, true, {}, 0 / 0 } do
+			refused(junk)
+		end
+		refused(nil)
+		expect(v.wish.arg).toBe("apple")
 	end)
 
 	it("grants a wish only with the right answer", function()
@@ -77,9 +279,17 @@ describe("Life", function()
 		local ok, paid = Life.grantWish(p, "v1", "food", v.fav, Rng.new(1))
 		expect(ok).toBe(true)
 		expect(v.wish).toBe(nil)
-		expect(p.coins).toBe(coins + paid)
+		-- a craving is paid for (Life.buyWish), so it gives no coins back
+		expect(paid).toBe(0)
+		expect(p.coins).toBe(coins)
 		expect(p.stats.wishes).toBe(1)
 		expect(v.hxp > 0 or v.heart > 1).toBeTruthy()
+		-- a wish that cost nothing still brings a few coins
+		v.wish = { kind = "cheer", untilT = 1e9 }
+		local okCheer, gift = Life.grantWish(p, "v1", "cheer", nil, Rng.new(1))
+		expect(okCheer).toBe(true)
+		expect(gift).toBeBetween(L.WishCoinsMin, L.WishCoinsMax)
+		expect(p.coins).toBe(coins + gift)
 	end)
 
 	it("introduces villagers for a friend wish", function()
@@ -105,6 +315,22 @@ describe("Life", function()
 				expect(type(text) == "string" and not text:find("{")).toBeTruthy()
 			end
 		end
+		-- every craving handed out is for a food there is, so it always has a price, and their
+		-- favourite comes up about half the time
+		local cravings, favs = 0, 0
+		for seed = 1, 3000 do
+			local q = town(1)
+			local v = q.villagers.v1
+			local wish = Life.maybeWish(q, "v1", Rng.new(seed), 0)
+			if wish and wish.kind == "food" then
+				cravings += 1
+				expect(Foods.get(wish.arg) ~= nil).toBeTruthy()
+				expect(type(Life.wishPrice(q, "v1"))).toBe("number")
+				favs += if wish.arg == v.fav then 1 else 0
+			end
+		end
+		expect(cravings > 50).toBeTruthy()
+		expect(favs / cravings).toBeBetween(0.4, 0.65)
 	end)
 
 	it("lets ignored wishes fade", function()
@@ -148,6 +374,48 @@ describe("Life", function()
 		end
 	end)
 
+	it("has goals about villagers working and none about food or a shop", function()
+		local ids = {}
+		for _, g in Goals.list do
+			expect(ids[g.id]).toBe(nil)
+			ids[g.id] = true
+			local words = (g.name .. " " .. g.desc):lower()
+			for _, gone in { "feed", "fed ", "snack", "shop", "food", "buy" } do
+				expect(words:find(gone, 1, true)).toBe(nil)
+			end
+		end
+		-- people in a job, at each size of town a level asks for and no more than can be had
+		local p = town(3)
+		p.plan = StarterHouse.plan()
+		p.plan.items.stall = { id = "work_market", x = 130, y = 0, z = 12, r = 180, lv = 0 }
+		expect((Life.claimGoal(p, "work2"))).toBe(false)
+		p.villagers.v1.job = City.freeWorkplace(p)
+		expect((Life.claimGoal(p, "work2"))).toBe(false)
+		p.villagers.v2.job = City.freeWorkplace(p)
+		local ok, coins = Life.claimGoal(p, "work2")
+		expect(ok).toBe(true)
+		expect(coins).toBe(Goals.get("work2").reward)
+		for _, id in { "work2", "work6", "work10" } do
+			expect(Goals.get(id).need <= Tuning.Villagers.Max).toBeTruthy()
+		end
+		-- wages earned (paydays add to stats.earned) and skill at work
+		expect((Life.claimGoal(p, "wages"))).toBe(false)
+		p.stats.earned = Goals.get("wages").need
+		expect((Life.claimGoal(p, "wages"))).toBe(true)
+		expect((Life.claimGoal(p, "skill5"))).toBe(false)
+		p.villagers.v3.lv = Goals.get("skill5").need
+		expect((Life.claimGoal(p, "skill5"))).toBe(true)
+		expect(Goals.get("skill5").need <= Tuning.Jobs.SkillCap).toBeTruthy()
+		-- a goal's coins are an extra beside wages: the biggest is a few days of a full town's pay
+		local pay = 0
+		for _, job in Jobs.list do
+			pay += Jobs.pay(job, 1, Tuning.Villagers.StartMood, "none")
+		end
+		for _, g in Goals.list do
+			expect(g.reward <= pay).toBeTruthy()
+		end
+	end)
+
 	it("fills in hearts and goals for old saves", function()
 		local old = { coins = 50, villagers = { a = { name = "Old", pers = "sunny" } }, order = { "a" } }
 		local p = Schema.migrate(old)
@@ -155,5 +423,21 @@ describe("Life", function()
 		expect(type(p.offers)).toBe("table")
 		expect(type(p.goals)).toBe("table")
 		expect(p.stats.wishes).toBe(0)
+	end)
+
+	it("drops a saved wish it can't make sense of, and keeps the ones it can", function()
+		local function load(wish)
+			local old =
+				{ coins = 50, villagers = { a = { name = "Old", pers = "sunny", wish = wish } }, order = { "a" } }
+			return Schema.migrate(old).villagers.a.wish
+		end
+		expect(load({ kind = "food", arg = "apple", untilT = 9 }).arg).toBe("apple")
+		expect(load({ kind = "cheer", untilT = 9 }).kind).toBe("cheer")
+		expect(load({ kind = "friend", arg = "b", untilT = 9 }).kind).toBe("friend")
+		expect(load({ kind = "food", arg = "medicine", untilT = 9 })).toBe(nil)
+		expect(load({ kind = "food", untilT = 9 })).toBe(nil)
+		expect(load({ kind = "feast" })).toBe(nil)
+		expect(load("food")).toBe(nil)
+		expect(load(4)).toBe(nil)
 	end)
 end)

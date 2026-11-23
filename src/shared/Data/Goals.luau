@@ -1,6 +1,7 @@
 --!strict
 -- Town goals: a list of things to work toward as the town grows, each paying coins when you claim
--- it. `value` reads how far along you are from the profile (and the city's stats).
+-- it. `value` reads how far along you are from the profile (and the city's stats). None is about
+-- food or a shop: there is neither.
 
 local Goals = {}
 
@@ -31,6 +32,14 @@ local function bestFriends(profile: any): number
 	return n
 end
 
+local function bestSkill(profile: any): number
+	local best = 0
+	for _, v in profile.villagers do
+		best = math.max(best, v.lv or 1)
+	end
+	return best
+end
+
 local function stat(key: string): (any, any) -> number
 	return function(profile: any, _city: any): number
 		return profile.stats[key] or 0
@@ -56,6 +65,18 @@ Goals.list = {
 		reward = 300,
 		value = stat("wishes"),
 	},
+	-- Work is what a town lives on (the user: "progression is much more based on villagers
+	-- working"), so its goals run through the list: people in a job, wages earned, skill.
+	{
+		id = "work2",
+		name = "Off to work",
+		desc = "Have 2 villagers in a job.",
+		need = 2,
+		reward = 300,
+		value = function(_p, city)
+			return city.employed
+		end,
+	},
 	{
 		id = "heart5",
 		name = "Close to you",
@@ -77,6 +98,14 @@ Goals.list = {
 		end,
 	},
 	{
+		id = "wages",
+		name = "Pay packets",
+		desc = "Earn 5,000 coins in wages.",
+		need = 5000,
+		reward = 500,
+		value = stat("earned"),
+	},
+	{
 		id = "couple",
 		name = "Sweethearts",
 		desc = "See a couple get together.",
@@ -92,6 +121,26 @@ Goals.list = {
 		reward = 800,
 		value = function(_p, city)
 			return city.level
+		end,
+	},
+	{
+		id = "work6",
+		name = "All hands",
+		desc = "Have 6 villagers in a job.",
+		need = 6,
+		reward = 800,
+		value = function(_p, city)
+			return city.employed
+		end,
+	},
+	{
+		id = "skill5",
+		name = "Knows the ropes",
+		desc = "Have a villager reach skill 5 at their work.",
+		need = 5,
+		reward = 700,
+		value = function(p, _city)
+			return bestSkill(p)
 		end,
 	},
 	{
@@ -136,6 +185,16 @@ Goals.list = {
 		reward = 1500,
 		value = function(p, _city)
 			return bestHeart(p)
+		end,
+	},
+	{
+		id = "work10",
+		name = "A working town",
+		desc = "Have 10 villagers in a job.",
+		need = 10,
+		reward = 2000,
+		value = function(_p, city)
+			return city.employed
 		end,
 	},
 	{

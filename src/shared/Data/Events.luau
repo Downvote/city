@@ -38,7 +38,7 @@ local TOPICS = {
 	"the new bench by the fountain",
 	"a song neither of them can remember the name of",
 	"whose handwriting is worse",
-	"what the shop should sell next",
+	"what the market stall should sell next",
 	"how many stairs are too many",
 }
 
@@ -96,10 +96,15 @@ local function isPers(ctx: Ctx, vid: string, ...: string): boolean
 	return table.find({ ... }, ctx.v(vid).pers) ~= nil
 end
 
-local function cheapFood(ctx: Ctx)
-	local shop = Foods.shop()
-	return ctx.rng:pick(shop)
-end
+-- Presents one villager finds for another (when it isn't something to eat).
+local GIFTS = {
+	"a jar of plum jam",
+	"a pressed flower in a card",
+	"a scarf they knitted",
+	"a shell from the beach",
+	"a book they had finished",
+	"a drawing of the two of them",
+}
 
 -- the list ----------------------------------------------------------------------------------------
 
@@ -226,7 +231,7 @@ event({
 		return 2 + trait(ctx, a, "kind") * 4
 	end,
 	scene = function(ctx: Ctx, a: string, b: string): Scene
-		local food = cheapFood(ctx)
+		local food = ctx.rng:pick(Foods.list)
 		return {
 			title = "Making up",
 			lines = {
@@ -252,18 +257,18 @@ event({
 		return trait(ctx, a, "kind") * 1.5 + math.max(0, ctx.rel(a, b)) / 60
 	end,
 	scene = function(ctx: Ctx, a: string, b: string): Scene
-		local food = ctx.rng:pick(Foods.list)
-		local hates = ctx.v(b).hate == food.id
-		local loves = ctx.v(b).fav == food.id
+		-- half the time something to eat, and now and then it is the very thing they love
+		local fav = Foods.get(ctx.v(b).fav)
+		local roll = ctx.rng:float(0, 1)
+		local food = if roll < 0.15 and fav then fav elseif roll < 0.5 then ctx.rng:pick(Foods.list) else nil
+		local loves = food ~= nil and fav ~= nil and food.id == fav.id
+		local thing = if food then food.name:lower() else ctx.rng:pick(GIFTS)
 		local lines = {
-			line(nil, ctx.f("{a} has a present for {b}: {food}.", { food = food.name:lower() })),
+			line(nil, ctx.f("{a} has a present for {b}: {thing}.", { thing = thing })),
 			line("a", "I saw this and thought of you.", "sparkle", "wave"),
 		}
 		local effects
-		if hates then
-			table.insert(lines, line("b", "Oh. Um. Thank you. I'll... save it for later.", "sweat"))
-			effects = { { t = "rel", a = "a", b = "b", d = 2 }, { t = "known", who = "b", food = food.id, r = "hate" } }
-		elseif loves then
+		if loves and food then
 			table.insert(
 				lines,
 				line("b", ctx.f("{food}! That's my favourite!", { food = food.name }), "heart", "cheer")
@@ -271,8 +276,11 @@ event({
 			effects = {
 				{ t = "rel", a = "a", b = "b", d = 14 },
 				{ t = "mood", who = "b", d = 10 },
-				{ t = "known", who = "b", food = food.id, r = "love" },
 			}
+		elseif ctx.rng:chance(0.12) then
+			-- not quite their thing
+			table.insert(lines, line("b", "Oh. Um. Thank you. I'll... save it for later.", "sweat"))
+			effects = { { t = "rel", a = "a", b = "b", d = 2 } }
 		else
 			table.insert(lines, voice(ctx, "b", b, "thanks", "heart"))
 			effects = { { t = "rel", a = "a", b = "b", d = 8 }, { t = "mood", who = "b", d = 4 } }
@@ -281,7 +289,7 @@ event({
 			title = "A present",
 			lines = lines,
 			effects = effects,
-			log = ctx.f("{a} gave {b} {food}.", { food = food.name:lower() }),
+			log = ctx.f("{a} gave {b} {thing}.", { thing = thing }),
 		}
 	end,
 })
@@ -299,7 +307,6 @@ event({
 	end,
 	scene = function(ctx: Ctx, a: string, b: string): Scene
 		local place = ctx.rng:pick(PLACES)
-		local souvenir = ctx.rng:pick(Foods.list)
 		return {
 			title = "An outing",
 			lines = {
@@ -311,17 +318,13 @@ event({
 					text = "Have fun, you two",
 					lines = {
 						line(nil, ctx.f("{a} and {b} headed off to {place}.", { place = place })),
-						line(
-							nil,
-							ctx.f("They came back with {food} and big smiles.", { food = souvenir.name:lower() })
-						),
+						line(nil, "They came back tired, a bit sunburnt and still laughing."),
 					},
 					effects = {
 						{ t = "away", who = { "a", "b" }, seconds = 30 },
 						{ t = "rel", a = "a", b = "b", d = 12 },
-						{ t = "mood", who = "a", d = 6 },
-						{ t = "mood", who = "b", d = 6 },
-						{ t = "food", id = souvenir.id, n = 1 },
+						{ t = "mood", who = "a", d = 8 },
+						{ t = "mood", who = "b", d = 8 },
 					},
 				},
 				{
@@ -473,9 +476,14 @@ event({
 					then line("b", "...We'll call it extra crispy.", "sweat")
 					else line("b", "This is going to be so good.", "heart"),
 			},
+			-- they eat what they make: a good one cheers them both up
 			effects = if burnt
 				then { { t = "rel", a = "a", b = "b", d = 5 } }
-				else { { t = "rel", a = "a", b = "b", d = 6 }, { t = "food", id = food.id, n = 2 } },
+				else {
+					{ t = "rel", a = "a", b = "b", d = 6 },
+					{ t = "mood", who = "a", d = 4 },
+					{ t = "mood", who = "b", d = 4 },
+				},
 			log = ctx.f("{a} and {b} cooked {food}.", { food = food.name:lower() }),
 		}
 	end,
@@ -673,57 +681,60 @@ event({
 	end,
 })
 
--- Craving a food.
+-- Craving a food. There is no shop and no bag of food (the user: "when a character gets a
+-- craving, allow the player to simply pay to buy it"): the answer pays for it there and then, at
+-- the price a craving wish costs (Life.cravingPrice), and does what a granted craving does.
 event({
 	id = "craving",
 	actors = 1,
 	when = "day",
 	weight = function(ctx: Ctx, a: string)
+		-- someone already wishing for a food has their bubble up; this is for the others
+		local wish = ctx.v(a).wish
+		if wish and wish.kind == "food" then
+			return 0
+		end
 		return 1.2
 	end,
 	scene = function(ctx: Ctx, a: string): Scene
 		local v = ctx.v(a)
-		local pool = {}
-		for _, f in Foods.shop() do
-			if f.id ~= v.hate then
-				table.insert(pool, f)
-			end
-		end
-		local food = if ctx.rng:chance(0.35) then Foods.get(v.fav) or ctx.rng:pick(pool) else ctx.rng:pick(pool)
-		local have = ctx.count(food.id) > 0
-		local price = food.price or 50
-		local choices = {}
-		if have then
-			table.insert(choices, {
-				text = ctx.f("Give them {food}", { food = food.name:lower() }),
-				lines = { line("a", "You're the best!", "heart", "cheer") },
-				effects = { { t = "eat", who = "a", food = food.id }, { t = "mood", who = "a", d = 6 } },
-			})
-		else
-			table.insert(choices, {
-				text = ctx.f("Buy some ({price} coins)", { price = price }),
-				cost = price,
-				lines = { line("a", "You're the best!", "heart", "cheer") },
-				effects = {
-					{ t = "coins", d = -price },
-					{ t = "food", id = food.id, n = 1 },
-					{ t = "eat", who = "a", food = food.id },
-					{ t = "mood", who = "a", d = 6 },
-				},
-			})
-		end
-		table.insert(choices, {
-			text = "Not right now",
-			lines = { line("a", "Okay... my tummy is sad though.", "sad") },
-			effects = { { t = "mood", who = "a", d = -4 } },
-		})
+		local fav = Foods.get(v.fav)
+		local food = if fav and ctx.rng:chance(0.35) then fav else ctx.rng:pick(Foods.list)
+		local loves = fav ~= nil and food.id == fav.id
+		local price = ctx.cravingPrice(food.id)
+		local L = Tuning.Life
 		return {
 			title = "A craving",
 			lines = {
 				line("a", ctx.f("I really want some {food}. Like, really.", { food = food.name:lower() }), "idea"),
 			},
-			choices = choices,
-			default = #choices,
+			choices = {
+				{
+					text = ctx.f("Buy them some ({price} coins)", { price = price }),
+					cost = price,
+					lines = {
+						if loves
+							then line(
+								"a",
+								ctx.f("{food}! My favourite. You're the best.", { food = food.name }),
+								"heart",
+								"cheer"
+							)
+							else line("a", "You're the best!", "heart", "cheer"),
+					},
+					effects = {
+						{ t = "coins", d = -price },
+						{ t = "mood", who = "a", d = L.WishMood + (if loves then L.FavWishMood else 0) },
+						{ t = "hearts", who = "a", n = L.WishHearts + (if loves then L.FavWishHearts else 0) },
+					},
+				},
+				{
+					text = "Not right now",
+					lines = { line("a", "Okay... my tummy is sad though.", "sad") },
+					effects = { { t = "mood", who = "a", d = -4 } },
+				},
+			},
+			default = 2,
 			log = ctx.f("{a} wanted {food}.", { food = food.name:lower() }),
 		}
 	end,
@@ -887,32 +898,53 @@ event({
 		return 0.45
 	end,
 	scene = function(ctx: Ctx, a: string): Scene
-		local have = ctx.itemCount("medicine") > 0
+		-- There is no medicine to buy. A villager who works as the town's doctor sees to a cold
+		-- at once; otherwise it is a day in bed (no pay while they are in it), or carrying on
+		-- in a worse mood.
+		local doctor: string? = nil
+		for _, vid in ctx.profile.order do
+			local w = if vid ~= a then ctx.job(vid) else nil
+			if w and w.job.id == "doctor" then
+				doctor = vid
+				break
+			end
+		end
 		local choices = {}
-		if have then
+		local lines = { line("a", "Achoo! I think I caught a cold.", "sweat") }
+		if doctor then
+			local name = ctx.v(doctor).name
 			table.insert(choices, {
-				text = "Give them medicine",
-				lines = { line("a", "Ugh. Tastes awful. Feeling better though.", "sparkle") },
-				effects = { { t = "item", id = "medicine", n = -1 }, { t = "mood", who = "a", d = 4 } },
+				text = ctx.f("Send them to {doctor}", { doctor = name }),
+				lines = {
+					line(nil, ctx.f("{doctor} had a look and sent {a} off with a hot lemon drink.", { doctor = name })),
+					line("a", "Tastes awful. Feeling better though.", "sparkle"),
+				},
+				effects = {
+					{ t = "mood", who = "a", d = 4 },
+					{ t = "relv", a = a, b = doctor, d = 4 },
+					{ t = "xpv", vid = doctor, d = 10 },
+				},
 			})
 		else
-			table.insert(choices, {
-				text = "Buy medicine (60 coins)",
-				cost = 60,
-				lines = { line("a", "Ugh. Tastes awful. Feeling better though.", "sparkle") },
-				effects = { { t = "coins", d = -60 }, { t = "mood", who = "a", d = 4 } },
-			})
+			table.insert(lines, line(nil, "A doctor in town would see to this. A clinic desk opens the job."))
 		end
 		table.insert(choices, {
 			text = "Rest it off in bed",
 			lines = { line("a", "Okay... wake me when I'm better.", "zzz") },
 			effects = { { t = "sick", who = "a", minutes = 5 }, { t = "mood", who = "a", d = -2 } },
 		})
+		if not doctor then
+			table.insert(choices, {
+				text = "Ask them to carry on",
+				lines = { line("a", "Fine. Achoo. Fine.", "sad") },
+				effects = { { t = "mood", who = "a", d = -8 } },
+			})
+		end
 		return {
 			title = "Achoo",
-			lines = { line("a", "Achoo! I think I caught a cold.", "sweat") },
+			lines = lines,
 			choices = choices,
-			default = #choices,
+			default = if doctor then 2 else 1,
 			log = ctx.f("{a} caught a cold."),
 		}
 	end,
@@ -1135,27 +1167,6 @@ event({
 	end,
 })
 
--- A travelling merchant with a sale.
-event({
-	id = "merchant",
-	actors = 0,
-	when = "day",
-	weight = function(ctx: Ctx)
-		return if ctx.merchantActive then 0 else 0.5
-	end,
-	scene = function(ctx: Ctx): Scene
-		return {
-			title = "A travelling merchant",
-			lines = {
-				line(nil, "A travelling merchant has set up at the market."),
-				line(nil, "Everything at the shop is cheaper for a few minutes."),
-			},
-			effects = { { t = "merchant" } },
-			log = "A travelling merchant came to town.",
-		}
-	end,
-})
-
 -- A dance party.
 event({
 	id = "festival",
@@ -1195,15 +1206,15 @@ event({
 		return 0.8
 	end,
 	scene = function(ctx: Ctx): Scene
-		local effects: { any } = { { t = "food", id = "starfruit", n = 1 } }
+		local effects: { any } = {}
 		for _, vid in ctx.present do
-			table.insert(effects, { t = "moodv", vid = vid, d = 4 })
+			table.insert(effects, { t = "moodv", vid = vid, d = 5 })
 		end
 		return {
 			title = "Shooting stars",
 			lines = {
 				line(nil, "Shooting stars over town! Everyone makes a wish."),
-				line(nil, "One of them landed as a star fruit by the fence."),
+				line(nil, "Nobody says what they wished for. They all stay up far too late."),
 			},
 			effects = effects,
 			log = "Shooting stars lit up the sky.",
@@ -1281,7 +1292,7 @@ event({
 	scene = function(ctx: Ctx, a: string): Scene
 		local w = ctx.job(a)
 		local place = w.def.name:lower()
-		local coins = math.floor(w.job.income * 0.6)
+		local coins = math.floor(w.job.income * Tuning.Jobs.BusyDayShare)
 		return {
 			title = "A busy day",
 			lines = {

@@ -261,7 +261,10 @@ function Life.grantWish(profile: any, vid: string, how: string, arg: any, rng: a
 		mood(v, L.WishMood + (if fav then L.FavWishMood else 0))
 		table.insert(
 			notices,
-			Text.fill(if fav then "{x} got their favourite and is so pleased." else "{x} is so pleased.", { x = v.name })
+			Text.fill(
+				if fav then "{x} got their favourite and is so pleased." else "{x} is so pleased.",
+				{ x = v.name }
+			)
 		)
 		Life.addHearts(profile, vid, L.WishHearts + (if fav then L.FavWishHearts else 0), rng, notices)
 		return true, 0, notices

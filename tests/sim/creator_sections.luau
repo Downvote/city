@@ -141,34 +141,43 @@ local function look()
 	Sim.advance(0.5)
 	return previews[#previews]
 end
-local function cardNames()
+-- the cards on show (each carries its name in bold, and a small line under it)
+local function cardList()
 	local out = {}
 	local creator = gui:FindFirstChild("Creator")
 	for _, d in creator:GetDescendants() do
-		if d:IsA("TextButton") and Fake.shown(d) and d.Size.X.Offset == 128 and d.Size.Y.Offset == 160 then
-			for _, l in d:GetChildren() do
-				if l:IsA("TextLabel") then
-					table.insert(out, l.Text)
-				end
-			end
+		if d:IsA("TextButton") and Fake.shown(d) and d:GetAttribute("ItemCard") then
+			table.insert(out, d)
 		end
+	end
+	return out
+end
+local function cardNames()
+	local out = {}
+	for _, card in cardList() do
+		table.insert(out, card:FindFirstChild("Name", true).Text)
 	end
 	return out
 end
 local function ticked()
 	local out = {}
-	local creator = gui:FindFirstChild("Creator")
-	for _, d in creator:GetDescendants() do
-		if d.Name == "Worn" and d.Visible and Fake.shown(d) then
-			for _, l in d.Parent:GetChildren() do
-				if l:IsA("TextLabel") then
-					table.insert(out, l.Text)
-				end
-			end
+	for _, card in cardList() do
+		local worn = card:FindFirstChild("Worn")
+		if worn and worn.Visible then
+			table.insert(out, card:FindFirstChild("Name", true).Text)
 		end
 	end
 	table.sort(out)
 	return table.concat(out, ",")
+end
+-- a card's small line, by the card's name
+local function smallLine(name)
+	for _, card in cardList() do
+		if card:FindFirstChild("Name", true).Text == name then
+			return card:FindFirstChild("Sub", true).Text
+		end
+	end
+	return nil
 end
 local function noteText()
 	local creator = gui:FindFirstChild("Creator")
@@ -192,30 +201,72 @@ end
 local warned = #Sim.errors
 local Creator = Harness.require(Sim.CLIENT .. "UI.Creator")
 
-Sim.run("the rail: every section in reach", function()
+Sim.run("the sections: a row of words, every one in reach", function()
 	Creator.open({ mode = "new" })
 	frames(3)
 	Sim.advance(1)
-	local rail = gui:FindFirstChild("Rail", true)
-	check(rail ~= nil and rail.ClassName == "Frame", "the sections are a block that doesn't scroll")
-	local n = 0
-	for _, b in rail:GetChildren() do
+	-- the user: "remove this tooltip in character creation"
+	local said = Fake.find(gui, function(d)
+		return d:IsA("TextLabel") and d.Text:find("Drag to turn", 1, true) ~= nil
+	end)
+	check(#said == 0, "no line telling you to drag them round")
+	-- the user: "for the left side, the interface for look should be like the second image"
+	local row = gui:FindFirstChild("Sections", true)
+	check(row ~= nil and row.ClipsDescendants, "the sections are a row of words in a window")
+	local words = {}
+	for _, b in row:FindFirstChild("Row"):GetChildren() do
 		if b:IsA("TextButton") then
-			n += 1
+			table.insert(words, b)
 		end
 	end
-	check(n == #Categories.Tabs and n == 16, "sixteen sections, a button each (" .. n .. ")")
-	local layout = rail:FindFirstChildOfClass("UIGridLayout")
-	local perRow =
-		math.floor((720 + layout.CellPadding.X.Offset) / (layout.CellSize.X.Offset + layout.CellPadding.X.Offset))
-	check(perRow == 8, "eight fit across the panel")
-	local rows = math.ceil(n / perRow)
-	check(
-		rail.Size.Y.Offset == rows * layout.CellSize.Y.Offset + (rows - 1) * layout.CellPadding.Y.Offset,
-		"and the block is as tall as its rows"
-	)
+	check(#words == #Categories.Tabs and #words == 16, "sixteen sections, a word each (" .. #words .. ")")
 	for _, name in { "Body parts", "My items", "My avatars", "Outfits", "Players", "Bodies" } do
 		check(has(name), "there is a " .. name .. " section")
+	end
+	-- more than fit: the arrow brings the rest into view a page at a time, and back
+	check(row:GetAttribute("First") == 1 and row:GetAttribute("LastShown") < 16, "they don't all fit at once")
+	local pages = 0
+	while row:GetAttribute("LastShown") < 16 and pages < 10 do
+		press("More sections")
+		pages += 1
+	end
+	check(row:GetAttribute("LastShown") == 16, "the arrow brings the last into view (" .. pages .. " pages)")
+	while row:GetAttribute("First") > 1 and pages < 20 do
+		press("Earlier sections")
+		pages += 1
+	end
+	check(row:GetAttribute("First") == 1, "and the other arrow back to the first")
+	-- a word picks its section, is underlined, and is brought into view
+	press("My avatars")
+	local picked = row:FindFirstChild("My avatars", true)
+	check(
+		picked.Underline.Visible and not row:FindFirstChild("Hair", true).Underline.Visible,
+		"the picked word is underlined"
+	)
+	check(row:GetAttribute("LastShown") >= 14 and row:GetAttribute("First") <= 15, "and in view")
+	press("Hair")
+	check(row:GetAttribute("First") <= 2, "a word near the start brings the row back")
+	-- the cards: the name in bold, a small line under it
+	local names = cardNames()
+	check(#names == 4 and names[1] == "HairAccessory 1", "the cards carry the item's name")
+	check(smallLine("HairAccessory 1") == "Hair", "and a small line saying what it is")
+	press("HairAccessory 2")
+	check(smallLine("HairAccessory 2") == "Wearing", "the one on says so")
+	check(ticked() == "HairAccessory 2", "and is ticked")
+	press("HairAccessory 2")
+	-- the tools along the bottom are icons that say what they do over the row
+	local footer = gui:FindFirstChild("Creator"):FindFirstChild("Footer", true)
+	local caption = gui:FindFirstChild("Creator"):FindFirstChild("ToolCaption", true)
+	for _, name in { "Undo", "Redo", "Shuffle", "Reset", "Zoom", "Light" } do
+		local b = footer:FindFirstChild(name, true)
+		check(b ~= nil and b:IsA("TextButton") and b:FindFirstChild("IconArt") ~= nil, name .. " is an icon button")
+		b.MouseEnter:Fire()
+		check(
+			caption.Text ~= "" and caption.Text:find(name, 1, true) ~= nil
+				or name == "Light" and caption.Text:find("light", 1, true) ~= nil,
+			name .. " says what it does"
+		)
+		b.MouseLeave:Fire()
 	end
 end)
 
@@ -528,6 +579,99 @@ Sim.run("picking somebody takes their look and their name", function()
 	press("Name and personality")
 	check(nameBox().Text == was, "a villager being edited keeps the name they have")
 	Creator.close()
+	frames(2)
+end)
+
+Sim.run("name and personality: a slider of personalities and a bar of colours", function()
+	-- the user: "for name and personality, the personality should be a slider, the color a
+	-- pallette bar slider"
+	local Personalities = Harness.require("ReplicatedStorage.Shared.Data.Personalities")
+	local Palette = Harness.require("ReplicatedStorage.Shared.Data.Palette")
+	local Schema = Harness.require("ReplicatedStorage.Shared.Sim.Schema")
+	local sent = nil
+	Sim.remoteFn("VillagerCreate").OnServerInvoke = function(_, input)
+		sent = input
+		return true
+	end
+	Creator.open({ mode = "new" })
+	frames(3)
+	Sim.advance(1)
+	-- Reset puts the plain look back, as its old button did
+	press("Shuffle")
+	Sim.advance(1)
+	press("Reset")
+	check(Appearance.equal(look(), Appearance.default()), "Reset puts the plain look back")
+	press("Name and personality")
+	local creator = gui:FindFirstChild("Creator")
+	local pers = creator:FindFirstChild("Personality", true)
+	local slide = pers:FindFirstChild("Slide")
+	check(#Fake.find(pers, function(d)
+		return d:GetAttribute("Stop") ~= nil
+	end) == #Personalities.list, "a stop on the track for each personality")
+	-- (the sim's engine puts every box at 100 across, 100 wide: a press at x is that far along)
+	local function stopAt(i)
+		return 100 + 14 + 72 * (i - 1) / (#Personalities.list - 1)
+	end
+	local MB1 = Enum.UserInputType.MouseButton1
+	local all = true
+	for i, p in Personalities.list do
+		slide.InputBegan:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(stopAt(i), 0, 0) })
+		Sim.UIS.InputEnded:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(stopAt(i), 0, 0) }, false)
+		frames(1)
+		all = all
+			and pers:GetAttribute("Picked") == i
+			and pers:FindFirstChild("Picked").Text == p.name
+			and pers:FindFirstChild("Blurb").Text == p.blurb
+	end
+	check(all, "a press on each stop picks that personality, its name and its line over the track")
+	-- dragging along the track slides from one to another
+	slide.InputBegan:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(stopAt(1), 0, 0) })
+	Sim.UIS.InputChanged:Fire(
+		{ UserInputType = Enum.UserInputType.MouseMovement, Position = roblox.Vector3.new(stopAt(4), 0, 0) },
+		false
+	)
+	frames(1)
+	check(pers:GetAttribute("Picked") == 4, "dragging slides the knob to another")
+	Sim.UIS.InputEnded:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(stopAt(4), 0, 0) }, false)
+	Sim.UIS.InputChanged:Fire(
+		{ UserInputType = Enum.UserInputType.MouseMovement, Position = roblox.Vector3.new(stopAt(7), 0, 0) },
+		false
+	)
+	frames(1)
+	check(pers:GetAttribute("Picked") == 4, "and stops when it is let go")
+	-- the colour: a bar of the palette's colours, the knob on the one picked, a chip showing it
+	local colour = creator:FindFirstChild("Colour", true)
+	local n = #Palette.Colors
+	local function colourAt(k)
+		return 100 + 100 * (k - 0.5) / n
+	end
+	local bar = colour:FindFirstChild("Slide")
+	local swatches = Fake.find(colour:FindFirstChild("Palette"), function(d)
+		return d.Name == "Swatch"
+	end)
+	check(#swatches == n, "the bar shows every colour of the palette (" .. #swatches .. ")")
+	local k = 31
+	bar.InputBegan:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(colourAt(k), 0, 0) })
+	Sim.UIS.InputEnded:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(colourAt(k), 0, 0) }, false)
+	frames(1)
+	check(colour:GetAttribute("Picked") == k, "a press on the bar picks the colour under it")
+	check(
+		colour:FindFirstChild("Swatch").BackgroundColor3:ToHex():upper() == Palette.Colors[k],
+		"and the chip beside it shows it"
+	)
+	local box = Fake.find(creator, function(d)
+		return d:IsA("TextBox") and d.PlaceholderText == "What are they called?"
+	end)[1]
+	box.Text = "Wren"
+	press("Move them in")
+	Sim.advance(1)
+	check(sent ~= nil and sent.pers == Personalities.list[4].id, "the personality picked is the one sent")
+	check(sent ~= nil and sent.color == Palette.Colors[k], "and the colour is one of the palette's")
+	local cleaned = sent and Schema.cleanVillagerInput(sent)
+	check(cleaned ~= nil and cleaned.color == Palette.Colors[k], "which the server keeps as it is")
+	if Creator.isOpen() then
+		Creator.close()
+	end
 	frames(2)
 end)
 

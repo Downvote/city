@@ -391,7 +391,8 @@ local KINDS: { [string]: string } = {
 	LeftLeg = "Left leg",
 	RightLeg = "Right leg",
 }
-local SET_KINDS: { [string]: string } = { body = "Whole body", head = "Head set", shoes = "Pair of shoes", anim = "Set of moves" }
+local SET_KINDS: { [string]: string } =
+	{ body = "Whole body", head = "Head set", shoes = "Pair of shoes", anim = "Set of moves" }
 
 local function kindOf(item: any, kind: string?): string
 	if item.ItemType == "Outfit" then
@@ -414,7 +415,7 @@ refreshWorn = function()
 	for id, card in cards do
 		local worn = isOn(id)
 		local lit = worn and tabId ~= "wearing"
-		local face = card:FindFirstChild("Face")
+		local face = card:FindFirstChild("Square")
 		if face and face:IsA("Frame") then
 			face.BackgroundColor3 = if lit then T.Yellow else T.Card
 			local rim = face:FindFirstChild("Rim")
@@ -422,10 +423,12 @@ refreshWorn = function()
 				rim.Color = if lit then T.YellowDark else T.Line
 			end
 		end
-		local sub = card:FindFirstChild("Sub")
+		local sub = card:FindFirstChild("Sub", true)
 		if sub and sub:IsA("TextLabel") then
 			local plain = card:GetAttribute("Kind")
-			sub.Text = if worn and tabId ~= "wearing" then "Wearing" else (if type(plain) == "string" then plain else "")
+			sub.Text = if worn and tabId ~= "wearing"
+				then "Wearing"
+				else (if type(plain) == "string" then plain else "")
 			sub.TextColor3 = if worn and tabId ~= "wearing" then Kit.tint(T.Yellow) else T.InkSoft
 		end
 		local badge = card:FindFirstChild("Worn")
@@ -454,7 +457,7 @@ local function itemCard(item: any, order: number, onClick: (() -> ())?, kind: st
 	card:SetAttribute("ItemCard", true)
 	card:SetAttribute("Kind", kindOf(item, kind))
 	local face = Kit.frame({
-		Name = "Face",
+		Name = "Square",
 		Parent = card,
 		Size = UDim2.fromOffset(CARD_W, CARD_PIC),
 		Color = T.Card,
@@ -492,25 +495,35 @@ local function itemCard(item: any, order: number, onClick: (() -> ())?, kind: st
 		ZIndex = 4,
 	})
 	worn.Visible = false
-	Kit.title(item.Name or "", {
-		Name = "Name",
+	-- the name in bold on up to two lines, the small line straight under it
+	local words = Kit.box({
+		Name = "Words",
 		Parent = card,
-		Size = UDim2.new(1, -4, 0, 34),
-		Position = UDim2.fromOffset(2, CARD_PIC + 4),
-		TextSize = 14,
+		Size = UDim2.new(1, -4, 0, 50),
+		Position = UDim2.fromOffset(2, CARD_PIC + 5),
+	})
+	Kit.list(words, 1)
+	local name = Kit.title(item.Name or "", {
+		Name = "Name",
+		Parent = words,
+		Size = UDim2.new(1, 0, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		TextSize = 15,
 		AlignY = Enum.TextYAlignment.Top,
+		LayoutOrder = 1,
 		ZIndex = 2,
-	}).TextTruncate =
-		Enum.TextTruncate.AtEnd
+	})
+	name.TextTruncate = Enum.TextTruncate.AtEnd
+	Kit.new("UISizeConstraint", { MaxSize = Vector2.new(math.huge, 34), Parent = name })
 	Kit.text(card:GetAttribute("Kind") :: string, {
 		Name = "Sub",
-		Parent = card,
-		Size = UDim2.new(1, -4, 0, 16),
-		Position = UDim2.fromOffset(2, CARD_PIC + 4 + 34),
+		Parent = words,
+		Size = UDim2.new(1, 0, 0, 16),
 		TextSize = 13,
 		Font = Kit.Fonts.Bold,
 		Color = T.InkSoft,
 		Wrap = false,
+		LayoutOrder = 2,
 		ZIndex = 2,
 	})
 	local scale = Kit.new("UIScale", { Parent = card })
@@ -829,7 +842,13 @@ local function wearingPage()
 		if not info then
 			table.insert(unknown, a.id)
 		end
-		itemCard({ Id = a.id, Name = if info then info.name else "Worn item", ItemType = "Asset" }, i, function()
+		local item = {
+			Id = a.id,
+			Name = if info then info.name else "Worn item",
+			ItemType = "Asset",
+			AssetType = if info then info.type else nil,
+		}
+		itemCard(item, i, function()
 			setApp(Appearance.without(app, a.id))
 			task.defer(wearingPage)
 		end)
@@ -1387,7 +1406,7 @@ end
 -- only where there is more than one.
 local function layoutBrowse(showSearch: boolean, showFilterRow: boolean)
 	searchBox.TextEditable = showSearch
-	searchBox.PlaceholderText = if showSearch then "Search" else "Nothing to search here"
+	searchBox.PlaceholderText = if showSearch then "Search" else "No search here"
 	searchRow:SetAttribute("Off", not showSearch)
 	local glass = searchRow:FindFirstChild("Glass")
 	if glass then
@@ -1548,7 +1567,7 @@ local function stopSlider(
 		Radius = "pill",
 	})
 	Kit.rim(track, T.Line, 1)
-	local fill = Kit.frame({ Name = "Fill", Parent = track, Size = UDim2.fromScale(0, 1), Color = T.Yellow, Radius = "pill" })
+	-- no fill up to the knob: the stops are kinds, not amounts, and a fill would read as "more"
 	for i = 1, count do
 		local t = (i - 1) / (count - 1)
 		local stop = Kit.disc({
@@ -1561,15 +1580,21 @@ local function stopSlider(
 			ZIndex = 2,
 		})
 		stop:SetAttribute("Stop", nameOf(i))
+		-- its name under it (the two at the ends kept inside the row)
+		local ends = if i == 1
+			then Enum.TextXAlignment.Left
+			elseif i == count then Enum.TextXAlignment.Right
+			else Enum.TextXAlignment.Center
+		local nameX = if i == 1 then -inset + 2 elseif i == count then -88 + inset - 2 else -45
 		Kit.text(nameOf(i), {
 			Name = "StopName",
 			Parent = holder,
-			Size = UDim2.fromOffset(90, 16),
-			Position = UDim2.new(t, inset - 45 - math.floor(inset * 2 * t), 0, y + 14),
+			Size = UDim2.fromOffset(if i == 1 or i == count then 88 else 90, 16),
+			Position = UDim2.new(t, inset + nameX - math.floor(inset * 2 * t), 0, y + 14),
 			TextSize = 12,
 			Font = Kit.Fonts.Bold,
 			Color = T.InkSoft,
-			AlignX = Enum.TextXAlignment.Center,
+			AlignX = ends,
 			Wrap = false,
 		})
 	end
@@ -1597,7 +1622,6 @@ local function stopSlider(
 		current = i
 		local t = (i - 1) / (count - 1)
 		knob.Position = UDim2.new(t, inset - math.floor(inset * 2 * t), 0, y)
-		fill.Size = UDim2.fromScale(t, 1)
 		holder:SetAttribute("Picked", i)
 	end
 	dragAlong(hit, function(t)
@@ -1674,7 +1698,6 @@ local function paletteBar(holder: Frame, size: UDim2): { set: (number) -> (), on
 	return api
 end
 
-
 local function buildProfilePage()
 	for _, c in profilePage:GetChildren() do
 		if c:IsA("GuiObject") then
@@ -1713,7 +1736,7 @@ local function buildProfilePage()
 	-- One track with a stop for each personality (the user: "the personality should be a
 	-- slider"): the one picked big over it with its line under it in its own colour; click or tap
 	-- a stop, or drag the knob along.
-	local pers = Kit.box({ Name = "Personality", Parent = scroll, Size = UDim2.new(1, -10, 0, 108), LayoutOrder = 4 })
+	local pers = Kit.box({ Name = "Personality", Parent = scroll, Size = UDim2.new(1, -10, 0, 104), LayoutOrder = 4 })
 	local persName = Kit.title("", {
 		Name = "Picked",
 		Parent = pers,
@@ -1730,7 +1753,7 @@ local function buildProfilePage()
 		Wrap = false,
 	})
 	local list = Personalities.list
-	local stops = stopSlider(pers, #list, 62, function(i)
+	local stops = stopSlider(pers, #list, 72, function(i)
 		return Colors.fromHex(list[i].color)
 	end, function(i)
 		return list[i].name
@@ -1763,7 +1786,7 @@ local function buildProfilePage()
 		Parent = colours,
 		Size = UDim2.fromOffset(40, 40),
 		Position = UDim2.new(1, -40, 0, 0),
-		Color = studioColor(),
+		Color = T.Blue,
 		Radius = 10,
 	})
 	Kit.rim(chip, T.Line, 1.5)
@@ -1777,6 +1800,7 @@ local function buildProfilePage()
 		paintStudio()
 	end
 	bar.set(index)
+	chip.BackgroundColor3 = Colors.fromHex(Palette.Colors[index])
 	heading("Birthday", 7)
 	local seasons = {}
 	for i, name in Schema.Seasons do
@@ -2389,6 +2413,7 @@ local function build()
 	})
 	searchBox.Position = UDim2.fromOffset(38, 0)
 	searchBox.BackgroundTransparency = 1
+	searchBox.ClipsDescendants = true
 	searchBox.ZIndex = 2
 	local boxPad = searchBox:FindFirstChildOfClass("UIPadding")
 	if boxPad then
@@ -2412,17 +2437,17 @@ local function build()
 		Position = UDim2.fromOffset(SEARCH_W + 12, 0),
 	})
 	local viewW = sectionsW - ARROW * 2 - 8
-	local sections = Kit.new("ScrollingFrame", {
+	-- (a window onto the row, which slides along behind it)
+	local sections = Kit.new("Frame", {
 		Name = "Sections",
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
+		ClipsDescendants = true,
 		Size = UDim2.fromOffset(viewW, SECTION_H),
 		Position = UDim2.fromOffset(ARROW + 4, 0),
-		ScrollingDirection = Enum.ScrollingDirection.X,
-		ScrollBarThickness = 0,
-		ElasticBehavior = Enum.ElasticBehavior.Never,
 		Parent = strip,
 	})
+	local slide = Kit.box({ Name = "Row", Parent = sections, Size = UDim2.fromScale(1, 1) })
 	local words: { TextButton } = {}
 	local wordAt: { number } = {}
 	local wordW: { number } = {}
@@ -2440,7 +2465,7 @@ local function build()
 			BackgroundTransparency = 1,
 			Size = UDim2.fromOffset(w, SECTION_H),
 			Position = UDim2.fromOffset(x, 0),
-			Parent = sections,
+			Parent = slide,
 		})
 		-- the line under the one you are in
 		Kit.frame({
@@ -2460,7 +2485,7 @@ local function build()
 		x += w
 	end
 	local total = x
-	sections.CanvasSize = UDim2.fromOffset(total, 0)
+	slide.Size = UDim2.fromOffset(total, SECTION_H)
 	-- the first word in view; the row starts at it
 	local first = 1
 	local function lastShown(from: number): number
@@ -2482,7 +2507,9 @@ local function build()
 	local back, ahead
 	local function scrollTo(i: number)
 		first = math.clamp(i, 1, maxFirst)
-		sections.CanvasPosition = Vector2.new(wordAt[first], 0)
+		TweenService:Create(slide, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Position = UDim2.fromOffset(-wordAt[first], 0),
+		}):Play()
 		sections:SetAttribute("First", first)
 		sections:SetAttribute("LastShown", lastShown(first))
 		-- an arrow is dim when there is nothing more that way

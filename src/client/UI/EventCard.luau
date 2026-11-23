@@ -1,16 +1,15 @@
 -- A random event as it plays out in town. The user: "in the case of random villager text events,
 -- make this only happen when the player chooses to watch". So an event never takes the screen by
 -- itself: a small prompt comes up at the bottom of the screen with the event's name and a Watch
--- button, and the event goes on in the town as it would anyway. Pressing Watch points the camera
--- at it and puts up the dialogue scene (UI/Dialogue): the villagers in it slide in, and the line
--- being said is typed into the textbox, then the lines after it, with the villagers' names picked
--- out in colour. When the event asks what you do, the prompt says so ("They want your say"),
--- Watch becomes Answer and a thin bar runs down the time left; the answers are pills in the
--- scene's textbox. Nobody is made to answer: the server picks the gentle option when the time is
--- up. Stop (or the event ending) takes the scene down and gives the camera back.
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+-- button, and the event goes on in the town as it would anyway. Pressing Watch puts up the
+-- dialogue scene (UI/Dialogue): the villagers in it slide in, and the line being said is typed
+-- into the textbox, then the lines after it, with the villagers' names picked out in colour. The
+-- camera stays where the player has it (it used to swing round to the event; the user: "no need
+-- for the camera to jump after clicking on watch, just make the characters appear and the
+-- dialogue speech appears"). When the event asks what you do, the prompt says so ("They want
+-- your say"), Watch becomes Answer and a thin bar runs down the time left; the answers are pills
+-- in the scene's textbox. Nobody is made to answer: the server picks the gentle option when the
+-- time is up. Stop (or the event ending) takes the scene down.
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Remotes = require(Shared.Net.Remotes)
@@ -25,7 +24,6 @@ local State = require(script.Parent.Parent.Controllers.State)
 local EventCard = {}
 
 local T = Kit.Theme
-local player = Players.LocalPlayer
 
 local holder: Frame -- the prompt
 local titleLabel: TextLabel
@@ -37,8 +35,6 @@ local scene: any = nil -- the dialogue scene, while you watch
 local current: any = nil
 local queue: { any } = {}
 local playing = false
-local watching = false -- the camera is on the event
-local watchConn: RBXScriptConnection? = nil
 local hidden = false -- while you build or make a villager, the prompt and the scene step aside
 local lineNow: any = nil -- the line being said right now: { who, text }
 local asking = false -- the event is waiting for your answer
@@ -70,52 +66,6 @@ local function richify(text: string): string
 		out = out:gsub(pattern, replacement)
 	end
 	return out
-end
-
--- The camera ---------------------------------------------------------------------------------------------
-
-local function stopCamera()
-	watching = false
-	if watchConn then
-		watchConn:Disconnect()
-		watchConn = nil
-	end
-	local cam = workspace.CurrentCamera
-	local BuildMode = require(script.Parent.Parent.Build.BuildMode)
-	if cam and not BuildMode.isActive() then
-		cam.CameraType = Enum.CameraType.Custom
-		local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-		if hum then
-			cam.CameraSubject = hum
-		end
-	end
-end
-
-local function startCamera()
-	local focus = current and current.focus
-	if not focus or not focus.Parent then
-		return
-	end
-	local BuildMode = require(script.Parent.Parent.Build.BuildMode)
-	if BuildMode.isActive() then
-		return
-	end
-	watching = true
-	local cam = workspace.CurrentCamera
-	cam.CameraType = Enum.CameraType.Scriptable
-	local angle = 0
-	watchConn = RunService.RenderStepped:Connect(function(dt)
-		if not focus.Parent then
-			stopCamera()
-			return
-		end
-		angle += dt * 0.15
-		local root = focus:FindFirstChild("HumanoidRootPart")
-		local center = if root and root:IsA("BasePart") then root.Position else focus:GetPivot().Position
-		local offset = Vector3.new(math.sin(angle) * 16, 8, math.cos(angle) * 16)
-		cam.CFrame =
-			cam.CFrame:Lerp(CFrame.lookAt(center + offset, center + Vector3.new(0, 1.5, 0)), math.min(1, dt * 4))
-	end)
 end
 
 -- The prompt ---------------------------------------------------------------------------------------------
@@ -351,14 +301,11 @@ local function closeScene(now: boolean?)
 		typing += 1
 		s.close(now)
 	end
-	if watching then
-		stopCamera()
-	end
 	updatePrompt()
 end
 
--- Puts the scene up: the camera goes to the event, the villagers slide in and the line being said
--- now is typed out (the lines before it are not said again).
+-- Puts the scene up: the villagers slide in and the line being said now is typed out (the lines
+-- before it are not said again). The camera is left alone.
 local function openScene()
 	if scene or not current or hidden then
 		return
@@ -381,7 +328,6 @@ local function openScene()
 		closeScene()
 	end)
 	updatePrompt()
-	startCamera()
 	if asking then
 		bring(lineNow)
 		showAnswers()

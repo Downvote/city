@@ -956,24 +956,31 @@ def main():
     ignore = P(root, "IgnoreGuiInset", False)
     top = 0 if ignore else inset
     gw, gh = vw / scale, (vh - top) / scale
+    # The interface is laid out under the strip Roblox keeps at the top, but that strip is
+    # see-through in the game and an object placed above y = 0 shows in it. So the picture is the
+    # whole screen, the layout moved down by the strip. (It used to be painted black, which hid a
+    # clock slab that ran up through it: "the weather tab is stretched".)
+    off = top / scale
     for c in gui_children(root):
         if P(c, "Visible", True):
             sw, sh = measure(c, gw, gh)
             pos = P(c, "Position", [0, 0, 0, 0])
             anc = P(c, "AnchorPoint", [0, 0])
-            place(c, udim(pos[:2], gw) - anc[0] * sw, udim(pos[2:], gh) - anc[1] * sh, sw, sh)
+            place(c, udim(pos[:2], gw) - anc[0] * sw, off + udim(pos[2:], gh) - anc[1] * sh, sw, sh)
     ss = args.ss
-    cv = Canvas(vw, vh - top, ss, scale)
+    cv = Canvas(vw, vh, ss, scale)
     kids = sorted(enumerate(gui_children(root)), key=lambda e: (P(e[1], "ZIndex", 1), e[0]))
     for _, c in kids:
         draw_node(cv, c, None)
     bg = backdrop(vw * ss, vh * ss, args.bg)
-    # the Roblox top bar
-    d = ImageDraw.Draw(bg)
-    d.rectangle([0, 0, vw * ss, top * ss], fill=(0, 0, 0, 0))
-    for i, cx in enumerate([16, 60]):
-        d.rounded_rectangle([cx * ss, 4 * ss, (cx + 36) * ss, 32 * ss], radius=10 * ss, fill=(20, 20, 24, 150))
-    bg.alpha_composite(cv.im, (0, top * ss))
+    bg.alpha_composite(cv.im, (0, 0))
+    # Roblox's own two buttons at the left of its top strip
+    if top > 0:
+        chrome = Image.new("RGBA", bg.size, (0, 0, 0, 0))
+        d = ImageDraw.Draw(chrome)
+        for cx in [16, 60]:
+            d.rounded_rectangle([cx * ss, 4 * ss, (cx + 36) * ss, 32 * ss], radius=10 * ss, fill=(20, 20, 24, 150))
+        bg.alpha_composite(chrome)
     out = bg if args.keep else bg.resize((vw, vh), Image.LANCZOS)
     out.convert("RGB").save(args.out)
     print("wrote", args.out)

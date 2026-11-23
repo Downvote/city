@@ -369,10 +369,10 @@ function Kit.slant(face: GuiObject, height: number?, outside: boolean?, flip: bo
 	return cap
 end
 
--- The small things that make a painted slab look made: a thin line just inside its edge, and a
--- tone of halftone dots that starts at one end of the slab, cut to its shape, and thins out
--- toward the middle. opts: Line (the line's colour, white by default; false for none), LineAlpha
--- (how see-through, 0.84), Tone (the dots' colour; false for none), ToneAlpha (0.9), Side
+-- The small thing that makes a painted slab look made: a tone of halftone dots that starts at one
+-- end of the slab, cut to its shape, and thins out toward the middle. (A thin line ran just
+-- inside the slab's edge too. The user, of the stats strip: "remove the borders". So no leaning
+-- slab has one now.) opts: Tone (the dots' colour; false for none), ToneAlpha (0.9), Side
 -- ("right" or "left": the end the dots start from), ToneWidth (how far in they reach). Does
 -- nothing where the slab isn't painted.
 function Kit.detail(face: GuiObject, opts: { [string]: any }?)
@@ -388,15 +388,6 @@ function Kit.detail(face: GuiObject, opts: { [string]: any }?)
 		local old = face:FindFirstChild(name)
 		if old then
 			old:Destroy()
-		end
-	end
-	if o.Line ~= false and h >= 22 then
-		local pic = Skin.slab(h, cap, flip, point, 2.5, 1)
-		if pic then
-			local line = slabLayer(face, "Line", pic, cap, -2)
-			line.ImageColor3 = if typeof(o.Line) == "Color3" then o.Line else Color3.new(1, 1, 1)
-			line.ImageTransparency = o.LineAlpha or 0.84
-			line:SetAttribute("Tinted", true)
 		end
 	end
 	if o.Tone ~= false then
@@ -2148,8 +2139,7 @@ function Kit.darkPill(props: { [string]: any }?): Frame
 	-- (Flip leans it the other way: "\\" in place of "/")
 	local h = if p.Size then (p.Size :: UDim2).Y.Offset else 40
 	Kit.slant(f, h, true, p.Flip == true)
-	-- a thin line inside its edge, and dots growing toward one end (Tone = false for none,
-	-- Side = "left" to turn them round)
+	-- dots growing toward one end (Tone = false for none, Side = "left" to turn them round)
 	local w = if p.Size then (p.Size :: UDim2).X.Offset else 0
 	Kit.detail(f, {
 		Tone = if p.Tone == false then false else nil,
@@ -2629,9 +2619,9 @@ function Kit.bigButton(text: string, icon: string, props: { [string]: any }?, on
 	})
 	local core = face:FindFirstChild("Core", true)
 	if core and core:IsA("Frame") then
-		-- shaded across, a pale line inside its edge and dots toward its far end
+		-- shaded across, with dots toward its far end
 		Kit.shade(core, color)
-		Kit.detail(core, p.Detail or { LineAlpha = 0.55, Tone = T.Dark, ToneAlpha = 0.86, ToneWidth = 150 })
+		Kit.detail(core, p.Detail or { Tone = T.Dark, ToneAlpha = 0.86, ToneWidth = 150 })
 	end
 	local h = size.Y.Offset
 	local ipx = math.floor(h * 0.7)
@@ -3059,7 +3049,7 @@ function Kit.backButton(props: { [string]: any }, onClick: (() -> ())?): TextBut
 	})
 	Kit.slant(face, h)
 	Kit.shade(face)
-	Kit.detail(face, { Line = T.Dark, LineAlpha = 0.45, Tone = T.Dark, ToneAlpha = 0.88, ToneWidth = 34 })
+	Kit.detail(face, { Tone = T.Dark, ToneAlpha = 0.88, ToneWidth = 34 })
 	local ipx = math.floor(h * 0.56)
 	Icons.make(props.Icon or "back", ipx, {
 		Name = "IconArt",

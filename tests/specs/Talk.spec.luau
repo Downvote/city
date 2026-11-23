@@ -87,8 +87,8 @@ describe("Talk", function()
 		end
 		expect(snapshot(p, "v1")).toEqual(before)
 		expect(snapshot(p, "v2")).toEqual(other)
-		-- and a day of chats is worth less than a day of the snacks they love
-		expect(K.ChatsPerDay * K.ChatHearts < L.FeedsPerDay * L.FavHearts).toBeTruthy()
+		-- and a day of chats is worth less than one granted wish
+		expect(K.ChatsPerDay * K.ChatHearts < L.WishHearts).toBeTruthy()
 		expect(K.ChatsPerDay * K.ChatHearts < Life.heartNeed(1)).toBeTruthy()
 	end)
 

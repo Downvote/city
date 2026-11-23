@@ -315,13 +315,16 @@ function Hud.start()
 	-- the clock, top right ---------------------------------------------------------------------------------
 	-- The user: "these three should be coming out of the corners of the screen instead of floating.
 	-- vertically flip the paralleograms of the weather and one of the 4 icons". The clock's glass
-	-- runs up into the strip Roblox keeps at the top and off the right edge, leaning the other way
-	-- from the rest, so it hangs from the corner; what it shows sits in the screen as before.
+	-- hangs from the very corner of the screen, in the free end of the strip Roblox keeps at the
+	-- top, leaning the other way from the rest and running off the top and the right edge. What it
+	-- shows sits up there in it. (The glass used to run from the corner down through that strip to
+	-- a clock placed under it, twice as tall as what it held: "the weather tab is stretched".)
 	local inset = Kit.topInset()
+	local CLOCK_OVER = 10 -- how far the glass runs off the top, so its upper points are out of sight
 	local clockTab = Kit.darkPill({
 		Name = "ClockTab",
-		Size = UDim2.fromOffset(250, 72 + inset),
-		Position = UDim2.new(1, 0, 0, -inset),
+		Size = UDim2.fromOffset(250, 72 + CLOCK_OVER),
+		Position = UDim2.new(1, 0, 0, -inset - CLOCK_OVER),
 		AnchorPoint = Vector2.new(1, 0),
 		Flip = true,
 		Side = "left",
@@ -330,7 +333,7 @@ function Hud.start()
 	local clock = Kit.box({
 		Name = "Clock",
 		Size = UDim2.fromOffset(226, 64),
-		Position = UDim2.new(1, -10, 0, 4),
+		Position = UDim2.new(1, -10, 0, 4 - inset),
 		AnchorPoint = Vector2.new(1, 0),
 		Parent = hud,
 	})
@@ -341,7 +344,8 @@ function Hud.start()
 	local corner = Kit.box({
 		Name = "Corner",
 		Size = UDim2.fromOffset(248, 76),
-		Position = UDim2.new(1, -14, 0, 88),
+		-- under the clock's glass, which ends 72 from the top of the screen
+		Position = UDim2.new(1, -14, 0, 88 - inset),
 		AnchorPoint = Vector2.new(1, 0),
 		Parent = hud,
 	})
@@ -536,8 +540,8 @@ function Hud.start()
 	local barCore = bar:FindFirstChild("Core", true)
 	if barCore and barCore:IsA("Frame") then
 		Kit.shade(barCore, T.Paper)
-		-- a thin line inside its edge and a run of dots toward its far end
-		Kit.detail(barCore, { Line = T.Ink, LineAlpha = 0.86, Tone = T.Ink, ToneAlpha = 0.92, ToneWidth = 96 })
+		-- a run of dots toward its far end
+		Kit.detail(barCore, { Tone = T.Ink, ToneAlpha = 0.92, ToneWidth = 96 })
 	end
 	local _ = barInside
 	-- the tiles start at the left edge of the screen
@@ -587,7 +591,7 @@ function Hud.start()
 		Color = T.Paper,
 		TextColor = T.Ink,
 		IconColor = T.Yellow,
-		Detail = { Line = T.Ink, LineAlpha = 0.86, Tone = T.Ink, ToneAlpha = 0.92, Side = "left", ToneWidth = 96 },
+		Detail = { Tone = T.Ink, ToneAlpha = 0.92, Side = "left", ToneWidth = 96 },
 	}, function()
 		Hud.closeAll()
 		BuildMode.enter()
