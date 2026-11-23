@@ -835,11 +835,17 @@ None of that game's streets, shops, signs, gate or art: Maplewick's are its own.
   solid modelling when it starts and then copies wherever it is used. So a building can carry many times the
   detail for the same number of parts. Where merging isn't possible the same shapes are built as plain parts and
   look the same.
-- **Our own materials.** Walls, roofs and ground take painted textures of our own (`scripts/gen_textures.py`):
-  panelled concrete, stucco, brick, small facade tiles, checker floor tiles, corrugated sheet, shutter slats,
-  timber slats, barrel roof tiles, paving slabs, street asphalt, awning canvas. A part asks for one by name
-  (`"Concrete:Panel"`). They show once their pictures are uploaded and their ids are in `Data/TextureIds`; until
-  then the part shows Roblox's plain material.
+- **Materials with a look.** Walls, roofs and ground can ask for one of thirteen looks by name
+  (`"Concrete:Panel"`): panelled concrete, stucco, brick, small facade tiles, checker floor tiles, corrugated
+  sheet, shutter slats, timber slats, barrel roof tiles, paving slabs, street asphalt, awning canvas, layered
+  rock. We painted a picture of our own for each (`scripts/gen_textures.py --looks`, in `art/textures`). Roblox
+  only shows a picture that has been uploaded to the game's owner, and asked how to get them in, the user chose:
+
+  > use roblox library images that are similar
+
+  So each look wears a Creator Store picture picked to match ours as nearly as the library allows (ids and
+  credits in `Data/TextureIds`), the way the base materials already do. A look with no close match shows its
+  plain material. Our painted set stays in the repository and can replace them later with one upload.
 - **The light.** Roblox still runs no shaders of our own, so this is again the sun, the air and the effects over
   the picture. The sun rides lower all day (the island sits further north: a latitude of 54), so shadows are long;
   their edge is a touch softer than the hard cel edge it had, and the shade is lifted a little by light off the
