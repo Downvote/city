@@ -40,7 +40,8 @@ The contract between the parts of the game. Update it with every change to an AP
     `Slide` or raised by `Lift`, all measured in that doorway).
 - `Data/`: `Palette` (paint swatches, materials and the ready-made finishes Build mode shows as tiles), `Personalities`, `Foods`, `Items`, `Jobs`, `Events` (the event list), `Town` (map
   layout and plot frames, the road network `Roads` as `{ x1, z1, x2, z2, half width, sidewalk }`, `Districts`,
-  `CreatorSpot`), `TownMap` (the island as parts: grass, beach, shallows, deep sea floor, see-through
+  `CreatorSpot` and `CreatorHeight`: the creator's stage floats that high over its meadow, out of sight of the
+  town), `TownMap` (the island as parts: grass, beach, shallows, deep sea floor, see-through
   water and invisible walls at the shallows' edge; the streets, sidewalks, square and market; and where every
   building, palm, parasol, islet, the marina and piece of street furniture stands; the
   ground slabs are all SmoothPlastic for a clean flat look), `TownModels` (plaza buildings), `AmbientModels` (cars, the bus, birds,
@@ -122,6 +123,13 @@ stats = { events, fed, made, earned, paydays, wishes, hearts, couples, partners 
 
 `Schema.migrate` fills in anything missing and drops anything broken, so old saves load.
 
+A villager also carries `chatDay?` and `chats?` (the day index of their last chat with the owner and how many
+that day, kept like `feedDay` and `feeds`; `Sim/Talk` reads and writes them).
+
+`settings` is `Schema.Settings`: `music`, `sfx` (0 to 1), `bubbles`, `eventCamera` (true or false) and `theme`
+("dark" or "light", the interface's look). `SettingSet(key, value)` takes a value of the default's type; a number
+is clamped to 0..1 and a word must be one of `Schema.SettingChoices[key]`.
+
 ## Server services
 
 Start order (`Main.server`): every service's `init`, then every `start`, and only then `Data.open()`, which loads
@@ -140,7 +148,7 @@ The creator's remotes: `CreatorPeople` (the people here and your friends, and th
 | `Plots` | Hands out plots, draws the saved build and the owned land, sells more land (`PlotExpand`). |
 | `Build` | `BuildApply`, `BuildUndo`, `BuildRedo`: checks requests, charges or refunds, keeps history, redraws, syncs the plan to its owner (`PlanSync`). Fires `Changed`. A batch is up to 320 requests (a whole ready-made building); an item's `wall = "@n"` means the wall made by the batch's n-th request. `Build.prepare` is exported for the specs. |
 | `Avatar` | The creator: a private stage and mannequin per player, catalog search fallback, bundles, copying users, outfits, asset checks, the text filter. `toDescription`, `buildModel` for everyone else. |
-| `Villagers` | Creating, editing, moving out, beds, jobs, feeding. Spawns NPCs and runs their routine: sleep at night, work 9 to 5, wander, sit, chat, visit shops. Payday at 5 PM. |
+| `Villagers` | Creating, editing, moving out, beds, jobs, feeding. Spawns NPCs and runs their routine: sleep at night, work 9 to 5, wander, sit, chat, visit shops. Payday at 5 PM. Talking: `Villagers.spawn` puts `Npc.talkPrompt(name)` on each body (a ProximityPrompt `TalkPrompt` on the HumanoidRootPart: E, held `Tuning.Talk.HoldSeconds`, from `Distance` studs, no `Opens` attribute) and `setControl` switches it with `Npc.setTalkable(Talk.free(mode))`; it is off while they sleep. `Villagers.talkedTo(who, owner, vid)` answers it: it refuses a sleeper, someone in an event or away, a player more than `Range` studs off and a second line within `Cooldown`; then holds them (`setControl(owner, vid, "talk")` for `StaySeconds`, `VisitorSeconds` for a visitor, or until the player walks off), turns them with `Npc.face`, and has them say `Talk.line`. The owner also gets `Talk.chat`'s gain and the `Talk` event. |
 | `Events` | Picks and plays random events, waits for choices, applies effects, room request rewards, small friendship gains from chats, parties. |
 | `Shop` | Food, medicine and party cakes, cheaper while the merchant is in town. |
 
@@ -166,10 +174,12 @@ Functions (client asks, server answers): `GetState`, `BuildApply`, `BuildUndo`, 
 `VillagerCreate`, `VillagerUpdate`, `VillagerRemove`, `VillagerBed`, `VillagerJob`, `VillagerFeed`,
 `VillagerFocus`, `OutfitSave`, `OutfitDelete`, `EventChoose`, `ShopBuy`, `DailyClaim`, `PlotExpand`, `SettingSet`,
 `TutorialStep`, `VisitPlot`, `WishGrant` (`vid, "friend" | "cheer", otherVid?`), `HeartReward` (`choice`),
-`GoalClaim` (`goalId`), `PlaceFound` (`placeId`), `Travel` (`placeId`).
+`GoalClaim` (`goalId`), `PlaceFound` (`placeId`), `Travel` (`placeId`), `VillagerTalk` (`vid, bye?` ->
+`ok, { vid, text, note, model }` or an error: the talk card's Chat, or its Bye).
 
 Events (server pushes): `State` (patches of the client state), `PlanSync` (`{ full }` or `{ ops }`), `Notify`
-(`text, kind`; kind `action` carries `open:creator:<vid>`), `EventShow`, `EventLine`, `EventEnd`, `Payday`, `Say`.
+(`text, kind`; kind `action` carries `open:creator:<vid>`), `EventShow`, `EventLine`, `EventEnd`, `Payday`, `Say`,
+`Talk` (`{ vid, text, note, model }`: to the town's owner, what their villager said when they held E on them).
 
 Every handler checks its arguments: types, ranges, ownership. Build requests go through `Plan.validate` on the
 server, whatever the client did.
@@ -202,8 +212,13 @@ clipping (`tools/preview/ui_render.py`).
   wedges. `Kit.cutInto(holder, colour, cut)` lays a rectangle with its top left and bottom right corners cut
   under what is in `holder` (`Kit.frame({ Cut = n })` does it; `Kit.paintCut`). `Kit.stripes(props)` is a block
   of slanted stripes, `Kit.tile(icon, caption, props, onClick)` an icon over its name on a small leaning slab,
-  `Kit.motion(parent, accent, seed)` the shapes drifting behind a menu (one Heartbeat connection, dropped when
-  the layer is destroyed). Buttons (`Kit.button`), `Kit.bigButton`, `Kit.darkPill`, `Kit.ribbon`, `Kit.choice`,
+  `Kit.motion(parent, accent, seed, opts)` the shapes drifting behind a menu (one Heartbeat connection, dropped
+  when the layer is destroyed; `opts`: `W`, `H`, `Count`, `Faint`, `Second`, `Sizes`, `Speed`, and `Bands` for
+  long leaning strips of the colour that drift sideways). `Kit.backdrop(parent, accent, seed, opts)` is a whole
+  backdrop to stand somebody in front of: a wash of the colour, three bands and the shapes, in a CanvasGroup named
+  `Backdrop` so the turned shapes are cut to its box (`Plain = true` makes it a plain frame, for a SurfaceGui). It
+  is marked `KeepColors`. Whoever stands on it goes beside it, never inside: a ViewportFrame inside a CanvasGroup
+  comes out pale. Buttons (`Kit.button`), `Kit.bigButton`, `Kit.darkPill`, `Kit.ribbon`, `Kit.choice`,
   `Kit.row`, `Kit.segments` and `Kit.backButton` all lean; `Kit.pad` keeps a leaning face inside its button.
   The previews draw a wedge as its triangle (`ui_render.py`).
 - `UI/Kit` menus: `Kit.panel(title, size, onClose, icon, color, opts)` is a full menu (pass `Kit.MenuSize`): a
@@ -213,8 +228,28 @@ clipping (`tools/preview/ui_render.py`).
   `Kit.row(props, onClick)` is a pill row (Title, Sub, Marker, MarkerColor, Right, LeftSpace, RightSpace, Sunk,
   Selected) and returns the row and a box filling it; `Kit.setRowSelected(row, on)` turns it yellow with dark
   words. `Kit.setButtonColor` recolours an icon beside the words too. `UI/ModelPreview.fromModel(model,
-  { Stand = true })` is the whole villager fitted to a tall frame (the viewport is named `Avatar`).
-- `UI/Kit`: theme and helpers. The theme is dark (`Kit.Theme`; the names are from the light look before it):
+  { Stand = true })` is the whole villager fitted to a tall frame (the viewport is named `Avatar`): the copy is
+  stood upright at the origin with every Motor6D's Transform cleared (a sleeping villager lies on their back),
+  framed from the feet to the top of the head, and plays its idle animation unless `Still = true`. With
+  `Shadow = true` it returns a second viewport, `AvatarShadow`: the same copy again, `ImageColor3` black and see
+  through, a little bigger and off to the right, playing the same animation.
+- `UI/Kit` looks: `Kit.Themes.dark` and `Kit.Themes.light` hold the tokens that differ (`Black`, the colour a
+  menu covers the screen with, and the surfaces and words: `PaperDark`, `Cream`, `Paper`, `Card`, `Picture`,
+  `Line`, `Ink`, `InkSoft`). `Kit.Theme` holds the one that is on (`Kit.ThemeName`); `Kit.setTheme(name)` swaps
+  the values into it in place, sets `Icons.Glyph` and `Icons.Hole`, repaints every ScreenGui and SurfaceGui beside
+  Kit's own, and calls whoever asked with `Kit.onTheme(fn)`. The repaint maps each colour: one of the old look's
+  tokens becomes the new look's; a colour made by `Kit.deep` is made again; a grey nobody named has its lightness
+  turned over (every channel moved by the same amount, so the way back is exact); a colour with some life in it
+  is left alone. It skips anything named `Swatch`, a ViewportFrame, and whatever is under something with the
+  `KeepColors` attribute (`Kit.darkPill` and `Kit.roundButton` set it: the glass is dark in both looks). No two
+  tokens of a look may be the same colour. `Kit.tint(colour)` is an accent for words on a surface: itself in the
+  dark look, a shade deeper in the light one; `Kit.text` and `Kit.title` take it as `Tint` and `Kit.row` uses it
+  for `RightColor`, and those labels carry a `Tint` attribute so a switch makes them again. `UI/Theme` is the
+  player's choice: `Theme.toggle()`, `Theme.set(name, save)`, `Theme.icon()` ("sun" or "moon": the look you
+  would get), `Theme.start()` (puts the saved one on when the settings arrive). It saves with
+  `SettingSet("theme", name)`. The creator is built once and kept, so it listens with `Kit.onTheme` and builds
+  itself again where it was.
+- `UI/Kit`: theme and helpers. The theme opens dark (`Kit.Theme`; the names are from the light look before it):
   surfaces `PaperDark` (wells, tracks, tabs not picked), `Cream` (big panels), `Paper` (cards, buttons, bars over
   the 3D view), `Card` (a row or tile on a panel), `Picture` (the tile behind a catalog picture or a face), `Line`;
   words `Ink` and `InkSoft` on those surfaces, `White` on a coloured button, `Dark` for outlines round letters
@@ -222,7 +257,10 @@ clipping (`tools/preview/ui_render.py`).
   is an accent sunk into the panel colour (header bars, `ribbon`). A colour chip to pick from is named `Swatch`
   (`Kit.swatch` does it), which is what lets it be light. `UI/Icons` has `Icons.Glyph` (light) and `Icons.Hole`
   (the dark card colour) as its defaults. `tools/preview/audit.sh` dumps every screen and
-  `tools/preview/ui_audit.py` fails on a light surface or on words that don't stand out; `scripts/check.sh` runs it.
+  `tools/preview/ui_audit.py` fails on a light surface or on words that don't stand out, then dumps them all
+  again in the light look (`ui_audit.py --light`: no surface left in one of the dark look's colours);
+  `scripts/check.sh` runs it. Any preview scene takes a prefix: `light:<scene>` builds it light,
+  `relight:<scene>` builds it dark and then switches.
   Helpers (`Kit.corner(inst, px | "pill" | "circle")`; frames are
   rounded unless `Radius = false`; `Kit.stroke` in the text colour comes out thin and see through). The pieces
   below kept their names from the storybook look: `button` (a square face on a darker block it presses into, outlined
@@ -286,9 +324,30 @@ clipping (`tools/preview/ui_render.py`).
   a seam. Flat icons (the default) draw every piece in one colour and cut details out in `Hole`; a shape marked
   `dent = true` is drawn in `Icons.dentOf(colour)` instead, the same colour a step darker (the coin's middle).
   `Icons.names()` lists them. `UI/Toasts`, `UI/ModelPreview` (3D thumbnails in ViewportFrames).
+- `Sim/Talk` (shared, numbers in `Tuning.Talk`): `Talk.free(mode)` says whether a villager can be stopped (their
+  own day, a word with a neighbour, a talk already going; not an event or an outing). `Talk.line(profile, vid,
+  rng, ctx)` is what they say back. `Talk.chat(profile, vid, day, rng, notices)` is what a chat with the town's
+  owner does: a wish for cheering up is granted (`Life.grantWish`), and the first `ChatsPerDay` (3) a day for each
+  villager give `ChatMood` (2) and `ChatHearts` (1, through `Life.addHearts`); it returns `{ counted, hearts,
+  mood, left, wish, coins }`. `Talk.note` words that for the card. `UI/TalkCard` (started from `Main.client`) is
+  the card: it opens on the `Talk` event unless an event is being told (`EventCard.isPlaying()`), sits where the
+  event's dialogue card does, offers Chat (`VillagerTalk`), Profile (`Hud.open("Residents", vid)`) and Bye, and
+  closes on Bye, walking out of `Range`, waiting too long, a menu, Build mode, the creator or an event.
 - `UI/Hud`: stat pills, the level card, the clock, the icon dock and the daily gift; opens one panel at a time:
   `Creator`, `Residents`, `CityPanel`, `ShopPanel`, `News`, `Welcome`. `EventCard` (the dialogue box) and `Weather`
-  run all the time. The HUD and the event box step aside in Build mode and while the creator is open.
+  run all the time. The HUD and the event box step aside in Build mode and while the creator is open. The round
+  buttons under the clock start with `Look`, which calls `Theme.toggle()` and is drawn again after a switch.
+- `UI/Creator`'s view: a Scriptable camera with a 40 degree lens that orbits the mannequin at `zoom` studs
+  (`ZOOM_FACE` 3.1, `ZOOM_HOME` 7.2 where it opens, `ZOOM_WHOLE` 12.5; wheel and `TouchPinch` between 2.6 and 20;
+  the Zoom tool steps through the three) and looks at a height `focusAt(zoom)` gives. It stands off to one side so
+  the mannequin is in the left half. The studio is client side only: a part `CreatorBackdrop` set square to the
+  camera 9 studs behind the mannequin and sized to fill the view every frame, a SurfaceGui on it (LightInfluence
+  0, under PlayerGui, canvas kept the screen's shape) holding `Kit.backdrop` in the villager's favourite colour
+  and a ViewportFrame `Shade`, and a part `CreatorLamp` with a PointLight by the camera (brighter at night). The
+  shade is the mannequin's shadow: a copy of the mannequin (found under the `CreatorStage` model whose `Origin`
+  attribute is this stage's, copied again whenever its shape changes) seen through the same camera, all black,
+  its Motor6D Transforms and root copied from the real one every frame. `stopCamera` takes all of it down and
+  puts the field of view back.
 - `Build/BuildMode` (tools, snapping, ghosts, picking, sending): the cursor label and the selection highlight live in
   their own `BuildMarkers` folder (the grid and ghost folders are cleared all the time; clearing them used to destroy
   the label and break every tool). Input checks `Kit.overUI` instead of trusting
@@ -382,4 +441,5 @@ clipping (`tools/preview/ui_render.py`).
   manage), reads each decal's image id back and writes `Data/TextureIds`. `scripts/sync_materials.py` writes the
   uploaded ones into `default.project.json` (MaterialVariants under MaterialService and its `<Material>Name`
   overrides): Roblox only lets plugins set a variant's pictures, so they go in when the place is built.
-- `scripts/check.sh`: format, types, specs, the client sim, textures in sync with the place file, place build.
+- `scripts/check.sh`: format, types, specs, the client sims (`tests/sim/build_client.luau`, `tests/sim/talk_card.luau`),
+  the dark and the light look on every screen, textures in sync with the place file, place build.

@@ -11,6 +11,8 @@
 --   panel:<Name>        a panel over the main screen (Residents, CityPanel, ShopPanel, News, Welcome)
 --   event               an event at its choices
 --   event:talk          an event part way through its lines
+--   talk                the talk card: a villager you held E on tells you their wish
+--   talk:again          the talk card after the day's chats are used up
 --   toasts              a few notices
 --   icons               every icon, big and small
 --   icons:<a>,<b>,...   those icons up close
@@ -22,6 +24,8 @@
 --   signs:boards        the boards on canopies and roofs
 --   signs:posters       adverts on posters and billboards, the cinema's posters
 --   signs:blades        blade signs, a hanging tile, the marquee, street plates, a vending machine
+-- Any scene can carry a prefix: light:<scene> builds it in the light look, relight:<scene>
+-- builds it dark and then switches (what a player who presses the button mid game sees).
 
 local fs = require("@lune/fs")
 local process = require("@lune/process")
@@ -30,6 +34,12 @@ local roblox = require("@lune/roblox")
 
 local scene = process.args[1] or "hud"
 local outPath = process.args[2] or "out/ui.json"
+local look, relight = nil, false
+if scene:sub(1, 6) == "light:" then
+	look, scene = "light", scene:sub(7)
+elseif scene:sub(1, 8) == "relight:" then
+	relight, scene = true, scene:sub(9)
+end
 
 local Sim = require("../../tests/sim/client")
 local Harness = Sim.Harness
@@ -109,6 +119,11 @@ Sim.ws:SetAttribute("Season", 2)
 Sim.ws:SetAttribute("Day", 7)
 Sim.ws:SetAttribute("Weather", "clear")
 
+local Kit = Harness.require(Sim.CLIENT .. "UI.Kit")
+if look then
+	Kit.setTheme(look)
+end
+
 local Hud
 local function startHud()
 	Hud = Harness.require(Sim.CLIENT .. "UI.Hud")
@@ -171,6 +186,22 @@ elseif scene == "event" or scene == "event:talk" then
 		},
 	})
 	Sim.advance(if scene == "event:talk" then 2.5 else 24)
+elseif scene == "talk" or scene == "talk:again" then
+	-- the talk card (UI/TalkCard), in the words Sim/Talk gives the villagers: Mara is walked up
+	-- to and tells her wish; Ivy is asked for one more line once the day's chats are used up
+	startHud()
+	local Talk = Harness.require("ReplicatedStorage.Shared.Sim.Talk")
+	Harness.require(Sim.CLIENT .. "UI.TalkCard").start()
+	local again = scene == "talk:again"
+	local vid = if again then order[3] else order[1]
+	local town = { villagers = villagers, order = order, rel = rel, plan = Sim.State.plan }
+	local chat = { counted = not again, left = if again then 0 else 1, wish = false, hearts = 1, mood = 2, coins = 0 }
+	Sim.remoteEvent("Talk"):FireClient(Sim.player, {
+		vid = vid,
+		text = Talk.line(town, vid, Rng.new(4), { first = not again, now = os.time() }),
+		note = Talk.note(town, vid, chat),
+	})
+	Sim.frames(3)
 elseif scene == "toasts" then
 	startHud()
 	local Toasts = Harness.require(Sim.CLIENT .. "UI.Toasts")
@@ -197,6 +228,10 @@ elseif scene == "creator" or scene == "creator:profile" then
 			table.insert(items, { Id = 1000 + i, Name = n, ItemType = "Asset", AssetType = "HairAccessory" })
 		end
 		return items
+	end
+	-- the stage, so the camera starts and the studio's backdrop goes up
+	Sim.remoteFn("CreatorOpen").OnServerInvoke = function()
+		return { origin = roblox.Vector3.new(0, 420, 0), app = Appearance.default() }
 	end
 	startHud()
 	Hud.open("Creator", { mode = "new" })
@@ -549,6 +584,22 @@ end
 -- an animation: tools/preview/ui_anim.sh
 local frameCount = tonumber(process.args[3] or "")
 local step = tonumber(process.args[4] or "") or 0.2
+if relight then
+	Kit.setTheme("light")
+	Sim.frames(2)
+end
+-- the creator's backdrop stands on a part in the world: lay it under the screen to see it
+for _, g in Sim.gui.Parent:GetChildren() do
+	if g.Name == "CreatorBackdrop" then
+		local holder = Sim.gui:FindFirstChild("Creator", true)
+		for _, c in g:GetChildren() do
+			if holder and c:IsA("GuiObject") then
+				c.ZIndex = -1
+				c.Parent = holder
+			end
+		end
+	end
+end
 local function write(path)
 	local root = dump(Sim.gui)
 	local list = {}

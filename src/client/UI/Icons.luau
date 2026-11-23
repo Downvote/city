@@ -330,6 +330,12 @@ D.back = {
 	{ "r", 46, 33, 8, 34, C.white, o = false },
 }
 
+-- a looking glass: a ring and a handle
+D.zoom = {
+	{ "r", 58, 58, 36, 14, C.white, r = 0.5, rot = 45 },
+	{ "ring", 8, 8, 60, 60, C.white, 10 },
+}
+
 D.down = {
 	{ "r", 32, 10, 36, 44, C.white, r = 0.2 },
 	arrowHead("down", 10, 50, 80, C.white),

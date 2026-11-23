@@ -18,6 +18,8 @@ local Icons = require(script.Parent.Icons)
 local Kit = {}
 
 Kit.Theme = {
+	-- what a full menu covers the screen with, and the far end of a fade
+	Black = Color3.fromRGB(6, 7, 12),
 	-- surfaces, darkest to lightest: a well sinks into a panel, a card stands up off it
 	PaperDark = Color3.fromRGB(20, 22, 31), -- wells, tracks, unpicked tabs
 	Cream = Color3.fromRGB(29, 31, 42), -- big panels
@@ -49,6 +51,38 @@ Kit.Theme = {
 }
 
 local T = Kit.Theme
+
+-- The two looks. The game opens dark (the user: "Make every ui element dark mode, with a dark
+-- background"); light is for whoever asks for it ("along with the option to change to light
+-- mode"). Only the surfaces and the words on them differ: the accents, white, the dark glass
+-- over the 3D view and its words stay. Kit.Theme holds the one that is on, and Kit.setTheme
+-- swaps these values into it in place, so code that reads T.Paper as it builds gets the right
+-- one. No two tokens of a look may be the same colour: the switch tells them apart by it.
+Kit.Themes = {
+	dark = {
+		Black = T.Black,
+		PaperDark = T.PaperDark,
+		Cream = T.Cream,
+		Paper = T.Paper,
+		Card = T.Card,
+		Picture = T.Picture,
+		Line = T.Line,
+		Ink = T.Ink,
+		InkSoft = T.InkSoft,
+	},
+	light = {
+		Black = Color3.fromRGB(218, 223, 235),
+		PaperDark = Color3.fromRGB(208, 214, 228),
+		Cream = Color3.fromRGB(236, 239, 246),
+		Paper = Color3.fromRGB(246, 248, 252),
+		Card = Color3.fromRGB(253, 253, 255),
+		Picture = Color3.fromRGB(222, 228, 242),
+		Line = Color3.fromRGB(196, 202, 219),
+		Ink = Color3.fromRGB(34, 37, 51),
+		InkSoft = Color3.fromRGB(100, 106, 131),
+	},
+}
+Kit.ThemeName = "dark"
 
 Kit.Fonts = {
 	Title = Enum.Font.FredokaOne,
@@ -467,8 +501,154 @@ Kit.mix = mix
 
 -- An accent sunk most of the way into the dark panel colour: what a header bar or a title
 -- ribbon is drawn in, so those are dark too and only tinted with their colour.
+local deepMade: { [string]: Color3 } = {}
+
 function Kit.deep(color: Color3): Color3
-	return color:Lerp(T.Cream, 0.58)
+	-- in the dark look the colour sinks into the panel; in the light one it gets a shade deeper,
+	-- so white words still read on it
+	local out = if Kit.ThemeName == "light" then color:Lerp(T.Dark, 0.26) else color:Lerp(T.Cream, 0.58)
+	deepMade[out:ToHex()] = color
+	return out
+end
+
+-- An accent as a colour for words on a surface: itself in the dark look, a shade deeper in the
+-- light one, where a pastel would fade into the paper. Kit.text and Kit.title take it as Tint.
+function Kit.tint(color: Color3): Color3
+	return if Kit.ThemeName == "light" then color:Lerp(T.Dark, 0.36) else color
+end
+
+-- Switching looks -----------------------------------------------------------------------------------
+-- Screens are built from T as they open, so a menu opened after the switch is simply right. What
+-- is already up (the HUD, Build mode, whatever is open) is repainted: every colour on it that is
+-- one of the old look's tokens becomes the new look's, a ribbon made by Kit.deep is made again,
+-- and a grey nobody named (a mix of two tokens, say) has its lightness turned over. Colours
+-- with some life in them (the accents, a villager's own colour) are left alone, and so is
+-- anything named Swatch, a picture, and whatever sits under something marked KeepColors.
+
+local themeHooks: { (string) -> () } = {}
+local turnedBack: { [string]: Color3 } = {}
+
+-- Calls fn(name) after every switch (for what paints itself: the creator's backdrop).
+function Kit.onTheme(fn: (string) -> ())
+	table.insert(themeHooks, fn)
+end
+
+-- Lightness turned over, hue and colourfulness kept: every channel moves by the same amount.
+local function turnOver(c: Color3): Color3
+	local r, g, b = c.R, c.G, c.B
+	local k = 1 - (math.max(r, g, b) + math.min(r, g, b))
+	return Color3.new(math.clamp(r + k, 0, 1), math.clamp(g + k, 0, 1), math.clamp(b + k, 0, 1))
+end
+
+local function repaint(inst: Instance, map: (Color3) -> Color3)
+	if inst.Name == "Swatch" or inst:GetAttribute("KeepColors") or inst:IsA("ViewportFrame") then
+		return
+	end
+	local any = inst :: any
+	if inst:IsA("GuiObject") then
+		inst.BackgroundColor3 = map(inst.BackgroundColor3)
+		-- a row remembers the colour its words go back to when it is no longer picked
+		local plain = inst:GetAttribute("Plain")
+		if type(plain) == "string" then
+			inst:SetAttribute("Plain", map(Color3.fromHex(plain)):ToHex())
+		end
+		-- words in an accent (Kit.tint) are made again for the new look
+		local tint = inst:GetAttribute("Tint")
+		if type(tint) == "string" and (inst:IsA("TextLabel") or inst:IsA("TextButton")) then
+			any.TextColor3 = Kit.tint(Color3.fromHex(tint))
+			any.TextStrokeColor3 = map(any.TextStrokeColor3)
+		elseif inst:IsA("TextLabel") or inst:IsA("TextButton") or inst:IsA("TextBox") then
+			any.TextColor3 = map(any.TextColor3)
+			any.TextStrokeColor3 = map(any.TextStrokeColor3)
+			if inst:IsA("TextBox") then
+				inst.PlaceholderColor3 = map(inst.PlaceholderColor3)
+			end
+		elseif inst:IsA("ImageLabel") or inst:IsA("ImageButton") then
+			-- a line icon is one colour laid over its sheet; a picture keeps its own
+			if inst:GetAttribute("Mono") then
+				any.ImageColor3 = map(any.ImageColor3)
+			end
+		elseif inst:IsA("ScrollingFrame") then
+			inst.ScrollBarImageColor3 = map(inst.ScrollBarImageColor3)
+		end
+	elseif inst:IsA("UIStroke") then
+		inst.Color = map(inst.Color)
+	elseif inst:IsA("UIGradient") and inst.Name == "Wash" then
+		local keys = {}
+		for _, k in inst.Color.Keypoints do
+			table.insert(keys, ColorSequenceKeypoint.new(k.Time, map(k.Value)))
+		end
+		inst.Color = ColorSequence.new(keys)
+	end
+	for _, c in inst:GetChildren() do
+		repaint(c, map)
+	end
+end
+
+-- Puts the look called `name` ("dark" or "light") on: new screens build in it and what is up
+-- is repainted. Returns false for a name it doesn't know.
+function Kit.setTheme(name: string): boolean
+	local to = Kit.Themes[name]
+	if not to then
+		return false
+	end
+	if name == Kit.ThemeName then
+		return true
+	end
+	local exact: { [string]: Color3 } = {}
+	for _, v in T :: { [string]: any } do
+		if typeof(v) == "Color3" then
+			exact[v:ToHex()] = v
+		end
+	end
+	for key, color in to :: { [string]: Color3 } do
+		exact[((T :: any)[key] :: Color3):ToHex()] = color
+	end
+	local deeps = deepMade
+	deepMade = {}
+	for key, color in to :: { [string]: Color3 } do
+		(T :: any)[key] = color
+	end
+	Kit.ThemeName = name
+	Icons.Glyph = T.Ink
+	Icons.Hole = T.Paper
+	for was, accent in deeps do
+		exact[was] = Kit.deep(accent)
+	end
+	local back = turnedBack
+	local made: { [string]: Color3 } = {}
+	-- what this pass has already given out: a button hands its words' colour on to its label
+	-- the moment it changes, and the label must not be turned a second time when its turn comes
+	local given: { [string]: boolean } = {}
+	local function map(c: Color3): Color3
+		local key = c:ToHex()
+		if given[key] then
+			return c
+		end
+		local out = exact[key] or back[key]
+		if not out then
+			if math.max(c.R, c.G, c.B) - math.min(c.R, c.G, c.B) > 0.17 then
+				return c
+			end
+			out = turnOver(c)
+			made[out:ToHex()] = c
+		end
+		given[out:ToHex()] = true
+		return out
+	end
+	turnedBack = made
+	local home = if root then root.Parent else nil
+	if home then
+		for _, gui in home:GetChildren() do
+			if gui:IsA("LayerCollector") then
+				repaint(gui, map)
+			end
+		end
+	end
+	for _, fn in themeHooks do
+		task.spawn(fn, name)
+	end
+	return true
 end
 
 -- Washes a frame from colour `a` into colour `b` (left to right, or along `rotation` degrees).
@@ -784,7 +964,7 @@ function Kit.text(text: string, props: { [string]: any }?): TextLabel
 		BackgroundTransparency = 1,
 		Font = p.Font or Kit.Fonts.Body,
 		TextSize = p.TextSize or 18,
-		TextColor3 = p.Color or T.Ink,
+		TextColor3 = if p.Tint then Kit.tint(p.Tint) else p.Color or T.Ink,
 		TextWrapped = if p.Wrap == nil then true else p.Wrap,
 		TextXAlignment = p.AlignX or Enum.TextXAlignment.Left,
 		TextYAlignment = p.AlignY or Enum.TextYAlignment.Center,
@@ -799,6 +979,9 @@ function Kit.text(text: string, props: { [string]: any }?): TextLabel
 		TextScaled = p.Scaled or false,
 		Parent = p.Parent,
 	})
+	if p.Tint then
+		label:SetAttribute("Tint", (p.Tint :: Color3):ToHex())
+	end
 	if p.Outline then
 		Kit.outlineText(label, if typeof(p.Outline) == "Color3" then p.Outline else T.Dark, p.OutlineThickness)
 	end
@@ -1406,6 +1589,8 @@ function Kit.darkPill(props: { [string]: any }?): Frame
 		Transparency = T.GlassAlpha,
 		Radius = false,
 	})
+	-- the glass is dark in both looks, so what is on it keeps its colours through a switch
+	f:SetAttribute("KeepColors", true)
 	-- a leaning slab: its slanted ends stand out past the box, so what is in it keeps its room
 	local h = if p.Size then (p.Size :: UDim2).Y.Offset else 40
 	Kit.slant(f, h, true)
@@ -1829,6 +2014,7 @@ function Kit.roundButton(icon: string, props: { [string]: any }?, onClick: (() -
 		Parent = p.Parent,
 	})
 	b:SetAttribute("KitButton", true)
+	b:SetAttribute("KeepColors", true)
 	Kit.corner(b, "circle")
 	local ipx = math.floor(px * 0.56)
 	Icons.make(icon, ipx, {
@@ -2033,19 +2219,22 @@ function Kit.row(props: { [string]: any }, onClick: (() -> ())?): (GuiObject, Fr
 		})
 	end
 	if p.Right then
-		Kit.new("TextLabel", {
+		local right = Kit.new("TextLabel", {
 			Name = "Right",
 			Text = p.Right,
 			BackgroundTransparency = 1,
 			Font = Kit.Fonts.Title,
 			TextSize = 16,
-			TextColor3 = p.RightColor or T.InkSoft,
+			TextColor3 = if p.RightColor then Kit.tint(p.RightColor) else T.InkSoft,
 			TextXAlignment = Enum.TextXAlignment.Right,
 			Size = UDim2.new(0, 130, 1, 0),
 			Position = UDim2.new(1, -(134 + lean + 12), 0, 0),
 			ZIndex = 2,
 			Parent = inner,
 		})
+		if p.RightColor then
+			right:SetAttribute("Tint", (p.RightColor :: Color3):ToHex())
+		end
 	end
 	row:SetAttribute("Lean", lean)
 	if p.Selected then
@@ -2324,8 +2513,22 @@ end
 -- background with shapes like it in the menus". Leaning bars, triangles, hollow diamonds, plus
 -- signs and rows of ticks, faint, in the menu's colour and white, all sliding the same way at
 -- their own speeds and coming round again. One loop moves them, and it stops when the menu goes.
-function Kit.motion(parent: GuiObject, accent: Color3, seed: number): Frame
-	local W, H = 2600, 1500
+-- opts: W, H (the layer's size), Count, Faint ({ from, to } transparency), Second (the colour of
+-- every third shape, the words' colour by default), Sizes ({ from, to } pixels), Speed (a scale),
+-- Bands (true or a number: long leaning strips of the colour drifting sideways behind the shapes).
+function Kit.motion(parent: GuiObject, accent: Color3, seed: number, opts: { [string]: any }?): Frame
+	local o: { [string]: any } = opts or {}
+	local W: number, H: number = o.W or 2600, o.H or 1500
+	local count: number = o.Count or 30
+	local faintLo: number, faintHi: number = 0.86, 0.94
+	if o.Faint then
+		faintLo, faintHi = o.Faint[1], o.Faint[2]
+	end
+	local second: Color3 = o.Second or T.Ink
+	local sizeLo: number, sizeHi: number = 34, 96
+	if o.Sizes then
+		sizeLo, sizeHi = o.Sizes[1], o.Sizes[2]
+	end
 	local layer = Kit.new("Frame", {
 		Name = "Motion",
 		BackgroundTransparency = 1,
@@ -2351,12 +2554,30 @@ function Kit.motion(parent: GuiObject, accent: Color3, seed: number): Frame
 			Parent = holder,
 		})
 	end
+	-- everything slides up and to the right, and comes back in at the far edge
+	local dx, dy = 0.91, -0.41
+	-- leaning bands of the colour, long enough to cross the whole layer, drifting slowly sideways
+	type Band = { gui: GuiObject, at: number, speed: number }
+	local bands: { Band } = {}
+	local span = 0.41 * W + 0.91 * H
+	if o.Bands then
+		local reach = math.sqrt(W * W + H * H) * 1.1
+		for b = 1, if type(o.Bands) == "number" then o.Bands else 3 do
+			local thick = rng:NextNumber(0.05, 0.13) * H
+			local band = block(layer, reach, thick, -24, accent, rng:NextNumber(faintLo - 0.08, faintLo + 0.02))
+			band.Name = "Band"
+			table.insert(
+				bands,
+				{ gui = band, at = (b - 0.5) / 3 + rng:NextNumber(-0.1, 0.1), speed = rng:NextNumber(0.006, 0.013) }
+			)
+		end
+	end
 	local kinds = { "bar", "tri", "diamond", "bar", "plus", "ticks", "tri", "bar", "diamond" }
-	for k = 1, 30 do
+	for k = 1, count do
 		local kind = kinds[(k - 1) % #kinds + 1]
-		local color = if k % 3 == 0 then T.White else accent
-		local faint = rng:NextNumber(0.86, 0.94)
-		local size = rng:NextNumber(34, 96)
+		local color = if k % 3 == 0 then second else accent
+		local faint = rng:NextNumber(faintLo, faintHi)
+		local size = rng:NextNumber(sizeLo, sizeHi)
 		local holder = Kit.new("Frame", {
 			Name = kind,
 			BackgroundTransparency = 1,
@@ -2396,12 +2617,10 @@ function Kit.motion(parent: GuiObject, accent: Color3, seed: number): Frame
 			gui = holder,
 			x = rng:NextNumber(0, W),
 			y = rng:NextNumber(0, H),
-			speed = rng:NextNumber(10, 34),
+			speed = rng:NextNumber(10, 34) * (o.Speed or 1),
 			spin = spin,
 		})
 	end
-	-- everything slides up and to the right, and comes back in at the far edge
-	local dx, dy = 0.91, -0.41
 	local function place(dt: number)
 		for _, m in movers do
 			m.x = (m.x + dx * m.speed * dt) % W
@@ -2411,6 +2630,11 @@ function Kit.motion(parent: GuiObject, accent: Color3, seed: number): Frame
 				m.gui.Rotation += m.spin * dt
 			end
 		end
+		for _, b in bands do
+			b.at = (b.at + b.speed * dt) % 1
+			local d = (b.at - 0.5) * span
+			b.gui.Position = UDim2.fromOffset(W / 2 + 0.41 * d, H / 2 + 0.91 * d)
+		end
 	end
 	place(0)
 	local beat = RunService.Heartbeat:Connect(place)
@@ -2418,6 +2642,38 @@ function Kit.motion(parent: GuiObject, accent: Color3, seed: number): Frame
 		beat:Disconnect()
 	end)
 	return layer
+end
+
+-- A moving backdrop to stand somebody in front of: `accent` sinking into the look's backdrop,
+-- leaning bands of it, and shapes sliding up and to the right (the user: "animate shapes in this
+-- screen as well, going diagonally"). It cuts what it holds to its own box, so the turned
+-- shapes never hang over the edge. Whoever stands on it goes beside it, not in it: a 3D picture
+-- inside a CanvasGroup comes out pale. opts: W, H (the box's size in pixels, so the shapes cover
+-- it), Count, Sink (how far the colour sinks, 0.5 by default), Name, ZIndex, Plain.
+function Kit.backdrop(parent: Instance, accent: Color3, seed: number, opts: { [string]: any }?): GuiObject
+	local o: { [string]: any } = opts or {}
+	local sink: number = o.Sink or 0.5
+	-- Plain: an ordinary frame, for where the edge is cut some other way (a SurfaceGui's own)
+	local group = Kit.new(if o.Plain then "Frame" else "CanvasGroup", {
+		Name = o.Name or "Backdrop",
+		BorderSizePixel = 0,
+		Size = o.Size or UDim2.fromScale(1, 1),
+		ZIndex = o.ZIndex or 0,
+		Parent = parent,
+	})
+	group:SetAttribute("KeepColors", true)
+	Kit.wash(group, accent:Lerp(T.Black, sink), accent:Lerp(T.Black, math.min(1, sink + 0.36)), o.Rotation or 18)
+	Kit.motion(group, accent:Lerp(T.White, 0.35), seed, {
+		W = o.W or 1400,
+		H = o.H or 900,
+		Count = o.Count or 18,
+		Bands = if o.Bands == nil then 3 else o.Bands,
+		Faint = o.Faint or { 0.7, 0.87 },
+		Second = T.White,
+		Sizes = o.Sizes,
+		Speed = o.Speed,
+	})
+	return group
 end
 
 -- The size every full menu's panel is, so they all sit in the same place.
@@ -2460,7 +2716,7 @@ function Kit.panel(
 		Size = UDim2.fromOffset(6000, 6000),
 		Position = UDim2.fromScale(0.5, 0.5),
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Color = Color3.fromRGB(6, 7, 12),
+		Color = T.Black,
 		Transparency = if dialog then 0.45 else 0.06,
 		Radius = false,
 		ZIndex = 0,
@@ -2563,7 +2819,7 @@ function Kit.panel(
 			Size = UDim2.new(0.5, -130, 0, 46),
 			Position = UDim2.fromOffset(130, 2),
 			TextSize = 30,
-			Color = T.White,
+			Color = T.Ink,
 		})
 		if o.Tabs then
 			local _bar, select = Kit.segments(o.Tabs, function(id: string)

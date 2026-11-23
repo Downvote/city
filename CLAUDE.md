@@ -21,11 +21,12 @@ the contract (update it with every API, remote or saved data change), `src/share
    same way: `sh tools/preview/ui.sh <scene> <png> [--bg <png>]` (scenes in `tools/preview/ui_dump.luau`; run
    `sh tools/preview/fonts.sh` once for the font).
 5. `sh scripts/check.sh` must pass: format, types (luau-lsp against Roblox's definitions), specs, the client
-   simulation (`tests/sim/build_client.luau`: the real Build mode driven by clicks), the dark look on every
-   screen (`sh tools/preview/audit.sh`), place build.
+   simulations (`tests/sim/build_client.luau`: the real Build mode driven by clicks; `tests/sim/talk_card.luau`:
+   the card you get by holding E on a villager), the dark and the light look on every screen
+   (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (143, all passing; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (169, all passing; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off), Build (catalog, plan rules, field cleaning, shapes, builder), BuildService (the server's
 Build service with stubbed neighbours: charges, syncs, strips junk, refuses land you don't own), Events (3000 seeded
@@ -85,6 +86,11 @@ rabbits and ducks on each player's own screen. Name a new tree's crown parts `Le
 Server start: `init` everything, `start` everything, then `Data.open()` lets players in. Never load a profile
 before every service is listening (a player can be in the server before the town is built).
 
+The user asked to "interact/chat with villagers by holding e on them": every villager carries a ProximityPrompt
+(`Npc.talkPrompt`, put on in `Villagers.spawn` and answered by `Villagers.talkedTo`), what they say and what a
+chat is worth is `Sim/Talk` (numbers in `Tuning.Talk`), and the owner's card is `UI/TalkCard`. A prompt that opens a panel carries an `Opens` attribute
+(`Hud` reads it); the talk prompts must not.
+
 The user asked for things to move "where possible": buttons, screens and the town are animated (docs/GAME_DESIGN.md
 section 10). New buttons get it from `UI/Kit`; new moving scenery goes in `World/Ambience` (client only, one loop,
 `BulkMoveTo`), and the simulation checks it runs.
@@ -112,16 +118,22 @@ CanvasGroup). Buttons and tabs still have no shading of their own. All of it sit
 dotting the background" (`Kit.wash`, `Kit.shapes`: on cards and pills, not on buttons or tabs, and never on the
 strip at the top of a menu: "No need for shapes at the top part seperator of the menu"), and the villager's
 face in place of the colour bar in lists. (A wavy edge under the header came and went with the old panels.)
-The interface is dark (the user: "Make every ui element dark mode, with a dark background"; docs/GAME_DESIGN.md
-section 10, Dark mode). There is one theme and no light version. In `Kit.Theme` the surfaces are `PaperDark`
+The interface opens dark (the user: "Make every ui element dark mode, with a dark background"; docs/GAME_DESIGN.md
+section 10, Dark mode), and a light look can be switched on (the user: "along with the option to change to light
+mode"): `Kit.Themes.dark` and `Kit.Themes.light` hold the surface and word tokens, `Kit.setTheme` swaps them into
+`Kit.Theme` and repaints what is on screen, `UI/Theme` keeps the player's choice. So always colour from `T`, never
+from a literal: a literal doesn't switch. The backdrop behind a menu and the far end of a fade is `T.Black`. Words
+in an accent colour take `Tint = colour` (or `Kit.tint`), which deepens them on light paper. What sits on the dark
+glass over the 3D view (`Kit.darkPill`, `Kit.roundButton`) is white in both looks. In `Kit.Theme` the surfaces are `PaperDark`
 (wells, tracks, tabs not picked), `Cream` (big panels), `Paper` (cards and bars over the 3D view), `Card` (a row
 or tile on a panel) and `Picture` (behind a catalog picture or a face); words are `Ink` and `InkSoft` on those,
 `White` on a coloured button, and `Dark` for outlines round letters and for words on a bright face (yellow). The
 names are left over from the light look. Never write a white, cream or pale grey surface, and never use `White`
 for one: a header or ribbon is `Kit.deep(colour)`. Buttons you press keep their pastel colour. A colour chip to
 pick from must show its colour, so name it `Swatch` (`Kit.swatch` does). `sh tools/preview/audit.sh` builds every
-screen and fails on a light surface or on words that don't stand out; when a new screen gets a preview scene, add
-it to that script's list.
+screen in both looks and fails on a surface in the wrong look's colours or on words that don't stand out; when a
+new screen gets a preview scene, add it to that script's list. Look at a screen in light with the scene prefix
+`light:` (`sh tools/preview/ui.sh light:panel:Goals <png>`), and at what a switch mid game leaves with `relight:`.
 Menus follow a reference the user gave ("For reference of the character screen and the character creation
 screen, use zenless zone zero's character menu", "Other menus should also have a style like this"): take the
 layout and the parts, draw them our own way, never that game's art, slanted tabs or patterns. A menu is
@@ -131,9 +143,13 @@ in one big panel with a rim. `opts.Dialog = true` is the small kind (a welcome, 
 `Kit.row` slabs; the usual layout is a card for the picked thing on the left and the rows down the right.
 Yellow with dark words (`T.Yellow`, `T.Dark`) means picked, everywhere: tabs, rows, steps, Build mode's tabs.
 Buttons that do something keep their own colour. The villager screen and the creator are character screens:
-the villager stands on the left (`ModelPreview.fromModel(model, { Stand = true })`, or in the town for the
-creator), a fade runs from clear to black toward the right, and the stats or the catalog sit on the black. The
-old header bar and its wave are gone.
+the villager stands on the left in front of a moving backdrop (`Kit.backdrop`: their colour, leaning bands,
+shapes sliding up and to the right) with their shadow cast on it, and the stats or the catalog sit on the right.
+On the villagers' screen that is `ModelPreview.fromModel(model, { Stand = true, Shadow = true })` (stood upright,
+playing their idle) with a fade to `T.Black` under the stats; in the creator the real mannequin stands on a stage
+high in the sky and the client puts the backdrop on a part behind it that follows the camera (no town, no fade:
+"no need for the gradient background or the city background"). Never put a ViewportFrame inside a CanvasGroup: it
+comes out pale. The old header bar and its wave are gone.
 Shapes are angular (the user: "Use the format in zenless zone zero for buttons and details in ui instead of
 overusing circles and rounded rectangles"): never reach for a circle or a rounded rectangle. `Kit.corner` gives 3
 pixels whatever is asked. Buttons, tabs, rows and bars lean (`Kit.slant` puts a slanted wedge on each end;
@@ -142,8 +158,11 @@ corners cut (`Kit.frame({ Cut = n })`), markers are diamonds (a square turned 45
 `Kit.stripes` and ticks. Recolour a leaning face with `Kit.paint`, never by setting its BackgroundColor3, or its
 ends keep the old colour. A full menu has `Kit.motion` behind it ("make an animated background with shapes like
 it in the menus"). Build mode is laid out like the genre's best known builder ("The building ui should be
-exactly like bloxburg"): the catalog docked bottom left (tools row, cards, category tiles, main groups), floors
-at the right, one big Done bottom right, coins top left.
+exactly like bloxburg"): the catalog docked at the bottom (tools row, cards, category tiles, main groups), one
+big Done bottom right, coins top left. The cards and the categories run the whole width of the screen and the
+floor card sits on top of them at the right ("build mode should have the right part with all the decor and
+details filling the whole screen horizontally, and the right side should be moved up"): size those bars by scale
+(`UDim2.new(1, -28, 0, h)`), never to a fixed width.
 Icons are vector art (the user: "Alot of the icons arent proper vector art and just shapes spliced together,
 look online to see how vector art should be. Make them as simple as possible"): paths in `UI/IconArt` on a 24
 grid, one line weight, round ends, a margin of 2, as few lines as possible, painted by `UI/Vector` into an

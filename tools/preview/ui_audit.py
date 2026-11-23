@@ -2,7 +2,7 @@
 """Checks a dumped screen (tools/preview/ui_dump.luau's JSON) for the dark look: no surface is
 left light, and no words are lost against what is behind them.
 
-    python3 tools/preview/ui_audit.py <screen.json> [more.json ...]
+    python3 tools/preview/ui_audit.py [--light] <screen.json> [more.json ...]
 
 The user: "Make every ui element dark mode, with a dark background". A surface is any frame,
 button or box that is drawn (not see-through). It may be dark, or it may be a colour (a button,
@@ -10,6 +10,10 @@ a bar's fill, a tag), but it may not be white, cream or pale grey. Pieces of dra
 slider's knob and the dot that marks you on the map are let through. Words must stand out from
 the nearest drawn thing behind them unless they carry an outline. A colour chip to pick from (a
 paint colour, a finish, a favourite colour, a food's dot) is named "Swatch" and may be any colour.
+
+With --light the screens were built in the light look (the user: "along with the option to
+change to light mode"): then no surface may be left in one of the dark look's own colours, and
+words must still stand out. The dark glass over the 3D view stays dark in both looks.
 
 Prints what it finds and exits 1 if there is anything.
 """
@@ -20,6 +24,9 @@ SURFACES = {"Frame", "TextButton", "TextLabel", "TextBox", "CanvasGroup", "Scrol
 WORDS = {"TextLabel", "TextButton", "TextBox"}
 # names that may be light on purpose
 ALLOWED = {"Knob", "You", "Sheen", "Halo", "Swatch"}
+# the dark look's surfaces (Kit.Themes.dark): none of these may show in the light look
+DARK_LOOK = {(6, 7, 12), (20, 22, 31), (29, 31, 42), (37, 40, 54), (47, 51, 68), (74, 80, 104), (66, 71, 93), (9, 10, 16)}
+LIGHT = False
 
 
 def lum(c):
@@ -82,7 +89,10 @@ def walk(node, path, behind, found):
     here = path + [node["name"]]
     cols = colours(node)
     if cols and not in_icon(here) and node["name"] not in ALLOWED:
-        if any(pale(c) for c in cols) and not small(node):
+        if LIGHT:
+            if any(tuple(round(x * 255) for x in c) in DARK_LOOK for c in cols):
+                found.append("dark surface: %s %s" % ("/".join(here[-6:]), [round(x * 255) for x in cols[0]]))
+        elif any(pale(c) for c in cols) and not small(node):
             found.append("light surface: %s %s" % ("/".join(here[-6:]), [round(x * 255) for x in cols[0]]))
     if cols:
         behind = cols
@@ -102,8 +112,13 @@ def walk(node, path, behind, found):
 
 
 def main():
+    global LIGHT
+    args = sys.argv[1:]
+    if args and args[0] == "--light":
+        LIGHT = True
+        args = args[1:]
     bad = 0
-    for path in sys.argv[1:]:
+    for path in args:
         data = json.load(open(path))
         found = []
         walk(data["root"], [], None, found)
@@ -115,9 +130,12 @@ def main():
             print("%s: %s" % (path.split("/")[-1], f))
         bad += len(seen)
     if bad:
-        print("%d things are not dark" % bad)
+        print("%d things are not %s" % (bad, "light" if LIGHT else "dark"))
         sys.exit(1)
-    print("dark look: nothing light left in %d screens" % len(sys.argv[1:]))
+    if LIGHT:
+        print("light look: nothing dark left in %d screens" % len(args))
+    else:
+        print("dark look: nothing light left in %d screens" % len(args))
 
 
 if __name__ == "__main__":

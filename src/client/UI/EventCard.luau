@@ -262,6 +262,11 @@ local function play(ev: any)
 	end
 end
 
+-- Is an event being told right now? (The talk card, UI/TalkCard, keeps out of its way.)
+function EventCard.isPlaying(): boolean
+	return playing
+end
+
 function EventCard.setHidden(v: boolean)
 	if v == hidden then
 		return

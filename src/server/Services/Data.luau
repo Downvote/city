@@ -316,6 +316,11 @@ function Data.start()
 		end
 		if type(v) == "number" then
 			v = math.clamp(v, 0, 1)
+		elseif type(v) == "string" then
+			local choices = Schema.SettingChoices[k]
+			if not choices or not choices[v] then
+				return false
+			end
 		end
 		p.settings[k] = v
 		return true

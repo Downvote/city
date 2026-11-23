@@ -48,6 +48,22 @@ is, not sources.
 - **Friendships.** Every pair has a score from -100 to 100 with named levels from Rivals to Best friends.
   Chats, gifts, outings and parties raise it; quarrels and pranks gone wrong lower it. A quarrel lasts a while
   unless someone makes up.
+- **Talking to them.**
+
+  > also, allow the option to interact/chat with villagers by holding e on them
+
+  Walk up to a villager and hold E (a touch or a gamepad button does the same): a Talk prompt with their name
+  hangs on each of them. They stop, turn to face you, wave and say something in their speech bubble, which anyone
+  nearby sees: a greeting in their own voice or what they are wishing for, then small talk about how they feel,
+  their work, their hobby and the people they live with. In your own town a small card opens at the bottom of the
+  screen, where an event is told: their name on a tab in their colour, the line, what the chat did, and three
+  answers. Chat gets another line. Profile opens the villagers' screen on them. Bye closes it, and so does
+  walking off, keeping them waiting, opening a menu, Build mode or the creator, or an event starting. The first
+  three chats with a villager each day lift their mood by 2 and give one heart point, less than a snack they
+  love, since a chat costs nothing. After that they still answer and nothing is gained. A villager who wished for
+  some cheering up has the wish granted by a chat. A sleeping villager, one in the middle of an event and one
+  away on an outing can't be stopped. A visitor in someone else's town can chat, for the line and the bubble
+  only.
 
 ### Hearts, wishes, romance and town goals
 
@@ -160,6 +176,31 @@ the search box and sort, the filter chips and a grid of item cards five across. 
 tool buttons (undo, redo, shuffle, reset, face) and the copy a username box. The stage is a low wooden deck on a
 meadow just north of Hill Road; the villager faces north and the camera looks back south, so the town is behind
 them. (The old stage stood far out of town, where the sky's haze washed everything out.)
+
+> zoom in more in the character creation screen. players can also zoom out it should be this scale, with the menu
+> to the right. no need for the gradient background or the city background, make an animated menu like in the
+> screenshot, along with the option to change to light mode
+
+(The screenshot was another game's character menu. Its framing and the idea of a moving backdrop are taken; the
+backdrop itself is our own, the same one the villagers' screen uses.)
+
+- **Closer.** The camera looks through a longer lens and starts with the villager filling the screen from the
+  knees up, standing in the left half with the editor on the right. The wheel or a pinch zooms from a close look
+  at the face out to the whole of them with room to spare, and the Zoom button under them steps through three
+  distances for whoever has neither. The camera looks at the head from close up and at the middle of them from
+  far off.
+- **The studio.** The town and the fade to black are gone. The stage now floats high over the meadow, out of
+  sight of the town, and the player's own screen stands a backdrop behind the mannequin: the villager's favourite
+  colour sinking into the dark, leaning bands of it, and shapes sliding up and to the right. It follows the
+  camera, so dragging turns the villager while the backdrop stays put. A lamp by the camera keeps them lit at
+  night. Pick another favourite colour on the second step and the backdrop takes it.
+- **Dark or light.** A button under the villager switches the look (see section 10).
+
+> there should also be a shadow cast on the background in the character customization and character select
+> screen, like such
+
+The villager's shadow falls on the backdrop, up and to the right of them and a little bigger than they are, and it
+moves as they move.
 
 ## 7. The city
 
@@ -599,7 +640,8 @@ pass and open as they come), round furniture and over low steps. If they get stu
 
 > Make every ui element dark mode, with a dark background
 
-The whole interface is dark now, and there is no light version to switch to.
+The whole interface is dark, and that is the look the game opens in. (A light one can be switched on since: see
+"Light mode, the studio and a cast shadow" below.)
 
 - **Surfaces** are four dark slate shades. A big panel is the base, a card or a bar over the 3D view is a step
   lighter, a row or a tile on a panel a step lighter again, and wells (bar tracks, text boxes, tabs not picked,
@@ -623,7 +665,8 @@ The whole interface is dark now, and there is no light version to switch to.
   food's dot), since they have to show the colour itself, the slider's knob and the dot that marks you on the map.
 
 `sh tools/preview/audit.sh` builds every screen and fails if a surface is left white, cream or pale grey, or if
-words don't stand out from what is behind them. It is part of the check.
+words don't stand out from what is behind them. It then builds them all again in the light look and fails if a
+surface is left in one of the dark look's colours. It is part of the check.
 
 ### Vector icons, pictures of things, and the menus' new shape
 
@@ -696,6 +739,47 @@ font and colours, none of their art, logos or patterns.
   tag, the categories as icon tiles, and the main groups (Build, Furniture, Outdoor, Work). The floor switcher
   and the view switches (roofs, walls, grid) sit at the right, the way out is one big Done button in the bottom
   right corner, and your coins are at the top left. What each part does is unchanged.
+
+> also, build mode should have the right part with all the decor and details filling the whole screen
+> horizontally, and the right side should be moved up
+
+(Sent with a picture of the floor card.) The tray of things to place and the row of categories now run the whole
+width of the screen, a small margin each side, on any screen: ten cards in view on a desktop where there were six,
+and every category of Furniture showing without scrolling. The floor card moved up to sit on top of the tray at
+the right, level with the tools. Done stays in the bottom right corner beside the main groups.
+
+### Light mode, the studio and a cast shadow
+
+> zoom in more in the character creation screen. players can also zoom out it should be this scale, with the menu
+> to the right. no need for the gradient background or the city background, make an animated menu like in the
+> screenshot, along with the option to change to light mode
+
+> animate shapes in this screen as well, going diagonally like in zenless. make the character animated as well
+
+> also, the character sometimes rotates 90 degrees, can this be fixed?
+
+> there should also be a shadow cast on the background in the character customization and character select
+> screen, like such
+
+- **Light mode.** A sun button on the main screen (under the clock, with the map and the shop) and in the creator
+  switches the interface to light; the button then shows a moon and switches back. The choice is saved with the
+  player's settings. Only the surfaces and the words on them change: panels, cards and rows go from dark slate to
+  near white, words from near white to dark slate, and the black a menu covers the screen with goes pale. The
+  pastel buttons, yellow for whatever is picked, white words on a coloured button and the dark glass bars over
+  the town stay as they are. Words in an accent colour (a goal's Claim, "No bed") go a shade deeper on light
+  paper. Menus are built in the look that is on when they open; what is already on screen (the main screen,
+  Build mode) is repainted on the spot, and the creator rebuilds itself where it was.
+- **The villagers' screen moves.** Behind the villager, leaning bands of their own colour drift across the stage
+  and shapes slide up and to the right, as behind every menu.
+- **The villager is alive.** The one standing on the stage plays their idle animation (their own, if they wear an
+  animation pack).
+- **Standing up straight.** The villager in the menu is a copy taken at that moment, and a villager asleep lies
+  on their back in bed: that was the one lying sideways. The copy is now stood upright with its joints at rest
+  before it is shown, whatever they were doing, and framed from the feet to the top of the head, so wings and
+  tails no longer shrink them. The pale, washed out look in the same picture is fixed too: the stage no longer
+  draws them through a layer that bleaches 3D pictures, and the light on them is softer.
+- **A cast shadow.** On both screens the villager's shadow falls on the backdrop behind them, a little bigger
+  than they are and off to the right, and keeps their pose.
 
 ### A drawn city
 

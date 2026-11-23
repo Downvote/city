@@ -379,9 +379,10 @@ end
 -- The creator stage --------------------------------------------------------------------------------
 
 local function buildStage(slot: number): Model
-	-- a low round deck on the meadow north of Hill Road; the villager faces north, so the camera
-	-- looks back south and the town is behind them
-	local origin = Town.CreatorSpot + Vector3.new(-(slot - 1) * Town.CreatorGap, 0, 0)
+	-- a low round deck high over the meadow north of Hill Road, out of sight of the town: the
+	-- player's own screen stands a backdrop behind it (the user: "no need for the gradient
+	-- background or the city background")
+	local origin = Town.CreatorSpot + Vector3.new(-(slot - 1) * Town.CreatorGap, Town.CreatorHeight, 0)
 	local model = Instance.new("Model")
 	model.Name = "CreatorStage" .. slot
 	local function disc(diameter: number, y: number, height: number, color: Color3)

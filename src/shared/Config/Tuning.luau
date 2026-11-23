@@ -174,4 +174,17 @@ Tuning.Rewards = {
 	MerchantDiscount = 0.6,
 }
 
+-- Talking to a villager: hold E on them (Sim/Talk) ------------------------------
+Tuning.Talk = {
+	HoldSeconds = 0.5, -- how long the key is held before they answer
+	Distance = 9, -- studs: how close you stand for the prompt to show
+	Range = 16, -- studs: walk further off than this and the talk is over
+	ChatsPerDay = 3, -- per villager: only the first few chats a day lift their mood and fill hearts
+	ChatHearts = 1, -- less than a snack they love: a chat costs nothing
+	ChatMood = 2,
+	StaySeconds = 12, -- how long they wait for the owner's next answer before going back to their day
+	VisitorSeconds = 5, -- how long they stop for somebody visiting
+	Cooldown = 0.4, -- seconds between two lines to one player: shorter than the hold, it only stops a flood
+}
+
 return Tuning

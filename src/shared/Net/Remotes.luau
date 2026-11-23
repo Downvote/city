@@ -44,6 +44,7 @@ Remotes.Functions = {
 	"GoalClaim", -- (goalId) -> ok, coins
 	"PlaceFound", -- (placeId) -> ok: the player is at a place (checked against where they stand)
 	"Travel", -- (placeId) -> ok, err: back to a place they've found
+	"VillagerTalk", -- (vid, bye?) -> ok, { vid, text, note, model } or err: the talk card's Chat, or its Bye
 }
 
 Remotes.Events = {
@@ -55,6 +56,7 @@ Remotes.Events = {
 	"EventEnd", -- server -> client: (token, summary)
 	"Payday", -- server -> client: { total, lines = { { vid, amount } } }
 	"Say", -- server -> client: (model, text) speech bubble (also visible to everyone nearby)
+	"Talk", -- server -> client: { vid, text, note, model } what your villager said when you held E on them
 }
 
 local folder: Folder? = nil

@@ -5,6 +5,7 @@
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
 local UserInputService = game:GetService("UserInputService")
 local AvatarEditorService = game:GetService("AvatarEditorService")
 
@@ -22,6 +23,7 @@ local Tuning = require(Shared.Config.Tuning)
 local Kit = require(script.Parent.Kit)
 local Icons = require(script.Parent.Icons)
 local Toasts = require(script.Parent.Toasts)
+local Theme = require(script.Parent.Theme)
 local State = require(script.Parent.Parent.Controllers.State)
 
 local Creator = {}
@@ -40,8 +42,13 @@ local origin = Vector3.zero
 local camConn: RBXScriptConnection? = nil
 local inputConns: { RBXScriptConnection } = {}
 local yaw = 0
-local zoom = 11
-local focusY = 2.8
+-- How far the camera stands off, in studs, through a long lens (FOV). At ZOOM_HOME they fill the
+-- screen from the knees up (the user: "zoom in more in the character creation screen. players
+-- can also zoom out"); ZOOM_FACE is a close look at the head, ZOOM_WHOLE the whole of them.
+local FOV = 40
+local ZOOM_FACE, ZOOM_HOME, ZOOM_WHOLE = 3.1, 7.2, 12.5
+local ZOOM_MIN, ZOOM_MAX = 2.6, 20
+local zoom = ZOOM_HOME
 local previewToken = 0
 local previewPending = false
 local openToken = 0
@@ -71,6 +78,7 @@ local titleLabel: TextLabel? = nil
 local selectTab: (string) -> ()
 local markTab: ((string) -> ())? = nil
 local profile = { name = "", pers = "sunny", color = "4FA9D9", bday = { s = 1, d = 1 } }
+local paintStudio: () -> ()
 
 local function thumb(id: number, bundle: boolean?): string
 	if bundle then
@@ -986,6 +994,7 @@ local function buildProfilePage()
 	for i, hex in Palette.Colors do
 		Kit.swatch(Colors.fromHex(hex), 30, function()
 			profile.color = hex
+			paintStudio()
 		end, { Parent = colorGrid, LayoutOrder = i })
 	end
 	Kit.text("Birthday", { Parent = scroll, TextSize = 17, Font = Kit.Fonts.Bold, LayoutOrder = 7 })
@@ -1050,7 +1059,10 @@ local function buildProfilePage()
 	end)
 end
 
+local stepNow = "look"
+
 local function showStep(step: string)
+	stepNow = step
 	lookPage.Visible = step == "look"
 	profilePage.Visible = step == "profile"
 	for id, b in stepButtons do
@@ -1064,6 +1076,264 @@ end
 
 -- Camera -----------------------------------------------------------------------------------------------
 
+-- The height the camera looks at: the head from close up, the chest at the usual distance, the
+-- middle of them from far off.
+local function focusAt(z: number): number
+	if z <= ZOOM_HOME then
+		local t = math.clamp((z - ZOOM_FACE) / (ZOOM_HOME - ZOOM_FACE), 0, 1)
+		return 5 + (3.6 - 5) * t
+	end
+	local t = math.clamp((z - ZOOM_HOME) / (ZOOM_WHOLE - ZOOM_HOME), 0, 1)
+	return 3.6 + (3.15 - 3.6) * t
+end
+
+-- The studio: what stands behind them in place of the town (the user: "no need for the gradient
+-- background or the city background, make an animated menu like in the screenshot"). The stage
+-- is up in the sky, so there is no ground to hide; a flat part stands square to the camera a
+-- little way behind the mannequin, wide enough to fill the view, and carries the same moving
+-- backdrop as the villagers' screen. It follows the camera, so turning the view turns the
+-- villager and the backdrop stays put. A lamp by the camera keeps them lit at night. All of it
+-- is on this player's own screen only.
+type Studio = {
+	part: Part,
+	gui: SurfaceGui,
+	lamp: Part,
+	light: PointLight,
+	w: number,
+	h: number,
+	-- their shadow on the backdrop: a copy of the mannequin in a picture of its own, all black
+	shade: ViewportFrame?,
+	shadeCam: Camera?,
+	twin: Model?,
+	source: Model?,
+	mark: number,
+	motors: { { Motor6D } },
+	roots: { BasePart },
+	nextLook: number,
+}
+local studio: Studio? = nil
+local fovBefore: number? = nil
+
+local function studioColor(): Color3
+	local ok, c = pcall(Colors.fromHex, profile.color)
+	return if ok and typeof(c) == "Color3" then c else T.Blue
+end
+
+function paintStudio()
+	local s = studio
+	if not s then
+		return
+	end
+	for _, c in s.gui:GetChildren() do
+		c:Destroy()
+	end
+	local size = s.gui.CanvasSize
+	Kit.backdrop(s.gui, studioColor(), 77, {
+		Plain = true,
+		W = size.X + 200,
+		H = size.Y + 200,
+		Count = 26,
+		Sink = 0.6,
+		Sizes = { 40, 120 },
+	})
+	-- The shadow they cast on it (the user: "there should also be a shadow cast on the
+	-- background in the character customization and character select screen"). The backdrop is
+	-- a flat picture, so no real shadow falls on it: a second picture on it shows a copy of the
+	-- mannequin through the same camera, all in black and see-through, a little bigger and off
+	-- to one side. The backdrop is 1.06 of the screen, so the picture is the screen's size.
+	local shade = Instance.new("ViewportFrame")
+	shade.Name = "Shade"
+	shade.BackgroundTransparency = 1
+	shade.ImageColor3 = Color3.new(0, 0, 0)
+	shade.ImageTransparency = 0.68
+	shade.AnchorPoint = Vector2.new(0.5, 0.5)
+	shade.Size = UDim2.fromScale(1.07 / 1.06, 1.07 / 1.06)
+	shade.Position = UDim2.fromScale(0.5 + 0.07, 0.5 + 0.012)
+	shade.ZIndex = 2
+	local world = Instance.new("WorldModel")
+	world.Name = "World"
+	world.Parent = shade
+	local shadeCam = Instance.new("Camera")
+	shadeCam.Parent = shade
+	shade.CurrentCamera = shadeCam
+	shade.Parent = s.gui
+	s.shade, s.shadeCam = shade, shadeCam
+	s.twin, s.source, s.mark, s.motors, s.roots, s.nextLook = nil, nil, 0, {}, {}, 0
+end
+
+-- The mannequin on this player's stage (the server swaps it for a new one now and then).
+local function findMannequin(): Model?
+	for _, c in workspace:GetChildren() do
+		if c:IsA("Model") and c.Name:sub(1, 12) == "CreatorStage" and c:GetAttribute("Origin") == origin then
+			for _, m in c:GetChildren() do
+				if m:IsA("Model") and m:FindFirstChildOfClass("Humanoid") then
+					return m
+				end
+			end
+		end
+	end
+	return nil
+end
+
+-- A number that changes when the mannequin's shape does: how many pieces, and how big.
+local function shapeMark(model: Model): number
+	local mark = 0
+	for _, d in model:GetDescendants() do
+		mark += 1
+		if d:IsA("BasePart") then
+			mark += d.Size.X + d.Size.Y * 3 + d.Size.Z * 7
+		end
+	end
+	return mark
+end
+
+-- Keeps the shadow's copy the mannequin's shape, in its pose, seen as the camera sees it.
+local function syncShadow(cam: Camera)
+	local s = studio
+	local shade, shadeCam = s and s.shade, s and s.shadeCam
+	if not s or not shade or not shadeCam then
+		return
+	end
+	shadeCam.CFrame = cam.CFrame
+	shadeCam.FieldOfView = cam.FieldOfView
+	local now = os.clock()
+	if now >= s.nextLook then
+		s.nextLook = now + 0.4
+		local model = findMannequin()
+		local mark = if model then shapeMark(model) else 0
+		if model ~= s.source or mark ~= s.mark then
+			if s.twin then
+				s.twin:Destroy()
+			end
+			s.twin, s.source, s.mark, s.motors, s.roots = nil, model, mark, {}, {}
+			local world = shade:FindFirstChild("World")
+			local ok, copy = pcall(function()
+				if not model then
+					return nil
+				end
+				model.Archivable = true
+				return model:Clone()
+			end)
+			if ok and copy and model and world then
+				-- the copy's pieces come in the mannequin's order: pair the joints up by it
+				local from, to = model:GetDescendants(), copy:GetDescendants()
+				for i, d in from do
+					local t = to[i]
+					if d:IsA("Motor6D") and t and t:IsA("Motor6D") then
+						table.insert(s.motors, { d, t })
+					end
+				end
+				local a, b = model:FindFirstChild("HumanoidRootPart"), copy:FindFirstChild("HumanoidRootPart")
+				if a and a:IsA("BasePart") and b and b:IsA("BasePart") then
+					b.Anchored = true
+					s.roots = { a, b }
+				end
+				for _, d in to do
+					if d:IsA("Script") or d:IsA("LocalScript") or d:IsA("BillboardGui") then
+						d:Destroy()
+					end
+				end
+				copy.Parent = world
+				s.twin = copy
+			end
+		end
+	end
+	for _, pair in s.motors do
+		pair[2].Transform = pair[1].Transform
+	end
+	if s.roots[1] and s.roots[2] then
+		s.roots[2].CFrame = s.roots[1].CFrame
+	end
+end
+
+local function closeStudio()
+	local s = studio
+	if s then
+		s.gui:Destroy()
+		s.part:Destroy()
+		s.lamp:Destroy()
+		studio = nil
+	end
+end
+
+local function openStudio()
+	closeStudio()
+	local function ghost(name: string): Part
+		local p = Instance.new("Part")
+		p.Name = name
+		p.Anchored = true
+		p.CanCollide = false
+		p.CanQuery = false
+		p.CanTouch = false
+		p.CastShadow = false
+		p.Material = Enum.Material.SmoothPlastic
+		p.Color = T.Black
+		p.Size = Vector3.new(4, 4, 0.2)
+		p.Parent = workspace
+		return p
+	end
+	local part = ghost("CreatorBackdrop")
+	local lamp = ghost("CreatorLamp")
+	lamp.Transparency = 1
+	lamp.Size = Vector3.new(0.2, 0.2, 0.2)
+	local light = Instance.new("PointLight")
+	light.Range = 30
+	light.Shadows = false
+	light.Color = Color3.fromRGB(255, 244, 232)
+	light.Parent = lamp
+	local gui = Instance.new("SurfaceGui")
+	gui.Name = "CreatorBackdrop"
+	gui.Face = Enum.NormalId.Back
+	gui.LightInfluence = 0
+	gui.SizingMode = Enum.SurfaceGuiSizingMode.FixedSize
+	gui.CanvasSize = Vector2.new(1600, 900)
+	gui.ClipsDescendants = true
+	gui.ResetOnSpawn = false
+	gui.Adornee = part
+	gui.Parent = Kit.root().Parent
+	studio = {
+		part = part,
+		gui = gui,
+		lamp = lamp,
+		light = light,
+		w = 0,
+		h = 0,
+		mark = 0,
+		motors = {},
+		roots = {},
+		nextLook = 0,
+	}
+	paintStudio()
+end
+
+-- Stands the backdrop square to the camera, filling the view, `depth` studs off.
+local function placeStudio(cam: Camera, depth: number)
+	local s = studio
+	if not s then
+		return
+	end
+	local view = cam.ViewportSize
+	local aspect = if view.Y > 0 then view.X / view.Y else 16 / 9
+	local h = 2 * depth * math.tan(math.rad(cam.FieldOfView / 2)) * 1.06
+	local w = h * aspect
+	if math.abs(w - s.w) > 0.01 or math.abs(h - s.h) > 0.01 then
+		s.w, s.h = w, h
+		s.part.Size = Vector3.new(w, h, 0.2)
+		-- keep the picture's shape the screen's, so nothing on it is stretched
+		local wide = math.clamp(math.floor(900 * aspect + 0.5), 900, 2400)
+		if math.abs(wide - s.gui.CanvasSize.X) > 8 then
+			s.gui.CanvasSize = Vector2.new(wide, 900)
+			paintStudio()
+		end
+	end
+	s.part.CFrame = cam.CFrame * CFrame.new(0, 0, -depth - 0.1)
+	s.lamp.CFrame = cam.CFrame * CFrame.new(-2, 1.5, 0)
+	-- a soft fill by day, the main light at night
+	local hour = Lighting.ClockTime
+	local dark = math.clamp((math.abs(hour - 12.5) - 5.2) / 1.4, 0, 1)
+	s.light.Brightness = 0.2 + 1.5 * dark
+end
+
 local function stopCamera()
 	if camConn then
 		camConn:Disconnect()
@@ -1073,8 +1343,13 @@ local function stopCamera()
 		c:Disconnect()
 	end
 	inputConns = {}
+	closeStudio()
 	local cam = workspace.CurrentCamera
 	cam.CameraType = Enum.CameraType.Custom
+	if fovBefore then
+		cam.FieldOfView = fovBefore
+		fovBefore = nil
+	end
 	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 	if hum then
 		cam.CameraSubject = hum
@@ -1093,17 +1368,44 @@ local function startCamera()
 	inputConns = {}
 	local cam = workspace.CurrentCamera
 	cam.CameraType = Enum.CameraType.Scriptable
+	fovBefore = fovBefore or cam.FieldOfView
+	cam.FieldOfView = FOV
+	openStudio()
 	local dragging = false
 	local last: Vector2? = nil
-	camConn = RunService.RenderStepped:Connect(function()
-		-- the mannequin stands at the origin; the camera sits to the left so the panel doesn't cover it
-		local center = origin + Vector3.new(0, focusY, 0)
-		local dir = Vector3.new(math.sin(yaw), 0.18, math.cos(yaw)).Unit
-		local right = Vector3.new(math.cos(yaw), 0, -math.sin(yaw))
-		local eye = center + dir * zoom
-		cam.CFrame = CFrame.lookAt(eye, center) * CFrame.new(zoom * 0.4, 0, 0)
-		local _ = right
-	end)
+	local pinchFrom: number? = nil
+	local function frame()
+		-- the mannequin stands at the origin; the camera sits off to one side of it, so they
+		-- stand in the left half of the screen and the panel on the right doesn't cover them
+		local center = origin + Vector3.new(0, focusAt(zoom), 0)
+		local dir = Vector3.new(math.sin(yaw), 0.1, math.cos(yaw)).Unit
+		local view = cam.ViewportSize
+		local aspect = if view.Y > 0 then view.X / view.Y else 16 / 9
+		local half = zoom * math.tan(math.rad(FOV / 2)) * aspect
+		cam.CFrame = CFrame.lookAt(center + dir * zoom, center) * CFrame.new(half * 0.5, 0, 0)
+		placeStudio(cam, zoom + 9)
+		syncShadow(cam)
+	end
+	frame()
+	camConn = RunService.RenderStepped:Connect(frame)
+	-- two fingers pinch to zoom
+	table.insert(
+		inputConns,
+		UserInputService.TouchPinch:Connect(function(_touches, scale, _velocity, state, processed)
+			if processed then
+				return
+			end
+			if state == Enum.UserInputState.Begin or not pinchFrom then
+				pinchFrom = zoom
+			end
+			if scale > 0 then
+				zoom = math.clamp((pinchFrom :: number) / scale, ZOOM_MIN, ZOOM_MAX)
+			end
+			if state == Enum.UserInputState.End or state == Enum.UserInputState.Cancel then
+				pinchFrom = nil
+			end
+		end)
+	)
 	table.insert(
 		inputConns,
 		UserInputService.InputBegan:Connect(function(input, processed)
@@ -1149,7 +1451,7 @@ local function startCamera()
 				yaw -= (p - last).X * 0.01
 				last = p
 			elseif input.UserInputType == Enum.UserInputType.MouseWheel and not processed then
-				zoom = math.clamp(zoom * (if input.Position.Z > 0 then 0.9 else 1.1), 4, 18)
+				zoom = math.clamp(zoom * (if input.Position.Z > 0 then 0.9 else 1.1), ZOOM_MIN, ZOOM_MAX)
 			end
 		end)
 	)
@@ -1171,30 +1473,8 @@ local function build()
 	root = frame
 
 	-- Laid out as a character screen, like the villagers' one (the user pointed at another
-	-- game's character menu for both): the villager stands in the town on the left, the screen
-	-- fades to black toward the right, and everything to choose from sits on the black.
-	local fade = Kit.frame({
-		Name = "Fade",
-		Size = UDim2.new(0, 1240, 1, 400),
-		Position = UDim2.new(1, 0, 0, -200),
-		AnchorPoint = Vector2.new(1, 0),
-		Color = Color3.fromRGB(9, 10, 16),
-		Radius = false,
-		ZIndex = 0,
-		Parent = frame,
-	})
-	Kit.new("UIGradient", {
-		Name = "Clear",
-		Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 1),
-			NumberSequenceKeypoint.new(0.13, 0.76),
-			NumberSequenceKeypoint.new(0.26, 0.34),
-			NumberSequenceKeypoint.new(0.36, 0.06),
-			NumberSequenceKeypoint.new(0.4, 0),
-			NumberSequenceKeypoint.new(1, 0),
-		}),
-		Parent = fade,
-	})
+	-- game's character menu for both): the villager stands on the left in front of the studio's
+	-- moving backdrop (startCamera), and everything to choose from sits in a panel on the right.
 	-- the way back and the title, at the top left
 	local back = Kit.backButton({ Parent = frame, Position = UDim2.fromOffset(16, 12) }, function()
 		Creator.close()
@@ -1205,7 +1485,7 @@ local function build()
 		Size = UDim2.fromOffset(520, 46),
 		Position = UDim2.fromOffset(104, 12),
 		TextSize = 30,
-		Color = T.White,
+		Color = T.Ink,
 		Wrap = false,
 	})
 
@@ -1391,11 +1671,17 @@ local function build()
 	tool("trash", "Reset", function()
 		setApp(Appearance.default())
 	end, 4)
-	tool("smile", "Face", function()
-		if zoom > 6 then
-			zoom, focusY = 4.5, 4.2
+	-- dark or light, here as well as on the main screen (the user asked for it with this screen:
+	-- "along with the option to change to light mode"); the button names the look you would get
+	tool(Theme.icon(), if Theme.name() == "dark" then "Light" else "Dark", Theme.toggle, 6)
+	-- one button steps through the three distances, for whoever has no wheel and no second finger
+	tool("zoom", "Zoom", function()
+		if zoom > (ZOOM_HOME + ZOOM_WHOLE) / 2 then
+			zoom = ZOOM_FACE
+		elseif zoom > (ZOOM_FACE + ZOOM_HOME) / 2 then
+			zoom = ZOOM_WHOLE
 		else
-			zoom, focusY = 11, 2.8
+			zoom = ZOOM_HOME
 		end
 	end, 5)
 
@@ -1453,7 +1739,7 @@ local function build()
 	})
 	tip.AutomaticSize = Enum.AutomaticSize.X
 	Kit.pad(tip, 14, 0)
-	Kit.text("Drag to turn them round. Scroll to zoom.", {
+	Kit.text("Drag to turn them round. Scroll or pinch to zoom.", {
 		Parent = tip,
 		Size = UDim2.fromOffset(0, 30),
 		AutomaticSize = Enum.AutomaticSize.X,
@@ -1535,5 +1821,29 @@ function Creator.close()
 	end)
 	local _ = previewPending
 end
+
+-- The screen is built once and kept. After a change of look it is built again where it was (the
+-- step, the tab and what they wear are kept); shut, it is simply built afresh the next time.
+Kit.onTheme(function()
+	local old = root
+	if not old then
+		return
+	end
+	local title = if titleLabel then titleLabel.Text else nil
+	old:Destroy()
+	root = nil
+	titleLabel = nil
+	if not isOpen then
+		return
+	end
+	build()
+	if title then
+		setTitle(title)
+	end
+	showStep(stepNow)
+	selectTab(tabId)
+	refreshWorn()
+	paintStudio()
+end)
 
 return Creator

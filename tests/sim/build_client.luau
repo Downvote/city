@@ -322,6 +322,117 @@ run("a menu takes the screen: a way back, tabs, rows", function()
 	dialog.root:Destroy()
 end)
 
+run("the look switches between dark and light, and back", function()
+	local Kit = Sim.Kit
+	local T = Kit.Theme
+	local dark = {}
+	for k, v in Kit.Themes.dark do
+		dark[k] = v
+	end
+	-- everything the screen holds, as it is in the dark look
+	local function snapshot()
+		local out = {}
+		for _, d in Sim.gui:GetDescendants() do
+			if d:IsA("GuiObject") then
+				local row = { d.BackgroundColor3 }
+				if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then
+					row[2] = d.TextColor3
+				end
+				out[d] = row
+			end
+		end
+		return out
+	end
+	local panel = Kit.panel("Town goals", Kit.MenuSize, nil, nil, nil, {})
+	local row = Kit.row({ Parent = panel.body, Title = "A row", Right = "Claim", RightColor = T.Green })
+	local pill = Kit.darkPill({ Parent = panel.body, Size = roblox.UDim2.fromOffset(200, 40) })
+	local onGlass = Kit.text("on glass", { Parent = pill, Color = roblox.Color3.fromRGB(206, 218, 240) })
+	local button = Kit.button("Go", { Parent = panel.body, Color = T.Paper, TextColor = T.Ink })
+	local swatch = Kit.swatch(roblox.Color3.fromRGB(30, 30, 34), 30, nil, { Parent = panel.body })
+	local before = snapshot()
+	local told = nil
+	Kit.onTheme(function(name)
+		told = name
+	end)
+	check(Kit.setTheme("sepia") == false, "a look that doesn't exist is refused")
+	check(Kit.setTheme("light") and Kit.ThemeName == "light", "light goes on")
+	Sim.frames(1)
+	check(told == "light", "and whoever listens is told")
+	check(T.Paper == Kit.Themes.light.Paper and T.Ink == Kit.Themes.light.Ink, "new screens build in it")
+	check(
+		T.Green == roblox.Color3.fromRGB(128, 198, 118) and T.Glass == roblox.Color3.fromRGB(14, 16, 24),
+		"the accents and the glass stay"
+	)
+	local fill = row:FindFirstChild("Fill")
+	local title = row:FindFirstChild("Title", true)
+	check(fill.BackgroundColor3 == T.PaperDark and title.TextColor3 == T.Ink, "a row that was up is repainted")
+	local label = button:FindFirstChild("Label", true)
+	check(button.TextColor3 == T.Ink and label.TextColor3 == T.Ink, "a button's words are turned once, not twice")
+	check(
+		pill.BackgroundColor3 == T.Glass and onGlass.TextColor3 == roblox.Color3.fromRGB(206, 218, 240),
+		"what is on the dark glass keeps its colours"
+	)
+	check(swatch.BackgroundColor3 == roblox.Color3.fromRGB(30, 30, 34), "a colour chip keeps its colour")
+	local right = row:FindFirstChild("Right", true)
+	check(
+		right.TextColor3 == Kit.tint(T.Green) and right.TextColor3 ~= T.Green,
+		"words in an accent go a shade deeper on light paper"
+	)
+	local dim = panel.root:FindFirstChild("Dim")
+	check(dim.BackgroundColor3 == Kit.Themes.light.Black, "the screen behind a menu goes light")
+	-- a menu opened now is light from the start
+	local fresh = Kit.panel("Shop", Kit.MenuSize, nil, nil, nil, {})
+	check(fresh.root:FindFirstChild("Dim").BackgroundColor3 == Kit.Themes.light.Black, "a menu opened now is light")
+	check(fresh.title.TextColor3 == T.Ink, "with dark words for its name")
+	fresh.root:Destroy()
+	check(Kit.setTheme("dark") and T.Paper == dark.Paper, "dark goes back on")
+	local off = 0
+	for d, was in before do
+		-- to the eight bits a screen shows: a mixed colour may come back a hair off
+		if
+			d.BackgroundColor3:ToHex() ~= was[1]:ToHex()
+			or (was[2] and (d :: any).TextColor3:ToHex() ~= was[2]:ToHex())
+		then
+			off += 1
+		end
+	end
+	check(off == 0, "and every colour on the screen is what it was")
+	panel.root:Destroy()
+end)
+
+run("somebody to stand in front of: a backdrop of leaning bands and sliding shapes", function()
+	local Kit = Sim.Kit
+	local New = Sim.env.Instance.new
+	local stage = New("Frame")
+	stage.Size = roblox.UDim2.fromOffset(800, 500)
+	stage.Parent = Sim.gui
+	local back = Kit.backdrop(stage, Kit.Theme.Pink, 5, { W = 1000, H = 700 })
+	check(back.ClassName == "CanvasGroup", "it cuts its turned shapes to its own box")
+	check(back:GetAttribute("KeepColors") == true, "and a change of look leaves it alone")
+	local motion = back:FindFirstChild("Motion")
+	check(motion ~= nil, "shapes slide over it")
+	local bands, shape = {}, nil
+	for _, c in motion:GetChildren() do
+		if c.Name == "Band" then
+			table.insert(bands, c)
+		else
+			shape = shape or c
+		end
+	end
+	check(#bands == 3 and bands[1].Rotation == -24, "with three leaning bands of the colour")
+	local bandAt, shapeAt = bands[1].Position, shape.Position
+	Sim.frames(8)
+	check(shape.Position ~= shapeAt, "the shapes move")
+	check(
+		shape.Position.X.Offset > shapeAt.X.Offset or shape.Position.Y.Offset < shapeAt.Y.Offset,
+		"up and to the right"
+	)
+	check(bands[1].Position ~= bandAt, "and the bands drift")
+	local plain = Kit.backdrop(stage, Kit.Theme.Blue, 6, { Plain = true })
+	check(plain.ClassName == "Frame", "on a sign in the world it is a plain frame")
+	stage:Destroy()
+end)
+
 run("people wear an ink outline", function()
 	local Outlines = Sim.Harness.require(Sim.CLIENT .. "World.Outlines")
 	local New = Sim.env.Instance.new

@@ -1,6 +1,8 @@
 -- Villagers: their saved data (made in the creator), their bodies walking round the owner's plot,
 -- and their days: wandering, sitting, chatting with each other, going to bed at night.
 -- Random events (Services/Events) borrow villagers by taking control of them for a scene.
+-- Players stop one for a talk by holding E on them (the prompt on every body; see "Talking to a
+-- villager" below).
 
 local Players = game:GetService("Players")
 local CollectionService = game:GetService("CollectionService")
@@ -18,6 +20,7 @@ local Colors = require(Shared.Util.Colors)
 local City = require(Shared.Sim.City)
 local EventEngine = require(Shared.Sim.EventEngine)
 local Life = require(Shared.Sim.Life)
+local Talk = require(Shared.Sim.Talk)
 local Sayings = require(Shared.Data.Sayings)
 local Rng = require(Shared.Util.Rng)
 local Text = require(Shared.Util.Text)
@@ -68,7 +71,7 @@ function Villagers.control(player: Player, vid: string): string?
 	return c and c[vid]
 end
 
--- Takes a villager out of their routine ("event", "away", "chat") or gives them back (nil).
+-- Takes a villager out of their routine ("event", "away", "chat", "talk") or gives them back (nil).
 function Villagers.setControl(player: Player, vid: string, mode: string?)
 	control[player] = control[player] or {}
 	control[player][vid] = mode
@@ -77,6 +80,8 @@ function Villagers.setControl(player: Player, vid: string, mode: string?)
 		if mode then
 			npc:halt()
 		end
+		-- no talking to someone in the middle of an event's scene, or away on an outing
+		npc:setTalkable(Talk.free(mode))
 		if mode == "away" then
 			npc.model.Parent = nil
 		elseif not mode and npc.model.Parent == nil then
@@ -263,6 +268,11 @@ function Villagers.spawn(player: Player, vid: string)
 	npc:play("idle")
 	npcs[player] = npcs[player] or {}
 	npcs[player][vid] = npc
+	-- hold E on them to talk. Made here, so a body rebuilt for a new look or name gets its own.
+	npc:setTalkable(Talk.free(Villagers.control(player, vid)))
+	npc:talkPrompt(v.name).Triggered:Connect(function(who: Player)
+		Villagers.talkedTo(who, player, vid)
+	end)
 	task.spawn(Villagers.brain, player, vid, npc)
 end
 
@@ -443,7 +453,10 @@ local function chat(player: Player, vid: string, npc: any): boolean
 			npc:say(ownLine(va, "hello"))
 			npc:gesture("wave")
 			task.wait(2.2)
-			fnpc:say(ownLine(vb, "hello"))
+			-- (a player may have stopped the friend for a talk of their own by now)
+			if Villagers.control(player, friend) == "chat" then
+				fnpc:say(ownLine(vb, "hello"))
+			end
 			task.wait(2.2)
 			local key = Schema.pairKey(vid, friend)
 			local rel = profile.rel[key]
@@ -491,6 +504,10 @@ function Villagers.brain(player: Player, vid: string, npc: any)
 					if not near then
 						local cf = spot.CFrame
 						for _, side in { cf.RightVector * 2.6, -cf.RightVector * 2.6, cf.LookVector * -3.4 } do
+							-- stopped on the way (an event, a player talking to them): bed can wait
+							if Villagers.control(player, vid) then
+								break
+							end
 							if npc:walkTo(spot.Position + side + Vector3.new(0, 2, 0), 25) then
 								near = true
 								break
@@ -1045,6 +1062,157 @@ function Villagers.feed(player: Player, vid: string, foodId: string): (boolean, 
 	return true, { reaction = reaction, mood = mood }
 end
 
+-- Talking to a villager --------------------------------------------------------------------------
+--
+-- The user: "allow the option to interact/chat with villagers by holding e on them". Every
+-- villager carries a prompt (Npc.talkPrompt, put on in Villagers.spawn). Hold it and they stop,
+-- turn to you and say a line in their bubble, which everyone nearby sees. They stay put while
+-- the talk goes on (control "talk") and go back to their day when it is over. In their own town
+-- a player also gets the talk card (the client's UI/TalkCard) and the little good a chat does
+-- (Sim/Talk: the first few a day count); somebody visiting gets the line and nothing else.
+
+local TK = Tuning.Talk
+local talkTokens: { [Player]: { [string]: number } } = {} -- the newest talk with each villager
+local talkedAt: { [Player]: number } = {} -- when each player last got a line
+local lastSaid: { [Player]: { [string]: string } } = {} -- what each villager said last
+
+-- Where a player stands, if that is close enough to a villager to talk.
+local function standsBy(who: Player, npc: any): Vector3?
+	local char = who.Character
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+	if root and root:IsA("BasePart") and (root.Position - npc:position()).Magnitude <= TK.Range then
+		return root.Position
+	end
+	return nil
+end
+
+-- Keeps a villager where they are for a talk and gives them back to their routine after: when
+-- the time is up or the player has walked off. A newer talk, an event taking them or a new body
+-- ends this watch early.
+local function holdForTalk(who: Player, owner: Player, vid: string, npc: any, seconds: number)
+	local tokens = talkTokens[owner]
+	if not tokens then
+		tokens = {}
+		talkTokens[owner] = tokens
+	end
+	local token = (tokens[vid] or 0) + 1
+	tokens[vid] = token
+	Villagers.setControl(owner, vid, "talk")
+	task.spawn(function()
+		local untilT = os.clock() + seconds
+		while os.clock() < untilT do
+			task.wait(0.5)
+			if tokens[vid] ~= token or Villagers.control(owner, vid) ~= "talk" or Villagers.get(owner, vid) ~= npc then
+				break
+			end
+			if not who.Parent or not standsBy(who, npc) then
+				break
+			end
+		end
+		-- still this talk's to end? (When the owner leaves, the lot is cleared.)
+		if talkTokens[owner] == tokens and tokens[vid] == token and Villagers.control(owner, vid) == "talk" then
+			Villagers.setControl(owner, vid, nil)
+		end
+	end)
+end
+
+-- A player talks to one of `owner`'s villagers, by the prompt or by the talk card's Chat. It is
+-- all checked here, every time: that the villager is up and free, and that the player really is
+-- standing by them. Returns what the talk card shows ({ vid, text, note, model }), or nil and
+-- why not (no reason when it was only too soon after the last line).
+local function talk(who: Player, owner: Player, vid: string): (any?, string?)
+	local profile = Data.get(owner)
+	local v = profile and profile.villagers[vid]
+	local npc = Villagers.get(owner, vid)
+	if not v or not npc or npc.model.Parent == nil or npc.sleeping then
+		return nil, "They can't talk right now."
+	end
+	local mode = Villagers.control(owner, vid)
+	if not Talk.free(mode) then
+		return nil, "They're busy right now."
+	end
+	local at = standsBy(who, npc)
+	if not at then
+		return nil, "You're too far away to talk."
+	end
+	local now = os.clock()
+	if now - (talkedAt[who] or 0) < TK.Cooldown then
+		return nil, nil
+	end
+	talkedAt[who] = now
+
+	local mine = who == owner
+	local first = mode ~= "talk" -- walked up to just now, or already talking
+	holdForTalk(who, owner, vid, npc, if mine then TK.StaySeconds else TK.VisitorSeconds)
+	if not npc.seat then
+		npc:face(at)
+	end
+	-- the good a chat does is the owner's alone
+	local chat: Talk.Chat? = nil
+	local notices: { string } = {}
+	if mine then
+		chat = Talk.chat(profile, vid, World.dayIndex(), rng, notices)
+	end
+	local said = lastSaid[owner]
+	if not said then
+		said = {}
+		lastSaid[owner] = said
+	end
+	local text = Talk.line(profile, vid, rng, {
+		first = first,
+		last = said[vid],
+		working = v.job ~= nil and v.dayOff ~= World.dayIndex() and isWorkTime(World.hour()),
+		now = os.time(),
+		chat = chat,
+	})
+	said[vid] = text
+	npc:say(text)
+	if first then
+		npc:gesture("wave")
+	end
+	if chat and (chat.counted or chat.wish) then
+		npc:icon("heart")
+		for _, n in notices do
+			Data.notify(owner, n, "good")
+		end
+		if chat.wish then
+			syncWishes(owner)
+			owner:SetAttribute("Coins", profile.coins)
+		end
+		Data.push(owner, "villagers", "offers", "coins", "stats")
+	end
+	return {
+		vid = vid,
+		text = text,
+		note = if chat then Talk.note(profile, vid, chat) else nil,
+		model = npc.model,
+	}
+end
+
+-- Somebody held E on a villager: the prompt's Triggered, as the server hears it.
+function Villagers.talkedTo(who: Player, owner: Player, vid: string)
+	local said = talk(who, owner, vid)
+	if said and who == owner then
+		Remotes.event("Talk"):FireClient(owner, said)
+	end
+end
+
+-- The owner said bye: their villager goes back to their day at once.
+local function endTalk(owner: Player, vid: string)
+	if Villagers.control(owner, vid) ~= "talk" then
+		return
+	end
+	local tokens = talkTokens[owner]
+	if tokens and tokens[vid] then
+		tokens[vid] += 1 -- that talk's own watch stands down
+	end
+	local npc = Villagers.get(owner, vid)
+	if npc then
+		npc:gesture("wave")
+	end
+	Villagers.setControl(owner, vid, nil)
+end
+
 function Villagers.start()
 	Remotes.fn("VillagerCreate").OnServerInvoke = create
 	Remotes.fn("VillagerUpdate").OnServerInvoke = update
@@ -1122,6 +1290,21 @@ function Villagers.start()
 		local npc = type(vid) == "string" and Villagers.get(player, vid)
 		return npc and npc.model or nil
 	end
+	-- the talk card's answers: Chat (one more line from one of your own villagers) and Bye
+	Remotes.fn("VillagerTalk").OnServerInvoke = function(player, vid, bye)
+		if type(vid) ~= "string" then
+			return false, "Who?"
+		end
+		if bye == true then
+			endTalk(player, vid)
+			return true
+		end
+		local said, why = talk(player, player, vid)
+		if not said then
+			return false, why
+		end
+		return true, said
+	end
 
 	local settled: { [Player]: boolean } = {}
 	local function settle(player: Player)
@@ -1166,6 +1349,9 @@ function Villagers.start()
 		end
 		npcs[player] = nil
 		control[player] = nil
+		talkTokens[player] = nil
+		talkedAt[player] = nil
+		lastSaid[player] = nil
 	end)
 
 	-- players can sit on any seat they can reach

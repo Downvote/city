@@ -1,6 +1,7 @@
--- Build mode's interface, laid out the way house builders usually are: a category bar along the
--- bottom (with Done) and an item tray above it, a tool strip down the left, coins and the floor
--- switcher with view toggles top right, and a little action bar over whatever you pick.
+-- Build mode's interface, laid out the way house builders usually are: the main groups and Done
+-- along the bottom, the categories and the item tray above them from one edge of the screen to the
+-- other, the tools on top of the tray at the left, the floor switcher with the view toggles on top
+-- of it at the right, coins top left, and a little action bar over whatever you pick.
 
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -590,8 +591,10 @@ local function wallTray(styles: { string }, room: boolean)
 		)
 	end
 	if not Plan.WallStyles[s.wallStyle].fence then
-		-- the paint for new walls: outside and inside
-		local paintBox = Kit.box({ Parent = row, Size = UDim2.fromOffset(380, 96), LayoutOrder = 20 })
+		-- the paint for new walls, outside and inside: it takes the rest of the row, whatever the
+		-- screen's width, so a wide screen shows more finishes at once
+		local taken = #styles * (96 + 8)
+		local paintBox = Kit.box({ Parent = row, Size = UDim2.new(1, -taken, 0, 96), LayoutOrder = 20 })
 		Kit.list(paintBox, 4)
 		local toggles = Kit.box({ Parent = paintBox, Size = UDim2.new(1, 0, 0, 30) })
 		Kit.list(toggles, 6, true)
@@ -1178,7 +1181,12 @@ function BuildUI.init(exitCallback: () -> ())
 	-- things to place as cards with price tags, then the categories as icon tiles, then the main
 	-- groups; the floors and view switches sit at the right, and the way out is one big button
 	-- in the bottom right corner. Its layout and flow are what is taken, drawn our own way.
-	local LEFT, WIDE = 14, 760
+	-- Then the user: "build mode should have the right part with all the decor and details filling
+	-- the whole screen horizontally, and the right side should be moved up". So the tray and the
+	-- categories run from one edge of the screen to the other (their widths are a share of the
+	-- screen, never a count of pixels), the floors card sits on top of the tray at the right, and
+	-- Done shares the bottom row with the main groups.
+	local LEFT = 14 -- the margin at each side of the screen
 
 	-- the main groups, along the bottom
 	local dock = Kit.frame({
@@ -1208,12 +1216,13 @@ function BuildUI.init(exitCallback: () -> ())
 		end)
 	end
 
-	-- the way out: one big button in the bottom right corner
+	-- the way out: one big button in the bottom right corner, as tall as the main groups' bar
+	-- beside it so it stays clear of the categories above
 	Kit.button("Done", {
 		Parent = ui,
 		Name = "Done",
-		Size = UDim2.fromOffset(196, 64),
-		Position = UDim2.new(1, -14, 1, -12),
+		Size = UDim2.fromOffset(196, 60),
+		Position = UDim2.new(1, -LEFT, 1, -12),
 		AnchorPoint = Vector2.new(1, 1),
 		TextSize = 26,
 		Color = T.Coral,
@@ -1227,7 +1236,7 @@ function BuildUI.init(exitCallback: () -> ())
 	-- the categories just above, as icon tiles, scrolling sideways when there are many
 	local subHolder = Kit.frame({
 		Name = "SubsBar",
-		Size = UDim2.fromOffset(WIDE, 84),
+		Size = UDim2.new(1, -LEFT * 2, 0, 84),
 		Position = UDim2.new(0, LEFT, 1, -78),
 		AnchorPoint = Vector2.new(0, 1),
 		Color = T.Paper,
@@ -1244,10 +1253,10 @@ function BuildUI.init(exitCallback: () -> ())
 	subBar.ScrollBarThickness = 0
 	Kit.list(subBar, 0, true)
 
-	-- the tray of things to place and options
+	-- the tray of things to place and options, as wide as the screen: its rows scroll sideways
 	tray = Kit.frame({
 		Name = "Tray",
-		Size = UDim2.fromOffset(WIDE, 182),
+		Size = UDim2.new(1, -LEFT * 2, 0, 182),
 		Position = UDim2.new(0, LEFT, 1, -168),
 		AnchorPoint = Vector2.new(0, 1),
 		Color = T.Paper,
@@ -1297,12 +1306,12 @@ function BuildUI.init(exitCallback: () -> ())
 		Wrap = false,
 	})
 
-	-- the floors and the view switches, at the right above the way out
+	-- the floors and the view switches, at the right on top of the tray (level with the tools)
 	local floors = Kit.frame({
 		Name = "Floors",
 		Size = UDim2.fromOffset(196, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		Position = UDim2.new(1, -14, 1, -88),
+		Position = UDim2.new(1, -LEFT, 1, -356),
 		AnchorPoint = Vector2.new(1, 1),
 		Color = T.Paper,
 		Parent = ui,

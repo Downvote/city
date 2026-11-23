@@ -15,6 +15,7 @@ State.start()
 
 local Hud = require(UI.Hud)
 Hud.start()
+require(UI.TalkCard).start() -- hold E on a villager: what they say back, and your answers
 
 -- life around town, and the show when you build
 local World = script.Parent.World

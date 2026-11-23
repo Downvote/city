@@ -17,6 +17,12 @@ Schema.Settings = {
 	sfx = 0.8,
 	bubbles = true,
 	eventCamera = true,
+	theme = "dark", -- the interface's look: "dark" or "light"
+}
+
+-- What a setting that is a word may be.
+Schema.SettingChoices = {
+	theme = { dark = true, light = true },
 }
 
 Schema.Seasons = { "Spring", "Summer", "Autumn", "Winter" }
@@ -48,6 +54,8 @@ export type Villager = {
 	hobby: string?,
 	feedDay: number?,
 	feeds: number?,
+	chatDay: number?, -- the day index of their last chat with you, and how many that day (Sim/Talk)
+	chats: number?,
 	from: string?, -- who they came as when they moved in from the road (Sim/Newcomers)
 }
 

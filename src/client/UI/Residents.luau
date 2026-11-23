@@ -283,7 +283,7 @@ local function stat(parent: Instance, label: string, value: string, order: numbe
 		Position = UDim2.fromOffset(0, 18),
 		TextSize = 16,
 		Font = Kit.Fonts.Bold,
-		Color = color,
+		Tint = color,
 		AlignY = Enum.TextYAlignment.Top,
 	})
 end
@@ -413,16 +413,18 @@ local function showDetail()
 	local pers = Personalities.get(v.pers)
 	local own = Colors.fromHex(v.color)
 
-	-- the stage: their own colour, sunk into the dark, with a glow where they stand
-	local back = Kit.frame({ Name = "Back", Parent = detail, Radius = false })
-	Kit.wash(back, own:Lerp(T.PaperDark, 0.5), T.PaperDark, 0)
+	-- the stage: their own colour sinking into the dark, leaning bands of it and shapes sliding
+	-- up and to the right behind them (the user: "animate shapes in this screen as well, going
+	-- diagonally")
+	local backdrop =
+		Kit.backdrop(detail, own, #vid * 17 + (string.byte(vid, #vid) or 0), { W = 1300, H = 820, Count = 16 })
+	Kit.halo(backdrop, 620, own:Lerp(T.White, 0.25), 0.3)
 	local stand = Kit.box({
 		Name = "Avatar",
 		Parent = detail,
 		Size = UDim2.new(0, INFO_X + 40, 1, 10),
 		Position = UDim2.fromOffset(-10, 0),
 	})
-	Kit.halo(stand, 560, own:Lerp(T.White, 0.25), 0.4)
 	-- the villager, the whole of them, standing
 	task.spawn(function()
 		local model = faceModels[vid]
@@ -436,9 +438,12 @@ local function showDetail()
 			end
 		end
 		if model and stand.Parent then
-			local vp = ModelPreview.fromModel(model, { Parent = stand, Stand = true })
+			local vp, shade = ModelPreview.fromModel(model, { Parent = stand, Stand = true, Shadow = true })
 			if vp then
 				vp.ZIndex = 2
+			end
+			if shade then
+				shade.ZIndex = 1
 			end
 		end
 	end)
@@ -448,7 +453,7 @@ local function showDetail()
 		Parent = detail,
 		Size = UDim2.new(1, -150, 1, 0),
 		Position = UDim2.fromOffset(150, 0),
-		Color = Color3.fromRGB(9, 10, 16),
+		Color = T.Black,
 		Radius = false,
 		ZIndex = 3,
 	})
@@ -716,14 +721,15 @@ function Residents.open(vid: string?)
 	})
 	listFrame = Kit.scroll({ Parent = panel.body, Size = UDim2.new(0, 262, 1, 0) })
 	Kit.list(listFrame, 8)
-	-- the stage cuts the villager and the fade to its round corners
+	-- the stage cuts the villager and the fade to its box. A plain frame: inside a CanvasGroup
+	-- the villager's 3D picture comes out pale (the moving backdrop has its own, behind them)
 	detail = Kit.frame({
 		Name = "Stage",
 		Parent = panel.body,
 		Size = UDim2.new(1, -278, 1, 0),
 		Position = UDim2.fromOffset(278, 0),
 		Color = T.PaperDark,
-		Radius = 24,
+		Radius = false,
 		Clips = true,
 	})
 	Kit.popIn(panel.root)

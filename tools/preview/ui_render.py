@@ -740,15 +740,18 @@ def draw_wedge(cv, node, rect, clip):
     cv.paste(im, x, y, clip)
 
 
-def draw_figure(cv, rect, clip):
+def draw_figure(cv, rect, clip, shadow=None):
     """A stand-in for a villager (the real one is a 3D model in a ViewportFrame): a plain figure
-    the height of the frame, so a screen's layout can be judged."""
+    the height of the frame, so a screen's layout can be judged. With `shadow` (0..1, how
+    see-through) it is their shadow instead: the same figure all in black."""
     x, y, w, h = [cv.px(v) for v in rect]
     u = h / 100.0
     im = Image.new("RGBA", (max(1, int(w)), max(1, int(h))), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
     cx = w / 2
     skin, shirt, legs, hair = (244, 200, 164, 255), (112, 170, 226, 255), (74, 84, 120, 255), (96, 70, 60, 255)
+    if shadow is not None:
+        skin = shirt = legs = hair = (0, 0, 0, int(255 * (1 - shadow)))
 
     def box(x1, y1, x2, y2, col, r):
         d.rounded_rectangle([cx + x1 * u, y1 * u, cx + x2 * u, y2 * u], radius=r * u, fill=col)
@@ -808,6 +811,8 @@ def draw_node(cv, node, clip, item_hint=None):
             draw_text(target, node, rect, clip)
         if node["name"] == "Avatar":
             draw_figure(target, rect, clip)
+        elif node["name"] == "AvatarShadow":
+            draw_figure(target, rect, clip, P(node, "ImageTransparency", 0.66))
         if node["class"] in ("ImageLabel", "ImageButton") and P(node, "Picture"):
             draw_picture(target, node, rect, clip)
         if node["class"] in ("ImageLabel", "ImageButton") and str(P(node, "Image", "")).startswith("rbxthumb"):

@@ -24,6 +24,8 @@ export type Npc = typeof(setmetatable(
 		bubble: BillboardGui?,
 		bubbleToken: number,
 		vid: string,
+		prompt: ProximityPrompt?, -- "Talk": hold E on them
+		talkable: boolean, -- false while something else has them (an event's scene, an outing)
 	},
 	Npc
 ))
@@ -76,6 +78,8 @@ function Npc.new(model: Model, vid: string): Npc
 		bubble = nil,
 		bubbleToken = 0,
 		vid = vid,
+		prompt = nil,
+		talkable = true,
 	}, Npc)
 	humanoid.WalkSpeed = Tuning.Villagers.WalkSpeed
 	humanoid.AutoRotate = true
@@ -346,6 +350,37 @@ function Npc.claim(self: Npc)
 	end)
 end
 
+-- The prompt players hold E on to talk to a villager (touch and gamepads get their own way to
+-- hold it). It sits on the body's root part, so it comes and goes with the body: a new look is
+-- a new body, and Services/Villagers puts a new prompt on it. It is off while they sleep and
+-- while something else has them (setTalkable).
+function Npc.talkPrompt(self: Npc, name: string): ProximityPrompt
+	local old = self.prompt
+	if old then
+		old:Destroy()
+	end
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = "TalkPrompt"
+	prompt.ActionText = "Talk"
+	prompt.ObjectText = name
+	prompt.KeyboardKeyCode = Enum.KeyCode.E
+	prompt.HoldDuration = Tuning.Talk.HoldSeconds
+	prompt.MaxActivationDistance = Tuning.Talk.Distance
+	prompt.RequiresLineOfSight = false
+	prompt.Enabled = self.talkable and not self.sleeping
+	prompt.Parent = self.root
+	self.prompt = prompt
+	return prompt
+end
+
+function Npc.setTalkable(self: Npc, on: boolean)
+	self.talkable = on
+	local prompt = self.prompt
+	if prompt then
+		prompt.Enabled = on and not self.sleeping
+	end
+end
+
 function Npc.standUp(self: Npc)
 	if self.sleeping then
 		self.sleeping = false
@@ -354,6 +389,7 @@ function Npc.standUp(self: Npc)
 		self.humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
 		self:stop("sit")
 		self:claim()
+		self:setTalkable(self.talkable)
 	end
 	if self.seat then
 		self.humanoid.Sit = false
@@ -369,6 +405,7 @@ end
 function Npc.sleep(self: Npc, spot: BasePart)
 	self:halt()
 	self.sleeping = true
+	self:setTalkable(self.talkable) -- nobody is woken for a chat
 	self:stop("walk")
 	self:play("idle")
 	self.humanoid.PlatformStand = true

@@ -14,6 +14,7 @@ local Schema = require(Shared.Sim.Schema)
 local Kit = require(script.Parent.Kit)
 local Icons = require(script.Parent.Icons)
 local Toasts = require(script.Parent.Toasts)
+local Theme = require(script.Parent.Theme)
 local State = require(script.Parent.Parent.Controllers.State)
 
 local Hud = {}
@@ -249,7 +250,7 @@ function Hud.start()
 	-- round buttons under the clock: the city, the shop, the news
 	local corner = Kit.box({
 		Name = "Corner",
-		Size = UDim2.fromOffset(240, 52),
+		Size = UDim2.fromOffset(302, 52),
 		Position = UDim2.new(1, -14, 0, 86),
 		AnchorPoint = Vector2.new(1, 0),
 		Parent = hud,
@@ -268,6 +269,18 @@ function Hud.start()
 			Hud.open(e[2])
 		end)
 	end
+	-- dark or light: the button shows the one you would switch to
+	local lookButton: GuiObject? = nil
+	local function drawLook()
+		if lookButton then
+			lookButton:Destroy()
+		end
+		lookButton = Kit.roundButton(Theme.icon(), { Parent = corner, LayoutOrder = 0, Name = "Look" }, function()
+			Theme.toggle()
+		end)
+	end
+	drawLook()
+	Kit.onTheme(drawLook)
 	local weatherArt: Frame? = nil
 	local weatherNow = ""
 	local function setWeatherIcon(name: string)
@@ -549,6 +562,8 @@ function Hud.start()
 			Hud.open("CityPanel")
 		end
 	end)
+
+	Theme.start()
 
 	-- events, weather
 	Hud.panel("EventCard").start(Hud)

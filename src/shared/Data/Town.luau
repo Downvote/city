@@ -60,6 +60,9 @@ Town.Districts = {
 -- behind it. Stages for several players line up westward from here.
 Town.CreatorSpot = Vector3.new(-330, 0, 318)
 Town.CreatorGap = 34
+-- How high over the meadow the stage floats. Nothing of the town is near it up there, so the
+-- creator can stand its own backdrop behind the mannequin.
+Town.CreatorHeight = 420
 
 -- The frame of plot i (1..8): its local origin is the front left corner, seen from the street.
 function Town.plotFrame(i: number): CFrame

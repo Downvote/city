@@ -1,7 +1,7 @@
 #!/bin/sh
 # The check every change passes before it is committed:
 #   format (stylua), types and lint against Roblox's API (luau-lsp), specs (lune), the client
-#   simulation (tests/sim), the dark look on every screen (tools/preview/audit.sh), the painted
+#   simulations (tests/sim), the dark and the light look on every screen (tools/preview/audit.sh), the painted
 #   textures in the place file, place build (rojo).
 # Usage: sh scripts/check.sh [--fix]   (--fix formats the code instead of only checking it)
 set -e
@@ -52,10 +52,18 @@ if ! lune run tests/sim/build_client.luau >"$SIM_OUT" 2>&1; then
 	exit 1
 fi
 tail -n 1 "$SIM_OUT"
+# the card you get when you hold E on a villager, driven the same way
+if ! lune run tests/sim/talk_card.luau >"$SIM_OUT" 2>&1; then
+	cat "$SIM_OUT"
+	rm -f "$SIM_OUT"
+	exit 1
+fi
+tail -n 1 "$SIM_OUT"
 rm -f "$SIM_OUT"
 
-echo "== dark look"
-# every screen is dark: no white or cream surface left, no words lost against their background
+echo "== the two looks"
+# every screen is dark, and light when that look is on: no surface left in the other look's
+# colours, no words lost against their background
 sh tools/preview/audit.sh
 
 echo "== textures"

@@ -110,7 +110,7 @@ local function showDetail(g: any)
 		Size = UDim2.fromOffset(0, 34),
 		AutomaticSize = Enum.AutomaticSize.X,
 		TextSize = 24,
-		Color = T.Yellow,
+		Tint = T.YellowDark,
 		Wrap = false,
 		LayoutOrder = 2,
 	})
@@ -120,7 +120,7 @@ local function showDetail(g: any)
 			Size = UDim2.new(1, 0, 0, 30),
 			Position = UDim2.new(0, 0, 1, -72),
 			TextSize = 20,
-			Color = T.GreenDark,
+			Tint = T.GreenDark,
 			AlignX = Enum.TextXAlignment.Center,
 		})
 	elseif g.done then
