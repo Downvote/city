@@ -660,6 +660,10 @@ local PROPS = {
 	"ImageTransparency",
 	"ImageRectOffset",
 	"ImageRectSize",
+	"ScaleType",
+	"SliceCenter",
+	"SliceScale",
+	"TileSize",
 	"CanvasSize",
 	"AutomaticCanvasSize",
 	"ScrollingDirection",
@@ -708,6 +712,8 @@ local function encode(v)
 		return { v.X, v.Y }
 	elseif t == "Color3" then
 		return { v.R, v.G, v.B }
+	elseif t == "Rect" then
+		return { v.Min.X, v.Min.Y, v.Max.X, v.Max.Y }
 	elseif t == "EnumItem" then
 		return v.Name
 	elseif t == "ColorSequence" then

@@ -981,6 +981,53 @@ lines. Never its art, patterns or layouts.
 - **Dialogs** fit what is in them (no empty bottom), and the event card loses the empty strip over its words when
   nobody in particular is speaking.
 
+### Out of the corners, rounded points, textures and circles; menus after a reference page
+
+> these three should be coming out of the corners of the screen instead of floating. vertically flip the
+> paralleograms of the weather and one of the 4 icons. also, the quest tab and currency/stats tab should also be
+> part of the left side edge
+
+> could you make these parallelograms textured like these buttons, with other details and buttons shown like this
+> in circles? note that these have smooth points as well
+
+> for menu interfaces, reference this: https://zenless.hoyoverse.com/en-us/news/113767 and try to replicate the
+> look and feel as much as possible, including the texturing and minute details
+
+(The first came with pictures of our own clock, menu bar, Build button and stats; the second with a picture of
+another game's main screen: dark textured leaning slabs with rounded points, round buttons and details. The page in
+the third is that game's own guide to its menu screens.) These soften the angular rule from before: what leans
+still leans, but nothing is sharp any more, and menus are built from rounded cards, pills and circles.
+
+What is taken from the reference is how it feels: charcoal cards with round corners inside a thin rim, rows as
+pills a shade lighter than the panel, one strong yellow for whatever is picked with dark words on it, round markers
+and round icon buttons, a red leaning way out, fine halftone dots and hatching on the surfaces, and small careful
+details. What is never taken: that game's art, icons, logos, names, lettering or background patterns. Every shape
+and texture here is drawn by our own code from nothing, the icons are our own line drawings and the words are
+Maplewick's.
+
+- **Out of the corners.** The clock's slab hangs from the top right corner, running up off the top and off the
+  right edge, and leans the other way from the rest. The menu bar comes out of the bottom left corner and leans
+  the other way too, so it widens toward the bottom. The Build button runs off the bottom right corner. The stats
+  strip and the quests under it start at the left edge of the screen.
+- **Slabs with smooth points.** Every leaning slab has its four points rounded. A box can only cut a sharp slanted
+  end, so the slabs are painted: the game paints each slab's two ends once into a small picture and stretches the
+  middle between them (`UI/Skin`). A slab over the 3D view is near black glass with a thin pale line just inside
+  its edge and a run of halftone dots that grow toward one end. If a game has Allow Mesh / Image APIs off, the
+  slabs fall back to sharp ends and no texture, and everything still works.
+- **Circles.** The round buttons under the clock are discs in a thin ring. The town's level sits on a round dial.
+  Quest and row markers are discs with the icon on them, the alert on a button is a red dot, a note starts with a
+  round badge. Diamonds are gone.
+- **Menus.** A menu's panel is a charcoal card with round corners; a thin warm grey line runs round it a few
+  pixels out, a tone of fine dots lies over it and thins out toward the bottom left, and a band of hatching in the
+  menu's colour sits in its bottom right corner. Rows are pills with a thin line, lighter than the panel; the
+  picked one is yellow with dark words. Tabs are one dark pill with a yellow pill on the picked tab. A tile is a
+  rounded square with its name on a deeper band along the bottom. Buttons are pills in their own colour with a
+  thin deeper line. The way out is a red leaning slab with a dark arrow at the top left; a dialog has a darker
+  band across its top with its name and a red cross at the right. A note on how something works is a khaki strip
+  with a dark round badge.
+- **Colour.** The dark look's surfaces lost their blue: they are charcoal now, so the accents carry the colour.
+  The yellow is stronger. The light look keeps its pale paper, with the same shapes and textures in darker dots.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

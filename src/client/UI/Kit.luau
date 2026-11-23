@@ -14,24 +14,26 @@ local UserInputService = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
 
 local Icons = require(script.Parent.Icons)
+local Skin = require(script.Parent.Skin)
 
 local Kit = {}
 
 Kit.Theme = {
 	-- what a full menu covers the screen with, and the far end of a fade
-	Black = Color3.fromRGB(6, 7, 12),
-	-- surfaces, darkest to lightest: a well sinks into a panel, a card stands up off it
-	PaperDark = Color3.fromRGB(20, 22, 31), -- wells, tracks, unpicked tabs
-	Cream = Color3.fromRGB(29, 31, 42), -- big panels
-	Paper = Color3.fromRGB(37, 40, 54), -- cards and buttons, the bars over the 3D view
-	Card = Color3.fromRGB(47, 51, 68), -- a row or a tile on a panel
-	Picture = Color3.fromRGB(74, 80, 104), -- behind a catalog picture or a face: light enough that dark hair shows
-	Line = Color3.fromRGB(66, 71, 93),
+	Black = Color3.fromRGB(8, 8, 10),
+	-- surfaces, darkest to lightest: a well sinks into a panel, a card stands up off it. They
+	-- are charcoal with next to no colour of their own, so the accents carry it
+	PaperDark = Color3.fromRGB(15, 15, 18), -- wells, tracks, unpicked tabs
+	Cream = Color3.fromRGB(23, 23, 27), -- big panels
+	Paper = Color3.fromRGB(31, 31, 36), -- cards and buttons, the bars over the 3D view
+	Card = Color3.fromRGB(44, 44, 50), -- a row or a tile on a panel
+	Picture = Color3.fromRGB(78, 80, 94), -- behind a catalog picture or a face: light enough that dark hair shows
+	Line = Color3.fromRGB(82, 80, 72), -- the thin rim round a card: a warm grey
 	-- words
-	Ink = Color3.fromRGB(236, 238, 246), -- words on any of the surfaces above
-	InkSoft = Color3.fromRGB(158, 164, 187),
+	Ink = Color3.fromRGB(240, 240, 236), -- words on any of the surfaces above
+	InkSoft = Color3.fromRGB(158, 158, 164),
 	White = Color3.fromRGB(255, 255, 255), -- words and icons on a coloured button
-	Dark = Color3.fromRGB(16, 18, 26), -- outlines round letters, and words on a bright face
+	Dark = Color3.fromRGB(13, 13, 16), -- outlines round letters, and words on a bright face
 	-- accents: the same pastels as before, they carry the colour now
 	Green = Color3.fromRGB(128, 198, 118),
 	GreenDark = Color3.fromRGB(92, 164, 92),
@@ -39,15 +41,16 @@ Kit.Theme = {
 	CoralDark = Color3.fromRGB(222, 104, 98),
 	Blue = Color3.fromRGB(116, 178, 236),
 	BlueDark = Color3.fromRGB(84, 146, 210),
-	Yellow = Color3.fromRGB(255, 206, 104),
-	YellowDark = Color3.fromRGB(240, 170, 70),
+	Yellow = Color3.fromRGB(255, 210, 64),
+	YellowDark = Color3.fromRGB(238, 166, 44),
+	Red = Color3.fromRGB(232, 66, 60), -- the way out of a menu
 	Purple = Color3.fromRGB(186, 156, 232),
 	Orange = Color3.fromRGB(255, 172, 108),
 	Pink = Color3.fromRGB(250, 156, 186),
 	Teal = Color3.fromRGB(110, 204, 188),
 	Shadow = Color3.fromRGB(0, 0, 0),
-	Glass = Color3.fromRGB(14, 16, 24), -- the dark see-through pills over the 3D view
-	GlassAlpha = 0.26,
+	Glass = Color3.fromRGB(12, 12, 15), -- the dark see-through slabs over the 3D view
+	GlassAlpha = 0.14,
 }
 
 local T = Kit.Theme
@@ -141,33 +144,65 @@ function Kit.new(class: string, props: { [string]: any }?, children: { Instance 
 	return inst
 end
 
--- Angular shapes ----------------------------------------------------------------------------------------
+-- Shapes ---------------------------------------------------------------------------------------------
 --
--- The user: "Use the format in zenless zone zero for buttons and details in ui instead of
--- overusing circles and rounded rectangles". So the interface is cut from straight lines: a
--- button, a tab or a row leans (its two ends are slanted, a parallelogram), a panel or a card has
--- two of its corners cut off, a marker is a diamond, and small details are stripes and ticks.
--- Corners that are left are all but square. The idea of leaning, cut shapes is what is taken;
--- the shapes, colours and type are Maplewick's own.
+-- The look so far was cut from straight lines (the user: "Use the format in zenless zone zero for
+-- buttons and details in ui instead of overusing circles and rounded rectangles"). Two later
+-- requests soften it. Of the slabs on the main screen: "could you make these parallelograms
+-- textured like these buttons, with other details and buttons shown like this in circles? note
+-- that these have smooth points as well". Of the menus, pointing at that game's own guide to its
+-- menu screens: "try to replicate the look and feel as much as possible, including the texturing
+-- and minute details".
 --
--- A slanted edge is drawn without any picture: a box with a UIGradient laid square across its
--- diagonal whose Transparency steps from clear to solid half way, which leaves a right angled
--- triangle (a "wedge"). A wedge at each end of a rectangle makes it lean; a wedge in a corner cuts
--- the corner.
+-- So: what leans (the slabs over the 3D view, the way back out of a menu, a price tag) still
+-- leans, with its four points rounded and a tone of halftone dots on it; a menu is a charcoal
+-- card with round corners and a thin rim; rows and tabs are pills, the picked one yellow with dark
+-- words; small buttons, markers and details are circles. The feel is what is taken. Every shape,
+-- dot and line is drawn here from nothing (UI/Skin), and none of that game's art, icons, type or
+-- patterns is used.
+--
+-- A leaning slab with rounded points can't be cut from boxes, so UI/Skin paints its two ends
+-- and an ImageLabel stretches the middle between them. Where the game can't make pictures
+-- (Allow Mesh / Image APIs off) the slab is drawn the old way: a box with a sharp wedge on each
+-- end, a wedge being a box with a UIGradient laid square across its diagonal whose Transparency
+-- steps from clear to solid half way.
 
-local CORNER = 3 -- what is left of a rounded corner, in pixels
+local CORNER = 10 -- a corner's radius when none is asked for, in pixels
+local CORNER_MAX = 18 -- and the most any corner gets, short of a pill or a circle
 Kit.Lean = 0.3 -- how far a leaning end runs sideways, as a share of the thing's height
 
--- Corners are all but square: whatever radius is asked for comes out as a few pixels. Only
--- "round" makes a circle of a square (a progress ring's parts, a glow).
+-- Round corners: `radius` in pixels (kept modest), or "pill" / "round" for ends that are half
+-- circles (a pill of a bar, a circle of a square).
 function Kit.corner(inst: Instance, radius: any): UICorner
-	local r = if radius == "round" then UDim.new(0.5, 0) else UDim.new(0, CORNER)
+	local r = UDim.new(0, CORNER)
+	if radius == "round" or radius == "pill" or radius == "circle" then
+		r = UDim.new(0.5, 0)
+	elseif type(radius) == "number" then
+		r = UDim.new(0, math.clamp(radius, 2, CORNER_MAX))
+	end
 	return Kit.new("UICorner", { CornerRadius = r, Parent = inst })
 end
 
--- A round frame with a border for somebody's face. Shapes in this look are cut from straight
--- lines, with one exception the user asked for: "make portraits a circle with a border instead
--- of a square". props: Parent, Size (pixels across), Position, AnchorPoint, Color (what shows
+-- A thin line round a card, a well or a disc, just inside its edge: the rim every surface in
+-- this look has. `transparency` 0 by default.
+function Kit.rim(inst: Instance, color: Color3?, thickness: number?, transparency: number?): UIStroke
+	local old = inst:FindFirstChild("Rim")
+	if old then
+		old:Destroy()
+	end
+	return Kit.new("UIStroke", {
+		Name = "Rim",
+		Color = color or T.Line,
+		Thickness = thickness or 1.5,
+		Transparency = transparency or 0,
+		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+		LineJoinMode = Enum.LineJoinMode.Round,
+		Parent = inst,
+	})
+end
+
+-- A round frame with a border for somebody's face (the user: "make portraits a circle with a
+-- border instead of a square"). props: Parent, Size (pixels across), Position, AnchorPoint, Color (what shows
 -- behind the face), Border (the ring's colour), BorderWidth, Name, ZIndex, LayoutOrder. Returns
 -- the frame. A picture put in it (a ViewportFrame, an ImageLabel) fills it and is cut to the
 -- circle with Kit.rounded.
@@ -243,10 +278,53 @@ function Kit.wedge(props: { [string]: any }, keep: string): Frame
 	return f
 end
 
--- Makes a plain rectangle lean: it is pulled in at both ends and a wedge put on each, so the
+-- How round a leaning slab's points are, for its height.
+local function pointOf(h: number): number
+	return math.clamp(math.floor(h * 0.17 + 0.5), 3, 9)
+end
+
+-- The painted picture under a leaning face, or nil where its plain wedges are showing.
+local function bodyOf(face: Instance): ImageLabel?
+	local body = face:FindFirstChild("Body")
+	return if body and body:IsA("ImageLabel") then body else nil
+end
+
+-- The gradient a shaded face is shaded by (on its painted picture when it has one).
+local function shadeOf(face: Instance): UIGradient?
+	local g = (bodyOf(face) or face):FindFirstChild("Shade")
+	return if g and g:IsA("UIGradient") then g else nil
+end
+Kit.shadeOf = shadeOf
+
+-- A picture of UI/Skin's laid over a leaning face's whole shape (its ends stand `cap` past the
+-- face on either side).
+local function slabLayer(face: GuiObject, name: string, pic: any, cap: number, z: number): ImageLabel
+	local pad = Skin.Pad
+	local layer = Kit.new("ImageLabel", {
+		Name = name,
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Size = UDim2.new(1, (cap + pad) * 2, 1, pad * 2),
+		Position = UDim2.fromOffset(-cap - pad, -pad),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(pic.cap * Skin.Scale, 0, pic.w - pic.cap * Skin.Scale, pic.h),
+		SliceScale = 1 / Skin.Scale,
+		ZIndex = z,
+		Parent = face,
+	});
+	(layer :: any).ImageContent = pic.content
+	return layer
+end
+
+-- Makes a plain rectangle lean: it is pulled in at both ends and an end put on each, so the
 -- whole stays inside the box the rectangle had (or with `outside`, the rectangle keeps its box
--- and the wedges stand out past its ends). `height` is its height in pixels when its Size
--- doesn't say. Returns how far each end runs.
+-- and the ends stand out past it). `height` is its height in pixels when its Size doesn't say.
+-- Returns how far each end runs.
+--
+-- The slab is painted, its four points rounded: the face itself goes clear and a picture named
+-- Body under everything in it draws the shape, in the face's colour. So recolour a leaning face
+-- with Kit.paint and read its colour with Kit.colorOf, never through its BackgroundColor3. (Where
+-- the game can't make pictures the face keeps its colour and gets a sharp wedge on each end.)
 function Kit.slant(face: GuiObject, height: number?, outside: boolean?, flip: boolean?): number
 	local h = height or face.Size.Y.Offset
 	if h <= 0 then
@@ -257,6 +335,21 @@ function Kit.slant(face: GuiObject, height: number?, outside: boolean?, flip: bo
 		face.Position += UDim2.fromOffset(cap, 0)
 		face.Size -= UDim2.fromOffset(cap * 2, 0)
 		face:SetAttribute("Inset", cap)
+	end
+	if flip then
+		face:SetAttribute("Flip", true)
+	end
+	face:SetAttribute("Cap", cap)
+	face:SetAttribute("Tall", h)
+	local pic = Skin.slab(h, cap, flip == true, pointOf(h))
+	if pic then
+		local body = slabLayer(face, "Body", pic, cap, -3)
+		body.ImageColor3 = face.BackgroundColor3
+		body.ImageTransparency = face.BackgroundTransparency
+		face:SetAttribute("Base", face.BackgroundColor3:ToHex())
+		face:SetAttribute("Painted", true)
+		face.BackgroundTransparency = 1
+		return cap
 	end
 	-- the usual lean is "/" (wider at the bottom on the left, at the top on the right); flipped
 	-- it is "\": wider at the top on the left, at the bottom on the right
@@ -273,10 +366,64 @@ function Kit.slant(face: GuiObject, height: number?, outside: boolean?, flip: bo
 			H = h,
 		}, keep)
 	end
-	if flip then
-		face:SetAttribute("Flip", true)
-	end
 	return cap
+end
+
+-- The small things that make a painted slab look made: a thin line just inside its edge, and a
+-- tone of halftone dots growing toward one end. opts: Line (the line's colour, white by default;
+-- false for none), LineAlpha (how see-through, 0.84), Tone (the dots' colour; false for none),
+-- ToneAlpha (0.9), Side ("right" or "left": the end the dots grow toward), ToneWidth. Does
+-- nothing where the slab isn't painted.
+function Kit.detail(face: GuiObject, opts: { [string]: any }?)
+	local o = opts or {}
+	if not bodyOf(face) then
+		return
+	end
+	local h: number = face:GetAttribute("Tall") :: any or 40
+	local cap: number = face:GetAttribute("Cap") :: any or 8
+	local flip = face:GetAttribute("Flip") == true
+	local point = pointOf(h)
+	for _, name in { "Line", "Tone" } do
+		local old = face:FindFirstChild(name)
+		if old then
+			old:Destroy()
+		end
+	end
+	if o.Line ~= false and h >= 22 then
+		local pic = Skin.slab(h, cap, flip, point, 2.5, 1)
+		if pic then
+			local line = slabLayer(face, "Line", pic, cap, -2)
+			line.ImageColor3 = if typeof(o.Line) == "Color3" then o.Line else Color3.new(1, 1, 1)
+			line.ImageTransparency = o.LineAlpha or 0.84
+			line:SetAttribute("Tinted", true)
+		end
+	end
+	if o.Tone ~= false then
+		local pic = Skin.texture("fan")
+		if pic then
+			local left = o.Side == "left"
+			local tall = math.max(4, h - 8)
+			local wide = math.min(o.ToneWidth or 132, Skin.FanSize.X)
+			local tone = Kit.new("ImageLabel", {
+				Name = "Tone",
+				BackgroundTransparency = 1,
+				BorderSizePixel = 0,
+				Size = UDim2.fromOffset(wide, tall),
+				AnchorPoint = Vector2.new(if left then 0 else 1, 0.5),
+				Position = UDim2.new(if left then 0 else 1, if left then point else -point, 0.5, 0),
+				Rotation = if left then 180 else 0,
+				ImageColor3 = if typeof(o.Tone) == "Color3" then o.Tone else Color3.new(1, 1, 1),
+				ImageTransparency = o.ToneAlpha or 0.9,
+				-- the far end of the run, dot for dot (never squashed to fit)
+				ImageRectOffset = Vector2.new((Skin.FanSize.X - wide) * Skin.Scale, 0),
+				ImageRectSize = Vector2.new(wide * Skin.Scale, math.min(tall, Skin.FanSize.Y) * Skin.Scale),
+				ZIndex = -2,
+				Parent = face,
+			});
+			(tone :: any).ImageContent = pic.content
+			tone:SetAttribute("Tinted", true)
+		end
+	end
 end
 
 -- Gradients -----------------------------------------------------------------------------------------
@@ -299,7 +446,7 @@ function Kit.shadeEnd(color: Color3): Color3
 	return color:Lerp(SHADE_TO, if light > 0.7 then 0.07 else 0.16)
 end
 
--- What colour a face is, shaded or not.
+-- What colour a face is, shaded or not, painted or not.
 function Kit.colorOf(face: GuiObject): Color3
 	local base = face:GetAttribute("Base")
 	if type(base) == "string" then
@@ -308,16 +455,60 @@ function Kit.colorOf(face: GuiObject): Color3
 	return face.BackgroundColor3
 end
 
--- Shades a leaning face from `color` (its own colour if none) at the left to a deeper tone at
--- the right.
+-- The colour of the thin line round a face of `color`: a deeper tone of it.
+local function edgeOf(color: Color3): Color3
+	local light = color.R * 0.3 + color.G * 0.59 + color.B * 0.11
+	return color:Lerp(Color3.new(0, 0, 0), if light > 0.7 then 0.2 else 0.34)
+end
+Kit.edgeOf = edgeOf
+
+-- (After a face is recoloured.) Its thin line follows its colour, where it has one that does.
+local function follow(face: GuiObject)
+	local rim = face:FindFirstChild("Rim")
+	if rim and rim:IsA("UIStroke") and rim:GetAttribute("Follow") then
+		rim.Color = edgeOf(Kit.colorOf(face))
+	end
+end
+
+-- A tile's face: its colour, with a deeper band across the bottom where its name goes (one
+-- gradient with a step in it, so the band is cut to the tile's round corners with it).
+local FOOT = 0.66
+local function footShade(face: GuiObject, color: Color3)
+	face:SetAttribute("Base", color:ToHex())
+	face.BackgroundColor3 = Color3.new(1, 1, 1)
+	local g = face:FindFirstChild("Foot")
+	if not (g and g:IsA("UIGradient")) then
+		g = Kit.new("UIGradient", { Name = "Foot", Rotation = 90, Parent = face })
+	end
+	local light = color.R * 0.3 + color.G * 0.59 + color.B * 0.11
+	local top = color:Lerp(Color3.new(1, 1, 1), if light > 0.7 then 0 else 0.03)
+	local low = color:Lerp(Color3.new(0, 0, 0), if light > 0.7 then 0.1 else 0.3);
+	(g :: UIGradient).Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, top),
+		ColorSequenceKeypoint.new(FOOT, color),
+		ColorSequenceKeypoint.new(FOOT + 0.005, low),
+		ColorSequenceKeypoint.new(1, low),
+	})
+end
+
+-- Shades a face from `color` (its own colour if none) at the left to a deeper tone at the
+-- right.
 function Kit.shade(face: GuiObject, color: Color3?)
 	local a = color or Kit.colorOf(face)
 	local b = Kit.shadeEnd(a)
 	face:SetAttribute("Base", a:ToHex())
-	face.BackgroundColor3 = Color3.new(1, 1, 1)
-	local g = face:FindFirstChild("Shade")
+	local body = bodyOf(face)
+	local host: Instance = body or face
+	if body then
+		-- the picture is white under the gradient; the face keeps the colour for whoever reads it
+		body.ImageColor3 = Color3.new(1, 1, 1)
+		face.BackgroundColor3 = a
+	else
+		face.BackgroundColor3 = Color3.new(1, 1, 1)
+	end
+	local g = host:FindFirstChild("Shade")
 	if not (g and g:IsA("UIGradient")) then
-		g = Kit.new("UIGradient", { Name = "Shade", Parent = face })
+		g = Kit.new("UIGradient", { Name = "Shade", Parent = host })
 	end
 	(g :: UIGradient).Color = ColorSequence.new(a, b)
 	for _, c in face:GetChildren() do
@@ -326,6 +517,7 @@ function Kit.shade(face: GuiObject, color: Color3?)
 			c.BackgroundColor3 = if c.Position.X.Scale < 0.5 then a else b
 		end
 	end
+	follow(face)
 end
 
 -- A soft glow of `color` laid into a frame from one corner ("tr" the top right by default, or
@@ -364,14 +556,44 @@ function Kit.glow(frame: GuiObject, color: Color3, strength: number?, corner: st
 	return glow
 end
 
--- Recolours a face and the wedges on it (and whether they show).
+-- Recolours a face (and whether it shows): its painted picture or its wedges follow, and its
+-- thin line.
 function Kit.paint(face: GuiObject, color: Color3?, transparency: number?)
-	if color and face:FindFirstChild("Shade") then
+	if color and shadeOf(face) then
 		Kit.shade(face, color)
 		color = nil
+	elseif color and face:FindFirstChild("Foot") then
+		footShade(face, color)
+		color = nil
+	end
+	local rim = face:FindFirstChild("Rim")
+	if transparency and rim and rim:IsA("UIStroke") and rim:GetAttribute("Follow") then
+		rim.Transparency = transparency
+	end
+	local body = bodyOf(face)
+	if body then
+		if color then
+			body.ImageColor3 = color
+			face.BackgroundColor3 = color
+			face:SetAttribute("Base", color:ToHex())
+		end
+		if transparency then
+			body.ImageTransparency = transparency
+			-- its line and its dots go when it does
+			for _, name in { "Line", "Tone" } do
+				local detail = face:FindFirstChild(name)
+				if detail and detail:IsA("GuiObject") then
+					detail.Visible = transparency < 1
+				end
+			end
+		end
+		return
 	end
 	if color then
 		face.BackgroundColor3 = color
+		if face:GetAttribute("Base") ~= nil then
+			face:SetAttribute("Base", color:ToHex())
+		end
 	end
 	if transparency then
 		face.BackgroundTransparency = transparency
@@ -386,58 +608,110 @@ function Kit.paint(face: GuiObject, color: Color3?, transparency: number?)
 			end
 		end
 	end
+	follow(face)
 end
 
--- Fills `holder` with a rectangle whose top left and bottom right corners are cut off by `cut`
--- pixels, under everything else in it. Returns the layer (Kit.paintCut recolours it).
+-- Fills `holder` with a card's shape, under everything else in it: a rounded rectangle (its
+-- corners `cut` round, which was how much of two corners got cut off in the look before, and
+-- the name has stayed). Returns the layer (Kit.paintCut recolours it).
 function Kit.cutInto(holder: GuiObject, color: Color3, cut: number, z: number?): Frame
 	local layer = Kit.new("Frame", {
 		Name = "Cut",
-		BackgroundTransparency = 1,
+		BackgroundColor3 = color,
 		BorderSizePixel = 0,
 		Size = UDim2.fromScale(1, 1),
 		ZIndex = z or 0,
 		Parent = holder,
 	})
-	local function piece(name: string, position: UDim2, size: UDim2)
-		Kit.new("Frame", {
-			Name = name,
-			BackgroundColor3 = color,
-			BorderSizePixel = 0,
-			Position = position,
-			Size = size,
-			ZIndex = z or 0,
-			Parent = layer,
-		})
-	end
-	piece("Top", UDim2.fromOffset(cut, 0), UDim2.new(1, -cut, 0, cut))
-	piece("Mid", UDim2.fromOffset(0, cut), UDim2.new(1, 0, 1, -cut * 2))
-	piece("Bot", UDim2.new(0, 0, 1, -cut), UDim2.new(1, -cut, 0, cut))
-	Kit.wedge(
-		{ Parent = layer, Color = color, Size = UDim2.fromOffset(cut, cut), ZIndex = z or 0, W = cut, H = cut },
-		"br"
-	)
-	Kit.wedge({
-		Parent = layer,
-		Color = color,
-		Size = UDim2.fromOffset(cut, cut),
-		Position = UDim2.new(1, -cut, 1, -cut),
-		ZIndex = z or 0,
-		W = cut,
-		H = cut,
-	}, "tl")
+	Kit.corner(layer, math.clamp(cut, 6, 14))
 	return layer
 end
 
 function Kit.paintCut(holder: Instance, color: Color3)
 	local layer = holder:FindFirstChild("Cut")
-	if layer then
-		for _, c in layer:GetChildren() do
-			if c:IsA("Frame") then
-				c.BackgroundColor3 = color
-			end
-		end
+	if layer and layer:IsA("Frame") then
+		layer.BackgroundColor3 = color
 	end
+end
+
+-- A halftone tone over a card: the fine grid of dots this look's surfaces carry. It is cut to
+-- `radius` (the card's own corners) and fades toward the bottom left unless `even`. Returns
+-- the layer, or nil where the game can't make pictures.
+function Kit.dots(card: GuiObject, color: Color3?, alpha: number?, radius: any, even: boolean?): ImageLabel?
+	local old = card:FindFirstChild("Dots")
+	if old then
+		old:Destroy()
+	end
+	local pic = Skin.texture("dots")
+	if not pic then
+		return nil
+	end
+	local tile = Skin.DotPitch * 2
+	local dots = Kit.new("ImageLabel", {
+		Name = "Dots",
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Size = UDim2.fromScale(1, 1),
+		ImageColor3 = color or T.Ink,
+		ImageTransparency = alpha or 0.94,
+		ScaleType = Enum.ScaleType.Tile,
+		TileSize = UDim2.fromOffset(tile, tile),
+		ZIndex = 0,
+		Parent = card,
+	});
+	(dots :: any).ImageContent = pic.content
+	dots:SetAttribute("Tinted", true)
+	if radius ~= false then
+		Kit.corner(dots, radius)
+	end
+	if not even then
+		Kit.new("UIGradient", {
+			Name = "Falloff",
+			Rotation = 150,
+			Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0),
+				NumberSequenceKeypoint.new(0.5, 0.45),
+				NumberSequenceKeypoint.new(1, 1),
+			}),
+			Parent = dots,
+		})
+	end
+	return dots
+end
+
+-- A band of diagonal hatching: a detail for a header or the end of a bar. props: Parent, Size,
+-- Position, AnchorPoint, Color, Transparency, ZIndex, Fade ("left" or "right": the end it fades
+-- out toward). Returns nil where the game can't make pictures.
+function Kit.hatch(props: { [string]: any }): ImageLabel?
+	local pic = Skin.texture("hatch")
+	if not pic then
+		return nil
+	end
+	local band = Kit.new("ImageLabel", {
+		Name = "Hatch",
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Size = props.Size or UDim2.fromOffset(80, 16),
+		Position = props.Position or UDim2.new(),
+		AnchorPoint = props.AnchorPoint or Vector2.zero,
+		ImageColor3 = props.Color or T.Ink,
+		ImageTransparency = props.Transparency or 0.85,
+		ScaleType = Enum.ScaleType.Tile,
+		TileSize = UDim2.fromOffset(Skin.HatchPitch, Skin.HatchPitch),
+		ZIndex = props.ZIndex or 1,
+		Parent = props.Parent,
+	});
+	(band :: any).ImageContent = pic.content
+	band:SetAttribute("Tinted", true)
+	if props.Fade then
+		local left = props.Fade == "left"
+		Kit.new("UIGradient", {
+			Name = "Falloff",
+			Transparency = NumberSequence.new(if left then 1 else 0, if left then 0 else 1),
+			Parent = band,
+		})
+	end
+	return band
 end
 
 -- A small block of slanted stripes: a detail for a panel's corner or beside a title. props:
@@ -683,16 +957,18 @@ local function repaint(inst: Instance, map: (Color3) -> Color3)
 		-- slanted ends follow), rather than each end mapped on its own
 		local base = inst:GetAttribute("Base")
 		if type(base) == "string" then
-			if inst:FindFirstChild("Shade") then
-				Kit.shade(inst, map(Color3.fromHex(base)))
-			else
-				inst:SetAttribute("Base", map(Color3.fromHex(base)):ToHex())
-			end
+			-- (a painted slab's colour is on its picture, a tile's in its two tones)
+			Kit.paint(inst, map(Color3.fromHex(base)))
 		end
 		-- a row remembers the colour its words go back to when it is no longer picked
 		local plain = inst:GetAttribute("Plain")
 		if type(plain) == "string" then
 			inst:SetAttribute("Plain", map(Color3.fromHex(plain)):ToHex())
+		end
+		-- and the colour it lies in when it isn't
+		local rest = inst:GetAttribute("Rest")
+		if type(rest) == "string" then
+			inst:SetAttribute("Rest", map(Color3.fromHex(rest)):ToHex())
 		end
 		-- words in an accent (Kit.tint) are made again for the new look
 		local tint = inst:GetAttribute("Tint")
@@ -708,7 +984,12 @@ local function repaint(inst: Instance, map: (Color3) -> Color3)
 		elseif inst:IsA("ImageLabel") or inst:IsA("ImageButton") then
 			-- a line icon is one colour laid over its sheet; a picture keeps its own
 			-- (Icons marks the icon's frame Mono; the picture in it is its child)
-			if inst:GetAttribute("Mono") or (inst.Parent and inst.Parent:GetAttribute("Mono")) then
+			-- and so is a painted line or texture (UI/Skin), marked Tinted
+			if
+				inst:GetAttribute("Mono")
+				or inst:GetAttribute("Tinted")
+				or (inst.Parent and inst.Parent:GetAttribute("Mono"))
+			then
 				any.ImageColor3 = map(any.ImageColor3)
 			end
 		elseif inst:IsA("ScrollingFrame") then
@@ -723,10 +1004,15 @@ local function repaint(inst: Instance, map: (Color3) -> Color3)
 		end
 		inst.Color = ColorSequence.new(keys)
 	end
-	local shaded = inst:GetAttribute("Base") ~= nil and inst:FindFirstChild("Shade") ~= nil
+	local shaded = inst:GetAttribute("Base") ~= nil and shadeOf(inst) ~= nil
+	local painted = inst:GetAttribute("Painted") == true
 	for _, c in inst:GetChildren() do
-		-- a shaded face's gradient and slanted ends were just made again
-		if not (shaded and (c.Name == "Shade" or c.Name:sub(1, 6) == "Wedge_")) then
+		-- a shaded face's gradient and slanted ends were just made again, and so was a painted
+		-- slab's picture
+		local done = (shaded and (c.Name == "Shade" or c.Name:sub(1, 6) == "Wedge_"))
+			or (painted and c.Name == "Body")
+			or (c:IsA("UIStroke") and c:GetAttribute("Follow") == true)
+		if not done then
 			repaint(c, map)
 		end
 	end
@@ -1059,7 +1345,9 @@ function Kit.frame(props: { [string]: any }?): Frame
 	if p.Cut then
 		-- two corners cut off: the frame itself is clear and the shape is laid under what is in it
 		f.BackgroundTransparency = 1
-		Kit.cutInto(f, p.Color or T.Paper, p.Cut)
+		local shape = Kit.cutInto(f, p.Color or T.Paper, p.Cut)
+		-- a thin line round a card, a shade off its own colour
+		Kit.rim(shape, mix(p.Color or T.Paper, T.Ink, 0.08), 1)
 	elseif p.Radius ~= false then
 		Kit.corner(f, p.Radius or 14)
 	end
@@ -1383,11 +1671,9 @@ local function pressable(b: GuiButton)
 	end)
 end
 
--- The chunky look shared by buttons and tiles: the button itself is the darker lip, a "Face"
--- child sits on it with a gradient, a glossy "Shine" and a sweeping "Sheen", and a thick dark
--- outline goes round.
-local function chunky(b: GuiButton, color: Color3, radius: any, lip: number, _outline: number?)
-	-- a flat face in one colour (the button's own background stays clear)
+-- A button's face: a pill in one colour, shaded across, with a thin line of a deeper tone round
+-- it (the button's own background stays clear).
+local function chunky(b: GuiButton, color: Color3, _radius: any, lip: number, _outline: number?)
 	b.BackgroundTransparency = 1
 	b:SetAttribute("KitButton", true)
 	b:SetAttribute("Lip", lip)
@@ -1399,10 +1685,9 @@ local function chunky(b: GuiButton, color: Color3, radius: any, lip: number, _ou
 		ZIndex = b.ZIndex,
 		Parent = b,
 	})
-	local _ = radius
-	-- a button leans: its ends are slanted
-	Kit.slant(face, b.Size.Y.Offset - lip)
+	Kit.corner(face, "pill")
 	Kit.shade(face)
+	Kit.rim(face, edgeOf(color), 1.5):SetAttribute("Follow", true)
 	return face
 end
 
@@ -1699,27 +1984,136 @@ function Kit.bar(props: { [string]: any }, ratio: number, color: Color3): (Frame
 	return track, fill
 end
 
--- A red diamond on a button's corner, for something waiting to be seen. The user: "Remove the ! In
--- the alert, just the red dot is enough. Make the red dot pulse slowly". So no mark, no number
--- and no rim.
+-- A red dot on a button's corner, for something waiting to be seen. The user: "Remove the ! In
+-- the alert, just the red dot is enough. Make the red dot pulse slowly". So no mark and no
+-- number, only a thin dark ring so it shows on any colour.
 function Kit.badge(parent: GuiObject): Frame
 	local f = Kit.frame({
 		Name = "Badge",
 		Parent = parent,
-		Size = UDim2.fromOffset(14, 14),
+		Size = UDim2.fromOffset(13, 13),
 		Position = UDim2.new(1, -8, 0, 6),
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Color = Color3.fromRGB(240, 72, 78), -- redder than the coral buttons, so it shows on the gift
-		Radius = 2,
+		Color = T.Red,
+		Radius = "round",
 		ZIndex = (parent.ZIndex or 1) + 5,
 	})
-	f.Rotation = 45 -- a diamond
+	f:SetAttribute("KeepColors", true)
+	Kit.rim(f, T.Dark, 2)
 	-- a slow pulse about its middle: it swells and settles, a couple of seconds a beat
 	local pulse = Kit.new("UIScale", { Name = "Pulse", Parent = f })
 	TweenService
 		:Create(pulse, TweenInfo.new(1.1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Scale = 1.3 })
 		:Play()
 	return f
+end
+
+-- A round marker: a disc in one colour with an icon on it, in a thin dark ring (what a diamond
+-- was in the look before: a row's badge, a stat's mark, a pin on the map). props: Parent, Size
+-- (pixels across), Position, AnchorPoint, Color, Icon (an icon name), IconColor, Ring (false for
+-- no ring, or its colour), Name, ZIndex, LayoutOrder. Returns the disc.
+function Kit.disc(props: { [string]: any }?): Frame
+	local p = props or {}
+	local px: number = p.Size or 28
+	local color: Color3 = p.Color or T.Yellow
+	local z: number = p.ZIndex or 1
+	local f = Kit.new("Frame", {
+		Name = p.Name or "Marker",
+		BackgroundColor3 = color,
+		BorderSizePixel = 0,
+		Size = UDim2.fromOffset(px, px),
+		Position = p.Position or UDim2.new(),
+		AnchorPoint = p.AnchorPoint or Vector2.zero,
+		ZIndex = z,
+		LayoutOrder = p.LayoutOrder or 0,
+		Parent = p.Parent,
+	})
+	Kit.corner(f, "round")
+	if p.Ring ~= false then
+		Kit.rim(f, if typeof(p.Ring) == "Color3" then p.Ring else T.Dark, math.max(1.5, px / 16), 0.5)
+	end
+	if p.Icon and Icons.has(p.Icon) then
+		local ipx = math.floor(px * 0.6)
+		local light = color.R * 0.3 + color.G * 0.59 + color.B * 0.11 > 0.5
+		Icons.make(p.Icon, ipx, {
+			Name = "IconArt",
+			Parent = f,
+			Position = UDim2.new(0.5, -ipx / 2, 0.5, -ipx / 2),
+			Color = p.IconColor or (if light then T.Dark else T.White),
+			Hole = color,
+			ZIndex = z + 1,
+		})
+	end
+	return f
+end
+
+-- A hint: a strip in a dull khaki with a dark round badge at its left end and dark words (a
+-- note under a panel on how something works). props: Parent, Size, Position, AnchorPoint,
+-- LayoutOrder, Name, TextSize, ZIndex. It is as tall as its words need. Returns the strip and
+-- its label.
+function Kit.hint(text: string, props: { [string]: any }?): (Frame, TextLabel)
+	local p = props or {}
+	local z: number = p.ZIndex or 1
+	local strip = Kit.new("Frame", {
+		Name = p.Name or "Hint",
+		BackgroundColor3 = Color3.fromRGB(132, 126, 96),
+		BackgroundTransparency = 0.12,
+		BorderSizePixel = 0,
+		Size = p.Size or UDim2.new(1, 0, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		Position = p.Position or UDim2.new(),
+		AnchorPoint = p.AnchorPoint or Vector2.zero,
+		LayoutOrder = p.LayoutOrder or 0,
+		ZIndex = z,
+		Parent = p.Parent,
+	})
+	-- khaki with dark words in both looks
+	strip:SetAttribute("KeepColors", true)
+	Kit.corner(strip, 10)
+	Kit.new("UIPadding", {
+		PaddingLeft = UDim.new(0, 44),
+		PaddingRight = UDim.new(0, 14),
+		PaddingTop = UDim.new(0, 8),
+		PaddingBottom = UDim.new(0, 8),
+		Parent = strip,
+	})
+	local badge = Kit.new("Frame", {
+		Name = "Badge",
+		BackgroundColor3 = T.Dark,
+		BorderSizePixel = 0,
+		Size = UDim2.fromOffset(22, 22),
+		Position = UDim2.new(0, -32, 0.5, 0),
+		AnchorPoint = Vector2.new(0, 0.5),
+		ZIndex = z + 1,
+		Parent = strip,
+	})
+	Kit.corner(badge, "round")
+	Kit.new("TextLabel", {
+		Name = "Bang",
+		Text = "!",
+		BackgroundTransparency = 1,
+		Font = Kit.Fonts.Title,
+		TextSize = 16,
+		TextColor3 = Color3.fromRGB(190, 184, 150),
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = z + 2,
+		Parent = badge,
+	})
+	local label = Kit.new("TextLabel", {
+		Name = "Text",
+		Text = text,
+		BackgroundTransparency = 1,
+		Font = Kit.Fonts.Body,
+		TextSize = p.TextSize or 15,
+		TextColor3 = T.Dark,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextWrapped = true,
+		Size = UDim2.new(1, 0, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		ZIndex = z + 1,
+		Parent = strip,
+	})
+	return strip, label
 end
 
 -- A dark see-through pill for the HUD over the 3D view (white words read on it). No outline.
@@ -1743,6 +2137,9 @@ function Kit.darkPill(props: { [string]: any }?): Frame
 	-- (Flip leans it the other way: "\\" in place of "/")
 	local h = if p.Size then (p.Size :: UDim2).Y.Offset else 40
 	Kit.slant(f, h, true, p.Flip == true)
+	-- a thin line inside its edge, and dots growing toward one end (Tone = false for none,
+	-- Side = "left" to turn them round)
+	Kit.detail(f, { Tone = if p.Tone == false then false else nil, Side = p.Side, ToneWidth = p.ToneWidth })
 	return f
 end
 
@@ -2043,10 +2440,9 @@ function Kit.doodles(parent: GuiObject, color: Color3, seed: number, count: numb
 	return layer
 end
 
--- A hexagon badge with a small word over a big number (the town's level). It's three rounded
--- bars turned 60 degrees apart in the dark surface colour, on one a little bigger in the accent
--- (its rim). props: Parent, Position, Size (px),
--- Color, Label, ZIndex. Returns the badge and its number label.
+-- A round badge with a small word over a big number (the town's level): a dark disc in a ring
+-- of the accent with a thin line inside it. (It was a hexagon, and the name has stayed.) props:
+-- Parent, Position, Size (px), Color, Label, ZIndex. Returns the badge and its number label.
 function Kit.hexBadge(value: string, props: { [string]: any }?): (Frame, TextLabel)
 	local p = props or {}
 	local px = p.Size or 68
@@ -2059,34 +2455,41 @@ function Kit.hexBadge(value: string, props: { [string]: any }?): (Frame, TextLab
 		Parent = p.Parent,
 	})
 	holder.ZIndex = z
+	-- it sits over the 3D view, dark in both looks
+	holder:SetAttribute("KeepColors", true)
 	-- a soft glow behind the badge (a radial gradient), so the town's level catches the eye
 	Kit.halo(holder, math.floor(px * 1.7), p.Glow or T.Yellow, 0.5)
-	local function hex(color: Color3, w: number)
-		for _, rot in { 0, 60, 120 } do
-			local f = Kit.new("Frame", {
-				BackgroundColor3 = color,
-				BorderSizePixel = 0,
-				Size = UDim2.fromOffset(w, w * 0.577),
-				AnchorPoint = Vector2.new(0.5, 0.5),
-				Position = UDim2.fromScale(0.5, 0.5),
-				Rotation = rot + 90,
-				ZIndex = z,
-				Parent = holder,
-			})
-			Kit.corner(f, math.floor(w * 0.08))
-		end
-	end
-	hex(p.Color or T.Blue, px)
-	hex(T.Paper, px - 10)
+	-- a dark disc in a ring of the colour, with a thin line inside the ring
+	local disc = Kit.new("Frame", {
+		Name = "Disc",
+		BackgroundColor3 = T.Glass,
+		BorderSizePixel = 0,
+		Size = UDim2.fromOffset(px - 8, px - 8),
+		Position = UDim2.fromOffset(4, 4),
+		ZIndex = z,
+		Parent = holder,
+	})
+	Kit.corner(disc, "round")
+	Kit.rim(disc, p.Color or T.Blue, 4)
+	local inner = Kit.new("Frame", {
+		Name = "Inner",
+		BackgroundTransparency = 1,
+		Size = UDim2.new(1, -8, 1, -8),
+		Position = UDim2.fromOffset(4, 4),
+		ZIndex = z,
+		Parent = disc,
+	})
+	Kit.corner(inner, "round")
+	Kit.rim(inner, T.White, 1, 0.82)
 	Kit.new("TextLabel", {
 		Name = "Label",
 		Text = p.Label or "LEVEL",
 		BackgroundTransparency = 1,
 		Font = Kit.Fonts.Title,
-		TextSize = math.floor(px * 0.16),
-		TextColor3 = T.White,
+		TextSize = math.floor(px * 0.15),
+		TextColor3 = Color3.fromRGB(206, 206, 210),
 		Size = UDim2.new(1, 0, 0, px * 0.2),
-		Position = UDim2.fromScale(0, 0.18),
+		Position = UDim2.fromScale(0, 0.2),
 		ZIndex = z + 1,
 		Parent = holder,
 	})
@@ -2095,10 +2498,10 @@ function Kit.hexBadge(value: string, props: { [string]: any }?): (Frame, TextLab
 		Text = value,
 		BackgroundTransparency = 1,
 		Font = Kit.Fonts.Title,
-		TextSize = math.floor(px * 0.44),
+		TextSize = math.floor(px * 0.42),
 		TextColor3 = T.White,
 		Size = UDim2.new(1, 0, 0, px * 0.46),
-		Position = UDim2.fromScale(0, 0.36),
+		Position = UDim2.fromScale(0, 0.35),
 		ZIndex = z + 1,
 		Parent = holder,
 	})
@@ -2165,6 +2568,7 @@ function Kit.roundButton(icon: string, props: { [string]: any }?, onClick: (() -
 	b:SetAttribute("KitButton", true)
 	b:SetAttribute("KeepColors", true)
 	Kit.corner(b, "circle")
+	Kit.rim(b, T.White, 1.5, 0.8)
 	local ipx = math.floor(px * 0.56)
 	Icons.make(icon, ipx, {
 		Name = "IconArt",
@@ -2197,7 +2601,7 @@ function Kit.bigButton(text: string, icon: string, props: { [string]: any }?, on
 		Parent = p.Parent,
 	})
 	b:SetAttribute("KitButton", true)
-	Kit.blob({
+	local face = Kit.blob({
 		Name = "Face",
 		Parent = b,
 		Size = UDim2.fromScale(1, 1),
@@ -2205,6 +2609,12 @@ function Kit.bigButton(text: string, icon: string, props: { [string]: any }?, on
 		Slant = size.Y.Offset,
 		Estimate = Vector2.new(size.X.Offset, size.Y.Offset),
 	})
+	local core = face:FindFirstChild("Core", true)
+	if core and core:IsA("Frame") then
+		-- shaded across, a pale line inside its edge and dots toward its far end
+		Kit.shade(core, color)
+		Kit.detail(core, { LineAlpha = 0.55, Tone = T.Dark, ToneAlpha = 0.86, ToneWidth = 150 })
+	end
 	local h = size.Y.Offset
 	local ipx = math.floor(h * 0.7)
 	Icons.make(icon, ipx, {
@@ -2253,12 +2663,12 @@ local function rimColor(): Color3
 	return mix(T.PaperDark, T.Line, 0.6)
 end
 
--- A row for lists: a leaning slab in a rim. props: Parent, Size, LayoutOrder, Name, Title, Sub (a
--- smaller line under the title), Marker (an icon name: a diamond badge at the left end),
--- MarkerColor, Right (words at the right end), Selected, Sunk (a row that is over and done
--- with), Height, LeftSpace and RightSpace (room kept clear of the words at either end, for
--- something of your own). With onClick it is a button. Returns the row and the box inside it
--- (put more in it: it fills the row).
+-- A row for lists: a pill, lighter than the panel it lies on, with a thin line round it. props:
+-- Parent, Size, LayoutOrder, Name, Title, Sub (a smaller line under the title), Marker (an icon
+-- name: a round badge at the left end), MarkerColor, Right (words at the right end), Selected,
+-- Sunk (a row that is over and done with), Height, LeftSpace and RightSpace (room kept clear of
+-- the words at either end, for something of your own). With onClick it is a button. Returns the
+-- row and the box inside it (put more in it: it fills the row).
 function Kit.row(props: { [string]: any }, onClick: (() -> ())?): (GuiObject, Frame)
 	local p = props
 	local h: number = p.Height or 58
@@ -2274,24 +2684,18 @@ function Kit.row(props: { [string]: any }, onClick: (() -> ())?): (GuiObject, Fr
 		row.Text = ""
 		row.AutoButtonColor = false
 	end
-	local rim = Kit.new("Frame", {
-		Name = "Rim",
-		BackgroundColor3 = rimColor(),
-		BorderSizePixel = 0,
-		Size = UDim2.fromScale(1, 1),
-		Parent = row,
-	})
-	local lean = Kit.slant(rim, h)
+	local rest = if p.Sunk then T.PaperDark else T.Card
 	local face = Kit.new("Frame", {
 		Name = "Fill",
-		BackgroundColor3 = T.PaperDark,
+		BackgroundColor3 = rest,
 		BorderSizePixel = 0,
-		Size = UDim2.new(1, -RIM * 2 - 4, 1, -RIM * 2),
-		Position = UDim2.fromOffset(RIM + 2, RIM),
+		Size = UDim2.new(1, -2, 1, -2),
+		Position = UDim2.fromOffset(1, 1),
 		Parent = row,
 	})
-	Kit.slant(face, h - RIM * 2)
+	Kit.corner(face, math.min(h / 2, 16))
 	Kit.shade(face)
+	Kit.rim(face, edgeOf(rest), 1):SetAttribute("Follow", true)
 	local inner = Kit.new("Frame", {
 		Name = "Inside",
 		BackgroundTransparency = 1,
@@ -2299,35 +2703,36 @@ function Kit.row(props: { [string]: any }, onClick: (() -> ())?): (GuiObject, Fr
 		ZIndex = 2,
 		Parent = row,
 	})
-	local left = lean + 16
+	-- how far in a pill's round end pushes what is on it
+	local lean = 6
+	local left = lean + 14
 	if p.Marker then
-		-- a diamond badge with the icon upright on it
-		local d = h - 22
-		local side = math.floor(d * 0.72)
+		-- a round badge with the icon on it
+		local d = h - 18
 		local badge = Kit.new("Frame", {
 			Name = "Marker",
 			BackgroundColor3 = p.MarkerColor or T.Yellow,
 			BorderSizePixel = 0,
-			Rotation = 45,
-			Size = UDim2.fromOffset(side, side),
+			Size = UDim2.fromOffset(d, d),
 			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = UDim2.new(0, lean + 8 + d / 2, 0.5, 0),
+			Position = UDim2.new(0, lean + 4 + d / 2, 0.5, 0),
 			ZIndex = 2,
 			Parent = inner,
 		})
-		Kit.corner(badge, 2)
+		Kit.corner(badge, "round")
+		Kit.rim(badge, T.Dark, 2, 0.55)
 		if Icons.has(p.Marker) then
-			local ipx = math.floor(d * 0.56)
+			local ipx = math.floor(d * 0.58)
 			Icons.make(p.Marker, ipx, {
 				Name = "IconArt",
 				Parent = inner,
-				Position = UDim2.new(0, lean + 8 + d / 2 - ipx / 2, 0.5, -ipx / 2),
+				Position = UDim2.new(0, lean + 4 + d / 2 - ipx / 2, 0.5, -ipx / 2),
 				Color = T.Dark,
 				Hole = p.MarkerColor or T.Yellow,
 				ZIndex = 3,
 			})
 		end
-		left = lean + d + 22
+		left = lean + d + 16
 	end
 	if p.LeftSpace then
 		left = p.LeftSpace + lean
@@ -2387,6 +2792,7 @@ function Kit.row(props: { [string]: any }, onClick: (() -> ())?): (GuiObject, Fr
 		end
 	end
 	row:SetAttribute("Lean", lean)
+	row:SetAttribute("Rest", rest:ToHex())
 	if p.Selected then
 		Kit.setRowSelected(row, true)
 	end
@@ -2403,15 +2809,12 @@ function Kit.row(props: { [string]: any }, onClick: (() -> ())?): (GuiObject, Fr
 	return row, inner
 end
 
--- The picked row of a list is yellow, with dark words (and the others go back to dark).
+-- The picked row of a list is yellow, with dark words (and the others go back to their own).
 function Kit.setRowSelected(row: GuiObject, on: boolean)
 	local face = row:FindFirstChild("Fill")
 	if face and face:IsA("Frame") then
-		Kit.paint(face, if on then T.Yellow else T.PaperDark)
-	end
-	local rim = row:FindFirstChild("Rim")
-	if rim and rim:IsA("Frame") then
-		Kit.paint(rim, if on then mix(T.Yellow, T.White, 0.45) else rimColor())
+		local rest = row:GetAttribute("Rest")
+		Kit.paint(face, if on then T.Yellow elseif type(rest) == "string" then Color3.fromHex(rest) else T.Card)
 	end
 	row:SetAttribute("Selected", on)
 	for _, d in row:GetDescendants() do
@@ -2424,9 +2827,9 @@ function Kit.setRowSelected(row: GuiObject, on: boolean)
 	end
 end
 
--- Tabs in one leaning bar: the picked one a yellow slab with dark words. `list` is
--- { { id, name } }; onSelect(id) when one is picked. props: Parent, Position, AnchorPoint,
--- Height, TextSize. Returns the bar and select(id).
+-- Tabs in one bar: a dark well shaped like a pill with a thin line round it, the picked tab a
+-- yellow pill with dark words. `list` is { { id, name } }; onSelect(id) when one is picked.
+-- props: Parent, Position, AnchorPoint, Height, TextSize. Returns the bar and select(id).
 function Kit.segments(
 	list: { { id: string, name: string } },
 	onSelect: (string) -> (),
@@ -2445,24 +2848,16 @@ function Kit.segments(
 		LayoutOrder = p.LayoutOrder or 0,
 		Parent = p.Parent,
 	})
-	local rim = Kit.new("Frame", {
-		Name = "Rim",
-		BackgroundColor3 = rimColor(),
-		BorderSizePixel = 0,
-		Size = UDim2.fromScale(1, 1),
-		Parent = bar,
-	})
-	local lean = Kit.slant(rim, h)
 	local well = Kit.new("Frame", {
 		Name = "Well",
 		BackgroundColor3 = T.PaperDark,
 		BorderSizePixel = 0,
-		Size = UDim2.new(1, -RIM * 2 - 4, 1, -RIM * 2),
-		Position = UDim2.fromOffset(RIM + 2, RIM),
+		Size = UDim2.new(1, -2, 1, -2),
+		Position = UDim2.fromOffset(1, 1),
 		Parent = bar,
 	})
-	Kit.slant(well, h - RIM * 2)
-	Kit.shade(well)
+	Kit.corner(well, "pill")
+	Kit.rim(well, rimColor(), 1.5)
 	local holder = Kit.new("Frame", {
 		Name = "Row",
 		BackgroundTransparency = 1,
@@ -2472,14 +2867,13 @@ function Kit.segments(
 		Parent = bar,
 	})
 	Kit.new("UIPadding", {
-		PaddingLeft = UDim.new(0, RIM + 3),
-		PaddingRight = UDim.new(0, RIM + 3),
-		PaddingTop = UDim.new(0, RIM + 1),
-		PaddingBottom = UDim.new(0, RIM + 1),
+		PaddingLeft = UDim.new(0, RIM + 2),
+		PaddingRight = UDim.new(0, RIM + 2),
+		PaddingTop = UDim.new(0, RIM + 2),
+		PaddingBottom = UDim.new(0, RIM + 2),
 		Parent = holder,
 	})
-	-- the tabs sit a little into each other, so their slanted ends run side by side
-	Kit.list(holder, -lean + 3, true)
+	Kit.list(holder, 2, true)
 	local buttons: { [string]: TextButton } = {}
 	local faces: { [string]: Frame } = {}
 	local labels: { [string]: TextLabel } = {}
@@ -2491,7 +2885,7 @@ function Kit.segments(
 			b:SetAttribute("Selected", on)
 		end
 	end
-	local th = h - RIM * 2 - 2
+	local th = h - RIM * 2 - 4
 	for i, t in list do
 		local b = Kit.new("TextButton", {
 			Name = t.name,
@@ -2505,7 +2899,7 @@ function Kit.segments(
 			ZIndex = 2,
 			Parent = holder,
 		})
-		Kit.new("UIPadding", { PaddingLeft = UDim.new(0, 24), PaddingRight = UDim.new(0, 24), Parent = b })
+		Kit.new("UIPadding", { PaddingLeft = UDim.new(0, 22), PaddingRight = UDim.new(0, 22), Parent = b })
 		labels[t.id] = Kit.new("TextLabel", {
 			Name = "Label",
 			Text = t.name,
@@ -2518,18 +2912,18 @@ function Kit.segments(
 			ZIndex = 4,
 			Parent = b,
 		})
-		-- the yellow slab behind the picked tab's words (it reaches back over the padding)
+		-- the yellow pill behind the picked tab's words (it reaches back over the padding)
 		local face = Kit.new("Frame", {
 			Name = "Face",
 			BackgroundColor3 = T.Yellow,
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
-			Size = UDim2.new(1, 48, 1, 0),
-			Position = UDim2.fromOffset(-24, 0),
+			Size = UDim2.new(1, 44, 1, 0),
+			Position = UDim2.fromOffset(-22, 0),
 			ZIndex = 3,
 			Parent = b,
 		})
-		Kit.slant(face, th)
+		Kit.corner(face, "pill")
 		Kit.shade(face)
 		buttons[t.id] = b
 		faces[t.id] = face
@@ -2544,8 +2938,9 @@ function Kit.segments(
 	return bar, select
 end
 
--- A tile: an icon over its name on a small leaning slab (a category, a tool). props: Parent,
--- Size, LayoutOrder, Name, Color, TextColor, TextSize. Kit.setButtonColor recolours it.
+-- A tile: an icon over its name on a rounded square, the name on a deeper band across the
+-- bottom (a category, a tool). props: Parent, Size, LayoutOrder, Name, Color, TextColor,
+-- TextSize. Kit.setButtonColor recolours it.
 function Kit.tile(icon: string, caption: string, props: { [string]: any }?, onClick: (() -> ())?): TextButton
 	local p = props or {}
 	local size: UDim2 = p.Size or UDim2.fromOffset(84, 68)
@@ -2567,12 +2962,13 @@ function Kit.tile(icon: string, caption: string, props: { [string]: any }?, onCl
 		Name = "Face",
 		BackgroundColor3 = color,
 		BorderSizePixel = 0,
-		Size = UDim2.fromScale(1, 1),
+		Size = UDim2.new(1, -4, 1, -2),
+		Position = UDim2.fromOffset(2, 1),
 		Parent = b,
 	})
-	-- a slight lean, so tiles in a row sit side by side like tabs
-	Kit.slant(face, 26)
-	Kit.shade(face)
+	Kit.corner(face, 9)
+	footShade(face, color)
+	Kit.rim(face, edgeOf(color), 1):SetAttribute("Follow", true)
 	local content = Kit.new("Frame", {
 		Name = "Content",
 		BackgroundTransparency = 1,
@@ -2581,12 +2977,13 @@ function Kit.tile(icon: string, caption: string, props: { [string]: any }?, onCl
 		Parent = b,
 	})
 	local h = size.Y.Offset
-	local ipx = math.floor(h * 0.42)
+	local foot = math.floor((h - 2) * (1 - FOOT) + 0.5)
+	local ipx = math.floor(h * 0.4)
 	if Icons.has(icon) then
 		Icons.make(icon, ipx, {
 			Name = "IconArt",
 			Parent = content,
-			Position = UDim2.new(0.5, -ipx / 2, 0, math.floor(h * 0.12)),
+			Position = UDim2.new(0.5, -ipx / 2, 0, math.floor((h - foot - ipx) / 2)),
 			Color = textColor,
 			Hole = color,
 			ZIndex = 2,
@@ -2600,8 +2997,8 @@ function Kit.tile(icon: string, caption: string, props: { [string]: any }?, onCl
 		TextSize = p.TextSize or 13,
 		TextColor3 = textColor,
 		TextTruncate = Enum.TextTruncate.AtEnd,
-		Size = UDim2.new(1, -12, 0, 18),
-		Position = UDim2.new(0, 6, 1, -22),
+		Size = UDim2.new(1, -12, 0, foot),
+		Position = UDim2.new(0, 6, 1, -foot - 1),
 		ZIndex = 2,
 		Parent = b,
 	})
@@ -2612,46 +3009,44 @@ function Kit.tile(icon: string, caption: string, props: { [string]: any }?, onCl
 	return b
 end
 
--- The way back out of a menu: a leaning slab with an arrow, in a coral rim. props: Parent,
--- Position, AnchorPoint, ZIndex.
+-- The way out of a menu: a red slab that leans, its points rounded, with a dark arrow (or a
+-- cross, on a dialog) and a thin dark line just inside its edge. props: Parent, Position,
+-- AnchorPoint, ZIndex, Icon ("back" by default), Size.
 function Kit.backButton(props: { [string]: any }, onClick: (() -> ())?): TextButton
 	local z: number = props.ZIndex or 2
+	local size: UDim2 = props.Size or UDim2.fromOffset(84, 46)
+	local h = size.Y.Offset
 	local b = Kit.new("TextButton", {
 		Name = "Close",
 		Text = "",
 		AutoButtonColor = false,
 		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(84, 46),
+		Size = size,
 		Position = props.Position or UDim2.new(),
 		AnchorPoint = props.AnchorPoint or Vector2.zero,
 		ZIndex = z,
 		Parent = props.Parent,
 	})
-	local rim = Kit.new("Frame", {
-		Name = "Rim",
-		BackgroundColor3 = T.Coral,
+	-- red means the way out in both looks
+	b:SetAttribute("KeepColors", true)
+	local face = Kit.new("Frame", {
+		Name = "Fill",
+		BackgroundColor3 = T.Red,
 		BorderSizePixel = 0,
 		Size = UDim2.fromScale(1, 1),
 		ZIndex = z,
 		Parent = b,
 	})
-	Kit.slant(rim, 46)
-	local face = Kit.new("Frame", {
-		Name = "Fill",
-		BackgroundColor3 = T.PaperDark,
-		BorderSizePixel = 0,
-		Size = UDim2.new(1, -RIM * 2 - 4, 1, -RIM * 2),
-		Position = UDim2.fromOffset(RIM + 2, RIM),
-		ZIndex = z,
-		Parent = b,
-	})
-	Kit.slant(face, 46 - RIM * 2)
-	Icons.make("back", 26, {
+	Kit.slant(face, h)
+	Kit.shade(face)
+	Kit.detail(face, { Line = T.Dark, LineAlpha = 0.45, Tone = T.Dark, ToneAlpha = 0.88, ToneWidth = 34 })
+	local ipx = math.floor(h * 0.56)
+	Icons.make(props.Icon or "back", ipx, {
 		Name = "IconArt",
 		Parent = b,
-		Position = UDim2.new(0.5, -13, 0.5, -13),
-		Color = T.Coral,
-		Hole = T.PaperDark,
+		Position = UDim2.new(0.5, -ipx / 2, 0.5, -ipx / 2),
+		Color = T.Dark,
+		Hole = T.Red,
 		ZIndex = z + 1,
 	})
 	b:SetAttribute("KitButton", true)
@@ -2838,8 +3233,10 @@ Kit.MenuSize = UDim2.fromOffset(1180, 580)
 --     opts.OnTab), and the panel under them
 --   a dialog (opts.Dialog) is a small panel in the middle with its title inside and a close
 --     button, over a lighter dim: a question, a welcome
--- The panel has its top left and bottom right corners cut off, and sits in a rim. `color` is
--- the menu's own colour: the drifting shapes, the stripes and the mark beside the title.
+-- The panel is a charcoal card with round corners, a thin line round it a few pixels out, a
+-- tone of halftone dots across it and a band of hatching in its corner. A dialog's title sits
+-- on a darker band across its top, with the red way out at the right. `color` is the menu's own
+-- colour: the drifting shapes, the hatching and the mark beside the title.
 -- Returns { root, card, body, close, title, header, selectTab }. `root` holds everything, so
 -- hiding or destroying it takes the lot.
 function Kit.panel(
@@ -2898,7 +3295,7 @@ function Kit.panel(
 			Parent = wide,
 		})
 		screenGlow.ZIndex = 0
-		Kit.glow(screenGlow, accent, 0.34, "tl")
+		Kit.glow(screenGlow, accent, 0.26, "tl")
 		local low = Kit.box({
 			Name = "Low",
 			Size = UDim2.fromOffset(2400, 1400),
@@ -2911,76 +3308,113 @@ function Kit.panel(
 		Kit.motion(holder, accent, seed)
 	end
 	local _ = icon
-	-- the panel in its rim, two corners cut
-	local CUT = if dialog then 22 else 30
+	-- the panel: a thin line, a gap, then the card
+	local ROUND = if dialog then 16 else 18
+	local GAP = 5
+	local HEAD = 60 -- a dialog's band
 	local rim = Kit.box({
 		Name = "Rim",
 		Size = UDim2.new(1, 0, 1, -BAR),
 		Position = UDim2.fromOffset(0, BAR),
 		Parent = holder,
 	})
-	Kit.cutInto(rim, rimColor(), CUT + 2)
-	local frame = Kit.box({
-		Name = "Card",
-		Size = UDim2.new(1, -RIM * 2, 1, -RIM * 2),
-		Position = UDim2.fromOffset(RIM, RIM),
+	local edge = Kit.new("Frame", {
+		Name = "Edge",
+		BackgroundColor3 = T.Black,
+		BackgroundTransparency = 0.35,
+		BorderSizePixel = 0,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 0,
 		Parent = rim,
 	})
-	Kit.cutInto(frame, T.Cream, CUT)
-	-- the menu's colour glowing softly into the panel from its top right corner
-	Kit.glow(frame, accent, if dialog then 0.24 else 0.18, "tr")
-	-- details: a block of stripes inside the cut corner at the bottom right, ticks along the top
-	Kit.stripes({
-		Parent = frame,
-		Size = UDim2.fromOffset(86, 12),
-		Position = UDim2.new(1, -CUT - 96, 1, -22),
-		Color = accent,
-		Transparency = 0.25,
+	Kit.corner(edge, ROUND)
+	Kit.rim(edge, T.Line, 1.5)
+	local frame = Kit.box({
+		Name = "Card",
+		Size = UDim2.new(1, -GAP * 2, 1, -GAP * 2),
+		Position = UDim2.fromOffset(GAP, GAP),
+		Parent = rim,
 	})
-	for t = 0, 5 do
-		Kit.new("Frame", {
-			Name = "Tick",
-			BackgroundColor3 = accent,
-			BackgroundTransparency = 0.45,
-			BorderSizePixel = 0,
-			Size = UDim2.fromOffset(if t == 0 then 26 else 5, 4),
-			Position = UDim2.fromOffset(CUT + 12 + (if t == 0 then 0 else 24 + t * 10), 9),
-			Parent = frame,
+	local shape = Kit.cutInto(frame, T.Cream, ROUND - GAP)
+	if dialog then
+		-- the band its title sits on: the card's own shape in two tones, so the band keeps the
+		-- card's round corners
+		local tall = size.Y.Offset - GAP * 2
+		local at = math.clamp(HEAD / math.max(1, tall), 0.05, 0.9)
+		shape.BackgroundColor3 = Color3.new(1, 1, 1)
+		Kit.new("UIGradient", {
+			Name = "Wash",
+			Rotation = 90,
+			Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, T.Black),
+				ColorSequenceKeypoint.new(at, T.PaperDark),
+				ColorSequenceKeypoint.new(math.min(0.99, at + 0.004), T.Cream),
+				ColorSequenceKeypoint.new(1, T.Cream),
+			}),
+			Parent = shape,
 		})
 	end
-
+	Kit.rim(shape, mix(T.Cream, T.Ink, 0.07), 1)
+	-- the menu's colour glowing softly into the panel from its top right corner
+	Kit.glow(frame, accent, if dialog then 0.16 else 0.14, "tr")
+	-- a tone of dots over the card, thinning out toward the bottom left
+	Kit.dots(frame, T.Ink, 0.93, ROUND - GAP)
+	-- details: a band of hatching in the bottom right corner, ticks along the top
+	local hatch = Kit.hatch({
+		Parent = frame,
+		Size = UDim2.fromOffset(120, 12),
+		Position = UDim2.new(1, -ROUND - 126, 1, -24),
+		Color = accent,
+		Transparency = 0.35,
+		Fade = "left",
+	})
+	if hatch then
+		hatch:SetAttribute("KeepColors", true)
+	end
+	if not dialog then
+		for t = 0, 5 do
+			Kit.new("Frame", {
+				Name = "Tick",
+				BackgroundColor3 = accent,
+				BackgroundTransparency = 0.45,
+				BorderSizePixel = 0,
+				Size = UDim2.fromOffset(if t == 0 then 26 else 5, 3),
+				Position = UDim2.fromOffset(ROUND + 10 + (if t == 0 then 0 else 24 + t * 10), 9),
+				Parent = frame,
+			})
+		end
+	end
 	local title: TextLabel
 	local close: TextButton
 	local header: Frame
 	local selectTab: ((string) -> ())? = nil
 	if dialog then
-		header = Kit.box({ Name = "Header", Parent = frame, Size = UDim2.new(1, 0, 0, 62) })
+		header = Kit.box({ Name = "Header", Parent = frame, Size = UDim2.new(1, 0, 0, HEAD) })
+		-- a mark in the dialog's colour, then its name
+		local mark = Kit.new("Frame", {
+			Name = "Mark",
+			BackgroundColor3 = accent,
+			BorderSizePixel = 0,
+			Size = UDim2.fromOffset(6, 24),
+			Position = UDim2.fromOffset(24, HEAD / 2 - 12),
+			Parent = header,
+		})
+		mark:SetAttribute("KeepColors", true)
+		Kit.corner(mark, 3)
 		title = Kit.title(titleText, {
 			Parent = header,
-			Size = UDim2.new(1, -110, 1, 0),
-			Position = UDim2.fromOffset(34, 6),
-			TextSize = 26,
+			Size = UDim2.new(1, -140, 1, 0),
+			Position = UDim2.fromOffset(42, 0),
+			TextSize = 25,
 			Color = T.Ink,
 		})
-		close = Kit.new("TextButton", {
-			Name = "Close",
-			Text = "",
-			AutoButtonColor = false,
-			BackgroundColor3 = T.Card,
-			Size = UDim2.fromOffset(40, 40),
-			Position = UDim2.new(1, -14, 0, 14),
-			AnchorPoint = Vector2.new(1, 0),
-			ZIndex = 2,
+		close = Kit.backButton({
 			Parent = frame,
-		})
-		Kit.corner(close, 3)
-		Icons.make("close", 20, {
-			Name = "IconArt",
-			Parent = close,
-			Position = UDim2.new(0.5, -10, 0.5, -10),
-			Color = T.Ink,
-			Hole = T.Card,
-			ZIndex = 3,
+			Icon = "close",
+			Size = UDim2.fromOffset(58, 34),
+			Position = UDim2.new(1, -18, 0, HEAD / 2),
+			AnchorPoint = Vector2.new(1, 0.5),
+			ZIndex = 2,
 		})
 	else
 		header = Kit.box({ Name = "Header", Parent = holder, Size = UDim2.new(1, 0, 0, BAR - 10) })
@@ -2995,6 +3429,7 @@ function Kit.panel(
 			Position = UDim2.fromOffset(98, 8),
 			Parent = header,
 		})
+		mark:SetAttribute("KeepColors", true)
 		Kit.slant(mark, 34)
 		Kit.shade(mark, accent)
 		title = Kit.title(titleText, {
@@ -3033,11 +3468,7 @@ function Kit.panel(
 		end
 	end
 	title.ZIndex = 2
-	if dialog then
-		close:SetAttribute("KitButton", true)
-		pressable(close)
-	end
-	local top = if dialog then 62 else 26
+	local top = if dialog then HEAD + 10 else 26
 	local body = Kit.box({
 		Name = "Body",
 		Size = UDim2.new(1, -52, 1, -top - 26),
@@ -3093,7 +3524,7 @@ function Kit.blobInto(holder: Frame, p: { [string]: any }): BlobInfo
 		-- a leaning shape: slanted ends and no rounding at all
 		Kit.slant(core, if type(p.Slant) == "number" then p.Slant else nil, nil, p.Flip == true)
 	else
-		Kit.corner(core, p.Radius or 20)
+		Kit.corner(core, if p.Round then "round" else p.Radius or 14)
 		-- a soft shadow under the shape (Lift = false for none, or how deep)
 		if p.Lift ~= false then
 			Kit.softShadow(core, if type(p.Lift) == "number" then p.Lift else 0.6)
@@ -3238,9 +3669,11 @@ function Kit.bubble(props: { [string]: any }?): (Frame, Frame)
 				ZIndex = z,
 				Parent = holder,
 			})
-			-- what was a pill is a leaning slab
-			local core = Kit.frame({ Name = "Core", Parent = l, Color = spec[2], Radius = false, ZIndex = z })
-			Kit.slant(core, if p.Size then (p.Size :: UDim2).Y.Offset else 54)
+			-- a pill, with a thin line of a deeper tone round it
+			local core = Kit.frame({ Name = "Core", Parent = l, Color = spec[2], Radius = "pill", ZIndex = z })
+			if spec[1] == "Shape" then
+				Kit.rim(core, edgeOf(spec[2]), 1):SetAttribute("Follow", true)
+			end
 			if tail then
 				local size = p.TailSize or 16
 				local at = p.TailAt or 0.5
@@ -3316,7 +3749,7 @@ function Kit.choice(text: string, props: { [string]: any }?, onClick: (() -> ())
 		Size = UDim2.fromScale(1, 1),
 		Radius = "pill",
 		Tail = false,
-		Color = T.PaperDark,
+		Color = T.Card,
 		ZIndex = z,
 	})
 	local core = holder:FindFirstChild("Shape") and (holder :: any).Shape:FindFirstChild("Core")
@@ -3360,7 +3793,7 @@ function Kit.choice(text: string, props: { [string]: any }?, onClick: (() -> ())
 	})
 	local _ = label
 	local function lit(on: boolean)
-		Kit.setBubbleColor(holder, if on and not p.Disabled then T.Line else T.PaperDark)
+		Kit.setBubbleColor(holder, if on and not p.Disabled then T.Line else T.Card)
 		stripes.Enabled = on and not p.Disabled
 	end
 	b.MouseEnter:Connect(function()

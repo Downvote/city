@@ -696,8 +696,20 @@ def load_pictures(data):
             PICTURES[p["id"]] = Image.frombytes("RGBA", (p["w"], p["h"]), raw)
 
 
+def fit_picture(img, tw, th):
+    """A picture brought to tw by th the way a screen does it: plain averaging when it shrinks."""
+    tw, th = max(1, int(round(tw))), max(1, int(round(th)))
+    if img.width == tw and img.height == th:
+        return img
+    if tw >= img.width and th >= img.height:
+        return img.resize((tw, th), Image.BILINEAR, reducing_gap=None)
+    return img.resize((tw, th), Image.BOX)
+
+
 def draw_picture(cv, node, rect, clip):
-    """An ImageLabel showing part of one of those pictures, tinted by ImageColor3."""
+    """An ImageLabel showing part of one of those pictures, tinted by ImageColor3: stretched,
+    nine sliced (SliceCenter, SliceScale) or tiled (TileSize), under its own UIGradient and cut
+    to its own UICorner."""
     sheet = PICTURES.get(P(node, "Picture"))
     if sheet is None:
         return
@@ -707,15 +719,71 @@ def draw_picture(cv, node, rect, clip):
     if size[0] > 0 and size[1] > 0:
         sheet = sheet.crop((int(off[0]), int(off[1]), int(off[0] + size[0]), int(off[1] + size[1])))
     tw, th = max(1, int(round(w))), max(1, int(round(h)))
-    # shrunk the way a screen does it: plain two by two averaging, no sharpening
-    part = sheet.resize((tw, th), Image.BILINEAR, reducing_gap=None) if tw >= sheet.width else sheet.resize((tw, th), Image.BOX)
+    kind = str(P(node, "ScaleType", "Stretch"))
+    region = None
+    if kind == "Slice":
+        cl, ct, cr, cb = P(node, "SliceCenter", [0, 0, sheet.width, sheet.height])
+        k = (P(node, "SliceScale", 1) or 1) * cv.k
+        # the edges keep their size (times SliceScale); the middle takes what is left
+        xs_src = [0, int(cl), int(cr), sheet.width]
+        ys_src = [0, int(ct), int(cb), sheet.height]
+        left, right = int(round(cl * k)), int(round((sheet.width - cr) * k))
+        top, bottom = int(round(ct * k)), int(round((sheet.height - cb) * k))
+        if left + right > tw:
+            left = tw * left // max(1, left + right)
+            right = tw - left
+        if top + bottom > th:
+            top = th * top // max(1, top + bottom)
+            bottom = th - top
+        xs_dst = [0, left, tw - right, tw]
+        ys_dst = [0, top, th - bottom, th]
+        part = Image.new("RGBA", (tw, th), (0, 0, 0, 0))
+        for iy in range(3):
+            for ix in range(3):
+                sw, sh = xs_src[ix + 1] - xs_src[ix], ys_src[iy + 1] - ys_src[iy]
+                dw, dh = xs_dst[ix + 1] - xs_dst[ix], ys_dst[iy + 1] - ys_dst[iy]
+                if sw <= 0 or sh <= 0 or dw <= 0 or dh <= 0:
+                    continue
+                piece = sheet.crop((xs_src[ix], ys_src[iy], xs_src[ix + 1], ys_src[iy + 1]))
+                part.paste(fit_picture(piece, dw, dh), (xs_dst[ix], ys_dst[iy]))
+    elif kind == "Tile":
+        ts = P(node, "TileSize", [1, 0, 1, 0])
+        uw, uh = ts[0] * w + ts[1] * cv.k, ts[2] * h + ts[3] * cv.k
+        tile = fit_picture(sheet, max(1, uw), max(1, uh))
+        # only the part that can be seen (a tone over a whole backdrop is far bigger than the screen)
+        vx1, vy1, vx2, vy2 = 0, 0, cv.im.width, cv.im.height
+        if clip:
+            vx1, vy1, vx2, vy2 = max(vx1, clip[0]), max(vy1, clip[1]), min(vx2, clip[2]), min(vy2, clip[3])
+        ix, iy = int(round(x)), int(round(y))
+        rx1, ry1 = int(max(0, math.floor(vx1 - ix))), int(max(0, math.floor(vy1 - iy)))
+        rx2, ry2 = int(min(tw, math.ceil(vx2 - ix))), int(min(th, math.ceil(vy2 - iy)))
+        if rx2 <= rx1 or ry2 <= ry1:
+            return
+        part = Image.new("RGBA", (rx2 - rx1, ry2 - ry1), (0, 0, 0, 0))
+        for ty in range((ry1 // tile.height) * tile.height, ry2, tile.height):
+            for tx in range((rx1 // tile.width) * tile.width, rx2, tile.width):
+                part.paste(tile, (tx - rx1, ty - ry1))
+        region = (rx1, ry1, rx2 - rx1, ry2 - ry1)
+    else:
+        part = fit_picture(sheet, tw, th)
     tint = P(node, "ImageColor3", [1, 1, 1])
     a = np.array(part, dtype=np.float32)
     a[..., 0] *= tint[0]
     a[..., 1] *= tint[1]
     a[..., 2] *= tint[2]
     a[..., 3] *= 1 - (P(node, "ImageTransparency", 0) or 0)
-    cv.paste(Image.fromarray(a.clip(0, 255).astype(np.uint8), "RGBA"), x, y, clip)
+    grad = mods(node).get("UIGradient")
+    if grad and P(grad, "Enabled", True):
+        g = np.array(gradient_layer(tw, th, [1, 1, 1], 1, grad, region), dtype=np.float32) / 255
+        a *= g
+    r = corner_radius(node, w / cv.k, h / cv.k) * cv.k
+    if r > 0:
+        mask = rounded_mask(tw, th, r)
+        if region:
+            mask = mask.crop((region[0], region[1], region[0] + region[2], region[1] + region[3]))
+        a[..., 3] *= np.array(mask, dtype=np.float32) / 255
+    ox, oy = (region[0], region[1]) if region else (0, 0)
+    cv.paste(Image.fromarray(a.clip(0, 255).astype(np.uint8), "RGBA"), int(round(x)) + ox, int(round(y)) + oy, clip)
 
 
 def draw_wedge(cv, node, rect, clip):

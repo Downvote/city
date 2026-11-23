@@ -306,46 +306,81 @@ harness stands in for the newer enums, so the UI previews draw shadows, radial a
 clipping (`tools/preview/ui_render.py`).
 
 - `Controllers/State`: the mirror of the player's state and plan; `State.on(key, fn)`, `State.onPlan(fn)`.
-- `UI/Kit` shapes are angular, drawn with no pictures. `Kit.corner` gives every radius 3 pixels (only `"round"`
-  makes a circle). `Kit.portrait(props)` is the exception: a round frame with a `Rim` stroke for somebody's
-  face (Size in pixels, Color, Border, BorderWidth), and `Kit.rounded(picture)` cuts a ViewportFrame or an
-  ImageLabel in it to the circle. `Kit.wedge(props, keep)` is a right angled triangle: a box named `Wedge_<br|tl|tr|bl>` with a
-  UIGradient `Cut` laid square across its diagonal whose Transparency steps half way (it refits when the box's
-  AbsoluteSize changes). `Kit.slant(face, height, outside)` makes a rectangle lean by pulling it in and putting a
-  wedge on each end (or outside its box); `Kit.paint(face, colour, transparency)` recolours a face with its
-  wedges. `Kit.cutInto(holder, colour, cut)` lays a rectangle with its top left and bottom right corners cut
-  under what is in `holder` (`Kit.frame({ Cut = n })` does it; `Kit.paintCut`). `Kit.stripes(props)` is a block
-  of slanted stripes, `Kit.tile(icon, caption, props, onClick)` an icon over its name on a small leaning slab,
+- `UI/Skin` paints what boxes can't make: `Skin.paintSlab(h, cap, flip, r, gap?, line?)` is a leaning slab `h`
+  tall whose ends run `cap` sideways, its four points rounded by `r` (with `line`, a thin line `gap` in from the
+  edge in place of the solid shape); only its two ends and a sliver of middle are painted, and what comes back says
+  how wide an end is (`cap`). `Skin.paintDots()` is one tile of a staggered halftone grid, `Skin.paintHatch()` one
+  tile of a diagonal hatch, `Skin.paintFan()` a run of halftone dots growing from nothing. All white, two pixels to
+  each pixel of the interface (`Skin.Scale`), with a pixel of clear `Skin.Pad` round a slab. `Skin.slab(...)` and
+  `Skin.texture("dots" | "hatch" | "fan")` put them in EditableImages (one small picture each, kept) and give
+  `{ content, w, h, cap }`, or nil when the game can't make pictures (`Skin.on()` then says false, once, with a
+  warning; `Skin.set(false | nil)` switches them off or lets them be tried again). The painting has no services in
+  it, so the Skin spec runs it.
+- `UI/Kit` shapes. `Kit.corner(inst, radius)` gives a radius of 2 to 18 pixels, or half circle ends for `"pill"`,
+  `"round"` and `"circle"`. `Kit.rim(inst, colour?, thickness?, transparency?)` is the thin line round a card, a
+  well or a disc (a UIStroke named `Rim`; with the attribute `Follow` it takes a deeper tone of its face whenever
+  the face is recoloured, `Kit.edgeOf(colour)`). `Kit.portrait(props)` is a round frame with a `Rim` for
+  somebody's face (Size in pixels, Color, Border, BorderWidth), and `Kit.rounded(picture)` cuts a ViewportFrame or
+  an ImageLabel in it to the circle. `Kit.disc(props)` is a round marker with an icon on it (Size, Color, Icon,
+  IconColor, Ring), `Kit.hint(text, props)` a khaki strip with a dark round badge and dark words, `Kit.badge` a red
+  dot, `Kit.hexBadge` a round dial (a dark disc in a ring of the colour).
+  `Kit.slant(face, height, outside, flip)` makes a rectangle lean (pulled in at both ends, or with `outside` its
+  ends standing past its box; `flip` leans it the other way). The slab is painted: the face goes clear
+  (BackgroundTransparency 1, attributes `Painted`, `Base` its colour, `Cap`, `Tall`, `Flip`) and an ImageLabel
+  named `Body` under everything in it (ZIndex -3) shows `Skin.slab`, nine sliced, in the face's colour. So a
+  leaning face is recoloured with `Kit.paint(face, colour?, transparency?)` and read with `Kit.colorOf(face)`,
+  never through its BackgroundColor3. `Kit.detail(face, opts)` adds `Line` (a thin line just inside the edge) and
+  `Tone` (the halftone run toward one end: `Side`, `ToneWidth`), both marked `Tinted` so a change of look maps
+  their colour. Where pictures are off, `Kit.slant` falls back to a sharp wedge on each end (`Kit.wedge(props,
+  keep)`: a box named `Wedge_<br|tl|tr|bl>` with a UIGradient `Cut` across its diagonal) and `Kit.detail` does
+  nothing. `Kit.cutInto(holder, colour, cut)` lays a rounded card under what is in `holder` (a frame named `Cut`;
+  `Kit.frame({ Cut = n })` does it and adds a thin rim; `Kit.paintCut` recolours it; the names are from when two
+  corners were cut off). `Kit.dots(card, colour?, alpha?, radius, even?)` lays the halftone grid over a card
+  (a tiled ImageLabel `Dots`, fading toward the bottom left unless `even`), `Kit.hatch(props)` a band of
+  diagonal hatching (`Fade`). `Kit.stripes(props)` is a block of slanted stripes,
+  `Kit.tile(icon, caption, props, onClick)` an icon over its name on a rounded square whose bottom third is a
+  deeper band (one UIGradient `Foot` with a step in it, so the band is cut to the corners with the tile),
   `Kit.motion(parent, accent, seed, opts)` the shapes drifting behind a menu (one Heartbeat connection, dropped
   when the layer is destroyed; `opts`: `W`, `H`, `Count`, `Faint`, `Second`, `Sizes`, `Speed`, and `Bands` for
   long leaning strips of the colour that drift sideways). `Kit.backdrop(parent, accent, seed, opts)` is a whole
   backdrop to stand somebody in front of: a wash of the colour, three bands and the shapes, in a CanvasGroup named
   `Backdrop` so the turned shapes are cut to its box (`Plain = true` makes it a plain frame, for a SurfaceGui). It
   is marked `KeepColors`. Whoever stands on it goes beside it, never inside: a ViewportFrame inside a CanvasGroup
-  comes out pale. Buttons (`Kit.button`), `Kit.bigButton`, `Kit.darkPill`, `Kit.ribbon`, `Kit.choice`,
-  `Kit.row`, `Kit.segments` and `Kit.backButton` all lean; `Kit.pad` keeps a leaning face inside its button.
-  The previews draw a wedge as its triangle (`ui_render.py`).
+  comes out pale. What leans: `Kit.darkPill` (the glass slabs over the 3D view, with their line and tone),
+  `Kit.bigButton`, `Kit.ribbon`, `Kit.backButton` (red, with a dark arrow, or `Icon = "close"`). What is a pill:
+  `Kit.button` (with a `Follow` rim), `Kit.row`, `Kit.segments`, `Kit.choice`, `Kit.bar`. The previews draw the
+  pictures the game made (`ui_dump.luau` writes each EditableImage's pixels; `ui_render.py` stretches, nine
+  slices or tiles them, under the label's own gradient and corners).
 - `UI/Kit` menus: `Kit.panel(title, size, onClose, icon, color, opts)` is a full menu (pass `Kit.MenuSize`): a
   black backdrop, `Kit.backButton` and the title in a strip above the panel, `opts.Tabs` / `opts.OnTab` as
-  `Kit.segments` at the top right, the panel in a rim. `opts.Dialog = true` is a small panel in the middle with
-  the title and a round close button inside. Returns `{ root, card, body, close, title, header, selectTab }`.
+  `Kit.segments` at the top right (a dark pill well, the picked tab a yellow pill). The panel is `Rim` (holding
+  `Edge`, a thin line of `T.Line` a few pixels out) and in it `Card`: a rounded card (`Cut`) with a rim of its
+  own, a glow of the menu's colour, `Dots` and a `Hatch` band in its bottom right corner. `opts.Dialog = true` is
+  a small panel in the middle: its card is two tones (a UIGradient `Wash` with a step), the darker band across the
+  top holding the title and the red close button, and its body starts 70 pixels down.
+  Returns `{ root, card, body, close, title, header, selectTab }`.
   `Kit.row(props, onClick)` is a pill row (Title, Sub, Marker, MarkerColor, Right, LeftSpace, RightSpace, Sunk,
-  Selected) and returns the row and a box filling it; `Kit.setRowSelected(row, on)` turns it yellow with dark
-  words. `Kit.setButtonColor` recolours an icon beside the words too. `UI/ModelPreview.fromModel(model,
+  Selected): its `Fill` rests in `T.Card` (a `Sunk` row in `T.PaperDark`; the colour is kept in the row's `Rest`
+  attribute) with a `Follow` rim, its marker is a round disc, and its `Lean` attribute (how far its round end
+  pushes what is on it) is 6. It returns the row and a box filling it; `Kit.setRowSelected(row, on)` turns it
+  yellow with dark words. `Kit.setButtonColor` recolours an icon beside the words too. `UI/ModelPreview.fromModel(model,
   { Stand = true })` is the whole villager fitted to a tall frame (the viewport is named `Avatar`): the copy is
   stood upright at the origin with every Motor6D's Transform cleared (a sleeping villager lies on their back),
   framed from the feet to the top of the head, and plays its idle animation unless `Still = true`. With
   `Shadow = true` it returns a second viewport, `AvatarShadow`: the same copy again, `ImageColor3` black and see
   through, a little bigger and off to the right, playing the same animation.
-- `UI/Kit` gradients: `Kit.shade(face, colour?)` shades a leaning face across (a UIGradient `Shade` from the colour
-  to `Kit.shadeEnd(colour)`: 16% toward black, 7% for a pale surface, yellow toward amber), keeps the colour in the
-  face's `Base` attribute (its BackgroundColor3 is white) and paints its left wedge (`Wedge_br`) in the first colour
-  and its right one (`Wedge_tl`) in the second; `Kit.colorOf(face)` reads it back; `Kit.paint` re-shades a shaded
-  face. `Kit.row`'s `Fill`, `Kit.segments`' `Well` and tab `Face`s, `Kit.button`'s and `Kit.tile`'s `Face` are shaded.
+- `UI/Kit` gradients: `Kit.shade(face, colour?)` shades a face across (a UIGradient `Shade` from the colour
+  to `Kit.shadeEnd(colour)`: 16% toward black, 7% for a pale surface, yellow toward amber) and keeps the colour in
+  the face's `Base` attribute. On a plain face the gradient is on the face (its BackgroundColor3 white); on a
+  painted slab it is on `Body` (`Kit.shadeOf(face)` finds it either way), and where the slab fell back to wedges
+  the left one takes the first colour and the right one the second. `Kit.colorOf(face)` reads the colour back;
+  `Kit.paint` re-shades a shaded face. `Kit.row`'s `Fill`, `Kit.segments`' tab `Face`s, `Kit.button`'s `Face` and
+  the leaning slabs are shaded.
   `Kit.glow(frame, colour, strength?, corner?)` adds a `Glow` frame (a diagonal transparency fade from the corner,
   gone before the middle; marked `KeepColors`). `Kit.panel` puts a `Backglow` (two glows, top left and bottom right)
   behind a full menu's shapes, a glow in the panel's card and a `Rule` hairline under the title; a look switch
-  repaints `Shade` gradients and `Base` attributes with the rest.
+  repaints whatever carries `Base` through `Kit.paint` (so a shaded face, a painted slab and a tile's two tones
+  all follow), maps `Rest` and `Plain`, and maps the ImageColor3 of pictures marked `Mono` or `Tinted`.
 - `UI/Kit` looks: `Kit.Themes.dark` and `Kit.Themes.light` hold the tokens that differ (`Black`, the colour a
   menu covers the screen with, and the surfaces and words: `PaperDark`, `Cream`, `Paper`, `Card`, `Picture`,
   `Line`, `Ink`, `InkSoft`). `Kit.Theme` holds the one that is on (`Kit.ThemeName`); `Kit.setTheme(name)` swaps
@@ -366,7 +401,9 @@ clipping (`tools/preview/ui_render.py`).
   surfaces `PaperDark` (wells, tracks, tabs not picked), `Cream` (big panels), `Paper` (cards, buttons, bars over
   the 3D view), `Card` (a row or tile on a panel), `Picture` (the tile behind a catalog picture or a face), `Line`;
   words `Ink` and `InkSoft` on those surfaces, `White` on a coloured button, `Dark` for outlines round letters
-  and for words on a bright face (yellow); the pastel accents; `Glass` for the see-through pills. `Kit.deep(colour)`
+  and for words on a bright face (yellow); the pastel accents, a strong `Yellow` and `Red` (the way out, an
+  alert); `Glass` for the see-through slabs. The dark look's surfaces are charcoal with next to no colour of
+  their own, and `Line` is a warm grey. `Kit.deep(colour)`
   is an accent sunk into the panel colour (header bars, `ribbon`). A colour chip to pick from is named `Swatch`
   (`Kit.swatch` does it), which is what lets it be light. `UI/Icons` has `Icons.Glyph` (light) and `Icons.Hole`
   (the dark card colour) as its defaults. `tools/preview/audit.sh` dumps every screen and
@@ -461,13 +498,22 @@ clipping (`tools/preview/ui_render.py`).
   the card: it opens on the `Talk` event unless an event is being told (`EventCard.isPlaying()`), sits where the
   event's dialogue card does, offers Chat (`VillagerTalk`), Profile (`Hud.open("Residents", vid)`) and Bye, and
   closes on Bye, walking out of `Range`, waiting too long, a menu, Build mode, the creator or an event.
+- `UI/MenuParts`: what the full menus are built from, so they match: the left card (`Kit.frame` with `Cut`, a glow
+  of the menu's colour, an inner box the caller fills), the list on the right, section headings with a count, stat
+  tiles, empty states, notes and progress lines. A menu rebuilds itself when the look switches. Its states are
+  previewed as `panel:<Name>:<state>` (`ui_dump.luau`).
 - `UI/Quests`: the quest list on the main screen. `Quests.mount(parent, position, open)` builds it (a header that
   folds it, a list of at most `Quests.Shown` (3) quests) and refreshes it on any state that moves a goal;
   `Quests.next(profile, count)` picks them (done and unclaimed first, then by how far along). A finished one claims
   through `GoalClaim`; a click elsewhere calls `open` (the Hud opens the goals menu).
-- `UI/Hud`: the level card, the money, people and happiness pills in a strip under it (`Pills`), the quests under
-  that, the clock and the captioned round buttons under it (`HomeCell` with `Home`, then the map, the city hall, the
-  shop, the news and the look), the icon dock and the daily gift. `Hud.goHome()` shuts the menus, dips the screen
+- `UI/Hud`: the level card (its badge a round dial), and four glass slabs that come out of the screen's edges and
+  corners: `Pills` (one `Kit.darkPill` flush on the left edge under the level, with a `Row` of the money, people
+  and happiness cells and slanted `Divider`s between them), the quests under it (their rows and header start at
+  the left edge too), `ClockTab` (hanging from the top right corner, running up into the top inset, leaning the
+  other way, with the `Clock` box over it), `Menu` at the bottom left (its `MenuBar` out of the corner, leaning the
+  other way, the portrait and the four tiles on it), and the Build button running off the bottom right corner.
+  Under the clock are the captioned round buttons (`HomeCell` with `Home`, then the map, the city hall, the shop,
+  the news and the look). `Hud.goHome()` shuts the menus, dips the screen
   (a `Veil` frame) and asks `GoHome`; H does the same when the HUD shows and nothing has the keyboard. It opens one
   panel at a time:
   `Creator`, `Residents`, `CityPanel`, `ShopPanel`, `News`, `Welcome`. `EventCard` (the dialogue box) and `Weather`
@@ -543,7 +589,10 @@ clipping (`tools/preview/ui_render.py`).
   reader, and painted areas of circles, rings, lines, dots and round rectangles checked against geometry),
   `Street` (street models are cheap, sign faces are marked, overhead parts can't be bumped into, nothing stands
   inside anything else, wires end on poles, the scene keeps to its budget), `Signs` (every kind has names,
-  adverts are well formed, picks are stable and vary, no dashes or banned words).
+  adverts are well formed, picks are stable and vary, no dashes or banned words), `Skin` (a painted slab's size
+  and its solid middle, which way it leans, its area against a parallelogram's, that it is itself turned half way
+  round, a rim that lies inside the slab and is a pixel thick, textures that tile without a seam, a halftone that
+  grows).
 - The harness stands in for Roblox's image API: `AssetService:CreateEditableImage` returns a table that keeps its
   pixels (listed in `Harness.images`), and `Content.fromObject` gives a real Content with the address
   `rbxeditable://<n>`, which Lune's ImageLabel accepts. `tools/preview/ui_dump.luau` writes each such picture out

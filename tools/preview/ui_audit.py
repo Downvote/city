@@ -25,7 +25,7 @@ WORDS = {"TextLabel", "TextButton", "TextBox"}
 # names that may be light on purpose
 ALLOWED = {"Knob", "You", "Sheen", "Halo", "Swatch"}
 # the dark look's surfaces (Kit.Themes.dark): none of these may show in the light look
-DARK_LOOK = {(6, 7, 12), (20, 22, 31), (29, 31, 42), (37, 40, 54), (47, 51, 68), (74, 80, 104), (66, 71, 93), (9, 10, 16)}
+DARK_LOOK = {(8, 8, 10), (15, 15, 18), (23, 23, 27), (31, 31, 36), (44, 44, 50), (78, 80, 94), (82, 80, 72)}
 LIGHT = False
 
 
@@ -38,7 +38,20 @@ def colours(node):
     p = node["props"]
     if node["class"] not in SURFACES:
         return None
+    # a painted slab (UI/Skin): the frame is clear and a picture called Body under what is in
+    # it draws the shape, tinted, with the face's shading on it
+    for c in node["children"]:
+        if c["name"] == "Body" and c["class"] == "ImageLabel" and c["props"].get("Picture"):
+            if c["props"].get("ImageTransparency", 0) >= 0.6:
+                return None
+            tint = c["props"].get("ImageColor3", [1, 1, 1])
+            for g in c["children"]:
+                if g["class"] == "UIGradient" and "Color" in g["props"]:
+                    return [[k[1] * tint[0], k[2] * tint[1], k[3] * tint[2]] for k in g["props"]["Color"]]
+            return [tint]
     if p.get("BackgroundTransparency", 0) >= 0.6:
+        return None
+    if node["class"] in ("ImageLabel", "ImageButton") and p.get("Picture") and p.get("BackgroundTransparency", 0) >= 0.6:
         return None
     base = p.get("BackgroundColor3", [1, 1, 1])
     for c in node["children"]:

@@ -29,7 +29,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (253, all passing; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (260, all passing; `Skin`: the painted slabs and textures; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off; what kind a bundle
 is, the outfit that holds the body, single body parts, the player's own items and avatars; preview scenes
@@ -109,22 +109,27 @@ section 10). New buttons get it from `UI/Kit`; new moving scenery goes in `World
 The user asked for the genre's own layouts (house builders, avatar editors, city builders), then for a bright,
 cozy look like the life sims they showed, then named a mobile city builder (Pocket City 2) as the UI and graphics
 direction: its layout and clean low poly feel, in our own designs, never copied (docs/GAME_DESIGN.md section 10).
-The HUD is a level hexagon top left with the money, people and happiness pills in a strip under it and the quests
+The HUD is a round level dial top left with the money, people and happiness in one strip under it and the quests
 (`UI/Quests`: the next town goals, claimable there) under that ("put these as a tab below the level, then add quests
 below it as well"); the clock top right with a row of captioned round buttons under it, Home first ("make it such
 that there is a teleport home button": `Hud.goHome`, the `GoHome` remote, the H key); a portrait and quick menu
-bottom left and a big Build button bottom right; no outlines on rounded rectangles; the ground is flat colour. Build
+bottom left and a big Build button bottom right. Those pieces come out of the screen's edges ("these three should
+be coming out of the corners of the screen instead of floating. vertically flip the paralleograms of the weather and
+one of the 4 icons. also, the quest tab and currency/stats tab should also be part of the left side edge"): the
+clock's slab hangs from the top right corner and the menu bar comes out of the bottom left, both leaning the other
+way (`Flip`), the Build button runs off the bottom right, the stats and quests start at the left edge. Never float
+one of them clear of its edge. The ground is flat colour. Build
 screens from `UI/Kit` (rounded cards with pill banners and soft shadows, rounded buttons on a soft base,
 round icon buttons with a caption pill, translucent dark pills over the 3D view) and `UI/Icons`
 (drawn icons, never emoji in the interface). The user asked for wobbly bubbles round text, wobbly buttons,
 speech bubble dialogue with names in colour, and simple one colour icons: use `Kit.blob`, `Kit.bubble`,
 `Kit.choice`, and `Icons.make` (flat by default: `Color`, `Hole`; `Full = true` for the old stickers). Menus
 have no decorative icons. Since "reference zenless zone zero uis, add gradients to menus as well to add more polish",
-leaning faces are shaded: `Kit.shade(face, colour)` runs a face from its colour at the left to a deeper tone at the
-right (picked yellow warms to amber), its slanted ends matching their side, and `Kit.row`, `Kit.segments`,
-`Kit.button` and `Kit.tile` do it already; read a shaded face's colour with `Kit.colorOf`, recolour it with
+faces are shaded: `Kit.shade(face, colour)` runs a face from its colour at the left to a deeper tone at the
+right (picked yellow warms to amber), and `Kit.row`, `Kit.segments`, `Kit.button` and the leaning slabs do it
+already; read a shaded face's colour with `Kit.colorOf`, recolour it with
 `Kit.paint` or `Kit.setButtonColor` (they keep the shade). `Kit.glow(frame, colour, strength, corner)` lays a soft fade
-of a colour into a card from a corner (the top right by default, clear of cut corners): every menu's panel has one in
+of a colour into a card from a corner (the top right by default): every menu's panel has one in
 its colour, the black behind a menu glows with it from the top left, and a hairline in its colour runs under its
 name. Take only the direction from that game, never its art. (`Kit.gradient`, the old sheen, stays off.)
 The latest word on menus: follow popular games of the genre (never invent layouts) and keep it cozy and soft, so
@@ -159,9 +164,12 @@ Menus follow a reference the user gave ("For reference of the character screen a
 screen, use zenless zone zero's character menu", "Other menus should also have a style like this"): take the
 layout and the parts, draw them our own way, never that game's art, slanted tabs or patterns. A menu is
 `Kit.panel(title, Kit.MenuSize, onClose, icon, colour, opts)`: it takes the whole screen over black, the way back
-is a pill at the top left beside the title, `opts.Tabs` are one long pill at the top right, and the content sits
-in one big panel with a rim. `opts.Dialog = true` is the small kind (a welcome, a question). Lists are
-`Kit.row` slabs; the usual layout is a card for the picked thing on the left and the rows down the right.
+is the red leaning button at the top left beside the title, `opts.Tabs` are one long pill at the top right, and the
+content sits in one big rounded card inside a thin rim. `opts.Dialog = true` is the small kind (a welcome, a
+question): its name sits on a darker band across the top with a red cross at the right. Lists are `Kit.row`
+pills; the usual layout is a card for the picked thing on the left and the rows down the right, and the full menus
+build both from `UI/MenuParts` (the left card, the list, headings, stat tiles, empty states, notes) and rebuild
+themselves when the look switches. A menu's states are previewed as `panel:<Name>:<state>`.
 Yellow with dark words (`T.Yellow`, `T.Dark`) means picked, everywhere: tabs, rows, steps, Build mode's tabs.
 Buttons that do something keep their own colour. The villager screen and the creator are character screens:
 the villager stands on the left in front of a moving backdrop (`Kit.backdrop`: their colour, leaning bands,
@@ -172,15 +180,33 @@ air high over the meadow, with nothing under it ("remove the plate the character
 screen"), and the client puts the backdrop on a part behind it that follows the camera (no town, no fade: "no need
 for the gradient background or the city background"). Never put a ViewportFrame inside a CanvasGroup: it
 comes out pale. The old header bar and its wave are gone.
-Shapes are angular (the user: "Use the format in zenless zone zero for buttons and details in ui instead of
-overusing circles and rounded rectangles"): never reach for a circle or a rounded rectangle. The one exception
-is a face: "make portraits a circle with a border instead of a square" (`Kit.portrait` is the ringed circle,
-`Kit.rounded` cuts the picture in it). `Kit.corner` gives 3
-pixels whatever is asked. Buttons, tabs, rows and bars lean (`Kit.slant` puts a slanted wedge on each end;
-`Kit.button`, `Kit.row`, `Kit.segments`, `Kit.tile` and `Kit.darkPill` already do), panels and cards have two
-corners cut (`Kit.frame({ Cut = n })`), markers are diamonds (a square turned 45 degrees), details are
-`Kit.stripes` and ticks. Recolour a leaning face with `Kit.paint`, never by setting its BackgroundColor3, or its
-ends keep the old colour. A full menu has `Kit.motion` behind it ("make an animated background with shapes like
+Shapes were angular for a while (the user: "Use the format in zenless zone zero for buttons and details in ui
+instead of overusing circles and rounded rectangles"). Two later requests replace that rule. Of the slabs on the
+main screen, with a picture of another game's HUD: "could you make these parallelograms textured like these
+buttons, with other details and buttons shown like this in circles? note that these have smooth points as well".
+Of the menus: "for menu interfaces, reference this: https://zenless.hoyoverse.com/en-us/news/113767 and try to
+replicate the look and feel as much as possible, including the texturing and minute details". So today's shapes
+(docs/GAME_DESIGN.md section 10, the last part):
+- What leans still leans, with its four points rounded: the glass slabs over the 3D view (`Kit.darkPill`), the
+  Build button, the red way out of a menu (`Kit.backButton`), a ribbon, a price tag. `Kit.slant` paints the slab
+  (`UI/Skin` paints its two ends, an ImageLabel named `Body` stretches the middle), so recolour a leaning face
+  with `Kit.paint` and read it with `Kit.colorOf`, never through its BackgroundColor3 or BackgroundTransparency
+  (the face itself is clear). `Kit.detail` adds the thin line inside its edge and the run of halftone dots.
+- Menus are rounded cards in a thin rim (`Kit.frame({ Cut = n })`, `Kit.rim`), rows and tabs and buttons are pills
+  (`Kit.row`, `Kit.segments`, `Kit.button`), a tile is a rounded square with its name on a deeper band
+  (`Kit.tile`), markers and small buttons are circles (`Kit.disc`, `Kit.roundButton`, `Kit.badge`; a face is
+  `Kit.portrait`: "make portraits a circle with a border instead of a square"). Never draw a diamond or a sharp
+  cut corner. `Kit.corner` takes a radius (2 to 18) or `"pill"` / `"round"`.
+- Surfaces carry texture: `Kit.dots` (a fine halftone grid over a card), `Kit.hatch` (a band of diagonal
+  hatching), the slabs' own tone. A note on how something works is `Kit.hint` (a khaki strip with a round badge).
+- The dark look is charcoal with next to no colour of its own; the accents, the strong yellow (picked) and
+  `T.Red` (the way out, an alert) carry it.
+- Take the feel from that page, never the game: none of its art, icons, logos, names, lettering or patterns, and
+  none of its files in the repository. Everything is drawn by our own code.
+- The painted shapes need Allow Mesh / Image APIs, like the icons; without it `Kit.slant` falls back to sharp
+  wedges and the textures are left out, so nothing may depend on a texture being there. The Skin spec checks the
+  painting; `Sim.Skin.set(false)` in a simulation builds the fallback.
+A full menu has `Kit.motion` behind it ("make an animated background with shapes like
 it in the menus"). Build mode is laid out like the genre's best known builder ("The building ui should be
 exactly like bloxburg"): the catalog docked at the bottom (tools row, cards, category tiles, main groups), one
 big Done bottom right, coins top left. The cards and the categories run the whole width of the screen and the

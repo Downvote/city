@@ -89,26 +89,17 @@ local function quest(g: any, order: number): Frame
 	hit.Activated:Connect(function()
 		onOpen()
 	end)
-	-- a diamond: yellow with a tick when it's done, the goal's own mark otherwise
-	local marker = Kit.new("Frame", {
+	-- a round marker: yellow with a tick when it's done, the goal's own mark otherwise
+	Kit.disc({
 		Name = "Marker",
-		BackgroundColor3 = if ready then T.Yellow else T.Blue,
-		BorderSizePixel = 0,
-		Rotation = 45,
-		Size = UDim2.fromOffset(18, 18),
+		Parent = slab,
+		Size = 26,
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0, 22, 0.5, -3),
+		Position = UDim2.new(0, 22, 0.5, 0),
+		Color = if ready then T.Yellow else T.Blue,
+		Icon = if ready then "check" else "trophy",
+		IconColor = T.Dark,
 		ZIndex = 3,
-		Parent = slab,
-	})
-	Kit.corner(marker, 2)
-	Icons.make(if ready then "check" else "trophy", 14, {
-		Name = "IconArt",
-		Parent = slab,
-		Position = UDim2.new(0, 15, 0.5, -10),
-		Color = T.Dark,
-		Hole = if ready then T.Yellow else T.Blue,
-		ZIndex = 4,
 	})
 	local name = Kit.title(g.goal.name, {
 		Name = "Name",

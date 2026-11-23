@@ -36,12 +36,16 @@ run("the stats sit in a strip under the town's level", function()
 	check(pills.Position.X.Scale == 0 and pills.AnchorPoint.X == 0, "at the left, not the middle")
 	check(pills.Position.Y.Offset >= card.Position.Y.Offset + card.Size.Y.Offset, "below the level card, not beside it")
 	local names = {}
-	for _, c in pills:GetChildren() do
-		if c:IsA("GuiObject") then
+	for _, c in pills:FindFirstChild("Row"):GetChildren() do
+		if c:IsA("GuiObject") and c.Name ~= "Divider" then
 			table.insert(names, c.Name)
 		end
 	end
 	check(#names == 3, "money, people and happiness")
+	check(
+		pills:FindFirstChild("Body") ~= nil and pills:FindFirstChild("Tone") ~= nil,
+		"on one painted slab with a tone of dots on it"
+	)
 	check(pills:FindFirstChild("Plus", true) ~= nil, "and the money's + to the shop")
 end)
 

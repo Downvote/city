@@ -324,6 +324,7 @@ function Hud.start()
 		Position = UDim2.new(1, 0, 0, -inset),
 		AnchorPoint = Vector2.new(1, 0),
 		Flip = true,
+		Side = "left",
 		Parent = hud,
 	})
 	local clock = Kit.box({
@@ -530,6 +531,8 @@ function Hud.start()
 	local barCore = bar:FindFirstChild("Core", true)
 	if barCore and barCore:IsA("Frame") then
 		Kit.shade(barCore, T.Paper)
+		-- a thin line inside its edge and a run of dots toward its far end
+		Kit.detail(barCore, { Line = T.Ink, LineAlpha = 0.86, Tone = T.Ink, ToneAlpha = 0.92 })
 	end
 	-- (a circle with a border: "make portraits a circle with a border instead of a square")
 	local portrait = Kit.portrait({

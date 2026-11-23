@@ -271,7 +271,8 @@ run("a menu takes the screen: a way back, tabs, rows", function()
 		slab(first).BackgroundTransparency == 0 and Sim.Kit.colorOf(slab(first)) == T.Yellow,
 		"the first tab starts picked, on a yellow slab"
 	)
-	check(slab(first):FindFirstChild("Wedge_br") ~= nil, "which leans: it has slanted ends")
+	local round = slab(first):FindFirstChildOfClass("UICorner")
+	check(round ~= nil and round.CornerRadius.Scale == 0.5, "which is a pill")
 	check(words(first).TextColor3 == T.Dark and words(second).TextColor3 == T.Ink, "with dark words, the other light")
 	second.Activated:Fire()
 	check(
@@ -287,7 +288,11 @@ run("a menu takes the screen: a way back, tabs, rows", function()
 		end
 	)
 	local marker = row:FindFirstChild("Marker", true)
-	check(marker ~= nil and marker.Rotation == 45, "a row has its diamond marker")
+	local disc = marker and marker:FindFirstChildOfClass("UICorner")
+	check(
+		marker ~= nil and marker.Rotation == 0 and disc ~= nil and disc.CornerRadius.Scale == 0.5,
+		"a row has its round marker"
+	)
 	local title = row:FindFirstChild("Title", true)
 	check(title.TextColor3 == T.Ink, "its words are light")
 	local fill = row:FindFirstChild("Fill")
@@ -300,13 +305,14 @@ run("a menu takes the screen: a way back, tabs, rows", function()
 			and shade.Color.Keypoints[#shade.Color.Keypoints].Value == Sim.Kit.shadeEnd(T.Yellow),
 		"shaded across, yellow warming to amber"
 	)
+	local line = fill:FindFirstChild("Rim")
 	check(
-		fill:FindFirstChild("Wedge_br").BackgroundColor3 == T.Yellow
-			and fill:FindFirstChild("Wedge_tl").BackgroundColor3 == Sim.Kit.shadeEnd(T.Yellow),
-		"its slanted ends take the colour of their side"
+		fill:FindFirstChildOfClass("UICorner") ~= nil and line ~= nil and line.Color == Sim.Kit.edgeOf(T.Yellow),
+		"a pill with a thin line round it, which takes a deeper yellow"
 	)
 	Sim.Kit.setRowSelected(row, false)
-	check(title.TextColor3 == T.Ink and Sim.Kit.colorOf(fill) == T.PaperDark, "and goes back")
+	check(title.TextColor3 == T.Ink and Sim.Kit.colorOf(fill) == T.Card, "and goes back")
+	check(line.Color == Sim.Kit.edgeOf(T.Card), "its line too")
 	row.Activated:Fire()
 	check(hit, "clicking a row calls back")
 	check(panel.root:FindFirstChild("Motion") ~= nil, "shapes drift across the black behind it")
@@ -315,9 +321,21 @@ run("a menu takes the screen: a way back, tabs, rows", function()
 	check(card1 ~= nil and card1:FindFirstChild("Glow") ~= nil, "and softly into the panel from its top right")
 	local card0 = panel.root:FindFirstChild("Card", true)
 	check(
-		card0:FindFirstChild("Cut") ~= nil and card0.Cut:FindFirstChild("Wedge_br") ~= nil,
-		"the panel has its corners cut"
+		card0:FindFirstChild("Cut") ~= nil and card0.Cut:FindFirstChildOfClass("UICorner") ~= nil,
+		"the panel is a card with round corners"
 	)
+	local edge = panel.root:FindFirstChild("Edge", true)
+	check(edge ~= nil and edge:FindFirstChild("Rim") ~= nil, "in a thin line of its own a few pixels out")
+	check(card0:FindFirstChild("Dots") ~= nil, "with a tone of halftone dots over it")
+	check(card0:FindFirstChild("Hatch") ~= nil, "and a band of hatching in its corner")
+	-- the way out is red and leans, its points rounded: a painted slab
+	local out = panel.close:FindFirstChild("Fill")
+	check(out ~= nil and Sim.Kit.colorOf(out) == T.Red, "the way out is red")
+	check(
+		out:FindFirstChild("Body") ~= nil and out.BackgroundTransparency == 1,
+		"a painted slab: the picture draws its shape and the box itself is clear"
+	)
+	check(out:FindFirstChild("Line") ~= nil, "with a thin line just inside its edge")
 	local shapes = panel.root.Motion:GetChildren()
 	local before = shapes[1].Position
 	Sim.frames(6)
@@ -329,16 +347,37 @@ run("a menu takes the screen: a way back, tabs, rows", function()
 	check(card ~= nil and card:FindFirstChild("Close") ~= nil, "a dialog has its close button on the panel")
 	check(dialog.root:FindFirstChild("Tabs", true) == nil, "and no tabs")
 	check(dialog.root:FindFirstChild("Motion") == nil, "and nothing drifting behind it")
-	-- a button leans, and keeps leaning when it is recoloured
+	-- a button is a pill, and its thin line follows when it is recoloured
 	local b = Sim.Kit.button("Go", { Parent = dialog.body, Size = roblox.UDim2.fromOffset(120, 40) })
 	local face = b:FindFirstChild("Face")
-	check(
-		face:FindFirstChild("Wedge_br") ~= nil and face:FindFirstChild("Wedge_tl") ~= nil,
-		"a button has slanted ends"
-	)
-	check(face:FindFirstChildOfClass("UICorner") == nil, "and no rounded corners")
+	local pill = face:FindFirstChildOfClass("UICorner")
+	check(pill ~= nil and pill.CornerRadius.Scale == 0.5, "a button is a pill")
+	check(face:FindFirstChild("Rim").Color == Sim.Kit.edgeOf(T.Green), "with a thin line in a deeper green")
 	Sim.Kit.setButtonColor(b, T.Yellow, T.Dark)
-	check(face:FindFirstChild("Wedge_br").BackgroundColor3 == T.Yellow, "recoloured, its ends follow")
+	check(
+		Sim.Kit.colorOf(face) == T.Yellow and face:FindFirstChild("Rim").Color == Sim.Kit.edgeOf(T.Yellow),
+		"recoloured, its line follows"
+	)
+	-- a leaning slab is painted, and painting it again recolours the picture
+	local glass = Sim.Kit.darkPill({ Parent = dialog.body, Size = roblox.UDim2.fromOffset(200, 40) })
+	local body = glass:FindFirstChild("Body")
+	check(body ~= nil and body.ClassName == "ImageLabel", "a slab over the 3D view is a painted picture")
+	check(body.ScaleType == roblox.Enum.ScaleType.Slice, "stretched between its two ends")
+	check(glass:FindFirstChild("Line") ~= nil and glass:FindFirstChild("Tone") ~= nil, "with its line and its dots")
+	Sim.Kit.paint(glass, T.Blue)
+	check(body.ImageColor3 == T.Blue and Sim.Kit.colorOf(glass) == T.Blue, "painting it recolours the picture")
+	-- where the game can't make pictures, the plain wedges are back
+	Sim.Skin.set(false)
+	local plain = Sim.Kit.darkPill({ Parent = dialog.body, Size = roblox.UDim2.fromOffset(200, 40) })
+	check(
+		plain:FindFirstChild("Body") == nil
+			and plain:FindFirstChild("Wedge_br") ~= nil
+			and plain.BackgroundTransparency < 1,
+		"with pictures off, a slab is a box with a wedge on each end"
+	)
+	Sim.Kit.paint(plain, T.Blue)
+	check(plain:FindFirstChild("Wedge_br").BackgroundColor3 == T.Blue, "and its wedges follow its colour")
+	Sim.Skin.set(nil)
 	dialog.root:Destroy()
 end)
 
@@ -370,6 +409,7 @@ run("the look switches between dark and light, and back", function()
 	local button = Kit.button("Go", { Parent = panel.body, Color = T.Paper, TextColor = T.Ink })
 	local swatch = Kit.swatch(roblox.Color3.fromRGB(30, 30, 34), 30, nil, { Parent = panel.body })
 	local before = snapshot()
+	local green, glass = T.Green, T.Glass
 	local told = nil
 	Kit.onTheme(function(name)
 		told = name
@@ -379,17 +419,17 @@ run("the look switches between dark and light, and back", function()
 	Sim.frames(1)
 	check(told == "light", "and whoever listens is told")
 	check(T.Paper == Kit.Themes.light.Paper and T.Ink == Kit.Themes.light.Ink, "new screens build in it")
-	check(
-		T.Green == roblox.Color3.fromRGB(128, 198, 118) and T.Glass == roblox.Color3.fromRGB(14, 16, 24),
-		"the accents and the glass stay"
-	)
+	check(T.Green == green and T.Glass == glass, "the accents and the glass stay")
 	local fill = row:FindFirstChild("Fill")
 	local title = row:FindFirstChild("Title", true)
-	check(Sim.Kit.colorOf(fill) == T.PaperDark and title.TextColor3 == T.Ink, "a row that was up is repainted")
+	check(Sim.Kit.colorOf(fill) == T.Card and title.TextColor3 == T.Ink, "a row that was up is repainted")
+	check(fill:FindFirstChild("Rim").Color == Sim.Kit.edgeOf(T.Card), "and the thin line round it")
 	local label = button:FindFirstChild("Label", true)
 	check(button.TextColor3 == T.Ink and label.TextColor3 == T.Ink, "a button's words are turned once, not twice")
 	check(
-		pill.BackgroundColor3 == T.Glass and onGlass.TextColor3 == roblox.Color3.fromRGB(206, 218, 240),
+		Sim.Kit.colorOf(pill) == T.Glass
+			and pill:FindFirstChild("Body").ImageColor3 == T.Glass
+			and onGlass.TextColor3 == roblox.Color3.fromRGB(206, 218, 240),
 		"what is on the dark glass keeps its colours"
 	)
 	check(swatch.BackgroundColor3 == roblox.Color3.fromRGB(30, 30, 34), "a colour chip keeps its colour")
@@ -495,9 +535,11 @@ run("the alert on a button is a plain red dot", function()
 	local holder = Sim.Kit.box({ Parent = gui, Size = roblox.UDim2.fromOffset(80, 80) })
 	local dot = Sim.Kit.badge(holder)
 	local words = Fake.find(dot, function(d)
-		return d:IsA("TextLabel") or d:IsA("UIStroke")
+		return d:IsA("TextLabel")
 	end)
-	check(#words == 0, "no mark on it and no rim")
+	check(#words == 0, "no mark on it")
+	local round = dot:FindFirstChildOfClass("UICorner")
+	check(dot.Rotation == 0 and round ~= nil and round.CornerRadius.Scale == 0.5, "a circle, not a diamond")
 	check(dot.Size.X.Offset == dot.Size.Y.Offset and dot.Size.X.Offset <= 16, "small and round")
 	check(dot.AnchorPoint == roblox.Vector2.new(0.5, 0.5), "it pulses about its middle")
 	check(dot:FindFirstChild("Pulse") ~= nil, "and it pulses")

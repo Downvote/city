@@ -525,6 +525,7 @@ return {
 	buildFolder = buildFolder,
 	State = State,
 	Kit = Kit,
+	Skin = Harness.require(CLIENT .. "UI.Skin"),
 	BuildMode = BuildMode,
 	BuildUI = BuildUI,
 	CLIENT = CLIENT,
