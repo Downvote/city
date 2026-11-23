@@ -3296,6 +3296,8 @@ function Kit.panel(
 		})
 		screenGlow.ZIndex = 0
 		Kit.glow(screenGlow, accent, 0.26, "tl")
+		-- and a faint tone of dots over the whole backdrop
+		Kit.dots(screenGlow, T.Ink, 0.965, false, true)
 		local low = Kit.box({
 			Name = "Low",
 			Size = UDim2.fromOffset(2400, 1400),

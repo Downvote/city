@@ -37,12 +37,16 @@
 --   creator:avatars     the creator's My avatars (the player's saved avatars on Roblox), one worn
 --   creator:wearing     what the villager has on (creator:skin, creator:shape, creator:outfits: those
 --                       pages; outfits with none saved yet)
+--   creator:outfits:saved  Outfits with three saved
+--   creator:people      Players: people here and friends, and looks other players shared
 --   signs               the town's signs laid flat: a shop fascia in every layout
 --   signs:boards        the boards on canopies and roofs
 --   signs:posters       adverts on posters and billboards, the cinema's posters
 --   signs:blades        blade signs, a hanging tile, the marquee, street plates, a vending machine
 -- Any scene can carry a prefix: light:<scene> builds it in the light look, relight:<scene>
--- builds it dark and then switches (what a player who presses the button mid game sees).
+-- builds it dark and then switches (what a player who presses the button mid game sees), and
+-- plain:<scene> builds it with the painted shapes off (what a game with Allow Mesh / Image APIs
+-- off shows: sharp ends on the slabs and no textures).
 
 local fs = require("@lune/fs")
 local process = require("@lune/process")
@@ -51,7 +55,10 @@ local roblox = require("@lune/roblox")
 
 local scene = process.args[1] or "hud"
 local outPath = process.args[2] or "out/ui.json"
-local look, relight = nil, false
+local look, relight, plain = nil, false, false
+if scene:sub(1, 6) == "plain:" then
+	plain, scene = true, scene:sub(7)
+end
 if scene:sub(1, 6) == "light:" then
 	look, scene = "light", scene:sub(7)
 elseif scene:sub(1, 8) == "relight:" then
@@ -59,6 +66,9 @@ elseif scene:sub(1, 8) == "relight:" then
 end
 
 local Sim = require("../../tests/sim/client")
+if plain then
+	Sim.Skin.set(false)
+end
 local Harness = Sim.Harness
 local Fake = Sim.Fake
 local UDim2, Color3, Enum, Instance = roblox.UDim2, roblox.Color3, roblox.Enum, Sim.env.Instance
@@ -445,6 +455,32 @@ elseif scene == "creator" or scene:sub(1, 8) == "creator:" then
 		Sim.press("Shape")
 	elseif page == "outfits" then
 		Sim.press("Outfits")
+	elseif page == "outfits:saved" then
+		Sim.remoteEvent("State"):FireClient(Sim.player, {
+			outfits = {
+				{ name = "Market day", app = Appearance.default() },
+				{ name = "Rainy walk", app = Appearance.default() },
+				{ name = "Garden party", app = Appearance.default() },
+			},
+		})
+		Sim.frames(2)
+		Sim.press("Outfits")
+	elseif page == "people" then
+		Sim.remoteFn("CreatorPeople").OnServerInvoke = function()
+			return {
+				people = {
+					{ id = 1, name = "You", kind = "you" },
+					{ id = 2, name = "Pebble_Baker", kind = "here" },
+					{ id = 3, name = "Moss", kind = "friend" },
+					{ id = 4, name = "Juniper", kind = "friend" },
+				},
+				looks = {
+					{ name = "Lighthouse keeper", by = 5, who = "Wren", app = Appearance.default() },
+					{ name = "Picnic in the park", by = 6, who = "Ollie", app = Appearance.default() },
+				},
+			}
+		end
+		Sim.press("Players")
 	elseif page ~= "" then
 		error("unknown scene " .. scene)
 	end
