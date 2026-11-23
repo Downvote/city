@@ -286,6 +286,34 @@ local function collectTown()
 						axis = "tree",
 					})
 				end
+			elseif name == "marina" then
+				-- each moored boat bobs on its own
+				local groups: { [string]: { BasePart } } = {}
+				for _, p in model:GetDescendants() do
+					if p:IsA("BasePart") and p.Name:match("^Boat%d+$") then
+						groups[p.Name] = groups[p.Name] or {}
+						table.insert(groups[p.Name], p)
+					end
+				end
+				for _, parts in groups do
+					local centre = Vector3.zero
+					for _, p in parts do
+						centre += p.Position
+					end
+					local base = CFrame.new(centre / #parts)
+					local locals = {}
+					for _, p in parts do
+						table.insert(locals, base:ToObjectSpace(p.CFrame))
+					end
+					table.insert(sways, {
+						parts = parts,
+						locals = locals,
+						base = base,
+						phase = rng:float(0, math.pi * 2),
+						amount = 0.035,
+						axis = "bob",
+					})
+				end
 			elseif name == "flagpole" then
 				local pivot = model:GetPivot()
 				local parts, locals = {}, {}
@@ -326,6 +354,10 @@ local function stepSway(dt: number)
 			local rot
 			if s.axis == "flag" then
 				rot = CFrame.Angles(0, a + math.sin(clock * 3.1 + s.phase) * 0.08, 0)
+			elseif s.axis == "bob" then
+				-- up and down on the swell, rolling a little
+				rot = CFrame.new(0, math.sin(clock * 1.1 + s.phase) * 0.18, 0)
+					* CFrame.Angles(a * 0.4, 0, math.sin(clock * 0.9 + s.phase * 2) * 0.05)
 			else
 				rot = CFrame.Angles(a, 0, a * 0.6)
 			end

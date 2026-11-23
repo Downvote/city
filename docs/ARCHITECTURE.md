@@ -29,7 +29,8 @@ The contract between the parts of the game. Update it with every change to an AP
 - `Data/`: `Palette` (paint swatches, materials and the ready-made finishes Build mode shows as tiles), `Personalities`, `Foods`, `Items`, `Jobs`, `Events` (the event list), `Town` (map
   layout and plot frames), `TownMap` (the island as parts: grass, beach, shallows, deep sea floor, see-through
   water and invisible walls at the shallows' edge; the streets, sidewalks, square and market; and where every
-  building, palm, parasol, islet and piece of street furniture stands), `TownModels` (plaza buildings), `AmbientModels` (cars, the bus, birds,
+  building, palm, parasol, islet, the marina and piece of street furniture stands; the
+  ground slabs are all SmoothPlastic for a clean flat look), `TownModels` (plaza buildings), `AmbientModels` (cars, the bus, birds,
   clouds), `Presets` (ready-made buildings: `requests(id, x, z, rot)` turns one into Build requests, `check(plan,
   requests)` tries them on a copy of a plan, `price(id)`), `StarterHouse` (every new plot's first build),
   `Textures` (the painted texture for each material and its studs per tile; `ready()` lists the uploaded ones,
@@ -145,7 +146,12 @@ server, whatever the client did.
   with a tail, `bubble(props)` (a blob with a tail), `choice(text, props, fn)` (an answer as a speech bubble,
   yellow and striped under the pointer), `arrowTag(text, colour, props)`, `wobbly(g, degrees)` and `wiggle(g)`
   (one loop sways things and wiggles buttons on hover; anything holding clipped icon pieces breathes instead of
-  turning), `recolorIcon(icon, glyph, hole)`, `pieces(parent, list, thick, z)` (rects and triangles with one
+  turning), `recolorIcon(icon, glyph, hole)`, `doodles(holder, colour, seed, n?, area?)` (faint
+  line doodles behind a big bubble's content), `hexBadge(value, props)`, `darkPill(props)` (the HUD's see-through
+  pills), `menuButton(icon, caption, props, fn)` (icon over a name, no background), `roundButton(icon, props, fn)`
+  (white icon on a dark round), `bigButton(text, icon, props, fn)` (the wobbly Build button). `Kit.stroke` makes
+  disabled strokes (no outlines on rounded rectangles); flat icons pick which pieces to cut out by containment and
+  colour contrast, `pieces(parent, list, thick, z)` (rects and triangles with one
   shared outline: every dark copy first, then every fill), `panel` (cream card, solid shadow, top band, ribbon title,
   round red close; `root` holds the card and its shadow), `bar` (outlined progress bars), `badge`, `closeButton`,
   `outlineText`, `tabs`, `slider`, `swatch`, `textbox`, `scroll`, `shadow` (a solid offset shadow).
@@ -156,6 +162,7 @@ server, whatever the client did.
 - `UI/Rewards` (the thank you picker, opened by the HUD when `offers` arrive), `UI/Goals` (the town goals panel;
   `Goals.ready()` feeds the dock badge), `World/Wishes` (a wobbly thought bubble over each villager whose model has a
   `Wish` attribute; a click opens their page).
+- `World/Ambience` also bobs the marina's boats (parts named `Boat<n>`, one group each).
 - `World/Ambience` (client only): cars and the bus on the street (they stop for anyone on a crossing, the bus waits
   at its stop), drifting clouds with shadows, circling birds with flapping wings, swaying trees and waving flags
   (only near the camera), the fountain's spray, fireflies at night. Everything moves with `workspace:BulkMoveTo`

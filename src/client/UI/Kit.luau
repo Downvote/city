@@ -34,8 +34,8 @@ Kit.Theme = {
 	Teal = Color3.fromRGB(36, 196, 188),
 	White = Color3.fromRGB(255, 255, 255),
 	Shadow = Color3.fromRGB(30, 40, 80), -- soft shadows, see through
-	Glass = Color3.fromRGB(28, 38, 70), -- the translucent pills over the 3D view
-	GlassAlpha = 0.32,
+	Glass = Color3.fromRGB(24, 34, 62), -- the dark see-through pills over the 3D view
+	GlassAlpha = 0.38,
 	Wood = Color3.fromRGB(28, 38, 70),
 	WoodLight = Color3.fromRGB(40, 52, 90),
 }
@@ -107,11 +107,13 @@ function Kit.corner(inst: Instance, radius: any): UICorner
 	return Kit.new("UICorner", { CornerRadius = r, Parent = inst })
 end
 
--- An outline. Outlines are soft in this look: one asked for in the text colour comes out as a
--- thin see-through line.
+-- An outline. The user asked for no outlines on rounded rectangles, so these are switched off:
+-- the stroke is still made (callers keep and tween it) but never shows. Doodles and icons make
+-- their own strokes.
 function Kit.stroke(inst: Instance, color: Color3?, thickness: number?): UIStroke
 	local ink = color == T.Ink
 	return Kit.new("UIStroke", {
+		Enabled = false,
 		Color = color or T.Line,
 		Thickness = if ink then math.min(thickness or 1.5, 2) else thickness or 1.5,
 		Transparency = if ink then 0.72 else 0,
@@ -896,6 +898,24 @@ function Kit.badge(parent: GuiObject, text: string): Frame
 	return f
 end
 
+-- A dark see-through pill for the HUD over the 3D view (white words read on it). No outline.
+function Kit.darkPill(props: { [string]: any }?): Frame
+	local p = props or {}
+	local f = Kit.frame({
+		Name = p.Name or "DarkPill",
+		Size = p.Size,
+		Position = p.Position,
+		AnchorPoint = p.AnchorPoint,
+		Parent = p.Parent,
+		LayoutOrder = p.LayoutOrder,
+		ZIndex = p.ZIndex,
+		Color = T.Glass,
+		Transparency = T.GlassAlpha,
+		Radius = p.Radius or "pill",
+	})
+	return f
+end
+
 -- A rounded stat pill: a dark glass bar with a big icon over its left end and the value in white.
 -- props: Size, Position, AnchorPoint, LayoutOrder, Name, TextSize, Plus (a function: draws a
 -- green + button on the right). Returns the frame and the value label.
@@ -903,19 +923,18 @@ function Kit.pill(icon: string, props: { [string]: any }?): (Frame, TextLabel)
 	local p = props or {}
 	local size: UDim2 = p.Size or UDim2.fromOffset(150, 40)
 	local h = size.Y.Offset
-	local f = Kit.glass({
+	local f = Kit.darkPill({
 		Name = p.Name or "Pill",
 		Size = size,
 		Position = p.Position,
 		AnchorPoint = p.AnchorPoint,
 		Parent = p.Parent,
 		LayoutOrder = p.LayoutOrder,
-		Radius = "pill",
 	})
 	local iconPx = math.floor(h * 0.86)
 	if Icons.has(icon) then
 		-- one colour, the stat's own
-		local tints = { people = T.Blue, smile = T.Orange }
+		local tints = { people = Color3.fromRGB(120, 196, 255), smile = T.Orange }
 		Icons.make(icon, iconPx, {
 			Name = "IconArt",
 			Parent = f,
@@ -923,7 +942,7 @@ function Kit.pill(icon: string, props: { [string]: any }?): (Frame, TextLabel)
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			ZIndex = f.ZIndex + 1,
 			Color = p.IconColor or tints[icon],
-			Hole = T.Paper,
+			Hole = T.Glass,
 		})
 	else
 		Kit.new("TextLabel", {
@@ -946,7 +965,7 @@ function Kit.pill(icon: string, props: { [string]: any }?): (Frame, TextLabel)
 		BackgroundTransparency = 1,
 		Font = Kit.Fonts.Title,
 		TextSize = p.TextSize or math.floor(h * 0.52),
-		TextColor3 = p.TextColor or T.Ink,
+		TextColor3 = p.TextColor or T.White,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Size = UDim2.new(1, -left - right, 1, 0),
 		Position = UDim2.fromOffset(left, 0),
@@ -1116,6 +1135,276 @@ function Kit.ribbon(text: string, props: { [string]: any }?): (Frame, TextLabel)
 	return holder, label
 end
 
+-- Doodles: simple line drawings scattered faintly over a big bubble's background (squiggles,
+-- rings, little bar charts, stars made of two crossed lines), in `color`. Give it the bubble's
+-- holder (not its content frame), so they sit over the shape and under the content.
+function Kit.doodles(parent: GuiObject, color: Color3, seed: number, count: number?, area: { number }?)
+	local rng = Random.new(seed)
+	local a = area or { 0.08, 0.14, 0.92, 0.92 }
+	local z = parent.ZIndex
+	local layer = Kit.new("Frame", {
+		Name = "Doodles",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = z,
+		Parent = parent,
+	})
+	local function line(holder: Instance, x: number, y: number, len: number, rot: number)
+		local f = Kit.new("Frame", {
+			BackgroundColor3 = color,
+			BorderSizePixel = 0,
+			Size = UDim2.fromOffset(len, 4),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.fromOffset(x, y),
+			Rotation = rot,
+			ZIndex = z,
+			Parent = holder,
+		})
+		Kit.corner(f, "pill")
+	end
+	local kinds = { "squiggle", "ring", "chart", "star", "squiggle", "ring" }
+	for k = 1, count or 8 do
+		local kind = kinds[(k - 1) % #kinds + 1]
+		local holder = Kit.new("Frame", {
+			Name = kind,
+			BackgroundTransparency = 1,
+			Size = UDim2.fromOffset(60, 40),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.fromScale(rng:NextNumber(a[1], a[3]), rng:NextNumber(a[2], a[4])),
+			Rotation = rng:NextInteger(-30, 30),
+			ZIndex = z,
+			Parent = layer,
+		})
+		if kind == "squiggle" then
+			-- a zigzag of short rounded strokes
+			for n = 0, 3 do
+				line(holder, 8 + n * 14, 20, 18, if n % 2 == 0 then 38 else -38)
+			end
+		elseif kind == "ring" then
+			local r = Kit.new("Frame", {
+				BackgroundTransparency = 1,
+				Size = UDim2.fromOffset(26, 26),
+				Position = UDim2.fromOffset(17, 7),
+				ZIndex = z,
+				Parent = holder,
+			})
+			Kit.corner(r, "circle")
+			Kit.new("UIStroke", { Color = color, Thickness = 4, Parent = r })
+		elseif kind == "chart" then
+			-- three bars standing on a line
+			line(holder, 30, 36, 40, 0)
+			for n, h in { 12, 22, 16 } do
+				local bar = Kit.new("Frame", {
+					BackgroundColor3 = color,
+					BorderSizePixel = 0,
+					Size = UDim2.fromOffset(8, h),
+					AnchorPoint = Vector2.new(0.5, 1),
+					Position = UDim2.fromOffset(16 + (n - 1) * 14, 32),
+					ZIndex = z,
+					Parent = holder,
+				})
+				Kit.corner(bar, 3)
+			end
+		else
+			line(holder, 30, 20, 22, 45)
+			line(holder, 30, 20, 22, -45)
+		end
+	end
+	return layer
+end
+
+-- A hexagon badge with a small word over a big number (the town's level). It's three rounded
+-- bars turned 60 degrees apart, on a white one a little bigger. props: Parent, Position, Size (px),
+-- Color, Label, ZIndex. Returns the badge and its number label.
+function Kit.hexBadge(value: string, props: { [string]: any }?): (Frame, TextLabel)
+	local p = props or {}
+	local px = p.Size or 68
+	local z = p.ZIndex or 2
+	local holder = Kit.box({
+		Name = p.Name or "HexBadge",
+		Size = UDim2.fromOffset(px, px),
+		Position = p.Position,
+		AnchorPoint = p.AnchorPoint,
+		Parent = p.Parent,
+	})
+	holder.ZIndex = z
+	local function hex(color: Color3, w: number)
+		for _, rot in { 0, 60, 120 } do
+			local f = Kit.new("Frame", {
+				BackgroundColor3 = color,
+				BorderSizePixel = 0,
+				Size = UDim2.fromOffset(w, w * 0.577),
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Position = UDim2.fromScale(0.5, 0.5),
+				Rotation = rot + 90,
+				ZIndex = z,
+				Parent = holder,
+			})
+			Kit.corner(f, math.floor(w * 0.08))
+		end
+	end
+	hex(T.White, px)
+	hex(p.Color or T.Blue, px - 10)
+	Kit.new("TextLabel", {
+		Name = "Label",
+		Text = p.Label or "LEVEL",
+		BackgroundTransparency = 1,
+		Font = Kit.Fonts.Title,
+		TextSize = math.floor(px * 0.16),
+		TextColor3 = T.White,
+		Size = UDim2.new(1, 0, 0, px * 0.2),
+		Position = UDim2.fromScale(0, 0.18),
+		ZIndex = z + 1,
+		Parent = holder,
+	})
+	local number = Kit.new("TextLabel", {
+		Name = "Value",
+		Text = value,
+		BackgroundTransparency = 1,
+		Font = Kit.Fonts.Title,
+		TextSize = math.floor(px * 0.44),
+		TextColor3 = T.White,
+		Size = UDim2.new(1, 0, 0, px * 0.46),
+		Position = UDim2.fromScale(0, 0.36),
+		ZIndex = z + 1,
+		Parent = holder,
+	})
+	return holder, number
+end
+
+-- A button in a quick menu: a flat icon in its own colour over its name, no background. props:
+-- Parent, LayoutOrder, Size, Color (the icon's), TextSize.
+function Kit.menuButton(icon: string, caption: string, props: { [string]: any }?, onClick: (() -> ())?): TextButton
+	local p = props or {}
+	local b = Kit.new("TextButton", {
+		Name = caption,
+		Text = "",
+		AutoButtonColor = false,
+		BackgroundTransparency = 1,
+		Size = p.Size or UDim2.fromOffset(78, 82),
+		LayoutOrder = p.LayoutOrder or 0,
+		Parent = p.Parent,
+	})
+	b:SetAttribute("KitButton", true)
+	local px = math.floor(b.Size.Y.Offset * 0.56)
+	Icons.make(icon, px, {
+		Name = "IconArt",
+		Parent = b,
+		Position = UDim2.new(0.5, -px / 2, 0, 4),
+		Color = p.Color,
+		Hole = T.White,
+	})
+	Kit.new("TextLabel", {
+		Name = "Caption",
+		Text = caption,
+		BackgroundTransparency = 1,
+		Font = Kit.Fonts.Title,
+		TextSize = p.TextSize or 15,
+		TextColor3 = T.Ink,
+		Size = UDim2.new(1, 0, 0, 20),
+		Position = UDim2.new(0, 0, 1, -22),
+		Parent = b,
+	})
+	pressable(b)
+	if onClick then
+		b.Activated:Connect(onClick)
+	end
+	return b
+end
+
+-- A round utility button: a white icon on a dark see-through circle. props: Parent, Size (px),
+-- Position, AnchorPoint, LayoutOrder, Name.
+function Kit.roundButton(icon: string, props: { [string]: any }?, onClick: (() -> ())?): TextButton
+	local p = props or {}
+	local px = p.Size or 50
+	local b = Kit.new("TextButton", {
+		Name = p.Name or icon,
+		Text = "",
+		AutoButtonColor = false,
+		BackgroundColor3 = T.Glass,
+		BackgroundTransparency = T.GlassAlpha,
+		Size = UDim2.fromOffset(px, px),
+		Position = p.Position or UDim2.new(),
+		AnchorPoint = p.AnchorPoint or Vector2.zero,
+		LayoutOrder = p.LayoutOrder or 0,
+		Parent = p.Parent,
+	})
+	b:SetAttribute("KitButton", true)
+	Kit.corner(b, "circle")
+	local ipx = math.floor(px * 0.56)
+	Icons.make(icon, ipx, {
+		Name = "IconArt",
+		Parent = b,
+		Position = UDim2.new(0.5, -ipx / 2, 0.5, -ipx / 2),
+		Color = T.White,
+		Hole = T.Glass,
+	})
+	pressable(b)
+	if onClick then
+		b.Activated:Connect(onClick)
+	end
+	return b
+end
+
+-- The big main action button: a bright wobbly pill with a big icon in its own colour and bold
+-- white words (Build). props: Parent, Size, Position, AnchorPoint, Color, IconColor, TextSize.
+function Kit.bigButton(text: string, icon: string, props: { [string]: any }?, onClick: (() -> ())?): TextButton
+	local p = props or {}
+	local size: UDim2 = p.Size or UDim2.fromOffset(230, 76)
+	local color: Color3 = p.Color or T.Blue
+	local b = Kit.new("TextButton", {
+		Name = text,
+		Text = "",
+		AutoButtonColor = false,
+		BackgroundTransparency = 1,
+		Size = size,
+		Position = p.Position or UDim2.new(),
+		AnchorPoint = p.AnchorPoint or Vector2.zero,
+		Parent = p.Parent,
+	})
+	b:SetAttribute("KitButton", true)
+	local face = Kit.blob({
+		Name = "Face",
+		Parent = b,
+		Size = UDim2.fromScale(1, 1),
+		Color = color,
+		Radius = "pill",
+		Border = T.White,
+		BorderWidth = 4,
+		Estimate = Vector2.new(size.X.Offset, size.Y.Offset),
+	})
+	local _ = face
+	local h = size.Y.Offset
+	local ipx = math.floor(h * 0.7)
+	Icons.make(icon, ipx, {
+		Name = "IconArt",
+		Parent = b,
+		Position = UDim2.new(0, math.floor(h * 0.36), 0.5, -ipx / 2),
+		Color = p.IconColor or T.Yellow,
+		Hole = color,
+		ZIndex = 3,
+	})
+	local label = Kit.new("TextLabel", {
+		Name = "Label",
+		Text = text,
+		BackgroundTransparency = 1,
+		Font = Kit.Fonts.Title,
+		TextSize = p.TextSize or math.floor(h * 0.44),
+		TextColor3 = T.White,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Size = UDim2.new(1, -(ipx + h * 0.5), 1, 0),
+		Position = UDim2.fromOffset(ipx + math.floor(h * 0.5), 0),
+		ZIndex = 3,
+		Parent = b,
+	})
+	Kit.outlineText(label, darker(color, 0.62), 1.5)
+	pressable(b)
+	if onClick then
+		b.Activated:Connect(onClick)
+	end
+	return b
+end
+
 -- A modal panel: a cream paper card with a thick outline and a solid shadow, its title on a
 -- ribbon across the top edge, and a red round close button on the top right corner. Returns
 -- { root, card, body, close, title, header }. `root` holds the card and its shadow, so hiding or
@@ -1145,27 +1434,8 @@ function Kit.panel(titleText: string, size: UDim2, onClose: (() -> ())?, icon: s
 		ZIndex = holder.ZIndex,
 		Parent = holder,
 	})
-	-- faint doodles in the panel's colour, like a patterned paper
-	local doodles = Random.new(#titleText * 31)
-	for k = 1, 9 do
-		local dx, dy = doodles:NextNumber(0.06, 0.94), doodles:NextNumber(0.2, 0.94)
-		local ring = k % 3 == 0
-		local d = Kit.frame({
-			Name = "Doodle",
-			Size = if ring then UDim2.fromOffset(26, 26) else UDim2.fromOffset(34, 9),
-			Position = UDim2.fromScale(dx, dy),
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Color = headColor,
-			Transparency = if ring then 1 else 0.88,
-			Radius = "pill",
-			Parent = frame,
-		})
-		d.Rotation = doodles:NextInteger(-50, 50)
-		if ring then
-			local st = Kit.stroke(d, headColor, 4)
-			st.Transparency = 0.86
-		end
-	end
+	-- faint doodles in the background, a little darker than the card
+	Kit.doodles(frame.Parent :: Frame, T.Cream:Lerp(headColor, 0.16), #titleText * 31, 9)
 	-- (kept for callers that place things by it: a clear strip where the banner sits)
 	local header = Kit.box({
 		Name = "Header",

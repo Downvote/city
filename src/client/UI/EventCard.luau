@@ -297,16 +297,17 @@ function EventCard.start(_hud: any)
 		Parent = holder,
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		Radius = 38,
+		Radius = 34,
 		Tail = "down",
 		TailAt = 0.5,
 		TailSize = 28,
 		Border = Color3.fromRGB(255, 196, 150),
 		BorderWidth = 4,
-		Estimate = Vector2.new(620, 150),
+		Estimate = Vector2.new(620, 80),
 		LayoutOrder = 3,
 	})
-	local _ = page
+	-- faint doodles behind the words
+	Kit.doodles(page, Color3.fromRGB(255, 236, 222), 7, 6, { 0.08, 0.2, 0.92, 0.8 })
 	local inner = Kit.box({ Parent = card, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y })
 	Kit.pad(inner, 34, 26)
 	Kit.list(inner, 10)

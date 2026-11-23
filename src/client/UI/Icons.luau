@@ -1095,17 +1095,48 @@ function Icons.flat(name: string, px: number, p: { [string]: any }): Frame
 	local glyph: Color3 = p.Color or p.Tint or Icons.Colors[name] or Icons.Glyph
 	local hole: Color3 = p.Hole or Color3.new(1, 1, 1)
 	local def = D[name] or D.medal
+	-- which pieces are cut out: a piece inside a bigger one, in a clearly different colour, is a
+	-- detail and takes the other colour (a detail inside a cut out flips back); a piece inside
+	-- nothing is cut out only if it's dark (eyes, lines drawn on)
+	local function bounds(sh: any): (number, number, number, number)
+		if sh[1] == "t" then
+			local base, dir = sh[4], sh[5]
+			local horizontal = dir == "up" or dir == "down"
+			return sh[2], sh[3], if horizontal then base else base / 2, if horizontal then base / 2 else base
+		end
+		return sh[2], sh[3], sh[4] or 0, sh[5] or 0
+	end
+	local cut: { boolean } = {}
+	for i, sh in def do
+		local x, y, w, h = bounds(sh)
+		local lum = if typeof(sh[6]) == "Color3" then luminance(sh[6]) else 0.5
+		local container: number? = nil
+		local bestArea = math.huge
+		for j = 1, i - 1 do
+			local o = def[j]
+			if (o.t or 0) == 0 and o[1] ~= "ring" then
+				local ox, oy, ow, oh = bounds(o)
+				local area = ow * oh
+				local inside = x >= ox - 2 and y >= oy - 2 and x + w <= ox + ow + 2 and y + h <= oy + oh + 2
+				if inside and w * h < area * 0.7 and area < bestArea then
+					container, bestArea = j, area
+				end
+			end
+		end
+		if container then
+			local c = def[container]
+			local clum = if typeof(c[6]) == "Color3" then luminance(c[6]) else 0.5
+			cut[i] = if math.abs(lum - clum) > 0.16 then not cut[container] else cut[container]
+		else
+			cut[i] = lum < 0.3
+		end
+	end
 	flat = true
 	for i, s in def do
 		if (s.t or 0) > 0 then
 			continue -- shines and see-through glints
 		end
-		local original = s[6]
-		local color = glyph
-		if typeof(original) == "Color3" and luminance(original) < 0.3 then
-			color = hole
-		end
-		drawShape(root, s, i, false, 0, 0, color, z)
+		drawShape(root, s, i, false, 0, 0, if cut[i] then hole else glyph, z)
 	end
 	flat = false
 	root:SetAttribute("Glyph", glyph:ToHex())

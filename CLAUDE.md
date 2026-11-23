@@ -44,7 +44,10 @@ section 10). New buttons get it from `UI/Kit`; new moving scenery goes in `World
 `BulkMoveTo`), and the simulation checks it runs.
 
 The user asked for the genre's own layouts (house builders, avatar editors, city builders), then for a bright,
-cozy look like the life sims they showed (in our own designs, never copied): docs/GAME_DESIGN.md section 10. Build
+cozy look like the life sims they showed, then named a mobile city builder (Pocket City 2) as the UI and graphics
+direction: its layout and clean low poly feel, in our own designs, never copied (docs/GAME_DESIGN.md section 10).
+The HUD is a level hexagon top left, dark pills top middle, clock and round buttons top right, a portrait and quick
+menu bottom left and a big Build button bottom right; no outlines on rounded rectangles; the ground is flat colour. Build
 screens from `UI/Kit` (white rounded cards with pill banners and soft shadows, rounded buttons on a soft base,
 round icon buttons with a white rim and a caption pill, translucent navy pills over the 3D view) and `UI/Icons`
 (drawn icons, never emoji in the interface). The user asked for wobbly bubbles round text, wobbly buttons,

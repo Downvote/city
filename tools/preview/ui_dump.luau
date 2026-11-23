@@ -13,6 +13,7 @@
 --   toasts              a few notices
 --   icons               every icon, big and small
 --   icons:<a>,<b>,...   those icons up close
+--   flaticons           every icon flat, white on a dark round button
 --   creator             the villager creator on the hair tab
 
 local fs = require("@lune/fs")
@@ -190,6 +191,31 @@ elseif scene == "creator" then
 	Hud.open("Creator", { mode = "new" })
 	Sim.frames(3)
 	Sim.advance(1)
+elseif scene == "flaticons" then
+	-- every icon flat, white on a dark round (as the round buttons draw them)
+	local Icons = Harness.require(Sim.CLIENT .. "UI.Icons")
+	local Kit = Sim.Kit
+	local sheet = Kit.frame({
+		Parent = Sim.gui,
+		Size = UDim2.fromScale(1, 1),
+		Color = Color3.fromRGB(150, 200, 120),
+		Radius = false,
+	})
+	local grid = Instance.new("UIGridLayout")
+	grid.CellSize = UDim2.fromOffset(100, 100)
+	grid.CellPadding = UDim2.fromOffset(4, 4)
+	grid.Parent = sheet
+	for i, name in Icons.names() do
+		local cell = Kit.box({ Parent = sheet, LayoutOrder = i })
+		Kit.roundButton(name, { Parent = cell, Size = 56, Position = UDim2.new(0.5, -28, 0, 4) })
+		Kit.text(name, {
+			Parent = cell,
+			Size = UDim2.new(1, 0, 0, 16),
+			Position = UDim2.new(0, 0, 1, -24),
+			TextSize = 13,
+			AlignX = Enum.TextXAlignment.Center,
+		})
+	end
 elseif scene:sub(1, 6) == "icons:" then
 	local Icons = Harness.require(Sim.CLIENT .. "UI.Icons")
 	local Kit = Sim.Kit

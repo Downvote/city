@@ -343,6 +343,27 @@ In our own drawing:
 - **Icons are flat and one colour**: white on a coloured button, navy on a white one, details like eyes cut out in
   the colour behind them. A few keep their natural colour: the coin and medal gold, the sun yellow, hearts pink.
 
+> Look at Pocket City 2. this should be the ui and graphical direction you should reference from
+
+> also, there shouldnt be any outlines in any rounded rectangles. add simple shapes in the background of the wobble
+> shapes as well, like in the screenshot
+
+The main screen now follows the layout mobile city builders use, drawn our own way (no icons, names or art taken
+from that game):
+
+- Top left, a hexagon level badge with the town's name in big outlined letters and a yellow bar to the next
+  level. Top middle, dark see-through pills for money (with a green +), people and happiness. Top right, the
+  clock with the weather in a dark pill, and round dark buttons under it for the city, the shop and the news.
+- Bottom left, a round portrait (it opens the villagers) beside a white wobbly menu of the town's people, the
+  creator, goals and the daily gift, each a coloured icon over its name. Bottom right, a big blue wobbly Build
+  button with a yellow hard hat.
+- No rounded rectangle has an outline anywhere. Big wobbly shapes (panels, the event bubble) carry faint doodles in
+  their background: squiggles, rings, little bar charts and crossed lines.
+- The town's ground is smooth flat colour in a clean low poly look: bright green lawns, mid grey roads, white
+  walks and paving, deep blue sea. Buildings keep their textured materials.
+- A marina on the south beach: a boardwalk out over the water on posts, finger piers and moored boats that bob and
+  roll on the swell.
+
 Villagers walk with Roblox's pathfinding with jumping on, so they go round walls, through doorways (doors are free to
 pass and open as they come), round furniture and over low steps. If they get stuck they jump, then plan again.
 

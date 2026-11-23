@@ -21,23 +21,23 @@ local L = Town.HalfLength
 local HW = Town.StreetHalfWidth
 local SW = Town.SidewalkWidth
 
-local GRASS = Color3.fromRGB(122, 210, 86)
-local ROAD = Color3.fromRGB(104, 110, 128)
-local ROAD_EDGE = Color3.fromRGB(92, 98, 116)
+local GRASS = Color3.fromRGB(134, 206, 92)
+local ROAD = Color3.fromRGB(122, 128, 142)
+local ROAD_EDGE = Color3.fromRGB(108, 114, 128)
 local LINE_WHITE = Color3.fromRGB(250, 250, 246)
 local LINE_YELLOW = Color3.fromRGB(255, 210, 70)
 local CURB = Color3.fromRGB(246, 246, 242)
 local WALK = Color3.fromRGB(240, 240, 236)
 local JOINT = Color3.fromRGB(218, 220, 216)
-local PAVING = Color3.fromRGB(248, 246, 240)
-local PAVING_DARK = Color3.fromRGB(198, 214, 228)
+local PAVING = Color3.fromRGB(236, 238, 240)
+local PAVING_DARK = Color3.fromRGB(214, 220, 228)
 local PROMENADE = Color3.fromRGB(232, 128, 84) -- warm brick walks
 local HEDGE = Color3.fromRGB(84, 184, 70)
 local SOIL = Color3.fromRGB(122, 90, 62)
 local SAND = Color3.fromRGB(252, 234, 190)
-local SEABED = Color3.fromRGB(236, 226, 186)
-local DEEP = Color3.fromRGB(24, 118, 164)
-local WATER = Color3.fromRGB(62, 200, 220)
+local SEABED = Color3.fromRGB(150, 214, 230)
+local DEEP = Color3.fromRGB(36, 104, 190)
+local WATER = Color3.fromRGB(70, 156, 232)
 local BARK = Color3.fromRGB(176, 126, 82)
 local BARK_DARK = Color3.fromRGB(150, 104, 66)
 local LEAF = Color3.fromRGB(84, 192, 70)
@@ -137,6 +137,65 @@ TownMap.Models.parasol = function(r: R)
 		for _, z in { -2.2, 2.2 } do
 			r:block(x - 0.15, 0, z - 0.15, x + 0.15, 0.9, z + 0.15, Color3.fromRGB(220, 222, 224), "Metal")
 		end
+	end
+end
+
+-- A little boat: a white hull with a coloured stripe and a pointed bow, a small cabin. Every
+-- piece is named `name`, so the client bobs the boat as one.
+local function boat(r: R, x: number, z: number, yaw: number, stripe: Color3, name: string)
+	local frame = CFrame.new(x, TownMap.WaterY, z) * CFrame.Angles(0, math.rad(yaw), 0)
+	local white = Color3.fromRGB(250, 250, 250)
+	local parts = {
+		r:boxAt(frame * CFrame.new(0, 0.3, 0), 3.4, 1.4, 7, white, "SmoothPlastic"),
+		r:boxAt(frame * CFrame.new(0, 0.55, 0), 3.5, 0.3, 7.05, stripe, "SmoothPlastic"),
+		r:wedge(frame * CFrame.new(0, 0.3, -4.75), 3.4, 1.4, 2.5, white, "SmoothPlastic"),
+		r:boxAt(frame * CFrame.new(0, 1.5, 0.8), 2.4, 1.2, 2.8, white, "SmoothPlastic"),
+		r:boxAt(frame * CFrame.new(0, 1.6, -0.62), 2.2, 0.7, 0.06, Color3.fromRGB(120, 190, 240), "Glass"),
+		r:boxAt(frame * CFrame.new(0, 2.15, 0.8), 2.6, 0.12, 3, stripe, "SmoothPlastic"),
+	}
+	for _, prim in parts do
+		prim.name = name
+		prim.collide = false
+	end
+end
+
+-- A marina on the beach: a boardwalk out over the water on posts, finger piers between the
+-- berths, and moored boats.
+TownMap.Models.marina = function(r: R)
+	local deck = Color3.fromRGB(214, 170, 120)
+	local post = Color3.fromRGB(160, 120, 84)
+	local y = 0.3
+	-- the main walk, from the sand out over the water (local -Z is out to sea)
+	r:block(-3, y - 0.4, -70, 3, y, 4, deck, "WoodPlanks")
+	for z = -68, 2, 10 do
+		for _, x in { -2.6, 2.6 } do
+			r:cyl(x, -2.2, z, 5, 0.8, "y", post, "Wood")
+		end
+	end
+	-- the head of the pier, across the end
+	r:block(-26, y - 0.4, -76, 26, y, -70, deck, "WoodPlanks")
+	-- finger piers off both sides, with a boat in most berths
+	local stripes = {
+		Color3.fromRGB(64, 150, 232),
+		Color3.fromRGB(255, 108, 98),
+		Color3.fromRGB(86, 198, 74),
+		Color3.fromRGB(255, 190, 50),
+	}
+	local n = 0
+	for _, side in { -1, 1 } do
+		for k, z in { -18, -36, -54 } do
+			local x1, x2 = if side < 0 then -20 else 3, if side < 0 then -3 else 20
+			r:block(x1, y - 0.4, z - 1.2, x2, y, z + 1.2, deck, "WoodPlanks")
+			r:cyl((x1 + x2) / 2 + side * 7, -2.2, z, 5, 0.7, "y", post, "Wood")
+			if (k + (if side > 0 then 1 else 0)) % 3 ~= 0 then
+				n += 1
+				boat(r, side * 11.5, z - 8.2, 0, stripes[(n - 1) % #stripes + 1], "Boat" .. n)
+			end
+		end
+	end
+	-- a couple of benches and a lamp at the head
+	for _, x in { -18, 18 } do
+		r:block(x - 2, y, -74.6, x + 2, y + 1, -73.4, Color3.fromRGB(190, 140, 96), "Wood")
 	end
 end
 
@@ -462,7 +521,9 @@ function TownMap.ground(region: Region?): { Prim }
 	)
 		local a, b, c, d = clip(region, x1, z1, x2, z2)
 		if a then
-			r:block(a, y1, b, c, y2, d, color, mat)
+			-- the ground is smooth flat colour, a clean low poly look (no textures on it)
+			local _ = mat
+			r:block(a, y1, b, c, y2, d, color, "SmoothPlastic")
 		end
 	end
 
@@ -819,18 +880,28 @@ function TownMap.placements(): { Placement }
 			put(kind, x, z, trees:float(0, 360))
 		end
 	end
+	-- the marina on the south beach, its walk running out to sea
+	put("marina", 300, -(IZ + 2), 0)
 	-- the beach: palms leaning out to sea, and parasols on the sand
 	local beach = Rng.new(31)
 	for _, side in { 1, -1 } do
 		local z0 = side * (IZ + B * 0.45)
 		for x = -IX + 20, IX - 20, 26 do
 			local px, pz = x + beach:float(-8, 8), z0 + beach:float(-6, 6)
-			put(if beach:chance(0.5) then "palm" else "palmTall", px, pz, if side > 0 then 90 else 270)
+			local kind = if beach:chance(0.5) then "palm" else "palmTall"
+			if side < 0 and math.abs(px - 300) < 34 then
+				continue -- the marina's walk comes ashore here
+			end
+			put(kind, px, pz, if side > 0 then 90 else 270)
 			local last = out[#out]
 			last.cf = last.cf + Vector3.new(0, -0.25, 0)
 		end
 		for x = -IX + 60, IX - 60, 70 do
-			put("parasol", x + beach:float(-10, 10), side * (IZ + B * 0.7), beach:float(-20, 20))
+			local px = x + beach:float(-10, 10)
+			if side < 0 and math.abs(px - 300) < 34 then
+				continue
+			end
+			put("parasol", px, side * (IZ + B * 0.7), beach:float(-20, 20))
 			local last = out[#out]
 			last.cf = last.cf + Vector3.new(0, -0.35, 0)
 		end

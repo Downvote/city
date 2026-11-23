@@ -103,71 +103,68 @@ function Hud.start()
 	local gui = Kit.root()
 	local hud = Kit.box({ Name = "Hud", Size = UDim2.fromScale(1, 1), Parent = gui })
 
-	-- money and stats, top left: dark glass pills with a big icon over one end -------------------------
-	local pills =
-		Kit.box({ Name = "Pills", Size = UDim2.fromOffset(520, 46), Position = UDim2.fromOffset(26, 14), Parent = hud })
-	Kit.list(pills, 26, true)
-	local coinPill, coins = Kit.pill("coin", {
-		Parent = pills,
-		Size = UDim2.fromOffset(196, 46),
-		LayoutOrder = 1,
-		Plus = function()
-			Hud.open("ShopPanel")
-		end,
-	})
-	local _, popLabel = Kit.pill("people", { Parent = pills, Size = UDim2.fromOffset(104, 46), LayoutOrder = 2 })
-	local moodPill, moodLabel = Kit.pill("smile", { Parent = pills, Size = UDim2.fromOffset(116, 46), LayoutOrder = 3 })
-
-	-- the town's level under them: a medal, the level's name and a bar to the next one
-	local card = Kit.glass({
+	-- the town's level, top left: a hexagon badge, the level's name and a bar to the next one --------
+	local card = Kit.box({
 		Name = "CityCard",
-		Size = UDim2.fromOffset(318, 64),
-		Position = UDim2.fromOffset(26, 72),
-		Radius = 18,
+		Size = UDim2.fromOffset(340, 80),
+		Position = UDim2.fromOffset(14, 10),
 		Parent = hud,
 	})
-	Icons.make("medal", 64, { Parent = card, Position = UDim2.new(0, -18, 0.5, 0), AnchorPoint = Vector2.new(0, 0.5) })
-	local badgeText = Kit.title("1", {
-		Parent = card,
-		Size = UDim2.fromOffset(30, 30),
-		Position = UDim2.new(0, -1, 0.5, 9),
-		AnchorPoint = Vector2.new(0, 0.5),
-		TextSize = 20,
-		Color = T.White,
-		AlignX = Enum.TextXAlignment.Center,
-		Outline = Kit.darker(T.YellowDark, 0.5),
-	})
+	local _, badgeText = Kit.hexBadge("1", { Parent = card, Size = 74, Position = UDim2.fromOffset(0, 2) })
 	local cityName = Kit.title("", {
 		Parent = card,
-		Size = UDim2.new(1, -70, 0, 24),
-		Position = UDim2.fromOffset(54, 5),
-		TextSize = 22,
-		Color = T.Ink,
+		Size = UDim2.new(1, -88, 0, 30),
+		Position = UDim2.fromOffset(84, 6),
+		TextSize = 29,
+		Color = T.White,
+		Outline = T.Glass,
+		OutlineThickness = 2.5,
 	})
 	local track = Kit.frame({
 		Parent = card,
-		Size = UDim2.new(1, -66, 0, 14),
-		Position = UDim2.fromOffset(54, 31),
-		Color = T.PaperDark,
+		Size = UDim2.new(1, -96, 0, 12),
+		Position = UDim2.fromOffset(86, 42),
+		Color = T.Glass,
+		Transparency = 0.35,
 		Radius = "pill",
 	})
-	local fill = Kit.frame({ Parent = track, Size = UDim2.fromScale(0, 1), Color = T.Purple, Radius = "pill" })
-	Kit.gradient(fill, 0.3)
+	local fill = Kit.frame({ Parent = track, Size = UDim2.fromScale(0, 1), Color = T.Yellow, Radius = "pill" })
 	local nextLine = Kit.text("", {
 		Parent = card,
-		Size = UDim2.new(1, -66, 0, 14),
-		Position = UDim2.fromOffset(54, 47),
-		TextSize = 12,
+		Size = UDim2.new(1, -96, 0, 16),
+		Position = UDim2.fromOffset(86, 58),
+		TextSize = 13,
 		Font = Kit.Fonts.Bold,
-		Color = T.InkSoft,
+		Color = T.White,
 		Wrap = false,
 	})
+	Kit.outlineText(nextLine, T.Glass, 1.5)
 	nextLine.TextTruncate = Enum.TextTruncate.AtEnd
 	local cardButton =
 		Kit.new("TextButton", { Text = "", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), Parent = card })
 	cardButton.Activated:Connect(function()
 		Hud.open("CityPanel")
 	end)
+
+	-- money, people and happiness, top middle -------------------------------------------------------------
+	local pills = Kit.box({
+		Name = "Pills",
+		Size = UDim2.fromOffset(470, 50),
+		Position = UDim2.new(0.5, 0, 0, 14),
+		AnchorPoint = Vector2.new(0.5, 0),
+		Parent = hud,
+	})
+	Kit.list(pills, 14, true, Enum.HorizontalAlignment.Center)
+	local coinPill, coins = Kit.pill("coin", {
+		Parent = pills,
+		Size = UDim2.fromOffset(200, 50),
+		LayoutOrder = 1,
+		Plus = function()
+			Hud.open("ShopPanel")
+		end,
+	})
+	local _, popLabel = Kit.pill("people", { Parent = pills, Size = UDim2.fromOffset(110, 50), LayoutOrder = 2 })
+	local moodPill, moodLabel = Kit.pill("smile", { Parent = pills, Size = UDim2.fromOffset(122, 50), LayoutOrder = 3 })
 
 	local shown = 0
 	local function setCoins(n: number)
@@ -214,12 +211,15 @@ function Hud.start()
 			moodNow = want
 			local h = moodPill.Size.Y.Offset
 			moodArt:Destroy()
-			local px = math.floor(h * 1.12)
+			local px = math.floor(h * 0.86)
 			moodArt = Icons.make(want, px, {
 				Name = "IconArt",
 				Parent = moodPill,
-				Position = UDim2.new(0, -math.floor(h * 0.3) + px / 2, 0.5, 0),
+				Position = UDim2.new(0, math.floor(h * 0.12) + px / 2, 0.5, 0),
 				AnchorPoint = Vector2.new(0.5, 0.5),
+				ZIndex = moodPill.ZIndex + 1,
+				Color = if want == "heart" then T.Pink else T.Orange,
+				Hole = T.Glass,
 			})
 		end
 		badgeText.Text = tostring(stats.level)
@@ -238,14 +238,35 @@ function Hud.start()
 	refreshCity()
 
 	-- the clock, top right ---------------------------------------------------------------------------------
-	local clock = Kit.glass({
+	local clock = Kit.darkPill({
 		Name = "Clock",
 		Size = UDim2.fromOffset(226, 64),
 		Position = UDim2.new(1, -14, 0, 12),
 		AnchorPoint = Vector2.new(1, 0),
-		Radius = 18,
+		Radius = 32,
 		Parent = hud,
 	})
+	-- round buttons under the clock: the city, the shop, the news
+	local corner = Kit.box({
+		Name = "Corner",
+		Size = UDim2.fromOffset(226, 52),
+		Position = UDim2.new(1, -14, 0, 86),
+		AnchorPoint = Vector2.new(1, 0),
+		Parent = hud,
+	})
+	local cornerList = Kit.list(corner, 10, true, Enum.HorizontalAlignment.Right)
+	local _ = cornerList
+	for i, e in
+		{
+			{ "city", "CityPanel" },
+			{ "cart", "ShopPanel" },
+			{ "news", "News" },
+		}
+	do
+		Kit.roundButton(e[1], { Parent = corner, LayoutOrder = i, Name = e[2] }, function()
+			Hud.open(e[2])
+		end)
+	end
 	local weatherArt: Frame? = nil
 	local weatherNow = ""
 	local function setWeatherIcon(name: string)
@@ -256,11 +277,13 @@ function Hud.start()
 		if weatherArt then
 			weatherArt:Destroy()
 		end
-		local art = Icons.make(
-			name,
-			40,
-			{ Parent = clock, Position = UDim2.new(0, 36, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5), ZIndex = 2 }
-		)
+		local art = Icons.make(name, 40, {
+			Parent = clock,
+			Position = UDim2.new(0, 36, 0.5, 0),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			ZIndex = 2,
+			Hole = T.Glass,
+		})
 		weatherArt = art
 		if name == "sun" then
 			-- the sun turns slowly (it has no clipped parts, so turning it is safe)
@@ -281,7 +304,7 @@ function Hud.start()
 		Size = UDim2.new(1, -78, 0, 28),
 		Position = UDim2.fromOffset(64, 6),
 		TextSize = 26,
-		Color = T.Ink,
+		Color = T.White,
 	})
 	local dateLabel = Kit.text("", {
 		Parent = clock,
@@ -289,7 +312,7 @@ function Hud.start()
 		Position = UDim2.fromOffset(64, 35),
 		TextSize = 14,
 		Font = Kit.Fonts.Bold,
-		Color = T.InkSoft,
+		Color = Color3.fromRGB(206, 218, 240),
 		Wrap = false,
 	})
 	task.spawn(function()
@@ -314,15 +337,6 @@ function Hud.start()
 		end
 	end)
 
-	-- the dock down the left: big coloured tiles -----------------------------------------------------------
-	local dock = Kit.box({
-		Name = "Dock",
-		Size = UDim2.fromOffset(84, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
-		Position = UDim2.fromOffset(18, 154),
-		Parent = hud,
-	})
-	Kit.list(dock, 4, false, Enum.HorizontalAlignment.Center)
 	local BuildMode = require(script.Parent.Parent.Build.BuildMode)
 	local BuildUI = require(script.Parent.Parent.Build.BuildUI)
 	BuildUI.init(function()
@@ -349,84 +363,94 @@ function Hud.start()
 			refreshVisible()
 		end
 	end)
-	local entries = {
-		{
-			"crane",
-			"Build",
-			T.Blue,
-			function()
-				Hud.closeAll()
-				BuildMode.enter()
-			end,
-		},
-		{
-			"people",
-			"Villagers",
-			T.Green,
-			function()
-				Hud.open("Residents")
-			end,
-		},
-		{
-			"shirt",
-			"Create",
-			T.Pink,
-			function()
-				Hud.open("Creator", { mode = "new" })
-			end,
-		},
-		{
-			"city",
-			"City",
-			T.Purple,
-			function()
-				Hud.open("CityPanel")
-			end,
-		},
-		{
-			"cart",
-			"Shop",
-			T.Orange,
-			function()
-				Hud.open("ShopPanel")
-			end,
-		},
-		{
-			"news",
-			"News",
-			T.Teal,
-			function()
-				Hud.open("News")
-			end,
-		},
-		{
-			"medal",
-			"Goals",
-			T.Orange,
-			function()
-				Hud.open("Goals")
-			end,
-		},
-	}
+	-- the quick menu, bottom left: a portrait, then the town's people, the creator, goals and the gift --
+	local menu = Kit.box({
+		Name = "Menu",
+		Size = UDim2.fromOffset(470, 108),
+		Position = UDim2.new(0, 14, 1, -12),
+		AnchorPoint = Vector2.new(0, 1),
+		Parent = hud,
+	})
+	local portrait, portraitInside = Kit.blob({
+		Name = "Portrait",
+		Parent = menu,
+		Round = true,
+		Color = T.White,
+		Border = T.Blue,
+		BorderWidth = 4,
+		Size = UDim2.fromOffset(98, 98),
+		Position = UDim2.fromOffset(0, 5),
+	})
+	Icons.make("person", 56, {
+		Parent = portraitInside,
+		Position = UDim2.new(0.5, -28, 0.5, -28),
+		Color = T.Blue,
+		ZIndex = 3,
+	})
+	local portraitButton = Kit.new(
+		"TextButton",
+		{ Text = "", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), ZIndex = 4, Parent = portrait }
+	)
+	portraitButton.Activated:Connect(function()
+		Hud.open("Residents")
+	end)
+	local _bar, barInside = Kit.blob({
+		Name = "MenuBar",
+		Parent = menu,
+		Color = T.White,
+		Radius = 44,
+		Size = UDim2.fromOffset(356, 96),
+		Position = UDim2.fromOffset(108, 8),
+		Estimate = Vector2.new(356, 96),
+	})
+	local row = Kit.box({ Parent = barInside, Size = UDim2.fromScale(1, 1) })
+	local rowList = Kit.list(row, 2, true, Enum.HorizontalAlignment.Center)
+	rowList.VerticalAlignment = Enum.VerticalAlignment.Center
 	local tiles = {}
-	for i, e in entries do
-		table.insert(
-			tiles,
-			Kit.iconButton(e[1], e[2], {
-				Parent = dock,
-				Size = UDim2.fromOffset(74, 62),
-				LayoutOrder = i,
-				Radius = 16,
-				Color = e[3],
-				TextSize = 15,
-			}, e[4])
-		)
+	local function menuButton(icon: string, caption: string, color: Color3, order: number, fn: () -> ()): TextButton
+		local b = Kit.menuButton(icon, caption, { Parent = row, LayoutOrder = order, Color = color }, fn)
+		table.insert(tiles, b)
+		return b
 	end
+	menuButton("people", "Villagers", T.Blue, 1, function()
+		Hud.open("Residents")
+	end)
+	menuButton("shirt", "Create", T.Pink, 2, function()
+		Hud.open("Creator", { mode = "new" })
+	end)
+	local goalsTile = menuButton("medal", "Goals", T.Orange, 3, function()
+		Hud.open("Goals")
+	end)
+	local giftReady = false
+	local gift = menuButton("gift", "Gift", T.Coral, 4, function()
+		if not giftReady then
+			Toasts.show("Your next gift comes tomorrow.", "info")
+			return
+		end
+		giftReady = false
+		task.spawn(function()
+			local ok, amount = Remotes.fn("DailyClaim"):InvokeServer()
+			if ok then
+				Toasts.show(Text.fill("Daily gift: {n} coins. Come back tomorrow for more.", { n = amount }), "good")
+			end
+		end)
+	end)
 
-	-- daily gift ---------------------------------------------------------------------------------------
-	-- a badge on Goals while there's something to claim, and the thank you picker when a
-	-- villager's heart level goes up
-	local goalsTile = tiles[#tiles]
+	-- the big Build button, bottom right
+	local buildButton = Kit.bigButton("Build", "hardhat", {
+		Parent = hud,
+		Size = UDim2.fromOffset(236, 80),
+		Position = UDim2.new(1, -20, 1, -18),
+		AnchorPoint = Vector2.new(1, 1),
+		Color = T.Blue,
+		IconColor = T.Yellow,
+	}, function()
+		Hud.closeAll()
+		BuildMode.enter()
+	end)
+
+	-- badges: Goals while there's something to claim, the gift while today's is waiting; and the
+	-- thank you picker when a villager's heart level goes up
 	local goalsBadge = Kit.badge(goalsTile, "!")
 	local Goals = Hud.panel("Goals")
 	local function refreshGoals()
@@ -446,44 +470,20 @@ function Hud.start()
 			end)
 		end
 	end)
-
-	local gift = Kit.iconButton("gift", "Gift", {
-		Parent = dock,
-		Size = UDim2.fromOffset(74, 62),
-		LayoutOrder = 20,
-		Radius = 16,
-		Color = T.Yellow,
-		TextColor = T.White,
-		TextSize = 15,
-	})
-	Kit.badge(gift, "!")
-	gift.Visible = false
-	local giftArt = gift:FindFirstChild("IconArt", true)
-	if giftArt then
-		local giftScale = Instance.new("UIScale")
-		giftScale.Parent = giftArt
-		TweenService:Create(
-			giftScale,
-			TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
-			{ Scale = 1.15 }
-		):Play()
-	end
+	local giftBadge = Kit.badge(gift, "!")
 	State.on("daily", function(daily)
 		local today = math.floor(os.time() / 86400)
-		gift.Visible = daily == nil or daily.last ~= today
-	end)
-	gift.Activated:Connect(function()
-		gift.Visible = false
-		local ok, amount = Remotes.fn("DailyClaim"):InvokeServer()
-		if ok then
-			Toasts.show(Text.fill("Daily gift: {n} coins. Come back tomorrow for more.", { n = amount }), "good")
-		end
+		giftReady = daily == nil or daily.last ~= today
+		giftBadge.Visible = giftReady
 	end)
 
 	-- everything slides into place when the game starts, one piece after another
 	Kit.slideIn(pills, 0, -90, 0.1)
 	Kit.slideIn(card, -360, 0, 0.2)
 	Kit.slideIn(clock, 240, 0, 0.15)
+	Kit.slideIn(corner, 240, 0, 0.2)
+	Kit.slideIn(menu, -480, 0, 0.25)
+	Kit.slideIn(buildButton, 260, 0, 0.3)
 	for i, tile in tiles do
 		local bounce = Kit.new("UIScale", { Name = "Intro", Parent = tile })
 		bounce.Scale = 0
