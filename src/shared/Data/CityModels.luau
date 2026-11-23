@@ -49,6 +49,91 @@ local function lit(r: R, pane: Recipe.Prim): Recipe.Prim
 end
 CityModels.lit = lit
 
+-- Signs ---------------------------------------------------------------------------------------------
+-- The boards the Signs service writes on once the town is built (Services/Signs, with the words
+-- from Data/Signs). A building's own board is a part named Sign (a hanging SwingSign keeps its
+-- name, so it still swings) that carries:
+--   SignKind  whose name goes on it: a key of Data/Signs.Shops ("bakery", "cinema", "office"...)
+--   SignForm  how it is laid out: "fascia", "roof", "blade", "tile" or "marquee"
+--   SignFace  the one side that shows ("Front", "Back", "Left", "Right"); left out, both big sides
+--   SignHome  the way back from the board to its building's middle, so that every board on one
+--             building finds the same spot and so the same name
+-- A part named Ad is an advertising face: it gets one of Data/Signs' adverts, picked from where
+-- it stands (AdKind "film" for the cinema's posters).
+local function sign(prim: Recipe.Prim, kind: string, form: string, face: string?): Recipe.Prim
+	prim.name = prim.name or "Sign"
+	local attrs: { [string]: any } = prim.attrs or {}
+	attrs.SignKind = kind
+	attrs.SignForm = form
+	attrs.SignFace = face
+	attrs.SignHome = prim.cf:Inverse()
+	prim.attrs = attrs
+	return prim
+end
+CityModels.sign = sign
+
+local function advert(prim: Recipe.Prim, face: string?, kind: string?): Recipe.Prim
+	prim.name = "Ad"
+	local attrs: { [string]: any } = prim.attrs or {}
+	attrs.SignFace = face
+	attrs.AdKind = kind
+	prim.attrs = attrs
+	return prim
+end
+CityModels.advert = advert
+
+-- A poster on each side wall of a ground floor, toward the front (and a second further back on
+-- a deep building).
+local function sidePosters(r: R, w: number, d: number)
+	for _, sx in { -1, 1 } do
+		local face = if sx > 0 then "Right" else "Left"
+		for z = -d / 2 + 3, if d >= 30 then -d / 2 + 10 else -d / 2 + 3, 7 do
+			advert(r:block(sx * w / 2, 2.3, z, sx * (w / 2 + 0.2), 7.3, z + 4, DARK, "SmoothPlastic"), face)
+		end
+	end
+end
+
+-- A blade sign: a tall board standing out from a front wall (at z = zf) on brackets, read from
+-- either side. `x` is where along the wall, `y1` to `y2` its height, `reach` how far it stands
+-- out, `brackets` the heights it is fixed at.
+local function blade(
+	r: R,
+	kind: string,
+	x: number,
+	y1: number,
+	y2: number,
+	zf: number,
+	reach: number,
+	color: Color3,
+	brackets: { number }
+)
+	sign(
+		r:glow(r:block(x - 0.2, y1, zf - 0.7 - reach, x + 0.2, y2, zf - 0.7, color, "SmoothPlastic"), 0),
+		kind,
+		"blade"
+	)
+	for _, y in brackets do
+		r:block(x - 0.12, y, zf - 0.7, x + 0.12, y + 0.25, zf, DARK, "Metal")
+	end
+end
+
+-- A board standing on a roof, braced from behind: `hw` is half its width, `y` the roof under it,
+-- `z` its front.
+local function roofBoard(r: R, hw: number, y: number, tall: number, z: number, color: Color3): Recipe.Prim
+	local board = r:glow(r:block(-hw, y, z, hw, y + tall, z + 0.4, color, "SmoothPlastic"), 0)
+	for _, sx in { -1, 1 } do
+		r:beam(
+			Vector3.new(sx * hw * 0.7, y + tall * 0.8, z + 0.4),
+			Vector3.new(sx * hw * 0.7, y, z + 0.4 + tall * 0.6),
+			0.25,
+			0.25,
+			DARK,
+			"Metal"
+		)
+	end
+	return board
+end
+
 -- Draws something (a room, its furniture) as if `f` were the model's middle: whatever `draw`
 -- adds to the recipe is moved by `f` afterwards, doors' own frames included.
 local function placed(r: R, f: CFrame, draw: () -> ())
@@ -76,6 +161,7 @@ export type TowerSpec = {
 	top: string?, -- "ac" | "helipad" | "spire" | "garden" | "sign"
 	sign: Color3?,
 	balconies: boolean?, -- flats: a balcony on every floor of the front
+	kind: string?, -- whose name is over the door (Data/Signs.Shops): flats or an office unless said
 }
 
 -- A tower: a ground floor of shopfront glass under a canopy, then floors with a band of windows
@@ -102,8 +188,15 @@ function CityModels.tower(spec: TowerSpec): (R) -> ()
 			floorMat = "Marble",
 		})
 		Interiors.fill(r, if spec.balconies then "flats" else "lobby", box, spec.wall)
+		local kind = spec.kind or (if spec.balconies then "flats" else "office")
 		-- the way in: a canopy on two columns, and a sign band over the ground floor
 		r:block(-5.4, g - 0.9, -d / 2 - 4, 5.4, g - 0.4, -d / 2, trim, "SmoothPlastic")
+		-- the building's name on a board along the canopy's front edge, and a poster on each side
+		-- wall of the lobby
+		local nameBoard =
+			r:block(-5.4, g - 0.4, -d / 2 - 4, 5.4, g + 1.4, -d / 2 - 3.7, spec.sign or trim, "SmoothPlastic")
+		sign(r:glow(nameBoard, 0), kind, "fascia", "Front")
+		sidePosters(r, w, d)
 		for _, cx in { -4.8, 4.8 } do
 			r:cyl(cx, (g - 0.9) / 2, -d / 2 - 3.4, g - 0.9, 0.6, "y", trim, "SmoothPlastic")
 		end
@@ -176,10 +269,42 @@ function CityModels.tower(spec: TowerSpec): (R) -> ()
 			local lx, lz = -w / 2 + 6 + o[1], d / 2 - 6 + o[2]
 			r:block(lx - 0.2, h + 1, lz - 0.2, lx + 0.2, h + 2.8, lz + 0.2, DARK, "Metal")
 		end
+		-- offices sell their walls: a banner up the east side, and on the tall ones a screen over
+		-- the door and a banner up the west side too. They stand just clear of the glass.
+		if kind == "office" or kind == "tower" then
+			local y1, y2 = g + fh + 0.4, g + 5 * fh - 0.4
+			advert(r:block(w / 2 + 0.16, y1, -5, w / 2 + 0.46, y2, 5, DARK, "SmoothPlastic"), "Right")
+			if spec.floors >= 16 then
+				local hw = math.min(w * 0.24, 8)
+				advert(r:block(-hw, y1 + fh, -d / 2 - 0.6, hw, y2 + fh, -d / 2 - 0.3, DARK, "SmoothPlastic"), "Front")
+				advert(
+					r:block(-w / 2 - 0.46, y1 + 3 * fh, -6, -w / 2 - 0.16, y2 + 5 * fh, 6, DARK, "SmoothPlastic"),
+					"Left"
+				)
+			end
+		elseif kind == "hotel" then
+			-- the hotel's blade, up the front between two rows of windows
+			local fixings = { g + fh + 0.4, g + 6 * fh - 0.2 }
+			blade(r, kind, w / 2 - 5, g + 4, g + 28, -d / 2, 3.2, spec.sign or trim, fixings)
+		end
 		local top = spec.top or "ac"
 		if top == "ac" then
 			r:block(-w / 4, h + 1, -d / 6, -w / 4 + 5, h + 3, -d / 6 + 4, METAL, "Metal")
 			r:block(w / 6, h + 1, d / 8, w / 6 + 4, h + 2.6, d / 8 + 5, METAL, "Metal")
+			-- a billboard on legs along the front of the roof, an advert on each side of it
+			local by, bz = h + 3.2, -d / 2 + 2
+			advert(r:block(-8, by, bz, 8, by + 6, bz + 0.4, DARK, "SmoothPlastic"))
+			for _, sx in { -1, 1 } do
+				r:block(sx * 6 - 0.25, h + 1, bz + 0.4, sx * 6 + 0.25, by + 5, bz + 0.9, DARK, "Metal")
+				r:beam(
+					Vector3.new(sx * 6, by + 3, bz + 0.9),
+					Vector3.new(sx * 6, h + 1, bz + 5),
+					0.3,
+					0.3,
+					DARK,
+					"Metal"
+				)
+			end
 		elseif top == "helipad" then
 			r:cyl(0, h + 1.3, 0, 0.6, math.min(w, d) - 4, "y", DARK, "SmoothPlastic")
 			r:block(-1.6, h + 1.6, -4, 1.6, h + 1.7, 4, WHITE, "SmoothPlastic")
@@ -192,8 +317,9 @@ function CityModels.tower(spec: TowerSpec): (R) -> ()
 			r:ball(-w / 5, h + 3.2, 0, 4, LEAF_DARK, "SmoothPlastic")
 			r:ball(w / 5, h + 3, d / 6, 3.4, LEAF_DARK, "SmoothPlastic")
 		elseif top == "sign" then
-			local sign = spec.sign or rgb(255, 120, 100)
-			r:block(-w / 3, h + 1, -1, w / 3, h + 6, 0, sign, "SmoothPlastic")
+			-- the name on the roof, read from the street in front and from the one behind
+			local col = spec.sign or rgb(255, 120, 100)
+			sign(r:glow(r:block(-w / 3, h + 1, -1, w / 3, h + 6, 0, col, "SmoothPlastic"), 0), kind, "roof")
 			r:block(-w / 3 - 0.5, h + 1, -0.5, -w / 3, h + 6, 0.5, METAL, "Metal")
 		end
 	end
@@ -209,6 +335,7 @@ export type ShopSpec = {
 	cols: number?,
 	sign: Color3?,
 	kind: string?, -- what it sells, which furnishes it (Data/Interiors)
+	ads: boolean?, -- false for a building that carries no adverts (the school, the clinic)
 }
 
 -- A shop row building: a shopfront and striped awning at the bottom, rows of windows above, a
@@ -231,22 +358,26 @@ function CityModels.shop(spec: ShopSpec): (R) -> ()
 			trim = trim,
 			door = shade(awning, 0.82),
 		})
-		Interiors.fill(r, spec.kind or "grocer", box, spec.wall)
+		local kind = spec.kind or "grocer"
+		Interiors.fill(r, kind, box, spec.wall)
 		r:block(-w / 2, G, -d / 2, w / 2, h, d / 2, spec.wall, "Brick")
-		-- the striped awning, sloping out over the window and the door
+		-- the fascia: a box sign right across the shopfront with the shop's name on it. It stands
+		-- a stud proud of the wall, from over the awning up to the flower boxes.
+		local fascia =
+			r:block(-w / 2 + 0.6, 7.65, -d / 2 - 1, w / 2 - 0.6, 9.42, -d / 2, spec.sign or awning, "SmoothPlastic")
+		sign(r:glow(fascia, 0), kind, "fascia", "Front")
+		-- the striped awning, sloping down and out over the window and the door from under the
+		-- fascia. (It used to tip up, through where the fascia is now.) It reaches as far over the
+		-- pavement as it did, so the building's footprint, and with it its lot, has not moved.
+		local reach = 1.6 + 1.7 * math.cos(math.rad(22)) + 0.1 * math.sin(math.rad(22))
+		local tilt = math.rad(12)
+		local az = -d / 2 - reach + 1.7 * math.cos(tilt) + 0.1 * math.sin(tilt)
 		local stripes = math.max(6, math.floor(w / 5))
 		for k = 0, stripes - 1 do
 			local x1 = -w / 2 + 1 + k * (w - 2) / stripes
 			local x2 = x1 + (w - 2) / stripes
 			local col = if k % 2 == 0 then awning else WHITE
-			r:boxAt(
-				CFrame.new((x1 + x2) / 2, G - 0.1, -d / 2 - 1.6) * CFrame.Angles(math.rad(22), 0, 0),
-				x2 - x1,
-				0.2,
-				3.4,
-				col,
-				"Fabric"
-			)
+			r:boxAt(CFrame.new((x1 + x2) / 2, 7.2, az) * CFrame.Angles(-tilt, 0, 0), x2 - x1, 0.2, 3.4, col, "Fabric")
 		end
 		-- a lamp on the wall either side of the front, and a board hanging by the door
 		for _, sx in { -1, 1 } do
@@ -254,7 +385,17 @@ function CityModels.shop(spec: ShopSpec): (R) -> ()
 			r:glow(r:ball(sx * (w / 2 - 0.5), 5.1, -d / 2 - 0.9, 0.9, rgb(255, 236, 190), "SmoothPlastic"), 0)
 		end
 		r:block(-3.6, 6.3, -d / 2 - 2.2, -3.3, 6.6, -d / 2, DARK, "Metal")
-		r:block(-4.4, 4.6, -d / 2 - 2.1, -2.5, 6.3, -d / 2 - 1.9, spec.sign or awning, "Wood").name = "SwingSign"
+		local hanging = r:block(-4.4, 4.6, -d / 2 - 2.1, -2.5, 6.3, -d / 2 - 1.9, spec.sign or awning, "Wood")
+		hanging.name = "SwingSign"
+		sign(hanging, kind, "tile", "Front")
+		-- adverts: a poster on each side wall, and a big one on the blank back wall (two on a
+		-- wide building)
+		if spec.ads ~= false then
+			sidePosters(r, w, d)
+			for _, x in if w >= 50 then { -w / 4, w / 4 } else { 0 } do
+				advert(r:block(x - 7, 3.5, d / 2, x + 7, 12, d / 2 + 0.2, DARK, "SmoothPlastic"), "Back")
+			end
+		end
 		local cols = spec.cols or math.max(2, math.floor(w / 6))
 		for f = 1, spec.floors - 1 do
 			local y1 = G + (f - 1) * fh + 1
@@ -274,8 +415,18 @@ function CityModels.shop(spec: ShopSpec): (R) -> ()
 			r:block(w / 2, y1, -d / 2 + 1, w / 2 + 0.1, y1 + 2.4, d / 2 - 1, GLASS, "Glass")
 		end
 		r:block(-w / 2 - 0.4, h - 0.6, -d / 2 - 0.4, w / 2 + 0.4, h + 0.3, d / 2 + 0.4, trim, "SmoothPlastic")
+		-- a tall shop has a blade sign up its front, in the gap between the last two windows (a
+		-- wide one has a second at the other end)
+		if spec.floors >= 3 then
+			local fixings = { G + 2.2, h - 2.2 }
+			blade(r, kind, -w / 2 + (cols - 1) * w / cols, G + 1.7, h - 1.3, -d / 2, 2.2, spec.sign or awning, fixings)
+			if w >= 50 then
+				blade(r, kind, -w / 2 + w / cols, G + 1.7, h - 1.3, -d / 2, 2.2, spec.sign or awning, fixings)
+			end
+		end
+		-- the name again on the roof
 		if spec.sign then
-			r:block(-w / 4, h + 0.3, -d / 2 + 0.2, w / 4, h + 2.6, -d / 2 + 0.8, spec.sign, "SmoothPlastic")
+			sign(roofBoard(r, math.min(w * 0.32, 13), h + 0.3, 3.2, -d / 2 + 0.3, spec.sign), kind, "roof", "Front")
 		end
 		-- on the roof: an air unit, a vent and a chimney stack
 		r:block(w / 2 - 7, h + 0.3, d / 2 - 6, w / 2 - 3, h + 1.9, d / 2 - 2.5, METAL, "Metal")
@@ -498,6 +649,7 @@ M.hotel = CityModels.tower({
 	trim = rgb(255, 196, 100),
 	top = "sign",
 	sign = rgb(255, 130, 90),
+	kind = "hotel",
 })
 M.officeBlue =
 	CityModels.tower({ w = 34, d = 30, floors = 11, wall = rgb(104, 160, 224), glass = rgb(176, 222, 250), top = "ac" })
@@ -517,6 +669,7 @@ M.skyTower = CityModels.tower({
 	glass = rgb(206, 236, 255),
 	trim = WHITE,
 	top = "spire",
+	kind = "tower",
 })
 M.apartmentPeach = CityModels.tower({
 	balconies = true,
@@ -643,7 +796,7 @@ M.cinema = function(r: R)
 	-- glass poster cases either side of the doors
 	for _, sx in { -1, 1 } do
 		r:block(sx * 10 - 3, 1.4, -d / 2 - 0.2, sx * 10 + 3, 6, -d / 2, rgb(255, 196, 70), "SmoothPlastic")
-		r:block(
+		local poster = r:block(
 			sx * 10 - 2.6,
 			1.8,
 			-d / 2 - 0.3,
@@ -653,21 +806,32 @@ M.cinema = function(r: R)
 			if sx < 0 then rgb(240, 110, 120) else rgb(90, 170, 240),
 			"SmoothPlastic"
 		)
+		advert(poster, "Front", "film")
 	end
-	-- the marquee over the doors, lit
+	-- the marquee over the doors, lit: the cinema's name and what's on
 	r:glow(r:block(-18, 7.6, -d / 2 - 4, 18, 10.8, -d / 2, rgb(255, 214, 90), "Neon"), 18, 1.2)
-	r:block(-17, 8, -d / 2 - 4.15, 17, 10.4, -d / 2 - 4, WHITE, "SmoothPlastic")
+	sign(r:block(-17, 8, -d / 2 - 4.15, 17, 10.4, -d / 2 - 4, WHITE, "SmoothPlastic"), "cinema", "marquee", "Front")
 	-- the film's name in lights: a row of bulbs along the marquee's lower edge
 	for k = -8, 8 do
 		r:glow(r:ball(k * 2, 7.7, -d / 2 - 4.1, 0.6, rgb(255, 250, 220), "SmoothPlastic"), 0)
 	end
 	-- the tall sign blade on the corner
-	r:glow(r:block(w / 2 - 3, 7, -d / 2 - 2.5, w / 2 - 1.8, h + 8, -d / 2 + 0.5, rgb(255, 110, 120), "Neon"), 0)
+	local corner = r:block(w / 2 - 3, 7, -d / 2 - 2.5, w / 2 - 1.8, h + 8, -d / 2 + 0.5, rgb(255, 110, 120), "Neon")
+	sign(r:glow(corner, 0), "cinema", "blade")
 	-- poster frames
 	for _, x in { -w / 2 + 4, w / 2 - 8 } do
-		r:block(x, 9.5, -d / 2 - 0.2, x + 4, 13, -d / 2, rgb(255, 196, 70), "SmoothPlastic")
+		advert(r:block(x, 9.5, -d / 2 - 0.2, x + 4, 13, -d / 2, rgb(255, 196, 70), "SmoothPlastic"), "Front", "film")
 	end
 	r:block(-w / 2 - 0.4, h, -d / 2 - 0.4, w / 2 + 0.4, h + 1, d / 2 + 0.4, rgb(255, 214, 90), "SmoothPlastic")
+	-- and its name on the roof
+	sign(roofBoard(r, 13, h + 1, 4, -d / 2 + 1.2, rgb(255, 110, 120)), "cinema", "roof", "Front")
+	-- what's coming, big, down both side walls
+	for _, sx in { -1, 1 } do
+		for _, z in { -12, 2 } do
+			local poster = r:block(sx * w / 2, 3, z, sx * (w / 2 + 0.2), 12, z + 8, rgb(255, 196, 70), "SmoothPlastic")
+			advert(poster, if sx > 0 then "Right" else "Left", "film")
+		end
+	end
 end
 
 M.station = function(r: R)
@@ -697,6 +861,26 @@ M.station = function(r: R)
 	r:cyl(0, h + 4.6, -d / 2 - 2.15, 0.2, 4.6, "z", DARK, "SmoothPlastic")
 	r:block(-0.15, h + 4.6, -d / 2 - 2.3, 0.15, h + 6.4, -d / 2 - 2.15, WHITE, "SmoothPlastic")
 	r:block(-0.15, h + 4.45, -d / 2 - 2.3, 1.3, h + 4.75, -d / 2 - 2.15, WHITE, "SmoothPlastic")
+	-- the station's name over the doors, and twice along the platform side
+	sign(
+		r:glow(r:block(-10, 7.5, -d / 2 - 0.35, 10, 8.9, -d / 2, roof, "SmoothPlastic"), 0),
+		"station",
+		"fascia",
+		"Front"
+	)
+	for _, sx in { -1, 1 } do
+		local board = r:block(sx * 22 - 8, 6.2, d / 2, sx * 22 + 8, 8.2, d / 2 + 0.3, roof, "SmoothPlastic")
+		sign(r:glow(board, 0), "station", "fascia", "Back")
+	end
+	-- posters to read while the train is late
+	for _, x in { -6, 0, 6 } do
+		advert(r:block(x - 2, 2.3, d / 2, x + 2, 7.3, d / 2 + 0.2, DARK, "SmoothPlastic"), "Back")
+	end
+	-- and in big letters on two posts over the ridge, read from the street and from the platform
+	sign(r:glow(r:block(-15, h + 8.2, -0.2, 15, h + 11.4, 0.2, roof, "SmoothPlastic"), 0), "station", "roof")
+	for _, sx in { -1, 1 } do
+		r:block(sx * 12 - 0.25, h + 5, -0.25, sx * 12 + 0.25, h + 8.2, 0.25, DARK, "Metal")
+	end
 	-- the platform and the line behind, with a train waiting
 	r:block(-w / 2 - 10, 0, d / 2, w / 2 + 10, 1.2, d / 2 + 12, STONE, "SmoothPlastic")
 	r:block(-w / 2 - 10, 1.2, d / 2 + 11, w / 2 + 10, 1.3, d / 2 + 12, rgb(255, 214, 90), "SmoothPlastic")
@@ -743,6 +927,11 @@ M.carPark = function(r: R)
 			r:block(x - 0.2, 0.22, z, x + 0.2, 0.25, z + 18, WHITE, "SmoothPlastic")
 		end
 	end
+	-- a billboard at the far end, its legs on two of the bay lines, an advert on each side
+	advert(r:block(-9, 5, 27.8, 9, 12, 28.2, DARK, "SmoothPlastic"))
+	for _, x in { -5, 5 } do
+		r:block(x - 0.3, 0.2, 27.7, x + 0.3, 5, 28.3, DARK, "Metal")
+	end
 end
 
 -- The civic quarter -------------------------------------------------------------------------------
@@ -758,6 +947,7 @@ M.school = function(r: R)
 		awning = rgb(64, 160, 236),
 		cols = 10,
 		sign = rgb(64, 160, 236),
+		ads = false,
 	})(r)
 	-- a clock tower over the middle, with a bell under its roof
 	r:block(-6, 13.4, -10, 6, 24, 2, wall, "SmoothPlastic")
@@ -813,6 +1003,7 @@ M.clinic = function(r: R)
 		wall = WHITE,
 		awning = rgb(70, 196, 170),
 		cols = 7,
+		ads = false,
 	})(r)
 	-- the cross on the front
 	r:block(-1.6, 18.6, -14.6, 1.6, 24.6, -14.2, rgb(255, 96, 96), "SmoothPlastic")
@@ -854,7 +1045,12 @@ M.library = function(r: R)
 	r:block(-29, 12, -15, 29, 13.2, 15, WHITE, "SmoothPlastic")
 	-- the name over the door on a stone band, and a lamp either side
 	r:block(-7, 8.4, -14.5, 7, 10.4, -14, WHITE, "SmoothPlastic")
-	r:block(-5.4, 9, -14.6, 5.4, 9.8, -14.5, shade(wall, 0.7), "SmoothPlastic")
+	sign(
+		r:block(-6.5, 8.65, -14.62, 6.5, 10.15, -14.5, shade(wall, 0.7), "SmoothPlastic"),
+		"library",
+		"fascia",
+		"Front"
+	)
 	for _, sx in { -1, 1 } do
 		r:glow(r:ball(sx * 4.4, 6.4, -14.6, 1, rgb(255, 236, 190), "SmoothPlastic"), 0)
 	end
@@ -892,10 +1088,11 @@ M.museum = function(r: R)
 	r:block(-24, 13.9, -22, 24, 15, -14, stone, "SmoothPlastic")
 	r:wedge(CFrame.new(-12, 17.5, -18) * CFrame.Angles(0, math.rad(90), 0), 8, 5, 24, stone, "SmoothPlastic")
 	r:wedge(CFrame.new(12, 17.5, -18) * CFrame.Angles(0, math.rad(-90), 0), 8, 5, 24, stone, "SmoothPlastic")
-	-- banners
+	-- banners down the wall either side, and one strung across the columns over the way in
 	for _, x in { -25, 25 } do
-		r:block(x - 1.4, 4, -14.3, x + 1.4, 11, -14.1, rgb(255, 110, 100), "Fabric")
+		sign(r:block(x - 1.4, 4, -14.3, x + 1.4, 11, -14.1, rgb(255, 110, 100), "Fabric"), "museum", "blade", "Front")
 	end
+	sign(r:block(-11, 9.6, -21.45, 11, 12.4, -21.25, rgb(255, 110, 100), "Fabric"), "museum", "fascia", "Front")
 end
 
 M.fireStation = function(r: R)
@@ -909,6 +1106,8 @@ M.fireStation = function(r: R)
 		end
 	end
 	r:block(-27, 11, -15, 27, 12, 15, WHITE, "SmoothPlastic")
+	-- its name over the bay doors
+	sign(r:glow(r:block(-12, 8.5, -14.35, 12, 10.5, -14, WHITE, "SmoothPlastic"), 0), "fire", "fascia", "Front")
 	-- the hose tower
 	r:block(20, 11, 4, 28, 26, 12, red, "SmoothPlastic")
 	r:block(19.5, 26, 3.5, 28.5, 27, 12.5, WHITE, "SmoothPlastic")
