@@ -11,12 +11,12 @@
 export type Ids = { color: string?, normal: string?, studs: number?, own: boolean?, decal: number? }
 
 local TextureIds: { [string]: Ids } = {
-	grass = { color = "rbxassetid://76261303902540", studs = 10, own = true, decal = 128954068505906 }, -- "Grass" by edivanbr
+	grass = { color = "rbxassetid://133002408799738", studs = 12, own = true, decal = 111021148404125 }, -- "Light Cartoonish Grass" by robloxian40645
 	wood = { color = "rbxassetid://127935223360351", studs = 4, decal = 125695710899534 }, -- "Wood Texture" by conoluz
 	planks = { color = "rbxassetid://126083643168466", studs = 6, decal = 107218328642902 }, -- "Roblox wood planks texture" by TheDanMan2307
 	brick = { color = "rbxassetid://9620643733", studs = 6, decal = 9620643745 }, -- "Sweet_picnic_white-min" by Varzkitt
 	cobble = { color = "rbxassetid://10953335350", studs = 6, decal = 10953335360 }, -- "cobblestone paving" by glarpenn
-	paving = { color = "rbxassetid://14006461515", studs = 6, decal = 14006461545 }, -- "pavement" by JustLars015
+	paving = { color = "rbxassetid://133622340383137", studs = 6, decal = 134144901412773 }, -- "brick" by goatysan
 	concrete = { color = "rbxassetid://17528667950", studs = 12, decal = 17528667984 }, -- "Old Concrete Texture" by VastChadJavelin
 	asphalt = { color = "rbxassetid://74051293306053", studs = 12, decal = 104048479913484 }, -- "Asphalt texture (worn)" by DaHood_lover123
 	plaster = { color = "rbxassetid://7339363282", studs = 8, decal = 7339363321 }, -- "Dry Wall Texture" by hamzahassan6

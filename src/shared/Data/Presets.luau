@@ -35,21 +35,21 @@ export type Preset = {
 local PLASTER = { c = "F2E8D5", m = "Plaster" }
 local WHITE = { c = "F7F3EA", m = "SmoothPlastic" }
 local CREAM = { c = "FFF4DE", m = "SmoothPlastic" }
-local BRICK = { c = "A34A22", m = "Brick" }
-local SIDING_BLUE = { c = "8FBCE0", m = "WoodPlanks" }
-local SIDING_MINT = { c = "A8D8B8", m = "WoodPlanks" }
-local SIDING_YELLOW = { c = "F5D98A", m = "WoodPlanks" }
+local BRICK = { c = "E9785C", m = "Brick" }
+local SIDING_BLUE = { c = "7FC4F2", m = "WoodPlanks" }
+local SIDING_MINT = { c = "8EE0BE", m = "WoodPlanks" }
+local SIDING_YELLOW = { c = "FFD970", m = "WoodPlanks" }
 local OAK = { c = "C99A62", m = "WoodPlanks" }
 local WALNUT = { c = "8A5A2E", m = "WoodPlanks" }
 local TILES = { c = "F7F3EA", m = "CeramicTiles" }
 local CHECKER = { c = "D6D6D6", m = "CeramicTiles" }
 local CARPET_BLUE = { c = "6FA8DC", m = "Carpet" }
-local PAVING = { c = "D9C7A7", m = "Pavement" }
-local CLAY = { c = "C7383F", m = "ClayRoofTiles" }
+local PAVING = { c = "F2F0EA", m = "Pavement" }
+local CLAY = { c = "F0584A", m = "ClayRoofTiles" }
 local TERRACOTTA = { c = "D4622B", m = "ClayRoofTiles" }
-local SLATE = { c = "5E6E86", m = "Slate" }
-local SHINGLE_BROWN = { c = "6B4423", m = "RoofShingles" }
-local SHINGLE_GREEN = { c = "3E7A4A", m = "RoofShingles" }
+local SLATE = { c = "5B8FD6", m = "Slate" }
+local SHINGLE_BROWN = { c = "E07A4F", m = "RoofShingles" }
+local SHINGLE_GREEN = { c = "4FC16E", m = "RoofShingles" }
 
 -- A little builder for laying a preset out.
 local Blueprint = {}

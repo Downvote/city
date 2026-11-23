@@ -27,8 +27,9 @@ The contract between the parts of the game. Update it with every change to an AP
   - `Shapes`: walls (with openings cut out, corner reach), floors (with stairwells cut out), roofs (five styles).
   - `Builder`: prims to Parts and plan objects to Models; tags night lights, door leaves, seats and beds.
 - `Data/`: `Palette` (paint swatches, materials and the ready-made finishes Build mode shows as tiles), `Personalities`, `Foods`, `Items`, `Jobs`, `Events` (the event list), `Town` (map
-  layout and plot frames), `TownMap` (the streets, sidewalks, square and market as parts, and where every building
-  and piece of street furniture stands), `TownModels` (plaza buildings), `AmbientModels` (cars, the bus, birds,
+  layout and plot frames), `TownMap` (the island as parts: grass, beach, shallows, deep sea floor, see-through
+  water and invisible walls at the shallows' edge; the streets, sidewalks, square and market; and where every
+  building, palm, parasol, islet and piece of street furniture stands), `TownModels` (plaza buildings), `AmbientModels` (cars, the bus, birds,
   clouds), `Presets` (ready-made buildings: `requests(id, x, z, rot)` turns one into Build requests, `check(plan,
   requests)` tries them on a copy of a plan, `price(id)`), `StarterHouse` (every new plot's first build),
   `Textures` (the painted texture for each material and its studs per tile; `ready()` lists the uploaded ones,

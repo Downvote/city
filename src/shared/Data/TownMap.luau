@@ -1,7 +1,8 @@
 --!strict
--- The town's streets and plaza as parts: asphalt with lane lines and crosswalks, curbs,
--- paved sidewalks with joints, street trees in planters, the square's lawns and hedges, and
--- the street furniture (lamps, benches, bins, hydrants, a bus stop).
+-- The town's island as parts: a sunny island in a turquoise sea with a sandy beach, the street
+-- with its lane lines and crosswalks, white curbs and paving, palms in planters, the square's
+-- lawns, hedges and brick promenade, and the street furniture (lamps, benches, bins, hydrants,
+-- a bus stop). Out at sea, little islets with palms sit on the horizon.
 -- Shared and free of services, so the World service builds it and the preview tool can draw it.
 
 local Recipe = require(script.Parent.Parent.Build.Recipe)
@@ -20,25 +21,133 @@ local L = Town.HalfLength
 local HW = Town.StreetHalfWidth
 local SW = Town.SidewalkWidth
 
-local GRASS = Color3.fromRGB(124, 198, 94)
-local ROAD = Color3.fromRGB(72, 76, 90)
-local ROAD_EDGE = Color3.fromRGB(62, 66, 80)
-local LINE_WHITE = Color3.fromRGB(236, 236, 230)
-local LINE_YELLOW = Color3.fromRGB(240, 200, 80)
-local CURB = Color3.fromRGB(198, 198, 194)
-local WALK = Color3.fromRGB(226, 222, 214)
-local JOINT = Color3.fromRGB(176, 172, 164)
-local PAVING = Color3.fromRGB(238, 222, 194)
-local PAVING_DARK = Color3.fromRGB(210, 188, 156)
-local HEDGE = Color3.fromRGB(70, 150, 70)
-local SOIL = Color3.fromRGB(96, 70, 50)
+local GRASS = Color3.fromRGB(122, 210, 86)
+local ROAD = Color3.fromRGB(104, 110, 128)
+local ROAD_EDGE = Color3.fromRGB(92, 98, 116)
+local LINE_WHITE = Color3.fromRGB(250, 250, 246)
+local LINE_YELLOW = Color3.fromRGB(255, 210, 70)
+local CURB = Color3.fromRGB(246, 246, 242)
+local WALK = Color3.fromRGB(240, 240, 236)
+local JOINT = Color3.fromRGB(218, 220, 216)
+local PAVING = Color3.fromRGB(248, 246, 240)
+local PAVING_DARK = Color3.fromRGB(198, 214, 228)
+local PROMENADE = Color3.fromRGB(232, 128, 84) -- warm brick walks
+local HEDGE = Color3.fromRGB(84, 184, 70)
+local SOIL = Color3.fromRGB(122, 90, 62)
+local SAND = Color3.fromRGB(252, 234, 190)
+local SEABED = Color3.fromRGB(236, 226, 186)
+local DEEP = Color3.fromRGB(24, 118, 164)
+local WATER = Color3.fromRGB(62, 200, 220)
+local BARK = Color3.fromRGB(176, 126, 82)
+local BARK_DARK = Color3.fromRGB(150, 104, 66)
+local LEAF = Color3.fromRGB(84, 192, 70)
+local LEAF_LIGHT = Color3.fromRGB(132, 218, 92)
+
+-- The island: grass out to here, then the beach, then the shallows, then the deep sea.
+TownMap.IslandX = L + 120
+TownMap.IslandZ = 262
+TownMap.Beach = 34
+TownMap.Shallows = 90
+TownMap.WaterY = -1.2
 
 -- A region the preview crops to: { x1, z1, x2, z2 }. Nil builds the whole town.
 export type Region = { number }
 
+-- A round piece from p1 to p2 (a beam turned so its length runs along X, made a cylinder).
+local function cylBetween(r: R, p1: Vector3, p2: Vector3, d: number, color: Color3, mat: string?)
+	local prim = r:beam(p1, p2, d, d, color, mat)
+	if prim then
+		prim.cf = prim.cf * CFrame.Angles(0, math.pi / 2, 0)
+		prim.size = Vector3.new(prim.size.Z, d, d)
+		prim.shape = "Cylinder"
+	end
+end
+
+-- A palm: a curved ringed trunk leaning toward `yaw` (degrees), drooping fronds and coconuts.
+-- `spread` scales how far the fronds reach.
+local function palm(r: R, ox: number, oy: number, oz: number, h: number, lean: number, yaw: number, spread: number?)
+	local dir = Vector3.new(math.cos(math.rad(yaw)), 0, math.sin(math.rad(yaw)))
+	local segs = 7
+	local prev = Vector3.new(ox, oy, oz)
+	local top = prev
+	for i = 1, segs do
+		local t = i / segs
+		local pos = Vector3.new(ox, oy + h * t, oz) + dir * (lean * t * t)
+		cylBetween(r, prev, pos, 1.5 - 0.55 * t, if i % 2 == 0 then BARK_DARK else BARK, "Wood")
+		prev = pos
+		top = pos
+	end
+	r:ball(top.X, top.Y + 0.3, top.Z, 1.6, LEAF, "SmoothPlastic")
+	for k = 0, 2 do
+		local a = math.rad(yaw + 60 + k * 120)
+		r:ball(top.X + math.cos(a) * 0.7, top.Y - 0.5, top.Z + math.sin(a) * 0.7, 0.85, BARK_DARK, "SmoothPlastic")
+	end
+	local fronds = 8
+	for f = 0, fronds - 1 do
+		local a = math.rad(yaw + f * 360 / fronds + (f % 2) * 12)
+		local out = Vector3.new(math.cos(a), 0, math.sin(a))
+		local color = if f % 2 == 0 then LEAF else LEAF_LIGHT
+		local reach = (if f % 2 == 0 then 2.3 else 1.9) * (spread or 1)
+		local p0 = top + Vector3.new(0, 0.4, 0)
+		for k = 1, 4 do
+			local p1 = top + out * (k * reach) + Vector3.new(0, 0.9 * k - 0.42 * k * k + 0.4, 0)
+			r:beam(p0, p1, 2.4 - k * 0.42, 0.26, color, "SmoothPlastic")
+			p0 = p1
+		end
+	end
+end
+
 -- Street furniture that only the map uses ----------------------------------------------------------
 
 TownMap.Models = {} :: { [string]: (R) -> () }
+
+TownMap.Models.palm = function(r: R)
+	palm(r, 0, 0, 0, 15, 2.4, 20)
+end
+
+TownMap.Models.palmTall = function(r: R)
+	palm(r, 0, 0, 0, 19, 3.4, 200)
+end
+
+-- A beach parasol in stripes, a towel and a lounger.
+TownMap.Models.parasol = function(r: R)
+	local stripes = { Color3.fromRGB(255, 255, 255), Color3.fromRGB(255, 120, 110) }
+	r:cyl(0, 3.4, 0, 6.8, 0.3, "y", Color3.fromRGB(240, 240, 236), "SmoothPlastic")
+	local tip = Vector3.new(0, 7.4, 0)
+	local n = 8
+	for i = 0, n - 1 do
+		local a1, a2 = i / n * math.pi * 2, (i + 1) / n * math.pi * 2
+		local p1 = Vector3.new(math.cos(a1) * 5, 6, math.sin(a1) * 5)
+		local p2 = Vector3.new(math.cos(a2) * 5, 6, math.sin(a2) * 5)
+		r:tri(tip, p1, p2, 0.15, stripes[i % 2 + 1], "SmoothPlastic")
+	end
+	r:block(-1.6, 0, 1.2, 1.6, 0.06, 6.2, Color3.fromRGB(90, 190, 230), "Fabric")
+	r:block(-1.6, 0.06, 1.2, 1.6, 0.08, 1.8, Color3.fromRGB(255, 255, 255), "Fabric")
+	-- the lounger
+	r:block(2.6, 0.9, -2.5, 4.6, 1.2, 2.5, Color3.fromRGB(255, 255, 255), "SmoothPlastic")
+	r:beam(
+		Vector3.new(3.6, 1.2, -2.4),
+		Vector3.new(3.6, 3.0, -3.6),
+		2,
+		0.3,
+		Color3.fromRGB(255, 255, 255),
+		"SmoothPlastic"
+	)
+	for _, x in { 2.8, 4.4 } do
+		for _, z in { -2.2, 2.2 } do
+			r:block(x - 0.15, 0, z - 0.15, x + 0.15, 0.9, z + 0.15, Color3.fromRGB(220, 222, 224), "Metal")
+		end
+	end
+end
+
+-- A little island out at sea: sand rising out of the deep, a grassy top and a few palms.
+TownMap.Models.islet = function(r: R)
+	r:cyl(0, -7, 0, 18, 64, "y", SAND, "Sand")
+	r:cyl(0, 2.1, 0, 0.4, 44, "y", GRASS, "Grass")
+	palm(r, -6, 2.3, 4, 16, 3, 140)
+	palm(r, 7, 2.3, -3, 13, 2.6, 330)
+	palm(r, 2, 2.3, 9, 18, 3.6, 70)
+end
 
 TownMap.Models.hydrant = function(r: R)
 	local red = Color3.fromRGB(206, 52, 48)
@@ -71,22 +180,16 @@ TownMap.Models.bollard = function(r: R)
 end
 
 TownMap.Models.streetTree = function(r: R)
-	-- a square tree pit with a low kerb, soil and a young tree
+	-- a square planter with a white kerb, soil, and a palm
 	r:block(-1.8, 0, -1.8, 1.8, 0.45, -1.4, CURB, "Concrete")
 	r:block(-1.8, 0, 1.4, 1.8, 0.45, 1.8, CURB, "Concrete")
 	r:block(-1.8, 0, -1.4, -1.4, 0.45, 1.4, CURB, "Concrete")
 	r:block(1.4, 0, -1.4, 1.8, 0.45, 1.4, CURB, "Concrete")
 	r:block(-1.4, 0, -1.4, 1.4, 0.3, 1.4, SOIL, "Ground")
-	r:cyl(0, 3.4, 0, 6.4, 0.7, "y", C.Bark, "Wood")
-	r:beam(Vector3.new(0, 5, 0), Vector3.new(1.2, 6.6, 0.4), 0.35, 0.35, C.Bark, "Wood")
-	r:beam(Vector3.new(0, 5.4, 0), Vector3.new(-1, 7, -0.5), 0.35, 0.35, C.Bark, "Wood")
-	r:ball(0, 8.6, 0, 5.6, C.Leaf, "Grass")
-	r:ball(1.6, 7.6, 0.6, 3.6, C.DarkLeaf, "Grass")
-	r:ball(-1.5, 7.9, -0.8, 3.8, C.Leaf, "Grass")
-	r:ball(0.3, 10.4, -0.2, 3.4, Color3.fromRGB(104, 178, 84), "Grass")
+	-- leaning out over the street (local -Z), with a smaller crown that stays off the plots
+	palm(r, 0, 0.3, 0, 14, 1.8, 270, 0.68)
 end
 
--- A bus shelter facing +Z (the street): glass back and sides, a roof, a bench and a sign.
 TownMap.Models.busStop = function(r: R)
 	local frame = Color3.fromRGB(46, 78, 120)
 	for _, x in { -5, 5 } do
@@ -223,7 +326,7 @@ end
 -- A round bandstand for the square's festivals: a raised floor, eight posts and a peaked roof.
 TownMap.Models.bandstand = function(r: R)
 	local white = Color3.fromRGB(244, 240, 232)
-	local roof = Color3.fromRGB(46, 120, 74)
+	local roof = Color3.fromRGB(255, 120, 104)
 	r:cyl(0, 0.75, 0, 1.5, 17, "y", Color3.fromRGB(196, 190, 178), "Cobblestone")
 	r:cyl(0, 1.6, 0, 0.2, 16, "y", Color3.fromRGB(176, 128, 82), "WoodPlanks")
 	-- steps up on the front
@@ -304,7 +407,7 @@ TownMap.Models.rock = function(r: R)
 end
 
 -- Rolling hills round the edge of the world: the top of a big buried ball.
-local function hill(radius: number, height: number)
+local function hill(radius: number, height: number) -- (no longer placed; kept for the preview scenes)
 	return function(r: R)
 		r:ball(0, height - radius, 0, radius * 2, Color3.fromRGB(110, 186, 86), "Grass")
 	end
@@ -363,7 +466,41 @@ function TownMap.ground(region: Region?): { Prim }
 		end
 	end
 
-	slab(-L - 130, -280, L + 130, 280, -2.1, -0.1, GRASS, "Grass")
+	-- the island: grass, a sandy beach round it, sand under the shallows, the deep sea floor, and
+	-- the water over all of it (see through, so the shallows show light and the deep sea dark)
+	local IX, IZ, B, SH = TownMap.IslandX, TownMap.IslandZ, TownMap.Beach, TownMap.Shallows
+	local WY = TownMap.WaterY
+	slab(-IX, -IZ, IX, IZ, -2.1, -0.1, GRASS, "Grass")
+	slab(-IX - B, -IZ - B, IX + B, IZ + B, -2.6, -0.35, SAND, "Sand")
+	slab(-IX - B - SH, -IZ - B - SH, IX + B + SH, IZ + B + SH, -4, -2.5, SEABED, "Sand")
+	local FAR = 2400
+	slab(-FAR, -FAR, FAR, FAR, -18, -16, DEEP, "SmoothPlastic")
+	do
+		local a, b, c, d = clip(region, -FAR, -FAR, FAR, FAR)
+		if a then
+			local water = r:block(a, WY - 0.2, b, c, WY, d, WATER, "SmoothPlastic")
+			water.transp = 0.3
+			water.collide = false
+			water.name = "Water"
+		end
+	end
+	-- walls nobody sees at the edge of the shallows, so nobody wanders off into the deep
+	local EX, EZ = IX + B + SH, IZ + B + SH
+	for _, w in
+		{
+			{ -EX - 2, -EZ - 2, EX + 2, -EZ },
+			{ -EX - 2, EZ, EX + 2, EZ + 2 },
+			{ -EX - 2, -EZ, -EX, EZ },
+			{ EX, -EZ, EX + 2, EZ },
+		}
+	do
+		local a, b, c, d = clip(region, w[1], w[2], w[3], w[4])
+		if a then
+			local wall = r:block(a, -4, b, c, 30, d, WATER, "SmoothPlastic")
+			wall.transp = 1
+			wall.name = "SeaWall"
+		end
+	end
 	-- the road, with a darker gutter strip along each edge
 	slab(-L, -HW + 1, L, HW - 1, -0.15, 0.05, ROAD, "Asphalt")
 	for _, side in { 1, -1 } do
@@ -470,8 +607,18 @@ function TownMap.ground(region: Region?): { Prim }
 			end
 		end
 	end
-	slab(-5, HW + SW, 5, Town.Spots.Fountain.Z - 16, 0.27, 0.29, LIGHT, "Pavement")
-	slab(-5, Town.Spots.Hall.Z + 14, 5, -(HW + SW), 0.27, 0.29, LIGHT, "Pavement")
+	local _ = LIGHT
+	slab(-5, HW + SW, 5, Town.Spots.Fountain.Z - 16, 0.27, 0.29, PROMENADE, "Brick")
+	slab(-5, Town.Spots.Hall.Z + 14, 5, -(HW + SW), 0.27, 0.29, PROMENADE, "Brick")
+	-- and a brick walk round the square's edge
+	for _, center in { Town.SquareCenter, Town.MarketCenter } do
+		local z1 = if center.Z > 0 then HW + SW + 1.2 else center.Z - 58.8
+		local z2 = if center.Z > 0 then center.Z + 58.8 else -(HW + SW + 1.2)
+		for _, sx in { -1, 1 } do
+			local x = center.X + sx * 45
+			slab(x - 3, z1, x + 3, z2, 0.27, 0.285, PROMENADE, "Brick")
+		end
+	end
 	-- a round of lighter paving and a ring of dark stone around the fountain
 	if not region or (region[1] < 20 and region[3] > -20 and region[2] < 100 and region[4] > 60) then
 		local f = Town.Spots.Fountain
@@ -535,7 +682,7 @@ function TownMap.placements(): { Placement }
 	for i, l in TownMap.lawns() do
 		local cx, cz = l[1], l[2]
 		local sx = if cx < 0 then -1 else 1
-		put("tree", cx + sx * 4, cz + 5, i * 70)
+		put("palm", cx + sx * 4, cz + 5, i * 70)
 		local bed = out[#out]
 		bed.cf = bed.cf + Vector3.new(0, 0.32, 0)
 		put("flowerBed", cx - sx * 3, cz - 8, 0)
@@ -593,7 +740,7 @@ function TownMap.placements(): { Placement }
 		local nearCross = math.abs(x - 274) < 14 or math.abs(x + 274) < 14
 		if not onPlaza and not nearCross then
 			for _, side in { 1, -1 } do
-				put("streetTree", x, side * walkZ, 0)
+				put("streetTree", x, side * walkZ, if side > 0 then 0 else 180)
 				local last = out[#out]
 				last.cf = last.cf + Vector3.new(0, 0.3, 0)
 			end
@@ -638,33 +785,61 @@ function TownMap.placements(): { Placement }
 			last.cf = last.cf + Vector3.new(0, 0.32, 0)
 		end
 	end
-	-- the outskirts: hills on the horizon, meadows of flowers, a few rocks
-	local land = Rng.new(19)
-	for x = -L - 100, L + 100, 150 do
+	-- out at sea: little islets on the horizon
+	local sea = Rng.new(19)
+	local IX, IZ, B = TownMap.IslandX, TownMap.IslandZ, TownMap.Beach
+	for x = -L - 200, L + 200, 210 do
 		for _, side in { 1, -1 } do
-			local size = land:pick({ "hillS", "hillM", "hillL" })
-			put(size, x + land:float(-40, 40), side * land:float(306, 330), 0, { tag = "backdrop" })
+			put("islet", x + sea:float(-60, 60), side * sea:float(470, 560), sea:float(0, 360), { tag = "backdrop" })
 		end
 	end
+	for _, side in { 1, -1 } do
+		put("islet", side * (IX + 260), sea:float(-120, 120), sea:float(0, 360), { tag = "backdrop" })
+	end
+	-- flowers and a few rocks in the grass round the edge of town
 	for _ = 1, 70 do
-		local x = land:float(-L - 110, L + 110)
-		local z = land:float(-268, 268)
+		local x = sea:float(-IX + 10, IX - 10)
+		local z = sea:float(-IZ + 6, IZ - 6)
 		local inTown = math.abs(z) < 238 and math.abs(x) < L + 14
 		local onSquare = math.abs(x) < 70 and math.abs(z) < 150
 		if not inTown and not onSquare then
-			put(if land:chance(0.7) then "flowerPatch" else "rock", x, z, land:float(0, 360))
+			put(if sea:chance(0.75) then "flowerPatch" else "rock", x, z, sea:float(0, 360))
 		end
 	end
 
-	-- trees round the edge of town, clear of the street, the square and every plot
+	-- palms and round trees round the edge of town, clear of the street, the square and every plot
 	local trees = Rng.new(7)
-	for _ = 1, 160 do
-		local x = trees:float(-L - 120, L + 120)
-		local z = trees:float(-275, 275)
+	for _ = 1, 120 do
+		local x = trees:float(-IX + 8, IX - 8)
+		local z = trees:float(-IZ + 4, IZ - 4)
 		local inTown = math.abs(z) < 236 and math.abs(x) < L + 12
 		local onSquare = math.abs(x) < 54 and math.abs(z) < 150
 		if not inTown and not onSquare then
-			put(if trees:chance(0.45) then "pine" else "tree", x, z, trees:float(0, 360))
+			local kind = if trees:chance(0.6) then (if trees:chance(0.5) then "palm" else "palmTall") else "tree"
+			put(kind, x, z, trees:float(0, 360))
+		end
+	end
+	-- the beach: palms leaning out to sea, and parasols on the sand
+	local beach = Rng.new(31)
+	for _, side in { 1, -1 } do
+		local z0 = side * (IZ + B * 0.45)
+		for x = -IX + 20, IX - 20, 26 do
+			local px, pz = x + beach:float(-8, 8), z0 + beach:float(-6, 6)
+			put(if beach:chance(0.5) then "palm" else "palmTall", px, pz, if side > 0 then 90 else 270)
+			local last = out[#out]
+			last.cf = last.cf + Vector3.new(0, -0.25, 0)
+		end
+		for x = -IX + 60, IX - 60, 70 do
+			put("parasol", x + beach:float(-10, 10), side * (IZ + B * 0.7), beach:float(-20, 20))
+			local last = out[#out]
+			last.cf = last.cf + Vector3.new(0, -0.35, 0)
+		end
+	end
+	for _, side in { 1, -1 } do
+		for z = -IZ + 20, IZ - 20, 30 do
+			put("palm", side * (IX + B * 0.45), z + beach:float(-8, 8), if side > 0 then 0 else 180)
+			local last = out[#out]
+			last.cf = last.cf + Vector3.new(0, -0.25, 0)
 		end
 	end
 	return out

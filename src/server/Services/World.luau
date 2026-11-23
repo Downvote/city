@@ -240,25 +240,26 @@ end
 local grading: ColorCorrectionEffect? = nil
 
 local function stylize()
-	Lighting.Brightness = 2.6
-	Lighting.Ambient = Color3.fromRGB(112, 112, 128)
-	Lighting.OutdoorAmbient = Color3.fromRGB(150, 150, 168)
-	Lighting.EnvironmentDiffuseScale = 0.55
-	Lighting.EnvironmentSpecularScale = 0.25
-	Lighting.ShadowSoftness = 0.35
+	-- a bright sunny island: strong light, soft cool shadows, lively colour
+	Lighting.Brightness = 3.2
+	Lighting.Ambient = Color3.fromRGB(140, 146, 160)
+	Lighting.OutdoorAmbient = Color3.fromRGB(176, 184, 200)
+	Lighting.EnvironmentDiffuseScale = 0.7
+	Lighting.EnvironmentSpecularScale = 0.35
+	Lighting.ShadowSoftness = 0.45
 	Lighting.GlobalShadows = true
-	Lighting.ExposureCompensation = 0.1
+	Lighting.ExposureCompensation = 0.15
 	local cc = Instance.new("ColorCorrectionEffect")
 	cc.Name = "Grading"
-	cc.Saturation = 0.2
-	cc.Contrast = 0.08
-	cc.Brightness = 0.02
+	cc.Saturation = 0.28
+	cc.Contrast = 0.04
+	cc.Brightness = 0.04
 	cc.Parent = Lighting
 	grading = cc
 	local bloom = Instance.new("BloomEffect")
-	bloom.Intensity = 0.4
-	bloom.Size = 26
-	bloom.Threshold = 1.3
+	bloom.Intensity = 0.35
+	bloom.Size = 24
+	bloom.Threshold = 1.5
 	bloom.Parent = Lighting
 	local rays = Instance.new("SunRaysEffect")
 	rays.Intensity = 0.05
@@ -321,8 +322,8 @@ function World.setWeather(kind: string)
 	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
 	if atmosphere then
 		local dense = kind == "rain" or kind == "storm" or kind == "cloudy"
-		atmosphere.Density = if dense then 0.4 else 0.26
-		atmosphere.Haze = if dense then 2.2 else 0.8
+		atmosphere.Density = if dense then 0.4 else 0.22
+		atmosphere.Haze = if dense then 2.2 else 0.4
 	end
 end
 
@@ -440,12 +441,12 @@ function World.init()
 	stylize()
 	if not Lighting:FindFirstChildOfClass("Atmosphere") then
 		local a = Instance.new("Atmosphere")
-		a.Density = 0.26
-		a.Offset = 0.15
-		a.Haze = 0.8
-		a.Glare = 0.2
-		a.Color = Color3.fromRGB(205, 225, 245)
-		a.Decay = Color3.fromRGB(140, 170, 210)
+		a.Density = 0.22
+		a.Offset = 0.2
+		a.Haze = 0.4
+		a.Glare = 0.25
+		a.Color = Color3.fromRGB(200, 236, 250)
+		a.Decay = Color3.fromRGB(120, 196, 230)
 		a.Parent = Lighting
 	end
 	if not Lighting:FindFirstChildOfClass("Sky") then

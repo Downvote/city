@@ -265,7 +265,7 @@ local function collectTown()
 	for _, model in town:GetChildren() do
 		if model:IsA("Model") then
 			local name = model.Name
-			if name == "tree" or name == "pine" or name == "streetTree" then
+			if name == "tree" or name == "pine" or name == "streetTree" or name == "palm" or name == "palmTall" then
 				local pivot = model:GetPivot()
 				local base = CFrame.new(pivot.Position)
 				local parts, locals = {}, {}

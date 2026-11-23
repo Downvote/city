@@ -1,6 +1,7 @@
 --!nocheck
 -- The town map: every placed model exists, nothing stands on a plot or in the road, the
--- sidewalks leave room to walk, and the panels' buildings are all there.
+-- sidewalks leave room to walk, the scenery out at sea stays off the plots, and the panels'
+-- buildings are all there.
 
 local Shared = "ReplicatedStorage.Shared."
 local Tuning = require(Shared .. "Config.Tuning")
@@ -20,14 +21,19 @@ describe("Town", function()
 		for _, p in TownMap.placements() do
 			local prims = Geometry.transform(TownMap.prims(p.name), p.cf)
 			if p.tag == "backdrop" then
-				-- a hill: only the dome above the ground counts, and it must stay clear of every plot
+				-- scenery out at sea (islets): every piece stays well past the plots, beyond them
+				-- to the north or south, or past the last plot at either end of the street
+				local lastX = 0
+				for _, cx in Town.PlotCentersX do
+					lastX = math.max(lastX, math.abs(cx) + Tuning.Plot.Size / 2)
+				end
 				for _, prim in prims do
-					local radius = prim.size.X / 2
-					local depth = -prim.cf.Position.Y
-					local footprint = math.sqrt(math.max(0, radius * radius - depth * depth))
-					local nearest = math.abs(prim.cf.Position.Z) - footprint
-					if nearest < Town.PlotSetback + Tuning.Plot.Size + 4 then
-						error(p.name .. " reaches the plots at z " .. tostring(prim.cf.Position.Z))
+					local reach = math.max(prim.size.X, prim.size.Z) / 2
+					local pos = prim.cf.Position
+					local clearZ = math.abs(pos.Z) - reach > Town.PlotSetback + Tuning.Plot.Size + 4
+					local clearX = math.abs(pos.X) - reach > lastX + 4
+					if not clearZ and not clearX then
+						error(p.name .. " reaches the plots at " .. tostring(pos))
 					end
 				end
 				continue

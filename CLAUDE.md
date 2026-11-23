@@ -28,12 +28,15 @@ Specs today (54, all passing): Build (catalog, plan rules, field cleaning, shape
 Build service with stubbed neighbours: charges, syncs, strips junk, refuses land you don't own), Events (1500 seeded
 events, every kind reachable, text filled, numbers in range), City (starter town valid, levels, land, paydays, save
 loading, economy bounds), Town (placed models exist, plots and road clear, room to walk, spawn and festival spots
-clear, hills off the plots), Presets (every ready-made building goes down whole turned every way, on the client and
+clear, the islets out at sea off the plots), Presets (every ready-made building goes down whole turned every way, on the client and
 the server, inside its footprint, with its workplace), Icons (every icon builds with one outline round its silhouette: outline copies before
 fills, no stroke on a fill), Textures (every painted texture has its pictures and matching studs, ids well formed). The town map previews with `sh tools/preview/render.sh map <png>` (or
 `map:x1,z1,x2,z2`), the cars, bus and bird with `ambient`, a cloud with `cloud`, a ready-made building with
 `preset:<id>` (`preset:<id>:inside` leaves the roof off). A new ready-made building is a function in
 `Data/Presets` laid out with its little builder; the Presets spec will say where it doesn't fit.
+
+The town is a bright island in a turquoise sea (the user's reference: a cozy, bright life sim; our own designs, never
+copied): `Data/TownMap` has the island, beach, water, palms and parasols. Keep new scenery bright and candy coloured.
 
 The user asked for things to move "where possible": buttons, screens and the town are animated (docs/GAME_DESIGN.md
 section 10). New buttons get it from `UI/Kit`; new moving scenery goes in `World/Ambience` (client only, one loop,

@@ -256,6 +256,23 @@ so parts of those materials are lifted most of the way to white and the paint on
 slate, marble and rock had nothing that fit and keep Roblox's look (our painted ones can go up for those).
 Each one's maker is credited in `Data/TextureIds`.
 
+> use tomodachi life's aesthetic even more, with identical vibes and ui and features and progression
+
+> stylize it as such. the uis everywhere should also have the same cozy and bright aesthetic tomodachi life has
+
+We can't make a copy of another game, so we went for the same bright, cozy feel in designs of our own.
+The town is now a sunny island:
+
+- A turquoise sea all round: light shallows over sand by the shore, deep blue further out, with little islets
+  of palms on the horizon. Walls nobody sees at the edge of the shallows stop anyone wading off.
+- A sandy beach round the island with palms leaning out to sea and striped parasols with towels and loungers.
+- Bright lime lawns, white paving and curbs, warm brick promenades down the middle and sides of the square and the
+  market, palms in planters along the street, bright hedges.
+- Candy coloured buildings: a sunny yellow grocer with bright green trim, a pink tailor, a mint city hall with a
+  bright blue roof, a coral bandstand; the ready-made houses come in coral brick, sky blue, mint and sunny siding
+  with bright roofs.
+- Stronger, brighter light with livelier colour and a clear cyan haze.
+
 Villagers walk with Roblox's pathfinding with jumping on, so they go round walls, through doorways (doors are free to
 pass and open as they come), round furniture and over low steps. If they get stuck they jump, then plan again.
 

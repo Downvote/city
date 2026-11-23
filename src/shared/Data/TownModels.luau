@@ -14,8 +14,8 @@ local C = Recipe.Colors
 
 local TownModels = {}
 
-local STONE = Color3.fromRGB(206, 200, 188)
-local DARK_STONE = Color3.fromRGB(160, 154, 144)
+local STONE = Color3.fromRGB(236, 234, 228)
+local DARK_STONE = Color3.fromRGB(196, 204, 214)
 local WOOD = Color3.fromRGB(156, 106, 64)
 local DARK_WOOD = Color3.fromRGB(102, 68, 42)
 local IRON = Color3.fromRGB(46, 52, 50)
@@ -422,7 +422,7 @@ end
 
 TownModels.Models.board = function(r: R)
 	local cork = Color3.fromRGB(196, 150, 100)
-	local roof = Color3.fromRGB(156, 42, 46)
+	local roof = Color3.fromRGB(246, 104, 92)
 	-- two posts with caps, holding a framed cork board under a little gabled roof
 	for _, x in { -4.45, 4.45 } do
 		r:box(x, 4.05, 0, 0.6, 8.1, 0.6, DARK_WOOD, "Wood")
@@ -479,9 +479,9 @@ TownModels.Models.board = function(r: R)
 end
 
 TownModels.Models.tailor = function(r: R)
-	local plum = Color3.fromRGB(122, 74, 98)
+	local plum = Color3.fromRGB(226, 92, 152)
 	shopShell(r, {
-		wall = Color3.fromRGB(240, 214, 210),
+		wall = Color3.fromRGB(255, 176, 200),
 		wallMat = "Plaster",
 		inner = Color3.fromRGB(250, 238, 232),
 		trim = CREAM,
@@ -627,16 +627,16 @@ TownModels.Models.tailor = function(r: R)
 end
 
 TownModels.Models.shop = function(r: R)
-	local green = Color3.fromRGB(52, 98, 72)
+	local green = Color3.fromRGB(64, 186, 104)
 	shopShell(r, {
-		wall = Color3.fromRGB(178, 84, 64),
-		wallMat = "Brick",
-		inner = Color3.fromRGB(244, 238, 222),
+		wall = Color3.fromRGB(255, 208, 86),
+		wallMat = "Plaster",
+		inner = Color3.fromRGB(255, 248, 228),
 		trim = CREAM,
 		base = green,
-		floor = Color3.fromRGB(220, 214, 202),
+		floor = Color3.fromRGB(236, 232, 222),
 		floorMat = "Marble",
-		stripe1 = Color3.fromRGB(86, 160, 92),
+		stripe1 = Color3.fromRGB(84, 200, 110),
 		stripe2 = CREAM,
 		board = green,
 	})
@@ -747,9 +747,9 @@ TownModels.Models.shop = function(r: R)
 end
 
 TownModels.Models.hall = function(r: R)
-	local wall = Color3.fromRGB(242, 232, 213)
-	local trim = Color3.fromRGB(250, 248, 242)
-	local roof = Color3.fromRGB(78, 92, 112)
+	local wall = Color3.fromRGB(176, 234, 214)
+	local trim = Color3.fromRGB(252, 252, 248)
+	local roof = Color3.fromRGB(74, 150, 232)
 	local door = Color3.fromRGB(96, 58, 36)
 	-- a stone podium with steps up to a raised porch
 	r:block(-10.5, 0, -7.5, 10.5, 0.6, 6.5, STONE, "Concrete")

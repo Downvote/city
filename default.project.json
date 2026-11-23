@@ -74,8 +74,8 @@
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Grass",
-          "ColorMap": "rbxassetid://76261303902540",
-          "StudsPerTile": 10,
+          "ColorMap": "rbxassetid://133002408799738",
+          "StudsPerTile": 12,
           "MaterialPattern": "Regular"
         }
       },
@@ -119,7 +119,7 @@
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Pavement",
-          "ColorMap": "rbxassetid://14006461515",
+          "ColorMap": "rbxassetid://133622340383137",
           "StudsPerTile": 6,
           "MaterialPattern": "Regular"
         }
