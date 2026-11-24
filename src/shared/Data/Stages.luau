@@ -851,7 +851,13 @@ stage({
 			r:lump(CFrame.new(c[1], -c[4] / 2, c[2]), c[3], c[4], c[5], CLOUD, "SmoothPlastic")
 		end
 		for _, c in
-			{ { -2.6, -2.2, 0.6, 6 }, { 2.8, -2.4, -1.4, 6.4 }, { 0, -3, 1.6, 5 }, { -5.6, -2, -2, 4 }, { 6, -2, 1, 4 } }
+			{
+				{ -2.6, -2.2, 0.6, 6 },
+				{ 2.8, -2.4, -1.4, 6.4 },
+				{ 0, -3, 1.6, 5 },
+				{ -5.6, -2, -2, 4 },
+				{ 6, -2, 1, 4 },
+			}
 		do
 			r:lump(CFrame.new(c[1], c[2], c[3]), c[4], 3, c[4] * 0.8, SHADE, "SmoothPlastic")
 		end
@@ -1301,7 +1307,14 @@ stage({
 			local x, z = math.cos(a) * 0.32, -5 + math.sin(a) * 0.32
 			r:cyl(x, T + 1.56, z, 0.44, 0.1, "y", PARTY[k + 1], "SmoothPlastic")
 			r:ball(x, T + 1.86, z, 0.16, rgb(255, 210, 120), "Neon")
-			r:ball(math.cos(a + 0.6) * 0.46, T + 1.4, -5 + math.sin(a + 0.6) * 0.46, 0.18, rgb(214, 60, 80), "SmoothPlastic")
+			r:ball(
+				math.cos(a + 0.6) * 0.46,
+				T + 1.4,
+				-5 + math.sin(a + 0.6) * 0.46,
+				0.18,
+				rgb(214, 60, 80),
+				"SmoothPlastic"
+			)
 		end
 		for _, at in { v3(-2.4, T, -4.2), v3(2.4, T, -4.2), v3(-2.6, T, -6.0), v3(2.6, T, -6.0) } do
 			r:cyl(at.X, at.Y + 0.04, at.Z, 0.08, 1.0, "y", rgb(240, 240, 236), "Marble")
@@ -1717,20 +1730,22 @@ stage({
 			end
 		end
 		-- the pillars, with a lantern on each, a stone wall either side with its coping
+		local H = 9 -- the pillars' height
+		local IRON = rgb(60, 60, 70)
 		for _, sx in { -1, 1 } do
 			local x = sx * 5.2
-			r:block(x - 1, 0, -1, x + 1, 6, 1, STONE, "Cobblestone")
+			r:block(x - 1, 0, -1, x + 1, H, 1, STONE, "Cobblestone")
 			r:block(x - 1.2, 0, -1.2, x + 1.2, 0.6, 1.2, STONE_DARK, "Cobblestone")
-			r:block(x - 1.25, 6, -1.25, x + 1.25, 6.4, 1.25, STONE_DARK, "Slate")
-			r:block(x - 0.5, 6.4, -0.5, x + 0.5, 6.6, 0.5, rgb(60, 60, 70), "Metal")
-			r:block(x - 0.36, 6.6, -0.36, x + 0.36, 7.6, 0.36, rgb(255, 228, 176), "Glass")
+			r:block(x - 1.25, H, -1.25, x + 1.25, H + 0.4, 1.25, STONE_DARK, "Slate")
+			r:block(x - 0.5, H + 0.4, -0.5, x + 0.5, H + 0.6, 0.5, IRON, "Metal")
+			r:block(x - 0.36, H + 0.6, -0.36, x + 0.36, H + 1.6, 0.36, rgb(255, 228, 176), "Glass")
 			for _, ox in { -0.4, 0.4 } do
 				for _, oz in { -0.4, 0.4 } do
-					r:box(x + ox, 7.1, oz, 0.1, 1.0, 0.1, rgb(60, 60, 70), "Metal")
+					r:box(x + ox, H + 1.1, oz, 0.1, 1.0, 0.1, IRON, "Metal")
 				end
 			end
-			r:block(x - 0.56, 7.6, -0.56, x + 0.56, 7.76, 0.56, rgb(60, 60, 70), "Metal")
-			r:cone(x, 8.1, 0, 0.7, 0.9, rgb(60, 60, 70), "Metal")
+			r:block(x - 0.56, H + 1.6, -0.56, x + 0.56, H + 1.76, 0.56, IRON, "Metal")
+			r:cone(x, H + 2.1, 0, 0.7, 0.9, IRON, "Metal")
 			local x1, x2 = if sx < 0 then -34 else 6.2, if sx < 0 then -6.2 else 34
 			r:block(x1, 0, -0.6, x2, 2.4, 0.6, STONE, "Cobblestone")
 			r:block(x1, 2.4, -0.75, x2, 2.7, 0.75, STONE_DARK, "Slate")
@@ -1744,41 +1759,55 @@ stage({
 			r:lump(CFrame.new(bx, 1.9, 2.6), 1.8, 1.0, 1.8, C.Leaf, "Grass")
 			for k = 0, 3 do
 				local a = k * 1.6 + sx
-				r:ball(
-					bx + math.cos(a) * 0.6,
-					2.3,
-					2.6 + math.sin(a) * 0.6,
-					0.4,
-					if k % 2 == 0 then rgb(246, 150, 170) else rgb(250, 216, 110),
+				local col = if k % 2 == 0 then rgb(246, 150, 170) else rgb(250, 216, 110)
+				r:ball(bx + math.cos(a) * 0.6, 2.3, 2.6 + math.sin(a) * 0.6, 0.4, col, "SmoothPlastic")
+			end
+		end
+		-- the beam between the pillars' tops with its little roof, and the board hanging from it
+		local B = H - 1.2 -- the beam's underside
+		r:block(-6.4, B, -0.4, 6.4, B + 0.7, 0.4, WOOD, "Wood")
+		r:wedge(CFrame.new(0, B + 1.2, -0.55) * yaw(180), 13.6, 1.0, 1.1, rgb(150, 92, 76), "Slate")
+		r:wedge(CFrame.new(0, B + 1.2, 0.55), 13.6, 1.0, 1.1, rgb(150, 92, 76), "Slate")
+		r:block(-6.9, B + 1.68, -0.12, 6.9, B + 1.84, 0.12, rgb(120, 76, 64), "Slate")
+		local G = B - 2.6 -- the board's foot
+		for _, x in { -1.9, 1.9 } do
+			r:box(x, G + 1.95, 0, 0.08, 1.3, 0.08, IRON, "Metal")
+		end
+		r:block(-2.6, G + 0.1, -0.12, 2.6, G + 1.3, 0.12, rgb(246, 236, 214), "Wood")
+		r:block(-2.7, G, -0.16, 2.7, G + 0.1, 0.16, WOOD, "Wood")
+		r:block(-2.7, G + 1.3, -0.16, 2.7, G + 1.4, 0.16, WOOD, "Wood")
+		-- the board's picture: two little houses with their roofs and a tree, on both faces
+		for _, side in { -1, 1 } do
+			local z = side * 0.14
+			local function mark(x1: number, y1: number, x2: number, y2: number, color: Color3)
+				r:block(x1, G + y1, z - 0.02, x2, G + y2, z + 0.02, color, "SmoothPlastic")
+			end
+			mark(-1.9, 0.3, -1.0, 0.8, rgb(90, 150, 150))
+			mark(-0.7, 0.3, 0.3, 0.9, rgb(220, 120, 100))
+			mark(1.0, 0.3, 1.2, 0.7, rgb(120, 90, 70))
+			r:ball(1.1, G + 0.9, z, 0.6, rgb(110, 170, 100), "SmoothPlastic")
+			for _, roof in { { -1.9, -1.0, 0.8 }, { -0.7, 0.3, 0.9 } } do
+				local w = (roof[2] - roof[1]) / 2
+				r:wedge(
+					CFrame.new(roof[1] + w / 2, G + roof[3] + 0.15, z) * yaw(90),
+					0.04,
+					0.3,
+					w,
+					rgb(150, 92, 76),
+					"SmoothPlastic"
+				)
+				r:wedge(
+					CFrame.new(roof[2] - w / 2, G + roof[3] + 0.15, z) * yaw(-90),
+					0.04,
+					0.3,
+					w,
+					rgb(150, 92, 76),
 					"SmoothPlastic"
 				)
 			end
 		end
-		-- the beam over the road with its little roof, and the board hanging from it
-		r:block(-6.4, 6.6, -0.4, 6.4, 7.3, 0.4, WOOD, "Wood")
-		r:wedge(CFrame.new(0, 7.8, -0.55) * yaw(180), 13.6, 1.0, 1.1, rgb(150, 92, 76), "Slate")
-		r:wedge(CFrame.new(0, 7.8, 0.55), 13.6, 1.0, 1.1, rgb(150, 92, 76), "Slate")
-		r:block(-6.9, 8.28, -0.12, 6.9, 8.44, 0.12, rgb(120, 76, 64), "Slate")
-		for _, x in { -1.9, 1.9 } do
-			r:box(x, 6.1, 0, 0.08, 1.0, 0.08, rgb(60, 60, 70), "Metal")
-		end
-		r:block(-2.6, 4.4, -0.12, 2.6, 5.6, 0.12, rgb(246, 236, 214), "Wood")
-		r:block(-2.7, 4.3, -0.16, 2.7, 4.4, 0.16, WOOD, "Wood")
-		r:block(-2.7, 5.6, -0.16, 2.7, 5.7, 0.16, WOOD, "Wood")
-		-- the board's picture: two little houses and a tree, painted on both faces
-		for _, side in { -1, 1 } do
-			local z = side * 0.14
-			local function mark(x1: number, y1: number, x2: number, y2: number, color: Color3)
-				r:block(x1, y1, z - 0.02, x2, y2, z + 0.02, color, "SmoothPlastic")
-			end
-			mark(-1.9, 4.6, -1.0, 5.1, rgb(90, 150, 150))
-			mark(-0.7, 4.6, 0.3, 5.2, rgb(220, 120, 100))
-			mark(1.0, 4.6, 1.2, 5.0, rgb(120, 90, 70))
-			r:ball(1.1, 5.2, z, 0.6, rgb(110, 170, 100), "SmoothPlastic")
-			r:wedge(CFrame.new(-1.45, 5.25, z) * yaw(90), 0.04, 0.3, 1.0, rgb(150, 92, 76), "SmoothPlastic")
-		end
 		-- a signpost, a mailbox, a bench, and the suitcase on the road
-		town(r, "signpost", CFrame.new(8.6, 0, 4.6) * yaw(-20))
+		town(r, "signpost", CFrame.new(7.8, 0, -4.2) * yaw(-20))
 		town(r, "mailbox", CFrame.new(-7.6, 0, 3.4) * yaw(20))
 		town(r, "bench", CFrame.new(-10.5, 0, 6.5) * yaw(90))
 		local sc = CFrame.new(0.4, 0.1, -7.4) * yaw(14)
@@ -2032,13 +2061,13 @@ stage({
 	name = "A busy market stall",
 	marks = {
 		{ at = v3(0, 0, -2.8), yaw = 0 },
-		{ at = v3(-1.6, 0, 1.6), yaw = 166 },
-		{ at = v3(2.8, 0, 3.8), yaw = -150 },
+		{ at = v3(-3.0, 0, 1.8), yaw = 150 },
+		{ at = v3(3.4, 0, 2.6), yaw = -142 },
 	},
 	shots = {
 		wide = { eye = v3(5, 5.6, 14), look = v3(0, 3.6, -1.5), fov = 44 },
-		two = { eye = v3(-4.6, 4.8, 3.8), look = v3(-0.4, 4.4, -1.2), fov = 38 },
-		counter = { eye = v3(1.2, 4.6, 1.8), look = v3(0, 3.4, -1), fov = 32 },
+		two = { eye = v3(-6.4, 5.0, 5.4), look = v3(-1.4, 4.4, -0.6), fov = 38 },
+		counter = { eye = v3(-1.4, 5.4, 2.6), look = v3(0.4, 3.4, -1.0), fov = 36 },
 		queue = { eye = v3(8.4, 4.4, 2.4), look = v3(0, 4, 0.6), fov = 40 },
 		pan = {
 			eye = v3(-10, 5, 9),
@@ -2354,7 +2383,12 @@ function Stages.close(s: Stage, i: number): Shot
 			local shot = { eye = eye, look = look, fov = k.fov }
 			first = first or shot
 			local lo, hi = s.bounds.lo, s.bounds.hi
-			local within = eye.X >= lo.X and eye.X <= hi.X and eye.Y >= lo.Y and eye.Y <= hi.Y and eye.Z >= lo.Z and eye.Z <= hi.Z
+			local within = eye.X >= lo.X
+				and eye.X <= hi.X
+				and eye.Y >= lo.Y
+				and eye.Y <= hi.Y
+				and eye.Z >= lo.Z
+				and eye.Z <= hi.Z
 			-- (the last stud before their face is theirs: a hat brim or a lifted hand)
 			local near = look + (eye - look).Unit * 1.0
 			if
