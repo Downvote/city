@@ -1614,6 +1614,16 @@ anything built: on a plot it grows on the open lawn and keeps off houses and pat
 sways with the wind, harder in a storm, and bends away from you and the villagers as you walk through it. Roblox's
 own blades are off. The patches are coloured to match the ground under them.
 
+> the grass works, but they are too shiny and too big, and only at some areas. make them everywhere where grassy
+> ground is
+
+(With a picture of one tall square clump on bare ground.) The pack's tufts all hang off bones packed into the
+middle of each patch, so a patch came out as one clump about thirty studs across with blades taller than you, and
+the island showed a clump here and there. Now every patch's tufts are spread out again on a fine grid of our own,
+each nudged and turned its own way, and the blades are knee high and thinner. They are matte, a shade darker, and
+cover all the grassy ground round you: the island's grass, the lawns on the plots and the grass lawns in town, up
+to the edges of roads, paths, sand and floors, and under benches and trees too.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

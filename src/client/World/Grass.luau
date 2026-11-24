@@ -1,18 +1,26 @@
 -- The island's long grass. The user, after Roblox's terrain grass didn't show for them: "you
 -- should use this for grass", with SkinnedGrass, xander_z22's interactive grass from the Roblox
 -- developer forum ("SkinnedGrass: performant interactive foliage"; its author: "feel free to
--- modify and use it in your own projects"). The pack ships in the place file as it came
--- (vendor/SkinnedGrass.rbxm); the server hands its module and meshes to the clients without
--- the pack's sample scripts (World.shareGrass).
+-- modify and use it in your own projects"). Then, of the first try: "the grass works, but they
+-- are too shiny and too big, and only at some areas. make them everywhere where grassy ground is".
 --
--- A patch is one skinned mesh: a square of blades on a grid of bones, the blades round each bone
--- moving with it. Patches are laid on a grid over the island as the camera comes near, one a
--- frame. Each bone stands on the ground under it where that ground is grass all round it (the
--- terrain's Grass, which Data/Terrain keeps off everything built, or a plot's grass part) and
--- sinks out of sight anywhere else: on roads, sand, rock, water, in a house. When something is
--- built or taken down on a plot, the patches over it look again. The module sways the bones in
--- the wind (Workspace.GlobalWind, stronger in a storm) and bends them away from anyone walking
--- through. All of it is on each player's own screen.
+-- The pack ships in the place file as it came (vendor/SkinnedGrass.rbxm); the server hands its
+-- module and meshes to the clients without the pack's sample scripts (World.shareGrass).
+--
+-- A patch is one skinned mesh of 100 tufts, every tuft (23 blades) held by one bone and drawn
+-- where that bone is. The pack's bones sit far closer together than its mesh is wide, so its
+-- tufts came out as one tall clump in the middle of each square. Here every patch's bones are
+-- laid out again on a fine grid of our own (`Tuning.Grass.Pitch` apart, turned and nudged a
+-- little so no rows show), the mesh is shrunk to knee high blades, and it is drawn matte.
+--
+-- Patches cover the ground round the camera, a few a frame, and go again when it moves on. Each
+-- tuft stands on the ground under it where that ground is grass all round it (the terrain's
+-- Grass, which Data/Terrain keeps off everything built, or a grass part lying on the ground: a
+-- plot's lawn, a lawn in town) and sinks out of sight anywhere else: roads, paths, sand, rock,
+-- water, floors. A ray looks past things standing on the ground (a bench, a tree's crown) to the
+-- ground under them. When something is built or taken down on a plot, the patches over it look
+-- again. The module sways the bones in the wind (Workspace.GlobalWind, stronger in a storm) and
+-- bends them away from anyone walking through. All of it is on each player's own screen.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -20,29 +28,38 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Tuning = require(Shared.Config.Tuning)
+local Hills = require(Shared.Data.Hills)
+local Rng = require(Shared.Util.Rng)
 
 local Grass = {}
 
 local G = Tuning.Grass
 
-type Cell = { model: Model, part: MeshPart, bones: { Bone }, x: number, z: number }
+-- One tuft of a patch: its bone, where it stands across the ground and how it's turned.
+type Tuft = { bone: Bone, x: number, z: number, turn: CFrame, node: any }
+type Cell = { model: Model, part: MeshPart, origin: Bone?, tufts: { Tuft }, i: number, j: number, meshNode: any }
 
 local cells: { [string]: Cell | false } = {}
 local queue: { { number } } = {}
 local folder: Folder
 local template: Model
 local sim: any = nil -- the SkinnedGrass object
-local sizeX, sizeZ = 100, 100 -- a patch's width and depth in studs (its mesh's)
-local gap = 10 -- studs between a patch's bones (measured from the first one)
-local AROUND = { { 1, 1 }, { -1, 1 }, { 1, -1 }, { -1, -1 } }
+local across = 10 -- tufts along a patch's side (the pack has 100 bones)
+local side = 16 -- a patch's side in studs
+local SINK = CFrame.new(0, -G.Sink, 0)
+local HIDDEN = CFrame.new(0, -G.HiddenDepth, 0)
 
 local function key(i: number, j: number): string
 	return i .. "," .. j
 end
 
--- What the rays may land on: the terrain, and each plot's floor, land and what is built on it.
+-- What the rays may land on: the terrain, the town, and each plot's floor, land and buildings.
 local function rayParams(): RaycastParams
 	local list: { Instance } = { workspace.Terrain }
+	local town = workspace:FindFirstChild("Town")
+	if town then
+		table.insert(list, town)
+	end
 	local plots = workspace:FindFirstChild("Plots")
 	if plots then
 		for _, plot in plots:GetChildren() do
@@ -61,85 +78,160 @@ local function rayParams(): RaycastParams
 	return params
 end
 
--- The ground's height at x, z, and whether grass may grow there.
+-- The ground's height at x, z, and whether grass grows there. Terrain says by its material; a part
+-- lying on the ground (no higher than `Lawn` over it) is the ground there, grass if it's a grass
+-- part; past anything standing higher the ray goes on down.
 local function ground(x: number, z: number, params: RaycastParams): (number?, boolean)
-	local hit = workspace:Raycast(Vector3.new(x, G.Top, z), Vector3.new(0, -G.Top - 200, 0), params)
-	if not hit then
-		return nil, false
+	local floor = Hills.at(x, z) - 0.1
+	local top = G.Top
+	for _ = 1, 6 do
+		local hit = workspace:Raycast(Vector3.new(x, top, z), Vector3.new(0, floor - top - 40, 0), params)
+		if not hit then
+			return nil, false
+		end
+		local y = hit.Position.Y
+		local grassy = hit.Material == Enum.Material.Grass and hit.Normal.Y >= G.Flat
+		if hit.Instance:IsA("Terrain") or y <= floor + G.Lawn then
+			return y, grassy
+		end
+		top = y - 0.05
 	end
-	return hit.Position.Y, hit.Material == Enum.Material.Grass and hit.Normal.Y >= G.Flat
+	return nil, false
 end
 
--- Stands each bone of a patch on the grass under it, or sinks it where there is none. Returns
--- how many stand. (The bones are moved through WorldCFrame, as the pack's author places them on
--- terrain, so the mesh's own scale is taken care of.)
+-- The ground on a patch's grid of tufts, one point round its edge too: { y or false } by
+-- (column, row), from 0 to across + 1.
+local function survey(cell: Cell, params: RaycastParams): { { number | false } }
+	local x0 = cell.i * side + G.Pitch / 2
+	local z0 = cell.j * side + G.Pitch / 2
+	local rows = {}
+	for a = 0, across + 1 do
+		local row = {}
+		for b = 0, across + 1 do
+			local y, ok = ground(x0 + (a - 1) * G.Pitch, z0 + (b - 1) * G.Pitch, params)
+			row[b] = if ok and y then y else false
+		end
+		rows[a] = row
+	end
+	return rows
+end
+
+-- Stands each tuft of a patch on the grass under it, or sinks it. Returns how many stand. A tuft
+-- stands where its point and the four round it are grass, level within `Rise`.
 local function conform(cell: Cell, params: RaycastParams): number
-	local reach = gap * G.Spread
+	local rows = survey(cell, params)
 	local shown = 0
-	for _, bone in cell.bones do
-		local at = bone.WorldCFrame
-		local turn = at - at.Position
-		local x, z = at.Position.X, at.Position.Z
-		local y, ok = ground(x, z, params)
-		if ok and y then
-			for _, o in AROUND do
-				local y2, ok2 = ground(x + o[1] * reach, z + o[2] * reach, params)
-				if not ok2 or not y2 or math.abs(y2 - y) > G.Rise then
+	for k, tuft in cell.tufts do
+		local a, b = (k - 1) % across + 1, (k - 1) // across + 1
+		local y = rows[a][b]
+		local ok = y ~= false
+		if ok then
+			for _, o in { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } } do
+				local n = rows[a + o[1]][b + o[2]]
+				if n == false or math.abs((n :: number) - (y :: number)) > G.Rise then
 					ok = false
 					break
 				end
 			end
 		end
-		if ok and y then
-			bone.WorldCFrame = CFrame.new(x, y, z) * turn
+		local at = CFrame.new(tuft.x, if ok then y :: number else cell.part.Position.Y, tuft.z) * tuft.turn
+		tuft.bone.WorldCFrame = if ok then at else at * SINK
+		if ok then
 			shown += 1
-		else
-			bone.WorldCFrame = CFrame.new(x, (y or cell.part.Position.Y) - G.Sink, z) * turn
+		end
+		if tuft.node then
+			tuft.node:SetPosition(tuft.bone.WorldCFrame.Position)
 		end
 	end
 	return shown
 end
 
-local function bonesOf(part: Instance): { Bone }
-	local out: { Bone } = {}
-	for _, d in part:GetDescendants() do
-		if d:IsA("Bone") and d.Name ~= "SkinnedGrass_Origin" then
-			table.insert(out, d)
-		end
+-- Takes a laid patch into the module, as its AddMeshes does, keeping the octree's nodes so the
+-- patch can be let go again (forget).
+local function attach(cell: Cell)
+	local part = cell.part
+	local origin = Instance.new("Bone")
+	origin.Name = "SkinnedGrass_Origin"
+	origin.Parent = part
+	origin.WorldCFrame = part.CFrame
+	cell.origin = origin
+	for _, tuft in cell.tufts do
+		tuft.node = sim.BoneOctree:CreateNode(tuft.bone.WorldCFrame.Position, tuft.bone)
+		tuft.bone.Parent = origin
 	end
-	return out
+	origin.Transform = HIDDEN
+	cell.meshNode = sim.MeshOctree:CreateNode(part.Position, part)
+	sim.MeshParents[cell.model] = folder
+	cell.model.Parent = nil -- (the module brings it in when the camera is near)
 end
 
--- Lays the patch for grid square i, j: none if no grass at all grows in it.
+local function forget(cell: Cell)
+	for _, tuft in cell.tufts do
+		if tuft.node then
+			tuft.node:Destroy()
+		end
+		sim.DisplaceBones[tuft.bone] = nil
+		sim.ReturnBones[tuft.bone] = nil
+	end
+	if cell.meshNode then
+		cell.meshNode:Destroy()
+	end
+	sim.MeshParents[cell.model] = nil
+	local shown = table.find(sim.SkinnedMeshesRenderedIn, cell.part)
+	if shown then
+		table.remove(sim.SkinnedMeshesRenderedIn, shown)
+	end
+	local fading = cell.origin and table.find(sim.MeshTweenOuts, cell.origin)
+	if fading then
+		table.remove(sim.MeshTweenOuts, fading)
+	end
+	cell.model:Destroy()
+end
+
+-- Lays the patch for grid square i, j: none if no grass grows in it.
 local function make(i: number, j: number)
 	local k = key(i, j)
 	if cells[k] ~= nil then
 		return
 	end
-	local cx, cz = (i + 0.5) * sizeX, (j + 0.5) * sizeZ
 	local params = rayParams()
-	-- (the patch sits at the middle height of its ground, so its box is round its blades)
-	local sum, n = 0, 0
-	for _, o in { { 0, 0 }, { 0.25, 0.25 }, { -0.25, 0.25 }, { 0.25, -0.25 }, { -0.25, -0.25 } } do
-		local h = ground(cx + o[1] * sizeX, cz + o[2] * sizeZ, params)
-		if h then
-			sum, n = sum + h, n + 1
-		end
-	end
-	local y = if n > 0 then sum / n else 0
 	local model = template:Clone()
 	local part = model:FindFirstChildOfClass("MeshPart") :: MeshPart
-	part.Anchored = true
-	part.CFrame = CFrame.new(cx, y, cz)
+	local cell: Cell = { model = model, part = part, tufts = {}, i = i, j = j, meshNode = nil }
+	-- (the patch sits at the middle height of its ground, so its box is round its blades)
+	local mid = ground((i + 0.5) * side, (j + 0.5) * side, params) or Hills.at((i + 0.5) * side, (j + 0.5) * side)
+	part.CFrame = CFrame.new((i + 0.5) * side, mid, (j + 0.5) * side)
 	model.Parent = folder -- (bones are only worked out in the world)
-	local cell: Cell = { model = model, part = part, bones = bonesOf(part), x = cx, z = cz }
+	-- the tufts on our own grid, each nudged and turned its own way (the same every time)
+	local rng = Rng.new(i * 7919 + j * 104729)
+	local bones: { Bone } = {}
+	for _, d in part:GetChildren() do
+		if d:IsA("Bone") then
+			table.insert(bones, d)
+		end
+	end
+	local nudge = G.Pitch * G.Jitter
+	for n, bone in bones do
+		if n > across * across then
+			bone.WorldCFrame = part.CFrame * SINK -- (a bone past the square: out of sight)
+			continue
+		end
+		local a, b = (n - 1) % across, (n - 1) // across
+		table.insert(cell.tufts, {
+			bone = bone,
+			x = i * side + (a + 0.5) * G.Pitch + rng:float(-nudge, nudge),
+			z = j * side + (b + 0.5) * G.Pitch + rng:float(-nudge, nudge),
+			turn = CFrame.Angles(0, rng:float(0, math.pi * 2), 0),
+			node = nil,
+		})
+	end
 	if conform(cell, params) == 0 then
 		model:Destroy()
 		cells[k] = false
 		return
 	end
 	cells[k] = cell
-	sim:AddMeshes({ model })
+	attach(cell)
 end
 
 -- The camera's focus: where the player is looking (their character, or Build mode's spot).
@@ -148,17 +240,19 @@ local function focus(): Vector3
 	return if cam then cam.Focus.Position else Vector3.zero
 end
 
--- Queues the grid squares near the focus that have no patch yet, nearest first.
+-- Queues the grid squares near the focus that have no patch yet, nearest first, and lets go of
+-- patches left far behind.
+local far: { Cell } = {}
 local function plan()
 	local at = focus()
 	local reach = G.Distance + G.Ahead
-	local ci, cj = math.floor(at.X / sizeX), math.floor(at.Z / sizeZ)
-	local ni, nj = math.ceil(reach / sizeX), math.ceil(reach / sizeZ)
+	local ci, cj = math.floor(at.X / side), math.floor(at.Z / side)
+	local n = math.ceil(reach / side)
 	table.clear(queue)
-	for i = ci - ni, ci + ni do
-		for j = cj - nj, cj + nj do
+	for i = ci - n, ci + n do
+		for j = cj - n, cj + n do
 			if cells[key(i, j)] == nil then
-				local dx, dz = (i + 0.5) * sizeX - at.X, (j + 0.5) * sizeZ - at.Z
+				local dx, dz = (i + 0.5) * side - at.X, (j + 0.5) * side - at.Z
 				local d = math.sqrt(dx * dx + dz * dz)
 				if d <= reach then
 					table.insert(queue, { i, j, d })
@@ -169,14 +263,30 @@ local function plan()
 	table.sort(queue, function(a, b)
 		return a[3] < b[3]
 	end)
+	table.clear(far)
+	local gone = reach + side * 3
+	for k, cell in cells do
+		if cell then
+			local dx, dz = (cell.i + 0.5) * side - at.X, (cell.j + 0.5) * side - at.Z
+			if dx * dx + dz * dz > gone * gone then
+				table.insert(far, cell)
+			end
+		elseif cell == false then
+			local i, j = string.match(k, "^(-?%d+),(-?%d+)$")
+			local dx, dz = (tonumber(i) :: number + 0.5) * side - at.X, (tonumber(j) :: number + 0.5) * side - at.Z
+			if dx * dx + dz * dz > gone * gone then
+				cells[k] = nil
+			end
+		end
+	end
 end
 
 -- Looks again at every patch over a rectangle of the world (after a change on a plot). A patch
 -- the module has put away (out of reach) is brought into the world for the moment it takes.
 local function refresh(x1: number, z1: number, x2: number, z2: number)
 	local params = rayParams()
-	for i = math.floor(x1 / sizeX), math.floor(x2 / sizeX) do
-		for j = math.floor(z1 / sizeZ), math.floor(z2 / sizeZ) do
+	for i = math.floor(x1 / side), math.floor(x2 / side) do
+		for j = math.floor(z1 / side), math.floor(z2 / side) do
 			local cell = cells[key(i, j)]
 			if cell then
 				local was = cell.model.Parent
@@ -266,37 +376,46 @@ local function gatherFolk()
 	end
 end
 
--- The pack's patch, coloured to the island's grass.
-local function tint(model: Model)
+-- The pack's patch made ready: shrunk to our blades, matte, coloured to the island's grass.
+local function prepare(model: Model): boolean
 	local part = model:FindFirstChildOfClass("MeshPart")
 	if not part then
-		return
+		return false
 	end
+	part.Anchored = true
 	part.CanCollide = false
 	part.CanQuery = false
 	part.CanTouch = false
 	part.CastShadow = G.Shadows
-	if G.Kind ~= "Studio" then
-		return
-	end
+	part.Reflectance = 0
+	-- the mesh's own size (Roblox knows it; the pack's numbers if it won't say)
+	local native = Vector3.new(G.Native[1], G.Native[2], G.Native[3])
+	pcall(function()
+		local size = (part :: any).MeshSize
+		if typeof(size) == "Vector3" and size.X > 0 then
+			native = size
+		end
+	end)
+	part.Size = Vector3.new(native.X * G.Scale, native.Y * G.Height, native.Z * G.Scale)
+	pcall(function()
+		part.Material = (Enum.Material :: any)[G.Material]
+	end)
 	local ok, base = pcall(function()
 		return workspace.Terrain:GetMaterialColor(Enum.Material.Grass)
 	end)
 	if not ok then
-		return
+		base = Color3.fromRGB(136, 172, 86)
 	end
 	local function scaled(r: { number }): Color3
 		return Color3.new(math.min(1, base.R * r[1]), math.min(1, base.G * r[2]), math.min(1, base.B * r[3]))
 	end
-	pcall(function()
-		part.Material = (Enum.Material :: any)[G.Material]
-	end)
 	part.Color = scaled(G.Body)
 	for _, d in part:GetChildren() do
 		if d:IsA("Decal") then
 			d.Color3 = scaled(G.Blades)
 		end
 	end
+	return true
 end
 
 function Grass.start()
@@ -323,31 +442,28 @@ function Grass.start()
 			waited += task.wait(1)
 		end
 		template = first:Clone()
-		tint(template)
-		local part = template:FindFirstChildOfClass("MeshPart") :: MeshPart
-		sizeX, sizeZ = part.Size.X, part.Size.Z
+		if not prepare(template) then
+			warn("[Grass] the pack's patch has no mesh")
+			return
+		end
+		local count = 0
+		for _, d in (template:FindFirstChildOfClass("MeshPart") :: MeshPart):GetChildren() do
+			if d:IsA("Bone") then
+				count += 1
+			end
+		end
+		across = math.max(1, math.floor(math.sqrt(count)))
+		side = across * G.Pitch
 		folder = Instance.new("Folder")
 		folder.Name = "Grass"
 		folder.Parent = workspace
-		-- the gap between bones, from one patch laid out in the world
-		do
-			local probe = template:Clone()
-			probe.Parent = folder
-			local lo, hi, n = math.huge, -math.huge, 0
-			for _, b in bonesOf(probe) do
-				local x = b.WorldCFrame.Position.X
-				lo, hi, n = math.min(lo, x), math.max(hi, x), n + 1
-			end
-			probe:Destroy()
-			local across = math.max(2, math.floor(math.sqrt(n) + 0.5))
-			if hi > lo then
-				gap = (hi - lo) / (across - 1)
-			end
-		end
 		sim = SkinnedGrass.new({
 			RenderDistance = G.Distance,
-			CollisionRadiusInner = G.Bend * 0.6,
+			RenderOutOffset = HIDDEN,
+			CollisionRadiusInner = G.Bend * 0.55,
 			CollisionRadiusOuter = G.Bend,
+			CollisionAngle = G.BendAngle,
+			WindDistanceOuter = G.WindReach,
 		})
 		task.spawn(watchPlots)
 
@@ -359,13 +475,21 @@ function Grass.start()
 				planClock = 0
 				plan()
 			end
-			local next = table.remove(queue, 1)
-			if next then
+			for _ = 1, G.PerFrame do
+				local next = table.remove(queue, 1)
+				if not next then
+					break
+				end
 				local made, whyNot = pcall(make, next[1], next[2])
 				if not made then
 					cells[key(next[1], next[2])] = false
 					warn("[Grass] couldn't lay a patch: " .. tostring(whyNot))
 				end
+			end
+			local old = table.remove(far)
+			if old then
+				cells[key(old.i, old.j)] = nil
+				pcall(forget, old)
 			end
 			folkClock += dt
 			if folkClock > 0.5 then

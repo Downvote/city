@@ -179,18 +179,24 @@ asked for it) ships as it came in `vendor/SkinnedGrass.rbxm`, mounted by the pla
 `World.shareGrass()`, first in `World.init`, clones it without its scripts into `ReplicatedStorage.SkinnedGrass`.
 The specs' harness skips a project path that is a model file.
 
-`client/World/Grass` waits for `Startup` to be `Ready`, then lays patches of `Tuning.Grass.Kind` on a grid of the
-mesh's size round the camera's focus (`Distance` plus `Ahead`, nearest first, one a frame). `conform(cell)` stands
-each bone on the ground through `Bone.WorldCFrame`, as the pack's author places them on terrain: a ray down from
-`Top` (onto the terrain and each plot's `Base`, `Land` and `Build`) at the bone and at four points `Spread` of the
-bone gap round it; the bone stands where all five land on `Grass` material, level within `Rise` and flatter than
-`Flat`, and sinks `Sink` studs anywhere else. A patch with no bone standing is not made. Then
-`SkinnedGrass:AddMeshes` takes it, and `Step(dt, bends, focus)` on RenderStepped shows the patches within
-`Distance`, sways them in `Workspace.GlobalWind` and bends them round every player and plot villager within `Folk`
-(`Bend` studs). A change in a plot's `Build` or its `Land` has the patches over it conform again 0.6 s later. The
-`Studio` mesh is drawn in `Material` (the pack has Neon, which ignores the light and would glow at night), its
-colour the terrain grass's times `Blades` (its decals) and `Body`. Five failed steps in a row
-stop it with a warning; the rest of the game doesn't depend on it.
+`client/World/Grass` waits for `Startup` to be `Ready`, then shrinks the pack's patch (`prepare`: `Size` is the
+mesh's own size, `MeshSize` or `Native`, times `Scale` across and `Height` up; `Material`, colour from the
+terrain grass times `Blades` for its decals and `Body`). Every vertex of the mesh is held by one bone, 23 blades to
+a bone, and a tuft is drawn where its bone is; the pack's bones sit in the middle fifth of its mesh, so `make`
+lays them out again: a patch is `across` by `across` tufts (10) `Pitch` apart on the world's grid of `side`
+squares, each nudged by up to `Jitter` and turned by a seeded `Rng`, placed through `Bone.WorldCFrame` (so the
+engine handles the mesh's scale). `survey` casts one ray per tuft and a ring round the patch: `ground(x, z)`
+returns the first hit that is terrain or a part no higher than `Lawn` over `Hills.at - 0.1`, looking past anything
+higher (up to six hits), and it is grass when its material is `Grass` and it is flatter than `Flat`. `conform`
+stands a tuft where its point and the four round it are grass, level within `Rise`, and sinks it `Sink` studs
+anywhere else; a patch with none standing isn't made. `attach` does what `SkinnedGrass:AddMeshes` does (an origin
+bone, the octrees, `MeshParents`) but keeps the octree nodes, so `forget` can let a patch go when the focus is
+far from it. Patches are made `PerFrame` a frame within `Distance` plus `Ahead` of the camera's focus, nearest
+first; `Step(dt, bends, focus)` on RenderStepped shows those within `Distance` (rising from `HiddenDepth` below),
+sways them in `Workspace.GlobalWind` within `WindReach`, and bends them round every player and plot villager
+within `Folk` (`Bend` studs, `BendAngle`). A change in a plot's `Build` or its `Land` has the patches over it
+conform again 0.6 s later. Five failed steps in a row stop it with a warning; the rest of the game doesn't depend
+on it.
 
 ## Pieces and material looks
 

@@ -70,9 +70,11 @@ golden green Grass, a beach in sine wave curves sloping into terrain water with 
 (`Hills.at`). The long grass on it is SkinnedGrass by xander_z22 (the user: "you should use this for grass", with
 its forum post; Roblox's own terrain blades never showed for them and stay off): the pack ships as it came in
 `vendor/SkinnedGrass.rbxm` (ServerStorage; `World.shareGrass` hands the clients a copy without its sample
-scripts), and `client/World/Grass` lays its patches round the camera, standing each bone on the ground under it
-where that is Grass material all round (terrain, or a plot's lawn) and sinking it anywhere else, again when a plot
-changes (numbers in `Tuning.Grass`). Keep the author's credit with it. Nothing built may stand on terrain Grass:
+scripts), and `client/World/Grass` lays its patches round the camera. A tuft is drawn where its bone is, and the
+pack's bones are bunched in the middle of its mesh (one tall clump per patch: "too shiny and too big, and only at
+some areas"), so each patch's 100 bones are laid out again on our own fine grid and the mesh is shrunk and matte;
+each tuft stands on the ground under it where that is Grass all round (terrain, a plot's lawn, a grass lawn in
+town) and sinks anywhere else, again when a plot changes (numbers in `Tuning.Grass`). Keep the author's credit with it. Nothing built may stand on terrain Grass:
 `TownMap.cover` lists what is built and the terrain under it is LeafyGrass, so a new kind of ground part or a
 placed model is covered by rule. Never give MaterialService a Grass override (the long grass is coloured to match
 Roblox's own). The plots' floors and lawns are visible parts at floor level (an invisible floor over terrain made

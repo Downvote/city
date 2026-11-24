@@ -395,26 +395,36 @@ Tuning.Look = {
 }
 
 -- The long grass (client World/Grass): patches of SkinnedGrass, xander_z22's skinned grass, the
--- user's pick ("you should use this for grass"). A patch is a square of blades on a grid of
--- bones; each bone stands on the ground under it where that ground is grass (terrain Grass, or a
--- plot's grass part) all round it, and sinks out of sight anywhere else.
+-- user's pick ("you should use this for grass"). A patch is 100 tufts, each held by one bone; we
+-- lay the bones out on our own grid, and each tuft stands on the ground under it where that is
+-- grass all round it, and sinks out of sight anywhere else. Then the user: "they are too shiny
+-- and too big, and only at some areas. make them everywhere where grassy ground is".
 Tuning.Grass = {
 	Kind = "Studio", -- which of the pack's two meshes: "Studio" (like Studio's own grass) or "GrassCard"
-	Distance = 160, -- patches whose middle is this close to the camera's focus are shown
-	Ahead = 140, -- and patches this much further out are made ready, one a frame
-	Spread = 0.45, -- a bone's ground is checked this far (of the gap between bones) on each side
+	Native = { 75.03, 4.02, 75.42 }, -- the mesh's own size, if Roblox won't say (MeshSize)
+	Scale = 0.6, -- the tufts' width against the pack's (its tufts are 3 studs across)
+	Height = 0.42, -- the blades' height against the pack's (its are 2.6 studs, up to 4)
+	Pitch = 1.6, -- studs between tufts; a patch is ten of these on a side
+	Jitter = 0.3, -- each tuft nudged up to this much of the pitch, so no rows show
+	Distance = 110, -- patches whose middle is this close to the camera's focus are shown
+	Ahead = 30, -- and patches this much further out are made ready
+	PerFrame = 2, -- patches made in a frame
 	Flat = 0.78, -- no grass on ground steeper than this (the up part of its normal)
-	Rise = 1.2, -- nor where the ground round a bone isn't level within this
-	Sink = 8, -- studs a bone with no grass under it goes down, out of sight
+	Rise = 0.8, -- nor where the ground round a tuft isn't level within this
+	Lawn = 0.6, -- a grass part no higher than this over the ground is a lawn (higher, it's a hedge)
+	Sink = 10, -- studs a tuft with no grass under it goes down, out of sight
+	HiddenDepth = 8, -- studs a patch starts under the ground and goes back to when the camera leaves
 	Top = 250, -- the rays look down from this high (over the hills' tops)
 	Shadows = false, -- blades casting shadows costs a lot; Roblox's own grass doesn't either
-	-- The pack draws its Studio blades in Neon, which ignores the light: the lawns would glow at
-	-- night. So they are lit like everything else, and take the terrain grass's colour times
-	-- these, so the blades match the ground they grow on.
-	Material = "SmoothPlastic",
-	Blades = { 1, 1, 0.94 },
-	Body = { 0.9, 0.9, 0.86 },
-	Bend = 6, -- studs round someone walking that the grass bends away from them
+	-- The pack draws its blades in Neon, which ignores the light (the lawns would glow at night),
+	-- and the next try in SmoothPlastic was "too shiny". Grass is matte. The blades take the
+	-- terrain grass's colour times these, a little darker, so they sit in the ground they grow on.
+	Material = "Grass",
+	Blades = { 0.72, 0.8, 0.66 },
+	Body = { 0.8, 0.86, 0.72 },
+	Bend = 2.6, -- studs round someone walking that the grass bends away from them
+	BendAngle = 70, -- and how far over it goes, in degrees
+	WindReach = 45, -- studs round the focus the grass sways
 	Folk = 120, -- villagers and players this close to the focus bend it
 }
 
