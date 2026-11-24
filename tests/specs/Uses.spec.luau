@@ -555,3 +555,128 @@ describe("Uses", function()
 		expect(n >= 3).toBe(true)
 	end)
 end)
+
+-- Acting a go out (Npc/Use), with stand-in bodies that note what they were told to do.
+local Use = require("ServerScriptService.Server.Npc.Use")
+
+local function body(name, opts)
+	opts = opts or {}
+	local log = {}
+	local npc = { name = name, log = log }
+	function npc:walkTo(target)
+		table.insert(log, "walk")
+		self.pos = target
+		return opts.walk ~= false
+	end
+	function npc:sit(seat)
+		table.insert(log, "sit " .. seat.Name)
+		self.seat = seat
+		return true
+	end
+	function npc:standUp()
+		table.insert(log, "up")
+		self.seat = nil
+	end
+	for _, f in { "face", "gesture", "icon", "say" } do
+		npc[f] = function(_, a)
+			table.insert(log, f .. " " .. tostring(a))
+		end
+	end
+	return {
+		npc = npc,
+		at = Vector3.new(0, 0, 3),
+		look = Vector3.new(0, 2, 0),
+		seat = opts.seat,
+		here = function()
+			return opts.here ~= false
+		end,
+	}
+end
+
+local function job(use, main, friend, restUntil)
+	local happened, waited = {}, 0
+	local j = {
+		use = use,
+		outcome = use.outcomes[#use.outcomes],
+		alone = use.outcomes[1],
+		seconds = 10,
+		main = main,
+		friend = friend,
+		rest = function(s)
+			waited += s
+			return restUntil == nil or waited < restUntil
+		end,
+		chatter = function()
+			return "a line of my own"
+		end,
+		lines = function(o, with)
+			return o.id, if with then "and me" else nil
+		end,
+		happen = function(o, with)
+			table.insert(happened, { o = o, with = with, at = waited })
+		end,
+	}
+	return j, happened, function()
+		return waited
+	end
+end
+
+local function has(log, entry)
+	return table.find(log, entry) ~= nil
+end
+
+describe("Using a piece", function()
+	it("sits two on their own seats, turns out once at its moment, and gets them up after", function()
+		local sofa = Uses.of("sofa_two")
+		local a = body("a", { seat = { Name = "left" } })
+		local b = body("b", { seat = { Name = "right" } })
+		local j, happened, waited = job(sofa, a, b)
+		expect(Use.act(j)).toBe(true)
+		expect(has(a.npc.log, "sit left") and has(b.npc.log, "sit right")).toBe(true)
+		expect(#happened).toBe(1)
+		expect(happened[1].with).toBe(true)
+		expect(happened[1].o).toBe(j.outcome)
+		expect(happened[1].at).toBeNear(10 * K.Outcome, 1e-6)
+		expect(waited()).toBeNear(10, 1e-6)
+		expect(has(a.npc.log, "say " .. j.outcome.id)).toBe(true)
+		expect(has(a.npc.log, "say a line of my own")).toBe(true)
+		expect(has(a.npc.log, "up") and has(b.npc.log, "up")).toBe(true)
+		-- sat down, nobody waves their arms about
+		for _, entry in a.npc.log do
+			expect(entry:sub(1, 7) ~= "gesture").toBe(true)
+		end
+	end)
+
+	it("goes on alone when the one they brought never gets there", function()
+		local swing = Uses.of("swing_set")
+		local a = body("a", { seat = { Name = "one" } })
+		local b = body("b", { seat = { Name = "two" }, walk = false })
+		local j, happened = job(swing, a, b)
+		expect(Use.act(j)).toBe(true)
+		expect(#happened).toBe(1)
+		expect(happened[1].with).toBe(false)
+		expect(happened[1].o).toBe(j.alone)
+		expect(has(b.npc.log, "up")).toBe(false)
+	end)
+
+	it("stands at a piece facing it, at its gesture, and stops when something else takes them", function()
+		local books = Uses.of("bookshelf")
+		local a = body("a")
+		local j, happened = job(books, a, nil)
+		expect(Use.act(j)).toBe(true)
+		expect(has(a.npc.log, "face " .. tostring(a.look))).toBe(true)
+		expect(has(a.npc.log, "gesture " .. books.act)).toBe(true)
+		expect(#happened).toBe(1)
+		-- taken off before the moment: nothing happens, and they are left where they are
+		local c = body("c", { seat = { Name = "s" } })
+		local j2, happened2 = job(Uses.of("piano"), c, nil, 2)
+		expect(Use.act(j2)).toBe(true)
+		expect(#happened2).toBe(0)
+		expect(has(c.npc.log, "up")).toBe(false)
+		-- and no way there is no go at all
+		local d = body("d", { walk = false })
+		local j3, happened3 = job(books, d, nil)
+		expect(Use.act(j3)).toBe(false)
+		expect(#happened3).toBe(0)
+	end)
+end)

@@ -90,6 +90,23 @@ The contract between the parts of the game. Update it with every change to an AP
 - A prim with `attrs.NightColor` on a `glow` role is a window: the World service gives it that colour (and Neon)
   at night and its own back in the morning (`CityModels.lit`).
 
+## Using things
+
+`Data/Interactions` lists the uses: for catalog ids, the spots in the piece's own space (stand or sit), the stay,
+who likes it (a trait), the gestures, icons and lines, and the outcomes, each with a weight, a rarity, an optional
+personality colouring and its effects (mood, a heart between two, reactions near by, a puff, a trace, a log line,
+two only or alone only, late hours only, needing a villager's name); a piece may have a player use too;
+`Interactions.traces` draws the book, letter and sand castle left behind. `Sim/Uses` chooses without services:
+`around(plan, from, reach, taken)`, `choose` (by liking, nearness, not the last piece used), `outcome` and `chances`
+(weight times `1 + per * (trait - 0.5)`; the same unusual outcome never twice running), `spots`, `drop`, `promptAt`,
+`say`, `fill`. `server/Npc/Use` acts a go out (`act`: walk there, bring a friend to the second spot, sit or face,
+gesture, say a line, turn out at 55% of the stay, get up), fires `Used` (`show`) and lays traces (`trace`, 0.04 proud,
+in a `Traces` folder under the plot model, 150 s, at most 6 a plot). In `Services/Villagers`, `"use"` is a break and
+a potter kind (`Around.uses`, `can.use`, weights in `Tuning.Routine`), `Villagers.Used(player, vid, useId,
+outcomeId, key)` fires when a go turns out, and `Villagers.reactNear` is shared with Interact. A brought friend is
+held with control `"chat"`. The numbers are in `Tuning.Uses`; nothing is saved. The Uses spec checks the data, the
+spots against every placed turn, the rarity bands and shares over 20,000 seeded goes, and the rules.
+
 ## The island's terrain
 
 `Data/Terrain` lays out the island's natural ground, which `World.buildTerrain` writes as Roblox terrain when the
@@ -293,6 +310,7 @@ The creator's remotes: `CreatorPeople` (the people here and your friends, and th
 | `Plots` | Hands out plots, draws the saved build and the owned land, sells more land (`PlotExpand`). |
 | `Build` | `BuildApply`, `BuildUndo`, `BuildRedo`: checks requests, charges or refunds, keeps history, redraws, syncs the plan to its owner (`PlanSync`). Fires `Changed`. A batch is up to 320 requests (a whole ready-made building); an item's `wall = "@n"` means the wall made by the batch's n-th request. `Build.prepare` is exported for the specs. |
 | `Avatar` | The creator: a private stage (an empty Model `CreatorStage<slot>` with an `Origin` attribute, high over the meadow; nothing is built there) and an anchored mannequin per player, catalog search fallback, bundles, copying users, outfits, asset checks, the text filter. `toDescription`, `buildModel` for everyone else. |
+| `Interact` | Puts a `UsePrompt` (E, no `Opens`) on an attachment `UseSpot` on each placed piece that has a player use (`Data/Interactions`), in every plot's Build folder; checks the player is within `Tuning.Uses.Reaches` (14 studs), a `Cooldown` per player and a `Rest` per piece; picks the outcome (`Sim/Uses`), has villagers near react to the loud ones and fires `Used`. Nothing is bought or saved. Starts after `Villagers`. |
 | `Villagers` | Creating, editing, moving out, beds, jobs, buying a craving (`Villagers.buyWish`, the `WishBuy` remote). Spawns NPCs and runs their routine (`Villagers.brain` acts out what `Sim/Routine` chooses): sleep at night; in work hours each worker goes round their job's loop at the workplace and takes breaks; those with no job or done for the day potter. Pay goes to whoever is earning at that moment: every `Tuning.Jobs.EarnStep` seconds it checks `npc.atWork` in work hours with control nil, chat or talk (an event, an outing, a day off or sickness pays nothing), keeps a purse per villager in server memory, and every `PayEvery` seconds sends the coins (`Data.addCoins(..., quiet)`, `stats.earned`, the `Earned` event); what is left goes when the player leaves. `Villagers.endOfWork` at 5 PM sends the last of it, grants skill by the share of the day earned and says "Your villagers earned {n} coins today." (it still writes `stats.paydays` and `lastPayday`). Talking: `Villagers.spawn` puts `Npc.talkPrompt(name)` on each body (a ProximityPrompt `TalkPrompt` on the HumanoidRootPart: E, held `Tuning.Talk.HoldSeconds`, from `Distance` studs, no `Opens` attribute) and `setControl` switches it with `Npc.setTalkable(Talk.free(mode))`; it is off while they sleep. `Villagers.talkedTo(who, owner, vid)` answers it: it refuses a sleeper, someone in an event or away, a player more than `Range` studs off and a second line within `Cooldown`; then holds them (`setControl(owner, vid, "talk")` for `StaySeconds`, `VisitorSeconds` for a visitor, or until the player walks off), turns them with `Npc.face`, and has them say `Talk.line`. The owner also gets `Talk.chat`'s gain and the `Talk` event. |
 | `Events` | Picks and plays random events, waits for choices, applies effects, room request rewards, small friendship gains from chats, parties. |
 
@@ -345,7 +363,7 @@ counts as not said), `CreatorSearch` (its query may carry `offSale` and `inside`
 `ok, { vid, text, note, model }` or an error: the talk card's Chat, or its Bye).
 
 Events (server pushes): `State` (patches of the client state), `PlanSync` (`{ full }` or `{ ops }`), `Notify`
-(`text, kind`; kind `action` carries `open:creator:<vid>`), `EventShow`, `EventLine`, `EventEnd`, `Earned` (`{ coins, earned, lines = { { vid, n } } }` every `Tuning.Jobs.PayEvery` seconds when anyone earned: `client/World/Earnings` lifts a coin and "+N" off each earner's head and the HUD's count rolls up quietly), `Say`,
+(`text, kind`; kind `action` carries `open:creator:<vid>`), `Used` (`at, puff?, text?, rarity?` to every client: `client/World/Interact` draws the puff and a bubble over the piece, a gold rim for a rare one), `EventShow`, `EventLine`, `EventEnd`, `Earned` (`{ coins, earned, lines = { { vid, n } } }` every `Tuning.Jobs.PayEvery` seconds when anyone earned: `client/World/Earnings` lifts a coin and "+N" off each earner's head and the HUD's count rolls up quietly), `Say`,
 `Talk` (`{ vid, text, note, model }`: to the town's owner, what their villager said when they held E on them).
 
 Every handler checks its arguments: types, ranges, ownership. Build requests go through `Plan.validate` on the

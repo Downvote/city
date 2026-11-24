@@ -87,6 +87,23 @@ is, not sources.
   away on an outing can't be stopped. A visitor in someone else's town can chat, for the line and the bubble
   only.
 
+### Using things, and the odd surprise
+
+> just like tomodachi life, make it such that some obejcts have a random chance of having unique interactions with it
+
+Villagers use the things around them. On a break or with time to spare, one may go to a piece near them and use it:
+read at the bookshelf, play the piano, water a plant, nap on the sofa, swing, look in the fridge, cook, watch TV,
+play the arcade or a board game, drum, watch the fish, warm up by the fire, dig in the sandbox, wish at the well,
+pat the gnome, check the post. Who they are decides what they go for (the lazy nap and snack, the playful swing and
+play games, the focused read). Most goes turn out the usual way. Now and then something else happens (a wrong note
+and a sulk, a book on the head, a burnt pan with smoke), and once in a while something rare (a perfect tune that
+makes everyone near clap, an old letter in a book, a plant coming into flower, a sand castle left in the sandbox).
+Rare ones get a line in the town's log; a book, letter or sand castle stays on the floor a couple of minutes. Two
+who use a piece together, on the swings, the sofa or at the board game, grow closer. Players can hold E on the
+piano, bookshelf, fridge, arcade, drums, fish tank, clock, well, bell, gnome, mailbox, globe, record player and snow
+globe: a little tune or a mess, a note from one of the villagers in the fridge, now and then something rare. It
+costs nothing and changes nothing.
+
 ### Hearts, wishes, romance and town goals
 
 > use tomodachi life's aesthetic even more, with identical vibes and ui and features and progression

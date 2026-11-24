@@ -645,7 +645,7 @@ stage({
 		{ at = v3(0, 1.7, -1.6), yaw = 0 },
 	},
 	shots = {
-		wide = { eye = v3(0, 7.4, 27), look = v3(0, 5, 0), fov = 42 },
+		wide = { eye = v3(0, 6.8, 23), look = v3(0, 5, 0), fov = 42 },
 		two = { eye = v3(0, 5.6, 12), look = v3(0, 5.6, 1.6), fov = 34 },
 		crowd = { eye = v3(-6, 2.4, 16), look = v3(0, 6.4, 0), fov = 42 },
 		high = { eye = v3(8, 13, 19), look = v3(0, 3.6, 0), fov = 42 },
@@ -656,7 +656,7 @@ stage({
 			to = { eye = v3(14, 6, 16), look = v3(4, 4.6, 0), fov = 42 },
 		},
 	},
-	bounds = { lo = v3(-16, 1, 9.5), hi = v3(16, 16, 30) },
+	bounds = { lo = v3(-16, 1, -6), hi = v3(16, 16, 30) },
 	light = { ambient = rgb(132, 112, 162), color = rgb(255, 196, 176), dir = v3(-0.62, -0.5, -0.6) },
 	sky = {
 		top = rgb(38, 42, 108),
@@ -761,7 +761,7 @@ stage({
 				color = col,
 				mat = "Neon",
 			})
-			p.transp = 0.84
+			p.transp = 0.9
 			p.collide = false
 		end
 		-- bunting from the roof's edge out to two poles over the paving
@@ -991,12 +991,13 @@ stage({
 	marks = {
 		{ at = v3(-1.5, 0.1, -4.4), yaw = 76 },
 		{ at = v3(1.5, 0.1, -4.4), yaw = -76 },
-		{ at = v3(0, 0.1, -7.8), yaw = 0 },
+		-- (whoever marries them stands behind the arch: seen between the two of them)
+		{ at = v3(0, 0.1, -7.8), yaw = 0, close = { eye = v3(0, 5.1, -1.6), look = v3(0, 4.6, -7.8), fov = 30 } },
 	},
 	shots = {
 		wide = { eye = v3(0, 6.6, 16), look = v3(0, 3.8, -5), fov = 44 },
 		two = { eye = v3(0.3, 4.9, 3.6), look = v3(0, 4.5, -4.6), fov = 36 },
-		low = { eye = v3(-2.6, 1.9, 6.4), look = v3(0, 5.8, -5.4), fov = 42 },
+		low = { eye = v3(-0.9, 1.9, 4.2), look = v3(0, 5.8, -5.4), fov = 42 },
 		aisle = { eye = v3(0, 4.9, 12.5), look = v3(0, 4.5, -5), fov = 30 },
 		pan = {
 			eye = v3(-10.5, 6, 10.5),
@@ -1138,14 +1139,14 @@ stage({
 			end
 		end
 		-- lanterns on shepherd's hooks along the aisle, and urns of flowers where it starts
-		for _, z in { -1.2, 3.4, 7 } do
+		for _, z in { 3.4, 7, 10.6 } do
 			for _, sx in { -1, 1 } do
-				local x = sx * 2.2
-				r:box(x, 2.3, z, 0.1, 4.6, 0.1, rgb(70, 72, 80), "Metal")
-				r:beam(v3(x, 4.6, z), v3(x - sx * 0.6, 4.9, z), 0.08, 0.08, rgb(70, 72, 80), "Metal")
-				r:box(x - sx * 0.6, 4.55, z, 0.05, 0.6, 0.05, rgb(70, 72, 80), "Metal")
-				r:box(x - sx * 0.6, 3.95, z, 0.5, 0.6, 0.5, rgb(255, 236, 200), "Glass")
-				r:box(x - sx * 0.6, 4.3, z, 0.6, 0.1, 0.6, rgb(70, 72, 80), "Metal")
+				local x = sx * 2.35
+				r:box(x, 2.0, z, 0.1, 4.0, 0.1, rgb(70, 72, 80), "Metal")
+				r:beam(v3(x, 4.0, z), v3(x + sx * 0.6, 4.3, z), 0.08, 0.08, rgb(70, 72, 80), "Metal")
+				r:box(x + sx * 0.6, 3.95, z, 0.05, 0.6, 0.05, rgb(70, 72, 80), "Metal")
+				r:box(x + sx * 0.6, 3.35, z, 0.5, 0.6, 0.5, rgb(255, 236, 200), "Glass")
+				r:box(x + sx * 0.6, 3.7, z, 0.6, 0.1, 0.6, rgb(70, 72, 80), "Metal")
 			end
 		end
 		for _, sx in { -1, 1 } do
@@ -1189,8 +1190,8 @@ stage({
 	},
 	shots = {
 		wide = { eye = v3(0, 6.4, 9.6), look = v3(0, 3.6, -6), fov = 48 },
-		two = { eye = v3(-1.4, 4.9, 1.2), look = v3(-2.4, 4.4, -6), fov = 40 },
-		cake = { eye = v3(0.9, 5.3, -1.3), look = v3(0, 4.3, -5), fov = 32 },
+		two = { eye = v3(2.8, 5.4, 3.4), look = v3(-2.6, 4.2, -5), fov = 40 },
+		cake = { eye = v3(0.9, 4.6, -1.2), look = v3(0, 3.2, -5), fov = 32 },
 		high = { eye = v3(6, 9.4, 7), look = v3(0, 3, -6), fov = 44 },
 		pan = {
 			eye = v3(-10, 6, 7),
@@ -1272,51 +1273,45 @@ stage({
 		r:block(14.7, 7.2, -3.2, 14.9, 7.5, 0.2, TRIM, "Wood")
 		r:box(14.78, 3.6, -0.3, 0.12, 0.2, 0.2, C.Gold, "Metal")
 		-- the table under its cloth, with the cake, plates, cups and hats
+		local T = 2.5 -- the table's top
 		for _, sx in { -1, 1 } do
 			for _, sz in { -1, 1 } do
-				r:box(sx * 3.2, 1.0, -5 + sz * 1.4, 0.3, 2.0, 0.3, shade(WOOD, 0.8), "Wood")
+				r:box(sx * 3.2, 0.8, -5 + sz * 1.4, 0.3, 1.6, 0.3, shade(WOOD, 0.8), "Wood")
 			end
 		end
-		r:block(-3.6, 2.0, -6.8, 3.6, 3.1, -3.2, CLOTH, "Fabric")
-		r:block(-3.62, 2.0, -6.82, 3.62, 2.3, -3.18, rgb(240, 150, 170), "Fabric")
-		r:cyl(0, 3.14, -5, 0.08, 2.9, "y", rgb(240, 240, 236), "Marble")
-		r:cyl(0, 3.68, -5, 1.0, 2.4, "y", rgb(250, 232, 226), "SmoothPlastic")
-		r:cyl(0, 4.58, -5, 0.8, 1.6, "y", rgb(246, 186, 200), "SmoothPlastic")
-		r:cyl(0, 4.2, -5, 0.04, 2.46, "y", rgb(255, 255, 250), "SmoothPlastic")
+		r:block(-3.6, 1.6, -6.8, 3.6, T, -3.2, CLOTH, "Fabric")
+		r:block(-3.62, 1.6, -6.82, 3.62, 1.86, -3.18, rgb(240, 150, 170), "Fabric")
+		r:cyl(0, T + 0.04, -5, 0.08, 2.2, "y", rgb(240, 240, 236), "Marble")
+		r:cyl(0, T + 0.43, -5, 0.7, 1.7, "y", rgb(250, 232, 226), "SmoothPlastic")
+		r:cyl(0, T + 1.06, -5, 0.56, 1.1, "y", rgb(246, 186, 200), "SmoothPlastic")
+		r:cyl(0, T + 0.78, -5, 0.04, 1.76, "y", rgb(255, 255, 250), "SmoothPlastic")
 		for k = 0, 7 do
 			local a = k * math.pi / 4 + math.pi / 8
 			r:boxAt(
-				CFrame.new(math.cos(a) * 1.22, 4.0, -5 + math.sin(a) * 1.22) * CFrame.Angles(0, -a, 0),
+				CFrame.new(math.cos(a) * 0.86, T + 0.62, -5 + math.sin(a) * 0.86) * CFrame.Angles(0, -a, 0),
 				0.08,
-				0.5,
-				0.28,
+				0.34,
+				0.2,
 				rgb(255, 255, 250),
 				"SmoothPlastic"
 			)
 		end
 		for k = 0, 4 do
 			local a = k * 2 * math.pi / 5
-			local x, z = math.cos(a) * 0.5, -5 + math.sin(a) * 0.5
-			r:cyl(x, 5.3, z, 0.6, 0.12, "y", PARTY[k + 1], "SmoothPlastic")
-			r:ball(x, 5.72, z, 0.2, rgb(255, 210, 120), "Neon")
-			r:ball(
-				math.cos(a + 0.6) * 0.68,
-				5.06,
-				-5 + math.sin(a + 0.6) * 0.68,
-				0.24,
-				rgb(214, 60, 80),
-				"SmoothPlastic"
-			)
+			local x, z = math.cos(a) * 0.32, -5 + math.sin(a) * 0.32
+			r:cyl(x, T + 1.56, z, 0.44, 0.1, "y", PARTY[k + 1], "SmoothPlastic")
+			r:ball(x, T + 1.86, z, 0.16, rgb(255, 210, 120), "Neon")
+			r:ball(math.cos(a + 0.6) * 0.46, T + 1.4, -5 + math.sin(a + 0.6) * 0.46, 0.18, rgb(214, 60, 80), "SmoothPlastic")
 		end
-		for _, at in { v3(-2.4, 3.1, -4.2), v3(2.4, 3.1, -4.2), v3(-2.6, 3.1, -6.0), v3(2.6, 3.1, -6.0) } do
-			r:cyl(at.X, at.Y + 0.04, at.Z, 0.08, 1.1, "y", rgb(240, 240, 236), "Marble")
+		for _, at in { v3(-2.4, T, -4.2), v3(2.4, T, -4.2), v3(-2.6, T, -6.0), v3(2.6, T, -6.0) } do
+			r:cyl(at.X, at.Y + 0.04, at.Z, 0.08, 1.0, "y", rgb(240, 240, 236), "Marble")
 		end
-		for i, at in { v3(-1.6, 3.1, -3.7), v3(1.6, 3.1, -3.7), v3(-3.0, 3.1, -5.0) } do
-			r:cyl(at.X, at.Y + 0.35, at.Z, 0.7, 0.5, "y", PARTY[i + 1], "SmoothPlastic")
+		for i, at in { v3(-1.6, T, -3.7), v3(1.6, T, -3.7), v3(-3.0, T, -5.0) } do
+			r:cyl(at.X, at.Y + 0.25, at.Z, 0.5, 0.4, "y", PARTY[i + 1], "SmoothPlastic")
 		end
-		for i, at in { v3(-1.4, 3.1, -6.2), v3(1.5, 3.1, -6.3), v3(3.0, 3.1, -4.7) } do
-			r:cone(at.X, at.Y + 0.6, at.Z, 1.2, 0.8, PARTY[i], "SmoothPlastic")
-			r:ball(at.X, at.Y + 1.26, at.Z, 0.3, PARTY[i + 2], "SmoothPlastic")
+		for i, at in { v3(-1.4, T, -6.2), v3(1.5, T, -6.3), v3(3.0, T, -4.7) } do
+			r:cone(at.X, at.Y + 0.45, at.Z, 0.9, 0.6, PARTY[i], "SmoothPlastic")
+			r:ball(at.X, at.Y + 0.96, at.Z, 0.24, PARTY[i + 2], "SmoothPlastic")
 		end
 		-- presents: boxes with a ribbon round them and a bow
 		local function present(
@@ -1477,17 +1472,17 @@ stage({
 			r:block(x, -0.9, z - 0.25, x + 4 + next() * 2, -0.86, z + 0.25, rgb(246, 244, 236), "SmoothPlastic")
 		end
 		-- the sun's path on the water
-		for i = 0, 30 do
-			local z = -22 - i * 14 - next() * 5
+		for i = 0, 22 do
+			local z = -22 - i * 9 - next() * 3
 			local x = -z * 0.3 + (next() - 0.5) * 4
-			local w = 1.6 + next() * (2 + i * 0.35)
-			r:block(x - w / 2, -0.9, z - 0.35, x + w / 2, -0.86, z + 0.35, rgb(255, 214, 160), "SmoothPlastic")
+			local w = 3 + next() * (3 + i * 0.5)
+			r:block(x - w / 2, -0.9, z - 0.8, x + w / 2, -0.86, z + 0.8, rgb(176, 160, 176), "SmoothPlastic")
 		end
 		-- palms, driftwood, a sandcastle, a towel, a rowboat pulled up, rocks
-		town(r, "palm", CFrame.new(-19, 0, 4) * yaw(-20))
+		town(r, "palm", CFrame.new(-17.5, 0, -3.5) * yaw(-10))
 		town(r, "palmTall", CFrame.new(19, 0, -1) * yaw(200))
 		town(r, "driftwood", CFrame.new(-7, 0, -6.4) * yaw(30))
-		town(r, "sandcastle", CFrame.new(7, 0, -4.6) * yaw(-20))
+		town(r, "sandcastle", CFrame.new(9.5, 0, -6.6) * yaw(-20))
 		town(r, "towel", CFrame.new(9.5, 0, 5) * yaw(30))
 		town(r, "rowboat", CFrame.new(-16, 0, -6) * yaw(60))
 		town(r, "rock", CFrame.new(13, 0, -8.5))
@@ -1524,7 +1519,7 @@ stage({
 		-- the headland far off, its lighthouse, and a sailboat out on the water
 		for i = 0, 5 do
 			r:lump(
-				CFrame.new(-110 - i * 26, -10, -230 - (i % 2) * 20),
+				CFrame.new(-140 - i * 30, -10, -244 - (i % 2) * 20),
 				70,
 				30 + (i % 3) * 8,
 				50,
@@ -1532,7 +1527,7 @@ stage({
 				"SmoothPlastic"
 			)
 		end
-		town(r, "lighthouse", CFrame.new(-96, 2, -222) * yaw(40))
+		town(r, "lighthouse", CFrame.new(-150, 2, -236) * yaw(40))
 		town(r, "sailboat", CFrame.new(46, -1.2, -140) * yaw(80))
 	end,
 })
@@ -1593,8 +1588,8 @@ stage({
 		end
 		town(r, "bench", CFrame.new(0, 0, -1.6))
 		town(r, "lowTreeBig", CFrame.new(2.6, 0, -7) * yaw(20))
-		town(r, "lamp", CFrame.new(-4.4, 0, -1.2))
-		town(r, "bin", CFrame.new(3.6, 0, -0.6))
+		town(r, "lamp", CFrame.new(-5.6, 0, -2.8))
+		town(r, "bin", CFrame.new(5.6, 0, 0.4))
 		town(r, "flowerBed", CFrame.new(-9.6, 0, -4.4) * yaw(15))
 		town(r, "flowerBed", CFrame.new(10.4, 0, -5.4) * yaw(-20))
 		town(r, "hedgeRow", CFrame.new(-12, 0, -13))
@@ -2238,28 +2233,147 @@ function Stages.head(s: Stage, i: number): Vector3
 	return m.at + Vector3.new(0, if m.sit then Stages.SitHead else Stages.Head, 0)
 end
 
--- The close shot on mark i: in front of their face and round toward the set's front, so whoever
--- they face isn't in the way.
+-- What the camera must keep clear of: every solid shape of the set (a see-through one, a beam of
+-- light or a sheer drape, it may pass through) as its box, with the box round that in the set's
+-- own axes to rule most of them out quickly. Round shapes count as their boxes, which is safe.
+type Solid = { cf: CFrame, half: Vector3, lo: Vector3, hi: Vector3 }
+local solidsOf: { [string]: { Solid } } = {}
+
+local function solids(s: Stage): { Solid }
+	local made = solidsOf[s.id]
+	if not made then
+		made = {}
+		for _, p in Geometry.flatten(Stages.prims(s.id)) do
+			if (p.transp or 0) < 0.3 then
+				local half = p.size / 2
+				local lo = Vector3.new(math.huge, math.huge, math.huge)
+				local hi = -lo
+				for _, c in Geometry.corners(p) do
+					lo, hi = lo:Min(c), hi:Max(c)
+				end
+				table.insert(made, { cf = p.cf, half = half, lo = lo, hi = hi })
+			end
+		end
+		solidsOf[s.id] = made
+	end
+	return made
+end
+
+-- Is the point within `margin` of anything solid on the set?
+function Stages.inside(s: Stage, p: Vector3, margin: number): boolean
+	for _, b in solids(s) do
+		if
+			p.X > b.lo.X - margin
+			and p.X < b.hi.X + margin
+			and p.Y > b.lo.Y - margin
+			and p.Y < b.hi.Y + margin
+			and p.Z > b.lo.Z - margin
+			and p.Z < b.hi.Z + margin
+		then
+			local q = b.cf:PointToObjectSpace(p)
+			if
+				math.abs(q.X) < b.half.X + margin
+				and math.abs(q.Y) < b.half.Y + margin
+				and math.abs(q.Z) < b.half.Z + margin
+			then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+-- Does the line from a to b come within `margin` of anything solid (tested every quarter stud)?
+function Stages.blocked(s: Stage, a: Vector3, b: Vector3, margin: number): boolean
+	local n = math.max(1, math.ceil((b - a).Magnitude / 0.25))
+	for k = 0, n do
+		if Stages.inside(s, a:Lerp(b, k / n), margin) then
+			return true
+		end
+	end
+	return false
+end
+
+-- Does the line from a to b come within `margin` of anybody standing on a mark other than `skip`
+-- (each taken as a post from their feet to over their head)?
+function Stages.crowded(s: Stage, a: Vector3, b: Vector3, margin: number, skip: number?): boolean
+	local n = math.max(1, math.ceil((b - a).Magnitude / 0.25))
+	for j, m in s.marks do
+		if j ~= skip then
+			local foot = m.at + Vector3.new(0, 0.3, 0)
+			local top = Stages.head(s, j) + Vector3.new(0, 0.9, 0)
+			for k = 0, n do
+				local p = a:Lerp(b, k / n)
+				local y = math.clamp(p.Y, foot.Y, top.Y)
+				if (Vector3.new(p.X - foot.X, p.Y - y, p.Z - foot.Z)).Magnitude < margin then
+					return true
+				end
+			end
+		end
+	end
+	return false
+end
+
+Stages.Sides = { 52, 38, 66, 24, 80, 10 } -- how far round from where they face a close shot may go, best first
+Stages.Room = 0.45 -- how near the camera may come to the set
+Stages.Body = 1.3 -- and the line it looks along to anybody else on the set
+
+local closeOf: { [string]: Shot } = {}
+
+-- The close shot on mark i: in front of their face and round toward the set's front, at the first
+-- angle (Stages.Sides) where nothing on the set and nobody else stands between the camera and
+-- their face. Worked out once per mark.
 function Stages.close(s: Stage, i: number): Shot
 	local m = s.marks[i]
 	if m.close then
 		return m.close
 	end
+	local key = s.id .. ":" .. i
+	local known = closeOf[key]
+	if known then
+		return known
+	end
 	local head = Stages.head(s, i)
+	local look = head - Vector3.new(0, 0.15, 0)
 	local f = Stages.facing(m.yaw)
 	local k = Stages.Close
-	local best: Vector3 = f
-	for _, side in { -1, 1 } do
-		local d = (CFrame.Angles(0, math.rad(side * k.side), 0) :: CFrame):VectorToWorldSpace(f)
-		if d.Z > best.Z or best == f then
-			best = d
+	local first: Shot? = nil
+	local found: Shot? = nil
+	for _, angle in Stages.Sides do
+		local tries = {}
+		for _, side in { -1, 1 } do
+			local d = (CFrame.Angles(0, math.rad(side * angle), 0) :: CFrame):VectorToWorldSpace(f)
+			table.insert(tries, d)
+		end
+		-- the side nearer the set's front first
+		table.sort(tries, function(a: Vector3, b: Vector3): boolean
+			return a.Z > b.Z
+		end)
+		for _, d in tries do
+			local eye = head + d * k.dist + Vector3.new(0, k.lift, 0)
+			local shot = { eye = eye, look = look, fov = k.fov }
+			first = first or shot
+			local lo, hi = s.bounds.lo, s.bounds.hi
+			local within = eye.X >= lo.X and eye.X <= hi.X and eye.Y >= lo.Y and eye.Y <= hi.Y and eye.Z >= lo.Z and eye.Z <= hi.Z
+			-- (the last stud before their face is theirs: a hat brim or a lifted hand)
+			local near = look + (eye - look).Unit * 1.0
+			if
+				within
+				and not Stages.inside(s, eye, Stages.Room)
+				and not Stages.blocked(s, eye, near, 0.2)
+				and not Stages.crowded(s, eye, near, Stages.Body, i)
+			then
+				found = shot
+				break
+			end
+		end
+		if found then
+			break
 		end
 	end
-	return {
-		eye = head + best * k.dist + Vector3.new(0, k.lift, 0),
-		look = head - Vector3.new(0, 0.15, 0),
-		fov = k.fov,
-	}
+	local shot = found or first :: Shot
+	closeOf[key] = shot
+	return shot
 end
 
 -- The push in on mark i: where a slow push toward their face ends.

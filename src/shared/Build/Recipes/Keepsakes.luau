@@ -157,7 +157,7 @@ local items: { Item } = {
 				y += 0.1
 			end
 			r:cyl(0, 1.34, 0, 0.08, 0.74, "y", shade(r.c1, 1.08), mat)
-			r:cyl(0, 1.385, 0, 0.01, 0.5, "y", shade(r.c1, 0.45), mat)
+			r:cyl(0, 1.4, 0, 0.04, 0.5, "y", shade(r.c1, 0.45), mat)
 			r:cyl(0, 0.68, 0, 0.14, 1.16, "y", r.c2, "Glass")
 			for i = 0, 5 do
 				local a = i * math.pi / 3 + 0.3
@@ -204,7 +204,7 @@ local items: { Item } = {
 			r:lump(CFrame.new(-0.02, 0.56, 0) * CFrame.Angles(0, 0, math.rad(-10)), 0.86, 0.5, 0.48, r.c1, "Wood")
 			for _, s in { -1, 1 } do
 				r:lump(
-					CFrame.new(-0.08, 0.6, s * 0.21) * CFrame.Angles(0, 0, math.rad(-16)),
+					CFrame.new(-0.08, 0.6, s * 0.25) * CFrame.Angles(0, 0, math.rad(-16)),
 					0.56,
 					0.3,
 					0.1,
@@ -251,7 +251,7 @@ local items: { Item } = {
 			r:cyl(0, 3.0, 0, 3.08, 0.12, "x", wood, "Wood")
 			r:cyl(0, 0.6, -0.45, 3.08, 0.1, "x", wood, "Wood")
 			local cream = Color3.fromRGB(246, 236, 214)
-			r:cyl(0, 3.0, 0, 2.84, 0.32, "x", r.c2, "Fabric")
+			r:cyl(0, 3.0, 0, 2.84, 0.44, "x", r.c2, "Fabric")
 			r:block(-1.42, 1.0, 0.1, 1.42, 3.0, 0.16, cream, "Fabric")
 			r:block(-1.42, 1.3, -0.16, 1.42, 3.0, -0.1, r.c2, "Fabric")
 			local colours = { r.c1, r.c2, Color3.fromRGB(130, 170, 200), Color3.fromRGB(150, 190, 130) }
@@ -617,19 +617,19 @@ local items: { Item } = {
 				q:block(0.43, 0.12, -0.06, 0.55, 1.28, 0.06, r.c1, "Wood")
 			end)
 			r:block(-0.43, 0.12, -0.04, 0.43, 1.28, 0.0, r.c2, "SmoothPlastic")
-			r:block(-0.43, 0.12, 0.0, 0.43, 0.42, 0.02, Color3.fromRGB(150, 190, 110), "SmoothPlastic")
-			dot(r, 0.28, 1.1, 0.0, 0.02, 0.16, C.Yellow)
+			r:block(-0.43, 0.12, 0.0, 0.43, 0.42, 0.03, Color3.fromRGB(150, 190, 110), "SmoothPlastic")
+			dot(r, 0.28, 1.1, 0.0, 0.03, 0.16, C.Yellow)
 			-- the fountain behind them
-			r:block(-0.22, 0.42, 0.0, 0.22, 0.56, 0.02, C.Stone, "SmoothPlastic")
-			r:block(-0.04, 0.56, 0.0, 0.04, 0.8, 0.02, C.Stone, "SmoothPlastic")
-			dot(r, 0, 0.84, 0.0, 0.02, 0.18, C.Water)
+			r:block(-0.22, 0.42, 0.0, 0.22, 0.56, 0.03, C.Stone, "SmoothPlastic")
+			r:block(-0.04, 0.56, 0.0, 0.04, 0.75, 0.03, C.Stone, "SmoothPlastic")
+			dot(r, 0, 0.84, 0.0, 0.03, 0.18, C.Water)
 			-- three friends in front
 			local shirts = { Color3.fromRGB(214, 100, 96), Color3.fromRGB(120, 160, 210), Color3.fromRGB(240, 200, 100) }
 			for i, shirt in shirts do
 				local x = -0.27 + (i - 1) * 0.27
-				r:block(x - 0.08, 0.3, 0.02, x + 0.08, 0.6, 0.045, shirt, "SmoothPlastic")
-				dot(r, x, 0.7, 0.02, 0.045, 0.16, SKIN)
-				r:block(x - 0.08, 0.74, 0.045, x + 0.08, 0.79, 0.07, if i == 2 then C.Bark else INK, "SmoothPlastic")
+				r:block(x - 0.08, 0.3, 0.03, x + 0.08, 0.6, 0.06, shirt, "SmoothPlastic")
+				dot(r, x, 0.7, 0.03, 0.06, 0.16, SKIN)
+				r:block(x - 0.08, 0.74, 0.06, x + 0.08, 0.79, 0.09, if i == 2 then C.Bark else INK, "SmoothPlastic")
 			end
 			dot(r, -0.36, 1.18, 0.0, 0.03, 0.1, C.Pink)
 			r:beam(Vector3.new(0, 1.0, -0.06), Vector3.new(0, 0.02, -0.5), 0.1, 0.05, shade(r.c1, 0.8), "Wood")
