@@ -65,6 +65,7 @@ end
 
 local root: Frame? = nil
 local rows: Frame? = nil
+local readyChip: Frame? = nil
 local folded = false
 local onOpen: () -> () = function() end
 local claiming: { [string]: boolean } = {}
@@ -88,6 +89,7 @@ local function quest(g: any, order: number): Frame
 	hit.Activated:Connect(function()
 		onOpen()
 	end)
+	Kit.press(hit, { Kind = "slab", Face = slab, Grow = 1, Dip = 0.99 })
 	-- a round marker: yellow with a tick when it's done, the goal's own mark otherwise
 	Kit.disc({
 		Name = "Marker",
@@ -198,6 +200,21 @@ function Quests.refresh()
 	end
 	list.Visible = not folded
 	local shown = Quests.next(view())
+	-- how many are done and waiting, on the header
+	local waiting = 0
+	for _, g in shown do
+		if g.done and not g.claimed then
+			waiting += 1
+		end
+	end
+	local chip = readyChip
+	if chip then
+		chip.Visible = waiting > 0
+		local words = chip:FindFirstChild("Count")
+		if words and words:IsA("TextLabel") then
+			words.Text = tostring(waiting)
+		end
+	end
 	if #shown == 0 then
 		local note = Kit.darkPill({ Name = "Done", Parent = list, Size = UDim2.new(1, -12, 0, 36) })
 		local words = Kit.text("Every goal is done. Nice work.", {
@@ -257,6 +274,32 @@ function Quests.mount(parent: GuiObject, position: UDim2, open: () -> ()): Frame
 		Wrap = false,
 	})
 	word.ZIndex = 3
+	-- a yellow chip with how many are ready to claim
+	local chip = Kit.new("Frame", {
+		Name = "Ready",
+		BackgroundColor3 = T.Yellow,
+		BorderSizePixel = 0,
+		Size = UDim2.fromOffset(20, 18),
+		Position = UDim2.new(0, 92, 0.5, 0),
+		AnchorPoint = Vector2.new(0, 0.5),
+		ZIndex = 3,
+		Visible = false,
+		Parent = tab,
+	})
+	chip:SetAttribute("KeepColors", true)
+	Kit.corner(chip, "pill")
+	Kit.text("", {
+		Name = "Count",
+		Parent = chip,
+		Size = UDim2.fromScale(1, 1),
+		TextSize = 13,
+		Font = Kit.Fonts.Title,
+		Color = T.Dark,
+		AlignX = Enum.TextXAlignment.Center,
+		Wrap = false,
+		ZIndex = 4,
+	})
+	readyChip = chip
 	local arrow = Icons.make("down", 16, {
 		Name = "Fold",
 		Parent = tab,

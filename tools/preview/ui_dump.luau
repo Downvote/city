@@ -64,6 +64,8 @@
 --   signs:boards        the boards on canopies and roofs
 --   signs:posters       adverts on posters and billboards, the cinema's posters
 --   signs:blades        blade signs, a hanging tile, the marquee, street plates, a vending machine
+--   hover               the main screen with the pointer on a few of its buttons (the band of light
+--                       stopped half way across); hover:menu the goals menu the same way
 -- Any scene can carry a prefix: light:<scene> builds it in the light look, relight:<scene>
 -- builds it dark and then switches (what a player who presses the button mid game sees), and
 -- plain:<scene> builds it with the painted shapes off (what a game with Allow Mesh / Image APIs
@@ -337,6 +339,47 @@ elseif scene:sub(1, 6) == "panel:" then
 		row.Activated:Fire()
 	end
 	Sim.frames(3)
+elseif scene == "hover" or scene == "hover:menu" then
+	-- the motion under the pointer (UI/Kit's Kit.press), caught at its height: tweens finish at
+	-- once here, so the band of light is stopped half way across each face to show it. hover is
+	-- the main screen (the Build button, a round button, a tile of the quick menu, a quest),
+	-- hover:menu the goals menu (a row, the Claim button, the way back, a tab of the villagers)
+	startHud()
+	local names
+	if scene == "hover:menu" then
+		Hud.open("Goals")
+		Sim.frames(3)
+		names = { "Claim", "Close" }
+	else
+		names = { "Build", "CityPanel", "Goals", "Open" }
+	end
+	local over = {}
+	for _, name in names do
+		local found = Fake.find(Sim.gui, function(d)
+			return d:IsA("GuiButton") and d.Name == name and Fake.shown(d)
+		end)
+		if found[1] then
+			table.insert(over, found[1])
+		end
+	end
+	if scene == "hover:menu" then
+		-- the second row of the list (the first is picked)
+		local rows = Fake.find(Sim.gui, function(d)
+			return d:IsA("TextButton") and d:FindFirstChild("Inside") ~= nil and d:GetAttribute("Selected") ~= true
+		end)
+		if rows[1] then
+			table.insert(over, rows[1])
+		end
+	end
+	for _, b in over do
+		b.MouseEnter:Fire()
+	end
+	Sim.frames(2)
+	for _, d in Sim.gui:GetDescendants() do
+		if d:IsA("UIGradient") and d.Name == "Band" then
+			d.Offset = roblox.Vector2.new(0, 0)
+		end
+	end
 elseif scene == "event" or scene:sub(1, 6) == "event:" then
 	-- an event: the small prompt while nobody watches it (event: at its choices, event:talk part
 	-- way through its lines), or its scene once Watch is pressed (event:one, event:two,

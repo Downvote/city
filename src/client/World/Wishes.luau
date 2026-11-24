@@ -94,7 +94,6 @@ local function show(model: Model, icon: string)
 			Hud.open("Residents", vid)
 		end
 	end)
-	Kit.wobbly(holder, 4)
 	bb.Parent = gui
 	bubbles[model] = bb
 end

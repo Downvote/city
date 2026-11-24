@@ -1657,6 +1657,13 @@ So the ground keeps Roblox's own grass texture.
 
 The long grass's blades let a quarter of what's behind them through.
 
+> also, it seems like the grass dosent render sometimes after going out of menus, such as the character creation one
+
+A patch of grass that left the camera's reach and came back before it had finished sinking away could be taken out
+again just as it rose, and then never showed until you walked off and back. Now the grass checks itself after every
+frame and puts back anything that should be showing, plans the ground at once when the camera jumps back from a
+menu, and never stops for good when something goes wrong: it starts itself over instead.
+
 ### Softer lamps, thinner haze, weather you can see
 
 > the placeable lights are too bright. also, make the fog less. also, it seems like weather particles arent

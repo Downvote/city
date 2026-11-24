@@ -87,6 +87,8 @@ local lookPage: Frame
 local profilePage: Frame
 local stepButtons: { [string]: TextButton } = {}
 local titleLabel: TextLabel? = nil
+local titleGhost: TextLabel? = nil -- the title again, large and faint, behind it
+local stepCaption: TextLabel? = nil -- which step this is, set wide under the title
 local selectTab: (string) -> ()
 local markTab: ((string) -> ())? = nil
 local profile = { name = "", pers = "sunny", color = "4FA9D9", bday = { s = 1, d = 1 } }
@@ -526,19 +528,10 @@ local function itemCard(item: any, order: number, onClick: (() -> ())?, kind: st
 		LayoutOrder = 2,
 		ZIndex = 2,
 	})
-	local scale = Kit.new("UIScale", { Parent = card })
-	card.MouseEnter:Connect(function()
-		TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Scale = 1.04 }):Play()
-	end)
-	card.MouseLeave:Connect(function()
-		TweenService:Create(scale, TweenInfo.new(0.15), { Scale = 1 }):Play()
-	end)
-	card.MouseButton1Down:Connect(function()
-		TweenService:Create(scale, TweenInfo.new(0.06), { Scale = 0.96 }):Play()
-	end)
+	-- the interface's own motion: a band of light across the square, brackets closing in on the
+	-- card, a dip and a flash when pressed
+	Kit.press(card, { Kind = "tile", Face = face })
 	card.Activated:Connect(function()
-		scale.Scale = 0.94
-		TweenService:Create(scale, TweenInfo.new(0.3, Enum.EasingStyle.Back), { Scale = 1 }):Play()
 		if onClick then
 			onClick()
 		else
@@ -1867,12 +1860,20 @@ end
 local stepNow = "look"
 
 local function showStep(step: string)
+	local was = stepNow
 	stepNow = step
 	lookPage.Visible = step == "look"
 	profilePage.Visible = step == "profile"
 	for id, b in stepButtons do
 		-- the picked step is yellow with dark words, like a picked tab on any menu
 		Kit.setButtonColor(b, if id == step then T.Yellow else T.PaperDark, if id == step then T.Dark else T.Ink)
+	end
+	-- its yellow slides over from the other step
+	if was and was ~= step and stepButtons[was] and stepButtons[step] then
+		Kit.glide(stepButtons[was], stepButtons[step])
+	end
+	if stepCaption then
+		stepCaption.Text = Kit.spaced(if step == "look" then "Step 1 of 2" else "Step 2 of 2")
 	end
 	if step == "profile" then
 		buildProfilePage()
@@ -2300,6 +2301,9 @@ local function setTitle(text: string)
 	if titleLabel then
 		titleLabel.Text = text
 	end
+	if titleGhost then
+		titleGhost.Text = string.upper(text)
+	end
 end
 
 local function build()
@@ -2316,6 +2320,14 @@ local function build()
 		Creator.close()
 	end)
 	local _back = back
+	-- the title again, large and faint, behind it (as on every menu)
+	titleGhost = Kit.ghost("Make a villager", {
+		Parent = frame,
+		Position = UDim2.fromOffset(92, -18),
+		TextSize = 72,
+		Transparency = 0.95,
+		ZIndex = 0,
+	})
 	titleLabel = Kit.title("Make a villager", {
 		Parent = frame,
 		Size = UDim2.fromOffset(520, 46),
@@ -2323,6 +2335,22 @@ local function build()
 		TextSize = 30,
 		Color = T.Ink,
 		Wrap = false,
+	})
+	-- a rule under it that ends in a dot, and which step this is set wide after it
+	Kit.rule({
+		Name = "Rule",
+		Parent = frame,
+		Size = UDim2.fromOffset(230, 6),
+		Position = UDim2.fromOffset(100, 61),
+		AnchorPoint = Vector2.new(0, 0.5),
+		Accent = T.Pink,
+		AccentLength = 30,
+	})
+	stepCaption = Kit.caption("Step 1 of 2", {
+		Name = "Step",
+		Parent = frame,
+		Position = UDim2.fromOffset(342, 61),
+		AnchorPoint = Vector2.new(0, 0.5),
 	})
 
 	-- Everything to choose from is one panel on the right, a rounded card, its villager's
@@ -2341,6 +2369,16 @@ local function build()
 	Kit.softShadow(holder, 1)
 	panelFrame = holder
 	Kit.glow(holder, studioColor(), 0.22)
+	-- brackets on its corners, just outside it
+	Kit.brackets(holder, {
+		Name = "Corners",
+		Corners = { "tl", "tr", "bl", "br" },
+		Arm = 16,
+		Thick = 2,
+		Inset = -6,
+		Color = T.Line,
+		ZIndex = 1,
+	})
 	local panel = Kit.box({
 		Name = "Panel",
 		Parent = holder,
@@ -2738,17 +2776,15 @@ local function build()
 			Color = T.Ink,
 			Hole = T.Card,
 		})
-		local scale = Kit.new("UIScale", { Parent = b })
+		Kit.press(b, { Kind = "tile" })
 		b.MouseEnter:Connect(function()
 			captionToken += 1
 			caption.Text = t[3]
-			TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Scale = 1.08 }):Play()
 		end)
 		b.MouseLeave:Connect(function()
 			if caption.Text == t[3] then
 				caption.Text = ""
 			end
-			TweenService:Create(scale, TweenInfo.new(0.15), { Scale = 1 }):Play()
 		end)
 		b.Activated:Connect(function()
 			-- (said on a press too, for a touch screen, where nothing hovers)
@@ -2760,8 +2796,6 @@ local function build()
 					caption.Text = ""
 				end
 			end)
-			scale.Scale = 0.92
-			TweenService:Create(scale, TweenInfo.new(0.3, Enum.EasingStyle.Back), { Scale = 1 }):Play()
 			t[4]()
 		end)
 	end

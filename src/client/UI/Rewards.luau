@@ -20,7 +20,7 @@ end
 
 function Rewards.close()
 	if panel then
-		panel.root:Destroy()
+		Kit.closePanel(panel)
 		panel = nil
 	end
 end
@@ -91,7 +91,6 @@ function Rewards.open()
 			end)
 		end)
 	end
-	Kit.popIn(panel.root)
 end
 
 return Rewards

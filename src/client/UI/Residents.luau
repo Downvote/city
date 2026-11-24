@@ -237,7 +237,8 @@ end
 -- A fact about them: a small soft label over its value, which may run to two lines.
 local function fact(parent: Instance, label: string, value: string, order: number, color: Color3?)
 	local cell = Kit.box({ Name = label, Parent = parent, LayoutOrder = order })
-	Kit.text(label, { Name = "Label", Parent = cell, Size = UDim2.new(1, 0, 0, 16), TextSize = 13, Color = T.InkSoft })
+	-- the label set wide in small capitals, as on the stat tiles
+	Kit.caption(label, { Name = "Label", Parent = cell, Size = UDim2.new(1, 0, 0, 16), TextSize = 11 })
 	Kit.text(value, {
 		Name = "Value",
 		Parent = cell,
@@ -669,7 +670,6 @@ local function showDetail()
 			Size = UDim2.fromOffset(76, ACT),
 			Color = color,
 			LayoutOrder = order,
-			Wobble = 0,
 		}, fn)
 	end
 	action("briefcase", "Job", T.Blue, 1, function()
@@ -809,7 +809,7 @@ function Residents.close()
 	end
 	unbind = {}
 	if panel then
-		panel.root:Destroy()
+		Kit.closePanel(panel)
 		panel = nil
 	end
 end
@@ -821,6 +821,7 @@ function Residents.open(vid: string?)
 	end
 	tab = "about"
 	panel = Kit.panel("Villagers", Kit.MenuSize, Residents.close, "people", Kit.Theme.Green, {
+		Caption = "People in town",
 		Tabs = { { id = "about", name = "About" }, { id = "friends", name = "Friends" } },
 		OnTab = function(id: string)
 			tab = id
@@ -836,15 +837,12 @@ function Residents.open(vid: string?)
 		Color = T.PaperDark,
 		Cut = 14,
 	})
-	Kit.text("In town", {
+	Kit.caption("In town", {
 		Name = "Caption",
 		Parent = well,
 		Size = UDim2.new(1, -28, 0, 18),
 		Position = UDim2.fromOffset(14, 10),
-		TextSize = 14,
-		Font = Kit.Fonts.Bold,
-		Color = T.InkSoft,
-		Wrap = false,
+		TextSize = 11,
 	})
 	count = Kit.text("", {
 		Name = "Count",
@@ -877,7 +875,6 @@ function Residents.open(vid: string?)
 	})
 	Kit.corner(detail, STAGE_ROUND)
 	Kit.rim(detail, T.Line, 1, 0.3)
-	Kit.popIn(panel.root)
 	refreshList()
 	showDetail()
 	local lastVillagers = nil

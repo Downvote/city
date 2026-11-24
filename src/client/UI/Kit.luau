@@ -737,6 +737,237 @@ function Kit.stripes(props: { [string]: any }): Frame
 	return f
 end
 
+-- Fine detail ----------------------------------------------------------------------------------------
+-- The same request asked for the menus to be polished "much further", in the feel of that game's
+-- menu screens: small careful marks that make a card look made. Corner brackets, thin rules that
+-- end in a dot, small captions set wide in capitals, index numbers, a faint large word behind a
+-- title and ticks round a dial. All of it is plain frames and words drawn here, in our colours.
+
+-- Words set wide for a small caption: capitals with a space between the letters and three between
+-- the words ("Ready to claim" becomes "R E A D Y   T O   C L A I M").
+function Kit.spaced(text: string): string
+	local words = {}
+	for word in string.gmatch(string.upper(text), "%S+") do
+		local letters = {}
+		for _, code in utf8.codes(word) do
+			table.insert(letters, utf8.char(code))
+		end
+		table.insert(words, table.concat(letters, " "))
+	end
+	return table.concat(words, "   ")
+end
+
+-- A number as an index: two digits ("03").
+function Kit.index(n: number): string
+	return string.format("%02d", math.max(0, math.floor(n)))
+end
+
+-- A small caption set wide in capitals. props: Parent, Size (it is as wide as its words unless
+-- given), Position, AnchorPoint, LayoutOrder, Name, TextSize (11), Color (InkSoft) or Tint, AlignX,
+-- ZIndex. Returns the label.
+function Kit.caption(text: string, props: { [string]: any }?): TextLabel
+	local p = props or {}
+	local size: number = p.TextSize or 11
+	local label = Kit.text(Kit.spaced(text), {
+		Name = p.Name or "Caption",
+		Parent = p.Parent,
+		Size = p.Size or UDim2.fromOffset(0, size + 4),
+		AutomaticSize = if p.Size then Enum.AutomaticSize.None else Enum.AutomaticSize.X,
+		Position = p.Position,
+		AnchorPoint = p.AnchorPoint,
+		LayoutOrder = p.LayoutOrder,
+		TextSize = size,
+		Font = Kit.Fonts.Body,
+		Color = if p.Tint then nil else p.Color or T.InkSoft,
+		Tint = p.Tint,
+		AlignX = p.AlignX,
+		Wrap = false,
+		ZIndex = p.ZIndex,
+	})
+	label.TextTruncate = Enum.TextTruncate.AtEnd
+	return label
+end
+
+-- Corner brackets: an L at each corner named in `Corners` ("tl", "tr", "bl", "br"; the top left
+-- and the bottom right by default), so a card or a box looks framed. props: Color (T.Line), Arm
+-- (how long each leg is, 10), Thick (2), Inset (from the corner inward; less than 0 sits outside
+-- the frame), Transparency, ZIndex, Name. Returns the layer that holds them (a frame filling
+-- `frame`, under the name Brackets).
+function Kit.brackets(frame: GuiObject, props: { [string]: any }?): Frame
+	local p = props or {}
+	local arm: number = p.Arm or 10
+	local thick: number = p.Thick or 2
+	local inset: number = p.Inset or 4
+	local color: Color3 = p.Color or T.Line
+	local z: number = p.ZIndex or 3
+	local layer = Kit.new("Frame", {
+		Name = p.Name or "Brackets",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = z,
+		Parent = frame,
+	})
+	for _, corner in p.Corners or { "tl", "br" } do
+		local right = corner:sub(2, 2) == "r"
+		local bottom = corner:sub(1, 1) == "b"
+		local anchor = Vector2.new(if right then 1 else 0, if bottom then 1 else 0)
+		local holder = Kit.new("Frame", {
+			Name = corner,
+			BackgroundTransparency = 1,
+			Size = UDim2.fromOffset(arm, arm),
+			AnchorPoint = anchor,
+			Position = UDim2.new(anchor.X, if right then -inset else inset, anchor.Y, if bottom then -inset else inset),
+			ZIndex = z,
+			Parent = layer,
+		})
+		for _, across in { true, false } do
+			local leg = Kit.new("Frame", {
+				Name = if across then "Across" else "Down",
+				BackgroundColor3 = color,
+				BackgroundTransparency = p.Transparency or 0,
+				BorderSizePixel = 0,
+				Size = if across then UDim2.new(1, 0, 0, thick) else UDim2.new(0, thick, 1, 0),
+				AnchorPoint = anchor,
+				Position = UDim2.fromScale(anchor.X, anchor.Y),
+				ZIndex = z,
+				Parent = holder,
+			})
+			Kit.corner(leg, "pill")
+		end
+	end
+	return layer
+end
+
+-- A thin rule with a dot at its end: a hairline that runs across and stops in a small round dot
+-- (Dots = "both" puts one at the start too), with a short heavier stroke of Accent at its start
+-- when given. props: Parent, Size (its height is the dot's room: 6), Position, AnchorPoint,
+-- LayoutOrder, Name, Color (T.Line), Transparency, Accent, AccentLength (26), ZIndex. Returns it.
+function Kit.rule(props: { [string]: any }): Frame
+	local p = props
+	local z: number = p.ZIndex or 1
+	local color: Color3 = p.Color or T.Line
+	local holder = Kit.new("Frame", {
+		Name = p.Name or "Rule",
+		BackgroundTransparency = 1,
+		Size = p.Size or UDim2.new(1, 0, 0, 6),
+		Position = p.Position or UDim2.new(),
+		AnchorPoint = p.AnchorPoint or Vector2.zero,
+		LayoutOrder = p.LayoutOrder or 0,
+		ZIndex = z,
+		Parent = p.Parent,
+	})
+	local both = p.Dots == "both"
+	Kit.new("Frame", {
+		Name = "Line",
+		BackgroundColor3 = color,
+		BackgroundTransparency = p.Transparency or 0,
+		BorderSizePixel = 0,
+		Size = UDim2.new(1, if both then -12 else -6, 0, 1),
+		Position = UDim2.new(0, if both then 6 else 0, 0.5, 0),
+		AnchorPoint = Vector2.new(0, 0.5),
+		ZIndex = z,
+		Parent = holder,
+	})
+	local ends: { number } = if both then { 0, 1 } else { 1 }
+	for _, at in ends do
+		local dot = Kit.new("Frame", {
+			Name = "Dot",
+			BackgroundColor3 = color,
+			BackgroundTransparency = p.Transparency or 0,
+			BorderSizePixel = 0,
+			Size = UDim2.fromOffset(5, 5),
+			Position = UDim2.fromScale(at, 0.5),
+			AnchorPoint = Vector2.new(at, 0.5),
+			ZIndex = z,
+			Parent = holder,
+		})
+		Kit.corner(dot, "round")
+	end
+	if p.Accent then
+		local stroke = Kit.new("Frame", {
+			Name = "Accent",
+			BackgroundColor3 = p.Accent,
+			BorderSizePixel = 0,
+			Size = UDim2.fromOffset(p.AccentLength or 26, 3),
+			Position = UDim2.new(0, if both then 6 else 0, 0.5, 0),
+			AnchorPoint = Vector2.new(0, 0.5),
+			ZIndex = z + 1,
+			Parent = holder,
+		})
+		stroke:SetAttribute("KeepColors", true)
+		Kit.corner(stroke, "pill")
+	end
+	return holder
+end
+
+-- A faint large word behind a title. props: Parent, Position, AnchorPoint, Size (its box: the
+-- word is as big as TextSize says and may run past it), TextSize (72), Color (T.Ink), Transparency
+-- (0.94), AlignX, ZIndex. Returns the label.
+function Kit.ghost(word: string, props: { [string]: any }): TextLabel
+	local p = props
+	local label = Kit.new("TextLabel", {
+		Name = p.Name or "Ghost",
+		Text = string.upper(word),
+		BackgroundTransparency = 1,
+		Font = Kit.Fonts.Title,
+		TextSize = p.TextSize or 72,
+		TextColor3 = p.Color or T.Ink,
+		TextTransparency = p.Transparency or 0.94,
+		TextXAlignment = p.AlignX or Enum.TextXAlignment.Left,
+		TextYAlignment = Enum.TextYAlignment.Center,
+		TextWrapped = false,
+		Size = p.Size or UDim2.fromOffset(600, (p.TextSize or 72) + 8),
+		Position = p.Position or UDim2.new(),
+		AnchorPoint = p.AnchorPoint or Vector2.zero,
+		ZIndex = p.ZIndex or 0,
+		Parent = p.Parent,
+	})
+	return label
+end
+
+-- Ticks round the inside of a round frame, like the marks on a dial: `count` short strokes,
+-- every `major`th one longer. props: Color (T.White), Transparency (0.6), Length (4), Major,
+-- Inset (from the rim, 3), Thick (2), ZIndex. Returns the layer.
+function Kit.ticks(frame: GuiObject, count: number, props: { [string]: any }?): Frame
+	local p = props or {}
+	local z: number = p.ZIndex or frame.ZIndex
+	local layer = Kit.new("Frame", {
+		Name = "Ticks",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = z,
+		Parent = frame,
+	})
+	local len: number = p.Length or 4
+	for i = 0, count - 1 do
+		-- a spoke as wide as the frame, turned; its stroke sits at the top end
+		local spoke = Kit.new("Frame", {
+			Name = "Spoke",
+			BackgroundTransparency = 1,
+			Size = UDim2.fromScale(1, 1),
+			Rotation = i * 360 / count,
+			ZIndex = z,
+			Parent = layer,
+		})
+		local major = p.Major and i % p.Major == 0
+		local l = if major then len * 1.8 else len
+		Kit.new("Frame", {
+			Name = "Tick",
+			BackgroundColor3 = p.Color or T.White,
+			BackgroundTransparency = if major
+				then math.max(0, (p.Transparency or 0.6) - 0.3)
+				else p.Transparency or 0.6,
+			BorderSizePixel = 0,
+			Size = UDim2.fromOffset(p.Thick or 2, l),
+			Position = UDim2.new(0.5, 0, 0, p.Inset or 3),
+			AnchorPoint = Vector2.new(0.5, 0),
+			ZIndex = z,
+			Parent = spoke,
+		})
+	end
+	return layer
+end
+
 -- An outline. The user asked for no outlines on rounded rectangles, so these are switched off:
 -- the stroke is still made (callers keep and tween it) but never shows. Doodles and icons make
 -- their own strokes.
@@ -1452,225 +1683,657 @@ local function onScreen(o: Instance): boolean
 end
 Kit.onScreen = onScreen
 
--- The glossy sheen that sweeps across buttons now and then. One loop for the whole interface
--- picks a button on screen every so often and runs the sweep across it.
-local sheens: { [any]: number } = setmetatable({}, { __mode = "k" }) :: any
-local sheenLoop = false
-local function startSheens()
-	if sheenLoop then
-		return
+-- Motion ---------------------------------------------------------------------------------------------
+--
+-- The user: "polish the ui and menu everywhere much further, along with button animations to be
+-- more suitable, referencing zenless zone zero menus". Buttons used to grow on a spring, hop their
+-- icon and wiggle, which read like a cartoon. Now they move the way that game's menus feel: quick
+-- and exact. Under the pointer a light band sweeps once across the face (cut to its shape), a
+-- small marker slides in at the leading edge, the face brightens a touch and grows by two or three
+-- hundredths. A press dips it to 0.97 with a short flash; letting go settles it back with no
+-- bounce. Nothing turns, wiggles or springs. It is all tweens, one per change and no loop per
+-- button, and the layers a hover needs are only made the first time the pointer comes over. On a
+-- touch screen nothing hovers, so a tap gets the dip and the flash.
+
+Kit.Motion = {
+	Hover = TweenInfo.new(0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+	Leave = TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+	Press = TweenInfo.new(0.06, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+	Settle = TweenInfo.new(0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+	Flash = TweenInfo.new(0.26, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+	Sweep = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+	Glide = TweenInfo.new(0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+	In = TweenInfo.new(0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+	Out = TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+}
+local M = Kit.Motion
+
+-- Plays a tween at once and hands it back.
+local function tween(inst: Instance, info: TweenInfo, goals: { [string]: any }): Tween
+	local t = TweenService:Create(inst, info, goals)
+	t:Play()
+	return t
+end
+Kit.tween = tween
+
+-- The same easing as `info`, starting `delay` seconds later.
+local function later(info: TweenInfo, delay: number): TweenInfo
+	local i = info :: any
+	if type(i) == "table" then
+		-- (the simulation's stand-in keeps what it was made with as a list)
+		return TweenInfo.new(i[1], i[2], i[3], 0, false, delay)
 	end
-	sheenLoop = true
-	task.spawn(function()
-		while true do
-			task.wait(0.7)
-			local ready = {}
-			local now = os.clock()
-			for grad, last in sheens do
-				local holder = grad.Parent
-				if holder and holder.Parent and now - last > 5 and onScreen(holder) then
-					table.insert(ready, grad)
-				end
-			end
-			if #ready > 0 then
-				local g = ready[math.random(1, #ready)] :: any
-				sheens[g] = now
-				g.Offset = Vector2.new(-1.3, 0)
-				TweenService:Create(g, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-					Offset = Vector2.new(1.3, 0),
-				}):Play()
-			end
-		end
-	end)
+	return TweenInfo.new(info.Time, info.EasingStyle, info.EasingDirection, 0, false, delay)
+end
+Kit.later = later
+
+local WHITE = Color3.new(1, 1, 1)
+local HOVER_GLOW = 0.07 -- how much white a face takes under the pointer
+local FLASH = 0.24 -- and in the moment it is pressed
+
+local function touchOnly(): boolean
+	return UserInputService.TouchEnabled and not UserInputService.MouseEnabled
 end
 
-local function addSheen(face: GuiObject, radius: any)
-	if true then
-		return -- flat colours: no sheen sweeping across
+-- Where a face's colour is drawn: a blob's Core, a card's Cut, or the face itself.
+local function shapeOf(face: GuiObject): GuiObject
+	if face:GetAttribute("Blob") then
+		local core = face:FindFirstChild("Core", true)
+		if core and core:IsA("GuiObject") then
+			return core
+		end
 	end
-	local sheen = Kit.new("Frame", {
-		Name = "Sheen",
-		BackgroundColor3 = T.White,
-		BorderSizePixel = 0,
+	local cut = face:FindFirstChild("Cut")
+	if cut and cut:IsA("GuiObject") then
+		return cut
+	end
+	return face
+end
+
+local function alphaKey(layer: GuiObject): string
+	return if layer:IsA("ImageLabel") then "ImageTransparency" else "BackgroundTransparency"
+end
+
+-- A white layer over a face's whole shape, under what is in it: the slab's painted picture again
+-- for a leaning face, or a frame with the face's own corners. Made the first time and kept. Nil
+-- where a slab fell back to plain wedges (a layer there would show the box).
+local function layerOver(face: GuiObject, name: string): GuiObject?
+	local host = shapeOf(face)
+	local old = host:FindFirstChild(name)
+	if old and old:IsA("GuiObject") then
+		return old
+	end
+	local body = bodyOf(host)
+	local layer: GuiObject
+	if body then
+		local img = Kit.new("ImageLabel", {
+			Name = name,
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			Size = body.Size,
+			Position = body.Position,
+			ScaleType = body.ScaleType,
+			SliceCenter = body.SliceCenter,
+			SliceScale = body.SliceScale,
+			ImageColor3 = WHITE,
+			ImageTransparency = 1,
+			ZIndex = -1,
+			Parent = host,
+		});
+		(img :: any).ImageContent = (body :: any).ImageContent
+		layer = img
+	elseif host:FindFirstChild("Wedge_br") or host:FindFirstChild("Wedge_tr") then
+		return nil
+	else
+		local f = Kit.new("Frame", {
+			Name = name,
+			BackgroundColor3 = WHITE,
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			Size = UDim2.fromScale(1, 1),
+			ZIndex = 0,
+			Parent = host,
+		})
+		local corner = host:FindFirstChildOfClass("UICorner")
+		if corner then
+			Kit.new("UICorner", { CornerRadius = corner.CornerRadius, Parent = f })
+		end
+		layer = f
+	end
+	-- a light laid over whatever colour is under it, in both looks
+	layer:SetAttribute("KeepColors", true)
+	return layer
+end
+
+-- A band of light runs once across a face, cut to its shape.
+local function sweepOnce(face: GuiObject)
+	local band = layerOver(face, "Sweep")
+	if not band then
+		return
+	end
+	local g = band:FindFirstChild("Band") :: UIGradient?
+	if not g then
+		g = Kit.new("UIGradient", {
+			Name = "Band",
+			Rotation = 16,
+			Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 1),
+				NumberSequenceKeypoint.new(0.36, 1),
+				NumberSequenceKeypoint.new(0.5, 0),
+				NumberSequenceKeypoint.new(0.64, 1),
+				NumberSequenceKeypoint.new(1, 1),
+			}),
+			Parent = band,
+		})
+	end
+	local grad = g :: UIGradient;
+	(band :: any)[alphaKey(band)] = 0.8
+	grad.Offset = Vector2.new(-1, 0)
+	tween(grad, M.Sweep, { Offset = Vector2.new(1, 0) })
+end
+
+-- A small chevron (">") of two rounded strokes, for the leading edge of a button. Its strokes
+-- start clear; `px` is its height.
+local function chevron(parent: Instance, color: Color3, px: number, z: number): Frame
+	local holder = Kit.new("Frame", {
+		Name = "Chevron",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(px, px),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		ZIndex = z,
+		Parent = parent,
+	})
+	holder:SetAttribute("KeepColors", true)
+	local len = math.max(5, px * 0.7)
+	local thick = math.max(2, math.floor(px * 0.2 + 0.5))
+	for i, turn in { 45, -45 } do
+		local stroke = Kit.new("Frame", {
+			Name = "Stroke",
+			BackgroundColor3 = color,
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			Size = UDim2.fromOffset(len, thick),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.5, (if i == 1 then -1 else 1) * len * 0.33),
+			Rotation = turn,
+			ZIndex = z,
+			Parent = holder,
+		})
+		Kit.corner(stroke, "pill")
+	end
+	return holder
+end
+Kit.chevron = chevron
+
+local function fadeKids(holder: Instance, info: TweenInfo, to: number)
+	for _, c in holder:GetChildren() do
+		if c:IsA("Frame") then
+			tween(c, info, { BackgroundTransparency = to })
+		end
+	end
+end
+
+-- Corner brackets that close in on a tile under the pointer (made the first time).
+local function focusBrackets(b: GuiObject, color: Color3): Frame
+	local old = b:FindFirstChild("Focus")
+	if old and old:IsA("Frame") then
+		return old
+	end
+	local layer =
+		Kit.brackets(b, { Name = "Focus", Corners = { "tl", "br" }, Arm = 9, Thick = 2, Inset = 0, Color = color })
+	layer:SetAttribute("KeepColors", true)
+	layer.ZIndex = 6
+	for _, corner in layer:GetChildren() do
+		if corner:IsA("Frame") then
+			corner:SetAttribute("Home", corner.Position)
+			for _, arm in corner:GetChildren() do
+				if arm:IsA("Frame") then
+					arm.BackgroundTransparency = 1
+				end
+			end
+		end
+	end
+	return layer
+end
+
+-- A ring that opens out round a round button under the pointer (made the first time).
+local function focusRing(host: GuiObject, color: Color3): (Frame, UIStroke)
+	local old = host:FindFirstChild("Focus")
+	if old and old:IsA("Frame") then
+		return old, old:FindFirstChildOfClass("UIStroke") :: UIStroke
+	end
+	local ring = Kit.new("Frame", {
+		Name = "Focus",
+		BackgroundTransparency = 1,
 		Size = UDim2.fromScale(1, 1),
-		ZIndex = face.ZIndex,
-		Parent = face,
+		Position = UDim2.fromScale(0.5, 0.5),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		ZIndex = 0,
+		Parent = host,
 	})
-	Kit.corner(sheen, radius)
-	local g = Kit.new("UIGradient", {
-		Rotation = 20,
-		Offset = Vector2.new(-1.3, 0),
-		Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 1),
-			NumberSequenceKeypoint.new(0.4, 1),
-			NumberSequenceKeypoint.new(0.5, 0.45),
-			NumberSequenceKeypoint.new(0.6, 1),
-			NumberSequenceKeypoint.new(1, 1),
-		}),
-		Parent = sheen,
+	ring:SetAttribute("KeepColors", true)
+	Kit.corner(ring, "round")
+	local stroke = Kit.new("UIStroke", {
+		Color = color,
+		Thickness = 1.5,
+		Transparency = 1,
+		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+		Parent = ring,
 	})
-	sheens[g] = os.clock() - math.random() * 4
-	startSheens()
+	return ring, stroke
 end
 
--- What a Kit button does under the pointer: grows when hovered (its icon hops), sinks onto its
--- lip when pressed, and springs back with a little bounce when let go.
--- Wobble: some things sway gently on their own, and every button wiggles when the pointer comes
--- over it. One loop moves them all. Roblox ignores clipping under a turned frame, and some icons
--- are cut out with clipping, so anything holding one breathes (its face grows and shrinks a
--- little) instead of turning.
-type Wob = { amount: number, phase: number, kick: number, canTurn: boolean, face: GuiObject?, faceScale: UIScale? }
-local wobbles: { [GuiObject]: Wob } = {}
-local wobbleLoop = false
-local wobbleClock = 0
-
-local function canTurn(g: GuiObject): boolean
-	for _, d in g:GetDescendants() do
-		if d:IsA("GuiObject") and d.ClipsDescendants then
-			return false
-		end
-	end
-	return true
-end
-
-local function startWobble()
-	if wobbleLoop then
+-- Gives a button the interface's motion. opts:
+--   Kind    "pill" (a button with words: a chevron slides in at its left end), "slab" (a leaning
+--           face: what is on it nudges along), "round" (a ring opens round it), "tile" (corner
+--           brackets close in), "row" (an accent bar grows on its left end and the content nudges
+--           right), "flat" (an icon over its name: the icon lifts and a short line grows under
+--           the name), "plain" (no marker: a tab)
+--   Face    what lights up and what the band sweeps across (found by name when not given:
+--           Face, then Fill, then the button itself); false for nothing
+--   Grow    how big it gets under the pointer (1.025; 1 for a row)
+--   Dip     how small a press makes it (0.97)
+--   Nudge   a list of things that move along under the pointer, NudgeX pixels (4)
+--   Accent  the colour of the marker (yellow; the icon's own for "flat"), Ring for "round"
+--   Sweep   false for no band
+-- Touch players get the press and the flash, with nothing that needs a hover.
+function Kit.press(b: GuiButton, opts: { [string]: any }?)
+	if b:GetAttribute("Pressable") then
 		return
 	end
-	wobbleLoop = true
-	RunService.Heartbeat:Connect(function(dt)
-		wobbleClock += dt
-		local t = wobbleClock
-		for g, w in wobbles do
-			if not g.Parent then
-				wobbles[g] = nil
-				continue
-			end
-			if not g.Visible then
-				continue
-			end
-			local since = t - w.kick
-			local kick = if since < 0.6 then math.sin(since * 28) * (1 - since / 0.6) else 0
-			local sway = 0 -- nothing sways on its own any more; buttons still wiggle under the pointer
-			if w.canTurn then
-				g.Rotation = math.floor((sway * w.amount + kick * 5) * 10 + 0.5) / 10
-			elseif w.face then
-				if not w.faceScale then
-					w.faceScale = Kit.new("UIScale", { Name = "Wobble", Parent = w.face })
+	b:SetAttribute("Pressable", true)
+	local o = opts or {}
+	local kind: string = o.Kind or "pill"
+	local grow: number = o.Grow or (if kind == "row" or kind == "flat" then 1 else 1.025)
+	local dip: number = o.Dip or (if kind == "row" then 0.985 else 0.97)
+	local scale = b:FindFirstChild("Press")
+	if not (scale and scale:IsA("UIScale")) then
+		scale = Kit.new("UIScale", { Name = "Press", Parent = b })
+	end
+	local press = scale :: UIScale
+	local over, down = false, false
+	local function face(): GuiObject?
+		if o.Face == false then
+			return nil
+		end
+		local f = o.Face or b:FindFirstChild("Face") or b:FindFirstChild("Fill")
+		if f and f:IsA("GuiObject") then
+			return f
+		end
+		return b
+	end
+	local lit: GuiObject? = nil
+	local function litLayer(): GuiObject?
+		if lit and lit.Parent then
+			return lit
+		end
+		local f = face()
+		lit = if f then layerOver(f, "Lit") else nil
+		return lit
+	end
+	-- what is nudged along, and where each rests
+	local nudged: { [GuiObject]: UDim2 } = {}
+	local function nudge(on: boolean)
+		local list: { any } = o.Nudge or {}
+		local dx: number = o.NudgeX or 4
+		for _, g in list do
+			if typeof(g) == "Instance" and g:IsA("GuiObject") then
+				local home = nudged[g]
+				if not home then
+					home = g.Position
+					nudged[g] = home
 				end
-				local fs = w.faceScale :: UIScale
-				fs.Scale = 1 + sway * w.amount * 0.018 + kick * 0.06
+				tween(g, if on then M.Hover else M.Leave, {
+					Position = if on then (home :: UDim2) + UDim2.fromOffset(dx, o.NudgeY or 0) else home,
+				})
 			end
 		end
-	end)
-end
-
--- Makes `g` sway on its own by about `amount` degrees (1.6 if not given; 0 only wiggles on hover).
-function Kit.wobbly(g: GuiObject, amount: number?)
-	local w = wobbles[g]
-	if not w then
-		local face = g:FindFirstChild("Face")
-		w = {
-			amount = 0,
-			phase = math.random() * math.pi * 2,
-			kick = -10,
-			canTurn = canTurn(g),
-			face = if face and face:IsA("GuiObject") then face else nil,
-		}
-		wobbles[g] = w
-		startWobble()
-		-- icons and labels are often added just after the button is made: look again shortly
-		task.defer(function()
-			local ww = wobbles[g]
-			if ww then
-				ww.canTurn = canTurn(g)
-			end
-		end)
 	end
-	local ww = w :: Wob
-	ww.amount = amount or 1.6
-end
-
--- A quick wiggle, as when the pointer comes over a button.
-function Kit.wiggle(g: GuiObject)
-	if not wobbles[g] then
-		Kit.wobbly(g, 0)
-	end
-	local w = wobbles[g]
-	if w then
-		w.kick = wobbleClock
-	end
-end
-
-local function pressable(b: GuiButton)
-	local scale = Kit.new("UIScale", { Name = "Press", Parent = b })
-	local hovering, pressed = false, false
-	local function sink(down: boolean)
-		local lip = b:GetAttribute("Lip")
-		if type(lip) ~= "number" or lip <= 0 then
-			return
-		end
-		for _, name in { "Face", "Content" } do
-			local f = b:FindFirstChild(name)
-			if f and f:IsA("GuiObject") then
-				local baseY = f:GetAttribute("BaseY")
-				if type(baseY) ~= "number" then
-					baseY = f.Position.Y.Offset
-					f:SetAttribute("BaseY", baseY)
+	local function marker(on: boolean)
+		local info = if on then M.Hover else M.Leave
+		if kind == "pill" then
+			local mark = b:FindFirstChild("Chevron") :: Frame?
+			if on and not mark then
+				-- only where the words leave room at the round end
+				local h = b.AbsoluteSize.Y
+				local content = b:FindFirstChild("Content")
+				local list = content and content:FindFirstChildOfClass("UIListLayout")
+				local used = if list then list.AbsoluteContentSize.X else b.AbsoluteSize.X
+				if h <= 0 or (b.AbsoluteSize.X - used) / 2 < h * 0.62 + 4 then
+					return
 				end
-				local p = f.Position
-				f.Position =
-					UDim2.new(p.X.Scale, p.X.Offset, p.Y.Scale, (baseY :: number) + (if down then lip - 1 else 0))
+				local color: Color3 = if b:IsA("TextButton") then b.TextColor3 else T.White
+				mark = chevron(b, color, math.floor(h * 0.3), b.ZIndex + 2)
+				local m = mark :: Frame
+				m:SetAttribute("Home", h * 0.42)
+				m.Position = UDim2.new(0, h * 0.42 - 6, 0.5, 0)
 			end
+			if mark then
+				local m = mark :: Frame
+				local x: number = m:GetAttribute("Home") :: any or 12
+				if b:IsA("TextButton") then
+					for _, s in m:GetChildren() do
+						if s:IsA("Frame") then
+							s.BackgroundColor3 = b.TextColor3
+						end
+					end
+				end
+				tween(m, info, { Position = UDim2.new(0, if on then x else x - 6, 0.5, 0) })
+				fadeKids(m, info, if on then 0 else 1)
+			end
+		elseif kind == "tile" then
+			local layer = focusBrackets(b, o.Accent or T.Yellow)
+			for _, corner in layer:GetChildren() do
+				if corner:IsA("Frame") then
+					local home = corner:GetAttribute("Home")
+					if typeof(home) == "UDim2" then
+						local inward = if corner.Name == "tl" then 4 else -4
+						tween(corner, info, {
+							Position = if on then home else home + UDim2.fromOffset(inward, inward),
+						})
+					end
+					fadeKids(corner, info, if on then 0 else 1)
+				end
+			end
+		elseif kind == "round" then
+			local host = face() or b
+			local ring, stroke = focusRing(host, o.Ring or T.Ink)
+			tween(ring, info, { Size = if on then UDim2.new(1, 8, 1, 8) else UDim2.fromScale(1, 1) })
+			tween(stroke, info, { Transparency = if on then 0.35 else 1 })
+		elseif kind == "row" then
+			local bar = b:FindFirstChild("Accent") :: Frame?
+			if not bar then
+				local made = Kit.new("Frame", {
+					Name = "Accent",
+					BackgroundColor3 = T.Yellow,
+					BorderSizePixel = 0,
+					Size = UDim2.fromOffset(3, 0),
+					Position = UDim2.new(0, 4, 0.5, 0),
+					AnchorPoint = Vector2.new(0, 0.5),
+					ZIndex = 4,
+					Parent = b,
+				})
+				made:SetAttribute("KeepColors", true)
+				Kit.corner(made, "pill")
+				bar = made
+			end
+			local a = bar :: Frame
+			-- on the picked (yellow) row the bar is dark
+			a.BackgroundColor3 = if b:GetAttribute("Selected") then T.Dark else (o.Accent or T.Yellow)
+			tween(a, info, { Size = UDim2.new(0, 3, if on then 0.5 else 0, 0) })
+		elseif kind == "flat" then
+			local line = b:FindFirstChild("Underline") :: Frame?
+			if not line then
+				local made = Kit.new("Frame", {
+					Name = "Underline",
+					BackgroundColor3 = o.Accent or T.Yellow,
+					BorderSizePixel = 0,
+					Size = UDim2.fromOffset(0, 3),
+					Position = UDim2.new(0.5, 0, 1, -1),
+					AnchorPoint = Vector2.new(0.5, 1),
+					ZIndex = 3,
+					Parent = b,
+				})
+				made:SetAttribute("KeepColors", true)
+				Kit.corner(made, "pill")
+				line = made
+			end
+			tween(line :: Frame, info, { Size = UDim2.fromOffset(if on then 22 else 0, 3) })
 		end
+		nudge(on)
 	end
-	local function hop()
-		local art = b:FindFirstChild("IconArt", true)
-		if art and art:IsA("GuiObject") then
-			local baseY = art:GetAttribute("BaseY")
-			if type(baseY) ~= "number" then
-				baseY = art.Position.Y.Offset
-				art:SetAttribute("BaseY", baseY)
-			end
-			local p = art.Position
-			art.Position = UDim2.new(p.X.Scale, p.X.Offset, p.Y.Scale, (baseY :: number) - 4)
-			TweenService:Create(art, TweenInfo.new(0.35, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out), {
-				Position = UDim2.new(p.X.Scale, p.X.Offset, p.Y.Scale, baseY :: number),
-			}):Play()
+	local function hover(on: boolean)
+		over = on
+		tween(press, if on then M.Hover else M.Leave, { Scale = if on then grow else 1 })
+		local l = if on then litLayer() else lit
+		if l then
+			tween(l, if on then M.Hover else M.Leave, { [alphaKey(l)] = if on then 1 - HOVER_GLOW else 1 })
 		end
+		if on and o.Sweep ~= false and kind ~= "row" and kind ~= "flat" then
+			local f = face()
+			if f then
+				sweepOnce(f)
+			end
+		end
+		marker(on)
 	end
 	b.MouseEnter:Connect(function()
-		hovering = true
-		TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Scale = 1.06 }):Play()
-		hop()
-		Kit.wiggle(b)
+		if touchOnly() or over then
+			return
+		end
+		hover(true)
 	end)
 	b.MouseLeave:Connect(function()
-		hovering = false
-		if pressed then
-			pressed = false
-			sink(false)
+		down = false
+		if over then
+			hover(false)
+		else
+			tween(press, M.Leave, { Scale = 1 })
 		end
-		TweenService:Create(scale, TweenInfo.new(0.15), { Scale = 1 }):Play()
 	end)
 	b.MouseButton1Down:Connect(function()
-		pressed = true
-		sink(true)
-		TweenService:Create(scale, TweenInfo.new(0.06), { Scale = 0.96 }):Play()
-	end)
-	b.MouseButton1Up:Connect(function()
-		if pressed then
-			pressed = false
-			sink(false)
+		down = true
+		tween(press, M.Press, { Scale = dip })
+		-- a short flash that fades
+		local l = litLayer()
+		if l then
+			local key = alphaKey(l);
+			(l :: any)[key] = 1 - FLASH
+			tween(l, M.Flash, { [key] = if over then 1 - HOVER_GLOW else 1 })
 		end
 	end)
+	local function settle()
+		down = false
+		tween(press, M.Settle, { Scale = if over then grow else 1 })
+	end
+	b.MouseButton1Up:Connect(settle)
 	b.Activated:Connect(function()
-		-- a squash and a springy rebound
-		scale.Scale = 0.9
-		TweenService:Create(scale, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-			Scale = if hovering then 1.06 else 1,
-		}):Play()
+		if down then
+			settle()
+		end
 	end)
+end
+local pressable = Kit.press
+
+-- Things that come in one after another. A row, a card or a tile marks itself as it is made
+-- (Kit.mark), and when a menu opens or its tab changes, what was made since then comes in: each
+-- fades up out of what is behind it and slides a few pixels in from the side, a few hundredths of
+-- a second after the one before.
+local made = 0
+
+-- Marks `g` as something that comes in with its menu.
+function Kit.mark(g: GuiObject)
+	made += 1
+	g:SetAttribute("Born", made)
+end
+
+-- How many things have been marked so far (pass it to Kit.revealIn later).
+function Kit.born(): number
+	return made
+end
+
+-- The colour behind `g`: the nearest card or surface it lies on.
+local function behindOf(g: Instance): Color3
+	local cur = g.Parent
+	while cur and not cur:IsA("LayerCollector") do
+		if cur:IsA("GuiObject") then
+			local cut = cur:FindFirstChild("Cut")
+			if cut and cut:IsA("GuiObject") and cut.BackgroundTransparency < 0.5 then
+				return cut.BackgroundColor3
+			end
+			if cur:IsA("Frame") and cur.BackgroundTransparency < 0.5 and cur.Name ~= "Dim" then
+				return Kit.colorOf(cur)
+			end
+		end
+		cur = cur.Parent
+	end
+	return T.Cream
+end
+
+-- The round corners `g` is drawn with (its own, its face's or its card's).
+local function cornerOf(g: Instance): UDim?
+	for _, name in { "Fill", "Face", "Cut" } do
+		local f = g:FindFirstChild(name)
+		local c = f and f:FindFirstChildOfClass("UICorner")
+		if c then
+			return c.CornerRadius
+		end
+	end
+	local own = g:FindFirstChildOfClass("UICorner")
+	return if own then own.CornerRadius else nil
+end
+
+-- Brings `items` in one after another. opts: Delay (before the first, 0), Step (between them,
+-- 0.035), DX and DY (where they come from: 18 pixels to the right), Max (how many get it: 18; the
+-- rest just show), Behind (the colour they fade up out of; found when not given).
+function Kit.reveal(items: { GuiObject }, opts: { [string]: any }?)
+	local o = opts or {}
+	local step: number = o.Step or 0.035
+	local first: number = o.Delay or 0
+	local dx: number, dy: number = o.DX or 18, o.DY or 0
+	for i, g in items do
+		if i > (o.Max or 18) or not g.Parent then
+			break
+		end
+		local at = first + (i - 1) * step
+		local info = later(TweenInfo.new(0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), at)
+		-- what moves: the thing itself, or what is in it when a layout places it
+		local laid = g.Parent:FindFirstChildOfClass("UIListLayout") or g.Parent:FindFirstChildOfClass("UIGridLayout")
+		local movers: { GuiObject } = {}
+		if laid then
+			for _, c in g:GetChildren() do
+				if c:IsA("GuiObject") then
+					table.insert(movers, c)
+				end
+			end
+		else
+			table.insert(movers, g)
+		end
+		-- a veil in the colour behind it, over all of it, that clears
+		local veil = Kit.new("Frame", {
+			Name = "Veil",
+			BackgroundColor3 = o.Behind or behindOf(g),
+			BorderSizePixel = 0,
+			Size = UDim2.fromScale(1, 1),
+			ZIndex = 40,
+			Parent = g,
+		})
+		veil:SetAttribute("KeepColors", true)
+		local corner = cornerOf(g)
+		if corner then
+			Kit.new("UICorner", { CornerRadius = corner, Parent = veil })
+		end
+		if laid then
+			table.insert(movers, veil)
+		end
+		for _, m in movers do
+			local home = m.Position
+			m.Position = home + UDim2.fromOffset(dx, dy)
+			tween(m, info, { Position = home })
+		end
+		tween(veil, info, { BackgroundTransparency = 1 })
+		task.delay(at + 0.3, function()
+			veil:Destroy()
+		end)
+	end
+end
+
+-- Brings in what was marked inside `container` after `since` (Kit.born()), in the order it is
+-- laid out: down a list, across a grid.
+function Kit.revealIn(container: Instance, since: number, opts: { [string]: any }?)
+	local found: { GuiObject } = {}
+	local function walk(inst: Instance)
+		local kids = inst:GetChildren()
+		if inst:FindFirstChildOfClass("UIListLayout") or inst:FindFirstChildOfClass("UIGridLayout") then
+			table.sort(kids, function(a, b)
+				local la = if a:IsA("GuiObject") then a.LayoutOrder else 0
+				local lb = if b:IsA("GuiObject") then b.LayoutOrder else 0
+				return la < lb
+			end)
+		end
+		for _, c in kids do
+			if c:IsA("GuiObject") and c.Visible then
+				local born = c:GetAttribute("Born")
+				if type(born) == "number" and born > since then
+					table.insert(found, c)
+				end
+				walk(c)
+			end
+		end
+	end
+	walk(container)
+	Kit.reveal(found, opts)
+end
+
+-- Slides a picked pill over from one button to another: `to`'s face (named Face unless `name`
+-- says) starts where `from` is and runs over to its own place. The buttons it passes are lifted
+-- over it while it runs, so their words stay on top. Does nothing before the buttons are laid out.
+function Kit.glide(from: GuiObject?, to: GuiObject, name: string?)
+	local face = to:FindFirstChild(name or "Face")
+	if not from or from == to or not (face and face:IsA("GuiObject")) then
+		return
+	end
+	local w = from.AbsoluteSize.X
+	if w <= 0 or to.AbsoluteSize.X <= 0 then
+		return
+	end
+	local homePos = face:GetAttribute("GlidePos")
+	local homeSize = face:GetAttribute("GlideSize")
+	if typeof(homePos) ~= "UDim2" or typeof(homeSize) ~= "UDim2" then
+		homePos, homeSize = face.Position, face.Size
+		face:SetAttribute("GlidePos", homePos)
+		face:SetAttribute("GlideSize", homeSize)
+	end
+	local pos, size = homePos :: UDim2, homeSize :: UDim2
+	-- the picked one under the rest, so the pill runs under their words
+	local parent = to.Parent
+	if parent then
+		local base = to:GetAttribute("GlideZ")
+		if type(base) ~= "number" then
+			base = to.ZIndex
+		end
+		for _, c in parent:GetChildren() do
+			if c:IsA("GuiObject") and c ~= to and c.ZIndex == base then
+				c:SetAttribute("GlideZ", base)
+				c.ZIndex = (base :: number) + 1
+			end
+		end
+		to:SetAttribute("GlideZ", base)
+		to.ZIndex = base :: number
+	end
+	local dx = from.AbsolutePosition.X - to.AbsolutePosition.X
+	face.Position = UDim2.new(pos.X.Scale, pos.X.Offset + dx, pos.Y.Scale, pos.Y.Offset)
+	face.Size = UDim2.new(0, w, size.Y.Scale, size.Y.Offset)
+	tween(face, M.Glide, { Position = pos, Size = size })
+end
+
+-- Where a menu goes while it closes: a screen of its own beside the interface, at the same scale,
+-- so what is closing is out of the way of anything that looks for the menu by name.
+local leaving: ScreenGui? = nil
+local function leavingGui(): ScreenGui
+	if leaving and leaving.Parent then
+		return leaving
+	end
+	local gui = Kit.root()
+	local g = Instance.new("ScreenGui")
+	g.Name = "MaplewickClosing"
+	g.ResetOnSpawn = false
+	g.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	g.IgnoreGuiInset = gui.IgnoreGuiInset
+	g.DisplayOrder = gui.DisplayOrder + 1
+	local scale = Instance.new("UIScale")
+	scale.Name = "Scale"
+	scale.Parent = g
+	local main = gui:FindFirstChild("Scale")
+	if main and main:IsA("UIScale") then
+		scale.Scale = main.Scale
+		main:GetPropertyChangedSignal("Scale"):Connect(function()
+			scale.Scale = main.Scale
+		end)
+	end
+	g.Parent = gui.Parent
+	leaving = g
+	return g
 end
 
 -- A button's face: a pill in one colour, shaded across, with a thin line of a deeper tone round
@@ -1949,8 +2612,7 @@ function Kit.iconButton(icon: string, caption: string?, props: { [string]: any }
 			Parent = tag,
 		})
 	end
-	pressable(b)
-	Kit.wobbly(b, if p.Wobble == nil then 2 else p.Wobble)
+	pressable(b, { Kind = "round", Ring = p.Ring })
 	if onClick then
 		b.Activated:Connect(onClick)
 	end
@@ -1958,7 +2620,8 @@ function Kit.iconButton(icon: string, caption: string?, props: { [string]: any }
 end
 
 -- A chunky progress bar: a dark outlined track with a shaded fill. props: Parent, Size, Position,
--- LayoutOrder, Track (the empty part's colour). Returns the track and the fill.
+-- LayoutOrder, Track (the empty part's colour), Ticks (notches cutting it into that many even
+-- parts). Returns the track and the fill.
 function Kit.bar(props: { [string]: any }, ratio: number, color: Color3): (Frame, Frame)
 	local size: UDim2 = props.Size or UDim2.new(1, 0, 0, 14)
 	local h = math.max(6, size.Y.Offset)
@@ -1983,6 +2646,21 @@ function Kit.bar(props: { [string]: any }, ratio: number, color: Color3): (Frame
 		Color = color,
 		Radius = false,
 	})
+	-- Ticks = n cuts it into n even parts with thin notches across it
+	local n: number = props.Ticks or 0
+	for i = 1, n - 1 do
+		Kit.new("Frame", {
+			Name = "Notch",
+			BackgroundColor3 = T.Black,
+			BackgroundTransparency = 0.45,
+			BorderSizePixel = 0,
+			Size = UDim2.new(0, 2, 1, 0),
+			Position = UDim2.fromScale(i / n, 0),
+			AnchorPoint = Vector2.new(0.5, 0),
+			ZIndex = 3,
+			Parent = track,
+		})
+	end
 	return track, fill
 end
 
@@ -2487,6 +3165,8 @@ function Kit.hexBadge(value: string, props: { [string]: any }?): (Frame, TextLab
 	})
 	Kit.corner(inner, "round")
 	Kit.rim(inner, T.White, 1, 0.82)
+	-- the marks of a dial round the inside of the ring, a longer one at each quarter
+	Kit.ticks(inner, 24, { Major = 6, Length = 3, Inset = 3, Thick = 2, Transparency = 0.72, ZIndex = z })
 	Kit.new("TextLabel", {
 		Name = "Label",
 		Text = p.Label or "LEVEL",
@@ -2529,7 +3209,7 @@ function Kit.menuButton(icon: string, caption: string, props: { [string]: any }?
 	})
 	b:SetAttribute("KitButton", true)
 	local px = math.floor(b.Size.Y.Offset * 0.56)
-	Icons.make(icon, px, {
+	local art = Icons.make(icon, px, {
 		Name = "IconArt",
 		Parent = b,
 		Position = UDim2.new(0.5, -px / 2, 0, 4),
@@ -2547,7 +3227,8 @@ function Kit.menuButton(icon: string, caption: string, props: { [string]: any }?
 		Position = UDim2.new(0, 0, 1, -22),
 		Parent = b,
 	})
-	pressable(b)
+	-- the icon lifts and a short line in its colour grows under the name
+	pressable(b, { Kind = "flat", Face = false, Nudge = { art }, NudgeX = 0, NudgeY = -3, Accent = p.Color })
 	if onClick then
 		b.Activated:Connect(onClick)
 	end
@@ -2583,7 +3264,8 @@ function Kit.roundButton(icon: string, props: { [string]: any }?, onClick: (() -
 		Color = T.White,
 		Hole = T.Glass,
 	})
-	pressable(b)
+	-- (the dark glass is the same in both looks, so its ring is white in both)
+	pressable(b, { Kind = "round", Ring = T.White })
 	if onClick then
 		b.Activated:Connect(onClick)
 	end
@@ -2649,7 +3331,8 @@ function Kit.bigButton(text: string, icon: string, props: { [string]: any }?, on
 	if not p.TextColor then
 		Kit.outlineText(label, darker(color, 0.62), 1.5)
 	end
-	pressable(b)
+	-- under the pointer the band sweeps along the slab and the icon and words move on a little
+	pressable(b, { Kind = "slab", Grow = 1.02, Nudge = { label }, NudgeX = 5 })
 	if onClick then
 		b.Activated:Connect(onClick)
 	end
@@ -2808,14 +3491,11 @@ function Kit.row(props: { [string]: any }, onClick: (() -> ())?): (GuiObject, Fr
 	end
 	if onClick and row:IsA("TextButton") then
 		row.Activated:Connect(onClick)
-		local scale = Kit.new("UIScale", { Parent = row })
-		row.MouseEnter:Connect(function()
-			TweenService:Create(scale, TweenInfo.new(0.12), { Scale = 1.02 }):Play()
-		end)
-		row.MouseLeave:Connect(function()
-			TweenService:Create(scale, TweenInfo.new(0.12), { Scale = 1 }):Play()
-		end)
+		-- under the pointer: an accent bar grows on its left end and what is on it moves right a little
+		pressable(row, { Kind = "row", Face = face, Nudge = { inner }, NudgeX = 4 })
 	end
+	-- it comes in with its menu
+	Kit.mark(row)
 	return row, inner
 end
 
@@ -2825,6 +3505,32 @@ function Kit.setRowSelected(row: GuiObject, on: boolean)
 	if face and face:IsA("Frame") then
 		local rest = row:GetAttribute("Rest")
 		Kit.paint(face, if on then T.Yellow elseif type(rest) == "string" then Color3.fromHex(rest) else T.Card)
+		-- the picked row carries a band of dark hatching toward its right end, fading out to the
+		-- left, inside its straight part
+		local band = face:FindFirstChild("PickedHatch")
+		if on and not band then
+			local h = if row.Size.Y.Offset > 0 then row.Size.Y.Offset else 58
+			local made = Kit.hatch({
+				Name = "PickedHatch",
+				Parent = face,
+				Size = UDim2.fromOffset(96, math.max(8, h - 16)),
+				Position = UDim2.new(1, -(math.min(h / 2, 16) + 2), 0.5, 0),
+				AnchorPoint = Vector2.new(1, 0.5),
+				Color = T.Dark,
+				Transparency = 0.86,
+				Fade = "left",
+				ZIndex = 1,
+			})
+			if made then
+				made:SetAttribute("KeepColors", true)
+			end
+		elseif not on and band then
+			band:Destroy()
+		end
+	end
+	local accent = row:FindFirstChild("Accent")
+	if accent and accent:IsA("Frame") then
+		accent.BackgroundColor3 = if on then T.Dark else T.Yellow
 	end
 	row:SetAttribute("Selected", on)
 	for _, d in row:GetDescendants() do
@@ -2887,12 +3593,23 @@ function Kit.segments(
 	local buttons: { [string]: TextButton } = {}
 	local faces: { [string]: Frame } = {}
 	local labels: { [string]: TextLabel } = {}
+	local picked: string? = nil
+	-- the yellow pill slides over from the tab that was picked to the new one
 	local function select(id: string)
+		local was = picked
+		picked = id
 		for bid, b in buttons do
 			local on = bid == id
 			Kit.paint(faces[bid], nil, if on then 0 else 1)
-			labels[bid].TextColor3 = if on then T.Dark else T.Ink
+			local hover = b:FindFirstChild("Hover")
+			if hover and hover:IsA("Frame") then
+				hover.BackgroundTransparency = 1
+			end
+			tween(labels[bid], M.Hover, { TextColor3 = if on then T.Dark else T.Ink })
 			b:SetAttribute("Selected", on)
+		end
+		if was and was ~= id and buttons[was] and buttons[id] then
+			Kit.glide(buttons[was], buttons[id])
 		end
 	end
 	local th = h - RIM * 2 - 4
@@ -2937,6 +3654,28 @@ function Kit.segments(
 		Kit.shade(face)
 		buttons[t.id] = b
 		faces[t.id] = face
+		-- under the pointer a tab that isn't picked lifts a faint pill of its own, and a press
+		-- dips it
+		local hover = Kit.new("Frame", {
+			Name = "Hover",
+			BackgroundColor3 = T.Ink,
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			Size = UDim2.new(1, 44, 1, 0),
+			Position = UDim2.fromOffset(-22, 0),
+			ZIndex = 2,
+			Parent = b,
+		})
+		Kit.corner(hover, "pill")
+		b.MouseEnter:Connect(function()
+			if picked ~= t.id and not touchOnly() then
+				tween(hover, M.Hover, { BackgroundTransparency = 0.9 })
+			end
+		end)
+		b.MouseLeave:Connect(function()
+			tween(hover, M.Leave, { BackgroundTransparency = 1 })
+		end)
+		pressable(b, { Kind = "plain", Face = false, Grow = 1, Dip = 0.96 })
 		b.Activated:Connect(function()
 			select(t.id)
 			onSelect(t.id)
@@ -3012,7 +3751,7 @@ function Kit.tile(icon: string, caption: string, props: { [string]: any }?, onCl
 		ZIndex = 2,
 		Parent = b,
 	})
-	pressable(b)
+	pressable(b, { Kind = "tile" })
 	if onClick then
 		b.Activated:Connect(onClick)
 	end
@@ -3051,7 +3790,7 @@ function Kit.backButton(props: { [string]: any }, onClick: (() -> ())?): TextBut
 	Kit.shade(face)
 	Kit.detail(face, { Tone = T.Dark, ToneAlpha = 0.88, ToneWidth = 34 })
 	local ipx = math.floor(h * 0.56)
-	Icons.make(props.Icon or "back", ipx, {
+	local art = Icons.make(props.Icon or "back", ipx, {
 		Name = "IconArt",
 		Parent = b,
 		Position = UDim2.new(0.5, -ipx / 2, 0.5, -ipx / 2),
@@ -3060,7 +3799,8 @@ function Kit.backButton(props: { [string]: any }, onClick: (() -> ())?): TextBut
 		ZIndex = z + 1,
 	})
 	b:SetAttribute("KitButton", true)
-	pressable(b)
+	-- under the pointer the band runs along the slab and the arrow leans the way out
+	pressable(b, { Kind = "slab", Nudge = { art }, NudgeX = if props.Icon == "close" then 0 else -4 })
 	if onClick then
 		b.Activated:Connect(onClick)
 	end
@@ -3244,10 +3984,18 @@ Kit.MenuSize = UDim2.fromOffset(1180, 580)
 --     opts.OnTab), and the panel under them
 --   a dialog (opts.Dialog) is a small panel in the middle with its title inside and a close
 --     button, over a lighter dim: a question, a welcome
--- The panel is a charcoal card with round corners, a thin line round it a few pixels out, a
--- tone of halftone dots across it and a band of hatching in its corner. A dialog's title sits
--- on a darker band across its top, with the red way out at the right. `color` is the menu's own
--- colour: the drifting shapes, the hatching and the mark beside the title.
+-- The panel is a charcoal card with round corners, a thin line round it a few pixels out with
+-- brackets in the menu's colour on its corners, a tone of halftone dots across it and a band of
+-- hatching in its corner. A full menu's title has its name again, large and faint, behind it,
+-- and a rule under it that ends in a dot, with opts.Caption (a few words) set wide after it. A
+-- dialog's title sits on a darker band across its top, with the red way out at the right.
+-- `color` is the menu's own colour: the drifting shapes, the hatching, the brackets and the mark
+-- beside the title.
+-- It comes in by itself: the black fades up, the card slides in a little from the right while
+-- the title and the way back come from the left, and then the rows and cards in it come in one
+-- after another (whatever was marked with Kit.mark while the menu was being filled). A change of
+-- tab brings in what the tab made the same way. Kit.closePanel takes it away, quicker and the
+-- other way round.
 -- Returns { root, card, body, close, title, header, selectTab }. `root` holds everything, so
 -- hiding or destroying it takes the lot.
 function Kit.panel(
@@ -3263,6 +4011,7 @@ function Kit.panel(
 	local accent = color or T.Blue
 	local dialog = o.Dialog == true
 	local BAR = if dialog then 0 else 62 -- the strip above a full menu's panel
+	local since = Kit.born()
 	local holder = Kit.box({
 		Name = titleText,
 		Size = UDim2.fromOffset(size.X.Offset, size.Y.Offset + BAR),
@@ -3271,20 +4020,23 @@ function Kit.panel(
 		Parent = gui,
 	})
 	holder.ZIndex = 5
+	holder:SetAttribute("Panel", true)
 	-- the rest of the screen goes dark behind a menu, and clicks don't go through it
+	local dimTo = if dialog then 0.45 else 0.06
 	local dim = Kit.frame({
 		Name = "Dim",
 		Size = UDim2.fromOffset(6000, 6000),
 		Position = UDim2.fromScale(0.5, 0.5),
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Color = T.Black,
-		Transparency = if dialog then 0.45 else 0.06,
+		Transparency = dimTo,
 		Radius = false,
 		ZIndex = 0,
 		Parent = holder,
 	})
 	dim.Active = true
 	local seed = #titleText * 31 + string.byte(titleText, 1)
+	local glows: { GuiObject } = {}
 	if dialog then
 		-- lighter behind the dialog, darker toward the screen's edges
 		Kit.vignette(dim, 0.6, 0.3, 0.3)
@@ -3306,7 +4058,7 @@ function Kit.panel(
 			Parent = wide,
 		})
 		screenGlow.ZIndex = 0
-		Kit.glow(screenGlow, accent, 0.26, "tl")
+		table.insert(glows, Kit.glow(screenGlow, accent, 0.26, "tl"))
 		-- and a faint tone of dots over the whole backdrop
 		Kit.dots(screenGlow, T.Ink, 0.965, false, true)
 		local low = Kit.box({
@@ -3317,7 +4069,7 @@ function Kit.panel(
 			Parent = wide,
 		})
 		low.ZIndex = 0
-		Kit.glow(low, accent, 0.14, "br")
+		table.insert(glows, Kit.glow(low, accent, 0.14, "br"))
 		Kit.motion(holder, accent, seed)
 	end
 	local _ = icon
@@ -3342,6 +4094,18 @@ function Kit.panel(
 	})
 	Kit.corner(edge, ROUND)
 	Kit.rim(edge, T.Line, 1.5)
+	-- brackets in the menu's colour on the line's corners, just outside it
+	local marks = Kit.brackets(rim, {
+		Name = "Corners",
+		Corners = { "tl", "tr", "bl", "br" },
+		Arm = if dialog then 12 else 16,
+		Thick = 2,
+		Inset = -6,
+		Color = accent,
+		Transparency = 0.1,
+		ZIndex = 1,
+	})
+	marks:SetAttribute("KeepColors", true)
 	local frame = Kit.box({
 		Name = "Card",
 		Size = UDim2.new(1, -GAP * 2, 1, -GAP * 2),
@@ -3421,6 +4185,20 @@ function Kit.panel(
 			TextSize = 25,
 			Color = T.Ink,
 		})
+		-- a band of hatching across the band's far end, fading toward the title
+		local band = Kit.hatch({
+			Name = "BandHatch",
+			Parent = header,
+			Size = UDim2.fromOffset(110, HEAD - 28),
+			Position = UDim2.new(1, -92, 0.5, 0),
+			AnchorPoint = Vector2.new(1, 0.5),
+			Color = accent,
+			Transparency = 0.6,
+			Fade = "left",
+		})
+		if band then
+			band:SetAttribute("KeepColors", true)
+		end
 		close = Kit.backButton({
 			Parent = frame,
 			Icon = "close",
@@ -3431,6 +4209,13 @@ function Kit.panel(
 		})
 	else
 		header = Kit.box({ Name = "Header", Parent = holder, Size = UDim2.new(1, 0, 0, BAR - 10) })
+		-- the menu's name again, large and faint, behind its title
+		Kit.ghost(titleText, {
+			Parent = header,
+			Position = UDim2.fromOffset(118, -30),
+			TextSize = 80,
+			Transparency = 0.962,
+		})
 		-- the way back, at the top left
 		close = Kit.backButton({ Parent = header, Position = UDim2.fromOffset(2, 2) })
 		-- a leaning mark in the menu's colour, then its name
@@ -3452,30 +4237,39 @@ function Kit.panel(
 			TextSize = 30,
 			Color = T.Ink,
 		})
-		-- a hairline in the menu's colour under the name, fading out to the right
-		local rule = Kit.new("Frame", {
+		-- under the name a rule that ends in a dot, a short stroke of the menu's colour at its
+		-- start, and a few words set wide after it
+		Kit.rule({
 			Name = "Rule",
-			BackgroundColor3 = accent,
-			BorderSizePixel = 0,
-			Size = UDim2.fromOffset(280, 2),
-			Position = UDim2.fromOffset(100, 49),
 			Parent = header,
+			Size = UDim2.fromOffset(250, 6),
+			Position = UDim2.fromOffset(100, 49),
+			AnchorPoint = Vector2.new(0, 0.5),
+			Color = T.Line,
+			Accent = accent,
+			AccentLength = 30,
 		})
-		rule:SetAttribute("KeepColors", true)
-		Kit.new("UIGradient", {
-			Name = "Falloff",
-			Transparency = NumberSequence.new({
-				NumberSequenceKeypoint.new(0, 0.1),
-				NumberSequenceKeypoint.new(0.6, 0.6),
-				NumberSequenceKeypoint.new(1, 1),
-			}),
-			Parent = rule,
-		})
+		if o.Caption then
+			Kit.caption(o.Caption, {
+				Name = "Caption",
+				Parent = header,
+				Position = UDim2.fromOffset(362, 49),
+				AnchorPoint = Vector2.new(0, 0.5),
+				TextSize = 11,
+			})
+		end
 		if o.Tabs then
 			local _bar, select = Kit.segments(o.Tabs, function(id: string)
+				local mark = Kit.born()
 				if o.OnTab then
 					o.OnTab(id)
 				end
+				-- what the tab made comes in the way a menu's rows do, a little quicker
+				task.defer(function()
+					if holder.Parent then
+						Kit.revealIn(holder, mark, { DX = 14, Step = 0.025 })
+					end
+				end)
 			end, { Parent = header, Position = UDim2.new(1, -2, 0, 2), AnchorPoint = Vector2.new(1, 0) })
 			selectTab = select
 		end
@@ -3488,7 +4282,18 @@ function Kit.panel(
 		Position = UDim2.fromOffset(26, top),
 		Parent = frame,
 	})
-	local self = {
+	-- what covers the card while it comes in and goes out: the backdrop's own black
+	local veil = Kit.new("Frame", {
+		Name = "Veil",
+		BackgroundColor3 = T.Black,
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 30,
+		Parent = rim,
+	})
+	Kit.corner(veil, ROUND)
+	local self: any = {
 		root = holder,
 		card = frame,
 		body = body,
@@ -3496,15 +4301,104 @@ function Kit.panel(
 		title = title,
 		header = header,
 		selectTab = selectTab,
+		dialog = dialog,
+		dim = dim,
+		dimTo = dimTo,
+		rim = rim,
+		veil = veil,
+		glows = glows,
 	}
 	close.Activated:Connect(function()
 		if onClose then
 			onClose()
 		else
-			holder.Visible = false
+			Kit.closePanel(self)
+		end
+	end)
+	-- in it comes
+	dim.BackgroundTransparency = 1
+	tween(dim, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { BackgroundTransparency = dimTo })
+	for _, g in glows do
+		g.BackgroundTransparency = 1
+		tween(g, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { BackgroundTransparency = 0 })
+	end
+	local rimHome = rim.Position
+	rim.Position = rimHome + (if dialog then UDim2.fromOffset(0, 18) else UDim2.fromOffset(40, 0))
+	tween(rim, M.In, { Position = rimHome })
+	veil.BackgroundTransparency = 0
+	tween(veil, TweenInfo.new(0.24, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { BackgroundTransparency = 1 })
+	if not dialog then
+		local headHome = header.Position
+		header.Position = headHome - UDim2.fromOffset(30, 0)
+		tween(header, later(M.In, 0.03), { Position = headHome })
+		title.TextTransparency = 1
+		tween(title, later(M.In, 0.05), { TextTransparency = 0 })
+	end
+	-- and what the menu was filled with comes in after it, once it has been filled
+	task.defer(function()
+		if holder.Parent then
+			Kit.revealIn(holder, since, { Delay = 0.1 })
 		end
 	end)
 	return self
+end
+
+-- Takes a menu made by Kit.panel away: the card slides back the way it came under the black,
+-- the title goes off the other way and the black clears, quicker than it came in. What is
+-- closing moves to a screen of its own at once and nothing on it can be pressed, so the menu is
+-- gone for everything else straight away. `now` drops it without the motion.
+function Kit.closePanel(p: any, now: boolean?)
+	local root: GuiObject? = p and p.root
+	if not root or not root.Parent then
+		return
+	end
+	if now then
+		root:Destroy()
+		return
+	end
+	pcall(function()
+		(root :: any).Interactable = false
+	end)
+	if p.dim then
+		p.dim.Active = false
+	end
+	root.Parent = leavingGui()
+	if p.dim then
+		tween(p.dim, M.Out, { BackgroundTransparency = 1 })
+	end
+	for _, g in p.glows or {} do
+		tween(g, M.Out, { BackgroundTransparency = 1 })
+	end
+	local motion = root:FindFirstChild("Motion")
+	if motion and motion:IsA("GuiObject") then
+		motion.Visible = false
+	end
+	local dots = root:FindFirstChild("Dots", true)
+	if dots and dots:IsA("ImageLabel") and dots.Parent and dots.Parent.Name == "Screen" then
+		dots.Visible = false
+	end
+	if p.rim then
+		tween(p.rim, M.Out, {
+			Position = p.rim.Position + (if p.dialog then UDim2.fromOffset(0, 12) else UDim2.fromOffset(28, 0)),
+		})
+	end
+	if p.veil then
+		tween(p.veil, M.Out, { BackgroundTransparency = 0 })
+	end
+	if not p.dialog and p.header then
+		tween(p.header, M.Out, { Position = p.header.Position - UDim2.fromOffset(24, 0) })
+		if p.title then
+			tween(p.title, M.Out, { TextTransparency = 1 })
+		end
+		for _, d in p.header:GetDescendants() do
+			if d:IsA("TextLabel") and d ~= p.title then
+				tween(d, M.Out, { TextTransparency = 1 })
+			end
+		end
+	end
+	task.delay(0.16, function()
+		root:Destroy()
+	end)
 end
 
 -- Shapes ---------------------------------------------------------------------------------------------
@@ -3815,7 +4709,7 @@ function Kit.choice(text: string, props: { [string]: any }?, onClick: (() -> ())
 	b.MouseLeave:Connect(function()
 		lit(false)
 	end)
-	pressable(b)
+	pressable(b, { Face = holder })
 	if onClick then
 		b.Activated:Connect(onClick)
 	end
@@ -4059,7 +4953,10 @@ function Kit.tabs(
 	bar.ScrollBarThickness = 0
 	Kit.list(bar, 6, true)
 	local buttons = {}
+	local picked: string? = nil
 	local function select(id: string)
+		local was = picked
+		picked = id
 		for bid, b in buttons do
 			if bid == id then
 				-- the picked tab is yellow with dark words
@@ -4067,6 +4964,10 @@ function Kit.tabs(
 			else
 				Kit.setButtonColor(b, T.PaperDark, T.Ink)
 			end
+		end
+		-- and its yellow slides over from the one picked before
+		if was and was ~= id and buttons[was] and buttons[id] then
+			Kit.glide(buttons[was], buttons[id])
 		end
 	end
 	for i, t in list do
@@ -4112,18 +5013,22 @@ function Kit.swatch(color: Color3, size: number?, onClick: (() -> ())?, props: {
 	return b
 end
 
--- A panel or card springs into view.
+-- A card comes into view: it grows the last few hundredths to its size, quick and with no bounce.
+-- (A full menu or a dialog from Kit.panel brings itself in.)
 function Kit.popIn(frame: GuiObject)
-	local s = frame:FindFirstChild("PopScale") or Kit.new("UIScale", { Name = "PopScale", Parent = frame })
-	s.Scale = 0.6
 	frame.Visible = true
-	TweenService:Create(s, TweenInfo.new(0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	if frame:GetAttribute("Panel") then
+		return
+	end
+	local s = frame:FindFirstChild("PopScale") or Kit.new("UIScale", { Name = "PopScale", Parent = frame })
+	s.Scale = 0.94
+	tween(s, M.In, { Scale = 1 })
 end
 
 -- Shrinks a frame away, then runs `done` (which usually hides or destroys it).
 function Kit.popOut(frame: GuiObject, done: (() -> ())?)
 	local s = frame:FindFirstChild("PopScale") or Kit.new("UIScale", { Name = "PopScale", Parent = frame })
-	TweenService:Create(s, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Scale = 0.7 }):Play()
+	tween(s, M.Out, { Scale = 0.94 })
 	task.delay(0.15, function()
 		if done then
 			done()
@@ -4131,7 +5036,8 @@ function Kit.popOut(frame: GuiObject, done: (() -> ())?)
 	end)
 end
 
--- Slides a frame in from (dx, dy) pixels away, after `delay` seconds.
+-- Slides a frame in from (dx, dy) pixels away, after `delay` seconds, easing out to rest (no
+-- overshoot).
 function Kit.slideIn(frame: GuiObject, dx: number, dy: number, delay: number?)
 	local home = frame:GetAttribute("Home")
 	local target: UDim2
@@ -4142,19 +5048,16 @@ function Kit.slideIn(frame: GuiObject, dx: number, dy: number, delay: number?)
 		frame:SetAttribute("Home", target)
 	end
 	frame.Position = target + UDim2.fromOffset(dx, dy)
-	local tween = TweenService:Create(
-		frame,
-		TweenInfo.new(0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, delay or 0),
-		{ Position = target }
-	)
-	tween:Play()
+	tween(frame, later(TweenInfo.new(0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), delay or 0), {
+		Position = target,
+	})
 end
 
--- A quick swell, for a number that just changed.
+-- A quick swell, for a number that just changed: it settles back with no bounce.
 function Kit.bump(frame: GuiObject, amount: number?)
 	local s = frame:FindFirstChild("Bump") or Kit.new("UIScale", { Name = "Bump", Parent = frame })
-	s.Scale = 1 + (amount or 0.15)
-	TweenService:Create(s, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	s.Scale = 1 + (amount or 0.12)
+	tween(s, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Scale = 1 })
 end
 
 -- Coins that fly from a point on screen into a counter, the way games show money coming in.

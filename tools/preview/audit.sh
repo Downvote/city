@@ -16,7 +16,7 @@ panel:CityPanel:ready earned loading event event:talk event:one event:two event:
 creator:profile creator:bodies creator:parts creator:items creator:items:ask creator:items:no creator:avatars
 creator:wearing creator:skin creator:shape creator:outfits creator:outfits:saved creator:people creator:profile:set creator:end build:rooms build:floors build:roofs build:fences
 build:paths build:buildings build:bought build:sell build:view build:placing build:placing:touch
-build:keepsakes build:keepsakes:empty"
+build:keepsakes build:keepsakes:empty hover hover:menu"
 COUNT=$(echo $SCENES | wc -w)
 status=0
 for look in dark light; do

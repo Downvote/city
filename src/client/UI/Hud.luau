@@ -161,6 +161,21 @@ function Hud.start()
 		Radius = "pill",
 	})
 	local fill = Kit.frame({ Parent = track, Size = UDim2.fromScale(0, 1), Color = T.Yellow, Radius = "pill" })
+	-- notches at each quarter, like a gauge
+	for i = 1, 3 do
+		local notch = Kit.new("Frame", {
+			Name = "Notch",
+			BackgroundColor3 = T.Glass,
+			BackgroundTransparency = 0.35,
+			BorderSizePixel = 0,
+			Size = UDim2.new(0, 2, 1, 0),
+			Position = UDim2.fromScale(i / 4, 0),
+			AnchorPoint = Vector2.new(0.5, 0),
+			ZIndex = 3,
+			Parent = track,
+		})
+		notch:SetAttribute("KeepColors", true)
+	end
 	local nextLine = Kit.text("", {
 		Parent = card,
 		Size = UDim2.new(1, -150, 0, 18),
@@ -559,6 +574,17 @@ function Hud.start()
 	local tiles = {}
 	local function menuButton(icon: string, caption: string, color: Color3, order: number, fn: () -> ()): TextButton
 		local b = Kit.menuButton(icon, caption, { Parent = row, LayoutOrder = order, Color = color }, fn)
+		-- a small index number at its top left
+		Kit.text(Kit.index(order), {
+			Name = "Index",
+			Parent = b,
+			Size = UDim2.fromOffset(20, 12),
+			Position = UDim2.fromOffset(6, 2),
+			TextSize = 10,
+			Font = Kit.Fonts.Body,
+			Color = T.InkSoft,
+			Wrap = false,
+		})
 		table.insert(tiles, b)
 		return b
 	end
@@ -643,7 +669,10 @@ function Hud.start()
 			return
 		end
 		aside = on
-		local ease = TweenInfo.new(0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		-- off quickly, back in easing out to rest
+		local ease = if on
+			then TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+			else TweenInfo.new(0.34, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		TweenService:Create(menu, ease, { Position = UDim2.new(0, if on then -460 else 0, 1, 0) }):Play()
 		TweenService:Create(buildButton, ease, { Position = UDim2.new(1, if on then 320 else 20, 1, 0) }):Play()
 		local quests = Quests.root()
@@ -663,14 +692,20 @@ function Hud.start()
 	Kit.slideIn(corner, 240, 0, 0.2)
 	Kit.slideIn(menu, -480, 0, 0.25)
 	Kit.slideIn(buildButton, 260, 0, 0.3)
+	-- and the quick menu's tiles rise into it one after another
 	for i, tile in tiles do
-		local bounce = Kit.new("UIScale", { Name = "Intro", Parent = tile })
-		bounce.Scale = 0
-		TweenService:Create(
-			bounce,
-			TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, 0.25 + i * 0.06),
-			{ Scale = 1 }
-		):Play()
+		for _, name in { "IconArt", "Caption" } do
+			local part = tile:FindFirstChild(name)
+			if part and part:IsA("GuiObject") then
+				local home = part.Position
+				part.Position = home + UDim2.fromOffset(0, 18)
+				Kit.tween(
+					part,
+					TweenInfo.new(0.36, Enum.EasingStyle.Quint, Enum.EasingDirection.Out, 0, false, 0.3 + i * 0.05),
+					{ Position = home }
+				)
+			end
+		end
 	end
 
 	-- now and then the coin on the money pill flips over
@@ -684,7 +719,7 @@ function Hud.start()
 					Size = UDim2.fromOffset(2, full.Y.Offset),
 				}):Play()
 				task.wait(0.15)
-				TweenService:Create(coinArt, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+				TweenService:Create(coinArt, TweenInfo.new(0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
 					Size = full,
 				}):Play()
 			end

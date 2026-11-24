@@ -419,15 +419,14 @@ function CityPanel.close()
 	end
 	unbind = {}
 	if panel then
-		panel.root:Destroy()
+		Kit.closePanel(panel)
 		panel = nil
 	end
 end
 
 function CityPanel.open()
 	CityPanel.close()
-	panel = Kit.panel("City hall", Kit.MenuSize, CityPanel.close, "hall", Kit.Theme.Purple)
-	Kit.popIn(panel.root)
+	panel = Kit.panel("City hall", Kit.MenuSize, CityPanel.close, "hall", Kit.Theme.Purple, { Caption = "Your town" })
 	draw()
 	table.insert(unbind, State.on("coins", onCoins))
 	table.insert(unbind, State.on("villagers", draw))

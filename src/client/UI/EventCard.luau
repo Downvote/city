@@ -480,6 +480,11 @@ function EventCard.start(_hud: any)
 	Kit.corner(holder, "pill")
 	Kit.rim(holder, T.White, 1.5, 0.78)
 	Kit.softShadow(holder, 1)
+	-- brackets on two corners, just outside the pill
+	Kit.brackets(
+		holder,
+		{ Corners = { "tl", "br" }, Arm = 12, Thick = 2, Inset = -6, Color = T.White, Transparency = 0.5 }
+	)
 	Kit.disc({
 		Name = "Mark",
 		Parent = holder,

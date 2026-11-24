@@ -91,6 +91,16 @@ run("placing a piece of furniture from the tray", function()
 	end
 	check(back, "putting it away brings every bar back where it was")
 	check(not said.Text:find("R turns it", 1, true), "and the hint goes back to the tool's")
+	-- the red back button beside the hint does what a right click does (the user: "add a back
+	-- button while having a building being put down that does the same as right click")
+	cards[1].Activated:Fire()
+	frames(2)
+	Sim.advance(0.5)
+	local away = ui:FindFirstChild("Put it away", true)
+	check(away ~= nil and Fake.shown(away), "holding a piece shows a back button beside the hint")
+	press("Put it away")
+	frames(2)
+	check(BuildMode.state.placing == nil and shown("Catalog"), "and it puts the piece away as a right click does")
 end)
 
 run("drawing a wall by dragging", function()

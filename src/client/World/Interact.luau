@@ -170,10 +170,11 @@ function Interact.bubble(at: Vector3, text: string, rare: boolean)
 	limit.MaxSize = Vector2.new(250, 200)
 	limit.Parent = label
 	local scale = Instance.new("UIScale")
-	scale.Scale = 0.6
+	scale.Scale = 0.85
 	scale.Parent = card
 	gui.Parent = p
-	TweenService:Create(scale, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 })
+	-- it grows the last bit to its size, quick and with no bounce, like the interface's cards
+	TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Scale = 1 })
 		:Play()
 	task.delay(seconds, function()
 		if gui.Parent then

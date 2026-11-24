@@ -13,7 +13,7 @@ end
 
 function Welcome.close()
 	if panel then
-		panel.root:Destroy()
+		Kit.closePanel(panel)
 		panel = nil
 	end
 end
@@ -82,7 +82,6 @@ function Welcome.open(hud: any)
 		Size = UDim2.new(1, 0, 0, 0),
 		LayoutOrder = 7,
 	})
-	Kit.popIn(panel.root)
 end
 
 return Welcome

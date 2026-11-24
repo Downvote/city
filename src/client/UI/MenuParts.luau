@@ -35,19 +35,19 @@ function MenuParts.card(parent: Instance, accent: Color3, props: { [string]: any
 		Cut = 16,
 	})
 	Kit.glow(card, accent, 0.22, "tr")
+	-- brackets on two of its corners, just inside its edge
+	Kit.brackets(card, { Corners = { "tl", "br" }, Arm = 12, Inset = 7, Color = T.Line, ZIndex = 1 })
 	local pad = p.Pad or MenuParts.Pad
 	if p.Caption then
-		Kit.text(p.Caption, {
+		Kit.caption(p.Caption, {
 			Name = "Caption",
 			Parent = card,
 			Size = UDim2.new(1, -pad * 2, 0, 16),
 			Position = UDim2.fromOffset(pad, 8),
-			TextSize = 13,
-			Font = Kit.Fonts.Bold,
-			Color = T.InkSoft,
-			Wrap = false,
+			TextSize = 11,
 		})
 	end
+	Kit.mark(card)
 	local inside = Kit.box({
 		Name = "Inside",
 		Parent = card,
@@ -77,48 +77,57 @@ function MenuParts.rowSize(height: number?): UDim2
 	return UDim2.new(1, -12, 0, height or MenuParts.Row)
 end
 
--- A dim caption over a group of rows, a hairline running on from it, and a count or a note at
--- the right end. (`accent` is kept for callers; a caption is quiet and carries no colour.)
+-- A caption over a group of rows: its number in the group's colour, the words set wide in
+-- capitals, a count or a note at the right end, and under them a hairline that ends in a dot.
+-- The groups in one list are numbered 01, 02 and on in the order they are made.
 function MenuParts.heading(parent: Instance, text: string, accent: Color3, order: number, right: string?): Frame
-	local _ = accent
-	local h = Kit.box({ Name = "Heading", Parent = parent, Size = UDim2.new(1, -12, 0, 24), LayoutOrder = order })
-	local words = Kit.text(text, {
-		Name = "Title",
+	local n = 1
+	for _, c in parent:GetChildren() do
+		if c.Name == "Heading" then
+			n += 1
+		end
+	end
+	local h = Kit.box({ Name = "Heading", Parent = parent, Size = UDim2.new(1, -12, 0, 28), LayoutOrder = order })
+	Kit.title(Kit.index(n), {
+		Name = "Index",
 		Parent = h,
-		Size = UDim2.fromOffset(0, 18),
-		AutomaticSize = Enum.AutomaticSize.X,
-		Position = UDim2.fromOffset(6, 4),
+		Size = UDim2.fromOffset(24, 16),
+		Position = UDim2.fromOffset(6, 3),
 		TextSize = 14,
-		Font = Kit.Fonts.Bold,
-		Color = T.InkSoft,
+		Tint = accent,
 		Wrap = false,
 	})
-	local _2 = words
-	-- the hairline, from after the words to before the count
-	local line = Kit.new("Frame", {
-		Name = "Rule",
-		BackgroundColor3 = T.Line,
-		BackgroundTransparency = 0.45,
-		BorderSizePixel = 0,
-		Size = UDim2.new(1, -(#text * 8 + 22) - (if right then 48 else 8), 0, 1),
-		Position = UDim2.fromOffset(#text * 8 + 18, 13),
+	Kit.caption(text, {
+		Name = "Title",
 		Parent = h,
+		Size = UDim2.new(1, -(if right then 96 else 40), 0, 16),
+		Position = UDim2.fromOffset(32, 3),
+		TextSize = 11,
 	})
-	local _3 = line
 	if right then
 		Kit.text(right, {
 			Name = "Count",
 			Parent = h,
-			Size = UDim2.new(0, 40, 0, 18),
-			Position = UDim2.new(1, -6, 0, 4),
+			Size = UDim2.new(0, 60, 0, 16),
+			Position = UDim2.new(1, -6, 0, 3),
 			AnchorPoint = Vector2.new(1, 0),
 			TextSize = 14,
-			Font = Kit.Fonts.Bold,
+			Font = Kit.Fonts.Title,
 			Color = T.InkSoft,
 			AlignX = Enum.TextXAlignment.Right,
 			Wrap = false,
 		})
 	end
+	Kit.rule({
+		Name = "Rule",
+		Parent = h,
+		Size = UDim2.new(1, -6, 0, 6),
+		Position = UDim2.fromOffset(6, 23),
+		AnchorPoint = Vector2.new(0, 0.5),
+		Color = T.Line,
+		Transparency = 0.35,
+	})
+	Kit.mark(h)
 	return h
 end
 
@@ -145,16 +154,17 @@ function MenuParts.stat(
 		Cut = 12,
 	})
 	Kit.disc({ Name = "Mark", Parent = tile, Size = 24, Position = UDim2.fromOffset(10, 9), Color = color, Icon = icon })
-	Kit.text(label, {
+	Kit.caption(label, {
 		Name = "Label",
 		Parent = tile,
-		Size = UDim2.new(1, -48, 0, 18),
-		Position = UDim2.fromOffset(42, 12),
-		TextSize = 14,
-		Color = T.InkSoft,
-		Wrap = false,
-	}).TextTruncate =
-		Enum.TextTruncate.AtEnd
+		Size = UDim2.new(1, -52, 0, 16),
+		Position = UDim2.fromOffset(42, 13),
+		TextSize = 11,
+	})
+	-- a bracket in its colour on the top right corner
+	Kit.brackets(tile, { Corners = { "tr" }, Arm = 8, Inset = 6, Color = color, Transparency = 0.25, ZIndex = 2 })
+		:SetAttribute("KeepColors", true)
+	Kit.mark(tile)
 	local row = Kit.box({
 		Name = "Value",
 		Parent = tile,
@@ -224,6 +234,7 @@ function MenuParts.dial(value: string, label: string, color: Color3, props: { [s
 	})
 	Kit.corner(inner, "round")
 	Kit.rim(inner, T.Line, 1, 0.3)
+	Kit.ticks(inner, 24, { Major = 6, Length = 3, Inset = 3, Color = T.Line, Transparency = 0.2 })
 	Kit.text(label, {
 		Name = "Label",
 		Parent = dial,
@@ -301,6 +312,7 @@ function MenuParts.empty(icon: string, title: string, hint: string, props: { [st
 		AlignX = Enum.TextXAlignment.Center,
 		AlignY = Enum.TextYAlignment.Top,
 	})
+	Kit.mark(box)
 	return box
 end
 
@@ -356,6 +368,7 @@ function MenuParts.hint(text: string, props: { [string]: any }?): Frame
 		AnchorPoint = p.AnchorPoint,
 		LayoutOrder = p.LayoutOrder,
 	})
+	Kit.mark(strip)
 	return strip
 end
 
@@ -381,6 +394,7 @@ function MenuParts.note(text: string, accent: Color3, props: { [string]: any }?)
 		Color = T.InkSoft,
 		AlignY = Enum.TextYAlignment.Top,
 	})
+	Kit.mark(box)
 	return box
 end
 
@@ -429,7 +443,9 @@ function MenuParts.progress(label: string, numbers: string, ratio: number, props
 		Parent = box,
 		Size = UDim2.new(1, 0, 0, 12),
 		Position = UDim2.fromOffset(0, 26),
+		Ticks = 4,
 	}, ratio, if ratio >= 1 then T.Green else p.Color or T.Blue)
+	Kit.mark(box)
 	return box
 end
 

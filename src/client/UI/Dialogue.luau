@@ -301,6 +301,27 @@ function Dialogue.open(opts: { [string]: any }?): any
 	Kit.corner(box, 16)
 	Kit.rim(box, T.White, 1.5, 0.78)
 	Kit.softShadow(box, 1.2)
+	-- brackets on its four corners, just inside the edge, and a band of hatching in its bottom
+	-- right corner
+	Kit.brackets(box, {
+		Corners = { "tl", "tr", "bl", "br" },
+		Arm = 14,
+		Thick = 2,
+		Inset = 7,
+		Color = T.White,
+		Transparency = 0.55,
+		ZIndex = 6,
+	})
+	Kit.hatch({
+		Parent = box,
+		Size = UDim2.fromOffset(110, 8),
+		Position = UDim2.new(1, -28, 1, -8),
+		AnchorPoint = Vector2.new(1, 1),
+		Color = T.White,
+		Transparency = 0.86,
+		Fade = "left",
+		ZIndex = 6,
+	})
 	local inner = Kit.box({ Name = "Inner", Parent = box, Size = UDim2.new(1, 0, 0, 0) })
 	inner.AutomaticSize = Enum.AutomaticSize.Y
 	inner.ZIndex = 6
@@ -338,6 +359,18 @@ function Dialogue.open(opts: { [string]: any }?): any
 	local foot = Kit.box({ Name = "Foot", Parent = inner, Size = UDim2.new(1, 0, 0, 36) })
 	foot.LayoutOrder = 3
 	foot.ZIndex = 6
+	-- a hairline over the foot that ends in a dot at each end
+	Kit.rule({
+		Name = "Rule",
+		Parent = foot,
+		Size = UDim2.new(1, 0, 0, 6),
+		Position = UDim2.fromOffset(0, -4),
+		AnchorPoint = Vector2.new(0, 0.5),
+		Color = T.White,
+		Transparency = 0.84,
+		Dots = "both",
+		ZIndex = 6,
+	})
 	local note = Kit.new("TextLabel", {
 		Name = "Note",
 		Text = o.Caption or "",
@@ -370,6 +403,10 @@ function Dialogue.open(opts: { [string]: any }?): any
 		ZIndex = 7,
 	})
 	more.Visible = false
+	-- it bobs on the spot, slowly, while it is up
+	TweenService:Create(more, TweenInfo.new(0.55, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+		Position = more.Position + UDim2.fromOffset(0, 4),
+	}):Play()
 	-- the name tags on the box's top edge
 	local left = tag(box, "Speaker", false)
 	local right = tag(box, "Other", true)

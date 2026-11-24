@@ -328,15 +328,14 @@ function News.close()
 	end
 	unbind = {}
 	if panel then
-		panel.root:Destroy()
+		Kit.closePanel(panel)
 		panel = nil
 	end
 end
 
 function News.open()
 	News.close()
-	panel = Kit.panel("Town news", Kit.MenuSize, News.close, "news", Kit.Theme.Teal)
-	Kit.popIn(panel.root)
+	panel = Kit.panel("Town news", Kit.MenuSize, News.close, "news", Kit.Theme.Teal, { Caption = "Today in town" })
 	draw()
 	table.insert(unbind, State.on("log", draw))
 	table.insert(unbind, State.on("requests", draw))

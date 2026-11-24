@@ -282,7 +282,7 @@ end
 
 function Goals.close()
 	if panel then
-		panel.root:Destroy()
+		Kit.closePanel(panel)
 		panel = nil
 		list = nil
 		detail = nil
@@ -293,13 +293,12 @@ function Goals.open()
 	Goals.close()
 	panel = Kit.panel("Town goals", Kit.MenuSize, function()
 		Goals.close()
-	end, "trophy", T.Yellow)
+	end, "trophy", T.Yellow, { Caption = "What to work toward" })
 	-- the picked goal on the left, the list down the right
 	local _, inside = MenuParts.card(panel.body, T.Yellow)
 	detail = inside
 	list = MenuParts.list(panel.body)
 	fill()
-	Kit.popIn(panel.root)
 end
 
 for _, key in { "goals", "stats", "villagers", "rel", "coins" } do

@@ -126,6 +126,7 @@ local INNER_H = 160 -- what the tray holds
 -- the one place that says so: set it to false and the categories go back under the cards.
 local CATEGORIES_ON_TOP = true
 local WELL_PAD = 4 -- round the tiles in their well
+local SUB_NOTE = 190 -- kept at the well's right end for the picked category's number and name
 local WELL_H = TILE_H + WELL_PAD * 2
 local CATALOG_H = PAD + WELL_H + PAD + INNER_H + PAD
 -- the bars' bottoms, measured up from the bottom of the screen
@@ -156,6 +157,8 @@ local ui: Frame
 local tray: Frame -- the catalog's lower part, which the tray's pages fill
 local trayBody: Frame
 local subBar: ScrollingFrame
+local subCaption: TextLabel? = nil -- the picked category's number and name, at the well's right end
+local subIndex: TextLabel? = nil
 local mainButtons: { [string]: TextButton } = {}
 local subButtons: { [string]: TextButton } = {}
 local toolButtons: { [string]: TextButton } = {}
@@ -338,26 +341,11 @@ local function priceTag(parent: Instance, price: number, y: number): Frame
 	return tag
 end
 
--- What a card does under the mouse: it lifts a little and sinks when pressed.
+-- What a card does under the mouse: the motion every tile in the interface has (Kit.press): a
+-- band of light across its face, corner brackets closing in, a dip and a flash when pressed.
 local function hoverable(card: GuiButton): UIScale
-	local scale = Kit.new("UIScale", { Parent = card })
-	local over = false
-	card.MouseEnter:Connect(function()
-		over = true
-		TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Scale = 1.05 }):Play()
-	end)
-	card.MouseLeave:Connect(function()
-		over = false
-		TweenService:Create(scale, TweenInfo.new(0.15), { Scale = 1 }):Play()
-	end)
-	card.MouseButton1Down:Connect(function()
-		TweenService:Create(scale, TweenInfo.new(0.06), { Scale = 0.96 }):Play()
-	end)
-	card.MouseButton1Up:Connect(function()
-		TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Back), { Scale = if over then 1.05 else 1 })
-			:Play()
-	end)
-	return scale
+	Kit.press(card, { Kind = "tile" })
+	return card:FindFirstChild("Press") :: UIScale
 end
 
 -- A card in the tray: a picture on the upper face, its name and price on the band under it.
@@ -390,11 +378,11 @@ local function card(
 	})
 	local scale = hoverable(b)
 	b.Activated:Connect(onPick)
-	-- cards pop into the tray one after another
-	scale.Scale = 0.4
+	-- cards come into the tray one after another, growing the last few hundredths to their size
+	scale.Scale = 0.9
 	TweenService:Create(
 		scale,
-		TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, math.min(order, 14) * 0.025),
+		TweenInfo.new(0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out, 0, false, math.min(order, 14) * 0.022),
 		{ Scale = 1 }
 	):Play()
 	return b, pic, foot
@@ -1233,9 +1221,28 @@ end
 -- choosing tabs -------------------------------------------------------------------------------------------
 
 local function openSub(id: string)
+	local was = subTab
 	subTab = id
 	for sid, b in subButtons do
 		Kit.setButtonColor(b, if sid == id then T.Yellow else T.Paper, if sid == id then T.Dark else T.Ink)
+	end
+	if was and was ~= id and subButtons[was] and subButtons[id] then
+		Kit.glide(subButtons[was], subButtons[id])
+	end
+	-- at the right end of the well: which one of how many, and its name set wide
+	local main
+	for _, m in MAIN do
+		if m.id == mainTab then
+			main = m
+		end
+	end
+	if main and subCaption and subIndex then
+		for i, sub in main.subs do
+			if sub.id == id then
+				subIndex.Text = Kit.index(i) .. " / " .. Kit.index(#main.subs)
+				subCaption.Text = Kit.spaced(sub.name)
+			end
+		end
 	end
 	if id == "walls" or id == "fences" then
 		s.wallMode = "line"
@@ -1263,9 +1270,14 @@ local function openSub(id: string)
 end
 
 local function openMain(id: string)
+	local was = mainTab
 	mainTab = id
 	for mid, b in mainButtons do
 		Kit.setButtonColor(b, if mid == id then T.Yellow else T.Paper, if mid == id then T.Dark else T.Ink)
+	end
+	-- the yellow slides over from the group picked before
+	if was and was ~= id and mainButtons[was] and mainButtons[id] then
+		Kit.glide(mainButtons[was], mainButtons[id])
 	end
 	clear(subBar)
 	subButtons = {}
@@ -1519,9 +1531,12 @@ end
 local AWAY: { [string]: number } =
 	{ Dock = 460, Catalog = 460, Tools = 460, Floors = 460, Pill = -140, CameraTip = -140 }
 local HINT_HOME = UDim2.new(0, EDGE + 12, 1, -HINT_AT)
-local TOUCH_W = 2 * 52 + GAP -- the two round buttons beside the hint on a touch screen
+-- beside the hint while a piece is held: the red way back (it puts the piece away, as a right
+-- click does) and, on a touch screen, a round button that turns it
+local HOLD_W = 84
+local TURN_W = 52
 local function hintLow(): UDim2
-	return UDim2.new(0, EDGE + 12 + (if Kit.isTouch() then TOUCH_W + GAP else 0), 1, -(EDGE + 12))
+	return UDim2.new(0, EDGE + 12 + HOLD_W + GAP + (if Kit.isTouch() then TURN_W + GAP else 0), 1, -(EDGE + 12))
 end
 
 -- Is a piece in hand, following the pointer to be placed (from a card, or picked up to move or
@@ -1566,9 +1581,9 @@ local function setHolding(on: boolean, instant: boolean?)
 					end
 				end)
 			else
-				-- back from wherever it is, with the bars' own spring
+				-- back from wherever it is, easing out to rest
 				f.Visible = true
-				TweenService:Create(f, TweenInfo.new(0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+				TweenService:Create(f, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
 					Position = home,
 				}):Play()
 			end
@@ -1580,11 +1595,18 @@ local function setHolding(on: boolean, instant: boolean?)
 	if instant then
 		hintPill.Position = target
 	else
-		TweenService:Create(hintPill, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+		TweenService:Create(hintPill, TweenInfo.new(0.34, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
 			Position = target,
 		}):Play()
 	end
-	touchButtons.Visible = on and Kit.isTouch()
+	-- the way back (and on a touch screen the round button that turns the piece) beside it
+	local touch = Kit.isTouch()
+	local turn = touchButtons:FindFirstChild("Turn it")
+	if turn and turn:IsA("GuiObject") then
+		turn.Visible = touch
+	end
+	touchButtons.Size = UDim2.fromOffset(HOLD_W + (if touch then TURN_W + GAP else 0), 52)
+	touchButtons.Visible = on
 	refreshChrome()
 end
 
@@ -1832,9 +1854,45 @@ function BuildUI.init(exitCallback: () -> ())
 	subBar = Kit.scroll({
 		Name = "Subs",
 		Parent = well,
-		Size = UDim2.new(1, -WELL_PAD * 2, 0, TILE_H),
+		Size = UDim2.new(1, -WELL_PAD * 2 - SUB_NOTE, 0, TILE_H),
 		Position = UDim2.fromOffset(WELL_PAD, WELL_PAD),
 		Axis = Enum.AutomaticSize.X,
+	})
+	-- the picked category at the well's right end: its number in yellow over its name set wide,
+	-- with a rule between them that ends in a dot
+	local note = Kit.box({
+		Name = "SubNote",
+		Parent = well,
+		Size = UDim2.new(0, SUB_NOTE - 16, 1, 0),
+		Position = UDim2.new(1, -12, 0, 0),
+		AnchorPoint = Vector2.new(1, 0),
+	})
+	note.ZIndex = 2
+	subIndex = Kit.title("", {
+		Name = "Index",
+		Parent = note,
+		Size = UDim2.new(1, 0, 0, 22),
+		Position = UDim2.fromOffset(0, 10),
+		TextSize = 20,
+		Tint = T.Yellow,
+		AlignX = Enum.TextXAlignment.Right,
+		Wrap = false,
+	})
+	Kit.rule({
+		Name = "Rule",
+		Parent = note,
+		Size = UDim2.new(1, 0, 0, 6),
+		Position = UDim2.fromOffset(0, 38),
+		AnchorPoint = Vector2.new(0, 0.5),
+		Color = T.Line,
+		Dots = "both",
+	})
+	subCaption = Kit.caption("", {
+		Name = "Caption",
+		Parent = note,
+		Size = UDim2.new(1, 0, 0, 14),
+		Position = UDim2.fromOffset(0, 46),
+		AlignX = Enum.TextXAlignment.Right,
 	})
 	subBar.ScrollBarThickness = 0
 	Kit.list(subBar, 0, true)
@@ -1891,22 +1949,26 @@ function BuildUI.init(exitCallback: () -> ())
 		Color = T.White,
 		Wrap = false,
 	})
-	-- a touch screen has no R and no right click: while a piece is held, two round buttons beside
-	-- the hint turn it and put it away
+	-- while a piece is held, the way back stands beside the hint for everyone: the red leaning
+	-- button every menu has, and it does what a right click does (the user: "add a back button
+	-- while having a building being put down that does the same as right click"). A touch screen
+	-- has no R either, so a round button beside it turns the piece there.
 	touchButtons = Kit.box({
 		Name = "Holding",
-		Size = UDim2.fromOffset(TOUCH_W, 52),
+		Size = UDim2.fromOffset(HOLD_W, 52),
 		Position = UDim2.new(0, EDGE + 12, 1, -(EDGE + 3)),
 		AnchorPoint = Vector2.new(0, 1),
 		Visible = false,
 		Parent = ui,
 	})
 	Kit.list(touchButtons, GAP, true)
-	Kit.roundButton("rotate", { Name = "Turn it", Parent = touchButtons, Size = 52, LayoutOrder = 1 }, function()
-		BuildMode.rotate(45)
-	end)
-	Kit.roundButton("close", { Name = "Put it away", Parent = touchButtons, Size = 52, LayoutOrder = 2 }, function()
+	local putAway = Kit.backButton({ Parent = touchButtons, Size = UDim2.fromOffset(HOLD_W, 46) }, function()
 		BuildMode.putAway()
+	end)
+	putAway.Name = "Put it away"
+	putAway.LayoutOrder = 0
+	Kit.roundButton("rotate", { Name = "Turn it", Parent = touchButtons, Size = TURN_W, LayoutOrder = 1 }, function()
+		BuildMode.rotate(45)
 	end)
 
 	-- the floors and the view switches, at the right on top of the catalog (level with the tools):

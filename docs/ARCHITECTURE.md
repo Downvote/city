@@ -210,8 +210,12 @@ far from it. Patches are made `PerFrame` a frame within `Distance` plus `Ahead` 
 first; `Step(dt, bends, focus)` on RenderStepped shows those within `Distance` (rising from `HiddenDepth` below),
 sways them in `Workspace.GlobalWind` within `WindReach`, and bends them round every player and plot villager
 within `Folk` (`Bend` studs, `BendAngle`). A change in a plot's `Build` or its `Land` has the patches over it
-conform again 0.6 s later. Five failed steps in a row stop it with a warning; the rest of the game doesn't depend
-on it.
+conform again 0.6 s later. After every step `heal()` puts back in the world every patch the pack
+counts as shown and drops any of them still on its list to be taken out (a patch that came back while sinking stayed
+on that list and was taken out again the moment it rose: the grass that "dosent render sometimes after going out of
+menus"); a camera that jumps gets its grass planned at once. A step that fails is reported now and then and never
+stops the grass; twenty in a row start it over (`reset`: every patch let go, a fresh pack object). The rest of the
+game doesn't depend on it.
 
 ## Pieces and material looks
 
