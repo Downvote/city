@@ -83,7 +83,7 @@ end
 -- cans and gives it the lamp that lights the pavement, so it has none of its own here. The
 -- cabinet and the band take the machine's colours; the rest is one piece, the same on all three.
 local function vending(r: R, body: Color3, band: Color3)
-	r:block(-1.7, 0.3, -1.2, 1.7, 6.3, 1.2, body, "SmoothPlastic")
+	r:block(-1.7, 0.3, -1.2, 1.7, 6.12, 1.2, body, "SmoothPlastic")
 	local window = r:block(-1.45, 2.9, -1.3, 0.8, 5.9, -1.2, SCREEN, "SmoothPlastic")
 	window.name = "Vend"
 	r:glow(window, 0)
@@ -91,7 +91,7 @@ local function vending(r: R, body: Color3, band: Color3)
 	r:block(-1.7, 2.2, -1.25, 1.7, 2.6, -1.2, band, "SmoothPlastic")
 	r:piece(function(p: R)
 		p:block(-1.6, 0, -1.05, 1.6, 0.3, 1.15, DARK, "SmoothPlastic")
-		p:block(-1.76, 6.3, -1.26, 1.76, 6.55, 1.26, DARK, "SmoothPlastic")
+		p:block(-1.73, 6.12, -1.23, 1.73, 6.3, 1.23, DARK, "SmoothPlastic")
 		p:block(-1.55, 2.8, -1.26, 0.9, 6.0, -1.2, SILVER, "SmoothPlastic")
 		p:block(1.0, 2.9, -1.27, 1.45, 5.3, -1.2, SILVER, "SmoothPlastic")
 		for k = 0, 3 do
@@ -187,25 +187,24 @@ end
 -- The front of an outdoor fan unit, round the origin facing local -Z: the fan's dark round, two
 -- bars of its guard and the hub, and a service panel with louvres beside it.
 local function fanFront(p: R, fx: number, fy: number, front: number, d: number)
-	p:cyl(fx, fy, front - 0.04, 0.08, d, "z", BLACK, "SmoothPlastic")
+	p:cyl(fx, fy, front, 0.06, d, "z", BLACK, "SmoothPlastic")
 	for _, dy in { -0.18, 0.18 } do
-		p:block(fx - d / 2 + 0.06, fy + dy - 0.03, front - 0.12, fx + d / 2 - 0.06, fy + dy + 0.03, front - 0.08, SILVER, "SmoothPlastic")
+		p:block(fx - d / 2 + 0.06, fy + dy - 0.03, front - 0.06, fx + d / 2 - 0.06, fy + dy + 0.03, front - 0.03, SILVER, "SmoothPlastic")
 	end
-	p:cyl(fx, fy, front - 0.12, 0.06, d * 0.24, "z", SILVER, "SmoothPlastic")
+	p:cyl(fx, fy, front - 0.045, 0.03, d * 0.24, "z", SILVER, "SmoothPlastic")
 end
 
 -- An air conditioner's outdoor box on a wall: the origin is on the wall at the box's bottom edge
--- and the box hangs out from it on two brackets, its pipes going into the wall. It is overhead,
+-- and the box hangs out from it on two brackets. It is overhead,
 -- so nobody bumps into it.
 M.acUnit = function(r: R)
 	r:piece(function(p: R)
-		p:block(-1.4, 0, -1.1, 1.4, 1.6, 0, CREAM, "SmoothPlastic")
-		fanFront(p, -0.4, 0.8, -1.1, 1.25)
-		p:block(0.55, 0.15, -1.14, 1.25, 1.45, -1.1, shade(CREAM, 0.92), "SmoothPlastic")
+		p:block(-1.4, 0.18, -1.1, 1.4, 1.6, 0, CREAM, "SmoothPlastic")
+		fanFront(p, -0.4, 0.89, -1.1, 1.2)
+		p:block(0.55, 0.33, -1.14, 1.25, 1.45, -1.1, shade(CREAM, 0.92), "SmoothPlastic")
 		for _, sx in { -1, 1 } do
-			p:block(sx * 1.05 - 0.07, -0.22, -1.0, sx * 1.05 + 0.07, 0, 0, DARK, "SmoothPlastic")
+			p:block(sx * 1.05 - 0.07, 0, -1.0, sx * 1.05 + 0.07, 0.18, 0, DARK, "SmoothPlastic")
 		end
-		p:cyl(1.47, 0.35, -0.3, 0.14, 0.14, "x", WHITE, "SmoothPlastic")
 	end)
 end
 
@@ -217,7 +216,9 @@ M.condenser = function(r: R)
 		p:block(-1.7, 0.25, -0.8, 1.7, 3.1, 0.8, CREAM, "SmoothPlastic")
 		fanFront(p, -0.5, 1.7, -0.8, 2)
 		p:block(0.75, 0.5, -0.84, 1.5, 2.9, -0.8, shade(CREAM, 0.92), "SmoothPlastic")
-		p:block(-1.5, 3.1, -0.6, 1.5, 3.22, 0.6, shade(CREAM, 0.8), "SmoothPlastic")
+		for _, z in { -0.4, 0, 0.4 } do
+			p:block(-1.5, 3.1, z - 0.1, 1.5, 3.14, z + 0.1, shade(CREAM, 0.8), "SmoothPlastic")
+		end
 		for _, y in { 0.7, 1.0 } do
 			p:block(1.7, y - 0.06, 0.1, 1.84, y + 0.06, 0.24, WHITE, "SmoothPlastic")
 		end
@@ -254,7 +255,7 @@ M.antennaMast = function(r: R)
 	r:cyl(0, 6.8, 0, 12, 0.4, "y", METAL, "Metal")
 	r:block(-1.6, 9.2, -0.08, 1.6, 9.36, 0.08, METAL, "Metal")
 	r:block(-1, 11, -0.08, 1, 11.16, 0.08, METAL, "Metal")
-	r:block(-0.08, 7.4, -1.2, 0.08, 7.56, 1.2, METAL, "Metal")
+	r:block(-1.3, 7.4, -0.08, 1.3, 7.56, 0.08, METAL, "Metal")
 	r:cyl(0, 12.75, 0, 0.1, 0.7, "y", DARK, "Metal")
 	r:glow(r:ball(0, 13.1, 0, 0.8, rgb(255, 96, 86), "SmoothPlastic"), 0)
 end
@@ -265,13 +266,13 @@ M.satDish = function(r: R)
 	r:cyl(0, 0.9, 0, 1.8, 0.4, "y", DARK, "Metal")
 	r:block(-0.3, 1.7, -0.5, 0.3, 2.0, 0.1, DARK, "Metal")
 	local tilt = CFrame.new(0, 2.5, -0.3) * CFrame.Angles(math.rad(-50), 0, 0)
-	r:cone(0, 0, 0, 0.6, 3, shade(WHITE, 0.9), "SmoothPlastic").cf = tilt
-		* CFrame.new(0, -0.15, 0)
+	r:cone(0, 0, 0, 0.4, 2.6, shade(WHITE, 0.9), "SmoothPlastic").cf = tilt
+		* CFrame.new(0, -0.1, 0)
 		* CFrame.Angles(math.pi, 0, 0)
-	r:boxAt(tilt * CFrame.new(0, 0.15, 0) * CFrame.Angles(0, 0, math.pi / 2), 0.08, 3, 3, WHITE, "SmoothPlastic").shape =
+	r:boxAt(tilt * CFrame.new(0, 0.1, 0) * CFrame.Angles(0, 0, math.pi / 2), 0.08, 3, 3, WHITE, "SmoothPlastic").shape =
 		"Cylinder"
-	r:beam((tilt * CFrame.new(0, 0.19, 1.4)).Position, (tilt * CFrame.new(0, 1.25, 0)).Position, 0.1, 0.1, DARK, "Metal")
-	r:boxAt(tilt * CFrame.new(0, 1.3, 0), 0.26, 0.36, 0.26, DARK, "Metal")
+	r:beam((tilt * CFrame.new(0, 0.14, 1.2)).Position, (tilt * CFrame.new(0, 1.2, 0)).Position, 0.1, 0.1, DARK, "Metal")
+	r:boxAt(tilt * CFrame.new(0, 1.25, 0), 0.26, 0.36, 0.26, DARK, "Metal")
 end
 
 -- Adverts ---------------------------------------------------------------------------------------------
@@ -345,10 +346,10 @@ end
 M.aBoard = function(r: R)
 	local lean = CFrame.new(0, 1.55, -0.35) * CFrame.Angles(math.rad(13), 0, 0)
 	r:piece(function(p: R)
-		p:block(-1.06, 3.04, -0.08, 1.06, 3.16, 0.08, BLACK, "Wood")
+		p:block(-0.98, 2.98, -0.08, 0.98, 3.1, 0.08, BLACK, "Wood")
 		p:boxAt(lean, 2, 3.2, 0.14, DARK, "Wood")
 		p:boxAt(CFrame.new(0, 1.55, 0.35) * CFrame.Angles(math.rad(-13), 0, 0), 2, 3.2, 0.14, DARK, "Wood")
-		p:boxAt(lean * CFrame.new(0, -1.36, -0.13), 1.9, 0.16, 0.12, WOOD, "Wood")
+		p:boxAt(lean * CFrame.new(0, -1.3, -0.1), 1.9, 0.16, 0.06, WOOD, "Wood")
 		for _, sx in { -1, 1 } do
 			p:block(sx * 0.95 - 0.03, 0.87, -0.5, sx * 0.95 + 0.03, 0.93, 0.5, BLACK, "Wood")
 		end
@@ -389,9 +390,9 @@ end
 local function crate(r: R, cf: CFrame)
 	group(r, cf, function(q: R)
 		q:piece(function(p: R)
-			p:block(-0.95, 0, -0.95, 0.95, 1.9, 0.95, WOOD, "WoodPlanks")
+			p:block(-0.85, 0, -0.85, 0.85, 1.7, 0.85, WOOD, "WoodPlanks")
 			for _, c in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
-				p:block(c[1] * 0.95 - 0.14, 0, c[2] * 0.95 - 0.14, c[1] * 0.95 + 0.14, 1.86, c[2] * 0.95 + 0.14, WOOD_DARK, "WoodPlanks")
+				p:block(c[1] * 0.85 - 0.12, 0, c[2] * 0.85 - 0.12, c[1] * 0.85 + 0.12, 1.66, c[2] * 0.85 + 0.12, WOOD_DARK, "WoodPlanks")
 			end
 		end, true)
 	end)
@@ -400,8 +401,8 @@ end
 -- Wooden crates left by a back door, two side by side and one on top.
 M.crateStack = function(r: R)
 	crate(r, CFrame.new(-0.7, 0, 0))
-	crate(r, CFrame.new(-0.55, 1.9, 0) * CFrame.Angles(0, math.rad(14), 0))
-	crate(r, CFrame.new(1.45, 0, 0.3) * CFrame.Angles(0, math.rad(-20), 0))
+	crate(r, CFrame.new(-0.55, 1.7, 0) * CFrame.Angles(0, math.rad(10), 0))
+	crate(r, CFrame.new(1.4, 0, 0.22) * CFrame.Angles(0, math.rad(-12), 0))
 end
 
 -- Bottle crates outside a shop: a stack of three in bright plastic and one beside it, the
@@ -417,7 +418,7 @@ M.drinksCrates = function(r: R)
 		local top = CFrame.new(-0.9, 2.6, 0) * CFrame.Angles(0, math.rad(7), 0)
 		for i = 0, 2 do
 			for j = 0, 1 do
-				p:boxAt(top * CFrame.new(-0.5 + i * 0.5, 0.06, -0.25 + j * 0.5), 0.26, 0.12, 0.26, rgb(80, 120, 90), "SmoothPlastic")
+				p:boxAt(top * CFrame.new(-0.5 + i * 0.5, 0.49, -0.25 + j * 0.5), 0.26, 0.1, 0.26, rgb(80, 120, 90), "SmoothPlastic")
 				p:cyl(0.4 + i * 0.5, 1.06, -0.25 + j * 0.5, 0.12, 0.24, "y", rgb(120, 86, 60), "SmoothPlastic")
 			end
 		end
@@ -483,7 +484,7 @@ M.phoneBooth = function(r: R)
 end
 
 -- A parked scooter, its nose toward local -Z: tyres and hubs, a fork, the footboard, the body
--- and the leg shield in its colour, a seat, handlebars with mirrors, a headlight, a tail light
+-- and the leg shield in its colour, a seat, handlebars with mirrors at their ends, a headlight, a tail light
 -- over the number plate, and its stand. The colour is two parts; the rest is one piece.
 local function scooter(r: R, col: Color3)
 	local lean = CFrame.new(0, 2.1, -1.55) * CFrame.Angles(math.rad(14), 0, 0)
@@ -499,8 +500,7 @@ local function scooter(r: R, col: Color3)
 		p:block(-0.45, 2.1, 0.4, 0.45, 2.4, 2.1, rgb(50, 52, 62), "Metal")
 		p:block(-1, 3.4, -1.3, 1, 3.6, -1.1, DARK, "Metal")
 		for _, sx in { -1, 1 } do
-			p:beam(Vector3.new(sx * 0.8, 3.6, -1.2), Vector3.new(sx * 0.9, 4.1, -1.25), 0.06, 0.06, DARK, "Metal")
-			p:block(sx * 0.9 - 0.16, 4.05, -1.28, sx * 0.9 + 0.16, 4.25, -1.22, SILVER, "Metal")
+			p:block(sx * 0.86 - 0.12, 3.18, -1.36, sx * 0.86 + 0.12, 3.4, -1.3, SILVER, "Metal")
 		end
 		p:boxAt(lean * CFrame.new(0, 0.9, -0.2), 0.5, 0.35, 0.1, rgb(255, 240, 200), "Metal")
 		p:block(-0.25, 1.6, 2.3, 0.25, 1.85, 2.36, rgb(220, 80, 76), "Metal")

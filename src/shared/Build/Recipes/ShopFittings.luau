@@ -339,9 +339,6 @@ local items: { Item } = {
 					end
 				end)
 			end
-			-- a price ticket on a stick
-			r:block(-0.04, 1.4, 1.2, 0.04, 2.3, 1.26, r.c2, "Wood")
-			r:block(-0.4, 2.1, 1.26, 0.4, 2.6, 1.3, C.Paper, "SmoothPlastic")
 		end,
 	},
 	{
