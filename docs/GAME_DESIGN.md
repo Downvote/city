@@ -27,8 +27,8 @@ is, not sources.
    when they have no job or the day is done, and sleep at night. Every couple of
    minutes something happens: two of them quarrel and look to you to settle it, someone wants a lamp by their bed,
    a birthday party, a prank, a tourist leaves a tip.
-4. **Earn and grow.** Payday at 5 PM pays out for every villager who worked, and that is where the money comes
-   from: wages are most of what a town earns. Events, room requests and thank yous are small extras. The town
+4. **Earn and grow.** Villagers earn as they work: while they are at their workplace a few coins come in every
+   few seconds and a coin rises over them. That is where the money comes from: wages are most of what a town earns. Events, room requests and thank yous are small extras. The town
    levels up as it gains people, people in work and value, and each level lets you buy more land.
 
 ## 3. Villagers
@@ -61,7 +61,7 @@ is, not sources.
   workplace as a customer, or stretch and look at the view, then walk back and carry on. Who they are decides it:
   a lazy villager breaks more often and for longer, a focused one hardly at all, a sunny one usually goes to chat
   and an easygoing one to sit. Breaks never run past five, never take more than about a quarter of the day, and
-  never touch their pay; most days a worker is at their station for three quarters of it or more. A villager with
+  a break earns nothing: pay comes for the time at the workplace (section 8); most days a worker is at their station for three quarters of it or more. A villager with
   no job, or one whose day is done, potters: a stroll, a sit, a chat, a look at something, a visit to a staffed
   workplace, a wave. Standing still is rare and short.
 - **Home.** One bed per villager (double and bunk beds sleep two). Furniture within a few steps of their bed is
@@ -117,7 +117,7 @@ own design (`Sim/Life`):
   Friendships and romances show on a villager's page as arrow tags.
 - **Town goals.** A list to work toward (Goals on the dock): neighbours, wishes granted, heart levels, best
   friends, the first couple, growing into a Town and then a City, a full house, and work: two villagers in jobs,
-  six, ten, 5,000 coins earned in wages, a villager at skill 5. Each pays coins when you claim it.
+  six, ten, 15,000 coins earned in wages, a villager at skill 5. Each pays coins when you claim it.
 
 ## 4. Random events
 
@@ -182,7 +182,7 @@ Bloxburg style, all on a grid and all saved:
   (below). Click one, turn it with R, put it down. A ghost of the whole building follows the mouse and
   turns red with the reason when it won't fit or you can't afford it. Each is made of ordinary walls, floors,
   roofs, doors, windows and furniture, so it can be changed piece by piece afterwards, and it costs what its pieces
-  cost (from about 1,600 coins for the park to 6,400 for the family house). The shops and public buildings come
+  cost (from about 820 coins for the park to 3,250 for the family house). The shops and public buildings come
   with their workplace, so they open a job straight away. One undo takes a whole building back.
 
   > also, for buildings, make much more buildings, one for each workspace, and detail them all to be unique, as
@@ -190,7 +190,7 @@ Bloxburg style, all on a grid and all saved:
 
   Twelve, one for each job, each its own shape and colours and as finished as the starting house (120 to 170
   pieces: trim at every window, corner boards, footings, downpipes, lamps, planters, a sign of its trade, and
-  furnished inside down to the clock on the wall), costing about 6,500 to 10,700 coins. Each leaves clear floor
+  furnished inside down to the clock on the wall), costing about 3,350 to 5,500 coins. Each leaves clear floor
   where its worker moves round the station.
   - **Grocer's:** two storeys of brick and cream; the upper floor juts over an arcade where the market stall
     stands; shelves, crates and a till inside, a sitting room and a stock room upstairs.
@@ -338,7 +338,8 @@ another Roblox avatar game. Its layout is taken, drawn our own way.)
   each needing a city level and coins.
 - **Jobs**: twelve workplaces (market stall, café counter, bread oven, flower cart, artist's easel, clinic desk,
   chalkboard, little stage, builder's bench, post office desk, ice cream cart, library desk), one job each.
-- **Payday** at 5 PM pays each working villager `income x mood x skill x liking`.
+- **Wages**: each working villager earns `income x mood x skill x liking` a day, a little at a time while at their
+  workplace (section 8).
 
   > also, it seems like money gain from work is too little. balanced it such that progression is much more based on
   > villagers working
@@ -1500,6 +1501,17 @@ pink haze by day that turns gold through the long afternoon and rose at dusk, a 
 through the haze, and a faint softening far off. The colour grade is warmer all day. The glow on lamps and signs
 stays gentle. Every number is in `Tuning.Look` (`Air`, `SunRays`, `Lens`), and the street previews draw the same
 haze.
+
+### Firs on the hills
+
+> also, make the grass and plants like in the image
+
+(With the picture of a sunset hilltop.) The hills' woods are firs and spruces standing apart: a straight reddish
+trunk under tiers of drooping boughs that get shorter up to a thin spire, dark blue green inside, olive and gold
+where the low sun catches the tops. They come in three sizes: young firs of about 8 studs, firs of 17 and spruces
+of 26, and most of the woods are firs now. The broadleaf trees have a full, soft crown of seven leafy clumps.
+Bushes are clumps dark at the foot and light on top, hedges are clipped with rounded edges, and rocks carry moss.
+Build mode's oak, pine, blossom and swing trees are drawn the same way. Every crown still sways in the wind.
 
 ## 11. Writing
 
