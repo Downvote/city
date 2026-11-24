@@ -250,13 +250,19 @@ function EventEngine.pick(ctx: any, recent: { string }?): any
 	if not choice then
 		return nil
 	end
-	setNames(ctx, choice.actors)
-	local scene = choice.def.scene(ctx, choice.actors[1], choice.actors[2], choice.actors[3])
+	return EventEngine.stage(ctx, choice.def, choice.actors)
+end
+
+-- Builds one event's scene with these stars (in order: a, b, c), as pick does once it has chosen.
+-- The specs and Studio's forced events use it to play a given event.
+function EventEngine.stage(ctx: any, def: any, order: { string }): any
+	setNames(ctx, order)
+	local scene = def.scene(ctx, order[1], order[2], order[3])
 	local actors = {}
-	for i, vid in choice.actors do
+	for i, vid in order do
 		actors[LETTERS[i]] = vid
 	end
-	return { id = choice.def.id, actors = actors, order = choice.actors, scene = scene }
+	return { id = def.id, actors = actors, order = order, scene = scene }
 end
 
 -- Applies effects to the profile. Returns notices (strings for the player) and effects the service
