@@ -281,7 +281,12 @@ counts as shown and drops any of them still on its list to be taken out (a patch
 on that list and was taken out again the moment it rose: the grass that "dosent render sometimes after going out of
 menus"); a camera that jumps gets its grass planned at once. A step that fails is reported now and then and never
 stops the grass; twenty in a row start it over (`reset`: every patch let go, a fresh pack object). The rest of the
-game doesn't depend on it.
+game doesn't depend on it. The far grass fades (`fadeCell`, `Tuning.Grass.Fade`): past `Start` (beyond
+`WindReach`, so the wind never fights it) each standing tuft's bone `Transform` sinks it by how far out it stands,
+in `Steps`, a little past the tallest blade at `End` (short of `Distance`), and each patch's mesh and decals go
+from `Transparency` to `Clear` by how far its middle is. Only changes are written; a square wholly inside
+`Start` or wholly past `End` is skipped once it has been set; a tuft the pack is bending is left to it. It runs for
+a new square, a square looked at again, and every time the focus has moved `Move` studs.
 
 ## Pieces and material looks
 
@@ -471,8 +476,8 @@ the profile of everyone already in the server and of everyone who joins later. E
 `xpcall`: one that fails is reported in the output (with its traceback) and the rest go on, so players are still
 let in. Characters don't load until the player's plot is ready (`Plots.spawn`); until then the client shows
 `UI/Loading` (the game's name over the menus' moving shapes), which fades when the character arrives. It says
-what the server is doing: the workspace attribute `Startup` (`World.step`: "Cutting the low poly shapes", "Writing
-the island's ground", "Merging the town's details", "Putting the town up", "Laying out the plots", then "Ready"
+what the server is doing: the workspace attribute `Startup` (`World.step`: "Getting the models ready", "Shaping
+the island", "Merging the town's details", "Putting the town up", "Laying out the plots", then "Ready"
 from `Main.server`), then the player's own `Arrival` ("Loading your save", "Your save is in", "Your plot is ready",
 "Loading your character", "Here"), and in red `StartupError` (a service that failed to set up) or an `Arrival`
 starting "Couldn't". With no character after 20 s it calls `SpawnMe` every 8 s (`Plots.spawn` if there is none;
@@ -653,8 +658,9 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   attribute) with a `Follow` rim, its marker is a round disc, and its `Lean` attribute (how far its round end
   pushes what is on it) is 6. It returns the row and a box filling it; `Kit.setRowSelected(row, on)` turns it
   yellow with dark words and lays `PickedHatch` (dark hatching fading left) toward its right end. A row with an
-  onClick has `Kit.press` of the "row" kind: an `Accent` bar grows on its left end and `Inside` moves 4 pixels
-  right under the pointer. `Kit.segments` slides its picked pill with `Kit.glide` and shows a faint `Hover` pill on a
+  onClick has `Kit.press` of the "row" kind: `Inside` moves 4 pixels right under the pointer (no bar
+  comes in at its left end). A menu's or a dialog's name, and the Quests tab's word, sit flush at the left with
+  no coloured mark in front of them. `Kit.segments` slides its picked pill with `Kit.glide` and shows a faint `Hover` pill on a
   tab that isn't picked; `Kit.tabs` glides too. `Kit.setButtonColor` recolours an icon beside the words too. `UI/ModelPreview.fromModel(model,
   { Stand = true })` is the whole villager fitted to a tall frame (the viewport is named `Avatar`): the copy is
   stood upright at the origin with every Motor6D's Transform cleared (a sleeping villager lies on their back),

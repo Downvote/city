@@ -26,6 +26,12 @@
 -- ground under them. When something is built or taken down on a plot, the patches over it look
 -- again. The module sways the bones in the wind (Workspace.GlobalWind, stronger in a storm) and
 -- bends them away from anyone walking through. All of it is on each player's own screen.
+--
+-- The pack shows or hides a whole patch by how far its middle is, which made the grass stop in a
+-- hard edge of squares (the user: "instead of grass hard cutting, can it become less opaque as
+-- they go futher from the player instead, in a circle?"). So the grass fades out first (fade):
+-- past `Fade.Start` each tuft sinks into the ground by how far out it stands, gone by `Fade.End`,
+-- a circle tuft by tuft, and each patch grows more see-through by how far its middle is.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -42,11 +48,29 @@ local G = Tuning.Grass
 
 -- One tuft of a patch: its bone, where it stands across the ground, how it's turned and leans,
 -- how far into the ground it sits (a shorter tuft) and whether it's left out (a bare spot).
-type Tuft = { bone: Bone, x: number, z: number, turn: CFrame, drop: number, bare: boolean, node: any }
+type Tuft = {
+	bone: Bone,
+	x: number,
+	z: number,
+	turn: CFrame,
+	drop: number,
+	bare: boolean,
+	node: any,
+	up: boolean?, -- it stands (rather than sunk out of sight)
+	fade: number?, -- how far it has sunk for being far out, 0 to 1
+}
 -- One patch over a square of ground, in one of the greens.
-type Layer = { model: Model, part: MeshPart, origin: Bone?, tufts: { Tuft }, meshNode: any }
--- A square of ground: its patches.
-type Cell = { i: number, j: number, layers: { Layer } }
+type Layer = {
+	model: Model,
+	part: MeshPart,
+	origin: Bone?,
+	tufts: { Tuft },
+	meshNode: any,
+	decals: { Decal },
+	clear: number?, -- its see-through as last set for being far out
+}
+-- A square of ground: its patches, and whether any of it has faded for being far out.
+type Cell = { i: number, j: number, layers: { Layer }, faded: boolean?, gone: boolean? }
 
 local cells: { [string]: Cell | false } = {}
 local queue: { { number } } = {}
@@ -153,6 +177,7 @@ local function conform(cell: Layer, rows: Rows): number
 		local at = CFrame.new(tuft.x, if ok then (y :: number) - tuft.drop else cell.part.Position.Y, tuft.z)
 			* tuft.turn
 		tuft.bone.WorldCFrame = if ok then at else at * SINK
+		tuft.up = ok
 		if ok then
 			shown += 1
 		end
@@ -213,7 +238,12 @@ end
 local function lay(i: number, j: number, k: number, rows: Rows, mid: number): Layer?
 	local model = templates[k]:Clone()
 	local part = model:FindFirstChildOfClass("MeshPart") :: MeshPart
-	local layer: Layer = { model = model, part = part, tufts = {}, meshNode = nil }
+	local layer: Layer = { model = model, part = part, tufts = {}, meshNode = nil, decals = {} }
+	for _, d in part:GetChildren() do
+		if d:IsA("Decal") then
+			table.insert(layer.decals, d)
+		end
+	end
 	-- (the patch sits at the middle height of its ground, so its box is round its blades)
 	part.CFrame = CFrame.new((i + 0.5) * side, mid, (j + 0.5) * side)
 	model.Parent = folder -- (bones are only worked out in the world)
@@ -261,6 +291,68 @@ local function lay(i: number, j: number, k: number, rows: Rows, mid: number): La
 	return layer
 end
 
+-- The camera's focus: where the player is looking (their character, or Build mode's spot).
+local function focus(): Vector3
+	local cam = workspace.CurrentCamera
+	return if cam then cam.Focus.Position else Vector3.zero
+end
+
+-- Fades one square's patches for how far they are from the focus `at`: each standing tuft sinks
+-- by how far out it stands, each patch grows more see-through by how far its middle is. Only
+-- what changed is written. Squares wholly inside `Fade.Start` are left to the wind, once put back.
+local FADE = G.Fade
+local function fadeCell(cell: Cell, at: Vector3)
+	local cx, cz = (cell.i + 0.5) * side - at.X, (cell.j + 0.5) * side - at.Z
+	local middle = math.sqrt(cx * cx + cz * cz)
+	local near = middle + side * 0.75 < FADE.Start
+	if near and not cell.faded then
+		return
+	end
+	-- (a square wholly past `Fade.End` is all gone: once it has been put down it needs no more)
+	local beyond = middle - side * 0.75 > FADE.End
+	if beyond and cell.gone then
+		return
+	end
+	cell.gone = beyond
+	cell.faded = not near
+	local span = FADE.End - FADE.Start
+	local t = math.clamp((middle - FADE.Start) / span, 0, 1)
+	local clear = math.floor((G.Transparency + (FADE.Clear - G.Transparency) * t) * 40 + 0.5) / 40
+	-- (sunk a little past the tallest blade, so none of it shows at the end)
+	local deep = G.Native[2] * G.Height * 1.15
+	local bent = sim and sim.DisplaceBones or {}
+	local back = sim and sim.ReturnBones or {}
+	for _, layer in cell.layers do
+		if layer.clear ~= clear then
+			layer.clear = clear
+			layer.part.Transparency = clear
+			for _, d in layer.decals do
+				d.Transparency = clear
+			end
+		end
+		for _, tuft in layer.tufts do
+			if tuft.up then
+				local dx, dz = tuft.x - at.X, tuft.z - at.Z
+				local out = math.clamp((math.sqrt(dx * dx + dz * dz) - FADE.Start) / span, 0, 1)
+				local level = math.floor(out * FADE.Steps + 0.5) / FADE.Steps
+				-- (a tuft someone is bending is the pack's until it's back up)
+				if level ~= (tuft.fade or 0) and not bent[tuft.bone] and not back[tuft.bone] then
+					tuft.fade = level
+					tuft.bone.Transform = if level > 0 then CFrame.new(0, -level * deep, 0) else CFrame.identity
+				end
+			end
+		end
+	end
+end
+
+local function fade(at: Vector3)
+	for _, cell in cells do
+		if cell then
+			fadeCell(cell, at)
+		end
+	end
+end
+
 -- Lays the patches for grid square i, j: none if no grass grows in it.
 local function make(i: number, j: number)
 	local k = key(i, j)
@@ -277,13 +369,12 @@ local function make(i: number, j: number)
 			table.insert(cell.layers, layer)
 		end
 	end
-	cells[k] = if #cell.layers > 0 then cell else false
-end
-
--- The camera's focus: where the player is looking (their character, or Build mode's spot).
-local function focus(): Vector3
-	local cam = workspace.CurrentCamera
-	return if cam then cam.Focus.Position else Vector3.zero
+	if #cell.layers > 0 then
+		cells[k] = cell
+		fadeCell(cell, focus())
+	else
+		cells[k] = false
+	end
 end
 
 -- Queues the grid squares near the focus that have no patch yet, nearest first, and lets go of
@@ -346,6 +437,8 @@ local function refresh(x1: number, z1: number, x2: number, z2: number)
 						layer.model.Parent = was
 					end
 				end
+				cell.gone = nil
+				fadeCell(cell, focus()) -- (a tuft that stands now fades with the rest)
 			elseif cell == false then
 				cells[key(i, j)] = nil -- (grass may grow there now: lay it again)
 			end
@@ -590,6 +683,7 @@ function Grass.start()
 
 		local planClock, folkClock, failures, said = 0, 0, 0, -math.huge
 		local last = focus()
+		local fadedAt: Vector3? = nil
 		RunService.RenderStepped:Connect(function(dt)
 			planClock += dt
 			-- (a camera that has jumped, as when a menu or the creator gives it back, gets its
@@ -634,6 +728,16 @@ function Grass.start()
 				sim:Step(dt, bends, at)
 				heal()
 			end)
+			-- the far grass fades again once the focus has moved a stud or so (or jumped)
+			local moved = if fadedAt then math.abs(at.X - fadedAt.X) + math.abs(at.Z - fadedAt.Z) else math.huge
+			if moved >= G.Fade.Move then
+				fadedAt = at
+				local fine, err = pcall(fade, at)
+				if not fine and os.clock() - said > 30 then
+					said = os.clock()
+					warn("[Grass] couldn't fade the far grass: " .. tostring(err))
+				end
+			end
 			if stepped then
 				failures = 0
 			else

@@ -483,6 +483,12 @@ Tuning.Grass = {
 	BendAngle = 70, -- and how far over it goes, in degrees
 	WindReach = 38, -- studs round the focus the grass sways
 	Folk = 120, -- villagers and players this close to the focus bend it
+	-- "instead of grass hard cutting, can it become less opaque as they go futher from the player
+	-- instead, in a circle?" Past `Start` studs from the player each tuft sinks into the ground the
+	-- further out it stands (in `Steps` steps), gone by `End`, and each patch is more see-through
+	-- by how far its middle is, up to `Clear` at `End`. `Start` stays past `WindReach` (the wind
+	-- moves the bones in there) and `End` short of `Distance` (where the pack drops whole patches).
+	Fade = { Start = 46, End = 80, Clear = 0.8, Steps = 12, Move = 1 },
 }
 
 return Tuning

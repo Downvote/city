@@ -92,7 +92,10 @@ the plain matt look Blade; the grass runs taller and shorter in drifts with bare
 more random"), each square has patches in two greens with their tufts mixed ("make the colors of grass
 random? and dense enough to cover all the floor?", then three were "too laggy, make it less dense"), and tufts are
 always placed with the patch's origin bone at rest (otherwise they fly); the blades are slightly see-through
-("could you make it such that the grass is slightly transparent?", `Transparency`);
+("could you make it such that the grass is slightly transparent?", `Transparency`) and fade out in a circle round
+the player instead of stopping at the pack's squares ("instead of grass hard cutting, can it become less opaque as
+they go futher from the player instead, in a circle?": `Tuning.Grass.Fade`, each tuft sinking by its own distance,
+each patch more see-through; keep `Start` past `WindReach` and `End` short of `Distance`);
 each tuft stands on the ground under it where that is Grass all round (terrain, a plot's lawn, a grass lawn in
 town) and sinks anywhere else, again when a plot changes (numbers in `Tuning.Grass`). Keep the author's credit with it. Nothing built may stand on terrain Grass:
 `TownMap.cover` lists what is built and the terrain under it is LeafyGrass, so a new kind of ground part or a
@@ -227,11 +230,13 @@ section 10). New buttons get it from `UI/Kit`; new moving scenery goes in `World
 ("polish the ui and menu everywhere much further, along with button animations to be more suitable, referencing
 zenless zone zero menus"): `Kit.press(button, { Kind })` is every control's motion (under the pointer a band of
 light sweeps once across the face cut to its shape, the face brightens a touch and grows 2 to 3%, a marker comes in
-at the leading edge: a chevron at a button's left end, a ring round a round button, brackets on a tile, a bar and a nudge on a
+at the leading edge: a chevron at a button's left end, a ring round a round button, brackets on a tile, a nudge on a
 row, a line under a quick menu tile; a press dips to 0.97 with a flash; release settles back), all tweens in
 `Kit.Motion` (Quint or Quad, never Back, Bounce or Elastic) and its layers made on the first hover. Never bring back
 the wiggle, the icon hop or a springy rebound, and never animate a leaning face's BackgroundColor3 (its layers
-move). Touch gets the press with nothing that needs a hover. The picked slab slides between tabs (`Kit.glide`). A
+move). No coloured bar goes in front of words, on a menu's name, a dialog's, a tab or a row (the user: "remove every
+bar behind text design like this, and flush the text back"): the words start flush. Touch gets the press with
+nothing that needs a hover. The picked slab slides between tabs (`Kit.glide`). A
 `Kit.panel` brings itself in (the black fades up, the card slides in from the right, the title from the left, then
 what was marked with `Kit.mark` comes in one after another through `Kit.revealIn`) and a screen closes it with
 `Kit.closePanel(panel)`, never `panel.root:Destroy()`; what is closing moves to a ScreenGui of its own at once, so

@@ -1953,7 +1953,7 @@ end
 -- Gives a button the interface's motion. opts:
 --   Kind    "pill" (a button with words: a chevron slides in at its left end), "slab" (a leaning
 --           face: what is on it nudges along), "round" (a ring opens round it), "tile" (corner
---           brackets close in), "row" (an accent bar grows on its left end and the content nudges
+--           brackets close in), "row" (the content nudges
 --           right), "flat" (an icon over its name: the icon lifts and a short line grows under
 --           the name), "plain" (no marker: a tab)
 --   Face    what lights up and what the band sweeps across (found by name when not given:
@@ -2068,30 +2068,9 @@ function Kit.press(b: GuiButton, opts: { [string]: any }?)
 			tween(ring, info, { Size = if on then UDim2.new(1, 8, 1, 8) else UDim2.fromScale(1, 1) })
 			tween(stroke, info, { Transparency = if on then 0.35 else 1 })
 		elseif kind == "row" then
-			local bar = b:FindFirstChild("Accent") :: Frame?
-			if not bar then
-				-- leaning the way the row's slanted end leans, just inside it
-				local cap: number = b:GetAttribute("Cap") :: any or 0
-				local tall = math.max(1, b.Size.Y.Offset - 2)
-				local made = Kit.new("Frame", {
-					Name = "Accent",
-					BackgroundColor3 = T.Yellow,
-					BorderSizePixel = 0,
-					Size = UDim2.fromOffset(3, 0),
-					Position = UDim2.new(0, 1 + cap / 2 + 6, 0.5, 0),
-					AnchorPoint = Vector2.new(0.5, 0.5),
-					Rotation = math.deg(math.atan2(cap, tall)),
-					ZIndex = 4,
-					Parent = b,
-				})
-				made:SetAttribute("KeepColors", true)
-				Kit.corner(made, "pill")
-				bar = made
-			end
-			local a = bar :: Frame
-			-- on the picked (yellow) row the bar is dark
-			a.BackgroundColor3 = if b:GetAttribute("Selected") then T.Dark else (o.Accent or T.Yellow)
-			tween(a, info, { Size = UDim2.new(0, 3, if on then 0.5 else 0, 0) })
+			-- (a row's hover is its nudge and its lift: no bar comes in at its left end any more,
+			-- the user: "remove every bar behind text design like this")
+			local _ = info
 		elseif kind == "flat" then
 			local line = b:FindFirstChild("Underline") :: Frame?
 			if not line then
@@ -3614,7 +3593,7 @@ function Kit.row(props: { [string]: any }, onClick: (() -> ())?): (GuiObject, Fr
 	end
 	if onClick and row:IsA("TextButton") then
 		row.Activated:Connect(onClick)
-		-- under the pointer: an accent bar grows on its left end and what is on it moves right a little
+		-- under the pointer: what is on it moves right a little
 		pressable(row, { Kind = "row", Face = face, Nudge = { inner }, NudgeX = 4 })
 	end
 	-- it comes in with its menu
@@ -3650,10 +3629,6 @@ function Kit.setRowSelected(row: GuiObject, on: boolean)
 		elseif not on and band then
 			band:Destroy()
 		end
-	end
-	local accent = row:FindFirstChild("Accent")
-	if accent and accent:IsA("Frame") then
-		accent.BackgroundColor3 = if on then T.Dark else T.Yellow
 	end
 	row:SetAttribute("Selected", on)
 	for _, d in row:GetDescendants() do
@@ -4290,21 +4265,12 @@ function Kit.panel(
 	local selectTab: ((string) -> ())? = nil
 	if dialog then
 		header = Kit.box({ Name = "Header", Parent = frame, Size = UDim2.new(1, 0, 0, HEAD) })
-		-- a mark in the dialog's colour, then its name
-		local mark = Kit.new("Frame", {
-			Name = "Mark",
-			BackgroundColor3 = accent,
-			BorderSizePixel = 0,
-			Size = UDim2.fromOffset(6, 24),
-			Position = UDim2.fromOffset(24, HEAD / 2 - 12),
-			Parent = header,
-		})
-		mark:SetAttribute("KeepColors", true)
-		Kit.corner(mark, 3)
+		-- its name, flush at the left (no coloured bar in front of it: the user, "remove every bar
+		-- behind text design like this, and flush the text back")
 		title = Kit.title(titleText, {
 			Parent = header,
-			Size = UDim2.new(1, -140, 1, 0),
-			Position = UDim2.fromOffset(42, 0),
+			Size = UDim2.new(1, -122, 1, 0),
+			Position = UDim2.fromOffset(24, 0),
 			TextSize = 25,
 			Color = T.Ink,
 		})
@@ -4335,28 +4301,17 @@ function Kit.panel(
 		-- the menu's name again, large and faint, behind its title
 		Kit.ghost(titleText, {
 			Parent = header,
-			Position = UDim2.fromOffset(118, -30),
+			Position = UDim2.fromOffset(88, -30),
 			TextSize = 80,
 			Transparency = 0.962,
 		})
 		-- the way back, at the top left
 		close = Kit.backButton({ Parent = header, Position = UDim2.fromOffset(2, 2) })
-		-- a leaning mark in the menu's colour, then its name
-		local mark = Kit.new("Frame", {
-			Name = "Mark",
-			BackgroundColor3 = accent,
-			BorderSizePixel = 0,
-			Size = UDim2.fromOffset(22, 34),
-			Position = UDim2.fromOffset(98, 8),
-			Parent = header,
-		})
-		mark:SetAttribute("KeepColors", true)
-		Kit.slant(mark, 34)
-		Kit.shade(mark, accent)
+		-- its name right after the way back (no coloured bar in front of it)
 		title = Kit.title(titleText, {
 			Parent = header,
-			Size = UDim2.new(0.5, -130, 0, 46),
-			Position = UDim2.fromOffset(130, 2),
+			Size = UDim2.new(0.5, -100, 0, 46),
+			Position = UDim2.fromOffset(100, 2),
 			TextSize = 30,
 			Color = T.Ink,
 		})

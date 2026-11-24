@@ -1114,7 +1114,9 @@ font and colours, none of their art, logos or patterns.
   row's marker, the alert on a button and a villager's mood are diamonds. Round buttons are square tiles. What
   corners are left are all but square. The progress ring is still a ring.
 - **Details.** A menu's panel carries a small block of slanted stripes in its colour by the cut corner and a row
-  of ticks along its top edge, and the menu's name has a leaning mark in its colour in front of it.
+  of ticks along its top edge. The menu's name had a leaning mark in its colour in front of it, until the user:
+  "remove every bar behind text design like this, and flush the text back". Names, titles and the Quests tab's
+  word now start flush at the left, with no bar in front of them, and a row under the pointer only moves.
 - **The backdrop moves.** Behind a full menu, leaning bars, triangles, hollow rings (diamonds at first), plus signs and rows of
   ticks drift slowly up and to the right across the black, faint, in the menu's colour and white, and come back
   in at the far edge. A small question (a dialog) has none.
@@ -1697,10 +1699,11 @@ while the server starts is reported in the output and the others carry on.
 
 > its stuck here
 
-(On "Writing the island's ground".) Most of that was the open sea: terrain water out to the horizon, three times
-the island's own ground, written when the server starts and loaded by every player. Past the island's shallows the
-sea is now a flat sheet of water over a dark floor, as it was before the terrain, and the island alone is terrain.
-The card counts the ground's tiles as they are written.
+(On "Writing the island's ground", as that step was called then; the card says "Shaping the island" now.) Most of
+that was the open sea: terrain water out to the horizon, three times the island's own ground, written when the
+server starts and loaded by every player. Past the island's shallows the sea is now a flat sheet of water over a dark
+floor, as it was before the terrain, and the island alone is terrain. The card counts the ground's tiles as they are
+written.
 
 ### Long grass you can walk through
 
@@ -1763,6 +1766,14 @@ again just as it rose, and then never showed until you walked off and back. Now 
 frame and puts back anything that should be showing, plans the ground at once when the camera jumps back from a
 menu, and never stops for good when something goes wrong: it starts itself over instead.
 
+> instead of grass hard cutting, can it become less opaque as they go futher from the player instead, in a circle?
+
+The grass used to stop in a staircase of squares: the pack shows or hides each patch whole, by how far its middle is.
+Now it thins out before that. From about 46 studs away each tuft sinks a little further into the ground the further
+out it stands, and by 80 studs it's gone, so the grass ends in a soft circle round the player, tuft by tuft. Each
+patch also gets more see-through the further out it is. The squares the pack drops further out have nothing left
+showing by then.
+
 ### Softer lamps, thinner haze, weather you can see
 
 > the placeable lights are too bright. also, make the fog less. also, it seems like weather particles arent
@@ -1790,8 +1801,8 @@ the hop, the wiggle and the springs).
   its icon lifts, the arrow on the way back leaning out. A press dips it to 0.97 with a short flash that fades, and
   letting go settles it back. Nothing turns, wiggles, hops or springs, anywhere. On a touch screen nothing hovers, so
   a tap gets the dip and the flash.
-- **Rows** in a list: under the pointer a yellow bar grows on the left end and what is on the row moves a few pixels
-  to the right. The picked row is still yellow with dark words, now with a band of dark hatching toward its right end.
+- **Rows** in a list: under the pointer what is on the row moves a few pixels to the right (the yellow bar that
+  grew on its left end went with the other bars in front of words). The picked row is still yellow with dark words, now with a band of dark hatching toward its right end.
 - **Tabs** slide: the yellow pill runs from the tab you left to the one you picked, under the other tabs' words.
   The same in Build mode's main groups and categories and in the creator's two steps. A tab not picked shows a faint
   pill under the pointer.

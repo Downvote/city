@@ -261,26 +261,17 @@ function Quests.mount(parent: GuiObject, position: UDim2, open: () -> ()): Frame
 		Text = "",
 		AutoButtonColor = false,
 		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(150, 30),
+		Size = UDim2.fromOffset(138, 30),
 		LayoutOrder = 0,
 		Parent = frame,
 	})
 	-- (from the left edge of the screen, like the rows under it and the stats above)
-	local tab = Kit.darkPill({ Name = "Tab", Parent = head, Size = UDim2.fromOffset(150, 30) })
-	local bar = Kit.new("Frame", {
-		Name = "Mark",
-		BackgroundColor3 = T.Yellow,
-		BorderSizePixel = 0,
-		Size = UDim2.fromOffset(5, 18),
-		Position = UDim2.new(0, 14, 0.5, -9),
-		ZIndex = 3,
-		Parent = tab,
-	})
-	bar:SetAttribute("KeepColors", true)
+	local tab = Kit.darkPill({ Name = "Tab", Parent = head, Size = UDim2.fromOffset(138, 30) })
+	-- (the name sits flush at the left: no yellow bar in front of it any more)
 	local word = Kit.title("Quests", {
 		Parent = tab,
-		Size = UDim2.new(1, -56, 1, 0),
-		Position = UDim2.fromOffset(26, 0),
+		Size = UDim2.new(1, -44, 1, 0),
+		Position = UDim2.fromOffset(14, 0),
 		TextSize = 17,
 		Color = T.White,
 		Wrap = false,
@@ -292,7 +283,7 @@ function Quests.mount(parent: GuiObject, position: UDim2, open: () -> ()): Frame
 		BackgroundColor3 = T.Yellow,
 		BorderSizePixel = 0,
 		Size = UDim2.fromOffset(20, 18),
-		Position = UDim2.new(0, 92, 0.5, 0),
+		Position = UDim2.new(0, 80, 0.5, 0),
 		AnchorPoint = Vector2.new(0, 0.5),
 		ZIndex = 3,
 		Visible = false,
