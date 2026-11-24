@@ -184,7 +184,7 @@ local items: { Item } = {
 			-- foot. c1 the boards, c2 the posts.
 			r:piece(function(q: R)
 				for _, x in { -1.9, 1.9 } do
-					q:block(x - 0.1, 0, -0.85, x + 0.1, 6.6, -0.65, r.c2, "Wood")
+					q:block(x - 0.1, 0, -0.82, x + 0.1, 6.6, -0.62, r.c2, "Wood")
 					q:block(x - 0.1, 0, 0.6, x + 0.1, 5.4, 0.8, r.c2, "Wood")
 					q:block(x - 0.08, 0.5, -0.65, x + 0.08, 0.7, 0.6, r.c2, "Wood")
 				end

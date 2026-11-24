@@ -173,8 +173,8 @@ local items: { Item } = {
 					r:cyl(sx * 1.68, top / 2 + 0.2, z, top - 0.4, 0.24, "y", iron, "Metal")
 					r:ball(sx * 1.68, top + 0.05, z, 0.34, iron, "Metal")
 				end
-				r:cyl(0, top - 0.1, z, 3.36, 0.2, "x", iron, "Metal")
-				r:cyl(0, 1.5, z, 3.36, 0.16, "x", iron, "Metal")
+				r:cyl(0, top - 0.1, z, 3.22, 0.2, "x", iron, "Metal")
+				r:cyl(0, 1.5, z, 3.22, 0.16, "x", iron, "Metal")
 				r:piece(function(q: R)
 					for i = -2, 2 do
 						q:block(i * 0.56 - 0.05, 1.5, z - 0.05, i * 0.56 + 0.05, top - 0.1, z + 0.05, iron, "Metal")
