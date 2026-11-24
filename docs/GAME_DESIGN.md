@@ -20,7 +20,7 @@ is, not sources.
 ## 2. The loop
 
 1. **Make villagers.** Start by making yourself (your own avatar is loaded in for you). Later, make anyone: friends,
-   family, made-up people. Visitors also turn up and ask to move in.
+   family, made-up people. Nobody moves in on their own: every villager is one you made.
 2. **Build.** Every new villager needs a bed. Every workplace you place opens a job. Rooms, gardens and decorations
    make villagers happier, and the town is worth more.
 3. **Watch life happen.** Villagers work at their stations from 9 to 5 with a break now and then, potter about
@@ -155,7 +155,7 @@ choose (side with one of them, pay for something, let them go out). About forty 
   coins, colds (seen to for free by a villager working as the doctor, or slept off), hobbies, wanting a new look,
   sleepwalking, practising at work, a busy day at work, asking for the day off, looking for work, feeling lonely,
   birthdays;
-- the whole town: a visitor wants to move in, a dance party, shooting stars, a thunderstorm, a tourist, the
+- the whole town: a dance party, shooting stars, a thunderstorm, a tourist, the
   garden inspector. (The travelling merchant went with the shop. Events that gave or used food now give coins,
   mood or friendship.)
 
@@ -167,14 +167,11 @@ events and checks every kind can happen, every line is filled in and every numbe
 > also, make the random villagers that move in the player's friends first, then default ones if all of them are
 > already in. no repeats
 
-The visitor is one of your Roblox friends, with their own avatar and display name, until every friend has moved
-in. After that the town's own newcomers come: twenty of them (Pip, Juno, Basil, Wren and the rest), each with a
-name, a nature and a look of their own, dressed in free hair and clothes made by Roblox. Nobody comes twice. A
-villager remembers who they came as and the save remembers everyone who has ever arrived, so somebody who moved
-out only comes back once every friend and every newcomer has had a turn (friends first again). A newcomer whose
-name one of your own villagers already has stays away. The server reads the friends list when you join and
-nobody turns up until it has it, so a newcomer can't jump the queue while it loads (`Sim/Newcomers`, with its own
-spec).
+> remove random villager coming in events
+
+There used to be an event where a visitor (one of your Roblox friends, then one of the town's own twenty
+newcomers) turned up and asked to move in. It's gone: nobody moves in on their own, and every villager in town is one
+you made in the creator. A save from before keeps the villagers who came that way.
 
 ### Many more events, things in the world, keepsakes
 

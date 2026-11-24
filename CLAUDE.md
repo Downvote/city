@@ -40,8 +40,8 @@ Build mode's are `build`, `build:walls`, `build:rooms`, `build:floors`, `build:r
 `build:placing`, `build:placing:touch`; any scene takes the
 prefix `plain:` to show it with the painted shapes off), Build (catalog, plan rules, field cleaning, shapes, builder), BuildService (the server's
 Build service with stubbed neighbours: charges, syncs, strips junk, refuses land you don't own), Events (3000 seeded
-events, every kind reachable, text filled, numbers in range), Newcomers (who moves in: the player's friends first,
-then the town's own twenty, nobody twice), City (starter town valid, levels, land, paydays, save
+events, every kind reachable, text filled, numbers in range, nobody moving in on their own: the user, "remove random
+villager coming in events", so every villager is one the player made), City (starter town valid, levels, land, paydays, save
 loading, economy bounds), Town (placed models exist, plots and road clear, room to walk, spawn and festival spots
 clear, the islets out at sea off the plots), Presets (every ready-made building goes down whole turned every way, on the client and
 the server, inside its footprint, with its workplace), Icons (every icon builds with one outline round its silhouette: outline copies before

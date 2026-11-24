@@ -63,7 +63,7 @@ export type Villager = {
 	hobby: string?,
 	chatDay: number?, -- the day index of their last chat with you, and how many that day (Sim/Talk)
 	chats: number?,
-	from: string?, -- who they came as when they moved in from the road (Sim/Newcomers)
+	from: string?, -- who they came as when they moved in from the road (nobody does any more; old saves keep it)
 	memo: { text: string, t: number }?, -- the last event they were in, as they'd tell it (Sim/Talk)
 }
 
@@ -94,7 +94,7 @@ function Schema.newProfile(): any
 		offers = {}, -- heart level thank yous waiting to be picked (Sim/Life)
 		found = {}, -- places on the island found, by id (Data/Places)
 		goals = {}, -- town goals claimed, by id
-		arrived = {}, -- everyone who has ever moved in from the road, by key (Sim/Newcomers)
+		arrived = {}, -- who moved in from the road, by key, back when villagers could (kept for old saves)
 		keepsakes = {}, -- things villagers made you, by catalog id: how many of each (Sim/Keepsakes)
 		-- what the player has earned at a workplace with their own hands today (Sim/PlayerWork):
 		-- the town day it is for, the part of a coin not handed over yet, the whole coins that were

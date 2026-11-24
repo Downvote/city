@@ -1451,8 +1451,8 @@ stage({
 	end,
 })
 
--- The town gate, where newcomers come in: the road running in from the hills between fields and
--- fences, two stone pillars with lanterns on them, a little roofed beam across with a board
+-- The town gate (no cutscene uses it since nobody moves in from the road; kept as a set): the
+-- road running in from the hills between fields and fences, two stone pillars with lanterns on them, a little roofed beam across with a board
 -- hanging from it, a stone wall going off each way, barrels of flowers, a signpost, a mailbox
 -- and a bench. A suitcase stands on the road. Morning.
 stage({

@@ -86,9 +86,9 @@ The contract between the parts of the game. Update it with every change to an AP
 - `Data/DetailModels` (street furniture, the pockets that fill the gaps between buildings, and props for the
   hills, the beach and the sea; `TownMap.prims` looks here after `CityModels`). `TownMap.placements` puts the
   pockets down by rule: `pockets(block, kinds, y, most, half, gap)` finds squares clear of every footprint.
-- `Sim/Newcomers` (who moves in from the road: `list` the town's own twenty, `next(profile, friends, rng)` friends
-  first then the town's own and nobody twice, `arrive(profile, villager, key)`, `look(own)`, keys `u<userId>` and
-  `d:<id>`). `EventEngine.context` takes `friends` and offers `ctx.newcomer()`; with no `friends` nobody moves in.
+- Nobody moves in from the road ("remove random villager coming in events"): the `visitor` event, its effect and
+  cutscene, `Sim/Newcomers` and the Events service's friends list are gone; `EventEngine.context` takes no
+  `friends`. A villager's `from` and the save's `arrived` stay in the schema so old saves load as they were.
 - A prim with `attrs.NightColor` on a `glow` role is a window: the World service gives it that colour (and Neon)
   at night and its own back in the morning (`CityModels.lit`).
 

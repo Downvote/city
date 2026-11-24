@@ -308,7 +308,6 @@ describe("Cutscenes", function()
 					"birthday",
 					"festival",
 					"dream",
-					"visitor",
 					"makeup",
 					"quarrel",
 					"stars",

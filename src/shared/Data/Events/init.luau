@@ -1118,54 +1118,6 @@ event({
 	end,
 })
 
--- Someone new wants to move in.
-event({
-	id = "visitor",
-	actors = 0,
-	when = "day",
-	weight = function(ctx: Ctx)
-		-- friends first, then the town's own newcomers, nobody twice (Sim/Newcomers)
-		if ctx.freeSlots <= 0 or not ctx.newcomer() then
-			return 0
-		end
-		local count = #ctx.present
-		return Tuning.Events.VisitorChance * (if count < 3 then 3 else 1)
-	end,
-	scene = function(ctx: Ctx): Scene
-		local who = ctx.newcomer()
-		local name = who.name
-		local hello = if who.userId
-			then "Your friend {name} has turned up at the edge of town with a suitcase."
-			else "A traveller called {name} is passing through town."
-		return {
-			title = "A visitor",
-			lines = {
-				line(nil, ctx.f(hello, { name = name })),
-				line(nil, ctx.f("{name} likes it here and asks if there's room for one more.", { name = name })),
-			},
-			choices = {
-				{
-					text = ctx.f("Welcome, {name}!", { name = name }),
-					lines = { line(nil, ctx.f("{name} is moving in.", { name = name })) },
-					effects = { { t = "visitor", name = name, key = who.key } },
-				},
-				{
-					text = "Make your own villager instead",
-					lines = { line(nil, "The tailor's stall can help with that.") },
-					effects = { { t = "creator" } },
-				},
-				{
-					text = "Not right now",
-					lines = { line(nil, ctx.f("{name} waves and heads off down the road.", { name = name })) },
-					effects = {},
-				},
-			},
-			default = 3,
-			log = ctx.f("{name} stopped by.", { name = name }),
-		}
-	end,
-})
-
 -- A dance party.
 event({
 	id = "festival",

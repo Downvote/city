@@ -16,15 +16,16 @@
 --   memo who text                what they'll tell you about it when you stop them for a chat
 --   saying who id | hobby who id a new saying or hobby of theirs (Data/Sayings)
 -- Handled by the service (returned in `service`):
---   away who seconds | visitor name | festival | creator who? | dayoff who
+--   away who seconds | festival | creator who? | dayoff who
 --   leave prop hours by?         a thing (Data/EventProps) left lying about for a while
--- (There is no food to give, take, count or eat and no shop things: the shop and feeding went.
+-- (Nobody moves in from the road: the user, "remove random villager coming in events". New
+-- villagers are the ones the player makes. There is no food to give, take, count or eat and no
+-- shop things: the shop and feeding went.
 -- A craving is paid for there and then, at ctx.cravingPrice(foodId). There is no romance either,
 -- so no bond between two villagers: best friends, a friendship score, is as close as they get.)
 
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Events = require(script.Parent.Parent.Data.Events)
-local Newcomers = require(script.Parent.Newcomers)
 local Relationships = require(script.Parent.Relationships)
 local City = require(script.Parent.City)
 local Catalog = require(script.Parent.Parent.Build.Catalog)
@@ -80,9 +81,6 @@ export type Options = {
 	rng: any,
 	present: { string },
 	freeSlots: number,
-	-- the player's Roblox friends, for who moves in next (Sim/Newcomers). Left out, nobody moves
-	-- in yet: the server leaves it out until it has the list, so friends really do come first.
-	friends: { Newcomers.Friend }?,
 }
 
 function EventEngine.context(profile: any, o: Options): any
@@ -101,15 +99,6 @@ function EventEngine.context(profile: any, o: Options): any
 	}
 	function ctx.v(vid: string)
 		return profile.villagers[vid]
-	end
-	-- Whoever would move in next, picked once for this context (nil when nobody can).
-	local looked, who = false, nil
-	function ctx.newcomer(): Newcomers.Pick?
-		if not looked then
-			looked = true
-			who = if o.friends then Newcomers.next(profile, o.friends, o.rng) else nil
-		end
-		return who
 	end
 	function ctx.rel(a: string, b: string): number
 		return Relationships.peek(profile, a, b)
@@ -394,7 +383,7 @@ function EventEngine.apply(profile: any, ev: any, effects: { any }, now: number)
 				v.hobby = e.id
 			end
 		else
-			-- away, visitor, festival, creator, dayoff, leave
+			-- away, festival, creator, dayoff, leave
 			local copy = table.clone(e)
 			if type(e.by) == "string" then
 				copy.byVid = vid(e.by)

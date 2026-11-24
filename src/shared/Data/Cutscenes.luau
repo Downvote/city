@@ -220,22 +220,6 @@ byEvent.dream = {
 	ending = { shot = "wide", act = { a = "spin" } },
 }
 
--- A visitor at the gate: two from town wait by it; the camera looks down the road, then back at
--- the town as the newcomer would see it.
-byEvent.visitor = {
-	stage = "gate",
-	extras = 2,
-	open = "wide",
-	lines = {
-		[1] = { shot = "road", act = { all = "gaze" } },
-		[2] = { shot = "out", act = { all = "wave" } },
-	},
-	ask = { shot = "wide" },
-	after = {
-		[1] = { shot = "road", act = { all = "wave" } },
-	},
-}
-
 -- Making up: one sits alone on the bench, the other comes with something to eat; once they have
 -- made up they sit together.
 byEvent.makeup = {

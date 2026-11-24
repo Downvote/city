@@ -66,7 +66,6 @@ for _, id in
 		"practice",
 		"lonely",
 		"birthday",
-		"visitor",
 		"festival",
 		"stars",
 		"storm",
@@ -309,7 +308,6 @@ for _, t in
 		"hearts",
 		"bday",
 		"away",
-		"visitor",
 		"festival",
 		"creator",
 		"dayoff",
@@ -558,6 +556,14 @@ describe("Event engine", function()
 	end)
 
 	-- the user: "remove any romance, just best friends is the highest"
+	it("brings nobody new to town: villagers are the ones the player makes", function()
+		-- the user: "remove random villager coming in events"
+		expect(Events.get("visitor")).toBe(nil)
+		for _, def in Events.list do
+			expect(def.id ~= "visitor").toBe(true)
+		end
+	end)
+
 	it("has no romance: best friends is as close as two villagers get", function()
 		for _, id in
 			{

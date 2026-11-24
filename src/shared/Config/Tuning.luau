@@ -6,15 +6,17 @@ local Tuning = {}
 
 Tuning.Game = {
 	Name = "Maplewick",
-	MaxPlayers = 8,
+	MaxPlayers = 4, -- one to a plot (the place file's Players carries it too; a live server's size is set in the game's settings)
 	DataVersion = 1,
 	DataStoreName = "Maplewick_v1",
 }
 
 -- Building ------------------------------------------------------------------
 Tuning.Plot = {
-	Size = 200, -- studs along each side of a plot at its biggest (see City.Land for what you start with)
-	Count = 8,
+	-- The user: "make player plots much bigger, double the size", and asked how, four plots of 400
+	-- a side in the old town, two north of Main Street and two south (they were eight of 200)
+	Size = 400, -- studs along each side of a plot at its biggest (see City.Land for what you start with)
+	Count = 4,
 	HomeCooldown = 3, -- seconds between two trips home with the Home button
 	WallSnap = 2, -- walls, floors and roofs snap to this grid
 	ItemSnap = 1, -- furniture snaps to this unless free placement is on
@@ -31,7 +33,7 @@ Tuning.Plot = {
 	RoofThickness = 0.6,
 	RoofMaxRise = 18,
 	RoofMaxOverhang = 3,
-	MaxFloorSpan = 200,
+	MaxFloorSpan = 400, -- (a floor may run the whole plot)
 	OpeningMargin = 0.2, -- min gap between an opening and a wall end or another opening
 }
 
@@ -124,7 +126,6 @@ Tuning.Events = {
 	RecentFloor = 0.03, -- the weight left to the event seen last
 	MaxPendingRequests = 3,
 	RequestHours = 36, -- in-game hours a room request stays open
-	VisitorChance = 0.35, -- weight scale for "someone wants to move in" while there is room
 	KeepsakeMax = 9, -- of any one keepsake a player can be given (Sim/Keepsakes)
 	MemoHours = 30, -- in-game hours a villager still talks about an event they were in (Sim/Talk)
 	PropsMax = 6, -- things an event can leave lying about in one town at once (Services/Events)
@@ -186,12 +187,13 @@ Tuning.City = {
 	-- how much of the starting house counts toward the town's level (Sim/City.worth): what the
 	-- small cottage it replaced was worth, so the bigger house skips no level (2610 at the old prices)
 	StarterWorth = 1305,
-	-- usable land, its price and the city level it needs
+	-- usable land, its price and the city level it needs. Every step doubled along each side with
+	-- the plots (it was 100, 128, 160 and 200); the prices and levels stayed as they were.
 	Land = {
-		{ Size = 100, Price = 0, Level = 1 },
-		{ Size = 128, Price = 4000, Level = 2 },
-		{ Size = 160, Price = 12000, Level = 3 },
-		{ Size = 200, Price = 30000, Level = 4 },
+		{ Size = 200, Price = 0, Level = 1 },
+		{ Size = 256, Price = 4000, Level = 2 },
+		{ Size = 320, Price = 12000, Level = 3 },
+		{ Size = 400, Price = 30000, Level = 4 },
 	},
 }
 
