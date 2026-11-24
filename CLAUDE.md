@@ -29,7 +29,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (294 at the last full run, more since; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (347 at the last full run; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off; what kind a bundle
 is, the outfit that holds the body, single body parts, the player's own items and avatars; preview scenes
@@ -65,9 +65,9 @@ roads (`Town.Roads`), downtown east, the civic quarter west, the hills north (`D
 `Data/TownMap` lays out the ground and where everything stands, `Data/CityModels` draws the buildings and landmarks,
 `Data/Places` lists the places to find. The user wants it detailed like a classic city builder: buildings on
 landscaped lots (`CityModels.lot`), window bays, signs, roof details, parked cars, groves, textured ground, all
-textures from the Roblox library. Budgets (the Town spec holds them): the whole town under 30,000 parts with a merged piece counted as one, under
-70,000 with every piece opened into its shapes, and under 220 different pieces (it is about 28,700, 57,500 and 166
-since the redo; every shop, tower, house and public building you can walk into is a furnished room from
+textures from the Roblox library. Budgets (the Town spec holds them): the whole town under 36,000 parts with a merged piece counted as one, under
+110,000 with every piece opened into its shapes, and under 320 different pieces (it is about 30,500, 101,000 and 290
+since the detail pass; every shop, tower, house and public building you can walk into is a furnished room from
 `Data/Interiors`, preview with `render.sh inside:<kind>,<kind>`). Street buildings come from the facade kit
 (`Data/Facades`): a building is a name such as `facade:24x18:4:17:shop=open:cl` (size, storeys, seed and options)
 or one of its presets, so a new one needs only a placement. Downtown is rows of them on every block edge, with a
@@ -341,6 +341,16 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
 - Land sizes keep their edges on the wall grid (the City spec checks it).
 - The server validates everything the client sends; never trust a client value.
 - Player-written text (villager and outfit names) goes through `Avatar.filterText` before anyone else sees it.
+- Detail is at the starting house's level everywhere (the user: "the amount of detail should be similar to the
+  default house everywhere", "this includes buildings the player places as well"): a thing is made of the parts
+  the real one has, at a believable size, never one box standing for something else (books are thin spines, a
+  planter has soil, stems and flowers over its rim, a stall has posts, crates and produce). Repeated detail goes
+  in a piece so the part count stays low.
+- No z-fighting ("there is also z-fighting in alot of areas"): never leave two faces of different paint facing
+  the same way within 0.02 of each other. A small thing stands at least 0.03 proud of what it sits on (paint,
+  labels and chalk 0.04), big flat layers 0.1 (street paint stands 0.11 over the road), layers in one mark lie
+  side by side, and what is set into paving is cut into it. Check with `lune run tools/preview/zfight.luau
+  <catalog|models|town|interiors|starter|presets|all>`; the Zfight spec fails on any new pair.
 
 ## Writing (always)
 

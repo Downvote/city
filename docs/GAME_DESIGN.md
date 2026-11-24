@@ -1373,6 +1373,52 @@ the eaves.)
   north side of Main Street. Roblox's own setting that favours lighting quality is on, so close shadows stay as a
   phone lowers its graphics quality; below quality 4 Roblox still drops them.
 
+### Detail everywhere, and nothing that flickers
+
+> pay more attention to detail. alot of places in the map are just simple shapes. try to make them more detailed
+> and recognizable for the things they are, the amount of detail should be similar to the default house
+> everywhere. there is also z-fighting in alot of areas.
+
+> this includes buildings the player places as well, some of them are too underdetailed
+
+(With pictures: a shop's bookcases holding three big solid cubes to a shelf in loud colours, a street planter that
+was a dark box with three gems on top, and Build mode's market stall, a striped sheet on four sticks over a box.)
+
+The starting house is the measure. Everything is made of the parts the real thing has, at a size you'd believe,
+and nothing is one box standing for something else.
+
+- **Build mode's pieces.** Bookcases hold thin spines of different heights in muted colours, some leaning and a
+  few lying flat. A TV has a bezel round a screen set back in it, sofas have buttoned cushions and piped pillows,
+  beds have frames, mattresses, pillows and a folded throw, cabinets have raised panels and pulls. Doors and
+  windows are trimmed like the starting house's: a lining in the hole, an architrave on both faces, plinths at a
+  door's feet, a sill and apron under a window, a sash with glazing bars and the glass set back. Flowers are
+  stems with leaves and petal cups at different heights, trailing over a planter's rim; fences have pointed
+  pickets and capped posts, swings hang on chains, stairs have nosed treads, balusters and newels.
+- **Workplaces.** Each is drawn the way the real one looks. The market stall has turned posts, a cloth awning
+  with a scalloped edge, tilted crates of apples, oranges, cabbages and carrots, a till and a scale; the oven is a
+  brick dome with a fire in its mouth, logs under it and loaves on a peel.
+- **Rooms you walk into.** Shops, flats, the library and the other public rooms are furnished at the same level:
+  bookcases of real spines, shelves of loaves, jars, folded clothes, toys and pots of flowers, counters with a
+  till, café tables, sofas, rugs, pictures, clocks and lamps.
+- **The town's buildings.** Windows have frames, sills and bars, doors have frames and hoods, roofs have fascia,
+  ridges and chimneys. The barn, windmill, lookout, observatory, lighthouse, ferris wheel, carousel, pier, parks
+  and playground are built from the parts the real things have.
+- **The streets.** Planters have soil, stems, leaves and flowers at different heights spilling over the rim;
+  benches, lamps, troughs, poles, air units, cars and the bus are drawn the same way.
+- **Cost.** A detail used many times is one merged piece, made once per server and stamped where it is needed,
+  so a furnished room or a detailed shop costs about as many parts as the plain one did. The town's budgets went
+  up for this (36,000 parts, 110,000 shapes with every piece opened, 320 different pieces); it sits at about
+  30,500, 101,000 and 290.
+
+**No z-fighting.** Two flat faces in the same plane, facing the same way, in different colours, flicker: the
+engine can't tell which is in front. Now no two faces share a plane. Paint stands a tenth of a stud over its road
+or pavement, what is set into paving is cut into it, ground layers lie side by side instead of on top of each
+other, a small thing stands at least 0.03 proud of what it sits on (paint, labels and chalk 0.04), layered rugs
+step up 0.025, the holes for doors and windows are cut a hair wider than the frame, and a floor redraws when the
+one under it changes. `lune run tools/preview/zfight.luau <scope>` finds any pair that does share a plane, and the
+Zfight spec keeps new ones out of the catalog, the map's models, the rooms, the starting house and the ready-made
+buildings.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

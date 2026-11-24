@@ -74,7 +74,11 @@ The contract between the parts of the game. Update it with every change to an AP
   walls, shop window, a door leaf with its own `frame` so it opens like any other door) and returns its `Box`;
   `fill(r, kind, box, tint)` furnishes it (`bakery grocer books clothes cafe toys flowers post department lobby
   flats home hut library museum cinema station school clinic`). `CityModels.shop`, `tower` and `house` are built
-  on it; a shop's `kind` picks its furniture.
+  on it; a shop's `kind` picks its furniture. The `Box` carries `door`, the doorway's x, so furniture keeps clear
+  of it. What rooms use again and again (bookcases with their spines, shelves of goods, counters, café tables) is
+  a piece from the rooms' own kit, and `Interiors.owns(key)` says whether a piece is one of those, so the facade
+  kit counts its own pieces apart. Room pieces never collide (a facade's room is non-colliding): a shelf, counter
+  or stand a player shouldn't walk through gets an invisible box.
 - Frames must be right-handed. `Geometry.beam` and `Plan.wallFrame` build theirs from three axes; the Frames spec
   checks every primitive of every model for a proper rotation, because Roblox turns a mirrored one some other way.
 - `Data/DetailModels` (street furniture, the pockets that fill the gaps between buildings, and props for the
@@ -105,7 +109,8 @@ The contract between the parts of the game. Update it with every change to an AP
   colour) and checks the result is the size of the piece's box, and every use is a `Clone` placed at
   `frame * prim.cf * pieceAt[key]` (where the merge put the mesh's own middle in the piece's frame). Queued pieces arrive just after the rest of a model and are not in the list `instantiate`
   returns. A failed or mis-sized merge, a ghost, a client and the specs get the shapes as plain parts. Pieces
-  don't collide unless made with `collide = true`. `Builder.Pieces` counts `cut`, `failed`, `placed`, `waiting`.
+  don't collide unless made with `collide = true`, and one that does collides as its whole box, so anything people
+  walk between (a gate's two posts) stays plain parts. `Builder.Pieces` counts `cut`, `failed`, `placed`, `waiting`.
 - A primitive's `mat` may be `"Base:Look"` (`"Concrete:Panel"`): the Builder sets the part's Material to `Base` and
   its `MaterialVariant` to `Maplewick<Look>`. Where the place has no such variant the plain material shows.
   `Data/Textures` lists them in `Textures.looks` (`{ name, material, look, studs }`): `Concrete:Panel` (picture
@@ -170,8 +175,11 @@ are visual pieces with an invisible ramp along their noses. `Data/StreetPaint` l
 by rule from `Town.Roads` (`StreetPaint.ground(region)`, added by `TownMap.ground`): stop lines, arrows, tactile
 strips and yellow kerbs at zebras, manhole covers and gratings, Main Street's cycle lanes, the bus bay, box
 junctions, parking bays (`StreetPaint.parked()` follows TownMap's seeded parking), the square's rings and aprons,
-and a zebra on Hill Road at the stair's foot (`StreetPaint.StairCrossing`). It lies a hair above TownMap's own lines
-(`StreetPaint.Heights`). The Landmarks spec checks frames and piece rules, that everything is on the island, off
+and a zebra on Hill Road at the stair's foot (`StreetPaint.StairCrossing`). Paint stands a tenth over the road or
+pavement it marks (`StreetPaint.Heights`: `lift` 0.11), a small thing on a mark 0.04 over that, and big layers in
+one mark lie side by side. What is set into the square's paving (the fountain's rings, the aprons, the hall's
+bands, the threshold) is listed by `StreetPaint.inlays()` as `{ x1, z1, x2, z2 }`; `TownMap.ground` cuts those out
+of the paving so they lie flush, and lays its own ground slabs side by side rather than on top of each other. The Landmarks spec checks frames and piece rules, that everything is on the island, off
 the roads and the plots, that the stair follows the hill with walkable rises, that the paint lies flat inside what
 it belongs to, and the budgets (set pieces at most 1,400 parts, paint at most 1,600, a piece as one).
 
@@ -194,7 +202,8 @@ on a wall by key, `t` studs along it, `y` above its bottom, on side `a` or `b`.
 
 Changes are lists of ops: `{ op = "add" | "remove" | "set", kind, key, obj, before? }`. `Plan.apply` applies them all
 or none, `Plan.invert` makes the undo, `Plan.changeCost` says what they cost (selling refunds in full),
-`Plan.affected` says what to redraw. `Plan.validate` holds every rule: the grid, the land, lengths, levels, paint,
+`Plan.affected` says what to redraw (a wall's change redraws the floor above it too, since a floor stops at the
+walls under it). `Plan.validate` holds every rule: the grid, the land, lengths, levels, paint,
 doors fitting their wall and not overlapping, stairs on quarter turns.
 
 ## Saved profile
@@ -652,6 +661,15 @@ clipping (`tools/preview/ui_render.py`).
   with a lens, the sun where a latitude of 54 puts it at that hour and coloured as `Services/World` grades it,
   shadows from a shadow map near the camera, a sky and haze). `render.sh` is for a model or a layout seen from
   above; this is for a street.
+- `lune run tools/preview/zfight.luau <scope> [--names a,b] [--owner NAME] [--max n] [--far] [--json f] [--known]`
+  finds z-fighting: two faces of different parts (pieces opened into their shapes) whose normals are within a
+  degree, less than 0.02 apart, overlapping by more than 0.02 square studs and painted differently. `--far` also
+  lists big upward faces (2 square studs or more) less than 0.1 apart, which flicker from a distance. Scopes:
+  `catalog` (every Build mode piece), `models` (the map's models), `town` (the whole placed town; the far rule
+  always on), `interiors`, `starter`, `presets`, `all`. `tools/preview/zfight_lib.luau` holds the test; `--known`
+  prints the spec's list. The `Zfight` spec runs every scope and fails on any pair not in its short `KNOWN` list.
+  Doors and windows cut their wall's hole 0.04 wider than themselves all round (`Shapes`, `HOLE`), hidden by the
+  lining that starts 0.1 outside it.
 - `tests/harness.luau` loads the game's modules under Lune with Roblox datatypes from `@lune/roblox` and a fake
   instance tree built from the Rojo project. `tests/run.luau` runs `tests/specs/*.spec.luau`.
 - Specs: `Build` (catalog, plan rules, shapes, builder), `BuildService` (the server's Build service with its
