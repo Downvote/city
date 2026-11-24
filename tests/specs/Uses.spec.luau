@@ -28,7 +28,8 @@ local ICONS = { heart = 1, anger = 1, music = 1, sweat = 1, zzz = 1, idea = 1, q
 local ACTS = { wave = 1, point = 1, dance = 1, dance2 = 1, laugh = 1, cheer = 1, toolslash = 1 }
 local PUFFS = { dust = 1, sparkle = 1, smoke = 1, petals = 1, notes = 1, bubbles = 1 }
 local NEAR = { cheer = 1, look = 1, dance = 1 }
-local BANNED = { "delve", "embark", "unleash", "vibrant", "bustling", "journey", "realm", "tapestry", "seamless", "elevate" }
+local BANNED =
+	{ "delve", "embark", "unleash", "vibrant", "bustling", "journey", "realm", "tapestry", "seamless", "elevate" }
 
 local TRAITS = {}
 for _, p in Personalities.list do

@@ -7,6 +7,7 @@
 -- its `size`. Look at them with `sh tools/preview/render.sh props <png>` (or props:<id>,<id>).
 
 local Recipe = require(script.Parent.Parent.Build.Recipe)
+local Catalog = require(script.Parent.Parent.Build.Catalog)
 local Colors = require(script.Parent.Parent.Util.Colors)
 
 local C = Recipe.Colors
@@ -982,13 +983,40 @@ for _, p in list do
 	byId[p.id] = p
 end
 
+-- A prop by id. "item:<catalog id>" is a Build mode piece shown as a prop (the thing a
+-- villager has just made, before it's given to you as a keepsake).
 function EventProps.get(id: string?): Prop?
-	return if id then byId[id] else nil
+	if not id then
+		return nil
+	end
+	local found = byId[id]
+	if found then
+		return found
+	end
+	local item = string.match(id, "^item:(.+)$")
+	local def = item and Catalog.get(item)
+	if not def or def.place == "opening" then
+		return nil
+	end
+	-- a wall piece stands on its bottom edge, a hanging one is lifted to hang from its top
+	local lift = if def.place == "ceiling" then def.size.Y else 0
+	return {
+		id = id,
+		name = def.name,
+		size = def.size,
+		build = function(r: R)
+			for _, p in Catalog.prims(def) do
+				local q = table.clone(p)
+				q.cf = CFrame.new(0, lift, 0) * p.cf
+				r:add(q)
+			end
+		end,
+	}
 end
 
 -- A prop's primitives in its own space.
 function EventProps.prims(id: string): { Recipe.Prim }
-	local p = byId[id]
+	local p = EventProps.get(id)
 	if not p then
 		return {}
 	end

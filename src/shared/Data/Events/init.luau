@@ -7,11 +7,27 @@
 -- Lines are { who = "a" | "b" | "c" | nil, text, icon?, gesture? }; nil is the narrator.
 -- Text uses {a}, {b}, {c} for the stars' names (ctx.f fills them and any extra {words}).
 -- Effects are listed in Sim/EventEngine.
+--
+-- The forty or so first events are below. The rest, and the parts they share, are in the
+-- modules beside this one (the user: "make much much more random events. custom objects,
+-- conversations, etc., just like tomodachi life"):
+--   Kit       weights and a little scene builder (s:say, s:by personality, s:choice, s:prop...)
+--   Chatter   villager to villager talk made from parts, and the banks of topics and dreams
+--   Talks     the conversations you can watch: chats, gossip, dreams compared, spats, debates
+--   Solo      one villager's day: hiccups, hobbies, weather, dreams, things they make you
+--   Pairs     two or three together: games, duets, secrets, crushes, falling out, making up
+--   Town      the whole town: power cuts, talent night, a parade, a lost dog, the seasons
+--   Work      at work: big orders, a tower of bricks, the wrong letters
+--   Asks      a villager asks you: a name for a pet, which outfit, whether to tell the truth
+-- A scene may name props (Data/EventProps) to put by its stars while it plays; an answer may
+-- leave one for a while, give you a keepsake, or teach them a saying or a hobby.
 
 local Personalities = require(script.Parent.Personalities)
 local Foods = require(script.Parent.Foods)
 local Catalog = require(script.Parent.Parent.Build.Catalog)
 local Tuning = require(script.Parent.Parent.Config.Tuning)
+local Kit = require(script.Kit)
+local Chatter = require(script.Chatter)
 
 type Ctx = any
 type Scene = any
@@ -28,19 +44,6 @@ local function voice(ctx: Ctx, who: string, vid: string, kind: string, icon: str
 	local lines = p and p.lines[kind] or { "..." }
 	return line(who, ctx.rng:pick(lines), icon, gesture)
 end
-
-local TOPICS = {
-	"the best way to eat a sandwich",
-	"whether ghosts get cold",
-	"the clouds over the gate this morning",
-	"a dream about flying fish",
-	"which season smells the nicest",
-	"the new bench by the fountain",
-	"a song neither of them can remember the name of",
-	"whose handwriting is worse",
-	"what the market stall should sell next",
-	"how many stairs are too many",
-}
 
 local QUARREL = {
 	"the last slice of pie",
@@ -126,20 +129,13 @@ event({
 		return 1 + (trait(ctx, a, "social") + trait(ctx, b, "social"))
 	end,
 	scene = function(ctx: Ctx, a: string, b: string): Scene
-		local topic = ctx.rng:pick(TOPICS)
-		local agree = ctx.rng:chance(0.7)
-		return {
-			title = "A chat",
-			lines = {
-				line(nil, ctx.f("{a} and {b} got talking about {topic}.", { topic = topic })),
-				voice(ctx, "a", a, "hello", nil, "point"),
-				if agree
-					then line("b", "Ha! Exactly what I was thinking.", "music")
-					else line("b", "Hmm. I see it a bit differently.", "question"),
-			},
-			effects = { { t = "rel", a = "a", b = "b", d = if agree then 6 else 2 } },
-			log = ctx.f("{a} and {b} talked about {topic}.", { topic = topic }),
-		}
+		-- made from parts (Data/Events/Chatter), so two neighbours rarely say the same thing twice
+		local s = Kit.scene(ctx, "A chat")
+		local topic, _, d = Chatter.chat(ctx, s, a, b)
+		s:rel(d)
+		s:with({ topic = topic.about })
+		s:log("{a} and {b} talked about {topic}.")
+		return s:done()
 	end,
 })
 
@@ -1627,10 +1623,22 @@ event({
 	end,
 })
 
+for _, name in { "Talks", "Solo", "Pairs", "Town", "Work", "Asks" } do
+	local module = script:FindFirstChild(name)
+	if module then
+		for _, def in require(module) :: any do
+			event(def)
+		end
+	end
+end
+
 Events.list = list
 
 local byId: { [string]: any } = {}
 for _, e in list do
+	if byId[e.id] then
+		error("event id used twice: " .. e.id)
+	end
 	byId[e.id] = e
 end
 
