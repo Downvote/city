@@ -43,6 +43,7 @@ end
 
 export type Options = {
 	ghost: boolean?, -- see-through, no collisions, no lights (placement previews)
+	plain: boolean?, -- pieces as their shapes, never merged (what players build in Build mode)
 	tint: Color3?, -- ghost colour override (red when a spot is not allowed)
 }
 
@@ -241,7 +242,14 @@ end
 -- placed by (pieceAt). Returns nil when it can't be done or the mesh isn't the size of the
 -- piece's box, so the caller falls back to plain parts.
 local function cutPiece(prim: Prim): BasePart?
-	local subs: { Prim } = prim.parts or {}
+	-- only the boxes and wedges are merged (Geometry.merges); round shapes are placed beside it
+	local subs: { Prim } = {}
+	local all: { Prim } = prim.parts or {}
+	for _, sub in all do
+		if Geometry.merges(sub) then
+			table.insert(subs, sub)
+		end
+	end
 	local main: BasePart? = nil
 	local rest: { BasePart } = {}
 	for _, sub in subs do
@@ -284,9 +292,11 @@ local function cutPiece(prim: Prim): BasePart?
 	if not shape then
 		return nil
 	end
-	-- a sanity check on what came back: standing square, it has to be the piece's box
+	-- a sanity check on what came back: standing square, it has to be the size of the box round
+	-- the shapes that went in
 	if upright(shape.CFrame) then
-		local d = shape.Size - prim.size
+		local lo, hi = Geometry.bounds(subs)
+		local d = shape.Size - (hi - lo)
 		if
 			math.abs(d.X) > 0.1
 			or math.abs(d.Y) > 0.1
@@ -312,11 +322,26 @@ local function cutPiece(prim: Prim): BasePart?
 	return shape
 end
 
-local function placePiece(template: BasePart, prim: Prim, frame: CFrame, parent: Instance): BasePart
+local function placePiece(template: BasePart, prim: Prim, frame: CFrame, parent: Instance, out: { BasePart }?): BasePart
 	local part = template:Clone()
 	part.CFrame = frame * prim.cf * (pieceAt[prim.key or ""] or CFrame.identity)
 	part.Parent = parent
 	Builder.Pieces.placed += 1
+	-- the round shapes, as parts of their own beside the mesh
+	local f = frame * prim.cf
+	local all: { Prim } = prim.parts or {}
+	for _, sub in all do
+		if not Geometry.merges(sub) then
+			local round = makePart(sub, f, nil)
+			if prim.collide ~= true then
+				round.CanCollide = false
+			end
+			round.Parent = parent
+			if out then
+				table.insert(out, round)
+			end
+		end
+	end
 	return part
 end
 
@@ -414,14 +439,14 @@ function Builder.instantiate(prims: { Prim }, parent: Instance, frame: CFrame?, 
 	local out = table.create(#prims)
 	for _, prim in prims do
 		if prim.shape == "Piece" then
-			local cutting = Builder.cutPieces and not (opts and opts.ghost)
+			local cutting = Builder.cutPieces and not (opts and (opts.ghost or opts.plain))
 			local known = if cutting then pieceKit[prim.key or ""] else false
 			if known == nil then
 				table.insert(pieceQueue, { prim = prim, frame = f, parent = parent })
 				Builder.Pieces.waiting = #pieceQueue
 				workPieces()
 			elseif known then
-				table.insert(out, placePiece(known :: BasePart, prim, f, parent))
+				table.insert(out, placePiece(known :: BasePart, prim, f, parent, out))
 			else
 				expandPiece(prim, f, parent, opts, out)
 			end
@@ -546,7 +571,10 @@ function Builder.render(plan: Plan.PlanData, kind: string, key: string, folder: 
 	if kind == "items" then
 		model:SetAttribute("ItemId", obj.id)
 	end
-	Builder.instantiate(prims, model, plotFrame)
+	-- what players build is drawn from plain parts, as the piece looked while they held it (the
+	-- user: "alot of the objects seem to have its pieces wrong after putting them down in build
+	-- mode"); merging is for the town's own models, which never change
+	Builder.instantiate(prims, model, plotFrame, { plain = true })
 	model.Parent = folder
 	return model
 end

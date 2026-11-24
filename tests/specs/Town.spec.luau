@@ -103,15 +103,15 @@ describe("Town", function()
 	end)
 
 	it("keeps the whole town to a budget of parts and of different pieces", function()
-		-- A piece (Geometry.piece) is one part in the game: one merged mesh, copied wherever it
-		-- is used. So the town is counted twice: with each piece as one part, which is what a
-		-- server holds, and with every piece opened into its shapes, which is what a client
+		-- A piece (Geometry.piece) is one part in the game for its boxes and wedges, one merged
+		-- mesh copied wherever it is used, plus a part for each round shape in it
+		-- (Geometry.served). So the town is counted twice: that way, which is what a server holds, and with every piece opened into its shapes, which is what a client
 		-- draws where the merge can't be done. Every different piece is a merge when the server
 		-- starts, so there may not be many of those either. (The caps went up from 30,000, 70,000
 		-- and 220 for the user's "the amount of detail should be similar to the default house
 		-- everywhere".)
 		local ground = TownMap.ground()
-		local parts, opened = #ground, #Geometry.flatten(ground)
+		local parts, opened = Geometry.served(ground), #Geometry.flatten(ground)
 		local keys, different = {}, 0
 		local function note(prims)
 			for _, prim in prims do
@@ -128,13 +128,16 @@ describe("Town", function()
 			if not size then
 				local prims = TownMap.prims(p.name)
 				note(prims)
-				size = { #prims, #Geometry.flatten(prims) }
+				size = { Geometry.served(prims), #Geometry.flatten(prims) }
 				sizes[p.name] = size
 			end
 			parts += size[1]
 			opened += size[2]
 		end
-		expect(parts < 36000).toBeTruthy()
+		print(string.format("Town: %d parts, %d opened, %d different pieces", parts, opened, different))
+		-- (parts went up from 36,000 when round shapes stopped being merged into pieces and became
+		-- parts of their own, for the user's "alot of the objects seem to have its pieces wrong")
+		expect(parts < 56000).toBeTruthy()
 		expect(opened < 110000).toBeTruthy()
 		expect(different < 320).toBeTruthy()
 	end)

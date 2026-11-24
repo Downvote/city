@@ -287,6 +287,39 @@ function Geometry.piece(shapes: { Prim }, collide: boolean?): Prim
 	}
 end
 
+-- Whether a piece's shape goes into its merged mesh. Only plain boxes and wedges do: a ball, a
+-- cylinder or a cone is a shape from the low poly kit (itself a merged mesh, stretched to size),
+-- and merged again inside a piece they came out in the wrong place or the wrong shape in the game
+-- (the user: "alot of the objects seem to have its pieces wrong after putting them down in build
+-- mode"). The Builder puts those beside the mesh as parts of their own.
+function Geometry.merges(shape: Prim): boolean
+	return shape.shape == "Block" or shape.shape == "Wedge" or shape.shape == "CornerWedge"
+end
+
+-- How many parts these prims are in the game when pieces are merged: a piece is one mesh for
+-- its boxes and wedges, plus a part for each round shape in it.
+function Geometry.served(prims: { Prim }): number
+	local n = 0
+	for _, p in prims do
+		if p.shape == "Piece" and p.parts then
+			local merged = false
+			for _, q in p.parts do
+				if Geometry.merges(q) then
+					merged = true
+				else
+					n += 1
+				end
+			end
+			if merged then
+				n += 1
+			end
+		else
+			n += 1
+		end
+	end
+	return n
+end
+
 -- The same list with every piece opened into its shapes, each in the list's own frame: what the
 -- previews draw and what a spec that looks at every part needs.
 function Geometry.flatten(prims: { Prim }): { Prim }
