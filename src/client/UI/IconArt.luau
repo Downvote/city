@@ -38,7 +38,8 @@ IconArt.art = A
 -- The layers (UI/Vector): solid (a filled shape, its corners taken off), flat (filled just as
 -- written), hole (a shape rubbed out), gap (a line rubbed out, 2 wide unless told), clear (room
 -- rubbed out round a shape about to be laid over others), line (a line of its own width).
-local solid, flat, hole, gap, clear, line = Vector.solid, Vector.flat, Vector.hole, Vector.gap, Vector.clear, Vector.line
+local solid, flat, hole, gap, clear, line =
+	Vector.solid, Vector.flat, Vector.hole, Vector.gap, Vector.clear, Vector.line
 
 -- signs ------------------------------------------------------------------------------------------------
 
@@ -533,7 +534,7 @@ A.blossom = {
 -- a leaf on the wind
 A.leaves = { flat("M3 21 Q3 7 21 3 Q21 21 3 21 Z"), gap("M6.5 17.5 L14.5 9.5", 1.75) }
 
--- things from the shop and food (UI/ItemArt) ------------------------------------------------------
+-- the foods (UI/ItemArt): silhouettes by the same rules, shown in each food's own colour -------------
 
 for name, art in ItemArt do
 	A[name] = art

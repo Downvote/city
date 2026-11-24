@@ -29,7 +29,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (415 at the last full run; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `PlayerWork` and `WorkService`: a player working at a workplace themselves, its pay and cap, and the server's side with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (436 at the last full run; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `PlayerWork` and `WorkService`: a player working at a workplace themselves, its pay and cap, and the server's side with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off; what kind a bundle
 is, the outfit that holds the body, single body parts, the player's own items and avatars; preview scenes
@@ -45,7 +45,7 @@ villager coming in events", so every villager is one the player made), City (sta
 loading, economy bounds), Town (placed models exist, plots and road clear, room to walk, spawn and festival spots
 clear, the islets out at sea off the plots), Presets (every ready-made building goes down whole turned every way, on the client and
 the server, inside its footprint, with its workplace), Icons (every icon builds with one outline round its silhouette: outline copies before
-fills, no stroke on a fill), Textures (every painted texture has its pictures and matching studs, ids well formed), Life
+fills, no stroke on a fill; the foods are silhouettes by the same rules, in colours that read in both looks), Textures (every painted texture has its pictures and matching studs, ids well formed), Life
 (hearts and thank yous, snacks a day, wishes granted only by the right answer and fading, no romance with best friends
 the top and an old save's romance loading as best friends, goals pay once),
 World (hills flat at their edges, on the creator's meadow and their tops, gentle to walk; places on the island and
@@ -393,9 +393,14 @@ solid silhouette in one colour with its details cut out of it (the door out of t
 clock), never an outline: cuts and gaps 1.5 to 2 wide so they last at 16 pixels, signs that are all line (plus,
 cross, tick, arrows) 4 wide with square ends, true circles and firm corners, points that really point, a notch
 in every arrow's tail, 1.5 clear of the edge (the rules are at the top of IconArt, and the Icons spec holds
-them). Foods are shaded pictures in `UI/ItemArt` (`Icons.item`). As with the menus, the style
+them). Foods are icons too (the user: "make food and thing icons sillouhettes like normal icons as well"):
+silhouettes in `UI/ItemArt` drawn by the same rules (the leaf apart from the apple, the scores cut out of the
+bread), with no colour of their own; `Icons.item` shows one in the food's own colour (`Data/Foods`' `color`,
+which must read on the dark glass and on a card in either look) unless the caller passes `Color`, as with
+`Icons.make`. The Icons spec holds them to the icons' rules. As with the menus, the style
 is taken and never the pictures: no icon, dish, logo or lettering of that game is copied or traced, and none
-of its files is in the repository. Look at art with `sh tools/preview/art.sh <png> <names>`. A published game only paints them
+of its files is in the repository. Look at art with `sh tools/preview/art.sh <png> <names>` (`foods` for every
+food, `LIGHT=1` to see the small ones on the light card; `ui.sh foods` shows them as the game does). A published game only paints them
 with Allow Mesh / Image APIs on (Security, in the game's settings); otherwise each icon falls back to its
 shape list in `UI/Icons` (`D`), so a new icon needs both, and the Icons spec fails without the art. The coin
 keeps its gold and its indent ("the coin icon can have a darker circle inside as an indent"). The Goals button

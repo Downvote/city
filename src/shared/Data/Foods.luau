@@ -2,8 +2,9 @@
 -- Foods: what a villager can crave. Every villager has a favourite, which they crave half the
 -- time. There is no shop and nothing is kept in a bag: a craving is a wish (Sim/Life), and its
 -- Buy button pays for the food there and then. `price` is the food's own price; what the player
--- pays is Life.cravingPrice (this times Tuning.Life.CravingMarkup). The pictures are in the
--- client's UI/ItemArt, by id.
+-- pays is Life.cravingPrice (this times Tuning.Life.CravingMarkup). The icons are in the
+-- client's UI/ItemArt, by id, and `color` is the colour the icon is shown in: one that says what
+-- the food is and reads on the dark glass and on a card in either look (the Icons spec checks).
 
 export type Food = {
 	id: string,
@@ -23,7 +24,7 @@ local list: { Food } = {
 	{ id = "skewer", name = "Fish skewer", price = 50, color = "4FAEE6" },
 	{ id = "tart", name = "Berry tart", price = 60, color = "9F78E6" },
 	{ id = "honeycake", name = "Honey cake", price = 70, color = "ECA22C" },
-	{ id = "riceball", name = "Rice ball", price = 30, color = "B8C0CC" },
+	{ id = "riceball", name = "Rice ball", price = 30, color = "A7B1C0" },
 	{ id = "pancakes", name = "Pancakes", price = 55, color = "DDA058" },
 	{ id = "curry", name = "Spicy curry", price = 80, color = "E07A2E" },
 	{ id = "pie", name = "Pumpkin pie", price = 75, color = "EB8C3C" },

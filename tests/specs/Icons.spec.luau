@@ -4,9 +4,24 @@
 -- and none has an outline drawn over another part. The flat shape ones are one colour, with
 -- details cut out in a second. The stickers are drawn in two passes (dark outline copies first,
 -- then the fills with no stroke), so the only outline that shows is the one round the whole
--- silhouette.
+-- silhouette. The foods (UI/ItemArt) are icons too (the user: "make food and thing icons
+-- sillouhettes like normal icons as well"), held to the same rules and shown in their own colour.
 
 local Icons = require("StarterPlayer.StarterPlayerScripts.Client.UI.Icons")
+local Foods = require("ReplicatedStorage.Shared.Data.Foods")
+local Colors = require("ReplicatedStorage.Shared.Util.Colors")
+
+-- How far apart two colours are to the eye: the ratio of their lightness (1 to 21).
+local function contrast(a: Color3, b: Color3): number
+	local function lum(c: Color3): number
+		local function ch(v: number): number
+			return if v <= 0.04045 then v / 12.92 else ((v + 0.055) / 1.055) ^ 2.4
+		end
+		return 0.2126 * ch(c.R) + 0.7152 * ch(c.G) + 0.0722 * ch(c.B)
+	end
+	local la, lb = lum(a), lum(b)
+	return (math.max(la, lb) + 0.05) / (math.min(la, lb) + 0.05)
+end
 
 local function strokesUnder(inst)
 	local out = {}
@@ -172,23 +187,23 @@ describe("Icons", function()
 		end
 	end)
 
-	it("keeps the interface icons to one colour", function()
+	it("keeps the icons to one colour, the foods too", function()
 		local Vector = require("StarterPlayer.StarterPlayerScripts.Client.UI.Vector")
 		local IconArt = require("StarterPlayer.StarterPlayerScripts.Client.UI.IconArt")
 		local own = { coin = true, coins = true }
-		for _, name in Icons.names() do
+		for _, name in Icons.artNames() do
 			local _, coloured = Vector.raster(IconArt.art[name], 24)
 			expect(coloured == (own[name] == true)).toBeTruthy()
 		end
 	end)
 
-	it("draws the interface icons solid, with a margin, and nothing too fine to show small", function()
+	it("draws every icon solid, with a margin, and nothing too fine to show small", function()
 		-- the style (UI/IconArt): a filled silhouette with its details cut out of it. So every
 		-- icon has a solid shape, no line (drawn or rubbed out) is thinner than 1.5 of the 24
 		-- grid, which is one pixel at 16 across, and nothing comes nearer than 1 to the edge
 		local Vector = require("StarterPlayer.StarterPlayerScripts.Client.UI.Vector")
 		local IconArt = require("StarterPlayer.StarterPlayerScripts.Client.UI.IconArt")
-		for _, name in Icons.names() do
+		for _, name in Icons.artNames() do
 			local solid = false
 			for _, layer in IconArt.art[name] do
 				local l = if type(layer) == "string" then { layer } else layer
@@ -260,6 +275,122 @@ describe("Icons", function()
 		Icons.warm({ "apple" })
 		Icons.setVector(nil)
 		expect(#Harness.images).toBe(sheets)
+	end)
+
+	it("draws every food as a silhouette with its details cut out", function()
+		-- a food is an icon like the rest: one solid shape in one colour (checked above with every
+		-- icon), with cuts that really show at 16 pixels, big in its square, and a shape list
+		-- behind it for when the game can't make pictures
+		local Vector = require("StarterPlayer.StarterPlayerScripts.Client.UI.Vector")
+		local IconArt = require("StarterPlayer.StarterPlayerScripts.Client.UI.IconArt")
+		expect(#Foods.list >= 20).toBeTruthy()
+		for _, food in Foods.list do
+			local art = IconArt.art[food.id]
+			if not art then
+				error(food.id .. " has no picture")
+			end
+			if not Icons.defs[food.id] then
+				error(food.id .. " has no shape list to fall back on")
+			end
+			local whole: { any } = {}
+			local cuts = 0
+			for _, layer in art do
+				local l = if type(layer) == "string" then { layer } else layer
+				expect(l.fill == nil or l.fill == true).toBeTruthy()
+				expect(l.stroke == nil).toBeTruthy()
+				expect(l.opacity == nil).toBeTruthy()
+				if l.cut then
+					cuts += 1
+				else
+					table.insert(whole, layer)
+				end
+			end
+			if cuts == 0 then
+				error(food.id .. " has nothing cut out of it")
+			end
+			-- at 48 across (what a 16 to 24 pixel icon is drawn from) the cuts take away a fair
+			-- few pixels, so the details show
+			local n = 48
+			local cut = Vector.raster(art, n, { Weight = Icons.Weight[n] })
+			local uncut = Vector.raster(whole, n, { Weight = Icons.Weight[n] })
+			local gone, left = 0, 0
+			local x0, y0, x1, y1 = n, n, -1, -1
+			for y = 0, n - 1 do
+				for x = 0, n - 1 do
+					local a = buffer.readu8(cut, (y * n + x) * 4 + 3)
+					gone += buffer.readu8(uncut, (y * n + x) * 4 + 3) - a
+					left += a
+					if a > 127 then
+						x0, y0, x1, y1 = math.min(x0, x), math.min(y0, y), math.max(x1, x), math.max(y1, y)
+					end
+				end
+			end
+			if gone < 255 * 24 then
+				error(food.id .. "'s cuts are too small to show at 16 pixels")
+			end
+			-- it fills its square the way the icons do: 16 of the 24 across at least
+			if math.max(x1 - x0, y1 - y0) + 1 < n * 16 / 24 then
+				error(food.id .. " is too small in its square")
+			end
+			-- and has some weight (a diagonal one, like the skewer or the sun, is lighter)
+			if left < 255 * n * n * 0.15 then
+				error(food.id .. " is too thin to read")
+			end
+		end
+	end)
+
+	it("gives every food a colour of its own that reads on the dark glass and on a card", function()
+		local glass, dark, light = Color3.fromRGB(12, 12, 15), Color3.fromRGB(44, 44, 50), Color3.fromRGB(253, 253, 255)
+		for _, food in Foods.list do
+			local c = Colors.fromHex(food.color)
+			if contrast(c, glass) < 4 or contrast(c, dark) < 3 or contrast(c, light) < 1.5 then
+				error(food.id .. "'s colour doesn't stand out: " .. food.color)
+			end
+		end
+	end)
+
+	it("shows a food in its own colour, or tinted like an icon when asked", function()
+		local own = Color3.fromRGB(229, 65, 75)
+		local apple = Icons.item("apple", 24, own, {})
+		local art = apple:FindFirstChild("Art")
+		expect(art ~= nil).toBeTruthy()
+		expect(apple:GetAttribute("Mono")).toBe(true)
+		expect(art.ImageColor3:ToHex():lower()).toBe(own:ToHex():lower())
+		local tint = Color3.fromRGB(10, 200, 30)
+		local tinted = Icons.item("apple", 24, own, { Color = tint }):FindFirstChild("Art")
+		expect(tinted.ImageColor3:ToHex():lower()).toBe(tint:ToHex():lower())
+		local byTint = Icons.item("apple", 24, own, { Tint = tint }):FindFirstChild("Art")
+		expect(byTint.ImageColor3:ToHex():lower()).toBe(tint:ToHex():lower())
+		-- Icons.make draws it like any icon, in the glyph colour unless told
+		local plain = Icons.make("apple", 24, { Color = tint }):FindFirstChild("Art")
+		expect(plain.ImageColor3:ToHex():lower()).toBe(tint:ToHex():lower())
+	end)
+
+	it("builds a food from its shape list when the game can't make pictures", function()
+		local own, hole = Color3.fromRGB(229, 65, 75), Color3.fromRGB(250, 240, 230)
+		Icons.setVector(false)
+		for _, food in Foods.list do
+			local icon = Icons.item(food.id, 40, own, { Hole = hole })
+			expect(icon.Name ~= "Swatch").toBeTruthy()
+			expect(icon:FindFirstChild("Art")).toBe(nil)
+			expect(#icon:GetChildren() >= 2).toBeTruthy()
+			local holes = 0
+			for _, d in icon:GetDescendants() do
+				local c = if d:IsA("Frame") and d.BackgroundTransparency < 1
+					then d.BackgroundColor3
+					elseif d:IsA("UIStroke") then d.Color
+					else nil
+				if c then
+					expect(c:ToHex() == own:ToHex() or c:ToHex() == hole:ToHex()).toBeTruthy()
+					holes += if c:ToHex() == hole:ToHex() then 1 else 0
+				end
+			end
+			-- its details are cut out of it as the picture's are (pancakes are only stacked)
+			if food.id ~= "pancakes" and food.id ~= "stew" and food.id ~= "broccoli" and holes == 0 then
+				error(food.id .. "'s shape list has nothing cut out of it")
+			end
+		end
+		Icons.setVector(nil)
 	end)
 
 	it("draws a disc for a thing with no picture", function()

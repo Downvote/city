@@ -908,6 +908,216 @@ D.leaves = {
 	{ "r", 46, 16, 5, 66, C.orangeDark, r = 0.5, rot = 40, o = false },
 }
 
+-- the foods (UI/ItemArt) ---------------------------------------------------------------------------
+-- Their silhouettes again, roughly, for when the game can't make pictures: the big shapes in one
+-- colour and the cuts (`INK`, inside the shape they cut) drawn in the hole colour, as the icons
+-- above are. Icons.item draws them in the food's own colour.
+
+local function food(color: Color3, shapes: { any }): { any }
+	for _, s in shapes do
+		if s[6] == nil then
+			s[6] = color
+		end
+	end
+	return shapes
+end
+
+D.apple = food(C.red, {
+	{ "c", 12, 27, 76, 63 },
+	{ "r", 46, 6, 9, 26, nil, r = 0.5, rot = 12 },
+	{ "c", 58, 6, 30, 14, nil, rot = -25 },
+	{ "r", 22, 42, 8, 22, INK, r = 0.5, rot = 25, o = false },
+})
+
+D.goldapple = food(C.gold, {
+	{ "c", 12, 27, 76, 63 },
+	{ "r", 46, 6, 9, 26, nil, r = 0.5, rot = 12 },
+	{ "c", 58, 6, 30, 14, nil, rot = -25 },
+	{ "r", 8, 10, 12, 12, nil, r = 0.15, rot = 45 },
+	{ "r", 28, 48, 16, 16, INK, r = 0.15, rot = 45, o = false },
+})
+
+D.bread = food(C.wood, {
+	{ "half", 10, 23, 80, 70, nil, dir = "up" },
+	{ "r", 10, 52, 80, 29, nil, r = 0.2 },
+	{ "r", 26, 42, 7, 18, INK, r = 0.5, rot = 35, o = false },
+	{ "r", 45, 40, 7, 18, INK, r = 0.5, rot = 35, o = false },
+	{ "r", 64, 42, 7, 18, INK, r = 0.5, rot = 35, o = false },
+})
+
+D.carrot = food(C.orange, {
+	{ "r", 26, 30, 22, 70, nil, r = 0.5, rot = 45 },
+	{ "c", 60, 4, 12, 26, C.leaf, rot = -15 },
+	{ "c", 72, 6, 12, 28, C.leaf, rot = 40 },
+	{ "c", 72, 26, 24, 11, C.leaf, rot = 15 },
+	{ "r", 27, 57, 8, 4, INK, rot = 45, o = false },
+	{ "r", 41, 71, 8, 4, INK, rot = 45, o = false },
+})
+
+D.cheese = food(C.yellow, {
+	{ "t", 32, 8, 60, "up" },
+	{ "r", 8, 42, 84, 40, nil, r = 0.08 },
+	{ "c", 20, 54, 18, 18, INK, o = false },
+	{ "c", 52, 48, 13, 13, INK, o = false },
+	{ "c", 68, 62, 12, 12, INK, o = false },
+})
+
+D.soup = food(C.wood, {
+	{ "r", 27, 8, 8, 30, nil, r = 0.5, rot = 15 },
+	{ "r", 46, 4, 8, 34, nil, r = 0.5, rot = 15 },
+	{ "r", 65, 8, 8, 30, nil, r = 0.5, rot = 15 },
+	{ "half", 10, 22, 80, 66 },
+	{ "r", 10, 48, 80, 8, nil, r = 0.5 },
+	{ "r", 10, 56, 80, 4, INK, o = false },
+})
+
+D.skewer = food(C.blue, {
+	{ "r", 46, 4, 8, 92, nil, r = 0.5, rot = 60 },
+	{ "c", 44, 17, 33, 54, nil, rot = 60 },
+	{ "r", 18, 55, 17, 17, nil, r = 0.15, rot = 105 },
+	{ "c", 69, 32, 9, 9, INK, o = false },
+})
+
+D.tart = food(C.purple, {
+	{ "r", 8, 64, 84, 24, nil, r = 0.15 },
+	{ "c", 10, 46, 20, 20 },
+	{ "c", 70, 46, 20, 20 },
+	{ "c", 29, 43, 22, 22 },
+	{ "c", 49, 43, 22, 22 },
+	{ "c", 20, 29, 20, 20 },
+	{ "c", 39, 26, 22, 22 },
+	{ "c", 60, 29, 20, 20 },
+	{ "r", 30, 74, 5, 14, INK, o = false },
+	{ "r", 48, 74, 5, 14, INK, o = false },
+	{ "r", 66, 74, 5, 14, INK, o = false },
+})
+
+D.honeycake = food(C.gold, {
+	{ "t", 20, 12, 64, "up" },
+	{ "r", 10, 46, 80, 26, nil, r = 0.05 },
+	{ "r", 8, 44, 84, 5, INK, o = false },
+	{ "r", 32, 44, 6, 12, INK, r = 0.5, o = false },
+	{ "r", 60, 44, 6, 10, INK, r = 0.5, o = false },
+	{ "r", 8, 61, 84, 4, INK, o = false },
+	{ "r", 7, 82, 86, 10, nil, r = 0.5 },
+})
+
+D.riceball = food(C.greyLight, {
+	{ "r", 22, 18, 56, 56, nil, r = 0.25, rot = 45 },
+	{ "r", 8, 56, 84, 32, nil, r = 0.4 },
+	{ "r", 34, 58, 32, 30, INK, o = false },
+	{ "r", 40, 64, 20, 24, nil, o = false },
+})
+
+D.pancakes = food(C.woodLight, {
+	{ "r", 36, 9, 28, 13, nil, r = 0.15 },
+	{ "r", 10, 26, 80, 16, nil, r = 0.5 },
+	{ "r", 8, 46, 84, 16, nil, r = 0.5 },
+	{ "r", 10, 66, 80, 16, nil, r = 0.5 },
+	{ "r", 7, 86, 86, 8, nil, r = 0.5 },
+})
+
+D.curry = food(C.orange, {
+	{ "r", 74, 10, 9, 40, nil, r = 0.5, rot = 22 },
+	{ "half", 42, 46, 50, 40, nil, dir = "up" },
+	{ "r", 58, 52, 9, 9, INK, r = 0.2, o = false },
+	{ "r", 74, 55, 8, 8, INK, r = 0.2, o = false },
+	{ "half", 10, 30, 48, 70, nil, dir = "up" },
+	{ "half", 7, 54, 86, 36 },
+})
+
+D.pie = food(C.orange, {
+	{ "r", 12, 54, 76, 32, nil, r = 0.15 },
+	{ "c", 8, 34, 84, 32 },
+	{ "ring", 22, 42, 56, 16, C.woodDark, 4, o = false },
+	{ "c", 38, 10, 24, 26 },
+})
+
+D.icecream = food(C.pink, {
+	{ "t", 22, 58, 56, "down" },
+	{ "r", 42, 60, 5, 14, INK, rot = 45, o = false },
+	{ "r", 54, 62, 5, 12, INK, rot = 45, o = false },
+	{ "r", 66, 4, 8, 22, nil, r = 0.5, rot = 45 },
+	{ "c", 20, 10, 60, 52 },
+	{ "r", 20, 36, 60, 18, nil, r = 0.4 },
+	{ "r", 36, 30, 5, 9, INK, r = 0.5, rot = 45, o = false },
+	{ "r", 52, 22, 5, 9, INK, r = 0.5, rot = 45, o = false },
+})
+
+D.salad = food(C.green, {
+	{ "c", 12, 30, 32, 32 },
+	{ "c", 54, 28, 34, 34 },
+	{ "c", 30, 14, 40, 40 },
+	{ "c", 66, 36, 12, 12, INK, o = false },
+	{ "half", 10, 34, 80, 54 },
+})
+
+D.chocolate = food(C.woodDark, {
+	{ "r", 28, 10, 44, 42, nil, r = 0.1, rot = 15 },
+	{ "r", 48, 12, 4, 38, INK, rot = 15, o = false },
+	{ "r", 28, 30, 44, 4, INK, rot = 15, o = false },
+	{ "r", 25, 52, 50, 36, nil, r = 0.1, rot = 15 },
+	{ "r", 23, 68, 54, 5, INK, rot = 15, o = false },
+})
+
+D.pudding = food(C.gold, {
+	{ "c", 38, 16, 18, 18 },
+	{ "r", 52, 8, 4, 12, nil, r = 0.5, rot = 40 },
+	{ "r", 22, 36, 56, 42, nil, r = 0.12 },
+	{ "r", 22, 50, 56, 5, INK, r = 0.5, o = false },
+	{ "r", 7, 82, 86, 10, nil, r = 0.5 },
+})
+
+D.broccoli = food(C.greenDark, {
+	{ "c", 8, 28, 30, 30 },
+	{ "c", 62, 28, 30, 30 },
+	{ "c", 22, 12, 32, 32 },
+	{ "c", 46, 12, 32, 32 },
+	{ "c", 33, 22, 34, 34 },
+	{ "r", 30, 54, 10, 22, nil, r = 0.3, rot = -45 },
+	{ "r", 60, 54, 10, 22, nil, r = 0.3, rot = 45 },
+	{ "r", 40, 64, 20, 28, nil, r = 0.15 },
+})
+
+D.pickles = food(C.leaf, {
+	{ "r", 20, 8, 60, 16, nil, r = 0.15 },
+	{ "r", 34, 16, 5, 8, INK, o = false },
+	{ "r", 48, 16, 5, 8, INK, o = false },
+	{ "r", 62, 16, 5, 8, INK, o = false },
+	{ "r", 16, 32, 68, 58, nil, r = 0.2 },
+	{ "r", 40, 38, 18, 46, INK, r = 0.5, rot = 30, o = false },
+})
+
+D.stew = food(C.redDark, {
+	{ "r", 60, 4, 9, 34, nil, r = 0.5, rot = 45 },
+	{ "c", 22, 22, 22, 22 },
+	{ "c", 38, 16, 26, 26 },
+	{ "c", 56, 24, 20, 20 },
+	{ "r", 10, 43, 80, 10, nil, r = 0.5 },
+	{ "r", 18, 58, 64, 32, nil, r = 0.3 },
+	{ "r", 7, 62, 16, 11, nil, r = 0.4 },
+	{ "r", 77, 62, 16, 11, nil, r = 0.4 },
+})
+
+D.starfruit = food(C.yellow, {
+	{ "c", 28, 31, 44, 44 },
+	{ "r", 40, 11, 20, 44, nil, r = 0.3, rot = 0 },
+	{ "r", 59, 24.8, 20, 44, nil, r = 0.3, rot = 72 },
+	{ "r", 51.8, 47.2, 20, 44, nil, r = 0.3, rot = 144 },
+	{ "r", 28.2, 47.2, 20, 44, nil, r = 0.3, rot = 216 },
+	{ "r", 21, 24.8, 20, 44, nil, r = 0.3, rot = 288 },
+	{ "c", 42, 45, 16, 16, INK, o = false },
+})
+
+D.dragonchili = food(C.red, {
+	{ "r", 30, 32, 24, 64, nil, r = 0.5, rot = 50 },
+	{ "c", 58, 30, 28, 24 },
+	{ "r", 70, 12, 8, 20, nil, r = 0.5, rot = 30 },
+	{ "c", 8, 18, 34, 38 },
+	{ "t", 13, 4, 24, "up" },
+	{ "c", 20, 34, 12, 14, INK, o = false },
+})
+
 -- making them -------------------------------------------------------------------------------------
 --
 -- An icon is drawn in two passes so that no outline ever crosses another or runs over a fill:
@@ -1353,7 +1563,7 @@ function Icons.artNames(): { string }
 end
 
 -- The vector drawing of an icon, or nil if there is none or the game can't make pictures. Art
--- with colours of its own (the coin, food) shows in them; the rest takes `Color`.
+-- with colours of its own (the coin) shows in them; the rest (the foods too) takes `Color`.
 function Icons.vector(name: string, px: number, p: { [string]: any }): Frame?
 	if vectorOn == false or broken[name] or IconArt.art[name] == nil then
 		return nil
@@ -1408,9 +1618,9 @@ function Icons.vector(name: string, px: number, p: { [string]: any }): Frame?
 end
 
 -- Paints pictures ahead of need, one at a time with a breath between, so the first screen that
--- shows a lot of them at once (several cravings, each a stack of shaded shapes) doesn't
--- stall while they are all painted together. `names` is which (every piece of art if not given).
--- Does nothing where the game can't make pictures.
+-- shows a lot of them at once (several cravings) doesn't stall while they are all painted
+-- together. `names` is which (every piece of art if not given). Does nothing where the game
+-- can't make pictures.
 function Icons.warm(names: { string }?)
 	task.spawn(function()
 		for _, name in names or Icons.artNames() do
@@ -1428,17 +1638,24 @@ function Icons.warm(names: { string }?)
 	end)
 end
 
--- The picture of a food: its vector art, or where there is
--- none or the game can't make pictures, a disc in `fallback`, the thing's own colour.
-function Icons.item(name: string, px: number, fallback: Color3, props: { [string]: any }?): Frame
-	local p = props or {}
+-- The picture of a food (UI/ItemArt): a silhouette like the interface icons (the user: "make
+-- food and thing icons sillouhettes like normal icons as well"), drawn in `color`, the thing's own
+-- (Data/Foods' color: a red apple, a brown loaf), unless props name a Color or Tint, which it
+-- takes as Icons.make does (Hole too, for the shape lists). Where the game can't make pictures
+-- it is built from its shape list like any icon; a name with neither is a disc in `color`.
+function Icons.item(name: string, px: number, color: Color3, props: { [string]: any }?): Frame
+	local p = table.clone(props or {})
+	p.Color = p.Color or p.Tint or color
 	local drawn = Icons.vector(name, px, p)
 	if drawn then
 		return drawn
 	end
+	if D[name] then
+		return Icons.flat(name, px, p)
+	end
 	local disc = Instance.new("Frame")
 	disc.Name = "Swatch"
-	disc.BackgroundColor3 = fallback
+	disc.BackgroundColor3 = p.Color
 	disc.BorderSizePixel = 0
 	disc.Size = UDim2.fromOffset(px, px)
 	disc.Position = p.Position or UDim2.new()

@@ -47,7 +47,7 @@ The contract between the parts of the game. Update it with every change to an AP
     leaf carries `Closed` (its shut CFrame) and `Frame` (its own doorway in the world: `primsFor` notes the item's
     frame on the prim as `frame`); `Builder.doorOpen(leaf)` is where it stands open (swung round `HingeX`, slid by
     `Slide` or raised by `Lift`, all measured in that doorway).
-- `Data/`: `Palette` (paint swatches, materials and the ready-made finishes Build mode shows as tiles), `Personalities`, `Foods`, `Items`, `Jobs`, `Events` (the event list), `Town` (map
+- `Data/`: `Palette` (paint swatches, materials and the ready-made finishes Build mode shows as tiles), `Personalities`, `Foods` (id, name, price and `color`, the colour its icon is drawn in), `Items`, `Jobs`, `Events` (the event list), `Town` (map
   layout and plot frames: `Tuning.Plot.Count` plots of `Tuning.Plot.Size`, four of 400 a side, `PlotCentersX`
   { -266, 266 }, plots 1 and 2 north of Main Street west to east facing it, 3 and 4 south of it, turned,
   `plotFrame(i)`, `plotCenter`, `plotArrival`, `toPlot`; the road network `Roads` as `{ x1, z1, x2, z2, half
@@ -778,21 +778,25 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   `Vector.raster(layers, n, opts)` paints layers into an n by n RGBA buffer and says whether the art has colours
   of its own. A layer is a path string (a stroke) or `{ d, w =, fill =, stroke =, cut =, opacity = }`. A stroke is
   every pixel within half its width of the line (round ends and corners); a fill is even-odd over four lines a
-  pixel row. `Vector.circle`, `ellipse`, `rect` and `dot` write paths.
+  pixel row. `Vector.circle`, `ellipse`, `rect` and `dot` write paths; `Vector.solid`, `flat`, `hole`, `gap`,
+  `clear` and `line` make layers in the icons' style (`Vector.Gap`, 2, is a cut's width), for IconArt and ItemArt
+  alike.
 - `Icons.warm(names?)` paints art ahead of need, one piece at a time with a breath between; `Main.client` warms
-  the food and things a few seconds after the game is up, so the shop's rows are not all painted in the frame it
-  opens.
+  the foods a few seconds after the game is up, so the first screen with several cravings doesn't stall painting
+  them.
 - `UI/IconArt`: every interface icon as paths on a 24 grid (`IconArt.art[name]`), plus the coin. Each is a solid
-  silhouette with its details cut out (its own helpers `solid`, `flat`, `hole`, `gap`, `clear`, `line` build the
-  layers). `UI/ItemArt`: shaded pictures of the foods and shop things, by id; IconArt folds them into the same
-  table.
+  silhouette with its details cut out (UI/Vector's `solid`, `flat`, `hole`, `gap`, `clear`, `line` build the
+  layers). `UI/ItemArt`: the foods, by id, drawn by the same rules (a silhouette in one colour with its cuts, no
+  colours of its own; the Icons spec holds them to it); IconArt folds them into the same table.
 - `UI/Icons`: `Icons.make(name, px, props)` returns a Frame holding the icon. It tries `Icons.vector` first: the art
   is painted once at 48 and once at 96 pixels (`Icons.Weight`, 3.25 and 3, is the width of a line that names none, at each) into a 512 square
   EditableImage sheet, a pixel apart, and shown by an ImageLabel named `Art` through `ImageContent`,
   `ImageRectOffset` and `ImageRectSize`, tinted with `ImageColor3` (art with its own colours is left white). The
   root carries the attributes `Vector`, `Mono` and `Glyph`. Any failure (the Mesh / Image API off in a published
   game, no memory) warns once and returns nil, and `Icons.flat` builds the icon from its older shape list.
-  `Icons.item(id, px, fallback, props)` is a thing's picture, or a disc named `Swatch` in its colour.
+  `Icons.item(id, px, color, props)` is a food's icon in `color`, its own colour (`Data/Foods`' `color`), unless
+  props name a `Color` or `Tint` as `Icons.make` takes them; where the game can't make pictures it is built from
+  its shape list in `D` (cuts in `Hole`), and a name with neither is a disc named `Swatch`.
   `Icons.hasArt`, `Icons.artNames`, `Icons.vectorOn`, `Icons.setVector(false | nil)`. A new icon needs both: paths
   in IconArt and a shape list in `D`. The older build from shapes: `Icons.flat` builds one from its shape list (rounded rects, ellipses,
   right angled triangles made by clipping a turned square, rings, half ellipses) in two passes: first a dark copy of

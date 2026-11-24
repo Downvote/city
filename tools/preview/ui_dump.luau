@@ -66,6 +66,8 @@
 --   signs:blades        blade signs, a hanging tile, the marquee, street plates, a vending machine
 --   bubbles             what hangs over villagers' heads, laid flat: speech cards, mood badges and
 --                       wish bubbles stacked, two heads' stacks kept apart
+--   foods               every food's icon in its own colour, big and small, on a card and on the
+--                       dark glass, and tinted (foods:shapes: from their shape lists)
 --   hover               the main screen with the pointer on a few of its buttons (the band of light
 --                       stopped half way across); hover:menu the goals menu the same way
 -- Any scene can carry a prefix: light:<scene> builds it in the light look, relight:<scene>
@@ -840,6 +842,50 @@ elseif scene == "icons" then
 			Parent = cell,
 			Size = UDim2.new(1, 0, 0, 16),
 			Position = UDim2.new(0, 0, 1, -18),
+			TextSize = 13,
+			AlignX = Enum.TextXAlignment.Center,
+		})
+	end
+elseif scene == "foods" or scene == "foods:shapes" then
+	-- every food as Icons.item shows it: in its own colour at 56, 24 and 16 across, on a card and
+	-- on the dark glass of a wish bubble, and tinted like an interface icon (the 24 below);
+	-- foods:shapes builds them from their shape lists (a game with Allow Mesh / Image APIs off)
+	local Icons = Harness.require(Sim.CLIENT .. "UI.Icons")
+	local Foods = Harness.require("ReplicatedStorage.Shared.Data.Foods")
+	local Colors = Harness.require("ReplicatedStorage.Shared.Util.Colors")
+	local Kit = Sim.Kit
+	if scene == "foods:shapes" then
+		Icons.setVector(false)
+	end
+	local sheet = Kit.frame({
+		Parent = Sim.gui,
+		Size = UDim2.fromScale(1, 1),
+		Color = Kit.Theme.Cream,
+		Radius = false,
+	})
+	local grid = Instance.new("UIGridLayout")
+	grid.CellSize = UDim2.fromOffset(176, 108)
+	grid.CellPadding = UDim2.fromOffset(4, 4)
+	grid.Parent = sheet
+	for i, food in Foods.list do
+		local cell = Kit.box({ Parent = sheet, LayoutOrder = i })
+		local color = Colors.fromHex(food.color)
+		Icons.item(food.id, 56, color, { Parent = cell, Position = UDim2.fromOffset(6, 6) })
+		Icons.item(food.id, 24, color, { Parent = cell, Position = UDim2.fromOffset(68, 6) })
+		Icons.item(food.id, 16, color, { Parent = cell, Position = UDim2.fromOffset(98, 10) })
+		Icons.item(food.id, 24, color, { Parent = cell, Position = UDim2.fromOffset(68, 38), Color = Kit.Theme.Ink })
+		local glass = Kit.new("Frame", {
+			Parent = cell,
+			BackgroundColor3 = Kit.Theme.Glass,
+			Size = UDim2.fromOffset(52, 52),
+			Position = UDim2.fromOffset(120, 6),
+		})
+		Kit.corner(glass, 12)
+		Icons.item(food.id, 38, color, { Parent = glass, Position = UDim2.fromOffset(7, 7) })
+		Kit.text(food.name, {
+			Parent = cell,
+			Size = UDim2.new(1, 0, 0, 16),
+			Position = UDim2.new(0, 0, 1, -20),
 			TextSize = 13,
 			AlignX = Enum.TextXAlignment.Center,
 		})

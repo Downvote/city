@@ -1873,6 +1873,23 @@ the edge), only dips a little when pressed.
 (With a picture of the yellow meeting the dark in one clean slanted line, only the far end's corners rounded.) So the
 Claim button's left end is a sharp cut, no rounding, while its right end keeps the quest's own rounded points.
 
+### Foods drawn as icons
+
+> make food and thing icons sillouhettes like normal icons as well
+
+The foods are icons now, drawn by the same rules as the rest: one solid shape in one colour with its details cut out
+of it, no outline and no shading. The leaf stands apart from the apple, the scores are cut into the bread roll, two
+wisps of steam rise over the soup, the cheese has its holes and the rice ball its strip of seaweed. The cuts are wide
+enough to last at 16 pixels, and every one is still a drawing of our own. The shop's things went with the shop, so
+the foods are all there is to draw.
+
+- **Each food keeps its own colour**, the one in its line of the food list: a red apple, a brown loaf, a blue fish, a
+  green jar of pickles. It reads on the dark glass of a wish bubble and on a card in the dark look and the light one.
+  A place that wants a food tinted like the icons round it can ask for that colour instead.
+- **Without the painted pictures** (Allow Mesh / Image APIs off) a food is built from simple shapes like the other
+  icons, in its own colour with its cuts in the card's colour, where it used to be a coloured dot.
+- The shaded pictures above (glints, a darker far side, bowls and plates with rims) are gone.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no
