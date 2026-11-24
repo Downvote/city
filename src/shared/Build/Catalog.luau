@@ -58,6 +58,8 @@ Catalog.Categories = {
 	{ id = "walldecor", name = "On walls" },
 	{ id = "garden", name = "Garden" },
 	{ id = "work", name = "Work" },
+	-- things villagers made you in events: free, and only as many as you were given (Sim/Keepsakes)
+	{ id = "keepsakes", name = "Keepsakes" },
 }
 
 Catalog.Places = {
@@ -90,7 +92,7 @@ Catalog.Tags = {
 }
 
 -- Tags that aren't asked for in requests but mean something.
-Catalog.OtherTags = { bed = true, stairs = true, kitchen = true, bath = true, work = true }
+Catalog.OtherTags = { bed = true, stairs = true, kitchen = true, bath = true, work = true, keepsake = true }
 
 local byId: { [string]: Def } = {}
 local byCat: { [string]: { Def } } = {}
@@ -100,6 +102,9 @@ local all: { Def } = {}
 -- that price times Tuning.Prices.Items, to a whole coin, and to 5 coins from 50 up so the
 -- catalog's prices stay round.
 function Catalog.priceOf(listed: number): number
+	if listed <= 0 then
+		return 0 -- a gift stays free (a keepsake)
+	end
 	local p = listed * Tuning.Prices.Items
 	local step = if p >= 50 then 5 else 1
 	return math.max(1, math.floor(p / step + 0.5) * step)

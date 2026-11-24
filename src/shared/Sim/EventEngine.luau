@@ -13,8 +13,12 @@
 --   bday who
 --   bond a b to                  romance: to = "crush" | "sweethearts" | "partners" | nil (over)
 --   hearts who n                 fills their hearts with you (Sim/Life)
+--   keepsake item who?           something they made you: a free Build mode piece (Sim/Keepsakes)
+--   memo who text                what they'll tell you about it when you stop them for a chat
+--   saying who id | hobby who id a new saying or hobby of theirs (Data/Sayings)
 -- Handled by the service (returned in `service`):
 --   away who seconds | visitor name | festival | creator who? | dayoff who
+--   leave prop hours by?         a thing (Data/EventProps) left lying about for a while
 -- (There is no food to give, take, count or eat and no shop things: the shop and feeding went.
 -- A craving is paid for there and then, at ctx.cravingPrice(foodId).)
 
@@ -27,6 +31,8 @@ local Catalog = require(script.Parent.Parent.Build.Catalog)
 local Plan = require(script.Parent.Parent.Build.Plan)
 local Text = require(script.Parent.Parent.Util.Text)
 local Life = require(script.Parent.Life)
+local Keepsakes = require(script.Parent.Keepsakes)
+local Sayings = require(script.Parent.Parent.Data.Sayings)
 local Rng = require(script.Parent.Parent.Util.Rng)
 
 local EventEngine = {}
@@ -179,10 +185,25 @@ end
 
 local function setNames(ctx: any, actors: { string })
 	ctx.names = {}
+	ctx.stars = {}
 	for i, vid in actors do
 		local v = ctx.v(vid)
 		ctx.names[LETTERS[i]] = if v then v.name else "?"
+		ctx.stars[LETTERS[i]] = vid
 	end
+end
+
+-- How much of its weight an event keeps for having come up lately: `recent` is newest first.
+-- The one just seen keeps RecentFloor of it, and the share climbs back to all of it by the end
+-- of the remembered list, so nothing repeats soon and nothing is shut out for long.
+function EventEngine.recentPenalty(recent: { string }?, id: string): number
+	local at = recent and table.find(recent, id)
+	if not at then
+		return 1
+	end
+	local span = math.max(1, Tuning.Events.RecentMemory)
+	local floor = Tuning.Events.RecentFloor
+	return math.clamp(floor + (1 - floor) * ((at - 1) / span) ^ 1.5, floor, 1)
 end
 
 -- Chooses an event and its stars. Returns { id, actors = { a = vid, ... }, scene } or nil.
@@ -192,7 +213,7 @@ function EventEngine.pick(ctx: any, recent: { string }?): any
 	local candidates = {}
 	for _, def in Events.list do
 		if EventEngine.allowedNow(def, ctx.hour) then
-			local penalty = if recent and table.find(recent, def.id) then 0.12 else 1
+			local penalty = EventEngine.recentPenalty(recent, def.id)
 			local tries: { { string } } = {}
 			if def.actors == 0 then
 				tries = { {} }
@@ -345,9 +366,41 @@ function EventEngine.apply(profile: any, ev: any, effects: { any }, now: number)
 				profile.bdays = profile.bdays or {}
 				profile.bdays[who] = profile.calendarDay or 0
 			end
+		elseif t == "keepsake" then
+			local maker = profile.villagers[vid(e.who) or ""]
+			local def = Catalog.get(e.item or "")
+			if def and Keepsakes.give(profile, e.item) then
+				table.insert(
+					notices,
+					if maker
+						then Text.fill(
+							"{x} gave you their {thing}. It's under Keepsakes in Build mode.",
+							{ x = maker.name, thing = def.name:lower() }
+						)
+						else Text.fill("You got a {thing}. It's under Keepsakes in Build mode.", { thing = def.name:lower() })
+				)
+			end
+		elseif t == "memo" then
+			local v = profile.villagers[vid(e.who) or ""]
+			if v and type(e.text) == "string" and #e.text > 0 and #e.text <= 200 then
+				v.memo = { text = e.text, t = now }
+			end
+		elseif t == "saying" then
+			local v = profile.villagers[vid(e.who) or ""]
+			if v and Sayings.get(e.id) then
+				v.saying = e.id
+			end
+		elseif t == "hobby" then
+			local v = profile.villagers[vid(e.who) or ""]
+			if v and Sayings.hobby(e.id) then
+				v.hobby = e.id
+			end
 		else
-			-- away, visitor, festival, creator, dayoff
+			-- away, visitor, festival, creator, dayoff, leave
 			local copy = table.clone(e)
+			if type(e.by) == "string" then
+				copy.byVid = vid(e.by)
+			end
 			if type(e.who) == "string" then
 				copy.vid = vid(e.who)
 			elseif type(e.who) == "table" then

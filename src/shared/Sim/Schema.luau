@@ -7,6 +7,7 @@ local Appearance = require(script.Parent.Parent.Avatar.Appearance)
 local Personalities = require(script.Parent.Parent.Data.Personalities)
 local Foods = require(script.Parent.Parent.Data.Foods)
 local Colors = require(script.Parent.Parent.Util.Colors)
+local Keepsakes = require(script.Parent.Keepsakes)
 
 local Schema = {}
 
@@ -56,6 +57,7 @@ export type Villager = {
 	chatDay: number?, -- the day index of their last chat with you, and how many that day (Sim/Talk)
 	chats: number?,
 	from: string?, -- who they came as when they moved in from the road (Sim/Newcomers)
+	memo: { text: string, t: number }?, -- the last event they were in, as they'd tell it (Sim/Talk)
 }
 
 function Schema.newProfile(): any
@@ -88,6 +90,7 @@ function Schema.newProfile(): any
 		found = {}, -- places on the island found, by id (Data/Places)
 		goals = {}, -- town goals claimed, by id
 		arrived = {}, -- everyone who has ever moved in from the road, by key (Sim/Newcomers)
+		keepsakes = {}, -- things villagers made you, by catalog id: how many of each (Sim/Keepsakes)
 		recent = {},
 		calendar = { s = 1, d = 1, y = 1 },
 	}
@@ -134,6 +137,11 @@ function Schema.migrate(raw: any): any
 			v.app = Appearance.sanitize(v.app)
 			fill(v, Schema.villagerDefaults(v.pers), true)
 			v.hate, v.known, v.feedDay, v.feeds = nil, nil, nil, nil
+			-- what they'd say about their last event: a line and when, or nothing
+			local memo = v.memo
+			if memo ~= nil and (type(memo) ~= "table" or type(memo.text) ~= "string" or type(memo.t) ~= "number") then
+				v.memo = nil
+			end
 			if type(v.fav) ~= "string" or not Foods.get(v.fav) then
 				v.fav = Foods.list[1].id
 			end
@@ -149,6 +157,7 @@ function Schema.migrate(raw: any): any
 		end
 	end
 	profile.villagers = clean
+	profile.keepsakes = Keepsakes.clean(profile.keepsakes)
 	local order = {}
 	for _, vid in profile.order do
 		if clean[vid] and not table.find(order, vid) then

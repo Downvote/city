@@ -881,13 +881,17 @@ local STAIR_HALF = 4.5 -- half the width of the steps
 local STAIR_EDGE = 5.4 -- and out to the outside of the walls beside them
 local LIFT = 0.25 -- how far a step sits over the hill under it
 local TREAD = 5 -- a broad step, front to back
-local FLIGHTS = 4
+local FLIGHTS = 5
 local FLIGHT_STEPS = 8 -- risers in a flight, a stud each
 -- How deep a flight's treads may be, the deepest first: a flight takes the deepest that still
--- outclimbs the hill under it by enough for a landing, so it stands no higher over the grass
--- than it must.
-local FLIGHT_TREADS = { 2, 1.75, 1.5 }
-local LANDING = 4.5 -- the least a landing runs before the hill has caught up with it
+-- outclimbs the hill under it by enough for a landing with its head no more than HEAD over the
+-- grass, so it stands no higher than it must. Deep ones where the hill is gentle, shallow ones
+-- where it is steep: the hill is smooth terrain, gentle at its foot and steepening as it
+-- climbs. (Few depths, since each is a piece of its own: the Landmarks spec counts them.)
+local FLIGHT_TREADS = { 3, 2.5, 2, 1.6, 1.4, 1.25 }
+local LANDING = 4.75 -- the least the last landing runs before the hill has caught up with it
+local LANDING_MID = 3.25 -- and one between two flights
+local HEAD = 3 -- the most a flight's head (and its landing) stands over the grass beside it
 
 export type Step = { z1: number, z2: number, y: number, kind: string }
 type Flight = { z: number, y: number, tread: number }
@@ -915,6 +919,18 @@ local function hillOver(x1: number, x2: number, z1: number, z2: number): number
 		end
 	end
 	return top
+end
+
+-- The lowest the hill gets across the steps over a patch of ground (where a step stands
+-- furthest over it).
+local function hillUnder(z1: number, z2: number): number
+	local low = math.huge
+	for _, z in { z1 + 0.01, (z1 + z2) / 2, z2 - 0.01 } do
+		for j = 0, 4 do
+			low = math.min(low, Hills.at(STAIR_X - STAIR_HALF + 2 * STAIR_HALF * j / 4, z))
+		end
+	end
+	return low
 end
 
 local TERRACE_X1, TERRACE_X2 = STAIR_X - 27, STAIR_X - STAIR_EDGE
@@ -952,20 +968,28 @@ local function stairProfile(): Profile
 	end
 	local flights: { Flight } = {}
 	local landings: { Step } = {}
-	for _ = 1, FLIGHTS do
-		local tread = FLIGHT_TREADS[#FLIGHT_TREADS]
+	for f = 1, FLIGHTS do
+		local room = if f == FLIGHTS then LANDING else LANDING_MID
+		-- it will do if no step of it is under the hill and its landing has room; it does best if
+		-- its head stands no more than HEAD over the grass. The deepest that does best, else the
+		-- one that stands lowest of those that will do, else the shallowest.
+		local tread, best, lowest = nil, nil, math.huge
 		for _, t in FLIGHT_TREADS do
-			-- it will do if no step of it is under the hill and its landing has room
 			local run = t * (FLIGHT_STEPS - 1)
-			local fits = hillOver(x1 - 0.8, x2 + 0.8, z + run, z + run + LANDING) + LIFT <= y + FLIGHT_STEPS
+			local fits = hillOver(x1 - 0.8, x2 + 0.8, z + run, z + run + room) + LIFT <= y + FLIGHT_STEPS
+			local over = y + FLIGHT_STEPS - hillUnder(z + run, z + run + 0.5)
 			for j = 1, FLIGHT_STEPS - 1 do
 				fits = fits and hillOver(x1, x2, z + t * (j - 1), z + t * j) + 0.1 <= y + j
+				over = math.max(over, y + j - hillUnder(z + t * (j - 1), z + t * j))
 			end
-			if fits then
+			if fits and over <= HEAD and not tread then
 				tread = t
-				break
+			end
+			if fits and over < lowest then
+				best, lowest = t, over
 			end
 		end
+		tread = tread or best or FLIGHT_TREADS[#FLIGHT_TREADS]
 		table.insert(flights, { z = z, y = y, tread = tread })
 		for j = 1, FLIGHT_STEPS - 1 do
 			table.insert(steps, { z1 = z + tread * (j - 1), z2 = z + tread * j, y = y + j, kind = "step" })

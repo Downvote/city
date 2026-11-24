@@ -56,7 +56,8 @@ describe("Catalog", function()
 	it("gives every item sane fields and a drawing that fits its box", function()
 		for _, def in Catalog.all() do
 			expect(type(def.name)).toBe("string")
-			expect(def.price > 0).toBeTruthy()
+			-- (a keepsake is a gift from a villager, and free: Sim/Keepsakes)
+			expect(def.price > 0 or (def.cat == "keepsakes" and def.price == 0)).toBeTruthy()
 			expect(Catalog.Places[def.place]).toBe(true)
 			expect(def.size.X > 0 and def.size.Y > 0 and def.size.Z > 0).toBeTruthy()
 			local found = false
