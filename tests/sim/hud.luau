@@ -284,6 +284,80 @@ run("the weather's icon keeps its place on the clock", function()
 	Sim.advance(2)
 end)
 
+run("a pay packet counts the coins up quietly and floats a coin over who earned it", function()
+	-- the user: "make it such that villagers earn coins as they work, not after every day"
+	local Earnings = Harness.require(Sim.CLIENT .. "World.Earnings")
+	Earnings.start()
+	local plot = Sim.ws:FindFirstChild("Plots"):FindFirstChild("Plot1")
+	local folder = plot:FindFirstChild("Villagers") or Sim.Fake.new("Folder", plot)
+	folder.Name = "Villagers"
+	local model = Sim.Fake.new("Model", folder)
+	model.Name = "Mara"
+	model:SetAttribute("Vid", "v1")
+	local head = Sim.Fake.new("Part", model)
+	head.Name = "Head"
+	local cam = Sim.ws.CurrentCamera
+	head.Position = cam.CFrame.Position + cam.CFrame.LookVector * 30
+	local pill = gui:FindFirstChild("Pills", true)
+	local function flying()
+		local n = 0
+		for _, d in gui:GetDescendants() do
+			if d:IsA("GuiObject") and d.ZIndex == 60 then
+				n += 1
+			end
+		end
+		return n
+	end
+	local function popsUnderPill()
+		local n = 0
+		for _, d in pill:GetDescendants() do
+			if d:IsA("TextLabel") and d.Text:sub(1, 1) == "+" then
+				n += 1
+			end
+		end
+		return n
+	end
+	State.set("stats", { earned = 100 })
+	State.set("coins", 5000)
+	frames(2)
+	Sim.advance(2)
+	local before = flying()
+	Sim.remoteEvent("Earned"):FireClient(Sim.player, { coins = 5031, earned = 131, lines = { { vid = "v1", n = 31 } } })
+	frames(2)
+	check(State.data.coins == 5031, "the town's coins are the server's")
+	check(State.data.stats.earned == 131, "and what work has brought in")
+	local label = pill:FindFirstChild("Value", true) or pill:FindFirstChildWhichIsA("TextLabel", true)
+	Sim.advance(1)
+	local shows = false
+	for _, d in pill:GetDescendants() do
+		if d:IsA("TextLabel") and d.Text == "5,031" then
+			shows = true
+		end
+	end
+	check(shows, "the money on the main screen counts up to it (" .. tostring(label and label.Text) .. ")")
+	check(flying() == before, "no coins fly across the screen for a pay packet")
+	check(popsUnderPill() == 0, "and no +31 under the money: it rises over the villager instead")
+	local pop = Sim.player.PlayerGui:FindFirstChild("CoinPop")
+	check(pop ~= nil and pop.Adornee == head, "a coin over the villager who earned it")
+	local amount = pop and pop:FindFirstChild("Amount", true)
+	check(amount ~= nil and amount.Text == "+31", "saying +31")
+	check(pop ~= nil and pop:FindFirstChild("Coin", true) ~= nil, "with the drawn coin beside it")
+	Sim.advance(2)
+	check(Sim.player.PlayerGui:FindFirstChild("CoinPop") == nil, "gone a moment later")
+	-- somebody too far off to see gets no coin, and the money still counts
+	head.Position = cam.CFrame.Position + cam.CFrame.LookVector * 400
+	Sim.remoteEvent("Earned"):FireClient(Sim.player, { coins = 5062, earned = 162, lines = { { vid = "v1", n = 31 } } })
+	frames(2)
+	check(Sim.player.PlayerGui:FindFirstChild("CoinPop") == nil, "no coin over somebody far off")
+	check(State.data.coins == 5062, "but the coins still come in")
+	-- any other gain still shows the way it always has
+	State.set("coins", 5562)
+	frames(2)
+	check(popsUnderPill() == 1, "a gain that isn't wages still says +500 under the money")
+	Sim.advance(2)
+	folder:Destroy()
+end)
+
 print(
 	string.format(
 		"\nhud sim: %s (%d warnings)",

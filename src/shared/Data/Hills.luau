@@ -52,10 +52,16 @@ local function raw(x: number, z: number): number
 		local dx, dz = x - p[1], z - p[2]
 		h += p[3] * math.exp(-(dx * dx + dz * dz) / (p[4] * p[4]))
 	end
-	-- nothing at the edges: rising from Hill Road, down to the north shore and both ends
-	local ez = smoothstep(Hills.Z1, Hills.Z1 + 120, z) * (1 - smoothstep(Hills.Z2 - 150, Hills.Z2 - 50, z))
-	local ex = 1 - smoothstep(Hills.X2 - 170, Hills.X2 - 50, math.abs(x))
-	return h * ez * ex
+	-- nothing at the edge by the town: rising from Hill Road
+	return h * smoothstep(Hills.Z1, Hills.Z1 + 120, z)
+end
+
+-- Down to the shore at the north and at both ends. (This goes on after the flat tops are
+-- worked in, over a good width, so the hills come down to the beach as slopes and not as a
+-- wall behind the observatory and the mast: the hills are smooth terrain now, and a drop the
+-- facets once spread over a cell would show.)
+local function shores(x: number, z: number): number
+	return (1 - smoothstep(Hills.Z2 - 165, Hills.Z2 - 5, z)) * (1 - smoothstep(Hills.X2 - 170, Hills.X2 - 10, math.abs(x)))
 end
 
 -- The plateaus' heights, worked out once.
@@ -78,9 +84,9 @@ function Hills.smooth(x: number, z: number): number
 		local dx = math.max(f[1] - x, 0, x - f[3])
 		local dz = math.max(f[2] - z, 0, z - f[4])
 		local d = math.sqrt(dx * dx + dz * dz)
-		h *= smoothstep(0, 70, d)
+		h *= smoothstep(0, 110, d)
 	end
-	return h
+	return h * shores(x, z)
 end
 
 -- The height of a plateau's flat top.

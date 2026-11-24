@@ -165,6 +165,9 @@ function Terrain.deepLine(s: number): number
 	return Terrain.Beach + Terrain.Shallows + 14 + waves(DEEP, s)
 end
 
+-- Hills steeper than this show rock through the grass.
+Terrain.Crag = 0.68
+
 -- The height of the ground at x, z and what it is, as nature made it: grass (on the hills too),
 -- then sand from where the grass ends, sloping gently to the water's edge and on down under
 -- the water, then the drop to the deep floor.
@@ -193,9 +196,6 @@ function Terrain.natural(x: number, z: number): (number, string)
 	end
 	return h, if h < -9 then "Slate" else "Sand"
 end
-
--- Hills steeper than this show rock through the grass.
-Terrain.Crag = 0.42
 
 -- The height of the ground where something stands on it (what the terrain's surface is there).
 function Terrain.height(x: number, z: number): number

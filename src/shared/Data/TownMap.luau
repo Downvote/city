@@ -12,6 +12,7 @@ local Town = require(script.Parent.Town)
 local TownModels = require(script.Parent.TownModels)
 local Rng = require(script.Parent.Parent.Util.Rng)
 local Hills = require(script.Parent.Hills)
+local Terrain = require(script.Parent.Terrain)
 local DetailModels = require(script.Parent.DetailModels)
 local CityModels = require(script.Parent.CityModels)
 local StreetModels = require(script.Parent.StreetModels)
@@ -56,13 +57,14 @@ local BARK_DARK = Color3.fromRGB(150, 104, 66)
 local LEAF = Color3.fromRGB(84, 192, 70)
 local LEAF_LIGHT = Color3.fromRGB(132, 218, 92)
 
--- The island: grass out to here, then the beach, then the shallows, then the deep sea.
-TownMap.IslandX = 1100 -- grass from -IslandX to IslandX
-TownMap.IslandN = 940 -- and from -IslandS to IslandN (the hills run up to the north shore)
-TownMap.IslandS = 292
-TownMap.Beach = 38
-TownMap.Shallows = 92
-TownMap.WaterY = -1.2
+-- The island: grass out to here, then the beach, then the shallows, then the deep sea. The
+-- ground itself is Roblox terrain (Data/Terrain); these are its measures.
+TownMap.IslandX = Terrain.IslandX -- grass from -IslandX to IslandX
+TownMap.IslandN = Terrain.IslandN -- and from -IslandS to IslandN (the hills run up to the north shore)
+TownMap.IslandS = Terrain.IslandS
+TownMap.Beach = Terrain.Beach -- (on average: the water's edge waves in and out)
+TownMap.Shallows = Terrain.Shallows
+TownMap.WaterY = Terrain.WaterY
 
 -- A region the preview crops to: { x1, z1, x2, z2 }. Nil builds the whole town.
 export type Region = { number }
@@ -635,9 +637,10 @@ TownMap.crossings = crossings
 local PAINT = StreetPaint.Heights.paint
 local COVER = PAINT + 0.04
 
--- The whole island as one list of flat parts: the sea, the beach and the grass; every road with
--- its sidewalks, lane lines and crossings; the square and the market; the boardwalk; downtown's
--- paved blocks; the path up the hills; and the hills themselves.
+-- What is laid on the island, as one list of flat parts: every road with its sidewalks, lane
+-- lines and crossings; the square and the market; the boardwalk; downtown's paved blocks; the
+-- path up the hills; and the walls nobody sees round the shallows. (The ground itself, the
+-- grass, the hills, the beach and the sea, is terrain: Data/Terrain.)
 function TownMap.ground(region: Region?): { Prim }
 	local r = Recipe.new(C.White, C.White)
 	local function slab(
@@ -656,60 +659,10 @@ function TownMap.ground(region: Region?): { Prim }
 		end
 	end
 
-	-- the island: grass, a sandy beach round it, sand under the shallows, the deep sea floor, and
-	-- the water over all of it (see through, so the shallows show light and the deep sea dark)
+	-- the island's grass, the beach, the shallows and the sea are Roblox terrain (Data/Terrain,
+	-- written by the World service): the user asked for a wavy shore "with water lapping up to it"
+	-- and for Roblox's own long grass
 	local IX, IN, IS, B, SH = TownMap.IslandX, TownMap.IslandN, TownMap.IslandS, TownMap.Beach, TownMap.Shallows
-	local WY = TownMap.WaterY
-	slab(-IX, -IS, IX, IN, -2.1, -0.1, GRASS, "Grass")
-	slab(-IX - B, -IS - B, IX + B, IN + B, -2.6, -0.35, SAND, "Sand")
-	slab(-IX - B - SH, -IS - B - SH, IX + B + SH, IN + B + SH, -4, -2.5, SEABED, "Sand")
-	local FAR = 3000
-	slab(-FAR, -FAR, FAR, FAR, -18, -16, DEEP, "SmoothPlastic")
-	do
-		local a, b, c, d = clip(region, -FAR, -FAR, FAR, FAR)
-		if a then
-			local water = r:block(a, WY - 0.2, b, c, WY, d, WATER, "SmoothPlastic")
-			water.transp = 0.3
-			water.collide = false
-			water.name = "Water"
-		end
-	end
-	-- a softer coastline: round capes of sand out into the shallows, and grassy headlands over the
-	-- sand on the east, west and north shores (the south has the boardwalk)
-	do
-		local coast = Rng.new(73)
-		local function disc(x: number, z: number, radius: number, top: number, color: Color3, mat: string)
-			if
-				region
-				and (
-					x < region[1] - radius
-					or x > region[3] + radius
-					or z < region[2] - radius
-					or z > region[4] + radius
-				)
-			then
-				return
-			end
-			r:cyl(x, top - 1.1, z, 2.2, radius * 2, "y", color, mat)
-		end
-		local x = -IX
-		while x < IX do
-			disc(x, IN + B, coast:float(26, 56), -0.36, SAND, "Sand")
-			disc(x + coast:float(-20, 20), -IS - B, coast:float(22, 44), -0.36, SAND, "Sand")
-			disc(x + coast:float(-20, 20), IN, coast:float(18, 40), -0.11, GRASS, "Grass")
-			x += coast:float(70, 120)
-		end
-		local z = -IS
-		while z < IN do
-			for _, sx in { 1, -1 } do
-				disc(sx * (IX + B), z + coast:float(-20, 20), coast:float(26, 52), -0.36, SAND, "Sand")
-				if z > -200 then
-					disc(sx * IX, z + coast:float(-20, 20), coast:float(16, 34), -0.11, GRASS, "Grass")
-				end
-			end
-			z += coast:float(70, 120)
-		end
-	end
 	-- walls nobody sees at the edge of the shallows, so nobody wanders off into the deep
 	local EX, EN, ES = IX + B + SH, IN + B + SH, IS + B + SH
 	for _, w in
@@ -722,7 +675,8 @@ function TownMap.ground(region: Region?): { Prim }
 	do
 		local a, b, c, d = clip(region, w[1], w[2], w[3], w[4])
 		if a then
-			local wall = r:block(a, -4, b, c, 60, d, WATER, "SmoothPlastic")
+			-- (down to the deep floor, so nobody swims under one where the sand dips)
+			local wall = r:block(a, Terrain.Floor, b, c, 60, d, WATER, "SmoothPlastic")
 			wall.transp = 1
 			wall.name = "SeaWall"
 		end

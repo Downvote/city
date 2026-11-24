@@ -32,6 +32,9 @@
 --   talk                the talk card: a villager you held E on tells you their wish
 --   talk:again          the talk card after the day's chats are used up
 --   toasts              a few notices
+--   earned              the main screen as a pay packet comes in, and the coins that rise over the
+--                       villagers who earned it, laid flat where three heads would be (the
+--                       BillboardGuis themselves can't be drawn here)
 --   icons               every icon, big and small
 --   icons:<a>,<b>,...   those icons up close
 --   stickers:<a>,<b>    those icons as full colour stickers with their outline (Full = true)
@@ -401,6 +404,23 @@ elseif scene == "talk" or scene == "talk:again" or scene == "talk:craving" then
 		note = Talk.note(town, vid, chat),
 	})
 	Sim.advance(4)
+elseif scene == "earned" then
+	startHud()
+	local Earnings = Harness.require(Sim.CLIENT .. "World.Earnings")
+	Earnings.start()
+	Sim.remoteEvent("Earned"):FireClient(Sim.player, {
+		coins = Sim.profile.coins + 83,
+		earned = 383,
+		lines = { { vid = order[1], n = 31 }, { vid = order[3], n = 24 }, { vid = order[4], n = 28 } },
+	})
+	Sim.frames(2)
+	-- the coins as they rise: just off a head, half way up and fading, nearly gone
+	for i, at in { { 520, 380, 0 }, { 760, 300, 0.4 }, { 980, 420, 0.75 } } do
+		local card = Earnings.card(({ 31, 24, 28 })[i], Sim.gui)
+		card.Position = UDim2.fromOffset(at[1], at[2])
+		card.GroupTransparency = at[3]
+	end
+	Sim.frames(2)
 elseif scene == "toasts" then
 	startHud()
 	local Toasts = Harness.require(Sim.CLIENT .. "UI.Toasts")

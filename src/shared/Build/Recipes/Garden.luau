@@ -285,7 +285,7 @@ local items: { Item } = {
 			-- a straight trunk on its roots showing under rows of drooping boughs that get shorter
 			-- up to a slim spire, dark in the middle and lighter at the top (as the town's firs are)
 			roots(r, 3, 0.9, 0.35, r.c2)
-			r:cyl(0, 1.4, 0, 2.8, 0.6, "y", r.c2, "Wood")
+			r:cyl(0, 1.4, 0, 2.8, 0.7, "y", r.c2, "Wood")
 			firCrown(r, 1.2, 12.9, 2.6, 7, shade(r.c1, 0.82), Colors.mix(r.c1, SUNLIT, 0.32))
 			-- a few cones fallen under it
 			r:piece(function(q: R)

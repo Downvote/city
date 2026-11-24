@@ -239,7 +239,8 @@ function City.earn(purse: Purse, day: number, rate: number, seconds: number): nu
 	if purse.day ~= day then
 		purse.day, purse.owed, purse.paid = day, 0, 0
 	end
-	if not (rate > 0 and seconds > 0) or rate ~= rate or seconds == math.huge then
+	-- (no rate or time, or one that is not a number at all: nothing)
+	if not (rate > 0 and rate < math.huge and seconds > 0 and seconds < math.huge) then
 		return 0
 	end
 	local room = math.max(0, rate * City.workDay() - purse.paid - purse.owed)
