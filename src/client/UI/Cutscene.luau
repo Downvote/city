@@ -208,66 +208,76 @@ function Cutscene.new(parent: GuiObject, opts: { [string]: any }): any
 		Parent = sky,
 	})
 	local discs: { any } = {}
-	local function disc(name: string, d: Stages.Disc?)
-		if not d then
-			return
+	local stars: { any } = {}
+	-- the sun or the moon and the stars of a set's sky (made again when the scene moves to
+	-- another set)
+	local function skyArt(st: Stages.Stage)
+		for _, d in discs do
+			d.holder:Destroy()
 		end
-		local holder = Kit.new("Frame", {
-			Name = name,
-			BackgroundTransparency = 1,
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Size = UDim2.fromOffset(0, 0),
-			ZIndex = 1,
-			Parent = sky,
-		})
-		local rings = {}
-		if d.glow then
-			for i, k in { 2.6, 1.8, 1.3 } do
-				local g = Kit.new("Frame", {
-					Name = "Glow" .. i,
-					BackgroundColor3 = d.glow,
-					BackgroundTransparency = ({ 0.84, 0.72, 0.56 })[i],
-					BorderSizePixel = 0,
-					AnchorPoint = Vector2.new(0.5, 0.5),
-					Position = UDim2.fromScale(0.5, 0.5),
-					ZIndex = 1,
-					Parent = holder,
-				})
-				Kit.corner(g, "round")
-				table.insert(rings, { frame = g, k = k })
+		for _, star in stars do
+			star.frame:Destroy()
+		end
+		table.clear(discs)
+		table.clear(stars)
+		local function disc(name: string, d: Stages.Disc?)
+			if not d then
+				return
 			end
-		end
-		local face = Kit.new("Frame", {
-			Name = "Face",
-			BackgroundColor3 = d.color,
-			BorderSizePixel = 0,
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = UDim2.fromScale(0.5, 0.5),
-			ZIndex = 1,
-			Parent = holder,
-		})
-		Kit.corner(face, "round")
-		table.insert(rings, { frame = face, k = 1 })
-		local bite: Frame? = nil
-		if d.phase and d.phase > 0 then
-			bite = Kit.new("Frame", {
-				Name = "Shade",
-				BackgroundColor3 = stage.sky.horizon,
+			local holder = Kit.new("Frame", {
+				Name = name,
+				BackgroundTransparency = 1,
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Size = UDim2.fromOffset(0, 0),
+				ZIndex = 1,
+				Parent = sky,
+			})
+			local rings = {}
+			if d.glow then
+				for i, k in { 2.6, 1.8, 1.3 } do
+					local g = Kit.new("Frame", {
+						Name = "Glow" .. i,
+						BackgroundColor3 = d.glow,
+						BackgroundTransparency = ({ 0.84, 0.72, 0.56 })[i],
+						BorderSizePixel = 0,
+						AnchorPoint = Vector2.new(0.5, 0.5),
+						Position = UDim2.fromScale(0.5, 0.5),
+						ZIndex = 1,
+						Parent = holder,
+					})
+					Kit.corner(g, "round")
+					table.insert(rings, { frame = g, k = k })
+				end
+			end
+			local face = Kit.new("Frame", {
+				Name = "Face",
+				BackgroundColor3 = d.color,
 				BorderSizePixel = 0,
 				AnchorPoint = Vector2.new(0.5, 0.5),
+				Position = UDim2.fromScale(0.5, 0.5),
 				ZIndex = 1,
 				Parent = holder,
 			})
-			Kit.corner(bite :: Frame, "round")
+			Kit.corner(face, "round")
+			table.insert(rings, { frame = face, k = 1 })
+			local bite: Frame? = nil
+			if d.phase and d.phase > 0 then
+				bite = Kit.new("Frame", {
+					Name = "Shade",
+					BackgroundColor3 = st.sky.horizon,
+					BorderSizePixel = 0,
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					ZIndex = 1,
+					Parent = holder,
+				})
+				Kit.corner(bite :: Frame, "round")
+			end
+			table.insert(discs, { holder = holder, d = d, rings = rings, bite = bite })
 		end
-		table.insert(discs, { holder = holder, d = d, rings = rings, bite = bite })
-	end
-	disc("Sun", stage.sky.sun)
-	disc("Moon", stage.sky.moon)
-	local stars: { any } = {}
-	do
+		disc("Sun", st.sky.sun)
+		disc("Moon", st.sky.moon)
 		local next = rand(11)
-		for i = 1, stage.sky.stars or 0 do
+		for i = 1, st.sky.stars or 0 do
 			local az = next() * 2 * math.pi
 			local el = math.rad(10 + next() * 70)
 			local size = 1.5 + next() * 2
@@ -287,6 +297,8 @@ function Cutscene.new(parent: GuiObject, opts: { [string]: any }): any
 			table.insert(stars, { frame = f, dir = dir, i = i })
 		end
 	end
+
+	skyArt(stage)
 
 	-- the set, in its own little world, with its own camera and light
 	local view = Kit.new("ViewportFrame", {
@@ -352,6 +364,13 @@ function Cutscene.new(parent: GuiObject, opts: { [string]: any }): any
 	local speaker: string? = nil
 	local lastSpeaker: string? = nil
 	local stageNow = stage
+	local castNow: { [string]: number }? = nil -- the marks the stars stand on, once a scene moves to another set
+	local function markOf(letter: string): number?
+		if castNow then
+			return castNow[letter]
+		end
+		return Cutscenes.markOf(story, letter)
+	end
 
 	local function play(p: any, action: string, fade: number?)
 		if not p.humanoid then
@@ -434,6 +453,7 @@ function Cutscene.new(parent: GuiObject, opts: { [string]: any }): any
 			return nil
 		end
 		p.key = key
+		p.source = model
 		p.act = nil
 		p.actAt = 0
 		p.model.Name = "Actor_" .. key
@@ -445,8 +465,8 @@ function Cutscene.new(parent: GuiObject, opts: { [string]: any }): any
 	end
 
 	-- the guests a script asks for: other villagers from town, on the free marks
-	local function guests()
-		local want = story.extras or 0
+	local function guests(count: number?)
+		local want = count or story.extras or 0
 		if want <= 0 then
 			return
 		end
@@ -473,12 +493,21 @@ function Cutscene.new(parent: GuiObject, opts: { [string]: any }): any
 			if n >= want or not freeMark() then
 				break
 			end
+			local here = false
+			for _, p in people do
+				if p.source == m then
+					here = true
+				end
+			end
+			if here then
+				continue
+			end
 			-- a guest leaves the marks the stars are given free
 			local i: number? = nil
 			for k in stageNow.marks do
 				local forStar = false
 				for letter in (opts.event and opts.event.names) or {} do
-					if Cutscenes.markOf(story, letter) == k then
+					if markOf(letter) == k then
 						forStar = true
 					end
 				end
@@ -491,7 +520,7 @@ function Cutscene.new(parent: GuiObject, opts: { [string]: any }): any
 				break
 			end
 			n += 1
-			add("x" .. n, m, i)
+			add("x" .. (#order + 1), m, i)
 		end
 	end
 
@@ -579,7 +608,13 @@ function Cutscene.new(parent: GuiObject, opts: { [string]: any }): any
 			local p = people[on]
 			local i = p and (p.goal or p.mark)
 			if i then
-				return if name == "close" then Stages.close(stageNow, i) else Stages.push(stageNow, i), name
+				local shot = if name == "close" then Stages.close(stageNow, i) else Stages.push(stageNow, i)
+				if p.act == "kneel" or p.pending == "kneel" then
+					-- down on one knee: the camera comes down with them
+					local down = Vector3.new(0, -0.5 * (p.lift - p.root.Size.Y / 2), 0)
+					shot = { eye = shot.eye + down, look = shot.look + down, fov = shot.fov }
+				end
+				return shot, name
 			end
 			return nil, "wide"
 		end
@@ -652,6 +687,11 @@ function Cutscene.new(parent: GuiObject, opts: { [string]: any }): any
 	end
 
 	local function setAct(p: any, act: string?)
+		if p.walk and act then
+			-- whoever is walking does it once they get there
+			p.pending = act
+			return
+		end
 		if p.act == "dance" or p.act == "dance2" then
 			stop(p, p.act)
 		end
@@ -695,7 +735,7 @@ function Cutscene.new(parent: GuiObject, opts: { [string]: any }): any
 	end
 
 	-- Moves the scene to another set: a fade to black, the new set, everyone on their marks.
-	local function changeSet(id: string)
+	local function changeSet(id: string, cast: { [string]: number }?)
 		local nextStage = Stages.get(id)
 		if not nextStage or nextStage == stageNow then
 			return
@@ -713,12 +753,13 @@ function Cutscene.new(parent: GuiObject, opts: { [string]: any }): any
 		root:SetAttribute("Stage", id)
 		view:SetAttribute("Stage", id)
 		taken = {}
+		castNow = cast
 		for _, key in order do
 			people[key].mark = nil
 		end
 		for _, key in order do
 			local p = people[key]
-			local want = if #key == 1 then Cutscenes.markOf(story, key) else nil
+			local want = if #key == 1 then markOf(key) else nil
 			local i = if want and nextStage.marks[want] and not taken[want] then want else freeMark()
 			if i then
 				stand(p, i)
@@ -746,18 +787,15 @@ function Cutscene.new(parent: GuiObject, opts: { [string]: any }): any
 			})
 		end
 		skyLow.BackgroundColor3 = nextStage.sky.low
-		for _, d in discs do
-			d.holder.Visible = false
-		end
-		for _, s in stars do
-			s.frame.Visible = false
-		end
+		skyArt(nextStage)
+		-- the town turns up: whoever else is about fills the marks left
+		guests(#nextStage.marks)
 		lift(0.6)
 	end
 
 	local function apply(b: Cutscenes.Beat, line: any)
 		if b.set then
-			changeSet(b.set)
+			changeSet(b.set, (b :: any).cast)
 			setCam(shotNamed(b.shot, b.on) or stageNow.shots.wide)
 		end
 		-- who is talking, and who everyone turns to
@@ -873,11 +911,12 @@ function Cutscene.new(parent: GuiObject, opts: { [string]: any }): any
 		end
 		local top, hor, low = rowOf(Cutscene.SkySpan), rowOf(0), rowOf(-Cutscene.SkySpan)
 		skyUp.Position = UDim2.fromScale(0, top)
-		skyUp.Size = UDim2.fromScale(1, math.max(0, hor - top))
+		-- (each band runs a little into the next, so no seam shows between them)
+		skyUp.Size = UDim2.new(1, 0, math.max(0, hor - top), 2)
 		skyDown.Position = UDim2.fromScale(0, hor)
-		skyDown.Size = UDim2.fromScale(1, math.max(0, low - hor))
-		skyLow.Position = UDim2.fromScale(0, low)
-		skyLow.Size = UDim2.fromScale(1, math.max(0, 1 - low))
+		skyDown.Size = UDim2.new(1, 0, math.max(0, low - hor), 2)
+		skyLow.Position = UDim2.new(0, 0, low, -1)
+		skyLow.Size = UDim2.new(1, 0, math.max(0, 1 - low), 2)
 		local k = scale()
 		local function project(dir: Vector3): (number?, number?)
 			local d = dir.Unit
@@ -889,7 +928,7 @@ function Cutscene.new(parent: GuiObject, opts: { [string]: any }): any
 		end
 		for _, d in discs do
 			local x, y = project(d.d.dir)
-			d.holder.Visible = x ~= nil and stageNow == stage
+			d.holder.Visible = x ~= nil
 			if x and y then
 				d.holder.Position = UDim2.fromScale(x, y)
 				local size = d.d.size * H / 720 / k
@@ -900,16 +939,16 @@ function Cutscene.new(parent: GuiObject, opts: { [string]: any }): any
 					d.bite.Size = UDim2.fromOffset(size, size)
 					d.bite.Position = UDim2.new(0.5, size * (d.d.phase or 0), 0.5, -size * 0.05)
 					-- the sky's own colour where the moon is, so the bite matches it
-					local c = stage.sky.horizon
+					local c = stageNow.sky.horizon
 					if y < hor then
 						local t = math.clamp((y - top) / math.max(1e-6, hor - top), 0, 1)
-						local mid = stage.sky.mid
+						local mid = stageNow.sky.mid
 						if mid then
 							c = if t < Cutscene.SkyMid
-								then stage.sky.top:Lerp(mid, t / Cutscene.SkyMid)
-								else mid:Lerp(stage.sky.horizon, (t - Cutscene.SkyMid) / (1 - Cutscene.SkyMid))
+								then stageNow.sky.top:Lerp(mid, t / Cutscene.SkyMid)
+								else mid:Lerp(stageNow.sky.horizon, (t - Cutscene.SkyMid) / (1 - Cutscene.SkyMid))
 						else
-							c = stage.sky.top:Lerp(stage.sky.horizon, t)
+							c = stageNow.sky.top:Lerp(stageNow.sky.horizon, t)
 						end
 					end
 					d.bite.BackgroundColor3 = c
@@ -918,7 +957,7 @@ function Cutscene.new(parent: GuiObject, opts: { [string]: any }): any
 		end
 		for _, s in stars do
 			local x, y = project(s.dir)
-			s.frame.Visible = x ~= nil and stageNow == stage
+			s.frame.Visible = x ~= nil
 			if x and y then
 				s.frame.Position = UDim2.fromScale(x, y)
 			end
@@ -959,6 +998,11 @@ function Cutscene.new(parent: GuiObject, opts: { [string]: any }): any
 						else
 							p.feet = m.at
 							play(p, "idle", 0.2)
+						end
+						if p.pending then
+							local act = p.pending
+							p.pending = nil
+							setAct(p, act)
 						end
 					end
 				end
@@ -1024,14 +1068,14 @@ function Cutscene.new(parent: GuiObject, opts: { [string]: any }): any
 			return
 		end
 		if actor.model then
-			add(actor.key, actor.model, Cutscenes.markOf(story, actor.key))
+			add(actor.key, actor.model, markOf(actor.key))
 		end
 	end
 
 	-- A model found late.
 	function self.found(key: string, model: Model)
 		if not people[key] then
-			add(key, model, Cutscenes.markOf(story, key))
+			add(key, model, markOf(key))
 		end
 	end
 

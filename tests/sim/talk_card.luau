@@ -460,7 +460,10 @@ run("a big moment, watched as a cutscene", function()
 	check(stage ~= nil, "with a set behind the textbox")
 	check(s and s:FindFirstChild("Bust_a", true) == nil, "and no busts sliding in")
 	local view = stage and stage:FindFirstChild("StageView")
-	check(view ~= nil and view:IsA("ViewportFrame") and view:GetAttribute("Stage") == "rooftop", "the rooftop, in a viewport")
+	check(
+		view ~= nil and view:IsA("ViewportFrame") and view:GetAttribute("Stage") == "rooftop",
+		"the rooftop, in a viewport"
+	)
 	local world = view and view:FindFirstChild("World")
 	local set = world and world:FindFirstChild("Set")
 	check(set ~= nil and #set:GetChildren() > 200, "the set built in it")
@@ -474,7 +477,10 @@ run("a big moment, watched as a cutscene", function()
 	local function flat(v)
 		return Vector3.new(v.X, 0, v.Z)
 	end
-	check(feet(a) and (feet(a) - flat(rooftop.marks[3].at)).Magnitude < 0.3, "the one who will say it on the mark the script gives")
+	check(
+		feet(a) and (feet(a) - flat(rooftop.marks[3].at)).Magnitude < 0.3,
+		"the one who will say it on the mark the script gives"
+	)
 	check(feet(b) and (feet(b) - flat(rooftop.marks[2].at)).Magnitude < 0.3, "the other on theirs")
 	frames(40)
 	local top = stage and stage:FindFirstChild("BarTop")
@@ -505,7 +511,10 @@ run("a big moment, watched as a cutscene", function()
 	line("e5", { who = "a", text = "Tobin, I like you. Like, really like you.", icon = "heart" })
 	advance(3)
 	frames(2)
-	check(feet(a) and (feet(a) - flat(rooftop.marks[1].at)).Magnitude < 0.3, "she walks over to him for the line that matters")
+	check(
+		feet(a) and (feet(a) - flat(rooftop.marks[1].at)).Magnitude < 0.3,
+		"she walks over to him for the line that matters"
+	)
 	Sim.remoteEvent("EventLine"):FireClient(Sim.player, {
 		token = "e5",
 		line = { who = "b", text = "Oh. I was hoping you'd say that.", icon = "heart", gesture = "cheer" },

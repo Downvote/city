@@ -63,8 +63,10 @@ local Stages = {}
 
 Stages.Head = 4.6 -- a standing villager's eyes over their feet
 Stages.SitHead = 2.9 -- and a sitting one's over the seat
-Stages.Close = { dist = 6.6, side = 52, fov = 30, lift = 0.3 } -- a close shot: how far, how far round, the lens
-Stages.Push = { dist = 4.8, fov = 26 } -- where a push in ends
+-- A close shot: how far, how far round, the lens, how far over their eyes it stands, and how far
+-- under them it looks (the textbox covers the bottom of the screen, so the face sits high).
+Stages.Close = { dist = 6.6, side = 52, fov = 30, lift = 0.3, drop = 0.55 }
+Stages.Push = { dist = 5.4, fov = 26, drop = 0.45 } -- where a push in ends
 
 local C = Recipe.Colors
 
@@ -647,10 +649,10 @@ stage({
 		{
 			at = v3(-2.4, 1.7, 1.6),
 			yaw = 14,
-			close = { eye = v3(-1.1, 6.4, 7.6), look = v3(-2.4, 6.15, 1.6), fov = 30 },
+			close = { eye = v3(-1.1, 6.4, 7.6), look = v3(-2.4, 5.75, 1.6), fov = 30 },
 		},
-		{ at = v3(2.4, 1.7, 1.6), yaw = -14, close = { eye = v3(1.1, 6.4, 7.6), look = v3(2.4, 6.15, 1.6), fov = 30 } },
-		{ at = v3(0, 1.7, -1.6), yaw = 0, close = { eye = v3(0, 6.6, 7.4), look = v3(0, 6.15, -1.6), fov = 30 } },
+		{ at = v3(2.4, 1.7, 1.6), yaw = -14, close = { eye = v3(1.1, 6.4, 7.6), look = v3(2.4, 5.75, 1.6), fov = 30 } },
+		{ at = v3(0, 1.7, -1.6), yaw = 0, close = { eye = v3(0, 6.6, 7.4), look = v3(0, 5.75, -1.6), fov = 30 } },
 	},
 	shots = {
 		wide = { eye = v3(0, 6.8, 23), look = v3(0, 5, 0), fov = 42 },
@@ -995,7 +997,7 @@ stage({
 		{ at = v3(-1.5, 0.1, -4.4), yaw = 76 },
 		{ at = v3(1.5, 0.1, -4.4), yaw = -76 },
 		-- (whoever marries them stands behind the arch: seen between the two of them)
-		{ at = v3(0, 0.1, -7.8), yaw = 0, close = { eye = v3(0, 5.1, -1.6), look = v3(0, 4.6, -7.8), fov = 30 } },
+		{ at = v3(0, 0.1, -7.8), yaw = 0, close = { eye = v3(0, 5.1, -1.6), look = v3(0, 4.15, -7.8), fov = 30 } },
 	},
 	shots = {
 		wide = { eye = v3(0, 6.6, 16), look = v3(0, 3.8, -5), fov = 44 },
@@ -1196,7 +1198,7 @@ stage({
 	shots = {
 		wide = { eye = v3(0, 6.4, 9.6), look = v3(0, 3.6, -6), fov = 48 },
 		two = { eye = v3(2.8, 5.4, 3.4), look = v3(-2.6, 4.2, -5), fov = 40 },
-		cake = { eye = v3(0.9, 4.6, -1.2), look = v3(0, 3.2, -5), fov = 32 },
+		cake = { eye = v3(1.6, 5.6, 1.0), look = v3(0, 3.8, -5.6), fov = 30 },
 		high = { eye = v3(6, 9.4, 7), look = v3(0, 3, -6), fov = 44 },
 		pan = {
 			eye = v3(-10, 6, 7),
@@ -1659,23 +1661,23 @@ stage({
 		{
 			at = v3(-2.2, 0.1, 2.4),
 			yaw = 160,
-			close = { eye = v3(-0.5, 5.0, -3.6), look = v3(-2.2, 4.55, 2.4), fov = 30 },
+			close = { eye = v3(-0.5, 5.0, -3.6), look = v3(-2.2, 4.15, 2.4), fov = 30 },
 		},
 		{
 			at = v3(2.2, 0.1, 2.4),
 			yaw = -160,
-			close = { eye = v3(0.5, 5.0, -3.6), look = v3(2.2, 4.55, 2.4), fov = 30 },
+			close = { eye = v3(0.5, 5.0, -3.6), look = v3(2.2, 4.15, 2.4), fov = 30 },
 		},
 		{
 			at = v3(1.2, 0.1, -9.6),
 			yaw = -12,
-			close = { eye = v3(-0.2, 5.0, -3.4), look = v3(1.2, 4.55, -9.6), fov = 30 },
+			close = { eye = v3(-0.2, 5.0, -3.4), look = v3(1.2, 4.15, -9.6), fov = 30 },
 		},
 	},
 	shots = {
 		wide = { eye = v3(0, 6.2, 14), look = v3(0, 3.6, -8), fov = 46 },
 		two = { eye = v3(-0.8, 4.8, -5.4), look = v3(0, 4.4, 2.2), fov = 36 },
-		road = { eye = v3(0, 5.6, 9), look = v3(0, 3.2, -40), fov = 40 },
+		road = { eye = v3(0, 6.0, 12), look = v3(0, 3.4, -40), fov = 40 },
 		out = { eye = v3(0, 4.6, -14.5), look = v3(0, 4.6, 1.5), fov = 42 },
 		pan = {
 			eye = v3(-6.5, 5.6, -16),
@@ -2073,7 +2075,8 @@ stage({
 	id = "stall",
 	name = "A busy market stall",
 	marks = {
-		{ at = v3(0, 0, -2.8), yaw = 0 },
+		-- (seen over the fruit on the counter)
+		{ at = v3(0, 0, -2.8), yaw = 0, close = { eye = v3(-0.8, 5.6, 2.8), look = v3(0, 4.3, -2.8), fov = 30 } },
 		{ at = v3(-3.0, 0, 1.8), yaw = 150 },
 		{ at = v3(3.4, 0, 2.6), yaw = -142 },
 	},
@@ -2378,7 +2381,7 @@ function Stages.close(s: Stage, i: number): Shot
 		return known
 	end
 	local head = Stages.head(s, i)
-	local look = head - Vector3.new(0, 0.15, 0)
+	local look = head - Vector3.new(0, Stages.Close.drop, 0)
 	local f = Stages.facing(m.yaw)
 	local k = Stages.Close
 	local first: Shot? = nil
@@ -2438,9 +2441,9 @@ end
 -- The push in on mark i: where a slow push toward their face ends.
 function Stages.push(s: Stage, i: number): Shot
 	local c = Stages.close(s, i)
-	local look = c.look
-	local dir = (c.eye - look).Unit
-	return { eye = look + dir * Stages.Push.dist, look = look, fov = Stages.Push.fov }
+	local look = c.look + Vector3.new(0, Stages.Close.drop - Stages.Push.drop, 0)
+	local dir = (c.eye - c.look).Unit
+	return { eye = c.look + dir * Stages.Push.dist, look = look, fov = Stages.Push.fov }
 end
 
 -- Every place the camera can be: the named shots (a pan's start and end apart), and the close

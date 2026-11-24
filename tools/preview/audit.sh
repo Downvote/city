@@ -12,7 +12,7 @@ TMP=$(mktemp -d /tmp/audit.XXXXXX)
 SCENES="hud build build:walls build:pick build:paint panel:Residents panel:CityPanel
 panel:News panel:Welcome panel:Goals panel:Rewards panel:Residents:friends panel:Residents:empty
 panel:Residents:craving panel:Residents:short panel:News:empty panel:News:busy panel:Goals:claimed
-panel:CityPanel:ready earned event event:talk event:one event:two event:four event:narration event:answers talk talk:again talk:craving toasts creator
+panel:CityPanel:ready earned event event:talk event:one event:two event:four event:narration event:answers cutscene:confess:2 cutscene:propose:a3 cutscene:festival talk talk:again talk:craving toasts creator
 creator:profile creator:bodies creator:parts creator:items creator:items:ask creator:items:no creator:avatars
 creator:wearing creator:skin creator:shape creator:outfits creator:outfits:saved creator:people creator:profile:set creator:end build:rooms build:floors build:roofs build:fences
 build:paths build:buildings build:bought build:sell build:view build:placing build:placing:touch

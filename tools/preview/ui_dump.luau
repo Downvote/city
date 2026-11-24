@@ -829,7 +829,12 @@ elseif scene:sub(1, 9) == "cutscene:" then
 	local plot = Sim.ws:FindFirstChild("Plots"):FindFirstChild("Plot1")
 	local folder = plot:FindFirstChild("Villagers") or Fake.new("Folder", plot)
 	folder.Name = "Villagers"
-	local HAIR = { Color3.fromRGB(96, 70, 60), Color3.fromRGB(60, 50, 48), Color3.fromRGB(200, 150, 90), Color3.fromRGB(150, 80, 60) }
+	local HAIR = {
+		Color3.fromRGB(96, 70, 60),
+		Color3.fromRGB(60, 50, 48),
+		Color3.fromRGB(200, 150, 90),
+		Color3.fromRGB(150, 80, 60),
+	}
 	for i, vid in order do
 		local v = villagers[vid]
 		local model = Fake.new("Model", folder)
@@ -862,7 +867,8 @@ elseif scene:sub(1, 9) == "cutscene:" then
 	end
 	startHud()
 	-- the event's own scene, made as the server makes it
-	local profile = { villagers = villagers, order = order, rel = rel, requests = {}, plan = Sim.State.plan, bdays = {} }
+	local profile =
+		{ villagers = villagers, order = order, rel = rel, requests = {}, plan = Sim.State.plan, bdays = {} }
 	local ctx = EventEngine.context(profile, {
 		now = os.time(),
 		hour = 12,
@@ -896,7 +902,15 @@ elseif scene:sub(1, 9) == "cutscene:" then
 			choices[i] = { text = c.text, cost = c.cost }
 		end
 	end
-	local ev = { token = "c1", id = id, title = made.title, names = names, actors = actors, lines = made.lines, choices = choices }
+	local ev = {
+		token = "c1",
+		id = id,
+		title = made.title,
+		names = names,
+		actors = actors,
+		lines = made.lines,
+		choices = choices,
+	}
 	Sim.remoteEvent("EventShow"):FireClient(Sim.player, ev)
 	Sim.frames(2)
 	local function say(l, last)

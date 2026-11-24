@@ -109,6 +109,27 @@ requests)` (an add past what was given is refused; removes in the same change co
 (cards read "Free, N left" or "None left"; `ui.sh build:keepsakes[:empty]`). `Sim/Talk.line` takes `season` and
 `weather`, and `Talk.memo(v, now)` is the last event's memo while fresh. Previews: `render.sh props[:ids]`.
 
+## Cutscenes
+
+`Data/Stages` holds the sets (rooftop, pier, bandstand, dream, wedding, birthday, beach, park, gate, kitchen,
+stall): each has three marks, named shots (wide, two, pan and a few of its own), bounds, light and a painted sky;
+`Stages.close` picks the first angle on a face clear of the set and of everyone else, `Stages.push` builds on it,
+and `inside`, `blocked` and `crowded` check clearance. `Data/Cutscenes` scripts events by id (`Cutscenes.forEvent(id,
+ev)`): which set, who stands where, and beats keyed by line number, by the lines after an answer, by an `icon` or
+`who` filter, or by a `cue` a line carries; a beat has `shot`, `on`, `act` (letter, `*` the speaker, `others`,
+`all`), `look`, `move` (to a mark), `set` (another set, with a fade) and `fx`. An event def in Data/Events may carry
+`cutscene = "<set>" | { stage, cast, extras, open, lines, after, ask, ending }`, and a line `cue = "<name>"`; both
+pass through unchanged (no server or remote change). `UI/Cutscene` plays it in a full screen ViewportFrame with a
+WorldModel: clones of the villagers on their marks playing their idle and the acts (six by Roblox's animations, the
+rest by their joints and where they stand), the camera easing between shots (a move that would pass through the set
+becomes a dip to black), letterbox bars and the sky. `Dialogue.open` takes `Stage = { script, stage, event,
+modelOf }` and the scene has `beat(line)` and `stage` (it falls back to busts if the stage can't be built);
+`EventCard` adds `line.at = { phase = "lines" | "after", n }` and sends beats for the lines, the question and the
+ending. The Cutscenes spec checks the sets (frames, z-fighting, at most 1,000 parts, marks with room), every shot
+and every move between two shots, and that every script names real events, sets, marks, shots and acts. Previews:
+`sh tools/preview/stage.sh <id> <dir>` (a set from every shot), `ui.sh cutscene:<event>[:<n>|:ask|:a<n>]`,
+`render.sh stage:<id>`.
+
 ## Using things
 
 `Data/Interactions` lists the uses: for catalog ids, the spots in the piece's own space (stand or sit), the stay,

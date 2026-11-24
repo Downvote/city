@@ -364,6 +364,11 @@ describe("Cutscenes", function()
 					error(where .. ": " .. s.id .. " has no mark " .. tostring(mark))
 				end
 			end
+			for who, mark in b.cast or {} do
+				if not letters[who] or not s.marks[mark] then
+					error(where .. ": " .. tostring(who) .. " on mark " .. tostring(mark) .. " of " .. s.id)
+				end
+			end
 			if b.fx and b.fx ~= "stars" then
 				error(where .. ": no effect " .. b.fx)
 			end

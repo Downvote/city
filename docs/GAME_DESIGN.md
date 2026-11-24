@@ -187,6 +187,20 @@ times as you were given it. Holding E, villagers also talk about their last even
 joke, the season and the weather. Events that came up lately are much less likely to come again. Nothing in them
 comes from the game the user named: the events, lines, props and keepsakes are this town's own.
 
+### Cutscenes
+
+> add cutscenes and scenes like tomodachi life as well
+
+A watched big moment (a confession, a proposal, a date, a birthday, a dance party, a dream, a newcomer at the gate,
+a crush, making up, a quarrel, shooting stars, a busy day, and the bigger new events: concerts, picnics, nights on
+the pier) plays on a set of its own behind the dialogue's textbox: a rooftop at sunset, the pier at night, the
+bandstand lit for a concert, a dream, a wedding arch, a party room, the beach at dawn, a park bench, the town gate,
+a kitchen at night, a market stall. The villagers act it out (they wave, cheer, kneel, hug, dance, walk to a seat)
+while the camera eases between a wide shot, a two shot, a close one on whoever talks and a slow push at the key
+line, under the set's own light and sky, with bars top and bottom. A yes on the pier cuts to the wedding arch with
+guests from town. As with every event it never takes the screen by itself, and the player's camera stays put.
+Taken from that game: the idea only. No sets, songs, characters or camera moves are copied.
+
 ## 5. Building
 
 Bloxburg style, all on a grid and all saved:

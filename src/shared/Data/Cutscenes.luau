@@ -27,6 +27,7 @@
 --   look     who turns to whom: { [letter] = letter or "camera" }
 --   move     someone walks to another mark (and sits, if it is a seat): { [letter] = mark }
 --   set      the scene moves to another set (a fade to black between), everyone to their marks
+--            (`cast` gives the marks there), and others from town fill the marks left
 --   fx       something in the sky: "stars" (shooting stars)
 --   icon, who  only for a line with this icon, or said by this letter (the lines after an answer
 --            differ by the answer, so a beat by number can say which one it is for)
@@ -50,6 +51,7 @@ export type Beat = {
 	look: { [string]: string }?,
 	move: { [string]: number }?,
 	set: string?,
+	cast: { [string]: number }?,
 	fx: string?,
 	icon: string?,
 	who: string?,
@@ -168,11 +170,11 @@ byEvent.propose = {
 		[1] = { shot = "wide", act = { b = "gaze" } },
 		[2] = { shot = "close", look = { a = "camera" } },
 	},
-	ask = { shot = "moon" },
+	ask = { shot = "two" }, -- (the two of them in view while you answer)
 	after = {
 		[1] = { icon = "heart", shot = "push", move = { a = 2 }, act = { a = "kneel" } },
 		[2] = { icon = "heart", shot = "close", on = "b", act = { b = "cheer", a = "jump" } },
-		[3] = { set = "wedding", shot = "wide", act = { all = "cheer" } },
+		[3] = { set = "wedding", cast = { a = 1, b = 2 }, shot = "wide", act = { all = "cheer" } },
 	},
 }
 
@@ -393,7 +395,7 @@ local function merge(into: any, beat: Beat?, line: any)
 	if beat.who and beat.who ~= line.who then
 		return
 	end
-	for _, k in { "shot", "on", "set", "fx" } do
+	for _, k in { "shot", "on", "set", "cast", "fx" } do
 		if (beat :: any)[k] ~= nil then
 			into[k] = (beat :: any)[k]
 		end
