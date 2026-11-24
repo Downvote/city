@@ -107,7 +107,9 @@ describe("Town", function()
 		-- is used. So the town is counted twice: with each piece as one part, which is what a
 		-- server holds, and with every piece opened into its shapes, which is what a client
 		-- draws where the merge can't be done. Every different piece is a merge when the server
-		-- starts, so there may not be many of those either.
+		-- starts, so there may not be many of those either. (The caps went up from 30,000, 70,000
+		-- and 220 for the user's "the amount of detail should be similar to the default house
+		-- everywhere".)
 		local ground = TownMap.ground()
 		local parts, opened = #ground, #Geometry.flatten(ground)
 		local keys, different = {}, 0
@@ -132,8 +134,8 @@ describe("Town", function()
 			parts += size[1]
 			opened += size[2]
 		end
-		expect(parts < 30000).toBeTruthy()
-		expect(opened < 70000).toBeTruthy()
-		expect(different < 220).toBeTruthy()
+		expect(parts < 36000).toBeTruthy()
+		expect(opened < 110000).toBeTruthy()
+		expect(different < 320).toBeTruthy()
 	end)
 end)
