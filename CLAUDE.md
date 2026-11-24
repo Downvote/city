@@ -67,9 +67,10 @@ more buildings, as much as in the city side"), the hills north (`Data/Hills`), t
 `Data/TownMap` lays out the ground and where everything stands, `Data/CityModels` draws the buildings and landmarks,
 `Data/Places` lists the places to find. The user wants it detailed like a classic city builder: buildings on
 landscaped lots (`CityModels.lot`), window bays, signs, roof details, parked cars, groves, textured ground, all
-textures from the Roblox library. Budgets (the Town spec holds them): the whole town under 36,000 parts with a merged piece counted as one, under
-110,000 with every piece opened into its shapes, and under 320 different pieces (it is about 30,500, 101,000 and 290
-since the detail pass; every shop, tower, house and public building you can walk into is a furnished room from
+textures from the Roblox library. Budgets (the Town spec holds them): the whole town under 56,000 parts as the game makes them (a merged piece is one
+part for its boxes and wedges plus one for each round shape in it: `Geometry.served`, since merged round shapes came
+out wrong in the game), under 126,000 with every piece opened into its shapes, and under 320 different pieces (about
+50,200, 123,700 and 296 with the civic quarter built up; every shop, tower, house and public building you can walk into is a furnished room from
 `Data/Interiors`, preview with `render.sh inside:<kind>,<kind>`). Street buildings come from the facade kit
 (`Data/Facades`): a building is a name such as `facade:24x18:4:17:shop=open:cl` (size, storeys, seed and options)
 or one of its presets, so a new one needs only a placement. Downtown is rows of them on every block edge, with a
