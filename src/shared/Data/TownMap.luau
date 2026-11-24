@@ -59,7 +59,7 @@ local LEAF_LIGHT = Color3.fromRGB(132, 218, 92)
 -- ground itself is Roblox terrain (Data/Terrain); these are its measures.
 TownMap.IslandX = Terrain.IslandX -- grass from -IslandX to IslandX
 TownMap.IslandN = Terrain.IslandN -- and from -IslandS to IslandN (the hills run up to the north shore)
-TownMap.IslandS = Terrain.IslandS
+TownMap.IslandS = Terrain.IslandS -- (and further south on the old town's cape: Terrain.south)
 TownMap.Beach = Terrain.Beach -- (on average: the water's edge waves in and out)
 TownMap.Shallows = Terrain.Shallows
 TownMap.WaterY = Terrain.WaterY
@@ -1417,9 +1417,11 @@ local function streetScene(standing: { Placement }): { Placement }
 			end
 		end
 	end
+	-- (from the boardwalk round the old town's cape up to the far side of its Hill Road: the
+	-- scene goes no further)
 	for _, p in standing do
 		local z = p.cf.Position.Z
-		if p.tag ~= "backdrop" and z > -310 and z < 290 then
+		if p.tag ~= "backdrop" and z > -(Town.RingZ + 48) and z < Town.RingZ + 28 then
 			stand(p.name, p.cf)
 		end
 	end
@@ -1732,8 +1734,8 @@ local function streetScene(standing: { Placement }): { Placement }
 			end
 		end
 	end
-	-- Round the old town, on the verge between the ring road's sidewalk and the hedges, and in the
-	-- gaps between the plots on the main street.
+	-- Round the old town, on the verge between the ring road's sidewalk and the hedges, and on the
+	-- main street out past the plots' ends.
 	local verge = RZ - reach - 0.8
 	for i, x in { -390, -130, 130, 390 } do
 		set(if i % 2 == 0 then "posterWall2" else "posterWall", x, verge, 180)
@@ -2311,7 +2313,14 @@ function TownMap.placements(): { Placement }
 				local side = if n % 2 == 0 then 1 else -1
 				local v = side * (hw + 1.8)
 				local x, z = if horizontal then u else at + v, if horizontal then at + v else u
-				if not nearRoad(x, z, road) then
+				-- (and not on the kerb by a zebra crossing, where its tactile paving is)
+				local atZebra = false
+				for _, c in crossings(road) do
+					for _, dir in { -1, 1 } do
+						atZebra = atZebra or math.abs(u - (c[1] + dir * (c[2] + c[3] + 4))) < 6
+					end
+				end
+				if not nearRoad(x, z, road) and not atZebra then
 					local yaw = if horizontal then (if side > 0 then 0 else 180) else (if side > 0 then -90 else 90)
 					if n % 3 == 0 then
 						put("streetLamp", x, z, yaw)
@@ -3008,7 +3017,8 @@ function TownMap.placements(): { Placement }
 			pockets(lane, GREEN, 0, 4, 8, 4)
 			-- (clear of the footbridge's stairs and the crossing's bollards at the street end; the
 			-- trees stay 18 from the avenue's sidewalk)
-			local strip = block(math.min(sx * plotOut, sx * (side - 2)), 44, math.max(sx * plotOut, sx * (side - 2)), back)
+			local strip =
+				block(math.min(sx * plotOut, sx * (side - 2)), 44, math.max(sx * plotOut, sx * (side - 2)), back)
 			pockets(strip, GARDENS, 0, 2, 15, 2)
 			treeRow(strip, 26)
 			pockets(strip, GREEN, 0, 3, 8, 3)
@@ -3057,7 +3067,15 @@ function TownMap.placements(): { Placement }
 		local yaw = math.deg(math.atan2(-math.cos(rad), -math.sin(rad)))
 		hill("fenceRun", lx + 43 * math.cos(rad), lz + 43 * math.sin(rad), yaw)
 	end
-	for _, p in { { lx + 24, lz + 12, 20 }, { campX + 676, campZ + 548, -30 }, { campX + 690, campZ + 500, 60 }, { -350, 742, 10 }, { 836, 676, 0 } } do
+	for _, p in
+		{
+			{ lx + 24, lz + 12, 20 },
+			{ campX + 676, campZ + 548, -30 },
+			{ campX + 690, campZ + 500, 60 },
+			{ -350, 742, 10 },
+			{ 836, 676, 0 },
+		}
+	do
 		hill("picnicTable", p[1], p[2], p[3])
 	end
 	-- (at the foot of the stair, on the way up to the lookout, by the farm's track and the camp's,
@@ -3186,6 +3204,24 @@ function TownMap.placements(): { Placement }
 		local px = x + beach:float(-12, 12)
 		if clearOfPiers(px) and math.abs(px) > 20 then
 			onBeach("parasol", "south", px, 0.7, beach:float(-20, 20), 0.35)
+		end
+	end
+	-- the lawns down the cape's curving sides, between the boardwalk in front of downtown and the
+	-- civic quarter and the beach: a few palms and trees, 18 back from the first avenue's sidewalk
+	-- and the road's, and well up from the sand
+	do
+		local cape = Terrain.Cape
+		local n = 0
+		for _, sx in { 1, -1 } do
+			for x = cape.half + 40, cape.half + cape.ease, 40 do
+				local z = -(Town.OuterRingZ + 17 + 18)
+				while z > -south(x) + 16 do
+					n += 1
+					local name = if n % 3 == 0 then "palm" elseif n % 2 == 0 then "lowTreeBig" else "lowTree"
+					put(name, sx * x, z, n * 47)
+					z -= 45
+				end
+			end
 		end
 	end
 	-- palms along the east and west shores, and a quiet cove on the north shore

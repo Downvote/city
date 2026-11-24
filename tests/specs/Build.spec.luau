@@ -288,6 +288,54 @@ describe("Plan rules", function()
 		expect(Plan.count(plan, "items")).toBe(1)
 		expect(plan.nextId >= 3).toBeTruthy()
 	end)
+
+	it("moves a save from before the plots grew onto today's plot, with its land doubled", function()
+		-- The user: "make player plots much bigger, double the size". A save of v 1 was laid out on
+		-- a plot of 200 with land of 100, 128, 160 or 200 a side, in the middle of the plot's
+		-- width; it keeps its step of land, twice as big, and its build moves with the middle.
+		local old = {
+			v = 1,
+			size = 128,
+			nextId = 5,
+			walls = {
+				["1"] = {
+					x1 = 40,
+					z1 = 10,
+					x2 = 60,
+					z2 = 10,
+					lv = 0,
+					style = "wall",
+					a = { c = "F2E8D5", m = "Plaster" },
+					b = { c = "FFFFFF", m = "SmoothPlastic" },
+				},
+			},
+			floors = { ["2"] = { x1 = 40, z1 = 10, x2 = 60, z2 = 30, lv = 0, c = "C99A62", m = "WoodPlanks" } },
+			roofs = {},
+			items = { ["3"] = { id = "tree_oak", x = 150, y = 0, z = 90, r = 0, lv = 0 } },
+		}
+		local plan = Plan.sanitize(old)
+		expect(plan.v).toBe(Plan.Version)
+		expect(plan.size).toBe(Tuning.City.Land[2].Size)
+		local dx = (P.Size - 200) / 2
+		expect(plan.walls["1"].x1).toBe(40 + dx)
+		expect(plan.walls["1"].z1).toBe(10)
+		expect(plan.floors["2"].x2).toBe(60 + dx)
+		expect(plan.items["3"].x).toBe(150 + dx)
+		expect(plan.items["3"].z).toBe(90)
+		-- and it is all still on the land, which sits round the same middle
+		local x1, z1, x2, z2 = Plan.bounds(plan)
+		expect((x1 + x2) / 2).toBe(P.Size / 2)
+		expect(x1 <= 40 + dx and x2 >= 150 + dx and z1 == 0 and z2 >= 90).toBeTruthy()
+		-- what the save held is left as it was, and a plan of today's is not moved again
+		expect(old.walls["1"].x1).toBe(40)
+		local again = Plan.sanitize(Plan.copy(plan))
+		expect(again.walls["1"].x1).toBe(40 + dx)
+		expect(again.size).toBe(plan.size)
+		-- every step of land the old plot had maps onto today's, in order
+		for i, size in { 100, 128, 160, 200 } do
+			expect(Plan.sanitize({ v = 1, size = size }).size).toBe(Tuning.City.Land[i].Size)
+		end
+	end)
 end)
 
 describe("Shapes", function()

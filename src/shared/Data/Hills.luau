@@ -21,8 +21,10 @@ Hills.Z1, Hills.Z2 = 290, 940
 Hills.Notch = { half = 560, ease = 160, depth = 200, rise = 180 }
 Hills.Rise = 120 -- the hills come up from nothing over this much, north of their foot
 
--- round peaks: { x, z, height, radius }. (The lookout's moved north, and lost a little height, when
--- the old town grew; the two small ones that stood behind the old town went north with it.)
+-- round peaks: { x, z, height, radius }. When the old town grew the lookout's hill moved north and
+-- broadened, a little lower (it was 96 high at z 640), the observatory's came down a little (it was
+-- 75), the two small hills behind the old town went north with it, and the farm's and the camp's
+-- went out past its sides.
 local PEAKS = {
 	{ 0, 740, 70, 260 },
 	{ -380, 760, 66, 190 },
@@ -47,11 +49,13 @@ Hills.Plateaus = {
 	{ name = "stones", x = -920, z = 750, r = 34 }, -- a ring of standing stones
 }
 
--- ground kept flat (at 0): { x1, z1, x2, z2 } with a soft edge. The creator's meadow, behind Hill
--- Road west of the stair.
+-- ground kept flat (at 0): { x1, z1, x2, z2 } with a soft edge (FLAT_EDGE). The creator's meadow,
+-- behind Hill Road west of the stair, where the hills behind the old town come up: the long soft
+-- edge keeps the slope up from it gentle.
 local FLATS = {
 	{ -540, 480, -300, 566 },
 }
+local FLAT_EDGE = 150
 
 local function smoothstep(a: number, b: number, x: number): number
 	local t = math.clamp((x - a) / (b - a), 0, 1)
@@ -113,7 +117,7 @@ function Hills.smooth(x: number, z: number): number
 		local dx = math.max(f[1] - x, 0, x - f[3])
 		local dz = math.max(f[2] - z, 0, z - f[4])
 		local d = math.sqrt(dx * dx + dz * dz)
-		h *= smoothstep(0, 150, d)
+		h *= smoothstep(0, FLAT_EDGE, d)
 	end
 	return h * notch(x, z) * shores(x, z)
 end

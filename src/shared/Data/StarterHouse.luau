@@ -16,6 +16,7 @@
 
 local Plan = require(script.Parent.Parent.Build.Plan)
 local Catalog = require(script.Parent.Parent.Build.Catalog)
+local Spread = require(script.Parent.Parent.Build.Spread)
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 
 local StarterHouse = {}
@@ -25,13 +26,24 @@ type Finish = { c: string, m: string }
 local F = Tuning.Plot.Foundation
 
 -- Everything is laid out in one frame: x across from the house's left corner, z back from the
--- workshop's front, on the 2 stud wall grid. All the walls fit a box W by D, and OX and OZ put
--- that box's middle on the middle of the land a new player owns (which starts at the street, in
--- the middle of the plot's width). The house stands at (0, HOUSE_Z) in it, the workshop at
--- (SHOP_X, 0); the fence runs FRONT studs in front of the box.
-local W, D = 40, 28
+-- workshop's front, on the 2 stud wall grid. The rooms are drawn tight first, the walls inside a
+-- box 40 by 28, with the house at (0, HOUSE_Z) in it and the workshop at (SHOP_X, 0), and the
+-- fence FRONT studs in front of the box. Then floor is let in along the lines in CUTS (Build/
+-- Spread; the user: "make the houses and other buildings bigger such that the interior feels
+-- much more spacious"), which leaves the box W wide: every room half as wide and deep again,
+-- the furniture against the walls it was against. OX puts the box's middle on the middle of the
+-- plot's width, OZ keeps it near the street, a lawn in front of the garden fence.
+local CUTS: Spread.Cuts = {
+	-- through the bedroom and the kitchen, the front room and the porch, the workshop
+	x = { { 9.5, 6 }, { 13.6, 8 }, { 35.6, 6 } },
+	-- across the front of the bedroom and the workshop, and the front of the kitchen and the
+	-- front room
+	z = { { 4.5, 4 }, { 14.4, 6 } },
+}
+local TIGHT_W = 40 -- the box's width before it is opened up
+local W = Spread.size(CUTS, TIGHT_W, 28)
 local OX = Tuning.Plot.Size / 2 - W / 2
-local OZ = Tuning.City.Land[1].Size / 2 - D / 2
+local OZ = 36
 local HOUSE_Z = 4
 local SHOP_X = 28
 local FRONT = 6
@@ -215,14 +227,13 @@ function StarterHouse.plan(): Plan.PlanData
 
 	-- Two roofs. The gabled part's is steep and runs front to back. The wing's is lower, runs
 	-- across, comes down over the porch and dies into the other one's slope.
-	roof(0, 0, 12, 24, 9, 1)
-	roof(8, 2, 24, 22, 7, 0)
+	roof(0, 0, 12, 24, 10, 1)
+	roof(8, 2, 24, 22, 9, 0)
 
 	-- doors and windows
 	opening("door_front", "porch", 6, GREEN, WHITE)
 	opening("win_tall", "porch", 1.8)
 	opening("win_tall", "porch", 10.2)
-	opening("win_bay", "gable", 6, WHITE, TILE.c)
 	opening("win_square", "leftfront", 5)
 	opening("win_square", "leftback", 10)
 	opening("win_small", "back", 4.6)
@@ -237,8 +248,6 @@ function StarterHouse.plan(): Plan.PlanData
 	dress("leftback", 10, true)
 	dress("wingback", 4.5, true)
 	dress("end", 9.5, true)
-	hang("hanging_basket", "gable", 1.4, 5, "a")
-	hang("hanging_basket", "gable", 10.6, 5, "a")
 	hang("hanging_basket", "back", 1.6, 5, "a")
 	hang("trellis", "back", 9.4, 1.3, "a")
 	hang("trellis", "end", 2.6, 1.3, "a")
@@ -263,11 +272,6 @@ function StarterHouse.plan(): Plan.PlanData
 	hang("downpipe", "end", 12.7, 0, "a")
 	hang("downpipe", "leftback", 1, 0, "a")
 	item("water_butt", 25.5, 20.7, 90) -- (a hair off the downpipe's side)
-	-- Up in the gables, which stand on the level above: a window front and back, and a
-	-- weathervane on the ridge.
-	upstairs("window_attic", 6, 0, 180, WHITE, GREEN)
-	upstairs("window_attic", 6, 24, 0, WHITE, GREEN)
-	upstairs("weathervane", 6, 0.8, 0)
 
 	-- the porch: four posts under the eave (the one against the gabled part is turned, so its
 	-- beam keeps out of the bedroom wall), rails between them, steps up from the path, and what a
@@ -339,12 +343,8 @@ function StarterHouse.plan(): Plan.PlanData
 	wall("shopright", 12, 0, 12, 8, BOARDS, SHOP_IN)
 	wall("shopback", 12, 8, 0, 8, BOARDS, SHOP_IN)
 	wall("shopleft", 0, 8, 0, 0, BOARDS, SHOP_IN)
-	roof(0, 0, 12, 8, 4, 0)
+	roof(0, 0, 12, 8, 5, 0)
 	opening("win_small", "shopback", 2.5)
-	opening("win_square", "shopleft", 4)
-	opening("win_square", "shopright", 4)
-	dress("shopleft", 4, false)
-	dress("shopright", 4, false)
 	for _, t in { 2, 6 } do
 		hang("stone_footing", "shopright", t, 0, "a")
 		hang("stone_footing", "shopleft", t, 0, "a")
@@ -382,7 +382,7 @@ function StarterHouse.plan(): Plan.PlanData
 	end
 	item("fence_picket", 0, -FRONT + 2, 90)
 	item("fence_picket", 0, -FRONT + 6, 90)
-	item("fence_picket", W, -FRONT + 2, 90)
+	item("fence_picket", TIGHT_W, -FRONT + 2, 90)
 	item("gate_garden", 18, -FRONT, 0, F)
 	item("lamp_post", 14.9, -FRONT + 1.2, 0)
 	item("mailbox", 21, -3, 270)
@@ -405,11 +405,74 @@ function StarterHouse.plan(): Plan.PlanData
 	item("path_stones", 25.5, -1.7, 40)
 
 	item("veg_patch", 31, 13, 0)
-	item("veg_patch", 36, 13, 90)
+	item("veg_patch", 35.5, 13, 90)
 	item("tree_swing", 30, 22.5, 0)
 
 	-- a paved path from the street to just inside the gate
 	floor(16, -OZ, 20, -FRONT + 2, PAVING)
+
+	-- opened up -------------------------------------------------------------------------------
+	-- Floor let in along the lines in CUTS, on the plot. The stones at the walls' feet, the
+	-- fence and the borders close up over the gaps; everything is a gift at its new size.
+	local function onPlot(list: { Spread.Cut }?, o: number): { Spread.Cut }
+		local out = {}
+		for _, c in list or {} :: { Spread.Cut } do
+			table.insert(out, { c[1] + o, c[2] })
+		end
+		return out
+	end
+	local cuts: Spread.Cuts = { x = onPlot(CUTS.x, OX), z = onPlot(CUTS.z, OZ) }
+	local entries: { Spread.Entry } = {}
+	for _, kind in Plan.Kinds do
+		local keys = {}
+		for key in (plan :: any)[kind] do
+			table.insert(keys, key)
+		end
+		table.sort(keys, function(a, b)
+			return (tonumber(a) or 0) < (tonumber(b) or 0)
+		end)
+		for _, key in keys do
+			local obj = (plan :: any)[kind][key]
+			local on = if kind == "items" and obj.wall then plan.walls[obj.wall] else nil
+			table.insert(entries, { kind = kind, obj = obj, wall = on })
+		end
+	end
+	for _, f in Spread.apply(cuts, entries) do
+		add(f.kind, f.obj)
+	end
+	for _, kind in Plan.Kinds do
+		for _, obj in (plan :: any)[kind] do
+			obj.gift = Plan.cost(kind, obj)
+		end
+	end
+
+	-- What goes on the opened up house, in its frame: the gabled part is now x 0 to 18 and z 0
+	-- to 34, the wing x 18 to 38 and z 12 to 32, the porch in front of it from z 6.
+	ox, oz = OX, OZ + HOUSE_Z
+	-- the bay window in the middle of the gabled front with a basket either side, a window up
+	-- in each gable and the weathervane on the ridge
+	opening("win_bay", "gable", 9, WHITE, TILE.c)
+	hang("hanging_basket", "gable", 4.4, 5, "a")
+	hang("hanging_basket", "gable", 13.6, 5, "a")
+	upstairs("window_attic", 9, 0, 180, WHITE, GREEN)
+	upstairs("window_attic", 9, 34, 0, WHITE, GREEN)
+	upstairs("weathervane", 9, 0.8, 0)
+	-- the porch rail on from the post against the gabled part
+	item("porch_rail", 21.5, 6.5, 0)
+	item("porch_rail", 24.5, 6.5, 0)
+	-- a dresser in the bedroom, the kitchen's counter on past the sink, and a chair and a lamp
+	-- by the fire in the front room
+	item("dresser", 10.6, 12.9, 180)
+	item("counter", 10.4, 32.4, 180)
+	item("armchair", 27.2, 27.2, 90)
+	item("table_side", 27.2, 24.6, 0)
+	item("lamp_table", 27.2, 24.6, 0, top("table_side"))
+	-- the workshop's side windows in the middle of its longer walls
+	ox, oz = OX + Spread.axis(CUTS.x, SHOP_X), OZ
+	opening("win_square", "shopleft", 6)
+	opening("win_square", "shopright", 6)
+	dress("shopleft", 6, false)
+	dress("shopright", 6, false)
 
 	return plan
 end

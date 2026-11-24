@@ -32,6 +32,15 @@ The contract between the parts of the game. Update it with every change to an AP
   - `Recipes/*`: the catalog, one module per group. Each returns a list of item definitions.
   - `Catalog`: loads the recipes, indexes them, `prims(def, c1, c2)` draws one, `Categories`, `Tags`.
   - `Plan`: a plot's build as data and every rule about changing it (see below).
+  - `Spread`: opens a building up (the user: "make the houses and other buildings bigger such that the interior
+    feels much more spacious"). `apply(cuts, entries)` lets floor in along lines, `cuts = { x = { { at, by } },
+    z = ... }` (`by` on the wall grid): whatever lies past `at` moves on by `by`, so walls, floors and roofs across
+    the line get longer and a piece moves whole with the side its middle is on (`entries` are `{ kind, obj, wall }`,
+    `wall` the wall a door, window or hung piece is on: it keeps its place along the wall the same way). A row of
+    one piece end to end (`Rows`: stone footings, pickets and porch rails close up with no gap, flower borders,
+    counters and tall bookcases with whole pieces) is filled where a line opens it; the fills come back for the
+    caller to add. It refuses a line along a wall, floor or roof edge, or one between a piece and what stands on
+    it. `axis`, `point`, `size`, `bands` say where things end up.
   - `Shapes`: walls (with openings cut out; `wallReach` gives each end's reach per layer `{ a, b }` so walls meeting
     at corners, T junctions and crossings never share space), floors (with stairwells cut out), roofs (five styles).
   - `Builder`: prims to Parts and plan objects to Models; tags night lights, door leaves, seats and beds. A door
@@ -39,17 +48,26 @@ The contract between the parts of the game. Update it with every change to an AP
     frame on the prim as `frame`); `Builder.doorOpen(leaf)` is where it stands open (swung round `HingeX`, slid by
     `Slide` or raised by `Lift`, all measured in that doorway).
 - `Data/`: `Palette` (paint swatches, materials and the ready-made finishes Build mode shows as tiles), `Personalities`, `Foods`, `Items`, `Jobs`, `Events` (the event list), `Town` (map
-  layout and plot frames, the road network `Roads` as `{ x1, z1, x2, z2, half width, sidewalk }`, `Districts`,
-  `CreatorSpot` and `CreatorHeight`: the creator's stage floats that high over its meadow, out of sight of the
-  town), `TownMap` (the island as parts: grass, beach, shallows, deep sea floor, see-through
+  layout and plot frames: `Tuning.Plot.Count` plots of `Tuning.Plot.Size`, four of 400 a side, `PlotCentersX`
+  { -266, 266 }, plots 1 and 2 north of Main Street west to east facing it, 3 and 4 south of it, turned,
+  `plotFrame(i)`, `plotCenter`, `plotArrival`, `toPlot`; the road network `Roads` as `{ x1, z1, x2, z2, half
+  width, sidewalk }` with `name` on the named ones: Main Street, then Hill Road and Harbour Road round the old town
+  at `RingZ` (462) between the first avenues, the avenues (`AvenueX`; the first ones run out to `RingZ`, the others
+  to `OuterRingZ`, 262), the cross streets at `CrossZ`, and the ring's stretches on its old line past the first
+  avenues (Hillside Row, Mill Row, Quay Street, Strand Road); `ringAt(x)` is where the ring runs at x;
+  `MainCrossings` the main street's own zebras; `Districts`, `CreatorSpot` and `CreatorHeight`: the creator's
+  stage floats that high over its meadow, out of sight of the town), `TownMap` (the island as parts: grass, beach, shallows, deep sea floor, see-through
   water and invisible walls at the shallows' edge; the streets, sidewalks, square and market; and where every
   building, palm, parasol, islet, the marina and piece of street furniture stands; the
   ground slabs are all SmoothPlastic for a clean flat look), `TownModels` (plaza buildings), `AmbientModels` (cars, the bus, birds,
   clouds), `Presets` (ready-made buildings: `requests(id, x, z, rot)` turns one into Build requests, `check(plan,
   requests)` tries them on a copy of a plan, `price(id)`; the houses and the park are in it, and one building per
   workplace is a file of its own, `Data/Buildings/<Name>.luau` returning `function(add)`, loaded in the order of
-  `Presets.Workplaces`; a building added again with the same id replaces the earlier one), `Build/Recipes/
-  ShopFittings`, `CraftFittings` and `PublicFittings` (the trades' own catalog pieces those buildings use), `StarterHouse` (every new plot's first build),
+  `Presets.Workplaces`; a building added again with the same id replaces the earlier one. Its rooms are drawn tight
+  and opened up with the builder's `b:spread(cuts)` (`Build/Spread`): what is drawn after that is in the opened up
+  building's coordinates, `w` and `d` are the tight plan's and grow with the cuts, and `preset.spread` keeps them
+  for the previews), `Build/Recipes/
+  ShopFittings`, `CraftFittings` and `PublicFittings` (the trades' own catalog pieces those buildings use), `StarterHouse` (every new plot's first build: drawn tight, opened up along its `CUTS` with `Build/Spread`, every piece's `gift` its cost at the new size; the box it fills, 60 by 38 with the garden fence 6 in front, is centred on the plot's width and 36 back from the street),
   `Textures` (the painted texture for each material and its studs per tile; `ready()` lists the uploaded ones,
   `install(materialService)` sets each material to its MaterialVariant and makes missing variants where Roblox
   allows it, which is only the command bar and plugins), `TextureIds` (image ids by texture name: Creator Store pictures with their
@@ -67,8 +85,9 @@ The contract between the parts of the game. Update it with every change to an AP
   thank you offers, wishes, goals; no romance: best friends, the top of `Tuning.Relationships.Levels`, is as
   close as two villagers get; `Life.cravingPrice(foodId)`, `Life.wishPrice(profile, vid)`,
   `Life.buyWish(profile, vid, rng)`; all pure).
-- `Data/Hills` (the northern hills: `smooth(x, z)`, `at(x, z)` the drawn surface's height, `slope`, `Plateaus`,
-  `prims(region)` as flat triangles), `Data/CityModels` (downtown, civic, hill and waterfront buildings and
+- `Data/Hills` (the northern hills: `smooth(x, z)`, `at(x, z)` the drawn surface's height, `slope`, `Plateaus`;
+  `Notch` and `foot(x)`: between the first avenues they start 200 further north, behind the old town's Hill Road,
+  and come up over `Notch.rise`), `Data/CityModels` (downtown, civic, hill and waterfront buildings and
   landmarks; `lot(w, d, kind, margin)` landscaping, placed by name as `lot:<w>x<d>:<kind>:<margin>`; `parkedCar1..6`; `tower`, `shop` and `house` kinds; spinning parts named `Hub`, `Spin`, `Cabin`), `Data/Places` (places
   to find: id, name, blurb, pos, radius, coins; `near`).
 - `Data/Goals` (the town goals with their `value(profile, city)`; `bestfriends` and `bestfriends3` count pairs of
@@ -203,7 +222,9 @@ columns with `WriteVoxelChannels` (sand and water share a voxel, so the water's 
 is the `WriteVoxels` fallback, with a warning; the card counts the tiles), then the open sea past the region as
 flat parts (`openSea()`'s blocks: a see-through sheet at the sea's level over a dark floor, in `workspace.OpenSea`;
 as terrain it was nine million voxels, three quarters of all of it, slow to write and for every player to load). It holds the
-island's measures (TownMap reads them), the coast (a position round the island and how far out a point is; the
+island's measures (TownMap reads them: `IslandX`, `IslandN`, `IslandS`, and `Cape`, the old town's cape, where the
+south shore stands `out` 200 further south between the first avenues and eases back over `ease`; `south(x)` is how
+far south the grass reaches at x, `Around` the coast's length), the coast (a position round the island and how far out a point is; the
 water's edge, the grass edge and the deep drop are sums of sine waves that close on themselves), `natural(x, z)`
 (height and material: grass at -0.1 or `Hills.at - 0.1`, rock on slopes past 0.45, sand falling to the sea at -1.2
 and on down, Slate for the deep floor), `plan(cover)` (every column; grass under anything built becomes LeafyGrass,
@@ -385,7 +406,10 @@ Item  { id, x, y, z, r, lv, c1?, c2?, wall?, t?, side? }
 ```
 
 Coordinates are studs in the plot's own frame (`Town.plotFrame(i)`): x and z run 0 to `Plot.Size`, z = 0 is the
-street edge, y is height. `size` is the land bought so far; `Plan.bounds(plan)` is that land, centred left to right.
+street edge, y is height. `size` is the land bought so far (`Tuning.City.Land`: 200, 256, 320, 400);
+`Plan.bounds(plan)` is that land, centred left to right. `v` is `Plan.Version`, 2 since the plots grew from 200 to
+400: `Plan.sanitize` moves a plan of `v` 1 onto today's plot first (`Plan.fromOldPlot`: its land of 100, 128, 160 or
+200 becomes that step of today's, and every x moves by 100, so the build keeps its place at the land's front middle).
 Colours are six digit hex, materials are names from `Palette.Materials`. Wall items (doors, windows, pictures) hang
 on a wall by key, `t` studs along it, `y` above its bottom, on side `a` or `b`.
 
@@ -464,7 +488,7 @@ The creator's remotes: `CreatorPeople` (the people here and your friends, and th
 |---|---|
 | `Data` | Loads with a session lock, autosaves every two minutes, saves on leave and shutdown, pushes state patches (`State`), toasts (`Notify`), coins, the town log, the daily gift. |
 | `World` | Builds the town from `Data/TownMap` (streets, plaza, street furniture, decoration, hills, prompts) and the plot bases; sets the stylised lighting (colour grading tinted by the hour, a bloom from `Tuning.Look.Bloom`, sun rays, haze); the clock (real time, 12 minute days) and calendar; night lights; doors that open for anyone walking up; seasonal weather. |
-| `Plots` | Hands out plots, draws the saved build and the owned land, sells more land (`PlotExpand`). Characters don't load by themselves (`Players.CharacterAutoLoads` is off in the place): `Plots.spawn` loads one once the player's plot is ready (or after 20 s if their profile never loads), and again `Players.RespawnTime` after a death; every character arrives at its plot. Once a second anyone below `Plots.FallLimit` (-40) is put back on their plot, or in the square. |
+| `Plots` | Hands out plots, draws the saved build and the owned land, sells more land (`PlotExpand`). A server holds one player to a plot (`Tuning.Game.MaxPlayers`, also `MaxPlayers` on Players in default.project.json; a published game takes its server size from the game's settings). One more is put on a waiting list, gets a body in the square at once and a note, and is given the next plot that comes free (`GoHome` tells them they have none yet). Characters don't load by themselves (`Players.CharacterAutoLoads` is off in the place): `Plots.spawn` loads one once the player's plot is ready (or after 20 s if their profile never loads), and again `Players.RespawnTime` after a death; every character arrives at its plot. Once a second anyone below `Plots.FallLimit` (-40) is put back on their plot, or in the square. |
 | `Build` | `BuildApply`, `BuildUndo`, `BuildRedo`: checks requests, charges or refunds, keeps history, redraws, syncs the plan to its owner (`PlanSync`). Fires `Changed`. A batch is up to 320 requests (a whole ready-made building); an item's `wall = "@n"` means the wall made by the batch's n-th request. `Build.prepare` is exported for the specs. |
 | `Avatar` | The creator: a private stage (an empty Model `CreatorStage<slot>` with an `Origin` attribute, high over the meadow; nothing is built there) and an anchored mannequin per player, catalog search fallback, bundles, copying users, outfits, asset checks, the text filter. `toDescription`, `buildModel` for everyone else. |
 | `Interact` | Puts a `UsePrompt` (E, no `Opens`) on an attachment `UseSpot` on each placed piece that has a player use (`Data/Interactions`), in every plot's Build folder; checks the player is within `Tuning.Uses.Reaches` (14 studs), a `Cooldown` per player and a `Rest` per piece; picks the outcome (`Sim/Uses`), has villagers near react to the loud ones and fires `Used`. Nothing is bought or saved. Starts after `Villagers`. |

@@ -233,15 +233,29 @@ Bloxburg style, all on a grid and all saved:
   (below). Click one, turn it with R, put it down. A ghost of the whole building follows the mouse and
   turns red with the reason when it won't fit or you can't afford it. Each is made of ordinary walls, floors,
   roofs, doors, windows and furniture, so it can be changed piece by piece afterwards, and it costs what its pieces
-  cost (from about 820 coins for the park to 3,250 for the family house). The shops and public buildings come
+  cost (from about 820 coins for the park to 4,150 for the family house). The shops and public buildings come
   with their workplace, so they open a job straight away. One undo takes a whole building back.
+
+  > make the houses and other buildings bigger such that the interior feels much more spacious
+
+  Asked which, the user chose the ones you place: the ready-made buildings and the starting house (the town's own
+  shops and towers stay as they are). Every room is about half as wide and deep again: the cottage is 30 by 24
+  inside its walls (it was 20 by 16), the family house 44 by 30 (28 by 20), the townhouse 28 by 22 on both floors
+  (20 by 16), the café 38 by 28, the classroom 36 by 24, the music hall 28 by 28. The furniture keeps its size and
+  the wall it stood against; the new floor goes between things, so there is more room round every bed, table and
+  workplace, and some rooms gained what now fits: a dining table in the family house and a nightstand each side
+  of its double bed, an island in the townhouse kitchen, a fourth row of seats in the music hall, another table
+  in the café, the bakery and the ice cream parlour, a second bench in the builder's barn. Ceilings stay 12 studs
+  high: that is already more than twice a villager's height, a saved town keeps its upstairs furniture's heights
+  as numbers (a taller storey would have to move every save), and the corner boards, porch posts and drainpipes
+  are made to that height.
 
   > also, for buildings, make much more buildings, one for each workspace, and detail them all to be unique, as
   > much as the starting house
 
-  Twelve, one for each job, each its own shape and colours and as finished as the starting house (120 to 170
+  Twelve, one for each job, each its own shape and colours and as finished as the starting house (130 to 180
   pieces: trim at every window, corner boards, footings, downpipes, lamps, planters, a sign of its trade, and
-  furnished inside down to the clock on the wall), costing about 3,350 to 5,500 coins. Each leaves clear floor
+  furnished inside down to the clock on the wall), costing about 3,800 to 6,250 coins. Each leaves clear floor
   where its worker moves round the station.
   - **Grocer's:** two storeys of brick and cream; the upper floor juts over an arcade where the market stall
     stands; shelves, crates and a till inside, a sitting room and a stock room upstairs.
@@ -385,8 +399,9 @@ another Roblox avatar game. Its layout is taken, drawn our own way.)
   Big town, City (people 0, 3, 6, 9, 12; in work 0, 2, 4, 7, 10). City hall shows all three against the next
   level. The starting house counts at what the old cottage was worth (2,610), so the bigger one skips no level;
   everything the owner builds counts in full.
-- **Land**: you start with 100 by 100 studs in the middle of a 200 by 200 plot. You can buy 128, 160 and then 200,
-  each needing a city level and coins.
+- **Land**: you start with 200 by 200 studs in the middle of a 400 by 400 plot. You can buy 256, 320 and then 400,
+  each needing a city level and coins (the prices and levels are what they were for 128, 160 and 200, before the
+  plots doubled: see "Bigger plots" in section 9).
 - **Jobs**: twelve workplaces (market stall, café counter, bread oven, flower cart, artist's easel, clinic desk,
   chalkboard, little stage, builder's bench, post office desk, ice cream cart, library desk), one job each.
 - **Wages**: each working villager earns `income x mood x skill x liking` a day, a little at a time while at their
@@ -512,7 +527,7 @@ Held by `tests/specs/City.spec.luau` (and the earning itself by `Wages.spec.luau
 > can you redo the entirety of the city/overworld? make it detailed and big with a lot to explore, with hills, other
 > buildings, etc.
 
-The island is now about 2,300 studs across, with the old town (the eight plots, the square and the market, where
+The island is now about 2,300 studs across, with the old town (the plots, the square and the market, where
 they always were) in the middle of a ring of roads and new districts all round:
 
 - **Downtown** (east): a grid of streets lined wall to wall with shops and flats (see "A denser, more detailed
@@ -528,13 +543,14 @@ they always were) in the middle of a ring of roads and new districts all round:
   on its other three sides. Behind the rows each block is lawn with a gravel path, and the little gardens and
   play areas are there.
 - **The hills** (north): smooth rolling hills of Roblox terrain you can walk all over, wooded thicker to the east. A path of
-  stepping stones climbs from Hill Road to the lookout on the top, a platform with ramps up to it and a telescope.
+  stepping stones climbs from Hill Road to the lookout near the top, a platform with ramps up to it and a telescope.
   There's a farm on a terrace (barn, silo, fields, hay and cows, and a windmill that turns), an observatory, a
   radio mast, and a camp in the pines with tents round a fire and a log cabin. A quiet cove waits on the north
   shore.
 - **The waterfront** (south): a boardwalk along the whole shore, the beach with palms and parasols, beach huts, a
   lifeguard tower, the marina, a fairground pier with a ferris wheel and a carousel that go round, and a
-  lighthouse out on the rocks at the end of a jetty.
+  lighthouse out on the rocks at the end of a jetty. (Since the plots grew, the old town's stretch of it is out on
+  a cape: see "Bigger plots" below.)
 
 **More detail everywhere.**
 
@@ -570,9 +586,9 @@ places found and not yet found, and where you are; found places have a Go button
 the big island never means a long walk back.
 
 
-Up to eight players share a server. The street runs east to west with four plots on each side: asphalt with lane
-lines, curbs that drop at the zebra crossings, wide paved sidewalks with street trees, lamps, hydrants and a bus
-stop. In the middle: the square with the fountain ringed by benches, two lawns, a bandstand for festivals, the notice
+Up to four players share a server, one to a plot (it was eight, on eight smaller plots: see "Bigger plots" below).
+The street runs east to west with two plots on each side: asphalt with lane lines, curbs that drop at the zebra
+crossings, wide paved sidewalks with street trees, lamps, hydrants and a bus stop. In the middle: the square with the fountain ringed by benches, two lawns, a bandstand for festivals, the notice
 board (town news) and the tailor (the creator), and across the street the market with its stalls and café tables,
 the shop and the town hall (city stats and land). Every plot starts with one house in the middle of its land (the
 user: "players should spawn at their plot, which starts out with a single house in the middle"), and you arrive at
@@ -600,7 +616,14 @@ window, porch posts and rails, a fireplace chimney, corner boards, a stone footi
 weathervane, picket fence panels and a gate, flower borders, a vegetable patch, a tree swing, a water butt, a bird
 house, a flower pot, a trellis, a woodpile, a hanging basket, a bicycle, a wall lantern, a doormat, bunting, a tool
 board, a workshop sign, a crate and a sawhorse), so the owner can move, repaint or sell any of it, and buy more. The
-whole of it covers under a fifth of the starting land. Time follows a 12 minute day with a calendar of four
+whole of it covers under a fifth of the starting land.
+
+Then the user asked for roomier buildings ("make the houses and other buildings bigger such that the interior feels
+much more spacious"). The bedroom is now 18 by 14 (it was 12 by 10), the kitchen 18 by 20 (12 by 14), the front
+room 20 by 20 (12 by 14) and the workshop 18 by 12 (12 by 8), the porch and the garden wider with them; a dresser,
+a counter past the sink, and an armchair and a lamp by the fire fill some of the new floor. It stands across the
+middle of the land's width, 30 studs back from the street behind its front lawn, with the rest of the land behind
+it for the player. Time follows a 12 minute day with a calendar of four
 ten-day seasons, and weather suited to the season: rain, storms, snow, blossom, falling leaves.
 
 **A city pack, tried and dropped.**
@@ -614,6 +637,36 @@ wrong size, and the user said:
 > never mind, go back to the original map
 
 So the island above is back as it was, and nothing of the pack is left in the game or its code.
+
+**Bigger plots.**
+
+> make player plots much bigger, double the size
+
+Asked how, the user chose to keep the plots in the old town but have only four of them, each 400 studs a side (they
+were eight of 200): two north of Main Street and two south, side by side with the square and the market between
+them, as before. So a server holds four players. Everything else made room:
+
+- **Land** doubled with the plots: you start with 200 by 200 and can buy 256, 320 and 400, at the old prices and
+  levels. A save from before keeps its step of land (twice as big now) and its build moves with the land's middle,
+  so it stands at the front of the land where it stood, with the new room round it.
+- **The ring road** runs out behind the plots: Hill Road and Harbour Road go round the old town 462 studs from Main
+  Street (they were at 262), and the first avenues run on out to meet them. Downtown and the civic quarter are as
+  they were, so past the first avenues the ring keeps to its old line along their backs, as streets of their own:
+  Hillside Row and Mill Row on the north, Quay Street and Strand Road on the south.
+- **The cape.** The south plots reach well past where the beach was, so between the first avenues the island runs
+  200 studs further out to sea, and beside them the shore curves back to where it was in one smooth bend. The
+  boardwalk, the beach, the lifeguard, the marina, the fairground pier and the boats and buoys in the bay went out
+  with it. The beach huts moved east, past the bend.
+- **The hills** start 200 studs further north behind the old town and come up more slowly there, so the stair from
+  Hill Road can still climb them; the lookout moved north up the hill and is a little lower, the observatory's hill
+  too, and the farm, the camp and the standing stones moved out past the old town's sides. The creator's meadow
+  is behind the new Hill Road, west of the stair.
+- **The old town's own ground.** A walk with a row of trees each side runs from the square up to Hill Road and from
+  the market down to Harbour Road, with gardens beside it; strips of garden and trees run between the plots' ends and
+  the first avenues; hedges and flower beds line the backs of the plots. The main street's crossings are in front of
+  the square and the market and out past the plots at each end, with the footbridge over the east one.
+- **A fifth player.** If a fifth player ever gets in (a test in Studio, or a server whose size was never set in the
+  game's settings), they look round town from the square and get the next plot that comes free.
 
 ## 10. Look and feel
 

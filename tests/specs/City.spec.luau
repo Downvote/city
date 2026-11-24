@@ -213,9 +213,12 @@ describe("City", function()
 			end
 		end
 		expect(walls >= 4).toBeTruthy()
-		-- the middle of the two buildings is the land's middle
+		-- the middle of the two buildings is the middle of the land's width, and they stand near
+		-- the street: a lawn and the front garden before them, most of the land behind (the land
+		-- grew far deeper than the house; the user then had the house made roomier)
 		expect(math.abs((lo.X + hi.X) / 2 - (x1 + x2) / 2) < 0.01).toBeTruthy()
-		expect(math.abs((lo.Z + hi.Z) / 2 - (z1 + z2) / 2) < 0.01).toBeTruthy()
+		expect(lo.Z - z1).toBeBetween(30, 48)
+		expect(hi.Z - z1 < (z2 - z1) / 2).toBeTruthy()
 		-- and everything it starts with keeps to them (a bed among them): nothing further out
 		-- than the front garden, nothing beside or behind the two buildings
 		local beds = 0

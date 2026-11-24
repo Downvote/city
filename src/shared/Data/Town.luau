@@ -65,7 +65,7 @@ for _, r in
 		{ -1070, 262, -542, 262, "Mill Row" },
 		{ 542, -262, 1070, -262, "Quay Street" },
 		{ -1070, -262, -542, -262, "Strand Road" },
-	}
+	} :: { { any } }
 do
 	table.insert(Town.Roads, { r[1], r[2], r[3], r[4], 11, 6, name = r[5] })
 end

@@ -40,9 +40,11 @@ Spread.Rows = {
 }
 
 -- Where a coordinate ends up.
+local NONE: { Cut } = {}
+
 function Spread.axis(list: { Cut }?, v: number): number
 	local out = v
-	for _, c in list or {} do
+	for _, c in list or NONE do
 		if v > c[1] + 1e-6 then
 			out += c[2]
 		end
@@ -61,18 +63,19 @@ end
 
 -- The bands of new floor, in the coordinates after the spread: { from, to } along each axis.
 function Spread.bands(cuts: Cuts): { x: { { number } }, z: { { number } } }
-	local out = { x = {}, z = {} }
-	for axis, list in { x = cuts.x or {}, z = cuts.z or {} } do
-		for _, c in list do
+	local function along(list: { Cut }?): { { number } }
+		local bands = {}
+		for _, c in list or NONE do
 			local from = Spread.axis(list, c[1])
-			table.insert((out :: any)[axis], { from, from + c[2] })
+			table.insert(bands, { from, from + c[2] })
 		end
+		return bands
 	end
-	return out
+	return { x = along(cuts.x), z = along(cuts.z) }
 end
 
 local function onCut(list: { Cut }?, v: number): boolean
-	for _, c in list or {} do
+	for _, c in list or NONE do
 		if math.abs(v - c[1]) < 1e-6 then
 			return true
 		end
@@ -83,7 +86,7 @@ end
 local function check(cuts: Cuts, e: Entry)
 	local o = e.obj
 	local snap = Tuning.Plot.WallSnap
-	for _, list in { cuts.x or {}, cuts.z or {} } do
+	for _, list: { Cut } in { cuts.x or NONE, cuts.z or NONE } do
 		for _, c in list do
 			assert(c[2] > 0 and (c[2] / snap) % 1 == 0, "a cut lets in whole grid squares")
 		end
@@ -139,7 +142,7 @@ function Spread.apply(cuts: Cuts, entries: { Entry }): { Entry }
 		end
 	end
 	-- rows, before anything moves: the same piece laid end to end, each with the next along
-	local rows: { [string]: { { any } } } = {}
+	local rows: { [string]: { any } } = {}
 	local walls: { [any]: string } = {}
 	local wallCount = 0
 	for _, e in entries do
@@ -163,11 +166,17 @@ function Spread.apply(cuts: Cuts, entries: { Entry }): { Entry }
 			-- (whatever their paint: a border of flowers in turn pink and lilac is still one row)
 			key = string.format("%s|%s|%.2f|%d", key, o.id, o.y, o.lv)
 			rows[key] = rows[key] or {}
-			table.insert(rows[key], { e, along })
+			table.insert(rows[key], { e, along } :: { any })
 		end
 	end
 	local pairs_: { { Entry } } = {}
-	for _, row in rows do
+	local keys = {}
+	for key in rows do
+		table.insert(keys, key)
+	end
+	table.sort(keys) -- (the same fills in the same order every time)
+	for _, key in keys do
+		local row = rows[key]
 		table.sort(row, function(p, q)
 			return p[2] < q[2]
 		end)
@@ -184,8 +193,13 @@ function Spread.apply(cuts: Cuts, entries: { Entry }): { Entry }
 	for _, a in entries do
 		if a.kind == "items" and not a.wall then
 			for _, b in entries do
-				local def = b ~= a and b.kind == "items" and not b.wall and Catalog.get(b.obj.id)
-				if def and def.surface and b.obj.lv == a.obj.lv and math.abs(a.obj.y - (b.obj.y + def.surface)) < 0.05 then
+				local def = if b ~= a and b.kind == "items" and not b.wall then Catalog.get(b.obj.id) else nil
+				if
+					def
+					and def.surface
+					and b.obj.lv == a.obj.lv
+					and math.abs(a.obj.y - (b.obj.y + def.surface)) < 0.05
+				then
 					local rad = math.rad(b.obj.r)
 					local c, sn = math.abs(math.cos(rad)), math.abs(math.sin(rad))
 					local hx = (def.size.X * c + def.size.Z * sn) / 2
@@ -236,9 +250,7 @@ function Spread.apply(cuts: Cuts, entries: { Entry }): { Entry }
 			from, to = math.min(a.obj.z, b.obj.z), math.max(a.obj.z, b.obj.z)
 		end
 		local gap = to - from - len -- the bare stretch between the two pieces
-		local n = if Spread.Rows[a.obj.id] == "cover"
-			then math.ceil(gap / len - 1e-6)
-			else math.floor(gap / len + 0.05)
+		local n = if Spread.Rows[a.obj.id] == "cover" then math.ceil(gap / len - 1e-6) else math.floor(gap / len + 0.05)
 		if gap > 0.05 and n > 0 then
 			-- spread evenly along the gap
 			for i = 1, n do

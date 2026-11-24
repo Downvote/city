@@ -8,8 +8,55 @@ local Tuning = require(Shared .. "Config.Tuning")
 local Town = require(Shared .. "Data.Town")
 local TownMap = require(Shared .. "Data.TownMap")
 local Geometry = require(Shared .. "Build.Geometry")
+local Terrain = require(Shared .. "Data.Terrain")
 
 describe("Town", function()
+	it("lays out four big plots in the old town, inside its ring, on the island", function()
+		-- The user: "make player plots much bigger, double the size", and asked how, four of 400 a
+		-- side in the old town, two north of the main street and two south. A server holds one
+		-- player to a plot.
+		expect(Tuning.Plot.Count).toBe(4)
+		expect(Tuning.Plot.Size).toBe(400)
+		expect(Tuning.Game.MaxPlayers).toBe(Tuning.Plot.Count)
+		local project = decodeJson(readFile("default.project.json"))
+		expect(project.tree.Players["$properties"].MaxPlayers).toBe(Tuning.Game.MaxPlayers)
+		local size = Tuning.Plot.Size
+		local ring = Town.RingZ - 11 - 6 -- (the ring road's sidewalk, and the first avenues')
+		local avenue = Town.AvenueX[1] - 11 - 6
+		local rects = {}
+		for i = 1, Tuning.Plot.Count do
+			local f = Town.plotFrame(i)
+			local north = i <= Tuning.Plot.Count / 2
+			-- local z runs back from the street: north for the first two, south for the others
+			expect(f:VectorToWorldSpace(Vector3.new(0, 0, 1)).Z).toBeNear(if north then 1 else -1, 1e-6)
+			local a, b = f * Vector3.zero, f * Vector3.new(size, 0, size)
+			local r = { math.min(a.X, b.X), math.min(a.Z, b.Z), math.max(a.X, b.X), math.max(a.Z, b.Z) }
+			-- the front on the back of the main street's sidewalk, the rest inside the ring
+			expect(if north then r[2] else -r[4]).toBeNear(Town.StreetHalfWidth + Town.SidewalkWidth, 1e-6)
+			expect(r[1] > -avenue and r[3] < avenue and r[2] > -ring and r[4] < ring).toBeTruthy()
+			-- clear of the square and the market between them
+			expect(r[1] >= Town.SquareCenter.X + 50 or r[3] <= Town.SquareCenter.X - 50).toBeTruthy()
+			-- on the island: the south ones out on the old town's cape
+			for _, x in { r[1], (r[1] + r[3]) / 2, r[3] } do
+				expect(Terrain.coast(x, r[2]) < -60).toBeTruthy()
+			end
+			-- you arrive in front of your own plot, on the sidewalk
+			local arrive = Town.plotArrival(i).Position
+			local on = Town.toPlot(i, arrive)
+			expect(on).toBe(false)
+			expect(math.abs(arrive.Z) < Town.StreetHalfWidth + Town.SidewalkWidth).toBeTruthy()
+			table.insert(rects, r)
+		end
+		for i, a in rects do
+			for j, b in rects do
+				if i < j then
+					local apart = a[3] <= b[1] or b[3] <= a[1] or a[4] <= b[2] or b[4] <= a[2]
+					expect(apart).toBeTruthy()
+				end
+			end
+		end
+	end)
+
 	it("places only models that exist", function()
 		for _, p in TownMap.placements() do
 			local prims = TownMap.prims(p.name)

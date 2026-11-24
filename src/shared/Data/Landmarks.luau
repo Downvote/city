@@ -9,7 +9,7 @@
 --   marketHall      an open hall of iron columns under one long tiled roof, five stalls inside
 --                   and a canvas awning over each, along the square's west side
 --   marketTentA/B, marketCart, marketGoods   loose stalls and their stock on the east side
---   footbridge      a steel footbridge over Main Street between the plots east of the square
+--   footbridge      a steel footbridge over Main Street east of the plots, by the avenue
 --   hillStair       the stepped street up the hill from Hill Road: a court, broad steps, four
 --                   steep flights with landings, railings and stone lanterns
 --   lookoutBluff    the rock the stair climbs beside, with a paved terrace on top
@@ -1442,7 +1442,7 @@ function Landmarks.placements(): { Placement }
 	put("marketCart", sq.X + 43.4, PAVING, sq.Z - 3.5, 90)
 	put("marketTentB", sq.X + 44, PAVING, sq.Z + 8.5, 90)
 
-	-- the footbridge, east of the square where the main street's own crossing is
+	-- the footbridge, over the main street's own crossing east of the plots
 	local B = Landmarks.Bridge
 	put("footbridge", B.x, 0, B.foot, 0)
 

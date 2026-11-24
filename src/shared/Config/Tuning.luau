@@ -6,7 +6,7 @@ local Tuning = {}
 
 Tuning.Game = {
 	Name = "Maplewick",
-	MaxPlayers = 4, -- one to a plot (the place file's Players carries it too; a live server's size is set in the game's settings)
+	MaxPlayers = 4, -- one to a plot (default.project.json sets it on Players; Roblox takes it from the game settings)
 	DataVersion = 1,
 	DataStoreName = "Maplewick_v1",
 }

@@ -53,9 +53,10 @@ local SHINGLE_BROWN = { c = "B87C64", m = "RoofShingles" } -- a clay brown
 local Blueprint = {}
 Blueprint.__index = Blueprint
 
-type Blueprint = typeof(
-	setmetatable({} :: { objects: { Obj }, walls: { [string]: any }, cuts: { Spread.Cuts } }, Blueprint)
-)
+type Blueprint = typeof(setmetatable(
+	{} :: { objects: { Obj }, walls: { [string]: any }, cuts: { Spread.Cuts } },
+	Blueprint
+))
 
 local function blueprint(): Blueprint
 	return setmetatable({ objects = {}, walls = {}, cuts = {} }, Blueprint)

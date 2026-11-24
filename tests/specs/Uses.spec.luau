@@ -504,13 +504,18 @@ describe("Uses", function()
 			counts[c.key] = (counts[c.key] or 0) + 1
 		end
 		expect((counts[fridgeKey] or 0) > (counts["9002"] or 0)).toBe(true)
-		local again = 0
+		-- (measured against the same pieces with nothing used last: how many are in reach depends
+		-- on how roomy the starting house is)
+		local again, fresh = 0, 0
 		for _ = 1, 4000 do
 			if Uses.choose(near, "sunny", fridgeKey, rng).key == fridgeKey then
 				again += 1
 			end
+			if Uses.choose(near, "sunny", nil, rng).key == fridgeKey then
+				fresh += 1
+			end
 		end
-		expect(again < (counts[fridgeKey] or 0) * 1.0).toBe(true)
+		expect(again < fresh * 0.5).toBe(true)
 		-- and in the starter house there is something to do
 		local kinds = {}
 		for _, c in all do

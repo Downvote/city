@@ -34,7 +34,8 @@
     },
     "Players": {
       "$properties": {
-        "CharacterAutoLoads": false
+        "CharacterAutoLoads": false,
+        "MaxPlayers": 4
       }
     },
     "Lighting": {

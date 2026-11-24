@@ -58,13 +58,27 @@ and civic buildings inside their blocks). The town map previews with `sh tools/p
 has its own building in `Data/Buildings/<Name>.luau` (the user: "make much more buildings, one for each workspace,
 and detail them all to be unique, as much as the starting house"): keep each at that level (the Presets spec wants
 110 to 300 pieces and the workplace inside), its own shape and palette, and clear floor where the worker moves
-round the station (`Sim/Routine`'s loops).
+round the station (`Sim/Routine`'s loops). The rooms are roomy (the user: "make the houses and other buildings
+bigger such that the interior feels much more spacious"): a building is drawn tight and opened up with
+`b:spread(cuts)` (`Build/Spread`: floor let in along lines across it, furniture kept against its walls, rows of
+footings, pickets and counters closed up), about half as wide and deep again; put a cut across open floor, never
+along a wall or between a lamp and the desk it stands on (it refuses both), and draw what fills the new floor
+after the spread, in its coordinates. The starting house is opened up the same way (its `CUTS`;
+`render.sh house:inside` shows its rooms). Storeys stay 12 high (saved upstairs furniture keeps its height as a
+number).
 
 The town is a big bright island (docs/GAME_DESIGN.md section 9; the user once had it rebuilt from a low poly city
 pack, then said "never mind, go back to the original map", so this is it): the old town and its plots in the middle, a ring of
 roads (`Town.Roads`), downtown east, the civic quarter west (built up like downtown but homelier: rows of town
 houses round every block, the civic buildings standing in the rows: "the side with less buildings should have much
-more buildings, as much as in the city side"), the hills north (`Data/Hills`), the waterfront south. The
+more buildings, as much as in the city side"), the hills north (`Data/Hills`), the waterfront south. The plots
+are four of 400 a side, two each side of Main Street with the square and the market between them (the user: "make
+player plots much bigger, double the size", and their choice of four; `Tuning.Game.MaxPlayers` and the place's
+Players hold a server to four): Hill Road and Harbour Road run round the old town at `Town.RingZ` (462), the first
+avenues run out to meet them, past those the ring keeps its old line (`Town.OuterRingZ`, 262) behind downtown and
+the civic quarter as streets with their own names, the island reaches out to sea as a cape between the first
+avenues (`Terrain.Cape`, `Terrain.south(x)`) and the hills start further north behind the old town
+(`Hills.Notch`). An old save's build is moved onto the bigger plot when it loads (`Plan.fromOldPlot`). The
 island's natural ground is Roblox terrain (`Data/Terrain`, written by `World.buildTerrain` when the server starts:
 "the shoreline should be wavy, with water lapping up to it" and "make the grass and plants like in the image"):
 golden green Grass, a beach in sine wave curves sloping into terrain water with small waves, smooth hills
@@ -403,8 +417,9 @@ leave, NPC network ownership, spawn races). Playtest in Studio after changing th
 Every plot starts with `Data/StarterHouse`: a detailed house, a workshop where the first villager works as a
 builder, and a fenced garden, all of it ordinary Build mode pieces carrying `gift` (the user: "improve the starting
 house detail by alot, and add a workspace next to it"). Specs find the bed by "bed" in an item's id, so the
-starter must not use `flower_bed`; the Build mode sim clicks at plot (122, 51) and (124, 64), so the workshop must
-stay shallower than z 44 and low.
+starter must not use `flower_bed`; the Build mode sim clicks at plot (222, 101) and (224, 114) (they moved by
+100 and 50 when the plots grew), and the house stands near the street, the fence at z 30 and the buildings to
+z 74, so keep the house and the workshop in front of z 94 and low.
 
 The user then asked: "make the colors of the buildings, such as the roof of the buildings, more pleasing to look at.
 make the overall color pallete pleasing to look at as well", and "it seems like shadows dont render on models". So:

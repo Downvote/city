@@ -12,6 +12,8 @@ local BuildCamera = {}
 
 local player = Players.LocalPlayer
 local SIZE = Tuning.Plot.Size
+-- how far out the camera may pull: far enough to see the whole plot (it was 220 on a plot of 200)
+local FARTHEST = SIZE * 1.1
 
 local active = false
 local plotFrame = CFrame.identity
@@ -139,7 +141,7 @@ function BuildCamera.enable(frame: CFrame)
 					pan(d.X, d.Y)
 				end
 			elseif input.UserInputType == Enum.UserInputType.MouseWheel and not processed then
-				goalDistance = math.clamp(goalDistance * (if input.Position.Z > 0 then 0.88 else 1.14), 14, 220)
+				goalDistance = math.clamp(goalDistance * (if input.Position.Z > 0 then 0.88 else 1.14), 14, FARTHEST)
 			elseif input.UserInputType == Enum.UserInputType.Touch and touchStart[input] then
 				-- one finger drags orbit the camera once they move far enough
 				local count = 0
@@ -162,7 +164,7 @@ function BuildCamera.enable(frame: CFrame)
 		connections,
 		UserInputService.TouchPinch:Connect(function(_, scale, _, state)
 			if state == Enum.UserInputState.Change then
-				goalDistance = math.clamp(goalDistance / math.max(0.5, scale ^ 0.08), 14, 220)
+				goalDistance = math.clamp(goalDistance / math.max(0.5, scale ^ 0.08), 14, FARTHEST)
 			end
 		end)
 	)

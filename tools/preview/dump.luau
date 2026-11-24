@@ -7,7 +7,7 @@
 --   all                every catalog item in a grid
 --   walls              every wall style
 --   roofs              every roof style
---   house              the starter house
+--   house              the starter house (house:inside without its roofs)
 --   town               the plaza's own buildings
 --   town:<name>        one of them (fountain, board, tailor, shop, hall...)
 --   preset:<id>        a ready-made building (cottage, family, townhouse, library, cafe...)
@@ -128,12 +128,15 @@ elseif scene == "roofs" then
 		addPrims(Shapes.roof(r))
 		x += 22
 	end
-elseif scene == "house" then
+elseif scene == "house" or scene == "house:inside" then
+	-- (house:inside leaves off the roofs and what stands up in them, to see in)
 	local StarterHouse = R(Shared .. "Data.StarterHouse")
 	local plan = StarterHouse.plan()
 	for _, kind in Plan.Kinds do
-		for key in plan[kind] do
-			addPrims(Builder.primsFor(plan, kind, key))
+		for key, obj in plan[kind] do
+			if scene == "house" or (kind ~= "roofs" and (obj.lv or 0) == 0) then
+				addPrims(Builder.primsFor(plan, kind, key))
+			end
 		end
 	end
 elseif scene:sub(1, 5) == "town:" then
