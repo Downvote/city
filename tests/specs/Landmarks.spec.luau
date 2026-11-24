@@ -337,9 +337,11 @@ describe("The stair up the hill", function()
 
 	it("starts at the back of Hill Road's pavement and runs up without a gap", function()
 		local first = stair.steps[1]
+		-- (the stretch of Hill Road the stair stands on: round the old town)
 		local hill
 		for _, road in Town.Roads do
-			if road.name == "Hill Road" then
+			local x1, x2 = math.min(road[1], road[3]), math.max(road[1], road[3])
+			if road.name == "Hill Road" and stair.x >= x1 and stair.x <= x2 then
 				hill = road
 			end
 		end
@@ -668,7 +670,9 @@ describe("Budgets", function()
 				paintKeys[p.key] = true
 			end
 		end
-		expect(count(keys) <= 70).toBeTruthy()
+		-- (74: it was 70 until the old town's plots grew and the hill behind it came to rise over a
+		-- shorter run, so the stair up it takes flights of a few more depths)
+		expect(count(keys) <= 74).toBeTruthy()
 		-- (the fountain's rings are one each)
 		expect(count(paintKeys) <= 26).toBeTruthy()
 	end)

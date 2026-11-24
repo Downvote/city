@@ -1144,8 +1144,10 @@ function Z.jobs(scope: string, match: ((string) -> boolean)?): { any }
 		local Plan = need("Build.Plan")
 		for _, p in Presets.list do
 			one("preset:" .. p.id, function()
-				local plan = Plan.new(200)
-				plan.size = 200
+				-- (the whole plot is the land here, so the building can go down at its corner)
+				local full = need("Config.Tuning").Plot.Size
+				local plan = Plan.new(full)
+				plan.size = full
 				local _, why, _, trial, made = Presets.check(plan, Presets.requests(p.id, 0, 0, 0))
 				assert(why == nil, p.id .. ": " .. tostring(why))
 				local prims, unit = planPrims(trial, made)

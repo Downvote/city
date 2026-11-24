@@ -16,28 +16,29 @@ Hills.Z1, Hills.Z2 = 290, 940
 -- (the user: "make player plots much bigger, double the size") and Hill Road runs behind them,
 -- so between the first avenues the foot of the hills is `depth` further north, and beside them it
 -- eases back to Z1 over `ease`. Past that, in front of downtown and the civic quarter, the hills
--- are as they always were.
-Hills.Notch = { half = 560, ease = 160, depth = 200 }
+-- are as they always were. Behind the old town they come up slowly, over `rise`, so the stair
+-- up from Hill Road can climb them.
+Hills.Notch = { half = 560, ease = 160, depth = 200, rise = 180 }
 Hills.Rise = 120 -- the hills come up from nothing over this much, north of their foot
 
 -- round peaks: { x, z, height, radius }. (The lookout's moved north, and lost a little height, when
 -- the old town grew; the two small ones that stood behind the old town went north with it.)
 local PEAKS = {
-	{ 0, 720, 80, 230 },
-	{ -380, 760, 75, 190 },
+	{ 0, 740, 70, 260 },
+	{ -380, 760, 66, 190 },
 	{ 380, 760, 65, 200 },
 	{ 860, 720, 57, 210 },
 	{ -860, 720, 60, 200 },
 	{ -800, 480, 23, 240 },
 	{ 780, 490, 30, 220 },
-	{ 220, 620, 18, 130 },
-	{ -190, 630, 22, 140 },
+	{ 250, 630, 18, 130 },
+	{ -230, 650, 16, 140 },
 }
 
 -- flat tops where things stand: { name, x, z, radius } (their height is the hills' there). The
 -- farm and the camp stand clear of the notch behind the old town, the stones out of the farm's way.
 Hills.Plateaus = {
-	{ name = "lookout", x = 0, z = 720, r = 46 },
+	{ name = "lookout", x = 0, z = 740, r = 46 },
 	{ name = "observatory", x = -380, z = 760, r = 40 },
 	{ name = "farm", x = -800, z = 480, r = 130 },
 	{ name = "camp", x = 780, z = 490, r = 86 },
@@ -69,7 +70,7 @@ local function notch(x: number, z: number): number
 	local N = Hills.Notch
 	local z0 = Hills.Z1 + N.depth
 	local inside = 1 - smoothstep(N.half, N.half + N.ease, math.abs(x))
-	return 1 - inside * (1 - smoothstep(z0, z0 + Hills.Rise, z))
+	return 1 - inside * (1 - smoothstep(z0, z0 + N.rise, z))
 end
 
 local function raw(x: number, z: number): number

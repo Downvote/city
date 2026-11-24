@@ -146,12 +146,13 @@ return function(add: any)
 			end
 			hang(b, "downpipe", "back", 0.6, 0, "a")
 			hang(b, "downpipe", "back", 19.4, 0, "a")
-			-- the pavilion's posts, its picnic table and a bench along the back rail
-			for _, p in { { 31.6, 6.6 }, { 31.6, 15.4 }, { 28, 15.4 } } do
+			-- the pavilion's posts (their feet a hair in from the rail's posts), its picnic table
+			-- and a bench along the back rail
+			for _, p in { { 31.5, 6.6 }, { 31.5, 15.4 }, { 28, 15.4 } } do
 				b:item("porch_post", p[1], p[2], 0)
 				paint(b, TRIM, TRIM)
 			end
-			b:item("porch_post", 31.6, 11, 90)
+			b:item("porch_post", 31.5, 11, 90)
 			paint(b, TRIM, TRIM)
 			b:item("picnic_table", 28, 11, 0, 0, F)
 			b:item("vase_flowers", 28, 11, 0, 0, F + 2.8)
@@ -243,7 +244,7 @@ return function(add: any)
 			hang(b, "art_flowers", "left3", 6, 8.2, "b")
 			hang(b, "sconce", "left1", 1, 6.4, "b")
 			-- a post more along the pavilion's longer side, and a table for two by the freezer
-			b:item("porch_post", 39.6, 16.2, 90)
+			b:item("porch_post", 39.5, 16.2, 90)
 			paint(b, TRIM, TRIM)
 			b:item("table_round", 9.6, 15.6, 0)
 			paint(b, TRIM, WALNUT)

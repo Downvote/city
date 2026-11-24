@@ -273,6 +273,10 @@ return function(add: any)
 			put("stool", 24.8, 18.4, 0)
 			put("light_ceiling", 25, 19, 0)
 			hang("clock_wall", "right2", 16.4, 7.2, "a")
+
+			-- opened up: the counter hall wider either side of the postie's desk and deeper
+			-- either side of the counters, the sorting room wider and deeper
+			b:spread({ x = { { 6.5, 4 }, { 17.1, 4 }, { 25.2, 4 } }, z = { { 14.6, 4 }, { 19.2, 4 } } })
 		end
 	)
 end

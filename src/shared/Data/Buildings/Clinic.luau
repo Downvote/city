@@ -174,8 +174,6 @@ return function(add: any)
 			open("win_square", "court", 7, TRIM, TRIM)
 			open("win_wide", "wfront", 28, TRIM, TRIM)
 			hang("awning", "wfront", 28, 7.5, "a", TEAL, TRIM)
-			window("wright", 10.2)
-			window("wright", 16.2)
 			open("arch_wide", "divide", 18, TRIM, TRIM)
 
 			-- outside: stone at the feet of the walls, boards up the corners, drainpipes, the
@@ -248,30 +246,36 @@ return function(add: any)
 			end
 
 			-- the ward ----------------------------------------------------------------------
-			-- three beds with their heads to the end wall, a screen and a nightstand between
-			-- each, the linen and a basin at the back
-			for _, z in { 7.2, 13.2, 19.2 } do
-				put("bed_ward", 29.5, z, 270) -- (its head off the planes of the curtains behind it)
-				put("light_ceiling", 29, z, 0)
-			end
-			for _, z in { 10.2, 16.2 } do
-				put("screen_folding", 29.6, z, 0, TRIM, "A9D4CC")
-				put("nightstand", 32.8, z, 270, TRIM)
-			end
-			put("nightstand", 32.8, 22.2, 270, TRIM)
-			putAt("lamp_table", 32.8, 10.2, 0, top("nightstand"))
-			putAt("vase_flowers", 32.8, 16.2, 0, top("nightstand"))
-			putAt("books_stack", 32.8, 22.2, 0, top("nightstand"))
+			-- (its beds are laid out once the building is opened up, below) the linen and a
+			-- basin at the back
 			put("cabinet", 28, 22.7, 180, TRIM)
 			putAt("plant_small", 28, 22.7, 0, top("cabinet"))
 			put("sink_vanity", 24.2, 22.35, 180) -- (its top in front of the window sill)
 			put("armchair", 24.1, 6.8, 90, "9CCFC4")
 			put("table_side", 24.1, 9.6, 0, OAK)
 			putAt("vase_flowers", 24.1, 9.6, 0, top("table_side"))
-			hang("curtains", "wright", 10.2, 2.2, "b")
-			hang("curtains", "wright", 16.2, 2.2, "b")
 			hang("art_flowers", "wfront", 23.6, 5.4, "b")
 			hang("clock_wall", "divide", 11.6, 7.4, "a")
+
+			-- opened up: the hall wider either side of the desk and deeper behind it, the ward
+			-- wider and deeper
+			b:spread({ x = { { 7.2, 4 }, { 16.8, 4 }, { 25, 6 } }, z = { { 16.6, 4 }, { 20, 4 } } })
+			-- the ward's three beds with their heads to the end wall, a screen and a nightstand
+			-- between each, a window over each nightstand
+			for _, z in { 8.4, 16.8, 25.2 } do
+				put("bed_ward", 43.5, z, 270) -- (its head off the planes of the curtains behind it)
+				put("light_ceiling", 43, z, 0)
+			end
+			for _, z in { 12.6, 21 } do
+				put("screen_folding", 43.6, z, 0, TRIM, "A9D4CC")
+				put("nightstand", 46.8, z, 270, TRIM)
+				window("wright", z)
+				hang("curtains", "wright", z, 2.2, "b")
+			end
+			put("nightstand", 46.8, 29.4, 270, TRIM)
+			putAt("lamp_table", 46.8, 12.6, 0, top("nightstand"))
+			putAt("vase_flowers", 46.8, 21, 0, top("nightstand"))
+			putAt("books_stack", 46.8, 29.4, 0, top("nightstand"))
 		end
 	)
 end

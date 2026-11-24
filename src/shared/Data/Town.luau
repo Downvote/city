@@ -43,11 +43,6 @@ Town.Roads = {
 	{ -1080, 0, 1080, 0, 14, 8, name = "Main Street" },
 	{ -542, 462, 542, 462, 11, 6, name = "Hill Road" },
 	{ -542, -462, 542, -462, 11, 6, name = "Harbour Road" },
-	-- (the ring's stretches past the first avenues, on its old line)
-	{ 542, 262, 1070, 262, 11, 6, name = "Hill Road" },
-	{ -1070, 262, -542, 262, 11, 6, name = "Hill Road" },
-	{ 542, -262, 1070, -262, 11, 6, name = "Harbour Road" },
-	{ -1070, -262, -542, -262, 11, 6, name = "Harbour Road" },
 } :: { any }
 for k, x in Town.AvenueX do
 	-- (the first avenues run on to the old town's stretch of the ring)
@@ -61,6 +56,18 @@ for _, sx in { 1, -1 } do
 		local a, b = 542, 1070
 		table.insert(Town.Roads, { sx * a, z, sx * b, z, 11, 6 })
 	end
+end
+-- The ring's stretches past the first avenues, on its old line along the backs of downtown and the
+-- civic quarter: streets of their own now, with their own names on the plates.
+for _, r in
+	{
+		{ 542, 262, 1070, 262, "Hillside Row" },
+		{ -1070, 262, -542, 262, "Mill Row" },
+		{ 542, -262, 1070, -262, "Quay Street" },
+		{ -1070, -262, -542, -262, "Strand Road" },
+	}
+do
+	table.insert(Town.Roads, { r[1], r[2], r[3], r[4], 11, 6, name = r[5] })
 end
 
 -- Where the ring runs at x: the old town's stretch between the first avenues, the old line past

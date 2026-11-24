@@ -308,6 +308,14 @@ return function(add: any)
 			for _, x in { 7, 13.4, 19 } do
 				putAt("light_ceiling", x, 22, 0, Plan.levelTop(1) - 1, 1)
 			end
+
+			-- opened up: wider either side of the door and deeper, the reading room at its front
+			-- and the gallery over the back (the stair and its railing keep together)
+			b:spread({ x = { { 11.5, 4 }, { 12.5, 4 } }, z = { { 8.3, 4 }, { 18.4, 6 } } })
+			-- two more pillars under the pediment, either side of the door
+			for _, x in { 13.2, 18.8 } do
+				putAt("pillar_round", x, 3.4, 0, F, 0, PALE_STONE, PALE_STONE)
+			end
 		end
 	)
 end

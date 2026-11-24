@@ -219,7 +219,15 @@ return function(add: any)
 			hang(b, "shelf_wall", "front", 16, 8.6, "b", OAK)
 			hang(b, "art_landscape", "right", 13.6, 7.6, "b")
 
+			-- opened up: the barn wider either side of the doors and deeper either side of the
+			-- builder's bench, the timber store deeper with it
 			b:spread({ x = { { 7.5, 4 }, { 14.5, 4 } }, z = { { 15.5, 4 }, { 21.5, 4 } } })
+			-- on the new floor: a second bench under the back window with a vice for small work,
+			-- and a pair of sawhorses with a board across them
+			put(b, "workbench", 12.4, 32.5, 180, nil, OAK, WALNUT)
+			put(b, "sawhorse", 21.4, 17, 0, nil, OAK, PALE)
+			put(b, "sawhorse", 21.4, 20.4, 0, nil, OAK, PALE)
+			put(b, "crate", 24.2, 27.4, 10, nil, OAK, OAK)
 		end
 	)
 end

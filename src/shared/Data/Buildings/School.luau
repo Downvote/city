@@ -176,8 +176,6 @@ return function(add: any)
 			open("door_double", "tfront", 14, FOREST, TRIM)
 			open("arch_open", "mid", 14, TRIM, TRIM)
 			open("door_front", "right", 14.4, FOREST, TRIM)
-			pair("fl", 6)
-			pair("fr", 22)
 			pair("left", 15)
 			pair("right", 20.6)
 			pair("back", 6)
@@ -187,10 +185,8 @@ return function(add: any)
 				paint(TRIM, TRIM)
 			end
 
-			-- outside the walls: stone at their feet, quoins, drainpipes, lamps
-			for _, wall in { "fl", "fr", "right", "back", "left", "tfront", "tright", "tleft" } do
-				footing(wall)
-			end
+			-- outside the walls: quoins, drainpipes, lamps (the stone at their feet goes on once
+			-- the building is opened up, below)
 			corner(2, 12, 180)
 			corner(26, 12, 90)
 			corner(26, 28, 0)
@@ -249,8 +245,6 @@ return function(add: any)
 			hang("clock_wall", "back", 14, 8.6, "b")
 			hang("art_abstract", "right", 24.6, 4.6, "b")
 			hang("art_flowers", "right", 25.9, 7.8, "b") -- (hung above the other, not over it)
-			hang("art_landscape", "fl", 6, 8.9, "b")
-			hang("shelf_wall", "fr", 22, 9.4, "b")
 			hang("curtains", "left", 15.05, 2.25, "b")
 			hang("bunting", "mid", 14, 10.2, "b")
 			for _, x in { 8, 20 } do
@@ -284,6 +278,19 @@ return function(add: any)
 			put("sandbox", 28.8, 19, 0)
 			put("slide", 32.8, 16.4, 180)
 			put("tree_oak", 31, 5, 0)
+
+			-- opened up: the classroom wider either side of the tower and deeper behind the
+			-- desks, the playground with it
+			b:spread({ x = { { 5.6, 6 }, { 23.9, 6 } }, z = { { 18.1, 4 }, { 22.8, 4 } } })
+			-- the front's windows in the middle of the longer walls either side of the tower,
+			-- what hangs inside them, and stone along the foot of every wall
+			pair("fl", 9)
+			pair("fr", 31)
+			hang("art_landscape", "fl", 9, 8.9, "b")
+			hang("shelf_wall", "fr", 31, 9.4, "b")
+			for _, wall in { "fl", "fr", "right", "back", "left", "tfront", "tright", "tleft" } do
+				footing(wall)
+			end
 		end
 	)
 end

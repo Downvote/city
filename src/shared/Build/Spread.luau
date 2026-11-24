@@ -160,7 +160,8 @@ function Spread.apply(cuts: Cuts, entries: { Entry }): { Entry }
 				key = string.format("z%.2f", o.x)
 				along = o.z
 			end
-			key = string.format("%s|%s|%s|%s|%.2f|%d", key, o.id, tostring(o.c1), tostring(o.c2), o.y, o.lv)
+			-- (whatever their paint: a border of flowers in turn pink and lilac is still one row)
+			key = string.format("%s|%s|%.2f|%d", key, o.id, o.y, o.lv)
 			rows[key] = rows[key] or {}
 			table.insert(rows[key], { e, along })
 		end
@@ -176,6 +177,37 @@ function Spread.apply(cuts: Cuts, entries: { Entry }): { Entry }
 				table.insert(pairs_, { row[i][1], row[i + 1][1] })
 			end
 		end
+	end
+	-- what stands on top of another piece (a lamp on a desk, a kettle on a counter) must move
+	-- with it: a line between them would leave it in the air
+	local stands: { { Entry } } = {}
+	for _, a in entries do
+		if a.kind == "items" and not a.wall then
+			for _, b in entries do
+				local def = b ~= a and b.kind == "items" and not b.wall and Catalog.get(b.obj.id)
+				if def and def.surface and b.obj.lv == a.obj.lv and math.abs(a.obj.y - (b.obj.y + def.surface)) < 0.05 then
+					local rad = math.rad(b.obj.r)
+					local c, sn = math.abs(math.cos(rad)), math.abs(math.sin(rad))
+					local hx = (def.size.X * c + def.size.Z * sn) / 2
+					local hz = (def.size.X * sn + def.size.Z * c) / 2
+					if math.abs(a.obj.x - b.obj.x) <= hx and math.abs(a.obj.z - b.obj.z) <= hz then
+						table.insert(stands, { a, b })
+					end
+				end
+			end
+		end
+	end
+	local function moved(e: Entry): (number, number)
+		local x, z = Spread.point(cuts, e.obj.x, e.obj.z)
+		return x - e.obj.x, z - e.obj.z
+	end
+	for _, pair in stands do
+		local ax, az = moved(pair[1])
+		local bx, bz = moved(pair[2])
+		assert(
+			math.abs(ax - bx) < 1e-6 and math.abs(az - bz) < 1e-6,
+			string.format("a cut runs between %s and the %s it stands on", pair[1].obj.id, pair[2].obj.id)
+		)
 	end
 	-- now move everything
 	for _, e in entries do
