@@ -15,6 +15,7 @@ local order = {
 	"Avatar",
 	"Villagers",
 	"Interact", -- holding E on a piece (Data/Interactions): after Villagers, whose villagers react
+	"Work", -- a player working at a workplace themselves: after Villagers, whose pay packets it uses
 	"Events",
 	"Explore",
 	"Signs",

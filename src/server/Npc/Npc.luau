@@ -6,6 +6,7 @@ local TweenService = game:GetService("TweenService")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Tuning = require(Shared.Config.Tuning)
+local Bubble = require(Shared.Util.Bubble)
 
 local Npc = {}
 Npc.__index = Npc
@@ -523,49 +524,11 @@ local function makeBubble(self: Npc): BillboardGui
 		return self.bubble
 	end
 	local head = self.model:FindFirstChild("Head") or self.root
-	local gui = Instance.new("BillboardGui")
-	gui.Name = "Bubble"
-	gui.Size = UDim2.fromOffset(240, 70)
-	gui.StudsOffset = Vector3.new(0, 3.4, 0)
-	gui.MaxDistance = 90
-	gui.AlwaysOnTop = false
-	gui.Adornee = head :: BasePart
+	-- the interface's look, drawn by Util/Bubble; the client stacks it with the wish bubble and
+	-- the mood badges over the same head and hides it behind walls (World/Bubbles)
+	local gui = Bubble.billboard("Bubble", head :: BasePart, 260, 90)
 	gui.Enabled = false
-	local frame = Instance.new("Frame")
-	frame.Name = "Card"
-	frame.AnchorPoint = Vector2.new(0.5, 1)
-	frame.Position = UDim2.fromScale(0.5, 1)
-	frame.Size = UDim2.fromScale(0, 0)
-	frame.AutomaticSize = Enum.AutomaticSize.XY
-	-- dark like the rest of the interface (the client's UI/Kit: Paper, Line and Ink)
-	frame.BackgroundColor3 = Color3.fromRGB(37, 40, 54)
-	frame.Parent = gui
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 12)
-	corner.Parent = frame
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = Color3.fromRGB(66, 71, 93)
-	stroke.Thickness = 2
-	stroke.Parent = frame
-	local pad = Instance.new("UIPadding")
-	pad.PaddingLeft = UDim.new(0, 10)
-	pad.PaddingRight = UDim.new(0, 10)
-	pad.PaddingTop = UDim.new(0, 6)
-	pad.PaddingBottom = UDim.new(0, 6)
-	pad.Parent = frame
-	local label = Instance.new("TextLabel")
-	label.Name = "Text"
-	label.BackgroundTransparency = 1
-	label.AutomaticSize = Enum.AutomaticSize.XY
-	label.Size = UDim2.fromOffset(0, 0)
-	label.Font = Enum.Font.BuilderSansMedium
-	label.TextSize = 18
-	label.TextWrapped = true
-	label.TextColor3 = Color3.fromRGB(236, 238, 246)
-	label.Parent = frame
-	local limit = Instance.new("UISizeConstraint")
-	limit.MaxSize = Vector2.new(230, 200)
-	limit.Parent = label
+	Bubble.speech(gui)
 	gui.Parent = self.model
 	self.bubble = gui
 	return gui
@@ -579,11 +542,12 @@ function Npc.say(self: Npc, text: string, seconds: number?)
 	local label = gui:FindFirstChild("Text", true) :: TextLabel
 	label.Text = text
 	gui.Enabled = true
-	local card = gui:FindFirstChild("Card") :: Frame
+	-- it grows the last bit to its size, quick and with no bounce
+	local card = gui:FindFirstChild("Fade", true) :: CanvasGroup
 	local scale = card:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
 	scale.Parent = card
-	scale.Scale = 0.6
-	TweenService:Create(scale, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 })
+	scale.Scale = 0.86
+	TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Scale = 1 })
 		:Play()
 	task.delay(seconds or math.clamp(#text / 14, 2.5, 6), function()
 		if self.bubbleToken == token and gui.Parent then
@@ -592,50 +556,18 @@ function Npc.say(self: Npc, text: string, seconds: number?)
 	end)
 end
 
--- A small symbol over the head: "heart", "anger", "music", "sweat", "zzz", "idea", "question", "sparkle".
-local ICONS = {
-	heart = "♥",
-	anger = "!!",
-	music = "♪",
-	sweat = "...",
-	zzz = "zzz",
-	idea = "!",
-	question = "?",
-	sparkle = "✦",
-	sad = "T_T",
-}
-local ICON_COLORS = {
-	heart = Color3.fromRGB(232, 102, 122),
-	anger = Color3.fromRGB(199, 56, 63),
-	music = Color3.fromRGB(79, 169, 217),
-	sweat = Color3.fromRGB(120, 150, 200),
-	zzz = Color3.fromRGB(156, 122, 214),
-	idea = Color3.fromRGB(214, 160, 44),
-	question = Color3.fromRGB(133, 108, 88),
-	sparkle = Color3.fromRGB(255, 190, 60),
-	sad = Color3.fromRGB(90, 130, 190),
-}
-
+-- A small symbol over the head: "heart", "anger", "music", "sweat", "zzz", "idea", "question",
+-- "sparkle", "sad" (Util/Bubble's Moods), on a round badge in the same stack as the speech card.
 function Npc.icon(self: Npc, kind: string, seconds: number?)
 	local head = self.model:FindFirstChild("Head") or self.root
-	local gui = Instance.new("BillboardGui")
-	gui.Size = UDim2.fromOffset(60, 40)
-	gui.StudsOffset = Vector3.new(1.6, 2.6, 0)
-	gui.MaxDistance = 80
-	gui.Adornee = head :: BasePart
-	local label = Instance.new("TextLabel")
-	label.BackgroundTransparency = 1
-	label.Size = UDim2.fromScale(1, 1)
-	label.Font = Enum.Font.FredokaOne
-	label.TextScaled = true
-	label.Text = ICONS[kind] or kind
-	label.TextColor3 = ICON_COLORS[kind] or Color3.new(1, 1, 1)
-	label.TextStrokeTransparency = 0.4
-	label.TextStrokeColor3 = Color3.fromRGB(16, 18, 26)
-	label.Parent = gui
+	local gui = Bubble.billboard("Mood", head :: BasePart, 60, 80)
+	gui:SetAttribute("Kind", kind)
+	local badge = Bubble.mood(gui, kind)
+	local scale = Instance.new("UIScale")
+	scale.Scale = 0.7
+	scale.Parent = badge
 	gui.Parent = self.model
-	TweenService
-		:Create(gui, TweenInfo.new(seconds or 2.5, Enum.EasingStyle.Sine), { StudsOffset = Vector3.new(1.6, 4, 0) })
+	TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Scale = 1 })
 		:Play()
 	task.delay(seconds or 2.5, function()
 		gui:Destroy()

@@ -104,7 +104,8 @@ function Earnings.got(msg: any)
 	for _, line in (if type(msg.lines) == "table" then msg.lines else {}) do
 		if type(line) == "table" and type(line.n) == "number" and line.n > 0 then
 			total += line.n
-			local model = Dialogue.modelOf(line.vid)
+			-- (`you`: the player's own work at a workplace, World/Work; the coin rises over them)
+			local model = if line.you == true then player.Character else Dialogue.modelOf(line.vid)
 			if model then
 				Earnings.pop(model, line.n)
 			end

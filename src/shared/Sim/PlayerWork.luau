@@ -84,7 +84,8 @@ function PlayerWork.standFrame(frame: CFrame, stance: Stance, lift: number): CFr
 	if ahead.Magnitude < 1e-3 then
 		ahead = Vector3.new(frame.LookVector.X, 0, frame.LookVector.Z)
 	end
-	return CFrame.lookAt(at, at + ahead.Unit)
+	-- (turned by its yaw: CFrame.Angles(0, a, 0) looks along (-sin a, 0, -cos a))
+	return CFrame.new(at) * CFrame.Angles(0, math.atan2(-ahead.X, -ahead.Z), 0)
 end
 
 -- How far a body's root at `root` is from where it was stood (`target`): across the ground, and

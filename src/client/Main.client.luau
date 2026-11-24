@@ -49,5 +49,6 @@ require(World.Materials).start()
 require(World.Wishes).start()
 require(World.Earnings).start() -- coins over the villagers as they earn them
 require(World.Interact).start() -- a go at a piece: a puff from it, and what happened over it
+require(World.Work).start() -- working at a workplace yourself: its prompts, your motion and the notice
 require(World.Explore).start()
 require(World.Outlines).start()
