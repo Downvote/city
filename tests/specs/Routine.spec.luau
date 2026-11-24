@@ -929,6 +929,12 @@ Routine.done = function(state, turn, seconds, rng, walk)
 	return realDone(state, turn, seconds, rng, walk)
 end
 Villagers.start()
+-- the goes villagers have at the pieces in the house (Data/Interactions), as they turn out
+local goes = {}
+Villagers.Used:Connect(function(_, vid, use, outcome, key)
+	local body = bodies[vid]
+	table.insert(goes, { vid = vid, use = use, outcome = outcome, key = key, at = body and body.pos, t = now })
+end)
 
 -- only this spec's copy of the service keeps the stand-ins and the wound clock
 env.task, env.os = realTask, realOs
@@ -1115,6 +1121,40 @@ describe("Villager routine", function()
 		local visits = coins - coinsBefore - paid(coinsAt, now)
 		expect(visits >= Tuning.Jobs.VisitCoins).toBeTruthy()
 		expect(visits % Tuning.Jobs.VisitCoins).toBe(0)
+	end)
+
+	it("has them use the things in the house now and then, only their own and near them", function()
+		-- The user: "just like tomodachi life, make it such that some obejcts have a random chance
+		-- of having unique interactions with it".
+		local mine = 0
+		local used = {}
+		for _, g in goes do
+			if g.t > first.from and g.t <= first.to then
+				mine += 1
+			end
+			used[g.use] = true
+			-- a piece on the owner's own plan, and they were at it when it turned out
+			local item = profile.plan.items[g.key]
+			expect(item ~= nil).toBeTruthy()
+			local def = Catalog.get(item.id)
+			local frame = Town.plotFrame(1) * Plan.itemFrame(profile.plan, item)
+			local Uses = require(Shared .. "Sim.Uses")
+			expect(Uses.of(item.id).id).toBe(g.use)
+			local best = math.huge
+			for _, spot in Uses.spots(item.id) do
+				best = math.min(best, flat(frame * spot.at, g.at))
+			end
+			if best > 0.5 then
+				error(string.format("%s used the %s from %.1f studs off its spot", g.vid, def.name, best))
+			end
+		end
+		-- the two with no job have a go at something a few times a day
+		expect(mine >= 3).toBeTruthy()
+		local kinds = 0
+		for _ in used do
+			kinds += 1
+		end
+		expect(kinds >= 2).toBeTruthy()
 	end)
 
 	it("says at five what the day's work came to, and the builder learns from it", function()

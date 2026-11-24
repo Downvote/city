@@ -598,7 +598,7 @@ local UK = Tuning.Uses
 local inUse: { [Player]: { [string]: string } } = {} -- pieces being used this moment: item key -> vid
 local lastGo: { [Player]: { [string]: { piece: string?, outcome: any } } } = {} -- not twice running
 local usedEvent = Instance.new("BindableEvent")
-Villagers.Used = usedEvent.Event -- (player, vid, use id, outcome id) as a go turns out
+Villagers.Used = usedEvent.Event -- (player, vid, use id, outcome id, item key) as a go turns out
 
 -- The free seats of one placed piece.
 local function seatsOf(player: Player, key: string): { Seat }
@@ -938,7 +938,7 @@ local function useThing(
 			if o.mood then
 				Data.push(player, "villagers")
 			end
-			usedEvent:Fire(player, vid, c.use.id, o.id)
+			usedEvent:Fire(player, vid, c.use.id, o.id, c.key)
 		end,
 	}
 	if friend then
