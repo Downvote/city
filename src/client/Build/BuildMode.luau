@@ -880,7 +880,7 @@ local function safeUpdate()
 		if msg ~= lastError then
 			lastError = msg
 			warn("[BuildMode] " .. msg)
-			Toasts.show("Build mode hit a snag: " .. msg:sub(1, 100), "warn")
+			Toasts.show("Build mode error: " .. msg:sub(1, 100), "warn")
 		end
 	end
 end

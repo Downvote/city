@@ -133,11 +133,7 @@ local function assign(player: Player, profile: any)
 			table.insert(waiting, player)
 		end
 		player:SetAttribute("Arrival", "Every plot here is taken")
-		Data.notify(
-			player,
-			"Every plot here is taken. Have a look round town: the next one to come free is yours.",
-			"warn"
-		)
+		Data.notify(player, "Every plot here is taken. You'll get the next one that comes free.", "warn")
 		-- a body now, in the square, rather than after the wait for a profile that never came
 		if not player.Character then
 			task.spawn(Plots.spawn, player)
@@ -218,7 +214,7 @@ local function release(player: Player)
 		local nextUp = table.remove(waiting, 1)
 		local profile = if nextUp.Parent then Data.get(nextUp) else nil
 		if profile then
-			Data.notify(nextUp, "A plot came free, and it's yours.", "good")
+			Data.notify(nextUp, "A plot came free. It's yours.", "good")
 			task.spawn(assign, nextUp, profile)
 			break
 		end
@@ -317,11 +313,7 @@ function Plots.start()
 		Plots.drawLand(i, profile.plan)
 		Remotes.event("PlanSync"):FireClient(player, { full = profile.plan })
 		Data.log(player, Text.fill("You bought more land. It's now {n} by {n}.", { n = land.Size }))
-		Data.notify(
-			player,
-			Text.fill("More land! You now have {n} by {n} studs to build on.", { n = land.Size }),
-			"good"
-		)
+		Data.notify(player, Text.fill("Land bought. Your plot is now {n} by {n} studs.", { n = land.Size }), "good")
 		return true
 	end
 

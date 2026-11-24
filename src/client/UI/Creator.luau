@@ -1075,7 +1075,7 @@ local function outfitsPage()
 	local outfits = State.data.outfits or {}
 	if #outfits == 0 then
 		-- nothing saved: say how, on a card of its own (the note under the cards)
-		note("No outfits saved yet. Give this look a name and save it, and it will wait here to be worn again.")
+		note("No saved outfits yet. Name this look and save it to keep it here.")
 		local n = content:FindFirstChild("Note")
 		if n and n:IsA("GuiObject") then
 			n.Position = UDim2.fromOffset(0, ROW_H + 12)
@@ -1263,7 +1263,7 @@ local function peoplePage()
 		end
 		local shared = data.looks or {}
 		if #shared == 0 then
-			Kit.hint("Nobody has shared a look yet. Name yours above and share it, and other players can wear it.", {
+			Kit.hint("Nobody has shared a look yet. Name yours above and share it.", {
 				Parent = looks,
 			})
 		end
@@ -1322,13 +1322,13 @@ end
 
 local OWN = {
 	inventory = {
-		unasked = "Put what you own on Roblox on your villager. Roblox will ask you first if this game may see your items.",
-		no = "You said no, so nothing was read. Your items stay hidden from this game.",
+		unasked = "Dress your villager in things you own on Roblox. Roblox will ask you first if this game may see your items.",
+		no = "You said no, so this game can't see your items.",
 		button = "Show my items",
 	},
 	outfits = {
 		unasked = "Dress your villager in an avatar you saved on Roblox. Roblox will ask you first if this game may see them.",
-		no = "You said no, so nothing was read. Your saved avatars stay hidden from this game.",
+		no = "You said no, so this game can't see your saved avatars.",
 		button = "Show my avatars",
 	},
 }
@@ -1845,13 +1845,13 @@ local function buildProfilePage()
 			saving = false
 			if ok then
 				Toasts.show(
-					if mode == "new" then Text.fill("{name} is moving in!", { name = name }) else "Saved.",
+					if mode == "new" then Text.fill("{name} is moving in.", { name = name }) else "Saved.",
 					"good"
 				)
 				Creator.close()
 			else
 				save.Text = if mode == "new" then "Move them in" else "Save changes"
-				Toasts.show(err or "That didn't work.", "warn")
+				Toasts.show(err or "Couldn't save that. Try again.", "warn")
 			end
 		end)
 	end)
@@ -2706,7 +2706,7 @@ local function build()
 	local toolList = {
 		{ "undo", "Undo", "Undo", undo },
 		{ "redo", "Redo", "Redo", redo },
-		{ "dice", "Shuffle", "Shuffle: a random look", shuffle },
+		{ "dice", "Shuffle", "Random look", shuffle },
 		{
 			"trash",
 			"Reset",
@@ -2719,7 +2719,7 @@ local function build()
 		{
 			"zoom",
 			"Zoom",
-			"Zoom: the face, close up, or all of them",
+			"Zoom in or out",
 			function()
 				if zoom > (ZOOM_HOME + ZOOM_WHOLE) / 2 then
 					zoom = ZOOM_FACE
@@ -2736,7 +2736,7 @@ local function build()
 		{
 			Theme.icon(),
 			if Theme.name() == "dark" then "Light" else "Dark",
-			if Theme.name() == "dark" then "Switch to the light look" else "Switch to the dark look",
+			if Theme.name() == "dark" then "Switch to light mode" else "Switch to dark mode",
 			Theme.toggle,
 		},
 	}
@@ -2808,10 +2808,8 @@ local function build()
 		Parent = foot,
 		Size = UDim2.new(1, -(toolsW + 16), 1, 0),
 	})
-	local userBox = inputWell(
-		"Copy an avatar: a Roblox username",
-		{ Parent = copy, Size = UDim2.new(1, -156, 0, BOTTOM_H), TextSize = 15 }
-	)
+	local userBox =
+		inputWell("Roblox username to copy", { Parent = copy, Size = UDim2.new(1, -156, 0, BOTTOM_H), TextSize = 15 })
 	Kit.button("Copy", {
 		Parent = copy,
 		Size = UDim2.fromOffset(80, BOTTOM_H),

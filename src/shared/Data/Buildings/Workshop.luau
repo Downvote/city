@@ -67,7 +67,7 @@ return function(add: any)
 	add(
 		"workshop",
 		"Builder's yard",
-		"A timber barn with big doors, a store of planks under a lean-to and a fenced yard.",
+		"A timber barn with big doors, and planks stacked under a lean-to.",
 		"hammer",
 		36,
 		28,

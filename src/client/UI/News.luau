@@ -25,7 +25,7 @@ local WEATHER = {
 	rain = "rain",
 	storm = "storms",
 	snow = "snow",
-	blossom = "blossom on the wind",
+	blossom = "falling blossom",
 	leaves = "falling leaves",
 }
 
@@ -148,7 +148,7 @@ local function frontPage(inside: Frame, log: { any }, today: number, waiting: nu
 		AlignY = Enum.TextYAlignment.Top,
 		LayoutOrder = 2,
 	})
-	Kit.text(if latest then ago(latest.t) else "Check back once your villagers have been about a while.", {
+	Kit.text(if latest then ago(latest.t) else "Your villagers haven't done much yet.", {
 		Name = "Byline",
 		Parent = story,
 		Size = UDim2.new(1, 0, 0, 20),
@@ -281,7 +281,7 @@ local function draw()
 					Size = MenuParts.rowSize(),
 					LayoutOrder = order,
 					Title = Text.fill(
-						"{name} would like {thing} near their bed",
+						"{name} wants {thing} by their bed",
 						{ name = v.name, thing = Catalog.Tags[r.tag] or r.tag }
 					),
 					Sub = "Put one by their bed in Build mode.",
@@ -309,7 +309,7 @@ local function draw()
 	end
 	if #log == 0 then
 		order += 1
-		MenuParts.empty("news", "No news yet", "Quarrels, parties, new faces in town: it all ends up here.", {
+		MenuParts.empty("news", "No news yet", "Things that happen in town show up here.", {
 			Parent = list,
 			LayoutOrder = order,
 			Color = T.Teal,

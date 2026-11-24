@@ -142,7 +142,7 @@ local function buildTerrain(groundPrims: { any }, placements: { any }, drawn: { 
 	local tiles = Ground.tiles(plan)
 	for n, tile in tiles do
 		if n % 8 == 1 then
-			step(("Writing the island's ground (%d of %d)"):format(n, #tiles))
+			step(("Shaping the island (%d of %d)"):format(n, #tiles))
 		end
 		local lo, hi, channels = Ground.voxels(plan, tile, mats)
 		local region = Region3.new(lo, hi)
@@ -164,9 +164,10 @@ local function buildTerrain(groundPrims: { any }, placements: { any }, drawn: { 
 	end
 	-- The open sea past the island's shallows is flat parts, not terrain: as terrain it was ten
 	-- million voxels of water out to the horizon, slow to write and for every player to load
-	-- (the user, stuck on "Writing the island's ground": "its stuck here"). A see-through sheet
-	-- at the sea's level over a dark floor, in pieces of at most 1,000 studs.
-	step("Laying the open sea")
+	-- (the user, stuck on "Writing the island's ground", as this step was called then: "its stuck
+	-- here"). A see-through sheet at the sea's level over a dark floor, in pieces of at most 1,000
+	-- studs.
+	step("Filling in the sea")
 	local sea = Instance.new("Folder")
 	sea.Name = "OpenSea"
 	local deep = Ground.Colors.Slate
@@ -225,7 +226,7 @@ local function buildMap()
 	-- still gets plain grass and sea, and the rest of the town still goes up: a failure here used
 	-- to stop the server before the streets, the plots and the spawn were built, and players fell
 	-- through an empty world (the user: "it keeps spawning me below the world").
-	step("Writing the island's ground")
+	step("Shaping the island")
 	local wrote, why = pcall(buildTerrain, groundPrims, placements, drawn)
 	if not wrote then
 		warn("[World] the terrain couldn't be written, so the island is plain grass: " .. tostring(why))
@@ -789,12 +790,12 @@ end
 
 function World.init()
 	World.shareGrass()
-	step("Setting up the light")
+	step("Setting up the lighting")
 	Lighting.ClockTime = World.hour()
 	stylize()
 	air()
 	-- the low poly kit first, so the map and every house are built in its facets
-	step("Cutting the low poly shapes")
+	step("Getting the models ready")
 	local kit, problems = LowPoly.make()
 	kit.Parent = ReplicatedStorage
 	Builder.useKit(kit)

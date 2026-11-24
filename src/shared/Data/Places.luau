@@ -40,7 +40,7 @@ Places.list = {
 	{
 		id = "square",
 		name = "The town square",
-		blurb = "Where everyone ends up sooner or later.",
+		blurb = "The middle of the old town.",
 		pos = Vector3.new(0, 0, 70),
 		radius = 30,
 		coins = 0,
@@ -48,7 +48,7 @@ Places.list = {
 	{
 		id = "lookout",
 		name = "The lookout",
-		blurb = "The best view on the island, if you don't mind the climb.",
+		blurb = "A steep climb up to the best view on the island.",
 		pos = onTop("lookout", 0, 0),
 		radius = 26,
 		coins = 80,
@@ -56,7 +56,7 @@ Places.list = {
 	{
 		id = "farm",
 		name = "Hilltop farm",
-		blurb = "Cows, corn and a windmill that never stops.",
+		blurb = "A farm up in the hills with a windmill.",
 		pos = onTop("farm", 20, 10),
 		radius = 50,
 		coins = 60,
@@ -64,7 +64,7 @@ Places.list = {
 	{
 		id = "camp",
 		name = "Pine camp",
-		blurb = "Tents round a fire that somebody always keeps going.",
+		blurb = "A few tents round a campfire in the pines.",
 		pos = onTop("camp", 0, 0),
 		radius = 34,
 		coins = 60,
@@ -72,7 +72,7 @@ Places.list = {
 	{
 		id = "observatory",
 		name = "The observatory",
-		blurb = "On clear nights you can count the moons. There's one.",
+		blurb = "A telescope dome on top of the hill.",
 		pos = at(-380, 748),
 		radius = 30,
 		coins = 70,
@@ -80,7 +80,7 @@ Places.list = {
 	{
 		id = "radio",
 		name = "The radio mast",
-		blurb = "Plays the same three songs, very far.",
+		blurb = "The mast for the island's radio station.",
 		pos = at(380, 760),
 		radius = 24,
 		coins = 50,
@@ -88,7 +88,7 @@ Places.list = {
 	{
 		id = "pier",
 		name = "Fairground pier",
-		blurb = "A ferris wheel, a carousel and a smell of doughnuts.",
+		blurb = "A ferris wheel and a carousel out on the pier.",
 		pos = offShore(-320, 0.4, 68),
 		radius = 40,
 		coins = 50,
@@ -96,7 +96,7 @@ Places.list = {
 	{
 		id = "marina",
 		name = "The marina",
-		blurb = "Boats nobody seems to take out.",
+		blurb = "Where the town keeps its boats.",
 		pos = offShore(300, 0.3, 38),
 		radius = 30,
 		coins = 40,
@@ -112,7 +112,7 @@ Places.list = {
 	{
 		id = "station",
 		name = "The train station",
-		blurb = "The train is always about to leave.",
+		blurb = "Two platforms and a ticket office.",
 		pos = Vector3.new(686, 0.22, -146),
 		radius = 30,
 		coins = 40,
@@ -120,7 +120,7 @@ Places.list = {
 	{
 		id = "skytower",
 		name = "Sky Tower",
-		blurb = "The tallest thing for miles. Or metres.",
+		blurb = "The tallest building in town.",
 		pos = Vector3.new(950, 0.22, -146),
 		radius = 26,
 		coins = 40,
@@ -128,7 +128,7 @@ Places.list = {
 	{
 		id = "cinema",
 		name = "The cinema",
-		blurb = "Showing the same film as last week, and loving it.",
+		blurb = "Films most nights, two on Fridays.",
 		pos = Vector3.new(920, 0.22, 24),
 		radius = 26,
 		coins = 40,
@@ -136,7 +136,7 @@ Places.list = {
 	{
 		id = "pond",
 		name = "Pond park",
-		blurb = "Three ducks, one bridge and a lot of benches.",
+		blurb = "A duck pond with a footbridge.",
 		pos = Vector3.new(-750, 0.3, -68),
 		radius = 40,
 		coins = 40,
@@ -152,7 +152,7 @@ Places.list = {
 	{
 		id = "museum",
 		name = "The museum",
-		blurb = "Mostly old rocks. Very nice rocks.",
+		blurb = "Fossils and old maps of the island.",
 		pos = Vector3.new(-760, 0, 20),
 		radius = 26,
 		coins = 40,

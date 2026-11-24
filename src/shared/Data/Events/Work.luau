@@ -53,7 +53,7 @@ event({
 		s:prop(o[1], "a")
 		s:n("A big order came in at the {place}: {order}.")
 		s:by("a", {
-			bold = "Easy. I'll have it done by lunch. Maybe dinner.",
+			bold = "Easy. Done by lunch.",
 			easygoing = "That's... a lot. Can I panic slowly?",
 			proud = "They came to the best. Naturally.",
 			shy = "That's so many. What if I get it wrong?",
@@ -90,7 +90,7 @@ event({
 			bold = "One more. Just one more.",
 			proud = "Engineering. Pure engineering.",
 			cheeky = "If it falls, I was never here.",
-			_ = "It's practice. For something. Mostly fun.",
+			_ = "It's practice. For what, I don't know yet.",
 		}, "sparkle", "point")
 		s:choice("Add one more", function(c)
 			if ctx.rng:chance(0.5) then
@@ -106,7 +106,11 @@ event({
 			end
 		end)
 		s:choice("Quit while it's standing", function(c)
-			c:say("a", "Good call. I'll leave it up for people to see.", "heart")
+			c:by("a", {
+				proud = "Fine. It's perfect as it is anyway.",
+				bold = "Fine. I could've done one more, though.",
+				_ = "Good call. I'll leave it up for people to see.",
+			}, "heart")
 			c:leave("bricks", 8, "a")
 			c:xp("a", 8)
 			c:mood("a", 3)
@@ -147,7 +151,12 @@ event({
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "A grumpy customer"):with({ place = place(ctx, a) })
 		s:n("{b} came into the {place} in a very bad mood.")
-		s:say("b", "This is all wrong. All of it. I want to speak to whoever's in charge.", "anger", "point")
+		s:by("b", {
+			proud = "This is not what I asked for. Who's in charge here?",
+			bold = "This is all wrong. Who's in charge?",
+			cheeky = "Is this meant to be like this? Seriously?",
+			_ = "This is all wrong. I want to speak to whoever's in charge.",
+		}, "anger", "point")
 		s:by("a", {
 			gentle = "I'm sorry it's been a bad day. Let me make it right.",
 			bold = "That's me. I'm in charge. What's the problem?",
@@ -188,7 +197,7 @@ event({
 		s:say("a", "New at the {place} today: {thing}. Try it. Be honest.", "idea", "point")
 		s:choice("Try it", function(c)
 			if ctx.rng:chance(0.6) then
-				c:n("Surprisingly, it's good. Very good.")
+				c:n("It's good. It's actually good.")
 				c:voice("a", "excited", "sparkle", "cheer")
 				c:coins(share(ctx, a, 0.6))
 				c:xp("a", 15)
@@ -200,7 +209,7 @@ event({
 			end
 		end)
 		s:choice("Maybe tomorrow", function(c)
-			c:say("a", "Tomorrow. It'll still be here. All of it, probably.", "sad")
+			c:say("a", "Tomorrow, then. There's plenty left.", "sad")
 		end)
 		s:log("{a} tried out {thing} at the {place}.")
 		return s:done()
@@ -223,13 +232,21 @@ event({
 			_ = "Which one's your favourite? Lie if you have to.",
 		}, "sparkle")
 		s:choice("The portrait", function(c)
-			c:say("a", "That one? It's yours. No arguing.", "heart", "cheer")
+			c:by("a", {
+				shy = "That one? You can have it. If you want.",
+				proud = "Good eye. It's yours.",
+				_ = "That one? It's yours. No arguing.",
+			}, "heart", "cheer")
 			c:keep("keep_portrait", "a")
 			c:xp("a", 10)
 			c:hearts("a", 1)
 		end)
 		s:choice("All of them", function(c)
-			c:say("a", "You're only saying that. Say it again.", "heart")
+			c:by("a", {
+				shy = "Really? All of them? ...Thank you.",
+				proud = "Of course. They're all good.",
+				_ = "You're only saying that. Say it again.",
+			}, "heart")
 			c:xp("a", 15)
 			c:mood("a", 6)
 			c:all(2)
@@ -256,7 +273,11 @@ event({
 		s:prop("microphone", "a")
 		s:prop("guitar", "a")
 		s:n("{a} is playing a concert at the bandstand. The whole town is there.")
-		s:say("a", "This next one's about a gull who wanted to be a swan. Clap if you know it.", "music")
+		s:by("a", {
+			shy = "Um. This one's about a gull who wanted to be a swan.",
+			proud = "This next one's my best. You'll want to remember it.",
+			_ = "This next one's about a gull who wanted to be a swan. Clap if you know it.",
+		}, "music")
 		s:n("Nobody knows it. Everybody claps.")
 		s:fx({ t = "festival" })
 		s:xp("a", 20)
@@ -355,7 +376,11 @@ event({
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "A very late book")
 		s:n("Someone posted a book back through the library door. It's ten years overdue.")
-		s:say("a", "Ten years. TEN. The fine on this would buy a boat.", "anger")
+		s:by("a", {
+			gentle = "Ten years. Well, I never.",
+			shy = "Ten years. I don't even know what the fine is for that.",
+			_ = "Ten years. TEN. The fine on this would buy a boat.",
+		}, "anger")
 		s:by("a", {
 			gentle = "There's a note inside. It says sorry, and that they loved it.",
 			proud = "I'll be framing the date stamp.",
@@ -377,7 +402,7 @@ event({
 		s:prop("bouquet", "a")
 		s:n("{a} has been asked for the biggest bouquet the town has ever seen. It needs a bucket.")
 		s:by("a", {
-			gentle = "Every flower means something. This one means everything.",
+			gentle = "I've put sweet peas all round the edge.",
 			dreamy = "I put in one that only opens at night. A little secret.",
 			_ = "Two buckets, actually. I've run out of buckets.",
 		}, "sparkle")
@@ -404,7 +429,12 @@ event({
 			c:mood("a", 3)
 		end)
 		s:choice("Stick to vanilla", function(c)
-			c:say("a", "Coward. I mean, sensible.", "sweat")
+			c:by("a", {
+				cheeky = "Coward. I mean, sensible.",
+				shy = "Oh. That's okay. Vanilla's nice.",
+				proud = "Vanilla. Of course. Your loss.",
+				_ = "Fair enough. Vanilla it is.",
+			}, "sweat")
 		end)
 		s:log("{a} invented {flavour} ice cream.")
 		return s:done()

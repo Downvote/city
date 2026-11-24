@@ -90,7 +90,7 @@ return function(add: any)
 	add(
 		"cafe",
 		"Café",
-		"Coffee at the counter, booths by the window and tables out on the covered terrace.",
+		"Booths by the window inside, and more tables out on a covered terrace.",
 		"pot",
 		30,
 		28,

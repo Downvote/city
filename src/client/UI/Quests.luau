@@ -229,7 +229,7 @@ function Quests.refresh()
 	end
 	if #shown == 0 then
 		local note = Kit.darkPill({ Name = "Done", Parent = list, Size = UDim2.new(1, -12, 0, 36) })
-		local words = Kit.text("Every goal is done. Nice work.", {
+		local words = Kit.text("You've done every goal.", {
 			Parent = note,
 			Size = UDim2.new(1, -24, 1, 0),
 			Position = UDim2.fromOffset(12, 0),

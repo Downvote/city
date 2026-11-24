@@ -103,7 +103,7 @@ local function town(inside: Frame, stats: any, wages: number)
 			{ Name = "Unlocks", Parent = inside, Position = UDim2.fromOffset(0, y + 4), Height = 24 }
 		)
 	else
-		Kit.text("Your town is as big as towns get.", {
+		Kit.text("Your town is at the top level.", {
 			Name = "Next",
 			Parent = inside,
 			Size = UDim2.new(1, 0, 0, 22),
@@ -112,7 +112,7 @@ local function town(inside: Frame, stats: any, wages: number)
 			Font = Kit.Fonts.Bold,
 		})
 		MenuParts.note(
-			"There's no level after this one. Build whatever you like.",
+			"There are no more levels after this one.",
 			accent,
 			{ Name = "Unlocks", Parent = inside, Position = UDim2.fromOffset(0, 116), Height = 44 }
 		)
@@ -336,7 +336,7 @@ function draw()
 		)
 	else
 		MenuParts.hint(
-			"More workplaces are under Work in Build mode. Each one is a job for a villager.",
+			"You can build more workplaces from Work in Build mode.",
 			{ Name = "More", Parent = list, LayoutOrder = 1000 }
 		)
 	end

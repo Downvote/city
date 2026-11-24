@@ -95,7 +95,7 @@ return function(add: any)
 	add(
 		"market",
 		"Grocer's",
-		"A fruit stall under the arcade, shelves of tins inside and rooms upstairs.",
+		"A grocer's with fruit and veg out under the arcade, and rooms upstairs.",
 		"cart",
 		28,
 		28,

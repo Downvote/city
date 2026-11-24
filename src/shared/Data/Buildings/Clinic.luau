@@ -34,7 +34,7 @@ return function(add: any)
 	add(
 		"clinic",
 		"Clinic",
-		"A waiting room and the doctor's desk, a ward of three beds behind screens, a canopy at the door.",
+		"A waiting room at the front and a ward with three beds at the back.",
 		"heart",
 		36,
 		28,

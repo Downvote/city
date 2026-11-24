@@ -578,7 +578,7 @@ function Hud.start()
 		task.spawn(function()
 			local ok, amount = Remotes.fn("DailyClaim"):InvokeServer()
 			if ok then
-				Toasts.show(Text.fill("Daily gift: {n} coins. Come back tomorrow for more.", { n = amount }), "good")
+				Toasts.show(Text.fill("Daily gift: {n} coins.", { n = amount }), "good")
 			end
 		end)
 	end)

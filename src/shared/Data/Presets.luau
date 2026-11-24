@@ -231,7 +231,7 @@ local function add(id: string, name: string, desc: string, icon: string, w: numb
 	table.insert(list, made)
 end
 
-add("cottage", "Garden cottage", "One room to live in, a bedroom and a kitchen corner.", "house", 24, 24, function(b)
+add("cottage", "Garden cottage", "A small house with a bedroom and a kitchen corner.", "house", 24, 24, function(b)
 	b:floor(2, 6, 22, 22, OAK)
 	b:box("", 2, 6, 22, 22, PLASTER, WHITE)
 	b:wall("inner", 12, 22, 12, 14, WHITE, WHITE)
@@ -363,7 +363,7 @@ end)
 add(
 	"townhouse",
 	"Townhouse",
-	"Two floors: a living room and kitchen downstairs, bedrooms upstairs.",
+	"A kitchen and living room downstairs, and two bedrooms upstairs.",
 	"house",
 	24,
 	26,
@@ -432,7 +432,7 @@ add(
 add(
 	"park",
 	"Little park",
-	"A fountain, benches, trees and flower beds round a paved square.",
+	"A paved square with a fountain in the middle and benches round it.",
 	"tree",
 	24,
 	24,

@@ -60,7 +60,7 @@ return function(add: any)
 	add(
 		"musichall",
 		"Music hall",
-		"A small hall with a stage, rows of seats and a foyer with a ticket desk.",
+		"A small hall with a stage. Tickets are sold in the foyer.",
 		"music",
 		28,
 		30,

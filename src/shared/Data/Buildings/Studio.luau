@@ -71,7 +71,7 @@ return function(add: any)
 	add(
 		"studio",
 		"Artist's studio",
-		"A painter's studio behind a tall glass front, a small gallery and a yard of sculptures.",
+		"A painter's studio with a tall glass front and sculptures in the yard.",
 		"brush",
 		34,
 		24,

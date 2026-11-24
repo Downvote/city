@@ -44,7 +44,61 @@ function Talk.free(mode: string?): boolean
 	return mode == nil or mode == "chat" or mode == "talk"
 end
 
-local THANKS = { "Thanks. I feel better already.", "I needed that. Thank you." }
+-- What the lines below are keyed by: a villager's personality (Data/Personalities), with "_" for
+-- anybody else. The user: "for the humanization, make sure to take note of the personalities of the
+-- villagers as well", so a shy villager and a loud one don't say the same thing the same way.
+local function own(map: { [string]: string }, pers: string?): string
+	return (pers and map[pers]) or map._
+end
+
+-- After a talk that answered their wish for one.
+local THANKS = {
+	_ = "Thanks. I feel better already.",
+	sunny = "Oh, thank you, I really needed that. I feel loads better.",
+	gentle = "Thank you for stopping, dear. I feel much better.",
+	bold = "Yeah. Okay. That helped. Thanks.",
+	dreamy = "Oh... the fog's gone a bit. Thank you.",
+	easygoing = "Thanks. Needed that.",
+	proud = "I was perfectly fine. But... thank you.",
+	shy = "Thanks for talking to me. I feel better. Um, a lot better.",
+	cheeky = "Right, I'm cheered up. Don't tell anyone it was you.",
+}
+
+-- No bed yet.
+local NOBED = {
+	_ = "I still don't have a bed, you know.",
+	gentle = "I don't like to be a bother, but I still haven't got a bed.",
+	bold = "Still no bed. I'm sleeping on the floor. Sort it out.",
+	dreamy = "I still don't have a bed. I just sleep wherever I end up.",
+	easygoing = "No bed yet. Floor's fine. A bed'd be better.",
+	proud = "I'm still without a bed. I don't complain, but honestly.",
+	shy = "Um. I don't have a bed yet. It's okay. The floor's okay.",
+	cheeky = "Still no bed, you know. I might just move into yours.",
+}
+
+-- A quarrel that hasn't blown over.
+local QUARREL = {
+	_ = "{y} and I aren't speaking right now.",
+	gentle = "{y} and I have had words. I hope it blows over soon.",
+	bold = "Don't talk to me about {y}. We're not speaking.",
+	dreamy = "{y} and I aren't speaking. I can't remember why. We just aren't.",
+	easygoing = "Me and {y} aren't talking. It'll blow over.",
+	proud = "I'm not speaking to {y}. They know what they did.",
+	shy = "{y} and I had a falling out. I feel awful about it.",
+	cheeky = "{y} and I are having a fight. I'm winning.",
+}
+
+-- Their best friend, the one at the top.
+local FRIEND = {
+	_ = "{y} always makes me laugh.",
+	gentle = "{y} came round with soup when I had a cold. They're good like that.",
+	bold = "{y}'s all right. Better than all right.",
+	dreamy = "{y} gets my thoughts. Even the odd ones.",
+	easygoing = "Me and {y} sat on the pier all afternoon. Good times.",
+	proud = "{y} is nearly as good company as me.",
+	shy = "{y} talks to me a lot. I like that.",
+	cheeky = "{y} laughs at all my jokes. Even the bad ones.",
+}
 
 -- Small talk anybody might make on an ordinary day.
 local SMALL = {
@@ -52,9 +106,53 @@ local SMALL = {
 	"Nothing much going on today. I like it that way.",
 	"I went for a walk round town earlier.",
 	"It's a nice spot, this.",
-	"Have you tried the bench by the fountain? Very comfy.",
-	"I waved at a boat this morning. It waved back. Well, someone on it did.",
-	"I've been meaning to tidy my room. I've been meaning to for a month.",
+	"Have you tried the bench by the fountain? It's comfier than it looks.",
+	"Somebody on a boat waved at me this morning. No idea who.",
+	"I keep meaning to tidy my room.",
+}
+
+-- Small talk of their own, by personality.
+local OWN = {
+	sunny = {
+		"I've said hello to about twenty people today and it's not even lunch.",
+		"Did you see the new flowers by the hall? Someone's been busy, I want to find out who.",
+		"We should all have lunch together one day, the whole town, on the square.",
+	},
+	gentle = {
+		"Your collar's turned up at the back. There. That's better.",
+		"I left some bread out for the ducks. Don't tell anyone, they'll say I spoil them.",
+		"Are you sleeping all right? You can tell me.",
+	},
+	bold = {
+		"Race you to the pier. No? Fine.",
+		"I fixed the gate by the square. Kicked it. It works now.",
+		"Need anything carried? I'm bored.",
+	},
+	dreamy = {
+		"The water in the fountain goes round and round. I wonder if it gets dizzy.",
+		"I followed a cat round the square this morning. It seemed to know where it was going.",
+		"Have you ever noticed the town sounds different after it rains?",
+	},
+	easygoing = {
+		"Found a good spot for a nap. Not telling you where.",
+		"Not much to report. Which is how I like it.",
+		"Eh. Same as yesterday. Good, though.",
+	},
+	proud = {
+		"My window boxes are the best on the street. Ask anyone.",
+		"I've been told I have very good posture. Twice this week.",
+		"I could run this town, you know. Not that you're doing badly.",
+	},
+	shy = {
+		"I found a nice quiet spot by the water. Nobody goes there.",
+		"Um. I like your hat.",
+		"I tried to say hello to someone new today. I waved, sort of.",
+	},
+	cheeky = {
+		"Have you noticed the fountain's a bit... fizzier today? No reason.",
+		"Somebody turned all the benches round to face the wall. No idea who.",
+		"I know who keeps putting buttons in the fountain. My lips are sealed. For now.",
+	},
 }
 
 local JOKES = {
@@ -79,7 +177,7 @@ local OPINION = {
 	},
 	{
 		min = 30,
-		lines = { "{y} lent me a ladder last week. Good sort.", "I had tea with {y}. Milk first. I forgave them." },
+		lines = { "{y} lent me a ladder last week. Good sort.", "I had tea round at {y}'s yesterday. Lovely place." },
 	},
 	{
 		min = 10,
@@ -90,30 +188,40 @@ local OPINION = {
 		min = -40,
 		lines = { "{y} and I don't really get on.", "{y} borrowed my rake and gave it back muddy. Just saying." },
 	},
-	{ min = -101, lines = { "Don't mention {y}. Please.", "I'm not saying {y} is the worst. I'm thinking it." } },
+	{ min = -101, lines = { "Don't mention {y}. Please.", "I'd rather not talk about {y}, if that's all right." } },
 }
 
 -- What a neighbour is like, by their personality.
 local LIKE = {
 	sunny = "{y} is always so cheerful. How do they do it?",
-	gentle = "{y} brought me soup when I was ill. I wasn't even ill.",
+	gentle = "{y} dropped a cake round last week. No reason, just because.",
 	bold = "{y} challenged me to a race. I said no. They raced anyway.",
 	dreamy = "{y} told me the moon is a big pebble. I've been thinking about it all day.",
 	easygoing = "I've never seen {y} hurry. Not once.",
-	proud = "{y} has a mirror in every room. I counted.",
-	shy = "{y} said three words to me today. A record.",
+	proud = "{y} checks their hair in every window they walk past.",
+	shy = "{y} said hello to me today. All on their own.",
 	cheeky = "{y} put a frog in my bucket. I think it was a present.",
 }
 
 -- A best friend, as close as two villagers get (there is no romance: the user, "remove any
--- romance, just best friends is the highest").
-local BEST = "{y} and I are best friends. We have a handshake. It takes four minutes."
+-- romance, just best friends is the highest"). In the speaker's own way.
+local BEST = {
+	_ = "{y} and I are best friends. We've got a handshake and everything.",
+	sunny = "{y} is my best friend, did I tell you? We do everything together.",
+	gentle = "{y} is my best friend. I don't know what I'd do without them.",
+	bold = "{y}'s my best friend. Anyone got a problem with that, they come to me.",
+	dreamy = "{y} is my best friend. I think we knew each other before, somehow.",
+	easygoing = "Me and {y}? Best friends. Easy.",
+	proud = "{y} is my best friend. They're very lucky.",
+	shy = "{y} is my best friend. I've never had one before.",
+	cheeky = "{y} is my best friend. We've got a secret handshake. It takes four minutes.",
+}
 local LEVELS = Tuning.Relationships.Levels
 local BEST_FRIENDS = LEVELS[#LEVELS].Min
 
 local SEASON = {
-	"Everything's coming up green. Even my shoes.",
-	"Too hot for socks. I've stopped wearing socks.",
+	"Have you seen the daffodils by the hall? They're out already.",
+	"Too hot for socks today.",
 	"I love this time of year. Everything's crunchy.",
 	"My nose has been cold since Tuesday.",
 }
@@ -126,6 +234,32 @@ local WEATHER = {
 	leaves = "I've swept my step three times today.",
 	clear = "Not a cloud. I'm making the most of it.",
 	cloudy = "Grey again. I don't mind grey.",
+}
+
+-- A craving, in their own words ({food} is the food's name, so it starts a sentence).
+local CRAVE = {
+	_ = "I keep thinking about food. {food}, to be exact.",
+	sunny = "Okay, don't laugh, but all I can think about today is food. {food}, mostly.",
+	gentle = "I don't like to ask. {food} would be lovely, though.",
+	bold = "{food}. I want some. Now, ideally.",
+	dreamy = "I dreamed about food last night. {food}, I think. I can still smell it.",
+	easygoing = "{food}. Man. Could really go for that.",
+	proud = "I have a craving, if you must know. {food}. A good one.",
+	shy = "Um. {food}... I've been wanting some. If it's no trouble.",
+	cheeky = "I'll stop bothering you if you do one thing for me. {food}. Deal?",
+}
+
+-- Someone they'd like to meet.
+local MEET = {
+	_ = "I'd like to get to know {y}. Could you introduce us?",
+	sunny = "I really want to be friends with {y}. Could you introduce us? Please?",
+	gentle = "I'd like to get to know {y} better. Would you introduce us?",
+	bold = "Introduce me to {y}. I'd do it myself, but they keep walking off.",
+	dreamy = "I keep seeing {y} around. I think we'd get on. Could you introduce us?",
+	easygoing = "{y} seems cool. Introduce us sometime?",
+	proud = "{y} seems worth knowing. You could introduce us.",
+	shy = "I'd like to talk to {y}. I don't know how to start. Could you help?",
+	cheeky = "Who's {y}? They look fun. Introduce me?",
 }
 
 -- Their last event, as they'd tell it, while it's still fresh.
@@ -152,13 +286,13 @@ function Talk.wishLine(profile: any, vid: string): string?
 	if w.kind == "food" then
 		local food = Foods.get(w.arg)
 		if food then
-			return Text.fill("I keep thinking about food. {food}, to be exact.", { food = food.name })
+			return Text.fill(own(CRAVE, v.pers), { food = food.name })
 		end
 		return "I keep thinking about food."
 	elseif w.kind == "friend" then
 		local other = profile.villagers[w.arg]
 		if other then
-			return Text.fill("I'd like to get to know {y}. Could you introduce us?", { y = other.name })
+			return Text.fill(own(MEET, v.pers), { y = other.name })
 		end
 	end
 	return nil
@@ -195,9 +329,8 @@ function Talk.line(profile: any, vid: string, rng: any, opts: { [string]: any }?
 	local saying = Sayings.get(v.saying)
 	local chat: Chat? = o.chat
 	if chat and chat.wish then
-		for _, text in THANKS do
-			add(text)
-		end
+		add(own(THANKS, v.pers))
+		add("I needed that. Thank you.")
 	elseif o.first then
 		local wish = Talk.wishLine(profile, vid)
 		if wish then
@@ -213,16 +346,19 @@ function Talk.line(profile: any, vid: string, rng: any, opts: { [string]: any }?
 			addLines("happy", 2)
 		end
 		if not v.bed then
-			add("I still don't have a bed, you know.", 3)
+			add(own(NOBED, v.pers), 3)
 		end
 		for _, other in profile.order do
 			local ov = profile.villagers[other]
 			if ov and other ~= vid and Relationships.quarreling(profile, vid, other, o.now or 0) then
-				add(Text.fill("{y} and I aren't speaking right now.", { y = ov.name }), 3)
+				add(Text.fill(own(QUARREL, v.pers), { y = ov.name }), 3)
 			end
 		end
 		if not sad then
 			for _, text in SMALL do
+				add(text)
+			end
+			for _, text in OWN[v.pers] or {} do
 				add(text)
 			end
 			if v.bed then
@@ -234,7 +370,7 @@ function Talk.line(profile: any, vid: string, rng: any, opts: { [string]: any }?
 			local friend = Relationships.bestFriend(profile, vid)
 			local fv = friend and profile.villagers[friend]
 			if fv and friend and not Relationships.quarreling(profile, vid, friend, o.now or 0) then
-				add(Text.fill("{y} always makes me laugh.", { y = fv.name }), 2)
+				add(Text.fill(own(FRIEND, v.pers), { y = fv.name }), 2)
 			end
 			local work = o.working and City.jobOf(profile, vid)
 			if work then
@@ -266,7 +402,7 @@ function Talk.line(profile: any, vid: string, rng: any, opts: { [string]: any }?
 					add(Text.fill(like, { y = ov.name }))
 				end
 				if score >= BEST_FRIENDS then
-					add(Text.fill(BEST, { y = ov.name }), 2)
+					add(Text.fill(own(BEST, v.pers), { y = ov.name }), 2)
 				end
 			end
 			-- a worry, a joke (more from the cheeky ones), the season and the weather

@@ -35,11 +35,14 @@ local function makes(o: { [string]: any })
 			s:by("a", o.react, "sparkle")
 			s:choice(o.ask or "Could I have it?", function(c)
 				c:by("a", {
-					shy = "For you? Okay. I'd like that.",
-					proud = "Naturally you want it. Take good care of it.",
-					cheeky = "It'll cost you one smile. Paid. It's yours.",
-					dreamy = "Yes. It wanted to go home with you anyway.",
-					_ = { "Of course. I made it thinking someone would love it.", "Really? Here. It's yours." },
+					shy = "You want it? Oh. Okay. Here.",
+					proud = "Of course you want it. Look after it.",
+					cheeky = "Fine. But I'm coming round to visit it.",
+					dreamy = "Yes. I think it wanted to go with you anyway.",
+					bold = "Take it. It's yours.",
+					easygoing = "Sure. Saves me finding a shelf for it.",
+					gentle = "Of course, dear. I'd like you to have it.",
+					_ = { "Course you can. Here.", "Really? You want it? Here you go." },
 				}, "heart", "cheer")
 				c:keep(o.item, "a")
 				c:mood("a", 4)
@@ -50,6 +53,8 @@ local function makes(o: { [string]: any })
 				c:by("a", {
 					proud = "I'll put it where everyone can see.",
 					shy = "Okay. I'll keep it somewhere safe.",
+					cheeky = "Good, because I wasn't really going to give it away.",
+					dreamy = "It can sit by the window and look out.",
 					_ = "I'll find it a good spot at home.",
 				}, "heart")
 				c:mood("a", 6)
@@ -75,7 +80,7 @@ event({
 			shy = "Please don't look at me. Hic.",
 			bold = "I'll beat these. Hic. Watch me.",
 			dreamy = "Each one's a little bubble. Hic. Pretty.",
-			cheeky = "I'm doing it on purpose. Hic. Mostly.",
+			cheeky = "I'm doing it on purpose. Hic. Don't tell anyone.",
 			_ = { "I'm fine. Hic. Totally fine.", "Three hours now. Hic. Three." },
 		}, "sweat")
 		s:choice("Give them a fright", function(c)
@@ -83,7 +88,7 @@ event({
 			c:by("a", {
 				shy = "EEP. ...Oh. They've gone.",
 				bold = "HA. You got me. And they've gone.",
-				easygoing = "Whoa. Okay. Heart's going. Hiccups aren't.",
+				easygoing = "Whoa. Don't do that. ...Oh. They stopped.",
 				_ = "Aah! ...Wait. They've stopped.",
 			}, "sparkle")
 			c:mood("a", 4)
@@ -124,21 +129,33 @@ event({
 		local s = K.scene(ctx, "A new hobby"):with({ hobby = h.name })
 		s:say("a", "I've decided. I'm taking up {hobby}.", "idea", "point")
 		s:by("a", {
-			bold = "I'm going to be the best at it in a week.",
+			bold = "Starting today. No point waiting.",
 			shy = "Is that silly? I've been wanting to for ages.",
+			cheeky = "Don't laugh. I can see you about to laugh.",
+			sunny = "I've told everyone already, so now I have to.",
 			easygoing = "Seems relaxing. Mostly sitting, I hope.",
 			dreamy = "It came to me in a dream. Well, a nap.",
 			proud = "I expect I'll be a natural.",
 			_ = "I bought everything for it already.",
 		}, "sparkle")
 		s:choice("Go for it", function(c)
-			c:say("a", "Right. Starting now. Well, after a snack.", "music", "cheer")
+			c:by("a", {
+				easygoing = "Right. Starting now. After a snack.",
+				shy = "Okay. I'll try it.",
+				proud = "Watch. I'll be good at this.",
+				_ = "Right. Starting now.",
+			}, "music", "cheer")
 			c:hobby("a", h.id)
 			c:mood("a", 6)
 			c:memo("a", "I've taken up {hobby}. Ask me about it. Please.")
 		end)
 		s:choice("Maybe stick with what you've got", function(c)
-			c:say("a", "Hmm. Maybe you're right.", "sad")
+			c:by("a", {
+				proud = "Hmph. I'd have been good at it.",
+				bold = "Fine. Forget I said it.",
+				shy = "Okay. It was a silly idea.",
+				_ = "Hmm. Maybe you're right.",
+			}, "sad")
 			c:mood("a", -2)
 		end)
 		s:log("{a} wanted to take up {hobby}.")
@@ -181,7 +198,11 @@ event({
 		s:n("{a} has been humming the same four notes all day.")
 		s:say("a", "Dum da dum DUM. Dum da dum DUM. Make it stop.", "music")
 		s:choice("Hum along", function(c)
-			c:say("a", "Now it's a duet. That's worse. That's so much worse.", "music", "laugh")
+			c:by("a", {
+				cheeky = "Oh, you're doing harmonies now?",
+				sunny = "Ha. Now it's both of us.",
+				_ = "Now we've both got it. Thanks a lot.",
+			}, "music", "laugh")
 			c:mood("a", 3)
 		end)
 		s:choice("Hum them a different song", function(c)
@@ -211,24 +232,30 @@ event({
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "The big marrow")
 		s:prop("marrow", "a")
-		s:n("{a} has been growing a marrow behind the house. It's very, very big.")
+		s:n("{a} has been growing a marrow behind the house. It's about the size of a wheelbarrow.")
 		s:by("a", {
-			proud = "Biggest in town. Possibly the world. I measured it twice.",
+			proud = "Biggest in town. I've measured it. Go on, find a bigger one.",
 			gentle = "I sing to it in the mornings. I think it helps.",
-			bold = "It weighs more than me. I tried to lift it. It won.",
-			_ = "I don't know what to do with it. I just wanted to see how big it would get.",
+			bold = "Tried to lift it this morning. Couldn't. Yet.",
+			shy = "I didn't mean for it to get this big.",
+			easygoing = "I just kept watering it and it kept going.",
+			_ = "I don't know what to do with it. I just wanted to see how big it'd get.",
 		}, "sparkle", "point")
 		s:choice("Keep watering it", function(c)
-			c:say("a", "Bigger. It can go bigger. I believe in it.", "sparkle", "cheer")
+			c:by("a", {
+				proud = "It can go bigger. I know it can.",
+				dreamy = "Grow, marrow. Grow.",
+				_ = "More water, then. Let's see how far it goes.",
+			}, "sparkle", "cheer")
 			c:leave("marrow", 18, "a")
 			c:mood("a", 5)
 			c:memo("a", "The marrow's still growing. I've had to move the fence.")
 		end)
 		s:choice("Make soup for everyone", function(c)
-			c:say("a", "Soup for the whole town. Good idea. Big pot.", "heart")
+			c:say("a", "Soup for everyone, then. I'll need the big pot.", "heart")
 			c:all(3)
 			c:mood("a", 3)
-			c:memo("a", "Everybody had marrow soup. Nobody asked for seconds, but still.")
+			c:memo("a", "Everybody had marrow soup. There's still half a marrow left.")
 		end)
 		s:log("{a} grew an enormous marrow.")
 		return s:done()
@@ -247,7 +274,9 @@ makes({
 	react = {
 		proud = "Second is the first of the losers. I'll be back next year.",
 		easygoing = "Second's great. Less pressure than first.",
-		_ = "I couldn't have done it without you cheering me on. Well, I could. But still.",
+		shy = "I nearly didn't go. I'm glad I did.",
+		bold = "Second. Next year I'm winning it.",
+		_ = "Second place. I'll take that.",
 	},
 	ask = "Can I see it on my shelf?",
 	keep = "You earned it, keep it",
@@ -267,17 +296,27 @@ event({
 		s:by("a", {
 			shy = "Don't look. Please don't look.",
 			proud = "It's meant to be like this. It's a style.",
-			cheeky = "I meant to do it. Mostly. Some of it.",
+			cheeky = "I meant to do that. The left side, anyway.",
 			easygoing = "Eh. It'll grow.",
+			bold = "Did it myself. Went a bit far.",
+			dreamy = "I was thinking about something else while I cut it.",
 			_ = "Is it bad? Be honest. No, don't be honest.",
 		}, "sweat")
 		s:choice("It suits you", function(c)
-			c:by("a", { proud = "I know.", _ = "Really? Okay. I'm keeping it." }, "heart")
+			c:by(
+				"a",
+				{ proud = "I know.", shy = "Really? You're not just saying that?", _ = "Really? Okay. I'm keeping it." },
+				"heart"
+			)
 			c:mood("a", 5)
 			c:hearts("a", 1)
 		end)
 		s:choice("A hat for a week, maybe", function(c)
-			c:say("a", "...That bad. Right. I'll find a hat.", "sad")
+			c:by("a", {
+				proud = "It's not that bad. ...Fine. Where's my hat.",
+				easygoing = "Fair. I've got a hat somewhere.",
+				_ = "...That bad? Right. I'll find a hat.",
+			}, "sad")
 			c:mood("a", -3)
 			c:memo("a", "I'm wearing a hat until my fringe grows out. Don't ask.")
 		end)
@@ -325,7 +364,7 @@ event({
 		s:by("a", {
 			shy = "Don't read it. It's mostly about the weather. And... other things.",
 			proud = "My memoirs. They'll be worth a fortune one day.",
-			cheeky = "It's all lies. Every word. That's what makes it fun.",
+			cheeky = "Half of it's made up. Yesterday I won a boat race, apparently.",
 			_ = "It's my diary. Every day since I moved in.",
 		}, "sweat")
 		s:choice("Sneak a look", function(c)
@@ -335,7 +374,12 @@ event({
 				c:mood("a", -1)
 			else
 				c:n("{a} snapped the book shut before you got close.")
-				c:say("a", "Nice try.", "anger")
+				c:by("a", {
+					bold = "Oi. Nice try.",
+					shy = "Th-that's private.",
+					gentle = "Not that one, please.",
+					_ = "Nice try.",
+				}, "anger")
 				c:mood("a", -5)
 			end
 		end)
@@ -365,6 +409,8 @@ event({
 			dreamy = "I could stay here till they all turn into something.",
 			easygoing = "Best way to spend an afternoon. Don't tell anyone.",
 			bold = "I've been here an hour. Is that allowed?",
+			cheeky = "That one looks like you. The grumpy one.",
+			shy = "I don't usually do this where people can see.",
 			_ = "Come and lie down. There's room.",
 		}, "music")
 		s:mood("a", 4)
@@ -390,7 +436,7 @@ event({
 			_ = { "SPLASH. Did you see that one?", "Biggest puddle wins. That one. Watch." },
 		}, "music", "cheer")
 		s:mood("a", 5)
-		s:memo("a", "My boots are still wet from the puddles. Worth it.")
+		s:memo("a", "My boots are still wet from the puddles.")
 		s:log("{a} jumped in puddles in the rain.")
 		return s:done()
 	end,
@@ -417,7 +463,7 @@ event({
 			c:memo("a", "Have you seen my snowman? Go and say hello. He's very polite.")
 		end)
 		s:choice("Too cold for me", function(c)
-			c:say("a", "Fair. My fingers have stopped talking to me.", "sweat")
+			c:say("a", "Fair. I can't feel my fingers anyway.", "sweat")
 			c:leave("snowman", 12, "a")
 			c:mood("a", 3)
 		end)
@@ -446,7 +492,7 @@ event({
 			cheeky = "Three. Two. One. JUMP.",
 			_ = "One jump. Just one. Then I'll rake it again.",
 		}, "sparkle", "cheer")
-		s:n("Leaves everywhere. The pile is now two smaller piles and a very happy villager.")
+		s:n("Leaves everywhere. There are two piles now, and {a} is in one of them.")
 		s:leave("leaves", 10, "a")
 		s:mood("a", 5)
 		s:log("{a} jumped in a pile of leaves.")
@@ -495,12 +541,12 @@ event({
 			s:by("a", {
 				bold = "I'm going up. Hold my shoes.",
 				shy = "Oh no. Oh no no.",
-				cheeky = "The tree wanted a kite more than I did. Fair enough.",
-				_ = "...Well. It's still flying. Sort of.",
+				cheeky = "Well, the tree's having a nice time.",
+				_ = "...Well. It's up there, at least.",
 			}, "sweat")
 			s:choice("Help them get it down", function(c)
 				c:n("With a long stick and a lot of jumping, the kite came down with only one small hole.")
-				c:say("a", "Thank you. It's a bit holey now. Like me.", "heart")
+				c:say("a", "Thanks. There's a hole in it now, but it'll still fly.", "heart")
 				c:mood("a", 4)
 				c:hearts("a", 1)
 			end)
@@ -539,7 +585,7 @@ event({
 			_ = "...It might be a plane.",
 		}, "question")
 		s:mood("a", 4)
-		s:memo("a", "I found a star last night. It turned out to be a plane. Still counts.")
+		s:memo("a", "I found a new star last night. It was a plane.")
 		s:log("{a} went stargazing.")
 		return s:done()
 	end,
@@ -558,6 +604,8 @@ event({
 		s:by("a", {
 			dreamy = "My brain's doing cartwheels. Big ones.",
 			proud = "I'm not tired. Sleep is for other people.",
+			bold = "I've been staring at the ceiling for an hour. It's winning.",
+			cheeky = "I'm not sleeping. I'm planning things.",
 			shy = "I keep thinking about what I said today.",
 			_ = {
 				"I've counted to four hundred sheep. They're getting bored too.",
@@ -597,7 +645,9 @@ event({
 			proud = "A chef has to test things at all hours.",
 			easygoing = "Best meal of the day, this one.",
 			shy = "Please don't tell anyone.",
-			_ = "It's still there. Mostly.",
+			cheeky = "You didn't see anything.",
+			bold = "I was hungry. So what.",
+			_ = "It was there. It isn't now.",
 		}, "heart")
 		s:mood("a", 3)
 		s:log("{a} had a midnight snack.")
@@ -622,12 +672,17 @@ event({
 			_ = "I dreamed my house floated away and I couldn't catch it.",
 		}, "sad")
 		s:choice("It was only a dream", function(c)
-			c:say("a", "I know. I know. Can you stay till I'm sleepy again?", "heart")
+			c:by("a", {
+				bold = "Yeah. I know. ...Stay a bit, though?",
+				proud = "Obviously. I wasn't scared.",
+				shy = "Can you stay? Just till I'm sleepy?",
+				_ = "I know. Can you stay till I'm sleepy again?",
+			}, "heart")
 			c:mood("a", 4)
 			c:hearts("a", 1)
 		end)
 		s:choice("Leave the light on", function(c)
-			c:say("a", "Good idea. The light's on. Nothing floats away with the light on.", "zzz")
+			c:say("a", "Okay. Light on. That's better.", "zzz")
 			c:mood("a", 2)
 		end)
 		s:log("{a} had a bad dream.")
@@ -670,14 +725,24 @@ event({
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "Practising a speech")
 		s:n("{a} is giving a speech to the mirror.")
-		s:say("a", "Thank you, thank you. I couldn't have done it without... me, mostly.", "sparkle", "point")
 		s:by("a", {
-			shy = "Oh. You heard that. I'll just die quietly over here.",
+			proud = "Thank you. I couldn't have done it without... well, me.",
+			shy = "Um. Thank you all for... um. Thank you.",
+			sunny = "Thank you all so much. I'd like to thank my mum, the baker, the man with the dog...",
+			_ = "Thank you, thank you. I'd like to thank... um. Everybody.",
+		}, "sparkle", "point")
+		s:by("a", {
+			shy = "Oh no. You heard that. I'm going to go and hide now.",
 			proud = "Pretty good, right? I'll take questions now.",
 			_ = "It's for nothing. I just like to be ready.",
 		}, "sweat")
 		s:choice("Clap", function(c)
-			c:say("a", "Thank you. Thank you. You're too kind. Keep going.", "sparkle", "cheer")
+			c:by("a", {
+				shy = "Oh. Um. Thank you.",
+				proud = "Thank you. Yes. Keep going.",
+				cheeky = "Louder. I can't hear you.",
+				_ = "Thank you, thank you. You're too kind.",
+			}, "sparkle", "cheer")
 			c:mood("a", 5)
 		end)
 		s:choice("Pretend you heard nothing", function(c)
@@ -772,7 +837,7 @@ event({
 			c:memo("a", "Someone sent me a parcel. I still don't know who.")
 		end)
 		s:choice("Save it for later", function(c)
-			c:say("a", "Good idea. I'll make a cup of tea first. Build it up.", "music")
+			c:say("a", "Good idea. Tea first, then the parcel.", "music")
 			c:mood("a", 2)
 		end)
 		s:log("{a} got a mystery parcel.")
@@ -808,13 +873,13 @@ event({
 		local f1, f2 = ctx.rng:pick(Foods.list), ctx.rng:pick(Foods.list)
 		local s = K.scene(ctx, "A new recipe"):with({ one = f1.name:lower(), two = f2.name:lower() })
 		s:n("{a} is inventing a dish: {one} with {two}.")
-		s:say("a", "Nobody's ever put these together. There must be a reason. Let's find out.", "idea")
+		s:say("a", "Nobody's ever put these two together. Let's see why.", "idea")
 		s:choice("Taste it", function(c)
 			if ctx.rng:chance(0.5) then
 				c:n("It was... good. Weirdly good.")
 				c:voice("a", "excited", "sparkle", "cheer")
 				c:mood("a", 5)
-				c:memo("a", "My {one} and {two} thing worked. I'm a genius. Tell people.")
+				c:memo("a", "My {one} and {two} thing worked. I'm making it again on Sunday.")
 			else
 				c:n("You chewed slowly. {a} watched your face.")
 				c:say("a", "That bad? That bad. I'll write 'no' next to it.", "sweat")
@@ -853,14 +918,19 @@ event({
 		}, "sparkle")
 		s:choice("Could you paint me?", function(c)
 			c:n("{a} had you sit on a crate for an hour. Then they turned the canvas round.")
-			c:say("a", "There. It's you. Well, it's how I see you. Keep it.", "heart", "cheer")
+			c:by("a", {
+				shy = "It's you. I mean, it's meant to be. You can keep it.",
+				proud = "There. You've never looked better. Keep it.",
+				cheeky = "I gave you a bigger nose. Artist's choice. Keep it.",
+				_ = "There. It's you. Keep it.",
+			}, "heart", "cheer")
 			c:keep("keep_portrait", "a")
 			c:hearts("a", 1)
 			c:mood("a", 5)
 			c:memo("a", "I painted your portrait. I hope you hung it somewhere nice.")
 		end)
 		s:choice("Leave them to work", function(c)
-			c:say("a", "Thanks. I'll show you when it's done. If it's ever done.", "music")
+			c:say("a", "Thanks. I'll show you when it's done.", "music")
 			c:mood("a", 3)
 		end)
 		s:log("{a} spent the afternoon painting.")
@@ -878,11 +948,11 @@ makes({
 		{ "a", "It's a bit lopsided. That's the handmade look.", "sparkle", "point" },
 	},
 	react = {
-		proud = "The finest pot this town has ever seen. Probably.",
+		proud = "Best pot on the island. I've seen the others.",
 		shy = "It's my first one. Is it all right?",
 		_ = "I put lavender in it. To hide the wonky bit.",
 	},
-	memo = "I made a pot. It holds water. Mostly.",
+	memo = "I made a pot. It leaks a little at the bottom.",
 	log = "{a} made a clay pot.",
 })
 
@@ -897,7 +967,7 @@ makes({
 	},
 	react = {
 		cheeky = "I was going for a duck, but it got ideas.",
-		bold = "Took three bits of wood. The first two had it coming.",
+		bold = "Took three bits of wood. Snapped the first two.",
 		_ = "I think it's the nicest thing I've ever made.",
 	},
 	memo = "I carved a little bird. My thumb has a plaster on it now.",
@@ -916,7 +986,7 @@ makes({
 	react = {
 		gentle = "I sewed a heart in the middle. For whoever sleeps under it.",
 		proud = "Two hundred stitches. I counted every one.",
-		_ = "It took all autumn. My fingers have holes in them.",
+		_ = "It took all autumn. I kept pricking my fingers.",
 	},
 	memo = "That quilt took me weeks. Are you warm enough at night?",
 	log = "{a} finished a patchwork quilt.",
@@ -933,10 +1003,10 @@ makes({
 	},
 	react = {
 		dreamy = "I like to think it's sailing somewhere small.",
-		proud = "Patience and genius. Mostly genius.",
+		proud = "It takes patience. And steady hands, which I have.",
 		_ = "It took tweezers and a very long week.",
 	},
-	memo = "I put a ship in a bottle. I'm never doing it again. I'm doing it again.",
+	memo = "I put a ship in a bottle. I've already started on a second one.",
 	log = "{a} put a ship in a bottle.",
 })
 
@@ -952,7 +1022,7 @@ makes({
 	react = {
 		dreamy = "If you hold one to your ear you can hear Tuesday.",
 		cheeky = "One of them was a crab. I put him back. He was cross.",
-		_ = "I put a starfish on top. Not a real one. Well, it was.",
+		_ = "There's a starfish on top. I found it already dried out.",
 	},
 	memo = "I filled a jar with shells. The beach has a few left.",
 	log = "{a} filled a jar with shells.",
@@ -965,14 +1035,14 @@ makes({
 	w = { base = 0.08, season = { 1, 2 }, traits = { kind = 0.2 } },
 	lines = {
 		{ "n", "{a} has built a little house on a post, with a round door and flowers painted on." },
-		{ "a", "It's for the birds. A bird has already moved in. That was fast.", "sparkle" },
+		{ "a", "A bird moved in before the paint was dry.", "sparkle" },
 	},
 	react = {
 		gentle = "I put a perch on it so they can sit and look out.",
 		bold = "Best house on the street. Don't tell the builders.",
-		_ = "The roof comes off so you can clean it. I thought of everything.",
+		_ = "The roof comes off, so you can clean it out.",
 	},
-	memo = "I built a birdhouse. The bird hasn't paid rent yet.",
+	memo = "I built a birdhouse. There's a robin in it now.",
 	log = "{a} built a birdhouse.",
 })
 
@@ -988,7 +1058,7 @@ makes({
 	react = {
 		dreamy = "The wind plays it better than I could.",
 		easygoing = "Music I don't have to play. Perfect.",
-		_ = "Each pipe's a different note. One's a bit flat. That's the character.",
+		_ = "Each pipe's a different note. One of them's a bit flat.",
 	},
 	memo = "Every time it's windy I think of the chime I made.",
 	log = "{a} made a wind chime.",
@@ -1006,7 +1076,7 @@ makes({
 	react = {
 		shy = "The heart's a bit wonky. Is that all right?",
 		cheeky = "There's a secret message on the bottom. Don't look yet.",
-		_ = "Tea tastes better out of a mug someone made. That's science.",
+		_ = "Tea tastes better out of a mug someone made for you.",
 	},
 	memo = "Are you drinking out of the mug I painted? Say yes.",
 	log = "{a} painted a mug.",
@@ -1022,7 +1092,7 @@ makes({
 		{ "a", "I've been pressing flowers from the hill. These are ready.", "sparkle" },
 	},
 	react = {
-		gentle = "I framed them. Spring will keep, this way.",
+		gentle = "I framed them, so they'll keep.",
 		dreamy = "They're asleep. Flat and asleep.",
 		_ = "A daisy, two poppies and some lavender. I wrote their names on a label.",
 	},
@@ -1062,12 +1132,12 @@ makes({
 	},
 	lines = {
 		{ "n", "{a} is surrounded by wool. In the middle of it all is a cushion." },
-		{ "a", "I was knitting a scarf. It became a cushion. These things happen.", "sweat" },
+		{ "a", "I was knitting a scarf. Then it was a cushion.", "sweat" },
 	},
 	react = {
-		easygoing = "It's very good for naps. I've tested it. A lot.",
+		easygoing = "It's good for naps. I've checked.",
 		proud = "Three cables. Do you know how hard cables are?",
-		_ = "It has a button. The button doesn't do anything. It's just a nice button.",
+		_ = "It's got a button on. The button doesn't do anything.",
 	},
 	memo = "I knitted a cushion. Somebody please sit on it.",
 	log = "{a} knitted a cushion.",
@@ -1087,7 +1157,7 @@ makes({
 		dreamy = "The sea made the wood. I only put it together.",
 		_ = "The real gulls keep looking at it. I think they're jealous.",
 	},
-	memo = "My driftwood gull scared off a real one. Proud moment.",
+	memo = "My driftwood gull scared off a real one this morning.",
 	log = "{a} made a gull out of driftwood.",
 })
 
@@ -1101,11 +1171,11 @@ makes({
 		{ "a", "There's a tiny house in it. With a tiny tree. I made all of it.", "sparkle" },
 	},
 	react = {
-		gentle = "It's for when it's cold out. A little winter you can hold.",
+		gentle = "It's for when it's cold out. You can shake it by the fire.",
 		cheeky = "I nearly glued my finger in there.",
 		_ = "Shake it. Go on. See?",
 	},
-	memo = "The snow globe I made sits on my windowsill. Well, it did.",
+	memo = "I keep shaking the snow globe I made. I can't stop.",
 	log = "{a} made a snow globe.",
 })
 
@@ -1123,7 +1193,7 @@ event({
 			cheeky = "Ta da. I'll be here all week.",
 			shy = "Nobody saw that. Please say nobody saw that.",
 			bold = "The ground started it.",
-			_ = "I'm fine. The ground is fine. We're all fine.",
+			_ = "I'm fine. I'm fine. Keep walking.",
 		}, "sweat", "laugh")
 		s:mood("a", -1)
 		s:log("{a} tripped over nothing.")
@@ -1185,7 +1255,7 @@ event({
 				c:say("a", "{pet}. Yes. You look like a {pet}.", "heart", "cheer")
 				c:mood("a", 6)
 				c:hearts("a", 1)
-				c:memo("a", "{pet} slept on my face last night. Very warm. Very heavy.")
+				c:memo("a", "{pet} slept on my face last night. I didn't have the heart to move.")
 			end)
 		end
 		s:log("A stray cat moved in with {a}.")
@@ -1205,8 +1275,8 @@ event({
 			gentle = "Poor thing. It's just looking for somewhere warm.",
 			shy = "I'm moving house. That's it. It can have the house.",
 			proud = "I'm not scared. I'm letting it have the bath. As a guest.",
-			cheeky = "I'm going to put it in someone's shoe. Kidding. Mostly.",
-			dreamy = "It's got eight legs and I've only got two. It's winning.",
+			cheeky = "I'm going to put it in someone's shoe. ...Kidding.",
+			dreamy = "Do you think it has a name? It looks like a Clive.",
 			_ = "Can someone else deal with this? Anyone?",
 		}, "sweat")
 		s:choice("Put it outside", function(c)
@@ -1216,7 +1286,11 @@ event({
 			c:mood("a", 2)
 		end)
 		s:choice("It was here first", function(c)
-			c:say("a", "Fine. It can stay. I'll shower at the beach.", "sweat")
+			c:by("a", {
+				gentle = "It can stay, then. I'll wash at the beach.",
+				proud = "Fine. It's my guest. I'll shower at the beach.",
+				_ = "Fine. It can stay. I'll shower at the beach.",
+			}, "sweat")
 			c:mood("a", -2)
 		end)
 		s:log("{a} found a spider in the bath.")
@@ -1232,11 +1306,11 @@ event({
 		local coins = ctx.rng:int(2, 6) * 5
 		local s = K.scene(ctx, "A lucky day"):with({ coins = coins })
 		s:n("Everything is going right for {a} today.")
-		s:say("a", "Found a coin. Then another one. A bird sang at me. Then a rainbow.", "sparkle", "cheer")
+		s:say("a", "Found a coin on the way out. Then another one by the fountain.", "sparkle", "cheer")
 		s:by("a", {
 			proud = "The world's finally caught up with me.",
 			dreamy = "I think the sky likes me today.",
-			_ = "I'm not going to question it. I'm going to enjoy it.",
+			_ = "I'm not going to ask why.",
 		}, "music")
 		s:coins(coins)
 		s:mood("a", 5)
@@ -1252,15 +1326,15 @@ event({
 	weight = W({ base = 0.2 }),
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "One of those days")
-		s:n("{a} stubbed their toe, got rained on by a gutter and dropped their toast butter side down.")
+		s:n("{a} stubbed their toe on the way out, then dropped their toast butter side down.")
 		s:by("a", {
 			sunny = "Okay. Okay. I'm still smiling. Look. Smiling.",
-			proud = "This is a test. I'm passing it. Barely.",
+			proud = "This is a test. I'm passing it.",
 			easygoing = "I'm going back to bed. See you tomorrow.",
 			_ = "What next? Don't answer. Don't tempt it.",
 		}, "sad")
 		s:choice("Cheer them up", function(c)
-			c:n("You did your best impression of a seagull. It wasn't good. It worked anyway.")
+			c:n("You did your best seagull. It wasn't very good, but {a} laughed.")
 			c:voice("a", "laugh", "music", "laugh")
 			c:mood("a", 6)
 			c:hearts("a", 1)
@@ -1304,13 +1378,13 @@ event({
 		local s = K.scene(ctx, "It won't wash off")
 		s:n("{a} drew a curly moustache on their face for a laugh. With the wrong pen.")
 		s:by("a", {
-			cheeky = "Worth it. Look at me. I'm distinguished.",
+			cheeky = "Look at me. I'm distinguished.",
 			proud = "It suits me, frankly.",
 			shy = "I've scrubbed it four times. It's still there.",
 			_ = "I'll have to wear it to work. Tell me it suits me.",
 		}, "sweat", "laugh")
 		s:mood("a", 1)
-		s:memo("a", "The moustache is nearly gone. Nearly.")
+		s:memo("a", "The moustache is nearly gone. You can still see the curly bit.")
 		s:log("{a} drew on a moustache that won't come off.")
 		return s:done()
 	end,
@@ -1336,11 +1410,15 @@ event({
 			_ = "Second verse is about the bus. Needs work.",
 		}, "sparkle")
 		s:choice("Play it again", function(c)
-			c:say("a", "From the top. Everyone sing.", "music", "cheer")
+			c:by("a", {
+				shy = "Again? Okay. Um. From the top.",
+				bold = "From the top. Louder this time.",
+				_ = "From the top. Everyone sing.",
+			}, "music", "cheer")
 			c:all(2)
 		end)
 		s:choice("Keep working on it", function(c)
-			c:say("a", "You're right. It needs a key change. Everything needs a key change.", "idea")
+			c:say("a", "You're right. It needs a key change.", "idea")
 			c:mood("a", 3)
 		end)
 		s:log("{a} wrote a song about the town.")
@@ -1409,8 +1487,13 @@ event({
 			_ = "I miss where I grew up, a bit. The smell of it.",
 		}, "sad")
 		s:choice("Tell me about it", function(c)
-			c:n("{a} talked for a long time: a bakery on a corner, a dog called Bean, a hill you could sledge down.")
-			c:say("a", "That helped. It's nice to remember it out loud.", "heart")
+			c:n("{a} talked for a long time, mostly about a dog called Bean and a hill you could sledge down.")
+			c:by("a", {
+				bold = "Thanks. Don't tell anyone I got soppy.",
+				shy = "Thanks for listening. I don't talk about it much.",
+				proud = "Well. That was more than I meant to say.",
+				_ = "Thanks. I haven't talked about it in ages.",
+			}, "heart")
 			c:mood("a", 5)
 			c:hearts("a", 1)
 			c:memo("a", "I told you about Bean, didn't I? The dog from home. Good dog.")
@@ -1450,7 +1533,7 @@ event({
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "A hidden talent")
 		s:say("a", "I just found out I can wiggle my ears. Look. LOOK.", "sparkle", "point")
-		s:n("They can. Only a bit. But they can.")
+		s:n("They can, just about.")
 		s:by("a", {
 			proud = "I've always been gifted. Now there's proof.",
 			cheeky = "I'm going to do it at the worst possible moments.",
@@ -1473,7 +1556,7 @@ event({
 		s:n("{a} climbed the hill and shouted HELLO at the cliffs.")
 		s:n("The cliffs said HELLO back. Then, a moment later, a different voice said 'keep it down'.")
 		s:by("a", {
-			bold = "Who said that? Come out. Fight me.",
+			bold = "Who said that? Come out where I can see you.",
 			shy = "Sorry. Sorry. Sorry, sorry. Sorry.",
 			dreamy = "The hill has opinions. I like that in a hill.",
 			_ = "I think there's somebody living up there.",
@@ -1508,7 +1591,7 @@ local WORRIES = {
 	"What if the sea gets bored and leaves?",
 	"I waved at someone and they weren't waving at me.",
 	"I said 'you too' when the baker said 'enjoy your bread'.",
-	"I can't remember if I locked the door. I don't have a lock.",
+	"I can't remember if I locked the door. I've been back twice.",
 }
 
 event({
@@ -1520,13 +1603,22 @@ event({
 		s:say("a", ctx.rng:pick(WORRIES), "sweat")
 		s:voice("a", "worry", "question")
 		s:choice("It's not as bad as you think", function(c)
-			c:say("a", "You think? Okay. Okay. I'll stop thinking about it.", "heart")
+			c:by("a", {
+				proud = "I wasn't worried. ...Okay, a bit.",
+				easygoing = "Yeah. You're right. Too much effort anyway.",
+				_ = "You think? Okay. Okay. I'll stop thinking about it.",
+			}, "heart")
 			c:mood("a", 4)
 			c:hearts("a", 1)
 		end)
 		s:choice("Let's go and check", function(c)
 			c:n("You went to check together. It was fine. It's always fine.")
-			c:say("a", "Thank you. I feel silly now. Nice silly.", "heart")
+			c:by("a", {
+				shy = "Thanks. Sorry. I feel a bit silly.",
+				proud = "I knew it was fine. I was checking you knew.",
+				bold = "Right. Fine. Good.",
+				_ = "Thanks. I feel a bit silly now.",
+			}, "heart")
 			c:mood("a", 5)
 		end)
 		s:log("{a} was worried about something small.")
@@ -1581,7 +1673,7 @@ event({
 			s:voice("a", "brag", "sparkle", "cheer")
 			s:mood("a", 6)
 		else
-			s:n("There was a bang, some smoke and a smell like burnt toast.")
+			s:n("There was a bang and a smell like burnt toast.")
 			s:by("a", {
 				proud = "Version two will be perfect.",
 				easygoing = "Eh. Lunch anyway?",
@@ -1700,24 +1792,20 @@ event({
 		local s = K.scene(ctx, "Ten years from now")
 		s:n("{a} was looking out over the rooftops.")
 		if city.value > 20000 then
-			s:say(
-				"a",
-				"Imagine this place in ten years. It's already huge. It'll have a tram. A tram!",
-				"idea",
-				"point"
-			)
+			s:say("a", "Imagine this place in ten years. It's big already. I want a tram.", "idea", "point")
 		else
-			s:say(
-				"a",
-				"Imagine this place in ten years. More houses. A bigger bakery. A statue of me.",
-				"idea",
-				"point"
-			)
+			s:by("a", {
+				proud = "Imagine this place in ten years. More houses. A statue of me.",
+				shy = "Imagine this place in ten years. More houses. More people, I suppose.",
+				_ = "Imagine this place in ten years. More houses. A bigger bakery.",
+			}, "idea", "point")
 		end
 		s:by("a", {
-			gentle = "I hope we're all still here. That's the main thing.",
-			cheeky = "The statue's non negotiable.",
-			_ = "You'll build it, won't you? I believe in you.",
+			gentle = "I hope we're all still here.",
+			cheeky = "I want my name on something. A bench, at least.",
+			proud = "I'd like a say in where things go, mind.",
+			shy = "I hope there's still room for me.",
+			_ = "You'll build it, won't you?",
 		}, "heart")
 		s:hearts("a", 1)
 		s:log("{a} wondered what the town will be like in ten years.")
@@ -1739,7 +1827,9 @@ event({
 			proud = "Finest lemonade on the island. Freshly squeezed by me.",
 			shy = "Um. Lemonade? Only if you want. No pressure.",
 			cheeky = "Half price if you can tell me what's in it. Nobody can.",
-			_ = "Lemonade. Cold. Very cold. Get it while it's cold.",
+			bold = "LEMONADE. Cold. Get it here.",
+			easygoing = "Lemonade. Leave the coins in the tin. I'm sitting down.",
+			_ = "Cold lemonade here. Come and get some.",
 		}, "music", "wave")
 		s:n("By the afternoon the jug was empty and the tin was full.")
 		s:coins(coins)

@@ -91,6 +91,22 @@ local SKILLS =
 
 local WANTS = { "a new pair of boots", "a fancy hat", "a fishing rod", "a set of paints", "a kite", "a guitar" }
 
+-- What someone says when you take the other side in a quarrel, in their own way.
+local SULK = {
+	proud = "Fine. You'll see I was right.",
+	shy = "Oh. Okay.",
+	gentle = "All right. If that's how it is.",
+	cheeky = "Wow. Okay. Noted.",
+	dreamy = "Oh. I'll go and be wrong somewhere else, then.",
+	easygoing = "Eh. Fine.",
+	_ = "Fine. Whatever.",
+}
+
+-- A line in the villager's own way (Kit.byPers): a map keyed by personality, "_" for anyone else.
+local function by(ctx: Ctx, who: string, vid: string, map: any, icon: string?, gesture: string?): any
+	return line(who, Kit.byPers(ctx, vid, map), icon, gesture)
+end
+
 local function trait(ctx: Ctx, vid: string, t: string): number
 	return Personalities.trait(ctx.v(vid).pers, t)
 end
@@ -171,7 +187,7 @@ event({
 			choices = {
 				{
 					text = ctx.f("Side with {a}"),
-					lines = { voice(ctx, "a", a, "happy", "sparkle", "cheer"), line("b", "Fine. Whatever.", "anger") },
+					lines = { voice(ctx, "a", a, "happy", "sparkle", "cheer"), by(ctx, "b", b, SULK, "anger") },
 					effects = {
 						{ t = "rel", a = "a", b = "b", d = -12 },
 						{ t = "mood", who = "a", d = 6 },
@@ -181,7 +197,7 @@ event({
 				},
 				{
 					text = ctx.f("Side with {b}"),
-					lines = { voice(ctx, "b", b, "happy", "sparkle", "cheer"), line("a", "Fine. Whatever.", "anger") },
+					lines = { voice(ctx, "b", b, "happy", "sparkle", "cheer"), by(ctx, "a", a, SULK, "anger") },
 					effects = {
 						{ t = "rel", a = "a", b = "b", d = -12 },
 						{ t = "mood", who = "b", d = 6 },
@@ -193,11 +209,25 @@ event({
 					text = "Ask them to make up",
 					lines = if works
 						then {
-							line("a", "...Sorry. I got carried away.", "sweat"),
-							line("b", "Me too. Want to share the next one?", "heart"),
+							by(ctx, "a", a, {
+								proud = "...Fine. I may have got a bit carried away.",
+								bold = "...Yeah. Sorry. I got loud.",
+								shy = "...Sorry. I didn't mean it.",
+								_ = "...Sorry. I got carried away.",
+							}, "sweat"),
+							by(ctx, "b", b, {
+								gentle = "Me too. Let's forget it, shall we?",
+								cheeky = "Me too. Hug? No? Okay.",
+								proud = "...So did I. A little.",
+								_ = "Me too. Let's forget about it.",
+							}, "heart"),
 						}
 						else {
-							line("a", "Not until they say sorry first.", "anger"),
+							by(ctx, "a", a, {
+								shy = "...I don't want to talk about it.",
+								easygoing = "Nah. Not today.",
+								_ = "Not until they say sorry first.",
+							}, "anger"),
 							line("b", "Then we'll be here all week.", "anger"),
 						},
 					effects = if works
@@ -232,8 +262,19 @@ event({
 			title = "Making up",
 			lines = {
 				line(nil, ctx.f("{a} walked over to {b} holding {food}.", { food = food.name:lower() })),
-				line("a", "I brought a peace offering. I was being silly.", "sweat"),
-				line("b", "...I was too. Thanks.", "heart"),
+				by(ctx, "a", a, {
+					proud = "Here. I may have been... a bit much.",
+					shy = "I brought you this. I'm sorry about before.",
+					bold = "Here. I was out of line. Truce?",
+					cheeky = "Peace offering. You can't stay cross with your mouth full.",
+					_ = "I brought you this. I was being silly.",
+				}, "sweat"),
+				by(ctx, "b", b, {
+					proud = "...Fine. I was a bit much too.",
+					gentle = "Oh, come here. I was silly too.",
+					shy = "...Me too. Thank you.",
+					_ = "...I was too. Thanks.",
+				}, "heart"),
 			},
 			effects = { { t = "makeup", a = "a", b = "b" }, { t = "rel", a = "a", b = "b", d = 10 } },
 			log = ctx.f("{a} and {b} made up.", {}),
@@ -261,7 +302,11 @@ event({
 		local thing = if food then food.name:lower() else ctx.rng:pick(GIFTS)
 		local lines = {
 			line(nil, ctx.f("{a} has a present for {b}: {thing}.", { thing = thing })),
-			line("a", "I saw this and thought of you.", "sparkle", "wave"),
+			by(ctx, "a", a, {
+				shy = "I, um, got you this.",
+				bold = "Here. Got you something.",
+				_ = "I saw this and thought of you.",
+			}, "sparkle", "wave"),
 		}
 		local effects
 		if loves and food then
@@ -275,7 +320,14 @@ event({
 			}
 		elseif ctx.rng:chance(0.12) then
 			-- not quite their thing
-			table.insert(lines, line("b", "Oh. Um. Thank you. I'll... save it for later.", "sweat"))
+			table.insert(
+				lines,
+				by(ctx, "b", b, {
+					proud = "Oh. How... thoughtful.",
+					cheeky = "Oh. Wow. You shouldn't have. Really.",
+					_ = "Oh. Um. Thank you. I'll... save it for later.",
+				}, "sweat")
+			)
 			effects = { { t = "rel", a = "a", b = "b", d = 2 } }
 		else
 			table.insert(lines, voice(ctx, "b", b, "thanks", "heart"))
@@ -307,14 +359,18 @@ event({
 			title = "An outing",
 			lines = {
 				line("a", ctx.f("Hey {b}, want to go to {place} with me?", { place = place }), "idea", "point"),
-				line("b", "Ooh, sure. Can we?", "question"),
+				by(ctx, "b", b, {
+					shy = "Me? Okay. If that's all right.",
+					easygoing = "Sure, if there's somewhere to sit.",
+					_ = "Ooh, sure. Can we?",
+				}, "question"),
 			},
 			choices = {
 				{
 					text = "Have fun, you two",
 					lines = {
 						line(nil, ctx.f("{a} and {b} headed off to {place}.", { place = place })),
-						line(nil, "They came back tired, a bit sunburnt and still laughing."),
+						line(nil, "They came back at teatime, a bit sunburnt."),
 					},
 					effects = {
 						{ t = "away", who = { "a", "b" }, seconds = 30 },
@@ -359,7 +415,14 @@ event({
 				line("a", "Hehehe. Got you.", "sparkle", "laugh"),
 				if goodSport
 					then line("b", "Okay, okay, that was good. You'll pay for it though.", "music", "laugh")
-					else line("b", "That wasn't funny!", "anger"),
+					else by(ctx, "b", b, {
+						bold = "Oi. Not funny.",
+						proud = "How childish.",
+						shy = "That... wasn't funny.",
+						gentle = "That wasn't very nice.",
+						dreamy = "Oh. Was that a joke? I didn't like it.",
+						_ = "That wasn't funny!",
+					}, "anger"),
 			},
 			choices = {
 				{
@@ -429,10 +492,19 @@ event({
 			title = "Arm wrestling",
 			lines = {
 				line("a", ctx.f("{b}! Arm wrestle. Loser does the dishes."), "idea", "point"),
-				line("b", "You're on.", "sparkle"),
+				by(ctx, "b", b, { shy = "Um. Okay?", easygoing = "Do I have to?", _ = "You're on." }, "sparkle"),
 				line(nil, "A lot of grunting later..."),
-				line(winner, "Ha. Dishes are all yours.", "sparkle", "cheer"),
-				line(loser, "Next time. Next time for sure.", "sweat"),
+				by(ctx, winner, if aWins then a else b, {
+					proud = "As expected. Enjoy the dishes.",
+					shy = "Oh. I won? Sorry about the dishes.",
+					_ = "Ha. Dishes are all yours.",
+				}, "sparkle", "cheer"),
+				by(ctx, loser, if aWins then b else a, {
+					proud = "I let you win. Obviously.",
+					easygoing = "Eh. I like doing dishes anyway.",
+					bold = "Again. Right now.",
+					_ = "Next time. Next time for sure.",
+				}, "sweat"),
 			},
 			effects = {
 				{ t = "rel", a = "a", b = "b", d = 4 },
@@ -530,10 +602,20 @@ event({
 			lines = {
 				line("a", ctx.f("Race you to the fence, {b}."), "idea", "point"),
 				line(nil, "And they're off."),
-				line(winner, "I win!", "sparkle", "cheer"),
+				by(ctx, winner, if aWins then a else b, {
+					proud = "As expected.",
+					shy = "Oh. I won?",
+					bold = "YES. First.",
+					_ = "I win!",
+				}, "sparkle", "cheer"),
 				if sore
 					then line(loser, "That didn't count. I wasn't ready.", "anger")
-					else line(loser, "Wow, you're fast.", "sweat"),
+					else by(ctx, loser, loserVid, {
+						shy = "You're really fast...",
+						easygoing = "Nope. I'm done. You win.",
+						dreamy = "I was watching a butterfly. Well done, though.",
+						_ = "Wow, you're fast.",
+					}, "sweat"),
 			},
 			effects = {
 				{ t = "mood", who = winner, d = 4 },
@@ -561,8 +643,18 @@ event({
 			lines = {
 				line("a", joke[1], "music", "point"),
 				if laughs
-					then line("b", "Hahaha. Okay, that's a good one.", "music", "laugh")
-					else line("b", "...I'm leaving.", "sweat"),
+					then by(ctx, "b", b, {
+						dreamy = "Hee. I'll laugh again later, too.",
+						cheeky = "Ha. I'm stealing that one.",
+						_ = "Hahaha. Okay, that's a good one.",
+					}, "music", "laugh")
+					else by(ctx, "b", b, {
+						proud = "That was beneath both of us.",
+						gentle = "Oh dear. ...Ha.",
+						shy = "Um. Hehe?",
+						bold = "Boo.",
+						_ = "...I'm leaving.",
+					}, "sweat"),
 			},
 			effects = { { t = "rel", a = "a", b = "b", d = if laughs then 6 else -1 } },
 			log = ctx.f("{a} told {b} a joke."),
@@ -629,7 +721,11 @@ event({
 				line("a", ctx.f("Want me to show you how to {skill}?", { skill = skill }), "idea"),
 				line("b", "Yes please.", "sparkle"),
 				line(nil, "A few tries later, they get it."),
-				line("b", "I did it!", "sparkle", "cheer"),
+				by(ctx, "b", b, {
+					shy = "I did it. I actually did it.",
+					proud = "There. I knew I'd get it.",
+					_ = "I did it!",
+				}, "sparkle", "cheer"),
 			},
 			effects = { { t = "xp", who = "b", d = 35 }, { t = "rel", a = "a", b = "b", d = 5 } },
 			log = ctx.f("{a} taught {b} to {skill}.", { skill = skill }),
@@ -653,7 +749,12 @@ event({
 			title = "Left out",
 			lines = {
 				line(nil, ctx.f("{b} and {c} are laughing together again.")),
-				line("a", "They always do stuff without me.", "sad"),
+				by(ctx, "a", a, {
+					shy = "They never ask me. It's fine.",
+					proud = "I don't need them. ...They could ask, though.",
+					bold = "They could at least ask.",
+					_ = "They always do stuff without me.",
+				}, "sad"),
 			},
 			choices = {
 				{
@@ -670,7 +771,9 @@ event({
 				},
 				{
 					text = ctx.f("Cheer {a} up yourself"),
-					lines = { line("a", "Thanks. You're a good friend.", "heart") },
+					lines = {
+						by(ctx, "a", a, { shy = "Thanks. That helps.", _ = "Thanks. You're a good friend." }, "heart"),
+					},
 					effects = { { t = "mood", who = "a", d = 8 } },
 				},
 			},
@@ -729,7 +832,13 @@ event({
 				},
 				{
 					text = "Not right now",
-					lines = { line("a", "Okay... my tummy is sad though.", "sad") },
+					lines = {
+						by(ctx, "a", a, {
+							proud = "Fine. I didn't need it.",
+							bold = "Ugh. Fine.",
+							_ = "Okay... my tummy is sad though.",
+						}, "sad"),
+					},
 					effects = { { t = "mood", who = "a", d = -4 } },
 				},
 			},
@@ -835,7 +944,12 @@ event({
 		return {
 			title = "Nowhere to sleep",
 			lines = {
-				line("a", "Um. Where do I sleep?", "sad"),
+				by(ctx, "a", a, {
+					bold = "Right. Where's my bed, then?",
+					proud = "I'll need a bed. A good one.",
+					easygoing = "So... where do I nap?",
+					_ = "Um. Where do I sleep?",
+				}, "sad"),
 				line(nil, "Every villager needs a bed. Find beds under Furniture in Build mode."),
 			},
 			effects = { { t = "mood", who = "a", d = -3 } },
@@ -858,7 +972,12 @@ event({
 			title = "A dream",
 			lines = {
 				line("a", ctx.f("Last night I dreamed about {dream}.", { dream = dream }), "zzz"),
-				line("a", "I think it means something. Or I'm hungry.", "question"),
+				by(ctx, "a", a, {
+					dreamy = "I think it was trying to tell me something.",
+					easygoing = "Weird. Anyway.",
+					proud = "Even my dreams are interesting.",
+					_ = "I think it means something. Or I was just hungry.",
+				}, "question"),
 			},
 			effects = { { t = "mood", who = "a", d = 2 } },
 			log = ctx.f("{a} dreamed about {dream}.", { dream = dream }),
@@ -963,7 +1082,13 @@ event({
 			title = "Free time",
 			lines = {
 				line(nil, ctx.f("{a} spent the afternoon {hobby}.", { hobby = hobby })),
-				line("a", "Time well spent.", "sparkle"),
+				by(ctx, "a", a, {
+					easygoing = "Good afternoon, that.",
+					proud = "I'm getting very good at it.",
+					dreamy = "Is it evening already?",
+					shy = "That was nice.",
+					_ = "Time well spent.",
+				}, "sparkle"),
 			},
 			effects = { { t = "mood", who = "a", d = 4 } },
 			log = ctx.f("{a} spent the afternoon {hobby}.", { hobby = hobby }),
@@ -1007,7 +1132,11 @@ event({
 			title = "Practice",
 			lines = {
 				line(nil, ctx.f("{a} stayed late at the {place} to practise.", { place = place })),
-				line("a", "I'm getting the hang of this.", "sparkle", "point"),
+				by(ctx, "a", a, {
+					proud = "I was good already. Now I'm better.",
+					shy = "I think I'm getting it.",
+					_ = "I'm getting the hang of this.",
+				}, "sparkle", "point"),
 			},
 			effects = { { t = "xp", who = "a", d = 25 } },
 			log = ctx.f("{a} practised at the {place}.", { place = place }),
@@ -1029,7 +1158,14 @@ event({
 	scene = function(ctx: Ctx, a: string, b: string): Scene
 		return {
 			title = "A bit lonely",
-			lines = { line("a", "Everyone seems to have friends but me.", "sad") },
+			lines = {
+				by(ctx, "a", a, {
+					shy = "Everyone's got someone to talk to. Except me.",
+					proud = "I don't need friends. ...It'd be nice, though.",
+					bold = "Nobody ever asks me along.",
+					_ = "Everyone seems to have friends but me.",
+				}, "sad"),
+			},
 			choices = {
 				{
 					text = ctx.f("Introduce them to {b}"),
@@ -1080,7 +1216,13 @@ event({
 			lines = {
 				line(nil, ctx.f("It's {a}'s birthday today.")),
 				line(nil, "Everyone gathers round with cake."),
-				line("a", "You all remembered. This is the best.", "heart", "cheer"),
+				by(ctx, "a", a, {
+					shy = "You all remembered? Oh. Thank you.",
+					proud = "Of course you remembered. Thank you, though.",
+					bold = "Cake. Right, who's cutting it?",
+					easygoing = "Aw. You didn't have to. Is there cake?",
+					_ = "You all remembered. This is the best.",
+				}, "heart", "cheer"),
 			},
 			effects = effects,
 			log = ctx.f("{a} had a birthday party."),
@@ -1187,7 +1329,12 @@ event({
 			lines = {
 				line(nil, ctx.f("{b} stopped by {a}'s {place}.", { place = place })),
 				line("a", ctx.rng:pick(w.job.lines), "music", "wave"),
-				line("b", "I'll take one of those, please.", "sparkle"),
+				by(ctx, "b", b, {
+					shy = "Um. One of those, please?",
+					bold = "One of those. Thanks.",
+					proud = "I'll have your best one.",
+					_ = "I'll take one of those, please.",
+				}, "sparkle"),
 			},
 			effects = {
 				{ t = "coins", d = coins },
@@ -1218,7 +1365,12 @@ event({
 			title = "A busy day",
 			lines = {
 				line(nil, ctx.f("Customers keep queueing up at {a}'s counter.", { place = place })),
-				line("a", "I've never been this busy. I love it.", "sparkle", "cheer"),
+				by(ctx, "a", a, {
+					easygoing = "So many people. I need a sit down after this.",
+					shy = "So many people... I'm doing okay, aren't I?",
+					proud = "Of course they're queueing. It's me.",
+					_ = "I've never been this busy. I love it.",
+				}, "sparkle", "cheer"),
 			},
 			effects = { { t = "coins", d = coins }, { t = "mood", who = "a", d = 5 }, { t = "xp", who = "a", d = 15 } },
 			log = ctx.f("{a} had a busy day at the {place}.", { place = place }),
@@ -1240,7 +1392,13 @@ event({
 	scene = function(ctx: Ctx, a: string): Scene
 		return {
 			title = "A day off",
-			lines = { line("a", "Could I take the rest of today off? I'm worn out.", "sweat") },
+			lines = {
+				by(ctx, "a", a, {
+					proud = "I'd like the rest of the day off. I've earned it.",
+					shy = "Um. Could I maybe go home early? Sorry.",
+					_ = "Could I take the rest of today off? I'm worn out.",
+				}, "sweat"),
+			},
 			choices = {
 				{
 					text = "Go and rest",
@@ -1274,7 +1432,12 @@ event({
 		return {
 			title = "Looking for work",
 			lines = {
-				line("a", "I'd love a job. Anything, really.", "question"),
+				by(ctx, "a", a, {
+					proud = "I'd like a job. A good one, ideally.",
+					bold = "Give me a job. Any job.",
+					shy = "Is there any work going? I don't mind what.",
+					_ = "I'd love a job. Anything, really.",
+				}, "question"),
 				line(nil, "Put a workplace down from the Work tab in Build mode and they'll take it."),
 			},
 			effects = { { t = "mood", who = "a", d = -2 } },

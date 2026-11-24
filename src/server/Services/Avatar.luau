@@ -345,7 +345,7 @@ function Avatar.fromUserName(name: string): (Appearance.Appearance?, string?)
 		return Players:GetUserIdFromNameAsync(name)
 	end)
 	if not ok or type(id) ~= "number" then
-		return nil, "No one goes by that name."
+		return nil, "Couldn't find anyone with that username."
 	end
 	local app = Avatar.fromUserId(id)
 	if not app then
@@ -873,7 +873,7 @@ function Avatar.start()
 		end
 		local t = os.clock()
 		if lastShare[player] and t - lastShare[player] < 30 then
-			return false, "Give it a moment before sharing another."
+			return false, "Wait a moment before sharing another."
 		end
 		local clean = name:gsub("[%c]", ""):gsub("^%s+", ""):gsub("%s+$", ""):sub(1, Tuning.Villagers.NameMaxLength)
 		if #clean < 1 then

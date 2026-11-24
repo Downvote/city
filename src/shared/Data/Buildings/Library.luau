@@ -38,7 +38,7 @@ return function(add: any)
 	add(
 		"library",
 		"Library",
-		"A tall reading room with a gallery of books, the librarian's desk, and a garden to read in.",
+		"A tall reading room with a gallery running round it, and a garden out back.",
 		"news",
 		36,
 		28,

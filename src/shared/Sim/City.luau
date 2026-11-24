@@ -7,6 +7,7 @@ local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Plan = require(script.Parent.Parent.Build.Plan)
 local Catalog = require(script.Parent.Parent.Build.Catalog)
 local Jobs = require(script.Parent.Parent.Data.Jobs)
+local Text = require(script.Parent.Parent.Util.Text)
 
 local City = {}
 
@@ -162,7 +163,8 @@ function City.canExpand(profile: any): (any?, string?)
 		return nil, "Your land can't get any bigger."
 	end
 	if stats.level < land.Level then
-		return nil, "Your town needs to grow first: reach " .. Tuning.City.Levels[land.Level].Name:lower() .. "."
+		return nil,
+			Text.fill("Your town needs to be {a} first.", { a = Text.an(Tuning.City.Levels[land.Level].Name:lower()) })
 	end
 	if profile.coins < land.Price then
 		return nil, "Not enough coins."

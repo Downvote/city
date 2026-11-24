@@ -421,7 +421,7 @@ local function keepsakeTile(parent: Instance, entry: Keepsakes.Entry, order: num
 		if entry.left > 0 then
 			BuildMode.startPlacing(def.id)
 		else
-			Toasts.show("Every one you were given is down already.", "info")
+			Toasts.show("You've already put all of these down.", "info")
 		end
 	end)
 	b:SetAttribute("ItemId", def.id)
@@ -844,7 +844,7 @@ local function catalogTray(cat: string)
 		local entries = Keepsakes.list(State.data.keepsakes, State.plan)
 		if #entries == 0 then
 			trayNote(trayStack(), "gift", T.Pink, "Nothing here yet", {
-				"When a villager makes something for you, it waits here.",
+				"Things your villagers make for you go here.",
 				"Keepsakes are free to put down.",
 			})
 			return
@@ -912,7 +912,7 @@ local function wallTray(styles: { string }, room: boolean)
 		-- how fences are coloured, in a hint strip level with the middle of the tiles
 		local note = Kit.box({ Parent = row, Size = UDim2.new(1, -taken, 0, STYLE_H), LayoutOrder = 20 })
 		Kit.list(note, 0).VerticalAlignment = Enum.VerticalAlignment.Center
-		Kit.hint("Fences come in their own colours. Paint one with the Paint tool once it is up.", {
+		Kit.hint("To change a fence's colour, use the Paint tool once it's up.", {
 			Parent = note,
 			Size = UDim2.new(1, -8, 0, 0),
 		})
@@ -1159,7 +1159,7 @@ local function selectionTray()
 		local taken = #Plan.WallStyleOrder * (STYLE_W + GAP) + GAP
 		local note = Kit.box({ Parent = row, Size = UDim2.new(1, -taken, 0, STYLE_H), LayoutOrder = 20 })
 		Kit.list(note, 0).VerticalAlignment = Enum.VerticalAlignment.Center
-		Kit.hint("Each side of a wall has its own paint. Use the Paint tool to colour the inside and the outside.", {
+		Kit.hint("Each side of a wall takes its own colour. Use the Paint tool on either side.", {
 			Parent = note,
 			Size = UDim2.new(1, -8, 0, 0),
 		})
@@ -1176,7 +1176,7 @@ end
 local function sellTray()
 	local stack = trayStack()
 	trayNote(stack, "trash", T.Coral, "Click something to sell it", {
-		"You get back what you paid for it. Sold the wrong thing? Undo puts it back.",
+		"You get back what you paid. Undo brings it back.",
 	}, 1)
 	Kit.hint("The starting house was a gift, so its pieces sell for nothing.", {
 		Parent = stack,

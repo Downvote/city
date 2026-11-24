@@ -37,7 +37,7 @@ return function(add: any)
 	add(
 		"postoffice",
 		"Post office",
-		"A counter for letters and parcels, a sorting room at the back and a yard for the bicycle.",
+		"A counter for letters and parcels, with the sorting room behind it.",
 		"gift",
 		32,
 		28,

@@ -84,7 +84,7 @@ return function(add: any)
 	add(
 		"icecream",
 		"Ice cream parlour",
-		"Scoops through the hatch, a booth inside and a pavilion with a picnic table.",
+		"Serves through a hatch, with a picnic table under a pavilion next door.",
 		"sun",
 		34,
 		24,

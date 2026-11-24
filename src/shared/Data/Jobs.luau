@@ -33,12 +33,12 @@ local list: { Job } = {
 		blurb = "Runs a market stall.",
 		income = 1050,
 		likes = { "sunny", "proud" },
-		lines = { "Fresh stock today!", "Take a look, no rush.", "Two for one on apples." },
+		lines = { "Fresh stock today.", "Take a look, no rush.", "Two for one on apples." },
 	},
 	{
 		id = "barista",
 		name = "Barista",
-		blurb = "Makes the coffee everyone needs.",
+		blurb = "Makes the coffee.",
 		income = 1125,
 		likes = { "sunny", "gentle" },
 		lines = { "One latte, coming up.", "Mind the foam, it's hot.", "I drew a heart on that one." },
@@ -46,10 +46,10 @@ local list: { Job } = {
 	{
 		id = "baker",
 		name = "Baker",
-		blurb = "Up early, smells of bread.",
+		blurb = "Bakes bread every morning.",
 		income = 1200,
 		likes = { "easygoing", "gentle" },
-		lines = { "Rolls are out of the oven!", "Flour everywhere again.", "Smell that? That's success." },
+		lines = { "Rolls are out of the oven.", "Flour everywhere again.", "Mind, the tray's hot." },
 	},
 	{
 		id = "florist",
@@ -65,7 +65,7 @@ local list: { Job } = {
 		blurb = "Paints, sells the odd picture.",
 		income = 900,
 		likes = { "dreamy", "shy" },
-		lines = { "Hold still, I'm painting you.", "It's abstract. Probably.", "Needs more blue." },
+		lines = { "Hold still, I'm painting you.", "Nearly done with this one.", "Needs more blue." },
 	},
 	{
 		id = "doctor",
@@ -78,7 +78,7 @@ local list: { Job } = {
 	{
 		id = "teacher",
 		name = "Teacher",
-		blurb = "Teaches anyone who'll sit still.",
+		blurb = "Teaches at the school.",
 		income = 1425,
 		likes = { "proud", "gentle" },
 		lines = { "Eyes on the board, please.", "Who knows the answer?", "Homework is due Monday." },
@@ -86,10 +86,10 @@ local list: { Job } = {
 	{
 		id = "musician",
 		name = "Musician",
-		blurb = "Plays for tips on a little stage.",
+		blurb = "Plays for tips on a small stage.",
 		income = 1050,
 		likes = { "sunny", "cheeky", "bold" },
-		lines = { "This one's an original.", "Any requests?", "Clap along!" },
+		lines = { "This one's an original.", "Any requests?", "Clap along if you know it." },
 	},
 	{
 		id = "builder",
@@ -105,7 +105,7 @@ local list: { Job } = {
 		blurb = "Sorts the town's letters.",
 		income = 975,
 		likes = { "shy", "easygoing" },
-		lines = { "Letter for you!", "So many parcels today.", "Stamps are on the left." },
+		lines = { "Letter for you.", "So many parcels today.", "Stamps are on the left." },
 	},
 	{
 		id = "icecream",
@@ -113,12 +113,12 @@ local list: { Job } = {
 		blurb = "Scoops all day.",
 		income = 1050,
 		likes = { "cheeky", "sunny" },
-		lines = { "Cone or cup?", "Sprinkles are free today.", "Brain freeze, coming up!" },
+		lines = { "Cone or cup?", "Sprinkles are free today.", "Eat it before it drips." },
 	},
 	{
 		id = "librarian",
 		name = "Librarian",
-		blurb = "Shushes people kindly.",
+		blurb = "Looks after the library.",
 		income = 1125,
 		likes = { "shy", "dreamy" },
 		lines = { "Shh, please.", "That one's due back Friday.", "Have you read this one?" },

@@ -190,7 +190,7 @@ describe("Talk", function()
 			expect(atWork[text]).toBe(true)
 			expect(atHome[text]).toBe(nil)
 		end
-		expect(atHome["Caught a boot today. Nice boot, though."]).toBe(true)
+		expect(atHome["Nothing was biting today. I stayed out three hours anyway."]).toBe(true)
 		expect(atHome["Nothing a cup of tea can't fix."]).toBe(true)
 		expect(atHome["V2 always makes me laugh."]).toBe(true)
 		expect(atHome["V3 and I aren't speaking right now."]).toBe(true)
@@ -232,8 +232,8 @@ describe("Talk", function()
 		local now = 1000 + 60
 		local all = heard({ now = now, season = 4, weather = "snow" })
 		expect(all["I built a snowman yesterday. He's called Gerald."]).toBe(true)
-		expect(all["V2 and I are best friends. We have a handshake. It takes four minutes."]).toBe(true)
-		expect(all["V3 and I are best friends. We have a handshake. It takes four minutes."]).toBe(nil)
+		expect(all["V2 is my best friend. We've got a secret handshake. It takes four minutes."]).toBe(true)
+		expect(all["V3 is my best friend. We've got a secret handshake. It takes four minutes."]).toBe(nil)
 		expect(all["V2 told me the moon is a big pebble. I've been thinking about it all day."]).toBe(true)
 		local fond, cross = false, false
 		for text in all do
@@ -242,7 +242,7 @@ describe("Talk", function()
 				or text:find("carry a piano", 1, true) ~= nil
 			cross = cross
 				or text == "Don't mention V3. Please."
-				or text == "I'm not saying V3 is the worst. I'm thinking it."
+				or text == "I'd rather not talk about V3, if that's all right."
 		end
 		expect(fond).toBe(true)
 		expect(cross).toBe(true)

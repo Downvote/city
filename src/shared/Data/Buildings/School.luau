@@ -34,7 +34,7 @@ return function(add: any)
 	add(
 		"school",
 		"Schoolhouse",
-		"A classroom of desks round a chalkboard, a bell tower over the door and a playground.",
+		"One classroom under a bell tower, with a playground beside it.",
 		"blueprint",
 		36,
 		30,

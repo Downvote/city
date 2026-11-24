@@ -73,7 +73,7 @@ return function(add: any)
 	add(
 		"florist",
 		"Flower shop",
-		"A flower shop with a glasshouse on the side and buckets out on the pavement.",
+		"A flower shop with a glasshouse built on the side.",
 		"flower",
 		34,
 		30,

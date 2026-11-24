@@ -122,7 +122,7 @@ local function prepare(plan: any, requests: { any }): ({ any }?, string?)
 					or obj.z2 ~= before.z2
 					or obj.lv ~= before.lv
 				then
-					return fail("walls can't move; delete and redraw instead")
+					return fail("walls can't be moved, so sell it and draw it again")
 				end
 				if obj.style ~= before.style and #Plan.attached(plan, req.key) > 0 and obj.style ~= "wall" then
 					return fail("take the doors and windows off first")

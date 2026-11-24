@@ -31,8 +31,8 @@ function Welcome.open(hud: any)
 	local body = panel.body
 	Kit.list(body, 10)
 	local lines = {
-		"This little town is yours to build. Put up houses, shops and gardens on your land, wall by wall or room by room.",
-		"Fill it with villagers you dress up from the whole Roblox catalog. They get jobs, make friends, fall out, cook, pull pranks and ask you for things.",
+		"This plot is yours to build on. Draw the walls and rooms yourself, or put down a ready-made building.",
+		"You make the villagers who live here and dress them from the Roblox catalog. They take jobs in town and sometimes ask you for things.",
 	}
 	for i, l in lines do
 		Kit.text(l, {
@@ -44,7 +44,7 @@ function Welcome.open(hud: any)
 		})
 	end
 	-- the two ways in, as tiles with their names on a band, under a dim caption
-	Kit.text("Start with someone you know well: you.", {
+	Kit.text("Make your first villager", {
 		Name = "Caption",
 		Parent = body,
 		Size = UDim2.new(1, 0, 0, 22),
@@ -77,7 +77,7 @@ function Welcome.open(hud: any)
 		Welcome.close()
 		hud.open("Creator", { mode = "new" })
 	end)
-	Kit.hint("You can make more villagers any time from Create, at the bottom of the screen.", {
+	Kit.hint("You can make more later from Create, at the bottom left.", {
 		Parent = body,
 		Size = UDim2.new(1, 0, 0, 0),
 		LayoutOrder = 7,

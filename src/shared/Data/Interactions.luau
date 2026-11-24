@@ -572,7 +572,7 @@ Interactions.uses = {
 				rarity = "uncommon",
 				weight = 14,
 				pair = false,
-				say = { "Playing myself. I'm winning, and losing." },
+				say = { "Playing against myself. Somehow I'm losing." },
 				act = "laugh",
 			},
 			{

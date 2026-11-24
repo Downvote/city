@@ -715,7 +715,7 @@ local function sitOn(npc: any, seat: Seat, timeout: number, maxPath: number?): b
 	return npc:walkTo(front, timeout, maxPath) and npc:sit(seat)
 end
 
-local ORDERS = { "One of those, please!", "What's good today?", "Just looking. Okay, I'll take it." }
+local ORDERS = { "One of those, please.", "What's good today?", "The usual, please." }
 
 -- Drops by somebody's workplace while they are at it and buys something: a few coins for the
 -- town, a little practice for the worker. They stand on the customer's side unless that is a
@@ -745,7 +745,7 @@ local function visit(player: Player, vid: string, npc: any, worker: string, maxP
 	npc:say(rng:pick(ORDERS), 3)
 	task.wait(1.5)
 	if Villagers.control(player, worker) == "chat" then
-		wnpc:say("Thanks! Come again.", 2.5)
+		wnpc:say("Thanks, come again.", 2.5)
 	end
 	npc:icon("sparkle")
 	Data.addCoins(player, Tuning.Jobs.VisitCoins)
@@ -1050,7 +1050,7 @@ local function bedTurn(player: Player, vid: string, npc: any, v: any)
 	else
 		-- no bed: they mope about it
 		if rng:chance(0.25) then
-			npc:say("I wish I had a bed...")
+			npc:say("Where am I meant to sleep?")
 			npc:icon("sad")
 		end
 		local t = wanderTarget(player)
@@ -1811,7 +1811,7 @@ function Villagers.buyWish(player: Player, vid: any): (boolean, string?)
 	local npc = Villagers.get(player, vid)
 	if npc and food then
 		if food.id == v.fav then
-			npc:say(Text.fill("{food}! My favourite!", { food = food.name }))
+			npc:say(Text.fill("{food}! My favourite.", { food = food.name }))
 			npc:icon("heart")
 			npc:gesture("cheer")
 		else
@@ -2004,7 +2004,7 @@ function Villagers.start()
 		end
 		local npc = Villagers.get(player, vid)
 		if npc then
-			npc:say(if how == "cheer" then "Thanks. I feel better already." else "Nice to meet you properly.")
+			npc:say(if how == "cheer" then "Thanks. I needed that." else "Nice to meet you properly.")
 			npc:icon("heart")
 		end
 		syncWishes(player)

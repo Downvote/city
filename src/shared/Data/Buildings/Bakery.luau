@@ -91,7 +91,7 @@ return function(add: any)
 	add(
 		"bakery",
 		"Bakery",
-		"A bread oven in the stone bakehouse, a hatch to the street and cakes in the shop.",
+		"A stone bakehouse with the oven, and a hatch selling bread to the street.",
 		"store",
 		32,
 		26,

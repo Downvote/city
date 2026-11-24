@@ -190,7 +190,7 @@ local function pickJob(vid: string)
 		table.insert(options, {
 			label = Text.fill("{job} at the {place}", { job = w.job.name, place = w.def.name:lower() }),
 			sub = if worker
-				then Text.fill("{name} works here now (they'd swap)", { name = worker })
+				then Text.fill("{name} works here. They'll swap jobs.", { name = worker })
 				else Text.fill("About {n} coins a day", { n = w.job.income }),
 			fn = function()
 				call("VillagerJob", vid, w.key)
@@ -348,7 +348,7 @@ local function friendsOf(parent: Frame, vid: string, p: any)
 		return a.s > b.s
 	end)
 	if #rows == 0 then
-		MenuParts.empty("people", "Nobody to know yet", "Friends come along once someone else moves in.", {
+		MenuParts.empty("people", "Nobody else in town yet", "Friends show up here once someone else moves in.", {
 			Parent = friends,
 			LayoutOrder = 1,
 			Color = T.Pink,

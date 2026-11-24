@@ -582,21 +582,21 @@ local function checkRequests(player: Player)
 			v.mood = math.clamp(v.mood + 10, 0, 100)
 			local npc = Villagers.get(player, r.vid)
 			if npc then
-				npc:say("You remembered! Thank you!", 4)
+				npc:say("You remembered. Thank you.", 4)
 				npc:icon("heart")
 				npc:gesture("cheer")
 			end
 			Data.notify(
 				player,
 				Text.fill(
-					"{name} loves the new {thing}. +{coins} coins",
+					"{name} has {thing} by their bed now. +{coins} coins",
 					{ name = v.name, thing = Catalog.Tags[r.tag] or r.tag, coins = Tuning.Rewards.RequestCoins }
 				),
 				"good"
 			)
 			Data.log(
 				player,
-				Text.fill("{name} got {thing} near their bed.", { name = v.name, thing = Catalog.Tags[r.tag] or r.tag })
+				Text.fill("{name} got {thing} by their bed.", { name = v.name, thing = Catalog.Tags[r.tag] or r.tag })
 			)
 		elseif (r.untilT or 0) < now then
 			table.remove(profile.requests, i)
@@ -689,7 +689,7 @@ function Events.start()
 			local v = profile and profile.villagers[vid]
 			local npc = Villagers.get(player, vid)
 			if v and npc then
-				npc:say(Text.fill("Hi! I'm {name}. This place is lovely.", { name = v.name }), 4)
+				npc:say(Text.fill("Hi, I'm {name}. I just moved in.", { name = v.name }), 4)
 				npc:gesture("wave")
 			end
 		end)
