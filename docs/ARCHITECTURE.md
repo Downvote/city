@@ -152,6 +152,13 @@ kit's piece keys) help the map and the specs. Sizes: `Facades.Ground` 8.4 (the s
 detail is a piece; windows have their glass drawn into the piece, and about a third also carry an ordinary `lit`
 pane that lights up at night. Detail is on street faces only; party walls and backs are plain.
 
+The civic quarter is built the same way (`row(..., west)` with its own mix: town houses 12 to 20 wide, mostly
+doors, 2 to 3 storeys on side streets and 3 to 4 on Main Street and the avenue at x -542, render and brick, tiled
+roofs, no name plates on family houses). `TownMap.civic()` lists its sites (`{ name, x, z, yaw, lot, ground }`),
+read by `ground()` and `placements()`, and `TownMap.WestBand` (21) is how far the paving under its rows reaches
+into each block; the rest of a block is lawn with a gravel path, where its pockets go. The World spec checks every
+civic quarter block edge is at least 75% buildings or ground a civic site keeps.
+
 `TownMap.placements` fills each downtown block edge with a row 6 studs inside the block, wall to wall wherever 12
 studs or more are free (widths 12 to 34), storeys by the road (3 to 5 on Main Street in the market quarter, 3 to 4
 in the far blocks, 2 to 3 on cross streets and ring roads, 2 to 4 on the avenues). The block south of Main Street

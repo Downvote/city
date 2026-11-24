@@ -61,7 +61,9 @@ round the station (`Sim/Routine`'s loops).
 
 The town is a big bright island (docs/GAME_DESIGN.md section 9; the user once had it rebuilt from a low poly city
 pack, then said "never mind, go back to the original map", so this is it): the old town and its plots in the middle, a ring of
-roads (`Town.Roads`), downtown east, the civic quarter west, the hills north (`Data/Hills`), the waterfront south.
+roads (`Town.Roads`), downtown east, the civic quarter west (built up like downtown but homelier: rows of town
+houses round every block, the civic buildings standing in the rows: "the side with less buildings should have much
+more buildings, as much as in the city side"), the hills north (`Data/Hills`), the waterfront south.
 `Data/TownMap` lays out the ground and where everything stands, `Data/CityModels` draws the buildings and landmarks,
 `Data/Places` lists the places to find. The user wants it detailed like a classic city builder: buildings on
 landscaped lots (`CityModels.lot`), window bays, signs, roof details, parked cars, groves, textured ground, all

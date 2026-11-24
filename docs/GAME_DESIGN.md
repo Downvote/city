@@ -381,9 +381,15 @@ they always were) in the middle of a ring of roads and new districts all round:
 - **Downtown** (east): a grid of streets lined wall to wall with shops and flats (see "A denser, more detailed
   town" in section 10), a hotel, office towers, a department store, a cinema with a lit marquee, the train station
   with a train at the platform, and Sky Tower, the tallest thing on the island.
-- **The civic quarter** (west): the school with its sports field and a playground, the library, the museum, the
-  clinic, the fire station with its engine, the post office, a basketball court, a park with a pond and a bridge,
-  and rows of little houses with gardens.
+- **The civic quarter** (west): built up like downtown (the user: "the side with less buildings should have much
+  more buildings, as much as in the city side"), but lower and homelier. Every block has rows of town houses round
+  its edges: two and three storeys on the side streets, up to four with shops under flats along Main Street and
+  the avenue facing the old town, a shop or a cafe on the corners, painted render and brick under tiled roofs.
+  The civic buildings stand in the rows in their hedged gardens as the quarter's landmarks: the school with its
+  sports field and a playground, the library, the museum, the clinic, the fire station with its engine, the post
+  office, a basketball court, and the pond park, which fills its block's middle, open to Main Street, with houses
+  on its other three sides. Behind the rows each block is lawn with a gravel path, and the little gardens and
+  play areas are there.
 - **The hills** (north): faceted low poly hills you can walk all over, wooded thicker to the east. A path of
   stepping stones climbs from Hill Road to the lookout on the top, a platform with ramps up to it and a telescope.
   There's a farm on a terrace (barn, silo, fields, hay and cows, and a windmill that turns), an observatory, a

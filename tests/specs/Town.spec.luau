@@ -138,7 +138,9 @@ describe("Town", function()
 		-- (parts went up from 36,000 when round shapes stopped being merged into pieces and became
 		-- parts of their own, for the user's "alot of the objects seem to have its pieces wrong")
 		expect(parts < 56000).toBeTruthy()
-		expect(opened < 110000).toBeTruthy()
+		-- (opened went up from 110,000 when the civic quarter was built up for the user's "the
+		-- side with less buildings should have much more buildings, as much as in the city side")
+		expect(opened < 126000).toBeTruthy()
 		expect(different < 320).toBeTruthy()
 	end)
 end)

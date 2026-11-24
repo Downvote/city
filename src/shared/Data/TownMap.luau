@@ -45,7 +45,7 @@ local PAVING = Color3.fromRGB(234, 230, 220)
 local PAVING_DARK = Color3.fromRGB(216, 212, 204)
 local PROMENADE = Color3.fromRGB(221, 160, 126) -- warm brick walks
 local SQUARE = Color3.fromRGB(236, 222, 196) -- the market quarter's square
-local HEDGE = Color3.fromRGB(84, 184, 70)
+local HEDGE = Color3.fromRGB(66, 120, 66)
 local SOIL = Color3.fromRGB(122, 90, 62)
 local SAND = Color3.fromRGB(244, 228, 188)
 local SEABED = Color3.fromRGB(174, 224, 226)
@@ -318,10 +318,21 @@ TownMap.Models.busStop = function(r: R)
 	r:cyl(6.6, 9.2, 1.41, 0.06, 1.4, "z", C.White, "SmoothPlastic")
 end
 
--- A low hedge along X, length w.
+-- A low clipped hedge along X, 8 long, its top edges rounded off and lighter where the sun gets
+-- at it. One piece.
 TownMap.Models.hedge = function(r: R)
-	r:block(-4, 0, -0.9, 4, 2.6, 0.9, HEDGE, "Grass")
-	r:block(-3.8, 2.6, -0.7, 3.8, 2.9, 0.7, Color3.fromRGB(76, 146, 70), "Grass")
+	local body, top = HEDGE, Color3.fromRGB(92, 144, 78)
+	r:piece(function(q)
+		q:block(-4, 0, -0.9, 4, 2.4, 0.9, body, "Grass")
+		q:block(-3.75, 2.4, -0.65, 3.75, 2.9, 0.65, top, "Grass")
+		-- the rounded edges: wedges sloping from the top down to the sides and the ends
+		for _, side in { -1, 1 } do
+			local along = CFrame.new(0, 2.65, side * 0.775) * CFrame.Angles(0, if side > 0 then math.pi else 0, 0)
+			q:wedge(along, 7.5, 0.5, 0.25, top, "Grass")
+			local across = CFrame.new(side * 3.875, 2.65, 0) * CFrame.Angles(0, side * -math.pi / 2, 0)
+			q:wedge(across, 1.3, 0.5, 0.25, top, "Grass")
+		end
+	end)
 end
 
 TownMap.Models.flowerBed = function(r: R)
@@ -468,11 +479,17 @@ end
 -- decoration ----------------------------------------------------------------------------------------
 
 -- A round bush of a few leafy balls.
+-- A round bush of a few leafy clumps, each squashed and turned its own way, dark at the foot and
+-- lighter on top.
 TownMap.Models.bush = function(r: R)
-	r:ball(0, 1.6, 0, 3.4, Color3.fromRGB(78, 160, 74), "Grass")
-	r:ball(-1.3, 1.2, 0.6, 2.4, Color3.fromRGB(96, 182, 84), "Grass")
-	r:ball(1.2, 1.3, -0.4, 2.6, Color3.fromRGB(64, 140, 66), "Grass")
-	r:ball(0.3, 2.6, 0.2, 2, Color3.fromRGB(110, 196, 92), "Grass")
+	local function clump(x: number, y: number, z: number, w: number, h: number, d: number, turn: number, color: Color3)
+		r:lump(CFrame.new(x, y, z) * CFrame.Angles(0.12, turn, -0.1), w, h, d, color, "Grass")
+	end
+	clump(0, 1.45, 0, 3.6, 2.8, 3.4, 0.2, Color3.fromRGB(70, 114, 66))
+	clump(-1.35, 1.0, 0.7, 2.6, 2.0, 2.4, 1.1, Color3.fromRGB(56, 98, 62))
+	clump(1.3, 1.1, -0.55, 2.8, 2.2, 2.5, 2.3, Color3.fromRGB(62, 106, 64))
+	clump(0.45, 0.95, 1.35, 2.2, 1.7, 2.0, 0.7, Color3.fromRGB(78, 122, 68))
+	clump(0.15, 2.5, 0.1, 2.4, 1.7, 2.2, 1.6, Color3.fromRGB(102, 140, 76))
 end
 
 -- A patch of flowers in the grass: a low green tuft dotted with blooms.
@@ -497,10 +514,18 @@ TownMap.Models.flowerPatch = function(r: R)
 	end
 end
 
+-- A mossy grey rock: a boulder sunk in the grass with two smaller stones against it, and moss on
+-- their tops.
 TownMap.Models.rock = function(r: R)
-	r:ball(0, 0.6, 0, 2.6, Color3.fromRGB(170, 172, 182), "Slate")
-	r:ball(1.3, 0.4, 0.6, 1.6, Color3.fromRGB(150, 152, 162), "Slate")
-	r:ball(-1, 0.3, -0.7, 1.2, Color3.fromRGB(186, 188, 196), "Slate")
+	local function stone(x: number, y: number, z: number, w: number, h: number, d: number, k: number, c: Color3, m: string)
+		r:lump(CFrame.new(x, y, z) * CFrame.Angles(0.08, k, 0.06), w, h, d, c, m)
+	end
+	stone(0, 0.55, 0, 2.9, 1.9, 2.4, 0.5, Color3.fromRGB(150, 150, 154), "Slate")
+	stone(1.4, 0.35, 0.7, 1.7, 1.2, 1.4, 1.3, Color3.fromRGB(128, 130, 134), "Slate")
+	stone(-1.1, 0.25, -0.8, 1.3, 0.9, 1.1, 2.2, Color3.fromRGB(166, 166, 168), "Slate")
+	-- the moss
+	stone(-0.2, 1.42, -0.1, 1.9, 0.36, 1.5, 0.9, Color3.fromRGB(104, 124, 72), "Grass")
+	stone(1.45, 0.93, 0.75, 0.9, 0.24, 0.7, 0.4, Color3.fromRGB(116, 134, 76), "Grass")
 end
 
 -- Rolling hills round the edge of the world: the top of a big buried ball.
@@ -1098,10 +1123,7 @@ function TownMap.civic(): { CivicSite }
 			local w = cf * corner
 			x1, z1, x2, z2 = math.min(x1, w.X), math.min(z1, w.Z), math.max(x2, w.X), math.max(z2, w.Z)
 		end
-		table.insert(
-			list,
-			{ name = c[1], x = c[2], z = c[3], yaw = c[4], lot = c[5], ground = { x1, z1, x2, z2 } }
-		)
+		table.insert(list, { name = c[1], x = c[2], z = c[3], yaw = c[4], lot = c[5], ground = { x1, z1, x2, z2 } })
 	end
 	civicSites = list
 	return list
