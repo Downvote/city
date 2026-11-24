@@ -122,8 +122,10 @@ own design (`Sim/Life`):
   some extra practice at their work (skill points, so they earn more), a new saying they'll use in their speech
   bubbles, or a hobby they'll talk about.
 - **Wishes.** Now and then a villager wants something, and a thought bubble floats over their head: a craving for
-  a food (the bubble shows the food), someone they'd like to get to know, a new look, or a chat because they feel
-  down. Open their page or talk to them to sort it out: introduce them, restyle them or have a chat.
+  a food (the bubble shows the food), someone they'd like to get to know, or a chat because they feel down. Open
+  their page or talk to them to sort it out: introduce them or have a chat. (Wanting a new look went: "remove new
+  look cravings". The wish and the event where a villager asks for new clothes are both gone, and a wish for one in
+  an old save is dropped when it loads. You can still restyle anyone in the creator whenever you like.)
 
   > remove the shop, buying of things and food and feeding. when a character gets a craving, allow the player to
   > simply pay to buy it
@@ -152,7 +154,7 @@ choose (side with one of them, pay for something, let them go out). About forty 
   cooking together, late night secrets, races, jokes, lost things, lessons, shopping at a friend's workplace;
 - three villagers: someone feels left out;
 - one villager: cravings (pay there and then, or not), asking for coins, room requests, no bed, dreams, finding
-  coins, colds (seen to for free by a villager working as the doctor, or slept off), hobbies, wanting a new look,
+  coins, colds (seen to for free by a villager working as the doctor, or slept off), hobbies,
   sleepwalking, practising at work, a busy day at work, asking for the day off, looking for work, feeling lonely,
   birthdays;
 - the whole town: a dance party, shooting stars, a thunderstorm, a tourist, the

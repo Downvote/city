@@ -971,36 +971,6 @@ event({
 	end,
 })
 
--- A new look.
-event({
-	id = "newlook",
-	actors = 1,
-	when = "day",
-	weight = function(ctx: Ctx, a: string)
-		return 0.35
-	end,
-	scene = function(ctx: Ctx, a: string): Scene
-		return {
-			title = "Time for a change",
-			lines = { line("a", "I'm bored of my clothes. Could you help me pick something new?", "question") },
-			choices = {
-				{
-					text = "Let's do it",
-					lines = { line("a", "Yay. Let's go.", "sparkle", "cheer") },
-					effects = { { t = "creator", who = "a" }, { t = "mood", who = "a", d = 6 } },
-				},
-				{
-					text = "You look great already",
-					lines = { line("a", "Aw. Okay, if you say so.", "heart") },
-					effects = { { t = "mood", who = "a", d = 2 } },
-				},
-			},
-			default = 2,
-			log = ctx.f("{a} wanted a new look."),
-		}
-	end,
-})
-
 -- Sleepwalking.
 event({
 	id = "sleepwalk",

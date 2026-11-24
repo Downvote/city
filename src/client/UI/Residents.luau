@@ -508,12 +508,6 @@ wishRow = function(info: Frame, vid: string, v: any, p: any, wishText: string, b
 		label, fn = "Introduce", function()
 			call("WishGrant", vid, "friend", v.wish.arg)
 		end
-	elseif kind == "look" then
-		label, fn =
-			"New look", function()
-				local Hud = require(script.Parent.Hud)
-				Hud.open("Creator", { mode = "edit", vid = vid })
-			end
 	else
 		label, fn = "Have a chat", function()
 			call("WishGrant", vid, "cheer")

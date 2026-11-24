@@ -26,8 +26,9 @@ Schema.SettingChoices = {
 	theme = { dark = true, light = true },
 }
 
--- What a villager can wish for (Sim/Life): a craving, someone to meet, a new look, a chat.
-Schema.WishKinds = { food = true, friend = true, look = true, cheer = true }
+-- What a villager can wish for (Sim/Life): a craving, someone to meet, a chat. (A wish for a new
+-- look went: "remove new look cravings"; one in an old save is dropped when it loads.)
+Schema.WishKinds = { food = true, friend = true, cheer = true }
 
 -- The romance there was, as an old save keeps it on a pair (rel.bond). There is none now (the
 -- user: "remove any romance, just best friends is the highest"), so a pair who had one loads as

@@ -61,7 +61,6 @@ for _, id in
 		"coins",
 		"cold",
 		"hobby",
-		"newlook",
 		"sleepwalk",
 		"practice",
 		"lonely",

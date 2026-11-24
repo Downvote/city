@@ -428,7 +428,8 @@ The creator's remotes: `CreatorPeople` (the people here and your friends, and th
 `Villagers` also runs the life sim's server side: every in-game hour wishes fade and new ones turn up (the model's
 `Wish` attribute carries the icon for the client's bubble); `WishBuy` pays for a craving and grants it
 (`Life.buyWish`: the price from `Life.wishPrice`, hearts and mood, a little more for their favourite, no coins
-back); a new look answers a wish for one; `WishGrant`, `HeartReward` and `GoalClaim` answer the rest. Villagers sometimes say their
+back); there is no wish for a new look (`Schema.WishKinds` is food, friend and cheer; "remove new look cravings"),
+nor the `newlook` event; `WishGrant`, `HeartReward` and `GoalClaim` answer the rest. Villagers sometimes say their
 own saying or a line about their hobby.
 | `World` (doors) | Doors stay shut; each gets a `DoorPrompt` (Open or Close, `World.toggleDoor`); a villager within 6.5 studs opens one and it shuts 1.2 s after the last villager leaves, unless a player opened it. |
 | `Explore` | `PlaceFound` checks the player stands at the place, pays its coins once and marks `found`. (The map and `Travel`, the trip back to a found place, are gone.) |

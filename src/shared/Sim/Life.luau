@@ -4,7 +4,7 @@
 --            each new heart level lets you pick a thank you (coins they saved, some practice
 --            at their work, a new saying, a hobby).
 --   wishes   one at a time per villager, shown over their head: a craving, someone they'd like
---            to meet, a new look, or a chat to cheer them up. Granting one fills hearts and
+--            to meet, or a chat to cheer them up (no new look: "remove new look cravings"). Granting one fills hearts and
 --            lifts their mood. A craving is bought for them (Life.wishPrice, Life.buyWish); the
 --            other wishes cost nothing and they give you a few coins. Unanswered wishes fade
 --            after a day. There is no shop and no food to keep: the user asked to "remove the
@@ -140,7 +140,8 @@ end
 
 -- Wishes --------------------------------------------------------------------------------------------
 
-Life.WishIcons = { food = "apple", friend = "people", look = "shirt", cheer = "smile" }
+-- (No wish for a new look any more: the user, "remove new look cravings".)
+Life.WishIcons = { food = "apple", friend = "people", cheer = "smile" }
 
 function Life.openWishes(profile: any): number
 	local n = 0
@@ -161,7 +162,7 @@ function Life.maybeWish(profile: any, vid: string, rng: any, now: number): any
 	if not rng:chance(L.WishChance) then
 		return nil
 	end
-	local kinds = { "food", "look", "cheer" }
+	local kinds = { "food", "cheer" }
 	-- someone they hardly know yet
 	local strangers = {}
 	for other in profile.villagers do
@@ -200,8 +201,6 @@ function Life.wishText(profile: any, vid: string): string?
 		return Text.fill("{x} is craving {food}.", { x = v.name, food = if f then f.name:lower() else "a snack" })
 	elseif w.kind == "friend" then
 		return Text.fill("{x} would like to get to know {y}.", { x = v.name, y = name(profile, w.arg) })
-	elseif w.kind == "look" then
-		return Text.fill("{x} wants a new look.", { x = v.name })
 	elseif w.kind == "cheer" then
 		return Text.fill("{x} feels a bit down and wants to talk.", { x = v.name })
 	end
@@ -220,7 +219,7 @@ function Life.cravingPrice(foodId: any): number?
 end
 
 -- What granting a villager's wish costs. A craving is bought for them; nil when they have no
--- wish or it is not one you pay for (someone to meet, a new look, a chat).
+-- wish or it is not one you pay for (someone to meet, a chat).
 function Life.wishPrice(profile: any, vid: string): number?
 	local v = profile.villagers[vid]
 	local w = v and v.wish
@@ -231,7 +230,7 @@ function Life.wishPrice(profile: any, vid: string): number?
 end
 
 -- Grants a villager's wish if `how` (and `arg`) answer it: "food" with the food id, "friend"
--- with the other villager, "look", or "cheer". Returns ok, the coins they gave and notices.
+-- with the other villager, or "cheer". Returns ok, the coins they gave and notices.
 -- A craving gives no coins back (it was paid for: see Life.buyWish), and a little more mood
 -- and hearts when it was for their favourite.
 function Life.grantWish(profile: any, vid: string, how: string, arg: any, rng: any): (boolean, number, { string })

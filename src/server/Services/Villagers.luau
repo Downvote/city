@@ -1683,16 +1683,6 @@ local function update(player: Player, vid: any, fields: any): (boolean, string?)
 	if fields.app then
 		v.app = Avatar.validate(input.app, 30)
 		respawn = true
-		-- a new look answers a wish for one
-		if v.wish and v.wish.kind == "look" then
-			local granted, _, notices = Life.grantWish(profile, vid, "look", nil, rng)
-			if granted then
-				for _, n in notices do
-					Data.notify(player, n, "good")
-				end
-				Data.push(player, "offers", "coins", "stats")
-			end
-		end
 	end
 	v.pers = input.pers
 	v.color = input.color

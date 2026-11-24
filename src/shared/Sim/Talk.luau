@@ -160,8 +160,6 @@ function Talk.wishLine(profile: any, vid: string): string?
 		if other then
 			return Text.fill("I'd like to get to know {y}. Could you introduce us?", { y = other.name })
 		end
-	elseif w.kind == "look" then
-		return "I fancy a change. New clothes, maybe."
 	end
 	return nil
 end

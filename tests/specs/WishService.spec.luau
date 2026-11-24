@@ -345,7 +345,6 @@ describe("Wish service", function()
 		for _, wish in
 			{
 				{ kind = "friend", arg = "v3", untilT = 1e12 },
-				{ kind = "look", untilT = 1e12 },
 				{ kind = "cheer", untilT = 1e12 },
 			}
 		do

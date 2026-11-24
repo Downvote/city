@@ -134,7 +134,7 @@ describe("Life", function()
 		-- a dearer food is a dearer craving
 		expect(Life.cravingPrice("goldapple") > Life.cravingPrice("apple")).toBeTruthy()
 		-- the wishes you don't pay for have no price
-		for _, wish in { { kind = "friend", arg = "v2" }, { kind = "look" }, { kind = "cheer" } } do
+		for _, wish in { { kind = "friend", arg = "v2" }, { kind = "cheer" } } do
 			v.wish = wish
 			expect(Life.wishPrice(p, "v1")).toBe(nil)
 		end
@@ -251,7 +251,6 @@ describe("Life", function()
 		for _, wish in
 			{
 				{ kind = "friend", arg = "v2", untilT = 1e9 },
-				{ kind = "look", untilT = 1e9 },
 				{ kind = "cheer", untilT = 1e9 },
 			}
 		do
@@ -292,6 +291,31 @@ describe("Life", function()
 		expect(okCheer).toBe(true)
 		expect(gift).toBeBetween(L.WishCoinsMin, L.WishCoinsMax)
 		expect(p.coins).toBe(coins + gift)
+	end)
+
+	it("never wishes for a new look, and drops one an old save holds", function()
+		-- the user: "remove new look cravings"
+		expect(Life.WishIcons.look).toBe(nil)
+		expect(Schema.WishKinds.look).toBe(nil)
+		local p = town(4)
+		local rng = Rng.new(9)
+		for t = 1, 400 do
+			for _, v in p.villagers do
+				v.wish = nil
+			end
+			for vid in p.villagers do
+				local w = Life.maybeWish(p, vid, rng, t)
+				if w then
+					expect(w.kind ~= "look").toBe(true)
+				end
+			end
+		end
+		local raw = Schema.newProfile()
+		local q = town(1)
+		raw.villagers, raw.order = q.villagers, q.order
+		raw.villagers.v1.wish = { kind = "look", untilT = 1e12 }
+		local loaded = Schema.migrate(raw)
+		expect(loaded.villagers.v1.wish).toBe(nil)
 	end)
 
 	it("introduces villagers for a friend wish", function()

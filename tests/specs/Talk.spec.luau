@@ -136,8 +136,6 @@ describe("Talk", function()
 		expect(said:find(Foods.get(v.fav).name, 1, true) ~= nil).toBeTruthy()
 		v.wish = { kind = "friend", arg = "v2", untilT = 1e9 }
 		expect(Talk.line(p, "v1", rng, { first = true }):find("V2", 1, true) ~= nil).toBeTruthy()
-		v.wish = { kind = "look", untilT = 1e9 }
-		expect(readable(Talk.line(p, "v1", rng, { first = true }))).toBeTruthy()
 		-- a wish for a talk isn't told, the talk answers it
 		v.wish = { kind = "cheer", untilT = 1e9 }
 		expect(Talk.wishLine(p, "v1")).toBe(nil)
