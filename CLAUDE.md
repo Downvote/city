@@ -120,7 +120,20 @@ player to simply pay to buy it" and "remove the map button and the map interface
 (`inv`), no feeding and no map screen. A craving is bought from the villager's page or the talk card through
 `WishBuy` at `Life.wishPrice`. Don't add anything for sale but cravings and Build mode's pieces. The user also
 asked that "progression is much more based on villagers working": wages are most of a town's income and town
-levels ask for villagers in work (`Tuning.City.Levels[i].Workers`); the City spec holds that balance.
+levels ask for villagers in work (`Tuning.City.Levels[i].Workers`); the City spec holds that balance. Then: "could
+you make working give much more coins, and make buildings cheaper?" and "make it such that villagers earn coins as
+they work, not after every day": a villager at their workplace earns a little every few seconds (`City.earn` purses
+in `Services/Villagers`, sent every `Tuning.Jobs.PayEvery` seconds as the `Earned` event, a "+N" coin rising over
+them from `client/World/Earnings`), a break or an event earns nothing, and Build mode prices are the recipes' times
+`Tuning.Prices.Items` (0.5, applied in `Catalog` at load: never halve a recipe's own price).
+
+Life in the town, in the spirit of the life sim the user named (its ideas only, never its content): well over two
+hundred events in `Data/Events/` (a folder: `Kit` builds weights and scenes, `Chatter` builds conversations from
+parts; a new event goes in one of its modules), props they bring into the world (`Data/EventProps`), keepsakes a
+villager makes for the player (free Build mode pieces in `Build/Recipes/Keepsakes`, counted in `profile.keepsakes`,
+checked by `Sim/Keepsakes` on the server), and things villagers use on breaks with a chance of something unusual or
+rare (`Data/Interactions`, chosen by `Sim/Uses`, acted by `server/Npc/Use`; players hold E on some through
+`Services/Interact`). Every line follows the writing rule.
 
 Server start: `init` everything, `start` everything, then `Data.open()` lets players in. Never load a profile
 before every service is listening (a player can be in the server before the town is built).
