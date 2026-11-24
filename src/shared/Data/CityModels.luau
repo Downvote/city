@@ -926,39 +926,150 @@ local function house(
 end
 CityModels.house = house
 
--- A low poly tree: an eight sided trunk under a crown of faceted lumps, each a different green and
--- turned its own way (Build/LowPoly cuts the shapes).
-local function lowTree(r: R, x: number, y: number, z: number, s: number)
-	r:cyl(x, y + 2 * s, z, 4 * s, 1.1 * s, "y", BARK, "Wood")
-	-- (every clump is named Leaf: the client sways each one in the wind, World/Ambience)
-	local clumps = {
-		{ 0, 5.2, 0, 6.4, 5, 6, 1, 0.2, 0.6, 0.1 },
-		{ 1.9, 6.4, -0.9, 4.6, 3.8, 4.4, 1.1, 0.5, 1.3, 0.3 },
-		{ -1.8, 6, 1.1, 4.8, 4, 4.6, 0.88, -0.3, 2.2, 0.4 },
-		{ 0.2, 7.9, 0.5, 3.8, 3, 3.6, 1.2, 0.4, 0.2, -0.5 },
-	}
-	for _, c in clumps do
-		local leaf = r:lump(
-			CFrame.new(x + c[1] * s, y + c[2] * s, z + c[3] * s) * CFrame.Angles(c[8], c[9], c[10]),
-			c[4] * s,
-			c[5] * s,
-			c[6] * s,
-			shade(LEAF, c[7])
-		)
-		leaf.name = "Leaf"
+-- Trees ----------------------------------------------------------------------------------------------
+-- The user, with a picture of firs standing apart on a hill at sunset: "make the grass and plants
+-- like in the image". So the woods are mostly firs: a straight thin reddish trunk showing under
+-- tiers of drooping boughs that get shorter up to a thin spire, dark blue green inside and olive
+-- where the tops catch the sun. A bough is a wedge hanging down and out from a dark core, and
+-- each tier is turned against the one under it. The broadleaf trees have a full, soft crown of
+-- leafy clumps on a forked trunk. Each crown is one piece (one mesh in the game) named Leaf, so
+-- the client sways it in the wind (World/Ambience) and the trunk stays put: a tree is two parts.
+
+local FIR_CORE = rgb(30, 54, 50)
+local FIR_LOW = rgb(40, 76, 62)
+local FIR_HIGH = rgb(106, 124, 70)
+local FIR_BARK = rgb(124, 78, 58)
+
+local function mix(a: Color3, b: Color3, t: number): Color3
+	return Color3.new(a.R + (b.R - a.R) * t, a.G + (b.G - a.G) * t, a.B + (b.B - a.B) * t)
+end
+
+-- One bough on q, hanging from the core at height y: a wedge `len` long, `wide` across and
+-- `thick` where it leaves the core, pointing out along the angle `a` and tipped `droop` down.
+local function bough(q: R, y: number, a: number, len: number, wide: number, thick: number, droop: number, color: Color3)
+	local out = Vector3.new(math.cos(a), 0, math.sin(a))
+	local along = out * math.cos(droop) - Vector3.yAxis * math.sin(droop)
+	local up = out * math.sin(droop) + Vector3.yAxis * math.cos(droop)
+	local back = -along
+	-- (right, up and back are a right-handed set, as every frame must be)
+	local right = up:Cross(back)
+	local foot = Vector3.new(0, y, 0) - along * (thick * 0.4)
+	q:wedge(CFrame.fromMatrix(foot + along * (len / 2) + up * (thick / 2), right, up, back), wide, thick, len, color, "Grass")
+end
+
+-- A fir's crown on q: `tiers` rows of boughs from the lowest tips at `base` up to the spire's
+-- point at `top`, the lowest boughs `reach` long.
+type Fir = { base: number, top: number, reach: number, tiers: number, trunk: number }
+local function firCrown(q: R, f: Fir)
+	local h = f.top - f.base
+	local droop0 = 0.6
+	local low = f.base + f.reach * math.sin(droop0) * 0.8
+	local high = f.top - 1.2 - h * 0.06
+	-- the dark core the boughs grow from (the piece's square box, which the merge hangs the rest on)
+	q:box(0, (f.base + high) / 2 + 0.3, 0, f.reach * 0.32, high - f.base, f.reach * 0.32, FIR_CORE, "Grass")
+	for i = 0, f.tiers - 1 do
+		local t = i / (f.tiers - 1)
+		local y = low + (high - low) * t ^ 0.8
+		local tone = mix(FIR_LOW, FIR_HIGH, t ^ 1.3)
+		local turn = i * (math.pi / 4 + 0.23)
+		if i == f.tiers - 1 then
+			-- the spire: three slim boughs standing almost upright
+			for k = 0, 2 do
+				bough(q, y, turn + k * math.pi * 2 / 3, 0.55, 0.6, f.top - y, 0.15, tone)
+			end
+		else
+			local len = f.reach * (1 - 0.8 * t)
+			local droop = droop0 - 0.28 * t
+			local n = if t > 0.6 then 3 else 4
+			for k = 0, n - 1 do
+				local color = if k % 2 == 0 then tone else shade(tone, 0.86)
+				bough(q, y, turn + k * math.pi * 2 / n, len, len * 0.9 + 0.3, len * 0.42 + 0.3, droop, color)
+			end
+		end
 	end
+end
+
+local FIRS: { [string]: Fir } = {
+	young = { base = 0.9, top = 8.5, reach = 2.5, tiers = 6, trunk = 0.5 },
+	fir = { base = 2.6, top = 17, reach = 4.2, tiers = 7, trunk = 0.8 },
+	tall = { base = 3.6, top = 26, reach = 5.4, tiers = 7, trunk = 1.05 },
+}
+
+-- A fir standing at `at`: "young", "fir" or "tall".
+local function fir(r: R, kind: string, at: CFrame)
+	local f = FIRS[kind]
+	drawAt(r, at, function(q)
+		q:cyl(0, (f.base + 1.6) / 2, 0, f.base + 1.6, f.trunk, "y", FIR_BARK, "Wood")
+	end)
+	stamp(r, "fir:" .. kind, at, function(q)
+		firCrown(q, f)
+	end).name = "Leaf"
+end
+CityModels.fir = fir
+
+-- The broadleaf crown on q at scale s: clumps of leaves round a square heart, dark underneath and
+-- light on top, each clump a box turned its own way so the crown is all facets.
+local LEAF_LOW = rgb(60, 104, 62)
+local LEAF_MID = rgb(86, 132, 70)
+local LEAF_TOP = rgb(130, 158, 82)
+local CLUMPS = {
+	-- x, y, z, size, tone (0 low .. 1 top)
+	{ 2.3, 5.0, 0.4, 2.8, 0.1 },
+	{ 0.6, 4.9, 2.3, 2.6, 0.05 },
+	{ -1.9, 5.1, 1.3, 2.7, 0.1 },
+	{ -2.1, 5.0, -1.2, 2.6, 0 },
+	{ 0.2, 4.8, -2.3, 2.7, 0.05 },
+	{ 1.8, 5.3, -1.6, 2.4, 0.15 },
+	{ 1.5, 6.6, 1.3, 2.9, 0.5 },
+	{ -1.3, 6.8, 0.9, 2.8, 0.45 },
+	{ -0.9, 6.6, -1.5, 2.8, 0.5 },
+	{ 1.3, 6.9, -0.9, 2.6, 0.55 },
+	{ 0.3, 8.0, 0.4, 3.0, 0.9 },
+	{ -0.8, 7.9, -0.5, 2.2, 1 },
+	{ 0.9, 8.1, -0.3, 2.0, 0.95 },
+}
+local function broadCrown(q: R, s: number)
+	q:box(0, 6.4 * s, 0, 4 * s, 3 * s, 4 * s, LEAF_LOW, "Grass")
+	for i, c in CLUMPS do
+		local tone = if c[5] < 0.5 then mix(LEAF_LOW, LEAF_MID, c[5] * 2) else mix(LEAF_MID, LEAF_TOP, c[5] * 2 - 1)
+		q:boxAt(
+			CFrame.new(c[1] * s, c[2] * s, c[3] * s) * CFrame.Angles(0.5 + i * 0.37, i * 0.91, 0.6 + i * 0.29),
+			c[4] * s,
+			c[4] * s * 0.86,
+			c[4] * s,
+			tone,
+			"Grass"
+		)
+	end
+end
+
+-- The forked trunk on q at scale s: two boxes crossed for a round enough stem, and three limbs.
+local function broadTrunk(q: R, s: number)
+	q:box(0, 2.6 * s, 0, 0.9 * s, 5.2 * s, 0.9 * s, BARK, "Wood")
+	q:boxAt(CFrame.new(0, 2.4 * s, 0) * CFrame.Angles(0, math.pi / 4, 0), 0.9 * s, 4.8 * s, 0.9 * s, BARK, "Wood")
+	for _, l in { { 1.6, 6.2, 0.4 }, { -1.4, 6.4, 0.9 }, { 0.1, 6.6, -1.6 } } do
+		q:beam(Vector3.new(0, 4.4 * s, 0), Vector3.new(l[1] * s, l[2] * s, l[3] * s), 0.5 * s, 0.5 * s, BARK, "Wood")
+	end
+end
+
+-- A broadleaf tree: s is 1 or a little more (a bigger one is drawn at 1.35). Each is turned its own
+-- way by where it stands, so a row of them doesn't look stamped.
+local function lowTree(r: R, x: number, y: number, z: number, s: number)
+	local size = if s >= 1.2 then 1.35 else 1
+	local at = CFrame.new(x, y, z) * CFrame.Angles(0, (x * 0.37 + z * 0.61) % (math.pi * 2), 0)
+	stamp(r, "broadTrunk:" .. size, at, function(q)
+		broadTrunk(q, size)
+	end)
+	stamp(r, "broadCrown:" .. size, at, function(q)
+		broadCrown(q, size)
+	end).name = "Leaf"
 end
 CityModels.lowTree = lowTree
 
--- A low poly pine: a trunk under three stacked cones, each a little smaller and turned a little.
+-- A fir in the old call's shape: s under 0.8 is a young one, over 1.25 a tall one.
 local function lowPine(r: R, x: number, y: number, z: number, s: number)
-	r:cyl(x, y + 1.3 * s, z, 2.6 * s, 0.9 * s, "y", BARK, "Wood")
-	local tiers = { { 4.3, 4.6, 6.4, 1 }, { 6.5, 4, 5, 1.08 }, { 8.7, 3.6, 3.4, 1.16 } }
-	for i, t in tiers do
-		local cone = r:cone(x, y + t[1] * s, z, t[2] * s, t[3] * s, shade(LEAF_DARK, t[4]))
-		cone.cf = cone.cf * CFrame.Angles(0, math.rad(i * 22.5), 0)
-		cone.name = "Leaf"
-	end
+	local kind = if s < 0.8 then "young" elseif s > 1.25 then "tall" else "fir"
+	fir(r, kind, CFrame.new(x, y, z))
 end
 CityModels.lowPine = lowPine
 
@@ -969,10 +1080,13 @@ M.lowTreeBig = function(r: R)
 	lowTree(r, 0, 0, 0, 1.4)
 end
 M.lowPine = function(r: R)
-	lowPine(r, 0, 0, 0, 1)
+	fir(r, "fir", CFrame.identity)
 end
 M.lowPineBig = function(r: R)
-	lowPine(r, 0, 0, 0, 1.5)
+	fir(r, "tall", CFrame.identity)
+end
+M.firYoung = function(r: R)
+	fir(r, "young", CFrame.identity)
 end
 
 -- A parked car, nose to local -Z: a body and a cabin in its own colour, and everything every car
