@@ -137,7 +137,10 @@ in"): the villagers in it slide in from the sides as busts (`ModelPreview.fromMo
 card and the event card both build it; never write a second dialogue box. A random event must never take the
 screen by itself ("in the cast of random villager text events, make this only happen when the player chooses to
 watch"): `EventShow` brings up only a small prompt with Watch (Answer, with a timer, when a choice is waiting), and
-the scene goes up when the player presses it (`EventCard.isWatching()`), and the camera stays where the player
+the scene goes up when the player presses it (`EventCard.isWatching()`; a big moment scripted in `Data/Cutscenes`
+plays as a cutscene on a set of its own from `Data/Stages` behind the same box, in a ViewportFrame: "add cutscenes and
+scenes like tomodachi life as well"; preview with `sh tools/preview/stage.sh <id> <dir>` and `ui.sh cutscene:<event>`),
+and the camera stays where the player
 has it ("no need for the camera to jump after clicking on watch"). While a scene is up `State`'s `talking`
 is true and the HUD's bottom bar, Build button and quests slide away. Preview scenes: `event` and `event:talk` (the
 prompt), `event:one`, `event:two`, `event:four`, `event:narration`, `event:answers`, `talk`, `talk:again`.
