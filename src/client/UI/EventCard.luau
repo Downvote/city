@@ -11,10 +11,15 @@
 -- in the scene's textbox. Nobody is made to answer: the server picks the gentle option when the
 -- time is up. Stop (or the event ending) takes the scene down.
 --
--- The server keeps the time. It says each line over the villagers' heads and sends it here as it
--- does (EventLine), so Watch always picks up the line they are saying now, never the start (the
--- user: "clicking watch to watch a conversation restarts the conversation from the start"). A click
--- on the box shows the rest of the line at once, and on the last line closes the scene.
+-- The server keeps the time in the town. It says each line over the villagers' heads and sends it
+-- here as it does (EventLine), and every line the client hears for the event is kept. Watch plays
+-- the scene from its first line (the user: "make watching conversations restart the conversation
+-- from the start"; an earlier request had it pick up at the line being said now): each line is
+-- typed and stays as long as the villagers take to say one, a click moves on sooner, and once it
+-- has caught up the lines come as the villagers say them. A choice that is waiting while it plays
+-- has its answers up in the scene at once, with the time left running down over the box, so
+-- watching from the start never costs the player their say. A click on the box shows the rest of
+-- the line at once, and on the last line closes the scene.
 --
 -- The big moments (Data/Cutscenes) play as cutscenes when watched (the user: "add cutscenes and
 -- scenes like tomodachi life as well"): the same scene, with the villagers acting on a set of
@@ -47,7 +52,12 @@ local current: any = nil
 local queue: { any } = {}
 local playing = false
 local hidden = false -- while you build or make a villager, the prompt and the scene step aside
-local lineNow: any = nil -- the line being said right now: { who, text }
+local heard: { any } = {} -- every line of the event so far, in order (so Watch can play it from the start)
+local shown = 0 -- how many of them the scene has shown
+local pacing = 0 -- goes up whenever the scene moves on, so an old wait stops
+local idle = false -- the scene has shown every line it has and waits for the next one
+local sceneSeen: { string } = {} -- who the scene has brought in so far
+local sceneTime: Frame? = nil -- the time left to answer, over the scene's box
 local asking = false -- the event is waiting for your answer
 local askedAt = 0
 local typing = 0 -- goes up with every line typed, so an old one stops
@@ -184,8 +194,11 @@ local function bring(l: any)
 	if not s then
 		return
 	end
-	local need = table.clone(seen)
+	local need = table.clone(sceneSeen)
 	for _, letter in cast(l) do
+		if not table.find(sceneSeen, letter) then
+			table.insert(sceneSeen, letter)
+		end
 		if not table.find(need, letter) then
 			table.insert(need, letter)
 		end
@@ -234,7 +247,7 @@ local function typeOut(text: string)
 			label.MaxVisibleGraphemes = -1
 			typing += 1
 			if scene == s then
-				s.more.Visible = not asking
+				s.more.Visible = not asking or shown < #heard
 			end
 		end
 	end)
@@ -264,7 +277,19 @@ local function clearAnswers()
 	end
 end
 
--- The answers, as pills in the box under the words.
+-- The question, once the scene has shown every line before it.
+local function askLine()
+	local s = scene
+	if not s then
+		return
+	end
+	s.beat({ ask = true })
+	s.speak(nil)
+	typeOut("What do you do?")
+end
+
+-- The answers, as pills in the box under the words (up as soon as the event asks, even while the
+-- scene is still showing the lines before it), and the time left over the box.
 local function showAnswers()
 	local s = scene
 	local ev = current
@@ -272,9 +297,9 @@ local function showAnswers()
 		return
 	end
 	clearAnswers()
-	s.beat({ ask = true })
-	s.speak(nil)
-	typeOut("What do you do?")
+	if sceneTime then
+		sceneTime.Visible = true
+	end
 	local n = #ev.choices
 	local grid = Kit.grid(s.answers, UDim2.new(1 / math.max(1, math.min(n, 3)), -8, 0, 44), 8)
 	grid.FillDirectionMaxCells = 3
@@ -297,6 +322,9 @@ local function showAnswers()
 			end
 			asking = false
 			clearAnswers()
+			if sceneTime then
+				sceneTime.Visible = false
+			end
 			updatePrompt()
 			task.spawn(function()
 				local ok, err = Remotes.fn("EventChoose"):InvokeServer(ev.token, i)
@@ -312,19 +340,66 @@ local function closeScene(now: boolean?)
 	if scene then
 		local s = scene
 		scene = nil
+		sceneTime = nil
 		typing += 1
+		pacing += 1
 		s.close(now)
 	end
 	updatePrompt()
 end
 
--- Puts the scene up: the villagers slide in and the line being said now is typed out (the lines
--- before it are not said again). The camera is left alone.
+-- How long a line stays before the scene moves on: as long as the villagers take to say it (the
+-- server's own pace, Services/Events), a little less so a replay keeps up.
+local function readFor(l: any): number
+	return math.clamp(#(l.text or "") / 18, 2.2, 4.2) - 0.2
+end
+
+-- Shows the next line the scene hasn't shown, and moves on by itself once it has been read. With
+-- nothing more to show it waits for the villagers' next line (and puts the question, if they
+-- asked one).
+local function nextLine()
+	local s = scene
+	if not s then
+		return
+	end
+	pacing += 1
+	local mine = pacing
+	if shown >= #heard then
+		idle = true
+		if asking then
+			askLine()
+		end
+		return
+	end
+	idle = false
+	shown += 1
+	local l = heard[shown]
+	showLine(l)
+	local started = os.clock()
+	local wait = readFor(l)
+	task.spawn(function()
+		while pacing == mine and scene == s do
+			if s.words.MaxVisibleGraphemes == -1 and os.clock() - started >= wait then
+				break
+			end
+			task.wait(0.1)
+		end
+		if pacing == mine and scene == s then
+			nextLine()
+		end
+	end)
+end
+
+-- Puts the scene up and plays it from its first line: the villagers slide in as their lines come
+-- and each line is typed out, then the ones the villagers say after. The camera is left alone.
 local function openScene()
 	if scene or not current or hidden then
 		return
 	end
 	local ev = current
+	shown = 0
+	idle = false
+	sceneSeen = {}
 	-- a big moment plays on a set of its own
 	local story, stage = Cutscenes.forEvent(ev.id, ev)
 	scene = Dialogue.open({
@@ -336,7 +411,16 @@ local function openScene()
 			-- turned out, a click closes the scene (the user: "when clicking on the last part of
 			-- the conversation, the conversation should close"); before that the next line comes
 			-- when the villagers say it.
-			if scene and current and (current.ended or (lineNow and lineNow.last)) and not asking then
+			if not scene or not current then
+				return
+			end
+			if shown < #heard then
+				-- a line still to come from before: on to it now
+				nextLine()
+				return
+			end
+			local last = heard[shown]
+			if (current.ended or (last and last.last)) and not asking then
 				current.closed = true
 				closeScene()
 			end
@@ -363,24 +447,47 @@ local function openScene()
 			bring({ who = letter, text = "" })
 		end
 	end
+	-- the time left to answer, a thin bar along the box's foot, while the event waits for you
+	local track = Kit.new("Frame", {
+		Name = "TimeLeft",
+		BackgroundColor3 = T.Glass:Lerp(T.White, 0.16),
+		BorderSizePixel = 0,
+		Size = UDim2.new(1, -60, 0, 3),
+		Position = UDim2.new(0, 30, 1, -5),
+		Visible = false,
+		ZIndex = 8,
+		Parent = scene.box,
+	})
+	Kit.corner(track, "pill")
+	local fill = Kit.new("Frame", {
+		Name = "Fill",
+		BackgroundColor3 = T.Yellow,
+		BorderSizePixel = 0,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 9,
+		Parent = track,
+	})
+	Kit.corner(fill, "pill")
+	sceneTime = track
 	if asking then
-		bring(lineNow)
+		-- they want your say already: the answers are up at once, while the lines play
 		showAnswers()
-	elseif lineNow then
-		showLine(lineNow)
 	end
+	nextLine()
 end
 
 -- The lines -----------------------------------------------------------------------------------------------
 
--- A line the villagers are saying now: shown in the scene if it is up, kept for when it goes up.
+-- A line the villagers are saying now: kept with the rest, and shown at once if the scene is up
+-- and has caught up (otherwise it comes in its turn).
 local function say(l: any)
 	cursor = Cutscenes.follow(cursor, current, l)
 	l.at = cursor
-	lineNow = l
+	table.insert(heard, l)
 	note(l)
-	if scene then
-		showLine(l)
+	if scene and (idle or shown >= #heard - 1) then
+		shown = #heard - 1
+		nextLine()
 	end
 end
 
@@ -389,10 +496,13 @@ local function ask()
 	cursor = Cutscenes.asked()
 	asking = true
 	askedAt = os.clock()
-	lineNow = { text = "What do you do?" }
 	updatePrompt()
 	if scene then
 		showAnswers()
+		-- (the question itself once the scene has shown the lines before it)
+		if idle or shown >= #heard then
+			askLine()
+		end
 	end
 end
 
@@ -400,7 +510,9 @@ local function play(ev: any)
 	playing = true
 	current = ev
 	asking = false
-	lineNow = nil
+	heard = {}
+	shown = 0
+	idle = false
 	cursor = nil
 	seen = {}
 	updatePrompt()
@@ -421,6 +533,12 @@ local function play(ev: any)
 	end
 	asking = false
 	clearAnswers()
+	-- a scene still playing what came before lets it finish first (a while at most)
+	local waited = 0
+	while scene and shown < #heard and waited < 60 do
+		task.wait(0.25)
+		waited += 0.25
+	end
 	if ev.notices and #ev.notices > 0 and scene then
 		-- how it turned out, a moment, before the scene goes
 		scene.beat({ ending = true })
@@ -431,7 +549,8 @@ local function play(ev: any)
 	closeScene()
 	holder.Visible = false
 	current = nil
-	lineNow = nil
+	heard = {}
+	shown = 0
 	playing = false
 	local nextEv = table.remove(queue, 1)
 	if nextEv then
@@ -572,6 +691,11 @@ function EventCard.start(_hud: any)
 			if asking then
 				local left = 1 - (os.clock() - askedAt) / Tuning.Events.ChoiceTimeout
 				timeFill.Size = UDim2.fromScale(math.clamp(left, 0, 1), 1)
+				local bar = sceneTime
+				local fill = bar and bar:FindFirstChild("Fill")
+				if fill and fill:IsA("Frame") then
+					fill.Size = UDim2.fromScale(math.clamp(left, 0, 1), 1)
+				end
 			end
 		end
 	end)
@@ -601,6 +725,9 @@ function EventCard.start(_hud: any)
 				if asking then
 					asking = false
 					clearAnswers()
+					if sceneTime then
+						sceneTime.Visible = false
+					end
 					updatePrompt()
 				end
 				say(line)

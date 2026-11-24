@@ -2985,37 +2985,62 @@ function TownMap.placements(): { Placement }
 	local function hill(name: string, x: number, z: number, yaw: number, extra: { [string]: any }?)
 		on(name, x, z, yaw, Hills.at(x, z) - 0.1, extra)
 	end
-	hill("farmyard", -720, 490, 0)
-	hill("barn", -610, 445, 200)
-	hill("windmill", -640, 548, 0)
-	hill("lookout", 0, 640, 0)
+	-- (each where its flat top is: Data/Hills. The farm and the camp moved out past the notch
+	-- the hills keep behind the old town, the lookout north up the hill, when the plots grew)
+	local function top(name: string): (number, number)
+		for _, pl in Hills.Plateaus do
+			if pl.name == name then
+				return pl.x, pl.z
+			end
+		end
+		error("no flat top " .. name)
+	end
+	local fx, fz = top("farm")
+	fx, fz = fx - 700, fz - 480 -- (from where the farm was laid out)
+	local cx, cz = top("camp")
+	cx, cz = cx - 650, cz - 520
+	local lx, lz = top("lookout")
+	hill("farmyard", fx - 720, fz + 490, 0)
+	hill("barn", fx - 610, fz + 445, 200)
+	hill("windmill", fx - 640, fz + 548, 0)
+	hill("lookout", lx, lz, 0)
 	hill("observatory", -380, 760, 0)
 	hill("radioMast", 380, 760, 0)
-	hill("camp", 650, 520, 0)
+	hill("camp", cx + 650, cz + 520, 0)
 	for _, p in { { -630, 520 }, { -770, 430 }, { -800, 540 } } do
-		hill("lowTree", p[1], p[2], 0)
+		hill("lowTree", fx + p[1], fz + p[2], 0)
 	end
 	-- a mountain lake on the east peak and a ring of standing stones on the west one
 	hill("tarn", 860, 720, 200)
-	hill("stoneCircle", -860, 720, 0)
+	local sx, sz = top("stones")
+	hill("stoneCircle", sx, sz, 0)
 	-- hay bales round the farm, a rail along the lookout's edge, picnic tables and signposts
 	for _, p in { { -670, 452 }, { -676, 459 }, { -663, 460 }, { -766, 452 }, { -598, 502 }, { -605, 508 } } do
-		hill("hayBale", p[1], p[2], p[1] * 7)
+		hill("hayBale", fx + p[1], fz + p[2], p[1] * 7)
 	end
 	for a = 200, 340, 20 do
 		local rad = math.rad(a)
 		local yaw = math.deg(math.atan2(-math.cos(rad), -math.sin(rad)))
-		hill("fenceRun", 43 * math.cos(rad), 640 + 43 * math.sin(rad), yaw)
+		hill("fenceRun", lx + 43 * math.cos(rad), lz + 43 * math.sin(rad), yaw)
 	end
-	for _, p in { { 24, 652, 20 }, { 676, 548, -30 }, { 690, 500, 60 }, { -350, 742, 10 }, { 836, 676, 0 } } do
+	for _, p in { { lx + 24, lz + 12, 20 }, { cx + 676, cz + 548, -30 }, { cx + 690, cz + 500, 60 }, { -350, 742, 10 }, { 836, 676, 0 } } do
 		hill("picnicTable", p[1], p[2], p[3])
 	end
+	-- (at the foot of the stair, on the way up to the lookout, by the farm's track and the camp's,
+	-- below the observatory and the lake, and by the stones)
 	for _, p in
-		{ { 24, 300, 0 }, { 30, 596, 40 }, { -556, 420, 90 }, { 592, 470, -60 }, { -344, 716, 0 }, { 800, 640, 30 } }
+		{
+			{ 24, Town.RingZ + 38, 0 },
+			{ lx + 30, lz - 44, 40 },
+			{ -626, 330, 90 },
+			{ 680, 380, -60 },
+			{ -344, 716, 0 },
+			{ 800, 640, 30 },
+			{ sx + 54, sz - 56, -30 },
+		}
 	do
 		hill("signpost", p[1], p[2], p[3])
 	end
-	hill("signpost", -806, 664, -30)
 	-- trees over the slopes, clear of the flat tops and the path, thicker in the north east
 	local woods = Rng.new(23)
 	for _ = 1, 240 do
