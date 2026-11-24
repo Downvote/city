@@ -346,6 +346,35 @@ function Kit.slant(face: GuiObject, height: number?, outside: boolean?, flip: bo
 		face:SetAttribute("Sharp", sharp)
 	end
 	local pic = Skin.slab(h, cap, flip == true, pointOf(h), nil, nil, sharp)
+	-- A slab that sizes itself to its words (a caption, a name tag, a size tag): its width is set
+	-- from the words instead once they're in, since its painted layer is sized by share of it
+	-- (Kit.fitWidth). Only for a slab whose one thing is a line of words.
+	if face.AutomaticSize == Enum.AutomaticSize.X or face.AutomaticSize == Enum.AutomaticSize.XY then
+		local fitted = false
+		local function try()
+			if fitted then
+				return
+			end
+			local words: GuiObject? = nil
+			for _, c in face:GetChildren() do
+				if c:IsA("TextLabel") or c:IsA("TextButton") then
+					if words then
+						return
+					end
+					words = c
+				elseif c:IsA("GuiObject") and c.Name ~= "Body" and not c:GetAttribute("SlabEnd") then
+					return
+				end
+			end
+			if words then
+				fitted = true
+				Kit.fitWidth(face, words)
+			end
+		end
+		-- (its words go in after the slab is made)
+		face.ChildAdded:Connect(try)
+		task.defer(try)
+	end
 	if pic then
 		local body = slabLayer(face, "Body", pic, cap, -3)
 		body.ImageColor3 = face.BackgroundColor3
@@ -359,7 +388,7 @@ function Kit.slant(face: GuiObject, height: number?, outside: boolean?, flip: bo
 	-- it is "\": wider at the top on the left, at the bottom on the right
 	local ends = if flip then { "tr", "bl" } else { "br", "tl" }
 	for i, keep in ends do
-		Kit.wedge({
+		local wedge = Kit.wedge({
 			Parent = face,
 			Color = face.BackgroundColor3,
 			Transparency = face.BackgroundTransparency,
@@ -369,6 +398,7 @@ function Kit.slant(face: GuiObject, height: number?, outside: boolean?, flip: bo
 			W = cap,
 			H = h,
 		}, keep)
+		wedge:SetAttribute("SlabEnd", true)
 	end
 	return cap
 end
@@ -1408,9 +1438,19 @@ function Kit.shapes(parent: GuiObject, color: Color3, seed: number, count: numbe
 				Parent = ring,
 			})
 		elseif kind == "plus" then
+			-- one bar across and the two arms of the other up to its edges, so no part of the sign
+			-- is drawn twice and it's the one see-through colour all over (the user: "make this
+			-- shape the same color around instead of having an intersecting color")
 			local turn = rng:NextInteger(0, 40)
-			piece(holder, size, size * 0.28, turn, true)
-			piece(holder, size, size * 0.28, turn + 90, true)
+			local thick = size * 0.28
+			piece(holder, size, thick, turn, true)
+			local arm = (size - thick) / 2
+			local along = math.rad(turn + 90)
+			local reach = (thick + arm) / 2
+			for _, side in { -1, 1 } do
+				local a = piece(holder, arm, thick, turn + 90, false)
+				a.Position = UDim2.new(0.5, side * math.cos(along) * reach, 0.5, side * math.sin(along) * reach)
+			end
 		elseif kind == "diamond" then
 			piece(holder, size * 0.62, size * 0.62, 45, false)
 		else
@@ -2481,6 +2521,11 @@ function Kit.button(text: string, props: { [string]: any }?, onClick: (() -> ())
 	pressable(b, p.Press) -- (Press: options for Kit.press, e.g. { Grow = 1 } for a button set flush in a slab)
 	if onClick then
 		b.Activated:Connect(onClick)
+	end
+	-- a button that sizes itself to its words gets its width set from them instead (Kit.fitWidth:
+	-- its face and content are sized by share of it)
+	if b.AutomaticSize == Enum.AutomaticSize.X or b.AutomaticSize == Enum.AutomaticSize.XY then
+		Kit.fitWidth(b, b)
 	end
 	return b
 end
@@ -3648,6 +3693,55 @@ function Kit.setRowSelected(row: GuiObject, on: boolean)
 	end
 end
 
+-- How wide a line of words is, as the engine measures it, or nil where it can't (the previews).
+function Kit.measure(text: string, size: number, font: Enum.Font?): number?
+	if text == "" then
+		return 0
+	end
+	local ok, bounds = pcall(function()
+		return game:GetService("TextService"):GetTextSize(text, size, font or Kit.Fonts.Title, Vector2.new(4000, 400))
+	end)
+	if ok and typeof(bounds) == "Vector2" and bounds.X > 0 then
+		return math.ceil(bounds.X)
+	end
+	return nil
+end
+
+-- How wide a line of words is (a reckoning by its letters where the engine can't measure it). For
+-- sizing things by their words without AutomaticSize.
+function Kit.textWidth(text: string, size: number, font: Enum.Font?): number
+	return Kit.measure(text, size, font) or math.ceil(#text * size * 0.56)
+end
+
+-- Stops `frame` sizing itself across and sets its width from the words of `label` (measured), the
+-- paddings on the two of them and `extra`, again whenever the words change. In the game a frame that
+-- sizes itself, laid out in a list, with something in it sized by share of it, grows to the size
+-- of the list (the Villagers menu's tabs ran its whole width, a notice came out half the screen
+-- tall). Where the words can't be measured (the previews) it is left to size itself.
+function Kit.fitWidth(frame: GuiObject, label: GuiObject, extra: number?)
+	local function padOf(inst: Instance): number
+		local pad = inst:FindFirstChildOfClass("UIPadding")
+		return if pad then pad.PaddingLeft.Offset + pad.PaddingRight.Offset else 0
+	end
+	local function fit()
+		local l = label :: any
+		local w = Kit.measure(l.Text, l.TextSize, l.Font)
+		if not w then
+			return
+		end
+		local total = w + padOf(frame) + (if label ~= frame then padOf(label) else 0) + (extra or 0)
+		if frame.AutomaticSize == Enum.AutomaticSize.XY then
+			frame.AutomaticSize = Enum.AutomaticSize.Y
+		elseif frame.AutomaticSize == Enum.AutomaticSize.X then
+			frame.AutomaticSize = Enum.AutomaticSize.None
+		end
+		frame.Size = UDim2.new(0, math.ceil(total), frame.Size.Y.Scale, frame.Size.Y.Offset)
+	end
+	(label :: any):GetPropertyChangedSignal("Text"):Connect(fit)
+	-- (once whoever made it has put its paddings on)
+	task.defer(fit)
+end
+
 -- Tabs in one bar: a dark well shaped like a pill with a thin line round it, the picked tab a
 -- yellow pill with dark words. `list` is { { id, name } }; onSelect(id) when one is picked.
 -- props: Parent, Position, AnchorPoint, Height, TextSize. Returns the bar and select(id).
@@ -3658,12 +3752,17 @@ function Kit.segments(
 ): (Frame, (string) -> ())
 	local p = props or {}
 	local h: number = p.Height or 46
+	-- Nothing in the bar sizes itself: every width is worked out from the words here. (A tab sized
+	-- round its words with its yellow slab sized by share of it grew into the slab in the game,
+	-- until the two tabs ran the menu's whole width, under its way back: the user, "the abouts and
+	-- friends tabs seem to overlap the back button".)
+	local textSize: number = p.TextSize or 18
+	local inner = RIM + 2 -- (and the slanted ends' share, below)
 	local bar = Kit.new("Frame", {
 		Name = "Tabs",
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		Size = UDim2.fromOffset(0, h),
-		AutomaticSize = Enum.AutomaticSize.X,
 		Position = p.Position or UDim2.new(),
 		AnchorPoint = p.AnchorPoint or Vector2.zero,
 		LayoutOrder = p.LayoutOrder or 0,
@@ -3679,35 +3778,22 @@ function Kit.segments(
 	})
 	-- a leaning well, the picked tab a leaning slab in it
 	local wellCap = Kit.slant(well, h - 2)
+	local side = inner + math.ceil(wellCap / 3)
 	local holder = Kit.new("Frame", {
 		Name = "Row",
 		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(0, h),
-		AutomaticSize = Enum.AutomaticSize.X,
+		Size = UDim2.fromScale(1, 1),
 		ZIndex = 2,
 		Parent = bar,
 	})
 	Kit.new("UIPadding", {
-		PaddingLeft = UDim.new(0, RIM + 2 + math.ceil(wellCap / 3)),
-		PaddingRight = UDim.new(0, RIM + 2 + math.ceil(wellCap / 3)),
-		PaddingTop = UDim.new(0, RIM + 2),
-		PaddingBottom = UDim.new(0, RIM + 2),
+		PaddingLeft = UDim.new(0, side),
+		PaddingRight = UDim.new(0, side),
+		PaddingTop = UDim.new(0, inner),
+		PaddingBottom = UDim.new(0, inner),
 		Parent = holder,
 	})
 	Kit.list(holder, 2, true)
-	-- The well follows the tabs' own width once the game has laid them out, in the interface's
-	-- units: sized by scale inside a bar that sizes itself, it could stretch the bar far wider than
-	-- its tabs (on a phone the tabs stood off to the left of the menu).
-	local function fitWell()
-		local tall = holder.AbsoluteSize.Y
-		if tall <= 0 or holder.AbsoluteSize.X <= 0 then
-			return
-		end
-		local across = holder.AbsoluteSize.X * h / tall
-		well.Size = UDim2.fromOffset(math.max(0, across - 2 - wellCap * 2), h - 2)
-	end
-	holder:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitWell)
-	task.defer(fitWell)
 	local buttons: { [string]: TextButton } = {}
 	local faces: { [string]: Frame } = {}
 	local labels: { [string]: TextLabel } = {}
@@ -3731,15 +3817,17 @@ function Kit.segments(
 		end
 	end
 	local th = h - RIM * 2 - 4
+	local across = side * 2 + 2 * math.max(0, #list - 1)
 	for i, t in list do
+		local tw = Kit.textWidth(t.name, textSize, Kit.Fonts.Title) + 44
+		across += tw
 		local b = Kit.new("TextButton", {
 			Name = t.name,
 			Text = "",
 			AutoButtonColor = false,
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
-			Size = UDim2.fromOffset(0, th),
-			AutomaticSize = Enum.AutomaticSize.X,
+			Size = UDim2.fromOffset(tw, th),
 			LayoutOrder = i,
 			ZIndex = 2,
 			Parent = holder,
@@ -3749,11 +3837,10 @@ function Kit.segments(
 			Name = "Label",
 			Text = t.name,
 			Font = Kit.Fonts.Title,
-			TextSize = p.TextSize or 18,
+			TextSize = textSize,
 			TextColor3 = T.Ink,
 			BackgroundTransparency = 1,
-			Size = UDim2.fromOffset(0, th),
-			AutomaticSize = Enum.AutomaticSize.X,
+			Size = UDim2.fromScale(1, 1),
 			ZIndex = 4,
 			Parent = b,
 		})
@@ -3799,6 +3886,7 @@ function Kit.segments(
 			onSelect(t.id)
 		end)
 	end
+	bar.Size = UDim2.fromOffset(across, h)
 	if list[1] then
 		select(list[1].id)
 	end
@@ -4021,8 +4109,15 @@ function Kit.motion(parent: GuiObject, accent: Color3, seed: number, opts: { [st
 			Kit.new("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = d })
 			Kit.new("UIStroke", { Color = color, Transparency = faint, Thickness = math.max(3, size / 14), Parent = d })
 		elseif kind == "plus" then
-			block(holder, size, size * 0.2, 0, color, faint)
-			block(holder, size * 0.2, size, 0, color, faint)
+			-- the bar across, then the upright's two arms up to its edges: nothing drawn twice, so
+			-- the sign is one colour all over
+			local thick = size * 0.2
+			block(holder, size, thick, 0, color, faint)
+			local arm = (size - thick) / 2
+			for _, side in { -1, 1 } do
+				local a = block(holder, thick, arm, 0, color, faint)
+				a.Position = UDim2.new(0.5, 0, 0.5, side * (thick + arm) / 2)
+			end
 			spin = rng:NextNumber(-14, 14)
 		else
 			for t = 0, 3 do

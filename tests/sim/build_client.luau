@@ -396,6 +396,41 @@ run("a menu takes the screen: a way back, tabs, rows", function()
 			and dock.Position.X.Scale == 1,
 		"at the right end of the strip"
 	)
+	-- nothing in the tab bar sizes itself (in the game that let a tab grow to the width of the menu)
+	local selfSizing = false
+	for _, d in tabs:GetDescendants() do
+		if d:IsA("GuiObject") and d.AutomaticSize ~= Enum.AutomaticSize.None then
+			selfSizing = true
+		end
+	end
+	check(not selfSizing and tabs.Size.X.Offset > 0, "its tabs and their bar have widths of their own")
+	do
+		-- where the game can measure words, a button or a tag that sizes itself to its words gets a
+		-- width of its own from them instead (a stand-in measure here: 7 pixels a letter)
+		local Kit = Sim.Kit
+		local measure = Kit.measure
+		Kit.measure = function(text)
+			return #text * 7
+		end
+		local holder = Sim.Kit.box({ Parent = Sim.gui, Size = roblox.UDim2.fromOffset(400, 60) })
+		local b = Kit.button(
+			"Marble",
+			{ Parent = holder, Size = roblox.UDim2.fromOffset(0, 40), AutomaticSize = Enum.AutomaticSize.X }
+		)
+		local tag = Kit.iconButton("house", "Home", { Parent = holder, Name = "Home" })
+		frames(2)
+		Kit.measure = measure
+		local cap = tag:FindFirstChild("Tag", true)
+		check(
+			b.AutomaticSize == Enum.AutomaticSize.None and b.Size.X.Offset >= 42,
+			"a button that sized itself to its words is as wide as them, set outright"
+		)
+		check(
+			cap ~= nil and cap.AutomaticSize == Enum.AutomaticSize.None and cap.Size.X.Offset >= 28,
+			"and so is an icon button's caption"
+		)
+		holder:Destroy()
+	end
 	local first, second = tabs:FindFirstChild("First", true), tabs:FindFirstChild("Second", true)
 	local function slab(tab)
 		return tab:FindFirstChild("Face")

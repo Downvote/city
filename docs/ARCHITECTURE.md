@@ -639,7 +639,11 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
 - `UI/Kit` menus: `Kit.panel(title, size, onClose, icon, color, opts)` is a full menu (pass `Kit.MenuSize`): a
   black backdrop, `Kit.backButton` and the title in a strip above the panel, `opts.Tabs` / `opts.OnTab` as
   `Kit.segments` at the top right (a dark pill well, the picked tab a yellow pill), in a `TabsDock` across the right
-  half of the header whose list layout puts them against its right end; the well takes the tabs' laid out width. The panel is `Rim` (holding
+  half of the header whose list layout puts them against its right end. Nothing in `Kit.segments` sizes itself: each
+  tab is its measured words (`Kit.textWidth`) and 44, the bar their sum and its paddings. `Kit.measure(text, size,
+  font)` is the engine's width of a line of words or nil where it can't say; `Kit.fitWidth(frame, label, extra?)`
+  turns a box that sized itself across into one as wide as its label's words plus the paddings, again when the words
+  change (a self sizing `Kit.button` and a self sizing leaning slab with one label do it themselves). The panel is `Rim` (holding
   `Edge`, a thin line of `T.Line` a few pixels out) and in it `Card`: a rounded card (`Cut`) with a rim of its
   own, a glow of the menu's colour, `Dots` and a `Hatch` band in its bottom right corner. `opts.Dialog = true` is
   a small panel in the middle: its card is two tones (a UIGradient `Wash` with a step), the darker band across the

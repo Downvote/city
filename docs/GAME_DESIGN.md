@@ -1893,6 +1893,21 @@ round what was in it, so in the game the two grew into each other until the note
 notices. A note's height is now worked out from its words before it goes up: one line, or two for a long notice, and
 the block fills that.
 
+> make this shape the same color around instead of having an intersecting color
+
+(A plus sign drifting behind a menu, its middle brighter where its two bars crossed.) The shapes behind menus and
+dotted over cards are see-through, so where two of their pieces overlapped the colour was laid on twice. A plus is
+now one bar and two short arms that stop at its edges: one colour all over.
+
+> the abouts and friends tabs seem to overlap the back button
+
+(A picture: the two tabs each half as wide as the whole menu, About running under the way back.) The same thing as
+the tall notices: each tab sized itself round its words, and its yellow slab was sized by share of the tab, which the
+game lets grow to the width of what holds the tabs. The tabs are now as wide as their words, measured, and nothing in
+the bar sizes itself. The same was done for every button and small leaning tag that sizes itself to its words (Build
+mode's materials, the season and body part tabs, the captions under round buttons, name tags), so none of them can
+run wide like that.
+
 ### Leaning shapes for everything with words on it
 
 > make these type of shapes everywhere parallograms instead of rounded rectangles

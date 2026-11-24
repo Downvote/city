@@ -286,7 +286,13 @@ panels are cards with a tinted header bar, title, round close button and a dimme
 dialogue card with the answers inside; nothing wobbles (`Kit.blob` draws plain shapes) and nothing inside a
 self-sizing box may reach past its edges, and nothing in a box that sizes itself (AutomaticSize) is sized by scale
 along that axis: in the game the two grow into each other (a notice once came out half the screen tall: "notifications
-are bugged"). Measure the words (`TextService:GetTextSize`) or size the box yourself. UI previews
+are bugged", and the Villagers menu's tabs ran its whole width: "the abouts and friends tabs seem to overlap the
+back button"). Measure the words (`Kit.measure`, `Kit.textWidth`) or size the box yourself; `Kit.fitWidth(frame,
+label)` does it for a box that sizes itself across to one line of words, and `Kit.button` and every leaning slab
+with a single label in it use it already (where the words can't be measured, the previews, they keep sizing
+themselves). `Kit.segments` sets every width outright. A shape drawn
+see-through is never made of pieces that overlap ("make this shape the same color around instead of having an
+intersecting color"): a plus is a bar and two arms that stop at its edges. UI previews
 look best over an island render as `--bg`. The user then pointed at Roblox's write-up of native shadows, gradients and
 rounded clipping ("reference this doc an implement as much as possible"): cards, pills, buttons and menus get
 `Kit.softShadow` (two UIShadows), backdrops `Kit.vignette`, progress `Kit.ring` (conical) or `Kit.bar`, glows
