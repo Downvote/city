@@ -120,7 +120,7 @@ end
 -- A broadleaf crown on r: a heart of leaves, four clumps round its lower edge, three above and a
 -- small one at the crown, darker underneath and lighter where the sun is. Each clump is a faceted
 -- lump squashed and turned its own way. `s` scales it (at 1 it is about 8 studs across, its
--- middle at y 8) and `lift` raises it.
+-- middle at y 8), `lift` raises it and `spread` widens it.
 local CROWN = {
 	-- x, y, z, width, height, depth, tone (0 low to 1 top), turn
 	{ 0, 8.0, 0, 4.6, 3.8, 4.4, 0.4, 0.2 },
@@ -133,16 +133,17 @@ local CROWN = {
 	{ 0, 9.1, -1.3, 3.0, 2.5, 2.8, 0.7, 1.9 },
 	{ 0.1, 10.5, 0.1, 2.5, 2.0, 2.5, 1, 1.1 },
 }
-local function crown(r: R, s: number, leaf: Color3, lit: Color3, lift: number?)
+local function crown(r: R, s: number, leaf: Color3, lit: Color3, lift: number?, spread: number?)
+	local w = s * (spread or 1)
 	local under = shade(leaf, 0.74)
 	for _, c in CROWN do
 		local t = c[7]
 		local tone = if t < 0.5 then Colors.mix(under, leaf, t * 2) else Colors.mix(leaf, lit, t * 2 - 1)
 		r:lump(
-			CFrame.new(c[1] * s, c[2] * s + (lift or 0), c[3] * s) * CFrame.Angles(0.3, c[8], -0.25),
-			c[4] * s,
+			CFrame.new(c[1] * w, c[2] * s + (lift or 0), c[3] * w) * CFrame.Angles(0.3, c[8], -0.25),
+			c[4] * w,
 			c[5] * s,
-			c[6] * s,
+			c[6] * w,
 			tone,
 			"Grass"
 		)
@@ -1537,7 +1538,7 @@ local items: { Item } = {
 			rod(r, Vector3.new(0, 5.4, 0), Vector3.new(4.3, 6.6, 0.2), 0.6, r.c2, "Wood")
 			rod(r, Vector3.new(0, 5.6, 0), Vector3.new(-1.9, 8.0, -0.6), 0.6, r.c2, "Wood")
 			rod(r, Vector3.new(0, 5.8, 0), Vector3.new(0.4, 8.4, 1.5), 0.5, r.c2, "Wood")
-			crown(r, 1.1, r.c1, Colors.mix(r.c1, SUNLIT, 0.28), 0.6)
+			crown(r, 1.05, r.c1, Colors.mix(r.c1, SUNLIT, 0.28), 0.9, 1.15)
 			r:piece(function(q: R)
 				q:box(3.6, 1.95, 0.2, 0.7, 0.14, 1.9, Color3.fromRGB(196, 150, 96), "Wood")
 				for _, z in { -0.55, 0.95 } do

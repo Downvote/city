@@ -22,7 +22,7 @@ local Earnings = {}
 local T = Kit.Theme
 local player = Players.LocalPlayer
 
-local SEEN = 90 -- studs: further from the camera than this, a villager's coins aren't shown
+local SEEN = 120 -- studs: further from the camera than this, a villager's coins aren't shown
 local RISE = 1.6 -- seconds a coin takes to rise off their head and fade
 local FROM = Vector3.new(-1.3, 2.7, 0) -- where it starts, beside the head (a wish bubble is over it)
 local TO = Vector3.new(-1.3, 4.3, 0)

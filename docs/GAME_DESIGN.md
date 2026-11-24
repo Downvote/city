@@ -352,21 +352,73 @@ another Roblox avatar game. Its layout is taken, drawn our own way.)
 
 ## 8. Economy bounds
 
-Held by `tests/specs/City.spec.luau`:
+> could you make working give much more coins, and make buildings cheaper?
 
-- a day's pay for one villager at starting mood and skill is 300 to 700 coins, and never more than 3,000;
-- the starting coins buy a second bed and a workplace; then a day of the builder's wage (540) buys the cheapest
-  workplace, two the usual one, and none takes three; a workplace pays for itself in one to three days of its job;
-- three workers save up for the first land in 2 to 5 town days (a town day is 12 real minutes); one alone takes
-  more than 5;
+> make it such that villagers earn coins as they work, not after every day
+
+**Paid as they work.** There is no payday any more. While a villager is at their workplace in work hours, every
+second there earns its share of their day's pay (the job's income for their skill, mood and liking, spread over
+the part of nine to five a worker is usually at their station: 85% of it, the rest being the walk there and a
+break or two). A break, the evening, a day off, being sick or asleep, or being taken off by an event earns
+nothing; a word over the counter or a player's chat where they stand still counts as work. Every four seconds the
+town gets what its villagers earned in one go: a coin and "+31" rise off the head of each one who earned
+something and fade, and the money on the main screen counts up (without the flying coins a bigger gain brings).
+At five a short notice says what the day came to ("Your villagers earned 3,240 coins today.") and each worker
+gains skill for the day, a whole day's worth for a whole day's pay and some for part of one. A usual day comes to
+about a day's pay: a focused villager a little more, a lazy one a little less. City hall shows "A day's wages"
+where it showed the payday.
+
+**Much more.** Every job pays three times what it did. A day's pay at starting mood and skill is 1,080 (the
+artist) to 1,980 (the doctor), 1,387 on average; it was 360 to 660, 462 on average. The builder at the starting
+workshop earns 1,620 a town day (it was 540), about 31 coins every four seconds at the bench, and 8,100 in a real
+hour of play (it was 2,700; a town day is 12 real minutes, so an hour is five of them). The "Pay packets" goal asks
+for 15,000 coins in wages (it was 5,000).
+
+**Cheaper building.** Building costs about half. Every catalog piece costs half its old price (to a whole coin,
+to 5 from 50 up), walls and roofs cost 1 coin a stud and a square (they were 2), floors and fences stay at 1, the
+least a whole coin can be. A ready-made building costs what its pieces do: the park 821 (it was 1,606), the cottage
+1,896 (3,710), the family house 3,250 (6,358), the trades' buildings 3,345 to 5,519 (6,450 to 10,723). The worth
+a town level asks for halved with the prices (1,500, 5,000, 12,500 and 25,000; the starting house counts 1,305),
+so a level asks for as much building as it did and a town keeps the level it had. Selling refunds today's
+price, so a piece bought before the change sells for half what was paid; building the same thing again costs half
+too.
+
+**Land and cravings** keep their prices. The land is 4,000, 12,000 and 30,000: the first is two and a half days of
+the builder's wage alone (it was seven and a half), or a day and a half once a second villager works. A craving is
+40 to 300 coins, 129 on average: about a twentieth of what two workers earn in a day (it was about a seventh).
+
+How long things take a new player now, at starting mood and skill:
+
+- a bed and a workplace for the second villager, and a ready-made cottage on top, come out of the 3,000 starting
+  coins at once; after that the cottage is 1.2 town days of the builder's wage, about 14 minutes;
+- the first land is 30 minutes of the builder alone, 17 with the two workers a village has (it was 50);
+- each town level, the building it asks for and then the land it opens, earned by just the workers the levels ask
+  for: Village 1.6 town days, Town 3.4, Big town 4.4, City 1.3; the whole way about 2.1 hours of play (it was 8.9).
+  A town that keeps its villagers happy and learning gets there in about half.
+
+Held by `tests/specs/City.spec.luau` (and the earning itself by `Wages.spec.luau` and `Routine.spec.luau`):
+
+- a day's pay for one villager at starting mood and skill is 900 to 2,100 coins, and never more than 9,000 at the
+  best of everything;
+- the starting coins buy the second villager a bed and a workplace and a ready-made cottage on top; a day of the
+  builder's wage buys three of the dearest workplace, the cottage takes one to two days of it and the biggest
+  ready-made building less than four; a workplace pays for itself inside half a day of its job, and a trade's
+  ready-made building in 1.5 to 5 days;
+- three workers save up for the first land in half a town day to two, one alone in two to five;
 - the daily gift, a wish's coins, an event's, a room request's, a customer's and a busy day's are all held small
   beside the least paid job's day;
 - every step from one level to the next (the building its worth asks for, then the land it opens, earned by just
-  the workers the levels ask for) takes 3 to 25 town days, and the whole way to a city 4 to 15 hours;
-- ten town days played out for the keenest player: wages are two thirds or more of what comes in once two
-  villagers work, and 72% to 80% or more as the town grows;
+  the workers the levels ask for) takes 1 to 8 town days, and the whole way to a city 1.5 to 5 hours (it was 3 to
+  25 days and 4 to 15 hours);
+- ten town days played out for the keenest player: wages are 80% or more of what comes in once two villagers
+  work, and 85% to 90% or more as the town grows (they come to 88% and 95%; it was two thirds and 72% to 80%);
 - buying every craving a town of three with two workers gets takes more than a fiftieth of its wages and less
-  than a quarter;
+  than a quarter (it is about 4%);
+- what one villager earns in a pay packet is 10 to 60 coins at the start and never more than 200;
+- a day at the workplace comes to 95% to 105% of a day's pay over every personality, 85% to 112% for each one,
+  and never more than a whole work day there would; the builder's day in the brain's own run comes to its pay
+  within a few coins, and nothing is paid on a break, after five, at night, on a day off, while sick or while an
+  event has them;
 - the starting house is a gift: selling any of it refunds nothing (only what was paid on top, say a dearer finish),
   so a new town can't be sold for coins.
 

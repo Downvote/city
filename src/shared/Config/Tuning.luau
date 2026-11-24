@@ -129,7 +129,7 @@ Tuning.Events = {
 -- of a day's coins or more once two villagers have jobs. The user: "make it such that villagers
 -- earn coins as they work, not after every day". So a villager earns while they are at their
 -- workplace in work hours (Sim/City.earn, Services/Villagers), a day's pay spread over the part of
--- the work day a middling worker spends there; nothing on a break, off work or asleep.
+-- the work day a worker usually spends there; nothing on a break, off work or asleep.
 Tuning.Jobs = {
 	SkillCap = 30,
 	SkillPay = 0.06, -- each skill level above the first adds this share of the job's income

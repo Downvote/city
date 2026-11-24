@@ -175,7 +175,7 @@ end
 -- The user: "make it such that villagers earn coins as they work, not after every day". A day's
 -- pay (Jobs.pay: the job's income for their skill, mood and liking) comes in a little at a time
 -- while they are at their workplace in work hours: City.rate coins a second, the day's pay spread
--- over the seconds a middling worker spends there (City.workSeconds). Services/Villagers looks
+-- over the seconds a worker usually spends there (City.workSeconds). Services/Villagers looks
 -- every Tuning.Jobs.EarnStep seconds at who is at work and pays them through City.earn.
 
 -- The seconds of a work day, nine to five on the town's clock.
@@ -183,7 +183,7 @@ function City.workDay(): number
 	return (Tuning.Day.WorkEnd - Tuning.Day.WorkStart) / 24 * Tuning.Day.Length
 end
 
--- The seconds of it a day's pay is spread over: the part a middling worker is at their workplace
+-- The seconds of it a day's pay is spread over: the part a worker is usually at their workplace
 -- (Tuning.Jobs.AtWork; the rest is the walk there and breaks).
 function City.workSeconds(): number
 	return City.workDay() * Tuning.Jobs.AtWork

@@ -489,16 +489,26 @@ function Terrain.preview(plan: Plan, region: { number }, step: number?): { { any
 		local idx = j * plan.nx + i + 1
 		return Vector3.new(plan.x1 + i * V + V / 2, plan.height[idx], plan.z1 + j * V + V / 2), plan.material[idx]
 	end
+	-- a triangle takes the colours of its corners' materials, mixed, as Roblox blends one
+	-- material into the next
+	local function mixed(m1: string, m2: string, m3: string, shade: number): Color3
+		if m1 == m2 and m2 == m3 then
+			return color(m1, shade)
+		end
+		local a, b, c = color(m1, shade), color(m2, shade), color(m3, shade)
+		return Color3.new((a.R + b.R + c.R) / 3, (a.G + b.G + c.G) / 3, (a.B + b.B + c.B) / 3)
+	end
 	for j = j1, j2 - 1, k do
 		local i = i1
 		while i < i2 do
 			local p00, m = node(i, j)
-			local p10 = node(i + k, j)
-			local p01 = node(i, j + k)
-			local p11 = node(i + k, j + k)
+			local p10, m10 = node(i + k, j)
+			local p01, m01 = node(i, j + k)
+			local p11, m11 = node(i + k, j + k)
 			-- a little play in the colour, so a lawn isn't one flat sheet in the preview
 			local shade = 0.97 + 0.06 * ((i * 7 + j * 13) % 5) / 4
 			local flat = p00.Y == p10.Y and p00.Y == p01.Y and p00.Y == p11.Y
+			flat = flat and m10 == m and m01 == m and m11 == m
 			if flat then
 				-- run on east while the ground stays level and of one material
 				local run = i + k
@@ -518,8 +528,8 @@ function Terrain.preview(plan: Plan, region: { number }, step: number?): { { any
 				tri(p00, e1, p01, color(m, shade), m)
 				i = run
 			else
-				tri(p00, p10, p11, color(m, shade), m)
-				tri(p00, p11, p01, color(m, shade), m)
+				tri(p00, p10, p11, mixed(m, m10, m11, shade), m)
+				tri(p00, p11, p01, mixed(m, m11, m01, shade), m)
 				i += k
 			end
 		end
