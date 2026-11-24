@@ -588,6 +588,52 @@ function TownMap.lawns(): { { number } }
 	return { { sq.X - 30, sq.Z + 30, 12, 15 }, { sq.X + 30, sq.Z + 30, 12, 15 } }
 end
 
+-- The boardwalk's runs along the south shore, behind Harbour Road: { x1, x2, shore, back, rail1,
+-- rail2 }, where `shore` is how far south the grass reaches (its sea edge) and `back` how far
+-- Harbour Road's sidewalk does (its town edge), and the rail on the sea side runs from rail1 to
+-- rail2. One round the old town's cape, between the first avenues' outer kerbs, and one each side
+-- in front of downtown and the civic quarter on the old line. Those two have the cape's curving
+-- side beyond them at first, a lawn down to the beach, and take their rail where it ends.
+export type Boardwalk = { x1: number, x2: number, shore: number, back: number, rail1: number, rail2: number }
+function TownMap.boardwalks(): { Boardwalk }
+	local edge = Town.AvenueX[1] + 17
+	local far = Terrain.IslandX - 30
+	local cape = Terrain.Cape
+	local out: { Boardwalk } = {
+		{
+			x1 = -edge,
+			x2 = edge,
+			shore = Terrain.south(0),
+			back = Town.RingZ + 17,
+			rail1 = -edge,
+			rail2 = edge,
+		},
+	}
+	for _, sx in { 1, -1 } do
+		local a, b = sx * edge, sx * far
+		local r = sx * (cape.half + cape.ease)
+		table.insert(out, {
+			x1 = math.min(a, b),
+			x2 = math.max(a, b),
+			shore = Terrain.IslandS,
+			back = Town.OuterRingZ + 17,
+			rail1 = if sx > 0 then r else -far,
+			rail2 = if sx > 0 then far else r,
+		})
+	end
+	return out
+end
+
+-- The boardwalk's run at x, if any.
+function TownMap.boardwalkAt(x: number): Boardwalk?
+	for _, run in TownMap.boardwalks() do
+		if x >= run.x1 and x <= run.x2 then
+			return run
+		end
+	end
+	return nil
+end
+
 -- Which roads cross a road, and where: for a road along x, the x of every road along z whose run
 -- covers its z (and the other way round), as { at, half width, sidewalk, neg = the other road goes
 -- on to the negative side, pos = to the positive side }.
@@ -664,20 +710,35 @@ function TownMap.ground(region: Region?): { Prim }
 	local IX, IN, IS, B, SH = TownMap.IslandX, TownMap.IslandN, TownMap.IslandS, TownMap.Beach, TownMap.Shallows
 	-- walls nobody sees at the edge of the shallows, so nobody wanders off into the deep
 	local EX, EN, ES = IX + B + SH, IN + B + SH, IS + B + SH
-	for _, w in
-		{
-			{ -EX - 2, -ES - 2, EX + 2, -ES },
-			{ -EX - 2, EN, EX + 2, EN + 2 },
-			{ -EX - 2, -ES, -EX, EN },
-			{ EX, -ES, EX + 2, EN },
-		}
-	do
-		local a, b, c, d = clip(region, w[1], w[2], w[3], w[4])
+	-- (down to the deep floor, so nobody swims under one where the sand dips)
+	local function seaWall(x1: number, z1: number, x2: number, z2: number)
+		local a, b, c, d = clip(region, x1, z1, x2, z2)
 		if a then
-			-- (down to the deep floor, so nobody swims under one where the sand dips)
 			local wall = r:block(a, Terrain.Floor, b, c, 60, d, WATER, "SmoothPlastic")
 			wall.transp = 1
 			wall.name = "SeaWall"
+		end
+	end
+	seaWall(-EX - 2, EN, EX + 2, EN + 2)
+	seaWall(-EX - 2, -ES, -EX, EN)
+	seaWall(EX, -ES, EX + 2, EN)
+	-- the south one goes round the old town's cape (Terrain.Cape) in short straight runs, each
+	-- reaching to the next one's line so no gap opens between them
+	do
+		local cape = Terrain.Cape
+		local runs = { -EX - 2 }
+		for x = -(cape.half + cape.ease), -cape.half, 20 do
+			table.insert(runs, x)
+		end
+		for x = cape.half, cape.half + cape.ease, 20 do
+			table.insert(runs, x)
+		end
+		table.insert(runs, EX + 2)
+		for k = 1, #runs - 1 do
+			local x1, x2 = runs[k], runs[k + 1]
+			local z1 = -(Terrain.south(x1) + B + SH)
+			local z2 = -(Terrain.south(x2) + B + SH)
+			seaWall(x1, math.min(z1, z2) - 2, x2, math.max(z1, z2))
 		end
 	end
 
@@ -723,7 +784,13 @@ function TownMap.ground(region: Region?): { Prim }
 		local step = if main then 14 else 20
 		local u = a1 + 6
 		while u < a2 - 10 do
-			if not nearCross(u + 3.5, 11) and not (main and (math.abs(u) < 14 or math.abs(math.abs(u) - 274) < 14)) then
+			local onZebra = false
+			if main then
+				for _, x in Town.MainCrossings do
+					onZebra = onZebra or math.abs(u - x) < 14
+				end
+			end
+			if not nearCross(u + 3.5, 11) and not onZebra then
 				rect(u, -0.3, u + 7, 0.3, 0.05, PAINT, if main then LINE_YELLOW else LINE_WHITE)
 			end
 			u += step
@@ -801,9 +868,10 @@ function TownMap.ground(region: Region?): { Prim }
 				end
 			end
 		end
-		-- the main street's own crossings in front of the square, the market and between the plots
+		-- the main street's own crossings in front of the square and the market, and out past the
+		-- plots at either end
 		if main then
-			for _, cx in { 0, -274, 274 } do
+			for _, cx in Town.MainCrossings do
 				local v = -hw + 2.2
 				while v < hw - 2.6 do
 					slab(cx - 6, v, cx + 6, v + 1.6, 0.05, PAINT, LINE_WHITE, "")
@@ -975,10 +1043,16 @@ function TownMap.ground(region: Region?): { Prim }
 		lay(list)
 	end
 
-	-- the boardwalk along the south shore, with a rail on the sea side
-	local bz1, bz2 = -IS - 0.04, -(RZ + 11 + 6) -- (a hair past the grass, so its edge is hidden)
-	slab(-IX + 30, bz1, IX - 30, bz2, -0.15, 0.32, Color3.fromRGB(214, 172, 124), "WoodPlanks")
-	slab(-IX + 30, bz1, IX - 30, bz1 + 0.5, 0.32, 2.6, Color3.fromRGB(250, 250, 246), "SmoothPlastic")
+	-- the boardwalk along the south shore, with a rail on the sea side: round the old town's cape
+	-- behind Harbour Road, and in front of downtown and the civic quarter on the old line, where
+	-- the rail only starts once the cape's side has come back to the shore
+	for _, run in TownMap.boardwalks() do
+		local bz1, bz2 = -run.shore - 0.04, -run.back -- (a hair past the grass, so its edge is hidden)
+		slab(run.x1, bz1, run.x2, bz2, -0.15, 0.32, Color3.fromRGB(214, 172, 124), "WoodPlanks")
+		if run.rail2 > run.rail1 then
+			slab(run.rail1, bz1, run.rail2, bz1 + 0.5, 0.32, 2.6, Color3.fromRGB(250, 250, 246), "SmoothPlastic")
+		end
+	end
 
 	-- a path of flat stones up the hills from Hill Road to the lookout, winding a little
 	do
@@ -1477,7 +1551,7 @@ local function streetScene(standing: { Placement }): { Placement }
 			end
 		end
 		if road == Town.Roads[1] then
-			for _, x in { 0, -274, 274 } do
+			for _, x in Town.MainCrossings do
 				if math.abs(u - x) < 8 then
 					return true
 				end
@@ -1539,10 +1613,12 @@ local function streetScene(standing: { Placement }): { Placement }
 		error("no such road")
 	end
 	local main = Town.Roads[1]
-	local RZ, CZ = Town.RingZ, Town.CrossZ
+	local RZ, OZ, CZ = Town.RingZ, Town.OuterRingZ, Town.CrossZ
 	local AX = Town.AvenueX
-	local hill, harbour = roadAt(-AX[3], RZ, AX[3], RZ), roadAt(-AX[3], -RZ, AX[3], -RZ)
-	local firstAvenue, midAvenue = roadAt(AX[1], -RZ, AX[1], RZ), roadAt(AX[2], -RZ, AX[2], RZ)
+	-- (Hill Road and Harbour Road round the old town, and on past the first avenues on the old line)
+	local hill, harbour = roadAt(-AX[1], RZ, AX[1], RZ), roadAt(-AX[1], -RZ, AX[1], -RZ)
+	local hillEast, harbourEast = roadAt(AX[1], OZ, AX[3], OZ), roadAt(AX[1], -OZ, AX[3], -OZ)
+	local firstAvenue, midAvenue = roadAt(AX[1], -RZ, AX[1], RZ), roadAt(AX[2], -OZ, AX[2], OZ)
 	local crossNorth, crossSouth = roadAt(AX[1], CZ, AX[3], CZ), roadAt(AX[1], -CZ, AX[3], -CZ)
 	-- (how far a side road's sidewalk reaches from its middle)
 	local reach = hill[5] + hill[6]
@@ -1555,7 +1631,7 @@ local function streetScene(standing: { Placement }): { Placement }
 	poleLine(crossNorth, 1, 578, 986, 68)
 	poleLine(crossSouth, -1, 578, 986, 68)
 	-- and the civic quarter's: its middle avenue and its cross streets
-	local westMid, westFirst = roadAt(-AX[2], -RZ, -AX[2], RZ), roadAt(-AX[1], -RZ, -AX[1], RZ)
+	local westMid, westFirst = roadAt(-AX[2], -OZ, -AX[2], OZ), roadAt(-AX[1], -RZ, -AX[1], RZ)
 	local westNorth, westSouth = roadAt(-AX[1], CZ, -AX[3], CZ), roadAt(-AX[1], -CZ, -AX[3], -CZ)
 	poleLine(westMid, -1, -238, 238, 68)
 	poleLine(westNorth, 1, -986, -578, 68)
@@ -1597,7 +1673,8 @@ local function streetScene(standing: { Placement }): { Placement }
 				return SIDEWALK
 			end
 		end
-		if z < -(RZ + reach) and z > -TownMap.IslandS then
+		local run = TownMap.boardwalkAt(x)
+		if run and z < -run.back and z > -run.shore then
 			return 0.32 -- the boardwalk
 		end
 		return GRASS
@@ -1628,7 +1705,7 @@ local function streetScene(standing: { Placement }): { Placement }
 	set("billboardTall", AX[2] + 20, -(edge + 4), 90)
 	set("billboardTall", AX[2] + 20, CZ + 21, 90)
 	for _, x in { AX[1] - 2, AX[2] - 6, -(AX[1] - 2) } do
-		set("billboardTall", x, -(RZ + reach + 5), 0)
+		set("billboardTall", x, -(Town.ringAt(x) + reach + 5), 0)
 	end
 
 	-- Hoardings of posters. Downtown, one inside the mouth of each lane, against the side wall of
@@ -1668,22 +1745,23 @@ local function streetScene(standing: { Placement }): { Placement }
 	end
 	set("posterWall", AX[1] - reach - 0.8, 120, -90)
 	set("posterWall2", -(AX[1] - reach - 0.8), -120, 90)
-	set("posterWall", 274, -(edge + 0.5), 180)
-	set("posterWall", -274, edge + 0.5, 0)
+	local crossAt = Town.MainCrossings[3] -- (out past the plots, east and west)
+	set("posterWall", crossAt + 16, -(edge + 0.5), 180)
+	set("posterWall", -(crossAt + 16), edge + 0.5, 0)
 
-	-- Drinks machines at the back of the main street's sidewalk: by the crossings between the
-	-- plots, at the corners of the square and the market, and at either end of the old town.
+	-- Drinks machines at the back of the main street's sidewalk: by the crossings past the plots,
+	-- at the corners of the square and the market, and at either end of the old town.
 	local back = edge - 1.3
-	machines(270.2, back, 0, 2, 0, true)
-	machines(-270.2, -back, 180, 2, 1, true)
+	machines(crossAt - 13.8, back, 0, 2, 0, true)
+	machines(-(crossAt - 13.8), -back, 180, 2, 1, true)
 	machines(56, back, 0, 1, 2, true)
 	machines(-56, -back, 180, 1, 0, false)
-	machines(496, -back, 180, 2, 1, false)
-	machines(-496, back, 0, 2, 2, true)
+	machines(crossAt + 20, -back, 180, 2, 1, false)
+	machines(-(crossAt + 20), back, 0, 2, 2, true)
 
 	-- Telephone boxes: by the square, at a crossing, on a downtown corner and on the seafront.
 	set("phoneBooth", -59, edge - 1.9, 0)
-	set("phoneBooth", 287, -(edge - 1.9), 180)
+	set("phoneBooth", crossAt - 9, -(edge - 1.9), 180)
 	set("phoneBooth", AX[2] + 20.2, edge + 3, 0)
 	set("phoneBooth", 334, -(RZ + reach + 9.3), 180)
 	set("phoneBooth", -250, -(RZ + reach + 9.3), 180)
@@ -2041,8 +2119,10 @@ local function streetScene(standing: { Placement }): { Placement }
 		kerb(crossNorth, side, 570, 1040, 80, 140)
 		kerb(crossSouth, side, 570, 1040, 80, 140)
 	end
-	kerb(hill, -1, -520, 1040, 110, 200)
-	kerb(harbour, 1, -520, 1040, 110, 200)
+	kerb(hill, -1, -520, 520, 110, 200)
+	kerb(harbour, 1, -520, 520, 110, 200)
+	kerb(hillEast, -1, 560, 1040, 110, 200)
+	kerb(harbourEast, 1, 560, 1040, 110, 200)
 	kerb(roadAt(-AX[1], -RZ, -AX[1], RZ), 1, -240, 240, 110, 200)
 	-- (and the civic quarter's own streets, between the rows of houses, a little thinner than
 	-- downtown's)
@@ -2177,7 +2257,10 @@ function TownMap.placements(): { Placement }
 	local kerbN = 0
 	for x = -L + 20, L - 20, 34 do
 		local onPlaza = math.abs(x) < 54
-		local nearCross = math.abs(x - 274) < 14 or math.abs(x + 274) < 14
+		local nearCross = false
+		for _, cx in Town.MainCrossings do
+			nearCross = nearCross or (cx ~= 0 and math.abs(x - cx) < 14)
+		end
 		if not onPlaza and not nearCross and not nearRoad(x, walkZ) then
 			kerbN += 1
 			for _, side in { 1, -1 } do
@@ -2196,7 +2279,10 @@ function TownMap.placements(): { Placement }
 		put("hydrant", x, HW + 1.5, 0)
 		put("hydrant", -x, -(HW + 1.5), 180)
 	end
-	for _, cx in { -274, 274 } do
+	for _, cx in Town.MainCrossings do
+		if cx == 0 then
+			continue
+		end
 		for _, side in { 1, -1 } do
 			put("streetSign", cx + 9, side * (HW + 1.4), if side > 0 then 0 else 180)
 			for _, bx in { -5, 5 } do
@@ -2275,7 +2361,10 @@ function TownMap.placements(): { Placement }
 			put("bush", sx * 58, z, z * 7)
 			put("bush", sx * 58, -z, z * 11)
 		end
-		for i, z in { 160, 179, 198, 217, 236 } do
+		-- (all the way up the walk between the plots to Hill Road, and down it to Harbour Road)
+		local i = 0
+		for z = 160, Town.RingZ - 26, 19 do
+			i += 1
 			local name = if i % 2 == 1 then "planterBox" else "shrubPot"
 			put(name, sx * 14, z, 90)
 			put(if i % 2 == 1 then "planterBox2" else "shrubPot", sx * 14, -z, 90)
@@ -2846,24 +2935,49 @@ function TownMap.placements(): { Placement }
 	-- between the old town's plots and the ring roads: clipped hedges with flowers, strips of
 	-- flower bed and a bench now and then (no trees: they'd stand right by the road)
 	local edge = 0
+	local behind = (Town.PlotSetback + Tuning.Plot.Size + Town.RingZ - 17) / 2 -- (behind the plots)
+	local side = Town.AvenueX[1] - 25 -- (along the first avenues, past the plots' ends)
 	for _, sz in { 1, -1 } do
 		local x = -508.0
 		while x < 510 do
 			if math.abs(x) > 24 then
 				edge += 1
 				local name = if edge % 7 == 0 then "benchLite" elseif edge % 3 == 0 then "flowerStrip" else "hedgeRow"
-				put(name, x, sz * 235, if sz > 0 then 180 else 0)
+				put(name, x, sz * behind, if sz > 0 then 180 else 0)
 			end
 			x += 24
 		end
 	end
 	for _, sx in { 1, -1 } do
-		for z = -228, 228, 24 do
+		for z = -(Town.RingZ - 34), Town.RingZ - 34, 24 do
 			if math.abs(z) > 34 then
 				edge += 1
 				local name = if edge % 7 == 0 then "benchLite" elseif edge % 3 == 0 then "flowerStrip" else "hedgeRow"
-				put(name, sx * 504, z, if sx > 0 then 90 else -90)
+				put(name, sx * side, z, if sx > 0 then 90 else -90)
 			end
+		end
+	end
+	-- The old town's own ground round the plots, now they reach back to the ring (the user: "make
+	-- player plots much bigger, double the size"): gardens up both sides of the walk from the
+	-- square to Hill Road and from the market to Harbour Road, and down the strips between the
+	-- plots' ends and the first avenues, then small green things in what is left.
+	local walk = 14 + 4 -- (clear of the walk's planters)
+	local plotIn = Town.PlotCentersX[2] - Tuning.Plot.Size / 2 -- the plots' inner edges, either side
+	local plotOut = Town.PlotCentersX[2] + Tuning.Plot.Size / 2 -- and their outer ends
+	local back = Town.RingZ - 17 -- the ring road's sidewalk
+	local from = Town.SquareCenter.Z + 66 -- past the square and the market
+	for _, sz in { 1, -1 } do
+		local function block(x1: number, z1: number, x2: number, z2: number): { number }
+			return { x1, math.min(sz * z1, sz * z2), x2, math.max(sz * z1, sz * z2) }
+		end
+		for _, sx in { 1, -1 } do
+			local lane = block(math.min(sx * walk, sx * plotIn), from, math.max(sx * walk, sx * plotIn), back)
+			pockets(lane, GARDENS, 0, 6, 15, 3)
+			pockets(lane, GREEN, 0, 5, 8, 4)
+			-- (clear of the footbridge's stairs and the crossing's bollards at the street end)
+			local strip = block(math.min(sx * plotOut, sx * (side - 2)), 44, math.max(sx * plotOut, sx * (side - 2)), back)
+			pockets(strip, GARDENS, 0, 7, 15, 2)
+			pockets(strip, GREEN, 0, 6, 8, 3)
 		end
 	end
 

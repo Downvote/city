@@ -208,8 +208,10 @@ elseif scene:sub(1, 7) == "preset:" or scene:sub(1, 7) == "presets" then
 	else
 		table.insert(ids, name:sub(8))
 	end
-	local plan = Plan.new(200)
-	plan.size = 200
+	-- (the whole plot is the land here, so the row starts at its corner)
+	local full = R(Shared .. "Config.Tuning").Plot.Size
+	local plan = Plan.new(full)
+	plan.size = full
 	local x, z, rowDepth = 0, 0, 0
 	for _, id in ids do
 		local p = Presets.get(id)
