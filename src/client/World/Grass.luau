@@ -487,6 +487,61 @@ local function painted(model: Model, green: { Base: { number }, Tip: { number } 
 	return copy
 end
 
+-- Puts right what the pack's bookkeeping can get wrong (the user: "it seems like the grass dosent
+-- render sometimes after going out of menus"). A patch that leaves the camera's reach starts
+-- sinking and is put on a list to be taken out of the world when it's down; if it comes back
+-- before then, it stays on that list, and the next time it's raised the list takes it straight
+-- back out while the pack still counts it as shown, so it never shows again. After every step:
+-- whatever the pack counts as shown is in the world, and nothing shown is waiting to go.
+local function heal()
+	local shown: { [Instance]: boolean } = {}
+	for _, part in sim.SkinnedMeshesRenderedIn do
+		shown[part] = true
+		local model = part.Parent
+		if model and model:IsA("Model") and model.Parent ~= folder and sim.MeshParents[model] then
+			model.Parent = folder
+		end
+	end
+	local leaving = sim.MeshTweenOuts
+	for n = #leaving, 1, -1 do
+		local origin = leaving[n]
+		local part = origin and origin.Parent
+		if not part or shown[part] then
+			table.remove(leaving, n)
+		end
+	end
+end
+
+-- Starts the grass over: every patch let go, a fresh pack object, the ground surveyed again.
+-- (After a run of steps that went wrong, rather than leaving the island bare.)
+local SkinnedGrassModule: any = nil
+local function newSim(): any
+	return SkinnedGrassModule.new({
+		RenderDistance = G.Distance,
+		RenderOutOffset = HIDDEN,
+		CollisionRadiusInner = G.Bend * 0.55,
+		CollisionRadiusOuter = G.Bend,
+		CollisionAngle = G.BendAngle,
+		WindDistanceOuter = G.WindReach,
+	})
+end
+local function reset()
+	for _, cell in cells do
+		if cell then
+			for _, layer in cell.layers do
+				pcall(forget, layer)
+				pcall(function()
+					layer.model:Destroy()
+				end)
+			end
+		end
+	end
+	table.clear(cells)
+	table.clear(queue)
+	table.clear(far)
+	sim = newSim()
+end
+
 function Grass.start()
 	task.spawn(function()
 		local pack = ReplicatedStorage:WaitForChild("SkinnedGrass", 120)
@@ -529,21 +584,20 @@ function Grass.start()
 		folder = Instance.new("Folder")
 		folder.Name = "Grass"
 		folder.Parent = workspace
-		sim = SkinnedGrass.new({
-			RenderDistance = G.Distance,
-			RenderOutOffset = HIDDEN,
-			CollisionRadiusInner = G.Bend * 0.55,
-			CollisionRadiusOuter = G.Bend,
-			CollisionAngle = G.BendAngle,
-			WindDistanceOuter = G.WindReach,
-		})
+		SkinnedGrassModule = SkinnedGrass
+		sim = newSim()
 		task.spawn(watchPlots)
 
-		local planClock, folkClock, failures = 0, 0, 0
-		local connection: RBXScriptConnection
-		connection = RunService.RenderStepped:Connect(function(dt)
+		local planClock, folkClock, failures, said = 0, 0, 0, -math.huge
+		local last = focus()
+		RunService.RenderStepped:Connect(function(dt)
 			planClock += dt
-			if planClock > 0.4 then
+			-- (a camera that has jumped, as when a menu or the creator gives it back, gets its
+			-- grass planned at once rather than in a moment)
+			local at = focus()
+			local jumped = (at - last).Magnitude > G.Distance * 0.5
+			last = at
+			if planClock > 0.4 or jumped then
 				planClock = 0
 				plan()
 			end
@@ -577,13 +631,22 @@ function Grass.start()
 				end
 			end
 			local stepped, why = pcall(function()
-				sim:Step(dt, bends, focus())
+				sim:Step(dt, bends, at)
+				heal()
 			end)
-			if not stepped then
+			if stepped then
+				failures = 0
+			else
+				-- never give up on it: say what went wrong now and then, and after a run of
+				-- failures start the grass over
 				failures += 1
-				if failures >= 5 then
-					warn("[Grass] the grass stopped moving: " .. tostring(why))
-					connection:Disconnect()
+				if os.clock() - said > 30 then
+					said = os.clock()
+					warn("[Grass] a step went wrong: " .. tostring(why))
+				end
+				if failures >= 20 then
+					failures = 0
+					pcall(reset)
 				end
 			end
 		end)
