@@ -16,6 +16,14 @@ function Text.fill(template: string, vars: { [string]: any }): string
 	)
 end
 
+-- What villagers call the player: their name (the user: "the player is to be referred to as their
+-- player name"), kept in the save as `name` each time they join. "friend" where there is none (a
+-- spec's made up town).
+function Text.playerName(profile: any): string
+	local n = type(profile) == "table" and profile.name
+	return if type(n) == "string" and n ~= "" then n else "friend"
+end
+
 -- 1234567 -> "1,234,567"
 function Text.commas(n: number): string
 	local s = tostring(math.floor(n + 0.5))

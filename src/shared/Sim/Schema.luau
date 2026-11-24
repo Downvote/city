@@ -72,6 +72,7 @@ function Schema.newProfile(): any
 	return {
 		v = Schema.Version,
 		coins = Tuning.Economy.StartCoins,
+		name = "", -- the player's display name, set each time they join (villagers call them by it)
 		plan = nil, -- filled with the starter house on first visit to a plot
 		villagers = {},
 		order = {},

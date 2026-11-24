@@ -259,6 +259,8 @@ local function onJoin(player: Player)
 	end
 	-- a brand new player starts with the cottage; anyone else gets their saved build back, checked
 	profile.plan = if profile.plan == nil then StarterHouse.plan() else Plan.sanitize(profile.plan)
+	-- what the villagers call them ({player} in their lines)
+	profile.name = player.DisplayName
 	-- heart level thank yous an old save was still waiting to pick are paid out now (there is no
 	-- picking any more: Sim/Life)
 	local owed = Life.settleOffers(profile)

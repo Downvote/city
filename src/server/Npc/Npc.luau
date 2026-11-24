@@ -12,6 +12,7 @@ Npc.__index = Npc
 
 export type Npc = typeof(setmetatable(
 	{} :: {
+		playerName: string?, -- what they call their player ({player} in a line)
 		model: Model,
 		humanoid: Humanoid,
 		root: BasePart,
@@ -536,6 +537,10 @@ end
 
 -- Shows a speech bubble for a few seconds.
 function Npc.say(self: Npc, text: string, seconds: number?)
+	-- villagers call their player by name ({player})
+	text = text:gsub("{player}", function()
+		return self.playerName or "friend"
+	end)
 	local gui = makeBubble(self)
 	self.bubbleToken += 1
 	local token = self.bubbleToken

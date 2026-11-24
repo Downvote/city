@@ -283,6 +283,7 @@ function Villagers.spawn(player: Player, vid: string)
 		end)
 	end
 	local npc = Npc.new(model, vid)
+	npc.playerName = player.DisplayName
 	npc:setName(v.name, Colors.fromHex(v.color))
 	npc:play("idle")
 	npcs[player] = npcs[player] or {}

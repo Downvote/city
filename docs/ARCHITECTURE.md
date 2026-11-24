@@ -439,6 +439,9 @@ profile = {
   lastPayday, calendarDay, offers (old saves only: emptied on load), goals = { [goalId] = true },
   found = { [placeId] = true }, arrived = { [newcomerKey] = true },
   work = { day, owed, paid },  -- what the player earned at a workplace themselves on town day `day`
+  name,  -- the player's display name, set by `Data` each time they join: villagers call them by it. A line
+         -- says `{player}` and `Text.playerName(profile)` fills it: the event context's `ctx.f`, `Talk.line`,
+         -- `Talk.wishLine`, and `Npc.say` on the server (each villager's `playerName`).
                                -- (Sim/PlayerWork.purse; at most Tuning.Jobs.Player.DayCap a day)
 }
 Villager = { id, name, pers, app, color, bday = { s, d }, fav, mood, job?, lv, xp, bed?, sick?,

@@ -147,6 +147,7 @@ function EventEngine.context(profile: any, o: Options): any
 	-- fills {a} {b} {c} with the stars' names and any extra words
 	function ctx.f(template: string, vars: { [string]: any }?): string
 		local all = table.clone(ctx.names)
+		all.player = Text.playerName(profile)
 		local extra: { [string]: any } = vars or {}
 		for k, v in extra do
 			all[k] = v

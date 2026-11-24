@@ -280,7 +280,7 @@ end
 
 -- A villager's wish in their own words, or nil when they have none to tell. (A wish for a talk
 -- isn't told: the talk answers it.)
-function Talk.wishLine(profile: any, vid: string): string?
+local function wishFor(profile: any, vid: string): string?
 	local v = profile.villagers[vid]
 	local w = v and v.wish
 	if not w then
@@ -301,6 +301,12 @@ function Talk.wishLine(profile: any, vid: string): string?
 	return nil
 end
 
+-- The line for what they're wishing for, or nil.
+function Talk.wishLine(profile: any, vid: string): string?
+	local line = wishFor(profile, vid)
+	return if line then (Text.fill(line, { player = Text.playerName(profile) })) else nil
+end
+
 -- What a villager says to someone who stops to talk. opts:
 --   first    they were just walked up to (a greeting, or their wish); otherwise it is small talk
 --   last     what they said last, so they don't say it twice running
@@ -308,7 +314,7 @@ end
 --   now      os time, for quarrels and how fresh their last event is
 --   chat     what Talk.chat made of this talk, when it is the town's owner talking
 --   season   1..4, and weather (World's), when known
-function Talk.line(profile: any, vid: string, rng: any, opts: { [string]: any }?): string
+local function lineFor(profile: any, vid: string, rng: any, opts: { [string]: any }?): string
 	local v = profile.villagers[vid]
 	if not v then
 		return "..."
@@ -335,7 +341,7 @@ function Talk.line(profile: any, vid: string, rng: any, opts: { [string]: any }?
 		add(own(THANKS, v.pers))
 		add("I needed that. Thank you.")
 	elseif o.first then
-		local wish = Talk.wishLine(profile, vid)
+		local wish = wishFor(profile, vid)
 		if wish then
 			return wish
 		end
@@ -435,6 +441,18 @@ function Talk.line(profile: any, vid: string, rng: any, opts: { [string]: any }?
 		return "..."
 	end
 	return rng:pick(pool)
+end
+
+-- {player} in a line is the player's name (the user: "the player is to be referred to as their
+-- player name"): filled in here, as the line leaves.
+local function named(profile: any, text: string): string
+	return (Text.fill(text, { player = Text.playerName(profile) }))
+end
+
+-- What a villager says when you stop to talk: their own words, about how they feel, the town, the
+-- people they know, or what they're wishing for.
+function Talk.line(profile: any, vid: string, rng: any, opts: { [string]: any }?): string
+	return named(profile, lineFor(profile, vid, rng, opts))
 end
 
 -- The good a chat does ---------------------------------------------------------------------------------

@@ -168,7 +168,11 @@ parts; a new event goes in one of its modules), props they bring into the world 
 villager makes for the player (free Build mode pieces in `Build/Recipes/Keepsakes`, counted in `profile.keepsakes`,
 checked by `Sim/Keepsakes` on the server), and things villagers use on breaks with a chance of something unusual or
 rare (`Data/Interactions`, chosen by `Sim/Uses`, acted by `server/Npc/Use`; players hold E on some through
-`Services/Interact`). Every line follows the writing rule, in the speaker's voice (the user: "for the humanization, make sure to take
+`Services/Interact`). Villagers call the player by name, never "you there", "Sensei" or "Mayor" (the user: "the
+player is to be referred to as their player name instead of sensei"): a line says `{player}` and it is filled with the
+player's display name (`profile.name`, `Text.playerName`). They talk the way a friend texts, short bursts in their own
+voice (the user pointed at a messaging app's chats as the reference: its feel only, nothing of its lines or
+characters). Every line follows the writing rule, in the speaker's voice (the user: "for the humanization, make sure to take
 note of the personalities of the villagers as well"): each personality talks its own way (`Data/Personalities`'
 `lines`, `Sim/Talk`'s maps keyed by personality), and a line only one kind of villager would say goes through
 `s:by`. There is no romance (the user: "remove any romance, just

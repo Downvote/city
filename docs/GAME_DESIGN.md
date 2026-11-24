@@ -2005,3 +2005,16 @@ themself and never quite says sorry. Shy says "um", trails off and apologises. C
 reaction. And a line in an event that only one kind of person would say (a bashful thank you, a boast, a sulk after
 losing) is said in the speaker's own way now (`s:by`, keyed by personality), so a Bold villager is never handed the
 Shy one's words. Narration and the diary lines stay plain.
+
+> redo all the conversation lines, using https://bluearchive.wiki/wiki/MomoTalk as a reference. look through all the
+> momotalks, referencing how the students speak and incorporate them into the villagers based on their
+> personalities ... add more personalities too, and much more events / conversation events. the player is to be
+> referred to as their player name instead of sensei
+
+(That wiki doesn't let tools read it, so the feel was taken from what is known of those chats, and nothing of theirs
+was copied: no lines, names or characters.) Villagers talk the way a friend texts: short bursts, two or three quick
+lines rather than one long one, a small thing from their day to share or a favour to ask, and each personality with
+tics you can hear in a single line. They call the player by their name (their Roblox display name) where a friend
+would: to get their attention, to say thanks, to tease them. Eight more personalities joined the first eight: Cool,
+Prickly, Dramatic, Bookish, Gloomy, Polite, Foodie and Nervous. And there are many more events, the conversation
+kind most of all.
