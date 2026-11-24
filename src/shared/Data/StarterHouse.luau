@@ -262,7 +262,7 @@ function StarterHouse.plan(): Plan.PlanData
 	item("corner_board", 0, 24, 270, 0)
 	hang("downpipe", "end", 12.7, 0, "a")
 	hang("downpipe", "leftback", 1, 0, "a")
-	item("water_butt", 25.45, 20.7, 90)
+	item("water_butt", 25.5, 20.7, 90) -- (a hair off the downpipe's side)
 	-- Up in the gables, which stand on the level above: a window front and back, and a
 	-- weathervane on the ridge.
 	upstairs("window_attic", 6, 0, 180, WHITE, GREEN)
@@ -302,9 +302,10 @@ function StarterHouse.plan(): Plan.PlanData
 	hang("art_abstract", "wingback", 9.3, 7.6, "b")
 
 	-- the bedroom, behind the bay window
-	item("bed_single", 2.1, 6.1, 180)
-	item("nightstand", 5, 8.75, 180)
-	item("lamp_table", 5, 8.75, 180, top("nightstand"))
+	-- (clear of the curtains at the window beside it)
+	item("bed_single", 3, 6.1, 180)
+	item("nightstand", 5.95, 8.75, 180)
+	item("lamp_table", 5.95, 8.75, 180, top("nightstand"))
 	item("rug_round", 6.8, 4.8, 0)
 	item("wardrobe", 10.6, 4, 270)
 	item("light_ceiling", 6.5, 5, 0)

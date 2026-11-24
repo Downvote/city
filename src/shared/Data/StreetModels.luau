@@ -125,11 +125,11 @@ M.canBin = function(r: R)
 		p:block(-0.85, 0, -0.75, 0.85, 0.12, 0.75, DARK, "Metal")
 		p:block(-0.8, 0.12, -0.7, 0.8, 3.2, 0.7, METAL, "Metal")
 		p:block(-0.84, 2.0, -0.74, 0.84, 2.4, 0.74, TEAL, "Metal")
-		p:block(-0.86, 3.2, -0.76, 0.86, 3.5, 0.76, TEAL, "Metal")
 		for _, x in { -0.4, 0.4 } do
 			p:cyl(x, 3.52, 0, 0.04, 0.44, "y", BLACK, "Metal")
 		end
 	end, true)
+	r:block(-0.86, 3.2, -0.76, 0.86, 3.5, 0.76, TEAL, "Metal")
 end
 
 -- Poles and wires ------------------------------------------------------------------------------------
@@ -198,8 +198,8 @@ end
 -- and the box hangs out from it on two brackets. It is overhead,
 -- so nobody bumps into it.
 M.acUnit = function(r: R)
+	r:noCollide(r:block(-1.4, 0.18, -1.1, 1.4, 1.6, 0, CREAM, "SmoothPlastic"))
 	r:piece(function(p: R)
-		p:block(-1.4, 0.18, -1.1, 1.4, 1.6, 0, CREAM, "SmoothPlastic")
 		fanFront(p, -0.4, 0.89, -1.1, 1.2)
 		p:block(0.55, 0.33, -1.14, 1.25, 1.45, -1.1, shade(CREAM, 0.92), "SmoothPlastic")
 		for _, sx in { -1, 1 } do
@@ -359,11 +359,12 @@ end
 
 -- Street clutter --------------------------------------------------------------------------------------
 
--- A traffic cone on its square foot with two white bands. One piece, round the origin.
+-- A traffic cone on its square foot with two white bands, round the origin.
 local function cone(r: R, x: number, z: number)
 	group(r, CFrame.new(x, 0, z), function(q: R)
+		q:block(-0.7, 0, -0.7, 0.7, 0.16, 0.7, shade(ORANGE, 0.82), "SmoothPlastic")
 		q:piece(function(p: R)
-			p:block(-0.7, 0, -0.7, 0.7, 0.16, 0.7, shade(ORANGE, 0.82), "SmoothPlastic")
+			p:block(-0.12, 2.3, -0.12, 0.12, 2.36, 0.12, ORANGE, "SmoothPlastic")
 			p:cone(0, 1.26, 0, 2.2, 1.1, ORANGE, "SmoothPlastic")
 			p:cyl(0, 1.0, 0, 0.26, 0.74, "y", WHITE, "SmoothPlastic")
 			p:cyl(0, 1.6, 0, 0.2, 0.48, "y", WHITE, "SmoothPlastic")
@@ -379,9 +380,9 @@ end
 M.coneBar = function(r: R)
 	cone(r, -2.4, 0)
 	cone(r, 2.4, 0)
-	for k = 0, 4 do
-		local x = -2.4 + k * 0.96
-		r:block(x, 1.5, -0.1, x + 0.96, 1.8, 0.1, if k % 2 == 0 then YELLOW else BLACK, "SmoothPlastic")
+	for k = 0, 2 do
+		local x = -2.4 + k * 1.6
+		r:block(x, 1.5, -0.1, x + 1.6, 1.8, 0.1, if k % 2 == 0 then YELLOW else BLACK, "SmoothPlastic")
 	end
 end
 
@@ -406,14 +407,13 @@ M.crateStack = function(r: R)
 end
 
 -- Bottle crates outside a shop: a stack of three in bright plastic and one beside it, the
--- tops of the bottles showing in the ones on top. One piece.
+-- tops of the bottles showing in the ones on top.
 M.drinksCrates = function(r: R)
 	r:piece(function(p: R)
 		for i, col in { YELLOW, RED, BLUE } do
 			local y = (i - 1) * 1.05
 			p:boxAt(CFrame.new(-0.9, y + 0.5, 0) * CFrame.Angles(0, math.rad((i - 2) * 7), 0), 1.6, 1, 1.2, col, "SmoothPlastic")
 		end
-		p:block(0.1, 0, -0.6, 1.7, 1, 0.6, GREEN, "SmoothPlastic")
 		p:block(0.3, 0.55, -0.64, 1.5, 0.75, -0.6, shade(GREEN, 0.7), "SmoothPlastic")
 		local top = CFrame.new(-0.9, 2.6, 0) * CFrame.Angles(0, math.rad(7), 0)
 		for i = 0, 2 do
@@ -423,6 +423,7 @@ M.drinksCrates = function(r: R)
 			end
 		end
 	end, true)
+	r:block(0.1, 0, -0.6, 1.7, 1, 0.6, GREEN, "SmoothPlastic")
 end
 
 -- A box that sells newspapers: a post on a foot, the box in its colour, and in front a window
@@ -490,6 +491,11 @@ local function scooter(r: R, col: Color3)
 	local lean = CFrame.new(0, 2.1, -1.55) * CFrame.Angles(math.rad(14), 0, 0)
 	r:block(-0.55, 0.9, 0.3, 0.55, 2.1, 2.3, col, "SmoothPlastic")
 	r:boxAt(lean, 1.1, 2.7, 0.3, col, "SmoothPlastic")
+	-- (the bars and mirrors are parts of their own, so the piece's box stays as narrow as the body)
+	r:block(-1, 3.4, -1.3, 1, 3.6, -1.1, DARK, "Metal")
+	for _, sx in { -1, 1 } do
+		r:block(sx * 0.86 - 0.12, 3.18, -1.36, sx * 0.86 + 0.12, 3.4, -1.3, SILVER, "Metal")
+	end
 	r:piece(function(p: R)
 		for _, z in { -1.9, 1.7 } do
 			p:cyl(0, 0.65, z, 0.36, 1.3, "x", BLACK, "Metal")
@@ -498,10 +504,6 @@ local function scooter(r: R, col: Color3)
 		p:beam(Vector3.new(0, 1.0, -1.7), Vector3.new(0, 0.65, -1.9), 0.14, 0.14, DARK, "Metal")
 		p:block(-0.45, 0.7, -1.6, 0.45, 0.95, 0.5, DARK, "Metal")
 		p:block(-0.45, 2.1, 0.4, 0.45, 2.4, 2.1, rgb(50, 52, 62), "Metal")
-		p:block(-1, 3.4, -1.3, 1, 3.6, -1.1, DARK, "Metal")
-		for _, sx in { -1, 1 } do
-			p:block(sx * 0.86 - 0.12, 3.18, -1.36, sx * 0.86 + 0.12, 3.4, -1.3, SILVER, "Metal")
-		end
 		p:boxAt(lean * CFrame.new(0, 0.9, -0.2), 0.5, 0.35, 0.1, rgb(255, 240, 200), "Metal")
 		p:block(-0.25, 1.6, 2.3, 0.25, 1.85, 2.36, rgb(220, 80, 76), "Metal")
 		p:block(-0.3, 1.1, 2.3, 0.3, 1.45, 2.34, WHITE, "Metal")
@@ -528,13 +530,12 @@ M.bollardRow = function(r: R)
 end
 
 -- A length of pedestrian rail along a kerb: three posts, a top rail and a lower one, and bars
--- between them. One piece.
+-- between them.
 M.guardRail = function(r: R)
 	r:piece(function(p: R)
 		for _, x in { -4.2, 0, 4.2 } do
 			p:cyl(x, 1.4, 0, 2.8, 0.36, "y", WHITE, "Metal")
 		end
-		p:block(-4.2, 2.3, -0.1, 4.2, 2.56, 0.1, GREEN, "Metal")
 		p:block(-4.2, 1.1, -0.1, 4.2, 1.36, 0.1, GREEN, "Metal")
 		for k = 0, 7 do
 			if k ~= 4 then
@@ -543,6 +544,7 @@ M.guardRail = function(r: R)
 			end
 		end
 	end, true)
+	r:block(-4.2, 2.3, -0.1, 4.2, 2.56, 0.1, GREEN, "Metal")
 end
 
 -- A street sign: a post on a collar with a cap, the street's name on a plate at the top and a
@@ -558,13 +560,12 @@ M.streetSignPost = function(r: R)
 	r:block(-0.6, 5.85, -0.3, 0.6, 6.15, -0.25, WHITE, "SmoothPlastic")
 end
 
--- Rubbish bags put out for the morning, each tied at the neck. One piece.
+-- Rubbish bags put out for the morning, the black ones tied at the neck.
 M.binBags = function(r: R)
 	r:piece(function(p: R)
 		local bags = {
 			{ CFrame.new(0, 0.8, 0) * CFrame.Angles(0.2, 0.4, 0.1), 2, 1.7, 1.8, rgb(84, 92, 112) },
 			{ CFrame.new(1.4, 0.65, 0.4) * CFrame.Angles(-0.2, 1, 0.2), 1.6, 1.3, 1.5, rgb(104, 112, 132) },
-			{ CFrame.new(0.5, 0.6, -1.1) * CFrame.Angles(0.1, 0.2, -0.2), 1.5, 1.2, 1.4, WHITE },
 		}
 		for _, b in bags do
 			p:lump(b[1], b[2], b[3], b[4], b[5], "SmoothPlastic")
@@ -572,6 +573,7 @@ M.binBags = function(r: R)
 			p:block(top.X - 0.13, top.Y - 0.12, top.Z - 0.13, top.X + 0.13, top.Y + 0.2, top.Z + 0.13, shade(b[5], 0.85), "SmoothPlastic")
 		end
 	end, true)
+	r:lump(CFrame.new(0.5, 0.6, -1.1) * CFrame.Angles(0.1, 0.2, -0.2), 1.5, 1.2, 1.4, WHITE, "SmoothPlastic")
 end
 
 function StreetModels.prims(name: string): { any }?

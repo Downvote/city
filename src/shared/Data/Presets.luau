@@ -218,7 +218,7 @@ add("cottage", "Garden cottage", "One room to live in, a bedroom and a kitchen c
 	b:open("win_square", "left", 12)
 	b:open("arch_open", "inner", 4)
 	-- the bedroom, back left
-	b:item("bed_single", 5, 18, 180)
+	b:item("bed_single", 5, 17.9, 180)
 	b:item("nightstand", 8.6, 20.6, 180)
 	b:item("lamp_floor", 10.6, 15.6)
 	-- the kitchen corner, back right
@@ -283,14 +283,14 @@ add("family", "Family house", "A living room, a kitchen, two bedrooms and a bath
 	b:item("stool_bar", 22.4, 7.4)
 	b:item("stool_bar", 25.6, 7.4)
 	-- the bedrooms and the bathroom
-	b:item("bed_double", 7, 22, 180)
+	b:item("bed_double", 7, 21.9, 180)
 	b:item("nightstand", 3.4, 24.6, 180)
 	b:item("nightstand", 10.6, 24.6, 180)
 	b:item("dresser", 4.6, 17.2)
 	b:item("bathtub", 17.9, 22.6)
 	b:item("toilet", 13.8, 24.5, 90)
 	b:item("sink_vanity", 14, 18.4)
-	b:item("bed_single", 27, 22, 180)
+	b:item("bed_single", 27, 21.9, 180)
 	b:item("desk", 22.6, 24.4, 180)
 	b:item("chair_wood", 22.6, 21.6)
 	for _, p in { { 9, 11 }, { 24, 11 }, { 7, 21 }, { 16, 21 }, { 25, 21 } } do

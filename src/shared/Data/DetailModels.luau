@@ -209,7 +209,7 @@ local function hedgeRow(r: R, cf: CFrame)
 			p:block(-7.9, 0, -0.84, 7.9, 1.5, 0.84, HEDGE, "Grass")
 			for k = 0, 5 do
 				p:lump(
-					CFrame.new(-6.4 + k * 2.6, 1.45, 0) * CFrame.Angles(0, (k % 3 - 1) * 0.08, 0),
+					CFrame.new(-6.4 + k * 2.6, 1.42 + (k % 2) * 0.06, 0) * CFrame.Angles(0, (k % 3 - 1) * 0.08, 0),
 					3.25,
 					1.5,
 					1.94,
@@ -1226,8 +1226,7 @@ M.log = function(r: R)
 	end)
 end
 
--- A signpost with three fingers, each a board with a pointed end, a cap on its post and stones
--- at its foot.
+-- A signpost with three fingers, each a board with a pointed end, and a cap on its post.
 M.signpost = function(r: R)
 	parts(r, function(p: R)
 		p:block(-0.25, 0, -0.25, 0.25, 6.4, 0.25, WOOD_DARK, "Wood")
@@ -1246,10 +1245,6 @@ M.signpost = function(r: R)
 		finger(4.15, -1, 3.1)
 		finger(2.9, 1, 2.4)
 	end, true)
-	parts(r, function(p: R)
-		p:lump(CFrame.new(0.6, 0.2, 0.4) * CFrame.Angles(0, 0.4, 0), 0.9, 0.5, 0.7, ROCK, "Slate")
-		p:lump(CFrame.new(-0.6, 0.15, -0.3) * CFrame.Angles(0, 1.2, 0), 0.7, 0.4, 0.6, shade(ROCK, 1.1), "Slate")
-	end)
 end
 
 -- A round bale of hay: two bands of twine, the rolled ends and a wisp loose on top.
@@ -1305,9 +1300,9 @@ end
 -- A mountain lake: water in a stony rim, a jetty of boards on bearers and posts with a rowing
 -- boat tied to it, reeds with brown heads and lily pads, rocks and a bench.
 M.tarn = function(r: R)
-	r:cyl(0, 0.1, 0, 0.3, 62, "y", rgb(196, 190, 176), "Slate")
-	r:cyl(0, 0.2, 0, 0.3, 56, "y", WATER, "SmoothPlastic")
-	r:cyl(6, 0.42, -4, 0.1, 30, "y", shade(WATER, 1.12), "SmoothPlastic")
+	r:cyl(0, 0.25, 0, 0.6, 62, "y", rgb(196, 190, 176), "Slate")
+	r:cyl(0, 0.6, 0, 0.3, 56, "y", WATER, "SmoothPlastic")
+	r:cyl(6, 0.82, -4, 0.1, 30, "y", shade(WATER, 1.12), "SmoothPlastic")
 	parts(r, function(p: R)
 		for k = 0, 4 do
 			local x = -2 + k * 0.8
@@ -1335,10 +1330,10 @@ M.tarn = function(r: R)
 			p:cyl(x, h - 0.2, z, 0.7, 0.3, "y", CATTAIL, "Grass")
 		end
 		for _, l in { { -10, 8 }, { -14, 2 }, { 12, 14 }, { 16, -8 } } do
-			p:cyl(l[1], 0.56, l[2], 0.08, 3, "y", rgb(96, 180, 90), "SmoothPlastic")
+			p:cyl(l[1], 0.94, l[2], 0.08, 3, "y", rgb(96, 180, 90), "SmoothPlastic")
 		end
-		p:ball(-13.4, 0.75, 2.4, 0.6, PINK, "SmoothPlastic")
-		p:ball(12.3, 0.72, 14.2, 0.5, WHITE, "SmoothPlastic")
+		p:ball(-13.4, 1.12, 2.4, 0.6, PINK, "SmoothPlastic")
+		p:ball(12.3, 1.1, 14.2, 0.5, WHITE, "SmoothPlastic")
 	end)
 	parts(r, function(p: R)
 		p:lump(CFrame.new(-28, 1.2, -14) * CFrame.Angles(0.2, 0.4, 0.1), 5.6, 3.4, 4.4, ROCK, "Slate")
@@ -1402,32 +1397,32 @@ end
 
 -- A towel laid out with two stripes and a rolled pillow; beside it sandals, a book left open, a
 -- bottle of sun cream and a ball (one piece, the same by every towel).
-local function towel(r: R, col: Color3, stripe: Color3)
+local function towel(r: R, col: Color3, stripe: Color3, top: number)
 	parts(r, function(p: R)
-		p:block(-1.8, 0, -3.3, 1.8, 0.1, 3.3, col, "Fabric")
-		p:block(-1.8, 0.1, -0.7, 1.8, 0.14, -0.3, stripe, "Fabric")
-		p:block(-1.8, 0.1, 0.3, 1.8, 0.14, 0.7, stripe, "Fabric")
-		p:cyl(0, 0.33, 2.6, 3.2, 0.5, "x", stripe, "Fabric")
+		p:block(-1.8, -0.1, -3.3, 1.8, top, 3.3, col, "Fabric")
+		p:block(-1.8, top, -0.7, 1.8, top + 0.04, -0.3, stripe, "Fabric")
+		p:block(-1.8, top, 0.3, 1.8, top + 0.04, 0.7, stripe, "Fabric")
+		p:cyl(0, top + 0.23, 2.6, 3.2, 0.5, "x", stripe, "Fabric")
 	end)
 	r:piece(function(p: R)
 		for _, sx in { -1, 1 } do
-			p:block(2.3 + sx * 0.3 - 0.2, 0, 1.4, 2.3 + sx * 0.3 + 0.2, 0.1, 2.4, rgb(90, 120, 170), "SmoothPlastic")
-			p:block(2.3 + sx * 0.3 - 0.2, 0.1, 1.6, 2.3 + sx * 0.3 + 0.2, 0.18, 1.72, rgb(70, 96, 140), "SmoothPlastic")
+			p:block(2.3 + sx * 0.3 - 0.2, 0, 1.4, 2.3 + sx * 0.3 + 0.2, 0.2, 2.4, rgb(90, 120, 170), "SmoothPlastic")
+			p:block(2.3 + sx * 0.3 - 0.2, 0.2, 1.6, 2.3 + sx * 0.3 + 0.2, 0.28, 1.72, rgb(70, 96, 140), "SmoothPlastic")
 		end
-		p:boxAt(CFrame.new(0.4, 0.2, -1.6) * CFrame.Angles(0, 0.3, 0.12), 0.8, 0.08, 1.1, rgb(120, 150, 110), "SmoothPlastic")
-		p:boxAt(CFrame.new(-0.36, 0.2, -1.83) * CFrame.Angles(0, 0.3, -0.12), 0.8, 0.08, 1.1, rgb(120, 150, 110), "SmoothPlastic")
-		p:cyl(-1.1, 0.4, 1.2, 0.6, 0.36, "y", rgb(236, 200, 120), "SmoothPlastic")
-		p:cyl(-1.1, 0.78, 1.2, 0.16, 0.22, "y", WHITE, "SmoothPlastic")
+		p:boxAt(CFrame.new(0.4, 0.46, -1.6) * CFrame.Angles(0, 0.3, 0.12), 0.8, 0.08, 1.1, rgb(120, 150, 110), "SmoothPlastic")
+		p:boxAt(CFrame.new(-0.36, 0.46, -1.83) * CFrame.Angles(0, 0.3, -0.12), 0.8, 0.08, 1.1, rgb(120, 150, 110), "SmoothPlastic")
+		p:cyl(-1.1, 0.66, 1.2, 0.6, 0.36, "y", rgb(236, 200, 120), "SmoothPlastic")
+		p:cyl(-1.1, 1.04, 1.2, 0.16, 0.22, "y", WHITE, "SmoothPlastic")
 		ball(p, 2.6, 0.7, -2.4, 1.4)
 	end)
 end
 
 M.towel = function(r: R)
-	towel(r, RED, WHITE)
+	towel(r, RED, WHITE, 0.14)
 end
 
 M.towel2 = function(r: R)
-	towel(r, TEAL, YELLOW)
+	towel(r, TEAL, YELLOW, 0.36)
 end
 
 -- A sandcastle: a walled base with battlements, four towers with pointed tops, a keep, a gate
@@ -1543,10 +1538,10 @@ M.volleyNet = function(r: R)
 			p:block(x - 0.05, 3.6, -0.14, x + 0.05, 8.2, -0.06, RED, "Fabric")
 		end
 		for _, z in { -14, 14 } do
-			p:block(-9, 0, z - 0.15, 9, 0.06, z + 0.15, BLUE, "Fabric")
+			p:block(-9, -0.1, z - 0.15, 9, 0.13, z + 0.15, BLUE, "Fabric")
 		end
 		for _, x in { -9, 9 } do
-			p:block(x - 0.15, 0, -13.85, x + 0.15, 0.06, 13.85, BLUE, "Fabric")
+			p:block(x - 0.15, -0.1, -13.85, x + 0.15, 0.13, 13.85, BLUE, "Fabric")
 		end
 		ball(p, 4, 1, 6, 2)
 	end)

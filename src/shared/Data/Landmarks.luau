@@ -244,7 +244,7 @@ end
 -- Sacks on a pallet.
 local function sacks(r: R, at: CFrame)
 	stamp(r, "sacks", at, function(q)
-		q:box(0, 0.15, 0, 3.2, 0.3, 2.4, CRATE, "Fabric")
+		q:box(0, 0.18, 0, 3.2, 0.36, 2.4, CRATE, "Fabric")
 		q:lump(CFrame.new(-0.8, 0.95, 0.1) * CFrame.Angles(0, 0.3, 0.1), 1.7, 1.5, 1.9, SACK, "Fabric")
 		q:lump(CFrame.new(0.8, 0.9, -0.1) * CFrame.Angles(0, -0.4, -0.1), 1.7, 1.4, 1.9, shade(SACK, 0.92), "Fabric")
 		q:lump(CFrame.new(0.1, 1.9, 0) * CFrame.Angles(0.1, 1.2, 0), 1.8, 1.2, 1.6, shade(SACK, 1.06), "Fabric")

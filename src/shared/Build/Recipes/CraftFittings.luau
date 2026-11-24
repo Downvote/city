@@ -35,6 +35,48 @@ local function signArm(r: R)
 	end)
 end
 
+-- A bucket's worth of flowers standing in it: leaves at the mouth (y = mouth), four stems
+-- leaning out a little, and a head on each by kind ("rose", "tulip", "daisy", "lavender", or
+-- sweet peas). One piece.
+local function bouquet(r: R, x: number, mouth: number, z: number, kind: string, col: Color3, seed: number, tall: number)
+	r:piece(function(q: R)
+		q:block(x - 0.05, mouth - 0.12, z - 0.05, x + 0.05, mouth + 0.1, z + 0.05, C.DarkLeaf)
+		q:lump(CFrame.new(x - 0.1, mouth + 0.1, z + 0.05) * CFrame.Angles(0, seed, 0.3), 0.56, 0.28, 0.4, C.Leaf)
+		q:lump(
+			CFrame.new(x + 0.12, mouth + 0.08, z - 0.06) * CFrame.Angles(0, -seed, -0.3),
+			0.48,
+			0.26,
+			0.38,
+			C.DarkLeaf
+		)
+		local n = if kind == "lavender" then 6 else 4
+		for k = 0, n - 1 do
+			local a = k / n * math.pi * 2 + seed
+			local rad = if k == 0 then 0.04 else 0.2
+			local px, pz = x + math.cos(a) * rad, z + math.sin(a) * rad
+			local h = tall + ((k * 7 + seed) % 3) * 0.1
+			local lean = CFrame.new(px, mouth + h / 2, pz) * CFrame.Angles(math.sin(a) * rad, 0, -math.cos(a) * rad)
+			q:boxAt(lean, 0.05, h, 0.05, C.DarkLeaf)
+			local head = lean * CFrame.new(0, h / 2 + 0.07, 0)
+			local p = head.Position
+			if kind == "rose" then
+				q:ball(p.X, p.Y, p.Z, 0.28, col)
+				q:ball(p.X, p.Y + 0.09, p.Z, 0.15, shade(col, 0.8))
+			elseif kind == "tulip" then
+				q:lump(head * CFrame.new(0, 0.05, 0), 0.2, 0.3, 0.2, col)
+			elseif kind == "lavender" then
+				q:lump(head * CFrame.new(0, 0.1, 0), 0.1, 0.4, 0.1, col)
+			elseif kind == "daisy" then
+				q:lump(head, 0.3, 0.07, 0.3, col)
+				q:ball(p.X, p.Y + 0.05, p.Z, 0.11, C.Yellow)
+			else
+				q:ball(p.X, p.Y, p.Z, 0.24, col)
+				q:ball(p.X + 0.09, p.Y - 0.09, p.Z, 0.18, shade(col, 1.1))
+			end
+		end
+	end)
+end
+
 -- A canvas on its stretcher leaning back against a wall behind it (-z): `w` wide and `h` tall,
 -- its foot at z = foot. Returns its frame, for painting on its face (x across, y up the canvas,
 -- z = 0.1 just proud of it).
@@ -102,32 +144,22 @@ local items: { Item } = {
 					end
 				end
 			end, true)
-			-- leaves in every bucket, taller stems in the back row
+			-- in each bucket leaves at its mouth, stems leaning out a little and the flowers, one
+			-- kind to a bucket (c2 the colour there is most of)
+			local kinds = { "rose", "daisy", "tulip", "lavender", "rose", "sweet", "tulip", "rose", "daisy" }
+			local cols = { r.c2, C.White, C.Red, LILAC, r.c2, LILAC, ORANGE, r.c2, C.Yellow }
+			for i, top in tops do
+				for k, x in { -1.5, 0, 1.5 } do
+					local n = (i - 1) * 3 + k
+					bouquet(r, x, top + 0.8, mids[i], kinds[n], cols[n], n, if i == 3 then 0.7 else 0.5)
+				end
+			end
+			-- a little price card on the edge of each step
 			r:piece(function(q: R)
 				for i, top in tops do
-					for k, x in { -1.5, 0, 1.5 } do
-						q:ball(x, top + 0.95, mids[i], 0.8, if (i + k) % 2 == 0 then C.Leaf else C.DarkLeaf, "Grass")
-					end
-				end
-				for _, x in { -1.5, 0, 1.5 } do
-					q:block(x - 0.05, 3.7, -0.95, x + 0.05, 4.2, -0.85, C.DarkLeaf, "Grass")
+					q:box(1.9, top - 0.07, mids[i] + 0.47, 0.5, 0.3, 0.04, C.Paper, "SmoothPlastic")
 				end
 			end)
-			-- the flowers: three heads to a bucket, a colour to a bucket
-			local blooms = { r.c2, C.Yellow, C.Red, C.White, r.c2, LILAC, ORANGE, r.c2, C.White }
-			for i, top in tops do
-				r:piece(function(q: R)
-					-- a little price card on the edge of the step
-					q:box(1.9, top - 0.07, mids[i] + 0.47, 0.5, 0.3, 0.04, C.Paper, "SmoothPlastic")
-					for k, x in { -1.5, 0, 1.5 } do
-						local col = blooms[(i - 1) * 3 + k]
-						local y = top + (if i == 3 then 1.5 else 1.25)
-						q:ball(x - 0.24, y, mids[i] + 0.12, 0.42, col, "SmoothPlastic")
-						q:ball(x + 0.22, y + 0.1, mids[i] - 0.1, 0.42, col, "SmoothPlastic")
-						q:ball(x + 0.02, y + 0.22, mids[i] + 0.2, 0.38, col, "SmoothPlastic")
-					end
-				end)
-			end
 		end,
 	},
 	{

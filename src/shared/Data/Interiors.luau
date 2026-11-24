@@ -189,18 +189,45 @@ end
 -- Every piece made so far, by name. A piece is drawn once round its own origin, so its key never
 -- wavers; using it again is a copy with a new frame.
 local kit: { [string]: Prim } = {}
+local owned: { [string]: boolean } = {}
 
-local function stamp(r: R, f: CFrame, id: string, draw: (R) -> (), collide: boolean?): Prim
+local function stamp(r: R, f: CFrame, id: string, draw: (R) -> ()): Prim
 	local proto = kit[id]
 	if not proto then
 		local q = Recipe.new(WHITE, WHITE)
 		draw(q)
-		proto = Geometry.piece(q.prims, collide)
+		proto = Geometry.piece(q.prims, false)
 		kit[id] = proto
+		owned[proto.key or ""] = true
 	end
 	local p = table.clone(proto)
 	p.cf = f * proto.cf
 	return r:add(p)
+end
+
+-- The same drawing as plain parts at f, for furniture only the big public rooms have: a piece
+-- costs the town a merge of its own, which isn't worth it for a handful of copies.
+local function plain(r: R, f: CFrame, draw: (R) -> ())
+	local q = Recipe.new(WHITE, WHITE)
+	draw(q)
+	for _, p in q.prims do
+		p.cf = f * p.cf
+		r:add(p)
+	end
+end
+
+-- An invisible box that makes a piece solid to bump into (pieces never collide: the facade
+-- kit's rule).
+local function solid(r: R, f: CFrame, x1: number, y1: number, z1: number, x2: number, y2: number, z2: number)
+	local p = r:boxAt(
+		f * CFrame.new((x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2),
+		x2 - x1,
+		y2 - y1,
+		z2 - z1,
+		WHITE,
+		"SmoothPlastic"
+	)
+	p.transp = 1
 end
 
 -- Shelves ------------------------------------------------------------------------------------------------
@@ -496,7 +523,8 @@ local GOODS: { [string]: (R) -> () } = {
 
 -- A case with goods on it: `lower` on the bottom two shelves, `upper` on the top two.
 local function shelves(r: R, f: CFrame, lower: string, upper: string)
-	stamp(r, f, "case", drawCase, true)
+	stamp(r, f, "case", drawCase)
+	solid(r, f, -2.0, 0, -0.5, 2.0, 6.6, 0.5)
 	stamp(r, f, lower, GOODS[lower])
 	stamp(r, f * CFrame.new(0, SHELF[3] - SHELF[1], 0), upper, GOODS[upper])
 end
@@ -527,6 +555,11 @@ local function drawCounter(q: R)
 	for _, x in { -1.45, 0, 1.45 } do
 		q:block(x - 0.15, 0.62, -0.96, x + 0.15, 2.55, -0.9, WOOD, M)
 	end
+end
+
+local function counter(r: R, f: CFrame)
+	stamp(r, f, "counter", drawCounter)
+	solid(r, f, -3.05, 0, -0.96, 3.05, 3.3, 0.85)
 end
 
 -- What stands on a counter: the till turned to the shopkeeper, a card reader for the customer, a
@@ -1231,6 +1264,13 @@ local function drawFruit(q: R)
 	end
 end
 
+-- A stand with its fruit, and an invisible box to bump into.
+local function produceStand(r: R, f: CFrame)
+	stamp(r, f, "produce", drawProduce)
+	stamp(r, f, "fruit", drawFruit)
+	solid(r, f, -2.65, 0, -1.05, 2.65, 2.4, 1.05)
+end
+
 -- A coffee machine for a counter top: two heads with cups under them, gauges, a steam wand, cups
 -- warming on top, and the grinder beside it.
 local function drawCoffee(q: R)
@@ -1252,6 +1292,12 @@ local function drawCoffee(q: R)
 	rod(q, Vector3.new(0.95, 0.9, -0.3), Vector3.new(1.15, 0.35, -0.55), 0.07, steel, M)
 	q:block(1.25, 0, -0.35, 1.75, 0.8, 0.25, INK, M)
 	q:cyl(1.5, 1.05, -0.05, 0.5, 0.44, "y", rgb(150, 110, 80), M)
+end
+
+-- Whether a piece is one of the rooms' furniture: the facade kit counts its own pieces apart
+-- from these (a shop's room is drawn inside a facade).
+function Interiors.owns(key: string): boolean
+	return owned[key] == true
 end
 
 -- The room itself --------------------------------------------------------------------------------------
@@ -1520,14 +1566,14 @@ local function shop(r: R, kind: string, b: Box)
 	local n = math.clamp(math.floor((w - 10.5) / CASE_STEP), 2, 4)
 	shelfRow(r, at(b, b.x1 + 2.55, b.z2 - 0.55), n, stock.back)
 	local till = at(b, b.x2 - 4.2, b.z2 - 4.4)
-	stamp(r, till, "counter", drawCounter, true)
+	counter(r, till)
 	stamp(r, till, "till", drawTill)
 	-- behind the shopkeeper a case of stock (in a cafe a bench with the coffee machine on it), and
 	-- between that and the shelves the door to the back room
 	local rightStart = b.x2 - 4.6
 	if kind == "cafe" then
 		local bench = at(b, b.x2 - 4.2, b.z2 - 1.1, 180)
-		stamp(r, bench, "counter", drawCounter, true)
+		counter(r, bench)
 		stamp(r, bench * CFrame.new(0.6, 3.3, 0) * CFrame.Angles(0, math.pi, 0), "coffee", drawCoffee)
 		rightStart = b.x2 - 7.5
 	else
@@ -1556,12 +1602,10 @@ local function shop(r: R, kind: string, b: Box)
 		stamp(r, at(b, cx - 1.5, mid, 90), "rug", drawRug)
 		stamp(r, at(b, cx - 1.5, mid), "cafe", drawCafeSet)
 	elseif kind == "grocer" then
-		stamp(r, at(b, winX, b.z1 + 2.2), "produce", drawProduce, true)
-		stamp(r, at(b, winX, b.z1 + 2.2), "fruit", drawFruit)
+		produceStand(r, at(b, winX, b.z1 + 2.2))
 		for _, s in { { mid - 1.35, 0 }, { mid + 1.35, 180 } } do
 			local f = at(b, cx - 1.5, s[1], s[2])
-			stamp(r, f, "produce", drawProduce, true)
-			stamp(r, f, "fruit", drawFruit)
+			produceStand(r, f)
 		end
 		-- sacks of potatoes by the shelves, one open, and baskets to carry things in by the door
 		for i, z in { b.z1 + 8.0, b.z1 + 9.1, b.z1 + 10.2 } do
@@ -1682,7 +1726,7 @@ local function department(r: R, b: Box)
 	end
 	for _, x in { b.x1 + 6, b.x2 - 6 } do
 		local f = at(b, x, b.z1 + 7, 180)
-		stamp(r, f, "counter", drawCounter, true)
+		counter(r, f)
 		stamp(r, f, "till", drawTill)
 	end
 	runner(r, b, door, b.z1 + 2.2, b.z1 + 13, 5, rgb(176, 96, 94))
@@ -1722,14 +1766,14 @@ local function lobby(r: R, b: Box, flats: boolean)
 	lamp(r, b, cx, b.z1 + d * 0.35)
 	lamp(r, b, cx, b.z1 + d * 0.7, false)
 	if flats then
-		stamp(r, wallAt(b, "left", b.z1 + d * 0.5, 0), "mail", drawMailboxes)
+		plain(r, wallAt(b, "left", b.z1 + d * 0.5, 0), drawMailboxes)
 		stamp(r, at(b, b.x2 - 0.85, b.z1 + d * 0.5, 90), "seats", drawSeats)
 		stamp(r, wallAt(b, "right", b.z1 + d * 0.5, 3.4), "notices", drawNotices)
 		stamp(r, wallAt(b, "back", cx + 9.5, 3.2), "landscape", drawLandscape)
 		bike(r, at(b, b.x1 + 0.45, b.z1 + 4.4))
 	else
 		local desk = at(b, cx + w * 0.26, b.z1 + d * 0.5, 90)
-		stamp(r, desk, "counter", drawCounter, true)
+		counter(r, desk)
 		stamp(r, desk, "till", drawTill)
 		shelves(r, at(b, b.x2 - 0.55, b.z1 + d * 0.5, 90), "booksA", "booksB")
 		local m = b.z1 + d * 0.4
@@ -1804,8 +1848,8 @@ local function readingTable(r: R, b: Box, x: number, z: number)
 	end
 	slab(r, f, -3.15, 0.5, -0.12, 3.15, 0.75, 0.12, shade(WALNUT, 0.85), "Wood")
 	for _, s in { -1, 1 } do
-		stamp(r, f * CFrame.new(s * 1.9, 0, 2.35), "chair", drawChair)
-		stamp(r, f * CFrame.new(s * 1.9, 0, -2.35) * CFrame.Angles(0, math.pi, 0), "chair", drawChair)
+		plain(r, f * CFrame.new(s * 1.9, 0, 2.35), drawChair)
+		plain(r, f * CFrame.new(s * 1.9, 0, -2.35) * CFrame.Angles(0, math.pi, 0), drawChair)
 	end
 	slab(r, f, -2.6, 2.65, -0.9, -1.7, 2.85, -0.2, rgb(168, 86, 78), "SmoothPlastic")
 	r:boxAt(f * CFrame.new(1.6, 2.68, 0.5) * CFrame.Angles(0, math.rad(15), 0), 1.2, 0.06, 0.8, WHITE, "SmoothPlastic")
@@ -1854,7 +1898,7 @@ local function library(r: R, b: Box)
 		local t = k / 7
 		r:cyl(lx, b.y + 6.5 * t, lz - 1.3 * (1 - t), 1.6, 0.1, "x", WALNUT, "Wood")
 	end
-	stamp(r, at(b, door + 8.5, b.z1 + 4.5), "desk", drawDesk)
+	plain(r, at(b, door + 8.5, b.z1 + 4.5), drawDesk)
 	stamp(r, wallAt(b, "left", b.z1 + 4.0, 3.2), "notices", drawNotices)
 	-- the reading corner at the front left
 	local rx = b.x1 + 7.5
@@ -1957,7 +2001,7 @@ local function museum(r: R, b: Box)
 	skeleton(r, at(b, cx, mid))
 	rope(r, at(b, cx, mid - 3.0), 13)
 	for i, x in { cx - 20, cx - 11, cx + 11, cx + 20 } do
-		stamp(r, at(b, x, b.z1 + d * (if i % 2 == 0 then 0.36 else 0.64)), "exhibit", drawExhibit)
+		plain(r, at(b, x, b.z1 + d * (if i % 2 == 0 then 0.36 else 0.64)), drawExhibit)
 	end
 	for _, x in { cx - 15.5, cx + 15.5 } do
 		findsCase(r, at(b, x, b.z2 - 2.2))
@@ -1974,7 +2018,7 @@ local function museum(r: R, b: Box)
 	for _, x in { cx - 8, cx + 8 } do
 		museumBench(r, at(b, x, b.z1 + 6.0), 5)
 	end
-	stamp(r, at(b, door + 8.5, b.z1 + 3.5), "desk", drawDesk)
+	plain(r, at(b, door + 8.5, b.z1 + 3.5), drawDesk)
 	stamp(r, wallAt(b, "left", b.z1 + 4.5, 3.2), "notices", drawNotices)
 	runner(r, b, door, b.z1 + 2.2, mid - 3.6, 4.0, rgb(176, 96, 94))
 	doormat(r, b)
@@ -2068,7 +2112,7 @@ local function cinema(r: R, b: Box)
 	end
 	-- the foyer: the popcorn counter and its machine, a bench, a plant, posters, a lamp
 	local c = at(b, b.x1 + 6, b.z1 + 3.4, 180)
-	stamp(r, c, "counter", drawCounter, true)
+	counter(r, c)
 	stamp(r, c, "till", drawTill)
 	local pop = at(b, b.x1 + 4.4, b.z1 + 3.4)
 	slab(r, pop, -0.9, 3.3, -0.7, 0.9, 3.5, 0.7, BERRY, "Metal")
@@ -2113,7 +2157,7 @@ local function station(r: R, b: Box)
 	local cx = (b.x1 + b.x2) / 2
 	local I = CFrame.identity
 	local t = at(b, cx - 22, b.z2 - 4.0)
-	stamp(r, t, "counter", drawCounter, true)
+	counter(r, t)
 	stamp(r, t, "till", drawTill)
 	slab(r, t, -3.2, 3.75, -0.98, 3.2, 6.3, -0.92, GLASS, "Glass").transp = 0.55
 	shelves(r, at(b, cx - 22, b.z2 - 0.55), "booksA", "booksB")
@@ -2142,7 +2186,7 @@ local function station(r: R, b: Box)
 	end
 	-- the kiosk at the right end
 	local k = at(b, b.x2 - 6, b.z2 - 4.0)
-	stamp(r, k, "counter", drawCounter, true)
+	counter(r, k)
 	stamp(r, k, "till", drawTill)
 	shelves(r, at(b, b.x2 - 6, b.z2 - 0.55), "booksB", "jars")
 	-- a drinks machine by the ticket office
@@ -2202,11 +2246,11 @@ local function school(r: R, b: Box)
 	local sides = if w >= 56 then { -1, 1 } else { 0 }
 	for _, side in sides do
 		local ox = cx + side * w * 0.25
-		stamp(r, wallAt(b, "back", ox, 2.2), "board", drawBlackboard)
-		stamp(r, at(b, ox + (if side < 0 then -6.5 else 6.5), b.z2 - 4.4), "desk", drawDesk)
+		plain(r, wallAt(b, "back", ox, 2.2), drawBlackboard)
+		plain(r, at(b, ox + (if side < 0 then -6.5 else 6.5), b.z2 - 4.4), drawDesk)
 		for row = 0, 1 do
 			for col = -1, 1 do
-				stamp(r, at(b, ox + col * 4.4, b.z1 + 4.5 + row * 4.4), "schoolDesk", drawSchoolDesk)
+				plain(r, at(b, ox + col * 4.4, b.z1 + 4.5 + row * 4.4), drawSchoolDesk)
 			end
 		end
 		local left = side <= 0
@@ -2273,7 +2317,7 @@ local function clinic(r: R, b: Box)
 	local cx = (b.x1 + b.x2) / 2
 	local door = b.door or cx
 	local desk = at(b, b.x2 - 4.6, b.z1 + 6.5, 90)
-	stamp(r, desk, "counter", drawCounter, true)
+	counter(r, desk)
 	stamp(r, desk, "till", drawTill)
 	shelves(r, at(b, b.x2 - 0.55, b.z1 + 6.5, 90), "booksA", "booksB")
 	stamp(r, at(b, b.x1 + 0.85, b.z1 + 6.0, -90), "seats", drawSeats)
@@ -2286,7 +2330,7 @@ local function clinic(r: R, b: Box)
 	-- the beds at the back right, each with a curtain on a rail beside it, the red cross over the
 	-- first and a drip stand by it
 	for i, x in (if w >= 40 then { b.x2 - 4, b.x2 - 12 } else { b.x2 - 4 }) do
-		stamp(r, at(b, x, b.z2 - 4.2), "hbed", drawHospitalBed)
+		plain(r, at(b, x, b.z2 - 4.2), drawHospitalBed)
 		curtain(r, b, x - 3.9, b.z2 - 8.2, b.z2 - 0.6)
 		if i == 1 then
 			local c = CFrame.new(x, b.y, b.z2)
@@ -2300,8 +2344,8 @@ local function clinic(r: R, b: Box)
 	lumpAt(r, s, 0.25, 5.2, 0, 0.4, 0.7, 0.2, rgb(214, 236, 232))
 	-- the doctor's corner at the back left: the desk, a chair for the patient, medicine on the
 	-- shelves and the scales
-	stamp(r, at(b, b.x1 + 7, b.z2 - 4.5), "desk", drawDesk)
-	stamp(r, at(b, b.x1 + 7, b.z2 - 7.4, 180), "chair", drawChair)
+	plain(r, at(b, b.x1 + 7, b.z2 - 4.5), drawDesk)
+	plain(r, at(b, b.x1 + 7, b.z2 - 7.4, 180), drawChair)
 	shelves(r, at(b, b.x1 + 14, b.z2 - 0.55), "jars", "jars")
 	local sc = at(b, b.x1 + 11, b.z2 - 2.2)
 	slab(r, sc, -0.7, 0, -0.7, 0.7, 0.3, 0.7, STEEL, "Metal")

@@ -306,7 +306,16 @@ local items: { Item } = {
 				local cf = CFrame.new(g.x, g.y, g.z) * CFrame.Angles(math.rad(16), 0, 0)
 				-- the crate, propped on a block at the back: a floor, slatted sides, two ends
 				r:piece(function(q: R)
-					q:block(g.x - 0.7, g.step, g.z - 0.6, g.x + 0.7, g.step + 0.22, g.z - 0.4, shade(r.c1, 0.7), "WoodPlanks")
+					q:block(
+						g.x - 0.7,
+						g.step,
+						g.z - 0.6,
+						g.x + 0.7,
+						g.step + 0.22,
+						g.z - 0.4,
+						shade(r.c1, 0.7),
+						"WoodPlanks"
+					)
 					q:boxAt(cf, 1.84, 0.12, 1.12, shade(r.c1, 0.85), "WoodPlanks")
 					for _, sz in { -1, 1 } do
 						q:boxAt(cf * CFrame.new(0, 0.16, sz * 0.56), 1.8, 0.18, 0.1, r.c1, "WoodPlanks")
@@ -319,8 +328,22 @@ local items: { Item } = {
 				-- what is in it
 				r:piece(function(q: R)
 					local foot = cf * CFrame.new(0.62, 0.1, -0.38)
-					q:block(foot.X - 0.03, foot.Y, foot.Z - 0.03, foot.X + 0.03, foot.Y + 0.66, foot.Z + 0.03, PALE_WOOD)
-					q:boxAt(CFrame.new(foot.X, foot.Y + 0.74, foot.Z + 0.04) * CFrame.Angles(math.rad(-12), 0, 0), 0.46, 0.3, 0.04, if g.kind % 2 == 0 then LEMON else C.Paper)
+					q:block(
+						foot.X - 0.03,
+						foot.Y,
+						foot.Z - 0.03,
+						foot.X + 0.03,
+						foot.Y + 0.66,
+						foot.Z + 0.03,
+						PALE_WOOD
+					)
+					q:boxAt(
+						CFrame.new(foot.X, foot.Y + 0.74, foot.Z + 0.04) * CFrame.Angles(math.rad(-12), 0, 0),
+						0.46,
+						0.3,
+						0.04,
+						if g.kind % 2 == 0 then LEMON else C.Paper
+					)
 					for i = 0, 7 do
 						local col, row = i % 4, i // 4
 						local at = cf * CFrame.new(-0.6 + col * 0.4, 0.3 + (i % 2) * 0.04, -0.2 + row * 0.4)

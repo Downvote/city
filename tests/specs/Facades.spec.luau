@@ -6,6 +6,7 @@
 
 local Shared = "ReplicatedStorage.Shared."
 local Facades = require(Shared .. "Data.Facades")
+local Interiors = require(Shared .. "Data.Interiors")
 local Signs = require(Shared .. "Data.Signs")
 local Geometry = require(Shared .. "Build.Geometry")
 
@@ -251,7 +252,10 @@ describe("Facades", function()
 						expect((known.size - p.size).Magnitude < 1e-6).toBeTruthy()
 					else
 						keys[p.key] = p
-						distinct += 1
+						-- (a shop's furniture is Data/Interiors' own kit, counted apart)
+						if not Interiors.owns(p.key) then
+							distinct += 1
+						end
 						local mat = p.parts[1].mat
 						local standing = false
 						for _, q in p.parts do

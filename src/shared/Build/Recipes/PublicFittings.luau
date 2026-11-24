@@ -112,23 +112,65 @@ local items: { Item } = {
 		c1 = "FAF6EC",
 		c2 = "3F8C86",
 		build = function(r: R)
-			-- A flat roof over a doorway on two slim posts: its back (-z) goes against the wall.
-			-- c1 the posts and the deck, c2 the band round its edge. A lamp under it comes on
-			-- after dark.
+			-- A flat roof over a doorway on two posts, its back (-z) against the wall: a deck with
+			-- a beam along its front, a band round its edge (c2) with a lip on top and a bead
+			-- under it, brackets up from the posts and out from the wall, and a lantern hung
+			-- under the middle that comes on after dark. c1 the posts and the deck.
+			local post = r.c1
 			for _, sx in { -1, 1 } do
 				local x = sx * 3.65
-				r:block(x - 0.42, 0, 1.38, x + 0.42, 0.34, 2.2, shade(r.c1, 0.78), "Concrete")
-				r:block(x - 0.2, 0.34, 1.6, x + 0.2, 9, 2, r.c1, "Metal")
-				r:block(x - 0.28, 8.7, 1.52, x + 0.28, 9, 2.08, shade(r.c1, 0.88), "Metal")
+				r:block(x - 0.42, 0, 1.38, x + 0.42, 0.34, 2.2, shade(post, 0.78), "Concrete")
+				r:block(x - 0.2, 0.34, 1.6, x + 0.2, 9, 2, post, "Metal")
+				r:block(x - 0.28, 8.7, 1.52, x + 0.28, 9, 2.08, shade(post, 0.88), "Metal")
 			end
-			r:block(-4, 9, -2.2, 4, 9.3, 2.2, r.c1, "SmoothPlastic")
-			r:block(-3.8, 9.3, -2.2, 3.8, 9.42, 2, shade(r.c1, 0.9), "SmoothPlastic")
-			r:block(-4, 9.3, 2, 4, 9.8, 2.2, r.c2, "SmoothPlastic")
-			r:block(-4, 9.3, -2.2, -3.8, 9.8, 2, r.c2, "SmoothPlastic")
-			r:block(3.8, 9.3, -2.2, 4, 9.8, 2, r.c2, "SmoothPlastic")
-			r:block(-4, 8.72, -2.2, 4, 9, -2.02, shade(r.c1, 0.85), "SmoothPlastic")
-			local lamp = r:block(-1.1, 8.9, -0.5, 1.1, 9, 0.5, C.Warm, "SmoothPlastic")
-			r:glow(lamp, 14, 1)
+			r:piece(function(q: R)
+				for _, sx in { -1, 1 } do
+					local x = sx * 3.65
+					q:block(x - 0.26, 0.34, 1.54, x + 0.26, 0.62, 2.06, shade(post, 0.9), "Metal")
+					q:block(x - 0.25, 8.4, 1.55, x + 0.25, 8.52, 2.05, shade(post, 0.9), "Metal")
+					q:beam(Vector3.new(x, 7.5, 1.8), Vector3.new(x - sx * 1.2, 8.72, 1.8), 0.14, 0.14, post, "Metal")
+					q:block(x - 0.2, 7.0, -2.2, x + 0.2, 7.5, -2.12, post, "Metal")
+					q:beam(Vector3.new(x, 7.2, -2.12), Vector3.new(x, 9.0, -0.7), 0.14, 0.14, post, "Metal")
+				end
+				q:block(-3.45, 8.72, 1.62, 3.45, 9.0, 1.98, shade(post, 0.85), "Metal")
+			end)
+			r:block(-4, 9, -2.2, 4, 9.3, 2.2, post, "SmoothPlastic")
+			r:block(-3.8, 9.3, -2.2, 3.8, 9.42, 2, shade(post, 0.9), "SmoothPlastic")
+			r:block(-4, 8.72, -2.2, 4, 9, -2.02, shade(post, 0.85), "SmoothPlastic")
+			r:piece(function(q: R)
+				q:block(-4, 9.3, 2, 4, 9.8, 2.2, r.c2)
+				q:block(-4, 9.3, -2.2, -3.8, 9.8, 2, r.c2)
+				q:block(3.8, 9.3, -2.2, 4, 9.8, 2, r.c2)
+				local lip = shade(r.c2, 0.85)
+				q:block(-4.06, 9.8, 1.94, 4.06, 9.88, 2.26, lip)
+				q:block(-4.06, 9.8, -2.2, -3.74, 9.88, 1.94, lip)
+				q:block(3.74, 9.8, -2.2, 4.06, 9.88, 1.94, lip)
+				q:block(-4.04, 9.22, 2.2, 4.04, 9.3, 2.26, lip)
+				q:block(-4.06, 9.22, -2.2, -4, 9.3, 2.26, lip)
+				q:block(4, 9.22, -2.2, 4.06, 9.3, 2.26, lip)
+			end)
+			-- the lantern on its chain
+			r:piece(function(q: R)
+				q:block(-0.03, 8.3, -0.03, 0.03, 9.0, 0.03, C.DarkMetal, "Metal")
+				q:block(-0.32, 8.12, -0.32, 0.32, 8.3, 0.32, C.DarkMetal, "Metal")
+				q:block(-0.3, 7.4, -0.3, 0.3, 7.5, 0.3, C.DarkMetal, "Metal")
+				for _, sx in { -1, 1 } do
+					for _, sz in { -1, 1 } do
+						q:block(
+							sx * 0.26 - 0.03,
+							7.5,
+							sz * 0.26 - 0.03,
+							sx * 0.26 + 0.03,
+							8.12,
+							sz * 0.26 + 0.03,
+							C.DarkMetal,
+							"Metal"
+						)
+					end
+				end
+				q:ball(0, 7.34, 0, 0.14, C.DarkMetal, "Metal")
+			end)
+			r:glow(r:noCollide(r:block(-0.25, 7.5, -0.25, 0.25, 8.12, 0.25, C.Warm, "SmoothPlastic")), 14, 1)
 		end,
 	},
 	{

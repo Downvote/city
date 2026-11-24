@@ -74,6 +74,21 @@ local function stamp(r: R, id: string, at: CFrame, draw: (R) -> (), collide: boo
 	return r:add(p)
 end
 
+-- The same drawing as a stamp, made as plain parts where it stands: for details used once or
+-- twice, which would cost a merge each and save next to nothing. `collide` false keeps people
+-- from tripping on them (lines, nets).
+local function drawAt(r: R, at: CFrame, draw: (R) -> (), collide: boolean?)
+	local q = Recipe.new(WHITE, WHITE)
+	draw(q)
+	for _, p in q.prims do
+		p.cf = at * p.cf
+		if collide == false then
+			p.collide = false
+		end
+		r:add(p)
+	end
+end
+
 -- A little plant on a stem: leaves round the foot and a flower on top. For the planting pieces.
 local function sprig(q: R, x: number, y: number, z: number, tall: number, bloom: Color3, leaf: Color3)
 	q:box(x, y + tall / 2, z, 0.08, tall, 0.08, leaf)
@@ -448,14 +463,9 @@ function CityModels.tower(spec: TowerSpec): (R) -> ()
 		for c = 0, halves - 1 do
 			for _, face in faces do
 				local len = face[1] :: number
-				stamp(
-					r,
-					string.format("towerGrid:%g:%d:%s", len, per, trim:ToHex()),
-					CFrame.new(0, g + c * per * fh, 0) * (face[2] :: CFrame),
-					function(q)
-						towerGrid(q, len, per, fh, trim)
-					end
-				)
+				drawAt(r, CFrame.new(0, g + c * per * fh, 0) * (face[2] :: CFrame), function(q)
+					towerGrid(q, len, per, fh, trim)
+				end)
 			end
 		end
 		if spec.balconies then
@@ -987,19 +997,21 @@ function CityModels.lot(w: number, d: number, kind: string, margin: number): (R)
 		if kind == "garden" then
 			r:block(-hw, 0, -hd, hw, 0.16, hd, rgb(132, 190, 106), "Grass")
 			r:block(-hw, 0.16, hd - 1.5, hw, 2.2, hd, hedge, "SmoothPlastic")
-			r:block(-hw, 0.16, -hd, -hw + 1.5, 2.2, hd - 1.5, hedge, "SmoothPlastic")
-			r:block(hw - 1.5, 0.16, -hd, hw, 2.2, hd - 1.5, hedge, "SmoothPlastic")
-			r:block(-hw + 1.5, 0.16, -hd, -4, 2.2, -hd + 1.5, hedge, "SmoothPlastic")
-			r:block(4, 0.16, -hd, hw - 1.5, 2.2, -hd + 1.5, hedge, "SmoothPlastic")
-			r:block(-2.6, 0.16, -hd, 2.6, 0.22, -hd + margin, rgb(232, 226, 214), "Pavement")
+			r:block(-hw, 0.16, -hd + 0.25, -hw + 1.5, 2.2, hd - 1.5, hedge, "SmoothPlastic")
+			r:block(hw - 1.5, 0.16, -hd + 0.25, hw, 2.2, hd - 1.5, hedge, "SmoothPlastic")
+			r:block(-hw + 1.5, 0.16, -hd + 0.25, -4, 2.2, -hd + 1.5, hedge, "SmoothPlastic")
+			r:block(4, 0.16, -hd + 0.25, hw - 1.5, 2.2, -hd + 1.5, hedge, "SmoothPlastic")
+			-- (the front of a lot runs under the pavement, by up to three studs: the path starts
+			-- past that, and the beds are along the sides)
+			r:block(-2.6, 0.16, -hd + 3.2, 2.6, 0.22, -hd + margin, rgb(232, 226, 214), "Pavement")
 			for _, sx in { -1, 1 } do
 				-- gate posts either side of the path, with a lamp on each
 				gatePost(r, sx * 3.3, -hd + 0.4)
 				-- round shrubs in the back corners (no trees this close to a road)
 				r:ball(sx * (hw - 4), 1.6, hd - 4, 4, LEAF, "SmoothPlastic").name = "Leaf"
 				r:ball(sx * (hw - 6.4), 1.1, hd - 3.4, 2.6, shade(LEAF, 1.14), "SmoothPlastic").name = "Leaf"
-				-- a flower bed either side of the path
-				flowerBed(r, CFrame.new(sx * 6, 0.16, -hd + 3) * (if sx < 0 then yaw(180) else CFrame.identity))
+				-- a flower bed down each side of the building
+				flowerBed(r, CFrame.new(sx * (hw - 3.3), 0.16, 0) * yaw(90))
 			end
 		else
 			-- a paved forecourt: flower tubs at the corners and benches by the door
@@ -1519,7 +1531,7 @@ M.sportsField = function(r: R)
 	r:block(-50, 0.25, -28, 50, 0.3, 28, rgb(132, 184, 104), "Grass")
 	-- the markings, sunk into the grass so only their tops show: the touch lines, halfway, the
 	-- centre circle and a box at each end
-	stamp(r, "pitchLines", CFrame.new(0, 0.3, 0), function(q)
+	drawAt(r, CFrame.new(0, 0.3, 0), function(q)
 		for _, line in
 			{
 				{ -48, -26.4, 48, -26 },
@@ -1541,10 +1553,10 @@ M.sportsField = function(r: R)
 			local a = (k + 0.5) / 12 * math.pi * 2
 			q:boxAt(CFrame.new(math.cos(a) * 6, 0, math.sin(a) * 6) * CFrame.Angles(0, -a, 0), 0.4, 0.08, 3.2, WHITE)
 		end
-	end)
+	end, false)
 	-- a goal at each end: posts and a bar, a frame behind and the strings of the net
 	for _, sx in { -1, 1 } do
-		stamp(r, "goal", CFrame.new(sx * 47, 0.3, 0) * yaw(if sx > 0 then 0 else 180), function(q)
+		drawAt(r, CFrame.new(sx * 47, 0.3, 0) * yaw(if sx > 0 then 0 else 180), function(q)
 			for _, sz in { -1, 1 } do
 				q:box(0, 2.15, sz * 4.7, 0.3, 4.3, 0.3, WHITE)
 				q:box(2.4, 1.6, sz * 4.7, 0.16, 3.2, 0.16, WHITE)
@@ -1610,7 +1622,7 @@ M.clinic = function(r: R)
 	r:boxAt(f * CFrame.new(0, 1.4, -2.95), 4.2, 1.6, 3.1, WHITE, "SmoothPlastic")
 	r:boxAt(f * CFrame.new(0, 3.2, -2.05), 4.0, 2.0, 1.3, WHITE, "SmoothPlastic")
 	r:boxAt(f * CFrame.new(0, 3.0, 1.525), 4.2, 4.8, 5.85, WHITE, "SmoothPlastic")
-	stamp(r, "ambulance", f, function(q)
+	drawAt(r, f, function(q)
 		for _, sx in { -1, 1 } do
 			for _, wz in { -2.85, 2.85 } do
 				q:cyl(sx * 1.85, 0.75, wz, 0.6, 1.5, "x", TYRE)
@@ -1707,7 +1719,7 @@ M.library = function(r: R)
 	end
 	-- the way in: pilasters either side with a lantern on each, a broad step, the name over the
 	-- door on a stone band, and a pediment over it all above the cornice
-	r:block(-6.5, 0, -15.3, 6.5, 0.15, -14, stone, "Concrete")
+	r:block(-6.5, 0, -15.3, 6.5, 0.34, -14, stone, "Concrete")
 	for _, sx in { -1, 1 } do
 		local px = sx * 7.6
 		r:block(px - 0.8, 0, -14.6, px + 0.8, 0.8, -14, stone, "Concrete")
@@ -1883,7 +1895,7 @@ M.fireStation = function(r: R)
 	local fx, fz = -15, -22
 	r:block(fx - 4, 1.2, fz - 7, fx + 4, 5.4, fz + 5, red, "SmoothPlastic")
 	r:block(fx - 4, 1.2, fz - 10, fx + 4, 6, fz - 7, red, "SmoothPlastic")
-	stamp(r, "fireEngine", CFrame.new(fx, 0, fz), function(q)
+	drawAt(r, CFrame.new(fx, 0, fz), function(q)
 		q:box(0, 4.6, -10.04, 7.2, 1.6, 0.08, GLASS_CAR)
 		for _, sx in { -1, 1 } do
 			q:box(sx * 4.04, 4.7, -8.5, 0.08, 1.4, 2.4, GLASS_CAR)
@@ -1900,7 +1912,7 @@ M.fireStation = function(r: R)
 		q:box(0, 2.6, -10.06, 3.2, 0.9, 0.08, TRIM_DARK)
 		q:cyl(0, 4.6, 4.2, 2.6, 2.2, "x", shade(red, 0.8))
 	end)
-	stamp(r, "fireLadder", CFrame.new(fx, 5.55, fz - 6.5), function(q)
+	drawAt(r, CFrame.new(fx, 5.55, fz - 6.5), function(q)
 		ladder(q, 11, 1.8, METAL)
 	end)
 	r:glow(r:block(fx - 2.2, 6, fz - 9, fx + 2.2, 6.4, fz - 8.2, rgb(230, 90, 80), "Neon"), 0)
@@ -1926,7 +1938,7 @@ M.houseRow = function(r: R)
 			end
 		end, true)
 		for _, sx in { -1, 1 } do
-			flowerBed(r, CFrame.new(x + sx * 5, 0, -7.2))
+			flowerBed(r, CFrame.new(x + sx * 5, 0.16, -7.2))
 		end
 		-- a shrub in each back garden (no trees this close to the road)
 		r:ball(x + 6, 1.3, 6, 3, LEAF, "SmoothPlastic").name = "Leaf"
@@ -1950,7 +1962,7 @@ M.pondPark = function(r: R)
 	r:cyl(-10, 0.32, 0, 0.12, 64, "y", rgb(214, 210, 196), "Slate")
 	water(r:cyl(-10, 0.39, 0, 0.14, 58, "y", WATER, "SmoothPlastic"))
 	-- stones round the edge, reeds in clumps and lily pads on the water
-	stamp(r, "pondStones", CFrame.new(-10, 0.3, 0), function(q)
+	drawAt(r, CFrame.new(-10, 0.3, 0), function(q)
 		q:box(0, 0.02, 0, 0.6, 0.04, 0.6, ROCK)
 		for k = 0, 15 do
 			if k ~= 4 and k ~= 12 then
@@ -1974,14 +1986,14 @@ M.pondPark = function(r: R)
 		local _ = i
 	end
 	for _, p in { { -24, -6 }, { 6, 8 } } do
-		stamp(r, "lilies", CFrame.new(p[1], 0.46, p[2]), function(q)
+		drawAt(r, CFrame.new(p[1], 0.46, p[2]), function(q)
 			q:box(0, 0.02, 0, 0.3, 0.02, 0.3, rgb(118, 166, 100))
 			for k, o in { { 0, 0 }, { 1.6, 0.7 }, { -1.3, 1.1 }, { 0.6, -1.5 }, { -1.8, -0.8 } } do
 				q:cyl(o[1], 0.02, o[2], 0.04, 1.3, "y", if k % 2 == 0 then rgb(96, 150, 92) else rgb(118, 166, 100))
 			end
 			q:lump(CFrame.new(1.6, 0.2, 0.7), 0.5, 0.35, 0.5, rgb(240, 196, 206))
 			q:lump(CFrame.new(-1.8, 0.2, -0.8), 0.45, 0.3, 0.45, rgb(246, 240, 226))
-		end)
+		end, false)
 	end
 	-- the bridge across: the deck on piers, with railings of posts and rails
 	r:block(-14, 0.4, -32, -6, 1.6, 32, WOOD, "WoodPlanks")
@@ -2004,7 +2016,7 @@ M.pondPark = function(r: R)
 	end
 	-- ducks
 	for i, p in { { -30, -8 }, { -26, -12 }, { 10, 10 } } do
-		stamp(r, "duck", CFrame.new(p[1], 0.46, p[2]) * yaw(i * 70), function(q)
+		drawAt(r, CFrame.new(p[1], 0.46, p[2]) * yaw(i * 70), function(q)
 			q:box(0, 0.2, 0, 0.5, 0.3, 0.4, WHITE)
 			q:lump(CFrame.new(0, 0.3, 0), 1.3, 0.7, 0.9, WHITE)
 			q:lump(CFrame.new(-0.62, 0.8, 0), 0.55, 0.55, 0.5, WHITE)
@@ -2050,7 +2062,7 @@ M.playground = function(r: R)
 	end
 	r:wedge(CFrame.new(-21, 9.2, -4.5), 7, 1.6, 3.4, red, "SmoothPlastic")
 	r:wedge(CFrame.new(-21, 9.2, -1.5) * yaw(180), 7, 1.6, 2.6, red, "SmoothPlastic")
-	stamp(r, "slideLadder", CFrame.new(-21, 0.25, -6.3) * CFrame.Angles(math.rad(-90), 0, 0), function(q)
+	drawAt(r, CFrame.new(-21, 0.25, -6.3) * CFrame.Angles(math.rad(-90), 0, 0), function(q)
 		ladder(q, 5.6, 1.6, blue)
 	end)
 	r:ramp(-22.4, 0.25, 0.2, -19.6, 5.8, 9.6, false, yellow, "SmoothPlastic")
@@ -2103,7 +2115,7 @@ end
 M.basketCourt = function(r: R)
 	r:block(-30, 0, -18, 30, 0.25, 18, rgb(210, 150, 118), "SmoothPlastic")
 	-- the lines, sunk into the court so only their tops show
-	stamp(r, "courtLines", CFrame.new(0, 0.25, 0), function(q)
+	drawAt(r, CFrame.new(0, 0.25, 0), function(q)
 		for _, line in
 			{
 				{ -28, -16, 28, -15.6 },
@@ -2125,10 +2137,10 @@ M.basketCourt = function(r: R)
 			local a = (k + 0.5) / 10 * math.pi * 2
 			q:boxAt(CFrame.new(math.cos(a) * 3.6, 0, math.sin(a) * 3.6) * CFrame.Angles(0, -a, 0), 0.4, 0.08, 2.3, WHITE)
 		end
-	end)
+	end, false)
 	-- a hoop at each end: a padded pole, an arm, the board with its square, the rim and the net
 	for _, sx in { -1, 1 } do
-		stamp(r, "hoop", CFrame.new(sx * 27, 0, 0) * yaw(if sx > 0 then 0 else 180), function(q)
+		drawAt(r, CFrame.new(sx * 27, 0, 0) * yaw(if sx > 0 then 0 else 180), function(q)
 			q:cyl(1.5, 4.5, 0, 9, 0.6, "y", DARK, "Metal")
 			q:box(1.5, 1.0, 0, 0.9, 1.6, 0.9, rgb(96, 138, 176), "Metal")
 			q:box(0.75, 9.0, 0, 1.5, 0.3, 0.3, DARK, "Metal")
@@ -2175,7 +2187,7 @@ M.barn = function(r: R)
 		gableRoof(r, 20, 15, 10, 8, 0.5, red, "WoodPlanks", rgb(112, 104, 104), "Slate", WHITE)
 	end)
 	-- the doors, and the hayloft door in the gable over them
-	stamp(r, "barnDoors", CFrame.new(0, 0, -10), function(q)
+	drawAt(r, CFrame.new(0, 0, -10), function(q)
 		q:box(0, 4.15, -0.06, 10, 7.9, 0.12, shade(red, 0.86), "Wood")
 		for _, x in { -5, 0, 5 } do
 			q:box(x, 4.1, -0.2, 0.5, 8.2, 0.2, WHITE, "Wood")
@@ -2221,7 +2233,7 @@ M.barn = function(r: R)
 		r:cyl(20, y, 0, 0.3, 9, "y", rgb(176, 184, 196), "Metal")
 	end
 	r:ball(20, 18, 0, 9, rgb(124, 150, 180), "Metal")
-	stamp(r, "siloLadder", CFrame.new(20, 0.6, -4.65) * CFrame.Angles(math.rad(-90), 0, 0), function(q)
+	drawAt(r, CFrame.new(20, 0.6, -4.65) * CFrame.Angles(math.rad(-90), 0, 0), function(q)
 		ladder(q, 17.4, 1.2, DARK)
 	end)
 end
@@ -2358,7 +2370,7 @@ M.farmyard = function(r: R)
 	field(r, -60, 10, 46, 34, "greens")
 	field(r, 0, 50, 46, 30, "pumpkins")
 	for _, p in { { 30, -20 }, { 36, -14 }, { 26, -12 } } do
-		stamp(r, "hayRoll", CFrame.new(p[1], 1.4, p[2]), function(q)
+		drawAt(r, CFrame.new(p[1], 1.4, p[2]), function(q)
 			q:box(0, 0, 0, 2.4, 1.2, 1.2, rgb(214, 186, 120))
 			q:cyl(0, 0, 0, 3, 2.8, "x", rgb(230, 206, 138))
 			for _, x in { -1.52, 1.52 } do
@@ -2487,21 +2499,21 @@ M.radioMast = function(r: R)
 		end
 	end
 	for i = 0, 7 do
-		local col = if i % 2 == 0 then rgb(206, 112, 102) else WHITE
-		stamp(r, "mastSection:" .. col:ToHex(), CFrame.new(0, 5 + i * 4, 0), function(q)
+		local col, brace = rgb(206, 112, 102), WHITE
+		stamp(r, "mastSection", CFrame.new(0, 5 + i * 4, 0), function(q)
 			for _, sx in { -1, 1 } do
 				for _, sz in { -1, 1 } do
 					q:box(sx * 0.9, 2, sz * 0.9, 0.24, 4, 0.24, col, "Metal")
 				end
 			end
-			q:box(0, 0.1, -0.9, 1.8, 0.16, 0.16, col, "Metal")
-			q:box(0, 0.1, 0.9, 1.8, 0.16, 0.16, col, "Metal")
-			q:box(-0.9, 0.1, 0, 0.16, 0.16, 1.8, col, "Metal")
-			q:box(0.9, 0.1, 0, 0.16, 0.16, 1.8, col, "Metal")
-			q:beam(Vector3.new(-0.9, 0.2, -0.9), Vector3.new(0.9, 3.9, -0.9), 0.12, 0.12, col, "Metal")
-			q:beam(Vector3.new(0.9, 0.2, 0.9), Vector3.new(-0.9, 3.9, 0.9), 0.12, 0.12, col, "Metal")
-			q:beam(Vector3.new(-0.9, 0.2, 0.9), Vector3.new(-0.9, 3.9, -0.9), 0.12, 0.12, col, "Metal")
-			q:beam(Vector3.new(0.9, 0.2, -0.9), Vector3.new(0.9, 3.9, 0.9), 0.12, 0.12, col, "Metal")
+			q:box(0, 0.1, -0.9, 1.8, 0.16, 0.16, brace, "Metal")
+			q:box(0, 0.1, 0.9, 1.8, 0.16, 0.16, brace, "Metal")
+			q:box(-0.9, 0.1, 0, 0.16, 0.16, 1.8, brace, "Metal")
+			q:box(0.9, 0.1, 0, 0.16, 0.16, 1.8, brace, "Metal")
+			q:beam(Vector3.new(-0.9, 0.2, -0.9), Vector3.new(0.9, 3.9, -0.9), 0.12, 0.12, brace, "Metal")
+			q:beam(Vector3.new(0.9, 0.2, 0.9), Vector3.new(-0.9, 3.9, 0.9), 0.12, 0.12, brace, "Metal")
+			q:beam(Vector3.new(-0.9, 0.2, 0.9), Vector3.new(-0.9, 3.9, -0.9), 0.12, 0.12, brace, "Metal")
+			q:beam(Vector3.new(0.9, 0.2, -0.9), Vector3.new(0.9, 3.9, 0.9), 0.12, 0.12, brace, "Metal")
 		end)
 	end
 	r:block(-1.6, 37, -1.6, 1.6, 37.25, 1.6, METAL, "Metal")
@@ -2542,7 +2554,7 @@ M.camp = function(r: R)
 		r:boxAt(CFrame.new(0, 0.5, 0) * CFrame.Angles(0, a, math.rad(15)), 3, 0.6, 0.6, WOOD_DARK, "Wood")
 	end
 	r:fire(r:glow(r:ball(0, 1, 0, 1.2, rgb(255, 150, 60), "Neon"), 14, 1.4, rgb(255, 170, 90)))
-	stamp(r, "fireStones", CFrame.identity, function(q)
+	drawAt(r, CFrame.identity, function(q)
 		q:box(0, 0.02, 0, 0.6, 0.04, 0.6, ROCK)
 		for k = 0, 7 do
 			local a = k / 8 * math.pi * 2
@@ -2558,7 +2570,7 @@ M.camp = function(r: R)
 	end
 	house(r, -22, 20, 14, 10, rgb(164, 124, 92), rgb(106, 92, 90), 160)
 	-- a picnic table: planks on two A frames, and a bench either side
-	stamp(r, "picnicTable", CFrame.new(19, 0, 20), function(q)
+	drawAt(r, CFrame.new(19, 0, 20), function(q)
 		for i = 0, 2 do
 			q:box(0, 2.6, -1.1 + i * 1.1, 6, 0.2, 1.0, WOOD, "Wood")
 		end
@@ -2628,7 +2640,7 @@ M.ferrisWheel = function(r: R)
 	end
 	r:block(-11, 0, -4, 11, 0.6, 4, STONE, "SmoothPlastic")
 	r:block(-11.2, 0.6, -4, 11.2, 0.75, -3.6, WHITE, "SmoothPlastic")
-	stamp(r, "ticketBooth", CFrame.new(14.2, 0, 0), function(q)
+	drawAt(r, CFrame.new(14.2, 0, 0), function(q)
 		q:box(0, 1.6, 0, 2.8, 3.2, 2.8, rgb(232, 198, 118))
 		q:box(0, 3.35, 0, 3.4, 0.3, 3.4, col)
 		q:box(0, 3.75, 0, 2.2, 0.5, 2.2, col)
@@ -2648,7 +2660,7 @@ M.carousel = function(r: R)
 	local hub = r:cyl(0, 4, 0, 8, 1.6, "y", red, "Metal")
 	hub.name = "Hub"
 	r:cyl(0, 4.6, 0, 7.2, 3, "y", gold, "SmoothPlastic")
-	stamp(r, "carouselCanopy", CFrame.identity, function(q)
+	drawAt(r, CFrame.identity, function(q)
 		q:box(0, 12.1, 0, 1, 0.4, 1, gold, "Fabric")
 		local apex = Vector3.new(0, 12, 0)
 		for k = 0, 7 do
@@ -2727,7 +2739,7 @@ M.stall = function(r: R)
 			q:box(x, 4.95, -4.66, 8.4 / 5, 0.55, 0.08, col, "Fabric")
 		end
 	end)
-	stamp(r, "stallGoods", CFrame.identity, function(q)
+	drawAt(r, CFrame.identity, function(q)
 		q:box(0, 5.72, 2.28, 2.0, 0.95, 0.08, rgb(60, 70, 66))
 		for i = 0, 2 do
 			q:box(-0.15, 5.95 - i * 0.25, 2.22, 1.4 - i * 0.3, 0.07, 0.04, rgb(240, 236, 222))
@@ -2750,7 +2762,7 @@ end
 -- The fairground pier: a wide deck out over the water on piles, with railings of posts and rails,
 -- lamps down both sides and benches at the end looking out to sea.
 M.fairPier = function(r: R)
-	r:block(-8, -0.1, -40, 8, 0.4, 2, WOOD, "WoodPlanks")
+	r:block(-8, -0.1, -40, 8, 0.48, 2, WOOD, "WoodPlanks")
 	r:block(-60, -0.1, -130, 60, 0.4, -40, WOOD, "WoodPlanks")
 	local function rail(at: CFrame)
 		stamp(r, "pierRail", at, function(q)
@@ -2820,7 +2832,7 @@ M.lighthouse = function(r: R)
 	end
 	-- the gallery, its railing, the lamp room and the cap
 	r:cyl(0, y + 0.3, 0, 0.6, diam + 4, "y", DARK, "Metal")
-	stamp(r, "galleryRail", CFrame.new(0, y + 0.6, 0), function(q)
+	drawAt(r, CFrame.new(0, y + 0.6, 0), function(q)
 		q:box(0, 0.05, 0, 0.6, 0.1, 0.6, DARK, "Metal")
 		for k = 0, 11 do
 			local a1, a2 = k / 12 * math.pi * 2, (k + 1) / 12 * math.pi * 2
@@ -2832,7 +2844,7 @@ M.lighthouse = function(r: R)
 	end)
 	r:cyl(0, y + 1.5, 0, 1.8, 7.2, "y", WHITE, "SmoothPlastic")
 	r:cyl(0, y + 4.2, 0, 3.6, 5.6, "y", GLASS, "Glass")
-	stamp(r, "lampRoom", CFrame.new(0, y + 2.4, 0), function(q)
+	drawAt(r, CFrame.new(0, y + 2.4, 0), function(q)
 		q:box(0, 0.08, 0, 0.6, 0.16, 0.6, DARK, "Metal")
 		for k = 0, 7 do
 			local a = k / 8 * math.pi * 2

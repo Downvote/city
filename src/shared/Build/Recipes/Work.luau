@@ -183,7 +183,8 @@ local function books(
 				x += 0.86
 			elseif n == 9 and x + w + 0.2 < x2 then
 				-- one leaning on its neighbour
-				local lean = CFrame.new(x + w / 2 + h * 0.13, y + h * 0.49, (back + zf) / 2) * CFrame.Angles(0, 0, -0.28)
+				local lean = CFrame.new(x + w / 2 + h * 0.13, y + h * 0.49, (back + zf) / 2)
+					* CFrame.Angles(0, 0, -0.28)
 				q:boxAt(lean, w - 0.03, h, math.abs(zf - back), col)
 				x += w + 0.32
 			else
@@ -257,14 +258,6 @@ local function counter(r: R, w: number, d: number, h: number, body: Color3, top:
 		end
 	end)
 end
-
-local function wheel(r: R, x: number, y: number, z: number, d: number)
-	r:cyl(x, y, z, 0.3, d, "x", C.Black, "SmoothPlastic")
-	r:cyl(x, y, z, 0.34, d * 0.4, "x", C.Metal, "Metal")
-end
-
-local WOOD = Color3.fromRGB(150, 100, 60)
-local DARK = Color3.fromRGB(105, 70, 42)
 
 local items: { any } = {
 	{
@@ -503,8 +496,12 @@ local items: { any } = {
 			end)
 			-- a string of onions at one end of the awning, a bunch of garlic at the other
 			r:piece(function(q: R)
-				for _, e in { { -3.4, Color3.fromRGB(214, 164, 92) }, { 3.4, Color3.fromRGB(238, 230, 214) } } do
-					local x, col = e[1], e[2]
+				local strings = {
+					{ x = -3.4, col = Color3.fromRGB(214, 164, 92) },
+					{ x = 3.4, col = Color3.fromRGB(238, 230, 214) },
+				}
+				for _, e in strings do
+					local x, col = e.x, e.col
 					q:block(x - 0.03, 5.9, 2.17, x + 0.03, 7.2, 2.23, KRAFT)
 					for k = 0, 3 do
 						q:lump(CFrame.new(x + (k % 2 - 0.5) * 0.24, 6.55 - k * 0.2, 2.2), 0.34, 0.3, 0.32, col)
@@ -1993,7 +1990,16 @@ local items: { any } = {
 			end)
 			r:piece(function(q: R)
 				for i, e in { { -2.1, -1.3, 0.7 }, { -1.1, -0.2, 0.9 }, { 0.1, 0.9, 0.55 }, { 1.2, 2.1, 0.8 } } do
-					q:block(e[1], 0.4, -1.38, e[2], 0.4 + e[3], -1.14, if i % 2 == 0 then KRAFT else shade(KRAFT, 0.9), "Fabric")
+					q:block(
+						e[1],
+						0.4,
+						-1.38,
+						e[2],
+						0.4 + e[3],
+						-1.14,
+						if i % 2 == 0 then KRAFT else shade(KRAFT, 0.9),
+						"Fabric"
+					)
 					local xm = (e[1] + e[2]) / 2
 					q:block(xm - 0.04, 0.4, -1.42, xm + 0.04, 0.44 + e[3], -1.14, C.Paper, "Fabric")
 				end
@@ -2004,7 +2010,15 @@ local items: { any } = {
 					q:block(x, 1.75, -1.4, x + 1.3, 1.85, -1.14, Color3.fromRGB(84, 112, 142))
 					q:block(x, 1.85, -1.4, x + 1.3, 2.15, -1.36, Color3.fromRGB(84, 112, 142))
 					for k = 0, 4 do
-						q:block(x + 0.1 + k * 0.24, 1.85, -1.34, x + 0.14 + k * 0.24, 2.3 - (k % 2) * 0.08, -1.18, if k % 2 == 0 then C.Paper else Color3.fromRGB(236, 226, 200))
+						q:block(
+							x + 0.1 + k * 0.24,
+							1.85,
+							-1.34,
+							x + 0.14 + k * 0.24,
+							2.3 - (k % 2) * 0.08,
+							-1.18,
+							if k % 2 == 0 then C.Paper else Color3.fromRGB(236, 226, 200)
+						)
 					end
 				end
 			end)
@@ -2034,7 +2048,16 @@ local items: { any } = {
 				q:block(x - 0.04, H + 0.12, z - 0.04, x + 0.04, H + 0.62, z + 0.04, BRASS, "Metal")
 				q:block(x - 0.42, H + 0.6, z - 0.03, x + 0.42, H + 0.66, z + 0.03, BRASS, "Metal")
 				for _, s in { -1, 1 } do
-					q:block(x + s * 0.38 - 0.02, H + 0.42, z - 0.02, x + s * 0.38 + 0.02, H + 0.6, z + 0.02, BRASS, "Metal")
+					q:block(
+						x + s * 0.38 - 0.02,
+						H + 0.42,
+						z - 0.02,
+						x + s * 0.38 + 0.02,
+						H + 0.6,
+						z + 0.02,
+						BRASS,
+						"Metal"
+					)
 					q:cyl(x + s * 0.38, H + 0.4, z, 0.04, 0.4, "y", BRASS, "Metal")
 				end
 			end)
@@ -2056,7 +2079,15 @@ local items: { any } = {
 			r:piece(function(q: R)
 				for k = 0, 4 do
 					local lo = H + k * 0.05
-					q:block(-0.6 + (k % 2) * 0.04, lo, -0.95, 0.1 - (k % 2) * 0.03, lo + 0.05, -0.5, if k % 2 == 0 then C.Paper else Color3.fromRGB(236, 226, 200))
+					q:block(
+						-0.6 + (k % 2) * 0.04,
+						lo,
+						-0.95,
+						0.1 - (k % 2) * 0.03,
+						lo + 0.05,
+						-0.5,
+						if k % 2 == 0 then C.Paper else Color3.fromRGB(236, 226, 200)
+					)
 				end
 				q:block(-0.3, H, -0.99, -0.2, H + 0.29, -0.46, APPLE)
 			end)
@@ -2081,7 +2112,13 @@ local items: { any } = {
 				})
 				q:block(-1.6, H, 0.4, -0.8, H + 0.1, 0.9, wood)
 				q:boxAt(CFrame.new(-1.2, H + 0.3, 0.6) * CFrame.Angles(math.rad(-15), 0, 0), 0.7, 0.5, 0.06, C.Paper)
-				q:boxAt(CFrame.new(-1.2, H + 0.3, 0.72) * CFrame.Angles(math.rad(-15), 0, 0), 0.7, 0.44, 0.06, Color3.fromRGB(236, 226, 200))
+				q:boxAt(
+					CFrame.new(-1.2, H + 0.3, 0.72) * CFrame.Angles(math.rad(-15), 0, 0),
+					0.7,
+					0.44,
+					0.06,
+					Color3.fromRGB(236, 226, 200)
+				)
 			end)
 			-- the pigeonholes at the end, open toward +x, a cupboard below
 			local X1, X2 = 2.6, 3.5
@@ -2124,11 +2161,26 @@ local items: { any } = {
 				q:block(X2, 1.34, -0.9, X2 + 0.04, 1.4, 0.9, C.Paper)
 			end)
 			-- a sack of mail against the far end, letters showing at its neck
-			r:noCollide(r:lump(CFrame.new(-3.05, 0.85, 0.2) * CFrame.Angles(0, 0, 0.12), 1.0, 1.7, 1.0, Color3.fromRGB(150, 160, 172), "Fabric"))
+			r:noCollide(
+				r:lump(
+					CFrame.new(-3.05, 0.85, 0.2) * CFrame.Angles(0, 0, 0.12),
+					1.0,
+					1.7,
+					1.0,
+					Color3.fromRGB(150, 160, 172),
+					"Fabric"
+				)
+			)
 			r:piece(function(q: R)
 				q:block(-3.32, 1.62, 0.02, -2.92, 1.7, 0.38, Color3.fromRGB(128, 138, 150))
 				for k = 0, 2 do
-					q:boxAt(CFrame.new(-3.22 + k * 0.1, 1.86, 0.12 + k * 0.08) * CFrame.Angles(0.2, 0, 0.3 - k * 0.25), 0.4, 0.3, 0.03, if k == 1 then C.Paper else Color3.fromRGB(236, 226, 200))
+					q:boxAt(
+						CFrame.new(-3.22 + k * 0.1, 1.86, 0.12 + k * 0.08) * CFrame.Angles(0.2, 0, 0.3 - k * 0.25),
+						0.4,
+						0.3,
+						0.03,
+						if k == 1 then C.Paper else Color3.fromRGB(236, 226, 200)
+					)
 				end
 			end)
 		end,
@@ -2172,7 +2224,13 @@ local items: { any } = {
 			end, true)
 			-- a big cone painted on the side, two scoops and a cherry
 			r:piece(function(q: R)
-				q:tri(Vector3.new(-1.35, 2.35, 1.02), Vector3.new(-0.45, 2.35, 1.02), Vector3.new(-0.9, 1.55, 1.02), 0.04, Color3.fromRGB(226, 184, 124))
+				q:tri(
+					Vector3.new(-1.35, 2.35, 1.02),
+					Vector3.new(-0.45, 2.35, 1.02),
+					Vector3.new(-0.9, 1.55, 1.02),
+					0.04,
+					Color3.fromRGB(226, 184, 124)
+				)
 				q:block(-1.4, 2.3, 1.0, -0.4, 2.4, 1.08, Color3.fromRGB(206, 160, 100))
 				q:cyl(-1.1, 2.55, 1.09, 0.06, 0.5, "z", Color3.fromRGB(176, 220, 196))
 				q:cyl(-0.68, 2.6, 1.14, 0.08, 0.5, "z", Color3.fromRGB(232, 168, 178))
@@ -2196,27 +2254,40 @@ local items: { any } = {
 			end)
 			-- the tubs set in the lid, a mound of ice cream in each
 			local flavours = {
-				{ -1.3, 0.45, VANILLA },
-				{ 0.0, 0.45, Color3.fromRGB(232, 168, 178) },
-				{ 1.3, 0.45, Color3.fromRGB(128, 94, 72) },
-				{ -0.95, -0.45, Color3.fromRGB(176, 220, 196) },
-				{ 0.95, -0.45, LEMON },
+				{ x = -1.3, z = 0.45, col = VANILLA },
+				{ x = 0.0, z = 0.45, col = Color3.fromRGB(232, 168, 178) },
+				{ x = 1.3, z = 0.45, col = Color3.fromRGB(128, 94, 72) },
+				{ x = -0.95, z = -0.45, col = Color3.fromRGB(176, 220, 196) },
+				{ x = 0.95, z = -0.45, col = LEMON },
 			}
 			r:piece(function(q: R)
 				q:block(-0.05, TOPY, -0.55, 0.05, TOPY + 0.08, -0.45, ZINC, "Metal")
 				for _, f in flavours do
-					q:cyl(f[1], TOPY + 0.03, f[2], 0.06, 0.82, "y", ZINC, "Metal")
+					q:cyl(f.x, TOPY + 0.03, f.z, 0.06, 0.82, "y", ZINC, "Metal")
 				end
 				-- a dipper with the scoop in it, a stack of cones in its holder
 				q:cyl(-2.0, TOPY + 0.2, -0.4, 0.4, 0.34, "y", ZINC, "Metal")
-				q:beam(Vector3.new(-2.0, TOPY + 0.25, -0.4), Vector3.new(-2.3, TOPY + 0.75, -0.55), 0.06, 0.06, ZINC, "Metal")
+				q:beam(
+					Vector3.new(-2.0, TOPY + 0.25, -0.4),
+					Vector3.new(-2.3, TOPY + 0.75, -0.55),
+					0.06,
+					0.06,
+					ZINC,
+					"Metal"
+				)
 				q:cyl(2.0, TOPY + 0.35, -0.3, 0.7, 0.4, "y", ZINC, "Metal")
 			end)
 			r:piece(function(q: R)
 				q:block(-0.05, TOPY, 0.4, 0.05, TOPY + 0.06, 0.5, VANILLA)
 				for i, f in flavours do
-					q:lump(CFrame.new(f[1], TOPY + 0.12, f[2]) * CFrame.Angles(0, i, 0), 0.72, 0.36, 0.72, f[3])
-					q:lump(CFrame.new(f[1] + 0.12, TOPY + 0.3, f[2] - 0.1) * CFrame.Angles(0, i * 2, 0), 0.36, 0.22, 0.36, shade(f[3], 1.04))
+					q:lump(CFrame.new(f.x, TOPY + 0.12, f.z) * CFrame.Angles(0, i, 0), 0.72, 0.36, 0.72, f.col)
+					q:lump(
+						CFrame.new(f.x + 0.12, TOPY + 0.3, f.z - 0.1) * CFrame.Angles(0, i * 2, 0),
+						0.36,
+						0.22,
+						0.36,
+						shade(f.col, 1.04)
+					)
 				end
 				for k = 0, 2 do
 					q:add({
@@ -2229,11 +2300,25 @@ local items: { any } = {
 				end
 				-- paper cups stacked and a pot of spoons
 				for k = 0, 3 do
-					q:cyl(-2.05, TOPY + 0.09 + k * 0.1, 0.45, 0.18, 0.34 + k * 0.01, "y", if k % 2 == 0 then C.Paper else trim)
+					q:cyl(
+						-2.05,
+						TOPY + 0.09 + k * 0.1,
+						0.45,
+						0.18,
+						0.34 + k * 0.01,
+						"y",
+						if k % 2 == 0 then C.Paper else trim
+					)
 				end
 				q:cyl(1.95, TOPY + 0.18, 0.5, 0.36, 0.24, "y", Color3.fromRGB(106, 150, 190))
 				for k = 0, 2 do
-					q:beam(Vector3.new(1.95, TOPY + 0.2, 0.5), Vector3.new(1.88 + k * 0.07, TOPY + 0.58, 0.46 + (k % 2) * 0.08), 0.04, 0.04, C.White)
+					q:beam(
+						Vector3.new(1.95, TOPY + 0.2, 0.5),
+						Vector3.new(1.88 + k * 0.07, TOPY + 0.58, 0.46 + (k % 2) * 0.08),
+						0.04,
+						0.04,
+						C.White
+					)
 				end
 			end)
 			-- the umbrella: a pole, eight panels in turn, a valance with a scalloped edge
@@ -2247,7 +2332,16 @@ local items: { any } = {
 			for pass, col in { body, trim } do
 				r:piece(function(q: R)
 					if pass == 1 then
-						q:block(top.X - 0.05, top.Y - 0.02, top.Z - 0.05, top.X + 0.05, top.Y + 0.12, top.Z + 0.05, col, "Fabric")
+						q:block(
+							top.X - 0.05,
+							top.Y - 0.02,
+							top.Z - 0.05,
+							top.X + 0.05,
+							top.Y + 0.12,
+							top.Z + 0.05,
+							col,
+							"Fabric"
+						)
 					else
 						q:block(-0.03, 6.5, -0.53, 0.03, 6.6, -0.47, col, "Fabric")
 					end
@@ -2326,7 +2420,15 @@ local items: { any } = {
 				q:block(-0.5, H + 0.5, -0.75, 0.4, H + 0.54, -0.25, shade(WALNUT, 0.7))
 				for k = 0, 5 do
 					local z = -0.72 + k * 0.08
-					q:block(-0.46, H + 0.5, z, 0.36, H + 0.66 + (k % 2) * 0.06, z + 0.03, if k == 2 then LEMON else C.Paper)
+					q:block(
+						-0.46,
+						H + 0.5,
+						z,
+						0.36,
+						H + 0.66 + (k % 2) * 0.06,
+						z + 0.03,
+						if k == 2 then LEMON else C.Paper
+					)
 				end
 			end)
 			-- a tray of returns, a pile of books, two standing between bookends and a plant
@@ -2349,7 +2451,14 @@ local items: { any } = {
 				q:block(1.95, H + 0.4, 0.4, 2.25, H + 0.48, 0.7, C.Soil)
 				for k = 0, 4 do
 					local a = k * math.pi * 2 / 5
-					q:lump(CFrame.new(2.1 + math.cos(a) * 0.16, H + 0.68, 0.55 + math.sin(a) * 0.16) * CFrame.Angles(math.sin(a) * 0.6, a, -math.cos(a) * 0.6), 0.18, 0.5, 0.1, C.Leaf)
+					q:lump(
+						CFrame.new(2.1 + math.cos(a) * 0.16, H + 0.68, 0.55 + math.sin(a) * 0.16)
+							* CFrame.Angles(math.sin(a) * 0.6, a, -math.cos(a) * 0.6),
+						0.18,
+						0.5,
+						0.1,
+						C.Leaf
+					)
 				end
 			end)
 			-- the stack at the end: two sides, a divider, five shelves, books both ways
