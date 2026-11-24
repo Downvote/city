@@ -217,8 +217,8 @@ local items: { Item } = {
 		c2 = "6E4C30",
 		tags = { "plant" },
 		build = function(r: R)
-			-- a trunk on its roots and six tiers of branches, each a cone turned a little from the
-			-- one under it, light and dark in turn so each tier reads on its own
+			-- a trunk on its roots and six tiers of branches, each a cone turned half a facet from
+			-- the one under it, light and dark in turn so each tier reads on its own
 			roots(r, 3, 0.9, 0.35, r.c2)
 			r:cyl(0, 1.5, 0, 3.0, 0.75, "y", r.c2, "Wood")
 			for i, t in
@@ -233,7 +233,7 @@ local items: { Item } = {
 			do
 				r:add({
 					shape = "Cone",
-					cf = CFrame.new(0, t[1] + t[2] / 2, 0) * CFrame.Angles(0, i * 0.4, 0),
+					cf = CFrame.new(0, t[1] + t[2] / 2, 0) * CFrame.Angles(0, if i % 2 == 0 then math.pi / 8 else 0, 0),
 					size = Vector3.new(t[3], t[2], t[3]),
 					color = shade(r.c1, (if i % 2 == 0 then 1.06 else 0.94) + i * 0.025),
 					mat = "Grass",
@@ -1385,14 +1385,14 @@ local items: { Item } = {
 			-- tall spikes at the back and flowers (c2) in front
 			r:block(-2, 0, -0.7, 2, 0.16, 0.5, C.Soil, "Sand")
 			r:piece(function(q: R)
-				q:block(-1.95, 0, 0.52, 1.95, 0.06, 0.68, shade(r.c1, 0.8), "Slate")
+				q:block(-1.95, 0, 0.5, 1.95, 0.06, 0.64, shade(r.c1, 0.8), "Slate")
 				for i = 0, 8 do
 					local x = -1.78 + i * 0.445
 					q:lump(
-						CFrame.new(x, 0.16, 0.6) * CFrame.Angles(0, (i % 3) * 0.3 - 0.3, (i % 2) * 0.1),
+						CFrame.new(x, 0.16, 0.57) * CFrame.Angles(0, (i % 3) * 0.3 - 0.3, (i % 2) * 0.1),
 						0.46,
 						0.34,
-						0.26,
+						0.24,
 						if i % 2 == 0 then r.c1 else shade(r.c1, 1.08),
 						"Slate"
 					)
@@ -1520,13 +1520,13 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a rain barrel (c1) on a stand of bricks (c2), with a lid and a tap at the front
 			r:block(-0.8, 0, -0.8, 0.8, 0.5, 0.8, r.c2, "Brick")
-			r:cyl(0, 1.9, 0, 2.8, 2.0, "y", r.c1, "SmoothPlastic")
-			r:cyl(0, 3.36, 0, 0.14, 2.14, "y", shade(r.c1, 0.8), "SmoothPlastic")
+			r:cyl(0, 1.9, 0, 2.8, 1.92, "y", r.c1, "SmoothPlastic")
+			r:cyl(0, 3.36, 0, 0.14, 2.06, "y", shade(r.c1, 0.8), "SmoothPlastic")
 			r:piece(function(q: R)
 				q:box(0, 0.95, 1.08, 0.16, 0.16, 0.3, C.Gold, "Metal")
 				q:box(0, 1.06, 1.18, 0.08, 0.2, 0.08, C.Gold, "Metal")
-				q:cyl(0, 1.2, 0, 0.1, 2.06, "y", C.DarkMetal, "Metal")
-				q:cyl(0, 2.7, 0, 0.1, 2.06, "y", C.DarkMetal, "Metal")
+				q:cyl(0, 1.2, 0, 0.1, 1.98, "y", C.DarkMetal, "Metal")
+				q:cyl(0, 2.7, 0, 0.1, 1.98, "y", C.DarkMetal, "Metal")
 				q:block(-0.3, 3.43, -0.06, 0.3, 3.5, 0.06, C.DarkMetal, "Metal")
 			end)
 			-- a watering can left beside it

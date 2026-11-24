@@ -99,15 +99,25 @@ local function upholstered(r: R, w: number, d: number, n: number)
 		local back = CFrame.new(xm, 1.12, zb + 0.28) * CFrame.Angles(-0.16, 0, 0)
 		r:boxAt(back * CFrame.new(0, 0.82, 0), x2 - x1, 1.64, 0.5, r.c1, "Fabric")
 		cylAt(r, back * CFrame.new(0, 1.64, 0), x2 - x1, 0.5, r.c1, "Fabric")
+		-- two buttons pulled into each back cushion
+		for _, bx in { -0.25, 0.25 } do
+			local b = (back * CFrame.new(bx * (x2 - x1), 1.0, 0.25)).Position
+			r:ball(b.X, b.Y, b.Z, 0.1, shade(r.c1, 0.75), "Fabric")
+		end
 		r:seat(xm, 1.7, (zs + d / 2) / 2)
 	end
 	-- throw pillows: one by each arm, or a small one in the middle of an armchair
+	-- each with a piped edge round it in a deeper shade
+	local function throwPillow(cf: CFrame, w: number, h: number)
+		r:boxAt(cf, w, h, 0.3, pillow, "Fabric")
+		r:boxAt(cf, w + 0.06, h + 0.06, 0.1, shade(pillow, 0.8), "Fabric")
+	end
 	if n == 1 then
-		r:boxAt(CFrame.new(0, 2.15, zb + 0.72) * CFrame.Angles(-0.22, 0, 0), 1.2, 0.7, 0.3, pillow, "Fabric")
+		throwPillow(CFrame.new(0, 2.15, zb + 0.72) * CFrame.Angles(-0.22, 0, 0), 1.2, 0.7)
 	else
 		for _, sx in { -1, 1 } do
 			local x = sx * (iw / 2 - 0.62)
-			r:boxAt(CFrame.new(x, 2.2, zb + 0.75) * CFrame.Angles(-0.25, 0, sx * 0.14), 1.0, 1.0, 0.3, pillow, "Fabric")
+			throwPillow(CFrame.new(x, 2.2, zb + 0.75) * CFrame.Angles(-0.25, 0, sx * 0.14), 1.0, 1.0)
 		end
 	end
 end
@@ -248,6 +258,13 @@ local items: { Item } = {
 		tags = { "seat" },
 		build = function(r: R)
 			upholstered(r, 7.4, 3.2, 3)
+			-- a knitted throw folded over the right arm, hanging down inside it, with a stripe
+			local throw = Color3.fromRGB(222, 211, 188)
+			r:block(3.0, 2.44, -0.35, 3.6, 2.56, 0.65, throw, "Fabric")
+			r:block(3.05, 2.56, -0.3, 3.55, 2.66, 0.6, shade(throw, 1.04), "Fabric")
+			r:block(3.0, 1.74, -0.35, 3.08, 2.44, 0.65, throw, "Fabric")
+			r:block(2.97, 1.9, -0.38, 3.11, 2.0, 0.68, shade(r.c1, 0.8), "Fabric")
+			r:block(3.02, 2.53, 0.1, 3.58, 2.69, 0.2, shade(r.c1, 0.8), "Fabric")
 		end,
 	},
 	{

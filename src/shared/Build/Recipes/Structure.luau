@@ -418,10 +418,10 @@ local items: { any } = {
 			-- The corner is the middle of the footprint and the house is behind it and to its
 			-- left (-x, -z); turn it for the other corners. c1 the boards, c2 the foot.
 			local top = H + F
-			r:block(WALL, 0, -0.6, WALL + 0.14, top, WALL + 0.14, r.c1, "Wood")
-			r:block(-0.6, 0, WALL, WALL, top, WALL + 0.14, r.c1, "Wood")
-			r:block(WALL, 0, -0.66, WALL + 0.22, 1.5, WALL + 0.22, r.c2, "Wood")
-			r:block(-0.66, 0, WALL, WALL, 1.5, WALL + 0.22, r.c2, "Wood")
+			r:block(WALL, 0, -0.6, WALL + 0.18, top, WALL + 0.18, r.c1, "Wood")
+			r:block(-0.6, 0, WALL, WALL, top, WALL + 0.18, r.c1, "Wood")
+			r:block(WALL, 0, -0.68, WALL + 0.34, 1.5, WALL + 0.34, r.c2, "Wood")
+			r:block(-0.68, 0, WALL, WALL, 1.5, WALL + 0.34, r.c2, "Wood")
 		end,
 	},
 	{
@@ -435,19 +435,18 @@ local items: { any } = {
 		c2 = "D6D6D6",
 		build = function(r: R)
 			-- four studs of stone course for the foot of a wall: c1 the stones, laid in two
-			-- rows with mortar between them, c2 the ledge on top
+			-- rows with mortar between them, c2 the ledge on top. Each row is one shade, so two
+			-- footings that overlap along a wall still agree where they meet.
 			r:piece(function(q: R)
 				q:block(-1.94, 0, 0, 1.94, 1.1, 0.12, shade(r.c1, 0.72), "Slate")
 				local rows =
 					{ { 0.04, 0.54, { -2, -1.05, -0.1, 0.95, 2 } }, { 0.58, 1.05, { -2, -1.5, -0.55, 0.45, 1.4, 2 } } }
-				local n = 0
-				for _, row in rows do
+				for k, row in rows do
 					local xs = row[3]
 					for i = 1, #xs - 1 do
-						n += 1
 						local a = xs[i] + (if i == 1 then 0.02 else 0.03)
 						local b = xs[i + 1] - (if i == #xs - 1 then 0.02 else 0.03)
-						q:block(a, row[1], 0.05, b, row[2], 0.2, shade(r.c1, 0.92 + (n * 7 % 5) * 0.03), "Slate")
+						q:block(a, row[1], 0.05, b, row[2], 0.23, shade(r.c1, if k == 1 then 0.94 else 1.03), "Slate")
 					end
 				end
 			end, true)

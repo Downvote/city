@@ -263,10 +263,10 @@ local function planting(r: R, x0: number, x1: number, y: number, z0: number, z1:
 		for i = 0, n - 1 do
 			local t = (i + 0.5) / n
 			local x = x0 + (x1 - x0) * t
-			local s = 0.5 + (i % 3) * 0.08
+			local s = 0.42 + (i % 3) * 0.06
 			q:lump(
-				CFrame.new(x, y + 0.2, (z0 + z1) / 2 + (if i % 2 == 0 then 0.08 else -0.08))
-					* CFrame.Angles(0, i * 1.3, 0),
+				CFrame.new(x, y + 0.2, (z0 + z1) / 2 + (if i % 2 == 0 then 0.06 else -0.06))
+					* CFrame.Angles(0, ((i % 3) - 1) * 0.25, 0),
 				s + 0.2,
 				0.36,
 				s,

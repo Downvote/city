@@ -11,8 +11,15 @@
 -- of the hall, a threshold under the gate.
 --
 -- Nothing here stands up or can be bumped into. Each mark is a thin box (or a piece of thin
--- boxes) lying on the surface it belongs to, a hair above whatever TownMap.ground has already
--- laid there, so two flat faces never share a height and flicker.
+-- boxes) lying on the surface it belongs to. Two flat faces must never share a height, and from
+-- across the town the depth buffer can't part big ones much under a tenth of a stud, so (the
+-- user: "there is also z-fighting in alot of areas"):
+--   * paint on a road or a pavement stands a tenth over it (PAINT, ON_WALK, ON_KERB);
+--   * what lies on a mark is small and stands a little higher again (STEP), and big layers in
+--     one mark sit side by side instead of on top of each other (a checker's tiles, a cover's
+--     rim, the threshold's panels);
+--   * what is set into the square's paving (the fountain's rings, the aprons, the hall's bands,
+--     the threshold) is cut out of it by TownMap.ground (StreetPaint.inlays) and lies flush.
 
 local Recipe = require(script.Parent.Parent.Build.Recipe)
 local Geometry = require(script.Parent.Parent.Build.Geometry)
@@ -47,7 +54,13 @@ local ROAD = 0.05
 local WALK = 0.3
 local PAVING = 0.27
 local KERB = 0.42 -- the top of a kerb stone
-StreetPaint.Heights = { road = ROAD, walk = WALK, paving = PAVING }
+local LIFT = 0.11 -- how far a big flat layer stands over the one under it
+local STEP = 0.04 -- and a small one over a mark it lies on
+local PAINT = ROAD + LIFT -- the top of the paint on a road
+StreetPaint.Heights = { road = ROAD, walk = WALK, paving = PAVING, paint = PAINT, lift = LIFT }
+
+-- The fountain's rings reach this far from its middle (as the flats of a sixteen sided ring).
+StreetPaint.FountainReach = 24
 
 -- The main street's bus stop (TownMap stands the shelter there and World/Ambience pulls the bus
 -- in at it), on the south side.
@@ -58,13 +71,15 @@ local BUS_STOP_X = 96
 -- Each mark is drawn once round the origin and stamped where it is wanted (see Data/Landmarks).
 -- A mark on a road is drawn for somebody travelling along it: ahead is local -Z, their right
 -- hand is local +X, and the road's surface is y = 0.
+-- (What is set into the paving takes the place of the paving it was cut from, so people stand on
+-- it: `solid`.)
 local protos: { [string]: Prim } = {}
-local function proto(id: string, draw: (R) -> ()): Prim
+local function proto(id: string, draw: (R) -> (), solid: boolean?): Prim
 	local made = protos[id]
 	if not made then
 		local q = Recipe.new(WHITE, WHITE)
 		draw(q)
-		made = Geometry.piece(q.prims, false)
+		made = Geometry.piece(q.prims, solid == true)
 		protos[id] = made
 	end
 	return made
@@ -75,27 +90,46 @@ local function heading(x: number, y: number, z: number, fx: number, fz: number):
 	return CFrame.new(x, y, z) * CFrame.Angles(0, math.atan2(-fx, -fz), 0)
 end
 
+-- (Drawn with y = 0 on the road: a cover of lighter iron, a little higher than other paint so it
+-- stays clear of a line it lies across, with a dark rim, a dark cross and a boss over it. The
+-- cross stops short of the boss, so the two sit side by side.)
+local COVER = LIFT + 0.03
 local function manhole(q: R)
-	q:cyl(0, 0.015, 0, 0.03, 3.2, "y", IRON, "Metal")
-	q:cyl(0, 0.019, 0, 0.038, 2.6, "y", IRON_LIGHT, "Metal")
-	q:box(0, 0.022, 0, 2.3, 0.044, 0.3, IRON, "Metal")
-	q:box(0, 0.022, 0, 0.3, 0.044, 2.3, IRON, "Metal")
-	q:cyl(0, 0.025, 0, 0.05, 0.8, "y", IRON_LIGHT, "Metal")
+	for _, sx in { -1, 1 } do
+		q:box(sx * 0.775, COVER + STEP / 2, 0, 0.75, STEP, 0.3, IRON, "Metal")
+		q:box(0, COVER + STEP / 2, sx * 0.775, 0.3, STEP, 0.75, IRON, "Metal")
+	end
+	q:cyl(0, COVER / 2, 0, COVER, 3.2, "y", IRON_LIGHT, "Metal")
+	local run = 2 * 1.6 * math.tan(math.rad(22.5))
+	for k = 0, 7 do
+		local a = k * math.pi / 4
+		q:boxAt(
+			CFrame.new(math.cos(a) * 1.45, COVER + STEP / 2, math.sin(a) * 1.45) * CFrame.Angles(0, -a, 0),
+			0.3,
+			STEP,
+			run,
+			IRON,
+			"Metal"
+		)
+	end
+	q:cyl(0, COVER + STEP / 2, 0, STEP, 0.8, "y", IRON_LIGHT, "Metal")
 end
 
 -- A grating in the gutter, its long side along the kerb.
+-- (It stands a little higher than other paint, so it is clear of a cycle lane it reaches into.)
 local function grating(q: R)
-	q:box(0, 0.016, 0, 1.1, 0.032, 3.2, IRON, "Metal")
+	local top = COVER
+	q:box(0, top / 2, 0, 1.1, top, 3.2, IRON, "Metal")
 	for i = -2, 2 do
-		q:box(0, 0.02, i * 0.58, 0.8, 0.04, 0.26, rgb(40, 42, 52), "Metal")
+		q:box(0, top + STEP / 2, i * 0.58, 0.8, STEP, 0.26, rgb(40, 42, 52), "Metal")
 	end
 end
 
 -- Six studs of tactile paving at a crossing: yellow, with raised bars.
 local function tactile(q: R)
-	q:box(0, 0.012, 0, 1.3, 0.024, 6, TACTILE, "Concrete")
+	q:box(0, LIFT / 2, 0, 1.3, LIFT, 6, TACTILE, "Concrete")
 	for i = 0, 6 do
-		q:box(0, 0.02, -2.7 + i * 0.9, 1, 0.04, 0.34, TACTILE_DARK, "Concrete")
+		q:box(0, LIFT + STEP / 2, -2.7 + i * 0.9, 1, STEP, 0.34, TACTILE_DARK, "Concrete")
 	end
 end
 
@@ -103,13 +137,13 @@ end
 -- width, `lane` how far out the middle of the lane is.
 local function stopLine(half: number, lane: number): (R) -> ()
 	return function(q: R)
-		q:box((half - 0.5) / 2 + 0.4, 0.016, 0, half - 1.3, 0.032, 0.9, WHITE, "SmoothPlastic")
-		q:box(lane, 0.016, 13.2, 0.5, 0.032, 4, WHITE, "SmoothPlastic")
+		q:box((half - 0.5) / 2 + 0.4, LIFT / 2, 0, half - 1.3, LIFT, 0.9, WHITE, "SmoothPlastic")
+		q:box(lane, LIFT / 2, 13.2, 0.5, LIFT, 4, WHITE, "SmoothPlastic")
 		q:tri(
-			Vector3.new(lane, 0.016, 8.6),
-			Vector3.new(lane - 1, 0.016, 11.2),
-			Vector3.new(lane + 1, 0.016, 11.2),
-			0.032,
+			Vector3.new(lane, LIFT / 2, 8.6),
+			Vector3.new(lane - 1, LIFT / 2, 11.2),
+			Vector3.new(lane + 1, LIFT / 2, 11.2),
+			LIFT,
 			WHITE,
 			"SmoothPlastic"
 		)
@@ -120,33 +154,35 @@ end
 local function bays(half: number, count: number): (R) -> ()
 	return function(q: R)
 		local long = 13 * count
-		q:box(half - 5.6, 0.014, 0, 0.3, 0.028, long + 0.3, WHITE, "SmoothPlastic")
+		q:box(half - 5.6, LIFT / 2, 0, 0.3, LIFT, long + 0.3, WHITE, "SmoothPlastic")
 		for i = 0, count do
-			q:box(half - 3.1, 0.014, -long / 2 + i * 13, 4.7, 0.028, 0.3, WHITE, "SmoothPlastic")
+			q:box(half - 3.1, LIFT / 2, -long / 2 + i * 13, 4.7, LIFT, 0.3, WHITE, "SmoothPlastic")
 		end
 	end
 end
 
 -- A bicycle and a chevron, painted in a cycle lane.
+-- (Drawn with y = 0 on the lane's own paint: the frame and the wheels on it, the red middles of
+-- the wheels on those.)
 local function bicycle(q: R)
-	q:box(0, 0.016, 0.1, 0.22, 0.032, 2.2, WHITE, "SmoothPlastic")
+	q:box(0, STEP / 2, 0.1, 0.22, STEP, 2.2, WHITE, "SmoothPlastic")
 	for _, z in { -1.1, 1.3 } do
-		q:cyl(0, 0.014, z, 0.028, 1.4, "y", WHITE, "SmoothPlastic")
-		q:cyl(0, 0.017, z, 0.034, 0.86, "y", CYCLE, "SmoothPlastic")
+		q:cyl(0, STEP / 2, z, STEP, 1.4, "y", WHITE, "SmoothPlastic")
+		q:cyl(0, STEP * 1.5, z, STEP, 0.86, "y", CYCLE, "SmoothPlastic")
 	end
-	q:box(0, 0.018, -0.5, 1, 0.036, 0.2, WHITE, "SmoothPlastic")
+	q:box(0, STEP / 2, -0.5, 1, STEP, 0.2, WHITE, "SmoothPlastic")
 	q:boxAt(
-		CFrame.new(-0.42, 0.016, -3.3) * CFrame.Angles(0, math.rad(40), 0),
+		CFrame.new(-0.42, STEP / 2, -3.3) * CFrame.Angles(0, math.rad(40), 0),
 		0.24,
-		0.032,
+		STEP,
 		1.3,
 		WHITE,
 		"SmoothPlastic"
 	)
 	q:boxAt(
-		CFrame.new(0.42, 0.016, -3.3) * CFrame.Angles(0, math.rad(-40), 0),
+		CFrame.new(0.42, STEP / 2, -3.3) * CFrame.Angles(0, math.rad(-40), 0),
 		0.24,
-		0.032,
+		STEP,
 		1.3,
 		WHITE,
 		"SmoothPlastic"
@@ -157,16 +193,16 @@ end
 local function busBay(q: R)
 	local long, wide = 26, 3.4
 	for _, sx in { -1, 1 } do
-		q:box(sx * wide / 2, 0.016, 0, 0.3, 0.032, long, YELLOW, "SmoothPlastic")
+		q:box(sx * wide / 2, LIFT / 2, 0, 0.3, LIFT, long, YELLOW, "SmoothPlastic")
 	end
 	for _, sz in { -1, 1 } do
-		q:box(0, 0.016, sz * long / 2, wide + 0.3, 0.032, 0.3, YELLOW, "SmoothPlastic")
+		q:box(0, LIFT / 2, sz * long / 2, wide + 0.3, LIFT, 0.3, YELLOW, "SmoothPlastic")
 	end
 	for i = -2, 2 do
 		q:boxAt(
-			CFrame.new(0, 0.016, i * 5.2) * CFrame.Angles(0, math.rad(50), 0),
+			CFrame.new(0, LIFT / 2, i * 5.2) * CFrame.Angles(0, math.rad(50), 0),
 			0.3,
-			0.032,
+			LIFT,
 			4.2,
 			YELLOW,
 			"SmoothPlastic"
@@ -178,44 +214,96 @@ end
 local function junctionBox(w: number, d: number): (R) -> ()
 	return function(q: R)
 		for _, sx in { -1, 1 } do
-			q:box(sx * w / 2, 0.016, 0, 0.36, 0.032, d + 0.36, YELLOW, "SmoothPlastic")
+			q:box(sx * w / 2, LIFT / 2, 0, 0.36, LIFT, d + 0.36, YELLOW, "SmoothPlastic")
 		end
 		for _, sz in { -1, 1 } do
-			q:box(0, 0.016, sz * d / 2, w, 0.032, 0.36, YELLOW, "SmoothPlastic")
+			q:box(0, LIFT / 2, sz * d / 2, w, LIFT, 0.36, YELLOW, "SmoothPlastic")
 		end
 		-- three lines each way, parallel to the box's own diagonals
 		local long = math.sqrt(w * w + d * d)
 		for _, s in { -1, 1 } do
 			local turn = CFrame.Angles(0, math.atan2(w, s * d), 0)
 			for _, k in { -0.5, 0, 0.5 } do
-				local at = turn * CFrame.new(k * w * d / long, 0.016, 0)
-				q:boxAt(at, 0.3, 0.032, long * (1 - math.abs(k)) - 1, YELLOW, "SmoothPlastic")
+				local at = turn * CFrame.new(k * w * d / long, LIFT / 2, 0)
+				q:boxAt(at, 0.3, LIFT, long * (1 - math.abs(k)) - 1, YELLOW, "SmoothPlastic")
 			end
 		end
 	end
 end
 
--- A checker of tiles, eight studs by six.
+-- A checker of tiles, eight studs by six, side by side (set into the paving: its top 0.03 over it).
 local function checker(q: R)
-	q:box(0, 0.01, 0, 8, 0.02, 6, TILE_LIGHT, "CeramicTiles")
 	for i = 0, 3 do
 		for j = 0, 2 do
-			if (i + j) % 2 == 0 then
-				q:box(-3 + i * 2, 0.014, -2 + j * 2, 2, 0.028, 2, TILE_DARK, "CeramicTiles")
-			end
+			local dark = (i + j) % 2 == 0
+			local h = if dark then 0.03 else 0.024
+			q:box(-3 + i * 2, h / 2, -2 + j * 2, 2, h, 2, if dark then TILE_DARK else TILE_LIGHT, "CeramicTiles")
 		end
 	end
 end
 
--- The joints of the fountain's rings: short lines out from the middle, in two rounds.
+-- The joints of the fountain's rings: short lines out from the middle, in two rounds, standing
+-- a little proud of the rings.
 local function spokes(q: R)
 	for i = 0, 11 do
 		local a = i / 12 * math.pi * 2
 		local turn = CFrame.Angles(0, -a, 0)
-		q:boxAt(turn * CFrame.new(16.55, 0.005, 0), 3.1, 0.01, 0.22, JOINT, "Pavement")
+		q:boxAt(turn * CFrame.new(16.55, STEP / 2, 0), 3.1, STEP, 0.22, JOINT, "Pavement")
 		local b = a + math.pi / 12
-		q:boxAt(CFrame.Angles(0, -b, 0) * CFrame.new(22.25, 0.005, 0), 2.5, 0.01, 0.22, JOINT, "Pavement")
+		q:boxAt(CFrame.Angles(0, -b, 0) * CFrame.new(22.25, STEP / 2, 0), 2.5, STEP, 0.22, JOINT, "Pavement")
 	end
+end
+
+-- One of the fountain's rings of stone, from `inner` to `outer` out from its middle, as sixteen
+-- slabs that meet like the sides of the sixteen sided disc in the middle (each runs out to the
+-- ring's outer corners, so together they fill it without reaching past it either way). Drawn
+-- with y = 0 at its top, `depth` deep.
+local function ring(inner: number, outer: number, depth: number, color: Color3): (R) -> ()
+	return function(q: R)
+		local across = 2 * outer * math.tan(math.pi / 16)
+		for k = 0, 15 do
+			local a = k * math.pi / 8
+			local mid = (inner + outer) / 2
+			q:boxAt(
+				CFrame.new(math.cos(a) * mid, -depth / 2, math.sin(a) * mid) * CFrame.Angles(0, -a, 0),
+				outer - inner,
+				depth,
+				across,
+				color,
+				"Pavement"
+			)
+		end
+	end
+end
+
+-- What is set into the square's paving, so TownMap.ground leaves a hole for each: { x1, z1, x2,
+-- z2, fill = the height of a paving fill under it, if any }.
+function StreetPaint.inlays(): { { any } }
+	local S = Town.Spots
+	local f = S.Fountain
+	local reach = StreetPaint.FountainReach
+	local out: { { any } } = {
+		-- (paving is laid under the rings, a tenth down, for the corners the rings leave)
+		{ f.X - reach, f.Z - reach, f.X + reach, f.Z + reach, fill = PAVING - LIFT },
+	}
+	for _, a in StreetPaint.aprons() do
+		table.insert(out, { a[1], a[2], a[1] + a[3] * 8, a[2] + 6 })
+	end
+	table.insert(out, { S.Hall.X - 16, S.Hall.Z + 8.4, S.Hall.X + 16, S.Hall.Z + 8.4 + 3 * 3.8 })
+	local edge = Town.StreetHalfWidth + Town.SidewalkWidth
+	local sq = Town.SquareCenter
+	table.insert(out, { sq.X - 19.5, edge + 0.3, sq.X + 19.5, edge + 4.7 })
+	return out
+end
+
+-- The tiled aprons in front of the tailor, the notice board and the shop: { x1, z1, modules }.
+function StreetPaint.aprons(): { { number } }
+	local S = Town.Spots
+	return {
+		{ S.Tailor.X - 12, S.Tailor.Z - 16, 3 },
+		{ S.Board.X - 8, S.Board.Z - 7.4, 2 },
+		{ S.Shop.X - 12, S.Shop.Z + 10, 3 },
+	}
 end
 
 -- Roads ---------------------------------------------------------------------------------------------------
@@ -349,7 +437,8 @@ function StreetPaint.ground(region: Region?): { Prim }
 		y1: number,
 		y2: number,
 		color: Color3,
-		mat: string?
+		mat: string?,
+		solid: boolean?
 	)
 		if x1 > x2 then
 			x1, x2 = x2, x1
@@ -362,15 +451,15 @@ function StreetPaint.ground(region: Region?): { Prim }
 				math.max(x1, region[1]), math.max(z1, region[2]), math.min(x2, region[3]), math.min(z2, region[4])
 		end
 		if x1 < x2 and z1 < z2 then
-			r:block(x1, y1, z1, x2, y2, z2, color, mat).collide = false
+			r:block(x1, y1, z1, x2, y2, z2, color, mat).collide = solid == true
 		end
 	end
 	-- a piece, kept whole when its middle is in the region
-	local function mark(id: string, at: CFrame, draw: (R) -> ())
+	local function mark(id: string, at: CFrame, draw: (R) -> (), solid: boolean?)
 		if region and (at.X < region[1] or at.X > region[3] or at.Z < region[2] or at.Z > region[4]) then
 			return
 		end
-		local made = proto(id, draw)
+		local made = proto(id, draw, solid)
 		local p = table.clone(made)
 		p.cf = at * made.cf
 		r:add(p)
@@ -433,7 +522,7 @@ function StreetPaint.ground(region: Region?): { Prim }
 				if dir == 0 or s == -dir then
 					for _, side in { -1, 1 } do
 						local u1, u2 = u - s * (half + 0.5), u - s * (half + 8.5)
-						rect(u1, side * hw, u2, side * (hw + 0.6), KERB, KERB + 0.025, YELLOW)
+						rect(u1, side * hw, u2, side * (hw + 0.6), KERB, KERB + LIFT, YELLOW)
 					end
 				end
 			end
@@ -441,7 +530,7 @@ function StreetPaint.ground(region: Region?): { Prim }
 			if dir == 0 and not road.main then
 				local v = -hw + 1.6
 				while v < hw - 2.6 do
-					rect(u - half, v, u + half, v + 1.6, ROAD, ROAD + 0.032, WHITE)
+					rect(u - half, v, u + half, v + 1.6, ROAD, PAINT, WHITE)
 					v += 2.8
 				end
 			end
@@ -489,11 +578,11 @@ function StreetPaint.ground(region: Region?): { Prim }
 				local from: number? = nil
 				local function close(to: number)
 					if from and to - from > 14 then
-						rect(from, side * 10.6, to, side * 13.2, ROAD, ROAD + 0.024, CYCLE, "Asphalt")
-						rect(from, side * 10.2, to, side * 10.5, ROAD, ROAD + 0.03, WHITE)
+						rect(from, side * 10.6, to, side * 13.2, ROAD, PAINT, CYCLE, "Asphalt")
+						rect(from, side * 10.2, to, side * 10.5, ROAD, PAINT, WHITE)
 						local b = from + 9
 						while b < to - 6 do
-							mark("bicycle", going(b, side * 11.9, ROAD + 0.024, s), bicycle)
+							mark("bicycle", going(b, side * 11.9, PAINT, s), bicycle)
 							b += 88
 						end
 					end
@@ -556,11 +645,19 @@ function StreetPaint.ground(region: Region?): { Prim }
 	end
 
 	-- the square -------------------------------------------------------------------------------------
+	-- (all of it set into the paving: TownMap.ground cuts a hole for each of StreetPaint.inlays)
 	local f = Town.Spots.Fountain
+	local reach = StreetPaint.FountainReach
 	if
-		not region or (region[1] < f.X + 26 and region[3] > f.X - 26 and region[2] < f.Z + 26 and region[4] > f.Z - 26)
+		not region
+		or (
+			region[1] < f.X + reach
+			and region[3] > f.X - reach
+			and region[2] < f.Z + reach
+			and region[4] > f.Z - reach
+		)
 	then
-		-- rings of two stones round the fountain, each a little higher than the one outside it
+		-- rings of stone round the fountain, flush with the paving, and the joints over them
 		local rings: { { r: number, c: Color3 } } = {
 			{ r = 24, c = JOINT },
 			{ r = 23.5, c = SAND },
@@ -571,28 +668,32 @@ function StreetPaint.ground(region: Region?): { Prim }
 			{ r = 12.4, c = JOINT },
 			{ r = 11.9, c = SAND },
 		}
-		local top = PAVING + 0.05
-		for _, ring in rings do
-			local disc = r:cyl(f.X, (PAVING + top) / 2, f.Z, top - PAVING, ring.r * 2, "y", ring.c, "Pavement")
-			disc.collide = false
-			top += 0.005
+		local at = CFrame.new(f.X, PAVING, f.Z)
+		for k, ringK in rings do
+			local inner = if rings[k + 1] then rings[k + 1].r else 0
+			if inner > 0 then
+				local id = string.format("ring:%g:%g", inner, ringK.r)
+				local made = proto(id, ring(inner, ringK.r, LIFT, ringK.c), true)
+				local p = table.clone(made)
+				p.cf = at * made.cf
+				r:add(p)
+			else
+				r:cyl(f.X, PAVING - LIFT / 2, f.Z, LIFT, ringK.r * 2, "y", ringK.c, "Pavement")
+			end
 		end
 		local made = proto("spokes", spokes)
 		local p = table.clone(made)
-		p.cf = CFrame.new(f.X, top, f.Z) * made.cf
+		p.cf = at * made.cf
 		r:add(p)
 	end
 	-- tiled aprons in front of the tailor, the notice board and the shop
-	local function apron(x1: number, z1: number, modules: number)
-		for i = 0, modules - 1 do
-			mark("checker", CFrame.new(x1 + 4 + i * 8, PAVING, z1 + 3), checker)
+	for _, a in StreetPaint.aprons() do
+		for i = 0, a[3] - 1 do
+			mark("checker", CFrame.new(a[1] + 4 + i * 8, PAVING, a[2] + 3), checker, true)
 		end
 	end
-	local S = Town.Spots
-	apron(S.Tailor.X - 12, S.Tailor.Z - 16, 3)
-	apron(S.Board.X - 8, S.Board.Z - 7.4, 2)
-	apron(S.Shop.X - 12, S.Shop.Z + 10, 3)
 	-- bands of stone in front of the hall
+	local S = Town.Spots
 	for i = 0, 2 do
 		local z1 = S.Hall.Z + 8.4 + i * 3.8
 		flat(
@@ -600,23 +701,30 @@ function StreetPaint.ground(region: Region?): { Prim }
 			z1,
 			S.Hall.X + 16,
 			z1 + 3.8,
-			PAVING,
+			-0.15,
 			PAVING + 0.03 + i * 0.002,
 			if i % 2 == 0 then SLATE else SAND,
-			"Pavement"
+			"Pavement",
+			true
 		)
 	end
 	-- the threshold under the gate: a band of stone across the way in, edged, with a darker
-	-- panel under each bay
+	-- panel under each bay (each its own patch, side by side)
 	local edge = Town.StreetHalfWidth + Town.SidewalkWidth
 	local sq = Town.SquareCenter
-	flat(sq.X - 19.5, edge + 0.3, sq.X + 19.5, edge + 4.7, PAVING, PAVING + 0.03, SAND, "Pavement")
-	flat(sq.X - 19.5, edge + 0.3, sq.X + 19.5, edge + 0.7, PAVING, PAVING + 0.036, JOINT, "Pavement")
-	flat(sq.X - 19.5, edge + 4.3, sq.X + 19.5, edge + 4.7, PAVING, PAVING + 0.036, JOINT, "Pavement")
-	flat(sq.X - 5.6, edge + 1.3, sq.X + 5.6, edge + 3.7, PAVING, PAVING + 0.036, SLATE, "Pavement")
-	for _, sx in { -1, 1 } do
-		flat(sq.X + sx * 9.4, edge + 1.3, sq.X + sx * 15.4, edge + 3.7, PAVING, PAVING + 0.036, SLATE, "Pavement")
+	local LOW, HIGH = PAVING + 0.03, PAVING + 0.036
+	flat(sq.X - 19.5, edge + 0.3, sq.X + 19.5, edge + 0.7, -0.15, HIGH, JOINT, "Pavement", true)
+	flat(sq.X - 19.5, edge + 4.3, sq.X + 19.5, edge + 4.7, -0.15, HIGH, JOINT, "Pavement", true)
+	flat(sq.X - 19.5, edge + 0.7, sq.X + 19.5, edge + 1.3, -0.15, LOW, SAND, "Pavement", true)
+	flat(sq.X - 19.5, edge + 3.7, sq.X + 19.5, edge + 4.3, -0.15, LOW, SAND, "Pavement", true)
+	local panels = { { -15.4, -9.4 }, { -5.6, 5.6 }, { 9.4, 15.4 } }
+	local x = -19.5
+	for _, pn in panels do
+		flat(sq.X + x, edge + 1.3, sq.X + pn[1], edge + 3.7, -0.15, LOW, SAND, "Pavement", true)
+		flat(sq.X + pn[1], edge + 1.3, sq.X + pn[2], edge + 3.7, -0.15, HIGH, SLATE, "Pavement", true)
+		x = pn[2]
 	end
+	flat(sq.X + x, edge + 1.3, sq.X + 19.5, edge + 3.7, -0.15, LOW, SAND, "Pavement", true)
 	return r.prims
 end
 

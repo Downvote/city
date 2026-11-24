@@ -175,7 +175,10 @@ function Hills.prims(region: { number }?): { Prim }
 		local col = GRASS[k % #GRASS + 1]
 		col = col:Lerp(HIGH, math.clamp(avg / 90, 0, 0.6))
 		col = col:Lerp(STEEP, math.clamp(steep * 2.2, 0, 0.7))
-		for _, p in Geometry.triangle(a, b, c, Hills.Thickness, col, "Grass") do
+		-- (the top of each triangle is the surface itself, Hills.at's, and its thickness hangs
+		-- under it, so two neighbours meet along their edge and never overlap there and flicker)
+		local up = Vector3.new(0, Hills.Thickness / 2, 0)
+		for _, p in Geometry.tri(a + up, b + up, c + up, Hills.Thickness, col, "Grass", -Vector3.yAxis) do
 			p.name = "Hill"
 			table.insert(out, p)
 		end

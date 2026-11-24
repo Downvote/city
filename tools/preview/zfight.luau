@@ -157,11 +157,14 @@ for _, k in order do
 		if r.repeat_ then
 			print(
 				string.format(
-					"  %s at (%.2f, %.2f, %.2f) gap %.3f overlap %.2f sq studs%s%s",
+					"  %s at (%.2f, %.2f, %.2f) facing (%.2f, %.2f, %.2f) gap %.3f overlap %.2f sq studs%s%s",
 					r.cls,
 					r.at[1],
 					r.at[2],
 					r.at[3],
+					r.normal[1],
+					r.normal[2],
+					r.normal[3],
 					r.gap,
 					r.area,
 					if r.seen < 1 then string.format(" (%d%% seen)", math.floor(r.seen * 100 + 0.5)) else "",

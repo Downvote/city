@@ -605,6 +605,11 @@ local function crossings(road: any): { any }
 end
 TownMap.crossings = crossings
 
+-- Paint on a road stands a tenth over it (StreetPaint.Heights: nearer than that, the two flicker
+-- from across the town), and covers a little more, clear of a cycle lane they reach into.
+local PAINT = StreetPaint.Heights.paint
+local COVER = PAINT + 0.04
+
 -- The whole island as one list of flat parts: the sea, the beach and the grass; every road with
 -- its sidewalks, lane lines and crossings; the square and the market; the boardwalk; downtown's
 -- paved blocks; the path up the hills; and the hills themselves.
@@ -741,7 +746,7 @@ function TownMap.ground(region: Region?): { Prim }
 		local u = a1 + 6
 		while u < a2 - 10 do
 			if not nearCross(u + 3.5, 6) and not (main and (math.abs(u) < 14 or math.abs(math.abs(u) - 274) < 14)) then
-				rect(u, -0.3, u + 7, 0.3, 0.05, 0.08, if main then LINE_YELLOW else LINE_WHITE)
+				rect(u, -0.3, u + 7, 0.3, 0.05, PAINT, if main then LINE_YELLOW else LINE_WHITE)
 			end
 			u += step
 		end
@@ -750,8 +755,8 @@ function TownMap.ground(region: Region?): { Prim }
 		while m < a2 - 40 do
 			if not nearCross(m, 12) and not nearCross(m + 30, 12) then
 				local v = if turn % 2 == 0 then hw * 0.45 else -hw * 0.45
-				rect(m - 1.5, v - 1.5, m + 1.5, v + 1.5, 0.05, 0.085, MANHOLE, "Metal")
-				rect(m + 28.4, hw - 1.2, m + 31.6, hw - 0.2, 0.05, 0.085, MANHOLE, "Metal")
+				rect(m - 1.5, v - 1.5, m + 1.5, v + 1.5, 0.05, COVER, MANHOLE, "Metal")
+				rect(m + 28.4, hw - 1.2, m + 31.6, hw - 0.2, 0.05, COVER, MANHOLE, "Metal")
 			end
 			m += 118
 			turn += 1
@@ -784,9 +789,9 @@ function TownMap.ground(region: Region?): { Prim }
 					local v = -hw + 1.6
 					while v < hw - 2.6 do
 						if horizontal then
-							slab(u0 - 3, at + v, u0 + 3, at + v + 1.6, 0.05, 0.08, LINE_WHITE, "")
+							slab(u0 - 3, at + v, u0 + 3, at + v + 1.6, 0.05, PAINT, LINE_WHITE, "")
 						else
-							slab(at + v, u0 - 3, at + v + 1.6, u0 + 3, 0.05, 0.08, LINE_WHITE, "")
+							slab(at + v, u0 - 3, at + v + 1.6, u0 + 3, 0.05, PAINT, LINE_WHITE, "")
 						end
 						v += 2.8
 					end
@@ -823,43 +828,111 @@ function TownMap.ground(region: Region?): { Prim }
 			for _, cx in { 0, -274, 274 } do
 				local v = -hw + 2.2
 				while v < hw - 2.6 do
-					slab(cx - 6, v, cx + 6, v + 1.6, 0.05, 0.08, LINE_WHITE, "")
+					slab(cx - 6, v, cx + 6, v + 1.6, 0.05, PAINT, LINE_WHITE, "")
 					v += 2.8
 				end
 			end
 		end
 	end
 
-	-- the square (north) and the market (south): paving with a border and a grid of joints
-	for _, center in { Town.SquareCenter, Town.MarketCenter } do
-		local x1, x2 = center.X - 50, center.X + 50
-		local z1 = if center.Z > 0 then HW + SW else center.Z - 60
-		local z2 = if center.Z > 0 then center.Z + 60 else -(HW + SW)
-		slab(x1, z1, x2, z2, -0.15, 0.25, PAVING_DARK, "Pavement")
-		slab(x1 + 1.2, z1 + 1.2, x2 - 1.2, z2 - 1.2, -0.15, 0.27, PAVING, "Pavement")
-		local jz1 = if center.Z > 0 then HW + SW + 1.2 else center.Z - 58.8
-		local jz2 = if center.Z > 0 then center.Z + 58.8 else -(HW + SW + 1.2)
-		for gx = center.X - 48, center.X + 48, 12 do
-			slab(gx - 0.12, jz1, gx + 0.12, jz2, 0.27, 0.28, PAVING_DARK, "Pavement")
+	-- Rectangles of `rect` ({ x1, z1, x2, z2 }) that lie outside every rectangle in `holes`.
+	local function cut(rect: { number }, holes: { { number } }): { { number } }
+		local out = { rect }
+		for _, h in holes do
+			local left = {}
+			for _, q in out do
+				local qx1, qz1, qx2, qz2 = q[1], q[2], q[3], q[4]
+				local hx1, hz1 = math.max(h[1], qx1), math.max(h[2], qz1)
+				local hx2, hz2 = math.min(h[3], qx2), math.min(h[4], qz2)
+				if hx1 >= hx2 - 1e-4 or hz1 >= hz2 - 1e-4 then
+					table.insert(left, q)
+				else
+					if hz1 > qz1 + 1e-4 then
+						table.insert(left, { qx1, qz1, qx2, hz1 })
+					end
+					if hz2 < qz2 - 1e-4 then
+						table.insert(left, { qx1, hz2, qx2, qz2 })
+					end
+					if hx1 > qx1 + 1e-4 then
+						table.insert(left, { qx1, hz1, hx1, hz2 })
+					end
+					if hx2 < qx2 - 1e-4 then
+						table.insert(left, { hx2, hz1, qx2, hz2 })
+					end
+				end
+			end
+			out = left
 		end
-		for _, sx in { -1, 1 } do
-			local x = center.X + sx * 45
-			slab(x - 3, jz1, x + 3, jz2, 0.27, 0.285, PROMENADE, "Brick")
+		return out
+	end
+	-- Flat things laid side by side in one place, the most important first: each is cut out of
+	-- all that come after it, so no two lie over each other. Two flat layers a few hundredths
+	-- apart flicker from across the town (the user: "there is also z-fighting in alot of
+	-- areas"); side by side, nothing does. Each is { x1, z1, x2, z2, y1, y2, colour, material },
+	-- or just the rectangle for a hole that something else (StreetPaint, the lawns) fills.
+	local function lay(list: { { any } })
+		local taken: { { number } } = {}
+		for _, it in list do
+			if it[7] then
+				for _, q in cut({ it[1], it[2], it[3], it[4] }, taken) do
+					slab(q[1], q[2], q[3], q[4], it[5], it[6], it[7], it[8])
+				end
+			end
+			table.insert(taken, { it[1], it[2], it[3], it[4] })
 		end
 	end
-	-- brick walks from the crossing to the fountain and to the hall, and on to the ring roads
-	slab(-5, HW + SW, 5, Town.Spots.Fountain.Z - 16, 0.27, 0.29, PROMENADE, "Brick")
-	slab(-5, Town.Spots.Hall.Z + 14, 5, -(HW + SW), 0.27, 0.29, PROMENADE, "Brick")
+
+	-- the square (north) and the market (south): paving with a border and a grid of joints, brick
+	-- bands, a brick walk, the lawns, and what StreetPaint sets into the paving
+	local inlays = StreetPaint.inlays()
+	for _, center in { Town.SquareCenter, Town.MarketCenter } do
+		local north = center.Z > 0
+		local x1, x2 = center.X - 50, center.X + 50
+		local z1 = if north then HW + SW else center.Z - 60
+		local z2 = if north then center.Z + 60 else -(HW + SW)
+		local list: { { any } } = {}
+		if north then
+			for _, l in TownMap.lawns() do
+				local cx, cz, hx, hz = l[1], l[2], l[3], l[4]
+				table.insert(list, { cx - hx - 0.5, cz - hz - 0.5, cx + hx + 0.5, cz + hz + 0.5 })
+			end
+		end
+		for _, it in inlays do
+			if it[1] < x2 and it[3] > x1 and it[2] < z2 and it[4] > z1 then
+				if it.fill then
+					-- (paving a tenth down under what fills the hole, for the corners it leaves)
+					table.insert(list, { it[1], it[2], it[3], it[4], -0.15, it.fill, PAVING, "Pavement" })
+				else
+					table.insert(list, { it[1], it[2], it[3], it[4] })
+				end
+			end
+		end
+		-- the brick walk from the crossing to the fountain, or from the hall to the crossing
+		if north then
+			table.insert(list, { -5, HW + SW, 5, Town.Spots.Fountain.Z - 16, -0.15, 0.29, PROMENADE, "Brick" })
+		else
+			table.insert(list, { -5, Town.Spots.Hall.Z + 14, 5, -(HW + SW), -0.15, 0.29, PROMENADE, "Brick" })
+		end
+		local jz1, jz2 = z1 + 1.2, z2 - 1.2
+		for _, sx in { -1, 1 } do
+			local x = center.X + sx * 45
+			table.insert(list, { x - 3, jz1, x + 3, jz2, -0.15, 0.285, PROMENADE, "Brick" })
+		end
+		-- (the joints are grooves a little under the paving)
+		for gx = center.X - 48, center.X + 48, 12 do
+			table.insert(list, { gx - 0.12, jz1, gx + 0.12, jz2, -0.15, 0.25, PAVING_DARK, "Pavement" })
+		end
+		table.insert(list, { x1 + 1.2, z1 + 1.2, x2 - 1.2, z2 - 1.2, -0.15, 0.27, PAVING, "Pavement" })
+		table.insert(list, { x1, z1, x2, z2, -0.15, 0.25, PAVING_DARK, "Pavement" })
+		lay(list)
+	end
+	-- the paths on to the ring roads: brick down the middle, paving either side
 	local RZ = Town.RingZ
-	slab(-6, Town.SquareCenter.Z + 60, 6, RZ - 17, -0.15, 0.27, PAVING, "Pavement")
-	slab(-6, -(RZ - 17), 6, Town.MarketCenter.Z - 60, -0.15, 0.27, PAVING, "Pavement")
-	slab(-3, Town.SquareCenter.Z + 60, 3, RZ - 17, 0.27, 0.29, PROMENADE, "Brick")
-	slab(-3, -(RZ - 17), 3, Town.MarketCenter.Z - 60, 0.27, 0.29, PROMENADE, "Brick")
-	-- a round of lighter paving and a ring of dark stone around the fountain
-	if not region or (region[1] < 20 and region[3] > -20 and region[2] < 100 and region[4] > 60) then
-		local f = Town.Spots.Fountain
-		r:cyl(f.X, 0.28, f.Z, 0.04, 36, "y", PAVING_DARK, "Pavement")
-		r:cyl(f.X, 0.29, f.Z, 0.04, 34, "y", Color3.fromRGB(234, 222, 200), "Pavement")
+	for _, ends in { { Town.SquareCenter.Z + 60, RZ - 17 }, { -(RZ - 17), Town.MarketCenter.Z - 60 } } do
+		lay({
+			{ -3, ends[1], 3, ends[2], -0.15, 0.29, PROMENADE, "Brick" },
+			{ -6, ends[1], 6, ends[2], -0.15, 0.27, PAVING, "Pavement" },
+		})
 	end
 	-- lawns in the square's corners
 	for _, l in TownMap.lawns() do
@@ -873,24 +946,26 @@ function TownMap.ground(region: Region?): { Prim }
 
 	-- downtown's blocks are paved right up to the sidewalks
 	-- with a cobbled lane through the middle of each (it comes out between the buildings at
-	-- either end) and a darker band round its edge
+	-- either end) and a darker band round its edge, all side by side
 	for _, b in TownMap.blocks("east") do
-		slab(b[1], b[2], b[3], b[4], -0.15, 0.22, PAVING, "Pavement")
+		local list: { { any } } = {}
 		local mid = math.floor((b[2] + b[4]) / 2)
 		if b[1] == 559 and b[4] == -22 then
-			-- (the market lane, south of the main street)
-			slab(b[1] + 5.4, -76, b[3] - 5.4, -60, 0.22, 0.25, LANE, "Cobblestone")
+			-- the market quarter's square, open to the main street: big slabs inside a band of
+			-- brick; and the market lane, south of the main street
+			table.insert(list, { 662, -60, 710, -24, -0.15, 0.265, SQUARE, "Pavement:Slabs" })
+			table.insert(list, { 660, -62, 712, -22, -0.15, 0.255, PROMENADE, "Brick" })
+			table.insert(list, { b[1] + 5.4, -76, b[3] - 5.4, -60, -0.15, 0.25, LANE, "Cobblestone" })
 		else
-			slab(b[1] + 5.4, mid - 5, b[3] - 5.4, mid + 6, 0.22, 0.25, LANE, "Cobblestone")
+			table.insert(list, { b[1] + 5.4, mid - 5, b[3] - 5.4, mid + 6, -0.15, 0.25, LANE, "Cobblestone" })
 		end
-		slab(b[1] + 3, b[2] + 3, b[3] - 3, b[2] + 5.4, 0.22, 0.25, PAVING_DARK, "Pavement")
-		slab(b[1] + 3, b[4] - 5.4, b[3] - 3, b[4] - 3, 0.22, 0.25, PAVING_DARK, "Pavement")
-		slab(b[1] + 3, b[2] + 5.4, b[1] + 5.4, b[4] - 5.4, 0.22, 0.25, PAVING_DARK, "Pavement")
-		slab(b[3] - 5.4, b[2] + 5.4, b[3] - 3, b[4] - 5.4, 0.22, 0.25, PAVING_DARK, "Pavement")
+		table.insert(list, { b[1] + 3, b[2] + 3, b[3] - 3, b[2] + 5.4, -0.15, 0.25, PAVING_DARK, "Pavement" })
+		table.insert(list, { b[1] + 3, b[4] - 5.4, b[3] - 3, b[4] - 3, -0.15, 0.25, PAVING_DARK, "Pavement" })
+		table.insert(list, { b[1] + 3, b[2] + 5.4, b[1] + 5.4, b[4] - 5.4, -0.15, 0.25, PAVING_DARK, "Pavement" })
+		table.insert(list, { b[3] - 5.4, b[2] + 5.4, b[3] - 3, b[4] - 5.4, -0.15, 0.25, PAVING_DARK, "Pavement" })
+		table.insert(list, { b[1], b[2], b[3], b[4], -0.15, 0.22, PAVING, "Pavement" })
+		lay(list)
 	end
-	-- the market quarter's square, open to the main street: big slabs inside a band of brick
-	slab(660, -62, 712, -22, 0.22, 0.255, PROMENADE, "Brick")
-	slab(662, -60, 710, -24, 0.22, 0.265, SQUARE, "Pavement:Slabs")
 	-- the civic quarter's lawns have gravel paths: one along each block and two across
 	for _, b in TownMap.blocks("west") do
 		local mid = (b[2] + b[4]) / 2
@@ -902,7 +977,7 @@ function TownMap.ground(region: Region?): { Prim }
 	end
 
 	-- the boardwalk along the south shore, with a rail on the sea side
-	local bz1, bz2 = -IS, -(RZ + 11 + 6)
+	local bz1, bz2 = -IS - 0.04, -(RZ + 11 + 6) -- (a hair past the grass, so its edge is hidden)
 	slab(-IX + 30, bz1, IX - 30, bz2, -0.15, 0.32, Color3.fromRGB(214, 172, 124), "WoodPlanks")
 	slab(-IX + 30, bz1, IX - 30, bz1 + 0.5, 0.32, 2.6, Color3.fromRGB(250, 250, 246), "SmoothPlastic")
 

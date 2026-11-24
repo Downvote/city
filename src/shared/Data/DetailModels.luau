@@ -153,7 +153,7 @@ local function plantsInTrough(q: R)
 		end
 		-- and spilling over the lip, front and back
 		for _, t in { { -1.7, -1 }, { 0.8, -1 }, { -0.6, 1 }, { 1.9, 1 } } do
-			p:lump(CFrame.new(t[1], 1.32, t[2] * 0.8), 1.1, 0.42, 0.44, FOLIAGE_DARK, "Grass")
+			p:lump(CFrame.new(t[1], 1.38, t[2] * 0.8), 1.1, 0.42, 0.44, FOLIAGE_DARK, "Grass")
 		end
 	end)
 	q:piece(function(p: R)
@@ -175,11 +175,11 @@ local function planter(r: R, cf: CFrame)
 			for _, sx in { -1, 1 } do
 				p:block(sx * 2.45 - 0.35, 0, -0.66, sx * 2.45 + 0.35, 0.22, 0.66, foot, "Concrete")
 			end
-			p:block(-2.86, 0.2, -0.76, 2.86, 1.14, 0.76, STONE, "Concrete")
-			p:block(-3, 1.1, -0.9, 3, 1.34, -0.66, lip, "Concrete")
-			p:block(-3, 1.1, 0.66, 3, 1.34, 0.9, lip, "Concrete")
-			p:block(-3, 1.1, -0.66, -2.74, 1.34, 0.66, lip, "Concrete")
-			p:block(2.74, 1.1, -0.66, 3, 1.34, 0.66, lip, "Concrete")
+			p:block(-2.86, 0.2, -0.76, 2.86, 1.02, 0.76, STONE, "Concrete")
+			p:block(-3, 0.98, -0.9, 3, 1.34, -0.66, lip, "Concrete")
+			p:block(-3, 0.98, 0.66, 3, 1.34, 0.9, lip, "Concrete")
+			p:block(-3, 0.98, -0.66, -2.74, 1.34, 0.66, lip, "Concrete")
+			p:block(2.74, 0.98, -0.66, 3, 1.34, 0.66, lip, "Concrete")
 		end, true)
 		q:block(-2.76, 1.0, -0.68, 2.76, 1.24, 0.68, SOIL, "Ground")
 		plantsInTrough(q)
@@ -195,7 +195,7 @@ local function shrub(r: R, x: number, y: number, z: number)
 			p:cyl(0, 0.55, 0, 0.82, 1.5, "y", shade(CLAY, 0.94), "SmoothPlastic")
 			p:cyl(0, 1.2, 0, 0.6, 1.8, "y", CLAY, "SmoothPlastic")
 			p:cyl(0, 1.62, 0, 0.3, 2.1, "y", shade(CLAY, 1.06), "SmoothPlastic")
-			p:cyl(0, 1.74, 0, 0.12, 1.84, "y", SOIL, "SmoothPlastic")
+			p:cyl(0, 1.82, 0, 0.12, 1.84, "y", SOIL, "SmoothPlastic")
 			p:block(-0.12, 1.7, -0.12, 0.12, 2.4, 0.12, WOOD_DARK, "SmoothPlastic")
 		end, true)
 		q:ball(0, 3.2, 0, 2.7, FOLIAGE, "SmoothPlastic").name = "Leaf"
@@ -208,20 +208,20 @@ end
 local function hedgeRow(r: R, cf: CFrame)
 	group(r, cf, function(q: R)
 		q:piece(function(p: R)
-			p:block(-7.9, 0, -0.84, 7.9, 1.85, 0.84, HEDGE, "Grass")
+			p:block(-7.9, 0, -0.84, 7.9, 1.5, 0.84, HEDGE, "Grass")
 			for k = 0, 5 do
 				p:lump(
-					CFrame.new(-6.4 + k * 2.6, 1.7, 0) * CFrame.Angles(0, (k % 3 - 1) * 0.08, 0),
+					CFrame.new(-6.4 + k * 2.6, 1.45, 0) * CFrame.Angles(0, (k % 3 - 1) * 0.08, 0),
 					3.25,
-					0.95,
-					1.8,
+					1.5,
+					1.94,
 					if k % 2 == 0 then HEDGE_LIGHT else HEDGE,
 					"Grass"
 				)
 			end
 			for k, x in { -5.2, 0.4, 5.3 } do
-				p:ball(x, 2.12, -0.3, 0.5, bloom(k), "Grass")
-				p:ball(x + 0.5, 2.05, 0.25, 0.42, bloom(k + 2), "Grass")
+				p:ball(x, 2.22, -0.3, 0.5, bloom(k), "Grass")
+				p:ball(x + 0.5, 2.18, 0.25, 0.42, bloom(k + 2), "Grass")
 			end
 		end, true)
 	end)
@@ -244,7 +244,7 @@ local function wildflowers(r: R, cf: CFrame)
 			end
 			for k = 0, 2 do
 				local s = WILD[k * 2 + 1]
-				p:lump(CFrame.new(s[1] + 0.2, 0.15, s[2]) * CFrame.Angles(0, k, 0), 1.3, 0.45, 0.9, FOLIAGE_DARK, "Grass")
+				p:lump(CFrame.new(s[1] + 0.2, 0.2, s[2]) * CFrame.Angles(0, k, 0), 1.0, 0.6, 0.8, FOLIAGE_DARK, "Grass")
 			end
 			for k = 0, 1 do
 				local a = 1.2 + k * 2.4
@@ -405,16 +405,16 @@ M.bikeRack = function(r: R)
 				return Vector3.new(bx, y, z * d)
 			end
 			for _, z in { 1.3, -1.5 } do
-				p:cyl(bx, 1, z * d, 0.14, 2.0, "x", rgb(46, 48, 58), "Metal")
-				p:cyl(bx, 1, z * d, 0.16, 1.6, "x", METAL, "Metal")
+				p:cyl(bx, 1, z * d, 0.16, 2.0, "x", rgb(46, 48, 58), "Metal")
+				p:cyl(bx, 1, z * d, 0.24, 1.6, "x", METAL, "Metal")
 			end
 			local bb, seat, head = at(1.0, 0.1), at(2.3, 0.55), at(2.25, -1.0)
-			p:beam(bb, seat, 0.16, 0.16, col, "Metal")
-			p:beam(bb, head, 0.18, 0.18, col, "Metal")
-			p:beam(seat, head, 0.14, 0.14, col, "Metal")
-			p:beam(bb, at(1, 1.3), 0.1, 0.1, col, "Metal")
-			p:beam(seat, at(1, 1.3), 0.1, 0.1, col, "Metal")
-			p:beam(at(2.65, -1.05), at(1, -1.5), 0.12, 0.12, col, "Metal")
+			p:beam(bb, seat, 0.12, 0.12, col, "Metal")
+			p:beam(bb, head, 0.14, 0.14, col, "Metal")
+			p:beam(seat, head, 0.12, 0.12, col, "Metal")
+			p:beam(bb, at(1, 1.3), 0.08, 0.08, col, "Metal")
+			p:beam(seat, at(1, 1.3), 0.08, 0.08, col, "Metal")
+			p:beam(at(2.65, -1.05), at(1, -1.5), 0.1, 0.1, col, "Metal")
 			p:boxAt(CFrame.new(bx, 2.7, -1.05 * d), 0.14, 0.12, 1.2, DARK, "Metal")
 			p:boxAt(CFrame.new(bx, 2.42, 0.62 * d), 0.28, 0.15, 0.45, rgb(90, 66, 52), "Metal")
 		end
@@ -522,7 +522,7 @@ M.kiosk = function(r: R)
 			local c = if k % 2 == 0 then RED else WHITE
 			p:block(x - 0.95, 5.5, -4.32, x + 0.95, 5.78, -4.26, c, "Fabric")
 			for _, dx in { -0.475, 0.475 } do
-				p:cyl(x + dx, 5.5, -4.29, 0.06, 0.9, "z", c, "Fabric")
+				p:cyl(x + dx, 5.4, -4.29, 0.06, 0.76, "z", c, "Fabric")
 			end
 		end
 	end)
@@ -612,7 +612,7 @@ local function statue(r: R, x: number, y: number, z: number)
 			p:cyl(0, 8.85, 0, 0.5, 0.82, "y", shade(BRONZE, 0.85), "Metal")
 			p:boxAt(CFrame.new(1.05, 8.0, -0.35) * CFrame.Angles(math.rad(25), 0, math.rad(-22)), 0.4, 1.7, 0.4, BRONZE, "Metal")
 			p:block(-1.12, 5.9, -0.2, -0.72, 7.3, 0.2, BRONZE, "Metal")
-			p:block(-1.14, 5.6, -0.55, -0.84, 6.4, 0.22, shade(BRONZE, 0.75), "Metal")
+			p:block(-1.16, 5.6, -0.55, -0.84, 6.4, 0.12, shade(BRONZE, 0.75), "Metal")
 			p:block(-1.2, 1.7, -2.06, 1.2, 2.6, -2, GOLD, "Metal")
 		end, true)
 	end)
@@ -640,9 +640,9 @@ local function fountain(r: R, x: number, y: number, z: number)
 			p:cyl(0, 3.75, 0, 0.3, 2, "y", STONE, "Concrete")
 			p:cyl(0, 3.98, 0, 0.3, 0.32, "y", shade(STONE, 0.92), "Concrete")
 		end, true)
-		q:cyl(0, 0.85, 0, 0.3, 10.4, "y", WATER, "SmoothPlastic")
-		q:cyl(0, 2.66, 0, 0.1, 3.9, "y", WATER, "SmoothPlastic")
-		q:cyl(0, 3.88, 0, 0.1, 1.7, "y", WATER, "SmoothPlastic")
+		q:cyl(0, 0.87, 0, 0.3, 10.4, "y", WATER, "SmoothPlastic")
+		q:cyl(0, 2.77, 0, 0.1, 3.9, "y", WATER, "SmoothPlastic")
+		q:cyl(0, 3.97, 0, 0.1, 1.7, "y", WATER, "SmoothPlastic")
 		local jet = q:cyl(0, 5, 0, 2, 0.5, "y", rgb(214, 240, 255), "Glass")
 		jet.transp = 0.35
 		jet.collide = false
@@ -704,10 +704,10 @@ end
 
 -- A manhole cover, flat on the road: a rim and a cover with ribs across it.
 M.manhole = function(r: R)
-	r:cyl(0, 0.03, 0, 0.06, 3, "y", rgb(84, 88, 100), "Metal")
-	r:cyl(0, 0.05, 0, 0.06, 2.4, "y", rgb(104, 108, 120), "Metal")
+	r:cyl(0, 0.02, 0, 0.04, 3, "y", rgb(84, 88, 100), "Metal")
+	r:cyl(0, 0.09, 0, 0.1, 2.4, "y", rgb(104, 108, 120), "Metal")
 	for k = -1, 1 do
-		r:block(-0.9 + math.abs(k) * 0.25, 0.08, k * 0.5 - 0.06, 0.9 - math.abs(k) * 0.25, 0.11, k * 0.5 + 0.06, rgb(90, 94, 106), "Metal")
+		r:block(-0.9 + math.abs(k) * 0.25, 0.14, k * 0.5 - 0.06, 0.9 - math.abs(k) * 0.25, 0.18, k * 0.5 + 0.06, rgb(90, 94, 106), "Metal")
 	end
 end
 
@@ -743,10 +743,10 @@ end
 -- stones, two beds of flowers, shrubs where the path comes in, bushes, two benches and a lamp.
 M.pocketGarden = function(r: R)
 	r:block(-15, 0, -15, 15, 0.2, 15, LAWN, "Grass")
-	r:block(-2, 0.2, -15, 2, 0.26, 15, PAVING, "Pavement")
+	r:block(-2, 0.2, -15, 2, 0.32, 15, PAVING, "Pavement")
 	parts(r, function(p: R)
 		for _, sx in { -1, 1 } do
-			p:block(sx * 2 - 0.12, 0.2, -15, sx * 2 + 0.12, 0.34, 15, shade(PAVING, 0.86), "Pavement")
+			p:block(sx * 2 - 0.12, 0.2, -15, sx * 2 + 0.12, 0.44, 15, shade(PAVING, 0.86), "Pavement")
 		end
 	end, true)
 	for _, sx in { -1, 1 } do
@@ -767,8 +767,8 @@ end
 -- A round fountain on a ring of darker paving, with benches and potted shrubs round it.
 M.pocketFountain = function(r: R)
 	r:cyl(0, 0.06, 0, 0.12, 30, "y", PAVING, "Pavement")
-	r:cyl(0, 0.08, 0, 0.16, 16, "y", shade(PAVING, 0.9), "Pavement")
-	fountain(r, 0, 0.16, 0)
+	r:cyl(0, 0.12, 0, 0.24, 16, "y", shade(PAVING, 0.9), "Pavement")
+	fountain(r, 0, 0.24, 0)
 	for k = 0, 3 do
 		local a = math.rad(45 + k * 90)
 		shrub(r, math.cos(a) * 11.5, 0.12, math.sin(a) * 11.5)
@@ -833,8 +833,8 @@ M.pocketParking = function(r: R)
 	parts(r, function(p: R)
 		for k = 0, 4 do
 			local x = -12 + k * 6
-			p:block(x - 0.12, 0.1, -14, x + 0.12, 0.14, -5, WHITE, "SmoothPlastic")
-			p:block(x - 0.12, 0.1, 5, x + 0.12, 0.14, 14, WHITE, "SmoothPlastic")
+			p:block(x - 0.1, 0.1, -14, x + 0.1, 0.14, -5, WHITE, "SmoothPlastic")
+			p:block(x - 0.1, 0.1, 5, x + 0.1, 0.14, 14, WHITE, "SmoothPlastic")
 		end
 		for k = 0, 3 do
 			local x = -9 + k * 6
@@ -928,21 +928,21 @@ M.pocketPicnic = function(r: R)
 			)
 		end
 		p:lump(CFrame.new(o + Vector3.new(0, 1.9, 0)), 2.0, 1.2, 2.0, rgb(150, 70, 66), "Metal")
-		p:lump(CFrame.new(o + Vector3.new(0, 2.35, 0)), 1.96, 1.1, 1.96, rgb(170, 82, 76), "Metal")
+		p:lump(CFrame.new(o + Vector3.new(0, 2.42, 0)) * CFrame.Angles(0, math.pi / 8, 0), 1.86, 1.0, 1.86, rgb(170, 82, 76), "Metal")
 		p:block(o.X - 0.3, o.Y + 2.88, o.Z - 0.08, o.X + 0.3, o.Y + 3.03, o.Z + 0.08, DARK, "Metal")
 		p:block(o.X + 0.9, o.Y + 1.9, o.Z - 0.5, o.X + 1.7, o.Y + 1.98, o.Z + 0.5, WOOD_DARK, "Wood")
 	end, true)
 	parts(r, function(p: R)
 		for i = 0, 3 do
 			for j = 0, 2 do
-				p:block(4 + i * 1.75, 0.2, -12 + j * 1.67, 5.75 + i * 1.75, 0.28, -10.33 + j * 1.67, if (i + j) % 2 == 0 then RED else WHITE, "Fabric")
+				p:block(4 + i * 1.75, 0.2, -12 + j * 1.67, 5.75 + i * 1.75, 0.32, -10.33 + j * 1.67, if (i + j) % 2 == 0 then RED else WHITE, "Fabric")
 			end
 		end
-		p:block(5, 0.28, -11, 6.6, 1.2, -9.8, WOOD, "Wood")
+		p:block(5, 0.32, -11, 6.6, 1.2, -9.8, WOOD, "Wood")
 		p:block(4.95, 1.2, -11.05, 6.65, 1.36, -9.75, WOOD_DARK, "Wood")
 		p:beam(Vector3.new(5.1, 1.36, -10.4), Vector3.new(5.8, 2.1, -10.4), 0.12, 0.12, WOOD_DARK, "Wood")
 		p:beam(Vector3.new(5.8, 2.1, -10.4), Vector3.new(6.5, 1.36, -10.4), 0.12, 0.12, WOOD_DARK, "Wood")
-		p:cyl(8, 0.31, -9, 0.06, 1.1, "y", WHITE, "SmoothPlastic")
+		p:cyl(8, 0.35, -9, 0.06, 1.1, "y", WHITE, "SmoothPlastic")
 	end)
 	wildflowers(r, CFrame.new(-11, 0.2, -11))
 	wildflowers(r, CFrame.new(11, 0.2, 11) * CFrame.Angles(0, 2, 0))
@@ -967,7 +967,7 @@ local function vegBed(r: R, x: number, z: number, kind: number)
 			elseif kind == 2 then
 				-- carrots: rows of feathery tops over a ridge with the orange shoulders showing
 				for j = 0, 2 do
-					p:block(-3.3, 0.3, -1.8 + j * 1.8 - 0.2, 3.3, 0.38, -1.8 + j * 1.8 + 0.2, rgb(226, 140, 84), "Grass")
+					p:block(-3.3, 0.3, -1.8 + j * 1.8 - 0.2, 3.3, 0.42, -1.8 + j * 1.8 + 0.2, rgb(226, 140, 84), "Grass")
 					for i = 0, 3 do
 						p:cone(-2.7 + i * 1.8, 0.8, -1.8 + j * 1.8, 0.9, 0.5, FOLIAGE_LIGHT, "Grass")
 					end
@@ -1057,8 +1057,8 @@ end
 -- stepping stones, two benches and flowers. (The ducks are the client's: they swim.)
 M.pocketPond = function(r: R)
 	r:block(-15, 0, -15, 15, 0.2, 15, LAWN, "Grass")
-	r:cyl(0, 0.24, 0, 0.1, 19.4, "y", shade(SOIL, 1.2), "Ground")
-	r:cyl(0, 0.3, 0, 0.1, 17.6, "y", WATER, "SmoothPlastic")
+	r:cyl(0, 0.26, 0, 0.12, 19.4, "y", shade(SOIL, 1.2), "Ground")
+	r:cyl(0, 0.38, 0, 0.12, 17.6, "y", WATER, "SmoothPlastic")
 	parts(r, function(p: R)
 		for k = 0, 13 do
 			local a = k * math.pi * 2 / 14
@@ -1072,7 +1072,7 @@ M.pocketPond = function(r: R)
 			)
 		end
 		for k = 0, 2 do
-			p:cyl(4.5 + k * 2.6, 0.4, 4.5 + k * 2.2, 0.24, 2, "y", ROCK, "Slate")
+			p:cyl(4.5 + k * 2.6, 0.44, 4.5 + k * 2.2, 0.24, 2, "y", ROCK, "Slate")
 		end
 	end, true)
 	parts(r, function(p: R)
@@ -1084,10 +1084,10 @@ M.pocketPond = function(r: R)
 			p:cyl(x, 0.3 + h - 0.3, z, 0.6, 0.24, "y", CATTAIL, "Grass")
 		end
 		for _, l in { { -3, 2, 1.4 }, { -4.4, -1, 1.1 }, { 2.4, -4, 1.3 }, { 1, 4.6, 1.0 } } do
-			p:cyl(l[1], 0.37, l[2], 0.04, l[3], "y", rgb(96, 168, 92), "SmoothPlastic")
+			p:cyl(l[1], 0.46, l[2], 0.04, l[3], "y", rgb(96, 168, 92), "SmoothPlastic")
 		end
-		p:ball(-3.1, 0.5, 2.1, 0.4, PINK, "SmoothPlastic")
-		p:ball(2.5, 0.5, -4.1, 0.36, WHITE, "SmoothPlastic")
+		p:ball(-3.1, 0.6, 2.1, 0.4, PINK, "SmoothPlastic")
+		p:ball(2.5, 0.6, -4.1, 0.36, WHITE, "SmoothPlastic")
 	end)
 	bench(r, -11, -11, 135, 0.2)
 	bench(r, 11, -11, -135, 0.2)
@@ -1119,7 +1119,7 @@ M.pocketPlay = function(r: R)
 		for _, c in { { 4, -10 }, { 8, -10 }, { 4, -6 }, { 8, -6 } } do
 			p:block(c[1] - 0.15, 0.2, c[2] - 0.15, c[1] + 0.15, 6.4, c[2] + 0.15, BLUE, "SmoothPlastic")
 		end
-		p:block(3.85, 4.8, -10.15, 8.15, 5, -5.85, shade(BLUE, 1.15), "SmoothPlastic")
+		p:block(3.78, 4.8, -10.22, 8.22, 5, -5.78, shade(BLUE, 1.15), "SmoothPlastic")
 		p:block(4, 6.2, -10.2, 8, 6.4, -10, BLUE, "SmoothPlastic")
 		p:block(3.75, 6.2, -10, 3.95, 6.4, -6, BLUE, "SmoothPlastic")
 		p:block(8.05, 6.2, -10, 8.25, 6.4, -6, BLUE, "SmoothPlastic")
@@ -1178,7 +1178,7 @@ M.boulder = function(r: R)
 		p:lump(CFrame.new(3.7, 0.15, -0.6) * CFrame.Angles(0, 1.3, 0), 0.7, 0.4, 0.6, shade(ROCK, 0.95), "Slate")
 		p:lump(CFrame.new(-3.3, 0.15, 0.7) * CFrame.Angles(0, 0.4, 0), 0.8, 0.45, 0.6, ROCK, "Slate")
 	end, true)
-	r:lump(CFrame.new(-0.3, 3.2, -0.1) * CFrame.Angles(0.2, 0.5, 0.15), 2.6, 0.5, 2.0, MOSS, "Grass")
+	r:lump(CFrame.new(-0.3, 3.28, -0.1) * CFrame.Angles(0.12, 1.3, 0.06), 2.4, 0.5, 2.0, MOSS, "Grass")
 end
 
 M.boulderBig = function(r: R)
@@ -1204,11 +1204,11 @@ M.log = function(r: R)
 	parts(r, function(p: R)
 		p:cyl(0, 0.9, 0, 8, 1.8, "x", WOOD_DARK, "Wood")
 		p:cyl(4.01, 0.9, 0, 0.1, 1.6, "x", ring, "Wood")
-		p:cyl(4.04, 0.9, 0, 0.08, 0.8, "x", core, "Wood")
+		p:cyl(4.07, 0.9, 0, 0.08, 0.8, "x", core, "Wood")
 		p:cyl(-4.01, 0.9, 0, 0.1, 1.6, "x", ring, "Wood")
 		p:beam(Vector3.new(1.2, 1.4, -0.4), Vector3.new(1.9, 2.2, -1.2), 0.4, 0.4, WOOD_DARK, "Wood")
 		p:cyl(-5.4, 0.7, 2, 1.4, 2, "y", WOOD_DARK, "Wood")
-		p:cyl(-5.4, 1.42, 2, 0.06, 1.8, "y", ring, "Wood")
+		p:cyl(-5.4, 1.49, 2, 0.06, 1.8, "y", ring, "Wood")
 		for k = 0, 2 do
 			local a = 0.6 + k * 2.1
 			p:beam(
@@ -1263,7 +1263,7 @@ M.hayBale = function(r: R)
 			p:cyl(sx * 1.72, 1.8, 0, 0.06, 2.8, "x", rgb(210, 184, 120), "SmoothPlastic")
 			p:cyl(sx * 0.8, 1.8, 0, 0.12, 3.66, "x", rgb(176, 150, 110), "SmoothPlastic")
 		end
-		p:cyl(1.74, 1.8, 0, 0.06, 1.4, "x", rgb(196, 168, 108), "SmoothPlastic")
+		p:cyl(1.77, 1.8, 0, 0.06, 1.4, "x", rgb(196, 168, 108), "SmoothPlastic")
 		p:cone(0, 0, 0, 0.4, 0.5, shade(hay, 1.05), "SmoothPlastic").cf = CFrame.new(0.4, 3.62, 0.3) * CFrame.Angles(0.3, 0, 0.5)
 	end, true)
 end
@@ -1309,7 +1309,7 @@ end
 M.tarn = function(r: R)
 	r:cyl(0, 0.1, 0, 0.3, 62, "y", rgb(196, 190, 176), "Slate")
 	r:cyl(0, 0.2, 0, 0.3, 56, "y", WATER, "SmoothPlastic")
-	r:cyl(6, 0.32, -4, 0.1, 30, "y", shade(WATER, 1.12), "SmoothPlastic")
+	r:cyl(6, 0.42, -4, 0.1, 30, "y", shade(WATER, 1.12), "SmoothPlastic")
 	parts(r, function(p: R)
 		for k = 0, 4 do
 			local x = -2 + k * 0.8
@@ -1337,10 +1337,10 @@ M.tarn = function(r: R)
 			p:cyl(x, h - 0.2, z, 0.7, 0.3, "y", CATTAIL, "Grass")
 		end
 		for _, l in { { -10, 8 }, { -14, 2 }, { 12, 14 }, { 16, -8 } } do
-			p:cyl(l[1], 0.38, l[2], 0.08, 3, "y", rgb(96, 180, 90), "SmoothPlastic")
+			p:cyl(l[1], 0.56, l[2], 0.08, 3, "y", rgb(96, 180, 90), "SmoothPlastic")
 		end
-		p:ball(-13.4, 0.6, 2.4, 0.6, PINK, "SmoothPlastic")
-		p:ball(12.3, 0.55, 14.2, 0.5, WHITE, "SmoothPlastic")
+		p:ball(-13.4, 0.75, 2.4, 0.6, PINK, "SmoothPlastic")
+		p:ball(12.3, 0.72, 14.2, 0.5, WHITE, "SmoothPlastic")
 	end)
 	parts(r, function(p: R)
 		p:lump(CFrame.new(-28, 1.2, -14) * CFrame.Angles(0.2, 0.4, 0.1), 5.6, 3.4, 4.4, ROCK, "Slate")
@@ -1395,12 +1395,11 @@ end
 
 -- The beach and the sea ------------------------------------------------------------------------------
 
--- A beach ball: white, with two bands round it and a cap at the top.
+-- A beach ball: white, with a band round its middle and one over the top.
 local function ball(p: R, x: number, y: number, z: number, d: number)
 	p:ball(x, y, z, d, WHITE, "SmoothPlastic")
-	p:cyl(x, y, z, d * 0.22, d * 1.02, "x", RED, "SmoothPlastic")
-	p:cyl(x, y, z, d * 0.22, d * 1.02, "z", BLUE, "SmoothPlastic")
-	p:cyl(x, y + d * 0.46, z, d * 0.1, d * 0.36, "y", YELLOW, "SmoothPlastic")
+	p:cyl(x, y, z, d * 0.24, d * 1.0, "x", RED, "SmoothPlastic")
+	p:cyl(x, y, z, d * 0.24, d * 1.06, "y", YELLOW, "SmoothPlastic")
 end
 
 -- A towel laid out with two stripes and a rolled pillow; beside it sandals, a book left open, a
@@ -1505,9 +1504,9 @@ M.rowboat = function(r: R)
 		p:block(-2, 0.3, 4.1, 2, 1.25, 4.5, BLUE, "SmoothPlastic")
 		p:boxAt(CFrame.new(0, 0.62, -2.6) * CFrame.Angles(0, math.pi / 4, 0), 2.8, 1.25, 2.8, BLUE, "SmoothPlastic")
 		for _, sx in { -1, 1 } do
-			p:block(sx * 1.7 - 0.34, 1.25, -2.2, sx * 1.7 + 0.34, 1.35, 4.44, WHITE, "SmoothPlastic")
+			p:block(sx * 1.7 - 0.34, 1.25, -2.2, sx * 1.7 + 0.34, 1.37, 4.44, WHITE, "SmoothPlastic")
 		end
-		p:block(-2.04, 1.25, 4.1, 2.04, 1.35, 4.54, WHITE, "SmoothPlastic")
+		p:block(-2.04, 1.25, 4.1, 2.04, 1.37, 4.54, WHITE, "SmoothPlastic")
 	end, true)
 	parts(r, function(p: R)
 		p:block(-1.4, 0.75, -2.4, 1.4, 0.85, 4.1, WOOD, "Wood")
@@ -1625,7 +1624,7 @@ local function sailboat(r: R, hull: Color3, sail: Color3)
 		p:block(-0.6, 2.3, 0.94, 0.6, 3.8, 1, rgb(110, 84, 62), "Wood")
 		p:cyl(0, 12, -1, 20, 0.5, "y", WOOD_DARK, "Wood")
 		p:block(-1.8, 15, -1.08, 1.8, 15.16, -0.92, WOOD_DARK, "Wood")
-		p:block(-0.12, 4.5, -1, 0.12, 4.75, 6.6, WOOD_DARK, "Wood")
+		p:block(-0.16, 4.5, -1, 0.16, 4.75, 6.6, WOOD_DARK, "Wood")
 		p:beam(Vector3.new(0, 3.1, 7.27), Vector3.new(0, 3.3, 5.8), 0.1, 0.1, WOOD_DARK, "Wood")
 		for _, sx in { -1, 1 } do
 			for _, z in { -6.5, -1, 4, 7.3 } do

@@ -1228,6 +1228,7 @@ function Z.run(job): ({ any }, number, number)
 			gap = f.gap,
 			seen = f.seen,
 			at = f.at,
+			normal = f.normal,
 			a = Z.describe(a) .. (if a.object then " [" .. a.object .. "]" else ""),
 			b = Z.describe(b) .. (if b.object then " [" .. b.object .. "]" else ""),
 			srcA = a.src or "?",
