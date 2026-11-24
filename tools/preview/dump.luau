@@ -16,8 +16,9 @@
 --   inside:<kind>,...  furnished rooms with the roof off (bakery, grocer, books, clothes, cafe,
 --                      toys, flowers, post, lobby, flats, home, library, museum, cinema, station,
 --                      school, clinic, department); a kind may carry a size: library=56x28x12
---   map                the middle of town: streets, plaza and street furniture
---   map:x1,z1,x2,z2    another part of town
+--   map                the middle of town: streets, plaza and street furniture, on the terrain
+--   map:x1,z1,x2,z2    another part of town (the terrain is drawn as faceted ground of its
+--                      materials' colours, finer the smaller the part, with the sea over it)
 
 local fs = require("@lune/fs")
 local process = require("@lune/process")
@@ -40,6 +41,7 @@ local scene = process.args[1] or "all"
 local outPath = process.args[2] or "out/preview.json"
 
 local prims = {}
+local tris = {} -- the terrain's triangles: { a, b, c, color, mat, transp }
 
 local function addPrims(list, frame)
 	-- a piece (Geometry.piece) is drawn as the shapes it is made of
@@ -181,6 +183,16 @@ elseif scene == "map" or scene:sub(1, 4) == "map:" then
 		end
 	end
 	addPrims(TownMap.preview(region))
+	-- and the ground itself, the terrain (Data/Terrain), a facet every few voxels: finer for a
+	-- small part of town, coarser for the whole island
+	local Terrain = R(Shared .. "Data.Terrain")
+	local reg = region or { -110, -150, 110, 150 }
+	local plan = Terrain.plan(TownMap.cover())
+	local span = math.max(reg[3] - reg[1], reg[4] - reg[2])
+	local step = math.max(4, math.floor(span / 260 / 4) * 4)
+	for _, t in Terrain.preview(plan, reg, step) do
+		table.insert(tris, t)
+	end
 elseif scene:sub(1, 7) == "preset:" or scene:sub(1, 7) == "presets" then
 	-- preset:<id> one ready-made building; presets all of them in a row
 	local Presets = R(Shared .. "Data.Presets")
@@ -235,6 +247,20 @@ for _, p in prims do
 		color = { p.color.R, p.color.G, p.color.B },
 		transp = p.transp or 0,
 		mat = p.mat,
+	})
+end
+for _, t in tris do
+	local a, b, c = t[1], t[2], t[3]
+	local lo, hi = a:Min(b):Min(c), a:Max(b):Max(c)
+	local mid = (lo + hi) / 2
+	table.insert(out, {
+		shape = "Tri",
+		verts = { a.X, a.Y, a.Z, b.X, b.Y, b.Z, c.X, c.Y, c.Z },
+		cf = { mid.X, mid.Y, mid.Z, 1, 0, 0, 0, 1, 0, 0, 0, 1 },
+		size = { hi.X - lo.X, hi.Y - lo.Y, hi.Z - lo.Z },
+		color = { t[4].R, t[4].G, t[4].B },
+		transp = t[6],
+		mat = t[5],
 	})
 end
 local dir = outPath:match("^(.*)/[^/]*$")

@@ -289,6 +289,8 @@ def gem_turn(pos):
 
 
 def prim_tris(p):
+    if p["shape"] == "Tri":  # the terrain's ground, a triangle at a time (tools/preview/dump.luau)
+        return [np.array(p["verts"], dtype=float).reshape(3, 3)]
     c = p["cf"]
     pos = np.array(c[0:3])
     rot = np.array([[c[3], c[4], c[5]], [c[6], c[7], c[8]], [c[9], c[10], c[11]]])
