@@ -870,6 +870,10 @@ function TownMap.ground(region: Region?): { Prim }
 	-- apart flicker from across the town (the user: "there is also z-fighting in alot of
 	-- areas"); side by side, nothing does. Each is { x1, z1, x2, z2, y1, y2, colour, material },
 	-- or just the rectangle for a hole that something else (StreetPaint, the lawns) fills.
+	-- (one entry, built from its numbers, colour and material)
+	local function put(list: { { any } }, ...: any)
+		table.insert(list, { ... })
+	end
 	local function lay(list: { { any } })
 		local taken: { { number } } = {}
 		for _, it in list do
@@ -899,9 +903,9 @@ function TownMap.ground(region: Region?): { Prim }
 		end
 		for _, it in inlays do
 			if it[1] < x2 and it[3] > x1 and it[2] < z2 and it[4] > z1 then
-				if it.fill then
+				if it[5] then
 					-- (paving a tenth down under what fills the hole, for the corners it leaves)
-					table.insert(list, { it[1], it[2], it[3], it[4], -0.15, it.fill, PAVING, "Pavement" })
+					put(list, it[1], it[2], it[3], it[4], -0.15, it[5], PAVING, "Pavement")
 				else
 					table.insert(list, { it[1], it[2], it[3], it[4] })
 				end
@@ -909,30 +913,30 @@ function TownMap.ground(region: Region?): { Prim }
 		end
 		-- the brick walk from the crossing to the fountain, or from the hall to the crossing
 		if north then
-			table.insert(list, { -5, HW + SW, 5, Town.Spots.Fountain.Z - 16, -0.15, 0.29, PROMENADE, "Brick" })
+			put(list, -5, HW + SW, 5, Town.Spots.Fountain.Z - 16, -0.15, 0.29, PROMENADE, "Brick")
 		else
-			table.insert(list, { -5, Town.Spots.Hall.Z + 14, 5, -(HW + SW), -0.15, 0.29, PROMENADE, "Brick" })
+			put(list, -5, Town.Spots.Hall.Z + 14, 5, -(HW + SW), -0.15, 0.29, PROMENADE, "Brick")
 		end
 		local jz1, jz2 = z1 + 1.2, z2 - 1.2
 		for _, sx in { -1, 1 } do
 			local x = center.X + sx * 45
-			table.insert(list, { x - 3, jz1, x + 3, jz2, -0.15, 0.27, PROMENADE, "Brick" })
+			put(list, x - 3, jz1, x + 3, jz2, -0.15, 0.27, PROMENADE, "Brick")
 		end
 		-- (the joints are grooves a little under the paving)
 		for gx = center.X - 48, center.X + 48, 12 do
-			table.insert(list, { gx - 0.12, jz1, gx + 0.12, jz2, -0.15, 0.25, PAVING_DARK, "Pavement" })
+			put(list, gx - 0.12, jz1, gx + 0.12, jz2, -0.15, 0.25, PAVING_DARK, "Pavement")
 		end
-		table.insert(list, { x1 + 1.2, z1 + 1.2, x2 - 1.2, z2 - 1.2, -0.15, 0.27, PAVING, "Pavement" })
-		table.insert(list, { x1, z1, x2, z2, -0.15, 0.25, PAVING_DARK, "Pavement" })
+		put(list, x1 + 1.2, z1 + 1.2, x2 - 1.2, z2 - 1.2, -0.15, 0.27, PAVING, "Pavement")
+		put(list, x1, z1, x2, z2, -0.15, 0.25, PAVING_DARK, "Pavement")
 		lay(list)
 	end
 	-- the paths on to the ring roads: brick down the middle, paving either side
 	local RZ = Town.RingZ
 	for _, ends in { { Town.SquareCenter.Z + 60, RZ - 17 }, { -(RZ - 17), Town.MarketCenter.Z - 60 } } do
-		lay({
-			{ -3, ends[1], 3, ends[2], -0.15, 0.29, PROMENADE, "Brick" },
-			{ -6, ends[1], 6, ends[2], -0.15, 0.27, PAVING, "Pavement" },
-		})
+		local list: { { any } } = {}
+		put(list, -3, ends[1], 3, ends[2], -0.15, 0.29, PROMENADE, "Brick")
+		put(list, -6, ends[1], 6, ends[2], -0.15, 0.27, PAVING, "Pavement")
+		lay(list)
 	end
 	-- lawns in the square's corners
 	for _, l in TownMap.lawns() do
@@ -953,19 +957,19 @@ function TownMap.ground(region: Region?): { Prim }
 		if b[1] == 559 and b[4] == -22 then
 			-- the market quarter's square, open to the main street: big slabs inside a band of
 			-- brick; and the market lane, south of the main street
-			table.insert(list, { 662, -60, 710, -24, -0.15, 0.22, SQUARE, "Pavement:Slabs" })
-			table.insert(list, { 660, -62, 712, -22, -0.15, 0.215, PROMENADE, "Brick" })
-			table.insert(list, { b[1] + 5.4, -76, b[3] - 5.4, -60, -0.15, 0.21, LANE, "Cobblestone" })
+			put(list, 662, -60, 710, -24, -0.15, 0.22, SQUARE, "Pavement:Slabs")
+			put(list, 660, -62, 712, -22, -0.15, 0.215, PROMENADE, "Brick")
+			put(list, b[1] + 5.4, -76, b[3] - 5.4, -60, -0.15, 0.21, LANE, "Cobblestone")
 		else
-			table.insert(list, { b[1] + 5.4, mid - 5, b[3] - 5.4, mid + 6, -0.15, 0.21, LANE, "Cobblestone" })
+			put(list, b[1] + 5.4, mid - 5, b[3] - 5.4, mid + 6, -0.15, 0.21, LANE, "Cobblestone")
 		end
 		-- (none higher than the paving: what stands on a block, a terrace or a shop's apron,
 		-- stands more than a tenth over all of them)
-		table.insert(list, { b[1] + 3, b[2] + 3, b[3] - 3, b[2] + 5.4, -0.15, 0.21, PAVING_DARK, "Pavement" })
-		table.insert(list, { b[1] + 3, b[4] - 5.4, b[3] - 3, b[4] - 3, -0.15, 0.21, PAVING_DARK, "Pavement" })
-		table.insert(list, { b[1] + 3, b[2] + 5.4, b[1] + 5.4, b[4] - 5.4, -0.15, 0.21, PAVING_DARK, "Pavement" })
-		table.insert(list, { b[3] - 5.4, b[2] + 5.4, b[3] - 3, b[4] - 5.4, -0.15, 0.21, PAVING_DARK, "Pavement" })
-		table.insert(list, { b[1], b[2], b[3], b[4], -0.15, 0.22, PAVING, "Pavement" })
+		put(list, b[1] + 3, b[2] + 3, b[3] - 3, b[2] + 5.4, -0.15, 0.21, PAVING_DARK, "Pavement")
+		put(list, b[1] + 3, b[4] - 5.4, b[3] - 3, b[4] - 3, -0.15, 0.21, PAVING_DARK, "Pavement")
+		put(list, b[1] + 3, b[2] + 5.4, b[1] + 5.4, b[4] - 5.4, -0.15, 0.21, PAVING_DARK, "Pavement")
+		put(list, b[3] - 5.4, b[2] + 5.4, b[3] - 3, b[4] - 5.4, -0.15, 0.21, PAVING_DARK, "Pavement")
+		put(list, b[1], b[2], b[3], b[4], -0.15, 0.22, PAVING, "Pavement")
 		lay(list)
 	end
 	-- the civic quarter's lawns have gravel paths: one along each block and two across

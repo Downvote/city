@@ -149,9 +149,9 @@ return function(add: any)
 				b:item("corner_board", c[1], c[2], c[3], 0, 0)
 				paint(b, TRIM, TRIM)
 			end
-			hang(b, "downpipe", "right", 11.5, 0, "a")
-			hang(b, "downpipe", "left", 0.5, 0, "a")
-			hang(b, "downpipe", "left", 19.5, 0, "a")
+			hang(b, "downpipe", "right", 11.4, 0, "a")
+			hang(b, "downpipe", "left", 0.6, 0, "a")
+			hang(b, "downpipe", "left", 19.4, 0, "a")
 			hang(b, "trellis", "left", 10, 1.3, "a")
 
 			-- the terrace: posts at the corner and along the front, rails between them, two tables,

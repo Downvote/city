@@ -144,7 +144,13 @@ end
 local function duck(r: R)
 	r:lump(CFrame.new(0, 0.4, 0), 1.2, 0.9, 1.7, r.c1)
 	for _, sx in { -1, 1 } do
-		r:lump(CFrame.new(sx * 0.47, 0.56, -0.15) * CFrame.Angles(0.15, sx * 0.12, 0), 0.34, 0.5, 1.2, darker(r.c1, 0.82))
+		r:lump(
+			CFrame.new(sx * 0.47, 0.56, -0.15) * CFrame.Angles(0.15, sx * 0.12, 0),
+			0.34,
+			0.5,
+			1.2,
+			darker(r.c1, 0.82)
+		)
 	end
 	r:boxAt(CFrame.new(0, 0.72, -0.9) * CFrame.Angles(-0.5, 0, 0), 0.5, 0.18, 0.45, darker(r.c1, 0.9), "SmoothPlastic")
 	r:cyl(0, 0.82, 0.62, 0.12, 0.5, "y", Color3.fromRGB(250, 250, 246), "SmoothPlastic")

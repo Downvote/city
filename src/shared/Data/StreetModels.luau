@@ -189,7 +189,16 @@ end
 local function fanFront(p: R, fx: number, fy: number, front: number, d: number)
 	p:cyl(fx, fy, front, 0.06, d, "z", BLACK, "SmoothPlastic")
 	for _, dy in { -0.18, 0.18 } do
-		p:block(fx - d / 2 + 0.06, fy + dy - 0.03, front - 0.06, fx + d / 2 - 0.06, fy + dy + 0.03, front - 0.03, SILVER, "SmoothPlastic")
+		p:block(
+			fx - d / 2 + 0.06,
+			fy + dy - 0.03,
+			front - 0.06,
+			fx + d / 2 - 0.06,
+			fy + dy + 0.03,
+			front - 0.03,
+			SILVER,
+			"SmoothPlastic"
+		)
 	end
 	p:cyl(fx, fy, front - 0.045, 0.03, d * 0.24, "z", SILVER, "SmoothPlastic")
 end
@@ -393,7 +402,16 @@ local function crate(r: R, cf: CFrame)
 		q:piece(function(p: R)
 			p:block(-0.85, 0, -0.85, 0.85, 1.7, 0.85, WOOD, "WoodPlanks")
 			for _, c in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
-				p:block(c[1] * 0.85 - 0.12, 0, c[2] * 0.85 - 0.12, c[1] * 0.85 + 0.12, 1.66, c[2] * 0.85 + 0.12, WOOD_DARK, "WoodPlanks")
+				p:block(
+					c[1] * 0.85 - 0.12,
+					0,
+					c[2] * 0.85 - 0.12,
+					c[1] * 0.85 + 0.12,
+					1.66,
+					c[2] * 0.85 + 0.12,
+					WOOD_DARK,
+					"WoodPlanks"
+				)
 			end
 		end, true)
 	end)
@@ -412,13 +430,27 @@ M.drinksCrates = function(r: R)
 	r:piece(function(p: R)
 		for i, col in { YELLOW, RED, BLUE } do
 			local y = (i - 1) * 1.05
-			p:boxAt(CFrame.new(-0.9, y + 0.5, 0) * CFrame.Angles(0, math.rad((i - 2) * 7), 0), 1.6, 1, 1.2, col, "SmoothPlastic")
+			p:boxAt(
+				CFrame.new(-0.9, y + 0.5, 0) * CFrame.Angles(0, math.rad((i - 2) * 7), 0),
+				1.6,
+				1,
+				1.2,
+				col,
+				"SmoothPlastic"
+			)
 		end
 		p:block(0.3, 0.55, -0.64, 1.5, 0.75, -0.6, shade(GREEN, 0.7), "SmoothPlastic")
 		local top = CFrame.new(-0.9, 2.6, 0) * CFrame.Angles(0, math.rad(7), 0)
 		for i = 0, 2 do
 			for j = 0, 1 do
-				p:boxAt(top * CFrame.new(-0.5 + i * 0.5, 0.49, -0.25 + j * 0.5), 0.26, 0.1, 0.26, rgb(80, 120, 90), "SmoothPlastic")
+				p:boxAt(
+					top * CFrame.new(-0.5 + i * 0.5, 0.49, -0.25 + j * 0.5),
+					0.26,
+					0.1,
+					0.26,
+					rgb(80, 120, 90),
+					"SmoothPlastic"
+				)
 				p:cyl(0.4 + i * 0.5, 1.06, -0.25 + j * 0.5, 0.12, 0.24, "y", rgb(120, 86, 60), "SmoothPlastic")
 			end
 		end
@@ -426,22 +458,23 @@ M.drinksCrates = function(r: R)
 	r:block(0.1, 0, -0.6, 1.7, 1, 0.6, GREEN, "SmoothPlastic")
 end
 
--- A box that sells newspapers: a post on a foot, the box in its colour, and in front a window
+-- A box that sells newspapers: a post, the box in its colour, and in front a window
 -- framing today's front page, a handle, a coin slot and the lid's hinge.
 local function newsBox(r: R, col: Color3)
 	r:block(-0.9, 1.3, -0.7, 0.9, 3.7, 0.7, col, "Metal")
+	r:block(-0.3, 0, -0.3, 0.3, 1.3, 0.3, DARK, "Metal")
+	-- (the post is a part of its own: a piece is one box, and one from the ground to the lid would
+	-- keep the box out of places it fits)
 	r:piece(function(p: R)
-		p:block(-0.45, 0, -0.45, 0.45, 0.08, 0.45, DARK, "Metal")
-		p:block(-0.3, 0.08, -0.3, 0.3, 1.3, 0.3, DARK, "Metal")
-		p:block(-0.7, 2.25, -0.74, 0.7, 3.45, -0.7, DARK, "Metal")
-		p:block(-0.6, 2.35, -0.78, 0.6, 3.35, -0.74, PAPER, "Metal")
-		p:block(-0.5, 3.08, -0.81, 0.5, 3.24, -0.78, BLACK, "Metal")
+		p:block(-0.7, 2.25, -0.725, 0.7, 3.45, -0.7, DARK, "Metal")
+		p:block(-0.6, 2.35, -0.75, 0.6, 3.35, -0.725, PAPER, "Metal")
+		p:block(-0.5, 3.08, -0.775, 0.5, 3.24, -0.75, BLACK, "Metal")
 		for _, y in { 2.8, 2.58 } do
-			p:block(-0.5, y, -0.8, 0.3, y + 0.08, -0.78, SILVER, "Metal")
+			p:block(-0.5, y, -0.775, 0.3, y + 0.08, -0.75, SILVER, "Metal")
 		end
 		p:block(0.5, 3.5, -0.75, 0.75, 3.6, -0.7, BLACK, "Metal")
-		p:block(-0.4, 2.02, -0.82, 0.4, 2.12, -0.7, BLACK, "Metal")
-		p:cyl(0, 3.7, 0.7, 1.7, 0.14, "x", DARK, "Metal")
+		p:block(-0.4, 2.02, -0.76, 0.4, 2.12, -0.7, BLACK, "Metal")
+		p:cyl(0, 3.66, 0.66, 1.7, 0.14, "x", DARK, "Metal")
 	end)
 end
 
@@ -486,16 +519,19 @@ end
 
 -- A parked scooter, its nose toward local -Z: tyres and hubs, a fork, the footboard, the body
 -- and the leg shield in its colour, a seat, handlebars with mirrors at their ends, a headlight, a tail light
--- over the number plate, and its stand. The colour is two parts; the rest is one piece.
+-- over the number plate, and its stand. The colour is two parts, the bars, mirrors and lamp are
+-- parts of their own, and the rest is two pieces, one low and one at the back, so that no piece's
+-- box reaches where the scooter itself doesn't (the town puts a thing down only where each of its
+-- parts' boxes is clear).
 local function scooter(r: R, col: Color3)
 	local lean = CFrame.new(0, 2.1, -1.55) * CFrame.Angles(math.rad(14), 0, 0)
 	r:block(-0.55, 0.9, 0.3, 0.55, 2.1, 2.3, col, "SmoothPlastic")
 	r:boxAt(lean, 1.1, 2.7, 0.3, col, "SmoothPlastic")
-	-- (the bars and mirrors are parts of their own, so the piece's box stays as narrow as the body)
 	r:block(-1, 3.4, -1.3, 1, 3.6, -1.1, DARK, "Metal")
 	for _, sx in { -1, 1 } do
 		r:block(sx * 0.86 - 0.12, 3.18, -1.36, sx * 0.86 + 0.12, 3.4, -1.3, SILVER, "Metal")
 	end
+	r:boxAt(lean * CFrame.new(0, 0.9, -0.2), 0.5, 0.35, 0.1, rgb(255, 240, 200), "SmoothPlastic")
 	r:piece(function(p: R)
 		for _, z in { -1.9, 1.7 } do
 			p:cyl(0, 0.65, z, 0.36, 1.3, "x", BLACK, "Metal")
@@ -503,11 +539,12 @@ local function scooter(r: R, col: Color3)
 		end
 		p:beam(Vector3.new(0, 1.0, -1.7), Vector3.new(0, 0.65, -1.9), 0.14, 0.14, DARK, "Metal")
 		p:block(-0.45, 0.7, -1.6, 0.45, 0.95, 0.5, DARK, "Metal")
+		p:beam(Vector3.new(0.3, 0.8, 0.2), Vector3.new(0.42, 0, 0.4), 0.08, 0.08, DARK, "Metal")
+	end)
+	r:piece(function(p: R)
 		p:block(-0.45, 2.1, 0.4, 0.45, 2.4, 2.1, rgb(50, 52, 62), "Metal")
-		p:boxAt(lean * CFrame.new(0, 0.9, -0.2), 0.5, 0.35, 0.1, rgb(255, 240, 200), "Metal")
 		p:block(-0.25, 1.6, 2.3, 0.25, 1.85, 2.36, rgb(220, 80, 76), "Metal")
 		p:block(-0.3, 1.1, 2.3, 0.3, 1.45, 2.34, WHITE, "Metal")
-		p:beam(Vector3.new(0.3, 0.8, 0.2), Vector3.new(0.6, 0, 0.4), 0.08, 0.08, DARK, "Metal")
 	end)
 end
 
@@ -524,8 +561,8 @@ end
 M.bollardRow = function(r: R)
 	for k = 0, 3 do
 		local x = -3.6 + k * 2.4
-		r:cyl(x, 1.1, 0, 2.2, 0.56, "y", DARK, "Metal")
-		r:cyl(x, 1.7, 0, 0.3, 0.62, "y", YELLOW, "Metal")
+		r:cyl(x, 1.1, 0, 2.2, 0.5, "y", DARK, "Metal")
+		r:cyl(x, 1.7, 0, 0.3, 0.56, "y", YELLOW, "Metal")
 	end
 end
 
@@ -570,7 +607,16 @@ M.binBags = function(r: R)
 		for _, b in bags do
 			p:lump(b[1], b[2], b[3], b[4], b[5], "SmoothPlastic")
 			local top = (b[1] * CFrame.new(0, b[3] / 2, 0)).Position
-			p:block(top.X - 0.13, top.Y - 0.12, top.Z - 0.13, top.X + 0.13, top.Y + 0.2, top.Z + 0.13, shade(b[5], 0.85), "SmoothPlastic")
+			p:block(
+				top.X - 0.13,
+				top.Y - 0.12,
+				top.Z - 0.13,
+				top.X + 0.13,
+				top.Y + 0.2,
+				top.Z + 0.13,
+				shade(b[5], 0.85),
+				"SmoothPlastic"
+			)
 		end
 	end, true)
 	r:lump(CFrame.new(0.5, 0.6, -1.1) * CFrame.Angles(0.1, 0.2, -0.2), 1.5, 1.2, 1.4, WHITE, "SmoothPlastic")

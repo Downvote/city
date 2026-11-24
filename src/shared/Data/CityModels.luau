@@ -143,7 +143,14 @@ local function tub(r: R, x: number, z: number, turn: number)
 	end, true)
 	stamp(r, "tubPlants", at, function(q)
 		q:box(0, 1.06, 0, 3.8, 0.12, 3.8, SOIL)
-		local spots = { { -1.35, -1.3, 0.9 }, { 0.2, -1.45, 1.25 }, { 1.4, -1.1, 0.75 }, { 1.4, 0.6, 1.1 }, { -0.4, 1.4, 0.8 }, { -1.45, 0.4, 1.3 } }
+		local spots = {
+			{ -1.35, -1.3, 0.9 },
+			{ 0.2, -1.45, 1.25 },
+			{ 1.4, -1.1, 0.75 },
+			{ 1.4, 0.6, 1.1 },
+			{ -0.4, 1.4, 0.8 },
+			{ -1.45, 0.4, 1.3 },
+		}
 		for i, s in spots do
 			sprig(q, s[1], 1.12, s[2], s[3], BLOOMS[(i - 1) % 4 + 1], LEAVES[(i - 1) % 3 + 1])
 		end
@@ -151,7 +158,8 @@ local function tub(r: R, x: number, z: number, turn: number)
 			q:lump(CFrame.new(s[1], 1.0, s[2]) * CFrame.Angles(0.4, i, 0.3), 0.8, 0.6, 0.7, LEAVES[i % 3 + 1])
 		end
 	end)
-	r:lump(at * CFrame.new(0.1, 2.0, 0.1) * CFrame.Angles(0.2, 0.6, 0.1), 2.5, 2.1, 2.4, LEAF, "SmoothPlastic").name = "Leaf"
+	r:lump(at * CFrame.new(0.1, 2.0, 0.1) * CFrame.Angles(0.2, 0.6, 0.1), 2.5, 2.1, 2.4, LEAF, "SmoothPlastic").name =
+		"Leaf"
 end
 
 -- A flower bed in a stone edging, 5.2 by 2: soil, plants of three heights and two low mounds.
@@ -162,7 +170,14 @@ local function flowerBed(r: R, at: CFrame)
 			q:box(s * 2.5, 0.15, 0, 0.2, 0.3, 1.6, rgb(206, 200, 188))
 		end
 		q:box(0, 0.11, 0, 4.8, 0.22, 1.6, SOIL)
-		local spots = { { -1.9, -0.3, 0.75 }, { -1.1, 0.35, 1.05 }, { -0.3, -0.35, 0.6 }, { 0.5, 0.3, 0.95 }, { 1.25, -0.3, 0.7 }, { 1.95, 0.3, 1.0 } }
+		local spots = {
+			{ -1.9, -0.3, 0.75 },
+			{ -1.1, 0.35, 1.05 },
+			{ -0.3, -0.35, 0.6 },
+			{ 0.5, 0.3, 0.95 },
+			{ 1.25, -0.3, 0.7 },
+			{ 1.95, 0.3, 1.0 },
+		}
 		for i, s in spots do
 			sprig(q, s[1], 0.22, s[2], s[3], BLOOMS[(i + 1) % 5 + 1], LEAVES[i % 3 + 1])
 		end
@@ -317,9 +332,11 @@ end
 -- Kinds of building ---------------------------------------------------------------------------------
 
 -- The grid over one side of a tower, in face space (x along the wall, y up from the floor the
--- grid starts at, the wall's face at z = 0 and the street toward -z): slim mullions the whole
--- height, a broader one every third, and a sill under every floor's band of windows.
-local function towerGrid(q: R, len: number, floors: number, fh: number, trim: Color3)
+-- grid starts at, the wall's face at z = 0 and the street toward -z): on the street front slim
+-- mullions the whole height, a broader one every third and a sill under every floor's band of
+-- windows; round the back and sides only the broad ones, which leaves the street scene room to
+-- hang its air units between the bands (TownMap's airCon).
+local function towerGrid(q: R, len: number, floors: number, fh: number, trim: Color3, front: boolean)
 	local n = math.max(2, math.floor((len - 2) / 3.5))
 	local step = (len - 2) / n
 	local top = floors * fh
@@ -327,12 +344,14 @@ local function towerGrid(q: R, len: number, floors: number, fh: number, trim: Co
 		local x = -len / 2 + 1 + i * step
 		if i % 3 == 0 then
 			q:box(x, top / 2, -0.16, 0.5, top, 0.32, trim)
-		else
+		elseif front then
 			q:box(x, top / 2, -0.12, 0.16, top, 0.24, trim)
 		end
 	end
-	for k = 0, floors - 1 do
-		q:box(0, k * fh + 0.98, -0.17, len - 1.4, 0.26, 0.34, trim)
+	if front then
+		for k = 0, floors - 1 do
+			q:box(0, k * fh + 0.98, -0.17, len - 1.4, 0.26, 0.34, trim)
+		end
 	end
 end
 
@@ -454,17 +473,17 @@ function CityModels.tower(spec: TowerSpec): (R) -> ()
 		end
 		local halves = if spec.floors > 20 and spec.floors % 2 == 0 then 2 else 1
 		local per = spec.floors // halves
-		local faces = {
-			{ w, CFrame.new(0, 0, -d / 2) },
-			{ w, CFrame.new(0, 0, d / 2) * yaw(180) },
-			{ d, CFrame.new(w / 2, 0, 0) * yaw(-90) },
-			{ d, CFrame.new(-w / 2, 0, 0) * yaw(90) },
+		local faces: { { len: number, at: CFrame, front: boolean } } = {
+			{ len = w, at = CFrame.new(0, 0, -d / 2), front = true },
+			{ len = w, at = CFrame.new(0, 0, d / 2) * yaw(180), front = false },
+			{ len = d, at = CFrame.new(w / 2, 0, 0) * yaw(-90), front = false },
+			{ len = d, at = CFrame.new(-w / 2, 0, 0) * yaw(90), front = false },
 		}
 		for c = 0, halves - 1 do
 			for _, face in faces do
-				local len = face[1] :: number
-				drawAt(r, CFrame.new(0, g + c * per * fh, 0) * (face[2] :: CFrame), function(q)
-					towerGrid(q, len, per, fh, trim)
+				local len = face.len
+				drawAt(r, CFrame.new(0, g + c * per * fh, 0) * face.at, function(q)
+					towerGrid(q, len, per, fh, trim, face.front)
 				end)
 			end
 		end
@@ -553,14 +572,26 @@ function CityModels.tower(spec: TowerSpec): (R) -> ()
 			r:block(-1.15, h + 1.72, -0.4, 1.15, h + 1.78, 0.4, WHITE, "SmoothPlastic")
 			for k = 0, 7 do
 				local a = k / 8 * math.pi * 2
-				r:glow(r:ball(math.cos(a) * pad / 2, h + 1.75, math.sin(a) * pad / 2, 0.5, rgb(255, 214, 120), "Neon"), 0)
+				r:glow(
+					r:ball(math.cos(a) * pad / 2, h + 1.75, math.sin(a) * pad / 2, 0.5, rgb(255, 214, 120), "Neon"),
+					0
+				)
 			end
 		elseif top == "spire" then
 			-- a crown of three steps, each under a cap, and the mast with its light
 			local steps = { { w / 3, 1, 5 }, { w / 4, 5, 7.6 }, { w / 6, 7.6, 9.8 } }
 			for i, st in steps do
 				local hw = st[1] :: number
-				r:block(-hw, h + st[2], -hw, hw, h + st[3] - 0.3, hw, if i == 2 then shade(spec.wall, 0.86) else spec.wall, "SmoothPlastic")
+				r:block(
+					-hw,
+					h + st[2],
+					-hw,
+					hw,
+					h + st[3] - 0.3,
+					hw,
+					if i == 2 then shade(spec.wall, 0.86) else spec.wall,
+					"SmoothPlastic"
+				)
 				r:block(-hw - 0.3, h + st[3] - 0.3, -hw - 0.3, hw + 0.3, h + st[3], hw + 0.3, trim, "SmoothPlastic")
 			end
 			r:cyl(0, h + 17.5, 0, 15.4, 0.8, "y", METAL, "Metal")
@@ -574,9 +605,21 @@ function CityModels.tower(spec: TowerSpec): (R) -> ()
 			r:block(-w / 2 + 1.5, h + 1.5, -1.5, w / 2 - 1.5, h + 1.56, 1.5, rgb(226, 220, 206), "Pavement")
 			for _, sx in { -1, 1 } do
 				flowerBed(r, CFrame.new(sx * w / 4, h + 1.5, -d / 2 + 4.5))
-				local leaf = r:lump(CFrame.new(sx * w / 5, h + 2.8, d / 4) * CFrame.Angles(0.2, sx, 0.1), 3.6, 2.8, 3.2, LEAF_DARK)
+				local leaf = r:lump(
+					CFrame.new(sx * w / 5, h + 2.8, d / 4) * CFrame.Angles(0.2, sx, 0.1),
+					3.6,
+					2.8,
+					3.2,
+					LEAF_DARK
+				)
 				leaf.name = "Leaf"
-				r:lump(CFrame.new(sx * (w / 5 + 2.2), h + 2.1, d / 4 - 1.6) * CFrame.Angles(0, sx * 2, 0.2), 2, 1.5, 1.8, LEAF).name =
+				r:lump(
+					CFrame.new(sx * (w / 5 + 2.2), h + 2.1, d / 4 - 1.6) * CFrame.Angles(0, sx * 2, 0.2),
+					2,
+					1.5,
+					1.8,
+					LEAF
+				).name =
 					"Leaf"
 			end
 			bench(r, 0, d / 4 - 2, 180)
@@ -729,19 +772,23 @@ function CityModels.shop(spec: ShopSpec): (R) -> ()
 			for i = 1, n do
 				local z = -d / 2 + 2 + (i - 0.5) * (d - 4) / n
 				for _, sx in { -1, 1 } do
-					stamp(
-						r,
-						"sideWindow:" .. trim:ToHex(),
-						CFrame.new(sx * w / 2, y1, z) * yaw(-90 * sx),
-						function(q)
-							sideWindow(q, trim)
-						end
-					)
+					stamp(r, "sideWindow:" .. trim:ToHex(), CFrame.new(sx * w / 2, y1, z) * yaw(-90 * sx), function(q)
+						sideWindow(q, trim)
+					end)
 				end
 			end
 			-- a string course along the front between the storeys
 			if f < spec.floors - 1 then
-				r:block(-w / 2, G + f * fh - 0.12, -d / 2 - 0.18, w / 2, G + f * fh + 0.12, -d / 2, trim, "SmoothPlastic")
+				r:block(
+					-w / 2,
+					G + f * fh - 0.12,
+					-d / 2 - 0.18,
+					w / 2,
+					G + f * fh + 0.12,
+					-d / 2,
+					trim,
+					"SmoothPlastic"
+				)
 			end
 		end
 		r:block(-w / 2 - 0.4, h - 0.6, -d / 2 - 0.4, w / 2 + 0.4, h + 0.3, d / 2 + 0.4, trim, "SmoothPlastic")
@@ -997,16 +1044,17 @@ function CityModels.lot(w: number, d: number, kind: string, margin: number): (R)
 		if kind == "garden" then
 			r:block(-hw, 0, -hd, hw, 0.16, hd, rgb(132, 190, 106), "Grass")
 			r:block(-hw, 0.16, hd - 1.5, hw, 2.2, hd, hedge, "SmoothPlastic")
-			r:block(-hw, 0.16, -hd + 0.25, -hw + 1.5, 2.2, hd - 1.5, hedge, "SmoothPlastic")
-			r:block(hw - 1.5, 0.16, -hd + 0.25, hw, 2.2, hd - 1.5, hedge, "SmoothPlastic")
-			r:block(-hw + 1.5, 0.16, -hd + 0.25, -4, 2.2, -hd + 1.5, hedge, "SmoothPlastic")
-			r:block(4, 0.16, -hd + 0.25, hw - 1.5, 2.2, -hd + 1.5, hedge, "SmoothPlastic")
-			-- (the front of a lot runs under the pavement, by up to three studs: the path starts
-			-- past that, and the beds are along the sides)
+			-- (the front of a lot runs under the pavement, by up to three studs, so the hedge, its
+			-- gate and the path start behind that, with a strip of grass in front)
+			local front = -hd + 3.2
+			r:block(-hw, 0.16, front, -hw + 1.5, 2.2, hd - 1.5, hedge, "SmoothPlastic")
+			r:block(hw - 1.5, 0.16, front, hw, 2.2, hd - 1.5, hedge, "SmoothPlastic")
+			r:block(-hw + 1.5, 0.16, front, -4, 2.2, front + 1.4, hedge, "SmoothPlastic")
+			r:block(4, 0.16, front, hw - 1.5, 2.2, front + 1.4, hedge, "SmoothPlastic")
 			r:block(-2.6, 0.16, -hd + 3.2, 2.6, 0.22, -hd + margin, rgb(232, 226, 214), "Pavement")
 			for _, sx in { -1, 1 } do
 				-- gate posts either side of the path, with a lamp on each
-				gatePost(r, sx * 3.3, -hd + 0.4)
+				gatePost(r, sx * 3.3, -hd + 3.9)
 				-- round shrubs in the back corners (no trees this close to a road)
 				r:ball(sx * (hw - 4), 1.6, hd - 4, 4, LEAF, "SmoothPlastic").name = "Leaf"
 				r:ball(sx * (hw - 6.4), 1.1, hd - 3.4, 2.6, shade(LEAF, 1.14), "SmoothPlastic").name = "Leaf"
@@ -1229,7 +1277,14 @@ M.cinema = function(r: R)
 	r:block(-18.2, 10.8, -d / 2 - 4.1, 18.2, 11.1, -d / 2, TRIM_DARK, "Metal")
 	r:block(-18.2, 7.3, -d / 2 - 4.1, 18.2, 7.6, -d / 2, TRIM_DARK, "Metal")
 	for _, sx in { -1, 1 } do
-		r:beam(Vector3.new(sx * 14, 13.2, -d / 2), Vector3.new(sx * 14, 11.1, -d / 2 - 3.6), 0.14, 0.14, TRIM_DARK, "Metal")
+		r:beam(
+			Vector3.new(sx * 14, 13.2, -d / 2),
+			Vector3.new(sx * 14, 11.1, -d / 2 - 3.6),
+			0.14,
+			0.14,
+			TRIM_DARK,
+			"Metal"
+		)
 	end
 	-- the tall sign blade on the corner
 	local corner = r:block(w / 2 - 3, 7, -d / 2 - 2.5, w / 2 - 1.8, h + 8, -d / 2 + 0.5, rgb(255, 110, 120), "Neon")
@@ -1246,7 +1301,16 @@ M.cinema = function(r: R)
 		for _, z in { -14, -1, 12, 18.5 } do
 			r:block(x1, 0, z - 0.6, x2, h, z + 0.6, trim, "SmoothPlastic")
 		end
-		r:block(math.min(sx * w / 2, sx * (w / 2 + 0.2)), 0, -d / 2, math.max(sx * w / 2, sx * (w / 2 + 0.2)), 1.2, d / 2, shade(wall, 0.8), "SmoothPlastic")
+		r:block(
+			math.min(sx * w / 2, sx * (w / 2 + 0.2)),
+			0,
+			-d / 2,
+			math.max(sx * w / 2, sx * (w / 2 + 0.2)),
+			1.2,
+			d / 2,
+			shade(wall, 0.8),
+			"SmoothPlastic"
+		)
 	end
 	r:block(-w / 2 - 0.4, h, -d / 2 - 0.4, w / 2 + 0.4, h + 1, d / 2 + 0.4, rgb(204, 178, 130), "SmoothPlastic")
 	-- and its name on the roof, over a stepped crown on the front
@@ -1397,7 +1461,11 @@ M.station = function(r: R)
 			q:box(0, 6.9, 7, 0.9, 0.2, 0.9, TRIM_DARK, "Metal")
 		end)
 		if i % 2 == 0 then
-			r:glow(r:block(x + 2.15, 7.95, d / 2 + 4.65, x + 2.85, 8.15, d / 2 + 5.35, rgb(255, 236, 190), "SmoothPlastic"), 14, 0.9)
+			r:glow(
+				r:block(x + 2.15, 7.95, d / 2 + 4.65, x + 2.85, 8.15, d / 2 + 5.35, rgb(255, 236, 190), "SmoothPlastic"),
+				14,
+				0.9
+			)
 		end
 	end
 	-- the line behind: ballast, sleepers and rails, with a train waiting
@@ -1423,7 +1491,19 @@ M.station = function(r: R)
 	-- the engine's nose on the front carriage, with its lamps
 	r:wedge(CFrame.new(35.5, 4.5, d / 2 + 18) * yaw(-90), 9, 7, 5, body, "SmoothPlastic")
 	for _, sz in { -2.6, 2.6 } do
-		r:glow(r:block(36.9, 1.3, d / 2 + 18 + sz - 0.5, 37.6, 1.8, d / 2 + 18 + sz + 0.5, rgb(255, 240, 200), "SmoothPlastic"), 0)
+		r:glow(
+			r:block(
+				36.9,
+				1.3,
+				d / 2 + 18 + sz - 0.5,
+				37.6,
+				1.8,
+				d / 2 + 18 + sz + 0.5,
+				rgb(255, 240, 200),
+				"SmoothPlastic"
+			),
+			0
+		)
 	end
 	-- benches on the platform
 	for _, x in { -20, 0, 20 } do
@@ -1513,8 +1593,12 @@ M.school = function(r: R)
 	r:cone(0, 25.6, -4, 1.6, 2.4, rgb(214, 176, 96), "Metal")
 	r:block(-6, 28, -10, 6, 28.4, 2, WHITE, "SmoothPlastic")
 	local apex = Vector3.new(0, 32.2, -4)
-	local corners =
-		{ Vector3.new(-6.4, 28.4, -10.4), Vector3.new(6.4, 28.4, -10.4), Vector3.new(6.4, 28.4, 2.4), Vector3.new(-6.4, 28.4, 2.4) }
+	local corners = {
+		Vector3.new(-6.4, 28.4, -10.4),
+		Vector3.new(6.4, 28.4, -10.4),
+		Vector3.new(6.4, 28.4, 2.4),
+		Vector3.new(-6.4, 28.4, 2.4),
+	}
 	for k = 1, 4 do
 		r:tri(corners[k], corners[k % 4 + 1], apex, 0.25, if k % 2 == 0 then roof else shade(roof, 0.88), "Slate")
 	end
@@ -1547,7 +1631,15 @@ M.sportsField = function(r: R)
 				{ 39.8, -10.2, 40.2, 10.2 },
 			}
 		do
-			q:box((line[1] + line[3]) / 2, 0, (line[2] + line[4]) / 2, line[3] - line[1], 0.08, line[4] - line[2], WHITE)
+			q:box(
+				(line[1] + line[3]) / 2,
+				0,
+				(line[2] + line[4]) / 2,
+				line[3] - line[1],
+				0.08,
+				line[4] - line[2],
+				WHITE
+			)
 		end
 		for k = 0, 11 do
 			local a = (k + 0.5) / 12 * math.pi * 2
@@ -1579,13 +1671,40 @@ M.sportsField = function(r: R)
 	for _, sx in { -1, 1 } do
 		for _, sz in { -1, 1 } do
 			r:cyl(sx * 48.2, 1.3, sz * 26.2, 2, 0.1, "y", WHITE, "Metal")
-			r:block(sx * 48.2, 1.8, sz * 26.2 - 0.02, sx * 48.2 + sx * 0.8, 2.3, sz * 26.2 + 0.02, rgb(224, 128, 102), "Fabric")
+			r:block(
+				sx * 48.2,
+				1.8,
+				sz * 26.2 - 0.02,
+				sx * 48.2 + sx * 0.8,
+				2.3,
+				sz * 26.2 + 0.02,
+				rgb(224, 128, 102),
+				"Fabric"
+			)
 		end
 	end
 	-- the stand: three tiers with a row of seats on each, steps up the aisles and a rail behind
 	for k = 0, 2 do
-		r:block(-36, 0, 38 + k * 2, 36, 1 + k * 1.2, 40 + k * 2, if k % 2 == 0 then rgb(206, 202, 196) else rgb(220, 216, 208), "Concrete")
-		r:block(-35.6, 1 + k * 1.2, 39.2 + k * 2, 35.6, 1.5 + k * 1.2, 39.9 + k * 2, if k % 2 == 0 then rgb(96, 138, 176) else WHITE, "SmoothPlastic")
+		r:block(
+			-36,
+			0,
+			38 + k * 2,
+			36,
+			1 + k * 1.2,
+			40 + k * 2,
+			if k % 2 == 0 then rgb(206, 202, 196) else rgb(220, 216, 208),
+			"Concrete"
+		)
+		r:block(
+			-35.6,
+			1 + k * 1.2,
+			39.2 + k * 2,
+			35.6,
+			1.5 + k * 1.2,
+			39.9 + k * 2,
+			if k % 2 == 0 then rgb(96, 138, 176) else WHITE,
+			"SmoothPlastic"
+		)
 	end
 	for _, x in { -12, 12 } do
 		for k = 0, 2 do
@@ -1802,7 +1921,16 @@ M.museum = function(r: R)
 		r:block(x1, 0, -14, x2, 1.4, 16, shadow, "Marble")
 		r:block(x1, 11.4, -14, x2, 12.4, 16, shadow, "Marble")
 		for _, z in { -9, -1.5, 6, 13.5 } do
-			r:block(math.min(sx * 30, sx * 30.4), 1.4, z - 0.6, math.max(sx * 30, sx * 30.4), 11.4, z + 0.6, stone, "Marble")
+			r:block(
+				math.min(sx * 30, sx * 30.4),
+				1.4,
+				z - 0.6,
+				math.max(sx * 30, sx * 30.4),
+				11.4,
+				z + 0.6,
+				stone,
+				"Marble"
+			)
 		end
 	end
 	-- a dome over the middle hall on a drum, with a lantern on top
@@ -1877,7 +2005,7 @@ M.fireStation = function(r: R)
 	r:block(20, 11, 4, 28, 26, 12, red, "Brick")
 	r:block(19.5, 26, 3.5, 28.5, 27, 12.5, WHITE, "SmoothPlastic")
 	for _, y in { 13.5, 18 } do
-		stamp(r, "sideWindow:" .. WHITE:ToHex(), CFrame.new(24, y, 4) , function(q)
+		stamp(r, "sideWindow:" .. WHITE:ToHex(), CFrame.new(24, y, 4), function(q)
 			sideWindow(q, WHITE)
 		end)
 	end
@@ -1885,9 +2013,21 @@ M.fireStation = function(r: R)
 		r:block(21.2, 22.6 + i * 0.6, 3.82, 26.8, 22.9 + i * 0.6, 4, shade(red, 0.7), "Wood")
 	end
 	local apex = Vector3.new(24, 30.5, 8)
-	local corners = { Vector3.new(19.9, 27, 3.9), Vector3.new(28.1, 27, 3.9), Vector3.new(28.1, 27, 12.1), Vector3.new(19.9, 27, 12.1) }
+	local corners = {
+		Vector3.new(19.9, 27, 3.9),
+		Vector3.new(28.1, 27, 3.9),
+		Vector3.new(28.1, 27, 12.1),
+		Vector3.new(19.9, 27, 12.1),
+	}
 	for k = 1, 4 do
-		r:tri(corners[k], corners[k % 4 + 1], apex, 0.2, if k % 2 == 0 then rgb(110, 92, 90) else rgb(96, 80, 80), "Slate")
+		r:tri(
+			corners[k],
+			corners[k % 4 + 1],
+			apex,
+			0.2,
+			if k % 2 == 0 then rgb(110, 92, 90) else rgb(96, 80, 80),
+			"Slate"
+		)
 	end
 	r:cyl(24, 32, 8, 3, 0.16, "y", METAL, "Metal")
 	-- a fire engine out front: the cab with its glass, lockers down the body, a ladder on top,
@@ -1967,7 +2107,13 @@ M.pondPark = function(r: R)
 		for k = 0, 15 do
 			if k ~= 4 and k ~= 12 then
 				local a = k / 16 * math.pi * 2
-				q:lump(CFrame.new(math.cos(a) * 31.2, 0.25, math.sin(a) * 31.2) * CFrame.Angles(0.2, a * 3, 0.1), 2.4, 1.0, 1.8, if k % 3 == 0 then shade(ROCK, 1.15) else ROCK)
+				q:lump(
+					CFrame.new(math.cos(a) * 31.2, 0.25, math.sin(a) * 31.2) * CFrame.Angles(0.2, a * 3, 0.1),
+					2.4,
+					1.0,
+					1.8,
+					if k % 3 == 0 then shade(ROCK, 1.15) else ROCK
+				)
 			end
 		end
 	end, true)
@@ -1977,7 +2123,13 @@ M.pondPark = function(r: R)
 			for k = 0, 6 do
 				local a = k / 7 * math.pi * 2
 				local tip = Vector3.new(math.cos(a) * 0.9, 2.4 + (k % 3) * 0.5, math.sin(a) * 0.9)
-				q:beam(Vector3.new(math.cos(a) * 0.4, 0, math.sin(a) * 0.4), tip, 0.12, 0.12, if k % 2 == 0 then rgb(110, 150, 90) else rgb(132, 166, 100))
+				q:beam(
+					Vector3.new(math.cos(a) * 0.4, 0, math.sin(a) * 0.4),
+					tip,
+					0.12,
+					0.12,
+					if k % 2 == 0 then rgb(110, 150, 90) else rgb(132, 166, 100)
+				)
 				if k % 3 == 0 then
 					q:lump(CFrame.new(tip.X, tip.Y - 0.4, tip.Z), 0.22, 0.6, 0.22, rgb(122, 92, 64))
 				end
@@ -2089,7 +2241,14 @@ M.playground = function(r: R)
 	r:cyl(18, 1.9, 14, 2, 1, "y", METAL, "Metal")
 	for k = 0, 3 do
 		local a = k / 4 * math.pi * 2
-		r:beam(Vector3.new(18, 2.8, 14), Vector3.new(18 + math.cos(a) * 4, 1.1, 14 + math.sin(a) * 4), 0.16, 0.16, METAL, "Metal")
+		r:beam(
+			Vector3.new(18, 2.8, 14),
+			Vector3.new(18 + math.cos(a) * 4, 1.1, 14 + math.sin(a) * 4),
+			0.16,
+			0.16,
+			METAL,
+			"Metal"
+		)
 	end
 	-- a sandpit in a timber edge, with a bucket and spade
 	r:block(-32, 0.25, 12, -16, 0.5, 26, rgb(240, 224, 184), "Sand")
@@ -2105,7 +2264,14 @@ M.playground = function(r: R)
 	r:block(26.6, 0.25, 21.4, 27.4, 1.2, 22.6, DARK, "Metal")
 	r:boxAt(CFrame.new(27, 1.4, 22) * CFrame.Angles(0, 0, math.rad(9)), 9, 0.25, 1, yellow, "WoodPlanks")
 	for _, sx in { -1, 1 } do
-		r:boxAt(CFrame.new(27, 1.4, 22) * CFrame.Angles(0, 0, math.rad(9)) * CFrame.new(sx * 3.6, 0.5, 0), 0.2, 0.8, 0.8, red, "SmoothPlastic")
+		r:boxAt(
+			CFrame.new(27, 1.4, 22) * CFrame.Angles(0, 0, math.rad(9)) * CFrame.new(sx * 3.6, 0.5, 0),
+			0.2,
+			0.8,
+			0.8,
+			red,
+			"SmoothPlastic"
+		)
 	end
 	-- benches for whoever is watching
 	bench(r, 0, 27, 0)
@@ -2131,11 +2297,25 @@ M.basketCourt = function(r: R)
 				{ 21, -3.2, 21.4, 3.2 },
 			}
 		do
-			q:box((line[1] + line[3]) / 2, 0, (line[2] + line[4]) / 2, line[3] - line[1], 0.08, line[4] - line[2], WHITE)
+			q:box(
+				(line[1] + line[3]) / 2,
+				0,
+				(line[2] + line[4]) / 2,
+				line[3] - line[1],
+				0.08,
+				line[4] - line[2],
+				WHITE
+			)
 		end
 		for k = 0, 9 do
 			local a = (k + 0.5) / 10 * math.pi * 2
-			q:boxAt(CFrame.new(math.cos(a) * 3.6, 0, math.sin(a) * 3.6) * CFrame.Angles(0, -a, 0), 0.4, 0.08, 2.3, WHITE)
+			q:boxAt(
+				CFrame.new(math.cos(a) * 3.6, 0, math.sin(a) * 3.6) * CFrame.Angles(0, -a, 0),
+				0.4,
+				0.08,
+				2.3,
+				WHITE
+			)
 		end
 	end, false)
 	-- a hoop at each end: a padded pole, an arm, the board with its square, the rim and the net
@@ -2156,7 +2336,14 @@ M.basketCourt = function(r: R)
 				local p2 = c + Vector3.new(math.cos(a2) * 0.9, 0, math.sin(a2) * 0.9)
 				q:beam(p1, p2, 0.1, 0.1, rgb(220, 118, 92), "Metal")
 				if k % 2 == 0 then
-					q:beam(p1, c + Vector3.new(math.cos(a1) * 0.45, -1.1, math.sin(a1) * 0.45), 0.06, 0.06, rgb(240, 240, 236), "Metal")
+					q:beam(
+						p1,
+						c + Vector3.new(math.cos(a1) * 0.45, -1.1, math.sin(a1) * 0.45),
+						0.06,
+						0.06,
+						rgb(240, 240, 236),
+						"Metal"
+					)
 				end
 			end
 		end, true)
@@ -2174,7 +2361,15 @@ end
 M.barn = function(r: R)
 	local red = rgb(176, 92, 80)
 	r:block(-14, 0, -10, 14, 10, 10, red, "WoodPlanks")
-	for _, seg in { { -14.12, -10.12, -5.3, -10 }, { 5.3, -10.12, 14.12, -10 }, { -14.12, 10, 14.12, 10.12 }, { -14.12, -10, -14, 10 }, { 14, -10, 14.12, 10 } } do
+	for _, seg in
+		{
+			{ -14.12, -10.12, -5.3, -10 },
+			{ 5.3, -10.12, 14.12, -10 },
+			{ -14.12, 10, 14.12, 10.12 },
+			{ -14.12, -10, -14, 10 },
+			{ 14, -10, 14.12, 10 },
+		}
+	do
 		r:block(seg[1], 0, seg[2], seg[3], 0.8, seg[4], rgb(150, 146, 140), "Concrete")
 	end
 	for _, sx in { -1, 1 } do
@@ -2221,7 +2416,12 @@ M.barn = function(r: R)
 		r:block(-1.3, ridge + 0.4 + i * 0.5, -1.66, 1.3, ridge + 0.6 + i * 0.5, 1.66, rgb(214, 210, 200), "Wood")
 	end
 	local apex = Vector3.new(0, ridge + 4, 0)
-	local cs = { Vector3.new(-2, ridge + 2.2, -2), Vector3.new(2, ridge + 2.2, -2), Vector3.new(2, ridge + 2.2, 2), Vector3.new(-2, ridge + 2.2, 2) }
+	local cs = {
+		Vector3.new(-2, ridge + 2.2, -2),
+		Vector3.new(2, ridge + 2.2, -2),
+		Vector3.new(2, ridge + 2.2, 2),
+		Vector3.new(-2, ridge + 2.2, 2),
+	}
 	for k = 1, 4 do
 		r:tri(cs[k], cs[k % 4 + 1], apex, 0.2, if k % 2 == 0 then rgb(112, 104, 104) else rgb(98, 92, 92), "Slate")
 	end
@@ -2296,14 +2496,26 @@ local CROPS: { [string]: (R) -> () } = {
 		q:box(0, 0.25, 0, 44, 0.5, 1.6, rgb(140, 108, 80))
 		for i = 0, 13 do
 			local x = -20.8 + i * 3.2
-			q:lump(CFrame.new(x, 1.2, 0) * CFrame.Angles(0, i, 0.1), 2.4, 1.8, 1.5, if i % 2 == 0 then rgb(222, 196, 120) else rgb(206, 178, 104))
+			q:lump(
+				CFrame.new(x, 1.2, 0) * CFrame.Angles(0, i, 0.1),
+				2.4,
+				1.8,
+				1.5,
+				if i % 2 == 0 then rgb(222, 196, 120) else rgb(206, 178, 104)
+			)
 		end
 	end,
 	greens = function(q: R)
 		q:box(0, 0.25, 0, 44, 0.5, 1.6, rgb(140, 108, 80))
 		for i = 0, 13 do
 			local x = -20.8 + i * 3.2
-			q:lump(CFrame.new(x, 0.9, 0) * CFrame.Angles(0.2, i * 0.7, 0), 1.6, 1.1, 1.5, if i % 3 == 0 then rgb(150, 190, 110) else rgb(116, 168, 96))
+			q:lump(
+				CFrame.new(x, 0.9, 0) * CFrame.Angles(0.2, i * 0.7, 0),
+				1.6,
+				1.1,
+				1.5,
+				if i % 3 == 0 then rgb(150, 190, 110) else rgb(116, 168, 96)
+			)
 		end
 	end,
 	pumpkins = function(q: R)
@@ -2440,7 +2652,14 @@ M.lookout = function(r: R)
 	-- the telescope on a tripod, looking out over the town
 	for k = 0, 2 do
 		local a = k / 3 * math.pi * 2
-		r:beam(Vector3.new(-3, deckY + 2.6, -10), Vector3.new(-3 + math.cos(a) * 0.9, deckY, -10 + math.sin(a) * 0.9), 0.14, 0.14, DARK, "Metal")
+		r:beam(
+			Vector3.new(-3, deckY + 2.6, -10),
+			Vector3.new(-3 + math.cos(a) * 0.9, deckY, -10 + math.sin(a) * 0.9),
+			0.14,
+			0.14,
+			DARK,
+			"Metal"
+		)
 	end
 	r:boxAt(CFrame.new(-3, deckY + 3.1, -10.4) * CFrame.Angles(math.rad(-14), 0, 0), 0.8, 0.8, 2.8, METAL, "Metal")
 	r:boxAt(CFrame.new(-3, deckY + 3.42, -12.0) * CFrame.Angles(math.rad(-14), 0, 0), 1.1, 1.1, 0.5, DARK, "Metal")
@@ -2467,7 +2686,9 @@ M.observatory = function(r: R)
 			r:beam(onDome(zs[i], 0.1) + o, onDome(zs[i + 1], 0.1) + o, 1.2, 0.5, rgb(184, 194, 206), "Metal")
 		end
 	end
-	r:cyl(0, 0, 0, 3.6, 1.1, "x", METAL, "Metal").cf = CFrame.new(0, 14.2, -5.4) * CFrame.Angles(math.rad(36), 0, 0) * CFrame.Angles(0, math.pi / 2, 0)
+	r:cyl(0, 0, 0, 3.6, 1.1, "x", METAL, "Metal").cf = CFrame.new(0, 14.2, -5.4)
+		* CFrame.Angles(math.rad(36), 0, 0)
+		* CFrame.Angles(0, math.pi / 2, 0)
 	-- windows round the drum
 	for _, a in { 50, 130, 230, 310 } do
 		local f = CFrame.Angles(0, math.rad(a), 0) * CFrame.new(0, 4.4, -8.62)
@@ -2495,7 +2716,14 @@ M.radioMast = function(r: R)
 	r:block(-3, 0, -3, 3, 1, 3, STONE, "Concrete")
 	for _, sx in { -1, 1 } do
 		for _, sz in { -1, 1 } do
-			r:beam(Vector3.new(sx * 2.4, 1, sz * 2.4), Vector3.new(sx * 0.9, 5, sz * 0.9), 0.3, 0.3, rgb(206, 112, 102), "Metal")
+			r:beam(
+				Vector3.new(sx * 2.4, 1, sz * 2.4),
+				Vector3.new(sx * 0.9, 5, sz * 0.9),
+				0.3,
+				0.3,
+				rgb(206, 112, 102),
+				"Metal"
+			)
 		end
 	end
 	for i = 0, 7 do
@@ -2538,7 +2766,13 @@ local function tent(r: R, x: number, z: number, turn: number, col: Color3)
 			q:beam(Vector3.new(sx * 2.62, 4.0, 0), Vector3.new(sx * 4.3, 0.05, 0), 0.05, 0.05, rgb(220, 214, 196))
 			q:box(sx * 4.3, 0.15, 0, 0.12, 0.3, 0.12, WOOD_DARK)
 		end
-		q:tri(Vector3.new(2.53, 0.06, -1.3), Vector3.new(2.53, 0.06, 1.3), Vector3.new(2.53, 2.8, 0), 0.04, rgb(86, 78, 70))
+		q:tri(
+			Vector3.new(2.53, 0.06, -1.3),
+			Vector3.new(2.53, 0.06, 1.3),
+			Vector3.new(2.53, 2.8, 0),
+			0.04,
+			rgb(86, 78, 70)
+		)
 	end)
 end
 
@@ -2558,7 +2792,13 @@ M.camp = function(r: R)
 		q:box(0, 0.02, 0, 0.6, 0.04, 0.6, ROCK)
 		for k = 0, 7 do
 			local a = k / 8 * math.pi * 2
-			q:lump(CFrame.new(math.cos(a) * 1.9, 0.25, math.sin(a) * 1.9) * CFrame.Angles(0.3, a, 0.2), 0.9, 0.6, 0.8, if k % 2 == 0 then ROCK else shade(ROCK, 1.15))
+			q:lump(
+				CFrame.new(math.cos(a) * 1.9, 0.25, math.sin(a) * 1.9) * CFrame.Angles(0.3, a, 0.2),
+				0.9,
+				0.6,
+				0.8,
+				if k % 2 == 0 then ROCK else shade(ROCK, 1.15)
+			)
 		end
 	end, true)
 	for k = 0, 4 do
@@ -2615,7 +2855,14 @@ M.ferrisWheel = function(r: R)
 		local a1, a2 = k / n * math.pi * 2, (k + 1) / n * math.pi * 2
 		local p1 = Vector3.new(math.cos(a1) * R0, hy + math.sin(a1) * R0, 0)
 		local p2 = Vector3.new(math.cos(a2) * R0, hy + math.sin(a2) * R0, 0)
-		local rim = r:beam(p1, p2, if k % 2 == 0 then 0.8 else 0.7, 1.2, if k % 2 == 0 then col else rgb(232, 198, 118), "SmoothPlastic")
+		local rim = r:beam(
+			p1,
+			p2,
+			if k % 2 == 0 then 0.8 else 0.7,
+			1.2,
+			if k % 2 == 0 then col else rgb(232, 198, 118),
+			"SmoothPlastic"
+		)
 		if rim then
 			rim.name = "Spin"
 		end
@@ -2692,13 +2939,27 @@ M.carousel = function(r: R)
 		local pole = r:cyl(x, 4.6, z, 7.6, 0.3, "y", gold, "Metal")
 		pole.name = "Spin"
 		local hide = horses[k + 1]
-		local parts = {
+		local parts: { Prim? } = {
 			r:lump(f * CFrame.new(0, 3, 0), 1.1, 1.2, 2.8, hide, "SmoothPlastic"),
-			r:lump(f * CFrame.new(0, 4.0, -1.45) * CFrame.Angles(math.rad(-30), 0, 0), 0.8, 1.6, 1.0, hide, "SmoothPlastic"),
+			r:lump(
+				f * CFrame.new(0, 4.0, -1.45) * CFrame.Angles(math.rad(-30), 0, 0),
+				0.8,
+				1.6,
+				1.0,
+				hide,
+				"SmoothPlastic"
+			),
 			r:beam(f * Vector3.new(0, 2.7, -0.9), f * Vector3.new(0, 1.5, -1.7), 0.28, 0.3, hide, "SmoothPlastic"),
 			r:beam(f * Vector3.new(0, 2.7, 0.9), f * Vector3.new(0, 1.5, 1.6), 0.28, 0.3, hide, "SmoothPlastic"),
 			r:boxAt(f * CFrame.new(0, 3.62, 0.1), 1.2, 0.2, 1.0, saddles[k + 1], "SmoothPlastic"),
-			r:lump(f * CFrame.new(0, 3.0, 1.55) * CFrame.Angles(math.rad(30), 0, 0), 0.3, 0.9, 0.3, shade(hide, 0.8), "SmoothPlastic"),
+			r:lump(
+				f * CFrame.new(0, 3.0, 1.55) * CFrame.Angles(math.rad(30), 0, 0),
+				0.3,
+				0.9,
+				0.3,
+				shade(hide, 0.8),
+				"SmoothPlastic"
+			),
 		}
 		for _, p in parts do
 			if p then
@@ -2753,7 +3014,13 @@ M.stall = function(r: R)
 		end
 		q:box(1.6, 3.4, -1.0, 1.8, 0.4, 1.2, WOOD)
 		for i = 0, 3 do
-			q:lump(CFrame.new(1.05 + i * 0.38, 3.7, -1.0 + (i % 2) * 0.2), 0.42, 0.42, 0.42, if i % 2 == 0 then rgb(224, 128, 102) else rgb(234, 196, 112))
+			q:lump(
+				CFrame.new(1.05 + i * 0.38, 3.7, -1.0 + (i % 2) * 0.2),
+				0.42,
+				0.42,
+				0.42,
+				if i % 2 == 0 then rgb(224, 128, 102) else rgb(234, 196, 112)
+			)
 		end
 		q:box(-0.4, 3.5, -0.6, 0.9, 0.6, 0.6, METAL)
 	end)

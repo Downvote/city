@@ -148,8 +148,8 @@ return function(add: any)
 				b:item("corner_board", c[1], c[2], c[3], 0, 0)
 				paint(b, TRIM, TRIM)
 			end
-			hang(b, "downpipe", "back", 0.5, 0, "a")
-			hang(b, "downpipe", "back", 19.5, 0, "a")
+			hang(b, "downpipe", "back", 0.6, 0, "a")
+			hang(b, "downpipe", "back", 19.4, 0, "a")
 			-- the pavilion's posts, its picnic table and a bench along the back rail
 			for _, p in { { 31.6, 6.6 }, { 31.6, 15.4 }, { 28, 15.4 } } do
 				b:item("porch_post", p[1], p[2], 0)

@@ -196,9 +196,10 @@ local function stamp(r: R, f: CFrame, id: string, draw: (R) -> ()): Prim
 	if not proto then
 		local q = Recipe.new(WHITE, WHITE)
 		draw(q)
-		proto = Geometry.piece(q.prims, false)
-		kit[id] = proto
-		owned[proto.key or ""] = true
+		local made = Geometry.piece(q.prims, false)
+		kit[id] = made
+		owned[made.key or ""] = true
+		proto = made
 	end
 	local p = table.clone(proto)
 	p.cf = f * proto.cf
@@ -389,30 +390,31 @@ end
 local function drawFolds(q: R)
 	local M = "Fabric"
 	local rand = dice(3301)
-	local rows = {
+	type Stack = { x: number, n: number, a: Color3, b: Color3 }
+	local rows: { { Stack } } = {
 		{
-			{ -1.25, 4, NAVY, rgb(96, 120, 160) },
-			{ 0.0, 3, CREAM, rgb(220, 208, 186) },
-			{ 1.25, 4, SAGE, rgb(120, 160, 134) },
+			{ x = -1.25, n = 4, a = NAVY, b = rgb(96, 120, 160) },
+			{ x = 0.0, n = 3, a = CREAM, b = rgb(220, 208, 186) },
+			{ x = 1.25, n = 4, a = SAGE, b = rgb(120, 160, 134) },
 		},
 		{
-			{ -1.25, 3, BERRY, rgb(200, 120, 120) },
-			{ 0.0, 4, MUSTARD, BUTTER },
-			{ 1.25, 3, rgb(96, 120, 160), rgb(80, 100, 140) },
+			{ x = -1.25, n = 3, a = BERRY, b = rgb(200, 120, 120) },
+			{ x = 0.0, n = 4, a = MUSTARD, b = BUTTER },
+			{ x = 1.25, n = 3, a = rgb(96, 120, 160), b = rgb(80, 100, 140) },
 		},
 	}
 	for r, row in rows do
 		for _, s in row do
 			local top = SHELF[r]
-			for k = 1, s[2] do
+			for k = 1, s.n do
 				local t = 0.15 + rand() * 0.04
 				q:boxAt(
-					CFrame.new(s[1] + (rand() - 0.5) * 0.08, top + t / 2, -0.08)
+					CFrame.new(s.x + (rand() - 0.5) * 0.08, top + t / 2, -0.08)
 						* CFrame.Angles(0, math.rad((rand() - 0.5) * 6), 0),
 					1.02,
 					t,
 					0.66,
-					if k % 2 == 0 then s[4] else s[3],
+					if k % 2 == 0 then s.b else s.a,
 					M
 				)
 				top += t
@@ -681,8 +683,14 @@ local function drawStillLife(q: R)
 	q:block(-0.92, 0.18, -0.1, 0.92, 0.75, -0.07, rgb(150, 110, 80), M)
 	q:cyl(0, 1.06, -0.115, 0.03, 0.62, "z", CREAM, M)
 	q:block(-0.12, 1.3, -0.13, 0.12, 1.6, -0.1, CREAM, M)
-	for _, f in { { -0.38, 1.85, CORAL }, { 0.0, 2.2, BUTTER }, { 0.38, 1.9, BLUSH }, { 0.02, 1.68, WHITE } } do
-		q:cyl(f[1], f[2], -0.145, 0.03, 0.36, "z", f[3], M)
+	local heads: { { x: number, y: number, c: Color3 } } = {
+		{ x = -0.38, y = 1.85, c = CORAL },
+		{ x = 0.0, y = 2.2, c = BUTTER },
+		{ x = 0.38, y = 1.9, c = BLUSH },
+		{ x = 0.02, y = 1.68, c = WHITE },
+	}
+	for _, f in heads do
+		q:cyl(f.x, f.y, -0.145, 0.03, 0.36, "z", f.c, M)
 	end
 	for _, s in { -1, 1 } do
 		q:boxAt(CFrame.new(s * 0.52, 1.6, -0.115) * CFrame.Angles(0, 0, math.rad(s * 30)), 0.5, 0.14, 0.03, LEAF, M)
@@ -930,19 +938,21 @@ local function drawNotices(q: R)
 	q:block(-1.8, 2.24, -0.14, 1.8, 2.4, 0, WALNUT, M)
 	q:block(-1.8, 0.16, -0.14, -1.62, 2.24, 0, WALNUT, M)
 	q:block(1.62, 0.16, -0.14, 1.8, 2.24, 0, WALNUT, M)
-	local notes = {
-		{ -1.05, 1.55, 0.75, 0.9, 4, CREAM },
-		{ -0.1, 1.7, 0.7, 0.6, -6, BUTTER },
-		{ 0.95, 1.5, 0.75, 0.95, 3, WHITE },
-		{ -1.0, 0.62, 0.8, 0.66, -3, BLUSH },
-		{ 0.0, 0.7, 0.66, 0.8, 7, SKY },
-		{ 1.0, 0.55, 0.62, 0.5, -4, CREAM },
+	type Note = { x: number, y: number, w: number, h: number, turn: number, c: Color3 }
+	local notes: { Note } = {
+		{ x = -1.05, y = 1.55, w = 0.75, h = 0.9, turn = 4, c = CREAM },
+		{ x = -0.1, y = 1.7, w = 0.7, h = 0.6, turn = -6, c = BUTTER },
+		{ x = 0.95, y = 1.5, w = 0.75, h = 0.95, turn = 3, c = WHITE },
+		{ x = -1.0, y = 0.62, w = 0.8, h = 0.66, turn = -3, c = BLUSH },
+		{ x = 0.0, y = 0.7, w = 0.66, h = 0.8, turn = 7, c = SKY },
+		{ x = 1.0, y = 0.55, w = 0.62, h = 0.5, turn = -4, c = CREAM },
 	}
+	local pins = { CORAL, TEAL, MUSTARD, BERRY }
 	for i, n in notes do
 		local z = if i % 2 == 0 then -0.125 else -0.095
-		q:boxAt(CFrame.new(n[1], n[2], z) * CFrame.Angles(0, 0, math.rad(n[5])), n[3], n[4], 0.03, n[6], M)
+		q:boxAt(CFrame.new(n.x, n.y, z) * CFrame.Angles(0, 0, math.rad(n.turn)), n.w, n.h, 0.03, n.c, M)
 		if i <= 4 then
-			q:ball(n[1], n[2] + n[4] / 2 - 0.12, -0.16, 0.1, ({ CORAL, TEAL, MUSTARD, BERRY })[i], M)
+			q:ball(n.x, n.y + n.h / 2 - 0.12, -0.16, 0.1, pins[i], M)
 		end
 	end
 end
@@ -1003,16 +1013,16 @@ local function drawBlackboard(q: R)
 	q:cyl(-3.2, 0.27, -0.3, 0.5, 0.1, "x", chalk, M)
 	q:cyl(-2.4, 0.27, -0.25, 0.35, 0.1, "x", rgb(240, 200, 200), M)
 	q:block(2.6, 0.22, -0.42, 3.3, 0.42, -0.2, rgb(214, 180, 120), M)
-	local lines = {
-		{ 3.05, { 1.3, 0.8, 1.5 } },
-		{ 2.55, { 0.9, 1.6, 0.7 } },
-		{ 2.05, { 1.8, 1.1 } },
-		{ 1.55, { 0.7, 1.2, 0.9 } },
+	local lines: { { y: number, words: { number } } } = {
+		{ y = 3.05, words = { 1.3, 0.8, 1.5 } },
+		{ y = 2.55, words = { 0.9, 1.6, 0.7 } },
+		{ y = 2.05, words = { 1.8, 1.1 } },
+		{ y = 1.55, words = { 0.7, 1.2, 0.9 } },
 	}
 	for _, l in lines do
 		local x = -4.9
-		for _, len in l[2] do
-			q:block(x, l[1], -0.13, x + len, l[1] + 0.1, -0.1, chalk, M)
+		for _, len in l.words do
+			q:block(x, l.y, -0.13, x + len, l.y + 0.1, -0.1, chalk, M)
 			x += len + 0.35
 		end
 	end
@@ -1227,25 +1237,25 @@ local function drawFruit(q: R)
 	local rand = dice(5150)
 	q:block(-2.05, 0.95, -1.06, -1.45, 1.2, -1.03, PAPER, M)
 	q:block(-0.3, 0.95, -1.06, 0.3, 1.2, -1.03, PAPER, M)
-	local heaps = {
-		{ -1, 0.36, rgb(184, 80, 72), rgb(204, 116, 80) },
-		{ 0, 0.38, rgb(226, 150, 78), rgb(234, 170, 92) },
+	local heaps: { { crate: number, d: number, a: Color3, b: Color3 } } = {
+		{ crate = -1, d = 0.36, a = rgb(184, 80, 72), b = rgb(204, 116, 80) },
+		{ crate = 0, d = 0.38, a = rgb(226, 150, 78), b = rgb(234, 170, 92) },
 	}
 	for _, h in heaps do
-		local c = crateAt(h[1])
+		local c = crateAt(h.crate)
 		for row = -1, 1 do
 			for col = -1, 1 do
 				q:lump(
 					c
 						* CFrame.new(
 							col * 0.46 + (rand() - 0.5) * 0.06,
-							0.1 + h[2] / 2,
+							0.1 + h.d / 2,
 							row * 0.55 + (rand() - 0.5) * 0.06
 						),
-					h[2],
-					h[2] * 0.94,
-					h[2],
-					if (row + col) % 2 == 0 then h[3] else h[4],
+					h.d,
+					h.d * 0.94,
+					h.d,
+					if (row + col) % 2 == 0 then h.a else h.b,
 					M
 				)
 			end
@@ -1408,12 +1418,6 @@ end
 local function doormat(r: R, b: Box)
 	local x = b.door or (b.x1 + b.x2) / 2
 	slab(r, CFrame.identity, x - 1.8, b.y, b.z1 + 0.35, x + 1.8, b.y + 0.04, b.z1 + 1.95, rgb(176, 146, 104), "Fabric")
-end
-
--- A long carpet from z1 to z2, w wide, with a border.
-local function runner(r: R, b: Box, x: number, z1: number, z2: number, w: number, color: Color3)
-	slab(r, CFrame.identity, x - w / 2, b.y, z1, x + w / 2, b.y + 0.03, z2, rgb(232, 218, 190), "Fabric")
-	slab(r, CFrame.identity, x - w / 2 + 0.3, b.y, z1 + 0.3, x + w / 2 - 0.3, b.y + 0.06, z2 - 0.3, color, "Fabric")
 end
 
 -- A door to the back room in the back wall at x: a frame, the door, a knob and a plate on it.
@@ -1689,6 +1693,23 @@ local function shop(r: R, kind: string, b: Box)
 			post(r, till, x, 3.3, -0.95, 3.0, 0.12, METAL, "Metal")
 		end
 		postBox(r, at(b, winX, b.z1 + 1.8))
+		-- a sloping stand to fill in forms at, with two forms and a pen on it, and a carpet up the
+		-- middle
+		local st = at(b, cx - 3.5, b.z1 + d * 0.5)
+		slab(r, st, -0.7, 0, -0.5, 0.7, 0.2, 0.5, WALNUT, "Wood")
+		slab(r, st, -0.2, 0.2, -0.2, 0.2, 3.4, 0.2, WALNUT, "Wood")
+		local top = st * CFrame.new(0, 3.55, 0) * CFrame.Angles(math.rad(-12), 0, 0)
+		r:boxAt(top, 3.0, 0.14, 1.6, WOOD, "Wood")
+		r:boxAt(top * CFrame.new(-0.6, 0.085, 0) * CFrame.Angles(0, math.rad(8), 0), 0.7, 0.03, 0.9, WHITE)
+		r:boxAt(top * CFrame.new(0.55, 0.085, 0.1) * CFrame.Angles(0, math.rad(-6), 0), 0.7, 0.03, 0.9, BUTTER)
+		r:add({
+			shape = "Cylinder",
+			cf = top * CFrame.new(1.1, 0.1, -0.4),
+			size = Vector3.new(0.5, 0.06, 0.06),
+			color = NAVY,
+			mat = "SmoothPlastic",
+		})
+		runner(r, b, door, b.z1 + 2.2, b.z2 - 1.5, 3.6, rgb(160, 92, 90))
 		stamp(r, at(b, b.x1 + 0.85, b.z1 + 8.5, -90), "seats", drawSeats)
 		stamp(r, wallAt(b, "left", b.z1 + 8.5, 3.4), "notices", drawNotices)
 		for i, x in { shelfEnd + 0.9, shelfEnd + 2.1 } do
@@ -1994,7 +2015,7 @@ local function museumBench(r: R, f: CFrame, w: number)
 end
 
 local function museum(r: R, b: Box)
-	local w, d = b.x2 - b.x1, b.z2 - b.z1
+	local d = b.z2 - b.z1
 	local cx = (b.x1 + b.x2) / 2
 	local door = b.door or cx
 	local mid = b.z1 + d * 0.52
@@ -2153,7 +2174,7 @@ end
 -- The station hall: the ticket office behind glass, the board of departures and the clock over
 -- the middle, benches back to back, a kiosk of papers, a machine for drinks, a luggage trolley.
 local function station(r: R, b: Box)
-	local w, d = b.x2 - b.x1, b.z2 - b.z1
+	local d = b.z2 - b.z1
 	local cx = (b.x1 + b.x2) / 2
 	local I = CFrame.identity
 	local t = at(b, cx - 22, b.z2 - 4.0)
@@ -2243,7 +2264,7 @@ end
 local function school(r: R, b: Box)
 	local w, d = b.x2 - b.x1, b.z2 - b.z1
 	local cx = (b.x1 + b.x2) / 2
-	local sides = if w >= 56 then { -1, 1 } else { 0 }
+	local sides: { number } = if w >= 56 then { -1, 1 } else { 0 }
 	for _, side in sides do
 		local ox = cx + side * w * 0.25
 		plain(r, wallAt(b, "back", ox, 2.2), drawBlackboard)
@@ -2329,7 +2350,8 @@ local function clinic(r: R, b: Box)
 	stamp(r, at(b, b.x2 - 1.4, b.z1 + 1.4), "plant", drawPlant)
 	-- the beds at the back right, each with a curtain on a rail beside it, the red cross over the
 	-- first and a drip stand by it
-	for i, x in (if w >= 40 then { b.x2 - 4, b.x2 - 12 } else { b.x2 - 4 }) do
+	local beds: { number } = if w >= 40 then { b.x2 - 4, b.x2 - 12 } else { b.x2 - 4 }
+	for i, x in beds do
 		plain(r, at(b, x, b.z2 - 4.2), drawHospitalBed)
 		curtain(r, b, x - 3.9, b.z2 - 8.2, b.z2 - 0.6)
 		if i == 1 then

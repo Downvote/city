@@ -120,7 +120,7 @@ local function awning(
 	for _, x in { x1, x2 } do
 		r:tri(Vector3.new(x, y, zw), Vector3.new(x, yf, zf), Vector3.new(x, yf - 0.55, zw + 0.3), 0.06, c1, "Fabric")
 	end
-	r:cyl((x1 + x2) / 2, yf, zf + 0.1, x2 - x1, 0.1, "x", IRON, "Metal")
+	r:cyl((x1 + x2) / 2, yf, zf - 0.1, x2 - x1, 0.1, "x", IRON, "Metal")
 	for _, x in { x1 + 0.6, (x1 + x2) / 2, x2 - 0.6 } do
 		rod(r, Vector3.new(x, y - 1.7, zw), Vector3.new(x, yf - 0.05, zf - 0.1), 0.08, IRON, "Metal")
 	end

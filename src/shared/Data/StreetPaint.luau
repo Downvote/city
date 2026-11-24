@@ -277,14 +277,14 @@ local function ring(inner: number, outer: number, depth: number, color: Color3):
 end
 
 -- What is set into the square's paving, so TownMap.ground leaves a hole for each: { x1, z1, x2,
--- z2, fill = the height of a paving fill under it, if any }.
-function StreetPaint.inlays(): { { any } }
+-- z2, and the height of a paving fill under it, if any }.
+function StreetPaint.inlays(): { { number } }
 	local S = Town.Spots
 	local f = S.Fountain
 	local reach = StreetPaint.FountainReach
-	local out: { { any } } = {
+	local out: { { number } } = {
 		-- (paving is laid under the rings, a tenth down, for the corners the rings leave)
-		{ f.X - reach, f.Z - reach, f.X + reach, f.Z + reach, fill = PAVING - LIFT },
+		{ f.X - reach, f.Z - reach, f.X + reach, f.Z + reach, PAVING - LIFT },
 	}
 	for _, a in StreetPaint.aprons() do
 		table.insert(out, { a[1], a[2], a[1] + a[3] * 8, a[2] + 6 })

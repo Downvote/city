@@ -114,8 +114,8 @@ end
 -- Planters -------------------------------------------------------------------------------------------
 
 -- The street planter: a stone trough 6 long and 1.8 deep along x on four feet, a lip round its
--- top, soil sunk inside, mounds of leaves spilling over the lip and flowers at two heights, the
--- tall ones on stems. Three pieces and the soil.
+-- top, soil sunk inside, mounds of leaves with more trailing down over the sides, and flowers at
+-- two heights, the tall ones on stems. Four pieces and the soil.
 local TALL = { { -2.0, -0.2, 2.45 }, { -0.3, 0.22, 2.7 }, { 1.7, -0.1, 2.5 } }
 local LOW = {
 	{ -2.45, 0.25, 2.0 },
@@ -125,12 +125,12 @@ local LOW = {
 	{ 2.45, -0.1, 1.9 },
 }
 local MOUNDS = {
-	{ -2.3, 0.15, 1.2, 1.0, 0.2 },
-	{ -1.35, -0.2, 1.3, 1.1, -0.3 },
-	{ -0.45, 0.2, 1.25, 1.0, 0.5 },
-	{ 0.5, -0.18, 1.3, 1.15, 0.1 },
-	{ 1.45, 0.18, 1.2, 1.0, -0.4 },
-	{ 2.35, -0.12, 1.15, 0.95, 0.3 },
+	{ -2.3, 0.1, 1.2, 1.0, 0.2 },
+	{ -1.35, -0.1, 1.3, 1.1, -0.25 },
+	{ -0.45, 0.1, 1.25, 1.0, 0.3 },
+	{ 0.5, -0.1, 1.3, 1.15, 0.1 },
+	{ 1.45, 0.1, 1.2, 1.0, -0.3 },
+	{ 2.35, -0.08, 1.15, 0.95, 0.25 },
 }
 
 local function plantsInTrough(q: R)
@@ -144,14 +144,19 @@ local function plantsInTrough(q: R)
 				CFrame.new(m[1], 1.52, m[2]) * CFrame.Angles(0, m[5], 0),
 				m[3],
 				m[4],
-				1.05,
+				1.0,
 				greens[k % 3 + 1],
 				"Grass"
 			)
 		end
-		-- and spilling over the lip, front and back
+	end)
+	-- and trailing down the trough's sides under the lip, front and back. (A piece of their own,
+	-- low, so the trough's box over the pavement stays the size it was: the town stands a news box
+	-- with its box overhanging a planter where it can.)
+	q:piece(function(p: R)
+		p:block(-1.85, 0.74, -0.86, -1.55, 0.86, -0.82, FOLIAGE_DARK, "Grass")
 		for _, t in { { -1.7, -1 }, { 0.8, -1 }, { -0.6, 1 }, { 1.9, 1 } } do
-			p:lump(CFrame.new(t[1], 1.38, t[2] * 0.8), 1.1, 0.42, 0.44, FOLIAGE_DARK, "Grass")
+			p:lump(CFrame.new(t[1], 0.8, t[2] * 0.84), 1.0, 0.36, 0.16, FOLIAGE_DARK, "Grass")
 		end
 	end)
 	q:piece(function(p: R)
@@ -209,10 +214,10 @@ local function hedgeRow(r: R, cf: CFrame)
 			p:block(-7.9, 0, -0.84, 7.9, 1.5, 0.84, HEDGE, "Grass")
 			for k = 0, 5 do
 				p:lump(
-					CFrame.new(-6.4 + k * 2.6, 1.42 + (k % 2) * 0.06, 0) * CFrame.Angles(0, (k % 3 - 1) * 0.08, 0),
-					3.25,
+					CFrame.new(-6.5 + k * 2.6, 1.42 + (k % 2) * 0.06, 0),
+					3.0,
 					1.5,
-					1.94,
+					1.84,
 					if k % 2 == 0 then HEDGE_LIGHT else HEDGE,
 					"Grass"
 				)
@@ -325,7 +330,16 @@ local function lamp(r: R, x: number, y: number, z: number)
 			p:cyl(0, 2.9, 0, 3.4, 0.32, "y", DARK, "Metal")
 			p:cyl(0, 4.65, 0, 0.18, 0.6, "y", DARK, "Metal")
 			for _, s in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
-				p:block(s[1] * 0.42 - 0.05, 4.74, s[2] * 0.42 - 0.05, s[1] * 0.42 + 0.05, 5.9, s[2] * 0.42 + 0.05, DARK, "Metal")
+				p:block(
+					s[1] * 0.42 - 0.05,
+					4.74,
+					s[2] * 0.42 - 0.05,
+					s[1] * 0.42 + 0.05,
+					5.9,
+					s[2] * 0.42 + 0.05,
+					DARK,
+					"Metal"
+				)
 			end
 			p:cone(0, 6.15, 0, 0.5, 1.25, DARK, "Metal")
 			p:ball(0, 6.48, 0, 0.26, DARK, "Metal")
@@ -350,7 +364,16 @@ end
 -- A round table under a parasol, with two bistro chairs.
 local function cafe(r: R, x: number, y: number, z: number, top: Color3)
 	parts(r, function(p: R)
-		local function block(x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, c: Color3, m: string)
+		local function block(
+			x1: number,
+			y1: number,
+			z1: number,
+			x2: number,
+			y2: number,
+			z2: number,
+			c: Color3,
+			m: string
+		)
 			p:block(x + x1, y + y1, z + z1, x + x2, y + y2, z + z2, c, m)
 		end
 		block(-0.6, 0, -0.6, 0.6, 0.1, 0.6, DARK, "Metal")
@@ -360,7 +383,16 @@ local function cafe(r: R, x: number, y: number, z: number, top: Color3)
 		for _, sx in { -1, 1 } do
 			local cx = sx * 2.7
 			for _, l in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
-				block(cx + l[1] * 0.42 - 0.05, 0, l[2] * 0.42 - 0.05, cx + l[1] * 0.42 + 0.05, 1.7, l[2] * 0.42 + 0.05, DARK, "Metal")
+				block(
+					cx + l[1] * 0.42 - 0.05,
+					0,
+					l[2] * 0.42 - 0.05,
+					cx + l[1] * 0.42 + 0.05,
+					1.7,
+					l[2] * 0.42 + 0.05,
+					DARK,
+					"Metal"
+				)
 			end
 			p:cyl(x + cx, y + 1.79, z, 0.18, 1.3, "y", WOOD, "Wood")
 			block(cx + sx * 0.38, 1.88, -0.42, cx + sx * 0.5, 2.98, 0.42, WOOD, "Wood")
@@ -386,10 +418,32 @@ M.shrubPot = function(r: R)
 end
 
 -- A rack of three steel hoops with two town bikes standing in it, one each way: tyres and
--- wheels, the frame, the fork, bars and a saddle. The two bikes are one piece.
+-- wheels, the frame, the fork, bars and a saddle. Each bike is a piece of its own (the same one
+-- turned about), so that no piece's box takes in the rack between them.
+local function bike(r: R, cf: CFrame)
+	group(r, cf, function(q: R)
+		q:piece(function(p: R)
+			local col = rgb(88, 150, 170)
+			for _, z in { 1.3, -1.5 } do
+				p:cyl(0, 1, z, 0.16, 2.0, "x", rgb(46, 48, 58), "Metal")
+				p:cyl(0, 1, z, 0.24, 1.6, "x", METAL, "Metal")
+			end
+			local bb, seat, head = Vector3.new(0, 1.0, 0.1), Vector3.new(0, 2.3, 0.55), Vector3.new(0, 2.25, -1.0)
+			p:beam(bb, seat, 0.12, 0.12, col, "Metal")
+			p:beam(bb, head, 0.14, 0.14, col, "Metal")
+			p:beam(seat, head, 0.12, 0.12, col, "Metal")
+			p:beam(bb, Vector3.new(0, 1, 1.3), 0.08, 0.08, col, "Metal")
+			p:beam(seat, Vector3.new(0, 1, 1.3), 0.08, 0.08, col, "Metal")
+			p:beam(Vector3.new(0, 2.65, -1.05), Vector3.new(0, 1, -1.5), 0.1, 0.1, col, "Metal")
+			p:block(-0.07, 2.64, -1.65, 0.07, 2.76, -0.45, DARK, "Metal")
+			p:block(-0.14, 2.35, 0.4, 0.14, 2.5, 0.85, rgb(90, 66, 52), "Metal")
+		end)
+	end)
+end
+
 M.bikeRack = function(r: R)
 	parts(r, function(p: R)
-		p:block(-2.4, 0, -0.1, 2.4, 0.08, 0.1, DARK, "Metal")
+		p:block(-2.2, 0, -0.1, 2.2, 0.08, 0.1, DARK, "Metal")
 		for _, x in { -2.2, 0, 2.2 } do
 			for _, sz in { -1, 1 } do
 				p:block(x - 0.08, 0, sz * 0.75 - 0.08, x + 0.08, 1.45, sz * 0.75 + 0.08, METAL, "Metal")
@@ -397,28 +451,8 @@ M.bikeRack = function(r: R)
 			p:cyl(x, 1.45, 0, 1.66, 0.16, "z", METAL, "Metal")
 		end
 	end, true)
-	r:piece(function(p: R)
-		for i, bx in { -1.1, 1.1 } do
-			local d = if i == 1 then 1 else -1
-			local col = if i == 1 then RED else BLUE
-			local function at(y: number, z: number): Vector3
-				return Vector3.new(bx, y, z * d)
-			end
-			for _, z in { 1.3, -1.5 } do
-				p:cyl(bx, 1, z * d, 0.16, 2.0, "x", rgb(46, 48, 58), "Metal")
-				p:cyl(bx, 1, z * d, 0.24, 1.6, "x", METAL, "Metal")
-			end
-			local bb, seat, head = at(1.0, 0.1), at(2.3, 0.55), at(2.25, -1.0)
-			p:beam(bb, seat, 0.12, 0.12, col, "Metal")
-			p:beam(bb, head, 0.14, 0.14, col, "Metal")
-			p:beam(seat, head, 0.12, 0.12, col, "Metal")
-			p:beam(bb, at(1, 1.3), 0.08, 0.08, col, "Metal")
-			p:beam(seat, at(1, 1.3), 0.08, 0.08, col, "Metal")
-			p:beam(at(2.65, -1.05), at(1, -1.5), 0.1, 0.1, col, "Metal")
-			p:boxAt(CFrame.new(bx, 2.7, -1.05 * d), 0.14, 0.12, 1.2, DARK, "Metal")
-			p:boxAt(CFrame.new(bx, 2.42, 0.62 * d), 0.28, 0.15, 0.45, rgb(90, 66, 52), "Metal")
-		end
-	end)
+	bike(r, CFrame.new(-1.1, 0, -0.1))
+	bike(r, CFrame.new(1.1, 0, -0.1) * CFrame.Angles(0, math.pi, 0))
 end
 
 -- A post box on a post: a foot, the post and its collar, a box with a round top and a rim, the
@@ -430,10 +464,10 @@ M.mailbox = function(r: R)
 		p:block(-0.3, 2.1, -0.3, 0.3, 2.4, 0.3, shade(DARK, 1.2), "Metal")
 		p:block(-0.9, 2.4, -0.7, 0.9, 3.9, 0.7, BLUE, "Metal")
 		p:cyl(0, 3.9, 0, 1.8, 1.4, "x", BLUE, "Metal")
-		p:block(-0.94, 3.86, -0.74, 0.94, 3.94, 0.74, shade(BLUE, 0.8), "Metal")
-		p:block(-0.66, 3.5, -0.8, 0.66, 3.6, -0.7, shade(BLUE, 0.82), "Metal")
-		p:block(-0.55, 3.34, -0.76, 0.55, 3.46, -0.7, rgb(36, 40, 50), "Metal")
-		p:block(-0.4, 2.7, -0.76, 0.4, 3.1, -0.7, WHITE, "Metal")
+		p:block(-0.92, 3.86, -0.72, 0.92, 3.94, 0.72, shade(BLUE, 0.8), "Metal")
+		p:block(-0.66, 3.5, -0.77, 0.66, 3.6, -0.7, shade(BLUE, 0.82), "Metal")
+		p:block(-0.55, 3.34, -0.74, 0.55, 3.46, -0.7, rgb(36, 40, 50), "Metal")
+		p:block(-0.4, 2.7, -0.74, 0.4, 3.1, -0.7, WHITE, "Metal")
 	end, true)
 end
 
@@ -442,7 +476,7 @@ end
 -- parts named Red, Amber and Green, which the client switches.
 M.trafficLight = function(r: R)
 	r:piece(function(p: R)
-		p:block(-0.6, 0, -0.6, 0.6, 0.16, 0.6, DARK, "Metal")
+		p:block(-0.34, 0, -0.34, 0.34, 0.16, 0.34, DARK, "Metal")
 		p:cyl(0, 5.6, 0, 11.2, 0.5, "y", DARK, "Metal")
 	end, true)
 	r:piece(function(p: R)
@@ -608,7 +642,14 @@ local function statue(r: R, x: number, y: number, z: number)
 			p:ball(0, 8.15, 0, 1.0, shade(BRONZE, 1.08), "Metal")
 			p:cyl(0, 8.55, 0, 0.12, 1.3, "y", shade(BRONZE, 0.85), "Metal")
 			p:cyl(0, 8.85, 0, 0.5, 0.82, "y", shade(BRONZE, 0.85), "Metal")
-			p:boxAt(CFrame.new(1.05, 8.0, -0.35) * CFrame.Angles(math.rad(25), 0, math.rad(-22)), 0.4, 1.7, 0.4, BRONZE, "Metal")
+			p:boxAt(
+				CFrame.new(1.05, 8.0, -0.35) * CFrame.Angles(math.rad(25), 0, math.rad(-22)),
+				0.4,
+				1.7,
+				0.4,
+				BRONZE,
+				"Metal"
+			)
 			p:block(-1.12, 5.9, -0.2, -0.72, 7.3, 0.2, BRONZE, "Metal")
 			p:block(-1.16, 5.6, -0.55, -0.84, 6.4, 0.12, shade(BRONZE, 0.75), "Metal")
 			p:block(-1.2, 1.7, -2.06, 1.2, 2.6, -2, GOLD, "Metal")
@@ -628,7 +669,14 @@ local function fountain(r: R, x: number, y: number, z: number)
 			p:cyl(0, 0.45, 0, 0.9, 10.8, "y", shade(STONE, 0.95), "Concrete")
 			local side = 2 * 5.6 * math.tan(math.pi / 8)
 			for k = 0, 7 do
-				p:boxAt(CFrame.Angles(0, k * math.pi / 4, 0) * CFrame.new(0, 1.1, 5.3), side, 0.4, 0.6, STONE, "Concrete")
+				p:boxAt(
+					CFrame.Angles(0, k * math.pi / 4, 0) * CFrame.new(0, 1.1, 5.3),
+					side,
+					0.4,
+					0.6,
+					STONE,
+					"Concrete"
+				)
 			end
 			p:cyl(0, 1.6, 0, 1.4, 1.3, "y", shade(STONE, 0.92), "Concrete")
 			p:cone(0, 0, 0, 0.9, 4.4, STONE, "Concrete").cf = CFrame.new(0, 1.85, 0) * CFrame.Angles(math.pi, 0, 0)
@@ -672,7 +720,8 @@ end
 -- A flower bed 12 long: timber edging, soil, mounds of leaves and flowers at two heights.
 M.flowerStrip = function(r: R)
 	edgedBed(r, CFrame.identity, 12, 2.2)
-	local tall = { { -4.6, 0.3, 1.35 }, { -2.2, -0.35, 1.55 }, { 0.4, 0.25, 1.4 }, { 2.9, -0.3, 1.6 }, { 4.9, 0.3, 1.3 } }
+	local tall =
+		{ { -4.6, 0.3, 1.35 }, { -2.2, -0.35, 1.55 }, { 0.4, 0.25, 1.4 }, { 2.9, -0.3, 1.6 }, { 4.9, 0.3, 1.3 } }
 	r:piece(function(p: R)
 		for _, s in tall do
 			stem(p, s[1], s[2], 0.28, s[3])
@@ -705,7 +754,16 @@ M.manhole = function(r: R)
 	r:cyl(0, 0.02, 0, 0.04, 3, "y", rgb(84, 88, 100), "Metal")
 	r:cyl(0, 0.09, 0, 0.1, 2.4, "y", rgb(104, 108, 120), "Metal")
 	for k = -1, 1 do
-		r:block(-0.9 + math.abs(k) * 0.25, 0.14, k * 0.5 - 0.06, 0.9 - math.abs(k) * 0.25, 0.18, k * 0.5 + 0.06, rgb(90, 94, 106), "Metal")
+		r:block(
+			-0.9 + math.abs(k) * 0.25,
+			0.14,
+			k * 0.5 - 0.06,
+			0.9 - math.abs(k) * 0.25,
+			0.18,
+			k * 0.5 + 0.06,
+			rgb(90, 94, 106),
+			"Metal"
+		)
 	end
 end
 
@@ -785,8 +843,11 @@ M.pocketStatue = function(r: R)
 	r:cyl(0, 0.1, 0, 0.2, 14.6, "y", shade(STONE, 0.9), "Concrete")
 	r:cyl(0, 0.16, 0, 0.3, 14, "y", SOIL, "Ground")
 	statue(r, 0, 0.3, 0)
-	for k = 0, 3 do
-		wildflowers(r, CFrame.Angles(0, k * math.pi / 2 + 0.4, 0) * CFrame.new(5.1, 0.3, 0) * CFrame.Angles(0, k, 0))
+	for k = 0, 2 do
+		wildflowers(
+			r,
+			CFrame.Angles(0, k * math.pi * 2 / 3 + 0.4, 0) * CFrame.new(5.1, 0.3, 0) * CFrame.Angles(0, k, 0)
+		)
 	end
 	bench(r, -10, -8, 135, 0.12)
 	bench(r, 10, -8, -135, 0.12)
@@ -926,14 +987,30 @@ M.pocketPicnic = function(r: R)
 			)
 		end
 		p:lump(CFrame.new(o + Vector3.new(0, 1.9, 0)), 2.0, 1.2, 2.0, rgb(150, 70, 66), "Metal")
-		p:lump(CFrame.new(o + Vector3.new(0, 2.42, 0)) * CFrame.Angles(0, math.pi / 8, 0), 1.86, 1.0, 1.86, rgb(170, 82, 76), "Metal")
+		p:lump(
+			CFrame.new(o + Vector3.new(0, 2.42, 0)) * CFrame.Angles(0, math.pi / 8, 0),
+			1.86,
+			1.0,
+			1.86,
+			rgb(170, 82, 76),
+			"Metal"
+		)
 		p:block(o.X - 0.3, o.Y + 2.88, o.Z - 0.08, o.X + 0.3, o.Y + 3.03, o.Z + 0.08, DARK, "Metal")
 		p:block(o.X + 0.9, o.Y + 1.9, o.Z - 0.5, o.X + 1.7, o.Y + 1.98, o.Z + 0.5, WOOD_DARK, "Wood")
 	end, true)
 	parts(r, function(p: R)
 		for i = 0, 3 do
 			for j = 0, 2 do
-				p:block(4 + i * 1.75, 0.2, -12 + j * 1.67, 5.75 + i * 1.75, 0.32, -10.33 + j * 1.67, if (i + j) % 2 == 0 then RED else WHITE, "Fabric")
+				p:block(
+					4 + i * 1.75,
+					0.2,
+					-12 + j * 1.67,
+					5.75 + i * 1.75,
+					0.32,
+					-10.33 + j * 1.67,
+					if (i + j) % 2 == 0 then RED else WHITE,
+					"Fabric"
+				)
 			end
 		end
 		p:block(5, 0.32, -11, 6.6, 1.2, -9.8, WOOD, "Wood")
@@ -958,14 +1035,30 @@ local function vegBed(r: R, x: number, z: number, kind: number)
 				for i = 0, 2 do
 					for j = 0, 1 do
 						local cx, cz = -2.4 + i * 2.4, -1.2 + j * 2.4
-						p:lump(CFrame.new(cx, 0.55, cz) * CFrame.Angles(0, i + j, 0), 1.7, 0.5, 1.7, FOLIAGE_DARK, "Grass")
+						p:lump(
+							CFrame.new(cx, 0.55, cz) * CFrame.Angles(0, i + j, 0),
+							1.7,
+							0.5,
+							1.7,
+							FOLIAGE_DARK,
+							"Grass"
+						)
 						p:ball(cx, 0.82, cz, 0.95, rgb(170, 204, 140), "Grass")
 					end
 				end
 			elseif kind == 2 then
 				-- carrots: rows of feathery tops over a ridge with the orange shoulders showing
 				for j = 0, 2 do
-					p:block(-3.3, 0.3, -1.8 + j * 1.8 - 0.2, 3.3, 0.42, -1.8 + j * 1.8 + 0.2, rgb(226, 140, 84), "Grass")
+					p:block(
+						-3.3,
+						0.3,
+						-1.8 + j * 1.8 - 0.2,
+						3.3,
+						0.42,
+						-1.8 + j * 1.8 + 0.2,
+						rgb(226, 140, 84),
+						"Grass"
+					)
 					for i = 0, 3 do
 						p:cone(-2.7 + i * 1.8, 0.8, -1.8 + j * 1.8, 0.9, 0.5, FOLIAGE_LIGHT, "Grass")
 					end
@@ -1233,7 +1326,16 @@ M.signpost = function(r: R)
 		p:cone(0, 6.6, 0, 0.4, 0.66, shade(WOOD_DARK, 0.85), "Wood")
 		local function finger(y: number, dir: number, len: number)
 			local x0 = dir * 0.25
-			p:block(math.min(x0, x0 + dir * len), y - 0.45, -0.15, math.max(x0, x0 + dir * len), y + 0.45, 0.15, WOOD, "Wood")
+			p:block(
+				math.min(x0, x0 + dir * len),
+				y - 0.45,
+				-0.15,
+				math.max(x0, x0 + dir * len),
+				y + 0.45,
+				0.15,
+				WOOD,
+				"Wood"
+			)
 			for _, up in { -1, 1 } do
 				local tip = CFrame.new(x0 + dir * (len + 0.25), y + up * 0.225, 0)
 					* CFrame.Angles(0, -dir * math.pi / 2, 0)
@@ -1257,7 +1359,8 @@ M.hayBale = function(r: R)
 			p:cyl(sx * 0.8, 1.8, 0, 0.12, 3.66, "x", rgb(176, 150, 110), "SmoothPlastic")
 		end
 		p:cyl(1.77, 1.8, 0, 0.06, 1.4, "x", rgb(196, 168, 108), "SmoothPlastic")
-		p:cone(0, 0, 0, 0.4, 0.5, shade(hay, 1.05), "SmoothPlastic").cf = CFrame.new(0.4, 3.62, 0.3) * CFrame.Angles(0.3, 0, 0.5)
+		p:cone(0, 0, 0, 0.4, 0.5, shade(hay, 1.05), "SmoothPlastic").cf = CFrame.new(0.4, 3.62, 0.3)
+			* CFrame.Angles(0.3, 0, 0.5)
 	end, true)
 end
 
@@ -1359,7 +1462,8 @@ M.stoneCircle = function(r: R)
 			p:lump(f * CFrame.new(0, h / 2, 0), 2.3, 0.9, 3.3, c, "Slate")
 		end
 		p:boxAt(
-			CFrame.new(20 * math.cos(math.rad(20)), 9.6, 20 * math.sin(math.rad(20))) * CFrame.Angles(0, math.rad(-110), 0),
+			CFrame.new(20 * math.cos(math.rad(20)), 9.6, 20 * math.sin(math.rad(20)))
+				* CFrame.Angles(0, math.rad(-110), 0),
 			16,
 			1.6,
 			3,
@@ -1369,7 +1473,7 @@ M.stoneCircle = function(r: R)
 		p:boxAt(CFrame.new(0, 0.6, 0) * CFrame.Angles(0, 0.4, 0), 7, 1.2, 4.6, shade(ROCK, 1.1), "Slate")
 	end, true)
 	parts(r, function(p: R)
-		for k = 0, 8, 2 do
+		for k = 0, 8, 4 do
 			local a = math.rad(k * 40)
 			p:lump(
 				CFrame.new(math.cos(a) * 18.85, 2.6 + k * 0.2, math.sin(a) * 18.85) * CFrame.Angles(0, -a, 0),
@@ -1409,8 +1513,22 @@ local function towel(r: R, col: Color3, stripe: Color3, top: number)
 			p:block(2.3 + sx * 0.3 - 0.2, 0, 1.4, 2.3 + sx * 0.3 + 0.2, 0.2, 2.4, rgb(90, 120, 170), "SmoothPlastic")
 			p:block(2.3 + sx * 0.3 - 0.2, 0.2, 1.6, 2.3 + sx * 0.3 + 0.2, 0.28, 1.72, rgb(70, 96, 140), "SmoothPlastic")
 		end
-		p:boxAt(CFrame.new(0.4, 0.46, -1.6) * CFrame.Angles(0, 0.3, 0.12), 0.8, 0.08, 1.1, rgb(120, 150, 110), "SmoothPlastic")
-		p:boxAt(CFrame.new(-0.36, 0.46, -1.83) * CFrame.Angles(0, 0.3, -0.12), 0.8, 0.08, 1.1, rgb(120, 150, 110), "SmoothPlastic")
+		p:boxAt(
+			CFrame.new(0.4, 0.46, -1.6) * CFrame.Angles(0, 0.3, 0.12),
+			0.8,
+			0.08,
+			1.1,
+			rgb(120, 150, 110),
+			"SmoothPlastic"
+		)
+		p:boxAt(
+			CFrame.new(-0.36, 0.46, -1.83) * CFrame.Angles(0, 0.3, -0.12),
+			0.8,
+			0.08,
+			1.1,
+			rgb(120, 150, 110),
+			"SmoothPlastic"
+		)
 		p:cyl(-1.1, 0.66, 1.2, 0.6, 0.36, "y", rgb(236, 200, 120), "SmoothPlastic")
 		p:cyl(-1.1, 1.04, 1.2, 0.16, 0.22, "y", WHITE, "SmoothPlastic")
 		ball(p, 2.6, 0.7, -2.4, 1.4)
@@ -1430,7 +1548,9 @@ end
 M.sandcastle = function(r: R)
 	parts(r, function(p: R)
 		p:block(-2, 0, -2, 2, 1.2, 2, SAND, "Sand")
-		for _, s in { { -0.6, -2 }, { 0.6, -2 }, { -0.6, 2 }, { 0.6, 2 }, { -2, -0.6 }, { -2, 0.6 }, { 2, -0.6 }, { 2, 0.6 } } do
+		for _, s in
+			{ { -0.6, -2 }, { 0.6, -2 }, { -0.6, 2 }, { 0.6, 2 }, { -2, -0.6 }, { -2, 0.6 }, { 2, -0.6 }, { 2, 0.6 } }
+		do
 			p:block(s[1] - 0.22, 1.2, s[2] - 0.22, s[1] + 0.22, 1.5, s[2] + 0.22, SAND, "Sand")
 		end
 		for _, c in { { -1.6, -1.6 }, { 1.6, -1.6 }, { -1.6, 1.6 }, { 1.6, 1.6 } } do
@@ -1447,7 +1567,14 @@ M.sandcastle = function(r: R)
 		p:cyl(2.9, 0.5, 1.6, 1, 1.1, "y", BLUE, "SmoothPlastic")
 		p:cyl(2.9, 0.98, 1.6, 0.1, 1.2, "y", shade(BLUE, 0.8), "SmoothPlastic")
 		p:beam(Vector3.new(2.6, 0.15, -1.2), Vector3.new(3.6, 0.5, -2.6), 0.12, 0.12, YELLOW, "SmoothPlastic")
-		p:boxAt(CFrame.new(2.45, 0.1, -0.95) * CFrame.Angles(0, math.rad(-35), 0), 0.6, 0.08, 0.7, YELLOW, "SmoothPlastic")
+		p:boxAt(
+			CFrame.new(2.45, 0.1, -0.95) * CFrame.Angles(0, math.rad(-35), 0),
+			0.6,
+			0.08,
+			0.7,
+			YELLOW,
+			"SmoothPlastic"
+		)
 	end)
 end
 
@@ -1518,7 +1645,7 @@ end
 M.volleyNet = function(r: R)
 	parts(r, function(p: R)
 		for _, x in { -9, 9 } do
-			p:block(x - 0.5, 0, -0.5, x + 0.5, 0.12, 0.5, DARK, "Metal")
+			p:block(x - 0.5, 0, -0.5, x + 0.5, 0.2, 0.5, DARK, "Metal")
 			p:cyl(x, 3.6, 0, 7.2, 0.5, "y", WHITE, "Metal")
 			p:cyl(x, 7.3, 0, 0.2, 0.6, "y", DARK, "Metal")
 		end
@@ -1569,7 +1696,14 @@ M.driftwood = function(r: R)
 			)
 		end
 		p:cone(-2.6, 0.22, 1.2, 0.44, 0.9, PINK, "SmoothPlastic")
-		p:lump(CFrame.new(0.6, 0.12, -1.1) * CFrame.Angles(0, 0.4, 0), 1.6, 0.24, 0.7, rgb(80, 120, 84), "SmoothPlastic")
+		p:lump(
+			CFrame.new(0.6, 0.12, -1.1) * CFrame.Angles(0, 0.4, 0),
+			1.6,
+			0.24,
+			0.7,
+			rgb(80, 120, 84),
+			"SmoothPlastic"
+		)
 	end)
 end
 
@@ -1668,7 +1802,14 @@ M.seaRocks = function(r: R)
 		for _, sz in { -1, 1 } do
 			p:lump(CFrame.new(0.2, 4.35, 0.2 + sz * 0.33), 1.2, 0.36, 0.2, rgb(170, 176, 190), "SmoothPlastic")
 		end
-		p:boxAt(CFrame.new(-0.4, 4.35, 0.2) * CFrame.Angles(0, 0, 0.3), 0.5, 0.12, 0.36, rgb(70, 74, 86), "SmoothPlastic")
+		p:boxAt(
+			CFrame.new(-0.4, 4.35, 0.2) * CFrame.Angles(0, 0, 0.3),
+			0.5,
+			0.12,
+			0.36,
+			rgb(70, 74, 86),
+			"SmoothPlastic"
+		)
 	end)
 end
 

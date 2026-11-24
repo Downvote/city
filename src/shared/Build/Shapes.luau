@@ -288,8 +288,9 @@ function Shapes.floor(f: Plan.Floor, holes: { { number } }?, under: { { number }
 		local g = 0.05
 		rects = Shapes.subtract(rects, { h[1] - g, h[2] - g, h[3] + g, h[4] + g })
 	end
+	local walls: { { number } } = under or {}
 	if f.lv > 0 then
-		for _, w in under or {} do
+		for _, w in walls do
 			rects = Shapes.subtract(rects, w)
 		end
 	end
