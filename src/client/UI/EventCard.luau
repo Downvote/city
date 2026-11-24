@@ -603,13 +603,12 @@ function EventCard.start(_hud: any)
 		holder,
 		{ Corners = { "tl", "br" }, Arm = 12, Thick = 2, Inset = -6, Color = T.White, Transparency = 0.5 }
 	)
-	Kit.disc({
+	-- a marker filling the prompt's left end, flush with it
+	local _, markReach = Kit.flushMark(holder, holder, 60, true, {
 		Name = "Mark",
-		Parent = holder,
-		Size = 38,
-		Position = UDim2.new(0, 11, 0.5, -19),
 		Color = T.Orange,
 		Icon = "people",
+		IconColor = T.Dark,
 		ZIndex = 21,
 	})
 	titleLabel = Kit.new("TextLabel", {
@@ -653,13 +652,17 @@ function EventCard.start(_hud: any)
 	}, function()
 		openScene()
 	end)
-	-- the time left to answer, a thin bar along the prompt's foot
+	-- the time left to answer, a thin bar along the prompt's foot, starting a little clear of the
+	-- marker's slanted edge (the user: "The timeout bar below should have a gap from the left icon
+	-- block"; at the foot the marker reaches half an end less far than at its middle)
+	local holderCap = holder:GetAttribute("Cap")
+	local barStart = math.ceil(markReach - (if type(holderCap) == "number" then holderCap / 2 else 9)) + 10
 	timeTrack = Kit.new("Frame", {
 		Name = "TimeLeft",
 		BackgroundColor3 = T.Glass:Lerp(T.White, 0.16),
 		BorderSizePixel = 0,
-		Size = UDim2.new(1, -60, 0, 3),
-		Position = UDim2.new(0, 30, 1, -5),
+		Size = UDim2.new(1, -(barStart + 30), 0, 3),
+		Position = UDim2.new(0, barStart, 1, -5),
 		Visible = false,
 		ZIndex = 21,
 		Parent = holder,

@@ -340,7 +340,13 @@ replicate the look and feel as much as possible, including the texturing and min
   `Lean` is half its end and a little), and what sits on a slab goes in a frame of its own, never straight under
   a padding or a list layout on the slab (they would move its painted `Body`). A slab is faded with `Kit.fade`.
   Round things stay round (round buttons, discs, badges, portraits, dials), and cards, panels, tiles, text boxes
-  and progress bars keep their rounded corners. `Kit.slant` paints the slab
+  and progress bars keep their rounded corners. The icon at the left of a bar is never a circle (the user: "make it
+  such that all icons that are at the left of every bar becomes like this instead of a circle", then "Make them
+  fill it up with no gaps, just like the claim button"): on a leaning bar it fills the bar's left end flush
+  (`Kit.flushMark`, as `Kit.row`'s `Marker` and the quests' and the event prompt's markers do), the way the Claim
+  button fills a quest's right end with its left end sharp (`Sharp`); on a rounded card or strip it is a small
+  leaning square (`Kit.leanMark`, `Kit.disc({ Lean = true })`). Keep what runs along a bar clear of its marker
+  (the event prompt's countdown starts after it). `Kit.slant` paints the slab
   (`UI/Skin` paints its two ends, an ImageLabel named `Body` stretches the middle), so recolour a leaning face
   with `Kit.paint` and read it with `Kit.colorOf`, never through its BackgroundColor3 or BackgroundTransparency
   (the face itself is clear). `Kit.detail` adds the halftone at one end, which starts at the very end of the slab

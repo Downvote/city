@@ -703,8 +703,8 @@ local function trayNote(parent: Instance, icon: string, color: Color3, title: st
 		AutomaticSize = Enum.AutomaticSize.Y,
 		LayoutOrder = order or 0,
 	})
-	-- a round marker with the icon on it, at the left
-	Kit.disc({ Parent = box, Size = 48, Position = UDim2.fromOffset(4, 0), Color = color, Icon = icon })
+	-- a leaning marker with the icon on it, at the left
+	Kit.disc({ Lean = true, Parent = box, Size = 48, Position = UDim2.fromOffset(4, 0), Color = color, Icon = icon })
 	local words = Kit.box({
 		Parent = box,
 		Size = UDim2.new(1, -68, 0, 0),

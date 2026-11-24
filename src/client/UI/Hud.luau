@@ -159,21 +159,8 @@ function Hud.start()
 		Radius = "pill",
 	})
 	local fill = Kit.frame({ Parent = track, Size = UDim2.fromScale(0, 1), Color = T.Yellow, Radius = "pill" })
-	-- notches at each quarter, like a gauge
-	for i = 1, 3 do
-		local notch = Kit.new("Frame", {
-			Name = "Notch",
-			BackgroundColor3 = T.Glass,
-			BackgroundTransparency = 0.35,
-			BorderSizePixel = 0,
-			Size = UDim2.new(0, 2, 1, 0),
-			Position = UDim2.fromScale(i / 4, 0),
-			AnchorPoint = Vector2.new(0.5, 0),
-			ZIndex = 3,
-			Parent = track,
-		})
-		notch:SetAttribute("KeepColors", true)
-	end
+	-- (no notches across it: the user, of the marks on the bar and the strokes between the money,
+	-- people and happiness, "No need for borders where i marked red")
 	local nextLine = Kit.text("", {
 		Parent = card,
 		Size = UDim2.new(1, -150, 0, 18),
@@ -216,7 +203,8 @@ function Hud.start()
 	local pillRow =
 		Kit.box({ Name = "Row", Parent = pills, Size = UDim2.new(1, -8, 1, 0), Position = UDim2.fromOffset(8, 0) })
 	pillRow.ZIndex = 2
-	Kit.list(pillRow, 6, true, Enum.HorizontalAlignment.Left).VerticalAlignment = Enum.VerticalAlignment.Center
+	-- (a little more room between the three now nothing stands between them)
+	Kit.list(pillRow, 14, true, Enum.HorizontalAlignment.Left).VerticalAlignment = Enum.VerticalAlignment.Center
 	local function cell(icon: string, width: number, order: number, plus: (() -> ())?): (Frame, TextLabel)
 		local f, value = Kit.pill(icon, {
 			Parent = pillRow,
@@ -228,25 +216,10 @@ function Hud.start()
 		Kit.paint(f, nil, 1)
 		return f, value
 	end
-	local function divider(order: number)
-		local d = Kit.new("Frame", {
-			Name = "Divider",
-			BackgroundColor3 = Color3.fromRGB(206, 218, 240),
-			BackgroundTransparency = 0.7,
-			BorderSizePixel = 0,
-			Size = UDim2.fromOffset(2, 26),
-			Rotation = 16,
-			LayoutOrder = order,
-			Parent = pillRow,
-		})
-		d:SetAttribute("KeepColors", true)
-	end
 	-- (the money had a green + beside it that opened the shop. The user: "remove the + button next
 	-- to coins". The shop itself went later.)
 	local coinPill, coins = cell("coin", 134, 1)
-	divider(2)
 	local _, popLabel = cell("people", 82, 3)
-	divider(4)
 	local moodPill, moodLabel = cell("smile", 98, 5)
 	-- and under that, the quests: the town's next goals
 	Quests.mount(hud, UDim2.fromOffset(0, 152), function()

@@ -2100,7 +2100,9 @@ function Kit.press(b: GuiButton, opts: { [string]: any }?)
 					BackgroundColor3 = o.Accent or T.Yellow,
 					BorderSizePixel = 0,
 					Size = UDim2.fromOffset(0, 3),
-					Position = UDim2.new(0.5, 0, 1, -1),
+					-- a few pixels clear of the name, not touching it (the user: "make the bar
+					-- lower when hovering")
+					Position = UDim2.new(0.5, 0, 1, 5),
 					AnchorPoint = Vector2.new(0.5, 1),
 					ZIndex = 3,
 					Parent = b,
@@ -2730,12 +2732,119 @@ function Kit.badge(parent: GuiObject): Frame
 	return f
 end
 
+-- A leaning marker: a small slab in one colour, leaning as every slab does, its points softly
+-- rounded, with an icon on it. It is what sits at the left end of a bar (a quest, a list row, a
+-- notice, the event prompt, a hint) in place of a round one. The user, with a picture of a small
+-- purple leaning square with a case on it: "make it such that all icons that are at the left of
+-- every bar becomes like this instead of a circle. this includes the quest bars too". props:
+-- Parent, Size (its height in pixels), Width (its box's width; about square if left out),
+-- Sharp ("right": that end a clean cut, for a marker set flush into a bar's end, as the quests'
+-- Claim button is: "make them fill it up with no gaps, just like the claim button"), Position,
+-- AnchorPoint, Color, Icon, IconColor, Text (a letter or two in place of an icon), TextColor,
+-- Name, ZIndex, LayoutOrder. Returns its frame, whose box is the whole shape, ends and all.
+function Kit.leanMark(props: { [string]: any }?): Frame
+	local p = props or {}
+	local px: number = p.Size or 28
+	local color: Color3 = p.Color or T.Yellow
+	local z: number = p.ZIndex or 1
+	local cap = math.clamp(math.floor(px * Kit.Lean + 0.5), 4, 20)
+	-- about as wide across its middle as it is tall, so it reads as a leaning square
+	local w: number = p.Width or (math.floor(px * 0.86 + 0.5) + cap)
+	local holder = Kit.new("Frame", {
+		Name = p.Name or "Marker",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(w, px),
+		Position = p.Position or UDim2.new(),
+		AnchorPoint = p.AnchorPoint or Vector2.zero,
+		ZIndex = z,
+		LayoutOrder = p.LayoutOrder or 0,
+		Parent = p.Parent,
+	})
+	local face = Kit.new("Frame", {
+		Name = "Face",
+		BackgroundColor3 = color,
+		BorderSizePixel = 0,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = z,
+		Parent = holder,
+	})
+	face:SetAttribute("KeepColors", true)
+	Kit.slant(face, px, nil, nil, p.Sharp)
+	Kit.shade(face, color)
+	local light = color.R * 0.3 + color.G * 0.59 + color.B * 0.11 > 0.5
+	if p.Icon and Icons.has(p.Icon) then
+		local ipx = math.floor(px * 0.58)
+		Icons.make(p.Icon, ipx, {
+			Name = "IconArt",
+			Parent = holder,
+			Position = UDim2.new(0.5, -ipx / 2 + (p.IconX or 0), 0.5, -ipx / 2),
+			Color = p.IconColor or (if light then T.Dark else T.White),
+			Hole = color,
+			ZIndex = z + 1,
+		})
+	elseif p.Text then
+		Kit.new("TextLabel", {
+			Name = "Mark",
+			Text = p.Text,
+			BackgroundTransparency = 1,
+			Font = Kit.Fonts.Title,
+			TextSize = math.floor(px * 0.7),
+			TextColor3 = p.TextColor or (if light then T.Dark else T.White),
+			Size = UDim2.fromScale(1, 1),
+			ZIndex = z + 1,
+			Parent = holder,
+		})
+	end
+	return holder
+end
+
+-- A marker that fills the left end of a leaning bar, flush with it: as tall as the bar, its
+-- slanted left edge on the bar's own and its right end a clean cut into the bar (the user: "Make
+-- them fill it up with no gaps, just like the claim button"). `bar` is the slab's face (made by
+-- Kit.slant), `outside` whether its ends stand out past its box (Kit.darkPill's do) or sit inside
+-- it (a row's, a button's). The marker goes in `parent` (the bar's frame or a sibling covering
+-- the same box) at `X` across, where the bar's face box starts. props as Kit.leanMark, less Size
+-- and Position, and Hidden: how much of the bar's left end is off the screen (the quests come out
+-- of the screen's left edge, their whole slanted end out of sight), so the marker reaches that
+-- much further in and its icon sits in the middle of what shows. Returns the marker and how far in
+-- from the bar's box its right end reaches at the middle of its height (where words after it may
+-- start, plus a gap).
+function Kit.flushMark(
+	parent: GuiObject,
+	bar: GuiObject,
+	tall: number,
+	outside: boolean,
+	props: { [string]: any }
+): (Frame, number)
+	local cap: number = bar:GetAttribute("Cap") :: any or math.clamp(math.floor(tall * Kit.Lean + 0.5), 4, 20)
+	local p = table.clone(props)
+	local hidden: number = p.Hidden or 0
+	local w = math.floor(tall * 0.8 + 0.5) + cap + hidden
+	local x0: number = p.X or 0
+	p.X, p.Hidden = nil, nil
+	p.IconX = hidden * 0.25
+	p.Size = tall
+	p.Width = w
+	p.Sharp = "right"
+	-- a bar whose ends stand out past its box starts one end further left
+	local left = if outside then x0 - cap else x0
+	p.Position = UDim2.new(0, left, 0.5, 0)
+	p.AnchorPoint = Vector2.new(0, 0.5)
+	local mark = Kit.leanMark(p)
+	mark.Parent = parent
+	return mark, left + w - cap / 2
+end
+
 -- A round marker: a disc in one colour with an icon on it, in a thin dark ring (what a diamond
--- was in the look before: a row's badge, a stat's mark, a pin on the map). props: Parent, Size
+-- was in the look before: a stat's mark, a tick in a ring, a pin on the map). props: Parent, Size
 -- (pixels across), Position, AnchorPoint, Color, Icon (an icon name), IconColor, Ring (false for
--- no ring, or its colour), Name, ZIndex, LayoutOrder. Returns the disc.
+-- no ring, or its colour), Name, ZIndex, LayoutOrder, Lean (true: the leaning marker at the left
+-- end of a bar instead, Kit.leanMark). Returns the disc.
 function Kit.disc(props: { [string]: any }?): Frame
 	local p = props or {}
+	if p.Lean then
+		return Kit.leanMark(p)
+	end
 	local px: number = p.Size or 28
 	local color: Color3 = p.Color or T.Yellow
 	local z: number = p.ZIndex or 1
@@ -2799,27 +2908,17 @@ function Kit.hint(text: string, props: { [string]: any }?): (Frame, TextLabel)
 		PaddingBottom = UDim.new(0, 8),
 		Parent = strip,
 	})
-	local badge = Kit.new("Frame", {
+	-- a dark leaning marker with a "!" at its left end
+	Kit.leanMark({
 		Name = "Badge",
-		BackgroundColor3 = T.Dark,
-		BorderSizePixel = 0,
-		Size = UDim2.fromOffset(22, 22),
-		Position = UDim2.new(0, -32, 0.5, 0),
-		AnchorPoint = Vector2.new(0, 0.5),
-		ZIndex = z + 1,
 		Parent = strip,
-	})
-	Kit.corner(badge, "round")
-	Kit.new("TextLabel", {
-		Name = "Bang",
+		Size = 22,
+		Position = UDim2.new(0, -34, 0.5, 0),
+		AnchorPoint = Vector2.new(0, 0.5),
+		Color = T.Dark,
 		Text = "!",
-		BackgroundTransparency = 1,
-		Font = Kit.Fonts.Title,
-		TextSize = 16,
-		TextColor3 = Color3.fromRGB(190, 184, 150),
-		Size = UDim2.fromScale(1, 1),
-		ZIndex = z + 2,
-		Parent = badge,
+		TextColor = Color3.fromRGB(190, 184, 150),
+		ZIndex = z + 1,
 	})
 	local label = Kit.new("TextLabel", {
 		Name = "Text",
@@ -3439,32 +3538,17 @@ function Kit.row(props: { [string]: any }, onClick: (() -> ())?): (GuiObject, Fr
 	local lean = math.ceil(cap / 2) + 2
 	local left = lean + 14
 	if p.Marker then
-		-- a round badge with the icon on it
-		local d = h - 18
-		local badge = Kit.new("Frame", {
+		-- a marker filling the bar's left end, flush with its slanted edge (in the row itself,
+		-- not on what nudges under the pointer, so it never leaves its edge)
+		local _, reach = Kit.flushMark(row, face, h - 2, false, {
 			Name = "Marker",
-			BackgroundColor3 = p.MarkerColor or T.Yellow,
-			BorderSizePixel = 0,
-			Size = UDim2.fromOffset(d, d),
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = UDim2.new(0, lean + 4 + d / 2, 0.5, 0),
+			X = 1,
+			Color = p.MarkerColor or T.Yellow,
+			Icon = if Icons.has(p.Marker) then p.Marker else nil,
+			IconColor = T.Dark,
 			ZIndex = 2,
-			Parent = inner,
 		})
-		Kit.corner(badge, "round")
-		Kit.rim(badge, T.Dark, 2, 0.55)
-		if Icons.has(p.Marker) then
-			local ipx = math.floor(d * 0.58)
-			Icons.make(p.Marker, ipx, {
-				Name = "IconArt",
-				Parent = inner,
-				Position = UDim2.new(0, lean + 4 + d / 2 - ipx / 2, 0.5, -ipx / 2),
-				Color = T.Dark,
-				Hole = p.MarkerColor or T.Yellow,
-				ZIndex = 3,
-			})
-		end
-		left = lean + d + 16
+		left = math.ceil(reach) + 12
 	end
 	if p.LeftSpace then
 		left = p.LeftSpace + lean

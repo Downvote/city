@@ -52,6 +52,7 @@ function Toasts.show(text: string, kind: string?)
 	local row =
 		Kit.box({ Parent = card, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, ZIndex = 51 })
 	local icon = Kit.disc({
+		Lean = true,
 		Name = "Mark",
 		Parent = row,
 		Size = 28,

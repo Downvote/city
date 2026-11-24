@@ -92,23 +92,24 @@ local function quest(g: any, order: number): Frame
 		onOpen()
 	end)
 	Kit.press(hit, { Kind = "slab", Face = slab, Grow = 1, Dip = 0.99 })
-	-- a round marker: yellow with a tick when it's done, the goal's own mark otherwise
-	Kit.disc({
+	-- a marker filling the slab's left end, flush with it like the Claim button at the right:
+	-- yellow with a tick when it's done, the goal's own mark otherwise
+	local cap = slab:GetAttribute("Cap")
+	local _, reach = Kit.flushMark(slab, slab, ROW - 6, true, {
 		Name = "Marker",
-		Parent = slab,
-		Size = 26,
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0, 22, 0.5, 0),
+		-- (the quests come out of the screen's left edge: their slanted end is out of sight)
+		Hidden = if type(cap) == "number" then cap else 0,
 		Color = if ready then T.Yellow else T.Blue,
 		Icon = if ready then "check" else "trophy",
 		IconColor = T.Dark,
 		ZIndex = 3,
 	})
+	local textX = math.ceil(reach) + 10
 	local name = Kit.title(g.goal.name, {
 		Name = "Name",
 		Parent = slab,
-		Size = UDim2.new(1, -156, 0, 20),
-		Position = UDim2.fromOffset(40, 4),
+		Size = UDim2.new(1, -(textX + 116), 0, 20),
+		Position = UDim2.fromOffset(textX, 4),
 		TextSize = 16,
 		Color = T.White,
 		Wrap = false,
@@ -118,8 +119,8 @@ local function quest(g: any, order: number): Frame
 	local desc = Kit.text(g.goal.desc, {
 		Name = "Desc",
 		Parent = slab,
-		Size = UDim2.new(1, -156, 0, 15),
-		Position = UDim2.fromOffset(40, 23),
+		Size = UDim2.new(1, -(textX + 116), 0, 15),
+		Position = UDim2.fromOffset(textX, 23),
 		TextSize = 12,
 		Color = SOFT,
 		Wrap = false,

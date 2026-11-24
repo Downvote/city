@@ -1873,6 +1873,28 @@ the edge), only dips a little when pressed.
 (With a picture of the yellow meeting the dark in one clean slanted line, only the far end's corners rounded.) So the
 Claim button's left end is a sharp cut, no rounding, while its right end keeps the quest's own rounded points.
 
+> make the bar lower when hovering in the first image. also, in the second image, make it such that all icons that
+> are at the left of every bar becomes like this instead of a circle. this includes the quest bars too
+
+> Make them fill it up with no gaps, just like the claim button
+
+> The timeout bar below should have a gap from the left icon block
+
+(With pictures of the line under "Villagers" on the quick menu and of a small purple leaning square with a case on
+it.) The line that grows under a quick menu tile's name sits a few pixels below the name now. The icon at the left
+end of a bar is no longer a circle: on a leaning bar (a quest, a row in any list, the event prompt) it is a block
+in its colour that fills the bar's whole left end, its slanted edge on the bar's own and its inner end a clean cut,
+the way the Claim button fills a quest's right end, with the icon in the middle of what shows (the quests come out
+of the screen's edge, so theirs reaches past it). On a rounded card or strip (a notice, a hint, a note in Build
+mode) it is a small leaning square of its own. The event prompt's countdown bar starts a little clear of its
+block.
+
+> No need for borders where i marked red
+
+(With a phone screenshot, the three marks across the level bar and the two slanted strokes between the money, the
+people and the happiness circled.) The level bar is one plain bar with no notches, and the three numbers under it
+stand apart with a little more room and nothing between them.
+
 ### Foods drawn as icons
 
 > make food and thing icons sillouhettes like normal icons as well

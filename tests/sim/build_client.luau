@@ -416,11 +416,18 @@ run("a menu takes the screen: a way back, tabs, rows", function()
 			hit = true
 		end
 	)
+	-- its marker fills the row's left end, flush with its slanted edge, the inner end a clean cut
+	-- (the user: "Make them fill it up with no gaps, just like the claim button")
 	local marker = row:FindFirstChild("Marker", true)
-	local disc = marker and marker:FindFirstChildOfClass("UICorner")
+	local markFace = marker and marker:FindFirstChild("Face")
 	check(
-		marker ~= nil and marker.Rotation == 0 and disc ~= nil and disc.CornerRadius.Scale == 0.5,
-		"a row has its round marker"
+		marker ~= nil
+			and markFace ~= nil
+			and markFace:GetAttribute("Sharp") == "right"
+			and marker.Parent == row
+			and marker.Size.Y.Offset == row.Size.Y.Offset - 2
+			and marker.Position.X.Offset == 1,
+		"a row's marker fills its left end, flush, with a clean cut"
 	)
 	local title = row:FindFirstChild("Title", true)
 	check(title.TextColor3 == T.Ink, "its words are light")

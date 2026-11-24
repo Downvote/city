@@ -622,7 +622,11 @@ clipping (`tools/preview/ui_render.py`).
   with words: `Kit.button` (its `Face` slanted inside the button's box, `Inset` set; `Kit.pad` on it adds half an
   end to the padding), `Kit.row` (its `Fill` slanted, the row's `Cap` attribute its end and `Lean` half of that and
   2), `Kit.segments` (the `Well`, each tab's `Face` and `Hover`), `Kit.tabs`, `Kit.choice`, a round button's
-  caption `Tag` (slanted with its ends outside). `Kit.slant(face, height, outside, flip, sharp)` and `Kit.button`'s `Sharp` ("left" or "right": that end's two points
+  caption `Tag` (slanted with its ends outside). `Kit.leanMark(props)` (a small leaning square with an icon or a letter, `Width`, `Sharp`, `IconX`; `Kit.disc` with
+`Lean = true` makes one) and `Kit.flushMark(parent, bar, tall, outside, props)` (one that fills a leaning bar's left
+end, flush with its slanted edge and cut clean on the right, `Hidden` for a bar that comes out of the screen's
+edge; returns the marker and how far in it reaches at its middle): the icon at the left of a bar. `Kit.row`'s
+`Marker` is a flush one, set in the row itself so it doesn't nudge. `Kit.slant(face, height, outside, flip, sharp)` and `Kit.button`'s `Sharp` ("left" or "right": that end's two points
 left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it). `Kit.button` takes `Press` (options for `Kit.press`; the quests' Claim button, set flush in its slab's right end, passes `{ Grow = 1, Dip = 0.99 }`). `Kit.fade(face, info, transparency)` tweens a face's showing (its
   painted `Body`, or a plain face and its wedges). Nothing is a pill now but `Kit.bar`. The previews draw the
   pictures the game made (`ui_dump.luau` writes each EditableImage's pixels; `ui_render.py` stretches, nine
