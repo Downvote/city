@@ -413,8 +413,19 @@ local function bike(r: R, cf: CFrame)
 		q:piece(function(p: R)
 			local col = rgb(88, 150, 170)
 			for _, z in { 1.3, -1.5 } do
-				p:cyl(0, 1, z, 0.16, 2.0, "x", rgb(46, 48, 58), "Metal")
-				p:cyl(0, 1, z, 0.24, 1.6, "x", METAL, "Metal")
+				-- a tyre of eight short lengths round two crossed spokes, so the wheel is open
+				local ring = {}
+				for k = 0, 7 do
+					local a = (k + 0.5) * math.pi / 4
+					ring[k + 1] = Vector3.new(0, 1 + 0.9 * math.cos(a), z + 0.9 * math.sin(a))
+				end
+				for k = 1, 8 do
+					local a, b = ring[k], ring[k % 8 + 1]
+					local along = (b - a).Unit * 0.05
+					p:beam(a - along, b + along, 0.14, 0.16, rgb(46, 48, 58), "Metal")
+				end
+				p:beam(Vector3.new(0, 0.14, z), Vector3.new(0, 1.86, z), 0.04, 0.04, METAL, "Metal")
+				p:beam(Vector3.new(0, 1, z - 0.86), Vector3.new(0, 1, z + 0.86), 0.04, 0.04, METAL, "Metal")
 			end
 			local bb, seat, head = Vector3.new(0, 1.0, 0.1), Vector3.new(0, 2.3, 0.55), Vector3.new(0, 2.25, -1.0)
 			p:beam(bb, seat, 0.12, 0.12, col, "Metal")
