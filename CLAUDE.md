@@ -1,4 +1,4 @@
-# Maplewick: notes for Claude
+# Catalog Town: notes for Claude
 
 ## What this is
 

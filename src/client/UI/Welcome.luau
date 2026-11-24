@@ -21,7 +21,7 @@ end
 function Welcome.open(hud: any)
 	Welcome.close()
 	panel = Kit.panel(
-		"Welcome to Maplewick",
+		"Welcome to Catalog Town",
 		UDim2.fromOffset(600, 432),
 		Welcome.close,
 		"house",

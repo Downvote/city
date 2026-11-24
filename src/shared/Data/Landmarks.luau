@@ -16,7 +16,7 @@
 --   lookoutShelter  the shelter on that terrace
 --   outcropA/B, stoneLantern   rocks and lamps beside the stair
 --
--- All Maplewick's own designs. Each is a recipe drawn round its own middle, front facing local
+-- All Catalog Town's own designs. Each is a recipe drawn round its own middle, front facing local
 -- -Z. Every detail that repeats is a piece (Geometry.piece): it is drawn once at the origin and
 -- stamped wherever it is wanted, turned if need be, so the same shapes always make the same key
 -- and the server merges each only once.

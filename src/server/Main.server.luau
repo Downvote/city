@@ -36,9 +36,9 @@ for _, name in order do
 		local started = os.clock()
 		local ok, why = xpcall(s.init, debug.traceback)
 		if ok then
-			print(("[Maplewick] %s ready in %.1f s"):format(name, os.clock() - started))
+			print(("[CatalogTown] %s ready in %.1f s"):format(name, os.clock() - started))
 		else
-			warn(("[Maplewick] %s failed to set up: %s"):format(name, tostring(why)))
+			warn(("[CatalogTown] %s failed to set up: %s"):format(name, tostring(why)))
 			-- the loading card shows it, so a stuck start says why on the screen
 			local first = string.match(tostring(why), "^[^\n]*") or "?"
 			workspace:SetAttribute("StartupError", name .. " failed: " .. string.sub(first, 1, 160))
@@ -51,7 +51,7 @@ for _, name in order do
 		task.spawn(function()
 			local ok, why = xpcall(s.start, debug.traceback)
 			if not ok then
-				warn(("[Maplewick] %s failed to start: %s"):format(name, tostring(why)))
+				warn(("[CatalogTown] %s failed to start: %s"):format(name, tostring(why)))
 			end
 		end)
 	end
@@ -61,4 +61,4 @@ end
 -- before the first profile loads, or that player never gets a plot.
 loaded.Data.open()
 workspace:SetAttribute("Startup", "Ready")
-print("[Maplewick] server ready")
+print("[CatalogTown] server ready")

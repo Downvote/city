@@ -293,11 +293,11 @@ Chatter.Topics = {
 	},
 	{
 		about = "the town's name",
-		open = { "Maplewick is a funny name. Where's the maple? Where's the wick?" },
-		yes = { "I've looked everywhere. No wick.", "There's one maple. By the hall. Maybe." },
-		no = { "It's a lovely name. Don't you start.", "The wick's the little bit you don't see." },
-		more = { "I'm going to plant a maple. Just to be sure." },
-		back = { "Okay, but where IS it?" },
+		open = { "Who called it Catalog Town? Did they just open a catalog and point?" },
+		yes = { "Page one, I bet. A picture of a town and a price.", "A furniture catalog. Explains all the benches." },
+		no = { "It's a good name. Don't you start.", "It's because we all dress out of one. Look at us." },
+		more = { "I'm going to write to the catalog people and ask." },
+		back = { "Okay, but which catalog?" },
 	},
 	{
 		about = "ice cream in winter",

@@ -1,4 +1,4 @@
-# Maplewick: architecture
+# Catalog Town: architecture
 
 The contract between the parts of the game. Update it with every change to an API, a saved data shape or a remote.
 
@@ -313,14 +313,14 @@ game doesn't depend on it.
   `Tuning.Lights.Placed` for what players build (`opts.plain`: 0.4 and 0.75; "the placeable lights are too bright")
   or `Tuning.Lights.Town` for the town's own (0.8 and 1).
 - A primitive's `mat` may be `"Base:Look"` (`"Concrete:Panel"`): the Builder sets the part's Material to `Base` and
-  its `MaterialVariant` to `Maplewick<Look>`. Where the place has no such variant the plain material shows.
+  its `MaterialVariant` to `CatalogTown<Look>`. Where the place has no such variant the plain material shows.
   `Data/Textures` lists them in `Textures.looks` (`{ name, material, look, studs }`): `Concrete:Panel` (picture
   `panel`, 12 studs a tile), `Concrete:Stucco` (`stucco`, 10), `Brick:Maple` (`maple`, 6), `CeramicTiles:Mosaic`
   (`mosaic`, 4), `CeramicTiles:Checker` (`checker`, 4), `Metal:Corrugated` (`corrugated`, 6), `Metal:Shutter`
   (`shutter`, 4), `WoodPlanks:Slats` (`slats`, 4), `ClayRoofTiles:Barrel` (`barrel`, 6), `Pavement:Slabs`
   (`slabs`, 8), `Asphalt:Street` (`street`, 16), `Fabric:Canvas` (`canvas`, 3), `Rock:Cliff` (`cliff`, 16),
   `Grass:Lawn` (`lawn`, 8) and `SmoothPlastic:Blade` (`blade`, 16: no pattern and fully matt, worn by the long
-  grass's blades, `client/World/Grass`, which sets `MaplewickBlade` itself).
+  grass's blades, `client/World/Grass`, which sets `CatalogTownBlade` itself).
   `Textures.split(mat)` gives base and look, `Textures.look(mat)` the entry, `Textures.variant(mat)` the variant's
   name (nil for a plain material, an unknown look or a look on the wrong material), and `Textures.tint` takes the
   whole string. `Textures.ready()` is still the materials only (the client sets an override for each of those);
@@ -645,7 +645,7 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   18) under a `Veil` of `T.Black` that clears, `Header` slides in from the left and the title fades up; then, once
   the screen has filled it (`task.defer`), `Kit.revealIn(root, since)` brings in what was marked while it was made.
   A tab change brings in what the tab made the same way. `Kit.closePanel(panel, now?)` takes it away (the screens
-  call it, never `root:Destroy()`): the root moves at once to the ScreenGui `MaplewickClosing` (same scale, one
+  call it, never `root:Destroy()`): the root moves at once to the ScreenGui `CatalogTownClosing` (same scale, one
   display order up, `Interactable` off), plays the way in backwards in 0.14 seconds and is destroyed.
   Returns `{ root, card, body, close, title, header, selectTab, dim, rim, veil, glows, dialog }`.
   `Kit.row(props, onClick)` is a pill row (Title, Sub, Marker, MarkerColor, Right, LeftSpace, RightSpace, Sunk,

@@ -1,5 +1,5 @@
 {
-  "name": "Maplewick",
+  "name": "CatalogTown",
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
@@ -102,22 +102,22 @@
     "MaterialService": {
       "$className": "MaterialService",
       "$properties": {
-        "WoodName": "MaplewickWood",
-        "WoodPlanksName": "MaplewickPlanks",
-        "BrickName": "MaplewickBrick",
-        "CobblestoneName": "MaplewickCobble",
-        "PavementName": "MaplewickPaving",
-        "ConcreteName": "MaplewickConcrete",
-        "AsphaltName": "MaplewickAsphalt",
-        "PlasterName": "MaplewickPlaster",
-        "ClayRoofTilesName": "MaplewickClay",
-        "CeramicTilesName": "MaplewickTiles",
-        "CarpetName": "MaplewickCarpet",
-        "FabricName": "MaplewickFabric",
-        "SandName": "MaplewickSand",
-        "MetalName": "MaplewickMetal"
+        "WoodName": "CatalogTownWood",
+        "WoodPlanksName": "CatalogTownPlanks",
+        "BrickName": "CatalogTownBrick",
+        "CobblestoneName": "CatalogTownCobble",
+        "PavementName": "CatalogTownPaving",
+        "ConcreteName": "CatalogTownConcrete",
+        "AsphaltName": "CatalogTownAsphalt",
+        "PlasterName": "CatalogTownPlaster",
+        "ClayRoofTilesName": "CatalogTownClay",
+        "CeramicTilesName": "CatalogTownTiles",
+        "CarpetName": "CatalogTownCarpet",
+        "FabricName": "CatalogTownFabric",
+        "SandName": "CatalogTownSand",
+        "MetalName": "CatalogTownMetal"
       },
-      "MaplewickWood": {
+      "CatalogTownWood": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Wood",
@@ -127,7 +127,7 @@
           "NormalMap": "rbxassetid://82700223149662"
         }
       },
-      "MaplewickPlanks": {
+      "CatalogTownPlanks": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "WoodPlanks",
@@ -136,7 +136,7 @@
           "MaterialPattern": "Regular"
         }
       },
-      "MaplewickBrick": {
+      "CatalogTownBrick": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Brick",
@@ -146,7 +146,7 @@
           "NormalMap": "rbxassetid://15826267601"
         }
       },
-      "MaplewickCobble": {
+      "CatalogTownCobble": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Cobblestone",
@@ -156,7 +156,7 @@
           "NormalMap": "rbxassetid://135713644746103"
         }
       },
-      "MaplewickPaving": {
+      "CatalogTownPaving": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Pavement",
@@ -165,7 +165,7 @@
           "MaterialPattern": "Regular"
         }
       },
-      "MaplewickConcrete": {
+      "CatalogTownConcrete": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Concrete",
@@ -175,7 +175,7 @@
           "NormalMap": "rbxassetid://10266817549"
         }
       },
-      "MaplewickAsphalt": {
+      "CatalogTownAsphalt": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Asphalt",
@@ -185,7 +185,7 @@
           "NormalMap": "rbxassetid://11226165423"
         }
       },
-      "MaplewickPlaster": {
+      "CatalogTownPlaster": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Plaster",
@@ -195,7 +195,7 @@
           "NormalMap": "rbxassetid://5437994223"
         }
       },
-      "MaplewickClay": {
+      "CatalogTownClay": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "ClayRoofTiles",
@@ -204,7 +204,7 @@
           "MaterialPattern": "Regular"
         }
       },
-      "MaplewickTiles": {
+      "CatalogTownTiles": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "CeramicTiles",
@@ -214,7 +214,7 @@
           "NormalMap": "rbxassetid://12477337856"
         }
       },
-      "MaplewickCarpet": {
+      "CatalogTownCarpet": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Carpet",
@@ -224,7 +224,7 @@
           "NormalMap": "rbxassetid://108650587944937"
         }
       },
-      "MaplewickFabric": {
+      "CatalogTownFabric": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Fabric",
@@ -234,7 +234,7 @@
           "NormalMap": "rbxassetid://83181758798164"
         }
       },
-      "MaplewickSand": {
+      "CatalogTownSand": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Sand",
@@ -245,7 +245,7 @@
           "RoughnessMap": "rbxassetid://76767113118953"
         }
       },
-      "MaplewickMetal": {
+      "CatalogTownMetal": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Metal",
@@ -254,7 +254,7 @@
           "MaterialPattern": "Regular"
         }
       },
-      "MaplewickPanel": {
+      "CatalogTownPanel": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Concrete",
@@ -263,7 +263,7 @@
           "MaterialPattern": "Regular"
         }
       },
-      "MaplewickStucco": {
+      "CatalogTownStucco": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Concrete",
@@ -272,7 +272,7 @@
           "MaterialPattern": "Regular"
         }
       },
-      "MaplewickMaple": {
+      "CatalogTownMaple": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Brick",
@@ -281,7 +281,7 @@
           "MaterialPattern": "Regular"
         }
       },
-      "MaplewickMosaic": {
+      "CatalogTownMosaic": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "CeramicTiles",
@@ -290,7 +290,7 @@
           "MaterialPattern": "Regular"
         }
       },
-      "MaplewickChecker": {
+      "CatalogTownChecker": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "CeramicTiles",
@@ -299,7 +299,7 @@
           "MaterialPattern": "Regular"
         }
       },
-      "MaplewickCorrugated": {
+      "CatalogTownCorrugated": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Metal",
@@ -308,7 +308,7 @@
           "MaterialPattern": "Regular"
         }
       },
-      "MaplewickShutter": {
+      "CatalogTownShutter": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Metal",
@@ -317,7 +317,7 @@
           "MaterialPattern": "Regular"
         }
       },
-      "MaplewickSlats": {
+      "CatalogTownSlats": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "WoodPlanks",
@@ -326,7 +326,7 @@
           "MaterialPattern": "Regular"
         }
       },
-      "MaplewickBarrel": {
+      "CatalogTownBarrel": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "ClayRoofTiles",
@@ -335,7 +335,7 @@
           "MaterialPattern": "Regular"
         }
       },
-      "MaplewickSlabs": {
+      "CatalogTownSlabs": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Pavement",
@@ -344,7 +344,7 @@
           "MaterialPattern": "Regular"
         }
       },
-      "MaplewickStreet": {
+      "CatalogTownStreet": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Asphalt",
@@ -354,7 +354,7 @@
           "NormalMap": "rbxassetid://11226165423"
         }
       },
-      "MaplewickCanvas": {
+      "CatalogTownCanvas": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Fabric",
@@ -365,7 +365,7 @@
           "RoughnessMap": "rbxassetid://81106618533486"
         }
       },
-      "MaplewickCliff": {
+      "CatalogTownCliff": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Rock",
@@ -374,7 +374,7 @@
           "MaterialPattern": "Regular"
         }
       },
-      "MaplewickLawn": {
+      "CatalogTownLawn": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Grass",
@@ -385,7 +385,7 @@
           "RoughnessMap": "rbxassetid://123781418381440"
         }
       },
-      "MaplewickBlade": {
+      "CatalogTownBlade": {
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "SmoothPlastic",

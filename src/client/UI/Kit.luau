@@ -101,7 +101,7 @@ function Kit.root(): ScreenGui
 		return root
 	end
 	local gui = Instance.new("ScreenGui")
-	gui.Name = "Maplewick"
+	gui.Name = "CatalogTown"
 	gui.ResetOnSpawn = false
 	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	gui.IgnoreGuiInset = false
@@ -2358,7 +2358,7 @@ local function leavingGui(): ScreenGui
 	end
 	local gui = Kit.root()
 	local g = Instance.new("ScreenGui")
-	g.Name = "MaplewickClosing"
+	g.Name = "CatalogTownClosing"
 	g.ResetOnSpawn = false
 	g.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	g.IgnoreGuiInset = gui.IgnoreGuiInset
@@ -3486,7 +3486,7 @@ end
 -- like this"): a menu takes the whole screen over a black backdrop, the way out is a button at
 -- the top left, its sections are tabs at the top right with the picked one in yellow, and what
 -- is in it sits in one big rounded panel, as rows shaped like pills. Those are the layout and
--- the parts, and they are what is taken; the drawing is Maplewick's own (its font, its colours,
+-- the parts, and they are what is taken; the drawing is Catalog Town's own (its font, its colours,
 -- its plain rounded shapes), with none of that game's art, slanted tabs or patterns.
 
 -- The rim round a panel, a row or a tab bar: the same shape a few pixels bigger in another

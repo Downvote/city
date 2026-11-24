@@ -8,7 +8,7 @@
 --
 -- A look is a second face for a material that only the parts asking for it wear: a primitive
 -- whose material is "Concrete:Panel" is Concrete in the look Panel, and the Builder gives that
--- part the MaterialVariant "MaplewickPanel". Plain Concrete stays as it is. The looks' pictures
+-- part the MaterialVariant "CatalogTownPanel". Plain Concrete stays as it is. The looks' pictures
 -- are grey or pale so the part's colour tints them. A look with no id shows its material.
 --
 -- Roblox lets only plugins set a MaterialVariant's pictures, so the variants go into the place
@@ -104,11 +104,11 @@ function Textures.look(material: string): Entry?
 	return lookByKey[material]
 end
 
--- The name of the MaterialVariant a part of this material wears: "MaplewickPanel" for
+-- The name of the MaterialVariant a part of this material wears: "CatalogTownPanel" for
 -- "Concrete:Panel". Nil where `Textures.look` is nil.
 function Textures.variant(material: string): string?
 	local e = lookByKey[material]
-	return if e then "Maplewick" .. (e.look :: string) else nil
+	return if e then "CatalogTown" .. (e.look :: string) else nil
 end
 
 local function collect(list: { Entry }, source: { [string]: TextureIds.Ids }): { Ready }
@@ -118,7 +118,7 @@ local function collect(list: { Entry }, source: { [string]: TextureIds.Ids }): {
 		if got and type(got.color) == "string" and got.color:match(ID) then
 			table.insert(out, {
 				name = e.name,
-				variant = "Maplewick" .. (e.look or (e.name:sub(1, 1):upper() .. e.name:sub(2))),
+				variant = "CatalogTown" .. (e.look or (e.name:sub(1, 1):upper() .. e.name:sub(2))),
 				material = e.material,
 				studs = if type(got.studs) == "number" and got.studs > 0 then got.studs else e.studs,
 				color = got.color,

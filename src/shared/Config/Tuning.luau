@@ -5,9 +5,11 @@
 local Tuning = {}
 
 Tuning.Game = {
-	Name = "Maplewick",
+	Name = "Catalog Town",
 	MaxPlayers = 4, -- one to a plot (default.project.json sets it on Players; Roblox takes it from the game settings)
 	DataVersion = 1,
+	-- (the saves keep the store they were written to under the old name, Maplewick: a new name would
+	-- start every player over)
 	DataStoreName = "Maplewick_v1",
 }
 
@@ -462,7 +464,7 @@ Tuning.Grass = {
 	-- SmoothPlastic was "too shiny", and Grass, matte but speckled, wanted "smoother". So they wear
 	-- the look Blade: SmoothPlastic with a plain picture and no shine (Data/Textures).
 	Material = "SmoothPlastic",
-	Look = "MaplewickBlade",
+	Look = "CatalogTownBlade",
 	-- "could you make the colors of grass random? and dense enough to cover all the floor?" Every
 	-- square of ground has `Layers` patches over it, each in one of these greens, their tufts in
 	-- among each other, so the colours fall at random tuft by tuft. Three of them were "too

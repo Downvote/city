@@ -1329,7 +1329,7 @@ event({
 		local s = K.scene(ctx, "A song about town")
 		s:prop("guitar", "a")
 		s:n("{a} sat on the step with a guitar and wrote a song about the town.")
-		s:say("a", "Oh Maplewick, your gulls are loud, your bread is warm, I'm very proud.", "music")
+		s:say("a", "Oh Catalog Town, your gulls are loud, your bread is warm, I'm very proud.", "music")
 		s:by("a", {
 			proud = "Number one hit. Mark my words.",
 			shy = "That's all I've got so far. Was it all right?",

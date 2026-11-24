@@ -99,7 +99,7 @@ def meta(asset_type, display, creator):
     return {
         "assetType": asset_type,
         "displayName": display,
-        "description": "Painted texture for Maplewick",
+        "description": "Painted texture for Catalog Town",
         "creationContext": {"creator": creator},
     }
 
@@ -218,7 +218,7 @@ def main():
             size = os.path.getsize(path)
             total += size
             w, h = png_size(path)
-            display = f"Maplewick {name} {field}"
+            display = f"Catalog Town {name} {field}"
             print(f"POST {CREATE}")
             print(f"  request      {json.dumps(meta(asset_type, display, creator))}")
             print(f"  fileContent  art/textures/{file} (image/png, {w}x{h}, {size} bytes)")
@@ -231,7 +231,7 @@ def main():
     done = 0
     no_colour = set()  # textures whose colour map didn't go up: their other maps wait for the next run
     for name, field, file in jobs:
-        display = f"Maplewick {name} {field}"
+        display = f"Catalog Town {name} {field}"
         path = os.path.join(TEX, file)
         if name in no_colour:
             failed += 1

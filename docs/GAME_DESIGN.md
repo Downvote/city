@@ -1,4 +1,4 @@
-# Maplewick: game design
+# Catalog Town: game design
 
 ## 1. What was asked for
 
@@ -8,7 +8,10 @@
 
 > no monsters or adventures, this is a city building game
 
-So Maplewick is a town builder. You build the town, Bloxburg style. You fill it with villagers you dress from the
+The game was called Maplewick at first. Then the user: "rename all mentions of the game name to "Catalog Town"".
+(Players' saves stay in the store they were written to, which still carries the old name.)
+
+So Catalog Town is a town builder. You build the town, Bloxburg style. You fill it with villagers you dress from the
 whole Roblox catalog. They live their lives in it, and random events happen between them the way they do in
 Miitopia's inn. There is no fighting and there are no monsters. The town itself is the game: it grows from a hamlet
 to a city as people move in and you build more.
@@ -1062,7 +1065,7 @@ surface is left in one of the dark look's colours. It is part of the check.
 > Other menus should also have a style like this
 
 What is taken from that game is how its menus are laid out and what they are made of. The drawing stays
-Maplewick's own: its font, its pastels, plain rounded shapes, none of that game's art, slanted tabs or patterns.
+Catalog Town's own: its font, its pastels, plain rounded shapes, none of that game's art, slanted tabs or patterns.
 
 - **Icons are line art.** Every interface icon is redrawn as paths with real curves, the way the line icon sets
   on the web are made (their published design guides agree, and these follow them): a 24 by 24 grid with a
@@ -1103,7 +1106,7 @@ Maplewick's own: its font, its pastels, plain rounded shapes, none of that game'
 > Use the format in zenless zone zero for buttons and details in ui instead of overusing circles and rounded
 > rectangles Also, make an animated background with shapes like it in the menus.
 
-As before, what is taken from those two games is layout and the kind of shape, drawn our own way: Maplewick's
+As before, what is taken from those two games is layout and the kind of shape, drawn our own way: Catalog Town's
 font and colours, none of their art, logos or patterns.
 
 - **Shapes are cut from straight lines.** A button, a tab, a row and the dark bars over the town lean: their two
@@ -1175,7 +1178,7 @@ portrait button at the bottom left of the main screen (a blue ring), and the pla
 > necessary. The map should look similar to a city in the game
 
 The direction is taken, not the game: a dense modern city that looks drawn, thick with signs and street
-clutter, all of it Maplewick's own. None of that game's streets, shops, names, logos or art are copied.
+clutter, all of it Catalog Town's own. None of that game's streets, shops, names, logos or art are copied.
 
 - **The look of the light.** Roblox runs no shaders of our own, so the drawn look comes from the lighting and
   the effects over the picture: shadows with a hard edge like a painted cel, shade that is violet and not grey
@@ -1211,7 +1214,7 @@ clutter, all of it Maplewick's own. None of that game's streets, shops, names, l
 department store, and a market gate under a cliff.) What is taken is the level of detail and the kind of place:
 buildings shoulder to shoulder along the pavement, shop fronts under awnings, tiled and panelled walls, window
 bays with frames and sills, things on the walls and roofs, patterned paving and painted roads, warm low light.
-None of that game's streets, shops, signs, gate or art: Maplewick's are its own.
+None of that game's streets, shops, signs, gate or art: Catalog Town's are its own.
 
 - **Pieces are meshes.** A detail that is used over and over (a window's frame and sill, an awning, a shutter, a
   balcony rail) is drawn once as a handful of small shapes and built as a single mesh, which the server merges by
@@ -1321,7 +1324,7 @@ pills a shade lighter than the panel, one strong yellow for whatever is picked w
 and round icon buttons, a red leaning way out, fine halftone dots and hatching on the surfaces, and small careful
 details. What is never taken: that game's art, icons, logos, names, lettering or background patterns. Every shape
 and texture here is drawn by our own code from nothing, the icons are our own line drawings and the words are
-Maplewick's.
+Catalog Town's.
 
 - **Out of the corners.** The clock's slab hangs from the top right corner, running up off the top and off the
   right edge, and leans the other way from the rest. The menu bar comes out of the bottom left corner and leans

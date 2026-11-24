@@ -87,7 +87,7 @@ describe("Textures", function()
 		local names, variants = {}, {}
 		for _, e in Textures.list do
 			names[e.name] = true
-			variants["Maplewick" .. e.name:sub(1, 1):upper() .. e.name:sub(2)] = true
+			variants["CatalogTown" .. e.name:sub(1, 1):upper() .. e.name:sub(2)] = true
 		end
 		for _, e in Textures.looks do
 			local ok, m = pcall(function()
@@ -102,7 +102,7 @@ describe("Textures", function()
 				error("two textures are called " .. e.name)
 			end
 			names[e.name] = true
-			local variant = "Maplewick" .. e.look
+			local variant = "CatalogTown" .. e.look
 			if variants[variant] then
 				error("two textures would be the MaterialVariant " .. variant)
 			end
@@ -116,19 +116,19 @@ describe("Textures", function()
 	it("has the looks the town is drawn with", function()
 		for key, variant in
 			{
-				["Concrete:Panel"] = "MaplewickPanel",
-				["Concrete:Stucco"] = "MaplewickStucco",
-				["Brick:Maple"] = "MaplewickMaple",
-				["CeramicTiles:Mosaic"] = "MaplewickMosaic",
-				["CeramicTiles:Checker"] = "MaplewickChecker",
-				["Metal:Corrugated"] = "MaplewickCorrugated",
-				["Metal:Shutter"] = "MaplewickShutter",
-				["WoodPlanks:Slats"] = "MaplewickSlats",
-				["ClayRoofTiles:Barrel"] = "MaplewickBarrel",
-				["Pavement:Slabs"] = "MaplewickSlabs",
-				["Asphalt:Street"] = "MaplewickStreet",
-				["Fabric:Canvas"] = "MaplewickCanvas",
-				["Rock:Cliff"] = "MaplewickCliff",
+				["Concrete:Panel"] = "CatalogTownPanel",
+				["Concrete:Stucco"] = "CatalogTownStucco",
+				["Brick:Maple"] = "CatalogTownMaple",
+				["CeramicTiles:Mosaic"] = "CatalogTownMosaic",
+				["CeramicTiles:Checker"] = "CatalogTownChecker",
+				["Metal:Corrugated"] = "CatalogTownCorrugated",
+				["Metal:Shutter"] = "CatalogTownShutter",
+				["WoodPlanks:Slats"] = "CatalogTownSlats",
+				["ClayRoofTiles:Barrel"] = "CatalogTownBarrel",
+				["Pavement:Slabs"] = "CatalogTownSlabs",
+				["Asphalt:Street"] = "CatalogTownStreet",
+				["Fabric:Canvas"] = "CatalogTownCanvas",
+				["Rock:Cliff"] = "CatalogTownCliff",
 			}
 		do
 			if Textures.variant(key) ~= variant then
@@ -163,7 +163,7 @@ describe("Textures", function()
 		for _, t in ready do
 			byName[t.name] = t
 		end
-		expect(byName.sand.variant).toBe("MaplewickSand")
+		expect(byName.sand.variant).toBe("CatalogTownSand")
 		expect(byName.sand.material).toBe("Sand")
 		expect(byName.sand.normal).toBe("rbxassetid://456")
 		expect(byName.brick.normal).toBe(nil)
@@ -174,7 +174,7 @@ describe("Textures", function()
 		-- `ready` is what sets a material's look everywhere, so a look must never be in it
 		local ready = Textures.ready(SOME)
 		expect(#ready).toBe(1)
-		expect(ready[1].variant).toBe("MaplewickConcrete")
+		expect(ready[1].variant).toBe("CatalogTownConcrete")
 		expect(ready[1].look).toBe(nil)
 		local looks = Textures.readyLooks(SOME)
 		expect(#looks).toBe(2)
@@ -182,12 +182,12 @@ describe("Textures", function()
 		for _, t in looks do
 			byName[t.name] = t
 		end
-		expect(byName.panel.variant).toBe("MaplewickPanel")
+		expect(byName.panel.variant).toBe("CatalogTownPanel")
 		expect(byName.panel.material).toBe("Concrete")
 		expect(byName.panel.look).toBe("Panel")
 		expect(byName.panel.studs).toBe(12)
 		expect(byName.panel.rough).toBe("rbxassetid://13")
-		expect(byName.barrel.variant).toBe("MaplewickBarrel")
+		expect(byName.barrel.variant).toBe("CatalogTownBarrel")
 		expect(byName.barrel.normal).toBe(nil)
 		expect(byName.shutter).toBe(nil)
 		-- with nothing uploaded there are none, and nothing breaks
@@ -214,8 +214,8 @@ describe("Textures", function()
 		expect(#problems).toBe(0)
 		expect(count).toBe(3)
 		table.sort(asked)
-		expect(table.concat(asked, " ")).toBe("MaplewickBarrel MaplewickConcrete MaplewickPanel")
-		expect(overrides.Concrete).toBe("MaplewickConcrete")
+		expect(table.concat(asked, " ")).toBe("CatalogTownBarrel CatalogTownConcrete CatalogTownPanel")
+		expect(overrides.Concrete).toBe("CatalogTownConcrete")
 		expect(overrides.ClayRoofTiles).toBe(nil)
 		local n = 0
 		for _ in overrides do

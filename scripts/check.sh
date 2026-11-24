@@ -75,6 +75,6 @@ python3 scripts/sync_materials.py --check
 
 echo "== build"
 HASH=$(git rev-parse --short HEAD 2>/dev/null || echo dev)
-rm -f Maplewick-*.rbxl
-rojo build default.project.json -o "Maplewick-$HASH.rbxl"
-echo "built Maplewick-$HASH.rbxl"
+rm -f CatalogTown-*.rbxl
+rojo build default.project.json -o "CatalogTown-$HASH.rbxl"
+echo "built CatalogTown-$HASH.rbxl"

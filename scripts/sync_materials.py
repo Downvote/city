@@ -5,7 +5,7 @@ pointing each material at its variant. Roblox only lets plugins set a variant's 
 in at build time rather than from a script while the game runs.
 
 A look (an entry of art/textures/textures.json with a "look", such as Concrete's Panel) gets its
-MaterialVariant too, named Maplewick<Look>, but no <Material>Name property: it takes no
+MaterialVariant too, named CatalogTown<Look>, but no <Material>Name property: it takes no
 material's place, and only the parts that name it wear it.
 
     python3 scripts/sync_materials.py          rewrite default.project.json from Data/TextureIds
@@ -119,10 +119,10 @@ KEEP_OWN = {"Grass"}
 
 
 def variant_name(name, info=None):
-    """The MaterialVariant a texture becomes: MaplewickSand for sand, Maplewick<Look> for a look."""
+    """The MaterialVariant a texture becomes: CatalogTownSand for sand, CatalogTown<Look> for a look."""
     if info and info.get("look"):
-        return "Maplewick" + info["look"]
-    return "Maplewick" + name[:1].upper() + name[1:]
+        return "CatalogTown" + info["look"]
+    return "CatalogTown" + name[:1].upper() + name[1:]
 
 
 def material_service(ids, index):

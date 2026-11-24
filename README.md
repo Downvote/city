@@ -1,4 +1,4 @@
-# Maplewick
+# Catalog Town
 
 A Roblox town builder. Build your town wall by wall, fill it with villagers you dress from the whole Roblox catalog,
 and watch them live there: they get jobs, make friends, fall out, ask you for things and throw birthday parties.
@@ -27,7 +27,7 @@ sh scripts/check.sh
 ```
 
 `check.sh` checks the formatting (pass `--fix` to format instead), type checks against Roblox's API, runs the specs
-and builds `Maplewick-<commit>.rbxl` in the repository root. Open that file in Roblox Studio. DataStores need **Enable Studio
+and builds `CatalogTown-<commit>.rbxl` in the repository root. Open that file in Roblox Studio. DataStores need **Enable Studio
 Access to API Services** in Game Settings to save; without it the game runs on fresh data and says so.
 
 To work live in Studio, run `rojo serve` and connect with the Rojo plugin.

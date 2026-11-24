@@ -96,7 +96,7 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 	part.TopSurface = Enum.SurfaceType.Smooth
 	part.BottomSurface = Enum.SurfaceType.Smooth
 	-- "Concrete" is Roblox's material; "Concrete:Panel" is that material in one of our own
-	-- looks (a MaterialVariant named MaplewickPanel, Data/Textures). Where the place has no such
+	-- looks (a MaterialVariant named CatalogTownPanel, Data/Textures). Where the place has no such
 	-- variant the part simply shows the plain material.
 	local base, look = prim.mat, nil
 	local colon = string.find(prim.mat, ":", 1, true)
@@ -106,7 +106,7 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 	local mat = (Enum.Material :: any)[base]
 	part.Material = mat or Enum.Material.SmoothPlastic
 	if look then
-		part.MaterialVariant = "Maplewick" .. look
+		part.MaterialVariant = "CatalogTown" .. look
 	end
 	part.Color = Textures.tint(prim.mat, prim.color)
 	part.Transparency = prim.transp or 0
