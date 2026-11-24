@@ -573,7 +573,9 @@ elseif scene == "creator" or scene:sub(1, 8) == "creator:" then
 		local creator = Sim.gui:FindFirstChild("Creator")
 		local MB1 = Enum.UserInputType.MouseButton1
 		local function pressAt(holder, x)
-			holder:FindFirstChild("Slide").InputBegan:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(x, 0, 0) })
+			holder
+				:FindFirstChild("Slide").InputBegan
+				:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(x, 0, 0) })
 			Sim.UIS.InputEnded:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(x, 0, 0) }, false)
 		end
 		pressAt(creator:FindFirstChild("Personality", true), 100 + 14 + 72 * 2 / 7)
