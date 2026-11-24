@@ -76,6 +76,8 @@ describe("Textures", function()
 			expect(ok and m ~= nil).toBeTruthy()
 			expect(seen[e.material]).toBe(nil)
 			seen[e.material] = true
+			-- never Grass: the terrain's blades grow only on Roblox's own (ours is the look Lawn)
+			expect(e.material ~= "Grass").toBeTruthy()
 			expect(e.look).toBe(nil)
 			expect(e.studs).toBeBetween(0.5, 50)
 		end

@@ -1642,8 +1642,11 @@ wider, the shortest aren't as short, and a bare spot is rare.
 > never mind, it gets too laggy, make it less dense, but make the floor grass texture smoother
 
 Now it's two greens mixed, spread wider apart: about as many tufts as at first, so it runs as lightly as it did,
-and it's drawn a little less far out. The ground under them, the island's grass and every lawn, is smooth and matt
-now, one even green with no speckle, so the gaps between tufts look like short grass.
+and it's drawn a little less far out. The ground under them was made smooth and matt for a moment, then:
+
+> never mind, the previous grass texture was ok
+
+So the ground keeps Roblox's own grass texture.
 
 ## 11. Writing
 

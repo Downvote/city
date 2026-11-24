@@ -413,9 +413,9 @@ describe("Terrain", function()
 				expect(math.floor(props.WaterColor[i] * 255 + 0.5)).toBe(water.Color[i])
 				expect(ws["$properties"].GlobalWind[i]).toBe(Terrain.Wind[i])
 			end
-			-- the grass under foot wears the plain matt Meadow ("make the floor grass texture smoother")
+			-- Roblox's own Grass keeps its face: the long grass is coloured to match it
 			local ms = project.tree.MaterialService
-			expect(ms and ms["$properties"] and ms["$properties"].GrassName).toBe("MaplewickMeadow")
+			expect(ms and ms["$properties"] and ms["$properties"].GrassName).toBe(nil)
 		end)
 	end)
 end)

@@ -165,10 +165,9 @@ or Ground under the hill's stepping stones, and columns fully under paving sink 
 shape of a placed model that touches the ground and covers about 3 square studs or more). `Hills.at` is the smooth
 surface (`Hills.prims` is gone). The place file sets what scripts can't: Workspace/Terrain (`Decoration` off,
 `ShorelinesUpgraded`, `SmoothVoxelsUpgraded`, the `Water*` settings) and `Workspace.GlobalWind` (the breeze;
-`World.setWeather` sets `StormWind` in a storm). Grass wears `MaplewickMeadow` everywhere (the texture `meadow`
-in `Textures.list`: a plain white picture, fully matt, so the floor's grass is smooth and its colour is just the
-terrain's or the part's paint; the user: "make the floor grass texture smoother"); the library grass picture is
-the look `Grass:Lawn`. The Terrain spec checks the shore is wavy,
+`World.setWeather` sets `StormWind` in a storm). MaterialService never replaces Grass (`scripts/sync_materials.py`
+refuses it), so the long grass can be coloured to match it (a smooth plain floor was tried and taken back: "never
+mind, the previous grass texture was ok"); the library grass picture is the look `Grass:Lawn`. The Terrain spec checks the shore is wavy,
 the water's edge sits on a gentle slope inside the shallows, no grass is under anything built or on a road or a
 plot, the terrain follows `Hills.at`, the tiles, the open sea, the beach props and the place's settings.
 

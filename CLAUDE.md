@@ -80,8 +80,8 @@ always placed with the patch's origin bone at rest (otherwise they fly);
 each tuft stands on the ground under it where that is Grass all round (terrain, a plot's lawn, a grass lawn in
 town) and sinks anywhere else, again when a plot changes (numbers in `Tuning.Grass`). Keep the author's credit with it. Nothing built may stand on terrain Grass:
 `TownMap.cover` lists what is built and the terrain under it is LeafyGrass, so a new kind of ground part or a
-placed model is covered by rule. Grass wears the plain matt texture Meadow everywhere, terrain and parts (the user: "make the
-floor grass texture smoother"; it was Roblox's own while its terrain blades were wanted). The plots' floors and lawns are visible parts at floor level (an invisible floor over terrain made
+placed model is covered by rule. Never give MaterialService a Grass override: the floor keeps Roblox's own grass texture (a smooth
+plain one was tried: "never mind, the previous grass texture was ok"), and the long grass is coloured to match it. The plots' floors and lawns are visible parts at floor level (an invisible floor over terrain made
 the ground look sunk). The previews draw the terrain as triangles and show no long grass.
 `Data/TownMap` lays out the ground and where everything stands, `Data/CityModels` draws the buildings and landmarks,
 `Data/Places` lists the places to find. The user wants it detailed like a classic city builder: buildings on
