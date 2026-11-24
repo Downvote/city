@@ -383,6 +383,16 @@
           "NormalMap": "rbxassetid://74383676401444",
           "RoughnessMap": "rbxassetid://123781418381440"
         }
+      },
+      "MaplewickBlade": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "SmoothPlastic",
+          "ColorMap": "rbxassetid://79514706284696",
+          "StudsPerTile": 16,
+          "MaterialPattern": "Regular",
+          "RoughnessMap": "rbxassetid://79514706284696"
+        }
       }
     }
   }

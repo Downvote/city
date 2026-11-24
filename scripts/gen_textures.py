@@ -754,6 +754,13 @@ def street(rng):
     return lum, h, 1.6, rough
 
 
+def blade(rng):
+    # the long grass's blades (client World/Grass): no pattern at all and fully matt, so the
+    # blades are smooth and don't shine (the user: "too shiny", then "make their textures smoother")
+    lum = np.full((N, N), 0.98)
+    return lum, np.zeros((N, N)), 0.0, np.ones((N, N))
+
+
 def canvas_weave(rng):
     # awning canvas: a plain weave of thick threads, some a little heavier than the rest
     k = 40
@@ -861,6 +868,7 @@ LOOKS = {
     # Roblox's own grass is left alone everywhere (terrain grass only grows its blades on it), so
     # our painted grass is a look a part has to ask for
     "lawn": (grass, "Grass", 8, "Lawn"),
+    "blade": (blade, "SmoothPlastic", 16, "Blade"),
 }
 
 # seeds kept from before a texture moved between the two lists
@@ -879,7 +887,7 @@ SAMPLE = {
     "mosaic": (0.92, 0.58, 0.30), "checker": (0.86, 0.34, 0.30), "corrugated": (0.50, 0.66, 0.74),
     "shutter": (0.74, 0.76, 0.78), "slats": (0.74, 0.54, 0.36), "barrel": (0.34, 0.47, 0.58),
     "slabs": (0.84, 0.80, 0.73), "street": (0.36, 0.36, 0.40), "canvas": (0.82, 0.26, 0.22),
-    "cliff": (0.66, 0.58, 0.50),
+    "cliff": (0.66, 0.58, 0.50), "blade": (0.44, 0.62, 0.30),
 }
 
 

@@ -1624,6 +1624,14 @@ each nudged and turned its own way, and the blades are knee high and thinner. Th
 cover all the grassy ground round you: the island's grass, the lawns on the plots and the grass lawns in town, up
 to the edges of roads, paths, sand and floors, and under benches and trees too.
 
+> some of these are flying. also, they are too even, grass should be more random. also, make their textures smoother
+
+(With a picture of the lawns at night, a band of grass hanging over the ground by a house.) The grass over a plot
+is laid again whenever something on the plot changes, and a patch out of sight at that moment is sitting a few
+studs under the ground; laid from there, its blades came back that much too high. Now they're always laid from where
+the patch rests. The grass runs taller and shorter in drifts across the ground, each tuft its own height and lean,
+with bare spots here and there, and the blades are smooth and matt with no speckle on them.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

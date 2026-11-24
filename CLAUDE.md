@@ -72,7 +72,9 @@ its forum post; Roblox's own terrain blades never showed for them and stay off):
 `vendor/SkinnedGrass.rbxm` (ServerStorage; `World.shareGrass` hands the clients a copy without its sample
 scripts), and `client/World/Grass` lays its patches round the camera. A tuft is drawn where its bone is, and the
 pack's bones are bunched in the middle of its mesh (one tall clump per patch: "too shiny and too big, and only at
-some areas"), so each patch's 100 bones are laid out again on our own fine grid and the mesh is shrunk and matte;
+some areas"), so each patch's 100 bones are laid out again on our own fine grid and the mesh is shrunk and wears
+the plain matt look Blade; the grass runs taller and shorter in drifts with bare spots ("too even, grass should be
+more random"), and tufts are always placed with the patch's origin bone at rest (otherwise they fly);
 each tuft stands on the ground under it where that is Grass all round (terrain, a plot's lawn, a grass lawn in
 town) and sinks anywhere else, again when a plot changes (numbers in `Tuning.Grass`). Keep the author's credit with it. Nothing built may stand on terrain Grass:
 `TownMap.cover` lists what is built and the terrain under it is LeafyGrass, so a new kind of ground part or a
@@ -336,7 +338,8 @@ colour when the picture has a pattern, and keep one texture to a line in `Data/T
 `render.sh <scene> <png> --textures` shows them. Our own painted set (`scripts/gen_textures.py`, art/textures)
 covers the rest and can be uploaded with `scripts/upload_textures.py`. The town's looks (the user: "you can make your own textures
 for these too") are second faces for a material that only the parts naming them wear (`"Concrete:Panel"`,
-`"Brick:Maple"`, `"CeramicTiles:Mosaic"` and ten more: `Textures.looks`). We painted our own
+`"Brick:Maple"`, `"CeramicTiles:Mosaic"` and twelve more: `Textures.looks`; `"SmoothPlastic:Blade"` is the long grass's
+plain matt face). We painted our own
 (`python3 scripts/gen_textures.py --looks`), but asked how to get them into the game the user chose "use roblox
 library images that are similar", so each wears a Creator Store picture like the materials do; the painted set
 stays in art/textures, unused. A `light` on a line of `Data/TextureIds` brightens the paint under a dark picture,

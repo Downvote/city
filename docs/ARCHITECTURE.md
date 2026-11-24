@@ -184,12 +184,16 @@ mesh's own size, `MeshSize` or `Native`, times `Scale` across and `Height` up; `
 terrain grass times `Blades` for its decals and `Body`). Every vertex of the mesh is held by one bone, 23 blades to
 a bone, and a tuft is drawn where its bone is; the pack's bones sit in the middle fifth of its mesh, so `make`
 lays them out again: a patch is `across` by `across` tufts (10) `Pitch` apart on the world's grid of `side`
-squares, each nudged by up to `Jitter` and turned by a seeded `Rng`, placed through `Bone.WorldCFrame` (so the
-engine handles the mesh's scale). `survey` casts one ray per tuft and a ring round the patch: `ground(x, z)`
+squares, each nudged by up to `Jitter`, turned and leaning up to `Lean` by a seeded `Rng`, placed through
+`Bone.WorldCFrame` (so the engine handles the mesh's scale). The grass is uneven on purpose: a tuft's height is
+a noise in drifts `Drifts` studs across plus its own bit, never under `Shortest` of the tallest, and a shorter
+tuft is one sat further into the ground (`drop`: a bone can't be scaled); it is `bare` where a second noise of
+`BareSize` passes `Bare`, and anywhere with the chance `Gaps`. `survey` casts one ray per tuft and a ring round the patch: `ground(x, z)`
 returns the first hit that is terrain or a part no higher than `Lawn` over `Hills.at - 0.1`, looking past anything
 higher (up to six hits), and it is grass when its material is `Grass` and it is flatter than `Flat`. `conform`
 stands a tuft where its point and the four round it are grass, level within `Rise`, and sinks it `Sink` studs
-anywhere else; a patch with none standing isn't made. `attach` does what `SkinnedGrass:AddMeshes` does (an origin
+anywhere else, with the patch's origin bone set back to rest for the moment (a patch sunk out of sight by the
+module, or rising, would otherwise get its tufts that much too high: the flying grass); a patch with none standing isn't made. `attach` does what `SkinnedGrass:AddMeshes` does (an origin
 bone, the octrees, `MeshParents`) but keeps the octree nodes, so `forget` can let a patch go when the focus is
 far from it. Patches are made `PerFrame` a frame within `Distance` plus `Ahead` of the camera's focus, nearest
 first; `Step(dt, bends, focus)` on RenderStepped shows those within `Distance` (rising from `HiddenDepth` below),
@@ -229,7 +233,9 @@ on it.
   `panel`, 12 studs a tile), `Concrete:Stucco` (`stucco`, 10), `Brick:Maple` (`maple`, 6), `CeramicTiles:Mosaic`
   (`mosaic`, 4), `CeramicTiles:Checker` (`checker`, 4), `Metal:Corrugated` (`corrugated`, 6), `Metal:Shutter`
   (`shutter`, 4), `WoodPlanks:Slats` (`slats`, 4), `ClayRoofTiles:Barrel` (`barrel`, 6), `Pavement:Slabs`
-  (`slabs`, 8), `Asphalt:Street` (`street`, 16), `Fabric:Canvas` (`canvas`, 3), `Rock:Cliff` (`cliff`, 16).
+  (`slabs`, 8), `Asphalt:Street` (`street`, 16), `Fabric:Canvas` (`canvas`, 3), `Rock:Cliff` (`cliff`, 16),
+  `Grass:Lawn` (`lawn`, 8) and `SmoothPlastic:Blade` (`blade`, 16: no pattern and fully matt, worn by the long
+  grass's blades, `client/World/Grass`, which sets `MaplewickBlade` itself).
   `Textures.split(mat)` gives base and look, `Textures.look(mat)` the entry, `Textures.variant(mat)` the variant's
   name (nil for a plain material, an unknown look or a look on the wrong material), and `Textures.tint` takes the
   whole string. `Textures.ready()` is still the materials only (the client sets an override for each of those);

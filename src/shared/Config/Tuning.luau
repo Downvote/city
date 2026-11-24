@@ -405,7 +405,17 @@ Tuning.Grass = {
 	Scale = 0.6, -- the tufts' width against the pack's (its tufts are 3 studs across)
 	Height = 0.42, -- the blades' height against the pack's (its are 2.6 studs, up to 4)
 	Pitch = 1.6, -- studs between tufts; a patch is ten of these on a side
-	Jitter = 0.3, -- each tuft nudged up to this much of the pitch, so no rows show
+	Jitter = 0.5, -- each tuft nudged up to this much of the pitch, so no rows show
+	-- "they are too even, grass should be more random": the grass runs taller and shorter in drifts
+	-- this many studs across, each tuft a little different, the shortest this much of the tallest;
+	-- bare spots where a second noise of this size passes `Bare`, and a tuft in `Gaps` left out
+	-- anywhere; every tuft leans up to `Lean` degrees its own way
+	Drifts = 26,
+	Shortest = 0.35,
+	BareSize = 9,
+	Bare = 0.42,
+	Gaps = 0.06,
+	Lean = 14,
 	Distance = 110, -- patches whose middle is this close to the camera's focus are shown
 	Ahead = 30, -- and patches this much further out are made ready
 	PerFrame = 2, -- patches made in a frame
@@ -416,10 +426,12 @@ Tuning.Grass = {
 	HiddenDepth = 8, -- studs a patch starts under the ground and goes back to when the camera leaves
 	Top = 250, -- the rays look down from this high (over the hills' tops)
 	Shadows = false, -- blades casting shadows costs a lot; Roblox's own grass doesn't either
-	-- The pack draws its blades in Neon, which ignores the light (the lawns would glow at night),
-	-- and the next try in SmoothPlastic was "too shiny". Grass is matte. The blades take the
-	-- terrain grass's colour times these, a little darker, so they sit in the ground they grow on.
-	Material = "Grass",
+	-- The pack draws its blades in Neon, which ignores the light (the lawns would glow at night);
+	-- SmoothPlastic was "too shiny", and Grass, matte but speckled, wanted "smoother". So they wear
+	-- the look Blade: SmoothPlastic with a plain picture and no shine (Data/Textures). The blades
+	-- take the terrain grass's colour times these, a little darker, so they sit in the ground.
+	Material = "SmoothPlastic",
+	Look = "MaplewickBlade",
 	Blades = { 0.72, 0.8, 0.66 },
 	Body = { 0.8, 0.86, 0.72 },
 	Bend = 2.6, -- studs round someone walking that the grass bends away from them

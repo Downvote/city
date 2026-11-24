@@ -79,6 +79,7 @@ Textures.looks = {
 	{ name = "canvas", material = "Fabric", look = "Canvas", studs = 3 }, -- awning canvas
 	{ name = "cliff", material = "Rock", look = "Cliff", studs = 16 }, -- layered rock
 	{ name = "lawn", material = "Grass", look = "Lawn", studs = 8 }, -- short grass, blades in clumps
+	{ name = "blade", material = "SmoothPlastic", look = "Blade", studs = 16 }, -- the long grass: plain and matt
 } :: { Entry }
 
 local ID = "^rbxassetid://%d+$"

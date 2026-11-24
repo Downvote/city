@@ -35,8 +35,9 @@ local Grass = {}
 
 local G = Tuning.Grass
 
--- One tuft of a patch: its bone, where it stands across the ground and how it's turned.
-type Tuft = { bone: Bone, x: number, z: number, turn: CFrame, node: any }
+-- One tuft of a patch: its bone, where it stands across the ground, how it's turned and leans,
+-- how far into the ground it sits (a shorter tuft) and whether it's left out (a bare spot).
+type Tuft = { bone: Bone, x: number, z: number, turn: CFrame, drop: number, bare: boolean, node: any }
 type Cell = { model: Model, part: MeshPart, origin: Bone?, tufts: { Tuft }, i: number, j: number, meshNode: any }
 
 local cells: { [string]: Cell | false } = {}
@@ -121,10 +122,17 @@ end
 local function conform(cell: Cell, params: RaycastParams): number
 	local rows = survey(cell, params)
 	local shown = 0
+	-- (the bones are placed against the patch at rest: a patch the module has sunk out of sight,
+	-- or is raising, would otherwise put them that much too high when it comes back up)
+	local origin = cell.origin
+	local was = if origin then origin.Transform else nil
+	if origin then
+		origin.Transform = CFrame.identity
+	end
 	for k, tuft in cell.tufts do
 		local a, b = (k - 1) % across + 1, (k - 1) // across + 1
 		local y = rows[a][b]
-		local ok = y ~= false
+		local ok = y ~= false and not tuft.bare
 		if ok then
 			for _, o in { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } } do
 				local n = rows[a + o[1]][b + o[2]]
@@ -134,7 +142,8 @@ local function conform(cell: Cell, params: RaycastParams): number
 				end
 			end
 		end
-		local at = CFrame.new(tuft.x, if ok then y :: number else cell.part.Position.Y, tuft.z) * tuft.turn
+		local at = CFrame.new(tuft.x, if ok then (y :: number) - tuft.drop else cell.part.Position.Y, tuft.z)
+			* tuft.turn
 		tuft.bone.WorldCFrame = if ok then at else at * SINK
 		if ok then
 			shown += 1
@@ -142,6 +151,9 @@ local function conform(cell: Cell, params: RaycastParams): number
 		if tuft.node then
 			tuft.node:SetPosition(tuft.bone.WorldCFrame.Position)
 		end
+	end
+	if origin and was then
+		origin.Transform = was
 	end
 	return shown
 end
@@ -211,17 +223,30 @@ local function make(i: number, j: number)
 		end
 	end
 	local nudge = G.Pitch * G.Jitter
+	local lean = math.rad(G.Lean)
+	local tall = G.Native[2] * G.Height -- the tallest blades
 	for n, bone in bones do
 		if n > across * across then
 			bone.WorldCFrame = part.CFrame * SINK -- (a bone past the square: out of sight)
 			continue
 		end
 		local a, b = (n - 1) % across, (n - 1) // across
+		local x = i * side + (a + 0.5) * G.Pitch + rng:float(-nudge, nudge)
+		local z = j * side + (b + 0.5) * G.Pitch + rng:float(-nudge, nudge)
+		-- Not an even carpet: the grass runs taller and shorter in drifts across the ground, every
+		-- tuft a little different, with bare spots here and there. A shorter tuft is one sitting
+		-- further into the ground (a bone can't be scaled).
+		local drift = math.noise(x / G.Drifts, z / G.Drifts, 0.31)
+		local height = math.clamp(0.72 + drift * 0.6 + rng:float(-0.18, 0.18), G.Shortest, 1)
+		local gap = math.noise(x / G.BareSize, z / G.BareSize, 7.7)
 		table.insert(cell.tufts, {
 			bone = bone,
-			x = i * side + (a + 0.5) * G.Pitch + rng:float(-nudge, nudge),
-			z = j * side + (b + 0.5) * G.Pitch + rng:float(-nudge, nudge),
-			turn = CFrame.Angles(0, rng:float(0, math.pi * 2), 0),
+			x = x,
+			z = z,
+			turn = CFrame.Angles(0, rng:float(0, math.pi * 2), 0)
+				* CFrame.Angles(rng:float(-lean, lean), 0, rng:float(-lean, lean)),
+			drop = (1 - height) * tall,
+			bare = gap > G.Bare or rng:float(0, 1) < G.Gaps,
 			node = nil,
 		})
 	end
@@ -397,8 +422,11 @@ local function prepare(model: Model): boolean
 		end
 	end)
 	part.Size = Vector3.new(native.X * G.Scale, native.Y * G.Height, native.Z * G.Scale)
+	-- smooth and matt: the plain look made for the blades (Data/Textures' Blade, a MaterialVariant
+	-- in the place); without it the material is still smooth
 	pcall(function()
 		part.Material = (Enum.Material :: any)[G.Material]
+		part.MaterialVariant = G.Look
 	end)
 	local ok, base = pcall(function()
 		return workspace.Terrain:GetMaterialColor(Enum.Material.Grass)
