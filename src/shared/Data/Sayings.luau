@@ -29,11 +29,19 @@ Sayings.hobbies = {
 	{ id = "guitar", name = "the guitar", line = "I've learned a third chord." },
 	{ id = "fishing", name = "fishing", line = "Nothing was biting today. I stayed out three hours anyway." },
 	{ id = "baking", name = "baking", line = "I made too many muffins. Want one?" },
-	{ id = "stargazing", name = "stargazing", line = "I was up half the night looking at stars. I'm paying for it now." },
+	{
+		id = "stargazing",
+		name = "stargazing",
+		line = "I was up half the night looking at stars. I'm paying for it now.",
+	},
 	{ id = "jogging", name = "jogging", line = "Three laps round the island today." },
 	{ id = "reading", name = "reading", line = "I can't put this book down." },
 	{ id = "knitting", name = "knitting", line = "This scarf is nearly as long as me." },
-	{ id = "birds", name = "watching birds", line = "There was a heron down by the pond this morning. I watched it for ages." },
+	{
+		id = "birds",
+		name = "watching birds",
+		line = "There was a heron down by the pond this morning. I watched it for ages.",
+	},
 }
 
 local byId: { [string]: any } = {}

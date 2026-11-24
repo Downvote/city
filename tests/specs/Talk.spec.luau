@@ -208,6 +208,54 @@ describe("Talk", function()
 		end
 	end)
 
+	it("says things in their own way", function()
+		-- the user: "for the humanization, make sure to take note of the personalities of the
+		-- villagers as well": the same news from a shy villager and a loud one
+		local function heard(pers)
+			local p = town(2, pers)
+			p.villagers.v1.mood = 50
+			Relationships.quarrel(p, "v1", "v2", 100)
+			local rng, seen = Rng.new(31), {}
+			for _ = 1, 800 do
+				seen[Talk.line(p, "v1", rng, { now = 200 })] = true
+			end
+			return seen
+		end
+		local shy, bold = heard("shy"), heard("bold")
+		expect(shy["Um. I don't have a bed yet. It's okay. The floor's okay."]).toBe(true)
+		expect(bold["Still no bed. I'm sleeping on the floor. Sort it out."]).toBe(true)
+		expect(shy["V2 and I had a falling out. I feel awful about it."]).toBe(true)
+		expect(bold["Don't talk to me about V2. We're not speaking."]).toBe(true)
+		expect(bold["Um. I don't have a bed yet. It's okay. The floor's okay."]).toBe(nil)
+		expect(bold["V2 and I had a falling out. I feel awful about it."]).toBe(nil)
+		expect(shy["Still no bed. I'm sleeping on the floor. Sort it out."]).toBe(nil)
+		expect(shy["Don't talk to me about V2. We're not speaking."]).toBe(nil)
+		-- every personality asks for a food, and to meet someone, in words of its own
+		local cravings, meets = {}, {}
+		for _, pers in Personalities.list do
+			local p = town(2, pers.id)
+			local v = p.villagers.v1
+			v.wish = { kind = "food", arg = v.fav, untilT = 1e9 }
+			local said = Talk.wishLine(p, "v1")
+			expect(readable(said)).toBeTruthy()
+			expect(said:find(Foods.get(v.fav).name, 1, true) ~= nil).toBeTruthy()
+			cravings[said] = true
+			v.wish = { kind = "friend", arg = "v2", untilT = 1e9 }
+			said = Talk.wishLine(p, "v1")
+			expect(readable(said) and said:find("V2", 1, true) ~= nil).toBeTruthy()
+			meets[said] = true
+		end
+		local n, m = 0, 0
+		for _ in cravings do
+			n += 1
+		end
+		for _ in meets do
+			m += 1
+		end
+		expect(n).toBe(#Personalities.list)
+		expect(m).toBe(#Personalities.list)
+	end)
+
 	it("has more to say: their last event, the neighbours, a worry, a joke, the season", function()
 		-- the user: "make much much more random events ... conversations"
 		local p = town(3)

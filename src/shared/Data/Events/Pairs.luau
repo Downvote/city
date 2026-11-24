@@ -331,7 +331,7 @@ event({
 		local s = K.scene(ctx, "A picnic")
 		s:prop("picnic", "a")
 		s:n("{a} and {b} spread a rug on the grass and unpacked far too many sandwiches.")
-		s:say("a", "I made far too many. There's one in here I don't even remember making.", "music")
+		s:say("a", "There's one in here I don't even remember making. Want to find out what it is?", "music")
 		if ctx.rng:chance(0.4) then
 			s:n("Then the ants found them. All of them.")
 			s:by("b", {
@@ -672,7 +672,12 @@ event({
 		s:n("Neither of them moves. The biscuit waits.")
 		s:choice("Give it to {a}", function(c)
 			c:voice("a", "thanks", "heart")
-			c:say("b", "I didn't want it anyway. I wanted it a bit.", "sad")
+			c:by("b", {
+				proud = "I didn't want it anyway.",
+				shy = "That's okay. Really. It's fine.",
+				bold = "Fine. Next one's mine.",
+				_ = "I didn't want it anyway. I wanted it a bit.",
+			}, "sad")
 			c:mood("a", 2)
 		end)
 		s:choice("Split it", function(c)
@@ -1196,7 +1201,11 @@ event({
 			ch:hearts("a", 2)
 		end)
 		s:choice("Wait for a better moment", function(ch)
-			ch:say("a", "You're right. Tomorrow. Probably.", "sweat")
+			ch:by("a", {
+				shy = "Tomorrow. I'll do it tomorrow. I think.",
+				proud = "Tomorrow. When the moment's right. I'll know.",
+				_ = "You're right. Tomorrow, then.",
+			}, "sweat")
 			ch:mood("a", -2)
 		end)
 		s:default(2)
@@ -1210,7 +1219,7 @@ local DAYS = {
 	"a picnic on the beach",
 	"a walk along the sand at sunset",
 	"ice cream by the fountain",
-	"counting boats from the pier",
+	"an afternoon counting boats from the pier",
 	"a concert at the bandstand",
 }
 

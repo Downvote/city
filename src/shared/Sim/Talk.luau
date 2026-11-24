@@ -115,7 +115,7 @@ local SMALL = {
 local OWN = {
 	sunny = {
 		"I've said hello to about twenty people today and it's not even lunch.",
-		"Did you see the new flowers by the hall? Someone's been busy, I want to find out who.",
+		"Did you see the new flowers by the fountain? Someone's been busy and I want to know who.",
 		"We should all have lunch together one day, the whole town, on the square.",
 	},
 	gentle = {
@@ -159,12 +159,15 @@ local JOKES = {
 	"Why did the gull sit on the bun? To keep it warm. Then it ate it.",
 	"I told the fountain a joke. It didn't laugh, but it gave me a wet look.",
 	"What do you call a sleepy crab? A crab nap.",
-	"My plant and I had a fight. It's still not talking to me. Never was, really.",
+	"Why don't crabs share? They're shellfish.",
 	"Why don't clouds wear shoes? They'd only lose them in the rain.",
 	"I bought a book about boats. Can't put it down. It's very heavy.",
 	"What's a pancake's favourite day? Flip day.",
-	"I asked the baker for a joke. He said, 'Here's one, it's a bit crusty.'",
+	"What do you call a fish with no eyes? A fsh. Sorry.",
 }
+
+-- How often they tell one: the cheeky and the sunny ones love a joke, the shy ones keep theirs in.
+local JOKY = { cheeky = 2, sunny = 2, shy = 0 }
 
 -- What they think of a neighbour, by how well they get on.
 local OPINION = {
@@ -407,7 +410,7 @@ function Talk.line(profile: any, vid: string, rng: any, opts: { [string]: any }?
 			end
 			-- a worry, a joke (more from the cheeky ones), the season and the weather
 			addLines("worry")
-			add(rng:pick(JOKES), if v.pers == "cheeky" or v.pers == "sunny" then 2 else 1)
+			add(rng:pick(JOKES), JOKY[v.pers] or 1)
 			if type(o.season) == "number" and SEASON[o.season] then
 				add(SEASON[o.season])
 			end

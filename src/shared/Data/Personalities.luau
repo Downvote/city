@@ -55,8 +55,8 @@ Personalities.list = {
 			},
 			thanks = {
 				"Oh, you didn't have to. Thank you, honestly.",
-				"Aw. I'm keeping this forever, you know that?",
-				"Thank you. I'm telling everyone you did this.",
+				"Aw. You're the best, you know that?",
+				"I owe you one. A big one.",
 			},
 			wow = {
 				"Oh wow, do it again, do it again.",
@@ -120,7 +120,7 @@ Personalities.list = {
 			},
 			excited = {
 				"I can't sit still, I really can't.",
-				"Tell me everything. From the start.",
+				"Oh, I'm so happy I could burst.",
 				"Okay okay okay. Yes.",
 				"This is the best news all week.",
 			},
@@ -133,7 +133,7 @@ Personalities.list = {
 			laugh = {
 				"Ha. Stop it.",
 				"I snorted. Don't tell anyone I snorted.",
-				"Oh, that's so silly. Again.",
+				"Oh, that's so silly.",
 				"Hahaha. Oh, my face hurts.",
 			},
 		},
@@ -164,8 +164,8 @@ Personalities.list = {
 			angry = { "That hurt my feelings.", "Please don't do that again.", "I think you owe someone an apology." },
 			thanks = {
 				"Oh, you shouldn't have. Thank you.",
-				"That's very kind. I'll find a nice spot for it.",
-				"Thank you, dear. Truly.",
+				"That's very kind of you, dear.",
+				"Thank you. Truly.",
 			},
 			wow = {
 				"Oh my. Did you make that?",
@@ -329,9 +329,9 @@ Personalities.list = {
 				"I'm cross. I'll forget why soon, but I'm cross.",
 			},
 			thanks = {
-				"Oh... for me?",
-				"It's lovely. It looks like it was always meant to be mine.",
-				"Thank you. I'll put it by the window, where the light is.",
+				"Oh... thank you.",
+				"Mm. That was nice of you. I'll remember it.",
+				"Thank you. I feel all light now.",
 			},
 			wow = {
 				"Oh... it's like something out of a dream.",
@@ -390,9 +390,9 @@ Personalities.list = {
 			},
 			excited = {
 				"Oh, oh, oh.",
-				"Something nice is coming. I can feel it in my toes.",
+				"I knew something nice was coming. I felt it in my toes.",
 				"I've gone all fizzy.",
-				"Is it now? Is it happening now?",
+				"Really? Oh... really?",
 			},
 			tired = {
 				"I'm sleepy all the way to my elbows.",
@@ -478,7 +478,7 @@ Personalities.list = {
 			angry = { "How dare you.", "I beg your pardon?", "You'll regret that. Maybe not today, but you will." },
 			thanks = {
 				"Well. That's acceptable.",
-				"Hmph. Thank you. It's actually rather nice.",
+				"Hmph. Thank you. That was rather nice of you.",
 				"You know me well. I'll give you that.",
 			},
 			wow = {
@@ -563,7 +563,7 @@ Personalities.list = {
 			happy = { "This is nice...", "I'm happy. Really.", "Hehe." },
 			sad = { "It's fine. Don't worry about me.", "I'd rather be on my own for a bit.", "..." },
 			angry = { "That's not okay.", "I'm upset. Actually upset.", "Please stop." },
-			thanks = { "For me? Th-thank you.", "Oh. I'll look after it.", "You're... really kind. Thanks." },
+			thanks = { "Oh. Th-thank you.", "Thank you. Really.", "You're... really kind. Thanks." },
 			wow = { "Oh... wow.", "That's really, really nice.", "I wish I could do that.", "Um. Amazing." },
 			scared = { "Eep.", "C-can we go?", "I'll just... stand behind you.", "I don't like this." },
 			sorry = { "S-sorry.", "I'm so sorry. I didn't mean to.", "Sorry. I'll go.", "Was that me? Sorry. Sorry." },
@@ -624,7 +624,11 @@ Personalities.list = {
 				"You'll pay for that. In a funny way.",
 				"Right. Revenge. Give me a minute to think of one.",
 			},
-			thanks = { "Ooh. What's the catch?", "Sweet. You're all right, you.", "For me? What did you do?" },
+			thanks = {
+				"Ooh. What's the catch?",
+				"Sweet. You're all right, you.",
+				"Thanks. I'll get you back. Nicely, I mean.",
+			},
 			wow = {
 				"Ooh, sneaky. I like it.",
 				"Okay, you got me. That's good.",

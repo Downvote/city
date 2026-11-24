@@ -346,7 +346,7 @@ event({
 	weight = W({ base = 0.18, rel = 25 }),
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "Making plans"):with({ plan = ctx.rng:pick(PLANS) })
-		s:say("a", "We should do {plan}. This week.", "idea", "point")
+		s:say("a", "We should have {plan}. This week.", "idea", "point")
 		s:by("b", {
 			easygoing = "Sure. Not too early, though.",
 			proud = "I'll plan it. My plans are flawless.",

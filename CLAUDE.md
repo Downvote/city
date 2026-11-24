@@ -29,7 +29,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (436 at the last full run; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `PlayerWork` and `WorkService`: a player working at a workplace themselves, its pay and cap, and the server's side with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (437 at the last full run; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `PlayerWork` and `WorkService`: a player working at a workplace themselves, its pay and cap, and the server's side with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off; what kind a bundle
 is, the outfit that holds the body, single body parts, the player's own items and avatars; preview scenes
@@ -167,7 +167,10 @@ parts; a new event goes in one of its modules), props they bring into the world 
 villager makes for the player (free Build mode pieces in `Build/Recipes/Keepsakes`, counted in `profile.keepsakes`,
 checked by `Sim/Keepsakes` on the server), and things villagers use on breaks with a chance of something unusual or
 rare (`Data/Interactions`, chosen by `Sim/Uses`, acted by `server/Npc/Use`; players hold E on some through
-`Services/Interact`). Every line follows the writing rule. There is no romance (the user: "remove any romance, just
+`Services/Interact`). Every line follows the writing rule, in the speaker's voice (the user: "for the humanization, make sure to take
+note of the personalities of the villagers as well"): each personality talks its own way (`Data/Personalities`'
+`lines`, `Sim/Talk`'s maps keyed by personality), and a line only one kind of villager would say goes through
+`s:by`. There is no romance (the user: "remove any romance, just
 best friends is the highest"): no crushes, dates, proposals or bonds, and best friends (the top of
 `Tuning.Relationships.Levels`, `K.BestFriends` in the events) is as close as two villagers get. Don't bring it back.
 
@@ -485,4 +488,6 @@ The user's standing rule: write like a person. Every player-visible string, line
 docs too: plain words; no em or en dashes; none of the stock AI words ("delve", "embark", "unleash", "vibrant",
 "bustling", "journey", "realm", "tapestry", "seamless", "elevate"); no "it's not X, it's Y"; no reflexive groups of
 three; no exclamation on every line; no hype; no stated morals. Short and specific, the way the town's own people
-would say it. The Events spec rejects dashes in event text.
+would say it. The user later: "make every text more human, including those in the ui", so also no tidy two beat joke on
+every line, no "Probably." or "Sort of." tacked on the end, no colon before a reveal, no cosy filler, no sign with a
+punchline; interface text says the thing once in a player's words. The Events spec rejects dashes in event text.

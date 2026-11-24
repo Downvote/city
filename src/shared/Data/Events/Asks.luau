@@ -210,6 +210,8 @@ event({
 				c:by("a", {
 					bold = "{Hobby}. Right. I'll be the best at it by Friday.",
 					easygoing = "{Hobby}? Sure. Why not.",
+					proud = "{Hobby}. Very well. I'll be good at it, naturally.",
+					shy = "{Hobby}? Um. Okay. I'll try.",
 					_ = "{Hobby}? Okay. Okay. I'm in.",
 				}, "idea", "cheer")
 				c:hobby("a", h.id)
@@ -384,7 +386,12 @@ event({
 				_ = "{b}. I'm sorry. Can we stop this now?",
 			}, "sad")
 			if ctx.rng:chance(0.5 + K.trait(ctx, b, "kind") * 0.4) then
-				c:say("b", "...Yes. I'm sorry too. I missed you.", "heart")
+				c:by("b", {
+					proud = "...Fine. I'm sorry too. A bit.",
+					bold = "Yeah. Me too. Done. Come here.",
+					shy = "Oh. Me too. I'm sorry too.",
+					_ = "...Yes. I'm sorry too. I missed you.",
+				}, "heart")
 				c:fx({ t = "makeup", a = "a", b = "b" })
 				c:rel(10)
 				c:mood("a", 5)

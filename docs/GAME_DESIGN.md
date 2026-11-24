@@ -1931,3 +1931,22 @@ the foods are all there is to draw.
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no
 "it's not X, it's Y", no hype, not an exclamation mark on every line. Short and specific, the way the town's own
 people would say it.
+
+> make every text more human, including those in the ui
+
+> for the humanization, make sure to take note of the personalities of the villagers as well
+
+So every string was gone over again, the interface, the notices, the signs and everything the villagers say. What
+still read machine made wasn't the banned words, it was the rhythm: a tidy two beat joke on every line, "Probably."
+or "Sort of." tacked on the end, lists of three, a colon before a reveal, cosy filler, a sign with a punchline. The
+interface now says the thing once in a player's own words ("Land bought. Your plot is now 300 by 300 studs.",
+"Things that happen in town show up here."), and a sign says what the place is.
+
+Each of the eight personalities talks its own way, all through their lines (`Data/Personalities`) and the talk card
+(`Sim/Talk`). Sunny runs on, warm, one thought into the next and asks you things. Gentle speaks softly in whole
+sentences and notices how you are. Bold uses a few words and tells you what to do. Dreamy drifts off mid thought to
+the light or the sea. Easygoing is short and can't be bothered ("Dunno. Ask me after lunch."). Proud is sure of
+themself and never quite says sorry. Shy says "um", trails off and apologises. Cheeky dares you and wants a
+reaction. And a line in an event that only one kind of person would say (a bashful thank you, a boast, a sulk after
+losing) is said in the speaker's own way now (`s:by`, keyed by personality), so a Bold villager is never handed the
+Shy one's words. Narration and the diary lines stay plain.
