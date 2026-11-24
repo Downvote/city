@@ -935,55 +935,73 @@ CityModels.house = house
 -- leafy clumps on a forked trunk. Each crown is one piece (one mesh in the game) named Leaf, so
 -- the client sways it in the wind (World/Ambience) and the trunk stays put: a tree is two parts.
 
-local FIR_CORE = rgb(30, 54, 50)
-local FIR_LOW = rgb(40, 76, 62)
-local FIR_HIGH = rgb(106, 124, 70)
+local FIR_CORE = rgb(28, 50, 48)
+local FIR_LOW = rgb(38, 72, 62)
+local FIR_HIGH = rgb(78, 104, 66)
+local FIR_TIP = rgb(118, 128, 74)
 local FIR_BARK = rgb(124, 78, 58)
 
 local function mix(a: Color3, b: Color3, t: number): Color3
 	return Color3.new(a.R + (b.R - a.R) * t, a.G + (b.G - a.G) * t, a.B + (b.B - a.B) * t)
 end
 
--- One bough on q, hanging from the core at height y: a wedge `len` long, `wide` across and
--- `thick` where it leaves the core, pointing out along the angle `a` and tipped `droop` down.
-local function bough(q: R, y: number, a: number, len: number, wide: number, thick: number, droop: number, color: Color3)
+-- One bough on q, hanging from the middle at height y: a wedge `len` long, `wide` across and
+-- `thick` where it leaves the middle, pointing out along the angle `a` and tipped `droop` down.
+-- It starts `inset` inside the middle.
+local function bough(
+	q: R,
+	y: number,
+	a: number,
+	len: number,
+	wide: number,
+	thick: number,
+	droop: number,
+	inset: number,
+	color: Color3
+)
 	local out = Vector3.new(math.cos(a), 0, math.sin(a))
 	local along = out * math.cos(droop) - Vector3.yAxis * math.sin(droop)
 	local up = out * math.sin(droop) + Vector3.yAxis * math.cos(droop)
 	local back = -along
 	-- (right, up and back are a right-handed set, as every frame must be)
 	local right = up:Cross(back)
-	local foot = Vector3.new(0, y, 0) - along * (thick * 0.4)
-	q:wedge(CFrame.fromMatrix(foot + along * (len / 2) + up * (thick / 2), right, up, back), wide, thick, len, color, "Grass")
+	local foot = Vector3.new(0, y, 0) - along * inset
+	local cf = CFrame.fromMatrix(foot + along * ((len + inset) / 2) + up * (thick / 2), right, up, back)
+	q:wedge(cf, wide, thick, len + inset, color, "Grass")
 end
 
 -- A fir's crown on q: `tiers` rows of boughs from the lowest tips at `base` up to the spire's
--- point at `top`, the lowest boughs `reach` long.
+-- point at `top`, the lowest boughs `reach` long. The last row is the spire.
 type Fir = { base: number, top: number, reach: number, tiers: number, trunk: number }
 local function firCrown(q: R, f: Fir)
 	local h = f.top - f.base
-	local droop0 = 0.6
-	local low = f.base + f.reach * math.sin(droop0) * 0.8
-	local high = f.top - 1.2 - h * 0.06
-	-- the dark core the boughs grow from (the piece's square box, which the merge hangs the rest on)
-	q:box(0, (f.base + high) / 2 + 0.3, 0, f.reach * 0.32, high - f.base, f.reach * 0.32, FIR_CORE, "Grass")
+	local droop0 = 0.72
+	local low = f.base + f.reach * math.sin(droop0) * 0.9
+	local high = f.top - 1.4 - h * 0.08
+	local core = f.reach * 0.3
+	-- the dark middle the boughs grow from (the piece's square box, which the merge hangs the rest on)
+	q:box(0, (f.base + 0.6 + high) / 2, 0, core, high - f.base - 0.6, core, FIR_CORE, "Grass")
 	for i = 0, f.tiers - 1 do
 		local t = i / (f.tiers - 1)
-		local y = low + (high - low) * t ^ 0.8
-		local tone = mix(FIR_LOW, FIR_HIGH, t ^ 1.3)
-		local turn = i * (math.pi / 4 + 0.23)
+		local y = low + (high - low) * t ^ 0.85
+		local turn = i * (math.pi / 4 + 0.19)
 		if i == f.tiers - 1 then
-			-- the spire: three slim boughs standing almost upright
+			-- the spire: three slim boughs standing upright round the leader
 			for k = 0, 2 do
-				bough(q, y, turn + k * math.pi * 2 / 3, 0.55, 0.6, f.top - y, 0.15, tone)
+				bough(q, y, turn + k * math.pi * 2 / 3, 0.5 + f.reach * 0.06, 0.34, f.top - y, 0, 0, FIR_TIP)
 			end
 		else
-			local len = f.reach * (1 - 0.8 * t)
-			local droop = droop0 - 0.28 * t
+			local len = f.reach * (1 - 0.78 * t)
+			local droop = droop0 - 0.26 * t
+			local tone = mix(FIR_LOW, FIR_HIGH, t ^ 1.4)
 			local n = if t > 0.6 then 3 else 4
 			for k = 0, n - 1 do
-				local color = if k % 2 == 0 then tone else shade(tone, 0.86)
-				bough(q, y, turn + k * math.pi * 2 / n, len, len * 0.9 + 0.3, len * 0.42 + 0.3, droop, color)
+				-- every other bough a shade darker, and the sunny side's tips lighter
+				local color = if k % 2 == 0 then tone else shade(tone, 0.84)
+				if k == 0 and t > 0.3 then
+					color = mix(tone, FIR_TIP, 0.45)
+				end
+				bough(q, y, turn + k * math.pi * 2 / n, len, len * 0.72 + 0.3, len * 0.32 + 0.25, droop, core * 0.4, color)
 			end
 		end
 	end
