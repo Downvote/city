@@ -1,8 +1,4 @@
 {
-  "grass": {
-    "material": "Grass",
-    "studs": 8
-  },
   "wood": {
     "material": "Wood",
     "studs": 4
@@ -139,5 +135,10 @@
     "material": "Rock",
     "studs": 16,
     "look": "Cliff"
+  },
+  "lawn": {
+    "material": "Grass",
+    "studs": 8,
+    "look": "Lawn"
   }
 }
