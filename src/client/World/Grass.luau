@@ -437,6 +437,14 @@ local function prepare(model: Model): boolean
 	part.CanTouch = false
 	part.CastShadow = G.Shadows
 	part.Reflectance = 0
+	-- slightly see-through (the user: "could you make it such that the grass is slightly
+	-- transparent?"): the mesh and the pack's decals that shade the blades' foot alike
+	part.Transparency = G.Transparency
+	for _, d in part:GetChildren() do
+		if d:IsA("Decal") then
+			d.Transparency = G.Transparency
+		end
+	end
 	-- the mesh's own size (Roblox knows it; the pack's numbers if it won't say)
 	local native = Vector3.new(G.Native[1], G.Native[2], G.Native[3])
 	pcall(function()

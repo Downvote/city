@@ -1648,6 +1648,10 @@ and it's drawn a little less far out. The ground under them was made smooth and 
 
 So the ground keeps Roblox's own grass texture.
 
+> could you make it such that the grass is slightly transparent?
+
+The long grass's blades let a quarter of what's behind them through.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

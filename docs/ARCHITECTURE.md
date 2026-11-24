@@ -181,7 +181,8 @@ asked for it) ships as it came in `vendor/SkinnedGrass.rbxm`, mounted by the pla
 The specs' harness skips a project path that is a model file.
 
 `client/World/Grass` waits for `Startup` to be `Ready`, then shrinks the pack's patch (`prepare`: `Size` is the
-mesh's own size, `MeshSize` or `Native`, times `Scale` across and `Height` up; `Material` and the look `Look`)
+mesh's own size, `MeshSize` or `Native`, times `Scale` across and `Height` up; `Material` and the look `Look`;
+`Transparency` on the mesh and its decals)
 and makes a copy in each of the first `Layers` of `Greens` (`painted`: the terrain grass's colour times `Base`
 for the decals, which shade the blades' foot, and `Tip` for the mesh). A square of ground is a `Cell` of up to
 `Layers` patches (`Layer`s), one in each green, their tufts scattered in among each other, so the colours fall

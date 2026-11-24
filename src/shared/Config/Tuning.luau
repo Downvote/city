@@ -426,6 +426,9 @@ Tuning.Grass = {
 	HiddenDepth = 8, -- studs a patch starts under the ground and goes back to when the camera leaves
 	Top = 250, -- the rays look down from this high (over the hills' tops)
 	Shadows = false, -- blades casting shadows costs a lot; Roblox's own grass doesn't either
+	-- "could you make it such that the grass is slightly transparent?": the blades and their shading
+	-- let this much of what's behind them through
+	Transparency = 0.25,
 	-- The pack draws its blades in Neon, which ignores the light (the lawns would glow at night);
 	-- SmoothPlastic was "too shiny", and Grass, matte but speckled, wanted "smoother". So they wear
 	-- the look Blade: SmoothPlastic with a plain picture and no shine (Data/Textures).

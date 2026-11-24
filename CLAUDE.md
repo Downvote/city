@@ -76,7 +76,8 @@ some areas"), so each patch's 100 bones are laid out again on our own fine grid 
 the plain matt look Blade; the grass runs taller and shorter in drifts with bare spots ("too even, grass should be
 more random"), each square has patches in two greens with their tufts mixed ("make the colors of grass
 random? and dense enough to cover all the floor?", then three were "too laggy, make it less dense"), and tufts are
-always placed with the patch's origin bone at rest (otherwise they fly);
+always placed with the patch's origin bone at rest (otherwise they fly); the blades are slightly see-through
+("could you make it such that the grass is slightly transparent?", `Transparency`);
 each tuft stands on the ground under it where that is Grass all round (terrain, a plot's lawn, a grass lawn in
 town) and sinks anywhere else, again when a plot changes (numbers in `Tuning.Grass`). Keep the author's credit with it. Nothing built may stand on terrain Grass:
 `TownMap.cover` lists what is built and the terrain under it is LeafyGrass, so a new kind of ground part or a
