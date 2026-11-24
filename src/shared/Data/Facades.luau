@@ -307,7 +307,7 @@ local WINDOWS: { [string]: Window } = {
 			q:block(-1.55, 0.95, -0.95, 1.55, 1.2, -0.55, rgb(86, 150, 84))
 			for i, x in { -1.2, -0.4, 0.4, 1.2 } do
 				local col = if i % 2 == 0 then rgb(250, 130, 150) else rgb(248, 210, 112)
-				q:block(x - 0.22, 1.15, -0.98, x + 0.22, 1.55, -0.56, col)
+				q:block(x - 0.22, 1.15, -0.98, x + 0.22, 1.55, -0.6, col)
 			end
 		end,
 	},
@@ -503,8 +503,8 @@ local function houseDoor(q: R, trim: Color3, door: Color3)
 	q:block(-2.6, 3.4, -0.1, -1.5, 5.6, 0, PANE)
 	q:block(-2.8, 5.6, -0.3, -1.3, 5.8, 0, trim)
 	q:block(-2.8, 3.2, -0.4, -1.3, 3.4, 0, trim)
-	q:block(-2.8, 3.4, -0.25, -2.6, 5.6, 0, trim)
-	q:block(-1.5, 3.4, -0.25, -1.3, 5.6, 0, trim)
+	q:block(-2.8, 3.4, -0.3, -2.6, 5.6, 0, trim)
+	q:block(-1.5, 3.4, -0.3, -1.3, 5.6, 0, trim)
 	q:block(-2.6, 4.44, -0.2, -1.5, 4.56, -0.1, trim)
 	-- the lamp
 	q:block(-2.12, 6.5, -0.5, -1.98, 6.62, 0, DARK)
@@ -519,7 +519,7 @@ local function garage(q: R, sheet: Color3)
 	for _, sx in { -1, 1 } do
 		q:block(sx * 5, 1.2, -0.3, sx * 4.6, 6.2, 0, shade(sheet, 0.7), MAT)
 		q:block(sx * 5, 0, -0.32, sx * 4.6, 1.2, 0, rgb(244, 196, 66), MAT)
-		q:block(sx * 5, 0.4, -0.34, sx * 4.6, 0.8, 0, DARK, MAT)
+		q:block(sx * 5.04, 0.4, -0.36, sx * 4.56, 0.8, 0, DARK, MAT)
 	end
 	q:block(-4.6, 0.1, -0.15, 4.6, 6.2, 0, sheet, MAT)
 	for _, y in { 1.6, 3.1, 4.6 } do
@@ -574,12 +574,12 @@ end
 -- A square downpipe from a hopper under the roof to a shoe at the pavement, clipped to the wall
 -- at every storey. Drawn with y = 0 on the pavement.
 local function downpipe(q: R, height: number)
-	q:block(-0.16, 0.3, -0.4, 0.16, height - 0.9, -0.1, DARK)
-	q:block(-0.38, height - 0.9, -0.56, 0.38, height - 0.3, 0, DARK)
+	q:block(-0.16, 0.3, -0.45, 0.16, height - 0.9, -0.1, DARK)
+	q:block(-0.34, height - 0.9, -0.56, 0.34, height - 0.3, 0, DARK)
 	q:block(-0.16, 0, -0.75, 0.16, 0.3, -0.1, DARK)
 	local y = 3
 	while y < height - 2 do
-		q:block(-0.3, y, -0.44, 0.3, y + 0.14, 0, METAL)
+		q:block(-0.27, y, -0.5, 0.27, y + 0.14, 0, METAL)
 		y += FH
 	end
 end
@@ -611,7 +611,7 @@ end
 -- The two arms a blade sign hangs on, `rise` apart.
 local function bladeArms(q: R, rise: number)
 	q:block(-0.12, 0, -0.7, 0.12, 0.25, 0, DARK)
-	q:block(-0.12, rise, -0.7, 0.12, rise + 0.25, 0, DARK)
+	q:block(-0.12, rise - 0.04, -0.7, 0.12, rise + 0.21, 0, DARK)
 end
 
 -- The back of a building, all in one piece: a door with a step and a lamp, a barred window, the
@@ -648,8 +648,8 @@ end
 local function banner(q: R, cloth: Color3)
 	q:block(-0.1, 4.3, -2.3, 0.1, 4.5, 0, DARK)
 	q:block(-0.06, 0.2, -2.2, 0.06, 4.3, -0.6, cloth)
-	q:block(-0.08, 3.3, -2.2, 0.08, 3.7, -0.6, CREAM)
-	q:block(-0.08, 0.9, -2.2, 0.08, 1.1, -0.6, CREAM)
+	q:block(-0.1, 3.3, -2.24, 0.1, 3.7, -0.56, CREAM)
+	q:block(-0.1, 0.9, -2.24, 0.1, 1.1, -0.56, CREAM)
 	q:block(-0.1, 0.1, -2.25, 0.1, 0.2, -0.55, DARK)
 end
 
@@ -870,6 +870,17 @@ type Plan = {
 	cap: Color3,
 }
 
+-- How much wider than its shop front an awning is: 0.4, or less where the next front is so close
+-- that two awnings would overlap and flicker. A narrower one is a piece of its own.
+-- (in steps that keep its arms off the shop front's posts)
+local function awningExtra(gap: number): number
+	return if gap >= 0.46 then 0.4 elseif gap >= 0.26 then 0.2 else 0
+end
+local function awningId(w: number, canvas: string, gap: number): string
+	local extra = awningExtra(gap)
+	return string.format("awning:%d:%s", w, canvas) .. (if extra < 0.4 then string.format(":%.2f", extra) else "")
+end
+
 -- One street face: the ground floor, the storeys, what hangs on them and the band along the top.
 local function drawFace(face: Face, plan: Plan, main: boolean)
 	local spec, d = plan.spec, plan.d
@@ -955,13 +966,24 @@ local function drawFace(face: Face, plan: Plan, main: boolean)
 			if d.chance(0.7) then
 				lit(face, cx - u.w / 2 + 0.3, 1.1, cx + u.w / 2 - 0.3, 6.4)
 			end
-			stamp(face, string.format("awning:%d:%s", u.w, canvas.id), cx, 0, function(q: R)
-				awning(q, u.w + 0.4, canvas.color)
+			stamp(face, awningId(u.w, canvas.id, gap), cx, 0, function(q: R)
+				awning(q, u.w + awningExtra(gap), canvas.color)
 			end)
 			boardFrom, boardTo = math.min(boardFrom, cx - u.w / 2), math.max(boardTo, cx + u.w / 2)
 			if main and i == 1 and d.chance(0.55) then
-				local apron =
-					block(face, cx - u.w / 2, 0, -3, cx + u.w / 2, 0.05, 0, pick(d, APRONS), "CeramicTiles:Checker")
+				-- (a hair inside the shop front's ends, and its top a tenth over the pavement so the
+				-- two don't flicker from across the town)
+				local apron = block(
+					face,
+					cx - u.w / 2 + 0.04,
+					-0.06,
+					-3,
+					cx + u.w / 2 - 0.04,
+					0.1,
+					0,
+					pick(d, APRONS),
+					"CeramicTiles:Checker"
+				)
 				apron.collide = false
 			end
 		elseif u.kind == "shutter" or u.kind == "shut" then
@@ -975,8 +997,8 @@ local function drawFace(face: Face, plan: Plan, main: boolean)
 				lit(face, cx - 4.7, 0.05, cx + 4.7, 2.72, DIM)
 			end
 			if d.chance(0.35) then
-				stamp(face, string.format("awning:%d:%s", u.w, canvas.id), cx, 0, function(q: R)
-					awning(q, u.w + 0.4, canvas.color)
+				stamp(face, awningId(u.w, canvas.id, gap), cx, 0, function(q: R)
+					awning(q, u.w + awningExtra(gap), canvas.color)
 				end)
 			end
 			boardFrom, boardTo = math.min(boardFrom, cx - u.w / 2), math.max(boardTo, cx + u.w / 2)
@@ -991,7 +1013,8 @@ local function drawFace(face: Face, plan: Plan, main: boolean)
 			end)
 			lit(face, cx - 5.6, 3.3, cx + 5.6, 6.15, rgb(104, 76, 60))
 			if d.chance(0.5) then
-				local apron = block(face, cx - 6, 0, -3.2, cx + 6, 0.05, 0, pick(d, APRONS), "CeramicTiles:Checker")
+				local apron =
+					block(face, cx - 5.96, -0.06, -3.2, cx + 5.96, 0.1, 0, pick(d, APRONS), "CeramicTiles:Checker")
 				apron.collide = false
 			end
 		elseif u.kind == "door" then
@@ -1090,7 +1113,10 @@ local function drawFace(face: Face, plan: Plan, main: boolean)
 			local clear = here ~= "balcony" and below ~= "balcony" and below ~= "awned"
 			if clear and hung < 2 and d.chance(0.16) then
 				local off = if col.class == "W" then (if d.chance(0.5) then 1 else -1) else 0
-				stamp(face, "aircon", col.x + off, G + (s - 1) * FH - 0.62, airCon)
+				-- (not under a window box, where its top would be in the flowers)
+				if here ~= "flower" then
+					stamp(face, "aircon", col.x + off, G + (s - 1) * FH - 0.62, airCon)
+				end
 				hung += 1
 			end
 		end
@@ -1099,8 +1125,10 @@ local function drawFace(face: Face, plan: Plan, main: boolean)
 	-- a string course over the shop, the band along the top, a downpipe at one end and
 	-- sometimes a blade sign at the other
 	-- (on a corner the front's bands run on past the wall's end to meet the side's)
-	local left = -half - (if main and spec.corner == "left" then 0.4 else 0)
-	local right = half + (if main and spec.corner == "right" then 0.4 else 0)
+	-- (and a hair short of the end, so their ends sit inside the pier's cap or the wall round the
+	-- corner instead of on its face)
+	local left = -half - (if main and spec.corner == "left" then 0.4 else 0) + 0.03
+	local right = half + (if main and spec.corner == "right" then 0.4 else 0) - 0.03
 	if d.chance(0.6) then
 		block(face, left, G - 0.2, -0.2, right, G + 0.16, 0, plan.cap)
 	end

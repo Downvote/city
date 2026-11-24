@@ -272,7 +272,7 @@ local items: { Item } = {
 			end
 			-- a slatted shelf low down
 			for _, z in { -0.48, 0, 0.48 } do
-				r:block(-2.08, 0.44, z - 0.19, 2.08, 0.54, z + 0.19, shade(r.c1, 0.9), "Wood")
+				r:block(-2.1, 0.44, z - 0.19, 2.1, 0.54, z + 0.19, shade(r.c1, 0.9), "Wood")
 			end
 			-- five seat slats with small gaps between them
 			for i = 0, 4 do
@@ -378,16 +378,16 @@ local items: { Item } = {
 				r:cyl(x, 2.835, 0.85, 0.28, 0.17, "y", r.c1, "Wood")
 				rod(r, Vector3.new(x, 1.0, 0.68), Vector3.new(x, 1.0, -0.68), 0.08, dk, "Wood")
 			end
-			r:block(-1.0, 1.75, -0.9, 1.0, 1.95, 0.9, r.c1, "Wood")
-			r:cyl(0, 1.85, 0.9, 2.0, 0.2, "x", r.c1, "Wood")
+			r:block(-1.04, 1.75, -0.9, 1.04, 1.95, 0.9, r.c1, "Wood")
+			r:cyl(0, 1.85, 0.9, 2.08, 0.2, "x", r.c1, "Wood")
 			cushion(r, -0.78, 1.95, -0.72, 0.78, 2.12, 0.84, r.c2)
 			r:boxAt(CFrame.new(0, 4.18, -1.24) * CFrame.Angles(-0.22, 0, 0), 2.0, 0.42, 0.18, r.c1, "Wood")
-			r:boxAt(CFrame.new(0, 2.35, -0.83) * CFrame.Angles(-0.22, 0, 0), 1.7, 0.18, 0.14, r.c1, "Wood")
+			r:boxAt(CFrame.new(0, 2.35, -0.83) * CFrame.Angles(-0.22, 0, 0), 1.7, 0.18, 0.2, r.c1, "Wood")
 			for _, x in { -0.56, -0.28, 0, 0.28, 0.56 } do
 				rod(r, Vector3.new(x, 2.3, -0.82), Vector3.new(x, 4.0, -1.2), 0.1, dk, "Wood")
 			end
 			-- a little pillow tied to the back
-			r:boxAt(CFrame.new(0, 2.75, -0.82) * CFrame.Angles(-0.22, 0, 0), 1.2, 0.7, 0.22, r.c2, "Fabric")
+			r:boxAt(CFrame.new(0, 2.75, -0.82) * CFrame.Angles(-0.22, 0, 0), 0.94, 0.7, 0.22, r.c2, "Fabric")
 			r:seat(0, 2.12, 0.1)
 		end,
 	},

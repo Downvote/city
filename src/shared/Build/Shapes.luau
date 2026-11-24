@@ -121,6 +121,10 @@ function Shapes.wallReach(plan: Plan.PlanData, key: string): (Reach, Reach)
 	return reach(w.x1, w.z1), reach(w.x2, w.z2)
 end
 
+-- How much bigger than a door or window its hole in the wall is cut, all round. Doors and
+-- windows line their hole from 0.1 outside its edge (Recipes/Openings), so the cut stays hidden.
+local HOLE = 0.04
+
 -- Draws one wall. `openings` are { t, w, y0, y1 } (see Plan.openings); reach1/reach2 from wallReach.
 function Shapes.wall(w: Plan.Wall, openings: { { number } }?, reach1: any, reach2: any): { Prim }
 	local out: { Prim } = {}
@@ -176,10 +180,13 @@ function Shapes.wall(w: Plan.Wall, openings: { { number } }?, reach1: any, reach
 		local first = true
 		local cuts: { { number } } = openings or {}
 		for _, o in cuts do
-			local o0, o1 = o[1] - o[2] / 2, o[1] + o[2] / 2
+			-- the hole is cut a hair bigger than the door or window, so the wall's cut faces sit
+			-- inside its trim and don't flicker against the trim's own faces (and a door's step
+			-- under the hole sinks just under the floor beside it)
+			local o0, o1 = o[1] - o[2] / 2 - HOLE, o[1] + o[2] / 2 + HOLE
 			piece(s, o0, 0, height, first, false)
-			piece(o0, o1, 0, o[3])
-			piece(o0, o1, o[4], height)
+			piece(o0, o1, 0, o[3] - HOLE)
+			piece(o0, o1, o[4] + HOLE, height)
 			s = o1
 			first = false
 		end
@@ -273,7 +280,10 @@ function Shapes.floor(f: Plan.Floor, holes: { { number } }?): { Prim }
 	local rects = { { f.x1, f.z1, f.x2, f.z2 } }
 	local cuts: { { number } } = holes or {}
 	for _, h in cuts do
-		rects = Shapes.subtract(rects, h)
+		-- a stair's hole is cut a hair wider than the stair, so where it stops at a wall the
+		-- floor's cut edge sits inside the wall instead of on its face
+		local g = 0.05
+		rects = Shapes.subtract(rects, { h[1] - g, h[2] - g, h[3] + g, h[4] + g })
 	end
 	local color = Colors.fromHex(f.c)
 	for _, r in rects do
@@ -326,7 +336,9 @@ function Shapes.roof(r: Plan.Roof): { Prim }
 	local color = Colors.fromHex(r.c)
 	local color2 = Colors.fromHex(r.c2)
 	local t = P.RoofThickness
-	local wt = P.WallThickness
+	-- the gable ends: a little thinner than a wall, so where a wall of the storey above runs
+	-- through one the gable is hidden inside it rather than flickering on its faces
+	local GABLE = P.WallThickness - 0.06
 	local o = r.over
 	local y0 = Plan.levelTop(r.lv)
 	local up = Vector3.yAxis
@@ -346,9 +358,11 @@ function Shapes.roof(r: Plan.Roof): { Prim }
 		Geometry.append(out, list)
 	end
 	local function cap(a: Vector3, b: Vector3)
+		-- a hair past the roof's own ends, so its end faces don't lie on the gable ends' faces
+		local along = if (b - a).Magnitude > 1e-3 then (b - a).Unit * 0.04 else Vector3.zero
 		local prim = Geometry.beam(
-			a + Vector3.new(0, t * 0.9, 0),
-			b + Vector3.new(0, t * 0.9, 0),
+			a - along + Vector3.new(0, t * 0.9, 0),
+			b + along + Vector3.new(0, t * 0.9, 0),
 			0.9,
 			0.45,
 			Colors.shade(color, 0.85),
@@ -408,7 +422,7 @@ function Shapes.roof(r: Plan.Roof): { Prim }
 		)
 		cap(Pt(-o, top, V / 2), Pt(U + o, top, V / 2))
 		for _, u in { 0, U } do
-			add(Geometry.triangle(Pt(u, y0, 0), Pt(u, y0, V), Pt(u, top, V / 2), wt, color2, r.m2))
+			add(Geometry.triangle(Pt(u, y0, 0), Pt(u, y0, V), Pt(u, top, V / 2), GABLE, color2, r.m2))
 		end
 	elseif style == "hip" or style == "pyramid" then
 		local half = if style == "hip" then V / 2 else math.min(U, V) / 2
@@ -449,9 +463,9 @@ function Shapes.roof(r: Plan.Roof): { Prim }
 			)
 		)
 		for _, u in { 0, U } do
-			add(Geometry.triangle(Pt(u, y0, 0), Pt(u, y0, V), Pt(u, top, V), wt, color2, r.m2))
+			add(Geometry.triangle(Pt(u, y0, 0), Pt(u, y0, V), Pt(u, top, V), GABLE, color2, r.m2))
 		end
-		add(Geometry.quad(Pt(0, y0, V), Pt(U, y0, V), Pt(U, top, V), Pt(0, top, V), wt, color2, r.m2))
+		add(Geometry.quad(Pt(0, y0, V), Pt(U, y0, V), Pt(U, top, V), Pt(0, top, V), GABLE, color2, r.m2))
 	end
 	return out
 end

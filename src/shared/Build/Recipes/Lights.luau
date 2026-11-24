@@ -42,8 +42,8 @@ end
 -- A drum shade from y1 to y2, d across, with thin rims top and bottom; returns the glowing part.
 local function drum(r: R, x: number, y1: number, y2: number, z: number, d: number, color: Color3, rim: Color3)
 	local body = r:cyl(x, (y1 + y2) / 2, z, y2 - y1, d, "y", color, "Fabric")
-	r:cyl(x, y1 + 0.03, z, 0.06, d + 0.03, "y", rim, "Metal")
-	r:cyl(x, y2 - 0.03, z, 0.06, d + 0.03, "y", rim, "Metal")
+	r:cyl(x, y1 + 0.01, z, 0.08, d + 0.08, "y", rim, "Metal")
+	r:cyl(x, y2 - 0.01, z, 0.08, d + 0.08, "y", rim, "Metal")
 	return body
 end
 
@@ -158,13 +158,16 @@ local items: { Item } = {
 		c2 = "C9A35A",
 		tags = { "light" },
 		build = function(r: R)
-			r:cyl(0, -0.04, 0, 0.08, 1.1, "y", r.c2, "Metal")
-			r:cyl(0, -0.12, 0, 0.08, 1.86, "y", r.c2, "Metal")
-			local dome = r:cyl(0, -0.36, 0, 0.42, 1.76, "y", r.c1, "Glass")
-			r:glow(dome, 18, 1.3)
-			r:cyl(0, -0.62, 0, 0.12, 1.4, "y", r.c1, "Glass")
-			r:cyl(0, -0.7, 0, 0.06, 0.9, "y", shade(r.c1, 0.95), "Glass")
-			r:ball(0, -0.75, 0, 0.12, r.c2, "Metal")
+			-- a ceiling plate and collar (c2), a band, and a glass bowl (c1) in three steps
+			-- narrowing to a little finial
+			r:cyl(0, -0.04, 0, 0.08, 1.0, "y", r.c2, "Metal")
+			r:cyl(0, -0.12, 0, 0.1, 0.5, "y", shade(r.c2, 0.9), "Metal")
+			r:cyl(0, -0.2, 0, 0.06, 1.86, "y", r.c2, "Metal")
+			local bowl = r:cyl(0, -0.33, 0, 0.2, 1.7, "y", r.c1, "Glass")
+			r:glow(bowl, 18, 1.3)
+			r:cyl(0, -0.51, 0, 0.16, 1.3, "y", shade(r.c1, 0.97), "Glass")
+			r:cyl(0, -0.65, 0, 0.12, 0.8, "y", shade(r.c1, 0.94), "Glass")
+			r:ball(0, -0.76, 0, 0.14, r.c2, "Metal")
 		end,
 	},
 	{
@@ -187,7 +190,7 @@ local items: { Item } = {
 			r:cyl(0, -2.45, 0, 0.16, 0.86, "y", r.c1, "Metal")
 			r:cyl(0, -2.62, 0, 0.2, 1.26, "y", r.c1, "Metal")
 			r:cyl(0, -2.84, 0, 0.26, 1.6, "y", r.c1, "Metal")
-			r:cyl(0, -2.97, 0, 0.02, 1.5, "y", C.White, "SmoothPlastic")
+			r:cyl(0, -3.0, 0, 0.02, 1.5, "y", C.White, "SmoothPlastic")
 			local bulb = r:ball(0, -2.92, 0, 0.42, C.Warm, "SmoothPlastic")
 			r:glow(bulb, 16, 1.2)
 		end,

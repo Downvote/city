@@ -851,7 +851,7 @@ local items: { any } = {
 						)
 					end
 				end
-				local n = 12
+				local n = 10
 				for _, s in { -1, 1 } do
 					for i = 0, n - 1 do
 						local a1 = i / n * math.pi * 2

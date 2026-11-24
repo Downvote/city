@@ -35,9 +35,17 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 end
 
 -- A top from y1 to y2 with a thin bevel strip under its edge.
-local function top(r: R, w: number, d: number, y1: number, y2: number, color: Color3, mat: string)
-	r:block(-w / 2, y1, -d / 2, w / 2, y2, d / 2, color, mat)
-	r:block(-w / 2 + 0.06, y1 - 0.06, -d / 2 + 0.06, w / 2 - 0.06, y1, d / 2 - 0.06, shade(color, 0.82), mat)
+-- With `boards`, the top is that many boards side by side along its length, in two shades.
+local function top(r: R, w: number, d: number, y1: number, y2: number, color: Color3, mat: string, boards: number?)
+	if boards then
+		for i = 0, boards - 1 do
+			local z1 = -d / 2 + i * d / boards
+			r:block(-w / 2, y1, z1, w / 2, y2, z1 + d / boards, if i % 2 == 0 then color else shade(color, 0.95), mat)
+		end
+	else
+		r:block(-w / 2, y1, -d / 2, w / 2, y2, d / 2, color, mat)
+	end
+	r:block(-w / 2 + 0.04, y1 - 0.06, -d / 2 + 0.04, w / 2 - 0.04, y1, d / 2 - 0.04, shade(color, 0.82), mat)
 end
 
 -- A splayed mid century leg with a brass foot cap.
@@ -46,8 +54,8 @@ local function splayLeg(r: R, x: number, z: number, y: number, splay: number, d:
 	local sz = if z < 0 then -1 else 1
 	local foot = Vector3.new(x + sx * splay, 0, z + sz * splay)
 	local head = Vector3.new(x, y, z)
-	rod(r, head, foot, d, color, "Wood")
-	rod(r, foot + (head - foot).Unit * 0.18, foot, d + 0.03, C.Gold, "Metal")
+	rod(r, head, foot + (head - foot).Unit * 0.1, d, color, "Wood")
+	rod(r, foot + (head - foot).Unit * 0.18, foot, d + 0.06, C.Gold, "Metal")
 end
 
 -- A drawer front on the +z face at z, with a bar pull (or a round knob when it is small).
@@ -77,7 +85,7 @@ end
 -- A dining table: a top with a bevelled edge, an open apron of four boards, and turned legs.
 local function diningTable(r: R, w: number, d: number, mat: string)
 	local h = 3.1
-	top(r, w, d, h - 0.2, h, r.c1, mat)
+	top(r, w, d, h - 0.2, h, r.c1, mat, if w > 4 then 5 else 4)
 	local ax, az = w / 2 - 0.3, d / 2 - 0.3
 	local apron = shade(r.c2, 0.92)
 	for _, s in { -1, 1 } do
@@ -91,7 +99,7 @@ local function diningTable(r: R, w: number, d: number, mat: string)
 			r:box(x, h - 0.48, z, 0.32, 0.44, 0.32, r.c2, "Wood")
 			r:cyl(x, 1.5, z, 2.2, 0.26, "y", r.c2, "Wood")
 			r:cyl(x, 2.05, z, 0.16, 0.34, "y", shade(r.c2, 0.9), "Wood")
-			r:cyl(x, 0.22, z, 0.44, 0.3, "y", shade(r.c2, 0.9), "Wood")
+			r:cyl(x, 0.22, z, 0.44, 0.32, "y", shade(r.c2, 0.9), "Wood")
 		end
 	end
 end
@@ -124,7 +132,7 @@ local items: { Item } = {
 		c2 = "6E4C34",
 		tags = { "table" },
 		build = function(r: R)
-			top(r, 4, 2.4, 1.42, 1.6, r.c1, "Wood")
+			top(r, 4, 2.4, 1.42, 1.6, r.c1, "Wood", 3)
 			-- a shallow drawer box under the top
 			r:block(-1.62, 1.14, -0.86, 1.62, 1.36, 0.86, shade(r.c1, 0.86), "Wood")
 			r:block(-0.8, 1.17, 0.86, 0.8, 1.33, 0.9, shade(r.c1, 1.06), "Wood")
@@ -227,7 +235,7 @@ local items: { Item } = {
 					r.c2,
 					"Wood"
 				)
-				r:cyl(dx * 1.32, 0.06, dz * 1.32, 0.12, 0.26, "y", shade(r.c2, 0.8), "Wood")
+				r:cyl(dx * 1.32, 0.06, dz * 1.32, 0.12, 0.32, "y", shade(r.c2, 0.8), "Wood")
 			end
 		end,
 	},

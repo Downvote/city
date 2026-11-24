@@ -13,7 +13,8 @@
 --     pieces are opened into their shapes and tested inside too
 --   * two faces count when their normals are within Z.Angle degrees, the second lies within
 --     Z.Near of the first's plane over a shared patch bigger than Z.MinArea, and their parts
---     differ in colour or material (the same paint can't be seen to flicker)
+--     differ in colour or material (the same paint can't be seen to flicker; colours within a
+--     step or two of each other count as the same)
 --   * big flat layers facing up (ground, paving, paint, lawns) count closer than Z.Far, since the
 --     depth buffer at 300 to 600 studs can't part them any nearer (only where asked: `far`)
 --   * a patch is left out where it can't be seen: just in front of it is the inside of another
@@ -364,6 +365,20 @@ function Z.scan(prims, opts)
 	local P_comp = table.create(n) -- the 12 numbers of the drawn frame
 	local P_solid = table.create(n)
 	local P_key = table.create(n)
+	local P_rgb = table.create(n)
+	-- the same material in colours a step or two apart looks like the same paint
+	local function samePaint(a: number, b: number): boolean
+		if P_key[a] ~= P_key[b] then
+			return false
+		end
+		local x, y = P_rgb[a], P_rgb[b]
+		if x == y then
+			return true
+		end
+		return abs(x // 65536 - y // 65536) <= 2
+			and abs(x // 256 % 256 - y // 256 % 256) <= 2
+			and abs(x % 256 - y % 256) <= 2
+	end
 	local P_opaque = table.create(n)
 	local P_lo = table.create(n)
 	local P_hi = table.create(n)
@@ -432,7 +447,10 @@ function Z.scan(prims, opts)
 		P_solid[i] = solid
 		local c = { cf:GetComponents() }
 		P_comp[i] = c
-		P_key[i] = p.color:ToHex() .. "/" .. tostring(p.mat)
+		P_key[i] = tostring(p.mat)
+		P_rgb[i] = math.floor(p.color.R * 255 + 0.5) * 65536
+			+ math.floor(p.color.G * 255 + 0.5) * 256
+			+ math.floor(p.color.B * 255 + 0.5)
 		P_opaque[i] = (p.transp or 0) < 0.05
 		local s = p.size
 		local sx, sy, sz = max(s.X, 1e-4), max(s.Y, 1e-4), max(s.Z, 1e-4)
@@ -802,7 +820,7 @@ function Z.scan(prims, opts)
 		local mask = F_mask[f]
 		local lvf = F_level[f]
 		local a = F_prim[f]
-		local ua0, ka = unit[a] or 0, P_key[a]
+		local ua0 = unit[a] or 0
 		local nx, ny, nz = F_nx[f], F_ny[f], F_nz[f]
 		local fx0, fy0, fz0, fx1, fy1, fz1 = F_x0[f], F_y0[f], F_z0[f], F_x1[f], F_y1[f], F_z1[f]
 		local flo = { fx0, fy0, fz0 }
@@ -832,7 +850,7 @@ function Z.scan(prims, opts)
 									continue
 								end
 								local bp = F_prim[h]
-								if bp == a or P_key[bp] == ka then
+								if bp == a or samePaint(a, bp) then
 									continue
 								end
 								local ub = unit[bp] or 0

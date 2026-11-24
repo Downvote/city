@@ -37,16 +37,17 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 end
 
 -- A picture frame w x h with bars t wide, standing d out from the wall, with a thin darker lip
--- round the inside edge and a flat backing board behind.
+-- along the inside of its top and bottom bars, as one piece.
 local function frame(r: R, w: number, h: number, t: number, d: number, color: Color3, mat: string)
-	r:block(-w / 2 + 0.05, 0.05, 0, w / 2 - 0.05, h - 0.05, 0.02, shade(color, 0.6), mat)
-	r:block(-w / 2, h - t, 0, w / 2, h, d, color, mat)
-	r:block(-w / 2, 0, 0, w / 2, t, d, color, mat)
-	r:block(-w / 2, t, 0, -w / 2 + t, h - t, d, color, mat)
-	r:block(w / 2 - t, t, 0, w / 2, h - t, d, color, mat)
-	local lip = shade(color, 0.78)
-	r:block(-w / 2 + t, t, d - 0.06, w / 2 - t, t + 0.04, d - 0.02, lip, mat)
-	r:block(-w / 2 + t, h - t - 0.04, d - 0.06, w / 2 - t, h - t, d - 0.02, lip, mat)
+	r:piece(function(q: R)
+		q:block(-w / 2, h - t, 0, w / 2, h, d, color, mat)
+		q:block(-w / 2, 0, 0, w / 2, t, d, color, mat)
+		q:block(-w / 2, t, 0, -w / 2 + t, h - t, d, color, mat)
+		q:block(w / 2 - t, t, 0, w / 2, h - t, d, color, mat)
+		local lip = shade(color, 0.78)
+		q:block(-w / 2 + t, t, d - 0.08, w / 2 - t, t + 0.04, d - 0.04, lip, mat)
+		q:block(-w / 2 + t, h - t - 0.04, d - 0.08, w / 2 - t, h - t, d - 0.04, lip, mat)
+	end)
 end
 
 -- A flat triangle on a picture, at depth z.
@@ -81,21 +82,22 @@ local items: { Item } = {
 		c2 = "9CCBE8",
 		tags = { "art" },
 		build = function(r: R)
-			frame(r, 4, 3, 0.22, 0.25, r.c1, "Wood")
-			r:block(-1.78, 0.22, 0.02, 1.78, 2.78, 0.1, MAT, "SmoothPlastic")
-			-- sky, a sun and clouds, two hills, a field and a little house
-			r:block(-1.55, 0.45, 0.1, 1.55, 2.55, 0.12, r.c2, "SmoothPlastic")
-			r:block(-1.55, 1.9, 0.12, 1.55, 2.55, 0.125, shade(r.c2, 1.1), "SmoothPlastic")
-			r:cyl(0.95, 2.1, 0.13, 0.02, 0.5, "z", C.Yellow, "SmoothPlastic")
-			r:cyl(-0.85, 2.2, 0.13, 0.02, 0.36, "z", C.White, "SmoothPlastic")
-			r:cyl(-0.58, 2.24, 0.135, 0.02, 0.46, "z", C.White, "SmoothPlastic")
-			r:cyl(-0.35, 2.18, 0.13, 0.02, 0.3, "z", C.White, "SmoothPlastic")
-			flatTri(r, Vector2.new(-0.4, 0.8), Vector2.new(1.55, 0.8), Vector2.new(1.55, 1.65), 0.14, C.DarkLeaf)
-			flatTri(r, Vector2.new(-1.55, 0.8), Vector2.new(0.8, 0.8), Vector2.new(-0.6, 1.7), 0.16, C.Leaf)
-			r:block(-1.55, 0.45, 0.12, 1.55, 0.85, 0.18, Color3.fromRGB(150, 190, 90), "SmoothPlastic")
-			r:block(-1.55, 0.6, 0.18, 1.55, 0.66, 0.185, Color3.fromRGB(205, 180, 100), "SmoothPlastic")
-			r:block(-0.85, 0.85, 0.18, -0.45, 1.13, 0.2, C.White, "SmoothPlastic")
-			flatTri(r, Vector2.new(-0.92, 1.13), Vector2.new(-0.38, 1.13), Vector2.new(-0.65, 1.33), 0.2, C.Red)
+			-- a deep frame (c1) round a card mount, and in it a sky (c2) with a sun and clouds, two
+			-- hills, a field and a little house; each layer stands a little in front of the last
+			frame(r, 4, 3, 0.22, 0.32, r.c1, "Wood")
+			r:block(-1.78, 0.22, 0.02, 1.78, 2.78, 0.08, MAT, "SmoothPlastic")
+			r:block(-1.55, 0.45, 0.08, 1.55, 2.55, 0.11, r.c2, "SmoothPlastic")
+			r:block(-1.55, 1.9, 0.11, 1.55, 2.55, 0.14, shade(r.c2, 1.1), "SmoothPlastic")
+			r:cyl(0.95, 2.1, 0.155, 0.03, 0.5, "z", C.Yellow, "SmoothPlastic")
+			r:cyl(-0.85, 2.2, 0.155, 0.03, 0.36, "z", C.White, "SmoothPlastic")
+			r:cyl(-0.58, 2.24, 0.185, 0.03, 0.46, "z", C.White, "SmoothPlastic")
+			r:cyl(-0.35, 2.18, 0.155, 0.03, 0.3, "z", C.White, "SmoothPlastic")
+			flatTri(r, Vector2.new(-0.4, 0.8), Vector2.new(1.55, 0.8), Vector2.new(1.55, 1.65), 0.155, C.DarkLeaf)
+			flatTri(r, Vector2.new(-1.55, 0.8), Vector2.new(0.8, 0.8), Vector2.new(-0.6, 1.7), 0.185, C.Leaf)
+			r:block(-1.55, 0.45, 0.205, 1.55, 0.85, 0.23, Color3.fromRGB(150, 190, 90), "SmoothPlastic")
+			r:block(-1.55, 0.6, 0.23, 1.55, 0.66, 0.26, Color3.fromRGB(205, 180, 100), "SmoothPlastic")
+			r:block(-0.85, 0.85, 0.2, -0.45, 1.13, 0.26, C.White, "SmoothPlastic")
+			flatTri(r, Vector2.new(-0.92, 1.13), Vector2.new(-0.38, 1.13), Vector2.new(-0.65, 1.33), 0.245, C.Red)
 		end,
 	},
 	{
@@ -109,24 +111,34 @@ local items: { Item } = {
 		c2 = "3E5A4A",
 		tags = { "art" },
 		build = function(r: R)
-			frame(r, 2.4, 3, 0.2, 0.25, r.c1, "Metal")
-			r:block(-1.0, 0.2, 0.02, 1.0, 2.8, 0.12, r.c2, "SmoothPlastic")
-			-- a table edge, a jug and a bunch of flowers
-			r:block(-1.0, 0.2, 0.12, 1.0, 0.55, 0.14, shade(r.c2, 0.65), "SmoothPlastic")
-			r:block(-0.3, 0.55, 0.12, 0.3, 1.2, 0.15, Color3.fromRGB(110, 160, 200), "SmoothPlastic")
-			r:block(-0.2, 1.2, 0.12, 0.2, 1.35, 0.15, Color3.fromRGB(110, 160, 200), "SmoothPlastic")
-			r:block(-0.3, 0.8, 0.15, 0.3, 0.88, 0.16, C.White, "SmoothPlastic")
+			-- a gilt frame (c1) round a dark canvas (c2): a table edge, a jug and a bunch of
+			-- flowers on long stems
+			frame(r, 2.4, 3, 0.2, 0.32, r.c1, "Metal")
+			r:block(-1.0, 0.2, 0.02, 1.0, 2.8, 0.1, r.c2, "SmoothPlastic")
+			r:block(-1.0, 0.2, 0.1, 1.0, 0.55, 0.13, shade(r.c2, 0.65), "SmoothPlastic")
+			r:block(-0.3, 0.55, 0.1, 0.3, 1.2, 0.13, Color3.fromRGB(110, 160, 200), "SmoothPlastic")
+			r:block(-0.2, 1.2, 0.1, 0.2, 1.35, 0.13, Color3.fromRGB(110, 160, 200), "SmoothPlastic")
+			r:block(-0.3, 0.8, 0.13, 0.3, 0.88, 0.16, C.White, "SmoothPlastic")
 			local flowers = {
-				{ x = -0.45, y = 2.0, col = C.Pink },
-				{ x = 0.4, y = 2.15, col = C.Yellow },
-				{ x = 0.0, y = 2.45, col = Color3.fromRGB(220, 126, 108) },
-				{ x = -0.15, y = 1.75, col = C.White },
-				{ x = 0.3, y = 1.7, col = Color3.fromRGB(196, 160, 230) },
+				{ x = -0.45, y = 2.0, z = 0.19, col = C.Pink },
+				{ x = 0.4, y = 2.15, z = 0.19, col = C.Yellow },
+				{ x = 0.0, y = 2.45, z = 0.22, col = Color3.fromRGB(220, 126, 108) },
+				{ x = -0.15, y = 1.75, z = 0.25, col = C.White },
+				{ x = 0.3, y = 1.7, z = 0.22, col = Color3.fromRGB(196, 160, 230) },
 			}
 			for _, f in flowers do
 				r:beam(Vector3.new(0, 1.35, 0.14), Vector3.new(f.x, f.y, 0.14), 0.04, 0.04, C.Leaf, "SmoothPlastic")
-				r:cyl(f.x, f.y, 0.15, 0.03, 0.4, "z", f.col, "SmoothPlastic")
-				r:cyl(f.x, f.y, 0.165, 0.02, 0.14, "z", C.Yellow, "SmoothPlastic")
+				r:cyl(f.x, f.y, f.z - 0.015, 0.03, 0.4, "z", f.col, "SmoothPlastic")
+				r:cyl(
+					f.x,
+					f.y,
+					f.z + 0.015,
+					0.03,
+					0.14,
+					"z",
+					if f.col == C.Yellow then C.White else C.Yellow,
+					"SmoothPlastic"
+				)
 			end
 		end,
 	},
@@ -141,14 +153,15 @@ local items: { Item } = {
 		c2 = "F7F3EA",
 		tags = { "art" },
 		build = function(r: R)
-			frame(r, 3, 3, 0.1, 0.2, r.c1, "SmoothPlastic")
-			r:block(-1.4, 0.1, 0.02, 1.4, 2.9, 0.08, MAT, "SmoothPlastic")
-			r:block(-1.1, 0.4, 0.08, 1.1, 2.6, 0.1, r.c2, "SmoothPlastic")
-			r:cyl(-0.3, 1.85, 0.11, 0.02, 1.1, "z", Color3.fromRGB(224, 180, 102), "SmoothPlastic")
-			r:block(0.05, 0.6, 0.1, 0.9, 1.7, 0.12, Color3.fromRGB(208, 138, 108), "SmoothPlastic")
-			r:block(-0.9, 0.6, 0.1, -0.2, 1.0, 0.13, Color3.fromRGB(90, 130, 160), "SmoothPlastic")
-			r:block(-0.9, 1.2, 0.1, 0.9, 1.26, 0.14, C.Black, "SmoothPlastic")
-			r:cyl(0.55, 2.2, 0.11, 0.02, 0.3, "z", Color3.fromRGB(143, 179, 154), "SmoothPlastic")
+			-- a slim frame (c1) round a mount and a print (c2) of a few overlapping shapes
+			frame(r, 3, 3, 0.1, 0.24, r.c1, "SmoothPlastic")
+			r:block(-1.4, 0.1, 0.02, 1.4, 2.9, 0.06, MAT, "SmoothPlastic")
+			r:block(-1.1, 0.4, 0.06, 1.1, 2.6, 0.09, r.c2, "SmoothPlastic")
+			r:cyl(-0.3, 1.85, 0.105, 0.03, 1.1, "z", Color3.fromRGB(224, 180, 102), "SmoothPlastic")
+			r:block(0.05, 0.6, 0.12, 0.9, 1.7, 0.15, Color3.fromRGB(208, 138, 108), "SmoothPlastic")
+			r:block(-0.9, 0.6, 0.09, -0.2, 1.0, 0.12, Color3.fromRGB(90, 130, 160), "SmoothPlastic")
+			r:block(-0.9, 1.2, 0.15, 0.9, 1.26, 0.18, C.Black, "SmoothPlastic")
+			r:cyl(0.55, 2.2, 0.105, 0.03, 0.3, "z", Color3.fromRGB(143, 179, 154), "SmoothPlastic")
 		end,
 	},
 	{
@@ -162,34 +175,64 @@ local items: { Item } = {
 		c2 = "F7F3EA",
 		tags = { "clock" },
 		build = function(r: R)
-			r:cyl(0, 0.9, 0.13, 0.26, 1.8, "z", r.c1, "SmoothPlastic")
-			r:cyl(0, 0.9, 0.27, 0.04, 1.66, "z", shade(r.c1, 0.8), "SmoothPlastic")
-			r:cyl(0, 0.9, 0.28, 0.05, 1.5, "z", r.c2, "SmoothPlastic")
-			for i = 0, 11 do
-				local a = i * math.pi / 6
-				local big = i % 3 == 0
-				local len = if big then 0.18 else 0.1
-				local cf = CFrame.new(math.cos(a) * 0.6, 0.9 + math.sin(a) * 0.6, 0.315) * CFrame.Angles(0, 0, a)
-				r:boxAt(cf, len, if big then 0.06 else 0.035, 0.02, C.Black, "SmoothPlastic")
+			-- a round case (c1) with a darker bezel, a face (c2) with the four quarter numbers
+			-- and ticks for the other hours, two hands, a thin second hand and a pin
+			r:cyl(0, 0.9, 0.12, 0.24, 1.8, "z", r.c1, "SmoothPlastic")
+			r:cyl(0, 0.9, 0.27, 0.06, 1.66, "z", shade(r.c1, 0.8), "SmoothPlastic")
+			r:cyl(0, 0.9, 0.3, 0.06, 1.5, "z", r.c2, "SmoothPlastic")
+			local ink = Color3.fromRGB(52, 48, 54)
+			-- the numbers, drawn as strokes: a, b, c, d, e, f, g run round from the top and the
+			-- middle bar comes last, as on a clock radio
+			local segs = {
+				["1"] = { "b", "c" },
+				["2"] = { "a", "b", "g", "e", "d" },
+				["3"] = { "a", "b", "g", "c", "d" },
+				["6"] = { "a", "f", "g", "e", "d", "c" },
+				["9"] = { "a", "b", "c", "d", "f", "g" },
+			}
+			local function digit(q: R, ch: string, cx: number, cy: number)
+				local w, h, s = 0.09, 0.16, 0.026
+				local where = {
+					a = { cx, cy + h / 2, w, s },
+					d = { cx, cy - h / 2, w, s },
+					g = { cx, cy, w, s },
+					b = { cx + w / 2, cy + h / 4, s, h / 2 },
+					c = { cx + w / 2, cy - h / 4, s, h / 2 },
+					e = { cx - w / 2, cy - h / 4, s, h / 2 },
+					f = { cx - w / 2, cy + h / 4, s, h / 2 },
+				}
+				for _, k in segs[ch] do
+					local p = where[k]
+					q:box(p[1], p[2], 0.345, p[3], p[4], 0.03, ink, "SmoothPlastic")
+				end
 			end
-			r:boxAt(
-				CFrame.new(0.12, 1.05, 0.33) * CFrame.Angles(0, 0, -0.65),
-				0.06,
-				0.42,
-				0.02,
-				C.Black,
-				"SmoothPlastic"
-			)
-			r:boxAt(
-				CFrame.new(-0.05, 1.2, 0.34) * CFrame.Angles(0, 0, 0.15),
-				0.045,
-				0.6,
-				0.02,
-				C.Black,
-				"SmoothPlastic"
-			)
-			r:boxAt(CFrame.new(0.15, 0.62, 0.345) * CFrame.Angles(0, 0, 0.5), 0.02, 0.62, 0.01, r.c1, "SmoothPlastic")
-			r:cyl(0, 0.9, 0.35, 0.03, 0.1, "z", r.c1, "SmoothPlastic")
+			r:piece(function(q: R)
+				digit(q, "1", -0.07, 1.42)
+				digit(q, "2", 0.07, 1.42)
+				digit(q, "3", 0.52, 0.9)
+				digit(q, "6", 0, 0.38)
+				digit(q, "9", -0.52, 0.9)
+			end)
+			r:piece(function(q: R)
+				q:box(0, 0.9, 0.345, 0.12, 0.12, 0.03, ink, "SmoothPlastic")
+				for i = 0, 11 do
+					if i % 3 ~= 0 then
+						local a = i * math.pi / 6
+						q:boxAt(
+							CFrame.new(math.cos(a) * 0.62, 0.9 + math.sin(a) * 0.62, 0.345) * CFrame.Angles(0, 0, a),
+							0.12,
+							0.035,
+							0.03,
+							ink,
+							"SmoothPlastic"
+						)
+					end
+				end
+			end)
+			r:boxAt(CFrame.new(0.12, 1.05, 0.375) * CFrame.Angles(0, 0, -0.65), 0.06, 0.42, 0.03, ink, "SmoothPlastic")
+			r:boxAt(CFrame.new(-0.05, 1.2, 0.405) * CFrame.Angles(0, 0, 0.15), 0.045, 0.6, 0.03, ink, "SmoothPlastic")
+			r:boxAt(CFrame.new(0.15, 0.62, 0.435) * CFrame.Angles(0, 0, 0.5), 0.02, 0.62, 0.03, r.c1, "SmoothPlastic")
+			r:cyl(0, 0.9, 0.465, 0.03, 0.1, "z", r.c1, "SmoothPlastic")
 		end,
 	},
 	{

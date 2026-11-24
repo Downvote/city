@@ -18,39 +18,104 @@ local function shade(c: Color3, k: number): Color3
 	return Colors.shade(c, k)
 end
 
--- Straight stairs `w` wide and `d` deep rising H.
+-- Straight stairs `w` wide and `d` deep rising H, in twelve steps. Each tread (c1) has a nosing
+-- over the riser (c2) below it. Closed stairs are housed between two sloping strings (c2) with a
+-- handrail on balusters and a newel post at each end; open stairs have no risers and sit on two
+-- steel strings set in from the sides. People walk up a hidden ramp, so none of it needs to collide.
 local function stairs(r: R, w: number, d: number, rails: boolean)
 	local steps = 12
 	local run = d / steps
 	local rise = H / steps
-	-- one smooth hidden ramp to walk on
+	local slope = run / rise -- how far back one stud up the stairs goes
 	local ramp = r:ramp(-w / 2, 0, -d / 2, w / 2, H, d / 2, false, r.c1, "Wood")
 	for _, p in ramp do
 		p.transp = 1
 	end
-	for i = 1, steps do
-		local top = i * rise
-		local zFront = d / 2 - (i - 1) * run
-		local zBack = zFront - run
-		local tread = r:block(-w / 2 + 0.3, top - 0.35, zBack, w / 2 - 0.3, top, zFront, r.c1, "WoodPlanks")
-		tread.collide = false
-		local riser = r:block(-w / 2 + 0.3, top - rise, zFront - 0.15, w / 2 - 0.3, top - 0.35, zFront, r.c2, "Wood")
-		riser.collide = false
-	end
-	-- side boards follow the slope
-	for _, sx in { -1, 1 } do
-		local x = sx * (w / 2 - 0.15)
-		r:tri(Vector3.new(x, 0, d / 2), Vector3.new(x, 0, -d / 2), Vector3.new(x, H, -d / 2), 0.3, r.c2, "Wood")
-		if rails then
-			local bottom = Vector3.new(x, 3.2, d / 2 - 0.4)
-			local top = Vector3.new(x, H + 3.2, -d / 2 + 0.2)
-			r:beam(bottom, top, 0.25, 0.25, r.c2, "Wood")
-			for i = 0, 4 do
-				local f = i / 4
-				local z = d / 2 - 0.4 - f * (d - 0.6)
-				local y = f * H
-				r:block(x - 0.1, y, z - 0.1, x + 0.1, y + 3.2, z + 0.1, r.c2, "Wood")
+	local open = not rails
+	local sw = 0.3 -- a string's thickness
+	local x0 = if open then w / 2 - 0.08 else w / 2 - sw
+	for half = 0, 1 do
+		r:piece(function(q: R)
+			for i = half * 6 + 1, half * 6 + 6 do
+				local top = i * rise
+				local zFront = d / 2 - (i - 1) * run
+				local zBack = zFront - run
+				q:block(-x0, top - (if open then 0.22 else 0.3), zBack, x0, top, zFront + 0.06, r.c1, "Wood")
+				if not open then
+					q:block(-x0, top - rise, zFront - 0.12, x0, top - 0.3, zFront, r.c2, "Wood")
+				end
 			end
+		end)
+	end
+	-- the strings: a board along each side, its top a little over the corners of the steps
+	r:piece(function(q: R)
+		for _, sx in { -1, 1 } do
+			if open then
+				local x = sx * (w / 2 - 0.7)
+				local zt = d / 2 - 0.2 * slope -- where the strings' top edge meets the floor
+				q:block(x - 0.12, 0, zt - 1.0, x + 0.12, 0.05, zt + 0.05, r.c2, "Metal")
+				q:quad(
+					Vector3.new(x, 0, zt),
+					Vector3.new(x, H - 0.2, -d / 2 + 0.05),
+					Vector3.new(x, H - 1.0, -d / 2 + 0.05),
+					Vector3.new(x, 0, zt - 0.8 * slope),
+					0.2,
+					r.c2,
+					"Metal"
+				)
+			else
+				local x = sx * (w / 2 - sw / 2)
+				local zc = d / 2 - (H - 1.3) * slope -- where the top edge reaches the floor above
+				local zl = d / 2 - 0.5 * slope -- where the bottom edge meets the floor
+				q:block(x - sw / 2, 0, d / 2 - 0.4, x + sw / 2, 0.3, d / 2, r.c2, "Wood")
+				q:quad(
+					Vector3.new(x, 0, d / 2),
+					Vector3.new(x, 1.3, d / 2),
+					Vector3.new(x, H, zc),
+					Vector3.new(x, H, -d / 2),
+					sw,
+					r.c2,
+					"Wood"
+				)
+				q:quad(
+					Vector3.new(x, 0, d / 2),
+					Vector3.new(x, H, -d / 2),
+					Vector3.new(x, H - 0.5, -d / 2),
+					Vector3.new(x, 0, zl),
+					sw,
+					r.c2,
+					"Wood"
+				)
+			end
+		end
+	end)
+	if rails then
+		-- a newel at each end, a baluster on every tread and the rail over them, on both sides
+		for _, sx in { -1, 1 } do
+			local x = sx * (w / 2 - sw / 2)
+			r:piece(function(q: R)
+				local zb, zt = d / 2 - 0.3, -d / 2 + 0.3
+				q:block(x - 0.22, 0, zb - 0.22, x + 0.22, 4.5, zb + 0.22, r.c2, "Wood")
+				q:block(x - 0.27, 4.5, zb - 0.27, x + 0.27, 4.64, zb + 0.27, r.c2, "Wood")
+				q:ball(x, 4.78, zb, 0.3, r.c2, "Wood")
+				q:block(x - 0.22, H, zt - 0.22, x + 0.22, H + 3.36, zt + 0.22, r.c2, "Wood")
+				q:block(x - 0.27, H + 3.36, zt - 0.27, x + 0.27, H + 3.48, zt + 0.27, r.c2, "Wood")
+				for i = 1, steps do
+					local z = d / 2 - (i - 0.5) * run
+					q:block(x - 0.07, i * rise, z - 0.07, x + 0.07, i * rise + 3.2, z + 0.07, r.c2, "Wood")
+				end
+				local function railY(z: number): number
+					return rise + (d / 2 - z) / slope + 2.75
+				end
+				q:beam(
+					Vector3.new(x, railY(zb - 0.22), zb - 0.22),
+					Vector3.new(x, railY(zt + 0.22), zt + 0.22),
+					0.24,
+					0.2,
+					r.c2,
+					"Wood"
+				)
+			end)
 		end
 	end
 end
@@ -108,9 +173,11 @@ local items: { any } = {
 		c1 = "B4B4B8",
 		c2 = "B4B4B8",
 		build = function(r: R)
-			r:block(-2, 0, -1.5, 2, 1, -0.5, r.c1, "Concrete")
-			r:block(-2, 0, -0.5, 2, 0.66, 0.5, r.c1, "Concrete")
-			r:block(-2, 0, 0.5, 2, 0.33, 1.5, r.c1, "Concrete")
+			-- three steps of concrete (c1), each with a slab tread (c2) that overhangs its riser
+			for i, s in { { -1.5, -0.44, 0.92 }, { -0.5, 0.56, 0.58 }, { 0.5, 1.5, 0.25 } } do
+				r:block(-1.94, 0, s[1], 1.94, s[3], s[2] - 0.06, shade(r.c1, 0.96 + i * 0.02), "Concrete")
+				r:block(-2, s[3], s[1], 2, s[3] + 0.08, s[2], r.c2, "Concrete")
+			end
 		end,
 	},
 	{
@@ -123,9 +190,19 @@ local items: { any } = {
 		c1 = "F7F3EA",
 		c2 = "F7F3EA",
 		build = function(r: R)
-			r:block(-1, 0, -1, 1, 0.6, 1, r.c2, "Marble")
-			r:cyl(0, H / 2, 0, H - 1.2, 1.4, "y", r.c1, "Marble")
-			r:block(-1, H - 0.6, -1, 1, H, 1, r.c2, "Marble")
+			-- a column: a square plinth, a round base, a shaft (c1) a little narrower at the top
+			-- than the bottom, a neck ring, a flared capital and a square top (c2)
+			local mid, neck = H * 0.55, H - 1.05
+			r:piece(function(q: R)
+				q:block(-1, 0, -1, 1, 0.35, 1, r.c2, "Marble")
+				q:cyl(0, 0.48, 0, 0.26, 1.76, "y", r.c2, "Marble")
+				q:cyl(0, 0.68, 0, 0.14, 1.56, "y", r.c2, "Marble")
+				q:cyl(0, (0.75 + mid) / 2, 0, mid - 0.75, 1.4, "y", r.c1, "Marble")
+				q:cyl(0, (mid + neck) / 2, 0, neck - mid, 1.32, "y", r.c1, "Marble")
+				q:cyl(0, neck + 0.075, 0, 0.15, 1.5, "y", r.c2, "Marble")
+				q:cyl(0, neck + 0.4, 0, 0.5, 1.86, "y", r.c2, "Marble")
+				q:block(-1, H - 0.4, -1, 1, H, 1, r.c2, "Marble")
+			end, true)
 		end,
 	},
 	{
@@ -138,7 +215,14 @@ local items: { any } = {
 		c1 = "AD7E55",
 		c2 = "AD7E55",
 		build = function(r: R)
-			r:block(-0.5, 0, -0.5, 0.5, H, 0.5, r.c1, "Wood")
+			-- a square post on a block foot, with a moulding at each end and a cap
+			r:piece(function(q: R)
+				q:block(-0.5, 0, -0.5, 0.5, 0.5, 0.5, shade(r.c1, 0.9), "Wood")
+				q:block(-0.45, 0.5, -0.45, 0.45, 0.62, 0.45, r.c2, "Wood")
+				q:block(-0.38, 0.62, -0.38, 0.38, H - 0.62, 0.38, r.c1, "Wood")
+				q:block(-0.45, H - 0.62, -0.45, 0.45, H - 0.5, 0.45, r.c2, "Wood")
+				q:block(-0.5, H - 0.5, -0.5, 0.5, H, 0.5, shade(r.c1, 0.9), "Wood")
+			end, true)
 		end,
 	},
 	{
@@ -151,10 +235,28 @@ local items: { any } = {
 		c1 = "B8505A",
 		c2 = "68686E",
 		build = function(r: R)
-			r:block(-2, 0, -1.5, 2, 28.5, 1.5, r.c1, "Brick")
-			r:block(-2.3, 28.5, -1.8, 2.3, 29.3, 1.8, r.c2, "Concrete")
-			r:block(-1.4, 29.3, -0.9, 1.4, 30, 0.9, r.c2, "Concrete")
-			local smoke = r:block(-0.8, 29.6, -0.5, 0.8, 30, 0.5, C.Black, "SmoothPlastic")
+			-- a brick stack (c1) on a wider foot, with string courses up it, the top stepped out
+			-- in two courses under a stone cap (c2), and two clay pots, one of them smoking
+			r:block(-2, 0.9, -1.5, 2, 28, 1.5, r.c1, "Brick")
+			r:piece(function(q: R)
+				q:block(-2.1, 0, -1.6, 2.1, 0.9, 1.6, shade(r.c1, 0.9), "Brick")
+				for _, y in { 9.0, 18.0, 25.4 } do
+					q:block(-2.08, y, -1.58, 2.08, y + 0.3, 1.58, shade(r.c1, 0.92), "Brick")
+				end
+				q:block(-2.12, 27.4, -1.62, 2.12, 27.9, 1.62, shade(r.c1, 0.95), "Brick")
+				q:block(-2.24, 27.9, -1.74, 2.24, 28.4, 1.74, shade(r.c1, 0.92), "Brick")
+			end, true)
+			r:block(-2.32, 28.4, -1.82, 2.32, 28.8, 1.82, r.c2, "Concrete")
+			r:piece(function(q: R)
+				local clay = Color3.fromRGB(196, 116, 84)
+				q:block(-1.5, 28.8, -0.6, 1.5, 28.92, 0.6, shade(r.c2, 0.9), "Brick")
+				for _, x in { -0.75, 0.75 } do
+					q:cyl(x, 29.38, 0, 0.92, 0.64, "y", clay, "Brick")
+					q:cyl(x, 29.88, 0, 0.12, 0.8, "y", shade(clay, 0.9), "Brick")
+					q:cyl(x, 29.96, 0, 0.06, 0.46, "y", Color3.fromRGB(56, 46, 46), "Brick")
+				end
+			end)
+			local smoke = r:block(0.62, 29.995, -0.12, 0.88, 30.04, 0.12, Color3.fromRGB(56, 46, 46), "SmoothPlastic")
 			smoke.effect = "smoke"
 		end,
 	},
@@ -168,15 +270,37 @@ local items: { any } = {
 		c1 = "AD7E55",
 		c2 = "6E4C34",
 		build = function(r: R)
-			for _, x in { -3.6, 3.6 } do
-				for _, z in { -3.6, 3.6 } do
-					r:block(x - 0.4, 0, z - 0.4, x + 0.4, 0.6, z + 0.4, r.c2, "Wood")
+			-- boards (c1) with gaps between them, on joists and posts (c2), with a facing board
+			-- round the edge under their ends
+			r:piece(function(q: R)
+				for _, x in { -3.5, 3.5 } do
+					for _, z in { -3.5, 3.5 } do
+						q:block(x - 0.4, 0, z - 0.4, x + 0.4, 0.6, z + 0.4, r.c2, "Wood")
+					end
 				end
-			end
-			for i = 0, 7 do
-				local x = -4 + i
-				r:block(x + 0.05, 0.6, -4, x + 0.95, 1, 4, r.c1, "WoodPlanks")
-			end
+				for _, z in { -3.5, 0, 3.5 } do
+					q:block(-3.9, 0.25, z - 0.15, 3.9, 0.6, z + 0.15, r.c2, "Wood")
+				end
+				for _, s in { -1, 1 } do
+					q:block(-4, 0.28, s * 3.95 - 0.05, 4, 0.6, s * 3.95 + 0.05, shade(r.c1, 0.85), "Wood")
+					q:block(s * 3.95 - 0.05, 0.28, -3.9, s * 3.95 + 0.05, 0.6, 3.9, shade(r.c1, 0.85), "Wood")
+				end
+			end, true)
+			r:piece(function(q: R)
+				for i = 0, 7 do
+					local x = -4 + i
+					q:block(
+						x + 0.05,
+						0.6,
+						-4,
+						x + 0.95,
+						1,
+						4,
+						if i % 3 == 1 then shade(r.c1, 0.94) else r.c1,
+						"WoodPlanks"
+					)
+				end
+			end, true)
 		end,
 	},
 	{
@@ -265,7 +389,7 @@ local items: { any } = {
 					q:cyl(x, 22.66, -0.6, 0.68, 0.62, "y", Color3.fromRGB(196, 104, 70), "Brick")
 				end
 			end)
-			local soot = r:block(0.3, 22.9, -0.82, 0.8, 23, -0.38, C.Black, "SmoothPlastic")
+			local soot = r:block(0.38, 22.97, -0.75, 0.72, 23.04, -0.45, C.Black, "SmoothPlastic")
 			soot.effect = "smoke"
 			-- the fire: irons, embers that glow after dark and two logs
 			r:piece(function(q: R)
@@ -310,8 +434,23 @@ local items: { any } = {
 		c1 = "B4B4B8",
 		c2 = "D6D6D6",
 		build = function(r: R)
-			-- four studs of stone course for the foot of a wall: c1 the stone, c2 the ledge on top
-			r:block(-2, 0, 0, 2, 1.1, 0.2, r.c1, "Cobblestone")
+			-- four studs of stone course for the foot of a wall: c1 the stones, laid in two
+			-- rows with mortar between them, c2 the ledge on top
+			r:piece(function(q: R)
+				q:block(-1.94, 0, 0, 1.94, 1.1, 0.12, shade(r.c1, 0.72), "Slate")
+				local rows =
+					{ { 0.04, 0.54, { -2, -1.05, -0.1, 0.95, 2 } }, { 0.58, 1.05, { -2, -1.5, -0.55, 0.45, 1.4, 2 } } }
+				local n = 0
+				for _, row in rows do
+					local xs = row[3]
+					for i = 1, #xs - 1 do
+						n += 1
+						local a = xs[i] + (if i == 1 then 0.02 else 0.03)
+						local b = xs[i + 1] - (if i == #xs - 1 then 0.02 else 0.03)
+						q:block(a, row[1], 0.05, b, row[2], 0.2, shade(r.c1, 0.92 + (n * 7 % 5) * 0.03), "Slate")
+					end
+				end
+			end, true)
 			r:block(-2, 1.1, 0, 2, 1.26, 0.27, r.c2, "Concrete")
 		end,
 	},

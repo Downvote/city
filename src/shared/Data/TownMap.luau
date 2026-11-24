@@ -196,8 +196,9 @@ TownMap.Models.marina = function(r: R)
 	-- the main walk, from the sand out over the water (local -Z is out to sea)
 	r:block(-3, y - 0.4, -70, 3, y, 4, deck, "WoodPlanks")
 	for z = -68, 2, 10 do
-		for _, x in { -2.6, 2.6 } do
-			r:cyl(x, -2.2, z, 5, 0.8, "y", post, "Wood")
+		for _, x in { -2.56, 2.56 } do
+			-- (its top just under the deck's, its side just inside the deck's edge)
+			r:cyl(x, -2.22, z, 4.96, 0.8, "y", post, "Wood")
 		end
 	end
 	-- the head of the pier, across the end
@@ -214,7 +215,7 @@ TownMap.Models.marina = function(r: R)
 		for k, z in { -18, -36, -54 } do
 			local x1, x2 = if side < 0 then -20 else 3, if side < 0 then -3 else 20
 			r:block(x1, y - 0.4, z - 1.2, x2, y, z + 1.2, deck, "WoodPlanks")
-			r:cyl((x1 + x2) / 2 + side * 7, -2.2, z, 5, 0.7, "y", post, "Wood")
+			r:cyl((x1 + x2) / 2 + side * 7, -2.22, z, 4.96, 0.7, "y", post, "Wood")
 			if (k + (if side > 0 then 1 else 0)) % 3 ~= 0 then
 				n += 1
 				boat(r, side * 11.5, z - 8.2, 0, stripes[(n - 1) % #stripes + 1], "Boat" .. n)
@@ -313,8 +314,8 @@ TownMap.Models.busStop = function(r: R)
 	r:seat(-0.6, 2, -0.8, 0)
 	-- the stop sign on a pole beside it
 	r:cyl(6.6, 4.5, 1.2, 9, 0.3, "y", C.Metal, "Metal")
-	r:cyl(6.6, 9.2, 1.2, 0.3, 2, "z", Color3.fromRGB(80, 120, 176), "SmoothPlastic")
-	r:cyl(6.6, 9.2, 1.36, 0.06, 1.4, "z", C.White, "SmoothPlastic")
+	r:cyl(6.6, 9.2, 1.25, 0.3, 2, "z", Color3.fromRGB(80, 120, 176), "SmoothPlastic")
+	r:cyl(6.6, 9.2, 1.41, 0.06, 1.4, "z", C.White, "SmoothPlastic")
 end
 
 -- A low hedge along X, length w.
@@ -402,7 +403,7 @@ TownMap.Models.cafeTable = function(r: R)
 		r:block(-0.7, 1.6, z + side * 0.6, 0.7, 3.1, z + side * 0.72, Color3.fromRGB(150, 100, 60), "WoodPlanks")
 		r:seat(0, 1.6, z, if side > 0 then 180 else 0)
 	end
-	r:cyl(0, 4.2, 0, 5.6, 0.16, "y", C.White, "Metal")
+	r:cyl(0, 4.8, 0, 4.4, 0.16, "y", C.White, "Metal")
 	-- the parasol: eight panels round a peak
 	local colours = { Color3.fromRGB(214, 110, 100), C.White }
 	for i = 0, 7 do
@@ -461,7 +462,7 @@ TownMap.Models.flagpole = function(r: R)
 	r:ball(0, 15.6, 0, 0.5, C.Gold, "Metal")
 	-- the flag's parts are named so the client can wave them
 	r:block(0.15, 12.2, -0.05, 4.6, 15, 0.05, Color3.fromRGB(84, 120, 170), "Fabric").name = "Flag"
-	r:block(0.15, 13.2, -0.06, 4.6, 14, 0.06, C.White, "Fabric").name = "Flag"
+	r:block(0.11, 13.2, -0.08, 4.64, 14, 0.08, C.White, "Fabric").name = "Flag"
 end
 
 -- decoration ----------------------------------------------------------------------------------------

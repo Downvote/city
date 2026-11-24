@@ -739,6 +739,31 @@ local items: { Item } = {
 				r:beam(a2 + Vector3.new(0, 0.5, 0), b2 + Vector3.new(0, 0.5, 0), 0.14, 0.12, r.c1, "Wood")
 				r:beam(a2 + Vector3.new(0, 2.9, 0), b2 + Vector3.new(0, 2.9, 0), 0.1, 3.9, r.c2, "Fabric")
 				r:beam(a2 + Vector3.new(0, 1.3, 0), b2 + Vector3.new(0, 1.3, 0), 0.16, 0.08, shade(r.c1, 1.2), "Wood")
+				-- a painted branch of blossom running across the cloth, on the side facing the room
+				local n = Vector3.new(-along.Z, 0, along.X)
+				if n.Z < 0 then
+					n = -n
+				end
+				local function on(t: number, y: number): Vector3
+					return a2:Lerp(b2, t) + Vector3.new(0, y, 0) + n * 0.08
+				end
+				local twig = Color3.fromRGB(110, 84, 70)
+				local bloom = Colors.mix(C.Pink, C.Cream, 0.35)
+				local rise = if i == 2 then -0.5 else 0.5
+				r:beam(on(0.12, 3.4 - rise), on(0.88, 3.4 + rise), 0.04, 0.06, twig, "SmoothPlastic")
+				r:beam(on(0.45, 3.4 - rise * 0.1), on(0.62, 4.15), 0.04, 0.05, twig, "SmoothPlastic")
+				for k, t in { 0.2, 0.38, 0.55, 0.7, 0.84 } do
+					local y = 3.4 - rise + rise * 2 * (t - 0.12) / 0.76 + (if k % 2 == 0 then 0.16 else -0.12)
+					r:ball(
+						on(t, y).X,
+						on(t, y).Y,
+						on(t, y).Z,
+						0.16,
+						if k % 2 == 0 then bloom else C.Pink,
+						"SmoothPlastic"
+					)
+				end
+				r:ball(on(0.62, 4.2).X, on(0.62, 4.2).Y, on(0.62, 4.2).Z, 0.14, bloom, "SmoothPlastic")
 			end
 		end,
 	},
@@ -753,14 +778,14 @@ local items: { Item } = {
 		c2 = "8E6440",
 		build = function(r: R)
 			-- a coir mat: a woven border (c2), the bristle field (c1) in raised rows, and a band of
-			-- the border's colour across each end
-			flat(r, r:block(-1.5, 0, -0.9, 1.5, 0.045, 0.9, r.c2, "Fabric"))
-			flat(r, r:block(-1.32, 0.045, -0.72, 1.32, 0.08, 0.72, shade(r.c1, 0.82), "Carpet"))
+			-- the border's colour across each end. Its layers miss the 0.06 of a door's threshold.
+			flat(r, r:block(-1.5, 0, -0.9, 1.5, 0.03, 0.9, r.c2, "Fabric"))
+			flat(r, r:block(-1.32, 0.03, -0.72, 1.32, 0.09, 0.72, shade(r.c1, 0.82), "Carpet"))
 			r:piece(function(q: R)
 				for i = 0, 12 do
 					local z = -0.66 + i * 0.11
 					local col = if i == 1 or i == 11 then r.c2 elseif i % 2 == 0 then r.c1 else shade(r.c1, 0.92)
-					q:block(-1.26, 0.08, z - 0.035, 1.26, 0.115, z + 0.035, col, "Carpet")
+					q:block(-1.26, 0.09, z - 0.035, 1.26, 0.12, z + 0.035, col, "Carpet")
 				end
 			end)
 		end,

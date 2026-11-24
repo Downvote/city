@@ -71,11 +71,11 @@ local function mattress(
 	blanket: Color3
 )
 	r:block(x1, y0, z1, x2, y1, z2, SHEET, "Fabric")
-	r:block(x1 - 0.015, y1 - 0.1, z1 - 0.015, x2 + 0.015, y1 - 0.05, z2 + 0.015, shade(SHEET, 0.86), "Fabric")
+	r:block(x1 - 0.03, y1 - 0.1, z1 - 0.03, x2 + 0.03, y1 - 0.05, z2 + 0.03, shade(SHEET, 0.86), "Fabric")
 	local fold = Colors.mix(blanket, C.White, 0.3)
 	r:block(x1 - 0.08, y1 - 0.5, zb + 0.3, x2 + 0.08, y1 + 0.12, z2 + 0.08, blanket, "Fabric")
-	r:block(x1 - 0.09, y1 - 0.5, zb, x2 + 0.09, y1 + 0.2, zb + 0.4, fold, "Fabric")
-	r:cyl((x1 + x2) / 2, y1 + 0.05, zb, x2 - x1 + 0.18, 0.3, "x", fold, "Fabric")
+	r:block(x1 - 0.12, y1 - 0.46, zb, x2 + 0.12, y1 + 0.2, zb + 0.4, fold, "Fabric")
+	r:cyl((x1 + x2) / 2, y1 + 0.05, zb, x2 - x1 + 0.24, 0.3, "x", fold, "Fabric")
 end
 
 -- Four short tapered legs under the corners.
@@ -136,9 +136,15 @@ local items: { Item } = {
 			end
 			r:block(-1.56, 0.6, -3.56, 1.56, 3.25, -3.42, r.c1, "Wood")
 			r:block(-1.3, 1.95, -3.42, 1.3, 3.0, -3.38, shade(r.c1, 1.08), "Wood")
-			r:block(-1.82, 3.25, -3.62, 1.82, 3.4, -3.34, dk, "Wood")
+			r:block(-1.84, 3.25, -3.64, 1.84, 3.4, -3.32, dk, "Wood")
 			r:block(-1.56, 0.6, 3.42, 1.56, 1.5, 3.56, r.c1, "Wood")
-			r:block(-1.82, 1.5, 3.34, 1.82, 1.62, 3.62, dk, "Wood")
+			r:block(-1.84, 1.5, 3.32, 1.84, 1.62, 3.64, dk, "Wood")
+			-- a knitted throw folded across the foot, hanging over both sides, with two stripes
+			local throw = Colors.mix(r.c2, C.Cream, 0.55)
+			r:block(-1.74, 1.58, 2.2, 1.74, 2.14, 2.9, throw, "Fabric")
+			for _, z in { 2.38, 2.72 } do
+				r:block(-1.77, 1.58, z - 0.05, 1.77, 2.17, z + 0.05, shade(r.c2, 0.85), "Fabric")
+			end
 			r:sleep(0, 1.95, 0.1)
 		end,
 	},
@@ -157,7 +163,7 @@ local items: { Item } = {
 			-- a padded platform with a recessed base
 			r:block(-2.9, 0.4, -3.6, 2.9, 0.55, 3.6, shade(r.c1, 0.7), "Fabric")
 			r:block(-3, 0.55, -3.6, 3, 1.25, 3.8, r.c1, "Fabric")
-			mattress(r, -2.85, 2.85, -3.55, 3.55, 1.25, 1.98, -0.9, r.c2)
+			mattress(r, -2.85, 2.85, -3.38, 3.55, 1.25, 1.98, -0.9, r.c2)
 			-- a folded throw across the foot
 			r:block(-2.98, 1.6, 2.05, 2.98, 2.18, 3.05, Colors.mix(r.c2, C.Black, 0.35), "Fabric")
 			pillow(r, -1.35, 1.98, -2.85, 2.3)
@@ -212,8 +218,8 @@ local items: { Item } = {
 			-- guard rails round the top bunk, with a gap for the ladder
 			r:block(-1.82, 6.15, -3.2, -1.62, 6.45, 3.2, r.c1, "Wood")
 			r:block(1.62, 6.15, -3.2, 1.82, 6.45, 1.55, r.c1, "Wood")
-			r:block(1.64, 5.25, -3.2, 1.8, 5.4, 1.55, dk, "Wood")
-			r:block(-1.8, 5.25, -3.2, -1.64, 5.4, 3.2, dk, "Wood")
+			r:block(1.64, 5.21, -3.2, 1.8, 5.4, 1.55, dk, "Wood")
+			r:block(-1.8, 5.21, -3.2, -1.64, 5.4, 3.2, dk, "Wood")
 			-- the ladder on the right, by the foot
 			for _, z in { 1.75, 3.15 } do
 				r:block(1.9, 0, z - 0.1, 2.1, 6.5, z + 0.1, dk, "Wood")
@@ -221,6 +227,15 @@ local items: { Item } = {
 			for i = 1, 5 do
 				local y = 0.9 + (i - 1) * 1.05
 				r:cyl(2.0, y, 2.45, 1.3, 0.14, "z", dk, "Wood")
+			end
+			-- a teddy sitting up by the top pillow
+			local bear = Color3.fromRGB(176, 130, 88)
+			r:ball(0.9, 5.82, -1.9, 0.5, bear, "Fabric")
+			r:ball(0.9, 6.22, -1.95, 0.4, bear, "Fabric")
+			r:ball(0.9, 6.18, -1.76, 0.16, Color3.fromRGB(233, 211, 176), "Fabric")
+			for _, sx in { -1, 1 } do
+				r:ball(0.9 + sx * 0.16, 6.42, -1.98, 0.14, bear, "Fabric")
+				r:ball(0.9 + sx * 0.2, 5.75, -1.7, 0.2, bear, "Fabric")
 			end
 			r:sleep(0, 1.7, 0.1)
 			r:sleep(0, 5.4, 0.1)
@@ -256,7 +271,31 @@ local items: { Item } = {
 			-- a folded quilt at the foot and a pillow at the head
 			r:block(-1.85, 1.1, 1.75, 1.85, 1.42, 3.0, C.Cream, "Fabric")
 			r:cyl(0, 1.26, 1.75, 3.7, 0.32, "x", C.Cream, "Fabric")
-			r:block(-1.86, 1.1, 2.3, 1.86, 1.43, 2.45, shade(C.Cream, 0.85), "Fabric")
+			r:block(-1.88, 1.1, 2.3, 1.88, 1.45, 2.45, shade(C.Cream, 0.85), "Fabric")
+			r:piece(function(q: R)
+				for _, sx in { -1, 1 } do
+					local xa, xb = sx * 2.1, sx * 2.13
+					for k = 0, 8 do
+						local z = -3.1 + k * 0.775
+						q:block(
+							math.min(xa, xb),
+							0.24,
+							z - 0.16,
+							math.max(xa, xb),
+							0.39,
+							z + 0.16,
+							shade(r.c1, 0.86),
+							"Wood"
+						)
+					end
+				end
+			end)
+			local patches = { C.Pink, Color3.fromRGB(143, 179, 154), C.Yellow, Color3.fromRGB(110, 140, 168) }
+			for i, col in patches do
+				local x = -1.35 + (i - 1) * 0.9
+				r:block(x - 0.32, 1.42, 1.95, x + 0.32, 1.45, 2.25, col, "Fabric")
+				r:block(x - 0.32, 1.42, 2.5, x + 0.32, 1.45, 2.85, patches[(i % 4) + 1], "Fabric")
+			end
 			pillow(r, 0, 1.1, -2.6, 2.2)
 			r:sleep(0, 1.2, 0)
 		end,
@@ -279,31 +318,31 @@ local items: { Item } = {
 				for _, sz in { -1, 1 } do
 					local x, z = sx * 2.9, sz * 3.7
 					r:box(x, 0.75, z, 0.46, 1.5, 0.46, r.c1, "Wood")
-					r:cyl(x, 1.55, z, 0.16, 0.5, "y", dk, "Wood")
+					r:cyl(x, 1.55, z, 0.16, 0.54, "y", dk, "Wood")
 					r:cyl(x, 5.0, z, 6.8, 0.3, "y", r.c1, "Wood")
 					r:ball(x, 8.75, z, 0.5, r.c1, "Wood")
 					local x1, x2 = sx * 2.72, sx * 2.86
 					local zp = sz * 3.48
 					r:block(x1, 4.0, zp, x2, 8.2, zp - sz * 1.1, r.c2, "Fabric")
 					r:block(x1, 1.4, zp, x2, 3.7, zp - sz * 0.6, r.c2, "Fabric")
-					r:block(sx * 2.68, 3.65, zp, sx * 2.9, 4.05, zp - sz * 0.45, C.Gold, "Fabric")
+					r:block(sx * 2.68, 3.65, zp + sz * 0.03, sx * 2.9, 4.05, zp - sz * 0.48, C.Gold, "Fabric")
 				end
 			end
 			-- the top frame and a valance round it
 			for _, sz in { -1, 1 } do
 				r:block(-2.9, 8.2, sz * 3.7 - 0.15, 2.9, 8.55, sz * 3.7 + 0.15, r.c1, "Wood")
 				r:block(-2.7, 7.4, sz * 3.6 - 0.06, 2.7, 8.2, sz * 3.6 + 0.06, r.c2, "Fabric")
-				r:block(-2.7, 7.32, sz * 3.6 - 0.08, 2.7, 7.42, sz * 3.6 + 0.08, C.Gold, "Fabric")
+				r:block(-2.7, 7.32, sz * 3.6 - 0.09, 2.7, 7.42, sz * 3.6 + 0.09, C.Gold, "Fabric")
 			end
 			for _, sx in { -1, 1 } do
 				r:block(sx * 2.9 - 0.15, 8.2, -3.7, sx * 2.9 + 0.15, 8.55, 3.7, r.c1, "Wood")
 				r:block(sx * 2.8 - 0.06, 7.4, -3.5, sx * 2.8 + 0.06, 8.2, 3.5, r.c2, "Fabric")
-				r:block(sx * 2.8 - 0.08, 7.32, -3.5, sx * 2.8 + 0.08, 7.42, 3.5, C.Gold, "Fabric")
+				r:block(sx * 2.79 - 0.1, 7.32, -3.45, sx * 2.79 + 0.1, 7.42, 3.45, C.Gold, "Fabric")
 			end
 			r:block(-2.75, 8.45, -3.55, 2.75, 8.55, 3.55, cloth, "Fabric")
 			-- the bed itself
 			r:block(-2.7, 0.5, -3.5, 2.7, 1.25, 3.5, r.c1, "Wood")
-			r:block(-2.74, 0.5, 3.45, 2.74, 0.62, 3.55, dk, "Wood")
+			r:block(-2.74, 0.47, 3.44, 2.74, 0.62, 3.56, dk, "Wood")
 			mattress(r, -2.6, 2.6, -3.45, 3.4, 1.25, 1.98, -0.9, cloth)
 			pillow(r, -1.3, 1.98, -2.8, 2.2)
 			pillow(r, 1.3, 1.98, -2.8, 2.2)
@@ -334,7 +373,7 @@ local items: { Item } = {
 			mattress(r, -1.55, 1.55, -3.1, 3.1, 0.7, 1.3, -0.7, r.c2)
 			-- stars on the blanket
 			for _, p in { { -0.7, 0.4 }, { 0.5, 1.3 }, { -0.2, 2.3 }, { 0.8, -0.1 } } do
-				r:boxAt(CFrame.new(p[1], 1.43, p[2]) * CFrame.Angles(0, 0.6, 0), 0.3, 0.03, 0.3, C.Yellow, "Fabric")
+				r:boxAt(CFrame.new(p[1], 1.44, p[2]) * CFrame.Angles(0, 0.6, 0), 0.3, 0.03, 0.3, C.Yellow, "Fabric")
 			end
 			pillow(r, 0, 1.3, -2.5, 2.0)
 			-- a frame shaped like a little house
