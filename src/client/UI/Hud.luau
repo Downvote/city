@@ -728,9 +728,8 @@ function Hud.start()
 
 	Theme.start()
 
-	-- events, weather
+	-- events (the weather's rain and snow start on their own, from Main)
 	Hud.panel("EventCard").start(Hud)
-	Hud.panel("Weather").start()
 
 	-- the first visit: make yourself first
 	task.spawn(function()

@@ -1652,6 +1652,16 @@ So the ground keeps Roblox's own grass texture.
 
 The long grass's blades let a quarter of what's behind them through.
 
+### Softer lamps, thinner haze, weather you can see
+
+> the placeable lights are too bright. also, make the fog less. also, it seems like weather particles arent
+> showing, such as rain
+
+(With a picture of a room washed out by its lamps.) The lamps you place give off well under half the light they did
+and reach a bit less far, so a room is lit and not blown out; the town's own street lamps are only a little softer.
+The haze is about half as thick, so the far side of the island stays clear. Rain falls as long streaks you can see,
+heavier in a storm and faintly lit at night, snow and blossom drift bigger, and none of it falls indoors.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

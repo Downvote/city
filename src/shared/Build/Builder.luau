@@ -8,6 +8,7 @@ local Shapes = require(script.Parent.Shapes)
 local Catalog = require(script.Parent.Catalog)
 local Textures = require(script.Parent.Parent.Data.Textures)
 local LowPoly = require(script.Parent.LowPoly)
+local Tuning = require(script.Parent.Parent.Config.Tuning)
 
 type Prim = Geometry.Prim
 
@@ -154,20 +155,23 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 	end
 	if prim.light then
 		local l = prim.light
+		-- what players place is dimmer than the town's own lamps (Tuning.Lights: "the placeable
+		-- lights are too bright"); a room is small and Future lighting fills it
+		local scale = if opts and opts.plain then Tuning.Lights.Placed else Tuning.Lights.Town
 		if l.kind == "spot" then
 			local spot = Instance.new("SpotLight")
 			spot.Face = (Enum.NormalId :: any)[l.face or "Bottom"] or Enum.NormalId.Bottom
 			spot.Angle = 80
-			spot.Range = l.range
-			spot.Brightness = l.brightness
+			spot.Range = l.range * scale.Range
+			spot.Brightness = l.brightness * scale.Brightness
 			spot.Color = l.color
 			spot.Shadows = false
 			spot.Enabled = false
 			spot.Parent = part
 		else
 			local point = Instance.new("PointLight")
-			point.Range = l.range
-			point.Brightness = l.brightness
+			point.Range = l.range * scale.Range
+			point.Brightness = l.brightness * scale.Brightness
 			point.Color = l.color
 			point.Shadows = false
 			point.Enabled = false

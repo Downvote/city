@@ -165,7 +165,8 @@ or Ground under the hill's stepping stones, and columns fully under paving sink 
 shape of a placed model that touches the ground and covers about 3 square studs or more). `Hills.at` is the smooth
 surface (`Hills.prims` is gone). The place file sets what scripts can't: Workspace/Terrain (`Decoration` off,
 `ShorelinesUpgraded`, `SmoothVoxelsUpgraded`, the `Water*` settings) and `Workspace.GlobalWind` (the breeze;
-`World.setWeather` sets `StormWind` in a storm). MaterialService never replaces Grass (`scripts/sync_materials.py`
+`World.setWeather` sets `StormWind` in a storm). The haze is `Tuning.Look.Air` (`Clear` 0.22 and 1, `Dense` 0.32 and
+1.8 in rain: "make the fog less"). MaterialService never replaces Grass (`scripts/sync_materials.py`
 refuses it), so the long grass can be coloured to match it (a smooth plain floor was tried and taken back: "never
 mind, the previous grass texture was ok"); the library grass picture is the look `Grass:Lawn`. The Terrain spec checks the shore is wavy,
 the water's edge sits on a gentle slope inside the shallows, no grass is under anything built or on a road or a
@@ -234,6 +235,10 @@ on it.
   returns. A failed or mis-sized merge, a ghost, a client and the specs get the shapes as plain parts. Pieces
   don't collide unless made with `collide = true`, and one that does collides as its whole box, so anything people
   walk between (a gate's two posts) stays plain parts. `Builder.Pieces` counts `cut`, `failed`, `placed`, `waiting`.
+- `Recipe.glow(prim, range, brightness, color)` marks a lit piece (tag `NightLight`; World turns its light on and its
+  face to Neon after dark). The Builder makes its PointLight or SpotLight at the piece's range and brightness times
+  `Tuning.Lights.Placed` for what players build (`opts.plain`: 0.4 and 0.75; "the placeable lights are too bright")
+  or `Tuning.Lights.Town` for the town's own (0.8 and 1).
 - A primitive's `mat` may be `"Base:Look"` (`"Concrete:Panel"`): the Builder sets the part's Material to `Base` and
   its `MaterialVariant` to `Maplewick<Look>`. Where the place has no such variant the plain material shows.
   `Data/Textures` lists them in `Textures.looks` (`{ name, material, look, studs }`): `Concrete:Panel` (picture
@@ -735,8 +740,11 @@ clipping (`tools/preview/ui_render.py`).
   false. `Hud.goHome()` shuts the menus, dips the screen
   (a `Veil` frame) and asks `GoHome`; H does the same when the HUD shows and nothing has the keyboard. It opens one
   panel at a time:
-  `Creator`, `Residents`, `CityPanel`, `News`, `Welcome`. `EventCard` (the dialogue box) and `Weather`
-  run all the time. The HUD and the event box step aside in Build mode and while the creator is open. The round
+  `Creator`, `Residents`, `CityPanel`, `News`, `Welcome`. `EventCard` (the dialogue box) runs all the time.
+  `UI/Weather` (rain, snow, blossom, leaves) is started by `Main.client` on its own, in a pcall, before the HUD:
+  one emitter on a clear 90 stud square 32 studs over the camera, each setting put on by itself (`set`), rain
+  as streaks (`VelocityParallel`, `Squash` 3, the most Roblox allows) with a little `LightEmission` so it shows at
+  night, and paused while a ray up from the camera hits something solid (no rain indoors). The HUD and the event box step aside in Build mode and while the creator is open. The round
   buttons under the clock start with `Look`, which calls `Theme.toggle()` and is drawn again after a switch.
 - `UI/Creator`'s view: a Scriptable camera with a 40 degree lens that orbits the mannequin at `zoom` studs
   (`ZOOM_FACE` 3.1, `ZOOM_HOME` 7.2 where it opens, `ZOOM_WHOLE` 12.5; wheel and `TouchPinch` between 2.6 and 20;

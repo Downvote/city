@@ -315,6 +315,16 @@ Tuning.Uses = {
 	Bubble = 3.5, -- seconds what happened shows over the piece
 }
 
+-- Lights ---------------------------------------------------------------------------------
+-- How bright the lamps' lights are and how far they reach, against what each piece asks for
+-- (Recipe.glow): the user, of a room lit by Build mode's lamps, "the placeable lights are too
+-- bright". A room is small and Future lighting fills it, so what players place is dimmed a good
+-- deal more than the town's street lamps and windows.
+Tuning.Lights = {
+	Placed = { Brightness = 0.4, Range = 0.75 },
+	Town = { Brightness = 0.8, Range = 1 },
+}
+
 -- Building the town when the server starts ----------------------------------
 Tuning.World = {
 	-- seconds spent merging the town's detail pieces before any of it goes up (the most used
@@ -336,10 +346,11 @@ Tuning.Look = {
 	-- and the faintest softening far away. Density and Haze are the Atmosphere's (clear weather,
 	-- and overcast or rain); the colours are the air's by the grade's time of day (Color is the
 	-- haze, Decay the colour far off toward the sun). The Lighting's Technology is Future (in
-	-- default.project.json: scripts can't set it).
+	-- default.project.json: scripts can't set it). Then: "make the fog less", so the haze is about
+	-- half as thick and the far island stays clear (it was 0.36 and 2.2, in rain 0.48 and 3).
 	Air = {
-		Clear = { Density = 0.36, Haze = 2.2 },
-		Dense = { Density = 0.48, Haze = 3 },
+		Clear = { Density = 0.22, Haze = 1 },
+		Dense = { Density = 0.32, Haze = 1.8 },
 		Glare = 0.7,
 		Offset = 0.22,
 		Colors = {
