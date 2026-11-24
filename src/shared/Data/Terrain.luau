@@ -31,6 +31,11 @@ Terrain.Voxel = 4
 Terrain.IslandX = 1100 -- grass from -IslandX to IslandX
 Terrain.IslandN = 940 -- and from -IslandS to IslandN (the hills run up to the north shore)
 Terrain.IslandS = 292
+-- The old town's cape. Its plots run 400 back from the main street (the user: "make player plots
+-- much bigger, double the size"), so between the first avenues the south shore stands `out`
+-- further south, and beside them it eases back to IslandS over `ease` in one smooth curve.
+-- Downtown and the civic quarter keep their shore where it was. Terrain.south(x) is the line.
+Terrain.Cape = { half = 560, ease = 280, out = 200 }
 Terrain.Beach = 38
 Terrain.Shallows = 92
 
@@ -49,7 +54,7 @@ Terrain.Reach = 280
 Terrain.Far = 3000
 Terrain.Region = {
 	-(Terrain.IslandX + Terrain.Reach),
-	-(Terrain.IslandS + Terrain.Reach),
+	-(Terrain.IslandS + Terrain.Cape.out + Terrain.Reach),
 	Terrain.IslandX + Terrain.Reach,
 	Terrain.IslandN + Terrain.Reach,
 }
@@ -87,30 +92,81 @@ Terrain.StormWind = { 13, 0, 8 }
 Terrain.Materials = { "Grass", "LeafyGrass", "Ground", "Sand", "Rock", "Slate", "Water", "Air" }
 
 local IX, IN, IS = Terrain.IslandX, Terrain.IslandN, Terrain.IslandS
-local SPAN_X, SPAN_Z = 2 * IX, IS + IN
-local AROUND = 2 * (SPAN_X + SPAN_Z) -- the coast's length, round the grass
+local CAPE = Terrain.Cape
 
 local function smoothstep(a: number, b: number, x: number): number
 	local t = math.clamp((x - a) / (b - a), 0, 1)
 	return t * t * (3 - 2 * t)
 end
 
+-- How far south of the main street the grass reaches at x: IslandS past the cape, IslandS plus
+-- Cape.out along it, and a half wave of a curve between.
+function Terrain.south(x: number): number
+	local a = math.abs(x)
+	if a <= CAPE.half then
+		return IS + CAPE.out
+	elseif a >= CAPE.half + CAPE.ease then
+		return IS
+	end
+	return IS + CAPE.out * (1 + math.cos(math.pi * (a - CAPE.half) / CAPE.ease)) / 2
+end
+
+-- How much nearer the south shore really is than straight up or down from it: the cosine of the
+-- shore's slope at x (1 where it runs straight along x). Distances from the south shore are
+-- measured along z and times this, so a beach on the cape's curving side is as wide as anywhere.
+local function southScale(x: number): number
+	local a = math.abs(x)
+	if a <= CAPE.half or a >= CAPE.half + CAPE.ease then
+		return 1
+	end
+	local slope = CAPE.out * math.pi / (2 * CAPE.ease) * math.sin(math.pi * (a - CAPE.half) / CAPE.ease)
+	return 1 / math.sqrt(1 + slope * slope)
+end
+
+-- The south shore's length from its west end to x (it is longer than straight across, round the
+-- cape), worked out once in short steps.
+local RUN_STEP = 4
+local southRun: { number } = { 0 }
+do
+	local px, pz = -IX, -Terrain.south(-IX)
+	for k = 1, math.ceil(2 * IX / RUN_STEP) do
+		local x = math.min(-IX + k * RUN_STEP, IX)
+		local z = -Terrain.south(x)
+		southRun[k + 1] = southRun[k] + math.sqrt((x - px) ^ 2 + (z - pz) ^ 2)
+		px, pz = x, z
+	end
+end
+local function alongSouth(x: number): number
+	local f = (math.clamp(x, -IX, IX) + IX) / RUN_STEP
+	local k = math.floor(f)
+	if k >= #southRun - 1 then
+		return southRun[#southRun]
+	end
+	return southRun[k + 1] + (southRun[k + 2] - southRun[k + 1]) * (f - k)
+end
+
+local SPAN_X, SPAN_Z, SPAN_S = 2 * IX, IS + IN, southRun[#southRun]
+local AROUND = SPAN_S + SPAN_X + 2 * SPAN_Z -- the coast's length, round the grass
+Terrain.Around = AROUND
+
 -- Where a point is against the island's grass: how far out from it (negative inside), and where
 -- along the coast its nearest stretch is, in studs round from the south west corner (east along
 -- the south shore, then north, west and south again).
 function Terrain.coast(x: number, z: number): (number, number)
+	local cx = math.clamp(x, -IX, IX)
+	local south, k = Terrain.south(cx), southScale(cx)
 	local dx = math.max(-IX - x, 0, x - IX)
-	local dz = math.max(-IS - z, 0, z - IN)
+	local dz = math.max((-south - z) * k, 0, z - IN)
 	local d
-	local cx, cz = math.clamp(x, -IX, IX), math.clamp(z, -IS, IN)
+	local cz = math.clamp(z, -south, IN)
 	if dx > 0 or dz > 0 then
 		d = math.sqrt(dx * dx + dz * dz)
 	else
-		local w, e, s, n = x + IX, IX - x, z + IS, IN - z
+		local w, e, s, n = x + IX, IX - x, (z + south) * k, IN - z
 		local m = math.min(w, e, s, n)
 		d = -m
 		if m == s then
-			cz = -IS
+			cz = -south
 		elseif m == n then
 			cz = IN
 		elseif m == e then
@@ -120,14 +176,14 @@ function Terrain.coast(x: number, z: number): (number, number)
 		end
 	end
 	local s
-	if cz == -IS and cx > -IX then
-		s = cx + IX
+	if cz == -south and cx > -IX then
+		s = alongSouth(cx)
 	elseif cx == IX then
-		s = SPAN_X + (cz + IS)
+		s = SPAN_S + (cz + IS)
 	elseif cz == IN then
-		s = SPAN_X + SPAN_Z + (IX - cx)
+		s = SPAN_S + SPAN_Z + (IX - cx)
 	else
-		s = 2 * SPAN_X + SPAN_Z + (IN - cz)
+		s = SPAN_S + SPAN_Z + SPAN_X + (IN - cz)
 	end
 	return d, s
 end
@@ -157,7 +213,7 @@ end
 -- boardwalk, so no grass shows at its edge.
 function Terrain.grassLine(s: number): number
 	local u = if s > AROUND - 400 then s - AROUND else s
-	local south = smoothstep(-90, 0, u) * (1 - smoothstep(SPAN_X, SPAN_X + 90, u))
+	local south = smoothstep(-90, 0, u) * (1 - smoothstep(SPAN_S, SPAN_S + 90, u))
 	local g = math.max(0, 6 + waves(GRASS, s)) * (1 - south) - Terrain.Voxel * south
 	return math.min(g, Terrain.waterLine(s) - 16)
 end
@@ -233,12 +289,13 @@ end
 
 -- A point on the water's edge. `side` is "south", "north", "east" or "west" and `u` the x (south,
 -- north) or the z (east, west) along it; `out` moves it that far out to sea (negative: up the
--- beach). Returns x, z.
+-- beach). Returns x, z. (On the cape's curving sides, "out" is measured as Terrain.coast does.)
 function Terrain.shore(side: string, u: number, out: number?): (number, number)
 	local more = out or 0
 	if side == "south" then
-		local _, s = Terrain.coast(u, -IS)
-		return u, -IS - Terrain.waterLine(s) - more
+		local south = Terrain.south(u)
+		local _, s = Terrain.coast(u, -south)
+		return u, -south - (Terrain.waterLine(s) + more) / southScale(u)
 	elseif side == "north" then
 		local _, s = Terrain.coast(u, IN)
 		return u, IN + Terrain.waterLine(s) + more
@@ -256,7 +313,7 @@ function Terrain.onBeach(side: string, u: number, frac: number): (number, number
 	local _, s = Terrain.coast(x, z)
 	local back = (1 - frac) * (Terrain.waterLine(s) - Terrain.grassLine(s))
 	if side == "south" then
-		return x, z + back
+		return x, z + back / southScale(x)
 	elseif side == "north" then
 		return x, z - back
 	elseif side == "east" then
