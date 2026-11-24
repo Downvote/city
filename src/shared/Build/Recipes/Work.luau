@@ -1989,6 +1989,33 @@ local items: { any } = {
 			local H = 3.4
 			local wood = WALNUT
 			counter(r, 5.0, 2.2, H, r.c1, r.c2)
+			-- the postie's side: two shelves under the top, parcels below and trays of post above
+			r:piece(function(q: R)
+				q:block(-2.3, 0.3, -1.14, 2.3, 3.0, -1.1, shade(r.c1, 0.45), "Wood")
+				for _, y in { 0.3, 1.65 } do
+					q:block(-2.3, y, -1.4, 2.3, y + 0.1, -1.14, wood, "Wood")
+				end
+				for _, x in { -2.36, 2.36 } do
+					q:block(x - 0.06, 0.2, -1.42, x + 0.06, 3.0, -1.1, wood, "Wood")
+				end
+			end)
+			r:piece(function(q: R)
+				for i, e in { { -2.1, -1.3, 0.7 }, { -1.1, -0.2, 0.9 }, { 0.1, 0.9, 0.55 }, { 1.2, 2.1, 0.8 } } do
+					q:block(e[1], 0.4, -1.38, e[2], 0.4 + e[3], -1.14, if i % 2 == 0 then KRAFT else shade(KRAFT, 0.9), "Fabric")
+					local xm = (e[1] + e[2]) / 2
+					q:block(xm - 0.04, 0.4, -1.42, xm + 0.04, 0.44 + e[3], -1.14, C.Paper, "Fabric")
+				end
+			end)
+			r:piece(function(q: R)
+				for i = 0, 2 do
+					local x = -2.15 + i * 1.5
+					q:block(x, 1.75, -1.4, x + 1.3, 1.85, -1.14, Color3.fromRGB(84, 112, 142))
+					q:block(x, 1.85, -1.4, x + 1.3, 2.15, -1.36, Color3.fromRGB(84, 112, 142))
+					for k = 0, 4 do
+						q:block(x + 0.1 + k * 0.24, 1.85, -1.34, x + 0.14 + k * 0.24, 2.3 - (k % 2) * 0.08, -1.18, if k % 2 == 0 then C.Paper else Color3.fromRGB(236, 226, 200))
+					end
+				end
+			end)
 			-- the screen: brass posts and rails, two panes
 			r:piece(function(q: R)
 				for _, x in { -2.45, 0.0, 2.45 } do
