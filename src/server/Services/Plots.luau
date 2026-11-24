@@ -141,8 +141,37 @@ local function assign(player: Player, profile: any)
 	ready:Fire(player, index)
 	if player.Character then
 		Plots.sendTo(player)
+	else
+		Plots.spawn(player)
 	end
 end
+
+-- Characters don't load by themselves (Players.CharacterAutoLoads is off in the place): the user
+-- found "it keeps spawning me below the world", because a player joined while the server was
+-- still writing the island's terrain and fell through where the ground would be. So a character
+-- is loaded once the world is up and the player's plot is ready, and again after a respawn wait.
+local spawning: { [Player]: boolean } = {}
+function Plots.spawn(player: Player)
+	if spawning[player] or not player.Parent or player.Character then
+		return
+	end
+	spawning[player] = true
+	local ok, why = pcall(function()
+		local p = player :: any
+		if p.LoadCharacterAsync then
+			p:LoadCharacterAsync()
+		else
+			p:LoadCharacter()
+		end
+	end)
+	spawning[player] = nil
+	if not ok then
+		warn("[Plots] couldn't load a character for " .. player.Name .. ": " .. tostring(why))
+	end
+end
+
+-- Under this, a character has fallen through the world (the sea floor is at -16): put them back.
+Plots.FallLimit = -40
 
 local function release(player: Player)
 	local i = Plots.indexOf(player)
@@ -169,9 +198,48 @@ function Plots.start()
 			char:WaitForChild("HumanoidRootPart", 5)
 			task.wait(0.1)
 			Plots.sendTo(player, char)
+			local humanoid = char:FindFirstChildOfClass("Humanoid")
+			if humanoid then
+				humanoid.Died:Connect(function()
+					task.wait(Players.RespawnTime)
+					if player.Parent and player.Character == char then
+						char:Destroy()
+						player.Character = nil
+						Plots.spawn(player)
+					end
+				end)
+			end
+		end)
+		-- the world is up by now (World builds it before anything starts); a player whose
+		-- profile never loads still gets a body after a while, in the square
+		task.delay(20, function()
+			if player.Parent and not player.Character then
+				Plots.spawn(player)
+			end
 		end)
 	end
 	Players.PlayerAdded:Connect(watch)
+	Players.PlayerRemoving:Connect(function(player)
+		spawning[player] = nil
+	end)
+	-- anyone who drops through the world is put back on their plot, or in the square
+	task.spawn(function()
+		while true do
+			task.wait(1)
+			for _, player in Players:GetPlayers() do
+				local char = player.Character
+				local root = char and char:FindFirstChild("HumanoidRootPart")
+				if root and root:IsA("BasePart") and root.Position.Y < Plots.FallLimit then
+					root.AssemblyLinearVelocity = Vector3.zero
+					if Plots.indexOf(player) then
+						Plots.sendTo(player, char)
+					else
+						(char :: Model):PivotTo(CFrame.new(Town.Spots.Spawn + Vector3.new(0, 3, 0)))
+					end
+				end
+			end
+		end
+	end)
 	for _, player in Players:GetPlayers() do
 		watch(player)
 		-- anyone whose profile is already in (they joined while the server was starting)

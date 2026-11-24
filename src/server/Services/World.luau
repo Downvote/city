@@ -177,7 +177,31 @@ local function buildMap()
 			table.insert(lists, drawn[p.name])
 		end
 	end
-	buildTerrain(groundPrims, placements, drawn)
+	-- If the terrain can't be written (an API this server doesn't have, a bad tile), the island
+	-- still gets plain grass and sea, and the rest of the town still goes up: a failure here used
+	-- to stop the server before the streets, the plots and the spawn were built, and players fell
+	-- through an empty world (the user: "it keeps spawning me below the world").
+	local wrote, why = pcall(buildTerrain, groundPrims, placements, drawn)
+	if not wrote then
+		warn("[World] the terrain couldn't be written, so the island is plain grass: " .. tostring(why))
+		pcall(function()
+			local terrain = workspace.Terrain
+			terrain:Clear()
+			local IX, IS, IN = Ground.IslandX, Ground.IslandS, Ground.IslandN
+			local B = Ground.Beach
+			terrain:FillBlock(
+				CFrame.new(0, Ground.WaterY - 3, (IN - IS) / 2),
+				Vector3.new(2 * (IX + B) + 400, 6, IN + IS + 2 * B + 400),
+				Enum.Material.Water
+			)
+			terrain:FillBlock(
+				CFrame.new(0, -2.3, (IN - IS) / 2),
+				Vector3.new(2 * (IX + B), 4.4, IN + IS + 2 * B),
+				Enum.Material.Sand
+			)
+			terrain:FillBlock(CFrame.new(0, -2.1, (IN - IS) / 2), Vector3.new(2 * IX, 4, IN + IS), Enum.Material.Grass)
+		end)
+	end
 	local started = os.clock()
 	local cut, failed, left = Builder.preparePieces(lists, 60)
 	if cut + failed + left > 0 then

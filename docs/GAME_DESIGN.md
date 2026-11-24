@@ -1574,6 +1574,15 @@ The hills are smooth and rolling, with bits of rock on the steepest slopes and a
 stones. No blades grow under anything built: roads, paving, floors and the plots sit on short grass with none.
 Things on the beach follow the new water's edge, and the rowing boats are pulled up just above it.
 
+### Never below the world
+
+> it seems like it keeps spawning me below the world instead
+
+A player who joined while the server was still writing the island's terrain fell through where the ground would be,
+and a failed terrain write could stop the town from going up at all. Now nobody gets a body until the world is built
+and their plot is ready; anyone who still drops through is put back on their plot within a second; and if the
+terrain can't be written the island is plain grass and sea and everything else is built as usual.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

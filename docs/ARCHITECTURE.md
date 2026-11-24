@@ -150,7 +150,7 @@ spots against every placed turn, the rarity bands and shares over 20,000 seeded 
 ## The island's terrain
 
 `Data/Terrain` lays out the island's natural ground, which `World.buildTerrain` writes as Roblox terrain when the
-server starts, before the parts go up: the water settings and material colours, a clear, then tiles of 4 stud
+server starts, before the parts go up (in a pcall: if it fails, the island is filled with plain grass, sand and sea and the town still goes up): the water settings and material colours, a clear, then tiles of 4 stud
 columns with `WriteVoxelChannels` (sand and water share a voxel, so the water's edge lies on the slope; `classic()`
 is the `WriteVoxels` fallback, with a warning), then `openSea()` (`FillBlock`s out to 3,000 studs). It holds the
 island's measures (TownMap reads them), the coast (a position round the island and how far out a point is; the
@@ -349,7 +349,7 @@ The creator's remotes: `CreatorPeople` (the people here and your friends, and th
 |---|---|
 | `Data` | Loads with a session lock, autosaves every two minutes, saves on leave and shutdown, pushes state patches (`State`), toasts (`Notify`), coins, the town log, the daily gift. |
 | `World` | Builds the town from `Data/TownMap` (streets, plaza, street furniture, decoration, hills, prompts) and the plot bases; sets the stylised lighting (colour grading tinted by the hour, a bloom from `Tuning.Look.Bloom`, sun rays, haze); the clock (real time, 12 minute days) and calendar; night lights; doors that open for anyone walking up; seasonal weather. |
-| `Plots` | Hands out plots, draws the saved build and the owned land, sells more land (`PlotExpand`). |
+| `Plots` | Hands out plots, draws the saved build and the owned land, sells more land (`PlotExpand`). Characters don't load by themselves (`Players.CharacterAutoLoads` is off in the place): `Plots.spawn` loads one once the player's plot is ready (or after 20 s if their profile never loads), and again `Players.RespawnTime` after a death; every character arrives at its plot. Once a second anyone below `Plots.FallLimit` (-40) is put back on their plot, or in the square. |
 | `Build` | `BuildApply`, `BuildUndo`, `BuildRedo`: checks requests, charges or refunds, keeps history, redraws, syncs the plan to its owner (`PlanSync`). Fires `Changed`. A batch is up to 320 requests (a whole ready-made building); an item's `wall = "@n"` means the wall made by the batch's n-th request. `Build.prepare` is exported for the specs. |
 | `Avatar` | The creator: a private stage (an empty Model `CreatorStage<slot>` with an `Origin` attribute, high over the meadow; nothing is built there) and an anchored mannequin per player, catalog search fallback, bundles, copying users, outfits, asset checks, the text filter. `toDescription`, `buildModel` for everyone else. |
 | `Interact` | Puts a `UsePrompt` (E, no `Opens`) on an attachment `UseSpot` on each placed piece that has a player use (`Data/Interactions`), in every plot's Build folder; checks the player is within `Tuning.Uses.Reaches` (14 studs), a `Cooldown` per player and a `Rest` per piece; picks the outcome (`Sim/Uses`), has villagers near react to the loud ones and fires `Used`. Nothing is bought or saved. Starts after `Villagers`. |
