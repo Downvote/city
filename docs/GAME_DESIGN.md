@@ -1419,6 +1419,17 @@ one under it changes. `lune run tools/preview/zfight.luau <scope>` finds any pai
 Zfight spec keeps new ones out of the catalog, the map's models, the rooms, the starting house and the ready-made
 buildings.
 
+### Watching a conversation
+
+> clicking watch to watch a conversation restarts the conversation from the start
+
+> when clicking on the last part of the conversation, the conversation should close
+
+The scene and the speech bubbles over the villagers used to keep their own time, so the scene ran ahead of the
+bubbles and the two never agreed. Now the server says each line over their heads and sends it to the screen at
+the same moment, so Watch always picks up the line they are saying now. A click on the box shows the rest of a
+line being typed; on the last line it closes the scene.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

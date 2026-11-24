@@ -66,12 +66,18 @@ local function presentVillagers(player: Player, night: boolean): { string }
 	return out
 end
 
--- Plays a list of lines as bubbles over the right villagers.
-local function playLines(player: Player, ev: any, lines: { any })
-	for _, l in lines do
+-- Plays a list of lines as bubbles over the right villagers, and tells the player's client each
+-- line as it is said, so a scene that is watched shows the line the villagers are saying (the user:
+-- "clicking watch to watch a conversation restarts the conversation from the start": the client used
+-- to keep its own time, ahead of the bubbles, and the two never agreed). The server's is the only
+-- clock. `final` says these are the scene's last lines, so the client knows its last line (a click
+-- on it closes the scene).
+local function playLines(player: Player, ev: any, lines: { any }, token: string, final: boolean)
+	for i, l in lines do
 		if not player.Parent then
 			return
 		end
+		lineEvent:FireClient(player, { token = token, line = l, last = final and i == #lines or nil })
 		local vid = l.who and ev.actors[l.who]
 		local npc = vid and Villagers.get(player, vid)
 		if npc then
@@ -290,6 +296,14 @@ local function play(player: Player, ev: any)
 	for i, c in scene.choices or {} do
 		choices[i] = { text = c.text, cost = c.cost }
 	end
+	-- the stars walk together first, and the prompt comes up when the first of them speaks
+	if #ev.order >= 2 then
+		gather(player, ev)
+	end
+	if not player.Parent then
+		running[player] = nil
+		return
+	end
 	local focus = ev.order[1] and Villagers.get(player, ev.order[1])
 	showEvent:FireClient(player, {
 		token = token,
@@ -301,14 +315,12 @@ local function play(player: Player, ev: any)
 		choices = if #choices > 0 then choices else nil,
 		focus = focus and focus.model,
 	})
-	if #ev.order >= 2 then
-		gather(player, ev)
-	end
-	playLines(player, ev, scene.lines)
+	playLines(player, ev, scene.lines, token, not scene.choices)
 	local effects = scene.effects or {}
 	local after = {}
 	if scene.choices then
 		local deadline = os.clock() + E.ChoiceTimeout
+		lineEvent:FireClient(player, { token = token, ask = true })
 		while running[player] and running[player].choice == nil and os.clock() < deadline and player.Parent do
 			task.wait(0.2)
 		end
@@ -318,8 +330,7 @@ local function play(player: Player, ev: any)
 			effects = c.effects or {}
 			after = c.lines or {}
 		end
-		lineEvent:FireClient(player, { token = token, lines = after })
-		playLines(player, ev, after)
+		playLines(player, ev, after, token, true)
 	end
 	if not player.Parent then
 		return

@@ -53,7 +53,7 @@ Remotes.Events = {
 	"PlanSync", -- server -> client: (full plan) or (ops) after a change
 	"Notify", -- server -> client: (text, kind)
 	"EventShow", -- server -> client: an event scene (lines, choices)
-	"EventLine", -- server -> client: one more line of the running scene
+	"EventLine", -- server -> client: (token, line, last?) as it is said, or (token, ask) at a choice
 	"EventEnd", -- server -> client: (token, summary)
 	"Payday", -- server -> client: { total, lines = { { vid, amount } } }
 	"Say", -- server -> client: (model, text) speech bubble (also visible to everyone nearby)

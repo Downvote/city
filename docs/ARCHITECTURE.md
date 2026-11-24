@@ -565,10 +565,15 @@ clipping (`tools/preview/ui_render.py`).
 - `UI/EventCard`: an event never takes the screen by itself. `EventShow` brings up a small dark glass prompt at
   the bottom middle (the event's name and Watch). At a choice it reads "They want your say", Watch becomes a yellow
   Answer and a thin bar runs down `Tuning.Events.ChoiceTimeout`; the server still picks the gentle option when it
-  runs out. Watch or Answer points the camera at the event when it has a focus and opens the `Dialogue` scene
-  with whoever has been seen so far, from the line that is current; later lines and the choices (pills in the
-  box, sent with `EventChoose`) show in it. "Stop watching" puts the scene away and leaves the prompt until
-  `EventEnd`. `EventCard.isPlaying()` is true while an event is going on, `EventCard.isWatching()` while its scene
+  runs out. Watch or Answer opens the `Dialogue` scene (the camera stays put) with whoever has been seen so far,
+  from the line that is current; later lines and the choices (pills in the box, sent with `EventChoose`) show in
+  it. The server keeps the time: the stars walk together, then `EventShow` (token, title, lines, names, actors,
+  choices, focus) brings up the prompt, and each line goes out as the villagers say it over their heads as
+  `EventLine` `{ token, line, last? }` (`last` on the scene's final line), then `{ token, ask = true }` when the
+  answer timer starts; the lines after an answer come the same way. The client keeps no clock of its own, so
+  Watch shows what the bubbles say. A click on the box shows the rest of a line being typed, and on the last
+  line (or how it turned out) closes the scene, which then leaves no prompt behind. "Stop watching" puts the
+  scene away and leaves the prompt until `EventEnd`. `EventCard.isPlaying()` is true while an event is going on, `EventCard.isWatching()` while its scene
   is up. The prompt and the scene give way to a full menu.
 - `UI/Quests`: the quest list on the main screen. `Quests.mount(parent, position, open)` builds it (a header that
   folds it, a list of at most `Quests.Shown` (3) quests) and refreshes it on any state that moves a goal;

@@ -10,6 +10,11 @@
 -- your say"), Watch becomes Answer and a thin bar runs down the time left; the answers are pills
 -- in the scene's textbox. Nobody is made to answer: the server picks the gentle option when the
 -- time is up. Stop (or the event ending) takes the scene down.
+--
+-- The server keeps the time. It says each line over the villagers' heads and sends it here as it
+-- does (EventLine), so Watch always picks up the line they are saying now, never the start (the
+-- user: "clicking watch to watch a conversation restarts the conversation from the start"). A click
+-- on the box shows the rest of the line at once, and on the last line closes the scene.
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Remotes = require(Shared.Net.Remotes)
@@ -39,7 +44,6 @@ local hidden = false -- while you build or make a villager, the prompt and the s
 local lineNow: any = nil -- the line being said right now: { who, text }
 local asking = false -- the event is waiting for your answer
 local askedAt = 0
-local skip = false
 local typing = 0 -- goes up with every line typed, so an old one stops
 
 -- The villagers' names in a warm colour.
@@ -86,7 +90,8 @@ local function updatePrompt()
 	if not holder then
 		return
 	end
-	holder.Visible = playing and not hidden and scene == nil and not menuUp()
+	-- (a scene closed on its last line doesn't bring the prompt back)
+	holder.Visible = playing and not hidden and scene == nil and not menuUp() and not (current and current.closed)
 	if not current then
 		return
 	end
@@ -315,7 +320,14 @@ local function openScene()
 		Name = "EventScene",
 		Caption = if type(ev.title) == "string" then ev.title else nil,
 		OnClick = function()
-			skip = true
+			-- (Dialogue shows the rest of a line being typed first.) On the last line, or how it
+			-- turned out, a click closes the scene (the user: "when clicking on the last part of
+			-- the conversation, the conversation should close"); before that the next line comes
+			-- when the villagers say it.
+			if scene and current and (current.ended or (lineNow and lineNow.last)) and not asking then
+				current.closed = true
+				closeScene()
+			end
 		end,
 	})
 	Dialogue.answer("Stop watching", {
@@ -338,28 +350,23 @@ end
 
 -- The lines -----------------------------------------------------------------------------------------------
 
--- Says a line: in the scene if it is up, and in any case it takes its time, so the line that is
--- "now" moves on whether or not anyone watches. A click on the box moves on sooner.
+-- A line the villagers are saying now: shown in the scene if it is up, kept for when it goes up.
 local function say(l: any)
 	lineNow = l
 	note(l)
 	if scene then
 		showLine(l)
 	end
-	local t = os.clock()
-	local wait = math.clamp(#l.text / 18, 2.2, 4.2)
-	skip = false
-	while os.clock() - t < wait and not skip do
-		task.wait(0.05)
-	end
-	skip = false
 end
 
-local function sayAll(lines: { any })
-	for _, l in lines do
-		if type(l) == "table" and type(l.text) == "string" then
-			say(l)
-		end
+-- The event waits for your answer (the server's timer has started).
+local function ask()
+	asking = true
+	askedAt = os.clock()
+	lineNow = { text = "What do you do?" }
+	updatePrompt()
+	if scene then
+		showAnswers()
 	end
 end
 
@@ -373,34 +380,20 @@ local function play(ev: any)
 	if not hidden then
 		Kit.popIn(holder)
 	end
-	sayAll(ev.lines or {})
-	if ev.choices and current == ev and not ev.ended and not ev.after then
-		asking = true
-		askedAt = os.clock()
-		lineNow = { text = "What do you do?" }
-		updatePrompt()
-		if scene then
-			showAnswers()
-		end
+	-- what was said while it waited behind another event
+	for _, l in ev.said or {} do
+		say(l)
+	end
+	ev.said = nil
+	if ev.asking and ev.choices then
+		ask()
+		askedAt = ev.askedAt or askedAt
 	end
 	while current == ev and not ev.ended do
-		if ev.after then
-			local lines = ev.after
-			ev.after = nil
-			asking = false
-			clearAnswers()
-			updatePrompt()
-			sayAll(lines)
-		end
 		task.wait(0.1)
 	end
 	asking = false
 	clearAnswers()
-	if ev.after then
-		local lines = ev.after
-		ev.after = nil
-		sayAll(lines)
-	end
 	if ev.notices and #ev.notices > 0 and scene then
 		-- how it turned out, a moment, before the scene goes
 		scene.speak(nil)
@@ -561,9 +554,39 @@ function EventCard.start(_hud: any)
 			task.spawn(play, ev)
 		end
 	end)
+	-- each line as the villagers say it, and the moment they want your say
 	Remotes.event("EventLine").OnClientEvent:Connect(function(msg)
-		if current and type(msg) == "table" and current.token == msg.token then
-			current.after = msg.lines
+		if type(msg) ~= "table" then
+			return
+		end
+		local line = if type(msg.line) == "table" and type(msg.line.text) == "string" then msg.line else nil
+		if line and msg.last == true then
+			line.last = true
+		end
+		if current and current.token == msg.token then
+			if line then
+				if asking then
+					asking = false
+					clearAnswers()
+					updatePrompt()
+				end
+				say(line)
+			elseif msg.ask == true and current.choices then
+				ask()
+			end
+			return
+		end
+		for _, q in queue do
+			if q.token == msg.token then
+				if line then
+					q.said = q.said or {}
+					table.insert(q.said, line)
+					q.asking = false
+				elseif msg.ask == true then
+					q.asking = true
+					q.askedAt = os.clock()
+				end
+			end
 		end
 	end)
 	Remotes.event("EventEnd").OnClientEvent:Connect(function(msg)
