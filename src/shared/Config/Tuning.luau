@@ -118,10 +118,16 @@ Tuning.Events = {
 	MaxGap = 150,
 	ChoiceTimeout = 45, -- seconds before an unanswered choice picks the gentle option
 	LogSize = 40,
-	RecentMemory = 6, -- the same event kind won't repeat inside this many events
+	-- The events remembered, newest first: one just seen is very unlikely to come again, and the
+	-- chance climbs back as it slips down the list (Sim/EventEngine.recentPenalty).
+	RecentMemory = 40,
+	RecentFloor = 0.03, -- the weight left to the event seen last
 	MaxPendingRequests = 3,
 	RequestHours = 36, -- in-game hours a room request stays open
 	VisitorChance = 0.35, -- weight scale for "someone wants to move in" while there is room
+	KeepsakeMax = 9, -- of any one keepsake a player can be given (Sim/Keepsakes)
+	MemoHours = 30, -- in-game hours a villager still talks about an event they were in (Sim/Talk)
+	PropsMax = 6, -- things an event can leave lying about in one town at once (Services/Events)
 }
 
 -- Work and the city -------------------------------------------------------
@@ -315,7 +321,7 @@ Tuning.Look = {
 	-- sunlight at midday (the World spec holds it by look.py's model), still violet, and the sun
 	-- is a little lower so pale walls in it don't wash out to white.
 	Light = {
-		Brightness = 1.7, -- the sun (was 3.1)
+		Brightness = 1.6, -- the sun (was 3.1, then 1.7: a touch less under the haze, so a pale wall in the sun keeps its warmth)
 		Exposure = 0, -- ExposureCompensation: 1 is twice as bright (was 0.12)
 		Ambient = { 84, 78, 110 }, -- what lights a place the sky can't see (indoors; was 126, 118, 158)
 		OutdoorAmbient = { 96, 90, 124 }, -- what lights the shade outdoors: violet (was 152, 146, 186)
@@ -340,8 +346,8 @@ Tuning.Look = {
 		Brightness = 0.01,
 		Hours = {
 			-- (warmer all day for the user's sunset picture: the gold hours are long)
-			{ From = 10, To = 14.5, Tint = { 255, 244, 232 }, Saturation = 0.06, Contrast = 0.08, Air = "day" },
-			{ From = 7.5, To = 16.5, Tint = { 255, 236, 216 }, Saturation = 0.1, Contrast = 0.1, Air = "gold" },
+			{ From = 10, To = 14.5, Tint = { 255, 244, 232 }, Saturation = 0.06, Contrast = 0.06, Air = "day" },
+			{ From = 7.5, To = 16.5, Tint = { 255, 236, 216 }, Saturation = 0.08, Contrast = 0.07, Air = "gold" },
 			{ From = 5, To = 19.5, Tint = { 255, 216, 200 }, Saturation = 0.12, Contrast = 0.1, Air = "dusk" },
 		},
 		-- blue, and a little more push, so lit signs and windows stand out of the dark
