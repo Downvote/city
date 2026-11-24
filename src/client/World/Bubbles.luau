@@ -14,6 +14,11 @@
 --     off: leaves, long grass) and past every villager and player. The bubbles are drawn on top
 --     (AlwaysOnTop), so the villager's own head and hat never cut into them, and the ray is what
 --     keeps them from showing through a wall. They fade quickly in and out.
+-- And every piece pops in when it comes and out when it goes (the user: "bubbles and textboxes over
+-- villagers should have an animation transition when they appear or disappear"): it grows out of
+-- its point under it, from small and clear to its size, and shrinks back and fades on its way out.
+-- The server marks a piece `Going` a moment (Bubble.Leave) before it hides or removes it, and `Said`
+-- when a speech card gets a new line (a smaller pop); this side watches for both on every head.
 -- Everything moves with tweens on the pieces (each a CanvasGroup named Fade): nothing per frame.
 
 local Players = game:GetService("Players")
@@ -29,18 +34,142 @@ local Bubbles = {}
 local EVERY = 0.15 -- seconds between looks
 local MOVE = TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 local FADE = TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local POP_IN = TweenInfo.new(0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+local POP_OUT = TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+local SMALL = 0.55 -- how small a piece starts and goes back to
 -- the order pieces stack in over a head, bottom first
 local ORDER = { Bubble = 1, Mood = 2, WishBubble = 3 }
 
 local tracked: { [Model]: { BillboardGui } } = {} -- the client's own bubbles, by the model they're over
 local shownAt: { [Instance]: number } = {} -- each piece's lift now
 local alphaAt: { [Instance]: number } = {} -- and how see-through it is now
+local hooked: { [Instance]: boolean } = {} -- the head pieces whose comings and goings are watched
+
+local function fadeOf(gui: BillboardGui): CanvasGroup?
+	local f = gui:FindFirstChild("Fade")
+	return if f and f:IsA("CanvasGroup") then f else nil
+end
+
+-- The UIScale a piece pops with.
+local function popOf(fade: CanvasGroup): UIScale
+	local s = fade:FindFirstChild("Pop")
+	if s and s:IsA("UIScale") then
+		return s
+	end
+	local made = Instance.new("UIScale")
+	made.Name = "Pop"
+	made.Parent = fade
+	return made
+end
+
+local step: () -> () -- (below)
+local soon = false
+-- Runs a look at once (in a moment, once for a few calls), so what just came is placed and shown.
+local function lookSoon()
+	if soon then
+		return
+	end
+	soon = true
+	task.defer(function()
+		soon = false
+		local ok, err = pcall(step)
+		if not ok then
+			warn("bubbles: " .. tostring(err))
+		end
+	end)
+end
+
+-- A piece has come (or come back): small and clear for now; the next look places it and pops it
+-- in, or keeps it hidden if a wall is in the way.
+local function arrive(gui: BillboardGui)
+	local fade = fadeOf(gui)
+	if not fade then
+		return
+	end
+	popOf(fade).Scale = SMALL
+	fade.GroupTransparency = 1
+	alphaAt[fade] = 1
+	shownAt[fade] = nil
+	lookSoon()
+end
+
+-- A piece is on its way out: it shrinks back toward its point and fades. The look leaves it alone.
+local function leave(gui: BillboardGui)
+	local fade = fadeOf(gui)
+	if not fade then
+		return
+	end
+	alphaAt[fade] = 1
+	TweenService:Create(popOf(fade), POP_OUT, { Scale = SMALL }):Play()
+	TweenService:Create(fade, POP_OUT, { GroupTransparency = 1 }):Play()
+	lookSoon() -- (what was over it comes down into its place)
+end
+
+-- A speech card already showing got a new line: a small pop, no fade.
+local function bump(gui: BillboardGui)
+	local fade = fadeOf(gui)
+	if not fade or alphaAt[fade] ~= 0 then
+		return
+	end
+	local s = popOf(fade)
+	s.Scale = 0.88
+	TweenService:Create(s, POP_IN, { Scale = 1 }):Play()
+end
+
+local function going(gui: Instance): boolean
+	return gui:GetAttribute("Going") == true
+end
+
+-- Watches one head piece the server made: shown, hidden, marked going, a new line.
+local function hook(gui: BillboardGui)
+	if hooked[gui] then
+		return
+	end
+	hooked[gui] = true
+	gui.Destroying:Connect(function()
+		hooked[gui] = nil
+	end)
+	gui:GetPropertyChangedSignal("Enabled"):Connect(function()
+		if gui.Enabled and not going(gui) then
+			arrive(gui)
+		end
+	end)
+	gui:GetAttributeChangedSignal("Going"):Connect(function()
+		if going(gui) then
+			leave(gui)
+		elseif gui.Enabled then
+			arrive(gui)
+		end
+	end)
+	gui:GetAttributeChangedSignal("Said"):Connect(function()
+		if gui.Enabled and not going(gui) then
+			bump(gui)
+		end
+	end)
+	if gui.Enabled and not going(gui) then
+		arrive(gui)
+	end
+end
+
+-- Takes a bubble the client made off a head, popping it out first.
+function Bubbles.dismiss(gui: BillboardGui)
+	if going(gui) then
+		return
+	end
+	gui:SetAttribute("Going", true)
+	gui.Active = false
+	leave(gui)
+	task.delay(0.25, function()
+		gui:Destroy()
+	end)
+end
 
 -- Hands a bubble the client made (the wish bubble) to the loop. It goes when it is destroyed.
 function Bubbles.track(model: Model, gui: BillboardGui)
 	local list = tracked[model] or {}
 	tracked[model] = list
 	table.insert(list, gui)
+	arrive(gui)
 	gui.Destroying:Connect(function()
 		local now = tracked[model]
 		if now then
@@ -74,13 +203,16 @@ end
 local function piecesOf(model: Model): { BillboardGui }
 	local out = {}
 	for _, c in model:GetChildren() do
-		if c:IsA("BillboardGui") and ORDER[c.Name] and c.Enabled then
-			table.insert(out, c)
+		if c:IsA("BillboardGui") and ORDER[c.Name] then
+			hook(c)
+			if c.Enabled and not going(c) then
+				table.insert(out, c)
+			end
 		end
 	end
 	local own: { BillboardGui } = tracked[model] or {}
 	for _, gui in own do
-		if gui.Parent and gui.Enabled then
+		if gui.Parent and gui.Enabled and not going(gui) then
 			table.insert(out, gui)
 		end
 	end
@@ -88,11 +220,6 @@ local function piecesOf(model: Model): { BillboardGui }
 		return (ORDER[a.Name] or 9) < (ORDER[b.Name] or 9)
 	end)
 	return out
-end
-
-local function fadeOf(gui: BillboardGui): CanvasGroup?
-	local f = gui:FindFirstChild("Fade")
-	return if f and f:IsA("CanvasGroup") then f else nil
 end
 
 local function setLift(fade: CanvasGroup, lift: number)
@@ -117,6 +244,13 @@ local function setShown(fade: CanvasGroup, on: boolean)
 	alphaAt[fade] = want
 	if on then
 		fade.Visible = true
+		-- (coming in: it grows out of its point as it shows)
+		local s = popOf(fade)
+		if s.Scale < 1 then
+			TweenService:Create(s, POP_IN, { Scale = 1 }):Play()
+			TweenService:Create(fade, POP_IN, { GroupTransparency = 0 }):Play()
+			return
+		end
 	end
 	TweenService:Create(fade, FADE, { GroupTransparency = want }):Play()
 	if not on then
@@ -146,7 +280,7 @@ local function blocked(from: Vector3, at: Vector3, skip: { Instance }): boolean
 end
 
 -- One look: what shows, where, and what is hidden.
-function Bubbles.step()
+function step()
 	local cam = workspace.CurrentCamera
 	if not cam then
 		return
@@ -192,7 +326,9 @@ function Bubbles.step()
 					setShown(fade, false)
 				else
 					table.insert(fades, fade)
-					local size = fade.AbsoluteSize
+					-- (its full size, while it's still popping in)
+					local scale = math.max(0.1, popOf(fade).Scale)
+					local size = fade.AbsoluteSize / scale
 					table.insert(items, { w = size.X, h = size.Y })
 				end
 			end
@@ -221,7 +357,13 @@ function Bubbles.step()
 			alphaAt[fade] = nil
 		end
 	end
+	for fade in alphaAt do
+		if not fade.Parent then
+			alphaAt[fade] = nil
+		end
+	end
 end
+Bubbles.step = step
 
 local started = false
 function Bubbles.start()
@@ -232,7 +374,7 @@ function Bubbles.start()
 	task.spawn(function()
 		while true do
 			task.wait(EVERY)
-			local ok, err = pcall(Bubbles.step)
+			local ok, err = pcall(step)
 			if not ok then
 				warn("bubbles: " .. tostring(err))
 			end

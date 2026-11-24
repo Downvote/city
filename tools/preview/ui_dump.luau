@@ -510,7 +510,7 @@ elseif scene == "bubbles" then
 	local Wishes = Harness.require(Sim.CLIENT .. "World.Wishes")
 	local BubbleLayout = Harness.require(Sim.CLIENT .. "World.BubbleLayout")
 	local function speechSize(text)
-		return { w = math.min(248, #text * 8.2 + 30), h = 42 }
+		return { w = math.min(Bubble.SpeechWidth + 30, #text * 8.2 + 30), h = 51 }
 	end
 	local heads = {
 		{
@@ -518,7 +518,7 @@ elseif scene == "bubbles" then
 			x = 470,
 			y = 560,
 			depth = 18,
-			said = "Morning. Have you seen my cat?",
+			said = "Morning. Have you seen my cat anywhere? She was out all night again.",
 			mood = "heart",
 			food = Foods.list[1],
 		},
@@ -532,10 +532,10 @@ elseif scene == "bubbles" then
 			table.insert(items, speechSize(h.said))
 		end
 		if h.mood then
-			table.insert(items, { w = 36, h = 43 })
+			table.insert(items, { w = 44, h = 51 })
 		end
 		if h.food or h.wish then
-			table.insert(items, { w = 60, h = 67 })
+			table.insert(items, { w = 64, h = 73 })
 		end
 		table.insert(list, { key = h.key, x = h.x, y = h.y, depth = h.depth, items = items })
 	end

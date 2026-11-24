@@ -105,7 +105,11 @@ describe("Bubbles", function()
 
 	it("hangs every head piece from the same point, in billboards tall enough for a stack", function()
 		-- (the point is in the billboard's middle: a full stack gone up as far as it may still fits)
-		expect(Bubble.Tall / 2 >= Bubble.Base + 44 + 43 + 72 + 2 * Bubble.Gap + 150).toBe(true)
+		-- (a two line speech card, a mood badge and a wish bubble, each with its point and room for its rim)
+		expect(Bubble.Tall / 2 >= Bubble.Base + 71 + 51 + 73 + 2 * Bubble.Gap + 150).toBe(true)
+		-- a speech card runs wider before its words wrap than it did (220)
+		expect(Bubble.SpeechWidth >= 320).toBe(true)
+		expect(Bubble.Leave > 0.2 and Bubble.Leave < 0.6).toBe(true)
 		expect(Bubble.Anchor.Y > 2).toBe(true)
 		for kind, look in Bubble.Moods do
 			expect(type(look[1])).toBe("string")

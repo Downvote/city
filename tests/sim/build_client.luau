@@ -381,8 +381,21 @@ run("a menu takes the screen: a way back, tabs, rows", function()
 	check(back ~= nil and back:FindFirstChild("IconArt") ~= nil, "the way back is a button at the top left")
 	back.Activated:Fire()
 	check(closed, "and it closes the menu")
-	local tabs = header:FindFirstChild("Tabs")
+	local tabs = header:FindFirstChild("Tabs", true)
 	check(tabs ~= nil, "its tabs sit in the top strip")
+	-- held against the strip's right end by a layout, not by their own anchor (on a phone they
+	-- once stood off to the left of the menu)
+	local dock = header:FindFirstChild("TabsDock")
+	local lined = dock and dock:FindFirstChildOfClass("UIListLayout")
+	check(
+		dock ~= nil
+			and tabs.Parent == dock
+			and lined ~= nil
+			and lined.HorizontalAlignment == Enum.HorizontalAlignment.Right
+			and dock.AnchorPoint.X == 1
+			and dock.Position.X.Scale == 1,
+		"at the right end of the strip"
+	)
 	local first, second = tabs:FindFirstChild("First", true), tabs:FindFirstChild("Second", true)
 	local function slab(tab)
 		return tab:FindFirstChild("Face")

@@ -1862,6 +1862,30 @@ piece stands between it and the hint.
   The coins that rise over a villager at work are left as they were, beside the head and over walls, since most
   work goes on indoors.
 
+> make the outline outline the bottom pointy part as well, for the first image. also, the second image, remove the
+> bar. also, make it such that textboxes that appear over the head of villages have a longer max width. also,
+> bubbles and textboxes over villagers should have an animation transition when they appear or disappear
+
+(The first picture was a mood badge, the second a speech card.) A badge's coloured ring now runs round its point as
+well, and so does the rim of a speech card and of a wish bubble: the point and the card are one outlined shape. The
+speech card has lost the short yellow bar at its left; the words start flush. Its words run out to 340 pixels before
+they wrap (220 before), so a long line is two lines, not four. And everything over a head pops: it grows out of its
+point as it fades in, and when it goes it shrinks back toward the head and fades, quick and with no bounce, the rest
+of the stack coming down into its place. A new line on a card already showing gives it a small pop.
+
+> also, for textboxes like these, make the background part of the icon fill the right part just like what was asked
+> before with the other ones with no gaps. for the secondd image, it seems like the villager menu has a thing behind
+> it where im pointing
+
+> icons dont seem aligned. also, make a black icon for coins as well where it is required
+
+The notices that pop up at the top (a craving, coins earned) have their icon on a block that fills the note's left
+end, top to bottom, rounded with the note, with no gap round it. The Villagers menu's tabs (About and Friends) stood
+off to the left of the menu on a phone, behind its way back: they're now held against the right end of the menu's
+top strip by a layout of their own, their background follows their own width, and the yellow tab slides the right
+distance on a scaled screen. A coin on a coloured block is drawn in one colour now, dark on yellow and white on the
+others, with its indent cut out of it; on the money strip and on prices it keeps its gold.
+
 ### Leaning shapes for everything with words on it
 
 > make these type of shapes everywhere parallograms instead of rounded rectangles

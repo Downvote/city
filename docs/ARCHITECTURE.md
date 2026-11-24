@@ -638,7 +638,8 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   slices or tiles them, under the label's own gradient and corners).
 - `UI/Kit` menus: `Kit.panel(title, size, onClose, icon, color, opts)` is a full menu (pass `Kit.MenuSize`): a
   black backdrop, `Kit.backButton` and the title in a strip above the panel, `opts.Tabs` / `opts.OnTab` as
-  `Kit.segments` at the top right (a dark pill well, the picked tab a yellow pill). The panel is `Rim` (holding
+  `Kit.segments` at the top right (a dark pill well, the picked tab a yellow pill), in a `TabsDock` across the right
+  half of the header whose list layout puts them against its right end; the well takes the tabs' laid out width. The panel is `Rim` (holding
   `Edge`, a thin line of `T.Line` a few pixels out) and in it `Card`: a rounded card (`Cut`) with a rim of its
   own, a glow of the menu's colour, `Dots` and a `Hatch` band in its bottom right corner. `opts.Dialog = true` is
   a small panel in the middle: its card is two tones (a UIGradient `Wash` with a step), the darker band across the
@@ -760,12 +761,18 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   `Wish` attribute, `Wishes.face(parent, icon, food?)` drawing it; a click opens their page).
 - `Util/Bubble` (shared, plain instances, used by the server and the client): what hangs over a head. `Anchor` (the
   point over the head every head billboard hangs from), `Tall` (the billboards' height: the point is in their
-  middle), `Base` and `Gap` (pixels), `Moods` (symbol and colour by kind), `card(parent, props)` (the dark glass card
-  with a rim and two brackets), `speech(parent, text?)` (a card of words with a yellow stroke and a tail; returns the
-  group and the `Text` label), `mood(parent, kind)` (a round badge), `square(parent, px, colour)` (the wish bubble's
-  frame) and `billboard(name, adornee, wide, far)` (`AlwaysOnTop`, `StudsOffset = Anchor`). Each piece is a
-  CanvasGroup `Fade` with its bottom middle `n` pixels over the point. `Npc.say` shows one in a billboard named
-  `Bubble`, `Npc.icon` one named `Mood` (destroyed after a few seconds).
+  middle), `Base` and `Gap` (pixels), `SpeechWidth` (how wide a speech card's words run before they wrap, 340),
+  `Leave` (seconds between a piece being marked going and it going), `Moods` (symbol and colour by kind),
+  `card(parent, props)` (the solid dark glass card with a rim and two brackets), `speech(parent, text?)` (a card of
+  words flush at its left, no bar, and an outlined point; returns the group and the `Text` label),
+  `mood(parent, kind)` (a round badge whose ring runs round its point too: in one holder, back to front, the ring's
+  colour as a turned square, the badge with its ring, the glass point, the symbol), `square(parent, px, colour)` (the
+  wish bubble's frame) and `billboard(name, adornee, wide, far)` (`AlwaysOnTop`, `StudsOffset = Anchor`). A card's
+  point is a row under it reaching up over its edge: the rim's colour as a bigger turned square, the glass as a smaller
+  one, a patch of glass over their top halves. Each piece is a CanvasGroup `Fade` (padded 2 so the rims aren't cut)
+  with its bottom middle `n` pixels over the point. `Npc.say` shows one in a billboard named `Bubble` (each line sets
+  the attribute `Said`; `Going = true` a moment, `Leave`, before it hides), `Npc.icon` one named `Mood` (`Going`,
+  then destroyed `Leave` later). The server starts each `Fade` clear and leaves the motion to the clients.
 - `World/Bubbles` (client, started by `Wishes.start`): every 0.15 seconds it finds what is showing over each villager
   (`Bubble`, `Mood` in the model, and what `Bubbles.track(model, gui)` was handed: the wish bubble), casts a ray from
   the camera to `head.Position + Anchor` (excluding every `Villagers` folder and every player's character, through
@@ -773,7 +780,12 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   `World/BubbleLayout.arrange(heads, opts)` (pure: each head's items bottom first, `{ w, h }`, at its screen point and
   depth; returns each item's lift, the stack's rise and whether it is hidden; the nearer head keeps its place, a
   further one goes up over it up to `MaxRise` and hides past that) and tweens each `Fade` to its lift. The Bubbles
-  spec holds the sums. Preview: `ui.sh bubbles`.
+  spec holds the sums. Preview: `ui.sh bubbles`. It also pops every piece in and out: it watches each head
+  billboard's `Enabled`, `Going` and `Said`; a piece that comes starts small (`Pop`, a UIScale, at 0.55) and clear and
+  the next look (run at once) grows it out of its point as it shows it; one marked `Going` shrinks back and fades and
+  leaves the stack, so what was over it comes down; a new line gives a showing card a small pop. A piece's size for the
+  sums is its full size, whatever its pop. `Bubbles.dismiss(gui)` takes a client made bubble away the same way (the
+  wish bubble), then destroys it.
 - `World/Explore` (tells the server when the player reaches a place they haven't found). There is no map screen.
 - `World/Ambience` turns the ferris wheel, carousel and windmill (parts named `Spin` round the `Hub`'s X axis;
   `Cabin` parts go round upright) and bobs the marina's boats (parts named `Boat<n>`, one group each).
@@ -816,7 +828,11 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   icon space (each piece's keypoints are the icon's shade at its top and bottom), so overlapping pieces join without
   a seam. Flat icons (the default) draw every piece in one colour and cut details out in `Hole`; a shape marked
   `dent = true` is drawn in `Icons.dentOf(colour)` instead, the same colour a step darker (the coin's middle).
-  `Icons.names()` lists them. `UI/Toasts`, `UI/ModelPreview` (3D thumbnails in ViewportFrames).
+  `Icons.names()` lists them. Art with colours of its own (the coin) has a one colour form in `IconArt.mono` (its
+  indent a ring cut out of its face); `Icons.make(name, px, { Mono = true, Color })` draws that one in `Color`, and
+  every marker (`Kit.leanMark`, `Kit.disc`, so `Kit.flushMark` and the rows) asks for it, so a coin on a yellow block
+  is dark. `UI/Toasts` (a rounded note whose left end is a full height block in the notice's colour, rounded with the
+  note and straight on its inner edge, the icon on it), `UI/ModelPreview` (3D thumbnails in ViewportFrames).
 - `Avatar/Bundles` (shared): what a bundle is and what wearing it puts on. `Bundles.kindOfLabel(label)` reads a
   `BundleType` name, enum item or number (a whole body, "BodyParts" or "DynamicHeadAvatar", before a head);
   `Bundles.part(details, wanted)` takes `{ label, looks, assets }` (the outfits' looks, the bundle's own assets)

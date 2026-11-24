@@ -182,6 +182,26 @@ A.coins = {
 	{ circle(9, 9.5, 3.6), fill = GOLD_DARK },
 }
 
+-- The one colour forms of the art that has colours of its own, for where its own colours won't
+-- read: the coin on a yellow block (the user: "make a black icon for coins as well where it is
+-- required"). The indent is a ring cut out of the coin's face, as the icons' details are.
+IconArt.mono = {
+	coin = {
+		{ circle(12, 12, 10), fill = true },
+		{ circle(12, 12, 6), fill = true, cut = true },
+		{ circle(12, 12, 4.25), fill = true },
+	},
+	coins = {
+		{ circle(15, 14.5, 7), fill = true },
+		{ circle(15, 14.5, 4.2), fill = true, cut = true },
+		{ circle(15, 14.5, 2.6), fill = true },
+		{ circle(9, 9.5, 8.6), fill = true, cut = true },
+		{ circle(9, 9.5, 7), fill = true },
+		{ circle(9, 9.5, 4.2), fill = true, cut = true },
+		{ circle(9, 9.5, 2.6), fill = true },
+	},
+}
+
 -- clothes (the creator's tabs) ---------------------------------------------------------------------
 
 A.shirt = {

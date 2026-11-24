@@ -24,7 +24,7 @@ local bubbles: { [Model]: BillboardGui } = {}
 local function clear(model: Model)
 	local b = bubbles[model]
 	if b then
-		b:Destroy()
+		Bubbles.dismiss(b) -- (it pops out first)
 		bubbles[model] = nil
 	end
 end

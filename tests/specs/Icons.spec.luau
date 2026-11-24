@@ -187,6 +187,30 @@ describe("Icons", function()
 		end
 	end)
 
+	it("has a one colour form of the art with its own colours, cut like the rest", function()
+		-- (the user: "make a black icon for coins as well where it is required": a coin on a
+		-- yellow block shows in the block's dark ink)
+		local Vector = require("StarterPlayer.StarterPlayerScripts.Client.UI.Vector")
+		local IconArt = require("StarterPlayer.StarterPlayerScripts.Client.UI.IconArt")
+		for _, name in { "coin", "coins" } do
+			local art = IconArt.mono[name]
+			expect(art ~= nil).toBeTruthy()
+			local pixels, coloured = Vector.raster(art, 96, { Weight = Icons.Weight[96] })
+			expect(coloured).toBe(false)
+			local ink = 0
+			for i = 0, 96 * 96 - 1 do
+				ink += buffer.readu8(pixels, i * 4 + 3)
+			end
+			expect(ink > 96 * 96 * 20).toBeTruthy()
+		end
+		-- asked for (as a marker does), the coin is drawn in the colour given, not its gold
+		local ink = Color3.fromRGB(20, 20, 24)
+		local icon = Icons.make("coins", 40, { Color = ink, Mono = true })
+		expect(icon:GetAttribute("Mono")).toBe(true)
+		local plain = Icons.make("coins", 40, { Color = ink })
+		expect(plain:GetAttribute("Mono")).toBe(false)
+	end)
+
 	it("keeps the icons to one colour, the foods too", function()
 		local Vector = require("StarterPlayer.StarterPlayerScripts.Client.UI.Vector")
 		local IconArt = require("StarterPlayer.StarterPlayerScripts.Client.UI.IconArt")

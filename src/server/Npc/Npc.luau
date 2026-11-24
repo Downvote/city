@@ -2,7 +2,6 @@
 -- pathfinding, sitting, lying in bed, speech bubbles and little emotion icons over its head.
 
 local PathfindingService = game:GetService("PathfindingService")
-local TweenService = game:GetService("TweenService")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Tuning = require(Shared.Config.Tuning)
@@ -526,9 +525,10 @@ local function makeBubble(self: Npc): BillboardGui
 	local head = self.model:FindFirstChild("Head") or self.root
 	-- the interface's look, drawn by Util/Bubble; the client stacks it with the wish bubble and
 	-- the mood badges over the same head and hides it behind walls (World/Bubbles)
-	local gui = Bubble.billboard("Bubble", head :: BasePart, 260, 90)
+	local gui = Bubble.billboard("Bubble", head :: BasePart, Bubble.SpeechWidth + 60, 90)
 	gui.Enabled = false
-	Bubble.speech(gui)
+	local fade = Bubble.speech(gui)
+	fade.GroupTransparency = 1 -- (each player's screen brings it in: World/Bubbles)
 	gui.Parent = self.model
 	self.bubble = gui
 	return gui
@@ -541,17 +541,20 @@ function Npc.say(self: Npc, text: string, seconds: number?)
 	local token = self.bubbleToken
 	local label = gui:FindFirstChild("Text", true) :: TextLabel
 	label.Text = text
+	-- Each player's screen pops it in and out (World/Bubbles: the user, "bubbles and textboxes over
+	-- villagers should have an animation transition when they appear or disappear"). `Said` tells
+	-- it a new line came; `Going` that it's about to go, a moment before it does.
+	gui:SetAttribute("Said", token)
+	gui:SetAttribute("Going", false)
 	gui.Enabled = true
-	-- it grows the last bit to its size, quick and with no bounce
-	local card = gui:FindFirstChild("Fade", true) :: CanvasGroup
-	local scale = card:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
-	scale.Parent = card
-	scale.Scale = 0.86
-	TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Scale = 1 })
-		:Play()
 	task.delay(seconds or math.clamp(#text / 14, 2.5, 6), function()
 		if self.bubbleToken == token and gui.Parent then
-			gui.Enabled = false
+			gui:SetAttribute("Going", true)
+			task.delay(Bubble.Leave, function()
+				if self.bubbleToken == token and gui.Parent then
+					gui.Enabled = false
+				end
+			end)
 		end
 	end)
 end
@@ -563,14 +566,13 @@ function Npc.icon(self: Npc, kind: string, seconds: number?)
 	local gui = Bubble.billboard("Mood", head :: BasePart, 60, 80)
 	gui:SetAttribute("Kind", kind)
 	local badge = Bubble.mood(gui, kind)
-	local scale = Instance.new("UIScale")
-	scale.Scale = 0.7
-	scale.Parent = badge
+	badge.GroupTransparency = 1 -- (each player's screen pops it in and out: World/Bubbles)
 	gui.Parent = self.model
-	TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Scale = 1 })
-		:Play()
 	task.delay(seconds or 2.5, function()
-		gui:Destroy()
+		gui:SetAttribute("Going", true)
+		task.delay(Bubble.Leave, function()
+			gui:Destroy()
+		end)
 	end)
 end
 

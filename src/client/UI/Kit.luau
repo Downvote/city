@@ -2313,7 +2313,11 @@ function Kit.glide(from: GuiObject?, to: GuiObject, name: string?)
 		to:SetAttribute("GlideZ", base)
 		to.ZIndex = base :: number
 	end
-	local dx = from.AbsolutePosition.X - to.AbsolutePosition.X
+	-- (what is measured on the screen is in its pixels; the face is placed in the interface's own,
+	-- which differ by the screen's scale: a phone's is about half)
+	local tall = to.Size.Y.Offset
+	local ratio = if tall > 0 and to.AbsoluteSize.Y > 0 then to.AbsoluteSize.Y / tall else 1
+	local dx = (from.AbsolutePosition.X - to.AbsolutePosition.X) / ratio
 	-- (a leaning face is pulled in from its button's edges by its slanted ends)
 	local inset = face:GetAttribute("Inset")
 	local k: number = if type(inset) == "number" then inset else 0
@@ -2321,8 +2325,8 @@ function Kit.glide(from: GuiObject?, to: GuiObject, name: string?)
 	local span = if fromFace
 			and fromFace:IsA("GuiObject")
 			and fromFace.AbsoluteSize.X > 0
-		then fromFace.AbsoluteSize.X
-		else w - k * 2
+		then fromFace.AbsoluteSize.X / ratio
+		else w / ratio - k * 2
 	face.Position = UDim2.new(pos.X.Scale, pos.X.Offset + dx, pos.Y.Scale, pos.Y.Offset)
 	face.Size = UDim2.new(0, span, size.Y.Scale, size.Y.Offset)
 	tween(face, M.Glide, { Position = pos, Size = size })
@@ -2759,6 +2763,8 @@ function Kit.leanMark(props: { [string]: any }?): Frame
 			Position = UDim2.new(0.5, -ipx / 2 + (p.IconX or 0), 0.5, -ipx / 2),
 			Color = p.IconColor or (if light then T.Dark else T.White),
 			Hole = color,
+			-- (in one colour, the coin too: its gold doesn't read on a yellow block)
+			Mono = true,
 			ZIndex = z + 1,
 		})
 	elseif p.Text then
@@ -2851,6 +2857,7 @@ function Kit.disc(props: { [string]: any }?): Frame
 			Position = UDim2.new(0.5, -ipx / 2, 0.5, -ipx / 2),
 			Color = p.IconColor or (if light then T.Dark else T.White),
 			Hole = color,
+			Mono = true,
 			ZIndex = z + 1,
 		})
 	end
@@ -3688,6 +3695,19 @@ function Kit.segments(
 		Parent = holder,
 	})
 	Kit.list(holder, 2, true)
+	-- The well follows the tabs' own width once the game has laid them out, in the interface's
+	-- units: sized by scale inside a bar that sizes itself, it could stretch the bar far wider than
+	-- its tabs (on a phone the tabs stood off to the left of the menu).
+	local function fitWell()
+		local tall = holder.AbsoluteSize.Y
+		if tall <= 0 or holder.AbsoluteSize.X <= 0 then
+			return
+		end
+		local across = holder.AbsoluteSize.X * h / tall
+		well.Size = UDim2.fromOffset(math.max(0, across - 2 - wellCap * 2), h - 2)
+	end
+	holder:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitWell)
+	task.defer(fitWell)
 	local buttons: { [string]: TextButton } = {}
 	local faces: { [string]: Frame } = {}
 	local labels: { [string]: TextLabel } = {}
@@ -4096,6 +4116,29 @@ Kit.MenuSize = UDim2.fromOffset(1180, 580)
 -- other way round.
 -- Returns { root, card, body, close, title, header, selectTab }. `root` holds everything, so
 -- hiding or destroying it takes the lot.
+-- Where a full menu's tabs go: a strip along the right half of its header that lines what is in it
+-- up against its right end. The tab bar sizes itself to its tabs; placed by the strip's layout,
+-- not by its own anchor, it can't end up anywhere but the header's right end (on a phone it once
+-- stood off to the left of the menu, behind its way back).
+local function tabsDock(header: GuiObject): Frame
+	local dock = Kit.new("Frame", {
+		Name = "TabsDock",
+		BackgroundTransparency = 1,
+		Size = UDim2.new(0.5, 0, 0, 50),
+		Position = UDim2.new(1, -2, 0, 2),
+		AnchorPoint = Vector2.new(1, 0),
+		Parent = header,
+	})
+	Kit.new("UIListLayout", {
+		FillDirection = Enum.FillDirection.Horizontal,
+		HorizontalAlignment = Enum.HorizontalAlignment.Right,
+		VerticalAlignment = Enum.VerticalAlignment.Top,
+		SortOrder = Enum.SortOrder.LayoutOrder,
+		Parent = dock,
+	})
+	return dock
+end
+
 function Kit.panel(
 	titleText: string,
 	size: UDim2,
@@ -4348,7 +4391,7 @@ function Kit.panel(
 						Kit.revealIn(holder, mark, { DX = 14, Step = 0.025 })
 					end
 				end)
-			end, { Parent = header, Position = UDim2.new(1, -2, 0, 2), AnchorPoint = Vector2.new(1, 0) })
+			end, { Parent = tabsDock(header) })
 			selectTab = select
 		end
 	end

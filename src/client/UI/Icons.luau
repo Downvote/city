@@ -1511,13 +1511,14 @@ end
 
 -- The square of a sheet holding `name` painted n pixels across (painting it first if need be).
 -- Squares sit a pixel apart, so one never bleeds into the next when the picture is scaled.
-local function cellFor(name: string, n: number): Cell
-	local key = name .. ":" .. n
+local function cellFor(name: string, n: number, mono: boolean?): Cell
+	local art = if mono and IconArt.mono[name] then IconArt.mono[name] else IconArt.art[name]
+	local key = name .. ":" .. n .. (if art ~= IconArt.art[name] then ":mono" else "")
 	local have = cells[key]
 	if have then
 		return have
 	end
-	local pixels, coloured = Vector.raster(IconArt.art[name], n, { Weight = Icons.Weight[n] })
+	local pixels, coloured = Vector.raster(art, n, { Weight = Icons.Weight[n] })
 	local size = n + 2
 	local sheet = sheets[#sheets] or newSheet()
 	if sheet.x + size > SHEET then
@@ -1563,14 +1564,16 @@ function Icons.artNames(): { string }
 end
 
 -- The vector drawing of an icon, or nil if there is none or the game can't make pictures. Art
--- with colours of its own (the coin) shows in them; the rest (the foods too) takes `Color`.
+-- with colours of its own (the coin) shows in them; the rest (the foods too) takes `Color`. With
+-- `Mono`, art with colours of its own shows in its one colour form instead (IconArt.mono), in
+-- `Color`: a coin on a coloured block.
 function Icons.vector(name: string, px: number, p: { [string]: any }): Frame?
 	if vectorOn == false or broken[name] or IconArt.art[name] == nil then
 		return nil
 	end
 	local glyph: Color3 = p.Color or p.Tint or Icons.Colors[name] or Icons.Glyph
 	local ok, got = pcall(function(): Frame
-		local cell = cellFor(name, if px <= 30 then SMALL else BIG)
+		local cell = cellFor(name, if px <= 30 then SMALL else BIG, p.Mono == true)
 		local root = Instance.new("Frame")
 		root.Name = p.Name or "Icon"
 		root.BackgroundTransparency = 1

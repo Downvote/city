@@ -18,10 +18,18 @@ Bubble.Anchor = Vector3.new(0, 2.4, 0)
 Bubble.Tall = 760
 Bubble.Base = 14 -- the bottom of the stack, in pixels over that point (clear of a name tag)
 Bubble.Gap = 6 -- between two things in one stack
+-- seconds between a piece being marked `Going` and it going: time for its way out (World/Bubbles)
+Bubble.Leave = 0.35
 
--- the glass over the 3D view (UI/Kit's Glass), the same in both looks
+-- the glass over the 3D view (UI/Kit's Glass), the same in both looks; solid, so a tail laid over
+-- a card's edge doesn't show as a darker patch
 local GLASS = Color3.fromRGB(12, 12, 15)
 local WHITE = Color3.fromRGB(255, 255, 255)
+-- a speech card's thin rim: the pale white it was, mixed into the glass so it's solid too
+local RIM = Color3.fromRGB(84, 84, 88)
+-- The widest a speech card's words run before they wrap (the user: "make it such that textboxes
+-- that appear over the head of villages have a longer max width").
+Bubble.SpeechWidth = 340
 local INK = Color3.fromRGB(240, 240, 236)
 Bubble.Yellow = Color3.fromRGB(255, 210, 64)
 
@@ -76,6 +84,13 @@ local function group(parent: Instance?, at: number): CanvasGroup
 		Padding = UDim.new(0, 0),
 		Parent = g,
 	})
+	-- (a group draws nothing past its edges: room for the rims, which sit just outside a card)
+	new("UIPadding", {
+		PaddingLeft = UDim.new(0, 2),
+		PaddingRight = UDim.new(0, 2),
+		PaddingTop = UDim.new(0, 2),
+		Parent = g,
+	})
 	return g
 end
 
@@ -109,24 +124,48 @@ local function brackets(card: Instance, color: Color3, alpha: number)
 	end
 end
 
--- A little point under a card, toward the head: a turned square half cut off by its row.
-local function tail(g: Instance, color: Color3, alpha: number, order: number)
+-- A turned square of `side`, its middle at `x`, `y` in `parent`.
+local function diamond(parent: Instance, name: string, side: number, x: number, y: number, color: Color3, z: number)
+	return new("Frame", {
+		Name = name,
+		BackgroundColor3 = color,
+		BorderSizePixel = 0,
+		Size = UDim2.fromOffset(side, side),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromOffset(x, y),
+		Rotation = 45,
+		ZIndex = z,
+		Parent = parent,
+	})
+end
+
+-- A little point under a straight edged card, toward the head, and the card's rim running round
+-- it (the user, of the mood badge's: "make the outline outline the bottom pointy part as well").
+-- It sits in its own row under the card and reaches up over the card's edge: the rim's colour as a
+-- bigger turned square, the glass as a smaller one on it, and a patch of glass over the top half
+-- of both, so what shows is the point and its two outlined sides running into the card's rim.
+local POINT = 10 -- the glass square's side
+local function tail(g: Instance, rim: Color3, thick: number, order: number)
+	local reach = POINT * 0.7072 + thick * 1.4143 -- from the middle to the rim's tip
 	local row = new("Frame", {
 		Name = "Tail",
 		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(16, 7),
-		ClipsDescendants = true,
+		Size = UDim2.fromOffset(math.ceil(reach * 2) + 2, math.ceil(reach) + 1),
 		LayoutOrder = order,
+		ZIndex = 2,
 		Parent = g,
 	})
+	local mid = row.Size.X.Offset / 2
+	diamond(row, "Rim", POINT + thick * 2, mid, 0, rim, 1)
+	diamond(row, "Point", POINT, mid, 0, GLASS, 2)
 	new("Frame", {
-		BackgroundColor3 = color,
-		BackgroundTransparency = alpha,
+		Name = "Cover",
+		BackgroundColor3 = GLASS,
 		BorderSizePixel = 0,
-		Size = UDim2.fromOffset(10, 10),
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0.5, 0, 0, 0),
-		Rotation = 45,
+		Size = UDim2.fromOffset(math.ceil(reach * 2) + 2, math.ceil(reach) + 1),
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.fromOffset(mid, 0),
+		ZIndex = 3,
 		Parent = row,
 	})
 end
@@ -137,18 +176,19 @@ function Bubble.card(parent: Instance, props: { [string]: any }?): Frame
 	local card = new("Frame", {
 		Name = p.Name or "Card",
 		BackgroundColor3 = GLASS,
-		BackgroundTransparency = 0.08,
+		BackgroundTransparency = 0,
 		BorderSizePixel = 0,
 		Size = p.Size or UDim2.fromOffset(0, 0),
 		AutomaticSize = p.AutomaticSize or Enum.AutomaticSize.None,
 		LayoutOrder = 1,
+		ZIndex = 1,
 		Parent = parent,
 	})
 	corner(card, UDim.new(0, p.Radius or 12))
 	new("UIStroke", {
 		Name = "Rim",
-		Color = p.Rim or WHITE,
-		Transparency = p.RimAlpha or 0.72,
+		Color = p.Rim or RIM,
+		Transparency = 0,
 		Thickness = p.RimThickness or 1.5,
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 		Parent = card,
@@ -157,28 +197,19 @@ function Bubble.card(parent: Instance, props: { [string]: any }?): Frame
 	return card
 end
 
--- A speech card in `parent` (a billboard): the words in white on the glass, a short yellow stroke
--- at its left, and a tail under it. Returns the group and the words' label (named Text).
+-- A speech card in `parent` (a billboard): the words in white on the glass, flush at its left (no
+-- bar in front of them any more: the user, "remove the bar"), and an outlined tail under it.
+-- Returns the group and the words' label (named Text).
 function Bubble.speech(parent: Instance?, text: string?): (CanvasGroup, TextLabel)
 	local g = group(parent, Bubble.Base)
 	local card = Bubble.card(g, { AutomaticSize = Enum.AutomaticSize.XY })
 	new("UIPadding", {
-		PaddingLeft = UDim.new(0, 16),
-		PaddingRight = UDim.new(0, 12),
+		PaddingLeft = UDim.new(0, 15),
+		PaddingRight = UDim.new(0, 15),
 		PaddingTop = UDim.new(0, 7),
-		PaddingBottom = UDim.new(0, 8),
+		PaddingBottom = UDim.new(0, 11),
 		Parent = card,
 	})
-	local stroke = new("Frame", {
-		Name = "Mark",
-		BackgroundColor3 = Bubble.Yellow,
-		BorderSizePixel = 0,
-		Size = UDim2.new(0, 3, 1, -10),
-		Position = UDim2.new(0, -9, 0, 5),
-		ZIndex = 2,
-		Parent = card,
-	})
-	corner(stroke, UDim.new(0.5, 0))
 	local label = new("TextLabel", {
 		Name = "Text",
 		Text = text or "",
@@ -192,38 +223,57 @@ function Bubble.speech(parent: Instance?, text: string?): (CanvasGroup, TextLabe
 		ZIndex = 2,
 		Parent = card,
 	})
-	new("UISizeConstraint", { MaxSize = Vector2.new(220, 200), Parent = label })
-	tail(g, GLASS, 0.08, 2)
+	new("UISizeConstraint", { MaxSize = Vector2.new(Bubble.SpeechWidth, 240), Parent = label })
+	tail(g, RIM, 1.5, 2)
 	return g, label
 end
 
--- A mood badge in `parent`: a round glass badge with the symbol in its colour and a ring of it.
+-- A mood badge in `parent`: a round glass badge with the symbol in its colour, a ring of it, and a
+-- point under it toward the head with the ring running round the point too (the user: "make the
+-- outline outline the bottom pointy part as well"). Drawn in one holder, back to front: the ring's
+-- colour as a turned square, the badge with its ring, the glass point over the badge's ring where
+-- the two meet, the symbol.
+local DISC = 36
+local RING = 2
 function Bubble.mood(parent: Instance?, kind: string): CanvasGroup
 	local g = group(parent, Bubble.Base)
 	local look = Bubble.Moods[kind]
 	local color = if look then look[2] else INK
-	local disc = new("Frame", {
+	local wide = DISC + RING * 2
+	local below = DISC + RING - 2 -- the point's middle, a little over the badge's foot
+	local reach = POINT * 1.2 * 0.7072 + RING * 1.4143
+	local holder = new("Frame", {
 		Name = "Badge",
-		BackgroundColor3 = GLASS,
-		BackgroundTransparency = 0.08,
-		BorderSizePixel = 0,
-		Size = UDim2.fromOffset(36, 36),
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(wide, math.ceil(below + reach) + 1),
 		LayoutOrder = 1,
 		Parent = g,
 	})
+	diamond(holder, "Rim", POINT * 1.2 + RING * 2, wide / 2, below, color, 1)
+	local disc = new("Frame", {
+		Name = "Disc",
+		BackgroundColor3 = GLASS,
+		BorderSizePixel = 0,
+		Size = UDim2.fromOffset(DISC, DISC),
+		Position = UDim2.fromOffset(RING, RING),
+		ZIndex = 2,
+		Parent = holder,
+	})
 	corner(disc, UDim.new(0.5, 0))
-	new("UIStroke", { Color = color, Thickness = 2, Transparency = 0.1, Parent = disc })
+	new("UIStroke", { Color = color, Thickness = RING, Transparency = 0, Parent = disc })
+	diamond(holder, "Point", POINT * 1.2, wide / 2, below, GLASS, 3)
 	new("TextLabel", {
 		Name = "Symbol",
 		Text = if look then look[1] else kind,
 		BackgroundTransparency = 1,
-		Size = UDim2.fromScale(1, 1),
+		Size = UDim2.fromOffset(DISC, DISC),
+		Position = UDim2.fromOffset(RING, RING),
 		Font = Enum.Font.FredokaOne,
 		TextSize = if look and #look[1] > 2 then 14 else 20,
 		TextColor3 = color,
-		Parent = disc,
+		ZIndex = 4,
+		Parent = holder,
 	})
-	tail(g, GLASS, 0.08, 2)
 	return g
 end
 
@@ -231,9 +281,8 @@ end
 -- Returns the group and the card (put the picture in the card).
 function Bubble.square(parent: Instance?, px: number, color: Color3): (CanvasGroup, Frame)
 	local g = group(parent, Bubble.Base)
-	local card =
-		Bubble.card(g, { Size = UDim2.fromOffset(px, px), Radius = 14, Rim = color, RimAlpha = 0.05, RimThickness = 2 })
-	tail(g, GLASS, 0.08, 2)
+	local card = Bubble.card(g, { Size = UDim2.fromOffset(px, px), Radius = 14, Rim = color, RimThickness = 2 })
+	tail(g, color, 2, 2)
 	return g, card
 end
 

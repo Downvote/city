@@ -29,7 +29,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (437 at the last full run; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `PlayerWork` and `WorkService`: a player working at a workplace themselves, its pay and cap, and the server's side with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (438 at the last full run; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `PlayerWork` and `WorkService`: a player working at a workplace themselves, its pay and cap, and the server's side with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off; what kind a bundle
 is, the outfit that holds the body, single body parts, the player's own items and avatars; preview scenes
@@ -224,7 +224,10 @@ one client loop (`World/Bubbles`, a few times a second) stacks them over each he
 stacks apart on the screen (`World/BubbleLayout`: the nearer keeps its place, the further goes up or hides) and
 hides a stack while a ray from the camera to its point hits anything solid that isn't a villager or a player. They
 are drawn on top (`AlwaysOnTop`), so a head or a hat never cuts into them, and the ray is what keeps them from
-showing through walls. A new thing over heads is a piece from `Util/Bubble` in a billboard with one of those names
+showing through walls. A card's or a badge's rim runs round its point too ("make the outline outline the bottom
+pointy part as well"), a speech card has no bar ("remove the bar") and wraps at `Bubble.SpeechWidth` ("a longer max
+width"), and every piece pops in and out ("an animation transition when they appear or disappear"): the server only
+marks a piece `Going` a moment (`Bubble.Leave`) before it hides or removes it, and `World/Bubbles` does the motion. A new thing over heads is a piece from `Util/Bubble` in a billboard with one of those names
 (add the name to `ORDER` in `World/Bubbles`). Preview: `ui.sh bubbles`.
 
 The user asked for things to move "where possible": buttons, screens and the town are animated (docs/GAME_DESIGN.md
@@ -353,7 +356,9 @@ replicate the look and feel as much as possible, including the texturing and min
   fill it up with no gaps, just like the claim button"): on a leaning bar it fills the bar's left end flush
   (`Kit.flushMark`, as `Kit.row`'s `Marker` and the quests' and the event prompt's markers do), the way the Claim
   button fills a quest's right end with its left end sharp (`Sharp`); on a rounded card or strip it is a small
-  leaning square (`Kit.leanMark`, `Kit.disc({ Lean = true })`). Keep what runs along a bar clear of its marker
+  leaning square (`Kit.leanMark`, `Kit.disc({ Lean = true })`); a notice's icon block fills the notice's left end the same way ("with no gaps"). A
+  marker draws its icon in one colour, the coin too (`Mono`: "make a black icon for coins as well where it is
+  required"). Keep what runs along a bar clear of its marker
   (the event prompt's countdown starts after it). `Kit.slant` paints the slab
   (`UI/Skin` paints its two ends, an ImageLabel named `Body` stretches the middle), so recolour a leaning face
   with `Kit.paint` and read it with `Kit.colorOf`, never through its BackgroundColor3 or BackgroundTransparency
