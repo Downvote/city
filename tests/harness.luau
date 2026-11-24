@@ -241,7 +241,10 @@ local function mountProject()
 					if type(childDef) == "table" and childName:sub(1, 1) ~= "$" then
 						local path = childDef["$path"]
 						local child
-						if path then
+						if path and not isDir(projectRoot .. "/" .. path) then
+							-- a model file (the grass pack in ServerStorage): nothing the specs run
+							continue
+						elseif path then
 							child = Harness.makeNode(childName, projectRoot .. "/" .. path, parentNode)
 						else
 							child = setmetatable({ Name = childName, Parent = parentNode, ClassName = "Folder" }, Node)

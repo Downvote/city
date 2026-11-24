@@ -7,6 +7,7 @@ local CollectionService = game:GetService("CollectionService")
 local TweenService = game:GetService("TweenService")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Tuning = require(Shared.Config.Tuning)
 local Town = require(Shared.Data.Town)
@@ -119,12 +120,9 @@ local function buildTerrain(groundPrims: { any }, placements: { any }, drawn: { 
 			terrain:SetMaterialColor((Enum.Material :: any)[name], color)
 		end)
 	end
-	-- in case the place file didn't set the grass (Roblox may refuse: then it stays as it is)
+	-- Roblox's own blades stay off: the long grass is SkinnedGrass's (client World/Grass)
 	pcall(function()
-		(terrain :: any).Decoration = true
-	end)
-	pcall(function()
-		(terrain :: any).GrassLength = Ground.GrassLength
+		(terrain :: any).Decoration = false
 	end)
 	terrain:Clear()
 	local mats: { [string]: any } = {}
@@ -446,6 +444,26 @@ local function rgb(c: { number }): Color3
 	return Color3.fromRGB(c[1], c[2], c[3])
 end
 
+-- The long grass: SkinnedGrass by xander_z22 (the user: "you should use this for grass"), kept in
+-- the place file as it came (ServerStorage.Vendor). Its two sample scripts would start a second
+-- copy of the grass on every client, so they come out; the module and the meshes go to the
+-- clients, which lay the patches (client World/Grass).
+function World.shareGrass()
+	local vendor = ServerStorage:FindFirstChild("Vendor")
+	local pack = vendor and vendor:FindFirstChild("SkinnedGrass")
+	if not pack then
+		warn("[World] the grass pack is missing from ServerStorage.Vendor")
+		return
+	end
+	local copy = pack:Clone()
+	for _, d in copy:GetDescendants() do
+		if d:IsA("BaseScript") then
+			d:Destroy()
+		end
+	end
+	copy.Parent = ReplicatedStorage
+end
+
 local function stylize()
 	-- The numbers are in Tuning.Look, where the preview tools read them too.
 	local light = Tuning.Look.Light
@@ -613,6 +631,9 @@ World.Weathers = { "clear", "cloudy", "rain", "storm", "snow", "blossom", "leave
 
 function World.setWeather(kind: string)
 	workspace:SetAttribute("Weather", kind)
+	-- the wind the grass leans in: a breeze, a gale in a storm
+	local wind = if kind == "storm" then Ground.StormWind else Ground.Wind
+	workspace.GlobalWind = Vector3.new(wind[1], wind[2], wind[3])
 	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
 	if atmosphere then
 		local fog = if kind == "rain" or kind == "storm" or kind == "cloudy" then FOG.dense else FOG.clear
@@ -766,6 +787,7 @@ local function doorLoop()
 end
 
 function World.init()
+	World.shareGrass()
 	step("Setting up the light")
 	Lighting.ClockTime = World.hour()
 	stylize()

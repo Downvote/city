@@ -397,13 +397,12 @@ describe("Terrain", function()
 	end)
 
 	describe("the place file", function()
-		it("grows Roblox's own grass, long, and sets the sea as Data/Terrain says", function()
+		it("leaves Roblox's own blades off and sets the sea and the wind as Data/Terrain says", function()
 			local project = decodeJson(readFile("default.project.json"))
 			local ws = project.tree.Workspace
 			local props = ws.Terrain["$properties"]
-			-- Roblox doesn't let a script turn the grass on or set its length
-			expect(props.Decoration).toBe(true)
-			expect(props.GrassLength).toBe(Terrain.GrassLength)
+			-- (Roblox's own blades are off: the long grass is SkinnedGrass's, client World/Grass)
+			expect(props.Decoration).toBe(false)
 			expect(props.ShorelinesUpgraded).toBe(true)
 			local water = Terrain.Water
 			expect(props.WaterTransparency).toBe(water.Transparency)
@@ -414,7 +413,7 @@ describe("Terrain", function()
 				expect(math.floor(props.WaterColor[i] * 255 + 0.5)).toBe(water.Color[i])
 				expect(ws["$properties"].GlobalWind[i]).toBe(Terrain.Wind[i])
 			end
-			-- the blades grow only on Roblox's own grass: nothing takes its place
+			-- Roblox's own Grass keeps its face: the long grass is coloured to match it
 			local ms = project.tree.MaterialService
 			expect(ms and ms["$properties"] and ms["$properties"].GrassName).toBe(nil)
 		end)

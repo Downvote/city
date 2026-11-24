@@ -66,10 +66,17 @@ houses round every block, the civic buildings standing in the rows: "the side wi
 more buildings, as much as in the city side"), the hills north (`Data/Hills`), the waterfront south. The
 island's natural ground is Roblox terrain (`Data/Terrain`, written by `World.buildTerrain` when the server starts:
 "the shoreline should be wavy, with water lapping up to it" and "make the grass and plants like in the image"):
-Roblox's own long grass (never give MaterialService a Grass override: the blades only grow on Roblox's own grass),
-a beach in sine wave curves sloping into terrain water with small waves, smooth hills (`Hills.at`). Nothing built
-may stand on grass with blades: `TownMap.cover` lists what is built and the terrain under it has no blades, so a
-new kind of ground part or a placed model is covered by rule. The previews draw the terrain as triangles.
+golden green Grass, a beach in sine wave curves sloping into terrain water with small waves, smooth hills
+(`Hills.at`). The long grass on it is SkinnedGrass by xander_z22 (the user: "you should use this for grass", with
+its forum post; Roblox's own terrain blades never showed for them and stay off): the pack ships as it came in
+`vendor/SkinnedGrass.rbxm` (ServerStorage; `World.shareGrass` hands the clients a copy without its sample
+scripts), and `client/World/Grass` lays its patches round the camera, standing each bone on the ground under it
+where that is Grass material all round (terrain, or a plot's lawn) and sinking it anywhere else, again when a plot
+changes (numbers in `Tuning.Grass`). Keep the author's credit with it. Nothing built may stand on terrain Grass:
+`TownMap.cover` lists what is built and the terrain under it is LeafyGrass, so a new kind of ground part or a
+placed model is covered by rule. Never give MaterialService a Grass override (the long grass is coloured to match
+Roblox's own). The plots' floors and lawns are visible parts at floor level (an invisible floor over terrain made
+the ground look sunk). The previews draw the terrain as triangles and show no long grass.
 `Data/TownMap` lays out the ground and where everything stands, `Data/CityModels` draws the buildings and landmarks,
 `Data/Places` lists the places to find. The user wants it detailed like a classic city builder: buildings on
 landscaped lots (`CityModels.lot`), window bays, signs, roof details, parked cars, groves, textured ground, all
@@ -111,8 +118,8 @@ Preview the layouts with `sh tools/preview/ui.sh signs <png>` (also `signs:board
 
 The user asked for a lively world ("animated blades of grass, animated details, small creatures, trees with leaves
 that sway with the wind") and a clear sky ("remove clouds and birds from the sky"): leaves are parts named `Leaf`,
-hanging signs `SwingSign`, fountain jets `Jet`, and `World/Ambience` moves them, the grass and the ducks on each
-player's own screen. Name a new tree's crown parts `Leaf` and it sways. (The user later: "remove the butterflies
+hanging signs `SwingSign`, fountain jets `Jet`, and `World/Ambience` moves them and the ducks on each player's
+own screen (the grass is `World/Grass`). Name a new tree's crown parts `Leaf` and it sways. (The user later: "remove the butterflies
 and bunnies". Don't bring them back.)
 
 The user: "remove the shop, buying of things and food and feeding. when a character gets a craving, allow the

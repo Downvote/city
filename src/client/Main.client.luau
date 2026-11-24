@@ -34,6 +34,7 @@ require(UI.TalkCard).start() -- hold E on a villager: what they say back, and yo
 -- life around town, and the show when you build
 local World = script.Parent.World
 require(World.Ambience).start()
+require(World.Grass).start() -- the long grass (SkinnedGrass patches on the lawns)
 require(World.BuildFx).start()
 require(World.Materials).start()
 require(World.Wishes).start()

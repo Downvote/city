@@ -3,8 +3,9 @@
 -- way round whose edge at the water is a run of soft curves, the shallows and the deep sea. The
 -- user: "the shoreline should be wavy, with water lapping up to it", then, with a picture of a
 -- Roblox place covered in tall golden green grass, "make the grass and plants like in the image".
--- So the grass is Roblox's own terrain grass with its long blades (Terrain.Decoration, set in the
--- place file), and the water is Roblox's terrain water with waves that run up the sand.
+-- The water is Roblox's terrain water with waves that run up the sand. The long grass on top is
+-- SkinnedGrass's (client World/Grass: the user, when Roblox's own blades didn't show for them,
+-- "you should use this for grass"); it grows only where this terrain is Grass.
 --
 -- Shared and free of services: this module says what to fill (heights and materials, column by
 -- column, and the voxels from them), the World service writes it into workspace.Terrain when the
@@ -14,9 +15,10 @@
 -- one material; a voxel is filled as far as the surface reaches into it, and the water as far as
 -- the sea's level does, so the water's edge lies on the sloping sand wherever the two meet.
 --
--- Grass blades show through thin parts laid on them, so nothing built stands on grass: under
--- every road, pavement, floor and plot the ground is LeafyGrass (green, no blades), or Ground (a
--- worn path) under the stepping stones up the hills. TownMap.cover lists what is built.
+-- The long grass grows on Grass and would come up through thin parts laid on it, so nothing built
+-- stands on Grass: under every road, pavement, floor and plot the ground is LeafyGrass (green,
+-- and no long grass grows on it), or Ground (a worn path) under the stepping stones up the hills.
+-- TownMap.cover lists what is built.
 
 local Hills = require(script.Parent.Hills)
 
@@ -75,11 +77,11 @@ Terrain.Water = {
 	WaveSpeed = 9,
 }
 
--- The grass: as long as Roblox grows it (Terrain.GrassLength, 0.1 to 1), and a breeze from the
--- south west for it to lean in (Workspace.GlobalWind). Both are in default.project.json: Roblox
--- doesn't let scripts set the grass.
-Terrain.GrassLength = 1
-Terrain.Wind = { 4, 0, 2.5 } -- studs a second: a breeze, not a gale
+-- The wind the long grass leans in (Workspace.GlobalWind, in default.project.json and set by the
+-- weather): a breeze from the south west, and a gale in a storm. Roblox's own blades stay off
+-- (Terrain.Decoration false in the place file).
+Terrain.Wind = { 4, 0, 2.5 } -- studs a second: a breeze
+Terrain.StormWind = { 13, 0, 8 }
 
 -- Every material the terrain uses, by name.
 Terrain.Materials = { "Grass", "LeafyGrass", "Ground", "Sand", "Rock", "Slate", "Water", "Air" }

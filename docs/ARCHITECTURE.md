@@ -160,15 +160,37 @@ water's edge, the grass edge and the deep drop are sums of sine waves that close
 (height and material: grass at -0.1 or `Hills.at - 0.1`, rock on slopes past 0.45, sand falling to the sea at -1.2
 and on down, Slate for the deep floor), `plan(cover)` (every column; grass under anything built becomes LeafyGrass,
 or Ground under the hill's stepping stones, and columns fully under paving sink out of sight), `voxels()`,
-`preview()` (triangles: the preview JSON's `Tri` shape) and the colours, water, grass length and wind.
+`preview()` (triangles: the preview JSON's `Tri` shape) and the colours, water and wind (`Wind`, `StormWind`).
 `TownMap.cover(ground?, placements?, drawn?)` lists what is built by rule (every ground part, every plot, every
 shape of a placed model that touches the ground and covers about 3 square studs or more). `Hills.at` is the smooth
-surface (`Hills.prims` is gone). The place file sets what scripts can't: Workspace/Terrain (`Decoration`,
-`GrassLength`, `ShorelinesUpgraded`, `SmoothVoxelsUpgraded`, the `Water*` settings) and `Workspace.GlobalWind`.
-MaterialService never replaces Grass (`scripts/sync_materials.py` refuses it), so terrain grass is Roblox's own
-with its blades; the library grass picture is the look `Grass:Lawn`. The Terrain spec checks the shore is wavy,
+surface (`Hills.prims` is gone). The place file sets what scripts can't: Workspace/Terrain (`Decoration` off,
+`ShorelinesUpgraded`, `SmoothVoxelsUpgraded`, the `Water*` settings) and `Workspace.GlobalWind` (the breeze;
+`World.setWeather` sets `StormWind` in a storm). MaterialService never replaces Grass (`scripts/sync_materials.py`
+refuses it), so the long grass can be coloured to match it; the library grass picture is the look `Grass:Lawn`. The Terrain spec checks the shore is wavy,
 the water's edge sits on a gentle slope inside the shallows, no grass is under anything built or on a road or a
 plot, the terrain follows `Hills.at`, the tiles, the open sea, the beach props and the place's settings.
+
+### The long grass
+
+SkinnedGrass by xander_z22 (the Roblox developer forum's "SkinnedGrass: performant interactive foliage"; the user
+asked for it) ships as it came in `vendor/SkinnedGrass.rbxm`, mounted by the place file at
+`ServerStorage.Vendor.SkinnedGrass`: its module (`SkinnedGrass`, with Quenty's Octree), two meshes (`Studio` and
+`GrassCard`, each a 100 by 100 stud skinned MeshPart with a 10 by 10 grid of bones) and two sample scripts.
+`World.shareGrass()`, first in `World.init`, clones it without its scripts into `ReplicatedStorage.SkinnedGrass`.
+The specs' harness skips a project path that is a model file.
+
+`client/World/Grass` waits for `Startup` to be `Ready`, then lays patches of `Tuning.Grass.Kind` on a grid of the
+mesh's size round the camera's focus (`Distance` plus `Ahead`, nearest first, one a frame). `conform(cell)` stands
+each bone on the ground through `Bone.WorldCFrame`, as the pack's author places them on terrain: a ray down from
+`Top` (onto the terrain and each plot's `Base`, `Land` and `Build`) at the bone and at four points `Spread` of the
+bone gap round it; the bone stands where all five land on `Grass` material, level within `Rise` and flatter than
+`Flat`, and sinks `Sink` studs anywhere else. A patch with no bone standing is not made. Then
+`SkinnedGrass:AddMeshes` takes it, and `Step(dt, bends, focus)` on RenderStepped shows the patches within
+`Distance`, sways them in `Workspace.GlobalWind` and bends them round every player and plot villager within `Folk`
+(`Bend` studs). A change in a plot's `Build` or its `Land` has the patches over it conform again 0.6 s later. The
+`Studio` mesh is drawn in `Material` (the pack has Neon, which ignores the light and would glow at night), its
+colour the terrain grass's times `Blades` (its decals) and `Body`. Five failed steps in a row
+stop it with a warning; the rest of the game doesn't depend on it.
 
 ## Pieces and material looks
 
@@ -427,7 +449,7 @@ server, whatever the client did.
 ## Client
 
 `World/Ambience` also runs the life near the player: `Leaf` parts lean with `wind(at, phase)`, `SwingSign` parts
-swing, grass tufts are pooled and moved onto grass found by raycast (`grassAt`), ducks are
+swing (the long grass is `World/Grass`, see "The long grass"), ducks are
 `AmbientModels` movers (the butterflies and rabbits are gone), `trafficLight` models take turns by which road their arm hangs over, `buoy`, `sailboat` and
 `rowboat` models bob, parts named `Jet` spray. `Avatar/Categories` has `bundleWorn` and `unmerge` for sets.
 `UI/Kit` has `wash` (a two colour gradient), `shapes` (simple shapes dotted over a background: cards and pills,

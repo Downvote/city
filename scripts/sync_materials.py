@@ -113,8 +113,8 @@ def write_ids(ids, order, path=IDS):
     open(path, "w").write(text)
 
 
-# Materials that keep Roblox's own face: the island's terrain grass only grows its long blades on
-# Roblox's own Grass (Terrain.Decoration), so no texture may take its place; ours is a look.
+# Materials that keep Roblox's own face: the island's long grass (client World/Grass) is coloured
+# to match Roblox's own Grass under it, so no texture may take its place; ours is a look.
 KEEP_OWN = {"Grass"}
 
 

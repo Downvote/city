@@ -394,4 +394,28 @@ Tuning.Look = {
 	},
 }
 
+-- The long grass (client World/Grass): patches of SkinnedGrass, xander_z22's skinned grass, the
+-- user's pick ("you should use this for grass"). A patch is a square of blades on a grid of
+-- bones; each bone stands on the ground under it where that ground is grass (terrain Grass, or a
+-- plot's grass part) all round it, and sinks out of sight anywhere else.
+Tuning.Grass = {
+	Kind = "Studio", -- which of the pack's two meshes: "Studio" (like Studio's own grass) or "GrassCard"
+	Distance = 160, -- patches whose middle is this close to the camera's focus are shown
+	Ahead = 140, -- and patches this much further out are made ready, one a frame
+	Spread = 0.45, -- a bone's ground is checked this far (of the gap between bones) on each side
+	Flat = 0.78, -- no grass on ground steeper than this (the up part of its normal)
+	Rise = 1.2, -- nor where the ground round a bone isn't level within this
+	Sink = 8, -- studs a bone with no grass under it goes down, out of sight
+	Top = 250, -- the rays look down from this high (over the hills' tops)
+	Shadows = false, -- blades casting shadows costs a lot; Roblox's own grass doesn't either
+	-- The pack draws its Studio blades in Neon, which ignores the light: the lawns would glow at
+	-- night. So they are lit like everything else, and take the terrain grass's colour times
+	-- these, so the blades match the ground they grow on.
+	Material = "SmoothPlastic",
+	Blades = { 1, 1, 0.94 },
+	Body = { 0.9, 0.9, 0.86 },
+	Bend = 6, -- studs round someone walking that the grass bends away from them
+	Folk = 120, -- villagers and players this close to the focus bend it
+}
+
 return Tuning

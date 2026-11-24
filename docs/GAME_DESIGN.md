@@ -1568,10 +1568,10 @@ Build mode's oak, pine, blossom and swing trees are drawn the same way. Every cr
 
 (With a picture of the west beach, whose edge was a run of big straight sided steps, and later one of a hazy
 hilltop deep in long grass.) The island's ground is Roblox terrain, written when the server starts. The grass is
-Roblox's own long terrain grass, golden green and waving in a light breeze. The beach runs all round the island in
+golden green, with long grass waving on it in a light breeze (see "Long grass you can walk through"). The beach runs all round the island in
 soft curves of different sizes and slopes gently into clear turquoise water with small waves that run up the sand.
 The hills are smooth and rolling, with bits of rock on the steepest slopes and a worn dirt path under the stepping
-stones. No blades grow under anything built: roads, paving, floors and the plots sit on short grass with none.
+stones. No long grass grows under anything built: roads, paving, floors and the plots sit on short grass.
 Things on the beach follow the new water's edge, and the rowing boats are pulled up just above it.
 
 ### Never below the world
@@ -1597,6 +1597,22 @@ while the server starts is reported in the output and the others carry on.
 the island's own ground, written when the server starts and loaded by every player. Past the island's shallows the
 sea is now a flat sheet of water over a dark floor, as it was before the terrain, and the island alone is terrain.
 The card counts the ground's tiles as they are written.
+
+### Long grass you can walk through
+
+> https://devforum.roblox.com/t/introducing-grass/386129 can you use realistic grass?
+
+> it dosent work, and it seems like the ground is lower now. you should use this for grass:
+> https://devforum.roblox.com/t/skinnedgrass-performant-interactive-foliage/3364812
+
+(With pictures, and the pack from that post: SkinnedGrass by xander_z22, whose post says it's free to change and
+use in your own games.) Roblox's own terrain grass never showed up for the user, and the try at growing it on the
+plots made the plots' floors invisible, so the ground looked sunk. That try is gone: the plots' floors and lawns are
+back where they were. The long grass is now the pack's. Patches of it are laid over the island's grass as you come
+near, each clump standing on the ground under it and following the hills, and none on roads, sand, rock, water or
+anything built: on a plot it grows on the open lawn and keeps off houses and paths, and it moves when you build. It
+sways with the wind, harder in a storm, and bends away from you and the villagers as you walk through it. Roblox's
+own blades are off. The patches are coloured to match the ground under them.
 
 ## 11. Writing
 

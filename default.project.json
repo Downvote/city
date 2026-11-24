@@ -12,6 +12,15 @@
         "$path": "src/server"
       }
     },
+    "ServerStorage": {
+      "$className": "ServerStorage",
+      "Vendor": {
+        "$className": "Folder",
+        "SkinnedGrass": {
+          "$path": "vendor/SkinnedGrass.rbxm"
+        }
+      }
+    },
     "StarterPlayer": {
       "$properties": {
         "CameraMaxZoomDistance": 120,
@@ -74,8 +83,7 @@
       },
       "Terrain": {
         "$properties": {
-          "Decoration": true,
-          "GrassLength": 1.0,
+          "Decoration": false,
           "ShorelinesUpgraded": true,
           "SmoothVoxelsUpgraded": true,
           "WaterColor": [
