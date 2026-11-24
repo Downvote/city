@@ -266,7 +266,29 @@ Tuning.Look = {
 	-- bright a thing must be before it glows: above white, so only what gives off light does.
 	-- It was 0.92 at nearly full strength and a pale wall or a lamp at night washed the whole
 	-- view out (the user: "the bloom might be too much").
-	Bloom = { Intensity = 0.4, Size = 18, Threshold = 1.7 },
+	Bloom = { Intensity = 0.45, Size = 24, Threshold = 1.5 },
+	-- The air. The user, with a picture of a hilltop in a warm sunset haze: "make the shader
+	-- something like this, add fog and set the lighting to shadowmap/future". So a thick soft
+	-- haze that turns the far island pink and gold, a glare round the sun, rays through the haze,
+	-- and the faintest softening far away. Density and Haze are the Atmosphere's (clear weather,
+	-- and overcast or rain); the colours are the air's by the grade's time of day (Color is the
+	-- haze, Decay the colour far off toward the sun). The Lighting's Technology is Future (in
+	-- default.project.json: scripts can't set it).
+	Air = {
+		Clear = { Density = 0.36, Haze = 2.2 },
+		Dense = { Density = 0.48, Haze = 3 },
+		Glare = 0.7,
+		Offset = 0.22,
+		Colors = {
+			day = { Color = { 236, 220, 232 }, Decay = { 255, 196, 176 } },
+			gold = { Color = { 255, 214, 206 }, Decay = { 255, 172, 132 } },
+			dusk = { Color = { 255, 188, 196 }, Decay = { 255, 138, 112 } },
+			night = { Color = { 150, 156, 214 }, Decay = { 72, 78, 132 } },
+		},
+	},
+	SunRays = { Intensity = 0.14, Spread = 0.7 },
+	-- what softens far off (a DepthOfFieldEffect): only the distance, and only a little
+	Lens = { FocusDistance = 120, InFocusRadius = 240, FarIntensity = 0.1 },
 	-- The light (World.stylize puts it on Lighting; colours are 0 to 255). The preview tools read
 	-- these same numbers (tools/preview/look.py), so a render shows the game's light and grade.
 	-- The user: "it seems like shadows dont render on models". They did, but the shade was lit
@@ -279,7 +301,7 @@ Tuning.Look = {
 		Exposure = 0, -- ExposureCompensation: 1 is twice as bright (was 0.12)
 		Ambient = { 84, 78, 110 }, -- what lights a place the sky can't see (indoors; was 126, 118, 158)
 		OutdoorAmbient = { 96, 90, 124 }, -- what lights the shade outdoors: violet (was 152, 146, 186)
-		SunTint = { 255, 238, 206 }, -- ColorShift_Top: the sun's colour on what faces it
+		SunTint = { 255, 228, 192 }, -- ColorShift_Top: the sun's colour on what faces it (warmer for the haze)
 		-- GeographicLatitude. Roblox tilts the sun's path by the latitude less the earth's tilt
 		-- (23.5), so at 54 the sun stood 59 degrees up at noon on the +Z side, behind the houses on
 		-- the north side of Main Street, whose fronts face -Z (plot 1, the first player's, is one).
@@ -299,9 +321,10 @@ Tuning.Look = {
 	Grade = {
 		Brightness = 0.01,
 		Hours = {
-			{ From = 10, To = 14.5, Tint = { 255, 250, 242 }, Saturation = 0.08, Contrast = 0.06, Air = "day" },
-			{ From = 7.5, To = 16.5, Tint = { 255, 242, 224 }, Saturation = 0.1, Contrast = 0.07, Air = "gold" },
-			{ From = 5, To = 19.5, Tint = { 255, 218, 192 }, Saturation = 0.12, Contrast = 0.08, Air = "dusk" },
+			-- (warmer all day for the user's sunset picture: the gold hours are long)
+			{ From = 10, To = 14.5, Tint = { 255, 244, 232 }, Saturation = 0.06, Contrast = 0.08, Air = "day" },
+			{ From = 7.5, To = 16.5, Tint = { 255, 236, 216 }, Saturation = 0.1, Contrast = 0.1, Air = "gold" },
+			{ From = 5, To = 19.5, Tint = { 255, 216, 200 }, Saturation = 0.12, Contrast = 0.1, Air = "dusk" },
 		},
 		-- blue, and a little more push, so lit signs and windows stand out of the dark
 		Night = { Tint = { 184, 196, 255 }, Saturation = 0.15, Contrast = 0.12, Air = "night" },

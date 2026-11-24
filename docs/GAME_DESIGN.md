@@ -1430,6 +1430,19 @@ bubbles and the two never agreed. Now the server says each line over their heads
 the same moment, so Watch always picks up the line they are saying now. A click on the box shows the rest of a
 line being typed; on the last line it closes the scene.
 
+### A warm haze
+
+> make the shader something like this, add fog and set the lighting to shadowmap/future
+
+(With a picture of a hilltop at sunset: a thick pink and gold haze over the land, a glare round the sun, rays
+through the air, the far trees fading into it.)
+
+The light stays on Future (the place's Lighting; scripts can't change it). The air is thicker and warmer: a soft
+pink haze by day that turns gold through the long afternoon and rose at dusk, a wider glare round the sun, rays
+through the haze, and a faint softening far off. The colour grade is warmer all day. The glow on lamps and signs
+stays gentle. Every number is in `Tuning.Look` (`Air`, `SunRays`, `Lens`), and the street previews draw the same
+haze.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

@@ -282,8 +282,8 @@ local grading: ColorCorrectionEffect? = nil
 -- How thick the air is: a soft haze on a clear day that fades the far end of the island into the
 -- sky, thicker when it's overcast or raining.
 local FOG = {
-	clear = { density = 0.24, haze = 1 },
-	dense = { density = 0.42, haze = 2.4 },
+	clear = { density = Tuning.Look.Air.Clear.Density, haze = Tuning.Look.Air.Clear.Haze },
+	dense = { density = Tuning.Look.Air.Dense.Density, haze = Tuning.Look.Air.Dense.Haze },
 }
 
 -- The drawn look. The user: "stylize everything, including the map, to zenless zone zero style.
@@ -346,33 +346,37 @@ local function stylize()
 	bloom.Size = Tuning.Look.Bloom.Size
 	bloom.Threshold = Tuning.Look.Bloom.Threshold
 	bloom.Parent = Lighting
+	-- rays through the haze, and only the far distance softened
 	local rays = Instance.new("SunRaysEffect")
 	rays.Name = "Rays"
-	rays.Intensity = 0.08
-	rays.Spread = 0.72
+	rays.Intensity = Tuning.Look.SunRays.Intensity
+	rays.Spread = Tuning.Look.SunRays.Spread
 	rays.Parent = Lighting
-	-- a drawing is sharp all the way back: only the far distance softens a touch
+	local lens = Tuning.Look.Lens
 	local dof = Instance.new("DepthOfFieldEffect")
 	dof.Name = "Lens"
-	dof.FocusDistance = 110
-	dof.InFocusRadius = 260
+	dof.FocusDistance = lens.FocusDistance
+	dof.InFocusRadius = lens.InFocusRadius
 	dof.NearIntensity = 0
-	dof.FarIntensity = 0.05
+	dof.FarIntensity = lens.FarIntensity
 	dof.Parent = Lighting
 end
 
--- Fog and a sky, unless the place already has its own.
+-- The haze (Tuning.Look.Air), on the place's own Atmosphere if it has one, and a sky.
 local function air()
-	if not Lighting:FindFirstChildOfClass("Atmosphere") then
-		local a = Instance.new("Atmosphere")
-		a.Density = FOG.clear.density
-		a.Offset = 0.12
-		a.Haze = FOG.clear.haze
-		a.Glare = 0.3
-		a.Color = Color3.fromRGB(226, 230, 246)
-		a.Decay = Color3.fromRGB(255, 198, 170)
+	local a = Lighting:FindFirstChildOfClass("Atmosphere")
+	if not a then
+		a = Instance.new("Atmosphere")
 		a.Parent = Lighting
 	end
+	local look = Tuning.Look.Air
+	local day = look.Colors.day
+	a.Density = FOG.clear.density
+	a.Offset = look.Offset
+	a.Haze = FOG.clear.haze
+	a.Glare = look.Glare
+	a.Color = rgb(day.Color)
+	a.Decay = rgb(day.Decay)
 	if not Lighting:FindFirstChildOfClass("Sky") then
 		local sky = Instance.new("Sky")
 		sky.SunAngularSize = 14
@@ -393,10 +397,10 @@ end
 -- signs and windows stand out of it. The air takes the hour's colour too: a golden haze toward
 -- evening, a cool one at night.
 local AIR = {
-	day = { color = Color3.fromRGB(226, 230, 246), decay = Color3.fromRGB(255, 198, 170) },
-	gold = { color = Color3.fromRGB(255, 226, 190), decay = Color3.fromRGB(255, 176, 128) },
-	dusk = { color = Color3.fromRGB(255, 200, 160), decay = Color3.fromRGB(255, 140, 100) },
-	night = { color = Color3.fromRGB(150, 162, 214), decay = Color3.fromRGB(70, 80, 130) },
+	day = { color = rgb(Tuning.Look.Air.Colors.day.Color), decay = rgb(Tuning.Look.Air.Colors.day.Decay) },
+	gold = { color = rgb(Tuning.Look.Air.Colors.gold.Color), decay = rgb(Tuning.Look.Air.Colors.gold.Decay) },
+	dusk = { color = rgb(Tuning.Look.Air.Colors.dusk.Color), decay = rgb(Tuning.Look.Air.Colors.dusk.Decay) },
+	night = { color = rgb(Tuning.Look.Air.Colors.night.Color), decay = rgb(Tuning.Look.Air.Colors.night.Decay) },
 }
 
 local function grade(h: number)

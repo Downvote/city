@@ -31,6 +31,20 @@ import look as game_look  # noqa: E402  (the game's light and grade)
 NEAR = 0.4
 
 
+def air_at(look, hour):
+    """The haze's colour at an hour and how far off things fade into it, from Tuning.Look.Air
+    (the Atmosphere's colour for the grade's time of day; a guess at Roblox's falloff: at a
+    density of 0.24 a thing 1500 studs off is two thirds gone)."""
+    key = "night"
+    for g in look["Grade"]["Hours"]:
+        if g["From"] <= hour <= g["To"]:
+            key = g["Air"]
+            break
+    air = look["Air"]
+    color = np.array(air["Colors"][key]["Color"], dtype=float) / 255.0
+    return color, 360.0 / air["Clear"]["Density"]
+
+
 def sky_at(hour):
     """The colour of the sky overhead and of the haze at the horizon at an hour."""
     if 10 <= hour <= 14.5:
@@ -119,6 +133,8 @@ def main():
     light = game_look.Light(game_look.load(), args.hour)
     sun_dir = light.dir
     sky, haze = sky_at(args.hour)
+    look_json = game_look.load()
+    haze, fog_reach = air_at(look_json, args.hour)
 
     prims = json.load(open(args.inp))
     textures = render.Textures(painted=args.painted, library=args.textures) if (args.textures or args.painted) else None
@@ -258,7 +274,7 @@ def main():
             else:
                 shaded = light.shade(col, light.irradiance(n, lit))
             dist = np.linalg.norm(world - eye, axis=1)
-            fog = (1 - np.exp(-dist / 1500.0))[:, None]
+            fog = (1 - np.exp(-dist / fog_reach))[:, None]
             shaded = shaded * (1 - fog) + haze * fog
             a = alphas[i]
             sub = img[sl]
