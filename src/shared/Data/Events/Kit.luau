@@ -66,7 +66,8 @@ end
 
 local function addTraits(ctx: any, vid: string?, traits: { [string]: number }?): number
 	local w = 0
-	for t, k in traits or {} do
+	local list: { [string]: number } = traits or {}
+	for t, k in list do
 		local x = trait(ctx, vid, t)
 		w += if k >= 0 then x * k else (1 - x) * -k
 	end
@@ -312,6 +313,7 @@ function S:log(text: string): any
 end
 
 function S:done(): any
+	self.out.title = self:fill(self.out.title)
 	if self.out.choices then
 		if not self.out.default then
 			self.out.default = #self.out.choices

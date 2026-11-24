@@ -383,7 +383,10 @@ function EventEngine.apply(profile: any, ev: any, effects: { any }, now: number)
 							"{x} gave you their {thing}. It's under Keepsakes in Build mode.",
 							{ x = maker.name, thing = def.name:lower() }
 						)
-						else Text.fill("You got a {thing}. It's under Keepsakes in Build mode.", { thing = def.name:lower() })
+						else Text.fill(
+							"You got a {thing}. It's under Keepsakes in Build mode.",
+							{ thing = def.name:lower() }
+						)
 				)
 			end
 		elseif t == "memo" then

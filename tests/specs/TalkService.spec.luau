@@ -268,6 +268,13 @@ Harness.stub(Services .. "World", {
 	hour = function()
 		return 23
 	end,
+	-- a snowy winter's evening, for what they say about the season and the weather
+	calendar = function()
+		return { s = 4, d = 3, y = 1 }
+	end,
+	weather = function()
+		return "snow"
+	end,
 })
 Harness.stub(Services .. "Avatar", {
 	buildModel = function()
@@ -529,6 +536,25 @@ describe("Talk service", function()
 		expect(profile.coins > coins).toBeTruthy()
 		expect(#notices > 0).toBeTruthy()
 		expect(#cards()).toBe(1)
+	end)
+
+	it("talks about the season and the weather out there", function()
+		reset()
+		local body = bodies.v2
+		profile.villagers.v2.mood = 60
+		holdE(owner, "v2")
+		local heard = {}
+		for _ = 1, 80 do
+			local ok, more = ask(owner, "v2")
+			if ok then
+				heard[more.text] = true
+			end
+			advance(1)
+		end
+		expect(heard["My nose has been cold since Tuesday."] or heard["Have you been out in the snow yet? Go on."]).toBe(
+			true
+		)
+		expect(#body.said > 0).toBeTruthy()
 	end)
 
 	it("turns away junk from the card's remote", function()

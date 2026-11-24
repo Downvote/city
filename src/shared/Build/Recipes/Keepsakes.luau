@@ -171,7 +171,8 @@ local items: { Item } = {
 				)
 			end
 			-- lavender: stems up out of the neck, little purple heads along their tops
-			local stems = { Vector3.new(-0.12, 1.85, 0.06), Vector3.new(0.05, 1.9, -0.08), Vector3.new(0.16, 1.78, 0.1) }
+			local stems =
+				{ Vector3.new(-0.12, 1.85, 0.06), Vector3.new(0.05, 1.9, -0.08), Vector3.new(0.16, 1.78, 0.1) }
 			for _, top in stems do
 				local base = Vector3.new(top.X * 0.3, 1.2, top.Z * 0.3)
 				rod(r, base, top, 0.035, C.DarkLeaf)
@@ -322,7 +323,7 @@ local items: { Item } = {
 			-- with a ribbon round it (c2) tied in a bow, and a starfish on top
 			clear(r:cyl(0, 0.4, 0, 0.8, 0.6, "y", C.Glass, "Glass"))
 			r:cyl(0, 0.1, 0, 0.16, 0.52, "y", SAND, "Sand")
-			local shells = {
+			local shells: { { any } } = {
 				{ -0.14, 0.22, 0.1, Color3.fromRGB(246, 200, 190) },
 				{ 0.14, 0.22, -0.08, C.White },
 				{ 0.1, 0.23, 0.14, Color3.fromRGB(240, 180, 140) },
@@ -381,14 +382,7 @@ local items: { Item } = {
 			r:tri(Vector3.new(-0.45, 4.7, 0), Vector3.new(0.45, 4.7, 0), Vector3.new(0, 5.05, 0), 0.9, r.c1, "Wood")
 			local slope = math.atan2(0.35, 0.45)
 			for _, s in { -1, 1 } do
-				r:boxAt(
-					CFrame.new(s * 0.25, 4.92, 0) * CFrame.Angles(0, 0, -s * slope),
-					0.72,
-					0.08,
-					1.1,
-					r.c2,
-					"Wood"
-				)
+				r:boxAt(CFrame.new(s * 0.25, 4.92, 0) * CFrame.Angles(0, 0, -s * slope), 0.72, 0.08, 1.1, r.c2, "Wood")
 			end
 			r:cyl(0, 5.1, 0, 1.14, 0.12, "z", shade(r.c2, 0.8), "Wood")
 			r:cyl(0, 4.35, 0.465, 0.03, 0.28, "z", INK, "SmoothPlastic")
@@ -517,7 +511,13 @@ local items: { Item } = {
 				r:beam(Vector3.new(f.base.X, f.base.Y, 0.075), Vector3.new(f.top.X, f.top.Y, 0.075), 0.035, 0.03, stem)
 				local mid = f.base:Lerp(f.top, 0.45)
 				r:boxAt(CFrame.new(mid.X + 0.08, mid.Y, 0.075) * CFrame.Angles(0, 0, -0.7), 0.22, 0.08, 0.03, C.Leaf)
-				r:boxAt(CFrame.new(mid.X - 0.08, mid.Y + 0.1, 0.075) * CFrame.Angles(0, 0, 0.7), 0.22, 0.08, 0.03, C.Leaf)
+				r:boxAt(
+					CFrame.new(mid.X - 0.08, mid.Y + 0.1, 0.075) * CFrame.Angles(0, 0, 0.7),
+					0.22,
+					0.08,
+					0.03,
+					C.Leaf
+				)
 			end
 			-- the daisy
 			local d = flowers[1].top
@@ -624,7 +624,8 @@ local items: { Item } = {
 			r:block(-0.04, 0.56, 0.0, 0.04, 0.75, 0.03, C.Stone, "SmoothPlastic")
 			dot(r, 0, 0.84, 0.0, 0.03, 0.18, C.Water)
 			-- three friends in front
-			local shirts = { Color3.fromRGB(214, 100, 96), Color3.fromRGB(120, 160, 210), Color3.fromRGB(240, 200, 100) }
+			local shirts =
+				{ Color3.fromRGB(214, 100, 96), Color3.fromRGB(120, 160, 210), Color3.fromRGB(240, 200, 100) }
 			for i, shirt in shirts do
 				local x = -0.27 + (i - 1) * 0.27
 				r:block(x - 0.08, 0.3, 0.03, x + 0.08, 0.6, 0.06, shirt, "SmoothPlastic")
@@ -658,14 +659,16 @@ local items: { Item } = {
 			r:block(-0.05, 0.36, 0.08, 0.01, 0.46, 0.1, C.Bark, "SmoothPlastic")
 			r:cyl(0.15, 0.4, 0.06, 0.08, 0.04, "y", C.Bark, "Wood")
 			r:cone(0.15, 0.53, 0.06, 0.22, 0.14, C.DarkLeaf)
-			for _, p in {
-				Vector3.new(-0.18, 0.8, 0.1),
-				Vector3.new(0.12, 0.88, -0.1),
-				Vector3.new(0.2, 0.72, 0.16),
-				Vector3.new(-0.08, 0.95, -0.04),
-				Vector3.new(0.02, 0.76, 0.22),
-				Vector3.new(-0.22, 0.66, -0.14),
-			} do
+			for _, p in
+				{
+					Vector3.new(-0.18, 0.8, 0.1),
+					Vector3.new(0.12, 0.88, -0.1),
+					Vector3.new(0.2, 0.72, 0.16),
+					Vector3.new(-0.08, 0.95, -0.04),
+					Vector3.new(0.02, 0.76, 0.22),
+					Vector3.new(-0.22, 0.66, -0.14),
+				}
+			do
 				r:ball(p.X, p.Y, p.Z, 0.035, C.White)
 			end
 			r:cyl(0, 0.12, -0.44, 0.08, 0.06, "z", C.Gold, "Metal")
@@ -685,7 +688,13 @@ local items: { Item } = {
 			-- folded paper (c1) round a candle, glowing at night: a round base and a cap (c2),
 			-- thin ribs at its folds, painted petals round the middle and a wire handle
 			r:cyl(0, 0.05, 0, 0.1, 0.62, "y", r.c2, "Wood")
-			local rings = { { 0.1, 0.3, 0.52 }, { 0.3, 0.55, 0.7 }, { 0.55, 0.85, 0.78 }, { 0.85, 1.1, 0.7 }, { 1.1, 1.25, 0.52 } }
+			local rings = {
+				{ 0.1, 0.3, 0.52 },
+				{ 0.3, 0.55, 0.7 },
+				{ 0.55, 0.85, 0.78 },
+				{ 0.85, 1.1, 0.7 },
+				{ 1.1, 1.25, 0.52 },
+			}
 			for i, ring in rings do
 				local p = r:cyl(0, (ring[1] + ring[2]) / 2, 0, ring[2] - ring[1], ring[3], "y", r.c1, "Fabric")
 				if i == 3 then
@@ -707,7 +716,12 @@ local items: { Item } = {
 				)
 			end
 			r:cyl(0, 1.28, 0, 0.06, 0.38, "y", r.c2, "Wood")
-			local handle = { Vector3.new(-0.16, 1.31, 0), Vector3.new(-0.1, 1.44, 0), Vector3.new(0.1, 1.44, 0), Vector3.new(0.16, 1.31, 0) }
+			local handle = {
+				Vector3.new(-0.16, 1.31, 0),
+				Vector3.new(-0.1, 1.44, 0),
+				Vector3.new(0.1, 1.44, 0),
+				Vector3.new(0.16, 1.31, 0),
+			}
 			for k = 1, #handle - 1 do
 				rod(r, handle[k], handle[k + 1], 0.03, C.DarkMetal, "Metal")
 			end

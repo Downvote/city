@@ -4,7 +4,10 @@
 -- every villager and answers it, UI/TalkCard is the card the owner sees.
 --   lines   what they say back: a greeting in their own voice when you walk up (or what they
 --           are wishing for, if anything), then small talk about how they feel, their work,
---           their hobby and the people they live with.
+--           their hobby and the people they live with. Since the user asked for "much much more
+--           random events ... conversations": what they got up to in their last event (its memo,
+--           while it's fresh), what they think of a neighbour (by how they get on, and what that
+--           neighbour is like), a worry, a joke, the season and the weather.
 --   chats   the little good a chat does. In your own town the first few chats a day with a
 --           villager lift their mood a touch and fill their hearts by a point (Sim/Life); after
 --           that they still answer and nothing is gained. A chat is also the answer to a wish
@@ -49,7 +52,94 @@ local SMALL = {
 	"Nothing much going on today. I like it that way.",
 	"I went for a walk round town earlier.",
 	"It's a nice spot, this.",
+	"Have you tried the bench by the fountain? Very comfy.",
+	"I waved at a boat this morning. It waved back. Well, someone on it did.",
+	"I've been meaning to tidy my room. I've been meaning to for a month.",
 }
+
+local JOKES = {
+	"Why did the gull sit on the bun? To keep it warm. Then it ate it.",
+	"I told the fountain a joke. It didn't laugh, but it gave me a wet look.",
+	"What do you call a sleepy crab? A crab nap.",
+	"My plant and I had a fight. It's still not talking to me. Never was, really.",
+	"Why don't clouds wear shoes? They'd only lose them in the rain.",
+	"I bought a book about boats. Can't put it down. It's very heavy.",
+	"What's a pancake's favourite day? Flip day.",
+	"I asked the baker for a joke. He said, 'Here's one, it's a bit crusty.'",
+}
+
+-- What they think of a neighbour, by how well they get on.
+local OPINION = {
+	{
+		min = 60,
+		lines = {
+			"{y} is my favourite person. Don't tell the others.",
+			"If {y} asked me to carry a piano, I'd ask where to.",
+		},
+	},
+	{
+		min = 30,
+		lines = { "{y} lent me a ladder last week. Good sort.", "I had tea with {y}. Milk first. I forgave them." },
+	},
+	{
+		min = 10,
+		lines = { "I don't know {y} that well yet. They wave a lot.", "{y} seems nice. We should talk more." },
+	},
+	{ min = -10, lines = { "Who's {y} again? Oh, the one with the hat.", "I haven't really met {y}. Should I?" } },
+	{
+		min = -40,
+		lines = { "{y} and I don't really get on.", "{y} borrowed my rake and gave it back muddy. Just saying." },
+	},
+	{ min = -101, lines = { "Don't mention {y}. Please.", "I'm not saying {y} is the worst. I'm thinking it." } },
+}
+
+-- What a neighbour is like, by their personality.
+local LIKE = {
+	sunny = "{y} is always so cheerful. How do they do it?",
+	gentle = "{y} brought me soup when I was ill. I wasn't even ill.",
+	bold = "{y} challenged me to a race. I said no. They raced anyway.",
+	dreamy = "{y} told me the moon is a big pebble. I've been thinking about it all day.",
+	easygoing = "I've never seen {y} hurry. Not once.",
+	proud = "{y} has a mirror in every room. I counted.",
+	shy = "{y} said three words to me today. A record.",
+	cheeky = "{y} put a frog in my bucket. I think it was a present.",
+}
+
+local BOND = {
+	crush = "Does {y} ever mention me? Just wondering. No reason.",
+	sweethearts = "{y} and I went for a walk on the beach. Don't make that face.",
+	partners = "{y} snores like a boat engine. I love them anyway.",
+}
+
+local SEASON = {
+	"Everything's coming up green. Even my shoes.",
+	"Too hot for socks. I've stopped wearing socks.",
+	"I love this time of year. Everything's crunchy.",
+	"My nose has been cold since Tuesday.",
+}
+
+local WEATHER = {
+	rain = "Good day for staying in with a book.",
+	storm = "Did you hear that thunder? I hid under the table.",
+	snow = "Have you been out in the snow yet? Go on.",
+	blossom = "There are petals in my hair. Leave them.",
+	leaves = "I've swept my step three times today.",
+	clear = "Not a cloud. I'm making the most of it.",
+	cloudy = "Grey again. I don't mind grey.",
+}
+
+-- Their last event, as they'd tell it, while it's still fresh.
+function Talk.memo(v: any, now: number?): string?
+	local m = v and v.memo
+	if type(m) ~= "table" or type(m.text) ~= "string" or type(m.t) ~= "number" or not now then
+		return nil
+	end
+	local fresh = Tuning.Events.MemoHours * Tuning.Day.Length / 24
+	if now - m.t > fresh or now < m.t then
+		return nil
+	end
+	return m.text
+end
 
 -- A villager's wish in their own words, or nil when they have none to tell. (A wish for a talk
 -- isn't told: the talk answers it.)
@@ -80,8 +170,9 @@ end
 --   first    they were just walked up to (a greeting, or their wish); otherwise it is small talk
 --   last     what they said last, so they don't say it twice running
 --   working  they are at work right now (their job's lines join in)
---   now      os time, for quarrels
+--   now      os time, for quarrels and how fresh their last event is
 --   chat     what Talk.chat made of this talk, when it is the town's owner talking
+--   season   1..4, and weather (World's), when known
 function Talk.line(profile: any, vid: string, rng: any, opts: { [string]: any }?): string
 	local v = profile.villagers[vid]
 	if not v then
@@ -152,6 +243,43 @@ function Talk.line(profile: any, vid: string, rng: any, opts: { [string]: any }?
 				for _, text in work.job.lines do
 					add(text)
 				end
+			end
+			-- what they got up to lately
+			add(Talk.memo(v, o.now), 3)
+			-- a neighbour or two: how they get on, what they're like, a soft spot
+			local others = {}
+			for _, other in profile.order do
+				if other ~= vid and profile.villagers[other] then
+					table.insert(others, other)
+				end
+			end
+			for _ = 1, math.min(2, #others) do
+				local other: string = table.remove(others, rng:int(1, #others)) :: string
+				local ov = profile.villagers[other]
+				local score = Relationships.peek(profile, vid, other)
+				for _, band in OPINION do
+					if score >= band.min then
+						add(Text.fill(rng:pick(band.lines), { y = ov.name }))
+						break
+					end
+				end
+				local like = LIKE[ov.pers]
+				if like then
+					add(Text.fill(like, { y = ov.name }))
+				end
+				local bond = Life.bond(profile, vid, other)
+				if bond and BOND[bond] then
+					add(Text.fill(BOND[bond], { y = ov.name }), 2)
+				end
+			end
+			-- a worry, a joke (more from the cheeky ones), the season and the weather
+			addLines("worry")
+			add(rng:pick(JOKES), if v.pers == "cheeky" or v.pers == "sunny" then 2 else 1)
+			if type(o.season) == "number" and SEASON[o.season] then
+				add(SEASON[o.season])
+			end
+			if type(o.weather) == "string" and WEATHER[o.weather] then
+				add(WEATHER[o.weather])
 			end
 		end
 	end

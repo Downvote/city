@@ -6,7 +6,6 @@
 
 local K = require(script.Parent.Kit)
 local Chatter = require(script.Parent.Chatter)
-local Foods = require(script.Parent.Parent.Foods)
 
 local W = K.W
 
@@ -143,6 +142,7 @@ event({
 
 event({
 	id = "bakeoff",
+	cutscene = "kitchen",
 	when = "day",
 	weight = W({ base = 0.12 }),
 	scene = function(ctx, a, b)
@@ -189,6 +189,7 @@ event({
 
 event({
 	id = "duet",
+	cutscene = "bandstand",
 	when = "any",
 	weight = W({ base = 0.15, traits = { social = 0.2 } }),
 	scene = function(ctx, a, b)
@@ -284,6 +285,7 @@ event({
 
 event({
 	id = "promise",
+	cutscene = "rooftop",
 	when = "any",
 	weight = W({ base = 0.12, rel = 30 }),
 	scene = function(ctx, a, b)
@@ -305,6 +307,7 @@ event({
 
 event({
 	id = "picnic",
+	cutscene = "park",
 	when = "day",
 	weight = W({ base = 0.25, rel = 10, weather = { "clear", "blossom", "cloudy" } }),
 	scene = function(ctx, a, b)
@@ -357,6 +360,7 @@ event({
 
 event({
 	id = "sandcastle",
+	cutscene = "beach",
 	when = "day",
 	weight = W({ base = 0.25, season = 2, weather = { "clear", "cloudy" } }),
 	scene = function(ctx, a, b)
@@ -449,6 +453,7 @@ event({
 
 event({
 	id = "stargazepair",
+	cutscene = "rooftop",
 	when = "night",
 	weight = W({ base = 0.18, rel = 15, weather = "clear" }),
 	scene = function(ctx, a, b)
@@ -466,6 +471,7 @@ event({
 
 event({
 	id = "fishingtrip",
+	cutscene = "pier",
 	when = "day",
 	weight = W({
 		base = 0.15,
@@ -478,7 +484,8 @@ event({
 		s:prop("fishing", "a")
 		s:n("{a} and {b} sat on the pier with one rod between them for three hours.")
 		s:say("a", "Something's biting. Something BIG.", "idea")
-		local catch = ctx.rng:pick({ "an old boot", "a very small fish", "a crab, holding on out of spite", "somebody's hat" })
+		local catch =
+			ctx.rng:pick({ "an old boot", "a very small fish", "a crab, holding on out of spite", "somebody's hat" })
 		s:with({ catch = catch })
 		s:n("It was {catch}.")
 		s:by("b", {
@@ -583,6 +590,7 @@ event({
 
 event({
 	id = "howwemet",
+	cutscene = "park",
 	when = "any",
 	weight = W({ base = 0.15, rel = 40 }),
 	scene = function(ctx, a, b)
@@ -823,7 +831,13 @@ event({
 	weight = W({ base = 0.3, relMax = 25, rel = -5 }),
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "Something in common")
-		local thing = ctx.rng:pick({ "the same favourite song", "a fear of geese", "the same birthday month", "a soft spot for rainy days", "a secret love of pickles" })
+		local thing = ctx.rng:pick({
+			"the same favourite song",
+			"a fear of geese",
+			"the same birthday month",
+			"a soft spot for rainy days",
+			"a secret love of pickles",
+		})
 		s:with({ thing = thing })
 		s:n("{a} and {b} have never really talked before. Then they found out they share {thing}.")
 		s:say("a", "No way. You too?", "sparkle")
@@ -871,7 +885,12 @@ event({
 	end,
 })
 
-local SECRETS = { "a secret", "a surprise for someone", "who ate the last of the jam", "what they got everyone for their birthdays" }
+local SECRETS = {
+	"a secret",
+	"a surprise for someone",
+	"who ate the last of the jam",
+	"what they got everyone for their birthdays",
+}
 
 event({
 	id = "fallout",
@@ -951,6 +970,7 @@ event({
 
 event({
 	id = "dreamsame",
+	cutscene = "dream",
 	when = "day",
 	weight = W({ base = 0.06, rel = 20 }),
 	scene = function(ctx, a, b)
@@ -996,10 +1016,12 @@ event({
 	end,
 })
 
-local BANDS = { "The Soggy Biscuits", "Gull Patrol", "Three Spoons", "The Night Buses", "Marrowfat", "Thursday Pudding" }
+local BANDS =
+	{ "The Soggy Biscuits", "Gull Patrol", "Three Spoons", "The Night Buses", "Marrowfat", "Thursday Pudding" }
 
 event({
 	id = "band",
+	cutscene = { stage = "bandstand", open = "wide", ending = { shot = "wide", act = { all = "dance" } } },
 	actors = 3,
 	when = "any",
 	weight = W({ base = 0.1, count = 3, traits = { social = 0.2 } }),
@@ -1189,6 +1211,7 @@ event({
 
 event({
 	id = "loveletter",
+	cutscene = "park",
 	when = "day",
 	weight = W({ base = 0.6, bond = "crush" }),
 	scene = function(ctx, a, b)
@@ -1299,6 +1322,7 @@ event({
 
 event({
 	id = "anniversary",
+	cutscene = "birthday",
 	when = "any",
 	weight = W({ base = 0.25, bond = "partners" }),
 	scene = function(ctx, a, b)
@@ -1347,6 +1371,7 @@ event({
 
 event({
 	id = "starwatch",
+	cutscene = "pier",
 	when = "night",
 	weight = W({ base = 0.35, bond = "love", weather = "clear" }),
 	scene = function(ctx, a, b)
@@ -1381,6 +1406,7 @@ end
 
 event({
 	id = "doubledate",
+	cutscene = "beach",
 	when = "day",
 	weight = W({
 		base = 0.5,

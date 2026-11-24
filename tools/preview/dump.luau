@@ -282,12 +282,17 @@ elseif scene:sub(1, 6) == "stage:" then
 	end
 	for name, sh in s.shots do
 		if sh.to then
-			shots[name .. ":mid"] = shot({ eye = sh.eye:Lerp(sh.to.eye, 0.5), look = sh.look:Lerp(sh.to.look, 0.5), fov = sh.fov })
+			shots[name .. ":mid"] =
+				shot({ eye = sh.eye:Lerp(sh.to.eye, 0.5), look = sh.look:Lerp(sh.to.look, 0.5), fov = sh.fov })
 		end
 	end
 	-- a stand-in on each mark: legs, body, arms and a head with two eyes on the side it faces
 	local figures = {}
-	local SHIRTS = { roblox.Color3.fromRGB(232, 120, 110), roblox.Color3.fromRGB(110, 156, 222), roblox.Color3.fromRGB(240, 196, 92) }
+	local SHIRTS = {
+		roblox.Color3.fromRGB(232, 120, 110),
+		roblox.Color3.fromRGB(110, 156, 222),
+		roblox.Color3.fromRGB(240, 196, 92),
+	}
 	for i, m in s.marks do
 		local cf = CFrame.new(m.at) * CFrame.Angles(0, math.rad(m.yaw) + math.pi, 0)
 		local skin, legs = roblox.Color3.fromRGB(236, 196, 160), roblox.Color3.fromRGB(70, 78, 110)

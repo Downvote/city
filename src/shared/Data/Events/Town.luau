@@ -71,6 +71,7 @@ local TALENTS = {
 
 event({
 	id = "talentnight",
+	cutscene = { stage = "bandstand", extras = 2, open = "wide", ending = { shot = "wide", act = { all = "cheer" } } },
 	actors = 3,
 	when = "any",
 	weight = W({
@@ -140,7 +141,9 @@ event({
 		s:prop("stall")
 		local coins = ctx.rng:int(3, 8) * 10
 		s:with({ coins = coins })
-		s:n("Stalls went up all along the square this morning: jam, socks, second hand books and a man selling just one very large cabbage.")
+		s:n(
+			"Stalls went up all along the square this morning: jam, socks, second hand books and a man selling just one very large cabbage."
+		)
 		s:n("The stall fees came to {coins} coins for the town.")
 		s:coins(coins)
 		s:all(2)

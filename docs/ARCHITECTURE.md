@@ -90,6 +90,25 @@ The contract between the parts of the game. Update it with every change to an AP
 - A prim with `attrs.NightColor` on a `glow` role is a window: the World service gives it that colour (and Neon)
   at night and its own back in the morning (`CityModels.lit`).
 
+## Events, props and keepsakes
+
+`Data/Events` is a folder: `init` (the first 42 and the loader, which errors on a duplicate id) and `Kit` (weights
+from a short spec `K.W{ base, traits, season, weather, job, rel, bond, quarrel, count, cond }` and a scene builder:
+`s:say`, `s:by` (a line per personality), `s:voice`, `s:choice`, `s:prop`, `s:leave`, `s:keep`, `s:memo`; effects
+common to every answer are copied into each choice), `Chatter` (topics, dreams, debates, spats, openers by hour and
+weather, greetings by friendship; `Chatter.chat` builds a scene, `Chatter.small` two to four street lines, which
+`Villagers` uses for street chats), `Talks`, `Solo`, `Pairs`, `Town`, `Work` and `Asks`. A scene or a choice may carry
+`props = { { id, by } }`; a def may carry `cutscene` (see Cutscenes). `Sim/EventEngine` adds the effects `keepsake
+item who?`, `memo who text`, `saying who id`, `hobby who id` (all checked) and `leave prop hours by?` (for the
+service), `ctx.stars`, `EventEngine.stage(ctx, def, order)` and a graded `recentPenalty` (`Tuning.Events.RecentMemory`
+40, `RecentFloor`). `Data/EventProps` has `list`, `get(id)` (`item:<catalogId>` shows a Build mode piece) and
+`prims(id)`. `Build/Recipes/Keepsakes` holds the keepsakes (category `keepsakes`, price 0, tag `keepsake`);
+`Sim/Keepsakes` has `isKeepsake`, `owned`, `placed`, `left`, `give` (capped), `list(owned, plan)`, `check(profile,
+requests)` (an add past what was given is refused; removes in the same change count) and `clean`. `Build.apply` runs
+`Keepsakes.check` first, `Data.clientState` sends `keepsakes`, and Build mode has a Keepsakes sub tab under Furniture
+(cards read "Free, N left" or "None left"; `ui.sh build:keepsakes[:empty]`). `Sim/Talk.line` takes `season` and
+`weather`, and `Talk.memo(v, now)` is the last event's memo while fresh. Previews: `render.sh props[:ids]`.
+
 ## Using things
 
 `Data/Interactions` lists the uses: for catalog ids, the spots in the piece's own space (stand or sit), the stay,
@@ -262,12 +281,14 @@ profile = {
   v, coins, plan, villagers = { [vid] = Villager }, order = { vid }, nextVid,
   rel = { ["a|b"] = { s, q?, n } },
   requests = { { vid, tag, untilT } }, log = { { t, text } }, outfits = { { name, app } },
-  settings, tutorial, daily = { last, streak }, stats, recent = { eventId }, bdays = { [vid] = day },
+  settings, tutorial, daily = { last, streak }, stats, recent = { eventId } (up to 40), bdays = { [vid] = day },
+  keepsakes = { [itemId] = count } (`Sim/Keepsakes.clean` on load, at most `Tuning.Events.KeepsakeMax`),
   lastPayday, calendarDay, offers = { { vid, level, options } }, goals = { [goalId] = true },
   found = { [placeId] = true }, arrived = { [newcomerKey] = true },
 }
 Villager = { id, name, pers, app, color, bday = { s, d }, fav, mood, job?, lv, xp, bed?, sick?,
-             dayOff?, isYou?, born, heart, hxp, wish? = { kind, arg?, untilT }, saying?, hobby?, from? }
+             dayOff?, isYou?, born, heart, hxp, wish? = { kind, arg?, untilT }, saying?, hobby?, from?,
+             memo? = { text, t } }  -- their last event, which `Talk.memo` brings up for `MemoHours`
 rel record = { s, q?, n, bond? = "crush" | "sweethearts" | "partners" }
 stats = { events, made, earned, paydays, wishes, hearts, couples, partners }
 ```
@@ -312,7 +333,7 @@ The creator's remotes: `CreatorPeople` (the people here and your friends, and th
 | `Avatar` | The creator: a private stage (an empty Model `CreatorStage<slot>` with an `Origin` attribute, high over the meadow; nothing is built there) and an anchored mannequin per player, catalog search fallback, bundles, copying users, outfits, asset checks, the text filter. `toDescription`, `buildModel` for everyone else. |
 | `Interact` | Puts a `UsePrompt` (E, no `Opens`) on an attachment `UseSpot` on each placed piece that has a player use (`Data/Interactions`), in every plot's Build folder; checks the player is within `Tuning.Uses.Reaches` (14 studs), a `Cooldown` per player and a `Rest` per piece; picks the outcome (`Sim/Uses`), has villagers near react to the loud ones and fires `Used`. Nothing is bought or saved. Starts after `Villagers`. |
 | `Villagers` | Creating, editing, moving out, beds, jobs, buying a craving (`Villagers.buyWish`, the `WishBuy` remote). Spawns NPCs and runs their routine (`Villagers.brain` acts out what `Sim/Routine` chooses): sleep at night; in work hours each worker goes round their job's loop at the workplace and takes breaks; those with no job or done for the day potter. Pay goes to whoever is earning at that moment: every `Tuning.Jobs.EarnStep` seconds it checks `npc.atWork` in work hours with control nil, chat or talk (an event, an outing, a day off or sickness pays nothing), keeps a purse per villager in server memory, and every `PayEvery` seconds sends the coins (`Data.addCoins(..., quiet)`, `stats.earned`, the `Earned` event); what is left goes when the player leaves. `Villagers.endOfWork` at 5 PM sends the last of it, grants skill by the share of the day earned and says "Your villagers earned {n} coins today." (it still writes `stats.paydays` and `lastPayday`). Talking: `Villagers.spawn` puts `Npc.talkPrompt(name)` on each body (a ProximityPrompt `TalkPrompt` on the HumanoidRootPart: E, held `Tuning.Talk.HoldSeconds`, from `Distance` studs, no `Opens` attribute) and `setControl` switches it with `Npc.setTalkable(Talk.free(mode))`; it is off while they sleep. `Villagers.talkedTo(who, owner, vid)` answers it: it refuses a sleeper, someone in an event or away, a player more than `Range` studs off and a second line within `Cooldown`; then holds them (`setControl(owner, vid, "talk")` for `StaySeconds`, `VisitorSeconds` for a visitor, or until the player walks off), turns them with `Npc.face`, and has them say `Talk.line`. The owner also gets `Talk.chat`'s gain and the `Talk` event. |
-| `Events` | Picks and plays random events, waits for choices, applies effects, room request rewards, small friendship gains from chats, parties. |
+| `Events` | Picks and plays random events, waits for choices, applies effects, room request rewards, small friendship gains from chats, parties. A scene's props (`Data/EventProps`) are put down by their star after the gather, facing the group on the ground (a raycast that skips villagers, characters and props), made with `Builder.instantiate(..., { plain = true })`, not collidable, queryable or touchable, in `Workspace.EventProps` (attributes `Prop`, `Owner`); a choice's props come after the choice; `leave` keeps one for some hours (at most `PropsMax` a town, oldest out); tidied every 10 s and cleared when the player leaves. It pushes `keepsakes` when one is given. |
 
 `Villagers` also runs the life sim's server side: every in-game hour wishes fade and new ones turn up (the model's
 `Wish` attribute carries the icon for the client's bubble); `WishBuy` pays for a craving and grants it

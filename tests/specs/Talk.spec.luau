@@ -210,6 +210,58 @@ describe("Talk", function()
 		end
 	end)
 
+	it("has more to say: their last event, the neighbours, a worry, a joke, the season", function()
+		-- the user: "make much much more random events ... conversations"
+		local p = town(3)
+		local v = p.villagers.v1
+		v.mood = 50
+		v.bed = "1"
+		v.pers = "cheeky"
+		p.villagers.v2.pers = "dreamy"
+		Relationships.add(p, "v1", "v2", 70)
+		Relationships.add(p, "v1", "v3", -50)
+		Life.setBond(p, "v1", "v2", "sweethearts")
+		v.memo = { text = "I built a snowman yesterday. He's called Gerald.", t = 1000 }
+		local function heard(opts, n)
+			local rng, seen = Rng.new(21), {}
+			for _ = 1, n or 1500 do
+				local text = Talk.line(p, "v1", rng, opts)
+				expect(readable(text)).toBeTruthy()
+				seen[text] = true
+			end
+			return seen
+		end
+		local now = 1000 + 60
+		local all = heard({ now = now, season = 4, weather = "snow" })
+		expect(all["I built a snowman yesterday. He's called Gerald."]).toBe(true)
+		expect(all["V2 and I went for a walk on the beach. Don't make that face."]).toBe(true)
+		expect(all["V2 told me the moon is a big pebble. I've been thinking about it all day."]).toBe(true)
+		local fond, cross = false, false
+		for text in all do
+			fond = fond
+				or text == "V2 is my favourite person. Don't tell the others."
+				or text:find("carry a piano", 1, true) ~= nil
+			cross = cross
+				or text == "Don't mention V3. Please."
+				or text == "I'm not saying V3 is the worst. I'm thinking it."
+		end
+		expect(fond).toBe(true)
+		expect(cross).toBe(true)
+		expect(all["My nose has been cold since Tuesday."]).toBe(true)
+		expect(all["Have you been out in the snow yet? Go on."]).toBe(true)
+		local worried = false
+		for _, text in Personalities.get("cheeky").lines.worry do
+			worried = worried or all[text] == true
+		end
+		expect(worried).toBe(true)
+		-- an old event is forgotten after a day or so
+		local later = 1000 + Tuning.Events.MemoHours * Tuning.Day.Length / 24 + 10
+		expect(Talk.memo(v, later)).toBe(nil)
+		expect(heard({ now = later }, 600)["I built a snowman yesterday. He's called Gerald."]).toBe(nil)
+		expect(Talk.memo(v, nil)).toBe(nil)
+		expect(Talk.memo({ memo = "junk" }, now)).toBe(nil)
+	end)
+
 	it("says what a chat did in plain words", function()
 		local p = town(1)
 		local rng = Rng.new(8)

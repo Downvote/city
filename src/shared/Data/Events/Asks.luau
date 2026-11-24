@@ -57,7 +57,10 @@ event({
 		s:choice("Tell them, kindly", function(c)
 			c:say("a", "{b}, I love that you cook for me. But maybe less salt? Much less?", "sweat")
 			if K.isPers(ctx, b, "proud", "bold") then
-				c:by("b", { proud = "Less salt? My cooking is FLAWLESS. ...How much less?", _ = "WHAT. ...Fine. I'll taste it first next time." }, "anger")
+				c:by("b", {
+					proud = "Less salt? My cooking is FLAWLESS. ...How much less?",
+					_ = "WHAT. ...Fine. I'll taste it first next time.",
+				}, "anger")
 				c:rel(2)
 			else
 				c:by("b", {
@@ -89,7 +92,16 @@ local LIKES = {
 	shy = "a little plant",
 	cheeky = "a joke shop kit",
 }
-local GIFTS = { "flowers", "a book of poems", "a hammock", "a mirror", "a little plant", "a joke shop kit", "balloons", "dumbbells" }
+local GIFTS = {
+	"flowers",
+	"a book of poems",
+	"a hammock",
+	"a mirror",
+	"a little plant",
+	"a joke shop kit",
+	"balloons",
+	"dumbbells",
+}
 
 event({
 	id = "giftadvice",
@@ -292,6 +304,7 @@ event({
 
 event({
 	id = "cookfor",
+	cutscene = "kitchen",
 	actors = 2,
 	when = "day",
 	weight = W({ base = 0.12, rel = 20 }),
@@ -360,7 +373,8 @@ event({
 	end,
 })
 
-local SKILLS = { "juggling", "whistling with two fingers", "skipping stones", "doing a handstand", "folding paper cranes" }
+local SKILLS =
+	{ "juggling", "whistling with two fingers", "skipping stones", "doing a handstand", "folding paper cranes" }
 
 event({
 	id = "learnskill",

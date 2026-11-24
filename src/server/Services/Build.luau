@@ -13,6 +13,7 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Plan = require(Shared.Build.Plan)
 local Builder = require(Shared.Build.Builder)
 local Remotes = require(Shared.Net.Remotes)
+local Keepsakes = require(Shared.Sim.Keepsakes)
 
 local Data = require(script.Parent.Data)
 local Plots = require(script.Parent.Plots)
@@ -193,6 +194,11 @@ function Build.apply(player: Player, requests: any): (boolean, string?)
 	end
 	busy[player] = true
 	local ok, result = pcall(function()
+		-- a keepsake goes down only as many times as a villager gave it you (Sim/Keepsakes)
+		local allowed, why = Keepsakes.check(profile, requests)
+		if not allowed then
+			return { false, why }
+		end
 		local ops, err = prepare(profile.plan, requests)
 		if not ops then
 			return { false, err }

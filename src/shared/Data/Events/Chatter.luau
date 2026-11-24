@@ -25,7 +25,10 @@ Chatter.Topics = {
 	},
 	{
 		about = "the gulls on the pier",
-		open = { "I think the gulls have a leader. A big one with a bent beak.", "A gull looked me in the eye today. It knew things." },
+		open = {
+			"I think the gulls have a leader. A big one with a bent beak.",
+			"A gull looked me in the eye today. It knew things.",
+		},
 		yes = { "Bent Beak. He runs this town, really.", "They meet on the pier at noon. I've seen it." },
 		no = { "They're just birds. Hungry birds.", "Gulls don't have leaders. They have appetites." },
 		more = { "I'm going to start bringing him crusts. For safety." },
@@ -91,7 +94,10 @@ Chatter.Topics = {
 		about = "whether fish sleep",
 		open = { "Do fish sleep? With their eyes open? That's spooky." },
 		yes = { "So spooky. I'm not going near the pond tonight.", "They're watching. Even asleep." },
-		no = { "They sleep fine. You'd sleep fine too if you were a fish.", "They have little fish dreams. It's sweet." },
+		no = {
+			"They sleep fine. You'd sleep fine too if you were a fish.",
+			"They have little fish dreams. It's sweet.",
+		},
 		more = { "I'll knock before I walk past the pond." },
 		back = { "What would a fish even dream about? Puddles?" },
 	},
@@ -99,7 +105,10 @@ Chatter.Topics = {
 		about = "which season is best",
 		open = { "Autumn is the best season. Crunchy leaves. Soup." },
 		yes = { "Crunchy everything. Yes.", "And big jumpers. Autumn wins." },
-		no = { "Summer. You can't swim in autumn. Well, you can. Once.", "Spring. Everything's waking up. Like me, slowly." },
+		no = {
+			"Summer. You can't swim in autumn. Well, you can. Once.",
+			"Spring. Everything's waking up. Like me, slowly.",
+		},
 		more = { "I'm already planning which leaves to jump in." },
 		back = { "You'll come round. Everyone loves soup." },
 	},
@@ -115,7 +124,10 @@ Chatter.Topics = {
 		about = "whether ghosts get cold",
 		open = { "Do ghosts get cold? They don't wear coats." },
 		yes = { "That's why they moan. Cold ears.", "Somebody should knit them something." },
-		no = { "They're see-through. The wind goes right through them.", "Ghosts are made of cold. They're used to it." },
+		no = {
+			"They're see-through. The wind goes right through them.",
+			"Ghosts are made of cold. They're used to it.",
+		},
 		more = { "I'm leaving a scarf on the gate tonight. Just in case." },
 		back = { "Then why do they always hang about by the fire?" },
 	},
@@ -403,18 +415,58 @@ Chatter.Dreams = {
 
 -- Little things worth disagreeing about, loudly, for a minute.
 Chatter.Debates = {
-	{ q = "Is a cloud wet?", yes = "Of course it's wet. It's made of rain.", no = "You can't get wet from a cloud. I've walked through fog." },
-	{ q = "Do fish get thirsty?", yes = "Everything gets thirsty. Even fish.", no = "They live in a drink. They're fine." },
-	{ q = "Is a muffin just a cake with no confidence?", yes = "Exactly. A shy little cake.", no = "A muffin is breakfast. A cake is a party." },
+	{
+		q = "Is a cloud wet?",
+		yes = "Of course it's wet. It's made of rain.",
+		no = "You can't get wet from a cloud. I've walked through fog.",
+	},
+	{
+		q = "Do fish get thirsty?",
+		yes = "Everything gets thirsty. Even fish.",
+		no = "They live in a drink. They're fine.",
+	},
+	{
+		q = "Is a muffin just a cake with no confidence?",
+		yes = "Exactly. A shy little cake.",
+		no = "A muffin is breakfast. A cake is a party.",
+	},
 	{ q = "Is cereal soup?", yes = "Bits in a bowl of liquid. Soup.", no = "Soup is hot. Cereal is breakfast. Done." },
-	{ q = "Which came first, the egg or the omelette?", yes = "The egg. You need an egg to make an omelette.", no = "The omelette. Nobody wants an egg on its own." },
+	{
+		q = "Which came first, the egg or the omelette?",
+		yes = "The egg. You need an egg to make an omelette.",
+		no = "The omelette. Nobody wants an egg on its own.",
+	},
 	{ q = "Is a beanbag a chair?", yes = "You sit on it. Chair.", no = "It's a bag. Of beans. That's in the name." },
-	{ q = "Are crabs walking sideways or forwards to the side?", yes = "Sideways. Look at them.", no = "Forwards. They just face the wrong way." },
-	{ q = "Is it rude to wave at a boat?", yes = "You don't know them. Rude.", no = "Waving at boats is the law of the sea." },
-	{ q = "Can you be friends with a pigeon?", yes = "Course you can. I've got three.", no = "A pigeon is only your friend while you've got bread." },
-	{ q = "Is a jacket potato a dinner or a side?", yes = "Big enough to be dinner. With beans, it's a feast.", no = "It's a side. A potato can't carry a whole meal." },
-	{ q = "Should socks match?", yes = "Matching socks are a sign of a tidy mind.", no = "Odd socks are more fun. And easier." },
-	{ q = "Is the sea just a very big puddle?", yes = "Same thing. Just bigger and saltier.", no = "Puddles don't have whales in them." },
+	{
+		q = "Are crabs walking sideways or forwards to the side?",
+		yes = "Sideways. Look at them.",
+		no = "Forwards. They just face the wrong way.",
+	},
+	{
+		q = "Is it rude to wave at a boat?",
+		yes = "You don't know them. Rude.",
+		no = "Waving at boats is the law of the sea.",
+	},
+	{
+		q = "Can you be friends with a pigeon?",
+		yes = "Course you can. I've got three.",
+		no = "A pigeon is only your friend while you've got bread.",
+	},
+	{
+		q = "Is a jacket potato a dinner or a side?",
+		yes = "Big enough to be dinner. With beans, it's a feast.",
+		no = "It's a side. A potato can't carry a whole meal.",
+	},
+	{
+		q = "Should socks match?",
+		yes = "Matching socks are a sign of a tidy mind.",
+		no = "Odd socks are more fun. And easier.",
+	},
+	{
+		q = "Is the sea just a very big puddle?",
+		yes = "Same thing. Just bigger and saltier.",
+		no = "Puddles don't have whales in them.",
+	},
 }
 
 -- Small things two friends can fall out over and forget by teatime.
@@ -466,7 +518,11 @@ local function greet(ctx: any, s: any, score: number)
 	if score <= -10 then
 		s:pick("b", { "Oh. It's you.", "What now?", "Mm. Hello." }, "anger")
 	elseif score >= 40 then
-		s:pick("b", { "There you are. I was hoping I'd see you.", "Oh good, it's you.", "My favourite person." }, "heart")
+		s:pick(
+			"b",
+			{ "There you are. I was hoping I'd see you.", "Oh good, it's you.", "My favourite person." },
+			"heart"
+		)
 	else
 		s:voice("b", "hello")
 	end

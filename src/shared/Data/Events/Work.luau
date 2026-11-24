@@ -42,6 +42,7 @@ local ORDER = {
 
 event({
 	id = "bigorder",
+	cutscene = "stall",
 	when = "day",
 	weight = W({ base = 0.3, job = { "baker", "barista", "icecream", "shopkeeper", "florist", "postie", "builder" } }),
 	scene = function(ctx, a)
@@ -177,11 +178,13 @@ local NEWTHINGS = {
 
 event({
 	id = "newproduct",
+	cutscene = "stall",
 	when = "day",
 	weight = W({ base = 0.25, job = { "baker", "barista", "icecream", "shopkeeper" } }),
 	scene = function(ctx, a)
 		local w = ctx.job(a)
-		local s = K.scene(ctx, "Something new"):with({ thing = NEWTHINGS[w.job.id] or "something new", place = place(ctx, a) })
+		local s = K.scene(ctx, "Something new")
+			:with({ thing = NEWTHINGS[w.job.id] or "something new", place = place(ctx, a) })
 		s:say("a", "New at the {place} today: {thing}. Try it. Be honest.", "idea", "point")
 		s:choice("Try it", function(c)
 			if ctx.rng:chance(0.6) then
@@ -238,6 +241,7 @@ event({
 
 event({
 	id = "concert",
+	cutscene = { stage = "bandstand", extras = 3, open = "wide", ending = { shot = "wide", act = { all = "dance" } } },
 	when = "any",
 	weight = W({
 		base = 0.3,
@@ -263,7 +267,12 @@ event({
 	end,
 })
 
-local LESSONS = { "the names of all the clouds", "how to tie six different knots", "the history of the town's fountain", "how to say hello in four languages" }
+local LESSONS = {
+	"the names of all the clouds",
+	"how to tie six different knots",
+	"the history of the town's fountain",
+	"how to say hello in four languages",
+}
 
 event({
 	id = "lesson",

@@ -15,12 +15,18 @@
 -- does (EventLine), so Watch always picks up the line they are saying now, never the start (the
 -- user: "clicking watch to watch a conversation restarts the conversation from the start"). A click
 -- on the box shows the rest of the line at once, and on the last line closes the scene.
+--
+-- The big moments (Data/Cutscenes) play as cutscenes when watched (the user: "add cutscenes and
+-- scenes like tomodachi life as well"): the same scene, with the villagers acting on a set of
+-- their own behind the box (UI/Cutscene) instead of sliding in as busts. Each line tells the set
+-- where it falls among the event's lines, so the camera and the villagers do what that line asks.
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Remotes = require(Shared.Net.Remotes)
 local Tuning = require(Shared.Config.Tuning)
 local Text = require(Shared.Util.Text)
 local Colors = require(Shared.Util.Colors)
+local Cutscenes = require(Shared.Data.Cutscenes)
 
 local Kit = require(script.Parent.Kit)
 local Dialogue = require(script.Parent.Dialogue)
@@ -45,6 +51,7 @@ local lineNow: any = nil -- the line being said right now: { who, text }
 local asking = false -- the event is waiting for your answer
 local askedAt = 0
 local typing = 0 -- goes up with every line typed, so an old one stops
+local cursor: Cutscenes.Place? = nil -- where the line being said falls (Cutscenes.follow)
 
 -- The villagers' names in a warm colour.
 local NAME_COLOR = "#F07A3A"
@@ -240,6 +247,7 @@ local function showLine(l: any)
 		return
 	end
 	bring(l)
+	s.beat(l)
 	s.speak(if type(l.who) == "string" then l.who else nil)
 	typeOut(l.text)
 end
@@ -264,6 +272,7 @@ local function showAnswers()
 		return
 	end
 	clearAnswers()
+	s.beat({ ask = true })
 	s.speak(nil)
 	typeOut("What do you do?")
 	local n = #ev.choices
@@ -316,8 +325,11 @@ local function openScene()
 		return
 	end
 	local ev = current
+	-- a big moment plays on a set of its own
+	local story, stage = Cutscenes.forEvent(ev.id, ev)
 	scene = Dialogue.open({
 		Name = "EventScene",
+		Stage = if story then { script = story, stage = stage, event = ev, modelOf = Dialogue.modelOf } else nil,
 		Caption = if type(ev.title) == "string" then ev.title else nil,
 		OnClick = function()
 			-- (Dialogue shows the rest of a line being typed first.) On the last line, or how it
@@ -340,6 +352,17 @@ local function openScene()
 		closeScene()
 	end)
 	updatePrompt()
+	if scene.stage then
+		-- everyone in it stands on their mark from the start
+		local letters = {}
+		for letter in ev.names do
+			table.insert(letters, letter)
+		end
+		table.sort(letters)
+		for _, letter in letters do
+			bring({ who = letter, text = "" })
+		end
+	end
 	if asking then
 		bring(lineNow)
 		showAnswers()
@@ -352,6 +375,8 @@ end
 
 -- A line the villagers are saying now: shown in the scene if it is up, kept for when it goes up.
 local function say(l: any)
+	cursor = Cutscenes.follow(cursor, current, l)
+	l.at = cursor
 	lineNow = l
 	note(l)
 	if scene then
@@ -361,6 +386,7 @@ end
 
 -- The event waits for your answer (the server's timer has started).
 local function ask()
+	cursor = Cutscenes.asked()
 	asking = true
 	askedAt = os.clock()
 	lineNow = { text = "What do you do?" }
@@ -375,6 +401,7 @@ local function play(ev: any)
 	current = ev
 	asking = false
 	lineNow = nil
+	cursor = nil
 	seen = {}
 	updatePrompt()
 	if not hidden then
@@ -396,6 +423,7 @@ local function play(ev: any)
 	clearAnswers()
 	if ev.notices and #ev.notices > 0 and scene then
 		-- how it turned out, a moment, before the scene goes
+		scene.beat({ ending = true })
 		scene.speak(nil)
 		typeOut(table.concat(ev.notices, "\n"))
 		task.wait(3)

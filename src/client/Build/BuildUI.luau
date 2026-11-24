@@ -16,6 +16,7 @@ local Catalog = require(Shared.Build.Catalog)
 local Palette = require(Shared.Data.Palette)
 local Colors = require(Shared.Util.Colors)
 local Text = require(Shared.Util.Text)
+local Keepsakes = require(Shared.Sim.Keepsakes)
 
 local Kit = require(script.Parent.Parent.UI.Kit)
 local Presets = require(Shared.Data.Presets)
@@ -61,6 +62,8 @@ local MAIN = {
 			{ id = "fun", icon = "gamepad", name = "Fun" },
 			{ id = "decor", icon = "plant", name = "Decor" },
 			{ id = "walldecor", icon = "frame", name = "On walls" },
+			-- what villagers made you in events: free, as many as you were given (Sim/Keepsakes)
+			{ id = "keepsakes", icon = "gift", name = "Keepsakes" },
 		},
 	},
 	{
@@ -419,6 +422,37 @@ local function itemTile(parent: Instance, def: any, order: number, onPick: () ->
 	end)
 	cardName(b, def.name, foot, 13)
 	priceTag(b, def.price, CARD_H - 22)
+	return b
+end
+
+-- A keepsake's card: its picture and name, and on the band "Free" with how many more of it can go
+-- down. One with none left (every one given is down) says so and picks nothing.
+local function keepsakeTile(parent: Instance, entry: Keepsakes.Entry, order: number): TextButton
+	local def = entry.def
+	local b, pic, foot = card(parent, def.id, order, CARD_W, function()
+		if entry.left > 0 then
+			BuildMode.startPlacing(def.id)
+		else
+			Toasts.show("Every one you were given is down already.", "info")
+		end
+	end)
+	b:SetAttribute("ItemId", def.id)
+	b:SetAttribute("Left", entry.left)
+	task.spawn(function()
+		ModelPreview.fromPrims(Catalog.prims(def), { Parent = pic })
+	end)
+	cardName(b, def.name, foot, 13)
+	Kit.title(if entry.left > 0 then Text.fill("Free, {n} left", { n = entry.left }) else "None left", {
+		Name = "Left",
+		Parent = b,
+		Size = UDim2.new(1, -12, 0, 18),
+		Position = UDim2.fromOffset(6, CARD_H - 22),
+		TextSize = 15,
+		AlignX = Enum.TextXAlignment.Center,
+		Color = if entry.left > 0 then T.Ink else T.InkSoft,
+		Wrap = false,
+		ZIndex = 2,
+	})
 	return b
 end
 
@@ -815,6 +849,21 @@ local function presetTray()
 end
 
 local function catalogTray(cat: string)
+	if cat == "keepsakes" then
+		local entries = Keepsakes.list(State.data.keepsakes, State.plan)
+		if #entries == 0 then
+			trayNote(trayStack(), "gift", T.Pink, "Nothing here yet", {
+				"When a villager makes something for you, it waits here.",
+				"Keepsakes are free to put down.",
+			})
+			return
+		end
+		local row = trayRow()
+		for i, entry in entries do
+			keepsakeTile(row, entry, i)
+		end
+		return
+	end
 	local row = trayRow()
 	local list = Catalog.list(cat)
 	if cat == "paths" then
@@ -1982,6 +2031,17 @@ function BuildUI.init(exitCallback: () -> ())
 			if tag.Parent then
 				paintTag(tag, price)
 			end
+		end
+	end)
+	-- the Keepsakes tray follows what you were given and how many are down
+	State.on("keepsakes", function()
+		if trayMode == "catalog:keepsakes" then
+			refreshTray()
+		end
+	end)
+	State.onPlan(function()
+		if trayMode == "catalog:keepsakes" then
+			refreshTray()
 		end
 	end)
 	local tip = Kit.darkPill({

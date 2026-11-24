@@ -1,4 +1,4 @@
---!strict
+--!nonstrict
 -- Which random events play as a cutscene when they are watched, and how (UI/Cutscene plays
 -- them). The user: "add cutscenes and scenes like tomodachi life as well". An event with a
 -- cutscene still never takes the screen by itself: the small prompt comes up as for any event,
@@ -135,7 +135,8 @@ Cutscenes.Cues = {
 
 -- The scripts ----------------------------------------------------------------------------------------
 
-local byEvent: { [string]: Script } = {}
+-- (kept as plain data: the types above say what a script holds)
+local byEvent: { [string]: any } = {}
 Cutscenes.byEvent = byEvent
 
 -- Saying it out loud: up on a roof at sunset. The one who is going to say it paces by the bench

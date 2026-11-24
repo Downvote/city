@@ -82,7 +82,14 @@ end
 -- A little bow (two loops and a knot) facing +z at a point.
 local function bow(r: R, at: Vector3, size: number, color: Color3)
 	for _, s in { -1, 1 } do
-		r:lump(CFrame.new(at + Vector3.new(s * size * 0.6, 0, 0)) * CFrame.Angles(0, 0, s * 0.5), size, size * 0.55, size * 0.3, color, "Fabric")
+		r:lump(
+			CFrame.new(at + Vector3.new(s * size * 0.6, 0, 0)) * CFrame.Angles(0, 0, s * 0.5),
+			size,
+			size * 0.55,
+			size * 0.3,
+			color,
+			"Fabric"
+		)
 	end
 	r:ball(at.X, at.Y, at.Z + 0.01, size * 0.4, shade(color, 0.85), "Fabric")
 end
@@ -101,7 +108,16 @@ local list: { Prop } = {
 				for j = 0, 3 do
 					if (i + j) % 2 == 0 then
 						r:noCollide(
-							r:block(-1.9 + i * 0.633, 0.03, -1.4 + j * 0.7, -1.9 + (i + 1) * 0.633, 0.06, -1.4 + (j + 1) * 0.7, red, "Fabric")
+							r:block(
+								-1.9 + i * 0.633,
+								0.03,
+								-1.4 + j * 0.7,
+								-1.9 + (i + 1) * 0.633,
+								0.06,
+								-1.4 + (j + 1) * 0.7,
+								red,
+								"Fabric"
+							)
 						)
 					end
 				end
@@ -109,10 +125,27 @@ local list: { Prop } = {
 			local wicker = Color3.fromRGB(196, 150, 92)
 			r:block(-1.6, 0.06, -1.1, -0.7, 0.66, -0.5, wicker, "Fabric")
 			for k = 0, 3 do
-				r:block(-1.62, 0.16 + k * 0.14, -1.12, -0.68, 0.2 + k * 0.14, -0.48, shade(wicker, 0.82), "Fabric")
+				r:block(-1.63, 0.16 + k * 0.14, -1.13, -0.67, 0.2 + k * 0.14, -0.47, shade(wicker, 0.82), "Fabric")
 			end
-			r:boxAt(CFrame.new(-1.15, 0.86, -1.18) * CFrame.Angles(math.rad(70), 0, 0), 0.92, 0.04, 0.42, shade(wicker, 1.1), "Fabric")
-			path(r, { Vector3.new(-1.5, 0.66, -0.8), Vector3.new(-1.4, 1.1, -0.8), Vector3.new(-0.9, 1.1, -0.8), Vector3.new(-0.8, 0.66, -0.8) }, 0.06, shade(wicker, 0.7))
+			r:boxAt(
+				CFrame.new(-1.15, 0.86, -1.18) * CFrame.Angles(math.rad(70), 0, 0),
+				0.92,
+				0.04,
+				0.42,
+				shade(wicker, 1.1),
+				"Fabric"
+			)
+			path(
+				r,
+				{
+					Vector3.new(-1.5, 0.66, -0.8),
+					Vector3.new(-1.4, 1.1, -0.8),
+					Vector3.new(-0.9, 1.1, -0.8),
+					Vector3.new(-0.8, 0.66, -0.8),
+				},
+				0.06,
+				shade(wicker, 0.7)
+			)
 			disc(r, 0.2, 0.06, 0.2, 0.04, 0.9, C.White)
 			for k = 0, 2 do
 				local a = k * 2.1
@@ -126,7 +159,7 @@ local list: { Prop } = {
 			end
 			for _, p in { Vector3.new(1.1, 0, -0.6), Vector3.new(1.4, 0, 0.5) } do
 				r:cyl(p.X, 0.2, p.Z, 0.28, 0.2, "y", C.White, "SmoothPlastic")
-				r:cyl(p.X, 0.33, p.Z, 0.02, 0.16, "y", LEMON, "SmoothPlastic")
+				r:cyl(p.X, 0.355, p.Z, 0.03, 0.16, "y", LEMON, "SmoothPlastic")
 			end
 			r:cyl(0.9, 0.35, 0.9, 0.58, 0.36, "y", C.Glass, "Glass").transp = 0.5
 			r:cyl(0.9, 0.3, 0.9, 0.46, 0.3, "y", LEMON, "SmoothPlastic")
@@ -168,8 +201,18 @@ local list: { Prop } = {
 				local a = i * math.pi * 2 / 5
 				local x, z = math.cos(a) * 0.18, math.sin(a) * 0.18
 				r:cyl(x, 2.24, z, 0.24, 0.04, "y", if i % 2 == 0 then C.Pink else C.Blue, "SmoothPlastic")
-				r:glow(r:lump(CFrame.new(x, 2.4, z), 0.06, 0.1, 0.06, Color3.fromRGB(255, 200, 90), "Neon"), if i == 0 then 8 else 0)
-				r:lump(CFrame.new(math.cos(a + 0.6) * 0.38, 1.82, math.sin(a + 0.6) * 0.38), 0.1, 0.1, 0.1, C.Red, "SmoothPlastic")
+				r:glow(
+					r:lump(CFrame.new(x, 2.4, z), 0.06, 0.1, 0.06, Color3.fromRGB(255, 200, 90), "Neon"),
+					if i == 0 then 8 else 0
+				)
+				r:lump(
+					CFrame.new(math.cos(a + 0.6) * 0.38, 1.82, math.sin(a + 0.6) * 0.38),
+					0.1,
+					0.1,
+					0.1,
+					C.Red,
+					"SmoothPlastic"
+				)
 			end
 		end,
 	},
@@ -181,27 +224,63 @@ local list: { Prop } = {
 			-- an acoustic guitar leaning back on its stand: a body of two rounds, a dark sound
 			-- hole with a ring, a bridge, six strings up the neck to the head and its pegs
 			local stand = C.DarkMetal
-			path(r, { Vector3.new(-0.5, 0, 0.4), Vector3.new(0, 0.5, 0.1), Vector3.new(0.5, 0, 0.4) }, 0.05, stand, "Metal")
+			path(
+				r,
+				{ Vector3.new(-0.5, 0, 0.4), Vector3.new(0, 0.5, 0.1), Vector3.new(0.5, 0, 0.4) },
+				0.05,
+				stand,
+				"Metal"
+			)
 			rod(r, Vector3.new(0, 0, -0.45), Vector3.new(0, 1.9, -0.2), 0.05, stand, "Metal")
 			local wood, dark = Color3.fromRGB(214, 160, 98), Color3.fromRGB(110, 70, 48)
 			local tilt = CFrame.new(0, 0, 0.1) * CFrame.Angles(math.rad(-12), 0, 0)
 			local function at(x: number, y: number, z: number): CFrame
 				return tilt * CFrame.new(x, y, z)
 			end
-			r:add({ shape = "Cylinder", cf = at(0, 0.85, 0) * CFrame.Angles(0, math.pi / 2, 0), size = Vector3.new(0.3, 1.1, 1.1), color = wood, mat = "Wood" })
-			r:add({ shape = "Cylinder", cf = at(0, 1.5, 0) * CFrame.Angles(0, math.pi / 2, 0), size = Vector3.new(0.3, 0.86, 0.86), color = wood, mat = "Wood" })
-			r:add({ shape = "Cylinder", cf = at(0, 1.3, 0.16) * CFrame.Angles(0, math.pi / 2, 0), size = Vector3.new(0.03, 0.36, 0.36), color = shade(wood, 0.8), mat = "Wood" })
-			r:add({ shape = "Cylinder", cf = at(0, 1.3, 0.18) * CFrame.Angles(0, math.pi / 2, 0), size = Vector3.new(0.03, 0.28, 0.28), color = INK, mat = "SmoothPlastic" })
+			r:add({
+				shape = "Cylinder",
+				cf = at(0, 0.85, 0) * CFrame.Angles(0, math.pi / 2, 0),
+				size = Vector3.new(0.3, 1.1, 1.1),
+				color = wood,
+				mat = "Wood",
+			})
+			r:add({
+				shape = "Cylinder",
+				cf = at(0, 1.5, 0) * CFrame.Angles(0, math.pi / 2, 0),
+				size = Vector3.new(0.3, 0.86, 0.86),
+				color = wood,
+				mat = "Wood",
+			})
+			r:add({
+				shape = "Cylinder",
+				cf = at(0, 1.3, 0.17) * CFrame.Angles(0, math.pi / 2, 0),
+				size = Vector3.new(0.03, 0.36, 0.36),
+				color = shade(wood, 0.8),
+				mat = "Wood",
+			})
+			r:add({
+				shape = "Cylinder",
+				cf = at(0, 1.3, 0.2) * CFrame.Angles(0, math.pi / 2, 0),
+				size = Vector3.new(0.03, 0.28, 0.28),
+				color = INK,
+				mat = "SmoothPlastic",
+			})
 			r:boxAt(at(0, 0.72, 0.17), 0.4, 0.08, 0.05, dark, "Wood")
-			r:boxAt(at(0, 2.35, 0.08), 0.16, 1.5, 0.12, dark, "Wood")
+			r:boxAt(at(0, 2.35, 0.12), 0.16, 1.5, 0.12, dark, "Wood")
 			r:boxAt(at(0, 3.22, 0.08), 0.26, 0.36, 0.1, dark, "Wood")
 			for _, s in { -1, 1 } do
 				for k = 0, 2 do
-					r:add({ shape = "Cylinder", cf = at(s * 0.17, 3.1 + k * 0.1, 0.08), size = Vector3.new(0.08, 0.05, 0.05), color = C.Metal, mat = "Metal" })
+					r:add({
+						shape = "Cylinder",
+						cf = at(s * 0.17, 3.1 + k * 0.1, 0.08),
+						size = Vector3.new(0.08, 0.05, 0.05),
+						color = C.Metal,
+						mat = "Metal",
+					})
 				end
 			end
 			for k = -2.5, 2.5 do
-				r:boxAt(at(k * 0.025, 1.85, 0.165), 0.008, 2.3, 0.008, C.Metal, "Metal")
+				r:boxAt(at(k * 0.025, 1.85, 0.25), 0.008, 2.3, 0.008, C.Metal, "Metal")
 			end
 		end,
 	},
@@ -219,21 +298,41 @@ local list: { Prop } = {
 			rod(r, Vector3.new(0, 0, -0.9), Vector3.new(0, 4.3, -0.05), 0.1, wood, "Wood")
 			r:block(-0.85, 1.55, 0.06, 0.85, 1.65, 0.36, wood, "Wood")
 			r:block(-0.8, 1.65, 0.12, 0.8, 3.75, 0.2, C.White, "Fabric")
-			local sky, sea, hill = Color3.fromRGB(150, 196, 226), Color3.fromRGB(90, 150, 196), Color3.fromRGB(120, 170, 100)
+			local sky, sea, hill =
+				Color3.fromRGB(150, 196, 226), Color3.fromRGB(90, 150, 196), Color3.fromRGB(120, 170, 100)
 			r:block(-0.8, 2.8, 0.2, 0.05, 3.75, 0.23, sky, "SmoothPlastic")
 			r:block(-0.8, 2.2, 0.2, 0.05, 2.8, 0.23, sea, "SmoothPlastic")
-			r:tri(Vector3.new(-0.8, 1.65, 0.215), Vector3.new(0.05, 1.65, 0.215), Vector3.new(-0.5, 2.6, 0.215), 0.03, hill)
+			r:tri(
+				Vector3.new(-0.8, 1.65, 0.245),
+				Vector3.new(0.05, 1.65, 0.245),
+				Vector3.new(-0.5, 2.6, 0.245),
+				0.03,
+				hill
+			)
 			r:block(-0.8, 1.65, 0.2, 0.05, 2.2, 0.23, hill, "SmoothPlastic")
 			r:cyl(-0.45, 3.4, 0.245, 0.03, 0.3, "z", LEMON, "SmoothPlastic")
 			for _, line in { { 0.15, 2.4, 0.7, 2.6 }, { 0.2, 2.0, 0.65, 1.9 }, { 0.3, 3.1, 0.6, 3.3 } } do
-				r:beam(Vector3.new(line[1], line[2], 0.215), Vector3.new(line[3], line[4], 0.215), 0.025, 0.02, Color3.fromRGB(150, 150, 160))
+				r:beam(
+					Vector3.new(line[1], line[2], 0.225),
+					Vector3.new(line[3], line[4], 0.225),
+					0.025,
+					0.02,
+					Color3.fromRGB(150, 150, 160)
+				)
 			end
 			-- the stool, palette and brushes
 			local sx, sz = 1.05, 0.5
 			disc(r, sx, 1.1, sz, 0.1, 0.8, wood, "Wood")
 			for i = 0, 2 do
 				local a = i * math.pi * 2 / 3
-				rod(r, Vector3.new(sx + math.cos(a) * 0.38, 0, sz + math.sin(a) * 0.38), Vector3.new(sx + math.cos(a) * 0.25, 1.1, sz + math.sin(a) * 0.25), 0.07, shade(wood, 0.85), "Wood")
+				rod(
+					r,
+					Vector3.new(sx + math.cos(a) * 0.38, 0, sz + math.sin(a) * 0.38),
+					Vector3.new(sx + math.cos(a) * 0.25, 1.1, sz + math.sin(a) * 0.25),
+					0.07,
+					shade(wood, 0.85),
+					"Wood"
+				)
 			end
 			r:lump(CFrame.new(sx - 0.05, 1.23, sz), 0.6, 0.04, 0.44, Color3.fromRGB(196, 150, 100), "Wood")
 			for i, col in { C.Red, LEMON, C.Blue, C.White, Color3.fromRGB(120, 170, 100) } do
@@ -242,7 +341,14 @@ local list: { Prop } = {
 			end
 			r:cyl(sx + 0.22, 1.3, sz + 0.12, 0.3, 0.16, "y", C.Glass, "Glass").transp = 0.5
 			for k = 0, 2 do
-				rod(r, Vector3.new(sx + 0.22, 1.2, sz + 0.12), Vector3.new(sx + 0.15 + k * 0.07, 1.68, sz + 0.12 + (k - 1) * 0.05), 0.03, wood, "Wood")
+				rod(
+					r,
+					Vector3.new(sx + 0.22, 1.2, sz + 0.12),
+					Vector3.new(sx + 0.15 + k * 0.07, 1.68, sz + 0.12 + (k - 1) * 0.05),
+					0.03,
+					wood,
+					"Wood"
+				)
 			end
 		end,
 	},
@@ -299,11 +405,25 @@ local list: { Prop } = {
 			r:cyl(0, 3.95, 0, 0.1, 0.66, "y", Color3.fromRGB(200, 80, 80), "Fabric")
 			local scarf = Color3.fromRGB(96, 150, 200)
 			r:cyl(0, 2.98, 0, 0.2, 1.08, "y", scarf, "Fabric")
-			r:boxAt(CFrame.new(0.3, 2.7, 0.48) * CFrame.Angles(math.rad(-10), 0, math.rad(8)), 0.24, 0.6, 0.08, scarf, "Fabric")
+			r:boxAt(
+				CFrame.new(0.3, 2.7, 0.48) * CFrame.Angles(math.rad(-10), 0, math.rad(8)),
+				0.24,
+				0.6,
+				0.08,
+				scarf,
+				"Fabric"
+			)
 			for _, s in { -1, 1 } do
 				local hand = Vector3.new(s * 1.2, 2.95, 0.1)
 				rod(r, Vector3.new(s * 0.55, 2.45, 0), hand, 0.07, C.Bark, "Wood")
-				rod(r, hand:Lerp(Vector3.new(s * 0.55, 2.45, 0), 0.25), hand + Vector3.new(0, 0.25, 0.05), 0.04, C.Bark, "Wood")
+				rod(
+					r,
+					hand:Lerp(Vector3.new(s * 0.55, 2.45, 0), 0.25),
+					hand + Vector3.new(0, 0.25, 0.05),
+					0.04,
+					C.Bark,
+					"Wood"
+				)
 			end
 		end,
 	},
@@ -339,12 +459,21 @@ local list: { Prop } = {
 			end
 			r:lump(CFrame.new(0, 1.2, 0), 0.6, 0.34, 0.5, colours[3], "Grass")
 			for i, p in { Vector3.new(1.4, 0, 0.9), Vector3.new(-1.3, 0, 1.1), Vector3.new(0.6, 0, -1.35) } do
-				r:noCollide(r:boxAt(CFrame.new(p.X, 0.02, p.Z) * CFrame.Angles(0, i, 0), 0.2, 0.03, 0.12, colours[i], "Grass"))
+				r:noCollide(
+					r:boxAt(CFrame.new(p.X, 0.02, p.Z) * CFrame.Angles(0, i, 0), 0.2, 0.03, 0.12, colours[i], "Grass")
+				)
 			end
 			local wood = Color3.fromRGB(176, 130, 86)
 			rod(r, Vector3.new(1.5, 0.05, -1.3), Vector3.new(0.4, 1.5, 0.2), 0.08, wood, "Wood")
 			local head = Vector3.new(1.5, 0.1, -1.3)
-			r:boxAt(CFrame.lookAt(head, head + Vector3.new(-1.1, 1.45, 1.5)) * CFrame.Angles(0, math.pi / 2, 0), 0.06, 0.06, 0.7, C.DarkMetal, "Metal")
+			r:boxAt(
+				CFrame.lookAt(head, head + Vector3.new(-1.1, 1.45, 1.5)) * CFrame.Angles(0, math.pi / 2, 0),
+				0.06,
+				0.06,
+				0.7,
+				C.DarkMetal,
+				"Metal"
+			)
 		end,
 	},
 	{
@@ -363,9 +492,30 @@ local list: { Prop } = {
 			r:cyl(0, 2.05, 0, 0.14, 0.24, "y", C.DarkMetal, "Metal")
 			local dir = Vector3.new(0, 0.62, 0.78).Unit
 			local brass = Color3.fromRGB(206, 170, 96)
-			rod(r, head + Vector3.new(0, 0.12, 0) - dir * 0.7, head + Vector3.new(0, 0.12, 0) + dir * 0.9, 0.24, brass, "Metal")
-			rod(r, head + Vector3.new(0, 0.12, 0) + dir * 0.85, head + Vector3.new(0, 0.12, 0) + dir * 0.98, 0.3, shade(brass, 0.8), "Metal")
-			rod(r, head + Vector3.new(0, 0.12, 0) - dir * 0.95, head + Vector3.new(0, 0.12, 0) - dir * 0.7, 0.1, C.DarkMetal, "Metal")
+			rod(
+				r,
+				head + Vector3.new(0, 0.12, 0) - dir * 0.7,
+				head + Vector3.new(0, 0.12, 0) + dir * 0.9,
+				0.24,
+				brass,
+				"Metal"
+			)
+			rod(
+				r,
+				head + Vector3.new(0, 0.12, 0) + dir * 0.85,
+				head + Vector3.new(0, 0.12, 0) + dir * 0.98,
+				0.3,
+				shade(brass, 0.8),
+				"Metal"
+			)
+			rod(
+				r,
+				head + Vector3.new(0, 0.12, 0) - dir * 0.95,
+				head + Vector3.new(0, 0.12, 0) - dir * 0.7,
+				0.1,
+				C.DarkMetal,
+				"Metal"
+			)
 			local side = Vector3.new(0.17, 0.22, 0)
 			rod(r, head + side - dir * 0.2, head + side + dir * 0.3, 0.07, C.DarkMetal, "Metal")
 		end,
@@ -379,10 +529,10 @@ local list: { Prop } = {
 			-- question mark, and a little hole punched in the side
 			r:block(-0.7, 0, -0.7, 0.7, 1.1, 0.7, CARD, "Fabric")
 			r:block(-0.72, 1.1, -0.72, 0.72, 1.16, 0.72, shade(CARD, 1.08), "Fabric")
-			r:block(-0.12, 1.16, -0.72, 0.12, 1.18, 0.72, Color3.fromRGB(150, 110, 70), "Fabric")
+			r:block(-0.12, 1.16, -0.72, 0.12, 1.19, 0.72, Color3.fromRGB(150, 110, 70), "Fabric")
 			local string = Color3.fromRGB(240, 232, 214)
-			r:block(-0.74, 0, -0.04, 0.74, 1.2, 0.04, string, "Fabric")
-			r:block(-0.04, 0, -0.74, 0.04, 1.2, 0.74, string, "Fabric")
+			r:block(-0.74, 0.04, -0.04, 0.74, 1.23, 0.04, string, "Fabric")
+			r:block(-0.04, 0.04, -0.74, 0.04, 1.23, 0.74, string, "Fabric")
 			bow(r, Vector3.new(0, 1.26, 0.05), 0.2, string)
 			r:block(0.2, 0.55, 0.72, 0.6, 0.85, 0.75, C.Paper, "SmoothPlastic")
 			r:block(0.36, 0.6, 0.75, 0.42, 0.65, 0.78, INK, "SmoothPlastic")
@@ -401,21 +551,46 @@ local list: { Prop } = {
 			-- and the watering can that did it
 			for i = 0, 6 do
 				local a = i * 0.9
-				r:lump(CFrame.new(math.cos(a) * 0.8, 0.05, math.sin(a) * 0.5) * CFrame.Angles(0, a, 0), 1.0, 0.1, 0.5, STRAW, "Grass")
+				r:lump(
+					CFrame.new(math.cos(a) * 0.8, 0.05, math.sin(a) * 0.5) * CFrame.Angles(0, a, 0),
+					1.0,
+					0.1,
+					0.5,
+					STRAW,
+					"Grass"
+				)
 			end
 			local green = Color3.fromRGB(90, 136, 76)
 			local cf = CFrame.new(-0.2, 0.62, 0) * CFrame.Angles(0, 0.1, math.rad(4))
 			r:lump(cf, 2.8, 1.1, 1.1, green, "SmoothPlastic")
 			for k = -2, 2 do
-				r:lump(cf * CFrame.new(k * 0.42, 0, 0), 0.12, 1.12, 1.12, shade(green, 1.35), "SmoothPlastic")
+				r:lump(cf * CFrame.new(k * 0.42, 0, 0), 0.12, 1.16, 1.16, shade(green, 1.35), "SmoothPlastic")
 			end
-			rod(r, (cf * CFrame.new(1.35, 0.05, 0)).Position, (cf * CFrame.new(1.6, 0.2, 0)).Position, 0.14, C.Bark, "Wood")
+			rod(
+				r,
+				(cf * CFrame.new(1.35, 0.05, 0)).Position,
+				(cf * CFrame.new(1.6, 0.2, 0)).Position,
+				0.14,
+				C.Bark,
+				"Wood"
+			)
 			r:lump(CFrame.new(1.3, 0.75, 0.3) * CFrame.Angles(0.4, 0.3, 0.2), 0.5, 0.04, 0.4, C.Leaf, "Grass")
 			local can = Color3.fromRGB(120, 170, 160)
 			r:cyl(1.4, 0.3, -0.6, 0.6, 0.5, "y", can, "Metal")
 			rod(r, Vector3.new(1.6, 0.25, -0.6), Vector3.new(1.85, 0.6, -0.6), 0.08, can, "Metal")
 			disc(r, 1.87, 0.58, -0.6, 0.06, 0.14, shade(can, 0.8), "Metal")
-			path(r, { Vector3.new(1.2, 0.5, -0.6), Vector3.new(1.25, 0.8, -0.6), Vector3.new(1.55, 0.8, -0.6), Vector3.new(1.6, 0.55, -0.6) }, 0.05, shade(can, 0.8), "Metal")
+			path(
+				r,
+				{
+					Vector3.new(1.2, 0.5, -0.6),
+					Vector3.new(1.25, 0.8, -0.6),
+					Vector3.new(1.55, 0.8, -0.6),
+					Vector3.new(1.6, 0.55, -0.6),
+				},
+				0.05,
+				shade(can, 0.8),
+				"Metal"
+			)
 		end,
 	},
 	{
@@ -425,17 +600,26 @@ local list: { Prop } = {
 		build = function(r: R)
 			-- a three step podium (first in the middle, painted numbers on the fronts) with a
 			-- big gold cup on the top step
-			local steps = {
+			local steps: { { any } } = {
 				{ -1.5, -0.5, 0.6, Color3.fromRGB(200, 200, 210) },
 				{ -0.5, 0.5, 1.0, Color3.fromRGB(240, 200, 100) },
 				{ 0.5, 1.5, 0.4, Color3.fromRGB(210, 150, 110) },
 			}
 			for i, st in steps do
 				r:block(st[1], 0, -0.6, st[2], st[3], 0.6, st[4], "Wood")
-				r:block(st[1] + 0.05, st[3] - 0.05, -0.62, st[2] - 0.05, st[3], 0.62, shade(st[4], 1.1), "Wood")
+				r:block(st[1] + 0.05, st[3] - 0.05, -0.64, st[2] - 0.05, st[3] + 0.04, 0.64, shade(st[4], 1.1), "Wood")
 				local num = if i == 2 then 1 elseif i == 1 then 2 else 3
 				for k = 1, num do
-					r:block((st[1] + st[2]) / 2 - 0.05 + (k - (num + 1) / 2) * 0.16, st[3] / 2 - 0.15, 0.6, (st[1] + st[2]) / 2 + 0.05 + (k - (num + 1) / 2) * 0.16, st[3] / 2 + 0.15, 0.63, C.White, "SmoothPlastic")
+					r:block(
+						(st[1] + st[2]) / 2 - 0.05 + (k - (num + 1) / 2) * 0.16,
+						st[3] / 2 - 0.15,
+						0.6,
+						(st[1] + st[2]) / 2 + 0.05 + (k - (num + 1) / 2) * 0.16,
+						st[3] / 2 + 0.15,
+						0.63,
+						C.White,
+						"SmoothPlastic"
+					)
 				end
 			end
 			local gold = C.Gold
@@ -447,7 +631,18 @@ local list: { Prop } = {
 			r:cyl(0, 2.35, 0, 0.3, 0.94, "y", gold, "Metal")
 			r:cyl(0, 2.53, 0, 0.06, 1.0, "y", shade(gold, 1.12), "Metal")
 			for _, s in { -1, 1 } do
-				path(r, { Vector3.new(s * 0.44, 2.4, 0), Vector3.new(s * 0.68, 2.3, 0), Vector3.new(s * 0.66, 2.0, 0), Vector3.new(s * 0.36, 1.92, 0) }, 0.08, gold, "Metal")
+				path(
+					r,
+					{
+						Vector3.new(s * 0.44, 2.4, 0),
+						Vector3.new(s * 0.68, 2.3, 0),
+						Vector3.new(s * 0.66, 2.0, 0),
+						Vector3.new(s * 0.36, 1.92, 0),
+					},
+					0.08,
+					gold,
+					"Metal"
+				)
 			end
 		end,
 	},
@@ -459,14 +654,23 @@ local list: { Prop } = {
 			-- a keep with four round towers and their battlements, a gate, shells pressed into
 			-- the walls, a flag on top, a moat of sea water, and the bucket and spade
 			disc(r, 0, 0, 0, 0.08, 3.0, Color3.fromRGB(110, 176, 206), "SmoothPlastic")
-			disc(r, 0, 0, 0, 0.14, 2.5, SAND, "Sand")
+			disc(r, 0, 0.04, 0, 0.1, 2.5, SAND, "Sand")
 			r:block(-0.7, 0.14, -0.7, 0.7, 1.0, 0.7, SAND, "Sand")
 			for _, x in { -0.7, 0.7 } do
 				for _, z in { -0.7, 0.7 } do
 					r:cyl(x, 0.75, z, 1.2, 0.56, "y", shade(SAND, 0.95), "Sand")
 					for i = 0, 3 do
 						local a = i * math.pi / 2 + math.pi / 4
-						r:block(x + math.cos(a) * 0.2 - 0.07, 1.35, z + math.sin(a) * 0.2 - 0.07, x + math.cos(a) * 0.2 + 0.07, 1.5, z + math.sin(a) * 0.2 + 0.07, SAND, "Sand")
+						r:block(
+							x + math.cos(a) * 0.2 - 0.07,
+							1.35,
+							z + math.sin(a) * 0.2 - 0.07,
+							x + math.cos(a) * 0.2 + 0.07,
+							1.5,
+							z + math.sin(a) * 0.2 + 0.07,
+							SAND,
+							"Sand"
+						)
 					end
 				end
 			end
@@ -475,12 +679,18 @@ local list: { Prop } = {
 				r:lump(CFrame.new(p), 0.12, 0.1, 0.05, Color3.fromRGB(246, 200, 190), "SmoothPlastic")
 			end
 			rod(r, Vector3.new(0, 1.0, 0), Vector3.new(0, 1.9, 0), 0.04, C.Bark, "Wood")
-			r:tri(Vector3.new(0, 1.9, 0), Vector3.new(0, 1.62, 0), Vector3.new(0.42, 1.76, 0), 0.03, Color3.fromRGB(226, 96, 96))
+			r:tri(
+				Vector3.new(0, 1.9, 0),
+				Vector3.new(0, 1.62, 0),
+				Vector3.new(0.42, 1.76, 0),
+				0.03,
+				Color3.fromRGB(226, 96, 96)
+			)
 			local bucket = Color3.fromRGB(240, 120, 110)
 			r:cyl(1.25, 0.3, 0.9, 0.5, 0.44, "y", bucket, "SmoothPlastic")
 			r:cyl(1.25, 0.56, 0.9, 0.04, 0.5, "y", shade(bucket, 1.1), "SmoothPlastic")
 			rod(r, Vector3.new(-1.2, 0.05, 1.0), Vector3.new(-0.9, 0.9, 1.25), 0.06, LEMON, "SmoothPlastic")
-			r:boxAt(CFrame.new(-1.25, 0.05, 0.95) * CFrame.Angles(0, 0.7, 0), 0.3, 0.04, 0.36, LEMON, "SmoothPlastic")
+			r:boxAt(CFrame.new(-1.25, 0.12, 0.95) * CFrame.Angles(0, 0.7, 0), 0.3, 0.04, 0.36, LEMON, "SmoothPlastic")
 		end,
 	},
 	{
@@ -500,11 +710,23 @@ local list: { Prop } = {
 			r:block(-2.8, 2.6, z1, 2.8, 3.9, z2, Color3.fromRGB(150, 196, 226), "SmoothPlastic")
 			r:block(-2.8, 1.8, z1, 2.8, 2.6, z2, Color3.fromRGB(90, 150, 196), "SmoothPlastic")
 			r:cyl(1.9, 3.35, z2 + 0.015, 0.03, 0.8, "z", LEMON, "SmoothPlastic")
-			r:tri(Vector3.new(-2.2, 1.8, z2 + 0.015), Vector3.new(1.0, 1.8, z2 + 0.015), Vector3.new(-0.6, 2.9, z2 + 0.015), 0.03, Color3.fromRGB(120, 170, 100))
-			local houses = { { -1.4, C.Red }, { -0.8, C.Blue }, { -0.2, LEMON } }
+			r:tri(
+				Vector3.new(-2.2, 1.8, z2 + 0.015),
+				Vector3.new(1.0, 1.8, z2 + 0.015),
+				Vector3.new(-0.6, 2.9, z2 + 0.015),
+				0.03,
+				Color3.fromRGB(120, 170, 100)
+			)
+			local houses: { { any } } = { { -1.4, C.Red }, { -0.8, C.Blue }, { -0.2, LEMON } }
 			for _, h in houses do
 				r:block(h[1] - 0.2, 1.9, z2 + 0.03, h[1] + 0.2, 2.3, z2 + 0.06, C.White, "SmoothPlastic")
-				r:tri(Vector3.new(h[1] - 0.26, 2.3, z2 + 0.045), Vector3.new(h[1] + 0.26, 2.3, z2 + 0.045), Vector3.new(h[1], 2.55, z2 + 0.045), 0.03, h[2])
+				r:tri(
+					Vector3.new(h[1] - 0.26, 2.3, z2 + 0.045),
+					Vector3.new(h[1] + 0.26, 2.3, z2 + 0.045),
+					Vector3.new(h[1], 2.55, z2 + 0.045),
+					0.03,
+					h[2]
+				)
 			end
 			r:cyl(0.5, 2.5, z2 + 0.03, 0.03, 0.5, "z", C.DarkLeaf, "SmoothPlastic")
 			r:block(0.47, 2.0, z2 + 0.015, 0.53, 2.3, z2 + 0.045, C.Bark, "SmoothPlastic")
@@ -520,7 +742,7 @@ local list: { Prop } = {
 			for i, col in { C.Red, C.Blue, LEMON } do
 				local x = -1.6 + i * 0.7
 				r:cyl(x, 0.2, 0.9, 0.4, 0.36, "y", C.Metal, "Metal")
-				r:cyl(x, 0.41, 0.9, 0.02, 0.32, "y", col, "SmoothPlastic")
+				r:cyl(x, 0.42, 0.9, 0.04, 0.32, "y", col, "SmoothPlastic")
 			end
 			rod(r, Vector3.new(0.9, 0.42, 0.9), Vector3.new(1.2, 0.03, 1.3), 0.05, Color3.fromRGB(176, 130, 86), "Wood")
 		end,
@@ -543,7 +765,7 @@ local list: { Prop } = {
 				r:add({
 					shape = "Cylinder",
 					cf = CFrame.new(-0.25 + k * 0.05, 2.15 + k * 0.1, 0) * CFrame.Angles(0, math.pi / 2, 0),
-					size = Vector3.new(0.7 - k * 0.04, d, d),
+					size = Vector3.new(0.7 - k * 0.08, d, d),
 					color = if k % 2 == 0 then stone else pale,
 					mat = "Marble",
 				})
@@ -564,21 +786,45 @@ local list: { Prop } = {
 			local crate = Color3.fromRGB(196, 156, 104)
 			r:block(-0.6, 0, -0.6, 0.6, 0.9, 0.6, crate, "Wood")
 			for _, y in { 0.3, 0.6 } do
-				r:block(-0.62, y - 0.02, -0.62, 0.62, y + 0.02, 0.62, shade(crate, 0.8), "Wood")
+				r:block(-0.63, y - 0.02, -0.63, 0.63, y + 0.02, 0.63, shade(crate, 0.8), "Wood")
 			end
 			r:block(-0.5, 0.9, -0.5, 0.5, 0.95, 0.5, C.Bark, "Wood")
 			for i = 0, 5 do
 				for j = 0, 5 do
 					local col = if (i + j) % 2 == 0 then Color3.fromRGB(240, 230, 210) else Color3.fromRGB(70, 60, 60)
-					r:block(-0.45 + i * 0.15, 0.95, -0.45 + j * 0.15, -0.3 + i * 0.15, 0.97, -0.3 + j * 0.15, col, "SmoothPlastic")
+					r:block(
+						-0.45 + i * 0.15,
+						0.95,
+						-0.45 + j * 0.15,
+						-0.3 + i * 0.15,
+						0.98,
+						-0.3 + j * 0.15,
+						col,
+						"SmoothPlastic"
+					)
 				end
 			end
-			for _, p in { { 0, 0, C.Red }, { 2, 0, C.Red }, { 1, 1, C.Red }, { 4, 5, C.White }, { 3, 4, C.White }, { 5, 4, C.White }, { 2, 3, C.Red } } do
+			local pieces: { { any } } = {
+				{ 0, 0, C.Red },
+				{ 2, 0, C.Red },
+				{ 1, 1, C.Red },
+				{ 4, 5, C.White },
+				{ 3, 4, C.White },
+				{ 5, 4, C.White },
+				{ 2, 3, C.Red },
+			}
+			for _, p in pieces do
 				r:cyl(-0.375 + p[1] * 0.15, 1.0, -0.375 + p[2] * 0.15, 0.06, 0.12, "y", p[3], "SmoothPlastic")
 			end
-			r:cyl(0.4, 1.0, 0.4, 0.1, 0.3, "y", C.White, "SmoothPlastic")
+			r:cyl(0.4, 1.03, 0.4, 0.1, 0.3, "y", C.White, "SmoothPlastic")
 			for k = 0, 4 do
-				r:lump(CFrame.new(0.4 + math.cos(k) * 0.06, 1.07, 0.4 + math.sin(k) * 0.06) * CFrame.Angles(k, k, 0), 0.08, 0.02, 0.06, LEMON)
+				r:lump(
+					CFrame.new(0.4 + math.cos(k) * 0.06, 1.1, 0.4 + math.sin(k) * 0.06) * CFrame.Angles(k, k, 0),
+					0.08,
+					0.02,
+					0.06,
+					LEMON
+				)
 			end
 			for _, s in { -1, 1 } do
 				r:lump(CFrame.new(s * 1.1, 0.15, 0), 0.9, 0.3, 0.9, if s < 0 then C.Pink else C.Blue, "Fabric")
@@ -606,7 +852,18 @@ local list: { Prop } = {
 			end
 			r:cyl(0, 3.48, 0, 0.16, 0.06, "y", C.DarkMetal, "Metal")
 			rod(r, Vector3.new(0, 0.3, 0), Vector3.new(0, 2.7, 0), 0.06, C.DarkMetal, "Metal")
-			path(r, { Vector3.new(0, 0.32, 0), Vector3.new(0, 0.12, 0.05), Vector3.new(0, 0.1, 0.25), Vector3.new(0, 0.25, 0.3) }, 0.08, C.Bark, "Wood")
+			path(
+				r,
+				{
+					Vector3.new(0, 0.32, 0),
+					Vector3.new(0, 0.12, 0.05),
+					Vector3.new(0, 0.1, 0.25),
+					Vector3.new(0, 0.25, 0.3),
+				},
+				0.08,
+				C.Bark,
+				"Wood"
+			)
 			for _, p in { { -1.0, 0.6, 1.1 }, { 0.9, -0.8, 0.8 }, { 1.2, 1.0, 0.6 } } do
 				r:noCollide(r:cyl(p[1], 0.01, p[2], 0.02, p[3], "y", Color3.fromRGB(130, 170, 200), "Glass"))
 			end
@@ -622,21 +879,52 @@ local list: { Prop } = {
 			r:cyl(0, 0.4, 0, 0.8, 0.8, "y", C.Metal, "Metal")
 			r:cyl(0, 0.8, 0, 0.06, 0.86, "y", shade(C.Metal, 1.1), "Metal")
 			r:cyl(0, 0.3, 0, 0.06, 0.84, "y", shade(C.Metal, 0.85), "Metal")
-			path(r, { Vector3.new(-0.42, 0.75, 0), Vector3.new(-0.3, 1.0, 0.1), Vector3.new(0.3, 1.0, 0.1), Vector3.new(0.42, 0.75, 0) }, 0.03, C.DarkMetal, "Metal")
+			path(
+				r,
+				{
+					Vector3.new(-0.42, 0.75, 0),
+					Vector3.new(-0.3, 1.0, 0.1),
+					Vector3.new(0.3, 1.0, 0.1),
+					Vector3.new(0.42, 0.75, 0),
+				},
+				0.03,
+				C.DarkMetal,
+				"Metal"
+			)
 			local colours = { C.Red, C.Pink, LEMON, C.White, Color3.fromRGB(196, 140, 230) }
 			for i = 0, 10 do
 				local a = i * 2.4
 				local rad = 0.12 + (i % 3) * 0.1
 				local top = Vector3.new(math.cos(a) * (rad + 0.2), 1.7 + (i % 4) * 0.2, math.sin(a) * (rad + 0.2))
-				rod(r, Vector3.new(math.cos(a) * rad * 0.5, 0.8, math.sin(a) * rad * 0.5), top, 0.04, C.DarkLeaf, "Grass")
+				rod(
+					r,
+					Vector3.new(math.cos(a) * rad * 0.5, 0.8, math.sin(a) * rad * 0.5),
+					top,
+					0.04,
+					C.DarkLeaf,
+					"Grass"
+				)
 				local col = colours[i % #colours + 1]
 				for k = 0, 4 do
 					local b = k * math.pi * 2 / 5
-					r:lump(CFrame.new(top + Vector3.new(math.cos(b) * 0.08, 0, math.sin(b) * 0.08)), 0.12, 0.06, 0.12, col)
+					r:lump(
+						CFrame.new(top + Vector3.new(math.cos(b) * 0.08, 0, math.sin(b) * 0.08)),
+						0.12,
+						0.06,
+						0.12,
+						col
+					)
 				end
 				r:ball(top.X, top.Y + 0.03, top.Z, 0.07, if col == LEMON then C.White else LEMON)
 				if i % 2 == 0 then
-					r:lump(CFrame.new(top:Lerp(Vector3.new(0, 0.8, 0), 0.5)) * CFrame.Angles(0, a, 0.6), 0.22, 0.04, 0.1, C.Leaf, "Grass")
+					r:lump(
+						CFrame.new(top:Lerp(Vector3.new(0, 0.8, 0), 0.5)) * CFrame.Angles(0, a, 0.6),
+						0.22,
+						0.04,
+						0.1,
+						C.Leaf,
+						"Grass"
+					)
 				end
 			end
 			r:cyl(0, 1.0, 0, 0.08, 0.3, "y", Color3.fromRGB(226, 96, 110), "Fabric")
@@ -651,15 +939,30 @@ local list: { Prop } = {
 			-- toasting sticks with marshmallows stuck in the ground
 			for i = 0, 9 do
 				local a = i * math.pi / 5
-				r:lump(CFrame.new(math.cos(a) * 0.85, 0.12, math.sin(a) * 0.85) * CFrame.Angles(0, a, 0), 0.4, 0.26, 0.34, shade(C.Stone, 0.85 + (i % 3) * 0.08), "Slate")
+				r:lump(
+					CFrame.new(math.cos(a) * 0.85, 0.12, math.sin(a) * 0.85) * CFrame.Angles(0, a, 0),
+					0.4,
+					0.26,
+					0.34,
+					shade(C.Stone, 0.85 + (i % 3) * 0.08),
+					"Slate"
+				)
 			end
 			for i = 0, 3 do
 				local a = i * math.pi / 2 + 0.4
-				rod(r, Vector3.new(math.cos(a) * 0.6, 0.1, math.sin(a) * 0.6), Vector3.new(math.cos(a) * 0.05, 0.5, math.sin(a) * 0.05), 0.16, C.Bark, "Wood")
+				rod(
+					r,
+					Vector3.new(math.cos(a) * 0.6, 0.1, math.sin(a) * 0.6),
+					Vector3.new(math.cos(a) * 0.05, 0.5, math.sin(a) * 0.05),
+					0.16,
+					C.Bark,
+					"Wood"
+				)
 			end
 			local embers = r:lump(CFrame.new(0, 0.12, 0), 0.6, 0.16, 0.6, Color3.fromRGB(255, 140, 60), "Neon")
 			r:glow(embers, 18, 1.6, Color3.fromRGB(255, 170, 90))
-			local flame = r:noCollide(r:block(-0.1, 0.2, -0.1, 0.1, 0.4, 0.1, Color3.fromRGB(255, 160, 60), "SmoothPlastic"))
+			local flame =
+				r:noCollide(r:block(-0.1, 0.2, -0.1, 0.1, 0.4, 0.1, Color3.fromRGB(255, 160, 60), "SmoothPlastic"))
 			flame.transp = 1
 			r:fire(flame)
 			for _, s in { -1, 1 } do
@@ -677,9 +980,9 @@ local list: { Prop } = {
 			-- a bucket of water with a fish's tail sticking out, a rod leaning on it with a reel
 			-- and its line, and an old boot that came up first
 			r:cyl(0, 0.35, 0, 0.7, 0.7, "y", Color3.fromRGB(110, 150, 170), "Metal")
-			r:cyl(0, 0.66, 0, 0.04, 0.6, "y", C.Water, "SmoothPlastic")
+			r:cyl(0, 0.715, 0, 0.03, 0.6, "y", C.Water, "SmoothPlastic")
 			local fish = Color3.fromRGB(150, 176, 190)
-			r:tri(Vector3.new(0.05, 0.68, 0), Vector3.new(-0.1, 0.98, 0), Vector3.new(0.2, 0.98, 0), 0.04, fish)
+			r:tri(Vector3.new(0.05, 0.73, 0), Vector3.new(-0.1, 1.02, 0), Vector3.new(0.2, 1.02, 0), 0.04, fish)
 			local wood = Color3.fromRGB(176, 130, 86)
 			rod(r, Vector3.new(0.4, 0, -0.5), Vector3.new(-0.6, 3.2, 0.3), 0.06, wood, "Wood")
 			r:cyl(0.25, 0.55, -0.38, 0.14, 0.22, "x", C.DarkMetal, "Metal")
@@ -708,7 +1011,14 @@ local list: { Prop } = {
 			r:block(-0.9, 0.2, 0.66, 0.9, 0.3, 0.69, C.Red, "SmoothPlastic")
 			for i = 0, 5 do
 				local x = -1.3 + i * 0.433
-				r:boxAt(CFrame.new(x + 0.216, 3.0, -0.2) * CFrame.Angles(math.rad(-18), 0, 0), 0.433, 0.06, 1.0, if i % 2 == 0 then C.White else Color3.fromRGB(226, 110, 110), "Fabric")
+				r:boxAt(
+					CFrame.new(x + 0.216, 3.0, -0.2) * CFrame.Angles(math.rad(-18), 0, 0),
+					0.433,
+					0.06,
+					1.0,
+					if i % 2 == 0 then C.White else Color3.fromRGB(226, 110, 110),
+					"Fabric"
+				)
 			end
 			r:cyl(-0.6, 1.4, 0, 0.6, 0.36, "y", C.Glass, "Glass").transp = 0.45
 			r:cyl(-0.6, 1.33, 0, 0.42, 0.3, "y", LEMON, "SmoothPlastic")
@@ -717,7 +1027,13 @@ local list: { Prop } = {
 			end
 			r:cyl(0.8, 1.18, -0.1, 0.16, 0.5, "y", C.Blue, "SmoothPlastic")
 			for k = 0, 3 do
-				r:lump(CFrame.new(0.72 + (k % 2) * 0.16, 1.3 + math.floor(k / 2) * 0.08, -0.16 + (k % 2) * 0.1), 0.18, 0.13, 0.13, LEMON)
+				r:lump(
+					CFrame.new(0.72 + (k % 2) * 0.16, 1.3 + math.floor(k / 2) * 0.08, -0.16 + (k % 2) * 0.1),
+					0.18,
+					0.13,
+					0.13,
+					LEMON
+				)
 			end
 		end,
 	},
@@ -752,12 +1068,17 @@ local list: { Prop } = {
 			-- the builder's tower: bricks two to a course, each course turned a little more than
 			-- the last so the whole thing leans, a hard hat and a trowel at its foot
 			local brick = Color3.fromRGB(184, 96, 76)
-			local lean = 0
 			for k = 0, 15 do
-				lean += 0.012
-				local cf = CFrame.new(lean * k * 0.8, 0.17 + k * 0.34, 0) * CFrame.Angles(0, k * 0.22, 0)
+				local cf = CFrame.new(0.004 * k * k, 0.17 + k * 0.34, 0) * CFrame.Angles(0, k * 0.22, 0)
 				for _, s in { -1, 1 } do
-					r:boxAt(cf * CFrame.new(s * 0.26, 0, 0), 0.5, 0.3, 0.92, if (k + s) % 3 == 0 then shade(brick, 0.9) else brick, "Brick")
+					r:boxAt(
+						cf * CFrame.new(s * 0.26, 0, 0),
+						0.5,
+						0.3,
+						0.92,
+						if (k + s) % 3 == 0 then shade(brick, 0.9) else brick,
+						"Brick"
+					)
 				end
 			end
 			local hat = LEMON
@@ -780,8 +1101,19 @@ local list: { Prop } = {
 					r:cyl(x, 0.17, z, 0.08, 0.3, "z", INK, "Rubber")
 				end
 			end
-			path(r, { Vector3.new(1.1, 0.45, -0.6), Vector3.new(1.25, 1.4, -0.6), Vector3.new(1.25, 1.4, 0.6), Vector3.new(1.1, 0.45, 0.6) }, 0.06, C.DarkMetal, "Metal")
-			local boxes = {
+			path(
+				r,
+				{
+					Vector3.new(1.1, 0.45, -0.6),
+					Vector3.new(1.25, 1.4, -0.6),
+					Vector3.new(1.25, 1.4, 0.6),
+					Vector3.new(1.1, 0.45, 0.6),
+				},
+				0.06,
+				C.DarkMetal,
+				"Metal"
+			)
+			local boxes: { { any } } = {
 				{ -0.5, 0.45, 0, 0.9, 0.5, 1.0, Color3.fromRGB(246, 210, 220) },
 				{ 0.45, 0.45, 0, 0.9, 0.5, 1.0, C.White },
 				{ -0.45, 0.95, 0.05, 0.8, 0.45, 0.9, C.White },
@@ -789,12 +1121,36 @@ local list: { Prop } = {
 				{ 0, 1.4, 0, 0.8, 0.45, 0.9, Color3.fromRGB(246, 210, 220) },
 			}
 			for _, b in boxes do
-				r:block(b[1] - b[4] / 2, b[2], b[3] - b[6] / 2, b[1] + b[4] / 2, b[2] + b[5], b[3] + b[6] / 2, b[7], "Fabric")
-				r:block(b[1] - 0.03, b[2], b[3] - b[6] / 2 - 0.02, b[1] + 0.03, b[2] + b[5] + 0.02, b[3] + b[6] / 2 + 0.02, C.Red, "Fabric")
+				r:block(
+					b[1] - b[4] / 2,
+					b[2],
+					b[3] - b[6] / 2,
+					b[1] + b[4] / 2,
+					b[2] + b[5],
+					b[3] + b[6] / 2,
+					b[7],
+					"Fabric"
+				)
+				r:block(
+					b[1] - 0.03,
+					b[2] + 0.04,
+					b[3] - b[6] / 2 - 0.03,
+					b[1] + 0.03,
+					b[2] + b[5] + 0.03,
+					b[3] + b[6] / 2 + 0.03,
+					C.Red,
+					"Fabric"
+				)
 			end
-			r:block(-0.5, 1.85, -0.4, 0.5, 1.9, 0.4, C.Metal, "Metal")
+			r:block(-0.5, 1.89, -0.4, 0.5, 1.94, 0.4, C.Metal, "Metal")
 			for i = 0, 5 do
-				r:lump(CFrame.new(-0.3 + (i % 3) * 0.3, 1.98, -0.15 + math.floor(i / 3) * 0.3), 0.26, 0.16, 0.26, Color3.fromRGB(214, 160, 90))
+				r:lump(
+					CFrame.new(-0.3 + (i % 3) * 0.3, 2.02, -0.15 + math.floor(i / 3) * 0.3),
+					0.26,
+					0.16,
+					0.26,
+					Color3.fromRGB(214, 160, 90)
+				)
 			end
 		end,
 	},
@@ -815,7 +1171,18 @@ local list: { Prop } = {
 			for _, x in { 0.8, 1.2 } do
 				r:cyl(x, 0.8, 0.32, 0.04, 0.08, "z", C.Metal, "Metal")
 			end
-			path(r, { Vector3.new(0.7, 0.2, 0.32), Vector3.new(0.3, 0.02, 0.6), Vector3.new(0.05, 0.02, 0.1), Vector3.new(0.03, 0.5, 0.03) }, 0.03, INK, "Rubber")
+			path(
+				r,
+				{
+					Vector3.new(0.7, 0.2, 0.32),
+					Vector3.new(0.3, 0.02, 0.6),
+					Vector3.new(0.05, 0.02, 0.1),
+					Vector3.new(0.03, 0.5, 0.03),
+				},
+				0.03,
+				INK,
+				"Rubber"
+			)
 		end,
 	},
 	{
@@ -834,16 +1201,61 @@ local list: { Prop } = {
 			}
 			for i, p in parcels do
 				local col = if i % 2 == 0 then CARD else shade(CARD, 1.12)
-				r:block(p[1] - p[4] / 2, p[2], p[3] - p[6] / 2, p[1] + p[4] / 2, p[2] + p[5], p[3] + p[6] / 2, col, "Fabric")
-				r:block(p[1] - 0.025, p[2], p[3] - p[6] / 2 - 0.02, p[1] + 0.025, p[2] + p[5] + 0.02, p[3] + p[6] / 2 + 0.02, C.Paper, "Fabric")
+				r:block(
+					p[1] - p[4] / 2,
+					p[2],
+					p[3] - p[6] / 2,
+					p[1] + p[4] / 2,
+					p[2] + p[5],
+					p[3] + p[6] / 2,
+					col,
+					"Fabric"
+				)
+				r:block(
+					p[1] - 0.025,
+					p[2] + 0.04,
+					p[3] - p[6] / 2 - 0.03,
+					p[1] + 0.025,
+					p[2] + p[5] + 0.03,
+					p[3] + p[6] / 2 + 0.03,
+					C.Paper,
+					"Fabric"
+				)
 			end
 			for i = 0, 5 do
-				r:noCollide(r:boxAt(CFrame.new(-0.9 + i * 0.36, 0.02, 0.55 + (i % 2) * 0.25) * CFrame.Angles(0, i * 0.5, 0), 0.4, 0.03, 0.26, C.White, "SmoothPlastic"))
+				r:noCollide(
+					r:boxAt(
+						CFrame.new(-0.9 + i * 0.36, 0.02, 0.55 + (i % 2) * 0.25) * CFrame.Angles(0, i * 0.5, 0),
+						0.4,
+						0.03,
+						0.26,
+						C.White,
+						"SmoothPlastic"
+					)
+				)
 			end
 			local bag = Color3.fromRGB(140, 90, 60)
 			r:lump(CFrame.new(1.0, 0.45, 0.4), 0.8, 0.9, 0.5, bag, "Fabric")
-			r:boxAt(CFrame.new(1.0, 0.7, 0.62) * CFrame.Angles(math.rad(-10), 0, 0), 0.7, 0.4, 0.05, shade(bag, 1.15), "Fabric")
-			path(r, { Vector3.new(0.65, 0.7, 0.4), Vector3.new(0.75, 1.5, 0.4), Vector3.new(1.25, 1.5, 0.4), Vector3.new(1.35, 0.7, 0.4) }, 0.06, shade(bag, 0.7), "Fabric")
+			r:boxAt(
+				CFrame.new(1.0, 0.7, 0.62) * CFrame.Angles(math.rad(-10), 0, 0),
+				0.7,
+				0.4,
+				0.05,
+				shade(bag, 1.15),
+				"Fabric"
+			)
+			path(
+				r,
+				{
+					Vector3.new(0.65, 0.7, 0.4),
+					Vector3.new(0.75, 1.5, 0.4),
+					Vector3.new(1.25, 1.5, 0.4),
+					Vector3.new(1.35, 0.7, 0.4),
+				},
+				0.06,
+				shade(bag, 0.7),
+				"Fabric"
+			)
 		end,
 	},
 	{
@@ -858,8 +1270,22 @@ local list: { Prop } = {
 			for _, s in { -1, 1 } do
 				for k = 0, 2 do
 					n += 1
-					r:lump(CFrame.new(s * 1.3, 0.35, -1.0 + k * 1.0), 0.6, 0.7, 0.9, colours[n % #colours + 1], "Fabric")
-					r:lump(CFrame.new(s * 1.3, 0.95, -0.9 + k * 0.9), 0.55, 0.6, 0.85, colours[(n + 2) % #colours + 1], "Fabric")
+					r:lump(
+						CFrame.new(s * 1.3, 0.35, -1.0 + k * 1.0),
+						0.6,
+						0.7,
+						0.9,
+						colours[n % #colours + 1],
+						"Fabric"
+					)
+					r:lump(
+						CFrame.new(s * 1.3, 0.95, -0.9 + k * 0.9),
+						0.55,
+						0.6,
+						0.85,
+						colours[(n + 2) % #colours + 1],
+						"Fabric"
+					)
 				end
 			end
 			for k = 0, 2 do
@@ -874,7 +1300,7 @@ local list: { Prop } = {
 			r:block(-1.7, top, -1.55, 1.7, top + 0.1, 1.45, blanket, "Fabric")
 			for _, s in { -1, 1 } do
 				r:block(s * 1.7 - 0.05, 0.5, -1.55, s * 1.7 + 0.05, top, 1.45, blanket, "Fabric")
-				r:block(s * 1.7 - 0.07, 0.5, -1.57, s * 1.7 + 0.07, 0.6, 1.47, hem, "Fabric")
+				r:block(s * 1.7 - 0.08, 0.47, -1.58, s * 1.7 + 0.08, 0.57, 1.48, hem, "Fabric")
 			end
 			r:block(-1.65, 0.3, -1.6, 1.65, top, -1.5, blanket, "Fabric")
 			r:block(-1.6, 0.95, 1.4, -0.25, top, 1.5, blanket, "Fabric")
@@ -901,9 +1327,20 @@ local list: { Prop } = {
 			r:block(-0.33, 2.15, -0.15, -0.1, 2.25, 0.1, C.Metal, "Metal")
 			r:cyl(0, 1.93, 0.3, 0.2, 0.32, "z", C.DarkMetal, "Metal")
 			r:cyl(0, 1.93, 0.43, 0.06, 0.38, "z", INK, "Metal")
-			r:cyl(0, 1.93, 0.465, 0.02, 0.22, "z", Color3.fromRGB(110, 150, 190), "Glass")
+			r:cyl(0, 1.93, 0.475, 0.03, 0.22, "z", Color3.fromRGB(110, 150, 190), "Glass")
 			r:block(0.15, 2.15, -0.1, 0.3, 2.3, 0.05, C.White, "SmoothPlastic")
-			path(r, { Vector3.new(-0.36, 2.05, 0), Vector3.new(-0.42, 1.5, 0.05), Vector3.new(0.36, 1.5, 0.05), Vector3.new(0.36, 2.05, 0) }, 0.03, C.Red, "Fabric")
+			path(
+				r,
+				{
+					Vector3.new(-0.36, 2.05, 0),
+					Vector3.new(-0.42, 1.5, 0.05),
+					Vector3.new(0.36, 1.5, 0.05),
+					Vector3.new(0.36, 2.05, 0),
+				},
+				0.03,
+				C.Red,
+				"Fabric"
+			)
 		end,
 	},
 	{
@@ -920,7 +1357,14 @@ local list: { Prop } = {
 				r:cyl(s * 0.17, 0.3, 0.22, 0.6, 0.15, "y", coat, "Fabric")
 				r:ball(s * 0.17, 0.04, 0.27, 0.18, pale, "Fabric")
 				r:lump(CFrame.new(s * 0.3, 0.15, -0.3), 0.3, 0.3, 0.55, coat, "Fabric")
-				r:lump(CFrame.new(s * 0.27, 1.25, 0.18) * CFrame.Angles(0, 0, s * 0.3), 0.14, 0.4, 0.24, shade(coat, 0.75), "Fabric")
+				r:lump(
+					CFrame.new(s * 0.27, 1.25, 0.18) * CFrame.Angles(0, 0, s * 0.3),
+					0.14,
+					0.4,
+					0.24,
+					shade(coat, 0.75),
+					"Fabric"
+				)
 				r:ball(s * 0.11, 1.38, 0.46, 0.08, INK, "SmoothPlastic")
 			end
 			r:ball(0, 1.32, 0.25, 0.56, coat, "Fabric")
@@ -945,12 +1389,30 @@ local list: { Prop } = {
 			end
 			r:ball(0, 0.88, 0.06, 0.44, fur, "Fabric")
 			for _, s in { -1, 1 } do
-				r:wedge(CFrame.new(s * 0.13, 1.12, 0.04) * CFrame.Angles(0, 0, s * 0.2), 0.12, 0.16, 0.08, stripe, "Fabric")
+				r:wedge(
+					CFrame.new(s * 0.13, 1.12, 0.04) * CFrame.Angles(0, 0, s * 0.2),
+					0.12,
+					0.16,
+					0.08,
+					stripe,
+					"Fabric"
+				)
 				r:ball(s * 0.09, 0.92, 0.25, 0.07, Color3.fromRGB(110, 170, 90), "SmoothPlastic")
 				r:ball(s * 0.11, 0.06, 0.2, 0.14, C.White, "Fabric")
 			end
 			r:ball(0, 0.83, 0.28, 0.05, C.Pink, "SmoothPlastic")
-			path(r, { Vector3.new(0, 0.1, -0.35), Vector3.new(0.3, 0.06, -0.2), Vector3.new(0.35, 0.06, 0.15), Vector3.new(0.15, 0.08, 0.32) }, 0.09, stripe, "Fabric")
+			path(
+				r,
+				{
+					Vector3.new(0, 0.1, -0.35),
+					Vector3.new(0.3, 0.06, -0.2),
+					Vector3.new(0.35, 0.06, 0.15),
+					Vector3.new(0.15, 0.08, 0.32),
+				},
+				0.09,
+				stripe,
+				"Fabric"
+			)
 		end,
 	},
 	{
@@ -961,10 +1423,30 @@ local list: { Prop } = {
 			-- a long rope on the grass with a red rag tied at its middle, coils at both ends, and
 			-- a marker flag stuck in the ground under the middle
 			local rope = Color3.fromRGB(206, 180, 130)
-			path(r, { Vector3.new(-3.6, 0.06, 0.1), Vector3.new(-1.5, 0.06, -0.1), Vector3.new(1.5, 0.06, 0.1), Vector3.new(3.6, 0.06, -0.05) }, 0.12, rope, "Fabric")
+			path(
+				r,
+				{
+					Vector3.new(-3.6, 0.06, 0.1),
+					Vector3.new(-1.5, 0.06, -0.1),
+					Vector3.new(1.5, 0.06, 0.1),
+					Vector3.new(3.6, 0.06, -0.05),
+				},
+				0.12,
+				rope,
+				"Fabric"
+			)
 			for _, s in { -1, 1 } do
 				for k = 0, 1 do
-					r:cyl(s * (3.6 + k * 0.05), 0.06 + k * 0.1, 0.35, 0.1, 0.6 - k * 0.15, "y", shade(rope, 0.9 + k * 0.1), "Fabric")
+					r:cyl(
+						s * (3.6 + k * 0.05),
+						0.06 + k * 0.1,
+						0.35,
+						0.1,
+						0.6 - k * 0.15,
+						"y",
+						shade(rope, 0.9 + k * 0.1),
+						"Fabric"
+					)
 				end
 			end
 			r:lump(CFrame.new(0, 0.1, 0), 0.2, 0.2, 0.3, C.Red, "Fabric")

@@ -235,6 +235,26 @@ event({
 	end,
 })
 
+makes({
+	id = "marrowshow",
+	title = "The marrow show",
+	item = "keep_trophy",
+	w = { base = 0.08, season = { 2, 3 } },
+	lines = {
+		{ "n", "{a} took a marrow to the show on the next island and came back with a little gold cup." },
+		{ "a", "Second place. The winner's marrow had a hat on. I think that swung it.", "sparkle" },
+	},
+	react = {
+		proud = "Second is the first of the losers. I'll be back next year.",
+		easygoing = "Second's great. Less pressure than first.",
+		_ = "I couldn't have done it without you cheering me on. Well, I could. But still.",
+	},
+	ask = "Can I see it on my shelf?",
+	keep = "You earned it, keep it",
+	memo = "Second place at the marrow show. Next year, I'm bringing a hat.",
+	log = "{a} came second at the marrow show.",
+})
+
 -- a bad haircut --------------------------------------------------------------------------------------
 
 event({
@@ -529,6 +549,7 @@ event({
 
 event({
 	id = "insomnia",
+	cutscene = "kitchen",
 	when = "night",
 	weight = W({ base = 0.3, traits = { lazy = -0.3 } }),
 	scene = function(ctx, a)
@@ -538,7 +559,10 @@ event({
 			dreamy = "My brain's doing cartwheels. Big ones.",
 			proud = "I'm not tired. Sleep is for other people.",
 			shy = "I keep thinking about what I said today.",
-			_ = { "I've counted to four hundred sheep. They're getting bored too.", "Every time I close my eyes I remember something." },
+			_ = {
+				"I've counted to four hundred sheep. They're getting bored too.",
+				"Every time I close my eyes I remember something.",
+			},
 		}, "zzz")
 		s:choice("Warm milk", function(c)
 			c:say("a", "Mm. Warm. And... sleepy. Night.", "zzz")
@@ -561,6 +585,7 @@ event({
 
 event({
 	id = "midnightsnack",
+	cutscene = "kitchen",
 	when = "night",
 	weight = W({ base = 0.2, traits = { lazy = 0.4 } }),
 	scene = function(ctx, a)
@@ -582,6 +607,7 @@ event({
 
 event({
 	id = "nightmare",
+	cutscene = "dream",
 	when = "night",
 	weight = W({ base = 0.18 }),
 	scene = function(ctx, a)
@@ -1341,7 +1367,13 @@ event({
 	end,
 })
 
-local NAPSPOTS = { "on a bench", "standing up at the bus stop", "in a deckchair at noon", "in a hammock with their shoes on", "under the big tree, mid sentence" }
+local NAPSPOTS = {
+	"on a bench",
+	"standing up at the bus stop",
+	"in a deckchair at noon",
+	"in a hammock with their shoes on",
+	"under the big tree, mid sentence",
+}
 
 event({
 	id = "napspot",
@@ -1364,6 +1396,7 @@ event({
 
 event({
 	id = "homesick",
+	cutscene = "pier",
 	when = "any",
 	weight = W({ base = 0.12 }),
 	scene = function(ctx, a)
@@ -1529,7 +1562,12 @@ event({
 	end,
 })
 
-local GADGETS = { "a toaster that butters too", "a hat with an umbrella on it", "a self stirring spoon", "shoes with little bells in" }
+local GADGETS = {
+	"a toaster that butters too",
+	"a hat with an umbrella on it",
+	"a self stirring spoon",
+	"shoes with little bells in",
+}
 
 event({
 	id = "invention",
@@ -1595,6 +1633,7 @@ local DAYDREAMS = {
 
 event({
 	id = "daydream",
+	cutscene = "dream",
 	when = "day",
 	weight = W({ base = 0.18, traits = { focus = -0.5 } }),
 	scene = function(ctx, a)
@@ -1614,6 +1653,7 @@ event({
 
 event({
 	id = "dreamfood",
+	cutscene = "dream",
 	when = "day",
 	weight = W({ base = 0.12 }),
 	scene = function(ctx, a)
@@ -1633,6 +1673,7 @@ event({
 
 event({
 	id = "dreamsong",
+	cutscene = "dream",
 	when = "day",
 	weight = W({ base = 0.1, traits = { focus = -0.3 } }),
 	scene = function(ctx, a)
@@ -1659,9 +1700,19 @@ event({
 		local s = K.scene(ctx, "Ten years from now")
 		s:n("{a} was looking out over the rooftops.")
 		if city.value > 20000 then
-			s:say("a", "Imagine this place in ten years. It's already huge. It'll have a tram. A tram!", "idea", "point")
+			s:say(
+				"a",
+				"Imagine this place in ten years. It's already huge. It'll have a tram. A tram!",
+				"idea",
+				"point"
+			)
 		else
-			s:say("a", "Imagine this place in ten years. More houses. A bigger bakery. A statue of me.", "idea", "point")
+			s:say(
+				"a",
+				"Imagine this place in ten years. More houses. A bigger bakery. A statue of me.",
+				"idea",
+				"point"
+			)
 		end
 		s:by("a", {
 			gentle = "I hope we're all still here. That's the main thing.",
@@ -1676,6 +1727,7 @@ event({
 
 event({
 	id = "lemonade",
+	cutscene = "stall",
 	when = "day",
 	weight = W({ base = 0.18, season = 2, weather = { "clear", "cloudy" } }),
 	scene = function(ctx, a)

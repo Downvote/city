@@ -24,6 +24,7 @@ local Talk = require(Shared.Sim.Talk)
 local Routine = require(Shared.Sim.Routine)
 local Uses = require(Shared.Sim.Uses)
 local Sayings = require(Shared.Data.Sayings)
+local Chatter = require(Shared.Data.Events.Chatter)
 local Rng = require(Shared.Util.Rng)
 local Text = require(Shared.Util.Text)
 local Remotes = require(Shared.Net.Remotes)
@@ -508,9 +509,31 @@ local function chat(player: Player, vid: string, npc: any, friend: string, round
 				fnpc:say(ownLine(vb, "hello"))
 			end
 			task.wait(2.2)
-			for _ = 2, rounds or 1 do
+			for round = 2, rounds or 1 do
 				if Villagers.control(player, vid) ~= "chat" or Villagers.control(player, friend) ~= "chat" then
 					break
+				end
+				if round == 2 and score >= -20 then
+					-- the first round is about something (Data/Events/Chatter's topics), so two
+					-- neighbours in the street rarely say the same thing twice
+					local small = Chatter.small({
+						rng = rng,
+						v = function(id: string)
+							return profile.villagers[id]
+						end,
+						rel = function()
+							return score
+						end,
+					}, vid, friend)
+					npc:say(small[1].text)
+					npc:gesture(rng:pick({ "laugh", "point" }))
+					task.wait(2.2)
+					if Villagers.control(player, friend) == "chat" then
+						fnpc:say(small[2].text)
+						fnpc:gesture("laugh")
+					end
+					task.wait(2.2)
+					continue
 				end
 				npc:say(ownLine(va, feeling(va, score)))
 				npc:gesture(rng:pick({ "laugh", "point" }))
@@ -1894,6 +1917,9 @@ local function talk(who: Player, owner: Player, vid: string): (any?, string?)
 		working = v.job ~= nil and v.dayOff ~= World.dayIndex() and isWorkTime(World.hour()),
 		now = os.time(),
 		chat = chat,
+		-- (the specs' stand-in World may keep no calendar or weather)
+		season = if World.calendar then World.calendar().s else nil,
+		weather = if World.weather then World.weather() else nil,
 	})
 	said[vid] = text
 	npc:say(text)

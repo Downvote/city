@@ -129,6 +129,7 @@ event({
 
 event({
 	id = "dreamtalk",
+	cutscene = "dream",
 	when = "day",
 	weight = W({ base = 0.18, traits = { focus = -0.3 } }),
 	scene = function(ctx, a, b)
@@ -289,7 +290,13 @@ event({
 	end,
 })
 
-local PLANS = { "a trip to the little islet", "a picnic on the hill", "a night of board games", "a walk along the whole beach", "a baking day" }
+local PLANS = {
+	"a trip to the little islet",
+	"a picnic on the hill",
+	"a night of board games",
+	"a walk along the whole beach",
+	"a baking day",
+}
 
 event({
 	id = "plans",

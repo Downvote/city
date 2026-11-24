@@ -12,6 +12,8 @@
 --   build:paint         Build mode on the Paint tool (finishes and colours)
 --   build:sell          Build mode on the Sell tool
 --   build:view          Build mode just after the up arrow and See-through walls (the hint says so)
+--   build:keepsakes     Build mode's Keepsakes tab with six things villagers made you, one of
+--                       them already down (build:keepsakes:empty before anybody has)
 --   build:placing       Build mode holding an armchair to place: the bars away, the hint left
 --                       (build:placing:touch on a touch screen, with its two round buttons)
 --   panel:<Name>        a panel over the main screen (Residents, CityPanel, News, Goals,
@@ -29,6 +31,11 @@
 --   event:four          four villagers in the scene, the third talking
 --   event:narration     a line nobody in particular says: both villagers in, dimmed
 --   event:answers       a watched event at its choices: the answers in the textbox
+--   cutscene:<event>    a big moment watched as a cutscene (UI/Cutscene, Data/Cutscenes): the
+--                       event's own scene for the sample town with all its lines said;
+--                       cutscene:<event>:<n> after its first n lines, :ask at its question,
+--                       :a<n> n lines after the first answer (the set itself is drawn by
+--                       tools/preview/stage.py into the viewport; the villagers are stand-ins)
 --   talk                the talk card: a villager you held E on tells you their wish
 --   talk:again          the talk card after the day's chats are used up
 --   toasts              a few notices
@@ -166,6 +173,7 @@ if look then
 end
 
 local Hud
+local stageShot = false -- a cutscene is up: its set is drawn into the picture (stagePicture)
 -- the villagers standing in the player's plot, each marked with its id (UI/Dialogue finds a
 -- talking villager's model there for their bust)
 local function villagerModels()
@@ -229,7 +237,17 @@ elseif scene:sub(1, 5) == "build" then
 		["build:buildings"] = { "Buildings" },
 		["build:sell"] = { "Sell" },
 		["build:view"] = { "Furniture", "FloorUp", "See-through walls" },
+		["build:keepsakes"] = { "Furniture", "Keepsakes" },
+		["build:keepsakes:empty"] = { "Furniture", "Keepsakes" },
 	}
+	if scene == "build:keepsakes" then
+		-- given in events (Sim/Keepsakes); the carved bird is already on the plot
+		local given = { keep_portrait = 1, keep_pot = 2, keep_bird = 1, keep_quilt = 1, keep_globe = 1, keep_mug = 1 }
+		Sim.profile.keepsakes = given
+		Sim.State.plan.items.keptBird = { id = "keep_bird", x = 150, y = 0, z = 40, r = 0, lv = 0 }
+		Sim.remoteEvent("State"):FireClient(Sim.player, { keepsakes = given })
+		Sim.frames(2)
+	end
 	for _, tab in TABS[scene] or {} do
 		Sim.press(tab)
 	end
@@ -799,6 +817,116 @@ elseif scene == "signs" or scene:sub(1, 6) == "signs:" then
 		end
 		Service.drawMarquee(board(1248, 88), 1248, 88, Signs.Shops.cinema[1], Signs.Films[1])
 	end
+elseif scene:sub(1, 9) == "cutscene:" then
+	-- a big moment watched as a cutscene (see the list at the top)
+	local id, step = scene:sub(10):match("^([^:]+):?(.*)$")
+	local Events = Harness.require("ReplicatedStorage.Shared.Data.Events")
+	local EventEngine = Harness.require("ReplicatedStorage.Shared.Sim.EventEngine")
+	local Colors = Harness.require("ReplicatedStorage.Shared.Util.Colors")
+	local def = assert(Events.get(id), "no event " .. tostring(id))
+	-- the villagers as stand-ins: legs, a body and arms in their colour, a head with hair and
+	-- eyes on the side they face (-Z), round a root as a character has
+	local plot = Sim.ws:FindFirstChild("Plots"):FindFirstChild("Plot1")
+	local folder = plot:FindFirstChild("Villagers") or Fake.new("Folder", plot)
+	folder.Name = "Villagers"
+	local HAIR = { Color3.fromRGB(96, 70, 60), Color3.fromRGB(60, 50, 48), Color3.fromRGB(200, 150, 90), Color3.fromRGB(150, 80, 60) }
+	for i, vid in order do
+		local v = villagers[vid]
+		local model = Fake.new("Model", folder)
+		model.Name = v.name
+		model:SetAttribute("Vid", vid)
+		local base = roblox.CFrame.new(i * 6, 3, 0)
+		local function part(name, x, y, z, sx, sy, sz, color, transp)
+			local p = Fake.new("Part", model)
+			p.Name = name
+			p.Size = roblox.Vector3.new(sx, sy, sz)
+			p.CFrame = base * roblox.CFrame.new(x, y, z)
+			p.Color = color
+			p.Transparency = transp or 0
+		end
+		local shirt = Colors.fromHex(v.color, Color3.fromRGB(220, 120, 110))
+		local skin = Color3.fromRGB(236, 196, 160)
+		part("HumanoidRootPart", 0, 0, 0, 2, 2, 1, skin, 1)
+		for _, x in { -0.5, 0.5 } do
+			part("Leg", x, -2, 0, 0.9, 2, 0.9, Color3.fromRGB(70, 78, 110))
+		end
+		part("Torso", 0, 0, 0, 2, 2, 1, shirt)
+		for _, x in { -1.45, 1.45 } do
+			part("Arm", x, 0, 0, 0.9, 2, 0.9, shirt)
+		end
+		part("Head", 0, 1.6, 0, 1.2, 1.2, 1.2, skin)
+		part("Hair", 0, 2.3, 0.05, 1.3, 0.35, 1.3, HAIR[i % #HAIR + 1])
+		for _, x in { -0.25, 0.25 } do
+			part("Eye", x, 1.65, -0.62, 0.16, 0.22, 0.06, Color3.fromRGB(40, 36, 44))
+		end
+	end
+	startHud()
+	-- the event's own scene, made as the server makes it
+	local profile = { villagers = villagers, order = order, rel = rel, requests = {}, plan = Sim.State.plan, bdays = {} }
+	local ctx = EventEngine.context(profile, {
+		now = os.time(),
+		hour = 12,
+		season = 2,
+		dayOfSeason = 7,
+		day = 9,
+		weather = "clear",
+		rng = Rng.new(5),
+		present = order,
+		freeSlots = 4,
+		friends = {},
+	})
+	local LETTERS = { "a", "b", "c" }
+	local names, actors = {}, {}
+	ctx.names, ctx.stars = {}, {}
+	for i = 1, def.actors do
+		local vid = order[i]
+		names[LETTERS[i]] = villagers[vid].name
+		actors[LETTERS[i]] = vid
+		ctx.names[LETTERS[i]] = villagers[vid].name
+		ctx.stars[LETTERS[i]] = vid
+	end
+	local ok, made = pcall(def.scene, ctx, order[1], order[2], order[3])
+	if not ok then
+		made = { title = "Something's up", lines = { { text = "Something is going on in town." } } }
+	end
+	local choices = nil
+	if made.choices then
+		choices = {}
+		for i, c in made.choices do
+			choices[i] = { text = c.text, cost = c.cost }
+		end
+	end
+	local ev = { token = "c1", id = id, title = made.title, names = names, actors = actors, lines = made.lines, choices = choices }
+	Sim.remoteEvent("EventShow"):FireClient(Sim.player, ev)
+	Sim.frames(2)
+	local function say(l, last)
+		Sim.remoteEvent("EventLine"):FireClient(Sim.player, { token = "c1", line = table.clone(l), last = last })
+		Sim.frames(2)
+		Sim.advance(2.6)
+	end
+	local count = tonumber(step) or #made.lines
+	say(made.lines[1], not made.choices and count <= 1 and #made.lines == 1)
+	Sim.press("Watch")
+	Sim.advance(1)
+	for i = 2, math.min(count, #made.lines) do
+		say(made.lines[i], not made.choices and i == #made.lines)
+	end
+	if step == "ask" or step:sub(1, 1) == "a" then
+		Sim.remoteEvent("EventLine"):FireClient(Sim.player, { token = "c1", ask = true })
+		Sim.frames(2)
+		Sim.advance(2)
+	end
+	local after = tonumber(step:match("^a(%d+)$") or "")
+	if after and made.choices then
+		Sim.press("Choice1")
+		local lines = made.choices[1].lines or {}
+		for i = 1, math.min(after, #lines) do
+			say(lines[i], i == #lines)
+		end
+	end
+	Sim.advance(2)
+	Sim.frames(60)
+	stageShot = true
 else
 	error("unknown scene " .. scene)
 end
@@ -996,9 +1124,124 @@ for _, g in Sim.gui.Parent:GetChildren() do
 		end
 	end
 end
+-- A cutscene's set can't be drawn from the GUI tree: it is drawn here by tools/preview/stage.py
+-- from where the cutscene's camera is, with the stand-ins standing on it and the set's own light,
+-- see-through where the painted sky shows, and laid into the viewport as a picture.
+local function stagePicture(root, path, list)
+	local view = Sim.gui:FindFirstChild("StageView", true)
+	local cam = view and view.CurrentCamera
+	if not view or not cam then
+		return
+	end
+	local Stages = Harness.require("ReplicatedStorage.Shared.Data.Stages")
+	local Geometry = Harness.require("ReplicatedStorage.Shared.Build.Geometry")
+	local prims = {}
+	local function add(shape, cf, size, color, transp, mat)
+		table.insert(prims, {
+			shape = shape,
+			cf = { cf:GetComponents() },
+			size = { size.X, size.Y, size.Z },
+			color = { color.R, color.G, color.B },
+			transp = transp or 0,
+			mat = mat or "SmoothPlastic",
+		})
+	end
+	for _, p in Geometry.flatten(Stages.prims(view:GetAttribute("Stage"))) do
+		add(p.shape, p.cf, p.size, p.color, p.transp, p.mat)
+	end
+	local world = view:FindFirstChild("World")
+	for _, m in world and world:GetChildren() or {} do
+		if m.Name:sub(1, 6) == "Actor_" and m.Parent then
+			for _, d in m:GetDescendants() do
+				if d:IsA("BasePart") and d.Transparency < 0.99 then
+					add("Block", d.CFrame, d.Size, d.Color, d.Transparency)
+				end
+			end
+		end
+	end
+	local base = path:gsub("%.json$", "")
+	local function v(x)
+		return { x.X, x.Y, x.Z }
+	end
+	local function c(x)
+		return { x.R, x.G, x.B }
+	end
+	fs.writeFile(base .. ".set.json", serde.encode("json", prims))
+	fs.writeFile(
+		base .. ".set.json.stage.json",
+		serde.encode("json", {
+			light = { ambient = c(view.Ambient), color = c(view.LightColor), dir = v(view.LightDirection) },
+			sky = {},
+			shots = {},
+		})
+	)
+	local eye = cam.CFrame.Position
+	local look = eye + cam.CFrame.LookVector * 10
+	local function csv(x)
+		return string.format("%.4f,%.4f,%.4f", x.X, x.Y, x.Z)
+	end
+	local made = process.exec("python3", {
+		"tools/preview/stage.py",
+		base .. ".set.json",
+		base .. ".set.png",
+		"--eye=" .. csv(eye),
+		"--look=" .. csv(look),
+		"--fov=" .. tostring(cam.FieldOfView),
+		"--size",
+		"1280x720",
+		"--clear",
+	})
+	if not made.ok then
+		print("stage picture: " .. made.stderr)
+		return
+	end
+	process.exec("python3", {
+		"-c",
+		"import sys; from PIL import Image; open(sys.argv[2], 'wb').write(Image.open(sys.argv[1]).convert('RGBA').tobytes())",
+		base .. ".set.png",
+		base .. ".picture990001.rgba",
+	})
+	table.insert(list, { id = 990001, w = 1280, h = 720, file = base .. ".picture990001.rgba" })
+	local function find(node)
+		if node.name == "StageView" then
+			return node
+		end
+		for _, ch in node.children do
+			local f = find(ch)
+			if f then
+				return f
+			end
+		end
+		return nil
+	end
+	local node = find(root)
+	if node then
+		table.insert(node.children, {
+			class = "ImageLabel",
+			name = "StageShot",
+			props = {
+				Size = { 1, 0, 1, 0 },
+				Position = { 0, 0, 0, 0 },
+				BackgroundTransparency = 1,
+				Picture = 990001,
+				ImageColor3 = node.props.ImageColor3 or { 1, 1, 1 },
+				ZIndex = 2,
+				Visible = true,
+			},
+			children = {},
+		})
+	end
+	fs.removeFile(base .. ".set.json")
+	fs.removeFile(base .. ".set.json.stage.json")
+	fs.removeFile(base .. ".set.png")
+end
+
 local function write(path)
 	local root = dump(Sim.gui)
 	local list = {}
+	if stageShot then
+		stagePicture(root, path, list)
+	end
 	for _, p in pictureList do
 		local file = path:gsub("%.json$", "") .. ".picture" .. p.id .. ".rgba"
 		fs.writeFile(file, buffer.tostring(p.image.Pixels))

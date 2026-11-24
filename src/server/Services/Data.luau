@@ -189,6 +189,7 @@ function Data.clientState(player: Player): any
 		offers = p.offers,
 		goals = p.goals,
 		found = p.found,
+		keepsakes = p.keepsakes, -- what villagers made you, for Build mode's Keepsakes tab
 		unsaved = unsaved[player] == true,
 		plot = player:GetAttribute("Plot"),
 		plan = p.plan,

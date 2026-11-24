@@ -4,7 +4,9 @@
 -- stood in for here. The server tells the client a villager spoke (the "Talk" remote), the card
 -- opens, and its answers and every way it closes are tried. Then events: one nobody watches
 -- (only the small prompt, nothing slides in) and one that is watched (the scene, a second and a
--- third villager joining, the one talking lit, an answer sent). Then a craving, bought for the
+-- third villager joining, the one talking lit, an answer sent), and a big moment watched as a
+-- cutscene (its set in place of the busts, the camera easing between shots while the player's
+-- own stays put, a villager walking to her mark, the last click closing it). Then a craving, bought for the
 -- villager from the talk card and from the Villagers screen, with and without the coins.
 --   lune run tests/sim/talk_card.luau          (from the repository root)
 
@@ -425,6 +427,106 @@ run("watching an event already going", function()
 	Sim.remoteEvent("EventEnd"):FireClient(Sim.player, { token = "e4", notices = {} })
 	advance(8)
 	check(scene() == nil and prompt() == nil, "and it all goes when it ends")
+	check(#errors == warned, "no warnings from any of it")
+end)
+
+-- a cutscene: a big moment watched on a set of its own (UI/Cutscene, Data/Cutscenes) ----------------------
+
+run("a big moment, watched as a cutscene", function()
+	local warned = #errors
+	local Stages = Harness.require("ReplicatedStorage.Shared.Data.Stages")
+	local rooftop = Stages.get("rooftop")
+	local ev = {
+		token = "e5",
+		id = "confess",
+		title = "Saying it out loud",
+		names = { a = "Mara", b = "Tobin" },
+		actors = { a = "v1", b = "v2" },
+		lines = {
+			{ text = "Mara has been pacing up and down the roof." },
+			{ who = "a", text = "I'm going to tell Tobin how I feel. Should I?", icon = "sweat" },
+		},
+		choices = { { text = "Go for it" }, { text = "Wait for a better moment" } },
+	}
+	Sim.remoteEvent("EventShow"):FireClient(Sim.player, ev)
+	line("e5", ev.lines[1])
+	check(scene() == nil and prompt() ~= nil, "it starts as the small prompt like any event")
+	local cam = Sim.cam
+	local camType, camAt = cam.CameraType, cam.CFrame
+	press("Watch")
+	local s = scene()
+	check(s ~= nil, "Watch puts the scene up")
+	local stage = s and s:FindFirstChild("Cutscene", true)
+	check(stage ~= nil, "with a set behind the textbox")
+	check(s and s:FindFirstChild("Bust_a", true) == nil, "and no busts sliding in")
+	local view = stage and stage:FindFirstChild("StageView")
+	check(view ~= nil and view:IsA("ViewportFrame") and view:GetAttribute("Stage") == "rooftop", "the rooftop, in a viewport")
+	local world = view and view:FindFirstChild("World")
+	local set = world and world:FindFirstChild("Set")
+	check(set ~= nil and #set:GetChildren() > 200, "the set built in it")
+	local a, b = world and world:FindFirstChild("Actor_a"), world and world:FindFirstChild("Actor_b")
+	check(a ~= nil and b ~= nil, "both of them standing on it")
+	local function feet(actor)
+		local root = actor and actor:FindFirstChild("HumanoidRootPart")
+		local at = root and root.CFrame.Position
+		return at and Vector3.new(at.X, 0, at.Z)
+	end
+	local function flat(v)
+		return Vector3.new(v.X, 0, v.Z)
+	end
+	check(feet(a) and (feet(a) - flat(rooftop.marks[3].at)).Magnitude < 0.3, "the one who will say it on the mark the script gives")
+	check(feet(b) and (feet(b) - flat(rooftop.marks[2].at)).Magnitude < 0.3, "the other on theirs")
+	frames(40)
+	local top = stage and stage:FindFirstChild("BarTop")
+	check(top ~= nil and top.Position.Y.Scale == 0 and top.Size.Y.Scale > 0.05, "the letterbox slides in")
+	check(s and s:FindFirstChild("Box", true).Visible, "the textbox over it")
+	local said = ((s and words(s, "Line")) or ""):gsub("<[^>]+>", "")
+	check(said == "Mara has been pacing up and down the roof.", "the line being said is typed")
+	-- the second line: a close shot on her, eased into
+	local before = view.CurrentCamera.CFrame.Position
+	line("e5", ev.lines[2])
+	frames(3)
+	local close = Stages.close(rooftop, 3)
+	local mid = view.CurrentCamera.CFrame.Position
+	check(
+		(mid - before).Magnitude > 0.01 and (mid - close.eye).Magnitude > 1,
+		"the camera starts toward the next shot without jumping"
+	)
+	advance(2)
+	frames(2)
+	check((view.CurrentCamera.CFrame.Position - close.eye).Magnitude < 0.5, "and ends on a close shot of whoever talks")
+	check(words(s:FindFirstChild("Speaker", true), "Text") == "Mara", "her name on the tag")
+	check(cam.CameraType == camType and cam.CFrame == camAt, "the player's own camera never moves")
+	-- the answers, then she walks over and says it
+	askNow("e5")
+	advance(1)
+	check(s:FindFirstChild("Choice1", true) ~= nil, "the answers come up in the box")
+	press("Choice1")
+	line("e5", { who = "a", text = "Tobin, I like you. Like, really like you.", icon = "heart" })
+	advance(3)
+	frames(2)
+	check(feet(a) and (feet(a) - flat(rooftop.marks[1].at)).Magnitude < 0.3, "she walks over to him for the line that matters")
+	Sim.remoteEvent("EventLine"):FireClient(Sim.player, {
+		token = "e5",
+		line = { who = "b", text = "Oh. I was hoping you'd say that.", icon = "heart", gesture = "cheer" },
+		last = true,
+	})
+	frames(2)
+	advance(2)
+	check(words(s:FindFirstChild("Speaker", true), "Text") ~= nil, "the lines after the answer are said on the set")
+	local box = scene() and scene():FindFirstChild("Box", true)
+	if box then
+		box.InputBegan:Fire({ UserInputType = Enum.UserInputType.MouseButton1 })
+	end
+	frames(3)
+	check(scene() == nil, "a click on the last line closes it")
+	advance(1)
+	check(gui:FindFirstChild("Cutscene", true) == nil, "and the set goes with it")
+	check(Sim.State.data.talking == false, "the main screen comes back")
+	check(cam.CameraType == camType and cam.CFrame == camAt, "with the player's camera where they left it")
+	Sim.remoteEvent("EventEnd"):FireClient(Sim.player, { token = "e5", notices = {} })
+	advance(8)
+	check(prompt() == nil, "the prompt goes when it ends")
 	check(#errors == warned, "no warnings from any of it")
 end)
 

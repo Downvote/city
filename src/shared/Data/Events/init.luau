@@ -197,7 +197,7 @@ event({
 							line("b", "Me too. Want to share the next one?", "heart"),
 						}
 						else {
-							line("a", "Not until they say sorry first!", "anger"),
+							line("a", "Not until they say sorry first.", "anger"),
 							line("b", "Then we'll be here all week.", "anger"),
 						},
 					effects = if works
@@ -267,7 +267,7 @@ event({
 		if loves and food then
 			table.insert(
 				lines,
-				line("b", ctx.f("{food}! That's my favourite!", { food = food.name }), "heart", "cheer")
+				line("b", ctx.f("{food}. That's my favourite.", { food = food.name }), "heart", "cheer")
 			)
 			effects = {
 				{ t = "rel", a = "a", b = "b", d = 14 },
@@ -356,7 +356,7 @@ event({
 			title = "A prank",
 			lines = {
 				line(nil, ctx.f("{a} {prank}.", { prank = prank })),
-				line("a", "Hehehe. Got you!", "sparkle", "laugh"),
+				line("a", "Hehehe. Got you.", "sparkle", "laugh"),
 				if goodSport
 					then line("b", "Okay, okay, that was good. You'll pay for it though.", "music", "laugh")
 					else line("b", "That wasn't funny!", "anger"),
@@ -365,7 +365,7 @@ event({
 				{
 					text = "Laugh along",
 					lines = if goodSport
-						then { line("b", "Ha! Alright. Truce.", "music") }
+						then { line("b", "Ha. Alright. Truce.", "music") }
 						else { line("b", "You're both terrible.", "anger") },
 					effects = if goodSport
 						then { { t = "rel", a = "a", b = "b", d = 8 }, { t = "mood", who = "a", d = 4 } }
@@ -429,9 +429,9 @@ event({
 			title = "Arm wrestling",
 			lines = {
 				line("a", ctx.f("{b}! Arm wrestle. Loser does the dishes."), "idea", "point"),
-				line("b", "You're on!", "sparkle"),
+				line("b", "You're on.", "sparkle"),
 				line(nil, "A lot of grunting later..."),
-				line(winner, "Ha! Dishes are all yours.", "sparkle", "cheer"),
+				line(winner, "Ha. Dishes are all yours.", "sparkle", "cheer"),
 				line(loser, "Next time. Next time for sure.", "sweat"),
 			},
 			effects = {
@@ -467,7 +467,7 @@ event({
 				line(nil, ctx.f("{a} and {b} are making {food} together.", { food = food.name:lower() })),
 				if burnt
 					then line("a", "Is it meant to smell like that?", "sweat")
-					else line("a", "Pass me the spoon!", "music"),
+					else line("a", "Pass me the spoon.", "music"),
 				if burnt
 					then line("b", "...We'll call it extra crispy.", "sweat")
 					else line("b", "This is going to be so good.", "heart"),
@@ -528,8 +528,8 @@ event({
 		return {
 			title = "A race",
 			lines = {
-				line("a", ctx.f("Race you to the fence, {b}!"), "idea", "point"),
-				line(nil, "They're off!"),
+				line("a", ctx.f("Race you to the fence, {b}."), "idea", "point"),
+				line(nil, "And they're off."),
 				line(winner, "I win!", "sparkle", "cheer"),
 				if sore
 					then line(loser, "That didn't count. I wasn't ready.", "anger")
@@ -561,7 +561,7 @@ event({
 			lines = {
 				line("a", joke[1], "music", "point"),
 				if laughs
-					then line("b", "Hahaha! Okay, that's a good one.", "music", "laugh")
+					then line("b", "Hahaha. Okay, that's a good one.", "music", "laugh")
 					else line("b", "...I'm leaving.", "sweat"),
 			},
 			effects = { { t = "rel", a = "a", b = "b", d = if laughs then 6 else -1 } },
@@ -594,7 +594,7 @@ event({
 					text = "Help them look",
 					lines = {
 						line(nil, ctx.f("It was under a flowerpot the whole time.")),
-						line("a", "Thank you both!", "heart", "cheer"),
+						line("a", "Thank you both. I owe you.", "heart", "cheer"),
 					},
 					effects = { { t = "rel", a = "a", b = "b", d = 8 }, { t = "mood", who = "a", d = 6 } },
 				},
@@ -627,7 +627,7 @@ event({
 			title = "A lesson",
 			lines = {
 				line("a", ctx.f("Want me to show you how to {skill}?", { skill = skill }), "idea"),
-				line("b", "Yes please!", "sparkle"),
+				line("b", "Yes please.", "sparkle"),
 				line(nil, "A few tries later, they get it."),
 				line("b", "I did it!", "sparkle", "cheer"),
 			},
@@ -658,7 +658,10 @@ event({
 			choices = {
 				{
 					text = ctx.f("Get them to invite {a}"),
-					lines = { line("b", ctx.f("Hey {a}, come join us!"), "wave"), line("a", "Really? Okay!", "heart") },
+					lines = {
+						line("b", ctx.f("Hey {a}, come and join us."), "wave"),
+						line("a", "Really? Okay.", "heart"),
+					},
 					effects = {
 						{ t = "rel", a = "a", b = "b", d = 8 },
 						{ t = "rel", a = "a", b = "c", d = 8 },
@@ -716,7 +719,7 @@ event({
 								"heart",
 								"cheer"
 							)
-							else line("a", "You're the best!", "heart", "cheer"),
+							else line("a", "You're the best.", "heart", "cheer"),
 					},
 					effects = {
 						{ t = "coins", d = -price },
@@ -760,7 +763,7 @@ event({
 				{
 					text = ctx.f("Here you go ({cost} coins)", { cost = cost }),
 					cost = cost,
-					lines = { line("a", "Thank you! I love it!", "sparkle", "cheer") },
+					lines = { line("a", "Thank you. I love it.", "sparkle", "cheer") },
 					effects = { { t = "coins", d = -cost }, { t = "mood", who = "a", d = 12 } },
 				},
 				{
@@ -875,7 +878,7 @@ event({
 		local amount = ctx.rng:int(Tuning.Rewards.EventCoinsMin, Tuning.Rewards.EventCoinsMax)
 		return {
 			title = "Lucky find",
-			lines = { line("a", ctx.f("Look! {coins} coins in the grass!", { coins = amount }), "sparkle", "cheer") },
+			lines = { line("a", ctx.f("Look. {coins} coins in the grass.", { coins = amount }), "sparkle", "cheer") },
 			effects = { { t = "coins", d = amount } },
 			log = ctx.f("{a} found {coins} coins.", { coins = amount }),
 		}
@@ -906,7 +909,7 @@ event({
 			end
 		end
 		local choices = {}
-		local lines = { line("a", "Achoo! I think I caught a cold.", "sweat") }
+		local lines = { line("a", "Achoo. I think I caught a cold.", "sweat") }
 		if doctor then
 			local name = ctx.v(doctor).name
 			table.insert(choices, {
@@ -983,7 +986,7 @@ event({
 			choices = {
 				{
 					text = "Let's do it",
-					lines = { line("a", "Yay!", "sparkle", "cheer") },
+					lines = { line("a", "Yay. Let's go.", "sparkle", "cheer") },
 					effects = { { t = "creator", who = "a" }, { t = "mood", who = "a", d = 6 } },
 				},
 				{
@@ -1061,8 +1064,8 @@ event({
 				{
 					text = ctx.f("Introduce them to {b}"),
 					lines = {
-						line("b", ctx.f("Hi {a}! I've been meaning to say hello."), "wave"),
-						line("a", "Oh! Hi!", "heart"),
+						line("b", ctx.f("Hi {a}. I've been meaning to say hello."), "wave"),
+						line("a", "Oh. Hi.", "heart"),
 					},
 					effects = { { t = "rel", a = "a", b = "b", d = 12 }, { t = "mood", who = "a", d = 6 } },
 				},
@@ -1105,9 +1108,9 @@ event({
 		return {
 			title = "Happy birthday",
 			lines = {
-				line(nil, ctx.f("It's {a}'s birthday today!")),
+				line(nil, ctx.f("It's {a}'s birthday today.")),
 				line(nil, "Everyone gathers round with cake."),
-				line("a", "You all remembered! This is the best.", "heart", "cheer"),
+				line("a", "You all remembered. This is the best.", "heart", "cheer"),
 			},
 			effects = effects,
 			log = ctx.f("{a} had a birthday party."),
@@ -1183,7 +1186,7 @@ event({
 		end
 		return {
 			title = "Dance party",
-			lines = { line(nil, "Someone turned the music up. Everyone's dancing!") },
+			lines = { line(nil, "Someone turned the music up. Everyone's dancing.") },
 			effects = effects,
 			log = "There was a dance party.",
 		}
@@ -1209,7 +1212,7 @@ event({
 		return {
 			title = "Shooting stars",
 			lines = {
-				line(nil, "Shooting stars over town! Everyone makes a wish."),
+				line(nil, "Shooting stars over town. Everyone makes a wish."),
 				line(nil, "Nobody says what they wished for. They all stay up far too late."),
 			},
 			effects = effects,
@@ -1292,8 +1295,8 @@ event({
 		return {
 			title = "A busy day",
 			lines = {
-				line(nil, ctx.f("Customers keep queueing at {a}'s {place}.", { place = place })),
-				line("a", "I've never been this busy! I love it.", "sparkle", "cheer"),
+				line(nil, ctx.f("Customers keep queueing up at {a}'s counter.", { place = place })),
+				line("a", "I've never been this busy. I love it.", "sparkle", "cheer"),
 			},
 			effects = { { t = "coins", d = coins }, { t = "mood", who = "a", d = 5 }, { t = "xp", who = "a", d = 15 } },
 			log = ctx.f("{a} had a busy day at the {place}.", { place = place }),
@@ -1319,7 +1322,7 @@ event({
 			choices = {
 				{
 					text = "Go and rest",
-					lines = { line("a", "Thank you! Hammock, here I come.", "heart", "cheer") },
+					lines = { line("a", "Thank you. Hammock, here I come.", "heart", "cheer") },
 					effects = { { t = "dayoff", who = "a" }, { t = "mood", who = "a", d = 10 } },
 				},
 				{
@@ -1498,7 +1501,7 @@ event({
 		return {
 			title = "Saying it out loud",
 			lines = {
-				line(nil, ctx.f("{a} has been pacing by the fountain all morning.")),
+				line(nil, ctx.f("{a} has been pacing up and down the roof all morning.")),
 				line("a", ctx.f("I'm going to tell {b} how I feel. Should I?"), "sweat"),
 			},
 			choices = {

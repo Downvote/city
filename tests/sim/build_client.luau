@@ -245,7 +245,9 @@ run("every tab and tool opens without an error", function()
 			local shown = Fake.find(tray, function(d)
 				return d:IsA("GuiButton") and Fake.shown(d)
 			end)
-			check(#shown > 0, main .. " / " .. labelOf(b):gsub("^%s+", "") .. " fills the tray")
+			-- (Keepsakes is empty until a villager gives you something: it says so instead)
+			local empty = labelOf(b):find("Keepsakes", 1, true) ~= nil and tray:FindFirstChild("Note", true) ~= nil
+			check(#shown > 0 or empty, main .. " / " .. labelOf(b):gsub("^%s+", "") .. " fills the tray")
 			mouseAtPlot(120, 60)
 		end
 	end
@@ -276,6 +278,70 @@ run("every tab and tool opens without an error", function()
 	mouseAtPlot(120, 60)
 	press("FloorDown")
 	check(BuildMode.state.level == 0, "and down")
+	check(#errors == warned, "no warnings from any of it")
+end)
+
+run("keepsakes: free, and only as many as a villager gave you", function()
+	local warned = #errors
+	press("Furniture")
+	press("Keepsakes")
+	frames(2)
+	local tray = gui:FindFirstChild("Tray", true)
+	local function cards()
+		return Fake.find(tray, function(d)
+			return d:IsA("TextButton") and Fake.shown(d) and d:GetAttribute("ItemId") ~= nil
+		end)
+	end
+	local note = tray:FindFirstChild("Note", true)
+	check(#cards() == 0 and note ~= nil, "nothing given yet: the tray says so")
+	check(labelOf(note):find("Nothing here yet", 1, true) ~= nil, "in plain words")
+	-- a villager makes you a pot (Sim/EventEngine's keepsake effect), and the server says so
+	profile.keepsakes = { keep_pot = 1 }
+	Sim.remoteEvent("State"):FireClient(Sim.player, { keepsakes = profile.keepsakes })
+	frames(3)
+	local list = cards()
+	check(#list == 1 and list[1]:GetAttribute("ItemId") == "keep_pot", "the pot shows up in the tray")
+	check(labelOf(list[1]):find("Free, 1 left", 1, true) ~= nil, "free, with one to put down")
+	local before, coins = count("items"), profile.coins
+	list[1].Activated:Fire()
+	frames(2)
+	check(BuildMode.state.placing ~= nil, "clicking it picks it up")
+	check(mouseAtPlot(140, 40), "the spot is on screen")
+	click()
+	frames(3)
+	check(count("items") == before + 1, "it goes down")
+	check(profile.coins == coins, "and costs nothing")
+	-- put the hand away (right click), and the bars come back
+	input(Enum.UserInputType.MouseButton2, true)
+	input(Enum.UserInputType.MouseButton2, false)
+	frames(2)
+	Sim.advance(1)
+	list = cards()
+	check(#list == 1 and labelOf(list[1]):find("None left", 1, true) ~= nil, "the card says none are left")
+	list[1].Activated:Fire()
+	frames(2)
+	check(BuildMode.state.placing == nil, "and picks nothing up")
+	-- the server won't take a second one either, however it's asked
+	local ok, why = Sim.remoteFn("BuildApply").OnServerInvoke(Sim.player, {
+		{ type = "add", kind = "items", obj = { id = "keep_pot", x = 150, y = 0, z = 40, r = 0, lv = 0 } },
+	})
+	check(ok == false and type(why) == "string", "the server refuses a second one: " .. tostring(why))
+	check(count("items") == before + 1, "so there's still only the one")
+	-- sold, it can go down again
+	local key
+	for k, item in profile.plan.items do
+		if item.id == "keep_pot" then
+			key = k
+		end
+	end
+	Sim.advance(0.2)
+	ok = Sim.remoteFn("BuildApply").OnServerInvoke(Sim.player, { { type = "remove", kind = "items", key = key } })
+	frames(3)
+	check(ok == true and profile.coins == coins, "selling it gives nothing back, as it cost nothing")
+	list = cards()
+	check(#list == 1 and labelOf(list[1]):find("Free, 1 left", 1, true) ~= nil, "and it's back in the tray to put down")
+	BuildMode.setTool("select")
+	frames(2)
 	check(#errors == warned, "no warnings from any of it")
 end)
 

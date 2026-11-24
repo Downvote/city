@@ -171,6 +171,22 @@ name one of your own villagers already has stays away. The server reads the frie
 nobody turns up until it has it, so a newcomer can't jump the queue while it loads (`Sim/Newcomers`, with its own
 spec).
 
+### Many more events, things in the world, keepsakes
+
+> make much much more random events. custom objects, conversations, etc., just like tomodachi life
+
+The town has well over two hundred events: everyday oddities (hiccups that won't stop, odd socks, a giant marrow,
+a sneeze that scares a cat), weather and seasons, dreams, work, romance, the whole town (a power cut, a talent
+night, a stone snail in the square, a whale off the pier), and villagers asking your advice. Each personality has
+its own voice for every reaction, so a shy villager and a loud one play the same event differently. Conversations
+are made from parts (topics, replies by personality and friendship, gossip, dreams compared, spats that fizzle,
+debates you settle), and street chats use the same parts. Events bring things into the world (a picnic rug, a cake
+with candles, a snowman, a sandcastle, a lost dog), and some stay for a few hours. A villager who made something
+may give it to you as a keepsake: a free Build mode piece under Furniture, Keepsakes, which you can put down as many
+times as you were given it. Holding E, villagers also talk about their last event, their neighbours, a worry, a
+joke, the season and the weather. Events that came up lately are much less likely to come again. Nothing in them
+comes from the game the user named: the events, lines, props and keepsakes are this town's own.
+
 ## 5. Building
 
 Bloxburg style, all on a grid and all saved:

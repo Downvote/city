@@ -2,6 +2,12 @@
 -- event, borrows the villagers involved, walks them together, plays the lines as speech bubbles
 -- while the owner's screen shows the scene, waits for a choice if there is one, then applies what
 -- happened. Also hands out room request rewards and small friendship gains from casual chats.
+--
+-- Events bring things into the world (the user: "make much much more random events. custom
+-- objects, conversations, etc."): the props a scene names (Data/EventProps) are put down by its
+-- stars when they have gathered and taken away when it ends, an answer can bring its own, and a
+-- "leave" effect keeps one about for some hours (a snowman, a sandcastle). They are plain parts
+-- that nobody bumps into, kept in Workspace.EventProps, a few per town at most.
 
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
@@ -18,6 +24,9 @@ local Appearance = require(Shared.Avatar.Appearance)
 local Rng = require(Shared.Util.Rng)
 local Text = require(Shared.Util.Text)
 local Remotes = require(Shared.Net.Remotes)
+local EventProps = require(Shared.Data.EventProps)
+local EventData = require(Shared.Data.Events)
+local Builder = require(Shared.Build.Builder)
 
 local Data = require(script.Parent.Data)
 local Plots = require(script.Parent.Plots)
@@ -245,6 +254,214 @@ local function visitor(player: Player, name: string, key: any)
 	task.spawn(Villagers.spawn, player, vid)
 end
 
+-- Props ----------------------------------------------------------------------------------------
+
+type Left = { model: Model, untilT: number }
+local lingering: { [Player]: { Left } } = {} -- what events have left lying about, oldest first
+local onStage: { [Player]: { Model } } = {} -- the props of the scene playing now
+
+local function propsRoot(): Folder
+	local root = workspace:FindFirstChild("EventProps")
+	if not root then
+		root = Instance.new("Folder")
+		root.Name = "EventProps"
+		root.Parent = workspace
+	end
+	return root :: Folder
+end
+
+-- The ground under a point: a ray down past villagers, players and other props (water doesn't
+-- count). Without a hit, a little under the point (a villager's middle is about that high).
+local function groundAt(at: Vector3): Vector3
+	local skip: { Instance } = { propsRoot() }
+	for _, p in Players:GetPlayers() do
+		if p.Character then
+			table.insert(skip, p.Character)
+		end
+	end
+	local index = nil
+	for _, p in Players:GetPlayers() do
+		index = Plots.indexOf(p)
+		if index then
+			table.insert(skip, Plots.villagerFolder(index))
+		end
+	end
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = skip
+	params.IgnoreWater = true
+	local hit = workspace:Raycast(at + Vector3.new(0, 20, 0), Vector3.new(0, -60, 0), params)
+	return if hit then hit.Position else at - Vector3.new(0, 3, 0)
+end
+
+-- Where the i-th prop of a scene goes: beside the star it belongs to, on the side away from the
+-- others, turned to face them. With no stars (a town event) by whoever is about, else the plot.
+local function spotFor(player: Player, ev: any, by: string?, i: number, size: Vector3): CFrame?
+	local points: { Vector3 } = {}
+	for _, vid in ev.order do
+		local npc = Villagers.get(player, vid)
+		if npc and npc.model.Parent then
+			table.insert(points, npc:position())
+		end
+	end
+	if #points == 0 then
+		for _, vid in Villagers.list(player) do
+			local npc = Villagers.get(player, vid)
+			if npc and npc.model.Parent and not npc.sleeping then
+				table.insert(points, npc:position())
+				break
+			end
+		end
+	end
+	if #points == 0 then
+		local index = Plots.indexOf(player)
+		if not index then
+			return nil
+		end
+		table.insert(points, Plots.frame(index).Position + Vector3.new(0, 3, 0))
+	end
+	local center = Vector3.zero
+	for _, p in points do
+		center += p
+	end
+	center /= #points
+	local anchor = center
+	local star = by and ev.actors[by]
+	local npc = star and Villagers.get(player, star)
+	if npc and npc.model.Parent then
+		anchor = npc:position()
+	end
+	local away = Vector3.new(anchor.X - center.X, 0, anchor.Z - center.Z)
+	local turn = (i - 1) * 1.3 + 0.6
+	if away.Magnitude < 0.5 then
+		away = Vector3.new(math.cos(turn), 0, math.sin(turn))
+	else
+		away = CFrame.Angles(0, (i - 1) * 0.9, 0) * away.Unit
+	end
+	local reach = 3 + math.max(size.X, size.Z) / 2
+	local ground = groundAt(anchor + away.Unit * reach)
+	-- its front (+z) towards the stars
+	local look = Vector3.new(center.X - ground.X, 0, center.Z - ground.Z)
+	if look.Magnitude < 0.1 then
+		look = -away
+	end
+	return CFrame.lookAt(ground, ground - look.Unit)
+end
+
+-- Puts a prop down; nil when there's no such prop or nowhere to put it.
+local function spawnProp(player: Player, id: string, cf: CFrame?): Model?
+	if not cf or not EventProps.get(id) then
+		return nil
+	end
+	local prims = EventProps.prims(id)
+	if #prims == 0 then
+		return nil
+	end
+	local model = Instance.new("Model")
+	model.Name = "Prop"
+	model:SetAttribute("Prop", id)
+	model:SetAttribute("Owner", player.UserId)
+	local ok, err = pcall(function()
+		Builder.instantiate(prims, model, cf, { plain = true })
+	end)
+	if not ok then
+		warn("[Events] prop", id, err)
+		model:Destroy()
+		return nil
+	end
+	-- seen, never bumped into, clicked or stood on
+	for _, part in model:GetDescendants() do
+		if part:IsA("BasePart") then
+			part.Anchored = true
+			part.CanCollide = false
+			part.CanQuery = false
+			part.CanTouch = false
+		end
+	end
+	model.Parent = propsRoot()
+	return model
+end
+
+-- Puts down a list of { id, by } props for a scene playing now.
+local function stage(player: Player, ev: any, list: { any }?)
+	local shown = onStage[player] or {}
+	onStage[player] = shown
+	local props: { any } = list or {}
+	for _, p in props do
+		local prop = type(p) == "table" and EventProps.get(p.id)
+		if prop then
+			local model = spawnProp(player, p.id, spotFor(player, ev, p.by, #shown + 1, prop.size))
+			if model then
+				table.insert(shown, model)
+			end
+		end
+	end
+end
+
+-- Keeps a prop about for some in-game hours: the one the scene showed, or a new one. The oldest
+-- goes when a town has too many.
+local function leave(player: Player, ev: any, e: any)
+	local prop = EventProps.get(e.prop)
+	local hours = tonumber(e.hours)
+	if not prop or not hours or hours <= 0 then
+		return
+	end
+	local model: Model? = nil
+	local shown = onStage[player] or {}
+	for i, m in shown do
+		if m:GetAttribute("Prop") == e.prop then
+			model = table.remove(shown, i)
+			break
+		end
+	end
+	if not model then
+		local by = nil
+		for letter, vid in ev.actors do
+			if vid == e.byVid then
+				by = letter
+			end
+		end
+		model = spawnProp(player, e.prop, spotFor(player, ev, by, 1, prop.size))
+	end
+	if not model then
+		return
+	end
+	local list = lingering[player] or {}
+	lingering[player] = list
+	table.insert(list, { model = model, untilT = os.clock() + math.min(hours, 72) * Tuning.Day.Length / 24 })
+	while #list > E.PropsMax do
+		local oldest = table.remove(list, 1)
+		if oldest then
+			oldest.model:Destroy()
+		end
+	end
+end
+
+-- Takes away the scene's props (what it left about stays).
+local function clearStage(player: Player)
+	local shown = onStage[player]
+	onStage[player] = nil
+	for _, m in shown or {} do
+		m:Destroy()
+	end
+end
+
+-- Things left about too long go.
+local function tidyProps(player: Player)
+	local list = lingering[player]
+	if not list then
+		return
+	end
+	local now = os.clock()
+	for i = #list, 1, -1 do
+		local left = list[i]
+		if left.untilT <= now or not left.model.Parent then
+			table.remove(list, i)
+			left.model:Destroy()
+		end
+	end
+end
+
 -- Carries out the effects the engine leaves to the server.
 local function serviceEffects(player: Player, ev: any, list: { any })
 	for _, e in list do
@@ -271,6 +488,8 @@ local function serviceEffects(player: Player, ev: any, list: { any })
 			end
 		elseif e.t == "creator" then
 			Remotes.event("Notify"):FireClient(player, "open:creator:" .. (e.vid or ""), "action")
+		elseif e.t == "leave" then
+			leave(player, ev, e)
 		end
 	end
 end
@@ -304,6 +523,8 @@ local function play(player: Player, ev: any)
 		running[player] = nil
 		return
 	end
+	-- the scene's things, by the stars now they have gathered
+	stage(player, ev, scene.props)
 	local focus = ev.order[1] and Villagers.get(player, ev.order[1])
 	showEvent:FireClient(player, {
 		token = token,
@@ -329,10 +550,12 @@ local function play(player: Player, ev: any)
 		if c then
 			effects = c.effects or {}
 			after = c.lines or {}
+			stage(player, ev, c.props)
 		end
 		playLines(player, ev, after, token, true)
 	end
 	if not player.Parent then
+		clearStage(player)
 		return
 	end
 	profile.calendarDay = World.dayIndex()
@@ -351,12 +574,13 @@ local function play(player: Player, ev: any)
 		Data.notify(player, n, "event")
 	end
 	player:SetAttribute("Coins", profile.coins)
-	Data.push(player, "coins", "villagers", "rel", "requests", "stats", "offers")
+	Data.push(player, "coins", "villagers", "rel", "requests", "stats", "offers", "keepsakes")
 	for _, vid in ev.order do
 		if Villagers.control(player, vid) == "event" then
 			Villagers.setControl(player, vid, nil)
 		end
 	end
+	clearStage(player)
 	running[player] = nil
 end
 
@@ -412,12 +636,22 @@ function Events.trigger(player: Player, forceId: string?): boolean
 	profile.calendarDay = World.dayIndex()
 	local ev
 	if forceId then
-		-- for testing in Studio: pick until that event comes up
-		for _ = 1, 200 do
-			local e = EventEngine.pick(ctx, {})
-			if e and e.id == forceId then
-				ev = e
-				break
+		-- for testing in Studio: that event, with whoever around it can happen to
+		local def = EventData.get(forceId)
+		if def and EventEngine.allowedNow(def, hour) then
+			for _ = 1, 60 do
+				local order = rng:shuffle(present)
+				local stars = {}
+				for i = 1, def.actors do
+					stars[i] = order[i]
+				end
+				if #stars == def.actors then
+					local ok, w = pcall(def.weight, ctx, stars[1], stars[2], stars[3])
+					if ok and type(w) == "number" and w > 0 then
+						ev = EventEngine.stage(ctx, def, stars)
+						break
+					end
+				end
 			end
 		end
 	else
@@ -571,6 +805,12 @@ function Events.start()
 		nextAt[player] = nil
 		paused[player] = nil
 		friendsOf[player] = nil
+		clearStage(player)
+		local list: { Left } = lingering[player] or {}
+		for _, left in list do
+			left.model:Destroy()
+		end
+		lingering[player] = nil
 	end)
 	Players.PlayerAdded:Connect(function(player)
 		task.spawn(loadFriends, player)
@@ -605,6 +845,7 @@ function Events.start()
 			task.wait(10)
 			for _, player in Players:GetPlayers() do
 				checkRequests(player)
+				tidyProps(player)
 			end
 		end
 	end)
