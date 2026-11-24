@@ -325,7 +325,7 @@ end
 -- Body under everything in it draws the shape, in the face's colour. So recolour a leaning face
 -- with Kit.paint and read its colour with Kit.colorOf, never through its BackgroundColor3. (Where
 -- the game can't make pictures the face keeps its colour and gets a sharp wedge on each end.)
-function Kit.slant(face: GuiObject, height: number?, outside: boolean?, flip: boolean?): number
+function Kit.slant(face: GuiObject, height: number?, outside: boolean?, flip: boolean?, sharp: string?): number
 	local h = height or face.Size.Y.Offset
 	if h <= 0 then
 		h = 40
@@ -341,7 +341,11 @@ function Kit.slant(face: GuiObject, height: number?, outside: boolean?, flip: bo
 	end
 	face:SetAttribute("Cap", cap)
 	face:SetAttribute("Tall", h)
-	local pic = Skin.slab(h, cap, flip == true, pointOf(h))
+	if sharp then
+		-- (one end left sharp, where this slab meets another: Skin.paintSlab)
+		face:SetAttribute("Sharp", sharp)
+	end
+	local pic = Skin.slab(h, cap, flip == true, pointOf(h), nil, nil, sharp)
 	if pic then
 		local body = slabLayer(face, "Body", pic, cap, -3)
 		body.ImageColor3 = face.BackgroundColor3
@@ -2376,7 +2380,7 @@ end
 -- user, of the pill shaped Claim button: "make these type of shapes everywhere parallograms instead
 -- of rounded rectangles"). The button's own background stays clear; `height` is its height in
 -- pixels when its Size doesn't say (a button sized by scale).
-local function chunky(b: GuiButton, color: Color3, _radius: any, lip: number, height: number?)
+local function chunky(b: GuiButton, color: Color3, _radius: any, lip: number, height: number?, sharp: string?)
 	b.BackgroundTransparency = 1
 	b:SetAttribute("KitButton", true)
 	b:SetAttribute("Lip", lip)
@@ -2388,7 +2392,7 @@ local function chunky(b: GuiButton, color: Color3, _radius: any, lip: number, he
 		ZIndex = b.ZIndex,
 		Parent = b,
 	})
-	Kit.slant(face, if height and height > 0 then height - lip else nil)
+	Kit.slant(face, if height and height > 0 then height - lip else nil, nil, nil, sharp)
 	Kit.shade(face)
 	return face
 end
@@ -2420,7 +2424,7 @@ function Kit.button(text: string, props: { [string]: any }?, onClick: (() -> ())
 		AutomaticSize = p.AutomaticSize or Enum.AutomaticSize.None,
 		Parent = p.Parent,
 	})
-	chunky(b, color, p.Radius or 12, lip, size.Y.Offset)
+	chunky(b, color, p.Radius or 12, lip, size.Y.Offset, p.Sharp)
 	local content = Kit.new("Frame", {
 		Name = "Content",
 		BackgroundTransparency = 1,

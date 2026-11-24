@@ -1868,6 +1868,11 @@ button now is the slab's whole right end: as tall as the quest, its slanted edge
 reads as one leaning bar that turns yellow at its end. It no longer grows under the pointer (it would stand out past
 the edge), only dips a little when pressed.
 
+> make it like this
+
+(With a picture of the yellow meeting the dark in one clean slanted line, only the far end's corners rounded.) So the
+Claim button's left end is a sharp cut, no rounding, while its right end keeps the quest's own rounded points.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

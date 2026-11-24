@@ -136,8 +136,10 @@ local function quest(g: any, order: number): Frame
 		local claim = Kit.button(Text.fill("Claim {n}", { n = Text.commas(g.goal.reward) }), {
 			Name = "Claim",
 			Parent = slab,
-			Size = UDim2.new(0, CLAIM_WIDTH + lean, 1, 0),
+			Size = UDim2.fromOffset(CLAIM_WIDTH + lean, ROW - 6),
 			Position = UDim2.new(1, lean, 0, 0),
+			-- its left end a clean slanted cut into the quest, its right end the quest's own
+			Sharp = "left",
 			AnchorPoint = Vector2.new(1, 0),
 			Color = T.Yellow,
 			TextColor = T.Dark,

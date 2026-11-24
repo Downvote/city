@@ -103,23 +103,41 @@ end
 -- A leaning slab `h` tall whose ends run `cap` sideways, its four points rounded by `r`, all in
 -- pixels of the interface. Only its two ends and a sliver of middle are painted (see `cap` in
 -- what comes back: the width of one end, pad and all). With `line`, a thin line `line` wide,
--- `gap` in from the edge, is painted in place of the solid shape: a rim.
-function Skin.paintSlab(h: number, cap: number, flip: boolean, r: number, gap: number?, line: number?): Painted
+-- `gap` in from the edge, is painted in place of the solid shape: a rim. `sharp` ("left" or
+-- "right") leaves that end's two points sharp: a slab that meets another along that end, as the
+-- quests' Claim button meets its quest (the user: "make it like this", a clean slanted cut).
+function Skin.paintSlab(
+	h: number,
+	cap: number,
+	flip: boolean,
+	r: number,
+	gap: number?,
+	line: number?,
+	sharp: string?
+): Painted
 	local s = Skin.Scale
 	local pad = Skin.Pad
 	local endW = cap + math.ceil(r) + 2 -- an end: its slant and the round of its points
 	local wUI = endW * 2 + 2
 	local W, H = (wUI + pad * 2) * s, (h + pad * 2) * s
 	local rr = math.min(r, h / 2 - 0.5) * s
-	local core = inset(corners(wUI * s, h * s, cap * s, flip), rr)
+	local shape = corners(wUI * s, h * s, cap * s, flip)
+	local core = inset(shape, rr)
 	local pixels = buffer.create(W * H * 4)
 	local off = pad * s
 	local a = (gap or 0) * s
 	local t = (line or 0) * s
 	for y = 0, H - 1 do
 		for x = 0, W - 1 do
-			-- how far outside the rounded shape's edge this pixel's middle is
-			local e = distance(core, x + 0.5 - off, y + 0.5 - off) - rr
+			-- how far outside the rounded shape's edge this pixel's middle is (or the sharp
+			-- shape's, at a sharp end: the two edges are one along the top and the bottom)
+			local px = x + 0.5 - off
+			local e
+			if (sharp == "left" and x < W / 2) or (sharp == "right" and x >= W / 2) then
+				e = distance(shape, px, y + 0.5 - off)
+			else
+				e = distance(core, px, y + 0.5 - off) - rr
+			end
 			local cov
 			if line then
 				cov = math.clamp(0.5 - (e + a), 0, 1) - math.clamp(0.5 - (e + a + t), 0, 1)
@@ -283,10 +301,11 @@ local function picture(key: string, paint: () -> Painted): Pic?
 end
 
 -- The picture of a leaning slab (see Skin.paintSlab), or nil when the game can't make pictures.
-function Skin.slab(h: number, cap: number, flip: boolean, r: number, gap: number?, line: number?): Pic?
-	local key = string.format("slab:%d:%d:%s:%.1f:%.1f:%.1f", h, cap, tostring(flip), r, gap or -1, line or -1)
+function Skin.slab(h: number, cap: number, flip: boolean, r: number, gap: number?, line: number?, sharp: string?): Pic?
+	local key =
+		string.format("slab:%d:%d:%s:%.1f:%.1f:%.1f:%s", h, cap, tostring(flip), r, gap or -1, line or -1, sharp or "-")
 	return picture(key, function()
-		return Skin.paintSlab(h, cap, flip, r, gap, line)
+		return Skin.paintSlab(h, cap, flip, r, gap, line, sharp)
 	end)
 end
 

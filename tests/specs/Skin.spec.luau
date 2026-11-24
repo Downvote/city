@@ -64,6 +64,35 @@ describe("Skin", function()
 		expect(ink(round) > full * 0.93).toBeTruthy()
 	end)
 
+	it("leaves one end sharp when asked, and only that end", function()
+		-- the quests' Claim button meets its quest along a clean slanted cut ("make it like this")
+		local h, cap, r = 42, 12, 7
+		local round = Skin.paintSlab(h, cap, false, r)
+		local left = Skin.paintSlab(h, cap, false, r, nil, nil, "left")
+		local right = Skin.paintSlab(h, cap, false, r, nil, nil, "right")
+		local s, pad = Skin.Scale, Skin.Pad
+		local mid = round.w // 2
+		local function half(p, from, to)
+			local total = 0
+			for y = 0, p.h - 1 do
+				for x = from, to do
+					total += alpha(p, x, y)
+				end
+			end
+			return total
+		end
+		-- the sharp end covers more than the round one (its points are whole), the other end is
+		-- the same pixel for pixel
+		expect(half(left, 0, mid - 1) > half(round, 0, mid - 1)).toBeTruthy()
+		expect(half(left, mid, round.w - 1)).toBe(half(round, mid, round.w - 1))
+		expect(half(right, mid, round.w - 1) > half(round, mid, round.w - 1)).toBeTruthy()
+		expect(half(right, 0, mid - 1)).toBe(half(round, 0, mid - 1))
+		-- the sharp end's bottom point is there, right at its corner
+		local bx, by = pad * s + 1, (pad + h) * s - 2
+		expect(alpha(left, bx, by) > 0.5).toBeTruthy()
+		expect(alpha(round, bx, by) < 0.5).toBeTruthy()
+	end)
+
 	it("is the same turned half way round", function()
 		-- a leaning slab turned 180 degrees is itself
 		local p = Skin.paintSlab(46, 14, false, 8)
