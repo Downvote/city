@@ -96,6 +96,9 @@ function Schema.newProfile(): any
 		goals = {}, -- town goals claimed, by id
 		arrived = {}, -- everyone who has ever moved in from the road, by key (Sim/Newcomers)
 		keepsakes = {}, -- things villagers made you, by catalog id: how many of each (Sim/Keepsakes)
+		-- what the player has earned at a workplace with their own hands today (Sim/PlayerWork):
+		-- the town day it is for, the part of a coin not handed over yet, the whole coins that were
+		work = { day = -1, owed = 0, paid = 0 },
 		recent = {},
 		calendar = { s = 1, d = 1, y = 1 },
 	}

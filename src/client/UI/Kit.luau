@@ -826,7 +826,7 @@ function Kit.brackets(frame: GuiObject, props: { [string]: any }?): Frame
 				BackgroundColor3 = color,
 				BackgroundTransparency = p.Transparency or 0,
 				BorderSizePixel = 0,
-				Size = if across then UDim2.new(1, 0, 0, thick) else UDim2.new(0, thick, 1, 0),
+				Size = if across then UDim2.fromOffset(arm, thick) else UDim2.fromOffset(thick, arm),
 				AnchorPoint = anchor,
 				Position = UDim2.fromScale(anchor.X, anchor.Y),
 				ZIndex = z,

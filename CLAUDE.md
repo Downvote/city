@@ -182,7 +182,21 @@ chat is worth is `Sim/Talk` (numbers in `Tuning.Talk`), and the owner's card is 
 
 The user asked for things to move "where possible": buttons, screens and the town are animated (docs/GAME_DESIGN.md
 section 10). New buttons get it from `UI/Kit`; new moving scenery goes in `World/Ambience` (client only, one loop,
-`BulkMoveTo`), and the simulation checks it runs.
+`BulkMoveTo`), and the simulation checks it runs. The interface moves crisp and exact, after that game's menus
+("polish the ui and menu everywhere much further, along with button animations to be more suitable, referencing
+zenless zone zero menus"): `Kit.press(button, { Kind })` is every control's motion (under the pointer a band of
+light sweeps once across the face cut to its shape, the face brightens a touch and grows 2 to 3%, a marker comes in
+at the leading edge: a chevron on a pill, a ring round a round button, brackets on a tile, a bar and a nudge on a
+row, a line under a quick menu tile; a press dips to 0.97 with a flash; release settles back), all tweens in
+`Kit.Motion` (Quint or Quad, never Back, Bounce or Elastic) and its layers made on the first hover. Never bring back
+the wiggle, the icon hop or a springy rebound, and never animate a leaning face's BackgroundColor3 (its layers
+move). Touch gets the press with nothing that needs a hover. A picked pill slides between tabs (`Kit.glide`). A
+`Kit.panel` brings itself in (the black fades up, the card slides in from the right, the title from the left, then
+what was marked with `Kit.mark` comes in one after another through `Kit.revealIn`) and a screen closes it with
+`Kit.closePanel(panel)`, never `panel.root:Destroy()`; what is closing moves to a ScreenGui of its own at once, so
+nothing finds it by name. Detail is drawn with `Kit.brackets`, `Kit.rule` (a hairline ending in a dot),
+`Kit.caption` (small capitals set wide), `Kit.index`, `Kit.ghost` (a faint big word behind a title) and
+`Kit.ticks`. Preview the hover states with the scenes `hover` and `hover:menu`.
 
 The user asked for the genre's own layouts (house builders, avatar editors, city builders), then for a bright,
 cozy look like the life sims they showed, then named a mobile city builder (Pocket City 2) as the UI and graphics
@@ -315,8 +329,10 @@ building, a door or window, a piece being moved or copied), the whole interface 
 the hint stays, at the bottom left ("when placing down things in build mode, make the whole interface slide down
 other than this tooltip, then reappear once the player puts it away"); it comes back when the piece is put away
 or Build mode is left. `BuildUI`'s holding check, once a frame, is the one place that decides it, and what has slid
-off is hidden so it can't catch a click. The tools that draw keep their trays. A touch player gets two round
-buttons beside the hint, "Turn it" and "Put it away" (`BuildMode.putAway`).
+off is hidden so it can't catch a click. The tools that draw keep their trays. Beside the hint stands the red
+leaning way back (`Kit.backButton`, named "Put it away"), for every player, doing what a right click does
+(`BuildMode.putAway`; the user: "add a back button while having a building being put down that does the same as
+right click"), and a touch player gets a round "Turn it" button beside it too.
 Icons are vector art (the user: "Alot of the icons arent proper vector art and just shapes spliced together,
 look online to see how vector art should be. Make them as simple as possible"): paths in `UI/IconArt` on a 24
 grid, painted by `UI/Vector` into an EditableImage sheet when the game runs. They were thin line art; then the

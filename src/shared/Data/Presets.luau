@@ -13,6 +13,7 @@
 
 local Plan = require(script.Parent.Parent.Build.Plan)
 local Catalog = require(script.Parent.Parent.Build.Catalog)
+local Spread = require(script.Parent.Parent.Build.Spread)
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 
 local Presets = {}
@@ -29,6 +30,7 @@ export type Preset = {
 	w: number,
 	d: number,
 	objects: { Obj },
+	spread: { Spread.Cuts }, -- how it was opened up (Blueprint.spread), for the previews
 }
 
 -- finishes, from the town's palette: light walls, roofs a few steps darker and only gently
@@ -51,10 +53,12 @@ local SHINGLE_BROWN = { c = "B87C64", m = "RoofShingles" } -- a clay brown
 local Blueprint = {}
 Blueprint.__index = Blueprint
 
-type Blueprint = typeof(setmetatable({} :: { objects: { Obj }, walls: { [string]: any } }, Blueprint))
+type Blueprint = typeof(
+	setmetatable({} :: { objects: { Obj }, walls: { [string]: any }, cuts: { Spread.Cuts } }, Blueprint)
+)
 
 local function blueprint(): Blueprint
-	return setmetatable({ objects = {}, walls = {} }, Blueprint)
+	return setmetatable({ objects = {}, walls = {}, cuts = {} }, Blueprint)
 end
 
 function Blueprint.floor(self: Blueprint, x1: number, z1: number, x2: number, z2: number, finish: Finish, lv: number?)
@@ -184,6 +188,26 @@ function Blueprint.item(self: Blueprint, id: string, x: number, z: number, r: nu
 	})
 end
 
+-- Opens up what is drawn so far: floor let in along lines across it, `cuts` = { x = { { at, by },
+-- ... }, z = { ... } } (Build/Spread). The rooms are drawn tight, then spread to the size the user
+-- asked for ("make the houses and other buildings bigger such that the interior feels much more
+-- spacious"); whatever is drawn after this is in the opened up building's own coordinates (more
+-- furniture for the new floor, a wider door).
+function Blueprint.spread(self: Blueprint, cuts: Spread.Cuts)
+	local entries: { Spread.Entry } = {}
+	for _, o in self.objects do
+		table.insert(entries, { kind = o.kind, obj = o.obj, wall = if o.wallName then self.walls[o.wallName] else nil })
+	end
+	local names: { [any]: string } = {}
+	for name, w in self.walls do
+		names[w] = name
+	end
+	for _, f in Spread.apply(cuts, entries) do
+		table.insert(self.objects, { kind = f.kind, obj = f.obj, wallName = if f.wall then names[f.wall] else nil })
+	end
+	table.insert(self.cuts, cuts)
+end
+
 -- the buildings ------------------------------------------------------------------------------------
 
 local list: { Preset } = {}
@@ -191,7 +215,11 @@ local list: { Preset } = {}
 local function add(id: string, name: string, desc: string, icon: string, w: number, d: number, build: (Blueprint) -> ())
 	local b = blueprint()
 	build(b)
-	local made = { id = id, name = name, desc = desc, icon = icon, w = w, d = d, objects = b.objects }
+	-- w and d are the tight plan's; opened up, the building takes more ground
+	for _, cuts in b.cuts do
+		w, d = Spread.size(cuts, w, d)
+	end
+	local made = { id = id, name = name, desc = desc, icon = icon, w = w, d = d, objects = b.objects, spread = b.cuts }
 	-- a building defined again takes the place of the one before it
 	for i, old in list do
 		if old.id == id then

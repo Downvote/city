@@ -218,6 +218,8 @@ return function(add: any)
 			hang(b, "clock_wall", "right", 3, 8, "b", NAVY)
 			hang(b, "shelf_wall", "front", 16, 8.6, "b", OAK)
 			hang(b, "art_landscape", "right", 13.6, 7.6, "b")
+
+			b:spread({ x = { { 7.5, 4 }, { 14.5, 4 } }, z = { { 15.5, 4 }, { 21.5, 4 } } })
 		end
 	)
 end

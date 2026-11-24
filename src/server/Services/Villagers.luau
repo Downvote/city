@@ -1346,6 +1346,21 @@ end
 
 local purses: { [Player]: { [string]: City.Purse } } = {}
 local packets: { [Player]: { [string]: number } } = {} -- whole coins earned since the last message
+local YOU = "@you" -- the player's own work in a packet (Services/Work)
+local yourDay: { [Player]: number } = {} -- and what they have earned at it today, for the client
+
+-- A player's own work at a workplace (Services/Work, Sim/PlayerWork): their whole coins go out
+-- with the next pay packet, as a line of their own, so the "+N" rises over their head the way it
+-- does over a villager's. `today` is all they have earned at it today, this included.
+function Villagers.payPlayer(player: Player, coins: number, today: number)
+	if not (coins > 0 and coins < math.huge) then
+		return
+	end
+	local packet = packets[player] or {}
+	packets[player] = packet
+	packet[YOU] = (packet[YOU] or 0) + math.floor(coins)
+	yourDay[player] = today
+end
 
 -- Is this villager earning this moment?
 local function earning(player: Player, vid: string, npc: any, v: any): boolean
@@ -1397,7 +1412,11 @@ local function payOut(player: Player)
 	end
 	local lines, total = {}, 0
 	for vid, n in packet do
-		table.insert(lines, { vid = vid, n = n })
+		if vid == YOU then
+			table.insert(lines, { you = true, n = n, today = yourDay[player] })
+		else
+			table.insert(lines, { vid = vid, n = n })
+		end
 		total += n
 	end
 	if total <= 0 then
@@ -2129,6 +2148,7 @@ function Villagers.start()
 		-- what was earned since the last packet still goes in, if the profile is still here
 		payOut(player)
 		purses[player] = nil
+		yourDay[player] = nil
 		talkTokens[player] = nil
 		talkedAt[player] = nil
 		lastSaid[player] = nil

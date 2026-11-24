@@ -1674,6 +1674,64 @@ and reach a bit less far, so a room is lit and not blown out; the town's own str
 The haze is about half as thick, so the far side of the island stays clear. Rain falls as long streaks you can see,
 heavier in a storm and faintly lit at night, snow and blossom drift bigger, and none of it falls indoors.
 
+### Crisp buttons, menus that come in, and finer detail
+
+> polish the ui and menu everywhere much further, along with button animations to be more suitable, referencing
+> zenless zone zero menus
+
+(The menus' reference page is the one from before, that game's own guide to its menu screens.) As before, the
+feel is what is taken and nothing else: no art, icons, logos, lettering or patterns of that game, and none of its
+files. Every mark here is drawn by our own code. These replace the points above where they differ ("Buttons move",
+the hop, the wiggle and the springs).
+
+- **Buttons are quick and exact.** Under the pointer a band of light sweeps once across a button's face, cut to its
+  shape (the leaning slabs too), the face brightens a touch and grows by two or three hundredths, and a small marker
+  comes in at its leading edge: a chevron at the left end of a pill with words, a ring opening round a round button,
+  corner brackets closing in on a tile or a catalog card, a short line growing under a quick menu tile's name while
+  its icon lifts, the arrow on the way back leaning out. A press dips it to 0.97 with a short flash that fades, and
+  letting go settles it back. Nothing turns, wiggles, hops or springs, anywhere. On a touch screen nothing hovers, so
+  a tap gets the dip and the flash.
+- **Rows** in a list: under the pointer a yellow bar grows on the left end and what is on the row moves a few pixels
+  to the right. The picked row is still yellow with dark words, now with a band of dark hatching toward its right end.
+- **Tabs** slide: the yellow pill runs from the tab you left to the one you picked, under the other tabs' words.
+  The same in Build mode's main groups and categories and in the creator's two steps. A tab not picked shows a faint
+  pill under the pointer.
+- **Menus come in.** The black fades up, the panel slides in a little from the right while the title and the way back
+  come from the left, and then the rows, cards and tiles in it come in one after another, each fading up and sliding
+  a few pixels in, a few hundredths of a second apart. A new tab brings in what it shows the same way. Closing is
+  quicker and the other way round: the card slides back under the black, the title goes off to the left, the black
+  clears. A dialog rises a little into place instead of sliding.
+- **Finer detail.** A full menu's name stands again behind its title, large and very faint, and under the title a
+  rule that ends in a dot runs out from a short stroke of the menu's colour, with a few words set wide in small
+  capitals after it ("People in town", "Your town", "What to work toward", "Today in town"). Brackets in the menu's
+  colour sit on the panel's four corners, just outside its line. A group of rows in a list has a numbered caption
+  (01, 02) set wide, its count at the right and a hairline that ends in a dot under it. Cards on the left of a menu
+  have brackets on two corners, the stat tiles a small one in their own colour and their labels set wide, the city
+  hall's bars notches at each quarter, the level dials marks round the inside of their ring. A dialog's band has
+  hatching beside its close button.
+- **The main screen.** The level dial has its marks, the bar to the next level notches at each quarter, the quick
+  menu's tiles small index numbers (01 to 04) and the quests' header a yellow count of the ones ready to claim. The
+  pieces still slide off their edges while a scene is up; they leave quickly and come back easing out to rest, and
+  when the game starts the quick menu's icons rise into place one after another.
+- **The dialogue box** has brackets on its four corners, a hairline with a dot at each end over its foot, a band of
+  hatching in its bottom right corner, and the arrow that says a click moves on bobs gently. The event prompt has
+  brackets on two corners.
+- **Build mode.** The catalog's cards and the tools share the buttons' motion, the cards come into the tray growing the
+  last few hundredths to their size, and at the right end of the category well the picked category's number of how
+  many ("01 / 11") sits over its name set wide. The bars slide back after a piece is put away easing out, with no
+  overshoot.
+- **The creator** has its title's faint big copy behind it, a rule with the step it is on ("Step 1 of 2") set wide
+  after it, and brackets on the corners of its panel.
+
+### A way back while placing
+
+> add a back button while having a building being put down that does the same as right click
+
+While a piece or a ready-made building is held to place and the rest of Build mode has slid away, the red leaning way
+back that every menu has stands beside the hint at the bottom left, for every player. It does exactly what a right
+click does there: the piece is put away and the bars come back. On a touch screen the round button that turns the
+piece stands between it and the hint.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

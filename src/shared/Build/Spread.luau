@@ -1,0 +1,222 @@
+--!strict
+-- Opening a building up. The user: "make the houses and other buildings bigger such that the
+-- interior feels much more spacious". A ready-made building (Data/Presets, Data/Buildings) and
+-- the starting house (Data/StarterHouse) are drawn with their rooms tight, then floor is let in
+-- along lines across them, the way a builder pushes a wall out:
+--
+-- a cut { at, by } along x moves everything whose x is past `at` on by `by` studs (the same along
+-- z). Walls, floors and roofs that cross the line get longer; a piece of furniture moves whole
+-- with the side its middle is on, so a bed stays against its wall and a table keeps its chairs;
+-- a door, a window or anything hung on a wall keeps to its side of the line in the same way. A
+-- row of the same piece laid end to end (the stones along a wall's foot, a picket fence, porch
+-- rails, a flower border) stays a row: the gap the line opens in it is filled with more of it.
+--
+-- Cuts go across open floor. One that runs along a wall's line, a floor's edge or a roof's edge
+-- would tear the building apart, so Spread.apply refuses it. `by` keeps to the 2 stud wall grid.
+
+local Catalog = require(script.Parent.Catalog)
+local Tuning = require(script.Parent.Parent.Config.Tuning)
+
+local Spread = {}
+
+export type Cut = { number } -- { at, by }
+export type Cuts = { x: { Cut }?, z: { Cut }? }
+-- An object as the callers hold it: its kind, its fields, and for something hung on a wall the
+-- wall it hangs on (before the spread; Spread.apply moves the wall itself when it meets it as an
+-- object of its own).
+export type Entry = { kind: string, obj: any, wall: any? }
+
+-- Pieces that are laid in rows end to end.
+Spread.Rows = {
+	stone_footing = true,
+	fence_picket = true,
+	porch_rail = true,
+	flower_border = true,
+}
+
+-- Where a coordinate ends up.
+function Spread.axis(list: { Cut }?, v: number): number
+	local out = v
+	for _, c in list or {} do
+		if v > c[1] + 1e-6 then
+			out += c[2]
+		end
+	end
+	return out
+end
+
+function Spread.point(cuts: Cuts, x: number, z: number): (number, number)
+	return Spread.axis(cuts.x, x), Spread.axis(cuts.z, z)
+end
+
+-- What a building w by d becomes.
+function Spread.size(cuts: Cuts, w: number, d: number): (number, number)
+	return Spread.axis(cuts.x, w), Spread.axis(cuts.z, d)
+end
+
+-- The bands of new floor, in the coordinates after the spread: { from, to } along each axis.
+function Spread.bands(cuts: Cuts): { x: { { number } }, z: { { number } } }
+	local out = { x = {}, z = {} }
+	for axis, list in { x = cuts.x or {}, z = cuts.z or {} } do
+		for _, c in list do
+			local from = Spread.axis(list, c[1])
+			table.insert((out :: any)[axis], { from, from + c[2] })
+		end
+	end
+	return out
+end
+
+local function onCut(list: { Cut }?, v: number): boolean
+	for _, c in list or {} do
+		if math.abs(v - c[1]) < 1e-6 then
+			return true
+		end
+	end
+	return false
+end
+
+local function check(cuts: Cuts, e: Entry)
+	local o = e.obj
+	local snap = Tuning.Plot.WallSnap
+	for _, list in { cuts.x or {}, cuts.z or {} } do
+		for _, c in list do
+			assert(c[2] > 0 and (c[2] / snap) % 1 == 0, "a cut lets in whole grid squares")
+		end
+	end
+	if e.kind == "walls" or e.kind == "floors" or e.kind == "roofs" then
+		local bad = onCut(cuts.x, o.x1) or onCut(cuts.x, o.x2) or onCut(cuts.z, o.z1) or onCut(cuts.z, o.z2)
+		assert(not bad, string.format("a cut runs along the edge of a %s at %g, %g", e.kind, o.x1, o.z1))
+	end
+end
+
+local function wallLength(w: any): number
+	return math.sqrt((w.x2 - w.x1) ^ 2 + (w.z2 - w.z1) ^ 2)
+end
+
+local function copy(t: any): any
+	if type(t) ~= "table" then
+		return t
+	end
+	local out = {}
+	for k, v in t do
+		out[k] = copy(v)
+	end
+	return out
+end
+
+-- How long one piece of a row is, along the row.
+local function rowLength(id: string): number
+	local def = Catalog.get(id)
+	return if def then def.size.X else 4
+end
+
+-- Spreads the entries in place, and returns the pieces that fill the gaps opened in rows (each an
+-- entry of the same kind, hanging on the same wall where it hangs on one).
+function Spread.apply(cuts: Cuts, entries: { Entry }): { Entry }
+	for _, e in entries do
+		check(cuts, e)
+	end
+	-- where things hung on walls go, worked out on the walls as they were
+	local hung: { [Entry]: number } = {}
+	local before: { [Entry]: number } = {}
+	for _, e in entries do
+		local w = e.wall
+		if w then
+			local len = wallLength(w)
+			local dx, dz = (w.x2 - w.x1) / len, (w.z2 - w.z1) / len
+			local t = e.obj.t or 0
+			local px, pz = Spread.point(cuts, w.x1 + dx * t, w.z1 + dz * t)
+			local ax, az = Spread.point(cuts, w.x1, w.z1)
+			local bx, bz = Spread.point(cuts, w.x2, w.z2)
+			local nlen = math.sqrt((bx - ax) ^ 2 + (bz - az) ^ 2)
+			hung[e] = ((px - ax) * (bx - ax) + (pz - az) * (bz - az)) / nlen
+			before[e] = t
+		end
+	end
+	-- rows, before anything moves: the same piece laid end to end, each with the next along
+	local rows: { [string]: { { any } } } = {}
+	local walls: { [any]: string } = {}
+	local wallCount = 0
+	for _, e in entries do
+		local o = e.obj
+		if e.kind == "items" and Spread.Rows[o.id] and (e.wall or o.r % 90 == 0) then
+			local key, along
+			if e.wall then
+				if not walls[e.wall] then
+					wallCount += 1
+					walls[e.wall] = tostring(wallCount)
+				end
+				key = "w" .. walls[e.wall] .. tostring(o.side)
+				along = before[e]
+			elseif o.r % 180 == 0 then
+				key = string.format("x%.2f", o.z)
+				along = o.x
+			else
+				key = string.format("z%.2f", o.x)
+				along = o.z
+			end
+			key = string.format("%s|%s|%s|%s|%.2f|%d", key, o.id, tostring(o.c1), tostring(o.c2), o.y, o.lv)
+			rows[key] = rows[key] or {}
+			table.insert(rows[key], { e, along })
+		end
+	end
+	local pairs_: { { Entry } } = {}
+	for _, row in rows do
+		table.sort(row, function(p, q)
+			return p[2] < q[2]
+		end)
+		for i = 1, #row - 1 do
+			local len = rowLength(row[i][1].obj.id)
+			if row[i + 1][2] - row[i][2] <= len + 0.15 then
+				table.insert(pairs_, { row[i][1], row[i + 1][1] })
+			end
+		end
+	end
+	-- now move everything
+	for _, e in entries do
+		local o = e.obj
+		if e.kind == "walls" or e.kind == "floors" or e.kind == "roofs" then
+			o.x1, o.z1 = Spread.point(cuts, o.x1, o.z1)
+			o.x2, o.z2 = Spread.point(cuts, o.x2, o.z2)
+		elseif e.kind == "items" and not e.wall then
+			o.x, o.z = Spread.point(cuts, o.x, o.z)
+		end
+	end
+	for e, t in hung do
+		e.obj.t = t
+	end
+	-- and fill the rows the lines opened
+	local fills: { Entry } = {}
+	for _, pair in pairs_ do
+		local a, b = pair[1], pair[2]
+		local len = rowLength(a.obj.id)
+		local from, to
+		if a.wall then
+			from, to = math.min(a.obj.t, b.obj.t), math.max(a.obj.t, b.obj.t)
+		elseif a.obj.r % 180 == 0 then
+			from, to = math.min(a.obj.x, b.obj.x), math.max(a.obj.x, b.obj.x)
+		else
+			from, to = math.min(a.obj.z, b.obj.z), math.max(a.obj.z, b.obj.z)
+		end
+		local gap = to - from - len -- the bare stretch between the two pieces
+		if gap > 0.05 then
+			-- as few pieces as cover it, spread evenly (they overlap their neighbours a little)
+			local n = math.ceil(gap / len - 1e-6)
+			for i = 1, n do
+				local at = from + (to - from) * i / (n + 1)
+				local o = copy(a.obj)
+				if a.wall then
+					o.t = at
+				elseif a.obj.r % 180 == 0 then
+					o.x = at
+				else
+					o.z = at
+				end
+				table.insert(fills, { kind = "items", obj = o, wall = a.wall })
+			end
+		end
+	end
+	return fills
+end
+
+return Spread

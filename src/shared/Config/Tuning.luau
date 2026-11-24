@@ -150,6 +150,24 @@ Tuning.Jobs = {
 	AtWork = 0.85,
 	EarnStep = 1, -- seconds between two looks at who is at work
 	PayEvery = 4, -- seconds between two pay packets: the coins go to the town and the client hears
+	-- A player's own work: hold E at a workplace on your plot (Sim/PlayerWork, Services/Work). The
+	-- user: "also, allow players to interact and work at work areas". A player earns less than a
+	-- villager there would, and only up to a cap each town day, so a town still lives on its
+	-- villagers' wages (tests/specs/PlayerWork.spec.luau holds it to that).
+	Player = {
+		Share = 0.35, -- of what a villager new to the job earns there a second
+		DayCap = 250, -- coins a player can earn at work in one town day (9:00 to 9:00, World.dayIndex)
+		Hold = 0.5, -- seconds the key is held
+		Distance = 8, -- studs: how close you stand for the prompt to show
+		Reach = 14, -- studs: the server's check of where you stand when you ask
+		Leave = 2.5, -- studs off the spot that count as walking away
+		Rise = 3, -- studs up or down from it that count as a jump or a fall
+		Settle = 1, -- seconds after they are stood at the spot before that is checked
+		Check = 0.25, -- seconds between two looks at each player at work
+		Beat = 5, -- seconds between two goes at the motion, when the job's own has no beat
+		Act = "point", -- the motion when the job has none at its spot
+		PromptHeight = 3, -- studs over the work spot where the prompt hangs
+	},
 }
 
 -- City levels: reached by having enough villagers, enough of them in work and enough built. Each

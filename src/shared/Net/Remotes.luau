@@ -47,6 +47,7 @@ Remotes.Functions = {
 	"GoHome", -- () -> ok, err: to the player's own plot
 	"SpawnMe", -- () -> status: the loading card asks for a body when none has come (Services/Plots)
 	"VillagerTalk", -- (vid, bye?) -> ok, { vid, text, note, model } or err: the talk card's Chat, or its Bye
+	"WorkStop", -- () -> ok: the player stops their own work at a workplace (Services/Work)
 }
 
 Remotes.Events = {
@@ -57,13 +58,17 @@ Remotes.Events = {
 	"EventLine", -- server -> client: (token, line, last?) as it is said, or (token, ask) at a choice
 	"EventEnd", -- server -> client: (token, summary)
 	-- server -> client, every few seconds while villagers work: { coins (the town's now), earned
-	-- (all it has earned at work), lines = { { vid, n } } (who earned how many since the last) }
+	-- (all it has earned at work), lines = { { vid, n } } (who earned how many since the last) }; the
+	-- player's own work (Services/Work) is a line { you = true, n, today } (today: theirs so far)
 	"Earned",
 	"Say", -- server -> client: (model, text) speech bubble (also visible to everyone nearby)
 	"Talk", -- server -> client: { vid, text, note, model } what your villager said when you held E on them
 	-- server -> every client: (at, puff?, text?, rarity?) a piece was used (Npc/Use.show): a puff from
 	-- it, and for a player's go what happened, over it (client World/Interact)
 	"Used",
+	-- server -> client: the player's own work at a workplace (Services/Work): { on = true, plot, key,
+	-- name, act, beat, today, cap } when it starts, { on = false } when it stops
+	"Work",
 }
 
 local folder: Folder? = nil

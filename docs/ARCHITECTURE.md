@@ -552,13 +552,25 @@ clipping (`tools/preview/ui_render.py`).
   `Edge`, a thin line of `T.Line` a few pixels out) and in it `Card`: a rounded card (`Cut`) with a rim of its
   own, a glow of the menu's colour, `Dots` and a `Hatch` band in its bottom right corner. `opts.Dialog = true` is
   a small panel in the middle: its card is two tones (a UIGradient `Wash` with a step), the darker band across the
-  top holding the title and the red close button, and its body starts 70 pixels down.
-  Returns `{ root, card, body, close, title, header, selectTab }`.
+  top holding the title and the red close button, and its body starts 70 pixels down. Details: `Corners`
+  (`Kit.brackets` in the menu's colour just outside `Rim`), and on a full menu `Ghost` (the title large and faint
+  behind it), `Rule` (`Kit.rule`: a hairline from a short stroke of the colour to a dot) and `opts.Caption` (a few
+  words set wide after it, `Kit.caption`); a dialog's band has `BandHatch`. The panel's root carries the `Panel`
+  attribute and brings itself in: `Dim` and the glows fade up, `Rim` slides in from 40 pixels right (a dialog rises
+  18) under a `Veil` of `T.Black` that clears, `Header` slides in from the left and the title fades up; then, once
+  the screen has filled it (`task.defer`), `Kit.revealIn(root, since)` brings in what was marked while it was made.
+  A tab change brings in what the tab made the same way. `Kit.closePanel(panel, now?)` takes it away (the screens
+  call it, never `root:Destroy()`): the root moves at once to the ScreenGui `MaplewickClosing` (same scale, one
+  display order up, `Interactable` off), plays the way in backwards in 0.14 seconds and is destroyed.
+  Returns `{ root, card, body, close, title, header, selectTab, dim, rim, veil, glows, dialog }`.
   `Kit.row(props, onClick)` is a pill row (Title, Sub, Marker, MarkerColor, Right, LeftSpace, RightSpace, Sunk,
   Selected): its `Fill` rests in `T.Card` (a `Sunk` row in `T.PaperDark`; the colour is kept in the row's `Rest`
   attribute) with a `Follow` rim, its marker is a round disc, and its `Lean` attribute (how far its round end
   pushes what is on it) is 6. It returns the row and a box filling it; `Kit.setRowSelected(row, on)` turns it
-  yellow with dark words. `Kit.setButtonColor` recolours an icon beside the words too. `UI/ModelPreview.fromModel(model,
+  yellow with dark words and lays `PickedHatch` (dark hatching fading left) toward its right end. A row with an
+  onClick has `Kit.press` of the "row" kind: an `Accent` bar grows on its left end and `Inside` moves 4 pixels
+  right under the pointer. `Kit.segments` slides its picked pill with `Kit.glide` and shows a faint `Hover` pill on a
+  tab that isn't picked; `Kit.tabs` glides too. `Kit.setButtonColor` recolours an icon beside the words too. `UI/ModelPreview.fromModel(model,
   { Stand = true })` is the whole villager fitted to a tall frame (the viewport is named `Avatar`): the copy is
   stood upright at the origin with every Motor6D's Transform cleared (a sleeping villager lies on their back),
   framed from the feet to the top of the head, and plays its idle animation unless `Still = true`. With
@@ -618,25 +630,42 @@ clipping (`tools/preview/ui_render.py`).
   pill banner sized to its text), `blob(props)` / `blobInto(frame, props)` (plain shapes now: a rounded rectangle, pill or
   circle in one colour with an optional tail; nothing moves or reaches past the holder, so self-sizing holders stay
   the right size; `setBlobColor`), `panel` is a cream card with a header bar, title, round close and a `Dim` behind, `bubble(props)` (a blob with a tail), `choice(text, props, fn)` (an answer as a speech bubble,
-  yellow and striped under the pointer), `arrowTag(text, colour, props)`, `wobbly(g, degrees)` and `wiggle(g)`
-  (one loop sways things and wiggles buttons on hover; anything holding clipped icon pieces breathes instead of
-  turning), `recolorIcon(icon, glyph, hole)`, `doodles(holder, colour, seed, n?, area?)` (faint
+  yellow and striped under the pointer), `arrowTag(text, colour, props)`, `recolorIcon(icon, glyph, hole)`, `doodles(holder, colour, seed, n?, area?)` (faint
   line doodles behind a big bubble's content), `hexBadge(value, props)`, `darkPill(props)` (the HUD's see-through
   pills), `menuButton(icon, caption, props, fn)` (icon over a name, no background), `roundButton(icon, props, fn)`
-  (white icon on a dark round), `bigButton(text, icon, props, fn)` (the wobbly Build button). `Kit.stroke` makes
+  (white icon on a dark round), `bigButton(text, icon, props, fn)` (the Build button). `Kit.stroke` makes
   disabled strokes (no outlines on rounded rectangles); flat icons pick which pieces to cut out by containment and
   colour contrast, `pieces(parent, list, thick, z)` (rects and triangles with one
   shared outline: every dark copy first, then every fill), `panel` (cream card, solid shadow, top band, ribbon title,
   round red close; `root` holds the card and its shadow), `bar` (outlined progress bars), `badge`, `closeButton`,
   `outlineText`, `tabs`, `slider`, `swatch`, `textbox`, `scroll`, `shadow` (a solid offset shadow).
-  `Kit.pad` on a Kit button stretches its face back over the padding. Motion: buttons sink onto their lip when
-  pressed, grow and hop their icon on hover and spring back when clicked; one loop sweeps a sheen across a button on
-  screen now and then; `Kit.badge(parent)` is a plain red dot that pulses slowly; `popIn`, `popOut`, `slideIn`, `bump` and `flyCoins` animate screens. `Kit.overUI(pos)` says whether the pointer is
+  `Kit.pad` on a Kit button stretches its face back over the padding. Motion: `Kit.press(button, opts)` is every
+  control's (Kit's own buttons call it; `opts.Kind` is "pill", "slab", "round", "tile", "row", "flat" or "plain";
+  `Face` the shape that lights, false for none; `Grow` 1.025, `Dip` 0.97; `Nudge` things that move `NudgeX` /
+  `NudgeY` pixels; `Accent`, `Ring`; `Sweep = false`). Under the pointer it grows the button's `Press` UIScale, fades
+  up a white `Lit` layer over the face's shape (a copy of a slab's painted `Body`, else a frame with the face's own
+  corner, under what is on it) and runs a `Sweep` layer's `Band` gradient across once; the marker is a `Chevron`
+  (`Kit.chevron`) at a pill's left end where the words leave room, `Focus` brackets on a tile, a `Focus` ring round a
+  round button, the row's `Accent`, or an `Underline` under a flat button's name. A press dips the scale and flashes
+  `Lit`; release settles back. The layers are made on the first hover and marked `KeepColors`; touch screens get
+  only the press. `Kit.Motion` holds the easings (Hover, Leave, Press, Settle, Flash, Sweep, Glide, In, Out: Quint
+  or Quad), `Kit.tween(inst, info, goals)` plays one and `Kit.later(info, delay)` delays one. `Kit.glide(from, to,
+  name?)` slides `to`'s `Face` over from `from` (the others lifted over it while it runs). `Kit.mark(g)` marks
+  something that comes in with its menu (a `Born` number; `Kit.row`, the `MenuParts` pieces do it), `Kit.born()` is
+  the count so far, `Kit.reveal(items, opts)` brings things in one after another (a `Veil` of what is behind each
+  clears while it slides in; Delay, Step, DX, DY, Max, Behind) and `Kit.revealIn(container, since, opts)` does it to
+  what was marked after `since`, in layout order. Detail: `Kit.brackets(frame, props)` (corner Ls: Corners, Arm,
+  Thick, Inset, Color, Transparency; legs sized in pixels), `Kit.rule(props)` (a hairline ending in a dot: Dots
+  "both", Accent, AccentLength), `Kit.caption(text, props)` (small capitals set wide by `Kit.spaced(text)`),
+  `Kit.index(n)` ("03"), `Kit.ghost(word, props)` (a big faint word), `Kit.ticks(frame, n, props)` (dial marks round a
+  circle: Major, Length, Inset) and `Kit.bar`'s `Ticks` (notches). `Kit.badge(parent)` is a plain red dot that
+  pulses slowly; `popIn` (a card grows its last few hundredths; a panel brings itself in), `popOut`, `slideIn`
+  (Quint, no overshoot), `bump` and `flyCoins` animate screens. There is no wobble, wiggle, hop or springy rebound. `Kit.overUI(pos)` says whether the pointer is
   over our interface, using `GetGuiObjectsAtPosition`, so world clicks never go through a button. Only what is
   under a ScreenGui counts: that call also returns what is drawn on a SurfaceGui kept in PlayerGui (the creator's
   backdrop is one, with `Active` off), which is scenery.
 - `UI/Rewards` (the thank you picker, opened by the HUD when `offers` arrive), `UI/Goals` (the town goals panel;
-  `Goals.ready()` feeds the dock badge), `World/Wishes` (a wobbly thought bubble over each villager whose model has a
+  `Goals.ready()` feeds the dock badge), `World/Wishes` (a thought bubble over each villager whose model has a
   `Wish` attribute; a click opens their page).
 - `World/Explore` (tells the server when the player reaches a place they haven't found). There is no map screen.
 - `World/Ambience` turns the ferris wheel, carousel and windmill (parts named `Spin` round the `Hub`'s X axis;
@@ -703,8 +732,9 @@ clipping (`tools/preview/ui_render.py`).
   closes on Bye, walking out of `Range`, waiting too long, a menu, Build mode, the creator or an event.
 - `UI/MenuParts`: what the full menus and the cards are built from, so they match: `card` (the left card: a
   rounded card in a thin rim with a glow of the menu's colour and an inner box the caller fills), `list` (the rows
-  on the right), `heading` (a dim small caption with a hairline and a count), `stat` (a rounded well with a round
-  mark, a label and a big number), `dial` (a round level dial), `empty` (a disc in a faint ring, a title and what to
+  on the right), `heading` (its number in the group's colour, the words set wide, a count at the right and a
+  hairline ending in a dot under them; numbered by how many headings its list already has), `stat` (a rounded well
+  with a round mark, a label set wide, a big number and a bracket in its colour), `dial` (a round level dial), `empty` (a disc in a faint ring, a title and what to
   do), `slot` (a dim sunk pill with a ringed + or x, for something not there yet), `hint` (`Kit.hint`), `note`
   (a round dot and a line), `progress` (a label, numbers and a bar). A menu rebuilds itself when the look switches.
   Its states are previewed as `panel:<Name>:<state>` (`ui_dump.luau`).
