@@ -49,8 +49,6 @@ local SQUARE = Color3.fromRGB(236, 222, 196) -- the market quarter's square
 local HEDGE = Color3.fromRGB(66, 120, 66)
 local SOIL = Color3.fromRGB(122, 90, 62)
 local SAND = Color3.fromRGB(244, 228, 188)
-local SEABED = Color3.fromRGB(174, 224, 226)
-local DEEP = Color3.fromRGB(96, 148, 186)
 local WATER = Color3.fromRGB(118, 184, 212)
 local BARK = Color3.fromRGB(176, 126, 82)
 local BARK_DARK = Color3.fromRGB(150, 104, 66)
@@ -324,6 +322,7 @@ end
 -- at it. One piece.
 TownMap.Models.hedge = function(r: R)
 	local body, top = HEDGE, Color3.fromRGB(92, 144, 78)
+	-- (solid: a hedge is a wall you walk round)
 	r:piece(function(q)
 		q:block(-4, 0, -0.9, 4, 2.4, 0.9, body, "Grass")
 		q:block(-3.75, 2.4, -0.65, 3.75, 2.9, 0.65, top, "Grass")
@@ -334,7 +333,7 @@ TownMap.Models.hedge = function(r: R)
 			local across = CFrame.new(side * 3.875, 2.65, 0) * CFrame.Angles(0, side * -math.pi / 2, 0)
 			q:wedge(across, 1.3, 0.5, 0.25, top, "Grass")
 		end
-	end)
+	end, true)
 end
 
 TownMap.Models.flowerBed = function(r: R)
@@ -989,22 +988,104 @@ function TownMap.ground(region: Region?): { Prim }
 			local t = (z - RZ) / (top.z - RZ)
 			local x = math.sin(t * math.pi * 2.2) * 40 * (1 - t)
 			if not region or (x >= region[1] and x <= region[3] and z >= region[2] and z <= region[4]) then
-				local y = math.max(Hills.at(x, z), 0) + 0.05
-				r:cyl(x, y, z, 0.3, 4.2, "y", Color3.fromRGB(226, 216, 196), "SmoothPlastic")
+				-- each stone lies with the slope, its underside a twentieth into the ground (the
+				-- terrain's grass is a tenth under Hills.at), on a worn path (TownMap.cover)
+				local gx = (Hills.at(x + 2, z) - Hills.at(x - 2, z)) / 4
+				local gz = (Hills.at(x, z + 2) - Hills.at(x, z - 2)) / 4
+				local up = Vector3.new(-gx, 1, -gz).Unit
+				local at = Vector3.new(x, Hills.at(x, z) + Terrain.Ground, z) + up * 0.1
+				local stone = r:cyl(x, 0, z, 0.3, 4.2, "y", Color3.fromRGB(226, 216, 196), "SmoothPlastic")
+				local side = up:Cross(Vector3.zAxis).Unit
+				stone.cf = CFrame.fromMatrix(at, up, side)
+				stone.name = "PathStone"
 			end
 			z += 7
 		end
-	end
-
-	-- and the hills themselves
-	for _, p in Hills.prims(region) do
-		r:add(p)
 	end
 	-- what is laid flat on top: paving patterns, markings, covers
 	for _, p in StreetPaint.ground(region) do
 		r:add(p)
 	end
 	return r.prims
+end
+
+-- What is built on the island, for the terrain under it: Roblox's grass blades show through a
+-- floor laid on them, so Data/Terrain grows none under anything here. Rectangles { x1, z1, x2,
+-- z2, kind }: "paved" for the ground's own surfaces (roads, pavements, paving, the boardwalk, the
+-- square's lawns) and the players' plots, "path" under the stepping stones up the hills, and
+-- "built" for what a placed model lays on the ground: each of its shapes that reaches down to it
+-- and is more than a slip of a thing (a floor, a plinth, a pond, a planter or a bush; not a post
+-- or a trunk). By rule, so whatever is placed later is covered too. `ground`, `placements` and
+-- `drawn` (each model's shapes by name) save working them out again.
+function TownMap.cover(ground: { Prim }?, placements: { Placement }?, drawn: { [string]: { Prim } }?): { Terrain.Cover }
+	local out: { Terrain.Cover } = {}
+	for _, p in Geometry.flatten(ground or TownMap.ground()) do
+		if p.name ~= "SeaWall" and (p.transp or 0) < 0.99 then
+			local lo, hi = Geometry.bounds({ p })
+			table.insert(out, { lo.X, lo.Z, hi.X, hi.Z, if p.name == "PathStone" then "path" else "paved" })
+		end
+	end
+	-- the plots, where players lay their floors
+	local size = Tuning.Plot.Size
+	for i = 1, Tuning.Plot.Count do
+		local f = Town.plotFrame(i)
+		local a, b = f * Vector3.zero, f * Vector3.new(size, 0, size)
+		table.insert(out, { math.min(a.X, b.X), math.min(a.Z, b.Z), math.max(a.X, b.X), math.max(a.Z, b.Z), "paved" })
+	end
+	-- each model's footprints on the ground, in its own frame, worked out once a model
+	local feet: { [string]: { { number } } } = {}
+	local function footprints(name: string): { { number } }
+		local got = feet[name]
+		if got then
+			return got
+		end
+		local rects = {}
+		for _, q in Geometry.flatten((drawn and drawn[name]) or TownMap.prims(name)) do
+			if (q.transp or 0) < 0.9 then
+				local lo, hi = Geometry.bounds({ q })
+				local w, d = hi.X - lo.X, hi.Z - lo.Z
+				if lo.Y <= 0.6 and w >= 0.6 and d >= 0.6 and w * d >= 3 then
+					table.insert(rects, { lo.X, lo.Z, hi.X, hi.Z, w * d })
+				end
+			end
+		end
+		-- the big ones first, and nothing that lies inside one already kept (a building's
+		-- furniture inside its floor)
+		table.sort(rects, function(a, b)
+			return a[5] > b[5]
+		end)
+		local kept = {}
+		for _, q in rects do
+			local inside = false
+			for _, k in kept do
+				if q[1] >= k[1] - 0.01 and q[2] >= k[2] - 0.01 and q[3] <= k[3] + 0.01 and q[4] <= k[4] + 0.01 then
+					inside = true
+					break
+				end
+			end
+			if not inside then
+				table.insert(kept, q)
+			end
+		end
+		feet[name] = kept
+		return kept
+	end
+	for _, pl in placements or TownMap.placements() do
+		local pos = pl.cf.Position
+		-- (not what floats at sea, nor what stands up on something else, well off the ground)
+		if pl.tag ~= "backdrop" and pos.Y - Terrain.height(pos.X, pos.Z) < 3 then
+			for _, f in footprints(pl.name) do
+				local x1, z1, x2, z2 = math.huge, math.huge, -math.huge, -math.huge
+				for _, c in { { f[1], f[2] }, { f[3], f[2] }, { f[1], f[4] }, { f[3], f[4] } } do
+					local w = pl.cf * Vector3.new(c[1], 0, c[2])
+					x1, z1 = math.min(x1, w.X), math.min(z1, w.Z)
+					x2, z2 = math.max(x2, w.X), math.max(z2, w.Z)
+				end
+				table.insert(out, { x1, z1, x2, z2, "built" })
+			end
+		end
+	end
+	return out
 end
 
 -- The city blocks between the roads east (downtown) or west (the civic quarter) of the old town:
@@ -2825,9 +2906,11 @@ function TownMap.placements(): { Placement }
 			clear = false -- the creator's meadow
 		end
 		if clear and Hills.slope(x, z) < 0.8 then
-			local pine = x > 300 or woods:chance(0.35)
+			-- mostly firs, and some young ones among them (the user's picture of a hilltop in tall
+			-- firs: "make the grass and plants like in the image")
+			local pine = x > 300 or woods:chance(0.6)
 			local name = if pine
-				then (if woods:chance(0.4) then "lowPineBig" else "lowPine")
+				then (if woods:chance(0.25) then "firYoung" elseif woods:chance(0.4) then "lowPineBig" else "lowPine")
 				else (if woods:chance(0.3) then "lowTreeBig" else "lowTree")
 			hill(name, x, z, woods:float(0, 360))
 		end
@@ -2882,20 +2965,30 @@ function TownMap.placements(): { Placement }
 	on("stall", -368, -IS - 108, 30, 0.4)
 	on("stall", -278, -IS - 55, -20, 0.4)
 	on("stall", -272, -IS - 112, -60, 0.4)
-	on("beachHuts", 640, -IS - 14, 0, -0.35)
-	on("lifeguard", 0, -IS - 20, 0, -0.35)
+	-- what stands on the sand stands at the sand's height (it slopes down to the water), sunk by
+	-- `sink`; `frac` is how far down the beach, from where the grass ends (0) to the water (1)
+	local function onSandAt(name: string, x: number, z: number, yaw: number, sink: number)
+		on(name, x, z, yaw, Terrain.height(x, z) - sink)
+	end
+	local function onBeach(name: string, side: string, u: number, frac: number, yaw: number, sink: number)
+		local x, z = Terrain.onBeach(side, u, frac)
+		onSandAt(name, x, z, yaw, sink)
+	end
+	onSandAt("beachHuts", 640, -IS - 14, 0, 0)
+	onSandAt("lifeguard", 0, -IS - 20, 0, 0)
 	on("lighthouse", 1000, -IS - 80, 180)
 	local beach = Rng.new(31)
 	for x = -IX + 30, IX - 30, 58 do
 		local px = x + beach:float(-10, 10)
 		if clearOfPiers(px) and math.abs(px) > 12 then
-			on(if beach:chance(0.5) then "palm" else "palmTall", px, -IS - B * 0.45 + beach:float(-5, 5), 270, -0.6)
+			local name = if beach:chance(0.5) then "palm" else "palmTall"
+			onBeach(name, "south", px, 0.45 + beach:float(-5, 5) / B, 270, 0.25)
 		end
 	end
 	for x = -IX + 80, IX - 80, 110 do
 		local px = x + beach:float(-12, 12)
 		if clearOfPiers(px) and math.abs(px) > 20 then
-			on("parasol", px, -IS - B * 0.7, beach:float(-20, 20), -0.7)
+			onBeach("parasol", "south", px, 0.7, beach:float(-20, 20), 0.35)
 		end
 	end
 	-- palms along the east and west shores, and a quiet cove on the north shore
@@ -2904,15 +2997,15 @@ function TownMap.placements(): { Placement }
 			local pz = z + beach:float(-10, 10)
 			-- (not at the ends of the main street: no trees by a road)
 			if math.abs(pz) > 46 then
-				on("palm", side * (IX + B * 0.45), pz, if side > 0 then 0 else 180, -0.6)
+				onBeach("palm", if side > 0 then "east" else "west", pz, 0.45, if side > 0 then 0 else 180, 0.25)
 			end
 		end
 	end
 	for _, x in { 160, 200, 250 } do
-		on("parasol", x, IN + B * 0.55, beach:float(0, 360), -0.7)
+		onBeach("parasol", "north", x, 0.55, beach:float(0, 360), 0.35)
 	end
 	for _, x in { 120, 300, -200, -500, 520, 800 } do
-		on("palm", x, IN + B * 0.4, 90, -0.6)
+		onBeach("palm", "north", x, 0.4, 90, 0.25)
 	end
 	-- things left on the sand: towels, sandcastles, beach balls and driftwood; surfboards, a
 	-- volleyball net and rowing boats pulled up at the water's edge
@@ -2921,7 +3014,8 @@ function TownMap.placements(): { Placement }
 		for _ = 1, count do
 			local x = sand:float(-IX + 40, IX - 40)
 			if clearOfPiers(x) and math.abs(x) > 16 and math.abs(x - 130) > 26 and math.abs(x + 520) > 26 then
-				on(name, x, -IS - sand:float(8, B - 9), sand:float(0, 360), -0.35)
+				local frac = sand:float(8, B - 9) / B
+				onBeach(name, "south", x, frac, sand:float(0, 360), 0)
 			end
 		end
 	end
@@ -2930,18 +3024,23 @@ function TownMap.placements(): { Placement }
 	onSand("sandcastle", 9)
 	onSand("beachBall", 9)
 	onSand("driftwood", 8)
-	on("volleyNet", 130, -IS - 19, 90, -0.35)
-	on("volleyNet", -520, -IS - 19, 90, -0.35)
+	onSandAt("volleyNet", 130, -IS - 19, 90, 0)
+	onSandAt("volleyNet", -520, -IS - 19, 90, 0)
 	for _, x in { 70, -150, 470, 830 } do
-		on("surfRack", x, -IS - 5, 0, -0.35)
+		onSandAt("surfRack", x, -IS - 5, 0, 0)
 	end
+	-- (their middles two studs up the sand from the water, wherever the water comes to)
 	for _, x in { -570, -90, 430, 900 } do
-		on("rowboat", x, -IS - B + 3, 80 + x % 30, -0.5)
+		local bx, bz = Terrain.shore("south", x, -2)
+		onSandAt("rowboat", bx, bz, 80 + x % 30, 0.15)
 	end
 	for _, p in { { 160, 14 }, { 236, 22 }, { 190, 8 } } do
-		on(if p[2] > 20 then "driftwood" else "towel", p[1], IN + p[2], p[1], -0.35)
+		onBeach(if p[2] > 20 then "driftwood" else "towel", "north", p[1], p[2] / B, p[1], 0)
 	end
-	on("rowboat", 280, IN + B - 3, 250, -0.5)
+	do
+		local bx, bz = Terrain.shore("north", 280, -2)
+		onSandAt("rowboat", bx, bz, 250, 0.15)
+	end
 
 	-- out at sea: little islets on the horizon
 	local sea = Rng.new(19)

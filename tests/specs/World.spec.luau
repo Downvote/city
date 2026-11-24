@@ -122,6 +122,7 @@ describe("Roads", function()
 			lowTreeBig = true,
 			lowPine = true,
 			lowPineBig = true,
+			firYoung = true,
 			streetTree = true,
 			streetTreeLow = true,
 			palm = true,
