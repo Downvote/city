@@ -275,7 +275,10 @@ end
 
 local CEILING = Color3.fromRGB(247, 243, 234)
 
-function Shapes.floor(f: Plan.Floor, holes: { { number } }?): { Prim }
+-- `under` are the walls of the storey below, as { x1, z1, x2, z2 } on the plan: an upper floor
+-- stops at them and their own tops carry on level with it, so a floor never lies over the top of a
+-- wall and flickers with it (in an upstairs doorway, at the edge of a terrace).
+function Shapes.floor(f: Plan.Floor, holes: { { number } }?, under: { { number } }?): { Prim }
 	local out: { Prim } = {}
 	local rects = { { f.x1, f.z1, f.x2, f.z2 } }
 	local cuts: { { number } } = holes or {}
@@ -284,6 +287,11 @@ function Shapes.floor(f: Plan.Floor, holes: { { number } }?): { Prim }
 		-- floor's cut edge sits inside the wall instead of on its face
 		local g = 0.05
 		rects = Shapes.subtract(rects, { h[1] - g, h[2] - g, h[3] + g, h[4] + g })
+	end
+	if f.lv > 0 then
+		for _, w in under or {} do
+			rects = Shapes.subtract(rects, w)
+		end
 	end
 	local color = Colors.fromHex(f.c)
 	for _, r in rects do

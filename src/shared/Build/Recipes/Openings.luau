@@ -58,7 +58,8 @@ local function casing(q: R, w: number, h: number, color: Color3, o: Casing?)
 		q:block(x0 + E, -0.1, -LZ, x1 - E, E, LZ, color, mat)
 	end
 	local top = h - E + AW + 0.02
-	for _, s in opts.faces or { 1, -1 } do
+	local faces: { number } = opts.faces or { 1, -1 }
+	for _, s in faces do
 		local za, zb = zs(s, AZ0, AZ1)
 		local foot = opts.foot or 0
 		if opts.bottom then

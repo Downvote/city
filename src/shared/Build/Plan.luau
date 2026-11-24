@@ -743,7 +743,7 @@ end
 -- What has to be drawn again after these ops: { kind = { key = true } }.
 function Plan.affected(plan: PlanData, ops: { Op }): { [string]: { [string]: boolean } }
 	local out = { walls = {}, floors = {}, roofs = {}, items = {} }
-	local stairLevels = {}
+	local floorLevels = {}
 	local function noteItem(obj: any)
 		if not obj then
 			return
@@ -755,7 +755,7 @@ function Plan.affected(plan: PlanData, ops: { Op }): { [string]: { [string]: boo
 		if def.place == "opening" and obj.wall then
 			out.walls[obj.wall] = true
 		elseif def.place == "stairs" then
-			stairLevels[obj.lv + 1] = true
+			floorLevels[obj.lv + 1] = true
 		end
 	end
 	for _, op in ops do
@@ -763,9 +763,16 @@ function Plan.affected(plan: PlanData, ops: { Op }): { [string]: { [string]: boo
 		if op.kind == "items" then
 			noteItem(op.obj)
 			noteItem(op.before)
+		elseif op.kind == "walls" then
+			-- a floor above stops at the walls under it (Shapes.floor), so it is drawn again
+			for _, w in { op.obj, op.before, plan.walls[op.key] } do
+				if type(w) == "table" and type(w.lv) == "number" then
+					floorLevels[w.lv + 1] = true
+				end
+			end
 		end
 	end
-	for lv in stairLevels do
+	for lv in floorLevels do
 		for key, f in plan.floors do
 			if f.lv == lv then
 				out.floors[key] = true

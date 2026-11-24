@@ -298,31 +298,31 @@ local items: { Item } = {
 			end
 			r:piece(function(q: R)
 				local books = {
-					{ 0.14, 0.72, Color3.fromRGB(70, 96, 142) },
-					{ 0.18, 0.86, Color3.fromRGB(168, 86, 90) },
-					{ 0.12, 0.64, Color3.fromRGB(214, 170, 82) },
-					{ 0.16, 0.8, Color3.fromRGB(78, 127, 98) },
-					{ 0.13, 0.74, Color3.fromRGB(196, 154, 108) },
-					{ 0.17, 0.9, Color3.fromRGB(110, 140, 168) },
-					{ 0.12, 0.68, Color3.fromRGB(138, 111, 144) },
+					{ w = 0.14, h = 0.72, c = Color3.fromRGB(70, 96, 142) },
+					{ w = 0.18, h = 0.86, c = Color3.fromRGB(168, 86, 90) },
+					{ w = 0.12, h = 0.64, c = Color3.fromRGB(214, 170, 82) },
+					{ w = 0.16, h = 0.8, c = Color3.fromRGB(78, 127, 98) },
+					{ w = 0.13, h = 0.74, c = Color3.fromRGB(196, 154, 108) },
+					{ w = 0.17, h = 0.9, c = Color3.fromRGB(110, 140, 168) },
+					{ w = 0.12, h = 0.68, c = Color3.fromRGB(138, 111, 144) },
 				}
 				local x = -1.7
 				for i, b in books do
 					local front = 0.84 + (i % 3) * 0.02
-					q:block(x, 0.55, front - 0.62, x + b[1], 0.55 + b[2], front, b[3], "SmoothPlastic")
+					q:block(x, 0.55, front - 0.62, x + b.w, 0.55 + b.h, front, b.c, "SmoothPlastic")
 					if i == 2 or i == 6 then
 						q:block(
 							x + 0.02,
-							0.55 + b[2] - 0.2,
+							0.55 + b.h - 0.2,
 							front,
-							x + b[1] - 0.02,
-							0.55 + b[2] - 0.13,
+							x + b.w - 0.02,
+							0.55 + b.h - 0.13,
 							front + 0.03,
 							C.Paper,
 							"SmoothPlastic"
 						)
 					end
-					x += b[1] + 0.012
+					x += b.w + 0.012
 				end
 				q:boxAt(
 					CFrame.new(x + 0.2, 0.86, 0.5) * CFrame.Angles(0, 0, -0.38),

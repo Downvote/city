@@ -119,12 +119,10 @@ end
 local TALL = { { -2.0, -0.2, 2.45 }, { -0.3, 0.22, 2.7 }, { 1.7, -0.1, 2.5 } }
 local LOW = {
 	{ -2.45, 0.25, 2.0 },
-	{ -1.3, -0.25, 2.12 },
-	{ -0.95, 0.3, 1.95 },
+	{ -1.1, -0.25, 2.12 },
 	{ 0.45, -0.3, 2.08 },
 	{ 1.0, 0.3, 1.98 },
-	{ 2.35, 0.2, 1.96 },
-	{ 2.55, -0.32, 1.84 },
+	{ 2.45, -0.1, 1.9 },
 }
 local MOUNDS = {
 	{ -2.3, 0.15, 1.2, 1.0, 0.2 },
@@ -221,7 +219,9 @@ local function hedgeRow(r: R, cf: CFrame)
 			end
 			for k, x in { -5.2, 0.4, 5.3 } do
 				p:ball(x, 2.22, -0.3, 0.5, bloom(k), "Grass")
-				p:ball(x + 0.5, 2.18, 0.25, 0.42, bloom(k + 2), "Grass")
+				if k ~= 2 then
+					p:ball(x + 0.5, 2.18, 0.25, 0.42, bloom(k + 2), "Grass")
+				end
 			end
 		end, true)
 	end)
@@ -242,8 +242,8 @@ local function wildflowers(r: R, cf: CFrame)
 			for _, s in WILD do
 				stem(p, s[1], s[2], 0, s[3])
 			end
-			for k = 0, 2 do
-				local s = WILD[k * 2 + 1]
+			for k = 0, 1 do
+				local s = WILD[k * 3 + 1]
 				p:lump(CFrame.new(s[1] + 0.2, 0.2, s[2]) * CFrame.Angles(0, k, 0), 1.0, 0.6, 0.8, FOLIAGE_DARK, "Grass")
 			end
 			for k = 0, 1 do
@@ -437,15 +437,13 @@ M.mailbox = function(r: R)
 	end, true)
 end
 
--- Traffic lights: a pole on the corner with an arm out over the road (local -Z), a box for the
--- crossing button, and the head with a backboard and a hood over each lamp. The lamps are three
+-- Traffic lights: a pole on a foot on the corner with an arm out over the road (local -Z) on a
+-- brace, and the head with a backboard and a hood over each lamp. The lamps are three
 -- parts named Red, Amber and Green, which the client switches.
 M.trafficLight = function(r: R)
 	r:piece(function(p: R)
 		p:block(-0.6, 0, -0.6, 0.6, 0.16, 0.6, DARK, "Metal")
-		p:cyl(0, 0.5, 0, 0.7, 0.8, "y", shade(DARK, 1.15), "Metal")
 		p:cyl(0, 5.6, 0, 11.2, 0.5, "y", DARK, "Metal")
-		p:block(-0.28, 3.3, -0.62, 0.28, 4.1, -0.24, YELLOW, "Metal")
 	end, true)
 	r:piece(function(p: R)
 		p:block(-0.2, 10.5, -7, 0.2, 10.9, -0.24, DARK, "Metal")
@@ -1388,8 +1386,8 @@ M.stoneCircle = function(r: R)
 			)
 		end
 	end)
-	for k = 0, 3 do
-		wildflowers(r, CFrame.Angles(0, math.rad(30 + k * 90), 0) * CFrame.new(10, 0, 0))
+	for k = 0, 1 do
+		wildflowers(r, CFrame.Angles(0, math.rad(30 + k * 180), 0) * CFrame.new(10, 0, 0))
 	end
 end
 

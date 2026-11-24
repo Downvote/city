@@ -448,7 +448,28 @@ function Builder.primsFor(plan: Plan.PlanData, kind: string, key: string): { Pri
 		if not f then
 			return nil
 		end
-		return Shapes.floor(f, Plan.holes(plan, f.lv))
+		-- the full height walls of the storey below, where they run under this floor
+		local under = {}
+		if f.lv > 0 then
+			for wallKey, w in plan.walls do
+				local style = Plan.WallStyles[w.style]
+				if w.lv == f.lv - 1 and style and style.full and (w.x1 == w.x2 or w.z1 == w.z2) then
+					local r1, r2 = Shapes.wallReach(plan, wallKey)
+					local e1, e2 = math.max(r1[1], r1[2]), math.max(r2[1], r2[2])
+					local t = style.thick / 2
+					if w.x1 == w.x2 then
+						local s = if w.z2 >= w.z1 then 1 else -1
+						local za, zb = w.z1 - s * e1, w.z2 + s * e2
+						table.insert(under, { w.x1 - t, math.min(za, zb), w.x1 + t, math.max(za, zb) })
+					else
+						local s = if w.x2 >= w.x1 then 1 else -1
+						local xa, xb = w.x1 - s * e1, w.x2 + s * e2
+						table.insert(under, { math.min(xa, xb), w.z1 - t, math.max(xa, xb), w.z1 + t })
+					end
+				end
+			end
+		end
+		return Shapes.floor(f, Plan.holes(plan, f.lv), under)
 	elseif kind == "roofs" then
 		local r = plan.roofs[key]
 		if not r then

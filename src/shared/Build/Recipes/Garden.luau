@@ -1335,9 +1335,13 @@ local items: { Item } = {
 			-- two posts with a ball on top (c2), and a picket gate between them (c1) on iron
 			-- hinges, with a brace and a latch, that swings open like a door when somebody comes
 			-- up to it
+			-- the posts are parts of their own, so the way between them stays open (a piece
+			-- that collides does so as one box)
+			for _, sx in { -1, 1 } do
+				r:block(sx * 1.95 - 0.22, 0, -0.22, sx * 1.95 + 0.22, 3.4, 0.22, r.c2, "Wood")
+			end
 			r:piece(function(q: R)
 				for _, sx in { -1, 1 } do
-					q:block(sx * 1.95 - 0.22, 0, -0.22, sx * 1.95 + 0.22, 3.4, 0.22, r.c2, "Wood")
 					q:block(sx * 1.95 - 0.3, 3.4, -0.3, sx * 1.95 + 0.3, 3.52, 0.3, r.c2, "Wood")
 					q:ball(sx * 1.95, 3.76, 0, 0.5, r.c2, "Wood")
 				end
@@ -1345,7 +1349,7 @@ local items: { Item } = {
 					q:block(-1.75, y - 0.08, -0.17, -1.62, y + 0.08, -0.1, C.DarkMetal, "Wood")
 				end
 				q:block(1.62, 1.66, 0.1, 1.75, 1.9, 0.22, C.DarkMetal, "Wood")
-			end, true)
+			end)
 			local hinge = -1.7
 			local leaf = {}
 			for _, y in { 0.75, 2.0 } do

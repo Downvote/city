@@ -351,6 +351,7 @@ end
 --   group = { [i] = g } and supports = { [g] = { nx, ny, nz, D } }: the ground a group stands on,
 --          the half space n.p < D, which hides what is in it
 --   far = true to count big layers facing up closer than Z.Far
+--   under = { [g] = true }: groups whose faces looking down are never seen (the ground's)
 -- Returns findings: { a = i, b = j, cls = "near" | "far", area, gap, seen, at = { x, y, z } }
 function Z.scan(prims, opts)
 	opts = opts or {}
@@ -358,6 +359,7 @@ function Z.scan(prims, opts)
 	local group = opts.group or {}
 	local supports = opts.supports or {}
 	local wantFar = opts.far == true
+	local under = opts.under or {}
 	local pad = if wantFar then Z.Far + 0.01 else Z.Near + 0.01
 
 	local n = #prims
@@ -492,6 +494,10 @@ function Z.scan(prims, opts)
 				continue
 			end
 			wx, wy, wz = wx / L, wy / L, wz / L
+			-- (the underside of the ground is never seen)
+			if wy < -0.5 and group[i] and under[group[i]] then
+				continue
+			end
 			-- skip faces with no area (a part of no thickness has none worth testing)
 			local ex, ey, ez = x1 - x0, y1 - y0, z1 - z0
 			if ex * ey + ey * ez + ex * ez < 1e-8 then
@@ -763,7 +769,7 @@ function Z.scan(prims, opts)
 		if #near >= 6 and abs(area2(near)) > Z.MinArea then
 			cls, patch = "near", near
 		elseif far then
-			local wide = band(Z.Far)
+			local wide = band(Z.Far - 0.002) -- (a tenth apart is enough)
 			if #wide >= 6 and abs(area2(wide)) >= Z.FarArea then
 				cls, patch = "far", wide
 			end
@@ -797,10 +803,10 @@ function Z.scan(prims, opts)
 				seen += 1
 			end
 		end
-		if seen == 0 then
+		local area = abs(area2(patch))
+		if seen == 0 or area * seen / total <= Z.MinArea then
 			return
 		end
-		local area = abs(area2(patch))
 		table.insert(findings, {
 			a = a,
 			b = b,
@@ -1174,7 +1180,8 @@ function Z.jobs(scope: string, match: ((string) -> boolean)?): { any }
 					unit[#prims], group[#prims] = g, g
 				end
 			end
-			return prims, { unit = unit, group = group, supports = supports, far = true, names = names }
+			return prims,
+				{ unit = unit, group = group, supports = supports, far = true, names = names, under = { true } }
 		end)
 	end
 	return jobs

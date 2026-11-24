@@ -192,13 +192,13 @@ end
 TownMap.Models.marina = function(r: R)
 	local deck = Color3.fromRGB(214, 170, 120)
 	local post = Color3.fromRGB(160, 120, 84)
-	local y = 0.3
+	local y = 0.2 -- (a tenth under the boardwalk it starts from)
 	-- the main walk, from the sand out over the water (local -Z is out to sea)
 	r:block(-3, y - 0.4, -70, 3, y, 4, deck, "WoodPlanks")
 	for z = -68, 2, 10 do
 		for _, x in { -2.56, 2.56 } do
 			-- (its top just under the deck's, its side just inside the deck's edge)
-			r:cyl(x, -2.22, z, 4.96, 0.8, "y", post, "Wood")
+			r:cyl(x, (y - 0.04 - 4.7) / 2, z, y - 0.04 + 4.7, 0.8, "y", post, "Wood")
 		end
 	end
 	-- the head of the pier, across the end
@@ -215,7 +215,7 @@ TownMap.Models.marina = function(r: R)
 		for k, z in { -18, -36, -54 } do
 			local x1, x2 = if side < 0 then -20 else 3, if side < 0 then -3 else 20
 			r:block(x1, y - 0.4, z - 1.2, x2, y, z + 1.2, deck, "WoodPlanks")
-			r:cyl((x1 + x2) / 2 + side * 7, -2.22, z, 4.96, 0.7, "y", post, "Wood")
+			r:cyl((x1 + x2) / 2 + side * 7, (y - 0.04 - 4.7) / 2, z, y - 0.04 + 4.7, 0.7, "y", post, "Wood")
 			if (k + (if side > 0 then 1 else 0)) % 3 ~= 0 then
 				n += 1
 				boat(r, side * 11.5, z - 8.2, 0, stripes[(n - 1) % #stripes + 1], "Boat" .. n)
@@ -745,7 +745,7 @@ function TownMap.ground(region: Region?): { Prim }
 		local step = if main then 14 else 20
 		local u = a1 + 6
 		while u < a2 - 10 do
-			if not nearCross(u + 3.5, 6) and not (main and (math.abs(u) < 14 or math.abs(math.abs(u) - 274) < 14)) then
+			if not nearCross(u + 3.5, 11) and not (main and (math.abs(u) < 14 or math.abs(math.abs(u) - 274) < 14)) then
 				rect(u, -0.3, u + 7, 0.3, 0.05, PAINT, if main then LINE_YELLOW else LINE_WHITE)
 			end
 			u += step
@@ -916,7 +916,7 @@ function TownMap.ground(region: Region?): { Prim }
 		local jz1, jz2 = z1 + 1.2, z2 - 1.2
 		for _, sx in { -1, 1 } do
 			local x = center.X + sx * 45
-			table.insert(list, { x - 3, jz1, x + 3, jz2, -0.15, 0.285, PROMENADE, "Brick" })
+			table.insert(list, { x - 3, jz1, x + 3, jz2, -0.15, 0.27, PROMENADE, "Brick" })
 		end
 		-- (the joints are grooves a little under the paving)
 		for gx = center.X - 48, center.X + 48, 12 do
@@ -953,26 +953,29 @@ function TownMap.ground(region: Region?): { Prim }
 		if b[1] == 559 and b[4] == -22 then
 			-- the market quarter's square, open to the main street: big slabs inside a band of
 			-- brick; and the market lane, south of the main street
-			table.insert(list, { 662, -60, 710, -24, -0.15, 0.265, SQUARE, "Pavement:Slabs" })
-			table.insert(list, { 660, -62, 712, -22, -0.15, 0.255, PROMENADE, "Brick" })
-			table.insert(list, { b[1] + 5.4, -76, b[3] - 5.4, -60, -0.15, 0.25, LANE, "Cobblestone" })
+			table.insert(list, { 662, -60, 710, -24, -0.15, 0.22, SQUARE, "Pavement:Slabs" })
+			table.insert(list, { 660, -62, 712, -22, -0.15, 0.215, PROMENADE, "Brick" })
+			table.insert(list, { b[1] + 5.4, -76, b[3] - 5.4, -60, -0.15, 0.21, LANE, "Cobblestone" })
 		else
-			table.insert(list, { b[1] + 5.4, mid - 5, b[3] - 5.4, mid + 6, -0.15, 0.25, LANE, "Cobblestone" })
+			table.insert(list, { b[1] + 5.4, mid - 5, b[3] - 5.4, mid + 6, -0.15, 0.21, LANE, "Cobblestone" })
 		end
-		table.insert(list, { b[1] + 3, b[2] + 3, b[3] - 3, b[2] + 5.4, -0.15, 0.25, PAVING_DARK, "Pavement" })
-		table.insert(list, { b[1] + 3, b[4] - 5.4, b[3] - 3, b[4] - 3, -0.15, 0.25, PAVING_DARK, "Pavement" })
-		table.insert(list, { b[1] + 3, b[2] + 5.4, b[1] + 5.4, b[4] - 5.4, -0.15, 0.25, PAVING_DARK, "Pavement" })
-		table.insert(list, { b[3] - 5.4, b[2] + 5.4, b[3] - 3, b[4] - 5.4, -0.15, 0.25, PAVING_DARK, "Pavement" })
+		-- (none higher than the paving: what stands on a block, a terrace or a shop's apron,
+		-- stands more than a tenth over all of them)
+		table.insert(list, { b[1] + 3, b[2] + 3, b[3] - 3, b[2] + 5.4, -0.15, 0.21, PAVING_DARK, "Pavement" })
+		table.insert(list, { b[1] + 3, b[4] - 5.4, b[3] - 3, b[4] - 3, -0.15, 0.21, PAVING_DARK, "Pavement" })
+		table.insert(list, { b[1] + 3, b[2] + 5.4, b[1] + 5.4, b[4] - 5.4, -0.15, 0.21, PAVING_DARK, "Pavement" })
+		table.insert(list, { b[3] - 5.4, b[2] + 5.4, b[3] - 3, b[4] - 5.4, -0.15, 0.21, PAVING_DARK, "Pavement" })
 		table.insert(list, { b[1], b[2], b[3], b[4], -0.15, 0.22, PAVING, "Pavement" })
 		lay(list)
 	end
 	-- the civic quarter's lawns have gravel paths: one along each block and two across
 	for _, b in TownMap.blocks("west") do
 		local mid = (b[2] + b[4]) / 2
-		slab(b[1], mid - 2.5, b[3], mid + 2.5, 0, 0.07, GRAVEL, "Pavement")
+		-- (a tenth over the grass, and a tenth under the lawns of the lots laid over them)
+		slab(b[1], mid - 2.5, b[3], mid + 2.5, -0.15, 0.02, GRAVEL, "Pavement")
 		for _, t in { 0.3, 0.7 } do
 			local x = b[1] + (b[3] - b[1]) * t
-			slab(x - 2, b[2], x + 2, b[4], 0, 0.07, GRAVEL, "Pavement")
+			slab(x - 2, b[2], x + 2, b[4], -0.15, 0.02, GRAVEL, "Pavement")
 		end
 	end
 

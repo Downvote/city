@@ -457,15 +457,30 @@ describe("Street paint", function()
 		table.insert(paved, { c.X - 50, z1, c.X + 50, z2 })
 	end
 
-	it("lies flat and thin, and can't be bumped into", function()
+	-- (what is set into the square's paving takes the place of the paving it was cut from:
+	-- StreetPaint.inlays, TownMap.ground's holes)
+	local function inlaid(p)
+		local x1, _, z1, x2, _, z2 = boxOf(p, CFrame.identity)
+		return p.collide ~= false and insideAny(paved, x1, z1, x2, z2, 0.01)
+	end
+
+	it("lies flat, and only what is set into the paving can be stood on", function()
 		expect(#paint > 300).toBeTruthy()
 		for i, p in paint do
 			expect(wrong(p.cf)).toBe(nil)
-			expect(p.collide).toBe(false)
 			expect(p.name).toBe(nil)
 			local _, y1, _, _, y2 = boxOf(p, CFrame.identity)
-			if y2 - y1 > 0.13 or y1 < H.road - 0.001 or y2 > 0.45 then
-				error(string.format("paint %d (%s) lies from %.3f to %.3f", i, p.shape, y1, y2))
+			if inlaid(p) then
+				-- flush with the paving, or a few hundredths proud of it
+				if y2 < H.paving - 0.001 or y2 > H.paving + 0.04 then
+					error(string.format("inlay %d (%s) comes up to %.3f", i, p.shape, y2))
+				end
+			else
+				-- paint: a tenth or so thick, lying on its road, pavement or kerb
+				expect(p.collide).toBe(false)
+				if y2 - y1 > 0.2 or y1 < H.road - 0.001 or y2 > 0.55 then
+					error(string.format("paint %d (%s) lies from %.3f to %.3f", i, p.shape, y1, y2))
+				end
 			end
 			if p.shape == "Piece" then
 				checkPiece("paint " .. i, p)
@@ -475,21 +490,23 @@ describe("Street paint", function()
 		end
 	end)
 
-	it("stays on the road or the paving it belongs to, a hair above it", function()
+	it("stays on the road or the paving it belongs to, a tenth above it", function()
+		-- (two flat layers nearer than that flicker from across the town: the user, "there is
+		-- also z-fighting in alot of areas")
 		local onRoad, onWalk, onPaving = 0, 0, 0
 		for i, p in paint do
 			local x1, y1, z1, x2, y2, z2 = boxOf(p, CFrame.identity)
 			local where = string.format("paint %d (%s) at %.1f, %.1f", i, p.shape, (x1 + x2) / 2, (z1 + z2) / 2)
-			if y1 < H.road + 0.04 then
-				-- on the tarmac: inside one carriageway, its top over the road's
+			if insideAny(paved, x1, z1, x2, z2, 0.01) then
+				onPaving += 1
+				expect(y2 >= H.paving - 0.001).toBeTruthy()
+			elseif y1 < H.walk - 0.05 then
+				-- on the tarmac: inside one carriageway, its top a tenth over the road's
 				onRoad += 1
 				if not insideAny(carriageways, x1, z1, x2, z2, 0.01) then
 					error(where .. " runs off the road")
 				end
-				expect(y2 > H.road + 0.02).toBeTruthy()
-			elseif insideAny(paved, x1, z1, x2, z2, 0.01) then
-				onPaving += 1
-				expect(y1 >= H.paving - 0.001 and y2 > H.paving + 0.015).toBeTruthy()
+				expect(y2 >= H.road + 0.1).toBeTruthy()
 			else
 				-- on a sidewalk: inside one street, clear of its tarmac
 				onWalk += 1
@@ -501,41 +518,38 @@ describe("Street paint", function()
 						error(where .. " hangs over the kerb")
 					end
 				end
-				expect(y1 >= H.walk - 0.001).toBeTruthy()
+				expect(y1 >= H.walk - 0.001 and y2 >= H.walk + 0.1).toBeTruthy()
 			end
 		end
 		expect(onRoad > 200 and onWalk > 100 and onPaving > 15).toBeTruthy()
 	end)
 
-	it("rings the fountain in bands that step up toward the middle", function()
+	it("rings the fountain in bands set flush into the paving", function()
 		local f = Town.Spots.Fountain
-		local discs = {}
+		local bands = {}
 		for _, p in paint do
 			if
-				p.shape == "Cylinder"
+				(p.shape == "Cylinder" or p.shape == "Piece")
 				and math.abs(p.cf.Position.X - f.X) < 0.01
 				and math.abs(p.cf.Position.Z - f.Z) < 0.01
+				and p.collide ~= false
 			then
-				table.insert(discs, p)
+				table.insert(bands, p)
 			end
 		end
-		expect(#discs >= 6).toBeTruthy()
+		expect(#bands >= 6).toBeTruthy()
 		local colours = {}
-		for i, d in discs do
-			local top = d.cf.Position.Y + d.size.X / 2
-			-- (TownMap's own two discs there come up to 0.31)
-			expect(top > 0.315).toBeTruthy()
-			colours[d.color:ToHex()] = true
-			if i > 1 then
-				local before = discs[i - 1]
-				expect(d.size.Y < before.size.Y).toBeTruthy()
-				expect(top > before.cf.Position.Y + before.size.X / 2 + 0.003).toBeTruthy()
-			end
+		for _, b in bands do
+			local _, _, _, _, top = boxOf(b, CFrame.identity)
+			expect(top).toBeNear(H.paving, 0.001)
+			colours[b.color:ToHex()] = true
+			local reach = math.max(b.size.X, b.size.Z) / 2
+			expect(reach <= StreetPaint.FountainReach / math.cos(math.pi / 16) + 0.01).toBeTruthy()
 			-- clear of the lawns in the square's corners
 			for _, l in TownMap.lawns() do
 				local dx = math.max(math.abs(l[1] - f.X) - l[3], 0)
 				local dz = math.max(math.abs(l[2] - f.Z) - l[4], 0)
-				expect(d.size.Y / 2 < math.sqrt(dx * dx + dz * dz)).toBeTruthy()
+				expect(StreetPaint.FountainReach < math.sqrt(dx * dx + dz * dz)).toBeTruthy()
 			end
 		end
 		expect(count(colours) >= 3).toBeTruthy()
@@ -655,6 +669,7 @@ describe("Budgets", function()
 			end
 		end
 		expect(count(keys) <= 70).toBeTruthy()
-		expect(count(paintKeys) <= 16).toBeTruthy()
+		-- (the fountain's rings are one each)
+		expect(count(paintKeys) <= 26).toBeTruthy()
 	end)
 end)

@@ -420,8 +420,8 @@ local items: { any } = {
 			local top = H + F
 			r:block(WALL, 0, -0.6, WALL + 0.18, top, WALL + 0.18, r.c1, "Wood")
 			r:block(-0.6, 0, WALL, WALL, top, WALL + 0.18, r.c1, "Wood")
-			r:block(WALL, 0, -0.68, WALL + 0.34, 1.5, WALL + 0.34, r.c2, "Wood")
-			r:block(-0.68, 0, WALL, WALL, 1.5, WALL + 0.34, r.c2, "Wood")
+			r:block(WALL, 0, -0.68, WALL + 0.31, 1.5, WALL + 0.31, r.c2, "Wood")
+			r:block(-0.68, 0, WALL, WALL, 1.5, WALL + 0.31, r.c2, "Wood")
 		end,
 	},
 	{
@@ -439,14 +439,16 @@ local items: { any } = {
 			-- footings that overlap along a wall still agree where they meet.
 			r:piece(function(q: R)
 				q:block(-1.94, 0, 0, 1.94, 1.1, 0.12, shade(r.c1, 0.72), "Slate")
-				local rows =
-					{ { 0.04, 0.54, { -2, -1.05, -0.1, 0.95, 2 } }, { 0.58, 1.05, { -2, -1.5, -0.55, 0.45, 1.4, 2 } } }
+				local rows = {
+					{ y0 = 0.04, y1 = 0.54, xs = { -2, -1.05, -0.1, 0.95, 2 } },
+					{ y0 = 0.58, y1 = 1.05, xs = { -2, -1.5, -0.55, 0.45, 1.4, 2 } },
+				}
 				for k, row in rows do
-					local xs = row[3]
+					local xs = row.xs
 					for i = 1, #xs - 1 do
 						local a = xs[i] + (if i == 1 then 0.02 else 0.03)
 						local b = xs[i + 1] - (if i == #xs - 1 then 0.02 else 0.03)
-						q:block(a, row[1], 0.05, b, row[2], 0.23, shade(r.c1, if k == 1 then 0.94 else 1.03), "Slate")
+						q:block(a, row.y0, 0.05, b, row.y1, 0.23, shade(r.c1, if k == 1 then 0.94 else 1.03), "Slate")
 					end
 				end
 			end, true)

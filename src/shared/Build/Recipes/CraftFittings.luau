@@ -95,7 +95,7 @@ local items: { Item } = {
 			end
 			-- nine zinc buckets, and a rail along the back of the top step
 			r:piece(function(q: R)
-				q:block(-2.45, 2.8, -1.38, 2.45, 2.9, -1.3, ZINC, "Metal")
+				q:block(-2.45, 2.8, -1.34, 2.45, 2.9, -1.26, ZINC, "Metal")
 				for i, top in tops do
 					for _, x in { -1.5, 0, 1.5 } do
 						q:cyl(x, top + 0.4, mids[i], 0.8, 0.74, "y", ZINC, "Metal")
@@ -291,7 +291,7 @@ local items: { Item } = {
 						local a = math.rad(30 + (k - 1) * 32)
 						q:cyl(x, y + math.sin(a) * 0.62, z + math.cos(a) * 0.62, 0.04, 0.34, "x", col, "Metal")
 					end
-					local lean = CFrame.new(sx * 0.12, y - 0.15, z - 0.1) * CFrame.Angles(math.rad(40), 0, 0)
+					local lean = CFrame.new(sx * 0.17, y - 0.15, z - 0.1) * CFrame.Angles(math.rad(40), 0, 0)
 					q:boxAt(lean, 0.04, 0.1, 1.5, r.c2, "Metal")
 					q:boxAt(lean * CFrame.new(0, 0, -0.85), 0.04, 0.16, 0.26, C.Blue, "Metal")
 				end
@@ -317,18 +317,18 @@ local items: { Item } = {
 				-- a tube of paint left on the floor, then the picture: a low sun, its light on
 				-- the water and a strip of shore
 				q:block(1.3, 0, 0.6, 1.7, 0.14, 0.76, C.Red, "Fabric")
-				q:boxAt(sea * CFrame.new(0, -0.9, 0.11), 2.5, 1.2, 0.02, shade(r.c1, 0.72), "Fabric")
-				q:boxAt(sea * CFrame.new(0.5, 0.75, 0.11), 0.6, 0.6, 0.02, C.Yellow, "Fabric")
-				q:boxAt(sea * CFrame.new(0.5, -0.5, 0.125), 0.5, 0.12, 0.02, C.Yellow, "Fabric")
-				q:boxAt(sea * CFrame.new(0.45, -0.85, 0.125), 0.8, 0.12, 0.02, C.Yellow, "Fabric")
-				q:boxAt(sea * CFrame.new(-0.6, -1.4, 0.125), 1.3, 0.2, 0.02, Color3.fromRGB(226, 204, 150), "Fabric")
+				q:boxAt(sea * CFrame.new(0, -0.9, 0.12), 2.5, 1.2, 0.04, shade(r.c1, 0.72), "Fabric")
+				q:boxAt(sea * CFrame.new(0.5, 0.75, 0.12), 0.6, 0.6, 0.04, C.Yellow, "Fabric")
+				q:boxAt(sea * CFrame.new(0.5, -0.5, 0.165), 0.5, 0.12, 0.04, C.Yellow, "Fabric")
+				q:boxAt(sea * CFrame.new(0.45, -0.85, 0.165), 0.8, 0.12, 0.04, C.Yellow, "Fabric")
+				q:boxAt(sea * CFrame.new(-0.6, -1.4, 0.165), 1.3, 0.2, 0.04, Color3.fromRGB(226, 204, 150), "Fabric")
 			end)
 			local small = canvas(r, 0.75, 0.78, 1.7, 2.0, Color3.fromRGB(244, 226, 190), r.c2)
 			r:piece(function(q: R)
 				q:block(-1.7, 0, 0.5, -1.3, 0.1, 0.9, C.Paper, "Fabric")
-				q:boxAt(small * CFrame.new(-0.3, 0.3, 0.11), 0.7, 0.9, 0.02, C.Red, "Fabric")
-				q:boxAt(small * CFrame.new(0.35, -0.2, 0.11), 0.6, 0.7, 0.02, Color3.fromRGB(62, 110, 88), "Fabric")
-				q:boxAt(small * CFrame.new(0.1, 0.55, 0.125), 0.9, 0.14, 0.02, C.Black, "Fabric")
+				q:boxAt(small * CFrame.new(-0.3, 0.3, 0.12), 0.7, 0.9, 0.04, C.Red, "Fabric")
+				q:boxAt(small * CFrame.new(0.35, -0.2, 0.12), 0.6, 0.7, 0.04, Color3.fromRGB(62, 110, 88), "Fabric")
+				q:boxAt(small * CFrame.new(0.1, 0.55, 0.165), 0.9, 0.14, 0.04, C.Black, "Fabric")
 			end)
 		end,
 	},
@@ -385,7 +385,9 @@ local items: { Item } = {
 			for k = 1, 8 do
 				local a, b = pts[k], pts[k % 8 + 1]
 				local d = (b - a).Unit * 0.22
-				r:beam(a - d, b + d, 0.55, 0.55, if k % 2 == 0 then r.c2 else shade(r.c2, 0.9), "Metal")
+				-- every other segment a little thinner, so where two meet their faces don't lie together
+				local thick = if k % 2 == 0 then 0.55 else 0.47
+				r:beam(a - d, b + d, thick, 0.55, if k % 2 == 0 then r.c2 else shade(r.c2, 0.9), "Metal")
 			end
 			r:block(-0.5, 1.7, -0.34, 0.5, 1.82, 0.34, shade(r.c2, 0.8), "Metal")
 			r:ball(0.45, cy + 0.45, 0, 1.0, shade(r.c2, 1.25), "Metal")
@@ -406,7 +408,7 @@ local items: { Item } = {
 			-- a board with two notes joined at the top, the same on both faces: c1 the board,
 			-- c2 its edges and the notes
 			signArm(r)
-			r:block(-0.08, 0.9, 0.5, 0.08, 2.7, 2.66, r.c1, "Wood")
+			r:block(-0.08, 0.96, 0.5, 0.08, 2.64, 2.66, r.c1, "Wood")
 			r:block(-0.12, 2.58, 0.46, 0.12, 2.7, 2.7, r.c2, "Wood")
 			r:block(-0.12, 0.9, 0.46, 0.12, 1.02, 2.7, r.c2, "Wood")
 			r:piece(function(q: R)
@@ -470,9 +472,9 @@ local items: { Item } = {
 			-- A pelmet with a row of swags and a drape drawn back at each side, to stand across
 			-- the front of a stage (the middle is open to walk through): c1 the cloth, c2 the
 			-- braid and the ties.
-			r:block(-5.6, 9.4, -0.3, 5.6, 10.8, 0.3, r.c1, "Fabric")
-			r:block(-5.6, 9.28, -0.34, 5.6, 9.42, 0.34, r.c2, "Fabric")
-			r:block(-5.6, 10.66, -0.36, 5.6, 10.8, 0.36, shade(r.c1, 0.8), "Fabric")
+			r:block(-5.6, 9.4, -0.3, 5.6, 10.72, 0.3, r.c1, "Fabric")
+			r:block(-5.64, 9.28, -0.34, 5.64, 9.42, 0.34, r.c2, "Fabric")
+			r:block(-5.64, 10.66, -0.36, 5.64, 10.8, 0.36, shade(r.c1, 0.8), "Fabric")
 			for i = 0, 3 do
 				local x = -2.85 + i * 1.9
 				r:noCollide(r:cyl(x, 9.32, 0, 0.5, 1.9, "z", shade(r.c1, if i % 2 == 0 then 1.12 else 0.94), "Fabric"))
@@ -577,8 +579,8 @@ local items: { Item } = {
 				end
 			end, true)
 			-- the ends of the beams are painted, the way a yard marks its stock
-			r:block(3.5, 1.1, -0.62, 3.52, 1.7, -0.08, C.Red, "SmoothPlastic")
-			r:block(3.6, 1.1, 0.0, 3.62, 1.7, 0.54, C.Red, "SmoothPlastic")
+			r:block(3.5, 1.12, -0.6, 3.54, 1.68, -0.1, C.Red, "SmoothPlastic")
+			r:block(3.6, 1.12, 0.02, 3.64, 1.68, 0.52, C.Red, "SmoothPlastic")
 		end,
 	},
 	{
@@ -615,7 +617,7 @@ local items: { Item } = {
 				end
 			end, true)
 			r:boxAt(CFrame.new(-0.2, 1.89, -0.3) * CFrame.Angles(0, math.rad(7), 0), 5.8, 0.3, 0.58, tones[3], "Wood")
-			r:boxAt(CFrame.new(0.3, 1.89, 0.55) * CFrame.Angles(0, math.rad(-5), 0), 5.6, 0.3, 0.58, tones[2], "Wood")
+			r:boxAt(CFrame.new(0.3, 1.89, 0.85) * CFrame.Angles(0, math.rad(-5), 0), 5.6, 0.3, 0.58, tones[2], "Wood")
 		end,
 	},
 	{

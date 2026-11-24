@@ -466,6 +466,7 @@ function StreetPaint.ground(region: Region?): { Prim }
 	end
 
 	local all = roads()
+	local carsHere = parked(all)
 	for _, road in all do
 		local hw = road.half
 		-- (u along, v across) to the world, and the frame of somebody travelling along it
@@ -556,12 +557,21 @@ function StreetPaint.ground(region: Region?): { Prim }
 			m += 118
 			turn += 1
 		end
+		-- (none under a parked car's wheels)
+		local function underCar(u: number, side: number): boolean
+			for _, spot in carsHere do
+				if spot.road == road and spot.side == side and math.abs(spot.u - u) < 6 then
+					return true
+				end
+			end
+			return false
+		end
 		local g, n = road.a1 + 76, 0
 		while g < road.a2 - 30 do
 			if fromJunction(road, g) > 9 and not nearZebra(g, 5) then
 				-- (TownMap has a plain drain on the v > 0 side at every other one of these)
 				for _, side in { -1, 1 } do
-					if side < 0 or n % 2 == 1 then
+					if (side < 0 or n % 2 == 1) and not underCar(g, side) then
 						mark("grating", going(g, side * (hw - 0.75), ROAD, 1), grating)
 					end
 				end
@@ -650,12 +660,7 @@ function StreetPaint.ground(region: Region?): { Prim }
 	local reach = StreetPaint.FountainReach
 	if
 		not region
-		or (
-			region[1] < f.X + reach
-			and region[3] > f.X - reach
-			and region[2] < f.Z + reach
-			and region[4] > f.Z - reach
-		)
+		or (region[1] < f.X + reach and region[3] > f.X - reach and region[2] < f.Z + reach and region[4] > f.Z - reach)
 	then
 		-- rings of stone round the fountain, flush with the paving, and the joints over them
 		local rings: { { r: number, c: Color3 } } = {

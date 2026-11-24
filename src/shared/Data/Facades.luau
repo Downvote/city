@@ -971,15 +971,15 @@ local function drawFace(face: Face, plan: Plan, main: boolean)
 			end)
 			boardFrom, boardTo = math.min(boardFrom, cx - u.w / 2), math.max(boardTo, cx + u.w / 2)
 			if main and i == 1 and d.chance(0.55) then
-				-- (a hair inside the shop front's ends, and its top a tenth over the pavement so the
-				-- two don't flicker from across the town)
+				-- (a hair inside the shop front's ends, and its top more than a tenth over the
+				-- pavement and the bands in it, so they don't flicker from across the town)
 				local apron = block(
 					face,
 					cx - u.w / 2 + 0.04,
-					-0.06,
-					-3,
+					0,
+					-2.96,
 					cx + u.w / 2 - 0.04,
-					0.1,
+					0.13,
 					0,
 					pick(d, APRONS),
 					"CeramicTiles:Checker"
@@ -1014,7 +1014,7 @@ local function drawFace(face: Face, plan: Plan, main: boolean)
 			lit(face, cx - 5.6, 3.3, cx + 5.6, 6.15, rgb(104, 76, 60))
 			if d.chance(0.5) then
 				local apron =
-					block(face, cx - 5.96, -0.06, -3.2, cx + 5.96, 0.1, 0, pick(d, APRONS), "CeramicTiles:Checker")
+					block(face, cx - 5.96, 0, -3.16, cx + 5.96, 0.13, 0, pick(d, APRONS), "CeramicTiles:Checker")
 				apron.collide = false
 			end
 		elseif u.kind == "door" then
@@ -1460,7 +1460,8 @@ local function lanterns(q: R, span: number)
 	q:block(-h, 10.9, -0.04, h, 10.98, 0.04, DARK)
 	local n = math.floor(span / 2.4)
 	for k = 1, n do
-		local x = -h + k * span / (n + 1)
+		-- (kept three studs from the walls, clear of the balconies)
+		local x = -h + 3 + (k - 1) * (span - 6) / math.max(1, n - 1)
 		-- (they hang lower toward the middle, as if the string sagged)
 		local y = 10.7 - 0.9 * (1 - (2 * x / span) ^ 2)
 		q:block(x - 0.03, y, -0.03, x + 0.03, 10.9, 0.03, DARK)

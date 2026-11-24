@@ -602,28 +602,42 @@ local function drawPendant(q: R)
 end
 
 -- Pictures, their back at z = 0 and their bottom at y = 0: a frame of four bars, the canvas set
--- back in it, and what is painted standing a little off the canvas.
+-- back in it, and what is painted in flat shapes, each layer 0.03 in front of the one behind so no
+-- two lie in one plane.
 local function frameOf(q: R, w: number, h: number, color: Color3)
 	local M = "SmoothPlastic"
-	q:block(-w / 2, 0, -0.14, w / 2, 0.18, 0, color, M)
-	q:block(-w / 2, h - 0.18, -0.14, w / 2, h, 0, color, M)
-	q:block(-w / 2, 0.18, -0.14, -w / 2 + 0.18, h - 0.18, 0, color, M)
-	q:block(w / 2 - 0.18, 0.18, -0.14, w / 2, h - 0.18, 0, color, M)
+	q:block(-w / 2, 0, -0.2, w / 2, 0.18, 0, color, M)
+	q:block(-w / 2, h - 0.18, -0.2, w / 2, h, 0, color, M)
+	q:block(-w / 2, 0.18, -0.2, -w / 2 + 0.18, h - 0.18, 0, color, M)
+	q:block(w / 2 - 0.18, 0.18, -0.2, w / 2, h - 0.18, 0, color, M)
 end
 
--- Hills, a tree, a cottage with a red roof and the sun.
+-- A flat triangle painted on a picture, its front at depth z.
+local function paintTri(q: R, a: Vector2, b: Vector2, c: Vector2, z: number, color: Color3)
+	q:tri(
+		Vector3.new(a.X, a.Y, z + 0.015),
+		Vector3.new(b.X, b.Y, z + 0.015),
+		Vector3.new(c.X, c.Y, z + 0.015),
+		0.03,
+		color,
+		"SmoothPlastic"
+	)
+end
+
+-- Hills, a tree, a cottage with a red roof, a cloud and the sun.
 local function drawLandscape(q: R)
 	local M = "SmoothPlastic"
 	frameOf(q, 3.0, 2.2, rgb(190, 150, 90))
 	q:block(-1.32, 0.18, -0.07, 1.32, 2.02, 0, rgb(200, 218, 228), M)
-	q:lump(CFrame.new(-0.45, 0.75, -0.06), 2.0, 1.0, 0.08, rgb(150, 178, 150), M)
-	q:lump(CFrame.new(0.4, 0.42, -0.07), 2.0, 0.84, 0.1, rgb(112, 150, 98), M)
 	q:cyl(0.75, 1.55, -0.085, 0.03, 0.42, "z", rgb(240, 214, 140), M)
-	q:lump(CFrame.new(-0.3, 1.72, -0.085), 0.7, 0.2, 0.03, WHITE, M)
-	q:block(-0.95, 0.72, -0.15, -0.88, 1.05, -0.12, WALNUT, M)
-	q:lump(CFrame.new(-0.915, 1.15, -0.125), 0.42, 0.5, 0.05, LEAF_DARK, M)
-	q:block(0.05, 0.58, -0.15, 0.4, 0.84, -0.12, CREAM, M)
-	q:block(0.02, 0.84, -0.15, 0.43, 0.95, -0.12, BERRY, M)
+	q:block(-0.6, 1.62, -0.1, -0.05, 1.74, -0.07, WHITE, M)
+	q:block(-0.45, 1.74, -0.1, -0.2, 1.84, -0.07, WHITE, M)
+	paintTri(q, Vector2.new(-1.32, 0.18), Vector2.new(0.4, 0.18), Vector2.new(-0.55, 1.05), -0.1, rgb(150, 178, 150))
+	paintTri(q, Vector2.new(-0.35, 0.18), Vector2.new(1.32, 0.18), Vector2.new(0.75, 0.85), -0.13, rgb(112, 150, 98))
+	q:block(-0.98, 0.62, -0.13, -0.9, 0.95, -0.1, WALNUT, M)
+	q:cyl(-0.94, 1.08, -0.145, 0.03, 0.42, "z", LEAF_DARK, M)
+	q:block(0.6, 0.3, -0.16, 0.9, 0.52, -0.13, CREAM, M)
+	q:block(0.56, 0.52, -0.16, 0.94, 0.62, -0.13, BERRY, M)
 end
 
 -- A jug of flowers on a table, in a dark gold frame.
@@ -632,13 +646,14 @@ local function drawStillLife(q: R)
 	frameOf(q, 2.2, 2.8, rgb(150, 116, 70))
 	q:block(-0.92, 0.18, -0.07, 0.92, 2.62, 0, rgb(64, 92, 96), M)
 	q:block(-0.92, 0.18, -0.1, 0.92, 0.75, -0.07, rgb(150, 110, 80), M)
-	q:lump(CFrame.new(0, 1.15, -0.11), 0.7, 0.9, 0.05, CREAM, M)
-	local heads = { { -0.35, 1.9, CORAL }, { 0.3, 2.05, BUTTER }, { 0.0, 2.25, BLUSH }, { 0.45, 1.7, WHITE } }
-	for _, f in heads do
-		q:lump(CFrame.new(f[1], f[2], -0.115), 0.42, 0.42, 0.05, f[3], M)
+	q:cyl(0, 1.06, -0.115, 0.03, 0.62, "z", CREAM, M)
+	q:block(-0.12, 1.3, -0.13, 0.12, 1.6, -0.1, CREAM, M)
+	for _, f in { { -0.38, 1.85, CORAL }, { 0.0, 2.2, BUTTER }, { 0.38, 1.9, BLUSH }, { 0.02, 1.68, WHITE } } do
+		q:cyl(f[1], f[2], -0.145, 0.03, 0.36, "z", f[3], M)
 	end
-	q:lump(CFrame.new(-0.45, 1.55, -0.105), 0.5, 0.2, 0.04, LEAF, M)
-	q:lump(CFrame.new(0.15, 1.6, -0.105), 0.45, 0.2, 0.04, LEAF_DARK, M)
+	for _, s in { -1, 1 } do
+		q:boxAt(CFrame.new(s * 0.52, 1.6, -0.115) * CFrame.Angles(0, 0, math.rad(s * 30)), 0.5, 0.14, 0.03, LEAF, M)
+	end
 end
 
 -- A rug, 5 by 7: a cream border, a terracotta field, a medallion and corners, fringes at the ends.
@@ -646,14 +661,14 @@ end
 local function drawRug(q: R)
 	local M = "Fabric"
 	q:block(-2.5, 0, -3.5, 2.5, 0.03, 3.5, rgb(232, 218, 190), M)
-	q:block(-2.15, 0, -3.15, 2.15, 0.06, 3.15, rgb(172, 96, 84), M)
-	q:block(-0.9, 0, -1.4, 0.9, 0.09, 1.4, rgb(226, 196, 140), M)
-	q:block(-0.35, 0, -0.6, 0.35, 0.12, 0.6, NAVY, M)
+	q:block(-2.13, 0, -3.13, 2.13, 0.06, 3.13, rgb(172, 96, 84), M)
+	q:block(-0.88, 0, -1.37, 0.88, 0.09, 1.37, rgb(226, 196, 140), M)
+	q:block(-0.33, 0, -0.57, 0.33, 0.12, 0.57, NAVY, M)
 	for _, sx in { -1, 1 } do
 		for _, sz in { -1, 1 } do
-			q:block(sx * 1.6 - 0.25, 0, sz * 2.6 - 0.25, sx * 1.6 + 0.25, 0.09, sz * 2.6 + 0.25, NAVY, M)
+			q:block(sx * 1.6 - 0.24, 0, sz * 2.6 - 0.24, sx * 1.6 + 0.24, 0.09, sz * 2.6 + 0.24, NAVY, M)
 		end
-		q:block(-2.3, 0, sx * 3.5, 2.3, 0.02, sx * 3.75, rgb(236, 226, 204), M)
+		q:block(-2.3, 0, sx * 3.5, 2.3, 0.03, sx * 3.75, rgb(236, 226, 204), M)
 	end
 end
 
@@ -661,8 +676,8 @@ end
 local function drawCafeSet(q: R)
 	local M = "SmoothPlastic"
 	local frame, seat = rgb(120, 84, 60), rgb(150, 108, 76)
-	q:cyl(0, 0.05, 0, 0.1, 1.2, "y", DARK, M)
-	q:cyl(0, 1.3, 0, 2.4, 0.2, "y", DARK, M)
+	q:cyl(0, 0.08, 0, 0.16, 1.2, "y", DARK, M)
+	q:cyl(0, 1.33, 0, 2.34, 0.2, "y", DARK, M)
 	q:cyl(0, 2.56, 0, 0.12, 2.4, "y", PALE, M)
 	for _, s in { -1, 1 } do
 		local x = s * 1.85
@@ -1050,8 +1065,8 @@ end
 local function drawMannequin(q: R)
 	local M = "SmoothPlastic"
 	local form, dress, straw = rgb(238, 230, 216), rgb(112, 140, 170), rgb(222, 196, 140)
-	q:block(-0.6, 0, -0.6, 0.6, 0.12, 0.6, DARK, M)
-	q:cyl(0, 1.3, 0, 2.4, 0.12, "y", DARK, M)
+	q:block(-0.6, 0, -0.6, 0.6, 0.16, 0.6, DARK, M)
+	q:cyl(0, 1.32, 0, 2.36, 0.12, "y", DARK, M)
 	q:cone(0, 3.0, 0, 1.8, 1.7, dress, M)
 	q:lump(CFrame.new(0, 3.95, 0), 1.0, 1.15, 0.62, dress, M)
 	for _, s in { -1, 1 } do
@@ -1366,8 +1381,8 @@ end
 
 -- A lamp on a stand for a reading corner.
 local function floorLamp(r: R, f: CFrame)
-	post(r, f, 0, 0, 0, 0.12, 1.0, DARK, "Metal")
-	post(r, f, 0, 0.12, 0, 4.4, 0.12, DARK, "Metal")
+	post(r, f, 0, 0, 0, 0.16, 1.0, DARK, "Metal")
+	post(r, f, 0, 0.16, 0, 4.36, 0.12, DARK, "Metal")
 	r:add({
 		shape = "Cone",
 		cf = f * CFrame.new(0, 4.9, 0),
@@ -1403,7 +1418,7 @@ local function bike(r: R, f: CFrame)
 		r:add({
 			shape = "Cylinder",
 			cf = f * CFrame.new(0, 0.95, z),
-			size = Vector3.new(0.12, 1.9, 1.9),
+			size = Vector3.new(0.14, 1.9, 1.9),
 			color = INK,
 			mat = "SmoothPlastic",
 		})
@@ -1411,9 +1426,9 @@ local function bike(r: R, f: CFrame)
 	local function p(y: number, z: number): Vector3
 		return (f * CFrame.new(0, y, z)).Position
 	end
-	r:beam(p(0.95, 1.55), p(2.35, -1.05), 0.12, 0.12, frame)
-	r:beam(p(0.95, 0.3), p(2.55, 0.6), 0.12, 0.12, frame)
-	r:beam(p(0.95, -1.55), p(2.6, -1.1), 0.1, 0.1, frame)
+	r:beam(p(0.95, 1.55), p(2.35, -1.05), 0.06, 0.12, frame)
+	r:beam(p(0.95, 0.3), p(2.55, 0.6), 0.06, 0.12, frame)
+	r:beam(p(0.95, -1.55), p(2.6, -1.1), 0.06, 0.1, frame)
 	r:boxAt(f * CFrame.new(0, 2.65, 0.62), 0.4, 0.14, 0.8, INK, "SmoothPlastic")
 	r:cyl(p(2.7, -1.15).X, p(2.7, -1.15).Y, p(2.7, -1.15).Z, 1.4, 0.1, "x", INK, "Metal")
 end
@@ -1472,8 +1487,8 @@ local function plane(r: R, b: Box, x: number, z: number)
 	r:cyl(x, top - 0.9, z, 1.8, 0.04, "y", WHITE)
 	r:cyl(x, y, z, 2.4, 0.5, "z", BERRY)
 	r:block(x - 1.5, y - 0.04, z - 0.45, x + 1.5, y + 0.04, z + 0.15, CREAM)
-	r:block(x - 0.5, y - 0.04, z + 0.85, x + 0.5, y + 0.04, z + 1.2, CREAM)
-	r:block(x - 0.04, y, z + 0.8, x + 0.04, y + 0.55, z + 1.2, BERRY)
+	r:block(x - 0.5, y - 0.04, z + 0.8, x + 0.5, y + 0.04, z + 1.12, CREAM)
+	r:block(x - 0.04, y, z + 0.75, x + 0.04, y + 0.55, z + 1.12, BERRY)
 end
 
 -- A basket of trailing flowers hung from the ceiling at (x, z).
@@ -1588,7 +1603,7 @@ local function shop(r: R, kind: string, b: Box)
 			stamp(r, at(b, winX + dx, b.z1 + 1.8, dx * 10), "mannequin", drawMannequin)
 		end
 		-- a long mirror on the right wall
-		local m = wallAt(b, "right", b.z1 + 5.4, 0.3)
+		local m = wallAt(b, "right", b.z1 + 13.0, 0.3)
 		slab(r, m, -1.1, 0, -0.12, 1.1, 6.0, 0, WALNUT, "Wood")
 		slab(r, m, -0.9, 0.2, -0.16, 0.9, 5.8, -0.12, rgb(200, 216, 222), "Glass")
 	elseif kind == "cafe" then
@@ -1603,7 +1618,7 @@ local function shop(r: R, kind: string, b: Box)
 	elseif kind == "toys" then
 		teddy(r, at(b, winX, b.z1 + 2.2))
 		stamp(r, at(b, cx, mid), "rug", drawRug)
-		local blocks = at(b, cx + 1.2, mid + 1.2)
+		local blocks = at(b, cx + 1.0, mid + 1.2)
 		slab(r, blocks, -1.3, 0, -0.6, -0.1, 1.2, 0.6, MUSTARD, "SmoothPlastic")
 		slab(r, blocks, 0.1, 0, -0.6, 1.3, 1.2, 0.6, SAGE, "SmoothPlastic")
 		r:boxAt(
@@ -1677,8 +1692,9 @@ local function department(r: R, b: Box)
 	stamp(r, wallAt(b, "left", mid, 3.4), "landscape", drawLandscape)
 	stamp(r, wallAt(b, "right", mid, 3.2), "stillLife", drawStillLife)
 	stamp(r, wallAt(b, "right", b.z1 + d * 0.3, 5.6), "clock", drawClock)
-	for _, x in { cx - 22, cx - 11, cx, cx + 11, cx + 22 } do
-		lamp(r, b, x, mid, x == cx)
+	-- lamps between the rails, never over the shelves (they hang lower than a case is tall)
+	for i, x in { cx - 16.5, cx - 5.5, cx + 5.5, cx + 16.5 } do
+		lamp(r, b, x, mid, i == 2 or i == 3)
 	end
 end
 
@@ -2014,6 +2030,7 @@ local function cinema(r: R, b: Box)
 	)
 	-- the rows, the highest at the back by the door, four seats to a row on each side of the aisle
 	local rows = math.max(3, math.floor((d - 16) / 3.6))
+	local per = math.max(1, math.floor((w * 0.36 - 1.6) / 8.1))
 	local carpet = rgb(88, 70, 96)
 	for row = 0, rows - 1 do
 		local z = b.z1 + 9 + row * 3.6
@@ -2022,7 +2039,7 @@ local function cinema(r: R, b: Box)
 			slab(r, I, b.x1, b.y, z - 1.8, b.x2, b.y + rise, z + 1.8, carpet, "Fabric")
 		end
 		for _, s in { -1, 1 } do
-			for k = 0, 1 do
+			for k = 0, per - 1 do
 				stamp(
 					r,
 					at(b, cx + s * (5.84 + k * 8.1), z, 180) + Vector3.new(0, rise, 0),
@@ -2061,8 +2078,8 @@ local function cinema(r: R, b: Box)
 	stamp(r, wallAt(b, "left", b.z1 + 3.4, 4.6), "notices", drawNotices)
 	stamp(r, at(b, b.x2 - 5, b.z1 + 1.4, 180), "seats", drawSeats)
 	stamp(r, at(b, b.x2 - 1.4, b.z1 + 4.4), "plant", drawPlant)
-	stamp(r, wallAt(b, "right", b.z1 + 9.0, 4.4), "stillLife", drawStillLife)
-	stamp(r, wallAt(b, "right", b.z1 + 15.0, 4.6), "landscape", drawLandscape)
+	stamp(r, wallAt(b, "right", b.z1 + 9.0, 2.8), "stillLife", drawStillLife)
+	stamp(r, wallAt(b, "right", b.z1 + 13.5, 3.2), "landscape", drawLandscape)
 	-- lamps low on the side walls, and the way out lit over the door
 	for _, s in { -1, 1 } do
 		for _, z in { b.z1 + d * 0.45, b.z1 + d * 0.75 } do
@@ -2176,36 +2193,46 @@ local function station(r: R, b: Box)
 	end
 end
 
--- The school: two classrooms side by side, each with its board, the teacher's desk, six pupils'
--- desks, a bookcase and the children's drawings; shelves back to back between them, coats on
--- pegs by the door, a globe and a clock.
+-- The school: two classrooms side by side (one in a narrow building), each with its board, the
+-- teacher's desk, six pupils' desks, a bookcase and the children's drawings; shelves back to back
+-- between them, coats on pegs by the door, a globe and a clock.
 local function school(r: R, b: Box)
 	local w, d = b.x2 - b.x1, b.z2 - b.z1
 	local cx = (b.x1 + b.x2) / 2
-	for _, side in { -1, 1 } do
+	local sides = if w >= 56 then { -1, 1 } else { 0 }
+	for _, side in sides do
 		local ox = cx + side * w * 0.25
 		stamp(r, wallAt(b, "back", ox, 2.2), "board", drawBlackboard)
-		stamp(r, at(b, ox + 6.5 * side, b.z2 - 4.4), "desk", drawDesk)
+		stamp(r, at(b, ox + (if side < 0 then -6.5 else 6.5), b.z2 - 4.4), "desk", drawDesk)
 		for row = 0, 1 do
 			for col = -1, 1 do
 				stamp(r, at(b, ox + col * 4.4, b.z1 + 4.5 + row * 4.4), "schoolDesk", drawSchoolDesk)
 			end
 		end
-		local wall = if side < 0 then "left" else "right"
-		local sx = if side < 0 then b.x1 + 0.55 else b.x2 - 0.55
-		shelves(r, at(b, sx, b.z2 - 3.15, if side < 0 then -90 else 90), "booksA", "booksB")
-		stamp(r, wallAt(b, wall, b.z1 + 7.0, 3.2), "notices", drawNotices)
-		lamp(r, b, ox, b.z1 + d * 0.5, side > 0)
+		local left = side <= 0
+		local wall = if left then "left" else "right"
+		shelves(
+			r,
+			at(b, if left then b.x1 + 0.55 else b.x2 - 0.55, b.z2 - 3.15, if left then -90 else 90),
+			"booksA",
+			"booksB"
+		)
+		stamp(r, wallAt(b, if side == 0 then "right" else wall, b.z1 + 7.0, 3.2), "notices", drawNotices)
+		lamp(r, b, ox, b.z1 + d * 0.5, side >= 0)
 		lamp(r, b, ox, b.z1 + d * 0.8, false)
 	end
-	shelves(r, at(b, cx - 0.52, b.z1 + d * 0.55, 90), "booksB", "toys")
-	shelves(r, at(b, cx + 0.52, b.z1 + d * 0.55, -90), "booksA", "pots")
-	-- the globe
-	local g = at(b, cx - w * 0.25 - 6.5, b.z2 - 2.2)
+	if #sides == 2 then
+		shelves(r, at(b, cx - 0.52, b.z1 + d * 0.55, 90), "booksB", "toys")
+		shelves(r, at(b, cx + 0.52, b.z1 + d * 0.55, -90), "booksA", "pots")
+	end
+	-- the globe beside the first board (the other side from its desk), the clock beside the last
+	local first = cx + (if #sides == 2 then -w * 0.25 else 0)
+	local last = cx + (if #sides == 2 then w * 0.25 else 0)
+	local g = at(b, first + (if #sides == 2 then 6.5 else -6.5), b.z2 - 2.2)
 	post(r, g, 0, 0, 0, 0.15, 1.0, WALNUT, "Wood")
 	post(r, g, 0, 0.15, 0, 2.5, 0.16, WALNUT, "Wood")
 	lumpAt(r, g, 0, 3.3, 0, 1.6, 1.6, 1.6, rgb(110, 150, 176))
-	stamp(r, wallAt(b, "back", cx + w * 0.25 + 8.5, 5.4), "clock", drawClock)
+	stamp(r, wallAt(b, "back", last + 8.5, 5.4), "clock", drawClock)
 	-- coats on pegs along the left wall by the door
 	local pegs = wallAt(b, "left", b.z1 + 2.6, 4.6)
 	slab(r, pegs, -1.8, 0, -0.12, 1.8, 0.3, 0, WALNUT, "Wood")
@@ -2213,7 +2240,6 @@ local function school(r: R, b: Box)
 		lumpAt(r, pegs, -1.35 + (i - 1) * 0.9, -0.8, -0.32, 0.7, 1.7, 0.4, c, "Fabric")
 	end
 	doormat(r, b)
-	stamp(r, at(b, b.x1 + 1.5, b.z1 + 5.0), "plant", drawPlant)
 	stamp(r, at(b, b.x2 - 1.5, b.z1 + 1.5), "plant", drawPlant)
 end
 
@@ -2250,22 +2276,30 @@ local function clinic(r: R, b: Box)
 	stamp(r, desk, "counter", drawCounter, true)
 	stamp(r, desk, "till", drawTill)
 	shelves(r, at(b, b.x2 - 0.55, b.z1 + 6.5, 90), "booksA", "booksB")
-	for _, z in { b.z1 + 5.5, b.z1 + 14.0 } do
-		stamp(r, at(b, b.x1 + 0.85, z, -90), "seats", drawSeats)
+	stamp(r, at(b, b.x1 + 0.85, b.z1 + 6.0, -90), "seats", drawSeats)
+	if d >= 20 then
+		stamp(r, at(b, b.x1 + 0.85, b.z1 + 14.5, -90), "seats", drawSeats)
 	end
-	stamp(r, at(b, b.x1 + 3.6, b.z1 + 9.75, 90), "lowtable", drawLowTable)
+	stamp(r, at(b, b.x1 + 3.6, b.z1 + 10.25, 90), "lowtable", drawLowTable)
 	stamp(r, at(b, b.x1 + 1.4, b.z1 + 1.4), "plant", drawPlant)
 	stamp(r, at(b, b.x2 - 1.4, b.z1 + 1.4), "plant", drawPlant)
-	for _, x in { b.x2 - 4, b.x2 - 12 } do
+	-- the beds at the back right, each with a curtain on a rail beside it, the red cross over the
+	-- first and a drip stand by it
+	for i, x in (if w >= 40 then { b.x2 - 4, b.x2 - 12 } else { b.x2 - 4 }) do
 		stamp(r, at(b, x, b.z2 - 4.2), "hbed", drawHospitalBed)
 		curtain(r, b, x - 3.9, b.z2 - 8.2, b.z2 - 0.6)
+		if i == 1 then
+			local c = CFrame.new(x, b.y, b.z2)
+			slab(r, c, -1.2, 4.3, -0.25, 1.2, 4.9, -0.05, BERRY, "SmoothPlastic")
+			slab(r, c, -0.3, 3.7, -0.25, 0.3, 5.5, -0.05, BERRY, "SmoothPlastic")
+		end
 	end
-	-- the drip stand by the first bed
 	local s = at(b, b.x2 - 1.2, b.z2 - 2.0)
 	post(r, s, 0, 0, 0, 0.12, 1.0, STEEL, "Metal")
 	post(r, s, 0, 0.12, 0, 5.6, 0.1, STEEL, "Metal")
 	lumpAt(r, s, 0.25, 5.2, 0, 0.4, 0.7, 0.2, rgb(214, 236, 232))
-	-- the doctor's corner at the back left
+	-- the doctor's corner at the back left: the desk, a chair for the patient, medicine on the
+	-- shelves and the scales
 	stamp(r, at(b, b.x1 + 7, b.z2 - 4.5), "desk", drawDesk)
 	stamp(r, at(b, b.x1 + 7, b.z2 - 7.4, 180), "chair", drawChair)
 	shelves(r, at(b, b.x1 + 14, b.z2 - 0.55), "jars", "jars")
@@ -2273,11 +2307,9 @@ local function clinic(r: R, b: Box)
 	slab(r, sc, -0.7, 0, -0.7, 0.7, 0.3, 0.7, STEEL, "Metal")
 	post(r, sc, 0, 0.3, 0.5, 4.6, 0.16, STEEL, "Metal")
 	slab(r, sc, -0.4, 4.0, 0.3, 0.4, 4.6, 0.62, WHITE, "SmoothPlastic")
-	slab(r, CFrame.identity, cx - 1.2, b.y + 4.0, b.z2 - 0.25, cx + 1.2, b.y + 4.6, b.z2 - 0.05, BERRY, "SmoothPlastic")
-	slab(r, CFrame.identity, cx - 0.3, b.y + 3.1, b.z2 - 0.25, cx + 0.3, b.y + 5.5, b.z2 - 0.05, BERRY, "SmoothPlastic")
 	stamp(r, wallAt(b, "left", b.z2 - 4.6, 3.6), "notices", drawNotices)
 	stamp(r, wallAt(b, "right", b.z1 + 12.6, 3.4), "landscape", drawLandscape)
-	stamp(r, wallAt(b, "back", cx - 5, 5.4), "clock", drawClock)
+	stamp(r, wallAt(b, "back", b.x1 + 7, 5.4), "clock", drawClock)
 	runner(r, b, door, b.z1 + 2.2, b.z1 + 12.0, 4.0, rgb(110, 150, 150))
 	doormat(r, b)
 	lamp(r, b, cx, b.z1 + d * 0.5)

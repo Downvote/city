@@ -194,8 +194,8 @@ local function crate(r: R, kind: string?, at: CFrame)
 		q:box(0, 0.08, 0, 2, 0.16, 1.4, CRATE, "SmoothPlastic")
 		q:box(0, 0.5, -0.64, 2, 0.84, 0.12, CRATE, "SmoothPlastic")
 		q:box(0, 0.5, 0.64, 2, 0.84, 0.12, CRATE, "SmoothPlastic")
-		q:box(-0.94, 0.5, 0, 0.12, 0.84, 1.16, shade(CRATE, 0.86), "SmoothPlastic")
-		q:box(0.94, 0.5, 0, 0.12, 0.84, 1.16, shade(CRATE, 0.86), "SmoothPlastic")
+		q:box(-0.9, 0.5, 0, 0.12, 0.84, 1.16, shade(CRATE, 0.86), "SmoothPlastic")
+		q:box(0.9, 0.5, 0, 0.12, 0.84, 1.16, shade(CRATE, 0.86), "SmoothPlastic")
 		if kind then
 			local col = PRODUCE[kind]
 			for i = 0, 5 do
@@ -256,7 +256,7 @@ local function scale(r: R, at: CFrame)
 	stamp(r, "scale", at, function(q)
 		q:box(0, 0.12, 0, 1, 0.24, 0.8, IRON, "Metal")
 		q:box(0, 0.7, 0.2, 0.16, 0.9, 0.16, IRON, "Metal")
-		q:cyl(0, 1.3, 0.2, 0.14, 0.8, "z", CREAM, "Metal")
+		q:cyl(0, 1.3, 0.2, 0.24, 0.8, "z", CREAM, "Metal")
 		q:box(0, 0.4, -0.15, 1.1, 0.1, 0.7, rgb(190, 196, 204), "Metal")
 	end)
 end
@@ -277,9 +277,9 @@ local function rack(r: R, at: CFrame)
 	stamp(r, "rack", at, function(q)
 		q:box(-3.1, 1.3, 0, 0.25, 2.6, 3, TIMBER, "WoodPlanks")
 		q:box(3.1, 1.3, 0, 0.25, 2.6, 3, TIMBER, "WoodPlanks")
-		q:box(0, 1.3, -0.75, 6.2, 0.2, 1.5, TIMBER_LIGHT, "WoodPlanks")
-		q:box(0, 2.2, 0.75, 6.2, 0.2, 1.5, TIMBER_LIGHT, "WoodPlanks")
-		q:box(0, 0.75, -0.02, 6.2, 1.3, 0.12, TIMBER, "WoodPlanks")
+		q:box(0, 1.3, -0.75, 6.2, 0.2, 1.4, TIMBER_LIGHT, "WoodPlanks")
+		q:box(0, 2.2, 0.75, 6.2, 0.2, 1.4, TIMBER_LIGHT, "WoodPlanks")
+		q:box(0, 0.7, -0.02, 6.2, 1.3, 0.12, TIMBER, "WoodPlanks")
 	end, true)
 end
 
@@ -331,7 +331,7 @@ M.marketGate = function(r: R)
 			gable(q, 19.05, 0.3, 10.29, 2.4, 1.4, TIMBER_LIGHT, "Wood")
 		end)
 		stamp(r, "gateSideRoof", turn, function(q)
-			tiles(q, 8.8, 19.4, 10.3, 2.4, 1.4, 0.5, 6)
+			tiles(q, 8.7, 19.4, 10.3, 2.4, 1.4, 0.5, 6)
 		end)
 		lantern(r, sx * 13.7, 9.05, 0, 0)
 		lantern(r, sx * 4.3, 12.4, 0, 16)
@@ -382,7 +382,7 @@ M.marketGate = function(r: R)
 	stamp(r, "gateClock", CFrame.identity, function(q)
 		q:box(0, 19.75, 0, 3, 3.7, 3, CREAM, "SmoothPlastic")
 		q:box(0, 21.75, 0, 3.5, 0.3, 3.5, IRON, "SmoothPlastic")
-		q:box(0, 18.05, 0, 3.4, 0.3, 3.4, IRON, "SmoothPlastic")
+		q:box(0, 18.0, 0, 3.4, 0.3, 3.4, IRON, "SmoothPlastic")
 		q:wedge(CFrame.new(0, 22.55, -0.95), 3.8, 1.3, 1.9, TILE, "SmoothPlastic")
 		q:wedge(CFrame.new(0, 22.55, 0.95) * yaw(180), 3.8, 1.3, 1.9, TILE, "SmoothPlastic")
 		q:box(0, 23.5, 0, 0.2, 0.8, 0.2, GOLD, "SmoothPlastic")
@@ -421,9 +421,9 @@ M.marketMast = function(r: R)
 	end)
 	stamp(r, "mastBanner", CFrame.identity, function(q)
 		q:box(1.15, 13.95, 0, 1.8, 11, 0.08, TEAL, CANVAS_MAT)
-		q:box(1.15, 18.5, 0, 1.8, 0.5, 0.1, CREAM, CANVAS_MAT)
-		q:box(1.15, 9.4, 0, 1.8, 0.5, 0.1, CREAM, CANVAS_MAT)
-		q:boxAt(CFrame.new(1.15, 14, 0) * CFrame.Angles(0, 0, math.rad(45)), 0.9, 0.9, 0.1, CREAM, CANVAS_MAT)
+		q:box(1.15, 18.5, 0, 1.86, 0.5, 0.16, CREAM, CANVAS_MAT)
+		q:box(1.15, 9.4, 0, 1.86, 0.5, 0.16, CREAM, CANVAS_MAT)
+		q:boxAt(CFrame.new(1.15, 14, 0) * CFrame.Angles(0, 0, math.rad(45)), 0.9, 0.9, 0.16, CREAM, CANVAS_MAT)
 	end)
 end
 
@@ -504,9 +504,9 @@ M.marketHall = function(r: R)
 		end)
 	end
 	stamp(r, "hallPurlins", CFrame.new(0, FLOOR, 0), function(q)
-		q:box(0, 9.8, -4.6, L + 1, 0.45, 0.45, TIMBER_LIGHT, "Wood")
-		q:box(0, 9.8, 4.6, L + 1, 0.45, 0.45, TIMBER_LIGHT, "Wood")
-		q:box(0, 12.3, 0, L + 1, 0.5, 0.35, TIMBER_LIGHT, "Wood")
+		q:box(0, 9.8, -4.6, L + 0.8, 0.45, 0.45, TIMBER_LIGHT, "Wood")
+		q:box(0, 9.8, 4.6, L + 0.8, 0.45, 0.45, TIMBER_LIGHT, "Wood")
+		q:box(0, 12.3, 0, L + 0.8, 0.5, 0.35, TIMBER_LIGHT, "Wood")
 	end)
 	-- the roof, a bay at a time, and the vents along its ridge
 	local span = (L + 1.2) / HALL_BAYS
@@ -535,7 +535,7 @@ M.marketHall = function(r: R)
 			"hallGable",
 			CFrame.new(sx * (L / 2 + 0.35), FLOOR, 0) * (if sx > 0 then CFrame.identity else yaw(180)),
 			function(q)
-				q:box(0, 9.35, 0, 0.32, 0.6, 12.2, TIMBER, "Wood")
+				q:box(0, 9.35, 0, 0.4, 0.6, 12.2, TIMBER, "Wood")
 				gable(q, 0, 0.3, 9.6, 6.1, 2.85, TIMBER_LIGHT, "Wood")
 				q:cyl(0.12, 10.8, 0, 0.3, 1.5, "x", TIMBER, "Wood")
 			end
@@ -670,7 +670,7 @@ M.marketCart = function(r: R)
 		q:box(0, 2, 0, 5, 0.3, 2.6, TIMBER_LIGHT, "WoodPlanks")
 		for _, sz in { -1, 1 } do
 			q:box(0, 2.55, sz * 1.24, 5, 0.8, 0.14, TIMBER, "WoodPlanks")
-			q:cyl(-0.7, 1.3, sz * 1.5, 0.3, 2.6, "z", TIMBER, "WoodPlanks")
+			q:cyl(-0.7, 1.3, sz * 1.5, 0.26, 2.6, "z", TIMBER, "WoodPlanks")
 			q:cyl(-0.7, 1.3, sz * 1.62, 0.1, 0.7, "z", INK, "WoodPlanks")
 			q:beam(Vector3.new(2.4, 2.1, sz * 1.1), Vector3.new(4.4, 2.7, sz * 1.1), 0.18, 0.18, TIMBER, "WoodPlanks")
 		end
@@ -1071,7 +1071,7 @@ M.hillStair = function(r: R)
 		local at = CFrame.new(X, t.y, t.z1)
 		stamp(r, "broadStep", at, function(q)
 			q:box(0, -0.9, TREAD / 2, 2 * STAIR_HALF, 1.8, TREAD, PAVE, SLAB_MAT)
-			q:box(0, -0.22, 0.34, 2 * STAIR_HALF, 0.44, 0.7, STONE, SLAB_MAT)
+			q:box(0, -0.18, 0.3, 2 * STAIR_HALF, 0.44, 0.7, STONE, SLAB_MAT)
 		end, true)
 		stamp(r, "broadKerb", at, function(q)
 			for _, sx in { -1, 1 } do
@@ -1097,15 +1097,15 @@ M.hillStair = function(r: R)
 				q:box(0, j - 1.8, T * (j - 0.5), 2 * STAIR_HALF, 3.6, T, PAVE, SLAB_MAT)
 			end
 			for j = 1, FLIGHT_STEPS do
-				q:box(0, j - 0.12, T * (j - 1) + 0.2, 2 * STAIR_HALF + 0.02, 0.28, 0.5, STONE, SLAB_MAT)
+				q:box(0, j - 0.09, T * (j - 1) + 0.2, 2 * STAIR_HALF + 0.1, 0.28, 0.5, STONE, SLAB_MAT)
 			end
 			-- the walls beside the steps follow the slope, with a block at the foot and the head
 			local a, b = Vector3.new(0, 1, 0), Vector3.new(0, FLIGHT_STEPS + 1, RUN + T)
 			for _, sx in { -1, 1 } do
-				local off = Vector3.new(sx * (STAIR_HALF + 0.45), 0.9, 0) + down * 1.6
+				local off = Vector3.new(sx * (STAIR_HALF + 0.4), 0.9, 0) + down * 1.6
 				q:beam(a + off, b + off - slope.Unit * 1.4, 0.9, 3.2, STONE_DARK, SLAB_MAT)
-				q:box(sx * (STAIR_HALF + 0.45), 0.4, 0, 1.1, 3.6, 1.1, STONE, SLAB_MAT)
-				q:box(sx * (STAIR_HALF + 0.45), FLIGHT_STEPS + 0.4, RUN, 1.1, 3.6, 1.1, STONE, SLAB_MAT)
+				q:box(sx * (STAIR_HALF + 0.45), 0.4, 0, 1.2, 3.6, 1.1, STONE, SLAB_MAT)
+				q:box(sx * (STAIR_HALF + 0.45), FLIGHT_STEPS + 0.4, RUN, 1.2, 3.6, 1.1, STONE, SLAB_MAT)
 			end
 		end)
 		-- the ramp people walk up, from a tread's depth before the first riser to the landing
@@ -1178,7 +1178,7 @@ end
 
 local function cliff(r: R, kind: string, at: CFrame)
 	stamp(r, "cliff:" .. kind, at, function(q)
-		q:box(0, -8, 0.3, 12, 16, 0.6, ROCK_DARK, ROCK_MAT)
+		q:box(0, -8.05, 0.36, 12, 15.9, 0.6, ROCK_DARK, ROCK_MAT)
 		if kind == "a" then
 			rockSlab(q, 0.3, -1.7, -0.5, 12.4, 3.4, 1.8, 3, 0, ROCK_LIGHT)
 			rockSlab(q, -0.8, -5.3, -1, 11.2, 4.2, 2.8, -4, 1.5, ROCK)
@@ -1187,7 +1187,7 @@ local function cliff(r: R, kind: string, at: CFrame)
 			rockSlab(q, 3.9, -5.6, -1.9, 3, 9.4, 2.6, 12, 2, ROCK_LIGHT)
 			rockSlab(q, -3.6, -2.9, -1.3, 4.2, 1.6, 2.2, -8, -3, ROCK_DARK)
 		elseif kind == "b" then
-			rockSlab(q, -0.4, -1.3, -0.4, 12.2, 2.6, 1.6, -2, 0, ROCK)
+			rockSlab(q, -0.4, -1.36, -0.4, 12.2, 2.6, 1.6, -2, 0, ROCK)
 			rockSlab(q, 0.9, -4.4, -1.1, 10.4, 3.8, 3, 5, -1.5, ROCK_LIGHT)
 			rockSlab(q, -0.6, -8.6, -1.4, 12.4, 4.8, 3.4, -3, 1, ROCK)
 			rockSlab(q, 0.4, -13.4, -2, 12.6, 5.4, 4.8, 3, 0, ROCK_DARK)
@@ -1196,10 +1196,10 @@ local function cliff(r: R, kind: string, at: CFrame)
 			rockSlab(q, 1.8, -10.6, -3, 4.4, 2.2, 2.6, 16, 0, ROCK_LIGHT)
 		else
 			-- a flat bay, for where the stair runs close beside the rock
-			rockSlab(q, 0, -1.2, -0.25, 12, 2.4, 0.7, 0, 0, ROCK_LIGHT)
+			rockSlab(q, 0, -1.32, -0.25, 12, 2.4, 0.7, 0, 0, ROCK_LIGHT)
 			rockSlab(q, -1.8, -4.6, -0.3, 8.2, 4, 0.8, 0, 2, ROCK_DARK)
 			rockSlab(q, 3.2, -5.4, -0.2, 5, 5.6, 0.6, 0, -1.5, ROCK)
-			rockSlab(q, 0.4, -9.6, -0.3, 11.4, 4.6, 0.8, 0, -1, ROCK)
+			rockSlab(q, 0.4, -9.6, -0.36, 11.4, 4.6, 0.8, 0, -1, ROCK)
 			rockSlab(q, -0.6, -13.8, -0.3, 11.8, 4, 0.8, 0, 1, ROCK_DARK)
 		end
 	end)

@@ -120,7 +120,7 @@ local function awning(
 	for _, x in { x1, x2 } do
 		r:tri(Vector3.new(x, y, zw), Vector3.new(x, yf, zf), Vector3.new(x, yf - 0.55, zw + 0.3), 0.06, c1, "Fabric")
 	end
-	r:cyl((x1 + x2) / 2, yf, zf, x2 - x1, 0.1, "x", IRON, "Metal")
+	r:cyl((x1 + x2) / 2, yf, zf + 0.1, x2 - x1, 0.1, "x", IRON, "Metal")
 	for _, x in { x1 + 0.6, (x1 + x2) / 2, x2 - 0.6 } do
 		rod(r, Vector3.new(x, y - 1.7, zw), Vector3.new(x, yf - 0.05, zf - 0.1), 0.08, IRON, "Metal")
 	end
@@ -396,13 +396,13 @@ TownModels.Models.fountain = function(r: R)
 	r:cyl(0, 4.45, 0, 0.3, 2.6, "y", STONE, "Marble")
 	r:cyl(0, 4.75, 0, 0.3, 5.0, "y", STONE, "Marble")
 	r:cyl(0, 5.1, 0, 0.4, 7.0, "y", light, "Marble")
-	water(r:cyl(0, 5.24, 0, 0.1, 6.6, "y", C.Water, "Glass"))
+	water(r:cyl(0, 5.31, 0, 0.1, 6.6, "y", C.Water, "Glass"))
 	r:cyl(0, 6.3, 0, 2.0, 0.9, "y", STONE, "Marble")
 	r:cyl(0, 6.6, 0, 0.25, 1.3, "y", light, "Marble")
 	r:cyl(0, 7.4, 0, 0.2, 1.6, "y", STONE, "Marble")
 	r:cyl(0, 7.65, 0, 0.3, 2.8, "y", STONE, "Marble")
 	r:cyl(0, 7.95, 0, 0.3, 3.6, "y", light, "Marble")
-	water(r:cyl(0, 8.06, 0, 0.1, 3.2, "y", C.Water, "Glass"))
+	water(r:cyl(0, 8.14, 0, 0.1, 3.2, "y", C.Water, "Glass"))
 	r:cyl(0, 8.5, 0, 0.8, 0.55, "y", STONE, "Marble")
 	r:cyl(0, 8.95, 0, 0.15, 0.85, "y", light, "Marble")
 	local top = r:ball(0, 9.4, 0, 0.9, C.Water, "Glass")
@@ -451,7 +451,7 @@ TownModels.Models.board = function(r: R)
 		"Slate"
 	)
 	r:block(-4.85, 8.85, -0.15, 4.85, 9.1, 0.15, shade(roof, 0.8), "Slate")
-	r:block(-4.75, 7.45, -0.35, 4.75, 8.15, 0.35, WOOD, "WoodPlanks")
+	r:block(-4.7, 7.45, -0.35, 4.7, 8.15, 0.35, WOOD, "WoodPlanks")
 	-- notes pinned on it, and a poster with a little map
 	local notes: { { x: number, y: number, w: number, h: number, c: Color3 } } = {
 		{ x = -3.1, y = 5.7, w = 1.4, h = 1.6, c = C.Paper },
@@ -473,9 +473,9 @@ TownModels.Models.board = function(r: R)
 		r:ball(n.x, n.y + n.h / 2 - 0.15, 0.24, 0.16, if i % 2 == 0 then C.Red else C.Blue, "SmoothPlastic")
 	end
 	r:block(0.15, 4.6, 0.15, 1.75, 6.6, 0.2, C.Paper, "SmoothPlastic")
-	r:block(0.3, 4.8, 0.2, 1.6, 6.0, 0.22, Color3.fromRGB(150, 196, 120), "SmoothPlastic")
-	r:block(0.3, 5.3, 0.22, 1.6, 5.4, 0.23, Color3.fromRGB(90, 150, 210), "SmoothPlastic")
-	r:block(0.3, 6.15, 0.2, 1.6, 6.45, 0.22, C.Red, "SmoothPlastic")
+	r:block(0.3, 4.8, 0.2, 1.6, 6.0, 0.24, Color3.fromRGB(150, 196, 120), "SmoothPlastic")
+	r:block(0.3, 5.3, 0.24, 1.6, 5.4, 0.28, Color3.fromRGB(90, 150, 210), "SmoothPlastic")
+	r:block(0.3, 6.15, 0.2, 1.6, 6.45, 0.24, C.Red, "SmoothPlastic")
 end
 
 TownModels.Models.tailor = function(r: R)
@@ -496,7 +496,7 @@ TownModels.Models.tailor = function(r: R)
 	-- a coat hanger picked out on the sign board, with a dot either side
 	local hz = HZ + 0.2
 	r:cyl(0, 11.0, hz, 0.06, 0.32, "z", CREAM, "SmoothPlastic")
-	r:cyl(0, 11.0, hz + 0.01, 0.07, 0.16, "z", plum, "SmoothPlastic")
+	r:cyl(0, 11.0, hz + 0.04, 0.07, 0.16, "z", plum, "SmoothPlastic")
 	rod(r, Vector3.new(0, 10.85, hz), Vector3.new(-1.3, 10.05, hz), 0.12, CREAM, "SmoothPlastic")
 	rod(r, Vector3.new(0, 10.85, hz), Vector3.new(1.3, 10.05, hz), 0.12, CREAM, "SmoothPlastic")
 	rod(r, Vector3.new(-1.35, 10.0, hz), Vector3.new(1.35, 10.0, hz), 0.12, CREAM, "SmoothPlastic")
@@ -529,7 +529,7 @@ TownModels.Models.tailor = function(r: R)
 	end
 	for i, w in { 0.9, 0.6, 0.75 } do
 		local y = 2.4 - i * 0.4
-		local cf = CFrame.new(-7.0, 1.7, HZ + 2.45) * CFrame.Angles(-0.22, 0, 0) * CFrame.new(-0.45 + w / 2, y - 1.7, 0)
+		local cf = CFrame.new(-7.0, 1.7, HZ + 2.49) * CFrame.Angles(-0.22, 0, 0) * CFrame.new(-0.45 + w / 2, y - 1.7, 0)
 		r:boxAt(cf, w, 0.08, 0.02, CREAM, "SmoothPlastic")
 	end
 	-- a long rail of clothes down the left wall
@@ -679,7 +679,7 @@ TownModels.Models.shop = function(r: R)
 	for _, z in { -4.6, 3.4 } do
 		r:block(x1, F, z, x2, F + 6.0, z + 0.15, CREAM, "Wood")
 	end
-	r:block(x1, F, -4.6, x2, F + 0.5, 3.55, green, "Wood")
+	r:block(x1, F, -4.45, x2, F + 0.5, 3.4, green, "Wood")
 	local goods = {
 		Color3.fromRGB(230, 80, 60),
 		Color3.fromRGB(245, 200, 80),
@@ -758,7 +758,7 @@ TownModels.Models.hall = function(r: R)
 	r:block(-5.5, 0.6, 5.6, 5.5, 0.9, 6.3, STONE, "Concrete")
 	-- the main block: a stone base band, plaster walls, corner pilasters and a cornice
 	r:block(-8, 1.2, -6.5, 8, 11.4, 1.5, wall, "Plaster")
-	r:block(-8.1, 1.2, -6.6, 8.1, 2.2, 1.62, STONE, "Concrete")
+	r:block(-8.1, 1.2, -6.6, 8.1, 2.2, 1.58, STONE, "Concrete")
 	r:block(-8.2, 10.8, -6.7, 8.2, 11.0, 1.7, trim, "SmoothPlastic")
 	r:block(-8.4, 11.2, -6.9, 8.4, 11.7, 1.9, trim, "SmoothPlastic")
 	for _, sx in { -1, 1 } do
@@ -862,8 +862,8 @@ TownModels.Models.hall = function(r: R)
 		wall,
 		"Plaster"
 	)
-	r:beam(Vector3.new(-5.85, 11.35, 5.55), Vector3.new(0.05, 14.5, 5.55), 0.5, 0.35, trim, "SmoothPlastic")
-	r:beam(Vector3.new(5.85, 11.35, 5.55), Vector3.new(-0.05, 14.5, 5.55), 0.5, 0.35, trim, "SmoothPlastic")
+	r:beam(Vector3.new(-5.85, 11.35, 5.6), Vector3.new(0.05, 14.5, 5.6), 0.5, 0.35, trim, "SmoothPlastic")
+	r:beam(Vector3.new(5.85, 11.35, 5.6), Vector3.new(-0.05, 14.5, 5.6), 0.5, 0.35, trim, "SmoothPlastic")
 	for _, sx in { -1, 1 } do
 		r:quad(
 			Vector3.new(sx * 5.9, 11.55, 5.75),
@@ -876,7 +876,7 @@ TownModels.Models.hall = function(r: R)
 		)
 	end
 	r:cyl(0, 12.5, 5.6, 0.12, 1.5, "z", trim, "SmoothPlastic")
-	r:cyl(0, 12.5, 5.66, 0.04, 1.1, "z", Color3.fromRGB(150, 180, 200), "Glass")
+	r:cyl(0, 12.5, 5.7, 0.04, 1.1, "z", Color3.fromRGB(150, 180, 200), "Glass")
 	-- a slate roof along the main block, with plaster gable ends
 	r:quad(
 		Vector3.new(-8.5, 11.7, 2.0),
@@ -927,7 +927,7 @@ TownModels.Models.hall = function(r: R)
 	r:ball(0, 21.25, cz, 0.35, C.Gold, "Metal")
 	r:cyl(0, 22.9, cz, 3.2, 0.12, "y", C.Metal, "Metal")
 	r:block(0.08, 23.3, cz - 0.05, 2.7, 24.4, cz + 0.05, Color3.fromRGB(84, 120, 170), "Fabric")
-	r:block(0.08, 23.7, cz - 0.06, 2.7, 24.0, cz + 0.06, C.White, "Fabric")
+	r:block(0.08, 23.7, cz - 0.09, 2.66, 24.0, cz + 0.09, C.White, "Fabric")
 	-- clipped shrubs at the front corners of the podium
 	for _, sx in { -1, 1 } do
 		r:block(sx * 9.2 - 0.7, 0.6, 4.0, sx * 9.2 + 0.7, 1.6, 5.8, STONE, "Concrete")
@@ -979,7 +979,7 @@ TownModels.Models.bench = function(r: R)
 		r:block(-2.7, 1.78, z - 0.15, 2.7, 1.92, z + 0.15, WOOD, "WoodPlanks")
 	end
 	for _, y in { 2.3, 2.75, 3.2 } do
-		local z = -0.92 - (y - 1.9) * 0.16
+		local z = -0.69 - (y - 1.8) * 0.1667
 		r:boxAt(CFrame.new(0, y, z) * CFrame.Angles(-0.16, 0, 0), 5.4, 0.32, 0.12, WOOD, "WoodPlanks")
 	end
 	r:seat(-1.2, 1.92, 0, 0)

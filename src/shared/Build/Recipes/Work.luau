@@ -849,7 +849,7 @@ local items: { any } = {
 				q:lump(CFrame.new(-2.05, HEARTH + 0.9, 1.65) * CFrame.Angles(0.3, 0, -0.35), 0.26, 1.4, 0.26, CRUST)
 			end)
 			-- a sack of flour against the back corner
-			r:noCollide(r:lump(CFrame.new(2.35, 0.6, -2.3), 0.9, 1.2, 0.7, Color3.fromRGB(232, 222, 200), "Fabric"))
+			r:noCollide(r:lump(CFrame.new(2.35, 0.6, -2.2), 0.9, 1.2, 0.6, Color3.fromRGB(232, 222, 200), "Fabric"))
 		end,
 	},
 	{
@@ -914,10 +914,10 @@ local items: { any } = {
 				end
 				q:cyl(3.24, 2.34, 0, 1.62, 0.16, "z", WALNUT, "Wood")
 			end)
-			cartWheel(r, -0.7, 1.1, 1.22, 2.2, WALNUT)
-			cartWheel(r, -0.7, 1.1, -1.22, 2.2, WALNUT)
+			cartWheel(r, -0.7, 1.1, 1.29, 2.2, WALNUT)
+			cartWheel(r, -0.7, 1.1, -1.29, 2.2, WALNUT)
 			r:piece(function(q: R)
-				q:block(-0.78, 1.02, -1.3, -0.62, 1.18, 1.3, IRON, "Metal")
+				q:block(-0.78, 1.02, -1.37, -0.62, 1.18, 1.37, IRON, "Metal")
 				-- the zinc buckets, the back row a step up, a band round each
 				for i = 0, 5 do
 					local x = -1.7 + (i % 3) * 1.4
@@ -1044,8 +1044,8 @@ local items: { any } = {
 			-- A studio easel (c1): two legs and a third behind, a ledge and a clamp holding a
 			-- canvas (c2) that faces the painter, who stands behind it (-z). On it a landscape
 			-- half done: sky, hills, a house and a tree, the corner still bare. Beside it a
-			-- little table with the palette, a jar of brushes, tubes and a rag; a dust sheet
-			-- under it all, and a finished picture leant against the back leg.
+			-- little table with the palette, a jar of brushes, tubes and a rag, and a finished
+			-- picture leant against the back leg. (No dust sheet: it would fight a rug under it.)
 			local wood = r.c1
 			local lean = math.rad(4.7)
 			local function onLegs(y: number): number
@@ -1140,14 +1140,6 @@ local items: { any } = {
 				q:lump(canvas * CFrame.new(-0.9, -0.18, -0.19), 0.42, 0.42, 0.06, Color3.fromRGB(74, 118, 82), "Fabric")
 				-- a rag hung over the ledge
 				q:block(0.62, 2.05, L - 0.51, 0.98, 2.64, L - 0.45, Color3.fromRGB(214, 200, 176), "Fabric")
-			end)
-			-- the dust sheet, spattered
-			r:piece(function(q: R)
-				q:block(-1.45, 0, -1.95, 1.45, 0.05, 1.0, Color3.fromRGB(226, 218, 200), "Fabric")
-				for i, p in { { -0.6, -1.2 }, { 0.4, -0.7 }, { -0.2, 0.6 }, { 0.9, -1.5 }, { -1.0, 0.2 } } do
-					local cols = { C.Blue, LEMON, APPLE, Color3.fromRGB(132, 174, 110), C.Blue }
-					q:lump(CFrame.new(p[1], 0.06, p[2]) * CFrame.Angles(0, i, 0), 0.26, 0.04, 0.18, cols[i], "Fabric")
-				end
 			end)
 			-- the palette table: a round top on three legs
 			r:piece(function(q: R)
@@ -1646,9 +1638,9 @@ local items: { any } = {
 			-- the posts, the bar across and the curtain hung between them in folds
 			r:piece(function(q: R)
 				for _, s in { -1, 1 } do
-					q:block(s * 3.75, TOP, -2.98, s * 3.95, 5.82, -2.78, shade(WALNUT, 0.8), "Wood")
+					q:block(s * 3.75, TOP, -2.98, s * 3.95, 5.94, -2.78, shade(WALNUT, 0.8), "Wood")
 				end
-				q:block(-3.95, 5.62, -2.98, 3.95, 5.82, -2.78, shade(WALNUT, 0.8), "Wood")
+				q:block(-3.95, 5.74, -2.98, 3.95, 5.94, -2.78, shade(WALNUT, 0.8), "Wood")
 			end, true)
 			r:piece(function(q: R)
 				for i = 0, 9 do
@@ -1659,7 +1651,7 @@ local items: { any } = {
 						TOP,
 						-2.98,
 						x + 0.75,
-						5.62,
+						5.74,
 						if deep then -2.9 else -2.84,
 						if deep then shade(cloth, 0.86) else cloth,
 						"Fabric"
@@ -1667,7 +1659,7 @@ local items: { any } = {
 				end
 				for i = 0, 6 do
 					local x = -3.3 + i * 1.1
-					q:block(x, 5.3, -2.78, x + 0.08, 5.62, -2.74, LEMON, "Fabric")
+					q:block(x, 5.3, -2.78, x + 0.08, 5.74, -2.74, LEMON, "Fabric")
 				end
 			end)
 			-- bunting along the bar
@@ -1873,7 +1865,7 @@ local items: { any } = {
 					q:cyl(-3.6, 2.95, z, 0.5, 0.08, "x", steel)
 				end
 				q:cyl(-3.72, 3.05, 0.6, 0.66, 0.14, "x", IRON)
-				q:cyl(-3.98, 3.05, 0.6, 0.06, 0.6, "z", IRON)
+				q:cyl(-3.98, 3.05, 0.6, 0.66, 0.06, "z", IRON)
 				q:ball(-3.98, 3.05, 0.27, 0.12, IRON)
 				q:ball(-3.98, 3.05, 0.93, 0.12, IRON)
 			end)

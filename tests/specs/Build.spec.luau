@@ -302,7 +302,9 @@ describe("Shapes", function()
 			total += p.size.X * p.size.Y
 		end
 		local _, height = Plan.wallSpan("wall", 0)
-		expect(total).toBeNear(2 * (12 * height - 16), 1e-3)
+		-- (the hole is cut 0.04 bigger all round than the 4 x 4 window, so the wall's cut faces
+		-- sit inside its trim instead of flickering against it)
+		expect(total).toBeNear(2 * (12 * height - 4.08 * 4.08), 1e-3)
 	end)
 
 	it("joins walls without any two sharing space, and closes corners", function()
