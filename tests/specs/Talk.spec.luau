@@ -16,13 +16,16 @@ local Appearance = require(Shared .. "Avatar.Appearance")
 local Personalities = require(Shared .. "Data.Personalities")
 local Foods = require(Shared .. "Data.Foods")
 local StarterHouse = require(Shared .. "Data.StarterHouse")
+local Sayings = require(Shared .. "Data.Sayings")
 local Rng = require(Shared .. "Util.Rng")
+local Text = require(Shared .. "Util.Text")
 
 local K = Tuning.Talk
 local L = Tuning.Life
 
 local function town(count, pers)
 	local p = Schema.newProfile()
+	p.name = "Robin" -- the player, as the villagers call them ({player})
 	p.plan = StarterHouse.plan()
 	local rng = Rng.new(5)
 	for i = 1, count do
@@ -47,6 +50,75 @@ local function readable(text)
 		and not text:find("{", 1, true)
 		and not text:find("\u{2014}", 1, true)
 		and not text:find("\u{2013}", 1, true)
+end
+
+-- lines as the player sees them, with their name in
+local function filled(lines, p)
+	local out = {}
+	for _, text in lines or {} do
+		table.insert(out, (Text.fill(text, { player = Text.playerName(p) })))
+	end
+	return out
+end
+
+local function need(ok, what)
+	if not ok then
+		error(what, 2)
+	end
+end
+
+-- every kind of line a personality has (Data/Personalities)
+local KINDS = {
+	"hello",
+	"happy",
+	"sad",
+	"angry",
+	"thanks",
+	"wow",
+	"scared",
+	"sorry",
+	"yes",
+	"no",
+	"bye",
+	"tease",
+	"brag",
+	"worry",
+	"hmm",
+	"excited",
+	"tired",
+	"laugh",
+}
+
+-- every line a villager can say in a talk, with where it is from
+local function everyLine()
+	local out = {}
+	local function add(text, where)
+		if type(text) == "string" then
+			table.insert(out, { text = text, where = where })
+		elseif type(text) == "table" then
+			for k, v in text do
+				add(v, where .. "." .. tostring(k))
+			end
+		end
+	end
+	for _, p in Personalities.list do
+		add(p.lines, p.id)
+	end
+	for name, map in Talk.Voices do
+		if name ~= "JOKY" then
+			add(map, name)
+		end
+	end
+	for name, list in Talk.Shared do
+		add(list, name)
+	end
+	for _, say in Sayings.list do
+		add(say.text, "saying " .. say.id)
+	end
+	for _, h in Sayings.hobbies do
+		add(h.line, "hobby " .. h.id)
+	end
+	return out
 end
 
 describe("Talk", function()
@@ -159,12 +231,17 @@ describe("Talk", function()
 				v.mood = mood
 				local greeting = Talk.line(p, "v1", rng, { first = true })
 				expect(readable(greeting)).toBeTruthy()
-				expect(table.find(pers.lines.hello, greeting) ~= nil).toBeTruthy()
+				-- their own hello, or one of the greetings just for the player, by name
+				local greets = filled(pers.lines.hello, p)
+				for _, text in filled(Talk.Voices.GREET[pers.id], p) do
+					table.insert(greets, text)
+				end
+				expect(table.find(greets, greeting) ~= nil).toBeTruthy()
 				local last = greeting
 				for _ = 1, 60 do
 					local said = Talk.line(p, "v1", rng, { last = last, now = 100 })
 					-- (a shy villager who is down may just say "...")
-					expect(readable(said) or table.find(pers.lines.sad, said) ~= nil).toBeTruthy()
+					expect(readable(said) or table.find(filled(pers.lines.sad, p), said) ~= nil).toBeTruthy()
 					expect(said ~= last).toBeTruthy()
 					last = said
 				end
@@ -196,21 +273,24 @@ describe("Talk", function()
 			expect(atWork[text]).toBe(true)
 			expect(atHome[text]).toBe(nil)
 		end
-		expect(atHome["Nothing was biting today. I stayed out three hours anyway."]).toBe(true)
+		-- (a sunny villager, in their own words, calling the player by name)
+		local quarrel = "V3 and I had a fight and I hate it. Can things just go back to normal?"
+		local nobed = "Still no bed! I've been sleeping on a pile of coats. Could you sort one out, Robin?"
+		expect(atHome["Nothing was biting today. Stayed out three hours anyway."]).toBe(true)
 		expect(atHome["Nothing a cup of tea can't fix."]).toBe(true)
-		expect(atHome["V2 always makes me laugh."]).toBe(true)
-		expect(atHome["V3 and I aren't speaking right now."]).toBe(true)
-		expect(atHome["I still don't have a bed, you know."]).toBe(true)
+		expect(atHome["V2 always makes me laugh. We sat on the pier talking for hours yesterday!"]).toBe(true)
+		expect(atHome[quarrel]).toBe(true)
+		expect(atHome[nobed]).toBe(true)
 		-- the quarrel blows over, and a bed turns up
 		v.bed = "1"
 		local later = heard({ now = 100 + Tuning.Relationships.QuarrelMinutes * 60 + 1 })
-		expect(later["V3 and I aren't speaking right now."]).toBe(nil)
-		expect(later["I still don't have a bed, you know."]).toBe(nil)
+		expect(later[quarrel]).toBe(nil)
+		expect(later[nobed]).toBe(nil)
 		-- someone who is down doesn't make small talk
 		v.mood = 10
 		v.bed = "1"
 		for text in heard({ now = 5000 }, 200) do
-			expect(table.find(Personalities.get(v.pers).lines.sad, text) ~= nil).toBeTruthy()
+			expect(table.find(filled(Personalities.get(v.pers).lines.sad, p), text) ~= nil).toBeTruthy()
 		end
 	end)
 
@@ -344,6 +424,198 @@ describe("Talk", function()
 		expect(chat.counted).toBe(false)
 		expect(Talk.left(p, "nobody", 1)).toBe(0)
 		expect(Talk.line(p, "nobody", Rng.new(1), { first = true })).toBe("...")
+	end)
+
+	it("gives sixteen personalities every kind of line, each in a voice of its own", function()
+		-- the user: "redo all the conversation lines ... incorporate them into the villagers based on
+		-- their personalities ... add more personalities too"
+		expect(#Personalities.list).toBe(16)
+		local ids = {}
+		for _, p in Personalities.list do
+			need(ids[p.id] == nil, p.id .. " is there twice")
+			ids[p.id] = true
+			need(Personalities.get(p.id) == p, p.id .. " can't be found")
+			need(type(p.name) == "string" and #p.name > 0, p.id .. " has no name")
+			need(type(p.blurb) == "string" and #p.blurb > 0, p.id .. " has no blurb")
+			need(type(p.color) == "string" and p.color:match("^%x%x%x%x%x%x$") ~= nil, p.id .. " has no colour")
+			for _, t in { "social", "temper", "kind", "mischief", "lazy", "brave", "focus" } do
+				local x = p.traits[t]
+				need(type(x) == "number" and x >= 0 and x <= 1, p.id .. ": " .. t .. " out of range")
+			end
+			local seen = {}
+			for _, kind in KINDS do
+				local lines = p.lines[kind]
+				need(type(lines) == "table" and #lines >= 4, p.id .. " has too few " .. kind .. " lines")
+				for _, text in lines do
+					need(type(text) == "string" and #text > 0, p.id .. "." .. kind .. " has an empty line")
+					need(not seen[text], p.id .. " says this twice: " .. text)
+					seen[text] = true
+				end
+			end
+		end
+		for _, id in
+			{
+				"sunny",
+				"gentle",
+				"bold",
+				"dreamy",
+				"easygoing",
+				"proud",
+				"shy",
+				"cheeky",
+				"cool",
+				"prickly",
+				"dramatic",
+				"bookish",
+				"gloomy",
+				"polite",
+				"foodie",
+				"nervous",
+			}
+		do
+			need(ids[id], id .. " is missing")
+		end
+		-- every map Sim/Talk keys by personality has something for each of them, and no two of them
+		-- say it the same way
+		for name, map in Talk.Voices do
+			local said = {}
+			for _, p in Personalities.list do
+				local own = map[p.id]
+				need(own ~= nil, name .. " has nothing for " .. p.id)
+				if name ~= "JOKY" then
+					local key = if type(own) == "table" then table.concat(own, "|") else own
+					need(said[key] == nil, name .. ": " .. p.id .. " and " .. tostring(said[key]) .. " say the same")
+					said[key] = p.id
+				end
+			end
+		end
+		-- and the lines anybody says cover every season and every weather the town has
+		expect(#Talk.Shared.SEASON).toBe(4)
+		for _, w in { "clear", "cloudy", "rain", "storm", "snow", "blossom", "leaves" } do
+			need(Talk.Shared.WEATHER[w] ~= nil and #Talk.Shared.WEATHER[w] >= 2, "nothing to say about " .. w)
+		end
+	end)
+
+	it("sounds like a friend texting, each in their own way", function()
+		-- the user pointed at a messaging app's chats: short bursts in their own voice, and the
+		-- writing rule (CLAUDE.md, Writing) everywhere
+		local lines = everyLine()
+		local bang = 0
+		for _, l in lines do
+			local text, lower = l.text, l.text:lower()
+			need(
+				not text:find("\u{2014}", 1, true)
+					and not text:find("\u{2013}", 1, true)
+					and not text:find(" - ", 1, true),
+				l.where .. ": a dash in " .. text
+			)
+			need(not lower:find("it's not like", 1, true), l.where .. ": " .. text)
+			for _, word in
+				{
+					"delve",
+					"embark",
+					"unleash",
+					"vibrant",
+					"bustling",
+					"journey",
+					"realm",
+					"tapestry",
+					"seamless",
+					"elevate",
+				}
+			do
+				need(not lower:find(word, 1, true), l.where .. ": a stock word in " .. text)
+			end
+			-- the only blanks are the player's name, a neighbour's name and a food
+			for key in text:gmatch("{(%w+)}") do
+				need(key == "player" or key == "y" or key == "food", l.where .. ": {" .. key .. "} in " .. text)
+			end
+			bang += if text:find("!", 1, true) then 1 else 0
+		end
+		need(#lines > 1200, "only " .. #lines .. " lines")
+		-- no exclamation on every line
+		need(bang / #lines < 0.1, string.format("%d of %d lines shout", bang, #lines))
+		-- the cool ones: five words at most, and never a raised voice
+		for kind, list in Personalities.get("cool").lines do
+			for _, text in list do
+				local words = 0
+				for _ in text:gmatch("%S+") do
+					words += 1
+				end
+				need(words <= 5 and not text:find("!", 1, true), "cool." .. kind .. " says too much: " .. text)
+			end
+		end
+		-- the shy and the polite ones hardly ever raise their voice either
+		for _, id in { "shy", "polite", "gloomy", "gentle" } do
+			local n = 0
+			for _, list in Personalities.get(id).lines do
+				for _, text in list do
+					n += if text:find("!", 1, true) then 1 else 0
+				end
+			end
+			need(n <= 2, id .. " shouts " .. n .. " times")
+		end
+	end)
+
+	it("calls the player by name and never anything else", function()
+		-- the user: "the player is to be referred to as their player name instead of sensei"
+		for _, l in everyLine() do
+			local lower = l.text:lower()
+			need(
+				not lower:find("sensei", 1, true) and not lower:find("mayor", 1, true),
+				l.where .. ": calls the player something other than their name: " .. l.text
+			)
+		end
+		local named, total = 0, 0
+		for _, p in Personalities.list do
+			local own = 0
+			for _, list in p.lines do
+				for _, text in list do
+					total += 1
+					own += if text:find("{player}", 1, true) then 1 else 0
+				end
+			end
+			named += own
+			need(own > 0, p.id .. " never says the player's name")
+			for _, text in Talk.Voices.GREET[p.id] do
+				need(text:find("{player}", 1, true) ~= nil, p.id .. " greets the player without their name: " .. text)
+			end
+			-- what they say to another villager in an event, or to each other in passing, has no name in
+			for _, kind in { "hello", "angry", "thanks", "sorry", "yes", "no", "bye", "tease", "hmm", "laugh" } do
+				for _, text in p.lines[kind] do
+					need(not text:find("{player}", 1, true), p.id .. "." .. kind .. " goes to villagers too: " .. text)
+				end
+			end
+		end
+		-- some lines, not every one
+		need(named >= #Personalities.list and named < total / 4, named .. " of " .. total .. " say the name")
+		-- a saying is offered word for word as an answer in an event, so it has no blanks
+		for _, say in Sayings.list do
+			need(not say.text:find("{", 1, true), "saying " .. say.id .. " has a blank")
+		end
+		-- the name goes in as the line leaves: the owner's, or a visitor's own
+		local p = town(2, "foodie")
+		local rng = Rng.new(12)
+		local mine, theirs = {}, {}
+		for _ = 1, 300 do
+			local said = Talk.line(p, "v1", rng, { first = true })
+			expect(readable(said)).toBeTruthy()
+			mine[said] = true
+			said = Talk.line(p, "v1", rng, { first = true, name = "Sam" })
+			expect(readable(said) and said:find("Robin", 1, true) == nil).toBeTruthy()
+			theirs[said] = true
+		end
+		expect(mine["Robin! Have you eaten? I have. Twice."]).toBe(true)
+		expect(theirs["Sam! Have you eaten? I have. Twice."]).toBe(true)
+		expect(mine["Hey! Have you eaten? I have. Twice."]).toBe(true)
+		-- and a wish, told by name
+		local v = p.villagers.v1
+		v.wish = { kind = "food", arg = v.fav, untilT = 1e9 }
+		local food = Foods.get(v.fav).name
+		expect(Talk.wishLine(p, "v1")).toBe("Robin! " .. food .. "! I can taste it already. Mmm. Please?")
+		-- someone with no name yet is a friend
+		p.name = nil
+		expect(Talk.wishLine(p, "v1")).toBe("friend! " .. food .. "! I can taste it already. Mmm. Please?")
 	end)
 
 	it("chats with villagers from old saves", function()

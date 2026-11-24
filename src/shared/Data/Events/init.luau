@@ -42,7 +42,7 @@ end
 local function voice(ctx: Ctx, who: string, vid: string, kind: string, icon: string?, gesture: string?): any
 	local p = Personalities.get(ctx.v(vid).pers)
 	local lines = p and p.lines[kind] or { "..." }
-	return line(who, ctx.rng:pick(lines), icon, gesture)
+	return line(who, ctx.f(ctx.rng:pick(lines)), icon, gesture)
 end
 
 local QUARREL = {
@@ -103,8 +103,9 @@ local SULK = {
 }
 
 -- A line in the villager's own way (Kit.byPers): a map keyed by personality, "_" for anyone else.
+-- (filled, so a line may name the stars or call the player by name: {player})
 local function by(ctx: Ctx, who: string, vid: string, map: any, icon: string?, gesture: string?): any
-	return line(who, Kit.byPers(ctx, vid, map), icon, gesture)
+	return line(who, ctx.f(Kit.byPers(ctx, vid, map)), icon, gesture)
 end
 
 local function trait(ctx: Ctx, vid: string, t: string): number
