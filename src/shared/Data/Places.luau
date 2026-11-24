@@ -4,6 +4,7 @@
 -- interface".) Positions are on the ground (on the hills, at the hills' height).
 
 local Hills = require(script.Parent.Hills)
+local Terrain = require(script.Parent.Terrain)
 
 local Places = {}
 
@@ -20,6 +21,21 @@ local function at(x: number, z: number): Vector3
 	return Vector3.new(x, Hills.at(x, z), z)
 end
 
+-- On a flat top of the hills (Data/Hills), `dx` and `dz` from its middle.
+local function onTop(name: string, dx: number, dz: number): Vector3
+	for _, pl in Hills.Plateaus do
+		if pl.name == name then
+			return at(pl.x + dx, pl.z + dz)
+		end
+	end
+	error("no flat top " .. name)
+end
+
+-- Out from the south shore at x (the old town's beach is on its cape: Terrain.south).
+local function offShore(x: number, y: number, out: number): Vector3
+	return Vector3.new(x, y, -(Terrain.south(x) + out))
+end
+
 Places.list = {
 	{
 		id = "square",
@@ -33,7 +49,7 @@ Places.list = {
 		id = "lookout",
 		name = "The lookout",
 		blurb = "The best view on the island, if you don't mind the climb.",
-		pos = at(0, 640),
+		pos = onTop("lookout", 0, 0),
 		radius = 26,
 		coins = 80,
 	},
@@ -41,7 +57,7 @@ Places.list = {
 		id = "farm",
 		name = "Hilltop farm",
 		blurb = "Cows, corn and a windmill that never stops.",
-		pos = at(-680, 490),
+		pos = onTop("farm", 20, 10),
 		radius = 50,
 		coins = 60,
 	},
@@ -49,7 +65,7 @@ Places.list = {
 		id = "camp",
 		name = "Pine camp",
 		blurb = "Tents round a fire that somebody always keeps going.",
-		pos = at(650, 520),
+		pos = onTop("camp", 0, 0),
 		radius = 34,
 		coins = 60,
 	},
@@ -73,7 +89,7 @@ Places.list = {
 		id = "pier",
 		name = "Fairground pier",
 		blurb = "A ferris wheel, a carousel and a smell of doughnuts.",
-		pos = Vector3.new(-320, 0.4, -360),
+		pos = offShore(-320, 0.4, 68),
 		radius = 40,
 		coins = 50,
 	},
@@ -81,7 +97,7 @@ Places.list = {
 		id = "marina",
 		name = "The marina",
 		blurb = "Boats nobody seems to take out.",
-		pos = Vector3.new(300, 0.3, -330),
+		pos = offShore(300, 0.3, 38),
 		radius = 30,
 		coins = 40,
 	},
@@ -89,7 +105,7 @@ Places.list = {
 		id = "lighthouse",
 		name = "The lighthouse",
 		blurb = "Out on the rocks at the end of the jetty.",
-		pos = Vector3.new(1000, 0.6, -330),
+		pos = offShore(1000, 0.6, 38),
 		radius = 24,
 		coins = 60,
 	},

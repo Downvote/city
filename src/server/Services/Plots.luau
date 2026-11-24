@@ -114,6 +114,12 @@ function Plots.sendTo(player: Player, character: Model?)
 	end
 end
 
+-- Who is waiting for a plot, longest first. A server holds one player to a plot (Tuning.Plot.Count
+-- of them, and Tuning.Game.MaxPlayers is set to match), but one more can still turn up (a test
+-- in Studio, a server whose size was never changed in the game's settings). They look round the
+-- town from the square until a plot comes free, and then it is theirs.
+local waiting: { Player } = {}
+
 local function assign(player: Player, profile: any)
 	local index
 	for i = 1, Tuning.Plot.Count do
@@ -123,8 +129,24 @@ local function assign(player: Player, profile: any)
 		end
 	end
 	if not index then
-		Data.notify(player, "All the plots are taken in this server.", "warn")
+		if not table.find(waiting, player) then
+			table.insert(waiting, player)
+		end
+		player:SetAttribute("Arrival", "Every plot here is taken")
+		Data.notify(
+			player,
+			"Every plot here is taken. Have a look round town: the next one to come free is yours.",
+			"warn"
+		)
+		-- a body now, in the square, rather than after the wait for a profile that never came
+		if not player.Character then
+			task.spawn(Plots.spawn, player)
+		end
 		return
+	end
+	local queued = table.find(waiting, player)
+	if queued then
+		table.remove(waiting, queued)
 	end
 	owners[index] = player
 	player:SetAttribute("Plot", index)
@@ -178,6 +200,10 @@ end
 Plots.FallLimit = -40
 
 local function release(player: Player)
+	local queued = table.find(waiting, player)
+	if queued then
+		table.remove(waiting, queued)
+	end
 	local i = Plots.indexOf(player)
 	if not i then
 		return
@@ -187,6 +213,16 @@ local function release(player: Player)
 	Plots.buildFolder(i):ClearAllChildren()
 	Plots.villagerFolder(i):ClearAllChildren()
 	World.setPlotSign(i, "Plot " .. i .. "\nfor sale")
+	-- whoever has waited longest for one gets it
+	while #waiting > 0 do
+		local nextUp = table.remove(waiting, 1)
+		local profile = if nextUp.Parent then Data.get(nextUp) else nil
+		if profile then
+			Data.notify(nextUp, "A plot came free, and it's yours.", "good")
+			task.spawn(assign, nextUp, profile)
+			break
+		end
+	end
 end
 
 function Plots.start()
@@ -297,7 +333,10 @@ function Plots.start()
 		local index = Plots.indexOf(player)
 		local char = player.Character
 		local humanoid = char and char:FindFirstChildOfClass("Humanoid")
-		if not index or not char or not humanoid or humanoid.Health <= 0 then
+		if not index then
+			return false, "You don't have a plot yet. The next one to come free is yours."
+		end
+		if not char or not humanoid or humanoid.Health <= 0 then
 			return false, "Can't go home right now."
 		end
 		local now = os.clock()

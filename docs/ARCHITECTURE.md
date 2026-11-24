@@ -151,6 +151,50 @@ outcomeId, key)` fires when a go turns out, and `Villagers.reactNear` is shared 
 held with control `"chat"`. The numbers are in `Tuning.Uses`; nothing is saved. The Uses spec checks the data, the
 spots against every placed turn, the rarity bands and shares over 20,000 seeded goes, and the rules.
 
+## Working at a workplace yourself
+
+The user: "also, allow players to interact and work at work areas". `Sim/PlayerWork` decides without services
+(numbers in `Tuning.Jobs.Player`): `stance(def)` is where to stand and what to do, in the workplace's own space,
+taken from `Routine.loop` (the work spot, the point the job's first step there faces, its `act` and `beat`; a job
+with nothing to do at its spot gets `Act` every `Beat` seconds); `standFrame(frame, stance, lift)` is the root's
+world frame there, turned flat to the work; `offset(target, root)` is how far a body is from it, across and up;
+`rate(def)` is `Share` of `Jobs.pay(job, 1, 50, "none")` over `City.workSeconds()`; `purse(profile, day)` is the
+day's purse on the profile (`work`, a `City.Purse`; a new day or a broken one starts fresh); `earn(purse, day, rate,
+seconds)` pays into it up to `DayCap` and returns the whole coins; `full(purse)`; `staffedBy(profile, key, hour, day,
+now)` is the name of the villager whose working day it is there (their job, work hours, not their day off, not
+sick; a break doesn't free it), or nil; `canStart(ask)` and `stopWhy(watch)` say yes or no and what the player is
+told (`PlayerWork.Say`). `Tag`, `Action` ("Work here") and `StopAction` ("Stop work") are the prompts' tag and words.
+
+`Services/Work` puts a ProximityPrompt `WorkPrompt` (E, held `Hold`, from `Distance` studs, no line of sight, no
+`Opens`, attributes `Plot` and `BuildKey`, tag `WorkPrompt`) on an attachment `WorkSpot` `PromptHeight` studs over
+the work spot of every piece with a `job` drawn into a plot's Build folder, so a ready-made building's workplace
+gets one too. `Work.asked(player, plot, key)` answers it: a second press at the same one stops; otherwise
+`Work.begin` checks the piece is a workplace on the player's own plot, the root within `Reach` studs of the spot,
+nobody's working day there, no other player at it, the player not seated and the day's cap not reached; then
+pivots the character to `standFrame` (an R15 root stands `HipHeight` plus half its height up, an R6 one three
+studs) and fires `Work` `{ on = true, ... }`. Every `Check` seconds `Work.step` looks at each player at work: they
+left, changed body or died, the piece is gone or its frame changed (a repaint keeps it), they sit, their root is
+more than `Leave` studs off the spot or `Rise` up or down (not in the first `Settle` seconds: then it stands them
+there again), the place's villager has started their day, or the cap is reached: work stops, `Work` `{ on = false }`
+goes to the client and, for the piece moving or going, the villager coming and the cap, a notice says why. Else the
+time since the last look is paid into the purse and the whole coins go to `Villagers.payPlayer(player, coins,
+today)`, which puts them in that town's next pay packet as a line `{ you = true, n, today }`: the town's coins,
+`stats.earned` and the `Earned` event come from the same `payOut` as the villagers' wages. The `WorkStop` remote
+stops it (the client sends it when the player moves, jumps, sits or opens Build mode). Only the owner may work on a
+plot: a workplace's pay is its town's, a visitor would keep the owner off it, and the town map has no workplaces.
+
+`client/World/Work` (started from `Main.client`) keeps the tagged prompts in step every second: shown only on the
+player's own plot, outside Build mode and where `staffedBy` (from `State.data`, `Lighting.ClockTime` and the
+server's day index) says it is nobody's working day, and worded "Stop work" at the one they are at. On `Work` it
+plays the motion on the player's own Animator (the id from the character's `Animate` script, Roblox's own for an R15
+body with none; `Action` priority, again every `beat` seconds), watches `MoveDirection`, `Jump` and `Sit` on
+Heartbeat and Build mode opening to ask `WorkStop`, and slides a `Kit.darkPill` notice up at the foot of the screen
+("Working at the market stall", "48 of 250 coins today. Move to stop.", the day's count from the `today` of the
+`Earned` lines), out of the way while a scene is up. `client/World/Earnings` lifts the "+N" over the player's own
+character for a `you` line. The camera is left alone. Specs: `PlayerWork` (the stance for every workplace, the pay,
+the purse, the bounds, who may start, why it stops) and `WorkService` (the real Work service and the villagers' pay
+packets with their neighbours stubbed, on a wound clock).
+
 ## The island's terrain
 
 `Data/Terrain` lays out the island's natural ground, which `World.buildTerrain` writes as Roblox terrain when the
@@ -364,6 +408,8 @@ profile = {
   keepsakes = { [itemId] = count } (`Sim/Keepsakes.clean` on load, at most `Tuning.Events.KeepsakeMax`),
   lastPayday, calendarDay, offers = { { vid, level, options } }, goals = { [goalId] = true },
   found = { [placeId] = true }, arrived = { [newcomerKey] = true },
+  work = { day, owed, paid },  -- what the player earned at a workplace themselves on town day `day`
+                               -- (Sim/PlayerWork.purse; at most Tuning.Jobs.Player.DayCap a day)
 }
 Villager = { id, name, pers, app, color, bday = { s, d }, fav, mood, job?, lv, xp, bed?, sick?,
              dayOff?, isYou?, born, heart, hxp, wish? = { kind, arg?, untilT }, saying?, hobby?, from?,
@@ -422,6 +468,7 @@ The creator's remotes: `CreatorPeople` (the people here and your friends, and th
 | `Build` | `BuildApply`, `BuildUndo`, `BuildRedo`: checks requests, charges or refunds, keeps history, redraws, syncs the plan to its owner (`PlanSync`). Fires `Changed`. A batch is up to 320 requests (a whole ready-made building); an item's `wall = "@n"` means the wall made by the batch's n-th request. `Build.prepare` is exported for the specs. |
 | `Avatar` | The creator: a private stage (an empty Model `CreatorStage<slot>` with an `Origin` attribute, high over the meadow; nothing is built there) and an anchored mannequin per player, catalog search fallback, bundles, copying users, outfits, asset checks, the text filter. `toDescription`, `buildModel` for everyone else. |
 | `Interact` | Puts a `UsePrompt` (E, no `Opens`) on an attachment `UseSpot` on each placed piece that has a player use (`Data/Interactions`), in every plot's Build folder; checks the player is within `Tuning.Uses.Reaches` (14 studs), a `Cooldown` per player and a `Rest` per piece; picks the outcome (`Sim/Uses`), has villagers near react to the loud ones and fires `Used`. Nothing is bought or saved. Starts after `Villagers`. |
+| `Work` | A player working at a workplace themselves (see "Working at a workplace yourself"): a `WorkPrompt` at every placed workplace's work spot, `Work.asked`, `Work.begin`, `Work.stop(player, say?)`, `Work.at(player)` (plot and key, or nil), `Work.step(now)` every `Tuning.Jobs.Player.Check` seconds, the `WorkStop` remote. Pays through `Villagers.payPlayer`. Starts after `Villagers`. |
 | `Villagers` | Creating, editing, moving out, beds, jobs, buying a craving (`Villagers.buyWish`, the `WishBuy` remote). Spawns NPCs and runs their routine (`Villagers.brain` acts out what `Sim/Routine` chooses): sleep at night; in work hours each worker goes round their job's loop at the workplace and takes breaks; those with no job or done for the day potter. Pay goes to whoever is earning at that moment: every `Tuning.Jobs.EarnStep` seconds it checks `npc.atWork` in work hours with control nil, chat or talk (an event, an outing, a day off or sickness pays nothing), keeps a purse per villager in server memory, and every `PayEvery` seconds sends the coins (`Data.addCoins(..., quiet)`, `stats.earned`, the `Earned` event); what is left goes when the player leaves. `Villagers.endOfWork` at 5 PM sends the last of it, grants skill by the share of the day earned and says "Your villagers earned {n} coins today." (it still writes `stats.paydays` and `lastPayday`). Talking: `Villagers.spawn` puts `Npc.talkPrompt(name)` on each body (a ProximityPrompt `TalkPrompt` on the HumanoidRootPart: E, held `Tuning.Talk.HoldSeconds`, from `Distance` studs, no `Opens` attribute) and `setControl` switches it with `Npc.setTalkable(Talk.free(mode))`; it is off while they sleep. `Villagers.talkedTo(who, owner, vid)` answers it: it refuses a sleeper, someone in an event or away, a player more than `Range` studs off and a second line within `Cooldown`; then holds them (`setControl(owner, vid, "talk")` for `StaySeconds`, `VisitorSeconds` for a visitor, or until the player walks off), turns them with `Npc.face`, and has them say `Talk.line`. The owner also gets `Talk.chat`'s gain and the `Talk` event. |
 | `Events` | Picks and plays random events, waits for choices, applies effects, room request rewards, small friendship gains from chats, parties. A scene's props (`Data/EventProps`) are put down by their star after the gather, facing the group on the ground (a raycast that skips villagers, characters and props), made with `Builder.instantiate(..., { plain = true })`, not collidable, queryable or touchable, in `Workspace.EventProps` (attributes `Prop`, `Owner`); a choice's props come after the choice; `leave` keeps one for some hours (at most `PropsMax` a town, oldest out); tidied every 10 s and cleared when the player leaves. It pushes `keepsakes` when one is given. |
 
@@ -472,11 +519,14 @@ a plain reason when there is no craving or not enough coins), `HeartReward` (`ch
 counts as not said), `CreatorSearch` (its query may carry `offSale` and `inside`, a bundle's `BundledItems`),
 `GoHome` (-> `ok, err`: to the caller's own plot at `Town.plotArrival`, out of any seat first, at most once every
 `Tuning.Plot.HomeCooldown` seconds), `SpawnMe` (-> the caller's `Arrival`: loads a character if they have none), `VillagerTalk` (`vid, bye?` ->
-`ok, { vid, text, note, model }` or an error: the talk card's Chat, or its Bye).
+`ok, { vid, text, note, model }` or an error: the talk card's Chat, or its Bye), `WorkStop` (-> `true`: the
+caller stops working at a workplace, `Services/Work`).
 
 Events (server pushes): `State` (patches of the client state), `PlanSync` (`{ full }` or `{ ops }`), `Notify`
-(`text, kind`; kind `action` carries `open:creator:<vid>`), `Used` (`at, puff?, text?, rarity?` to every client: `client/World/Interact` draws the puff and a bubble over the piece, a gold rim for a rare one), `EventShow`, `EventLine`, `EventEnd`, `Earned` (`{ coins, earned, lines = { { vid, n } } }` every `Tuning.Jobs.PayEvery` seconds when anyone earned: `client/World/Earnings` lifts a coin and "+N" off each earner's head and the HUD's count rolls up quietly), `Say`,
-`Talk` (`{ vid, text, note, model }`: to the town's owner, what their villager said when they held E on them).
+(`text, kind`; kind `action` carries `open:creator:<vid>`), `Used` (`at, puff?, text?, rarity?` to every client: `client/World/Interact` draws the puff and a bubble over the piece, a gold rim for a rare one), `EventShow`, `EventLine`, `EventEnd`, `Earned` (`{ coins, earned, lines = { { vid, n } } }` every `Tuning.Jobs.PayEvery` seconds when anyone earned: `client/World/Earnings` lifts a coin and "+N" off each earner's head and the HUD's count rolls up quietly; the player's own work is a line `{ you = true, n, today }`, its "+N" over their own character), `Say`,
+`Talk` (`{ vid, text, note, model }`: to the town's owner, what their villager said when they held E on them),
+`Work` (`{ on = true, plot, key, name, act, beat, today, cap }` when the player starts work at a workplace, `{ on
+= false }` when it stops: `client/World/Work`).
 
 Every handler checks its arguments: types, ranges, ownership. Build requests go through `Plan.validate` on the
 server, whatever the client did.
@@ -771,14 +821,18 @@ clipping (`tools/preview/ui_render.py`).
 - `UI/EventCard`: an event never takes the screen by itself. `EventShow` brings up a small dark glass prompt at
   the bottom middle (the event's name and Watch). At a choice it reads "They want your say", Watch becomes a yellow
   Answer and a thin bar runs down `Tuning.Events.ChoiceTimeout`; the server still picks the gentle option when it
-  runs out. Watch or Answer opens the `Dialogue` scene (the camera stays put) with whoever has been seen so far,
-  from the line that is current; later lines and the choices (pills in the box, sent with `EventChoose`) show in
-  it. The server keeps the time: the stars walk together, then `EventShow` (token, title, lines, names, actors,
+  runs out. Watch or Answer opens the `Dialogue` scene (the camera stays put) and plays it from the first line:
+  the client keeps every line it hears for the event (`heard`) and the scene shows them in turn, each for as long
+  as the server takes to say one (`math.clamp(#text / 18, 2.2, 4.2)`, a little less) or until a click, bringing
+  each villager in when their first line comes; once it has caught up, each new line shows the moment it arrives.
+  A choice already waiting puts its answers (pills in the box, sent with `EventChoose`) and a `TimeLeft` bar over
+  the box up at once, while the lines play; "What do you do?" is typed when they are done. An event that ends while
+  its scene is still catching up lets it finish (a minute at most) before how it turned out. The server keeps the time: the stars walk together, then `EventShow` (token, title, lines, names, actors,
   choices, focus) brings up the prompt, and each line goes out as the villagers say it over their heads as
   `EventLine` `{ token, line, last? }` (`last` on the scene's final line), then `{ token, ask = true }` when the
-  answer timer starts; the lines after an answer come the same way. The client keeps no clock of its own, so
-  Watch shows what the bubbles say. A click on the box shows the rest of a line being typed, and on the last
-  line (or how it turned out) closes the scene, which then leaves no prompt behind. "Stop watching" puts the
+  answer timer starts; the lines after an answer come the same way. A click on the box shows the rest of a line
+  being typed, moves on to the next line the scene still has to show, and on the last line (or how it turned out)
+  closes the scene, which then leaves no prompt behind. "Stop watching" puts the
   scene away and leaves the prompt until `EventEnd`. `EventCard.isPlaying()` is true while an event is going on, `EventCard.isWatching()` while its scene
   is up. The prompt and the scene give way to a full menu.
 - `UI/Quests`: the quest list on the main screen. `Quests.mount(parent, position, open)` builds it (a header that

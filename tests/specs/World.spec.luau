@@ -9,6 +9,7 @@ local Tuning = require(Shared .. "Config.Tuning")
 local Town = require(Shared .. "Data.Town")
 local TownMap = require(Shared .. "Data.TownMap")
 local Hills = require(Shared .. "Data.Hills")
+local Terrain = require(Shared .. "Data.Terrain")
 local Places = require(Shared .. "Data.Places")
 local Goals = require(Shared .. "Data.Goals")
 local Geometry = require(Shared .. "Build.Geometry")
@@ -35,8 +36,19 @@ describe("Hills", function()
 			expect(Hills.at(Hills.X1 + 1, z) < 1).toBeTruthy()
 			expect(Hills.at(Hills.X2 - 2, z) < 1).toBeTruthy()
 		end
-		-- nothing south of Hill Road's sidewalk
+		-- nothing south of Hill Road's sidewalk, round the old town or past the first avenues, nor
+		-- beside the first avenues where they run on up to the old town's stretch
 		expect(Hills.at(0, Town.RingZ + 10)).toBe(0)
+		for x = -Town.AvenueX[1] - 17, Town.AvenueX[1] + 17, 8 do
+			expect(Hills.at(x, Town.RingZ + 17)).toBe(0)
+		end
+		for _, x in { Town.AvenueX[2], -Town.AvenueX[3] } do
+			expect(Hills.at(x, Town.OuterRingZ + 10)).toBe(0)
+		end
+		for z = Town.OuterRingZ, Town.RingZ + 17, 6 do
+			expect(Hills.at(Town.AvenueX[1] + 17, z)).toBe(0)
+			expect(Hills.at(-Town.AvenueX[1] - 17, z)).toBe(0)
+		end
 	end)
 
 	it("leave the creator's meadow flat", function()
@@ -76,7 +88,8 @@ describe("Places", function()
 			expect(seen[p.id]).toBe(nil)
 			seen[p.id] = true
 			expect(math.abs(p.pos.X) <= TownMap.IslandX + TownMap.Beach).toBeTruthy()
-			expect(p.pos.Z >= -TownMap.IslandS - 140 and p.pos.Z <= TownMap.IslandN + TownMap.Beach).toBeTruthy()
+			-- (the old town's beach is out on its cape: Terrain.south)
+			expect(p.pos.Z >= -Terrain.south(p.pos.X) - 140 and p.pos.Z <= TownMap.IslandN + TownMap.Beach).toBeTruthy()
 			expect(p.coins >= 0 and p.radius > 0).toBeTruthy()
 			expect(p.name:find("\u{2014}") == nil and p.blurb:find("\u{2014}") == nil).toBeTruthy()
 			for i = 1, Tuning.Plot.Count do

@@ -44,7 +44,6 @@ type Session = {
 	since: number, -- os.clock() when it began
 	last: number, -- when the pay was last worked out
 	rate: number, -- coins a second (PlayerWork.rate)
-	earned: number, -- whole coins this time
 }
 
 local sessions: { [Player]: Session } = {}
@@ -173,7 +172,6 @@ function Work.begin(player: Player, i: number, key: string): (boolean, string?)
 		since = now,
 		last = now,
 		rate = PlayerWork.rate(def),
-		earned = 0,
 	}
 	Remotes.event("Work"):FireClient(player, {
 		on = true,
@@ -243,7 +241,6 @@ local function look(player: Player, s: Session, now: number)
 	s.last = now
 	local coins = PlayerWork.earn(purse, day, s.rate, seconds)
 	if coins > 0 then
-		s.earned += coins
 		Villagers.payPlayer(player, coins, purse.paid)
 	end
 	if PlayerWork.full(purse) then
@@ -252,7 +249,7 @@ local function look(player: Player, s: Session, now: number)
 	end
 end
 
--- Looks at everyone at work once (the loop below; the spec calls it with its own clock).
+-- Looks at everyone at work once (every Check seconds, from the loop in Work.start).
 function Work.step(now: number)
 	for player, s in sessions do
 		look(player, s, now)

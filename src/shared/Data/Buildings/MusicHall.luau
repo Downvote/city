@@ -194,18 +194,26 @@ return function(add: any)
 			put(b, "rug_long", 14, 14.6, 0, nil, BERRY, MUSTARD)
 			b:item("chandelier", 14, 13, 0, 1)
 			b:item("chandelier", 14, 19, 0, 1)
-			for _, t in { 4, 8, 12 } do
-				hang(b, "sconce", "hleft", t, 7.4, "b")
-			end
-			for _, t in { 4, 8, 12, 16 } do
-				hang(b, "sconce", "hright", t, 7.4, "b")
-			end
 			hang(b, "art_landscape", "hleft", 18, 5, "b")
 			for _, t in { 6, 14 } do
 				hang(b, "string_lights", "upleft", t, 9.2, "b")
 				hang(b, "string_lights", "upright", t, 9.2, "b")
 			end
 			hang(b, "art_flowers", "hright", 2, 5, "b")
+
+			-- opened up: the hall wider either side of the aisle and deeper between its windows,
+			-- the foyer wider with it
+			b:spread({ x = { { 11.6, 4 }, { 16.4, 4 } }, z = { { 16.3, 4 }, { 19.8, 4 } } })
+			-- a fourth row of seats on the new floor, the aisle's runner on to the stage, and a
+			-- lamp between each pair of windows down both sides
+			for _, x in { 8.1, 27.9 } do
+				put(b, "seat_row", x, 18.3, 0, nil, BERRY, WALNUT)
+			end
+			put(b, "rug_long", 18, 22.6, 0, nil, BERRY, MUSTARD)
+			for _, z in { 18, 26, 34 } do
+				hang(b, "sconce", "hleft", 36 - z, 7.4, "b")
+				hang(b, "sconce", "hright", z - 8, 7.4, "b")
+			end
 		end
 	)
 end

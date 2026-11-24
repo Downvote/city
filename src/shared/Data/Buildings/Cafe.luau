@@ -245,6 +245,16 @@ return function(add: any)
 			b:item("light_ceiling", 22, 20, 0)
 			hang(b, "art_abstract", "right", 9.6, 6.6, "b")
 			hang(b, "curtains", "terback", 5.4, F + 2.2, "b", TEAL, WALNUT)
+
+			-- opened up: the café wider and deeper, the lounge and the terrace with it
+			b:spread({ x = { { 7.6, 4 }, { 15.6, 4 }, { 20.9, 4 } }, z = { { 14.8, 4 }, { 19.4, 4 } } })
+			-- a third little table on the new floor between the others and the lounge
+			b:item("table_round", 23.6, 20.4, 0)
+			paint(b, TRIM, WALNUT)
+			b:item("chair_wood", 21.4, 20.4, 90)
+			b:item("chair_wood", 25.8, 20.4, 270)
+			b:item("vase_flowers", 23.6, 20.4, 0, 0, top("table_round"))
+			b:item("lamp_pendant", 23.6, 20.4, 0)
 		end
 	)
 end

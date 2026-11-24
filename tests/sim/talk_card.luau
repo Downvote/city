@@ -373,7 +373,7 @@ end)
 
 run("watching an event already going", function()
 	local warned = #errors
-	-- the user: "clicking watch to watch a conversation restarts the conversation from the start"
+	-- the user: "make watching conversations restart the conversation from the start"
 	local ev = quarrel("e4")
 	ev.choices = nil
 	Sim.remoteEvent("EventShow"):FireClient(Sim.player, ev)
@@ -386,38 +386,58 @@ run("watching an event already going", function()
 	press("Watch")
 	frames(10)
 	local s = scene()
-	local said = ((s and words(s, "Line")) or ""):gsub("<[^>]+>", "")
-	check(said == "You took three. I counted.", "Watch picks up at the line being said, not the first")
-	check(s and s:FindFirstChild("Bust_c", true) ~= nil, "with whoever is saying it")
+	local function said()
+		return ((scene() and words(scene(), "Line")) or ""):gsub("<[^>]+>", "")
+	end
+	check(said() == "Mara is pacing by the fountain.", "Watch starts the conversation from its first line")
+	check(s and s:FindFirstChild("Bust_a", true) ~= nil, "with whoever is in it")
+	check(s and s:FindFirstChild("Bust_c", true) == nil, "and nobody who only comes in later")
+	advance(3)
+	check(said() == "I only took one bun.", "the next line comes at the pace the villagers say them")
+	advance(3)
+	check(said() == "You took three. I counted.", "and so on to the line being said now")
 	check(
-		s and s:FindFirstChild("Bust_a", true) ~= nil and s:FindFirstChild("Bust_b", true) ~= nil,
-		"and the others in it so far"
+		s and s:FindFirstChild("Bust_b", true) ~= nil and s:FindFirstChild("Bust_c", true) ~= nil,
+		"with everyone in it so far"
 	)
 	advance(6)
-	said = ((s and words(s, "Line")) or ""):gsub("<[^>]+>", "")
-	check(said == "You took three. I counted.", "and nothing is said again while the villagers are quiet")
+	check(said() == "You took three. I counted.", "then nothing is said again while the villagers are quiet")
 	press("Stop watching")
 	advance(2)
 	press("Watch")
 	frames(10)
-	s = scene()
-	said = ((s and words(s, "Line")) or ""):gsub("<[^>]+>", "")
-	check(said == "You took three. I counted.", "watching again picks up where they are")
+	check(said() == "Mara is pacing by the fountain.", "watching again starts from the first line again")
 	-- the user: "when clicking on the last part of the conversation, the conversation should close"
+	-- a click once the line is all there (a click while it is still being typed only finishes it)
 	local function click()
 		local box = scene() and scene():FindFirstChild("Box", true)
+		local typed = box and box:FindFirstChild("Line", true)
+		if typed then
+			typed.MaxVisibleGraphemes = -1
+		end
+		frames(1)
 		if box then
 			box.InputBegan:Fire({ UserInputType = Enum.UserInputType.MouseButton1 })
 		end
 		frames(3)
 	end
-	advance(2)
+	advance(1)
 	click()
-	check(scene() ~= nil, "a click on a line that isn't the last leaves the scene up")
+	check(scene() ~= nil and said() == "I only took one bun.", "a click moves on to the next line sooner")
 	Sim.remoteEvent("EventLine")
 		:FireClient(Sim.player, { token = "e4", line = { who = "a", text = "Fine, three." }, last = true })
 	frames(2)
-	advance(2)
+	check(said() == "I only took one bun.", "a line said meanwhile waits its turn")
+	advance(1)
+	click()
+	check(
+		said() == "You took three. I counted." and scene() ~= nil,
+		"a click on a line that isn't the last leaves it up"
+	)
+	advance(1)
+	click()
+	check(said() == "Fine, three.", "the line said meanwhile comes after")
+	advance(1)
 	click()
 	check(scene() == nil, "a click on the last line closes the scene")
 	advance(2)
@@ -425,6 +445,37 @@ run("watching an event already going", function()
 	Sim.remoteEvent("EventEnd"):FireClient(Sim.player, { token = "e4", notices = {} })
 	advance(8)
 	check(scene() == nil and prompt() == nil, "and it all goes when it ends")
+	check(#errors == warned, "no warnings from any of it")
+end)
+
+run("watching from the start while they wait for your say", function()
+	local warned = #errors
+	local ev = quarrel("e6")
+	Sim.remoteEvent("EventShow"):FireClient(Sim.player, ev)
+	for _, l in ev.lines do
+		line("e6", l)
+		advance(3)
+	end
+	askNow("e6")
+	advance(5)
+	press("Answer")
+	frames(10)
+	local s = scene()
+	local said = ((s and words(s, "Line")) or ""):gsub("<[^>]+>", "")
+	check(said == "Mara is pacing by the fountain.", "the scene still starts from the first line")
+	check(s and s:FindFirstChild("Choice1", true) ~= nil, "with the answers up at once")
+	local bar = s and s:FindFirstChild("Box", true):FindFirstChild("TimeLeft")
+	check(bar ~= nil and bar.Visible, "and the time left running down over the box")
+	advance(10)
+	said = ((s and words(s, "Line")) or ""):gsub("<[^>]+>", "")
+	check(said == "What do you do?", "once the lines are shown, the question")
+	press("Choice1")
+	check(#chosen > 0 and chosen[#chosen].token == "e6" and chosen[#chosen].i == 1, "and the answer goes to the server")
+	check(s and s:FindFirstChild("Choice1", true) == nil and not bar.Visible, "the answers and the time left go")
+	press("Stop watching")
+	Sim.remoteEvent("EventEnd"):FireClient(Sim.player, { token = "e6", notices = {} })
+	advance(8)
+	check(scene() == nil and prompt() == nil, "it all goes when it ends")
 	check(#errors == warned, "no warnings from any of it")
 end)
 

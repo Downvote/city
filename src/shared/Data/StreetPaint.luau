@@ -380,7 +380,7 @@ local function zebras(road: Road): { { number } }
 		end
 	end
 	if road.main then
-		for _, x in { 0, -274, 274 } do
+		for _, x in Town.MainCrossings do
 			table.insert(out, { x, 6, 0 })
 		end
 	elseif road.along and road.at == Town.RingZ then

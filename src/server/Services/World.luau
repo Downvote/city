@@ -232,7 +232,8 @@ local function buildMap()
 		pcall(function()
 			local terrain = workspace.Terrain
 			terrain:Clear()
-			local IX, IS, IN = Ground.IslandX, Ground.IslandS, Ground.IslandN
+			-- (out to the old town's cape on the south)
+			local IX, IS, IN = Ground.IslandX, Ground.IslandS + Ground.Cape.out, Ground.IslandN
 			local B = Ground.Beach
 			terrain:FillBlock(
 				CFrame.new(0, Ground.WaterY - 3, (IN - IS) / 2),

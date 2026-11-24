@@ -240,6 +240,17 @@ return function(add: any)
 			hang(b, "clock_wall", "bhback", 5, 9, "b")
 			hang(b, "coat_hooks", "bhback", 8.6, 7.6, "b")
 			hang(b, "sconce", "bhfront", 8.8, 6.2, "b")
+
+			-- opened up: the shop wider and deeper, the bakehouse with it
+			b:spread({ x = { { 4.4, 4 }, { 17, 4 }, { 23.4, 4 } }, z = { { 12.2, 4 }, { 19, 4 } } })
+			-- on the new floor: another table to sit at with a bun, and a rack more of loaves
+			b:item("table_round", 12.4, 24, 0)
+			paint(b, TRIM, WALNUT)
+			b:item("chair_wood", 10.2, 24, 90)
+			b:item("chair_wood", 14.6, 24, 270)
+			b:item("vase_flowers", 12.4, 24, 0, 0, top("table_round"))
+			b:item("lamp_pendant", 12.4, 24, 0)
+			b:item("bread_rack", 23.6, 30.7, 180)
 		end
 	)
 end

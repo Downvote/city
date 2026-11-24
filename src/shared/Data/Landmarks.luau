@@ -710,7 +710,7 @@ end
 -- The footbridge ----------------------------------------------------------------------------------------
 
 Landmarks.Bridge = {
-	x = 274.25, -- the middle of the gap between the plots east of the square
+	x = 490.25, -- over the main street's crossing east of the plots (Town.MainCrossings)
 	foot = 19, -- how far from the street's middle the stairs come down, on both sides
 	deck = 13.2, -- the top of the deck
 	clear = 11, -- nothing hangs lower than this over the road

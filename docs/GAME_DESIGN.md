@@ -399,8 +399,27 @@ another Roblox avatar game. Its layout is taken, drawn our own way.)
   540), skill grows twice as fast, and the coins a thank you gives went down. Played out for the keenest player
   there could be, wages went from 29% of a day's coins to 72% in a town of three with two in work, and from 51% to
   87% in a town of thirteen.
+- **Working yourself**:
+
+  > also, allow players to interact and work at work areas
+
+  Every workplace has a "Work here" prompt over the spot where its worker stands. Hold E there on your own plot and
+  your character steps onto the spot, turns to the work and goes at it the way the villagers do at that job: the
+  builder hammers at the bench, the musician dances on the stage, and a job with nothing to do at its spot (the
+  florist's, the doctor's) points at the work now and then. Your own animation for it plays, so any body works. A
+  notice at the foot of the screen says where you are working, what you have earned today and "Move to stop", and
+  the prompt you are at reads "Stop work". You earn for your town the way a villager there does, a little every few
+  seconds with a "+N" rising over your head, but at about a third of a new villager's rate (35% of the job's
+  income for a beginner: 6 to 11 coins a pay packet) and only up to 250 coins a town day, which takes a minute and a
+  half to under three minutes of work. The count starts again at 9:00 AM. Walking off, a jump, sitting down,
+  holding E again, opening Build mode or leaving ends it quietly; the workplace being moved or sold ends it with a
+  word why. A workplace is busy while it is its villager's working day (nine to five, unless it is their day off or
+  they are sick), even while they are out on a break: "Mara works here until 5:00 PM." If you are at it when their
+  day starts, you step aside and are told so. You can only work in your own town: a workplace's pay belongs to the
+  town it stands in, a visitor at the counter would keep its owner off it, and the town's own shops are scenery
+  with no workplace in them. The camera stays where you have it.
 - Other income, all small beside a day's work: a daily gift with a streak, events, room requests, thank yous,
-  customers dropping by staffed workplaces.
+  customers dropping by staffed workplaces, and your own work.
 
 ## 8. Economy bounds
 
@@ -481,6 +500,10 @@ Held by `tests/specs/City.spec.luau` (and the earning itself by `Wages.spec.luau
   and never more than a whole work day there would; the builder's day in the brain's own run comes to its pay
   within a few coins, and nothing is paid on a break, after five, at night, on a day off, while sick or while an
   event has them;
+- a player's own work at a workplace (`tests/specs/PlayerWork.spec.luau`) pays 35% of what a new villager earns
+  there and at most 250 coins a town day: a quarter of the least paid villager's day or less, so working to the cap
+  every day still leaves wages four fifths of what a keen player takes in with two villagers at work; the cap takes
+  more than a minute at the best paid workplace and less than a work day at the least paid;
 - the starting house is a gift: selling any of it refunds nothing (only what was paid on top, say a dearer finish),
   so a new town can't be sold for coins.
 
@@ -1549,6 +1572,17 @@ The scene and the speech bubbles over the villagers used to keep their own time,
 bubbles and the two never agreed. Now the server says each line over their heads and sends it to the screen at
 the same moment, so Watch always picks up the line they are saying now. A click on the box shows the rest of a
 line being typed; on the last line it closes the scene.
+
+> make watching conversations restart the conversation from the start
+
+This one turns the first round. The server still says each line in the town when it does, and the screen keeps
+every line it hears. Watch now plays the scene from the first line: each line is typed and stays as long as the
+villagers take to say one, a click moves on sooner, and the villagers slide in as their first lines come. Once
+the scene has caught up, each new line shows as the villagers say it. If they already want your say when you press
+Watch (or Answer), the answers are up in the box at once with the time left running down over it, so playing it
+from the start never costs you the choice; the question itself comes when the lines before it have been shown. If
+the event ends while the scene is still catching up, it plays to the end first. A villager you stop to chat with
+(the talk card) is as before.
 
 ### A warm haze
 

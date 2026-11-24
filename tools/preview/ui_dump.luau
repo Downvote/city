@@ -435,8 +435,21 @@ elseif scene == "event" or scene:sub(1, 6) == "event:" then
 	end
 	Sim.remoteEvent("EventShow"):FireClient(Sim.player, ev)
 	Sim.frames(2)
+	-- the server says the lines (part of them for event:talk) and then, with choices, asks; a
+	-- watched scene plays them from its first line (UI/EventCard), so the wait picks the line
+	for i, l in ev.lines do
+		if page ~= "talk" or i == 1 then
+			Sim.remoteEvent("EventLine")
+				:FireClient(Sim.player, { token = ev.token, line = l, last = i == #ev.lines and not ev.choices or nil })
+			Sim.frames(2)
+		end
+	end
+	if ev.choices and (page == "" or page == "answers") then
+		Sim.remoteEvent("EventLine"):FireClient(Sim.player, { token = ev.token, ask = true })
+		Sim.frames(2)
+	end
 	if watch then
-		Sim.press("Watch")
+		Sim.press(if ev.choices and page == "answers" then "Answer" else "Watch")
 	end
 	Sim.advance(wait)
 	if watch then
@@ -498,7 +511,15 @@ elseif scene == "bubbles" then
 		return { w = math.min(248, #text * 8.2 + 30), h = 42 }
 	end
 	local heads = {
-		{ key = "a", x = 470, y = 560, depth = 18, said = "Morning. Have you seen my cat?", mood = "heart", food = Foods.list[1] },
+		{
+			key = "a",
+			x = 470,
+			y = 560,
+			depth = 18,
+			said = "Morning. Have you seen my cat?",
+			mood = "heart",
+			food = Foods.list[1],
+		},
 		{ key = "b", x = 560, y = 552, depth = 26, said = "She was on the roof again." },
 		{ key = "c", x = 930, y = 500, depth = 34, mood = "zzz", wish = "bed" },
 	}

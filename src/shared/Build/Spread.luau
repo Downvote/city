@@ -26,12 +26,17 @@ export type Cuts = { x: { Cut }?, z: { Cut }? }
 -- object of its own).
 export type Entry = { kind: string, obj: any, wall: any? }
 
--- Pieces that are laid in rows end to end.
+-- Pieces that are laid in rows end to end, and how a gap in the row is filled: "cover" leaves no
+-- gap (the new pieces overlap their neighbours a little: a fence or a stone course must not open
+-- up), "fit" puts in as many whole pieces as fit with even gaps between them (a run of counters,
+-- a wall of bookcases).
 Spread.Rows = {
-	stone_footing = true,
-	fence_picket = true,
-	porch_rail = true,
-	flower_border = true,
+	stone_footing = "cover",
+	fence_picket = "cover",
+	porch_rail = "cover",
+	flower_border = "fit",
+	counter = "fit",
+	bookcase_tall = "fit",
 }
 
 -- Where a coordinate ends up.
@@ -199,9 +204,11 @@ function Spread.apply(cuts: Cuts, entries: { Entry }): { Entry }
 			from, to = math.min(a.obj.z, b.obj.z), math.max(a.obj.z, b.obj.z)
 		end
 		local gap = to - from - len -- the bare stretch between the two pieces
-		if gap > 0.05 then
-			-- as few pieces as cover it, spread evenly (they overlap their neighbours a little)
-			local n = math.ceil(gap / len - 1e-6)
+		local n = if Spread.Rows[a.obj.id] == "cover"
+			then math.ceil(gap / len - 1e-6)
+			else math.floor(gap / len + 0.05)
+		if gap > 0.05 and n > 0 then
+			-- spread evenly along the gap
 			for i = 1, n do
 				local at = from + (to - from) * i / (n + 1)
 				local o = copy(a.obj)

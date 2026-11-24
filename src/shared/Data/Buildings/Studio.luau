@@ -249,6 +249,10 @@ return function(add: any)
 			hang(b, "sconce", "gback", 10.2, 7.6, "b")
 			hang(b, "art_abstract", "gleft", 2.4, 5.6, "b", CORAL, WHITE)
 			hang(b, "art_flowers", "gleft", 9.6, 5.6, "b")
+
+			-- opened up: the studio wider between its tall windows and deeper, the gallery wider
+			-- and deeper, the yard with them
+			b:spread({ x = { { 8.4, 4 }, { 16.4, 4 }, { 22.8, 4 }, { 27.3, 4 } }, z = { { 8.9, 4 }, { 16.5, 6 } } })
 		end
 	)
 end

@@ -626,9 +626,12 @@ end
 
 -- Plans and changes ----------------------------------------------------------------------------
 
+-- What `v` a plan has: 2 since the plots grew to 400 a side (Plan.sanitize moves a 1 onto them).
+Plan.Version = 2
+
 function Plan.new(size: number?): PlanData
 	return {
-		v = 1,
+		v = Plan.Version,
 		size = size or Tuning.City.Land[1].Size,
 		nextId = 1,
 		walls = {},
@@ -783,12 +786,52 @@ function Plan.affected(plan: PlanData, ops: { Op }): { [string]: { [string]: boo
 	return out
 end
 
+-- A save from before the plots grew (the user: "make player plots much bigger, double the
+-- size") is a plan of `v` 1, laid out on a plot of 200 with land of 100, 128, 160 or 200 a side.
+-- It keeps its step of land, which is twice as big now, and the build moves with the land's
+-- middle: it stands at the front of the land as it did, with the new room round it.
+local OLD_PLOT = 200
+local OLD_LAND = { 100, 128, 160, 200 }
+function Plan.fromOldPlot(raw: any): any
+	local copy = deepCopy(raw)
+	local step = 1
+	for i, size in OLD_LAND do
+		if raw.size == size then
+			step = i
+		end
+	end
+	copy.size = Tuning.City.Land[math.min(step, #Tuning.City.Land)].Size
+	copy.v = Plan.Version
+	local dx = (P.Size - OLD_PLOT) / 2
+	for _, kind in { "walls", "floors", "roofs" } do
+		if type(copy[kind]) == "table" then
+			for _, obj in copy[kind] do
+				if type(obj) == "table" and type(obj.x1) == "number" and type(obj.x2) == "number" then
+					obj.x1 += dx
+					obj.x2 += dx
+				end
+			end
+		end
+	end
+	if type(copy.items) == "table" then
+		for _, obj in copy.items do
+			if type(obj) == "table" and type(obj.x) == "number" then
+				obj.x += dx
+			end
+		end
+	end
+	return copy
+end
+
 -- Makes loaded data safe: drops anything that no longer validates (an item removed from the
--- catalog, a corrupted entry) and fixes nextId.
+-- catalog, a corrupted entry) and fixes nextId. An old save is moved onto today's plot first.
 function Plan.sanitize(raw: any): PlanData
 	local plan = Plan.new()
 	if type(raw) ~= "table" then
 		return plan
+	end
+	if raw.v == 1 then
+		raw = Plan.fromOldPlot(raw)
 	end
 	for _, land in Tuning.City.Land do
 		if raw.size == land.Size then

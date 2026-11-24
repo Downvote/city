@@ -244,6 +244,10 @@ return function(add: any)
 			put(b, "lamp_pendant", 25, 20.2, 0, nil, WHITE)
 			hang(b, "string_lights", "party", 5.2, 10.2, "a")
 			hang(b, "hanging_basket", "party", 10.9, 6.4, "a", WALNUT, PINK)
+
+			-- opened up: the shop wider either side of the cart and deeper, the glasshouse wider
+			-- and deeper, the terrace and the garden with them
+			b:spread({ x = { { 5, 4 }, { 14.6, 4 }, { 29, 4 } }, z = { { 11.6, 4 }, { 20.95, 4 } } })
 		end
 	)
 end

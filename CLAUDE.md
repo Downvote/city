@@ -29,7 +29,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (415 at the last full run; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (415 at the last full run; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `PlayerWork` and `WorkService`: a player working at a workplace themselves, its pay and cap, and the server's side with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off; what kind a bundle
 is, the outfit that holds the body, single body parts, the player's own items and avatars; preview scenes
@@ -169,7 +169,10 @@ in"): the villagers in it slide in from the sides as busts (`ModelPreview.fromMo
 card and the event card both build it; never write a second dialogue box. A random event must never take the
 screen by itself ("in the cast of random villager text events, make this only happen when the player chooses to
 watch"): `EventShow` brings up only a small prompt with Watch (Answer, with a timer, when a choice is waiting), and
-the scene goes up when the player presses it (`EventCard.isWatching()`; a big moment scripted in `Data/Cutscenes`
+the scene goes up when the player presses it and plays from the first line ("make watching conversations restart
+the conversation from the start": the client keeps every `EventLine` it hears and shows them in turn at the
+villagers' pace or a click's, then the live ones; a waiting choice's answers and timer are up at once)
+(`EventCard.isWatching()`; a big moment scripted in `Data/Cutscenes`
 plays as a cutscene on a set of its own from `Data/Stages` behind the same box, in a ViewportFrame: "add cutscenes and
 scenes like tomodachi life as well"; preview with `sh tools/preview/stage.sh <id> <dir>` and `ui.sh cutscene:<event>`),
 and the camera stays where the player
@@ -181,6 +184,16 @@ The user asked to "interact/chat with villagers by holding e on them": every vil
 (`Npc.talkPrompt`, put on in `Villagers.spawn` and answered by `Villagers.talkedTo`), what they say and what a
 chat is worth is `Sim/Talk` (numbers in `Tuning.Talk`), and the owner's card is `UI/TalkCard`. A prompt that opens a panel carries an `Opens` attribute
 (`Hud` reads it); the talk prompts must not.
+
+The user: "also, allow players to interact and work at work areas". Every placed workplace (a piece with a `job`)
+carries a "Work here" prompt at its work spot (`Services/Work`, rules in `Sim/PlayerWork`, numbers in
+`Tuning.Jobs.Player`). On their own plot only, a player who holds E there is stood at the spot facing the work,
+plays the job's motion from `Sim/Routine`'s loop on their own body (`client/World/Work`, which also shows a small
+notice and words the prompt "Stop work"), and earns a share of a new villager's rate up to a cap each town day
+(`profile.work`), paid through the villagers' own packets (`Villagers.payPlayer`, a `{ you = true }` line in
+`Earned`, so the "+N" rises over them). A workplace is busy on its villager's working day, breaks included. Moving,
+jumping, sitting, a second press, Build mode, leaving, or the piece moving or going ends it; the server checks
+everything itself. Keep a player's own pay small beside the town's wages (the PlayerWork spec holds it).
 
 What hangs over a villager's head (the user: "improve villager bubbles above their head, and make it such that you
 cant see the bubbles through walls. also, they sometimes intersect villager speech bubbles") is drawn by

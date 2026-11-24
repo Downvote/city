@@ -97,7 +97,6 @@ return function(add: any)
 			-- the kiosk: the front in stripes either side of the hatch's long board, the left side
 			-- in stripes round a window's, plain blush behind and on the pavilion side
 			stripes(b, "front", 2, 6, 22, 6, { 2, 2, 2, 8, 2, 2, 2 }, BLUSH, WHITE)
-			stripes(b, "left", 2, 20, 2, 6, { 2, 2, 6, 2, 2 }, BLUSH, WHITE)
 			b:wall("back", 22, 20, 2, 20, BLUSH, INSIDE)
 			b:wall("side", 22, 6, 22, 20, BLUSH, INSIDE)
 			b:roof(2, 6, 22, 20, "flat", 0, 0, FLAT, SAGE_BAND, 0, 0.6)
@@ -116,7 +115,6 @@ return function(add: any)
 			b:open("door_glass", "side", 5)
 			paint(b, BERRY, BERRY)
 			b:open("win_square", "side", 11)
-			b:open("win_square", "left3", 3)
 			b:open("win_wide", "back", 15.4)
 			b:open("win_square", "back", 5)
 
@@ -130,8 +128,6 @@ return function(add: any)
 			end
 			hang(b, "lantern_wall", "front1", 1, 5.6, "a")
 			hang(b, "lantern_wall", "front7", 1, 5.6, "a")
-			hang(b, "awning", "left3", 3, F + 7.2, "a", BERRY, TRIM)
-			hang(b, "window_box", "left3", 3, F + 1.65, "a", WALNUT, MINT)
 			for _, t in { 15.4, 5 } do
 				hang(b, "window_hood", "back", t, F + 7.38, "a", TRIM, SAGE.c)
 				hang(b, "window_box", "back", t, F + 1.65, "a", WALNUT, BERRY)
@@ -230,13 +226,31 @@ return function(add: any)
 			hang(b, "curtains", "back", 15.4, F + 2.2, "b", "F2E6CC", BERRY)
 			hang(b, "shelf_wall", "back", 9.8, 7.2, "b")
 			hang(b, "art_abstract", "side", 7.6, 9.2, "b")
-			hang(b, "art_abstract", "left2", 1, 7, "b")
-			hang(b, "art_flowers", "left3", 3, 8.2, "b")
 			hang(b, "clock_wall", "side", 11, 9, "b")
-			hang(b, "sconce", "left1", 1, 6.4, "b")
 			hang(b, "sconce", "side", 2, 6.4, "b")
 			hang(b, "coat_hooks", "back", 1.6, 7.8, "b")
 			b:item("flower_pot", 13.1, 18.6, 0, 0, top("counter_sink"))
+
+			-- opened up: the kiosk wider either side of the cart and deeper behind it, the
+			-- pavilion with it
+			b:spread({ x = { { 11.5, 4 }, { 12.3, 4 } }, z = { { 12.6, 6 } } })
+			-- the left side in stripes round its window, on the longer wall
+			stripes(b, "left", 2, 26, 2, 6, { 2, 2, 12, 2, 2 }, BLUSH, WHITE)
+			b:open("win_square", "left3", 6)
+			hang(b, "awning", "left3", 6, F + 7.2, "a", BERRY, TRIM)
+			hang(b, "window_box", "left3", 6, F + 1.65, "a", WALNUT, MINT)
+			hang(b, "art_abstract", "left2", 1, 7, "b")
+			hang(b, "art_flowers", "left3", 6, 8.2, "b")
+			hang(b, "sconce", "left1", 1, 6.4, "b")
+			-- a post more along the pavilion's longer side, and a table for two by the freezer
+			b:item("porch_post", 39.6, 16.2, 90)
+			paint(b, TRIM, TRIM)
+			b:item("table_round", 9.6, 15.6, 0)
+			paint(b, TRIM, WALNUT)
+			b:item("chair_wood", 7.4, 15.6, 90)
+			b:item("chair_wood", 11.8, 15.6, 270)
+			b:item("vase_flowers", 9.6, 15.6, 0, 0, top("table_round"))
+			b:item("lamp_pendant", 9.6, 15.6, 0)
 		end
 	)
 end

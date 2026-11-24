@@ -174,11 +174,6 @@ return function(add: any)
 				hang(b, "awning", w.w, w.t, 7.6, "a", FOREST, TRIM)
 				hang(b, "window_box", w.w, w.t, F + 1.65, "a", WALNUT, CORAL)
 			end
-			hang(b, "sign_grocer", "upfront", 12, 3.3, "a", "F2E6CC", FOREST)
-			for _, x in { 2, 26 } do
-				b:item("window_attic", x, 16, if x < 14 then 270 else 90, 2)
-				paint(b, TRIM, FOREST)
-			end
 			-- the brick stands on a stone course; boards up the plaster's corners; four drainpipes
 			footing(b, "front", 24, { { 15, 21.4 } })
 			footing(b, "left", 14)
@@ -300,6 +295,21 @@ return function(add: any)
 			b:item("light_ceiling", 23, 21.4, 0, 1)
 			hang(b, "coat_hooks", "upmid", 19, 5.2, "b")
 			hang(b, "shelf_wall", "upback", 2.3, 6.9, "b")
+
+			-- opened up: the shop wider at both ends and deeper behind the aisle, the stock room
+			-- deeper over it (the stairs and their railing keep together)
+			b:spread({ x = { { 4.6, 4 }, { 20.7, 6 } }, z = { { 20, 6 } } })
+			-- the sign between the two front windows, a window up in each gable, and shelves
+			-- along the walls the shop gained
+			hang(b, "sign_grocer", "upfront", 19, 3.3, "a", "F2E6CC", FOREST)
+			for _, x in { 2, 36 } do
+				b:item("window_attic", x, 19, if x < 19 then 270 else 90, 2)
+				paint(b, TRIM, FOREST)
+			end
+			b:item("shop_shelves", 3.1, 24.3, 90)
+			b:item("shop_shelves", 34.9, 21.4, 270)
+			b:item("crate", 30.6, 24.6, 0)
+			b:item("crate", 30.5, 24.5, 12, 0, top("crate"))
 		end
 	)
 end

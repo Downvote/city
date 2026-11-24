@@ -18,7 +18,8 @@ local Geometry = require(Shared .. "Build.Geometry")
 local V = Terrain.Voxel
 local cover = TownMap.cover()
 local plan = Terrain.plan(cover)
-local AROUND = 2 * (2 * Terrain.IslandX + Terrain.IslandS + Terrain.IslandN)
+-- (round the island: the south shore is longer than straight across, round the old town's cape)
+local AROUND = Terrain.Around
 
 local NAMES = {}
 for _, m in Terrain.Materials do
@@ -70,10 +71,13 @@ describe("Terrain", function()
 			end
 			-- along a line out from the middle of each shore: grass, then sand that slopes down
 			-- through the sea's level, then sand under the water, then the deep
-			for _, probe in { { 0, -1, "south" }, { 1, 0, "east" }, { 0, 1, "north" }, { -1, 0, "west" } } do
+			for _, probe in
+				{ { 0, -1, "south" }, { 1, 0, "east" }, { 0, 1, "north" }, { -1, 0, "west" }, { 0, -1, "downtown" } }
+			do
 				local dx, dz = probe[1], probe[2]
-				local x0 = if dx ~= 0 then dx * Terrain.IslandX else 137
-				local z0 = if dz > 0 then Terrain.IslandN elseif dz < 0 then -Terrain.IslandS else 311
+				-- (the south shore out on the old town's cape, and past it in front of downtown)
+				local x0 = if dx ~= 0 then dx * Terrain.IslandX elseif probe[3] == "downtown" then 960 else 137
+				local z0 = if dz > 0 then Terrain.IslandN elseif dz < 0 then -Terrain.south(x0) else 311
 				local _, s = Terrain.coast(x0, z0)
 				local w = Terrain.waterLine(s)
 				local last = math.huge
@@ -102,8 +106,53 @@ describe("Terrain", function()
 				expect(Terrain.deepLine(s) > edge).toBeTruthy()
 			end
 			for x = -Terrain.IslandX, Terrain.IslandX, 97 do
-				local h = Terrain.natural(x, -Terrain.IslandS - edge + 1)
+				local h = Terrain.natural(x, -Terrain.south(x) - edge + 1)
 				expect(h > -4.5 and h < Terrain.WaterY).toBeTruthy()
+			end
+		end)
+
+		it("comes round the old town's cape in one smooth curve, with a beach all the way", function()
+			-- The plots run 400 back from the main street (the user: "make player plots much
+			-- bigger, double the size"), so the south shore stands out past them between the first
+			-- avenues and eases back beside them. Harbour Road and the boardwalk stay on land.
+			local cape = Terrain.Cape
+			expect(Terrain.south(0)).toBe(Terrain.IslandS + cape.out)
+			expect(Terrain.south(cape.half + cape.ease)).toBe(Terrain.IslandS)
+			expect(Terrain.south(Terrain.IslandX)).toBe(Terrain.IslandS)
+			local plotsReach = Town.PlotSetback + Tuning.Plot.Size
+			for x = -Town.AvenueX[1] - 17, Town.AvenueX[1] + 17, 13 do
+				expect(Terrain.south(x) >= Town.RingZ + 17 + 13).toBeTruthy()
+				expect(Terrain.south(x) > plotsReach + 40).toBeTruthy()
+			end
+			local last = Terrain.south(0)
+			for x = 0, Terrain.IslandX, 2 do
+				local now = Terrain.south(x)
+				expect(now <= last + 1e-9).toBeTruthy()
+				-- (no corner: it turns a little from one step to the next)
+				local bend = Terrain.south(x + 2) - 2 * now + Terrain.south(x - 2)
+				expect(math.abs(bend) < 0.1).toBeTruthy()
+				last = now
+			end
+			-- down the curving sides, straight out to sea: grass, sand sloping down to the water
+			-- where Terrain.shore says it is, then the sea floor
+			for _, x0 in { -800, -700, -600, 600, 700, 800 } do
+				local _, s = Terrain.coast(x0, -Terrain.south(x0))
+				local g, w = Terrain.grassLine(s), Terrain.waterLine(s)
+				expect(w - g >= 14).toBeTruthy()
+				local last = math.huge
+				local z0 = -Terrain.south(x0) + 30
+				for dz = 0, 260, 0.5 do
+					local h, m = Terrain.natural(x0, z0 - dz)
+					expect(h <= last + 1e-9).toBeTruthy()
+					last = h
+					local d = Terrain.coast(x0, z0 - dz)
+					if d > g + 0.5 and d < w + 60 then
+						expect(m).toBe("Sand")
+					end
+				end
+				local wx, wz = Terrain.shore("south", x0)
+				expect(wx).toBe(x0)
+				expect(Terrain.natural(wx, wz)).toBeNear(Terrain.WaterY, 0.01)
 			end
 		end)
 	end)
@@ -171,17 +220,21 @@ describe("Terrain", function()
 			local grass, total = 0, 0
 			for x = -1090, 1090, 13 do
 				for z = 230, 930, 13 do
-					total += 1
-					local m = material(x, z)
-					if m == "Grass" or m == "Rock" then
-						grass += 1
+					-- (the hills: past the old town's stretch of Hill Road, which runs out behind its
+					-- plots now, and past the ring's old line in front of downtown and the civic quarter)
+					if z > Town.ringAt(x) + 17 then
+						total += 1
+						local m = material(x, z)
+						if m == "Grass" or m == "Rock" then
+							grass += 1
+						end
 					end
 				end
 			end
 			-- most of the hills are open grass (paths, the farm, the camp and the rest are not)
 			expect(grass / total > 0.75).toBeTruthy()
 			-- between the plots and Hill Road, and the creator's meadow
-			expect(material(-300, 227)).toBe("Grass")
+			expect(material(-300, Town.PlotSetback + Tuning.Plot.Size + 4)).toBe("Grass")
 			expect(material(Town.CreatorSpot.X, Town.CreatorSpot.Z - 30)).toBe("Grass")
 		end)
 

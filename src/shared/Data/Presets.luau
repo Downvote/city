@@ -271,6 +271,17 @@ add("cottage", "Garden cottage", "One room to live in, a bedroom and a kitchen c
 	b:item("flower_bed", 19, 3)
 	b:item("bush", 8.4, 2.6)
 	b:item("mailbox", 22.6, 1.6)
+
+	-- opened up: the bedroom and the kitchen wider and deeper, the front room deeper
+	b:spread({ x = { { 9.5, 4 }, { 13, 6 } }, z = { { 13.2, 4 }, { 17.5, 4 } } })
+	-- a reading corner on the front room's new floor, and the kitchen counter run on to the arch
+	b:item("rug_round", 25.6, 12.4)
+	b:item("armchair", 22.4, 12.2, 90)
+	b:item("table_side", 22.4, 15.2)
+	b:item("lamp_table", 22.4, 15.2, 0, 0, F + (Catalog.get("table_side") :: any).surface)
+	b:item("bookshelf", 30.9, 15.4, 270)
+	b:item("light_ceiling", 25.6, 12)
+	b:item("counter", 21, 28.4, 180)
 end)
 
 add("family", "Family house", "A living room, a kitchen, two bedrooms and a bathroom.", "house", 32, 28, function(b)
@@ -311,7 +322,6 @@ add("family", "Family house", "A living room, a kitchen, two bedrooms and a bath
 	b:item("stool_bar", 22.4, 7.4)
 	b:item("stool_bar", 25.6, 7.4)
 	-- the bedrooms and the bathroom
-	-- (the room is too narrow for a double bed with a nightstand each side: one, clear of the bed)
 	b:item("bed_double", 8.3, 21.9, 180)
 	b:item("nightstand", 4.2, 24.6, 180)
 	b:item("dresser", 4.6, 17.2)
@@ -332,6 +342,21 @@ add("family", "Family house", "A living room, a kitchen, two bedrooms and a bath
 	b:item("bush", 10, 3)
 	b:item("bush", 22, 3)
 	b:item("mailbox", 30.8, 1.6)
+
+	-- opened up: every room wider and deeper
+	b:spread({ x = { { 11.6, 6 }, { 15.8, 4 }, { 26.6, 6 } }, z = { { 12.5, 4 }, { 20, 6 } } })
+	-- the kitchen's counters on from the stove to the fridge, a dining table between it and the
+	-- sofa, and now there is room, a nightstand on the other side of the double bed
+	b:item("counter", 38.1, 18.4, 180)
+	b:item("counter", 41.1, 18.4, 180)
+	b:item("table_dining_long", 21.4, 12.4)
+	for _, x in { 19.6, 23.2 } do
+		b:item("chair_dining", x, 10, 0)
+		b:item("chair_dining", x, 14.8, 180)
+	end
+	b:item("vase_flowers", 21.4, 12.4, 0, 0, F + (Catalog.get("table_dining_long") :: any).surface)
+	b:item("lamp_pendant", 21.4, 12.4)
+	b:item("nightstand", 12.4, 34.6, 180)
 end)
 
 add(
@@ -373,7 +398,7 @@ add(
 		b:item("fridge", 10.2, 10, 0)
 		b:item("table_round", 12, 14)
 		b:item("chair_dining", 12, 16.2, 180)
-		b:item("chair_dining", 9.8, 14, 90)
+		b:item("chair_dining", 14.2, 14, 270)
 		b:item("light_ceiling", 7, 18)
 		b:item("light_ceiling", 9, 12)
 		-- upstairs
@@ -390,6 +415,16 @@ add(
 		b:item("path_stones", 16, 5.6)
 		b:item("path_stones", 16, 3.4)
 		b:item("lamp_post", 3, 5.4)
+
+		-- opened up: wider rooms on both sides of the stairs, deeper behind the kitchen
+		b:spread({ x = { { 11.8, 4 }, { 16.9, 4 } }, z = { { 12.2, 6 } } })
+		-- an island in the kitchen, a light over the table, the other nightstand upstairs
+		b:item("kitchen_island", 7, 14.6, 0)
+		b:item("stool_bar", 5.4, 17.6, 180)
+		b:item("stool_bar", 8.6, 17.6, 180)
+		b:item("lamp_pendant", 16, 20)
+		b:item("nightstand", 11.7, 28.6, 180, 1)
+		b:item("dresser", 12.2, 10, 0, 1)
 	end
 )
 
