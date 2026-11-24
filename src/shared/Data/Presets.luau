@@ -283,9 +283,9 @@ add("family", "Family house", "A living room, a kitchen, two bedrooms and a bath
 	b:item("stool_bar", 22.4, 7.4)
 	b:item("stool_bar", 25.6, 7.4)
 	-- the bedrooms and the bathroom
-	b:item("bed_double", 7, 21.9, 180)
-	b:item("nightstand", 3.4, 24.6, 180)
-	b:item("nightstand", 10.6, 24.6, 180)
+	-- (the room is too narrow for a double bed with a nightstand each side: one, clear of the bed)
+	b:item("bed_double", 8.3, 21.9, 180)
+	b:item("nightstand", 4.2, 24.6, 180)
 	b:item("dresser", 4.6, 17.2)
 	b:item("bathtub", 17.9, 22.6)
 	b:item("toilet", 13.8, 24.5, 90)
@@ -349,8 +349,8 @@ add(
 		b:item("light_ceiling", 7, 18)
 		b:item("light_ceiling", 9, 12)
 		-- upstairs
-		b:item("bed_double", 7, 19.6, 180, 1)
-		b:item("nightstand", 3.4, 22.6, 180, 1)
+		b:item("bed_double", 7.6, 19.6, 180, 1)
+		b:item("nightstand", 3.5, 22.6, 180, 1)
 		b:item("wardrobe", 7, 9.6, 0, 1)
 		b:item("bed_single", 14.6, 19.6, 180, 1)
 		b:item("desk", 14.8, 13.6, 0, 1)

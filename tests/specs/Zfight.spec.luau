@@ -18,7 +18,6 @@ local KNOWN = {
 	"presets:preset:bakery",
 	"presets:preset:cafe",
 	"presets:preset:clinic",
-	"presets:preset:family",
 	"presets:preset:florist",
 	"presets:preset:icecream",
 	"presets:preset:library",
@@ -27,10 +26,8 @@ local KNOWN = {
 	"presets:preset:postoffice",
 	"presets:preset:school",
 	"presets:preset:studio",
-	"presets:preset:townhouse",
 	"presets:preset:workshop",
 	"town:ground",
-	"town:hedgeRow",
 }
 
 local RED, BLUE, GREEN = Color3.fromRGB(200, 80, 80), Color3.fromRGB(80, 80, 200), Color3.fromRGB(80, 200, 80)
