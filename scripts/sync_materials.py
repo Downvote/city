@@ -113,9 +113,9 @@ def write_ids(ids, order, path=IDS):
     open(path, "w").write(text)
 
 
-# Materials that keep Roblox's own face: the island's long grass (client World/Grass) is coloured
-# to match Roblox's own Grass under it, so no texture may take its place; ours is a look.
-KEEP_OWN = {"Grass"}
+# Materials that keep Roblox's own face. Grass used to (the terrain's blades only grew on Roblox's
+# own); the long grass is ours now and the user wanted the floor's grass smoother, so it has one.
+KEEP_OWN = set()
 
 
 def variant_name(name, info=None):

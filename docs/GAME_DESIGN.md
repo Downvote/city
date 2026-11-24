@@ -1639,6 +1639,12 @@ grass over it in three greens, a deep one, a fresh one and a dry gold one, with 
 each other, so every tuft's colour falls at random and three times as many cover the ground. The tufts are a little
 wider, the shortest aren't as short, and a bare spot is rare.
 
+> never mind, it gets too laggy, make it less dense, but make the floor grass texture smoother
+
+Now it's two greens mixed, spread wider apart: about as many tufts as at first, so it runs as lightly as it did,
+and it's drawn a little less far out. The ground under them, the island's grass and every lawn, is smooth and matt
+now, one even green with no speckle, so the gaps between tufts look like short grass.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

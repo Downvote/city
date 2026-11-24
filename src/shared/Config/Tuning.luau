@@ -404,7 +404,7 @@ Tuning.Grass = {
 	Native = { 75.03, 4.02, 75.42 }, -- the mesh's own size, if Roblox won't say (MeshSize)
 	Scale = 0.72, -- the tufts' width against the pack's (its tufts are 3 studs across)
 	Height = 0.42, -- the blades' height against the pack's (its are 2.6 studs, up to 4)
-	Pitch = 1.6, -- studs between tufts; a patch is ten of these on a side
+	Pitch = 2.2, -- studs between tufts in a patch; a patch is ten of these on a side
 	Jitter = 0.5, -- each tuft nudged up to this much of the pitch, so no rows show
 	-- "they are too even, grass should be more random": the grass runs taller and shorter in drifts
 	-- this many studs across, each tuft a little different, the shortest this much of the tallest;
@@ -416,8 +416,8 @@ Tuning.Grass = {
 	Bare = 0.6, -- ("dense enough to cover all the floor": a bare spot is rare)
 	Gaps = 0.02,
 	Lean = 14,
-	Distance = 96, -- patches whose middle is this close to the camera's focus are shown
-	Ahead = 26, -- and patches this much further out are made ready
+	Distance = 90, -- patches whose middle is this close to the camera's focus are shown
+	Ahead = 24, -- and patches this much further out are made ready
 	PerFrame = 2, -- patches made in a frame
 	Flat = 0.78, -- no grass on ground steeper than this (the up part of its normal)
 	Rise = 0.8, -- nor where the ground round a tuft isn't level within this
@@ -433,20 +433,21 @@ Tuning.Grass = {
 	Look = "MaplewickBlade",
 	-- "could you make the colors of grass random? and dense enough to cover all the floor?" Every
 	-- square of ground has `Layers` patches over it, each in one of these greens, their tufts in
-	-- among each other: the colours fall at random, tuft by tuft, and the ground is that much
-	-- fuller. A green is the terrain grass's colour times `Base` at the blades' foot and `Tip` at
-	-- their tips: a deep green, a fresh one and a dry gold one (the fourth, a cool green, is
-	-- there for a fourth layer).
-	Layers = 3,
+	-- among each other, so the colours fall at random tuft by tuft. Three of them were "too
+	-- laggy", so it's two, each at the wider `Pitch`: about as many tufts as one used to be, the
+	-- smooth floor under them showing through. A green is the terrain grass's colour times `Base`
+	-- at the blades' foot and `Tip` at their tips: a deep green and a sunny one (the others are
+	-- there for more layers).
+	Layers = 2,
 	Greens = {
 		{ Base = { 0.56, 0.68, 0.56 }, Tip = { 0.7, 0.8, 0.62 } },
+		{ Base = { 0.76, 0.84, 0.6 }, Tip = { 0.92, 0.94, 0.62 } },
 		{ Base = { 0.7, 0.84, 0.64 }, Tip = { 0.84, 0.95, 0.7 } },
-		{ Base = { 0.82, 0.8, 0.56 }, Tip = { 1, 0.9, 0.56 } },
 		{ Base = { 0.6, 0.8, 0.76 }, Tip = { 0.72, 0.9, 0.84 } },
 	},
 	Bend = 2.6, -- studs round someone walking that the grass bends away from them
 	BendAngle = 70, -- and how far over it goes, in degrees
-	WindReach = 45, -- studs round the focus the grass sways
+	WindReach = 38, -- studs round the focus the grass sways
 	Folk = 120, -- villagers and players this close to the focus bend it
 }
 

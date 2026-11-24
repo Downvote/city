@@ -754,6 +754,13 @@ def street(rng):
     return lum, h, 1.6, rough
 
 
+def meadow(rng):
+    # the grass under foot, terrain and grass parts alike: no pattern and fully matt. The user:
+    # "make the floor grass texture smoother" (Roblox's own grass is speckled)
+    lum = np.full((N, N), 0.98)
+    return lum, np.zeros((N, N)), 0.0, np.ones((N, N))
+
+
 def blade(rng):
     # the long grass's blades (client World/Grass): no pattern at all and fully matt, so the
     # blades are smooth and don't shine (the user: "too shiny", then "make their textures smoother")
@@ -847,6 +854,7 @@ TEXTURES = {
     "sand": (sand, "Sand", 10),
     "rock": (rock, "Rock", 10),
     "metal": (metal, "Metal", 6),
+    "meadow": (meadow, "Grass", 32),
 }
 
 # name -> (painter, Roblox material, studs per tile, the look's name): a part whose material is
@@ -865,8 +873,7 @@ LOOKS = {
     "street": (street, "Asphalt", 16, "Street"),
     "canvas": (canvas_weave, "Fabric", 3, "Canvas"),
     "cliff": (cliff, "Rock", 16, "Cliff"),
-    # Roblox's own grass is left alone everywhere (terrain grass only grows its blades on it), so
-    # our painted grass is a look a part has to ask for
+    # our painted grass is a look a part has to ask for (Grass itself wears the plain meadow)
     "lawn": (grass, "Grass", 8, "Lawn"),
     "blade": (blade, "SmoothPlastic", 16, "Blade"),
 }
@@ -882,7 +889,7 @@ SAMPLE = {
     "clay": (0.80, 0.40, 0.26), "shingles": (0.36, 0.42, 0.58), "slate": (0.42, 0.44, 0.50),
     "tiles": (0.86, 0.92, 0.95), "carpet": (0.72, 0.40, 0.44), "fabric": (0.40, 0.56, 0.70),
     "marble": (0.95, 0.94, 0.92), "sand": (0.92, 0.84, 0.64), "rock": (0.58, 0.56, 0.54),
-    "metal": (0.70, 0.72, 0.76),
+    "metal": (0.70, 0.72, 0.76), "meadow": (0.53, 0.67, 0.34),
     "panel": (0.80, 0.79, 0.76), "stucco": (0.96, 0.87, 0.72), "maple": (0.78, 0.40, 0.30),
     "mosaic": (0.92, 0.58, 0.30), "checker": (0.86, 0.34, 0.30), "corrugated": (0.50, 0.66, 0.74),
     "shutter": (0.74, 0.76, 0.78), "slats": (0.74, 0.54, 0.36), "barrel": (0.34, 0.47, 0.58),

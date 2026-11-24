@@ -71,6 +71,10 @@
     "material": "Metal",
     "studs": 6
   },
+  "meadow": {
+    "material": "Grass",
+    "studs": 32
+  },
   "panel": {
     "material": "Concrete",
     "studs": 12,

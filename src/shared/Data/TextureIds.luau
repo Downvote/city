@@ -26,6 +26,7 @@ export type Ids = {
 
 -- stylua: ignore
 local TextureIds: { [string]: Ids } = {
+	meadow = { color = "rbxassetid://79514706284696", rough = "rbxassetid://79514706284696", studs = 32 }, -- the same plain white map from xander_z22's SkinnedGrass pack: the grass under foot, smooth and matt
 	blade = { color = "rbxassetid://79514706284696", rough = "rbxassetid://79514706284696", studs = 16 }, -- a plain white map from xander_z22's SkinnedGrass pack: no pattern, fully matt (the long grass's blades)
 	lawn = { color = "rbxassetid://123781418381440", normal = "rbxassetid://74383676401444", rough = "rbxassetid://123781418381440", studs = 16, light = 0.7, decal = 132962949126736 }, -- "Grass005_2K-JPG_Roughness" and "_NormalGL" by gabrieleivazians2041 (the set's grey map, so the paint decides the green)
 	wood = { color = "rbxassetid://127935223360351", normal = "rbxassetid://82700223149662", studs = 4, decal = 125695710899534 }, -- "Wood Texture" by conoluz; normal "Wood092_1K-PNG_NormalGL" by Proville6
