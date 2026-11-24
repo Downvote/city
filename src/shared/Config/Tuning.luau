@@ -315,6 +315,14 @@ Tuning.Uses = {
 	Bubble = 3.5, -- seconds what happened shows over the piece
 }
 
+-- Building the town when the server starts ----------------------------------
+Tuning.World = {
+	-- seconds spent merging the town's detail pieces before any of it goes up (the most used
+	-- first); the rest are merged while it is built. It was 60, and a player who joined stood on
+	-- bare ground the whole time (the user: "it spawns me stuck here").
+	MergeBudget = 10,
+}
+
 -- The look of the world ----------------------------------------------------
 Tuning.Look = {
 	-- The glow over the picture (Roblox's own defaults are 1, 24 and 2). The threshold is how

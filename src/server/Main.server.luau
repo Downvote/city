@@ -27,16 +27,29 @@ for _, name in order do
 		loaded[name] = require(module)
 	end
 end
+-- Each service on its own: one that fails says so in the output and the rest go on, so players
+-- are still let in (a failure here once left everyone on bare ground: "it spawns me stuck here").
 for _, name in order do
 	local s = loaded[name]
 	if s and s.init then
-		s.init()
+		local started = os.clock()
+		local ok, why = xpcall(s.init, debug.traceback)
+		if ok then
+			print(("[Maplewick] %s ready in %.1f s"):format(name, os.clock() - started))
+		else
+			warn(("[Maplewick] %s failed to set up: %s"):format(name, tostring(why)))
+		end
 	end
 end
 for _, name in order do
 	local s = loaded[name]
 	if s and s.start then
-		task.spawn(s.start)
+		task.spawn(function()
+			local ok, why = xpcall(s.start, debug.traceback)
+			if not ok then
+				warn(("[Maplewick] %s failed to start: %s"):format(name, tostring(why)))
+			end
+		end)
 	end
 end
 -- Only now are players let in. Building the town takes a moment (the low poly kit is cut first),

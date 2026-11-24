@@ -403,28 +403,39 @@ end
 -- pieces are merged one by one). Yields; spaces the merges a frame apart, as solid modelling
 -- asks. Stops after `budget` seconds: whatever is left is built from plain parts, so a slow
 -- server still opens in time. Returns how many were merged, failed and left.
-function Builder.preparePieces(lists: { { Prim } }, budget: number?): (number, number, number)
+--
+-- `weights[i]` is how many times list i is used (a model placed forty times weighs forty), so the
+-- pieces seen most are merged first. What the budget leaves is merged later, one at a time, as
+-- the town is built (the queue above): the server opens sooner, and those details arrive a
+-- moment after their buildings instead of the whole town waiting for them.
+function Builder.preparePieces(lists: { { Prim } }, budget: number?, weights: { number }?): (number, number, number)
 	if not Builder.cutPieces then
 		return 0, 0, 0
 	end
 	local todo: { Prim } = {}
-	local seen: { [string]: boolean } = {}
-	for _, list in lists do
+	local seen: { [string]: number } = {}
+	for i, list in lists do
+		local w = if weights then weights[i] or 1 else 1
 		for _, prim in list do
 			local key = prim.key
-			if prim.shape == "Piece" and key and pieceKit[key] == nil and not seen[key] then
-				seen[key] = true
-				table.insert(todo, prim)
+			if prim.shape == "Piece" and key and pieceKit[key] == nil then
+				if seen[key] == nil then
+					seen[key] = 0
+					table.insert(todo, prim)
+				end
+				seen[key] += w
 			end
 		end
 	end
+	table.sort(todo, function(a, b)
+		return seen[a.key or ""] > seen[b.key or ""]
+	end)
 	local stop = os.clock() + (budget or 60)
 	local cut, failed, left = 0, 0, 0
 	for _, prim in todo do
 		local key = prim.key or ""
 		if os.clock() > stop then
-			pieceKit[key] = false
-			left += 1
+			left += 1 -- still nil: merged later, when something that uses it is built
 		else
 			local template = cutPiece(prim)
 			pieceKit[key] = template or false
@@ -437,7 +448,7 @@ function Builder.preparePieces(lists: { { Prim } }, budget: number?): (number, n
 		end
 	end
 	Builder.Pieces.cut += cut
-	Builder.Pieces.failed += failed + left
+	Builder.Pieces.failed += failed
 	return cut, failed, left
 end
 

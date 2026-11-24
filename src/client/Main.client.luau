@@ -3,6 +3,10 @@
 local Controllers = script.Parent.Controllers
 local UI = script.Parent.UI
 
+-- a dark card with the game's name until this player's character is in the world (it only
+-- loads once the town is built and their plot is ready)
+require(UI.Loading).start()
+
 -- the low poly kit the server cut (Build/LowPoly): whatever this client draws itself (placement
 -- ghosts, catalog pictures, the cars and clouds) uses the same faceted shapes
 local ReplicatedStorage = game:GetService("ReplicatedStorage")

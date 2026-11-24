@@ -179,10 +179,12 @@ plot, the terrain follows `Hills.at`, the tiles, the open sea, the beach props a
   into their shapes (the previews and the Frames spec use it). A piece's shapes share one material, are not see
   through, carry no name, light, role, effect or attributes, number at most `Geometry.PieceMax` (28), and one of
   them is a box that isn't turned.
-- `Builder.preparePieces(lists, budget)` merges, ahead of time, every different piece in some lists of prims (a
-  frame apart, stopping after `budget` seconds; what is left is built from plain parts); `Services/World` runs it
-  over the whole town (each placed model drawn once) before building anything, so no building stands without its
-  windows while pieces are merged. It returns how many were merged, failed and left, and the server prints it.
+- `Builder.preparePieces(lists, budget, weights?)` merges, ahead of time, the different pieces in some lists of
+  prims, the most used first (`weights[i]` is how often list i is used), a frame apart, for `budget` seconds;
+  what is left stays unmerged for now and is merged later, a piece at a time, when something using it is built
+  (the queue). `Services/World` runs it over the whole town for `Tuning.World.MergeBudget` (10) seconds before
+  building, so the town goes up within seconds and the last details arrive a moment after their buildings (it
+  once waited a whole minute and a player stood on bare ground). It returns how many were merged, failed and left.
 - `Builder.instantiate` makes a piece as one mesh where `Builder.cutPieces` is on (Services/World switches it on
   when the low poly kit was cut, so only on a real server): the first use of a key is queued, one worker merges it
   with `GeometryService:UnionAsync` (the unturned box as the main part; `UsePartColor = false` keeps each shape's
@@ -337,7 +339,11 @@ is clamped to 0..1 and a word must be one of `Schema.SettingChoices[key]`.
 ## Server services
 
 Start order (`Main.server`): every service's `init`, then every `start`, and only then `Data.open()`, which loads
-the profile of everyone already in the server and of everyone who joins later. Building the town yields (the low
+the profile of everyone already in the server and of everyone who joins later. Each `init` and `start` runs in an
+`xpcall`: one that fails is reported in the output (with its traceback) and the rest go on, so players are still
+let in. Characters don't load until the player's plot is ready (`Plots.spawn`); until then the client shows
+`UI/Loading` (the game's name over the menus' moving shapes, "Building the town"), which fades when the
+character arrives. Building the town yields (the low
 poly kit), so a player can be in before the services are listening; nothing may load a profile before they are.
 `Plots.start` and `Villagers.start` also pick up players whose profile or plot is already there.
 

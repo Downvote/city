@@ -171,11 +171,16 @@ local function buildMap()
 	local placements = TownMap.placements()
 	local drawn: { [string]: { any } } = {}
 	local lists = { groundPrims }
+	local weights = { 1 }
+	local slot: { [string]: number } = {}
 	for _, p in placements do
 		if not drawn[p.name] then
 			drawn[p.name] = TownMap.prims(p.name)
 			table.insert(lists, drawn[p.name])
+			table.insert(weights, 0)
+			slot[p.name] = #lists
 		end
+		weights[slot[p.name]] += 1
 	end
 	-- If the terrain can't be written (an API this server doesn't have, a bad tile), the island
 	-- still gets plain grass and sea, and the rest of the town still goes up: a failure here used
@@ -203,10 +208,12 @@ local function buildMap()
 		end)
 	end
 	local started = os.clock()
-	local cut, failed, left = Builder.preparePieces(lists, 60)
+	-- (a short while only, the most used first: the rest are merged as the town goes up, so the
+	-- server doesn't keep players on empty ground for a minute)
+	local cut, failed, left = Builder.preparePieces(lists, Tuning.World.MergeBudget, weights)
 	if cut + failed + left > 0 then
 		print(
-			("[World] merged %d kinds of detail piece in %.1f s (%d failed, %d left to plain parts)"):format(
+			("[World] merged %d kinds of detail piece in %.1f s (%d failed, %d to merge as the town goes up)"):format(
 				cut,
 				os.clock() - started,
 				failed,
@@ -216,6 +223,7 @@ local function buildMap()
 	end
 
 	-- streets, sidewalks, the square and the market (Data/TownMap lays them out)
+	local building = os.clock()
 	local ground = Instance.new("Model")
 	ground.Name = "Streets"
 	Builder.instantiate(groundPrims, ground, CFrame.identity)
@@ -246,6 +254,7 @@ local function buildMap()
 	spawn.CanCollide = false
 	spawn.Duration = 0
 	spawn.Parent = mapFolder
+	print(("[World] the town's %d models went up in %.1f s"):format(#placements, os.clock() - building))
 end
 
 local function buildPlots()

@@ -1583,6 +1583,14 @@ and a failed terrain write could stop the town from going up at all. Now nobody 
 and their plot is ready; anyone who still drops through is put back on their plot within a second; and if the
 terrain can't be written the island is plain grass and sea and everything else is built as usual.
 
+> it spawns me stuck here
+
+(With a picture of bare ground and no town.) The server spent up to a minute merging the town's details before a
+single part went up, and a player who joined in that minute stood on bare terrain with no body. Now it merges the
+most used details for ten seconds, puts the whole town up, and merges the rest as it goes; until a player's
+character arrives the screen shows a dark card with the game's name and "Building the town". A service that fails
+while the server starts is reported in the output and the others carry on.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

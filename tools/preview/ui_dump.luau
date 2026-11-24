@@ -440,6 +440,10 @@ elseif scene == "earned" then
 		card.GroupTransparency = at[3]
 	end
 	Sim.frames(2)
+elseif scene == "loading" then
+	-- what a player sees until their character is in the world
+	Harness.require(Sim.CLIENT .. "UI.Loading").start(true)
+	Sim.frames(2)
 elseif scene == "toasts" then
 	startHud()
 	local Toasts = Harness.require(Sim.CLIENT .. "UI.Toasts")
