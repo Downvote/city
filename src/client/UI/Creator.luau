@@ -2706,7 +2706,7 @@ local function build()
 	local toolList = {
 		{ "undo", "Undo", "Undo", undo },
 		{ "redo", "Redo", "Redo", redo },
-		{ "dice", "Shuffle", "Random look", shuffle },
+		{ "dice", "Shuffle", "Shuffle the whole look", shuffle },
 		{
 			"trash",
 			"Reset",

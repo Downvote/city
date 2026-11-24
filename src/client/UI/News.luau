@@ -148,7 +148,7 @@ local function frontPage(inside: Frame, log: { any }, today: number, waiting: nu
 		AlignY = Enum.TextYAlignment.Top,
 		LayoutOrder = 2,
 	})
-	Kit.text(if latest then ago(latest.t) else "Your villagers haven't done much yet.", {
+	Kit.text(if latest then ago(latest.t) else "Check back in a while.", {
 		Name = "Byline",
 		Parent = story,
 		Size = UDim2.new(1, 0, 0, 20),

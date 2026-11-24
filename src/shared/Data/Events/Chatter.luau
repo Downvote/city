@@ -17,105 +17,111 @@ local Chatter = {}
 Chatter.Topics = {
 	{
 		about = "whether soup is a drink",
-		open = { "Soup is a drink. I've decided.", "I had my soup from a mug today. So it's a drink now." },
-		yes = { "Obviously. Bread is the straw.", "If it fits in a mug, it's a drink." },
+		open = {
+			"Soup is a drink. I've decided.",
+			"I had my soup out of a mug today. So that makes it a drink, right?",
+		},
+		yes = { "If it fits in a mug, it's a drink. Simple.", "Yeah. I drink mine. Always have." },
 		no = { "If it has carrots in it, it's dinner.", "You can't drink a dumpling. I've tried." },
-		more = { "We should tell the café. They'll want to know." },
-		back = { "Then what's gravy? Answer me that." },
+		more = { "I'm going to ask for it in a mug at the café." },
+		back = { "Then what's gravy? Go on." },
 	},
 	{
 		about = "the gulls on the pier",
 		open = {
 			"I think the gulls have a leader. A big one with a bent beak.",
-			"A gull looked me in the eye today. It knew things.",
+			"A gull stared at me today. Properly stared.",
 		},
-		yes = { "Bent Beak. He runs this town, really.", "They meet on the pier at noon. I've seen it." },
+		yes = {
+			"Bent Beak. I've seen him. He's on the pier every day at noon.",
+			"They do all go quiet when the big one lands.",
+		},
 		no = { "They're just birds. Hungry birds.", "Gulls don't have leaders. They have appetites." },
-		more = { "I'm going to start bringing him crusts. For safety." },
-		back = { "That's exactly what Bent Beak wants you to think." },
+		more = { "I've started saving him my crusts. Just in case." },
+		back = { "That's what he wants you to think." },
 	},
 	{
 		about = "how many stairs are too many",
 		open = { "Any more than twelve stairs and I need a sit down." },
-		yes = { "Twelve, then a landing, then a snack.", "I count them. I always lose count on nine." },
-		no = { "I could do a hundred. Slowly. With breaks.", "Stairs are free exercise. I love them." },
+		yes = { "Twelve, then a landing, then a biscuit.", "I always lose count around nine." },
+		no = { "I could do a hundred. Slowly. With breaks.", "Stairs are free exercise. I like them." },
 		more = { "Every house should have a bench halfway up." },
-		back = { "Show off. I'm taking the ramp." },
+		back = { "Good for you. I'm taking the ramp." },
 	},
 	{
 		about = "socks with sandals",
-		open = { "I wore socks with sandals today and I felt free." },
-		yes = { "Warm toes, fresh air. Best of both.", "Nobody looks at feet. Do what you like." },
-		no = { "Pick one. Feet need to know what they are.", "I saw. I've been thinking about it all day." },
+		open = { "I wore socks with sandals today. Honestly? Great." },
+		yes = { "Warm toes and fresh air. Can't argue with that.", "Nobody looks at feet. Wear what you like." },
+		no = { "Pick one. Your feet need to know what they are.", "I saw. I've been thinking about it all day." },
 		more = { "I might do stripy ones tomorrow." },
-		back = { "My feet are very sure of themselves, thank you." },
+		back = { "My feet are very happy, thank you." },
 	},
 	{
 		about = "whether it'll rain tomorrow",
-		open = { "My knee says rain tomorrow.", "Smell that? Rain's coming. Tomorrow, I reckon." },
-		yes = { "My hair agrees with your knee.", "The gulls are flying low. Rain for sure." },
-		no = { "My knee says sunshine. Knee fight.", "Not a cloud for days. You'll see." },
-		more = { "I'll bring a brolly and look very smug." },
+		open = { "My knee says rain tomorrow.", "Can you smell that? Rain's coming. Tomorrow, I reckon." },
+		yes = { "My hair's gone frizzy, so yes.", "The gulls are flying low. Rain for sure." },
+		no = { "Not a chance. Not a cloud for days.", "My knee says sunshine, and my knee's never wrong." },
+		more = { "I'm taking a brolly anyway." },
 		back = { "We'll see whose knee is right." },
 	},
 	{
 		about = "the best kind of bread",
-		open = { "Crusty bread is the only bread. Fight me." },
-		yes = { "The crunchier the better.", "A good crust is half the meal." },
-		no = { "Soft rolls. Every time. I'm not a crocodile.", "I like bread that doesn't hurt." },
-		more = { "Let's ask the baker for extra crust." },
-		back = { "Your teeth are lazy. I said it." },
+		open = { "Crusty bread is the only bread. I'll argue about this." },
+		yes = { "The crunchier the better.", "The crust's the best bit. Everyone knows that." },
+		no = { "Soft rolls. Every time.", "I like bread that doesn't fight back." },
+		more = { "Let's ask the baker for the end bits." },
+		back = { "You've just got lazy teeth." },
 	},
 	{
 		about = "the moon following people home",
-		open = { "Have you noticed the moon follows me home?" },
+		open = { "Have you noticed the moon follows you home?" },
 		yes = { "It follows me too. It's very nosy.", "I've noticed. I walk faster now." },
 		no = { "It follows everyone. You're not special.", "That's just how the moon works." },
 		more = { "I wave at it now. To be polite." },
-		back = { "It waved back once. I'm sure it did." },
+		back = { "It still feels personal." },
 	},
 	{
 		about = "the perfect length for a nap",
 		open = { "Twenty minutes. That's the perfect nap.", "I've worked it out. The perfect nap is twenty minutes." },
-		yes = { "Any longer and you wake up in a different year.", "Twenty, and a biscuit after." },
-		no = { "Two hours or don't bother.", "Twenty minutes is a blink. Go big." },
-		more = { "I'm going to have one right after this." },
+		yes = { "Any longer and you wake up not knowing what day it is.", "Twenty, and a biscuit after." },
+		no = { "Two hours or don't bother.", "Twenty minutes? That's barely a blink." },
+		more = { "I'm having one right after this." },
 		back = { "Two hours? You'd miss lunch." },
 	},
 	{
 		about = "whoever keeps putting buttons in the fountain",
 		open = { "Someone's been throwing buttons in the fountain instead of coins." },
-		yes = { "I saw. A whole cardigan's worth.", "Shiny ones too. Somebody's coat is very draughty." },
-		no = { "Buttons are cheaper. That's just good sense.", "Maybe the fountain likes buttons." },
-		more = { "I'm going to find out who. I'll check everyone's coats." },
-		back = { "Wishes don't come true on buttons. Everyone knows." },
+		yes = { "I saw. There's a whole cardigan's worth in there.", "Shiny ones, too. Somebody's coat won't do up." },
+		no = { "Buttons are cheaper. Makes sense to me.", "Maybe the fountain likes buttons." },
+		more = { "I'm going to find out who. I'll be checking coats." },
+		back = { "You can't wish on a button. Everyone knows that." },
 	},
 	{
 		about = "whether fish sleep",
-		open = { "Do fish sleep? With their eyes open? That's spooky." },
-		yes = { "So spooky. I'm not going near the pond tonight.", "They're watching. Even asleep." },
+		open = { "Do fish sleep? With their eyes open? That's a bit creepy." },
+		yes = { "Really creepy. I'm not walking past the pond tonight.", "They're watching. Even asleep." },
 		no = {
-			"They sleep fine. You'd sleep fine too if you were a fish.",
-			"They have little fish dreams. It's sweet.",
+			"They sleep fine. You would too if you were a fish.",
+			"I bet they have little fish dreams.",
 		},
-		more = { "I'll knock before I walk past the pond." },
+		more = { "I'll tiptoe past the pond from now on." },
 		back = { "What would a fish even dream about? Puddles?" },
 	},
 	{
 		about = "which season is best",
-		open = { "Autumn is the best season. Crunchy leaves. Soup." },
-		yes = { "Crunchy everything. Yes.", "And big jumpers. Autumn wins." },
+		open = { "Autumn's the best season. All those leaves, and soup every day." },
+		yes = { "Big jumpers too. Autumn wins.", "The crunchy leaves. Yes." },
 		no = {
 			"Summer. You can't swim in autumn. Well, you can. Once.",
-			"Spring. Everything's waking up. Like me, slowly.",
+			"Spring. Everything waking up. Like me, slowly.",
 		},
-		more = { "I'm already planning which leaves to jump in." },
+		more = { "I've already picked which leaf piles I'm jumping in." },
 		back = { "You'll come round. Everyone loves soup." },
 	},
 	{
 		about = "what the market should sell next",
 		open = { "The market needs a stall that only sells spoons." },
-		yes = { "Big spoons, little spoons, a spoon for every mood.", "I'd buy a spoon. I'd buy five." },
+		yes = { "Big ones, little ones, the lot.", "I'd buy a spoon. I'd buy five." },
 		no = { "Who needs that many spoons?", "It needs a stall for naps. Hear me out." },
 		more = { "I'll run it. Spoon Corner." },
 		back = { "Everyone. Everyone needs that many spoons." },
@@ -123,7 +129,7 @@ Chatter.Topics = {
 	{
 		about = "whether ghosts get cold",
 		open = { "Do ghosts get cold? They don't wear coats." },
-		yes = { "That's why they moan. Cold ears.", "Somebody should knit them something." },
+		yes = { "That's why they moan. Cold ears.", "Someone should knit them something." },
 		no = {
 			"They're see-through. The wind goes right through them.",
 			"Ghosts are made of cold. They're used to it.",
@@ -134,33 +140,33 @@ Chatter.Topics = {
 	{
 		about = "whose handwriting is worse",
 		open = { "My handwriting's so bad I can't read my own shopping list." },
-		yes = { "Mine said eggs and I came home with a hat.", "Same. I've started drawing pictures." },
-		no = { "Mine's lovely. Everyone says so. Well, I say so.", "Write slower. That's all it is." },
-		more = { "Let's swap lists and see who comes home with what." },
-		back = { "I wrote that list in a hurry. On a bus. In a storm." },
+		yes = { "Mine said eggs and I came home with a hat.", "Same. I've started drawing pictures instead." },
+		no = { "Mine's lovely. Well, I think it's lovely.", "Just write slower. That's all it is." },
+		more = { "Let's swap lists and see what we come home with." },
+		back = { "I wrote that list in a hurry. On the bus." },
 	},
 	{
 		about = "cheese with apple pie",
 		open = { "Cheese with apple pie. Have you tried it?" },
-		yes = { "It's the best secret in the world.", "A slice of each. I do it every Sunday." },
-		no = { "Cheese should stay away from pudding.", "That sounds like a dare, not a dessert." },
+		yes = { "Every Sunday. A slice of each.", "My gran used to do that. It's good." },
+		no = { "Cheese should stay away from pudding.", "That sounds like a dare." },
 		more = { "I'll bring some round. You'll see." },
 		back = { "Don't knock it till you've tried it." },
 	},
 	{
 		about = "what pet they'd be",
-		open = { "If I were a pet I'd be a cat. Napping, judging people." },
-		yes = { "You'd be a great cat. You already judge people.", "You'd sit on everyone's newspaper." },
+		open = { "If I were a pet, I'd be a cat. I'd just sleep in the window all day." },
+		yes = { "You'd be a good cat. You already sit in the sun all day.", "You'd sit on everyone's newspaper." },
 		no = { "You'd be a dog. You get excited about the post.", "You'd be a goldfish. A happy one." },
-		more = { "I'd want a sunny windowsill. That's all." },
+		more = { "A sunny windowsill. That's all I'd want." },
 		back = { "I do not get excited about the post. Much." },
 	},
 	{
 		about = "what's on the little islet out at sea",
 		open = { "I bet there's treasure on that little islet out there." },
-		yes = { "Or a very lonely crab king.", "I've always wanted to row out and look." },
-		no = { "There's rocks. And one bird. I've been.", "It's just a big rock with ideas." },
-		more = { "We should go. Bring sandwiches." },
+		yes = { "Or a crab the size of a dog.", "I've always wanted to row out and look." },
+		no = { "There's rocks. And one bird. I've been.", "It's just a big rock." },
+		more = { "We should go one day. Bring sandwiches." },
 		back = { "You didn't dig, though. Did you?" },
 	},
 	{
@@ -183,31 +189,31 @@ Chatter.Topics = {
 		about = "borrowed umbrellas",
 		open = { "Every umbrella I own was borrowed from somebody." },
 		yes = { "Umbrellas belong to the town. Like the weather.", "They go round and round. It's fair." },
-		no = { "That's how you lose friends. And umbrellas.", "One of those might be mine, actually." },
+		no = { "You're meant to give them back, you know.", "One of those might be mine, actually." },
 		more = { "I'll give one back. One day. When it's sunny." },
 		back = { "Which one? The spotty one? That's mine now." },
 	},
 	{
 		about = "whether toast is just warm bread",
 		open = { "Toast is just bread that's been through something." },
-		yes = { "It's had an adventure. You can tell.", "Bread with a story." },
-		no = { "Toast is its own thing. It has a crunch.", "Toast is a meal. Bread is a start." },
-		more = { "I'm going to look at toast differently now." },
+		yes = { "It's had a hard day, that's all.", "I mean... yeah. It is." },
+		no = { "Toast is its own thing. It's got a crunch.", "No. Toast is toast." },
+		more = { "I'll never look at toast the same way." },
 		back = { "Bread doesn't crunch. That's my point." },
 	},
 	{
 		about = "getting up for the sunrise",
 		open = { "I got up at six to watch the sunrise. Never again." },
-		yes = { "Sunrises happen every day. They can wait.", "The sunset's the same, but later. Much better." },
+		yes = { "There's one every day. It can wait.", "Sunsets are the same thing, but later. Much better." },
 		no = { "It's the best bit of the day. Before anyone talks.", "Six is late. I'm up at five." },
-		more = { "I saw it, though. It was pink. Worth it, nearly." },
+		more = { "It was pink, though. Nearly worth it." },
 		back = { "Five? On purpose? Are you all right?" },
 	},
 	{
 		about = "the smell of the bakery",
 		open = { "The bakery smells so good in the morning I walk past it twice." },
-		yes = { "Three times. I pretend I'm lost.", "I stand downwind on purpose." },
-		no = { "I can't walk past at all. I just go in.", "Twice? I live in there, basically." },
+		yes = { "Three times, for me. I pretend I'm lost.", "I stand downwind on purpose." },
+		no = { "I can't walk past at all. I just go in.", "Twice? I'm basically in there all morning." },
 		more = { "Tomorrow I'm going in. No more walking past." },
 		back = { "That's why you're always covered in flour." },
 	},
@@ -216,7 +222,7 @@ Chatter.Topics = {
 		open = { "I can touch my nose with my tongue. Nobody believes me." },
 		yes = { "I believe you. Please don't show me.", "I can wiggle my ears. We're both gifted." },
 		no = { "Prove it. No. Wait. Don't.", "Nobody can do that." },
-		more = { "It's not useful. But it's mine." },
+		more = { "It's no use to anyone. I'm still proud of it." },
 		back = { "One day I'll show you. When you least expect it." },
 	},
 	{
@@ -225,7 +231,7 @@ Chatter.Topics = {
 		yes = { "I set my watch by it. I'm always a bit early.", "Two minutes of free time a day. Lovely." },
 		no = { "It's slow, actually. I've been late all week.", "Somebody should fix it. Not me." },
 		more = { "Don't tell anyone. I like it." },
-		back = { "Then we've both been wrong. Very on time of us." },
+		back = { "So we've both been wrong all week. Great." },
 	},
 	{
 		about = "their one tomato",
@@ -233,15 +239,15 @@ Chatter.Topics = {
 		yes = { "One good tomato beats ten bad ones.", "Has it got a name yet?" },
 		no = { "One? That's a lot of watering for one.", "My plant has nine. Not that I'm counting." },
 		more = { "I'm going to eat it in a sandwich. Slowly." },
-		back = { "Quality, not quantity." },
+		back = { "It's a very good tomato." },
 	},
 	{
 		about = "learning to whistle",
 		open = { "I've been learning to whistle for a week. Listen. Fffff." },
 		yes = { "That was nearly a note.", "Keep going. The birds are worried, though." },
-		no = { "That's just breathing loudly.", "Purse your lips more. Like a sad fish." },
+		no = { "That's just breathing loudly.", "Purse your lips more. Like a fish." },
 		more = { "By winter I'll be whistling tunes." },
-		back = { "Sad fish. Fine. Fffff. Fwee!" },
+		back = { "Like a fish. Fine. Fffff. Fwee." },
 	},
 	{
 		about = "the comfy bench by the fountain",
@@ -270,15 +276,15 @@ Chatter.Topics = {
 	{
 		about = "the right way to make tea",
 		open = { "Milk first, then tea. That's the rule." },
-		yes = { "Good. Someone sensible.", "My gran did it that way. So it's the law." },
-		no = { "Tea first. Always. I'll argue about this all day.", "Milk first is how you upset a teapot." },
+		yes = { "Good. Someone sensible.", "My gran did it that way, so that's that." },
+		no = { "Tea first. Always. I'll argue about this all day.", "Milk first? No. Never." },
 		more = { "Let's have one now. The proper way." },
-		back = { "We can never live together. That's fine." },
+		back = { "Well, I'm never making you a cup, then." },
 	},
 	{
 		about = "a strange noise at night",
 		open = { "There's a noise at night. Like a tiny trumpet." },
-		yes = { "I've heard it too. Toot. Toot.", "It's the pipes. Or a very small band." },
+		yes = { "I've heard it too. Toot. Toot.", "I've heard it. I think it's the pipes." },
 		no = { "That's your snoring.", "That's the wind in the gutter. It does a tune." },
 		more = { "I'm going to stay up and catch it." },
 		back = { "I do not snore. I hum. In my sleep." },
@@ -288,7 +294,7 @@ Chatter.Topics = {
 		open = { "If you got to the end of a rainbow, what would you hope was there?" },
 		yes = { "Cake. Lots of cake.", "A bench and a view. That's all I need." },
 		no = { "A puddle. It's always a puddle.", "More rainbow, probably." },
-		more = { "I'd share the cake. Probably. Some of it." },
+		more = { "I'd share the cake. Some of it." },
 		back = { "Where's your sense of wonder?" },
 	},
 	{
@@ -302,7 +308,7 @@ Chatter.Topics = {
 	{
 		about = "ice cream in winter",
 		open = { "Ice cream tastes better in winter. It doesn't melt." },
-		yes = { "No drips. Perfect science.", "And you don't have to queue." },
+		yes = { "No drips. It just makes sense.", "And you don't have to queue." },
 		no = { "Cold food in cold weather? No thanks.", "Winter is for soup. I've said it before." },
 		more = { "I'm having one in the snow this year." },
 		back = { "Soup and ice cream. Hot and cold. Live a little." },
@@ -310,7 +316,7 @@ Chatter.Topics = {
 	{
 		about = "tidying up",
 		open = { "I tidied my whole room and now I can't find anything." },
-		yes = { "A tidy room is a mystery room.", "I keep my mess where I can see it." },
+		yes = { "Same. I tidied once and lost my keys for a week.", "I keep my mess where I can see it." },
 		no = { "Put things back where you got them. Easy.", "Labels. Everything needs a label." },
 		more = { "I found a sock from last spring, though." },
 		back = { "I'd need a label for the labels." },
@@ -318,7 +324,7 @@ Chatter.Topics = {
 	{
 		about = "getting a fringe",
 		open = { "I'm thinking of getting a fringe." },
-		yes = { "Do it. Be brave.", "A fringe would suit you. Probably." },
+		yes = { "Do it. Go on.", "A fringe would really suit you." },
 		no = { "Remember last time?", "Think about it for a week first." },
 		more = { "Tomorrow. Before I chicken out." },
 		back = { "Last time was the scissors' fault." },
@@ -350,7 +356,7 @@ Chatter.Topics = {
 	{
 		about = "the bus being early",
 		open = { "The bus came early today. Early. I don't trust it." },
-		yes = { "Something's going on. Keep an eye on it.", "An early bus is a bus with a plan." },
+		yes = { "Something's going on. Keep an eye on it.", "Me neither. It's never early." },
 		no = { "Maybe the driver just had a good morning.", "Be grateful. Get on the bus." },
 		more = { "I'm going to wait at the stop tomorrow and watch." },
 		back = { "Nobody has that good a morning." },
@@ -366,24 +372,24 @@ Chatter.Topics = {
 	{
 		about = "a song neither of them can remember",
 		open = { "There's a song stuck in my head and I only know one line. Dum dum, da da dum." },
-		yes = { "Oh, I know it. No I don't. Dum dum.", "Now it's in my head too. Thanks." },
-		no = { "That's the bin lorry's reversing beep.", "That's not a song. That's a sneeze." },
+		yes = { "Oh, I know that one. No I don't. Dum dum.", "Now it's in my head too. Thanks." },
+		no = { "That's the bin lorry reversing.", "I don't think that's a song." },
 		more = { "We'll be humming it all day now." },
 		back = { "It is a song. It goes somewhere. I just don't know where." },
 	},
 	{
 		about = "talking to plants",
-		open = { "I talk to my plants. They're better listeners than most people." },
-		yes = { "Mine grew a whole leaf after I told it a joke.", "They never interrupt. Very polite." },
+		open = { "I talk to my plants. They never interrupt." },
+		yes = { "Mine grew a whole leaf after I told it a joke.", "Me too. I tell my fern everything." },
 		no = { "Plants want water, not chat.", "My cactus doesn't like my stories." },
-		more = { "Today I told the fern about my week." },
+		more = { "Today I told my fern about my week." },
 		back = { "Your cactus just needs better stories." },
 	},
 	{
 		about = "whether hats count as furniture for your head",
 		open = { "A hat is just a little roof for your head." },
 		yes = { "With a porch, if it's got a brim.", "That's why I feel safe in a hat." },
-		no = { "A roof doesn't blow off in the wind. Usually.", "A hat is a hat. Don't make it weird." },
+		no = { "A roof doesn't blow off in the wind. Usually.", "It's a hat. Don't make it weird." },
 		more = { "I'm going to get one with a chimney." },
 		back = { "Mine stays on. I've got a chin strap." },
 	},
@@ -483,8 +489,20 @@ Chatter.Spats = {
 	"who heard the owl first",
 }
 
--- Openers by the hour and the weather ({b} is who they're talking to).
-local function opener(ctx: any): string
+-- How each personality starts a conversation, whatever the hour.
+local OPEN_BY = {
+	sunny = "Oh, {b}, hi, I'm so glad I ran into you.",
+	gentle = "Hello, {b}. How are you keeping?",
+	bold = "{b}. Got a minute? Good.",
+	dreamy = "Oh. {b}. I was just thinking about you. Sort of.",
+	easygoing = "Hey, {b}.",
+	proud = "Ah, {b}. Just the person.",
+	shy = "Um. Hi, {b}.",
+	cheeky = "Psst. {b}. Come here a second.",
+}
+
+-- Openers by the hour, the weather and who is talking ({b} is who they're talking to).
+local function opener(ctx: any, a: string): string
 	local list = {}
 	local h = ctx.hour or 12
 	if h < 11 then
@@ -510,19 +528,40 @@ local function opener(ctx: any): string
 		table.insert(list, "Mind the leaves, {b}. Slippy.")
 	end
 	table.insert(list, "Hey, {b}. Can I ask you something?")
+	local own = OPEN_BY[K.pers(ctx, a)]
+	if own then
+		table.insert(list, own)
+		table.insert(list, own)
+	end
 	return ctx.rng:pick(list)
 end
 
--- How they say hello back, by how well they get on.
+-- How they say hello back, by how well they get on, in their own way.
 local function greet(ctx: any, s: any, score: number)
 	if score <= -10 then
-		s:pick("b", { "Oh. It's you.", "What now?", "Mm. Hello." }, "anger")
+		s:by("b", {
+			sunny = "Oh. Hi. Um, hi.",
+			gentle = "Hello, {a}.",
+			bold = "What now?",
+			dreamy = "Oh. You.",
+			easygoing = "Mm. Hey.",
+			proud = "Oh. It's you.",
+			shy = "Oh... hi.",
+			cheeky = "Well, look who it is.",
+			_ = "Mm. Hello.",
+		}, "anger")
 	elseif score >= 40 then
-		s:pick(
-			"b",
-			{ "There you are. I was hoping I'd see you.", "Oh good, it's you.", "My favourite person." },
-			"heart"
-		)
+		s:by("b", {
+			sunny = { "Oh good, it's you. I was hoping it'd be you.", "There you are. I was just looking for you." },
+			gentle = "{a}. I was hoping I'd see you today.",
+			bold = "There you are. Finally.",
+			dreamy = "Oh, {a}. I was just thinking about you.",
+			easygoing = "Oh, hey. Good. Sit down.",
+			proud = "Ah. My favourite person. After me.",
+			shy = "Oh, {a}. Hi. I'm glad it's you.",
+			cheeky = "Oh no, it's you. Kidding. Hi.",
+			_ = "Oh good, it's you.",
+		}, "heart")
 	else
 		s:voice("b", "hello")
 	end
@@ -552,7 +591,7 @@ end
 function Chatter.chat(ctx: any, s: any, a: string, b: string, topic: any?): (any, boolean, number)
 	local t = topic or ctx.rng:pick(Chatter.Topics)
 	local score = ctx.rel(a, b)
-	s:say("a", opener(ctx), nil, "wave")
+	s:say("a", opener(ctx, a), nil, "wave")
 	greet(ctx, s, score)
 	s:pick("a", t.open, "idea", "point")
 	local yes = Chatter.agrees(ctx, a, b)

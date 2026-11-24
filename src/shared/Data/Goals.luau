@@ -97,7 +97,7 @@ Goals.list = {
 	{
 		id = "bestfriends",
 		name = "Thick as thieves",
-		desc = "Have two villagers become best friends.",
+		desc = "Make two villagers best friends.",
 		need = 1,
 		reward = 400,
 		value = function(p, _city)
@@ -136,7 +136,7 @@ Goals.list = {
 	{
 		id = "skill5",
 		name = "Knows the ropes",
-		desc = "Have a villager reach skill 5 at their work.",
+		desc = "Reach skill 5 in any job.",
 		need = 5,
 		reward = 700,
 		value = function(p, _city)
@@ -164,7 +164,7 @@ Goals.list = {
 	{
 		id = "bestfriends3",
 		name = "Close knit",
-		desc = "Have three pairs of best friends in town.",
+		desc = "Have three pairs of best friends.",
 		need = 3,
 		reward = 1200,
 		value = function(p, _city)
