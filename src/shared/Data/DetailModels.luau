@@ -211,7 +211,7 @@ end
 local function hedgeRow(r: R, cf: CFrame)
 	group(r, cf, function(q: R)
 		q:piece(function(p: R)
-			p:block(-7.9, 0, -0.84, 7.9, 1.5, 0.84, HEDGE, "Grass")
+			p:block(-7.84, 0, -0.8, 7.84, 1.5, 0.8, HEDGE, "Grass")
 			for k = 0, 5 do
 				p:lump(
 					CFrame.new(-6.5 + k * 2.6, 1.42 + (k % 2) * 0.06, 0),
@@ -901,16 +901,16 @@ M.pocketParking = function(r: R)
 			p:block(x - 1.4, 0.1, 13.4, x + 1.4, 0.4, 14, shade(STONE, 0.9), "Concrete")
 		end
 	end)
-	for _, c in
-		{
-			{ -9, -9.5, 0, RED },
-			{ 3, -9.5, 0, rgb(246, 242, 232) },
-			{ -3, 9.5, 180, BLUE },
-			{ 9, 9.5, 180, YELLOW },
-		}
-	do
-		group(r, CFrame.new(c[1], 0.1, c[2]) * CFrame.Angles(0, math.rad(c[3]), 0), function(q: R)
-			for _, prim in AmbientModels.prims("car", c[4]) do
+	type Parked = { at: CFrame, color: Color3 }
+	local parked: { Parked } = {
+		{ at = CFrame.new(-9, 0.1, -9.5), color = RED },
+		{ at = CFrame.new(3, 0.1, -9.5), color = rgb(246, 242, 232) },
+		{ at = CFrame.new(-3, 0.1, 9.5) * CFrame.Angles(0, math.pi, 0), color = BLUE },
+		{ at = CFrame.new(9, 0.1, 9.5) * CFrame.Angles(0, math.pi, 0), color = YELLOW },
+	}
+	for _, c in parked do
+		group(r, c.at, function(q: R)
+			for _, prim in AmbientModels.prims("car", c.color) do
 				q:add(prim)
 			end
 		end)

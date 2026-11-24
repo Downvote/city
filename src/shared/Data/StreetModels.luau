@@ -600,13 +600,22 @@ end
 -- Rubbish bags put out for the morning, the black ones tied at the neck.
 M.binBags = function(r: R)
 	r:piece(function(p: R)
-		local bags = {
-			{ CFrame.new(0, 0.8, 0) * CFrame.Angles(0.2, 0.4, 0.1), 2, 1.7, 1.8, rgb(84, 92, 112) },
-			{ CFrame.new(1.4, 0.65, 0.4) * CFrame.Angles(-0.2, 1, 0.2), 1.6, 1.3, 1.5, rgb(104, 112, 132) },
+		type Bag = { at: CFrame, size: Vector3, color: Color3 }
+		local bags: { Bag } = {
+			{
+				at = CFrame.new(0, 0.8, 0) * CFrame.Angles(0.2, 0.4, 0.1),
+				size = Vector3.new(2, 1.7, 1.8),
+				color = rgb(84, 92, 112),
+			},
+			{
+				at = CFrame.new(1.4, 0.65, 0.4) * CFrame.Angles(-0.2, 1, 0.2),
+				size = Vector3.new(1.6, 1.3, 1.5),
+				color = rgb(104, 112, 132),
+			},
 		}
 		for _, b in bags do
-			p:lump(b[1], b[2], b[3], b[4], b[5], "SmoothPlastic")
-			local top = (b[1] * CFrame.new(0, b[3] / 2, 0)).Position
+			p:lump(b.at, b.size.X, b.size.Y, b.size.Z, b.color, "SmoothPlastic")
+			local top = (b.at * CFrame.new(0, b.size.Y / 2, 0)).Position
 			p:block(
 				top.X - 0.13,
 				top.Y - 0.12,
@@ -614,7 +623,7 @@ M.binBags = function(r: R)
 				top.X + 0.13,
 				top.Y + 0.2,
 				top.Z + 0.13,
-				shade(b[5], 0.85),
+				shade(b.color, 0.85),
 				"SmoothPlastic"
 			)
 		end

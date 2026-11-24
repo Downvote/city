@@ -183,15 +183,15 @@ local items: { Item } = {
 			-- a baker's rack: three sloping shelves of loaves, and a basket of long ones at the
 			-- foot. c1 the boards, c2 the posts.
 			r:piece(function(q: R)
-				for _, x in { -1.9, 1.9 } do
+				for _, x in { -1.86, 1.86 } do
 					q:block(x - 0.1, 0, -0.82, x + 0.1, 6.6, -0.62, r.c2, "Wood")
 					q:block(x - 0.1, 0, 0.6, x + 0.1, 5.4, 0.8, r.c2, "Wood")
 					q:block(x - 0.08, 0.5, -0.65, x + 0.08, 0.7, 0.6, r.c2, "Wood")
 				end
-				q:block(-2, 6.6, -0.9, 2, 6.78, -0.55, r.c2, "Wood")
+				q:block(-1.96, 6.6, -0.9, 1.96, 6.78, -0.55, r.c2, "Wood")
 			end)
-			r:block(-1.8, 1.0, -0.84, 1.8, 6.4, -0.76, shade(r.c1, 0.82), "WoodPlanks")
-			r:block(-1.8, 0.5, -0.7, 1.8, 0.64, 0.7, r.c1, "WoodPlanks")
+			r:block(-1.76, 1.0, -0.84, 1.76, 6.4, -0.76, shade(r.c1, 0.82), "WoodPlanks")
+			r:block(-1.76, 0.5, -0.7, 1.76, 0.64, 0.7, r.c1, "WoodPlanks")
 			for i, y in { 2.0, 3.6, 5.2 } do
 				local cf = CFrame.new(0, y, 0) * CFrame.Angles(math.rad(14), 0, 0)
 				r:boxAt(cf, 3.7, 0.14, 1.5, r.c1, "WoodPlanks")
