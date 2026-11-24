@@ -152,7 +152,8 @@ function K.voiceText(ctx: any, vid: string?, kind: string): string
 	if not lines or #lines == 0 then
 		return "..."
 	end
-	return ctx.rng:pick(lines)
+	-- (filled here: a personality's line may call the player by name, {player})
+	return ctx.f(ctx.rng:pick(lines))
 end
 
 -- Picks from a map keyed by personality ("_" for anybody else).
