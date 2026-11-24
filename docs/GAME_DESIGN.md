@@ -1861,6 +1861,13 @@ prompt, the creator's boxes to type in and its two steps). The words keep clear 
 markers, badges, faces and dials stay round, and cards, panels, tiles and progress bars keep their round corners.
 Without the painted shapes the slabs fall back to sharp ends, as before.
 
+> make the claim button fill the entire right side instead of having a gap around
+
+(With a picture of a quest's Claim button sitting inside its slab with dark round it.) A finished quest's Claim
+button now is the slab's whole right end: as tall as the quest, its slanted edge on the slab's own, so the quest
+reads as one leaning bar that turns yellow at its end. It no longer grows under the pointer (it would stand out past
+the edge), only dips a little when pressed.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

@@ -70,6 +70,8 @@ local folded = false
 local onOpen: () -> () = function() end
 local claiming: { [string]: boolean } = {}
 
+local CLAIM_WIDTH = 112 -- the Claim button's width at its middle, flush with a quest's right end
+
 local function quest(g: any, order: number): Frame
 	local ready = g.done and not g.claimed
 	local slab = Kit.darkPill({
@@ -125,16 +127,23 @@ local function quest(g: any, order: number): Frame
 	desc.TextTruncate = Enum.TextTruncate.AtEnd
 	desc.ZIndex = 3
 	if ready then
+		-- The Claim button fills the slab's whole right end, its slanted edge on the slab's own
+		-- (the user: "make the claim button fill the entire right side instead of having a gap
+		-- around"). The slab's ends stand out past its box by its cap and the button's sit inside
+		-- its own, so a button as tall as the slab whose box ends one cap past the slab's lines up.
+		local cap = slab:GetAttribute("Cap")
+		local lean = if type(cap) == "number" then cap else 0
 		local claim = Kit.button(Text.fill("Claim {n}", { n = Text.commas(g.goal.reward) }), {
 			Name = "Claim",
 			Parent = slab,
-			Size = UDim2.fromOffset(108, 30),
-			Position = UDim2.new(1, -8, 0.5, -3),
-			AnchorPoint = Vector2.new(1, 0.5),
+			Size = UDim2.new(0, CLAIM_WIDTH + lean, 1, 0),
+			Position = UDim2.new(1, lean, 0, 0),
+			AnchorPoint = Vector2.new(1, 0),
 			Color = T.Yellow,
 			TextColor = T.Dark,
 			TextSize = 15,
 			ZIndex = 4,
+			Press = { Grow = 1, Dip = 0.99 },
 		}, function()
 			local id = g.goal.id
 			if claiming[id] then

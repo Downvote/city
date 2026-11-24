@@ -2489,7 +2489,7 @@ function Kit.button(text: string, props: { [string]: any }?, onClick: (() -> ())
 	b:GetPropertyChangedSignal("TextColor3"):Connect(function()
 		label.TextColor3 = b.TextColor3
 	end)
-	pressable(b)
+	pressable(b, p.Press) -- (Press: options for Kit.press, e.g. { Grow = 1 } for a button set flush in a slab)
 	if onClick then
 		b.Activated:Connect(onClick)
 	end
