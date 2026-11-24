@@ -941,6 +941,41 @@ describe("Event engine", function()
 	end)
 end)
 
+describe("Hobbies", function()
+	it("are taken up in a random event, a new one each time, in the villager's own words", function()
+		-- (the user: "make random events where villagers pick up hobbies instead")
+		local def = Events.get("takeuphobby")
+		expect(def ~= nil).toBeTruthy()
+		local heard = {}
+		for seed = 1, 30 do
+			local p = Schema.newProfile()
+			p.plan = StarterHouse.plan()
+			local pers = Personalities.list[seed % #Personalities.list + 1].id
+			local input = Schema.cleanVillagerInput({ name = "Mo", pers = pers, app = Appearance.default() })
+			p.villagers.v1 = Schema.newVillager("v1", input, Rng.new(seed))
+			p.order = { "v1" }
+			local had = Sayings.hobbies[seed % #Sayings.hobbies + 1].id
+			p.villagers.v1.hobby = had
+			local ctx = context(p, Rng.new(seed), { hour = 12 })
+			local ev = EventEngine.stage(ctx, def, { "v1" })
+			for _, l in ev.scene.lines do
+				expect(l.text:find("{") == nil).toBeTruthy()
+			end
+			heard[ev.scene.lines[2].text] = true
+			EventEngine.apply(p, ev, ev.scene.effects or {}, 1000)
+			local now = p.villagers.v1.hobby
+			expect(Sayings.hobby(now) ~= nil).toBeTruthy()
+			expect(now ~= had).toBeTruthy()
+		end
+		-- not everybody says it the same way
+		local n = 0
+		for _ in heard do
+			n += 1
+		end
+		expect(n >= 5).toBeTruthy()
+	end)
+end)
+
 describe("Keepsakes", function()
 	it("are free Build mode pieces in their own set", function()
 		local list = Catalog.list("keepsakes")

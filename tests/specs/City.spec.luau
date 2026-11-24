@@ -97,6 +97,10 @@ local function playDays(p, rng, days)
 	local nextEvent = now + Tuning.Events.FirstDelay
 	local recent = {}
 	local weathers = { "clear", "clear", "clear", "clear", "clear", "clear", "clear", "rain", "rain", "storm" }
+	local hearts = {}
+	for vid, v in p.villagers do
+		hearts[vid] = v.heart or 1
+	end
 	for day = 1, days do
 		local weather = rng:pick(weathers)
 		for step = 0, 23 do
@@ -167,9 +171,12 @@ local function playDays(p, rng, days)
 				got.wishes += Talk.chat(p, vid, day, rng).coins
 			end
 		end
-		while #p.offers > 0 do
-			got.thanks += p.offers[1].options[1].n
-			Life.claimReward(p, 1, rng)
+		-- a new heart level pays its coins at once (Life.heartReward): count them by the levels gained
+		for vid, v in p.villagers do
+			for level = (hearts[vid] or 1) + 1, v.heart or 1 do
+				got.thanks += (Life.heartReward(level))
+			end
+			hearts[vid] = v.heart or 1
 		end
 		for _, v in p.villagers do
 			v.mood = math.clamp(v.mood + Tuning.Villagers.BedMoodPerNight, 0, Tuning.Villagers.MoodMax)

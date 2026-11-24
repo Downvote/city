@@ -35,81 +35,60 @@ local function town(count)
 end
 
 describe("Life", function()
-	it("levels hearts up and offers three thank yous each time", function()
+	it("levels hearts up and pays each level out at once, with a notice", function()
+		-- (the user: "make it a notification instead of a box that the player has to choose from.
+		-- make it such that it gives you coins and get better effeciency at work")
 		local p = town(1)
 		local v = p.villagers.v1
 		expect(v.heart).toBe(1)
-		local gained = Life.addHearts(p, "v1", Life.heartNeed(1) + Life.heartNeed(2), Rng.new(1))
+		local coins = p.coins
+		local notices = {}
+		local gained = Life.addHearts(p, "v1", Life.heartNeed(1) + Life.heartNeed(2), Rng.new(1), notices)
 		expect(gained).toBe(2)
 		expect(v.heart).toBe(3)
-		expect(#p.offers).toBe(2)
-		for _, offer in p.offers do
-			expect(#offer.options).toBe(3)
-			for _, o in offer.options do
-				expect(Life.rewardText(o) ~= "?").toBeTruthy()
-			end
-		end
-	end)
-
-	it("pays a thank you once", function()
-		local p = town(1)
-		Life.addHearts(p, "v1", Life.heartNeed(1), Rng.new(2))
-		local before = p.coins
-		local ok = Life.claimReward(p, 1, Rng.new(3)) -- the first option is always coins
-		expect(ok).toBe(true)
-		expect(p.coins).toBe(before + L.RewardCoinsPerLevel * 2)
+		-- nothing waits to be picked
 		expect(#p.offers).toBe(0)
-		expect(Life.claimReward(p, 1, Rng.new(3))).toBe(false)
-	end)
-
-	it("offers coins, practice, a saying or a hobby, and nothing that needs a bag", function()
-		-- the basket of snacks went with the food: some practice at their work stands in its place
-		local kinds = {}
-		for seed = 1, 200 do
-			local p = town(1)
-			for _, o in Life.rewardOptions(p, "v1", 2 + seed % 5, Rng.new(seed)) do
-				kinds[o.kind] = true
-				expect(o.kind ~= "basket").toBeTruthy()
-				local text = Life.rewardText(o)
-				expect(text ~= "?" and not text:find("{")).toBeTruthy()
-				expect(text:lower():find("basket") == nil).toBeTruthy()
-			end
-		end
-		for _, kind in { "coins", "practice", "saying", "hobby" } do
-			expect(kinds[kind]).toBe(true)
-		end
-		expect(Sayings.list[1] ~= nil).toBeTruthy()
-	end)
-
-	it("turns a thank you of practice into skill at their work", function()
-		local p = town(1)
-		local v = p.villagers.v1
-		local level = 4
-		table.insert(p.offers, {
-			vid = "v1",
-			level = level,
-			options = { { kind = "coins", n = 1 }, { kind = "practice", n = L.RewardSkillPerLevel * level } },
-		})
-		local coins = p.coins
-		local ok, notice = Life.claimReward(p, 2, Rng.new(1))
-		expect(ok).toBe(true)
-		expect(type(notice) == "string" and not notice:find("{")).toBeTruthy()
-		expect(p.coins).toBe(coins)
-		expect(#p.offers).toBe(0)
-		-- the points went into their skill, the way a day's work does
+		-- the coins for levels 2 and 3
+		local c2 = Life.heartReward(2)
+		local c3 = Life.heartReward(3)
+		expect(p.coins).toBe(coins + c2 + c3)
+		-- and the practice for both, in their work skill
+		local _, s2 = Life.heartReward(2)
+		local _, s3 = Life.heartReward(3)
 		local want = { name = "Twin", lv = 1, xp = 0 }
-		City.addSkill(want, L.RewardSkillPerLevel * level)
+		City.addSkill(want, s2)
+		City.addSkill(want, s3)
 		expect(v.lv).toBe(want.lv)
 		expect(v.xp).toBe(want.xp)
 		expect(v.lv > 1 or v.xp > 0).toBeTruthy()
+		-- one notice a level, filled in, naming the coins
+		expect(#notices).toBe(2)
+		for _, n in notices do
+			expect(not n:find("{") and n:find(v.name, 1, true) ~= nil and n:find("coins", 1, true) ~= nil).toBeTruthy()
+		end
 		-- worth about a day's work at a new heart level, not a week's
 		expect(L.RewardSkillPerLevel * 2).toBeBetween(Tuning.Jobs.XpPerDay / 2, Tuning.Jobs.XpPerDay * 2)
-		-- junk in a saved offer does nothing and still clears it
-		table.insert(p.offers, { vid = "v1", level = 2, options = { { kind = "practice" }, { kind = "basket" } } })
-		table.insert(p.offers, { vid = "v1", level = 2, options = { { kind = "practice" }, { kind = "basket" } } })
-		expect((Life.claimReward(p, 1, Rng.new(1)))).toBe(false)
-		expect((Life.claimReward(p, 2, Rng.new(1)))).toBe(false)
+	end)
+
+	it("pays out an old save's thank yous that were still waiting to be picked, once", function()
+		local p = town(1)
+		local v = p.villagers.v1
+		table.insert(p.offers, {
+			vid = "v1",
+			level = 4,
+			options = { { kind = "coins", n = 1 }, { kind = "saying", id = "tea" } },
+		})
+		-- junk in a saved offer does nothing and still clears
+		table.insert(p.offers, { vid = "nobody", level = 2 })
+		table.insert(p.offers, "junk")
+		local coins = p.coins
+		local notices = Life.settleOffers(p)
+		expect(#notices).toBe(1)
+		expect(p.coins).toBe(coins + (Life.heartReward(4)))
+		expect(v.lv > 1 or v.xp > 0).toBeTruthy()
 		expect(#p.offers).toBe(0)
+		expect(#Life.settleOffers(p)).toBe(0)
+		expect(p.coins).toBe(coins + (Life.heartReward(4)))
 		expect(p.inv).toBe(nil)
 	end)
 
@@ -277,20 +256,30 @@ describe("Life", function()
 		expect((Life.grantWish(p, "v1", "food", other, Rng.new(1)))).toBe(false)
 		expect((Life.grantWish(p, "v1", "cheer", nil, Rng.new(1)))).toBe(false)
 		local coins = p.coins
+		local heartWas = v.heart
 		local ok, paid = Life.grantWish(p, "v1", "food", v.fav, Rng.new(1))
 		expect(ok).toBe(true)
 		expect(v.wish).toBe(nil)
-		-- a craving is paid for (Life.buyWish), so it gives no coins back
+		-- a craving is paid for (Life.buyWish), so it gives no coins back (only a heart level it
+		-- brings pays, at once)
 		expect(paid).toBe(0)
-		expect(p.coins).toBe(coins)
+		local levelled = 0
+		for level = heartWas + 1, v.heart do
+			levelled += (Life.heartReward(level))
+		end
+		expect(p.coins).toBe(coins + levelled)
 		expect(p.stats.wishes).toBe(1)
 		expect(v.hxp > 0 or v.heart > 1).toBeTruthy()
 		-- a wish that cost nothing still brings a few coins
 		v.wish = { kind = "cheer", untilT = 1e9 }
+		local heartThen = v.heart
 		local okCheer, gift = Life.grantWish(p, "v1", "cheer", nil, Rng.new(1))
 		expect(okCheer).toBe(true)
 		expect(gift).toBeBetween(L.WishCoinsMin, L.WishCoinsMax)
-		expect(p.coins).toBe(coins + gift)
+		for level = heartThen + 1, v.heart do
+			levelled += (Life.heartReward(level))
+		end
+		expect(p.coins).toBe(coins + levelled + gift)
 	end)
 
 	it("never wishes for a new look, and drops one an old save holds", function()

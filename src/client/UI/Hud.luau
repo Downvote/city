@@ -601,8 +601,7 @@ function Hud.start()
 		BuildMode.enter()
 	end)
 
-	-- badges: Goals while there's something to claim, the gift while today's is waiting; and the
-	-- thank you picker when a villager's heart level goes up
+	-- badges: Goals while there's something to claim, the gift while today's is waiting
 	local goalsBadge = Kit.badge(goalsTile)
 	local Goals = Hud.panel("Goals")
 	local function refreshGoals()
@@ -612,16 +611,6 @@ function Hud.start()
 		State.on(key, refreshGoals)
 	end
 	refreshGoals()
-	State.on("offers", function(offers)
-		if type(offers) == "table" and #offers > 0 then
-			task.delay(1.5, function()
-				local Rewards = Hud.panel("Rewards")
-				if not Rewards.isOpen() and not BuildMode.isActive() then
-					Hud.open("Rewards")
-				end
-			end)
-		end
-	end)
 	local giftBadge = Kit.badge(gift)
 	State.on("daily", function(daily)
 		local today = math.floor(os.time() / 86400)

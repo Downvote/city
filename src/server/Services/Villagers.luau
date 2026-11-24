@@ -1820,7 +1820,7 @@ function Villagers.buyWish(player: Player, vid: any): (boolean, string?)
 		end
 	end
 	syncWishes(player)
-	Data.push(player, "villagers", "coins", "stats", "offers")
+	Data.push(player, "villagers", "coins", "stats")
 	return true
 end
 
@@ -1944,7 +1944,7 @@ local function talk(who: Player, owner: Player, vid: string): (any?, string?)
 			syncWishes(owner)
 			owner:SetAttribute("Coins", profile.coins)
 		end
-		Data.push(owner, "villagers", "offers", "coins", "stats")
+		Data.push(owner, "villagers", "coins", "stats")
 	end
 	return {
 		vid = vid,
@@ -2008,20 +2008,8 @@ function Villagers.start()
 			npc:icon("heart")
 		end
 		syncWishes(player)
-		Data.push(player, "villagers", "rel", "coins", "stats", "offers")
+		Data.push(player, "villagers", "rel", "coins", "stats")
 		return true
-	end
-	Remotes.fn("HeartReward").OnServerInvoke = function(player, choice)
-		local profile = Data.get(player)
-		if not profile then
-			return false, "Not ready yet."
-		end
-		local ok, notice = Life.claimReward(profile, choice, rng)
-		if ok and notice then
-			Data.notify(player, notice, "good")
-		end
-		Data.push(player, "offers", "coins", "villagers")
-		return ok, notice
 	end
 	Remotes.fn("GoalClaim").OnServerInvoke = function(player, id)
 		local profile = Data.get(player)

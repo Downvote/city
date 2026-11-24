@@ -41,7 +41,6 @@ Remotes.Functions = {
 	"VisitPlot", -- (plotIndex) -> ok
 	"WishGrant", -- (vid, "friend" | "cheer", otherVid?) -> ok, err
 	"WishBuy", -- (vid) -> ok, message: pays Life.wishPrice for the food a villager is craving and grants the wish
-	"HeartReward", -- (choice 1..3) -> ok, notice: picks a thank you from the oldest heart level up
 	"GoalClaim", -- (goalId) -> ok, coins
 	"PlaceFound", -- (placeId) -> ok: the player is at a place (checked against where they stand)
 	"GoHome", -- () -> ok, err: to the player's own plot

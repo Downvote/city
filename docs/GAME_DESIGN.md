@@ -121,9 +121,8 @@ We can't copy another game's features one for one, so the town grows the way lif
 own design (`Sim/Life`):
 
 - **Hearts.** Each villager has a heart level with you (up to 20). Granted wishes fill it, and so do chats and
-  the good moments in events. Each new level they want to thank you, and you pick one of three: coins they saved up,
-  some extra practice at their work (skill points, so they earn more), a new saying they'll use in their speech
-  bubbles, or a hobby they'll talk about.
+  the good moments in events. Each new level they thank you straight away, with a notice: coins they saved up and
+  some extra practice at their work (skill points, so they earn more). Hobbies and sayings come from random events.
 - **Wishes.** Now and then a villager wants something, and a thought bubble floats over their head: a craving for
   a food (the bubble shows the food), someone they'd like to get to know, or a chat because they feel down. Open
   their page or talk to them to sort it out: introduce them or have a chat. (Wanting a new look went: "remove new
@@ -1907,6 +1906,16 @@ game lets grow to the width of what holds the tabs. The tabs are now as wide as 
 the bar sizes itself. The same was done for every button and small leaning tag that sizes itself to its words (Build
 mode's materials, the season and body part tabs, the captions under round buttons, name tags), so none of them can
 run wide like that.
+
+> for this, make it a notification instead of a box that the player has to choose from. make it such that it gives
+> you coins and get better effeciency at work. make random events where villagers pick up hobbies instead
+
+(The box was the thank you picker that came up at a new heart level: coins, practice at work, a saying or a hobby.)
+A new heart level now just happens: a notice says so, the coins they saved come to you, and they get some practice
+at their job, which is skill, and skill is what their pay goes up with. Nothing to pick. Hobbies come from the town
+instead: now and then a villager takes one up on their own (a patch dug behind the house, a borrowed rod on the pier)
+and says so in their own way. They can still ask you to pick one, and sayings still come from their own events. An
+old save's thank yous that were never picked are paid out when it loads.
 
 ### Leaning shapes for everything with words on it
 

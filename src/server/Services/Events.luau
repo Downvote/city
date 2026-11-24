@@ -471,7 +471,7 @@ local function play(player: Player, ev: any)
 		Data.notify(player, n, "event")
 	end
 	player:SetAttribute("Coins", profile.coins)
-	Data.push(player, "coins", "villagers", "rel", "requests", "stats", "offers", "keepsakes")
+	Data.push(player, "coins", "villagers", "rel", "requests", "stats", "keepsakes")
 	for _, vid in ev.order do
 		if Villagers.control(player, vid) == "event" then
 			Villagers.setControl(player, vid, nil)

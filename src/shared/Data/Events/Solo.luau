@@ -1839,4 +1839,66 @@ event({
 	end,
 })
 
+-- A villager takes up a hobby on their own, and the town hears about it (the user: "make random
+-- events where villagers pick up hobbies instead": a hobby was one of the thank yous you picked
+-- at a new heart level). One a villager has already isn't picked again.
+local TAKEN_UP = {
+	gardening = "{a} has dug a patch behind the house and planted rows of something.",
+	painting = "{a} bought a box of paints and has been down by the harbour with an easel.",
+	guitar = "{a} found an old guitar at the market. You can hear it from the street.",
+	fishing = "{a} borrowed a rod and has been on the pier since early this morning.",
+	baking = "{a} has been baking every evening this week. The whole street smells of it.",
+	stargazing = "{a} has been up on the hill after dark with a borrowed telescope.",
+	jogging = "{a} has started running round the island before breakfast.",
+	reading = "{a} came back from the library with an armful of books.",
+	knitting = "{a} has been knitting on the bench by the square most afternoons.",
+	birds = "{a} has started carrying a notebook and stopping to look at gulls.",
+}
+
+event({
+	id = "takeuphobby",
+	when = "day",
+	weight = W({
+		base = 0.16,
+		cond = function(ctx, a)
+			local v = ctx.v(a)
+			for _, h in Sayings.hobbies do
+				if h.id ~= v.hobby then
+					return true
+				end
+			end
+			return false
+		end,
+	}),
+	scene = function(ctx, a)
+		local v = ctx.v(a)
+		local pool = {}
+		for _, h in Sayings.hobbies do
+			if h.id ~= v.hobby then
+				table.insert(pool, h)
+			end
+		end
+		local h = ctx.rng:pick(pool)
+		local s = K.scene(ctx, "Something new")
+		s:with({ hobby = h.name, Hobby = h.name:sub(1, 1):upper() .. h.name:sub(2) })
+		s:n(TAKEN_UP[h.id] or "{a} has taken up {hobby}.")
+		s:by("a", {
+			sunny = "I've taken up {hobby}. I keep telling everyone about it, sorry.",
+			gentle = "I've started {hobby}. It's nice to have something quiet for the evenings.",
+			bold = "{Hobby}. Started this week. I'll be good at it by spring.",
+			dreamy = "I've been doing {hobby}... the time sort of goes away when I do.",
+			easygoing = "Took up {hobby}. Nothing serious. Just something to do.",
+			proud = "I've taken up {hobby}. I'm told I have a gift for it.",
+			shy = "Um. I've started {hobby}. I'm not very good yet. Don't watch.",
+			cheeky = "{Hobby}. Don't laugh. Okay, you can laugh a bit.",
+			_ = "I've started {hobby}. Still working it out.",
+		}, "idea", "cheer")
+		s:hobby("a", h.id)
+		s:mood("a", 4)
+		s:memo("a", "I took up {hobby} this week.")
+		s:log("{a} took up {hobby}.")
+		return s:done()
+	end,
+})
+
 return list

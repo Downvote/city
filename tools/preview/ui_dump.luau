@@ -17,7 +17,7 @@
 --   build:placing       Build mode holding an armchair to place: the bars away, the hint left
 --                       (build:placing:touch on a touch screen, with its two round buttons)
 --   panel:<Name>        a panel over the main screen (Residents, CityPanel, News, Goals,
---                       Welcome, Rewards)
+--                       Welcome)
 --   panel:<Name>:<state> a menu in one of its states: Residents:friends, Residents:empty (nobody
 --                       lives here), Residents:craving (Mara craves something: the Buy button),
 --                       Residents:short (the same without the coins), News:empty, News:busy (news from several
@@ -150,19 +150,6 @@ local function pushState()
 		},
 		goals = { settlers = true },
 		found = { square = true, lookout = true, pier = true, marina = true, station = true },
-		offers = if scene == "panel:Rewards"
-			then {
-				{
-					vid = order[1],
-					level = 3,
-					options = {
-						{ kind = "coins", n = 120 },
-						{ kind = "saying", id = "breeze" },
-						{ kind = "hobby", id = "fishing" },
-					},
-				},
-			}
-			else {},
 	})
 	Sim.frames(2)
 end
@@ -329,11 +316,7 @@ elseif scene:sub(1, 6) == "panel:" then
 		Tuning.City.Land[2].Level = 1
 	end
 	startHud()
-	if name == "Rewards" then
-		Sim.advance(2.5) -- the thank you picker opens by itself when an offer is waiting
-	else
-		Hud.open(name)
-	end
+	Hud.open(name)
 	Sim.frames(3)
 	if state == "friends" then
 		Sim.press("Friends")

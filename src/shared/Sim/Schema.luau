@@ -92,7 +92,7 @@ function Schema.newProfile(): any
 			hearts = 0,
 			found = 0,
 		},
-		offers = {}, -- heart level thank yous waiting to be picked (Sim/Life)
+		offers = {}, -- (old saves: heart level thank yous left to pick, paid out on load by Life.settleOffers)
 		found = {}, -- places on the island found, by id (Data/Places)
 		goals = {}, -- town goals claimed, by id
 		arrived = {}, -- who moved in from the road, by key, back when villagers could (kept for old saves)

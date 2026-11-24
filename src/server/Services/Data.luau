@@ -15,6 +15,7 @@ local Tuning = require(Shared.Config.Tuning)
 local Remotes = require(Shared.Net.Remotes)
 local Plan = require(Shared.Build.Plan)
 local Schema = require(Shared.Sim.Schema)
+local Life = require(Shared.Sim.Life)
 local StarterHouse = require(Shared.Data.StarterHouse)
 
 local Data = {}
@@ -186,7 +187,6 @@ function Data.clientState(player: Player): any
 		tutorial = p.tutorial,
 		daily = p.daily,
 		stats = p.stats,
-		offers = p.offers,
 		goals = p.goals,
 		found = p.found,
 		keepsakes = p.keepsakes, -- what villagers made you, for Build mode's Keepsakes tab
@@ -259,8 +259,20 @@ local function onJoin(player: Player)
 	end
 	-- a brand new player starts with the cottage; anyone else gets their saved build back, checked
 	profile.plan = if profile.plan == nil then StarterHouse.plan() else Plan.sanitize(profile.plan)
+	-- heart level thank yous an old save was still waiting to pick are paid out now (there is no
+	-- picking any more: Sim/Life)
+	local owed = Life.settleOffers(profile)
 	profiles[player] = profile
 	player:SetAttribute("Coins", profile.coins)
+	if #owed > 0 then
+		task.delay(7, function()
+			if player.Parent then
+				for _, n in owed do
+					Data.notify(player, n, "good")
+				end
+			end
+		end)
+	end
 	player:SetAttribute("Arrival", "Your save is in")
 	loadedSignal:Fire(player, profile)
 	if unsaved[player] then

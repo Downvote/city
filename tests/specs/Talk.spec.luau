@@ -109,12 +109,18 @@ describe("Talk", function()
 		end
 		v.wish = { kind = "cheer", untilT = 1e9 }
 		local coins = p.coins
+		local heartWas = v.heart or 1
 		local notices = {}
 		local chat = Talk.chat(p, "v1", 5, rng, notices)
 		expect(chat.wish).toBe(true)
 		expect(chat.counted).toBe(false)
 		expect(v.wish).toBe(nil)
-		expect(p.coins).toBe(coins + chat.coins)
+		-- (a heart level it brings pays its own coins at once)
+		local levelled = 0
+		for level = heartWas + 1, v.heart do
+			levelled += (Life.heartReward(level))
+		end
+		expect(p.coins).toBe(coins + chat.coins + levelled)
 		expect(chat.coins >= L.WishCoinsMin and chat.coins <= L.WishCoinsMax).toBeTruthy()
 		expect(p.stats.wishes).toBe(1)
 		expect(#notices > 0).toBeTruthy()
@@ -122,7 +128,7 @@ describe("Talk", function()
 		expect(readable(Talk.note(p, "v1", chat))).toBeTruthy()
 		local again = Talk.chat(p, "v1", 5, rng)
 		expect(again.wish).toBe(false)
-		expect(p.coins).toBe(coins + chat.coins)
+		expect(p.coins).toBe(coins + chat.coins + levelled)
 	end)
 
 	it("leaves other wishes for their own answers, and says them", function()

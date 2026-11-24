@@ -284,25 +284,31 @@ describe("Wish service", function()
 			expect(n.text:find("{") == nil).toBeTruthy()
 		end
 		-- and the client hears of everything that changed, the bag of food not among it
-		for _, key in { "villagers", "coins", "stats", "offers" } do
+		for _, key in { "villagers", "coins", "stats" } do
 			expect(pushed(key)).toBe(true)
 		end
 		expect(pushed("inv")).toBe(false)
 		expect(profile.inv).toBe(nil)
 	end)
 
-	it("makes more of their favourite, and queues the thank you when a heart level fills", function()
+	it("makes more of their favourite, and pays the heart level it fills at once, with a notice", function()
 		reset(1000)
 		local v = profile.villagers.v3
 		v.wish = { kind = "food", arg = v.fav, untilT = 1e12 }
 		v.hxp = Life.heartNeed(1) - 1
 		local price = Life.wishPrice(profile, "v3")
 		expect(buy(owner, "v3")).toBe(true)
-		expect(profile.coins).toBe(1000 - price)
+		expect(profile.coins).toBe(1000 - price + (Life.heartReward(2)))
 		expect(v.mood).toBe(Tuning.Villagers.StartMood + L.WishMood + L.FavWishMood)
 		expect(v.heart).toBe(2)
-		expect(#profile.offers).toBe(1)
-		expect(profile.offers[1].vid).toBe("v3")
+		expect(#profile.offers).toBe(0)
+		local told = false
+		for _, n in notices do
+			if n.text:find("Heart level 2", 1, true) then
+				told = true
+			end
+		end
+		expect(told).toBe(true)
 		expect(bodies.v3.said[1]:find("favourite", 1, true) ~= nil).toBeTruthy()
 		expect(table.find(bodies.v3.icons, "heart") ~= nil).toBeTruthy()
 	end)
@@ -399,8 +405,14 @@ describe("Wish service", function()
 			local food = Foods.list[seed % #Foods.list + 1]
 			v.wish = { kind = "food", arg = food.id, untilT = 1e12 }
 			local price = Life.cravingPrice(food.id)
+			local heartWas = v.heart or 1
 			expect(buy(owner, v.id)).toBe(true)
-			expect(profile.coins).toBe(500 - price)
+			-- (only a heart level it brings pays, at once)
+			local levelled = 0
+			for level = heartWas + 1, v.heart do
+				levelled += (Life.heartReward(level))
+			end
+			expect(profile.coins).toBe(500 - price + levelled)
 			expect(price > 0).toBeTruthy()
 		end
 	end)

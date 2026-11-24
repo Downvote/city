@@ -81,8 +81,9 @@ The contract between the parts of the game. Update it with every change to an AP
   no food, item or merchant ops since the shop went, and no `bond`, `ctx.bond` or `ctx.free` since romance went), `City` (stats, levels, land, workplaces, wages earned as they work: `City.wages(profile, day, now)`, `City.workDay`, `City.workSeconds`, `City.dayPay`, `City.rate` (coins a second at the workplace), the purse `City.Purse` / `City.newPurse()` / `City.earn(purse, day, rate, seconds)` that carries part coins, starts again each day, caps a day at a whole work day and pays nothing for bad input, and `City.dayXp`;
   `City.level(value)` (worth alone: `Tuning.City.Levels[i]` is `Name` and `Value`; "make the only requirements for
   growing towns worth instead of villagers or work requirement"), `City.workers(profile)` the villagers with a job,
-  `City.addSkill(v, n)`; `City.stats(profile)` still gives `population` and `employed` to show), `Life` (hearts and their
-  thank you offers, wishes, goals; no romance: best friends, the top of `Tuning.Relationships.Levels`, is as
+  `City.addSkill(v, n)`; `City.stats(profile)` still gives `population` and `employed` to show), `Life` (hearts, wishes, goals; a new
+  heart level pays at once, `Life.heartReward(level)` -> coins, skill points, through `Life.addHearts`' notices, and
+  `Life.settleOffers(profile)` pays out an old save's unpicked thank yous on load; no romance: best friends, the top of `Tuning.Relationships.Levels`, is as
   close as two villagers get; `Life.cravingPrice(foodId)`, `Life.wishPrice(profile, vid)`,
   `Life.buyWish(profile, vid, rng)`; all pure).
 - `Data/Hills` (the northern hills: `smooth(x, z)`, `at(x, z)` the drawn surface's height, `slope`, `Plateaus`;
@@ -435,7 +436,7 @@ profile = {
   requests = { { vid, tag, untilT } }, log = { { t, text } }, outfits = { { name, app } },
   settings, tutorial, daily = { last, streak }, stats, recent = { eventId } (up to 40), bdays = { [vid] = day },
   keepsakes = { [itemId] = count } (`Sim/Keepsakes.clean` on load, at most `Tuning.Events.KeepsakeMax`),
-  lastPayday, calendarDay, offers = { { vid, level, options } }, goals = { [goalId] = true },
+  lastPayday, calendarDay, offers (old saves only: emptied on load), goals = { [goalId] = true },
   found = { [placeId] = true }, arrived = { [newcomerKey] = true },
   work = { day, owed, paid },  -- what the player earned at a workplace themselves on town day `day`
                                -- (Sim/PlayerWork.purse; at most Tuning.Jobs.Player.DayCap a day)
@@ -505,7 +506,7 @@ The creator's remotes: `CreatorPeople` (the people here and your friends, and th
 `Wish` attribute carries the icon for the client's bubble); `WishBuy` pays for a craving and grants it
 (`Life.buyWish`: the price from `Life.wishPrice`, hearts and mood, a little more for their favourite, no coins
 back); there is no wish for a new look (`Schema.WishKinds` is food, friend and cheer; "remove new look cravings"),
-nor the `newlook` event; `WishGrant`, `HeartReward` and `GoalClaim` answer the rest. Villagers sometimes say their
+nor the `newlook` event; `WishGrant` and `GoalClaim` answer the rest (there is no `HeartReward`: a heart level pays at once). Villagers sometimes say their
 own saying or a line about their hobby.
 | `World` (doors) | Doors stay shut; each gets a `DoorPrompt` (Open or Close, `World.toggleDoor`); a villager within 6.5 studs opens one and it shuts 1.2 s after the last villager leaves, unless a player opened it. |
 | `Explore` | `PlaceFound` checks the player stands at the place, pays its coins once and marks `found`. (The map and `Travel`, the trip back to a found place, are gone.) |
@@ -541,7 +542,7 @@ Functions (client asks, server answers): `GetState`, `BuildApply`, `BuildUndo`, 
 `VillagerFocus`, `OutfitSave`, `OutfitDelete`, `EventChoose`, `DailyClaim`, `PlotExpand`, `SettingSet`,
 `TutorialStep`, `VisitPlot`, `WishGrant` (`vid, "friend" | "cheer", otherVid?`), `WishBuy` (`vid` -> `ok, message?`:
 buys the villager's craving at `Life.wishPrice`; true with no message, the notices go through `Notify`; refused with
-a plain reason when there is no craving or not enough coins), `HeartReward` (`choice`),
+a plain reason when there is no craving or not enough coins),
 `GoalClaim` (`goalId`), `PlaceFound` (`placeId`), `CreatorFromOutfit` (`outfitId` -> appearance or nil: one of the player's own saved Roblox avatars, through
 `Players:GetHumanoidDescriptionFromOutfitIdAsync`; a whole number, at most one every 0.5 s a player),
 `CreatorBundle` (`bundleId, kind?`: kind "body", "head", "shoes" or "anim", what the tab asked for; anything else
@@ -760,7 +761,7 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   over our interface, using `GetGuiObjectsAtPosition`, so world clicks never go through a button. Only what is
   under a ScreenGui counts: that call also returns what is drawn on a SurfaceGui kept in PlayerGui (the creator's
   backdrop is one, with `Active` off), which is scenery.
-- `UI/Rewards` (the thank you picker, opened by the HUD when `offers` arrive), `UI/Goals` (the town goals panel;
+- `UI/Goals` (the town goals panel;
   `Goals.ready()` feeds the dock badge), `World/Wishes` (a bubble over each villager whose model has a
   `Wish` attribute, `Wishes.face(parent, icon, food?)` drawing it; a click opens their page).
 - `Util/Bubble` (shared, plain instances, used by the server and the client): what hangs over a head. `Anchor` (the

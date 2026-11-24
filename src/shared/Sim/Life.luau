@@ -1,8 +1,8 @@
 --!strict
 -- The life sim's progression, as pure data in and out so the specs can run it:
 --   hearts   how close each villager is to you. Granted wishes and chats fill their hearts;
---            each new heart level lets you pick a thank you (coins they saved, some practice
---            at their work, a new saying, a hobby).
+--            each new heart level brings coins they saved and some practice at their work (so
+--            they earn more), with a notice. Hobbies and sayings come from random events.
 --   wishes   one at a time per villager, shown over their head: a craving, someone they'd like
 --            to meet, or a chat to cheer them up (no new look: "remove new look cravings"). Granting one fills hearts and
 --            lifts their mood. A craving is bought for them (Life.wishPrice, Life.buyWish); the
@@ -17,7 +17,6 @@
 
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Foods = require(script.Parent.Parent.Data.Foods)
-local Sayings = require(script.Parent.Parent.Data.Sayings)
 local Goals = require(script.Parent.Parent.Data.Goals)
 local Relationships = require(script.Parent.Relationships)
 local City = require(script.Parent.City)
@@ -42,49 +41,41 @@ function Life.heartNeed(level: number): number
 	return L.HeartBase + L.HeartStep * level
 end
 
--- Three thank yous to pick from at a new heart level, drawn with `rng`.
-function Life.rewardOptions(profile: any, vid: string, level: number, rng: any): { any }
-	local v = profile.villagers[vid]
-	local options: { any } = { { kind = "coins", n = L.RewardCoinsPerLevel * level } }
-	-- (a basket of snacks stood here until the food went; some practice at work needs no bag)
-	local pool: { any } = { { kind = "practice", n = L.RewardSkillPerLevel * level } }
-	local saying = rng:pick(Sayings.list)
-	if v and saying.id ~= v.saying then
-		table.insert(pool, { kind = "saying", id = saying.id })
-	end
-	local hobby = rng:pick(Sayings.hobbies)
-	if v and hobby.id ~= v.hobby then
-		table.insert(pool, { kind = "hobby", id = hobby.id })
-	end
-	while #options < 3 and #pool > 0 do
-		table.insert(options, table.remove(pool, rng:int(1, #pool)))
-	end
-	return options
+-- What a new heart level brings: the coins they saved up and some practice at their work (skill,
+-- which is what their pay goes up with), both at once, with a notice. (It was a choice of three
+-- thank yous in a box. The user: "for this, make it a notification instead of a box that the
+-- player has to choose from. make it such that it gives you coins and get better effeciency at
+-- work". Hobbies come from random events now, and sayings too.)
+function Life.heartReward(level: number): (number, number)
+	return L.RewardCoinsPerLevel * level, L.RewardSkillPerLevel * level
 end
 
--- What a thank you says on its card.
-function Life.rewardText(option: any): string
-	if option.kind == "coins" then
-		return Text.fill("{n} coins they saved up", { n = Text.commas(option.n) })
-	elseif option.kind == "practice" then
-		return "Some extra practice at their work"
-	elseif option.kind == "saying" then
-		local s = Sayings.get(option.id)
-		return Text.fill('A new saying: "{s}"', { s = if s then s.text else "?" })
-	elseif option.kind == "hobby" then
-		local h = Sayings.hobby(option.id)
-		return Text.fill("Take up {h}", { h = if h then h.name else "?" })
+-- Gives villager `v` and the player what heart level `level` brings. Returns the notice.
+local function reward(profile: any, v: any, level: number): string
+	local coins, practice = Life.heartReward(level)
+	profile.coins = math.clamp(profile.coins + coins, 0, Tuning.Economy.MaxCoins)
+	local before = v.lv or 1
+	City.addSkill(v, practice)
+	if (v.lv or 1) > before then
+		return Text.fill(
+			"Heart level {n} with {x}. They gave you {c} coins, and their work skill is up to {s}.",
+			{ n = level, x = v.name, c = Text.commas(coins), s = v.lv }
+		)
 	end
-	return "?"
+	return Text.fill(
+		"Heart level {n} with {x}. They gave you {c} coins and got a bit better at their job.",
+		{ n = level, x = v.name, c = Text.commas(coins) }
+	)
 end
 
--- Fills a villager's hearts by `n`. Each new level queues a choice of thank yous in
--- profile.offers. Returns how many levels they went up.
+-- Fills a villager's hearts by `n`. Each new level pays out at once (Life.heartReward) and adds a
+-- notice. Returns how many levels they went up.
 function Life.addHearts(profile: any, vid: string, n: number, rng: any, notices: { string }?): number
 	local v = profile.villagers[vid]
 	if not v or n <= 0 then
 		return 0
 	end
+	local _ = rng
 	v.heart = v.heart or 1
 	v.hxp = (v.hxp or 0) + n
 	local gained = 0
@@ -93,12 +84,9 @@ function Life.addHearts(profile: any, vid: string, n: number, rng: any, notices:
 		v.heart += 1
 		gained += 1
 		profile.stats.hearts = (profile.stats.hearts or 0) + 1
-		table.insert(
-			profile.offers,
-			{ vid = vid, level = v.heart, options = Life.rewardOptions(profile, vid, v.heart, rng) }
-		)
+		local said = reward(profile, v, v.heart)
 		if notices then
-			table.insert(notices, Text.fill("{x} feels closer to you. Heart level {n}.", { x = v.name, n = v.heart }))
+			table.insert(notices, said)
 		end
 	end
 	if v.heart >= L.HeartMax then
@@ -107,35 +95,18 @@ function Life.addHearts(profile: any, vid: string, n: number, rng: any, notices:
 	return gained
 end
 
--- Picks thank you `choice` (1..3) from the oldest offer. Returns ok and a notice.
-function Life.claimReward(profile: any, choice: any, rng: any): (boolean, string?)
-	local offer = profile.offers[1]
-	if not offer or type(choice) ~= "number" then
-		return false, "Nothing to pick right now."
-	end
-	local option = offer.options[math.floor(choice)]
-	local v = profile.villagers[offer.vid]
-	table.remove(profile.offers, 1)
-	if not option or not v then
-		return false, "That thank you is gone."
-	end
-	if option.kind == "coins" then
-		profile.coins = math.clamp(profile.coins + option.n, 0, Tuning.Economy.MaxCoins)
-		return true, Text.fill("{x} gave you {n} coins.", { x = v.name, n = Text.commas(option.n) })
-	elseif option.kind == "practice" and type(option.n) == "number" then
-		local gained = City.addSkill(v, option.n)
-		if gained > 0 then
-			return true, Text.fill("{x} put in the practice. Skill {n} now.", { x = v.name, n = v.lv })
+-- An old save's thank yous still waiting to be picked: each is paid out as a heart level is now,
+-- and the list emptied. Returns the notices.
+function Life.settleOffers(profile: any): { string }
+	local out = {}
+	for _, offer in profile.offers or {} do
+		local v = type(offer) == "table" and profile.villagers[offer.vid]
+		if v and type(offer.level) == "number" then
+			table.insert(out, reward(profile, v, math.clamp(math.floor(offer.level), 1, L.HeartMax)))
 		end
-		return true, Text.fill("{x} put in the practice.", { x = v.name })
-	elseif option.kind == "saying" and Sayings.get(option.id) then
-		v.saying = option.id
-		return true, Text.fill("{x} has a new saying.", { x = v.name })
-	elseif option.kind == "hobby" and Sayings.hobby(option.id) then
-		v.hobby = option.id
-		return true, Text.fill("{x} took up {h}.", { x = v.name, h = Sayings.hobby(option.id).name })
 	end
-	return false, "That thank you is gone."
+	profile.offers = {}
+	return out
 end
 
 -- Wishes --------------------------------------------------------------------------------------------
