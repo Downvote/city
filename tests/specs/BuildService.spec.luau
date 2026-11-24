@@ -30,6 +30,7 @@ Harness.stub("ServerScriptService.Server.Services.Plots", {
 	frame = function()
 		return CFrame.new()
 	end,
+	groundSoon = function() end, -- (the plot's grass is terrain; nothing to paint here)
 })
 Harness.stub("ReplicatedStorage.Shared.Net.Remotes", {
 	event = function(name)

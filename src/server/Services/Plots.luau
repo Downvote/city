@@ -11,6 +11,7 @@ local StarterHouse = require(Shared.Data.StarterHouse)
 local Remotes = require(Shared.Net.Remotes)
 local Plan = require(Shared.Build.Plan)
 local City = require(Shared.Sim.City)
+local PlotGround = require(Shared.Sim.PlotGround)
 local Text = require(Shared.Util.Text)
 
 local Data = require(script.Parent.Data)
@@ -56,6 +57,47 @@ function Plots.ofPlayer(player: Player): (number?, CFrame?)
 end
 
 -- Shows the land a player owns: lighter grass with a low curb round it.
+-- The plot's ground (Sim/PlotGround): Roblox's long grass on the land the player owns, and the
+-- leafy kind with no blades on land not bought and under everything built. Redone after every
+-- change, a moment later so a run of changes paints once.
+local function region(r: { number }): Region3
+	return Region3.new(Vector3.new(r[1], -8, r[2]), Vector3.new(r[3], 4, r[4]))
+end
+function Plots.paintGround(i: number, plan: any)
+	local terrain = workspace.Terrain
+	local frame = Town.plotFrame(i)
+	local size = Tuning.Plot.Size
+	local ok, why = pcall(function()
+		terrain:ReplaceMaterial(
+			region(PlotGround.square(frame, size)),
+			4,
+			Enum.Material.Grass,
+			Enum.Material.LeafyGrass
+		)
+		if plan then
+			for _, r in PlotGround.grass(plan, frame, size) do
+				terrain:ReplaceMaterial(region(r), 4, Enum.Material.LeafyGrass, Enum.Material.Grass)
+			end
+		end
+	end)
+	if not ok then
+		warn("[Plots] couldn't paint plot " .. i .. "'s grass: " .. tostring(why))
+	end
+end
+local painting: { [number]: boolean } = {}
+function Plots.groundSoon(i: number)
+	if painting[i] then
+		return
+	end
+	painting[i] = true
+	task.delay(0.4, function()
+		painting[i] = nil
+		local owner = owners[i]
+		local profile = owner and Data.get(owner)
+		Plots.paintGround(i, profile and profile.plan)
+	end)
+end
+
 function Plots.drawLand(i: number, plan: any)
 	local plot = World.plotModel(i)
 	local old = plot:FindFirstChild("Land")
@@ -77,6 +119,10 @@ function Plots.drawLand(i: number, plan: any)
 	grass.Color = Textures.tint("Grass", Color3.fromRGB(148, 200, 120))
 	grass.Material = Enum.Material.Grass
 	grass.TopSurface = Enum.SurfaceType.Smooth
+	-- (unseen: the terrain's long grass grows through it, Plots.paintGround)
+	grass.Transparency = 1
+	grass.CanCollide = false
+	grass.CastShadow = false
 	grass.Parent = land
 	local curb = Color3.fromRGB(232, 228, 216)
 	local edges = {
@@ -136,6 +182,7 @@ local function assign(player: Player, profile: any)
 	local folder = Plots.buildFolder(index)
 	folder:ClearAllChildren()
 	Builder.renderAll(profile.plan, folder, Town.plotFrame(index))
+	Plots.paintGround(index, profile.plan)
 	World.setPlotSign(index, signFor(player))
 	Remotes.event("PlanSync"):FireClient(player, { full = profile.plan })
 	Data.push(player, "plot")
@@ -184,6 +231,7 @@ local function release(player: Player)
 	end
 	owners[i] = nil
 	Plots.drawLand(i, nil)
+	Plots.paintGround(i, nil)
 	Plots.buildFolder(i):ClearAllChildren()
 	Plots.villagerFolder(i):ClearAllChildren()
 	World.setPlotSign(i, "Plot " .. i .. "\nfor sale")
@@ -279,6 +327,7 @@ function Plots.start()
 		Data.addCoins(player, -land.Price)
 		profile.plan.size = land.Size
 		Plots.drawLand(i, profile.plan)
+		Plots.paintGround(i, profile.plan)
 		Remotes.event("PlanSync"):FireClient(player, { full = profile.plan })
 		Data.log(player, Text.fill("You bought more land. It's now {n} by {n}.", { n = land.Size }))
 		Data.notify(
