@@ -18,6 +18,21 @@ local ACCENTS = {
 }
 local ICONS = { info = "news", good = "check", warn = "alert", event = "people" }
 local BLOCK = 46 -- the icon's block across
+local WIDTH = 460 -- a note across
+local TEXT = 17 -- its words' size
+
+-- How tall `text` comes out wrapped `width` across (the engine measures it; a reckoning by its
+-- letters stands in where it can't).
+local function textHeight(text: string, size: number, width: number): number
+	local ok, bounds = pcall(function()
+		return game:GetService("TextService"):GetTextSize(text, size, Kit.Fonts.Bold, Vector2.new(width, 2000))
+	end)
+	if ok and typeof(bounds) == "Vector2" and bounds.Y > 0 then
+		return math.ceil(bounds.Y)
+	end
+	local perLine = math.max(1, math.floor(width / (size * 0.56)))
+	return math.ceil(math.ceil(#text / perLine) * size * 1.25)
+end
 
 local function getHolder(): Frame
 	if holder and holder.Parent then
@@ -25,7 +40,7 @@ local function getHolder(): Frame
 	end
 	local f = Kit.box({
 		Name = "Toasts",
-		Size = UDim2.new(0, 460, 0, 300),
+		Size = UDim2.new(0, WIDTH, 0, 300),
 		Position = UDim2.new(0.5, 0, 0, 70),
 		AnchorPoint = Vector2.new(0.5, 0),
 		Parent = Kit.root(),
@@ -40,9 +55,12 @@ function Toasts.show(text: string, kind: string?)
 	local h = getHolder()
 	local k = if kind and ACCENTS[kind] then kind else "info"
 	local accent: Color3 = ACCENTS[k]
+	-- The note is as tall as its words, worked out here: the block's height is the note's, and a
+	-- note that sized itself round its contents grew with the block, the height of every notice
+	-- put together (the user: "notifications are bugged").
+	local tall = math.max(BLOCK, textHeight(text, TEXT, WIDTH - BLOCK - 26) + 20)
 	local card = Kit.frame({
-		Size = UDim2.new(1, 0, 0, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
+		Size = UDim2.new(1, 0, 0, tall),
 		Color = Kit.Theme.Paper,
 		Radius = 16,
 		Parent = h,
@@ -85,24 +103,16 @@ function Toasts.show(text: string, kind: string?)
 		Mono = true,
 		ZIndex = 52,
 	})
-	-- the words, clear of the block
-	local row =
-		Kit.box({ Parent = card, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, ZIndex = 51 })
-	Kit.new("UIPadding", {
-		PaddingLeft = UDim.new(0, BLOCK + 12),
-		PaddingRight = UDim.new(0, 14),
-		PaddingTop = UDim.new(0, 10),
-		PaddingBottom = UDim.new(0, 10),
-		Parent = row,
-	})
+	-- the words, clear of the block, in the middle of the note's height
 	local label = Kit.text(text, {
-		Parent = row,
-		Size = UDim2.new(1, 0, 0, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
-		TextSize = 17,
+		Parent = card,
+		Size = UDim2.new(1, -(BLOCK + 26), 1, 0),
+		Position = UDim2.fromOffset(BLOCK + 12, 0),
+		TextSize = TEXT,
 		Color = Kit.Theme.Ink,
 		ZIndex = 52,
 		Font = Kit.Fonts.Bold,
+		AlignY = Enum.TextYAlignment.Center,
 	})
 	Kit.popIn(card)
 	-- keep a few at most

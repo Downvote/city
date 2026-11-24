@@ -1886,6 +1886,13 @@ top strip by a layout of their own, their background follows their own width, an
 distance on a scaled screen. A coin on a coloured block is drawn in one colour now, dark on yellow and white on the
 others, with its indent cut out of it; on the money strip and on prices it keeps its gold.
 
+> notifications are bugged
+
+(A picture of a notice as tall as half the screen.) The new block was as tall as its note, and the note sized itself
+round what was in it, so in the game the two grew into each other until the note was as tall as the whole column of
+notices. A note's height is now worked out from its words before it goes up: one line, or two for a long notice, and
+the block fills that.
+
 ### Leaning shapes for everything with words on it
 
 > make these type of shapes everywhere parallograms instead of rounded rectangles

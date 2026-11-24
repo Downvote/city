@@ -570,6 +570,7 @@ elseif scene == "toasts" then
 	Toasts.show("Your villagers earned 1,860 coins today.", "good")
 	Toasts.show("Not enough coins for that.", "warn")
 	Toasts.show("Ivy wants a lamp by her bed.", "event")
+	Toasts.show("Saving is off in this server, so progress here won't be kept.", "warn")
 	Sim.frames(2)
 elseif scene == "creator" or scene:sub(1, 8) == "creator:" then
 	-- The preview has no Roblox to ask, so the catalog, what the player owns and their saved

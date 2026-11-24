@@ -284,7 +284,9 @@ name. Take only the direction from that game, never its art. (`Kit.gradient`, th
 The latest word on menus: follow popular games of the genre (never invent layouts) and keep it cozy and soft, so
 panels are cards with a tinted header bar, title, round close button and a dimmed screen behind; events are a
 dialogue card with the answers inside; nothing wobbles (`Kit.blob` draws plain shapes) and nothing inside a
-self-sizing box may reach past its edges. UI previews
+self-sizing box may reach past its edges, and nothing in a box that sizes itself (AutomaticSize) is sized by scale
+along that axis: in the game the two grow into each other (a notice once came out half the screen tall: "notifications
+are bugged"). Measure the words (`TextService:GetTextSize`) or size the box yourself. UI previews
 look best over an island render as `--bg`. The user then pointed at Roblox's write-up of native shadows, gradients and
 rounded clipping ("reference this doc an implement as much as possible"): cards, pills, buttons and menus get
 `Kit.softShadow` (two UIShadows), backdrops `Kit.vignette`, progress `Kit.ring` (conical) or `Kit.bar`, glows

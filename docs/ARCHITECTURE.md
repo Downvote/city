@@ -832,7 +832,8 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   indent a ring cut out of its face); `Icons.make(name, px, { Mono = true, Color })` draws that one in `Color`, and
   every marker (`Kit.leanMark`, `Kit.disc`, so `Kit.flushMark` and the rows) asks for it, so a coin on a yellow block
   is dark. `UI/Toasts` (a rounded note whose left end is a full height block in the notice's colour, rounded with the
-  note and straight on its inner edge, the icon on it), `UI/ModelPreview` (3D thumbnails in ViewportFrames).
+  note and straight on its inner edge, the icon on it; the note's height is measured from its words with
+  `TextService:GetTextSize`, a reckoning by letters where that fails, never left to AutomaticSize), `UI/ModelPreview` (3D thumbnails in ViewportFrames).
 - `Avatar/Bundles` (shared): what a bundle is and what wearing it puts on. `Bundles.kindOfLabel(label)` reads a
   `BundleType` name, enum item or number (a whole body, "BodyParts" or "DynamicHeadAvatar", before a head);
   `Bundles.part(details, wanted)` takes `{ label, looks, assets }` (the outfits' looks, the bundle's own assets)
