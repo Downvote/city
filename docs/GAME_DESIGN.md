@@ -1632,6 +1632,13 @@ studs under the ground; laid from there, its blades came back that much too high
 the patch rests. The grass runs taller and shorter in drifts across the ground, each tuft its own height and lean,
 with bare spots here and there, and the blades are smooth and matt with no speckle on them.
 
+> could you make the colors of grass random? and dense enough to cover all the floor?
+
+(With a picture of single blades standing apart on dark ground.) Each square of ground now has three patches of
+grass over it in three greens, a deep one, a fresh one and a dry gold one, with their tufts scattered in among
+each other, so every tuft's colour falls at random and three times as many cover the ground. The tufts are a little
+wider, the shortest aren't as short, and a bare spot is rare.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

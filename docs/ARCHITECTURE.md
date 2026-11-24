@@ -180,8 +180,12 @@ asked for it) ships as it came in `vendor/SkinnedGrass.rbxm`, mounted by the pla
 The specs' harness skips a project path that is a model file.
 
 `client/World/Grass` waits for `Startup` to be `Ready`, then shrinks the pack's patch (`prepare`: `Size` is the
-mesh's own size, `MeshSize` or `Native`, times `Scale` across and `Height` up; `Material`, colour from the
-terrain grass times `Blades` for its decals and `Body`). Every vertex of the mesh is held by one bone, 23 blades to
+mesh's own size, `MeshSize` or `Native`, times `Scale` across and `Height` up; `Material` and the look `Look`)
+and makes a copy in each of the first `Layers` of `Greens` (`painted`: the terrain grass's colour times `Base`
+for the decals, which shade the blades' foot, and `Tip` for the mesh). A square of ground is a `Cell` of up to
+`Layers` patches (`Layer`s), one in each green, their tufts scattered in among each other, so the colours fall
+at random tuft by tuft and the ground is that much fuller ("could you make the colors of grass random? and dense
+enough to cover all the floor?"); one `survey` of the square serves them all. Every vertex of the mesh is held by one bone, 23 blades to
 a bone, and a tuft is drawn where its bone is; the pack's bones sit in the middle fifth of its mesh, so `make`
 lays them out again: a patch is `across` by `across` tufts (10) `Pitch` apart on the world's grid of `side`
 squares, each nudged by up to `Jitter`, turned and leaning up to `Lean` by a seeded `Rng`, placed through
@@ -193,7 +197,7 @@ returns the first hit that is terrain or a part no higher than `Lawn` over `Hill
 higher (up to six hits), and it is grass when its material is `Grass` and it is flatter than `Flat`. `conform`
 stands a tuft where its point and the four round it are grass, level within `Rise`, and sinks it `Sink` studs
 anywhere else, with the patch's origin bone set back to rest for the moment (a patch sunk out of sight by the
-module, or rising, would otherwise get its tufts that much too high: the flying grass); a patch with none standing isn't made. `attach` does what `SkinnedGrass:AddMeshes` does (an origin
+module, or rising, would otherwise get its tufts that much too high: the flying grass); a patch with none standing isn't made (`lay`), nor a square with none (`make`). `attach` does what `SkinnedGrass:AddMeshes` does (an origin
 bone, the octrees, `MeshParents`) but keeps the octree nodes, so `forget` can let a patch go when the focus is
 far from it. Patches are made `PerFrame` a frame within `Distance` plus `Ahead` of the camera's focus, nearest
 first; `Step(dt, bends, focus)` on RenderStepped shows those within `Distance` (rising from `HiddenDepth` below),

@@ -13,6 +13,11 @@
 -- laid out again on a fine grid of our own (`Tuning.Grass.Pitch` apart, turned and nudged a
 -- little so no rows show), the mesh is shrunk to knee high blades, and it is drawn matte.
 --
+-- Then: "could you make the colors of grass random? and dense enough to cover all the floor?" A
+-- mesh takes one colour, so a square of ground has a few patches over it at once (layers), each
+-- its own green, their tufts scattered in among each other: every tuft takes the colour of its
+-- layer, so the colours fall at random, and the ground under them is three times as full.
+--
 -- Patches cover the ground round the camera, a few a frame, and go again when it moves on. Each
 -- tuft stands on the ground under it where that ground is grass all round it (the terrain's
 -- Grass, which Data/Terrain keeps off everything built, or a grass part lying on the ground: a
@@ -38,12 +43,15 @@ local G = Tuning.Grass
 -- One tuft of a patch: its bone, where it stands across the ground, how it's turned and leans,
 -- how far into the ground it sits (a shorter tuft) and whether it's left out (a bare spot).
 type Tuft = { bone: Bone, x: number, z: number, turn: CFrame, drop: number, bare: boolean, node: any }
-type Cell = { model: Model, part: MeshPart, origin: Bone?, tufts: { Tuft }, i: number, j: number, meshNode: any }
+-- One patch over a square of ground, in one of the greens.
+type Layer = { model: Model, part: MeshPart, origin: Bone?, tufts: { Tuft }, meshNode: any }
+-- A square of ground: its patches.
+type Cell = { i: number, j: number, layers: { Layer } }
 
 local cells: { [string]: Cell | false } = {}
 local queue: { { number } } = {}
 local folder: Folder
-local template: Model
+local templates: { Model } = {} -- the pack's patch in each of the greens
 local sim: any = nil -- the SkinnedGrass object
 local across = 10 -- tufts along a patch's side (the pack has 100 bones)
 local side = 16 -- a patch's side in studs
@@ -102,9 +110,10 @@ end
 
 -- The ground on a patch's grid of tufts, one point round its edge too: { y or false } by
 -- (column, row), from 0 to across + 1.
-local function survey(cell: Cell, params: RaycastParams): { { number | false } }
-	local x0 = cell.i * side + G.Pitch / 2
-	local z0 = cell.j * side + G.Pitch / 2
+type Rows = { { number | false } }
+local function survey(i: number, j: number, params: RaycastParams): Rows
+	local x0 = i * side + G.Pitch / 2
+	local z0 = j * side + G.Pitch / 2
 	local rows = {}
 	for a = 0, across + 1 do
 		local row = {}
@@ -119,8 +128,7 @@ end
 
 -- Stands each tuft of a patch on the grass under it, or sinks it. Returns how many stand. A tuft
 -- stands where its point and the four round it are grass, level within `Rise`.
-local function conform(cell: Cell, params: RaycastParams): number
-	local rows = survey(cell, params)
+local function conform(cell: Layer, rows: Rows): number
 	local shown = 0
 	-- (the bones are placed against the patch at rest: a patch the module has sunk out of sight,
 	-- or is raising, would otherwise put them that much too high when it comes back up)
@@ -160,7 +168,7 @@ end
 
 -- Takes a laid patch into the module, as its AddMeshes does, keeping the octree's nodes so the
 -- patch can be let go again (forget).
-local function attach(cell: Cell)
+local function attach(cell: Layer)
 	local part = cell.part
 	local origin = Instance.new("Bone")
 	origin.Name = "SkinnedGrass_Origin"
@@ -177,7 +185,7 @@ local function attach(cell: Cell)
 	cell.model.Parent = nil -- (the module brings it in when the camera is near)
 end
 
-local function forget(cell: Cell)
+local function forget(cell: Layer)
 	for _, tuft in cell.tufts do
 		if tuft.node then
 			tuft.node:Destroy()
@@ -200,22 +208,17 @@ local function forget(cell: Cell)
 	cell.model:Destroy()
 end
 
--- Lays the patch for grid square i, j: none if no grass grows in it.
-local function make(i: number, j: number)
-	local k = key(i, j)
-	if cells[k] ~= nil then
-		return
-	end
-	local params = rayParams()
-	local model = template:Clone()
+-- Lays one patch of the square i, j in green number `k`, on the ground `rows`; nil if no tuft of
+-- it stands.
+local function lay(i: number, j: number, k: number, rows: Rows, mid: number): Layer?
+	local model = templates[k]:Clone()
 	local part = model:FindFirstChildOfClass("MeshPart") :: MeshPart
-	local cell: Cell = { model = model, part = part, tufts = {}, i = i, j = j, meshNode = nil }
+	local layer: Layer = { model = model, part = part, tufts = {}, meshNode = nil }
 	-- (the patch sits at the middle height of its ground, so its box is round its blades)
-	local mid = ground((i + 0.5) * side, (j + 0.5) * side, params) or Hills.at((i + 0.5) * side, (j + 0.5) * side)
 	part.CFrame = CFrame.new((i + 0.5) * side, mid, (j + 0.5) * side)
 	model.Parent = folder -- (bones are only worked out in the world)
 	-- the tufts on our own grid, each nudged and turned its own way (the same every time)
-	local rng = Rng.new(i * 7919 + j * 104729)
+	local rng = Rng.new(i * 7919 + j * 104729 + k * 15485863)
 	local bones: { Bone } = {}
 	for _, d in part:GetChildren() do
 		if d:IsA("Bone") then
@@ -234,12 +237,12 @@ local function make(i: number, j: number)
 		local x = i * side + (a + 0.5) * G.Pitch + rng:float(-nudge, nudge)
 		local z = j * side + (b + 0.5) * G.Pitch + rng:float(-nudge, nudge)
 		-- Not an even carpet: the grass runs taller and shorter in drifts across the ground, every
-		-- tuft a little different, with bare spots here and there. A shorter tuft is one sitting
+		-- tuft a little different, with a bare spot now and then. A shorter tuft is one sitting
 		-- further into the ground (a bone can't be scaled).
 		local drift = math.noise(x / G.Drifts, z / G.Drifts, 0.31)
-		local height = math.clamp(0.72 + drift * 0.6 + rng:float(-0.18, 0.18), G.Shortest, 1)
+		local height = math.clamp(0.78 + drift * 0.5 + rng:float(-0.16, 0.16), G.Shortest, 1)
 		local gap = math.noise(x / G.BareSize, z / G.BareSize, 7.7)
-		table.insert(cell.tufts, {
+		table.insert(layer.tufts, {
 			bone = bone,
 			x = x,
 			z = z,
@@ -250,13 +253,31 @@ local function make(i: number, j: number)
 			node = nil,
 		})
 	end
-	if conform(cell, params) == 0 then
+	if conform(layer, rows) == 0 then
 		model:Destroy()
-		cells[k] = false
+		return nil
+	end
+	attach(layer)
+	return layer
+end
+
+-- Lays the patches for grid square i, j: none if no grass grows in it.
+local function make(i: number, j: number)
+	local k = key(i, j)
+	if cells[k] ~= nil then
 		return
 	end
-	cells[k] = cell
-	attach(cell)
+	local params = rayParams()
+	local rows = survey(i, j, params)
+	local mid = ground((i + 0.5) * side, (j + 0.5) * side, params) or Hills.at((i + 0.5) * side, (j + 0.5) * side)
+	local cell: Cell = { i = i, j = j, layers = {} }
+	for n = 1, #templates do
+		local layer = lay(i, j, n, rows, mid)
+		if layer then
+			table.insert(cell.layers, layer)
+		end
+	end
+	cells[k] = if #cell.layers > 0 then cell else false
 end
 
 -- The camera's focus: where the player is looking (their character, or Build mode's spot).
@@ -314,13 +335,16 @@ local function refresh(x1: number, z1: number, x2: number, z2: number)
 		for j = math.floor(z1 / side), math.floor(z2 / side) do
 			local cell = cells[key(i, j)]
 			if cell then
-				local was = cell.model.Parent
-				if was ~= folder then
-					cell.model.Parent = folder
-				end
-				conform(cell, params)
-				if was ~= folder then
-					cell.model.Parent = was
+				local rows = survey(i, j, params)
+				for _, layer in cell.layers do
+					local was = layer.model.Parent
+					if was ~= folder then
+						layer.model.Parent = folder
+					end
+					conform(layer, rows)
+					if was ~= folder then
+						layer.model.Parent = was
+					end
 				end
 			elseif cell == false then
 				cells[key(i, j)] = nil -- (grass may grow there now: lay it again)
@@ -401,7 +425,7 @@ local function gatherFolk()
 	end
 end
 
--- The pack's patch made ready: shrunk to our blades, matte, coloured to the island's grass.
+-- The pack's patch made ready: shrunk to our blades and matt.
 local function prepare(model: Model): boolean
 	local part = model:FindFirstChildOfClass("MeshPart")
 	if not part then
@@ -428,6 +452,14 @@ local function prepare(model: Model): boolean
 		part.Material = (Enum.Material :: any)[G.Material]
 		part.MaterialVariant = G.Look
 	end)
+	return true
+end
+
+-- A copy of the made ready patch in one of the greens: the terrain grass's colour times its
+-- numbers, so every green sits in the ground it grows on (the pack's decals shade the blades from
+-- their foot, fading out up them, so the mesh's own colour is their tips).
+local function painted(model: Model, green: { Base: { number }, Tip: { number } }): Model
+	local copy = model:Clone()
 	local ok, base = pcall(function()
 		return workspace.Terrain:GetMaterialColor(Enum.Material.Grass)
 	end)
@@ -437,13 +469,14 @@ local function prepare(model: Model): boolean
 	local function scaled(r: { number }): Color3
 		return Color3.new(math.min(1, base.R * r[1]), math.min(1, base.G * r[2]), math.min(1, base.B * r[3]))
 	end
-	part.Color = scaled(G.Body)
+	local part = copy:FindFirstChildOfClass("MeshPart") :: MeshPart
+	part.Color = scaled(green.Tip)
 	for _, d in part:GetChildren() do
 		if d:IsA("Decal") then
-			d.Color3 = scaled(G.Blades)
+			d.Color3 = scaled(green.Base)
 		end
 	end
-	return true
+	return copy
 end
 
 function Grass.start()
@@ -469,10 +502,13 @@ function Grass.start()
 		while workspace:GetAttribute("Startup") ~= "Ready" and waited < 150 do
 			waited += task.wait(1)
 		end
-		template = first:Clone()
+		local template = first:Clone()
 		if not prepare(template) then
 			warn("[Grass] the pack's patch has no mesh")
 			return
+		end
+		for n = 1, math.min(G.Layers, #G.Greens) do
+			table.insert(templates, painted(template, G.Greens[n]))
 		end
 		local count = 0
 		for _, d in (template:FindFirstChildOfClass("MeshPart") :: MeshPart):GetChildren() do
@@ -517,7 +553,9 @@ function Grass.start()
 			local old = table.remove(far)
 			if old then
 				cells[key(old.i, old.j)] = nil
-				pcall(forget, old)
+				for _, layer in old.layers do
+					pcall(forget, layer)
+				end
 			end
 			folkClock += dt
 			if folkClock > 0.5 then

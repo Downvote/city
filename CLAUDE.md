@@ -74,7 +74,9 @@ scripts), and `client/World/Grass` lays its patches round the camera. A tuft is 
 pack's bones are bunched in the middle of its mesh (one tall clump per patch: "too shiny and too big, and only at
 some areas"), so each patch's 100 bones are laid out again on our own fine grid and the mesh is shrunk and wears
 the plain matt look Blade; the grass runs taller and shorter in drifts with bare spots ("too even, grass should be
-more random"), and tufts are always placed with the patch's origin bone at rest (otherwise they fly);
+more random"), each square has three patches in three greens with their tufts mixed ("make the colors of grass
+random? and dense enough to cover all the floor?"), and tufts are always placed with the patch's origin bone at
+rest (otherwise they fly);
 each tuft stands on the ground under it where that is Grass all round (terrain, a plot's lawn, a grass lawn in
 town) and sinks anywhere else, again when a plot changes (numbers in `Tuning.Grass`). Keep the author's credit with it. Nothing built may stand on terrain Grass:
 `TownMap.cover` lists what is built and the terrain under it is LeafyGrass, so a new kind of ground part or a
