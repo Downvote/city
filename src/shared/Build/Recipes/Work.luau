@@ -449,24 +449,138 @@ local items: { any } = {
 		place = "floor",
 		job = "barista",
 		size = Vector3.new(8, 5.5, 3),
-		c1 = "8A5A2E",
-		c2 = "F7F3EA",
+		c1 = "8A5A3C",
+		c2 = "F2ECE0",
 		tags = { "work" },
 		workSpot = Vector3.new(0, 0, -2.4),
 		workYaw = 0,
 		build = function(r: R)
-			counter(r, 8, 2.4, 3.6, r.c1, r.c2)
-			-- espresso machine
-			r:block(-3.2, 3.6, -0.9, -1.4, 5.2, 0.4, C.Metal, "Metal")
-			r:block(-3, 4.2, 0.4, -1.6, 4.4, 0.8, C.DarkMetal, "Metal")
-			r:cyl(-2.3, 3.85, 0.6, 0.5, 0.45, "y", C.White, "SmoothPlastic")
-			-- cups and a cake stand
-			for i = 0, 2 do
-				r:cyl(0.2 + i * 0.6, 3.85, 0.5, 0.5, 0.42, "y", C.White, "SmoothPlastic")
-			end
-			r:cyl(2.6, 3.7, 0, 0.2, 1.4, "y", C.White, "SmoothPlastic")
-			r:cyl(2.6, 4.05, 0, 0.5, 1.1, "y", C.Pink, "SmoothPlastic")
-			r:cyl(2.6, 4.45, 0, 0.3, 0.9, "y", C.Cream, "SmoothPlastic")
+			-- A café's counter (c1, its top c2): the espresso machine at one end with its grinder
+			-- and a jug of milk, the till in the middle, cups stacked to hand, then croissants on
+			-- a board, a cake under a glass bell and the syrups at the other end. A brass rail
+			-- runs along the foot of the front.
+			local H = 3.6
+			counter(r, 7.6, 2.2, H, r.c1, r.c2)
+			r:piece(function(q: R)
+				for _, x in { -3.1, 0, 3.1 } do
+					q:block(x - 0.06, 0.3, 1.1, x + 0.06, 0.44, 1.38, BRASS, "Metal")
+				end
+				q:cyl(0, 0.37, 1.32, 6.6, 0.14, "x", BRASS, "Metal")
+			end)
+			-- the espresso machine, its business end to the barista (-z)
+			local MX1, MX2 = -3.4, -1.4
+			r:piece(function(q: R)
+				q:block(MX1, H, -0.85, MX2, H + 0.15, 0.35, shade(ZINC, 0.72), "Metal")
+				q:block(MX1 + 0.1, H + 0.15, -0.7, MX2 - 0.1, H + 1.15, 0.3, Color3.fromRGB(184, 80, 90), "Metal")
+				q:block(MX1 + 0.16, H + 0.2, -0.78, MX2 - 0.16, H + 1.1, -0.7, ZINC, "Metal")
+				q:block(MX1 + 0.04, H + 1.15, -0.76, MX2 - 0.04, H + 1.25, 0.36, ZINC, "Metal")
+				for _, x in { MX1 + 0.08, MX2 - 0.08 } do
+					q:block(x - 0.03, H + 1.25, -0.72, x + 0.03, H + 1.45, 0.32, ZINC, "Metal")
+				end
+				q:block(MX1 + 0.4, H + 0.62, -0.92, MX2 - 0.4, H + 0.78, -0.78, ZINC, "Metal")
+				for _, x in { -2.75, -2.05 } do
+					q:cyl(x, H + 0.52, -0.92, 0.2, 0.32, "y", ZINC, "Metal")
+					q:cyl(x, H + 0.4, -0.92, 0.1, 0.36, "y", IRON, "Metal")
+					q:block(x - 0.05, H + 0.37, -1.5, x + 0.05, H + 0.45, -1.06, C.Black, "Metal")
+				end
+				q:block(MX1 + 0.3, H, -1.16, MX2 - 0.3, H + 0.1, -0.78, shade(ZINC, 0.8), "Metal")
+				for i = 0, 3 do
+					q:block(MX1 + 0.36, H + 0.1, -1.12 + i * 0.1, MX2 - 0.36, H + 0.14, -1.08 + i * 0.1, ZINC, "Metal")
+				end
+				q:cyl(-2.4, H + 0.95, -0.81, 0.08, 0.3, "z", TRIM, "Metal")
+				q:beam(Vector3.new(MX2 - 0.1, H + 0.95, -0.62), Vector3.new(MX2 + 0.06, H + 0.25, -0.95), 0.07, 0.07, ZINC, "Metal")
+			end)
+			-- cups: two under the spouts, four warming on top, two stacks of cups and saucers
+			r:piece(function(q: R)
+				for _, x in { -2.75, -2.05 } do
+					q:cyl(x, H + 0.24, -0.95, 0.2, 0.2, "y", C.White)
+				end
+				for i = 0, 3 do
+					q:cyl(-3.1 + i * 0.4, H + 1.37, -0.3 + (i % 2) * 0.3, 0.24, 0.24, "y", C.White)
+				end
+				for _, x in { 0.95, 1.45 } do
+					for k = 0, 2 do
+						q:cyl(x, H + 0.03 + k * 0.3, -0.7, 0.06, 0.46, "y", C.White)
+						q:cyl(x, H + 0.18 + k * 0.3, -0.7, 0.24, 0.3, "y", C.White)
+					end
+				end
+				q:block(1.8, H, -0.98, 2.04, H + 0.3, -0.74, C.Paper)
+			end)
+			-- the grinder: a dark stand and a hopper of beans, and a jug of milk beside the steam
+			r:piece(function(q: R)
+				q:block(-1.2, H, -0.75, -0.6, H + 0.7, -0.15, IRON)
+				q:block(-1.1, H + 0.12, -0.85, -0.7, H + 0.18, -0.75, C.Black)
+				q:add({
+					shape = "Cone",
+					cf = CFrame.new(-0.9, H + 1.0, -0.45) * CFrame.Angles(math.pi, 0, 0),
+					size = Vector3.new(0.66, 0.6, 0.66),
+					color = Color3.fromRGB(122, 88, 66),
+					mat = "SmoothPlastic",
+				})
+				q:cyl(-0.9, H + 1.33, -0.45, 0.08, 0.66, "y", IRON)
+				q:cyl(-1.28, H + 0.22, -1.02, 0.44, 0.3, "y", ZINC)
+				q:block(-1.31, H + 0.34, -1.24, -1.25, H + 0.42, -1.14, ZINC)
+			end)
+			-- the till, its screen to the barista and a little one to the customer
+			r:piece(function(q: R)
+				q:block(-0.15, H, -0.95, 0.75, H + 0.3, -0.25, Color3.fromRGB(90, 85, 96))
+				q:block(0.2, H + 0.3, -0.62, 0.4, H + 0.55, -0.5, Color3.fromRGB(90, 85, 96))
+				local screen = CFrame.new(0.3, H + 0.78, -0.56) * CFrame.Angles(math.rad(-18), 0, 0)
+				q:boxAt(screen, 0.9, 0.56, 0.08, IRON)
+				q:boxAt(screen * CFrame.new(0, 0, -0.06), 0.78, 0.44, 0.06, C.Glass)
+				q:block(0.5, H + 0.3, -0.25, 0.7, H + 0.5, -0.19, IRON)
+				q:block(-0.1, H + 0.3, -0.9, 0.7, H + 0.34, -0.7, CHALK)
+			end)
+			-- croissants on a board
+			r:piece(function(q: R)
+				q:block(0.9, H, 0.1, 2.15, H + 0.08, 0.95, PALE, "SmoothPlastic")
+				for i, p in { { 1.22, 0.35 }, { 1.82, 0.4 }, { 1.52, 0.75 } } do
+					local at = CFrame.new(p[1], H + 0.2, p[2]) * CFrame.Angles(0, i * 0.9, 0)
+					q:lump(at, 0.46, 0.26, 0.28, CRUST)
+					for _, s in { -1, 1 } do
+						q:lump(at * CFrame.new(s * 0.26, -0.03, -0.06) * CFrame.Angles(0, s * 0.7, 0), 0.3, 0.2, 0.2, CRUST_DARK)
+					end
+				end
+			end)
+			-- the cake on its stand, under a glass bell
+			r:piece(function(q: R)
+				q:block(2.65, H, -0.2, 3.05, H + 0.04, 0.2, TRIM)
+				q:cyl(2.85, H + 0.04, 0.0, 0.08, 0.7, "y", TRIM)
+				q:cyl(2.85, H + 0.28, 0.0, 0.44, 0.14, "y", TRIM)
+				q:cyl(2.85, H + 0.52, 0.0, 0.06, 1.1, "y", TRIM)
+				q:cyl(2.85, H + 0.75, 0.0, 0.4, 0.8, "y", Color3.fromRGB(232, 168, 178))
+				q:cyl(2.85, H + 0.98, 0.0, 0.08, 0.84, "y", C.White)
+				for k = 0, 4 do
+					local a = k * math.pi * 2 / 5
+					q:ball(2.85 + math.cos(a) * 0.28, H + 1.08, 0.0 + math.sin(a) * 0.28, 0.12, APPLE)
+				end
+			end)
+			local bell = r:cyl(2.85, H + 0.98, 0.0, 0.86, 1.2, "y", C.Glass, "Glass")
+			bell.transp = 0.6
+			bell.collide = false
+			local top = r:lump(CFrame.new(2.85, H + 1.4, 0.0), 1.2, 0.4, 1.2, C.Glass, "Glass")
+			top.transp = 0.6
+			top.collide = false
+			r:noCollide(r:ball(2.85, H + 1.64, 0.0, 0.16, ZINC, "Metal"))
+			-- three syrups with pumps, and a small standing menu card on the front corner
+			r:piece(function(q: R)
+				for i, col in { Color3.fromRGB(176, 106, 52), Color3.fromRGB(140, 70, 60), Color3.fromRGB(214, 180, 104) } do
+					local x = 3.1 + (i - 2) * 0.28
+					q:cyl(x, H + 0.35, -0.9, 0.7, 0.24, "y", col)
+					q:cyl(x, H + 0.76, -0.9, 0.12, 0.12, "y", C.Black)
+					q:block(x - 0.03, H + 0.8, -0.93, x + 0.03, H + 0.92, -0.87, C.Black)
+					q:block(x - 0.02, H + 0.88, -1.03, x + 0.02, H + 0.92, -0.9, C.Black)
+				end
+				q:boxAt(CFrame.new(3.55, H + 0.32, 0.98) * CFrame.Angles(math.rad(14), 0, 0), 0.6, 0.66, 0.04, SLATE)
+				q:boxAt(CFrame.new(3.55, H + 0.32, 0.78) * CFrame.Angles(math.rad(-14), 0, 0), 0.6, 0.66, 0.04, SLATE)
+			end)
+			r:piece(function(q: R)
+				local face = CFrame.new(3.55, H + 0.32, 0.98) * CFrame.Angles(math.rad(14), 0, 0)
+				for i, w in { 0.4, 0.28, 0.36 } do
+					q:boxAt(face * CFrame.new(-0.05, 0.22 - i * 0.12, 0.04), w, 0.05, 0.04, CHALK)
+				end
+				q:block(3.1, H, 1.02, 3.4, H + 0.06, 1.08, CHALK)
+			end)
 		end,
 	},
 	{

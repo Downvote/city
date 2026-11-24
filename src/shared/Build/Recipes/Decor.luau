@@ -560,7 +560,7 @@ local items: { Item } = {
 				local xa, xb = sx * 0.04, sx * 1.9
 				r:block(math.min(xa, xb), 0.32, 0.9, math.max(xa, xb), 2.08, 0.95, shade(r.c1, 1.12), "Wood")
 				r:block(math.min(xa, xb) + 0.15, 0.47, 0.95, math.max(xa, xb) - 0.15, 1.93, 0.99, r.c1, "Wood")
-				r:block(sx * 0.25 - 0.03, 0.9, 0.96, sx * 0.25 + 0.03, 1.5, 1.02, C.Gold, "Metal")
+				r:block(sx * 0.12 - 0.03, 0.9, 0.95, sx * 0.12 + 0.03, 1.5, 1.03, C.Gold, "Metal")
 			end
 			-- the tank: a black frame, gravel, a rock, a little castle and weed
 			r:block(-1.9, 2.2, -0.8, 1.9, 2.35, 0.8, r.c2, "Metal")

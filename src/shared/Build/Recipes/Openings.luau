@@ -255,39 +255,66 @@ end
 -- A planted box's worth of flowers on q: a mound of leaves along x0..x1 at height y, stems up
 -- out of it with leaves at their middles and flower heads of `heads` colours at different heights,
 -- and a few trailing stems over the front edge at z1.
-local function planting(q: R, x0: number, x1: number, y: number, z0: number, z1: number, heads: { Color3 })
+local function planting(r: R, x0: number, x1: number, y: number, z0: number, z1: number, heads: { Color3 })
 	local leaf, dark = C.Leaf, C.DarkLeaf
-	q:block(x0, y - 0.06, z0, x1, y + 0.12, z1, dark, "Grass")
-	local n = #heads
-	for i, col in heads do
-		local t = (i - 0.5) / n
-		local x = x0 + (x1 - x0) * t
-		local z = if i % 2 == 0 then z0 + (z1 - z0) * 0.35 else z0 + (z1 - z0) * 0.65
-		local top = y + 0.42 + ((i * 7) % 3) * 0.12
-		q:block(x - 0.03, y, z - 0.03, x + 0.03, top, z + 0.03, dark, "Grass")
-		q:lump(
-			CFrame.new(x + 0.12, y + (top - y) * 0.45, z) * CFrame.Angles(0, 0, -0.6),
-			0.28,
-			0.1,
-			0.16,
-			leaf,
-			"Grass"
-		)
-		q:lump(CFrame.new(x, top, z) * CFrame.Angles(0.25, i, 0), 0.36, 0.13, 0.36, col, "Grass")
-		q:ball(x, top + 0.07, z + 0.02, 0.12, if col == C.Yellow then C.White else C.Yellow, "Grass")
-	end
-	for _, p in { { 0.2, 0.55 }, { 0.5, 0.42 }, { 0.8, 0.6 } } do
-		local x = x0 + (x1 - x0) * p[1]
-		q:lump(
-			CFrame.new(x, y + 0.2, (z0 + z1) / 2) * CFrame.Angles(0, p[1] * 3, 0),
-			p[2] + 0.2,
-			0.32,
-			p[2],
-			leaf,
-			"Grass"
-		)
-		q:lump(CFrame.new(x - 0.1, y - 0.3, z1 + 0.22) * CFrame.Angles(0.3, 0, 0.4), 0.22, 0.46, 0.16, leaf, "Grass")
-	end
+	r:piece(function(q: R)
+		q:block(x0, y - 0.06, z0, x1, y + 0.12, z1, dark, "Grass")
+		local n = 6
+		for i = 0, n - 1 do
+			local t = (i + 0.5) / n
+			local x = x0 + (x1 - x0) * t
+			local s = 0.5 + (i % 3) * 0.08
+			q:lump(
+				CFrame.new(x, y + 0.2, (z0 + z1) / 2 + (if i % 2 == 0 then 0.08 else -0.08))
+					* CFrame.Angles(0, i * 1.3, 0),
+				s + 0.2,
+				0.36,
+				s,
+				if i % 2 == 0 then leaf else shade(leaf, 0.9),
+				"Grass"
+			)
+		end
+		-- stems trailing over the front edge
+		for _, p in { { 0.12, 0.5 }, { 0.36, 0.34 }, { 0.62, 0.56 }, { 0.88, 0.4 } } do
+			local x = x0 + (x1 - x0) * p[1]
+			q:lump(
+				CFrame.new(x, y - p[2] / 2, z1 + 0.24) * CFrame.Angles(0.3, 0, 0.3),
+				0.2,
+				p[2] + 0.12,
+				0.16,
+				leaf,
+				"Grass"
+			)
+			q:lump(
+				CFrame.new(x + 0.08, y - p[2] - 0.02, z1 + 0.28) * CFrame.Angles(0, p[1] * 4, 0),
+				0.22,
+				0.12,
+				0.2,
+				dark,
+				"Grass"
+			)
+		end
+	end)
+	r:piece(function(q: R)
+		local n = #heads
+		for i, col in heads do
+			local t = (i - 0.5) / n
+			local x = x0 + (x1 - x0) * t
+			local z = if i % 2 == 0 then z0 + (z1 - z0) * 0.3 else z0 + (z1 - z0) * 0.7
+			local top = y + 0.5 + ((i * 7) % 3) * 0.13
+			q:block(x - 0.03, y + 0.1, z - 0.03, x + 0.03, top, z + 0.03, dark, "Grass")
+			q:lump(
+				CFrame.new(x + 0.12, y + (top - y) * 0.55, z) * CFrame.Angles(0, 0, -0.6),
+				0.3,
+				0.1,
+				0.18,
+				leaf,
+				"Grass"
+			)
+			q:lump(CFrame.new(x, top, z) * CFrame.Angles(0.25, i, 0), 0.42, 0.14, 0.42, col, "Grass")
+			q:ball(x, top + 0.08, z + 0.02, 0.14, if col == C.Yellow then C.White else C.Yellow, "Grass")
+		end
+	end)
 end
 
 local items: { any } = {
@@ -756,7 +783,6 @@ local items: { any } = {
 				end)
 			end
 			r:piece(function(q: R)
-				q:box(0, 4.0, 0.47, 0.1, 0.1, 0.1, IRON, "Metal")
 				for _, sx in { -1, 1 } do
 					for _, y in { 0.7, 3.4 } do
 						q:block(sx * 2.26 - 0.06, y - 0.08, 0.4, sx * 2.26 + 0.06, y + 0.08, 0.68, IRON, "Metal")
@@ -810,7 +836,21 @@ local items: { any } = {
 			end)
 			r:glass(-1.42, 0.08, -0.03, 1.42, 2.92, 0.03)
 			r:piece(function(q: R)
-				q:box(0, 1.5, 0, 0.1, 0.1, 0.1, r.c1, "Metal")
+				for _, s in { -1, 1 } do
+					for k = 0, 3 do
+						local a = k * math.pi / 2 + math.pi / 4
+						q:box(
+							math.cos(a) * 1.38,
+							1.5 + math.sin(a) * 1.38,
+							s * 0.37,
+							0.12,
+							0.12,
+							0.04,
+							shade(r.c1, 0.8),
+							"Metal"
+						)
+					end
+				end
 				local n = 12
 				for _, s in { -1, 1 } do
 					for i = 0, n - 1 do
@@ -950,9 +990,7 @@ local items: { any } = {
 				end
 				q:block(-2.12, 1.2, 0.16, 2.12, 1.26, 0.86, C.Soil, "WoodPlanks")
 			end)
-			r:piece(function(q: R)
-				planting(q, -1.95, 1.95, 1.3, 0.22, 0.84, { r.c2, C.White, r.c2, C.Yellow, r.c2 })
-			end)
+			planting(r, -1.95, 1.95, 1.3, 0.22, 0.82, { r.c2, C.White, r.c2, C.Yellow, r.c2, C.White })
 		end,
 	},
 	{
@@ -977,7 +1015,7 @@ local items: { any } = {
 			slope(r, -2.5, 0.6, 0.02, 2.5, 1, 0.92, r.c2, "ClayRoofTiles")
 			local angle = math.atan2(0.4, 0.9)
 			r:piece(function(q: R)
-				q:block(-2.53, 0.94, 0.0, 2.53, 1.0, 0.1, shade(r.c2, 0.85), "ClayRoofTiles")
+				q:block(-2.53, 0.94, 0.06, 2.53, 1.0, 0.14, shade(r.c2, 0.85), "ClayRoofTiles")
 				for i, t in { 0.3, 0.62 } do
 					local z = 0.92 - t * 0.9
 					local y = 0.6 + t * 0.4
