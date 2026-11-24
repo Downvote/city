@@ -1848,6 +1848,19 @@ piece stands between it and the hint.
   The coins that rise over a villager at work are left as they were, beside the head and over walls, since most
   work goes on indoors.
 
+### Leaning shapes for everything with words on it
+
+> make these type of shapes everywhere parallograms instead of rounded rectangles
+
+(With a picture of the yellow "Claim 400" pill on a quest.) Every control that was a pill is now a leaning slab
+with its four points softly rounded, drawn the way the Build button, the way back and the price tags already were,
+and leaning the same way: buttons with words (Claim, Buy, Introduce, Watch, the answers in a conversation, Done and
+Build mode's groups), the rows in every list, the tabs and the yellow shape that slides between them, and the small
+tags with words (a round button's name, the quests' count, a goal's pay, the names on the dialogue box, the event
+prompt, the creator's boxes to type in and its two steps). The words keep clear of the slanted ends. Round buttons,
+markers, badges, faces and dials stay round, and cards, panels, tiles and progress bars keep their round corners.
+Without the painted shapes the slabs fall back to sharp ends, as before.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

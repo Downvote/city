@@ -596,9 +596,8 @@ function EventCard.start(_hud: any)
 		Parent = gui,
 	})
 	holder:SetAttribute("KeepColors", true)
-	Kit.corner(holder, "pill")
-	Kit.rim(holder, T.White, 1.5, 0.78)
-	Kit.softShadow(holder, 1)
+	-- a leaning slab of the glass, its slanted ends standing out past what is on it
+	Kit.slant(holder, 60, true)
 	-- brackets on two corners, just outside the pill
 	Kit.brackets(
 		holder,

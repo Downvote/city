@@ -602,6 +602,22 @@ function Kit.paint(face: GuiObject, color: Color3?, transparency: number?)
 	follow(face)
 end
 
+-- Fades a face in or out (to `transparency`) with a tween: a leaning face's painted picture, or a
+-- plain face and its slanted ends. (A leaning face's own BackgroundTransparency stays clear.)
+function Kit.fade(face: GuiObject, info: TweenInfo, transparency: number)
+	local body = bodyOf(face)
+	if body then
+		TweenService:Create(body, info, { ImageTransparency = transparency }):Play()
+		return
+	end
+	TweenService:Create(face, info, { BackgroundTransparency = transparency }):Play()
+	for _, c in face:GetChildren() do
+		if c:IsA("Frame") and c.Name:sub(1, 6) == "Wedge_" then
+			TweenService:Create(c, info, { BackgroundTransparency = transparency }):Play()
+		end
+	end
+end
+
 -- Fills `holder` with a card's shape, under everything else in it: a rounded rectangle (its
 -- corners `cut` round, which was how much of two corners got cut off in the look before, and
 -- the name has stayed). Returns the layer (Kit.paintCut recolours it).
@@ -1512,9 +1528,13 @@ local LIP = 4
 -- still fills edge to edge (the padding only makes an auto-sized button wider).
 function Kit.pad(inst: Instance, px: number, py: number?): UIPadding
 	local y = py or px
+	-- a button with a leaning face keeps its words clear of the slanted ends: half an end more
+	local face = inst:FindFirstChild("Face")
+	local cap = if inst:GetAttribute("KitButton") and face then face:GetAttribute("Inset") else nil
+	local x = px + (if type(cap) == "number" then math.ceil(cap / 2) else 0)
 	local pad = Kit.new("UIPadding", {
-		PaddingLeft = UDim.new(0, px),
-		PaddingRight = UDim.new(0, px),
+		PaddingLeft = UDim.new(0, x),
+		PaddingRight = UDim.new(0, x),
 		PaddingTop = UDim.new(0, y),
 		PaddingBottom = UDim.new(0, y),
 		Parent = inst,
@@ -1527,8 +1547,8 @@ function Kit.pad(inst: Instance, px: number, py: number?): UIPadding
 				-- a leaning face stays pulled in by its slanted ends
 				local inset = f:GetAttribute("Inset")
 				local k: number = if type(inset) == "number" then inset else 0
-				f.Position = UDim2.fromOffset(-px + k, -y)
-				f.Size = UDim2.new(1, px * 2 - k * 2, 1, y * 2 - lip)
+				f.Position = UDim2.fromOffset(-x + k, -y)
+				f.Size = UDim2.new(1, x * 2 - k * 2, 1, y * 2 - lip)
 			end
 		end
 	end
@@ -2046,13 +2066,17 @@ function Kit.press(b: GuiButton, opts: { [string]: any }?)
 		elseif kind == "row" then
 			local bar = b:FindFirstChild("Accent") :: Frame?
 			if not bar then
+				-- leaning the way the row's slanted end leans, just inside it
+				local cap: number = b:GetAttribute("Cap") :: any or 0
+				local tall = math.max(1, b.Size.Y.Offset - 2)
 				local made = Kit.new("Frame", {
 					Name = "Accent",
 					BackgroundColor3 = T.Yellow,
 					BorderSizePixel = 0,
 					Size = UDim2.fromOffset(3, 0),
-					Position = UDim2.new(0, 4, 0.5, 0),
-					AnchorPoint = Vector2.new(0, 0.5),
+					Position = UDim2.new(0, 1 + cap / 2 + 6, 0.5, 0),
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					Rotation = math.deg(math.atan2(cap, tall)),
 					ZIndex = 4,
 					Parent = b,
 				})
@@ -2305,8 +2329,17 @@ function Kit.glide(from: GuiObject?, to: GuiObject, name: string?)
 		to.ZIndex = base :: number
 	end
 	local dx = from.AbsolutePosition.X - to.AbsolutePosition.X
+	-- (a leaning face is pulled in from its button's edges by its slanted ends)
+	local inset = face:GetAttribute("Inset")
+	local k: number = if type(inset) == "number" then inset else 0
+	local fromFace = from:FindFirstChild(name or "Face")
+	local span = if fromFace
+			and fromFace:IsA("GuiObject")
+			and fromFace.AbsoluteSize.X > 0
+		then fromFace.AbsoluteSize.X
+		else w - k * 2
 	face.Position = UDim2.new(pos.X.Scale, pos.X.Offset + dx, pos.Y.Scale, pos.Y.Offset)
-	face.Size = UDim2.new(0, w, size.Y.Scale, size.Y.Offset)
+	face.Size = UDim2.new(0, span, size.Y.Scale, size.Y.Offset)
 	tween(face, M.Glide, { Position = pos, Size = size })
 end
 
@@ -2339,9 +2372,11 @@ local function leavingGui(): ScreenGui
 	return g
 end
 
--- A button's face: a pill in one colour, shaded across, with a thin line of a deeper tone round
--- it (the button's own background stays clear).
-local function chunky(b: GuiButton, color: Color3, _radius: any, lip: number, _outline: number?)
+-- A button's face: a leaning slab in one colour with its four points rounded, shaded across (the
+-- user, of the pill shaped Claim button: "make these type of shapes everywhere parallograms instead
+-- of rounded rectangles"). The button's own background stays clear; `height` is its height in
+-- pixels when its Size doesn't say (a button sized by scale).
+local function chunky(b: GuiButton, color: Color3, _radius: any, lip: number, height: number?)
 	b.BackgroundTransparency = 1
 	b:SetAttribute("KitButton", true)
 	b:SetAttribute("Lip", lip)
@@ -2353,9 +2388,8 @@ local function chunky(b: GuiButton, color: Color3, _radius: any, lip: number, _o
 		ZIndex = b.ZIndex,
 		Parent = b,
 	})
-	Kit.corner(face, "pill")
+	Kit.slant(face, if height and height > 0 then height - lip else nil)
 	Kit.shade(face)
-	Kit.rim(face, edgeOf(color), 1.5):SetAttribute("Follow", true)
 	return face
 end
 
@@ -2386,7 +2420,7 @@ function Kit.button(text: string, props: { [string]: any }?, onClick: (() -> ())
 		AutomaticSize = p.AutomaticSize or Enum.AutomaticSize.None,
 		Parent = p.Parent,
 	})
-	chunky(b, color, p.Radius or 12, lip)
+	chunky(b, color, p.Radius or 12, lip, size.Y.Offset)
 	local content = Kit.new("Frame", {
 		Name = "Content",
 		BackgroundTransparency = 1,
@@ -2598,10 +2632,10 @@ function Kit.iconButton(icon: string, caption: string?, props: { [string]: any }
 			ZIndex = z + 1,
 			Parent = b,
 		})
-		Kit.corner(tag, "pill")
-		Kit.stroke(tag, T.Line, 1.5)
-		Kit.pad(tag, 8, 0)
-		Kit.new("TextLabel", {
+		-- a small leaning tag, its slanted ends standing out past the words (the room round the
+		-- words is on the words, so the painted slab under them stays put)
+		Kit.slant(tag, tagH, true)
+		local words = Kit.new("TextLabel", {
 			Name = "Caption",
 			Text = caption,
 			BackgroundTransparency = 1,
@@ -2614,6 +2648,7 @@ function Kit.iconButton(icon: string, caption: string?, props: { [string]: any }
 			ZIndex = z + 1,
 			Parent = tag,
 		})
+		Kit.new("UIPadding", { PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6), Parent = words })
 	end
 	pressable(b, { Kind = "round", Ring = p.Ring })
 	if onClick then
@@ -3355,10 +3390,6 @@ end
 -- shade behind it, so the thing sits in a bezel. (A second shape, not a stroke.)
 local RIM = 3
 
-local function rimColor(): Color3
-	return mix(T.PaperDark, T.Line, 0.6)
-end
-
 -- A row for lists: a pill, lighter than the panel it lies on, with a thin line round it. props:
 -- Parent, Size, LayoutOrder, Name, Title, Sub (a smaller line under the title), Marker (an icon
 -- name: a round badge at the left end), MarkerColor, Right (words at the right end), Selected,
@@ -3381,6 +3412,7 @@ function Kit.row(props: { [string]: any }, onClick: (() -> ())?): (GuiObject, Fr
 		row.AutoButtonColor = false
 	end
 	local rest = if p.Sunk then T.PaperDark else T.Card
+	-- a leaning slab, its points rounded, like every other control with words on it
 	local face = Kit.new("Frame", {
 		Name = "Fill",
 		BackgroundColor3 = rest,
@@ -3389,9 +3421,9 @@ function Kit.row(props: { [string]: any }, onClick: (() -> ())?): (GuiObject, Fr
 		Position = UDim2.fromOffset(1, 1),
 		Parent = row,
 	})
-	Kit.corner(face, math.min(h / 2, 16))
+	local cap = Kit.slant(face, h - 2)
 	Kit.shade(face)
-	Kit.rim(face, edgeOf(rest), 1):SetAttribute("Follow", true)
+	row:SetAttribute("Cap", cap)
 	local inner = Kit.new("Frame", {
 		Name = "Inside",
 		BackgroundTransparency = 1,
@@ -3399,8 +3431,8 @@ function Kit.row(props: { [string]: any }, onClick: (() -> ())?): (GuiObject, Fr
 		ZIndex = 2,
 		Parent = row,
 	})
-	-- how far in a pill's round end pushes what is on it
-	local lean = 6
+	-- how far in its slanted end pushes what is on it (at the middle of its height, half an end)
+	local lean = math.ceil(cap / 2) + 2
 	local left = lean + 14
 	if p.Marker then
 		-- a round badge with the icon on it
@@ -3433,7 +3465,7 @@ function Kit.row(props: { [string]: any }, onClick: (() -> ())?): (GuiObject, Fr
 	if p.LeftSpace then
 		left = p.LeftSpace + lean
 	end
-	local right = (if p.Right then 150 else 16) + lean
+	local right = (if p.Right then 150 else 10) + lean
 	if p.RightSpace then
 		right = p.RightSpace + lean
 	end
@@ -3517,7 +3549,7 @@ function Kit.setRowSelected(row: GuiObject, on: boolean)
 				Name = "PickedHatch",
 				Parent = face,
 				Size = UDim2.fromOffset(96, math.max(8, h - 16)),
-				Position = UDim2.new(1, -(math.min(h / 2, 16) + 2), 0.5, 0),
+				Position = UDim2.new(1, -4, 0.5, 0),
 				AnchorPoint = Vector2.new(1, 0.5),
 				Color = T.Dark,
 				Transparency = 0.86,
@@ -3575,8 +3607,8 @@ function Kit.segments(
 		Position = UDim2.fromOffset(1, 1),
 		Parent = bar,
 	})
-	Kit.corner(well, "pill")
-	Kit.rim(well, rimColor(), 1.5)
+	-- a leaning well, the picked tab a leaning slab in it
+	local wellCap = Kit.slant(well, h - 2)
 	local holder = Kit.new("Frame", {
 		Name = "Row",
 		BackgroundTransparency = 1,
@@ -3586,8 +3618,8 @@ function Kit.segments(
 		Parent = bar,
 	})
 	Kit.new("UIPadding", {
-		PaddingLeft = UDim.new(0, RIM + 2),
-		PaddingRight = UDim.new(0, RIM + 2),
+		PaddingLeft = UDim.new(0, RIM + 2 + math.ceil(wellCap / 3)),
+		PaddingRight = UDim.new(0, RIM + 2 + math.ceil(wellCap / 3)),
 		PaddingTop = UDim.new(0, RIM + 2),
 		PaddingBottom = UDim.new(0, RIM + 2),
 		Parent = holder,
@@ -3606,7 +3638,7 @@ function Kit.segments(
 			Kit.paint(faces[bid], nil, if on then 0 else 1)
 			local hover = b:FindFirstChild("Hover")
 			if hover and hover:IsA("Frame") then
-				hover.BackgroundTransparency = 1
+				Kit.paint(hover, nil, 1)
 			end
 			tween(labels[bid], M.Hover, { TextColor3 = if on then T.Dark else T.Ink })
 			b:SetAttribute("Selected", on)
@@ -3642,7 +3674,7 @@ function Kit.segments(
 			ZIndex = 4,
 			Parent = b,
 		})
-		-- the yellow pill behind the picked tab's words (it reaches back over the padding)
+		-- the yellow slab behind the picked tab's words (it reaches back over the padding)
 		local face = Kit.new("Frame", {
 			Name = "Face",
 			BackgroundColor3 = T.Yellow,
@@ -3653,7 +3685,7 @@ function Kit.segments(
 			ZIndex = 3,
 			Parent = b,
 		})
-		Kit.corner(face, "pill")
+		Kit.slant(face, th)
 		Kit.shade(face)
 		buttons[t.id] = b
 		faces[t.id] = face
@@ -3669,14 +3701,14 @@ function Kit.segments(
 			ZIndex = 2,
 			Parent = b,
 		})
-		Kit.corner(hover, "pill")
+		Kit.slant(hover, th)
 		b.MouseEnter:Connect(function()
 			if picked ~= t.id and not touchOnly() then
-				tween(hover, M.Hover, { BackgroundTransparency = 0.9 })
+				Kit.fade(hover, M.Hover, 0.9)
 			end
 		end)
 		b.MouseLeave:Connect(function()
-			tween(hover, M.Leave, { BackgroundTransparency = 1 })
+			Kit.fade(hover, M.Leave, 1)
 		end)
 		pressable(b, { Kind = "plain", Face = false, Grow = 1, Dip = 0.96 })
 		b.Activated:Connect(function()
@@ -4635,59 +4667,44 @@ function Kit.setBubbleColor(holder: Instance, color: Color3)
 	Kit.setBlobColor(holder, color)
 end
 
--- An answer to pick, as a speech bubble: white with navy words, swaying a little; under the
--- pointer it turns sunny yellow with soft stripes. props: Parent, Size, LayoutOrder, TextSize,
--- Name, ZIndex, Disabled (greyed words, no yellow), Icon (an icon left of the words), Rich (the
--- text is rich text, for coloured names).
+-- An answer to pick: a leaning slab in the row colour with the words on it; under the pointer it
+-- turns a shade lighter. props: Parent, Size, LayoutOrder, TextSize, Name, ZIndex, Disabled (greyed
+-- words, nothing lights), Icon (an icon left of the words), Rich (the text is rich text, for
+-- coloured names).
 function Kit.choice(text: string, props: { [string]: any }?, onClick: (() -> ())?): TextButton
 	local p = props or {}
 	local z = p.ZIndex or 1
+	local size: UDim2 = p.Size or UDim2.new(1, 0, 0, 54)
 	local b = Kit.new("TextButton", {
 		Text = "",
 		AutoButtonColor = false,
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		Size = p.Size or UDim2.new(1, 0, 0, 54),
+		Size = size,
 		LayoutOrder = p.LayoutOrder or 0,
 		Name = p.Name or "Choice",
 		ZIndex = z,
 		Parent = p.Parent,
 	})
 	b:SetAttribute("KitButton", true)
-	local holder, body = Kit.bubble({
-		Parent = b,
+	local face = Kit.new("Frame", {
+		Name = "Face",
+		BackgroundColor3 = T.Card,
+		BorderSizePixel = 0,
 		Size = UDim2.fromScale(1, 1),
-		Radius = "pill",
-		Tail = false,
-		Color = T.Card,
 		ZIndex = z,
+		Parent = b,
 	})
-	local core = holder:FindFirstChild("Shape") and (holder :: any).Shape:FindFirstChild("Core")
-	local stripes = Kit.new("UIGradient", {
-		Name = "Stripes",
-		Enabled = false,
-		Rotation = 24,
-		Color = ColorSequence.new({
-			ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
-			ColorSequenceKeypoint.new(0.12, Color3.new(0.9, 0.9, 0.93)),
-			ColorSequenceKeypoint.new(0.25, Color3.new(1, 1, 1)),
-			ColorSequenceKeypoint.new(0.37, Color3.new(0.9, 0.9, 0.93)),
-			ColorSequenceKeypoint.new(0.5, Color3.new(1, 1, 1)),
-			ColorSequenceKeypoint.new(0.62, Color3.new(0.9, 0.9, 0.93)),
-			ColorSequenceKeypoint.new(0.75, Color3.new(1, 1, 1)),
-			ColorSequenceKeypoint.new(0.87, Color3.new(0.9, 0.9, 0.93)),
-			ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1)),
-		}),
-		Parent = core or body,
-	})
-	local row = Kit.box({ Name = "Content", Parent = body, Size = UDim2.fromScale(1, 1) })
+	Kit.slant(face, if size.Y.Offset > 0 then size.Y.Offset else 54)
+	Kit.shade(face)
+	local row = Kit.box({ Name = "Content", Parent = b, Size = UDim2.fromScale(1, 1) })
 	row.ZIndex = z + 1
 	local list = Kit.list(row, 8, true, Enum.HorizontalAlignment.Center)
 	list.VerticalAlignment = Enum.VerticalAlignment.Center
 	if p.Icon and Icons.has(p.Icon) then
 		Icons.make(p.Icon, 26, { Name = "IconArt", Parent = row, ZIndex = z + 1, LayoutOrder = 1 })
 	end
-	local label = Kit.new("TextLabel", {
+	Kit.new("TextLabel", {
 		Name = "Label",
 		Text = text,
 		BackgroundTransparency = 1,
@@ -4701,18 +4718,15 @@ function Kit.choice(text: string, props: { [string]: any }?, onClick: (() -> ())
 		RichText = p.Rich == true,
 		Parent = row,
 	})
-	local _ = label
-	local function lit(on: boolean)
-		Kit.setBubbleColor(holder, if on and not p.Disabled then T.Line else T.Card)
-		stripes.Enabled = on and not p.Disabled
+	if not p.Disabled then
+		b.MouseEnter:Connect(function()
+			Kit.paint(face, T.Line)
+		end)
+		b.MouseLeave:Connect(function()
+			Kit.paint(face, T.Card)
+		end)
 	end
-	b.MouseEnter:Connect(function()
-		lit(true)
-	end)
-	b.MouseLeave:Connect(function()
-		lit(false)
-	end)
-	pressable(b, { Face = holder })
+	pressable(b)
 	if onClick then
 		b.Activated:Connect(onClick)
 	end

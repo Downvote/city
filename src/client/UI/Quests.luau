@@ -287,7 +287,8 @@ function Quests.mount(parent: GuiObject, position: UDim2, open: () -> ()): Frame
 		Parent = tab,
 	})
 	chip:SetAttribute("KeepColors", true)
-	Kit.corner(chip, "pill")
+	-- a small leaning tag, as every piece with words on it is
+	Kit.slant(chip, 18, true)
 	Kit.text("", {
 		Name = "Count",
 		Parent = chip,

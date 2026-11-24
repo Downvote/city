@@ -227,11 +227,11 @@ section 10). New buttons get it from `UI/Kit`; new moving scenery goes in `World
 ("polish the ui and menu everywhere much further, along with button animations to be more suitable, referencing
 zenless zone zero menus"): `Kit.press(button, { Kind })` is every control's motion (under the pointer a band of
 light sweeps once across the face cut to its shape, the face brightens a touch and grows 2 to 3%, a marker comes in
-at the leading edge: a chevron on a pill, a ring round a round button, brackets on a tile, a bar and a nudge on a
+at the leading edge: a chevron at a button's left end, a ring round a round button, brackets on a tile, a bar and a nudge on a
 row, a line under a quick menu tile; a press dips to 0.97 with a flash; release settles back), all tweens in
 `Kit.Motion` (Quint or Quad, never Back, Bounce or Elastic) and its layers made on the first hover. Never bring back
 the wiggle, the icon hop or a springy rebound, and never animate a leaning face's BackgroundColor3 (its layers
-move). Touch gets the press with nothing that needs a hover. A picked pill slides between tabs (`Kit.glide`). A
+move). Touch gets the press with nothing that needs a hover. The picked slab slides between tabs (`Kit.glide`). A
 `Kit.panel` brings itself in (the black fades up, the card slides in from the right, the title from the left, then
 what was marked with `Kit.mark` comes in one after another through `Kit.revealIn`) and a screen closes it with
 `Kit.closePanel(panel)`, never `panel.root:Destroy()`; what is closing moves to a ScreenGui of its own at once, so
@@ -330,13 +330,23 @@ Of the menus: "for menu interfaces, reference this: https://zenless.hoyoverse.co
 replicate the look and feel as much as possible, including the texturing and minute details". So today's shapes
 (docs/GAME_DESIGN.md section 10, the last part):
 - What leans still leans, with its four points rounded: the glass slabs over the 3D view (`Kit.darkPill`), the
-  Build button, the red way out of a menu (`Kit.backButton`), a ribbon, a price tag. `Kit.slant` paints the slab
+  Build button, the red way out of a menu (`Kit.backButton`), a ribbon, a price tag, and (the user, of the pill
+  shaped Claim button: "make these type of shapes everywhere parallograms instead of rounded rectangles") every
+  control with words on it: `Kit.button` and all built on it, `Kit.choice`, the list rows (`Kit.row`), the tabs
+  (`Kit.segments`' well, its picked and hover shapes, `Kit.tabs`), Build mode's groups, small tags with words (a
+  round button's caption, the quests' count, a goal's pay, the dialogue's name tags, the event prompt, the
+  creator's wells and steps). All lean the one way the Build button does ("/"); only the corner pieces the user
+  asked to flip lean the other way. Words keep clear of the slanted ends (`Kit.pad` adds half an end; a row's
+  `Lean` is half its end and a little), and what sits on a slab goes in a frame of its own, never straight under
+  a padding or a list layout on the slab (they would move its painted `Body`). A slab is faded with `Kit.fade`.
+  Round things stay round (round buttons, discs, badges, portraits, dials), and cards, panels, tiles, text boxes
+  and progress bars keep their rounded corners. `Kit.slant` paints the slab
   (`UI/Skin` paints its two ends, an ImageLabel named `Body` stretches the middle), so recolour a leaning face
   with `Kit.paint` and read it with `Kit.colorOf`, never through its BackgroundColor3 or BackgroundTransparency
   (the face itself is clear). `Kit.detail` adds the halftone at one end, which starts at the very end of the slab
   and is cut to its shape ("the bars are misaligned, they should start from the very end"): never lay a texture
   on a leaning slab as a loose rectangle. No line runs inside a slab's edge ("remove the borders").
-- Menus are rounded cards in a thin rim (`Kit.frame({ Cut = n })`, `Kit.rim`), rows and tabs and buttons are pills
+- Menus are rounded cards in a thin rim (`Kit.frame({ Cut = n })`, `Kit.rim`), rows and tabs and buttons lean
   (`Kit.row`, `Kit.segments`, `Kit.button`), a tile is a rounded square with its name on a deeper band
   (`Kit.tile`), markers and small buttons are circles (`Kit.disc`, `Kit.roundButton`, `Kit.badge`; a face is
   `Kit.portrait`: "make portraits a circle with a border instead of a square"). Never draw a diamond or a sharp

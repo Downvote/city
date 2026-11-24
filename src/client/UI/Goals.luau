@@ -132,13 +132,22 @@ local function showDetail(g: any)
 		Position = UDim2.new(0.5, 0, 0, 306),
 		AnchorPoint = Vector2.new(0.5, 0),
 		Color = T.PaperDark,
-		Radius = "pill",
+		Radius = false,
 	})
-	Kit.rim(pay, T.Line, 1, 0.4)
-	Kit.pad(pay, 18, 3)
-	Kit.list(pay, 8, true, Enum.HorizontalAlignment.Center)
-	Kit.text(if g.claimed then "Paid" else "Pays", {
+	-- a leaning slab, its slanted ends standing out past the words (which sit in a row of their
+	-- own, so the painted slab under them stays put)
+	Kit.slant(pay, 40, true)
+	local payRow = Kit.box({
+		Name = "Row",
 		Parent = pay,
+		Size = UDim2.fromOffset(0, 40),
+		AutomaticSize = Enum.AutomaticSize.X,
+	})
+	payRow.ZIndex = 2
+	Kit.pad(payRow, 12, 3)
+	Kit.list(payRow, 8, true, Enum.HorizontalAlignment.Center)
+	Kit.text(if g.claimed then "Paid" else "Pays", {
+		Parent = payRow,
 		Size = UDim2.fromOffset(0, 34),
 		AutomaticSize = Enum.AutomaticSize.X,
 		TextSize = 17,
@@ -146,9 +155,9 @@ local function showDetail(g: any)
 		Wrap = false,
 		LayoutOrder = 0,
 	})
-	Icons.make("coin", 28, { Parent = pay, LayoutOrder = 1 })
+	Icons.make("coin", 28, { Parent = payRow, LayoutOrder = 1 })
 	Kit.title(Text.commas(g.goal.reward), {
-		Parent = pay,
+		Parent = payRow,
 		Size = UDim2.fromOffset(0, 34),
 		AutomaticSize = Enum.AutomaticSize.X,
 		TextSize = 24,

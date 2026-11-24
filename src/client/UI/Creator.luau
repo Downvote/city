@@ -879,9 +879,9 @@ local function inputWell(placeholder: string, props: { [string]: any }): TextBox
 		Position = props.Position,
 		LayoutOrder = props.LayoutOrder,
 	})
-	local well = Kit.frame({ Name = "Well", Parent = holder, Color = T.PaperDark, Radius = "pill" })
-	Kit.rim(well, T.Line, 1)
-	local lean = math.floor(h / 2) - 6 -- clear of its round ends
+	-- a leaning well, the words kept clear of its slanted ends
+	local well = Kit.frame({ Name = "Well", Parent = holder, Color = T.PaperDark, Radius = false })
+	local lean = Kit.slant(well, h) + 2
 	local box = Kit.textbox(placeholder, {
 		Parent = holder,
 		Size = UDim2.new(1, -lean * 2, 1, 0),
@@ -1711,13 +1711,13 @@ local function buildProfilePage()
 		})
 	end
 	heading("Name", 1)
-	local nameBox = Kit.textbox(
+	-- in a leaning well like the search box
+	local nameBox = inputWell(
 		"What are they called?",
 		{ Parent = scroll, Text = profile.name, LayoutOrder = 2, Size = UDim2.new(1, -10, 0, 42) }
 	)
 	nameBox.Font = Kit.Fonts.Title
 	nameBox.TextSize = 20
-	Kit.rim(nameBox, T.Line, 1)
 	nameField = nameBox
 	nameBox:GetPropertyChangedSignal("Text"):Connect(function()
 		if utf8.len(nameBox.Text) and (utf8.len(nameBox.Text) :: number) > Tuning.Villagers.NameMaxLength then
@@ -2393,21 +2393,25 @@ local function build()
 		Size = UDim2.new(1, 0, 0, 46),
 		Position = UDim2.fromOffset(0, 0),
 		Color = T.PaperDark,
-		Radius = "pill",
+		Radius = false,
 	})
-	Kit.rim(steps, T.Line, 1)
-	Kit.pad(steps, 4, 4)
-	Kit.list(steps, 4, true)
+	-- a leaning well with the two steps as leaning slabs in it (in a row of their own, so the
+	-- painted well under them stays put)
+	local stepsCap = Kit.slant(steps, 46)
+	local stepRow = Kit.box({ Name = "Steps", Parent = steps, Size = UDim2.fromScale(1, 1) })
+	stepRow.ZIndex = 2
+	Kit.pad(stepRow, 4 - stepsCap + math.ceil(stepsCap / 3), 4)
+	Kit.list(stepRow, 4, true)
 	stepButtons.look = Kit.button(
 		"1  Look",
-		{ Parent = steps, Size = UDim2.new(0.5, -2, 1, 0), TextSize = 18, Radius = "pill" },
+		{ Parent = stepRow, Size = UDim2.new(0.5, -2, 1, 0), TextSize = 18, Radius = "pill" },
 		function()
 			showStep("look")
 		end
 	)
 	stepButtons.profile = Kit.button(
 		"2  Name and personality",
-		{ Parent = steps, Size = UDim2.new(0.5, -2, 1, 0), TextSize = 18, Radius = "pill" },
+		{ Parent = stepRow, Size = UDim2.new(0.5, -2, 1, 0), TextSize = 18, Radius = "pill" },
 		function()
 			showStep("profile")
 		end
@@ -2432,9 +2436,9 @@ local function build()
 		Name = "Well",
 		Parent = searchRow,
 		Color = T.PaperDark,
-		Radius = "pill",
+		Radius = false,
 	})
-	Kit.rim(well, T.Line, 1)
+	Kit.slant(well, SECTION_H)
 	Icons.make("zoom", 18, {
 		Name = "Glass",
 		Parent = searchRow,

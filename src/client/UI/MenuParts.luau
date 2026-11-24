@@ -331,7 +331,7 @@ function MenuParts.slot(text: string, props: { [string]: any }?, onClick: (() ->
 		Title = text,
 		Sub = p.Sub,
 		Sunk = true,
-		LeftSpace = h - 2,
+		LeftSpace = h - 6,
 	}, onClick)
 	local lean: number = row:GetAttribute("Lean") or 6
 	local d = h - 18

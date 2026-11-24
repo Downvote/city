@@ -808,11 +808,13 @@ local function presetTray()
 			Position = UDim2.new(1, -4, 0, 4),
 			AnchorPoint = Vector2.new(1, 0),
 			Color = T.Paper,
-			Radius = "pill",
+			Radius = false,
 			ZIndex = 3,
 		})
-		Kit.pad(size, 6, 0)
-		Kit.text(Text.fill("{w} x {d}", { w = preset.w, d = preset.d }), {
+		-- a small leaning tag on the picture's corner (the room round the words is on the words)
+		Kit.slant(size, 18, true)
+		size.Position = UDim2.new(1, -10, 0, 4)
+		local sizeWords = Kit.text(Text.fill("{w} x {d}", { w = preset.w, d = preset.d }), {
 			Parent = size,
 			Size = UDim2.fromOffset(0, 18),
 			AutomaticSize = Enum.AutomaticSize.X,
@@ -822,6 +824,7 @@ local function presetTray()
 			Wrap = false,
 			ZIndex = 3,
 		})
+		Kit.new("UIPadding", { PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 4), Parent = sizeWords })
 		-- what is inside, in the hint while the mouse is on it
 		b.MouseEnter:Connect(function()
 			hovering = preset.desc

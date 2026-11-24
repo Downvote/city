@@ -78,14 +78,23 @@ local function tag(parent: Instance, name: string, right: boolean): any
 		Visible = false,
 		Parent = parent,
 	})
-	Kit.corner(pill, "pill")
-	local rim = Kit.rim(pill, T.White, 1.5, 0.3)
-	Kit.new("UIPadding", {
-		PaddingLeft = UDim.new(0, 8),
-		PaddingRight = UDim.new(0, 18),
+	-- a leaning tag, its slanted ends standing out past the name (what is on it sits in a row of
+	-- its own, so the painted slab under it is left where it is)
+	Kit.slant(pill, 36, true)
+	local row = Kit.new("Frame", {
+		Name = "Row",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(0, 36),
+		AutomaticSize = Enum.AutomaticSize.X,
+		ZIndex = 7,
 		Parent = pill,
 	})
-	Kit.list(pill, 8, true)
+	Kit.new("UIPadding", {
+		PaddingLeft = UDim.new(0, 6),
+		PaddingRight = UDim.new(0, 10),
+		Parent = row,
+	})
+	Kit.list(row, 8, true)
 	local mark = Kit.new("Frame", {
 		Name = "Mark",
 		BackgroundColor3 = T.Orange,
@@ -93,7 +102,7 @@ local function tag(parent: Instance, name: string, right: boolean): any
 		Size = UDim2.fromOffset(12, 12),
 		LayoutOrder = 1,
 		ZIndex = 7,
-		Parent = pill,
+		Parent = row,
 	})
 	Kit.corner(mark, "round")
 	local label = Kit.new("TextLabel", {
@@ -107,9 +116,9 @@ local function tag(parent: Instance, name: string, right: boolean): any
 		AutomaticSize = Enum.AutomaticSize.X,
 		LayoutOrder = 2,
 		ZIndex = 7,
-		Parent = pill,
+		Parent = row,
 	})
-	return { pill = pill, rim = rim, mark = mark, label = label, key = nil }
+	return { pill = pill, mark = mark, label = label, key = nil }
 end
 
 -- Puts `actor` on a tag (or takes it off), bright when they are talking.
@@ -132,8 +141,8 @@ local function fillTag(t: any, actor: Actor?, bright: boolean, hasBust: boolean)
 	end
 	local info = TweenInfo.new(0.18)
 	TweenService:Create(t.label, info, { TextColor3 = if bright then T.White else glass(0.5) }):Play()
-	TweenService:Create(t.rim, info, { Transparency = if bright then 0.3 else 0.82 }):Play()
-	TweenService:Create(t.pill, info, { BackgroundTransparency = if bright then 0 else 0.25 }):Play()
+	-- (the tag is a painted slab: its picture fades, never its own background)
+	Kit.fade(t.pill, info, if bright then 0 else 0.25)
 end
 
 -- A bust: a holder cut off at the hips, standing at the bottom of the screen in its slot, the
