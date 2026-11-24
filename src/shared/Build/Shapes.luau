@@ -35,16 +35,59 @@ local function sameSides(w: Plan.Wall): boolean
 	return w.a.c == w.b.c and w.a.m == w.b.m
 end
 
+local function fenceLike(w: Plan.Wall): boolean
+	local style = Plan.WallStyles[w.style]
+	return style ~= nil and style.fence == true
+end
+
 function Shapes.wallReach(plan: Plan.PlanData, key: string): (Reach, Reach)
 	local w = plan.walls[key]
 	local d = Plan.wallDir(w)
 	local n = Plan.wallNormal(w)
 	local function reach(x: number, z: number): Reach
+		-- A fence (or a railing, hedge or stone wall) carrying a full wall's line on from a
+		-- corner doesn't change how the walls there meet: they close the corner as if it
+		-- weren't there, and it starts at the face of the wall across its end. (Otherwise the
+		-- corner was left open where the fence's end stood in it.)
+		local ends: { [string]: Plan.Wall } = { [key] = w }
+		for otherKey, o in plan.walls do
+			if otherKey ~= key and o.lv == w.lv and (sameSpot(o.x1, o.z1, x, z) or sameSpot(o.x2, o.z2, x, z)) then
+				ends[otherKey] = o
+			end
+		end
+		local function carriesOn(k: string): boolean
+			local o = ends[k]
+			if not o or not fenceLike(o) then
+				return false
+			end
+			local od = Plan.wallDir(o)
+			for qk, q in ends do
+				if qk ~= k and not fenceLike(q) and math.abs(Plan.wallDir(q):Dot(od)) >= 0.999 then
+					return true
+				end
+			end
+			return false
+		end
+		if carriesOn(key) then
+			local across = 0
+			for qk, q in ends do
+				if qk ~= key and not fenceLike(q) and math.abs(Plan.wallDir(q):Dot(d)) < 0.999 then
+					across = math.max(across, Plan.wallThickness(q.style) / 2)
+				end
+			end
+			if across > 0 then
+				return { -across, -across }
+			end
+		end
 		local continues = false -- a wall carries straight on from here
 		local lineKey = key -- the smallest key along this wall's own line here
 		local angled: { { key: string, wall: Plan.Wall, away: Vector3 } } = {}
 		for otherKey, o in plan.walls do
-			if otherKey ~= key and o.lv == w.lv then
+			if
+				otherKey ~= key
+				and o.lv == w.lv
+				and not (ends[otherKey] and not fenceLike(w) and carriesOn(otherKey))
+			then
 				local at1, at2 = sameSpot(o.x1, o.z1, x, z), sameSpot(o.x2, o.z2, x, z)
 				local od = Plan.wallDir(o)
 				local straight = math.abs(od:Dot(d)) >= 0.999
@@ -90,10 +133,11 @@ function Shapes.wallReach(plan: Plan.PlanData, key: string): (Reach, Reach)
 		if continues then
 			return { 0, 0 }
 		end
-		-- a corner: who owns it?
+		-- a corner: who owns it? (a full wall before a fence, which draws no corner of its own)
 		local owner, ownerWall = key, w
 		for _, p in angled do
-			if p.key < owner then
+			local mine, theirs = fenceLike(ownerWall), fenceLike(p.wall)
+			if (mine and not theirs) or (mine == theirs and p.key < owner) then
 				owner, ownerWall = p.key, p.wall
 			end
 		end
@@ -109,7 +153,8 @@ function Shapes.wallReach(plan: Plan.PlanData, key: string): (Reach, Reach)
 		end
 		local other = angled[1]
 		local t = Plan.wallThickness(other.wall.style) / 2
-		if sameSides(w) then
+		if sameSides(w) or fenceLike(other.wall) then
+			-- (a fence draws no corner, so both layers run on to its far face)
 			return { t, t }
 		end
 		-- the layer on the other wall's side is the inside of the corner
@@ -471,10 +516,16 @@ function Shapes.roof(r: Plan.Roof): { Prim }
 				up
 			)
 		)
+		-- The ends stop at the high side's face, which runs on over them to their outer faces:
+		-- the same shape, but where the high side leans on a taller wall the ends' feet keep off
+		-- the joints of the walls under that wall's foot.
+		local g = GABLE / 2
+		local vEnd = V - g
+		local topEnd = y0 + r.rise * vEnd / V
 		for _, u in { 0, U } do
-			add(Geometry.triangle(Pt(u, y0, 0), Pt(u, y0, V), Pt(u, top, V), GABLE, color2, r.m2))
+			add(Geometry.triangle(Pt(u, y0, 0), Pt(u, y0, vEnd), Pt(u, topEnd, vEnd), GABLE, color2, r.m2))
 		end
-		add(Geometry.quad(Pt(0, y0, V), Pt(U, y0, V), Pt(U, top, V), Pt(0, top, V), GABLE, color2, r.m2))
+		add(Geometry.quad(Pt(-g, y0, V), Pt(U + g, y0, V), Pt(U + g, top, V), Pt(-g, top, V), GABLE, color2, r.m2))
 	end
 	return out
 end

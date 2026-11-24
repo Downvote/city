@@ -406,6 +406,18 @@ describe("Shapes", function()
 		mid.walls["1"] = wall(0, 0, 20, 0)
 		mid.walls["2"] = two(wall(10, 0, 10, 10))
 		check(mid, {})
+		-- a hedge carrying a wall on from a corner: the two walls still close the corner between
+		-- them (the wall's outside layer runs on to the far face), and the hedge starts at the
+		-- face of the wall across its end
+		local carry = Plan.new()
+		carry.walls["1"] = two(wall(0, 0, 10, 0))
+		carry.walls["2"] = two(wall(10, 0, 10, 10))
+		carry.walls["3"] = wall(10, 0, 16, 0, 0, "hedge")
+		check(carry, { { 10, 0 } })
+		local _, onto = Shapes.wallReach(carry, "1")
+		expect(math.max(onto[1], onto[2])).toBeNear(P.WallThickness / 2, 1e-6)
+		local from = Shapes.wallReach(carry, "3")
+		expect(from[1]).toBeNear(-P.WallThickness / 2, 1e-6)
 		-- a straight run doesn't reach at all
 		local run = Plan.new()
 		run.walls["1"] = wall(0, 0, 10, 0)

@@ -122,9 +122,9 @@ return function(add: any)
 			-- outside: the sign out from the foyer's side, posters either side of the foyer with
 			-- a lamp over each, lamps on the pavement, trim, stone along the foot of the walls
 			hang(b, "sign_music", "fright", 0.9, 8.6, "a")
-			hang(b, "art_abstract", "hfront1", 2, 3.4, "a", PLUM_C, WHITE)
+			hang(b, "art_abstract", "hfront1", 2.15, 3.4, "a", PLUM_C, WHITE) -- (off the corner board)
 			hang(b, "art_landscape", "hfront3", 2, 3.4, "a")
-			hang(b, "sconce", "hfront1", 2, 7.6, "a")
+			hang(b, "sconce", "hfront1", 2.15, 7.6, "a")
 			hang(b, "sconce", "hfront3", 2, 7.6, "a")
 			hang(b, "bunting", "ffront", 6, 9.6, "a", WHITE)
 			hang(b, "art_abstract", "hleft", 17.8, 3.4, "a", BERRY, WHITE)

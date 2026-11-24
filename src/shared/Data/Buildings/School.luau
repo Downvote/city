@@ -215,13 +215,13 @@ return function(add: any)
 			putAt("weathervane", 14, 9, 0, Plan.levelBase(2), 2)
 
 			-- the porch under the tower -------------------------------------------------------
-			put("doorstep", 14, 4.5, 180, PALE_STONE, STONE)
+			put("doorstep", 14, 4.45, 180, PALE_STONE, STONE)
 			put("doormat", 14, 7.6, 0)
 			for _, x in { 11.2, 16.8 } do
-				put("bench_wood", x, 9.3, if x < 14 then 90 else 270, OAK_PAINT, WALNUT)
+				put("bench_wood", x, 9.1, if x < 14 then 90 else 270, OAK_PAINT, WALNUT) -- (clear of the arch)
 			end
-			hang("coat_hooks", "tleft", 9.3, 5.2, "b")
-			hang("coat_hooks", "tright", 9.3, 5.2, "b")
+			hang("coat_hooks", "tleft", 9.1, 5.2, "b")
+			hang("coat_hooks", "tright", 9.1, 5.2, "b")
 			put("light_ceiling", 14, 9, 0)
 
 			-- the classroom -------------------------------------------------------------------
@@ -247,11 +247,11 @@ return function(add: any)
 			putAt("kettle", 24.9, 23.6, 250, top("cabinet"))
 			putAt("plant_small", 24.9, 25.8, 0, top("cabinet"))
 			hang("clock_wall", "back", 14, 8.6, "b")
-			hang("art_abstract", "right", 24.6, 5.4, "b")
-			hang("art_flowers", "right", 25.9, 5.4, "b")
+			hang("art_abstract", "right", 24.6, 4.6, "b")
+			hang("art_flowers", "right", 25.9, 7.8, "b") -- (hung above the other, not over it)
 			hang("art_landscape", "fl", 6, 8.9, "b")
 			hang("shelf_wall", "fr", 22, 9.4, "b")
-			hang("curtains", "left", 15, 2.2, "b")
+			hang("curtains", "left", 15.05, 2.25, "b")
 			hang("bunting", "mid", 14, 10.2, "b")
 			for _, x in { 8, 20 } do
 				put("lamp_pendant", x, 18, 0)

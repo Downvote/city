@@ -15,18 +15,6 @@ local Z = Harness.loadFile("tools/preview/zfight_lib.luau")()
 local Recipe = require("ReplicatedStorage.Shared.Build.Recipe")
 
 local KNOWN = {
-	"presets:preset:bakery",
-	"presets:preset:cafe",
-	"presets:preset:clinic",
-	"presets:preset:florist",
-	"presets:preset:icecream",
-	"presets:preset:library",
-	"presets:preset:market",
-	"presets:preset:musichall",
-	"presets:preset:postoffice",
-	"presets:preset:school",
-	"presets:preset:studio",
-	"presets:preset:workshop",
 	"town:ground",
 }
 

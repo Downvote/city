@@ -135,7 +135,8 @@ return function(add: any)
 			end
 			for _, t in { 2, 6, 10 } do
 				hang(b, "stone_footing", "storeback", t, 0, "a")
-				hang(b, "stone_footing", "storeright", t, 0, "a")
+				-- (the first a hair along, its end off the face of the fence's last paling)
+				hang(b, "stone_footing", "storeright", if t == 2 then 2.05 else t, 0, "a")
 			end
 			for _, t in { 2, 16 } do
 				hang(b, "stone_footing", "front", t, 0, "a")
@@ -200,7 +201,7 @@ return function(add: any)
 			put(b, "chimney_hearth", 3.9, 18, 90, nil, "B8665C", "DAD4C8")
 			put(b, "workbench", 5.6, 24.5, 180, nil, OAK, WALNUT)
 			put(b, "lamp_desk", 4.4, 24.6, 200, top("workbench"), MUSTARD)
-			hang(b, "tool_board", "back", 14.4, 6.2, "b", WALNUT, PALE)
+			hang(b, "tool_board", "back", 14.4, 7.8, "b", WALNUT, PALE) -- (over the window's head)
 			put(b, "timber_rack", 16, 24.5, 180, nil, DARK, PALE)
 			put(b, "sawhorse", 4.8, 13.2, 0, nil, OAK, PALE)
 			put(b, "crate", 3.6, 22, 0, nil, OAK, OAK)

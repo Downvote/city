@@ -161,11 +161,12 @@ return function(add: any)
 			hang(b, "trellis", "gback", 12, 1.3, "a", WHITE, "E9C46A")
 			hang(b, "downpipe", "right", 17.3, 0, "a")
 			hang(b, "downpipe", "right1", 17.3, 0, "a")
+			-- (the upper one over the gallery a hair up off its roof)
 			put(b, "corner_board", 18, 4, 180, 0)
 			put(b, "corner_board", 32, 4, 90, 0)
 			put(b, "corner_board", 32, 22, 0, 0)
-			for _, c in { { 18, 4, 180 }, { 32, 4, 90 }, { 32, 22, 0 }, { 18, 22, 270 } } do
-				b:item("corner_board", c[1], c[2], c[3], 1)
+			for _, c in { { 18, 4, 180, 0 }, { 32, 4, 90, 0 }, { 32, 22, 0, 0 }, { 18, 22, 270, 0.05 } } do
+				b:item("corner_board", c[1], c[2], c[3], 1, F + Tuning.Plot.LevelHeight + c[4])
 			end
 			put(b, "corner_board", 2, 10, 180, 0)
 			put(b, "corner_board", 2, 22, 270, 0)

@@ -188,7 +188,7 @@ return function(add: any)
 			})
 			b:roof(2, 8, 22, 26, "hip", 7, 0, ROOF, SANDSTONE, 1, 1)
 			-- the pediment: a gable to the street on the pillars, dying into the upper wall
-			b:roof(4, 2, 20, 8, "gable", 4, 1, ROOF, PEDIMENT, 0, 0.3)
+			b:roof(4, 2, 20, 8, "gable", 4, 1, ROOF, PEDIMENT, 0, 0.22) -- (its back ends inside the wall)
 			for _, x in { 5.2, 9.2, 14.8, 18.8 } do
 				putAt("pillar_round", x, 3.4, 0, F, 0, PALE_STONE, PALE_STONE)
 			end
@@ -204,7 +204,8 @@ return function(add: any)
 			open("door_glass", "right", 17, FOREST, FOREST)
 			window("right", 12)
 			window("right", 23)
-			for _, z in { 11, 17, 23 } do
+			-- (the middle one a hair along, its frame off the gallery rail's end)
+			for _, z in { 11, 17.03, 23 } do
 				window("upright", z)
 			end
 			for _, z in { 12, 20 } do
@@ -265,7 +266,7 @@ return function(add: any)
 			-- the reading room ----------------------------------------------------------------
 			-- the stair up the left wall, a long reading table with green lamps, armchairs
 			-- by the window, the desk under the gallery's edge
-			putAt("stairs_straight", 4.3, 16.3, 180, F, 0, WALNUT, WALNUT)
+			putAt("stairs_straight", 4.35, 16.3, 180, F, 0, WALNUT, WALNUT) -- (its rail off the plane of the window sills)
 			put("work_library", 13, 18.9, 180, WALNUT, "F2E6CC")
 			put("table_dining_long", 17.6, 11.4, 0, WALNUT)
 			for _, x in { 15.2, 17.6, 20 } do

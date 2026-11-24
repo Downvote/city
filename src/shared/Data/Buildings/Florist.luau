@@ -137,7 +137,7 @@ return function(add: any)
 			for _, t in { 2, 6, 10, 14 } do
 				hang(b, "stone_footing", "left", t, 0, "a")
 			end
-			for _, t in { 6, 10, 14 } do
+			for _, t in { 6.9, 10.45, 14 } do -- (clear of the door's frame)
 				hang(b, "stone_footing", "back", t, 0, "a")
 			end
 			hang(b, "stone_footing", "side", 2, 0, "a")

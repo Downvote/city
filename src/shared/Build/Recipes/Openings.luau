@@ -220,11 +220,12 @@ local function slope(
 end
 
 -- A bracket on a wall item's wall (z = 0) under a shelf at height y: a triangle `drop` tall
--- and `out` deep, as one wedge turned upside down, with a little scroll at its foot.
+-- and `out` deep, as one wedge turned upside down, with a little scroll at its foot (its face
+-- off the plane of a corner board's, 0.18 out, where a hood runs over one).
 local function bracket(q: R, x: number, y: number, drop: number, out: number, color: Color3, mat: string?)
 	local m = mat or "Wood"
 	q:wedge(CFrame.new(x, y - drop / 2, 0.02 + out / 2) * CFrame.Angles(math.pi, 0, 0), 0.16, drop, out, color, m)
-	q:block(x - 0.08, y - drop - 0.12, 0.02, x + 0.08, y - drop + 0.06, 0.16, color, m)
+	q:block(x - 0.08, y - drop - 0.12, 0.02, x + 0.08, y - drop + 0.06, 0.15, color, m)
 end
 
 -- A louvred shutter from x1 to x2, y0 to y1, its back at z: two stiles and rails (frame) with

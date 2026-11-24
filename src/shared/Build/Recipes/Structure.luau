@@ -98,8 +98,9 @@ local function stairs(r: R, w: number, d: number, rails: boolean)
 				q:block(x - 0.22, 0, zb - 0.22, x + 0.22, 4.5, zb + 0.22, r.c2, "Wood")
 				q:block(x - 0.27, 4.5, zb - 0.27, x + 0.27, 4.64, zb + 0.27, r.c2, "Wood")
 				q:ball(x, 4.78, zb, 0.3, r.c2, "Wood")
-				q:block(x - 0.22, H, zt - 0.22, x + 0.22, H + 3.36, zt + 0.22, r.c2, "Wood")
-				q:block(x - 0.27, H + 3.36, zt - 0.27, x + 0.27, H + 3.48, zt + 0.27, r.c2, "Wood")
+				-- (the top newel's cap stands a little proud of a railing round the stairwell)
+				q:block(x - 0.22, H, zt - 0.22, x + 0.22, H + 3.44, zt + 0.22, r.c2, "Wood")
+				q:block(x - 0.27, H + 3.44, zt - 0.27, x + 0.27, H + 3.58, zt + 0.27, r.c2, "Wood")
 				for i = 1, steps do
 					local z = d / 2 - (i - 0.5) * run
 					q:block(x - 0.07, i * rise, z - 0.07, x + 0.07, i * rise + 3.2, z + 0.07, r.c2, "Wood")
@@ -416,12 +417,13 @@ local items: { any } = {
 		build = function(r: R)
 			-- Two boards that wrap the outside corner of a house, from the ground to the eaves.
 			-- The corner is the middle of the footprint and the house is behind it and to its
-			-- left (-x, -z); turn it for the other corners. c1 the boards, c2 the foot.
+			-- left (-x, -z); turn it for the other corners. c1 the boards, c2 the foot, whose
+			-- ends stand a little proud of a stone wall running on from the corner.
 			local top = H + F
 			r:block(WALL, 0, -0.6, WALL + 0.18, top, WALL + 0.18, r.c1, "Wood")
 			r:block(-0.6, 0, WALL, WALL, top, WALL + 0.18, r.c1, "Wood")
-			r:block(WALL, 0, -0.68, WALL + 0.31, 1.5, WALL + 0.31, r.c2, "Wood")
-			r:block(-0.68, 0, WALL, WALL, 1.5, WALL + 0.31, r.c2, "Wood")
+			r:block(WALL, 0, -0.73, WALL + 0.31, 1.5, WALL + 0.31, r.c2, "Wood")
+			r:block(-0.73, 0, WALL, WALL, 1.5, WALL + 0.31, r.c2, "Wood")
 		end,
 	},
 	{

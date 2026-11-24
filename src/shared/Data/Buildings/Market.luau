@@ -138,7 +138,7 @@ return function(add: any)
 			b:open("win_square", "upfront", 20)
 			b:open("win_square", "upright", 5)
 			b:open("win_square", "upright", 15)
-			b:open("win_square", "upback", 4)
+			b:open("win_square", "upback", 3.4) -- (its frame clear of the railing's end post)
 			b:open("win_square", "upback", 16)
 			b:open("win_square", "upleft", 5)
 			b:open("win_square", "upleft", 15)
@@ -160,7 +160,12 @@ return function(add: any)
 				hang(b, "window_box", w.w, w.t, 1.65, "a", WALNUT, CORAL)
 			end
 			for _, w in
-				{ { w = "upleft", t = 5 }, { w = "upleft", t = 15 }, { w = "upback", t = 4 }, { w = "upback", t = 16 } }
+				{
+					{ w = "upleft", t = 5 },
+					{ w = "upleft", t = 15 },
+					{ w = "upback", t = 3.4 },
+					{ w = "upback", t = 16 },
+				}
 			do
 				hang(b, "shutters", w.w, w.t, 2.85, "a", FOREST, FOREST_DARK)
 				hang(b, "window_box", w.w, w.t, 1.65, "a", WALNUT, "9C86B8")
@@ -195,7 +200,7 @@ return function(add: any)
 			-- at the end, lights strung along the shop front
 			b:item("work_market", 8.6, 7.2, 180)
 			paint(b, FOREST, TRIM)
-			b:item("porch_post", 15.6, 6.4, 0, 0, F - 0.04) -- (its top just under the floor above)
+			b:item("porch_post", 15.6, 6.45, 0, 0, F - 0.04) -- (its top just under the floor above)
 			paint(b, FOREST, TRIM)
 			b:item("bench_garden", 24.7, 9.2, 270, 0, F)
 			hang(b, "lantern_wall", "arcright", 3, 6.2, "b")
@@ -224,9 +229,9 @@ return function(add: any)
 			-- the shop ----------------------------------------------------------------------------
 			-- by the door: the till on two counters, the bread on a rack
 			b:item("doormat", 20.2, 13.4, 0)
-			b:item("counter", 24.3, 14.2, 270)
+			b:item("counter", 24.3, 14.25, 270)
 			b:item("counter", 24.3, 17.2, 270)
-			b:item("books_stack", 24.3, 13.6, 80, 0, top("counter"))
+			b:item("books_stack", 24.3, 13.65, 80, 0, top("counter"))
 			b:item("plant_small", 24.5, 18.1, 0, 0, top("counter"))
 			b:item("lantern", 24.2, 16.4, 0, 0, top("counter"))
 			b:item("bread_rack", 15.2, 13.2, 0)
@@ -235,14 +240,14 @@ return function(add: any)
 			b:item("shop_shelves", 3.1, 19.2, 90)
 			b:item("shop_shelves", 3.1, 23.4, 90)
 			b:item("shop_shelves", 24.9, 20.6, 270)
-			b:item("pantry", 24.5, 24.2, 270)
+			b:item("pantry", 24.5, 24.26, 270)
 			b:item("shop_shelves", 17, 16.6, 180)
 			b:item("shop_shelves", 17, 18.2, 0)
 			-- crates of fruit and veg in the window, back to back
 			b:item("produce_stand", 9.6, 15.8, 180)
 			b:item("produce_stand", 9.6, 18.8, 0)
 			-- the stairs up along the back wall, and under their high end more crates
-			b:item("stairs_straight", 13.5, 23.7, 90)
+			b:item("stairs_straight", 13.5, 23.61, 90)
 			paint(b, OAK.c, TRIM)
 			b:item("crate", 8.2, 24.4, 0)
 			b:item("crate", 10.6, 24.5, 10)
@@ -269,10 +274,10 @@ return function(add: any)
 			b:item("kettle", 3.3, 12.2, 90, 1, top("cabinet", 1))
 			b:item("plant_small", 3.3, 9.8, 0, 1, top("cabinet", 1))
 			-- the shopkeeper's desk under the window, for the accounts
-			b:item("desk", 22, 7.6, 0, 1)
-			b:item("chair_wood", 22, 9.7, 180, 1)
-			b:item("lamp_desk", 23.6, 7.4, 200, 1, top("desk", 1))
-			b:item("books_stack", 20.8, 7.3, 0, 1, top("desk", 1))
+			b:item("desk", 22, 7.8, 0, 1)
+			b:item("chair_wood", 22, 9.9, 180, 1)
+			b:item("lamp_desk", 23.6, 7.85, 200, 1, top("desk", 1))
+			b:item("books_stack", 20.8, 7.5, 0, 1, top("desk", 1))
 			b:item("coat_stand", 8.4, 14.8, 0, 1)
 			b:item("light_ceiling", 8, 11, 0, 1)
 			b:item("light_ceiling", 19, 11, 0, 1)
@@ -285,7 +290,7 @@ return function(add: any)
 			-- the stock room behind it
 			b:item("shop_shelves", 11, 17.1, 0, 1)
 			b:item("shop_shelves", 15.2, 17.1, 0, 1)
-			b:item("cabinet", 24.8, 18.8, 270, 1)
+			b:item("cabinet", 24.65, 18.8, 270, 1)
 			b:item("crate", 22.2, 24.4, 0, 1)
 			b:item("crate", 24.5, 24.5, 20, 1)
 			b:item("crate", 22.3, 24.3, 350, 1, UP + 2)
@@ -293,8 +298,8 @@ return function(add: any)
 			b:item("stool", 19.6, 18.8, 0, 1)
 			b:item("light_ceiling", 13, 19.4, 0, 1)
 			b:item("light_ceiling", 23, 21.4, 0, 1)
-			hang(b, "coat_hooks", "upleft", 7.6, 5.2, "b")
-			hang(b, "shelf_wall", "upback", 2.4, 6.8, "b")
+			hang(b, "coat_hooks", "upmid", 19, 5.2, "b")
+			hang(b, "shelf_wall", "upback", 2.3, 6.9, "b")
 		end
 	)
 end
