@@ -35,39 +35,10 @@ local IconArt = {}
 local A: { [string]: { Vector.Layer } } = {}
 IconArt.art = A
 
-local GAP = 2 -- how wide a cut is
-
--- A solid shape. The thin line round it takes the points off its corners (and makes it half
--- that line wider all round).
-local function solid(d: string, edge: number?): Vector.Layer
-	return { d, fill = true, w = edge or 1 }
-end
-
--- A solid shape just as it is written: circles, and shapes that should keep a sharp point.
-local function flat(d: string): Vector.Layer
-	return { d, fill = true }
-end
-
--- A hole: a shape rubbed out of what is under it.
-local function hole(d: string): Vector.Layer
-	return { d, fill = true, cut = true }
-end
-
--- A gap: a line rubbed out of what is under it.
-local function gap(d: string, w: number?): Vector.Layer
-	return { d, cut = true, w = w or GAP }
-end
-
--- Room for a shape that is about to be laid over others: the shape rubbed out, and `margin`
--- more all round it.
-local function clear(d: string, margin: number?): Vector.Layer
-	return { d, fill = true, cut = true, w = (margin or GAP) * 2 }
-end
-
--- A line of a width of its own.
-local function line(d: string, w: number): Vector.Layer
-	return { d, w = w }
-end
+-- The layers (UI/Vector): solid (a filled shape, its corners taken off), flat (filled just as
+-- written), hole (a shape rubbed out), gap (a line rubbed out, 2 wide unless told), clear (room
+-- rubbed out round a shape about to be laid over others), line (a line of its own width).
+local solid, flat, hole, gap, clear, line = Vector.solid, Vector.flat, Vector.hole, Vector.gap, Vector.clear, Vector.line
 
 -- signs ------------------------------------------------------------------------------------------------
 

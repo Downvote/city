@@ -1,48 +1,31 @@
 --!strict
--- Vector pictures of food: what villagers crave. The user: "make vector art for items
--- like carrots, cakes, etc.", then "redo the icons, so that it matches the icon style in zenless
--- zone zero ... this includes the food and things icons". We take that style and none of that
--- game's pictures or dishes: every thing here is our own design.
+-- The foods: what villagers crave, as icons. The user: "make vector art for items like carrots,
+-- cakes, etc.", then "redo the icons, so that it matches the icon style in zenless zone zero ...
+-- this includes the food and things icons", and then "make food and thing icons sillouhettes like
+-- normal icons as well". We take that style and none of that game's pictures or dishes: every
+-- thing here is our own design.
 --
--- So each thing is painted with volume, lit from the top left. The painter (UI/Vector) has flat
--- fills and no gradients, so a form is a stack of shapes: its outline in a deep tone of its own
--- colour (a thin edge that keeps it clear of a dark panel and a light one), the base colour, a
--- darker tone on the side away from the light, a lighter one where the light lands, then a few
--- small bright glints on whatever is glossy. Shadows on food stay warm (a red shades to plum, a
--- yellow to amber, never to grey). A dish sits in or on something, seen a little from above:
--- `bowl` and `plate` below are the one bowl and the one plate, recoloured.
+-- So a food is drawn like an interface icon (the rules are at the top of UI/IconArt, and the
+-- Icons spec holds them here too): one solid silhouette in one colour, its details cut out of it
+-- (the leaf apart from the apple, the scores out of the bread, the gaps in the steam over the
+-- soup), never an outline and never a second tone. Cuts and gaps are 1.5 to 2 wide so they last
+-- at 16 pixels, circles are true, corners firm, points point, and nothing comes nearer than 1.5
+-- to the edge of the 24 grid. The big shape tells you what it is at 16 to 24 pixels; a cut or two
+-- says which one.
 --
--- The edge is a stroke 0.7 wide laid under the shape. It carries a fill as well only where the
--- shape on top is made of several pieces (a wedge's faces) or the edge is very thin, so nothing
--- shows through the joins. Every layer is painted across the whole square, so marks that share a
--- colour go in one layer.
---
--- Drawn on the same 24 grid as the icons (UI/IconArt), big in the square with a margin of
--- about 1. The big shapes carry the picture at 24 pixels; the small marks show when one is drawn
--- big. Look at them on a dark panel and a light one (tools/preview/art.sh, and a craving on the
--- villagers' screen: tools/preview/ui.sh panel:Residents:craving and
--- light:panel:Residents:craving). The name is the food's id (Data/Foods). (A party cake and a
--- bottle of medicine were here for the shop, which is gone: "remove the shop, buying of things and
--- food and feeding".)
+-- The art has no colour of its own. A food is shown in its own colour (Data/Foods' `color`: a red
+-- apple, a brown loaf), which Icons.item takes, or in whatever colour the place that shows it
+-- asks for (Color, as Icons.make takes it). Each one also has a shape list in UI/Icons, drawn
+-- when the game can't make pictures. Look at them with tools/preview/art.sh (no names: every
+-- icon; or name the foods), and on the screens: tools/preview/ui.sh panel:Residents:craving and
+-- light:panel:Residents:craving, and bubbles. The name is the food's id (Data/Foods).
 
 local Vector = require(script.Parent.Vector)
 
-local circle, ellipse = Vector.circle, Vector.ellipse
+local circle, rect, ellipse = Vector.circle, Vector.rect, Vector.ellipse
+local solid, flat, hole, gap, clear, line = Vector.solid, Vector.flat, Vector.hole, Vector.gap, Vector.clear, Vector.line
 
 type Layers = { Vector.Layer }
-
-local function rgb(r: number, g: number, b: number): Color3
-	return Color3.fromRGB(r, g, b)
-end
-
--- The brightest spot on anything glossy, and the shadow a thing casts on the table.
-local GLINT = rgb(255, 250, 236)
-local SHADOW = rgb(20, 12, 30)
-local STEAM = rgb(216, 224, 240)
-
-local function shadow(cx: number, cy: number, rx: number, ry: number): Vector.Layer
-	return { ellipse(cx, cy, rx, ry), fill = SHADOW, opacity = 0.32 }
-end
 
 -- Several lists of layers as one.
 local function join(...: Layers): Layers
@@ -55,56 +38,8 @@ local function join(...: Layers): Layers
 	return out
 end
 
--- Moves a path: every point scaled by k (from the grid's corner), then shifted by (dx, dy).
--- For paths written with capital commands, which is all of them here.
-local SHAPE: { [string]: string } =
-	{ M = "xy", L = "xy", H = "x", V = "y", C = "xy", S = "xy", Q = "xy", T = "xy", A = "rr...xy", Z = "" }
-local function movePath(d: string, dx: number, dy: number, k: number): string
-	local out: { string } = {}
-	local kinds, at = "", 0
-	local pos = 1
-	while pos <= #d do
-		local a, b = string.find(d, "^[%s,]*%a", pos)
-		if a and b then
-			local command = string.sub(d, b, b)
-			kinds, at = SHAPE[command] or "", 0
-			table.insert(out, command)
-			pos = b + 1
-		else
-			a, b = string.find(d, "^[%s,]*[%+%-]?%d*%.?%d+", pos)
-			if not a or not b then
-				break
-			end
-			local n = tonumber((string.gsub(string.sub(d, a, b), "[%s,]", ""))) or 0
-			local kind = string.sub(kinds, at % #kinds + 1, at % #kinds + 1)
-			at += 1
-			if kind == "x" then
-				n = n * k + dx
-			elseif kind == "y" then
-				n = n * k + dy
-			elseif kind == "r" then
-				n *= k
-			end
-			table.insert(out, string.format("%.3f", n))
-			pos = b + 1
-		end
-	end
-	return table.concat(out, " ")
-end
-
--- The same for a whole drawing (strokes keep their weight in step with the size).
-local function moved(layers: Layers, dx: number, dy: number, k: number?): Layers
-	local scale = k or 1
-	local out: Layers = {}
-	for _, layer in layers do
-		local l: { [any]: any } = if type(layer) == "string" then { layer } else table.clone(layer :: any)
-		l[1] = movePath(l[1], dx, dy, scale)
-		if l.w then
-			l.w *= scale
-		end
-		table.insert(out, l)
-	end
-	return out
+local function n(v: number): string
+	return string.format("%.3f", v)
 end
 
 -- Turns a drawing about (cx, cy), clockwise in degrees. Only for paths made of points (M, L, C,
@@ -116,14 +51,14 @@ local function turned(layers: Layers, degrees: number, cx: number, cy: number): 
 		local l: { [any]: any } = if type(layer) == "string" then { layer } else table.clone(layer :: any)
 		local x: number? = nil
 		l[1] = string.gsub(l[1], "[%+%-]?%d*%.?%d+", function(text: string): string
-			local n = tonumber(text) or 0
+			local v = tonumber(text) or 0
 			if x == nil then
-				x = n
+				x = v
 				return ""
 			end
-			local dx, dy = (x :: number) - cx, n - cy
+			local dx, dy = (x :: number) - cx, v - cy
 			x = nil
-			return string.format("%.3f %.3f", cx + dx * c - dy * s, cy + dx * s + dy * c)
+			return n(cx + dx * c - dy * s) .. " " .. n(cy + dx * s + dy * c)
 		end)
 		table.insert(out, l)
 	end
@@ -132,39 +67,38 @@ end
 
 -- A box as points, for `turned`.
 local function box(x: number, y: number, w: number, h: number): string
-	return string.format("M%.3f %.3f L%.3f %.3f L%.3f %.3f L%.3f %.3f Z", x, y, x + w, y, x + w, y + h, x, y + h)
+	return string.format("M%s %s L%s %s L%s %s L%s %s Z", n(x), n(y), n(x + w), n(y), n(x + w), n(y + h), n(x), n(y + h))
 end
 
--- Short marks across a ring, from one ellipse to another round the same middle: the crimps in a
--- pie's crust, the ribs of a lid. From angle a0 to a1 in degrees (0 is the right, 90 the front).
-local function ticks(
-	cx: number,
-	cy: number,
-	rx1: number,
-	ry1: number,
-	rx2: number,
-	ry2: number,
-	n: number,
-	a0: number,
-	a1: number
-): string
-	local out: { string } = {}
-	for i = 0, n - 1 do
-		local a = math.rad(a0 + (a1 - a0) * i / math.max(1, n - 1))
-		local c, s = math.cos(a), math.sin(a)
-		table.insert(
-			out,
-			string.format("M%.3f %.3f L%.3f %.3f", cx + rx1 * c, cy + ry1 * s, cx + rx2 * c, cy + ry2 * s)
-		)
-	end
-	return table.concat(out, " ")
+-- A leaf: pointed at both ends, from its base (bx, by) to its tip (tx, ty), w across at its
+-- widest on each side of the middle.
+local function leaf(bx: number, by: number, tx: number, ty: number, w: number): string
+	local mx, my = (bx + tx) / 2, (by + ty) / 2
+	local dx, dy = tx - bx, ty - by
+	local len = math.sqrt(dx * dx + dy * dy)
+	-- a curve's middle comes half way to its control point
+	local ox, oy = -dy / len * w * 2, dx / len * w * 2
+	return string.format(
+		"M%s %s Q%s %s %s %s Q%s %s %s %s Z",
+		n(bx),
+		n(by),
+		n(mx + ox),
+		n(my + oy),
+		n(tx),
+		n(ty),
+		n(mx - ox),
+		n(my - oy),
+		n(bx),
+		n(by)
+	)
 end
 
 -- A five pointed star with sides that swell: R out to the tips, r in to the notches, `swell`
--- how far each side bows out (grid units).
-local function star(cx: number, cy: number, R: number, r: number, swell: number): string
+-- how far each side bows out (grid units). `turn` turns it, in degrees.
+local function star(cx: number, cy: number, R: number, r: number, swell: number, turn: number?): string
+	local t = turn or 0
 	local function at(radius: number, degrees: number): (number, number)
-		local a = math.rad(degrees)
+		local a = math.rad(degrees + t)
 		return cx + radius * math.cos(a), cy + radius * math.sin(a)
 	end
 	-- the point a side bends through: its middle pushed away from the star's middle
@@ -178,1388 +112,372 @@ local function star(cx: number, cy: number, R: number, r: number, swell: number)
 		return mx + nx / len * swell * 2, my + ny / len * swell * 2
 	end
 	local px, py = at(r, -126)
-	local out = { string.format("M%.3f %.3f", px, py) }
+	local out = { "M" .. n(px) .. " " .. n(py) }
 	for i = 0, 4 do
 		local tx, ty = at(R, -90 + i * 72)
 		local nx, ny = at(r, -54 + i * 72)
 		local ax, ay = bend(px, py, tx, ty)
 		local bx, by = bend(tx, ty, nx, ny)
-		table.insert(out, string.format("Q%.3f %.3f %.3f %.3f Q%.3f %.3f %.3f %.3f", ax, ay, tx, ty, bx, by, nx, ny))
+		table.insert(out, string.format("Q%s %s %s %s Q%s %s %s %s", n(ax), n(ay), n(tx), n(ty), n(bx), n(by), n(nx), n(ny)))
 		px, py = nx, ny
 	end
 	table.insert(out, "Z")
 	return table.concat(out, " ")
 end
 
--- The kit: the bowl, the plate and other things more than one picture uses.
+-- A four pointed sparkle, its points `r` out from (cx, cy).
+local function sparkle(cx: number, cy: number, r: number): string
+	local k = r * 0.16
+	return string.format(
+		"M%s %s Q%s %s %s %s Q%s %s %s %s Q%s %s %s %s Q%s %s %s %s Z",
+		n(cx),
+		n(cy - r),
+		n(cx + k),
+		n(cy - k),
+		n(cx + r),
+		n(cy),
+		n(cx + k),
+		n(cy + k),
+		n(cx),
+		n(cy + r),
+		n(cx - k),
+		n(cy + k),
+		n(cx - r),
+		n(cy),
+		n(cx - k),
+		n(cy - k),
+		n(cx),
+		n(cy - r)
+	)
+end
 
--- What a glazed or solid thing is painted in: its edge, its dark side, itself, its light side,
--- and for a dish its rim and the wall inside.
-type Tones = { deep: Color3, shade: Color3, base: Color3, light: Color3, rim: Color3?, inside: Color3? }
+-- A disc with a scalloped edge: `count` bumps round a circle of radius r.
+local function scallop(cx: number, cy: number, r: number, count: number, bump: number): string
+	local out = {}
+	for i = 0, count do
+		local a = math.rad(-90 + i * 360 / count)
+		local x, y = cx + r * math.cos(a), cy + r * math.sin(a)
+		if i == 0 then
+			table.insert(out, "M" .. n(x) .. " " .. n(y))
+		else
+			table.insert(out, string.format("A%s %s 0 0 1 %s %s", n(bump), n(bump), n(x), n(y)))
+		end
+	end
+	table.insert(out, "Z")
+	return table.concat(out, " ")
+end
 
--- The bowl, seen a little from above: the rim is an ellipse round (12, 11.8), 20.4 wide. What
--- is in it goes on top: a soup's surface is ellipse(12, 12.5, 8.9, 2.85).
-local BOWL = "M1.8 11.8 C1.8 17.4 6.2 20.8 12 20.8 C17.8 20.8 22.2 17.4 22.2 11.8 Z"
-local function bowl(c: Tones): Layers
-	local rim = ellipse(12, 11.8, 10.2, 3.8)
-	return {
-		shadow(12, 21.8, 7.2, 1.3),
-		{ "M8.2 19.4 H15.8 V21 Q15.8 22 12 22 Q8.2 22 8.2 21 Z", fill = c.deep },
-		{ BOWL, stroke = c.deep, w = 0.7 },
-		{ BOWL, fill = c.base },
-		{
-			"M22.2 11.8 C22.2 17.4 17.8 20.8 12 20.8 C9.6 20.8 7.4 20.2 5.7 19.1 C8 19.6 10.6 19.4 13 18.4 C16.8 16.9 19.4 14.6 20 11.8 Z",
-			fill = c.shade,
-		},
-		{
-			"M22.2 12.6 C21.9 17.6 17.7 20.8 12 20.8 C11.2 20.8 10.4 20.7 9.7 20.6 C15.6 20.4 20.6 17.4 21.4 12.6 Z",
-			fill = c.deep,
-			opacity = 0.5,
-		},
-		{ "M3.1 14.6 C3.7 16.6 4.9 18 6.4 19 C5.5 17.6 4.9 16.2 4.6 14.9 Z", fill = c.light },
-		{ rim, stroke = c.deep, w = 0.7 },
-		{ rim, fill = c.rim or c.light },
-		{ "M2.9 11 C4.4 9.5 7.8 8.6 11.2 8.4", stroke = GLINT, w = 0.5, opacity = 0.85 },
-		{ ellipse(12, 12, 9.4, 3.2), fill = c.inside or c.shade },
+-- A slice of a disc from angle a0 to a1 (degrees, 0 to the right, 90 down), r out.
+local function wedge(cx: number, cy: number, r: number, a0: number, a1: number): string
+	local x0, y0 = cx + r * math.cos(math.rad(a0)), cy + r * math.sin(math.rad(a0))
+	local x1, y1 = cx + r * math.cos(math.rad(a1)), cy + r * math.sin(math.rad(a1))
+	return string.format(
+		"M%s %s L%s %s A%s %s 0 0 1 %s %s Z",
+		n(cx),
+		n(cy),
+		n(x0),
+		n(y0),
+		n(r),
+		n(r),
+		n(x1),
+		n(y1)
+	)
+end
+
+-- A plate under a dish: a flat bar with round ends.
+local PLATE = rect(1.75, 19.75, 20.5, 2.5, 1.25)
+
+-- Steam off something hot: wavy lines rising, each with its round ends.
+local function steam(xs: { number }, bottom: number, top: number): Layers
+	local out: Layers = {}
+	for _, x in xs do
+		local h = bottom - top
+		table.insert(
+			out,
+			line(
+				string.format(
+					"M%s %s C%s %s %s %s %s %s C%s %s %s %s %s %s",
+					n(x),
+					n(bottom),
+					n(x - 1.6),
+					n(bottom - h * 0.25),
+					n(x - 1.6),
+					n(bottom - h * 0.25),
+					n(x),
+					n(bottom - h * 0.5),
+					n(x + 1.6),
+					n(top + h * 0.25),
+					n(x + 1.6),
+					n(top + h * 0.25),
+					n(x),
+					n(top)
+				),
+				2
+			)
+		)
+	end
+	return out
+end
+
+-- The apple's body, stem and leaf, which the golden apple shares.
+local APPLE =
+	"M12 7.7 C10 6.1 3 5.6 3 12.6 C3 18.1 6.5 21.6 9.2 21.6 C10.6 21.6 11.2 21 12 21 C12.8 21 13.4 21.6 14.8 21.6 C17.5 21.6 21 18.1 21 12.6 C21 5.6 14 6.1 12 7.7 Z"
+local APPLE_LEAF = leaf(14.2, 5.6, 20.6, 2.6, 1.5)
+local function apple(...: Vector.Layer): Layers
+	local out: Layers = {
+		flat(APPLE),
+		line("M12 8.2 C12 6.2 12.3 4.4 13.2 2.9", 2),
+		clear(APPLE_LEAF, 1.5),
+		flat(APPLE_LEAF),
 	}
+	for _, layer in { ... } do
+		table.insert(out, layer)
+	end
+	return out
 end
 
--- The plate, seen the same way: its top is an ellipse round (12, 17.4), 21.2 wide, with a
--- shallow well in the middle.
-local function plate(c: Tones): Layers
-	local under = ellipse(12, 18.2, 10.6, 4.1)
-	return {
-		shadow(12, 19.2, 10.2, 3.6),
-		{ under, stroke = c.deep, w = 0.7 },
-		{ under, fill = c.shade },
-		{ ellipse(12, 17.4, 10.6, 4.1), fill = c.base },
-		{ "M2.3 16.3 C4 14.5 7.6 13.5 11.4 13.4", stroke = GLINT, w = 0.5, opacity = 0.8 },
-		{ ellipse(12, 17.5, 7.8, 2.9), fill = c.shade },
-		{ ellipse(12, 17.9, 7.5, 2.6), fill = c.inside or c.light },
-	}
-end
+local Art: { [string]: Layers } = {}
 
--- Steam off something hot: two pale wisps.
-local function steam(x: number, y: number): Layers
-	return moved({
-		{ "M0 5.6 C-1.4 4.2 1.2 3.2 0 1.6 C-0.4 1 -0.2 0.5 0.2 0", stroke = STEAM, w = 1, opacity = 0.6 },
-		{ "M5.4 5.2 C4.2 4 6.6 3 5.6 1.6", stroke = STEAM, w = 1, opacity = 0.6 },
-	}, x, y)
-end
+-- An apple: a round fruit with a dimple, its stem, a leaf standing off its shoulder and a shine
+-- cut out of its lit side.
+Art.apple = apple(gap("M6.3 15 C5.9 12.6 6.8 10.6 8.7 9.6", 1.75))
 
--- A round glossy thing (a berry, a cherry, a pea): its dark side, its lit face, a soft light
--- on it and a glint.
-local function ball(x: number, y: number, r: number, c: Tones): Layers
-	return {
-		{ circle(x, y, r), fill = c.deep, stroke = c.deep, w = 0.5 },
-		{ circle(x, y, r), fill = c.shade },
-		{ circle(x - r * 0.13, y - r * 0.13, r * 0.84), fill = c.base },
-		{ ellipse(x - r * 0.3, y - r * 0.36, r * 0.44, r * 0.3), fill = c.light },
-		{ circle(x - r * 0.42, y - r * 0.46, r * 0.15), fill = GLINT },
-	}
-end
+-- The golden apple: the apple again with a sparkle cut into its side and another over it.
+Art.goldapple = apple(hole(sparkle(8.75, 13.75, 3.75)), flat(sparkle(4.25, 4.5, 2.5)))
 
--- An apple, in whatever it is made of: a round fruit with a dimple, a stem and a leaf.
-local function apple(c: Tones): Layers
-	local body =
-		"M12 7.4 C9.6 5.2 2.2 5.4 2.2 12.2 C2.2 17.8 6.6 21.8 9.4 21.8 C10.8 21.8 11.2 21.2 12 21.2 C12.8 21.2 13.2 21.8 14.6 21.8 C17.4 21.8 21.8 17.8 21.8 12.2 C21.8 5.4 14.4 5.2 12 7.4 Z"
-	return {
-		shadow(12, 21.9, 7, 1.2),
-		{ body, stroke = c.deep, w = 0.7 },
-		{ body, fill = c.base },
-		{
-			"M19.2 7.2 C21 8.4 21.8 10.2 21.8 12.2 C21.8 17.8 17.4 21.8 14.6 21.8 C13.2 21.8 12.8 21.2 12 21.2 C11.2 21.2 10.8 21.8 9.4 21.8 C8.4 21.8 7.2 21.3 6 20.3 C8.5 21 11.5 20.4 14 18.6 C17.4 16.2 19.6 12 19.2 7.2 Z",
-			fill = c.shade,
-		},
-		{
-			"M21.2 9.6 C21.6 10.4 21.8 11.3 21.8 12.2 C21.8 17.8 17.4 21.8 14.6 21.8 C13.9 21.8 13.4 21.6 13 21.5 C16.6 20.6 20.6 16 21.2 9.6 Z",
-			fill = c.deep,
-			opacity = 0.55,
-		},
-		{
-			"M3.6 12.4 C3.4 9 5.8 6.9 9 7.2 C10.6 7.4 11 8.6 10 9.4 C8.4 9.8 6.6 11.6 5.6 14.4 C4.6 14.8 3.7 13.8 3.6 12.4 Z",
-			fill = c.light,
-		},
-		{
-			"M9.4 7.3 C10.6 8.9 13.4 8.9 14.6 7.3 C13.7 6.9 12.8 6.9 12 7.6 C11.2 6.9 10.3 6.9 9.4 7.3 Z",
-			fill = c.deep,
-			opacity = 0.6,
-		},
-		{
-			"M4.5 11.4 C4.7 9.4 6 8.1 7.8 7.8 C6.7 8.8 6 10 5.6 11.6 C5.3 12.3 4.5 12.2 4.5 11.4 Z",
-			fill = GLINT,
-			opacity = 0.9,
-		},
-		{ circle(9.3, 7.9, 0.45), fill = GLINT, opacity = 0.8 },
-		{
-			circle(8.2, 13.6, 0.28)
-				.. circle(10.6, 11.4, 0.25)
-				.. circle(11.6, 15.2, 0.28)
-				.. circle(7, 16.6, 0.25)
-				.. circle(14.2, 12.6, 0.25),
-			fill = c.light,
-			opacity = 0.7,
-		},
-		{ "M19.9 16.6 Q18.8 19 16.8 20.4", stroke = c.light, w = 0.5, opacity = 0.55 },
-		{ "M12 8.2 C12 5.8 12.6 3.8 14 2.3", stroke = rgb(98, 58, 36), w = 1.5 },
-		{ "M11.7 7.6 C11.7 5.8 12.3 3.9 13.5 2.6", stroke = rgb(176, 118, 68), w = 0.5 },
-		{
-			"M13.5 5.7 C14.2 2.7 17.4 1.5 21.2 2.3 C20.4 5.7 17.1 7.3 13.5 5.7 Z",
-			stroke = rgb(34, 104, 56),
-			w = 0.6,
-		},
-		{ "M13.5 5.7 C14.2 2.7 17.4 1.5 21.2 2.3 C20.4 5.7 17.1 7.3 13.5 5.7 Z", fill = rgb(58, 148, 66) },
-		{ "M13.5 5.7 C14.2 2.7 17.4 1.5 21.2 2.3 C18.6 2.9 16 4 13.5 5.7 Z", fill = rgb(112, 198, 84) },
-		{ "M15.6 3.6 C16.6 2.8 17.8 2.5 19 2.5", stroke = rgb(196, 240, 150), w = 0.4, opacity = 0.9 },
-	}
-end
-
-local Art: { [string]: { Vector.Layer } } = {}
-
--- Food.
-
--- An apple: red, plum on the side away from the light, a stem and one leaf.
-Art.apple = apple({
-	deep = rgb(128, 20, 50),
-	shade = rgb(182, 30, 58),
-	base = rgb(228, 52, 60),
-	light = rgb(248, 104, 84),
-})
-
--- A bread roll: a round golden crust with three cuts across the top showing the crumb.
+-- A bread roll: a round crust with three scores across the top.
 Art.bread = {
-	shadow(12, 20.7, 9.6, 1.6),
-	{
-		"M1.8 15 C1.8 9 6 4.8 12 4.8 C18 4.8 22.2 9 22.2 15 C22.2 18.4 19.6 20.4 16.4 20.4 H7.6 C4.4 20.4 1.8 18.4 1.8 15 Z",
-		stroke = rgb(116, 58, 20),
-		w = 0.7,
-	},
-	{
-		"M1.8 15 C1.8 9 6 4.8 12 4.8 C18 4.8 22.2 9 22.2 15 C22.2 18.4 19.6 20.4 16.4 20.4 H7.6 C4.4 20.4 1.8 18.4 1.8 15 Z",
-		fill = rgb(226, 154, 70),
-	},
-	{
-		"M1.8 15 C1.8 18.4 4.4 20.4 7.6 20.4 H16.4 C19.6 20.4 22.2 18.4 22.2 15 C22.2 16.9 19.6 17.9 16.4 17.9 H7.6 C4.4 17.9 1.8 16.9 1.8 15 Z",
-		fill = rgb(194, 114, 44),
-	},
-	{
-		"M17.6 6.6 C20.6 8.4 22.2 11.4 22.2 15 C22.2 18.4 19.6 20.4 16.4 20.4 H12.6 C16.8 19.4 19.6 15.6 19.4 11 C19.3 9.4 18.6 7.8 17.6 6.6 Z",
-		fill = rgb(164, 86, 32),
-		opacity = 0.6,
-	},
-	{
-		"M3.6 12.8 C4 8.6 7.8 5.9 12 5.9 C13.8 5.9 15.2 6.3 16.2 7 C12 7 7.4 9.4 5.6 14.2 C4.6 14.5 3.5 13.9 3.6 12.8 Z",
-		fill = rgb(246, 194, 108),
-	},
-	{
-		"M6 10.1 C7.6 9.5 9.4 11.2 9.4 13.9 C7.8 13.6 6.2 12.1 6 10.1 Z M10.7 8.3 C12.5 7.9 14.2 10 14.1 13 C12.4 12.6 10.8 10.6 10.7 8.3 Z M15.4 9.3 C17 9.1 18.5 11 18.3 13.8 C16.7 13.4 15.4 11.5 15.4 9.3 Z",
-		fill = rgb(150, 80, 30),
-		stroke = rgb(150, 80, 30),
-		w = 0.5,
-	},
-	{
-		"M6 10.1 C7.6 9.5 9.4 11.2 9.4 13.9 C7.8 13.6 6.2 12.1 6 10.1 Z M10.7 8.3 C12.5 7.9 14.2 10 14.1 13 C12.4 12.6 10.8 10.6 10.7 8.3 Z M15.4 9.3 C17 9.1 18.5 11 18.3 13.8 C16.7 13.4 15.4 11.5 15.4 9.3 Z",
-		fill = rgb(255, 232, 180),
-	},
-	{
-		"M6 10.1 C7.6 9.5 9.4 11.2 9.4 13.9 C8.9 12 7.8 10.7 6 10.1 Z M10.7 8.3 C12.5 7.9 14.2 10 14.1 13 C13.6 10.8 12.6 9.2 10.7 8.3 Z M15.4 9.3 C17 9.1 18.5 11 18.3 13.8 C17.9 11.8 17 10.2 15.4 9.3 Z",
-		fill = rgb(226, 178, 112),
-	},
-	{ "M4.9 10.9 C5.5 9.3 6.8 8.2 8.2 7.6", stroke = rgb(255, 238, 196), w = 0.6, opacity = 0.9 },
-	{
-		circle(9.4, 7.1, 0.3) .. circle(14.6, 6.9, 0.3) .. circle(4.6, 14.4, 0.3) .. circle(19.9, 12.2, 0.3) .. circle(
-			12.4,
-			15.6,
-			0.3
-		) .. circle(8, 16.2, 0.28) .. circle(16.6, 15.8, 0.28),
-		fill = rgb(255, 240, 206),
-		opacity = 0.85,
-	},
+	solid("M2.5 17.5 C2.5 10.5 6.8 5.5 12 5.5 C17.2 5.5 21.5 10.5 21.5 17.5 C21.5 19 20.5 19.5 19 19.5 H5 C3.5 19.5 2.5 19 2.5 17.5 Z"),
+	gap("M6 14.5 L8.75 10.75"),
+	gap("M10.5 14 L13.25 10.25"),
+	gap("M15 14.5 L17.75 10.75"),
 }
 
--- A carrot: an orange root pointing down to the left, grooves across it, and three leaves.
+-- A carrot pointing down to the left, grooves across it and three leaves off its top.
+local ROOT = "M2.75 21.25 C5 16 8.5 11.25 12.35 7.65 A3.5 3.5 0 0 1 17.35 12.65 C13.75 16.5 8 19 2.75 21.25 Z"
+local GREENS = leaf(16.75, 8.25, 14.75, 1.75, 1.35)
+	.. " "
+	.. leaf(16.75, 8.25, 21.25, 2.75, 1.5)
+	.. " "
+	.. leaf(16.75, 8.25, 22.25, 9.25, 1.35)
 Art.carrot = {
-	{ "M5.12 22.31 A9.5 2.2 -40 1 0 19.68 10.09 A9.5 2.2 -40 1 0 5.12 22.31 Z", fill = SHADOW, opacity = 0.32 },
-	{
-		"M16 5.5 C14.5 3.6 15.3 1.5 17.6 1.1 C17.9 2.8 17.6 4.5 16.8 5.9 Z M17.3 6 C17.5 3.5 19.8 1.5 22.7 1.7 C22.5 4.4 20.6 6.5 18.1 6.9 Z M18.5 7.1 C20 6.1 22.1 6.5 22.9 8.4 C21.4 9.7 19.5 9.3 18.3 8.2 Z",
-		fill = rgb(24, 92, 48),
-		stroke = rgb(24, 92, 48),
-		w = 0.7,
-	},
-	{ "M16 5.5 C14.5 3.6 15.3 1.5 17.6 1.1 C17.9 2.8 17.6 4.5 16.8 5.9 Z", fill = rgb(60, 150, 62) },
-	{ "M17.3 6 C17.5 3.5 19.8 1.5 22.7 1.7 C22.5 4.4 20.6 6.5 18.1 6.9 Z", fill = rgb(98, 190, 78) },
-	{ "M18.5 7.1 C20 6.1 22.1 6.5 22.9 8.4 C21.4 9.7 19.5 9.3 18.3 8.2 Z", fill = rgb(60, 150, 62) },
-	{ "M17.6 1.1 C17.9 2.8 17.6 4.5 16.8 5.9 L16.4 5.7 C17 4.2 17.4 2.7 17.6 1.1 Z", fill = rgb(40, 122, 56) },
-	{ "M22.7 1.7 C22.5 4.4 20.6 6.5 18.1 6.9 L17.7 6.4 C19.8 5.4 21.6 3.8 22.7 1.7 Z", fill = rgb(60, 150, 62) },
-	{ "M22.9 8.4 C21.4 9.7 19.5 9.3 18.3 8.2 L18.4 7.7 C19.8 8.3 21.4 8.5 22.9 8.4 Z", fill = rgb(40, 122, 56) },
-	{ "M18.4 5.6 C19.4 4.4 20.6 3.4 21.8 2.6", stroke = rgb(176, 232, 124), w = 0.4 },
-	{
-		"M18.2 6.4 C20.6 8.8 20 11.8 17.6 13.6 C13.6 16.6 8 20 3.6 22 C2.4 22.5 1.6 21.6 2.2 20.4 C4.4 16 7.6 10.6 10.6 6.6 C12.4 4.2 15.8 4 18.2 6.4 Z",
-		stroke = rgb(146, 56, 8),
-		w = 0.7,
-	},
-	{
-		"M18.2 6.4 C20.6 8.8 20 11.8 17.6 13.6 C13.6 16.6 8 20 3.6 22 C2.4 22.5 1.6 21.6 2.2 20.4 C4.4 16 7.6 10.6 10.6 6.6 C12.4 4.2 15.8 4 18.2 6.4 Z",
-		fill = rgb(244, 132, 30),
-	},
-	{
-		"M19.5 8.6 C20 10.6 19.3 12.3 17.6 13.6 C13.6 16.6 8 20 3.6 22 C2.9 22.3 2.4 22.1 2.2 21.6 C7 19.6 12.4 16.2 16.2 12.8 C17.8 11.4 19 10.2 19.5 8.6 Z",
-		fill = rgb(208, 90, 14),
-	},
-	{
-		"M11.6 7.2 C12.6 6 14 5.6 15.2 5.8 C13.6 6.6 12.4 7.8 11.2 9.6 C9.4 12.2 7.4 15.4 5.6 18.2 C5.3 18.5 5 18.2 5.2 17.8 C7 14.2 9.4 10.2 11.6 7.2 Z",
-		fill = rgb(255, 176, 76),
-	},
-	{
-		"M13.8 9.4 L15.6 11 M9.6 13.6 L11.2 15 M6.4 17.4 L7.5 18.4 M11.4 10.4 L12 10.9 M16.4 7.4 L17.2 8.1",
-		stroke = rgb(176, 72, 10),
-		w = 0.55,
-	},
-	{ "M12.5 6.9 C13.1 6.4 13.8 6.2 14.5 6.2", stroke = GLINT, w = 0.5, opacity = 0.85 },
+	flat(ROOT),
+	gap("M5.75 15.25 L7.75 17.25", 1.5),
+	gap("M10.5 9.75 L12.75 12", 1.5),
+	gap("M11.75 17.5 L10.5 16.25", 1.5),
+	clear(GREENS, 1.5),
+	flat(GREENS),
 }
 
--- Cheese: a wedge with a paler top, a rind down its far end and holes in the cut side.
+-- Cheese: a wedge, its top apart from its cut side, and holes in the cut side (one a bite out
+-- of its foot).
 Art.cheese = {
-	shadow(12.6, 20.4, 10.2, 1.7),
-	{ "M1.6 11.8 L14.4 3.2 L22.4 9.4 V18 L1.6 20.4 Z", fill = rgb(160, 86, 16), stroke = rgb(160, 86, 16), w = 0.7 },
-	{ "M1.6 11.8 L22.4 9.4 V18 L1.6 20.4 Z", fill = rgb(255, 198, 56) },
-	{ "M21 12 V18.16 L5 20 Z", fill = rgb(234, 150, 34), opacity = 0.55 },
-	{ "M21 15.4 V18.16 L11 19.3 Z", fill = rgb(214, 124, 26), opacity = 0.5 },
-	{ "M21 9.56 L22.4 9.4 V18 L21 18.16 Z", fill = rgb(206, 112, 24) },
-	{ "M1.6 11.8 L14.4 3.2 L22.4 9.4 Z", fill = rgb(255, 228, 118) },
-	{ "M3.4 10.9 L14.3 3.9 L15.7 5 L7.4 10.4 Z", fill = rgb(255, 244, 176), opacity = 0.85 },
-	{ "M14.4 3.2 L22.4 9.4 L21 9.56 L13.5 3.8 Z", fill = rgb(232, 150, 40) },
-	{ ellipse(12.2, 7.6, 1.6, 0.8), fill = rgb(240, 180, 60) },
-	{ ellipse(12.5, 7.8, 1.1, 0.5), fill = rgb(250, 208, 90) },
-	{ ellipse(16.8, 8.3, 0.9, 0.45), fill = rgb(240, 180, 60) },
-	{ circle(7.4, 15.8, 2.1), fill = rgb(196, 112, 20) },
-	{ circle(7.8, 16.2, 1.5), fill = rgb(236, 160, 40) },
-	{ circle(13.8, 13.4, 1.3), fill = rgb(196, 112, 20) },
-	{ circle(14.05, 13.65, 0.9), fill = rgb(236, 160, 40) },
-	{ circle(17.3, 15.9, 1.6), fill = rgb(186, 104, 18) },
-	{ circle(17.6, 16.2, 1.1), fill = rgb(226, 146, 34) },
-	{ circle(3.6, 17.6, 0.8), fill = rgb(196, 112, 20) },
-	{ circle(11.8, 17.6, 0.7), fill = rgb(196, 112, 20) },
-	{ "M2.3 11.76 L21.7 9.52", stroke = GLINT, w = 0.45, opacity = 0.9 },
+	solid("M2 11 L15.5 4 L22 7.5 V19.5 H2 Z"),
+	gap("M0.5 11.26 L23.5 7.24", 1.75),
+	hole(circle(7, 15.25, 2.25)),
+	hole(circle(14, 13.25, 1.6)),
+	hole(circle(17.5, 16.75, 1.5)),
+	hole(circle(11.25, 20, 1.75)),
 }
 
--- Mushroom soup: a blue bowl of creamy soup with slices of mushroom and a sprig of parsley on
--- it, and steam.
-Art.soup = join(
-	steam(9, 1.4),
-	bowl({
-		deep = rgb(22, 46, 104),
-		shade = rgb(36, 82, 156),
-		base = rgb(60, 124, 200),
-		light = rgb(140, 192, 242),
-		rim = rgb(246, 240, 226),
-		inside = rgb(206, 196, 180),
-	}),
-	{
-		{
-			"M2.6 14.6 C5 16.9 8.4 17.9 12 17.9 C15.6 17.9 19 16.9 21.4 14.6",
-			stroke = rgb(246, 240, 226),
-			w = 0.5,
-			opacity = 0.8,
-		},
-		{ ellipse(12, 12.5, 8.9, 2.85), fill = rgb(150, 92, 48) },
-		{ ellipse(12.15, 12.7, 8.3, 2.5), fill = rgb(210, 154, 88) },
-		{ ellipse(11, 12.5, 5.6, 1.5), fill = rgb(230, 186, 122), opacity = 0.8 },
-		{
-			"M14.6 11 C16.6 11 18.4 11.6 18.6 12.4 C18.7 13 17.6 13.2 16.8 13",
-			stroke = rgb(252, 238, 208),
-			w = 0.4,
-			opacity = 0.9,
-		},
-		{ "M10.2 11.5 C10.2 10.4 13.8 10.4 13.8 11.5 Z", fill = rgb(232, 208, 168) },
-		{
-			"M5.2 13.4 C5 11.4 11.4 11.2 11.6 13.2 C10.6 12.9 9.8 12.9 9.3 13 L9.7 14.7 C9 15.1 7.9 15.1 7.4 14.7 L7.5 13 C6.8 13 6 13.1 5.2 13.4 Z",
-			fill = rgb(140, 92, 56),
-			stroke = rgb(140, 92, 56),
-			w = 0.4,
-		},
-		{
-			"M5.2 13.4 C5 11.4 11.4 11.2 11.6 13.2 C10.6 12.9 9.8 12.9 9.3 13 L9.7 14.7 C9 15.1 7.9 15.1 7.4 14.7 L7.5 13 C6.8 13 6 13.1 5.2 13.4 Z",
-			fill = rgb(250, 238, 212),
-		},
-		{ "M5.6 13.2 C7 12.6 10 12.6 11.2 13", stroke = rgb(176, 124, 80), w = 0.4 },
-		{ "M8.9 13.2 L9.2 14.6 C8.9 14.8 8.6 14.9 8.4 14.9", stroke = rgb(222, 198, 160), w = 0.4 },
-		{
-			"M13 13.2 C12.4 11.4 18 10.4 18.8 12.2 C17.8 12.1 17.1 12.3 16.7 12.5 L17.6 14.2 C17.1 14.7 16 14.9 15.5 14.6 L15 13 C14.3 13 13.6 13.1 13 13.2 Z",
-			fill = rgb(140, 92, 56),
-			stroke = rgb(140, 92, 56),
-			w = 0.4,
-		},
-		{
-			"M13 13.2 C12.4 11.4 18 10.4 18.8 12.2 C17.8 12.1 17.1 12.3 16.7 12.5 L17.6 14.2 C17.1 14.7 16 14.9 15.5 14.6 L15 13 C14.3 13 13.6 13.1 13 13.2 Z",
-			fill = rgb(250, 238, 212),
-		},
-		{ "M13.4 13 C14.6 12.2 17 11.8 18.4 12", stroke = rgb(176, 124, 80), w = 0.4 },
-		{
-			"M10.9 14.3 C10.5 13.5 11.5 13.1 11.9 13.7 C12.3 13 13.3 13.4 12.9 14.1 C13.5 14.5 12.7 15.1 12.1 14.7 C11.7 15.1 10.7 14.9 10.9 14.3 Z",
-			fill = rgb(62, 150, 58),
-		},
-		{ circle(11.6, 14, 0.3), fill = rgb(150, 220, 110) },
-		{ circle(14.4, 14.6, 0.3) .. circle(18.6, 13.4, 0.3) .. circle(6.2, 14.2, 0.28), fill = rgb(84, 160, 62) },
-		{ ellipse(5.6, 12, 1.1, 0.3), fill = GLINT, opacity = 0.7 },
-	}
-)
-
--- A grilled fish on a skewer: the stick runs corner to corner through a blue fish, head up,
--- with the marks of the grill across its side.
-Art.skewer = {
-	{ "M6.3 23 A10 2 -45 1 0 20.5 8.9 A10 2 -45 1 0 6.3 23 Z", fill = SHADOW, opacity = 0.3 },
-	{ "M1.9 22.1 L22.1 1.9", stroke = rgb(112, 68, 34), w = 1.9 },
-	{ "M1.9 22.1 L22.1 1.9", stroke = rgb(226, 182, 120), w = 1.2 },
-	{ "M1.8 21.8 L21.8 1.8", stroke = rgb(252, 228, 176), w = 0.35 },
-	{
-		"M8.3 15.3 C6 15.9 3.8 15.6 1.6 14.6 C3.6 16.6 4.6 18 5.2 19 C6.2 19.6 7.6 20.6 9.6 22.6 C8.6 20.4 8.3 18.2 8.9 15.9 Z",
-		stroke = rgb(16, 62, 112),
-		w = 0.7,
-	},
-	{
-		"M8.3 15.3 C6 15.9 3.8 15.6 1.6 14.6 C3.6 16.6 4.6 18 5.2 19 C6.2 19.6 7.6 20.6 9.6 22.6 C8.6 20.4 8.3 18.2 8.9 15.9 Z",
-		fill = rgb(52, 132, 190),
-	},
-	{
-		"M5.2 19 C6.2 19.6 7.6 20.6 9.6 22.6 C8.6 20.4 8.3 18.2 8.9 15.9 C7.4 16.6 6.2 17.6 5.2 19 Z",
-		fill = rgb(32, 98, 160),
-	},
-	{ "M3.4 15.5 C5 16 6.6 16 8 15.7 M6.4 19.4 C7.2 18.4 7.8 17.4 8.2 16.4", stroke = rgb(132, 200, 234), w = 0.4 },
-	{
-		"M8.8 9.6 C8.2 7.4 9.6 5 12 4.2 L12.8 5.8 C11.2 6.6 9.8 7.9 8.8 9.6 Z",
-		stroke = rgb(16, 62, 112),
-		w = 0.7,
-	},
-	{ "M8.8 9.6 C8.2 7.4 9.6 5 12 4.2 L12.8 5.8 C11.2 6.6 9.8 7.9 8.8 9.6 Z", fill = rgb(40, 112, 174) },
-	{
-		"M20.6 4 C20 3.4 18.6 3 17 3.2 C11.6 3.8 7 8.8 6.6 15 L9.2 17.6 C15.4 17.2 20.4 12.6 21 7.2 C21.2 5.6 20.9 4.5 20.6 4 Z",
-		stroke = rgb(16, 62, 112),
-		w = 0.7,
-	},
-	{
-		"M20.6 4 C20 3.4 18.6 3 17 3.2 C11.6 3.8 7 8.8 6.6 15 L9.2 17.6 C15.4 17.2 20.4 12.6 21 7.2 C21.2 5.6 20.9 4.5 20.6 4 Z",
-		fill = rgb(98, 178, 220),
-	},
-	{
-		"M21 7.2 C20.4 12.6 15.4 17.2 9.2 17.6 L8 16.4 C13.6 15.4 18.4 11.4 20.9 5.2 C21.05 5.9 21.07 6.5 21 7.2 Z",
-		fill = rgb(226, 242, 248),
-	},
-	{ "M21 7.2 C20.4 12.6 15.4 17.2 9.2 17.6 L8.6 17 C14.6 16.2 19.4 12.2 21 7.2 Z", fill = rgb(160, 200, 224) },
-	{
-		"M17 3.2 C11.6 3.8 7 8.8 6.6 15 L7.5 15.9 C8.3 10.7 12 6.2 17.6 4.5 C18.5 4.2 19.5 4 20.4 3.8 C19.7 3.3 18.4 3.1 17 3.2 Z",
-		fill = rgb(46, 118, 182),
-	},
-	{ "M8.3 12 C9.5 8.9 12.2 6.4 15.6 5.3", stroke = rgb(176, 226, 248), w = 0.55 },
-	{
-		"M9.9 10.9 L13.1 14.1 M12.5 8.5 L15.9 11.9 M15.1 6.5 L17.8 9.2",
-		stroke = rgb(92, 52, 40),
-		w = 0.85,
-		opacity = 0.85,
-	},
-	{ "M13.6 10 C12.8 11 12.6 12.2 13 13.3 C14.2 12.7 15 11.6 15.1 10.4 Z", fill = rgb(40, 108, 170) },
-	{ "M16.2 4.1 C17.4 5 18.8 6.8 19.4 9", stroke = rgb(30, 92, 152), w = 0.5 },
-	{ circle(18.6, 5.3, 1.05), fill = rgb(244, 250, 252) },
-	{ circle(18.7, 5.4, 0.6), fill = rgb(22, 32, 54) },
-	{ circle(18.45, 5.15, 0.2), fill = rgb(255, 255, 255) },
-}
-
--- A berry tart: a fluted crust full of jam, heaped with purple berries, two red ones and a
--- leaf of mint.
-Art.tart = join(
-	{
-		shadow(12, 21.4, 8.4, 1.5),
-		{
-			"M1.8 11.6 L4.6 18.8 C5.2 20.4 8.6 21.2 12 21.2 C15.4 21.2 18.8 20.4 19.4 18.8 L22.2 11.6 Z",
-			stroke = rgb(122, 62, 22),
-			w = 0.7,
-		},
-		{
-			"M1.8 11.6 L4.6 18.8 C5.2 20.4 8.6 21.2 12 21.2 C15.4 21.2 18.8 20.4 19.4 18.8 L22.2 11.6 Z",
-			fill = rgb(228, 160, 80),
-		},
-		{
-			"M4.4 14 L6.4 20.1 M7 14.9 L8.35 20.7 M9.7 15.4 L10.38 21 M12.4 15.5 V21.1 M15.1 15.4 L14.42 21 M17.8 14.9 L16.45 20.7 M20.4 14 L18.4 20.1",
-			stroke = rgb(186, 110, 46),
-			w = 0.6,
-		},
-		{
-			"M3.5 13.7 L5.6 19.8 M6.2 14.8 L7.6 20.5 M8.9 15.3 L9.6 20.9 M11.6 15.5 V21.1",
-			stroke = rgb(252, 208, 134),
-			w = 0.5,
-		},
-		{ "M15.4 15.3 L22.2 11.6 L19.4 18.8 C19 19.9 17.4 20.6 15.4 20.9 Z", fill = rgb(120, 46, 30), opacity = 0.3 },
-		{ ellipse(12, 11.6, 10.2, 3.9), stroke = rgb(122, 62, 22), w = 0.7 },
-		{ ellipse(12, 11.6, 10.2, 3.9), fill = rgb(248, 200, 122) },
-		{ "M2.9 10.8 C4.4 9.3 7.8 8.4 11.2 8.2", stroke = rgb(255, 236, 190), w = 0.5 },
-		{ ellipse(12, 11.8, 9, 3.1), fill = rgb(92, 40, 120) },
-		{ ellipse(12, 12.1, 8.4, 2.7), fill = rgb(132, 62, 160) },
-		{
-			"M15.2 6.8 C16 4.6 18.4 3.6 20.8 4.4 C20.2 6.8 17.8 8 15.2 6.8 Z",
-			stroke = rgb(24, 92, 48),
-			w = 0.6,
-		},
-		{ "M15.2 6.8 C16 4.6 18.4 3.6 20.8 4.4 C20.2 6.8 17.8 8 15.2 6.8 Z", fill = rgb(62, 152, 66) },
-		{ "M15.2 6.8 C16 4.6 18.4 3.6 20.8 4.4 C18.8 4.8 16.8 5.6 15.2 6.8 Z", fill = rgb(116, 200, 88) },
-	},
-	ball(
-		4.7,
-		11.7,
-		1.5,
-		{ deep = rgb(120, 14, 44), shade = rgb(180, 24, 60), base = rgb(232, 56, 82), light = rgb(255, 130, 136) }
-	),
-	ball(
-		19.5,
-		11.9,
-		1.4,
-		{ deep = rgb(120, 14, 44), shade = rgb(180, 24, 60), base = rgb(232, 56, 82), light = rgb(255, 130, 136) }
-	),
-	ball(
-		7.2,
-		9.8,
-		2.7,
-		{ deep = rgb(50, 26, 104), shade = rgb(84, 50, 158), base = rgb(128, 90, 212), light = rgb(184, 158, 244) }
-	),
-	ball(
-		17,
-		10,
-		2.6,
-		{ deep = rgb(50, 26, 104), shade = rgb(84, 50, 158), base = rgb(128, 90, 212), light = rgb(184, 158, 244) }
-	),
-	ball(
-		12.2,
-		8.3,
-		3.2,
-		{ deep = rgb(50, 26, 104), shade = rgb(84, 50, 158), base = rgb(128, 90, 212), light = rgb(184, 158, 244) }
-	),
-	ball(
-		9.6,
-		12.6,
-		2.2,
-		{ deep = rgb(50, 26, 104), shade = rgb(92, 56, 168), base = rgb(140, 102, 222), light = rgb(196, 172, 248) }
-	),
-	ball(
-		14.7,
-		12.8,
-		2.1,
-		{ deep = rgb(50, 26, 104), shade = rgb(92, 56, 168), base = rgb(140, 102, 222), light = rgb(196, 172, 248) }
-	),
-	{
-		{
-			"M12.6 6.3 L13.3 5.9 L13.5 6.7 Z M7.6 8.2 L8.2 7.9 L8.3 8.6 Z M17.4 8.5 L18 8.2 L18.1 8.9 Z",
-			fill = rgb(50, 26, 104),
-			stroke = rgb(50, 26, 104),
-			w = 0.3,
-		},
-	}
-)
-
--- A slice of honey cake on a plate: layers of sponge and cream, honey over the top running
--- down the cut side, and a spoon of cream.
-Art.honeycake = join(
-	moved(
-		plate({
-			deep = rgb(104, 118, 160),
-			shade = rgb(172, 186, 214),
-			base = rgb(230, 236, 247),
-			light = rgb(246, 249, 253),
-		}),
-		0,
-		0.6
-	),
-	{
-		{
-			"M3.4 10.2 L10.6 4.6 L20.6 12.8 V19.6 L3.4 17 Z",
-			fill = rgb(116, 58, 14),
-			stroke = rgb(116, 58, 14),
-			w = 0.7,
-		},
-		{ "M3.4 10.2 L20.6 12.8 V19.6 L3.4 17 Z", fill = rgb(216, 138, 56) },
-		{
-			"M3.4 11.44 L20.6 14.04 V14.64 L3.4 12.04 Z M3.4 13.28 L20.6 15.88 V16.48 L3.4 13.88 Z M3.4 15.12 L20.6 17.72 V18.32 L3.4 15.72 Z",
-			fill = rgb(255, 240, 208),
-		},
-		{ "M20.6 14.4 V19.6 L8 17.7 Z", fill = rgb(120, 44, 20), opacity = 0.24 },
-		{ "M3.4 10.2 L10.6 4.6 L20.6 12.8 Z", fill = rgb(248, 176, 34) },
-		{ "M4.9 9.9 L10.5 5.5 L12.4 7 L8 10.4 Z", fill = rgb(255, 214, 96) },
-		{
-			"M6.2 10.6 L8 10.9 V13 Q8 14 7.1 14 Q6.2 14 6.2 13 Z M11.6 11.4 L13.4 11.7 V14.8 Q13.4 15.8 12.5 15.8 Q11.6 15.8 11.6 14.8 Z M16.3 12.1 L17.9 12.4 V13.6 Q17.9 14.4 17.1 14.4 Q16.3 14.4 16.3 13.6 Z",
-			fill = rgb(232, 150, 20),
-			stroke = rgb(190, 104, 12),
-			w = 0.3,
-		},
-		{
-			"M6.2 10.6 L8 10.9 V13 Q8 14 7.1 14 Q6.2 14 6.2 13 Z M11.6 11.4 L13.4 11.7 V14.8 Q13.4 15.8 12.5 15.8 Q11.6 15.8 11.6 14.8 Z M16.3 12.1 L17.9 12.4 V13.6 Q17.9 14.4 17.1 14.4 Q16.3 14.4 16.3 13.6 Z",
-			fill = rgb(244, 168, 28),
-		},
-		{ "M6.7 11.5 V12.8 M12.1 12.3 V14.4", stroke = rgb(255, 232, 150), w = 0.4 },
-		{ "M4.2 10.2 L20 12.6", stroke = GLINT, w = 0.4, opacity = 0.85 },
-		{ "M13.4 8.4 L16.6 11 M11.6 8.6 L12.6 9.4", stroke = rgb(255, 236, 160), w = 0.5, opacity = 0.9 },
-		{
-			circle(7.2, 9.3, 0.3) .. circle(14.6, 11.2, 0.3) .. circle(9.6, 9.9, 0.25) .. circle(17.6, 11.9, 0.25),
-			fill = rgb(176, 96, 20),
-		},
-		{
-			"M8.4 8 C8.2 6.8 9 6 10 6.2 C10.4 5.4 11.6 5.4 12 6.2 C13 6.2 13.6 7.2 13 8 C12 8.9 9.4 8.9 8.4 8 Z",
-			fill = rgb(150, 110, 90),
-			stroke = rgb(150, 110, 90),
-			w = 0.4,
-		},
-		{
-			"M8.4 8 C8.2 6.8 9 6 10 6.2 C10.4 5.4 11.6 5.4 12 6.2 C13 6.2 13.6 7.2 13 8 C12 8.9 9.4 8.9 8.4 8 Z",
-			fill = rgb(255, 250, 240),
-		},
-		{
-			"M13 8 C12 8.9 9.4 8.9 8.4 8 C9.6 8.2 11.8 8.2 12.6 7.2 C12.9 7.4 13.1 7.7 13 8 Z",
-			fill = rgb(232, 212, 190),
-		},
-	}
-)
-
--- A rice ball: white rice pressed into a rounded triangle, a strip of seaweed round the
--- bottom and a pickled plum on top.
-Art.riceball = join(
-	{
-		shadow(12, 21.6, 9, 1.4),
-		{
-			"M12 2.2 C14 2.2 15.6 3.8 16.6 5.8 L21.2 15.2 C22.8 18.8 20.6 21.4 17.6 21.4 H6.4 C3.4 21.4 1.2 18.8 2.8 15.2 L7.4 5.8 C8.4 3.8 10 2.2 12 2.2 Z",
-			stroke = rgb(120, 98, 92),
-			w = 0.7,
-		},
-		{
-			"M12 2.2 C14 2.2 15.6 3.8 16.6 5.8 L21.2 15.2 C22.8 18.8 20.6 21.4 17.6 21.4 H6.4 C3.4 21.4 1.2 18.8 2.8 15.2 L7.4 5.8 C8.4 3.8 10 2.2 12 2.2 Z",
-			fill = rgb(252, 249, 240),
-		},
-		{
-			"M14.4 3.2 C15.3 3.8 16.1 4.7 16.6 5.8 L21.2 15.2 C22.8 18.8 20.6 21.4 17.6 21.4 H14 C17.4 21 19.4 18.4 18.2 15.4 Z",
-			fill = rgb(230, 216, 196),
-		},
-		{
-			"M19.9 12.6 L21.2 15.2 C22.8 18.8 20.6 21.4 17.6 21.4 H16.6 C19.6 20.8 21.2 18.2 20.2 15.2 Z",
-			fill = rgb(196, 174, 156),
-			opacity = 0.7,
-		},
-		{
-			"M5.6 9.8 L6.3 9.5 M8.2 6.6 L8.8 6.1 M15.4 8.4 L15.9 9 M5 15.2 L4.5 15.8 M18.6 15.6 L19 16.3 M17.2 11.8 L17.6 12.4 M9.6 11 L10.3 11.2 M14.2 11.4 L13.6 11.8",
-			stroke = rgb(214, 198, 176),
-			w = 0.5,
-		},
-		{ "M4.6 14 L8 7 C8.6 5.8 9.4 4.9 10.4 4.4", stroke = rgb(255, 255, 255), w = 0.7 },
-		{
-			"M7.2 21.4 V14.2 C7.2 13.4 7.8 12.9 8.6 12.9 H15.4 C16.2 12.9 16.8 13.4 16.8 14.2 V21.4 Z",
-			stroke = rgb(12, 34, 30),
-			w = 0.6,
-		},
-		{
-			"M7.2 21.4 V14.2 C7.2 13.4 7.8 12.9 8.6 12.9 H15.4 C16.2 12.9 16.8 13.4 16.8 14.2 V21.4 Z",
-			fill = rgb(40, 84, 62),
-		},
-		{ "M13.8 12.9 H15.4 C16.2 12.9 16.8 13.4 16.8 14.2 V21.4 H13.8 Z", fill = rgb(24, 56, 46) },
-		{ "M8.3 14 V20.6", stroke = rgb(92, 146, 104), w = 0.5 },
-		{
-			"M10.4 15 L10.9 15.6 M12.2 18.2 L12.8 18 M9.8 19 L10.2 19.6 M14.8 15.4 L15.2 16 M11.8 16 L12.2 16.4",
-			stroke = rgb(72, 122, 88),
-			w = 0.35,
-		},
-	},
-	ball(
-		12,
-		7.6,
-		1.7,
-		{ deep = rgb(120, 14, 44), shade = rgb(180, 24, 60), base = rgb(232, 56, 82), light = rgb(255, 136, 140) }
-	)
-)
-
--- Pancakes: a stack of three on a plate, syrup running over the edge and a pat of butter on
--- top.
-Art.pancakes = join(
-	moved(
-		plate({
-			deep = rgb(104, 118, 160),
-			shade = rgb(172, 186, 214),
-			base = rgb(230, 236, 247),
-			light = rgb(246, 249, 253),
-		}),
-		0,
-		0.6
-	),
-	{
-		{
-			"M3.8 15.2 V17.5 A8.2 2.8 0 0 0 20.2 17.5 V15.2 Z",
-			stroke = rgb(128, 68, 26),
-			w = 0.7,
-		},
-		{ "M3.8 15.2 V17.5 A8.2 2.8 0 0 0 20.2 17.5 V15.2 Z", fill = rgb(246, 206, 136) },
-		{ ellipse(12, 15.2, 8.2, 2.8), fill = rgb(196, 118, 50) },
-		{
-			"M4.1 12.4 V14.7 A8.2 2.8 0 0 0 20.5 14.7 V12.4 Z",
-			stroke = rgb(128, 68, 26),
-			w = 0.7,
-		},
-		{ "M4.1 12.4 V14.7 A8.2 2.8 0 0 0 20.5 14.7 V12.4 Z", fill = rgb(246, 206, 136) },
-		{ ellipse(12.3, 12.4, 8.2, 2.8), fill = rgb(196, 118, 50) },
-		{ "M3.6 9.6 V11.9 A8.2 2.8 0 0 0 20 11.9 V9.6 Z", stroke = rgb(128, 68, 26), w = 0.7 },
-		{ "M3.6 9.6 V11.9 A8.2 2.8 0 0 0 20 11.9 V9.6 Z", fill = rgb(246, 206, 136) },
-		{ "M16.4 9.6 H20.5 V17.5 A8.2 2.8 0 0 1 16.4 19.86 Z", fill = rgb(130, 54, 24), opacity = 0.3 },
-		{ "M19 9.6 H20.5 V17.5 A8.2 2.8 0 0 1 19 18.96 Z", fill = rgb(130, 54, 24), opacity = 0.3 },
-		{
-			"M3.9 10.4 V11.9 C4.2 12.5 4.8 13 5.6 13.4 V12 Z M4 16 V17.6 C4.3 18.1 4.9 18.6 5.6 19 V17.6 Z",
-			fill = rgb(255, 236, 190),
-		},
-		{ ellipse(11.8, 9.6, 8.2, 2.8), stroke = rgb(128, 68, 26), w = 0.7 },
-		{ ellipse(11.8, 9.6, 8.2, 2.8), fill = rgb(250, 216, 150) },
-		{ ellipse(11.8, 9.65, 7.3, 2.3), fill = rgb(224, 150, 70) },
-		{ ellipse(10, 9.2, 4.6, 1.3), fill = rgb(240, 176, 96), opacity = 0.8 },
-		{
-			"M6.4 9.4 C6.4 8.2 9 7.6 12 7.6 C15.4 7.6 17.8 8.4 17.8 9.6 C17.8 10.3 17 10.8 16.2 11 V14.6 Q16.2 15.8 15.1 15.8 Q14 15.8 14 14.6 V11.4 C13 11.5 11.4 11.5 10.2 11.3 V12.6 Q10.2 13.6 9.2 13.6 Q8.2 13.6 8.2 12.6 V10.9 C7.1 10.6 6.4 10 6.4 9.4 Z",
-			fill = rgb(112, 46, 10),
-			stroke = rgb(112, 46, 10),
-			w = 0.5,
-		},
-		{
-			"M6.4 9.4 C6.4 8.2 9 7.6 12 7.6 C15.4 7.6 17.8 8.4 17.8 9.6 C17.8 10.3 17 10.8 16.2 11 V14.6 Q16.2 15.8 15.1 15.8 Q14 15.8 14 14.6 V11.4 C13 11.5 11.4 11.5 10.2 11.3 V12.6 Q10.2 13.6 9.2 13.6 Q8.2 13.6 8.2 12.6 V10.9 C7.1 10.6 6.4 10 6.4 9.4 Z",
-			fill = rgb(190, 92, 22),
-		},
-		{ "M7.6 9 C8.6 8.4 10.4 8.2 12 8.2", stroke = rgb(255, 196, 110), w = 0.45 },
-		{ "M8.7 11.4 V12.5 M14.5 12 V14.4", stroke = rgb(255, 196, 110), w = 0.4 },
-		{
-			"M9.2 8.4 L13 9 L15.6 7.6 V5.4 L11.8 4.8 L9.2 6.2 Z",
-			fill = rgb(150, 100, 20),
-			stroke = rgb(150, 100, 20),
-			w = 0.6,
-		},
-		{ "M9.2 6.2 L13 6.8 V9 L9.2 8.4 Z", fill = rgb(250, 214, 98) },
-		{ "M13 6.8 L15.6 5.4 V7.6 L13 9 Z", fill = rgb(226, 174, 62) },
-		{ "M9.2 6.2 L11.8 4.8 L15.6 5.4 L13 6.8 Z", fill = rgb(255, 242, 160) },
-		{ "M10.4 6 L11.9 5.2", stroke = GLINT, w = 0.4 },
-	}
-)
-
--- Spicy curry on a teal plate: the curry with potato, carrot and meat in it, a mound of rice
--- beside it, and a red chili laid on top.
-Art.curry = moved(
-	join(
-		plate({
-			deep = rgb(8, 78, 88),
-			shade = rgb(36, 134, 138),
-			base = rgb(84, 190, 180),
-			light = rgb(150, 224, 210),
-			inside = rgb(120, 208, 196),
-		}),
-		{
-			{
-				"M8.6 13 C11 10.8 17.4 10.8 19.8 12.8 C21.8 14.6 21.2 17.6 19 19 C16.2 20.6 10.2 20.8 6.6 19.4 C8 18.8 9.4 18 10 17 Z",
-				stroke = rgb(104, 36, 6),
-				w = 0.6,
-			},
-			{
-				"M8.6 13 C11 10.8 17.4 10.8 19.8 12.8 C21.8 14.6 21.2 17.6 19 19 C16.2 20.6 10.2 20.8 6.6 19.4 C8 18.8 9.4 18 10 17 Z",
-				fill = rgb(226, 122, 24),
-			},
-			{
-				"M20.9 14.4 C21.3 16.4 20.6 18 19 19 C16.2 20.6 10.2 20.8 6.6 19.4 C10.4 19.9 15.6 19.7 18.2 18.2 C19.6 17.3 20.5 16 20.9 14.4 Z",
-				fill = rgb(168, 70, 12),
-			},
-			{
-				"M12 13 C14.2 11.7 17.8 11.9 19.2 13.3 C20.2 14.5 19.4 16 18 16.9 C16.2 17.8 13.4 17.7 12.2 16.7 Z",
-				fill = rgb(248, 168, 56),
-				opacity = 0.85,
-			},
-			{
-				"M3 16 C2.6 12 4.8 8.8 7.6 8.8 C10.4 8.8 12.2 12 11.8 16 C11.6 17.8 9.6 18.6 7.4 18.6 C5.2 18.6 3.2 17.8 3 16 Z",
-				stroke = rgb(132, 108, 98),
-				w = 0.7,
-			},
-			{
-				"M3 16 C2.6 12 4.8 8.8 7.6 8.8 C10.4 8.8 12.2 12 11.8 16 C11.6 17.8 9.6 18.6 7.4 18.6 C5.2 18.6 3.2 17.8 3 16 Z",
-				fill = rgb(252, 249, 240),
-			},
-			{
-				"M9.3 9.5 C11.2 11 12.1 13.4 11.8 16 C11.6 17.8 9.6 18.6 7.4 18.6 C9.3 17.5 10.2 15.6 10.1 13.2 C10 11.8 9.8 10.6 9.3 9.5 Z",
-				fill = rgb(230, 214, 192),
-			},
-			{ "M4.3 13.8 C4.5 12 5.3 10.6 6.5 9.9", stroke = rgb(255, 255, 255), w = 0.7 },
-			{
-				"M5.8 12.6 L6.4 12.3 M7.8 10.8 L8.4 11 M5 15.8 L5.6 16.1 M7.8 14.4 L8.4 14.1 M6.6 17.2 L7.2 17 M9 16.4 L9.5 16",
-				stroke = rgb(212, 196, 174),
-				w = 0.5,
-			},
-			{
-				"M11.4 17.3 C11.6 18.6 13.8 19.2 15.4 18.8 C16.6 18.5 16.8 17.4 16 16.8 Z",
-				fill = rgb(168, 70, 12),
-				opacity = 0.6,
-			},
-			{ ellipse(18.4, 15.9, 1.6, 1.05), fill = rgb(186, 78, 12) },
-			{ ellipse(18.4, 15.4, 1.6, 1.05), fill = rgb(255, 150, 60) },
-			{ ellipse(18.2, 15.3, 0.9, 0.55), fill = rgb(255, 196, 110) },
-			{ ellipse(16.3, 18.3, 1.3, 0.8), fill = rgb(186, 78, 12) },
-			{ ellipse(16.3, 17.9, 1.3, 0.8), fill = rgb(255, 150, 60) },
-			{ "M12.8 13.9 L14.9 12.8 L16.8 13.7 L14.8 14.9 Z", fill = rgb(255, 236, 160) },
-			{ "M12.8 13.9 L14.8 14.9 V16.7 L12.8 15.7 Z", fill = rgb(248, 204, 108) },
-			{ "M14.8 14.9 L16.8 13.7 V15.5 L14.8 16.7 Z", fill = rgb(214, 160, 70) },
-			{
-				"M10.8 17.6 C10.8 16.6 12 16.2 13.2 16.4 C14.4 16.6 14.8 17.6 14.2 18.4 C13.4 19.2 11 19 10.8 17.6 Z",
-				fill = rgb(112, 52, 24),
-			},
-			{ "M11.6 17.2 C12.1 16.8 12.8 16.8 13.4 17", stroke = rgb(178, 100, 52), w = 0.4 },
-			{ "M14.7 11.3 L14 10.5", stroke = rgb(50, 140, 60), w = 0.7 },
-			{
-				"M14.7 11.2 C16 9.8 18.2 9.3 20.4 10 C19.4 11.3 17.2 12.3 15 12.1 C14.5 12 14.4 11.6 14.7 11.2 Z",
-				fill = rgb(128, 12, 34),
-				stroke = rgb(128, 12, 34),
-				w = 0.5,
-			},
-			{
-				"M14.7 11.2 C16 9.8 18.2 9.3 20.4 10 C19.4 11.3 17.2 12.3 15 12.1 C14.5 12 14.4 11.6 14.7 11.2 Z",
-				fill = rgb(232, 46, 52),
-			},
-			{ "M15.8 10.8 C16.8 10.2 17.8 10 18.8 10", stroke = rgb(255, 170, 160), w = 0.35 },
-			{ circle(18.6, 18, 0.55) .. circle(19.8, 13.8, 0.5) .. circle(11.4, 14.6, 0.5), fill = rgb(96, 176, 70) },
-			{
-				"M6.6 9.4 C6.2 8.6 7.2 8 7.8 8.6 C8.2 7.8 9.4 8.2 9 9.1 C9.8 9.5 9.2 10.4 8.4 10.1 C8 10.7 6.8 10.4 6.6 9.4 Z",
-				fill = rgb(56, 148, 60),
-			},
-			{ circle(7.6, 9, 0.3), fill = rgb(150, 220, 110) },
-			{ ellipse(13.6, 12.4, 0.9, 0.25) .. ellipse(19.6, 17.4, 0.7, 0.22), fill = GLINT, opacity = 0.75 },
-		}
-	),
-	0,
-	-2.4
-)
-
--- A pumpkin pie in its tin, a quarter of it gone, with whipped cream on what is left.
-Art.pie = moved({
-	shadow(12, 18.9, 8.8, 1.5),
-	{
-		"M1.8 11.4 L4 16.4 C4.8 18.2 8.4 19 12 19 C15.6 19 19.2 18.2 20 16.4 L22.2 11.4 Z",
-		stroke = rgb(62, 74, 112),
-		w = 0.7,
-	},
-	{ "M1.8 11.4 L4 16.4 C4.8 18.2 8.4 19 12 19 C15.6 19 19.2 18.2 20 16.4 L22.2 11.4 Z", fill = rgb(186, 198, 222) },
-	{
-		"M4.6 14.2 L5.8 17.4 M7.4 15.1 L8.2 18.3 M10.4 15.5 L10.8 18.8 M13.6 15.5 L13.2 18.8 M16.6 15.1 L15.8 18.3 M19.4 14.2 L18.2 17.4",
-		stroke = rgb(132, 146, 182),
-		w = 0.45,
-	},
-	{ "M15.6 15.3 L22.2 11.4 L20 16.4 C19.4 17.7 17.6 18.4 15.6 18.8 Z", fill = rgb(52, 62, 104), opacity = 0.36 },
-	{ "M2.7 12.8 L4.4 16.4 C4.6 16.9 5 17.3 5.6 17.6 L4 13.8 Z", fill = rgb(240, 244, 252) },
-	{ ellipse(12, 11.4, 10.2, 4.2), stroke = rgb(118, 58, 18), w = 0.7 },
-	{ ellipse(12, 11.4, 10.2, 4.2), fill = rgb(242, 186, 104) },
-	{ ticks(12, 11.4, 8.9, 3.5, 10, 4.1, 30, 0, 348), stroke = rgb(192, 116, 48), w = 0.45 },
-	{ "M2.8 10.4 C4.4 8.6 7.8 7.6 11.4 7.4", stroke = rgb(255, 230, 176), w = 0.5 },
-	{ ellipse(12, 11.5, 8.6, 3.3), fill = rgb(150, 58, 8) },
-	{ ellipse(12.1, 11.65, 8.2, 3.05), fill = rgb(238, 130, 32) },
-	{ ellipse(9.4, 10.7, 4.8, 1.4), fill = rgb(252, 164, 64), opacity = 0.8 },
-	{ ellipse(16.4, 10, 1.4, 0.3), fill = GLINT, opacity = 0.6 },
-	{ "M12 11.5 L20.83 13.5 A10.2 4.2 0 0 1 7.69 15.21 Z", fill = rgb(146, 160, 194) },
-	{ "M12 13.2 L19.6 14.2 C17 15.3 12.4 15.9 8.6 15.4 Z", fill = rgb(176, 188, 214) },
-	{ "M12 11.5 L20.83 13.5 L19.6 14.2 L12 13.2 Z", fill = rgb(226, 116, 26) },
-	{ "M19.45 13.19 L20.83 13.5 L19.6 14.2 L18.4 14.04 Z", fill = rgb(232, 174, 98) },
-	{ "M12 13.2 L19.6 14.2", stroke = rgb(216, 150, 78), w = 0.4 },
-	{ "M12 11.5 L7.69 15.21 L8.6 15.4 L12 13.2 Z", fill = rgb(168, 72, 12) },
-	{ "M12.2 11.55 L19.4 13.18", stroke = rgb(255, 196, 110), w = 0.3 },
-	{ "M20.83 13.5 A10.2 4.2 0 0 1 7.69 15.21", stroke = rgb(232, 238, 250), w = 0.45 },
-	{ circle(13.4, 14.5, 0.25) .. circle(15.8, 14.7, 0.22) .. circle(11.4, 14.8, 0.22), fill = rgb(226, 150, 70) },
-	{
-		"M6 10.4 C5.6 9.2 6.6 8.4 7.6 8.6 C7.5 7.6 8.2 7 8.6 6.8 C8.8 6.2 9.3 5.8 9.8 5.2 C10 6.2 10.5 6.8 10.4 7.4 C11.4 7.4 12 8.2 11.6 9 C12.4 9.6 12 11 10.8 11 C9.4 11.6 6.8 11.4 6 10.4 Z",
-		fill = rgb(146, 112, 104),
-		stroke = rgb(146, 112, 104),
-		w = 0.5,
-	},
-	{
-		"M6 10.4 C5.6 9.2 6.6 8.4 7.6 8.6 C7.5 7.6 8.2 7 8.6 6.8 C8.8 6.2 9.3 5.8 9.8 5.2 C10 6.2 10.5 6.8 10.4 7.4 C11.4 7.4 12 8.2 11.6 9 C12.4 9.6 12 11 10.8 11 C9.4 11.6 6.8 11.4 6 10.4 Z",
-		fill = rgb(255, 252, 244),
-	},
-	{
-		"M11.6 9 C12.4 9.6 12 11 10.8 11 C9.4 11.6 6.8 11.4 6 10.4 C7.6 10.8 10 10.6 11 9.4 Z",
-		fill = rgb(230, 214, 204),
-	},
-	{ "M7.6 8.7 C8.6 9.2 10 9 10.6 8.2 M8.6 6.9 C9.2 7.3 9.8 7.3 10.3 7", stroke = rgb(226, 208, 198), w = 0.35 },
-}, 0, 0.3)
-
--- An ice cream: a pink scoop with sprinkles on a waffle cone, a wafer roll stuck in it.
-Art.icecream = {
-	{ "M15 6.6 L20.4 1.9", stroke = rgb(116, 62, 20), w = 2.4 },
-	{ "M15 6.6 L20.4 1.9", stroke = rgb(236, 178, 100), w = 1.7 },
-	{ "M15 6 L20 1.7", stroke = rgb(254, 224, 160), w = 0.4 },
-	{ "M17 5.6 L16.2 4.7 M18.6 4.2 L17.8 3.3 M20.1 2.9 L19.4 2", stroke = rgb(176, 108, 46), w = 0.4 },
-	{ "M6.6 12.4 H17.4 L12.9 22 Q12 23 11.1 22 Z", stroke = rgb(116, 62, 20), w = 0.7 },
-	{ "M6.6 12.4 H17.4 L12.9 22 Q12 23 11.1 22 Z", fill = rgb(236, 176, 96) },
-	{ "M12.8 12.4 H17.4 L12.9 22 Q12.5 22.5 12 22.7 Z", fill = rgb(196, 124, 56) },
-	{
-		"M8.4 14.2 L12.6 20.6 M10.6 13.6 L14.2 19.2 M13 13.8 L15.6 17.2 M15.6 14.2 L11.4 20.6 M13.4 13.6 L9.8 19.2 M11 13.8 L8.6 17.2",
-		stroke = rgb(168, 98, 40),
-		w = 0.45,
-	},
-	{ "M7.6 13.4 L10.4 20 ", stroke = rgb(254, 220, 150), w = 0.45, opacity = 0.9 },
-	{
-		"M12 2.4 C15.6 2.4 18.2 5.2 18.2 8.6 C18.2 9.4 18.1 10 17.9 10.6 C18.8 10.8 19.2 11.6 18.9 12.4 C18.6 13.3 17.6 13.6 16.8 13.2 C16.2 14 15 14 14.4 13.3 C13.8 14.2 12.4 14.2 11.8 13.4 C11.2 14.2 9.8 14.1 9.3 13.2 C8.6 13.9 7.3 13.7 7 12.8 C6 13.2 5 12.6 5 11.6 C5 11 5.4 10.6 6 10.4 C5.8 9.8 5.8 9.2 5.8 8.6 C5.8 5.2 8.4 2.4 12 2.4 Z",
-		stroke = rgb(164, 40, 92),
-		w = 0.7,
-	},
-	{
-		"M12 2.4 C15.6 2.4 18.2 5.2 18.2 8.6 C18.2 9.4 18.1 10 17.9 10.6 C18.8 10.8 19.2 11.6 18.9 12.4 C18.6 13.3 17.6 13.6 16.8 13.2 C16.2 14 15 14 14.4 13.3 C13.8 14.2 12.4 14.2 11.8 13.4 C11.2 14.2 9.8 14.1 9.3 13.2 C8.6 13.9 7.3 13.7 7 12.8 C6 13.2 5 12.6 5 11.6 C5 11 5.4 10.6 6 10.4 C5.8 9.8 5.8 9.2 5.8 8.6 C5.8 5.2 8.4 2.4 12 2.4 Z",
-		fill = rgb(255, 156, 186),
-	},
-	{
-		"M15.6 3.6 C17.2 4.8 18.2 6.6 18.2 8.6 C18.2 9.4 18.1 10 17.9 10.6 C18.8 10.8 19.2 11.6 18.9 12.4 C18.6 13.3 17.6 13.6 16.8 13.2 C16.2 14 15 14 14.4 13.3 C14 13.9 13.2 14.1 12.6 13.9 C15.2 12.6 16.8 10 16.6 7 C16.5 5.8 16.2 4.6 15.6 3.6 Z",
-		fill = rgb(236, 108, 150),
-	},
-	{ "M6.4 10.7 C8 11.6 15.8 11.8 17.6 10.9", stroke = rgb(222, 92, 138), w = 0.5 },
-	{
-		"M7.2 8.2 C7.2 5.8 8.8 4 10.8 3.6 C9.6 4.6 8.8 6 8.6 8 C8.4 9 7.3 9 7.2 8.2 Z",
-		fill = rgb(255, 214, 226),
-	},
-	{ "M7.7 7.4 C7.9 6.2 8.5 5.2 9.4 4.5", stroke = GLINT, w = 0.5 },
-	{ "M10.6 6.4 L11.3 6.8 M13.4 4.6 L14 4.2 M12.6 8.6 L13.3 8.4", stroke = rgb(255, 236, 130), w = 0.5 },
-	{ "M9.6 9.6 L10.2 9.3 M14.6 6.8 L15.1 7.3 M11.4 4.2 L11.9 3.9", stroke = rgb(124, 214, 240), w = 0.5 },
-	{ "M12.4 6.4 L12.9 5.9 M15 9.4 L15.6 9.6 M8.4 12 L9 12.2", stroke = rgb(255, 255, 255), w = 0.5 },
-}
-
--- A garden salad: a wooden bowl heaped with leaves, wedges of tomato, slices of cucumber and
--- shreds of carrot.
-Art.salad = join(
-	bowl({
-		deep = rgb(84, 40, 14),
-		shade = rgb(150, 82, 34),
-		base = rgb(198, 124, 58),
-		light = rgb(238, 178, 104),
-		rim = rgb(228, 164, 92),
-		inside = rgb(140, 76, 32),
-	}),
-	{
-		{ "M3.6 15.4 C6 17.6 9 18.4 12 18.4 M14.6 18.3 C17 18 19.2 17 20.6 15.4", stroke = rgb(160, 92, 40), w = 0.4 },
-		{
-			"M2.8 12.2 C1.4 9.6 3 7.4 5 7.2 C4.8 4.8 7.4 3.4 9.4 4.4 C10.6 2.4 13.8 2.2 15 4 C17.2 3 19.6 4.6 19.2 7 C21.4 7.4 22.6 9.8 21.2 12.2 C20 14.4 16 15.2 12 15.2 C8 15.2 4 14.4 2.8 12.2 Z",
-			stroke = rgb(14, 66, 34),
-			w = 0.7,
-		},
-		{
-			"M2.8 12.2 C1.4 9.6 3 7.4 5 7.2 C4.8 4.8 7.4 3.4 9.4 4.4 C10.6 2.4 13.8 2.2 15 4 C17.2 3 19.6 4.6 19.2 7 C21.4 7.4 22.6 9.8 21.2 12.2 C20 14.4 16 15.2 12 15.2 C8 15.2 4 14.4 2.8 12.2 Z",
-			fill = rgb(48, 132, 54),
-		},
-		{
-			"M15 4 C17.2 3 19.6 4.6 19.2 7 C21.4 7.4 22.6 9.8 21.2 12.2 C20.4 13.6 18.6 14.4 16.4 14.8 C18.6 13 19.4 10.6 18.4 8.4 C17.8 6.8 16.6 5.2 15 4 Z",
-			fill = rgb(26, 96, 44),
-		},
-		{
-			"M5.6 7.2 C5.6 5.4 7.6 4.4 9.2 5.2 C10.2 3.6 12.6 3.2 13.8 4.4 C12 4.6 10.8 5.4 10.2 6.8 C8.8 6.4 7 6.6 5.6 7.2 Z",
-			fill = rgb(112, 192, 72),
-		},
-		{
-			"M3.4 12.2 C2.6 10.2 4 8.6 5.8 8.8 C6.4 7.2 8.8 6.8 10 8.2 C11.4 7.6 12.8 8.8 12.4 10.2 C13.6 11 13.2 13 11.8 13.4 C10 14.8 5.4 14.4 3.4 12.2 Z",
-			fill = rgb(124, 200, 76),
-		},
-		{
-			"M12.4 10.2 C13.6 11 13.2 13 11.8 13.4 C10 14.8 5.4 14.4 3.4 12.2 C6 13.2 9.4 13 11 11.4 C11.6 10.9 12 10.5 12.4 10.2 Z",
-			fill = rgb(82, 166, 62),
-		},
-		{
-			"M4.6 11.6 C6 10.6 8 10.2 10 10.4 M6.8 9.6 L7.4 10.5 M9 9.2 L9.2 10.4",
-			stroke = rgb(196, 236, 130),
-			w = 0.4,
-		},
-		{
-			"M13.6 12.8 C12.8 11.2 14 9.8 15.6 10 C16.2 8.6 18.4 8.4 19.2 9.8 C20.8 9.8 21.6 11.4 20.6 12.6 C19.6 14.2 15.4 14.6 13.6 12.8 Z",
-			fill = rgb(98, 182, 66),
-		},
-		{ "M14.6 12.4 C16 11.4 18 11.2 19.8 11.6", stroke = rgb(176, 226, 116), w = 0.4 },
-		{ ellipse(9.6, 6.8, 2.1, 1.5), fill = rgb(22, 92, 44) },
-		{ ellipse(9.6, 6.8, 1.65, 1.1), fill = rgb(204, 236, 158) },
-		{ ellipse(9.5, 6.7, 0.9, 0.55), fill = rgb(230, 248, 196) },
-		{ ellipse(13, 9.4, 2.4, 1.7), fill = rgb(22, 92, 44) },
-		{ ellipse(13, 9.4, 1.9, 1.3), fill = rgb(204, 236, 158) },
-		{ ellipse(12.9, 9.3, 1.1, 0.7), fill = rgb(230, 248, 196) },
-		{
-			circle(12.4, 9.2, 0.2)
-				.. circle(13.4, 9.1, 0.2)
-				.. circle(12.9, 9.8, 0.2)
-				.. circle(9.2, 6.7, 0.18)
-				.. circle(9.9, 6.9, 0.18),
-			fill = rgb(150, 200, 110),
-		},
-		{
-			"M4.4 10.8 C4.8 8.6 8.4 8 10.2 9.8 C9.6 12 6 12.6 4.4 10.8 Z M14.4 7.4 C15 5.4 18.4 5 19.8 7 C19 9 15.8 9.4 14.4 7.4 Z",
-			fill = rgb(124, 10, 30),
-			stroke = rgb(124, 10, 30),
-			w = 0.5,
-		},
-		{
-			"M4.4 10.8 C4.8 8.6 8.4 8 10.2 9.8 C9.6 12 6 12.6 4.4 10.8 Z M14.4 7.4 C15 5.4 18.4 5 19.8 7 C19 9 15.8 9.4 14.4 7.4 Z",
-			fill = rgb(232, 48, 50),
-		},
-		{
-			"M5.4 10.7 C6 9.6 8 9.3 9.2 10 C8.6 11.2 6.4 11.5 5.4 10.7 Z M15.4 7.3 C16 6.3 17.8 6.1 18.8 7 C18.2 8.1 16.4 8.2 15.4 7.3 Z",
-			fill = rgb(255, 128, 104),
-		},
-		{
-			circle(6.8, 10.5, 0.25) .. circle(7.9, 10.3, 0.25) .. circle(16.6, 7.2, 0.25) .. circle(17.6, 7.1, 0.25),
-			fill = rgb(255, 228, 160),
-		},
-		{ "M5 9.9 C5.8 9.2 7 8.9 8 9", stroke = rgb(255, 180, 170), w = 0.35 },
-		{
-			"M14.8 12.2 L17.2 11 M15.8 13.2 L18.6 12.2 M17.6 11.6 L19.6 11.4 M6.2 13.4 L8.6 13.8",
-			stroke = rgb(176, 80, 10),
-			w = 0.75,
-		},
-		{
-			"M14.8 12.2 L17.2 11 M15.8 13.2 L18.6 12.2 M17.6 11.6 L19.6 11.4 M6.2 13.4 L8.6 13.8",
-			stroke = rgb(252, 156, 48),
-			w = 0.45,
-		},
-	}
-)
-
--- A chocolate bar, tilted: brown squares, with the foil and the red wrapper still on the
--- lower half.
-Art.chocolate = join(
-	{ { "M5.5 22.3 A9 1.5 -14 1 0 22.6 18.2 A9 1.5 -14 1 0 5.5 22.3 Z", fill = SHADOW, opacity = 0.3 } },
-	turned({
-		{
-			"M6 3.4 Q6 2.6 6.8 2.6 L17.2 2.6 Q18 2.6 18 3.4 L18 20.4 Q18 21.2 17.2 21.2 L6.8 21.2 Q6 21.2 6 20.4 Z",
-			stroke = rgb(52, 22, 12),
-			w = 0.7,
-		},
-		{
-			"M6 3.4 Q6 2.6 6.8 2.6 L17.2 2.6 Q18 2.6 18 3.4 L18 20.4 Q18 21.2 17.2 21.2 L6.8 21.2 Q6 21.2 6 20.4 Z",
-			fill = rgb(92, 46, 24),
-		},
-		{
-			box(6.5, 3.1, 3.5, 4.1)
-				.. box(10.25, 3.1, 3.5, 4.1)
-				.. box(14, 3.1, 3.5, 4.1)
-				.. box(6.5, 7.7, 3.5, 4.1)
-				.. box(10.25, 7.7, 3.5, 4.1)
-				.. box(14, 7.7, 3.5, 4.1)
-				.. box(6.5, 12.3, 3.5, 4.1)
-				.. box(10.25, 12.3, 3.5, 4.1)
-				.. box(14, 12.3, 3.5, 4.1),
-			fill = rgb(128, 72, 38),
-		},
-		{
-			box(7.1, 3.7, 2.3, 2.9)
-				.. box(10.85, 3.7, 2.3, 2.9)
-				.. box(14.6, 3.7, 2.3, 2.9)
-				.. box(7.1, 8.3, 2.3, 2.9)
-				.. box(10.85, 8.3, 2.3, 2.9)
-				.. box(14.6, 8.3, 2.3, 2.9)
-				.. box(7.1, 12.9, 2.3, 2.9)
-				.. box(10.85, 12.9, 2.3, 2.9),
-			fill = rgb(146, 86, 46),
-		},
-		{
-			"M6.5 7.2 L6.5 3.1 L10 3.1 M10.25 7.2 L10.25 3.1 L13.75 3.1 M14 7.2 L14 3.1 L17.5 3.1 M6.5 11.8 L6.5 7.7 L10 7.7 M10.25 11.8 L10.25 7.7 L13.75 7.7 M14 11.8 L14 7.7 L17.5 7.7 M6.5 16.4 L6.5 12.3 L10 12.3 M10.25 16.4 L10.25 12.3 L13.75 12.3",
-			stroke = rgb(186, 120, 70),
-			w = 0.35,
-		},
-		{
-			"M10 3.1 L10 7.2 L6.5 7.2 M13.75 3.1 L13.75 7.2 L10.25 7.2 M17.5 3.1 L17.5 7.2 L14 7.2 M10 7.7 L10 11.8 L6.5 11.8 M13.75 7.7 L13.75 11.8 L10.25 11.8 M17.5 7.7 L17.5 11.8 L14 11.8",
-			stroke = rgb(70, 32, 16),
-			w = 0.35,
-		},
-		{ "M7.4 4 L8.6 4 M11.15 4 L12.35 4 M7.4 8.6 L8.6 8.6", stroke = rgb(226, 174, 124), w = 0.4 },
-		{
-			"M5.4 13.2 L7 11.8 L8.4 13 L10 11.4 L11.6 12.8 L13.2 11.2 L14.8 12.6 L16.6 11 L18.6 12.4 L18.6 15 L5.4 15 Z",
-			fill = rgb(96, 108, 146),
-			stroke = rgb(96, 108, 146),
-			w = 0.5,
-		},
-		{
-			"M5.4 13.2 L7 11.8 L8.4 13 L10 11.4 L11.6 12.8 L13.2 11.2 L14.8 12.6 L16.6 11 L18.6 12.4 L18.6 15 L5.4 15 Z",
-			fill = rgb(222, 228, 240),
-		},
-		{
-			"M7 11.8 L8.4 13 L8 14.6 Z M10 11.4 L11.6 12.8 L11 14.6 Z M13.2 11.2 L14.8 12.6 L14.2 14.6 Z M16.6 11 L18.6 12.4 L18 14.6 Z",
-			fill = rgb(168, 178, 204),
-		},
-		{
-			"M5 14.2 L19 14.2 L19 20.8 Q19 21.8 18 21.8 L6 21.8 Q5 21.8 5 20.8 Z",
-			stroke = rgb(112, 10, 34),
-			w = 0.7,
-		},
-		{ "M5 14.2 L19 14.2 L19 20.8 Q19 21.8 18 21.8 L6 21.8 Q5 21.8 5 20.8 Z", fill = rgb(222, 44, 58) },
-		{ "M15.6 14.2 L19 14.2 L19 20.8 Q19 21.8 18 21.8 L15.6 21.8 Z", fill = rgb(170, 22, 50) },
-		{ "M5 16.4 L19 16.4 L19 18.6 L5 18.6 Z", fill = rgb(255, 232, 190) },
-		{ "M15.6 16.4 L19 16.4 L19 18.6 L15.6 18.6 Z", fill = rgb(226, 190, 150) },
-		{ "M5.9 14.9 L5.9 15.9 M5.9 19.2 L5.9 20.8", stroke = rgb(255, 130, 120), w = 0.45 },
-		{ "M5.2 14.5 L18.8 14.5", stroke = rgb(255, 140, 130), w = 0.3 },
-	}, 14, 12, 12)
-)
-
--- A caramel pudding on a plate: pale custard, dark caramel over the top and pooled round it,
--- and a cherry.
-Art.pudding = join(
-	moved(
-		plate({
-			deep = rgb(104, 118, 160),
-			shade = rgb(172, 186, 214),
-			base = rgb(230, 236, 247),
-			light = rgb(246, 249, 253),
-		}),
-		0,
-		0.6
-	),
-	{
-		{ ellipse(12, 18.4, 8.3, 2.5), fill = rgb(150, 70, 14) },
-		{ ellipse(12, 18.3, 7.9, 2.3), fill = rgb(206, 118, 32) },
-		{ "M5.6 18 C6.6 16.9 8.6 16.4 10.4 16.4", stroke = rgb(255, 196, 110), w = 0.4 },
-		{
-			"M7.4 6.4 C6.4 9.4 5 13.4 4.6 17.2 A7.4 2.7 0 0 0 19.4 17.2 C19 13.4 17.6 9.4 16.6 6.4 Z",
-			stroke = rgb(146, 88, 22),
-			w = 0.7,
-		},
-		{
-			"M7.4 6.4 C6.4 9.4 5 13.4 4.6 17.2 A7.4 2.7 0 0 0 19.4 17.2 C19 13.4 17.6 9.4 16.6 6.4 Z",
-			fill = rgb(255, 226, 138),
-		},
-		{
-			"M14.4 7 L16.6 6.4 C17.6 9.4 19 13.4 19.4 17.2 A7.4 2.7 0 0 1 15.2 19.63 C15.9 15.6 15.5 10.8 14.4 7 Z",
-			fill = rgb(240, 184, 84),
-		},
-		{
-			"M16.6 6.4 C17.6 9.4 19 13.4 19.4 17.2 A7.4 2.7 0 0 1 17.8 18.88 C18.2 15 17.6 10.6 16.6 6.4 Z",
-			fill = rgb(214, 146, 56),
-		},
-		{ "M7.5 10 C6.9 12.2 6.4 14.4 6.2 16.6", stroke = rgb(255, 250, 224), w = 0.9 },
-		{
-			"M7.4 6.4 L6.9 8 C7.4 8.8 8 8.6 8.2 8.2 C8.6 9.8 9.8 10.2 10.2 9 C10.6 8.4 11.2 8.8 11.6 9.6 C12 10.8 13.2 10.8 13.6 9.6 C13.9 8.8 14.6 8.8 15 9.2 C15.6 9.8 16.6 9.4 16.9 8.6 L17.1 8 L16.6 6.4 Z",
-			fill = rgb(112, 46, 8),
-			stroke = rgb(112, 46, 8),
-			w = 0.5,
-		},
-		{
-			"M7.4 6.4 L6.9 8 C7.4 8.8 8 8.6 8.2 8.2 C8.6 9.8 9.8 10.2 10.2 9 C10.6 8.4 11.2 8.8 11.6 9.6 C12 10.8 13.2 10.8 13.6 9.6 C13.9 8.8 14.6 8.8 15 9.2 C15.6 9.8 16.6 9.4 16.9 8.6 L17.1 8 L16.6 6.4 Z",
-			fill = rgb(186, 96, 26),
-		},
-		{ ellipse(12, 6.4, 4.6, 1.7), fill = rgb(112, 46, 8), stroke = rgb(112, 46, 8), w = 0.5 },
-		{ ellipse(12, 6.4, 4.6, 1.7), fill = rgb(160, 76, 18) },
-		{ ellipse(11, 6, 2.6, 0.8), fill = rgb(206, 118, 40) },
-		{ ellipse(10, 5.8, 1.2, 0.3), fill = GLINT, opacity = 0.8 },
-		{ "M8.9 8.4 V9.2 M12.4 9.4 V10 ", stroke = rgb(240, 160, 70), w = 0.4 },
-		{ "M12.6 4.4 C12.8 3 13.6 2 14.8 1.5", stroke = rgb(70, 110, 40), w = 0.6 },
-	},
-	ball(
-		12.4,
-		4.9,
-		1.7,
-		{ deep = rgb(112, 6, 30), shade = rgb(172, 16, 44), base = rgb(228, 36, 54), light = rgb(255, 120, 120) }
-	)
-)
-
--- Broccoli: a bumpy dark green head on a short pale stalk.
-Art.broccoli = {
-	shadow(12.2, 22, 4.6, 1),
-	{
-		"M8 13.4 C10 15 10.2 17 10.2 19.4 V20.6 C10.2 21.8 11 22.4 12.2 22.4 C13.4 22.4 14.2 21.8 14.2 20.6 V19.4 C14.2 17 14.6 15 16.6 13.4 Z",
-		stroke = rgb(44, 96, 44),
-		w = 0.7,
-	},
-	{
-		"M8 13.4 C10 15 10.2 17 10.2 19.4 V20.6 C10.2 21.8 11 22.4 12.2 22.4 C13.4 22.4 14.2 21.8 14.2 20.6 V19.4 C14.2 17 14.6 15 16.6 13.4 Z",
-		fill = rgb(160, 208, 106),
-	},
-	{
-		"M12.7 14 H16 C14.6 15.4 14.2 17.4 14.2 19.4 V20.6 C14.2 21.8 13.4 22.4 12.2 22.4 C13 21.8 12.9 20.6 12.9 19.4 C12.9 17.6 12.9 15.8 12.7 14 Z",
-		fill = rgb(104, 162, 72),
-	},
-	{
-		"M8.4 13.8 H16.2 C15.8 14.5 15.4 15.1 15.2 15.8 C13 16.6 11 16.6 9.2 15.8 C9 15.1 8.8 14.4 8.4 13.8 Z",
-		fill = rgb(70, 128, 58),
-	},
-	{ "M11 17.4 V20.6", stroke = rgb(214, 240, 164), w = 0.6 },
-	{
-		"M5.4 14.8 C2.6 14.4 1.6 12.4 2 10.4 C2.3 8.8 3.4 7.9 4.6 7.6 C4.2 5.2 6 3.6 8 3.6 C9 2 10.6 1.4 12.2 1.6 C14 1.4 15.6 2.2 16.4 3.8 C18.6 3.8 20.2 5.4 19.6 7.8 C21.4 8.4 22.4 9.8 22 11.6 C21.6 13.6 20.2 14.6 18.4 14.8 C16 15.6 14 15.4 12 14.6 C10 15.4 7.6 15.6 5.4 14.8 Z",
-		stroke = rgb(16, 72, 40),
-		w = 0.7,
-	},
-	{
-		"M5.4 14.8 C2.6 14.4 1.6 12.4 2 10.4 C2.3 8.8 3.4 7.9 4.6 7.6 C4.2 5.2 6 3.6 8 3.6 C9 2 10.6 1.4 12.2 1.6 C14 1.4 15.6 2.2 16.4 3.8 C18.6 3.8 20.2 5.4 19.6 7.8 C21.4 8.4 22.4 9.8 22 11.6 C21.6 13.6 20.2 14.6 18.4 14.8 C16 15.6 14 15.4 12 14.6 C10 15.4 7.6 15.6 5.4 14.8 Z",
-		fill = rgb(62, 150, 62),
-	},
-	{
-		"M2 10.6 C3.6 12.2 6 12.4 7.4 11.4 C8.8 13.2 11 13.4 12.4 12.2 C13.8 13.6 16.2 13.4 17.2 11.8 C18.8 12.6 21 12.2 22 10.6 C22.4 12.8 21 14.6 18.4 14.8 C16 15.6 14 15.4 12 14.6 C10 15.4 7.6 15.6 5.4 14.8 C2.8 14.4 1.6 12.6 2 10.6 Z",
-		fill = rgb(34, 110, 52),
-	},
-	{
-		"M16.4 3.8 C18.6 3.8 20.2 5.4 19.6 7.8 C21.4 8.4 22.4 9.8 22 11.6 C21.6 13.6 20.2 14.6 18.4 14.8 C17.4 15.1 16.4 15.3 15.6 15.3 C18.4 13.8 20 11.4 19.4 9.2 C19 7.4 18 5.4 16.4 3.8 Z",
-		fill = rgb(16, 72, 40),
-		opacity = 0.45,
-	},
-	{
-		ellipse(6, 7.6, 2.1, 1.6) .. ellipse(11, 4.7, 2.7, 1.8) .. ellipse(16.2, 6.4, 2, 1.4) .. ellipse(
-			9.4,
-			10,
-			1.6,
-			1.1
-		) .. ellipse(14.2, 10, 1.6, 1.1) .. ellipse(4, 10.4, 1.1, 0.8),
-		fill = rgb(102, 188, 80),
-	},
-	{
-		ellipse(5.4, 7, 1, 0.6) .. ellipse(10.2, 4, 1.4, 0.75) .. ellipse(15.6, 5.9, 1, 0.55),
-		fill = rgb(168, 228, 118),
-	},
-	{
-		"M9 9 C8.6 10.3 7.4 11 6.2 10.8 M14.8 6 C14.4 7.6 13 8.5 11.4 8.4 M19.3 8.2 C18.9 9.5 17.7 10.1 16.4 9.9",
-		stroke = rgb(30, 104, 50),
-		w = 0.5,
-	},
-	{
-		circle(7.6, 5.6, 0.3) .. circle(13.4, 3.4, 0.3) .. circle(17.6, 5.2, 0.3) .. circle(12, 10.6, 0.3) .. circle(
-			6.4,
-			12.9,
-			0.3
-		) .. circle(17.4, 13.4, 0.3) .. circle(10.6, 13.9, 0.3),
-		fill = rgb(126, 204, 96),
-		opacity = 0.8,
-	},
-}
-
--- Pickles: a glass jar of pale brine with three gherkins standing in it, and a red lid.
-Art.pickles = {
-	shadow(12, 21.8, 7.6, 1.3),
-	{
-		"M4.4 10.2 C4.4 8.4 5.8 7.4 7.6 7.4 H16.4 C18.2 7.4 19.6 8.4 19.6 10.2 V19.4 C19.6 21 16.6 22 12 22 C7.4 22 4.4 21 4.4 19.4 Z",
-		stroke = rgb(40, 92, 60),
-		w = 0.7,
-	},
-	{
-		"M4.4 10.2 C4.4 8.4 5.8 7.4 7.6 7.4 H16.4 C18.2 7.4 19.6 8.4 19.6 10.2 V19.4 C19.6 21 16.6 22 12 22 C7.4 22 4.4 21 4.4 19.4 Z",
-		fill = rgb(206, 232, 156),
-	},
-	{
-		"M4.4 10.4 C6.4 11.6 17.6 11.6 19.6 10.4 V19.4 C19.6 21 16.6 22 12 22 C7.4 22 4.4 21 4.4 19.4 Z",
-		fill = rgb(176, 214, 120),
-	},
-	{ "M7.8 12.2 L7.4 18.6 M12 11.6 L12.2 19 M16.2 12.2 L16.6 18.6", stroke = rgb(26, 80, 38), w = 3.7 },
-	{ "M7.8 12.2 L7.4 18.6 M12 11.6 L12.2 19 M16.2 12.2 L16.6 18.6", stroke = rgb(84, 154, 58), w = 3.1 },
-	{ "M8.5 12.4 L8.2 18.8 M12.8 11.8 L13 19.2 M16.9 12.4 L17.3 18.8", stroke = rgb(52, 116, 48), w = 1.5 },
-	{ "M7 12.6 L6.7 17.6 M11.2 12 L11.3 18 M15.4 12.6 L15.7 17.6", stroke = rgb(150, 206, 96), w = 0.6 },
-	{
-		circle(7.8, 13.6, 0.3)
-			.. circle(7.4, 16.2, 0.3)
-			.. circle(12.2, 13.2, 0.3)
-			.. circle(11.9, 15.8, 0.3)
-			.. circle(12.4, 17.8, 0.3)
-			.. circle(16.3, 14, 0.3)
-			.. circle(16.6, 16.8, 0.3),
-		fill = rgb(40, 100, 44),
-	},
-	{
-		circle(9.9, 19.6, 0.3) .. circle(14.2, 20, 0.3) .. circle(10, 12, 0.28) .. circle(14.3, 13, 0.28),
-		fill = rgb(250, 226, 120),
-	},
-	{
-		"M9.8 14 C10 15.4 9.8 16.6 10 17.8 M9.8 15.2 L9.3 14.6 M9.9 16.4 L10.5 15.8 M14.2 14.6 C14 15.8 14.3 17 14.1 18.2 M14.1 16 L14.7 15.4",
-		stroke = rgb(60, 130, 60),
-		w = 0.35,
-	},
-	{
-		"M15.8 7.4 H16.4 C18.2 7.4 19.6 8.4 19.6 10.2 V19.4 C19.6 20.4 18.4 21.2 16.4 21.6 C17.6 18 17.6 11.6 15.8 7.4 Z",
-		fill = rgb(30, 84, 50),
-		opacity = 0.3,
-	},
-	{ "M5.7 10.6 V19", stroke = rgb(255, 255, 255), w = 0.8, opacity = 0.8 },
-	{ "M18.3 11.4 V15", stroke = rgb(255, 255, 255), w = 0.45, opacity = 0.6 },
-	{ "M4.9 19.7 C6.6 21 17.4 21 19.1 19.7", stroke = rgb(120, 172, 100), w = 0.45 },
-	{
-		"M5.4 3.4 C5.4 2.4 8.4 1.6 12 1.6 C15.6 1.6 18.6 2.4 18.6 3.4 V6.4 C18.6 7.4 15.6 8.2 12 8.2 C8.4 8.2 5.4 7.4 5.4 6.4 Z",
-		stroke = rgb(112, 10, 34),
-		w = 0.7,
-	},
-	{
-		"M5.4 3.4 C5.4 2.4 8.4 1.6 12 1.6 C15.6 1.6 18.6 2.4 18.6 3.4 V6.4 C18.6 7.4 15.6 8.2 12 8.2 C8.4 8.2 5.4 7.4 5.4 6.4 Z",
-		fill = rgb(222, 44, 58),
-	},
-	{ "M15.2 4.9 C17.2 4.6 18.6 4.1 18.6 3.4 V6.4 C18.6 7.1 17.2 7.7 15.2 8 Z", fill = rgb(170, 22, 50) },
-	{
-		"M6.7 5.2 V7 M8.3 5.7 V7.5 M10.1 6 V7.8 M12 6.1 V7.9 M13.9 6 V7.8 M15.7 5.7 V7.5 M17.3 5.2 V7",
-		stroke = rgb(150, 16, 44),
-		w = 0.4,
-	},
-	{ ellipse(12, 3.4, 6.6, 1.8), fill = rgb(250, 104, 100) },
-	{ ellipse(12, 3.5, 4.4, 1.1), fill = rgb(236, 70, 76) },
-	{ ellipse(9.2, 2.8, 2.2, 0.45), fill = GLINT, opacity = 0.8 },
-}
-
--- A pot of hearty stew: a red pot with two handles, meat, potato and carrot heaped in it, a
--- wooden spoon and steam.
-Art.stew = join(steam(6.6, 1.2), {
-	shadow(12, 21.6, 7.8, 1.3),
-	{
-		"M3.6 11.2 H2.6 C1.7 11.2 1.7 13.8 2.6 13.8 H3.6 M20.4 11.2 H21.4 C22.3 11.2 22.3 13.8 21.4 13.8 H20.4",
-		stroke = rgb(112, 10, 34),
-		w = 1.9,
-	},
-	{ "M3.6 11.2 H2.6 C1.7 11.2 1.7 13.8 2.6 13.8 H3.6", stroke = rgb(222, 52, 58), w = 1.2 },
-	{ "M20.4 11.2 H21.4 C22.3 11.2 22.3 13.8 21.4 13.8 H20.4", stroke = rgb(170, 22, 50), w = 1.2 },
-	{
-		"M3.6 9.6 V16.4 C3.6 19.8 7 21.6 12 21.6 C17 21.6 20.4 19.8 20.4 16.4 V9.6 Z",
-		stroke = rgb(112, 10, 34),
-		w = 0.7,
-	},
-	{ "M3.6 9.6 V16.4 C3.6 19.8 7 21.6 12 21.6 C17 21.6 20.4 19.8 20.4 16.4 V9.6 Z", fill = rgb(222, 52, 58) },
-	{ "M16.2 9.6 H20.4 V16.4 C20.4 19.8 17 21.6 12 21.6 C15.2 20.8 16.4 18.6 16.2 16.4 Z", fill = rgb(170, 22, 50) },
-	{
-		"M19 9.6 H20.4 V16.4 C20.4 18.6 18.9 20.2 16.4 21 C18.4 19.8 19 18.2 19 16.4 Z",
-		fill = rgb(112, 10, 34),
-		opacity = 0.5,
-	},
-	{ "M5.3 13 V16.4 C5.3 17.6 5.7 18.4 6.3 19", stroke = rgb(255, 150, 130), w = 0.9 },
-	{ ellipse(12, 9.6, 8.4, 3.2), stroke = rgb(112, 10, 34), w = 0.7 },
-	{ ellipse(12, 9.6, 8.4, 3.2), fill = rgb(248, 104, 94) },
-	{ "M4.4 9 C5.6 7.7 8.4 6.9 11.2 6.7", stroke = GLINT, w = 0.5, opacity = 0.85 },
-	{ ellipse(12, 9.8, 7.5, 2.6), fill = rgb(104, 20, 32) },
-	{ ellipse(12, 10.2, 7.1, 2.3), fill = rgb(122, 58, 20) },
-	{ ellipse(11.8, 10.3, 6.3, 1.9), fill = rgb(168, 94, 38) },
-	{ "M14.4 9.6 L20.9 2.9", stroke = rgb(104, 58, 22), w = 2 },
-	{ "M14.4 9.6 L20.9 2.9", stroke = rgb(214, 160, 96), w = 1.3 },
-	{ "M14.3 9.1 L20.5 2.7", stroke = rgb(246, 208, 150), w = 0.4 },
-	{
-		"M5.8 10 C5.8 8.8 7.2 8.2 8.6 8.6 C9.8 9 10 10.2 9.2 11 C8.2 11.8 6 11.4 5.8 10 Z",
-		fill = rgb(70, 28, 12),
-		stroke = rgb(70, 28, 12),
-		w = 0.4,
-	},
-	{ "M5.8 10 C5.8 8.8 7.2 8.2 8.6 8.6 C9.8 9 10 10.2 9.2 11 C8.2 11.8 6 11.4 5.8 10 Z", fill = rgb(124, 60, 28) },
-	{ "M6.6 9.6 C7.2 9 8 8.9 8.8 9.2", stroke = rgb(186, 108, 58), w = 0.4 },
-	{ ellipse(11.4, 9.2, 1.7, 1.1), fill = rgb(180, 72, 10) },
-	{ ellipse(11.4, 8.7, 1.7, 1.1), fill = rgb(252, 150, 46) },
-	{ ellipse(11.2, 8.6, 1, 0.6), fill = rgb(255, 190, 100) },
-	{ "M12.8 10.6 L14.8 9.6 L16.6 10.4 L14.7 11.5 Z", fill = rgb(255, 232, 150) },
-	{ "M12.8 10.6 L14.7 11.5 V12.5 L12.8 11.7 Z", fill = rgb(246, 198, 100) },
-	{ "M14.7 11.5 L16.6 10.4 V11.4 L14.7 12.5 Z", fill = rgb(212, 156, 66) },
-	{ ellipse(9.8, 11.7, 1.3, 0.8), fill = rgb(180, 72, 10) },
-	{ ellipse(9.8, 11.4, 1.3, 0.8), fill = rgb(252, 150, 46) },
-	{
-		"M16.4 9 C16.4 8.2 17.4 7.8 18.2 8.2 C19 8.6 19 9.6 18.2 10 C17.4 10.4 16.4 10 16.4 9 Z",
-		fill = rgb(124, 60, 28),
-	},
-	{
-		circle(17.4, 11.3, 0.5) .. circle(7.2, 11.8, 0.5) .. circle(12.2, 12, 0.45) .. circle(9.6, 9.4, 0.4),
-		fill = rgb(100, 180, 72),
-	},
-	{ ellipse(13.6, 8.6, 0.8, 0.22), fill = GLINT, opacity = 0.7 },
+-- Mushroom soup: a bowl with a rim, a mushroom cut into its side, and steam over it.
+Art.soup = join(steam({ 7.5, 12, 16.5 }, 9, 3.25), {
+	solid("M2.5 12 H21.5 C21.5 17.25 17.25 21 12 21 C6.75 21 2.5 17.25 2.5 12 Z"),
+	gap("M1 14.25 H23", 1.75),
+	hole("M8.75 18.25 C8.75 16.25 10.25 15.75 12 15.75 C13.75 15.75 15.25 16.25 15.25 18.25 Z"),
+	hole(rect(11.1, 17.5, 1.8, 2.25, 0.5)),
 })
 
--- A slice of star fruit: five fat points, golden skin round pale flesh, the seeds in a ring
--- round the middle, and a leaf behind it.
-Art.starfruit = join(
-	{
-		shadow(12.4, 21.5, 7.4, 1.3),
-		{
-			"M15.2 8.2 C15.4 5.2 17.8 3 21 3 C21 6 18.6 8.6 15.2 8.2 Z",
-			stroke = rgb(20, 84, 44),
-			w = 0.6,
-		},
-		{ "M15.2 8.2 C15.4 5.2 17.8 3 21 3 C21 6 18.6 8.6 15.2 8.2 Z", fill = rgb(60, 150, 62) },
-		{ "M15.2 8.2 C15.4 5.2 17.8 3 21 3 C18.6 4.2 16.6 6 15.2 8.2 Z", fill = rgb(116, 200, 88) },
-		{ star(12.5, 13.2, 10.2, 5.3, 0.45), fill = rgb(132, 78, 6), stroke = rgb(132, 78, 6), w = 1.5 },
-		{ star(12, 12.3, 10.2, 5.3, 0.45), fill = rgb(132, 78, 6), stroke = rgb(132, 78, 6), w = 1.7 },
-		{ star(12, 12.3, 10.2, 5.3, 0.45), fill = rgb(238, 190, 34), stroke = rgb(238, 190, 34), w = 1 },
-		{
-			"M21.7 9.15 L17.04 13.94 L18 20.55 L12 17.6 L6 20.55 L12 12.3 Z",
-			fill = rgb(210, 144, 20),
-			stroke = rgb(210, 144, 20),
-			w = 1,
-		},
-		{ star(12, 12.3, 8.1, 4.2, 0.36), fill = rgb(255, 238, 140), stroke = rgb(255, 238, 140), w = 0.7 },
-		{
-			"M19.7 9.8 L16 13.6 L16.76 18.86 L12 16.5 L12 12.3 Z",
-			fill = rgb(250, 214, 98),
-			stroke = rgb(250, 214, 98),
-			w = 0.7,
-		},
-	},
-	turned({ { "M12 4.8 L13.1 8.9 L12 10.9 L10.9 8.9 Z", fill = rgb(255, 250, 208) } }, 0, 12, 12.3),
-	turned({ { "M12 4.8 L13.1 8.9 L12 10.9 L10.9 8.9 Z", fill = rgb(255, 244, 184) } }, 72, 12, 12.3),
-	turned({ { "M12 4.8 L13.1 8.9 L12 10.9 L10.9 8.9 Z", fill = rgb(255, 236, 156) } }, 144, 12, 12.3),
-	turned({ { "M12 4.8 L13.1 8.9 L12 10.9 L10.9 8.9 Z", fill = rgb(255, 240, 168) } }, 216, 12, 12.3),
-	turned({ { "M12 4.8 L13.1 8.9 L12 10.9 L10.9 8.9 Z", fill = rgb(255, 250, 208) } }, 288, 12, 12.3),
-	turned({ { "M12 8.9 L12 10", stroke = rgb(150, 86, 24), w = 0.8 } }, 36, 12, 12.3),
-	turned({ { "M12 8.9 L12 10", stroke = rgb(150, 86, 24), w = 0.8 } }, 108, 12, 12.3),
-	turned({ { "M12 8.9 L12 10", stroke = rgb(150, 86, 24), w = 0.8 } }, 180, 12, 12.3),
-	turned({ { "M12 8.9 L12 10", stroke = rgb(150, 86, 24), w = 0.8 } }, 252, 12, 12.3),
-	turned({ { "M12 8.9 L12 10", stroke = rgb(150, 86, 24), w = 0.8 } }, 324, 12, 12.3),
-	{
-		{ circle(12, 12.3, 0.8), fill = rgb(240, 196, 60) },
-		{
-			"M10 6.6 C10.3 5.4 10.9 4.2 11.6 3.2 M3.8 9.2 C5 8.9 6.2 8.8 7.4 8.8",
-			stroke = GLINT,
-			w = 0.5,
-			opacity = 0.9,
-		},
-		{ circle(8.6, 10.6, 0.35), fill = GLINT, opacity = 0.9 },
-	}
-)
+-- A grilled fish on a skewer: the stick runs corner to corner through it, head up to the right,
+-- an eye, a gill and two marks of the grill across it.
+local FISH = "M12 2.75 C15.75 5.5 16.25 11 12 16.25 C7.75 11 8.25 5.5 12 2.75 Z"
+local TAIL = "M12 15 L16 20.75 Q12 19.25 8 20.75 Z"
+Art.skewer = turned({
+	line("M12 -0.5 L12 24.5", 2),
+	clear(FISH, 1.5),
+	clear(TAIL, 1.5),
+	flat(TAIL),
+	flat(FISH),
+	gap("M9.25 8.5 Q12 10 14.75 8.5", 1.5),
+	gap("M9.75 11.75 L14.25 11.75", 1.5),
+	gap("M10.5 14 L13.5 14", 1.5),
+}, 45, 12, 12)
+-- the eye, near the head
+table.insert(Art.skewer, hole(circle(12 + 6.25 * math.sin(math.rad(45)), 12 - 6.25 * math.cos(math.rad(45)), 1.15)))
 
--- A fire chili: a fat red pepper curling to a point, with a flame coming off its shoulder.
-Art.dragonchili = {
-	{ "M3.2 22.4 A9.4 1.6 -32 1 0 19.2 12.4 A9.4 1.6 -32 1 0 3.2 22.4 Z", fill = SHADOW, opacity = 0.28 },
-	{
-		"M12.6 12 C10.4 14.6 6.4 14.4 4.8 12 C3.4 9.8 4.4 7.4 5.6 6.4 C5.8 7.6 6.2 8.2 7 8.4 C6.4 5.8 7.4 3.2 9.4 1.6 C9.4 3.8 10.4 5 11.4 6.2 C12 5.4 12.2 4.6 12.2 3.8 C13.8 5.6 14.2 9.4 12.6 12 Z",
-		stroke = rgb(226, 62, 16),
-		w = 0.7,
-	},
-	{
-		"M12.6 12 C10.4 14.6 6.4 14.4 4.8 12 C3.4 9.8 4.4 7.4 5.6 6.4 C5.8 7.6 6.2 8.2 7 8.4 C6.4 5.8 7.4 3.2 9.4 1.6 C9.4 3.8 10.4 5 11.4 6.2 C12 5.4 12.2 4.6 12.2 3.8 C13.8 5.6 14.2 9.4 12.6 12 Z",
-		fill = rgb(255, 142, 30),
-	},
-	{
-		"M11.8 12 C10.2 13.6 7.6 13.4 6.4 11.8 C5.6 10.6 5.8 9.4 6.4 8.8 C6.8 9.6 7.4 10 8.2 9.8 C7.8 8.2 8.4 6.4 9.4 5.2 C9.8 6.6 10.6 7.6 11.6 8.4 C12.4 9.6 12.4 11 11.8 12 Z",
-		fill = rgb(255, 214, 80),
-	},
-	{
-		"M10.8 12 C10 12.8 8.6 12.6 8 11.8 C8.6 11.6 9.2 11 9.4 10 C10 10.4 10.8 11.2 10.8 12 Z",
-		fill = rgb(255, 250, 220),
-	},
-	{ circle(3.4, 4.6, 0.4) .. circle(14.8, 2.4, 0.35) .. circle(2.6, 14.6, 0.3), fill = rgb(255, 170, 50) },
-	{ "M17.4 6 C17.8 4.2 19 3 20.8 2.2", stroke = rgb(20, 84, 44), w = 1.9 },
-	{ "M17.4 6 C17.8 4.2 19 3 20.8 2.2", stroke = rgb(84, 168, 66), w = 1.2 },
-	{
-		"M13.4 7.8 C14 5.4 20.4 4.8 21.4 8.6 C22.8 15 13.6 23.4 2.2 20.8 C8.8 19.4 11.8 13.8 13.4 7.8 Z",
-		stroke = rgb(108, 4, 28),
-		w = 0.7,
-	},
-	{
-		"M13.4 7.8 C14 5.4 20.4 4.8 21.4 8.6 C22.8 15 13.6 23.4 2.2 20.8 C8.8 19.4 11.8 13.8 13.4 7.8 Z",
-		fill = rgb(230, 36, 46),
-	},
-	{ "M21.4 8.6 C22.8 15 13.6 23.4 2.2 20.8 C12 21.2 19.4 15.4 21.4 8.6 Z", fill = rgb(172, 14, 42) },
-	{ "M21.6 11.4 C21.4 17 13.2 23 2.2 20.8 C12.6 22 20 16.8 21.6 11.4 Z", fill = rgb(108, 4, 28), opacity = 0.5 },
-	{ "M12.6 16 C14.2 13.6 15.2 11.2 15.6 9", stroke = rgb(255, 110, 90), w = 1.2 },
-	{ "M14.5 12.6 C15 11.4 15.4 10.2 15.6 9.2", stroke = GLINT, w = 0.5, opacity = 0.9 },
-	{ "M7 20.2 C8.6 19.6 10 18.6 11 17.6", stroke = rgb(255, 110, 90), w = 0.6, opacity = 0.8 },
-	{
-		"M12.9 8.5 C12.7 5.6 15.8 4.8 17.4 5 C20.4 4.6 21.9 6.6 21.9 8.8 C20.8 7.8 19.6 8.2 19 8.8 C18 7.6 16.6 7.8 16 8.8 C15 7.8 13.8 8 12.9 8.5 Z",
-		stroke = rgb(20, 84, 44),
-		w = 0.6,
-	},
-	{
-		"M12.9 8.5 C12.7 5.6 15.8 4.8 17.4 5 C20.4 4.6 21.9 6.6 21.9 8.8 C20.8 7.8 19.6 8.2 19 8.8 C18 7.6 16.6 7.8 16 8.8 C15 7.8 13.8 8 12.9 8.5 Z",
-		fill = rgb(70, 156, 62),
-	},
-	{ "M14 7 C14.6 6 15.8 5.6 17 5.6", stroke = rgb(150, 216, 110), w = 0.45 },
+-- A berry tart: a fluted crust heaped with three berries.
+Art.tart = {
+	solid("M2.5 12.5 H21.5 L19 20.5 H5 Z"),
+	gap("M7.25 16 L7.75 22", 1.5),
+	gap("M12 16 V22", 1.5),
+	gap("M16.75 16 L16.25 22", 1.5),
+	clear(circle(6.75, 10.5, 3.25), 1.5),
+	flat(circle(6.75, 10.5, 3.25)),
+	clear(circle(17.25, 10.5, 3.25), 1.5),
+	flat(circle(17.25, 10.5, 3.25)),
+	clear(circle(12, 8, 3.5), 1.5),
+	flat(circle(12, 8, 3.5)),
 }
 
--- A golden apple: the apple again in gold, with a sparkle on its shoulder.
-Art.goldapple = join(
-	apple({
-		deep = rgb(146, 78, 10),
-		shade = rgb(222, 142, 28),
-		base = rgb(252, 198, 58),
-		light = rgb(255, 232, 130),
-	}),
-	{
-		{
-			"M7.2 8.6 Q7.7 11.5 10.6 12 Q7.7 12.5 7.2 15.4 Q6.7 12.5 3.8 12 Q6.7 11.5 7.2 8.6 Z",
-			fill = rgb(255, 255, 255),
-		},
-		{
-			"M17 14.2 Q17.25 15.75 18.8 16 Q17.25 16.25 17 17.8 Q16.75 16.25 15.2 16 Q16.75 15.75 17 14.2 Z",
-			fill = rgb(255, 255, 255),
-			opacity = 0.9,
-		},
-	}
-)
+-- A slice of honey cake on a plate: its top apart from its side by a line of honey running down
+-- in drips, a layer across it.
+Art.honeycake = {
+	solid("M2.5 11.5 L16.5 4.5 L21.5 7.5 V17.5 H2.5 Z"),
+	gap("M0.75 11.85 L8 10.4 V13.5 V10.4 L14.75 9.05 V12.75 V9.05 L23.25 7.35", 1.75),
+	gap("M1 15.5 H23", 1.5),
+	flat(PLATE),
+}
+
+-- A rice ball: rice pressed into a rounded triangle, a strip of seaweed round its foot.
+Art.riceball = {
+	solid(
+		"M12 3 C13.5 3 14.5 4 15.5 5.7 L21 15.75 C22.4 18.4 21 21 18.2 21 H5.8 C3 21 1.6 18.4 3 15.75 L8.5 5.7 C9.5 4 10.5 3 12 3 Z"
+	),
+	gap("M8 22.5 V14.25 H16 V22.5", 1.75),
+}
+
+-- Pancakes: a stack of three on a plate, a pat of butter on top and syrup running down.
+Art.pancakes = {
+	flat(rect(9, 3, 6, 3, 0.75)),
+	flat(rect(3, 7.5, 18, 3.5, 1.75)),
+	flat(rect(2.5, 12, 19, 3.5, 1.75)),
+	flat(rect(3, 16.5, 18, 3.5, 1.75)),
+	gap("M1 11.5 H23", 1.5),
+	gap("M1 16 H23", 1.5),
+	flat(rect(15, 9.5, 2, 4.75, 1)),
+	gap("M1 6.75 H23", 1.5),
+	gap("M1 20.5 H23", 1.25),
+	flat(PLATE),
+}
+
+-- Curry: a mound of rice and the curry beside it on a plate, two pieces in the curry.
+local RICE = "M3 15 C3 9.5 5.75 6.25 9.25 6.25 C12.75 6.25 15.5 9.5 15.5 15 Z"
+Art.curry = {
+	flat("M1.75 16 H22.25 C21.5 19.5 17.5 21.5 12 21.5 C6.5 21.5 2.5 19.5 1.75 16 Z"),
+	flat("M11 15 C11 11.5 14 9.75 17 9.75 C20 9.75 21.75 12 21.75 15 Z"),
+	gap("M0.5 15.25 H23.5", 1.5),
+	clear(RICE, 1.5),
+	flat(RICE),
+	hole(rect(15.5, 11.5, 2.25, 2.25, 0.5)),
+	hole(rect(19, 12.25, 1.75, 1.75, 0.5)),
+}
+
+-- A pumpkin pie from above: a crimped crust round the filling, a slice gone and cream on what is
+-- left.
+Art.pie = {
+	flat(scallop(12, 12.5, 9.25, 14, 1.4)),
+	gap(circle(12, 12.5, 6.75), 1.75),
+	clear(wedge(12, 12.5, 13, -90, 0), 1),
+	clear(circle(10, 14.5, 2.5), 1.5),
+	flat(circle(10, 14.5, 2.5)),
+}
+
+-- An ice cream: a scoop on a waffle cone, a wafer roll stuck in it.
+local SCOOP = "M5 11.5 A7 7 0 0 1 19 11.5 Q19 13 17.5 13 H6.5 Q5 13 5 11.5 Z"
+Art.icecream = {
+	flat("M6 14 H18 L12.75 22 Q12 23 11.25 22 Z"),
+	gap("M8.5 14 L14.25 19.75", 1.5),
+	gap("M15.5 14 L9.75 19.75", 1.5),
+	line("M15.5 6 L19.25 2.5", 2.25),
+	clear(SCOOP, 1.5),
+	flat(SCOOP),
+	gap("M8.5 8.5 L9.5 7.5", 1.5),
+	gap("M12.75 6.75 L13.75 5.75", 1.5),
+	gap("M14.5 10.5 L15.5 9.5", 1.5),
+}
+
+-- A garden salad: a bowl heaped with leaves, a vein down one and a slice of tomato.
+Art.salad = {
+	flat(circle(6.75, 11.5, 3.75) .. " " .. circle(17.25, 11, 4)),
+	flat(circle(12, 8.25, 4.75)),
+	gap("M9.5 11.5 Q11 8.75 14 7.5", 1.5),
+	hole(circle(17.5, 10.25, 1.6)),
+	gap("M1 13.5 H23", 1.5),
+	solid("M2.5 15 H21.5 C21.5 18.75 17.25 21 12 21 C6.75 21 2.5 18.75 2.5 15 Z"),
+}
+
+-- A chocolate bar, tilted: squares broken into its top, the wrapper on its lower half with a
+-- torn edge and a band.
+Art.chocolate = turned({
+	flat(box(6.5, 3, 11, 10)),
+	gap("M12 2 L12 12", 1.5),
+	gap("M5.5 7.75 L18.5 7.75", 1.5),
+	clear("M6 13.5 L7.5 12 L9 13.5 L10.5 12 L12 13.5 L13.5 12 L15 13.5 L16.5 12 L18 13.5 L18 21 L6 21 Z", 1.25),
+	solid("M6 13.5 L7.5 12 L9 13.5 L10.5 12 L12 13.5 L13.5 12 L15 13.5 L16.5 12 L18 13.5 L18 21 L6 21 Z"),
+	gap("M5 17.25 L19 17.25", 1.5),
+}, 15, 12, 12)
+
+-- A caramel pudding on a plate: the custard wider at its foot, caramel running over its top and
+-- a cherry on it.
+local CHERRY = circle(11.25, 6.25, 2.25)
+Art.pudding = {
+	solid("M7 8.5 H17 L19.75 18.5 H4.25 Z"),
+	gap("M2 12 C4.5 12 5.25 14.5 7.25 14.5 C9.25 14.5 10 12 12 12 C14 12 14.75 14.5 16.75 14.5 C18.75 14.5 19.5 12 22 12", 1.5),
+	clear(CHERRY, 1.5),
+	flat(CHERRY),
+	line("M12 4.25 C12.5 3.25 13.5 2.6 14.75 2.6", 1.75),
+	flat(PLATE),
+}
+
+-- Broccoli: a bumpy head of florets on a short thick stalk that forks into it.
+Art.broccoli = {
+	flat(
+		circle(6.5, 10.5, 4)
+			.. " "
+			.. circle(11.75, 7, 4.75)
+			.. " "
+			.. circle(17.25, 10, 4.25)
+			.. " "
+			.. rect(5, 9, 14, 4.5, 0)
+	),
+	gap("M8.25 13.75 Q9 11 8 8.75", 1.5),
+	gap("M14.75 13.75 Q14.5 11 15.75 8.5", 1.5),
+	clear("M9.5 14.5 H14.5 L15.75 21.75 H8.25 Z", 1.5),
+	solid("M9.5 14.5 H14.5 L15.75 21.75 H8.25 Z"),
+	gap("M12 14 V17.5", 1.5),
+}
+
+-- Pickles: a glass jar with its lid on, two gherkins standing in it.
+Art.pickles = {
+	flat(rect(5, 2, 14, 4.5, 1)),
+	gap("M8.5 1 V7.5", 1.5),
+	gap("M12 1 V7.5", 1.5),
+	gap("M15.5 1 V7.5", 1.5),
+	flat(rect(3.5, 8, 17, 14, 3)),
+	hole(rect(6.25, 10.25, 11.5, 9.5, 1.5)),
+	flat(rect(8, 11.75, 3.25, 6.5, 1.625)),
+	flat(rect(12.75, 11.75, 3.25, 6.5, 1.625)),
+}
+
+-- A pot of hearty stew: a pot with two handles, food heaped over its rim and a spoon in it.
+Art.stew = {
+	line("M13.5 9 L19.5 2.75", 2.25),
+	clear(circle(7.75, 9, 2.75) .. " " .. circle(12, 8, 3) .. " " .. circle(16, 9.25, 2.5), 1.5),
+	flat(circle(7.75, 9, 2.75) .. " " .. circle(12, 8, 3) .. " " .. circle(16, 9.25, 2.5)),
+	clear(rect(2.5, 10.25, 19, 2.5, 1.25), 1.5),
+	flat(rect(2.5, 10.25, 19, 2.5, 1.25)),
+	solid("M4.5 14.25 H19.5 V16.5 C19.5 19.5 17.5 21.5 14.5 21.5 H9.5 C6.5 21.5 4.5 19.5 4.5 16.5 Z"),
+	flat(rect(1.75, 15, 4, 2.75, 1) .. " " .. rect(18.25, 15, 4, 2.75, 1)),
+}
+
+-- A slice of star fruit: five fat points round a star cut out of its middle.
+Art.starfruit = {
+	solid(star(12, 12.75, 9.75, 4.9, 0.6), 1.5),
+	hole(star(12, 12.75, 3.5, 1.6, 0.15)),
+}
+
+-- A fire chili: a fat pepper curling to a point, its stalk, and a flame off its shoulder.
+local CHILI =
+	"M13.5 8.5 C16.25 6.75 20.75 8 20.5 12.5 C20.25 17.25 13 21.25 2.75 21.5 C9 19.25 12 15.75 12.5 12 C12.75 10.25 12.75 9 13.5 8.5 Z"
+local FLAME =
+	"M7.75 2 C9.75 4.25 11.75 6 11.25 9.25 C10.75 12 8.75 13.5 6.75 13.5 C4.5 13.5 2.5 11.75 2.5 9.5 C2.5 7.5 3.75 6.25 4.75 4.75 C5.25 6.25 5.75 7 6.75 7.25 C6.75 5.5 7 3.75 7.75 2 Z"
+Art.dragonchili = {
+	flat(CHILI),
+	gap("M13 11.25 Q16.5 9.5 20.75 11", 1.5),
+	line("M17 8.5 C17 6.25 17.75 4.5 19.5 3.5", 2),
+	clear(FLAME, 1.5),
+	flat(FLAME),
+	hole("M7 8 C8.25 9.25 9 10.25 8.5 11.25 C8.1 12 7.4 12.25 6.75 12.25 C5.75 12.25 5 11.5 5 10.5 C5 9.75 5.5 9.25 6 8.75 C6.25 9.25 6.5 9.5 6.75 9.5 C6.75 9 6.75 8.5 7 8 Z"),
+}
 
 return Art

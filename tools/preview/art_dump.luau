@@ -1,6 +1,7 @@
 --!nocheck
 -- Paints icons' vector art (UI/IconArt, UI/ItemArt) for tools/preview/art.sh to lay out on a
--- sheet:  lune run tools/preview/art_dump.luau <outdir> [name name ...]   (no names: all of it)
+-- sheet:  lune run tools/preview/art_dump.luau <outdir> [name name ...]   (no names: all of it;
+-- "foods": every food, in Data/Foods' order)
 -- For each icon it writes <name>.<n>.rgba (raw pixels) at 192, 96 and 48 across, and a list.
 local fs = require("@lune/fs")
 local process = require("@lune/process")
@@ -10,6 +11,8 @@ local Harness = require("../../tests/harness").init(".")
 local Vector = Harness.require("StarterPlayer.StarterPlayerScripts.Client.UI.Vector")
 local Icons = Harness.require("StarterPlayer.StarterPlayerScripts.Client.UI.Icons")
 local IconArt = Harness.require("StarterPlayer.StarterPlayerScripts.Client.UI.IconArt")
+local Foods = Harness.require("ReplicatedStorage.Shared.Data.Foods")
+local Colors = Harness.require("ReplicatedStorage.Shared.Util.Colors")
 
 local out = process.args[1]
 local names = {}
@@ -18,6 +21,11 @@ for i = 2, #process.args do
 end
 if #names == 0 then
 	names = Icons.artNames()
+elseif #names == 1 and names[1] == "foods" then
+	names = {}
+	for _, food in Foods.list do
+		table.insert(names, food.id)
+	end
 end
 if not fs.isDir(out) then
 	fs.writeDir(out)
@@ -36,7 +44,9 @@ for _, name in names do
 		coloured = c
 		fs.writeFile(out .. "/" .. name .. "." .. n .. ".rgba", buffer.tostring(pixels))
 	end
-	local tint = Icons.Colors[name]
+	-- a food is shown in its own colour (Data/Foods), as Icons.item shows it
+	local food = Foods.get(name)
+	local tint = Icons.Colors[name] or (food and Colors.fromHex(food.color))
 	table.insert(list, {
 		name = name,
 		coloured = coloured,

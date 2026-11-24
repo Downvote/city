@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Lays painted icons (tools/preview/art_dump.luau) out on a sheet to look at:
-    python3 tools/preview/art_sheet.py <dir> <out.png> [--cols N]
+    python3 tools/preview/art_sheet.py <dir> <out.png> [--cols N] [--light]
 Each icon is shown big (192), then as the game shows it: 48 and 28 across from the big painting,
-24 and 16 across from the small one, on the dark card colour, in its own tint (or near white)."""
+24 and 16 across from the small one, on the dark card colour, in its own tint (or near white).
+With --light the small ones are shown on the light look's card instead (a one colour icon with no
+tint of its own in the light look's ink), to see that a food's own colour reads there too."""
 import json
 import sys
 
@@ -10,8 +12,10 @@ from PIL import Image, ImageDraw, ImageFont
 
 src, out = sys.argv[1], sys.argv[2]
 cols = int(sys.argv[sys.argv.index("--cols") + 1]) if "--cols" in sys.argv else 4
+light = "--light" in sys.argv
 items = json.load(open(src + "/list.json"))
 CARD, INK = (37, 40, 54), (236, 238, 246)
+PAPER, PAPER_INK = (253, 253, 255), (34, 37, 51)
 W, H = 300, 262
 
 
@@ -19,10 +23,10 @@ def load(name, n):
     return Image.frombytes("RGBA", (n, n), open("%s/%s.%d.rgba" % (src, name, n), "rb").read())
 
 
-def tinted(im, item):
+def tinted(im, item, ink=INK):
     if item["coloured"]:
         return im
-    t = item.get("tint") or [c / 255 for c in INK]
+    t = item.get("tint") or [c / 255 for c in ink]
     r, g, b, a = im.split()
     return Image.merge("RGBA", (r.point(lambda v: int(v * t[0])), g.point(lambda v: int(v * t[1])), b.point(lambda v: int(v * t[2])), a))
 
@@ -48,8 +52,11 @@ for i, item in enumerate(items):
         draw.line([x + 8, y + 8 + k * 8, x + 200, y + 8 + k * 8], fill=c)
     sheet.paste(big, (x + 8, y + 8), big)
     px = x + 212
+    if light:
+        draw.rectangle([px - 6, y + 2, px + 54, y + 186], fill=PAPER)
     for size, level in ((48, 96), (28, 96), (24, 48), (16, 48)):
-        im = tinted(load(item["name"], level), item).resize((size, size), Image.BOX if level % size == 0 else Image.BILINEAR)
+        im = tinted(load(item["name"], level), item, PAPER_INK if light else INK)
+        im = im.resize((size, size), Image.BOX if level % size == 0 else Image.BILINEAR)
         sheet.paste(im, (px, y + 8), im)
         y += size + 8
     y = (i // cols) * H

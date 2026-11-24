@@ -572,4 +572,42 @@ function Vector.dot(x: number, y: number): string
 	return string.format("M%s %s L%s %s", f(x), f(y), f(x), f(y))
 end
 
+-- Layers in the icons' style, shared by the interface icons (UI/IconArt) and the foods and
+-- things (UI/ItemArt), so both are drawn by the same rules: a solid silhouette in one colour
+-- with its details rubbed out of it.
+
+Vector.Gap = 2 -- how wide a cut is
+
+-- A solid shape. The thin line round it takes the points off its corners (and makes it half
+-- that line wider all round).
+function Vector.solid(d: string, edge: number?): Layer
+	return { d, fill = true, w = edge or 1 }
+end
+
+-- A solid shape just as it is written: circles, and shapes that should keep a sharp point.
+function Vector.flat(d: string): Layer
+	return { d, fill = true }
+end
+
+-- A hole: a shape rubbed out of what is under it.
+function Vector.hole(d: string): Layer
+	return { d, fill = true, cut = true }
+end
+
+-- A gap: a line rubbed out of what is under it.
+function Vector.gap(d: string, w: number?): Layer
+	return { d, cut = true, w = w or Vector.Gap }
+end
+
+-- Room for a shape that is about to be laid over others: the shape rubbed out, and `margin`
+-- more all round it.
+function Vector.clear(d: string, margin: number?): Layer
+	return { d, fill = true, cut = true, w = (margin or Vector.Gap) * 2 }
+end
+
+-- A line of a width of its own.
+function Vector.line(d: string, w: number): Layer
+	return { d, w = w }
+end
+
 return Vector
