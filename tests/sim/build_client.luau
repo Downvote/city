@@ -390,18 +390,24 @@ run("a menu takes the screen: a way back, tabs, rows", function()
 	local function words(tab)
 		return tab:FindFirstChild("Label")
 	end
+	-- (a leaning slab shows through its painted picture; without pictures, through itself)
+	local function showing(face)
+		local body = face:FindFirstChild("Body")
+		return if body then body.ImageTransparency else face.BackgroundTransparency
+	end
 	check(
-		slab(first).BackgroundTransparency == 0 and Sim.Kit.colorOf(slab(first)) == T.Yellow,
+		showing(slab(first)) == 0 and Sim.Kit.colorOf(slab(first)) == T.Yellow,
 		"the first tab starts picked, on a yellow slab"
 	)
-	local round = slab(first):FindFirstChildOfClass("UICorner")
-	check(round ~= nil and round.CornerRadius.Scale == 0.5, "which is a pill")
+	-- the user: "make these type of shapes everywhere parallograms instead of rounded rectangles"
+	check(
+		(slab(first):FindFirstChild("Body") ~= nil or slab(first):FindFirstChild("Wedge_br") ~= nil)
+			and slab(first):FindFirstChildOfClass("UICorner") == nil,
+		"which leans"
+	)
 	check(words(first).TextColor3 == T.Dark and words(second).TextColor3 == T.Ink, "with dark words, the other light")
 	second.Activated:Fire()
-	check(
-		picked == "b" and slab(second).BackgroundTransparency == 0 and slab(first).BackgroundTransparency == 1,
-		"picking the other swaps them"
-	)
+	check(picked == "b" and showing(slab(second)) == 0 and showing(slab(first)) == 1, "picking the other swaps them")
 	-- rows
 	local hit = false
 	local row = Sim.Kit.row(
@@ -421,21 +427,20 @@ run("a menu takes the screen: a way back, tabs, rows", function()
 	local fill = row:FindFirstChild("Fill")
 	Sim.Kit.setRowSelected(row, true)
 	check(title.TextColor3 == T.Dark and Sim.Kit.colorOf(fill) == T.Yellow, "picked, it is yellow with dark words")
-	local shade = fill:FindFirstChild("Shade")
+	local shade = Sim.Kit.shadeOf(fill)
 	check(
 		shade ~= nil
 			and shade.Color.Keypoints[1].Value == T.Yellow
 			and shade.Color.Keypoints[#shade.Color.Keypoints].Value == Sim.Kit.shadeEnd(T.Yellow),
 		"shaded across, yellow warming to amber"
 	)
-	local line = fill:FindFirstChild("Rim")
 	check(
-		fill:FindFirstChildOfClass("UICorner") ~= nil and line ~= nil and line.Color == Sim.Kit.edgeOf(T.Yellow),
-		"a pill with a thin line round it, which takes a deeper yellow"
+		fill:FindFirstChild("Body") ~= nil and fill:FindFirstChild("Rim") == nil,
+		"a leaning slab, with no line inside its edge"
 	)
 	Sim.Kit.setRowSelected(row, false)
 	check(title.TextColor3 == T.Ink and Sim.Kit.colorOf(fill) == T.Card, "and goes back")
-	check(line.Color == Sim.Kit.edgeOf(T.Card), "its line too")
+	check(Sim.Kit.shadeOf(fill).Color.Keypoints[1].Value == T.Card, "its shading too")
 	row.Activated:Fire()
 	check(hit, "clicking a row calls back")
 	check(panel.root:FindFirstChild("Motion") ~= nil, "shapes drift across the black behind it")
@@ -471,16 +476,19 @@ run("a menu takes the screen: a way back, tabs, rows", function()
 	check(card ~= nil and card:FindFirstChild("Close") ~= nil, "a dialog has its close button on the panel")
 	check(dialog.root:FindFirstChild("Tabs", true) == nil, "and no tabs")
 	check(dialog.root:FindFirstChild("Motion") == nil, "and nothing drifting behind it")
-	-- a button is a pill, and its thin line follows when it is recoloured
+	-- a button leans (the user: "make these type of shapes everywhere parallograms instead of
+	-- rounded rectangles"), and its picture follows when it is recoloured
 	local b = Sim.Kit.button("Go", { Parent = dialog.body, Size = roblox.UDim2.fromOffset(120, 40) })
 	local face = b:FindFirstChild("Face")
-	local pill = face:FindFirstChildOfClass("UICorner")
-	check(pill ~= nil and pill.CornerRadius.Scale == 0.5, "a button is a pill")
-	check(face:FindFirstChild("Rim").Color == Sim.Kit.edgeOf(T.Green), "with a thin line in a deeper green")
+	check(
+		face:FindFirstChild("Body") ~= nil and face:FindFirstChildOfClass("UICorner") == nil,
+		"a button is a leaning slab"
+	)
+	check(face:FindFirstChild("Rim") == nil, "with no line inside its edge")
 	Sim.Kit.setButtonColor(b, T.Yellow, T.Dark)
 	check(
-		Sim.Kit.colorOf(face) == T.Yellow and face:FindFirstChild("Rim").Color == Sim.Kit.edgeOf(T.Yellow),
-		"recoloured, its line follows"
+		Sim.Kit.colorOf(face) == T.Yellow and Sim.Kit.shadeOf(face).Color.Keypoints[1].Value == T.Yellow,
+		"recoloured, its picture follows"
 	)
 	-- a leaning slab is painted, and painting it again recolours the picture
 	local glass = Sim.Kit.darkPill({ Parent = dialog.body, Size = roblox.UDim2.fromOffset(200, 40) })
@@ -550,7 +558,7 @@ run("the look switches between dark and light, and back", function()
 	local fill = row:FindFirstChild("Fill")
 	local title = row:FindFirstChild("Title", true)
 	check(Sim.Kit.colorOf(fill) == T.Card and title.TextColor3 == T.Ink, "a row that was up is repainted")
-	check(fill:FindFirstChild("Rim").Color == Sim.Kit.edgeOf(T.Card), "and the thin line round it")
+	check(Sim.Kit.shadeOf(fill).Color.Keypoints[1].Value == T.Card, "and shaded again from it")
 	local label = button:FindFirstChild("Label", true)
 	check(button.TextColor3 == T.Ink and label.TextColor3 == T.Ink, "a button's words are turned once, not twice")
 	check(
@@ -561,10 +569,10 @@ run("the look switches between dark and light, and back", function()
 	)
 	check(swatch.BackgroundColor3 == roblox.Color3.fromRGB(30, 30, 34), "a colour chip keeps its colour")
 	check(chipLine.Color == T.Line, "and the thin line round it follows the look")
-	local core = answer:FindFirstChild("Core", true)
+	local answerFace = answer:FindFirstChild("Face")
 	check(
-		core.BackgroundColor3 == T.Card and core:FindFirstChild("Rim").Color == Kit.edgeOf(T.Card),
-		"an answer's pill and the line round it follow too"
+		Kit.colorOf(answerFace) == T.Card and Kit.shadeOf(answerFace).Color.Keypoints[1].Value == T.Card,
+		"an answer's slab follows too"
 	)
 	local right = row:FindFirstChild("Right", true)
 	check(
