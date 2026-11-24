@@ -317,9 +317,6 @@ local function buildPlots()
 			Color = Color3.fromRGB(112, 188, 84),
 			Material = Enum.Material.Grass,
 		})
-		-- the floor you walk on, unseen: the terrain's grass shows through it (Plots.paintGround)
-		base.Transparency = 1
-		base.CastShadow = false
 		base.Parent = model
 		base.Color = Textures.tint("Grass", Color3.fromRGB(138, 192, 112))
 		local build = Instance.new("Folder")

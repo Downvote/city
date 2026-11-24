@@ -1598,17 +1598,6 @@ the island's own ground, written when the server starts and loaded by every play
 sea is now a flat sheet of water over a dark floor, as it was before the terrain, and the island alone is terrain.
 The card counts the ground's tiles as they are written.
 
-### Long grass on your own plot
-
-> https://devforum.roblox.com/t/introducing-grass/386129 can you use realistic grass?
-
-(With a picture of a sunny glade in tall, bladed grass.) That post is Roblox's own long grass, the terrain grass
-that grows when Decoration is on, and the island's hills, lawns and meadows already grew it. A player's plot didn't:
-it was a flat grass part over terrain with no blades. Now the land a player owns grows the long grass too, and the
-ground goes short and bladeless under whatever they build, so no blades come up through a floor or a sofa; when a
-piece is moved or sold the long grass grows back where it stood. Land not yet bought stays short, so it shows. The
-plot's flat parts are unseen floors over it.
-
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

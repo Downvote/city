@@ -167,7 +167,6 @@ local function commit(player: Player, ops: { any }, record: string?): (boolean, 
 	end
 	local affected = Plan.affected(profile.plan, ops)
 	Builder.update(profile.plan, affected, Plots.buildFolder(index), Plots.frame(index))
-	Plots.groundSoon(index) -- the long grass moves off what was built and back where it went
 	Remotes.event("PlanSync"):FireClient(player, { ops = ops })
 	changed:Fire(player, ops)
 	return true

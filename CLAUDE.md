@@ -69,10 +69,7 @@ island's natural ground is Roblox terrain (`Data/Terrain`, written by `World.bui
 Roblox's own long grass (never give MaterialService a Grass override: the blades only grow on Roblox's own grass),
 a beach in sine wave curves sloping into terrain water with small waves, smooth hills (`Hills.at`). Nothing built
 may stand on grass with blades: `TownMap.cover` lists what is built and the terrain under it has no blades, so a
-new kind of ground part or a placed model is covered by rule. A player's plot grows the long grass on the land
-they own and none under what they build, repainted after every change (`Sim/PlotGround`, `Plots.paintGround`: the
-user, of Roblox's terrain grass, "can you use realistic grass?"); the plot's grass parts are unseen floors. The
-previews draw the terrain as triangles.
+new kind of ground part or a placed model is covered by rule. The previews draw the terrain as triangles.
 `Data/TownMap` lays out the ground and where everything stands, `Data/CityModels` draws the buildings and landmarks,
 `Data/Places` lists the places to find. The user wants it detailed like a classic city builder: buildings on
 landscaped lots (`CityModels.lot`), window bays, signs, roof details, parked cars, groves, textured ground, all

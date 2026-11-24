@@ -346,7 +346,6 @@ Harness.stub("ServerScriptService.Server.Services.Plots", {
 	frame = function()
 		return Town.plotFrame(1)
 	end,
-	groundSoon = function() end, -- (the plot's grass is terrain; nothing to paint here)
 })
 local Build = Harness.require("ServerScriptService.Server.Services.Build")
 Build.start()
