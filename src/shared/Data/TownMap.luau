@@ -139,7 +139,7 @@ end
 
 -- A beach parasol in stripes, a towel and a lounger.
 TownMap.Models.parasol = function(r: R)
-	local stripes = { Color3.fromRGB(255, 255, 255), Color3.fromRGB(255, 120, 110) }
+	local stripes = { Color3.fromRGB(250, 246, 236), Color3.fromRGB(220, 122, 112) }
 	r:cyl(0, 3.4, 0, 6.8, 0.3, "y", Color3.fromRGB(240, 240, 236), "SmoothPlastic")
 	local tip = Vector3.new(0, 7.4, 0)
 	local n = 8
@@ -149,16 +149,16 @@ TownMap.Models.parasol = function(r: R)
 		local p2 = Vector3.new(math.cos(a2) * 5, 6, math.sin(a2) * 5)
 		r:tri(tip, p1, p2, 0.15, stripes[i % 2 + 1], "SmoothPlastic")
 	end
-	r:block(-1.6, 0, 1.2, 1.6, 0.06, 6.2, Color3.fromRGB(90, 190, 230), "Fabric")
-	r:block(-1.6, 0.06, 1.2, 1.6, 0.08, 1.8, Color3.fromRGB(255, 255, 255), "Fabric")
+	r:block(-1.6, 0, 1.2, 1.6, 0.06, 6.2, Color3.fromRGB(104, 170, 204), "Fabric")
+	r:block(-1.6, 0.06, 1.2, 1.6, 0.08, 1.8, Color3.fromRGB(250, 246, 236), "Fabric")
 	-- the lounger
-	r:block(2.6, 0.9, -2.5, 4.6, 1.2, 2.5, Color3.fromRGB(255, 255, 255), "SmoothPlastic")
+	r:block(2.6, 0.9, -2.5, 4.6, 1.2, 2.5, Color3.fromRGB(250, 246, 236), "SmoothPlastic")
 	r:beam(
 		Vector3.new(3.6, 1.2, -2.4),
 		Vector3.new(3.6, 3.0, -3.6),
 		2,
 		0.3,
-		Color3.fromRGB(255, 255, 255),
+		Color3.fromRGB(250, 246, 236),
 		"SmoothPlastic"
 	)
 	for _, x in { 2.8, 4.4 } do
@@ -172,7 +172,7 @@ end
 -- piece is named `name`, so the client bobs the boat as one.
 local function boat(r: R, x: number, z: number, yaw: number, stripe: Color3, name: string)
 	local frame = CFrame.new(x, TownMap.WaterY, z) * CFrame.Angles(0, math.rad(yaw), 0)
-	local white = Color3.fromRGB(250, 250, 250)
+	local white = Color3.fromRGB(250, 246, 236)
 	local parts = {
 		r:boxAt(frame * CFrame.new(0, 0.3, 0), 3.4, 1.4, 7, white, "SmoothPlastic"),
 		r:boxAt(frame * CFrame.new(0, 0.55, 0), 3.5, 0.3, 7.05, stripe, "SmoothPlastic"),
@@ -204,10 +204,10 @@ TownMap.Models.marina = function(r: R)
 	r:block(-26, y - 0.4, -76, 26, y, -70, deck, "WoodPlanks")
 	-- finger piers off both sides, with a boat in most berths
 	local stripes = {
-		Color3.fromRGB(64, 150, 232),
-		Color3.fromRGB(255, 108, 98),
-		Color3.fromRGB(86, 198, 74),
-		Color3.fromRGB(255, 190, 50),
+		Color3.fromRGB(92, 140, 190),
+		Color3.fromRGB(214, 110, 100),
+		Color3.fromRGB(110, 170, 98),
+		Color3.fromRGB(232, 188, 96),
 	}
 	local n = 0
 	for _, side in { -1, 1 } do
@@ -236,7 +236,7 @@ TownMap.Models.islet = function(r: R)
 end
 
 TownMap.Models.hydrant = function(r: R)
-	local red = Color3.fromRGB(206, 52, 48)
+	local red = Color3.fromRGB(192, 84, 76)
 	r:cyl(0, 0.1, 0, 0.2, 1.3, "y", C.DarkMetal, "Metal")
 	r:cyl(0, 1.1, 0, 1.9, 0.9, "y", red, "Metal")
 	r:cyl(0, 2.1, 0, 0.2, 1.1, "y", red, "Metal")
@@ -287,7 +287,7 @@ TownMap.Models.streetTreeLow = function(r: R)
 end
 
 TownMap.Models.busStop = function(r: R)
-	local frame = Color3.fromRGB(46, 78, 120)
+	local frame = Color3.fromRGB(60, 84, 116)
 	for _, x in { -5, 5 } do
 		for _, z in { -1.6, 1.4 } do
 			r:block(x - 0.2, 0, z - 0.2, x + 0.2, 8, z + 0.2, frame, "Metal")
@@ -302,8 +302,8 @@ TownMap.Models.busStop = function(r: R)
 		side.transp = 0.55
 	end
 	-- an advert on the back wall
-	r:block(1.4, 2, -1.5, 4.4, 6.6, -1.42, Color3.fromRGB(250, 214, 120), "SmoothPlastic")
-	r:block(1.7, 4.6, -1.42, 4.1, 6.2, -1.38, Color3.fromRGB(242, 95, 92), "SmoothPlastic")
+	r:block(1.4, 2, -1.5, 4.4, 6.6, -1.42, Color3.fromRGB(236, 206, 130), "SmoothPlastic")
+	r:block(1.7, 4.6, -1.42, 4.1, 6.2, -1.38, Color3.fromRGB(214, 110, 100), "SmoothPlastic")
 	-- the bench
 	r:block(-4.2, 1.7, -1.4, 0.8, 2, -0.2, Color3.fromRGB(150, 100, 60), "WoodPlanks")
 	for _, x in { -3.8, 0.4 } do
@@ -313,7 +313,7 @@ TownMap.Models.busStop = function(r: R)
 	r:seat(-0.6, 2, -0.8, 0)
 	-- the stop sign on a pole beside it
 	r:cyl(6.6, 4.5, 1.2, 9, 0.3, "y", C.Metal, "Metal")
-	r:cyl(6.6, 9.2, 1.2, 0.3, 2, "z", Color3.fromRGB(59, 130, 246), "SmoothPlastic")
+	r:cyl(6.6, 9.2, 1.2, 0.3, 2, "z", Color3.fromRGB(80, 120, 176), "SmoothPlastic")
 	r:cyl(6.6, 9.2, 1.36, 0.06, 1.4, "z", C.White, "SmoothPlastic")
 end
 
@@ -326,7 +326,7 @@ end
 TownMap.Models.flowerBed = function(r: R)
 	r:block(-4, 0, -2, 4, 0.5, 2, Color3.fromRGB(170, 120, 82), "Wood")
 	r:block(-3.7, 0.5, -1.7, 3.7, 0.7, 1.7, SOIL, "Ground")
-	local colours = { C.Pink, C.Yellow, Color3.fromRGB(240, 240, 250), Color3.fromRGB(196, 120, 220), C.Red }
+	local colours = { C.Pink, C.Yellow, Color3.fromRGB(240, 240, 250), Color3.fromRGB(180, 140, 206), C.Red }
 	local i = 0
 	for x = -3, 3, 1.5 do
 		for z = -1, 1, 1 do
@@ -339,7 +339,7 @@ end
 
 TownMap.Models.streetSign = function(r: R)
 	r:cyl(0, 4.5, 0, 9, 0.3, "y", C.Metal, "Metal")
-	r:block(-2.4, 8.2, -0.08, 2.4, 9.2, 0.08, Color3.fromRGB(46, 120, 74), "SmoothPlastic")
+	r:block(-2.4, 8.2, -0.08, 2.4, 9.2, 0.08, Color3.fromRGB(60, 120, 84), "SmoothPlastic")
 	r:block(-2.2, 8.4, 0.08, 2.2, 9, 0.12, C.White, "SmoothPlastic")
 end
 
@@ -368,7 +368,7 @@ TownMap.Models.marketStall = function(r: R)
 	for i = 0, stripes - 1 do
 		local x1 = -4.6 + i * 9.2 / stripes
 		local cf = CFrame.new(x1 + 9.2 / stripes / 2, 7.9, 0) * CFrame.Angles(math.rad(-22), 0, 0)
-		r:boxAt(cf, 9.2 / stripes, 0.2, 4.4, if i % 2 == 0 then C.White else Color3.fromRGB(46, 150, 90), "Fabric")
+		r:boxAt(cf, 9.2 / stripes, 0.2, 4.4, if i % 2 == 0 then C.White else Color3.fromRGB(72, 140, 100), "Fabric")
 	end
 	for i = 0, stripes - 1 do
 		local x = -4.6 + (i + 0.5) * 9.2 / stripes
@@ -379,7 +379,7 @@ TownMap.Models.marketStall = function(r: R)
 			x + 0.75,
 			7.1,
 			2.12,
-			if i % 2 == 0 then C.White else Color3.fromRGB(46, 150, 90),
+			if i % 2 == 0 then C.White else Color3.fromRGB(72, 140, 100),
 			"Fabric"
 		)
 	end
@@ -404,7 +404,7 @@ TownMap.Models.cafeTable = function(r: R)
 	end
 	r:cyl(0, 4.2, 0, 5.6, 0.16, "y", C.White, "Metal")
 	-- the parasol: eight panels round a peak
-	local colours = { Color3.fromRGB(242, 95, 92), C.White }
+	local colours = { Color3.fromRGB(214, 110, 100), C.White }
 	for i = 0, 7 do
 		local a1, a2 = i / 8 * math.pi * 2, (i + 1) / 8 * math.pi * 2
 		r:tri(
@@ -422,7 +422,7 @@ end
 -- A round bandstand for the square's festivals: a raised floor, eight posts and a peaked roof.
 TownMap.Models.bandstand = function(r: R)
 	local white = Color3.fromRGB(244, 240, 232)
-	local roof = Color3.fromRGB(255, 120, 104)
+	local roof = Color3.fromRGB(184, 102, 92)
 	r:cyl(0, 0.75, 0, 1.5, 17, "y", Color3.fromRGB(196, 190, 178), "Cobblestone")
 	r:cyl(0, 1.6, 0, 0.2, 16, "y", Color3.fromRGB(176, 128, 82), "WoodPlanks")
 	-- steps up on the front
@@ -460,7 +460,7 @@ TownMap.Models.flagpole = function(r: R)
 	r:cyl(0, 8, 0, 15, 0.3, "y", C.Metal, "Metal")
 	r:ball(0, 15.6, 0, 0.5, C.Gold, "Metal")
 	-- the flag's parts are named so the client can wave them
-	r:block(0.15, 12.2, -0.05, 4.6, 15, 0.05, Color3.fromRGB(59, 130, 246), "Fabric").name = "Flag"
+	r:block(0.15, 12.2, -0.05, 4.6, 15, 0.05, Color3.fromRGB(84, 120, 170), "Fabric").name = "Flag"
 	r:block(0.15, 13.2, -0.06, 4.6, 14, 0.06, C.White, "Fabric").name = "Flag"
 end
 
@@ -481,9 +481,9 @@ TownMap.Models.flowerPatch = function(r: R)
 		C.Pink,
 		C.Yellow,
 		Color3.fromRGB(250, 250, 255),
-		Color3.fromRGB(190, 120, 240),
+		Color3.fromRGB(180, 140, 214),
 		C.Red,
-		Color3.fromRGB(255, 160, 80),
+		Color3.fromRGB(236, 160, 110),
 	}
 	local rng = Rng.new(5)
 	for i = 1, 14 do

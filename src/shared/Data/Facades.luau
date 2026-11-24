@@ -70,8 +70,8 @@ local function shade(c: Color3, k: number): Color3
 	return Color3.new(math.min(1, c.R * k), math.min(1, c.G * k), math.min(1, c.B * k))
 end
 
-local WHITE = rgb(250, 250, 248)
-local CREAM = rgb(244, 236, 220)
+local WHITE = rgb(250, 246, 236)
+local CREAM = rgb(250, 246, 236)
 local STONE = rgb(214, 208, 198)
 local DARK = rgb(64, 70, 86)
 local METAL = rgb(176, 182, 190)
@@ -79,8 +79,8 @@ local BRASS = rgb(222, 178, 82)
 local GLASS = rgb(150, 206, 240) -- a window that lights up, by day
 local PANE = rgb(118, 164, 196) -- the glass drawn into a window's own piece
 local DIM = rgb(66, 58, 62) -- a room seen from the street by day
-local TIMBER = rgb(150, 104, 66)
-local TIMBER_PALE = rgb(196, 146, 96)
+local TIMBER = rgb(154, 107, 72)
+local TIMBER_PALE = rgb(196, 154, 108)
 local DECKS = { rgb(170, 164, 156), rgb(186, 176, 160), rgb(156, 160, 164), rgb(178, 140, 122), rgb(146, 168, 156) }
 
 local PLAIN = "SmoothPlastic"
@@ -88,29 +88,29 @@ local PLAIN = "SmoothPlastic"
 -- What the walls are made of: one of the painted looks and a warm colour for it.
 Facades.Walls = {
 	{ mat = "Concrete:Stucco", color = rgb(242, 226, 198) },
-	{ mat = "Concrete:Stucco", color = rgb(240, 198, 152) },
-	{ mat = "Concrete:Stucco", color = rgb(228, 170, 142) },
-	{ mat = "Concrete:Stucco", color = rgb(246, 216, 142) },
-	{ mat = "Concrete:Stucco", color = rgb(192, 216, 202) },
+	{ mat = "Concrete:Stucco", color = rgb(240, 205, 176) },
+	{ mat = "Concrete:Stucco", color = rgb(234, 192, 170) },
+	{ mat = "Concrete:Stucco", color = rgb(243, 223, 166) },
+	{ mat = "Concrete:Stucco", color = rgb(200, 222, 208) },
 	{ mat = "Concrete:Panel", color = rgb(212, 202, 188) },
 	{ mat = "Concrete:Panel", color = rgb(228, 212, 180) },
-	{ mat = "Brick:Maple", color = rgb(188, 112, 88) },
-	{ mat = "Brick:Maple", color = rgb(208, 158, 114) },
-	{ mat = "CeramicTiles:Mosaic", color = rgb(228, 144, 90) },
-	{ mat = "CeramicTiles:Mosaic", color = rgb(124, 172, 160) },
+	{ mat = "Brick:Maple", color = rgb(204, 142, 118) },
+	{ mat = "Brick:Maple", color = rgb(214, 170, 134) },
+	{ mat = "CeramicTiles:Mosaic", color = rgb(228, 180, 150) },
+	{ mat = "CeramicTiles:Mosaic", color = rgb(150, 190, 178) },
 	{ mat = "CeramicTiles:Mosaic", color = rgb(238, 228, 208) },
 } :: { { mat: string, color: Color3 } }
 
 -- A ground floor that isn't the wall above it: dark brick, glazed tile or timber slats.
 local BASES = {
-	{ mat = "Brick:Maple", color = rgb(160, 92, 74) },
+	{ mat = "Brick:Maple", color = rgb(172, 112, 94) },
 	{ mat = "CeramicTiles:Mosaic", color = rgb(76, 122, 116) },
-	{ mat = "WoodPlanks:Slats", color = rgb(160, 112, 72) },
+	{ mat = "WoodPlanks:Slats", color = rgb(158, 116, 82) },
 	{ mat = "CeramicTiles:Mosaic", color = rgb(94, 110, 150) },
 } :: { { mat: string, color: Color3 } }
 
 -- A storey added on the roof later, in sheet metal.
-local ATTICS = { rgb(158, 180, 190), rgb(182, 112, 90), rgb(214, 206, 184) }
+local ATTICS = { rgb(158, 180, 190), rgb(180, 124, 104), rgb(214, 206, 184) }
 
 -- Paint. The trims are few because every window comes in each of them; the awnings are the
 -- strong colours of the street.
@@ -120,35 +120,35 @@ local TRIMS = {
 		color = CREAM,
 		shutter = rgb(72, 128, 122),
 		riser = rgb(70, 112, 106),
-		doors = { rgb(52, 92, 80), rgb(150, 56, 52) },
-		shade = rgb(44, 124, 96),
+		doors = { rgb(52, 92, 80), rgb(166, 78, 80) },
+		shade = rgb(62, 128, 104),
 	},
 	{
 		id = "b",
 		color = rgb(108, 76, 56),
 		shutter = rgb(140, 98, 66),
-		riser = rgb(150, 86, 70),
-		doors = { rgb(112, 78, 54), rgb(48, 70, 112) },
-		shade = rgb(234, 174, 58),
+		riser = rgb(150, 96, 80),
+		doors = { rgb(112, 78, 54), rgb(70, 96, 142) },
+		shade = rgb(222, 180, 100),
 	},
 	{
 		id = "g",
 		color = rgb(60, 112, 98),
 		shutter = rgb(232, 222, 200),
 		riser = rgb(196, 188, 172),
-		doors = { rgb(70, 74, 88), rgb(150, 56, 52) },
-		shade = rgb(216, 114, 72),
+		doors = { rgb(70, 74, 88), rgb(166, 78, 80) },
+		shade = rgb(222, 138, 104),
 	},
 }
 local AWNINGS = {
-	{ id = "r", color = rgb(206, 64, 56) },
-	{ id = "g", color = rgb(44, 124, 96) },
-	{ id = "n", color = rgb(46, 78, 136) },
-	{ id = "y", color = rgb(234, 174, 58) },
-	{ id = "t", color = rgb(216, 114, 72) },
+	{ id = "r", color = rgb(194, 98, 90) },
+	{ id = "g", color = rgb(66, 132, 110) },
+	{ id = "n", color = rgb(70, 96, 142) },
+	{ id = "y", color = rgb(226, 184, 98) },
+	{ id = "t", color = rgb(222, 138, 104) },
 }
-local ROOFS = { rgb(200, 106, 74), rgb(176, 92, 70), rgb(108, 126, 144) }
-local APRONS = { rgb(236, 226, 208), rgb(226, 150, 120), rgb(150, 196, 186), rgb(238, 204, 130) }
+local ROOFS = { rgb(194, 126, 99), rgb(184, 102, 92), rgb(108, 126, 144) }
+local APRONS = { rgb(236, 226, 208), rgb(226, 170, 146), rgb(150, 196, 186), rgb(236, 210, 154) }
 
 -- A look is a trim and an awning that go together. (A trim brings its own doors, the tiles
 -- under its shop windows and the canvas over its upstairs windows: those are drawn into pieces,
@@ -303,10 +303,10 @@ local WINDOWS: { [string]: Window } = {
 		y2 = HEAD,
 		draw = function(q: R, trim: any, _awning: any)
 			single(q, trim.color)
-			q:block(-1.7, 0.45, -1, 1.7, 0.95, -0.5, rgb(170, 104, 76))
+			q:block(-1.7, 0.45, -1, 1.7, 0.95, -0.5, rgb(172, 118, 92))
 			q:block(-1.55, 0.95, -0.95, 1.55, 1.2, -0.55, rgb(86, 150, 84))
 			for i, x in { -1.2, -0.4, 0.4, 1.2 } do
-				local col = if i % 2 == 0 then rgb(250, 130, 150) else rgb(255, 212, 96)
+				local col = if i % 2 == 0 then rgb(250, 130, 150) else rgb(248, 210, 112)
 				q:block(x - 0.22, 1.15, -0.98, x + 0.22, 1.55, -0.56, col)
 			end
 		end,
@@ -459,7 +459,7 @@ local function counter(q: R, cloth: Color3)
 	end
 	q:block(-5, 4.2, -0.34, 5, 4.34, -0.14, TIMBER_PALE, MAT)
 	for i, x in { -4, -2.6, 1.8, 3.4 } do
-		local col = ({ rgb(226, 120, 96), rgb(120, 176, 150), rgb(238, 200, 110), rgb(240, 236, 226) })[i]
+		local col = ({ rgb(220, 128, 106), rgb(120, 176, 150), rgb(238, 200, 110), rgb(240, 236, 226) })[i]
 		q:block(x - 0.3, 4.34, -0.34, x + 0.3, 4.34 + 0.4 + (i % 2) * 0.2, -0.16, col, MAT)
 	end
 	for _, x in { -4.2, -1.4, 1.4, 4.2 } do
@@ -468,7 +468,7 @@ local function counter(q: R, cloth: Color3)
 	end
 	for _, x in { -5, 5 } do
 		q:block(x - 0.04, 5.3, -2.24, x + 0.04, 5.9, -2.16, DARK, MAT)
-		q:cyl(x, 4.85, -2.2, 0.9, 0.8, "y", rgb(226, 84, 64), MAT)
+		q:cyl(x, 4.85, -2.2, 0.9, 0.8, "y", rgb(216, 108, 88), MAT)
 	end
 end
 
@@ -557,7 +557,7 @@ end
 
 -- A pier at the end of a shop front: a plinth, a shaft and a cap up to the first floor.
 local PIERS = {
-	{ mat = "Brick:Maple", color = rgb(172, 98, 78) },
+	{ mat = "Brick:Maple", color = rgb(180, 116, 96) },
 	{ mat = "Brick:Maple", color = rgb(200, 148, 108) },
 	{ mat = "Concrete:Panel", color = rgb(204, 198, 188) },
 	{ mat = "CeramicTiles:Mosaic", color = rgb(74, 120, 112) },
@@ -795,9 +795,9 @@ local CLUTTER: { Clutter } = {
 -- A brick chimney for a tiled roof, drawn with y = 0 where it comes through the tiles.
 local function chimney(q: R)
 	local MAT = "Brick:Maple"
-	q:block(-0.8, -1.4, -0.7, 0.8, 2, 0.7, rgb(176, 100, 80), MAT)
-	q:block(-0.95, 2, -0.85, 0.95, 2.3, 0.85, shade(rgb(176, 100, 80), 0.8), MAT)
-	q:block(-0.35, 2.3, -0.35, 0.35, 3, 0.35, rgb(200, 120, 90), MAT)
+	q:block(-0.8, -1.4, -0.7, 0.8, 2, 0.7, rgb(178, 116, 96), MAT)
+	q:block(-0.95, 2, -0.85, 0.95, 2.3, 0.85, shade(rgb(178, 116, 96), 0.8), MAT)
+	q:block(-0.35, 2.3, -0.35, 0.35, 3, 0.35, rgb(196, 134, 110), MAT)
 end
 
 -- Laying a wall out -----------------------------------------------------------------------------------
@@ -981,7 +981,7 @@ local function drawFace(face: Face, plan: Plan, main: boolean)
 			end
 			boardFrom, boardTo = math.min(boardFrom, cx - u.w / 2), math.max(boardTo, cx + u.w / 2)
 		elseif u.kind == "counter" then
-			local cloth = if plan.spec.seed % 2 == 0 then rgb(46, 78, 136) else rgb(188, 62, 54)
+			local cloth = if plan.spec.seed % 2 == 0 then rgb(70, 96, 142) else rgb(194, 98, 90)
 			stamp(face, "counter:" .. plan.spec.seed % 2, cx, 0, function(q: R)
 				counter(q, cloth)
 			end)
@@ -1436,7 +1436,7 @@ local function lanterns(q: R, span: number)
 		-- (they hang lower toward the middle, as if the string sagged)
 		local y = 10.7 - 0.9 * (1 - (2 * x / span) ^ 2)
 		q:block(x - 0.03, y, -0.03, x + 0.03, 10.9, 0.03, DARK)
-		local col = ({ rgb(226, 84, 64), rgb(244, 196, 96), rgb(244, 236, 220) })[k % 3 + 1]
+		local col = ({ rgb(216, 108, 88), rgb(238, 200, 118), rgb(244, 236, 220) })[k % 3 + 1]
 		q:block(x - 0.32, y - 0.85, -0.32, x + 0.32, y, 0.32, col)
 		q:block(x - 0.2, y - 0.95, -0.2, x + 0.2, y - 0.85, 0.2, DARK)
 	end

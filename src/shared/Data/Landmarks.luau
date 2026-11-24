@@ -45,23 +45,23 @@ end
 -- One palette for all of them, so the gate, the hall, the bridge and the stair read as one town's.
 local WHITE = rgb(250, 250, 248)
 local CREAM = rgb(240, 230, 208)
-local BRICK = rgb(176, 96, 74)
+local BRICK = rgb(182, 116, 96)
 local STONE = rgb(208, 202, 188)
 local STONE_DARK = rgb(172, 166, 154)
 local PAVE = rgb(196, 190, 178)
 local TIMBER = rgb(98, 70, 50)
 local TIMBER_LIGHT = rgb(160, 116, 78)
 local CRATE = rgb(198, 152, 98)
-local TILE = rgb(52, 124, 122)
+local TILE = rgb(79, 138, 140)
 local IRON = rgb(50, 78, 74)
 local STEEL = rgb(64, 104, 110)
 local DECK = rgb(188, 190, 196)
 local GOLD = rgb(222, 178, 82)
 local INK = rgb(46, 44, 54)
 local LAMP = rgb(255, 224, 156)
-local RED = rgb(214, 84, 70)
-local TEAL = rgb(64, 150, 140)
-local YELLOW = rgb(240, 190, 80)
+local RED = rgb(198, 102, 90)
+local TEAL = rgb(78, 146, 138)
+local YELLOW = rgb(228, 192, 112)
 local ROCK = rgb(150, 146, 140)
 local ROCK_DARK = rgb(124, 120, 118)
 local ROCK_LIGHT = rgb(176, 170, 160)
@@ -206,7 +206,7 @@ local function crate(r: R, kind: string?, at: CFrame)
 	end)
 end
 
-local BLOOMS = { pink = rgb(245, 140, 170), gold = rgb(255, 206, 84), white = rgb(248, 246, 240) }
+local BLOOMS = { pink = rgb(245, 140, 170), gold = rgb(240, 204, 118), white = rgb(248, 246, 240) }
 
 -- A bucket of cut flowers.
 local function bucket(r: R, kind: string, at: CFrame)

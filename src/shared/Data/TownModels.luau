@@ -16,10 +16,10 @@ local TownModels = {}
 
 local STONE = Color3.fromRGB(236, 234, 228)
 local DARK_STONE = Color3.fromRGB(196, 204, 214)
-local WOOD = Color3.fromRGB(156, 106, 64)
+local WOOD = Color3.fromRGB(154, 110, 76)
 local DARK_WOOD = Color3.fromRGB(102, 68, 42)
 local IRON = Color3.fromRGB(46, 52, 50)
-local CREAM = Color3.fromRGB(247, 243, 234)
+local CREAM = Color3.fromRGB(250, 246, 236)
 local SKIN = Color3.fromRGB(240, 222, 204)
 
 local function shade(c: Color3, k: number): Color3
@@ -422,7 +422,7 @@ end
 
 TownModels.Models.board = function(r: R)
 	local cork = Color3.fromRGB(196, 150, 100)
-	local roof = Color3.fromRGB(246, 104, 92)
+	local roof = Color3.fromRGB(194, 126, 99)
 	-- two posts with caps, holding a framed cork board under a little gabled roof
 	for _, x in { -4.45, 4.45 } do
 		r:box(x, 4.05, 0, 0.6, 8.1, 0.6, DARK_WOOD, "Wood")
@@ -479,9 +479,9 @@ TownModels.Models.board = function(r: R)
 end
 
 TownModels.Models.tailor = function(r: R)
-	local plum = Color3.fromRGB(226, 92, 152)
+	local plum = Color3.fromRGB(196, 100, 140)
 	shopShell(r, {
-		wall = Color3.fromRGB(255, 176, 200),
+		wall = Color3.fromRGB(242, 192, 204),
 		wallMat = "Plaster",
 		inner = Color3.fromRGB(250, 238, 232),
 		trim = CREAM,
@@ -627,16 +627,16 @@ TownModels.Models.tailor = function(r: R)
 end
 
 TownModels.Models.shop = function(r: R)
-	local green = Color3.fromRGB(64, 186, 104)
+	local green = Color3.fromRGB(72, 146, 104)
 	shopShell(r, {
-		wall = Color3.fromRGB(255, 208, 86),
+		wall = Color3.fromRGB(243, 223, 166),
 		wallMat = "Plaster",
 		inner = Color3.fromRGB(255, 248, 228),
 		trim = CREAM,
 		base = green,
 		floor = Color3.fromRGB(236, 232, 222),
 		floorMat = "Marble",
-		stripe1 = Color3.fromRGB(84, 200, 110),
+		stripe1 = Color3.fromRGB(108, 170, 124),
 		stripe2 = CREAM,
 		board = green,
 	})
@@ -747,9 +747,9 @@ TownModels.Models.shop = function(r: R)
 end
 
 TownModels.Models.hall = function(r: R)
-	local wall = Color3.fromRGB(176, 234, 214)
-	local trim = Color3.fromRGB(252, 252, 248)
-	local roof = Color3.fromRGB(74, 150, 232)
+	local wall = Color3.fromRGB(200, 224, 210)
+	local trim = Color3.fromRGB(250, 246, 236)
+	local roof = Color3.fromRGB(100, 128, 160)
 	local door = Color3.fromRGB(96, 58, 36)
 	-- a stone podium with steps up to a raised porch
 	r:block(-10.5, 0, -7.5, 10.5, 0.6, 6.5, STONE, "Concrete")
@@ -926,7 +926,7 @@ TownModels.Models.hall = function(r: R)
 	pyramid(r, 0, cz, 19.2, 21.2, 1.6, roof)
 	r:ball(0, 21.25, cz, 0.35, C.Gold, "Metal")
 	r:cyl(0, 22.9, cz, 3.2, 0.12, "y", C.Metal, "Metal")
-	r:block(0.08, 23.3, cz - 0.05, 2.7, 24.4, cz + 0.05, Color3.fromRGB(59, 130, 246), "Fabric")
+	r:block(0.08, 23.3, cz - 0.05, 2.7, 24.4, cz + 0.05, Color3.fromRGB(84, 120, 170), "Fabric")
 	r:block(0.08, 23.7, cz - 0.06, 2.7, 24.0, cz + 0.06, C.White, "Fabric")
 	-- clipped shrubs at the front corners of the podium
 	for _, sx in { -1, 1 } do
@@ -1080,7 +1080,7 @@ TownModels.Models.sign = function(r: R)
 			"Wood"
 		)
 	end
-	local roof = Color3.fromRGB(156, 42, 46)
+	local roof = Color3.fromRGB(164, 92, 86)
 	for _, sz in { -1, 1 } do
 		r:quad(
 			Vector3.new(-4.7, 7.0, sz * 0.9),
@@ -1116,7 +1116,7 @@ TownModels.Models.plotSign = function(r: R)
 end
 
 TownModels.Models.mailbox = function(r: R)
-	local blue = Color3.fromRGB(70, 110, 170)
+	local blue = Color3.fromRGB(76, 108, 150)
 	r:block(-0.25, 0, -0.25, 0.25, 0.15, 0.25, DARK_STONE, "Concrete")
 	r:block(-0.15, 0, -0.15, 0.15, 3, 0.15, DARK_WOOD, "Wood")
 	r:block(-0.3, 2.85, -0.6, 0.3, 3.0, 0.6, DARK_WOOD, "Wood")

@@ -11,13 +11,13 @@ local C = Recipe.Colors
 local AmbientModels = {}
 
 AmbientModels.CarColors = {
-	Color3.fromRGB(232, 72, 72),
-	Color3.fromRGB(64, 150, 240),
-	Color3.fromRGB(255, 200, 60),
-	Color3.fromRGB(110, 210, 170),
-	Color3.fromRGB(245, 245, 240),
-	Color3.fromRGB(255, 140, 60),
-	Color3.fromRGB(170, 120, 230),
+	Color3.fromRGB(210, 104, 96),
+	Color3.fromRGB(96, 140, 192),
+	Color3.fromRGB(232, 196, 110),
+	Color3.fromRGB(120, 184, 160),
+	Color3.fromRGB(246, 242, 232),
+	Color3.fromRGB(226, 146, 96),
+	Color3.fromRGB(160, 136, 200),
 }
 
 local GLASS = Color3.fromRGB(70, 110, 150)
@@ -59,8 +59,8 @@ end
 
 -- The town bus: long, two-tone, with a row of windows and a sign on the front.
 local function bus(r: R)
-	local body = Color3.fromRGB(255, 196, 60)
-	local band = Color3.fromRGB(64, 150, 240)
+	local body = Color3.fromRGB(232, 192, 104)
+	local band = Color3.fromRGB(88, 134, 184)
 	r:block(-2.8, 0.8, -9, 2.8, 6.2, 9, body, "SmoothPlastic")
 	r:block(-2.85, 0.7, -9.1, 2.85, 1.5, 9.1, band, "SmoothPlastic")
 	r:block(-2.9, 3.2, -8.6, 2.9, 5.2, 8.2, GLASS, "Glass")

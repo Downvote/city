@@ -29,20 +29,20 @@ local function shade(c: Color3, k: number): Color3
 	return Color3.new(math.min(1, c.R * k), math.min(1, c.G * k), math.min(1, c.B * k))
 end
 
-local WHITE = rgb(250, 250, 248)
+local WHITE = rgb(250, 246, 236)
 local CREAM = rgb(240, 232, 214)
 local CONCRETE = rgb(184, 186, 192)
 local METAL = rgb(186, 192, 202)
 local DARK = rgb(64, 70, 86)
 local WIRE = rgb(46, 50, 62)
-local WOOD = rgb(196, 146, 96)
-local WOOD_DARK = rgb(150, 104, 66)
-local RED = rgb(240, 96, 90)
-local BLUE = rgb(80, 150, 230)
-local YELLOW = rgb(255, 208, 90)
-local TEAL = rgb(70, 190, 180)
-local ORANGE = rgb(255, 146, 66)
-local GREEN = rgb(96, 190, 120)
+local WOOD = rgb(196, 154, 108)
+local WOOD_DARK = rgb(154, 107, 72)
+local RED = rgb(214, 108, 98)
+local BLUE = rgb(96, 140, 190)
+local YELLOW = rgb(236, 198, 110)
+local TEAL = rgb(88, 164, 156)
+local ORANGE = rgb(228, 150, 100)
+local GREEN = rgb(104, 170, 124)
 local PAPER = rgb(236, 228, 208) -- a bare advert face, before anything is pasted on it
 local SCREEN = rgb(222, 238, 246) -- a lit window by day
 local SCREEN_NIGHT = rgb(206, 244, 255) -- and after dark

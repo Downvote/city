@@ -23,26 +23,26 @@ local function shade(c: Color3, k: number): Color3
 	return Color3.new(math.min(1, c.R * k), math.min(1, c.G * k), math.min(1, c.B * k))
 end
 
-local WHITE = rgb(250, 250, 248)
+local WHITE = rgb(250, 246, 236)
 local STONE = rgb(226, 222, 214)
 local ROCK = rgb(150, 152, 160)
 local SOIL = rgb(118, 88, 64)
 local LEAF = rgb(84, 176, 74)
-local HEDGE = rgb(60, 136, 66)
-local WOOD = rgb(196, 146, 96)
-local WOOD_DARK = rgb(150, 104, 66)
+local HEDGE = rgb(72, 138, 78)
+local WOOD = rgb(196, 154, 108)
+local WOOD_DARK = rgb(154, 107, 72)
 local METAL = rgb(186, 192, 202)
 local DARK = rgb(64, 70, 86)
 local GLASS = rgb(150, 206, 240)
 local WATER = rgb(84, 168, 236)
-local LAWN = rgb(122, 196, 88)
+local LAWN = rgb(132, 190, 106)
 local ASPHALT = rgb(104, 108, 120)
-local RED = rgb(240, 96, 90)
-local BLUE = rgb(80, 150, 230)
-local YELLOW = rgb(255, 208, 90)
-local TEAL = rgb(70, 190, 180)
-local PINK = rgb(255, 150, 176)
-local BLOOMS = { rgb(255, 140, 160), rgb(255, 214, 100), rgb(250, 250, 250), rgb(190, 150, 240), rgb(255, 150, 90) }
+local RED = rgb(214, 108, 98)
+local BLUE = rgb(96, 140, 190)
+local YELLOW = rgb(236, 198, 110)
+local TEAL = rgb(88, 164, 156)
+local PINK = rgb(240, 158, 176)
+local BLOOMS = { rgb(240, 148, 164), rgb(240, 206, 118), rgb(250, 246, 236), rgb(184, 160, 222), rgb(236, 156, 110) }
 
 -- Small pieces drawn at an offset, so the pockets below can share them -------------------------------
 
@@ -69,7 +69,7 @@ end
 
 -- A clipped shrub in a clay pot.
 local function shrub(r: R, x: number, y: number, z: number)
-	r:cyl(x, y + 0.8, z, 1.6, 2.2, "y", rgb(196, 120, 90), "SmoothPlastic")
+	r:cyl(x, y + 0.8, z, 1.6, 2.2, "y", rgb(190, 130, 104), "SmoothPlastic")
 	r:ball(x, y + 2.6, z, 3, LEAF, "SmoothPlastic").name = "Leaf"
 	r:ball(x + 0.7, y + 3.4, z - 0.4, 1.8, shade(LEAF, 1.15), "SmoothPlastic").name = "Leaf"
 end
@@ -182,7 +182,7 @@ end
 -- A kiosk selling papers and snacks under a striped awning.
 M.kiosk = function(r: R)
 	r:block(-4, 0, -3, 4, 0.3, 3, STONE, "Concrete")
-	r:block(-3.6, 0.3, -1.6, 3.6, 7, 2.6, rgb(255, 222, 150), "Plaster")
+	r:block(-3.6, 0.3, -1.6, 3.6, 7, 2.6, rgb(240, 220, 170), "Plaster")
 	r:glow(r:block(-3, 3, -1.75, 3, 5.6, -1.6, rgb(120, 90, 70), "SmoothPlastic"), 0).attrs =
 		{ NightColor = rgb(255, 224, 156) }
 	r:block(-3.3, 2.6, -2.6, 3.3, 3, -1.6, WOOD, "Wood")
@@ -397,7 +397,7 @@ M.pocketParking = function(r: R)
 		r:block(x - 0.12, 0.1, 5, x + 0.12, 0.14, 14, WHITE, "SmoothPlastic")
 	end
 	car(r, -9, 0.1, -9.5, 0, RED)
-	car(r, 3, 0.1, -9.5, 0, rgb(250, 250, 250))
+	car(r, 3, 0.1, -9.5, 0, rgb(246, 242, 232))
 	car(r, -3, 0.1, 9.5, 180, BLUE)
 	car(r, 9, 0.1, 9.5, 180, YELLOW)
 	lamp(r, -14, 0.1, 0)
@@ -438,7 +438,7 @@ end
 -- An allotment: four vegetable beds, a shed and a water butt.
 M.pocketAllotment = function(r: R)
 	r:block(-15, 0, -15, 15, 0.2, 15, LAWN, "Grass")
-	local crops = { rgb(96, 190, 80), rgb(250, 150, 70), rgb(230, 90, 90), rgb(160, 210, 90) }
+	local crops = { rgb(120, 176, 96), rgb(226, 156, 104), rgb(206, 104, 98), rgb(164, 196, 110) }
 	for i, p in { { -8, -7 }, { 2, -7 }, { -8, 3 }, { 2, 3 } } do
 		r:block(p[1] - 4, 0.2, p[2] - 3, p[1] + 4, 0.7, p[2] + 3, WOOD_DARK, "Wood")
 		r:block(p[1] - 3.6, 0.7, p[2] - 2.6, p[1] + 3.6, 0.8, p[2] + 2.6, SOIL, "Ground")
@@ -447,10 +447,10 @@ M.pocketAllotment = function(r: R)
 		end
 	end
 	-- the shed
-	r:block(8, 0.2, 6, 14, 6, 13, rgb(196, 120, 100), "WoodPlanks")
+	r:block(8, 0.2, 6, 14, 6, 13, rgb(176, 124, 104), "WoodPlanks")
 	r:block(7.6, 6, 5.6, 14.4, 6.6, 13.4, rgb(110, 84, 62), "SmoothPlastic")
 	r:block(10, 0.2, 5.9, 12, 4.4, 6, rgb(110, 84, 62), "SmoothPlastic")
-	r:cyl(11, 1.7, -10, 3, 2.6, "y", rgb(70, 130, 200), "SmoothPlastic")
+	r:cyl(11, 1.7, -10, 3, 2.6, "y", rgb(90, 128, 170), "SmoothPlastic")
 	for _, sx in { -1, 1 } do
 		hedge(r, sx * 15, -15, sx * 13.8, 15, 0.2)
 	end
@@ -479,7 +479,7 @@ end
 
 -- A small playground: swings, a slide and a sandpit.
 M.pocketPlay = function(r: R)
-	r:block(-15, 0, -15, 15, 0.2, 15, rgb(250, 214, 150), "Sand")
+	r:block(-15, 0, -15, 15, 0.2, 15, rgb(240, 220, 176), "Sand")
 	-- swings
 	for _, x in { -12, -4 } do
 		r:block(x - 0.25, 0.2, -9.25, x + 0.25, 7, -8.75, RED, "Metal")
@@ -530,8 +530,8 @@ M.signpost = function(r: R)
 end
 
 M.hayBale = function(r: R)
-	r:cyl(0, 1.8, 0, 3.4, 3.6, "x", rgb(236, 204, 110), "SmoothPlastic")
-	r:cyl(1.72, 1.8, 0, 0.06, 2.6, "x", rgb(214, 180, 96), "SmoothPlastic")
+	r:cyl(0, 1.8, 0, 3.4, 3.6, "x", rgb(230, 206, 138), "SmoothPlastic")
+	r:cyl(1.72, 1.8, 0, 0.06, 2.6, "x", rgb(210, 184, 120), "SmoothPlastic")
 end
 
 -- A length of post and rail fence, 14 long.
@@ -555,7 +555,7 @@ M.mushrooms = function(r: R)
 	for i, p in { { 0, 0, 1 }, { 1.4, 0.8, 0.7 }, { -1, 1.2, 0.6 } } do
 		local s = p[3]
 		r:cyl(p[1], 0.6 * s, p[2], 1.2 * s, 0.5 * s, "y", WHITE, "SmoothPlastic")
-		r:ball(p[1], 1.3 * s, p[2], 1.6 * s, if i == 2 then rgb(255, 170, 90) else RED, "SmoothPlastic")
+		r:ball(p[1], 1.3 * s, p[2], 1.6 * s, if i == 2 then rgb(236, 160, 110) else RED, "SmoothPlastic")
 	end
 end
 
@@ -572,7 +572,7 @@ M.tarn = function(r: R)
 		end
 	end
 	-- the boat
-	r:block(3, 0.5, -24, 7, 1.5, -15, rgb(240, 110, 90), "SmoothPlastic")
+	r:block(3, 0.5, -24, 7, 1.5, -15, rgb(214, 116, 98), "SmoothPlastic")
 	r:block(3.4, 1.1, -23.6, 6.6, 1.5, -15.4, WOOD, "Wood")
 	r:block(3, 1.2, -20, 7, 1.5, -19, WOOD_DARK, "Wood")
 	-- reeds, lily pads and rocks on the shore
@@ -719,7 +719,7 @@ M.sailboat = function(r: R)
 end
 
 M.sailboat2 = function(r: R)
-	sailboat(r, rgb(70, 110, 190), rgb(255, 236, 200))
+	sailboat(r, rgb(84, 116, 170), rgb(255, 236, 200))
 end
 
 -- Rocks breaking the surface, with a gull on the tallest.

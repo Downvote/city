@@ -27,24 +27,24 @@ local function shade(c: Color3, k: number): Color3
 	return Color3.new(math.min(1, c.R * k), math.min(1, c.G * k), math.min(1, c.B * k))
 end
 
-local WHITE = rgb(250, 250, 248)
+local WHITE = rgb(250, 246, 236)
 local CREAM = rgb(246, 236, 218)
-local WOOD = rgb(196, 146, 96)
-local WOOD_DARK = rgb(150, 104, 66)
+local WOOD = rgb(196, 154, 108)
+local WOOD_DARK = rgb(154, 107, 72)
 local WOOD_PALE = rgb(226, 190, 140)
 local METAL = rgb(186, 192, 202)
 local DARK = rgb(64, 70, 86)
 local GLASS = rgb(170, 216, 244)
 local LEAF = rgb(84, 176, 74)
-local POT = rgb(196, 120, 90)
-local RED = rgb(236, 96, 90)
-local BLUE = rgb(86, 150, 230)
-local YELLOW = rgb(255, 208, 90)
-local GREEN = rgb(110, 196, 110)
-local PINK = rgb(255, 160, 184)
-local PURPLE = rgb(170, 140, 230)
-local TEAL = rgb(80, 190, 180)
-local ORANGE = rgb(250, 150, 70)
+local POT = rgb(190, 130, 104)
+local RED = rgb(214, 108, 100)
+local BLUE = rgb(100, 144, 196)
+local YELLOW = rgb(238, 200, 112)
+local GREEN = rgb(120, 178, 118)
+local PINK = rgb(240, 166, 182)
+local PURPLE = rgb(164, 144, 210)
+local TEAL = rgb(92, 166, 158)
+local ORANGE = rgb(232, 156, 100)
 local LAMPLIGHT = rgb(255, 236, 190)
 local BRIGHTS = { RED, YELLOW, BLUE, GREEN, PINK, PURPLE, TEAL, ORANGE }
 
@@ -279,10 +279,10 @@ local function exhibit(r: R, f: CFrame, what: number)
 	if what % 3 == 0 then
 		r:lump(f * CFrame.new(0, 3.6, 0) * CFrame.Angles(0.3, 0.6, 0.2), 2, 1.8, 1.6, rgb(150, 152, 170), "Slate")
 	elseif what % 3 == 1 then
-		post(r, f, 0, 2.6, 0, 1.6, 1.3, rgb(86, 150, 230))
-		post(r, f, 0, 4.2, 0, 0.5, 0.7, rgb(86, 150, 230))
+		post(r, f, 0, 2.6, 0, 1.6, 1.3, rgb(100, 144, 196))
+		post(r, f, 0, 4.2, 0, 0.5, 0.7, rgb(100, 144, 196))
 	else
-		blob(r, f, 0, 3.5, 0, 1.6, rgb(240, 200, 90), "Metal")
+		blob(r, f, 0, 3.5, 0, 1.6, rgb(232, 198, 112), "Metal")
 		slab(r, f, -0.2, 2.6, -0.2, 0.2, 3, 0.2, DARK, "Metal")
 	end
 end
@@ -376,7 +376,7 @@ local STOCK: { [string]: { any } } = {
 	grocer = { "box", { RED, GREEN, YELLOW, ORANGE } },
 	books = { "book", BRIGHTS },
 	clothes = { "fold", { BLUE, PINK, WHITE, TEAL, YELLOW } },
-	cafe = { "box", { WHITE, CREAM, rgb(150, 104, 66) } },
+	cafe = { "box", { WHITE, CREAM, rgb(154, 107, 72) } },
 	toys = { "ball", BRIGHTS },
 	flowers = { "pot", { PINK, YELLOW, RED, PURPLE, WHITE } },
 	post = { "box", { rgb(214, 172, 124), rgb(196, 150, 100), CREAM } },
@@ -400,7 +400,7 @@ local function shop(r: R, kind: string, b: Box)
 	pendant(r, b, cx, (b.z1 + b.z2) / 2)
 	local mx, mz = b.x1 + w * 0.34, b.z1 + d * 0.42
 	if kind == "bakery" then
-		case(r, at(b, mx, mz), 6, { PINK, WHITE, rgb(150, 104, 66), YELLOW })
+		case(r, at(b, mx, mz), 6, { PINK, WHITE, rgb(154, 107, 72), YELLOW })
 		tableSet(r, at(b, b.x1 + 3.2, b.z1 + 3.4), WOOD_PALE)
 	elseif kind == "grocer" then
 		for i, col in { RED, GREEN, ORANGE } do
@@ -431,8 +431,8 @@ local function shop(r: R, kind: string, b: Box)
 	elseif kind == "toys" then
 		-- a teddy, a ball and a tower of blocks
 		local t = at(b, mx, mz)
-		blob(r, t, 0, 1.3, 0, 2.6, rgb(196, 146, 96))
-		blob(r, t, 0, 3.2, 0, 1.8, rgb(196, 146, 96))
+		blob(r, t, 0, 1.3, 0, 2.6, rgb(196, 154, 108))
+		blob(r, t, 0, 3.2, 0, 1.8, rgb(196, 154, 108))
 		blob(r, t, -0.7, 4.1, 0, 0.7, rgb(170, 120, 76))
 		blob(r, t, 0.7, 4.1, 0, 0.7, rgb(170, 120, 76))
 		blob(r, t, 3.4, 1, 1, 2, RED)
@@ -484,7 +484,7 @@ end
 local function lobby(r: R, b: Box, flats: boolean)
 	local cx = (b.x1 + b.x2) / 2
 	local w, d = b.x2 - b.x1, b.z2 - b.z1
-	slab(r, CFrame.identity, cx - 3, b.y, b.z1 + 0.4, cx + 3, b.y + 0.08, b.z2 - 6, rgb(196, 80, 84), "Fabric")
+	slab(r, CFrame.identity, cx - 3, b.y, b.z1 + 0.4, cx + 3, b.y + 0.08, b.z2 - 6, rgb(186, 96, 98), "Fabric")
 	lift(r, at(b, cx - 3.2, b.z2 - 0.05))
 	lift(r, at(b, cx + 3.2, b.z2 - 0.05))
 	if flats then
@@ -574,7 +574,7 @@ local function library(r: R, b: Box)
 		pendant(r, b, x, b.z1 + d * 0.45)
 	end
 	counter(r, at(b, cx + 7, b.z1 + 3, 180), 6.4, WOOD_DARK)
-	slab(r, CFrame.identity, cx - 3, b.y, b.z1 + 0.4, cx + 3, b.y + 0.08, b.z2 - 4, rgb(150, 60, 70), "Fabric")
+	slab(r, CFrame.identity, cx - 3, b.y, b.z1 + 0.4, cx + 3, b.y + 0.08, b.z2 - 4, rgb(150, 76, 84), "Fabric")
 	plant(r, at(b, b.x1 + 2, b.z1 + 2))
 end
 
@@ -670,8 +670,8 @@ local function cinema(r: R, b: Box)
 		)
 	end
 	-- the aisle's carpet, the popcorn counter and its machine
-	slab(r, CFrame.identity, cx - 1.5, b.y, b.z1 + 0.4, cx + 1.5, b.y + 0.08, b.z2 - 4, rgb(120, 60, 130), "Fabric")
-	counter(r, at(b, b.x1 + 6, b.z1 + 3.4, 180), 7, rgb(120, 92, 200))
+	slab(r, CFrame.identity, cx - 1.5, b.y, b.z1 + 0.4, cx + 1.5, b.y + 0.08, b.z2 - 4, rgb(120, 80, 128), "Fabric")
+	counter(r, at(b, b.x1 + 6, b.z1 + 3.4, 180), 7, rgb(144, 118, 170))
 	local pop = at(b, b.x1 + 4.4, b.z1 + 3.4)
 	slab(r, pop, -0.9, 3.3, -0.7, 0.9, 5.4, 0.7, GLASS, "Glass").transp = 0.5
 	blob(r, pop, 0, 4, 0, 1.2, YELLOW)
@@ -700,7 +700,7 @@ local function station(r: R, b: Box)
 				cx + 3 - row * 2,
 				b.y + 5.2 + row * 0.6,
 				b.z2 - 0.4,
-				rgb(255, 200, 90),
+				rgb(236, 198, 112),
 				"SmoothPlastic"
 			),
 			0
@@ -714,7 +714,7 @@ local function station(r: R, b: Box)
 	shelves(r, at(b, b.x2 - 5, b.z2 - 0.9), 7, 2, "book", BRIGHTS)
 	local l = at(b, cx + 30, b.z1 + 4)
 	slab(r, l, -1.6, 0.4, -1, 1.6, 0.7, 1, METAL, "Metal")
-	slab(r, l, -1.2, 0.7, -0.8, 0.2, 2.4, 0.8, rgb(150, 104, 66), "SmoothPlastic")
+	slab(r, l, -1.2, 0.7, -0.8, 0.2, 2.4, 0.8, rgb(154, 107, 72), "SmoothPlastic")
 	slab(r, l, 0.3, 0.7, -0.6, 1.3, 1.8, 0.6, BLUE, "SmoothPlastic")
 	plant(r, at(b, b.x1 + 2, b.z1 + 2))
 	for _, x in { cx - 20, cx, cx + 20 } do
