@@ -943,7 +943,11 @@ local function drawFace(face: Face, plan: Plan, main: boolean)
 		if plan.shop == "door" then
 			table.insert(units, if d.chance(0.5) then 1 else #units + 1, { kind = "door", w = 6 })
 			used += 6
-			groundWindows = math.max(1, math.floor((room - used) / 6.4))
+			-- (a narrow town house has room for its door alone)
+			groundWindows = math.floor((room - used) / 6.4)
+			if groundWindows == 0 and room - used >= 5.6 then
+				groundWindows = 1
+			end
 		elseif room - used >= 6.3 and d.chance(0.85) then
 			table.insert(units, if d.chance(0.5) then 1 else #units + 1, { kind = "door", w = 6 })
 			used += 6

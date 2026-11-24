@@ -81,7 +81,9 @@ describe("Street scene", function()
 				parts += #TownMap.prims(p.name)
 			end
 		end
-		expect(parts <= 2000).toBeTruthy()
+		-- (2000 until the civic quarter was built up, "as much as in the city side", and got its
+		-- share of poles and pavement clutter)
+		expect(parts <= 2140).toBeTruthy()
 		expect((count.utilityPole or 0) >= 40).toBeTruthy()
 		expect((count.wireSpan or 0) >= 35).toBeTruthy()
 		expect((count.acUnit or 0) >= 40).toBeTruthy()

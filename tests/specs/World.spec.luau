@@ -156,7 +156,9 @@ describe("Roads", function()
 				table.insert(pockets, p.cf.Position)
 			end
 		end
-		expect(#pockets >= 24).toBeTruthy()
+		-- (24 while the civic quarter was open lawn; its blocks are rows of houses now, the user's
+		-- "as much as in the city side", and its little places are in the gardens behind them)
+		expect(#pockets >= 14).toBeTruthy()
 		for i, a in pockets do
 			for j, b in pockets do
 				if i < j then
@@ -208,6 +210,64 @@ describe("Roads", function()
 					end
 				end
 				if covered / total < (if market then 0.8 else 0.65) then
+					error(
+						string.format(
+							"the %s edge of the block at %d, %d is only %d%% built",
+							e[1],
+							b[1],
+							b[2],
+							covered / total * 100
+						)
+					)
+				end
+			end
+		end
+	end)
+
+	it("have houses all along every civic quarter block's edges", function()
+		-- The user: "the side with less buildings should have much more buildings, as much as in
+		-- the city side". So the civic quarter's blocks are built round their edges too: along
+		-- each edge, all but the lanes and alleys is a building a storey or more high within 24
+		-- studs of it, or ground a civic building, a park or a playing field keeps.
+		local built = {}
+		for _, p in TownMap.placements() do
+			local pos = p.cf.Position
+			if pos.X < -550 and pos.Z > -250 and pos.Z < 250 then
+				local lo, hi = Geometry.bounds(Geometry.transform(TownMap.prims(p.name), p.cf))
+				if hi.Y - p.cf.Y > 12 and hi.X - lo.X > 10 and hi.Z - lo.Z > 10 then
+					table.insert(built, { lo.X, lo.Z, hi.X, hi.Z })
+				end
+			end
+		end
+		for _, c in TownMap.civic() do
+			table.insert(built, c.ground)
+		end
+		expect(#built > 120).toBeTruthy()
+		for _, b in TownMap.blocks("west") do
+			local edges = {
+				{ "south", b[1], b[3], b[2], b[2] + 24, true },
+				{ "north", b[1], b[3], b[4] - 24, b[4], true },
+				{ "west", b[2], b[4], b[1], b[1] + 24, false },
+				{ "east", b[2], b[4], b[3] - 24, b[3], false },
+			}
+			for _, e in edges do
+				local covered, total = 0, 0
+				for u = e[2] + 6, e[3] - 7 do
+					total += 1
+					for _, r in built do
+						local hit
+						if e[6] then
+							hit = r[1] < u + 1 and r[3] > u and r[2] < e[5] and r[4] > e[4]
+						else
+							hit = r[2] < u + 1 and r[4] > u and r[1] < e[5] and r[3] > e[4]
+						end
+						if hit then
+							covered += 1
+							break
+						end
+					end
+				end
+				if covered / total < 0.75 then
 					error(
 						string.format(
 							"the %s edge of the block at %d, %d is only %d%% built",
