@@ -1,10 +1,14 @@
 --!nocheck
--- The city: the starter town fits its land, levels and land go up in sensible steps, paydays pay
--- what Data/Jobs says, and the economy stays inside the bounds docs/GAME_DESIGN.md promises.
+-- The city: the starter town fits its land, levels and land go up in sensible steps, a day's work
+-- pays what Data/Jobs says, and the economy stays inside the bounds docs/GAME_DESIGN.md promises.
 -- The user: "it seems like money gain from work is too little. balanced it such that progression
 -- is much more based on villagers working". So the bounds here are about work: what a day's pay
 -- buys, wages against everything else a keen player can collect in a day (played out below over
 -- seeded town days), and what each level of the town takes in workers and in days of their pay.
+-- Then: "could you make working give much more coins, and make buildings cheaper?" (wages three
+-- times what they were, building half) and "make it such that villagers earn coins as they work,
+-- not after every day" (Sim/City.earn; the Routine spec holds that a day at work comes to about a
+-- day's pay, so a day here is paid that).
 
 local Shared = "ReplicatedStorage.Shared."
 local Tuning = require(Shared .. "Config.Tuning")
@@ -23,6 +27,7 @@ local Talk = require(Shared .. "Sim.Talk")
 local EventEngine = require(Shared .. "Sim.EventEngine")
 local Personalities = require(Shared .. "Data.Personalities")
 local Foods = require(Shared .. "Data.Foods")
+local Presets = require(Shared .. "Data.Presets")
 
 local START = Tuning.Villagers.StartMood
 
@@ -149,7 +154,8 @@ local function playDays(p, rng, days)
 				end
 			end
 			if hour == Tuning.Day.WorkEnd then
-				local lines, total = City.payday(p, day, now)
+				-- what the day at work came to (earned through the day; summed here at five)
+				local lines, total = City.wages(p, day, now)
 				got.wages += total
 				for _, l in lines do
 					EventEngine.addXp(p.villagers[l.vid], Tuning.Jobs.XpPerDay)
@@ -281,12 +287,12 @@ describe("City", function()
 		expect(v.job).toBe(w.key)
 		expect(City.freeWorkplace(p)).toBe(nil)
 		expect(v.mood).toBe(Tuning.Villagers.StartMood)
-		local _, total = City.payday(p, 1, 0)
+		local _, total = City.wages(p, 1, 0)
 		expect(total).toBe(Jobs.pay(w.job, 1, Tuning.Villagers.StartMood, v.pers))
-		-- which is a day's pay inside the bounds below: one wage gets a new player going (the
-		-- second workplace within a day or two) and is still no quick way to the first land
-		expect(total).toBeBetween(300, 700)
-		expect(Tuning.City.Land[2].Price / total > 5).toBeTruthy()
+		-- which is a day's pay inside the bounds below: one wage gets a new player going (a
+		-- ready-made cottage inside two days) and is still no quick way to the first land
+		expect(total).toBeBetween(900, 2100)
+		expect(Tuning.City.Land[2].Price / total).toBeBetween(2, 5)
 	end)
 
 	it("lets a villager walk from the street into every room, to the bed and to the workbench", function()
@@ -565,7 +571,7 @@ describe("City", function()
 		expect(villager(Schema.newProfile(), 3).hate).toBe(nil)
 	end)
 
-	it("pays workers, but not on a day off or while sick", function()
+	it("pays workers a day's wage, but not on a day off or while sick", function()
 		local p = Schema.newProfile()
 		p.plan = StarterHouse.plan()
 		-- a market stall by the street as well as the workshop the plot comes with: a job is only
@@ -575,16 +581,21 @@ describe("City", function()
 		local b = villager(p, 2, "shy")
 		a.job = City.freeWorkplace(p)
 		expect(a.job ~= nil).toBeTruthy()
-		local lines, total = City.payday(p, 10, 1000)
+		local lines, total = City.wages(p, 10, 1000)
 		expect(#lines).toBe(1)
 		expect(total).toBe(Jobs.pay(City.jobOf(p, a.id).job, a.lv, a.mood, a.pers))
+		expect(City.dayPay(p, a.id, 10, 1000)).toBe(total)
+		expect(City.dayPay(p, b.id, 10, 1000)).toBe(0)
+		expect(City.rate(p, a.id, 10, 1000)).toBeNear(total / City.workSeconds(), 1e-9)
 		a.dayOff = 10
-		local _, off = City.payday(p, 10, 1000)
+		local _, off = City.wages(p, 10, 1000)
 		expect(off).toBe(0)
+		expect(City.rate(p, a.id, 10, 1000)).toBe(0)
 		a.dayOff = nil
 		a.sick = 2000
-		local _, sick = City.payday(p, 10, 1000)
+		local _, sick = City.wages(p, 10, 1000)
 		expect(sick).toBe(0)
+		expect(City.rate(p, a.id, 10, 1000)).toBe(0)
 		local _ = b
 	end)
 
@@ -618,43 +629,58 @@ describe("City", function()
 	end)
 
 	it("keeps the economy in its bounds", function()
-		-- a day's pay at the mood and skill a villager starts with buys something real (a bed, a
-		-- cheap workplace) but not the town, and the best there is stays in sight of it
+		-- a day's pay at the mood and skill a villager starts with buys something real (a bed and
+		-- a workplace many times over, most of a ready-made house) but not the town, and the best
+		-- there is stays in sight of it
 		for _, job in Jobs.list do
 			local pay = startPay(job)
-			expect(pay).toBeBetween(300, 700)
+			expect(pay).toBeBetween(900, 2100)
 			local best = Jobs.pay(job, Tuning.Jobs.SkillCap, 100, job.likes[1])
-			expect(best).toBeBetween(pay, 3000)
+			expect(best).toBeBetween(pay, 9000)
 		end
-		-- the starting coins buy a bed and a workplace for the second villager
+		-- the starting coins buy the second villager a bed and a workplace, and a ready-made
+		-- cottage on top
 		local bed = Catalog.get("bed_single")
 		local cheapestWork, dearestWork = math.huge, 0
 		for _, def in Catalog.workplaces() do
 			cheapestWork = math.min(cheapestWork, def.price)
 			dearestWork = math.max(dearestWork, def.price)
 		end
-		expect(bed.price + cheapestWork < Tuning.Economy.StartCoins).toBeTruthy()
-		-- and from then on the builder's wage from the starting workshop is enough to get going:
-		-- a day of it buys the cheapest workplace, two the usual one, and none takes three
+		local cottage = Presets.price("cottage")
+		expect(bed.price + cheapestWork + cottage < Tuning.Economy.StartCoins).toBeTruthy()
+		-- and from then on the builder's wage from the starting workshop gets a town going: a day
+		-- of it buys three of the dearest workplace, a ready-made cottage takes one to two days of
+		-- it and the biggest ready-made building under four
 		local builder = startPay(Jobs.get("builder"))
-		expect(cheapestWork <= builder).toBeTruthy()
-		local prices = {}
-		for _, def in Catalog.workplaces() do
-			table.insert(prices, def.price)
+		expect(dearestWork * 3 <= builder).toBeTruthy()
+		expect(cottage / builder).toBeBetween(1, 2)
+		local dearestPreset = 0
+		for _, preset in Presets.list do
+			dearestPreset = math.max(dearestPreset, Presets.price(preset.id))
 		end
-		table.sort(prices)
-		expect(prices[math.ceil(#prices / 2)] <= builder * 2).toBeTruthy()
-		expect(dearestWork < builder * 3).toBeTruthy()
-		-- a workplace pays for itself in a day or two of the job it opens, and never in hours
+		expect(dearestPreset / builder < 4).toBeTruthy()
+		-- a workplace pays for itself inside half a day of the job it opens, and a ready-made
+		-- building for a trade (the workplace with its shop round it) in 1.5 to 5 days
 		for _, def in Catalog.workplaces() do
-			expect(def.price / startPay(Jobs.get(def.job))).toBeBetween(0.6, 3)
+			expect(def.price / startPay(Jobs.get(def.job))).toBeBetween(0.05, 0.5)
 		end
-		-- three workers save up for the first land in well under an hour of play (a town day is
-		-- 12 minutes); one alone takes more than an hour
+		local shops = 0
+		for _, preset in Presets.list do
+			for _, o in preset.objects do
+				local def = o.kind == "items" and Catalog.get(o.obj.id)
+				if def and def.job then
+					shops += 1
+					expect(Presets.price(preset.id) / startPay(Jobs.get(def.job))).toBeBetween(1.5, 5)
+				end
+			end
+		end
+		expect(shops >= #Jobs.list).toBeTruthy()
+		-- three workers save up for the first land inside one to two dozen minutes of play (a
+		-- town day is 12 minutes); one alone takes two to five town days
 		local job = Jobs.get("shopkeeper")
 		local perDay = 3 * Jobs.pay(job, 3, START, "none")
-		expect(Tuning.City.Land[2].Price / perDay).toBeBetween(2, 5)
-		expect(Tuning.City.Land[2].Price / Jobs.pay(job, 3, START, "none") > 5).toBeTruthy()
+		expect(Tuning.City.Land[2].Price / perDay).toBeBetween(0.5, 2)
+		expect(Tuning.City.Land[2].Price / Jobs.pay(job, 3, START, "none")).toBeBetween(2, 5)
 		-- the daily gift is a welcome, not a wage: the first one is less than the builder's first
 		-- day, and at its biggest it is less than two workers earn in a town day
 		local E = Tuning.Economy
@@ -677,8 +703,10 @@ describe("City", function()
 		-- What a level takes: the building its worth asks for on top of the level before (saved
 		-- up by the workers that level had to have), then the land it unlocks (saved up by the
 		-- workers it has to have itself). At starting mood and skill, with no more workers than
-		-- the levels ask for, every step is days of work and none is weeks. A town day is 12
-		-- minutes; a town that keeps everyone in work, happy and learning does it in about half.
+		-- the levels ask for, every step is a day or more of work and none is more than a few
+		-- hours of play. A town day is 12 minutes; a town that keeps everyone in work, happy and
+		-- learning does it in about half. (With wages tripled and building halved the steps took
+		-- a quarter of the 3 to 25 days they did.)
 		local levels, land = Tuning.City.Levels, Tuning.City.Land
 		local pay = meanStartPay()
 		local total = 0
@@ -690,25 +718,27 @@ describe("City", function()
 					days += l.Price / (levels[i].Workers * pay)
 				end
 			end
-			expect(days).toBeBetween(3, 25)
+			expect(days).toBeBetween(1, 8)
 			total += days
 		end
-		-- the whole way from a hamlet to a city, every land bought: more than a few hours of
-		-- play and not dozens
-		expect(total * Tuning.Day.Length / 3600).toBeBetween(4, 15)
+		-- the whole way from a hamlet to a city, every land bought: an evening's play or two,
+		-- not ten minutes and not a week (it was 4 to 15 hours)
+		expect(total * Tuning.Day.Length / 3600).toBeBetween(1.5, 5)
 	end)
 
-	it("earns at least two thirds of a keen player's coins from wages once two villagers work", function()
+	it("earns four fifths or more of a keen player's coins from wages once two villagers work", function()
 		-- Ten town days from the start of each stage, played out for the keenest player there
-		-- could be (see playDays), over several seeds. Wages must be two thirds of everything
+		-- could be (see playDays), over several seeds. Wages must be four fifths of everything
 		-- that comes in at the smallest of them (three villagers, two in work: what a village
-		-- asks for), and more as the town grows. Before the rebalance wages were 29% of it there
-		-- and half of it in a city, and the thank yous alone paid more than work did.
+		-- asks for), and more as the town grows. Before the first rebalance wages were 29% of it
+		-- there and half of it in a city, and the thank yous alone paid more than work did; after
+		-- it 72% and 87%. With wages tripled they are 88% and 95%, and these bounds went up with
+		-- them (they were two thirds, 72%, 72% and 80%).
 		local stages = {
-			{ pop = 3, workers = 2, share = 2 / 3 },
-			{ pop = 4, workers = 4, share = 0.72 },
-			{ pop = 7, workers = 6, share = 0.72 },
-			{ pop = 13, workers = 12, share = 0.8 },
+			{ pop = 3, workers = 2, share = 0.8 },
+			{ pop = 4, workers = 4, share = 0.85 },
+			{ pop = 7, workers = 6, share = 0.85 },
+			{ pop = 13, workers = 12, share = 0.9 },
 		}
 		for _, stage in stages do
 			local wages, other = 0, 0
@@ -734,8 +764,8 @@ describe("City", function()
 					)
 				)
 			end
-			-- and a day's wages are real money by then: more than the dearest workplace
-			expect(wages / (seeds * 10) > 1000).toBeTruthy()
+			-- and a day's wages are real money by then: more than a ready-made cottage
+			expect(wages / (seeds * 10) > Presets.price("cottage")).toBeTruthy()
 		end
 	end)
 

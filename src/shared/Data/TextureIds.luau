@@ -26,7 +26,7 @@ export type Ids = {
 
 -- stylua: ignore
 local TextureIds: { [string]: Ids } = {
-	grass = { color = "rbxassetid://123781418381440", normal = "rbxassetid://74383676401444", rough = "rbxassetid://123781418381440", studs = 16, light = 0.7, decal = 132962949126736 }, -- "Grass005_2K-JPG_Roughness" and "_NormalGL" by gabrieleivazians2041 (the set's grey map, so the paint decides the green)
+	lawn = { color = "rbxassetid://123781418381440", normal = "rbxassetid://74383676401444", rough = "rbxassetid://123781418381440", studs = 16, light = 0.7, decal = 132962949126736 }, -- "Grass005_2K-JPG_Roughness" and "_NormalGL" by gabrieleivazians2041 (the set's grey map, so the paint decides the green)
 	wood = { color = "rbxassetid://127935223360351", normal = "rbxassetid://82700223149662", studs = 4, decal = 125695710899534 }, -- "Wood Texture" by conoluz; normal "Wood092_1K-PNG_NormalGL" by Proville6
 	planks = { color = "rbxassetid://126083643168466", studs = 6, decal = 107218328642902 }, -- "Roblox wood planks texture" by TheDanMan2307
 	brick = { color = "rbxassetid://15826262054", normal = "rbxassetid://15826267601", studs = 8, decal = 15826262079 }, -- "brick color" and "brick normal" by latechicagonightz

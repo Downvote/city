@@ -970,47 +970,52 @@ local function bough(
 	q:wedge(cf, wide, thick, len + inset, color, "Grass")
 end
 
--- A fir's crown on q: `tiers` rows of boughs from the lowest tips at `base` up to the spire's
--- point at `top`, the lowest boughs `reach` long. The last row is the spire.
-type Fir = { base: number, top: number, reach: number, tiers: number, trunk: number }
+-- A fir's crown on q: rows of boughs from the lowest tips at `base` up to a slim spire whose point
+-- is at `top`, the lowest boughs `reach` long and each row turned against the one under it.
+-- `boughs` is how many to a row low down (a row near the top has three).
+type Fir = { base: number, top: number, reach: number, rows: number, boughs: number, trunk: number }
 local function firCrown(q: R, f: Fir)
-	local h = f.top - f.base
 	local droop0 = 0.72
 	local low = f.base + f.reach * math.sin(droop0) * 0.9
-	local high = f.top - 1.4 - h * 0.08
-	local core = f.reach * 0.3
-	-- the dark middle the boughs grow from (the piece's square box, which the merge hangs the rest on)
-	q:box(0, (f.base + 0.6 + high) / 2, 0, core, high - f.base - 0.6, core, FIR_CORE, "Grass")
-	for i = 0, f.tiers - 1 do
-		local t = i / (f.tiers - 1)
-		local y = low + (high - low) * t ^ 0.85
-		local turn = i * (math.pi / 4 + 0.19)
-		if i == f.tiers - 1 then
-			-- the spire: three slim boughs standing upright round the leader
-			for k = 0, 2 do
-				bough(q, y, turn + k * math.pi * 2 / 3, 0.5 + f.reach * 0.06, 0.34, f.top - y, 0, 0, FIR_TIP)
+	local high = f.top - (f.top - f.base) * 0.17
+	local core = f.reach * 0.24
+	local function rowAt(t: number): number
+		return low + (high - low) * t ^ 0.85
+	end
+	-- the dark middle the boughs grow from, up to the top row (the piece's square box, which the
+	-- merge hangs the rest on)
+	local coreTop = high
+	q:box(0, (f.base + 0.6 + coreTop) / 2, 0, core, coreTop - f.base - 0.6, core, FIR_CORE, "Grass")
+	for i = 0, f.rows - 1 do
+		local t = i / (f.rows - 1)
+		local y = rowAt(t)
+		local len = f.reach * (1 - 0.74 * t)
+		local droop = droop0 - 0.24 * t
+		local tone = mix(FIR_LOW, FIR_HIGH, t ^ 1.4)
+		local n = if t > 0.6 then 3 else f.boughs
+		local turn = i * (math.pi * 2 / n / 2 + 0.19)
+		for k = 0, n - 1 do
+			-- every other bough a shade darker, and one a row lit at its tip
+			local color = if k % 2 == 0 then tone else shade(tone, 0.84)
+			if k == 0 and t > 0.3 then
+				color = mix(tone, FIR_TIP, 0.4)
 			end
-		else
-			local len = f.reach * (1 - 0.78 * t)
-			local droop = droop0 - 0.26 * t
-			local tone = mix(FIR_LOW, FIR_HIGH, t ^ 1.4)
-			local n = if t > 0.6 then 3 else 4
-			for k = 0, n - 1 do
-				-- every other bough a shade darker, and the sunny side's tips lighter
-				local color = if k % 2 == 0 then tone else shade(tone, 0.84)
-				if k == 0 and t > 0.3 then
-					color = mix(tone, FIR_TIP, 0.45)
-				end
-				bough(q, y, turn + k * math.pi * 2 / n, len, len * 0.72 + 0.3, len * 0.32 + 0.25, droop, core * 0.4, color)
-			end
+			local wide = len * (if n == 3 then 0.9 else 0.72) + 0.3
+			-- (each a little off the even spacing, so no two lie in line and share a face)
+			local a = turn + k * math.pi * 2 / n + (k % 3) * 0.07
+			bough(q, y, a, len, wide, len * 0.32 + 0.25, droop, math.min(core * 0.4, len * 0.15), color)
 		end
+	end
+	-- the spire: three slim boughs standing upright round the leader
+	for k = 0, 2 do
+		bough(q, high - 0.3, k * math.pi * 2 / 3 + 0.5, 0.5 + f.reach * 0.07, 0.36, f.top - high + 0.3, 0, 0, FIR_HIGH)
 	end
 end
 
 local FIRS: { [string]: Fir } = {
-	young = { base = 0.9, top = 8.5, reach = 2.5, tiers = 6, trunk = 0.5 },
-	fir = { base = 2.6, top = 17, reach = 4.2, tiers = 7, trunk = 0.8 },
-	tall = { base = 3.6, top = 26, reach = 5.4, tiers = 7, trunk = 1.05 },
+	young = { base = 0.9, top = 8.5, reach = 2.5, rows = 5, boughs = 4, trunk = 0.5 },
+	fir = { base = 2.6, top = 17, reach = 4.2, rows = 6, boughs = 4, trunk = 0.8 },
+	tall = { base = 3.6, top = 26, reach = 5.4, rows = 8, boughs = 3, trunk = 1.05 },
 }
 
 -- A fir standing at `at`: "young", "fir" or "tall".
@@ -1025,62 +1030,47 @@ local function fir(r: R, kind: string, at: CFrame)
 end
 CityModels.fir = fir
 
--- The broadleaf crown on q at scale s: clumps of leaves round a square heart, dark underneath and
--- light on top, each clump a box turned its own way so the crown is all facets.
-local LEAF_LOW = rgb(60, 104, 62)
-local LEAF_MID = rgb(86, 132, 70)
-local LEAF_TOP = rgb(130, 158, 82)
-local CLUMPS = {
-	-- x, y, z, size, tone (0 low .. 1 top)
-	{ 2.3, 5.0, 0.4, 2.8, 0.1 },
-	{ 0.6, 4.9, 2.3, 2.6, 0.05 },
-	{ -1.9, 5.1, 1.3, 2.7, 0.1 },
-	{ -2.1, 5.0, -1.2, 2.6, 0 },
-	{ 0.2, 4.8, -2.3, 2.7, 0.05 },
-	{ 1.8, 5.3, -1.6, 2.4, 0.15 },
-	{ 1.5, 6.6, 1.3, 2.9, 0.5 },
-	{ -1.3, 6.8, 0.9, 2.8, 0.45 },
-	{ -0.9, 6.6, -1.5, 2.8, 0.5 },
-	{ 1.3, 6.9, -0.9, 2.6, 0.55 },
-	{ 0.3, 8.0, 0.4, 3.0, 0.9 },
-	{ -0.8, 7.9, -0.5, 2.2, 1 },
-	{ 0.9, 8.1, -0.3, 2.0, 0.95 },
+-- A broadleaf tree's crown: a big heart of leaves, clumps round its lower edge and two on top,
+-- darker underneath and lighter where the sun is. x, y, z, width, height, depth, tone (0 low to
+-- 1 top) and a turn of its own.
+local LEAF_LOW = rgb(54, 94, 60)
+local LEAF_MID = rgb(82, 126, 70)
+local LEAF_TOP = rgb(110, 142, 78)
+local CROWN = {
+	{ 0, 6.6, 0, 5.4, 4.6, 5.2, 0.4, 0.2 },
+	{ 2.3, 5.5, 0.6, 3.9, 3.2, 3.6, 0.12, 0.9 },
+	{ -1.7, 5.4, 1.8, 3.7, 3.0, 3.9, 0.04, 2.1 },
+	{ -0.9, 5.5, -2.2, 3.9, 3.0, 3.5, 0, 1.4 },
+	{ 1.2, 8.4, -0.7, 3.7, 3.1, 3.5, 0.75, 0.5 },
+	{ -1.1, 8.6, 0.9, 3.5, 3.0, 3.6, 0.8, 2.7 },
+	{ 0.2, 9.8, 0.1, 2.8, 2.3, 2.8, 1, 1.1 },
 }
-local function broadCrown(q: R, s: number)
-	q:box(0, 6.4 * s, 0, 4 * s, 3 * s, 4 * s, LEAF_LOW, "Grass")
-	for i, c in CLUMPS do
-		local tone = if c[5] < 0.5 then mix(LEAF_LOW, LEAF_MID, c[5] * 2) else mix(LEAF_MID, LEAF_TOP, c[5] * 2 - 1)
-		q:boxAt(
-			CFrame.new(c[1] * s, c[2] * s, c[3] * s) * CFrame.Angles(0.5 + i * 0.37, i * 0.91, 0.6 + i * 0.29),
-			c[4] * s,
-			c[4] * s * 0.86,
-			c[4] * s,
-			tone,
-			"Grass"
-		)
-	end
-end
+local BROAD_BARK = rgb(118, 86, 64)
 
--- The forked trunk on q at scale s: two boxes crossed for a round enough stem, and three limbs.
-local function broadTrunk(q: R, s: number)
-	q:box(0, 2.6 * s, 0, 0.9 * s, 5.2 * s, 0.9 * s, BARK, "Wood")
-	q:boxAt(CFrame.new(0, 2.4 * s, 0) * CFrame.Angles(0, math.pi / 4, 0), 0.9 * s, 4.8 * s, 0.9 * s, BARK, "Wood")
-	for _, l in { { 1.6, 6.2, 0.4 }, { -1.4, 6.4, 0.9 }, { 0.1, 6.6, -1.6 } } do
-		q:beam(Vector3.new(0, 4.4 * s, 0), Vector3.new(l[1] * s, l[2] * s, l[3] * s), 0.5 * s, 0.5 * s, BARK, "Wood")
-	end
-end
-
--- A broadleaf tree: s is 1 or a little more (a bigger one is drawn at 1.35). Each is turned its own
--- way by where it stands, so a row of them doesn't look stamped.
-local function lowTree(r: R, x: number, y: number, z: number, s: number)
-	local size = if s >= 1.2 then 1.35 else 1
-	local at = CFrame.new(x, y, z) * CFrame.Angles(0, (x * 0.37 + z * 0.61) % (math.pi * 2), 0)
-	stamp(r, "broadTrunk:" .. size, at, function(q)
-		broadTrunk(q, size)
+-- A broadleaf tree at `at`, s 1 (or 1.35 for a big one): a trunk that forks into three limbs
+-- under the crown (one piece), and the crown's clumps, each named Leaf to sway on its own.
+local function broadleaf(r: R, at: CFrame, s: number)
+	stamp(r, "broadTrunk:" .. s, at, function(q)
+		q:box(0, 2.6 * s, 0, 1.1 * s, 5.2 * s, 1.1 * s, BROAD_BARK, "Wood")
+		q:boxAt(CFrame.new(0, 2.5 * s, 0) * yaw(45), 1.1 * s, 5 * s, 1.1 * s, BROAD_BARK, "Wood")
+		for _, l in { { 1.9, 6.0, 0.5 }, { -1.7, 6.2, 1.1 }, { -0.2, 6.4, -1.9 } } do
+			local limb = Vector3.new(l[1] * s, l[2] * s, l[3] * s)
+			q:beam(Vector3.new(0, 4.2 * s, 0), limb, 0.5 * s, 0.5 * s, BROAD_BARK, "Wood")
+		end
 	end)
-	stamp(r, "broadCrown:" .. size, at, function(q)
-		broadCrown(q, size)
-	end).name = "Leaf"
+	for _, c in CROWN do
+		local t = c[7]
+		local tone = if t < 0.5 then mix(LEAF_LOW, LEAF_MID, t * 2) else mix(LEAF_MID, LEAF_TOP, t * 2 - 1)
+		local f = at * CFrame.new(c[1] * s, c[2] * s, c[3] * s) * CFrame.Angles(0.3, c[8], -0.25)
+		r:lump(f, c[4] * s, c[5] * s, c[6] * s, tone, "Grass").name = "Leaf"
+	end
+end
+
+-- A broadleaf tree in the old call's shape: s near 1 is the usual one, 1.2 or more the big one.
+-- Each is turned its own way by where it stands, so a row of them doesn't look stamped.
+local function lowTree(r: R, x: number, y: number, z: number, s: number)
+	local turn = (x * 0.37 + z * 0.61) % (math.pi * 2)
+	broadleaf(r, CFrame.new(x, y, z) * CFrame.Angles(0, turn, 0), if s >= 1.2 then 1.35 else 1)
 end
 CityModels.lowTree = lowTree
 

@@ -76,6 +76,8 @@ describe("Textures", function()
 			expect(ok and m ~= nil).toBeTruthy()
 			expect(seen[e.material]).toBe(nil)
 			seen[e.material] = true
+			-- never Grass: the terrain's blades grow only on Roblox's own (ours is the look Lawn)
+			expect(e.material ~= "Grass").toBeTruthy()
 			expect(e.look).toBe(nil)
 			expect(e.studs).toBeBetween(0.5, 50)
 		end
@@ -151,7 +153,7 @@ describe("Textures", function()
 
 	it("only uses well formed ids", function()
 		local ready = Textures.ready({
-			grass = { color = "rbxassetid://123", normal = "rbxassetid://456" },
+			sand = { color = "rbxassetid://123", normal = "rbxassetid://456" },
 			brick = { color = "rbxassetid://789", normal = "not an id" },
 			wood = { color = "http://example.com/x.png" },
 			nothing = { color = "rbxassetid://1" },
@@ -161,9 +163,9 @@ describe("Textures", function()
 		for _, t in ready do
 			byName[t.name] = t
 		end
-		expect(byName.grass.variant).toBe("MaplewickGrass")
-		expect(byName.grass.material).toBe("Grass")
-		expect(byName.grass.normal).toBe("rbxassetid://456")
+		expect(byName.sand.variant).toBe("MaplewickSand")
+		expect(byName.sand.material).toBe("Sand")
+		expect(byName.sand.normal).toBe("rbxassetid://456")
 		expect(byName.brick.normal).toBe(nil)
 		expect(byName.wood).toBe(nil)
 	end)

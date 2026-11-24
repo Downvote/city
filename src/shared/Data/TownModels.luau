@@ -8,6 +8,7 @@
 local Recipe = require(script.Parent.Parent.Build.Recipe)
 local Geometry = require(script.Parent.Parent.Build.Geometry)
 local Colors = require(script.Parent.Parent.Util.Colors)
+local CityModels = require(script.Parent.CityModels)
 
 type R = Recipe.Recipe
 local C = Recipe.Colors
@@ -986,76 +987,27 @@ TownModels.Models.bench = function(r: R)
 	r:seat(1.2, 1.92, 0, 0)
 end
 
-TownModels.Models.tree = function(r: R)
-	for i = 0, 4 do
-		local a = i / 5 * math.pi * 2 + 0.3
-		r:beam(
-			Vector3.new(0, 0.9, 0),
-			Vector3.new(math.cos(a) * 1.4, 0.05, math.sin(a) * 1.4),
-			0.55,
-			0.45,
-			C.Bark,
-			"Wood"
-		)
+-- The town's trees are drawn in Data/CityModels (a broadleaf, and a fir in tiers of drooping
+-- boughs). These two sway whole, by the model's name (World/Ambience), so their crowns lose the
+-- name Leaf that would sway them a second time.
+local function unnamed(r: R, draw: (R) -> ())
+	local from = #r.prims
+	draw(r)
+	for i = from + 1, #r.prims do
+		r.prims[i].name = nil
 	end
-	r:cyl(0, 0.7, 0, 1.4, 1.8, "y", C.Bark, "Wood")
-	r:cyl(0, 3.4, 0, 5.4, 1.35, "y", C.Bark, "Wood")
-	rod(r, Vector3.new(0, 4.8, 0), Vector3.new(-2.2, 7.4, 0.8), 0.6, C.Bark, "Wood")
-	rod(r, Vector3.new(0, 5.2, 0), Vector3.new(2.0, 7.8, -1.0), 0.6, C.Bark, "Wood")
-	rod(r, Vector3.new(0, 5.6, 0), Vector3.new(0.4, 8.2, 1.8), 0.5, C.Bark, "Wood")
-	local leaf = C.Leaf
-	r:ball(0, 8.6, 0, 6.6, leaf, "Grass")
-	r:ball(-2.5, 7.4, 1.0, 4.6, shade(leaf, 0.82), "Grass")
-	r:ball(2.4, 7.6, -0.8, 4.8, shade(leaf, 0.88), "Grass")
-	r:ball(0.6, 7.2, 2.5, 4.4, shade(leaf, 0.94), "Grass")
-	r:ball(-0.9, 7.6, -2.5, 4.4, shade(leaf, 0.78), "Grass")
-	r:ball(2.0, 9.9, 1.2, 4.0, shade(leaf, 1.06), "Grass")
-	r:ball(-1.8, 10.1, -0.6, 4.0, shade(leaf, 1.03), "Grass")
-	r:ball(0.3, 11.2, -0.3, 3.6, shade(leaf, 1.12), "Grass")
+end
+
+TownModels.Models.tree = function(r: R)
+	unnamed(r, function(q)
+		CityModels.lowTree(q, 0, 0, 0, 1.35)
+	end)
 end
 
 TownModels.Models.pine = function(r: R)
-	for i = 0, 2 do
-		local a = i / 3 * math.pi * 2 + 0.5
-		r:beam(
-			Vector3.new(0, 0.6, 0),
-			Vector3.new(math.cos(a) * 1.0, 0.05, math.sin(a) * 1.0),
-			0.4,
-			0.32,
-			C.Bark,
-			"Wood"
-		)
-	end
-	r:cyl(0, 1.6, 0, 3.2, 1.1, "y", C.Bark, "Wood")
-	local tiers = {
-		{ 2.4, 7.2, 3.5, 0 },
-		{ 4.8, 9.3, 2.9, math.pi / 4 },
-		{ 7.0, 11.2, 2.2, 0.2 },
-		{ 9.2, 13.2, 1.5, math.pi / 4 + 0.2 },
-	}
-	for k, t in tiers do
-		local y0, y1, half, turn = t[1], t[2], t[3], t[4]
-		local col = shade(C.DarkLeaf, 1 + (k - 1) * 0.06)
-		local corners = {}
-		for i = 0, 3 do
-			local a = turn + math.pi / 4 + i * math.pi / 2
-			table.insert(corners, Vector3.new(math.cos(a) * half * math.sqrt(2), y0, math.sin(a) * half * math.sqrt(2)))
-		end
-		local apex = Vector3.new(0, y1, 0)
-		for i = 1, 4 do
-			r:tri(corners[i], corners[i % 4 + 1], apex, 0.4, if i % 2 == 0 then col else shade(col, 0.88), "Grass")
-		end
-		if k == 1 then
-			r:boxAt(
-				CFrame.new(0, y0 + 0.05, 0) * CFrame.Angles(0, -turn, 0),
-				half * 2,
-				0.1,
-				half * 2,
-				shade(col, 0.7),
-				"Grass"
-			)
-		end
-	end
+	unnamed(r, function(q)
+		CityModels.fir(q, "fir", CFrame.identity)
+	end)
 end
 
 TownModels.Models.sign = function(r: R)

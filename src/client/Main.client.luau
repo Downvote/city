@@ -33,5 +33,6 @@ require(World.Ambience).start()
 require(World.BuildFx).start()
 require(World.Materials).start()
 require(World.Wishes).start()
+require(World.Earnings).start() -- coins over the villagers as they earn them
 require(World.Explore).start()
 require(World.Outlines).start()

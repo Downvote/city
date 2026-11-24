@@ -2,6 +2,7 @@
 -- Everything you can place in Build mode, gathered from the modules in Build/Recipes.
 -- Each entry:
 --   id, name, cat (a tab below), price, place, size (W x H x D footprint box),
+--   (price is what it costs: the recipe's own price times Tuning.Prices.Items, set at load)
 --   c1, c2 (default paint, hex), build(r) (draws it with Build/Recipe),
 --   optional: tags (what villagers ask for), surface (height of a top you can set things on),
 --   opening = { w, h, sill } for doors and windows,
@@ -17,12 +18,14 @@
 
 local Recipe = require(script.Parent.Recipe)
 local Colors = require(script.Parent.Parent.Util.Colors)
+local Tuning = require(script.Parent.Parent.Config.Tuning)
 
 export type Def = {
 	id: string,
 	name: string,
 	cat: string,
 	price: number,
+	listed: number?, -- the recipe's own price, before Tuning.Prices.Items
 	place: string,
 	size: Vector3,
 	c1: string,
@@ -93,6 +96,15 @@ local byId: { [string]: Def } = {}
 local byCat: { [string]: { Def } } = {}
 local all: { Def } = {}
 
+-- What a piece sells for, from its recipe's price. The user: "make buildings cheaper", so it is
+-- that price times Tuning.Prices.Items, to a whole coin, and to 5 coins from 50 up so the
+-- catalog's prices stay round.
+function Catalog.priceOf(listed: number): number
+	local p = listed * Tuning.Prices.Items
+	local step = if p >= 50 then 5 else 1
+	return math.max(1, math.floor(p / step + 0.5) * step)
+end
+
 local function load()
 	local folder = script.Parent.Recipes
 	local modules = folder:GetChildren()
@@ -109,6 +121,9 @@ local function load()
 				end
 				order += 1
 				def.order = order
+				-- (the recipe's own price is kept, so loading twice never halves it twice)
+				def.listed = def.listed or def.price
+				def.price = Catalog.priceOf(def.listed :: number)
 				byId[def.id] = def
 				byCat[def.cat] = byCat[def.cat] or {}
 				table.insert(byCat[def.cat], def)

@@ -35,11 +35,16 @@ Tuning.Plot = {
 	OpeningMargin = 0.2, -- min gap between an opening and a wall end or another opening
 }
 
+-- The user: "could you make working give much more coins, and make buildings cheaper?" So
+-- building costs about half what it did: walls and roofs went from 2 to 1, and every piece in the
+-- catalog costs its recipe's price times Items (Build/Catalog, when it loads). Floors and fences
+-- were 1 already, the least a whole coin can be. Ready-made buildings cost what their pieces do.
 Tuning.Prices = {
-	WallPerStud = 2,
+	WallPerStud = 1,
 	FencePerStud = 1,
 	FloorPerCell = 1, -- one WallSnap x WallSnap cell
-	RoofPerCell = 2,
+	RoofPerCell = 1,
+	Items = 0.5, -- a catalog piece costs its recipe's price times this, to a whole coin (5 from 50 up)
 	Repaint = 0, -- painting is free so people experiment
 }
 
@@ -102,7 +107,7 @@ Tuning.Day = {
 	BedTime = 21.5,
 	WakeTime = 7,
 	WorkStart = 9,
-	WorkEnd = 17, -- payday is at the end of the work day
+	WorkEnd = 17, -- the end of the work day: what the villagers earned is summed up then
 	StartClock = 9,
 }
 
@@ -121,29 +126,42 @@ Tuning.Events = {
 
 -- Work and the city -------------------------------------------------------
 -- Wages (Data/Jobs, Jobs.pay) are the town's main income: the City spec holds them to two thirds
--- of a day's coins or more once two villagers have jobs.
+-- of a day's coins or more once two villagers have jobs. The user: "make it such that villagers
+-- earn coins as they work, not after every day". So a villager earns while they are at their
+-- workplace in work hours (Sim/City.earn, Services/Villagers), a day's pay spread over the part of
+-- the work day a middling worker spends there; nothing on a break, off work or asleep.
 Tuning.Jobs = {
 	SkillCap = 30,
 	SkillPay = 0.06, -- each skill level above the first adds this share of the job's income
 	LikePay = 1.2, -- a personality that enjoys the job earns this many times its pay
-	XpPerDay = 25, -- skill points for a day's work (it was 12, and skill hardly moved)
+	XpPerDay = 25, -- skill points for a whole day's work, less for part of one (it was 12, and skill hardly moved)
 	VisitCoins = 10, -- what a villager spends when they drop by a staffed shop
 	BusyDayShare = 0.3, -- a busy day at work (an event) brings in this share of the job's income on top
+	-- The part of the work day a worker is at their workplace, on average over every personality
+	-- (the rest is the walk there and their breaks): the day's pay is spread over that much of it,
+	-- so a usual day earns about all of it, a focused worker a little more and a lazy one a little
+	-- less (the Routine spec holds it)
+	AtWork = 0.85,
+	EarnStep = 1, -- seconds between two looks at who is at work
+	PayEvery = 4, -- seconds between two pay packets: the coins go to the town and the client hears
 }
 
 -- City levels: reached by having enough villagers, enough of them in work and enough built. Each
 -- level lets you buy more land. Workers is how many villagers must have a job (never more than Pop).
+-- Value is what the town's buildings are worth at today's prices: it halved with the prices (it
+-- was 3000, 10000, 25000 and 50000), so a level asks for as much building as before and a town
+-- keeps the level it had.
 Tuning.City = {
 	Levels = {
 		{ Name = "Hamlet", Pop = 0, Workers = 0, Value = 0 },
-		{ Name = "Village", Pop = 3, Workers = 2, Value = 3000 },
-		{ Name = "Town", Pop = 6, Workers = 4, Value = 10000 },
-		{ Name = "Big town", Pop = 9, Workers = 7, Value = 25000 },
-		{ Name = "City", Pop = 12, Workers = 10, Value = 50000 },
+		{ Name = "Village", Pop = 3, Workers = 2, Value = 1500 },
+		{ Name = "Town", Pop = 6, Workers = 4, Value = 5000 },
+		{ Name = "Big town", Pop = 9, Workers = 7, Value = 12500 },
+		{ Name = "City", Pop = 12, Workers = 10, Value = 25000 },
 	},
 	-- how much of the starting house counts toward the town's level (Sim/City.worth): what the
-	-- small cottage it replaced was worth, so the bigger house skips no level
-	StarterWorth = 2610,
+	-- small cottage it replaced was worth, so the bigger house skips no level (2610 at the old prices)
+	StarterWorth = 1305,
 	-- usable land, its price and the city level it needs
 	Land = {
 		{ Size = 100, Price = 0, Level = 1 },

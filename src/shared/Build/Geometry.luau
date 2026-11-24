@@ -230,7 +230,9 @@ end
 -- middle of the box round them (still in that frame, so place it like any other primitive), and
 -- the shapes are kept relative to it. They must all be plain: one material, nothing see-through,
 -- no name, light, role or effect (those need a part of their own), and at least one must be a
--- box that isn't turned, for the merge to hang the others on.
+-- box that isn't turned, for the merge to hang the others on. The piece itself may be given a
+-- name once made (a tree's crown is "Leaf"): the Builder names its mesh, or the parts it is made
+-- as where it isn't merged, by it.
 function Geometry.piece(shapes: { Prim }, collide: boolean?): Prim
 	assert(#shapes >= 1 and #shapes <= Geometry.PieceMax, "a piece is 1 to " .. Geometry.PieceMax .. " shapes")
 	local lo, hi = Geometry.bounds(shapes)

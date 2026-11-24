@@ -100,8 +100,9 @@ Goals.list = {
 	{
 		id = "wages",
 		name = "Pay packets",
-		desc = "Earn 5,000 coins in wages.",
-		need = 5000,
+		-- (it was 5,000 when a day's work paid a third of what it does now)
+		desc = "Earn 15,000 coins in wages.",
+		need = 15000,
 		reward = 500,
 		value = stat("earned"),
 	},

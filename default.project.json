@@ -71,7 +71,6 @@
     "MaterialService": {
       "$className": "MaterialService",
       "$properties": {
-        "GrassName": "MaplewickGrass",
         "WoodName": "MaplewickWood",
         "WoodPlanksName": "MaplewickPlanks",
         "BrickName": "MaplewickBrick",
@@ -86,17 +85,6 @@
         "FabricName": "MaplewickFabric",
         "SandName": "MaplewickSand",
         "MetalName": "MaplewickMetal"
-      },
-      "MaplewickGrass": {
-        "$className": "MaterialVariant",
-        "$properties": {
-          "BaseMaterial": "Grass",
-          "ColorMap": "rbxassetid://123781418381440",
-          "StudsPerTile": 16,
-          "MaterialPattern": "Regular",
-          "NormalMap": "rbxassetid://74383676401444",
-          "RoughnessMap": "rbxassetid://123781418381440"
-        }
       },
       "MaplewickWood": {
         "$className": "MaterialVariant",
@@ -353,6 +341,17 @@
           "ColorMap": "rbxassetid://92852701550899",
           "StudsPerTile": 16,
           "MaterialPattern": "Regular"
+        }
+      },
+      "MaplewickLawn": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Grass",
+          "ColorMap": "rbxassetid://123781418381440",
+          "StudsPerTile": 16,
+          "MaterialPattern": "Regular",
+          "NormalMap": "rbxassetid://74383676401444",
+          "RoughnessMap": "rbxassetid://123781418381440"
         }
       }
     }

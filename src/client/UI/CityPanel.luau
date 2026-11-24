@@ -1,5 +1,6 @@
 -- The city hall panel: your town's level and what the next one needs, the numbers that matter
--- (people, happiness, worth, a payday), buying more land, and the workplaces with who fills them.
+-- (people, happiness, worth, a day's wages), buying more land, and the workplaces with who fills
+-- them.
 -- A full menu (Kit.panel): the town on the card at the left with its level as the headline, the
 -- land and the work down the right.
 
@@ -21,6 +22,14 @@ local T = Kit.Theme
 local panel: any = nil
 local unbind: { () -> () } = {}
 local draw: () -> () -- (below: everything in the panel, built again)
+-- What the coins decide on the panel, as draw() last showed it: whether the next land could be
+-- bought, the note under it saying how many more coins it needs, and what work has brought in.
+-- Villagers earn as they work (the user: "make it such that villagers earn coins as they work,
+-- not after every day"), so the coins move every few seconds: the panel is only built again when
+-- the land's button would change, and these numbers are changed where they stand.
+local landCan: boolean? = nil
+local landNote: Frame? = nil
+local earnedLabel: TextLabel? = nil
 
 local function profileView(): any
 	return { villagers = State.data.villagers or {}, plan = State.plan, coins = State.data.coins or 0 }
@@ -38,7 +47,7 @@ end
 
 -- The card on the left: the level as the headline, what the next one needs and brings, and the
 -- town's numbers as tiles along the bottom.
-local function town(inside: Frame, stats: any, payday: number)
+local function town(inside: Frame, stats: any, wages: number)
 	local accent = T.Purple
 	-- the level: a round dial with its number, the name big beside it
 	MenuParts.dial(tostring(stats.level), "LEVEL", accent, { Name = "Level", Parent = inside, Size = 72 })
@@ -157,13 +166,13 @@ local function town(inside: Frame, stats: any, payday: number)
 		LayoutOrder = 3,
 		Coin = true,
 	})
-	local at = Text.clock(Tuning.Day.WorkEnd):gsub(":00", "")
-	MenuParts.stat("clock", Text.fill("Payday at {t}", { t = at }), Text.commas(payday), T.Blue, {
-		Name = "Payday",
+	-- what everyone in work earns in a whole day there, a little at a time as they work
+	MenuParts.stat("briefcase", "A day's wages", Text.commas(wages), T.Blue, {
+		Name = "Wages",
 		Parent = grid,
 		LayoutOrder = 4,
 		Coin = true,
-		Sub = "today",
+		Sub = "while they work",
 	})
 end
 
@@ -171,6 +180,7 @@ end
 -- what's in the way when it can't be bought yet.
 local function landRow(list: ScrollingFrame, stats: any, coins: number, order: number)
 	local land = stats.nextLand
+	landCan, landNote = nil, nil
 	if not land then
 		Kit.row({
 			Name = "Land",
@@ -273,9 +283,13 @@ local function landRow(list: ScrollingFrame, stats: any, coins: number, order: n
 		end
 	)
 	button:SetAttribute("Disabled", not can)
+	landCan = can
 	if why then
 		-- what's in the way, right under the row
-		MenuParts.note(why, T.Red, { Name = "LandWhy", Parent = list, LayoutOrder = order + 1 })
+		local note = MenuParts.note(why, T.Red, { Name = "LandWhy", Parent = list, LayoutOrder = order + 1 })
+		if stats.level >= land.Level then
+			landNote = note
+		end
 	end
 end
 
@@ -288,7 +302,7 @@ function draw()
 	end
 	local p = profileView()
 	local stats = City.stats(p)
-	local lines, total = City.payday(p, -1, os.time())
+	local lines, total = City.wages(p, -1, os.time())
 
 	local _, inside = MenuParts.card(panel.body, T.Purple)
 	town(inside, stats, total)
@@ -351,7 +365,8 @@ function draw()
 	Kit.pad(foot, 4, 0)
 	Kit.list(foot, 6, true)
 	Icons.make("coin", 18, { Parent = foot, LayoutOrder = 1 })
-	Kit.title(Text.commas(earned), {
+	earnedLabel = Kit.title(Text.commas(earned), {
+		Name = "Amount",
 		Parent = foot,
 		Size = UDim2.fromOffset(0, 28),
 		AutomaticSize = Enum.AutomaticSize.X,
@@ -368,6 +383,30 @@ function draw()
 		Wrap = false,
 		LayoutOrder = 3,
 	})
+end
+
+-- The coins moved (a pay packet, a purchase): the panel built again only if the land's button
+-- would change, else the numbers that follow the coins changed where they are.
+local function onCoins()
+	if not panel then
+		return
+	end
+	local p = profileView()
+	local stats = City.stats(p)
+	local land = stats.nextLand
+	local can = land ~= nil and stats.level >= land.Level and p.coins >= land.Price
+	if landCan ~= nil and can ~= landCan then
+		draw()
+		return
+	end
+	local note = landNote
+	local words = note and note:FindFirstChild("Text")
+	if land and words and words:IsA("TextLabel") and land.Price > p.coins then
+		words.Text = Text.fill("You need {n} more coins.", { n = Text.commas(land.Price - p.coins) })
+	end
+	if earnedLabel and earnedLabel.Parent then
+		earnedLabel.Text = Text.commas(State.data.stats and State.data.stats.earned or 0)
+	end
 end
 
 function CityPanel.isOpen(): boolean
@@ -390,7 +429,7 @@ function CityPanel.open()
 	panel = Kit.panel("City hall", Kit.MenuSize, CityPanel.close, "hall", Kit.Theme.Purple)
 	Kit.popIn(panel.root)
 	draw()
-	table.insert(unbind, State.on("coins", draw))
+	table.insert(unbind, State.on("coins", onCoins))
 	table.insert(unbind, State.on("villagers", draw))
 end
 

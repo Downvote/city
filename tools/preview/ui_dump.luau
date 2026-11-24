@@ -404,7 +404,7 @@ elseif scene == "talk" or scene == "talk:again" or scene == "talk:craving" then
 elseif scene == "toasts" then
 	startHud()
 	local Toasts = Harness.require(Sim.CLIENT .. "UI.Toasts")
-	Toasts.show("Payday: 186 coins from 3 workers.", "good")
+	Toasts.show("Your villagers earned 1,860 coins today.", "good")
 	Toasts.show("Not enough coins for that.", "warn")
 	Toasts.show("Ivy wants a lamp by her bed.", "event")
 	Sim.frames(2)

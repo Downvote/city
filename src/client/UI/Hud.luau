@@ -253,6 +253,13 @@ function Hud.start()
 		task.delay(0.7, function()
 			value:Destroy()
 		end)
+		-- a pay packet from the villagers at work (World/Earnings) comes every few seconds while
+		-- they work: it counts up with a little bump, and the "+N" rises over the villagers instead
+		local wages = State.data.wages
+		if n > from and from > 0 and type(wages) == "table" and wages.coins == n then
+			Kit.bump(coinPill, 0.05)
+			return
+		end
 		if n ~= from and from > 0 then
 			local gain = n > from
 			Kit.bump(coinPill, 0.12)

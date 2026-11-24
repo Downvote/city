@@ -517,15 +517,15 @@ end
 -- A mossy grey rock: a boulder sunk in the grass with two smaller stones against it, and moss on
 -- their tops.
 TownMap.Models.rock = function(r: R)
-	local function stone(x: number, y: number, z: number, w: number, h: number, d: number, k: number, c: Color3, m: string)
-		r:lump(CFrame.new(x, y, z) * CFrame.Angles(0.08, k, 0.06), w, h, d, c, m)
+	local function stone(at: Vector3, w: number, h: number, d: number, turn: number, color: Color3, mat: string)
+		r:lump(CFrame.new(at) * CFrame.Angles(0.08, turn, 0.06), w, h, d, color, mat)
 	end
-	stone(0, 0.55, 0, 2.9, 1.9, 2.4, 0.5, Color3.fromRGB(150, 150, 154), "Slate")
-	stone(1.4, 0.35, 0.7, 1.7, 1.2, 1.4, 1.3, Color3.fromRGB(128, 130, 134), "Slate")
-	stone(-1.1, 0.25, -0.8, 1.3, 0.9, 1.1, 2.2, Color3.fromRGB(166, 166, 168), "Slate")
+	stone(Vector3.new(0, 0.55, 0), 2.9, 1.9, 2.4, 0.5, Color3.fromRGB(150, 150, 154), "Slate")
+	stone(Vector3.new(1.4, 0.35, 0.7), 1.7, 1.2, 1.4, 1.3, Color3.fromRGB(128, 130, 134), "Slate")
+	stone(Vector3.new(-1.1, 0.25, -0.8), 1.3, 0.9, 1.1, 2.2, Color3.fromRGB(166, 166, 168), "Slate")
 	-- the moss
-	stone(-0.2, 1.42, -0.1, 1.9, 0.36, 1.5, 0.9, Color3.fromRGB(104, 124, 72), "Grass")
-	stone(1.45, 0.93, 0.75, 0.9, 0.24, 0.7, 0.4, Color3.fromRGB(116, 134, 76), "Grass")
+	stone(Vector3.new(-0.2, 1.42, -0.1), 1.9, 0.36, 1.5, 0.9, Color3.fromRGB(104, 124, 72), "Grass")
+	stone(Vector3.new(1.45, 0.93, 0.75), 0.9, 0.24, 0.7, 0.4, Color3.fromRGB(116, 134, 76), "Grass")
 end
 
 -- Rolling hills round the edge of the world: the top of a big buried ball.

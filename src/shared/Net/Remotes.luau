@@ -55,7 +55,9 @@ Remotes.Events = {
 	"EventShow", -- server -> client: an event scene (lines, choices)
 	"EventLine", -- server -> client: (token, line, last?) as it is said, or (token, ask) at a choice
 	"EventEnd", -- server -> client: (token, summary)
-	"Payday", -- server -> client: { total, lines = { { vid, amount } } }
+	-- server -> client, every few seconds while villagers work: { coins (the town's now), earned
+	-- (all it has earned at work), lines = { { vid, n } } (who earned how many since the last) }
+	"Earned",
 	"Say", -- server -> client: (model, text) speech bubble (also visible to everyone nearby)
 	"Talk", -- server -> client: { vid, text, note, model } what your villager said when you held E on them
 }

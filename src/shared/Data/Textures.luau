@@ -36,9 +36,10 @@ export type Ready = {
 
 local Textures = {}
 
--- One texture for each material: it takes the material's place everywhere.
+-- One texture for each material: it takes the material's place everywhere. Never Grass: the
+-- island's terrain is Grass too, and Roblox only grows its long blades on its own grass (the user
+-- asked for grass "like in the image", Roblox's own), so our grass picture is the look Lawn.
 Textures.list = {
-	{ name = "grass", material = "Grass", studs = 8 },
 	{ name = "wood", material = "Wood", studs = 4 },
 	{ name = "planks", material = "WoodPlanks", studs = 8 },
 	{ name = "brick", material = "Brick", studs = 8 },
@@ -77,6 +78,7 @@ Textures.looks = {
 	{ name = "street", material = "Asphalt", look = "Street", studs = 16 }, -- street asphalt
 	{ name = "canvas", material = "Fabric", look = "Canvas", studs = 3 }, -- awning canvas
 	{ name = "cliff", material = "Rock", look = "Cliff", studs = 16 }, -- layered rock
+	{ name = "lawn", material = "Grass", look = "Lawn", studs = 8 }, -- short grass, blades in clumps
 } :: { Entry }
 
 local ID = "^rbxassetid://%d+$"

@@ -3,7 +3,7 @@
 and the looks (named variants of a material that only the parts asking for them wear: precast
 panels, roller shutters, barrel roof tiles and so on).
 
-    python3 scripts/gen_textures.py [--only grass,brick] [--looks] [--sheet out.png] [--tiles 3] [--cell 384]
+    python3 scripts/gen_textures.py [--only lawn,brick] [--looks] [--sheet out.png] [--tiles 3] [--cell 384]
 
 Writes art/textures/<name>.png (the colour map), <name>_n.png (a normal map), for the looks
 <name>_r.png (a roughness map: white is matt, dark is glossy) and textures.json (each texture's
@@ -204,7 +204,8 @@ def grass(rng):
     blades = done(im)
     lum = lum + blades * 0.26
     h = h + blades * 0.4
-    return lum, h, 3.0
+    rough = 0.9 - blades * 0.08  # (a look needs a roughness map; the blades' tips a touch less dull)
+    return lum, h, 3.0, rough
 
 
 def wood_grain(rng, bands=12):
@@ -821,7 +822,6 @@ def cliff(rng):
 
 # name -> (painter, Roblox material, studs per tile)
 TEXTURES = {
-    "grass": (grass, "Grass", 8),
     "wood": (wood, "Wood", 4),
     "planks": (planks, "WoodPlanks", 8),
     "brick": (brick, "Brick", 8),
@@ -858,11 +858,17 @@ LOOKS = {
     "street": (street, "Asphalt", 16, "Street"),
     "canvas": (canvas_weave, "Fabric", 3, "Canvas"),
     "cliff": (cliff, "Rock", 16, "Cliff"),
+    # Roblox's own grass is left alone everywhere (terrain grass only grows its blades on it), so
+    # our painted grass is a look a part has to ask for
+    "lawn": (grass, "Grass", 8, "Lawn"),
 }
+
+# seeds kept from before a texture moved between the two lists
+SEEDS = {"lawn": 1000}
 
 # a colour for each in the contact sheet, close to how the town uses it
 SAMPLE = {
-    "grass": (0.42, 0.72, 0.30), "wood": (0.66, 0.45, 0.28), "planks": (0.78, 0.58, 0.38),
+    "lawn": (0.42, 0.72, 0.30), "wood": (0.66, 0.45, 0.28), "planks": (0.78, 0.58, 0.38),
     "brick": (0.74, 0.36, 0.28), "cobble": (0.72, 0.68, 0.62), "paving": (0.86, 0.80, 0.70),
     "concrete": (0.80, 0.80, 0.78), "asphalt": (0.30, 0.30, 0.34), "plaster": (0.96, 0.90, 0.80),
     "clay": (0.80, 0.40, 0.26), "shingles": (0.36, 0.42, 0.58), "slate": (0.42, 0.44, 0.50),
@@ -880,8 +886,11 @@ SAMPLE = {
 def entries():
     """Every texture in order: name, painter, material, studs per tile, look (None for a
     material's own texture) and the seed it is painted from."""
-    out = [(name, fn, material, studs, None, 1000 + i) for i, (name, (fn, material, studs)) in enumerate(TEXTURES.items())]
-    out += [(name, fn, material, studs, look, 2000 + i)
+    # (the seeds stay what they were when grass was the first material's texture: wood is still
+    # 1001 and the lawn still paints from grass's 1000)
+    out = [(name, fn, material, studs, None, 1000 + i)
+           for i, (name, (fn, material, studs)) in enumerate(TEXTURES.items(), 1)]
+    out += [(name, fn, material, studs, look, SEEDS.get(name, 2000 + i))
             for i, (name, (fn, material, studs, look)) in enumerate(LOOKS.items())]
     return out
 

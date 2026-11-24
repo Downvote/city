@@ -1,22 +1,16 @@
 --!strict
--- The hills north of Hill Road, as a faceted low poly landscape: a smooth height function
--- (a few round peaks, flattened where things stand on them), sampled on a grid and drawn as
--- flat triangles, so the slopes catch the light in facets. Shared and free of services, so the
--- World service builds it, the preview draws it and the specs check it.
+-- The hills north of Hill Road: a smooth height function (a few round peaks, flattened where
+-- things stand on them, nothing at the edges). Shared and free of services, so the terrain
+-- (Data/Terrain) is filled from it, the preview draws it and the specs check it.
 --
--- `Hills.at(x, z)` gives the height of the drawn surface (what you'd stand on), so things placed
--- on the hills sit on it exactly.
-
-local Geometry = require(script.Parent.Parent.Build.Geometry)
-
-type Prim = Geometry.Prim
+-- `Hills.at(x, z)` gives the height of the hills there, so things placed on the hills sit on
+-- them. (They were drawn as flat triangles of parts, a faceted low poly landscape, until the
+-- user asked for Roblox's own terrain grass: "make the grass and plants like in the image".)
 
 local Hills = {}
 
 Hills.X1, Hills.X2 = -1100, 1100
 Hills.Z1, Hills.Z2 = 290, 940
-Hills.Cell = 50
-Hills.Thickness = 1.2
 
 -- round peaks: { x, z, height, radius }
 local PEAKS = {
@@ -70,7 +64,7 @@ for _, p in Hills.Plateaus do
 	plateauH[p.name] = raw(p.x, p.z)
 end
 
--- The smooth height (before it's drawn as facets).
+-- The height of the hills, worked out from the peaks, the flat tops and the meadow.
 function Hills.smooth(x: number, z: number): number
 	local h = raw(x, z)
 	for _, p in Hills.Plateaus do
@@ -94,58 +88,16 @@ function Hills.plateau(name: string): number
 	return plateauH[name] or 0
 end
 
--- the grid of heights, computed once
-local nx = math.floor((Hills.X2 - Hills.X1) / Hills.Cell)
-local nz = math.floor((Hills.Z2 - Hills.Z1) / Hills.Cell)
-local grid: { { number } } = {}
-for i = 0, nx do
-	local col = {}
-	for j = 0, nz do
-		col[j + 1] = Hills.smooth(Hills.X1 + i * Hills.Cell, Hills.Z1 + j * Hills.Cell)
-	end
-	grid[i + 1] = col
-end
-
-local function node(i: number, j: number): number
-	if i < 0 or j < 0 or i > nx or j > nz then
-		return 0
-	end
-	return grid[i + 1][j + 1]
-end
-
--- Which way a cell is split into its two triangles (alternating, for a less regular look).
-local function diag(i: number, j: number): boolean
-	return (i + j) % 2 == 0
-end
-
--- The height of the drawn surface at x, z (0 off the hills).
+-- The height of the ground at x, z (0 off the hills). The hills are Roblox terrain
+-- (Data/Terrain fills it to this height less a tenth, the island's grass), so things placed
+-- on the hills at `at` less a tenth sit on it exactly.
 function Hills.at(x: number, z: number): number
 	if x < Hills.X1 or x >= Hills.X2 or z < Hills.Z1 or z >= Hills.Z2 then
 		return 0
 	end
-	local fx = (x - Hills.X1) / Hills.Cell
-	local fz = (z - Hills.Z1) / Hills.Cell
-	local i, j = math.floor(fx), math.floor(fz)
-	local u, v = fx - i, fz - j
-	local h00, h10, h01, h11 = node(i, j), node(i + 1, j), node(i, j + 1), node(i + 1, j + 1)
-	if h00 < 0.3 and h10 < 0.3 and h01 < 0.3 and h11 < 0.3 then
-		return 0 -- a flat cell isn't drawn: the island's grass is underneath
-	end
-	local h
-	if diag(i, j) then
-		if u >= v then
-			h = h00 + (h10 - h00) * u + (h11 - h10) * v
-		else
-			h = h00 + (h11 - h01) * u + (h01 - h00) * v
-		end
-	else
-		if u + v <= 1 then
-			h = h00 + (h10 - h00) * u + (h01 - h00) * v
-		else
-			h = h11 + (h01 - h11) * (1 - u) + (h10 - h11) * (1 - v)
-		end
-	end
-	return h + Hills.Thickness / 2
+	local h = Hills.smooth(x, z)
+	-- (a trace of height at the foot is the grass itself)
+	return if h < 0.01 then 0 else h
 end
 
 -- How steep the surface is at x, z (rise over run).
@@ -154,60 +106,6 @@ function Hills.slope(x: number, z: number): number
 	local gx = (Hills.at(x + e, z) - Hills.at(x - e, z)) / (2 * e)
 	local gz = (Hills.at(x, z + e) - Hills.at(x, z - e)) / (2 * e)
 	return math.sqrt(gx * gx + gz * gz)
-end
-
--- the island's grass (TownMap's) and two tones either side of it, soft and leaning yellow
-local GRASS = {
-	Color3.fromRGB(138, 192, 112),
-	Color3.fromRGB(146, 198, 118),
-	Color3.fromRGB(130, 184, 106),
-}
-local HIGH = Color3.fromRGB(164, 200, 120)
-local STEEP = Color3.fromRGB(110, 160, 96)
-
--- The hills as flat triangles. `region` { x1, z1, x2, z2 } keeps only the cells inside it.
-function Hills.prims(region: { number }?): { Prim }
-	local out: { Prim } = {}
-	local function tri(a: Vector3, b: Vector3, c: Vector3, k: number)
-		local avg = (a.Y + b.Y + c.Y) / 3
-		local n = (b - a):Cross(c - a)
-		local steep = if n.Magnitude > 0 then 1 - math.abs(n.Unit.Y) else 0
-		local col = GRASS[k % #GRASS + 1]
-		col = col:Lerp(HIGH, math.clamp(avg / 90, 0, 0.6))
-		col = col:Lerp(STEEP, math.clamp(steep * 2.2, 0, 0.7))
-		-- (the top of each triangle is the surface itself, Hills.at's, and its thickness hangs
-		-- under it, so two neighbours meet along their edge and never overlap there and flicker)
-		local up = Vector3.new(0, Hills.Thickness / 2, 0)
-		for _, p in Geometry.tri(a + up, b + up, c + up, Hills.Thickness, col, "Grass", -Vector3.yAxis) do
-			p.name = "Hill"
-			table.insert(out, p)
-		end
-	end
-	for i = 0, nx - 1 do
-		for j = 0, nz - 1 do
-			local h00, h10, h01, h11 = node(i, j), node(i + 1, j), node(i, j + 1), node(i + 1, j + 1)
-			if h00 >= 0.3 or h10 >= 0.3 or h01 >= 0.3 or h11 >= 0.3 then
-				local x0, z0 = Hills.X1 + i * Hills.Cell, Hills.Z1 + j * Hills.Cell
-				local x1, z1 = x0 + Hills.Cell, z0 + Hills.Cell
-				local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
-				if not region or (cx >= region[1] and cx <= region[3] and cz >= region[2] and cz <= region[4]) then
-					local p00 = Vector3.new(x0, h00, z0)
-					local p10 = Vector3.new(x1, h10, z0)
-					local p01 = Vector3.new(x0, h01, z1)
-					local p11 = Vector3.new(x1, h11, z1)
-					local k = i * 7 + j * 13
-					if diag(i, j) then
-						tri(p00, p10, p11, k)
-						tri(p00, p11, p01, k + 1)
-					else
-						tri(p00, p10, p01, k)
-						tri(p10, p11, p01, k + 1)
-					end
-				end
-			end
-		end
-	end
-	return out
 end
 
 return Hills

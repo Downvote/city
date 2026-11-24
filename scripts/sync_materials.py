@@ -113,8 +113,13 @@ def write_ids(ids, order, path=IDS):
     open(path, "w").write(text)
 
 
+# Materials that keep Roblox's own face: the island's terrain grass only grows its long blades on
+# Roblox's own Grass (Terrain.Decoration), so no texture may take its place; ours is a look.
+KEEP_OWN = {"Grass"}
+
+
 def variant_name(name, info=None):
-    """The MaterialVariant a texture becomes: MaplewickGrass for grass, Maplewick<Look> for a look."""
+    """The MaterialVariant a texture becomes: MaplewickSand for sand, Maplewick<Look> for a look."""
     if info and info.get("look"):
         return "Maplewick" + info["look"]
     return "Maplewick" + name[:1].upper() + name[1:]
@@ -138,6 +143,9 @@ def material_service(ids, index):
         if "rough" in got:
             p["RoughnessMap"] = got["rough"]
         variants[v] = {"$className": "MaterialVariant", "$properties": p}
+        if info["material"] in KEEP_OWN and not info.get("look"):
+            sys.exit(f"{name} would take {info['material']}'s place, which the terrain needs as Roblox's own: "
+                     "make it a look")
         if not info.get("look"):  # a look takes no material's place
             props[info["material"] + "Name"] = v
     if not variants:

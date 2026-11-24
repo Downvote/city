@@ -230,6 +230,9 @@ local function expandPiece(prim: Prim, frame: CFrame, parent: Instance, opts: Op
 		if prim.collide ~= true then
 			part.CanCollide = false
 		end
+		if prim.name then
+			part.Name = prim.name -- a named piece's name goes on every part it is made as
+		end
 		part.Parent = parent
 		if out then
 			table.insert(out, part)
@@ -325,6 +328,9 @@ end
 local function placePiece(template: BasePart, prim: Prim, frame: CFrame, parent: Instance, out: { BasePart }?): BasePart
 	local part = template:Clone()
 	part.CFrame = frame * prim.cf * (pieceAt[prim.key or ""] or CFrame.identity)
+	if prim.name then
+		part.Name = prim.name -- (a tree's crown is named Leaf, and sways)
+	end
 	part.Parent = parent
 	Builder.Pieces.placed += 1
 	-- the round shapes, as parts of their own beside the mesh
@@ -335,6 +341,9 @@ local function placePiece(template: BasePart, prim: Prim, frame: CFrame, parent:
 			local round = makePart(sub, f, nil)
 			if prim.collide ~= true then
 				round.CanCollide = false
+			end
+			if prim.name then
+				round.Name = prim.name
 			end
 			round.Parent = parent
 			if out then

@@ -55,24 +55,95 @@ local function roots(r: R, n: number, reach: number, thick: number, color: Color
 	end
 end
 
--- One tier of a pine: a four sided cone from y0 up to y1, `half` wide at its base.
-local function pineTier(r: R, y0: number, y1: number, half: number, turn: number, color: Color3, base: boolean)
-	local corners = {}
-	for k = 0, 3 do
-		local a = turn + math.pi / 4 + k * math.pi / 2
-		table.insert(corners, Vector3.new(math.cos(a) * half * math.sqrt(2), y0, math.sin(a) * half * math.sqrt(2)))
+-- One bough of a fir on r: a wedge hanging from the trunk at height y, `len` long, `wide` across
+-- and `thick` where it leaves the trunk, pointing out along the angle `a` and tipped `droop` down.
+-- It starts `inset` inside the trunk.
+local function bough(
+	r: R,
+	y: number,
+	a: number,
+	len: number,
+	wide: number,
+	thick: number,
+	droop: number,
+	inset: number,
+	color: Color3
+)
+	local out = Vector3.new(math.cos(a), 0, math.sin(a))
+	local along = out * math.cos(droop) - Vector3.yAxis * math.sin(droop)
+	local up = out * math.sin(droop) + Vector3.yAxis * math.cos(droop)
+	local back = -along
+	-- (right, up and back are a right-handed set, as every frame must be)
+	local right = up:Cross(back)
+	local foot = Vector3.new(0, y, 0) - along * inset
+	local cf = CFrame.fromMatrix(foot + along * ((len + inset) / 2) + up * (thick / 2), right, up, back)
+	r:wedge(cf, wide, thick, len + inset, color, "Grass")
+end
+
+-- A fir's crown on r, the way the town's are drawn (Data/CityModels): `rows` of drooping boughs,
+-- three to a row, from the lowest tips at `base` up to a slim spire whose point is at `top`, the
+-- lowest boughs `reach` long and each row turned against the one under it. Dark in the middle,
+-- `leaf` on the boughs low down and `lit` (where the sun catches it) at the top.
+local function firCrown(r: R, base: number, top: number, reach: number, rows: number, leaf: Color3, lit: Color3)
+	local droop0 = 0.72
+	local low = base + reach * math.sin(droop0) * 0.9
+	local high = top - (top - base) * 0.15
+	local core = reach * 0.22
+	r:box(0, (base + 0.6 + high) / 2, 0, core, high - base - 0.6, core, shade(leaf, 0.55), "Grass")
+	for i = 0, rows - 1 do
+		local t = i / (rows - 1)
+		local y = low + (high - low) * t ^ 0.85
+		local len = reach * (1 - 0.7 * t)
+		local droop = droop0 - 0.24 * t
+		local tone = Colors.mix(leaf, lit, t ^ 1.4)
+		local turn = i * (math.pi / 3 + 0.19)
+		for k = 0, 2 do
+			local color = if k == 0 then tone elseif k == 1 then shade(tone, 0.86) else shade(tone, 0.93)
+			bough(
+				r,
+				y,
+				turn + k * math.pi * 2 / 3,
+				len,
+				len * 0.95 + 0.3,
+				len * 0.34 + 0.25,
+				droop,
+				math.min(core * 0.4, len * 0.15),
+				color
+			)
+		end
 	end
-	local apex = Vector3.new(0, y1, 0)
-	for k = 1, 4 do
-		r:tri(corners[k], corners[k % 4 + 1], apex, 0.3, if k % 2 == 0 then color else shade(color, 0.88), "Grass")
+	for k = 0, 2 do
+		bough(r, high - 0.3, k * math.pi * 2 / 3 + 0.5, 0.45 + reach * 0.08, 0.36, top - high + 0.3, 0, 0, lit)
 	end
-	if base then
-		r:boxAt(
-			CFrame.new(0, y0 + 0.05, 0) * CFrame.Angles(0, -turn, 0),
-			half * 2,
-			0.1,
-			half * 2,
-			shade(color, 0.7),
+end
+
+-- A broadleaf crown on r: a heart of leaves, four clumps round its lower edge, three above and a
+-- small one at the crown, darker underneath and lighter where the sun is. Each clump is a faceted
+-- lump squashed and turned its own way. `s` scales it (1 is 8 studs across and 6 deep, its
+-- middle at y 8 before scaling).
+local CROWN = {
+	-- x, y, z, width, height, depth, tone (0 low to 1 top), turn
+	{ 0, 8.0, 0, 4.6, 3.8, 4.4, 0.4, 0.2 },
+	{ 2.0, 6.9, 0.4, 3.2, 2.6, 3.0, 0.12, 0.9 },
+	{ -0.6, 6.7, 1.9, 3.0, 2.5, 3.2, 0.06, 2.1 },
+	{ -1.9, 6.9, -0.5, 3.2, 2.6, 2.9, 0, 1.4 },
+	{ 0.5, 6.6, -1.9, 3.0, 2.4, 3.0, 0.08, 0.3 },
+	{ 1.2, 9.2, 0.6, 3.0, 2.6, 2.9, 0.7, 0.5 },
+	{ -1.2, 9.4, 0.5, 2.9, 2.5, 3.0, 0.75, 2.7 },
+	{ 0, 9.1, -1.3, 3.0, 2.5, 2.8, 0.7, 1.9 },
+	{ 0.1, 10.5, 0.1, 2.5, 2.0, 2.5, 1, 1.1 },
+}
+local function crown(r: R, s: number, leaf: Color3, lit: Color3)
+	local under = shade(leaf, 0.74)
+	for _, c in CROWN do
+		local t = c[7]
+		local tone = if t < 0.5 then Colors.mix(under, leaf, t * 2) else Colors.mix(leaf, lit, t * 2 - 1)
+		r:lump(
+			CFrame.new(c[1] * s, c[2] * s, c[3] * s) * CFrame.Angles(0.3, c[8], -0.25),
+			c[4] * s,
+			c[5] * s,
+			c[6] * s,
+			tone,
 			"Grass"
 		)
 	end
@@ -96,6 +167,7 @@ end
 
 local AMBER = Color3.fromRGB(200, 132, 62)
 local CORAL = Color3.fromRGB(224, 133, 102)
+local SUNLIT = Color3.fromRGB(196, 190, 110) -- leaves where the sun catches them lean warm
 local LILAC = Color3.fromRGB(156, 134, 184)
 
 -- One flower drawn on q (a piece's recipe): a stem from y0 up to its head at h, a leaf part way
@@ -195,15 +267,8 @@ local items: { Item } = {
 			rod(r, Vector3.new(0, 4.2, 0), Vector3.new(-1.8, 6.8, 0.6), 0.55, r.c2, "Wood")
 			rod(r, Vector3.new(0, 4.6, 0), Vector3.new(1.6, 7.2, -0.8), 0.55, r.c2, "Wood")
 			rod(r, Vector3.new(0, 5.0, 0), Vector3.new(0.3, 7.6, 1.4), 0.45, r.c2, "Wood")
-			-- a full crown of overlapping clumps, darker underneath and lighter on top
-			r:ball(0, 8.5, 0, 5.4, r.c1, "Grass")
-			r:ball(-2.1, 7.3, 0.8, 3.8, shade(r.c1, 0.85), "Grass")
-			r:ball(2.1, 7.5, -0.6, 4.0, shade(r.c1, 0.9), "Grass")
-			r:ball(0.5, 7.1, 2.1, 3.6, shade(r.c1, 0.95), "Grass")
-			r:ball(-0.8, 7.5, -2.1, 3.6, shade(r.c1, 0.8), "Grass")
-			r:ball(1.8, 9.4, 1.0, 3.2, shade(r.c1, 1.08), "Grass")
-			r:ball(-1.5, 9.6, -0.6, 3.2, shade(r.c1, 1.04), "Grass")
-			r:ball(0.4, 10.4, -0.3, 3.0, shade(r.c1, 1.14), "Grass")
+			-- a full, soft crown of squashed clumps, darker underneath and lighter on top
+			crown(r, 1, r.c1, Colors.mix(r.c1, SUNLIT, 0.28))
 		end,
 	},
 	{
@@ -217,28 +282,11 @@ local items: { Item } = {
 		c2 = "6E4C30",
 		tags = { "plant" },
 		build = function(r: R)
-			-- a trunk on its roots and six tiers of branches, each a cone turned half a facet from
-			-- the one under it, light and dark in turn so each tier reads on its own
+			-- a straight trunk on its roots showing under rows of drooping boughs that get shorter
+			-- up to a slim spire, dark in the middle and lighter at the top (as the town's firs are)
 			roots(r, 3, 0.9, 0.35, r.c2)
-			r:cyl(0, 1.5, 0, 3.0, 0.75, "y", r.c2, "Wood")
-			for i, t in
-				{
-					{ 1.5, 2.9, 5.0 },
-					{ 3.3, 2.8, 4.3 },
-					{ 5.1, 2.7, 3.5 },
-					{ 6.9, 2.6, 2.7 },
-					{ 8.6, 2.5, 2.0 },
-					{ 10.2, 2.7, 1.3 },
-				}
-			do
-				r:add({
-					shape = "Cone",
-					cf = CFrame.new(0, t[1] + t[2] / 2, 0) * CFrame.Angles(0, if i % 2 == 0 then math.pi / 8 else 0, 0),
-					size = Vector3.new(t[3], t[2], t[3]),
-					color = shade(r.c1, (if i % 2 == 0 then 1.06 else 0.94) + i * 0.025),
-					mat = "Grass",
-				})
-			end
+			r:cyl(0, 1.4, 0, 2.8, 0.6, "y", r.c2, "Wood")
+			firCrown(r, 1.2, 12.9, 2.6, 7, shade(r.c1, 0.82), Colors.mix(r.c1, SUNLIT, 0.32))
 			-- a few cones fallen under it
 			r:piece(function(q: R)
 				q:box(1.3, 0.08, 0.9, 0.14, 0.14, 0.24, C.Bark, "Wood")
@@ -270,13 +318,7 @@ local items: { Item } = {
 			rod(r, Vector3.new(0, 4.2, 0), Vector3.new(-1.7, 5.8, 0.5), 0.36, r.c2, "Wood")
 			rod(r, Vector3.new(0.1, 3.8, 0), Vector3.new(1.6, 5.6, -0.4), 0.36, r.c2, "Wood")
 			rod(r, Vector3.new(0, 4.6, 0), Vector3.new(0.2, 6.0, -1.5), 0.3, r.c2, "Wood")
-			r:ball(0, 7.0, 0, 4.4, r.c1, "Grass")
-			r:ball(-1.9, 6.2, 0.6, 3.0, shade(r.c1, 0.92), "Grass")
-			r:ball(1.8, 6.4, -0.5, 3.2, shade(r.c1, 0.96), "Grass")
-			r:ball(0.4, 6.0, 1.8, 2.8, shade(r.c1, 1.03), "Grass")
-			r:ball(-0.6, 6.5, -1.8, 2.8, shade(r.c1, 0.88), "Grass")
-			r:ball(0.9, 8.4, 0.6, 2.6, shade(r.c1, 1.06), "Grass")
-			r:ball(-0.9, 8.6, -0.4, 2.4, Colors.mix(r.c1, C.White, 0.3), "Grass")
+			crown(r, 0.8, r.c1, Colors.mix(r.c1, C.White, 0.35))
 			-- petals fallen on the grass
 			for _, p in { { 1.6, 1.2 }, { -1.4, 1.8 }, { 2.2, -1.0 }, { -2.0, -1.2 }, { 0.4, 2.4 }, { -0.6, -2.2 } } do
 				r:noCollide(r:cyl(p[1], 0.02, p[2], 0.04, 0.45, "y", r.c1, "SmoothPlastic"))

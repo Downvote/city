@@ -1,15 +1,17 @@
 --!strict
 -- Jobs. Placing a workplace (a market stall, a café counter, an easel...) opens a job; a villager
--- who takes it walks there during work hours and earns coins for the town every payday.
+-- who takes it walks there during work hours and earns coins for the town while they work there
+-- (Sim/City.earn: a day's pay comes in a little at a time, nothing on a break).
 -- Personalities in `likes` enjoy the work and earn a bit more. Skill (a villager's level) grows
 -- with every day worked.
 --
 -- Wages are where a town's money comes from. The user: "it seems like money gain from work is
 -- too little. balanced it such that progression is much more based on villagers working". So an
--- income here is five times what it was (60 to 110 then), a day's work is
+-- income here was made five times what it was (60 to 110 then), a day's work is
 -- worth more skill (Tuning.Jobs.XpPerDay), and the thank yous, wishes and events pay little
 -- beside it: tests/specs/City.spec.luau holds wages to two thirds of a day's coins or more once
--- two villagers have jobs.
+-- two villagers have jobs. Then: "could you make working give much more coins, and make
+-- buildings cheaper?", so every income is three times that again (300 to 550 before).
 
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 
@@ -29,7 +31,7 @@ local list: { Job } = {
 		id = "shopkeeper",
 		name = "Shopkeeper",
 		blurb = "Runs a market stall.",
-		income = 350,
+		income = 1050,
 		likes = { "sunny", "proud" },
 		lines = { "Fresh stock today!", "Take a look, no rush.", "Two for one on apples." },
 	},
@@ -37,7 +39,7 @@ local list: { Job } = {
 		id = "barista",
 		name = "Barista",
 		blurb = "Makes the coffee everyone needs.",
-		income = 375,
+		income = 1125,
 		likes = { "sunny", "gentle" },
 		lines = { "One latte, coming up.", "Mind the foam, it's hot.", "I drew a heart on that one." },
 	},
@@ -45,7 +47,7 @@ local list: { Job } = {
 		id = "baker",
 		name = "Baker",
 		blurb = "Up early, smells of bread.",
-		income = 400,
+		income = 1200,
 		likes = { "easygoing", "gentle" },
 		lines = { "Rolls are out of the oven!", "Flour everywhere again.", "Smell that? That's success." },
 	},
@@ -53,7 +55,7 @@ local list: { Job } = {
 		id = "florist",
 		name = "Florist",
 		blurb = "Sells flowers from a cart.",
-		income = 325,
+		income = 975,
 		likes = { "gentle", "dreamy", "shy" },
 		lines = { "These ones mean friendship.", "Tulips are in today.", "Sniff this. Go on." },
 	},
@@ -61,7 +63,7 @@ local list: { Job } = {
 		id = "artist",
 		name = "Artist",
 		blurb = "Paints, sells the odd picture.",
-		income = 300,
+		income = 900,
 		likes = { "dreamy", "shy" },
 		lines = { "Hold still, I'm painting you.", "It's abstract. Probably.", "Needs more blue." },
 	},
@@ -69,7 +71,7 @@ local list: { Job } = {
 		id = "doctor",
 		name = "Doctor",
 		blurb = "Keeps the town healthy.",
-		income = 550,
+		income = 1650,
 		likes = { "gentle", "shy" },
 		lines = { "Say ahh.", "Drink more water.", "Next, please." },
 	},
@@ -77,7 +79,7 @@ local list: { Job } = {
 		id = "teacher",
 		name = "Teacher",
 		blurb = "Teaches anyone who'll sit still.",
-		income = 475,
+		income = 1425,
 		likes = { "proud", "gentle" },
 		lines = { "Eyes on the board, please.", "Who knows the answer?", "Homework is due Monday." },
 	},
@@ -85,7 +87,7 @@ local list: { Job } = {
 		id = "musician",
 		name = "Musician",
 		blurb = "Plays for tips on a little stage.",
-		income = 350,
+		income = 1050,
 		likes = { "sunny", "cheeky", "bold" },
 		lines = { "This one's an original.", "Any requests?", "Clap along!" },
 	},
@@ -93,7 +95,7 @@ local list: { Job } = {
 		id = "builder",
 		name = "Builder",
 		blurb = "Fixes and makes things at a workbench.",
-		income = 450,
+		income = 1350,
 		likes = { "bold", "proud" },
 		lines = { "Measure twice, cut once.", "Pass me that hammer.", "Good as new." },
 	},
@@ -101,7 +103,7 @@ local list: { Job } = {
 		id = "postie",
 		name = "Postie",
 		blurb = "Sorts the town's letters.",
-		income = 325,
+		income = 975,
 		likes = { "shy", "easygoing" },
 		lines = { "Letter for you!", "So many parcels today.", "Stamps are on the left." },
 	},
@@ -109,7 +111,7 @@ local list: { Job } = {
 		id = "icecream",
 		name = "Ice cream seller",
 		blurb = "Scoops all day.",
-		income = 350,
+		income = 1050,
 		likes = { "cheeky", "sunny" },
 		lines = { "Cone or cup?", "Sprinkles are free today.", "Brain freeze, coming up!" },
 	},
@@ -117,7 +119,7 @@ local list: { Job } = {
 		id = "librarian",
 		name = "Librarian",
 		blurb = "Shushes people kindly.",
-		income = 375,
+		income = 1125,
 		likes = { "shy", "dreamy" },
 		lines = { "Shh, please.", "That one's due back Friday.", "Have you read this one?" },
 	},

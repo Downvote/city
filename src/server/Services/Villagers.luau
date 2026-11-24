@@ -1058,6 +1058,117 @@ function Villagers.brain(player: Player, vid: string, npc: any)
 	end
 end
 
+-- Wages -----------------------------------------------------------------------------------------
+--
+-- The user: "make it such that villagers earn coins as they work, not after every day". Every
+-- Tuning.Jobs.EarnStep seconds each villager at their workplace in work hours (their body's
+-- `atWork`, which the brain keeps) is paid for those seconds (City.rate into their purse,
+-- City.earn). Nothing on a break, off work, on a day off, sick, asleep or taken off by an event; a
+-- word at the counter or a player's talk where they stand is still work, as the brain counts it.
+-- Every Tuning.Jobs.PayEvery seconds what the town's villagers earned goes to its coins in one go
+-- and the owner's client hears of it in one message, `Earned` (the "+N" over each villager, the
+-- coins counting up). At five a short notice says what the day came to, and skill grows with it.
+-- Everything here is the server's own: no client sends anything a wage is worked out from.
+
+local purses: { [Player]: { [string]: City.Purse } } = {}
+local packets: { [Player]: { [string]: number } } = {} -- whole coins earned since the last message
+
+-- Is this villager earning this moment?
+local function earning(player: Player, vid: string, npc: any, v: any): boolean
+	if npc.atWork ~= true or not v.job or v.dayOff == World.dayIndex() or sickNow(v) then
+		return false
+	end
+	local mode = Villagers.control(player, vid)
+	if mode ~= nil and mode ~= "chat" and mode ~= "talk" then
+		return false
+	end
+	return isWorkTime(World.hour())
+end
+
+-- Pays everyone at work for the last `seconds`.
+local function earnFor(player: Player, seconds: number)
+	local profile = Data.get(player)
+	local list = npcs[player]
+	if not profile or not list then
+		return
+	end
+	local day = World.dayIndex()
+	local now = os.time()
+	local mine = purses[player] or {}
+	purses[player] = mine
+	for vid, npc in list do
+		local v = profile.villagers[vid]
+		if v and earning(player, vid, npc, v) then
+			local purse = mine[vid] or City.newPurse()
+			mine[vid] = purse
+			local coins = City.earn(purse, day, City.rate(profile, vid, day, now), seconds)
+			if coins > 0 then
+				local packet = packets[player] or {}
+				packets[player] = packet
+				packet[vid] = (packet[vid] or 0) + coins
+			end
+		end
+	end
+end
+
+-- Hands the town what its villagers earned since the last packet, and tells the owner who
+-- earned what: { coins = the town's coins now, earned = all it has earned at work,
+-- lines = { { vid, n } } }.
+local function payOut(player: Player)
+	local packet = packets[player]
+	packets[player] = nil
+	local profile = Data.get(player)
+	if not packet or not profile then
+		return
+	end
+	local lines, total = {}, 0
+	for vid, n in packet do
+		table.insert(lines, { vid = vid, n = n })
+		total += n
+	end
+	if total <= 0 then
+		return
+	end
+	Data.addCoins(player, total, true)
+	profile.stats.earned = (profile.stats.earned or 0) + total
+	Remotes.event("Earned"):FireClient(player, { coins = profile.coins, earned = profile.stats.earned, lines = lines })
+end
+
+-- Five o'clock: what the day's work came to. Each villager who worked gains skill for it (a whole
+-- day's worth for a whole day's pay, less for part of one), and a short notice gives the sum.
+function Villagers.endOfWork(player: Player)
+	local profile = Data.get(player)
+	local mine = purses[player]
+	if not profile or not mine then
+		return
+	end
+	payOut(player)
+	local day = World.dayIndex()
+	if profile.lastPayday == day then
+		return
+	end
+	profile.lastPayday = day
+	local total = 0
+	local notices = {}
+	for vid, purse in mine do
+		local v = profile.villagers[vid]
+		if v and purse.day == day and purse.paid > 0 then
+			total += purse.paid
+			local full = City.dayPay(profile, vid, day, os.time())
+			EventEngine.addXp(v, City.dayXp(purse.paid, full), notices)
+		end
+	end
+	if total <= 0 then
+		return
+	end
+	profile.stats.paydays = (profile.stats.paydays or 0) + 1
+	Data.notify(player, Text.fill("Your villagers earned {n} coins today.", { n = Text.commas(total) }), "good")
+	for _, n in notices do
+		Data.notify(player, n, "event")
+	end
+	Data.push(player, "coins", "villagers", "stats")
+end
+
 -- Daily upkeep -----------------------------------------------------------------------------------
 
 -- How nice a villager's room is: items near their bed, plus a little for each kind of thing.
@@ -1387,39 +1498,6 @@ local function setJob(player: Player, vid: any, key: any): (boolean, string?)
 	return true
 end
 
--- Payday at the end of the work day: everyone who worked earns their pay and a little skill.
-function Villagers.payday(player: Player)
-	local profile = Data.get(player)
-	if not profile then
-		return
-	end
-	local day = World.dayIndex()
-	if profile.lastPayday == day then
-		return
-	end
-	profile.lastPayday = day
-	local lines, total = City.payday(profile, day, os.time())
-	if total <= 0 then
-		return
-	end
-	local notices = {}
-	for _, l in lines do
-		local v = profile.villagers[l.vid]
-		if v then
-			EventEngine.addXp(v, Tuning.Jobs.XpPerDay, notices)
-		end
-	end
-	Data.addCoins(player, total, true)
-	profile.stats.earned = (profile.stats.earned or 0) + total
-	profile.stats.paydays = (profile.stats.paydays or 0) + 1
-	Remotes.event("Payday"):FireClient(player, { total = total, lines = lines })
-	Data.notify(player, Text.fill("Payday! Your town earned {n} coins today.", { n = Text.commas(total) }), "good")
-	for _, n in notices do
-		Data.notify(player, n, "event")
-	end
-	Data.push(player, "coins", "villagers", "stats")
-end
-
 -- A craving is bought for them. The user: "remove the shop, buying of things and food and
 -- feeding. when a character gets a craving, allow the player to simply pay to buy it". So there
 -- is no bag and nothing to feed: the wish's Buy button asks for this, Life.buyWish takes
@@ -1677,7 +1755,31 @@ function Villagers.start()
 		end
 		if math.floor(hour) == Tuning.Day.WorkEnd then
 			for _, player in Players:GetPlayers() do
-				task.spawn(Villagers.payday, player)
+				task.spawn(Villagers.endOfWork, player)
+			end
+		end
+	end)
+	-- wages as they work: a look at who is at work every EarnStep seconds, a pay packet to each
+	-- town every PayEvery
+	task.spawn(function()
+		local last = os.clock()
+		local sincePacket = 0
+		while true do
+			task.wait(Tuning.Jobs.EarnStep)
+			local now = os.clock()
+			-- (a long stall in the server is not paid for: a few looks' worth at most)
+			local seconds = math.clamp(now - last, 0, Tuning.Jobs.EarnStep * 3)
+			last = now
+			sincePacket += seconds
+			local packetDue = sincePacket >= Tuning.Jobs.PayEvery - 1e-3
+			if packetDue then
+				sincePacket = 0
+			end
+			for _, player in Players:GetPlayers() do
+				earnFor(player, seconds)
+				if packetDue then
+					payOut(player)
+				end
 			end
 		end
 	end)
@@ -1747,6 +1849,9 @@ function Villagers.start()
 		end
 		npcs[player] = nil
 		control[player] = nil
+		-- what was earned since the last packet still goes in, if the profile is still here
+		payOut(player)
+		purses[player] = nil
 		talkTokens[player] = nil
 		talkedAt[player] = nil
 		lastSaid[player] = nil

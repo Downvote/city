@@ -13,6 +13,8 @@ local Shared = "ReplicatedStorage.Shared."
 local Services = "ServerScriptService.Server.Services."
 local Tuning = require(Shared .. "Config.Tuning")
 local Routine = require(Shared .. "Sim.Routine")
+local City = require(Shared .. "Sim.City")
+local Text = require(Shared .. "Util.Text")
 local Catalog = require(Shared .. "Build.Catalog")
 local Geometry = require(Shared .. "Build.Geometry")
 local Jobs = require(Shared .. "Data.Jobs")
@@ -253,6 +255,36 @@ describe("Routine", function()
 		expect(sum / #all > 0.8).toBeTruthy()
 		-- and nobody works the whole day through without a break
 		expect(worst < 0.8).toBeTruthy()
+	end)
+
+	it("pays for a day at the workplace about a day's pay: a bit more to the focused, less to the lazy", function()
+		-- The user: "make it such that villagers earn coins as they work, not after every day".
+		-- A worker earns for the seconds at their workplace (Sim/City.earn), a day's pay spread
+		-- over the part of the day Tuning.Jobs.AtWork says they are there. Over these days that
+		-- comes to about all of it on the usual day, and never more than a whole work day there.
+		local pay = 1000
+		local rate = pay / City.workSeconds()
+		local by, sum = {}, 0
+		for _, r in all do
+			local share = City.earn(City.newPurse(), r.day, rate, r.station) / pay
+			local b = by[r.pers] or { sum = 0, days = 0 }
+			by[r.pers] = b
+			b.sum += share
+			b.days += 1
+			sum += share
+			expect(share <= workDay / City.workSeconds() + 1e-6).toBeTruthy()
+		end
+		expect(sum / #all).toBeBetween(0.95, 1.05)
+		local function mean(p)
+			return by[p].sum / by[p].days
+		end
+		for p in by do
+			if mean(p) < 0.85 or mean(p) > 1.12 then
+				error(string.format("%s earns %.2f of a day's pay on the usual day", p, mean(p)))
+			end
+		end
+		-- easygoing is the laziest, proud the most focused
+		expect(mean("proud") > mean("easygoing") + 0.05).toBeTruthy()
 	end)
 
 	it("sends a worker on a break most days, and never on a long one", function()
@@ -617,6 +649,7 @@ env.os = setmetatable({
 	end,
 }, { __index = os })
 local watch = nil -- called every tenth of a second
+local always = nil -- the same, all the time (set once the bodies are about)
 local function advance(seconds)
 	for _ = 1, math.floor(seconds * 10 + 0.5) do
 		now += 0.1
@@ -633,6 +666,9 @@ local function advance(seconds)
 		end
 		if watch then
 			watch()
+		end
+		if always then
+			always()
 		end
 	end
 end
@@ -793,6 +829,10 @@ end
 function fakeNpc.useSeat() end
 
 local coins = 0
+-- The pay packets the service sent the owner (`Earned`), each with when it came and how long it
+-- had been since the builder was last at work, and the notices it gave.
+local packets, notes = {}, {}
+local lastWorking = -math.huge
 local leaving = Harness.signal()
 local oldPlayers = game:GetService("Players")
 Harness.addService("Players", {
@@ -814,7 +854,9 @@ Harness.stub(Services .. "Data", {
 	get = function(player)
 		return if player == owner then profile else nil
 	end,
-	notify = function() end,
+	notify = function(_, text)
+		table.insert(notes, text)
+	end,
 	push = function() end,
 	addCoins = function(_, n)
 		coins += n
@@ -857,8 +899,14 @@ Harness.stub(Services .. "Avatar", {
 })
 Harness.stub("ServerScriptService.Server.Npc.Npc", fakeNpc)
 Harness.stub(Shared .. "Net.Remotes", {
-	event = function()
-		return { FireClient = function() end }
+	event = function(name)
+		return {
+			FireClient = function(_, _, msg)
+				if name == "Earned" then
+					table.insert(packets, { at = now, msg = msg, idle = now - lastWorking })
+				end
+			end,
+		}
 	end,
 	fn = function()
 		return {}
@@ -893,12 +941,41 @@ Harness.stub(Shared .. "Util.Rng", Rng)
 Harness.stub(Services .. "Villagers", nil)
 Harness.addService("Players", oldPlayers)
 
+-- Is the builder earning this moment, as the pay sees it: at the bench (or held there a moment
+-- by a talk), not taken off by an event.
+local function builderWorking()
+	local w = bodies.v1
+	local mode = Villagers.control(owner, "v1")
+	return w ~= nil and w.atWork == true and (mode == nil or mode == "chat" or mode == "talk")
+end
+always = function()
+	if builderWorking() then
+		lastWorking = now
+	end
+end
+
+-- What the pay packets sent after `from` and up to `to` came to, for one villager or everyone.
+local function paid(from, to, vid)
+	local n = 0
+	for _, p in packets do
+		if p.at > from and p.at <= to then
+			for _, l in p.msg.lines do
+				if vid == nil or l.vid == vid then
+					n += l.n
+				end
+			end
+		end
+	end
+	return n
+end
+
 -- What one work day comes to: wound from nine to five, a look at everyone every tenth of a
 -- second. `during` is called once, a third of the way through.
 local function workday(during)
 	until_(D.WorkStart)
 	table.clear(breaks)
 	local log = { samples = 0, atSpot = 0, names = {}, away = 0, stillest = {}, atWorkAway = 0, breaks = breaks }
+	log.from, log.working = now, 0
 	for _, vid in { "v2", "v3" } do
 		bodies[vid].walkedAt = now
 		log.stillest[vid] = 0
@@ -906,6 +983,9 @@ local function workday(during)
 	local w = bodies.v1
 	watch = function()
 		log.samples += 1
+		if builderWorking() then
+			log.working += 0.1
+		end
 		local i = spotOf(w.pos)
 		if i then
 			log.atSpot += 1
@@ -931,16 +1011,17 @@ local function workday(during)
 	end
 	advance(workDay - third - 0.2)
 	watch = nil
+	log.to = now
 	log.breaks = table.clone(breaks)
 	return log
 end
 
 describe("Villager routine", function()
-	local first, gestures, said, walks, coinsBefore
+	local first, gestures, said, walks, coinsBefore, coinsAt
 	it("keeps the builder at the bench two thirds of the work day or more", function()
 		until_(8.5)
 		walks = { v2 = bodies.v2.walks, v3 = bodies.v3.walks }
-		coinsBefore = coins
+		coinsBefore, coinsAt = coins, now
 		table.clear(bodies.v1.gestures)
 		table.clear(bodies.v1.said)
 		first = workday()
@@ -994,9 +1075,65 @@ describe("Villager routine", function()
 		end
 	end)
 
+	it("pays the builder while at the bench, a few coins every few seconds and none on a break", function()
+		-- The user: "make it such that villagers earn coins as they work, not after every day".
+		-- What the day's packets paid the builder is the seconds at the bench at the day's pay
+		-- spread over Tuning.Jobs.AtWork of the day (a look every EarnStep, so a second or so out
+		-- at each coming and going), and about the day's pay for this lazy sort.
+		local got = paid(first.from, first.to + Tuning.Jobs.PayEvery, "v1")
+		local full = City.dayPay(profile, "v1", -1, 0)
+		local rate = full / City.workSeconds()
+		expect(math.abs(got - rate * first.working) <= rate * (2 * #first.breaks + 4) + 2).toBeTruthy()
+		expect(got / full).toBeBetween(0.75, 1.1)
+		-- in packets every PayEvery seconds, never one for a villager with no job, and never one
+		-- for a time the builder was away from the bench
+		local n, last = 0, nil
+		for _, pk in packets do
+			if pk.at > first.from and pk.at <= first.to then
+				n += 1
+				if last then
+					expect(pk.at - last >= Tuning.Jobs.PayEvery - 0.15).toBeTruthy()
+				end
+				last = pk.at
+				expect(type(pk.msg.coins)).toBe("number")
+				for _, l in pk.msg.lines do
+					expect(l.vid).toBe("v1")
+					expect(l.n >= 1).toBeTruthy()
+				end
+				if pk.idle > Tuning.Jobs.PayEvery + Tuning.Jobs.EarnStep + 0.25 then
+					error(string.format("paid %.1f seconds after the builder last worked", pk.idle))
+				end
+			end
+		end
+		expect(n >= first.working / Tuning.Jobs.PayEvery * 0.8).toBeTruthy()
+		-- and the town's work so far is counted for the goals
+		expect(profile.stats.earned >= got).toBeTruthy()
+	end)
+
 	it("has them call at the workplace now and then, and the town earns from it", function()
-		expect(coins - coinsBefore >= Tuning.Jobs.VisitCoins).toBeTruthy()
-		expect((coins - coinsBefore) % Tuning.Jobs.VisitCoins).toBe(0)
+		-- (the coins in between are the builder's wages and the customers' visits)
+		local visits = coins - coinsBefore - paid(coinsAt, now)
+		expect(visits >= Tuning.Jobs.VisitCoins).toBeTruthy()
+		expect(visits % Tuning.Jobs.VisitCoins).toBe(0)
+	end)
+
+	it("says at five what the day's work came to, and the builder learns from it", function()
+		until_(D.WorkEnd)
+		local five = now
+		local lv, xp = worker.lv, worker.xp
+		table.clear(notes)
+		Villagers.endOfWork(owner)
+		local day = paid(first.from - 1, now)
+		expect(day > 0).toBeTruthy()
+		expect(table.find(notes, Text.fill("Your villagers earned {n} coins today.", { n = Text.commas(day) })) ~= nil).toBeTruthy()
+		expect(worker.lv > lv or worker.xp > xp).toBeTruthy()
+		-- once a day only
+		table.clear(notes)
+		Villagers.endOfWork(owner)
+		expect(#notes).toBe(0)
+		-- and nothing comes in after five
+		until_(17.5)
+		expect(paid(five, now)).toBe(0)
 	end)
 
 	it("sends them home at five", function()
@@ -1036,9 +1173,12 @@ describe("Villager routine", function()
 		workday(function()
 			local w = bodies.v1
 			Villagers.setControl(owner, "v1", "event")
+			local taken = now
 			w.pos = w.pos + Vector3.new(40, 0, 25)
 			advance(10)
 			expect(w.walks >= 0).toBeTruthy()
+			-- paid nothing while the event has them (once the last packet from before is in)
+			expect(paid(taken + Tuning.Jobs.PayEvery + Tuning.Jobs.EarnStep, now, "v1")).toBe(0)
 			Villagers.setControl(owner, "v1", nil)
 			advance(20)
 			expect(spotOf(w.pos) ~= nil).toBeTruthy()
@@ -1067,12 +1207,14 @@ describe("Villager routine", function()
 		local log = workday()
 		expect(log.atSpot / log.samples < 0.2).toBeTruthy()
 		expect(log.atWorkAway).toBe(0)
+		expect(paid(log.from, log.to + Tuning.Jobs.PayEvery, "v1")).toBe(0)
 		worker.dayOff = nil
 		until_(8.9)
 		worker.sick = math.floor(now) + 2 * D.Length
 		local sickWalks = bodies.v1.walks
 		log = workday()
 		expect(bodies.v1.atWork).toBe(false)
+		expect(paid(log.from, log.to + Tuning.Jobs.PayEvery, "v1")).toBe(0)
 		expect(log.atSpot / log.samples < 0.2).toBeTruthy()
 		-- (no bed in this town: they mope about a little, as they always have)
 		expect(bodies.v1.walks - sickWalks < 40).toBeTruthy()
@@ -1081,9 +1223,12 @@ describe("Villager routine", function()
 
 	it("is nobody at work at night", function()
 		until_(23)
+		local from = now
 		for vid in profile.villagers do
 			expect(bodies[vid].atWork == true).toBe(false)
 		end
+		advance(60)
+		expect(paid(from, now)).toBe(0)
 	end)
 
 	it("ran without a single error in the background", function()
