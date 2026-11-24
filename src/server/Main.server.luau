@@ -14,6 +14,7 @@ local order = {
 	"Build",
 	"Avatar",
 	"Villagers",
+	"Interact", -- holding E on a piece (Data/Interactions): after Villagers, whose villagers react
 	"Events",
 	"Explore",
 	"Signs",

@@ -553,7 +553,7 @@ describe("Routine", function()
 	it("only does what there is something to do it with", function()
 		local rng = Rng.new(8)
 		local state = Routine.newDay()
-		local can = { sit = false, chat = false, visit = false }
+		local can = { sit = false, chat = false, visit = false, use = false }
 		for _, h in { 8, 12, 19 } do
 			for _ = 1, 200 do
 				local turn = Routine.next({ hour = h, day = 2, pers = "sunny", can = can }, state, rng)
@@ -1163,8 +1163,16 @@ describe("Villager routine", function()
 			advance(12)
 			-- (somebody may be in the middle of buying something from them by now)
 			expect(Villagers.control(owner, "v1") ~= "talk").toBeTruthy()
-			advance(6)
-			expect(spotOf(w.pos) ~= nil).toBeTruthy()
+			-- back at the bench soon after (a break that came due in the talk may come first)
+			local back = false
+			for _ = 1, math.ceil((K.BreakCap + 12) / 0.5) do
+				advance(0.5)
+				if spotOf(w.pos) ~= nil and w.atWork then
+					back = true
+					break
+				end
+			end
+			expect(back).toBeTruthy()
 		end)
 		expect(log.atSpot / log.samples > 0.6).toBeTruthy()
 	end)

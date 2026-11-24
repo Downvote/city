@@ -57,8 +57,8 @@ Terrain.Region = {
 -- under what is built, is the same green so the edge of a lawn doesn't show. The sand is the
 -- beach's, the deep floor the dark blue the sea used to show over it.
 Terrain.Colors = {
-	Grass = { 124, 150, 68 },
-	LeafyGrass = { 126, 152, 72 },
+	Grass = { 136, 172, 86 },
+	LeafyGrass = { 140, 176, 92 },
 	Ground = { 150, 124, 92 },
 	Sand = { 244, 228, 188 },
 	Rock = { 150, 146, 140 },
@@ -151,32 +151,59 @@ function Terrain.waterLine(s: number): number
 end
 
 -- How far out the grass reaches over the sand: in and out along the east, west and north shores
--- (grassy points between coves), and not at all along the south, where the boardwalk is.
+-- (grassy points between coves), and along the south the sand runs a voxel in under the
+-- boardwalk, so no grass shows at its edge.
 function Terrain.grassLine(s: number): number
 	local u = if s > AROUND - 400 then s - AROUND else s
 	local south = smoothstep(-90, 0, u) * (1 - smoothstep(SPAN_X, SPAN_X + 90, u))
-	local g = math.max(0, 6 + waves(GRASS, s)) * (1 - south)
+	local g = math.max(0, 6 + waves(GRASS, s)) * (1 - south) - Terrain.Voxel * south
 	return math.min(g, Terrain.waterLine(s) - 16)
 end
 
 -- Where the shallows end and the sea floor drops away to the deep, out past the hidden walls
 -- that keep people in the shallows (TownMap.ground's, at Beach + Shallows).
 function Terrain.deepLine(s: number): number
-	return Terrain.Beach + Terrain.Shallows + 14 + waves(DEEP, s)
+	return Terrain.Beach + Terrain.Shallows + 20 + waves(DEEP, s)
 end
 
--- Hills steeper than this show rock through the grass.
-Terrain.Crag = 0.68
+-- Rock shows through the grass in bits on the steeper slopes: none where the hill is gentler
+-- than this, and more of it the steeper it gets.
+Terrain.Crag = 0.45
+
+-- A smooth noise from 0 to 1 over cells `cell` studs across, the same every time.
+local function hash(i: number, j: number): number
+	local h = math.sin(i * 127.1 + j * 311.7) * 43758.5453
+	return h - math.floor(h)
+end
+local function noise(x: number, z: number, cell: number): number
+	local fx, fz = x / cell, z / cell
+	local i, j = math.floor(fx), math.floor(fz)
+	local u, v = fx - i, fz - j
+	u, v = u * u * (3 - 2 * u), v * v * (3 - 2 * v)
+	local a = hash(i, j) + (hash(i + 1, j) - hash(i, j)) * u
+	local b = hash(i, j + 1) + (hash(i + 1, j + 1) - hash(i, j + 1)) * u
+	return a + (b - a) * v
+end
+
+-- Whether the hill shows rock at x, z.
+function Terrain.rocky(x: number, z: number): boolean
+	local slope = Hills.slope(x, z)
+	return slope > Terrain.Crag and noise(x, z, 14) > 0.82 - (slope - Terrain.Crag) * 0.7
+end
 
 -- The height of the ground at x, z and what it is, as nature made it: grass (on the hills too),
 -- then sand from where the grass ends, sloping gently to the water's edge and on down under
 -- the water, then the drop to the deep floor.
 function Terrain.natural(x: number, z: number): (number, string)
 	local d, s = Terrain.coast(x, z)
-	local g = Terrain.grassLine(s)
+	-- (well inland, or far out past the drop, there is no shore to work out)
+	if d > Terrain.Beach + Terrain.Shallows + 120 then
+		return Terrain.Floor, "Slate"
+	end
+	local g = if d < -2 * Terrain.Voxel then d else Terrain.grassLine(s)
 	if d <= g then
 		local hill = Hills.at(x, z)
-		if hill > 0 and Hills.slope(x, z) > Terrain.Crag then
+		if hill > 0 and Terrain.rocky(x, z) then
 			return Terrain.Ground + hill, "Rock"
 		end
 		return Terrain.Ground + hill, "Grass"
@@ -206,29 +233,26 @@ end
 -- north) or the z (east, west) along it; `out` moves it that far out to sea (negative: up the
 -- beach). Returns x, z.
 function Terrain.shore(side: string, u: number, out: number?): (number, number)
-	local d, s
+	local more = out or 0
 	if side == "south" then
-		d, s = Terrain.coast(u, -IS)
-		return u, -IS - Terrain.waterLine(s) - (out or 0)
+		local _, s = Terrain.coast(u, -IS)
+		return u, -IS - Terrain.waterLine(s) - more
 	elseif side == "north" then
-		d, s = Terrain.coast(u, IN)
-		return u, IN + Terrain.waterLine(s) + (out or 0)
+		local _, s = Terrain.coast(u, IN)
+		return u, IN + Terrain.waterLine(s) + more
 	elseif side == "east" then
-		d, s = Terrain.coast(IX, u)
-		return IX + Terrain.waterLine(s) + (out or 0), u
+		local _, s = Terrain.coast(IX, u)
+		return IX + Terrain.waterLine(s) + more, u
 	end
-	d, s = Terrain.coast(-IX, u)
-	local _ = d
-	return -IX - Terrain.waterLine(s) - (out or 0), u
+	local _, s = Terrain.coast(-IX, u)
+	return -IX - Terrain.waterLine(s) - more, u
 end
 
 -- A point on the dry beach: `frac` of the way from where the grass ends (0) to the water (1).
 function Terrain.onBeach(side: string, u: number, frac: number): (number, number)
 	local x, z = Terrain.shore(side, u)
-	local d, s = Terrain.coast(x, z)
-	local g, w = Terrain.grassLine(s), Terrain.waterLine(s)
-	local _ = d
-	local back = (1 - frac) * (w - g)
+	local _, s = Terrain.coast(x, z)
+	local back = (1 - frac) * (Terrain.waterLine(s) - Terrain.grassLine(s))
 	if side == "south" then
 		return x, z + back
 	elseif side == "north" then
@@ -239,10 +263,16 @@ function Terrain.onBeach(side: string, u: number, frac: number): (number, number
 	return x + back, z
 end
 
--- A rectangle with something built on it: { x1, z1, x2, z2, kind }, kind "paved" (a floor or a
--- paved surface laid on the ground: the ground under it sinks out of sight), "built" (whatever a
--- placed model puts on the ground) or "path" (stepping stones: a worn path of bare ground).
-export type Cover = { any }
+-- A rectangle with something built on it. `kind` is "paved" (a floor or a paved surface laid on
+-- the ground: the ground under it sinks out of sight), "built" (whatever a placed model puts on
+-- the ground) or "path" (stepping stones: a worn path of bare ground).
+export type Cover = { x1: number, z1: number, x2: number, z2: number, kind: string }
+
+-- A block of the open sea for Terrain:FillBlock.
+export type SeaBlock = { center: Vector3, size: Vector3, material: string }
+
+-- A triangle of the preview's ground.
+export type Tri = { a: Vector3, b: Vector3, c: Vector3, color: Color3, mat: string, transp: number }
 
 -- Every column of the region: its surface's height and its material, in rows (k = j * nx + i + 1
 -- for the column i across, j down, from the region's corner).
@@ -255,8 +285,9 @@ export type Plan = {
 	material: { string },
 }
 
--- Works out every column, from nature and from what is built (TownMap.cover).
-function Terrain.plan(cover: { Cover }): Plan
+-- Works out every column, from nature and from what is built (TownMap.cover). `pause`, if given,
+-- is called after every row, so the server can let other work run in between.
+function Terrain.plan(cover: { Cover }, pause: (() -> ())?): Plan
 	local V = Terrain.Voxel
 	local R = Terrain.Region
 	local nx, nz = (R[3] - R[1]) // V, (R[4] - R[2]) // V
@@ -266,8 +297,8 @@ function Terrain.plan(cover: { Cover }): Plan
 	local sunk: { [number]: boolean } = {}
 	local m = Terrain.Margin
 	for _, c in cover do
-		local x1, z1, x2, z2 = c[1] :: number, c[2] :: number, c[3] :: number, c[4] :: number
-		local level = if c[5] == "path" then 1 else 2
+		local x1, z1, x2, z2 = c.x1, c.z1, c.x2, c.z2
+		local level = if c.kind == "path" then 1 else 2
 		local i1 = math.max(0, math.floor((x1 - m - R[1]) / V))
 		local i2 = math.min(nx - 1, math.ceil((x2 + m - R[1]) / V) - 1)
 		local j1 = math.max(0, math.floor((z1 - m - R[2]) / V))
@@ -280,7 +311,7 @@ function Terrain.plan(cover: { Cover }): Plan
 				end
 			end
 		end
-		if c[5] == "paved" then
+		if c.kind == "paved" then
 			for j = math.max(0, math.ceil((z1 - R[2]) / V)), math.min(nz - 1, math.floor((z2 - R[2]) / V) - 1) do
 				for i = math.max(0, math.ceil((x1 - R[1]) / V)), math.min(nx - 1, math.floor((x2 - R[1]) / V) - 1) do
 					sunk[j * nx + i + 1] = true
@@ -309,6 +340,9 @@ function Terrain.plan(cover: { Cover }): Plan
 			end
 			height[k] = h
 			material[k] = mat
+		end
+		if pause then
+			pause()
 		end
 	end
 	return { x1 = R[1], z1 = R[2], nx = nx, nz = nz, height = height, material = material }
@@ -419,9 +453,9 @@ function Terrain.classic(channels: { [string]: any }, mats: { [string]: any }): 
 	return materials, occupancy
 end
 
--- The open sea past the region, out to Far, as blocks for Terrain:FillBlock: { centre, size,
--- material }. Each piece of the sea is two: the deep floor and the water over it.
-function Terrain.openSea(): { { any } }
+-- The open sea past the region, out to Far, as blocks for Terrain:FillBlock. Each piece of the
+-- sea is two: the deep floor and the water over it.
+function Terrain.openSea(): { SeaBlock }
 	local R, F = Terrain.Region, Terrain.Far
 	local strips = {
 		{ -F, -F, F, R[2] },
@@ -430,7 +464,7 @@ function Terrain.openSea(): { { any } }
 		{ R[3], R[2], F, R[4] },
 	}
 	local STEP = 1000
-	local out = {}
+	local out: { SeaBlock } = {}
 	for _, st in strips do
 		local x = st[1]
 		while x < st[3] do
@@ -442,14 +476,14 @@ function Terrain.openSea(): { { any } }
 				local floor = Terrain.Floor - Terrain.Bottom
 				local water = Terrain.WaterY - Terrain.Floor
 				table.insert(out, {
-					Vector3.new(cx, Terrain.Bottom + floor / 2, cz),
-					Vector3.new(sx, floor, sz),
-					"Slate",
+					center = Vector3.new(cx, Terrain.Bottom + floor / 2, cz),
+					size = Vector3.new(sx, floor, sz),
+					material = "Slate",
 				})
 				table.insert(out, {
-					Vector3.new(cx, Terrain.Floor + water / 2, cz),
-					Vector3.new(sx, water, sz),
-					"Water",
+					center = Vector3.new(cx, Terrain.Floor + water / 2, cz),
+					size = Vector3.new(sx, water, sz),
+					material = "Water",
 				})
 				z = z2
 			end
@@ -462,12 +496,11 @@ end
 -- The terrain as triangles for the previews (tools/preview/dump.luau): the ground of `plan` in
 -- the region { x1, z1, x2, z2 }, every `step` studs (a whole number of voxels), coloured by
 -- material, and the sea's surface over all of it, see through. Flat runs of one colour are
--- joined. Each is { a, b, c, color, mat, transp }.
-function Terrain.preview(plan: Plan, region: { number }, step: number?): { { any } }
+-- joined.
+function Terrain.preview(plan: Plan, region: { number }, step: number?): { Tri }
 	local V = Terrain.Voxel
 	local k = math.max(1, math.floor((step or V) / V))
-	local S = k * V
-	local out = {}
+	local out: { Tri } = {}
 	local function color(mat: string, shade: number): Color3
 		local c = Terrain.Colors[mat] or Terrain.Colors.Grass
 		return Color3.fromRGB(
@@ -477,7 +510,7 @@ function Terrain.preview(plan: Plan, region: { number }, step: number?): { { any
 		)
 	end
 	local function tri(a: Vector3, b: Vector3, c: Vector3, col: Color3, mat: string, transp: number?)
-		table.insert(out, { a, b, c, col, mat, transp or 0 })
+		table.insert(out, { a = a, b = b, c = c, color = col, mat = mat, transp = transp or 0 })
 	end
 	-- the grid's nodes are column centres, `k` columns apart
 	local i1 = math.max(0, math.floor((region[1] - plan.x1) / V))
@@ -506,7 +539,7 @@ function Terrain.preview(plan: Plan, region: { number }, step: number?): { { any
 			local p01, m01 = node(i, j + k)
 			local p11, m11 = node(i + k, j + k)
 			-- a little play in the colour, so a lawn isn't one flat sheet in the preview
-			local shade = 0.97 + 0.06 * ((i * 7 + j * 13) % 5) / 4
+			local shade = 0.985 + 0.03 * ((i * 7 + j * 13) % 5) / 4
 			local flat = p00.Y == p10.Y and p00.Y == p01.Y and p00.Y == p11.Y
 			flat = flat and m10 == m and m01 == m and m11 == m
 			if flat then

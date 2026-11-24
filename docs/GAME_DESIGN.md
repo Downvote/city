@@ -443,7 +443,7 @@ they always were) in the middle of a ring of roads and new districts all round:
   office, a basketball court, and the pond park, which fills its block's middle, open to Main Street, with houses
   on its other three sides. Behind the rows each block is lawn with a gravel path, and the little gardens and
   play areas are there.
-- **The hills** (north): faceted low poly hills you can walk all over, wooded thicker to the east. A path of
+- **The hills** (north): smooth rolling hills of Roblox terrain you can walk all over, wooded thicker to the east. A path of
   stepping stones climbs from Hill Road to the lookout on the top, a platform with ramps up to it and a telescope.
   There's a farm on a terrace (barn, silo, fields, hay and cows, and a windmill that turns), an observatory, a
   radio mast, and a camp in the pines with tents round a fire and a log cabin. A quiet cove waits on the north
@@ -1512,6 +1512,20 @@ where the low sun catches the tops. They come in three sizes: young firs of abou
 of 26, and most of the woods are firs now. The broadleaf trees have a full, soft crown of seven leafy clumps.
 Bushes are clumps dark at the foot and light on top, hedges are clipped with rounded edges, and rocks carry moss.
 Build mode's oak, pine, blossom and swing trees are drawn the same way. Every crown still sways in the wind.
+
+### The island as terrain: long grass, a wavy beach, water that laps
+
+> the shoreline should be wavy, with water lapping up to it instead of what it is now
+
+> also, make the grass and plants like in the image
+
+(With a picture of the west beach, whose edge was a run of big straight sided steps, and later one of a hazy
+hilltop deep in long grass.) The island's ground is Roblox terrain, written when the server starts. The grass is
+Roblox's own long terrain grass, golden green and waving in a light breeze. The beach runs all round the island in
+soft curves of different sizes and slopes gently into clear turquoise water with small waves that run up the sand.
+The hills are smooth and rolling, with bits of rock on the steepest slopes and a worn dirt path under the stepping
+stones. No blades grow under anything built: roads, paving, floors and the plots sit on short grass with none.
+Things on the beach follow the new water's edge, and the rowing boats are pulled up just above it.
 
 ## 11. Writing
 

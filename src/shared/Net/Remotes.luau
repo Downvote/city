@@ -60,6 +60,9 @@ Remotes.Events = {
 	"Earned",
 	"Say", -- server -> client: (model, text) speech bubble (also visible to everyone nearby)
 	"Talk", -- server -> client: { vid, text, note, model } what your villager said when you held E on them
+	-- server -> every client: (at, puff?, text?, rarity?) a piece was used (Npc/Use.show): a puff from
+	-- it, and for a player's go what happened, over it (client World/Interact)
+	"Used",
 }
 
 local folder: Folder? = nil

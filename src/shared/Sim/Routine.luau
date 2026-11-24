@@ -7,8 +7,9 @@
 --   work    a villager with a job spends the work day at their workplace, going round the job's
 --           own loop of spots (Routine.loop): behind the counter, at the shelf, at the board.
 --   break   now and then they leave it for a little while: a sit down, a word with a neighbour,
---           a stroll, a call at somebody else's workplace, a stretch. Who they are decides how
---           often, how long and what (Personalities' lazy, focus and social).
+--           a stroll, a call at somebody else's workplace, a stretch, a go at something near
+--           (Sim/Uses: the piano, a swing, the fridge). Who they are decides how often, how long
+--           and what (Personalities' lazy, focus, social and mischief).
 --   potter  off work, on a day off, or with no job: small things one after another, and hardly
 --           ever just standing.
 --   sleep   at night, and all day when they are sick.
@@ -312,7 +313,8 @@ export type Ctx = {
 	sick: boolean?,
 	dayOff: boolean?,
 	-- what there is to do just now: `sit` (a free seat), `chat` (somebody free), `visit` (a
-	-- workplace with its worker at it), `look` (something worth a look). Only false rules out.
+	-- workplace with its worker at it), `look` (something worth a look), `use` (a piece near to
+	-- have a go at: Sim/Uses). Only false rules out.
 	can: { [string]: boolean }?,
 	-- steps of the loop they found no way to (never the workplace's own spot)
 	blocked: { [number]: boolean }?,
@@ -321,7 +323,8 @@ export type Ctx = {
 -- What they do now.
 export type Turn = {
 	kind: string, -- "sleep", "work", "break" or "potter"
-	what: string?, -- a break: sit, chat, stroll, visit, stretch. Pottering: those but stretch, and look, gesture, idle
+	what: string?, -- a break: sit, chat, stroll, visit, stretch, use. Pottering: those but stretch, and look, gesture, idle
+	-- (a "use" lasts as long as the piece's own stay, or what is left of the break: Sim/Uses)
 	step: number?, -- work: which step of the loop
 	seconds: number, -- how long: at the spot (work), for the whole break, or at the end of it (pottering)
 	say: string?, -- work: a line from the job to say here

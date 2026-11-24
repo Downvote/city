@@ -124,8 +124,15 @@ local function buildTerrain(groundPrims: { any }, placements: { any }, drawn: { 
 	for _, name in Ground.Materials do
 		mats[name] = (Enum.Material :: any)[name]
 	end
-	local plan = Ground.plan(TownMap.cover(groundPrims, placements, drawn))
+	-- (a breath now and then, so the server isn't stuck in one long step)
 	local rest = os.clock()
+	local function pause()
+		if os.clock() - rest > 0.1 then
+			task.wait()
+			rest = os.clock()
+		end
+	end
+	local plan = Ground.plan(TownMap.cover(groundPrims, placements, drawn), pause)
 	local classic = false
 	for _, tile in Ground.tiles(plan) do
 		local lo, hi, channels = Ground.voxels(plan, tile, mats)
@@ -144,13 +151,10 @@ local function buildTerrain(groundPrims: { any }, placements: { any }, drawn: { 
 			local materials, occupancy = Ground.classic(channels, mats)
 			terrain:WriteVoxels(region, Ground.Voxel, materials, occupancy)
 		end
-		if os.clock() - rest > 0.1 then
-			task.wait()
-			rest = os.clock()
-		end
+		pause()
 	end
 	for _, block in Ground.openSea() do
-		terrain:FillBlock(CFrame.new(block[1]), block[2], mats[block[3]])
+		terrain:FillBlock(CFrame.new(block.center), block.size, mats[block.material])
 	end
 	print(("[World] terrain written in %.1f s"):format(os.clock() - started))
 end

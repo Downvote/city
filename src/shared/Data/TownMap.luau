@@ -1010,8 +1010,8 @@ function TownMap.ground(region: Region?): { Prim }
 end
 
 -- What is built on the island, for the terrain under it: Roblox's grass blades show through a
--- floor laid on them, so Data/Terrain grows none under anything here. Rectangles { x1, z1, x2,
--- z2, kind }: "paved" for the ground's own surfaces (roads, pavements, paving, the boardwalk, the
+-- floor laid on them, so Data/Terrain grows none under anything here. Rectangles of a kind:
+-- "paved" for the ground's own surfaces (roads, pavements, paving, the boardwalk, the
 -- square's lawns) and the players' plots, "path" under the stepping stones up the hills, and
 -- "built" for what a placed model lays on the ground: each of its shapes that reaches down to it
 -- and is more than a slip of a thing (a floor, a plinth, a pond, a planter or a bush; not a post
@@ -1022,7 +1022,8 @@ function TownMap.cover(ground: { Prim }?, placements: { Placement }?, drawn: { [
 	for _, p in Geometry.flatten(ground or TownMap.ground()) do
 		if p.name ~= "SeaWall" and (p.transp or 0) < 0.99 then
 			local lo, hi = Geometry.bounds({ p })
-			table.insert(out, { lo.X, lo.Z, hi.X, hi.Z, if p.name == "PathStone" then "path" else "paved" })
+			local kind = if p.name == "PathStone" then "path" else "paved"
+			table.insert(out, { x1 = lo.X, z1 = lo.Z, x2 = hi.X, z2 = hi.Z, kind = kind })
 		end
 	end
 	-- the plots, where players lay their floors
@@ -1030,7 +1031,13 @@ function TownMap.cover(ground: { Prim }?, placements: { Placement }?, drawn: { [
 	for i = 1, Tuning.Plot.Count do
 		local f = Town.plotFrame(i)
 		local a, b = f * Vector3.zero, f * Vector3.new(size, 0, size)
-		table.insert(out, { math.min(a.X, b.X), math.min(a.Z, b.Z), math.max(a.X, b.X), math.max(a.Z, b.Z), "paved" })
+		table.insert(out, {
+			x1 = math.min(a.X, b.X),
+			z1 = math.min(a.Z, b.Z),
+			x2 = math.max(a.X, b.X),
+			z2 = math.max(a.Z, b.Z),
+			kind = "paved",
+		})
 	end
 	-- each model's footprints on the ground, in its own frame, worked out once a model
 	local feet: { [string]: { { number } } } = {}
@@ -1039,7 +1046,7 @@ function TownMap.cover(ground: { Prim }?, placements: { Placement }?, drawn: { [
 		if got then
 			return got
 		end
-		local rects = {}
+		local rects: { { number } } = {}
 		for _, q in Geometry.flatten((drawn and drawn[name]) or TownMap.prims(name)) do
 			if (q.transp or 0) < 0.9 then
 				local lo, hi = Geometry.bounds({ q })
@@ -1054,7 +1061,7 @@ function TownMap.cover(ground: { Prim }?, placements: { Placement }?, drawn: { [
 		table.sort(rects, function(a, b)
 			return a[5] > b[5]
 		end)
-		local kept = {}
+		local kept: { { number } } = {}
 		for _, q in rects do
 			local inside = false
 			for _, k in kept do
@@ -1076,12 +1083,19 @@ function TownMap.cover(ground: { Prim }?, placements: { Placement }?, drawn: { [
 		if pl.tag ~= "backdrop" and pos.Y - Terrain.height(pos.X, pos.Z) < 3 then
 			for _, f in footprints(pl.name) do
 				local x1, z1, x2, z2 = math.huge, math.huge, -math.huge, -math.huge
-				for _, c in { { f[1], f[2] }, { f[3], f[2] }, { f[1], f[4] }, { f[3], f[4] } } do
-					local w = pl.cf * Vector3.new(c[1], 0, c[2])
+				for _, c in
+					{
+						Vector3.new(f[1], 0, f[2]),
+						Vector3.new(f[3], 0, f[2]),
+						Vector3.new(f[1], 0, f[4]),
+						Vector3.new(f[3], 0, f[4]),
+					}
+				do
+					local w = pl.cf * c
 					x1, z1 = math.min(x1, w.X), math.min(z1, w.Z)
 					x2, z2 = math.max(x2, w.X), math.max(z2, w.Z)
 				end
-				table.insert(out, { x1, z1, x2, z2, "built" })
+				table.insert(out, { x1 = x1, z1 = z1, x2 = x2, z2 = z2, kind = "built" })
 			end
 		end
 	end
@@ -3010,12 +3024,25 @@ function TownMap.placements(): { Placement }
 	-- things left on the sand: towels, sandcastles, beach balls and driftwood; surfboards, a
 	-- volleyball net and rowing boats pulled up at the water's edge
 	local sand = Rng.new(47)
+	local left: { Vector3 } = {}
 	local function onSand(name: string, count: number)
 		for _ = 1, count do
 			local x = sand:float(-IX + 40, IX - 40)
 			if clearOfPiers(x) and math.abs(x) > 16 and math.abs(x - 130) > 26 and math.abs(x + 520) > 26 then
 				local frac = sand:float(8, B - 9) / B
-				onBeach(name, "south", x, frac, sand:float(0, 360), 0)
+				local yaw = sand:float(0, 360)
+				-- (never on top of something already left there)
+				local bx, bz = Terrain.onBeach("south", x, frac)
+				local clear = true
+				for _, p in left do
+					if (p - Vector3.new(bx, 0, bz)).Magnitude < 9 then
+						clear = false
+					end
+				end
+				if clear then
+					table.insert(left, Vector3.new(bx, 0, bz))
+					onSandAt(name, bx, bz, yaw, 0)
+				end
 			end
 		end
 	end

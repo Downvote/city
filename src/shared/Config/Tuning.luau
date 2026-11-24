@@ -261,6 +261,8 @@ Tuning.Routine = {
 		{ kind = "stroll", base = 2, trait = "focus", per = -1 },
 		{ kind = "visit", base = 0.4, trait = "social", per = 1.2 }, -- a call at somebody else's workplace
 		{ kind = "stretch", base = 1, trait = "lazy", per = 0 }, -- a few steps off, arms up, a look at the view
+		-- a go at something near the workplace (Data/Interactions: the piano, the fridge, a swing)
+		{ kind = "use", base = 0.5, trait = "mischief", per = 0.8 },
 	},
 	Repeat = 0.3, -- the same thing twice running is this much less likely
 	-- off work, and all day for a villager with no job: the same way of weighing
@@ -274,6 +276,7 @@ Tuning.Routine = {
 		{ kind = "visit", base = 0.7, trait = "social", per = 0 },
 		{ kind = "gesture", base = 0.6, trait = "social", per = 0 },
 		{ kind = "idle", base = 0.3, trait = "lazy", per = 0 }, -- just standing: seldom, and never twice running
+		{ kind = "use", base = 0.9, trait = "mischief", per = 0.8 }, -- a go at something (Data/Interactions)
 	},
 	Pause = { 0.5, 1.5 }, -- seconds between one thing and the next
 	Sit = { 8, 18 }, -- seconds on a seat
@@ -282,6 +285,34 @@ Tuning.Routine = {
 	Stroll = { 1.5, 3.5 }, -- the stop at the end of a stroll
 	Gesture = 3, -- seconds a wave or a little dance takes
 	Idle = { 2, 4 }, -- seconds of just standing there
+}
+
+-- Using things (Data/Interactions, Sim/Uses) ------------------------------------
+-- The user: "just like tomodachi life, make it such that some obejcts have a random chance of
+-- having unique interactions with it". A villager on a break or pottering about goes and uses a
+-- piece near them (Routine's "use"); a player can hold E on some. The chances of each outcome
+-- are the weights in Data/Interactions; tests/specs/Uses.spec.luau holds them to these.
+Tuning.Uses = {
+	Reach = 48, -- studs: how far off a piece may be for a villager pottering about (a break: Routine.BreakReach)
+	Near = 20, -- studs: a piece this far off is half as likely to be picked as one right by them
+	Front = 1.45, -- studs in front of a piece where its user stands, when the piece says no more
+	Outcome = 0.55, -- how far through a go its outcome comes
+	Say = 0.45, -- how likely a line of their own is while at it (an outcome that says something always does)
+	Invite = 0.5, -- a piece two can use: how likely they bring along somebody free nearby
+	Wait = 6, -- seconds the first waits at the piece for the one they brought
+	Repeat = 0.3, -- the same piece twice running is this much less likely
+	LateHour = 19, -- outcomes marked `late` only from this hour
+	Range = 22, -- studs: who is near enough to clap, or to look round
+	Proud = 0.04, -- studs a trace lies above what it lands on
+	TraceSeconds = 150, -- how long a trace stays
+	Traces = 6, -- the most on one plot at once (the oldest goes)
+	-- holding E on a piece
+	HoldSeconds = 0.3,
+	Distance = 8, -- studs: how close you stand for the prompt to show
+	Reaches = 14, -- studs: the server's check of where you stand
+	Cooldown = 1.2, -- seconds between two goes for one player
+	Rest = 2.5, -- seconds a piece rests between two goes
+	Bubble = 3.5, -- seconds what happened shows over the piece
 }
 
 -- The look of the world ----------------------------------------------------

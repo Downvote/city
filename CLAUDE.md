@@ -63,7 +63,13 @@ The town is a big bright island (docs/GAME_DESIGN.md section 9; the user once ha
 pack, then said "never mind, go back to the original map", so this is it): the old town and its plots in the middle, a ring of
 roads (`Town.Roads`), downtown east, the civic quarter west (built up like downtown but homelier: rows of town
 houses round every block, the civic buildings standing in the rows: "the side with less buildings should have much
-more buildings, as much as in the city side"), the hills north (`Data/Hills`), the waterfront south.
+more buildings, as much as in the city side"), the hills north (`Data/Hills`), the waterfront south. The
+island's natural ground is Roblox terrain (`Data/Terrain`, written by `World.buildTerrain` when the server starts:
+"the shoreline should be wavy, with water lapping up to it" and "make the grass and plants like in the image"):
+Roblox's own long grass (never give MaterialService a Grass override: the blades only grow on Roblox's own grass),
+a beach in sine wave curves sloping into terrain water with small waves, smooth hills (`Hills.at`). Nothing built
+may stand on grass with blades: `TownMap.cover` lists what is built and the terrain under it has no blades, so a
+new kind of ground part or a placed model is covered by rule. The previews draw the terrain as triangles.
 `Data/TownMap` lays out the ground and where everything stands, `Data/CityModels` draws the buildings and landmarks,
 `Data/Places` lists the places to find. The user wants it detailed like a classic city builder: buildings on
 landscaped lots (`CityModels.lot`), window bays, signs, roof details, parked cars, groves, textured ground, all
@@ -162,7 +168,7 @@ be coming out of the corners of the screen instead of floating. vertically flip 
 one of the 4 icons. also, the quest tab and currency/stats tab should also be part of the left side edge"): the
 clock's slab hangs from the top right corner and the menu bar comes out of the bottom left, both leaning the other
 way (`Flip`), the Build button runs off the bottom right, the stats and quests start at the left edge. Never float
-one of them clear of its edge. The ground is flat colour. Build
+one of them clear of its edge. Build
 screens from `UI/Kit` (rounded cards with pill banners and soft shadows, rounded buttons on a soft base,
 round icon buttons with a caption pill, translucent dark pills over the 3D view) and `UI/Icons`
 (drawn icons, never emoji in the interface). The user asked for wobbly bubbles round text, wobbly buttons,

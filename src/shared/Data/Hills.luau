@@ -61,7 +61,8 @@ end
 -- wall behind the observatory and the mast: the hills are smooth terrain now, and a drop the
 -- facets once spread over a cell would show.)
 local function shores(x: number, z: number): number
-	return (1 - smoothstep(Hills.Z2 - 165, Hills.Z2 - 5, z)) * (1 - smoothstep(Hills.X2 - 170, Hills.X2 - 10, math.abs(x)))
+	return (1 - smoothstep(Hills.Z2 - 165, Hills.Z2 - 5, z))
+		* (1 - smoothstep(Hills.X2 - 170, Hills.X2 - 10, math.abs(x)))
 end
 
 -- The plateaus' heights, worked out once.

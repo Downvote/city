@@ -352,6 +352,7 @@ end
 --          the half space n.p < D, which hides what is in it
 --   far = true to count big layers facing up closer than Z.Far
 --   under = { [g] = true }: groups whose faces looking down are never seen (the ground's)
+--   ground = function(x, z): the terrain's height there, which hides whatever is under it
 -- Returns findings: { a = i, b = j, cls = "near" | "far", area, gap, seen, at = { x, y, z } }
 function Z.scan(prims, opts)
 	opts = opts or {}
@@ -360,6 +361,7 @@ function Z.scan(prims, opts)
 	local supports = opts.supports or {}
 	local wantFar = opts.far == true
 	local under = opts.under or {}
+	local groundAt = opts.ground
 	local pad = if wantFar then Z.Far + 0.01 else Z.Near + 0.01
 
 	local n = #prims
@@ -570,6 +572,9 @@ function Z.scan(prims, opts)
 
 	-- is the point inside a solid other than a and b, or under the ground of either's group?
 	local function hidden(a, b, x, y, z)
+		if groundAt and y < groundAt(x, z) - Z.Margin then
+			return true
+		end
 		for _, g in { group[a], group[b] } do
 			local s = g and supports[g]
 			if s and s[1] * x + s[2] * y + s[3] * z < s[4] - Z.Margin then
@@ -1180,8 +1185,18 @@ function Z.jobs(scope: string, match: ((string) -> boolean)?): { any }
 					unit[#prims], group[#prims] = g, g
 				end
 			end
+			-- (the island's ground is terrain: what lies under its surface is never seen)
+			local Terrain = need("Data.Terrain")
 			return prims,
-				{ unit = unit, group = group, supports = supports, far = true, names = names, under = { true } }
+				{
+					unit = unit,
+					group = group,
+					supports = supports,
+					far = true,
+					names = names,
+					under = { true },
+					ground = Terrain.height,
+				}
 		end)
 	end
 	return jobs

@@ -13,12 +13,14 @@
 --   preset:<id>        a ready-made building (cottage, family, townhouse, library, cafe...)
 --   presets            all of them in a row (add :inside to leave the roofs off)
 --   ambient            the cars and the bus
+--   props              what random events bring into the world (props:<id>,<id> for some)
 --   inside:<kind>,...  furnished rooms with the roof off (bakery, grocer, books, clothes, cafe,
 --                      toys, flowers, post, lobby, flats, home, library, museum, cinema, station,
 --                      school, clinic, department); a kind may carry a size: library=56x28x12
 --   map                the middle of town: streets, plaza and street furniture, on the terrain
 --   map:x1,z1,x2,z2    another part of town (the terrain is drawn as faceted ground of its
 --                      materials' colours, finer the smaller the part, with the sea over it)
+--   stage:<id>         a cutscene's set (Data/Stages); tools/preview/stage.sh draws it from its shots
 
 local fs = require("@lune/fs")
 local process = require("@lune/process")
@@ -41,7 +43,7 @@ local scene = process.args[1] or "all"
 local outPath = process.args[2] or "out/preview.json"
 
 local prims = {}
-local tris = {} -- the terrain's triangles: { a, b, c, color, mat, transp }
+local tris = {} -- the terrain's triangles (Terrain.preview)
 
 local function addPrims(list, frame)
 	-- a piece (Geometry.piece) is drawn as the shapes it is made of
@@ -227,12 +229,124 @@ elseif scene:sub(1, 7) == "preset:" or scene:sub(1, 7) == "presets" then
 		plan = trial
 		x += p.w + 6
 	end
+elseif scene == "props" or scene:sub(1, 6) == "props:" then
+	-- props or props:<id>,<id>... : the things events bring into the world (Data/EventProps)
+	local EventProps = R(Shared .. "Data.EventProps")
+	local ids = {}
+	if scene == "props" then
+		for _, p in EventProps.list do
+			table.insert(ids, p.id)
+		end
+	else
+		for id in scene:sub(7):gmatch("[^,]+") do
+			table.insert(ids, id)
+		end
+	end
+	local x, z, depth, n = 0, 0, 0, 0
+	for _, id in ids do
+		local p = EventProps.get(id)
+		assert(p, "no prop " .. id)
+		addPrims(EventProps.prims(id), CFrame.new(x + p.size.X / 2, 0, z))
+		x += p.size.X + 2
+		depth = math.max(depth, p.size.Z)
+		n += 1
+		if n % 6 == 0 then
+			x, z, depth = 0, z + depth + 3, 0
+		end
+	end
 elseif scene == "ambient" then
 	local AmbientModels = R(Shared .. "Data.AmbientModels")
 	addPrims(AmbientModels.preview())
 elseif scene == "town" then
 	local TownModels = R(Shared .. "Data.TownModels")
 	addPrims(TownModels.preview())
+elseif scene:sub(1, 6) == "stage:" then
+	-- stage:<id> a cutscene's set (Data/Stages). Its light, sky, shots and a stand-in figure on
+	-- each mark go beside the JSON (<out>.stage.json) for tools/preview/stage.py, which draws the
+	-- set from its shots as the game's viewport lights it (tools/preview/stage.sh does both)
+	local Stages = R(Shared .. "Data.Stages")
+	local s = assert(Stages.get(scene:sub(7)), "no stage " .. scene:sub(7))
+	addPrims(Stages.prims(s.id))
+	local function v(x)
+		return { x.X, x.Y, x.Z }
+	end
+	local function c(x)
+		return { x.R, x.G, x.B }
+	end
+	local function shot(sh)
+		return { eye = v(sh.eye), look = v(sh.look), fov = sh.fov, sky = sh.sky }
+	end
+	local shots = {}
+	for _, e in Stages.allShots(s) do
+		shots[e.name] = shot(e.shot)
+	end
+	for name, sh in s.shots do
+		if sh.to then
+			shots[name .. ":mid"] = shot({ eye = sh.eye:Lerp(sh.to.eye, 0.5), look = sh.look:Lerp(sh.to.look, 0.5), fov = sh.fov })
+		end
+	end
+	-- a stand-in on each mark: legs, body, arms and a head with two eyes on the side it faces
+	local figures = {}
+	local SHIRTS = { roblox.Color3.fromRGB(232, 120, 110), roblox.Color3.fromRGB(110, 156, 222), roblox.Color3.fromRGB(240, 196, 92) }
+	for i, m in s.marks do
+		local cf = CFrame.new(m.at) * CFrame.Angles(0, math.rad(m.yaw) + math.pi, 0)
+		local skin, legs = roblox.Color3.fromRGB(236, 196, 160), roblox.Color3.fromRGB(70, 78, 110)
+		local parts = {}
+		local function box(x, y, z, sx, sy, sz, col)
+			table.insert(parts, { cf = cf * CFrame.new(x, y, z), size = roblox.Vector3.new(sx, sy, sz), color = col })
+		end
+		if m.sit then
+			for _, sx in { -0.5, 0.5 } do
+				box(sx, 0.3, -0.9, 0.9, 0.7, 2.0, legs)
+				box(sx, -0.6, -1.75, 0.9, 1.6, 0.8, legs)
+			end
+		else
+			for _, sx in { -0.5, 0.5 } do
+				box(sx, 1.0, 0, 0.9, 2.0, 0.9, legs)
+			end
+		end
+		local t = if m.sit then 0.3 else 2.0
+		box(0, t + 1.0, 0, 2.0, 2.0, 1.0, SHIRTS[i] or SHIRTS[1])
+		for _, sx in { -1.45, 1.45 } do
+			box(sx, t + 1.0, 0, 0.9, 2.0, 0.9, SHIRTS[i] or SHIRTS[1])
+		end
+		box(0, t + 2.6, 0, 1.2, 1.2, 1.2, skin)
+		box(0, t + 3.3, 0.05, 1.3, 0.35, 1.3, roblox.Color3.fromRGB(96, 70, 60))
+		for _, sx in { -0.25, 0.25 } do
+			box(sx, t + 2.65, -0.62, 0.16, 0.22, 0.06, roblox.Color3.fromRGB(40, 36, 44))
+		end
+		for _, p in parts do
+			table.insert(figures, {
+				shape = "Block",
+				cf = { p.cf:GetComponents() },
+				size = { p.size.X, p.size.Y, p.size.Z },
+				color = { p.color.R, p.color.G, p.color.B },
+				transp = 0,
+				mat = "SmoothPlastic",
+			})
+		end
+	end
+	local sky = {}
+	for k, x in s.sky do
+		if typeof(x) == "Color3" then
+			sky[k] = c(x)
+		elseif type(x) == "table" then
+			sky[k] = { dir = v(x.dir), size = x.size, color = c(x.color), glow = x.glow and c(x.glow), phase = x.phase }
+		else
+			sky[k] = x
+		end
+	end
+	fs.writeFile(
+		outPath .. ".stage.json",
+		serde.encode("json", {
+			id = s.id,
+			light = { ambient = c(s.light.ambient), color = c(s.light.color), dir = v(s.light.dir) },
+			sky = sky,
+			shots = shots,
+			bounds = { lo = v(s.bounds.lo), hi = v(s.bounds.hi) },
+			figures = figures,
+		})
+	)
 else
 	error("unknown scene " .. scene)
 end
@@ -250,7 +364,7 @@ for _, p in prims do
 	})
 end
 for _, t in tris do
-	local a, b, c = t[1], t[2], t[3]
+	local a, b, c = t.a, t.b, t.c
 	local lo, hi = a:Min(b):Min(c), a:Max(b):Max(c)
 	local mid = (lo + hi) / 2
 	table.insert(out, {
@@ -258,9 +372,9 @@ for _, t in tris do
 		verts = { a.X, a.Y, a.Z, b.X, b.Y, b.Z, c.X, c.Y, c.Z },
 		cf = { mid.X, mid.Y, mid.Z, 1, 0, 0, 0, 1, 0, 0, 0, 1 },
 		size = { hi.X - lo.X, hi.Y - lo.Y, hi.Z - lo.Z },
-		color = { t[4].R, t[4].G, t[4].B },
-		transp = t[6],
-		mat = t[5],
+		color = { t.color.R, t.color.G, t.color.B },
+		transp = t.transp,
+		mat = t.mat,
 	})
 end
 local dir = outPath:match("^(.*)/[^/]*$")

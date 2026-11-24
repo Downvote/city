@@ -90,6 +90,27 @@ The contract between the parts of the game. Update it with every change to an AP
 - A prim with `attrs.NightColor` on a `glow` role is a window: the World service gives it that colour (and Neon)
   at night and its own back in the morning (`CityModels.lit`).
 
+## The island's terrain
+
+`Data/Terrain` lays out the island's natural ground, which `World.buildTerrain` writes as Roblox terrain when the
+server starts, before the parts go up: the water settings and material colours, a clear, then tiles of 4 stud
+columns with `WriteVoxelChannels` (sand and water share a voxel, so the water's edge lies on the slope; `classic()`
+is the `WriteVoxels` fallback, with a warning), then `openSea()` (`FillBlock`s out to 3,000 studs). It holds the
+island's measures (TownMap reads them), the coast (a position round the island and how far out a point is; the
+water's edge, the grass edge and the deep drop are sums of sine waves that close on themselves), `natural(x, z)`
+(height and material: grass at -0.1 or `Hills.at - 0.1`, rock on slopes past 0.45, sand falling to the sea at -1.2
+and on down, Slate for the deep floor), `plan(cover)` (every column; grass under anything built becomes LeafyGrass,
+or Ground under the hill's stepping stones, and columns fully under paving sink out of sight), `voxels()`,
+`preview()` (triangles: the preview JSON's `Tri` shape) and the colours, water, grass length and wind.
+`TownMap.cover(ground?, placements?, drawn?)` lists what is built by rule (every ground part, every plot, every
+shape of a placed model that touches the ground and covers about 3 square studs or more). `Hills.at` is the smooth
+surface (`Hills.prims` is gone). The place file sets what scripts can't: Workspace/Terrain (`Decoration`,
+`GrassLength`, `ShorelinesUpgraded`, `SmoothVoxelsUpgraded`, the `Water*` settings) and `Workspace.GlobalWind`.
+MaterialService never replaces Grass (`scripts/sync_materials.py` refuses it), so terrain grass is Roblox's own
+with its blades; the library grass picture is the look `Grass:Lawn`. The Terrain spec checks the shore is wavy,
+the water's edge sits on a gentle slope inside the shallows, no grass is under anything built or on a road or a
+plot, the terrain follows `Hills.at`, the tiles, the open sea, the beach props and the place's settings.
+
 ## Pieces and material looks
 
 - A piece may be given a `name` once made (`Geometry.piece(...)`, then `.name = "Leaf"`): the Builder puts it on the merged mesh, on the round shapes placed beside it and on every part when the piece is made as plain parts (a fir's whole crown is one swaying `Leaf`). `CityModels.fir(r, kind, at)` draws a fir (`young`, `fir` or `tall`: a trunk and one crown piece); `lowPine` is the fir, `lowPineBig` the spruce, `firYoung` the young one; `lowTree(r, x, y, z, s)` snaps `s` to 1 or 1.35 and turns each tree by its spot; `TownModels.tree` and `pine` draw those without Leaf names, as they sway whole by their model name.

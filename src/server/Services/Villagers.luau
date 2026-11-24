@@ -22,6 +22,7 @@ local EventEngine = require(Shared.Sim.EventEngine)
 local Life = require(Shared.Sim.Life)
 local Talk = require(Shared.Sim.Talk)
 local Routine = require(Shared.Sim.Routine)
+local Uses = require(Shared.Sim.Uses)
 local Sayings = require(Shared.Data.Sayings)
 local Rng = require(Shared.Util.Rng)
 local Text = require(Shared.Util.Text)
@@ -33,6 +34,7 @@ local Build = require(script.Parent.Build)
 local World = require(script.Parent.World)
 local Avatar = require(script.Parent.Avatar)
 local Npc = require(script.Parent.Parent.Npc.Npc)
+local Use = require(script.Parent.Parent.Npc.Use)
 
 local Villagers = {}
 
@@ -584,19 +586,71 @@ local function rest(player: Player, vid: string, npc: any, seconds: number, ctx:
 	return true
 end
 
+-- Using things (the pieces round about) ------------------------------------------------------
+--
+-- The user: "just like tomodachi life, make it such that some obejcts have a random chance of
+-- having unique interactions with it". On a break or pottering about a villager may go and use a
+-- piece near them (Data/Interactions: the piano, a swing, the bookshelf, the fridge and more).
+-- Sim/Uses picks which and how the go turns out, Npc/Use acts it out, and useThing (below) does
+-- what it leaves behind.
+
+local UK = Tuning.Uses
+local inUse: { [Player]: { [string]: string } } = {} -- pieces being used this moment: item key -> vid
+local lastGo: { [Player]: { [string]: { piece: string?, outcome: any } } } = {} -- not twice running
+local usedEvent = Instance.new("BindableEvent")
+Villagers.Used = usedEvent.Event -- (player, vid, use id, outcome id) as a go turns out
+
+-- The free seats of one placed piece.
+local function seatsOf(player: Player, key: string): { Seat }
+	local folder = buildFolder(player)
+	local model = folder and folder:FindFirstChild(Builder.modelName("items", key))
+	local out = {}
+	if model then
+		for _, d in model:GetDescendants() do
+			if d:IsA("Seat") and not d.Occupant then
+				table.insert(out, d)
+			end
+		end
+	end
+	return out
+end
+
+-- The pieces within `reach` of `from` (in the world) a villager could go and use now: on their
+-- owner's own plan, not in use by somebody else, and with a seat free where it is sat on.
+local function usable(player: Player, from: Vector3, reach: number): { Uses.Candidate }
+	local profile = Data.get(player)
+	local i = Plots.indexOf(player)
+	if not profile or not i then
+		return {}
+	end
+	local out = {}
+	for _, c in Uses.around(profile.plan, Town.plotFrame(i):PointToObjectSpace(from), reach, inUse[player]) do
+		if c.use.how ~= "sit" or #seatsOf(player, c.key) > 0 then
+			table.insert(out, c)
+		end
+	end
+	return out
+end
+
 -- What there is to do round about: free seats, villagers free for a word, workplaces with their
 -- worker at them. Only within `reach` of `from` when given (a break keeps near the workplace).
 -- Somebody at work is somebody to talk to only for a worker on a break (a word with a
 -- neighbour over their counter); anyone else calls on them as a customer, or they would never
--- get any work done. `can` is what Routine.next is told.
-type Around = { seats: { Seat }, friends: { string }, open: { string }, can: { [string]: boolean } }
+-- get any work done. And the pieces they could use. `can` is what Routine.next is told.
+type Around = {
+	seats: { Seat },
+	friends: { string },
+	open: { string },
+	uses: { Uses.Candidate },
+	can: { [string]: boolean },
+}
 
 local function around(player: Player, vid: string, from: Vector3?, reach: number?): Around
 	local function near(p: Vector3): boolean
 		return from == nil or reach == nil or flat(p, from) <= reach
 	end
 	local onBreak = from ~= nil
-	local out: Around = { seats = {}, friends = {}, open = {}, can = {} }
+	local out: Around = { seats = {}, friends = {}, open = {}, uses = {}, can = {} }
 	for _, seat in seats(player) do
 		if near(seat.Position) then
 			table.insert(out.seats, seat)
@@ -622,7 +676,12 @@ local function around(player: Player, vid: string, from: Vector3?, reach: number
 			end
 		end
 	end
-	out.can = { sit = #out.seats > 0, chat = #out.friends > 0, visit = #out.open > 0 }
+	local me = Villagers.get(player, vid)
+	local at = from or (me and me:position())
+	if at then
+		out.uses = usable(player, at, reach or UK.Reach)
+	end
+	out.can = { sit = #out.seats > 0, chat = #out.friends > 0, visit = #out.open > 0, use = #out.uses > 0 }
 	return out
 end
 
@@ -712,6 +771,190 @@ local function sightSpot(player: Player): (Vector3?, Vector3?)
 		end
 	end
 	return nil, nil
+end
+
+-- Those near a go that came out well (or loud) do something about it: clap, look round or dance.
+-- `skip` are the ones at it. (Services/Interact uses it for a player's go too.)
+local function reactNear(player: Player, at: Vector3, how: string, skip: { [string]: boolean })
+	local profile = Data.get(player)
+	for _, other in if profile then profile.order else {} do
+		local o = Villagers.get(player, other)
+		if
+			not skip[other]
+			and o
+			and o.model.Parent
+			and not o.sleeping
+			and not Villagers.control(player, other)
+			and flat(o:position(), at) <= UK.Range
+		then
+			task.delay(rng:float(0.2, 0.9), function()
+				if how == "cheer" then
+					o:gesture("cheer")
+					o:icon("heart")
+				elseif how == "dance" then
+					o:gesture("dance", 3)
+					o:icon("music")
+				else
+					o:icon("question")
+				end
+			end)
+		end
+	end
+end
+Villagers.reactNear = reactNear
+
+-- Goes and uses one of the pieces round about (`near.uses`), now and then bringing somebody free
+-- along to a piece two can use. `seconds` is the most a break leaves for it (none: the piece's
+-- own stay), `maxPath` how far the walk there may be. False when it came to nothing (no way there,
+-- the seat taken): then they do something else.
+local function useThing(
+	player: Player,
+	vid: string,
+	npc: any,
+	near: Around,
+	ctx: Routine.Ctx,
+	seconds: number?,
+	maxPath: number?
+): boolean
+	local profile = Data.get(player)
+	local v = profile and profile.villagers[vid]
+	local i = Plots.indexOf(player)
+	if not profile or not v or not i or #near.uses == 0 then
+		return false
+	end
+	local gone = lastGo[player] or {}
+	lastGo[player] = gone
+	local mine = gone[vid] or {}
+	gone[vid] = mine
+	local c = Uses.choose(near.uses, v.pers, mine.piece, rng)
+	local def = c and Catalog.get(c.id)
+	if not c or not def or (inUse[player] and inUse[player][c.key]) then
+		return false
+	end
+	local frame = Town.plotFrame(i) * c.frame
+	local seats = if c.use.how == "sit" then seatsOf(player, c.key) else {}
+	if c.use.how == "sit" and #seats == 0 then
+		return false
+	end
+	-- their spot is the nearest, the friend's the next; each sits on the free seat by their spot
+	local from = npc:position()
+	local spots = table.clone(c.spots)
+	table.sort(spots, function(a, b)
+		return flat(frame * a.at, from) < flat(frame * b.at, from)
+	end)
+	local function seatBy(spot: Uses.Spot): Seat?
+		local best, bestD = nil, math.huge
+		for k, seat in seats do
+			local d = flat(seat.Position, frame * spot.at)
+			if d < bestD then
+				best, bestD = k, d
+			end
+		end
+		return if best then table.remove(seats, best) else nil
+	end
+	-- somebody free nearby, along for a piece two can use (not anybody at work)
+	local friend: string? = nil
+	if #spots > 1 and #near.friends > 0 and (c.use.how ~= "sit" or #seats > 1) and rng:chance(UK.Invite) then
+		local f = rng:pick(near.friends)
+		local fnpc = Villagers.get(player, f)
+		if fnpc and not fnpc.atWork and not fnpc.sleeping and not Villagers.control(player, f) then
+			friend = f
+		end
+	end
+	local fnpc = friend and Villagers.get(player, friend)
+	local fv = friend and profile.villagers[friend]
+	local vars = { name = v.name, other = if fv then fv.name else "", piece = string.lower(def.name) }
+	local hour = World.hour()
+	local stay = rng:float(c.use.stay[1], c.use.stay[2])
+	if seconds then
+		-- a break: what is left of it once the walk there and back is taken off
+		local walk = flat(frame * spots[1].at, from) / V.WalkSpeed * 1.3
+		stay = math.clamp(seconds - 2 * walk, RK.BreakStay, stay)
+	end
+	local function body(who: string, b: any, spot: Uses.Spot, mineToo: boolean): any
+		return {
+			npc = b,
+			at = frame * spot.at,
+			look = frame * spot.look,
+			seat = if c.use.how == "sit" then seatBy(spot) else nil,
+			here = function(): boolean
+				if Villagers.get(player, who) ~= b then
+					return false
+				end
+				local mode = Villagers.control(player, who)
+				return if mineToo then mode == nil else mode == "chat"
+			end,
+		}
+	end
+	local main = body(vid, npc, spots[1], true)
+	local job = {
+		use = c.use,
+		outcome = Uses.outcome(c.use.outcomes, v.pers, mine.outcome, rng, { pair = true, hour = hour }),
+		alone = Uses.outcome(c.use.outcomes, v.pers, mine.outcome, rng, { pair = false, hour = hour }),
+		seconds = stay,
+		main = main,
+		friend = if friend and fnpc then body(friend, fnpc, spots[2], false) else nil,
+		maxPath = maxPath,
+		rest = function(s: number): boolean
+			return rest(player, vid, npc, s, ctx)
+		end,
+		chatter = function(): string?
+			if #c.use.lines > 0 and rng:chance(UK.Say) then
+				return Uses.fill(rng:pick(c.use.lines), vars)
+			end
+			return nil
+		end,
+		lines = function(o: any, with: boolean): (string?, string?)
+			return Uses.say(o, vars, rng), if with and o.heart and fv then ownLine(fv, "happy") else nil
+		end,
+		happen = function(o: any, with: boolean)
+			mine.outcome = o
+			if o.mood then
+				Villagers.addMood(player, vid, o.mood)
+				if with and o.heart and friend then
+					Villagers.addMood(player, friend, o.mood)
+				end
+			end
+			-- a go at something together is a little bond either way, and a heart more so
+			if with and friend then
+				metEvent:Fire(player, vid, friend)
+				if o.heart then
+					npc:icon("heart")
+				end
+			end
+			if o.near then
+				reactNear(player, npc:position(), o.near, { [vid] = true, [friend or vid] = true })
+			end
+			if o.puff then
+				Use.show(frame * Vector3.new(0, math.min(def.size.Y, 4.5) * 0.85, 0), o.puff)
+			end
+			if o.trace then
+				local folder: any = Plots.villagerFolder(i)
+				Use.trace(folder and folder.Parent, o.trace, frame * CFrame.new(Uses.drop(c.id)))
+			end
+			if o.log then
+				Data.log(player, Uses.fill(o.log, vars))
+			end
+			if o.mood then
+				Data.push(player, "villagers")
+			end
+			usedEvent:Fire(player, vid, c.use.id, o.id)
+		end,
+	}
+	if friend then
+		Villagers.setControl(player, friend, "chat")
+	end
+	inUse[player] = inUse[player] or {}
+	inUse[player][c.key] = vid
+	mine.piece = c.key
+	local went = Use.act(job)
+	if inUse[player] and inUse[player][c.key] == vid then
+		inUse[player][c.key] = nil
+	end
+	if friend and Villagers.control(player, friend) == "chat" then
+		Villagers.setControl(player, friend, nil)
+	end
+	return went
 end
 
 -- How long to stay on a break once there, so that the walk back still fits in it.
@@ -878,6 +1121,10 @@ local function breakTurn(
 		if visit(player, vid, npc, rng:pick(near.open), RK.BreakReach) then
 			return os.clock() - start
 		end
+	elseif what == "use" and #near.uses > 0 then
+		if useThing(player, vid, npc, near, ctx, turn.seconds, RK.BreakReach * 1.5) then
+			return os.clock() - start
+		end
 	elseif what == "stroll" then
 		-- a turn round the plot near the workplace: out to a spot, a look round, and a stop or two
 		-- on the way back
@@ -922,6 +1169,10 @@ local function potterTurn(player: Player, vid: string, npc: any, turn: Routine.T
 		end
 	elseif what == "visit" and near and #near.open > 0 then
 		if visit(player, vid, npc, rng:pick(near.open)) then
+			return
+		end
+	elseif what == "use" and near and #near.uses > 0 then
+		if useThing(player, vid, npc, near, ctx) then
 			return
 		end
 	elseif what == "look" then
@@ -1855,6 +2106,8 @@ function Villagers.start()
 		talkTokens[player] = nil
 		talkedAt[player] = nil
 		lastSaid[player] = nil
+		inUse[player] = nil
+		lastGo[player] = nil
 	end)
 
 	-- players can sit on any seat they can reach

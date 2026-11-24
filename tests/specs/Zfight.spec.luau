@@ -14,9 +14,7 @@
 local Z = Harness.loadFile("tools/preview/zfight_lib.luau")()
 local Recipe = require("ReplicatedStorage.Shared.Build.Recipe")
 
-local KNOWN = {
-	"town:ground",
-}
+local KNOWN = {}
 
 local RED, BLUE, GREEN = Color3.fromRGB(200, 80, 80), Color3.fromRGB(80, 80, 200), Color3.fromRGB(80, 200, 80)
 
