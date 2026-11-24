@@ -64,6 +64,8 @@
 --   signs:boards        the boards on canopies and roofs
 --   signs:posters       adverts on posters and billboards, the cinema's posters
 --   signs:blades        blade signs, a hanging tile, the marquee, street plates, a vending machine
+--   bubbles             what hangs over villagers' heads, laid flat: speech cards, mood badges and
+--                       wish bubbles stacked, two heads' stacks kept apart
 --   hover               the main screen with the pointer on a few of its buttons (the band of light
 --                       stopped half way across); hover:menu the goals menu the same way
 -- Any scene can carry a prefix: light:<scene> builds it in the light look, relight:<scene>
@@ -479,6 +481,59 @@ elseif scene == "earned" then
 		card.AnchorPoint = roblox.Vector2.new(0, 0)
 		card.Position = UDim2.fromOffset(at[1], at[2])
 		card.GroupTransparency = at[3]
+	end
+	Sim.frames(2)
+elseif scene == "bubbles" then
+	-- what hangs over villagers' heads (Util/Bubble, World/Wishes), laid flat where three heads
+	-- would be and placed by World/BubbleLayout as World/Bubbles places them: one head with a
+	-- speech card, a mood badge and a craving stacked over it, a second close beside it whose
+	-- speech card has gone up over the first one's stack, and a third further off with a wish and
+	-- a sleepy badge (the BillboardGuis themselves can't be drawn here)
+	startHud()
+	local Bubble = Harness.require("ReplicatedStorage.Shared.Util.Bubble")
+	local Foods = Harness.require("ReplicatedStorage.Shared.Data.Foods")
+	local Wishes = Harness.require(Sim.CLIENT .. "World.Wishes")
+	local BubbleLayout = Harness.require(Sim.CLIENT .. "World.BubbleLayout")
+	local function speechSize(text)
+		return { w = math.min(248, #text * 8.2 + 30), h = 42 }
+	end
+	local heads = {
+		{ key = "a", x = 470, y = 560, depth = 18, said = "Morning. Have you seen my cat?", mood = "heart", food = Foods.list[1] },
+		{ key = "b", x = 560, y = 552, depth = 26, said = "She was on the roof again." },
+		{ key = "c", x = 930, y = 500, depth = 34, mood = "zzz", wish = "bed" },
+	}
+	local list = {}
+	for _, h in heads do
+		local items = {}
+		if h.said then
+			table.insert(items, speechSize(h.said))
+		end
+		if h.mood then
+			table.insert(items, { w = 36, h = 43 })
+		end
+		if h.food or h.wish then
+			table.insert(items, { w = 60, h = 67 })
+		end
+		table.insert(list, { key = h.key, x = h.x, y = h.y, depth = h.depth, items = items })
+	end
+	local placed = BubbleLayout.arrange(list, { Base = Bubble.Base, Gap = Bubble.Gap })
+	for _, h in heads do
+		local lifts = placed[h.key].lifts
+		local i = 0
+		local function put(fade)
+			i += 1
+			fade.Parent = Sim.gui
+			fade.Position = UDim2.fromOffset(h.x, h.y - lifts[i])
+		end
+		if h.said then
+			put((Bubble.speech(nil, h.said)))
+		end
+		if h.mood then
+			put(Bubble.mood(nil, h.mood))
+		end
+		if h.food or h.wish then
+			put(Wishes.face(nil, h.wish or "heart", h.food))
+		end
 	end
 	Sim.frames(2)
 elseif scene == "loading" then

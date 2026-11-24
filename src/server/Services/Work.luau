@@ -209,10 +209,12 @@ local function look(player: Player, s: Session, now: number)
 	local day = World.dayIndex()
 	local purse = if mine then PlayerWork.purse(mine, day) else nil
 	local def, frame = workplace(s.plot, s.key)
-	local piece = if not def or not frame or def.id ~= s.id
-		then "gone"
-		elseif sameFrame(frame, s.frame) then "same"
-		else "moved"
+	local piece = "same"
+	if not def or not frame or def.id ~= s.id then
+		piece = "gone"
+	elseif not sameFrame(frame, s.frame) then
+		piece = "moved"
+	end
 	local off, rise = math.huge, math.huge
 	if root then
 		off, rise = PlayerWork.offset(s.target.Position, root.Position)

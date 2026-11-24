@@ -12,38 +12,64 @@ local Hills = {}
 Hills.X1, Hills.X2 = -1100, 1100
 Hills.Z1, Hills.Z2 = 290, 940
 
--- round peaks: { x, z, height, radius }
+-- Behind the old town the hills start further north: its plots run 400 back from the main street
+-- (the user: "make player plots much bigger, double the size") and Hill Road runs behind them,
+-- so between the first avenues the foot of the hills is `depth` further north, and beside them it
+-- eases back to Z1 over `ease`. Past that, in front of downtown and the civic quarter, the hills
+-- are as they always were.
+Hills.Notch = { half = 560, ease = 160, depth = 200 }
+Hills.Rise = 120 -- the hills come up from nothing over this much, north of their foot
+
+-- round peaks: { x, z, height, radius }. (The lookout's moved north, and lost a little height, when
+-- the old town grew; the two small ones that stood behind the old town went north with it.)
 local PEAKS = {
-	{ 0, 640, 96, 230 },
+	{ 0, 720, 80, 230 },
 	{ -380, 760, 75, 190 },
 	{ 380, 760, 65, 200 },
 	{ 860, 720, 57, 210 },
 	{ -860, 720, 60, 200 },
-	{ -700, 480, 23, 240 },
-	{ 650, 520, 36, 220 },
-	{ 200, 440, 21, 140 },
-	{ -170, 470, 26, 150 },
+	{ -800, 480, 23, 240 },
+	{ 780, 490, 30, 220 },
+	{ 220, 620, 18, 130 },
+	{ -190, 630, 22, 140 },
 }
 
--- flat tops where things stand: { name, x, z, radius } (their height is the hills' there)
+-- flat tops where things stand: { name, x, z, radius } (their height is the hills' there). The
+-- farm and the camp stand clear of the notch behind the old town, the stones out of the farm's way.
 Hills.Plateaus = {
-	{ name = "lookout", x = 0, z = 640, r = 46 },
+	{ name = "lookout", x = 0, z = 720, r = 46 },
 	{ name = "observatory", x = -380, z = 760, r = 40 },
-	{ name = "farm", x = -700, z = 480, r = 130 },
-	{ name = "camp", x = 650, z = 520, r = 86 },
+	{ name = "farm", x = -800, z = 480, r = 130 },
+	{ name = "camp", x = 780, z = 490, r = 86 },
 	{ name = "radio", x = 380, z = 760, r = 30 },
 	{ name = "tarn", x = 860, z = 720, r = 46 }, -- a mountain lake
-	{ name = "stones", x = -860, z = 720, r = 34 }, -- a ring of standing stones
+	{ name = "stones", x = -920, z = 750, r = 34 }, -- a ring of standing stones
 }
 
--- ground kept flat (at 0): { x1, z1, x2, z2 } with a soft edge. The creator's meadow.
+-- ground kept flat (at 0): { x1, z1, x2, z2 } with a soft edge. The creator's meadow, behind Hill
+-- Road west of the stair.
 local FLATS = {
-	{ -600, 280, -120, 372 },
+	{ -540, 480, -300, 566 },
 }
 
 local function smoothstep(a: number, b: number, x: number): number
 	local t = math.clamp((x - a) / (b - a), 0, 1)
 	return t * t * (3 - 2 * t)
+end
+
+-- Where the hills start at x: Z1, or `depth` further north behind the old town.
+function Hills.foot(x: number): number
+	local N = Hills.Notch
+	return Hills.Z1 + N.depth * (1 - smoothstep(N.half, N.half + N.ease, math.abs(x)))
+end
+
+-- How much of the hills stands at x, z for the notch behind the old town: nothing south of the
+-- notch's foot between the first avenues, all of them past the notch's sides.
+local function notch(x: number, z: number): number
+	local N = Hills.Notch
+	local z0 = Hills.Z1 + N.depth
+	local inside = 1 - smoothstep(N.half, N.half + N.ease, math.abs(x))
+	return 1 - inside * (1 - smoothstep(z0, z0 + Hills.Rise, z))
 end
 
 local function raw(x: number, z: number): number
@@ -53,7 +79,7 @@ local function raw(x: number, z: number): number
 		h += p[3] * math.exp(-(dx * dx + dz * dz) / (p[4] * p[4]))
 	end
 	-- nothing at the edge by the town: rising from Hill Road
-	return h * smoothstep(Hills.Z1, Hills.Z1 + 120, z)
+	return h * smoothstep(Hills.Z1, Hills.Z1 + Hills.Rise, z)
 end
 
 -- Down to the shore at the north and at both ends. (This goes on after the flat tops are
@@ -71,7 +97,8 @@ for _, p in Hills.Plateaus do
 	plateauH[p.name] = raw(p.x, p.z)
 end
 
--- The height of the hills, worked out from the peaks, the flat tops and the meadow.
+-- The height of the hills, worked out from the peaks, the flat tops and the meadow, and cut
+-- back behind the old town.
 function Hills.smooth(x: number, z: number): number
 	local h = raw(x, z)
 	for _, p in Hills.Plateaus do
@@ -85,9 +112,9 @@ function Hills.smooth(x: number, z: number): number
 		local dx = math.max(f[1] - x, 0, x - f[3])
 		local dz = math.max(f[2] - z, 0, z - f[4])
 		local d = math.sqrt(dx * dx + dz * dz)
-		h *= smoothstep(0, 110, d)
+		h *= smoothstep(0, 150, d)
 	end
-	return h * shores(x, z)
+	return h * notch(x, z) * shores(x, z)
 end
 
 -- The height of a plateau's flat top.

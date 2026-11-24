@@ -78,7 +78,8 @@ local function piecesOf(model: Model): { BillboardGui }
 			table.insert(out, c)
 		end
 	end
-	for _, gui in tracked[model] or {} do
+	local own: { BillboardGui } = tracked[model] or {}
+	for _, gui in own do
 		if gui.Parent and gui.Enabled then
 			table.insert(out, gui)
 		end

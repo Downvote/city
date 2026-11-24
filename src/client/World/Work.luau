@@ -150,7 +150,10 @@ local function refresh(prompt: ProximityPrompt)
 	local here = job ~= nil and job.plot == plot and job.key == key
 	prompt.ActionText = if here then PlayerWork.StopAction else PlayerWork.Action
 	local free = here
-		or (type(key) == "string" and PlayerWork.staffedBy(State.data, key, Lighting.ClockTime, dayIndex(), os.time()) == nil)
+		or (
+			type(key) == "string"
+			and PlayerWork.staffedBy(State.data, key, Lighting.ClockTime, dayIndex(), os.time()) == nil
+		)
 	prompt.Enabled = own and free and not BuildMode.isActive()
 end
 

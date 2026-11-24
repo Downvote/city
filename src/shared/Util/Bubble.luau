@@ -227,6 +227,16 @@ function Bubble.mood(parent: Instance?, kind: string): CanvasGroup
 	return g
 end
 
+-- A square card for a picture (the wish bubble): `px` across, its rim in `color`, a tail under it.
+-- Returns the group and the card (put the picture in the card).
+function Bubble.square(parent: Instance?, px: number, color: Color3): (CanvasGroup, Frame)
+	local g = group(parent, Bubble.Base)
+	local card =
+		Bubble.card(g, { Size = UDim2.fromOffset(px, px), Radius = 14, Rim = color, RimAlpha = 0.05, RimThickness = 2 })
+	tail(g, GLASS, 0.08, 2)
+	return g, card
+end
+
 -- A head billboard to hang pieces in: tall, with the stack's point in its middle. It is drawn on
 -- top (World/Bubbles hides it when something solid is between it and the camera); `wide` is how
 -- wide its widest piece may get.

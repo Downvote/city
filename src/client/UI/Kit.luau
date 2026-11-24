@@ -1886,6 +1886,9 @@ local function focusBrackets(b: GuiObject, color: Color3): Frame
 	for _, corner in layer:GetChildren() do
 		if corner:IsA("Frame") then
 			corner:SetAttribute("Home", corner.Position)
+			-- they start a little in from the corners and clear, and close in from there
+			local inward = if corner.Name == "tl" then 4 else -4
+			corner.Position += UDim2.fromOffset(inward, inward)
 			for _, arm in corner:GetChildren() do
 				if arm:IsA("Frame") then
 					arm.BackgroundTransparency = 1

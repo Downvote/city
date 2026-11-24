@@ -135,12 +135,14 @@ describe("PlayerWork", function()
 		-- a new day empties it
 		expect(PlayerWork.purse(loaded, 4).paid).toBe(0)
 		-- broken data starts fresh and can't be used to earn past the cap
-		for _, broken in {
-			"lots",
-			{ day = 3, owed = 0, paid = -1e9 },
-			{ day = 3, owed = 0 / 0, paid = 0 },
-			{ day = "3", owed = 0, paid = 0 },
-		} do
+		for _, broken in
+			{
+				"lots",
+				{ day = 3, owed = 0, paid = -1e9 },
+				{ day = 3, owed = 0 / 0, paid = 0 },
+				{ day = "3", owed = 0, paid = 0 },
+			}
+		do
 			local q = Schema.newProfile()
 			q.work = broken
 			local fresh = PlayerWork.purse(q, 3)
