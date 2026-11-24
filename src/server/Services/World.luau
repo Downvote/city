@@ -91,6 +91,13 @@ local function signText(board: BasePart, text: string, face: Enum.NormalId?)
 	return label
 end
 
+-- What the server is doing while it starts, for the loading card (UI/Loading shows it).
+local function step(text: string)
+	workspace:SetAttribute("Startup", text)
+	print("[World] " .. text)
+end
+World.step = step
+
 -- The island's natural ground as Roblox terrain (Data/Terrain lays it out): the grass with its
 -- long blades, the hills, the beach whose edge at the water is a run of curves, and the sea with
 -- small waves that run up the sand. Written column by column round the island, in tiles, then
@@ -186,6 +193,7 @@ local function buildMap()
 	-- still gets plain grass and sea, and the rest of the town still goes up: a failure here used
 	-- to stop the server before the streets, the plots and the spawn were built, and players fell
 	-- through an empty world (the user: "it keeps spawning me below the world").
+	step("Writing the island's ground")
 	local wrote, why = pcall(buildTerrain, groundPrims, placements, drawn)
 	if not wrote then
 		warn("[World] the terrain couldn't be written, so the island is plain grass: " .. tostring(why))
@@ -210,6 +218,7 @@ local function buildMap()
 	local started = os.clock()
 	-- (a short while only, the most used first: the rest are merged as the town goes up, so the
 	-- server doesn't keep players on empty ground for a minute)
+	step("Merging the town's details")
 	local cut, failed, left = Builder.preparePieces(lists, Tuning.World.MergeBudget, weights)
 	if cut + failed + left > 0 then
 		print(
@@ -224,6 +233,7 @@ local function buildMap()
 
 	-- streets, sidewalks, the square and the market (Data/TownMap lays them out)
 	local building = os.clock()
+	step("Putting the town up")
 	local ground = Instance.new("Model")
 	ground.Name = "Streets"
 	Builder.instantiate(groundPrims, ground, CFrame.identity)
@@ -722,10 +732,12 @@ local function doorLoop()
 end
 
 function World.init()
+	step("Setting up the light")
 	Lighting.ClockTime = World.hour()
 	stylize()
 	air()
 	-- the low poly kit first, so the map and every house are built in its facets
+	step("Cutting the low poly shapes")
 	local kit, problems = LowPoly.make()
 	kit.Parent = ReplicatedStorage
 	Builder.useKit(kit)
@@ -736,7 +748,9 @@ function World.init()
 	-- are merged into one mesh each and copied (buildMap merges the town's before it builds)
 	Builder.cutPieces = Builder.hasKit()
 	buildMap()
+	step("Laying out the plots")
 	buildPlots()
+	step("Town built")
 	task.spawn(function()
 		task.wait(2)
 		while Builder.Pieces.waiting > 0 do

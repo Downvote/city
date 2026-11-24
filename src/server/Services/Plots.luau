@@ -128,6 +128,7 @@ local function assign(player: Player, profile: any)
 	end
 	owners[index] = player
 	player:SetAttribute("Plot", index)
+	player:SetAttribute("Arrival", "Your plot is ready")
 	if profile.plan == nil then
 		profile.plan = StarterHouse.plan()
 	end
@@ -156,6 +157,7 @@ function Plots.spawn(player: Player)
 		return
 	end
 	spawning[player] = true
+	player:SetAttribute("Arrival", "Loading your character")
 	local ok, why = pcall(function()
 		local p = player :: any
 		if p.LoadCharacterAsync then
@@ -167,6 +169,8 @@ function Plots.spawn(player: Player)
 	spawning[player] = nil
 	if not ok then
 		warn("[Plots] couldn't load a character for " .. player.Name .. ": " .. tostring(why))
+		local first = string.match(tostring(why), "^[^\n]*") or "?"
+		player:SetAttribute("Arrival", "Couldn't load your character: " .. string.sub(first, 1, 120))
 	end
 end
 
@@ -194,7 +198,11 @@ function Plots.start()
 	Players.PlayerRemoving:Connect(release)
 	-- you always arrive at your own plot: when you first get it, and every time you respawn
 	local function watch(player: Player)
+		if not player:GetAttribute("Arrival") then
+			player:SetAttribute("Arrival", if Data.get(player) then "Your save is in" else "Loading your save")
+		end
 		player.CharacterAdded:Connect(function(char)
+			player:SetAttribute("Arrival", "Here")
 			char:WaitForChild("HumanoidRootPart", 5)
 			task.wait(0.1)
 			Plots.sendTo(player, char)
@@ -247,6 +255,15 @@ function Plots.start()
 		if profile and not Plots.indexOf(player) then
 			task.spawn(assign, player, profile)
 		end
+	end
+
+	-- the loading card asks when no body has come: load one if there's none (on their plot once
+	-- they have one, in the square if not) and say where things stand
+	Remotes.fn("SpawnMe").OnServerInvoke = function(player)
+		if not player.Character then
+			task.spawn(Plots.spawn, player)
+		end
+		return player:GetAttribute("Arrival")
 	end
 
 	Remotes.fn("PlotExpand").OnServerInvoke = function(player)

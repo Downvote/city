@@ -9,6 +9,7 @@ local TweenService = game:GetService("TweenService")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Tuning = require(Shared.Config.Tuning)
+local Remotes = require(Shared.Net.Remotes)
 
 local Kit = require(script.Parent.Kit)
 
@@ -18,12 +19,39 @@ local T = Kit.Theme
 
 local holder: Frame? = nil
 
--- The card's words: what the server is doing as far as the client can tell.
-Loading.Steps = {
-	"Building the town",
-	"Getting your plot ready",
-	"Nearly there",
-}
+-- With no body after this many seconds the card asks the server for one, and again every few.
+Loading.AskAfter = 20
+Loading.AskEvery = 8
+
+-- What the server is doing as far as the client can tell: starting up, then getting this
+-- player in (workspace "Startup" and the player's "Arrival", set by World, Data and Plots).
+function Loading.say(): string
+	local startup = workspace:GetAttribute("Startup")
+	if type(startup) ~= "string" or startup == "" then
+		return "Building the town"
+	end
+	if startup ~= "Ready" then
+		return startup
+	end
+	local arrival = Players.LocalPlayer:GetAttribute("Arrival")
+	if type(arrival) == "string" and arrival ~= "" and not string.find(arrival, "^Couldn't") then
+		return arrival
+	end
+	return "Getting you in"
+end
+
+-- Something that went wrong on the way, or "".
+function Loading.problem(): string
+	local err = workspace:GetAttribute("StartupError")
+	if type(err) == "string" and err ~= "" then
+		return err
+	end
+	local arrival = Players.LocalPlayer:GetAttribute("Arrival")
+	if type(arrival) == "string" and string.find(arrival, "^Couldn't") then
+		return arrival
+	end
+	return ""
+end
 
 local function close()
 	local h = holder
@@ -75,7 +103,7 @@ function Loading.start(stay: boolean?)
 		ZIndex = 202,
 		Parent = h,
 	})
-	local step = Kit.text(Loading.Steps[1], {
+	local step = Kit.text(Loading.say(), {
 		Name = "Step",
 		Size = UDim2.new(1, 0, 0, 28),
 		Position = UDim2.new(0.5, 0, 0.5, 6),
@@ -86,14 +114,40 @@ function Loading.start(stay: boolean?)
 		ZIndex = 202,
 		Parent = h,
 	})
-	-- the words move on with the time waited, and a dot or three after them shows it's alive
+	-- what went wrong, if the server says something did (so a stuck start says why)
+	local problem = Kit.text("", {
+		Name = "Problem",
+		Size = UDim2.new(0.8, 0, 0, 48),
+		Position = UDim2.new(0.5, 0, 0.5, 44),
+		AnchorPoint = Vector2.new(0.5, 0),
+		TextSize = 16,
+		Tint = T.Red,
+		AlignX = Enum.TextXAlignment.Center,
+		AlignY = Enum.TextYAlignment.Top,
+		ZIndex = 202,
+		Parent = h,
+	})
+	-- the words follow what the server is doing, with a dot or three after them to show it's
+	-- alive; with no body after a while the card asks the server for one, now and then
 	task.spawn(function()
 		local started = os.clock()
+		local asked = 0
 		while holder == h do
 			local waited = os.clock() - started
-			local i = if waited < 8 then 1 elseif waited < 20 then 2 else 3
-			local dots = string.rep(".", math.floor(waited * 2) % 4)
-			step.Text = Loading.Steps[i] .. dots
+			if not stay and Players.LocalPlayer.Character then
+				close() -- (in case the character came without the card hearing of it)
+				break
+			end
+			step.Text = Loading.say() .. string.rep(".", math.floor(waited * 2) % 4)
+			problem.Text = Loading.problem()
+			if not stay and waited > Loading.AskAfter and os.clock() - asked > Loading.AskEvery then
+				asked = os.clock()
+				task.spawn(function()
+					pcall(function()
+						Remotes.fn("SpawnMe"):InvokeServer()
+					end)
+				end)
+			end
 			task.wait(0.25)
 		end
 	end)

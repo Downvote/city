@@ -342,8 +342,13 @@ Start order (`Main.server`): every service's `init`, then every `start`, and onl
 the profile of everyone already in the server and of everyone who joins later. Each `init` and `start` runs in an
 `xpcall`: one that fails is reported in the output (with its traceback) and the rest go on, so players are still
 let in. Characters don't load until the player's plot is ready (`Plots.spawn`); until then the client shows
-`UI/Loading` (the game's name over the menus' moving shapes, "Building the town"), which fades when the
-character arrives. Building the town yields (the low
+`UI/Loading` (the game's name over the menus' moving shapes), which fades when the character arrives. It says
+what the server is doing: the workspace attribute `Startup` (`World.step`: "Cutting the low poly shapes", "Writing
+the island's ground", "Merging the town's details", "Putting the town up", "Laying out the plots", then "Ready"
+from `Main.server`), then the player's own `Arrival` ("Loading your save", "Your save is in", "Your plot is ready",
+"Loading your character", "Here"), and in red `StartupError` (a service that failed to set up) or an `Arrival`
+starting "Couldn't". With no character after 20 s it calls `SpawnMe` every 8 s (`Plots.spawn` if there is none;
+returns the `Arrival`). Building the town yields (the low
 poly kit), so a player can be in before the services are listening; nothing may load a profile before they are.
 `Plots.start` and `Villagers.start` also pick up players whose profile or plot is already there.
 
@@ -407,7 +412,7 @@ a plain reason when there is no craving or not enough coins), `HeartReward` (`ch
 `CreatorBundle` (`bundleId, kind?`: kind "body", "head", "shoes" or "anim", what the tab asked for; anything else
 counts as not said), `CreatorSearch` (its query may carry `offSale` and `inside`, a bundle's `BundledItems`),
 `GoHome` (-> `ok, err`: to the caller's own plot at `Town.plotArrival`, out of any seat first, at most once every
-`Tuning.Plot.HomeCooldown` seconds), `VillagerTalk` (`vid, bye?` ->
+`Tuning.Plot.HomeCooldown` seconds), `SpawnMe` (-> the caller's `Arrival`: loads a character if they have none), `VillagerTalk` (`vid, bye?` ->
 `ok, { vid, text, note, model }` or an error: the talk card's Chat, or its Bye).
 
 Events (server pushes): `State` (patches of the client state), `PlanSync` (`{ full }` or `{ ops }`), `Notify`

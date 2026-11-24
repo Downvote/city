@@ -442,6 +442,7 @@ elseif scene == "earned" then
 	Sim.frames(2)
 elseif scene == "loading" then
 	-- what a player sees until their character is in the world
+	Sim.env.workspace:SetAttribute("Startup", "Merging the town's details")
 	Harness.require(Sim.CLIENT .. "UI.Loading").start(true)
 	Sim.frames(2)
 elseif scene == "toasts" then

@@ -38,6 +38,9 @@ for _, name in order do
 			print(("[Maplewick] %s ready in %.1f s"):format(name, os.clock() - started))
 		else
 			warn(("[Maplewick] %s failed to set up: %s"):format(name, tostring(why)))
+			-- the loading card shows it, so a stuck start says why on the screen
+			local first = string.match(tostring(why), "^[^\n]*") or "?"
+			workspace:SetAttribute("StartupError", name .. " failed: " .. string.sub(first, 1, 160))
 		end
 	end
 end
@@ -56,4 +59,5 @@ end
 -- and in Studio you are in the server before it is done: every service has to be listening
 -- before the first profile loads, or that player never gets a plot.
 loaded.Data.open()
+workspace:SetAttribute("Startup", "Ready")
 print("[Maplewick] server ready")

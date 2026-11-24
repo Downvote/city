@@ -45,6 +45,7 @@ Remotes.Functions = {
 	"GoalClaim", -- (goalId) -> ok, coins
 	"PlaceFound", -- (placeId) -> ok: the player is at a place (checked against where they stand)
 	"GoHome", -- () -> ok, err: to the player's own plot
+	"SpawnMe", -- () -> status: the loading card asks for a body when none has come (Services/Plots)
 	"VillagerTalk", -- (vid, bye?) -> ok, { vid, text, note, model } or err: the talk card's Chat, or its Bye
 }
 

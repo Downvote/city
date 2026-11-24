@@ -261,6 +261,7 @@ local function onJoin(player: Player)
 	profile.plan = if profile.plan == nil then StarterHouse.plan() else Plan.sanitize(profile.plan)
 	profiles[player] = profile
 	player:SetAttribute("Coins", profile.coins)
+	player:SetAttribute("Arrival", "Your save is in")
 	loadedSignal:Fire(player, profile)
 	if unsaved[player] then
 		task.delay(6, function()
