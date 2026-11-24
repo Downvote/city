@@ -6,8 +6,7 @@
 -- catalog's, the map's, the ambient ones and whole houses, has a right-handed orthonormal frame.
 
 local Shared = "ReplicatedStorage.Shared."
-local CityMap = require(Shared .. "Data.CityMap")
-local TownModels = require(Shared .. "Data.TownModels")
+local TownMap = require(Shared .. "Data.TownMap")
 local Catalog = require(Shared .. "Build.Catalog")
 local AmbientModels = require(Shared .. "Data.AmbientModels")
 local StarterHouse = require(Shared .. "Data.StarterHouse")
@@ -74,23 +73,21 @@ describe("Frames", function()
 	end)
 
 	it("are real rotations on everything on the map", function()
-		-- the city pack's pieces: every placement a turn and a stretch, never a mirror (the kit has
-		-- mirrored copies for those)
-		local n = 0
-		for _, p in CityMap.placements() do
+		local seen = {}
+		local n = check("the ground", TownMap.ground())
+		for _, p in TownMap.placements() do
 			expect(wrong(p.cf)).toBe(nil)
-			expect(p.scale.X > 0 and p.scale.Y > 0 and p.scale.Z > 0).toBeTruthy()
-			n += 1
-		end
-		for name in TownModels.Models do
-			n += check("town model " .. name, TownModels.prims(name))
+			if not seen[p.name] then
+				seen[p.name] = true
+				n += check(p.name, TownMap.prims(p.name))
+			end
 		end
 		for name, build in AmbientModels.Models do
 			local r = Recipe.new(Color3.new(1, 1, 1), Color3.new(1, 1, 1))
 			build(r)
 			n += check("ambient " .. name, r.prims)
 		end
-		expect(n > 2500).toBeTruthy()
+		expect(n > 5000).toBeTruthy()
 	end)
 
 	it("are real rotations on a wall's two sides, whichever way it runs", function()

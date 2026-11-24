@@ -50,6 +50,10 @@
 --                       pages; outfits with none saved yet)
 --   creator:outfits:saved  Outfits with three saved
 --   creator:people      Players: people here and friends, and looks other players shared
+--   signs               the town's signs laid flat: a shop fascia in every layout
+--   signs:boards        the boards on canopies and roofs
+--   signs:posters       adverts on posters and billboards, the cinema's posters
+--   signs:blades        blade signs, a hanging tile, the marquee, street plates, a vending machine
 -- Any scene can carry a prefix: light:<scene> builds it in the light look, relight:<scene>
 -- builds it dark and then switches (what a player who presses the button mid game sees), and
 -- plain:<scene> builds it with the painted shapes off (what a game with Allow Mesh / Image APIs
@@ -530,9 +534,7 @@ elseif scene == "creator" or scene:sub(1, 8) == "creator:" then
 		local creator = Sim.gui:FindFirstChild("Creator")
 		local MB1 = Enum.UserInputType.MouseButton1
 		local function pressAt(holder, x)
-			holder
-				:FindFirstChild("Slide").InputBegan
-				:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(x, 0, 0) })
+			holder:FindFirstChild("Slide").InputBegan:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(x, 0, 0) })
 			Sim.UIS.InputEnded:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(x, 0, 0) }, false)
 		end
 		pressAt(creator:FindFirstChild("Personality", true), 100 + 14 + 72 * 2 / 7)
@@ -678,6 +680,103 @@ elseif scene == "icons" then
 			TextSize = 13,
 			AlignX = Enum.TextXAlignment.Center,
 		})
+	end
+elseif scene == "signs" or scene:sub(1, 6) == "signs:" then
+	-- The boards the server's Signs service draws, flat on a dark sheet at the size they are
+	-- drawn at. The SurfaceGuis themselves can't be seen here; their layouts can.
+	Harness.stub("ServerScriptService.Server.Services.World", {
+		isNight = function()
+			return false
+		end,
+	})
+	local Service = Harness.require("ServerScriptService.Server.Services.Signs")
+	local Signs = Harness.require("ReplicatedStorage.Shared.Data.Signs")
+	local sheet = Instance.new("Frame")
+	sheet.Size = UDim2.fromScale(1, 1)
+	sheet.BackgroundColor3 = Color3.fromRGB(58, 62, 74)
+	sheet.BorderSizePixel = 0
+	sheet.Parent = Sim.gui
+	local x, y, rowH = 16, 12, 0
+	-- a board w by h pixels, placed left to right, wrapping
+	local function board(w, h)
+		if x + w > 1264 then
+			x, y, rowH = 16, y + rowH + 10, 0
+		end
+		local f = Instance.new("Frame")
+		f.Size = UDim2.fromOffset(w, h)
+		f.Position = UDim2.fromOffset(x, y)
+		f.BorderSizePixel = 0
+		f.ClipsDescendants = true
+		f.Parent = sheet
+		x += w + 10
+		rowH = math.max(rowH, h)
+		return f
+	end
+	local function draw(w, h, design, form)
+		Service.draw(board(w, h), w, h, design, form)
+	end
+	local page = scene:sub(7)
+	if page == "" then
+		-- a shop fascia (27 by 1.8 studs) in each layout, then the department store's long one
+		-- and the fire station's
+		local shown = {}
+		for _, kind in { "bakery", "books", "grocer", "toys", "cafe", "clothes", "flowers", "post" } do
+			for _, d in Signs.Shops[kind] do
+				if not shown[d.style] then
+					shown[d.style] = true
+					draw(900, 59, d, "fascia")
+				end
+			end
+		end
+		draw(1248, 32, Signs.Shops.department[1], "fascia")
+		draw(1248, 88, Signs.Shops.fire[1], "fascia")
+	elseif page == "boards" then
+		-- the boards on towers' canopies (11 by 1.8 studs), the library's, then roof boards
+		for _, d in { Signs.Shops.hotel[1], Signs.Shops.office[2], Signs.Shops.flats[3], Signs.Shops.flats[4] } do
+			draw(300, 50, d, "fascia")
+		end
+		for _, kind in { "office", "flats" } do
+			for i = 5, 8 do
+				draw(300, 50, Signs.Shops[kind][i], "fascia")
+			end
+		end
+		draw(560, 65, Signs.Shops.library[1], "fascia")
+		draw(640, 80, Signs.Shops.station[1], "fascia")
+		for _, d in { Signs.Shops.bakery[1], Signs.Shops.flowers[2], Signs.Shops.cafe[1], Signs.Shops.station[1] } do
+			draw(612, 104, d, "roof")
+		end
+		draw(880, 150, Signs.Shops.hotel[1], "roof")
+	elseif page == "posters" then
+		-- wall posters (4 by 5 studs), rooftop billboards (16 by 6), a tower's banner (10 by 16)
+		-- and the cinema's posters
+		for i = 1, 7 do
+			draw(150, 188, Signs.Adverts[i * 3 - 2])
+		end
+		for _, i in { 2, 3, 5, 9, 13, 20 } do
+			draw(400, 150, Signs.Adverts[i])
+		end
+		for _, i in { 6, 10, 15, 24 } do
+			draw(150, 240, Signs.Adverts[i])
+		end
+		for i = 1, 4 do
+			draw(205, 150, Signs.Films[i])
+		end
+	else
+		for _, d in { Signs.Shops.bakery[1], Signs.Shops.books[1], Signs.Shops.cinema[1], Signs.Shops.hotel[1] } do
+			draw(96, 290, d, "blade")
+		end
+		draw(100, 290, Signs.Shops.museum[1], "blade")
+		draw(64, 290, Signs.Adverts[4])
+		for _, d in { Signs.Shops.bakery[1], Signs.Shops.books[1], Signs.Shops.toys[1] } do
+			draw(84, 76, d, "tile")
+		end
+		for _, name in { "Main Street", "Plum Street", "East Shore Avenue" } do
+			Service.drawPlate(board(300, 60), 300, 60, name)
+		end
+		for i = 1, 3 do
+			Service.drawVend(board(120, 200), 120, 200, Signs.cansAt(i * 40, 3, i * 7, 3, 5), Signs.Cans[i * 2])
+		end
+		Service.drawMarquee(board(1248, 88), 1248, 88, Signs.Shops.cinema[1], Signs.Films[1])
 	end
 else
 	error("unknown scene " .. scene)

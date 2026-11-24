@@ -8,14 +8,16 @@
 --   walls              every wall style
 --   roofs              every roof style
 --   house              the starter house
---   town               the town's own small models (the news board, the welcome sign, a plot's sign)
---   town:<name>        one of them (board, sign, plotSign)
+--   town               the plaza's own buildings
+--   town:<name>        one of them (fountain, board, tailor, shop, hall...)
 --   preset:<id>        a ready-made building (cottage, family, townhouse, library, cafe...)
 --   presets            all of them in a row (add :inside to leave the roofs off)
 --   ambient            the cars and the bus
---   models:<key>,...   city pack kit keys side by side (bank, government_a, tree_03...)
---   map                the whole town: the city pack as Data/CityMap lays it out, the plots, the sea
---   map:x1,z1,x2,z2    a part of it
+--   inside:<kind>,...  furnished rooms with the roof off (bakery, grocer, books, clothes, cafe,
+--                      toys, flowers, post, lobby, flats, home, library, museum, cinema, station,
+--                      school, clinic, department); a kind may carry a size: library=56x28x12
+--   map                the middle of town: streets, plaza and street furniture
+--   map:x1,z1,x2,z2    another part of town
 
 local fs = require("@lune/fs")
 local process = require("@lune/process")
@@ -133,129 +135,52 @@ elseif scene == "house" then
 elseif scene:sub(1, 5) == "town:" then
 	local TownModels = R(Shared .. "Data.TownModels")
 	addPrims(TownModels.prims(scene:sub(6)))
+elseif scene:sub(1, 7) == "inside:" then
+	-- inside:<kind>,<kind>... : furnished rooms with the roof off (Data/Interiors). A kind may
+	-- give its own size as kind=WxDxH.
+	local Interiors = R(Shared .. "Data.Interiors")
+	local Recipe = R(Shared .. "Build.Recipe")
+	local x = 0
+	for entry in scene:sub(8):gmatch("[^,]+") do
+		local kind, w, d, h = entry:match("^(%a+)=(%d+)x(%d+)x(%d+)$")
+		kind = kind or entry
+		local W, D, H = tonumber(w) or 28, tonumber(d) or 22, tonumber(h) or 8.4
+		local C3 = roblox.Color3
+		local r = Recipe.new(C3.new(1, 1, 1), C3.new(1, 1, 1))
+		local box = Interiors.shell(r, { w = W, d = D, h = H, wall = C3.fromRGB(250, 214, 170), mat = "Brick" })
+		Interiors.fill(r, kind, box, C3.fromRGB(110, 160, 230))
+		addPrims(r.prims, CFrame.new(x + W / 2, 0, 0))
+		x += W + 6
+	end
 elseif scene:sub(1, 7) == "models:" then
-	-- models:<key>,<key>... : city pack kit keys side by side (Data/CityPack), drawn from the
-	-- preview cache by tools/preview/citypack.py (as boxes without it)
-	local CityMap = R(Shared .. "Data.CityMap")
+	-- models:<name>,<name>... : the map's own models side by side, by the names placements use
+	local TownMap = R(Shared .. "Data.TownMap")
+	local Geometry = R(Shared .. "Build.Geometry")
 	local x, z, depth, n = 0, 0, 0, 0
-	for key in scene:sub(8):gmatch("[^,]+") do
-		local def = CityMap.kit(key)
-		assert(def, "no kit key " .. key)
-		local c, s = CityMap.keyBox(key)
-		local cf = CFrame.new(x + s.X / 2 - c.X, s.Y / 2 - c.Y, z + s.Z / 2 - c.Z)
-		table.insert(prims, {
-			shape = "Pack",
-			key = key,
-			cf = cf,
-			size = s,
-			color = CityMap.StandIn[def.kind] or roblox.Color3.new(0.7, 0.7, 0.7),
-			mat = "SmoothPlastic",
-		})
-		x += s.X + 6
-		depth = math.max(depth, s.Z)
+	for name in scene:sub(8):gmatch("[^,]+") do
+		local list = TownMap.prims(name)
+		local lo, hi = Geometry.bounds(list)
+		addPrims(list, CFrame.new(x - lo.X, 0, z - lo.Z))
+		x += (hi.X - lo.X) + 4
+		depth = math.max(depth, hi.Z - lo.Z)
 		n += 1
 		if n % 6 == 0 then
 			x = 0
-			z += depth + 8
+			z += depth + 5
 			depth = 0
 		end
 	end
 elseif scene == "map" or scene:sub(1, 4) == "map:" then
-	-- map or map:x1,z1,x2,z2: the town as Data/CityMap lays out the city pack, with the plots,
-	-- the middle of town's own things and the sea round it (the whole town by default). Pack
-	-- objects are written as "Pack" prims that tools/preview/citypack.py draws from the kit.
-	local CityMap = R(Shared .. "Data.CityMap")
-	local Town = R(Shared .. "Data.Town")
-	local TownModels = R(Shared .. "Data.TownModels")
-	local Tuning = R(Shared .. "Config.Tuning")
-	local C3 = roblox.Color3
-	local V3 = roblox.Vector3
-	local o = CityMap.Offset
-	local rect = CityMap.PackRect
-	local region = { rect[1] + o.X - 300, rect[2] + o.Z - 300, rect[3] + o.X + 300, rect[4] + o.Z + 300 }
+	-- map or map:x1,z1,x2,z2 (the middle of town by default)
+	local TownMap = R(Shared .. "Data.TownMap")
+	local region = nil
 	if scene:sub(1, 4) == "map:" then
 		region = {}
 		for n in scene:sub(5):gmatch("[^,]+") do
 			table.insert(region, tonumber(n))
 		end
-		-- the pack's objects are cut to the region when they are drawn (tools/preview/citypack.py)
-		local mid = V3.new((region[1] + region[3]) / 2, 0, (region[2] + region[4]) / 2)
-		table.insert(prims, {
-			shape = "Clip",
-			cf = CFrame.new(mid),
-			size = V3.new(region[3] - region[1], 1, region[4] - region[2]),
-			color = C3.new(1, 1, 1),
-			mat = "SmoothPlastic",
-			transp = 1,
-		})
 	end
-	local function inside(lo, hi)
-		return hi.X >= region[1] and lo.X <= region[3] and hi.Z >= region[2] and lo.Z <= region[4]
-	end
-	for _, p in CityMap.placements() do
-		if inside(p.lo, p.hi) then
-			table.insert(prims, {
-				shape = "Pack",
-				key = p.key,
-				scale = p.scale,
-				cf = p.cf,
-				size = p.hi - p.lo,
-				color = CityMap.StandIn[p.kind] or C3.new(0.7, 0.7, 0.7),
-				mat = "SmoothPlastic",
-			})
-		end
-	end
-	local function clipBox(cf, size)
-		local lo, hi = cf.Position - size / 2, cf.Position + size / 2
-		local a = V3.new(math.max(lo.X, region[1]), lo.Y, math.max(lo.Z, region[2]))
-		local b = V3.new(math.min(hi.X, region[3]), hi.Y, math.min(hi.Z, region[4]))
-		if b.X <= a.X or b.Z <= a.Z then
-			return nil
-		end
-		return CFrame.new((a + b) / 2), b - a
-	end
-	do
-		local cf, size = CityMap.filler()
-		cf, size = clipBox(cf, size)
-		if cf then
-			table.insert(
-				prims,
-				{ shape = "Block", cf = cf, size = size, color = CityMap.StandIn.ground, mat = "SmoothPlastic" }
-			)
-		end
-	end
-	for _, s in CityMap.sea() do
-		if s.name == "Water" then
-			local cf, size = clipBox(s.cf, s.size)
-			if cf then
-				table.insert(
-					prims,
-					{ shape = "Block", cf = cf, size = size, color = CityMap.StandIn.water, mat = "SmoothPlastic" }
-				)
-			end
-		end
-	end
-	local SIZE = Tuning.Plot.Size
-	for i = 1, Tuning.Plot.Count do
-		local f = Town.plotFrame(i)
-		local cf, size = clipBox(f * CFrame.new(SIZE / 2, -0.5, SIZE / 2), V3.new(SIZE, 1, SIZE))
-		if cf then
-			table.insert(
-				prims,
-				{ shape = "Block", cf = cf, size = size, color = CityMap.PlotGround, mat = "SmoothPlastic" }
-			)
-		end
-		local at = f * CFrame.new(SIZE / 2, 0, -1.6) * CFrame.Angles(0, math.pi, 0)
-		if inside(at.Position, at.Position) then
-			addPrims(TownModels.prims("plotSign"), at)
-		end
-	end
-	for _, p in CityMap.Props do
-		local at = CFrame.new(p.x, 0, p.z) * CFrame.Angles(0, math.rad(p.yaw), 0)
-		if inside(at.Position, at.Position) then
-			addPrims(TownModels.prims(p.model), at)
-		end
-	end
+	addPrims(TownMap.preview(region))
 elseif scene:sub(1, 7) == "preset:" or scene:sub(1, 7) == "presets" then
 	-- preset:<id> one ready-made building; presets all of them in a row
 	local Presets = R(Shared .. "Data.Presets")
@@ -310,8 +235,6 @@ for _, p in prims do
 		color = { p.color.R, p.color.G, p.color.B },
 		transp = p.transp or 0,
 		mat = p.mat,
-		key = p.key, -- a "Pack" prim: its kit key and stretch (tools/preview/citypack.py)
-		scale = if p.scale then { p.scale.X, p.scale.Y, p.scale.Z } else nil,
 	})
 end
 local dir = outPath:match("^(.*)/[^/]*$")

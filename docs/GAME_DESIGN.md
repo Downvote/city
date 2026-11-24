@@ -372,46 +372,105 @@ Held by `tests/specs/City.spec.luau`:
 
 ## 9. The town
 
+> can you redo the entirety of the city/overworld? make it detailed and big with a lot to explore, with hills, other
+> buildings, etc.
+
+The island is now about 2,300 studs across, with the old town (the eight plots, the square and the market, where
+they always were) in the middle of a ring of roads and new districts all round:
+
+- **Downtown** (east): a grid of streets lined wall to wall with shops and flats (see "A denser, more detailed
+  town" in section 10), a hotel, office towers, a department store, a cinema with a lit marquee, the train station
+  with a train at the platform, and Sky Tower, the tallest thing on the island.
+- **The civic quarter** (west): the school with its sports field and a playground, the library, the museum, the
+  clinic, the fire station with its engine, the post office, a basketball court, a park with a pond and a bridge,
+  and rows of little houses with gardens.
+- **The hills** (north): faceted low poly hills you can walk all over, wooded thicker to the east. A path of
+  stepping stones climbs from Hill Road to the lookout on the top, a platform with ramps up to it and a telescope.
+  There's a farm on a terrace (barn, silo, fields, hay and cows, and a windmill that turns), an observatory, a
+  radio mast, and a camp in the pines with tents round a fire and a log cabin. A quiet cove waits on the north
+  shore.
+- **The waterfront** (south): a boardwalk along the whole shore, the beach with palms and parasols, beach huts, a
+  lifeguard tower, the marina, a fairground pier with a ferris wheel and a carousel that go round, and a
+  lighthouse out on the rocks at the end of a jetty.
+
+**More detail everywhere.**
+
+> opening doors seem to fling them away. also, use a softer grass texture, and make the double circle pedestal when
+> making a new villager smaller. remove the trees near the road. detail the entire map more. add bloom, fog, normal
+> maps and other details that would polish the game even further
+
+- No trees stand by a road any more. The main street's kerb has troughs of flowers, benches, potted shrubs, bike
+  racks and post boxes; the other streets have the same between their lamps; clipped hedges and flower beds run
+  between the old town's plots and the ring roads. Lots have shrubs and flower tubs instead of trees, with lamps on
+  the garden gateposts. Trees keep to the parks, the market square, the hills and the beach, and a spec holds them
+  18 studs back from any sidewalk.
+- Every junction has traffic lights, there are six more bus stops, and the roads have manhole covers and drains.
+- Every gap between downtown's buildings is a little place of its own: a cafe terrace with a kiosk and parasols, a
+  fountain ringed by benches, food trucks under bunting, a statue in a ring of flowers, a small car park or a
+  pocket garden, and single kiosks, statues and tables in the smaller gaps. A cobbled lane runs through each block.
+  The civic quarter's lawns get hedged gardens, duck ponds, picnic lawns with a barbecue, allotments with a shed
+  and playgrounds, joined by gravel paths. They are placed by rule (wherever a 30 stud square is free of every
+  building and lot), so new buildings push them out of the way.
+- The hills have a mountain lake on the east peak (a jetty, a rowing boat, reeds and lily pads) and a ring of
+  standing stones on the west one, a rail along the lookout's edge, picnic tables, signposts, hay bales at the
+  farm, and boulders, fallen logs, wild flowers and mushrooms over the slopes.
+- The beach has towels, sandcastles, beach balls, driftwood, surfboards on racks, two volleyball nets and rowing
+  boats at the water's edge. Out in the bay sailing boats lie at anchor, buoys with lights mark the way into the
+  marina, and rocks break the surface.
+- The creator's pedestal is half the size, just wide enough to stand on.
+
+**Places to find.** Sixteen places round the island (the lookout, the farm, the camp, the observatory, the radio
+mast, the pier, the marina, the lighthouse, the station, Sky Tower, the cinema, the pond, the school field, the
+museum, the north cove and the square). Walking up to one the first time pays a few coins and marks it on the map;
+two town goals count them. **The map** (the pin on the HUD) shows the whole island, every road and district, the
+places found and not yet found, and where you are; found places have a Go button that takes you straight there, so
+the big island never means a long walk back.
+
+
+Up to eight players share a server. The street runs east to west with four plots on each side: asphalt with lane
+lines, curbs that drop at the zebra crossings, wide paved sidewalks with street trees, lamps, hydrants and a bus
+stop. In the middle: the square with the fountain ringed by benches, two lawns, a bandstand for festivals, the notice
+board (town news) and the tailor (the creator), and across the street the market with its stalls and café tables,
+the shop and the town hall (city stats and land). Every plot starts with one house in the middle of its land (the
+user: "players should spawn at their plot, which starts out with a single house in the middle"), and you arrive at
+your own plot when you join and whenever you respawn.
+
+> improve the starting house detail by alot, and add a workspace next to it
+
+The starting house is now a little home with a lot to look at, and a workshop beside it:
+
+- **The house**: a steep gabled part with the bedroom behind a bay window and the kitchen, and a lower wing with the
+  front room, its roof coming down over a porch. Outside: a chimney over a real fireplace, shutters, hoods and flower
+  boxes on the windows, attic windows in both gables, a weathervane, corner boards, a stone footing, drainpipes into
+  a water butt, porch posts with braces and rails, a doorstep, a lantern, bunting, a doormat, a rocking chair, a
+  woodpile, pots, hanging baskets, roses on trellises. Inside: a bed with a rug, a lamp, a wardrobe, curtains and
+  pictures; a sofa, a bookshelf and a coffee table; a sink, a stove, a fridge, a table and two chairs.
+- **The workshop**: a boarded shed open to the street with a gable roof, the builder's bench, a tool board, crates,
+  a stool, lamps, a hanging sign and a sawhorse on a paved apron. It is a real workplace: the first villager takes
+  the builder's job there from day one.
+- **The garden**: a picket fence along the front with a gate that swings, flower borders, a bench, a bird house, a
+  bicycle, a lamp post and a mailbox, stepping stones to the door; behind the house two vegetable patches and a
+  tree with a swing; a paved path from the street to the gate.
+
+Everything in it is ordinary Build mode pieces (32 new ones: shutters, window boxes, hoods, an attic window, a bay
+window, porch posts and rails, a fireplace chimney, corner boards, a stone footing, a drainpipe, a doorstep, a
+weathervane, picket fence panels and a gate, flower borders, a vegetable patch, a tree swing, a water butt, a bird
+house, a flower pot, a trellis, a woodpile, a hanging basket, a bicycle, a wall lantern, a doormat, bunting, a tool
+board, a workshop sign, a crate and a sawhorse), so the owner can move, repaint or sell any of it, and buy more. The
+whole of it covers under a fifth of the starting land. Time follows a 12 minute day with a calendar of four
+ten-day seasons, and weather suited to the season: rain, storms, snow, blossom, falling leaves.
+
+**A city pack, tried and dropped.**
+
 > redo the map with these models and city
 
-(The user sent a low poly city model pack: a whole city of high rise flats, shops, a bank, a post office, a police
-station, hotels, a hospital, schools, a stadium, an industrial corner, rows of houses, roads, parks, hills, about
-1,200 trees and 300 parked cars, all coloured from one palette picture.)
+The user sent a low poly city model pack, and for a while the town was rebuilt from it (the plots in its suburb,
+its models uploaded to the user's Roblox account). In play the models came in without their colours and at the
+wrong size, and the user said:
 
-Asked how the models should reach Roblox, the user chose to import them in Studio themselves; asked where the
-players' plots should go, they chose "in the west suburb". So the town is that city, laid out round our plots:
+> never mind, go back to the original map
 
-- **Main Street** is the suburb's road from the motorway to the red bridge. The eight plots line it, four each
-  side, where the suburb's houses stood; behind them the suburb's other streets and houses carry on. The
-  motorway's ramp rises in front of the west end of the first plots on each side, and a footbridge crosses the
-  street between them.
-- **The middle of town** is east of the plots, by the river: you arrive on the green (the festival is held there
-  too), the tailor's is a boutique on the green (it opens the creator), the town news board stands by the street,
-  and City hall is the government building across Main Street.
-- **Over the bridge** is downtown: a grid of streets with shops, offices and tall towers, the hospital, the
-  stadium, the works to the north and more houses to the east, with hills along the south.
-- **The sea** runs all round to the horizon, and the motorway goes on out over it at both ends.
-- **Places to find** (each pays a few coins the first time, as before): the green, the red bridge, balloon beach,
-  the farm park, the hill lookout, the school, under the motorway, the tall towers, the hospital, the stadium, the
-  works, East End.
-- **Life in the streets:** cars and the bus drive Main Street over the bridge and stop at its crossings; ducks
-  paddle the river; fireflies come out over the green at night. The pack's own trees don't sway.
-- **The plots' ground** is the pack's own flat grass, so a plot reads as part of the lawn; the land a player owns
-  is a step lighter, inside its kerb.
-
-How it is built: the pack's 330 different models were turned into a kit of five files (`scripts/citypack.py`).
-
-> cant you convert the models to .rbxm yourself?
-
-An .rbxm can't carry meshes: every mesh in Roblox is an uploaded asset. So with an Open Cloud key the user made, we
-uploaded the kit to their account ourselves (`scripts/upload_citykit.py`), and the game loads those five models
-and the palette by id and places every model where the pack had it, moved to our town's frame. Until the kit's id is in the game, every model is a plain block of its size and colour,
-so the game still runs. The pack is the user's and the repository is public, so none of its files are in it: only
-a list of where each model stands. About 2,800 models are placed, 6.4 million triangles (parked cars and trees
-are most of them); a phone may want Roblox's streaming switched on, to be tried in Studio.
-
-(The town before this was our own: an island of about 2,300 studs with the plots in the middle of a ring of roads,
-a downtown, a civic quarter, hills, a waterfront and a market lane, all drawn by our own code. It is gone.)
+So the island above is back as it was, and nothing of the pack is left in the game or its code.
 
 ## 10. Look and feel
 

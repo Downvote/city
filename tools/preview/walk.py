@@ -27,7 +27,6 @@ from PIL import Image
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import render  # noqa: E402  (the shapes, the textures)
 import look as game_look  # noqa: E402  (the game's light and grade)
-import citypack  # noqa: E402  (the city pack's objects, from its preview cache)
 
 NEAR = 0.4
 
@@ -121,7 +120,7 @@ def main():
     sun_dir = light.dir
     sky, haze = sky_at(args.hour)
 
-    prims = citypack.expand(json.load(open(args.inp)), eye=eye, focal=focal, far=args.far)
+    prims = json.load(open(args.inp))
     textures = render.Textures(painted=args.painted, library=args.textures) if (args.textures or args.painted) else None
     tris, owners = [], []
     for pi, p in enumerate(prims):

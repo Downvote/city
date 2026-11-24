@@ -725,24 +725,32 @@ run("life around town and the show when you build", function()
 	local Harness, env = Sim.Harness, Sim.env
 	local Town = Harness.require("ReplicatedStorage.Shared.Data.Town")
 	local CFrame = roblox.CFrame
-	-- a corner of the town: a clump of leaves and a little fountain's jet near the camera (the
-	-- rest of the town is the city pack's pieces, which don't move)
+	local TownMap = Harness.require("ReplicatedStorage.Shared.Data.TownMap")
+	local Builder = Harness.require("ReplicatedStorage.Shared.Build.Builder")
+	-- a corner of the town for the trees, a flag and the fountain to be found in
 	local town = env.Instance.new("Folder")
 	town.Name = "Town"
 	town.Parent = ws
+	-- the fountain, and a flagpole and trees near the camera (far ones are left still)
 	local near = Town.plotFrame(1) * Vector3.new(100, 0, 60)
-	local leaf = env.Instance.new("Part")
-	leaf.Name = "Leaf"
-	leaf.Anchored = true
-	leaf.Size = Vector3.new(4, 3, 4)
-	leaf.CFrame = CFrame.new(near + Vector3.new(12, 8, -20))
-	leaf.Parent = town
-	local jet = env.Instance.new("Part")
-	jet.Name = "Jet"
-	jet.Anchored = true
-	jet.Size = Vector3.new(1, 0.3, 0.3)
-	jet.CFrame = CFrame.new(near + Vector3.new(24, 1, -20))
-	jet.Parent = town
+	for _, p in TownMap.placements() do
+		if p.name == "fountain" then
+			local m = env.Instance.new("Model")
+			m.Name = p.name
+			Builder.instantiate(TownMap.prims(p.name), m, p.cf)
+			m.Parent = town
+		end
+	end
+	for i, name in { "flagpole", "tree", "tree", "lowTree", "trafficLight", "trafficLight", "buoy" } do
+		local m = env.Instance.new("Model")
+		m.Name = name
+		local at = CFrame.new(near + Vector3.new(i * 12, 0, -20))
+		if i == 6 then
+			at = at * CFrame.Angles(0, math.pi / 2, 0) -- the second light hangs over the other road
+		end
+		Builder.instantiate(TownMap.prims(name), m, at)
+		m.Parent = town
+	end
 	local warned = #errors
 	local Ambience = Harness.require(Sim.CLIENT .. "World.Ambience")
 	local BuildFx = Harness.require(Sim.CLIENT .. "World.BuildFx")
@@ -771,39 +779,56 @@ run("life around town and the show when you build", function()
 		frames(n or 8)
 		return part.CFrame ~= was
 	end
-	local leaf = town:FindFirstChild("Leaf")
+	local leafy = town:FindFirstChild("lowTree")
+	local leaf = leafy and leafy:FindFirstChild("Leaf")
 	check(leaf ~= nil and moves(leaf), "every clump of leaves leans with the wind")
 	-- the user, later: "remove the butterflies and bunnies"
 	check(folder:FindFirstChild("butterfly") == nil, "no butterflies are about")
 	check(folder:FindFirstChild("rabbit") == nil, "and no rabbits")
-	local jet = town:FindFirstChild("Jet")
-	check(jet ~= nil and jet:FindFirstChild("Spray") ~= nil, "a fountain's jet sprays")
-	-- up the ramps and over the bridge, every car keeps to the road's height (Data/CityMap)
-	local CityMap = Harness.require("ReplicatedStorage.Shared.Data.CityMap")
-	local onRoad, cars = 0, 0
-	for _, m in folder:GetChildren() do
-		if m.Name == "car" or m.Name == "bus" then
-			cars += 1
-			local lo = math.huge
-			for _, part in m:GetDescendants() do
-				if part:IsA("BasePart") then
-					lo = math.min(lo, part.CFrame.Position.Y - part.Size.Y / 2)
+	local buoy = town:FindFirstChild("buoy")
+	check(buoy ~= nil and moves(buoy:FindFirstChildWhichIsA("BasePart")), "buoys bob on the water")
+	-- the two lights at a junction never show green together, and they change
+	local greens, lit = {}, 0
+	for _, m in town:GetChildren() do
+		if m.Name == "trafficLight" then
+			local g = m:FindFirstChild("Green")
+			table.insert(greens, g)
+			if g.Material == Enum.Material.Neon then
+				lit += 1
+			end
+		end
+	end
+	check(#greens == 2 and lit <= 1, "the traffic lights take turns")
+	local was1, was2 = greens[1].Material, greens[2].Material
+	frames(64, 0.2) -- a little over twelve seconds: one of them has changed by then
+	check(greens[1].Material ~= was1 or greens[2].Material ~= was2, "and they change")
+	local flagMoved = false
+	for _, m in town:GetChildren() do
+		if m.Name == "flagpole" and not flagMoved then
+			local flag = m:FindFirstChild("Flag")
+			local was = flag.CFrame
+			frames(8)
+			flagMoved = flag.CFrame ~= was
+		end
+	end
+	check(flagMoved, "flags wave")
+	local swayed = false
+	for _, m in town:GetChildren() do
+		if m.Name == "tree" and not swayed then
+			local leaf
+			for _, d in m:GetDescendants() do
+				if d:IsA("BasePart") and d.Position.Y > 6 then
+					leaf = d
 				end
 			end
-			local x = m:GetBoundingBox().Position.X
-			if math.abs(lo - CityMap.streetY(x)) < 1.5 then
-				onRoad += 1
-			end
+			local was = leaf.CFrame
+			frames(8)
+			swayed = leaf.CFrame ~= was
 		end
 	end
-	check(cars >= 9 and onRoad == cars, "the cars and the bus ride on the road (" .. onRoad .. " of " .. cars .. ")")
-	local ducks = 0
-	for _, m in folder:GetChildren() do
-		if m.Name == "duck" and m:GetBoundingBox().Position.Y < CityMap.SeaLevel + 1 then
-			ducks += 1
-		end
-	end
-	check(ducks >= 3, "ducks are out on the river (" .. ducks .. ")")
+	check(swayed, "trees sway")
+	local spout = town:FindFirstChild("Spout", true)
+	check(spout ~= nil and spout:FindFirstChild("Spray") ~= nil, "the fountain sprays")
 	-- placing something pops it up out of a puff
 	press("Build")
 	press("Furniture")

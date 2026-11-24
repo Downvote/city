@@ -201,7 +201,7 @@ Goals.list = {
 		id = "exploreAll",
 		name = "Know every corner",
 		desc = "Find every place on the island.",
-		need = 12,
+		need = 16,
 		reward = 2000,
 		value = stat("found"),
 	},

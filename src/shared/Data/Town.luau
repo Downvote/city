@@ -1,16 +1,15 @@
 --!strict
--- The town's layout: where the plots, the street and the middle of town are. Shared so the client
--- can find its plot's frame and the server can build the map.
+-- The town's layout: where the plots, the street and the plaza are. Shared so the client can find
+-- its plot's frame and the server can build the map.
 --
--- The town is the user's city pack (Data/CityPack, laid out by Data/CityMap). Main Street is the
--- pack suburb's road to the bridge, running along X through z = 0: two lanes each way with a
--- planted strip between them. The eight plots line it where the suburb's houses stood, four each
--- side, their front edge at the back of the sidewalk. Each plot has its own frame: local x and z
--- run 0..Plot.Size, local z = 0 is the street edge.
+-- The main street runs along X through z = 0. Plots line both sides of it, four each, with the town
+-- square on the north side of the middle and the market on the south. Each plot has its own
+-- frame: local x and z run 0..Plot.Size, local z = 0 is the street edge.
 --
--- West of the plots Main Street climbs onto the motorway; east of them is the middle of town (the
--- green by the river with the spawn, the tailor's and the news board, the city hall across the
--- road), then the bridge over the river to downtown.
+-- Round that old town a ring of roads: Hill Road along the north (the hills rise behind it),
+-- Harbour Road along the south (the boardwalk, beach and sea beyond), and avenues at either end.
+-- East of the ring is downtown, a grid of towers; west of it the civic quarter with the school,
+-- the clinic, the museum and a park.
 
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 
@@ -18,27 +17,50 @@ local Town = {}
 
 local SIZE = Tuning.Plot.Size
 
-Town.StreetHalfWidth = 30.5 -- the carriageway, curb to curb
-Town.SidewalkWidth = 7 -- runs right up to the plots
-Town.PlotSetback = 38 -- plot front edge distance from the street's middle
-Town.PlotCentersX = { -312, -104, 104, 312 }
--- Main Street's ends: the top of the motorway ramp in the west, the junction in downtown in the east
--- (Data/CityMap's StreetProfile has its height along the way)
-Town.StreetWest = -497
-Town.StreetEast = 1328
+Town.StreetHalfWidth = 14
+Town.SidewalkWidth = 8 -- runs right up to the plots
+Town.PlotSetback = 22 -- plot front edge distance from the street's middle
+Town.PlotCentersX = { -382, -166, 166, 382 }
+Town.SquareCenter = Vector3.new(0, 0, 82)
+Town.MarketCenter = Vector3.new(0, 0, -82)
+Town.HalfLength = 1080 -- the main street runs from -HalfLength to HalfLength
 
--- The roads the town's cars use, axis aligned: { x1, z1, x2, z2, half width, sidewalk width }.
--- Main Street is the first. Where people cross it: the gaps between the plots and the middle of town.
+-- The other roads, axis aligned: { x1, z1, x2, z2, half width, sidewalk width }. The main street
+-- (z = 0, StreetHalfWidth, SidewalkWidth) is the first.
+Town.RingZ = 262 -- Hill Road at +RingZ, Harbour Road at -RingZ
+Town.AvenueX = { 542, 830, 1070 } -- avenues at these x, and at minus them
+Town.CrossZ = 131 -- downtown and civic cross streets at plus and minus this
 Town.Roads = {
-	{ -497, 0, 1328, 0, 30.5, 7, name = "Main Street" },
+	{ -1080, 0, 1080, 0, 14, 8, name = "Main Street" },
+	{ -1070, 262, 1070, 262, 11, 6, name = "Hill Road" },
+	{ -1070, -262, 1070, -262, 11, 6, name = "Harbour Road" },
 } :: { any }
-Town.Crossings = { -208, 0, 208, 416, 596 }
+for _, x in Town.AvenueX do
+	for _, sx in { 1, -1 } do
+		table.insert(Town.Roads, { sx * x, -262, sx * x, 262, 11, 6 })
+	end
+end
+for _, sx in { 1, -1 } do
+	for _, z in { 131, -131 } do
+		local a, b = 542, 1070
+		table.insert(Town.Roads, { sx * a, z, sx * b, z, 11, 6 })
+	end
+end
 
--- Where the villager creator's stage stands: high over the beach north of the plots, between two
--- of its huts, the sea beyond it. Stages for several players line up westward from here.
-Town.CreatorSpot = Vector3.new(288, 0, -600)
+-- The districts, for the map: { name, x1, z1, x2, z2 }.
+Town.Districts = {
+	{ name = "Old Town", x1 = -525, z1 = -245, x2 = 525, z2 = 245 },
+	{ name = "Downtown", x1 = 559, z1 = -245, x2 = 1053, z2 = 245 },
+	{ name = "Civic Quarter", x1 = -1053, z1 = -245, x2 = -559, z2 = 245 },
+	{ name = "The Hills", x1 = -1100, z1 = 290, x2 = 1100, z2 = 920 },
+	{ name = "Waterfront", x1 = -1070, z1 = -340, x2 = 1070, z2 = -279 },
+}
+
+-- Where the villager creator's stage stands: a flat meadow just north of Hill Road, the town
+-- behind it. Stages for several players line up westward from here.
+Town.CreatorSpot = Vector3.new(-330, 0, 318)
 Town.CreatorGap = 34
--- How high over the beach the stage floats. Nothing of the town is near it up there, so the
+-- How high over the meadow the stage floats. Nothing of the town is near it up there, so the
 -- creator can stand its own backdrop behind the mannequin.
 Town.CreatorHeight = 420
 
@@ -70,14 +92,15 @@ function Town.toPlot(i: number, world: Vector3): (boolean, Vector3)
 	return p.X >= 0 and p.X <= SIZE and p.Z >= 0 and p.Z <= SIZE, p
 end
 
--- Spots of interest in the middle of town (world space): the spawn and the festival spot on the
--- green, and the doors of the news board, the tailor's and the city hall (Data/CityMap puts them).
+-- Spots of interest in the plaza (world space).
 Town.Spots = {
-	Spawn = Vector3.new(680, 0, -88),
-	Festival = Vector3.new(684, 0, -128),
-	Board = Vector3.new(652, 0, -56),
-	Tailor = Vector3.new(643.8, 0, -65.4),
-	Hall = Vector3.new(579, 0, 110),
+	Fountain = Vector3.new(0, 0, 80),
+	Board = Vector3.new(-24, 0, 40),
+	Tailor = Vector3.new(30, 0, 48),
+	Shop = Vector3.new(-26, 0, -48),
+	Hall = Vector3.new(0, 0, -124),
+	Spawn = Vector3.new(0, 0, 58),
+	Festival = Vector3.new(0, 0, 106), -- in front of the bandstand
 }
 
 return Town
