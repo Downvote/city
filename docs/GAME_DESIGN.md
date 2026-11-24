@@ -442,9 +442,19 @@ How long things take a new player now, at starting mood and skill:
 - a bed and a workplace for the second villager, and a ready-made cottage on top, come out of the 3,000 starting
   coins at once; after that the cottage is 1.2 town days of the builder's wage, about 14 minutes;
 - the first land is 30 minutes of the builder alone, 17 with the two workers a village has (it was 50);
-- each town level, the building it asks for and then the land it opens, earned by just the workers the levels ask
-  for: Village 1.6 town days, Town 3.4, Big town 4.4, City 1.3; the whole way about 2.1 hours of play (it was 8.9).
-  A town that keeps its villagers happy and learning gets there in about half.
+- each town level, the building it asks for and then the land it opens, earned by the workers a town at that level
+  typically has (2, 4, 7 and 10: what the levels used to ask for): Village 1.6 town days, Town 3.4, Big town 4.4,
+  City 1.3; the whole way about 2.1 hours of play (it was 8.9). A town that keeps its villagers happy and learning
+  gets there in about half.
+
+**Worth is all a level asks for.**
+
+> make the only requirements for growing towns worth instead of villagers or work requirement
+
+A town level used to ask for so many villagers, so many of them in work and so much built. Now it asks only for what
+the town is worth (1,500 for a village, 5,000 a town, 12,500 a big town, 25,000 a city). The city hall and the level
+dial show worth alone. The coins to build still come mostly from villagers working, so a town with people at work
+still grows fastest.
 
 Held by `tests/specs/City.spec.luau` (and the earning itself by `Wages.spec.luau` and `Routine.spec.luau`):
 
@@ -1728,6 +1738,26 @@ While a piece or a ready-made building is held to place and the rest of Build mo
 back that every menu has stands beside the hint at the bottom left, for every player. It does exactly what a right
 click does there: the piece is put away and the bars come back. On a touch screen the round button that turns the
 piece stands between it and the hint.
+
+### Bubbles over heads that stay in order
+
+> improve villager bubbles above their head, and make it such that you cant see the bubbles through walls. also,
+> they sometimes intersect villager speech bubbles
+
+- **One look.** What a villager says out loud in the town, the little mood symbols (a heart, a note, zzz) and their
+  wish are all drawn like the rest of the interface now: a card of the dark glass with a thin pale rim, small
+  brackets on two corners and a tail pointing down at the head. Words sit on a card with a short yellow stroke at its
+  left, a mood is a round badge with a ring in its colour, a wish is a square with an orange rim (yellow for a
+  craving) and the thing they want in it. They come in quick, growing the last bit to their size with no bounce.
+- **One above the other.** Everything over one head hangs from the same point and stacks: the words at the bottom,
+  then the mood, then the wish, with a small gap, so they never cross. When two villagers stand close, the nearer
+  one's stack keeps its place and the further one's goes up over it; if it would have to go up too far it waits,
+  hidden, until there is room.
+- **Not through walls.** A villager's bubbles hide, with a quick fade, while something solid is between them and
+  the camera: a wall, a roof, a hill. Leaves and long grass don't count, and neither do other villagers or players.
+  The bubbles are still drawn over the villager's own head and hat, so a hat never cuts into a speech card.
+  The coins that rise over a villager at work are left as they were, beside the head and over walls, since most
+  work goes on indoors.
 
 ## 11. Writing
 

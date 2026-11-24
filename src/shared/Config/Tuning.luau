@@ -171,18 +171,18 @@ Tuning.Jobs = {
 	},
 }
 
--- City levels: reached by having enough villagers, enough of them in work and enough built. Each
--- level lets you buy more land. Workers is how many villagers must have a job (never more than Pop).
+-- City levels: reached by what the town is worth, and nothing else (the user: "make the only
+-- requirements for growing towns worth instead of villagers or work requirement"; a level used to
+-- ask for so many villagers and so many of them in work too). Each level lets you buy more land.
 -- Value is what the town's buildings are worth at today's prices: it halved with the prices (it
--- was 3000, 10000, 25000 and 50000), so a level asks for as much building as before and a town
--- keeps the level it had.
+-- was 3000, 10000, 25000 and 50000), so a level asks for as much building as before.
 Tuning.City = {
 	Levels = {
-		{ Name = "Hamlet", Pop = 0, Workers = 0, Value = 0 },
-		{ Name = "Village", Pop = 3, Workers = 2, Value = 1500 },
-		{ Name = "Town", Pop = 6, Workers = 4, Value = 5000 },
-		{ Name = "Big town", Pop = 9, Workers = 7, Value = 12500 },
-		{ Name = "City", Pop = 12, Workers = 10, Value = 25000 },
+		{ Name = "Hamlet", Value = 0 },
+		{ Name = "Village", Value = 1500 },
+		{ Name = "Town", Value = 5000 },
+		{ Name = "Big town", Value = 12500 },
+		{ Name = "City", Value = 25000 },
 	},
 	-- how much of the starting house counts toward the town's level (Sim/City.worth): what the
 	-- small cottage it replaced was worth, so the bigger house skips no level (2610 at the old prices)

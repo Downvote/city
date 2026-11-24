@@ -64,13 +64,13 @@ function City.freeWorkplace(profile: any): string?
 	return nil
 end
 
--- The level a town of that many people and that worth has reached. `workers` is how many of
--- them have a job (Tuning.City.Levels[i].Workers: the user asked that "progression is much more
--- based on villagers working"); left out, only people and worth are counted.
-function City.level(population: number, value: number, workers: number?): number
+-- The level a town of that worth has reached. Worth is all a level asks for (the user: "make
+-- the only requirements for growing towns worth instead of villagers or work requirement"); the
+-- coins to build it still come mostly from villagers working.
+function City.level(value: number): number
 	local level = 1
 	for i, lv in Tuning.City.Levels do
-		if population >= lv.Pop and value >= lv.Value and (workers == nil or workers >= (lv.Workers or 0)) then
+		if value >= lv.Value then
 			level = i
 		else
 			break
@@ -116,8 +116,8 @@ function City.worth(plan: any): number
 	return Plan.value(plan) - math.max(0, Plan.giftValue(plan) - Tuning.City.StarterWorth)
 end
 
--- Everything the city panel shows. `employed` is how many villagers have a job, to set against
--- `nextLevel.Workers` (with `population` against `nextLevel.Pop` and `value` against `.Value`).
+-- Everything the city panel shows. The next level asks for `nextLevel.Value` of worth alone;
+-- `population` and `employed` (how many villagers have a job) are there to show.
 function City.stats(profile: any): any
 	local population = 0
 	local moodTotal = 0
@@ -130,7 +130,7 @@ function City.stats(profile: any): any
 		end
 	end
 	local value = if profile.plan then City.worth(profile.plan) else 0
-	local level = City.level(population, value, employed)
+	local level = City.level(value)
 	local nextLevel = Tuning.City.Levels[level + 1]
 	local size = Plan.size(profile.plan)
 	local nextLand = nil

@@ -118,17 +118,15 @@ local WEATHER_ICON = {
 	leaves = "leaves",
 }
 
--- How far the town is toward its next level: both people and what's built count, so the
--- slower of the two sets the bar.
+-- How far the town is toward its next level: what it's worth is all a level asks for.
 local function levelProgress(stats: any): (number, string)
 	local nextLevel = stats.nextLevel
 	if not nextLevel then
 		return 1, "Top level"
 	end
-	local pop = if nextLevel.Pop > 0 then stats.population / nextLevel.Pop else 1
 	local built = if nextLevel.Value > 0 then stats.value / nextLevel.Value else 1
-	-- the detail (people, worth) is in the city hall, a click away: here just where it's going
-	return math.clamp(math.min(pop, built), 0, 1), Text.fill("Next: {name}", { name = nextLevel.Name })
+	-- the detail is in the city hall, a click away: here just where it's going
+	return math.clamp(built, 0, 1), Text.fill("Next: {name}", { name = nextLevel.Name })
 end
 
 function Hud.start()

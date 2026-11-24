@@ -438,34 +438,24 @@ describe("City", function()
 		end
 	end)
 
-	it("goes up a level with more people, more of them in work and more built", function()
-		expect(City.level(0, 0)).toBe(1)
-		expect(City.level(0, 0, 0)).toBe(1)
+	it("goes up a level by what the town is worth, and nothing else", function()
+		-- the user: "make the only requirements for growing towns worth instead of villagers or
+		-- work requirement"
+		expect(City.level(0)).toBe(1)
 		local levels = Tuning.City.Levels
-		expect(levels[1].Workers).toBe(0)
 		for i = 2, #levels do
 			local lv = levels[i]
-			expect(City.level(lv.Pop, lv.Value)).toBe(i)
-			expect(City.level(lv.Pop - 1, lv.Value)).toBe(i - 1)
-			expect(lv.Pop > levels[i - 1].Pop).toBeTruthy()
+			expect(City.level(lv.Value)).toBe(i)
+			expect(City.level(lv.Value - 1)).toBe(i - 1)
 			expect(lv.Value > levels[i - 1].Value).toBeTruthy()
-			-- a level asks for villagers in work too: all three, and one short of any of them
-			-- is the level below
-			expect(City.level(lv.Pop, lv.Value, lv.Workers)).toBe(i)
-			expect(City.level(lv.Pop, lv.Value, lv.Workers - 1)).toBe(i - 1)
-			expect(City.level(lv.Pop, lv.Value - 1, lv.Workers)).toBe(i - 1)
-			expect(City.level(lv.Pop - 1, lv.Value, lv.Workers)).toBe(i - 1)
-			expect(lv.Workers > levels[i - 1].Workers).toBeTruthy()
-			-- never more workers than villagers, and most of the town at work
-			expect(lv.Workers <= lv.Pop).toBeTruthy()
-			expect(lv.Workers * 2 >= lv.Pop).toBeTruthy()
+			-- a level asks for worth alone: no head count, no workers
+			expect((lv :: any).Pop).toBe(nil)
+			expect((lv :: any).Workers).toBe(nil)
 		end
-		expect(levels[#levels].Pop <= Tuning.Villagers.Max).toBeTruthy()
-		-- a full town with nothing built or nobody working is still a hamlet
-		expect(City.level(Tuning.Villagers.Max, 1e9, 0)).toBe(1)
+		expect(City.level(1e9)).toBe(#levels)
 	end)
 
-	it("counts who has a job for the city hall, and a town of idlers stays small", function()
+	it("lets a town with nobody in work grow on its worth, and still counts who has a job", function()
 		local p = Schema.newProfile()
 		p.plan = StarterHouse.plan()
 		p.plan.items.stall = { id = "work_market", x = 130, y = 0, z = 12, r = 180, lv = 0 }
@@ -473,29 +463,24 @@ describe("City", function()
 			p.plan.items["x" .. k] = { id = "fountain", x = 60 + k * 6, y = 0, z = 90, r = 0, lv = 0 }
 		end
 		local village = Tuning.City.Levels[2]
-		for i = 1, village.Pop do
-			villager(p, i)
-		end
+		-- worth enough for a village and not a soul living there: a village all the same
 		local stats = City.stats(p)
 		expect(stats.value >= village.Value).toBeTruthy()
-		expect(stats.employed).toBe(0)
-		expect(City.workers(p)).toBe(0)
-		expect(stats.level).toBe(1)
-		-- the next level says what it asks for, workers among it
-		expect(stats.nextLevel.Workers).toBe(village.Workers)
-		expect(stats.nextLevel.Pop).toBe(village.Pop)
-		-- one in work is not enough for a village; two are
+		expect(stats.population).toBe(0)
+		expect(stats.level).toBe(2)
+		expect(stats.nextLevel.Value).toBe(Tuning.City.Levels[3].Value)
+		-- who has a job is still counted for the city hall, and makes no difference to the level
+		for i = 1, 3 do
+			villager(p, i)
+		end
+		expect(City.stats(p).employed).toBe(0)
 		p.villagers.v1.job = City.freeWorkplace(p)
 		expect(City.stats(p).employed).toBe(1)
-		expect(City.stats(p).level).toBe(1)
-		p.villagers.v2.job = City.freeWorkplace(p)
-		expect(City.stats(p).employed).toBe(2)
-		expect(City.workers(p)).toBe(2)
+		expect(City.workers(p)).toBe(1)
 		expect(City.stats(p).level).toBe(2)
 		-- a job at a workplace that has been sold is no job
 		p.plan.items.stall = nil
-		expect(City.stats(p).employed).toBe(1)
-		expect(City.stats(p).level).toBe(1)
+		expect(City.stats(p).employed).toBe(0)
 	end)
 
 	it("sells land in growing steps that fit the plot", function()
@@ -531,12 +516,9 @@ describe("City", function()
 		for k = 1, 12 do
 			p.plan.items["x" .. k] = { id = "fountain", x = 60 + k * 6, y = 0, z = 90, r = 0, lv = 0 }
 		end
-		-- and still no land: a village needs two of them in work
-		expect(City.canExpand(p)).toBe(nil)
-		p.plan.items.stall = { id = "work_market", x = 130, y = 0, z = 12, r = 180, lv = 0 }
-		p.villagers.v1.job = City.freeWorkplace(p)
-		p.villagers.v2.job = City.freeWorkplace(p)
+		-- and that's all it takes: a town's worth is all a level asks for, nobody needs a job
 		local stats = City.stats(p)
+		expect(stats.employed).toBe(0)
 		expect(stats.level >= 2).toBeTruthy()
 		expect(City.canExpand(p) ~= nil).toBeTruthy()
 	end)
@@ -701,21 +683,24 @@ describe("City", function()
 
 	it("asks of each level what its own workers can earn in a sensible time", function()
 		-- What a level takes: the building its worth asks for on top of the level before (saved
-		-- up by the workers that level had to have), then the land it unlocks (saved up by the
-		-- workers it has to have itself). At starting mood and skill, with no more workers than
+		-- up by the workers a town at that level typically has), then the land it unlocks (saved
+		-- up by the workers of the level it unlocks at). At starting mood and skill, with no more workers than
 		-- the levels ask for, every step is a day or more of work and none is more than a few
 		-- hours of play. A town day is 12 minutes; a town that keeps everyone in work, happy and
 		-- learning does it in about half. (With wages tripled and building halved the steps took
 		-- a quarter of the 3 to 25 days they did.)
 		local levels, land = Tuning.City.Levels, Tuning.City.Land
+		-- (a level no longer asks for villagers in work, but the coins still come from them: what
+		-- a town at each level typically has in work, the numbers the levels used to ask for)
+		local working = { 0, 2, 4, 7, 10 }
 		local pay = meanStartPay()
 		local total = 0
 		for i = 2, #levels do
 			local build = levels[i].Value - math.max(levels[i - 1].Value, Tuning.City.StarterWorth)
-			local days = build / (math.max(1, levels[i - 1].Workers) * pay)
+			local days = build / (math.max(1, working[i - 1]) * pay)
 			for _, l in land do
 				if l.Level == i then
-					days += l.Price / (levels[i].Workers * pay)
+					days += l.Price / (working[i] * pay)
 				end
 			end
 			expect(days).toBeBetween(1, 8)

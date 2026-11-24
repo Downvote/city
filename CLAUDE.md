@@ -134,8 +134,10 @@ The user: "remove the shop, buying of things and food and feeding. when a charac
 player to simply pay to buy it" and "remove the map button and the map interface". So there is no shop, no bag
 (`inv`), no feeding and no map screen. A craving is bought from the villager's page or the talk card through
 `WishBuy` at `Life.wishPrice`. Don't add anything for sale but cravings and Build mode's pieces. The user also
-asked that "progression is much more based on villagers working": wages are most of a town's income and town
-levels ask for villagers in work (`Tuning.City.Levels[i].Workers`); the City spec holds that balance. Then: "could
+asked that "progression is much more based on villagers working": wages are most of a town's income; the City spec
+holds that balance. A town level asks for worth and nothing else (the user: "make the only requirements for growing
+towns worth instead of villagers or work requirement": `Tuning.City.Levels[i]` is `Name` and `Value`, `City.level(value)`).
+Then: "could
 you make working give much more coins, and make buildings cheaper?" and "make it such that villagers earn coins as
 they work, not after every day": a villager at their workplace earns a little every few seconds (`City.earn` purses
 in `Services/Villagers`, sent every `Tuning.Jobs.PayEvery` seconds as the `Earned` event, a "+N" coin rising over
@@ -179,6 +181,18 @@ The user asked to "interact/chat with villagers by holding e on them": every vil
 (`Npc.talkPrompt`, put on in `Villagers.spawn` and answered by `Villagers.talkedTo`), what they say and what a
 chat is worth is `Sim/Talk` (numbers in `Tuning.Talk`), and the owner's card is `UI/TalkCard`. A prompt that opens a panel carries an `Opens` attribute
 (`Hud` reads it); the talk prompts must not.
+
+What hangs over a villager's head (the user: "improve villager bubbles above their head, and make it such that you
+cant see the bubbles through walls. also, they sometimes intersect villager speech bubbles") is drawn by
+`Util/Bubble` on the server and the client alike, in the interface's look: the speech card (`Npc.say`, a
+BillboardGui named `Bubble`), the mood badge (`Npc.icon`, `Mood`) and the wish bubble (`World/Wishes`,
+`WishBubble`). All of them hang from `Bubble.Anchor` in tall billboards, each piece a CanvasGroup named `Fade`, and
+one client loop (`World/Bubbles`, a few times a second) stacks them over each head with a gap, keeps two heads'
+stacks apart on the screen (`World/BubbleLayout`: the nearer keeps its place, the further goes up or hides) and
+hides a stack while a ray from the camera to its point hits anything solid that isn't a villager or a player. They
+are drawn on top (`AlwaysOnTop`), so a head or a hat never cuts into them, and the ray is what keeps them from
+showing through walls. A new thing over heads is a piece from `Util/Bubble` in a billboard with one of those names
+(add the name to `ORDER` in `World/Bubbles`). Preview: `ui.sh bubbles`.
 
 The user asked for things to move "where possible": buttons, screens and the town are animated (docs/GAME_DESIGN.md
 section 10). New buttons get it from `UI/Kit`; new moving scenery goes in `World/Ambience` (client only, one loop,

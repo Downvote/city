@@ -61,8 +61,9 @@ The contract between the parts of the game. Update it with every change to an AP
 - `Sim/`: `Schema` (profile and villager shapes, defaults, migration), `Relationships`, `EventEngine` (picks events,
   applies their effects, including `hearts` and `xpv vid d`, skill for one villager by id; `ctx.cravingPrice`;
   no food, item or merchant ops since the shop went, and no `bond`, `ctx.bond` or `ctx.free` since romance went), `City` (stats, levels, land, workplaces, wages earned as they work: `City.wages(profile, day, now)`, `City.workDay`, `City.workSeconds`, `City.dayPay`, `City.rate` (coins a second at the workplace), the purse `City.Purse` / `City.newPurse()` / `City.earn(purse, day, rate, seconds)` that carries part coins, starts again each day, caps a day at a whole work day and pays nothing for bad input, and `City.dayXp`;
-  `City.level(pop, value, workers?)`, `City.workers(profile)` the villagers with a job, `City.addSkill(v, n)`;
-  `City.stats(profile).employed` is set against `nextLevel.Workers` on the city hall), `Life` (hearts and their
+  `City.level(value)` (worth alone: `Tuning.City.Levels[i]` is `Name` and `Value`; "make the only requirements for
+  growing towns worth instead of villagers or work requirement"), `City.workers(profile)` the villagers with a job,
+  `City.addSkill(v, n)`; `City.stats(profile)` still gives `population` and `employed` to show), `Life` (hearts and their
   thank you offers, wishes, goals; no romance: best friends, the top of `Tuning.Relationships.Levels`, is as
   close as two villagers get; `Life.cravingPrice(foodId)`, `Life.wishPrice(profile, vid)`,
   `Life.buyWish(profile, vid, rng)`; all pure).
@@ -665,8 +666,24 @@ clipping (`tools/preview/ui_render.py`).
   under a ScreenGui counts: that call also returns what is drawn on a SurfaceGui kept in PlayerGui (the creator's
   backdrop is one, with `Active` off), which is scenery.
 - `UI/Rewards` (the thank you picker, opened by the HUD when `offers` arrive), `UI/Goals` (the town goals panel;
-  `Goals.ready()` feeds the dock badge), `World/Wishes` (a thought bubble over each villager whose model has a
-  `Wish` attribute; a click opens their page).
+  `Goals.ready()` feeds the dock badge), `World/Wishes` (a bubble over each villager whose model has a
+  `Wish` attribute, `Wishes.face(parent, icon, food?)` drawing it; a click opens their page).
+- `Util/Bubble` (shared, plain instances, used by the server and the client): what hangs over a head. `Anchor` (the
+  point over the head every head billboard hangs from), `Tall` (the billboards' height: the point is in their
+  middle), `Base` and `Gap` (pixels), `Moods` (symbol and colour by kind), `card(parent, props)` (the dark glass card
+  with a rim and two brackets), `speech(parent, text?)` (a card of words with a yellow stroke and a tail; returns the
+  group and the `Text` label), `mood(parent, kind)` (a round badge), `square(parent, px, colour)` (the wish bubble's
+  frame) and `billboard(name, adornee, wide, far)` (`AlwaysOnTop`, `StudsOffset = Anchor`). Each piece is a
+  CanvasGroup `Fade` with its bottom middle `n` pixels over the point. `Npc.say` shows one in a billboard named
+  `Bubble`, `Npc.icon` one named `Mood` (destroyed after a few seconds).
+- `World/Bubbles` (client, started by `Wishes.start`): every 0.15 seconds it finds what is showing over each villager
+  (`Bubble`, `Mood` in the model, and what `Bubbles.track(model, gui)` was handed: the wish bubble), casts a ray from
+  the camera to `head.Position + Anchor` (excluding every `Villagers` folder and every player's character, through
+  anything with CanCollide off) and fades a blocked head's pieces out, then places the rest with
+  `World/BubbleLayout.arrange(heads, opts)` (pure: each head's items bottom first, `{ w, h }`, at its screen point and
+  depth; returns each item's lift, the stack's rise and whether it is hidden; the nearer head keeps its place, a
+  further one goes up over it up to `MaxRise` and hides past that) and tweens each `Fade` to its lift. The Bubbles
+  spec holds the sums. Preview: `ui.sh bubbles`.
 - `World/Explore` (tells the server when the player reaches a place they haven't found). There is no map screen.
 - `World/Ambience` turns the ferris wheel, carousel and windmill (parts named `Spin` round the `Hub`'s X axis;
   `Cabin` parts go round upright) and bobs the marina's boats (parts named `Boat<n>`, one group each).
@@ -813,8 +830,11 @@ clipping (`tools/preview/ui_render.py`).
   `FloorUp`, `Hide roofs`, `See-through walls` and `Snap to grid`; the hint line says what a press did), the coin
   `Pill` top left. While a piece is held to place, every one of them but `Hint` slides off the screen (down, or up
   for the pill and the camera help) and is hidden once gone; a check once a frame decides it, and they slide back
-  when the holding ends or Build mode closes. `BuildMode.putAway()` ends holding (the touch buttons beside the hint
-  call it).
+  when the holding ends or Build mode closes. `BuildMode.putAway()` ends holding, as a right click does: `Holding`
+  beside the hint shows while a piece is held, for every player, with the red `Kit.backButton` named
+  `Put it away` that calls it and, on a touch screen, the round `Turn it`. The catalog's well keeps `SubNote` at its
+  right end (the picked category's `Index`, "01 / 11", over its name set wide). `Kit.glide` slides the yellow between
+  the main groups and between the categories.
 
 ## The drawn city
 

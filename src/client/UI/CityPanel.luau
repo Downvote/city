@@ -68,8 +68,8 @@ local function town(inside: Frame, stats: any, wages: number)
 		Color = T.InkSoft,
 	})
 
-	-- what the next level needs, as a bar for each thing it asks (villagers, worth and, from some
-	-- levels on, villagers at work), and what it brings
+	-- what the next level needs: worth, and nothing else ("make the only requirements for growing
+	-- towns worth instead of villagers or work requirement"), and what it brings
 	local nextLevel = stats.nextLevel
 	local STEP = 48
 	if nextLevel then
@@ -83,14 +83,6 @@ local function town(inside: Frame, stats: any, wages: number)
 			Font = Kit.Fonts.Bold,
 		})
 		local y = 116
-		local pop, need = stats.population, nextLevel.Pop
-		MenuParts.progress(
-			"Villagers",
-			Text.fill("{a} of {b}", { a = math.min(pop, need), b = need }),
-			pop / math.max(1, need),
-			{ Name = "Villagers", Parent = inside, Position = UDim2.fromOffset(0, y), Color = accent }
-		)
-		y += STEP
 		local worth, wneed = stats.value, nextLevel.Value
 		MenuParts.progress(
 			"Worth",
@@ -99,17 +91,6 @@ local function town(inside: Frame, stats: any, wages: number)
 			{ Name = "Worth", Parent = inside, Position = UDim2.fromOffset(0, y), Color = accent, Coin = true }
 		)
 		y += STEP
-		local workers = nextLevel.Workers
-		if type(workers) == "number" and workers > 0 then
-			local at = stats.employed or 0
-			MenuParts.progress(
-				"At work",
-				Text.fill("{a} of {b}", { a = math.min(at, workers), b = workers }),
-				at / workers,
-				{ Name = "AtWork", Parent = inside, Position = UDim2.fromOffset(0, y), Color = accent }
-			)
-			y += STEP
-		end
 		local land = landAt(stats.level + 1)
 		MenuParts.note(
 			if land
