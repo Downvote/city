@@ -152,7 +152,9 @@ spots against every placed turn, the rarity bands and shares over 20,000 seeded 
 `Data/Terrain` lays out the island's natural ground, which `World.buildTerrain` writes as Roblox terrain when the
 server starts, before the parts go up (in a pcall: if it fails, the island is filled with plain grass, sand and sea and the town still goes up): the water settings and material colours, a clear, then tiles of 4 stud
 columns with `WriteVoxelChannels` (sand and water share a voxel, so the water's edge lies on the slope; `classic()`
-is the `WriteVoxels` fallback, with a warning), then `openSea()` (`FillBlock`s out to 3,000 studs). It holds the
+is the `WriteVoxels` fallback, with a warning; the card counts the tiles), then the open sea past the region as
+flat parts (`openSea()`'s blocks: a see-through sheet at the sea's level over a dark floor, in `workspace.OpenSea`;
+as terrain it was nine million voxels, three quarters of all of it, slow to write and for every player to load). It holds the
 island's measures (TownMap reads them), the coast (a position round the island and how far out a point is; the
 water's edge, the grass edge and the deep drop are sums of sine waves that close on themselves), `natural(x, z)`
 (height and material: grass at -0.1 or `Hills.at - 0.1`, rock on slopes past 0.45, sand falling to the sea at -1.2

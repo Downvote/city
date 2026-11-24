@@ -1591,6 +1591,13 @@ most used details for ten seconds, puts the whole town up, and merges the rest a
 character arrives the screen shows a dark card with the game's name and "Building the town". A service that fails
 while the server starts is reported in the output and the others carry on.
 
+> its stuck here
+
+(On "Writing the island's ground".) Most of that was the open sea: terrain water out to the horizon, three times
+the island's own ground, written when the server starts and loaded by every player. Past the island's shallows the
+sea is now a flat sheet of water over a dark floor, as it was before the terrain, and the island alone is terrain.
+The card counts the ground's tiles as they are written.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

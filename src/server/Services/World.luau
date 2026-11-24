@@ -141,7 +141,11 @@ local function buildTerrain(groundPrims: { any }, placements: { any }, drawn: { 
 	end
 	local plan = Ground.plan(TownMap.cover(groundPrims, placements, drawn), pause)
 	local classic = false
-	for _, tile in Ground.tiles(plan) do
+	local tiles = Ground.tiles(plan)
+	for n, tile in tiles do
+		if n % 8 == 1 then
+			step(("Writing the island's ground (%d of %d)"):format(n, #tiles))
+		end
 		local lo, hi, channels = Ground.voxels(plan, tile, mats)
 		local region = Region3.new(lo, hi)
 		if not classic then
@@ -160,9 +164,39 @@ local function buildTerrain(groundPrims: { any }, placements: { any }, drawn: { 
 		end
 		pause()
 	end
+	-- The open sea past the island's shallows is flat parts, not terrain: as terrain it was ten
+	-- million voxels of water out to the horizon, slow to write and for every player to load
+	-- (the user, stuck on "Writing the island's ground": "its stuck here"). A see-through sheet
+	-- at the sea's level over a dark floor, in pieces of at most 1,000 studs.
+	step("Laying the open sea")
+	local sea = Instance.new("Folder")
+	sea.Name = "OpenSea"
+	local deep = Ground.Colors.Slate
 	for _, block in Ground.openSea() do
-		terrain:FillBlock(CFrame.new(block.center), block.size, mats[block.material])
+		local p = Instance.new("Part")
+		p.Anchored = true
+		p.CastShadow = false
+		p.TopSurface = Enum.SurfaceType.Smooth
+		p.BottomSurface = Enum.SurfaceType.Smooth
+		p.Material = Enum.Material.SmoothPlastic
+		if block.material == "Water" then
+			p.Name = "Sea"
+			p.Size = Vector3.new(block.size.X, 0.4, block.size.Z)
+			p.CFrame = CFrame.new(block.center.X, Ground.WaterY - 0.2, block.center.Z)
+			p.Color = Color3.fromRGB(water.Color[1], water.Color[2], water.Color[3])
+			p.Transparency = 0.25
+			p.Reflectance = 0.05
+			p.CanCollide = false
+			p.CanQuery = false
+		else
+			p.Name = "SeaFloor"
+			p.Size = Vector3.new(block.size.X, 2, block.size.Z)
+			p.CFrame = CFrame.new(block.center.X, Ground.Floor - 1, block.center.Z)
+			p.Color = if deep then Color3.fromRGB(deep[1], deep[2], deep[3]) else Color3.fromRGB(60, 90, 120)
+		end
+		p.Parent = sea
 	end
+	sea.Parent = workspace
 	print(("[World] terrain written in %.1f s"):format(os.clock() - started))
 end
 
