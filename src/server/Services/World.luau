@@ -12,6 +12,7 @@ local Tuning = require(Shared.Config.Tuning)
 local Town = require(Shared.Data.Town)
 local TownModels = require(Shared.Data.TownModels)
 local TownMap = require(Shared.Data.TownMap)
+local Ground = require(Shared.Data.Terrain)
 local Builder = require(Shared.Build.Builder)
 local LowPoly = require(Shared.Build.LowPoly)
 local Textures = require(Shared.Data.Textures)
@@ -90,6 +91,70 @@ local function signText(board: BasePart, text: string, face: Enum.NormalId?)
 	return label
 end
 
+-- The island's natural ground as Roblox terrain (Data/Terrain lays it out): the grass with its
+-- long blades, the hills, the beach whose edge at the water is a run of curves, and the sea with
+-- small waves that run up the sand. Written column by column round the island, in tiles, then
+-- the open sea out to the horizon in big blocks. The grass's blades and length are in the place
+-- file (default.project.json: Roblox doesn't let scripts set them); the rest is set here.
+local function buildTerrain(groundPrims: { any }, placements: { any }, drawn: { [string]: { any } })
+	local started = os.clock()
+	local terrain = workspace.Terrain
+	local water = Ground.Water
+	terrain.WaterColor = Color3.fromRGB(water.Color[1], water.Color[2], water.Color[3])
+	terrain.WaterTransparency = water.Transparency
+	terrain.WaterReflectance = water.Reflectance
+	terrain.WaterWaveSize = water.WaveSize
+	terrain.WaterWaveSpeed = water.WaveSpeed
+	for name, c in Ground.Colors do
+		-- (coloured as a part of that material is, so a texture laid over it comes out the same)
+		local color = Textures.tint(name, Color3.fromRGB(c[1], c[2], c[3]))
+		pcall(function()
+			terrain:SetMaterialColor((Enum.Material :: any)[name], color)
+		end)
+	end
+	-- in case the place file didn't set the grass (Roblox may refuse: then it stays as it is)
+	pcall(function()
+		(terrain :: any).Decoration = true
+	end)
+	pcall(function()
+		(terrain :: any).GrassLength = Ground.GrassLength
+	end)
+	terrain:Clear()
+	local mats: { [string]: any } = {}
+	for _, name in Ground.Materials do
+		mats[name] = (Enum.Material :: any)[name]
+	end
+	local plan = Ground.plan(TownMap.cover(groundPrims, placements, drawn))
+	local rest = os.clock()
+	local classic = false
+	for _, tile in Ground.tiles(plan) do
+		local lo, hi, channels = Ground.voxels(plan, tile, mats)
+		local region = Region3.new(lo, hi)
+		if not classic then
+			-- sand and sea in one voxel (Roblox's shorelines), so the water's edge lies on the slope
+			local ok, why = pcall(function()
+				terrain:WriteVoxelChannels(region, Ground.Voxel, channels)
+			end)
+			if not ok then
+				warn("[World] terrain written the older way, one material a voxel: " .. tostring(why))
+				classic = true
+			end
+		end
+		if classic then
+			local materials, occupancy = Ground.classic(channels, mats)
+			terrain:WriteVoxels(region, Ground.Voxel, materials, occupancy)
+		end
+		if os.clock() - rest > 0.1 then
+			task.wait()
+			rest = os.clock()
+		end
+	end
+	for _, block in Ground.openSea() do
+		terrain:FillBlock(CFrame.new(block[1]), block[2], mats[block[3]])
+	end
+	print(("[World] terrain written in %.1f s"):format(os.clock() - started))
+end
+
 local function buildMap()
 	mapFolder = Instance.new("Folder")
 	mapFolder.Name = "Town"
@@ -108,6 +173,7 @@ local function buildMap()
 			table.insert(lists, drawn[p.name])
 		end
 	end
+	buildTerrain(groundPrims, placements, drawn)
 	local started = os.clock()
 	local cut, failed, left = Builder.preparePieces(lists, 60)
 	if cut + failed + left > 0 then

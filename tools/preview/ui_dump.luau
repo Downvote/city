@@ -417,6 +417,7 @@ elseif scene == "earned" then
 	-- the coins as they rise: just off a head, half way up and fading, nearly gone
 	for i, at in { { 520, 380, 0 }, { 760, 300, 0.4 }, { 980, 420, 0.75 } } do
 		local card = Earnings.card(({ 31, 24, 28 })[i], Sim.gui)
+		card.AnchorPoint = roblox.Vector2.new(0, 0)
 		card.Position = UDim2.fromOffset(at[1], at[2])
 		card.GroupTransparency = at[3]
 	end

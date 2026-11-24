@@ -27,23 +27,31 @@ local RISE = 1.6 -- seconds a coin takes to rise off their head and fade
 local FROM = Vector3.new(-1.3, 2.7, 0) -- where it starts, beside the head (a wish bubble is over it)
 local TO = Vector3.new(-1.3, 4.3, 0)
 
--- What floats up: the coin and "+N" side by side, in a group that fades as one.
+-- What floats up: the coin and "+N" side by side on a small pill of the dark glass that sits over
+-- the 3D view everywhere (so a gold coin still shows on a sunny roof), in a group that fades as one.
 function Earnings.card(n: number, parent: Instance?): CanvasGroup
 	local group = Kit.new("CanvasGroup", {
 		Name = "Coins",
-		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(110, 30),
+		BackgroundColor3 = T.Glass,
+		BackgroundTransparency = 0.35,
+		BorderSizePixel = 0,
+		Size = UDim2.fromOffset(0, 34),
+		AutomaticSize = Enum.AutomaticSize.X,
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
 		Parent = parent,
 	})
-	local row = Kit.list(group, 3, true, Enum.HorizontalAlignment.Center)
+	Kit.corner(group, "pill")
+	Kit.pad(group, 8, 0)
+	local row = Kit.list(group, 4, true, Enum.HorizontalAlignment.Center)
 	row.VerticalAlignment = Enum.VerticalAlignment.Center
-	Icons.make("coin", 22, { Name = "Coin", Parent = group, LayoutOrder = 1 })
+	Icons.make("coin", 24, { Name = "Coin", Parent = group, LayoutOrder = 1 })
 	Kit.title(Text.fill("+{n}", { n = Text.commas(n) }), {
 		Name = "Amount",
 		Parent = group,
-		Size = UDim2.fromOffset(0, 26),
+		Size = UDim2.fromOffset(0, 30),
 		AutomaticSize = Enum.AutomaticSize.X,
-		TextSize = 20,
+		TextSize = 22,
 		Color = T.Yellow,
 		Outline = T.Dark,
 		Wrap = false,
@@ -66,7 +74,7 @@ function Earnings.pop(model: Model, n: number): BillboardGui?
 	local bb = Instance.new("BillboardGui")
 	bb.Name = "CoinPop"
 	bb.Adornee = head
-	bb.Size = UDim2.fromOffset(110, 30)
+	bb.Size = UDim2.fromOffset(130, 34)
 	bb.StudsOffset = FROM
 	bb.MaxDistance = SEEN
 	-- (over walls too, as the wish bubbles are: most work goes on indoors)

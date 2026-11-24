@@ -626,6 +626,8 @@ end
 
 -- Grass: tufts of blades on the lawns round the player, each leaning with the wind. There is a
 -- fixed number of them; a tuft the player has walked away from is moved to fresh grass ahead.
+-- Only on lawns made of parts (the square's, a garden's, a plot): the island's own grass is
+-- terrain, and Roblox grows its long blades there itself (Data/Terrain).
 type Tuft = { blades: { BasePart }, at: Vector3, yaw: number, phase: number, tall: number, live: boolean }
 local tufts: { Tuft } = {}
 local TUFTS = 150
@@ -640,7 +642,12 @@ local function grassAt(x: number, z: number, from: number): Vector3?
 	if not groundParams then
 		local params = RaycastParams.new()
 		params.FilterType = Enum.RaycastFilterType.Exclude
-		params.FilterDescendantsInstances = { folder }
+		local list: { Instance } = { folder }
+		local terrain = workspace:FindFirstChildOfClass("Terrain")
+		if terrain then
+			table.insert(list, terrain)
+		end
+		params.FilterDescendantsInstances = list
 		groundParams = params
 	end
 	local hit = workspace:Raycast(Vector3.new(x, from + 40, z), Vector3.new(0, -120, 0), groundParams :: RaycastParams)

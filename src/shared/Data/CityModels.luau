@@ -931,15 +931,16 @@ CityModels.house = house
 -- like in the image". So the woods are mostly firs: a straight thin reddish trunk showing under
 -- tiers of drooping boughs that get shorter up to a thin spire, dark blue green inside and olive
 -- where the tops catch the sun. A bough is a wedge hanging down and out from a dark core, and
--- each tier is turned against the one under it. The broadleaf trees have a full, soft crown of
--- leafy clumps on a forked trunk. Each crown is one piece (one mesh in the game) named Leaf, so
--- the client sways it in the wind (World/Ambience) and the trunk stays put: a tree is two parts.
+-- each tier is turned against the one under it. A fir's crown is one piece (one mesh in the game)
+-- named Leaf, so the client sways it in the wind (World/Ambience) while the trunk stays put: a
+-- fir is two parts. The broadleaf trees have a full, soft crown of seven leafy clumps, each
+-- named Leaf and swaying on its own.
 
 local FIR_CORE = rgb(28, 50, 48)
 local FIR_LOW = rgb(38, 72, 62)
 local FIR_HIGH = rgb(78, 104, 66)
 local FIR_TIP = rgb(118, 128, 74)
-local FIR_BARK = rgb(124, 78, 58)
+local FIR_BARK = rgb(106, 66, 52)
 
 local function mix(a: Color3, b: Color3, t: number): Color3
 	return Color3.new(a.R + (b.R - a.R) * t, a.G + (b.G - a.G) * t, a.B + (b.B - a.B) * t)
@@ -1047,16 +1048,11 @@ local CROWN = {
 }
 local BROAD_BARK = rgb(118, 86, 64)
 
--- A broadleaf tree at `at`, s 1 (or 1.35 for a big one): a trunk that forks into three limbs
--- under the crown (one piece), and the crown's clumps, each named Leaf to sway on its own.
+-- A broadleaf tree at `at`, s 1 (or 1.35 for a big one): a trunk you can't walk through, up into
+-- the crown, and the crown's clumps, each named Leaf to sway on its own.
 local function broadleaf(r: R, at: CFrame, s: number)
-	stamp(r, "broadTrunk:" .. s, at, function(q)
-		q:box(0, 2.6 * s, 0, 1.1 * s, 5.2 * s, 1.1 * s, BROAD_BARK, "Wood")
-		q:boxAt(CFrame.new(0, 2.5 * s, 0) * yaw(45), 1.1 * s, 5 * s, 1.1 * s, BROAD_BARK, "Wood")
-		for _, l in { { 1.9, 6.0, 0.5 }, { -1.7, 6.2, 1.1 }, { -0.2, 6.4, -1.9 } } do
-			local limb = Vector3.new(l[1] * s, l[2] * s, l[3] * s)
-			q:beam(Vector3.new(0, 4.2 * s, 0), limb, 0.5 * s, 0.5 * s, BROAD_BARK, "Wood")
-		end
+	drawAt(r, at, function(q)
+		q:cyl(0, 2.9 * s, 0, 5.8 * s, 1.15 * s, "y", BROAD_BARK, "Wood")
 	end)
 	for _, c in CROWN do
 		local t = c[7]

@@ -65,7 +65,29 @@
     "Workspace": {
       "$properties": {
         "Gravity": 196.2,
-        "StreamingEnabled": false
+        "StreamingEnabled": false,
+        "GlobalWind": [
+          4,
+          0,
+          2.5
+        ]
+      },
+      "Terrain": {
+        "$properties": {
+          "Decoration": true,
+          "GrassLength": 1.0,
+          "ShorelinesUpgraded": true,
+          "SmoothVoxelsUpgraded": true,
+          "WaterColor": [
+            0.25098039215686274,
+            0.6509803921568628,
+            0.6980392156862745
+          ],
+          "WaterTransparency": 0.8,
+          "WaterReflectance": 0.3,
+          "WaterWaveSize": 0.15,
+          "WaterWaveSpeed": 9
+        }
       }
     },
     "MaterialService": {

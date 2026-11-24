@@ -79,7 +79,7 @@ Terrain.Water = {
 -- south west for it to lean in (Workspace.GlobalWind). Both are in default.project.json: Roblox
 -- doesn't let scripts set the grass.
 Terrain.GrassLength = 1
-Terrain.Wind = { 3, 0, 2 }
+Terrain.Wind = { 4, 0, 2.5 } -- studs a second: a breeze, not a gale
 
 -- Every material the terrain uses, by name.
 Terrain.Materials = { "Grass", "LeafyGrass", "Ground", "Sand", "Rock", "Slate", "Water", "Air" }
