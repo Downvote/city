@@ -424,8 +424,8 @@ local function bike(r: R, cf: CFrame)
 					local along = (b - a).Unit * 0.05
 					p:beam(a - along, b + along, 0.14, 0.16, rgb(46, 48, 58), "Metal")
 				end
-				p:beam(Vector3.new(0, 0.14, z), Vector3.new(0, 1.86, z), 0.04, 0.04, METAL, "Metal")
-				p:beam(Vector3.new(0, 1, z - 0.86), Vector3.new(0, 1, z + 0.86), 0.04, 0.04, METAL, "Metal")
+				p:beam(Vector3.new(0, 0.14, z), Vector3.new(0, 1.86, z), 0.03, 0.03, METAL, "Metal")
+				p:beam(Vector3.new(0, 1, z - 0.86), Vector3.new(0, 1, z + 0.86), 0.03, 0.03, METAL, "Metal")
 			end
 			local bb, seat, head = Vector3.new(0, 1.0, 0.1), Vector3.new(0, 2.3, 0.55), Vector3.new(0, 2.25, -1.0)
 			p:beam(bb, seat, 0.12, 0.12, col, "Metal")
