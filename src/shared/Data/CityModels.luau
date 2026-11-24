@@ -2096,9 +2096,10 @@ M.postOffice = CityModels.shop({
 	sign = rgb(224, 190, 112),
 })
 
--- A park with a pond, a little bridge, trees and benches.
+-- A park with a pond, a little bridge, trees and benches. (It fills the middle of its block,
+-- open to the main street, with houses on the other three sides.)
 M.pondPark = function(r: R)
-	r:block(-110, 0, -42, 110, 0.3, 42, rgb(136, 190, 108), "Grass")
+	r:block(-105, 0, -34, 105, 0.3, 34, rgb(136, 190, 108), "Grass")
 	r:cyl(-10, 0.32, 0, 0.12, 64, "y", rgb(214, 210, 196), "Slate")
 	water(r:cyl(-10, 0.39, 0, 0.14, 58, "y", WATER, "SmoothPlastic"))
 	-- stones round the edge, reeds in clumps and lily pads on the water
@@ -2192,7 +2193,7 @@ M.pondPark = function(r: R)
 		stamp(r, "streetLamp", at, lampPost)
 		r:glow(r:boxAt(at * CFrame.new(0, 8.4, -2.3), 1, 0.3, 1, rgb(255, 236, 190), "SmoothPlastic"), 16, 1)
 	end
-	for _, p in { { 60, 0 }, { -80, 0 }, { 20, 36 }, { -40, -36 } } do
+	for _, p in { { 60, 0 }, { -80, 0 }, { 20, 29 }, { -40, -29 } } do
 		flowerBed(r, CFrame.new(p[1], 0.3, p[2]))
 	end
 end

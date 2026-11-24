@@ -972,15 +972,29 @@ function TownMap.ground(region: Region?): { Prim }
 		put(list, b[1], b[2], b[3], b[4], -0.15, 0.22, PAVING, "Pavement")
 		lay(list)
 	end
-	-- the civic quarter's lawns have gravel paths: one along each block and two across
+	-- the civic quarter's blocks are paved round their edges, under the rows of houses and as far
+	-- back as they go, with a darker band along the pavement as downtown has; the middle of each
+	-- is lawn with a gravel path along it. Where a civic building keeps its garden, or a park or a
+	-- playing field comes up to the street, the grass runs on to the sidewalk.
+	local BAND = TownMap.WestBand
 	for _, b in TownMap.blocks("west") do
-		local mid = (b[2] + b[4]) / 2
-		-- (a tenth over the grass, and a tenth under the lawns of the lots laid over them)
-		slab(b[1], mid - 2.5, b[3], mid + 2.5, -0.15, 0.02, GRAVEL, "Pavement")
-		for _, t in { 0.3, 0.7 } do
-			local x = b[1] + (b[3] - b[1]) * t
-			slab(x - 2, b[2], x + 2, b[4], -0.15, 0.02, GRAVEL, "Pavement")
+		local list: { { any } } = {}
+		for _, c in TownMap.civic() do
+			local g = c.ground
+			if g[1] < b[3] and g[3] > b[1] and g[2] < b[4] and g[4] > b[2] then
+				table.insert(list, { g[1], g[2], g[3], g[4] })
+			end
 		end
+		local mid = (b[2] + b[4]) / 2
+		-- (a tenth over the grass)
+		put(list, b[1] + BAND, mid - 2.5, b[3] - BAND, mid + 2.5, -0.15, 0.02, GRAVEL, "Pavement")
+		table.insert(list, { b[1] + BAND, b[2] + BAND, b[3] - BAND, b[4] - BAND })
+		put(list, b[1] + 3, b[2] + 3, b[3] - 3, b[2] + 5.4, -0.15, 0.21, PAVING_DARK, "Pavement")
+		put(list, b[1] + 3, b[4] - 5.4, b[3] - 3, b[4] - 3, -0.15, 0.21, PAVING_DARK, "Pavement")
+		put(list, b[1] + 3, b[2] + 5.4, b[1] + 5.4, b[4] - 5.4, -0.15, 0.21, PAVING_DARK, "Pavement")
+		put(list, b[3] - 5.4, b[2] + 5.4, b[3] - 3, b[4] - 5.4, -0.15, 0.21, PAVING_DARK, "Pavement")
+		put(list, b[1], b[2], b[3], b[4], -0.15, 0.22, PAVING, "Pavement")
+		lay(list)
 	end
 
 	-- the boardwalk along the south shore, with a rail on the sea side
@@ -1028,6 +1042,69 @@ function TownMap.blocks(side: string): { { number } }
 		end
 	end
 	return out
+end
+
+-- The civic quarter: its blocks are built up round their edges like downtown's (the user: "the
+-- side with less buildings should have much more buildings, as much as in the city side"), lower
+-- and homelier, with the civic buildings standing in the rows as its landmarks. The rows' paving
+-- reaches this far in from a block's edge (the pavement in front, the houses, a step behind);
+-- the middle of the block is lawn.
+TownMap.WestBand = 21
+
+export type CivicSite = { name: string, x: number, z: number, yaw: number, lot: boolean, ground: { number } }
+
+-- The civic quarter's own buildings and grounds, where they have always stood (the pond park was
+-- cut down to fit inside its rows): each with the ground it keeps, { x1, z1, x2, z2 }, which is
+-- its hedged garden when it has a `lot` (its footprint and five studs round it, as
+-- TownMap.placements lays the garden) or else its own edge. The rows of houses leave that ground
+-- alone, and the paving under them stops at it.
+local civicSites: { CivicSite }? = nil
+function TownMap.civic(): { CivicSite }
+	if civicSites then
+		return civicSites
+	end
+	local list: { CivicSite } = {}
+	for _, c in
+		{
+			{ "school", -686, 166, 0, true },
+			{ "playground", -686, 214, 0, false },
+			{ "sportsField", -950, 190, 0, false },
+			{ "library", -640, 42, 0, true },
+			{ "museum", -760, 52, 0, true },
+			{ "clinic", -960, 42, 0, true },
+			{ "basketCourt", -960, 92, 0, false },
+			{ "pondPark", -686, -58, 0, false },
+			{ "fireStation", -960, -60, 180, true },
+			{ "postOffice", -640, -166, 180, true },
+			{ "shopCoral", -700, -165, 180, true },
+			{ "shopLilac", -760, -165, 180, true },
+			{ "apartmentMint", -990, -167, 180, true },
+			{ "apartmentLilac", -900, -167, 180, true },
+			{ "houseRow", -888, -45, 180, true },
+			{ "houseRow", -950, -228, 0, true },
+			{ "houseRow", -1010, 60, -90, true },
+			{ "houseRow", -686, -222, 0, true },
+		} :: { { any } }
+	do
+		local lo, hi = Geometry.bounds(TownMap.prims(c[1]))
+		local margin = if c[5] then 5 else 0
+		local hw = (math.ceil(hi.X - lo.X) + margin * 2) / 2
+		local hd = (math.ceil(hi.Z - lo.Z) + margin * 2) / 2
+		local cf = CFrame.new(c[2], 0, c[3])
+			* CFrame.Angles(0, math.rad(c[4]), 0)
+			* CFrame.new((lo.X + hi.X) / 2, 0, (lo.Z + hi.Z) / 2)
+		local x1, z1, x2, z2 = math.huge, math.huge, -math.huge, -math.huge
+		for _, corner in { Vector3.new(-hw, 0, -hd), Vector3.new(hw, 0, hd) } do
+			local w = cf * corner
+			x1, z1, x2, z2 = math.min(x1, w.X), math.min(z1, w.Z), math.max(x2, w.X), math.max(z2, w.Z)
+		end
+		table.insert(
+			list,
+			{ name = c[1], x = c[2], z = c[3], yaw = c[4], lot = c[5], ground = { x1, z1, x2, z2 } }
+		)
+	end
+	civicSites = list
+	return list
 end
 
 -- What stands on the ground ---------------------------------------------------------------------------
@@ -1272,8 +1349,9 @@ local function streetScene(standing: { Placement }): { Placement }
 	end
 
 	-- The whole scene keeps to a budget of parts, whatever the buildings turn out to have room
-	-- for: once it is spent, nothing more goes down.
-	local BUDGET = 1940
+	-- for: once it is spent, nothing more goes down. (It went up from 1940 when the civic quarter
+	-- was built up and got its own poles and pavement clutter.)
+	local BUDGET = 2140
 	local spent = 0
 	local function add(name: string, cf: CFrame): boolean
 		local cost = #shapeOf(name).boxes
@@ -1405,15 +1483,36 @@ local function streetScene(standing: { Placement }): { Placement }
 	poleLine(firstAvenue, 1, -238, 238, 68)
 	poleLine(crossNorth, 1, 578, 986, 68)
 	poleLine(crossSouth, -1, 578, 986, 68)
+	-- and the civic quarter's: its middle avenue and its cross streets
+	local westMid, westFirst = roadAt(-AX[2], -RZ, -AX[2], RZ), roadAt(-AX[1], -RZ, -AX[1], RZ)
+	local westNorth, westSouth = roadAt(-AX[1], CZ, -AX[3], CZ), roadAt(-AX[1], -CZ, -AX[3], -CZ)
+	poleLine(westMid, -1, -238, 238, 68)
+	poleLine(westNorth, 1, -986, -578, 68)
+	poleLine(westSouth, -1, -986, -578, 68)
 	for _, span in strung do
 		add(span.name, span.cf)
 	end
 
-	-- What the ground is at a spot: downtown's paving, a sidewalk, the boardwalk or grass.
+	-- What the ground is at a spot: downtown's paving (and the civic quarter's, round its blocks'
+	-- edges), a sidewalk, the boardwalk or grass.
 	local function groundAt(x: number, z: number): number
 		for _, b in TownMap.blocks("east") do
 			if x >= b[1] and x <= b[3] and z >= b[2] and z <= b[4] then
 				return DOWNTOWN
+			end
+		end
+		local band = TownMap.WestBand
+		for _, b in TownMap.blocks("west") do
+			if x >= b[1] and x <= b[3] and z >= b[2] and z <= b[4] then
+				local inside = x > b[1] + band and x < b[3] - band and z > b[2] + band and z < b[4] - band
+				local lawn = inside
+				for _, c in TownMap.civic() do
+					local g = c.ground
+					if x >= g[1] and x <= g[3] and z >= g[2] and z <= g[4] then
+						lawn = true
+					end
+				end
+				return if lawn then GRASS else DOWNTOWN
 			end
 		end
 		for _, road in Town.Roads do
@@ -1874,6 +1973,14 @@ local function streetScene(standing: { Placement }): { Placement }
 	kerb(hill, -1, -520, 1040, 110, 200)
 	kerb(harbour, 1, -520, 1040, 110, 200)
 	kerb(roadAt(-AX[1], -RZ, -AX[1], RZ), 1, -240, 240, 110, 200)
+	-- (and the civic quarter's own streets, between the rows of houses, a little thinner than
+	-- downtown's)
+	for _, side in { 1, -1 } do
+		kerb(westMid, side, -240, 240, 80, 140)
+		kerb(westNorth, side, -1040, -570, 90, 150)
+		kerb(westSouth, side, -1040, -570, 90, 150)
+	end
+	kerb(westFirst, -1, -240, 240, 90, 150)
 
 	-- (the boxes were only needed to lay the scene out)
 	table.clear(shapes)
@@ -2194,13 +2301,30 @@ function TownMap.placements(): { Placement }
 		table.insert(solid, { big[5] - ALLEY, big[6] - ALLEY, big[7] + ALLEY, big[8] + ALLEY })
 	end
 
+	-- the civic quarter, west of the old town: its buildings in their hedged gardens, its parks
+	-- and playing fields (TownMap.civic), with the rows of houses round them leaving them room
+	lotKind = "garden"
+	local civicFrom = #out + 1
+	for _, c in TownMap.civic() do
+		on(c.name, c.x, c.z, c.yaw)
+	end
+	for _, p in { { -700, 50, 90 }, { -716, 50, -90 }, { -900, 70, 0 } } do
+		on("benchLite", p[1], p[2], p[3])
+	end
+	-- (an alley beside a garden's hedge; a park or a playing field can have the houses' backs)
+	for i = civicFrom, #out do
+		local x1, z1, x2, z2 = footprint(out[i])
+		local alley = if out[i].name:sub(1, 4) == "lot:" then 3 else 1
+		table.insert(solid, { x1 - alley, z1 - alley, x2 + alley, z2 + alley })
+	end
+
 	-- Street buildings (Data/Facades) -----------------------------------------------------------------
 	-- The user asked for the detail of a dense market town: buildings wall to wall along every
 	-- pavement, shop fronts under awnings, things on the walls and the roofs. So every edge of
 	-- every downtown block is a row of them, three to five storeys on the main street and lower on
 	-- the side streets, broken by alleys, by the lanes through the middle of each block and by one
 	-- small square. The shops people can walk into stand in the rows where they always stood.
-	type Lot = { spec: Facades.Spec, x: number, z: number, yaw: number, shop: string }
+	type Lot = { spec: Facades.Spec, x: number, z: number, yaw: number, shop: string, home: boolean? }
 	local lots: { Lot } = {}
 	local SETBACK, DEPTH = 6, 14
 	local function claim(spec: Facades.Spec, x: number, z: number, yaw: number, shop: string)
@@ -2240,10 +2364,17 @@ function TownMap.placements(): { Placement }
 	end
 	local MAIN = { "glazed", "glazed", "glazed", "glazed", "glazed", "counter", "counter", "shutter", "door", "garage" }
 	local SIDE = { "glazed", "glazed", "glazed", "glazed", "door", "door", "door", "shutter", "counter", "garage" }
+	-- The civic quarter's rows are homes: town houses with their own front doors, shops under flats
+	-- along its main streets, and a shop or a cafe on the corners. Painted render and brick, and
+	-- mostly tiled roofs.
+	local WEST_MAIN = { "glazed", "glazed", "counter", "door", "door", "glazed", "shutter", "door" }
+	local WEST_SIDE = { "door", "door", "door", "door", "door", "door", "glazed", "counter", "door", "shutter" }
+	local WEST_WALLS = { 1, 2, 3, 4, 5, 8, 9, 1, 2, 4, 8, 12 }
 	-- One row: fronts looking `facing` ("s", "n", "w" or "e") on the line `line`, from `from` to
 	-- `to` along it, of `lo` to `hi` storeys. Wherever a stretch of at least 12 studs is free it is
 	-- filled wall to wall. `lowStreet` and `highStreet` say that the row's end is a street corner
-	-- (or the square), so the building there gets a second street face.
+	-- (or the square), so the building there gets a second street face. A `west` row is the civic
+	-- quarter's: narrower houses, homes more than shops, and tiled roofs.
 	local function row(
 		facing: string,
 		line: number,
@@ -2254,7 +2385,8 @@ function TownMap.placements(): { Placement }
 		lowStreet: boolean,
 		highStreet: boolean,
 		deep: number?,
-		lively: boolean?
+		lively: boolean?,
+		west: boolean?
 	)
 		local depth = deep or DEPTH
 		local alongX = facing == "s" or facing == "n"
@@ -2292,6 +2424,9 @@ function TownMap.placements(): { Placement }
 		local lowSide = if facing == "s" or facing == "e" then "left" else "right"
 		local highSide = if lowSide == "left" then "right" else "left"
 		local kinds = if hi >= 4 or lively then MAIN else SIDE
+		if west then
+			kinds = if lively then WEST_MAIN else WEST_SIDE
+		end
 		for _, run in runs do
 			local len = run[2] - run[1]
 			if len >= 12 then
@@ -2301,7 +2436,15 @@ function TownMap.placements(): { Placement }
 				while a < run[2] do
 					local rest = run[2] - a
 					local w = rest
-					if rest > 34 then
+					if west then
+						-- (a town house is twelve to twenty studs wide)
+						if rest > 26 then
+							w = 12 + 2 * d.int(0, 4)
+							if rest - w < 13 then
+								w = rest - 13
+							end
+						end
+					elseif rest > 34 then
 						w = 16 + 2 * d.int(0, 7)
 						if rest - w < 16 then
 							w = rest - 16
@@ -2319,6 +2462,9 @@ function TownMap.placements(): { Placement }
 						corner = highSide
 					end
 					local shop = kinds[d.int(1, #kinds)]
+					if west and corner and w >= 15 then
+						shop = if d.chance(0.5) then "glazed" else "counter"
+					end
 					if w < 13 then
 						shop = "door"
 					elseif w < 15 and shop == "counter" then
@@ -2328,13 +2474,17 @@ function TownMap.placements(): { Placement }
 					local across = line + inward * depth / 2
 					local x, z = if alongX then mid else across, if alongX then across else mid
 					local seed = (math.floor(x) * 73 + math.floor(z + 400) * 151) % 90000 + 1
-					claim(
-						{ w = w, d = depth, storeys = storeys, seed = seed, corner = corner, shop = shop },
-						x,
-						z,
-						yaw,
-						shop
-					)
+					local spec: Facades.Spec =
+						{ w = w, d = depth, storeys = storeys, seed = seed, corner = corner, shop = shop }
+					if west then
+						spec.wall = WEST_WALLS[d.int(1, #WEST_WALLS)]
+						spec.top = if shop == "door" or (storeys <= 3 and d.chance(0.6)) then "pitched" else "flat"
+					end
+					claim(spec, x, z, yaw, shop)
+					if west and shop == "door" and storeys <= 3 then
+						-- (a family's own house: no name over its door)
+						lots[#lots].home = true
+					end
 					a += w
 				end
 			end
@@ -2387,6 +2537,22 @@ function TownMap.placements(): { Placement }
 			row("e", x2, z1, z2, 2, low + 1, true, true)
 		end
 	end
+	-- The civic quarter's rows: houses along every edge of every block, round the civic buildings,
+	-- two and three storeys on the side streets and up to four, with shops, on the main street and
+	-- along the avenue that faces the old town. The path through the middle of each block comes
+	-- out between the houses at either end.
+	for _, b in TownMap.blocks("west") do
+		local mid = (b[2] + b[4]) / 2
+		local x1, x2, z1, z2 = b[1] + SETBACK, b[3] - SETBACK, b[2] + SETBACK, b[4] - SETBACK
+		local mainSouth, mainNorth = b[2] == 22, b[4] == -22 -- (the edge on the main street)
+		local oldTown = b[3] == -559 -- (its east edge looks across the first avenue at the old town)
+		leave(b[1], mid - 3, x1 + DEPTH + 1, mid + 3)
+		leave(x2 - DEPTH - 1, mid - 3, b[3], mid + 3)
+		row("n", z2, x1, x2, if mainNorth then 3 else 2, if mainNorth then 4 else 3, true, true, nil, mainNorth, true)
+		row("s", z1, x1, x2, if mainSouth then 3 else 2, if mainSouth then 4 else 3, true, true, nil, mainSouth, true)
+		row("w", x1, z1, z2, 2, 3, true, true, nil, false, true)
+		row("e", x2, z1, z2, if oldTown then 3 else 2, if oldTown then 4 else 3, true, true, nil, oldTown, true)
+	end
 	-- Names. A board gets the name Data/Signs gives its kind of place at that spot, and there are
 	-- only a few names of each kind, so a building takes a kind whose name nobody within a street
 	-- or two has yet; when every name near it is taken its board stays bare.
@@ -2437,7 +2603,7 @@ function TownMap.placements(): { Placement }
 	local FOOD = { "cafe", "bakery", "grocer" }
 	local HOMES = { "flats", "office", "flats" }
 	for i, lot in lots do
-		if not lot.spec.sign and lot.shop ~= "garage" then
+		if not lot.spec.sign and lot.shop ~= "garage" and not lot.home then
 			local kinds = if lot.shop == "counter" then FOOD elseif lot.shop == "door" then HOMES else SHOPS
 			local turn = lot.spec.seed + i
 			for k = 1, #kinds do
@@ -2476,30 +2642,6 @@ function TownMap.placements(): { Placement }
 	-- lanterns strung across the lane
 	for _, x in { 592, 612, 632, 652, 720, 740, 760, 780 } do
 		plain(string.format("laneLights:%d", LANE[2] - LANE[1]), x, (LANE[1] + LANE[2]) / 2, 90, DT)
-	end
-
-	-- the civic quarter, west of the old town: every building in its own hedged garden
-	lotKind = "garden"
-	on("school", -686, 166, 0)
-	on("playground", -686, 214, 0)
-	on("sportsField", -950, 190, 0)
-	on("library", -640, 42, 0)
-	on("museum", -760, 52, 0)
-	on("clinic", -960, 42, 0)
-	on("basketCourt", -960, 92, 0)
-	on("pondPark", -686, -68, 0)
-	on("fireStation", -960, -60, 180)
-	on("postOffice", -640, -166, 180)
-	on("shopCoral", -700, -165, 180)
-	on("shopLilac", -760, -165, 180)
-	on("apartmentMint", -990, -167, 180)
-	on("apartmentLilac", -900, -167, 180)
-	on("houseRow", -888, -45, 180)
-	on("houseRow", -950, -228, 0)
-	on("houseRow", -1010, 60, -90)
-	on("houseRow", -686, -222, 0)
-	for _, p in { { -700, 50, 90 }, { -716, 50, -90 }, { -900, 70, 0 } } do
-		on("benchLite", p[1], p[2], p[3])
 	end
 
 	on = plain
@@ -2592,9 +2734,13 @@ function TownMap.placements(): { Placement }
 		pockets(block, PLAZAS, DT, 5, 15, 6)
 		pockets(block, SMALL, DT, 7, 8, 7)
 	end
-	for _, block in TownMap.blocks("west") do
-		pockets(block, GARDENS, 0, 6, 15, 6)
-		pockets(block, GREEN, 0, 6, 8, 8)
+	-- (in the civic quarter, in the lawns behind the rows of houses: never nearer a block's edge
+	-- than its paving reaches)
+	local yard = TownMap.WestBand - INSET + 2
+	for _, b in TownMap.blocks("west") do
+		local block = { b[1] + yard, b[2] + yard, b[3] - yard, b[4] - yard }
+		pockets(block, GARDENS, 0, 6, 15, 3)
+		pockets(block, GREEN, 0, 8, 8, 4)
 	end
 	-- cars parked at the kerb along the side streets (never on the main street, where cars drive)
 	local parking = Rng.new(41)
