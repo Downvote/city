@@ -25,14 +25,25 @@ event({
 		s:by("a", {
 			proud = "Both look perfect on me, obviously. But which is MORE perfect?",
 			shy = "I don't want anyone to look at me. But I want them to look a bit.",
+			easygoing = "I'd just wear both, but apparently that's too much.",
+			sunny = "I've changed four times already, I can't decide, you pick.",
 			_ = "I've been standing here for twenty minutes.",
 		}, "sweat")
 		s:choice("The yellow hat", function(c)
-			c:say("a", "The hat. Bold. Yes. Hat it is.", "sparkle", "cheer")
+			c:by("a", {
+				shy = "The hat? Okay. Okay. I'll be brave.",
+				proud = "The hat. Yes. People will talk, and they should.",
+				easygoing = "Hat. Cool. Done.",
+				_ = "The hat it is. Right, I'm off.",
+			}, "sparkle", "cheer")
 			c:mood("a", 4)
 		end)
 		s:choice("The stripy scarf", function(c)
-			c:say("a", "The scarf. Cosy. Good call.", "heart")
+			c:by("a", {
+				bold = "Scarf. Done. Let's go.",
+				dreamy = "The scarf. It's like wearing a hug.",
+				_ = "The scarf. Good call, it's cold out.",
+			}, "heart")
 			c:mood("a", 4)
 		end)
 		s:choice("Something new altogether", function(c)
@@ -72,7 +83,7 @@ event({
 			end
 		end)
 		s:choice("Keep eating it", function(c)
-			c:say("a", "You're right. It's the thought that counts. I'll eat it. Slowly.", "sad")
+			c:say("a", "Fine. I'll eat it. I'll have a big glass of water ready.", "sad")
 			c:mood("a", -3)
 			c:rel(2)
 		end)
@@ -131,7 +142,13 @@ event({
 					c:rel(14)
 					c:mood("b", 8)
 				else
-					c:say("b", "Oh. {gift}. That's... thank you.", "sweat")
+					c:by("b", {
+						proud = "Oh. You got me {gift}. How... thoughtful.",
+						bold = "You got me {gift}? Huh. Okay. Thanks.",
+						shy = "Oh. You got me {gift}. Thank you. Really.",
+						cheeky = "You got me {gift}. Is this a prank? It feels like a prank.",
+						_ = "Oh. You got me {gift}. That's... thank you.",
+					}, "sweat")
 					c:rel(3)
 				end
 			end)
@@ -158,7 +175,12 @@ event({
 		for _, say in options do
 			s:choice(say.text, function(c)
 				c:with({ motto = say.text })
-				c:say("a", "'{motto}' ...Yes. That's me. That's so me.", "sparkle", "cheer")
+				c:by("a", {
+					proud = "'{motto}' Yes. It suits me. Most things do.",
+					shy = "'{motto}' Um. I'll try saying it. Quietly at first.",
+					easygoing = "'{motto}' Yeah. I can say that.",
+					_ = "'{motto}' ...Yes. That's me. That's so me.",
+				}, "sparkle", "cheer")
 				c:saying("a", say.id)
 				c:mood("a", 3)
 			end)
@@ -184,8 +206,12 @@ event({
 		s:say("a", "I'm bored of being bored. Give me a hobby. Any hobby.", "question")
 		for _, h in options do
 			s:choice(h.name:sub(1, 1):upper() .. h.name:sub(2), function(c)
-				c:with({ hobby = h.name })
-				c:say("a", "{hobby}? Okay. Okay. I'm in.", "idea", "cheer")
+				c:with({ hobby = h.name, Hobby = h.name:sub(1, 1):upper() .. h.name:sub(2) })
+				c:by("a", {
+					bold = "{Hobby}. Right. I'll be the best at it by Friday.",
+					easygoing = "{Hobby}? Sure. Why not.",
+					_ = "{Hobby}? Okay. Okay. I'm in.",
+				}, "idea", "cheer")
 				c:hobby("a", h.id)
 				c:mood("a", 4)
 				c:memo("a", "You got me into {hobby}. I'm not very good yet.")
@@ -209,12 +235,12 @@ event({
 		local s = K.scene(ctx, "Plans for today")
 		s:say("a", "Day off. Beach or library? I can't decide.", "question")
 		s:choice("The beach", function(c)
-			c:say("a", "Beach. Sun, sand, a nap. Back by tea.", "sparkle", "cheer")
+			c:say("a", "The beach it is. I'll take a towel and see how long I last.", "sparkle", "cheer")
 			c:mood("a", 5)
 			c:memo("a", "I went to the beach because you said so. Good call.")
 		end)
 		s:choice("The library", function(c)
-			c:say("a", "Library. Quiet, a big chair, a big book. Perfect.", "heart")
+			c:say("a", "Library, then. There's a big chair by the window I like.", "heart")
 			c:mood("a", 4)
 			c:memo("a", "I read a whole book at the library yesterday. You were right.")
 		end)
@@ -283,7 +309,11 @@ event({
 		local s = K.scene(ctx, "A bold idea")
 		s:say("a", "I'm thinking of dyeing my hair blue. Bright blue. Should I?", "idea")
 		s:choice("Do it", function(c)
-			c:say("a", "Yes. Let's do it now before I change my mind.", "sparkle", "cheer")
+			c:by("a", {
+				shy = "Okay. Okay. Before I lose my nerve.",
+				bold = "Yes. Now. Get the dye.",
+				_ = "Yes. Let's do it now before I change my mind.",
+			}, "sparkle", "cheer")
 			c:fx({ t = "creator", who = "a" })
 			c:mood("a", 4)
 		end)
@@ -347,7 +377,12 @@ event({
 		local s = K.scene(ctx, "Who says sorry")
 		s:say("a", "{b} and I still aren't talking. Should I say sorry first? It was half their fault.", "sad")
 		s:choice("Say it first", function(c)
-			c:say("a", "{b}. I'm sorry. Can we stop this now?", "sad")
+			c:by("a", {
+				proud = "{b}. I may have been... partly wrong. Can we stop this now?",
+				shy = "{b}? I'm sorry. I don't like this. Can we stop?",
+				bold = "{b}. I'm sorry. There. Can we stop this now?",
+				_ = "{b}. I'm sorry. Can we stop this now?",
+			}, "sad")
 			if ctx.rng:chance(0.5 + K.trait(ctx, b, "kind") * 0.4) then
 				c:say("b", "...Yes. I'm sorry too. I missed you.", "heart")
 				c:fx({ t = "makeup", a = "a", b = "b" })
@@ -359,7 +394,11 @@ event({
 			end
 		end)
 		s:choice("Give it a day", function(c)
-			c:say("a", "One more day. Then I'll go. Probably.", "sad")
+			c:by("a", {
+				proud = "One more day. They might come to me first.",
+				shy = "One more day. I need to work out what to say.",
+				_ = "One more day. Then I'll go.",
+			}, "sad")
 			c:mood("a", -2)
 		end)
 		s:log("{a} wondered whether to say sorry to {b}.")
@@ -381,8 +420,12 @@ event({
 		for i = 1, 2 do
 			local skill = opts[i]
 			s:choice(skill:sub(1, 1):upper() .. skill:sub(2), function(c)
-				c:with({ skill = skill })
-				c:say("a", "{skill}. Right. I'll practise every day. Every day this week. Most days.", "idea", "cheer")
+				c:with({ skill = skill, Skill = skill:sub(1, 1):upper() .. skill:sub(2) })
+				c:by("a", {
+					proud = "{Skill}. I'll be better at it than anyone in town by Sunday.",
+					easygoing = "{Skill}. Cool. I'll practise. At some point.",
+					_ = "{Skill}. Right. I'll practise every day this week.",
+				}, "idea", "cheer")
 				c:xp("a", 10)
 				c:mood("a", 3)
 				c:memo("a", "I've been practising {skill}. Ask me to show you. Actually, don't, yet.")

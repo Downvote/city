@@ -47,30 +47,32 @@ event({
 })
 
 -- What there is to say about somebody, from what they're like and what they've been up to.
+local DOWN = "{c} seems a bit down. Have you noticed?"
+
 local function gossipAbout(ctx, c): { string }
 	local v = ctx.v(c)
 	local out = {}
 	local byPers = {
-		sunny = "{c} said good morning to a lamppost today. Twice.",
-		gentle = "{c} knitted a hat for the bakery's cat. It wears it.",
-		bold = "{c} challenged a gull to a race. The gull won.",
-		dreamy = "{c} asked me what colour Thursday is. I didn't know.",
+		sunny = "{c} stopped to chat with everyone on the way to the market. Took them all morning.",
+		gentle = "{c} knitted the bakery's cat a little hat. And the cat wears it.",
+		bold = "{c} tried to race a gull along the pier. The gull won.",
+		dreamy = "{c} sat by the fountain for two hours yesterday. Just watching the water.",
 		easygoing = "{c} fell asleep standing up at the bus stop.",
-		proud = "{c} bought a little mirror to carry around. For emergencies.",
+		proud = "{c} carries a little mirror around now. In their top pocket.",
 		shy = "{c} waved at me and then hid behind a bin.",
 		cheeky = "{c} swapped all the house numbers on our street. I live at 4 now.",
 	}
 	table.insert(out, byPers[v.pers] or "{c} has been acting very {c} lately.")
 	local hobby = Sayings.hobby(v.hobby)
 	if hobby then
-		table.insert(out, "{c} has been doing " .. hobby.name .. " every single evening. Every one.")
+		table.insert(out, "{c} is really into " .. hobby.name .. " at the moment. Every evening, without fail.")
 	end
 	local job = ctx.job(c)
 	if job then
-		table.insert(out, "{c} told me the " .. job.def.name:lower() .. " is the best job in town. Three times.")
+		table.insert(out, "{c} keeps telling me the " .. job.def.name:lower() .. " is the best job in town.")
 	end
 	if (v.mood or 50) < 35 then
-		table.insert(out, "{c} seems a bit down. Have you noticed?")
+		table.insert(out, DOWN)
 	end
 	for _, other in ctx.present do
 		if other ~= c and ctx.rel(c, other) >= K.BestFriends then
@@ -89,32 +91,67 @@ event({
 	scene = function(ctx, a, b, c)
 		local s = K.scene(ctx, "Did you hear")
 		local said = ctx.rng:pick(gossipAbout(ctx, c))
-		local kind = string.find(said, "down", 1, true) ~= nil
-		s:say("a", "Psst. {b}. Have you noticed {c} lately?", "question")
+		local kind = said == DOWN
+		s:by("a", {
+			sunny = "Oh, {b}, have you noticed {c} lately? I have to tell you this.",
+			gentle = "{b}, have you noticed anything about {c} lately?",
+			bold = "{b}. You seen what {c}'s been up to?",
+			shy = "Um. {b}? Have you noticed {c} lately?",
+			proud = "{b}. A word. About {c}.",
+			cheeky = "Psst. {b}. Got a minute? It's about {c}.",
+			_ = "{b}, have you noticed {c} lately?",
+		}, "question")
 		s:say("a", said, "idea", "point")
-		if ctx.rel(b, c) >= 30 then
+		if kind then
 			s:by("b", {
+				sunny = "Oh no, really? I'll go and find them later.",
+				gentle = "Oh, dear. I'll take them some soup.",
+				bold = "Who upset them? Tell me who.",
+				_ = "Now you mention it, yes. We should check on them.",
+			}, "sad")
+		elseif ctx.rel(b, c) >= 30 then
+			s:by("b", {
+				sunny = "Aw, that's so {c}. I love that about them.",
 				gentle = "Oh, be nice. {c}'s lovely.",
+				bold = "Good for {c}.",
+				dreamy = "I think I'd like to do that too.",
+				easygoing = "Heh. Fair enough.",
+				proud = "Well, I'd never do that. But it's very {c}.",
+				shy = "Oh. I think that's nice, actually.",
 				cheeky = "Ha. That's very {c}. I love it.",
 				_ = "That's just {c} being {c}. I like that about them.",
 			}, "heart")
 		else
 			s:by("b", {
+				bold = "So?",
+				dreamy = "Hm. I wonder why.",
+				easygoing = "Huh. Okay.",
 				proud = "I've always said {c} was odd.",
+				shy = "Oh. Um. Okay.",
 				cheeky = "Tell me more. Tell me everything.",
 				_ = "Really? Huh.",
 			}, "question")
 		end
 		if ctx.rng:chance(0.35) then
 			s:n("Then {c} walked round the corner.")
-			s:say("c", "Talking about me?", "question")
+			s:by("c", {
+				bold = "Talking about me? Say it to my face.",
+				proud = "Talking about me? Naturally.",
+				shy = "Um. Were you talking about me?",
+				_ = "Talking about me?",
+			}, "question")
 			if kind then
 				s:say("a", "We were worried about you. That's all.", "heart")
 				s:voice("c", "thanks", "heart")
 				s:relx("a", "c", 6)
 				s:relx("b", "c", 4)
 			else
-				s:say("a", "No. Talking about... lampposts.", "sweat")
+				s:by("a", {
+					cheeky = "Lampposts. We were talking about lampposts. Fascinating things.",
+					proud = "We were, yes. Mostly nice things.",
+					shy = "N-no. Nothing. Sorry.",
+					_ = "No. We were talking about... lampposts.",
+				}, "sweat")
 				s:voice("c", "angry", "anger")
 				s:relx("a", "c", -5)
 				s:relx("b", "c", -2)
@@ -144,6 +181,8 @@ event({
 			proud = "Mine was better. I dreamed {two}.",
 			shy = "Um. I dreamed {two}. Is that weird?",
 			dreamy = "Oh, I've been there. Last week I dreamed {two}.",
+			sunny = "Ooh, mine was even weirder. I dreamed {two}.",
+			easygoing = "Heh. I dreamed {two}. Then I slept in.",
 			_ = "That's nothing. I dreamed {two}.",
 		}, "zzz")
 		s:by("a", {
@@ -258,11 +297,11 @@ event({
 })
 
 local MOANS = {
-	rain = { "Rain again. My socks have given up.", "It's not raining, it's the sky doing the washing up." },
+	rain = { "Rain again. My socks have given up.", "It's rained so long my umbrella's gone floppy." },
 	storm = { "That thunder's been going since breakfast.", "My hat blew off. It's in the sea now. Gone." },
 	snow = { "I can't feel my nose. Is it still there?", "My door's frozen shut. I came out the window." },
-	clear = { "Too hot. I'm melting like an ice lolly.", "Not a cloud. Not one. I'm boiling." },
-	cloudy = { "It can't decide what it wants to do, this weather.", "Grey, grey, grey. Like soup that's gone off." },
+	clear = { "Too hot. I'm melting.", "Not a cloud. Not one. I'm boiling." },
+	cloudy = { "It can't decide what it wants to do, this weather.", "Grey again. Third day running." },
 	blossom = { "Petals everywhere. I keep finding them in my tea.", "I've sneezed nine times today. Nine." },
 	leaves = { "I swept my step and it's covered again already.", "A leaf hit me in the face. Right in the face." },
 }
@@ -276,11 +315,14 @@ event({
 		local s = K.scene(ctx, "This weather")
 		s:say("a", ctx.rng:pick(lines), "sweat")
 		s:by("b", {
-			sunny = "Oh, come on, it's not that bad. It's a bit bad.",
-			proud = "I don't feel it. I'm above weather.",
+			sunny = "Oh, it's not that bad. Okay, it's a bit bad.",
+			proud = "I don't let the weather bother me. Never have.",
 			easygoing = "I just stay in. Problem solved.",
 			gentle = "Come in and have a cup of something warm.",
 			cheeky = "I like it. Means everyone's grumpy and I'm not.",
+			bold = "It's only weather. Toughen up.",
+			shy = "Um. Yes. It's a lot.",
+			dreamy = "I quite like it. Everything looks different.",
 			_ = "Don't get me started.",
 		}, "question")
 		s:voice("a", "laugh", "music")
@@ -378,13 +420,13 @@ event({
 		s:voice("a", "worry", "sweat")
 		s:say("a", "What would you do?", "question")
 		s:by("b", {
-			sunny = "Smile at it. Things get scared when you smile at them.",
-			gentle = "Sleep on it, have something warm, and be kind to yourself.",
-			bold = "Walk straight at it. Head first. Works every time.",
-			dreamy = "Ask the sea. The sea knows things.",
+			sunny = "Honestly? Don't think about it too hard. Come for a walk with me and we'll forget all about it.",
+			gentle = "Have a cup of tea first. Then tell me all about it.",
+			bold = "Stop worrying and just do it. That's what I do.",
+			dreamy = "I'd go and look at the sea for a while. Everything feels smaller after.",
 			easygoing = "Have a nap. If it's still there after, then worry.",
-			proud = "Do what I would do. Which is be brilliant.",
-			shy = "I'd hide. But you're braver than me. You'll be fine.",
+			proud = "Do what I'd do. It usually works out for me.",
+			shy = "I'd hide, probably. But you're braver than me. You'll be okay.",
 			cheeky = "Put a whoopee cushion on it. Problems hate that.",
 		}, "idea")
 		s:choice("That's good advice", function(c)
@@ -393,7 +435,12 @@ event({
 			c:mood("a", 4)
 		end)
 		s:choice("Maybe ask someone else too", function(c)
-			c:say("b", "Rude. Fair, but rude.", "sweat")
+			c:by("b", {
+				proud = "Someone else? Who else is there?",
+				shy = "Oh. Yes. That's probably better.",
+				gentle = "That's sensible. Ask as many people as you like.",
+				_ = "Rude. Fair, but rude.",
+			}, "sweat")
 			c:say("a", "Thanks anyway. Really.", "heart")
 			c:rel(3)
 			c:mood("a", 2)
@@ -420,10 +467,14 @@ event({
 		s:voice("a", "sad", "sad")
 		s:by("b", {
 			bold = "Up. Come on. Up. You're the toughest person I know. After me.",
-			sunny = "Hey. Hey. You. Yes, you. You're brilliant, and today's not over.",
+			sunny = "Hey, budge up. Whatever it is, you've still got me, and the day's not over yet.",
 			gentle = "Come here. Whatever it is, it'll look smaller tomorrow.",
 			cheeky = "Want me to cheer you up or prank whoever did this? Both?",
-			_ = "Want to go for a walk? Walks fix things.",
+			shy = "Um. I brought you a biscuit. You don't have to talk.",
+			proud = "Chin up. People can see you. Well, I can see you.",
+			dreamy = "Want to sit with me and watch the clouds? They don't ask questions.",
+			easygoing = "Hey. Sit. We don't have to do anything.",
+			_ = "Want to go for a walk? It might help.",
 		}, "heart")
 		s:voice("a", "thanks", "heart")
 		s:rel(8)

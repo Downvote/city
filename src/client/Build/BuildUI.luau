@@ -1671,7 +1671,7 @@ local function refreshActionBar()
 			LayoutOrder = 3,
 		})
 	else
-		Kit.text(if gift then "A gift: sells for nothing" else "Sells for nothing", {
+		Kit.text(if gift then "A gift, so it sells for nothing" else "Sells for nothing", {
 			Parent = actionValue,
 			Size = UDim2.fromOffset(0, 20),
 			AutomaticSize = Enum.AutomaticSize.X,

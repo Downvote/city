@@ -856,7 +856,7 @@ local function update()
 			setLabel(
 				if refund > 0
 					then Text.fill("Sell for {n}", { n = costText(refund) })
-					elseif gift then "A gift: sells for nothing"
+					elseif gift then "A gift, so it sells for nothing"
 					else "Sells for nothing",
 				plotFrame:PointToObjectSpace(hit.Position + Vector3.new(0, 3, 0))
 			)

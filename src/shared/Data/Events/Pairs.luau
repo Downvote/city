@@ -38,6 +38,17 @@ local function loses(s, ctx, who, vid)
 	}, if K.isPers(ctx, vid, "proud", "bold") then "anger" else "sweat")
 end
 
+-- the one whose cake lost the bake off
+local SULK = {
+	proud = "Hmph. I'm eating mine on my own, then.",
+	gentle = "Oh, well done. It was fun to make anyway.",
+	shy = "Oh. That's okay. Yours did look nicer.",
+	bold = "Rematch. Next week. Bigger cakes.",
+	easygoing = "Eh. More for me.",
+	cheeky = "Fine. I'm hiding yours.",
+	_ = "Fine. Fine. More for me.",
+}
+
 -- games and rivalries -------------------------------------------------------------------------------
 
 event({
@@ -60,7 +71,12 @@ event({
 			c:mood("b", 2)
 		end)
 		s:choice("Call it a draw", function(c)
-			c:say(w, "A draw. Fine. I won, though.", "sweat")
+			c:by(w, {
+				proud = "A draw. Fine. We both know I won.",
+				gentle = "A draw. That seems fair.",
+				cheeky = "A draw. I'm still telling everyone I won.",
+				_ = "A draw. Fine. I won, though.",
+			}, "sweat")
 			c:say(l, "Draw.", "anger")
 			c:rel(3)
 		end)
@@ -162,14 +178,14 @@ event({
 		}, "sparkle")
 		s:choice("{a}'s", function(c)
 			c:voice("a", "excited", "sparkle", "cheer")
-			c:say("b", "Hmph. I'm eating mine on my own, then.", "anger")
+			c:by("b", SULK, "sweat")
 			c:mood("a", 6)
 			c:mood("b", -4)
 			c:rel(-2)
 		end)
 		s:choice("{b}'s", function(c)
 			c:voice("b", "excited", "sparkle", "cheer")
-			c:say("a", "Fine. Fine. More for me.", "anger")
+			c:by("a", SULK, "sweat")
 			c:mood("b", 6)
 			c:mood("a", -4)
 			c:rel(-2)
@@ -315,7 +331,7 @@ event({
 		local s = K.scene(ctx, "A picnic")
 		s:prop("picnic", "a")
 		s:n("{a} and {b} spread a rug on the grass and unpacked far too many sandwiches.")
-		s:say("a", "I brought cheese ones, jam ones, and one I can't remember making.", "music")
+		s:say("a", "I made far too many. There's one in here I don't even remember making.", "music")
 		if ctx.rng:chance(0.4) then
 			s:n("Then the ants found them. All of them.")
 			s:by("b", {
@@ -369,13 +385,17 @@ event({
 		s:prop("sandcastle", "a")
 		s:n("{a} and {b} spent the whole afternoon on a sandcastle. It has four towers and a moat.")
 		s:by("a", {
-			proud = "The finest castle ever built. Possibly ever.",
+			proud = "The finest castle on this beach. On any beach.",
 			dreamy = "A crab lives in the left tower now. He's the king.",
 			_ = "Don't step on it. Nobody step on it.",
 		}, "sparkle", "point")
 		s:say("b", "I made the flag. The flag's the important bit.", "music")
 		s:choice("Leave it for the tide", function(c)
-			c:say("a", "It'll stand till the sea takes it. That's how it should be.", "heart")
+			c:by("a", {
+				dreamy = "The sea can have it. It'll make something else out of the sand.",
+				proud = "The tide won't have knocked down anything better all year.",
+				_ = "Leave it. The sea can have it tonight.",
+			}, "heart")
 			c:leave("sandcastle", 12, "a")
 			c:rel(8)
 			c:memo("b", "Our sandcastle might still be there. Go and look.")
@@ -532,7 +552,11 @@ event({
 		s:n("{a} gave {b} a haircut with the kitchen scissors.")
 		if ctx.rng:chance(0.5) then
 			s:voice("b", "wow", "sparkle")
-			s:say("a", "I'm a natural. I'm opening a shop.", "sparkle", "cheer")
+			s:by("a", {
+				proud = "I'm a natural. Clearly.",
+				cheeky = "I'm a natural. Who's next? Nobody? Okay.",
+				_ = "I'm a natural. Who's next?",
+			}, "sparkle", "cheer")
 			s:rel(6)
 		else
 			s:say("b", "Why is it shorter on one side?", "question")
@@ -603,7 +627,7 @@ event({
 			proud = "You were very impressed by me. I remember that clearly.",
 			_ = "You asked me where the bakery was. We were standing in front of it.",
 		}, "music")
-		s:say("a", "Feels like ages ago. Feels like yesterday.", "heart")
+		s:say("a", "Feels like ages ago. It wasn't, really, was it?", "heart")
 		s:rel(8)
 		s:log("{a} and {b} talked about the day they met.")
 		return s:done()
@@ -677,6 +701,10 @@ event({
 		if K.trait(ctx, b, "kind") >= 0.5 then
 			s:by("b", {
 				gentle = "Of course. Don't worry about the bun. Well, maybe the bun.",
+				sunny = "Of course, here, and forget the bun, honestly.",
+				bold = "Here. Pay me back whenever.",
+				shy = "Um. Here. There's no rush.",
+				easygoing = "Sure. Whenever's fine.",
 				_ = "Sure. Bun first, though.",
 			}, "heart")
 			s:rel(6)
@@ -796,6 +824,10 @@ event({
 			gentle = "Come here. We'll count between the flashes together.",
 			cheeky = "It's the sky moving furniture. That's all.",
 			shy = "I'm scared too. Can we be scared together?",
+			sunny = "It's okay, I've got you, it's only noise, it can't get in here.",
+			dreamy = "Count with me. One... two... three. See? It's moving away.",
+			proud = "Thunder doesn't bother me. Stand next to me if you like.",
+			easygoing = "Eh. It's just loud. Sit with me.",
 			_ = "It's all right. It'll pass. They always do.",
 		}, "heart")
 		s:rel(9)
@@ -819,7 +851,7 @@ event({
 			proud = "I was enjoying the rain. But fine.",
 			_ = "You're a lifesaver.",
 		}, "heart")
-		s:n("They walked the long way home. Nobody said why.")
+		s:n("They walked home slowly and both got one wet shoulder.")
 		s:rel(8)
 		s:log("{a} shared an umbrella with {b}.")
 		return s:done()
@@ -857,7 +889,12 @@ event({
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "A sorry card")
 		s:n("{a} has made a card for {b}. It has a drawing of a sad cat on the front.")
-		s:say("a", "Could you give this to {b}? I can't do it myself. I'll go red.", "sweat")
+		s:by("a", {
+			shy = "Could you give this to {b}? I can't. I'll go all red.",
+			proud = "Give this to {b}, would you? I'm busy. Very busy.",
+			bold = "Give this to {b}? I'd do it, but I'd say it wrong.",
+			_ = "Could you give this to {b}? I don't think I can do it myself.",
+		}, "sweat")
 		s:choice("Take it to {b}", function(c)
 			c:n("{b} opened it. Inside it said: 'I was silly. I miss you. Here is a cat.'")
 			c:by("b", {
@@ -871,7 +908,11 @@ event({
 			c:mood("a", 5)
 		end)
 		s:choice("Say it in person", function(c)
-			c:say("a", "You're right. I'll go. I'll go red, but I'll go.", "sweat")
+			c:by("a", {
+				shy = "You're right. I'll go. I'll go red, but I'll go.",
+				proud = "Fine. In person. I'll be very dignified about it.",
+				_ = "You're right. I'll go and say it.",
+			}, "sweat")
 			if ctx.rng:chance(0.6) then
 				c:say("b", "...Okay. I'm sorry too.", "heart")
 				c:fx({ t = "makeup", a = "a", b = "b" })
@@ -1001,13 +1042,22 @@ event({
 		local s = K.scene(ctx, "Tug of war")
 		s:prop("rope", "a")
 		s:n("{a} and {b} on one end of the rope, {c} on the other.")
-		s:say("c", "Two against one? That's fine. I've been eating my greens.", "sparkle")
+		s:by("c", {
+			bold = "Two against one? Bring it.",
+			shy = "Two against one? Um. Okay.",
+			proud = "Two against one? That seems fair. For you.",
+			_ = "Two against one? That's fine. I've been eating my greens.",
+		}, "sparkle")
 		if K.trait(ctx, c, "brave") > 0.65 then
 			s:n("{c} dug in their heels and pulled them both over the line.")
 			s:voice("c", "brag", "sparkle", "cheer")
 		else
 			s:n("{c} lasted four seconds and then went face first into the grass.")
-			s:say("c", "I let you win. That was kindness.", "sweat")
+			s:by("c", {
+				proud = "I let you win. That was kindness.",
+				shy = "Ow. Okay. You win.",
+				_ = "I'm in the grass. You win.",
+			}, "sweat")
 		end
 		s:relx("a", "b", 4)
 		s:relx("a", "c", 3)
@@ -1127,7 +1177,12 @@ event({
 		s:n("{a} has been pacing up and down the roof for an hour.")
 		s:say("a", "{b} looked after me all week when I was ill. I never said thank you properly. Should I?", "sweat")
 		s:choice("Go and say it", function(ch)
-			ch:say("a", "{b}, I never said thank you. For the soup, and for sitting with me. It meant a lot.", "heart")
+			ch:by("a", {
+				proud = "{b}. About last week. The soup, sitting up with me. Thank you. There, I said it.",
+				shy = "{b}? Um. Thank you. For the soup. And for staying. I should have said.",
+				bold = "{b}. Thanks. For the soup and that. I mean it.",
+				_ = "{b}, I never said thank you. For the soup, and for sitting with me. It meant a lot.",
+			}, "heart")
 			ch:by("b", {
 				shy = "Oh. You didn't have to say anything. I'm glad you did.",
 				proud = "It was very good soup. But thank you. Really.",
