@@ -111,9 +111,15 @@ local function findKit(): { [string]: MeshPart }
 		end
 	end
 	local found: { [string]: MeshPart } = {}
+	local palette = Tuning.City.KitTextureId
 	for _, root in roots do
 		for _, d in root:GetDescendants() do
 			if d:IsA("MeshPart") then
+				if palette then
+					-- every model takes its colours from the one palette picture
+					d.TextureID = "rbxassetid://" .. tostring(palette)
+					d.Color = Color3.new(1, 1, 1)
+				end
 				found[d.Name] = d
 			end
 		end

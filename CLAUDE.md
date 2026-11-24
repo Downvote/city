@@ -67,9 +67,12 @@ any mesh data made from them. `python3 -I scripts/citypack.py <LowPoly_City_01Re
 the pack (kept anywhere outside the repository) into, under the git-ignored `out/citypack/`: the kit for Studio
 (five FBX files of its 330 models in studs, cut under the importer's 20,000 triangles, the palette beside them and
 `IMPORT.md`), the preview cache (`meshes.npz`) and the scene; and it writes `Data/CityPack`, the manifest (each
-model's pieces and sizes, each of the 3,149 placements), which is layout data and is committed. The user imports
-the kit in Studio, which puts the meshes on their account, and gives us asset ids for `Tuning.City.KitAssetIds`
-(or puts the kit in `ServerStorage.CityKit`). `World.buildMap` finds the kit, checks it against the manifest
+model's pieces and sizes, each of the 3,149 placements), which is layout data and is committed. The kit is on the
+user's Roblox account: `python3 -I scripts/upload_citykit.py --user <id>` uploads the five FBX files as Models and
+the palette as an Image through Open Cloud (the session's proxy adds the user's API key for `apis.roblox.com`; never
+put a key in a file or a command), and their ids are in `Tuning.City.KitAssetIds` and `KitTextureId` (the loader
+puts the palette on every kit part, since an uploaded FBX doesn't carry its picture). A kit imported in Studio and
+put in `ServerStorage.CityKit` is used first. `World.buildMap` finds the kit, checks it against the manifest
 (`CityMap.fit`: scale, a quarter or half turn, a mirror), sizes and places every model; without the kit it puts
 a plain box per piece, so the game runs and the specs and sims run on that. `Data/CityMap` lays the pack out round
 our plots: the suburb's road to the bridge is Main Street (`Town`), the eight plots replace its houses, the middle

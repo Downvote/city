@@ -590,6 +590,11 @@ clipping (`tools/preview/ui_render.py`).
   back to check names, triangles, sizes, facing and colours, and writes the preview cache
   (`out/citypack/meshes.npz`) and `src/shared/Data/CityPack.luau`. `out/` is git-ignored; nothing of the pack is
   committed.
+- `scripts/upload_citykit.py --user <id>` (or `--group <id>`): uploads the kit through Open Cloud's Assets API, the
+  palette as an Image and each FBX as a Model (Roblox makes a Model of MeshParts from it, saved as a package),
+  waits for each operation and prints the ids (also into `out/citypack/kit/uploaded.json`) for
+  `Tuning.City.KitAssetIds` and `Tuning.City.KitTextureId`. The API key never appears: the network proxy adds it as
+  `x-api-key`, or `ROBLOX_API_KEY` elsewhere. `World.buildMap` sets `KitTextureId` as every kit part's TextureID.
 - `tools/preview/citypack.py` draws the pack's models from that cache for `render.py` and `walk.py` (cut to a
   region, with a level of detail, and a fast `top` view); without the cache it draws the manifest's stand-in boxes
   and says so. `dump.luau`'s `map` and `map:x1,z1,x2,z2` show the city, `models:<key>,<key>` its models side by side.

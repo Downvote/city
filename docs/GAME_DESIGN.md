@@ -399,9 +399,13 @@ players' plots should go, they chose "in the west suburb". So the town is that c
 - **The plots' ground** is the pack's own flat grass, so a plot reads as part of the lawn; the land a player owns
   is a step lighter, inside its kerb.
 
-How it is built: the pack's 330 different models were turned into a kit of five files for Studio's importer
-(`scripts/citypack.py`), which the user imports once; the game then places every model where the pack had it,
-moved to our town's frame. Until the kit's id is in the game, every model is a plain block of its size and colour,
+How it is built: the pack's 330 different models were turned into a kit of five files (`scripts/citypack.py`).
+
+> cant you convert the models to .rbxm yourself?
+
+An .rbxm can't carry meshes: every mesh in Roblox is an uploaded asset. So with an Open Cloud key the user made, we
+uploaded the kit to their account ourselves (`scripts/upload_citykit.py`), and the game loads those five models
+and the palette by id and places every model where the pack had it, moved to our town's frame. Until the kit's id is in the game, every model is a plain block of its size and colour,
 so the game still runs. The pack is the user's and the repository is public, so none of its files are in it: only
 a list of where each model stands. About 2,800 models are placed, 6.4 million triangles (parked cars and trees
 are most of them); a phone may want Roblox's streaming switched on, to be tried in Studio.

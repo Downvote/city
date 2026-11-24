@@ -151,11 +151,20 @@ Tuning.City = {
 		{ Size = 160, Price = 12000, Level = 3 },
 		{ Size = 200, Price = 30000, Level = 4 },
 	},
-	-- The city kit's models, uploaded from Studio (out/citypack/kit/IMPORT.md): the asset ids the
-	-- import gave, or the one id of a CityKit model holding them all. Empty until the user sends
-	-- them; a CityKit model in ServerStorage is used first. Without either the town is built of
-	-- plain boxes the size of each piece.
-	KitAssetIds = {} :: { number },
+	-- The city kit's models on the owner's Roblox account (uploaded with scripts/upload_citykit.py,
+	-- or from Studio as out/citypack/kit/IMPORT.md says). A CityKit model in ServerStorage is used
+	-- first. Without either the town is built of plain boxes the size of each piece.
+	KitAssetIds = {
+		95472726117444, -- CityKit_Buildings
+		95667460718589, -- CityKit_Ground
+		128295194135399, -- CityKit_Nature
+		99212065431207, -- CityKit_Props
+		118622272793269, -- CityKit_Vehicles
+	} :: { number },
+	-- The pack's colour palette, uploaded as an image. A model uploaded through Open Cloud carries
+	-- its meshes but not the picture beside the FBX, so the loader puts this on every kit part.
+	-- nil keeps whatever texture the kit came with (a Studio import applies it itself).
+	KitTextureId = 105648446321673 :: number?,
 	KitBatch = 250, -- parts placed between two waits while the town goes up
 }
 
