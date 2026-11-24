@@ -184,23 +184,30 @@ end
 
 -- Walls and roofs ------------------------------------------------------------------------------------
 
--- The front of an outdoor fan unit, round the origin facing local -Z: the fan's dark round, two
--- bars of its guard and the hub, and a service panel with louvres beside it.
+-- The front of an outdoor fan unit facing local -Z: the fan's dark round behind the cross of its
+-- guard.
 local function fanFront(p: R, fx: number, fy: number, front: number, d: number)
 	p:cyl(fx, fy, front, 0.06, d, "z", BLACK, "SmoothPlastic")
-	for _, dy in { -0.18, 0.18 } do
-		p:block(
-			fx - d / 2 + 0.06,
-			fy + dy - 0.03,
-			front - 0.06,
-			fx + d / 2 - 0.06,
-			fy + dy + 0.03,
-			front - 0.03,
-			SILVER,
-			"SmoothPlastic"
-		)
-	end
-	p:cyl(fx, fy, front - 0.045, 0.03, d * 0.24, "z", SILVER, "SmoothPlastic")
+	p:block(
+		fx - d / 2 + 0.06,
+		fy - 0.03,
+		front - 0.06,
+		fx + d / 2 - 0.06,
+		fy + 0.03,
+		front - 0.03,
+		SILVER,
+		"SmoothPlastic"
+	)
+	p:block(
+		fx - 0.03,
+		fy - d / 2 + 0.06,
+		front - 0.06,
+		fx + 0.03,
+		fy + d / 2 - 0.06,
+		front - 0.03,
+		SILVER,
+		"SmoothPlastic"
+	)
 end
 
 -- An air conditioner's outdoor box on a wall: the origin is on the wall at the box's bottom edge

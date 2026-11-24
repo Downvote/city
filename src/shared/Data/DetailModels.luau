@@ -114,14 +114,14 @@ end
 -- Planters -------------------------------------------------------------------------------------------
 
 -- The street planter: a stone trough 6 long and 1.8 deep along x on four feet, a lip round its
--- top, soil sunk inside, mounds of leaves with more trailing down over the sides, and flowers at
--- two heights, the tall ones on stems. Four pieces and the soil.
+-- top, soil sunk inside, mounds of leaves and flowers at two heights, the tall ones on stems.
+-- Three pieces and the soil. (Leaves spilling over the lip were tried: the town stands a news box
+-- with its box overhanging a planter's edge where it can, and they took that room.)
 local TALL = { { -2.0, -0.2, 2.45 }, { -0.3, 0.22, 2.7 }, { 1.7, -0.1, 2.5 } }
 local LOW = {
 	{ -2.45, 0.25, 2.0 },
 	{ -1.1, -0.25, 2.12 },
-	{ 0.45, -0.3, 2.08 },
-	{ 1.0, 0.3, 1.98 },
+	{ 0.7, 0.2, 2.04 },
 	{ 2.45, -0.1, 1.9 },
 }
 local MOUNDS = {
@@ -148,15 +148,6 @@ local function plantsInTrough(q: R)
 				greens[k % 3 + 1],
 				"Grass"
 			)
-		end
-	end)
-	-- and trailing down the trough's sides under the lip, front and back. (A piece of their own,
-	-- low, so the trough's box over the pavement stays the size it was: the town stands a news box
-	-- with its box overhanging a planter where it can.)
-	q:piece(function(p: R)
-		p:block(-1.85, 0.74, -0.86, -1.55, 0.86, -0.82, FOLIAGE_DARK, "Grass")
-		for _, t in { { -1.7, -1 }, { 0.8, -1 }, { -0.6, 1 }, { 1.9, 1 } } do
-			p:lump(CFrame.new(t[1], 0.8, t[2] * 0.84), 1.0, 0.36, 0.16, FOLIAGE_DARK, "Grass")
 		end
 	end)
 	q:piece(function(p: R)
@@ -223,10 +214,7 @@ local function hedgeRow(r: R, cf: CFrame)
 				)
 			end
 			for k, x in { -5.2, 0.4, 5.3 } do
-				p:ball(x, 2.22, -0.3, 0.5, bloom(k), "Grass")
-				if k ~= 2 then
-					p:ball(x + 0.5, 2.18, 0.25, 0.42, bloom(k + 2), "Grass")
-				end
+				p:ball(x, 2.22, (k % 2 - 0.5) * 0.5, 0.5, bloom(k), "Grass")
 			end
 		end, true)
 	end)
