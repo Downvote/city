@@ -105,11 +105,11 @@ local LIKE = {
 	cheeky = "{y} put a frog in my bucket. I think it was a present.",
 }
 
-local BOND = {
-	crush = "Does {y} ever mention me? Just wondering. No reason.",
-	sweethearts = "{y} and I went for a walk on the beach. Don't make that face.",
-	partners = "{y} snores like a boat engine. I love them anyway.",
-}
+-- A best friend, as close as two villagers get (there is no romance: the user, "remove any
+-- romance, just best friends is the highest").
+local BEST = "{y} and I are best friends. We have a handshake. It takes four minutes."
+local LEVELS = Tuning.Relationships.Levels
+local BEST_FRIENDS = LEVELS[#LEVELS].Min
 
 local SEASON = {
 	"Everything's coming up green. Even my shoes.",
@@ -246,7 +246,7 @@ function Talk.line(profile: any, vid: string, rng: any, opts: { [string]: any }?
 			end
 			-- what they got up to lately
 			add(Talk.memo(v, o.now), 3)
-			-- a neighbour or two: how they get on, what they're like, a soft spot
+			-- a neighbour or two: how they get on, what they're like, a best friend
 			local others = {}
 			for _, other in profile.order do
 				if other ~= vid and profile.villagers[other] then
@@ -267,9 +267,8 @@ function Talk.line(profile: any, vid: string, rng: any, opts: { [string]: any }?
 				if like then
 					add(Text.fill(like, { y = ov.name }))
 				end
-				local bond = Life.bond(profile, vid, other)
-				if bond and BOND[bond] then
-					add(Text.fill(BOND[bond], { y = ov.name }), 2)
+				if score >= BEST_FRIENDS then
+					add(Text.fill(BEST, { y = ov.name }), 2)
 				end
 			end
 			-- a worry, a joke (more from the cheeky ones), the season and the weather

@@ -227,23 +227,17 @@ event({
 	id = "dancepartner",
 	actors = 3,
 	when = "any",
-	weight = W({
-		base = 0.12,
-		count = 3,
-		cond = function(ctx, a)
-			return ctx.free(a)
-		end,
-	}),
+	weight = W({ base = 0.12, count = 3 }),
 	scene = function(ctx, a, b, c)
 		local s = K.scene(ctx, "The dance")
-		s:say("a", "There's a dance at the hall on Friday. Should I ask {b} or {c}?", "sweat")
+		s:say("a", "There's a dance at the hall on Friday. I don't want to go on my own. {b} or {c}?", "sweat")
 		s:choice("Ask {b}", function(ch)
-			ch:say("a", "{b}, would you like to... go to the dance? With me?", "sweat")
+			ch:say("a", "{b}, come to the dance with me? I need someone to stand by the snacks with.", "sweat")
 			ch:voice("b", if ctx.rel(a, b) >= 0 then "yes" else "no", "heart")
 			ch:relx("a", "b", if ctx.rel(a, b) >= 0 then 10 else -2)
 		end)
 		s:choice("Ask {c}", function(ch)
-			ch:say("a", "{c}, would you like to... go to the dance? With me?", "sweat")
+			ch:say("a", "{c}, come to the dance with me? I need someone to stand by the snacks with.", "sweat")
 			ch:voice("c", if ctx.rel(a, c) >= 0 then "yes" else "no", "heart")
 			ch:relx("a", "c", if ctx.rel(a, c) >= 0 then 10 else -2)
 		end)

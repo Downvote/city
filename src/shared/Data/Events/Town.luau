@@ -512,7 +512,7 @@ event({
 		local who = bystander(ctx)
 		if who then
 			s:with({ x = ctx.v(who).name })
-			s:n("{x} found a shoe, a teapot and a very old love letter. They're keeping the teapot.")
+			s:n("{x} found a shoe, a teapot and a very old postcard. They're keeping the teapot.")
 		end
 		for i = 1, #ctx.present do
 			for j = i + 1, #ctx.present do

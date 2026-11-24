@@ -116,7 +116,7 @@ first.heart = 3
 first.wish = { kind = "friend", arg = order[2], untilT = os.time() + 9999 }
 local rel = {}
 rel[Schema.pairKey(order[1], order[3])] = { s = 62, n = 4 }
-rel[Schema.pairKey(order[3], order[4])] = { s = 84, n = 9, bond = "sweethearts" }
+rel[Schema.pairKey(order[3], order[4])] = { s = 84, n = 9 }
 rel[Schema.pairKey(order[1], order[4])] = { s = 18, n = 2 }
 Sim.profile.villagers = villagers
 Sim.profile.order = order
@@ -141,8 +141,6 @@ local function pushState()
 			paydays = 2,
 			wishes = 3,
 			hearts = 2,
-			couples = 1,
-			partners = 0,
 		},
 		goals = { settlers = true },
 		found = { square = true, lookout = true, pier = true, marina = true, station = true },

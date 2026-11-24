@@ -521,7 +521,7 @@ Personalities.list = {
 				"Nice face. Did it hurt?",
 				"You've got a sign on your back. Kidding. Or am I?",
 				"Who taught you to walk like that?",
-				"Ooh, someone's in love.",
+				"Ooh, somebody's had a haircut.",
 			},
 			brag = {
 				"Nobody saw it coming. Nobody.",

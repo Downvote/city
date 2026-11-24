@@ -29,6 +29,13 @@ Schema.SettingChoices = {
 -- What a villager can wish for (Sim/Life): a craving, someone to meet, a new look, a chat.
 Schema.WishKinds = { food = true, friend = true, look = true, cheer = true }
 
+-- The romance there was, as an old save keeps it on a pair (rel.bond). There is none now (the
+-- user: "remove any romance, just best friends is the highest"), so a pair who had one loads as
+-- best friends: the top of Tuning.Relationships.Levels.
+Schema.OldBonds = { crush = true, sweethearts = true, partners = true }
+local LEVELS = Tuning.Relationships.Levels
+Schema.BestFriends = LEVELS[#LEVELS].Min
+
 Schema.Seasons = { "Spring", "Summer", "Autumn", "Winter" }
 Schema.DaysPerSeason = 10
 
@@ -82,8 +89,6 @@ function Schema.newProfile(): any
 			paydays = 0,
 			wishes = 0,
 			hearts = 0,
-			couples = 0,
-			partners = 0,
 			found = 0,
 		},
 		offers = {}, -- heart level thank yous waiting to be picked (Sim/Life)
@@ -129,6 +134,21 @@ function Schema.migrate(raw: any): any
 	profile.inv = nil
 	if type(profile.stats) == "table" then
 		profile.stats.fed = nil
+		-- and the romance went too: its counts and its goals
+		profile.stats.couples, profile.stats.partners = nil, nil
+	end
+	if type(profile.goals) == "table" then
+		profile.goals.couple, profile.goals.partners = nil, nil
+	end
+	-- a crush, sweethearts or partners from before: best friends now, and no bond kept
+	for _, rel in if type(profile.rel) == "table" then profile.rel else {} do
+		if type(rel) == "table" and rel.bond ~= nil then
+			if Schema.OldBonds[rel.bond] then
+				local s = if type(rel.s) == "number" and rel.s == rel.s then rel.s else 0
+				rel.s = math.clamp(math.max(s, Schema.BestFriends), Tuning.Relationships.Min, Tuning.Relationships.Max)
+			end
+			rel.bond = nil
+		end
 	end
 	-- villagers: drop anything that isn't one, re-check looks
 	local clean = {}

@@ -325,7 +325,10 @@ local function about(parent: Frame, vid: string, v: any, p: any)
 end
 
 -- The Friends tab: everyone else in town as a row, closest first: how they get on (their
--- friendship, their romance, or a quarrel) in its colour and how close they are as a bar.
+-- friendship or a quarrel) in its colour and how close they are as a bar. Best friends are as
+-- close as two villagers get (there is no romance) and stand out in pink.
+local LEVELS = Tuning.Relationships.Levels
+local BEST_FRIENDS = LEVELS[#LEVELS].Min
 local function friendsOf(parent: Frame, vid: string, p: any)
 	local friends = Kit.scroll({ Parent = parent, Size = UDim2.fromScale(1, 1) })
 	Kit.list(friends, 6)
@@ -353,11 +356,10 @@ local function friendsOf(parent: Frame, vid: string, p: any)
 	end
 	for i, r in rows do
 		local _, levelName = Relationships.level(r.s)
-		local bond = Life.bond(p, vid, r.id)
-		local how = if r.q then "Not speaking" elseif bond then Life.BondNames[bond] else levelName
+		local how = if r.q then "Not speaking" else levelName
 		local col = if r.q
 			then T.Coral
-			elseif bond then T.Pink
+			elseif r.s >= BEST_FRIENDS then T.Pink
 			elseif r.s >= 55 then T.Yellow
 			elseif r.s >= 10 then T.Green
 			elseif r.s > -10 then T.Blue

@@ -1,11 +1,12 @@
 --!nonstrict
 -- Two or three villagers together: games and rivalries, duets, secret handshakes, picnics,
--- misunderstandings and promises, friendships starting and falling apart, making up, and
--- romance (crushes, sweethearts and partners). How it goes depends on who they are and how well
--- they get on.
+-- misunderstandings and promises, friendships starting and falling apart, making up, and best
+-- friends. How it goes depends on who they are and how well they get on. There is no romance (the
+-- user: "remove any romance, just best friends is the highest").
 
 local K = require(script.Parent.Kit)
 local Chatter = require(script.Parent.Chatter)
+local Sayings = require(script.Parent.Parent.Sayings)
 
 local W = K.W
 
@@ -1111,323 +1112,125 @@ event({
 	end,
 })
 
+-- best friends -----------------------------------------------------------------------------------
+-- As close as two villagers get: there is no romance (the user: "remove any romance, just best
+-- friends is the highest"). K.BestFriends is the score for it.
+
+-- A thank you that has waited too long, said up on the roof at sunset (Data/Cutscenes has its
+-- script).
 event({
-	id = "thirdwheel",
-	actors = 3,
+	id = "thanks",
 	when = "day",
-	weight = W({
-		base = 0.15,
-		count = 3,
-		cond = function(ctx, a, b, c)
-			local bond = ctx.bond(b, c)
-			return bond == "sweethearts" or bond == "partners"
-		end,
-	}),
-	scene = function(ctx, a, b, c)
-		local s = K.scene(ctx, "Three's a crowd")
-		s:n("{a} went for a walk with {b} and {c}. {b} and {c} haven't stopped holding hands.")
+	weight = W({ base = 0.3, rel = 55 }),
+	scene = function(ctx, a, b)
+		local s = K.scene(ctx, "Saying thank you")
+		s:n("{a} has been pacing up and down the roof for an hour.")
+		s:say("a", "{b} looked after me all week when I was ill. I never said thank you properly. Should I?", "sweat")
+		s:choice("Go and say it", function(ch)
+			ch:say("a", "{b}, I never said thank you. For the soup, and for sitting with me. It meant a lot.", "heart")
+			ch:by("b", {
+				shy = "Oh. You didn't have to say anything. I'm glad you did.",
+				proud = "It was very good soup. But thank you. Really.",
+				cheeky = "I know. I've been waiting weeks for this. Come here.",
+				_ = "Oh. You didn't have to. I'm glad you did, though.",
+			}, "heart", "cheer")
+			ch:n("They stayed up there until the sun went down.")
+			ch:rel(8)
+			ch:mood("a", 10)
+			ch:mood("b", 10)
+			ch:hearts("a", 2)
+		end)
+		s:choice("Wait for a better moment", function(ch)
+			ch:say("a", "You're right. Tomorrow. Probably.", "sweat")
+			ch:mood("a", -2)
+		end)
+		s:default(2)
+		s:log("{a} thanked {b} properly at last.")
+		return s:done()
+	end,
+})
+
+-- Best friends keep a day for each other now and then. The cutscene goes where the plan says.
+local DAYS = {
+	"a picnic on the beach",
+	"a walk along the sand at sunset",
+	"ice cream by the fountain",
+	"counting boats from the pier",
+	"a concert at the bandstand",
+}
+
+event({
+	id = "dayout",
+	when = "day",
+	weight = W({ base = 0.5, rel = K.BestFriends }),
+	scene = function(ctx, a, b)
+		local s = K.scene(ctx, "A day out"):with({ plan = ctx.rng:pick(DAYS) })
+		s:n("{a} and {b} went out for {plan}, the way they do every few weeks.")
+		s:say("b", "Same time next month?", "heart")
 		s:by("a", {
-			cheeky = "Should I walk behind you? Like a little parade?",
-			shy = "I'll just... walk over here.",
-			_ = "I'll carry the bags, then.",
-		}, "sweat")
-		s:choice("Rescue {a}", function(ch)
-			ch:n("You called {a} over to help with something that didn't really need help.")
-			ch:voice("a", "thanks", "heart")
-			ch:mood("a", 3)
-			ch:hearts("a", 1)
-		end)
-		s:choice("Tell {b} and {c} to include {a}", function(ch)
-			ch:say("b", "Oh no, sorry. Come here, you. Middle.", "heart")
-			ch:relx("a", "b", 5)
-			ch:relx("a", "c", 5)
-		end)
-		s:log("{a} felt like a third wheel.")
-		return s:done()
-	end,
-})
-
-event({
-	id = "matchmaker",
-	actors = 3,
-	when = "day",
-	weight = W({
-		base = 0.12,
-		count = 3,
-		rel = 20,
-		free = true,
-		cond = function(ctx, a, b, c)
-			return ctx.rel(a, c) >= 30 and ctx.rel(b, c) >= 30
-		end,
-	}),
-	scene = function(ctx, a, b, c)
-		local s = K.scene(ctx, "Matchmaker")
-		s:n("{c} has pulled you aside.")
-		s:say("c", "I think {a} and {b} would be perfect together. Should I set them up?", "idea")
-		s:choice("Set them up", function(ch)
-			ch:n("{c} arranged for {a} and {b} to sit together at the café. Then left. Quickly.")
-			if ctx.rng:chance(0.6) then
-				ch:say("a", "So... do you come here often?", "sweat")
-				ch:say("b", "...Every day. You know that. Hehe.", "heart")
-				ch:fx({ t = "bond", a = "a", b = "b", to = "crush" })
-				ch:rel(8)
-			else
-				ch:say("b", "Is this a set up? This is a set up.", "anger")
-				ch:say("a", "I'm going to have words with {c}.", "anger")
-				ch:relx("a", "c", -4)
-				ch:relx("b", "c", -4)
-			end
-		end)
-		s:choice("Let them work it out", function(ch)
-			ch:say("c", "You're right. Love finds a way. Probably. Eventually.", "heart")
-		end)
-		s:log("{c} tried to set up {a} and {b}.")
-		return s:done()
-	end,
-})
-
--- romance ---------------------------------------------------------------------------------------------
-
-event({
-	id = "blush",
-	when = "day",
-	weight = W({ base = 0.7, bond = "crush" }),
-	scene = function(ctx, a, b)
-		local s = K.scene(ctx, "Tongue tied")
-		s:say("b", "Morning, {a}.", "wave")
-		s:by("a", {
-			bold = "MORNING. Hi. Good morning. You look... morning.",
-			shy = "Oh! Um. M-morning. Hi. Bye.",
-			proud = "Ah. {b}. Yes. Hello. I am fine, thank you.",
-			cheeky = "Hey. I wasn't looking at you. Not at all.",
-			_ = "Hi! Hello. Hi. I mean, morning.",
-		}, "sweat")
-		s:n("{a} walked straight into a lamppost on the way out.")
-		s:rel(3)
-		s:log("{a} went red talking to {b}.")
-		return s:done()
-	end,
-})
-
-event({
-	id = "loveletter",
-	cutscene = "park",
-	when = "day",
-	weight = W({ base = 0.6, bond = "crush" }),
-	scene = function(ctx, a, b)
-		local s = K.scene(ctx, "A letter for {b}")
-		s:n("{a} has written a letter. The envelope has a heart on it, crossed out, then drawn again.")
-		s:say("a", "Would you give this to {b}? Don't say who it's from. They'll know. Don't say.", "sweat")
-		s:choice("Deliver it", function(ch)
-			ch:n("{b} read it twice and went very quiet.")
-			if ctx.rng:chance(0.55) then
-				ch:say("b", "Tell {a}... tell them to meet me by the fountain. Tonight.", "heart")
-				ch:fx({ t = "bond", a = "a", b = "b", to = "sweethearts" })
-				ch:rel(8)
-				ch:mood("a", 12)
-				ch:hearts("a", 2)
-			else
-				ch:say("b", "That's so sweet. Tell {a} thank you. I think we're better as friends.", "sweat")
-				ch:fx({ t = "bond", a = "a", b = "b", to = nil })
-				ch:mood("a", -8)
-			end
-		end)
-		s:choice("Tell {a} to say it in person", function(ch)
-			ch:say("a", "In PERSON? With my FACE? ...You're right. Soon.", "sweat")
-			ch:mood("a", -1)
-		end)
-		s:log("{a} wrote a letter to {b}.")
-		return s:done()
-	end,
-})
-
-event({
-	id = "serenade",
-	when = "any",
-	weight = W({ base = 0.35, bond = "love" }),
-	scene = function(ctx, a, b)
-		local s = K.scene(ctx, "A serenade")
-		s:prop("guitar", "a")
-		s:n("{a} turned up under {b}'s window with a guitar.")
-		s:say("a", "This one's for you. I wrote it myself. It's mostly one chord.", "music")
-		s:by("b", {
-			shy = "Everyone's listening... keep going.",
-			proud = "Finally, a song about me. Go on.",
-			cheeky = "I'm going to throw a flower down. It's a cabbage. Catch.",
-			_ = "Come up here, you soppy thing.",
+			proud = "It's already in my diary. In pen.",
+			cheeky = "Same time tomorrow, more like.",
+			shy = "I'd like that a lot.",
+			_ = "Obviously.",
 		}, "heart")
-		s:rel(8)
-		s:mood("b", 8)
-		s:log("{a} sang under {b}'s window.")
-		return s:done()
-	end,
-})
-
-event({
-	id = "lovetiff",
-	when = "day",
-	weight = W({ base = 0.25, bond = "love" }),
-	scene = function(ctx, a, b)
-		local s = K.scene(ctx, "A small tiff"):with({ thing = ctx.rng:pick(Chatter.Spats) })
-		s:n("{a} and {b} are arguing about {thing}. Quietly. Then not quietly.")
-		s:voice("a", "angry", "anger")
-		s:voice("b", "angry", "anger")
-		s:n("Then {b} snorted, and {a} started laughing, and that was that.")
-		s:say("b", "We're ridiculous.", "heart")
-		s:say("a", "We are. Tea?", "heart")
-		s:rel(3)
-		s:log("{a} and {b} had a little tiff about {thing}.")
-		return s:done()
-	end,
-})
-
-event({
-	id = "flowers",
-	when = "day",
-	weight = W({ base = 0.4, bond = "love" }),
-	scene = function(ctx, a, b)
-		local s = K.scene(ctx, "Flowers")
-		s:prop("bouquet", "a")
-		s:n("{a} turned up at {b}'s door with a whole bucket of flowers.")
-		s:say("a", "I couldn't pick one. So I picked all of them.", "heart")
-		s:voice("b", "thanks", "heart", "cheer")
-		s:rel(8)
-		s:mood("b", 6)
-		s:log("{a} brought {b} flowers.")
-		return s:done()
-	end,
-})
-
-local PETNAMES = { "pudding", "my little crumpet", "sweet pea", "dumpling", "sunshine", "biscuit" }
-
-event({
-	id = "nickname",
-	when = "any",
-	weight = W({ base = 0.25, bond = "love" }),
-	scene = function(ctx, a, b)
-		local s = K.scene(ctx, "Pet names"):with({ name = ctx.rng:pick(PETNAMES) })
-		s:say("a", "Morning, {name}.", "heart")
-		s:by("b", {
-			proud = "Not in public. ...Morning.",
-			shy = "Shh. People can hear. ...Morning.",
-			cheeky = "Morning, my sweet radish.",
-			_ = "Morning, you.",
-		}, "heart")
-		s:n("Everyone nearby pretended not to hear.")
-		s:rel(4)
-		s:log("{a} called {b} {name}.")
-		return s:done()
-	end,
-})
-
-event({
-	id = "anniversary",
-	cutscene = "birthday",
-	when = "any",
-	weight = W({ base = 0.25, bond = "partners" }),
-	scene = function(ctx, a, b)
-		local s = K.scene(ctx, "An anniversary")
-		s:prop("cake", "a")
-		s:n("{a} made a little cake with two candles on it. It's been a while since {a} and {b} became partners.")
-		s:say("a", "One candle for you, one for me.", "heart")
-		s:say("b", "You remembered. I remembered too. I got you socks.", "heart", "cheer")
-		s:rel(8)
+		s:rel(6)
 		s:mood("a", 6)
 		s:mood("b", 6)
-		s:log("{a} and {b} celebrated being partners.")
+		s:log("{a} and {b} went out for {plan}.")
 		return s:done()
 	end,
 })
 
+-- Two who turn out to have the same hobby.
 event({
-	id = "movein",
-	when = "day",
-	weight = W({ base = 0.2, bond = "partners" }),
-	scene = function(ctx, a, b)
-		local s = K.scene(ctx, "Moving boxes")
-		s:prop("parcels", "a")
-		s:n("{a} is carrying boxes over to {b}'s. There are a lot of boxes.")
-		s:say("b", "How many spoons does one person need?", "question")
-		s:by("a", {
-			proud = "Every spoon has a purpose.",
-			cheeky = "Three of those are yours. I took them years ago.",
-			_ = "Don't ask. Help me carry.",
-		}, "sweat")
-		s:choice("Help carry", function(ch)
-			ch:n("Three trips. Then four. The last box just said 'MISC' and rattled.")
-			ch:rel(6)
-			ch:mood("a", 4)
-			ch:mood("b", 4)
-			ch:hearts("a", 1)
-		end)
-		s:choice("Leave them to it", function(ch)
-			ch:say("b", "We'll manage. Slowly.", "sweat")
-			ch:rel(4)
-		end)
-		s:log("{a} moved some things over to {b}'s.")
-		return s:done()
-	end,
-})
-
-event({
-	id = "starwatch",
-	cutscene = "pier",
-	when = "night",
-	weight = W({ base = 0.35, bond = "love", weather = "clear" }),
-	scene = function(ctx, a, b)
-		local s = K.scene(ctx, "Late on the pier")
-		s:n("{a} and {b} sat on the end of the pier with their feet over the water.")
-		s:say("b", "Make a wish.", "heart")
-		s:say("a", "I don't need one tonight.", "heart")
-		s:rel(8)
-		s:mood("a", 5)
-		s:mood("b", 5)
-		s:log("{a} and {b} sat on the pier under the stars.")
-		return s:done()
-	end,
-})
-
--- two couples on the same afternoon
-local function otherCouple(ctx, a, b): (string?, string?)
-	local present = ctx.present
-	for i = 1, #present do
-		for j = i + 1, #present do
-			local x, y = present[i], present[j]
-			if x ~= a and x ~= b and y ~= a and y ~= b then
-				local bond = ctx.bond(x, y)
-				if bond == "sweethearts" or bond == "partners" then
-					return x, y
-				end
-			end
-		end
-	end
-	return nil, nil
-end
-
-event({
-	id = "doubledate",
-	cutscene = "beach",
+	id = "samehobby",
 	when = "day",
 	weight = W({
-		base = 0.5,
-		bond = "love",
-		count = 4,
+		base = 0.3,
+		rel = 10,
 		cond = function(ctx, a, b)
-			return (otherCouple(ctx, a, b)) ~= nil
+			local x, y = ctx.v(a), ctx.v(b)
+			return x.hobby ~= nil and x.hobby == y.hobby and Sayings.hobby(x.hobby) ~= nil
 		end,
 	}),
 	scene = function(ctx, a, b)
-		local x, y = otherCouple(ctx, a, b)
-		local s = K.scene(ctx, "A double date")
-		s:with({ x = ctx.v(x).name, y = ctx.v(y).name })
-		s:n("{a} and {b} went out with {x} and {y}. Four ice creams, one bench, a lot of laughing.")
-		s:say("a", "We should do this every week.", "heart", "laugh")
-		s:say("b", "As long as {x} stops stealing my sprinkles.", "laugh")
-		s:rel(6)
-		s:fx({ t = "relv", a = x, b = y, d = 6 })
-		s:fx({ t = "relv", a = ctx.stars.a, b = x, d = 4 })
-		s:fx({ t = "relv", a = ctx.stars.b, b = y, d = 4 })
-		s:log("{a} and {b} went on a double date with {x} and {y}.")
+		local hobby = Sayings.hobby(ctx.v(a).hobby) or Sayings.hobbies[1]
+		local s = K.scene(ctx, "Same here"):with({ hobby = hobby.name })
+		s:say("a", "Wait. You're into {hobby} too?", "question", "point")
+		s:by("b", {
+			proud = "I'm quite good, actually. You can watch.",
+			shy = "I didn't think anyone else was. I never said.",
+			bold = "Every evening. Want to see who's better?",
+			_ = "Since I was little. Why didn't you say?",
+		}, "sparkle")
+		s:n("They spent the rest of the afternoon at it, comparing notes and getting in each other's way.")
+		s:rel(10)
+		s:mood("a", 4)
+		s:mood("b", 4)
+		s:memo("a", "Turns out {b} is into {hobby} too. We do it together on Thursdays now.")
+		s:log("{a} and {b} found out they're both into {hobby}.")
+		return s:done()
+	end,
+})
+
+-- Best friends know each other's order.
+event({
+	id = "usual",
+	when = "day",
+	weight = W({ base = 0.3, rel = K.BestFriends }),
+	scene = function(ctx, a, b)
+		local s = K.scene(ctx, "The usual")
+		s:n("{a} got to the café first and ordered for {b} without asking.")
+		s:say("b", "How did you know I wanted the toasted one?", "question")
+		s:by("a", {
+			cheeky = "You always want the toasted one. You're very easy to read.",
+			gentle = "You had that look. The toasted one look.",
+			proud = "I notice things. It's a gift.",
+			_ = "You've had it every time for a year.",
+		}, "heart")
+		s:rel(5)
+		s:mood("b", 4)
+		s:log("{a} ordered for {b} and got it right.")
 		return s:done()
 	end,
 })

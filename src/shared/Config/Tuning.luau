@@ -177,7 +177,7 @@ Tuning.City = {
 	},
 }
 
--- Hearts, wishes and romance ---------------------------------------------------
+-- Hearts and wishes ---------------------------------------------------------
 Tuning.Life = {
 	HeartMax = 20,
 	HeartBase = 4, -- points for the next heart level: HeartBase + HeartStep * level
@@ -198,8 +198,6 @@ Tuning.Life = {
 	WishFadeMood = -5,
 	RewardCoinsPerLevel = 25, -- a thank you of coins they saved up: this times the new heart level (it was 40)
 	RewardSkillPerLevel = 10, -- a thank you of practice at their work: skill points, times the new heart level
-	CrushScore = 55, -- friendship before a crush can start
-	ProposeScore = 80,
 	IntroduceGain = 18,
 }
 

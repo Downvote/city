@@ -11,10 +11,9 @@
 --   hobby       the first star has this hobby (Data/Sayings)
 --   season      1..4 (spring, summer, autumn, winter) or a list of them
 --   weather     a weather or a list of them ("clear", "cloudy", "rain", "storm", "snow", "blossom", "leaves")
---   rel, relMax the first two stars' friendship score is at least / at most this
+--   rel, relMax the first two stars' friendship score is at least / at most this (K.BestFriends
+--               is best friends, as close as two villagers get: there is no romance)
 --   quarrel     true: only while the first two are quarreling; "any": either way; otherwise never
---   bond        the first two are "crush", "sweethearts", "partners" or "love" (sweethearts or partners)
---   free        the first two have nobody (Sim/Life.free)
 --   count       at least this many villagers around
 --   bed         the first star has a bed
 --   cond        function(ctx, a, b, c) -> boolean, anything else
@@ -37,8 +36,15 @@
 --   s:default(i) s:log(text) s:done()
 
 local Personalities = require(script.Parent.Parent.Personalities)
+local Tuning = require(script.Parent.Parent.Parent.Config.Tuning)
 
 local K = {}
+
+-- The friendship score at which two villagers are best friends: the top of
+-- Tuning.Relationships.Levels. There is nothing past it (the user: "remove any romance, just best
+-- friends is the highest").
+local LEVELS = Tuning.Relationships.Levels
+K.BestFriends = LEVELS[#LEVELS].Min
 
 -- Weights ------------------------------------------------------------------------------------------
 
@@ -121,19 +127,6 @@ function K.W(spec: { [string]: any }): (any, string?, string?, string?) -> numbe
 				return 0
 			end
 			if spec.relMax and score > spec.relMax then
-				return 0
-			end
-			if spec.bond then
-				local bond = ctx.bond(a, b)
-				if spec.bond == "love" then
-					if bond ~= "sweethearts" and bond ~= "partners" then
-						return 0
-					end
-				elseif bond ~= spec.bond then
-					return 0
-				end
-			end
-			if spec.free and (not ctx.free(a) or not ctx.free(b)) then
 				return 0
 			end
 		end

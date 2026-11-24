@@ -9,8 +9,8 @@
 -- The server keeps the time (Services/Events sends each line as it is said), so a script says
 -- nothing about when: for each line it says where the camera goes and what the villagers do while
 -- that line is said. A script:
---   stage    the set (Data/Stages), or `pick`, a function of the event that names one (the date
---            goes where the plan in its first line says)
+--   stage    the set (Data/Stages), or `pick`, a function of the event that names one (a day
+--            out goes where the plan in its first line says)
 --   cast     which mark each star stands on: { a = 1, b = 2, c = 3 } unless it says otherwise
 --   extras   how many other villagers from town fill the marks nobody in the event stands on
 --            (a party has guests, a dance party has dancers)
@@ -141,10 +141,11 @@ Cutscenes.Cues = {
 local byEvent: { [string]: any } = {}
 Cutscenes.byEvent = byEvent
 
--- Saying it out loud: up on a roof at sunset. The one who is going to say it paces by the bench
--- while the other looks out over the town; told to go for it, they walk over and say it, and the
--- camera pushes in.
-byEvent.confess = {
+-- Saying thank you: up on a roof at sunset. The one who wants to say it paces by the bench while
+-- the other looks out over the town; told to go and say it, they walk over, and the camera pushes
+-- in. (A confession and a proposal played here and on the pier until the user said: "remove any
+-- romance, just best friends is the highest".)
+byEvent.thanks = {
 	stage = "rooftop",
 	cast = { a = 3, b = 2 },
 	open = "wide",
@@ -159,27 +160,8 @@ byEvent.confess = {
 	},
 }
 
--- A big question: on the pier at night. They ask you about the ring off to one side while the
--- other looks at the sea; then they go down on one knee at the end of the pier, and if it is a yes
--- the scene moves to the garden with the arch, where the town has turned up.
-byEvent.propose = {
-	stage = "pier",
-	cast = { a = 3, b = 1 },
-	open = "wide",
-	lines = {
-		[1] = { shot = "wide", act = { b = "gaze" } },
-		[2] = { shot = "close", look = { a = "camera" } },
-	},
-	ask = { shot = "two" }, -- (the two of them in view while you answer)
-	after = {
-		[1] = { icon = "heart", shot = "push", move = { a = 2 }, act = { a = "kneel" } },
-		[2] = { icon = "heart", shot = "close", on = "b", act = { b = "cheer", a = "jump" } },
-		[3] = { set = "wedding", cast = { a = 1, b = 2 }, shot = "wide", act = { all = "cheer" } },
-	},
-}
-
--- A day out: wherever the plan in the first line says.
-local function datePlace(ev: any): string?
+-- Best friends' day out: wherever the plan in the first line says.
+local function dayPlace(ev: any): string?
 	local first = ev and type(ev.lines) == "table" and ev.lines[1]
 	local text = if type(first) == "table" and type(first.text) == "string" then first.text:lower() else ""
 	if text:find("bandstand", 1, true) then
@@ -192,9 +174,9 @@ local function datePlace(ev: any): string?
 	return "beach"
 end
 
-byEvent.date = {
+byEvent.dayout = {
 	stage = "beach",
-	pick = datePlace,
+	pick = dayPlace,
 	open = "wide",
 	lines = {
 		[1] = { shot = "pan", act = { a = "sway", b = "sway" } },
@@ -254,19 +236,6 @@ byEvent.visitor = {
 	},
 }
 
--- A little crush: the other one sits on the park bench, this one hangs about by the tree and asks
--- you about it.
-byEvent.crush = {
-	stage = "park",
-	cast = { a = 3, b = 1 },
-	open = "wide",
-	lines = {
-		[1] = { shot = "wide", act = { a = "shy" } },
-		[2] = { shot = "close", look = { a = "camera" } },
-	},
-	ask = { shot = "tree" },
-}
-
 -- Making up: one sits alone on the bench, the other comes with something to eat; once they have
 -- made up they sit together.
 byEvent.makeup = {
@@ -320,7 +289,7 @@ byEvent.bigday = {
 local Events: any = nil
 
 -- The cutscene an event plays as when watched (nil: it plays as the usual scene), and the set
--- it starts on. `ev` is the event as the client has it (its lines pick the date's set).
+-- it starts on. `ev` is the event as the client has it (its lines pick a day out's set).
 function Cutscenes.forEvent(id: any, ev: any?): (Script?, string?)
 	if type(id) ~= "string" then
 		return nil, nil

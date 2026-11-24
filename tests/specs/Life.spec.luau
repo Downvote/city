@@ -1,9 +1,11 @@
 --!nocheck
--- Hearts, wishes, romance and town goals (Sim/Life): heart levels queue thank yous that pay out
--- once, wishes are granted only by the right answer and fade when ignored, a craving is bought
--- for them at Life.wishPrice (the user: "remove the shop, buying of things and food and feeding.
--- when a character gets a craving, allow the player to simply pay to buy it"), bonds count
--- couples once, and goals pay once when they're done.
+-- Hearts, wishes and town goals (Sim/Life): heart levels queue thank yous that pay out once,
+-- wishes are granted only by the right answer and fade when ignored, a craving is bought for them
+-- at Life.wishPrice (the user: "remove the shop, buying of things and food and feeding. when a
+-- character gets a craving, allow the player to simply pay to buy it"), and goals pay once when
+-- they're done. There is no romance (the user: "remove any romance, just best friends is the
+-- highest"): best friends is the closest two villagers get, and an old save's crush, sweethearts
+-- or partners load as best friends.
 
 local Shared = "ReplicatedStorage.Shared."
 local Tuning = require(Shared .. "Config.Tuning")
@@ -344,19 +346,93 @@ describe("Life", function()
 		expect(v.mood < mood).toBeTruthy()
 	end)
 
-	it("keeps romance bonds and counts couples once", function()
+	it("has no romance: best friends is as close as two villagers get", function()
+		-- nothing to set or read a bond with, and nothing counted for one
+		for _, gone in { "BondNames", "bond", "setBond", "partnerOf", "free" } do
+			expect(Life[gone]).toBe(nil)
+		end
 		local p = town(3)
-		expect(Life.free(p, "v1")).toBe(true)
-		Life.setBond(p, "v1", "v2", "crush")
-		expect(Life.free(p, "v1")).toBe(false)
-		expect(Life.partnerOf(p, "v1")).toBe(nil)
-		Life.setBond(p, "v1", "v2", "sweethearts")
-		Life.setBond(p, "v2", "v1", "sweethearts")
-		expect(p.stats.couples).toBe(1)
-		expect((Life.partnerOf(p, "v2"))).toBe("v1")
-		Life.setBond(p, "v1", "v2", "partners")
-		expect(p.stats.partners).toBe(1)
-		expect(Life.free(p, "v3")).toBe(true)
+		expect(p.stats.couples).toBe(nil)
+		expect(p.stats.partners).toBe(nil)
+		-- the most a friendship can be is best friends
+		Relationships.add(p, "v1", "v2", 1000)
+		local index, name = Relationships.level(Relationships.peek(p, "v1", "v2"))
+		expect(index).toBe(#Tuning.Relationships.Levels)
+		expect(name).toBe("Best friends")
+		expect(Schema.BestFriends).toBe(Tuning.Relationships.Levels[index].Min)
+		expect(p.rel[Schema.pairKey("v1", "v2")].bond).toBe(nil)
+		-- and no goal is about a couple; there is one for best friends
+		for _, g in Goals.list do
+			local words = (g.name .. " " .. g.desc):lower()
+			for _, gone in { "couple", "sweetheart", "partner", "crush", "romance", "love" } do
+				expect(words:find(gone, 1, true)).toBe(nil)
+			end
+		end
+		expect(Goals.get("couple")).toBe(nil)
+		expect(Goals.get("partners")).toBe(nil)
+		expect((Life.claimGoal(p, "bestfriends"))).toBe(true)
+		expect((Life.claimGoal(p, "bestfriends3"))).toBe(false)
+		Relationships.add(p, "v1", "v3", 90)
+		Relationships.add(p, "v2", "v3", 90)
+		expect((Life.claimGoal(p, "bestfriends3"))).toBe(true)
+		-- best friends with someone who has moved away don't count
+		local q = town(2)
+		Relationships.add(q, "v1", "v9", 90)
+		expect((Life.claimGoal(q, "bestfriends"))).toBe(false)
+	end)
+
+	it("loads an old save's crush, sweethearts and partners as best friends", function()
+		local best = Schema.BestFriends
+		local old = {
+			coins = 50,
+			villagers = {
+				a = { name = "A", pers = "sunny" },
+				b = { name = "B", pers = "shy" },
+				c = { name = "C", pers = "bold" },
+				d = { name = "D", pers = "gentle" },
+			},
+			order = { "a", "b", "c", "d" },
+			rel = {
+				["a|b"] = { s = 60, n = 5, bond = "crush" },
+				["a|c"] = { s = 92, n = 20, bond = "sweethearts" },
+				["b|c"] = { s = 70, n = 9, q = 400, bond = "partners" },
+				["c|d"] = { s = 12, n = 2 },
+				["a|d"] = { s = "lots", n = 1, bond = "partners" },
+				["b|d"] = { s = 40, n = 3, bond = "nonsense" },
+			},
+			stats = { events = 4, wishes = 2, couples = 2, partners = 1 },
+			goals = { settlers = true, couple = true, partners = true },
+		}
+		local p = Schema.migrate(old)
+		-- a crush and sweethearts below the mark come up to best friends; one above it keeps its score
+		expect(p.rel["a|b"].s).toBe(best)
+		expect(p.rel["a|c"].s).toBe(92)
+		expect(p.rel["b|c"].s).toBe(best)
+		expect(p.rel["a|d"].s).toBe(best)
+		-- a quarrel and how often they met are kept; a pair that had no romance is left alone
+		expect(p.rel["b|c"].q).toBe(400)
+		expect(p.rel["a|c"].n).toBe(20)
+		expect(p.rel["c|d"].s).toBe(12)
+		-- a bond that was never romance is dropped and leaves the score as it was
+		expect(p.rel["b|d"].s).toBe(40)
+		for _, rel in p.rel do
+			expect(rel.bond).toBe(nil)
+		end
+		for _, key in { "a|b", "a|c", "b|c", "a|d" } do
+			local _, name = Relationships.level(p.rel[key].s)
+			expect(name).toBe("Best friends")
+		end
+		-- the counts and goals that went with romance are gone; the rest stay
+		expect(p.stats.couples).toBe(nil)
+		expect(p.stats.partners).toBe(nil)
+		expect(p.stats.wishes).toBe(2)
+		expect(p.goals.couple).toBe(nil)
+		expect(p.goals.partners).toBe(nil)
+		expect(p.goals.settlers).toBe(true)
+		-- and it loads the same the second time
+		local again = Schema.migrate(p)
+		expect(again.rel["a|b"].s).toBe(best)
+		expect(again.rel["c|d"].s).toBe(12)
 	end)
 
 	it("pays goals once, and only when they're done", function()

@@ -73,8 +73,8 @@ local function gossipAbout(ctx, c): { string }
 		table.insert(out, "{c} seems a bit down. Have you noticed?")
 	end
 	for _, other in ctx.present do
-		if other ~= c and ctx.bond(c, other) == "crush" then
-			table.insert(out, "I think {c} likes someone. They went pink at the market.")
+		if other ~= c and ctx.rel(c, other) >= K.BestFriends then
+			table.insert(out, "{c} has a best friend now. They've got matching scarves.")
 			break
 		end
 	end

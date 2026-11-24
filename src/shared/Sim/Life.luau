@@ -10,8 +10,9 @@
 --            after a day. There is no shop and no food to keep: the user asked to "remove the
 --            shop, buying of things and food and feeding. when a character gets a craving,
 --            allow the player to simply pay to buy it".
---   romance  pairs of good friends can get a crush, become sweethearts, then partners for life
---            (the events in Data/Events play it out; this keeps the bonds).
+--   friends  there is no romance (the user: "remove any romance, just best friends is the
+--            highest"): two villagers get no closer than best friends, the top of
+--            Sim/Relationships' levels.
 --   goals    the town's list of things to work toward (Data/Goals), claimed for coins.
 
 local Tuning = require(script.Parent.Parent.Config.Tuning)
@@ -19,7 +20,6 @@ local Foods = require(script.Parent.Parent.Data.Foods)
 local Sayings = require(script.Parent.Parent.Data.Sayings)
 local Goals = require(script.Parent.Parent.Data.Goals)
 local Relationships = require(script.Parent.Relationships)
-local Schema = require(script.Parent.Schema)
 local City = require(script.Parent.City)
 local Text = require(script.Parent.Parent.Util.Text)
 
@@ -311,56 +311,6 @@ function Life.fadeWishes(profile: any, now: number): { string }
 		end
 	end
 	return notices
-end
-
--- Romance -------------------------------------------------------------------------------------------
-
-Life.BondNames = { crush = "Has a crush", sweethearts = "Sweethearts", partners = "Partners" }
-
-function Life.bond(profile: any, a: string, b: string): string?
-	local rel = profile.rel[Schema.pairKey(a, b)]
-	return rel and rel.bond
-end
-
-function Life.setBond(profile: any, a: string, b: string, bond: string?)
-	local rel: any = Relationships.get(profile, a, b)
-	local before = rel.bond
-	rel.bond = bond
-	if bond == "sweethearts" and before ~= "sweethearts" and before ~= "partners" then
-		profile.stats.couples = (profile.stats.couples or 0) + 1
-	elseif bond == "partners" and before ~= "partners" then
-		profile.stats.partners = (profile.stats.partners or 0) + 1
-	end
-end
-
--- Who a villager is with (sweethearts or partners), if anyone, and how.
-function Life.partnerOf(profile: any, vid: string): (string?, string?)
-	for key, rel in profile.rel do
-		local bond = (rel :: any).bond
-		if bond == "sweethearts" or bond == "partners" then
-			local a, b = Schema.splitPair(key)
-			if a == vid and profile.villagers[b] then
-				return b, bond
-			elseif b == vid and profile.villagers[a] then
-				return a, bond
-			end
-		end
-	end
-	return nil, nil
-end
-
--- Is either of them already taken, or carrying a crush on someone?
-function Life.free(profile: any, vid: string): boolean
-	for key, rel in profile.rel do
-		local bond = (rel :: any).bond
-		if bond then
-			local a, b = Schema.splitPair(key)
-			if a == vid or b == vid then
-				return false
-			end
-		end
-	end
-	return true
 end
 
 -- Goals ---------------------------------------------------------------------------------------------

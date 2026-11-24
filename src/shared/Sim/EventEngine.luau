@@ -11,7 +11,6 @@
 --   sick who minutes             stays in bed
 --   xp who d | xpv vid d         skill at their job
 --   bday who
---   bond a b to                  romance: to = "crush" | "sweethearts" | "partners" | nil (over)
 --   hearts who n                 fills their hearts with you (Sim/Life)
 --   keepsake item who?           something they made you: a free Build mode piece (Sim/Keepsakes)
 --   memo who text                what they'll tell you about it when you stop them for a chat
@@ -20,7 +19,8 @@
 --   away who seconds | visitor name | festival | creator who? | dayoff who
 --   leave prop hours by?         a thing (Data/EventProps) left lying about for a while
 -- (There is no food to give, take, count or eat and no shop things: the shop and feeding went.
--- A craving is paid for there and then, at ctx.cravingPrice(foodId).)
+-- A craving is paid for there and then, at ctx.cravingPrice(foodId). There is no romance either,
+-- so no bond between two villagers: best friends, a friendship score, is as close as they get.)
 
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Events = require(script.Parent.Parent.Data.Events)
@@ -146,12 +146,6 @@ function EventEngine.context(profile: any, o: Options): any
 		return best
 	end
 	-- the job a villager has, if any: { key, def, job }
-	function ctx.bond(a: string, b: string): string?
-		return Life.bond(profile, a, b)
-	end
-	function ctx.free(vid: string): boolean
-		return Life.free(profile, vid)
-	end
 	function ctx.job(vid: string): any
 		return City.jobOf(profile, vid)
 	end
@@ -355,11 +349,6 @@ function EventEngine.apply(profile: any, ev: any, effects: { any }, now: number)
 			local v = profile.villagers[e.vid or ""]
 			if v then
 				EventEngine.addXp(v, e.d, notices)
-			end
-		elseif t == "bond" then
-			local a, b = vid(e.a), vid(e.b)
-			if a and b and a ~= b then
-				Life.setBond(profile, a, b, e.to)
 			end
 		elseif t == "hearts" then
 			local who = vid(e.who)

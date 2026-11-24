@@ -1144,7 +1144,7 @@ event({
 		s:by("a", {
 			shy = "It's sweet. I think. It won't stop looking at me.",
 			bold = "I've got a sidekick now.",
-			cheeky = "I gave it one crumb. One. Now we're married.",
+			cheeky = "I gave it one crumb. One. Now it thinks it lives with me.",
 			_ = "It's a friend now. It needs a name.",
 		}, "question")
 		for i = 1, 3 do

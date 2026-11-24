@@ -31,7 +31,7 @@ end
 
 -- what a big order looks like, by job
 local ORDER = {
-	baker = { "bakes", "two hundred bread rolls for a wedding on the next island" },
+	baker = { "bakes", "two hundred bread rolls for the fair on the next island" },
 	barista = { "bakes", "sixty coffees for the ferry crew, all different" },
 	icecream = { "bakes", "ice cream for a whole school trip" },
 	shopkeeper = { "parcels", "a cart full of apples for a cider maker" },
@@ -125,7 +125,7 @@ event({
 		local s = K.scene(ctx, "The wrong letters")
 		s:prop("parcels", "a")
 		s:n("{a} mixed up two bags this morning. Every letter in town went to the wrong house.")
-		s:say("b", "I got a love letter for somebody called Edna. We don't have an Edna.", "question")
+		s:say("b", "I got a birthday card for somebody called Edna. We don't have an Edna.", "question")
 		s:by("a", {
 			proud = "That was a test of everyone's honesty. Well done, you passed.",
 			shy = "I'm so sorry. I'll fix it. I'll fix all of it.",

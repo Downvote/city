@@ -1,9 +1,14 @@
 --!strict
 -- Town goals: a list of things to work toward as the town grows, each paying coins when you claim
 -- it. `value` reads how far along you are from the profile (and the city's stats). None is about
--- food or a shop: there is neither.
+-- food or a shop: there is neither. Nor romance: best friends is as close as two villagers get.
+
+local Tuning = require(script.Parent.Parent.Config.Tuning)
 
 local Goals = {}
+
+local LEVELS = Tuning.Relationships.Levels
+local BEST_FRIENDS = LEVELS[#LEVELS].Min
 
 export type Goal = {
 	id: string,
@@ -22,10 +27,12 @@ local function bestHeart(profile: any): number
 	return best
 end
 
+-- Pairs of villagers living in town who are best friends.
 local function bestFriends(profile: any): number
 	local n = 0
-	for _, rel in profile.rel do
-		if rel.s >= 80 then
+	for key, rel in profile.rel do
+		local a, b = key:match("^(.-)|(.*)$")
+		if rel.s >= BEST_FRIENDS and profile.villagers[a] and profile.villagers[b] then
 			n += 1
 		end
 	end
@@ -107,14 +114,6 @@ Goals.list = {
 		value = stat("earned"),
 	},
 	{
-		id = "couple",
-		name = "Sweethearts",
-		desc = "See a couple get together.",
-		need = 1,
-		reward = 600,
-		value = stat("couples"),
-	},
-	{
 		id = "town",
 		name = "On the map",
 		desc = "Grow into a Town.",
@@ -160,13 +159,17 @@ Goals.list = {
 		reward = 1000,
 		value = stat("wishes"),
 	},
+	-- (two goals about romance stood here, the first couple and partners for life; the user:
+	-- "remove any romance, just best friends is the highest")
 	{
-		id = "partners",
-		name = "Happily ever after",
-		desc = "See a couple become partners for life.",
-		need = 1,
+		id = "bestfriends3",
+		name = "Close knit",
+		desc = "Have three pairs of best friends in town.",
+		need = 3,
 		reward = 1200,
-		value = stat("partners"),
+		value = function(p, _city)
+			return bestFriends(p)
+		end,
 	},
 	{
 		id = "full",

@@ -29,7 +29,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (347 at the last full run; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (415 at the last full run; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off; what kind a bundle
 is, the outfit that holds the body, single body parts, the player's own items and avatars; preview scenes
@@ -46,7 +46,8 @@ loading, economy bounds), Town (placed models exist, plots and road clear, room 
 clear, the islets out at sea off the plots), Presets (every ready-made building goes down whole turned every way, on the client and
 the server, inside its footprint, with its workplace), Icons (every icon builds with one outline round its silhouette: outline copies before
 fills, no stroke on a fill), Textures (every painted texture has its pictures and matching studs, ids well formed), Life
-(hearts and thank yous, snacks a day, wishes granted only by the right answer and fading, bonds, goals pay once),
+(hearts and thank yous, snacks a day, wishes granted only by the right answer and fading, no romance with best friends
+the top and an old save's romance loading as best friends, goals pay once),
 World (hills flat at their edges, on the creator's meadow and their tops, gentle to walk; places on the island and
 off the plots; nothing in any road; no tree within 18 studs of a sidewalk; the pockets clear of each other; downtown
 and civic buildings inside their blocks). The town map previews with `sh tools/preview/render.sh map <png>` (or
@@ -147,7 +148,9 @@ parts; a new event goes in one of its modules), props they bring into the world 
 villager makes for the player (free Build mode pieces in `Build/Recipes/Keepsakes`, counted in `profile.keepsakes`,
 checked by `Sim/Keepsakes` on the server), and things villagers use on breaks with a chance of something unusual or
 rare (`Data/Interactions`, chosen by `Sim/Uses`, acted by `server/Npc/Use`; players hold E on some through
-`Services/Interact`). Every line follows the writing rule.
+`Services/Interact`). Every line follows the writing rule. There is no romance (the user: "remove any romance, just
+best friends is the highest"): no crushes, dates, proposals or bonds, and best friends (the top of
+`Tuning.Relationships.Levels`, `K.BestFriends` in the events) is as close as two villagers get. Don't bring it back.
 
 Server start: `init` everything, `start` everything, then `Data.open()` lets players in. Never load a profile
 before every service is listening (a player can be in the server before the town is built).

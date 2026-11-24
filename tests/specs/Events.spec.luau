@@ -32,6 +32,7 @@ local Appearance = require(Shared .. "Avatar.Appearance")
 local Rng = require(Shared .. "Util.Rng")
 
 local Chatter = require(Shared .. "Data.Events.Chatter")
+local Kit = require(Shared .. "Data.Events.Kit")
 
 -- the events there were before the user asked for many more
 local FIRST = {}
@@ -75,10 +76,6 @@ for _, id in
 		"jobhunt",
 		"tourist",
 		"inspector",
-		"crush",
-		"confess",
-		"date",
-		"propose",
 	}
 do
 	FIRST[id] = true
@@ -155,7 +152,8 @@ local function makeProfile(rng, count, withBeds)
 	return p
 end
 
--- A town with everything going on: a quarrel, close friends, a crush, sweethearts and partners.
+-- A town with everything going on: a quarrel, good friends and best friends (as close as two
+-- villagers get: there is no romance).
 local function busyTown(rng, count)
 	local p = makeProfile(rng, count, rng:chance(0.6))
 	if count >= 2 and rng:chance(0.3) then
@@ -166,17 +164,14 @@ local function busyTown(rng, count)
 	end
 	if count >= 4 and rng:chance(0.5) then
 		Relationships.add(p, "v3", "v4", 85)
-		Life.setBond(p, "v3", "v4", rng:pick({ "sweethearts", "partners" }))
 	end
 	if count >= 6 and rng:chance(0.5) then
 		Relationships.add(p, "v5", "v6", 85)
-		Life.setBond(p, "v5", "v6", rng:pick({ "sweethearts", "partners" }))
 	end
-	-- a romance under way: a crush, or sweethearts close enough to propose
+	-- two best friends on their own
 	if count == 2 and rng:chance(0.8) then
 		Relationships.makeUp(p, "v1", "v2")
 		Relationships.add(p, "v1", "v2", 85)
-		Life.setBond(p, "v1", "v2", rng:pick({ "crush", "sweethearts", "sweethearts", "partners" }))
 	end
 	if count >= 3 and rng:chance(0.3) then
 		for i = 1, count do
@@ -210,6 +205,31 @@ end
 local BANNED =
 	{ "delve", "embark", "unleash", "vibrant", "bustling", "journey", "realm", "tapestry", "seamless", "elevate" }
 
+-- nor any romance (the user: "remove any romance, just best friends is the highest"): whole words
+-- and phrases, so "a couple of" and "the date stamp" are fine
+local ROMANCE = {
+	"crush",
+	"crushes",
+	"sweetheart",
+	"sweethearts",
+	"romance",
+	"romantic",
+	"propose",
+	"proposal",
+	"marry",
+	"married",
+	"wedding",
+	"kiss",
+	"boyfriend",
+	"girlfriend",
+	"in love",
+	"love letter",
+	"partner for life",
+	"partners for life",
+	"double date",
+	"on a date",
+}
+
 local function hasHole(s)
 	return type(s) == "string" and s:find("{%w+}") ~= nil
 end
@@ -230,6 +250,11 @@ local function checkString(s, where)
 	for _, word in BANNED do
 		if lower:find("%f[%a]" .. word) then
 			error(where .. ": a stock word (" .. word .. ") in: " .. s)
+		end
+	end
+	for _, word in ROMANCE do
+		if lower:find("%f[%a]" .. word .. "%f[%A]") then
+			error(where .. ": romance (" .. word .. ") in: " .. s)
 		end
 	end
 end
@@ -281,7 +306,6 @@ for _, t in
 		"sick",
 		"xp",
 		"xpv",
-		"bond",
 		"hearts",
 		"bday",
 		"away",
@@ -371,6 +395,7 @@ local function settle(p, ev, effects)
 	end
 	for _, rel in p.rel do
 		expect(rel.s).toBeBetween(-100, 100)
+		expect(rel.bond).toBe(nil)
 	end
 	expect(p.coins >= 0).toBeTruthy()
 end
@@ -529,6 +554,56 @@ describe("Event engine", function()
 		-- and hardly anyone shouts (CLAUDE.md: "no exclamation on every line")
 		if shouts / said >= 0.12 then
 			error(string.format("%d of %d lines shout", shouts, said))
+		end
+	end)
+
+	-- the user: "remove any romance, just best friends is the highest"
+	it("has no romance: best friends is as close as two villagers get", function()
+		for _, id in
+			{
+				"crush",
+				"confess",
+				"date",
+				"propose",
+				"thirdwheel",
+				"matchmaker",
+				"blush",
+				"loveletter",
+				"serenade",
+				"lovetiff",
+				"flowers",
+				"nickname",
+				"anniversary",
+				"movein",
+				"starwatch",
+				"doubledate",
+			}
+		do
+			expect(Events.get(id)).toBe(nil)
+		end
+		-- best friends is the top of the friendship levels, and the events know it
+		local levels = Tuning.Relationships.Levels
+		expect(levels[#levels].Name).toBe("Best friends")
+		expect(Relationships.level(Tuning.Relationships.Max) == #levels).toBe(true)
+		expect(Kit.BestFriends).toBe(levels[#levels].Min)
+		-- an event has no bond to read or set, and nothing romantic left to say
+		local ctx = context(busyTown(Rng.new(3), 4), Rng.new(3), {})
+		expect(ctx.bond).toBe(nil)
+		expect(ctx.free).toBe(nil)
+		expect(OPS.bond).toBe(nil)
+		expect(Life.setBond).toBe(nil)
+		expect(Life.BondNames).toBe(nil)
+		expect(Tuning.Life.CrushScore).toBe(nil)
+		expect(Tuning.Life.ProposeScore).toBe(nil)
+		-- and the friendship events at the top are there: a day out and the usual order need
+		-- best friends, and come up for them
+		for _, id in { "dayout", "usual" } do
+			local def = Events.get(id)
+			local p = makeProfile(Rng.new(9), 2, false)
+			local c = context(p, Rng.new(9), { hour = 12 })
+			expect(def.weight(c, "v1", "v2")).toBe(0)
+			Relationships.add(p, "v1", "v2", Kit.BestFriends)
+			expect(def.weight(c, "v1", "v2") > 0).toBe(true)
 		end
 	end)
 

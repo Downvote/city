@@ -49,8 +49,6 @@ Sim.remoteEvent("State"):FireClient(Sim.player, {
 		paydays = 0,
 		wishes = 0,
 		hearts = 0,
-		couples = 0,
-		partners = 0,
 	},
 	goals = {},
 	found = {},
@@ -438,15 +436,15 @@ run("a big moment, watched as a cutscene", function()
 	local rooftop = Stages.get("rooftop")
 	local ev = {
 		token = "e5",
-		id = "confess",
-		title = "Saying it out loud",
+		id = "thanks",
+		title = "Saying thank you",
 		names = { a = "Mara", b = "Tobin" },
 		actors = { a = "v1", b = "v2" },
 		lines = {
-			{ text = "Mara has been pacing up and down the roof." },
-			{ who = "a", text = "I'm going to tell Tobin how I feel. Should I?", icon = "sweat" },
+			{ text = "Mara has been pacing up and down the roof for an hour." },
+			{ who = "a", text = "Tobin looked after me all week when I was ill. Should I?", icon = "sweat" },
 		},
-		choices = { { text = "Go for it" }, { text = "Wait for a better moment" } },
+		choices = { { text = "Go and say it" }, { text = "Wait for a better moment" } },
 	}
 	Sim.remoteEvent("EventShow"):FireClient(Sim.player, ev)
 	line("e5", ev.lines[1])
@@ -487,7 +485,7 @@ run("a big moment, watched as a cutscene", function()
 	check(top ~= nil and top.Position.Y.Scale == 0 and top.Size.Y.Scale > 0.05, "the letterbox slides in")
 	check(s and s:FindFirstChild("Box", true).Visible, "the textbox over it")
 	local said = ((s and words(s, "Line")) or ""):gsub("<[^>]+>", "")
-	check(said == "Mara has been pacing up and down the roof.", "the line being said is typed")
+	check(said == "Mara has been pacing up and down the roof for an hour.", "the line being said is typed")
 	-- the second line: a close shot on her, eased into
 	local before = view.CurrentCamera.CFrame.Position
 	line("e5", ev.lines[2])
@@ -508,7 +506,7 @@ run("a big moment, watched as a cutscene", function()
 	advance(1)
 	check(s:FindFirstChild("Choice1", true) ~= nil, "the answers come up in the box")
 	press("Choice1")
-	line("e5", { who = "a", text = "Tobin, I like you. Like, really like you.", icon = "heart" })
+	line("e5", { who = "a", text = "Tobin, I never said thank you. It meant a lot.", icon = "heart" })
 	advance(3)
 	frames(2)
 	check(
@@ -517,7 +515,7 @@ run("a big moment, watched as a cutscene", function()
 	)
 	Sim.remoteEvent("EventLine"):FireClient(Sim.player, {
 		token = "e5",
-		line = { who = "b", text = "Oh. I was hoping you'd say that.", icon = "heart", gesture = "cheer" },
+		line = { who = "b", text = "Oh. I'm glad you did.", icon = "heart", gesture = "cheer" },
 		last = true,
 	})
 	frames(2)

@@ -59,17 +59,19 @@ The contract between the parts of the game. Update it with every change to an AP
 - `Avatar/`: `Appearance` (the saved look, sanitising, which asset types fit which slot), `Categories` (creator tabs,
   catalog filters, wearing and merging).
 - `Sim/`: `Schema` (profile and villager shapes, defaults, migration), `Relationships`, `EventEngine` (picks events,
-  applies their effects, including `bond`, `hearts` and `xpv vid d`, skill for one villager by id; `ctx.cravingPrice`;
-  no food, item or merchant ops since the shop went), `City` (stats, levels, land, workplaces, wages earned as they work: `City.wages(profile, day, now)`, `City.workDay`, `City.workSeconds`, `City.dayPay`, `City.rate` (coins a second at the workplace), the purse `City.Purse` / `City.newPurse()` / `City.earn(purse, day, rate, seconds)` that carries part coins, starts again each day, caps a day at a whole work day and pays nothing for bad input, and `City.dayXp`;
+  applies their effects, including `hearts` and `xpv vid d`, skill for one villager by id; `ctx.cravingPrice`;
+  no food, item or merchant ops since the shop went, and no `bond`, `ctx.bond` or `ctx.free` since romance went), `City` (stats, levels, land, workplaces, wages earned as they work: `City.wages(profile, day, now)`, `City.workDay`, `City.workSeconds`, `City.dayPay`, `City.rate` (coins a second at the workplace), the purse `City.Purse` / `City.newPurse()` / `City.earn(purse, day, rate, seconds)` that carries part coins, starts again each day, caps a day at a whole work day and pays nothing for bad input, and `City.dayXp`;
   `City.level(pop, value, workers?)`, `City.workers(profile)` the villagers with a job, `City.addSkill(v, n)`;
   `City.stats(profile).employed` is set against `nextLevel.Workers` on the city hall), `Life` (hearts and their
-  thank you offers, wishes, romance bonds, goals; `Life.cravingPrice(foodId)`, `Life.wishPrice(profile, vid)`,
+  thank you offers, wishes, goals; no romance: best friends, the top of `Tuning.Relationships.Levels`, is as
+  close as two villagers get; `Life.cravingPrice(foodId)`, `Life.wishPrice(profile, vid)`,
   `Life.buyWish(profile, vid, rng)`; all pure).
 - `Data/Hills` (the northern hills: `smooth(x, z)`, `at(x, z)` the drawn surface's height, `slope`, `Plateaus`,
   `prims(region)` as flat triangles), `Data/CityModels` (downtown, civic, hill and waterfront buildings and
   landmarks; `lot(w, d, kind, margin)` landscaping, placed by name as `lot:<w>x<d>:<kind>:<margin>`; `parkedCar1..6`; `tower`, `shop` and `house` kinds; spinning parts named `Hub`, `Spin`, `Cabin`), `Data/Places` (places
   to find: id, name, blurb, pos, radius, coins; `near`).
-- `Data/Goals` (the town goals with their `value(profile, city)`), `Data/Sayings` (sayings and hobbies).
+- `Data/Goals` (the town goals with their `value(profile, city)`; `bestfriends` and `bestfriends3` count pairs of
+  villagers living in town at Best friends), `Data/Sayings` (sayings and hobbies).
 - `Data/Interiors` (the insides of the map's buildings): `shell(r, spec)` draws a room you can walk into (floor,
   walls, shop window, a door leaf with its own `frame` so it opens like any other door) and returns its `Box`;
   `fill(r, kind, box, tint)` furnishes it (`bakery grocer books clothes cafe toys flowers post department lobby
@@ -92,8 +94,9 @@ The contract between the parts of the game. Update it with every change to an AP
 
 ## Events, props and keepsakes
 
-`Data/Events` is a folder: `init` (the first 42 and the loader, which errors on a duplicate id) and `Kit` (weights
-from a short spec `K.W{ base, traits, season, weather, job, rel, bond, quarrel, count, cond }` and a scene builder:
+`Data/Events` is a folder: `init` (the first 38 and the loader, which errors on a duplicate id) and `Kit` (weights
+from a short spec `K.W{ base, traits, season, weather, job, rel, quarrel, count, cond }`, `K.BestFriends` the score
+for best friends, and a scene builder:
 `s:say`, `s:by` (a line per personality), `s:voice`, `s:choice`, `s:prop`, `s:leave`, `s:keep`, `s:memo`; effects
 common to every answer are copied into each choice), `Chatter` (topics, dreams, debates, spats, openers by hour and
 weather, greetings by friendship; `Chatter.chat` builds a scene, `Chatter.small` two to four street lines, which
@@ -111,13 +114,13 @@ requests)` (an add past what was given is refused; removes in the same change co
 
 ## Cutscenes
 
-`Data/Stages` holds the sets (rooftop, pier, bandstand, dream, wedding, birthday, beach, park, gate, kitchen,
-stall): each has three marks, named shots (wide, two, pan and a few of its own), bounds, light and a painted sky;
-`Stages.close` picks the first angle on a face clear of the set and of everyone else, `Stages.push` builds on it,
-and `inside`, `blocked` and `crowded` check clearance. `Data/Cutscenes` scripts events by id (`Cutscenes.forEvent(id,
-ev)`): which set, who stands where, and beats keyed by line number, by the lines after an answer, by an `icon` or
-`who` filter, or by a `cue` a line carries; a beat has `shot`, `on`, `act` (letter, `*` the speaker, `others`,
-`all`), `look`, `move` (to a mark), `set` (another set, with a fade) and `fx`. An event def in Data/Events may carry
+`Data/Stages` holds the sets (rooftop, pier, bandstand, dream, birthday, beach, park, gate, kitchen, stall; the
+wedding arch went with romance): each has three marks, named shots (wide, two, pan and a few of its own), bounds,
+light and a painted sky; `Stages.close` picks the first angle on a face clear of the set and of everyone else,
+`Stages.push` builds on it, and `inside`, `blocked` and `crowded` check clearance. `Data/Cutscenes` scripts events
+by id (`Cutscenes.forEvent(id, ev)`): which set, who stands where, and beats keyed by line number, by the lines
+after an answer, by an `icon` or `who` filter, or by a `cue` a line carries; a beat has `shot`, `on`, `act`
+(letter, `*` the speaker, `others`, `all`), `look`, `move` (to a mark), `set` (another set, with a fade) and `fx`. An event def in Data/Events may carry
 `cutscene = "<set>" | { stage, cast, extras, open, lines, after, ask, ending }`, and a line `cue = "<name>"`; both
 pass through unchanged (no server or remote change). `UI/Cutscene` plays it in a full screen ViewportFrame with a
 WorldModel: clones of the villagers on their marks playing their idle and the acts (six by Roblox's animations, the
@@ -360,8 +363,10 @@ profile = {
 Villager = { id, name, pers, app, color, bday = { s, d }, fav, mood, job?, lv, xp, bed?, sick?,
              dayOff?, isYou?, born, heart, hxp, wish? = { kind, arg?, untilT }, saying?, hobby?, from?,
              memo? = { text, t } }  -- their last event, which `Talk.memo` brings up for `MemoHours`
-rel record = { s, q?, n, bond? = "crush" | "sweethearts" | "partners" }
-stats = { events, made, earned, paydays, wishes, hearts, couples, partners }
+rel record = { s, q?, n }  -- an old save's bond ("crush", "sweethearts", "partners": `Schema.OldBonds`) loads as
+                           -- best friends: s comes up to `Schema.BestFriends` and the bond is dropped
+stats = { events, made, earned, paydays, wishes, hearts, found }  -- an old save's couples and partners are
+                                                                  -- dropped, and so are the goals couple and partners
 ```
 
 `Schema.migrate` fills in anything missing and drops anything broken, so old saves load. Since the shop went it

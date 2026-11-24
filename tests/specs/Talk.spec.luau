@@ -218,9 +218,9 @@ describe("Talk", function()
 		v.bed = "1"
 		v.pers = "cheeky"
 		p.villagers.v2.pers = "dreamy"
-		Relationships.add(p, "v1", "v2", 70)
+		-- best friends: as close as two villagers get (there is no romance)
+		Relationships.add(p, "v1", "v2", 85)
 		Relationships.add(p, "v1", "v3", -50)
-		Life.setBond(p, "v1", "v2", "sweethearts")
 		v.memo = { text = "I built a snowman yesterday. He's called Gerald.", t = 1000 }
 		local function heard(opts, n)
 			local rng, seen = Rng.new(21), {}
@@ -234,7 +234,8 @@ describe("Talk", function()
 		local now = 1000 + 60
 		local all = heard({ now = now, season = 4, weather = "snow" })
 		expect(all["I built a snowman yesterday. He's called Gerald."]).toBe(true)
-		expect(all["V2 and I went for a walk on the beach. Don't make that face."]).toBe(true)
+		expect(all["V2 and I are best friends. We have a handshake. It takes four minutes."]).toBe(true)
+		expect(all["V3 and I are best friends. We have a handshake. It takes four minutes."]).toBe(nil)
 		expect(all["V2 told me the moon is a big pebble. I've been thinking about it all day."]).toBe(true)
 		local fond, cross = false, false
 		for text in all do

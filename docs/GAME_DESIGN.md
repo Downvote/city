@@ -69,7 +69,13 @@ is, not sources.
 - **Birthday.** A season and a day on the town calendar. When it comes round, there's a party.
 - **Friendships.** Every pair has a score from -100 to 100 with named levels from Rivals to Best friends.
   Chats, gifts, outings and parties raise it; quarrels and pranks gone wrong lower it. A quarrel lasts a while
-  unless someone makes up.
+  unless someone makes up. Best friends is as close as two villagers get:
+
+  > remove any romance, just best friends is the highest
+
+  There are no crushes, sweethearts or partners, no dates and no proposals. A save from before keeps its pairs
+  who had one of those as best friends (their score comes up to the Best friends mark, `Schema.migrate`), and the
+  counts and goals that went with romance are dropped.
 - **Talking to them.**
 
   > also, allow the option to interact/chat with villagers by holding e on them
@@ -104,7 +110,7 @@ piano, bookshelf, fridge, arcade, drums, fish tank, clock, well, bell, gnome, ma
 globe: a little tune or a mess, a note from one of the villagers in the fridge, now and then something rare. It
 costs nothing and changes nothing.
 
-### Hearts, wishes, romance and town goals
+### Hearts, wishes and town goals
 
 > use tomodachi life's aesthetic even more, with identical vibes and ui and features and progression
 
@@ -112,7 +118,7 @@ We can't copy another game's features one for one, so the town grows the way lif
 own design (`Sim/Life`):
 
 - **Hearts.** Each villager has a heart level with you (up to 20). Granted wishes fill it, and so do chats and
-  happy romance moments. Each new level they want to thank you, and you pick one of three: coins they saved up,
+  the good moments in events. Each new level they want to thank you, and you pick one of three: coins they saved up,
   some extra practice at their work (skill points, so they earn more), a new saying they'll use in their speech
   bubbles, or a hobby they'll talk about.
 - **Wishes.** Now and then a villager wants something, and a thought bubble floats over their head: a craving for
@@ -128,13 +134,12 @@ own design (`Sim/Life`):
   is dim and says how many more you need. A bought craving lifts their mood and fills their hearts, a little more
   when it was their favourite, and gives no coins back (you paid for it). The other wishes still give a few coins.
   Up to three wishes are open at once; one left a whole day fades and they sulk a little.
-- **Romance.** Good friends can get a crush; you can tell them to say something. Later they work up the nerve to
-  confess, and it may or may not go their way. Sweethearts go on dates round the island, and when they're close
-  enough one of them asks you to help plan a proposal: partners for life, and the whole town throws a party.
-  Friendships and romances show on a villager's page as arrow tags.
+- **Best friends.** There is no romance (Friendships, above). Good friends work up the nerve to say a
+  proper thank you up on a roof, and best friends keep a day out for each other, know each other's order at the
+  café and find out they share a hobby. Friendships show on a villager's Friends tab, best friends in pink.
 - **Town goals.** A list to work toward (Goals on the dock): neighbours, wishes granted, heart levels, best
-  friends, the first couple, growing into a Town and then a City, a full house, and work: two villagers in jobs,
-  six, ten, 15,000 coins earned in wages, a villager at skill 5. Each pays coins when you claim it.
+  friends (one pair, then three), growing into a Town and then a City, a full house, and work: two villagers in
+  jobs, six, ten, 15,000 coins earned in wages, a villager at skill 5. Each pays coins when you claim it.
 
 ## 4. Random events
 
@@ -176,7 +181,7 @@ spec).
 > make much much more random events. custom objects, conversations, etc., just like tomodachi life
 
 The town has well over two hundred events: everyday oddities (hiccups that won't stop, odd socks, a giant marrow,
-a sneeze that scares a cat), weather and seasons, dreams, work, romance, the whole town (a power cut, a talent
+a sneeze that scares a cat), weather and seasons, dreams, work, friends, the whole town (a power cut, a talent
 night, a stone snail in the square, a whale off the pier), and villagers asking your advice. Each personality has
 its own voice for every reaction, so a shy villager and a loud one play the same event differently. Conversations
 are made from parts (topics, replies by personality and friendship, gossip, dreams compared, spats that fizzle,
@@ -191,15 +196,15 @@ comes from the game the user named: the events, lines, props and keepsakes are t
 
 > add cutscenes and scenes like tomodachi life as well
 
-A watched big moment (a confession, a proposal, a date, a birthday, a dance party, a dream, a newcomer at the gate,
-a crush, making up, a quarrel, shooting stars, a busy day, and the bigger new events: concerts, picnics, nights on
-the pier) plays on a set of its own behind the dialogue's textbox: a rooftop at sunset, the pier at night, the
-bandstand lit for a concert, a dream, a wedding arch, a party room, the beach at dawn, a park bench, the town gate,
-a kitchen at night, a market stall. The villagers act it out (they wave, cheer, kneel, hug, dance, walk to a seat)
+A watched big moment (a thank you said at last, best friends' day out, a birthday, a dance party, a dream, a
+newcomer at the gate, making up, a quarrel, shooting stars, a busy day, and the bigger new events: concerts,
+picnics, nights on the pier) plays on a set of its own behind the dialogue's textbox: a rooftop at sunset, the pier
+at night, the bandstand lit for a concert, a dream, a party room, the beach at dawn, a park bench, the town gate, a
+kitchen at night, a market stall. The villagers act it out (they wave, cheer, kneel, hug, dance, walk to a seat)
 while the camera eases between a wide shot, a two shot, a close one on whoever talks and a slow push at the key
-line, under the set's own light and sky, with bars top and bottom. A yes on the pier cuts to the wedding arch with
-guests from town. As with every event it never takes the screen by itself, and the player's camera stays put.
-Taken from that game: the idea only. No sets, songs, characters or camera moves are copied.
+line, under the set's own light and sky, with bars top and bottom. As with every event it never takes the screen by
+itself, and the player's camera stays put. Taken from that game: the idea only. No sets, songs, characters or camera
+moves are copied.
 
 ## 5. Building
 
@@ -697,7 +702,7 @@ Each one's maker is credited in `Data/TextureIds`.
 > stylize it as such. the uis everywhere should also have the same cozy and bright aesthetic tomodachi life has
 
 We can't make a copy of another game, so we went for the same bright, cozy feel in designs of our own, and the
-life sim side grows the way the genre does (hearts, wishes, romance, town goals: section 3).
+life sim side grows the way the genre does (hearts, wishes, town goals: section 3).
 The town is now a sunny island:
 
 - A turquoise sea all round: light shallows over sand by the shore, deep blue further out, with little islets

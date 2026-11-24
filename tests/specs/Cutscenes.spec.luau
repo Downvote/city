@@ -303,14 +303,12 @@ describe("Cutscenes", function()
 		it("gives a cutscene to every big moment that exists", function()
 			for _, id in
 				{
-					"confess",
-					"propose",
-					"date",
+					"thanks",
+					"dayout",
 					"birthday",
 					"festival",
 					"dream",
 					"visitor",
-					"crush",
 					"makeup",
 					"quarrel",
 					"stars",
@@ -323,6 +321,13 @@ describe("Cutscenes", function()
 				end
 				expect(Stages.get(stage) ~= nil).toBe(true)
 			end
+			-- and none for romance, which is gone (the user: "remove any romance, just best friends
+			-- is the highest"), nor its wedding arch
+			for _, id in { "confess", "propose", "date", "crush", "loveletter", "doubledate", "starwatch" } do
+				expect(Cutscenes.byEvent[id]).toBe(nil)
+				expect((Cutscenes.forEvent(id, { lines = { { text = "x" } } }))).toBe(nil)
+			end
+			expect(Stages.get("wedding")).toBe(nil)
 		end)
 
 		-- the beats a script can give, checked against the set it is on at that point
@@ -476,7 +481,7 @@ describe("Cutscenes", function()
 				{ stage = "pier", after = { [1] = { icon = "heart", shot = "push", act = { ["*"] = "kneel" } } } }
 			b = Cutscenes.beat(with, { who = "a", text = "Well.", icon = "sweat", at = { phase = "after", n = 1 } })
 			expect(b.shot).toBe("close")
-			b = Cutscenes.beat(with, { who = "a", text = "Marry me.", icon = "heart", at = { phase = "after", n = 1 } })
+			b = Cutscenes.beat(with, { who = "a", text = "Thanks.", icon = "heart", at = { phase = "after", n = 1 } })
 			expect(b.shot).toBe("push")
 			expect(b.act.a).toBe("kneel")
 			b = Cutscenes.beat(script, { who = "c", text = "Hup.", cue = "jump", at = { phase = "lines", n = 1 } })
