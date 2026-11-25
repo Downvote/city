@@ -5,6 +5,8 @@
 --   item:<id>          one catalog item
 --   cat:<category>     every item of a Build mode tab in a row
 --   items:<id>,<id>    those items in a row
+--   style:<look>       every catalog item of a look (cozy, modern, scifi, garden, seaside, rustic,
+--                      fancy, playful), category by category
 --   fences             every kind of fence in its own finish
 --   all                every catalog item in a grid
 --   walls              every wall style
@@ -13,7 +15,8 @@
 --   town               the plaza's own buildings
 --   town:<name>        one of them (fountain, board, tailor, shop, hall...)
 --   preset:<id>        a ready-made building (cottage, family, townhouse, library, cafe...)
---   presets            all of them in a row (add :inside to leave the roofs off)
+--   presets            all of them in a row (add :inside to leave the roofs off, or :up1 to leave
+--                      the roofs off and keep the floor above the ground storey, to see upstairs)
 --   ambient            the cars and the bus
 --   props              what random events bring into the world (props:<id>,<id> for some)
 --   inside:<kind>,...  furnished rooms with the roof off (bakery, grocer, books, clothes, cafe,
@@ -108,6 +111,8 @@ elseif scene:sub(1, 6) == "items:" then
 	itemRow(defs, 8)
 elseif scene:sub(1, 4) == "cat:" then
 	itemRow(Catalog.list(scene:sub(5)), 6)
+elseif scene:sub(1, 6) == "style:" then
+	itemRow(Catalog.withStyle(scene:sub(7)), 8)
 elseif scene == "all" then
 	itemRow(Catalog.all(), 12)
 elseif scene == "walls" then
@@ -234,7 +239,8 @@ elseif scene:sub(1, 7) == "preset:" or scene:sub(1, 7) == "presets" then
 	local Presets = R(Shared .. "Data.Presets")
 	local ids = {}
 	local inside = scene:sub(-7) == ":inside" -- leave off roofs and upper floors to see in
-	local name = if inside then scene:sub(1, -8) else scene
+	local up = scene:sub(-4) == ":up1" -- leave off the roofs, keep the first floor up
+	local name = if inside then scene:sub(1, -8) elseif up then scene:sub(1, -5) else scene
 	if name == "presets" then
 		for _, p in Presets.list do
 			table.insert(ids, p.id)
@@ -258,7 +264,11 @@ elseif scene:sub(1, 7) == "preset:" or scene:sub(1, 7) == "presets" then
 		assert(why == nil, id .. ": " .. tostring(why))
 		for _, m in made do
 			local obj = trial[m.kind][m.key]
-			if not inside or (m.kind ~= "roofs" and (obj.lv or 0) == 0) then
+			local keep = if inside
+				then m.kind ~= "roofs" and (obj.lv or 0) == 0
+				elseif up then m.kind ~= "roofs" and (obj.lv or 0) <= 1
+				else true
+			if keep then
 				addPrims(Builder.primsFor(trial, m.kind, m.key) or {})
 			end
 		end

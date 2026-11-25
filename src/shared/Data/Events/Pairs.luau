@@ -1160,13 +1160,13 @@ event({
 				proud = "Not bad, though I'd have done it better.",
 				shy = "Hehe... that's really good.",
 				cool = "That's good.|Do another.",
-				prickly = "Ugh, that's actually good.|Don't do me, though.",
+				prickly = "Ugh, that's actually good.|Don't tell anyone I said so.",
 				dramatic = "BRAVO!|Do another, do another!",
 				bookish = "That's very accurate, actually.|Do another one.",
 				gloomy = "Heh... that's really good, actually.",
 				polite = "Oh, that is very good.|Could you do another?",
 				foodie = "Ha, that's good!|Do one of the baker next.",
-				nervous = "That's really good!|Please don't do me next.",
+				nervous = "Is that really how I sound?|It's good, though!",
 				_ = "...It's quite good, actually.|Do another one!",
 			}, "laugh", "laugh")
 			s:rel(6)
@@ -2464,11 +2464,15 @@ event({
 			cool = "Hm, {b} is right.",
 			prickly = "Why am I always the one?|...Fine, it's {a}.",
 			dramatic = "I've heard both sides, and I need a whole day to think.",
-			bookish = "Actually, it depends what you mean by it, so let's define our terms first.",
+			bookish = "Actually, it depends what you both mean by it, so let's start there.",
 			gloomy = "Neither of you, because nobody's ever right.",
 			polite = "I really couldn't say, you both make good points.",
 			foodie = "Can we talk about this over lunch?",
 			nervous = "P-please don't make me pick.",
+			sunny = "Ehehe, you're both right, so let's get ice cream!",
+			bold = "It's {a}, and that's final.",
+			dreamy = "Hmm... I think it's {b}, but I'm not sure why.",
+			shy = "Um... do I have to?|...It's {a}, I think.",
 			_ = "I'm not getting involved.|...Okay, I'm getting involved, and it's {b}.",
 		}, "question")
 		s:relx("a", "b", 2)

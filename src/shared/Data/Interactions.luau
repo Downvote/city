@@ -245,7 +245,7 @@ Interactions.uses = {
 	{
 		id = "books",
 		how = "stand",
-		items = { bookshelf = true, bookcase_tall = true },
+		items = { bookshelf = true, bookcase_tall = true, cozy_bookcase = true, fancy_bookcase_glass = true },
 		stay = { 7, 11 },
 		base = 0.9,
 		trait = "focus",
@@ -413,7 +413,7 @@ Interactions.uses = {
 	{
 		id = "cook",
 		how = "stand",
-		items = { stove = true, bbq = true },
+		items = { stove = true, bbq = true, rustic_wood_stove = true, fancy_range = true, scifi_food_maker = true },
 		front = 1.6, -- (clear of the oven door's handle)
 		stay = { 7, 11 },
 		base = 0.8,
@@ -471,7 +471,17 @@ Interactions.uses = {
 	{
 		id = "water",
 		how = "stand",
-		items = { plant_big = true, planter_box = true, veg_patch = true, flower_bed = true },
+		items = {
+			plant_big = true,
+			planter_box = true,
+			veg_patch = true,
+			flower_bed = true,
+			cozy_plant_stand = true,
+			modern_tall_planter = true,
+			raised_bed_veg = true,
+			scifi_grow_tubes = true,
+			rustic_wheelbarrow = true,
+		},
 		front = 1.85, -- (clear of the big plant's leaves)
 		stay = { 5, 8 },
 		base = 0.8,
@@ -523,7 +533,7 @@ Interactions.uses = {
 	{
 		id = "tv",
 		how = "stand",
-		items = { tv_stand = true },
+		items = { tv_stand = true, modern_media_console = true, scifi_holo_display = true },
 		front = 3.4,
 		stay = { 8, 12 },
 		base = 0.8,
