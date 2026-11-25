@@ -409,6 +409,45 @@ ground part reaches down to it (it was 1 stud deep). Within a voxel of the edges
 so it steps down out of sight under that part, never as a dip beside it. A pool's sides are that part down to 4
 and the terrain under it. The Terrain spec holds it.
 
+### Pieces that bump, and the passes that free them
+
+> add collisions, and a gamepass should be there to remove it, ... another for smaller grid size placement, another
+> for x y scaling, vip, and other gamepasses bloxburg uses for better build mode
+
+**Collisions.** A piece can no longer go where it would stand in another piece's body or in a wall. Its ghost turns
+red, the hint at the bottom says what it bumps into ("Bumps into the sofa") and a click puts nothing down; the
+server turns it down too. The body is what people bump into (a sofa's seat, back and arms, a table's top and legs, a
+tree's trunk), never the little things: a vase on a table, a rug or a mark under one, a lamp hanging over it, a
+picture on the wall, a path under a bench and a door in its wall all share their spot. Pieces pushed flush against
+each other on the grid touch without bumping, a piece fits in a doorway, stairs are their own run and width so
+they go down against a wall at either end, and fence panels, the garden gate, porch rails and porch posts share
+their end posts. A wall drawn through a piece is turned down the same way, and so is a ready-made building put down
+over what is there (its own pieces touch each other as they were drawn). Only what changes is checked: a new piece,
+a piece moved, turned or stretched, a new wall. A save that already has pieces in each other loads as it is, and a
+piece stuck in another can still be repainted or sold.
+
+**Free Placing** lets pieces go inside each other and turns them in steps of 15 degrees (5 with Shift held) instead
+of eighths of a turn. Its switch sits on a little card at the right end of the tools, with a padlock for anyone
+without the pass (pressing it offers the pass); an owner can switch collisions back on with it. A piece an old save
+left at an odd angle can still be moved, and turned on by eighths from where it is.
+
+**Fine Grid** snaps furniture to a grid four times finer. Its switch is the floors card's grid switch, which used to
+let anybody place off the grid; now that finer placing is the pass's, the switch shows a padlock without it, and G
+does the same as pressing it.
+
+**Stretch** makes a piece wider, deeper or taller, each from half to twice its size, scaled from its foot so it still
+stands on the floor. Picked, a piece's page in the tray has a slider for each side and Reset; held, the same sliders
+stand at the bottom right while the rest of the screen is away. Doors, windows, stairs and workplaces keep their
+size; marks and ceiling pieces stretch across but not up. Copy keeps the stretch. Without the pass the picked
+piece's page offers it behind a padlock.
+
+**Any Colour** adds an Any colour button to the Paint tray: a bar of hues, a bar of shades of that hue from dark to
+light, and a box for a colour's six digit code. Without it the brush takes the palette, the ready-made finishes and
+any colour already on the plot (Copy a colour still works on everything).
+
+Held by `tests/specs/Collide.spec.luau`, the Build service spec's "the passes' rules" and the Build mode
+simulation's "the build mode passes" run.
+
 ### Pieces that move, effects, and VIP pieces
 
 > also, make animated decor, workplaces with special effects, particle makers, and more enticing types of things.
@@ -1620,7 +1659,7 @@ The card is one row of five icon buttons now, the height of the tools row: floor
 then Hide roofs, See-through walls and Snap to grid. A switch that is on is yellow with a dark icon; an arrow that
 can go no further is dim. With the words gone, the hint line over the tools says what a press did for a moment
 ("Floor 2", "Roofs hidden", "Walls see-through", "Snap to grid off") and, while the pointer is on a button, what
-pressing it would do.
+pressing it would do. (The grid switch is Fine Grid's now: see "Pieces that bump, and the passes that free them".)
 
 ### Two small things on the main screen
 

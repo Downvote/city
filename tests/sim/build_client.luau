@@ -1596,7 +1596,10 @@ run("the build mode passes: pieces bump, Free Placing, Fine Grid, Stretch and An
 	local ui = gui:FindFirstChild("BuildUI")
 	local said = ui:FindFirstChild("Hint"):FindFirstChildWhichIsA("TextLabel")
 	local free = gui:FindFirstChild("Free placing", true)
-	check(free ~= nil and Fake.shown(free) and free:GetAttribute("Locked") == true, "Free Placing's switch shows a padlock without the pass")
+	check(
+		free ~= nil and Fake.shown(free) and free:GetAttribute("Locked") == true,
+		"Free Placing's switch shows a padlock without the pass"
+	)
 	-- a chair held over the one put down at the start turns red and won't go
 	press("Furniture")
 	local cards = trayCards()
@@ -1615,7 +1618,10 @@ run("the build mode passes: pieces bump, Free Placing, Fine Grid, Stretch and An
 	Sim.advance(0.5)
 	local before = count("items")
 	local blocked = BuildMode.state.blocked
-	check(blocked ~= nil and blocked:find("bumps into", 1, true) == 1, "held over another piece it bumps into it (" .. tostring(blocked) .. ")")
+	check(
+		blocked ~= nil and blocked:find("bumps into", 1, true) == 1,
+		"held over another piece it bumps into it (" .. tostring(blocked) .. ")"
+	)
 	check(said.Text:find("Bumps into", 1, true) == 1, "and the hint says so")
 	local red = Fake.find(ws:FindFirstChild("BuildGhost"), function(d)
 		return d:IsA("BasePart") and d.Color == roblox.Color3.fromRGB(235, 80, 80)
@@ -1656,7 +1662,10 @@ run("the build mode passes: pieces bump, Free Placing, Fine Grid, Stretch and An
 	mouseAtPlot(150, 170)
 	Sim.advance(0.5)
 	local card = ui:FindFirstChild("StretchCard")
-	check(card ~= nil and card.Visible and card:FindFirstChild("Width", true) ~= nil, "Stretch's sliders show while a piece is held")
+	check(
+		card ~= nil and card.Visible and card:FindFirstChild("Width", true) ~= nil,
+		"Stretch's sliders show while a piece is held"
+	)
 	local ghostBefore = #ws:FindFirstChild("BuildGhost"):GetChildren()
 	BuildMode.setStretch(Vector3.new(1.5, 1, 1.25))
 	mouseAtPlot(150, 170)
@@ -1670,7 +1679,10 @@ run("the build mode passes: pieces bump, Free Placing, Fine Grid, Stretch and An
 		return it.id == id
 	end)
 	check(wide.sx == 1.5 and wide.sz == 1.25, "it goes down stretched (" .. tostring(wide.sx) .. ")")
-	check(math.abs(wide.x % 1 - 0.25) < 1e-6 and math.abs(wide.z % 1 - 0.5) < 1e-6, "on the fine grid (" .. wide.x .. ", " .. wide.z .. ")")
+	check(
+		math.abs(wide.x % 1 - 0.25) < 1e-6 and math.abs(wide.z % 1 - 0.5) < 1e-6,
+		"on the fine grid (" .. wide.x .. ", " .. wide.z .. ")"
+	)
 	putAway()
 	-- picked, its page in the tray has the sliders, and Reset takes the stretch off
 	press("Pick")
@@ -1687,7 +1699,10 @@ run("the build mode passes: pieces bump, Free Placing, Fine Grid, Stretch and An
 	press("Paint")
 	press("Any colour")
 	local hex = gui:FindFirstChild("Tray", true):FindFirstChild("Hex", true)
-	check(hex ~= nil and gui:FindFirstChild("Tray", true):FindFirstChild("Hue", true) ~= nil, "Any colour opens a picker of hue and shade")
+	check(
+		hex ~= nil and gui:FindFirstChild("Tray", true):FindFirstChild("Hue", true) ~= nil,
+		"Any colour opens a picker of hue and shade"
+	)
 	hex.Text = "#3a7bd5"
 	hex.FocusLost:Fire(true)
 	frames(2)
@@ -1698,7 +1713,10 @@ run("the build mode passes: pieces bump, Free Placing, Fine Grid, Stretch and An
 	press("Back to the palette")
 	-- without the passes the padlocks come back
 	passes({})
-	check(free:GetAttribute("Locked") == true and gridSwitch:GetAttribute("Locked") == true, "without the passes the switches lock again")
+	check(
+		free:GetAttribute("Locked") == true and gridSwitch:GetAttribute("Locked") == true,
+		"without the passes the switches lock again"
+	)
 	press("Pick")
 	profile.passes = nil
 	check(#errors == warned, "no warnings from any of it")

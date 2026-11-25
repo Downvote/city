@@ -1482,7 +1482,8 @@ local function stretchRow(parent: Instance, order: number)
 		Font = Kit.Fonts.Bold,
 		Color = T.InkSoft,
 	})
-	local inside = Kit.box({ Parent = row, Size = UDim2.new(1, -LABEL_W, 1, 0), Position = UDim2.fromOffset(LABEL_W, 0) })
+	local inside =
+		Kit.box({ Parent = row, Size = UDim2.new(1, -LABEL_W, 1, 0), Position = UDim2.fromOffset(LABEL_W, 0) })
 	Kit.list(inside, 16, true).VerticalAlignment = Enum.VerticalAlignment.Top
 	if not BuildMode.owns("stretch") then
 		local b = Kit.button("Stretch", {

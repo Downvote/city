@@ -51,14 +51,6 @@ A.up = { solid("M12 2.5 L21 11.5 H14 V21.5 L12 19.5 L10 21.5 V11.5 H3 Z") }
 A.down = { solid("M12 21.5 L21 12.5 H14 V2.5 L12 4.5 L10 2.5 V12.5 H3 Z") }
 A.back = { solid("M2.5 12 L11.5 3 V10 H21.5 L19.5 12 L21.5 14 H11.5 V21 Z") }
 A.alert = { flat(circle(12, 12, 10.25)), hole("M10.25 5.5 H13.75 L13 13.5 H11 Z"), hole(circle(12, 17.5, 1.9)) }
--- a padlock: its shackle an arch of line, its body a block with the keyhole cut out (what a game
--- pass hasn't been bought for yet shows it: Build mode's switches)
-A.lock = {
-	line("M7.75 11 V8 A4.25 4.25 0 0 1 16.25 8 V11", 2.25),
-	solid(rect(4, 10.5, 16, 11.5, 1.5)),
-	hole(circle(12, 15.25, 1.75)),
-	hole(rect(11.1, 15.5, 1.8, 3.25)),
-}
 
 -- the moods a villager shows over their head (Util/Bubble's MoodIcons), drawn to fill a badge:
 -- a light bulb for a bright idea, the glass with a gleam cut out of it over a screw base

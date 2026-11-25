@@ -114,10 +114,22 @@ describe("Collide: what keeps out of what", function()
 		expect(ok).toBe(false)
 		expect(why).toBe("bumps into a wall")
 		-- a door in it: the doorway is clear
-		plan.items["9"] = { id = "door_wood", x = 0, y = Plan.openingY(plan.walls["1"], 0), z = 0, r = 0, lv = 0, wall = "1", t = 10, side = "a" }
+		plan.items["9"] = {
+			id = "door_wood",
+			x = 0,
+			y = Plan.openingY(plan.walls["1"], 0),
+			z = 0,
+			r = 0,
+			lv = 0,
+			wall = "1",
+			t = 10,
+			side = "a",
+		}
 		expect((Plan.validItem(plan, plan.items["9"], "9"))).toBe(true)
 		-- (standing on the floor, over the foot of the wall under the doorway)
-		expect((Collide.check(plan, "items", item("shape_cube_small", 20, 50, { y = Tuning.Plot.Foundation })))).toBe(true)
+		expect((Collide.check(plan, "items", item("shape_cube_small", 20, 50, { y = Tuning.Plot.Foundation })))).toBe(
+			true
+		)
 		-- a wall drawn through a piece is turned down too
 		local sofa = planWith({ { "items", item("fancy_sofa_camel", 20, 60) } })
 		local wok, wwhy = Collide.check(sofa, "walls", wall(10, 60, 30, 60))
@@ -197,11 +209,16 @@ describe("Placing: the passes' rules for one change", function()
 	end)
 
 	it("lets the pieces of one change touch each other, but not what was there", function()
-		local plan = planWith({ { "items", item("shape_cube_medium", 20, 20) }, { "items", item("shape_cube_medium", 50, 20) } })
+		local plan =
+			planWith({ { "items", item("shape_cube_medium", 20, 20) }, { "items", item("shape_cube_medium", 50, 20) } })
 		local req = { type = "add", kind = "items" }
 		-- key 2 is a piece the same change put down
-		expect((Placing.check(plan, nobody, req, item("shape_cube_medium", 51, 20), nil, { [1] = "2" }, false))).toBe(true)
-		expect((Placing.check(plan, nobody, req, item("shape_cube_medium", 21, 20), nil, { [1] = "2" }, false))).toBe(false)
+		expect((Placing.check(plan, nobody, req, item("shape_cube_medium", 51, 20), nil, { [1] = "2" }, false))).toBe(
+			true
+		)
+		expect((Placing.check(plan, nobody, req, item("shape_cube_medium", 21, 20), nil, { [1] = "2" }, false))).toBe(
+			false
+		)
 	end)
 
 	it("turns in eighths without Free Placing, and in small steps with it", function()
@@ -211,13 +228,17 @@ describe("Placing: the passes' rules for one change", function()
 		expect(Placing.turnStep(true, true)).toBe(5)
 		local plan = Plan.new()
 		local req = { type = "add", kind = "items" }
-		expect((Placing.check(plan, nobody, req, item("shape_cube_small", 20, 20, { r = 45 }), nil, {}, true))).toBe(true)
+		expect((Placing.check(plan, nobody, req, item("shape_cube_small", 20, 20, { r = 45 }), nil, {}, true))).toBe(
+			true
+		)
 		local ok, why = Placing.check(plan, nobody, req, item("shape_cube_small", 20, 20, { r = 30 }), nil, {}, true)
 		expect(ok).toBe(false)
 		expect(why).toBe("turning to any angle needs the Free Placing pass")
 		expect((Placing.check(plan, free, req, item("shape_cube_small", 20, 20, { r = 30 }), nil, {}, true))).toBe(true)
 		-- a ready-made building put down whole keeps its own angles
-		expect((Placing.check(plan, nobody, req, item("shape_cube_small", 20, 20, { r = 30 }), nil, {}, false))).toBe(true)
+		expect((Placing.check(plan, nobody, req, item("shape_cube_small", 20, 20, { r = 30 }), nil, {}, false))).toBe(
+			true
+		)
 		-- a piece an old save left at 15 degrees still turns by eighths from there
 		local old = item("shape_cube_small", 20, 20, { r = 15 })
 		local turned = table.clone(old)
@@ -238,7 +259,9 @@ describe("Placing: the passes' rules for one change", function()
 		local plan2 = planWith({ { "items", wide } })
 		local moved = table.clone(wide)
 		moved.x += 4
-		expect((Placing.check(plan2, nobody, { type = "set", kind = "items", key = "1" }, moved, wide, {}, true))).toBe(true)
+		expect((Placing.check(plan2, nobody, { type = "set", kind = "items", key = "1" }, moved, wide, {}, true))).toBe(
+			true
+		)
 	end)
 
 	it("paints off the palette only with Any Colour, but any colour on the plot is anyone's", function()
@@ -260,7 +283,9 @@ describe("Placing: the passes' rules for one change", function()
 		plan.walls["5"] = w
 		expect((Placing.check(plan, nobody, set, odd, cube, {}, true))).toBe(true)
 		-- a wall drawn in the default finish is anyone's
-		expect((Placing.check(Plan.new(), nobody, { type = "add", kind = "walls" }, wall(10, 70, 20, 70), nil, {}, true))).toBe(true)
+		expect(
+			(Placing.check(Plan.new(), nobody, { type = "add", kind = "walls" }, wall(10, 70, 20, 70), nil, {}, true))
+		).toBe(true)
 	end)
 
 	it("puts a ready-made building down whole, kept clear of what is there", function()

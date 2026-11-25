@@ -38,7 +38,8 @@ Collide.Touch = 0.08
 
 -- Pieces laid in a row that meet at a shared post: fence panels and the garden gate, porch rails
 -- and porch posts. Two of these may overlap where they meet (a corner of a fence shares its post).
-Collide.Joins = { fence_picket = true, gate_garden = true, porch_rail = true, porch_post = true } :: { [string]: boolean }
+Collide.Joins =
+	{ fence_picket = true, gate_garden = true, porch_rail = true, porch_post = true } :: { [string]: boolean }
 
 -- how many steps a stair's body is cut into (Collide.body)
 Collide.StairSteps = 7

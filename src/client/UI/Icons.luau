@@ -1017,14 +1017,6 @@ D.barrel = {
 	{ "r", 12, 68, 76, 8, C.woodDark, r = 0.5, o = false },
 }
 
--- a padlock (Build mode's switches for a pass not bought yet)
-D.lock = {
-	{ "ring", 28, 6, 44, 52, C.steelDark, 10 },
-	{ "r", 14, 42, 72, 52, C.gold, r = 0.14 },
-	{ "c", 43, 54, 14, 14, INK, o = false },
-	{ "r", 46, 62, 8, 18, INK, r = 0.3, o = false },
-}
-
 D.gem = {
 	{ "r", 22, 10, 56, 26, C.purple, r = 0.1 },
 	{ "t", 6, 36, 88, "down", C.purple },

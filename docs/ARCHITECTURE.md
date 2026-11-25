@@ -476,8 +476,11 @@ Wall  { x1, z1, x2, z2, lv, style, a = { c, m }, b = { c, m } }
 Floor { x1, z1, x2, z2, lv, c, m }
 Roof  { x1, z1, x2, z2, lv, style, rise, dir, over, c, m, c2, m2 }
 Water { x1, z1, x2, z2, lv = 0, edge = "tile" | "stone" | "pond", depth = "shallow" | "swim" }
-Item  { id, x, y, z, r, lv, c1?, c2?, wall?, t?, side?, img? }
+Item  { id, x, y, z, r, lv, c1?, c2?, wall?, t?, side?, img?, sx?, sy?, sz? }
 ```
+
+(`sx`, `sy`, `sz`: how far a piece is stretched along its width, height and depth with the Stretch pass, left off
+at 1; see "Placing: collisions, angles, Fine Grid, Stretch and Any Colour".)
 
 Coordinates are studs in the plot's own frame (`Town.plotFrame(i)`): x and z run 0 to `Plot.Size`, z = 0 is the
 street edge, y is height. `lv` runs from -1 (the basement) to 7 (see "Floors, the basement and land"). `size` is the land bought so far (`Tuning.City.Land`: 200, 256, 320, 400);
@@ -633,6 +636,70 @@ The passes' floors and land (docs/GAME_DESIGN.md, "Floors, a basement and bigger
   back exactly). The build client sim's "floors" step drives the arrows, the locks, the passes, the hidden ground
   and a basement room. Previews: `render.sh basement` (and `basement:open`), `ui.sh build:top` and
   `build:basement`.
+
+## Placing: collisions, angles, Fine Grid, Stretch and Any Colour
+
+The build mode passes (docs/GAME_DESIGN.md, "Pieces that bump, and the passes that free them"). All of it is shared
+and pure, so the ghost and the server go by the same rules.
+
+- `Build/Collide`: `body(def)` (a piece's solid boxes in its own space: the parts `Build/Solid` keeps solid, a
+  piece's shapes each by itself; stairs are `StairSteps` (7) stepped boxes of their own run and width rising a
+  storey, since their hidden ramp's box reaches past both ends), `passes(def)` (never in the way and never blocked:
+  wall, ceiling, surface and mark pieces, rugs and flat pieces (`Solid.none`), doors and windows, paths),
+  `Joins` (fence panels, the garden gate, porch rails and posts may share their end posts), `itemShape(item)` (the
+  body where it stands, stretched, each box `Touch` (0.08) smaller all round, with the box round them; kept by a
+  signature of where and how it stands), `wallBoxes(w, openings)` (a wall as boxes along its line, its doorways and
+  windows cut out), `overlaps(a, b)` (`Sim/Unstick.overlaps` on each pair, after their bounds), `nameOf(kind, obj)`
+  ("the sofa", "the picket fence", "a wall"), `hit(plan, kind, obj, ignore)` (the first thing an item or a new wall
+  would be in: items against items and walls, walls against items), `check(plan, kind, obj, ignore)` (ok, or false
+  and "bumps into the sofa") and `checkMade(plan, trial, made)` (a ready-made building tried with `Presets.check`,
+  each of its pieces and walls against what the plan had). Floors and roofs are never checked.
+- `Build/Stretch`: `Fields` (`sx`, `sy`, `sz`), `Step` (0.25), `axes(def)` (none for doors, windows, stairs and
+  workplaces; across only for marks and ceiling pieces), `can`, `of(item)` (a Vector3, 1 where unset), `any`,
+  `size(def, item)` (the catalog size times the stretch), `valid(def, item)` (`Tuning.Passes.StretchMin` to
+  `StretchMax`, only along its axes), `clampValue`, `clamped(def, item)`, `scaleBox(cf, size, s)` and
+  `prims(prims, s)` (every prim scaled from the piece's pivot: its middle moves out, each side grows by how much the
+  stretch lengthens the way it points; a piece's shapes inside it too, and the piece gets a key of its own).
+  `Plan.itemRect` and `Water`'s footprint use `Stretch.size`; `Plan.validItem` checks `Stretch.valid` and a wall
+  piece's stretched height; `Plan.clean` keeps the fields; `Plan.sanitize` clamps them (`Stretch.clamped`) before it
+  checks an item; `Builder.primsFor` stretches an item after `Solid.apply`.
+- `Build/Placing`: `Turn` (45), `FreeTurn` (15), `FineTurn` (5), `turnStep(free, fine)`, `plainAngle(r)`,
+  `roundAngle(r)`, `plainColour(plan, hex, def?)` (the palette, `Palette.Presets` and `Defaults`, the fences' own
+  finishes, the piece's own colours, or any colour already on the plot), `moved(obj, before)` and
+  `check(plan, profile, req, obj, before, made, alone)`. The rules: a change of one thing (`alone`, or any `set`)
+  must keep its stretch unless the player has `stretch` (a set may keep the stretch it had), an angle that is a
+  whole eighth or an eighth on from where it was unless `freeplace`, and colours `plainColour` allows unless
+  `anycolour` (a set may keep the colour it had); a change of several pieces at once (a room, a ready-made
+  building) carries its own angles, stretches and colours. Collisions (`Sim/Passes.collides`): every new piece and
+  wall, and every piece moved, turned or stretched, against everything but the change's own pieces (`made`) and
+  itself; a piece only repainted is never checked.
+- `Services/Build`: `Build.apply` sets `placing` (`placingFor(profile, requests)`: the profile, and in a change of
+  several pieces the keys of the ones it moves) while `prepare` (or `prepareMoves`) works the change out, and
+  `prepare` calls `Placing.check` through `placingCheck` for each add and set after `Plan.validate`. Undo, redo,
+  `Build.system` and the specs' `Build.prepare` run without it.
+- Client: `BuildMode.owns(key)`, `collides()` (Free Placing owned and `state.freePlace` on), `fineGrid()` (Fine Grid
+  owned and `state.fineGrid` on: furniture snaps to `Sim/Passes.itemSnap`), `turnStep(fine)` (R: 45, or with Free
+  Placing 15, 5 with Shift; the Turn tile and the touch button turn 45), `toggleFreePlace()` and `toggleFineGrid()`
+  (each asks `Purchase.prompt` without its pass; G is Fine Grid's), `stretchTarget()` (the held piece, else the
+  picked one: its def and stretch) and `setStretch(scale)` (the held piece at once, the picked one through
+  `editSelected`). The place, wall and room tools and the ready-made building tool run `Placing.check`
+  (`Collide.checkMade` for a building) with the passes the server says the player owns, less Free Placing while its
+  owner has it off, worked out again only when the piece, the plan or the passes change; `state.blocked` holds why a
+  held piece can't go, and the hint says it ("Bumps into the sofa"). Copy rounds an older piece's free angle to an
+  eighth without Free Placing and copies a stretch only for an owner. `BuildUI`: the `Placing` card at the right end
+  of the tools (`Free placing`, an icon button like the floors card's; slides away while a piece is held), the floors
+  card's `Fine grid` switch (it was `Snap to grid`), a `Lock` badge (`lockBadge(holder, locked)`, the `lock` icon on a
+  yellow disc) and the attribute `Locked` on a switch whose pass isn't owned, the hint's words for each
+  (`passTip`), `StretchCard` at the bottom right while an owner holds a piece that stretches (sliders `Width`,
+  `Height`, `Depth`), a `Stretch` row in a picked piece's page (the sliders and `Reset`, or `StretchLocked`), and the
+  Paint tray's `AnyColour` button, which opens the picker in place of the finishes and colours: the bars `Hue` and
+  `Shade` (each a `Swatch` strip with a `Knob`) and the box `Hex`.
+- Specs: `Collide` (bodies, overlap and touching, walls and doorways, stairs against walls, fences sharing posts,
+  stretch in the body, `Placing.check`'s rules, a ready-made building kept clear, `Stretch` validity, clamping and
+  drawing); `BuildService` ("the passes' rules": the server turns down a piece in another, a wall through one, a
+  free angle, a stretch and an odd colour without their passes and takes them with). The Build mode simulation's
+  "the build mode passes" run and the ready-made building turned down over chairs. Previews: `build:blocked`,
+  `build:stretch`, `build:stretch:pick`, `build:colour` (in `audit.sh`), and `render.sh stretch:<id>`.
 
 ## Build mode's catalog: looks, shapes, pictures, marks, pillars, water
 
@@ -1396,7 +1463,8 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   the whole width holding the scroll `Subs` (category tiles, in a deeper well) over `Tray` (cards and options)
   when `CATEGORIES_ON_TOP` is true, the other way up when false; `Tools` (a row of tiles) above the catalog at
   the left with `Hint` over it, `Floors` above it at the right (a row of five icon buttons named `FloorDown`,
-  `FloorUp`, `Hide roofs`, `See-through walls` and `Snap to grid`; the hint line says what a press did), the coin
+  `FloorUp`, `Hide roofs`, `See-through walls` and `Fine grid`; the hint line says what a press did), `Placing`
+  beside the tools (Free Placing's switch; see "Placing: collisions, angles, Fine Grid, Stretch and Any Colour"), the coin
   `Pill` top left. While a piece is held to place, every one of them but `Hint` slides off the screen (down, or up
   for the pill and the camera help) and is hidden once gone; a check once a frame decides it, and they slide back
   when the holding ends or Build mode closes. `BuildMode.putAway()` ends holding, as a right click does: `Holding`

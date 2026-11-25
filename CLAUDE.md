@@ -442,7 +442,8 @@ runs the whole width of the screen and the floor card sits on top of it at the r
 right part with all the decor and details filling the whole screen horizontally, and the right side should be
 moved up"): size those bars by scale (`UDim2.new(1, -28, 0, h)`), never to a fixed width. The floor card is one
 row of five icon buttons with no words ("change this part to 5 icons, 2 arrows, 3 toggleable icons in a row with
-no need for text"): floor down, floor up, then Hide roofs, See-through walls and Snap to grid, yellow when on. What
+no need for text"): floor down, floor up, then Hide roofs, See-through walls and Fine grid (Fine Grid's switch:
+finer placing is that pass's now, so it carries a padlock without it), yellow when on. What
 a press did, and what a button under the pointer would do, is said in the hint line over the tools ("Floor 2",
 "Roofs hidden"); never put words back on the card. While a piece is held to place (picked from a card, a ready-made
 building, a door or window, a piece being moved or copied), the whole interface slides off the screen and only
@@ -531,6 +532,13 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
   `Tuning.Unstick.Tiny`, foliage and clutter on top never are (the user: "villagers and the player can sometimes get
   stuck in objects"). Draw a piece's body with real parts or a solid piece; the Unstick spec holds the catalog to it.
   Never move a swimmer; `Npc/Room` treats water as no floor.
+- Pieces keep out of each other (the user: "add collisions, and a gamepass should be there to remove it"):
+  `Build/Collide` (a piece's body is what `Build/Solid` keeps solid; hanging, surface, mark, flat pieces, doors,
+  windows and paths never bump; fences and porch rails share their posts; stairs are their run and width) and the
+  passes' other rules (angles, Stretch's `sx`/`sy`/`sz`, Any Colour) in `Build/Placing`, run by the ghost and by
+  `Services/Build` alike. Only a change is checked (a new piece or wall, a piece moved, turned or stretched), never a
+  loaded save or a repaint. A new piece that must sit inside another goes in `Solid.none`, `Collide.passes` or
+  `Collide.Joins`. Free Placing switches collisions off (`Sim/Passes.collides`).
 - Build mode (the user: "add much much more buildings, decoration, paths, fences and other options ... like garden, sci
   fi, cozy, etc, just like bloxburg ... basic shapes ... custom decal in the roblox library", "add another section
   where players can put down markings", "make much more building types, including decorative ones", "add ability to
