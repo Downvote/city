@@ -119,7 +119,8 @@ local function poster(r: R, w: number, h: number)
 	for _, sx in { -1, 1 } do
 		for _, y in { h - 0.12, 0.12 } do
 			r:boxAt(
-				CFrame.new(sx * (w / 2 - 0.12), y, 0.105) * CFrame.Angles(0, 0, sx * math.rad(if y > 1 then 45 else -45)),
+				CFrame.new(sx * (w / 2 - 0.12), y, 0.105)
+					* CFrame.Angles(0, 0, sx * math.rad(if y > 1 then 45 else -45)),
 				0.5,
 				0.16,
 				0.03,
@@ -136,13 +137,30 @@ local function wallDecal(r: R, s: number)
 	sketch(r, -s / 2, 0, s / 2, s, 0.06)
 end
 
--- A decal flat on the floor, lying like a mark (Catalog: "mark"): its top 0.04 over the floor.
+-- A decal flat on the floor, lying like a mark (Catalog: "mark", Plan.markY): a sheet 0.05 thick,
+-- with the little drawing over it until there is a picture.
 local function floorDecal(r: R, s: number)
-	canvas(r, -s / 2, 0.01, -s / 2, s / 2, 0.04, s / 2, "Top")
-	sketchFlat(r, s, 0.04)
+	canvas(r, -s / 2, 0, -s / 2, s / 2, 0.05, s / 2, "Top")
+	sketchFlat(r, s, 0.05)
 end
 
-local items = {
+-- One catalog entry (Build/Catalog explains the fields).
+type Item = {
+	id: string,
+	name: string,
+	cat: string,
+	price: number,
+	place: string,
+	size: Vector3,
+	c1: string,
+	c2: string?,
+	tags: { string }?,
+	picture: boolean,
+	style: string?,
+	build: (r: R) -> (),
+}
+
+local items: { Item } = {
 	{
 		id = "pic_poster",
 		name = "Poster",
@@ -349,7 +367,7 @@ local items = {
 		cat = "pictures",
 		price = 20,
 		place = "mark",
-		size = Vector3.new(4, 0.08, 4),
+		size = Vector3.new(4, 0.11, 4),
 		c1 = "F7F3EA",
 		c2 = "E6E1D6",
 		picture = true,
@@ -363,7 +381,7 @@ local items = {
 		cat = "pictures",
 		price = 50,
 		place = "mark",
-		size = Vector3.new(8, 0.08, 8),
+		size = Vector3.new(8, 0.11, 8),
 		c1 = "F7F3EA",
 		c2 = "E6E1D6",
 		picture = true,

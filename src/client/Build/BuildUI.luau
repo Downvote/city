@@ -25,6 +25,7 @@ local Toasts = require(script.Parent.Parent.UI.Toasts)
 local ModelPreview = require(script.Parent.Parent.UI.ModelPreview)
 local State = require(script.Parent.Parent.Controllers.State)
 local BuildMode = require(script.Parent.BuildMode)
+local WaterTool = require(script.Parent.WaterTool) -- (water: its tray and a picked water's page)
 
 local BuildUI = {}
 
@@ -80,6 +81,9 @@ local MAIN = {
 			{ id = "garden", icon = "flower", name = "Garden" },
 			{ id = "fences", icon = "fence", name = "Fences" },
 			{ id = "paths", icon = "path", name = "Paths" },
+			-- a pool or a pond, dug by dragging, and what goes in it (the user: "also, add ability
+			-- to add water, along with things that can go in the water": Build/WaterTool)
+			{ id = "water", icon = "water", name = "Water" },
 			-- flat paint on floors, paths and the ground (the user: "add another section where
 			-- players can put down markings, like in bloxburg": Recipes/Markings)
 			{ id = "markings", icon = "marking", name = "Markings" },
@@ -456,8 +460,14 @@ end
 local function itemTile(parent: Instance, def: any, order: number, onPick: () -> ()): TextButton
 	local b, pic, foot = card(parent, def.id, order, CARD_W, onPick)
 	b:SetAttribute("ItemId", def.id)
+	-- a flat mark is seen from above (from the side it would show almost nothing)
+	local flat = def.place == "mark"
 	task.spawn(function()
-		ModelPreview.fromPrims(Catalog.prims(def), { Parent = pic })
+		ModelPreview.fromPrims(Catalog.prims(def), {
+			Parent = pic,
+			Yaw = if flat then 0 else nil,
+			Pitch = if flat then 76 else nil,
+		})
 	end)
 	cardName(b, def.name, foot, 13)
 	priceTag(b, def.price, CARD_H - 22)
@@ -803,6 +813,10 @@ local function armTool()
 		if s.tool ~= "roof" then
 			BuildMode.setTool("roof")
 		end
+	elseif subTab == "water" then
+		if s.tool ~= "water" then
+			BuildMode.setTool("water")
+		end
 	end
 end
 
@@ -909,6 +923,8 @@ local picturePanel: (
 local function pictureWords(): (string, Color3?)
 	if draft.state == "checking" then
 		return "Checking with Roblox...", nil
+	elseif draft.state == "current" then
+		return "This is the picture on it now. Paste another id to change it.", nil
 	elseif draft.state == "ok" then
 		return "That one works.", T.Green
 	elseif draft.state == "bad" then
@@ -926,7 +942,7 @@ picturePanel = function(parent, owner, title, current, useLabel, onUse, extra, o
 			owner = owner,
 			text = if current then tostring(current) else "",
 			id = current,
-			state = if current then "ok" else "",
+			state = if current then "current" else "",
 			why = nil,
 		}
 	end
@@ -948,7 +964,8 @@ picturePanel = function(parent, owner, title, current, useLabel, onUse, extra, o
 		Radius = 8,
 	})
 	Kit.rim(view, T.Line, 1)
-	local shown: number? = draft.id
+	-- (an id that isn't a picture shows nothing: its thumbnail could be anything)
+	local shown: number? = if draft.state == "bad" then nil else draft.id
 	if shown then
 		Kit.new("ImageLabel", {
 			Name = "Image",
@@ -1130,7 +1147,8 @@ local function catalogTray(cat: string)
 		end
 		return
 	end
-	if cat == "pictures" and pictureDef and Catalog.get(pictureDef) then
+	-- (a picture piece's card, from Pictures or a look, opens the page for choosing its picture)
+	if pictureDef and Catalog.get(pictureDef) then
 		picturePlaceTray(Catalog.get(pictureDef))
 		return
 	end
@@ -1384,6 +1402,28 @@ local function paintTray()
 	end, 4)
 end
 
+-- (water: what the water tray is lent to look like the rest of the tray, Build/WaterTool)
+local waterKit: WaterTool.TrayKit = {
+	trayRow = trayRow,
+	trayStack = trayStack,
+	styleTile = styleTile,
+	itemTile = itemTile,
+	refresh = function()
+		refreshTray()
+	end,
+	setTool = BuildMode.setTool,
+	tool = function()
+		return s.tool
+	end,
+	startPlacing = function(id: string)
+		BuildMode.startPlacing(id)
+	end,
+	editSelected = BuildMode.editSelected,
+	styleW = STYLE_W,
+	styleH = STYLE_H,
+	gap = GAP,
+}
+
 -- What you can do with the picked object.
 local function selectionTray()
 	local kind, _, obj = BuildMode.selectedObject()
@@ -1501,6 +1541,8 @@ local function selectionTray()
 				BuildMode.editSelected({ c = preset.c, m = preset.m })
 			end)
 		end
+	elseif kind == "waters" then
+		WaterTool.selection(waterKit, stack, obj) -- (water: its edge and depth)
 	end
 end
 
@@ -1546,6 +1588,9 @@ refreshTray = function()
 	elseif subTab == "roofs" then
 		trayMode = "roofs"
 		roofTray()
+	elseif subTab == "water" then
+		trayMode = "water" -- (water: Build/WaterTool's tray)
+		WaterTool.tray(waterKit)
 	else
 		trayMode = "catalog:" .. subTab
 		catalogTray(subTab)
@@ -1597,6 +1642,8 @@ local function openSub(id: string)
 		BuildMode.setTool("floor")
 	elseif id == "roofs" then
 		BuildMode.setTool("roof")
+	elseif id == "water" then
+		BuildMode.setTool("water") -- (water: the drag tool, with the pieces in the tray)
 	else
 		BuildMode.setTool("place")
 		s.placing = nil
@@ -1729,6 +1776,7 @@ local HINTS = {
 	room = "Drag across the ground to make a room.",
 	floor = "Drag across the ground to lay a floor.",
 	roof = "Drag over the walls to put a roof on.",
+	water = "Drag across the ground to dig a pool or a pond.",
 	place = "Click to place it. R turns it, right click puts it away.",
 	preset = "Click to put it down. R turns it, right click puts it away.",
 	paint = "Click a wall, floor, roof or item to paint it.",

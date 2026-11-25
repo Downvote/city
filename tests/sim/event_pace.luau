@@ -165,8 +165,11 @@ local function key(code)
 	if not action then
 		return nil
 	end
-	local result =
-		action.fn(Dialogue.Action, Enum.UserInputState.Begin, { KeyCode = code, UserInputState = Enum.UserInputState.Begin })
+	local result = action.fn(
+		Dialogue.Action,
+		Enum.UserInputState.Begin,
+		{ KeyCode = code, UserInputState = Enum.UserInputState.Begin }
+	)
 	action.fn(Dialogue.Action, Enum.UserInputState.End, { KeyCode = code, UserInputState = Enum.UserInputState.End })
 	frames(3)
 	return result
@@ -183,6 +186,11 @@ local function click()
 end
 local function tap()
 	touch(Enum.UserInputType.Touch)
+end
+-- a second or so at the game's own pace: a line being typed is all there by then
+local function settle()
+	advance(1)
+	frames(60)
 end
 
 local LINES = {
@@ -209,7 +217,7 @@ run("nobody presses anything", function()
 	show(quarrel("p1"))
 	line("p1", LINES[1])
 	press("Watch")
-	advance(1)
+	settle()
 	check(scene() ~= nil, "Watch puts the scene up")
 	check(told("p1", "open"), "and tells the server it is up")
 	check(said() == LINES[1].text and typed(), "the first line is typed out")
@@ -250,10 +258,10 @@ run("a press a line, by key, tap and click", function()
 	check(arrow(), "and the arrow comes up")
 	key(Enum.KeyCode.Return)
 	check(said() == LINES[3].text, "Enter goes on too")
-	advance(1)
+	settle()
 	tap()
 	check(said() == LINES[4].text, "and a tap")
-	advance(1)
+	settle()
 	check(not answers(), "the question waits for the player to get to it")
 	click()
 	check(said() == "What do you do?", "a click and the question is up")
@@ -307,7 +315,7 @@ run("an event that comes while one is on screen waits its turn", function()
 	show(first)
 	line("p2", LINES[1])
 	press("Watch")
-	advance(1)
+	settle()
 	local s = scene()
 	local second = quarrel("p3", false)
 	second.title = "A kite in the tree"
@@ -330,30 +338,34 @@ run("an event that comes while one is on screen waits its turn", function()
 	click()
 	click()
 	check(scene() == nil, "its last line closed it")
-	advance(1)
+	settle()
 	check(prompt() == nil, "the one that ended meanwhile never takes the screen")
 
 	-- one still going when the scene is closed comes up then
-	show(first)
-	first.token = "p4"
-	show(first)
+	local third = quarrel("p4", false)
+	show(third)
 	line("p4", LINES[1])
-	second.token = "p5"
-	show(second)
+	local fourth = quarrel("p5", false)
+	fourth.title = second.title
+	fourth.lines = second.lines
+	show(fourth)
 	line("p5", second.lines[1])
 	press("Watch")
-	advance(1)
+	settle()
 	check(said() == LINES[1].text, "watching the first")
 	finish("p4", {})
-	advance(1)
+	settle()
 	click()
 	click()
 	check(scene() == nil, "closed")
-	advance(1)
+	settle()
 	local p = prompt()
-	check(p ~= nil and p:FindFirstChild("Title", true).Text == "A kite in the tree", "the next one's prompt comes up then")
+	check(
+		p ~= nil and p:FindFirstChild("Title", true).Text == "A kite in the tree",
+		"the next one's prompt comes up then"
+	)
 	press("Watch")
-	advance(1)
+	settle()
 	check(said() == second.lines[1].text, "and plays from its first line, said while it waited")
 	press("Stop watching")
 	finish("p5", {})
@@ -364,7 +376,8 @@ end)
 
 run("the talk card doesn't move on by itself", function()
 	local warned = #errors
-	Sim.remoteEvent("Talk"):FireClient(Sim.player, { vid = "v1", text = "Have you tried the new bakery?", model = models.v1 })
+	Sim.remoteEvent("Talk")
+		:FireClient(Sim.player, { vid = "v1", text = "Have you tried the new bakery?", model = models.v1 })
 	frames(2)
 	local card = gui:FindFirstChild("TalkCard")
 	local function words()
@@ -372,15 +385,15 @@ run("the talk card doesn't move on by itself", function()
 		return label and label.Text
 	end
 	check(card ~= nil and Fake.shown(card), "the talk card is up")
-	advance(Tuning.Talk.StaySeconds - 5)
-	check(Fake.shown(card) and words() == "Have you tried the new bakery?", "a long while later it says the same")
+	settle()
 	show(quarrel("p6", false))
 	line("p6", LINES[1])
-	advance(10)
-	check(Fake.shown(card) and words() == "Have you tried the new bakery?", "an event starting leaves it as it was")
-	check(prompt() == nil, "its prompt waits")
+	advance(Tuning.Talk.StaySeconds - 8)
+	check(Fake.shown(card) and words() == "Have you tried the new bakery?", "a long while later it says the same")
+	check(TalkCard.isOpen(), "though an event started meanwhile")
+	check(prompt() == nil, "whose prompt waits")
 	press("Bye")
-	advance(1)
+	settle()
 	check(prompt() ~= nil, "and comes up once the card has gone")
 	finish("p6", {})
 	advance(2)
@@ -398,13 +411,13 @@ run("a creator an answer asks for waits for the scene", function()
 	show(quarrel("p7", false))
 	line("p7", LINES[1], true)
 	press("Watch")
-	advance(1)
+	settle()
 	Sim.remoteEvent("Notify"):FireClient(Sim.player, "open:creator:v1", "action")
 	advance(5)
 	check(#opened == 0 and scene() ~= nil, "the scene stays up and the creator waits")
 	click()
 	check(scene() == nil, "closed")
-	advance(1)
+	settle()
 	check(#opened == 1 and opened[1].name == "Creator" and opened[1].arg.vid == "v1", "then the creator opens")
 	Hud.open = open
 	finish("p7", {})

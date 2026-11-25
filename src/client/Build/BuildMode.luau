@@ -24,6 +24,9 @@ local State = require(script.Parent.Parent.Controllers.State)
 local Toasts = require(script.Parent.Parent.UI.Toasts)
 local Kit = require(script.Parent.Parent.UI.Kit)
 local BuildCamera = require(script.Parent.BuildCamera)
+-- (water: dragging out a pool or a pond, and where a piece made for water sits)
+local WaterTool = require(script.Parent.WaterTool)
+local Water = require(Shared.Build.Water)
 
 local BuildMode = {}
 
@@ -609,11 +612,17 @@ local function placeCandidate(): (any?, string?)
 		y = if s.level == 0 then P.Foundation else Plan.levelBase(s.level)
 	elseif def.place == "ceiling" then
 		y = Plan.levelTop(s.level) - (if s.level < P.Levels - 1 then 1 else 0)
+	elseif def.place == "mark" then
+		-- (a mark: a little over what it lies on, and over the marks it covers: Plan.markY)
+		local support = if s.level > 0 then math.max(y, base) else y
+		local at = { id = pl.id, x = x, z = z, r = pl.r % 360, lv = s.level }
+		y = Plan.markY(State.plan, at, support, pl.moveKey)
+	elseif def.place == "water" then
+		y = Water.pieceY(def) -- (water: on the surface, the bottom or the side, by its kind)
 	elseif s.level > 0 then
 		y = math.max(y, base)
 	end
-	return { id = pl.id, x = x, y = y, z = z, r = pl.r % 360, lv = s.level, c1 = pl.c1, c2 = pl.c2, img = pl.img },
-		nil
+	return { id = pl.id, x = x, y = y, z = z, r = pl.r % 360, lv = s.level, c1 = pl.c1, c2 = pl.c2, img = pl.img }, nil
 end
 
 -- Placing a ready-made building: its ghost is built once per building and turn (in a model of
@@ -832,6 +841,19 @@ local function pickTool(color: Color3)
 	return hit, kind, key
 end
 
+-- (water: what the water tool is lent, Build/WaterTool)
+local waterApi: WaterTool.Api = {
+	planePoint = planePoint,
+	showGhost = showGhost,
+	clearGhost = clearGhost,
+	setLabel = setLabel,
+	coins = coins,
+	costText = costText,
+	level = function()
+		return s.level
+	end,
+}
+
 local pulseClock = 0
 local function update()
 	if not s.active or pending then
@@ -852,6 +874,10 @@ local function update()
 	elseif tool == "roof" then
 		setHighlight(nil)
 		rectTool("roofs")
+	elseif tool == "water" then
+		-- (water: Build/WaterTool drags out a pool or a pond)
+		setHighlight(nil)
+		candidate = WaterTool.update(waterApi, rectStart)
 	elseif tool == "place" then
 		setHighlight(nil)
 		placeTool()
@@ -988,7 +1014,7 @@ local function primary(released: boolean?)
 		end
 		return
 	end
-	if (tool == "wall" and s.wallMode == "room") or tool == "floor" or tool == "roof" then
+	if (tool == "wall" and s.wallMode == "room") or tool == "floor" or tool == "roof" or tool == "water" then
 		local p = planePoint()
 		if not p then
 			return
@@ -1218,6 +1244,7 @@ function BuildMode.setTool(tool: string)
 			else "Drag to draw a wall. Right click stops.",
 		floor = "Drag across the ground to lay a floor.",
 		roof = "Drag over the walls to put a roof on.",
+		water = "Drag across the ground to dig a pool or a pond.",
 		place = "Click to place it. R turns it, right click puts it away.",
 		preset = "Click to put it down. R turns it, right click puts it away.",
 		paint = "Click a wall, floor, roof or item to paint it.",

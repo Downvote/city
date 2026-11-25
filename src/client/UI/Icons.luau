@@ -810,6 +810,172 @@ D.stoneWall = {
 	{ "c", 48, 20, 36, 38, C.stone },
 }
 
+-- the fences that came later (Plan.WallStyles)
+D.brickWall = {
+	{ "r", 4, 44, 44, 22, C.brick, r = 0.15 },
+	{ "r", 52, 44, 44, 22, C.brick, r = 0.15 },
+	{ "r", 4, 70, 22, 22, C.brickDark, r = 0.15 },
+	{ "r", 30, 70, 40, 22, C.brick, r = 0.15 },
+	{ "r", 74, 70, 22, 22, C.brickDark, r = 0.15 },
+	{ "r", 2, 28, 96, 14, C.stone, r = 0.3 },
+}
+
+D.railFence = {
+	{ "r", 16, 10, 14, 82, C.white, r = 0.2 },
+	{ "r", 70, 10, 14, 82, C.white, r = 0.2 },
+	{ "r", 4, 24, 92, 12, C.cream, r = 0.3 },
+	{ "r", 4, 48, 92, 12, C.cream, r = 0.3 },
+	{ "r", 4, 72, 92, 12, C.cream, r = 0.3 },
+}
+
+D.ironFence = {
+	{ "r", 4, 36, 92, 9, C.greyDark, r = 0.4 },
+	{ "r", 4, 70, 92, 9, C.greyDark, r = 0.4 },
+	{ "r", 12, 20, 9, 72, C.greyDark, r = 0.4 },
+	{ "r", 36, 20, 9, 72, C.greyDark, r = 0.4 },
+	{ "r", 60, 20, 9, 72, C.greyDark, r = 0.4 },
+	{ "r", 82, 20, 9, 72, C.greyDark, r = 0.4 },
+	{ "t", 9, 8, 15, "up", C.greyDark },
+	{ "t", 33, 8, 15, "up", C.greyDark },
+	{ "t", 57, 8, 15, "up", C.greyDark },
+	{ "t", 79, 8, 15, "up", C.greyDark },
+}
+
+D.bamboo = {
+	{ "r", 8, 12, 16, 80, C.green, r = 0.45 },
+	{ "r", 30, 6, 16, 86, C.greenDark, r = 0.45 },
+	{ "r", 52, 14, 16, 78, C.green, r = 0.45 },
+	{ "r", 74, 8, 16, 84, C.greenDark, r = 0.45 },
+	{ "r", 4, 38, 92, 6, C.wood, r = 0.5, o = false },
+	{ "r", 4, 66, 92, 6, C.wood, r = 0.5, o = false },
+}
+
+D.logFence = {
+	{ "r", 14, 8, 18, 84, C.woodDark, r = 0.5 },
+	{ "r", 68, 8, 18, 84, C.woodDark, r = 0.5 },
+	{ "r", 4, 30, 92, 16, C.wood, r = 0.5 },
+	{ "r", 4, 60, 92, 16, C.wood, r = 0.5 },
+}
+
+D.wovenFence = {
+	{ "r", 6, 18, 88, 64, C.wood, r = 0.1 },
+	{ "r", 20, 6, 10, 88, C.woodDark, r = 0.3 },
+	{ "r", 70, 6, 10, 88, C.woodDark, r = 0.3 },
+	{ "r", 6, 38, 88, 5, C.woodDark, r = 0.5, o = false },
+	{ "r", 6, 58, 88, 5, C.woodDark, r = 0.5, o = false },
+}
+
+D.ropeFence = {
+	{ "r", 12, 18, 14, 76, C.woodDark, r = 0.3 },
+	{ "r", 74, 18, 14, 76, C.woodDark, r = 0.3 },
+	{ "t", 10, 6, 18, "up", C.woodDark },
+	{ "t", 72, 6, 18, "up", C.woodDark },
+	{ "r", 22, 40, 56, 8, C.woodLight, r = 0.5, rot = 8 },
+	{ "r", 22, 64, 56, 8, C.woodLight, r = 0.5, rot = -8 },
+}
+
+D.glassRail = {
+	{ "r", 4, 10, 92, 12, C.greyDark, r = 0.4 },
+	{ "r", 8, 18, 10, 76, C.grey, r = 0.3 },
+	{ "r", 82, 18, 10, 76, C.grey, r = 0.3 },
+	{ "r", 24, 30, 52, 56, C.sky, r = 0.08 },
+	{ "r", 34, 40, 8, 30, C.white, r = 0.5, rot = 35, o = false, t = 0.35 },
+}
+
+D.lightRail = {
+	{ "r", 4, 14, 92, 12, C.greyDark, r = 0.5 },
+	{ "r", 4, 68, 92, 12, C.greyDark, r = 0.5 },
+	{ "r", 14, 14, 12, 78, C.greyDark, r = 0.3 },
+	{ "r", 74, 14, 12, 78, C.greyDark, r = 0.3 },
+	{ "r", 38, 34, 24, 24, C.sky, r = 0.1, rot = 45 },
+}
+
+D.pillar = {
+	{ "r", 14, 8, 72, 14, C.stone, r = 0.2 },
+	{ "r", 26, 24, 48, 52, C.greyLight },
+	{ "r", 40, 24, 4, 52, C.grey, o = false },
+	{ "r", 56, 24, 4, 52, C.grey, o = false },
+	{ "r", 14, 78, 72, 14, C.stone, r = 0.2 },
+}
+
+D.shapes = {
+	{ "r", 8, 40, 48, 48, C.blue, r = 0.1 },
+	{ "c", 52, 8, 40, 40, C.pink },
+	{ "t", 54, 52, 40, "up", C.yellow },
+	{ "r", 54, 72, 40, 20, C.yellow, r = 0.05 },
+}
+
+D.picture = {
+	{ "r", 6, 14, 88, 72, C.sky, r = 0.1 },
+	{ "t", 14, 46, 44, "up", C.green, o = false },
+	{ "t", 40, 40, 48, "up", C.greenDark, o = false },
+	{ "c", 64, 22, 14, 14, C.yellow, o = false },
+}
+
+D.marking = {
+	{ "t", 22, 6, 56, "up", C.white },
+	{ "r", 40, 34, 20, 20, C.white, r = 0.1 },
+	{ "r", 40, 60, 20, 12, C.white, r = 0.2 },
+	{ "r", 40, 80, 20, 12, C.white, r = 0.2 },
+}
+
+-- water: a drop, a point on a round
+D.water = {
+	{ "r", 29, 14, 42, 42, C.blue, r = 0.1, rot = 45 },
+	{ "c", 19, 34, 62, 62, C.blue },
+	{ "c", 30, 60, 12, 18, C.white, o = false, t = 0.45 },
+}
+
+D.styles = {
+	{ "c", 6, 6, 88, 88, C.woodLight },
+	{ "c", 22, 34, 16, 16, C.red, o = false },
+	{ "c", 40, 16, 16, 16, C.yellow, o = false },
+	{ "c", 62, 24, 16, 16, C.blue, o = false },
+	{ "c", 26, 58, 16, 16, C.green, o = false },
+	{ "c", 60, 58, 18, 18, C.cream, o = false },
+}
+
+D.mug = {
+	{ "r", 12, 30, 58, 62, C.red, r = 0.2 },
+	{ "ring", 58, 42, 30, 34, C.red, 8 },
+	{ "r", 26, 6, 8, 18, C.white, r = 0.5, t = 0.3 },
+	{ "r", 46, 6, 8, 18, C.white, r = 0.5, t = 0.3 },
+}
+
+D.rocket = {
+	{ "r", 34, 6, 32, 64, C.white, r = 0.45 },
+	{ "t", 14, 50, 24, "left", C.red },
+	{ "t", 62, 50, 24, "right", C.red },
+	{ "c", 42, 26, 16, 16, C.sky, o = false },
+	{ "t", 38, 72, 24, "down", C.orange },
+}
+
+D.anchor = {
+	{ "ring", 38, 4, 24, 24, C.blueDark, 7 },
+	{ "r", 44, 26, 12, 62, C.blueDark, r = 0.3 },
+	{ "r", 26, 34, 48, 10, C.blueDark, r = 0.5 },
+	{ "half", 12, 50, 76, 44, C.blueDark },
+}
+
+D.barrel = {
+	{ "c", 14, 4, 72, 92, C.wood },
+	{ "r", 12, 24, 76, 8, C.woodDark, r = 0.5, o = false },
+	{ "r", 12, 68, 76, 8, C.woodDark, r = 0.5, o = false },
+}
+
+D.gem = {
+	{ "r", 22, 10, 56, 26, C.purple, r = 0.1 },
+	{ "t", 6, 36, 88, "down", C.purple },
+	{ "r", 4, 34, 92, 6, C.purpleDark, r = 0.5, o = false },
+}
+
+D.balloon = {
+	{ "c", 18, 4, 64, 70, C.pink },
+	{ "t", 42, 72, 16, "up", C.pink },
+	{ "r", 48, 78, 4, 18, C.greyDark, r = 0.5 },
+	{ "c", 30, 16, 14, 18, C.white, o = false, t = 0.4 },
+}
+
 D.roofHip = {
 	{ "t", 4, 22, 46, "left", C.redDark },
 	{ "t", 73, 22, 46, "right", C.redDark },

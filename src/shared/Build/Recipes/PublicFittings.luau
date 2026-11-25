@@ -97,6 +97,7 @@ type Item = {
 	c2: string?,
 	tags: { string }?,
 	surface: number?,
+	style: string?, -- the look it belongs to (Catalog.Styles)
 	build: (r: R) -> (),
 }
 
@@ -501,6 +502,7 @@ local items: { Item } = {
 		id = "gable_clock",
 		name = "Gable clock",
 		cat = "walldecor",
+		style = "fancy",
 		price = 150,
 		place = "floor",
 		size = Vector3.new(4.4, 5.6, 1.4),
@@ -578,6 +580,7 @@ local items: { Item } = {
 		id = "bookcase_tall",
 		name = "Tall bookcase with a ladder",
 		cat = "storage",
+		style = "fancy",
 		price = 320,
 		place = "floor",
 		size = Vector3.new(5, 10.6, 2.6),

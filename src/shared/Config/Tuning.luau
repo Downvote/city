@@ -77,6 +77,40 @@ Tuning.Villagers = {
 	NoBedMoodPerNight = -8,
 }
 
+-- Getting stuck -------------------------------------------------------------
+-- The user: "villagers and the player can sometimes get stuck in objects". Every part of a placed
+-- piece used to be solid, down to a cup on a table, and nobody was moved when a piece went down
+-- on them. These numbers say what of a piece is solid (Build/Solid), what a body needs to stand
+-- (Sim/Unstick), and when somebody counts as stuck (Npc.walkTo, Services/Unstick).
+Tuning.Unstick = {
+	-- what of a placed piece people bump into (Build/Solid)
+	Tiny = 1, -- a part whose longest side is under this many studs is never solid
+	Flat = 0.3, -- a floor piece no taller than this (a rug, a mat) is never solid
+	OnTop = 0.05, -- a part starting this close under a piece's top, or higher, stands on it: never solid
+	-- a body, standing (Sim/Unstick): the agent's width all round, a little over head height
+	Width = 2.6,
+	Height = 5,
+	Step = 0.6, -- what is lower than this over the feet is stepped on, not bumped into
+	Level = 1.2, -- how far the floor at a spot may sit above or below their feet
+	Touch = 0.05, -- an overlap this thin is two things touching, not one in the other
+	Reach = 14, -- how far out to look for room to stand
+	Ring = 1, -- studs between one ring of spots and the next
+	Hop = 6, -- the furthest a stuck villager is put on to the waypoint they were making for
+	-- villagers walking (Npc.walkTo): no further than Moved in JumpAfter seconds, a hop; still
+	-- not in ReplanAfter, a new path; stuck again on that one, moved on (Npc.free)
+	Moved = 0.4,
+	JumpAfter = 1.2,
+	ReplanAfter = 2.4,
+	-- anybody wedged in a solid placed part (Services/Unstick): looked at every CheckEvery
+	-- seconds, the middle Core of their root part inside it for WedgedFor seconds
+	CheckEvery = 0.5,
+	WedgedFor = 1,
+	Core = 0.6,
+	-- villagers' pathfinding (Npc): a disc narrower than our narrowest door (4 studs) with room
+	-- to spare, so paths go through doorways; the Unstick spec holds it to the catalog's doors
+	Agent = { Radius = 1.3, Height = 5, Spacing = 3 },
+}
+
 Tuning.Scales = {
 	Height = { Min = 0.8, Max = 1.15, Default = 1 },
 	Width = { Min = 0.7, Max = 1.1, Default = 1 },
@@ -432,6 +466,17 @@ Tuning.Look = {
 		-- blue, and a little more push, so lit signs and windows stand out of the dark
 		Night = { Tint = { 184, 196, 255 }, Saturation = 0.15, Contrast = 0.12, Air = "night" },
 	},
+}
+
+-- Water on a plot ---------------------------------------------------------------
+-- The user: "also, add ability to add water, along with things that can go in the water". A pool
+-- or a pond is dragged out in Build mode (Build/Water) and is Roblox terrain water in the game
+-- (Services/Water), so people wade and swim in it.
+Tuning.Water = {
+	Max = 8, -- pools and ponds on one plot
+	MinSide = 8, -- studs along each side, at least
+	MaxSide = 64, -- and at most
+	PerCell = { shallow = 2, swim = 3 }, -- coins for each WallSnap square of water, by its depth
 }
 
 return Tuning

@@ -21,6 +21,7 @@ local Text = require(script.Parent.Parent.Util.Text)
 local City = require(script.Parent.City)
 local Life = require(script.Parent.Life)
 local Relationships = require(script.Parent.Relationships)
+local Voice = require(script.Parent.Voice)
 
 local K = Tuning.Talk
 
@@ -655,7 +656,8 @@ end
 -- The line for what they're wishing for, or nil.
 function Talk.wishLine(profile: any, vid: string): string?
 	local line = wishFor(profile, vid)
-	return if line then named(profile, line, nil) else nil
+	local v = profile.villagers[vid]
+	return if line then Voice.speak(v and v.pers, named(profile, line, nil)) else nil
 end
 
 -- What a villager says to someone who stops to talk. opts:
@@ -782,11 +784,12 @@ local function lineFor(profile: any, vid: string, rng: any, opts: { [string]: an
 		end
 	end
 	-- not the same thing twice running, when there is anything else to say (`last` is what they
-	-- said, with the name in)
+	-- said, with the name in and in their own hand: Sim/Voice)
 	if o.last then
 		local fresh = {}
 		for _, text in pool do
-			if text ~= o.last and named(profile, text, o.name) ~= o.last then
+			local said = named(profile, text, o.name)
+			if text ~= o.last and said ~= o.last and Voice.speak(v.pers, said) ~= o.last then
 				table.insert(fresh, text)
 			end
 		end
@@ -803,7 +806,9 @@ end
 -- What a villager says when you stop to talk: their own words, about how they feel, the town, the
 -- people they know, or what they're wishing for. opts.name is what to call a visitor (see above).
 function Talk.line(profile: any, vid: string, rng: any, opts: { [string]: any }?): string
-	return named(profile, lineFor(profile, vid, rng, opts), opts and opts.name)
+	local v = profile.villagers[vid]
+	-- in their own hand (Sim/Voice)
+	return Voice.speak(v and v.pers, named(profile, lineFor(profile, vid, rng, opts), opts and opts.name))
 end
 
 -- The good a chat does ---------------------------------------------------------------------------------

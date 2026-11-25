@@ -7,6 +7,7 @@
 --   roofs  { x1, z1, x2, z2, lv, style, rise, dir, over, c, m, c2, m2 }
 --   items  { id, x, y, z, r, lv, c1?, c2?, wall?, t?, side?, img? }
 --          (img: a picture from the Roblox library, by its id, on a piece that takes one)
+--   waters { x1, z1, x2, z2, lv = 0, edge, depth }   a pool or a pond on the ground (Build/Water)
 -- Coordinates are studs in the plot's own frame: x and z run 0..Plot.Size, y is height above the ground.
 --
 -- Changes are lists of ops ({ op = "add" | "remove" | "set", kind, key, obj, before? }). The server
@@ -16,6 +17,8 @@ local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Palette = require(script.Parent.Parent.Data.Palette)
 local Colors = require(script.Parent.Parent.Util.Colors)
 local Catalog = require(script.Parent.Catalog)
+-- (water: pools and ponds, the plan's fifth kind, and what may stand in them)
+local Water = require(script.Parent.Water)
 
 local P = Tuning.Plot
 
@@ -59,13 +62,16 @@ export type PlanData = {
 	floors: { [string]: Floor },
 	roofs: { [string]: Roof },
 	items: { [string]: Item },
+	waters: { [string]: any }?, -- (Build/Water; a plan from before there was water has none)
 }
 export type Op = { op: string, kind: string, key: string, obj: any?, before: any? }
 
 local Plan = {}
 
-Plan.Kinds = { "walls", "floors", "roofs", "items" }
-Plan.KindSet = { walls = true, floors = true, roofs = true, items = true }
+-- (waters: a pool or a pond on the ground, { x1, z1, x2, z2, lv = 0, edge, depth }: Build/Water.
+-- They come before the items, which may stand in them.)
+Plan.Kinds = { "walls", "floors", "roofs", "waters", "items" }
+Plan.KindSet = { walls = true, floors = true, roofs = true, waters = true, items = true }
 
 export type WallStyle = {
 	name: string,
@@ -93,7 +99,7 @@ Plan.WallStyles = {
 		height = 3,
 		thick = 1,
 		fence = true,
-		paint = { c = "B86A52", m = "Brick" },
+		paint = { c = "A8705E", m = "Brick" },
 	},
 	bamboo = { name = "Bamboo fence", height = 5, thick = 0.6, fence = true, paint = { c = "C9B26E", m = "Wood" } },
 	iron = { name = "Iron fence", height = 4.5, thick = 0.4, fence = true, paint = { c = "3A3A40", m = "Metal" } },
@@ -316,6 +322,8 @@ function Plan.cost(kind: string, obj: any): number
 	elseif kind == "items" then
 		local def = Catalog.get(obj.id)
 		return if def then def.price else 0
+	elseif kind == "waters" then
+		return Water.cost(obj) -- (water: by the square, more the deeper)
 	end
 	return 0
 end
@@ -502,8 +510,48 @@ end
 -- picture is drawn from Roblox's own thumbnail of it (Builder.pictureUri), which works for a
 -- decal's id and an image's alike and shows only what Roblox's moderation has passed.
 
--- How far over its floor a mark may lie: on a path or a deck, and a few marks one over another.
+-- Marks (Catalog: "mark", Recipes/Markings) ----------------------------------------------------
+--
+-- A mark is flat paint about 0.05 thick. It lies MarkLift over what it is put on, so its paint is
+-- 0.1 over a floor or the ground (a big flat layer needs that much to stay clear of it from
+-- afar), and over every mark it covers, by that mark's own thickness, so two marks of different
+-- paint never lie at the same height. What is put over a mark stands on what the mark lies on.
+
+Plan.MarkLift = 0.05
+-- How far over its floor a mark may lie: on a path or a deck, and a pile of marks over that.
 Plan.MarkReach = 2
+
+-- Where a mark lies: `support` is the top of what it is on (a floor, the ground, a path). The
+-- marks of the plan on its level that it overlaps raise it over them; `ignoreKey` is itself, when
+-- it is being moved.
+function Plan.markY(plan: PlanData, item: any, support: number, ignoreKey: string?): number
+	local def = Catalog.get(item.id)
+	local thick = if def then def.size.Y else 0.05
+	local y = support + Plan.MarkLift
+	local x1, z1, x2, z2 = Plan.itemRect(item)
+	local under: { { number } } = {}
+	for key, other in plan.items do
+		if key ~= ignoreKey and other.lv == item.lv then
+			local odef = Catalog.get(other.id)
+			if odef and odef.place == "mark" then
+				local a1, b1, a2, b2 = Plan.itemRect(other)
+				if a1 < x2 - 1e-3 and a2 > x1 + 1e-3 and b1 < z2 - 1e-3 and b2 > z1 + 1e-3 then
+					table.insert(under, { other.y, other.y + odef.size.Y })
+				end
+			end
+		end
+	end
+	table.sort(under, function(a, b)
+		return a[1] < b[1]
+	end)
+	for _, m in under do
+		-- a mark it would cut into (its layer reaches past this one's bottom) puts it on top
+		if m[2] > y + 1e-3 and m[1] < y + thick - 1e-3 then
+			y = m[2]
+		end
+	end
+	return math.floor(y * 100 + 0.5) / 100
+end
 
 Plan.MaxPictureId = 2 ^ 52 -- past this a number no longer holds every whole number exactly
 
@@ -639,6 +687,14 @@ function Plan.validItem(plan: PlanData, item: any, ignoreKey: string?): (boolean
 	if def.place == "ground" and item.lv ~= 0 then
 		return false, "goes outside on the ground"
 	end
+	-- (water: a piece made for water goes only in it, at its own height; nothing else stands in
+	-- it unless it is up on something over it. Build/Water decides, or says nothing.)
+	local wet, why = Water.checkItem(plan, item, def, x1, z1, x2, z2)
+	if wet == false then
+		return false, why
+	elseif wet == true then
+		return true
+	end
 	if def.place == "stairs" then
 		if item.lv >= P.Levels - 1 then
 			return false, "no floor above"
@@ -673,12 +729,22 @@ end
 
 function Plan.validate(plan: PlanData, kind: string, obj: any, ignoreKey: string?): (boolean, string?)
 	local b = boundsList(plan)
-	if kind == "walls" then
-		return Plan.validWall(obj, b)
-	elseif kind == "floors" then
-		return Plan.validFloor(obj, b)
-	elseif kind == "roofs" then
-		return Plan.validRoof(obj, b)
+	-- (water: nothing is built over a pool or a pond, and water has its own rules)
+	if kind == "walls" or kind == "floors" or kind == "roofs" then
+		local ok, err
+		if kind == "walls" then
+			ok, err = Plan.validWall(obj, b)
+		elseif kind == "floors" then
+			ok, err = Plan.validFloor(obj, b)
+		else
+			ok, err = Plan.validRoof(obj, b)
+		end
+		if ok then
+			return Water.clearOf(plan, kind, obj)
+		end
+		return ok, err
+	elseif kind == "waters" then
+		return Water.valid(plan, obj, ignoreKey, b)
 	elseif kind == "items" then
 		return Plan.validItem(plan, obj, ignoreKey)
 	end
@@ -697,6 +763,9 @@ local FIELDS = {
 function Plan.clean(kind: string, obj: any): any
 	if type(obj) ~= "table" then
 		return obj
+	end
+	if kind == "waters" then
+		return Water.clean(obj) -- (water: its rectangle, edge and depth)
 	end
 	local out: { [string]: any } = {}
 	for _, k in FIELDS[kind] or {} do
@@ -726,11 +795,12 @@ local LIMITS = {
 	floors = P.MaxFloors,
 	roofs = P.MaxRoofs,
 	items = P.MaxItems,
+	waters = Tuning.Water.Max, -- (water)
 }
 
 function Plan.count(plan: PlanData, kind: string): number
 	local n = 0
-	for _ in (plan :: any)[kind] do
+	for _ in (plan :: any)[kind] or {} do -- (a plan from before there was water has no waters)
 		n += 1
 	end
 	return n
@@ -754,6 +824,7 @@ function Plan.new(size: number?): PlanData
 		floors = {},
 		roofs = {},
 		items = {},
+		waters = {}, -- (water)
 	}
 end
 
@@ -795,6 +866,9 @@ function Plan.apply(plan: PlanData, ops: { Op }): (boolean, string?)
 		if not Plan.KindSet[op.kind] or type(op.key) ~= "string" then
 			undoDone()
 			return false, "bad op"
+		end
+		if op.kind == "waters" and plan.waters == nil then
+			plan.waters = {} -- (water: a plan from before there was any)
 		end
 		local list = (plan :: any)[op.kind]
 		if op.op == "add" then
@@ -846,12 +920,17 @@ end
 -- The ops that remove an object, including whatever hangs on it.
 function Plan.removeOps(plan: PlanData, kind: string, key: string): { Op }
 	local ops = {}
-	local obj = (plan :: any)[kind][key]
+	local obj = ((plan :: any)[kind] or {})[key]
 	if obj == nil then
 		return ops
 	end
 	if kind == "walls" then
 		for _, itemKey in Plan.attached(plan, key) do
+			table.insert(ops, { op = "remove", kind = "items", key = itemKey, obj = deepCopy(plan.items[itemKey]) })
+		end
+	elseif kind == "waters" then
+		-- (water: what is in it goes with it, Build/Water)
+		for _, itemKey in Water.piecesIn(plan, key) do
 			table.insert(ops, { op = "remove", kind = "items", key = itemKey, obj = deepCopy(plan.items[itemKey]) })
 		end
 	end
@@ -861,7 +940,7 @@ end
 
 -- What has to be drawn again after these ops: { kind = { key = true } }.
 function Plan.affected(plan: PlanData, ops: { Op }): { [string]: { [string]: boolean } }
-	local out = { walls = {}, floors = {}, roofs = {}, items = {} }
+	local out = { walls = {}, floors = {}, roofs = {}, waters = {}, items = {} }
 	local floorLevels = {}
 	local function noteItem(obj: any)
 		if not obj then
@@ -961,7 +1040,8 @@ function Plan.sanitize(raw: any): PlanData
 			maxId = n
 		end
 	end
-	for _, kind in { "walls", "floors", "roofs" } do
+	-- (water after the walls, floors and roofs it must keep clear of, and before the items in it)
+	for _, kind in { "walls", "floors", "roofs", "waters" } do
 		local src = raw[kind]
 		if type(src) == "table" then
 			for key, obj in src do
@@ -993,7 +1073,7 @@ end
 function Plan.giftValue(plan: PlanData): number
 	local total = 0
 	for _, kind in Plan.Kinds do
-		for _, obj in (plan :: any)[kind] do
+		for _, obj in (plan :: any)[kind] or {} do
 			total += math.min(Plan.cost(kind, obj), giftOf(obj))
 		end
 	end
@@ -1004,7 +1084,7 @@ end
 function Plan.value(plan: PlanData): number
 	local total = 0
 	for _, kind in Plan.Kinds do
-		for _, obj in (plan :: any)[kind] do
+		for _, obj in (plan :: any)[kind] or {} do
 			total += Plan.cost(kind, obj)
 		end
 	end

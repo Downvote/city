@@ -15,6 +15,7 @@ local Text = require(Shared.Util.Text)
 
 local Data = require(script.Parent.Data)
 local World = require(script.Parent.World)
+local Room = require(script.Parent.Parent.Npc.Room)
 
 local Plots = {}
 
@@ -110,7 +111,8 @@ function Plots.sendTo(player: Player, character: Model?)
 	end
 	local root = char:FindFirstChild("HumanoidRootPart")
 	if root and root:IsA("BasePart") then
-		char:PivotTo(Town.plotArrival(i))
+		-- on open ground: beside whatever may stand on the spot (Npc/Room)
+		char:PivotTo(Room.landing(char, Town.plotArrival(i)))
 	end
 end
 
@@ -344,7 +346,8 @@ function Plots.start()
 			end
 			humanoid.Sit = false
 		end
-		char:PivotTo(Town.plotArrival(index))
+		-- always onto open ground, never into something standing on the spot (Npc/Room)
+		char:PivotTo(Room.landing(char, Town.plotArrival(index)))
 		return true, nil
 	end
 	Players.PlayerRemoving:Connect(function(player)
@@ -359,7 +362,7 @@ function Plots.start()
 		if not char then
 			return false
 		end
-		char:PivotTo(Town.plotArrival(index))
+		char:PivotTo(Room.landing(char, Town.plotArrival(index)))
 		return true
 	end
 end

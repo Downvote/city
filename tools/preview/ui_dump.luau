@@ -16,14 +16,26 @@
 --                       them already down (build:keepsakes:empty before anybody has)
 --   build:placing       Build mode holding an armchair to place: the bars away, the hint left
 --                       (build:placing:touch on a touch screen, with its two round buttons)
+--   build:styles        Build mode's Styles group on its Cozy tile (build:styles:<look> another)
+--   build:shapes        Build mode's Shapes tile (build:pillars, build:markings: those tiles)
+--   build:picture       the page for choosing a picture for a standing sign, a decal's id checked
+--                       (build:picture:bad an id that isn't a picture, build:picture:pick a placed
+--                       sign picked, with the picture it has)
 --   panel:<Name>        a panel over the main screen (Residents, CityPanel, News, Goals,
---                       Welcome)
+--                       Tutorial: the tutorial's welcome)
 --   panel:<Name>:<state> a menu in one of its states: Residents:friends, Residents:empty (nobody
 --                       lives here), Residents:craving (Mara craves something: the Buy button),
 --                       Residents:short (the same without the coins), News:empty, News:busy (news from several
 --                       days and a request), Goals:claimed (a claimed goal picked), CityPanel:ready
 --                       (the next land can be bought)
 --   talk:craving        the talk card with a villager who craves something: the answer that buys it
+--   tutorial:<page>     the tutorial (UI/Tutorial): tutorial:welcome its first page on a first visit,
+--                       tutorial:1 the card on step one with the Create tile pointed at, tutorial:2
+--                       step two with the Build button's arrow, tutorial:2:build Build mode's
+--                       Furniture open with the Beds tile ringed, tutorial:3:build Work open with the
+--                       bench's card ringed, tutorial:4 waiting for a craving, tutorial:4:craving the
+--                       bubble over Tobin's head with its arrow (laid flat), tutorial:4:buy the popup
+--                       with Buy ringed, tutorial:done the card that closes it
 --   event               an event at its choices, not watched: the small prompt says they want your say
 --   event:talk          an event part way through its lines, not watched: the prompt and Watch
 --   event:one           a watched event's scene with one villager talking
@@ -194,6 +206,22 @@ local function startHud()
 	Sim.advance(2)
 end
 
+-- A watched event's scene moves a line a press (UI/EventCard): the line being typed is finished,
+-- then a click on the box goes on, as the player's would.
+local function goOn()
+	local found = Sim.gui:FindFirstChild("EventScene")
+	local box = found and found:FindFirstChild("Box", true)
+	local typed = box and box:FindFirstChild("Line", true)
+	if typed then
+		typed.MaxVisibleGraphemes = -1
+	end
+	Sim.frames(1)
+	if box then
+		box.InputBegan:Fire({ UserInputType = roblox.Enum.UserInputType.MouseButton1 })
+	end
+	Sim.frames(3)
+end
+
 -- scenes -----------------------------------------------------------------------------------------------
 
 if scene == "hud" then
@@ -233,7 +261,23 @@ elseif scene:sub(1, 5) == "build" then
 		["build:view"] = { "Furniture", "FloorUp", "See-through walls" },
 		["build:keepsakes"] = { "Furniture", "Keepsakes" },
 		["build:keepsakes:empty"] = { "Furniture", "Keepsakes" },
+		["build:styles"] = { "Styles", "Cozy" },
+		["build:shapes"] = { "Build", "Shapes" },
+		["build:pillars"] = { "Build", "Pillars" },
+		["build:markings"] = { "Outdoor", "Markings" },
+		["build:picture"] = { "Furniture", "Pictures" },
+		["build:picture:bad"] = { "Furniture", "Pictures" },
+		["build:picture:pick"] = { "Furniture", "Pictures" },
 	}
+	if scene:sub(1, 13) == "build:styles:" then
+		-- another look: its name as the tile shows it
+		local Catalog = Sim.Harness.require("ReplicatedStorage.Shared.Build.Catalog")
+		for _, look in Catalog.Styles do
+			if look.id == scene:sub(14) then
+				TABS[scene] = { "Styles", look.name }
+			end
+		end
+	end
 	if scene == "build:keepsakes" then
 		-- given in events (Sim/Keepsakes); the carved bird is already on the plot
 		local given = { keep_portrait = 1, keep_pot = 2, keep_bird = 1, keep_quilt = 1, keep_globe = 1, keep_mug = 1 }
@@ -284,6 +328,35 @@ elseif scene:sub(1, 5) == "build" then
 	end
 	if scene == "build:paint" then
 		Sim.press("Paint")
+	end
+	if scene:sub(1, 13) == "build:picture" then
+		-- Roblox's answer stood in for: 24680 a decal, 999 a place
+		local Build = Sim.Harness.require("ServerScriptService.Server.Services.Build")
+		Build.productInfo = function(id)
+			return { AssetTypeId = if id == 999 then 9 else 13 }
+		end
+		local tray = Sim.gui:FindFirstChild("Tray", true)
+		local cards = Fake.find(tray, function(d)
+			return d:IsA("TextButton") and Fake.shown(d) and d:GetAttribute("ItemId") == "pic_sign"
+		end)
+		cards[1].Activated:Fire()
+		Sim.frames(2)
+		local field = Sim.gui:FindFirstChild("PictureId", true)
+		field.Text = if scene == "build:picture:bad" then "999" else "24680"
+		Sim.press("CheckPicture")
+		Sim.frames(2)
+		if scene == "build:picture:pick" then
+			Sim.press("UsePicture")
+			Sim.mouseAtPlot(124, 64)
+			Sim.click()
+			Sim.input(Enum.UserInputType.MouseButton2, true)
+			Sim.input(Enum.UserInputType.MouseButton2, false)
+			Sim.frames(2)
+			Sim.press("Pick")
+			Sim.mouseAtPlot(124, 64, 3)
+			Sim.click()
+			Sim.mouseAtPlot(150, 96)
+		end
 	end
 	Sim.frames(3)
 elseif scene:sub(1, 6) == "panel:" then
@@ -424,7 +497,8 @@ elseif scene == "event" or scene:sub(1, 6) == "event:" then
 	Sim.remoteEvent("EventShow"):FireClient(Sim.player, ev)
 	Sim.frames(2)
 	-- the server says the lines (part of them for event:talk) and then, with choices, asks; a
-	-- watched scene plays them from its first line (UI/EventCard), so the wait picks the line
+	-- watched scene plays them from its first line, a line a press (UI/EventCard), so the
+	-- presses below take it to the line it shows
 	for i, l in ev.lines do
 		if page ~= "talk" or i == 1 then
 			Sim.remoteEvent("EventLine")
@@ -441,6 +515,11 @@ elseif scene == "event" or scene:sub(1, 6) == "event:" then
 	end
 	Sim.advance(wait)
 	if watch then
+		-- the second line for event:two and event:four, the question for event:answers
+		local presses = if page == "two" or page == "four" then 1 elseif page == "answers" then #ev.lines else 0
+		for _ = 1, presses do
+			goOn()
+		end
 		Sim.frames(60) -- a second at the game's own pace, so the line being typed is all there
 	end
 elseif scene == "talk" or scene == "talk:again" or scene == "talk:craving" then
@@ -1090,9 +1169,13 @@ elseif scene:sub(1, 9) == "cutscene:" then
 	}
 	Sim.remoteEvent("EventShow"):FireClient(Sim.player, ev)
 	Sim.frames(2)
-	local function say(l, last)
+	-- a line said, and (press) the player going on to it, as the scene waits for them to
+	local function say(l, last, press)
 		Sim.remoteEvent("EventLine"):FireClient(Sim.player, { token = "c1", line = table.clone(l), last = last })
 		Sim.frames(2)
+		if press then
+			goOn()
+		end
 		Sim.advance(2.6)
 	end
 	local count = tonumber(step) or #made.lines
@@ -1100,11 +1183,12 @@ elseif scene:sub(1, 9) == "cutscene:" then
 	Sim.press("Watch")
 	Sim.advance(1)
 	for i = 2, math.min(count, #made.lines) do
-		say(made.lines[i], not made.choices and i == #made.lines)
+		say(made.lines[i], not made.choices and i == #made.lines, true)
 	end
 	if step == "ask" or step:sub(1, 1) == "a" then
 		Sim.remoteEvent("EventLine"):FireClient(Sim.player, { token = "c1", ask = true })
 		Sim.frames(2)
+		goOn()
 		Sim.advance(2)
 	end
 	local after = tonumber(step:match("^a(%d+)$") or "")
@@ -1112,12 +1196,85 @@ elseif scene:sub(1, 9) == "cutscene:" then
 		Sim.press("Choice1")
 		local lines = made.choices[1].lines or {}
 		for i = 1, math.min(after, #lines) do
-			say(lines[i], i == #lines)
+			-- (the first comes the moment it is said: the answer was the press)
+			say(lines[i], i == #lines, i > 1)
 		end
 	end
 	Sim.advance(2)
 	Sim.frames(60)
 	stageShot = true
+elseif scene:sub(1, 9) == "tutorial:" then
+	-- the tutorial (UI/Tutorial): its welcome, and its card at each step with the ring or arrow on
+	-- what to press next (see the list at the top)
+	local page = scene:sub(10)
+	local bedKey
+	for key, item in Sim.State.plan.items do
+		if item.id == "bed_single" then
+			bedKey = key
+		end
+	end
+	first.isYou = true
+	first.wish = nil
+	local patch = { tutorial = 0, stats = { cravings = 0 }, villagers = villagers, order = order }
+	if page == "welcome" or page == "1" then
+		patch.villagers, patch.order = {}, {}
+	elseif page == "2" or page == "2:build" then
+		patch.tutorial = 1
+	elseif page == "3:build" then
+		first.bed, first.job = bedKey, nil
+		patch.tutorial = 2
+	else
+		first.bed = bedKey
+		patch.tutorial = 3
+		if page ~= "4" then
+			villagers[order[2]].wish = { kind = "food", arg = "curry", untilT = os.time() + 9999 }
+		end
+	end
+	Sim.remoteEvent("State"):FireClient(Sim.player, patch)
+	Sim.frames(2)
+	if page == "4:craving" or page == "4:buy" then
+		villagerModels()
+	end
+	startHud()
+	Sim.advance(2)
+	if page == "1" then
+		Hud.closeAll()
+		Sim.advance(1)
+	elseif page == "2:build" or page == "3:build" then
+		Sim.BuildMode.enter()
+		Sim.frames(3)
+		Sim.press(if page == "2:build" then "Furniture" else "Work")
+		Sim.advance(1)
+	elseif page == "4:craving" then
+		-- the bubble over Tobin's head (World/Wishes), laid flat where his head would be (the
+		-- BillboardGuis themselves can't be drawn here) with the arrow the tutorial put on it
+		local folder = Sim.ws:FindFirstChild("Plots"):FindFirstChild("Plot1"):FindFirstChild("Villagers")
+		local model = folder:FindFirstChild("Tobin")
+		model:SetAttribute("Wish", "apple")
+		Harness.require(Sim.CLIENT .. "World.Wishes").start()
+		Sim.advance(2)
+		Sim.frames(3)
+		local bubble = Sim.playerGui:FindFirstChild("WishBubble")
+		local fade = bubble and bubble:FindFirstChild("Fade")
+		if fade then
+			fade.Parent = Sim.gui
+			fade.Visible = true
+			fade.GroupTransparency = 0
+			fade.Position = UDim2.fromOffset(620, 470)
+			local pop = fade:FindFirstChild("Pop")
+			if pop then
+				pop.Scale = 1
+			end
+		end
+	elseif page == "4:buy" then
+		Hud.open("WishPopup", order[2])
+		Sim.frames(3)
+		Sim.advance(1)
+	elseif page == "done" then
+		Sim.remoteEvent("State"):FireClient(Sim.player, { stats = { cravings = 1 } })
+		Sim.frames(2)
+		Sim.advance(1)
+	end
 else
 	error("unknown scene " .. scene)
 end

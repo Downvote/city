@@ -591,8 +591,11 @@ describe("Event engine", function()
 		if #missing > 0 then
 			error("never playable: " .. table.concat(missing, ", "))
 		end
-		-- and hardly anyone shouts (CLAUDE.md: "no exclamation on every line")
-		if shouts / said >= 0.12 then
+		-- and hardly anyone shouts (CLAUDE.md: "no exclamation on every line"). The loud ones shout
+		-- more now (the user: "make every single personality have a unique and distinct speech
+		-- pattern", Sim/Voice), so the cap is a fifth of the lines; Voice's spec holds the quiet ones
+		-- to none.
+		if shouts / said >= 0.2 then
 			error(string.format("%d of %d lines shout", shouts, said))
 		end
 		-- and a message is one sentence, or two that belong together, not a string of clipped bits

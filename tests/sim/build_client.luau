@@ -241,7 +241,7 @@ end)
 
 run("every tab and tool opens without an error", function()
 	local warned = #errors
-	local mains = { "Build", "Furniture", "Outdoor", "Work" }
+	local mains = { "Build", "Furniture", "Outdoor", "Styles", "Work" }
 	for _, main in mains do
 		press(main)
 		local subs = Fake.find(gui:FindFirstChild("Subs", true), function(d)
@@ -352,6 +352,377 @@ run("keepsakes: free, and only as many as a villager gave you", function()
 	check(#list == 1 and labelOf(list[1]):find("Free, 1 left", 1, true) ~= nil, "and it's back in the tray to put down")
 	BuildMode.setTool("select")
 	frames(2)
+	check(#errors == warned, "no warnings from any of it")
+end)
+
+-- the user: "add much much more buildings, decoration, paths, fences and other options. there
+-- should be many to choose from from different categories, like garden, sci fi, cozy, etc, just
+-- like bloxburg. there should also be basic shapes, like cube, cylinder, etc. also, allow the
+-- player to use custom decal in the roblox library", then markings and pillars
+
+local function trayCards(id)
+	local tray = gui:FindFirstChild("Tray", true)
+	return Fake.find(tray, function(d)
+		return d:IsA("TextButton")
+			and Fake.shown(d)
+			and d:GetAttribute("ItemId") ~= nil
+			and (id == nil or d:GetAttribute("ItemId") == id)
+	end)
+end
+
+local function putAway()
+	input(Enum.UserInputType.MouseButton2, true)
+	input(Enum.UserInputType.MouseButton2, false)
+	frames(2)
+end
+
+local function newest(test)
+	local best, bestKey = nil, nil
+	for k, it in profile.plan.items do
+		if test(it) and (bestKey == nil or tonumber(k) > tonumber(bestKey)) then
+			best, bestKey = it, k
+		end
+	end
+	return best, bestKey
+end
+
+run("the Styles group: one look across every category", function()
+	local warned = #errors
+	local Catalog = Sim.Harness.require("ReplicatedStorage.Shared.Build.Catalog")
+	press("Styles")
+	local subs = Fake.find(gui:FindFirstChild("Subs", true), function(d)
+		return d:IsA("TextButton") and Fake.shown(d)
+	end)
+	check(#subs == #Catalog.Styles, "a tile for every look (" .. #subs .. ")")
+	press("Cozy")
+	local cards = trayCards()
+	table.sort(cards, function(a, b)
+		return a.LayoutOrder < b.LayoutOrder
+	end)
+	local want = Catalog.withStyle("cozy")
+	check(#cards == #want and #cards >= 10, "the Cozy tile shows every cozy piece (" .. #cards .. ")")
+	local cats, cozy, sorted, last = {}, true, true, 0
+	for _, c in cards do
+		local def = Catalog.get(c:GetAttribute("ItemId"))
+		cozy = cozy and def.style == "cozy"
+		cats[def.cat] = true
+		local o = Catalog.categoryOrder(def.cat)
+		sorted = sorted and o >= last
+		last = o
+	end
+	local n = 0
+	for _ in cats do
+		n += 1
+	end
+	check(cozy, "every one of them cozy")
+	check(n >= 4, "from many categories (" .. n .. ")")
+	check(sorted, "in Build mode's order of categories")
+	-- one goes down like any other piece
+	local pick
+	for _, c in cards do
+		if not pick and Catalog.get(c:GetAttribute("ItemId")).place == "floor" then
+			pick = c
+		end
+	end
+	local before = count("items")
+	pick.Activated:Fire()
+	frames(2)
+	check(mouseAtPlot(186, 132), "the spot is on screen")
+	click()
+	check(count("items") == before + 1, "a piece picked from a look goes down")
+	putAway()
+	check(#errors == warned, "no warnings from any of it")
+end)
+
+run("basic shapes: a cube, and another stacked on it", function()
+	local warned = #errors
+	press("Build")
+	press("Shapes")
+	local cards = trayCards()
+	check(#cards >= 40, "the Shapes tile has the shapes in their sizes (" .. #cards .. ")")
+	trayCards("shape_cube_medium")[1].Activated:Fire()
+	frames(2)
+	check(mouseAtPlot(192, 146), "the spot is on screen")
+	click()
+	local cube = newest(function(it)
+		return it.id == "shape_cube_medium"
+	end)
+	check(cube ~= nil, "a cube goes down")
+	-- still in hand: the next one, held over the first cube's top, stands on it
+	mouseAtPlot(cube.x, cube.z, cube.y + 4)
+	click()
+	local top = newest(function(it)
+		return it.id == "shape_cube_medium"
+	end)
+	check(
+		top ~= cube and math.abs(top.y - (cube.y + 4)) < 0.05,
+		"a second cube sits on top of the first (" .. top.y .. ")"
+	)
+	putAway()
+	check(#errors == warned, "no warnings from any of it")
+end)
+
+run("a picture from the library on a standing sign", function()
+	local warned = #errors
+	local Builder = Sim.Harness.require("ReplicatedStorage.Shared.Build.Builder")
+	local Build = Sim.Harness.require("ServerScriptService.Server.Services.Build")
+	-- Roblox's answers, stood in for: a decal, an image, and a place
+	local kinds = { [24680] = 13, [13579] = 1, [999] = 9 }
+	Build.productInfo = function(id)
+		if not kinds[id] then
+			error("HTTP 400")
+		end
+		return { AssetTypeId = kinds[id] }
+	end
+	press("Furniture")
+	press("Pictures")
+	local before = count("items")
+	trayCards("pic_sign")[1].Activated:Fire()
+	frames(2)
+	check(BuildMode.state.placing == nil, "a picture piece asks for its picture before it is picked up")
+	local function field()
+		return gui:FindFirstChild("PictureId", true)
+	end
+	local function status()
+		local s = gui:FindFirstChild("PictureStatus", true)
+		return if s then s.Text else ""
+	end
+	check(field() ~= nil and Fake.shown(field()), "a box to paste the id into")
+	field().Text = "a cat"
+	press("CheckPicture")
+	check(status():find("isn't an id", 1, true) ~= nil, "words that aren't an id say so: " .. status())
+	field().Text = "999"
+	press("CheckPicture")
+	frames(2)
+	check(status():find("isn't a decal or an image", 1, true) ~= nil, "a place isn't a picture: " .. status())
+	press("UsePicture")
+	check(BuildMode.state.placing == nil, "and won't go on the sign")
+	field().Text = "https://create.roblox.com/store/asset/24680/Sunset"
+	press("CheckPicture")
+	frames(2)
+	check(status() == "That one works.", "a decal's link works: " .. status())
+	local preview = gui:FindFirstChild("PicturePreview", true)
+	local image = preview and preview:FindFirstChild("Image")
+	check(image ~= nil and image.Image == Builder.pictureUri(24680), "the picture shows before it's used")
+	press("UsePicture")
+	check(BuildMode.state.placing ~= nil and BuildMode.state.placing.img == 24680, "Place it picks the sign up with it")
+	check(mouseAtPlot(198, 152), "the spot is on screen")
+	click()
+	local sign, key = newest(function(it)
+		return it.id == "pic_sign"
+	end)
+	check(count("items") == before + 1 and sign ~= nil and sign.img == 24680, "the server keeps the picture's id")
+	local model = Sim.buildFolder:FindFirstChild("items_" .. key)
+	local shown = model and model:FindFirstChild("Image", true)
+	check(shown ~= nil and shown.Image == Builder.pictureUri(24680), "and the sign shows it")
+	putAway()
+	-- picked, its picture can be changed
+	press("Pick")
+	mouseAtPlot(sign.x, sign.z, 3)
+	click()
+	local _, picked = BuildMode.selectedObject()
+	check(picked == key, "clicking the sign picks it")
+	check(field() ~= nil and field().Text == "24680", "the tray shows the picture it has")
+	field().Text = "13579"
+	press("CheckPicture")
+	frames(2)
+	press("UsePicture")
+	check(profile.plan.items[key].img == 13579, "Use it puts an image on instead")
+	-- the server won't take a bad one, however it's asked
+	local bad = table.clone(profile.plan.items[key])
+	bad.img = 999
+	Sim.advance(0.2)
+	local ok = Sim.remoteFn("BuildApply").OnServerInvoke(Sim.player, {
+		{ type = "set", kind = "items", key = key, obj = bad },
+	})
+	check(ok == false and profile.plan.items[key].img == 13579, "the server refuses a place's id")
+	press("Take it off")
+	check(profile.plan.items[key] ~= nil and profile.plan.items[key].img == nil, "Take it off leaves it blank")
+	BuildMode.setTool("select")
+	frames(2)
+	check(#errors == warned, "no warnings from any of it")
+end)
+
+run("a mark goes under a table, and nothing stands on a mark", function()
+	local warned = #errors
+	local Catalog = Sim.Harness.require("ReplicatedStorage.Shared.Build.Catalog")
+	local Plan = Sim.Harness.require("ReplicatedStorage.Shared.Build.Plan")
+	press("Furniture")
+	press("Tables")
+	trayCards("table_round")[1].Activated:Fire()
+	frames(2)
+	check(mouseAtPlot(180, 160), "the spot is on screen")
+	click()
+	putAway()
+	local tbl = newest(function(it)
+		return it.id == "table_round"
+	end)
+	-- a mark from the Markings tile (or, while it has none, the floor decal, which lies the same way)
+	press("Outdoor")
+	press("Markings")
+	local marks = trayCards()
+	if #marks > 0 then
+		marks[1].Activated:Fire()
+	else
+		print("  (no markings yet: the floor decal stands in)")
+		press("Furniture")
+		press("Pictures")
+		trayCards("pic_decal_floor")[1].Activated:Fire()
+		frames(2)
+		press("Place it blank")
+	end
+	frames(2)
+	local markId = BuildMode.state.placing and BuildMode.state.placing.id
+	check(markId ~= nil and Catalog.get(markId).place == "mark", "a mark is in hand")
+	-- held over the table's top, it goes on the floor under the table
+	mouseAtPlot(tbl.x, tbl.z, tbl.y + Catalog.get("table_round").size.Y)
+	click()
+	local mark = newest(function(it)
+		return it.id == markId
+	end)
+	-- (the pointer's line runs on through the table to the floor, so the mark lands a little way
+	-- along it, under the table's top)
+	local size = Catalog.get(markId).size
+	check(
+		mark ~= nil and math.abs(mark.x - tbl.x) < size.X / 2 + 1.8 and math.abs(mark.z - tbl.z) < size.Z / 2 + 1.8,
+		"the mark goes down under the table ("
+			.. tostring(mark and (mark.x - tbl.x))
+			.. ", "
+			.. tostring(mark and (mark.z - tbl.z))
+			.. ")"
+	)
+	check(
+		mark ~= nil and math.abs(mark.y - (tbl.y + Plan.MarkLift)) < 0.02,
+		"on the floor, not on the table (" .. tostring(mark and mark.y) .. ")"
+	)
+	putAway()
+	-- a big floor decal, and a cube put over it stands on the ground, not on the paint
+	press("Furniture")
+	press("Pictures")
+	trayCards("pic_decal_floor_big")[1].Activated:Fire()
+	frames(2)
+	press("Place it blank")
+	mouseAtPlot(204, 166)
+	click()
+	putAway()
+	local decal = newest(function(it)
+		return it.id == "pic_decal_floor_big"
+	end)
+	check(decal ~= nil, "a big floor decal goes down")
+	press("Build")
+	press("Shapes")
+	trayCards("shape_cube_small")[1].Activated:Fire()
+	frames(2)
+	mouseAtPlot(decal.x + 2, decal.z + 2, decal.y + 0.04)
+	click()
+	putAway()
+	local cube = newest(function(it)
+		return it.id == "shape_cube_small"
+	end)
+	check(
+		cube ~= nil and cube.y < decal.y,
+		"a cube over the decal stands under it on the ground (" .. tostring(cube and cube.y) .. ")"
+	)
+	check(#errors == warned, "no warnings from any of it")
+end)
+
+run("a pillar from the Build group", function()
+	local warned = #errors
+	press("Build")
+	press("Pillars")
+	local cards = trayCards()
+	check(#cards > 0, "the Pillars tile has pillars (" .. #cards .. ")")
+	if #cards > 0 then
+		local before = count("items")
+		cards[1].Activated:Fire()
+		frames(2)
+		check(mouseAtPlot(172, 150), "the spot is on screen")
+		click()
+		check(count("items") == before + 1, "a pillar goes down")
+		putAway()
+	end
+	check(#errors == warned, "no warnings from any of it")
+end)
+
+run("the fences: every kind in a row that scrolls, each with its own finish", function()
+	local Plan = Sim.Harness.require("ReplicatedStorage.Shared.Build.Plan")
+	press("Outdoor")
+	press("Fences")
+	local before = count("walls")
+	press("Bamboo fence")
+	check(BuildMode.state.wallStyle == "bamboo", "a fence's tile picks it")
+	drag(176, 170, 190, 170)
+	local w = newest and nil
+	for _, o in profile.plan.walls do
+		if o.style == "bamboo" then
+			w = o
+		end
+	end
+	check(count("walls") == before + 1 and w ~= nil, "a bamboo fence goes up")
+	check(w ~= nil and w.a.c == Plan.WallStyles.bamboo.paint.c, "in its own finish")
+	local tiles = Fake.find(gui:FindFirstChild("Tray", true), function(d)
+		return d:IsA("TextButton") and Fake.shown(d)
+	end)
+	check(#tiles >= 13, "every kind of fence has a tile (" .. #tiles .. ")")
+	input(Enum.UserInputType.MouseButton2, true)
+	input(Enum.UserInputType.MouseButton2, false)
+end)
+
+-- (the user: "also, add ability to add water, along with things that can go in the water")
+run("a pond dug by dragging, with a lily pad floating on it", function()
+	local warned = #errors
+	local Water = Sim.Harness.require("ReplicatedStorage.Shared.Build.Water")
+	local Catalog = Sim.Harness.require("ReplicatedStorage.Shared.Build.Catalog")
+	local WaterTool = Sim.Harness.require("StarterPlayer.StarterPlayerScripts.Client.Build.WaterTool")
+	press("Outdoor")
+	-- the Water tile, by its name (cards elsewhere have "water" in theirs)
+	local tile = buttons(function(b)
+		return b.Name == "Water"
+	end)
+	check(#tile > 0, "the Outdoor group has a Water tile")
+	tile[1].Activated:Fire()
+	frames(2)
+	check(BuildMode.state.tool == "water", "it takes up the water tool")
+	check(#trayCards() >= 18, "and the tray shows what goes in water (" .. #trayCards() .. ")")
+	press("Pond")
+	press("Paddling")
+	check(WaterTool.state.edge == "pond" and WaterTool.state.depth == "shallow", "a pond, shallow, is picked")
+	check(BuildMode.state.tool == "water", "with the tool still in hand")
+	local before = count("waters")
+	drag(246, 150, 262, 166)
+	check(count("waters") == before + 1, "a dragged pond is dug")
+	local pond, newestKey = nil, nil
+	for k, w in profile.plan.waters do
+		if newestKey == nil or tonumber(k) > tonumber(newestKey) then
+			pond, newestKey = w, k
+		end
+	end
+	check(
+		pond ~= nil and pond.edge == "pond" and pond.depth == "shallow" and pond.x2 - pond.x1 == 16,
+		"as a shallow pond, 16 across, on the water's grid"
+	)
+	check(clientCount("waters") == count("waters"), "the client's copy matches")
+	local cards = trayCards("water_lilies")
+	check(#cards == 1, "the lily pads have a card")
+	if #cards == 1 then
+		cards[1].Activated:Fire()
+		frames(2)
+		local items = count("items")
+		check(mouseAtPlot(254, 158), "the pond is on screen")
+		click()
+		check(count("items") == items + 1, "a lily pad floats on it")
+		local lily = newest(function(it)
+			return it.id == "water_lilies"
+		end)
+		check(
+			lily ~= nil and math.abs(lily.y - Water.pieceY(Catalog.get("water_lilies"))) < 1e-3,
+			"at the water's surface"
+		)
+		mouseAtPlot(254, 140)
+		click()
+		check(count("items") == items + 1, "and not on dry ground")
+		putAway()
+	end
 	check(#errors == warned, "no warnings from any of it")
 end)
 

@@ -5,7 +5,8 @@
 -- details cut out in a second. The stickers are drawn in two passes (dark outline copies first,
 -- then the fills with no stroke), so the only outline that shows is the one round the whole
 -- silhouette. The foods (UI/ItemArt) are icons too (the user: "make food and thing icons
--- sillouhettes like normal icons as well"), held to the same rules and shown in their own colour.
+-- sillouhettes like normal icons as well"), held to the same rules and shown in their own colour,
+-- and kept to a few shapes and a cut or two (the user: "make food/item icons much simpler").
 
 local Icons = require("StarterPlayer.StarterPlayerScripts.Client.UI.Icons")
 local Foods = require("ReplicatedStorage.Shared.Data.Foods")

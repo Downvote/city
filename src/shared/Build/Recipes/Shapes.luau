@@ -379,7 +379,7 @@ for _, kind in KINDS do
 		local draw = kind.draw
 		table.insert(items, {
 			id = id,
-			name = (size[6] :: string?) or (label .. " " .. kind.name),
+			name = (size[6] :: any) or (label .. " " .. kind.name),
 			cat = "shapes",
 			price = size[5] :: number,
 			place = "floor",

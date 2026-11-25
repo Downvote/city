@@ -216,7 +216,7 @@ local function point(target: GuiObject?, how: string?)
 			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 			Parent = ring,
 		})
-		TweenService:Create(stroke, PULSE, { Transparency = 0.65 }):Play()
+		TweenService:Create(stroke, PULSE, { Transparency = 0.45 }):Play()
 		table.insert(pointer.parts, ring)
 	end
 	if how == "out" or how == "arrow" then
@@ -363,12 +363,12 @@ local function now(step: number, t: any): any
 				craving = { vid = vid, v = v, food = Foods.get(w.arg) }
 			end
 		end
+		view.food = craving and craving.food
 		local buy = buyButton()
 		if buy then
 			view.line = "Press Buy to get it for them."
 			view.target, view.how, view.phase = buy, "out", "buy"
 		elseif craving then
-			view.food = craving.food
 			local what = Text.fill("{x} is craving {food}.", { x = craving.v.name, food = Foods.phrase(craving.food) })
 			local model = models()[craving.vid]
 			local bubble = model and not inBuild and bubbleOf(model)
@@ -598,6 +598,20 @@ local function paint(view: any)
 			skip()
 		end
 	end)
+	-- what comes next, under the picture
+	Kit.caption(
+		if done then "" elseif view.step < Steps.Count then "Next: " .. LOOK[view.step + 1].short else "Last step",
+		{
+			Name = "Next",
+			Parent = box,
+			Position = UDim2.new(0, PAD, 1, -12),
+			AnchorPoint = Vector2.new(0, 1),
+			ZIndex = 3,
+		}
+	)
+	if done then
+		return
+	end
 	local tuck = Kit.roundButton("back", {
 		Name = "Tuck",
 		Parent = box,

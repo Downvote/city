@@ -6,6 +6,8 @@ local PathfindingService = game:GetService("PathfindingService")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Tuning = require(Shared.Config.Tuning)
 local Bubble = require(Shared.Util.Bubble)
+local Voice = require(Shared.Sim.Voice)
+local Room = require(script.Parent.Room)
 
 local Npc = {}
 Npc.__index = Npc
@@ -13,6 +15,7 @@ Npc.__index = Npc
 export type Npc = typeof(setmetatable(
 	{} :: {
 		playerName: string?, -- what they call their player ({player} in a line)
+		pers: string?, -- their personality, for how they write (Sim/Voice)
 		model: Model,
 		humanoid: Humanoid,
 		root: BasePart,
@@ -23,6 +26,7 @@ export type Npc = typeof(setmetatable(
 		busy: boolean,
 		seat: Seat?,
 		sleeping: boolean,
+		bed: BasePart?, -- the bed spot they lie on (Npc.sleep), so they get up beside it
 		bubble: BillboardGui?,
 		bubbleToken: number,
 		vid: string,
@@ -86,6 +90,7 @@ function Npc.new(model: Model, vid: string): Npc
 		busy = false,
 		seat = nil,
 		sleeping = false,
+		bed = nil,
 		bubble = nil,
 		bubbleToken = 0,
 		vid = vid,
@@ -194,13 +199,15 @@ end
 
 -- Walks to a world point. Returns true if it got there. Cancelled by a newer walk or stand().
 -- How villagers path: a little narrower than a door, allowed to hop small steps, and happy to
--- walk through door leaves (they swing open as you come up to them).
+-- walk through door leaves (they swing open as you come up to them). Only what is solid stands
+-- in a path, and of a placed piece that is its body (Build/Solid), so furniture is as big to a
+-- path as it is to a body walking into it.
 local AGENT = {
-	AgentRadius = 1.3,
-	AgentHeight = 5,
+	AgentRadius = Tuning.Unstick.Agent.Radius,
+	AgentHeight = Tuning.Unstick.Agent.Height,
 	AgentCanJump = true,
 	AgentCanClimb = false,
-	WaypointSpacing = 3,
+	WaypointSpacing = Tuning.Unstick.Agent.Spacing,
 	Costs = { Water = 20, Door = 1 },
 }
 
@@ -265,6 +272,14 @@ function Npc.pathLength(list: { any }): number
 	return total
 end
 
+-- A villager whose walk got nowhere, after a hop and a new path: stood on the waypoint they were
+-- making for when there is room there, else on the nearest spot with room (Npc/Room). The user:
+-- "villagers and the player can sometimes get stuck in objects".
+function Npc.free(self: Npc, waypoint: Vector3?): boolean
+	local ok, moved = pcall(Room.free, self.model, waypoint)
+	return ok and moved == true
+end
+
 -- How far the walk to a point would be (without taking it), or nil when there is no way there.
 function Npc.routeLength(self: Npc, target: Vector3): number?
 	local list = computePath(self, target)
@@ -282,6 +297,7 @@ function Npc.walkTo(self: Npc, target: Vector3, timeout: number?, maxPath: numbe
 	local token = self.moving
 	local deadline = os.clock() + (timeout or 25)
 	local tries = 0
+	local stuckTimes = 0 -- legs that got nowhere: a hop, then a new path, then moved on (Npc.free)
 	while tries < 3 do
 		tries += 1
 		if self.moving ~= token or not self.model.Parent then
@@ -356,12 +372,13 @@ function Npc.walkTo(self: Npc, target: Vector3, timeout: number?, maxPath: numbe
 				again = false
 				self.humanoid:MoveTo(list[index].Position)
 			end
-			if (pos - lastPos).Magnitude > 0.4 then
+			-- (Tuning.Unstick: a hop first, then a new path)
+			if (pos - lastPos).Magnitude > Tuning.Unstick.Moved then
 				lastPos = pos
 				lastMove = os.clock()
-			elseif os.clock() - lastMove > 1.2 then
+			elseif os.clock() - lastMove > Tuning.Unstick.JumpAfter then
 				self.humanoid.Jump = true
-				if os.clock() - lastMove > 2.4 then
+				if os.clock() - lastMove > Tuning.Unstick.ReplanAfter then
 					stuck = true
 					break
 				end
@@ -373,6 +390,14 @@ function Npc.walkTo(self: Npc, target: Vector3, timeout: number?, maxPath: numbe
 		end
 		if (self.root.Position - target).Magnitude < 3.5 then
 			return true
+		end
+		if stuck then
+			stuckTimes += 1
+			-- stuck again on the new path: moved on to where they were going, or out of what
+			-- they are caught in, and the next path starts from there
+			if stuckTimes >= 2 then
+				Npc.free(self, list[index].Position)
+			end
 		end
 		if os.clock() >= deadline then
 			break
@@ -482,20 +507,37 @@ function Npc.setTalkable(self: Npc, on: boolean)
 	end
 end
 
+-- Up from a bed or a seat, and stood on the floor beside it (Npc/Room): getting up used to
+-- leave them on the mattress or in the sofa's back.
 function Npc.standUp(self: Npc)
 	if self.sleeping then
+		local bed = self.bed
+		self.bed = nil
 		self.sleeping = false
 		self.root.Anchored = false
 		self.humanoid.PlatformStand = false
 		self.humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
 		self:stop("sit")
+		if bed then
+			pcall(Room.standBeside, self.model, bed)
+		end
 		self:claim()
 		self:setTalkable(self.talkable)
 	end
 	if self.seat then
-		self.humanoid.Sit = false
-		self.humanoid.Jump = true
+		local seat = self.seat
+		-- (still in it: a seat that was moved or sold has let them go already)
+		local sitting = self.humanoid.SeatPart == seat
 		self.seat = nil
+		local stood = false
+		if sitting then
+			local ok, done = pcall(Room.standBeside, self.model, seat)
+			stood = ok and done == true
+		end
+		self.humanoid.Sit = false
+		if not stood then
+			self.humanoid.Jump = true
+		end
 		self:stop("sit")
 		task.wait(0.15)
 		self:claim()
@@ -506,6 +548,7 @@ end
 function Npc.sleep(self: Npc, spot: BasePart)
 	self:halt()
 	self.sleeping = true
+	self.bed = spot
 	self:setTalkable(self.talkable) -- nobody is woken for a chat
 	self:stop("walk")
 	self:play("idle")
@@ -541,6 +584,8 @@ function Npc.say(self: Npc, text: string, seconds: number?)
 	text = text:gsub("{player}", function()
 		return self.playerName or "friend"
 	end)
+	-- and say it in their own hand (Sim/Voice; `pers` is set when they're spawned)
+	text = Voice.speak(self.pers, text)
 	local gui = makeBubble(self)
 	self.bubbleToken += 1
 	local token = self.bubbleToken

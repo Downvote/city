@@ -6,14 +6,15 @@ local Geometry = require(Shared.Build.Geometry)
 
 local ModelPreview = {}
 
-local function frameCamera(vp: ViewportFrame, lo: Vector3, hi: Vector3, yawDeg: number?)
+local function frameCamera(vp: ViewportFrame, lo: Vector3, hi: Vector3, yawDeg: number?, pitchDeg: number?)
 	local cam = Instance.new("Camera")
 	cam.FieldOfView = 30
 	local center = (lo + hi) / 2
 	local radius = math.max((hi - lo).Magnitude / 2, 0.5)
 	local dist = radius / math.tan(math.rad(cam.FieldOfView / 2)) * 1.05
 	local yaw = math.rad(yawDeg or 35)
-	local pitch = math.rad(24)
+	-- (Pitch: how far it looks down; something flat, a mark on the floor, is seen from high up)
+	local pitch = math.rad(pitchDeg or 24)
 	local dir = Vector3.new(math.sin(yaw) * math.cos(pitch), math.sin(pitch), math.cos(yaw) * math.cos(pitch))
 	cam.CFrame = CFrame.lookAt(center + dir * dist, center)
 	cam.Parent = vp
@@ -42,7 +43,7 @@ function ModelPreview.fromPrims(prims: { Geometry.Prim }, props: { [string]: any
 	model.Parent = vp
 	if #visible > 0 then
 		local lo, hi = Geometry.bounds(visible)
-		frameCamera(vp, lo, hi, p.Yaw)
+		frameCamera(vp, lo, hi, p.Yaw, p.Pitch)
 	end
 	if p.Parent then
 		vp.Parent = p.Parent

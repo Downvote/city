@@ -23,7 +23,17 @@ end
 
 -- A free-standing piece at (x, z) turned r, `y` up (nil: on the floor or the ground), on storey
 -- `lv`, painted.
-function Lay.put(b: any, id: string, x: number, z: number, r: number?, y: number?, c1: string?, c2: string?, lv: number?)
+function Lay.put(
+	b: any,
+	id: string,
+	x: number,
+	z: number,
+	r: number?,
+	y: number?,
+	c1: string?,
+	c2: string?,
+	lv: number?
+)
 	b:item(id, x, z, r or 0, lv or 0, y)
 	if c1 or c2 then
 		Lay.paint(b, c1, c2)
@@ -115,10 +125,13 @@ function Lay.footing(b: any, wall: string, len: number, skip: { { number } }?, c
 	end
 end
 
--- Corner boards round a room's corners: { x, z, turn } each (the turn as the cafe's are).
-function Lay.corners(b: any, list: { { number } }, c: string?, lv: number?)
+-- Corner boards round a room's corners: { x, z, turn } each (the turn as the cafe's are). A board
+-- is a storey and a bit tall, so one for the storey above the ground goes up from `y` 11.9 (on
+-- the ground floor's level, as the storey above's floor can't take it lower): it stops short of
+-- a roof on that storey instead of poking through it.
+function Lay.corners(b: any, list: { { number } }, c: string?, y: number?)
 	for _, p in list do
-		Lay.put(b, "corner_board", p[1], p[2], p[3], if lv and lv > 0 then Plan.levelBase(lv) else 0, c, c, lv)
+		Lay.put(b, "corner_board", p[1], p[2], p[3], y or 0, c, c)
 	end
 end
 

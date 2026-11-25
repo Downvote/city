@@ -352,14 +352,15 @@ local items: { any } = {
 		style = "garden",
 		price = 480,
 		place = "ground",
-		size = Vector3.new(26, 40, 26),
+		size = Vector3.new(26, 43, 26),
 		c1 = "6EA460",
 		c2 = "6E4C30",
 		tags = { "plant" },
 		build = function(r: R)
 			-- A huge old oak to build a treehouse round: a broad trunk (c2) on flaring roots
 			-- runs up past a platform at the first floor's height, boughs leave it above the
-			-- second and hold a wide crown (c1) high over a house's roof.
+			-- second and hold a wide crown (c1) high over a house's roof. No bough leans out to
+			-- the front (-z), so a hut can stand on that side of the trunk.
 			local bark = r.c2
 			for i = 0, 5 do
 				local a = i / 6 * math.pi * 2 + 0.3
@@ -373,19 +374,19 @@ local items: { any } = {
 				)
 			end
 			r:cyl(0, 2, 0, 4, 4.0, "y", bark, "Wood")
-			r:cyl(0, 13, 0, 18, 3.3, "y", bark, "Wood")
-			r:cyl(0, 25, 0, 6, 2.8, "y", shade(bark, 1.05), "Wood")
+			r:cyl(0, 15, 0, 22, 3.3, "y", bark, "Wood")
+			r:cyl(0, 27.5, 0, 3, 2.8, "y", shade(bark, 1.05), "Wood")
 			-- a few knots and a hollow on the trunk
 			r:lump(CFrame.new(1.4, 6.5, 0.9) * CFrame.Angles(0, 0.6, 0), 0.9, 1.1, 0.7, shade(bark, 0.85), "Wood")
 			r:lump(CFrame.new(-1.3, 9.5, -1.0) * CFrame.Angles(0, 2.2, 0), 0.8, 0.9, 0.7, shade(bark, 0.85), "Wood")
 			r:lump(CFrame.new(0.2, 4.2, 1.72) * CFrame.Angles(0, 0, 0), 0.8, 1.2, 0.3, shade(bark, 0.5), "Wood")
 			-- the boughs, rising steeply out to the crown
 			local boughs = {
-				{ 22, 0.4, 7.5, 31, 1.3 },
-				{ 23, 2.2, 7.0, 32, 1.2 },
-				{ 23.5, 4.0, 7.2, 31.5, 1.2 },
-				{ 26, 5.4, 6.0, 33, 1.0 },
-				{ 27, 1.4, 4.5, 35, 0.9 },
+				{ 23, 0.3, 7.6, 33, 1.3 },
+				{ 24, 1.5, 7.2, 34, 1.2 },
+				{ 25, 2.6, 7.4, 33.5, 1.2 },
+				{ 26, 3.5, 6.4, 35, 1.0 },
+				{ 27, 6.0, 5.0, 37, 0.9 },
 			}
 			for _, b in boughs do
 				local a = b[2]
@@ -404,14 +405,14 @@ local items: { any } = {
 			for i = 0, 7 do
 				local a = i / 8 * math.pi * 2 + 0.2
 				local rad = 7.8 + (i % 2) * 1.0
-				clump(r, math.cos(a) * rad, 30 + (i % 3) * 0.6, math.sin(a) * rad, 7.4, 5.2, 7.0, a, under)
+				clump(r, math.cos(a) * rad, 32.8 + (i % 3) * 0.6, math.sin(a) * rad, 7.4, 5.2, 7.0, a, under)
 			end
 			for i = 0, 5 do
 				local a = i / 6 * math.pi * 2 + 0.7
-				clump(r, math.cos(a) * 5.4, 34.4, math.sin(a) * 5.4, 7.6, 5.6, 7.2, a * 1.3, r.c1)
+				clump(r, math.cos(a) * 5.4, 37.2, math.sin(a) * 5.4, 7.6, 5.6, 7.2, a * 1.3, r.c1)
 			end
-			clump(r, 0, 32.5, 0, 10, 6.5, 10, 0.4, shade(r.c1, 0.9))
-			clump(r, 0.6, 37.2, -0.4, 7.4, 5.0, 7.0, 1.1, lit)
+			clump(r, 0, 35.3, 0, 10, 6.5, 10, 0.4, shade(r.c1, 0.9))
+			clump(r, 0.6, 40.0, -0.4, 7.4, 5.0, 7.0, 1.1, lit)
 		end,
 	},
 	{
@@ -842,6 +843,119 @@ local items: { any } = {
 					"SmoothPlastic"
 				)
 			end
+		end,
+	},
+	{
+		id = "show_glass_roof",
+		name = "Glass roof",
+		cat = "structure",
+		style = "garden",
+		price = 420,
+		place = "floor",
+		size = Vector3.new(17.2, 6.6, 17.2),
+		c1 = "F4F1EA",
+		c2 = "F4F1EA",
+		build = function(r: R)
+			-- A glasshouse roof for a room 16 by 16: stand it on the floor above, in the middle
+			-- of the room, its ridge running front to back. Two slopes of glass on white glazing
+			-- bars (c1), glass gables with their bars over the end walls, a ridge board (c2) with
+			-- a finial at each end and a gutter along each eave.
+			local eaveY, ridgeY, half = -0.25, 6.0, 8.6
+			local function glass(list: { Recipe.Prim })
+				for _, p in list do
+					p.transp = 0.5
+					p.collide = true
+				end
+			end
+			for _, s in { -1, 1 } do
+				glass(
+					r:quad(
+						Vector3.new(s * half, eaveY, -half),
+						Vector3.new(s * half, eaveY, half),
+						Vector3.new(0, ridgeY, half),
+						Vector3.new(0, ridgeY, -half),
+						0.12,
+						C.Glass,
+						"Glass"
+					)
+				)
+				r:piece(function(q: R)
+					q:block(
+						s * half - 0.12,
+						eaveY - 0.3,
+						-half,
+						s * half + 0.12,
+						eaveY + 0.05,
+						half,
+						r.c1,
+						"SmoothPlastic"
+					)
+					for k = 0, 10 do
+						local z = -half + 0.1 + k * (2 * half - 0.2) / 10
+						q:beam(
+							Vector3.new(s * (half - 0.05), eaveY + 0.12, z),
+							Vector3.new(0, ridgeY + 0.12, z),
+							0.14,
+							0.16,
+							r.c1,
+							"SmoothPlastic"
+						)
+					end
+				end)
+			end
+			-- the gables, over the end walls
+			local function slopeY(x: number): number
+				return ridgeY - (ridgeY - eaveY) * math.abs(x) / half
+			end
+			for _, zs in { -1, 1 } do
+				local z = zs * 8
+				glass(
+					r:tri(
+						Vector3.new(-8.25, 0, z),
+						Vector3.new(8.25, 0, z),
+						Vector3.new(0, ridgeY - 0.1, z),
+						0.1,
+						C.Glass,
+						"Glass"
+					)
+				)
+				r:piece(function(q: R)
+					q:block(-8.3, 0, z - 0.1, 8.3, 0.2, z + 0.1, r.c1, "SmoothPlastic")
+					for _, x in { -6, -3, 0, 3, 6 } do
+						q:block(x - 0.07, 0.2, z - 0.08, x + 0.07, slopeY(x) - 0.05, z + 0.08, r.c1, "SmoothPlastic")
+					end
+					q:block(-5.4, 2.4, z - 0.08, 5.4, 2.54, z + 0.08, r.c1, "SmoothPlastic")
+				end)
+			end
+			-- the ridge and its finials
+			r:block(-0.2, ridgeY, -half - 0.1, 0.2, ridgeY + 0.3, half + 0.1, r.c2, "SmoothPlastic")
+			for _, zs in { -1, 1 } do
+				r:ball(0, ridgeY + 0.45, zs * (half - 0.1), 0.36, r.c2, "SmoothPlastic")
+			end
+		end,
+	},
+	{
+		id = "show_ladder",
+		name = "Ladder",
+		cat = "structure",
+		style = "rustic",
+		price = 40,
+		place = "floor",
+		size = Vector3.new(2, 12, 1),
+		c1 = "9A6B48",
+		c2 = "9A6B48",
+		build = function(r: R)
+			-- A wooden ladder a storey tall, for the side of a platform or a wall: two rails (c1)
+			-- with a rung (c2) every foot of the way, its back (-z) against what it climbs.
+			r:piece(function(q: R)
+				for _, x in { -0.8, 0.8 } do
+					q:block(x - 0.12, 0, -0.3, x + 0.12, 12, 0.1, r.c1, "Wood")
+				end
+				for k = 0, 10 do
+					local y = 0.9 + k * 1.05
+					q:block(-0.68, y - 0.08, -0.2, 0.68, y + 0.08, 0.0, r.c2, "Wood")
+				end
+			end)
 		end,
 	},
 }

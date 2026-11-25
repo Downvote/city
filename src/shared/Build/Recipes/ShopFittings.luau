@@ -115,6 +115,7 @@ type Item = {
 	tags: { string }?,
 	surface: number?,
 	opening: { w: number, h: number, sill: number }?,
+	style: string?, -- the look it belongs to (Catalog.Styles)
 	build: (r: R) -> (),
 }
 
@@ -173,6 +174,7 @@ local items: { Item } = {
 		id = "bread_rack",
 		name = "Bread rack",
 		cat = "storage",
+		style = "rustic",
 		price = 160,
 		place = "floor",
 		size = Vector3.new(4, 6.8, 1.8),
@@ -277,6 +279,7 @@ local items: { Item } = {
 		id = "produce_stand",
 		name = "Fruit and veg stand",
 		cat = "decor",
+		style = "rustic",
 		price = 120,
 		place = "floor",
 		size = Vector3.new(4.4, 3.8, 2.8),
@@ -609,6 +612,7 @@ local items: { Item } = {
 		id = "cone_giant",
 		name = "Giant ice cream cone",
 		cat = "decor",
+		style = "playful",
 		price = 220,
 		place = "floor",
 		size = Vector3.new(3.4, 10, 3.4),

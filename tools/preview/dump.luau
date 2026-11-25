@@ -4,6 +4,8 @@
 -- Scenes:
 --   item:<id>          one catalog item
 --   cat:<category>     every item of a Build mode tab in a row
+--   items:<id>,<id>    those items in a row
+--   fences             every kind of fence in its own finish
 --   all                every catalog item in a grid
 --   walls              every wall style
 --   roofs              every roof style
@@ -21,6 +23,8 @@
 --   map:x1,z1,x2,z2    another part of town (the terrain is drawn as faceted ground of its
 --                      materials' colours, finer the smaller the part, with the sea over it)
 --   stage:<id>         a cutscene's set (Data/Stages); tools/preview/stage.sh draws it from its shots
+--   water              a tiled pool, a pond and a stone rimmed pool with things in them
+--                      (water:pool, water:pond, water:rim for one; tools/preview/water_scene.luau)
 
 local fs = require("@lune/fs")
 local process = require("@lune/process")
@@ -95,6 +99,13 @@ if scene:sub(1, 5) == "item:" then
 	local def = Catalog.get(scene:sub(6))
 	assert(def, "no item " .. scene)
 	itemRow({ def })
+elseif scene:sub(1, 6) == "items:" then
+	-- a few items side by side, by id
+	local defs = {}
+	for id in scene:sub(7):gmatch("[^,]+") do
+		table.insert(defs, (assert(Catalog.get(id), "no item " .. id)))
+	end
+	itemRow(defs, 8)
 elseif scene:sub(1, 4) == "cat:" then
 	itemRow(Catalog.list(scene:sub(5)), 6)
 elseif scene == "all" then
@@ -106,6 +117,26 @@ elseif scene == "walls" then
 		local s = Shapes.wall(w, {})
 		addPrims(s)
 		z += 6
+	end
+elseif scene == "fences" then
+	-- every kind of fence in its own finish (Plan.WallStyles' paint, or the game's defaults), two
+	-- rows of them, with a corner in each so the ends show
+	local own = { fence = "Fence", railing = "Fence", hedge = "Hedge", stone = "Stone" }
+	local i = 0
+	for _, style in Plan.WallStyleOrder do
+		local def = Plan.WallStyles[style]
+		if def.fence then
+			local paint = def.paint
+			if not paint then
+				local Palette = R(Shared .. "Data.Palette")
+				paint = Palette.Defaults[own[style] or "Fence"]
+			end
+			local x, z = (i % 2) * 18, math.floor(i / 2) * 7
+			local w = wall(x, z, x + 12, z, style)
+			w.a, w.b = paint, paint
+			addPrims(Shapes.wall(w, {}))
+			i += 1
+		end
 	end
 elseif scene == "roofs" then
 	local x = 0
@@ -259,6 +290,9 @@ elseif scene == "props" or scene:sub(1, 6) == "props:" then
 			x, z, depth = 0, z + depth + 3, 0
 		end
 	end
+elseif scene == "water" or scene:sub(1, 6) == "water:" then
+	-- (water: pools and ponds with things in them)
+	addPrims(require("./water_scene")(R, scene:sub(7)))
 elseif scene == "ambient" then
 	local AmbientModels = R(Shared .. "Data.AmbientModels")
 	addPrims(AmbientModels.preview())

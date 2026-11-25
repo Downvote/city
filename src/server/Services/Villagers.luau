@@ -284,6 +284,7 @@ function Villagers.spawn(player: Player, vid: string)
 	end
 	local npc = Npc.new(model, vid)
 	npc.playerName = player.DisplayName
+	npc.pers = v.pers -- how they write (Sim/Voice, in Npc.say)
 	npc:setName(v.name, Colors.fromHex(v.color))
 	npc:play("idle")
 	npcs[player] = npcs[player] or {}

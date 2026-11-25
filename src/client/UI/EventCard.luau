@@ -452,8 +452,11 @@ local function more(): boolean
 	if not ev then
 		return false
 	end
-	if shown < #heard or (asking and page ~= "ask") then
+	if shown < #heard then
 		return true
+	end
+	if asking then
+		return page ~= "ask" -- (the question, not up yet)
 	end
 	return ev.ended == true and page ~= "end" and type(ev.notices) == "table" and #ev.notices > 0
 end

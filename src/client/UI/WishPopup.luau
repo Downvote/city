@@ -126,9 +126,7 @@ end
 local function words(v: any, kind: string, food: any, other: any): (string, string, string)
 	if kind == "food" then
 		local line = Text.fill("{x} would love {food}.", { x = v.name, food = Foods.phrase(food) })
-		local how = if food.id == v.fav
-			then "It's their favourite, so it means a lot."
-			else "Buy it and they'll have it right away."
+		local how = if food.id == v.fav then "It's their favourite food." else "Buy it and they'll have it right away."
 		return line, how, ""
 	elseif kind == "friend" then
 		local line = Text.fill("{x} would like to get to know {y}.", { x = v.name, y = other.name })
@@ -140,7 +138,7 @@ local function words(v: any, kind: string, food: any, other: any): (string, stri
 end
 
 -- The card on the left: what they want, big, with its name under it.
-local function wanted(body: Frame, vid: string, v: any, kind: string, food: any, other: any)
+local function wanted(body: Frame, v: any, kind: string, food: any, other: any)
 	local tile = Kit.frame({
 		Name = "Wanted",
 		Parent = body,
@@ -385,7 +383,7 @@ function WishPopup.open(vid: any)
 	panel = p
 	local body: Frame = p.body
 	local line, how, label = words(v, kind, food, other)
-	wanted(body, vid, v, kind, food, other)
+	wanted(body, v, kind, food, other)
 	-- who wants it, and what
 	local who = Kit.box({
 		Name = "Who",

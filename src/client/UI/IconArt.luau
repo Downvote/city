@@ -403,6 +403,157 @@ A.stoneWall = {
 	gap("M8 22 L8.5 11"),
 	gap("M16.5 22 L15.5 12.5"),
 }
+-- the fences that came later (Plan.WallStyles): a low brick wall under its coping
+A.brickWall = {
+	flat(rect(1.5, 7, 21, 3, 0.75)),
+	flat(rect(2.5, 11.5, 19, 10.5, 0.5)),
+	gap("M1 16.75 H23"),
+	gap("M8.5 12 V16.75"),
+	gap("M15.5 12 V16.75"),
+	gap("M12 16.75 V23"),
+}
+-- a ranch fence: two posts and three rails
+A.railFence = {
+	flat(rect(4, 3, 3.5, 19, 0.5) .. " " .. rect(16.5, 3, 3.5, 19, 0.5)),
+	flat(rect(1.5, 6, 21, 3, 0.5) .. " " .. rect(1.5, 11.5, 21, 3, 0.5) .. " " .. rect(1.5, 17, 21, 3, 0.5)),
+}
+-- iron bars with spear points, on two rails
+local function bar(x: number): string
+	return string.format("M%s 21.5 V7 L%s 2.5 L%s 7 V21.5 Z", tostring(x), tostring(x + 1.25), tostring(x + 2.5))
+end
+A.ironFence = {
+	solid(bar(2.5) .. " " .. bar(8) .. " " .. bar(13.5) .. " " .. bar(19)),
+	flat(rect(1.5, 9.5, 21, 2.25) .. " " .. rect(1.5, 16.5, 21, 2.25)),
+}
+-- canes of bamboo, cut across at their joints
+A.bamboo = {
+	flat(
+		rect(2, 3, 3.5, 19, 1.5)
+			.. " "
+			.. rect(7.25, 2, 3.5, 20, 1.5)
+			.. " "
+			.. rect(12.5, 4, 3.5, 18, 1.5)
+			.. " "
+			.. rect(17.75, 2.5, 3.5, 19.5, 1.5)
+	),
+	gap("M1 9 H23", 1.5),
+	gap("M1 15.5 H23", 1.5),
+}
+-- round posts with two log rails across them, a ring cut in each post's top
+A.logFence = {
+	flat(rect(4, 2.5, 4.5, 19.5, 2.25) .. " " .. rect(15.5, 2.5, 4.5, 19.5, 2.25)),
+	flat(rect(1.5, 8.5, 21, 3.5, 1.75)),
+	flat(rect(1.5, 15, 21, 3.5, 1.75)),
+	hole(circle(6.25, 5.25, 0.9) .. " " .. circle(17.75, 5.25, 0.9)),
+}
+-- withies woven between stakes
+A.wovenFence = {
+	flat(rect(2, 4.5, 20, 15, 1.5)),
+	flat(rect(5, 2, 2.5, 20) .. " " .. rect(16.5, 2, 2.5, 20)),
+	gap("M1 9.5 Q6.5 7.5 12 9.5 Q17.5 11.5 23 9.5", 1.5),
+	gap("M1 14.5 Q6.5 12.5 12 14.5 Q17.5 16.5 23 14.5", 1.5),
+}
+-- two capped posts and the ropes hanging between them
+A.ropeFence = {
+	solid("M3 22 V7 L5 4 L7 7 V22 Z"),
+	solid("M17 22 V7 L19 4 L21 7 V22 Z"),
+	line("M6 9.5 Q12 15.5 18 9.5", 2),
+	line("M6 15.5 Q12 20.5 18 15.5", 2),
+}
+-- a glass panel between two posts, under a handrail
+A.glassRail = {
+	flat(rect(1.5, 3, 21, 3, 1)),
+	flat(rect(2.5, 4, 2.5, 18) .. " " .. rect(19, 4, 2.5, 18)),
+	flat(rect(6.5, 7.5, 11, 13, 0.75)),
+	gap("M8.5 17.5 L13 13", 1.75),
+	gap("M12.5 18.5 L15 16", 1.75),
+}
+-- a rail lit along its length, with a spark of light between its bars
+A.lightRail = {
+	flat(rect(1.5, 4, 21, 3, 1.5) .. " " .. rect(1.5, 16.5, 21, 3, 1.5)),
+	flat(rect(3.5, 4, 3, 18) .. " " .. rect(17.5, 4, 3, 18)),
+	solid("M12 8.5 L13.25 10.5 L15.5 11.75 L13.25 13 L12 15 L10.75 13 L8.5 11.75 L10.75 10.5 Z"),
+}
+-- a column: its capital, its fluted shaft and its base
+A.pillar = {
+	flat(rect(4, 2.5, 16, 3, 0.75)),
+	flat(rect(6.5, 7, 11, 11)),
+	gap("M10.25 6.75 V18.25", 1.5),
+	gap("M13.75 6.75 V18.25", 1.5),
+	flat(rect(4, 19.5, 16, 3, 0.75)),
+}
+-- the basic shapes: a cube seen from above a corner
+A.shapes = {
+	solid("M12 2 L21 7 V17 L12 22 L3 17 V7 Z"),
+	gap("M3 7.5 L12 12.5 L21 7.5", 1.75),
+	gap("M12 12.5 V23", 1.75),
+}
+-- a picture: hills and the sun cut out of it
+A.picture = {
+	flat(rect(2, 4, 20, 16, 2)),
+	hole("M5 17 L9.5 10.5 L12.75 15 L15 12.25 L19 17 Z"),
+	hole(circle(16, 8.5, 1.75)),
+}
+-- a road arrow and the dashes of a line
+A.marking = {
+	solid("M12 2 L18.5 9 H14 V13 L12 11.5 L10 13 V9 H5.5 Z"),
+	flat(rect(10, 14.5, 4, 3, 0.5) .. " " .. rect(10, 19.5, 4, 3, 0.5)),
+}
+-- water (Build mode's pools and ponds): a drop, with the light on it cut out low on its left
+A.water = {
+	flat("M12 2.25 L17.75 10.25 A7.25 7.25 0 1 1 6.25 10.25 Z"),
+	gap("M7.75 14.5 A4.25 4.25 0 0 0 11 18.75", 1.75),
+}
+-- the looks Build mode lists across every category (Catalog.Styles): a painter's palette for them
+-- all, then one each
+A.styles = {
+	flat(circle(12, 12, 10)),
+	hole(circle(16.5, 16, 2.25)),
+	hole(circle(7, 10, 1.75) .. " " .. circle(11, 6.25, 1.75) .. " " .. circle(16, 7.5, 1.75)),
+	hole(circle(7.75, 15.5, 1.75)),
+}
+-- cozy: a mug of something hot
+A.mug = {
+	solid("M3.5 8 H15.5 V17.5 A4 4 0 0 1 11.5 21.5 H7.5 A4 4 0 0 1 3.5 17.5 Z"),
+	line("M15.5 10.75 H17.25 A2.75 2.75 0 0 1 17.25 16.25 H15.5", 2.25),
+	line("M7.5 2.5 V5", 2),
+	line("M11.5 2.5 V5", 2),
+}
+-- sci-fi: a rocket
+A.rocket = {
+	solid("M12 1.5 A9 9 0 0 1 16 9.5 V16 H8 V9.5 A9 9 0 0 1 12 1.5 Z"),
+	hole(circle(12, 9, 1.75)),
+	flat("M8 11.5 L4 15.5 V19 L8 17 Z M16 11.5 L20 15.5 V19 L16 17 Z"),
+	flat("M9.5 17.5 H14.5 L12 22.5 Z"),
+}
+-- seaside: an anchor
+A.anchor = {
+	flat(circle(12, 4.75, 3)),
+	hole(circle(12, 4.75, 1.25)),
+	flat(rect(10.75, 7.5, 2.5, 13) .. " " .. rect(7, 9.5, 10, 2.5, 1)),
+	line("M4.5 13.5 A7.5 7.5 0 0 0 19.5 13.5", 2.5),
+}
+-- rustic: a barrel and its hoops
+A.barrel = {
+	flat("M7 2.5 H17 A14 14 0 0 1 17 21.5 H7 A14 14 0 0 1 7 2.5 Z"),
+	gap("M2 7.5 H22", 1.75),
+	gap("M2 16.5 H22", 1.75),
+}
+-- fancy: a cut gem
+A.gem = {
+	solid("M7 3 H17 L22 9 L12 21.5 L2 9 Z"),
+	gap("M1 9 H23", 1.75),
+	gap("M9.5 2 L8 9", 1.75),
+	gap("M14.5 2 L16 9", 1.75),
+}
+-- playful: a balloon on its string
+A.balloon = {
+	flat(ellipse(12, 9, 7, 7.5)),
+	gap("M8 8.5 A4.5 4.5 0 0 1 11 4.75", 1.75),
+	flat("M10.25 16 H13.75 L12 18.25 Z"),
+	line("M12 18 Q10 20 12 22", 1.75),
+}
+
 -- a room on a plan, its door open
 A.room = {
 	flat(rect(2, 2, 20, 20, 1.5) .. " M5.5 5.5 H18.5 V18.5 H5.5 Z"),

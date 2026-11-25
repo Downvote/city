@@ -810,3 +810,244 @@ describe("Builder", function()
 		end
 	end)
 end)
+
+describe("Styles, shapes, pictures, marks and fences", function()
+	-- the user: "add much much more buildings, decoration, paths, fences and other options. there
+	-- should be many to choose from from different categories, like garden, sci fi, cozy, etc, just
+	-- like bloxburg. there should also be basic shapes, like cube, cylinder, etc. also, allow the
+	-- player to use custom decal in the roblox library"; then "add another section where players
+	-- can put down markings, like in bloxburg"
+
+	it("names only styles the catalog has, and lists a style across categories in order", function()
+		local known = {}
+		for _, st in Catalog.Styles do
+			known[st.id] = true
+		end
+		for _, def in Catalog.all() do
+			if def.style ~= nil and not known[def.style] then
+				error(def.id .. " has an unknown style " .. tostring(def.style))
+			end
+		end
+		for _, st in Catalog.Styles do
+			local list = Catalog.withStyle(st.id)
+			for i, def in list do
+				expect(def.style).toBe(st.id)
+				expect(def.cat ~= "keepsakes").toBeTruthy()
+				if i > 1 then
+					local a, b = Catalog.categoryOrder(list[i - 1].cat), Catalog.categoryOrder(def.cat)
+					expect(a <= b).toBeTruthy()
+				end
+			end
+		end
+		-- today's furniture already fills the homely looks
+		expect(#Catalog.withStyle("cozy") >= 10).toBeTruthy()
+		expect(#Catalog.withStyle("garden") >= 10).toBeTruthy()
+		expect(#Catalog.withStyle("rustic") >= 10).toBeTruthy()
+	end)
+
+	it("has every basic shape in a few sizes, one paint, stacking", function()
+		local kinds = {}
+		for _, def in Catalog.list("shapes") do
+			local kind = def.id:match("^shape_(.-)_%a+$")
+			kinds[kind] = (kinds[kind] or 0) + 1
+			expect(def.stack).toBe(true)
+			expect(def.place).toBe("floor")
+			-- one colour: every part is drawn in the piece's main paint or a shade of it
+			local red = Catalog.prims(def, "FF0000")
+			for _, p in Geometry.flatten(red) do
+				expect(p.color.R > 0.5 and p.color.G < 0.2).toBeTruthy()
+			end
+			if def.surface then
+				expect(math.abs(def.surface - def.size.Y) < 1e-6).toBeTruthy()
+			end
+		end
+		for _, kind in
+			{
+				"cube",
+				"cylinder",
+				"sphere",
+				"wedge",
+				"corner",
+				"cone",
+				"pyramid",
+				"halfcyl",
+				"arch",
+				"ring",
+				"tube",
+				"plank",
+				"pillar",
+				"quarter",
+			}
+		do
+			if (kinds[kind] or 0) < 3 then
+				error("the " .. kind .. " comes in " .. tostring(kinds[kind] or 0) .. " sizes")
+			end
+		end
+		-- a cube stands on a cube; a chair doesn't stand on a table, and a cup does
+		local cube = Catalog.get("shape_cube_medium")
+		expect(Catalog.standsOn(cube, cube)).toBe(true)
+		expect(Catalog.standsOn(Catalog.get("chair_wood"), Catalog.get("table_round"))).toBe(false)
+		expect(Catalog.standsOn(Catalog.get("kettle"), Catalog.get("counter"))).toBe(true)
+	end)
+
+	it("lets a mark lie on floors and paths, over other marks, and holds nothing up", function()
+		local mark = Catalog.get("pic_decal_floor")
+		for _, def in Catalog.all() do
+			if def.place == "mark" then
+				-- flat, and never solid
+				expect(def.size.Y <= 0.3).toBeTruthy()
+				for _, p in Catalog.prims(def) do
+					expect(p.collide).toBe(false)
+				end
+			end
+		end
+		expect(Catalog.standsOn(mark, Catalog.get("path_stones"))).toBe(true)
+		-- (a mark over a mark is laid over it, below, rather than standing on its top)
+		expect(Catalog.standsOn(mark, mark)).toBe(false)
+		expect(Catalog.standsOn(mark, Catalog.get("table_round"))).toBe(false)
+		-- nothing stands on a mark: a table over one stands on the floor under it
+		expect(Catalog.standsOn(Catalog.get("table_round"), mark)).toBe(false)
+		expect(Catalog.standsOn(Catalog.get("kettle"), mark)).toBe(false)
+		expect(Catalog.standsOn(Catalog.get("shape_cube_small"), mark)).toBe(false)
+		-- on the ground, on a floor upstairs, under a table, but not up in the air
+		local plan = Plan.new()
+		local table1 = { id = "table_round", x = X0 + 20, y = P.Foundation, z = 20, r = 0, lv = 0 }
+		plan.items["1"] = table1
+		local under = { id = "pic_decal_floor", x = X0 + 20, y = P.Foundation, z = 20, r = 45, lv = 0 }
+		expect(Plan.validItem(plan, under)).toBe(true)
+		local ground = { id = "pic_decal_floor", x = X0 + 30, y = 0, z = 30, r = 0, lv = 0 }
+		expect(Plan.validItem(plan, ground)).toBe(true)
+		local upstairs = { id = "pic_decal_floor", x = X0 + 30, y = Plan.levelBase(1), z = 30, r = 90, lv = 1 }
+		expect(Plan.validItem(plan, upstairs)).toBe(true)
+		local high = { id = "pic_decal_floor", x = X0 + 30, y = 6, z = 30, r = 0, lv = 0 }
+		expect(Plan.validItem(plan, high)).toBe(false)
+		-- both are drawn: the table's top over the mark, the mark 0.04 over the floor
+		plan.items["2"] = under
+		local markPrims = Builder.primsFor(plan, "items", "2")
+		local lo, hi = Geometry.bounds(markPrims)
+		expect(lo.Y >= P.Foundation - 1e-6).toBeTruthy()
+		expect(hi.Y <= P.Foundation + 0.15).toBeTruthy()
+		-- placed, a mark's paint is 0.1 over its floor, and one put over it lies on top of it, so
+		-- two never share a height; one beside it, or one being moved, isn't raised
+		local fresh = Plan.new()
+		local first = { id = "pic_decal_floor", x = X0 + 40, z = 40, r = 0, lv = 0 }
+		first.y = Plan.markY(fresh, first, P.Foundation)
+		expect(first.y).toBeNear(P.Foundation + Plan.MarkLift, 1e-6)
+		expect(first.y + 0.05).toBeNear(P.Foundation + 0.1, 1e-6)
+		fresh.items["1"] = first
+		local over = { id = "pic_decal_floor", x = X0 + 42, z = 41, r = 45, lv = 0 }
+		over.y = Plan.markY(fresh, over, P.Foundation)
+		expect(over.y).toBeNear(first.y + mark.size.Y, 1e-6)
+		fresh.items["2"] = over
+		local third = { id = "pic_decal_floor", x = X0 + 41, z = 40, r = 0, lv = 0 }
+		expect(Plan.markY(fresh, third, P.Foundation)).toBeNear(over.y + mark.size.Y, 1e-6)
+		local beside = { id = "pic_decal_floor", x = X0 + 60, z = 40, r = 0, lv = 0 }
+		expect(Plan.markY(fresh, beside, P.Foundation)).toBeNear(P.Foundation + Plan.MarkLift, 1e-6)
+		expect(Plan.markY(fresh, over, P.Foundation, "2")).toBeNear(over.y, 1e-6)
+		for _, it in fresh.items do
+			expect(Plan.validItem(fresh, it)).toBe(true)
+		end
+	end)
+
+	it("keeps a picture's id as a whole number, only on a piece that shows one", function()
+		local plan = Plan.new()
+		local sign = { id = "pic_sign", x = X0 + 20, y = 0, z = 20, r = 0, lv = 0, img = 123456789 }
+		expect(Plan.validItem(plan, sign)).toBe(true)
+		for _, bad in { 0, -5, 1.5, 0 / 0, math.huge, 2 ^ 60, "123", true } do
+			local copy = table.clone(sign)
+			copy.img = bad
+			expect(Plan.validItem(plan, copy)).toBe(false)
+		end
+		local tree = { id = "tree_oak", x = X0 + 30, y = 0, z = 30, r = 0, lv = 0, img = 123456789 }
+		expect(select(2, Plan.validItem(plan, tree))).toBe("that doesn't take a picture")
+		-- it is saved with the item, and nothing else a client adds is
+		local clean = Plan.clean("items", { id = "pic_sign", x = 1, y = 0, z = 1, r = 0, lv = 0, img = 42, url = "x" })
+		expect(clean.img).toBe(42)
+		expect(clean.url).toBe(nil)
+		-- what a player pastes: the number, or a link with it in
+		expect(Plan.pictureId("  12345 ")).toBe(12345)
+		expect(Plan.pictureId("rbxassetid://987654")).toBe(987654)
+		expect(Plan.pictureId("https://www.roblox.com/library/5550001/Cat")).toBe(5550001)
+		expect(Plan.pictureId("https://create.roblox.com/store/asset/1234567/Sunset")).toBe(1234567)
+		expect(Plan.pictureId("http://www.roblox.com/asset/?id=24680")).toBe(24680)
+		expect(Plan.pictureId("a cat")).toBe(nil)
+		expect(Plan.pictureId("")).toBe(nil)
+		expect(Plan.pictureId("99999999999999999999")).toBe(nil)
+		expect(Plan.pictureId(5)).toBe(nil)
+	end)
+
+	it("shows the picture on its face, and a little drawing until there is one", function()
+		for _, def in Catalog.list("pictures") do
+			expect(def.picture).toBe(true)
+			local faces, placeholders = 0, 0
+			for _, p in Catalog.prims(def) do
+				if p.attrs and p.attrs.Picture then
+					faces += 1
+					expect(Enum.NormalId[p.attrs.Picture] ~= nil).toBeTruthy()
+					expect(p.attrs.PictureId).toBe(nil)
+				end
+				if p.name == "Placeholder" then
+					placeholders += 1
+				end
+			end
+			expect(faces).toBe(1)
+			expect(placeholders > 0).toBeTruthy()
+			for _, p in Catalog.prims(def, nil, nil, 777) do
+				expect(p.name ~= "Placeholder").toBeTruthy()
+				if p.attrs and p.attrs.Picture then
+					expect(p.attrs.PictureId).toBe(777)
+				end
+			end
+		end
+		-- built, the face carries Roblox's own picture of the asset
+		local plan = Plan.new()
+		plan.items["1"] = { id = "pic_sign", x = X0 + 20, y = 0, z = 20, r = 0, lv = 0, img = 13579 }
+		plan.items["2"] = { id = "pic_sign", x = X0 + 30, y = 0, z = 20, r = 0, lv = 0 }
+		local folder = Instance.new("Folder")
+		Builder.renderAll(plan, folder, CFrame.new())
+		local shown = {}
+		for _, d in folder:GetDescendants() do
+			if d:IsA("ImageLabel") then
+				table.insert(shown, d.Image)
+				local gui = d.Parent
+				expect(gui:IsA("SurfaceGui")).toBeTruthy()
+				expect(gui.Face).toBe(Enum.NormalId.Back)
+			end
+		end
+		expect(#shown).toBe(1)
+		expect(shown[1]).toBe("rbxthumb://type=Asset&id=13579&w=420&h=420")
+	end)
+
+	it("gives each new fence its own finish, and draws it", function()
+		local fences = 0
+		for _, id in Plan.WallStyleOrder do
+			local def = Plan.WallStyles[id]
+			expect(def ~= nil).toBeTruthy()
+			if def.paint then
+				expect(Colors.isHex(def.paint.c)).toBe(true)
+				expect(Palette.MaterialSet[def.paint.m]).toBe(true)
+			end
+			if def.fence then
+				fences += 1
+				local w = wall(0, 0, 12, 0, 0, id)
+				if def.paint then
+					w.a, w.b = table.clone(def.paint), table.clone(def.paint)
+				end
+				expect(Plan.validWall(w)).toBe(true)
+				local prims = Shapes.wall(w, {})
+				expect(#prims >= 2).toBeTruthy()
+				local _, hi = Geometry.bounds(prims)
+				local _, height = Plan.wallSpan(id, 0)
+				expect(hi.Y <= Plan.wallSpan(id, 0) + height + 1).toBeTruthy()
+			end
+		end
+		expect(fences >= 13).toBeTruthy()
+		-- the Paths tab finds the stepping stones
+		local found = false
+		for _, def in Catalog.paths() do
+			found = found or def.id == "path_stones"
+			expect(def.place ~= "mark").toBeTruthy()
+		end
+		expect(found).toBe(true)
+	end)
+end)

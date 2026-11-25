@@ -23,6 +23,9 @@
 --                     the part it shows on carries attrs.Picture (the face, a NormalId name), the
 --                     placeholder drawn until there is one is named "Placeholder", and the
 --                     placed item keeps the picture's id as `img` (Plan)
+-- (Water: a piece of place "water" goes only on a pool or a pond, Recipes/Water. Its `water` says
+-- how it sits, "float", "bottom" or "edge", and `draft` how far its frame's floor is under that:
+-- Build/Water has the rules.)
 
 local Recipe = require(script.Parent.Recipe)
 local Colors = require(script.Parent.Parent.Util.Colors)
@@ -49,6 +52,8 @@ export type Def = {
 	style: string?, -- the look it belongs to (Catalog.Styles): Build mode can list a whole style together
 	stack: boolean?, -- stands on other pieces too (see above)
 	picture: boolean?, -- takes a picture from the library (see above)
+	water: string?, -- (water) how a piece of place "water" sits: "float", "bottom" or "edge"
+	draft: number?, -- (water) how far its frame's floor is under the surface, or under the ground
 }
 
 local Catalog = {}
@@ -77,6 +82,9 @@ Catalog.Categories = {
 	-- (the user: "allow the player to use custom decal in the roblox library")
 	{ id = "pictures", name = "Pictures" },
 	{ id = "garden", name = "Garden" },
+	-- what goes on a pool or a pond: boats, floats, lily pads, a jetty (the user: "also, add
+	-- ability to add water, along with things that can go in the water"; Recipes/Water)
+	{ id = "water", name = "Water" },
 	-- flat paint on floors, paths and the ground: lines, arrows, crossings, court lines, chalk (the
 	-- user: "add another section where players can put down markings, like in bloxburg")
 	{ id = "markings", name = "Markings" },
@@ -109,6 +117,7 @@ Catalog.Places = {
 	ceiling = true,
 	stairs = true,
 	mark = true,
+	water = true, -- on a pool or a pond (Build/Water)
 }
 
 -- Tags villagers can ask for in a room request, with how they say it.
@@ -248,6 +257,7 @@ end
 
 -- A piece to walk on outdoors (stepping stones, a boardwalk, paving): tagged `path`, or a low
 -- flat piece that goes on the ground, or one named as a path. Build mode's Paths tab lists them.
+local PATH_WORDS = { "path", "boardwalk", "stepping", "paving", "walkway", "flagstone", "gravel" }
 function Catalog.isPath(def: Def): boolean
 	if Catalog.hasTag(def, "path") then
 		return true
@@ -258,7 +268,12 @@ function Catalog.isPath(def: Def): boolean
 	if def.place == "ground" and def.size.Y <= 0.6 then
 		return true
 	end
-	return string.find(def.id, "path", 1, true) ~= nil
+	for _, word in PATH_WORDS do
+		if string.find(def.id, word, 1, true) then
+			return true
+		end
+	end
+	return false
 end
 
 function Catalog.paths(): { Def }
@@ -273,19 +288,19 @@ end
 
 -- Can a piece of `def` stand on top of a placed piece of `below`? Small things go on any top
 -- (a table, a counter, a shape), the basic shapes stack on each other and on tops, and a mark
--- lies on a path, a low platform (a deck) or another mark. A mark never holds anything up: what
--- is put over one stands on whatever the mark lies on.
+-- lies on a path or a low platform (a deck). A mark never holds anything up: what is put over
+-- one stands on whatever the mark lies on (a mark over a mark is laid over it by Plan.markY).
 function Catalog.standsOn(def: Def, below: Def): boolean
+	if below.place == "mark" then
+		return false
+	end
 	if def.place == "mark" then
-		if below.place == "mark" or Catalog.isPath(below) then
+		if Catalog.isPath(below) then
 			return true
 		end
 		return below.surface ~= nil
 			and below.surface <= 1.2
 			and (below.place == "floor" or below.place == "ground" or below.place == "surface")
-	end
-	if below.place == "mark" then
-		return false
 	end
 	return def.place == "surface" or def.stack == true
 end

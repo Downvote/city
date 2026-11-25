@@ -132,33 +132,6 @@ local function bezier(p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3, t: num
 	return p0 * (u * u * u) + p1 * (3 * u * u * t) + p2 * (3 * u * t * t) + p3 * (t * t * t)
 end
 
--- A flat round plate that reads as round: four squares turned by a sixteenth of a turn each make a
--- sixteen sided disc (a cylinder this small would be the kit's eight sided prism). With axis "z"
--- it stands across x and y round (cx, cy), z1 to z2 deep; with axis "y" it lies across x and z
--- round (cx, cy as z), z1 to z2 high.
-local function roundPlate(
-	r: R,
-	cx: number,
-	cy: number,
-	z1: number,
-	z2: number,
-	d: number,
-	axis: string,
-	color: Color3,
-	mat: string
-)
-	r:piece(function(q: R)
-		for k = 0, 3 do
-			local a = k * math.pi / 8
-			if axis == "z" then
-				q:boxAt(CFrame.new(cx, cy, (z1 + z2) / 2) * CFrame.Angles(0, 0, a), d, d, z2 - z1, color, mat)
-			else
-				q:boxAt(CFrame.new(cx, (z1 + z2) / 2, cy) * CFrame.Angles(0, a, 0), d, z2 - z1, d, color, mat)
-			end
-		end
-	end)
-end
-
 -- One catalog entry (Build/Catalog explains the fields).
 type Item = {
 	id: string,
@@ -428,7 +401,7 @@ local items: { Item } = {
 	},
 	{
 		id = "modern_dining_table",
-		name = "Slab table",
+		name = "Oak dining table",
 		cat = "tables",
 		style = "modern",
 		price = 180,
@@ -717,14 +690,13 @@ local items: { Item } = {
 			r:boxAt(photo * CFrame.new(0, 0, 0.045), 0.58, 0.64, 0.03, WHITE, "SmoothPlastic")
 			r:boxAt(photo * CFrame.new(0, 0, 0.075), 0.42, 0.48, 0.03, Color3.fromRGB(150, 176, 186), "SmoothPlastic")
 			-- top: two books and a stone ball
-			local top = bookPile(r, -0.4, tops[4].y, -0.55, 2, 5)
+			bookPile(r, -0.4, tops[4].y, -0.55, 2, 5)
 			r:ball(0.55, tops[4].y + 0.18, -0.55, 0.36, Color3.fromRGB(196, 194, 188), "Slate")
-			local _ = top
 		end,
 	},
 	{
 		id = "modern_sideboard",
-		name = "Sideboard",
+		name = "Fluted sideboard",
 		cat = "storage",
 		style = "modern",
 		price = 200,
@@ -1454,8 +1426,8 @@ local items: { Item } = {
 		tags = { "mirror" },
 		build = function(r: R)
 			-- a round mirror on an oak disc, hung from a brass peg by a leather strap
-			roundPlate(r, 0, 1.3, 0, 0.12, 2.5, "z", r.c1, "Wood")
-			roundPlate(r, 0, 1.3, 0.12, 0.15, 2.3, "z", MIRROR, "Glass")
+			r:cyl(0, 1.3, 0.06, 0.12, 2.5, "z", r.c1, "Wood")
+			r:cyl(0, 1.3, 0.135, 0.03, 2.3, "z", MIRROR, "Glass")
 			r:boxAt(CFrame.new(-0.35, 1.6, 0.17) * CFrame.Angles(0, 0, -0.6), 0.12, 1.2, 0.04, WHITE, "Glass")
 			local peg = Vector3.new(0, 3.35, 0.14)
 			for _, sx in { -1, 1 } do
@@ -1481,7 +1453,7 @@ local items: { Item } = {
 		tags = { "clock" },
 		build = function(r: R)
 			-- an oak face with marks but no numbers, two dark hands and a teal second hand
-			roundPlate(r, 0, 0.9, 0, 0.12, 1.7, "z", r.c1, "Wood")
+			r:cyl(0, 0.9, 0.06, 0.12, 1.7, "z", r.c1, "Wood")
 			r:piece(function(q: R)
 				q:block(-0.03, 1.46, 0.12, 0.03, 1.66, 0.15, r.c2, "SmoothPlastic")
 				for i = 1, 11 do

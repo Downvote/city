@@ -12,10 +12,12 @@ local order = {
 	"Materials",
 	"Plots",
 	"Build",
+	"Water", -- pools and ponds as terrain water: after Build, whose changes it follows
 	"Avatar",
 	"Villagers",
 	"Interact", -- holding E on a piece (Data/Interactions): after Villagers, whose villagers react
 	"Work", -- a player working at a workplace themselves: after Villagers, whose pay packets it uses
+	"Unstick", -- people moved out of what they get stuck in: after Build and Villagers
 	"Events",
 	"Explore",
 	"Signs",

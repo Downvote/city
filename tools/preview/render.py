@@ -273,6 +273,10 @@ def cone_tris(sides=8):
 # Balls, cylinders and cones are drawn with the low poly kit's shapes, as the game draws them
 # (pass --smooth to see Roblox's own, which the game falls back to without the kit).
 SHAPES = {"Block": box_tris(), "Wedge": wedge_tris(), "Cylinder": cylinder_tris(), "Ball": ball_tris()}
+# Roblox's corner wedge: its point over the (+X, -Z) corner of its box (the basic shapes use it)
+SHAPES["CornerWedge"] = polytope_tris(
+    [((0, -1, 0), 0.5), ((1, 0, 0), 0.5), ((0, 0, -1), 0.5), ((-1, 1, 0), 0), ((0, 1, 1), 0)]
+)
 KIT = {"Gem": gem_tris(), "Prism": prism_tris(8), "Disc": prism_tris(16), "Cone": cone_tris()}
 USE_KIT = True
 DISC_FROM = 9

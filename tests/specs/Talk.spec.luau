@@ -9,6 +9,7 @@ local Shared = "ReplicatedStorage.Shared."
 local Tuning = require(Shared .. "Config.Tuning")
 local Schema = require(Shared .. "Sim.Schema")
 local Talk = require(Shared .. "Sim.Talk")
+local Voice = require(Shared .. "Sim.Voice")
 local Life = require(Shared .. "Sim.Life")
 local City = require(Shared .. "Sim.City")
 local Relationships = require(Shared .. "Sim.Relationships")
@@ -53,10 +54,11 @@ local function readable(text)
 end
 
 -- lines as the player sees them, with their name in
-local function filled(lines, p)
+local function filled(lines, p, pers)
 	local out = {}
 	for _, text in lines or {} do
-		table.insert(out, (Text.fill(text, { player = Text.playerName(p) })))
+		-- (and in their own hand, when we know whose: Sim/Voice)
+		table.insert(out, Voice.speak(pers, (Text.fill(text, { player = Text.playerName(p) }))))
 	end
 	return out
 end
@@ -232,8 +234,8 @@ describe("Talk", function()
 				local greeting = Talk.line(p, "v1", rng, { first = true })
 				expect(readable(greeting)).toBeTruthy()
 				-- their own hello, or one of the greetings just for the player, by name
-				local greets = filled(pers.lines.hello, p)
-				for _, text in filled(Talk.Voices.GREET[pers.id], p) do
+				local greets = filled(pers.lines.hello, p, pers.id)
+				for _, text in filled(Talk.Voices.GREET[pers.id], p, pers.id) do
 					table.insert(greets, text)
 				end
 				expect(table.find(greets, greeting) ~= nil).toBeTruthy()
@@ -241,7 +243,7 @@ describe("Talk", function()
 				for _ = 1, 60 do
 					local said = Talk.line(p, "v1", rng, { last = last, now = 100 })
 					-- (a shy villager who is down may just say "...")
-					expect(readable(said) or table.find(filled(pers.lines.sad, p), said) ~= nil).toBeTruthy()
+					expect(readable(said) or table.find(filled(pers.lines.sad, p, pers.id), said) ~= nil).toBeTruthy()
 					expect(said ~= last).toBeTruthy()
 					last = said
 				end
@@ -270,15 +272,16 @@ describe("Talk", function()
 		local atWork = heard({ working = true, now = 200 })
 		local atHome = heard({ now = 200 })
 		for _, text in job.lines do
-			expect(atWork[text]).toBe(true)
-			expect(atHome[text]).toBe(nil)
+			local said = Voice.speak(p.villagers.v1.pers, text)
+			expect(atWork[said]).toBe(true)
+			expect(atHome[said]).toBe(nil)
 		end
 		-- (a sunny villager, in their own words, calling the player by name)
-		local quarrel = "V3 and I had a fight, and I hate it!"
-		local nobed = "Robin, I've got no bed, so I'm sleeping on coats!"
-		expect(atHome[Sayings.hobby("fishing").line]).toBe(true)
-		expect(atHome[Sayings.get("tea").text]).toBe(true)
-		expect(atHome["V2 and I sat on the pier till the lamps came on!"]).toBe(true)
+		local quarrel = Voice.speak(v.pers, "V3 and I had a fight, and I hate it!")
+		local nobed = Voice.speak(v.pers, "Robin, I've got no bed, so I'm sleeping on coats!")
+		expect(atHome[Voice.speak(v.pers, Sayings.hobby("fishing").line)]).toBe(true)
+		expect(atHome[Voice.speak(v.pers, Sayings.get("tea").text)]).toBe(true)
+		expect(atHome[Voice.speak(v.pers, "V2 and I sat on the pier till the lamps came on!")]).toBe(true)
 		expect(atHome[quarrel]).toBe(true)
 		expect(atHome[nobed]).toBe(true)
 		-- the quarrel blows over, and a bed turns up
@@ -290,7 +293,7 @@ describe("Talk", function()
 		v.mood = 10
 		v.bed = "1"
 		for text in heard({ now = 5000 }, 200) do
-			expect(table.find(filled(Personalities.get(v.pers).lines.sad, p), text) ~= nil).toBeTruthy()
+			expect(table.find(filled(Personalities.get(v.pers).lines.sad, p, v.pers), text) ~= nil).toBeTruthy()
 		end
 	end)
 
@@ -308,10 +311,10 @@ describe("Talk", function()
 			return seen
 		end
 		local shy, bold = heard("shy"), heard("bold")
-		local shyBed = "Um, I don't have a bed yet, but the rug's okay."
-		local boldBed = "I'm still on the floor, so sort me out a bed, okay?"
-		local shyFell = "V2 and I fell out, and I don't know what to say..."
-		local boldFell = "Don't bring up V2, we're not talking."
+		local shyBed = Voice.speak("shy", "Um, I don't have a bed yet, but the rug's okay.")
+		local boldBed = Voice.speak("bold", "I'm still on the floor, so sort me out a bed, okay?")
+		local shyFell = Voice.speak("shy", "V2 and I fell out, and I don't know what to say...")
+		local boldFell = Voice.speak("bold", "Don't bring up V2, we're not talking.")
 		expect(shy[shyBed]).toBe(true)
 		expect(bold[boldBed]).toBe(true)
 		expect(shy[shyFell]).toBe(true)
@@ -332,7 +335,7 @@ describe("Talk", function()
 			cravings[said] = true
 			v.wish = { kind = "friend", arg = "v2", untilT = 1e9 }
 			said = Talk.wishLine(p, "v1")
-			expect(readable(said) and said:find("V2", 1, true) ~= nil).toBeTruthy()
+			expect(readable(said) and said:lower():find("v2", 1, true) ~= nil).toBeTruthy()
 			meets[said] = true
 		end
 		local n, m = 0, 0
@@ -369,32 +372,34 @@ describe("Talk", function()
 		end
 		local now = 1000 + 60
 		local all = heard({ now = now, season = 4, weather = "snow" })
-		expect(all["I built a snowman yesterday. He's called Gerald."]).toBe(true)
-		expect(all["V2's my best friend, and we've got a secret knock."]).toBe(true)
-		expect(all["V3's my best friend, and we've got a secret knock."]).toBe(nil)
-		expect(all["V2 asked if fish get bored, and now I wonder too."]).toBe(true)
+		expect(all[Voice.speak(v.pers, "I built a snowman yesterday. He's called Gerald.")]).toBe(true)
+		expect(all[Voice.speak(v.pers, "V2's my best friend, and we've got a secret knock.")]).toBe(true)
+		expect(all[Voice.speak(v.pers, "V3's my best friend, and we've got a secret knock.")]).toBe(nil)
+		expect(all[Voice.speak(v.pers, "V2 asked if fish get bored, and now I wonder too.")]).toBe(true)
 		local fond, cross = false, false
 		for text in all do
 			fond = fond
-				or text == "If V2 needed help, I'd be there before they asked."
+				or text == Voice.speak(v.pers, "If V2 needed help, I'd be there before they asked.")
 				or text:find("saved me a seat", 1, true) ~= nil
 			cross = cross
-				or text == "Can we not talk about V3, please?"
-				or text == "V3 and I are best kept at opposite ends of the square."
+				or text == Voice.speak(v.pers, "Can we not talk about V3, please?")
+				or text == Voice.speak(v.pers, "V3 and I are best kept at opposite ends of the square.")
 		end
 		expect(fond).toBe(true)
 		expect(cross).toBe(true)
-		expect(all["My fingers have been cold since Monday."]).toBe(true)
-		expect(all["Go and stand in the snow, it's quieter than you'd think."]).toBe(true)
+		expect(all[Voice.speak(v.pers, "My fingers have been cold since Monday.")]).toBe(true)
+		expect(all[Voice.speak(v.pers, "Go and stand in the snow, it's quieter than you'd think.")]).toBe(true)
 		local worried = false
 		for _, text in Personalities.get("cheeky").lines.worry do
-			worried = worried or all[text] == true
+			worried = worried or all[Voice.speak("cheeky", text)] == true
 		end
 		expect(worried).toBe(true)
 		-- an old event is forgotten after a day or so
 		local later = 1000 + Tuning.Events.MemoHours * Tuning.Day.Length / 24 + 10
 		expect(Talk.memo(v, later)).toBe(nil)
-		expect(heard({ now = later }, 600)["I built a snowman yesterday. He's called Gerald."]).toBe(nil)
+		expect(heard({ now = later }, 600)[Voice.speak(v.pers, "I built a snowman yesterday. He's called Gerald.")]).toBe(
+			nil
+		)
 		expect(Talk.memo(v, nil)).toBe(nil)
 		expect(Talk.memo({ memo = "junk" }, now)).toBe(nil)
 	end)

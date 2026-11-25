@@ -10,13 +10,16 @@ cd "$(dirname "$0")/../.."
 export PATH="$HOME/.local/rbx-tools/bin:$PATH"
 TMP=$(mktemp -d /tmp/audit.XXXXXX)
 SCENES="hud build build:walls build:pick build:paint panel:Residents panel:CityPanel
-panel:News panel:Welcome panel:Goals panel:Residents:friends panel:Residents:empty
+panel:News panel:Goals panel:Residents:friends panel:Residents:empty
 panel:Residents:craving panel:Residents:short panel:News:empty panel:News:busy panel:Goals:claimed
 panel:CityPanel:ready earned loading event event:talk event:one event:two event:four event:narration event:answers cutscene:thanks:2 cutscene:thanks:a2 cutscene:festival talk talk:again talk:craving wish wish:short wish:friend wish:cheer toasts creator
 creator:profile creator:bodies creator:parts creator:items creator:items:ask creator:items:no creator:avatars
 creator:wearing creator:skin creator:shape creator:outfits creator:outfits:saved creator:people creator:profile:set creator:end build:rooms build:floors build:roofs build:fences
 build:paths build:buildings build:bought build:sell build:view build:placing build:placing:touch
-build:keepsakes build:keepsakes:empty hover hover:menu bubbles"
+build:keepsakes build:keepsakes:empty build:styles build:shapes build:pillars build:markings build:picture
+build:picture:bad build:picture:pick hover hover:menu bubbles
+tutorial:welcome tutorial:1 tutorial:2 tutorial:2:build tutorial:3:build tutorial:4 tutorial:4:craving
+tutorial:4:buy tutorial:done"
 COUNT=$(echo $SCENES | wc -w)
 status=0
 for look in dark light; do

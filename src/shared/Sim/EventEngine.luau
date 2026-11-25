@@ -24,6 +24,7 @@
 -- A craving is paid for there and then, at ctx.cravingPrice(foodId). There is no romance either,
 -- so no bond between two villagers: best friends, a friendship score, is as close as they get.)
 
+local Voice = require(script.Parent.Voice)
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Events = require(script.Parent.Parent.Data.Events)
 local Relationships = require(script.Parent.Relationships)
@@ -245,6 +246,23 @@ function EventEngine.stage(ctx: any, def: any, order: { string }): any
 	local actors = {}
 	for i, vid in order do
 		actors[LETTERS[i]] = vid
+	end
+	-- every line a villager says comes out in their own hand (Sim/Voice); narration and your
+	-- answers stay as written
+	local function voiced(lines: { any }?)
+		for _, l in (lines or {}) :: { any } do
+			local vid = l.who and actors[l.who]
+			local v = vid and (ctx :: any).v(vid)
+			if v and type(l.text) == "string" then
+				l.text = Voice.speak(v.pers, l.text)
+			end
+		end
+	end
+	if type(scene) == "table" then
+		voiced(scene.lines)
+		for _, c in scene.choices or {} do
+			voiced(c.lines)
+		end
 	end
 	return { id = def.id, actors = actors, order = order, scene = scene }
 end

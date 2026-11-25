@@ -6,6 +6,8 @@ local Geometry = require(script.Parent.Geometry)
 local Plan = require(script.Parent.Plan)
 local Shapes = require(script.Parent.Shapes)
 local Catalog = require(script.Parent.Catalog)
+local Solid = require(script.Parent.Solid) -- (what of a placed piece is solid)
+local Water = require(script.Parent.Water) -- (water: pools and ponds)
 local Textures = require(script.Parent.Parent.Data.Textures)
 local LowPoly = require(script.Parent.LowPoly)
 local Tuning = require(script.Parent.Parent.Config.Tuning)
@@ -558,6 +560,13 @@ function Builder.primsFor(plan: Plan.PlanData, kind: string, key: string): { Pri
 			return nil
 		end
 		return Shapes.roof(r)
+	elseif kind == "waters" then
+		-- (water: its rim or bank and the basin's lining; the water itself is terrain in the game)
+		local w = plan.waters and plan.waters[key]
+		if not w then
+			return nil
+		end
+		return Water.prims(w)
 	elseif kind == "items" then
 		local item = plan.items[key]
 		if not item then
@@ -569,6 +578,9 @@ function Builder.primsFor(plan: Plan.PlanData, kind: string, key: string): { Pri
 			return nil
 		end
 		local prims = Catalog.prims(def, item.c1, item.c2, item.img)
+		-- only the piece's body is solid, not its little parts (Build/Solid: "villagers and the
+		-- player can sometimes get stuck in objects")
+		prims = Solid.apply(def, prims)
 		for _, p in prims do
 			if p.role == "door" then
 				p.frame = frame
@@ -639,7 +651,7 @@ end
 -- Renders the whole plan (used when a plot loads).
 function Builder.renderAll(plan: Plan.PlanData, folder: Instance, plotFrame: CFrame)
 	for _, kind in Plan.Kinds do
-		for key in (plan :: any)[kind] do
+		for key in (plan :: any)[kind] or {} do -- (a plan from before there was water has none)
 			Builder.render(plan, kind, key, folder, plotFrame)
 		end
 	end
