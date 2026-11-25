@@ -309,10 +309,14 @@ local function buildPlots()
 		local model = Instance.new("Model")
 		model.Name = "Plot" .. i
 		model:SetAttribute("Index", i)
+		-- the plot's ground: from the floor down to where the terrain under it lies a voxel down
+		-- (Data/Terrain's PlotFloor), so the island's grass never shows through it and a pool dug in
+		-- it has solid sides (Services/Water cuts it, its pieces as deep)
+		local depth = -Ground.PlotFloor
 		local base = part({
 			Name = "Base",
-			Size = Vector3.new(SIZE, 1, SIZE),
-			CFrame = frame * CFrame.new(SIZE / 2, -0.5, SIZE / 2),
+			Size = Vector3.new(SIZE, depth, SIZE),
+			CFrame = frame * CFrame.new(SIZE / 2, -depth / 2, SIZE / 2),
 			Color = Color3.fromRGB(112, 188, 84),
 			Material = Enum.Material.Grass,
 		})

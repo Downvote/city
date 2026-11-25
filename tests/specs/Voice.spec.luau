@@ -191,6 +191,96 @@ describe("Voice", function()
 		end
 	end)
 
+	-- the user: "make it such that villagers could have a custom saying, thing they add to the end of
+	-- their sentances sometimes" (Sim/Flair's ending)
+	it("puts a villager's ending on about one sentence in five, before the closing mark, never twice", function()
+		-- every line a personality has, and the shared ones: plenty of sentences to count
+		local lines = table.clone(SHARED)
+		for _, p in Personalities.list do
+			for _, list in p.lines do
+				for _, t in list do
+					if not t:find("{", 1, true) then
+						table.insert(lines, t)
+					end
+				end
+			end
+		end
+		local function escape(x)
+			return (x:gsub("%p", "%%%0"))
+		end
+		for _, p in Personalities.list do
+			local with, could = 0, 0
+			for _, t in lines do
+				local plain = Voice.speak(p.id, t)
+				local said = Voice.speak(p.id, t, "buddy")
+				-- the same every time, and saying it again changes nothing
+				expect(Voice.speak(p.id, t, "buddy")).toBe(said)
+				expect(Voice.speak(p.id, said, "buddy")).toBe(said)
+				-- never twice
+				expect(said:lower():find("buddy, buddy", 1, true)).toBe(nil)
+				local words = 0
+				for _ in plain:gmatch("%S+") do
+					words += 1
+				end
+				if words >= 3 then
+					could += 1
+				end
+				if said ~= plain then
+					with += 1
+					-- the personality's line with ", buddy" just in front of its closing marks
+					local body, tail = plain:match("^(.-)([%.!%?~]*)$")
+					expect(said).toBe(body .. ", buddy" .. tail)
+					expect(said:find("[%.!%?~]buddy")).toBe(nil)
+					expect(said:match(", buddy" .. escape(tail) .. "$") ~= nil).toBeTruthy()
+				end
+			end
+			local share = with / could
+			if share < 0.1 or share > 0.3 then
+				error(string.format("%s puts the ending on %.0f%% of sentences", p.id, share * 100))
+			end
+		end
+		-- "That's fine, buddy!": in front of the mark, whatever the mark is
+		local seen = {}
+		for _, t in lines do
+			for _, pers in { "sunny", "gentle", "dreamy", "shy", "cool", "dramatic" } do
+				local said = Voice.speak(pers, t, "buddy")
+				local tail = said:match(", buddy([%.!%?~]+)$")
+				if tail then
+					seen[tail] = true
+				end
+			end
+		end
+		for _, tail in { ".", "!", "?", "...", "~" } do
+			expect(seen[tail]).toBe(true)
+		end
+		-- the cheeky ones write it in lower case, like everything else
+		local cheeky = 0
+		for _, t in lines do
+			local said = Voice.speak("cheeky", t, "Mate")
+			expect(said:find("Mate", 1, true)).toBe(nil)
+			if said:find(", mate", 1, true) then
+				cheeky += 1
+			end
+		end
+		expect(cheeky > 0).toBeTruthy()
+		-- never on a word or two, a name, a face, a hum or a bracket, nor where it's said already
+		for _, t in { "Good.", "Hah, easy.", "Thanks, Robin.", "Got you :P", "La la la ♪", "Okay (I think)." } do
+			for _, p in Personalities.list do
+				expect(Voice.speak(p.id, t, "buddy")).toBe(Voice.speak(p.id, t))
+			end
+		end
+		for _, p in Personalities.list do
+			local said = Voice.speak(p.id, "Thanks for carrying that, buddy.", "buddy")
+			expect(said:lower():find("buddy, buddy", 1, true)).toBe(nil)
+		end
+		-- a villager speaks with their own: Voice.as reads it off them (Sim/Flair)
+		local v = { pers = "sunny", flair = { ending = "buddy" } }
+		for _, t in lines do
+			expect(Voice.as(v, t)).toBe(Voice.speak("sunny", t, "buddy"))
+			expect(Voice.as({ pers = "sunny" }, t)).toBe(Voice.speak("sunny", t))
+		end
+	end)
+
 	it("never stammers on a name, and leaves narration and silence alone", function()
 		for _ = 1, 3 do
 			expect(Voice.speak("nervous", "Robin, are you free?")).toBe("Robin, are you free?")

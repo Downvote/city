@@ -21,12 +21,24 @@ local Remotes = require(Shared.Net.Remotes)
 local Text = require(Shared.Util.Text)
 
 local State = require(script.Parent.Parent.Controllers.State)
+local Purchase = require(script.Parent.Parent.Controllers.Purchase)
 local Toasts = require(script.Parent.Parent.UI.Toasts)
 local Kit = require(script.Parent.Parent.UI.Kit)
 local BuildCamera = require(script.Parent.BuildCamera)
 -- (water: dragging out a pool or a pond, and where a piece made for water sits)
 local WaterTool = require(script.Parent.WaterTool)
+-- (the Select tool: a group of pieces picked together, Build/SelectTool)
+local SelectTool = require(script.Parent.SelectTool)
 local Water = require(Shared.Build.Water)
+-- (floors: which ones this player can go to, Sim/Floors; the ground hidden over the basement,
+-- Build/Underground)
+local Floors = require(Shared.Sim.Floors)
+local Underground = require(script.Parent.Underground)
+-- (the build mode passes: pieces keeping out of each other, angles, stretch: Build/Placing)
+local Collide = require(Shared.Build.Collide)
+local Placing = require(Shared.Build.Placing)
+local Stretch = require(Shared.Build.Stretch)
+local SimPasses = require(Shared.Sim.Passes)
 
 local BuildMode = {}
 
@@ -60,9 +72,13 @@ local s = {
 		m2 = Palette.Defaults.RoofGable.m,
 	},
 	paint = { c = "F2E8D5", m = "SmoothPlastic", slot = "main", pick = false },
-	placing = nil :: any, -- { id, r, c1, c2, moveKey }
+	placing = nil :: any, -- { id, r, c1, c2, img, sx, sy, sz, moveKey }
 	selected = nil :: any, -- { kind, key }
-	snap = true,
+	-- the build mode passes' switches, for their owners (Build/Placing): Free Placing on (pieces may
+	-- go inside each other) and Fine Grid on (furniture snaps four times finer)
+	freePlace = true,
+	fineGrid = true,
+	blocked = nil :: string?, -- why the held piece can't go where it is (the hint says it)
 	roofsHidden = true,
 	seeThrough = false,
 	hint = "",
@@ -96,6 +112,35 @@ local function changed(what: string?)
 	changedEvent:Fire(what or "state")
 end
 
+-- the build mode passes' rules on this side (Build/Placing) ------------------------------------------
+
+-- how many times the plan or the passes have changed: a rule worked out before is stale after
+local planVersion = 0
+
+-- The profile Build/Placing goes by here: the passes the server says the player owns, less Free
+-- Placing while its owner has switched collisions back on (the server lets an owner overlap
+-- pieces either way; the switch is theirs).
+local function rulesProfile(): any
+	local passes = table.clone(State.data.passes or {})
+	if not s.freePlace then
+		passes.freeplace = nil
+	end
+	return { passes = passes }
+end
+
+-- The last rule worked out, kept while what it was for stays the same (the tools ask every
+-- frame; it only changes when the piece moves or the plan does).
+local memoKey = ""
+local memoOk, memoWhy = true, nil :: string?
+local function memo(key: string, fn: () -> (boolean, string?)): (boolean, string?)
+	local k = key .. "#" .. planVersion .. (if s.freePlace then "+" else "-")
+	if k ~= memoKey then
+		memoKey = k
+		memoOk, memoWhy = fn()
+	end
+	return memoOk, memoWhy
+end
+
 -- helpers -----------------------------------------------------------------------------------------
 
 local function snapAxis(v: number, lo: number, hi: number): number
@@ -115,7 +160,8 @@ local function snapZ(v: number): number
 end
 
 local function snapItem(v: number): number
-	local g = if s.snap then P.ItemSnap else 0.25
+	-- (Fine Grid: a quarter of the step, while its owner has it on)
+	local g = if BuildMode.fineGrid() then SimPasses.itemSnap(State.data) else P.ItemSnap
 	return math.floor(v / g + 0.5) * g
 end
 
@@ -389,6 +435,20 @@ local function wallTool()
 				Geometry.append(prims, Shapes.floor(f, Plan.holes(State.plan, s.level)))
 			end
 		end
+		-- (its new walls kept out of the pieces they would run through: Build/Collide)
+		if valid and BuildMode.collides() then
+			valid, reason = memo(string.format("room%d,%d,%d,%d,%d", x1, z1, x2, z2, s.level), function()
+				for _, w in walls do
+					if not hasWall(w) then
+						local ok, why = Collide.check(State.plan, "walls", w)
+						if not ok then
+							return false, why
+						end
+					end
+				end
+				return true, nil
+			end)
+		end
 		if cost > coins() then
 			valid, reason = false, "not enough coins"
 		end
@@ -423,6 +483,12 @@ local function wallTool()
 	local valid, reason = Plan.validate(State.plan, "walls", w)
 	if valid and hasWall(w) then
 		valid, reason = false, "there's already a wall there"
+	end
+	-- (and not through a piece, unless Free Placing lets it: Build/Placing)
+	if valid then
+		valid, reason = memo(string.format("w%s|%s|%s|%d", tostring(wallStart), tostring(g), w.style, w.lv), function()
+			return Placing.check(State.plan, rulesProfile(), { type = "add", kind = "walls" }, w, nil, {}, true)
+		end)
 	end
 	local cost = Plan.cost("walls", w)
 	if valid and cost > coins() then
@@ -549,7 +615,7 @@ local function placeCandidate(): (any?, string?)
 		if def.place == "opening" then
 			y = Plan.openingY(w, (def.opening :: any).sill)
 		else
-			y = math.floor((local3.Y - bottom - def.size.Y / 2) * 2 + 0.5) / 2
+			y = math.floor((local3.Y - bottom - Stretch.size(def, pl).Y / 2) * 2 + 0.5) / 2
 			y = math.max(0, y)
 		end
 		return {
@@ -565,6 +631,10 @@ local function placeCandidate(): (any?, string?)
 			c1 = pl.c1,
 			c2 = pl.c2,
 			img = pl.img,
+			-- (stretched with the Stretch pass: Build/Stretch)
+			sx = pl.sx,
+			sy = pl.sy,
+			sz = pl.sz,
 		},
 			nil
 	end
@@ -611,18 +681,32 @@ local function placeCandidate(): (any?, string?)
 	if def.place == "stairs" then
 		y = if s.level == 0 then P.Foundation else Plan.levelBase(s.level)
 	elseif def.place == "ceiling" then
-		y = Plan.levelTop(s.level) - (if s.level < P.Levels - 1 then 1 else 0)
+		y = Plan.ceilingY(s.level)
 	elseif def.place == "mark" then
 		-- (a mark: a little over what it lies on, and over the marks it covers: Plan.markY)
-		local support = if s.level > 0 then math.max(y, base) else y
+		local support = if s.level ~= 0 then math.max(y, base) else y
 		local at = { id = pl.id, x = x, z = z, r = pl.r % 360, lv = s.level }
 		y = Plan.markY(State.plan, at, support, pl.moveKey)
 	elseif def.place == "water" then
 		y = Water.pieceY(def) -- (water: on the surface, the bottom or the side, by its kind)
-	elseif s.level > 0 then
+	elseif s.level ~= 0 then
 		y = math.max(y, base)
 	end
-	return { id = pl.id, x = x, y = y, z = z, r = pl.r % 360, lv = s.level, c1 = pl.c1, c2 = pl.c2, img = pl.img }, nil
+	return {
+		id = pl.id,
+		x = x,
+		y = y,
+		z = z,
+		r = pl.r % 360,
+		lv = s.level,
+		c1 = pl.c1,
+		c2 = pl.c2,
+		img = pl.img,
+		sx = pl.sx, -- (stretched with the Stretch pass: Build/Stretch)
+		sy = pl.sy,
+		sz = pl.sz,
+	},
+		nil
 end
 
 -- Placing a ready-made building: its ghost is built once per building and turn (in a model of
@@ -685,7 +769,12 @@ local function presetTool()
 	if key ~= presetCheckKey then
 		presetCheckKey = key
 		local requests = Presets.requests(preset.id, ox, oz, pl.r)
-		local ok, why, cost = Presets.check(State.plan, requests)
+		local ok, why, cost, trial, made = Presets.check(State.plan, requests)
+		-- (the whole building kept out of what is there already, its own pieces touching as they
+		-- were drawn: Build/Collide)
+		if ok and BuildMode.collides() then
+			ok, why = Collide.checkMade(State.plan, trial, made)
+		end
 		if ok and cost > coins() then
 			ok, why = false, "not enough coins"
 		end
@@ -714,6 +803,34 @@ local function placeTool()
 	local def = Catalog.get(item.id) :: any
 	local moveKey = s.placing.moveKey
 	local valid, why = Plan.validItem(State.plan, item, moveKey)
+	-- what the passes say, as the server will: out of other pieces, angles, stretch (Build/Placing)
+	if valid then
+		local before = if moveKey then State.plan.items[moveKey] else nil
+		local req = { type = if moveKey then "set" else "add", kind = "items", key = moveKey }
+		local sig = string.format(
+			"i%s|%.2f|%.2f|%.2f|%.2f|%s|%s|%s|%s|%s|%s",
+			item.id,
+			item.x,
+			item.y,
+			item.z,
+			item.r,
+			tostring(item.wall),
+			tostring(item.t),
+			tostring(item.sx),
+			tostring(item.sy),
+			tostring(item.sz),
+			tostring(moveKey)
+		)
+		valid, why = memo(sig, function()
+			return Placing.check(State.plan, rulesProfile(), req, item, before, {}, true)
+		end)
+	end
+	-- (the hint says why the piece in hand can't go here)
+	local blocked = if valid then nil else why
+	if blocked ~= s.blocked then
+		s.blocked = blocked
+		changed("blocked")
+	end
 	local cost = if moveKey then 0 else def.price
 	if valid and cost > coins() then
 		valid, why = false, "not enough coins"
@@ -724,9 +841,11 @@ local function placeTool()
 		candidate = nil
 		return
 	end
-	local prims = Geometry.transform(Catalog.prims(def, item.c1, item.c2, item.img), frame)
+	-- (stretched as it will stand: Build/Stretch)
+	local prims =
+		Geometry.transform(Stretch.prims(Catalog.prims(def, item.c1, item.c2, item.img), Stretch.of(item)), frame)
 	local key = string.format(
-		"i%s|%.2f|%.2f|%.2f|%d|%s|%s|%s|%s",
+		"i%s|%.2f|%.2f|%.2f|%.2f|%s|%s|%s|%s|%s|%s|%s",
 		item.id,
 		item.x,
 		item.y,
@@ -735,10 +854,13 @@ local function placeTool()
 		tostring(item.wall),
 		tostring(item.t),
 		tostring(item.side),
+		tostring(item.sx),
+		tostring(item.sy),
+		tostring(item.sz),
 		tostring(valid)
 	)
 	showGhost(key, prims, valid)
-	local at = frame.Position + Vector3.new(0, def.size.Y + 1.5, 0)
+	local at = frame.Position + Vector3.new(0, Stretch.size(def, item).Y + 1.5, 0)
 	setLabel(if valid then (if moveKey then "Move here" else costText(cost)) else why, at)
 	if moveKey then
 		local before = State.plan.items[moveKey]
@@ -854,6 +976,60 @@ local waterApi: WaterTool.Api = {
 	end,
 }
 
+-- Is the Select tool in hand?
+local function grouping(): boolean
+	return s.tool == "multi"
+end
+
+-- The Select tool draws its own ghost: what another tool left in the folder goes.
+local function clearGhostIfNot()
+	if lastGhostKey ~= "" then
+		clearGhost()
+	end
+end
+
+-- (the Select tool: what it is lent, Build/SelectTool)
+local selectApi: SelectTool.Api = {
+	raycast = function()
+		return raycast()
+	end,
+	objectOf = objectOf,
+	modelOf = modelOf,
+	planePoint = planePoint,
+	plotFrame = function()
+		return plotFrame
+	end,
+	level = function()
+		return s.level
+	end,
+	ghostFolder = function()
+		return ghostFolder
+	end,
+	markerFolder = function()
+		return markerFolder
+	end,
+	setLabel = setLabel,
+	setHighlight = setHighlight,
+	coins = coins,
+	costText = costText,
+	-- (BuildMode's own, made further down)
+	send = function(requests, onDone)
+		(BuildMode :: any).send(requests, onDone)
+	end,
+	itemStep = function()
+		return if (BuildMode :: any).fineGrid() then SimPasses.itemSnap(State.data) else P.ItemSnap
+	end,
+	itemTurn = function(fine)
+		return (BuildMode :: any).turnStep(fine)
+	end,
+	profile = function()
+		return rulesProfile()
+	end,
+	changed = function(what)
+		changed(what)
+	end,
+}
+
 local pulseClock = 0
 local function update()
 	if not s.active or pending then
@@ -918,6 +1094,11 @@ local function update()
 		if s.selected and not kind then
 			setHighlight(modelOf(s.selected.kind, s.selected.key), Color3.fromRGB(79, 169, 217))
 		end
+	elseif tool == "multi" then
+		-- (the Select tool: Build/SelectTool)
+		clearGhostIfNot()
+		candidate = nil
+		SelectTool.update(selectApi)
 	end
 end
 
@@ -1042,6 +1223,15 @@ local function primary(released: boolean?)
 		pressPoint = nil
 		return
 	end
+	if tool == "multi" then
+		-- (the Select tool: a click picks, a drag draws a box, Build/SelectTool)
+		if released then
+			SelectTool.release(selectApi)
+		else
+			SelectTool.press(selectApi)
+		end
+		return
+	end
 	if released then
 		return
 	end
@@ -1099,9 +1289,19 @@ local function cancel()
 		lastGhostKey = ""
 		return
 	end
+	if s.tool == "multi" then
+		-- (the Select tool: what is held goes back, else the group is let go)
+		if SelectTool.holding() then
+			SelectTool.putAway(selectApi)
+		else
+			SelectTool.clear(selectApi)
+		end
+		return
+	end
 	if s.tool == "place" or s.tool == "preset" then
 		s.placing = nil
 		s.tool = "select"
+		s.blocked = nil
 		clearGhost()
 		changed("tool")
 	elseif s.selected then
@@ -1197,13 +1397,27 @@ local function drawGrid()
 	end
 end
 
+-- While the basement is shown the ground over the plot hides on this screen (Build/Underground),
+-- and it comes back on any other floor or out of Build mode.
+local function groundFor(level: number)
+	if s.active and level < 0 then
+		Underground.hide(if buildFolder then buildFolder.Parent else nil, plotFrame, State.plan)
+	elseif Underground.isHidden() then
+		Underground.show(State.plan)
+	end
+end
+
+-- Goes to floor n: one this player may build on, or one the plan already has something on
+-- (Sim/Floors.shown). BuildUI offers the pass at the ends.
 function BuildMode.setLevel(n: number)
-	s.level = math.clamp(n, 0, P.Levels - 1)
+	local lo, hi = Floors.shown(State.data, State.plan)
+	s.level = math.clamp(n, lo, hi)
 	wallStart, rectStart = nil, nil
 	lastGhostKey = ""
 	BuildCamera.setHeight(Plan.levelBase(s.level))
 	drawGrid()
 	applyAllVisibility()
+	groundFor(s.level)
 	changed("level")
 end
 
@@ -1222,7 +1436,12 @@ end
 -- tools and settings ---------------------------------------------------------------------------------
 
 function BuildMode.setTool(tool: string)
+	-- (the Select tool's group is let go when another tool comes out)
+	if s.tool == "multi" and tool ~= "multi" then
+		SelectTool.reset(selectApi)
+	end
 	s.tool = tool
+	s.blocked = nil
 	wallStart, rectStart, pressPoint = nil, nil, nil
 	if tool ~= "place" and tool ~= "preset" then
 		s.placing = nil
@@ -1239,6 +1458,7 @@ function BuildMode.setTool(tool: string)
 	-- (Build mode's screen shows its own words for these: BuildUI's HINTS)
 	local hints = {
 		select = "Click something to pick it.",
+		multi = "Click to pick, Shift-click for more, or drag a box.",
 		wall = if s.wallMode == "room"
 			then "Drag across the ground to make a room."
 			else "Drag to draw a wall. Right click stops.",
@@ -1278,6 +1498,11 @@ function BuildMode.startPreset(id: string)
 end
 
 function BuildMode.rotate(step: number?)
+	if s.tool == "multi" then
+		-- (the Select tool turns its group about the middle; Shift turns finer, as for one piece)
+		SelectTool.turn(selectApi, step ~= nil and step < 45)
+		return
+	end
 	local pl = s.placing
 	if pl and pl.preset then
 		pl.r = (pl.r + 90) % 360
@@ -1313,6 +1538,10 @@ function BuildMode.rotate(step: number?)
 end
 
 function BuildMode.moveSelected()
+	if s.tool == "multi" then
+		SelectTool.pickUp(selectApi, "move") -- (the Select tool's group)
+		return
+	end
 	local sel = s.selected
 	if not sel or sel.kind ~= "items" then
 		return
@@ -1322,11 +1551,25 @@ function BuildMode.moveSelected()
 		return
 	end
 	BuildMode.setTool("place")
-	s.placing = { id = obj.id, r = obj.r, c1 = obj.c1, c2 = obj.c2, img = obj.img, moveKey = sel.key }
+	s.placing = {
+		id = obj.id,
+		r = obj.r,
+		c1 = obj.c1,
+		c2 = obj.c2,
+		img = obj.img,
+		sx = obj.sx, -- (as stretched as it is: Build/Stretch)
+		sy = obj.sy,
+		sz = obj.sz,
+		moveKey = sel.key,
+	}
 	changed("tool")
 end
 
 function BuildMode.copySelected()
+	if s.tool == "multi" then
+		SelectTool.pickUp(selectApi, "copy") -- (the Select tool's group)
+		return
+	end
 	local sel = s.selected
 	if not sel or sel.kind ~= "items" then
 		return
@@ -1335,10 +1578,23 @@ function BuildMode.copySelected()
 	if obj then
 		BuildMode.startPlacing(obj.id, obj.c1, obj.c2, obj.img)
 		s.placing.r = obj.r
+		-- a copy turns and stretches as the passes let it (Build/Placing): a piece an older save
+		-- left at another angle comes out on the nearest eighth of a turn without Free Placing,
+		-- and only an owner of Stretch copies a stretch
+		if not BuildMode.owns("freeplace") and not Placing.plainAngle(obj.r) then
+			s.placing.r = Placing.roundAngle(obj.r)
+		end
+		if BuildMode.owns("stretch") then
+			s.placing.sx, s.placing.sy, s.placing.sz = obj.sx, obj.sy, obj.sz
+		end
 	end
 end
 
 function BuildMode.deleteSelected()
+	if s.tool == "multi" then
+		SelectTool.sell(selectApi) -- (the Select tool's group)
+		return
+	end
 	local sel = s.selected
 	if not sel then
 		return
@@ -1346,6 +1602,108 @@ function BuildMode.deleteSelected()
 	BuildMode.send({ { type = "remove", kind = sel.kind, key = sel.key } })
 	s.selected = nil
 	changed("selected")
+end
+
+-- the build mode passes (Build/Placing) -------------------------------------------------------------------
+--
+-- The user: "add collisions, and a gamepass should be there to remove it ... another for smaller
+-- grid size placement, another for x y scaling". Without a pass its switch shows locked and a
+-- press asks Roblox to sell it (Controllers/Purchase).
+
+-- Does the player own this pass? (as the server last said: State's `passes`)
+function BuildMode.owns(key: string): boolean
+	return SimPasses.has(State.data, key)
+end
+
+-- Do pieces have to keep out of each other right now? Free Placing lets them in while its owner
+-- has it on.
+function BuildMode.collides(): boolean
+	return not (BuildMode.owns("freeplace") and s.freePlace)
+end
+
+-- Is furniture snapping to the fine grid? (Fine Grid, while its owner has it on)
+function BuildMode.fineGrid(): boolean
+	return BuildMode.owns("finegrid") and s.fineGrid
+end
+
+-- How far a press of R turns a piece: an eighth of a turn, or with Free Placing 15 degrees (5
+-- with Shift held).
+function BuildMode.turnStep(fine: boolean?): number
+	return Placing.turnStep(BuildMode.owns("freeplace"), fine)
+end
+
+-- Free Placing's switch: pieces may overlap, or keep out of each other again. Asks to sell the
+-- pass to a player without it. Returns whether it switched.
+function BuildMode.toggleFreePlace(): boolean
+	if not BuildMode.owns("freeplace") then
+		Purchase.prompt("freeplace")
+		return false
+	end
+	s.freePlace = not s.freePlace
+	lastGhostKey = ""
+	presetCheckKey = ""
+	changed("view")
+	return true
+end
+
+-- Fine Grid's switch: furniture snaps four times finer, or to the usual step again.
+function BuildMode.toggleFineGrid(): boolean
+	if not BuildMode.owns("finegrid") then
+		Purchase.prompt("finegrid")
+		return false
+	end
+	s.fineGrid = not s.fineGrid
+	lastGhostKey = ""
+	changed("view")
+	return true
+end
+
+-- What the stretch controls act on: the piece in hand, or else the picked piece. Returns its
+-- catalog entry and how far it is stretched now, or nil when it is nothing that stretches.
+function BuildMode.stretchTarget(): (any?, Vector3?)
+	local pl = s.placing
+	if s.tool == "place" and pl and pl.id then
+		local def = Catalog.get(pl.id)
+		if def and Stretch.can(def) then
+			return def, Stretch.of(pl)
+		end
+		return nil, nil
+	end
+	local sel = s.selected
+	if s.tool == "select" and sel and sel.kind == "items" then
+		local obj = State.plan.items[sel.key]
+		local def = obj and Catalog.get(obj.id)
+		if def and Stretch.can(def) then
+			return def, Stretch.of(obj)
+		end
+	end
+	return nil, nil
+end
+
+-- Stretches what the controls act on to `scale` (its width, height and depth; Build/Stretch keeps
+-- each in the range, and at 1 along a side the piece keeps). The piece in hand changes at once; a
+-- picked one is sent to the server.
+function BuildMode.setStretch(scale: Vector3)
+	if not BuildMode.owns("stretch") then
+		Purchase.prompt("stretch")
+		return
+	end
+	local def = BuildMode.stretchTarget()
+	if not def then
+		return
+	end
+	local fixed = Stretch.clamped(def, { sx = scale.X, sy = scale.Y, sz = scale.Z })
+	if s.tool == "place" and s.placing and s.placing.id then
+		s.placing.sx, s.placing.sy, s.placing.sz = fixed.sx, fixed.sy, fixed.sz
+		lastGhostKey = ""
+		changed("stretch")
+		return
+	end
+	local sel = s.selected
+	if sel and sel.kind == "items" then
+		-- (a side back at 1 is taken off the piece: false)
+		BuildMode.editSelected({ sx = fixed.sx or false, sy = fixed.sy or false, sz = fixed.sz or false })
+	end
 end
 
 -- Asks the server whether an id is a picture the library has (a decal or an image): ok, or why
@@ -1418,7 +1776,42 @@ end
 
 -- entering and leaving -------------------------------------------------------------------------------
 
+-- The Select tool's box: a release anywhere ends it (over the tray too), and on a touch screen one
+-- finger draws it (Build/SelectTool).
+local function bindSelect()
+	table.insert(
+		connections,
+		UserInputService.InputEnded:Connect(function(input)
+			if not s.active or s.tool ~= "multi" then
+				return
+			end
+			if input.UserInputType == Enum.UserInputType.MouseButton1 then
+				SelectTool.release(selectApi)
+			elseif input.UserInputType == Enum.UserInputType.Touch then
+				SelectTool.touch(selectApi, input, "ended")
+			end
+		end)
+	)
+	table.insert(
+		connections,
+		UserInputService.InputBegan:Connect(function(input, processed)
+			if s.active and s.tool == "multi" and input.UserInputType == Enum.UserInputType.Touch and not processed then
+				SelectTool.touch(selectApi, input, "began")
+			end
+		end)
+	)
+	table.insert(
+		connections,
+		UserInputService.InputChanged:Connect(function(input)
+			if s.active and s.tool == "multi" and input.UserInputType == Enum.UserInputType.Touch then
+				SelectTool.touch(selectApi, input, "changed")
+			end
+		end)
+	)
+end
+
 local function bindKeys()
+	bindSelect()
 	table.insert(
 		connections,
 		UserInputService.InputBegan:Connect(function(input, processed)
@@ -1442,7 +1835,8 @@ local function bindKeys()
 					or UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
 				local shift = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift)
 				if input.KeyCode == Enum.KeyCode.R then
-					BuildMode.rotate(if shift then 15 else 45)
+					-- an eighth of a turn, or with Free Placing 15 degrees (5 with Shift)
+					BuildMode.rotate(BuildMode.turnStep(shift))
 				elseif
 					input.KeyCode == Enum.KeyCode.Escape
 					or input.KeyCode == Enum.KeyCode.Backspace and s.tool ~= "select"
@@ -1459,15 +1853,14 @@ local function bindKeys()
 				elseif input.KeyCode == Enum.KeyCode.Y and ctrl then
 					BuildMode.redo()
 				elseif input.KeyCode == Enum.KeyCode.G then
-					s.snap = not s.snap
-					changed("view")
+					BuildMode.toggleFineGrid() -- (Fine Grid's switch)
 				elseif input.KeyCode == Enum.KeyCode.PageUp or input.KeyCode == Enum.KeyCode.Period then
 					BuildMode.setLevel(s.level + 1)
 				elseif input.KeyCode == Enum.KeyCode.PageDown or input.KeyCode == Enum.KeyCode.Comma then
 					BuildMode.setLevel(s.level - 1)
-				elseif input.KeyCode == Enum.KeyCode.M and s.selected then
+				elseif input.KeyCode == Enum.KeyCode.M and (s.selected or grouping()) then
 					BuildMode.moveSelected()
-				elseif input.KeyCode == Enum.KeyCode.C and s.selected and not ctrl then
+				elseif input.KeyCode == Enum.KeyCode.C and (s.selected or grouping()) and not ctrl then
 					BuildMode.copySelected()
 				end
 			end
@@ -1496,6 +1889,10 @@ local function bindKeys()
 			pointerIsScreen = true
 			lastGhostKey = ""
 			update()
+			if s.tool == "multi" then
+				SelectTool.tap(selectApi) -- (a tap adds a piece to the group or takes it away)
+				return
+			end
 			primary(false)
 		end)
 	)
@@ -1609,6 +2006,7 @@ function BuildMode.enter(): boolean
 	)
 	drawGrid()
 	applyAllVisibility()
+	groundFor(s.level)
 	table.insert(
 		connections,
 		buildFolder.ChildAdded:Connect(function(child)
@@ -1636,6 +2034,7 @@ function BuildMode.exit()
 	ContextActionService:UnbindAction("BuildFreeze")
 	BuildCamera.disable()
 	applyAllVisibility()
+	groundFor(s.level) -- (the ground comes back: Build mode is off)
 	for part, canQuery in hidden do
 		if part.Parent then
 			part.CanQuery = canQuery
@@ -1656,15 +2055,36 @@ function BuildMode.exit()
 	wallStart, rectStart, candidate = nil, nil, nil
 	s.selected = nil
 	s.placing = nil
+	SelectTool.reset() -- (the Select tool's group let go)
 	changed("active")
 end
 
 -- Puts down what you are holding to place without placing it (the right click and Esc of a
 -- screen with no mouse and no keys: Build mode's round button while the interface is away).
 function BuildMode.putAway()
-	if s.tool == "place" or s.tool == "preset" then
+	if s.tool == "place" or s.tool == "preset" or (s.tool == "multi" and SelectTool.holding()) then
 		cancel()
 	end
+end
+
+-- The Select tool's group, for BuildUI's tray and tools (Build/SelectTool).
+function BuildMode.groupMove()
+	SelectTool.pickUp(selectApi, "move")
+end
+function BuildMode.groupCopy()
+	SelectTool.pickUp(selectApi, "copy")
+end
+function BuildMode.groupTurn()
+	SelectTool.turn(selectApi)
+end
+function BuildMode.groupSell()
+	SelectTool.sell(selectApi)
+end
+function BuildMode.groupPaint(hex: string)
+	SelectTool.paint(selectApi, hex)
+end
+function BuildMode.groupClear()
+	SelectTool.clear(selectApi)
 end
 
 function BuildMode.isActive(): boolean
@@ -1675,12 +2095,29 @@ function BuildMode.plotIndex(): number?
 	return plotIndex
 end
 
+-- (the passes' rules worked out before are stale once the passes change: Build/Placing)
+State.on("passes", function()
+	planVersion += 1
+	lastGhostKey = ""
+	presetCheckKey = ""
+	if s.active then
+		changed("passes")
+	end
+end)
+
 State.onPlan(function(ops)
+	planVersion += 1
+	if s.active and Underground.isHidden() then
+		-- (the terrain the server sends may fill some of the hidden ground in again)
+		Underground.refresh()
+		task.delay(1, Underground.refresh)
+	end
 	if s.active then
 		lastGhostKey = ""
 		if ops == nil then
 			drawGrid() -- a full plan: maybe more land
 		end
+		SelectTool.onPlan(selectApi) -- (what went leaves the Select tool's group)
 		changed("plan")
 	end
 end)

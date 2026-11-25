@@ -18,7 +18,7 @@ local WelcomeBack = {}
 
 local T = Kit.Theme
 local panel: any = nil
-local SIZE = UDim2.fromOffset(560, 372)
+local SIZE = UDim2.fromOffset(560, 360)
 
 -- "5 hours 20 minutes", "2 days 3 hours", "12 minutes": the two biggest parts of a time away.
 function WelcomeBack.duration(secs: number): string
@@ -79,7 +79,8 @@ function WelcomeBack.open(info: any?)
 	})
 	Kit.mark(gone)
 	-- what came in, big, with the coin in front of it
-	local sum = Kit.box({ Name = "Earned", Parent = body, Size = UDim2.new(1, 0, 0, 64), Position = UDim2.fromOffset(0, 40) })
+	local sum =
+		Kit.box({ Name = "Earned", Parent = body, Size = UDim2.new(1, 0, 0, 64), Position = UDim2.fromOffset(0, 40) })
 	Kit.mark(sum)
 	local row = Kit.box({ Name = "Row", Parent = sum, Size = UDim2.fromScale(1, 1) })
 	Kit.list(row, 10, true, Enum.HorizontalAlignment.Center)
@@ -97,19 +98,23 @@ function WelcomeBack.open(info: any?)
 	local who = if workers == 1
 		then "Your villager at work kept going while you were out."
 		else Text.fill("Your {n} villagers at work kept going while you were out.", { n = workers })
+	local share = math.floor(Tuning.Offline.Share * 100 + 0.5)
 	local lines = { who }
 	if counted < secs - 60 then
 		table.insert(
 			lines,
-			Text.fill("Up to {h} hours away is paid for, at a share of a full day's wages.", { h = Tuning.Offline.Hours })
+			Text.fill(
+				"Up to {h} hours away counts, at {p}% of what they'd earn at work in that time.",
+				{ h = Tuning.Offline.Hours, p = share }
+			)
 		)
 	else
-		table.insert(lines, "You get a share of what they'd make in a full day at work.")
+		table.insert(lines, Text.fill("Time away pays {p}% of what they'd earn at work in that time.", { p = share }))
 	end
 	local note = Kit.text(table.concat(lines, " "), {
 		Name = "Note",
 		Parent = body,
-		Size = UDim2.new(1, -40, 0, 48),
+		Size = UDim2.new(1, -40, 0, 62),
 		Position = UDim2.fromOffset(20, 116),
 		TextSize = 16,
 		Color = T.InkSoft,

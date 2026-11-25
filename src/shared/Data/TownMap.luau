@@ -1100,7 +1100,7 @@ function TownMap.cover(ground: { Prim }?, placements: { Placement }?, drawn: { [
 			table.insert(out, { x1 = lo.X, z1 = lo.Z, x2 = hi.X, z2 = hi.Z, kind = kind })
 		end
 	end
-	-- the plots, where players lay their floors
+	-- the plots, where players lay their floors (their ground a voxel down, Terrain.PlotFloor)
 	local size = Tuning.Plot.Size
 	for i = 1, Tuning.Plot.Count do
 		local f = Town.plotFrame(i)
@@ -1110,7 +1110,7 @@ function TownMap.cover(ground: { Prim }?, placements: { Placement }?, drawn: { [
 			z1 = math.min(a.Z, b.Z),
 			x2 = math.max(a.X, b.X),
 			z2 = math.max(a.Z, b.Z),
-			kind = "paved",
+			kind = "plot",
 		})
 	end
 	-- each model's footprints on the ground, in its own frame, worked out once a model
@@ -3342,6 +3342,25 @@ end
 function TownMap.preview(region: Region?): { Prim }
 	local reg = region or { -110, -150, 110, 150 }
 	local out = TownMap.ground(reg)
+	-- the plots' own ground, as the World service lays it: down to where the terrain under them
+	-- lies (Terrain.PlotFloor)
+	local size = Tuning.Plot.Size
+	for i = 1, Tuning.Plot.Count do
+		local f = Town.plotFrame(i)
+		local a, b = f * Vector3.zero, f * Vector3.new(size, 0, size)
+		local lo, hi = a:Min(b), a:Max(b)
+		if lo.X < reg[3] and hi.X > reg[1] and lo.Z < reg[4] and hi.Z > reg[2] then
+			table.insert(
+				out,
+				Geometry.span(
+					Vector3.new(lo.X, Terrain.PlotFloor, lo.Z),
+					Vector3.new(hi.X, 0, hi.Z),
+					Color3.fromRGB(138, 192, 112),
+					"Grass"
+				)
+			)
+		end
+	end
 	for _, p in TownMap.placements() do
 		local pos = p.cf.Position
 		if pos.X >= reg[1] and pos.X <= reg[3] and pos.Z >= reg[2] and pos.Z <= reg[4] then

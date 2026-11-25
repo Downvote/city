@@ -45,6 +45,9 @@ Remotes.Functions = {
 	"VisitPlot", -- (plotIndex) -> ok
 	"WishGrant", -- (vid, "friend" | "cheer", otherVid?) -> ok, err
 	"WishBuy", -- (vid) -> ok, message: pays Life.wishPrice for the food a villager is craving and grants the wish
+	-- (vid, "phrase" | "ending" | "thing", text | false) -> ok, message: sets a villager's flair for its
+	-- price in gems (Sim/Flair), filtered on the server; false takes it off, for nothing
+	"VillagerFlair",
 	"GoalClaim", -- (goalId) -> ok, coins
 	"PlaceFound", -- (placeId) -> ok: the player is at a place (checked against where they stand)
 	"GoHome", -- () -> ok, err: to the player's own plot

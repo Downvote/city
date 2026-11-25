@@ -250,7 +250,7 @@ function Saves.requests(current: any, target: any): ({ any }, { [number]: number
 			end
 		end
 	end
-	local requests = {}
+	local requests: { any } = {}
 	local gifts: { [number]: number } = {}
 	for _, kind in { "items", "walls", "waters", "floors", "roofs" } do
 		for _, key in sortedKeys(current[kind]) do

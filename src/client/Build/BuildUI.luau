@@ -25,8 +25,15 @@ local Toasts = require(script.Parent.Parent.UI.Toasts)
 local ModelPreview = require(script.Parent.Parent.UI.ModelPreview)
 local State = require(script.Parent.Parent.Controllers.State)
 local Purchase = require(script.Parent.Parent.Controllers.Purchase) -- (VIP pieces: the pass on their cards)
+local Floors = require(Shared.Sim.Floors) -- (which floors the player may go to and build on)
 local BuildMode = require(script.Parent.BuildMode)
+-- (the build mode passes: Free Placing's switch, Fine Grid's, Stretch and Any Colour, Build/Placing;
+-- Purchase above asks Roblox to sell one)
+local Stretch = require(Shared.Build.Stretch)
 local WaterTool = require(script.Parent.WaterTool) -- (water: its tray and a picked water's page)
+-- (the Select tool's page, and the Saves page: Build/SelectTool, Build/SavesTray)
+local SelectTool = require(script.Parent.SelectTool)
+local SavesTray = require(script.Parent.SavesTray)
 
 local BuildUI = {}
 
@@ -101,6 +108,14 @@ local MAIN = {
 		icon = "store",
 		name = "Work",
 		subs = { { id = "work", icon = "store", name = "Workplaces" } },
+	},
+	-- the whole plot kept as a build in a slot, and loaded back (the user: "add loading and saving
+	-- of plots": Build/SavesTray)
+	{
+		id = "saves",
+		icon = "save",
+		name = "Saves",
+		subs = { { id = "saves", icon = "save", name = "My builds" } },
 	},
 }
 
@@ -208,6 +223,18 @@ local function materialName(id: string): string
 end
 
 local ui: Frame
+-- (the build mode passes: their switches and controls, drawn by the functions further down)
+local passButtons: { [string]: TextButton } = {}
+local stretchCard: Frame? = nil
+local stretchFor = "" -- the piece the stretch card was made for
+local pickerOpen = false -- Any Colour's picker showing in the Paint tray
+local pickerHue, pickerShade = 0, 0.5
+-- what one of the passes' switches would do, for the hint (nil for any other button)
+local passTip: (string) -> string? = function()
+	return nil
+end
+local refreshPassLooks: () -> () = function() end
+local refreshStretchCard: () -> () = function() end
 local tray: Frame -- the catalog's lower part, which the tray's pages fill
 local trayBody: Frame
 local subBar: ScrollingFrame
@@ -1364,6 +1391,312 @@ local function roofTray()
 	end, 1)
 end
 
+-- the build mode passes in the tray ------------------------------------------------------------------
+--
+-- The user: "another [gamepass] for x y scaling" and "other gamepasses bloxburg uses for better
+-- build mode". Stretch makes a picked piece wider, deeper or taller (Build/Stretch), and Any
+-- Colour paints with a colour picked by its hue and shade or typed as a hex code. Without the pass
+-- the control shows a padlock, and pressing it asks Roblox to sell it (Controllers/Purchase).
+
+-- A small padlock on the corner of a control whose pass isn't owned (taken off once it is).
+local function lockBadge(holder: GuiObject, locked: boolean)
+	local had = holder:FindFirstChild("Lock")
+	if not locked then
+		if had then
+			had:Destroy()
+		end
+		return
+	end
+	if had then
+		return
+	end
+	local badge = Kit.disc({
+		Name = "Lock",
+		Parent = holder,
+		Size = 22,
+		Position = UDim2.new(1, -3, 0, 3),
+		AnchorPoint = Vector2.new(1, 0),
+		Color = T.Yellow,
+		Icon = "lock",
+		IconColor = T.Dark,
+		ZIndex = holder.ZIndex + 4,
+	})
+	badge:SetAttribute("KeepColors", true)
+end
+
+-- the sides a piece stretches along, as the sliders name them
+local STRETCH_SIDES = { "Width", "Height", "Depth" }
+
+-- A slider for each side a piece may stretch along (Build/Stretch.axes), from Tuning.Passes'
+-- StretchMin to StretchMax. `scale` is how far it is stretched now; `onSet(scale)` when one moves.
+local function stretchSliders(parent: Instance, def: any, scale: Vector3, w: number, onSet: (Vector3) -> ())
+	local allowed = { Stretch.axes(def) }
+	local now = { scale.X, scale.Y, scale.Z }
+	for i, name in STRETCH_SIDES do
+		if allowed[i] then
+			Kit.slider(name, Tuning.Passes.StretchMin, Tuning.Passes.StretchMax, now[i], Stretch.Step, function(v)
+				now[i] = v
+				onSet(Vector3.new(now[1], now[2], now[3]))
+			end, { Parent = parent, Size = UDim2.fromOffset(w, 44), LayoutOrder = i })
+		end
+	end
+end
+
+-- The picked piece's stretch, a row in its page of the tray: a slider for each side, or for a
+-- player without Stretch a locked button that offers it. Nothing for a piece that keeps its size.
+local function stretchRow(parent: Instance, order: number)
+	local def, scale = BuildMode.stretchTarget()
+	if not def or not scale then
+		return
+	end
+	local row = Kit.box({ Name = "Stretch", Parent = parent, Size = UDim2.new(1, 0, 0, 44), LayoutOrder = order })
+	Kit.text("Stretch", {
+		Parent = row,
+		Size = UDim2.new(0, LABEL_W - GAP, 0, 32),
+		TextSize = 15,
+		Font = Kit.Fonts.Bold,
+		Color = T.InkSoft,
+	})
+	local inside = Kit.box({ Parent = row, Size = UDim2.new(1, -LABEL_W, 1, 0), Position = UDim2.fromOffset(LABEL_W, 0) })
+	Kit.list(inside, 16, true).VerticalAlignment = Enum.VerticalAlignment.Top
+	if not BuildMode.owns("stretch") then
+		local b = Kit.button("Stretch", {
+			Name = "StretchLocked",
+			Icon = "lock",
+			Parent = inside,
+			Size = UDim2.fromOffset(132, 32),
+			TextSize = 15,
+			Color = T.Card,
+			TextColor = T.Ink,
+			LayoutOrder = 1,
+		}, function()
+			Purchase.prompt("stretch")
+		end)
+		b:SetAttribute("Locked", true)
+		Kit.text("Make it wider, deeper or taller with the Stretch pass.", {
+			Parent = inside,
+			Size = UDim2.fromOffset(0, 32),
+			AutomaticSize = Enum.AutomaticSize.X,
+			TextSize = 15,
+			Color = T.InkSoft,
+			Wrap = false,
+			LayoutOrder = 2,
+		})
+		return
+	end
+	stretchSliders(inside, def, scale, 190, function(v)
+		-- (sent once the slider settles, not on every step of the drag)
+		holdTray = os.clock() + 0.8
+		sliderToken += 1
+		local token = sliderToken
+		task.delay(0.35, function()
+			if token == sliderToken then
+				BuildMode.setStretch(v)
+			end
+		end)
+	end)
+	Kit.button("Reset", {
+		Name = "StretchReset",
+		Icon = "undo",
+		Parent = inside,
+		Size = UDim2.fromOffset(108, 32),
+		TextSize = 15,
+		Color = T.Card,
+		TextColor = T.Ink,
+		LayoutOrder = 9,
+	}, function()
+		BuildMode.setStretch(Vector3.one)
+	end)
+end
+
+-- Any Colour's picker: a bar of hues and a bar of shades of the picked hue (dark to light), and a
+-- box for a colour's hex code. What it picks goes on the brush.
+local PICK_W = 360
+
+local function hueColour(h: number): Color3
+	return Color3.fromHSV(h % 1, 0.8, 0.96)
+end
+
+-- the colour at `t` along the shade bar of hue `h`: black, the hue itself at the middle, white
+local function shadeColour(h: number, t: number): Color3
+	local pure = hueColour(h)
+	if t < 0.5 then
+		return Color3.new(0, 0, 0):Lerp(pure, t * 2)
+	end
+	return pure:Lerp(Color3.new(1, 1, 1), (t - 0.5) * 2)
+end
+
+-- Puts the two bars' knobs where a colour sits on them (as near as the bars come: a grey or a
+-- muted colour is only made exactly by its hex code).
+local function placeOnBars(hex: string)
+	local h, sat, v = Colors.fromHex(hex):ToHSV()
+	pickerHue = h
+	if v < 0.95 then
+		pickerShade = math.clamp(v / 0.96 / 2, 0, 0.5)
+	else
+		pickerShade = math.clamp(0.5 + (1 - sat / 0.8) / 2, 0.5, 1)
+	end
+end
+
+-- One of the picker's bars: a strip of colours (`keys`, spread evenly) with a knob on it, which a
+-- click or a drag along it moves. `onPick(t)` as it moves (t from 0 at the left to 1), `onDone`
+-- when the drag lets go. Returns the strip, to recolour.
+local function pickBar(
+	parent: Instance,
+	name: string,
+	keys: { Color3 },
+	value: number,
+	onPick: (number) -> (),
+	onDone: () -> ()
+): Frame
+	local hit = Kit.new("TextButton", {
+		Name = name,
+		Text = "",
+		AutoButtonColor = false,
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(PICK_W, 22),
+		Parent = parent,
+	})
+	local strip = Kit.frame({
+		Name = "Swatch", -- (a colour to pick from shows its own colours in either look)
+		Parent = hit,
+		Size = UDim2.new(1, 0, 0, 16),
+		Position = UDim2.fromOffset(0, 3),
+		Color = Color3.new(1, 1, 1),
+		Radius = "pill",
+	})
+	strip:SetAttribute("KeepColors", true)
+	Kit.rim(strip, T.Line, 1)
+	local points = {}
+	for i, c in keys do
+		table.insert(points, ColorSequenceKeypoint.new((i - 1) / math.max(1, #keys - 1), c))
+	end
+	Kit.new("UIGradient", { Name = "Hues", Color = ColorSequence.new(points), Parent = strip })
+	local knob = Kit.frame({
+		Name = "Knob",
+		Parent = hit,
+		Size = UDim2.fromOffset(18, 18),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.new(value, 0, 0.5, 0),
+		Color = T.White,
+		Radius = "round",
+		ZIndex = 3,
+	})
+	knob:SetAttribute("KeepColors", true)
+	Kit.rim(knob, T.Dark, 2)
+	local dragging = false
+	local function at(x: number)
+		local t = math.clamp((x - hit.AbsolutePosition.X) / math.max(1, hit.AbsoluteSize.X), 0, 1)
+		knob.Position = UDim2.new(t, 0, 0.5, 0)
+		onPick(t)
+	end
+	hit.InputBegan:Connect(function(input)
+		local kind = input.UserInputType
+		if kind == Enum.UserInputType.MouseButton1 or kind == Enum.UserInputType.Touch then
+			dragging = true
+			at(input.Position.X)
+		end
+	end)
+	hit.InputChanged:Connect(function(input)
+		local kind = input.UserInputType
+		if dragging and (kind == Enum.UserInputType.MouseMovement or kind == Enum.UserInputType.Touch) then
+			at(input.Position.X)
+		end
+	end)
+	hit.InputEnded:Connect(function(input)
+		local kind = input.UserInputType
+		if dragging and (kind == Enum.UserInputType.MouseButton1 or kind == Enum.UserInputType.Touch) then
+			dragging = false
+			onDone()
+		end
+	end)
+	return strip
+end
+
+-- The picker's rows in the Paint tray, from `order` on: Hue, Shade and the hex code.
+local function colourPicker(stack: Instance, order: number)
+	local hues = {}
+	for i = 0, 6 do
+		table.insert(hues, hueColour(i / 6))
+	end
+	local hexBox: TextBox
+	local chip: Frame
+	local shadeStrip: Frame
+	local function shown()
+		chip.BackgroundColor3 = Colors.fromHex(s.paint.c)
+		hexBox.Text = s.paint.c
+	end
+	local function fromBars()
+		s.paint.c = Colors.toHex(shadeColour(pickerHue, pickerShade))
+		s.paint.pick = false
+		shown()
+	end
+	local function shades(): ColorSequence
+		return ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.new(0, 0, 0)),
+			ColorSequenceKeypoint.new(0.5, hueColour(pickerHue)),
+			ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1)),
+		})
+	end
+	pickBar(labelledRow(stack, "Hue", 22, order), "Hue", hues, pickerHue, function(t)
+		pickerHue = t
+		local g = shadeStrip:FindFirstChild("Hues")
+		if g and g:IsA("UIGradient") then
+			g.Color = shades()
+		end
+		fromBars()
+	end, refreshTray)
+	shadeStrip = pickBar(
+		labelledRow(stack, "Shade", 22, order + 1),
+		"Shade",
+		{ Color3.new(0, 0, 0), hueColour(pickerHue), Color3.new(1, 1, 1) },
+		pickerShade,
+		function(t)
+			pickerShade = t
+			fromBars()
+		end,
+		refreshTray
+	)
+	local hexRow = labelledRow(stack, "Hex code", 30, order + 2)
+	hexBox = Kit.textbox("F2E8D5", {
+		Name = "Hex",
+		Parent = hexRow,
+		Size = UDim2.fromOffset(140, 30),
+		Text = s.paint.c,
+		TextSize = 16,
+		LayoutOrder = 1,
+	})
+	chip = Kit.frame({
+		Name = "Swatch",
+		Parent = hexRow,
+		Size = UDim2.fromOffset(30, 30),
+		Color = Colors.fromHex(s.paint.c),
+		Radius = "round",
+		LayoutOrder = 2,
+	})
+	Kit.rim(chip, T.Line, 1.5)
+	Kit.text("Pick a hue and a shade, or type a colour's six digit code.", {
+		Parent = hexRow,
+		Size = UDim2.fromOffset(0, 30),
+		AutomaticSize = Enum.AutomaticSize.X,
+		TextSize = 15,
+		Color = T.InkSoft,
+		Wrap = false,
+		LayoutOrder = 3,
+	})
+	hexBox.FocusLost:Connect(function()
+		local hex = string.upper((string.gsub(hexBox.Text, "[^%x]", "")))
+		if Colors.isHex(hex) then
+			s.paint.c = hex
+			s.paint.pick = false
+			placeOnBars(hex)
+			refreshTray()
+		else
+			hexBox.Text = s.paint.c
+		end
+	end)
+end
+
 -- The Paint tool: which colour of a piece to paint, the brush, then the finishes, the colours
 -- and the materials, each in a row with its name at the left.
 local function paintTray()
@@ -1393,10 +1726,42 @@ local function paintTray()
 		refreshTray()
 		refreshChrome()
 	end)
+	-- Any Colour's picker beside the palette (a padlock until the pass is bought)
+	local anyOwned = BuildMode.owns("anycolour")
+	local open = pickerOpen and anyOwned
+	local any = Kit.button(if open then "Back to the palette" else "Any colour", {
+		Name = "AnyColour",
+		Icon = if anyOwned then "brush" else "lock",
+		Parent = left,
+		Size = UDim2.fromOffset(if open then 210 else 160, 30),
+		TextSize = 15,
+		Color = if open then T.Yellow else T.Card,
+		TextColor = if open then T.Dark else T.Ink,
+		LayoutOrder = 3,
+	}, function()
+		if not BuildMode.owns("anycolour") then
+			Purchase.prompt("anycolour")
+			return
+		end
+		pickerOpen = not pickerOpen
+		if pickerOpen then
+			placeOnBars(s.paint.c)
+		end
+		refreshTray()
+	end)
+	any:SetAttribute("Locked", not anyOwned)
 	-- what the brush holds, at the right
 	local right = Kit.box({ Parent = top, Size = UDim2.fromScale(1, 1) })
 	Kit.list(right, 6, true, Enum.HorizontalAlignment.Right)
 	finishChip(right, "Brush", s.paint.c, s.paint.m, 1)
+	if open then
+		colourPicker(stack, 2)
+		materialRow(stack, s.paint.m, function(m)
+			s.paint.m = m
+			refreshTray()
+		end, 6)
+		return
+	end
 	local finishes = labelledRow(stack, "Finishes", CHIP_H, 2)
 	local all = {}
 	for _, list in { Palette.Presets.walls, Palette.Presets.floors, Palette.Presets.roofs } do
@@ -1440,6 +1805,50 @@ local waterKit: WaterTool.TrayKit = {
 	styleW = STYLE_W,
 	styleH = STYLE_H,
 	gap = GAP,
+}
+
+-- (the Select tool's page: what it is lent to look like the rest of the tray, Build/SelectTool)
+local selectKit: SelectTool.TrayKit = {
+	stack = function()
+		return trayStack()
+	end,
+	note = trayNote,
+	swatchRow = swatchRow,
+	move = function()
+		BuildMode.groupMove()
+	end,
+	turn = function()
+		BuildMode.groupTurn()
+	end,
+	copy = function()
+		BuildMode.groupCopy()
+	end,
+	sell = function()
+		BuildMode.groupSell()
+	end,
+	paint = function(hex: string)
+		BuildMode.groupPaint(hex)
+	end,
+	clear = function()
+		BuildMode.groupClear()
+	end,
+}
+
+-- (the Saves page: what it is lent, Build/SavesTray)
+local savesKit: SavesTray.TrayKit = {
+	row = function(height: number?)
+		return trayRow(height)
+	end,
+	stack = function()
+		return trayStack()
+	end,
+	note = trayNote,
+	refresh = function()
+		if trayMode == "saves" then
+			refreshTray()
+		end
+	end,
+	height = INNER_H,
 }
 
 -- What you can do with the picked object.
@@ -1516,6 +1925,8 @@ local function selectionTray()
 				BuildMode.editSelected({ [slot[1]] = hex })
 			end, i)
 		end
+		-- (wider, deeper or taller with the Stretch pass)
+		stretchRow(stack, 3)
 	elseif kind == "roofs" then
 		local shown = table.clone(obj)
 		roofControls(stack, function()
@@ -1588,6 +1999,12 @@ refreshTray = function()
 	elseif tool == "select" and s.selected then
 		trayMode = "select"
 		selectionTray()
+	elseif tool == "multi" then
+		trayMode = "multi" -- (the Select tool's group: Build/SelectTool)
+		SelectTool.tray(selectKit)
+	elseif subTab == "saves" then
+		trayMode = "saves" -- (saved builds: Build/SavesTray)
+		SavesTray.tray(savesKit)
 	elseif subTab == "buildings" then
 		trayMode = "buildings"
 		presetTray()
@@ -1662,6 +2079,8 @@ local function openSub(id: string)
 		BuildMode.setTool("roof")
 	elseif id == "water" then
 		BuildMode.setTool("water") -- (water: the drag tool, with the pieces in the tray)
+	elseif id == "saves" then
+		BuildMode.setTool("select") -- (the Saves page: nothing in hand while it shows)
 	else
 		BuildMode.setTool("place")
 		s.placing = nil
@@ -1713,6 +2132,11 @@ local function needSelection(): boolean
 	return false
 end
 
+-- (with the Select tool in hand, Move, Turn and Copy work on its group: Build/SelectTool)
+local function grouping(): boolean
+	return s.tool == "multi"
+end
+
 local TOOLS = {
 	{
 		id = "select",
@@ -1722,13 +2146,25 @@ local TOOLS = {
 			BuildMode.setTool("select")
 		end,
 	},
+	-- many pieces at once: click, Shift-click or drag a box (the user: "add a select tool in
+	-- build mode")
+	{
+		id = "multi",
+		icon = "select",
+		name = "Select",
+		run = function()
+			BuildMode.setTool("multi")
+		end,
+	},
 	{
 		id = "move",
 		icon = "move",
 		name = "Move",
 		needs = true,
 		run = function()
-			if needSelection() then
+			if grouping() then
+				BuildMode.groupMove()
+			elseif needSelection() then
 				BuildMode.moveSelected()
 			end
 		end,
@@ -1739,7 +2175,9 @@ local TOOLS = {
 		name = "Turn",
 		needs = true,
 		run = function()
-			if s.placing then
+			if grouping() then
+				BuildMode.groupTurn()
+			elseif s.placing then
 				BuildMode.rotate(45)
 			elseif needSelection() then
 				BuildMode.rotate(45)
@@ -1752,7 +2190,9 @@ local TOOLS = {
 		name = "Copy",
 		needs = true,
 		run = function()
-			if needSelection() then
+			if grouping() then
+				BuildMode.groupCopy()
+			elseif needSelection() then
 				BuildMode.copySelected()
 			end
 		end,
@@ -1808,7 +2248,8 @@ local HINTS = {
 local VIEW = {
 	{ id = "roofs", icon = "roof", name = "Hide roofs" },
 	{ id = "walls", icon = "wallGlass", name = "See-through walls" },
-	{ id = "snap", icon = "grid", name = "Snap to grid" },
+	-- (Fine Grid's switch: furniture snaps four times finer, a game pass; Build/Placing)
+	{ id = "snap", icon = "grid", name = "Fine grid" },
 }
 
 local function viewOn(id: string): boolean
@@ -1817,7 +2258,7 @@ local function viewOn(id: string): boolean
 	elseif id == "walls" then
 		return s.seeThrough == true
 	end
-	return s.snap == true
+	return BuildMode.fineGrid()
 end
 
 -- What a switch did, said in the hint for a moment after it changes.
@@ -1828,16 +2269,64 @@ local function viewWords(id: string): string
 	elseif id == "walls" then
 		return if on then "Walls see-through" else "Walls solid"
 	end
-	return if on then "Snap to grid on" else "Snap to grid off"
+	if not BuildMode.owns("finegrid") then
+		return "Fine Grid is a game pass"
+	end
+	return if on then "Fine grid on" else "Fine grid off"
+end
+
+-- What a floor is called: "Floor 2" (the ground floor is floor 1), or the basement.
+local function floorName(lv: number): string
+	return if lv < 0 then "Basement" else Text.fill("Floor {n}", { n = lv + 1 })
+end
+
+-- What the floor arrows would do from here: "go" to the next floor, "lock" (a pass would open it:
+-- the key) or "end" (there is no floor that way). The floors are the ones the player may build on
+-- and any their plan already has things on (Sim/Floors): Tall Builds above the third, Basement under
+-- the ground floor.
+local function floorStep(dir: number): (string, number, string?)
+	local lo, hi = Floors.shown(State.data, State.plan)
+	local nextLv = s.level + dir
+	if nextLv >= lo and nextLv <= hi then
+		return "go", nextLv, nil
+	end
+	local pass = if nextLv >= Plan.Lowest and nextLv <= Plan.Highest then Floors.passFor(State.data, nextLv) else nil
+	if pass then
+		return "lock", nextLv, pass
+	end
+	return "end", nextLv, nil
+end
+
+-- What a floor arrow says in the hint, for what it would do.
+local function floorTip(dir: number): string
+	local what, nextLv = floorStep(dir)
+	if what == "go" then
+		if nextLv < 0 then
+			return "Down to the basement"
+		elseif s.level < 0 then
+			return "Up to the ground floor"
+		end
+		return Text.fill(if dir > 0 then "Up to floor {n}" else "Down to floor {n}", { n = nextLv + 1 })
+	elseif what == "lock" then
+		return if dir > 0 then "Floors past the third come with Tall Builds" else "A basement comes with the Basement pass"
+	end
+	if dir > 0 then
+		return "This is the top floor"
+	end
+	return if s.level < 0 then "This is the basement" else "This is the ground floor"
 end
 
 -- What the floors card's button under the mouse would do, for the hint.
 local function viewTip(id: string): string
-	local top = Tuning.Plot.Levels - 1
+	-- (the switches of the build mode passes say their own: passTip, further down)
+	local own = passTip(id)
+	if own then
+		return own
+	end
 	if id == "down" then
-		return if s.level > 0 then Text.fill("Down to floor {n}", { n = s.level }) else "This is the ground floor"
+		return floorTip(-1)
 	elseif id == "up" then
-		return if s.level < top then Text.fill("Up to floor {n}", { n = s.level + 2 }) else "This is the top floor"
+		return floorTip(1)
 	end
 	local on = viewOn(id)
 	if id == "roofs" then
@@ -1845,7 +2334,10 @@ local function viewTip(id: string): string
 	elseif id == "walls" then
 		return if on then "Make the walls solid again" else "See through the walls"
 	end
-	return if on then "Stop snapping to the grid" else "Snap to the grid"
+	if not BuildMode.owns("finegrid") then
+		return "Fine Grid snaps furniture four times finer"
+	end
+	return if on then "Back to the usual grid" else "Snap furniture four times finer"
 end
 
 -- Says what changed in the hint line over the tools for a moment.
@@ -1860,6 +2352,19 @@ local function flash(text: string)
 			refreshChrome()
 		end
 	end)
+end
+
+-- Presses a floor arrow: to the next floor, or the pass that opens it.
+local function floorPress(dir: number)
+	local what, nextLv, pass = floorStep(dir)
+	if what == "go" then
+		BuildMode.setLevel(nextLv)
+	elseif what == "lock" and pass then
+		flash(floorTip(dir))
+		Purchase.prompt(pass)
+	else
+		flash(floorTip(dir))
+	end
 end
 
 -- One of the floors card's icon buttons: a rounded square in a thin rim, yellow with a dark icon
@@ -1878,24 +2383,42 @@ local function paintViewButton(b: GuiButton, on: boolean, dim: boolean?)
 	b:SetAttribute("On", on)
 end
 
+-- The floor arrows: dim where there is no floor that way, a small lock on the corner where a pass
+-- would open one (pressing it offers the pass).
+local function paintFloorButtons()
+	for _, pair in { { levelDown, -1 }, { levelUp, 1 } } do
+		local b, dir = pair[1] :: GuiButton, pair[2] :: number
+		local what = floorStep(dir)
+		paintViewButton(b, false, what == "end")
+		local lock = b:FindFirstChild("Lock")
+		if lock and lock:IsA("GuiObject") then
+			lock.Visible = what == "lock"
+		end
+		b:SetAttribute("Locked", what == "lock")
+	end
+end
+
 refreshChrome = function()
 	for _, tool in TOOLS do
 		local b = toolButtons[tool.id]
 		local on = (tool.id == "select" and s.tool == "select")
+			or (tool.id == "multi" and s.tool == "multi")
 			or (tool.id == "paint" and s.tool == "paint")
 			or (tool.id == "delete" and s.tool == "delete")
 			or (tool.id == "move" and s.placing ~= nil and s.placing.moveKey ~= nil)
 		-- Move, Turn and Copy need something picked (Turn also turns what you are placing): they
 		-- are dimmed until then, and pressing one says so
-		local idle = NEEDS[tool.id] and not s.selected and not (tool.id == "rotate" and s.placing ~= nil)
+		local idle = NEEDS[tool.id]
+			and not s.selected
+			and not (tool.id == "rotate" and s.placing ~= nil)
+			and not (s.tool == "multi" and SelectTool.count() > 0)
 		Kit.setButtonColor(b, if on then T.Yellow else T.Paper, if on then T.Dark elseif idle then T.InkSoft else T.Ink)
 	end
-	local top = Tuning.Plot.Levels - 1
-	paintViewButton(levelDown, false, s.level <= 0)
-	paintViewButton(levelUp, false, s.level >= top)
+	paintFloorButtons()
 	for _, v in VIEW do
 		paintViewButton(viewButtons[v.id], viewOn(v.id))
 	end
+	refreshPassLooks() -- (the passes' switches, and a padlock on those not bought)
 	local hint = HINTS[s.tool] or ""
 	if s.tool == "wall" then
 		hint = if s.wallMode == "room"
@@ -1906,9 +2429,17 @@ refreshChrome = function()
 		hint = HINTS.copy
 	elseif s.tool == "place" and not s.placing then
 		hint = "Pick something from the tray below."
+	elseif s.tool == "multi" then
+		hint = SelectTool.hint(Kit.isTouch()) -- (the Select tool: Build/SelectTool)
+	elseif trayMode == "saves" and s.tool == "select" and not s.selected then
+		hint = "Keep your plot as it is in a slot, or load one back."
 	end
 	if holdingNow and Kit.isTouch() and TOUCH_HINTS[s.tool] then
 		hint = TOUCH_HINTS[s.tool]
+	end
+	-- why the piece in hand can't go where it is ("Bumps into the sofa": Build/Collide)
+	if holdingNow and s.blocked and s.blocked ~= "" then
+		hint = string.upper(string.sub(s.blocked, 1, 1)) .. string.sub(s.blocked, 2)
 	end
 	if hovering and (s.tool == "place" or s.tool == "preset") then
 		hint = hovering
@@ -1925,12 +2456,180 @@ refreshChrome = function()
 	hintPill.Visible = not actionBar.Visible or overView ~= nil or flashText ~= nil
 end
 
+-- the build mode passes' switches --------------------------------------------------------------------------
+--
+-- Free Placing's switch sits on a card of its own beside the tools, drawn like the floors card's
+-- switches (an icon, no words: the hint names it while the mouse is on it). Fine Grid's is the
+-- floors card's grid switch. While a piece is held, Stretch's sliders stand at the bottom right
+-- for an owner, as the way back stands beside the hint.
+
+local PASS_W = VIEW_BTN + SIDE * 2
+
+local PASS_SWITCHES = {
+	{ id = "free", key = "freeplace", icon = "layers", name = "Free placing" },
+}
+
+passTip = function(id: string): string?
+	if id ~= "free" then
+		return nil
+	end
+	if not BuildMode.owns("freeplace") then
+		return "Free Placing lets pieces overlap and turn any way"
+	end
+	return if s.freePlace then "Make pieces bump into each other again" else "Let pieces go inside each other"
+end
+
+-- One of the passes' switches: a rounded square with an icon, as the floors card's are.
+local function passButton(parent: Instance, sw: any, order: number): TextButton
+	local b = Kit.new("TextButton", {
+		Name = sw.name,
+		Text = "",
+		AutoButtonColor = false,
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(VIEW_BTN, TILE_H),
+		LayoutOrder = order,
+		Parent = parent,
+	})
+	local face = Kit.new("Frame", {
+		Name = "Face",
+		BackgroundColor3 = T.Card,
+		BorderSizePixel = 0,
+		Size = UDim2.new(1, -4, 1, -2),
+		Position = UDim2.fromOffset(2, 1),
+		Parent = b,
+	})
+	Kit.corner(face, 9)
+	Kit.rim(face, Kit.edgeOf(T.Card), 1):SetAttribute("Follow", true)
+	local ipx = 30
+	Icons.make(sw.icon, ipx, {
+		Name = "IconArt",
+		Parent = b,
+		Position = UDim2.new(0.5, -ipx / 2, 0.5, -ipx / 2),
+		Color = T.Ink,
+		Hole = T.Card,
+		ZIndex = 2,
+	})
+	hoverable(b)
+	b.MouseEnter:Connect(function()
+		overView = sw.id
+		refreshChrome()
+	end)
+	b.MouseLeave:Connect(function()
+		if overView == sw.id then
+			overView = nil
+			refreshChrome()
+		end
+	end)
+	b.Activated:Connect(function()
+		if sw.id == "free" and BuildMode.toggleFreePlace() then
+			flash(if s.freePlace then "Pieces can overlap" else "Pieces bump into each other")
+		end
+	end)
+	return b
+end
+
+-- The card with the passes' switches, at the right end of the tools.
+local function buildPassCard()
+	local toolsW = #TOOLS * TOOL_W + SIDE * 2
+	local card = Kit.frame({
+		Name = "Placing",
+		Size = UDim2.fromOffset(#PASS_SWITCHES * VIEW_BTN + SIDE * 2, TOOLS_H),
+		Position = UDim2.new(0, EDGE + toolsW + GAP, 1, -TOOLS_AT),
+		AnchorPoint = Vector2.new(0, 1),
+		Color = T.Paper,
+		Cut = CUT,
+		Parent = ui,
+	})
+	local row = Kit.box({
+		Parent = card,
+		Size = UDim2.new(1, -SIDE * 2, 1, -PAD * 2),
+		Position = UDim2.fromOffset(SIDE, PAD),
+	})
+	Kit.list(row, 0, true)
+	for i, sw in PASS_SWITCHES do
+		passButtons[sw.id] = passButton(row, sw, i)
+	end
+end
+
+refreshPassLooks = function()
+	for _, sw in PASS_SWITCHES do
+		local b = passButtons[sw.id]
+		if b then
+			local owned = BuildMode.owns(sw.key)
+			paintViewButton(b, owned and s.freePlace, not owned)
+			lockBadge(b, not owned)
+			b:SetAttribute("Locked", not owned)
+		end
+	end
+	local grid = viewButtons.snap
+	if grid then
+		local owned = BuildMode.owns("finegrid")
+		lockBadge(grid, not owned)
+		grid:SetAttribute("Locked", not owned)
+	end
+end
+
+-- Stretch's sliders for the piece in hand, at the bottom right while it is held (for an owner of
+-- the pass, and a piece that stretches). Made again for each piece picked up; a slider's move
+-- changes the piece in hand at once.
+refreshStretchCard = function()
+	local pl = s.placing
+	local def = if holdingNow and s.tool == "place" and pl and pl.id then BuildMode.stretchTarget() else nil
+	local want = if def and BuildMode.owns("stretch") then def.id else ""
+	if want == stretchFor and (want == "") == (stretchCard == nil) then
+		return
+	end
+	stretchFor = want
+	if stretchCard then
+		stretchCard:Destroy()
+		stretchCard = nil
+	end
+	if want == "" or not ui then
+		return
+	end
+	local _, scale = BuildMode.stretchTarget()
+	local allowed = { Stretch.axes(def) }
+	local count = 0
+	for _, a in allowed do
+		if a then
+			count += 1
+		end
+	end
+	local card = Kit.frame({
+		Name = "StretchCard",
+		Size = UDim2.fromOffset(240, 34 + count * 46 + PAD),
+		Position = UDim2.new(1, -EDGE, 1, -EDGE),
+		AnchorPoint = Vector2.new(1, 1),
+		Color = T.Paper,
+		Cut = CUT,
+		Parent = ui,
+	})
+	Kit.rim(card, T.Line, 1)
+	Kit.title("Stretch", {
+		Parent = card,
+		Size = UDim2.new(1, -SIDE * 2, 0, 24),
+		Position = UDim2.fromOffset(SIDE, PAD),
+		TextSize = 17,
+		Wrap = false,
+	})
+	local list = Kit.box({
+		Parent = card,
+		Size = UDim2.new(1, -SIDE * 2, 0, count * 46),
+		Position = UDim2.fromOffset(SIDE, 34),
+	})
+	Kit.list(list, 2)
+	stretchSliders(list, def, scale or Vector3.one, 240 - SIDE * 2, function(v)
+		BuildMode.setStretch(v)
+	end)
+	stretchCard = card
+end
+
 -- holding a piece: the interface steps aside --------------------------------------------------------------
 
 -- How far each part goes while a piece is held: the bottom ones down off the screen, the coins
 -- and the camera help at the top left up off it.
 local AWAY: { [string]: number } =
-	{ Dock = 460, Catalog = 460, Tools = 460, Floors = 460, Pill = -140, CameraTip = -140 }
+	{ Dock = 460, Catalog = 460, Tools = 460, Floors = 460, Placing = 460, Pill = -140, CameraTip = -140 }
 local HINT_HOME = UDim2.new(0, EDGE + 12, 1, -HINT_AT)
 -- beside the hint while a piece is held: the red way back (it puts the piece away, as a right
 -- click does) and, on a touch screen, a round button that turns it
@@ -1943,7 +2642,8 @@ end
 -- Is a piece in hand, following the pointer to be placed (from a card, or picked up to move or
 -- copy)? The tools that draw keep their trays.
 local function isHolding(): boolean
-	return s.active and ((s.tool == "place" and s.placing ~= nil) or s.tool == "preset")
+	return s.active
+		and ((s.tool == "place" and s.placing ~= nil) or s.tool == "preset" or (grouping() and SelectTool.holding()))
 end
 
 -- Slides the interface away while a piece is held, and back when it is put away. `instant` puts
@@ -2008,6 +2708,7 @@ local function setHolding(on: boolean, instant: boolean?)
 	end
 	touchButtons.Size = UDim2.fromOffset(HOLD_W + (if touch then TURN_W + GAP else 0), 52)
 	touchButtons.Visible = on
+	refreshStretchCard() -- (Stretch's sliders beside it, for the piece in hand)
 	refreshChrome()
 end
 
@@ -2138,7 +2839,8 @@ local function followSelection()
 	local bottom = (p.Y - inset.Y) / scale - 12
 	local left, right = x - w / 2, x + w / 2
 	local lowest = H - (CATALOG_AT + CATALOG_H) - GAP
-	if left < EDGE + #TOOLS * TOOL_W + SIDE * 2 then
+	-- (the tools, and the passes' card beside them)
+	if left < EDGE + #TOOLS * TOOL_W + SIDE * 2 + GAP + PASS_W then
 		lowest = math.min(lowest, H - (TOOLS_AT + TOOLS_H) - GAP)
 	end
 	if right > W - EDGE - FLOORS_W then
@@ -2436,16 +3138,25 @@ function BuildUI.init(exitCallback: () -> ())
 		return b
 	end
 	levelDown = viewButton("FloorDown", "down", "down", 1, function()
-		if s.level <= 0 then
-			flash(viewTip("down"))
-		end
-		BuildMode.setLevel(s.level - 1)
+		floorPress(-1)
 	end)
 	levelUp = viewButton("FloorUp", "up", "up", 2, function()
-		if s.level >= Tuning.Plot.Levels - 1 then
-			flash(viewTip("up"))
-		end
-		BuildMode.setLevel(s.level + 1)
+		floorPress(1)
+	end)
+	-- the lock on an arrow's corner when a pass would open the floor that way (paintFloorButtons)
+	for _, b in { levelDown, levelUp } do
+		local lock = Icons.make("lock", 16, {
+			Name = "Lock",
+			Parent = b,
+			Position = UDim2.new(1, -19, 0, 3),
+			Color = T.Yellow,
+			ZIndex = 3,
+		})
+		lock.Visible = false
+	end
+	-- a pass bought (or the plan reaching a new floor) changes where the arrows go
+	State.on("passes", function()
+		refreshChrome()
 	end)
 	-- a quiet line between the arrows and the switches, so they read as two groups
 	local split =
@@ -2466,8 +3177,7 @@ function BuildUI.init(exitCallback: () -> ())
 			BuildMode.setSeeThrough(not s.seeThrough)
 		end,
 		snap = function()
-			s.snap = not s.snap
-			BuildMode.notify()
+			BuildMode.toggleFineGrid() -- (asks to sell Fine Grid to a player without it)
 		end,
 	}
 	for i, v in ipairs(VIEW) do
@@ -2476,6 +3186,20 @@ function BuildUI.init(exitCallback: () -> ())
 			flash(viewWords(v.id))
 		end)
 	end
+
+	-- the passes' switches, on a card at the right end of the tools (Free Placing's)
+	buildPassCard()
+	-- a pass bought (or a refund) shows on the switches and the tray at once
+	State.on("passes", function()
+		if not ui.Visible then
+			return
+		end
+		refreshChrome()
+		refreshStretchCard()
+		if trayMode == "paint" or trayMode == "select" then
+			refreshTray()
+		end
+	end)
 
 	-- coins, top left, and under them how to look around
 	local coinPill, coinValue = Kit.pill("coin", {
@@ -2602,7 +3326,7 @@ function BuildUI.init(exitCallback: () -> ())
 						Kit.slideIn(f, 0, 140, 0)
 					elseif name == "Catalog" then
 						Kit.slideIn(f, 0, 320, 0.05)
-					elseif name == "Tools" or name == "Hint" then
+					elseif name == "Tools" or name == "Hint" or name == "Placing" then
 						Kit.slideIn(f, -260, 0, 0.1)
 					elseif name == "Floors" then
 						Kit.slideIn(f, 260, 0, 0.12)
@@ -2617,7 +3341,7 @@ function BuildUI.init(exitCallback: () -> ())
 		end
 		if what == "level" and s.level ~= shownLevel then
 			shownLevel = s.level
-			flash(Text.fill("Floor {n}", { n = s.level + 1 }))
+			flash(floorName(s.level))
 		end
 		refreshChrome()
 		if what == "tool" then
@@ -2639,12 +3363,16 @@ function BuildUI.init(exitCallback: () -> ())
 			end
 			refreshActionBar()
 		elseif what == "selected" or what == "plan" then
-			if s.tool == "select" and (what == "selected" or os.clock() > holdTray) then
+			if (s.tool == "select" or s.tool == "multi") and (what == "selected" or os.clock() > holdTray) then
 				refreshTray()
 			end
 			refreshActionBar()
 		elseif what == "paint" then
 			refreshTray()
+		end
+		-- (Stretch's sliders follow the piece in hand)
+		if what == "tool" or what == "passes" then
+			refreshStretchCard()
 		end
 	end)
 end

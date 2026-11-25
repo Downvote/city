@@ -361,6 +361,14 @@ Harness.stub("ServerScriptService.Server.Services.Plots", {
 })
 local Build = Harness.require("ServerScriptService.Server.Services.Build")
 Build.start()
+-- saved builds (Services/Saves): the real service, its text filter stood in for
+profile.saves = profile.saves or {}
+profile.passes = profile.passes or {}
+local Saves = Harness.require("ServerScriptService.Server.Services.Saves")
+Saves.filter = function(_, text)
+	return text
+end
+Saves.start()
 remoteFn("GetState").OnServerInvoke = function()
 	return { coins = profile.coins, villagers = {}, order = {}, plan = Plan.copy(profile.plan) }
 end

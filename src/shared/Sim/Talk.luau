@@ -764,7 +764,7 @@ local LATELY = {
 	},
 	dish = {
 		_ = "I made my {what} again last night.",
-		sunny = "I made my {what} again, and it came out even better this time!",
+		sunny = "I made my {what} again, even better than last time!",
 		gentle = "I'll make you some of my {what} next time, okay?",
 		bold = "I've made my {what} three nights running, and I'm not stopping.",
 		dreamy = "Hmm... I made my {what} again, and the whole house smelled lovely.",

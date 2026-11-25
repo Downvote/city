@@ -3689,4 +3689,79 @@ event({
 	end,
 })
 
+-- somebody notices what a villager has been wearing lately (Sim/Memory: the hat from "outfit", the
+-- thing from the market in "newthing")
+event({
+	id = "newlook",
+	when = "day",
+	weight = W({ base = 0.3, memory = "accessory", rel = -20 }),
+	scene = function(ctx, a, b)
+		local s = K.scene(ctx, "Something new"):with({ what = ctx.memoryWords(a, "accessory").what })
+		s:n("{b} has stopped {a} in the street to get a better look at their {what}.")
+		burst(s, "b", {
+			sunny = "{a}, your {what} is so cute!|Where did you get it?",
+			gentle = "Oh, {a}, that {what} really suits you.",
+			bold = "That {what} looks good on you, {a}.",
+			dreamy = "Hmm... {a}, your {what} catches the light so nicely.",
+			easygoing = "Nice {what}, {a}, it looks comfy.",
+			proud = "{a}, that {what} is almost as good as something I'd pick.",
+			shy = "Um, {a}... I like your {what}.",
+			cheeky = "{a}, can i borrow the {what}? asking for me",
+			cool = "Nice {what}, {a}.",
+			prickly = "Your {what} is fine, I suppose.|...Okay, it's nice.",
+			dramatic = "{a}, that {what} is a STATEMENT.",
+			bookish = "{a}, is that a new {what}? It suits you, actually.",
+			gloomy = "That {what} looks good on you, {a}, better than anything looks on me.",
+			polite = "Good day, {a}, may I say your {what} looks very smart.",
+			foodie = "{a}, that {what} looks great, and I'm only a little jealous.",
+			nervous = "{a}, is that a new {what}? It's nice, I really mean it.",
+			_ = "{a}, that {what} really suits you.",
+		}, "sparkle", "point")
+		burst(s, "a", {
+			sunny = "Really? Ehehe, thank you!",
+			gentle = "Oh, thank you, that's kind of you.",
+			bold = "Hah, I know, right?",
+			dreamy = "Oh... thank you, I'd nearly forgotten I had it on.",
+			easygoing = "Thanks, it's comfier than it looks.",
+			proud = "Naturally, but thank you for noticing.",
+			shy = "Oh... um, thank you.",
+			cheeky = "nope, it's mine, but thanks hehe",
+			cool = "Thanks.",
+			prickly = "Don't make a fuss.|...Thanks, though.",
+			dramatic = "You NOTICED, I could cry.",
+			bookish = "Thank you, that's the ninth person to say so, actually.",
+			gloomy = "Really? Huh, thanks.",
+			polite = "Thank you very much, you are very kind.",
+			foodie = "Thanks, I've only spilled on it once.",
+			nervous = "Really? Oh, phew, I was worried it looked silly.",
+			_ = "Thanks, I've been wearing it all week.",
+		}, "heart")
+		s:choice("It really does suit you.", function(c)
+			burst(c, "a", {
+				shy = "Two people said so, so it must be true.",
+				proud = "Two compliments in one day, as expected.",
+				gloomy = "Two nice things in one day, so something's wrong, heh.",
+				cheeky = "two compliments, that's a new record",
+				dramatic = "That's TWO compliments, I'm framing this day.",
+				_ = "Okay, now I'm definitely keeping it on.",
+			}, "sparkle", "cheer")
+			c:mood("a", 4)
+			c:rel(3)
+		end)
+		s:choice("I want one too.", function(c)
+			burst(c, "a", {
+				bold = "Hah, too late, I'm the one who wears it.",
+				prickly = "Get your own, this one's mine.",
+				polite = "I would be glad to show you where I found it.",
+				cheeky = "copycat hehe|ok, the stall's by the fountain",
+				_ = "There was another one at the market, so go quickly.",
+			}, "idea")
+			c:mood("a", 3)
+			c:rel(2)
+		end)
+		s:log("{b} liked {a}'s {what}.")
+		return s:done()
+	end,
+})
+
 return list

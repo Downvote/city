@@ -50,7 +50,10 @@ local function townLevel(i: number, gems: number): Achievement
 	return {
 		id = "level" .. i,
 		name = name,
-		desc = "Grow into " .. (if string.match(name, "^[AEIOUaeiou]") then "an " else "a ") .. string.lower(name) .. ".",
+		desc = "Grow into "
+			.. (if string.match(name, "^[AEIOUaeiou]") then "an " else "a ")
+			.. string.lower(name)
+			.. ".",
 		icon = "city",
 		need = i,
 		gems = gems,

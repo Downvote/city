@@ -240,10 +240,14 @@ function Hud.start()
 		IconColor = T.Purple,
 	})
 	Kit.paint(gemPill, nil, 1)
-	local gemButton = Kit.new(
-		"TextButton",
-		{ Name = "OpenGems", Text = "", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), ZIndex = 4, Parent = gemPill }
-	)
+	local gemButton = Kit.new("TextButton", {
+		Name = "OpenGems",
+		Text = "",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 4,
+		Parent = gemPill,
+	})
 	gemButton.Activated:Connect(function()
 		Hud.open("Store", "gems")
 	end)

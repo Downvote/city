@@ -2375,7 +2375,13 @@ local CATS = { "Turnip", "Duchess", "Pebble", "Mr Socks", "Waffle", "Pickle" }
 event({
 	id = "stray",
 	when = "day",
-	weight = W({ base = 0.12, traits = { kind = 0.3 } }),
+	weight = W({
+		base = 0.12,
+		traits = { kind = 0.3 },
+		cond = function(ctx, a)
+			return ctx.memory(a, "pet") == nil
+		end,
+	}),
 	scene = function(ctx, a)
 		local names = ctx.rng:shuffle(CATS)
 		local s = K.scene(ctx, "A cat moves in")
@@ -2427,6 +2433,8 @@ event({
 				c:mood("a", 6)
 				c:hearts("a", 1)
 				c:memo("a", "{pet} slept on my face last night, and I didn't have the heart to move.")
+				-- and the cat is theirs for a while (Sim/Memory)
+				c:remember("a", "pet", { what = "cat", name = name })
 			end)
 		end
 		s:log("A stray cat moved in with {a}.")
@@ -5450,14 +5458,14 @@ event({
 
 local PET_NAMES = { "Biscuit", "Pebble", "Noodle", "Muffin", "Socks", "Waffle", "Button", "Pickle" }
 
+-- (a cat that moves in has an event of its own, "stray")
 local STRAYS = {
-	{ kind = "kitten", prop = "cat", how = "A thin little kitten has slept outside {a}'s door three nights running." },
 	{ kind = "puppy", prop = "dog", how = "A muddy puppy with no collar followed {a} home from the harbour." },
 	{ kind = "rabbit", how = "A rabbit has been living under {a}'s porch, and today it hopped inside." },
 }
 
 event({
-	id = "stray",
+	id = "foundpet",
 	when = "day",
 	weight = W({
 		base = 0.12,
@@ -5469,7 +5477,7 @@ event({
 	scene = function(ctx, a)
 		local stray = ctx.rng:pick(STRAYS)
 		local names = ctx.rng:shuffle(PET_NAMES)
-		local s = K.scene(ctx, "A stray"):with({ pet = stray.kind })
+		local s = K.scene(ctx, "A new friend"):with({ pet = stray.kind })
 		if stray.prop then
 			s:prop(stray.prop, "a")
 		end
@@ -5521,7 +5529,7 @@ event({
 				c:memo("a", "I took in a {pet} and called it {name}, so come and say hello.")
 			end)
 		end
-		s:log("{a} took in a stray {pet}.")
+		s:log("{a} took in a {pet}.")
 		return s:done()
 	end,
 })
@@ -5886,7 +5894,7 @@ event({
 	end,
 })
 
--- how a pet has been getting on (a villager who took one in: "stray")
+-- how a pet has been getting on (a villager who took one in: "stray", "foundpet")
 local PET_NEWS = {
 	"{name}, {a}'s {pet}, has started following {a} to work every morning.",
 	"{a}'s {pet}, {name}, got into the flour and left white footprints all over the kitchen.",
@@ -5900,7 +5908,7 @@ event({
 	scene = function(ctx, a)
 		local w = ctx.memoryWords(a, "pet")
 		local s = K.scene(ctx, "How the pet is doing"):with({ name = w.name, pet = w.what })
-		if w.what == "kitten" then
+		if w.what == "cat" or w.what == "kitten" then
 			s:prop("cat", "a")
 		elseif w.what == "puppy" then
 			s:prop("dog", "a")
@@ -5957,7 +5965,7 @@ event({
 
 -- the first of the crop (a villager who started a garden: "newgarden")
 event({
-	id = "harvest",
+	id = "firstcrop",
 	when = "day",
 	weight = W({ base = 0.35, memory = "garden" }),
 	scene = function(ctx, a)
@@ -6080,7 +6088,7 @@ event({
 
 -- a letter back (a villager with a pen pal: "penpal")
 event({
-	id = "letter",
+	id = "penletter",
 	when = "day",
 	weight = W({ base = 0.3, memory = "penpal" }),
 	scene = function(ctx, a)

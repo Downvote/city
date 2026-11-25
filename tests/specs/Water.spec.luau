@@ -72,6 +72,22 @@ describe("Water", function()
 		expect(Water.snap(X0 + 260, X0, X0 + 200)).toBe(X0 + 198)
 	end)
 
+	it("has solid sides all the way down: the plot's ground part, then the terrain under it", function()
+		-- the terrain under a plot lies a voxel down (Data/Terrain's PlotFloor) and the plot's own
+		-- ground part (World's Base, which the Water service cuts round a pool, its pieces as deep)
+		-- reaches down to it, so every depth of water is dug at least that deep: no gap of air is
+		-- left between the part's sides and the water, and under it the terrain is solid
+		local Terrain = require("ReplicatedStorage.Shared.Data.Terrain")
+		for _, depth in Water.DepthOrder do
+			local w = { x1 = 102, z1 = 6, x2 = 118, z2 = 30, lv = 0, edge = "tile", depth = depth }
+			local lo = Water.voxels(w)
+			expect(lo.Y <= Terrain.PlotFloor + 1e-6).toBe(true)
+			-- and its floor is above the bottom of what is dug, so it stands in the water
+			expect(Water.Depths[depth].floor > lo.Y).toBe(true)
+		end
+		expect((Terrain.PlotFloor / Water.Voxel) % 1).toBe(0)
+	end)
+
 	it("takes a good pool and refuses one off the grid, off the land, too small, too big or upstairs", function()
 		local plan = Plan.new()
 		expect(Plan.validate(plan, "waters", water(22, 150, 38, 162))).toBe(true)

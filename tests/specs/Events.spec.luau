@@ -22,6 +22,7 @@ local Schema = require(Shared .. "Sim.Schema")
 local Relationships = require(Shared .. "Sim.Relationships")
 local Life = require(Shared .. "Sim.Life")
 local Keepsakes = require(Shared .. "Sim.Keepsakes")
+local Memory = require(Shared .. "Sim.Memory")
 local Personalities = require(Shared .. "Data.Personalities")
 local Sayings = require(Shared .. "Data.Sayings")
 local Foods = require(Shared .. "Data.Foods")
@@ -83,6 +84,10 @@ local WEATHERS = { "clear", "cloudy", "rain", "storm", "snow", "blossom", "leave
 
 -- every workplace in the catalog, so any job can be somebody's
 local WORKPLACES = Catalog.workplaces()
+
+-- what can last a few days that a scene doesn't need a second villager for (a falling out comes
+-- with a quarrel)
+local LASTING = { "band", "accessory", "hobby", "haircut", "pet", "dish", "garden", "penpal", "training" }
 
 local function makeProfile(rng, count, withBeds)
 	local p = Schema.newProfile()
@@ -146,6 +151,30 @@ local function makeProfile(rng, count, withBeds)
 		end
 		p.villagers[vid] = v
 		table.insert(p.order, vid)
+	end
+	-- and some of them are in the middle of something that lasts a few days (Sim/Memory), so the
+	-- events that come back to it can happen: drawn on a stream of its own, so the towns are the
+	-- same as they were in every other way
+	local mrng = Rng.new(#p.order * 7919 + p.villagers.v1.lv * 131 + p.villagers.v1.bday.d * 17)
+	for _, vid in p.order do
+		if mrng:chance(0.45) then
+			local kind = mrng:pick(LASTING)
+			local opts = {}
+			if kind == "band" then
+				opts.name = "Pickle Jar"
+			elseif kind == "accessory" then
+				opts.what = mrng:pick({ "yellowhat", "scarf", "strawhat", "glasses" })
+			elseif kind == "pet" then
+				opts.what, opts.name = "kitten", "Biscuit"
+			elseif kind == "dish" then
+				opts.what = "mushroom soup"
+			elseif kind == "garden" then
+				opts.what = "beans"
+			elseif kind == "hobby" then
+				opts.what = mrng:pick(Sayings.hobbies).id
+			end
+			Memory.start(p, vid, kind, opts, 900)
+		end
 	end
 	return p
 end
@@ -358,6 +387,8 @@ for _, t in
 		"saying",
 		"hobby",
 		"leave",
+		"remember",
+		"forget",
 	}
 do
 	OPS[t] = true
@@ -406,6 +437,11 @@ local function checkOps(scene, where)
 				expect(Sayings.get(e.id) ~= nil).toBeTruthy()
 			elseif e.t == "hobby" then
 				expect(Sayings.hobby(e.id) ~= nil).toBeTruthy()
+			elseif e.t == "remember" or e.t == "forget" then
+				-- something that lasts a few days (Sim/Memory): a kind it knows, its words filled
+				expect(table.find(Memory.Order, e.kind) ~= nil).toBeTruthy()
+				checkString(e.what, where)
+				checkString(e.name, where)
 			end
 		end
 	end

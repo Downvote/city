@@ -44,6 +44,13 @@ Terrain.Dry = -0.3 -- the sand where the grass ends
 Terrain.Floor = -16 -- the deep sea's floor
 Terrain.Bottom = -20 -- the lowest voxels
 Terrain.Sink = 0.25 -- how far the ground drops out of sight under a paved floor
+-- Under a plot the ground lies a whole voxel down, out of reach of Roblox drawing far terrain with
+-- coarser voxels (that once stood the island's grass up through a plot's ground in a long strip:
+-- the user, with a picture, "there seems to be a bug"). The plot's own ground part (World's Base)
+-- runs from the floor down to here, so a pool's sides are solid and nothing shows between. The
+-- columns within a voxel of a plot's edge keep the paved height, so the ground steps down out of
+-- sight under that part, never as a dip beside it.
+Terrain.PlotFloor = -4
 Terrain.Margin = 1.5 -- no blades within this of anything built (they'd poke through its edge)
 
 -- Where the terrain is written column by column: the island and its sea out to Reach past the
@@ -322,8 +329,9 @@ function Terrain.onBeach(side: string, u: number, frac: number): (number, number
 end
 
 -- A rectangle with something built on it. `kind` is "paved" (a floor or a paved surface laid on
--- the ground: the ground under it sinks out of sight), "built" (whatever a placed model puts on
--- the ground) or "path" (stepping stones: a worn path of bare ground).
+-- the ground: the ground under it sinks out of sight), "plot" (a player's plot: paved, and away from
+-- its edges down to Terrain.PlotFloor), "built" (whatever a placed model puts on the ground) or
+-- "path" (stepping stones: a worn path of bare ground).
 export type Cover = { x1: number, z1: number, x2: number, z2: number, kind: string }
 
 -- A block of the open sea for Terrain:FillBlock.
@@ -353,6 +361,7 @@ function Terrain.plan(cover: { Cover }, pause: (() -> ())?): Plan
 	-- a paved floor
 	local over: { number } = table.create(nx * nz, 0)
 	local sunk: { [number]: boolean } = {}
+	local deep: { [number]: boolean } = {} -- (wholly inside a plot, more than a voxel from its edges)
 	local m = Terrain.Margin
 	for _, c in cover do
 		local x1, z1, x2, z2 = c.x1, c.z1, c.x2, c.z2
@@ -369,10 +378,18 @@ function Terrain.plan(cover: { Cover }, pause: (() -> ())?): Plan
 				end
 			end
 		end
-		if c.kind == "paved" then
+		if c.kind == "paved" or c.kind == "plot" then
 			for j = math.max(0, math.ceil((z1 - R[2]) / V)), math.min(nz - 1, math.floor((z2 - R[2]) / V) - 1) do
 				for i = math.max(0, math.ceil((x1 - R[1]) / V)), math.min(nx - 1, math.floor((x2 - R[1]) / V) - 1) do
 					sunk[j * nx + i + 1] = true
+				end
+			end
+		end
+		if c.kind == "plot" then
+			local a1, b1, a2, b2 = x1 + V, z1 + V, x2 - V, z2 - V
+			for j = math.max(0, math.ceil((b1 - R[2]) / V)), math.min(nz - 1, math.floor((b2 - R[2]) / V) - 1) do
+				for i = math.max(0, math.ceil((a1 - R[1]) / V)), math.min(nx - 1, math.floor((a2 - R[1]) / V) - 1) do
+					deep[j * nx + i + 1] = true
 				end
 			end
 		end
@@ -394,6 +411,9 @@ function Terrain.plan(cover: { Cover }, pause: (() -> ())?): Plan
 				end
 				if sunk[k] then
 					h -= Terrain.Sink
+				end
+				if deep[k] then
+					h = math.min(h, Terrain.PlotFloor)
 				end
 			end
 			height[k] = h

@@ -26,6 +26,8 @@
 --   map:x1,z1,x2,z2    another part of town (the terrain is drawn as faceted ground of its
 --                      materials' colours, finer the smaller the part, with the sea over it)
 --   stage:<id>         a cutscene's set (Data/Stages); tools/preview/stage.sh draws it from its shots
+--   basement           two basement rooms dug under a patch of a plot, half under a ground floor
+--                      (basement:open without it; tools/preview/basement_scene.luau)
 --   water              a tiled pool, a pond and a stone rimmed pool with things in them
 --                      (water:pool, water:pond, water:rim for one; tools/preview/water_scene.luau)
 
@@ -300,6 +302,9 @@ elseif scene == "props" or scene:sub(1, 6) == "props:" then
 			x, z, depth = 0, z + depth + 3, 0
 		end
 	end
+elseif scene == "basement" or scene == "basement:open" then
+	-- (the basement: two rooms dug under the ground, tools/preview/basement_scene.luau)
+	addPrims(require("./basement_scene")(R, scene:sub(10)))
 elseif scene == "water" or scene:sub(1, 6) == "water:" then
 	-- (water: pools and ponds with things in them)
 	addPrims(require("./water_scene")(R, scene:sub(7)))

@@ -146,6 +146,34 @@ own design (`Sim/Life`):
   friends (one pair, then three), growing into a Town and then a City, a full house, and work: two villagers in
   jobs, six, ten, 15,000 coins earned in wages, a villager at skill 5. Each pays coins when you claim it.
 
+### Their own flair, and what stays with them
+
+> also, could you make it such that villagers could have a custom saying, thing they add to the end of their
+> sentances sometimes, custom thing they like the most which they will mention, along with their conversations and
+> events having more impact, such as remembering if they joined a band, started wearing a new accessory
+> (temporarily), etc.
+
+> players can also buy the before mentioned customization for villagers such as custom sayings, thing they like to
+> mention, thing they end of their sentences, etc. that can be bought with gems, as another currency
+
+- **Flair.** A villager's page has a Quirks tab where the player types three things for them: a catchphrase (a
+  sentence they say now and then, in a chat or over their head), an ending (a word or two they put on the end of a
+  sentence now and then) and a favourite thing (which they bring up when you chat, in lines of their own: "Mmm, I
+  love old maps nearly as much as I love lunch."). Each costs a few gems the first time and again for every change
+  (4, 3 and 3; a usual day of play brings six at most); taking one off is free. The page shows the price and the
+  gems you have, and the editor says how many more you need. The server tidies what was typed, refuses empty or odd
+  text in plain words and runs it through Roblox's filter before it charges anything. The ending goes on after the
+  personality's own marks and in front of the closing one, "That's fine, buddy!", on about one sentence in five,
+  never twice and never where it would read wrong (a word or two, a name, a face). It goes on everything they say:
+  chats, events and what they say over their heads.
+- **What stays with them.** Some events now leave something that lasts a few town days, and they talk about it in
+  their own voice while it does: they joined a band (and the band plays the square), they wear a new hat or scarf
+  (on their body for real, and it comes off when the days are up), they took up a hobby, got a haircut, took in a pet,
+  learned a dish, fell out with somebody (until they make up, or it blows over), started a garden, write to a pen
+  pal over the sea or are training for the harbour race. Later events come back to it: the band's show, somebody
+  noticing the new hat, how the pet is doing, the first crop, the dish made again, a letter back, race day. Their
+  page lists it all under Lately with the days left.
+
 ## 4. Random events
 
 Every 75 to 150 seconds the town picks an event, weighted by who is around, their personalities, their
@@ -524,6 +552,57 @@ Held by `tests/specs/City.spec.luau` (and the earning itself by `Wages.spec.luau
   more than a minute at the best paid workplace and less than a work day at the least paid;
 - the starting house is a gift: selling any of it refunds nothing (only what was paid on top, say a dearer finish),
   so a new town can't be sold for coins.
+
+### Passes, gems, rewards and time away
+
+> add offline earnings.
+
+> also, add gamepasses, just like bloxburg. add collisions, and a gamepass should be there to remove it, another
+> for basement, another for more levels, another for bigger plot, (make the biggest size smaller without paying
+> smaller) another for double income, another for smaller grid size placement, another for x y scaling, vip, and
+> other gamepasses bloxburg uses for better build mode.
+
+> players can also buy the before mentioned customization for villagers such as custom sayings, thing they like to
+> mention, thing they end of their sentences, etc. that can be bought with gems, as another currency. allow players
+> to buy gems, as a daily reward, certain achievements, playtime rewards, etc. and buying with robux. it should be
+> a rare currency.
+
+> also, add group rewards, such as percentage increase of earnings
+
+**The store.** A round Store button under the clock opens it, a full menu with two tabs. Passes shows a card for
+each game pass: its picture, its name, what it does in a line, its price in Robux and Buy, or Owned once it's
+yours. Gems shows how many you have and five packs, from 10 gems for 49 Robux to 400 for 1,199. Pressing the gems
+on the main screen opens it on the packs. The passes are Free Placing (250), Fine Grid (100), Stretch (200),
+Basement (150), Tall Builds (150), Big Plot (300), Double Pay (400), Any Colour (100), More Saves (75) and VIP (350).
+What each does in Build mode is in section 5; here are the two that touch money. Double Pay doubles everything your
+villagers earn at work. VIP adds a tenth to it, a gem to every daily gift, VIP pieces in Build mode and a small gold
+VIP tag over your head. A pass or a pack has to be made on the Roblox website before it can be sold; until then
+its button says Soon.
+
+**Gems are rare.** Coins come every few seconds from work. Gems come a few a day: one with the daily gift (three on
+every seventh day running, one more for VIP), and one each for 15, 40 and 90 minutes played that day. That is
+four or five on a usual day. Achievements pay a few each, once: the first villager, a workplace, 5, 10 and 16
+villagers, each town level, two villagers who are best friends, ten cravings bought. All of them together come to
+44. Joining the game's group pays 10 once. A pack is the quick way.
+
+**Rewards.** The quick menu's fourth tile was the Gift; it is Rewards now, with the red dot while anything is
+waiting. Its menu has four tabs. Daily is today's gift and the week it's in, a row a day. Playtime is a ring of
+the minutes played today and the three steps, each claimed with a press. They start again the next day. Achievements
+reads like the town goals: ready to claim, under way, done. Group says what members get.
+
+**The group.** Members earn 10% more from everything their villagers make at work, for as long as they stay in it,
+and get 10 gems once. The group has to be made on Roblox and its id put in `Tuning.Group.Id`; until then the tab
+says it isn't open yet. The boosts multiply: Double Pay, VIP and the group together make 2.42 times the pay.
+
+**Time away.** When you come back, your town has been paid a tenth of what its villagers at work would have earned
+in the time you were gone, up to eight hours of it. A welcome back card says how long you were away and what came
+in, with an OK. The builder alone makes 1,620 a town day, so eight hours away bring 6,480; an hour of play brings
+8,100. Nothing comes on a first visit, for a rejoin inside five minutes, or for a town with nobody in work.
+
+Held by `tests/specs/Rewards.spec.luau` (a usual day's gems from the gift, VIP and playtime are 6 or fewer; each
+claim pays once; playtime goes in order and starts again each day), `Offline.spec.luau` (the share, the cap, never
+more than an hour of play) and `Store.spec.luau` (passes from Roblox, a receipt pays once and is granted only once
+saved, the boost, the claims).
 
 ## 9. The town
 

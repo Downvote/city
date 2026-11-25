@@ -31,7 +31,9 @@ the contract (update it with every API, remote or saved data change), `src/share
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (511 at the last full run; `Voice`: each personality's own hand; `Tutorial`: the four steps, checked
+Specs today (511 at the last full run; `Voice`: each personality's own hand, and a villager's ending; `Memory`: what events leave
+with a villager for a few days, the accessory on and off; `FlairService`: buying flair with gems on the server, with
+stubbed neighbours; `Tutorial`: the four steps, checked
 by the server, the first craving coming quickly; `Water`: pools and ponds on the terrain grid, what may stand in them;
 `Unstick`: finding room to stand, what of a piece is solid, villagers getting up and getting unstuck, swimmers left
 alone; `EventService`: an answer's time held while the player reads; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `PlayerWork` and `WorkService`: a player working at a workplace themselves, its pay and cap, and the server's side with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
@@ -182,7 +184,14 @@ pattern, like using ~ at the end of sentances, ... and other details" and "try n
 the talk card, `Npc.say` over their heads), which puts on that personality's marks (only Gentle ends with "~", only
 Dreamy hums "♪", Cheeky is all lower case, Cool and Gloomy never "!", Polite never contracts, Nervous stammers;
 the table is in GAME_DESIGN and the Voice spec holds it); each personality's own words are written into their
-lines. Never write a mark another personality owns, and use everyday words a player anywhere knows. Every line follows the writing rule, in the speaker's voice (the user: "for the humanization, make sure to take
+lines. Never write a mark another personality owns, and use everyday words a player anywhere knows. A villager may
+also carry flair the player bought with gems (`Sim/Flair`: a catchphrase, an ending, a favourite thing; the user:
+"villagers could have a custom saying, thing they add to the end of their sentances sometimes, custom thing they like
+the most which they will mention"): the ending goes on through `Voice.as(v, text)` (or `Voice.speak(pers, text,
+ending)`), so a villager's line is spoken through it, never with words glued on. What an event leaves with them for a
+few days (a band, a hat worn for real, a pet: `Sim/Memory`, "remembering if they joined a band, started wearing a new
+accessory (temporarily)") is started with `s:remember`, asked for with `W{ memory = ... }`, talked about in
+`Sim/Talk`'s `LATELY` lines in each voice, and undone when it ends (the hat comes off: `Memory.dressed`). Every line follows the writing rule, in the speaker's voice (the user: "for the humanization, make sure to take
 note of the personalities of the villagers as well"): each personality talks its own way (`Data/Personalities`'
 `lines`, `Sim/Talk`'s maps keyed by personality), and a line only one kind of villager would say goes through
 `s:by`. There is no romance (the user: "remove any romance, just

@@ -64,7 +64,7 @@ Memory.Accessories = {
 }
 
 -- Pets someone might take in, as said in a sentence ("a kitten called Biscuit").
-Memory.Pets = { kitten = "kitten", puppy = "puppy", rabbit = "rabbit" }
+Memory.Pets = { cat = "cat", kitten = "kitten", puppy = "puppy", rabbit = "rabbit" }
 
 -- What a memory is, as the villager's page lists it under Lately.
 local LATELY: { [string]: string } = {
@@ -197,7 +197,7 @@ function Memory.start(
 	if not v or not KINDS[kind] or type(now) ~= "number" then
 		return nil, false
 	end
-	local o = opts or {}
+	local o: { [string]: any } = opts or {}
 	local days = if type(o.days) == "number" and o.days > 0 then o.days else (M.Days[kind] or 3)
 	local m: any = {
 		kind = kind,

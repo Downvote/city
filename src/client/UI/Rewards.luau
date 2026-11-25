@@ -92,7 +92,8 @@ local function pays(parent: Instance, coins: number, gems: number, props: { [str
 		Radius = false,
 	})
 	Kit.slant(slab, h, true)
-	local row = Kit.box({ Name = "Row", Parent = slab, Size = UDim2.fromOffset(0, h), AutomaticSize = Enum.AutomaticSize.X })
+	local row =
+		Kit.box({ Name = "Row", Parent = slab, Size = UDim2.fromOffset(0, h), AutomaticSize = Enum.AutomaticSize.X })
 	row.ZIndex = 2
 	Kit.pad(row, 12, 3)
 	Kit.list(row, 8, true, Enum.HorizontalAlignment.Center)
@@ -148,7 +149,8 @@ local function foot(parent: Instance, ready: boolean, label: string, status: str
 		}, claim)
 		return
 	end
-	local box = Kit.box({ Name = "Status", Parent = parent, Size = UDim2.new(1, 0, 0, 54), Position = UDim2.new(0, 0, 1, -54) })
+	local box =
+		Kit.box({ Name = "Status", Parent = parent, Size = UDim2.new(1, 0, 0, 54), Position = UDim2.new(0, 0, 1, -54) })
 	Kit.title(status, {
 		Parent = box,
 		Size = UDim2.new(1, 0, 0, 28),
@@ -188,17 +190,19 @@ local function headline(parent: Instance, title: string, desc: string, top: numb
 	})
 end
 
--- asks the server, and says what came of it
+-- asks the server, and says what came of it when it says no (the notice of what it paid comes
+-- from the server)
 local function ask(remote: string, ...: any)
 	local args = table.pack(...)
 	task.spawn(function()
-		local ok, result = pcall(function()
+		local called, ok, result = pcall(function()
 			return Remotes.fn(remote):InvokeServer(table.unpack(args, 1, args.n))
 		end)
-		if not ok then
+		if not called then
 			Toasts.show("That didn't go through. Try again in a moment.", "warn")
+		elseif not ok and type(result) == "string" then
+			Toasts.show(result, "info")
 		end
-		local _ = result
 	end)
 end
 
@@ -236,7 +240,10 @@ local function showDaily(card: Frame, list: ScrollingFrame)
 			local ok, amount, got = Remotes.fn("DailyClaim"):InvokeServer()
 			if ok then
 				Toasts.show(
-					Text.fill("Daily gift: {n} coins and {g}.", { n = Text.commas(amount or 0), g = Text.gems(got or 0) }),
+					Text.fill(
+						"Daily gift: {n} coins and {g}.",
+						{ n = Text.commas(amount or 0), g = Text.gems(got or 0) }
+					),
 					"good"
 				)
 			end
@@ -345,26 +352,29 @@ local function showPlaytime(card: Frame, list: ScrollingFrame)
 		local claimed = i <= p.got
 		local due = not claimed and reached >= i
 		local left = s.minutes * 60 - secs
-		Kit.row({
-			Name = "Step" .. i,
-			Parent = list,
-			Size = MenuParts.rowSize(),
-			LayoutOrder = 1 + i,
-			Title = minutes(s.minutes * 60),
-			Sub = Text.gems(s.gems),
-			Marker = if claimed then "check" else "clock",
-			MarkerColor = if claimed then T.Line elseif due then T.Green else T.Teal,
-			Right = if claimed
-				then "Claimed"
-				elseif due then (if i == nextIndex then "Claim" else "Ready")
-				else Text.fill("{t} to go", { t = minutes(math.max(60, left)) }),
-			RightColor = if due then T.Green else nil,
-			Sunk = claimed,
-		}, if due and i == nextIndex
-			then function()
-				ask("PlaytimeClaim", i)
-			end
-			else nil)
+		Kit.row(
+			{
+				Name = "Step" .. i,
+				Parent = list,
+				Size = MenuParts.rowSize(),
+				LayoutOrder = 1 + i,
+				Title = minutes(s.minutes * 60),
+				Sub = Text.gems(s.gems),
+				Marker = if claimed then "check" else "clock",
+				MarkerColor = if claimed then T.Line elseif due then T.Green else T.Teal,
+				Right = if claimed
+					then "Claimed"
+					elseif due then (if i == nextIndex then "Claim" else "Ready")
+					else Text.fill("{t} to go", { t = minutes(math.max(60, left)) }),
+				RightColor = if due then T.Green else nil,
+				Sunk = claimed,
+			},
+			if due and i == nextIndex
+				then function()
+					ask("PlaytimeClaim", i)
+				end
+				else nil
+		)
 	end
 end
 
@@ -575,23 +585,28 @@ local function showGroup(card: Frame, list: ScrollingFrame)
 		Right = if member then "On" else "Members",
 		RightColor = if member then T.Green else nil,
 	})
-	Kit.row({
-		Name = "Gems",
-		Parent = list,
-		Size = MenuParts.rowSize(),
-		LayoutOrder = 3,
-		Title = Text.fill("{g}, once", { g = Text.gems(gems) }),
-		Sub = "For joining",
-		Marker = if paid then "check" else "gem",
-		MarkerColor = if paid then T.Line else T.Purple,
-		Right = if paid then "Claimed" elseif member then "Claim" else "Members",
-		RightColor = if member and not paid then T.Green else nil,
-		Sunk = paid,
-	}, if open and member and not paid
-		then function()
-			ask("GroupClaim")
-		end
-		else nil)
+	Kit.row(
+		{
+			Name = "Gems",
+			Parent = list,
+			Size = MenuParts.rowSize(),
+			LayoutOrder = 3,
+			Title = Text.fill("{g}, once", { g = Text.gems(gems) }),
+			Sub = "For joining",
+			Marker = if paid then "check" else "gem",
+			MarkerColor = if paid then T.Line else T.Purple,
+			Right = if paid then "Claimed" elseif member then "Claim" else "Members",
+			RightColor = if member and not paid then T.Green else nil,
+			Sunk = paid,
+		},
+		if open
+				and member
+				and not paid
+			then function()
+				ask("GroupClaim")
+			end
+			else nil
+	)
 	MenuParts.hint("Leaving the group ends the extra pay. The gems stay yours.", { Parent = list, LayoutOrder = 4 })
 end
 

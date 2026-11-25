@@ -14,6 +14,8 @@
 --   build:paint         Build mode on the Paint tool (finishes and colours)
 --   build:sell          Build mode on the Sell tool
 --   build:view          Build mode just after the up arrow and See-through walls (the hint says so)
+--   build:top           Build mode on the third floor without Tall Builds, the up arrow locked
+--   build:basement      Build mode on the basement with the Basement pass, a room dug there
 --   build:keepsakes     Build mode's Keepsakes tab with six things villagers made you, one of
 --                       them already down (build:keepsakes:empty before anybody has)
 --   build:placing       Build mode holding an armchair to place: the bars away, the hint left
@@ -23,11 +25,19 @@
 --   build:picture       the page for choosing a picture for a standing sign, a decal's id checked
 --                       (build:picture:bad an id that isn't a picture, build:picture:pick a placed
 --                       sign picked, with the picture it has)
+--   build:select        Build mode's Select tool with three armchairs picked by a box (its tray:
+--                       how many, what they sell for, what to do with them, colours to paint them)
+--                       (build:select:none the tool with nothing picked yet)
+--   build:saves         Build mode's Saves page: two builds saved, an empty slot and the locked
+--                       ones More Saves opens (build:saves:load the dialog that asks before a load)
 --   panel:<Name>        a panel over the main screen (Residents, CityPanel, News, Goals,
 --                       Tutorial: the tutorial's welcome)
 --   panel:<Name>:<state> a menu in one of its states: Residents:friends, Residents:empty (nobody
 --                       lives here), Residents:craving (Mara craves something: the Buy button),
---                       Residents:short (the same without the coins), News:empty, News:busy (news from several
+--                       Residents:short (the same without the coins), Residents:lately (what Mara's
+--                       events left her with), Residents:quirks (her catchphrase, ending and favourite,
+--                       bought with gems), Residents:quirks:edit (the editor for her catchphrase),
+--                       Residents:quirks:short (the editor without the gems), News:empty, News:busy (news from several
 --                       days and a request), Goals:claimed (a claimed goal picked), CityPanel:ready
 --                       (the next land can be bought)
 --   panel:Store         the store on its passes (VIP and Fine Grid owned, More Saves not on sale
@@ -360,6 +370,109 @@ elseif scene:sub(1, 5) == "build" then
 	if scene == "build:paint" then
 		Sim.press("Paint")
 	end
+	if scene:sub(1, 12) == "build:select" then
+		-- (the Select tool: three armchairs beside the house, picked with a box drawn round them)
+		Sim.press("Select")
+		if scene ~= "build:select:none" then
+			local Town = Sim.Harness.require("ReplicatedStorage.Shared.Data.Town")
+			local requests = {}
+			for i = 0, 2 do
+				table.insert(requests, {
+					type = "add",
+					kind = "items",
+					obj = { id = "armchair", x = 124 + i * 6, y = 0, z = 64, r = 0, lv = 0 },
+				})
+			end
+			Sim.advance(0.2)
+			Sim.remoteFn("BuildApply").OnServerInvoke(Sim.player, requests)
+			Sim.frames(3)
+			-- the box: round where the three show on the screen, with room to spare
+			local frame = Town.plotFrame(1)
+			local lo, hi = roblox.Vector2.new(math.huge, math.huge), roblox.Vector2.new(-math.huge, -math.huge)
+			for i = 0, 2 do
+				local v = Sim.cam:WorldToViewportPoint(frame * roblox.Vector3.new(124 + i * 6, 1.5, 64))
+				lo = roblox.Vector2.new(math.min(lo.X, v.X), math.min(lo.Y, v.Y))
+				hi = roblox.Vector2.new(math.max(hi.X, v.X), math.max(hi.Y, v.Y))
+			end
+			Sim.setMouse(lo - roblox.Vector2.new(50, 50))
+			Sim.input(Enum.UserInputType.MouseButton1, true)
+			Sim.setMouse(hi + roblox.Vector2.new(50, 50))
+			Sim.input(Enum.UserInputType.MouseButton1, false)
+			Sim.mouseAtPlot(150, 96)
+		end
+	end
+	if scene:sub(1, 11) == "build:saves" then
+		-- (saved builds: the cottage as it is, and a smaller garden plan from a few days back)
+		local Plan = Sim.Harness.require("ReplicatedStorage.Shared.Build.Plan")
+		local now = Sim.env.os.time()
+		local garden = Plan.copy(Sim.profile.plan)
+		local n = 0
+		for key in Sim.profile.plan.items do
+			n += 1
+			if n % 3 == 0 then
+				garden.items[key] = nil
+			end
+		end
+		Sim.profile.saves = {
+			["1"] = { name = "Cottage by the sea", t = now - 3700, plan = Plan.copy(Sim.profile.plan) },
+			["2"] = { name = "Garden plan", t = now - 86400 * 3, plan = garden },
+		}
+		Sim.profile.passes = Sim.profile.passes or {}
+		Sim.profile.passes.saveslots = nil
+		Sim.press("Saves")
+		Sim.frames(2)
+		if scene == "build:saves:load" then
+			local load = Sim.buttons(function(b)
+				return b.Name == "Load" and b:IsDescendantOf(Sim.gui:FindFirstChild("Slot2", true))
+			end)
+			load[1].Activated:Fire()
+			Sim.frames(4)
+			Sim.advance(0.6)
+		end
+	end
+	if scene == "build:top" then
+		-- (floors: the third floor, the top one without Tall Builds; the up arrow under the mouse
+		-- carries its lock and the hint offers the pass)
+		Sim.profile.passes = {}
+		Sim.remoteEvent("State"):FireClient(Sim.player, { passes = {} })
+		Sim.frames(2)
+		Sim.press("FloorUp")
+		Sim.press("FloorUp")
+		Sim.advance(2)
+		Sim.gui:FindFirstChild("FloorUp", true).MouseEnter:Fire()
+		Sim.frames(2)
+	end
+	if scene == "build:basement" then
+		-- (the basement, with the Basement pass: a room dug and walled there, the floor tool on)
+		Sim.profile.passes = { basement = true }
+		Sim.remoteEvent("State"):FireClient(Sim.player, { passes = Sim.profile.passes })
+		Sim.frames(2)
+		local function side(x1, z1, x2, z2)
+			return {
+				type = "add",
+				kind = "walls",
+				obj = {
+					x1 = x1,
+					z1 = z1,
+					x2 = x2,
+					z2 = z2,
+					lv = -1,
+					style = "wall",
+					a = { c = "E9E1D3", m = "Plaster" },
+					b = { c = "F2EADC", m = "Plaster" },
+				},
+			}
+		end
+		Sim.remoteFn("BuildApply"):InvokeServer({
+			{ type = "add", kind = "floors", obj = { x1 = 230, z1 = 120, x2 = 254, z2 = 138, lv = -1, c = "B89A78", m = "WoodPlanks" } },
+			side(230, 120, 254, 120),
+			side(230, 120, 230, 138),
+		})
+		Sim.press("FloorDown")
+		Sim.press("Floors")
+		Sim.advance(2)
+		Sim.mouseAtPlot(242, 128)
+	end
 	if scene:sub(1, 13) == "build:picture" then
 		-- Roblox's answer stood in for: 24680 a decal, 999 a place
 		local Build = Sim.Harness.require("ServerScriptService.Server.Services.Build")
@@ -417,6 +530,20 @@ elseif scene:sub(1, 6) == "panel:" then
 	elseif (state == "craving" or state == "short") and name == "Residents" then
 		first.wish = { kind = "food", arg = "curry", untilT = os.time() + 9999 }
 		patch({ villagers = villagers, coins = if state == "short" then 30 else Sim.profile.coins })
+	elseif state == "lately" and name == "Residents" then
+		-- a band, a hat for a few days, a garden and a falling out (Sim/Memory)
+		local Memory = Harness.require("ReplicatedStorage.Shared.Sim.Memory")
+		local town = { villagers = villagers, order = order, rel = rel }
+		local now = Sim.env.os.time() -- the client's clock in the simulation
+		Memory.start(town, order[1], "fallout", { who = order[2] }, now - 600)
+		Memory.start(town, order[1], "garden", { what = "tomatoes" }, now - 3000)
+		Memory.start(town, order[1], "accessory", { what = "yellowhat" }, now - 1000)
+		Memory.start(town, order[1], "band", { name = "Pickle Jar" }, now - 200)
+		patch({ villagers = villagers })
+	elseif state:sub(1, 6) == "quirks" and name == "Residents" then
+		-- what the player gave Mara to say, and the gems there are (Sim/Flair)
+		first.flair = { phrase = "Smells like rain to me.", ending = "buddy" }
+		patch({ villagers = villagers, gems = if state == "quirks:short" then 2 else 9 })
 	elseif state == "ready" and name == "CityPanel" then
 		-- the next piece of land open to a hamlet, to see the button that buys it
 		local Tuning = Harness.require("ReplicatedStorage.Shared.Config.Tuning")
@@ -459,6 +586,18 @@ elseif scene:sub(1, 6) == "panel:" then
 		end
 	elseif state == "friends" then
 		Sim.press("Friends")
+	elseif state == "lately" then
+		Sim.press("Lately")
+	elseif state:sub(1, 6) == "quirks" then
+		Sim.press("Quirks")
+		if state == "quirks:edit" or state == "quirks:short" then
+			Sim.frames(2)
+			local row = Sim.gui:FindFirstChild("phrase", true)
+			local edit = row and row:FindFirstChild("Edit", true)
+			if edit then
+				edit.Activated:Fire()
+			end
+		end
 	elseif state == "claimed" then
 		-- the first goal, claimed already
 		local row = Sim.gui:FindFirstChild("settlers", true)

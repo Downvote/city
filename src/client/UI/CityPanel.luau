@@ -15,6 +15,7 @@ local Icons = require(script.Parent.Icons)
 local MenuParts = require(script.Parent.MenuParts)
 local Toasts = require(script.Parent.Toasts)
 local State = require(script.Parent.Parent.Controllers.State)
+local Purchase = require(script.Parent.Parent.Controllers.Purchase) -- (Big Plot, past the free land)
 
 local CityPanel = {}
 
@@ -32,7 +33,12 @@ local landNote: Frame? = nil
 local earnedLabel: TextLabel? = nil
 
 local function profileView(): any
-	return { villagers = State.data.villagers or {}, plan = State.plan, coins = State.data.coins or 0 }
+	return {
+		villagers = State.data.villagers or {},
+		plan = State.plan,
+		coins = State.data.coins or 0,
+		passes = State.data.passes, -- (Big Plot: City.landCap)
+	}
 end
 
 -- The land a level opens up, if any.
@@ -157,6 +163,40 @@ local function town(inside: Frame, stats: any, wages: number)
 	})
 end
 
+-- Land past what is free (Tuning.Passes.FreeLand): the row offers Big Plot, with a lock on its
+-- button (the user: "another [gamepass] for bigger plot, (make the biggest size smaller without
+-- paying smaller)").
+local function lockedLandRow(list: ScrollingFrame, land: any, order: number)
+	local _, inner = Kit.row({
+		Name = "Land",
+		Parent = list,
+		Size = MenuParts.rowSize(64),
+		Height = 64,
+		LayoutOrder = order,
+		Title = Text.fill("{n} by {n} studs", { n = land.Size }),
+		Sub = Text.fill("Land past {n} by {n} comes with Big Plot", { n = Tuning.Passes.FreeLand }),
+		Marker = "ruler",
+		MarkerColor = T.Purple,
+		RightSpace = 200,
+	})
+	local button = Kit.button("Big Plot", {
+		Name = "BuyLand",
+		Parent = inner,
+		Size = UDim2.fromOffset(176, 42),
+		Position = UDim2.new(1, -28, 0.5, 0),
+		AnchorPoint = Vector2.new(1, 0.5),
+		Color = T.Yellow,
+		TextColor = T.Dark,
+		TextSize = 17,
+		Icon = "lock",
+		ZIndex = 3,
+	}, function()
+		Purchase.prompt("bigplot")
+	end)
+	button:SetAttribute("Locked", true)
+	landCan = false
+end
+
 -- Buying the next piece of land: a row with what it is, what it costs and a button that says
 -- what's in the way when it can't be bought yet.
 local function landRow(list: ScrollingFrame, stats: any, coins: number, order: number)
@@ -173,6 +213,10 @@ local function landRow(list: ScrollingFrame, stats: any, coins: number, order: n
 			Marker = "check",
 			MarkerColor = T.Green,
 		})
+		return
+	end
+	if stats.landLocked then
+		lockedLandRow(list, land, order)
 		return
 	end
 	local needLevel = Tuning.City.Levels[land.Level]
@@ -375,7 +419,7 @@ local function onCoins()
 	local p = profileView()
 	local stats = City.stats(p)
 	local land = stats.nextLand
-	local can = land ~= nil and stats.level >= land.Level and p.coins >= land.Price
+	local can = land ~= nil and not stats.landLocked and stats.level >= land.Level and p.coins >= land.Price
 	if landCan ~= nil and can ~= landCan then
 		draw()
 		return
@@ -411,6 +455,7 @@ function CityPanel.open()
 	draw()
 	table.insert(unbind, State.on("coins", onCoins))
 	table.insert(unbind, State.on("villagers", draw))
+	table.insert(unbind, State.on("passes", draw)) -- (Big Plot bought: the land row opens)
 end
 
 -- a change of look builds what's open again in the new one (a row's shading is made for a look)

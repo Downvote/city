@@ -14,6 +14,7 @@ local player = Players.LocalPlayer
 local SIZE = Tuning.Plot.Size
 -- how far out the camera may pull: far enough to see the whole plot (it was 220 on a plot of 200)
 local FARTHEST = SIZE * 1.1
+local ABOVE_GROUND = 4 -- the least the camera stands over the ground while it looks into the basement
 
 local active = false
 local plotFrame = CFrame.identity
@@ -30,6 +31,9 @@ local connections: { RBXScriptConnection } = {}
 local touchStart: { [InputObject]: Vector2 } = {}
 
 BuildCamera.dragged = false -- true while a touch drag is moving the camera (so it isn't a tap)
+-- true while one finger draws the Select tool's box instead (Build/SelectTool): two fingers still
+-- move the view
+BuildCamera.boxing = false
 
 local function clampFocus()
 	focus = Vector3.new(math.clamp(focus.X, -20, SIZE + 20), 0, math.clamp(focus.Z, -20, SIZE + 20))
@@ -80,6 +84,10 @@ local function update(dt: number)
 	distance += (goalDistance - distance) * math.min(1, dt * 10)
 	local offset = Vector3.new(math.sin(yaw) * math.cos(pitch), math.sin(pitch), math.cos(yaw) * math.cos(pitch))
 		* distance
+	-- looking at the basement, the camera stays up over the ground and looks down into it
+	if focusHeight < 0 and focusHeight + offset.Y < ABOVE_GROUND then
+		offset += Vector3.new(0, ABOVE_GROUND - (focusHeight + offset.Y), 0)
+	end
 	local target = plotFrame * (focus + Vector3.new(0, focusHeight, 0))
 	local worldOffset = plotFrame:VectorToWorldSpace(offset)
 	cam.CFrame = CFrame.lookAt(target + worldOffset, target)
@@ -153,7 +161,7 @@ function BuildCamera.enable(frame: CFrame)
 				if (p - start).Magnitude > 14 then
 					BuildCamera.dragged = true
 				end
-				if count == 1 and BuildCamera.dragged then
+				if count == 1 and BuildCamera.dragged and not BuildCamera.boxing then
 					yaw -= input.Delta.X * 0.008
 					pitch = math.clamp(pitch + input.Delta.Y * 0.006, math.rad(12), math.rad(85))
 				end

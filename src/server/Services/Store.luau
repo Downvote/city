@@ -242,7 +242,10 @@ function Store.processReceipt(info: any): Enum.ProductPurchaseDecision
 	local NOT_YET = Enum.ProductPurchaseDecision.NotProcessedYet
 	local pack = type(info) == "table" and Store.packFor(info.ProductId) or nil
 	if not pack then
-		warn("[Store] a receipt for a product the game doesn't sell:", if type(info) == "table" then info.ProductId else nil)
+		warn(
+			"[Store] a receipt for a product the game doesn't sell:",
+			if type(info) == "table" then info.ProductId else nil
+		)
 		return NOT_YET
 	end
 	local player = Players:GetPlayerByUserId(info.PlayerId)
@@ -316,10 +319,7 @@ local function settleAway(player: Player, profile: any)
 		return
 	end
 	Data.addCoins(player, got.coins)
-	Data.log(
-		player,
-		Text.fill("While you were away your villagers earned {n} coins.", { n = Text.commas(got.coins) })
-	)
+	Data.log(player, Text.fill("While you were away your villagers earned {n} coins.", { n = Text.commas(got.coins) }))
 	welcome[player] = { secs = got.secs, counted = got.counted, coins = got.coins, workers = got.workers }
 end
 
@@ -344,8 +344,15 @@ end
 function Store.init() end
 
 function Store.start()
-	Data.Loaded:Connect(function(player: Player, profile: any)
-		task.spawn(Store.arrive, player, profile)
+	-- (the profile is fetched, not taken from the signal: a BindableEvent hands its listeners a
+	-- copy of a table, and the passes and coins must go into the real one)
+	Data.Loaded:Connect(function(player: Player)
+		task.spawn(function()
+			local profile = Data.get(player)
+			if profile then
+				Store.arrive(player, profile)
+			end
+		end)
 	end)
 
 	MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player, passId, bought)

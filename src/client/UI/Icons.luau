@@ -237,6 +237,18 @@ D.pointer = {
 	{ "r", 46, 12, 7, 14, C.white, r = 0.5, o = false, t = 0.4 },
 }
 
+-- Build mode's Select tool: three corners of a box and the pointer that drew it
+D.select = {
+	{ "r", 8, 8, 30, 12, C.blue, r = 0.3 },
+	{ "r", 8, 8, 12, 30, C.blue, r = 0.3 },
+	{ "r", 62, 8, 30, 12, C.blue, r = 0.3 },
+	{ "r", 80, 8, 12, 30, C.blue, r = 0.3 },
+	{ "r", 8, 80, 30, 12, C.blue, r = 0.3 },
+	{ "r", 8, 62, 12, 30, C.blue, r = 0.3 },
+	{ "r", 58, 56, 14, 38, C.skin, r = 0.5, rot = -35 },
+	{ "r", 46, 44, 30, 30, C.skin, r = 0.2 },
+}
+
 local function arrowHead(dir: string, x: number, y: number, base: number, color: Color3): { any }
 	return { "t", x, y, base, dir, color }
 end
@@ -494,6 +506,21 @@ D.hardhat = {
 	{ "r", 4, 52, 92, 16, C.orange, r = 0.5 },
 	{ "r", 44, 18, 12, 36, C.goldLight, r = 0.4, o = false },
 	{ "r", 26, 30, 8, 14, C.white, r = 0.5, rot = -25, o = false, t = 0.4 },
+}
+
+-- a saved build: a disk, its shutter and its label
+D.save = {
+	{ "r", 8, 8, 84, 84, C.blue, r = 0.12 },
+	{ "r", 28, 8, 40, 26, C.steel, o = false },
+	{ "r", 22, 52, 56, 34, C.white, r = 0.1, o = false },
+}
+
+-- a padlock: its shackle over the body and the keyhole
+D.lock = {
+	{ "ring", 26, 4, 48, 56, C.steelDark, 11 },
+	{ "r", 12, 40, 76, 56, C.gold, r = 0.14 },
+	{ "c", 42, 54, 16, 16, INK, o = false },
+	{ "r", 45, 62, 10, 20, INK, r = 0.3, o = false },
 }
 
 D.blueprint = {
@@ -988,6 +1015,14 @@ D.barrel = {
 	{ "c", 14, 4, 72, 92, C.wood },
 	{ "r", 12, 24, 76, 8, C.woodDark, r = 0.5, o = false },
 	{ "r", 12, 68, 76, 8, C.woodDark, r = 0.5, o = false },
+}
+
+-- a padlock (Build mode's switches for a pass not bought yet)
+D.lock = {
+	{ "ring", 28, 6, 44, 52, C.steelDark, 10 },
+	{ "r", 14, 42, 72, 52, C.gold, r = 0.14 },
+	{ "c", 43, 54, 14, 14, INK, o = false },
+	{ "r", 46, 62, 8, 18, INK, r = 0.3, o = false },
 }
 
 D.gem = {

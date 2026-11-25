@@ -24,6 +24,10 @@ local Routine = require(Shared.Sim.Routine)
 local Uses = require(Shared.Sim.Uses)
 local Passes = require(Shared.Sim.Passes)
 local Sayings = require(Shared.Data.Sayings)
+local Flair = require(Shared.Sim.Flair)
+local Memory = require(Shared.Sim.Memory)
+local Appearance = require(Shared.Avatar.Appearance)
+local Categories = require(Shared.Avatar.Categories)
 local Chatter = require(Shared.Data.Events.Chatter)
 local Kit = require(Shared.Data.Events.Kit)
 local Rng = require(Shared.Util.Rng)
@@ -257,7 +261,8 @@ function Villagers.spawn(player: Player, vid: string)
 	spawnTokens[tokenKey] = (spawnTokens[tokenKey] or 0) + 1
 	local token = spawnTokens[tokenKey]
 	Villagers.despawn(player, vid)
-	local model = Avatar.buildModel(v.app, v.name)
+	-- their look as it is today: their own, with what a memory has them wearing (Sim/Memory)
+	local model = Avatar.buildModel(Memory.dressed(v, os.time()), v.name)
 	if not model then
 		return
 	end
@@ -286,6 +291,7 @@ function Villagers.spawn(player: Player, vid: string)
 	local npc = Npc.new(model, vid)
 	npc.playerName = player.DisplayName
 	npc.pers = v.pers -- how they write (Sim/Voice, in Npc.say)
+	npc.ending = Flair.get(v, "ending") -- and the ending the player gave them (Sim/Flair)
 	npc:setName(v.name, Colors.fromHex(v.color))
 	npc:play("idle")
 	npcs[player] = npcs[player] or {}
@@ -384,8 +390,13 @@ local function line(pers: string, kind: string): string
 	return rng:pick(lines)
 end
 
--- What a villager says: now and then their own saying or a line about their hobby.
+-- What a villager says: now and then the catchphrase the player gave them (Sim/Flair), their own
+-- saying or a line about their hobby.
 local function ownLine(v: any, kind: string): string
+	local phrase = Flair.get(v, "phrase")
+	if phrase and rng:chance(Tuning.Flair.PhraseChance) then
+		return phrase
+	end
 	local saying = Sayings.get(v.saying)
 	if saying and rng:chance(0.3) then
 		return saying.text
@@ -423,6 +434,20 @@ local function lifeHour(player: Player)
 	local now = os.time()
 	for _, n in Life.fadeWishes(profile, now) do
 		Data.notify(player, n, "info")
+	end
+	-- what their events left them with runs out (Sim/Memory): what it changed goes back, a hat
+	-- comes off, a falling out ends
+	local ended, endNotices = Memory.tick(profile, now)
+	for _, n in endNotices do
+		Data.notify(player, n, "info")
+	end
+	for _, e in ended do
+		if e.dressed then
+			task.spawn(Villagers.dress, player, e.vid)
+		end
+	end
+	if #ended > 0 then
+		Data.push(player, "rel")
 	end
 	for _, vid in profile.order do
 		if Life.maybeWish(profile, vid, rng, now) then
@@ -1865,6 +1890,166 @@ function Villagers.buyWish(player: Player, vid: any): (boolean, string?)
 	return true
 end
 
+-- What a memory has them wearing (Sim/Memory) ----------------------------------------------------
+--
+-- The user: "remembering if they ... started wearing a new accessory (temporarily)". The memory
+-- names the thing (a yellow hat, a stripy scarf); the first time, the catalog is searched for one,
+-- as the creator's own search does (Avatar.search), and what was found is kept on the memory. The
+-- body is dressed from Memory.dressed: their own look with that on top. v.app is never changed, so
+-- when the memory ends and they are dressed again, it comes off.
+
+-- the Enum.AvatarAssetType a slot's search asks for
+local SLOT_ASSET = {
+	Hat = "Hat",
+	Face = "FaceAccessory",
+	Neck = "NeckAccessory",
+	Back = "BackAccessory",
+	Shoulder = "ShoulderAccessory",
+	Front = "FrontAccessory",
+	Waist = "WaistAccessory",
+}
+-- what each search found, by Memory.Accessories key; a search that found nothing is tried again
+-- after a couple of minutes
+local foundAcc: { [string]: { id: number, t: string } } = {}
+local triedAcc: { [string]: number } = {}
+
+local function findAccessory(key: string): { id: number, t: string }?
+	local def = Memory.Accessories[key]
+	if not def then
+		return nil
+	end
+	if foundAcc[key] then
+		return foundAcc[key]
+	end
+	if triedAcc[key] and os.clock() - triedAcc[key] < 120 then
+		return nil
+	end
+	triedAcc[key] = os.clock()
+	local assetType = SLOT_ASSET[def.slot]
+	local ok, results = pcall(Avatar.search, { keyword = def.search, assets = { assetType } })
+	if not ok or type(results) ~= "table" then
+		return nil
+	end
+	for _, item in results do
+		local typeName = Categories.assetTypeName(item.AssetType)
+		if
+			type(item.Id) == "number"
+			and item.Id > 0
+			and (item.ItemType == nil or item.ItemType == "Asset")
+			and typeName
+			and Appearance.slotAllows("acc." .. def.slot, typeName)
+		then
+			foundAcc[key] = { id = item.Id, t = def.slot }
+			return foundAcc[key]
+		end
+	end
+	return nil
+end
+
+-- Dresses a villager as they are today (Memory.dressed): finds what a new memory has them wearing
+-- first, then puts the look on the body they have (Humanoid:ApplyDescription), or builds them again
+-- with it when that won't take.
+function Villagers.dress(player: Player, vid: string)
+	local profile = Data.get(player)
+	local v = profile and profile.villagers[vid]
+	if not v then
+		return
+	end
+	local now = os.time()
+	local waiting = Memory.unfound(v, now)
+	if waiting and waiting.what then
+		local found = findAccessory(waiting.what)
+		if found then
+			waiting.acc = { id = found.id, t = found.t }
+		end
+	end
+	local npc = Villagers.get(player, vid)
+	local model = npc and npc.model
+	local hum = model and model:FindFirstChildOfClass("Humanoid")
+	if not hum then
+		return
+	end
+	local ok = pcall(function()
+		hum:ApplyDescription(Avatar.toDescription(Memory.dressed(v, now)))
+	end)
+	if not ok and Villagers.control(player, vid) == nil then
+		task.spawn(Villagers.spawn, player, vid)
+	end
+end
+
+-- A villager's flair (Sim/Flair) ------------------------------------------------------------------
+--
+-- The user: "villagers could have a custom saying, thing they add to the end of their sentances
+-- sometimes, custom thing they like the most ... that can be bought with gems". The villager's page
+-- sends what the player typed; it is checked (Flair.check: a villager of theirs, text that reads as
+-- one, not what they have already, enough gems), run through Roblox's filter, checked again on what
+-- the filter left, and only then kept and paid for (Flair.set takes the gems). Taking one off is free.
+
+local flairAt: { [Player]: number } = {} -- the last time each player sent one, so the filter isn't flooded
+
+function Villagers.setFlair(player: Player, vid: any, kind: any, text: any): (boolean, string?)
+	local profile = Data.get(player)
+	if not profile then
+		return false, "Not ready yet."
+	end
+	local v = type(vid) == "string" and profile.villagers[vid]
+	if not v then
+		return false, "Who?"
+	end
+	if not Flair.isKind(kind) then
+		return false, "Can't do that."
+	end
+	local npc = Villagers.get(player, vid)
+	if text == false then
+		if not Flair.clear(profile, vid, kind) then
+			return false, "There's nothing to take off."
+		end
+		if npc and kind == "ending" then
+			npc.ending = nil
+		end
+		Data.push(player, "villagers")
+		return true, nil
+	end
+	local wait = 1 - (os.clock() - (flairAt[player] or 0))
+	if wait > 0 then
+		return false, "One moment."
+	end
+	flairAt[player] = os.clock()
+	local clean, _, why = Flair.check(profile, vid, kind, text)
+	if not clean then
+		return false, why
+	end
+	local filtered = Avatar.filterText(player, clean)
+	if not filtered then
+		return false, "Couldn't check that just now. Try again in a moment."
+	end
+	if filtered:find("#", 1, true) then
+		return false, "That got filtered. Try something else."
+	end
+	-- (the profile may have changed while the filter answered: Flair.set checks it all again)
+	local ok, cost, why2 = Flair.set(profile, vid, kind, filtered)
+	if not ok then
+		return false, why2
+	end
+	v = profile.villagers[vid]
+	npc = Villagers.get(player, vid)
+	if npc then
+		npc.ending = Flair.get(v, "ending")
+		if kind == "phrase" then
+			-- they try it out straight away
+			npc:say(Flair.get(v, "phrase") :: string)
+			npc:icon("sparkle")
+		end
+	end
+	Data.push(player, "villagers", "gems")
+	local said =
+		Text.fill(if cost == 1 then "{x} has it now. It cost 1 gem." else "{x} has it now. It cost {n} gems.", {
+			x = v.name,
+			n = cost,
+		})
+	return true, said
+end
+
 -- Talking to a villager --------------------------------------------------------------------------
 --
 -- The user: "allow the option to interact/chat with villagers by holding e on them". Every
@@ -2103,6 +2288,9 @@ function Villagers.start()
 	Remotes.fn("WishBuy").OnServerInvoke = function(player, vid)
 		return Villagers.buyWish(player, vid)
 	end
+	Remotes.fn("VillagerFlair").OnServerInvoke = function(player, vid, kind, text)
+		return Villagers.setFlair(player, vid, kind, text)
+	end
 	Remotes.fn("VillagerFocus").OnServerInvoke = function(player, vid)
 		local npc = type(vid) == "string" and Villagers.get(player, vid)
 		return npc and npc.model or nil
@@ -2173,6 +2361,7 @@ function Villagers.start()
 		yourCarry[player] = nil
 		talkTokens[player] = nil
 		talkedAt[player] = nil
+		flairAt[player] = nil
 		lastSaid[player] = nil
 		inUse[player] = nil
 		lastGo[player] = nil

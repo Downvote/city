@@ -639,6 +639,148 @@ describe("Talk", function()
 		expect(Talk.wishLine(p, "v1")).toBe("Friend, I've been dreaming about " .. food .. " since breakfast.")
 	end)
 
+	-- the user: "villagers could have a custom saying, thing they add to the end of their sentances
+	-- sometimes, custom thing they like the most which they will mention"
+	it(
+		"says the catchphrase they were given, brings up their favourite thing, and ends some lines their way",
+		function()
+			for _, pers in Personalities.list do
+				local p = town(2, pers.id)
+				local v = p.villagers.v1
+				v.mood = 60
+				v.bed = "1"
+				v.flair = { phrase = "Smells like rain to me.", thing = "old maps", ending = "pal" }
+				local rng = Rng.new(#pers.id * 7)
+				local phrase, thing, ending, greeted = 0, 0, 0, 0
+				local n = 600
+				for _ = 1, n do
+					local said = Talk.line(p, "v1", rng, { now = 100 })
+					expect(readable(said)).toBeTruthy()
+					if said == Voice.as(v, "Smells like rain to me.") then
+						phrase += 1
+					end
+					if said:find("old maps", 1, true) then
+						thing += 1
+					end
+					if said:lower():find(", pal", 1, true) then
+						ending += 1
+					end
+					if Talk.line(p, "v1", rng, { first = true }) == Voice.as(v, "Smells like rain to me.") then
+						greeted += 1
+					end
+				end
+				-- now and then, never all the time
+				need(phrase > 0 and phrase < n / 4, pers.id .. " said the catchphrase " .. phrase .. " times")
+				need(greeted > 0 and greeted < n / 2, pers.id .. " greeted with it " .. greeted .. " times")
+				need(thing > 0 and thing < n / 4, pers.id .. " brought up their favourite " .. thing .. " times")
+				need(ending > 0 and ending < n / 2, pers.id .. " ended " .. ending .. " lines their way")
+			end
+			-- the favourite thing in each personality's own words, filled in
+			local p = town(1, "foodie")
+			p.villagers.v1.flair = { thing = "old maps" }
+			local heard = {}
+			local rng = Rng.new(4)
+			for _ = 1, 600 do
+				heard[Talk.line(p, "v1", rng, { now = 100 })] = true
+			end
+			expect(heard["Mmm, I love old maps nearly as much as I love lunch."]).toBe(true)
+			-- and without flair, none of it
+			p.villagers.v1.flair = nil
+			for _ = 1, 300 do
+				expect(Talk.line(p, "v1", rng, { now = 100 }):find("old maps", 1, true)).toBe(nil)
+			end
+		end
+	)
+
+	it("talks about what their events left them with while it lasts", function()
+		local Memory = require(Shared .. "Sim.Memory")
+		local p = town(2, "cool")
+		local v = p.villagers.v1
+		v.mood = 60
+		v.bed = "1"
+		Memory.start(p, "v1", "band", { name = "Pickle Jar" }, 100)
+		local band = Voice.as(v, "I'm in Pickle Jar now, and we practise on Thursdays.")
+		local function heard(now)
+			local rng, seen = Rng.new(8), {}
+			for _ = 1, 500 do
+				seen[Talk.line(p, "v1", rng, { now = now })] = true
+			end
+			return seen
+		end
+		expect(heard(200)[band]).toBe(true)
+		-- it runs out, and they stop
+		local after = 100 + Tuning.Memory.Days.band * Tuning.Day.Length + 1
+		expect(heard(after)[band]).toBe(nil)
+	end)
+
+	it("has the flair's and the memories' lines in every voice, written like a person", function()
+		local BANNED = {
+			"delve",
+			"embark",
+			"unleash",
+			"vibrant",
+			"bustling",
+			"journey",
+			"realm",
+			"tapestry",
+			"seamless",
+			"elevate",
+		}
+		local maps = { FAVOURITE = Talk.Flair.FAVOURITE }
+		for kind, map in Talk.Flair.LATELY do
+			maps["LATELY." .. kind] = map
+		end
+		local Memory = require(Shared .. "Sim.Memory")
+		for _, kind in Memory.Order do
+			need(Talk.Flair.LATELY[kind] ~= nil, "nothing to say about " .. kind)
+		end
+		local allowed = { player = true, thing = true, what = true, name = true, y = true }
+		local bang, all = 0, 0
+		for name, map in maps do
+			need(map._ ~= nil, name .. " has no line for anybody")
+			local said = {}
+			for _, pers in Personalities.list do
+				local own = map[pers.id]
+				need(own ~= nil, name .. " has nothing for " .. pers.id)
+				local list = if type(own) == "table" then own else { own }
+				local key = table.concat(list, "|")
+				need(said[key] == nil, name .. ": " .. pers.id .. " and " .. tostring(said[key]) .. " say the same")
+				said[key] = pers.id
+				for _, text in list do
+					all += 1
+					bang += if text:find("!", 1, true) then 1 else 0
+					local lower = text:lower()
+					need(
+						not text:find("\u{2014}", 1, true) and not text:find("\u{2013}", 1, true),
+						name .. ": a dash in " .. text
+					)
+					need(not text:find(" - ", 1, true), name .. ": a dash in " .. text)
+					for _, word in BANNED do
+						need(not lower:find(word, 1, true), name .. ": a stock word in " .. text)
+					end
+					for key in text:gmatch("{(%w+)}") do
+						need(allowed[key], name .. ": {" .. key .. "} in " .. text)
+					end
+					if name == "FAVOURITE" then
+						need(text:find("{thing}", 1, true) ~= nil, name .. " leaves the thing out: " .. text)
+					end
+					-- the quiet ones never raise their voice; the polite ones never contract
+					if pers.id == "cool" or pers.id == "gloomy" then
+						need(not text:find("!", 1, true), name .. ": " .. pers.id .. " shouts: " .. text)
+					end
+					if pers.id == "polite" then
+						need(not text:find("n't", 1, true) and not text:find("'m", 1, true), name .. ": " .. text)
+					end
+					if pers.id == "cheeky" then
+						local words = text:gsub("{%w+}", "")
+						need(words:lower() == words, name .. ": cheeky writes in lower case: " .. text)
+					end
+				end
+			end
+		end
+		need(bang / all < 0.2, string.format("%d of %d lines shout", bang, all))
+	end)
+
 	it("chats with villagers from old saves", function()
 		local old = { coins = 50, villagers = { a = { name = "Old", pers = "gentle" } }, order = { "a" } }
 		local p = Schema.migrate(old)

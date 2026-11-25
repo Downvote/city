@@ -423,6 +423,9 @@ local function serviceEffects(player: Player, ev: any, list: { any })
 			Remotes.event("Notify"):FireClient(player, "open:creator:" .. (e.vid or ""), "action")
 		elseif e.t == "leave" then
 			leave(player, ev, e)
+		elseif e.t == "dress" and e.vid then
+			-- a memory changed what they wear (Sim/Memory): the hat goes on, or comes off
+			task.spawn(Villagers.dress, player, e.vid)
 		end
 	end
 end

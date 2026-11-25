@@ -8,6 +8,7 @@
 -- the small repeated ones as pieces so a workplace stays a few dozen parts.
 
 local Recipe = require(script.Parent.Parent.Recipe)
+local Lively = require(script.Parent.Parent.Lively)
 local Colors = require(script.Parent.Parent.Parent.Util.Colors)
 
 local C = Recipe.Colors
@@ -2492,5 +2493,34 @@ local items: { any } = {
 		end,
 	},
 }
+
+-- What each workplace gives off while somebody works at it (the user: "workplaces with special
+-- effects"): a hidden spot (Build/Lively.fx, `FxWork`) that each player's screen sets going while
+-- the placed piece is marked `Working` (Services/Work marks it, client World/Lively plays it).
+-- The effects are in Data/Effects; `at` is in the piece's own space, by what the job works on.
+local WORK_FX: { [string]: { kind: string, at: Vector3, w: number, h: number?, d: number, color: Color3? } } = {
+	work_market = { kind = "till", at = Vector3.new(-0.05, 4.35, -0.7), w = 0.5, d = 0.3 }, -- the till
+	work_cafe = { kind = "steam", at = Vector3.new(-2.4, 5.1, -0.2), w = 0.6, d = 0.4 }, -- the machine
+	work_bakery = { kind = "flour", at = Vector3.new(0.9, 3.0, 1.85), w = 0.8, d = 0.3 }, -- the ledge
+	work_flowers = { kind = "petals", at = Vector3.new(0, 3.9, 0), w = 2.6, d = 1.2, color = C.Pink }, -- the buckets
+	work_easel = { kind = "paint", at = Vector3.new(1.45, 1.55, -1.25), w = 0.4, d = 0.3 }, -- the palette
+	work_clinic = { kind = "care", at = Vector3.new(-1.6, 4.2, -0.4), w = 0.4, d = 0.4 }, -- the desk
+	work_school = { kind = "chalk", at = Vector3.new(-1.4, 4.4, -0.5), w = 1.6, h = 1.0, d = 0.1 }, -- the board
+	work_stage = { kind = "music", at = Vector3.new(0, 5.0, 0.6), w = 2.0, d = 1.0 }, -- over the singer
+	work_builder = { kind = "sparks", at = Vector3.new(-0.5, 3.65, 0.3), w = 0.6, d = 0.3 }, -- the bench top
+	work_post = { kind = "paper", at = Vector3.new(0.6, 3.9, -0.6), w = 0.8, d = 0.4 }, -- the counter
+	work_icecream = { kind = "cold", at = Vector3.new(0, 3.56, 0), w = 2.0, d = 1.2 }, -- the tubs
+	work_library = { kind = "dust", at = Vector3.new(-1.0, 4.8, 0), w = 3.0, h = 1.5, d = 1.2 }, -- over the desk
+}
+for _, def in items do
+	local fx = WORK_FX[def.id]
+	if fx then
+		local draw = def.build
+		def.build = function(r: R)
+			draw(r)
+			Lively.fx(r, fx.kind, fx.at.X, fx.at.Y, fx.at.Z, { w = fx.w, h = fx.h, d = fx.d, work = true, color = fx.color })
+		end
+	end
+end
 
 return items

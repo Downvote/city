@@ -16,6 +16,7 @@ export type Npc = typeof(setmetatable(
 	{} :: {
 		playerName: string?, -- what they call their player ({player} in a line)
 		pers: string?, -- their personality, for how they write (Sim/Voice)
+		ending: string?, -- the ending the player gave them for their sentences (Sim/Flair)
 		model: Model,
 		humanoid: Humanoid,
 		root: BasePart,
@@ -585,8 +586,9 @@ function Npc.say(self: Npc, text: string, seconds: number?)
 	text = text:gsub("{player}", function()
 		return self.playerName or "friend"
 	end)
-	-- and say it in their own hand (Sim/Voice; `pers` is set when they're spawned)
-	text = Voice.speak(self.pers, text)
+	-- and say it in their own hand, with the ending the player gave them on some (Sim/Voice; `pers`
+	-- and `ending` are set when they're spawned)
+	text = Voice.speak(self.pers, text, self.ending)
 	local gui = makeBubble(self)
 	self.bubbleToken += 1
 	local token = self.bubbleToken

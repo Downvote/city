@@ -16,6 +16,9 @@ local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Plan = require(script.Parent.Plan)
 local Catalog = require(script.Parent.Catalog)
 local Water = require(script.Parent.Water)
+-- (the passes' rules: keeping out of other pieces, angles, colours, floors)
+local Placing = require(script.Parent.Placing)
+local Floors = require(script.Parent.Parent.Sim.Floors)
 
 local P = Tuning.Plot
 
@@ -334,25 +337,31 @@ function Group.sellValue(plan: any, picks: { Pick }): (number, boolean)
 	return total, gift
 end
 
--- The requests that paint the group with one finish: a wall on both sides, a floor, a roof (its
--- trim with slot "trim"), a piece's main colour (or its second). Water takes no paint. Pieces
--- already in that finish are left out.
-function Group.paintRequests(plan: any, picks: { Pick }, c: string, m: string, slot: string?): { any }
+-- The requests that paint the group: a wall on both sides, a floor, a roof (its trim with slot
+-- "trim"), a piece's main colour (or its second). With `m` they take that material too; without
+-- it each keeps its own. Water takes no paint. Pieces already like that are left out.
+function Group.paintRequests(plan: any, picks: { Pick }, c: string, m: string?, slot: string?): { any }
 	local out = {}
 	local trim = slot == "trim"
+	local function same(a: any, b: any): boolean
+		if type(a) == "table" and type(b) == "table" then
+			return a.c == b.c and a.m == b.m
+		end
+		return a == b
+	end
 	for _, p in Group.present(plan, picks) do
 		local obj = objOf(plan, p.kind, p.key)
 		local o = Plan.copy(obj)
 		if p.kind == "walls" then
-			o.a = { c = c, m = m }
-			o.b = { c = c, m = m }
+			o.a = { c = c, m = m or obj.a.m }
+			o.b = { c = c, m = m or obj.b.m }
 		elseif p.kind == "floors" then
-			o.c, o.m = c, m
+			o.c, o.m = c, m or obj.m
 		elseif p.kind == "roofs" then
 			if trim then
-				o.c2, o.m2 = c, m
+				o.c2, o.m2 = c, m or obj.m2
 			else
-				o.c, o.m = c, m
+				o.c, o.m = c, m or obj.m
 			end
 		elseif p.kind == "items" then
 			if trim then
@@ -364,14 +373,11 @@ function Group.paintRequests(plan: any, picks: { Pick }, c: string, m: string, s
 			o = nil
 		end
 		if o ~= nil then
-			local same = true
-			for _, k in { "c", "m", "c1", "c2", "m2" } do
-				same = same and o[k] == obj[k]
+			local unchanged = true
+			for _, k in { "a", "b", "c", "m", "c1", "c2", "m2" } do
+				unchanged = unchanged and same(o[k], obj[k])
 			end
-			if p.kind == "walls" then
-				same = obj.a.c == c and obj.a.m == m and obj.b.c == c and obj.b.m == m
-			end
-			if not same then
+			if not unchanged then
 				table.insert(out, { type = "set", kind = p.kind, key = p.key, obj = o })
 			end
 		end
@@ -438,12 +444,39 @@ end
 -- Tries a list of requests on a copy of the plan, as the server does (Services/Build): ok, why,
 -- and what it costs (negative: what it gives back). Pieces being moved are lifted first, so each
 -- is checked where it goes against everything else where it will be, never against a piece of the
--- group that hasn't moved yet. Build mode uses it to show whether a group fits where it is held.
-function Group.check(plan: any, requests: { any }): (boolean, string?, number)
+-- group that hasn't moved yet. With the player's `profile` (their passes) it holds the change to
+-- the passes' rules too (Sim/Floors, Build/Placing), as the server does. Build mode uses it to show
+-- whether a group fits where it is held.
+function Group.check(plan: any, requests: { any }, profile: any?): (boolean, string?, number)
 	local trial = Plan.copy(plan)
 	local lifted: { [number]: any } = {}
 	local cost = 0
 	local lift = Group.moves(plan, requests)
+	if profile ~= nil then
+		local floorOk, floorWhy = Floors.check(profile, plan, requests)
+		if not floorOk then
+			return false, floorWhy, 0
+		end
+	end
+	-- (as the server's: the pieces of a group moved together may touch each other)
+	local together: { string } = {}
+	if #requests > 1 then
+		for _, req in requests do
+			if req.type == "set" then
+				table.insert(together, req.key)
+			end
+		end
+	end
+	local function rules(req: any, obj: any, before: any, made: { [number]: string }, alone: boolean): (boolean, string?)
+		if profile == nil then
+			return true
+		end
+		local keys = table.clone(together)
+		for _, k in made do
+			table.insert(keys, k)
+		end
+		return Placing.check(trial, profile, req, obj, before, keys, alone)
+	end
 	if lift then
 		for i, req in requests do
 			lifted[i] = trial[req.kind][req.key]
@@ -470,6 +503,10 @@ function Group.check(plan: any, requests: { any }): (boolean, string?, number)
 			if req.kind == "walls" and Group.wallThere(trial, obj) then
 				return false, "there's already a wall there", cost
 			end
+			local placed, notPlaced = rules(req, obj, nil, made, #requests == 1)
+			if not placed then
+				return false, notPlaced, cost
+			end
 			local key = Plan.newKey(trial)
 			made[i] = key
 			Plan.apply(trial, { { op = "add", kind = req.kind, key = key, obj = obj } })
@@ -495,6 +532,11 @@ function Group.check(plan: any, requests: { any }): (boolean, string?, number)
 			local ok, why = Plan.validate(trial, req.kind, obj, req.key)
 			if not ok then
 				return false, why, cost
+			end
+			-- (a moved group's pieces each as a change of one, as the server checks them lifted)
+			local placed, notPlaced = rules(req, obj, before, {}, lift or #requests == 1)
+			if not placed then
+				return false, notPlaced, cost
 			end
 			obj.gift = before.gift
 			cost += Plan.price(req.kind, obj) - Plan.price(req.kind, before)

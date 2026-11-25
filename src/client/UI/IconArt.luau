@@ -51,6 +51,14 @@ A.up = { solid("M12 2.5 L21 11.5 H14 V21.5 L12 19.5 L10 21.5 V11.5 H3 Z") }
 A.down = { solid("M12 21.5 L21 12.5 H14 V2.5 L12 4.5 L10 2.5 V12.5 H3 Z") }
 A.back = { solid("M2.5 12 L11.5 3 V10 H21.5 L19.5 12 L21.5 14 H11.5 V21 Z") }
 A.alert = { flat(circle(12, 12, 10.25)), hole("M10.25 5.5 H13.75 L13 13.5 H11 Z"), hole(circle(12, 17.5, 1.9)) }
+-- a padlock: its shackle an arch of line, its body a block with the keyhole cut out (what a game
+-- pass hasn't been bought for yet shows it: Build mode's switches)
+A.lock = {
+	line("M7.75 11 V8 A4.25 4.25 0 0 1 16.25 8 V11", 2.25),
+	solid(rect(4, 10.5, 16, 11.5, 1.5)),
+	hole(circle(12, 15.25, 1.75)),
+	hole(rect(11.1, 15.5, 1.8, 3.25)),
+}
 
 -- the moods a villager shows over their head (Util/Bubble's MoodIcons), drawn to fill a badge:
 -- a light bulb for a bright idea, the glass with a gleam cut out of it over a screw base
@@ -300,6 +308,14 @@ A.idcard = {
 -- a heavy head square across its handle
 A.hammer = { solid("M8.5 6.5 L12.5 2.5 L21.5 11.5 L17.5 15.5 Z"), solid("M12 10 L14 12 L4.5 21.5 L2.5 19.5 Z") }
 A.pointer = { solid("M4 2 V20 L9 15.5 L12.5 22 L16.5 20 L13 13.5 H19.5 Z") }
+-- Build mode's Select tool: the corners of a box drawn round what it picks, and the pointer
+-- that drew it coming out of the fourth
+A.select = {
+	solid("M2 2 H9.5 V5 H5 V9.5 H2 Z"),
+	solid("M22 2 V9.5 H19 V5 H14.5 V2 Z"),
+	solid("M2 22 V14.5 H5 V19 H9.5 V22 Z"),
+	solid("M11 11 V21.5 L13.75 18.75 L15.75 22.5 L18.25 21.25 L16.25 17.5 H20 Z"),
+}
 A.move = {
 	solid(
 		"M12 2 L16 6.5 H13.5 V10.5 H17.5 V8 L22 12 L17.5 16 V13.5 H13.5 V17.5 H16 L12 22 L8 17.5 H10.5 V13.5 H6.5 V16 L2 12 L6.5 8 V10.5 H10.5 V6.5 H8 Z"
@@ -347,6 +363,19 @@ A.crane = {
 	flat(rect(3.5, 19.5, 9, 2.5, 0.75)),
 	line("M18.5 7.5 V12.5", 1.75),
 	flat(rect(15.5, 12.5, 6, 4.5, 0.75)),
+}
+-- a saved build (Build mode's Saves): a disk with its shutter and its label cut out
+A.save = {
+	solid("M2.5 2.5 H17 L21.5 7 V21.5 H2.5 Z"),
+	hole(rect(6.5, 4.5, 8.5, 5, 0.5)),
+	hole(rect(6, 13, 12, 6.5, 1)),
+}
+-- a padlock: what a pass would open
+A.lock = {
+	line("M7.75 10.5 V7.5 A4.25 4.25 0 0 1 16.25 7.5 V10.5", 2.25),
+	solid(rect(3.5, 10, 17, 12, 1.5)),
+	hole(circle(12, 14.75, 1.9)),
+	hole("M11 15.5 H13 L13.5 19 H10.5 Z"),
 }
 A.blueprint = {
 	flat(rect(2, 3.5, 20, 17, 1.5)),

@@ -725,3 +725,301 @@ describe("Build service, water", function()
 		Service.terrain = nil
 	end)
 end)
+
+-- Floors and the basement (Sim/Floors, Build/Basement, Services/Basement): the user, "another
+-- [gamepass] for basement, another for more levels". The Build service holds every request to the
+-- floors the player's passes allow, whatever the client says; the Basement service digs a room out
+-- of the terrain (a stand-in here) and puts the ground back exactly when it goes.
+describe("Build service, floors and the basement", function()
+	local Floors = require("ReplicatedStorage.Shared.Sim.Floors")
+	local Basement = require("ReplicatedStorage.Shared.Build.Basement")
+	local Town = require("ReplicatedStorage.Shared.Data.Town")
+	local Plots = require("ServerScriptService.Server.Services.Plots")
+	local x0 = Plan.bounds(profile.plan)
+	local B = Basement.Level
+	local function wall(x1, z1, x2, z2, lv)
+		return {
+			x1 = x0 + x1,
+			z1 = z1,
+			x2 = x0 + x2,
+			z2 = z2,
+			lv = lv,
+			style = "wall",
+			a = { c = "F2E8D5", m = "Plaster" },
+			b = { c = "FFFFFF", m = "SmoothPlastic" },
+		}
+	end
+	local function now(requests)
+		pause()
+		return Build.apply(p, requests)
+	end
+	local function keyOf(kind, test)
+		for k, o in profile.plan[kind] do
+			if test(o) then
+				return k
+			end
+		end
+		return nil
+	end
+
+	it("builds past the third floor only with Tall Builds, and keeps what is already up there", function()
+		profile.coins += 20000
+		profile.passes = {}
+		local high = wall(120, 100, 130, 100, 3)
+		local ok, why = now({ { type = "add", kind = "walls", obj = high } })
+		expect(ok).toBe(false)
+		expect(why).toBe(Floors.Why.floors)
+		profile.passes = { floors = true }
+		ok, why = now({ { type = "add", kind = "walls", obj = high } })
+		if not ok then
+			error(tostring(why))
+		end
+		local key = keyOf("walls", function(w)
+			return w.lv == 3 and w.x1 == x0 + 120
+		end)
+		-- the pass gone (a refund), the wall stays: it can be repainted and sold, not added to
+		profile.passes = {}
+		local painted = table.clone(profile.plan.walls[key])
+		painted.a, painted.b = painted.b, painted.a
+		ok, why = now({ { type = "set", kind = "walls", key = key, obj = painted } })
+		if not ok then
+			error(tostring(why))
+		end
+		ok, why = now({ { type = "add", kind = "walls", obj = wall(120, 104, 130, 104, 3) } })
+		expect(ok).toBe(false)
+		expect(why).toBe(Floors.Why.floors)
+		ok = now({ { type = "remove", kind = "walls", key = key } })
+		expect(ok).toBe(true)
+		expect(profile.plan.walls[key]).toBe(nil)
+	end)
+
+	-- A stand-in for workspace.Terrain: 4 stud voxels, the ground LeafyGrass up to just under 0.
+	local function fakeTerrain()
+		local vox = {}
+		local t = { writes = 0 }
+		local function get(i, j, k)
+			local v = vox[i .. "," .. j .. "," .. k]
+			if v then
+				return v
+			end
+			if j < -1 then
+				return { m = Enum.Material.LeafyGrass, o = 1, l = 0 }
+			elseif j == -1 then
+				return { m = Enum.Material.LeafyGrass, o = 0.9, l = 0 }
+			end
+			return { m = Enum.Material.Air, o = 0, l = 0 }
+		end
+		t.get = get
+		local function span(region, res)
+			assert(res == 4, "terrain is written in 4 stud voxels")
+			local lo = region.CFrame.Position - region.Size / 2
+			local out = {}
+			for _, n in { lo.X / 4, lo.Y / 4, lo.Z / 4, region.Size.X / 4, region.Size.Y / 4, region.Size.Z / 4 } do
+				assert(math.abs(n - math.floor(n + 0.5)) < 1e-6, "a block that isn't whole voxels")
+				table.insert(out, math.floor(n + 0.5))
+			end
+			return table.unpack(out)
+		end
+		function t.ReadVoxelChannels(_, region, res)
+			local i0, j0, k0, nx, ny, nz = span(region, res)
+			local out = { SolidMaterial = {}, SolidOccupancy = {}, LiquidOccupancy = {} }
+			for a = 1, nx do
+				for _, ch in out do
+					ch[a] = {}
+				end
+				for b = 1, ny do
+					out.SolidMaterial[a][b], out.SolidOccupancy[a][b], out.LiquidOccupancy[a][b] = {}, {}, {}
+					for c = 1, nz do
+						local v = get(i0 + a - 1, j0 + b - 1, k0 + c - 1)
+						out.SolidMaterial[a][b][c], out.SolidOccupancy[a][b][c], out.LiquidOccupancy[a][b][c] =
+							v.m, v.o, v.l
+					end
+				end
+			end
+			return out
+		end
+		function t.WriteVoxelChannels(_, region, res, ch)
+			local i0, j0, k0, nx, ny, nz = span(region, res)
+			for a = 1, nx do
+				for b = 1, ny do
+					for c = 1, nz do
+						vox[(i0 + a - 1) .. "," .. (j0 + b - 1) .. "," .. (k0 + c - 1)] = {
+							m = ch.SolidMaterial[a][b][c],
+							o = ch.SolidOccupancy[a][b][c],
+							l = ch.LiquidOccupancy[a][b][c],
+						}
+						t.writes += 1
+					end
+				end
+			end
+		end
+		return t
+	end
+
+	it("digs a basement room only with the pass, under the ground, and fills it back in when it goes", function()
+		local Service = require("ServerScriptService.Server.Services.Basement")
+		local WaterService = require("ServerScriptService.Server.Services.Water")
+		Service.init()
+		local terrain = fakeTerrain()
+		Service.terrain = terrain
+		local frame = Plots.frame
+		Plots.frame = function()
+			return Town.plotFrame(1)
+		end
+		-- the plot round the build folder, with its ground: World's base and Plots' lawn
+		local plot = Instance.new("Model")
+		plot.Name = "Plot1"
+		folder.Parent = plot
+		local base = Instance.new("Part")
+		base.Name = "Base"
+		base.Size = Vector3.new(400, 4, 400)
+		base.CFrame = Town.plotFrame(1) * CFrame.new(200, -2, 200)
+		base.Parent = plot
+		local land = Instance.new("Model")
+		land.Name = "Land"
+		land.Parent = plot
+		local grass = Instance.new("Part")
+		grass.Name = "Grass"
+		grass.Size = Vector3.new(200, 0.1, 200)
+		grass.CFrame = Town.plotFrame(1) * CFrame.new(200, -0.04, 100)
+		grass.Parent = land
+
+		profile.coins += 20000
+		local room = { x1 = x0 + 120, z1 = 100, x2 = x0 + 146, z2 = 118, lv = B, c = "C8B49A", m = "Concrete" }
+		-- without the pass nothing goes down there
+		profile.passes = {}
+		local ok, why = now({ { type = "add", kind = "floors", obj = room } })
+		expect(ok).toBe(false)
+		expect(why).toBe(Floors.Why.basement)
+		profile.passes = { basement = true }
+		ok, why = now({
+			{ type = "add", kind = "floors", obj = room },
+			{ type = "add", kind = "walls", obj = wall(120, 100, 146, 100, B) },
+		})
+		if not ok then
+			error(tostring(why))
+		end
+		ok, why = now({
+			{
+				type = "add",
+				kind = "items",
+				obj = { id = "stairs_straight", x = x0 + 140, y = Plan.levelBase(B), z = 110, r = 180, lv = B },
+			},
+			{ type = "add", kind = "items", obj = { id = "bed_single", x = x0 + 128, y = Plan.levelBase(B), z = 110, r = 0, lv = B } },
+		})
+		if not ok then
+			error(tostring(why))
+		end
+		-- nothing down there off its floor
+		ok, why = now({ { type = "add", kind = "walls", obj = wall(150, 130, 160, 130, B) } })
+		expect(ok).toBe(false)
+		expect(why).toBe(Basement.Why.noFloor)
+		local floorKey = keyOf("floors", function(f)
+			return f.lv == B
+		end)
+
+		-- the block of voxels it digs, and the ground round it, before
+		local block = Basement.block({ room.x1, room.z1, room.x2, room.z2 })
+		local i1, k1, i2, k2, aligned = Service.columns(1, block)
+		expect(aligned).toBe(true)
+		local jLo, jHi = Basement.Bottom // 4, -1
+		local before = {}
+		for i = i1 - 2, i2 + 2 do
+			for j = jLo - 1, 1 do
+				for k = k1 - 2, k2 + 2 do
+					before[i .. "," .. j .. "," .. k] = terrain.get(i, j, k)
+				end
+			end
+		end
+		local function inside(i, j, k)
+			return i >= i1 and i <= i2 and k >= k1 and k <= k2 and j >= jLo and j <= jHi
+		end
+		Service.sync(1, profile.plan, p)
+		expect(Service.dug(1)).toBe((i2 - i1 + 1) * (k2 - k1 + 1))
+		for name, was in before do
+			local i, j, k = string.match(name, "^(-?%d+),(-?%d+),(-?%d+)$")
+			i, j, k = tonumber(i), tonumber(j), tonumber(k)
+			local v = terrain.get(i, j, k)
+			if inside(i, j, k) then
+				expect(v.m).toBe(Enum.Material.Air)
+				expect(v.o).toBe(0)
+			else
+				expect(v.m == was.m and v.o == was.o and v.l == was.l).toBeTruthy()
+			end
+		end
+		-- the dig keeps inside the land, a margin in from its edges
+		local lx1, lz1, lx2, lz2 = Plan.bounds(profile.plan)
+		expect(block[1] >= lx1 and block[2] >= lz1 and block[3] <= lx2 and block[4] <= lz2).toBe(true)
+		-- the plot's ground is cut round the room exactly
+		expect(base.Transparency).toBe(1)
+		local area = 0
+		for _, c in plot:GetChildren() do
+			if c:GetAttribute("WaterPiece") == "Base" then
+				area += c.Size.X * c.Size.Z
+				expect(c.Size.Y).toBe(4)
+			end
+		end
+		expect(area).toBeNear(400 * 400 - 26 * 18, 1e-2)
+		-- a second room beside it digs only its own new columns
+		local writes = terrain.writes
+		local next = { x1 = x0 + 146, z1 = 100, x2 = x0 + 160, z2 = 118, lv = B, c = "C8B49A", m = "Concrete" }
+		ok, why = now({ { type = "add", kind = "floors", obj = next } })
+		if not ok then
+			error(tostring(why))
+		end
+		Service.sync(1, profile.plan, p)
+		local nextKey = keyOf("floors", function(f)
+			return f.lv == B and f.x1 == x0 + 146
+		end)
+		expect(terrain.writes > writes).toBe(true)
+		ok = now({ { type = "remove", kind = "floors", key = nextKey } })
+		expect(ok).toBe(true)
+		-- sold, the first room takes its wall, its stairs and its bed with it, and the ground comes
+		-- back exactly and whole
+		ok, why = now({ { type = "remove", kind = "floors", key = floorKey } })
+		if not ok then
+			error(tostring(why))
+		end
+		for _, kind in { "walls", "items", "floors" } do
+			for _, o in profile.plan[kind] do
+				expect(o.lv ~= B).toBe(true)
+			end
+		end
+		Service.sync(1, profile.plan, p)
+		expect(Service.dug(1)).toBe(0)
+		local same = true
+		for name, was in before do
+			local i, j, k = string.match(name, "^(-?%d+),(-?%d+),(-?%d+)$")
+			local v = terrain.get(tonumber(i), tonumber(j), tonumber(k))
+			same = same and v.m == was.m and v.o == was.o and v.l == was.l
+		end
+		expect(same).toBe(true)
+		local pieces = 0
+		for _, c in plot:GetChildren() do
+			if c:GetAttribute("WaterPiece") == "Base" then
+				pieces += 1
+			end
+		end
+		expect(pieces).toBe(0)
+		expect(base.Transparency).toBe(0)
+		-- undo digs it again, and the owner leaving (clear) puts it all back
+		expect(Build.undo(p)).toBe(true)
+		Service.sync(1, profile.plan, p)
+		expect(Service.dug(1) > 0).toBe(true)
+		Service.clear(1)
+		expect(Service.dug(1)).toBe(0)
+		same = true
+		for name, was in before do
+			local i, j, k = string.match(name, "^(-?%d+),(-?%d+),(-?%d+)$")
+			local v = terrain.get(tonumber(i), tonumber(j), tonumber(k))
+			same = same and v.m == was.m and v.o == was.o and v.l == was.l
+		end
+		expect(same).toBe(true)
+
+		Plots.frame = frame
+		folder.Parent = nil
+		Service.terrain = nil
+		WaterService.holeSources = {}
+		profile.passes = nil
+	end)
+end)

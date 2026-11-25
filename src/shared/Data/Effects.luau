@@ -9,7 +9,8 @@
 -- `tint` takes the colour from the piece's first paint (FxColor), so painting a particle maker
 -- changes what it gives off; `colors` lists more than one (one emitter each, the rate shared);
 -- `burst` gives off `count` at once every `every` seconds instead of a steady stream; `fire` adds
--- a Fire of that size; `dir` is the face it goes out of ("Top" unless it says). Rates stay low:
+-- a Fire of that size; `dir` is the face it goes out of ("Top" unless it says; a piece's front,
+-- +Z where it is drawn, is the face Roblox calls "Back"). Rates stay low:
 -- the spec holds every one to `Effects.MaxAlive` particles at a time.
 --
 -- Pictures: Roblox's own particle pictures, and a few from the Creator Store, white so a colour
@@ -81,13 +82,17 @@ Effects.list = {
 	splash = { texture = "sparkle", colors = { Color3.fromRGB(214, 238, 255) }, size = { 0.35, 0.12 }, transp = { 0.25, 1 }, life = { 0.7, 1 }, rate = 26, speed = { 6, 8 }, spread = { 16, 16 }, accel = Vector3.new(0, -22, 0), light = 0.3 },
 	spray = { texture = "sparkle", colors = { Color3.fromRGB(214, 238, 255) }, size = { 0.3, 0.1 }, transp = { 0.3, 1 }, life = { 0.8, 1.1 }, rate = 22, speed = { 5, 7 }, spread = { 55, 55 }, accel = Vector3.new(0, -16, 0), light = 0.3 },
 	popcorn = { texture = "dot", colors = { Color3.fromRGB(252, 240, 200) }, size = { 0.2, 0.18 }, transp = { 0, 0, 1 }, life = { 0.6, 0.9 }, rate = 7, speed = { 2, 3 }, spread = { 40, 40 }, accel = Vector3.new(0, -9, 0), rot = { 0, 360 } },
+	trickle = { texture = "sparkle", colors = { Color3.fromRGB(214, 238, 255) }, size = { 0.2, 0.12 }, transp = { 0.3, 0.9 }, life = { 0.45, 0.6 }, rate = 18, speed = { 1.2, 1.6 }, spread = { 5, 5 }, accel = Vector3.new(0, -18, 0), light = 0.3, dir = "Back" },
+	ripple = { texture = "sparkle", colors = { Color3.fromRGB(226, 244, 255) }, size = { 0.22, 0 }, transp = { 0.3, 1 }, life = { 0.3, 0.5 }, rate = 10, speed = { 1, 2 }, spread = { 60, 60 }, accel = Vector3.new(0, -10, 0), light = 0.3 },
+	glints = { texture = "sparkle", colors = { Color3.fromRGB(255, 255, 255) }, size = { 0, 0.32, 0 }, transp = { 0, 0, 1 }, life = { 0.4, 0.7 }, rate = 6, speed = { 0, 0 }, spread = { 0, 0 }, light = 1, locked = true },
+	tankbubbles = { texture = "bubble", colors = { Color3.fromRGB(236, 248, 255) }, size = { 0.12, 0.18, 0.2 }, transp = { 0.2, 0.3, 1 }, life = { 2, 3 }, rate = 4, speed = { 0.6, 1 }, spread = { 8, 8 }, accel = Vector3.new(0, 0.3, 0) },
 	steam = { texture = "smoke", colors = { WHITE }, size = { 0.3, 1, 1.6 }, transp = { 0.45, 0.7, 1 }, life = { 1.2, 2 }, rate = 5, speed = { 1, 1.6 }, spread = { 10, 10 }, accel = Vector3.new(0, 0.6, 0), rot = { 0, 360 }, spin = { -30, 30 } },
 	-- Workplaces (Recipes/Work), on while somebody is at work there -----------------------------------
 	till = { texture = "sparkle", colors = { Color3.fromRGB(250, 214, 110) }, fade = WHITE, size = { 0, 0.35, 0 }, transp = { 0, 0.1, 1 }, life = { 0.8, 1.2 }, rate = 3, speed = { 0.8, 1.4 }, spread = { 30, 30 }, light = 1 },
 	flour = { texture = "dot", colors = { Color3.fromRGB(250, 244, 230) }, size = { 0.1, 0.16, 0.2 }, transp = { 0.2, 0.5, 1 }, life = { 1, 1.6 }, rate = 9, speed = { 0.6, 1.2 }, spread = { 70, 70 }, accel = Vector3.new(0, -0.8, 0), drag = 2 },
 	paint = { texture = "dot", colors = { Color3.fromRGB(232, 120, 120), Color3.fromRGB(110, 170, 230), Color3.fromRGB(246, 204, 96) }, size = { 0.12, 0.1 }, transp = { 0, 1 }, life = { 0.6, 0.9 }, rate = 6, speed = { 1.5, 2.5 }, spread = { 50, 50 }, accel = Vector3.new(0, -8, 0) },
 	care = { texture = "heart", colors = { Color3.fromRGB(240, 150, 170) }, size = { 0, 0.32, 0.28 }, transp = { 0, 0, 1 }, life = { 1.6, 2.4 }, rate = 1.2, speed = { 1, 1.4 }, spread = { 15, 15 }, accel = Vector3.new(0, 0.3, 0), drag = 1 },
-	chalk = { texture = "dot", colors = { Color3.fromRGB(240, 240, 232) }, size = { 0.06, 0.1 }, transp = { 0.2, 1 }, life = { 1, 1.6 }, rate = 6, speed = { 0.3, 0.8 }, spread = { 60, 60 }, accel = Vector3.new(0, -0.8, 0), drag = 1.5, dir = "Front" },
+	chalk = { texture = "dot", colors = { Color3.fromRGB(240, 240, 232) }, size = { 0.06, 0.1 }, transp = { 0.2, 1 }, life = { 1, 1.6 }, rate = 6, speed = { 0.3, 0.8 }, spread = { 60, 60 }, accel = Vector3.new(0, -0.8, 0), drag = 1.5, dir = "Back" },
 	music = { texture = "note", colors = { Color3.fromRGB(250, 236, 180) }, size = { 0, 0.5, 0.45 }, transp = { 0, 0, 1 }, life = { 2, 3 }, rate = 2, speed = { 1.2, 1.8 }, spread = { 35, 35 }, accel = Vector3.new(0, 0.3, 0), drag = 0.8, rot = { -20, 20 }, spin = { -25, 25 } },
 	sparks = { texture = "spark", colors = { Color3.fromRGB(255, 196, 96) }, size = { 0.12, 0.08, 0 }, transp = { 0, 0, 1 }, life = { 0.35, 0.6 }, rate = 12, speed = { 3, 6 }, spread = { 50, 50 }, accel = Vector3.new(0, -12, 0), light = 1 },
 	paper = { texture = "dot", colors = { Color3.fromRGB(248, 240, 222) }, size = { 0.18, 0.18 }, transp = { 0, 0, 1 }, life = { 1.4, 2 }, rate = 2, speed = { 0.8, 1.4 }, spread = { 40, 40 }, accel = Vector3.new(0, -1.2, 0), drag = 1.2, rot = { 0, 360 }, spin = { -180, 180 }, squash = { 0.4, -0.4, 0.4 } },

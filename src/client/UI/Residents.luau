@@ -22,6 +22,8 @@ local Schema = require(Shared.Sim.Schema)
 local City = require(Shared.Sim.City)
 local Relationships = require(Shared.Sim.Relationships)
 local Life = require(Shared.Sim.Life)
+local Flair = require(Shared.Sim.Flair)
+local Memory = require(Shared.Sim.Memory)
 local Jobs = require(Shared.Data.Jobs)
 local Colors = require(Shared.Util.Colors)
 local Text = require(Shared.Util.Text)
@@ -398,6 +400,273 @@ local function friendsOf(parent: Frame, vid: string, p: any)
 	end
 end
 
+-- The Lately tab: what their events left them with for a few days (Sim/Memory), newest first, each
+-- with how long it has left. The user: "along with their conversations and events having more
+-- impact, such as remembering if they joined a band, started wearing a new accessory (temporarily)".
+local LATELY_ICONS = {
+	band = "music",
+	accessory = "hat",
+	hobby = "sparkle",
+	haircut = "hair",
+	pet = "smile",
+	dish = "pot",
+	fallout = "anger",
+	garden = "plant",
+	penpal = "news",
+	training = "trophy",
+}
+local LATELY_COLORS = {
+	band = "Purple",
+	accessory = "Orange",
+	hobby = "Yellow",
+	haircut = "Pink",
+	pet = "Green",
+	dish = "Orange",
+	fallout = "Coral",
+	garden = "Green",
+	penpal = "Blue",
+	training = "Blue",
+}
+
+local function latelyOf(parent: Frame, vid: string, p: any)
+	local rows = Memory.lately(p, vid, os.time())
+	local list = Kit.scroll({ Name = "Lately", Parent = parent, Size = UDim2.fromScale(1, 1) })
+	Kit.list(list, 6)
+	if #rows == 0 then
+		MenuParts.empty(
+			"sparkle",
+			"Nothing new lately",
+			"When something in an event sticks with them, a band or a new hat, it shows up here.",
+			{
+				Parent = list,
+				LayoutOrder = 1,
+				Color = T.Yellow,
+				Height = 200,
+			}
+		)
+		return
+	end
+	for i, row in rows do
+		Kit.row({
+			Name = row.kind,
+			Parent = list,
+			Size = UDim2.new(1, -12, 0, 52),
+			Height = 52,
+			LayoutOrder = i,
+			Title = row.text,
+			Sub = if row.days <= 1 then "Ends today" else Text.fill("{n} more days", { n = row.days }),
+			TextSize = 16,
+			Marker = LATELY_ICONS[row.kind] or "sparkle",
+			MarkerColor = (T :: any)[LATELY_COLORS[row.kind] or "Yellow"] or T.Yellow,
+		})
+	end
+end
+
+-- The Quirks tab: the three things the player gives a villager to say, bought with gems (Sim/Flair).
+-- The user: "villagers could have a custom saying, thing they add to the end of their sentances
+-- sometimes, custom thing they like the most which they will mention ... that can be bought with
+-- gems". Each is a row with what they have now and a button with its price; the gems you have are
+-- over them, and the editor says when you're short.
+local FLAIR_HINTS = {
+	phrase = "A sentence they say now and then, in a chat or over their head.",
+	ending = "A word or two they put on the end of a sentence now and then.",
+	thing = "Something they love, which they bring up when you chat.",
+}
+local FLAIR_EXAMPLES = { phrase = "Smells like rain to me.", ending = "buddy", thing = "old maps" }
+
+local function gemsText(n: number): string
+	return if n == 1 then "1 gem" else Text.fill("{n} gems", { n = n })
+end
+
+local function needMore(n: number): string
+	return if n == 1 then "You need 1 more gem." else Text.fill("You need {n} more gems.", { n = n })
+end
+
+-- what a price is short by, with the gems there are now
+local function gemsShort(kind: string): number
+	return math.max(0, Flair.price(kind) - (State.data.gems or 0))
+end
+
+local saving = false
+local function editFlair(vid: string, kind: string)
+	local v = State.villager(vid)
+	if not v then
+		return
+	end
+	closePopup()
+	local now = Flair.get(v, kind)
+	local price = Flair.price(kind)
+	local short = gemsShort(kind)
+	local pop = Kit.frame({
+		Name = "FlairEditor",
+		Parent = panel.root,
+		Size = UDim2.fromOffset(460, 300),
+		Position = UDim2.fromScale(0.5, 0.5),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Color = T.Paper,
+		Radius = 26,
+	})
+	pop.ZIndex = 30
+	Kit.softShadow(pop, 2)
+	popup = pop
+	Kit.pad(pop, 18, 16)
+	Kit.title(Text.fill("{x}'s {what}", { x = v.name, what = Flair.Names[kind]:lower() }), {
+		Parent = pop,
+		Size = UDim2.new(1, -48, 0, 32),
+		TextSize = 22,
+		Wrap = false,
+	})
+	Kit.closeButton({
+		Parent = pop,
+		Size = UDim2.fromOffset(38, 38),
+		Position = UDim2.new(1, -38, 0, -2),
+	}, closePopup)
+	Kit.text(FLAIR_HINTS[kind], {
+		Name = "Hint",
+		Parent = pop,
+		Size = UDim2.new(1, 0, 0, 36),
+		Position = UDim2.fromOffset(0, 40),
+		TextSize = 15,
+		Color = T.InkSoft,
+		AlignY = Enum.TextYAlignment.Top,
+	})
+	local box = Kit.textbox(Text.fill("For example: {x}", { x = FLAIR_EXAMPLES[kind] }), {
+		Name = "FlairText",
+		Parent = pop,
+		Text = now or "",
+		TextSize = 17,
+		Size = UDim2.new(1, 0, 0, 44),
+		Position = UDim2.fromOffset(0, 84),
+	})
+	box.ClearTextOnFocus = false
+	pcall(function()
+		(box :: any).MaxVisibleGraphemes = Flair.maxLength(kind)
+	end)
+	-- the price, the gems there are, and what's missing
+	Kit.text(
+		if short > 0
+			then Text.fill("It costs {price}. {more}", { price = gemsText(price), more = needMore(short) })
+			else Text.fill("It costs {price}. You have {have}.", {
+				price = gemsText(price),
+				have = gemsText(State.data.gems or 0),
+			}),
+		{
+			Name = "Price",
+			Parent = pop,
+			Size = UDim2.new(1, 0, 0, 22),
+			Position = UDim2.fromOffset(0, 140),
+			TextSize = 15,
+			Font = Kit.Fonts.Bold,
+			Tint = if short > 0 then T.Coral else nil,
+		}
+	)
+	local save = Kit.button(Text.fill("Save for {n}", { n = price }), {
+		Name = "SaveFlair",
+		Parent = pop,
+		Size = UDim2.fromOffset(190, 46),
+		Position = UDim2.new(1, 0, 1, 0),
+		AnchorPoint = Vector2.new(1, 1),
+		Color = if short > 0 then T.PaperDark else T.Green,
+		TextColor = if short > 0 then T.InkSoft else T.White,
+		TextSize = 17,
+		Icon = "gem",
+	}, function()
+		if short > 0 then
+			Toasts.show(needMore(short), "warn")
+			return
+		end
+		if saving then
+			return
+		end
+		saving = true
+		local text = box.Text
+		task.spawn(function()
+			local sent, ok, msg = pcall(function()
+				return Remotes.fn("VillagerFlair"):InvokeServer(vid, kind, text)
+			end)
+			saving = false
+			if sent and ok then
+				closePopup()
+				Toasts.show(if type(msg) == "string" and msg ~= "" then msg else "Saved.", "good")
+			else
+				Toasts.show(
+					if sent and type(msg) == "string" then msg else "That didn't go through. Try again.",
+					"warn"
+				)
+			end
+		end)
+	end)
+	save:SetAttribute("Disabled", short > 0)
+	if now then
+		Kit.button("Take it off", {
+			Name = "ClearFlair",
+			Parent = pop,
+			Size = UDim2.fromOffset(160, 46),
+			Position = UDim2.new(0, 0, 1, 0),
+			AnchorPoint = Vector2.new(0, 1),
+			Color = T.Coral,
+			TextSize = 17,
+		}, function()
+			closePopup()
+			call("VillagerFlair", vid, kind, false)
+		end)
+	end
+end
+
+local function quirksOf(parent: Frame, vid: string, v: any)
+	local list = Kit.scroll({ Name = "Quirks", Parent = parent, Size = UDim2.fromScale(1, 1) })
+	Kit.list(list, 8)
+	-- the gems there are
+	local gems = State.data.gems or 0
+	local head = Kit.box({ Name = "Gems", Parent = list, Size = UDim2.new(1, -12, 0, 26), LayoutOrder = 0 })
+	Icons.make("gem", 20, { Parent = head, Position = UDim2.new(0, 0, 0.5, -10), Color = T.Blue, Centre = true })
+	Kit.text(Text.fill("You have {n}. Each change costs again.", { n = gemsText(gems) }), {
+		Name = "Count",
+		Parent = head,
+		Size = UDim2.new(1, -28, 1, 0),
+		Position = UDim2.fromOffset(28, 0),
+		TextSize = 14,
+		Color = T.InkSoft,
+		Wrap = false,
+	})
+	for i, kind in Flair.Kinds do
+		local now = Flair.get(v, kind)
+		local price = Flair.price(kind)
+		local short = gemsShort(kind)
+		local row, inner = Kit.row({
+			Name = kind,
+			Parent = list,
+			Size = UDim2.new(1, -12, 0, 56),
+			Height = 56,
+			LayoutOrder = i,
+			Title = Flair.Names[kind],
+			Sub = if now then (if kind == "phrase" then now else Text.fill('"{x}"', { x = now })) else "Not set yet",
+			TextSize = 16,
+			RightSpace = 124,
+		})
+		local lean: number = row:GetAttribute("Lean") or 6
+		local button = Kit.button(
+			if now then Text.fill("Change {n}", { n = price }) else Text.fill("Set {n}", { n = price }),
+			{
+				Name = "Edit",
+				Parent = inner,
+				Size = UDim2.fromOffset(112, 38),
+				Position = UDim2.new(1, -(lean + 8), 0.5, 0),
+				AnchorPoint = Vector2.new(1, 0.5),
+				Color = T.Blue,
+				TextSize = 15,
+				Icon = "gem",
+				ZIndex = 3,
+			},
+			function()
+				-- (short of gems, the editor says how many more)
+				editFlair(vid, kind)
+			end
+		)
+		button:SetAttribute("Short", short > 0)
+	end
+end
+
 -- Buying what a villager craves: the coins go and the wish is granted on the server.
 local buying = false
 local function buyWish(vid: string)
@@ -707,6 +976,10 @@ local function showDetail()
 	})
 	if tab == "friends" then
 		friendsOf(content, vid, p)
+	elseif tab == "lately" then
+		latelyOf(content, vid, p)
+	elseif tab == "quirks" then
+		quirksOf(content, vid, v)
 	else
 		about(content, vid, v, p)
 	end
@@ -816,7 +1089,12 @@ function Residents.open(vid: string?)
 	tab = "about"
 	panel = Kit.panel("Villagers", Kit.MenuSize, Residents.close, "people", Kit.Theme.Green, {
 		Caption = "People in town",
-		Tabs = { { id = "about", name = "About" }, { id = "friends", name = "Friends" } },
+		Tabs = {
+			{ id = "about", name = "About" },
+			{ id = "friends", name = "Friends" },
+			{ id = "lately", name = "Lately" },
+			{ id = "quirks", name = "Quirks" },
+		},
 		OnTab = function(id: string)
 			tab = id
 			showDetail()
@@ -886,6 +1164,15 @@ function Residents.open(vid: string?)
 		unbind,
 		State.on("rel", function()
 			showDetail()
+		end)
+	)
+	-- the Quirks tab's prices follow the gems
+	table.insert(
+		unbind,
+		State.on("gems", function()
+			if tab == "quirks" then
+				showDetail()
+			end
 		end)
 	)
 	-- a craving's Buy button wakes up (or dims) as the coins come and go

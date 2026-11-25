@@ -525,6 +525,9 @@ local function prepareEach(profile: any, plan: any, requests: { any }, gifts: { 
 		end
 		if req.type == "add" then
 			local op = ops[1]
+			-- (not held to Build/Placing's rules: a save comes back as it was saved, angles, colours
+			-- and all, its pieces having stood together on this plot before, as the plot itself
+			-- does when it loads on joining)
 			made[i] = op.key
 			local g = gifts[i]
 			if g and g > 0 then

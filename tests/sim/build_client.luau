@@ -138,6 +138,167 @@ run("laying a floor", function()
 	check(count("floors") == before + 1, "a dragged floor is laid")
 end)
 
+-- Floors and the basement (Sim/Floors, Build/Basement, Build/Underground): the user, "another
+-- [gamepass] for basement, another for more levels". Without Tall Builds the third floor is the top
+-- and the up arrow carries a lock that offers the pass; without Basement the ground floor is the
+-- bottom, the same way. With the pass, the down arrow goes under the ground: the plot's ground fades
+-- and the terrain under the land is cleared on this screen, a room is drawn there, and going back
+-- up brings the ground back.
+run("floors: the third is the top without Tall Builds, and the basement opens with its pass", function()
+	local warned = #errors
+	local Underground = Sim.Harness.require(Sim.CLIENT .. "Build.Underground")
+	local player = Sim.player
+	local function passes(list)
+		profile.passes = list
+		Sim.remoteEvent("State"):FireClient(player, { passes = list })
+		frames(2)
+	end
+	local hint = gui:FindFirstChild("Hint", true)
+	local said = hint and hint:FindFirstChildWhichIsA("TextLabel")
+	press("Pick")
+	passes({})
+	BuildMode.setLevel(0)
+	frames(2)
+	local up, down = gui:FindFirstChild("FloorUp", true), gui:FindFirstChild("FloorDown", true)
+	check(down:GetAttribute("Locked") == true, "on the ground floor the down arrow has a lock: Basement would open it")
+	check(down:FindFirstChild("Lock") ~= nil and down.Lock.Visible, "and shows it")
+	press("FloorUp")
+	press("FloorUp")
+	check(BuildMode.state.level == 2, "up to the third floor")
+	check(said.Text == "Floor 3", "the hint names it")
+	check(up:GetAttribute("Locked") == true and up.Lock.Visible, "the third is the top: the up arrow has a lock")
+	press("FloorUp")
+	check(BuildMode.state.level == 2, "pressing it goes nowhere")
+	check(said.Text:find("Tall Builds", 1, true) ~= nil, "and says Tall Builds opens more floors")
+	-- nothing new goes up past it, whatever a client sends
+	local ok, why = Sim.remoteFn("BuildApply"):InvokeServer({
+		{ type = "add", kind = "floors", obj = { x1 = 240, z1 = 150, x2 = 250, z2 = 160, lv = 3, c = "C8B49A", m = "WoodPlanks" } },
+	})
+	check(ok == false and tostring(why):find("Tall Builds", 1, true) ~= nil, "the server turns down a floor past the third")
+	passes({ floors = true })
+	check(up:GetAttribute("Locked") == false, "with Tall Builds the lock goes")
+	for _ = 1, 6 do
+		press("FloorUp")
+	end
+	check(BuildMode.state.level == 7, "and the arrows go up to the eighth floor")
+	check(up:GetAttribute("Locked") == false and up:GetAttribute("On") == false, "where the up arrow is dim, with no lock")
+	BuildMode.setLevel(0)
+	frames(2)
+
+	-- the basement
+	press("FloorDown")
+	check(BuildMode.state.level == 0, "without Basement the ground floor is the bottom")
+	check(said.Text:find("Basement pass", 1, true) ~= nil, "and the hint says the Basement pass opens one")
+	-- the plot's ground, as the World and Plots services lay it, and a stand-in for the terrain:
+	-- solid ground a voxel down under the plot, every write counted
+	local plot = Sim.buildFolder.Parent
+	local base = Fake.new("Part", plot)
+	base.Name = "Base"
+	local landModel = Fake.new("Model", plot)
+	landModel.Name = "Land"
+	local grass = Fake.new("Part", landModel)
+	grass.Name = "Grass"
+	local vox, writes = {}, 0
+	local function get(i, j, k)
+		local v = vox[i .. "," .. j .. "," .. k]
+		if v then
+			return v
+		end
+		return if j < -1 then { m = Enum.Material.LeafyGrass, o = 1, l = 0 } else { m = Enum.Material.Air, o = 0, l = 0 }
+	end
+	local function span(region)
+		local lo = region.CFrame.Position - region.Size / 2
+		return math.floor(lo.X / 4 + 0.5),
+			math.floor(lo.Y / 4 + 0.5),
+			math.floor(lo.Z / 4 + 0.5),
+			math.floor(region.Size.X / 4 + 0.5),
+			math.floor(region.Size.Y / 4 + 0.5),
+			math.floor(region.Size.Z / 4 + 0.5)
+	end
+	local terrain = {}
+	function terrain.ReadVoxelChannels(_, region)
+		local i0, j0, k0, nx, ny, nz = span(region)
+		local out = { SolidMaterial = {}, SolidOccupancy = {}, LiquidOccupancy = {} }
+		for a = 1, nx do
+			out.SolidMaterial[a], out.SolidOccupancy[a], out.LiquidOccupancy[a] = {}, {}, {}
+			for b = 1, ny do
+				out.SolidMaterial[a][b], out.SolidOccupancy[a][b], out.LiquidOccupancy[a][b] = {}, {}, {}
+				for c = 1, nz do
+					local v = get(i0 + a - 1, j0 + b - 1, k0 + c - 1)
+					out.SolidMaterial[a][b][c], out.SolidOccupancy[a][b][c], out.LiquidOccupancy[a][b][c] = v.m, v.o, v.l
+				end
+			end
+		end
+		return out
+	end
+	function terrain.WriteVoxelChannels(_, region, _, ch)
+		local i0, j0, k0, nx, ny, nz = span(region)
+		for a = 1, nx do
+			for b = 1, ny do
+				for c = 1, nz do
+					vox[(i0 + a - 1) .. "," .. (j0 + b - 1) .. "," .. (k0 + c - 1)] =
+						{ m = ch.SolidMaterial[a][b][c], o = ch.SolidOccupancy[a][b][c], l = ch.LiquidOccupancy[a][b][c] }
+					writes += 1
+				end
+			end
+		end
+	end
+	Underground.terrain = terrain
+	passes({ basement = true })
+	check(down:GetAttribute("Locked") == false, "with the Basement pass the lock goes")
+	press("FloorDown")
+	check(BuildMode.state.level == -1, "and the down arrow goes under the ground floor")
+	check(said.Text == "Basement", "the hint says the basement")
+	check(Underground.isHidden(), "the ground over the plot hides on this screen")
+	check(base.LocalTransparencyModifier == 1 and grass.LocalTransparencyModifier == 1, "the plot's ground parts fade out")
+	check(writes > 0, "and the terrain under the land is cleared")
+	local Town = Sim.Harness.require("ReplicatedStorage.Shared.Data.Town")
+	local under = Town.plotFrame(1) * Vector3.new(170, -6, 150)
+	local ui, uj, uk = math.floor(under.X / 4), math.floor(under.Y / 4), math.floor(under.Z / 4)
+	check(get(ui, uj, uk).o == 0, "the ground under the land is gone (on this screen)")
+	-- a room down there: its floor dragged out, then a wall along its edge
+	press("Floors")
+	local floors = count("floors")
+	drag(240, 150, 260, 166)
+	check(count("floors") == floors + 1, "a basement floor is dragged out")
+	local key
+	for k, f in profile.plan.floors do
+		if f.lv == -1 then
+			key = k
+		end
+	end
+	check(key ~= nil, "on the basement level")
+	press("Walls")
+	local walls = count("walls")
+	drag(240, 150, 260, 150)
+	check(count("walls") == walls + 1, "a wall goes up along its edge")
+	-- the server would have dug the room; here only this screen's ground is checked
+	press("FloorUp")
+	check(BuildMode.state.level == 0, "up again to the ground floor")
+	check(not Underground.isHidden(), "the ground comes back")
+	check(base.LocalTransparencyModifier == 0 and grass.LocalTransparencyModifier == 0, "its parts show again")
+	check(get(ui, uj, uk).o == 1, "and the terrain away from the room is as it was")
+	local room = Town.plotFrame(1) * Vector3.new(250, -6, 158)
+	check(get(math.floor(room.X / 4), math.floor(room.Y / 4), math.floor(room.Z / 4)).o == 0, "while the room's own ground is left dug, as the server digs it")
+	-- sold, with its wall: back as it was
+	ok, why = Sim.remoteFn("BuildApply"):InvokeServer({ { type = "remove", kind = "floors", key = key } })
+	check(ok == true, "selling the basement floor takes its wall with it (" .. tostring(why) .. ")")
+	local left = 0
+	for _, w in profile.plan.walls do
+		if w.lv == -1 then
+			left += 1
+		end
+	end
+	check(left == 0, "no wall is left under the ground")
+	Underground.terrain = nil
+	base:Destroy()
+	landModel:Destroy()
+	passes({})
+	profile.passes = nil
+	press("Pick")
+	check(#errors == warned, "no warnings from any of it")
+end)
+
 run("putting a roof on", function()
 	press("Roofs")
 	local before = count("roofs")
@@ -241,7 +402,7 @@ end)
 
 run("every tab and tool opens without an error", function()
 	local warned = #errors
-	local mains = { "Build", "Furniture", "Outdoor", "Styles", "Work" }
+	local mains = { "Build", "Furniture", "Outdoor", "Styles", "Work", "Saves" }
 	for _, main in mains do
 		press(main)
 		local subs = Fake.find(gui:FindFirstChild("Subs", true), function(d)
@@ -267,21 +428,23 @@ run("every tab and tool opens without an error", function()
 		frames(2)
 	end
 	local view = BuildMode.state
-	local roofsWere, wallsWere, snapWas = view.roofsHidden, view.seeThrough, view.snap
+	local roofsWere, wallsWere = view.roofsHidden, view.seeThrough
 	press("Hide roofs")
 	press("See-through walls")
-	press("Snap to grid")
-	check(
-		view.roofsHidden ~= roofsWere and view.seeThrough ~= wallsWere and view.snap ~= snapWas,
-		"each view switch flips its setting"
-	)
+	check(view.roofsHidden ~= roofsWere and view.seeThrough ~= wallsWere, "each view switch flips its setting")
 	-- the switches are icons with no words: each shows its state by its colour, and the hint
 	-- over the tools says what just changed
-	local snapButton = gui:FindFirstChild("Snap to grid", true)
-	check(snapButton:GetAttribute("On") == view.snap, "a switch shows whether it is on")
+	local wallsButton = gui:FindFirstChild("See-through walls", true)
+	check(wallsButton:GetAttribute("On") == view.seeThrough, "a switch shows whether it is on")
 	local hint = gui:FindFirstChild("Hint", true)
 	local said = hint and hint:FindFirstChildWhichIsA("TextLabel")
-	check(said ~= nil and said.Text:find("Snap to grid", 1, true) ~= nil, "and the hint says what changed")
+	check(said ~= nil and said.Text:find("Walls", 1, true) ~= nil, "and the hint says what changed")
+	-- the grid switch is Fine Grid's (a game pass): locked without it, and pressing it doesn't
+	-- switch anything on
+	local grid = gui:FindFirstChild("Fine grid", true)
+	check(grid ~= nil and grid:GetAttribute("Locked") == true, "the fine grid switch shows a padlock without its pass")
+	press("Fine grid")
+	check(not BuildMode.fineGrid() and grid:GetAttribute("On") == false, "and stays off")
 	press("FloorUp")
 	check(BuildMode.state.level == 1, "the floor switcher goes up")
 	check(said.Text == "Floor 2", "the hint says which floor you are on")
@@ -1122,6 +1285,308 @@ run("the alert on a button is a plain red dot", function()
 	holder:Destroy()
 end)
 
+-- the user: "add a select tool in build mode"
+run("the Select tool: a box picks many, they move together, Undo puts them back, and they sell", function()
+	local warned = #errors
+	local SelectTool = Sim.Harness.require(Sim.CLIENT .. "Build.SelectTool")
+	local Town = Sim.Harness.require("ReplicatedStorage.Shared.Data.Town")
+	local Vector2 = roblox.Vector2
+	local plotFrame = Town.plotFrame(1)
+	BuildMode.setTool("select")
+	frames(2)
+	-- three chairs in a row on open ground
+	local spots = { { 262, 176 }, { 266, 176 }, { 270, 176 } }
+	local requests = {}
+	for _, at in spots do
+		table.insert(requests, {
+			type = "add",
+			kind = "items",
+			obj = { id = "chair_wood", x = at[1], y = 0, z = at[2], r = 0, lv = 0 },
+		})
+	end
+	Sim.advance(0.2)
+	local placed, why = Sim.remoteFn("BuildApply").OnServerInvoke(Sim.player, requests)
+	check(placed == true, "three chairs go down to pick (" .. tostring(why) .. ")")
+	frames(3)
+	local keys = {}
+	for key, it in profile.plan.items do
+		for _, at in spots do
+			if it.id == "chair_wood" and it.x == at[1] and it.z == at[2] then
+				table.insert(keys, key)
+			end
+		end
+	end
+	check(#keys == 3, "the chairs are on the plan")
+	press("Select")
+	check(BuildMode.state.tool == "multi", "the Select tool is in hand")
+	-- a box dragged across the screen round the three of them
+	local lo, hi = Vector2.new(math.huge, math.huge), Vector2.new(-math.huge, -math.huge)
+	for _, at in spots do
+		local v = Sim.cam:WorldToViewportPoint(plotFrame * Vector3.new(at[1], 1, at[2]))
+		lo = Vector2.new(math.min(lo.X, v.X), math.min(lo.Y, v.Y))
+		hi = Vector2.new(math.max(hi.X, v.X), math.max(hi.Y, v.Y))
+	end
+	local function moveMouse(v)
+		Sim.setMouse(v)
+		Sim.UIS.InputChanged:Fire({
+			UserInputType = Enum.UserInputType.MouseMovement,
+			Position = Vector3.new(v.X, v.Y - 36, 0),
+			Delta = Vector3.zero,
+		}, false)
+		frames(2)
+	end
+	moveMouse(lo - Vector2.new(40, 40))
+	input(Enum.UserInputType.MouseButton1, true)
+	moveMouse(hi + Vector2.new(40, 40))
+	local box = gui:FindFirstChild("SelectBox", true)
+	check(box ~= nil and box.Visible, "the box shows while it is dragged")
+	input(Enum.UserInputType.MouseButton1, false)
+	frames(2)
+	check(SelectTool.count() == 3, "letting go picks the three chairs (" .. SelectTool.count() .. ")")
+	check(not box.Visible, "and the box goes")
+	frames(15)
+	local outlines = 0
+	for _, d in ws:FindFirstChild("BuildMarkers"):GetDescendants() do
+		if d:IsA("SelectionBox") and d.Name == "Picked" then
+			outlines += 1
+		end
+	end
+	check(outlines == 3, "each picked chair wears an outline (" .. outlines .. ")")
+	local tray = gui:FindFirstChild("Tray", true)
+	check(labelOf(tray):find("3 pieces picked", 1, true) ~= nil, "the tray says how many are picked")
+	-- Shift-click takes one away, and puts it back
+	local isDown = Sim.UIS.IsKeyDown
+	Sim.UIS.IsKeyDown = function(_, k)
+		return k == Enum.KeyCode.LeftShift
+	end
+	local first = profile.plan.items[keys[1]]
+	mouseAtPlot(first.x, first.z, 1)
+	click()
+	check(SelectTool.count() == 2 and not SelectTool.has("items", keys[1]), "Shift-click takes one away")
+	mouseAtPlot(first.x, first.z, 1)
+	click()
+	check(SelectTool.count() == 3, "and puts it back")
+	Sim.UIS.IsKeyDown = isDown
+	-- picked up and put down 10 further on: one move, each keeping its place to the others
+	local was = {}
+	for _, key in keys do
+		was[key] = table.clone(profile.plan.items[key])
+	end
+	local coins = profile.coins
+	press("GroupMove")
+	check(SelectTool.holding(), "Move picks the group up")
+	mouseAtPlot(266, 166)
+	Sim.advance(0.5)
+	local ui = gui:FindFirstChild("BuildUI")
+	check(not ui:FindFirstChild("Catalog").Visible, "the bars slide away while the group is held")
+	local ghost = ws:FindFirstChild("BuildGhost")
+	check(ghost ~= nil and ghost:FindFirstChild("GroupGhost") ~= nil, "a ghost of the group follows the mouse")
+	click()
+	frames(2)
+	local same = true
+	local dz = profile.plan.items[keys[1]].z - was[keys[1]].z
+	for _, key in keys do
+		local it = profile.plan.items[key]
+		same = same and it.x == was[key].x and it.z - was[key].z == dz
+	end
+	check(dz == -10 and same, "clicking puts all three down 10 nearer the street, in a row as they were")
+	check(profile.coins == coins, "moving costs nothing")
+	check(not SelectTool.holding() and SelectTool.count() == 3, "and they stay picked")
+	Sim.advance(0.5)
+	check(ui:FindFirstChild("Catalog").Visible, "the bars come back")
+	-- one Undo takes the whole move back
+	press("Undo")
+	local back = true
+	for _, key in keys do
+		back = back and profile.plan.items[key].z == was[key].z
+	end
+	check(back, "one Undo puts all three back")
+	-- turned together about their middle
+	press("GroupTurn")
+	local turned = true
+	for _, key in keys do
+		turned = turned and profile.plan.items[key].r == 45
+	end
+	check(turned, "Turn turns all three about their middle")
+	local mid = profile.plan.items[keys[2]]
+	check(mid.x == 266 and mid.z == 176, "the middle one stays where it was")
+	-- copied: a second row put down beside the first
+	local items = count("items")
+	press("GroupCopy")
+	mouseAtPlot(266, 186)
+	click()
+	check(count("items") == items + 3, "Copy puts three more down at once")
+	input(Enum.UserInputType.MouseButton2, true)
+	input(Enum.UserInputType.MouseButton2, false)
+	frames(2)
+	check(not SelectTool.holding(), "a right click puts the copy away")
+	-- sold together
+	coins = profile.coins
+	items = count("items")
+	press("GroupSell")
+	check(count("items") == items - 3 and profile.coins > coins, "Sell sells all three and pays for them")
+	check(SelectTool.count() == 0, "and lets them go")
+	press("Undo")
+	check(count("items") == items, "Undo brings them back")
+	-- on a touch screen: taps add and take away, one finger drags a box
+	local UIS = Sim.UIS
+	UIS.TouchEnabled, UIS.MouseEnabled = true, false
+	local function screenOf(key)
+		local it = profile.plan.items[key]
+		local v = Sim.cam:WorldToViewportPoint(plotFrame * Vector3.new(it.x, 1, it.z))
+		return Vector2.new(v.X, v.Y - 36)
+	end
+	UIS.TouchTapInWorld:Fire(screenOf(keys[1]), false)
+	frames(2)
+	UIS.TouchTapInWorld:Fire(screenOf(keys[3]), false)
+	frames(2)
+	check(SelectTool.count() == 2, "two taps pick two chairs (" .. SelectTool.count() .. ")")
+	UIS.TouchTapInWorld:Fire(screenOf(keys[1]), false)
+	frames(2)
+	check(SelectTool.count() == 1, "a third tap on one takes it away")
+	local finger = { UserInputType = Enum.UserInputType.Touch, Position = Vector3.new(lo.X - 40, lo.Y - 76, 0) }
+	UIS.InputBegan:Fire(finger, false)
+	finger.Position = Vector3.new(hi.X + 40, hi.Y + 4, 0)
+	finger.Delta = Vector3.new(80, 80, 0)
+	UIS.InputChanged:Fire(finger, false)
+	frames(2)
+	UIS.InputEnded:Fire(finger, false)
+	frames(2)
+	check(SelectTool.count() == 3, "one finger dragged across them adds the rest (" .. SelectTool.count() .. ")")
+	UIS.TouchEnabled, UIS.MouseEnabled = false, true
+	BuildMode.setTool("select")
+	frames(2)
+	check(SelectTool.count() == 0, "another tool lets the group go")
+	check(#errors == warned, "no warnings from any of it")
+end)
+
+-- The build mode passes (Build/Placing; the user: "add collisions, and a gamepass should be there to
+-- remove it ... another for smaller grid size placement, another for x y scaling"): a piece bumps
+-- into what is there, Free Placing lets it in and turns it in small steps, Fine Grid snaps finer,
+-- Stretch makes it bigger, Any Colour picks any colour.
+run("the build mode passes: pieces bump, Free Placing, Fine Grid, Stretch and Any Colour", function()
+	local warned = #errors
+	if not BuildMode.isActive() then
+		BuildMode.enter()
+		frames(2)
+	end
+	local function passes(list)
+		profile.passes = list
+		Sim.remoteEvent("State"):FireClient(Sim.player, { passes = list })
+		frames(2)
+	end
+	passes({})
+	local ui = gui:FindFirstChild("BuildUI")
+	local said = ui:FindFirstChild("Hint"):FindFirstChildWhichIsA("TextLabel")
+	local free = gui:FindFirstChild("Free placing", true)
+	check(free ~= nil and Fake.shown(free) and free:GetAttribute("Locked") == true, "Free Placing's switch shows a padlock without the pass")
+	-- a chair held over the one put down at the start turns red and won't go
+	press("Furniture")
+	local cards = trayCards()
+	local id = cards[1]:GetAttribute("ItemId")
+	local spot
+	for _, it in profile.plan.items do
+		if it.id == id and not it.wall then
+			spot = it
+			break
+		end
+	end
+	check(spot ~= nil, "a " .. id .. " stands on the plot from before")
+	cards[1].Activated:Fire()
+	frames(2)
+	mouseAtPlot(spot.x, spot.z)
+	Sim.advance(0.5)
+	local before = count("items")
+	local blocked = BuildMode.state.blocked
+	check(blocked ~= nil and blocked:find("bumps into", 1, true) == 1, "held over another piece it bumps into it (" .. tostring(blocked) .. ")")
+	check(said.Text:find("Bumps into", 1, true) == 1, "and the hint says so")
+	local red = Fake.find(ws:FindFirstChild("BuildGhost"), function(d)
+		return d:IsA("BasePart") and d.Color == Color3.fromRGB(235, 80, 80)
+	end)
+	check(#red > 0, "its ghost turns red")
+	click()
+	check(count("items") == before, "and clicking there puts nothing down")
+	-- with Free Placing it goes in, and R turns it 15 degrees at a time
+	passes({ freeplace = true })
+	check(not BuildMode.collides(), "with Free Placing pieces may overlap")
+	mouseAtPlot(spot.x, spot.z + 0.2)
+	check(BuildMode.state.blocked == nil, "the same spot is fine now")
+	Sim.UIS.InputBegan:Fire({ UserInputType = Enum.UserInputType.Keyboard, KeyCode = Enum.KeyCode.R }, false)
+	frames(2)
+	check(BuildMode.state.placing.r == 15, "R turns it 15 degrees")
+	click()
+	local turned = newest(function(it)
+		return it.id == id
+	end)
+	check(count("items") == before + 1 and turned.r == 15, "and it goes down inside the other, turned 15")
+	putAway()
+	-- its owner can switch collisions back on
+	check(free:GetAttribute("Locked") == false and free:GetAttribute("On") == true, "the switch is on for its owner")
+	press("Free placing")
+	check(BuildMode.collides() and free:GetAttribute("On") == false, "and pressing it makes pieces bump again")
+	cards = trayCards()
+	cards[1].Activated:Fire()
+	frames(2)
+	mouseAtPlot(spot.x, spot.z)
+	check(BuildMode.state.blocked ~= nil, "so the chair bumps into the other again")
+	putAway()
+	press("Free placing")
+	-- Stretch: sliders beside the hint while a piece is held, and the piece grows
+	passes({ freeplace = true, stretch = true, finegrid = true, anycolour = true })
+	cards = trayCards()
+	cards[1].Activated:Fire()
+	frames(2)
+	mouseAtPlot(150, 170)
+	Sim.advance(0.5)
+	local card = ui:FindFirstChild("StretchCard")
+	check(card ~= nil and card.Visible and card:FindFirstChild("Width", true) ~= nil, "Stretch's sliders show while a piece is held")
+	local ghostBefore = #ws:FindFirstChild("BuildGhost"):GetChildren()
+	BuildMode.setStretch(Vector3.new(1.5, 1, 1.25))
+	mouseAtPlot(150, 170)
+	check(ghostBefore > 0 and BuildMode.state.placing.sx == 1.5, "the held piece is stretched")
+	-- Fine Grid: on for its owner, it snaps to a quarter of a stud
+	local gridSwitch = gui:FindFirstChild("Fine grid", true)
+	check(BuildMode.fineGrid() and gridSwitch:GetAttribute("Locked") == false, "Fine Grid is on for its owner")
+	mouseAtPlot(150.3, 170.6)
+	click()
+	local wide, wideKey = newest(function(it)
+		return it.id == id
+	end)
+	check(wide.sx == 1.5 and wide.sz == 1.25, "it goes down stretched (" .. tostring(wide.sx) .. ")")
+	check(math.abs(wide.x % 1 - 0.25) < 1e-6 and math.abs(wide.z % 1 - 0.5) < 1e-6, "on the fine grid (" .. wide.x .. ", " .. wide.z .. ")")
+	putAway()
+	-- picked, its page in the tray has the sliders, and Reset takes the stretch off
+	press("Pick")
+	mouseAtPlot(wide.x, wide.z, 1)
+	click()
+	local _, picked = BuildMode.selectedObject()
+	check(picked == wideKey, "clicking it picks it")
+	local row = gui:FindFirstChild("Tray", true):FindFirstChild("Stretch", true)
+	check(row ~= nil and row:FindFirstChild("Width", true) ~= nil, "its page has Stretch's sliders")
+	press("Reset")
+	Sim.advance(0.5)
+	check(profile.plan.items[wideKey].sx == nil, "and Reset puts it back to its own size")
+	-- Any Colour: a picker beside the palette, and a hex code painted on
+	press("Paint")
+	press("Any colour")
+	local hex = gui:FindFirstChild("Tray", true):FindFirstChild("Hex", true)
+	check(hex ~= nil and gui:FindFirstChild("Tray", true):FindFirstChild("Hue", true) ~= nil, "Any colour opens a picker of hue and shade")
+	hex.Text = "#3a7bd5"
+	hex.FocusLost:Fire(true)
+	frames(2)
+	check(BuildMode.state.paint.c == "3A7BD5", "a hex code goes on the brush")
+	mouseAtPlot(wide.x, wide.z, 1)
+	click()
+	check(profile.plan.items[wideKey].c1 == "3A7BD5", "and paints with it")
+	press("Back to the palette")
+	-- without the passes the padlocks come back
+	passes({})
+	check(free:GetAttribute("Locked") == true and gridSwitch:GetAttribute("Locked") == true, "without the passes the switches lock again")
+	press("Pick")
+	profile.passes = nil
+	check(#errors == warned, "no warnings from any of it")
+end)
+
 run("leaving Build mode", function()
 	press("Done")
 	check(not BuildMode.isActive(), "Done leaves Build mode")
@@ -1214,6 +1679,14 @@ run("putting down a ready-made building", function()
 	mouseAtPlot(218, 112)
 	local ghost = ws:FindFirstChild("BuildGhost")
 	check(ghost ~= nil and ghost:FindFirstChild("PresetGhost") ~= nil, "a ghost of the building follows the mouse")
+	-- over the chairs put down earlier it won't go, and says what it bumps into (Build/Collide)
+	local marks = ws:FindFirstChild("BuildMarkers")
+	local label = marks and marks:FindFirstChild("Text", true)
+	check(label ~= nil and label.Text:find("Bumps into", 1, true) ~= nil, "over the chairs it says what it bumps into")
+	click()
+	check(count("walls") == walls, "and clicking there puts nothing down")
+	-- on clear ground it goes down whole
+	mouseAtPlot(128, 136)
 	input(Enum.UserInputType.Keyboard, true)
 	BuildMode.rotate()
 	BuildMode.rotate()

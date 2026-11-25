@@ -149,6 +149,54 @@ chat carries on into another topic. `Services/Villagers`' street chats take thei
 message: under 3% of staged lines with three sentences or more, under 6% strings of clipped bits, and no personality
 line or `K.React` line of either kind. Previews: `render.sh props[:ids]`.
 
+### A villager's flair and their memories
+
+`Sim/Flair` (shared, numbers in `Tuning.Flair`): the three things a player gives a villager to say, kept as
+`v.flair = { phrase?, ending?, thing? }` and bought with gems. `Flair.Kinds`, `Flair.Names`, `isKind`, `price(kind)`
+(`Tuning.Flair.Prices`), `maxLength(kind)`, `get(v, kind)`, `clean(kind, raw)` (trims and shapes it: a catchphrase
+gets a capital and a closing mark, an ending and a thing lose their end marks; refuses empty text, "|{}<>#" and other
+odd marks, hidden characters, links, runs of one letter, an ending of more than `EndingWords` words or with marks
+in it, a thing that is a sentence, anything past its length; the reason is in plain words), `check(profile, vid,
+kind, raw)` (text, price, or nil and why: also the same text again and not enough gems), `set(profile, vid, kind,
+raw)` (checks again and takes the price with `Sim/Gems.spend`), `clear(profile, vid, kind)` (free) and `sanitize(raw)`
+(on load). `Sim/Voice.speak(pers, text, ending?)` puts the ending on after the personality's marks, in front of the
+closing mark ("That's fine, buddy!"), on the sentences `some(text, Tuning.Flair.EndingShare)` picks (about one in
+five, the same ones every time), only on three words or more ending in a word that isn't capitalised past the first
+(a name), a face or a bracket, never twice; an ending it already carries comes off and goes back on, so speaking twice
+changes nothing. `Voice.endingOf(v)` reads it and `Voice.as(v, text)` speaks as a villager; `EventEngine.stage`,
+`Talk.line`, `Talk.wishLine` use `Voice.as`, and `Npc.say` passes `npc.ending` (set in `Villagers.spawn` and when it
+changes). `Sim/Talk` adds the catchphrase to the pool (weight 2, greeting and small talk), the favourite thing
+through `FAVOURITE` (two lines a personality with `{thing}`, no verb hung on it), and a line per active memory from
+`LATELY` (`Talk.mention(profile, vid, m)`, weight `Tuning.Memory.TalkWeight`); `Talk.Flair = { FAVOURITE, LATELY }`
+for the specs. Over their head `Villagers`' `ownLine` says the catchphrase `Tuning.Flair.PhraseChance` of the time.
+
+`Sim/Memory` (shared, numbers in `Tuning.Memory`): what a villager's events leave them with for a few town days,
+kept as `v.lately = { { kind, what?, name?, who?, t, untilT, acc? } }`, newest last, at most `Max` (the oldest goes).
+Kinds (`Memory.Order`): `band` (name), `accessory` (what: a key of `Memory.Accessories`, each `{ words, search, slot }`;
+acc: `{ id, t }`, the catalog item the server found), `hobby` (what: a hobby id), `haircut`, `pet` (what: a key of
+`Memory.Pets`, name), `dish` (what: as said after "my"), `fallout` (who; lasts as long as the quarrel), `garden` (what:
+plural crops), `penpal`, `training`. `start(profile, vid, kind, opts, now)` (replaces one of the same kind; returns
+the memory and whether what they wear changed), `active(v, now)`, `has(v, kind, now)`, `forget(profile, vid, kind,
+who?)`, `tick(profile, now)` (ends what has run out and a falling out the two made up from; a falling out that runs
+out ends its quarrel; returns `{ vid, memory, dressed }` and each end notice once), `dressed(v, now)` (v.app with the
+memory's accessory on, in place of anything in its slot; v.app is never written), `unfound(v, now)`, `lately(profile,
+vid, now)` (the Lately rows: `{ kind, text, days }`), `words(profile, m)` (`{what}`, `{name}`, `{y}`) and
+`sanitize(profile, vid, raw)`. `Sim/EventEngine`: `remember who kind what? name? with? days?` and `forget who kind`
+(both add `{ t = "dress", vid }` to the service's part when what they wear changed); `quarrel` starts a `fallout` on
+both, `makeup` forgets it, `hobby` starts a `hobby` memory. `ctx.memory(vid, kind)` and `ctx.memoryWords(vid, kind)`;
+`K.W{ memory = kind | { kinds } }`; `s:remember(who, kind, opts)` and `s:forget(who, kind)`. Events that start one:
+`band` (all three), `outfit` (the hat or the scarf), `sillyhat`, `haircut` (the bangs, or a knitted hat to hide them),
+`haircut2`, `recipe`, `cook`, `stray` (a cat), `foundpet`, `newgarden`, `penpal`, `training`, `newthing` (from the
+market); events that need one: `gig` (band), `newlook` (accessory, two stars), `petnews`, `firstcrop`, `dishagain`,
+`penletter`, `raceday` (ends the training). `Services/Events` runs `dress` through `Villagers.dress(player, vid)`,
+which finds an unfound accessory with `Avatar.search({ keyword = search, assets = { <slot's asset type> } })` (the
+first result whose type fits the slot, kept per key; a search that found nothing is tried again after two minutes),
+then `Humanoid:ApplyDescription(Avatar.toDescription(Memory.dressed(v, now)))` on the body (pcall; if it won't take
+and nothing has them, they are spawned again). `Villagers.spawn` builds from `Memory.dressed`. `lifeHour` runs
+`Memory.tick`, notifies, dresses whoever's accessory ended and pushes `rel`. Specs: `Voice` (the ending), `Talk` (the
+catchphrase, the favourite, memories, every voice), `Memory`, `FlairService` (the remote with stubbed neighbours),
+`Events` (memories in the sample towns, `remember` and `forget` checked).
+
 ## Cutscenes
 
 `Data/Stages` holds the sets (rooftop, pier, bandstand, dream, birthday, beach, park, gate, kitchen, stall; the
@@ -542,7 +590,7 @@ profile = {
   v, coins, plan, villagers = { [vid] = Villager }, order = { vid }, nextVid,
   rel = { ["a|b"] = { s, q?, n } },
   requests = { { vid, tag, untilT } }, log = { { t, text } }, outfits = { { name, app } },
-  settings, tutorial, daily = { last, streak }, stats, recent = { eventId } (up to 40), bdays = { [vid] = day },
+  settings, tutorial, daily = { last, streak, run }, stats, recent = { eventId } (up to 40), bdays = { [vid] = day },
   keepsakes = { [itemId] = count } (`Sim/Keepsakes.clean` on load, at most `Tuning.Events.KeepsakeMax`),
   lastPayday, calendarDay, offers (old saves only: emptied on load), goals = { [goalId] = true },
   found = { [placeId] = true }, arrived = { [newcomerKey] = true },
@@ -551,10 +599,18 @@ profile = {
          -- says `{player}` and `Text.playerName(profile)` fills it: the event context's `ctx.f`, `Talk.line`,
          -- `Talk.wishLine`, and `Npc.say` on the server (each villager's `playerName`).
                                -- (Sim/PlayerWork.purse; at most Tuning.Jobs.Player.DayCap a day)
+  gems,  -- the rare currency (Sim/Gems; Data.addGems)
+  passes = { [passKey] = true },  -- as Roblox said this session (Services/Store.refreshPasses); Sim/Passes reads it
+  receipts = { purchaseId },  -- gem packs paid, the latest Tuning.Store.Receipts, so a receipt sent twice pays once
+  seen,  -- os.time() at the last save made with the player in the game (Data.save): offline earnings count from it
+  playtime = { day, secs, got },  -- today's play (UTC day) and how many of Data/Playtime's steps were claimed
+  achieved = { [achievementId] = true, group? = true },  -- achievements claimed; `group`: the group's gems paid
 }
 Villager = { id, name, pers, app, color, bday = { s, d }, fav, mood, job?, lv, xp, bed?, sick?,
              dayOff?, isYou?, born, heart, hxp, wish? = { kind, arg?, untilT }, saying?, hobby?, from?,
-             memo? = { text, t } }  -- their last event, which `Talk.memo` brings up for `MemoHours`
+             memo? = { text, t },  -- their last event, which `Talk.memo` brings up for `MemoHours`
+             flair? = { phrase?, ending?, thing? },  -- what the player gave them to say (Sim/Flair), bought with gems
+             lately? = { { kind, what?, name?, who?, t, untilT, acc? = { id, t } } } }  -- memories (Sim/Memory)
 rel record = { s, q?, n }  -- an old save's bond ("crush", "sweethearts", "partners": `Schema.OldBonds`) loads as
                            -- best friends: s comes up to `Schema.BestFriends` and the bond is dropped
 stats = { events, made, earned, paydays, wishes, hearts, found }  -- an old save's couples and partners are
@@ -564,7 +620,8 @@ stats = { events, made, earned, paydays, wishes, hearts, found }  -- an old save
 `Schema.migrate` fills in anything missing and drops anything broken, so old saves load. Since the shop went it
 also drops an old save's `inv` (the bag of food and things), `stats.fed`, and each villager's `hate`, `known`,
 `feedDay` and `feeds`; mends a `fav` that is no food; and drops a wish of a kind it doesn't know
-(`Schema.WishKinds`) or a craving for something that is no food.
+(`Schema.WishKinds`) or a craving for something that is no food. It runs each villager's `flair` through
+`Flair.sanitize` and `lately` through `Memory.sanitize` (unknown kinds, broken words and bad accessory ids go).
 
 Any plan object may carry `gift`: the coins of it that were given (every piece of the starting house carries its
 own price). `Plan.price(kind, obj)` is its cost less its gift and `Plan.changeCost` charges and refunds by price,
@@ -580,6 +637,57 @@ that day; `Sim/Talk` reads and writes them).
 `settings` is `Schema.Settings`: `music`, `sfx` (0 to 1), `bubbles`, `eventCamera` (true or false) and `theme`
 ("dark" or "light", the interface's look). `SettingSet(key, value)` takes a value of the default's type; a number
 is clamped to 0..1 and a word must be one of `Schema.SettingChoices[key]`.
+
+## Passes, gems, rewards and time away
+
+The money side that isn't coins from work (docs/GAME_DESIGN.md, "Passes, gems, rewards and time away").
+
+- `Data/Passes`: the passes (`key, id, name, blurb, icon, price`) and the gem packs (`key, id, gems, price, name`).
+  An id is 0 until the pass or product is made on Roblox; one at 0 can't be bought (its button says Soon, and
+  `Purchase.prompt` says it isn't on sale yet). In Studio, with `Passes.StudioOwnsAll`, every pass is owned.
+- `Sim/Passes` (what a pass changes): `has`, `itemSnap`, `levels`, `lowestLevel`, `maxLand`, `collides`,
+  `saveSlots`, `payBoost(profile, inGroup)` (Double Pay 2, VIP `1 + Tuning.Passes.VipPay`, the group
+  `1 + Tuning.Group.PayBonus`, multiplied), `keys`. `Sim/Gems`: `count`, `add`, `canAfford`, `spend`.
+- `Sim/Rewards` (pure; what a claim pays and marks, the server pays it): `today(now?)` (UTC day); the daily gift's
+  `daily(profile)` (mends `{ last, streak, run }`), `dailyReady`, `nextDaily`, `dailyGift(streak, run, vip)` (coins
+  by the streak; `Tuning.GemRewards.Daily` gems, `Seventh` on every `Week`th day of the run, `Vip` more),
+  `claimDaily(profile, today, vip)`; playtime's `playtime(profile, today)` (a new day starts it again), `reached(secs)`,
+  `tick(profile, secs, today)` (true when a step came due), `playtimeReady`, `claimPlaytime(profile, index?, today)`
+  (in order); `achievements(profile)` (`{ a, value, done, claimed }`, like `Life.goals`), `claimAchievement`;
+  the group's `hasGroup()` (`Tuning.Group.Id` not 0), `groupPaid`, `groupReady(profile, inGroup)`, `claimGroup`;
+  `waiting(profile, today, inGroup)` (the Rewards tile's badge). `Data/Playtime.steps` are `{ minutes, gems }`,
+  `Data/Achievements.list` `{ id, name, desc, icon, need, gems, value(profile, city) }`.
+- `Sim/Offline`: `away(seen, now)` (0 on a first visit) and `earnings(profile, secs, boost, now)` ->
+  `{ secs, counted, coins, workers, perDay }`: `Tuning.Offline.Share` of `City.wages` (day -1, nobody's day off)
+  for each town day of the time away, counted up to `Hours`, times the boost; nothing under `MinMinutes`.
+- `Services/Store`: on `Data.Loaded`, `Store.arrive(player, profile)`: `refreshPasses` (each pass with an id through
+  `MarketplaceService:UserOwnsGamePassAsync`, in pcall; one Roblox can't answer for keeps what the save had, one it
+  says no to goes; pushes `passes`), the group (`IsInGroupAsync` when `Tuning.Group.Id` isn't 0, kept as the player
+  attribute `InGroup`), then offline earnings (`Data.seenBefore`, `Offline.earnings` with `Store.payBoost`, paid by
+  `Data.addCoins` with a town log line, kept for `WelcomeBack`). `PromptGamePassPurchaseFinished` -> `passBought`
+  (checked again; Roblox's word stands when the check fails) -> `grant`. `MarketplaceService.ProcessReceipt` =
+  `processReceipt`: an unknown product, a player who left or whose save isn't in, or a failed save answers
+  `NotProcessedYet`; a pack's gems are added once per `PurchaseId` (`profile.receipts`) and `PurchaseGranted` comes
+  only after `Data.save` succeeds (in Studio with no data store, at once). VIP sets the attribute `VIP` and a gold
+  `VipTag` BillboardGui on the character, made again on `CharacterAdded`. A loop counts playtime every
+  `Tuning.Playtime.Tick` seconds and pushes `playtime` every `Push` seconds or when a step comes due.
+  `Store.memberNow(player)` asks `GroupService:GetGroupsAsync` afresh (the `GroupClaim` remote).
+- The pay boost is applied once, where pay is made: `Services/Villagers.earnFor` multiplies `City.rate` by
+  `Passes.payBoost(profile, InGroup)` (so the purse, its day's cap and five o'clock's sum carry it; skill goes by the
+  unboosted share), and `Villagers.payPlayer` multiplies the player's own work's coins, carrying the part of a coin
+  (`Sim/PlayerWork`'s day cap is on the work itself).
+- `Data.save` stamps `profile.seen = os.time()`; `Data.seenBefore(player)` is what it was as the profile loaded.
+  `Data.clientState` sends `gems`, `passes`, `playtime` and `achieved` too.
+- Client: `Controllers/Purchase` (`has`, `prompt`, `gems`, `watch`); `UI/Store` (a full menu, tabs Passes and Gems;
+  `Store.open("gems")` opens on the packs; `Store.tag`, `Store.price`); `UI/Rewards` (a full menu, tabs Daily,
+  Playtime, Achievements, Group; `Rewards.view()`, `Rewards.waiting()`, `Rewards.open(tab?)` opens on the first tab
+  with something waiting); `UI/WelcomeBack` (a dialog: `duration(secs)`, `open(info)`, `start(hud)` asks the server
+  once and shows it when the character is in and no menu is up). The HUD's strip has `Gems` beside the coins (a
+  press, `OpenGems`, opens the store's Gems), the round `Store` button under the clock, and the quick menu's
+  `Rewards` tile (it was the Gift) with a badge while `Rewards.waiting()` is more than 0; `Hud.anyOpen()`.
+- Specs: `Store` (the service with its neighbours stubbed: passes, grants, receipts once, the boost, offline
+  earnings, the claims), `Offline`, `Rewards`. Previews: `panel:Store`, `panel:Store:gems`, `panel:Rewards` and its
+  `:playtime`, `:achievements`, `:group`, `:member`, `welcome`, `welcome:long`.
 
 ## Server services
 
@@ -611,6 +719,7 @@ The creator's remotes: `CreatorPeople` (the people here and your friends, and th
 | `Interact` | Puts a `UsePrompt` (E, no `Opens`) on an attachment `UseSpot` on each placed piece that has a player use (`Data/Interactions`), in every plot's Build folder; checks the player is within `Tuning.Uses.Reaches` (14 studs), a `Cooldown` per player and a `Rest` per piece; picks the outcome (`Sim/Uses`), has villagers near react to the loud ones and fires `Used`. Nothing is bought or saved. Starts after `Villagers`. |
 | `Work` | A player working at a workplace themselves (see "Working at a workplace yourself"): a `WorkPrompt` at every placed workplace's work spot, `Work.asked`, `Work.begin`, `Work.stop(player, say?)`, `Work.at(player)` (plot and key, or nil), `Work.step(now)` every `Tuning.Jobs.Player.Check` seconds, the `WorkStop` remote. Pays through `Villagers.payPlayer`. Starts after `Villagers`. |
 | `Villagers` | Creating, editing, moving out, beds, jobs, buying a craving (`Villagers.buyWish`, the `WishBuy` remote). Spawns NPCs and runs their routine (`Villagers.brain` acts out what `Sim/Routine` chooses): sleep at night; in work hours each worker goes round their job's loop at the workplace and takes breaks; those with no job or done for the day potter. Pay goes to whoever is earning at that moment: every `Tuning.Jobs.EarnStep` seconds it checks `npc.atWork` in work hours with control nil, chat or talk (an event, an outing, a day off or sickness pays nothing), keeps a purse per villager in server memory, and every `PayEvery` seconds sends the coins (`Data.addCoins(..., quiet)`, `stats.earned`, the `Earned` event); what is left goes when the player leaves. `Villagers.endOfWork` at 5 PM sends the last of it, grants skill by the share of the day earned and says "Your villagers earned {n} coins today." (it still writes `stats.paydays` and `lastPayday`). Talking: `Villagers.spawn` puts `Npc.talkPrompt(name)` on each body (a ProximityPrompt `TalkPrompt` on the HumanoidRootPart: E, held `Tuning.Talk.HoldSeconds`, from `Distance` studs, no `Opens` attribute) and `setControl` switches it with `Npc.setTalkable(Talk.free(mode))`; it is off while they sleep. `Villagers.talkedTo(who, owner, vid)` answers it: it refuses a sleeper, someone in an event or away, a player more than `Range` studs off and a second line within `Cooldown`; then holds them (`setControl(owner, vid, "talk")` for `StaySeconds`, `VisitorSeconds` for a visitor, or until the player walks off), turns them with `Npc.face`, and has them say `Talk.line`. The owner also gets `Talk.chat`'s gain and the `Talk` event. |
+| `Store` | Passes, gem packs, rewards, offline earnings and the group (see "Passes, gems, rewards and time away"). Listens for `Data.Loaded`, so it starts before `Data.open`. |
 | `Events` | Picks and plays random events, waits for choices, applies effects, room request rewards, small friendship gains from chats, parties. A scene's props (`Data/EventProps`) are put down by their star after the gather, facing the group on the ground (a raycast that skips villagers, characters and props), made with `Builder.instantiate(..., { plain = true })`, not collidable, queryable or touchable, in `Workspace.EventProps` (attributes `Prop`, `Owner`); a choice's props come after the choice; `leave` keeps one for some hours (at most `PropsMax` a town, oldest out); tidied every 10 s and cleared when the player leaves. It pushes `keepsakes` when one is given. |
 
 `Villagers` also runs the life sim's server side: every in-game hour wishes fade and new ones turn up (the model's
@@ -655,7 +764,11 @@ Functions (client asks, server answers): `GetState`, `BuildApply`, `BuildUndo`, 
 then pushes `tutorial`; 99 skips it for good), `BuildPicture` (`id` -> `ok, why`: what a picture id is, at most one
 call every 0.5 s), `VisitPlot`, `WishGrant` (`vid, "friend" | "cheer", otherVid?`), `WishBuy` (`vid` -> `ok, message?`:
 buys the villager's craving at `Life.wishPrice`; true with no message, the notices go through `Notify`; refused with
-a plain reason when there is no craving or not enough coins),
+a plain reason when there is no craving or not enough coins), `VillagerFlair` (`vid, "phrase" | "ending" | "thing",
+text | false` -> `ok, message?`: `Villagers.setFlair` checks with `Flair.check`, at most one a second a player, runs
+it through `Avatar.filterText` (refused when it can't be checked or came back with "#"), then `Flair.set` charges the
+price in gems; pushes `villagers` and `gems`, the body's ending changes and a new catchphrase is said at once; false
+takes it off for nothing),
 `GoalClaim` (`goalId`), `PlaceFound` (`placeId`), `CreatorFromOutfit` (`outfitId` -> appearance or nil: one of the player's own saved Roblox avatars, through
 `Players:GetHumanoidDescriptionFromOutfitIdAsync`; a whole number, at most one every 0.5 s a player),
 `CreatorBundle` (`bundleId, kind?`: kind "body", "head", "shoes" or "anim", what the tab asked for; anything else
@@ -663,7 +776,12 @@ counts as not said), `CreatorSearch` (its query may carry `offSale` and `inside`
 `GoHome` (-> `ok, err`: to the caller's own plot at `Town.plotArrival`, out of any seat first, at most once every
 `Tuning.Plot.HomeCooldown` seconds), `SpawnMe` (-> the caller's `Arrival`: loads a character if they have none), `VillagerTalk` (`vid, bye?` ->
 `ok, { vid, text, note, model }` or an error: the talk card's Chat, or its Bye), `WorkStop` (-> `true`: the
-caller stops working at a workplace, `Services/Work`).
+caller stops working at a workplace, `Services/Work`). `DailyClaim` (-> `ok, coins, gems`: `Rewards.claimDaily`, VIP's
+gem included). The rewards and the store (`Services/Store`): `PlaytimeClaim` (`index?` -> `ok, gems` or `false,
+why`: the next of today's playtime steps, which must be reached), `AchievementClaim` (`id` -> `ok, gems`: once, when
+`Rewards.claimAchievement` finds it done), `GroupClaim` (-> `ok, gems` or `false, why`: once, for a member, asked fresh
+at most every 5 s), `WelcomeBack` (-> `{ secs, counted, coins, workers }` or nil: what the town earned while the
+player was away, once; it waits up to 120 s for their save and passes).
 
 Events (server pushes): `State` (patches of the client state), `PlanSync` (`{ full }` or `{ ops }`), `Notify`
 (`text, kind`; kind `action` carries `open:creator:<vid>`), `Used` (`at, puff?, text?, rarity?` to every client: `client/World/Interact` draws the puff and a bubble over the piece, a gold rim for a rare one), `EventShow`, `EventLine` (`{ token, line, last? }`, `{ token, ask = true, left? }`, `{ token, left }`), `EventEnd`, `Earned` (`{ coins, earned, lines = { { vid, n } } }` every `Tuning.Jobs.PayEvery` seconds when anyone earned: `client/World/Earnings` lifts a coin and "+N" off each earner's head and the HUD's count rolls up quietly; the player's own work is a line `{ you = true, n, today }`, its "+N" over their own character), `Say`,
@@ -1054,6 +1172,12 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   panel at a time:
   `Creator`, `Residents`, `CityPanel`, `News`, `Tutorial`, `WishPopup`. `EventCard` (the dialogue box) runs all the
   time. A `Notify` `open:creator:<vid>` waits until no `Dialogue` is open.
+  `Residents` has four tabs: About, Friends, Lately (`Memory.lately`: a row each, an icon by kind, "N more days" or
+  "Ends today"; an empty state when there is nothing) and Quirks (the gems there are, then a row per `Flair.Kinds`
+  with what they have and a "Set N" / "Change N" button with the gem; the button opens `FlairEditor`, a popup with a
+  textbox (`FlairText`), the price and either the gems there are or how many more are needed, `SaveFlair` (dim when
+  short, which then only says so) and, when one is set, `ClearFlair`; both go through `VillagerFlair`). A `gems`
+  change redraws the Quirks tab. Previews: `panel:Residents:lately`, `:quirks`, `:quirks:edit`, `:quirks:short`.
   `UI/Weather` (rain, snow, blossom, leaves) is started by `Main.client` on its own, in a pcall, before the HUD:
   one emitter on a clear 90 stud square 32 studs over the camera, each setting put on by itself (`set`), rain
   as streaks (`VelocityParallel`, `Squash` 3, the most Roblox allows) with a little `LightEmission` so it shows at

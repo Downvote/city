@@ -10,6 +10,7 @@ local Services = "ServerScriptService.Server.Services."
 local Plan = require(Shared .. "Build.Plan")
 local Group = require(Shared .. "Build.Group")
 local Catalog = require(Shared .. "Build.Catalog")
+local Palette = require(Shared .. "Data.Palette")
 
 local profile = { coins = 100000, plan = Plan.new(320), villagers = {}, order = {} }
 local folder = Instance.new("Folder")
@@ -267,7 +268,9 @@ describe("Select tool groups", function()
 	end)
 
 	it("paints a group in one go: both sides of each wall, the floor, the roof and the chair", function()
-		local requests = Group.paintRequests(profile.plan, picks, "6B8FA3", "Brick", "main")
+		-- (a colour from the palette: any other needs the Any Colour pass, Build/Placing)
+		local hex = Palette.Colors[8]
+		local requests = Group.paintRequests(profile.plan, picks, hex, "Brick", "main")
 		expect(#requests).toBe(7)
 		local ok, err = apply(requests)
 		if not ok then
@@ -276,15 +279,15 @@ describe("Select tool groups", function()
 		for _, pk in picks do
 			local obj = profile.plan[pk.kind][pk.key]
 			if pk.kind == "walls" then
-				expect(obj.a.c == "6B8FA3" and obj.b.c == "6B8FA3" and obj.a.m == "Brick").toBeTruthy()
+				expect(obj.a.c == hex and obj.b.c == hex and obj.a.m == "Brick").toBeTruthy()
 			elseif pk.kind == "items" then
-				expect(obj.c1).toBe("6B8FA3")
+				expect(obj.c1).toBe(hex)
 			else
-				expect(obj.c).toBe("6B8FA3")
+				expect(obj.c).toBe(hex)
 			end
 		end
 		-- painting it the same again asks for nothing
-		expect(#Group.paintRequests(profile.plan, picks, "6B8FA3", "Brick", "main")).toBe(0)
+		expect(#Group.paintRequests(profile.plan, picks, hex, "Brick", "main")).toBe(0)
 		expect(Build.undo(p)).toBe(true)
 	end)
 

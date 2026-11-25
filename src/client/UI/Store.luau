@@ -22,11 +22,6 @@ local panel: any = nil
 local tab = "passes"
 local unbind: { () -> () } = {}
 
--- The gems' own colour, on the main screen and in the menus.
-Store.GemColor = function(): Color3
-	return T.Purple
-end
-
 -- Each pass's colour, by its place in the list (VIP is gold).
 local function accentOf(i: number, key: string): Color3
 	if key == "vip" then
@@ -59,7 +54,8 @@ function Store.tag(icon: string?, words: string, props: { [string]: any }): Fram
 		Radius = false,
 	})
 	Kit.slant(tag, h, true)
-	local row = Kit.box({ Name = "Row", Parent = tag, Size = UDim2.fromOffset(0, h), AutomaticSize = Enum.AutomaticSize.X })
+	local row =
+		Kit.box({ Name = "Row", Parent = tag, Size = UDim2.fromOffset(0, h), AutomaticSize = Enum.AutomaticSize.X })
 	row.ZIndex = 2
 	Kit.pad(row, 10, 2)
 	Kit.list(row, 6, true, Enum.HorizontalAlignment.Center)
@@ -235,13 +231,14 @@ local function showGems()
 		Size = UDim2.new(1, 0, 1, -98),
 		Position = UDim2.fromOffset(0, 98),
 	})
+	-- (the packs in the middle of the room under the strip)
 	local list = Kit.list(row, GAP, true, Enum.HorizontalAlignment.Center)
-	list.VerticalAlignment = Enum.VerticalAlignment.Top
+	list.VerticalAlignment = Enum.VerticalAlignment.Center
 	for i, pack in PassData.packs do
 		local card = Kit.frame({
 			Name = pack.key,
 			Parent = row,
-			Size = UDim2.new(0, CARD_W, 1, 0),
+			Size = UDim2.fromOffset(CARD_W, 320),
 			LayoutOrder = i,
 			Color = T.Paper,
 			Cut = 14,

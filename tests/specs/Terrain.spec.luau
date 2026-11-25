@@ -216,6 +216,52 @@ describe("Terrain", function()
 			end
 		end)
 
+		it("lies a voxel or more under every plot's floor, away from its edges", function()
+			-- Roblox draws far terrain with coarser voxels, which once stood the island's grass up
+			-- through a plot's ground in a long strip (the user's picture). Under a plot's inside the
+			-- ground lies at Terrain.PlotFloor, a whole voxel under the floor, where the plot's own
+			-- ground part reaches down to; within a voxel of the edges it keeps the paved height, so
+			-- it steps down out of sight under that part and never dips beside it.
+			expect(Terrain.PlotFloor <= -V).toBe(true)
+			local size = Tuning.Plot.Size
+			local inside, edge = 0, 0
+			for i = 1, Tuning.Plot.Count do
+				local f = Town.plotFrame(i)
+				for u = 1, size - 1, 3 do
+					for v = 1, size - 1, 3 do
+						local p = f * Vector3.new(u, 0, v)
+						local h, m = Terrain.at(plan, p.X, p.Z)
+						expect(m).toBe("LeafyGrass")
+						local away = math.min(u, v, size - u, size - v)
+						if away > 2 * V then
+							if h > Terrain.PlotFloor + 1e-6 then
+								error(string.format("plot %d's ground at %.1f, %.1f is at %.2f", i, p.X, p.Z, h))
+							end
+							inside += 1
+						end
+						-- never above the paved height on it (the column astride its edge, half under
+						-- the street, keeps the street's)
+						if away > V / 2 then
+							expect(h <= Terrain.Ground - Terrain.Sink + 1e-6).toBe(true)
+						end
+					end
+				end
+				-- just past its edges, the street's own ground is as it was
+				for u = 2, size - 2, 7 do
+					for _, at in { Vector3.new(u, 0, -1.5), Vector3.new(-1.5, 0, u), Vector3.new(size + 1.5, 0, u) } do
+						local p = f * at
+						local h = Terrain.at(plan, p.X, p.Z)
+						if h and h < Terrain.Ground - Terrain.Sink - 1e-6 then
+							error(string.format("a dip beside plot %d at %.1f, %.1f: %.2f", i, p.X, p.Z, h))
+						end
+						edge += 1
+					end
+				end
+			end
+			expect(inside > 10000).toBe(true)
+			expect(edge > 100).toBe(true)
+		end)
+
 		it("grows over the open ground: the old town's verges, the hills and the meadow", function()
 			local grass, total = 0, 0
 			for x = -1090, 1090, 13 do

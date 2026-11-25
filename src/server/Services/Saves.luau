@@ -113,14 +113,15 @@ function Saves.handle(player: Player, action: any, slot: any, name: any): (boole
 end
 
 function Saves.start()
-	Remotes.fn("BuildSaves").OnServerInvoke = function(player, action, slot, name)
+	Remotes.fn("BuildSaves").OnServerInvoke = function(player: Player, action: any, slot: any, name: any)
 		local t = os.clock()
-		if lastAsk[player] and t - lastAsk[player] < Tuning.Saves.Every and action ~= "list" then
+		local what: string = if type(action) == "string" then action else ""
+		if what ~= "list" and lastAsk[player] and t - lastAsk[player] < Tuning.Saves.Every then
 			return false, "Give it a moment."
 		end
 		lastAsk[player] = t
 		-- (a load is a big change: one every few seconds)
-		if action == "load" then
+		if what == "load" then
 			if lastLoad[player] and t - lastLoad[player] < Tuning.Saves.LoadEvery then
 				return false, "Give it a moment."
 			end
