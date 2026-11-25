@@ -633,7 +633,7 @@ Chatter.Spats = {
 
 -- How each personality starts a conversation, whatever the hour.
 local OPEN_BY = {
-	sunny = "Oh, {b}. Hi hi. I was hoping I'd run into you.",
+	sunny = "Oh, {b}! Hi hi. I was hoping I'd run into you.",
 	gentle = "Ah, {b}. How are you keeping?",
 	bold = "{b}. Got a minute? Good.",
 	dreamy = "Oh... {b}. I was just thinking about you. Sort of.",
@@ -653,7 +653,7 @@ local OPEN_BY = {
 
 -- The quick second line some of them send straight after the first, before the other answers.
 local FOLLOW_BY = {
-	sunny = { "Okay so. Listen.", "Hehe. Sorry. I've got loads to say." },
+	sunny = { "Okaaay so. Listen.", "Hehe. Sorry. I've got loads to say." },
 	gentle = { "Only if you've got time.", "No rush at all." },
 	bold = "This'll be quick.",
 	dreamy = { "Hm... where was I.", "Wait. I had a thought. There it is." },

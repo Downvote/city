@@ -686,7 +686,7 @@ elseif scene == "creator" or scene:sub(1, 8) == "creator:" then
 				:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(x, 0, 0) })
 			Sim.UIS.InputEnded:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(x, 0, 0) }, false)
 		end
-		pressAt(creator:FindFirstChild("Personality", true), 100 + 14 + 72 * 2 / 7)
+		pressAt(creator:FindFirstChild("Personality", true), 100 + 14 + 72 * 2 / 15)
 		pressAt(creator:FindFirstChild("Colour", true), 100 + 100 * 34.5 / 48)
 		Fake.find(creator, function(d)
 			return d:IsA("TextBox") and d.PlaceholderText == "What are they called?"

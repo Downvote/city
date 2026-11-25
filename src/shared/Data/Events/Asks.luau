@@ -198,7 +198,7 @@ event({
 		s:say("a", "What would they like?", "question")
 		for _, g in options do
 			s:choice(upper(g), function(c)
-				c:with({ gift = g })
+				c:with({ gift = g, Gift = upper(g) })
 				c:n("{a} gave {b} {gift}.")
 				if g == want then
 					c:voice("b", "excited", "heart", "cheer")
@@ -206,16 +206,16 @@ event({
 					c:mood("b", 8)
 				else
 					c:by("b", {
-						proud = "Oh. {gift}. How... thoughtful.",
+						proud = "Oh. {Gift}. How... thoughtful.",
 						bold = "You got me {gift}? Huh. Okay. Thanks.",
 						shy = "Oh. You got me {gift}. Thank you. Really.",
-						cheeky = "{gift}. Is this a prank? It feels like a prank.",
-						cool = "{gift}. Thanks.",
-						prickly = "{gift}? Hm. I'll find a use for it. Probably.",
-						gloomy = "{gift}. Okay. Nobody ever knows what to get me.",
-						polite = "{gift}. How kind of you. Thank you.",
-						foodie = "{gift}. Can you eat it? No? Okay. Thanks.",
-						nervous = "{gift}? For me? Oh. Thank you. I'll look after it.",
+						cheeky = "{Gift}. Is this a prank? It feels like a prank.",
+						cool = "{Gift}. Thanks.",
+						prickly = "{Gift}? Hm. I'll find a use for it. Probably.",
+						gloomy = "{Gift}. Okay. Nobody ever knows what to get me.",
+						polite = "{Gift}. How kind of you. Thank you.",
+						foodie = "{Gift}. Can you eat it? No? Okay. Thanks.",
+						nervous = "{Gift}? For me? Oh. Thank you. I'll look after it.",
 						_ = "Oh. You got me {gift}. That's... thank you.",
 					}, "sweat")
 					c:rel(3)
@@ -416,7 +416,7 @@ event({
 		s:choice("Do it", function(c)
 			c:by("a", {
 				shy = "Okay. Okay. Before I lose my nerve.",
-				bold = "Yes. Now. Get the dye.",
+				bold = "Yes! Now. Get the dye.",
 				prickly = "Fine. If it's awful I'm blaming you.",
 				_ = "Yes. Now, before I change my mind.",
 			}, "sparkle", "cheer")
@@ -623,7 +623,7 @@ event({
 		}, "question")
 		s:choice("Share it round the street", function(c)
 			c:by("a", {
-				sunny = "Yes. I'll knock on every door.",
+				sunny = "Yes! I'll knock on every door.",
 				shy = "Every door? Um. Okay. I'll leave them on the steps.",
 				polite = "What a kind idea. One for every house.",
 				prickly = "Fine. If anyone asks, it was a mistake.",
@@ -732,7 +732,7 @@ event({
 		end)
 		s:choice("Butter yellow", function(c)
 			c:by("a", {
-				sunny = "Yellow. Of course. Why didn't I think of that?",
+				sunny = "Yellow! Of course. Why didn't I think of that?",
 				gloomy = "Yellow. Bright. Hm. ...I'll get used to it.",
 				foodie = "Butter yellow. I'll be hungry every time I come home.",
 				_ = "Butter yellow. Cheerful. I like it.",
@@ -764,7 +764,7 @@ event({
 		local s = K.scene(ctx, "The pier")
 		s:by("a", {
 			shy = "Um. {player}? Would you walk to the pier with me? I don't like it on my own in the dark.",
-			sunny = "{player}. Pier walk? The stars are out. Come on.",
+			sunny = "{player}! Pier walk? The stars are out. Come on.",
 			gloomy = "Going to the pier. It's cold. You could come. If you want.",
 			dreamy = "The pier's lovely at night... the water goes all silver. Come?",
 			nervous = "Would you come to the pier with me? It creaks. A lot.",
@@ -811,9 +811,9 @@ event({
 		local s = K.scene(ctx, "Look what I made")
 		s:by("a", {
 			proud = "{player}. Come here. You need to see this.",
-			sunny = "{player}. I finished it. Come and see. Come on.",
+			sunny = "{player}! I finished it. Come and seeee.",
 			shy = "Um, {player}? I made something. You can say if it's bad.",
-			dramatic = "{player}. Behold. My finest work.",
+			dramatic = "{player}. Behold! My finest work.",
 			nervous = "{player}, can you look at something? Be honest. Not too honest.",
 			bookish = "{player}, I built a stool. From a proper plan. Every step.",
 			cool = "Made a thing. Look.",
@@ -943,7 +943,9 @@ event({
 				cheeky = "A stakeout. I'll bring snacks.",
 				_ = "Tonight, then. Meet me by the harbour.",
 			}, "sparkle")
-			c:n("That night you watched from the harbour wall. Three small lights bobbed across the islet, then went out.")
+			c:n(
+				"That night you watched from the harbour wall. Three small lights bobbed across the islet, then went out."
+			)
 			c:by("a", {
 				gloomy = "Told you. Nobody ever believes me.",
 				dramatic = "We're witnesses now, {player}.",
@@ -1192,7 +1194,7 @@ event({
 		end)
 		s:choice("Jump in puddles", function(c)
 			c:by("a", {
-				sunny = "Wellies on.",
+				sunny = "Wellies on!",
 				shy = "Puddles? Like a kid? ...Okay. Just a small one.",
 				gloomy = "I'll get soaked. ...Okay. Yes. Let's.",
 				prickly = "That's ridiculous. Where are my wellies.",
@@ -1352,7 +1354,7 @@ event({
 			dramatic = "{player}. Witness my shame.",
 			prickly = "Not a word. ...Okay. One word. How bad?",
 			nervous = "Is it bad? It's bad. Is everyone looking?",
-			sunny = "{player}. Look at my hat. It has a feather. And a bell.",
+			sunny = "{player}! Look at my hat. It has a feather. And a bell.",
 			cool = "Hat. Bet. Don't ask.",
 			_ = "{player}. Be honest. How silly is this hat?",
 		}, "sweat")
@@ -1521,7 +1523,7 @@ event({
 		local s = K.scene(ctx, "You walked right past")
 		s:by("a", {
 			sunny = "{player}. You walked right past me. I waved and everything.",
-			cheeky = "{player}. I waved at you. You walked straight past. Hehe. I'm hurt.",
+			cheeky = "{player}. I waved at you. You walked straight past. I'm hurt :P",
 			shy = "Um. {player}? I waved earlier. You didn't see. That's okay.",
 			prickly = "I waved at you earlier. You walked right past. Whatever.",
 			dramatic = "{player}. This morning. I waved. You walked on. I've never felt so small.",

@@ -38,7 +38,8 @@ is, not sources.
 
 - **Look.** Made in the creator (section 6) from catalog items: hair, faces and heads, hats and accessories,
   classic and 3D clothing, shoes, bodies, animation packs, skin colours and body shape.
-- **Personality.** One of eight: Sunny, Gentle, Bold, Dreamy, Easygoing, Proud, Shy, Cheeky. Each has traits
+- **Personality.** One of sixteen: Sunny, Gentle, Bold, Dreamy, Easygoing, Proud, Shy, Cheeky, and since the user
+  asked for "more personalities too", Cool, Prickly, Dramatic, Bookish, Gloomy, Polite, Foodie and Nervous. Each has traits
   (social, temper, kind, mischief, lazy, brave, focus) that weight which events they start and how they react, and
   a bank of lines they say.
 - **Mood** (0 to 100). Goes up with a bed, a nice room, granted wishes, good events and paydays they enjoy. Goes
@@ -389,8 +390,8 @@ another Roblox avatar game. Its layout is taken, drawn our own way.)
   as rounded square icon buttons at the right, each named in a small line above the row when you point at it or
   press it. (The sixteen sections were two rows of eight. Grouping them, as that picture does, would have needed a
   third row of words, since our sections already have kinds of their own.)
-- **Name and personality.** The personality is a slider: one track with eight stops, a dot in each personality's
-  colour with its name under it, and a knob you drag or click along. The picked one's name stands big over it,
+- **Name and personality.** The personality is a slider: one track with a stop for each personality, a dot in each
+  one's colour with its name under it (on two rows, every other one lower, now there are sixteen), and a knob you drag or click along. The picked one's name stands big over it,
   with its line of description under it in its colour. The favourite colour is a bar of the palette's 48 colours
   side by side, with a knob on the one picked and a chip beside it; it snaps to the palette's own colours, which
   the server takes as they are. The name box, the birthday and Move them in stay.
@@ -1997,7 +1998,7 @@ or "Sort of." tacked on the end, lists of three, a colon before a reveal, cosy f
 interface now says the thing once in a player's own words ("Land bought. Your plot is now 300 by 300 studs.",
 "Things that happen in town show up here."), and a sign says what the place is.
 
-Each of the eight personalities talks its own way, all through their lines (`Data/Personalities`) and the talk card
+Each personality talks its own way, all through their lines (`Data/Personalities`) and the talk card
 (`Sim/Talk`). Sunny runs on, warm, one thought into the next and asks you things. Gentle speaks softly in whole
 sentences and notices how you are. Bold uses a few words and tells you what to do. Dreamy drifts off mid thought to
 the light or the sea. Easygoing is short and can't be bothered ("Dunno. Ask me after lunch."). Proud is sure of

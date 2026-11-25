@@ -859,7 +859,9 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   avatars); a refusal is remembered for the session and offered again from a button.
 - `Sim/Talk` (shared, numbers in `Tuning.Talk`): `Talk.free(mode)` says whether a villager can be stopped (their
   own day, a word with a neighbour, a talk already going; not an event or an outing). `Talk.line(profile, vid,
-  rng, ctx)` is what they say back. `Talk.chat(profile, vid, day, rng, notices)` is what a chat with the town's
+  rng, ctx)` is what they say back, with `{player}` filled (`ctx.name` for a visitor, who is called by their own
+  name, otherwise the owner's). `Talk.Voices` holds the lines keyed by personality (every one of the sixteen in each)
+  and `Talk.Shared` the ones anybody says, for the specs. `Talk.chat(profile, vid, day, rng, notices)` is what a chat with the town's
   owner does: a wish for cheering up is granted (`Life.grantWish`), and the first `ChatsPerDay` (3) a day for each
   villager give `ChatMood` (2) and `ChatHearts` (1, through `Life.addHearts`); it returns `{ counted, hearts,
   mood, left, wish, coins }`. `Talk.note` words that for the card. `UI/TalkCard` (started from `Main.client`) is

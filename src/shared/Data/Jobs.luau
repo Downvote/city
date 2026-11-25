@@ -32,7 +32,7 @@ local list: { Job } = {
 		name = "Shopkeeper",
 		blurb = "Runs a market stall.",
 		income = 1050,
-		likes = { "sunny", "proud" },
+		likes = { "sunny", "proud", "polite" },
 		lines = { "Fresh stock today.", "Take a look, no rush.", "Two for one on apples." },
 	},
 	{
@@ -40,7 +40,7 @@ local list: { Job } = {
 		name = "Barista",
 		blurb = "Makes the coffee.",
 		income = 1125,
-		likes = { "sunny", "gentle" },
+		likes = { "sunny", "gentle", "foodie" },
 		lines = { "One latte, coming up.", "Mind the foam, it's hot.", "I drew a heart on that one." },
 	},
 	{
@@ -48,7 +48,7 @@ local list: { Job } = {
 		name = "Baker",
 		blurb = "Bakes bread every morning.",
 		income = 1200,
-		likes = { "easygoing", "gentle" },
+		likes = { "easygoing", "gentle", "foodie" },
 		lines = { "Rolls are out of the oven.", "Flour everywhere again.", "Mind, the tray's hot." },
 	},
 	{
@@ -56,7 +56,7 @@ local list: { Job } = {
 		name = "Florist",
 		blurb = "Sells flowers from a cart.",
 		income = 975,
-		likes = { "gentle", "dreamy", "shy" },
+		likes = { "gentle", "dreamy", "shy", "gloomy" },
 		lines = { "These ones mean friendship.", "Tulips are in today.", "Sniff this. Go on." },
 	},
 	{
@@ -64,7 +64,7 @@ local list: { Job } = {
 		name = "Artist",
 		blurb = "Paints, sells the odd picture.",
 		income = 900,
-		likes = { "dreamy", "shy" },
+		likes = { "dreamy", "shy", "dramatic" },
 		lines = { "Hold still, I'm painting you.", "Nearly done with this one.", "Needs more blue." },
 	},
 	{
@@ -72,7 +72,7 @@ local list: { Job } = {
 		name = "Doctor",
 		blurb = "Keeps the town healthy.",
 		income = 1650,
-		likes = { "gentle", "shy" },
+		likes = { "gentle", "shy", "nervous" },
 		lines = { "Say ahh.", "Drink more water.", "Next, please." },
 	},
 	{
@@ -80,7 +80,7 @@ local list: { Job } = {
 		name = "Teacher",
 		blurb = "Teaches at the school.",
 		income = 1425,
-		likes = { "proud", "gentle" },
+		likes = { "proud", "gentle", "bookish" },
 		lines = { "Eyes on the board, please.", "Who knows the answer?", "Homework is due Monday." },
 	},
 	{
@@ -88,7 +88,7 @@ local list: { Job } = {
 		name = "Musician",
 		blurb = "Plays for tips on a small stage.",
 		income = 1050,
-		likes = { "sunny", "cheeky", "bold" },
+		likes = { "sunny", "cheeky", "bold", "dramatic" },
 		lines = { "This one's an original.", "Any requests?", "Clap along if you know it." },
 	},
 	{
@@ -96,7 +96,7 @@ local list: { Job } = {
 		name = "Builder",
 		blurb = "Fixes and makes things at a workbench.",
 		income = 1350,
-		likes = { "bold", "proud" },
+		likes = { "bold", "proud", "prickly" },
 		lines = { "Measure twice, cut once.", "Pass me that hammer.", "Good as new." },
 	},
 	{
@@ -104,7 +104,7 @@ local list: { Job } = {
 		name = "Postie",
 		blurb = "Sorts the town's letters.",
 		income = 975,
-		likes = { "shy", "easygoing" },
+		likes = { "shy", "easygoing", "cool" },
 		lines = { "Letter for you.", "So many parcels today.", "Stamps are on the left." },
 	},
 	{
@@ -112,7 +112,7 @@ local list: { Job } = {
 		name = "Ice cream seller",
 		blurb = "Scoops all day.",
 		income = 1050,
-		likes = { "cheeky", "sunny" },
+		likes = { "cheeky", "sunny", "foodie" },
 		lines = { "Cone or cup?", "Sprinkles are free today.", "Eat it before it drips." },
 	},
 	{
@@ -120,7 +120,7 @@ local list: { Job } = {
 		name = "Librarian",
 		blurb = "Looks after the library.",
 		income = 1125,
-		likes = { "shy", "dreamy" },
+		likes = { "shy", "dreamy", "bookish" },
 		lines = { "Shh, please.", "That one's due back Friday.", "Have you read this one?" },
 	},
 }

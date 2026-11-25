@@ -775,8 +775,143 @@ describe("Event engine", function()
 			do
 				expect(#(p.lines[kind] or {}) >= 3).toBeTruthy()
 				for _, text in p.lines[kind] do
-					checkString(text, p.id .. "." .. kind)
+					-- checked as said: {player} is filled with the player's name (ctx.f)
+					checkString((text:gsub("{player}", "Sam")), p.id .. "." .. kind)
 				end
+			end
+		end
+	end)
+
+	-- the user: "the player is to be referred to as their player name instead of sensei"
+	it("calls the player by their name, never Sensei, and fills it in every line", function()
+		local function said(scene)
+			local out = { scene.title, scene.log }
+			for _, l in scene.lines do
+				table.insert(out, l.text)
+			end
+			for _, e in scene.effects or {} do
+				if e.t == "memo" then
+					table.insert(out, e.text)
+				end
+			end
+			for _, c in scene.choices or {} do
+				table.insert(out, c.text)
+				for _, l in c.lines or {} do
+					table.insert(out, l.text)
+				end
+				for _, e in c.effects or {} do
+					if e.t == "memo" then
+						table.insert(out, e.text)
+					end
+				end
+			end
+			return out
+		end
+		local byName, missing = {}, {}
+		for _, def in Events.list do
+			local played = false
+			for seed = 1, 600 do
+				local rng = Rng.new(seed * 7919 + #def.id)
+				local count = if def.actors >= 3 then rng:int(3, 7) else rng:int(math.max(1, def.actors), 7)
+				local p = busyTown(rng, count)
+				p.name = "Robin"
+				local opts = {}
+				if def.when == "night" then
+					opts.hour = rng:float(Tuning.Day.NightStart, 24)
+				elseif def.when == "day" then
+					opts.hour = rng:float(Tuning.Day.NightEnd + 0.1, Tuning.Day.NightStart - 0.1)
+				end
+				local ctx = context(p, rng, opts)
+				local order = rng:shuffle(p.order)
+				local stars = {}
+				for i = 1, def.actors do
+					stars[i] = order[i]
+				end
+				if EventEngine.allowedNow(def, ctx.hour) and def.weight(ctx, stars[1], stars[2], stars[3]) > 0 then
+					local ev = EventEngine.stage(ctx, def, stars)
+					for _, text in said(ev.scene) do
+						if type(text) == "string" then
+							if text:find("{", 1, true) then
+								error(def.id .. ": a hole left in: " .. text)
+							end
+							if text:lower():find("sensei", 1, true) then
+								error(def.id .. ": calls the player Sensei: " .. text)
+							end
+							if text:find("Robin", 1, true) then
+								byName[def.id] = true
+							end
+						end
+					end
+					played = true
+					break
+				end
+			end
+			if not played then
+				table.insert(missing, def.id)
+			end
+		end
+		if #missing > 0 then
+			error("never staged: " .. table.concat(missing, ", "))
+		end
+		-- and plenty of them turn to the player by name (the asks most of all)
+		local n = 0
+		for _ in byName do
+			n += 1
+		end
+		expect(n >= 40).toBeTruthy()
+		for _, id in { "toomuchbread", "pierwalk", "doorpaint", "cantsleep", "walkedpast", "whowaves" } do
+			if not byName[id] then
+				error(id .. " never says the player's name")
+			end
+		end
+		-- the banks the talk is made from: no Sensei, and nothing in them that the log fills in
+		-- once (a topic's `about`, a dream) holds a {word} it couldn't fill
+		local function clean(text, where)
+			expect(text:lower():find("sensei", 1, true)).toBe(nil)
+			checkString((text:gsub("{player}", "Robin")), where)
+		end
+		for _, t in Chatter.Topics do
+			expect(t.about:find("{", 1, true)).toBe(nil)
+			for _, k in { "open", "yes", "no", "more", "back" } do
+				expect(#t[k] >= 1).toBeTruthy()
+				for _, text in t[k] do
+					clean(text, "topic " .. t.about)
+					expect(text:find("{[abc]}")).toBe(nil)
+				end
+			end
+		end
+		for _, d in Chatter.Dreams do
+			expect(d:find("{", 1, true)).toBe(nil)
+			clean(d, "dream")
+		end
+		for _, d in Chatter.Debates do
+			clean(d.q, "debate")
+			clean(d.yes, "debate")
+			clean(d.no, "debate")
+		end
+		for _, x in Chatter.Spats do
+			expect(x:find("{", 1, true)).toBe(nil)
+		end
+	end)
+
+	it("lets the street's chats run without the event engine's filling in", function()
+		-- Services/Villagers hands Chatter.small a context with no ctx.f; {player} is left for
+		-- Npc.say to fill when the bubble goes up, and nothing else is left unfilled
+		local p = makeProfile(Rng.new(8), 2, true)
+		local rng = Rng.new(8)
+		for _ = 1, 200 do
+			local small = Chatter.small({
+				rng = rng,
+				v = function(id)
+					return p.villagers[id]
+				end,
+				rel = function()
+					return 10
+				end,
+			}, "v1", "v2")
+			expect(#small >= 2).toBeTruthy()
+			for _, l in small do
+				checkString((l.text:gsub("{player}", "Robin")), "street")
 			end
 		end
 	end)

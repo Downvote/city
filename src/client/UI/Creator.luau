@@ -1538,10 +1538,16 @@ local function dragAlong(hit: GuiButton, at: (number) -> ())
 	end)
 end
 
+-- How many rows the names under a stop slider's stops take: one, or two when there are too many
+-- stops for their names to sit side by side (the sixteen personalities).
+local function stopNameRows(count: number): number
+	return if count > 8 then 2 else 1
+end
+
 -- A slider with `count` stops along one track, each marked by a small disc in its own colour, a
 -- knob on the picked one and the track filled up to it. A click or a tap anywhere on it picks the
 -- nearest stop; dragging slides the knob from stop to stop. `y` is where the track runs, in the
--- holder. Returns { set(i), onPick(i) }.
+-- holder (leave 30 under it for the names, 44 when stopNameRows is 2). Returns { set(i), onPick(i) }.
 local function stopSlider(
 	holder: Frame,
 	count: number,
@@ -1573,17 +1579,19 @@ local function stopSlider(
 			ZIndex = 2,
 		})
 		stop:SetAttribute("Stop", nameOf(i))
-		-- its name under it (the two at the ends kept inside the row)
+		-- its name under it (the two at the ends kept inside the row); with more stops than one row
+		-- of names has room for, every other name sits on a second row under the first
 		local ends = if i == 1
 			then Enum.TextXAlignment.Left
 			elseif i == count then Enum.TextXAlignment.Right
 			else Enum.TextXAlignment.Center
 		local nameX = if i == 1 then -inset + 2 elseif i == count then -88 + inset - 2 else -45
+		local row = (i - 1) % stopNameRows(count)
 		Kit.text(nameOf(i), {
 			Name = "StopName",
 			Parent = holder,
 			Size = UDim2.fromOffset(if i == 1 or i == count then 88 else 90, 16),
-			Position = UDim2.new(t, inset + nameX - math.floor(inset * 2 * t), 0, y + 14),
+			Position = UDim2.new(t, inset + nameX - math.floor(inset * 2 * t), 0, y + 14 + row * 14),
 			TextSize = 12,
 			Font = Kit.Fonts.Bold,
 			Color = T.InkSoft,
@@ -1729,7 +1737,13 @@ local function buildProfilePage()
 	-- One track with a stop for each personality (the user: "the personality should be a
 	-- slider"): the one picked big over it with its line under it in its own colour; click or tap
 	-- a stop, or drag the knob along.
-	local pers = Kit.box({ Name = "Personality", Parent = scroll, Size = UDim2.new(1, -10, 0, 104), LayoutOrder = 4 })
+	local list = Personalities.list
+	local pers = Kit.box({
+		Name = "Personality",
+		Parent = scroll,
+		Size = UDim2.new(1, -10, 0, 104 + 14 * (stopNameRows(#list) - 1)),
+		LayoutOrder = 4,
+	})
 	local persName = Kit.title("", {
 		Name = "Picked",
 		Parent = pers,
@@ -1745,7 +1759,6 @@ local function buildProfilePage()
 		TextSize = 15,
 		Wrap = false,
 	})
-	local list = Personalities.list
 	local stops = stopSlider(pers, #list, 72, function(i)
 		return Colors.fromHex(list[i].color)
 	end, function(i)

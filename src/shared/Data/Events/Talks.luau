@@ -618,7 +618,7 @@ event({
 		}, "question", "wave")
 		s:say("a", "We've been counting. Who waves at you more?", "question")
 		s:by("b", {
-			bold = "It's me. Say it's me.",
+			bold = "It's me! Say it's me.",
 			dramatic = "Think carefully. This matters more than you know.",
 			gloomy = "It's {a}. It's always {a}. Go on.",
 			nervous = "You don't have to answer. Unless you want to. Do you want to?",
@@ -682,7 +682,7 @@ event({
 		s:by("a", {
 			cool = "It's a hedgehog.",
 			bookish = "Actually, hedgehogs come out at night. Perfectly normal.",
-			sunny = "Aww. Hello, little one. You gave us a fright.",
+			sunny = "Aww! Hello, little one. You gave us a fright.",
 			cheeky = "Hehe. Your face, {b}.",
 			prickly = "It's a hedgehog. Calm down. ...It is quite cute.",
 			foodie = "Is it after the crumbs in my pocket? It can have them.",
@@ -710,13 +710,14 @@ event({
 	when = "day",
 	weight = W({ base = 0.14, rel = 5 }),
 	scene = function(ctx, a, b)
-		local s = K.scene(ctx, "You have to try it"):with({ rec = ctx.rng:pick(RECS) })
+		local rec = ctx.rng:pick(RECS)
+		local s = K.scene(ctx, "You have to try it"):with({ rec = rec, Rec = rec:sub(1, 1):upper() .. rec:sub(2) })
 		s:by("a", {
-			foodie = "{b}. {rec}. You have to. Today. I'll come with you.",
+			foodie = "{b}. {Rec}. You have to. Today. I'll come with you.",
 			bookish = "Have you tried {rec}? I've made a list of reasons you should.",
-			cool = "{rec}. Try it.",
-			sunny = "Okay, you have to try {rec}. Promise me.",
-			dramatic = "{b}. {rec}. It'll change your life.",
+			cool = "{Rec}. Try it.",
+			sunny = "Okay, you haaave to try {rec}. Promise me.",
+			dramatic = "{b}. {Rec}. It'll change your life.",
 			_ = "You have to try {rec}. Trust me.",
 		}, "idea", "point")
 		s:by("b", {
@@ -731,7 +732,7 @@ event({
 		s:by("b", {
 			prickly = "...It was good. Don't look at me like that.",
 			gloomy = "It was open. And good. Strange day.",
-			dramatic = "Life changing. I'm a new person.",
+			dramatic = "Life changing! I'm a new person.",
 			cool = "Good call.",
 			_ = "You were right. Annoyingly right.",
 		}, "heart")

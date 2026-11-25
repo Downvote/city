@@ -14,6 +14,7 @@ local Schema = require(Shared .. "Sim.Schema")
 local Appearance = require(Shared .. "Avatar.Appearance")
 local StarterHouse = require(Shared .. "Data.StarterHouse")
 local Rng = require(Shared .. "Util.Rng")
+local Talk = require(Shared .. "Sim.Talk")
 
 local K = Tuning.Talk
 local env = Harness.env()
@@ -551,9 +552,14 @@ describe("Talk service", function()
 			end
 			advance(1)
 		end
-		expect(heard["My nose has been cold since Tuesday."] or heard["Have you been out in the snow yet? Go on."]).toBe(
-			true
-		)
+		-- something about winter or the snow (Sim/Talk's lines for them)
+		local wintry = false
+		for _, list in { Talk.Shared.SEASON[4], Talk.Shared.WEATHER.snow } do
+			for _, text in list do
+				wintry = wintry or heard[text] == true
+			end
+		end
+		expect(wintry).toBe(true)
 		expect(#body.said > 0).toBeTruthy()
 	end)
 

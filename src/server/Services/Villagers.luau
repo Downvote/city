@@ -1922,6 +1922,8 @@ local function talk(who: Player, owner: Player, vid: string): (any?, string?)
 		lastSaid[owner] = said
 	end
 	local text = Talk.line(profile, vid, rng, {
+		-- (a visitor is called by their own name, not the owner's)
+		name = if mine then nil else who.DisplayName,
 		first = first,
 		last = said[vid],
 		working = v.job ~= nil and v.dayOff ~= World.dayIndex() and isWorkTime(World.hour()),

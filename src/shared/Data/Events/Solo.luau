@@ -2432,7 +2432,7 @@ event({
 event({
 	id = "latebook",
 	when = "any",
-	weight = W({ base = 0.12, traits = { focus = -0.3 } }),
+	weight = W({ base = 0.08, traits = { focus = -0.2 } }),
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "Three weeks late")
 		s:n("{a} found a library book under the sofa. It was due back three weeks ago.")

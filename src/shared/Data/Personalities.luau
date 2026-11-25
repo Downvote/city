@@ -73,14 +73,14 @@ Personalities.list = {
 			},
 			wow = {
 				"Oh wow, do it again, do it again!",
-				"Wait, you did that? That's brilliant.",
+				"Wait, YOU did that? Sooo good.",
 				"{player}, are you seeing this?",
-				"No way. Everyone has to see this.",
+				"No way. Hang on, I'm getting everyone.",
 			},
 			scared = {
 				"Oh no, what was that? Hold my hand?",
 				"I'm fine, I'm fine. Can we walk faster though?",
-				"That made me jump right out of my shoes.",
+				"Eek. That made me jump right out of my shoes.",
 				"Nope. Not going in there by myself.",
 			},
 			sorry = {
@@ -92,7 +92,7 @@ Personalities.list = {
 			yes = {
 				"Yes! Oh, yes, let's.",
 				"Ooh, I like that. When do we start?",
-				"Count me in.",
+				"Count me in. Oh, this'll be fun.",
 				"That's exactly what I was going to say.",
 			},
 			no = {
@@ -104,18 +104,18 @@ Personalities.list = {
 			bye = {
 				"Okay, I'll let you go. See you later!",
 				"Bye bye. This was nice. Again soon?",
-				"See you tomorrow, yeah?",
+				"See you tomorrow, yeah? Same bench?",
 				"Right, I'm off. Wave if you see me.",
 			},
 			tease = {
 				"You've gone all pink. Hehe.",
 				"Somebody got out of bed on the wrong side.",
 				"You've got a crumb on your chin. Other side. There.",
-				"Oh, I'm telling everyone about this.",
+				"Ehehe. I'm telling everyone about this.",
 			},
 			brag = {
 				"Did you see that? I did that!",
-				"I'm on a roll today, honestly.",
+				"Two good things in one day. I'm on a roll.",
 				"Not bad, right? Go on, say it's not bad.",
 				"{player}, did you see? Please say you saw.",
 			},
@@ -133,13 +133,13 @@ Personalities.list = {
 			},
 			excited = {
 				"I can't sit still, I really can't!",
-				"Oh, I'm so happy I could burst.",
+				"Ahh, I'm so happy I could burst.",
 				"Okay okay okay. Yes.",
 				"{player}! This is the best news all week.",
 			},
 			tired = {
 				"I need a nap and a biscuit, in that order.",
-				"My legs have gone all wobbly.",
+				"Up the hill and back twice. My legs have gone all wobbly.",
 				"Five minutes on the bench and I'll be fine.",
 				"I think I talked too much today. Is that a thing?",
 			},
@@ -191,7 +191,7 @@ Personalities.list = {
 			},
 			wow = {
 				"Oh my. Did you make that?",
-				"Well, look at that.",
+				"Oh, well, look at that.",
 				"That's lovely. You must have worked hard on it.",
 				"{player}, come and look. Isn't it pretty?",
 			},
@@ -207,29 +207,29 @@ Personalities.list = {
 				"I'll put it right. I promise.",
 				"Oh, I'm sorry. Are you all right?",
 			},
-			yes = { "I think so too.", "That sounds right to me.", "Yes, let's.", "Mm. I'd like that." },
+			yes = { "Mm. I think so too.", "That sounds right to me.", "Yes, let's.", "Mm. I'd like that." },
 			no = {
-				"I'm not so sure.",
+				"Hm. I'm not so sure.",
 				"I see it a little differently.",
 				"Maybe. I'd be careful, though.",
 				"I don't think that's quite fair.",
 			},
 			bye = {
-				"Take care now.",
+				"Take care now. Wrap up warm.",
 				"Mind how you go.",
 				"Get some rest, won't you?",
 				"Come by any time. I mean that.",
 			},
 			tease = {
 				"You've got paint on your nose.",
-				"Somebody's been at the biscuits.",
+				"Somebody's been at my biscuit tin. I can see the crumbs.",
 				"Is that a new hat? It's very... brave.",
 				"You're humming again. You always hum when you're pleased.",
 			},
 			brag = {
 				"I'm a little proud of that.",
 				"It came out rather well, didn't it?",
-				"I practised every evening for weeks.",
+				"I practised every evening for weeks. My neighbours must be sick of it.",
 				"My gran would have liked it.",
 			},
 			worry = {
@@ -246,14 +246,14 @@ Personalities.list = {
 			},
 			excited = {
 				"Oh, how wonderful.",
-				"I've got butterflies.",
+				"Oh my. I've got butterflies.",
 				"I can hardly believe it.",
 				"Oh, {player}. What a treat.",
 			},
 			tired = {
 				"I could do with a sit down.",
 				"My feet are telling me off.",
-				"Time for a cup of tea, I think.",
+				"Mm. Time for a cup of tea, I think.",
 				"I'll just rest my eyes for a minute.",
 			},
 			laugh = { "Oh, you are awful.", "Hee hee. Stop it.", "Oh, that's made my day.", "I shouldn't laugh. Hee." },
@@ -297,18 +297,23 @@ Personalities.list = {
 			},
 			sorry = {
 				"Yeah. That was on me. Sorry.",
-				"I was out of line.",
+				"Ugh. I was out of line. Sorry.",
 				"My fault. I'll fix it.",
 				"Sorry. I get loud.",
 			},
 			yes = { "Obviously.", "Yes. Let's go.", "Now you're talking.", "Done. Deal." },
 			no = { "No way.", "Nah. Wrong.", "Hard no.", "You're kidding, right?" },
-			bye = { "Later.", "I'm off. Stay out of trouble.", "See you round.", "Gotta run. Actually run. Bye." },
+			bye = {
+				"Later.",
+				"I'm off. Stay out of trouble.",
+				"See you round. Eat something, you look weak.",
+				"Gotta run. Actually run. Bye.",
+			},
 			tease = {
 				"Too slow.",
 				"Is that your angry face? Cute.",
 				"Call that a muscle?",
-				"Bet you can't keep up.",
+				"Bet you can't keep up. Go on. Try.",
 			},
 			brag = {
 				"Told you I'd win.",
@@ -338,7 +343,7 @@ Personalities.list = {
 			},
 			tired = {
 				"Okay. I need a sit.",
-				"That was a workout.",
+				"Hauled nets all morning. That was a workout.",
 				"Lying down. For fun. Leave me.",
 				"Water. Now.",
 			},
@@ -390,7 +395,7 @@ Personalities.list = {
 			},
 			wow = {
 				"Oh... like something out of a dream.",
-				"Did you see it catch the light?",
+				"Did you see it catch the light? Like a little sun...",
 				"That's the nicest thing I've seen since... hm. Ever, maybe.",
 				"{player}... are you seeing this too? Good. I wasn't sure.",
 			},
@@ -421,12 +426,12 @@ Personalities.list = {
 			bye = {
 				"Bye bye...",
 				"See you... somewhere. Soon.",
-				"I'm going to wander off now.",
+				"I'm going to wander off now... that way. Or that way.",
 				"Bye. Mind the puddles, they're deeper than they look.",
 			},
 			tease = {
 				"You've got a leaf in your hair. I'm keeping it.",
-				"You look like a sleepy otter.",
+				"You look like a sleepy otter. A nice one.",
 				"I know your secret. I forgot it, but I know it.",
 				"You hum when you think. Did you know?",
 			},
@@ -513,7 +518,7 @@ Personalities.list = {
 				"Can we not?",
 			},
 			sorry = { "My bad.", "Oops. Sorry, man.", "Yeah, sorry about that.", "I'll do better. After my nap." },
-			yes = { "Sure.", "Yeah, works for me.", "Sounds good.", "Eh, why not." },
+			yes = { "Sure.", "Yeah, works for me.", "Mm. Sounds good.", "Eh, why not." },
 			no = { "Nah.", "Eh. Not feeling it.", "Too much effort.", "Pass." },
 			bye = { "Later.", "Catch you around.", "Gonna go lie down.", "See ya.", "Mm. Bye. Going horizontal." },
 			tease = {
@@ -524,7 +529,7 @@ Personalities.list = {
 			},
 			brag = {
 				"Didn't even try.",
-				"Nailed it. Kinda.",
+				"Nailed it. Didn't even sit up.",
 				"Not bad for a lazy one.",
 				"Yeah, I'll take that.",
 				"{player}, did you see? Did it lying down. Mostly lying down.",
@@ -536,7 +541,12 @@ Personalities.list = {
 				"Hope it doesn't rain on my nap.",
 				"{player}, you okay? You're rushing about again.",
 			},
-			hmm = { "Hmm. Later.", "Dunno. Ask me after lunch.", "Eh, could go either way.", "No idea, honestly." },
+			hmm = {
+				"Hmm. Later.",
+				"Dunno. Ask me after lunch.",
+				"Eh, could go either way.",
+				"Mm... no idea, honestly.",
+			},
 			excited = {
 				"Oh, nice. Nice nice.",
 				"Okay, this is actually great.",
@@ -546,7 +556,7 @@ Personalities.list = {
 			},
 			tired = {
 				"Nap time.",
-				"I'm out.",
+				"Yawn... I'm out.",
 				"So tired. So comfy.",
 				"Resting my eyes. On purpose.",
 				"Yawn... five more minutes. Or fifty.",
@@ -610,7 +620,7 @@ Personalities.list = {
 				"Fine. I may have been wrong. Once.",
 				"I apologise. Don't get used to it.",
 				"That was beneath me. Sorry.",
-				"I suppose I was a little rude.",
+				"Hm. I suppose I was a little rude. A little.",
 			},
 			yes = { "Of course. I said so first.", "Finally, some sense.", "Agreed. Naturally.", "You're learning." },
 			no = {
@@ -649,7 +659,7 @@ Personalities.list = {
 			excited = {
 				"This is my moment.",
 				"Finally, something worthy of me.",
-				"I knew this day would come.",
+				"Ahem. I knew this day would come.",
 				"Clear the way, please.",
 			},
 			tired = {
@@ -721,7 +731,7 @@ Personalities.list = {
 				"{player}, um, are you still there? Okay. Good.",
 			},
 			sorry = { "S-sorry.", "I'm so sorry. I didn't mean to.", "Sorry. I'll go.", "Was that me? Sorry. Sorry." },
-			yes = { "Um, yes. I think so too.", "Okay.", "Mm-hm.", "Yes. If that's all right." },
+			yes = { "Um, yes. I think so too.", "Okay... okay. Yes.", "Mm-hm.", "Yes. If that's all right." },
 			no = { "Um. I don't think so.", "Maybe not...", "I'd rather not.", "Sorry. No." },
 			bye = { "Bye...", "Um. See you.", "Thanks for talking to me.", "I'll go now. Bye." },
 			tease = {
@@ -744,7 +754,7 @@ Personalities.list = {
 				"I don't want to be in the way.",
 				"{player}, um... was I okay today? Not too quiet?",
 			},
-			hmm = { "Um...", "I'm not sure.", "Can I think about it?", "I don't know. Sorry." },
+			hmm = { "Um...", "Hm... I'm not sure.", "Can I think about it?", "I don't know. Sorry." },
 			excited = {
 				"Oh! Oh. Really?",
 				"I'm so happy I could squeak.",
@@ -754,7 +764,7 @@ Personalities.list = {
 			tired = {
 				"I'm a bit sleepy.",
 				"Can I sit down for a bit?",
-				"That was a lot of people.",
+				"The market was so loud today. That was a lot of people.",
 				"I need a quiet corner.",
 			},
 			laugh = { "Hehe.", "Pff. That's silly.", "Hee. Sorry. Hee.", "Haha. Oops, that was loud." },
@@ -819,7 +829,7 @@ Personalities.list = {
 				"Fine. Sorry. Want a sweet? It's a normal sweet.",
 				"That got out of hand.",
 			},
-			yes = { "Oh, I love that.", "Yes. And we tell nobody.", "Deal.", "You read my mind." },
+			yes = { "Oh, I love that.", "Yes. And we tell nobody.", "Deal. Shake on it. Hehe.", "You read my mind." },
 			no = { "Boring. No.", "Nope. Got a better idea.", "Where's the fun in that?", "Hard pass, pal." },
 			bye = { "Toodles.", "Don't look in your pockets later.", "Bye. Or is it?", "Catch me if you can." },
 			tease = {
@@ -846,7 +856,7 @@ Personalities.list = {
 				"Hmm. What would cause the most trouble?",
 				"Thinking face. Wait for it.",
 				"Ooh, I've got an idea. No, two.",
-				"Let me plot.",
+				"Hmm. Let me plot. Ehehe.",
 			},
 			excited = {
 				"Ohhh, this is going to be good.",
@@ -857,7 +867,7 @@ Personalities.list = {
 			tired = {
 				"Mischief is tiring work.",
 				"I'll prank you after a nap.",
-				"My legs are done.",
+				"Ran from three gulls and a baker today. My legs are done.",
 				"Wake me if anything funny happens.",
 			},
 			laugh = {
