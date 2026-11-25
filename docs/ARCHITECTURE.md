@@ -137,7 +137,13 @@ requests)` (an add past what was given is refused; removes in the same change co
 (cards read "Free, N left" or "None left"; `ui.sh build:keepsakes[:empty]`). `Sim/Talk.line` takes `season` and
 `weather`, and `Talk.memo(v, now)` is the last event's memo while fresh. `Data/Foods.phrase(food)` is a food as it
 reads inside a sentence ("a rice ball", "an apple", "mushroom soup"); the cravings, the talk card's Buy button and the
-events' gifts all name food through it. Previews: `render.sh props[:ids]`.
+events' gifts all name food through it. Each job in `Data/Jobs` has a `place`, where it's done as people say
+it ("bakery", "workshop": `Jobs.placeOf(id)`), and `K.workplace(ctx, vid)` gives a star's, so no line names a
+workplace piece ("builder's bench"). `Chatter.chat(ctx, s, a, b, topic?, goesOn?)` leaves out the goodbye when the
+chat carries on into another topic. `Services/Villagers`' street chats take their stock lines through
+`Kit.sceneLines`, so two villagers never use the player's name to each other. The Events spec holds the shape of a
+message: under 3% of staged lines with three sentences or more, under 6% strings of clipped bits, and no personality
+line or `K.React` line of either kind. Previews: `render.sh props[:ids]`.
 
 ## Cutscenes
 
