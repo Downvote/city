@@ -19,9 +19,9 @@ local BUTTER: Finish = { c = "F3DFA6", m = "WoodPlanks" }
 local MINT: Finish = { c = "CFE8D8", m = "WoodPlanks" }
 local BLUSH: Finish = { c = "F0CDC4", m = "WoodPlanks" }
 local LILAC: Finish = { c = "DCD2EC", m = "WoodPlanks" }
-local INSIDE: Finish = { c = "FAF3E6", m = "SmoothPlastic" }
-local KIDS: Finish = { c = "E6F0F6", m = "SmoothPlastic" } -- the bedroom: pale sky
-local BATH: Finish = { c = "E4F0EC", m = "SmoothPlastic" }
+local INSIDE: Finish = { c = "FAF3E6", m = "Plaster" }
+local KIDS: Finish = { c = "E6F0F6", m = "Plaster" } -- the bedroom: pale sky
+local BATH: Finish = { c = "E4F0EC", m = "CeramicTiles" }
 local ROOF: Finish = { c = "6FA8A0", m = "RoofShingles" } -- soft teal
 local PLAY_FLOOR: Finish = { c = "D9C8E6", m = "Carpet" } -- lilac carpet
 local OAK: Finish = { c = "D2AE82", m = "WoodPlanks" }

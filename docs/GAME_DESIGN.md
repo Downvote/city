@@ -2579,3 +2579,15 @@ mid placement. The keys do the same: [ and ] for a finer or bigger grid, - and =
   basement room is fine) or off the edge of the world, or whose walks keep getting stuck with no room to be put on,
   is stood back beside their bed after a few seconds and says they got stuck. Asleep, at work, in a seat, or in
   the middle of an event or a chat, they are left alone. Without a bed they go to where the Mayor arrives on the plot.
+
+### Textured walls and ceilings under roofs
+
+> for interiors and exteriors everywhere for buildings, try to not use flat colors, use textures for them instead. also, improve interiors much more, make it such that roofs create a flat bottom below it as a ceiling instead of letting players see the inner pyramid of the roof
+
+- A pitched roof (gable, hip and the rest) now has a flat plaster ceiling under it, across the rooms at the top of the
+  walls. From inside you see a ceiling, not the underside of the tiles. It is part of the roof, so it hides with the
+  roofs in Build mode.
+- The ready-made buildings and the starting house had their inside walls, frames and trims in flat paint. They are
+  plaster now, and bathrooms are ceramic tiles. Build mode's own wall swatches that were flat paint (white, sage, sky
+  blue, blush, charcoal) are plaster too, and a new wall's inside starts as white plaster. The town's own buildings
+  were already textured; their signs, adverts and trims stay flat on purpose.

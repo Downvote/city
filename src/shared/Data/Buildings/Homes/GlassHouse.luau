@@ -18,10 +18,10 @@ local F = HomeKit.F
 -- finishes
 local WALLS: Finish = { c = "EEEBE4", m = "Concrete" } -- warm white render
 local FRAMES: Finish = { c = "4E4E54", m = "Metal" } -- the glass walls' dark frames
-local INSIDE: Finish = { c = "F4F2EE", m = "SmoothPlastic" }
-local BATH: Finish = { c = "E6ECEC", m = "SmoothPlastic" }
+local INSIDE: Finish = { c = "F4F2EE", m = "Plaster" }
+local BATH: Finish = { c = "E6ECEC", m = "CeramicTiles" }
 local ROOF: Finish = { c = "8A8A90", m = "Concrete" }
-local FASCIA: Finish = { c = "4E4E54", m = "SmoothPlastic" }
+local FASCIA: Finish = { c = "4E4E54", m = "Plaster" }
 local CONCRETE_FLOOR: Finish = { c = "D9D4CB", m = "Concrete" }
 local WOOD_FLOOR: Finish = { c = "C8AE8A", m = "WoodPlanks" }
 local BATH_TILES: Finish = { c = "D8DCDC", m = "CeramicTiles" }

@@ -13,7 +13,7 @@ local F = Tuning.Plot.Foundation
 local PEACH: Finish = { c = "F0CDB0", m = "Plaster" } -- the shop outside
 local SHOP_IN: Finish = { c = "F6F0E2", m = "Plaster" }
 local BOARDS: Finish = { c = "FAF6EC", m = "WoodPlanks" } -- the gable end
-local TRIM: Finish = { c = "FAF6EC", m = "SmoothPlastic" } -- the glasshouse's frames and white wall
+local TRIM: Finish = { c = "FAF6EC", m = "Plaster" } -- the glasshouse's frames and white wall
 local TEAL: Finish = { c = "4F8A8C", m = "RoofShingles" }
 local PANES: Finish = { c = "CFE0DE", m = "Glass" } -- the glasshouse roof: pale glass, on purpose
 local TILES: Finish = { c = "F2E6CC", m = "CeramicTiles" }

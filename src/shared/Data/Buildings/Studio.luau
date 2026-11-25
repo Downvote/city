@@ -12,11 +12,11 @@ local F = Tuning.Plot.Foundation
 -- finishes (the town's palette)
 local WALLS: Finish = { c = "DAD4C8", m = "Concrete" } -- pale stone, the studio outside
 local GALLERY: Finish = { c = "F6F0E2", m = "Plaster" } -- warm white, the gallery outside
-local STUDIO_IN: Finish = { c = "F6F0E2", m = "SmoothPlastic" }
-local GALLERY_IN: Finish = { c = "FAF6EC", m = "SmoothPlastic" }
+local STUDIO_IN: Finish = { c = "F6F0E2", m = "Plaster" }
+local GALLERY_IN: Finish = { c = "FAF6EC", m = "Plaster" }
 local COCOA: Finish = { c = "6A5C5A", m = "Slate" }
 local DECK: Finish = { c = "6A5C5A", m = "Concrete" } -- the gallery's flat roof
-local PARAPET: Finish = { c = "FAF6EC", m = "SmoothPlastic" }
+local PARAPET: Finish = { c = "FAF6EC", m = "Plaster" }
 local CONCRETE: Finish = { c = "DAD4C8", m = "Concrete" } -- the studio floor
 local PALE_WOOD: Finish = { c = "DDBE94", m = "WoodPlanks" } -- the gallery floor
 local PEBBLES: Finish = { c = "D8D2C4", m = "Pebble" } -- the yard

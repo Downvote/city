@@ -19,7 +19,7 @@ local LIMESTONE: Finish = { c = "EDE6DA", m = "Limestone" }
 local INSIDE: Finish = { c = "F4EEE2", m = "Plaster" }
 local BLUSH: Finish = { c = "EBDCD0", m = "Plaster" } -- the drawing room
 local SAGE_WALL: Finish = { c = "E2E8DC", m = "Plaster" } -- the kitchen
-local BATH: Finish = { c = "E6EEEC", m = "SmoothPlastic" }
+local BATH: Finish = { c = "E6EEEC", m = "CeramicTiles" }
 local ROOF: Finish = { c = "5E6A78", m = "Slate" }
 local PEDIMENT: Finish = { c = "E8E0D0", m = "Marble" }
 local PARQUET: Finish = { c = "9A6B48", m = "WoodPlanks" }

@@ -17,7 +17,7 @@ local INSIDE: Finish = { c = "F4E9D8", m = "Plaster" }
 local FLAGS: Finish = { c = "BDB8AE", m = "Cobblestone" }
 local BOARDS: Finish = { c = "C49A6C", m = "WoodPlanks" }
 local GALLERY: Finish = { c = "6E6A72", m = "Concrete" }
-local TRIM: Finish = { c = "F4F1EA", m = "SmoothPlastic" }
+local TRIM: Finish = { c = "F4F1EA", m = "Plaster" }
 local TILES: Finish = { c = "BC7468", m = "ClayRoofTiles" }
 
 local WHITE = "FAF6EC"

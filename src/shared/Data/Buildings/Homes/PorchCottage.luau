@@ -19,9 +19,9 @@ local WALLS: Finish = { c = "F2E4C8", m = "Plaster" } -- warm cream
 local GABLE: Finish = { c = "DCC6A2", m = "WoodPlanks" } -- honey boards in the gable ends
 local ROOF: Finish = { c = "8E6E5C", m = "RoofShingles" } -- cocoa shingles
 local FRONT_ROOM: Finish = { c = "F6EEDC", m = "Plaster" }
-local BEDROOM: Finish = { c = "E4E9DD", m = "SmoothPlastic" }
-local BATH: Finish = { c = "E3EDF0", m = "SmoothPlastic" }
-local KITCHEN: Finish = { c = "F6ECCF", m = "SmoothPlastic" }
+local BEDROOM: Finish = { c = "E4E9DD", m = "Plaster" }
+local BATH: Finish = { c = "E3EDF0", m = "CeramicTiles" }
+local KITCHEN: Finish = { c = "F6ECCF", m = "Plaster" }
 local OAK: Finish = { c = "C49A6C", m = "WoodPlanks" }
 local ROSE_CARPET: Finish = { c = "C9A9A0", m = "Carpet" }
 local BATH_TILES: Finish = { c = "DCE6E4", m = "CeramicTiles" }

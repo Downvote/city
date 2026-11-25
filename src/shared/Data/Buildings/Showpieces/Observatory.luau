@@ -16,7 +16,7 @@ local INSIDE: Finish = { c = "F4E9D8", m = "Plaster" }
 local FLOOR: Finish = { c = "9A6B48", m = "WoodPlanks" }
 local CEILING: Finish = { c = "F7F3EA", m = "Plaster" }
 local ROOF: Finish = { c = "8A8494", m = "Concrete" }
-local TRIM: Finish = { c = "F4F1EA", m = "SmoothPlastic" }
+local TRIM: Finish = { c = "F4F1EA", m = "Plaster" }
 local PAVING: Finish = { c = "EAE6DC", m = "Pavement" }
 
 local WHITE = "FAF6EC"

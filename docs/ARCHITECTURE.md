@@ -42,7 +42,9 @@ The contract between the parts of the game. Update it with every change to an AP
     caller to add. It refuses a line along a wall, floor or roof edge, or one between a piece and what stands on
     it. `axis`, `point`, `size`, `bands` say where things end up.
   - `Shapes`: walls (with openings cut out; `wallReach` gives each end's reach per layer `{ a, b }` so walls meeting
-    at corners, T junctions and crossings never share space), floors (with stairwells cut out), roofs (five styles).
+    at corners, T junctions and crossings never share space), floors (with stairwells cut out), roofs (five styles;
+    a pitched one carries a plaster `Ceiling` across its footprint, `CeilingInset` in from its edges and `CeilingDrop`
+    under the walls' tops).
     A ground floor in an outdoor ground material (`Shapes.Laid`: cobbles, paving, pebble, brick, road, rock,
     sandstone, limestone, and grass and sand without an edging) is laid in the ground (`Shapes.laid(f)`): the
     same height as any ground floor, a darker edging course `EdgeWidth` round its rim (a concrete kerb round road),

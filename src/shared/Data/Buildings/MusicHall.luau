@@ -11,8 +11,8 @@ local F = Tuning.Plot.Foundation
 -- finishes (the town's palette)
 local LAVENDER: Finish = { c = "D8D2E6", m = "Plaster" } -- the hall outside
 local FOYER: Finish = { c = "FAF6EC", m = "Plaster" } -- the foyer outside
-local HALL_IN: Finish = { c = "F2E6CC", m = "SmoothPlastic" }
-local FOYER_IN: Finish = { c = "F6F0E2", m = "SmoothPlastic" }
+local HALL_IN: Finish = { c = "F2E6CC", m = "Plaster" }
+local FOYER_IN: Finish = { c = "F6F0E2", m = "Plaster" }
 local PLUM: Finish = { c = "8A6F90", m = "Slate" }
 local GABLE: Finish = { c = "D8D2E6", m = "Plaster" }
 local WALNUT_FLOOR: Finish = { c = "9A6B48", m = "WoodPlanks" }

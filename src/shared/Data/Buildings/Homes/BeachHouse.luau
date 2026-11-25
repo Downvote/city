@@ -17,7 +17,7 @@ local F = HomeKit.F
 -- finishes
 local BOARDS: Finish = { c = "BFD6E8", m = "WoodPlanks" } -- pale sky boards
 local INSIDE: Finish = { c = "F7F3EA", m = "WoodPlanks" }
-local BATH: Finish = { c = "E3EFEF", m = "SmoothPlastic" }
+local BATH: Finish = { c = "E3EFEF", m = "CeramicTiles" }
 local ROOF: Finish = { c = "7E93A6", m = "RoofShingles" } -- slate blue
 local RAIL: Finish = { c = "FAF6EC", m = "Wood" }
 local FLOOR: Finish = { c = "D9C8A8", m = "WoodPlanks" }

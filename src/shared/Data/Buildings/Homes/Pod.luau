@@ -17,9 +17,9 @@ type Finish = HomeKit.Finish
 local F = HomeKit.F
 
 -- finishes
-local SHELL: Finish = { c = "F2F4F6", m = "SmoothPlastic" } -- the white pod
-local INSIDE: Finish = { c = "EEF2F4", m = "SmoothPlastic" }
-local BATH: Finish = { c = "DCEAEE", m = "SmoothPlastic" }
+local SHELL: Finish = { c = "F2F4F6", m = "Plaster" } -- the white pod
+local INSIDE: Finish = { c = "EEF2F4", m = "Plaster" }
+local BATH: Finish = { c = "DCEAEE", m = "CeramicTiles" }
 local ROOF: Finish = { c = "B4BEC8", m = "Metal" }
 local TUBE: Finish = { c = "C8D2DA", m = "Metal" } -- the entry tube's frames
 local FLOOR: Finish = { c = "D0D6DC", m = "Concrete" }

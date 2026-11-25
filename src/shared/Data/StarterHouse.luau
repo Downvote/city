@@ -67,9 +67,9 @@ local FRONT = 6
 local CREAM: Finish = { c = "F3E7CF", m = "Plaster" } -- the house outside
 local BOARDS: Finish = { c = "B9CFB2", m = "WoodPlanks" } -- the gable ends and the workshop: sage
 local TILE: Finish = { c = "C27E63", m = "ClayRoofTiles" } -- a soft clay
-local FRONT_ROOM: Finish = { c = "F7F3EA", m = "SmoothPlastic" }
-local BEDROOM: Finish = { c = "E3ECEF", m = "SmoothPlastic" }
-local KITCHEN: Finish = { c = "F6ECCF", m = "SmoothPlastic" }
+local FRONT_ROOM: Finish = { c = "F7F3EA", m = "Plaster" }
+local BEDROOM: Finish = { c = "E3ECEF", m = "Plaster" }
+local KITCHEN: Finish = { c = "F6ECCF", m = "Plaster" }
 local SHOP_IN: Finish = { c = "DDBE94", m = "WoodPlanks" }
 local OAK: Finish = { c = "C49A6C", m = "WoodPlanks" }
 local WALNUT: Finish = { c = "9A6B48", m = "WoodPlanks" }

@@ -130,17 +130,17 @@ Palette.Colors = {
 Palette.Presets = {
 	walls = {
 		{ name = "Cream plaster", c = "F2E6CC", m = "Plaster" },
-		{ name = "White paint", c = "F7F3EA", m = "SmoothPlastic" },
+		{ name = "White plaster", c = "F7F3EA", m = "Plaster" },
 		{ name = "Red brick", c = "B86A54", m = "Brick" },
 		{ name = "Grey brick", c = "8E8E94", m = "Brick" },
 		{ name = "Wood siding", c = "C99A62", m = "WoodPlanks" },
 		{ name = "Dark wood", c = "6B4423", m = "WoodPlanks" },
 		{ name = "Stone", c = "B4B4B8", m = "Cobblestone" },
 		{ name = "Limestone", c = "EADBC0", m = "Limestone" },
-		{ name = "Sage", c = "B9CFB2", m = "SmoothPlastic" },
-		{ name = "Sky blue", c = "CCDDEA", m = "SmoothPlastic" },
-		{ name = "Blush", c = "EBC8C2", m = "SmoothPlastic" },
-		{ name = "Charcoal", c = "45454A", m = "SmoothPlastic" },
+		{ name = "Sage", c = "B9CFB2", m = "Plaster" },
+		{ name = "Sky blue", c = "CCDDEA", m = "Plaster" },
+		{ name = "Blush", c = "EBC8C2", m = "Plaster" },
+		{ name = "Charcoal", c = "45454A", m = "Plaster" },
 		{ name = "White tiles", c = "F7F3EA", m = "CeramicTiles" },
 		{ name = "Concrete", c = "B4B4B8", m = "Concrete" },
 	},
@@ -176,7 +176,9 @@ Palette.Presets = {
 
 Palette.Defaults = {
 	WallOut = { c = "F2E6CC", m = "Plaster" },
-	WallIn = { c = "F7F3EA", m = "SmoothPlastic" },
+	-- (textured, never flat paint: the user, "for interiors and exteriors everywhere for buildings, try to
+	-- not use flat colors, use textures for them instead")
+	WallIn = { c = "F7F3EA", m = "Plaster" },
 	Floor = { c = "C49A6C", m = "WoodPlanks" },
 	Roof = { c = "C27E63", m = "ClayRoofTiles" },
 	RoofGable = { c = "F2E6CC", m = "Plaster" },

@@ -537,6 +537,9 @@ function Shapes.subtract(rects: { { number } }, h: { number }): { { number } }
 end
 
 local CEILING = Color3.fromRGB(247, 243, 234)
+Shapes.CeilingDrop = 0.05 -- how far under the walls' tops a roof's ceiling lies
+Shapes.CeilingThick = 0.2
+Shapes.CeilingInset = 0.07
 
 -- A ground floor in one of these is a path or a yard laid in the ground, not a slab on it (the
 -- user's "paths flush with the ground, with an edge": a cobble path used to stand on the lawn as a
@@ -757,6 +760,20 @@ function Shapes.roof(r: Plan.Roof): { Prim }
 		if prim then
 			table.insert(out, prim)
 		end
+	end
+
+	-- under a pitched roof, a flat plaster ceiling across the rooms at the top of the walls (the
+	-- user: "make it such that roofs create a flat bottom below it as a ceiling instead of letting
+	-- players see the inner pyramid of the roof"). Its top sits a little under the walls' tops so
+	-- the two never lie level, and it goes with the roof (hidden with it in Build mode).
+	if style ~= "flat" then
+		-- (in a hair from the roof's edges, inside the walls standing on them but on no face of theirs)
+		local i = Shapes.CeilingInset
+		local c1, c2 =
+			Pt(i, y0 - Shapes.CeilingDrop - Shapes.CeilingThick, i), Pt(U - i, y0 - Shapes.CeilingDrop, V - i)
+		local ceiling = Geometry.span(c1:Min(c2), c1:Max(c2), CEILING, "Plaster")
+		ceiling.name = "Ceiling"
+		table.insert(out, ceiling)
 	end
 
 	if style == "flat" then

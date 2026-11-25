@@ -20,7 +20,7 @@ local UP = F + Tuning.Plot.LevelHeight -- the upstairs floor
 local BRICK: Finish = { c = "D69A82", m = "Brick" }
 local CREAM: Finish = { c = "F2E6CC", m = "Plaster" }
 local SHOP_IN: Finish = { c = "DDE6D3", m = "Plaster" }
-local ROOM_IN: Finish = { c = "F2E6CC", m = "SmoothPlastic" }
+local ROOM_IN: Finish = { c = "F5EBD6", m = "Plaster" } -- (a shade apart from the cream outside)
 local STOCK_IN: Finish = { c = "E6D5B4", m = "WoodPlanks" }
 local RAIL: Finish = { c = "9A6B48", m = "Wood" }
 local MOSS: Finish = { c = "6F8F5F", m = "RoofShingles" }
