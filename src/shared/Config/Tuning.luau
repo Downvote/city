@@ -154,6 +154,14 @@ Tuning.Store = {
 	VipHeight = 3.4, -- studs over a VIP's head where their gold tag hangs
 }
 
+-- The creator's Players and Shared tabs (Services/Avatar): how many come at a time (Show more
+-- brings the next lot) and how many there can be in all.
+Tuning.Creator = {
+	PageSize = 24,
+	MaxPeople = 200, -- the people here and your friends
+	MaxShared = 120, -- looks players shared, newest first (one a player)
+}
+
 -- Villagers -----------------------------------------------------------------
 Tuning.Villagers = {
 	Max = 16,

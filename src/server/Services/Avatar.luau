@@ -644,13 +644,49 @@ end
 -- have shared from the creator (kept in one small list in a data store, newest first).
 
 type Person = { id: number, name: string, kind: string }
-local friendCache: { [Player]: { Person } } = {}
 local lastShare: { [Player]: number } = {}
-local MAX_PEOPLE = 48
-local MAX_SHARED = 48
+local MAX_PEOPLE = Tuning.Creator.MaxPeople
+local MAX_SHARED = Tuning.Creator.MaxShared
+local PAGE = Tuning.Creator.PageSize
 local SHARED_KEY = "recent"
 
-local function people(player: Player): { Person }
+-- Everyone the Players tab can show, up to `want` of them: you, the people here, then your
+-- friends (asked of Roblox a page at a time as more are wanted, and kept for the session).
+type FriendList = { list: { Person }, pages: any?, done: boolean }
+local friendCache: { [Player]: FriendList } = {}
+
+local function friendsUpTo(player: Player, want: number): { Person }
+	local f = friendCache[player]
+	if not f then
+		f = { list = {}, pages = nil, done = false }
+		friendCache[player] = f
+	end
+	local entry = f :: FriendList
+	while not entry.done and #entry.list < want do
+		local ok = pcall(function()
+			if entry.pages == nil then
+				entry.pages = Players:GetFriendsAsync(player.UserId)
+			else
+				entry.pages:AdvanceToNextPageAsync()
+			end
+			for _, friend in entry.pages:GetCurrentPage() do
+				local name = if type(friend.DisplayName) == "string" and friend.DisplayName ~= ""
+					then friend.DisplayName
+					else friend.Username
+				table.insert(entry.list, { id = friend.Id, name = name, kind = "friend" })
+			end
+			if entry.pages.IsFinished then
+				entry.done = true
+			end
+		end)
+		if not ok then
+			entry.done = true -- (Roblox can't say just now: what came is what there is)
+		end
+	end
+	return entry.list
+end
+
+local function people(player: Player, want: number): { Person }
 	local out: { Person } = { { id = player.UserId, name = player.DisplayName, kind = "you" } }
 	local seen = { [player.UserId] = true }
 	for _, other in Players:GetPlayers() do
@@ -659,27 +695,7 @@ local function people(player: Player): { Person }
 			table.insert(out, { id = other.UserId, name = other.DisplayName, kind = "here" })
 		end
 	end
-	local friends = friendCache[player]
-	if not friends then
-		friends = {}
-		pcall(function()
-			local pages = Players:GetFriendsAsync(player.UserId)
-			while #friends < MAX_PEOPLE do
-				for _, f in pages:GetCurrentPage() do
-					local name = if type(f.DisplayName) == "string" and f.DisplayName ~= ""
-						then f.DisplayName
-						else f.Username
-					table.insert(friends, { id = f.Id, name = name, kind = "friend" })
-				end
-				if pages.IsFinished then
-					break
-				end
-				pages:AdvanceToNextPageAsync()
-			end
-		end)
-		friendCache[player] = friends
-	end
-	for _, f in friends do
+	for _, f in friendsUpTo(player, math.min(want, MAX_PEOPLE)) do
 		if not seen[f.id] and #out < MAX_PEOPLE then
 			seen[f.id] = true
 			table.insert(out, f)
@@ -832,10 +848,29 @@ function Avatar.start()
 		return Avatar.fromUserName(name)
 	end
 
-	-- The Players tab: avatars made by players. The people in this server and your friends, as
-	-- they look on Roblox, and looks players of this game have shared.
-	Remotes.fn("CreatorPeople").OnServerInvoke = function(player)
-		return { people = people(player), looks = sharedLooks() }
+	-- The Players tab: the people in this server and your friends, as they look on Roblox; the
+	-- Shared tab: looks players of this game have shared. A page at a time (the user: "make a
+	-- different tab for shared by players split from players. then, add show more like the
+	-- other tabs"): page n is the n-th lot of PageSize, and `more` says whether there are others.
+	local function pageOf(n: any): number
+		return if type(n) == "number" and n == n then math.clamp(math.floor(n), 1, 1000) else 1
+	end
+	local function slice(list: { any }, n: number): ({ any }, boolean)
+		local out = {}
+		for i = (n - 1) * PAGE + 1, math.min(#list, n * PAGE) do
+			table.insert(out, list[i])
+		end
+		return out, #list > n * PAGE
+	end
+	Remotes.fn("CreatorPeople").OnServerInvoke = function(player, n)
+		local page = pageOf(n)
+		-- (one more than the page asks for, so `more` knows if there is another)
+		local list, more = slice(people(player, page * PAGE + 1), page)
+		return { people = list, more = more }
+	end
+	Remotes.fn("CreatorShared").OnServerInvoke = function(_, n)
+		local list, more = slice(sharedLooks(), pageOf(n))
+		return { looks = list, more = more }
 	end
 
 	local lastCopy: { [Player]: number } = {}

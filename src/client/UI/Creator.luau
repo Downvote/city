@@ -1120,26 +1120,60 @@ local function outfitsPage()
 	end
 end
 
--- The Players tab: avatars made by players. The people in this server and your friends as they
--- look on Roblox (click one and the villager wears it), then looks players have shared from this
--- creator, with a box to share the one you are making.
+-- A "Show more" at the foot of a list on the Players or Shared tab, as the catalog tabs have
+-- (the user: "add show more like the other tabs"). `fetch(page)` asks the server for that page
+-- and returns whether there is another after it; the button hides while it asks, and stays
+-- hidden when there is nothing more.
+local function showMore(holder: Instance, order: number, fetch: (number) -> boolean?)
+	local page = 1
+	local busy = false
+	local button: GuiButton
+	button = Kit.button("Show more", {
+		Name = "ShowMore",
+		Parent = holder,
+		Size = UDim2.new(1, -12, 0, 40),
+		Color = T.Blue,
+		TextSize = 17,
+		Icon = "down",
+		LayoutOrder = order,
+	}, function()
+		if busy then
+			return
+		end
+		busy = true
+		button.Visible = false
+		task.spawn(function()
+			local more = fetch(page + 1)
+			busy = false
+			if more == nil then
+				button.Visible = holder.Parent ~= nil -- (it failed: left to press again)
+				return
+			end
+			page += 1
+			button.Visible = more
+		end)
+	end)
+	button.Visible = false
+	return function(more: boolean)
+		button.Visible = more
+	end
+end
+
+-- The Players tab: the people in this server and your friends as they look on Roblox (click
+-- one and the villager wears it, and a new villager takes their name), a page at a time.
 local function peoplePage()
 	local holder = Kit.scroll({ Parent = content, Size = UDim2.fromScale(1, 1) })
 	holder.ScrollBarThickness = 4
 	Kit.list(holder, 8)
-	-- each group under a dim caption, as the rows in menus are
-	local function caption(text: string, order: number)
-		Kit.text(text, {
-			Name = "Caption",
-			Parent = holder,
-			Size = UDim2.new(1, -12, 0, 20),
-			TextSize = 15,
-			Font = Kit.Fonts.Bold,
-			Color = T.InkSoft,
-			LayoutOrder = order,
-		})
-	end
-	caption("People here and your friends", 1)
+	Kit.text("People here and your friends", {
+		Name = "Caption",
+		Parent = holder,
+		Size = UDim2.new(1, -12, 0, 20),
+		TextSize = 15,
+		Font = Kit.Fonts.Bold,
+		Color = T.InkSoft,
+		LayoutOrder = 1,
+	})
 	local faces = Kit.box({
 		Name = "Faces",
 		Parent = holder,
@@ -1155,8 +1189,103 @@ local function peoplePage()
 		Color = T.InkSoft,
 		LayoutOrder = 3,
 	})
-	caption("Shared by players", 4)
-	local row = Kit.box({ Parent = holder, Size = UDim2.new(1, -12, 0, ROW_H), LayoutOrder = 5 })
+	local KINDS = { you = "You", here = "Here now", friend = "Friend" }
+	local shown = 0
+	local function add(person: any)
+		shown += 1
+		local card = Kit.new("TextButton", {
+			Name = "Person",
+			Text = "",
+			AutoButtonColor = true,
+			BackgroundColor3 = T.Card,
+			LayoutOrder = shown,
+			Parent = faces,
+		})
+		Kit.corner(card, 12)
+		Kit.rim(card, T.Line, 1)
+		-- a circle with a border ("make portraits a circle with a border instead of a square")
+		local face = Kit.portrait({
+			Parent = card,
+			Size = 76,
+			Position = UDim2.new(0.5, -38, 0, 8),
+			Color = T.Picture,
+			Border = T.Line,
+			BorderWidth = 3,
+		})
+		Kit.rounded(Kit.new("ImageLabel", {
+			Image = string.format("rbxthumb://type=AvatarHeadShot&id=%d&w=150&h=150", person.id),
+			BackgroundTransparency = 1,
+			Size = UDim2.fromScale(1, 1),
+			Parent = face,
+		}))
+		Kit.text(person.name, {
+			Parent = card,
+			Size = UDim2.new(1, -8, 0, 18),
+			Position = UDim2.fromOffset(4, 88),
+			TextSize = 13,
+			Font = Kit.Fonts.Bold,
+			AlignX = Enum.TextXAlignment.Center,
+			Wrap = false,
+		}).TextTruncate =
+			Enum.TextTruncate.AtEnd
+		Kit.text(KINDS[person.kind] or "", {
+			Parent = card,
+			Size = UDim2.new(1, -8, 0, 14),
+			Position = UDim2.fromOffset(4, 107),
+			TextSize = 11,
+			Color = T.InkSoft,
+			AlignX = Enum.TextXAlignment.Center,
+			Wrap = false,
+		})
+		card.Activated:Connect(function()
+			task.spawn(function()
+				local look = Remotes.fn("CreatorFromUserId"):InvokeServer(person.id)
+				if look then
+					setApp(look)
+					takeName(person.name)
+				else
+					Toasts.show("Couldn't load that avatar just now.", "warn")
+				end
+			end)
+		end)
+	end
+	-- a page of people: true or false for whether there are more, nil if it couldn't be had
+	local function fetch(page: number): boolean?
+		local ok, data = pcall(function()
+			return Remotes.fn("CreatorPeople"):InvokeServer(page)
+		end)
+		if not holder.Parent or not ok or type(data) ~= "table" then
+			return nil
+		end
+		for _, person in data.people or {} do
+			if type(person) == "table" and type(person.id) == "number" and type(person.name) == "string" then
+				add(person)
+			end
+		end
+		return data.more == true
+	end
+	local setMore = showMore(holder, 4, fetch)
+	task.spawn(function()
+		local more = fetch(1)
+		if not holder.Parent then
+			return
+		end
+		waiting:Destroy()
+		if more == nil then
+			Kit.text("Couldn't look anyone up just now.", { Parent = faces, TextSize = 15, Color = T.InkSoft })
+			return
+		end
+		setMore(more)
+	end)
+end
+
+-- The Shared tab: looks players of this game have shared from this creator, newest first, with
+-- a box to share the one you are making. A page at a time, like the Players tab.
+local function sharedPage()
+	local holder = Kit.scroll({ Parent = content, Size = UDim2.fromScale(1, 1) })
+	holder.ScrollBarThickness = 4
+	Kit.list(holder, 8)
+	local row = Kit.box({ Parent = holder, Size = UDim2.new(1, -12, 0, ROW_H), LayoutOrder = 1 })
 	Kit.list(row, 8, true)
 	local nameBox = inputWell("Name this look", { Parent = row, Size = UDim2.new(1, -192, 0, ROW_H) })
 	Kit.button(
@@ -1173,8 +1302,8 @@ local function peoplePage()
 				if ok then
 					Toasts.show("Shared. Other players can wear it now.", "good")
 					task.wait(0.4)
-					if isOpen and tabId == "people" then
-						selectTab("people")
+					if isOpen and tabId == "shared" then
+						selectTab("shared")
 					end
 				elseif err then
 					Toasts.show(err, "warn")
@@ -1182,132 +1311,96 @@ local function peoplePage()
 			end)
 		end
 	)
+	Kit.text("Shared by players", {
+		Name = "Caption",
+		Parent = holder,
+		Size = UDim2.new(1, -12, 0, 20),
+		TextSize = 15,
+		Font = Kit.Fonts.Bold,
+		Color = T.InkSoft,
+		LayoutOrder = 2,
+	})
 	local looks = Kit.box({
 		Name = "Looks",
 		Parent = holder,
 		Size = UDim2.new(1, -12, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		LayoutOrder = 6,
+		LayoutOrder = 3,
 	})
 	Kit.list(looks, 6)
-
-	task.spawn(function()
-		local ok, data = pcall(function()
-			return Remotes.fn("CreatorPeople"):InvokeServer()
+	local shown = 0
+	local function add(look: any)
+		shown += 1
+		-- a pill row each: who made it in a round portrait, its name, and a way to wear it
+		local _, inner = Kit.row({
+			Name = "Look",
+			Parent = looks,
+			Height = 56,
+			Title = look.name,
+			Sub = Text.fill("by {who}", { who = look.who or "" }),
+			TextSize = 17,
+			LeftSpace = 58,
+			RightSpace = 104,
+			LayoutOrder = shown,
+		})
+		local face = Kit.portrait({
+			Parent = inner,
+			Size = 42,
+			Position = UDim2.fromOffset(9, 7),
+			Color = T.Picture,
+			Border = T.Line,
+			BorderWidth = 2,
+			ZIndex = 2,
+		})
+		Kit.rounded(Kit.new("ImageLabel", {
+			Image = string.format("rbxthumb://type=AvatarHeadShot&id=%d&w=150&h=150", look.by),
+			BackgroundTransparency = 1,
+			Size = UDim2.fromScale(1, 1),
+			ZIndex = 2,
+			Parent = face,
+		}))
+		Kit.button("Wear", {
+			Parent = inner,
+			Size = UDim2.fromOffset(84, 36),
+			Position = UDim2.new(1, -12, 0.5, 0),
+			AnchorPoint = Vector2.new(1, 0.5),
+			Color = T.Blue,
+			TextSize = 16,
+			ZIndex = 3,
+		}, function()
+			setApp(look.app)
 		end)
+	end
+	local function fetch(page: number): boolean?
+		local ok, data = pcall(function()
+			return Remotes.fn("CreatorShared"):InvokeServer(page)
+		end)
+		if not holder.Parent or not ok or type(data) ~= "table" then
+			return nil
+		end
+		for _, look in data.looks or {} do
+			if type(look) == "table" and type(look.name) == "string" and type(look.by) == "number" then
+				add(look)
+			end
+		end
+		return data.more == true
+	end
+	local setMore = showMore(holder, 4, fetch)
+	task.spawn(function()
+		local more = fetch(1)
 		if not holder.Parent then
 			return
 		end
-		waiting:Destroy()
-		if not ok or type(data) ~= "table" then
-			Kit.text("Couldn't look anyone up just now.", { Parent = faces, TextSize = 15, Color = T.InkSoft })
+		if more == nil then
+			Kit.text("Couldn't load the shared looks just now.", { Parent = looks, TextSize = 15, Color = T.InkSoft })
 			return
 		end
-		local KINDS = { you = "You", here = "Here now", friend = "Friend" }
-		for i, person in data.people or {} do
-			local card = Kit.new("TextButton", {
-				Name = "Person",
-				Text = "",
-				AutoButtonColor = true,
-				BackgroundColor3 = T.Card,
-				LayoutOrder = i,
-				Parent = faces,
-			})
-			Kit.corner(card, 12)
-			Kit.rim(card, T.Line, 1)
-			-- a circle with a border ("make portraits a circle with a border instead of a square")
-			local face = Kit.portrait({
-				Parent = card,
-				Size = 76,
-				Position = UDim2.new(0.5, -38, 0, 8),
-				Color = T.Picture,
-				Border = T.Line,
-				BorderWidth = 3,
-			})
-			Kit.rounded(Kit.new("ImageLabel", {
-				Image = string.format("rbxthumb://type=AvatarHeadShot&id=%d&w=150&h=150", person.id),
-				BackgroundTransparency = 1,
-				Size = UDim2.fromScale(1, 1),
-				Parent = face,
-			}))
-			Kit.text(person.name, {
-				Parent = card,
-				Size = UDim2.new(1, -8, 0, 18),
-				Position = UDim2.fromOffset(4, 88),
-				TextSize = 13,
-				Font = Kit.Fonts.Bold,
-				AlignX = Enum.TextXAlignment.Center,
-				Wrap = false,
-			}).TextTruncate =
-				Enum.TextTruncate.AtEnd
-			Kit.text(KINDS[person.kind] or "", {
-				Parent = card,
-				Size = UDim2.new(1, -8, 0, 14),
-				Position = UDim2.fromOffset(4, 107),
-				TextSize = 11,
-				Color = T.InkSoft,
-				AlignX = Enum.TextXAlignment.Center,
-				Wrap = false,
-			})
-			card.Activated:Connect(function()
-				task.spawn(function()
-					local look = Remotes.fn("CreatorFromUserId"):InvokeServer(person.id)
-					if look then
-						setApp(look)
-						takeName(person.name)
-					else
-						Toasts.show("Couldn't load that avatar just now.", "warn")
-					end
-				end)
-			end)
-		end
-		local shared = data.looks or {}
-		if #shared == 0 then
+		if shown == 0 then
 			Kit.hint("Nobody has shared a look yet. Name yours above and share it.", {
 				Parent = looks,
 			})
 		end
-		for i, look in shared do
-			-- a pill row each: who made it in a round portrait, its name, and a way to wear it
-			local _, inner = Kit.row({
-				Name = "Look",
-				Parent = looks,
-				Height = 56,
-				Title = look.name,
-				Sub = Text.fill("by {who}", { who = look.who or "" }),
-				TextSize = 17,
-				LeftSpace = 58,
-				RightSpace = 104,
-				LayoutOrder = i,
-			})
-			local face = Kit.portrait({
-				Parent = inner,
-				Size = 42,
-				Position = UDim2.fromOffset(9, 7),
-				Color = T.Picture,
-				Border = T.Line,
-				BorderWidth = 2,
-				ZIndex = 2,
-			})
-			Kit.rounded(Kit.new("ImageLabel", {
-				Image = string.format("rbxthumb://type=AvatarHeadShot&id=%d&w=150&h=150", look.by),
-				BackgroundTransparency = 1,
-				Size = UDim2.fromScale(1, 1),
-				ZIndex = 2,
-				Parent = face,
-			}))
-			Kit.button("Wear", {
-				Parent = inner,
-				Size = UDim2.fromOffset(84, 36),
-				Position = UDim2.new(1, -12, 0.5, 0),
-				AnchorPoint = Vector2.new(1, 0.5),
-				Color = T.Blue,
-				TextSize = 16,
-				ZIndex = 3,
-			}, function()
-				setApp(look.app)
-			end)
-		end
+		setMore(more)
 	end)
 end
 
@@ -1486,6 +1579,8 @@ selectTab = function(id: string)
 		outfitsPage()
 	elseif id == "people" then
 		peoplePage()
+	elseif id == "shared" then
+		sharedPage()
 	end
 end
 

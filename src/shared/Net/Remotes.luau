@@ -24,7 +24,8 @@ Remotes.Functions = {
 	-- (it also takes what the creator's tab is for: (bundleId, kind?), kind "body", "head", "shoes" or "anim")
 	"CreatorFromUser", -- (name or "") -> appearance
 	"CreatorSearch", -- (query) -> items (used when the client can't search the catalog itself)
-	"CreatorPeople", -- () -> { people = { { id, name, kind } }, looks = { { name, by, who, app } } }
+	"CreatorPeople", -- (page?) -> { people = { { id, name, kind } }, more }: the Players tab, a page at a time
+	"CreatorShared", -- (page?) -> { looks = { { name, by, who, app } }, more }: the Shared tab, a page at a time
 	"CreatorFromUserId", -- (userId) -> appearance
 	"CreatorFromOutfit", -- (outfitId) -> appearance: one of the player's own saved avatars on Roblox
 	"LookShare", -- (name, appearance) -> ok, err

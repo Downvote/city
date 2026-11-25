@@ -219,18 +219,20 @@ Sim.run("the sections: a row of words, every one in reach", function()
 			table.insert(words, b)
 		end
 	end
-	check(#words == #Categories.Tabs and #words == 16, "sixteen sections, a word each (" .. #words .. ")")
-	for _, name in { "Body parts", "My items", "My avatars", "Outfits", "Players", "Bodies" } do
+	-- (seventeen since Shared split from Players)
+	check(#words == #Categories.Tabs and #words == 17, "seventeen sections, a word each (" .. #words .. ")")
+	for _, name in { "Body parts", "My items", "My avatars", "Outfits", "Players", "Shared", "Bodies" } do
 		check(has(name), "there is a " .. name .. " section")
 	end
 	-- more than fit: the arrow brings the rest into view a page at a time, and back
-	check(row:GetAttribute("First") == 1 and row:GetAttribute("LastShown") < 16, "they don't all fit at once")
+	local last = #Categories.Tabs
+	check(row:GetAttribute("First") == 1 and row:GetAttribute("LastShown") < last, "they don't all fit at once")
 	local pages = 0
-	while row:GetAttribute("LastShown") < 16 and pages < 10 do
+	while row:GetAttribute("LastShown") < last and pages < 10 do
 		press("More sections")
 		pages += 1
 	end
-	check(row:GetAttribute("LastShown") == 16, "the arrow brings the last into view (" .. pages .. " pages)")
+	check(row:GetAttribute("LastShown") == last, "the arrow brings the last into view (" .. pages .. " pages)")
 	while row:GetAttribute("First") > 1 and pages < 20 do
 		press("Earlier sections")
 		pages += 1
@@ -487,6 +489,92 @@ Sim.run("an unanswered question can be put again the next time", function()
 	press("My items")
 	Sim.advance(60)
 	check(prompts == 3 and #cardNames() > 0, "still allowed, long after")
+	Creator.close()
+	frames(2)
+end)
+
+Sim.run("players and shared looks are two tabs, each with Show more", function()
+	-- the user: "make a different tab for shared by players split from players. then, add show
+	-- more like the other tabs"
+	local function list(n, from)
+		local out = {}
+		for i = from, from + n - 1 do
+			table.insert(out, i)
+		end
+		return out
+	end
+	local asked = {}
+	Sim.remoteFn("CreatorPeople").OnServerInvoke = function(_, page)
+		table.insert(asked, "people " .. tostring(page))
+		local people = {}
+		local n = if page == 1 then 24 else 6
+		for _, i in list(n, (page - 1) * 24 + 1) do
+			table.insert(people, { id = i, name = "Friend " .. i, kind = "friend" })
+		end
+		return { people = people, more = page == 1 }
+	end
+	Sim.remoteFn("CreatorShared").OnServerInvoke = function(_, page)
+		table.insert(asked, "shared " .. tostring(page))
+		local looks = {}
+		for _, i in list(if page == 1 then 24 else 3, (page - 1) * 24 + 1) do
+			table.insert(looks, { name = "Look " .. i, by = i, who = "Someone", app = Appearance.default() })
+		end
+		return { looks = looks, more = page == 1 }
+	end
+	local function named(name, class)
+		return Fake.find(gui, function(d)
+			return d.Name == name and (class == nil or d:IsA(class))
+		end)
+	end
+	local function visibleMore()
+		for _, b in named("ShowMore") do
+			if b.Visible then
+				return b
+			end
+		end
+		return nil
+	end
+	Creator.open({ mode = "new" })
+	frames(3)
+	Sim.advance(1)
+	press("Players")
+	Sim.advance(1)
+	frames(2)
+	check(#named("Person", "TextButton") == 24, "the Players tab shows the first 24 people")
+	check(#named("Look") == 0, "and no shared looks: they have a tab of their own")
+	check(#Fake.find(gui, function(d)
+		return d:IsA("TextBox") and d.PlaceholderText == "Name this look"
+	end) == 0, "nor the box to share a look")
+	local more = visibleMore()
+	check(more ~= nil, "Show more is at the foot of the people")
+	if more then
+		more.Activated:Fire()
+		Sim.advance(1)
+		frames(2)
+	end
+	check(#named("Person", "TextButton") == 30, "Show more brings the next people under the first")
+	check(visibleMore() == nil, "and goes when there are no more")
+	press("Shared")
+	Sim.advance(1)
+	frames(2)
+	check(#named("Person", "TextButton") == 0, "the Shared tab has no people on it")
+	check(#named("Look") == 24, "it shows the first 24 shared looks")
+	check(#Fake.find(gui, function(d)
+		return d:IsA("TextBox") and d.PlaceholderText == "Name this look"
+	end) == 1, "with the box to share yours at the top")
+	more = visibleMore()
+	check(more ~= nil, "and Show more at the foot")
+	if more then
+		more.Activated:Fire()
+		Sim.advance(1)
+		frames(2)
+	end
+	check(#named("Look") == 27, "Show more brings the next looks")
+	check(visibleMore() == nil, "and goes when there are no more")
+	check(
+		table.find(asked, "people 2") ~= nil and table.find(asked, "shared 2") ~= nil,
+		"each asks the server for its next page"
+	)
 	Creator.close()
 	frames(2)
 end)

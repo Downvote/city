@@ -46,7 +46,8 @@ mirrored one and turns the part some other way, which is how palms, rails and th
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off; what kind a bundle
 is, the outfit that holds the body, single body parts, the player's own items and avatars; preview scenes
 `creator:bodies`, `creator:parts`, `creator:items`, `creator:items:ask`, `creator:items:no`, `creator:avatars`,
-`creator:wearing`, `creator:skin`, `creator:shape`, `creator:outfits`, `creator:outfits:saved`, `creator:people`;
+`creator:wearing`, `creator:skin`, `creator:shape`, `creator:outfits`, `creator:outfits:saved`, `creator:people`,
+`creator:shared`, `creator:shared:none`;
 Build mode's are `build`, `build:walls`, `build:rooms`, `build:floors`, `build:roofs`, `build:fences`,
 `build:paths`, `build:buildings`, `build:bought`, `build:pick`, `build:paint`, `build:sell`, `build:view`,
 `build:placing`, `build:placing:touch`, `build:styles` (`build:styles:<look>`), `build:shapes`, `build:pillars`,

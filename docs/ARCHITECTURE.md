@@ -953,9 +953,13 @@ returns the `Arrival`). Building the town yields (the low
 poly kit), so a player can be in before the services are listening; nothing may load a profile before they are.
 `Plots.start` and `Villagers.start` also pick up players whose profile or plot is already there.
 
-The creator's remotes: `CreatorPeople` (the people here and your friends, and the shared looks), `CreatorFromUserId`,
-`LookShare` (name filtered; kept newest first, 48 at most, one a player, in the data store `<name>_Looks` under
-`recent`). The mannequin is stood again (`stand`) and plays its own Animate animations (`act`) after every change.
+The creator's remotes: `CreatorPeople(page)` (the Players tab: you, the people here and your friends, asked of
+Roblox a page of friends at a time as more are wanted, up to `Tuning.Creator.MaxPeople`), `CreatorShared(page)` (the
+Shared tab: looks players shared), each `{ list, more }` a page of `Tuning.Creator.PageSize` (24) at a time, so the
+client's Show more asks for the next; `CreatorFromUserId`, `LookShare` (name filtered; kept newest first,
+`Tuning.Creator.MaxShared` (120) at most, one a player, in the data store `<name>_Looks` under `recent`). The
+creator's tabs come from `Avatar/Categories` (Players and Shared are two since the user: "make a different tab for
+shared by players split from players. then, add show more like the other tabs"). The mannequin is stood again (`stand`) and plays its own Animate animations (`act`) after every change.
 
 | Service | Job |
 |---|---|

@@ -153,8 +153,11 @@ local tabs: { Tab } = {
 			{ id = "bought", name = "Bought", outfits = "Purchased" },
 		},
 	},
-	-- avatars made by other players: the people here, your friends, and looks shared from this creator
+	-- avatars made by other players: the people here and your friends
 	{ id = "people", name = "Players" },
+	-- looks players of this game shared from this creator (the user: "make a different tab for
+	-- shared by players split from players")
+	{ id = "shared", name = "Shared" },
 }
 
 Categories.Tabs = tabs

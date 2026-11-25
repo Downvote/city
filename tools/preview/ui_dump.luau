@@ -101,7 +101,9 @@
 --   creator:wearing     what the villager has on (creator:skin, creator:shape, creator:outfits: those
 --                       pages; outfits with none saved yet)
 --   creator:outfits:saved  Outfits with three saved
---   creator:people      Players: people here and friends, and looks other players shared
+--   creator:people      Players: people here and friends, a page of them with Show more
+--   creator:shared      Shared: looks other players shared, with the box to share yours
+--                       (creator:shared:none before anyone has)
 --   signs               the town's signs laid flat: a shop fascia in every layout
 --   signs:boards        the boards on canopies and roofs
 --   signs:posters       adverts on posters and billboards, the cinema's posters
@@ -1140,21 +1142,35 @@ elseif scene == "creator" or scene:sub(1, 8) == "creator:" then
 		Sim.frames(2)
 		Sim.press("Outfits")
 	elseif page == "people" then
+		-- a first page of 24 with more to come, so Show more is at its foot
+		local NAMES = { "Pebble_Baker", "Moss", "Juniper", "Wren", "Ollie", "Fern", "Basil", "Clover" }
 		Sim.remoteFn("CreatorPeople").OnServerInvoke = function()
-			return {
-				people = {
-					{ id = 1, name = "You", kind = "you" },
-					{ id = 2, name = "Pebble_Baker", kind = "here" },
-					{ id = 3, name = "Moss", kind = "friend" },
-					{ id = 4, name = "Juniper", kind = "friend" },
-				},
-				looks = {
-					{ name = "Lighthouse keeper", by = 5, who = "Wren", app = Appearance.default() },
-					{ name = "Picnic in the park", by = 6, who = "Ollie", app = Appearance.default() },
-				},
-			}
+			local people = { { id = 1, name = "You", kind = "you" }, { id = 2, name = "Pebble_Baker", kind = "here" } }
+			for i = 3, 24 do
+				table.insert(people, { id = i, name = NAMES[(i - 1) % #NAMES + 1] .. i, kind = "friend" })
+			end
+			return { people = people, more = true }
 		end
 		Sim.press("Players")
+	elseif page == "shared" or page == "shared:none" then
+		-- shared:none, the tab before anyone has shared a look
+		Sim.remoteFn("CreatorShared").OnServerInvoke = function()
+			if page == "shared:none" then
+				return { looks = {}, more = false }
+			end
+			local looks = {}
+			local NAMES = { "Lighthouse keeper", "Picnic in the park", "Rainy day", "Market morning", "Night owl" }
+			for i = 1, 8 do
+				table.insert(looks, {
+					name = NAMES[(i - 1) % #NAMES + 1],
+					by = 10 + i,
+					who = ({ "Wren", "Ollie", "Fern", "Basil" })[(i - 1) % 4 + 1],
+					app = Appearance.default(),
+				})
+			end
+			return { looks = looks, more = true }
+		end
+		Sim.press("Shared")
 	elseif page ~= "" then
 		error("unknown scene " .. scene)
 	end

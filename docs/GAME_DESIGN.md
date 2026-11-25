@@ -2460,3 +2460,11 @@ a plain dark card with its rim and its point. And while you sit, work at a workp
 prompt shows anywhere on your screen (the "Sit" over the seat you're already on was the picture). They come back the
 moment you get up, step away or the conversation closes.
 
+### Shared looks get a tab of their own
+
+> make a different tab for shared by players split from players. then, add show more like the other tabs
+
+In the creator, Players is the people in the server and your friends, and Shared is the looks other players shared,
+with the box to share yours at the top. Each shows 24 at a time with Show more at the foot, the way the catalog's
+tabs do, and asks the server for the next lot only when it's pressed. Up to 200 people and 120 shared looks.
+
