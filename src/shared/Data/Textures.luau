@@ -112,6 +112,9 @@ end
 
 local function collect(list: { Entry }, source: { [string]: TextureIds.Ids }): { Ready }
 	local out = {}
+	-- a texture without its own roughness map takes the flat grey one, so it shines a little
+	local flat = source.sheen
+	local sheen = if flat and type(flat.color) == "string" and flat.color:match(ID) then flat.color else nil
 	for _, e in list do
 		local got = source[e.name]
 		if got and type(got.color) == "string" and got.color:match(ID) then
@@ -122,7 +125,7 @@ local function collect(list: { Entry }, source: { [string]: TextureIds.Ids }): {
 				studs = if type(got.studs) == "number" and got.studs > 0 then got.studs else e.studs,
 				color = got.color,
 				normal = if type(got.normal) == "string" and got.normal:match(ID) then got.normal else nil,
-				rough = if type(got.rough) == "string" and got.rough:match(ID) then got.rough else nil,
+				rough = if type(got.rough) == "string" and got.rough:match(ID) then got.rough else sheen,
 				own = got.own == true,
 				light = if type(got.light) == "number" and got.light > 0 and got.light < 1 then got.light else nil,
 				look = e.look,

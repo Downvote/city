@@ -140,8 +140,10 @@ def material_service(ids, index):
              "MaterialPattern": "Regular"}
         if "normal" in got:
             p["NormalMap"] = got["normal"]
-        if "rough" in got:
-            p["RoughnessMap"] = got["rough"]
+        # a texture without its own roughness map takes the flat grey one (`sheen`), so it shines a little
+        rough = got.get("rough") or ids.get("sheen", {}).get("color")
+        if rough:
+            p["RoughnessMap"] = rough
         variants[v] = {"$className": "MaterialVariant", "$properties": p}
         if info["material"] in KEEP_OWN and not info.get("look"):
             sys.exit(f"{name} would take {info['material']}'s place, which the terrain needs as Roblox's own: "

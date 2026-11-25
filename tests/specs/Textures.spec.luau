@@ -309,7 +309,7 @@ describe("Textures", function()
 
 	it("keeps the uploaded ids table tidy", function()
 		for name, ids in TextureIds do
-			local known = false
+			local known = name == "sheen" -- the roughness map of every texture without one
 			for _, e in every() do
 				known = known or e.name == name
 			end

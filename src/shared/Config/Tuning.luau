@@ -609,7 +609,10 @@ Tuning.Look = {
 		-- At -20 it stands 46 degrees up on the -Z side: over the harbour, on those fronts.
 		Latitude = -20,
 		SkyDiffuse = 0.32, -- EnvironmentDiffuseScale: soft light off the sky into the shade (was 0.24)
-		SkySpecular = 0.18, -- EnvironmentSpecularScale: shine off the sky (was 0.12)
+		-- EnvironmentSpecularScale: shine off the sky. The user: "could you make materials interact
+		-- with lighting more, making all materials at least abit glossy?", so it is well up (was 0.18),
+		-- and every texture has a roughness map (Data/TextureIds' sheen where it has none of its own)
+		SkySpecular = 0.6,
 		ShadowSoftness = 0.18, -- a softer edge (was 0.12)
 		-- after dark, with only the moon, the shade is lifted again so the town stays readable
 		Night = { Ambient = { 104, 108, 150 }, OutdoorAmbient = { 124, 128, 176 } },

@@ -12,7 +12,7 @@
 -- it, as far as the colour can go (Textures.shade).
 -- After changing this, run python3 scripts/sync_materials.py to put it in the place.
 -- A texture with no colour id here keeps Roblox's own material, and a look with none shows its
--- material. One texture a line: the scripts and the preview read this file line by line.
+-- material. `sheen` is no texture: its picture is the roughness map of every texture without one. One texture a line: the scripts and the preview read this file line by line.
 
 export type Ids = {
 	color: string?,
@@ -53,6 +53,10 @@ local TextureIds: { [string]: Ids } = {
 	slabs = { color = "rbxassetid://15005538341", studs = 6, light = 0.56, decal = 15005538380 }, -- "Seamless Pavement Light Grey Tiles" by Adilordofwick2
 	street = { color = "rbxassetid://73120610106763", normal = "rbxassetid://11226165423", studs = 16, light = 0.41, decal = 132204323264236 }, -- "07F30FFC-720E-431C-BF04-24E4CEC113D8" by OohIsADuck; normal "asphalt_01_nor_gl_1k" by dorndaft
 	canvas = { color = "rbxassetid://106263716160538", normal = "rbxassetid://82442953804931", rough = "rbxassetid://81106618533486", studs = 3, decal = 110591274644699 }, -- "Color map", "Normal map" and "Roughness Map" by TriangRaroGames
+	-- the roughness map for every texture without its own: a flat 50% grey, so every material has a
+	-- little shine (the user: "could you make materials interact with lighting more, making all
+	-- materials at least abit glossy?")
+	sheen = { color = "rbxassetid://16600089027", decal = 16600089064 }, -- "Gray [My Movie]" by WickidOverseer
 	cliff = { color = "rbxassetid://92852701550899", studs = 16, light = 0.48, decal = 78269602654558 }, -- "stone texture" by Gojoh_12345A
 }
 

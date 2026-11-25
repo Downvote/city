@@ -118,7 +118,8 @@
           "ColorMap": "rbxassetid://127935223360351",
           "StudsPerTile": 4,
           "MaterialPattern": "Regular",
-          "NormalMap": "rbxassetid://82700223149662"
+          "NormalMap": "rbxassetid://82700223149662",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownPlanks": {
@@ -127,7 +128,8 @@
           "BaseMaterial": "WoodPlanks",
           "ColorMap": "rbxassetid://126083643168466",
           "StudsPerTile": 6,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownBrick": {
@@ -137,7 +139,8 @@
           "ColorMap": "rbxassetid://15826262054",
           "StudsPerTile": 8,
           "MaterialPattern": "Regular",
-          "NormalMap": "rbxassetid://15826267601"
+          "NormalMap": "rbxassetid://15826267601",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownCobble": {
@@ -147,7 +150,8 @@
           "ColorMap": "rbxassetid://79170514243126",
           "StudsPerTile": 8,
           "MaterialPattern": "Regular",
-          "NormalMap": "rbxassetid://135713644746103"
+          "NormalMap": "rbxassetid://135713644746103",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownPaving": {
@@ -156,7 +160,8 @@
           "BaseMaterial": "Pavement",
           "ColorMap": "rbxassetid://133622340383137",
           "StudsPerTile": 6,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownConcrete": {
@@ -166,7 +171,8 @@
           "ColorMap": "rbxassetid://17528667950",
           "StudsPerTile": 12,
           "MaterialPattern": "Regular",
-          "NormalMap": "rbxassetid://10266817549"
+          "NormalMap": "rbxassetid://10266817549",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownAsphalt": {
@@ -176,7 +182,8 @@
           "ColorMap": "rbxassetid://74051293306053",
           "StudsPerTile": 12,
           "MaterialPattern": "Regular",
-          "NormalMap": "rbxassetid://11226165423"
+          "NormalMap": "rbxassetid://11226165423",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownPlaster": {
@@ -186,7 +193,8 @@
           "ColorMap": "rbxassetid://7339363282",
           "StudsPerTile": 8,
           "MaterialPattern": "Regular",
-          "NormalMap": "rbxassetid://5437994223"
+          "NormalMap": "rbxassetid://5437994223",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownClay": {
@@ -195,7 +203,8 @@
           "BaseMaterial": "ClayRoofTiles",
           "ColorMap": "rbxassetid://6436676312",
           "StudsPerTile": 8,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownTiles": {
@@ -205,7 +214,8 @@
           "ColorMap": "rbxassetid://15246763549",
           "StudsPerTile": 6,
           "MaterialPattern": "Regular",
-          "NormalMap": "rbxassetid://12477337856"
+          "NormalMap": "rbxassetid://12477337856",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownCarpet": {
@@ -215,7 +225,8 @@
           "ColorMap": "rbxassetid://10538536313",
           "StudsPerTile": 4,
           "MaterialPattern": "Regular",
-          "NormalMap": "rbxassetid://108650587944937"
+          "NormalMap": "rbxassetid://108650587944937",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownFabric": {
@@ -225,7 +236,8 @@
           "ColorMap": "rbxassetid://234307070",
           "StudsPerTile": 3,
           "MaterialPattern": "Regular",
-          "NormalMap": "rbxassetid://83181758798164"
+          "NormalMap": "rbxassetid://83181758798164",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownSand": {
@@ -245,7 +257,8 @@
           "BaseMaterial": "Metal",
           "ColorMap": "rbxassetid://105709811279238",
           "StudsPerTile": 6,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownPanel": {
@@ -254,7 +267,8 @@
           "BaseMaterial": "Concrete",
           "ColorMap": "rbxassetid://110052141069002",
           "StudsPerTile": 12,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownStucco": {
@@ -263,7 +277,8 @@
           "BaseMaterial": "Concrete",
           "ColorMap": "rbxassetid://16287812455",
           "StudsPerTile": 10,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownMaple": {
@@ -272,7 +287,8 @@
           "BaseMaterial": "Brick",
           "ColorMap": "rbxassetid://9620643733",
           "StudsPerTile": 6,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownMosaic": {
@@ -281,7 +297,8 @@
           "BaseMaterial": "CeramicTiles",
           "ColorMap": "rbxassetid://5621459779",
           "StudsPerTile": 5,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownChecker": {
@@ -290,7 +307,8 @@
           "BaseMaterial": "CeramicTiles",
           "ColorMap": "rbxassetid://98785224516028",
           "StudsPerTile": 4,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownCorrugated": {
@@ -299,7 +317,8 @@
           "BaseMaterial": "Metal",
           "ColorMap": "rbxassetid://17452681009",
           "StudsPerTile": 4,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownShutter": {
@@ -308,7 +327,8 @@
           "BaseMaterial": "Metal",
           "ColorMap": "rbxassetid://6723969247",
           "StudsPerTile": 4,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownSlats": {
@@ -317,7 +337,8 @@
           "BaseMaterial": "WoodPlanks",
           "ColorMap": "rbxassetid://4708950958",
           "StudsPerTile": 10,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownBarrel": {
@@ -326,7 +347,8 @@
           "BaseMaterial": "ClayRoofTiles",
           "ColorMap": "rbxassetid://6436676312",
           "StudsPerTile": 10,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownSlabs": {
@@ -335,7 +357,8 @@
           "BaseMaterial": "Pavement",
           "ColorMap": "rbxassetid://15005538341",
           "StudsPerTile": 6,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownStreet": {
@@ -345,7 +368,8 @@
           "ColorMap": "rbxassetid://73120610106763",
           "StudsPerTile": 16,
           "MaterialPattern": "Regular",
-          "NormalMap": "rbxassetid://11226165423"
+          "NormalMap": "rbxassetid://11226165423",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownCanvas": {
@@ -365,7 +389,8 @@
           "BaseMaterial": "Rock",
           "ColorMap": "rbxassetid://92852701550899",
           "StudsPerTile": 16,
-          "MaterialPattern": "Regular"
+          "MaterialPattern": "Regular",
+          "RoughnessMap": "rbxassetid://16600089027"
         }
       },
       "CatalogTownLawn": {
