@@ -495,6 +495,47 @@ function Plan.validRoof(r: any, bounds: Bounds?): (boolean, string?)
 	return true
 end
 
+-- Pictures ------------------------------------------------------------------------------------
+--
+-- A piece that takes a picture (Catalog: `picture`) shows one from the Roblox library: a decal or
+-- an image, by its id, which the player pastes in Build mode. The id is all that is saved; the
+-- picture is drawn from Roblox's own thumbnail of it (Builder.pictureUri), which works for a
+-- decal's id and an image's alike and shows only what Roblox's moderation has passed.
+
+-- How far over its floor a mark may lie: on a path or a deck, and a few marks one over another.
+Plan.MarkReach = 2
+
+Plan.MaxPictureId = 2 ^ 52 -- past this a number no longer holds every whole number exactly
+
+function Plan.validPictureId(n: any): boolean
+	return type(n) == "number" and n == n and n % 1 == 0 and n >= 1 and n <= Plan.MaxPictureId
+end
+
+-- The id in what a player pasted: the number on its own, or the one in a Creator Store or
+-- library link, or in "rbxassetid://". nil when there is none.
+function Plan.pictureId(text: any): number?
+	if type(text) ~= "string" or #text > 300 then
+		return nil
+	end
+	local t = string.gsub(text, "^%s+", "")
+	t = string.gsub(t, "%s+$", "")
+	local digits = string.match(t, "^(%d+)$")
+		or string.match(t, "rbxassetid://(%d+)")
+		or string.match(t, "[?&][iI][dD]=(%d+)")
+		or string.match(t, "/asset/(%d+)")
+		or string.match(t, "/catalog/(%d+)")
+		or string.match(t, "/library/(%d+)")
+		or string.match(t, "/store/asset/(%d+)")
+	if not digits or #digits > 16 then
+		return nil
+	end
+	local n = tonumber(digits)
+	if n and Plan.validPictureId(n) then
+		return n
+	end
+	return nil
+end
+
 -- Checks an item against the plan it would sit in. `ignoreKey` skips the item itself when moving it.
 function Plan.validItem(plan: PlanData, item: any, ignoreKey: string?): (boolean, string?)
 	if type(item) ~= "table" or type(item.id) ~= "string" then
@@ -515,6 +556,16 @@ function Plan.validItem(plan: PlanData, item: any, ignoreKey: string?): (boolean
 	end
 	if not finite(item.y) then
 		return false, "bad number"
+	end
+	-- a picture from the library, only on a piece that shows one (the server also asks Roblox
+	-- that it is a decal or an image before it is saved: Services/Build)
+	if item.img ~= nil then
+		if not def.picture then
+			return false, "that doesn't take a picture"
+		end
+		if not Plan.validPictureId(item.img) then
+			return false, "that isn't a picture id"
+		end
 	end
 	if def.place == "opening" or def.place == "wall" then
 		if type(item.wall) ~= "string" then
@@ -610,6 +661,10 @@ function Plan.validItem(plan: PlanData, item: any, ignoreKey: string?): (boolean
 	end
 	local lo = if item.lv == 0 then 0 else Plan.levelBase(item.lv) - 0.01
 	local hi = Plan.levelTop(item.lv) - 0.5
+	if def.place == "mark" then
+		-- paint lies low: on the floor, a path, a deck or another mark, never up in the air
+		hi = (if item.lv == 0 then P.Foundation else Plan.levelBase(item.lv)) + Plan.MarkReach
+	end
 	if item.y < lo or item.y > hi then
 		return false, "bad height"
 	end
@@ -636,7 +691,7 @@ local FIELDS = {
 	walls = { "x1", "z1", "x2", "z2", "lv", "style" },
 	floors = { "x1", "z1", "x2", "z2", "lv", "c", "m" },
 	roofs = { "x1", "z1", "x2", "z2", "lv", "style", "rise", "dir", "over", "c", "m", "c2", "m2" },
-	items = { "id", "x", "y", "z", "r", "lv", "c1", "c2", "wall", "t", "side" },
+	items = { "id", "x", "y", "z", "r", "lv", "c1", "c2", "wall", "t", "side", "img" },
 }
 
 function Plan.clean(kind: string, obj: any): any
