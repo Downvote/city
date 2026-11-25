@@ -858,6 +858,16 @@ player's own screen plays it near the camera; the server only builds the parts, 
   left alone, and a pool's rim and lining never count. `Npc.free(self, waypoint)` (hop, new path, then moved on),
   `npc.bed` and `Npc.standUp` (beside the bed or the seat). Arrivals and Home use `Room.landing`. Numbers:
   `Tuning.Unstick` (with `Agent` = { Radius 1.3, Height 5, WaterCost 200 } for pathfinding).
+- Getting out when stuck (the user: "if players being stuck is detected, allow them to clip out of it" and "make a
+  failsafe so they respawn back in their bed if they get stuck"): `Sim/Unstick.pushedNowhere(trail, now, at,
+  pushing)` (pushing for `StuckFor` seconds and under `Moved` studs off) and `failsafe(watch, now, seen)` (in water,
+  `HoleDepth` under the ground with nothing built under them, for `BadFor`; `FallDepth` under it at once; or
+  `FailCount` failed frees in `FailWindow`; never while resting). `client/World/Stuck` offers a "Stuck? Slip out"
+  button to a player pushing and getting nowhere and sends `SlipOut(direction)`; `Unstick.slipOut` (the server)
+  keeps each player's trail itself, only answers somebody it has seen stay put, once every `SlipEvery`, and stands
+  them on `Room.freeSpot` from `Slip` studs the way they pushed. `Npc.free` notes each failed free in `npc.freeFails`;
+  `Services/Villagers` looks at every villager every `WatchEvery` and `Villagers.toBed(player, vid, npc)` stands a
+  stuck one beside their bed, facing it (or at the plot's arrival with no bed), and they say so.
 
 ## Saved profile
 

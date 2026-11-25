@@ -2566,3 +2566,16 @@ mid placement. The keys do the same: [ and ] for a finer or bigger grid, - and =
   on 45.
 - Asking for a finer grid or a smaller turn than the passes give offers the pass, and the hint says why. The hint
   also says what each button would do, and what a press did ("Furniture snaps to 2 studs").
+
+### Getting unstuck
+
+> some areas cause you to get stuck, make it such that if players being stuck is detected, allow them to clip out of it. also, villagers can get stuck too, sometimes in holes or in water. make a failsafe so they respawn back in their bed if they get stuck
+
+- A player who keeps walking into something and gets nowhere for two seconds sees a "Stuck? Slip out" button low in
+  the middle of the screen. Pressing it puts them on the nearest spot with room a few studs the way they were
+  walking, out of a tangle of chairs or a gap between a wall and a counter. The server only does it when it has
+  seen them stay put too, and not more than once every few seconds. The button goes as soon as they walk again.
+- A villager who ends up in water, down a hole (well under the plot's ground with nothing built under them, so a
+  basement room is fine) or off the edge of the world, or whose walks keep getting stuck with no room to be put on,
+  is stood back beside their bed after a few seconds and says they got stuck. Asleep, at work, in a seat, or in
+  the middle of an event or a chat, they are left alone. Without a bed they go to where the Mayor arrives on the plot.

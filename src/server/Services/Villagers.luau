@@ -41,6 +41,8 @@ local World = require(script.Parent.World)
 local Avatar = require(script.Parent.Avatar)
 local Npc = require(script.Parent.Parent.Npc.Npc)
 local Use = require(script.Parent.Parent.Npc.Use)
+local Room = require(script.Parent.Parent.Npc.Room)
+local UnstickSim = require(Shared.Sim.Unstick)
 
 local Villagers = {}
 
@@ -2215,7 +2217,103 @@ local function endTalk(owner: Player, vid: string)
 	Villagers.setControl(owner, vid, nil)
 end
 
+-- The failsafe for stuck villagers (the user: "villagers can get stuck too, sometimes in holes or
+-- in water. make a failsafe so they respawn back in their bed if they get stuck"): every few
+-- seconds each villager is looked at (Sim/Unstick.failsafe), and one in water, down a hole, fallen
+-- off the world or whose walks couldn't be freed is stood beside their bed (or, with no bed, where
+-- their owner arrives on the plot).
+local watches: { [any]: UnstickSim.Watch } = setmetatable({}, { __mode = "k" }) :: any
+
+function Villagers.toBed(player: Player, vid: string, npc: any)
+	local model = npc.model
+	if not model or not model.Parent then
+		return
+	end
+	npc:halt()
+	local profile = Data.get(player)
+	local v = profile and profile.villagers[vid]
+	local spot = if profile and v then bedSpot(player, v.bed, bedIndex(profile, vid)) else nil
+	local index = Plots.indexOf(player)
+	local feet: Vector3? = nil
+	if spot then
+		local cf = spot.CFrame
+		for _, side in { cf.RightVector * 2.6, -cf.RightVector * 2.6, cf.LookVector * -3.4 } do
+			local at = Vector3.new(spot.Position.X + side.X, spot.Position.Y - 1, spot.Position.Z + side.Z)
+			local free = Room.freeSpot(model, at)
+			if free then
+				feet = free
+				break
+			end
+		end
+	end
+	if feet then
+		Room.unseat(model)
+		-- (facing the bed)
+		Room.place(model, feet, if spot then spot.Position - feet else nil)
+	elseif index then
+		model:PivotTo(Room.landing(model, Town.plotArrival(index)))
+	end
+	local me: any = npc
+	me.freeFails = nil
+	npc:say("I got stuck back there, so I came home.")
+end
+
+local function watchOne(player: Player, vid: string, npc: any, now: number)
+	local model = npc.model
+	local root = model and model:FindFirstChild("HumanoidRootPart")
+	if not root or not root:IsA("BasePart") or root.Anchored then
+		return
+	end
+	local hum = model:FindFirstChildOfClass("Humanoid")
+	local feet = Room.feet(model) or root.Position
+	local index = Plots.indexOf(player)
+	local ground = if index then Plots.frame(index).Position.Y else 0
+	-- (anything built under them: a basement room's floor is somewhere to be)
+	local onBuilt = false
+	local folder = buildFolder(player)
+	if folder then
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Include
+		params.FilterDescendantsInstances = { folder }
+		onBuilt = workspace:Raycast(root.Position, Vector3.new(0, -8, 0), params) ~= nil
+	end
+	local w = watches[npc]
+	if not w then
+		w = {}
+		watches[npc] = w
+	end
+	local me: any = npc
+	local back = UnstickSim.failsafe(w, now, {
+		feet = feet,
+		swimming = Room.swimming(model),
+		ground = ground,
+		onBuilt = onBuilt,
+		resting = npc.sleeping == true
+			or npc.atWork == true
+			or Villagers.control(player, vid) ~= nil
+			or (hum ~= nil and hum.SeatPart ~= nil),
+		fails = me.freeFails,
+	})
+	if back then
+		Villagers.toBed(player, vid, npc)
+	end
+end
+
 function Villagers.start()
+	task.spawn(function()
+		while true do
+			task.wait(Tuning.Unstick.WatchEvery)
+			local now = os.clock()
+			for player, list in npcs do
+				for vid, npc in list do
+					local ok, why = pcall(watchOne, player, vid, npc, now)
+					if not ok then
+						warn("[Villagers] failsafe:", why)
+					end
+				end
+			end
+		end
+	end)
 	Remotes.fn("VillagerCreate").OnServerInvoke = create
 	Remotes.fn("VillagerUpdate").OnServerInvoke = update
 	Remotes.fn("VillagerRemove").OnServerInvoke = remove

@@ -553,7 +553,10 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
 - What of a placed piece is solid is `Build/Solid`: hanging, surface, flat and mark pieces, parts under
   `Tuning.Unstick.Tiny`, foliage and clutter on top never are (the user: "villagers and the player can sometimes get
   stuck in objects"). Draw a piece's body with real parts or a solid piece; the Unstick spec holds the catalog to it.
-  Never move a swimmer; `Npc/Room` treats water as no floor.
+  Never move a swimmer; `Npc/Room` treats water as no floor. A player stuck pushing gets a "Slip out" button
+  (`client/World/Stuck`, `SlipOut`, `Unstick.slipOut`), and a villager stuck in water, a hole or a failed walk is
+  stood back by their bed (`Sim/Unstick.failsafe`, `Villagers.toBed`; the user: "make a failsafe so they respawn back
+  in their bed if they get stuck").
 - Pieces keep out of each other (the user: "add collisions, and a gamepass should be there to remove it"):
   `Build/Collide` (a piece's body is what `Build/Solid` keeps solid; hanging, surface, mark, flat pieces, doors,
   windows and paths never bump; fences and porch rails share their posts; stairs are their run and width) and the

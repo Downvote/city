@@ -283,4 +283,76 @@ function Unstick.find(boxes: { Box }, feet: Vector3, opts: Opts?): (Vector3?, st
 	return Vector3.new(feet.X, top, feet.Z), "top"
 end
 
+-- The failsafe for a villager ------------------------------------------------------------------------
+--
+-- `w` is kept for each villager between looks; `seen` is how they are now: their feet, whether
+-- they are swimming (villagers never swim on purpose), the plot's ground height, whether anything
+-- built is under them (a basement room is fine), whether they are resting (asleep, at work, in a
+-- seat, or taken off by an event or a chat) and when their walks last couldn't be freed. True:
+-- put them back by their bed.
+export type Watch = { wrong: number? }
+export type Seen = {
+	feet: Vector3,
+	swimming: boolean,
+	ground: number,
+	onBuilt: boolean,
+	resting: boolean,
+	fails: { number }?,
+}
+
+function Unstick.failsafe(w: Watch, now: number, seen: Seen): boolean
+	local depth = seen.ground - seen.feet.Y
+	if depth >= K.FallDepth then
+		w.wrong = nil
+		return true
+	end
+	local fails = 0
+	local list: { number } = seen.fails or {}
+	for _, t in list do
+		if now - t <= K.FailWindow then
+			fails += 1
+		end
+	end
+	if fails >= K.FailCount then
+		w.wrong = nil
+		return true
+	end
+	local bad = seen.swimming or (depth >= K.HoleDepth and not seen.onBuilt)
+	if not bad or seen.resting then
+		w.wrong = nil
+		return false
+	end
+	w.wrong = w.wrong or now
+	if now - (w.wrong :: number) >= K.BadFor then
+		w.wrong = nil
+		return true
+	end
+	return false
+end
+
+-- Has a player been stuck: pushing to move (`pushing`) and getting under Moved studs from where
+-- they were StuckFor seconds ago? `trail` is { { time, position } } kept by the caller, newest
+-- last; this drops what is too old.
+function Unstick.pushedNowhere(trail: { { any } }, now: number, at: Vector3, pushing: boolean): boolean
+	table.insert(trail, { now, at } :: { any })
+	while #trail > 0 and now - (trail[1][1] :: number) > K.StuckFor + 1 do
+		table.remove(trail, 1)
+	end
+	if not pushing then
+		table.clear(trail)
+		return false
+	end
+	local first = trail[1]
+	if now - (first[1] :: number) < K.StuckFor then
+		return false
+	end
+	for _, p in trail do
+		local d = (p[2] :: Vector3) - at
+		if Vector3.new(d.X, 0, d.Z).Magnitude > K.Moved then
+			return false
+		end
+	end
+	return true
+end
+
 return Unstick

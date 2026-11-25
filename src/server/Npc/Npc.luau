@@ -279,7 +279,17 @@ end
 -- "villagers and the player can sometimes get stuck in objects".
 function Npc.free(self: Npc, waypoint: Vector3?): boolean
 	local ok, moved = pcall(Room.free, self.model, waypoint)
-	return ok and moved == true
+	local freed = ok and moved == true
+	if not freed then
+		-- (counted for the failsafe that puts a stuck villager back by their bed: Services/Villagers)
+		local me: any = self
+		me.freeFails = me.freeFails or {}
+		table.insert(me.freeFails, os.clock())
+		if #me.freeFails > 8 then
+			table.remove(me.freeFails, 1)
+		end
+	end
+	return freed
 end
 
 -- How far the walk to a point would be (without taking it), or nil when there is no way there.

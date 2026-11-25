@@ -574,6 +574,12 @@ describe("Unstick", function()
 			end,
 		})
 		Harness.stub(Services .. "Build", { Changed = fired })
+		-- (the service answers SlipOut, set up in start, which this doesn't run)
+		Harness.stub(Shared .. "Net.Remotes", {
+			fn = function()
+				return {}
+			end,
+		})
 		Harness.stub(Services .. "Unstick", nil)
 		local oldPlayers = game:GetService("Players")
 		local players = {}
@@ -730,5 +736,74 @@ describe("Unstick", function()
 			Harness.stub(Services .. name, nil)
 		end
 		Harness.addService("Players", oldPlayers)
+		Harness.stub(Shared .. "Net.Remotes", nil)
+	end)
+end)
+
+describe("The failsafe", function()
+	-- the user: "villagers can get stuck too, sometimes in holes or in water. make a failsafe so
+	-- they respawn back in their bed if they get stuck", and "if players being stuck is detected,
+	-- allow them to clip out of it"
+	local K = Tuning.Unstick
+	local function seen(over)
+		local s = { feet = Vector3.new(0, 0.4, 0), swimming = false, ground = 0, onBuilt = false, resting = false }
+		for k, v in over do
+			s[k] = v
+		end
+		return s
+	end
+
+	it("sends a villager in water home once they have been in it a while", function()
+		local w = {}
+		expect(Unstick.failsafe(w, 0, seen({ swimming = true }))).toBe(false)
+		expect(Unstick.failsafe(w, K.BadFor - 1, seen({ swimming = true }))).toBe(false)
+		expect(Unstick.failsafe(w, K.BadFor + 0.1, seen({ swimming = true }))).toBe(true)
+		-- out of the water in between, the wait starts again
+		local w2 = {}
+		Unstick.failsafe(w2, 0, seen({ swimming = true }))
+		Unstick.failsafe(w2, 4, seen({}))
+		expect(Unstick.failsafe(w2, K.BadFor + 1, seen({ swimming = true }))).toBe(false)
+	end)
+
+	it("sends a villager down a hole home, but not one in a basement room", function()
+		local low = Vector3.new(0, -K.HoleDepth - 1, 0)
+		local w = {}
+		Unstick.failsafe(w, 0, seen({ feet = low }))
+		expect(Unstick.failsafe(w, K.BadFor + 1, seen({ feet = low }))).toBe(true)
+		local b = {}
+		Unstick.failsafe(b, 0, seen({ feet = low, onBuilt = true }))
+		expect(Unstick.failsafe(b, K.BadFor + 1, seen({ feet = low, onBuilt = true }))).toBe(false)
+		-- fallen off the world: home at once
+		expect(Unstick.failsafe({}, 0, seen({ feet = Vector3.new(0, -K.FallDepth - 1, 0) }))).toBe(true)
+	end)
+
+	it("leaves a resting villager be, and sends one whose walks can't be freed home", function()
+		local w = {}
+		Unstick.failsafe(w, 0, seen({ swimming = true, resting = true }))
+		expect(Unstick.failsafe(w, K.BadFor + 1, seen({ swimming = true, resting = true }))).toBe(false)
+		expect(Unstick.failsafe({}, 100, seen({ fails = { 90 } }))).toBe(false)
+		expect(Unstick.failsafe({}, 100, seen({ fails = { 60, 90 } }))).toBe(true)
+		expect(Unstick.failsafe({}, 100, seen({ fails = { 10, 90 } }))).toBe(false) -- (one too long ago)
+	end)
+
+	it("tells a player pushing and getting nowhere from one walking", function()
+		local trail = {}
+		local at = Vector3.new(10, 3, 10)
+		local t = 0
+		while t < K.StuckFor - 0.25 do
+			expect(Unstick.pushedNowhere(trail, t, at, true)).toBe(false)
+			t += 0.25
+		end
+		expect(Unstick.pushedNowhere(trail, K.StuckFor + 0.1, at, true)).toBe(true)
+		-- walking along
+		local walk = {}
+		local stuck = false
+		for i = 0, 20 do
+			stuck = stuck or Unstick.pushedNowhere(walk, i * 0.25, Vector3.new(i * 2, 3, 0), true)
+		end
+		expect(stuck).toBe(false)
+		-- not pushing: never stuck, and the trail starts again
+		expect(Unstick.pushedNowhere(trail, 10, at, false)).toBe(false)
+		expect(#trail).toBe(0)
 	end)
 end)

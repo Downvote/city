@@ -218,6 +218,24 @@ Tuning.Unstick = {
 	-- WaterCost: a stud through terrain water (pools, ponds) counts as this many on dry ground,
 	-- so a path goes round a pool unless there is no other way
 	Agent = { Radius = 1.3, Height = 5, Spacing = 3, WaterCost = 200 },
+	-- The failsafe (the user: "villagers can get stuck too, sometimes in holes or in water. make a
+	-- failsafe so they respawn back in their bed if they get stuck"): looked at every WatchEvery
+	-- seconds, a villager in water, or HoleDepth under the plot's ground with nothing built under
+	-- them, for BadFor seconds, or whose walks couldn't be freed FailCount times in FailWindow
+	-- seconds, goes back beside their bed. FallDepth under the ground is back at once.
+	WatchEvery = 2,
+	HoleDepth = 3,
+	FallDepth = 30,
+	BadFor = 8,
+	FailCount = 2,
+	FailWindow = 60,
+	-- A player who keeps pushing and gets nowhere (the user: "if players being stuck is detected,
+	-- allow them to clip out of it"): StuckFor seconds moving under Moved studs while walking, and
+	-- a button lets them slip out, Slip studs on the way they are pushing (Services/Unstick); the
+	-- server only allows it when it has seen them stay put that long too, once every SlipEvery.
+	StuckFor = 2,
+	Slip = 3,
+	SlipEvery = 3,
 }
 
 Tuning.Scales = {

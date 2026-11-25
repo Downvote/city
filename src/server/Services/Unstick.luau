@@ -18,6 +18,7 @@ local Players = game:GetService("Players")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Tuning = require(Shared.Config.Tuning)
+local Remotes = require(Shared.Net.Remotes)
 local Plan = require(Shared.Build.Plan)
 local Builder = require(Shared.Build.Builder)
 
@@ -25,6 +26,7 @@ local Data = require(script.Parent.Data)
 local Plots = require(script.Parent.Plots)
 local Build = require(script.Parent.Build)
 local Room = require(script.Parent.Parent.Npc.Room)
+local UnstickSim = require(Shared.Sim.Unstick)
 
 local Unstick = {}
 
@@ -137,8 +139,77 @@ function Unstick.afterChange(player: Player, ops: { any })
 	end
 end
 
+-- Where each player has been lately, as the server sees them (for SlipOut: it only lets somebody
+-- out who has stayed put here too).
+local trails: { [Player]: { { any } } } = {}
+local lastSlip: { [Player]: number } = {}
+
+local function note(now: number)
+	-- (whoever has left is forgotten)
+	local here: { [Player]: boolean } = {}
+	for _, player in Players:GetPlayers() do
+		here[player] = true
+	end
+	for player in trails do
+		if not here[player] then
+			trails[player] = nil
+			lastSlip[player] = nil
+		end
+	end
+	for _, player in Players:GetPlayers() do
+		local char = player.Character
+		local root = char and char:FindFirstChild("HumanoidRootPart")
+		if root and root:IsA("BasePart") then
+			local trail = trails[player] or {}
+			trails[player] = trail
+			UnstickSim.pushedNowhere(trail, now, root.Position, true)
+		end
+	end
+end
+
+-- A stuck player asks to slip out (the user: "if players being stuck is detected, allow them to
+-- clip out of it"): stood on the nearest spot with room, starting Slip studs the way they were
+-- pushing (Npc/Room). Only for somebody the server has seen stay put for StuckFor seconds, once
+-- every SlipEvery. Returns whether they were moved.
+function Unstick.slipOut(player: Player, dir: any, now: number): boolean
+	local char = player.Character
+	local hum, root = nil, nil
+	if char then
+		hum, root = movable(char)
+	end
+	if not char or not hum or not root then
+		return false
+	end
+	if now - (lastSlip[player] or -math.huge) < K.SlipEvery then
+		return false
+	end
+	local trail = trails[player]
+	if not trail or not UnstickSim.pushedNowhere(trail, now, root.Position, true) then
+		return false
+	end
+	local away = root.CFrame.LookVector
+	if typeof(dir) == "Vector3" and dir.X == dir.X and dir.Z == dir.Z then
+		local flat = Vector3.new(dir.X, 0, dir.Z)
+		if flat.Magnitude > 0.05 and flat.Magnitude < 1e3 then
+			away = flat
+		end
+	end
+	away = Vector3.new(away.X, 0, away.Z).Unit
+	lastSlip[player] = now
+	local feet = Room.feet(char) or root.Position
+	local spot = Room.freeSpot(char, feet + away * K.Slip, { away = away })
+	if not spot then
+		return false
+	end
+	Room.unseat(char)
+	Room.place(char, spot, away)
+	table.clear(trail)
+	return true
+end
+
 -- One look at everybody: wedged in a solid placed part for WedgedFor seconds, moved out.
 function Unstick.look(now: number)
+	note(now)
 	local folders: { Instance } = {}
 	for i = 1, Tuning.Plot.Count do
 		local f = Plots.buildFolder(i)
@@ -171,6 +242,11 @@ function Unstick.look(now: number)
 end
 
 function Unstick.start()
+	Remotes.fn("SlipOut").OnServerInvoke = function(player: Player, dir: any)
+		local ok, moved = pcall(Unstick.slipOut, player, dir, os.clock())
+		return ok and moved == true
+	end
+
 	Build.Changed:Connect(function(player: Player, ops: { any })
 		Unstick.afterChange(player, ops)
 	end)

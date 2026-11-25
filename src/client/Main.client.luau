@@ -54,3 +54,4 @@ require(World.Prompts).start() -- no prompts while you sit, work or talk
 require(World.Explore).start()
 require(World.Outlines).start()
 require(World.Focus).start() -- the background blur follows what the camera looks at
+require(World.Stuck).start() -- stuck and pushing: a button to slip out
