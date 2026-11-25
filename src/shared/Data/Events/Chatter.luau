@@ -456,7 +456,7 @@ Chatter.Topics = {
 			"Now you have to keep going forever.",
 			"Someone called me Gary for a month once, and I answered to it.",
 		},
-		no = { "You need to tell them today.", "They've been calling you the wrong name back, I bet." },
+		no = { "You need to tell them today.", "You have to own up, it's only fair." },
 		more = { "I'm in too deep to fix it now." },
 		back = { "It's too late, it's been a whole week." },
 	},
@@ -894,7 +894,7 @@ local AGREED = {
 	dreamy = "Hmm... I like that.",
 	easygoing = "Heh, fair enough.",
 	proud = "Hmph, not a bad idea.",
-	shy = "Hehe... that's nice.",
+	shy = "Hehe... that does sound like you.",
 	cheeky = "hehe, of course you would",
 	cool = "Hm. Fair.",
 	prickly = "Ugh, of course you would.",
@@ -924,6 +924,28 @@ local DISAGREED = {
 	foodie = "Let's argue about it over lunch.",
 	nervous = "O-okay, maybe you've got a point.",
 	_ = "Ha, we'll have to agree to disagree.",
+}
+
+-- A goodbye between neighbours, after any topic (the talk card's own goodbyes in Data/Personalities
+-- are said to the player and can mention things this chat never touched).
+local BYE = {
+	sunny = { "Okay, I'm off, see you later!", "Bye, bye, wave if you see me!" },
+	gentle = { "Take care of yourself, all right?", "Goodbye for now, and wrap up warm." },
+	bold = { "Right, I'm off, so stay out of trouble.", "Later, and shout if you need a hand." },
+	dreamy = { "Bye for now... I'll be on the pier.", "See you, I'm going to sit on the hill for a bit." },
+	easygoing = { "Okay, I'm off for a nap.", "See you, there's no rush on anything." },
+	proud = { "Right, I have important things to do.", "Goodbye, and do tell people you saw me." },
+	shy = { "Um, bye, thanks for talking to me.", "Okay, um, see you tomorrow." },
+	cheeky = { "ok, bye, i'll come and bother you tomorrow", "see you, and remember you never saw me" },
+	cool = { "Later.", "See you, and get home safe." },
+	prickly = { "Right, I've wasted enough time, see you.", "Bye, and don't do anything silly while I'm gone." },
+	dramatic = { "Farewell, until we meet again!", "I must go, my public awaits." },
+	bookish = { "I must get back to my book, but this was lovely.", "I'll let you go, sorry for talking so long." },
+	gloomy = { "Bye, that was nice, which is unusual.", "See you, and mind how you go." },
+	polite = { "It was a pleasure, as always.", "Goodbye for now, and have a lovely day." },
+	foodie = { "Bye, I'm off to get a snack!", "It's nearly dinner, so I'd better go." },
+	nervous = { "Okay, bye, sorry for keeping you.", "Bye, and get home safe, okay?" },
+	_ = "Right, I'd better go, see you later.",
 }
 
 -- How they say hello back, by how well they get on, in their own way.
@@ -1022,7 +1044,7 @@ function Chatter.chat(ctx: any, s: any, a: string, b: string, topic: any?, goesO
 		end
 	end
 	if not goesOn and ctx.rng:chance(0.7) then
-		s:voice(ctx.rng:pick({ "a", "b" }), "bye", nil, "wave")
+		Chatter.burst(s, ctx.rng:pick({ "a", "b" }), BYE, nil, "wave")
 	end
 	local d = if yes then 6 elseif score <= -10 then -2 else 2
 	return t, yes, d
@@ -1054,7 +1076,10 @@ function Chatter.small(ctx: any, a: string, b: string): { { who: string, text: s
 	}
 	if ctx.rng:chance(0.6) then
 		table.insert(out, { who = "a", text = ctx.f(Chatter.flat(ctx.rng:pick(if yes then t.more else t.back))) })
-		table.insert(out, { who = "b", text = ctx.f(Chatter.flat(K.byPers(ctx, b, if yes then AGREED else DISAGREED))) })
+		table.insert(
+			out,
+			{ who = "b", text = ctx.f(Chatter.flat(K.byPers(ctx, b, if yes then AGREED else DISAGREED))) }
+		)
 	end
 	return out
 end

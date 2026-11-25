@@ -351,6 +351,7 @@ event({
 			shy = "Um... I think it was you.",
 			polite = "I'm fairly sure it was you, if I'm honest.",
 			sunny = "It was you, I saw you!",
+			dreamy = "It was you, wasn't it? I'm sure it was.",
 			_ = "It was you, and everyone knows it.",
 		}, "anger", "point")
 		burst(s, "b", {
@@ -361,7 +362,7 @@ event({
 			_ = "Me? It was obviously you.",
 		}, "anger")
 		burst(s, "a", {
-			sunny = "I saw you do it, so don't pretend!",
+			sunny = "Just say it was you, and we can stop!",
 			gentle = "Please just admit it, it's all right.",
 			bold = "Admit it, and we can stop.",
 			dreamy = "Hmm, I'm almost sure it was you.",
@@ -643,11 +644,11 @@ event({
 })
 
 local PLANS = {
-	"a trip to the little islet",
-	"a picnic on the hill",
-	"a night of board games",
-	"a walk along the whole beach",
-	"a baking day",
+	"take a boat out to the little islet",
+	"have a picnic on the hill",
+	"have a board game night",
+	"walk the whole length of the beach",
+	"have a baking day",
 }
 
 event({
@@ -657,10 +658,10 @@ event({
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "Making plans"):with({ plan = ctx.rng:pick(PLANS) })
 		burst(s, "a", {
-			sunny = "We should do {plan} this week, for real this time!",
-			bold = "You and me are doing {plan} this week, right?",
-			shy = "Um, would you want to do {plan} this week?|Only if you're free.",
-			_ = "We should do {plan} this week.",
+			sunny = "We should {plan} this week, for real this time!",
+			bold = "You and me are going to {plan} this week, right?",
+			shy = "Um, would you want to {plan} this week?|Only if you're free.",
+			_ = "We should {plan} this week.",
 		}, "idea", "point")
 		burst(s, "b", {
 			easygoing = "Sure, as long as it's not too early.",
@@ -671,7 +672,7 @@ event({
 			dramatic = "Yes, and it'll be the event of the season.",
 			foodie = "I'll do the food, obviously.",
 			gloomy = "It'll rain, but okay.",
-			_ = "Yes, let's actually do it this time.",
+			_ = "Yes, I'd love that.",
 		}, "music")
 		burst(s, "a", {
 			sunny = "Yay, I'm writing it on my calendar right now!",
@@ -689,8 +690,8 @@ event({
 			_ = "This time we really mean it.",
 		}, "heart")
 		s:rel(5)
-		s:memo("a", "{b} and I are planning {plan}, and this time we're actually doing it.")
-		s:log("{a} and {b} planned {plan}.")
+		s:memo("a", "{b} and I are going to {plan}, and this time we're actually doing it.")
+		s:log("{a} and {b} made plans to {plan}.")
 		return s:done()
 	end,
 })
@@ -705,16 +706,16 @@ local STORY = {
 	},
 	middle = {
 		"On the way, it met a crab who owed it money.",
-		"Then it rained for a hundred years, mostly on Tuesdays.",
-		"Then everyone in town turned into spoons, except Gerald.",
-		"Then it hid in a teapot and waited for spring.",
+		"After that, it rained for a hundred years, mostly on Tuesdays.",
+		"Meanwhile, everyone in town turned into spoons, except Gerald.",
+		"It got scared and hid in a teapot until spring.",
 		"Then a whale came along and asked for directions.",
 	},
 	finish = {
 		"And they all had cake, the end.",
 		"And that's why the gulls are so rude, the end.",
 		"And it's still out there if you look, the end.",
-		"Then they woke up, and it had all been a dream, the end.",
+		"And then they woke up, and it had all been a dream, the end.",
 	},
 }
 
@@ -727,8 +728,9 @@ event({
 		local s = K.scene(ctx, "A story, a line each")
 		say(s, "a", "Let's make up a story, a line each, and I'll start.", "idea")
 		s:pick("a", STORY.start, "music")
-		s:pick("b", STORY.middle, "music")
-		s:pick("c", STORY.middle, "music")
+		local middle = ctx.rng:shuffle(STORY.middle)
+		s:say("b", middle[1], "music")
+		s:say("c", middle[2], "music")
 		s:pick("a", STORY.finish, "sparkle")
 		burst(s, "b", {
 			proud = "That was mostly my line, really.",
@@ -755,7 +757,73 @@ event({
 	weight = W({ base = 0.18, rel = 15, traits = { brave = -0.3 } }),
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "Some advice")
-		s:voice("a", "worry", "sweat")
+		burst(s, "a", {
+			sunny = {
+				"What if I throw a party and only the gulls come?",
+				"I said I'd bring a cake to the fair, and I've forgotten which kind.",
+			},
+			gentle = {
+				"My neighbour's been very quiet this week, and I don't know whether to knock.",
+				"I said yes to helping three people on Saturday, and I can't be in three places.",
+			},
+			bold = {
+				"I snapped at someone at work today, and I can't stop thinking about it.",
+				"I said I'd swim round the islet next week, and I'm not sure I can.",
+			},
+			dreamy = {
+				"I keep losing things, and I don't know where they go.",
+				"I said I'd sing at the bandstand, and now I can't remember why.",
+			},
+			easygoing = {
+				"I said I'd fix someone's fence, and I can't remember whose.",
+				"I've put my chores off for so long that I don't know where to start.",
+			},
+			proud = {
+				"What if the judges don't like my cake this year?",
+				"I told everyone I'd win the race, and now I have to win it.",
+			},
+			shy = {
+				"What if I wave at someone and they don't see me?",
+				"I wrote the postie a thank you note, but it's still in my pocket.",
+			},
+			cheeky = {
+				"i think i went too far with the bubbles in the fountain",
+				"what if nobody finds my next prank funny",
+			},
+			cool = {
+				"I lent someone my good rope, and I can't remember who.",
+				"My roof's going to leak in the next storm, and I can't reach the hole.",
+			},
+			prickly = {
+				"Ugh, I snapped at the baker, and now she won't look at me.",
+				"My knee's been clicking all week, and I don't like it.",
+			},
+			dramatic = {
+				"What if I forget my lines at the festival and the whole town laughs?",
+				"My voice has gone croaky two days before the concert.",
+			},
+			bookish = {
+				"I've lent out so many books that I've lost track of who has them.",
+				"I've been asked to give a talk at the library, and I've never spoken to a crowd.",
+			},
+			gloomy = {
+				"I think I upset someone this week, but I don't know who.",
+				"My roof's dripping, and I put a bucket under it and gave up.",
+			},
+			polite = {
+				"I worry that I'm a bother to the neighbours with all my visits.",
+				"I hope I didn't offend anyone at the market this morning.",
+			},
+			foodie = {
+				"I put too much pepper in the soup, and I've already given it out.",
+				"I promised to bake for the fair, and I've never baked a thing in my life.",
+			},
+			nervous = {
+				"I have to give a speech at the hall tomorrow, and what if my mind goes blank?",
+				"What if I say the wrong thing at the party on Friday?",
+			},
+			_ = "I said I'd help with the fair, and I don't know where to start.",
+		}, "sweat")
 		s:say("a", "What would you do if you were me?", "question")
 		burst(s, "b", {
 			sunny = "Don't think about it so hard, and come for a walk with me instead!",

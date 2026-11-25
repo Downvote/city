@@ -40,6 +40,8 @@ local function loses(s, ctx, who, vid)
 		bold = { "I want a rematch, right now.", "I was going easy on you, you know that, right?" },
 		easygoing = "Eh, you win, so I'll go and get us some snacks.",
 		gentle = "Oh, my, you played that really well.",
+		sunny = "Aww, you win this time!|Rematch tomorrow?",
+		dreamy = "Oh... I lost? I was watching the clouds.",
 		shy = "Um... you're really good at this.",
 		cheeky = "ok fine, you win this one|i'm still telling everyone i let you win",
 		cool = "Hm. I'll get you next time.",
@@ -53,6 +55,27 @@ local function loses(s, ctx, who, vid)
 		_ = "I'll get you next time, I promise.",
 	}, if K.isPers(ctx, vid, "proud", "bold", "prickly", "dramatic") then "anger" else "sweat")
 end
+
+-- the winner's line, after any game or contest
+local WINS = {
+	sunny = "I won? Ehehe, I won!",
+	gentle = "Oh, my, I think I won.",
+	bold = "Hah! Told you I'd win.",
+	dreamy = "Oh... did I win? I wasn't really keeping track.",
+	easygoing = "Huh, I won, and I wasn't even trying.",
+	proud = "Naturally, I win again.",
+	shy = "Um... I think I won?",
+	cheeky = "hehe, i win, pay up",
+	cool = "Easy.",
+	prickly = "Obviously. Was there ever any doubt?",
+	dramatic = "VICTORY! Remember this day!",
+	bookish = "Exactly as I planned it.",
+	gloomy = "I won? Heh, that never happens.",
+	polite = "Oh, I won? Thank you, that was fun.",
+	foodie = "I win, so the loser buys the buns.",
+	nervous = "I-I won? I actually won!",
+	_ = "Ha, I win!",
+}
 
 -- the one whose cake lost the bake off
 local SULK = {
@@ -91,7 +114,7 @@ event({
 		}, "question")
 		local w, l = winner(ctx, a, b)
 		s:n("One move later, the game was over.")
-		s:voice(w, "brag", "sparkle", "cheer")
+		burst(s, w, WINS, "sparkle", "cheer")
 		loses(s, ctx, l, ctx.stars[l])
 		s:choice("Play another one.", function(c)
 			c:n("They played four more games, and by the end nobody could remember the score.")
@@ -136,7 +159,7 @@ event({
 		}, "sparkle")
 		s:n("It got very serious, and {a} kept making up new rules halfway through.")
 		local w, l = winner(ctx, a, b)
-		s:voice(w, "brag", "sparkle", "cheer")
+		burst(s, w, WINS, "sparkle", "cheer")
 		loses(s, ctx, l, ctx.stars[l])
 		s:rel(3)
 		s:log("{a} and {b} had a thumb war.")
@@ -192,7 +215,25 @@ event({
 				cheeky = "you cheated, you definitely cheated",
 				_ = "How did you know that one?",
 			}, "anger")
-			s:voice("b", "brag", "sparkle")
+			burst(s, "b", {
+				sunny = "Ehehe, I heard it at the bakery last week!",
+				gentle = "My gran used to tell me that one.",
+				bold = "Hah, easy.",
+				dreamy = "Hmm... it just came to me.",
+				easygoing = "Lucky guess, honestly.",
+				proud = "I know all the riddles, naturally.",
+				shy = "Um, I think I heard it somewhere...",
+				cheeky = "i'll never tell, hehe",
+				cool = "Everyone knows that one.",
+				prickly = "Because it's an old one, obviously.",
+				dramatic = "I am simply a GENIUS.",
+				bookish = "It's in a riddle book at the library, actually.",
+				gloomy = "It's the only one I know, heh.",
+				polite = "I'm afraid I've heard it before.",
+				foodie = "My brain works better after lunch.",
+				nervous = "I-I just guessed, honestly!",
+				_ = "Lucky guess.",
+			}, "sparkle")
 		else
 			burst(s, "b", {
 				sunny = "Wait, wait, I know this one...|No, I don't, it's gone.",
@@ -219,6 +260,27 @@ event({
 	end,
 })
 
+-- the one whose cake won
+local BAKE_WON = {
+	sunny = "Mine won? Ehehe, I'm so happy!",
+	gentle = "Oh, my, thank you, I'm so pleased.",
+	bold = "Hah! Knew it.",
+	dreamy = "Hmm... really? Mine?",
+	easygoing = "Oh, nice, and I didn't even follow the recipe.",
+	proud = "Naturally, it was never in doubt.",
+	shy = "Mine? Oh... thank you.",
+	cheeky = "hehe, told you mine was better",
+	cool = "Hm. Good.",
+	prickly = "Obviously. Did you even taste the other one?",
+	dramatic = "My cake is VICTORIOUS!",
+	bookish = "I did follow the recipe to the letter.",
+	gloomy = "Mine won? Heh, that's a first.",
+	polite = "Oh, thank you, that's very kind.",
+	foodie = "Yes! All that practice paid off.",
+	nervous = "R-really? Mine? Oh, phew.",
+	_ = "Ha, mine won!",
+}
+
 event({
 	id = "bakeoff",
 	cutscene = "kitchen",
@@ -242,16 +304,19 @@ event({
 			dramatic = "Mine is dark chocolate, as dark and mysterious as me.",
 			_ = "Mine's chocolate, and you can't beat chocolate.",
 		}, "sparkle")
-		say(s, "a", "{player}, you have to be fair about this.|Which one's better?", "question")
+		burst(s, "a", {
+			cheeky = "{player}, be fair about this|which one's better",
+			_ = "{player}, you have to be fair about this.|Which one's better?",
+		}, "question")
 		s:choice("{a}'s cake.", function(c)
-			c:voice("a", "excited", "sparkle", "cheer")
+			burst(c, "a", BAKE_WON, "sparkle", "cheer")
 			burst(c, "b", SULK, "sweat")
 			c:mood("a", 6)
 			c:mood("b", -4)
 			c:rel(-2)
 		end)
 		s:choice("{b}'s cake.", function(c)
-			c:voice("b", "excited", "sparkle", "cheer")
+			burst(c, "b", BAKE_WON, "sparkle", "cheer")
 			burst(c, "a", SULK, "sweat")
 			c:mood("b", 6)
 			c:mood("a", -4)
@@ -295,12 +360,48 @@ event({
 		}, "music")
 		if ctx.rng:chance(0.55) then
 			s:n("On the second try it came together, and people stopped in the street to listen.")
-			s:voice("a", "excited", "music", "cheer")
+			burst(s, "a", {
+				sunny = "Ehehe, people were clapping!",
+				gentle = "Oh, my, that was lovely, wasn't it?",
+				bold = "Hah! We should do that every week.",
+				dreamy = "Hmm... it sounded like the sea for a moment.",
+				easygoing = "Huh, that went well, nice.",
+				proud = "Naturally, with me on guitar.",
+				shy = "Um... people were listening to us.",
+				cheeky = "we should start charging",
+				cool = "That was good.",
+				prickly = "Fine, that was actually good.",
+				dramatic = "We were MAGNIFICENT.",
+				bookish = "That was much better than the first try.",
+				gloomy = "Huh, nobody threw anything.",
+				polite = "What a lovely crowd, thank you all.",
+				foodie = "That's better than warm bread!",
+				nervous = "Th-they liked it? They actually liked it!",
+				_ = "That was great, let's do it again.",
+			}, "music", "cheer")
 			s:rel(8)
 			s:all(2)
 		else
 			s:n("{a} played one song while {b} sang a completely different one, very loudly.")
-			s:voice("b", "laugh", "music", "laugh")
+			burst(s, "b", {
+				sunny = "Ehehe, okay, that was a mess!",
+				gentle = "Oh, dear, we weren't even singing the same song.",
+				bold = "Hah, I was louder, so I win.",
+				dreamy = "Hmm... I liked my song better.",
+				easygoing = "Heh, both songs were good, just not together.",
+				proud = "My song was the right one, for the record.",
+				shy = "Hehe, okay, that was silly.",
+				cheeky = "hehe, mine was better",
+				cool = "Hm. That didn't work.",
+				prickly = "Ugh, you were playing the wrong song.",
+				dramatic = "That was a DISASTER, and I loved it.",
+				bookish = "Actually, we were in two different keys as well.",
+				gloomy = "Heh... that went about as well as I expected.",
+				polite = "Oh, goodness, I'm so sorry about that.",
+				foodie = "I think I need a snack after that.",
+				nervous = "S-sorry, was I singing the wrong one?",
+				_ = "Ha, okay, that was a mess.",
+			}, "music", "laugh")
 			say(s, "a", "We're going to need a lot more practice.", "sweat")
 			s:rel(4)
 		end
@@ -377,8 +478,44 @@ event({
 		s:say("a", "...", "sweat")
 		s:say("a", "{said}", "sweat")
 		s:n("There was a long pause.")
-		s:voice("b", "laugh", "music", "laugh")
-		s:voice("a", "laugh", "music", "laugh")
+		burst(s, "b", {
+			sunny = "Ehehe, oops!",
+			gentle = "Oh, my, I'm so sorry.",
+			bold = "Hah, well, mine sounded better.",
+			dreamy = "Hmm... I did wonder about that.",
+			easygoing = "Heh, that would explain a lot.",
+			proud = "Well, you should speak more clearly.",
+			shy = "Oh no... sorry.",
+			cheeky = "honestly, my version was better",
+			cool = "...Ah.",
+			prickly = "Ugh, why didn't you say it properly?",
+			dramatic = "So all of THAT was for nothing?",
+			bookish = "Actually, that does make more sense.",
+			gloomy = "Heh... of course I got it wrong.",
+			polite = "Oh dear, I do apologise.",
+			foodie = "Oh. I think I need a snack after that.",
+			nervous = "Oh no, oh no, I got it all wrong.",
+			_ = "Oh. That makes more sense.",
+		}, "music", "laugh")
+		burst(s, "a", {
+			sunny = "Ehehe, it's fine, it's funnier this way!",
+			gentle = "It's all right, I'm laughing too.",
+			bold = "Hah, never mind, it's a good story now.",
+			dreamy = "Hmm... I like your version better.",
+			easygoing = "Eh, let's just go with it.",
+			proud = "I'll forgive you, this once.",
+			shy = "Hehe... it's okay.",
+			cheeky = "i'm telling everyone about this",
+			cool = "It's fine. Funny, actually.",
+			prickly = "Ugh.|...Okay, it's a bit funny.",
+			dramatic = "This will be told for GENERATIONS.",
+			bookish = "I'm writing this one down.",
+			gloomy = "Heh, at least it's funny.",
+			polite = "Please don't worry, it's quite funny really.",
+			foodie = "Let's laugh about it over lunch.",
+			nervous = "It's okay, it's okay, it's funny really.",
+			_ = "Ha, never mind, it's funny now.",
+		}, "music", "laugh")
 		s:rel(5)
 		s:log("{a} and {b} got their wires crossed.")
 		return s:done()
@@ -441,7 +578,25 @@ event({
 			}, "sweat")
 			s:rel(5)
 		else
-			s:voice("b", "happy", "heart")
+			burst(s, "b", {
+				sunny = "Yes, yes, give me the mystery one!",
+				gentle = "Oh, go on, then, I'll try it.",
+				bold = "Hah, hand it over.",
+				dreamy = "Hmm... all right, I'll be brave.",
+				easygoing = "Sure, I'll eat anything right now.",
+				proud = "I'll try it, but I expect great things.",
+				shy = "Um, okay... I'll try a little bit.",
+				cheeky = "if it's pickle and jam again, i'm leaving",
+				cool = "Sure. Pass it here.",
+				prickly = "Fine, but if it's fish paste, I'm going home.",
+				dramatic = "Hand it over, I'm BRAVE.",
+				bookish = "I'll try it, for science.",
+				gloomy = "Heh... it'll be fish paste, but go on.",
+				polite = "I'd be glad to, thank you.",
+				foodie = "Mystery sandwiches are the best kind, so hand it over.",
+				nervous = "W-what's in it? ...Okay, I'll try it.",
+				_ = "Go on, then, hand it over.",
+			}, "heart")
 			s:rel(9)
 			s:mood("a", 4)
 			s:mood("b", 4)
@@ -576,6 +731,9 @@ event({
 			shy = "Oh no...|I'll go home and change.",
 			cool = "Hm. Same jumper.",
 			dramatic = "This square isn't big enough for two of this jumper.",
+			gentle = "Oh, my, we match!",
+			sunny = "We match, we match!",
+			polite = "Oh dear, how embarrassing.",
 			_ = "Well, one of us has good taste.",
 		}, "sweat")
 		burst(s, "b", {
@@ -599,7 +757,7 @@ event({
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "Under the stars")
 		s:prop("telescope", "a")
-		s:n("{a} and {b} are lying on the grass, passing a telescope back and forth.")
+		s:n("{a} and {b} are lying on a blanket, passing a telescope back and forth.")
 		burst(s, "b", {
 			bookish = "That one's the bear.|Actually, the three stars in a row are meant to be its belt.",
 			dreamy = "That one's a bear...|He's wearing a belt.",
@@ -657,10 +815,13 @@ event({
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "An impression")
 		say(s, "a", "Guess who this is.|'Is it lunch yet? I simply must have a bun.'", "music", "point")
-		s:say("b", "Is that meant to be me?", "question")
+		burst(s, "b", { cheeky = "wait, is that meant to be me", _ = "Is that meant to be me?" }, "question")
 		local good = K.isPers(ctx, b, "cheeky", "sunny", "easygoing") or ctx.rng:chance(0.3)
 		if good then
-			say(s, "b", "...It's quite good, actually.|Do another one!", "laugh", "laugh")
+			burst(s, "b", {
+				cheeky = "...ok, that's actually quite good|do another one",
+				_ = "...It's quite good, actually.|Do another one!",
+			}, "laugh", "laugh")
 			s:rel(6)
 		else
 			burst(s, "b", {
@@ -685,7 +846,25 @@ event({
 		say(s, "a", "Hold still, I've watched the barber do this loads of times.", "idea")
 		s:n("{a} gave {b} a haircut with the kitchen scissors.")
 		if ctx.rng:chance(0.5) then
-			s:voice("b", "wow", "sparkle")
+			burst(s, "b", {
+				sunny = "Ooh, I love it!",
+				gentle = "Oh, my, it looks lovely.",
+				bold = "Hah, not bad at all.",
+				dreamy = "Hmm... I feel lighter.",
+				easygoing = "Huh, nice, and I didn't even have to get up.",
+				proud = "Hmph, I look even better than before.",
+				shy = "Oh... it looks nice.",
+				cheeky = "ok, i look great",
+				cool = "Hm. Good cut.",
+				prickly = "Fine, it's good.|Don't let it go to your head.",
+				dramatic = "I look like a STAR.",
+				bookish = "It's very even, actually.",
+				gloomy = "Huh, it's actually good.",
+				polite = "How lovely, thank you.",
+				foodie = "It's good, and I didn't even have to pay.",
+				nervous = "I-it's good? Oh, it's really good!",
+				_ = "Oh, that actually looks good.",
+			}, "sparkle")
 			burst(s, "a", {
 				proud = "Hmph, I'm clearly a natural.",
 				cheeky = "i'm a natural|so who's next?",
@@ -724,7 +903,25 @@ event({
 		if ctx.rng:chance(0.5) then
 			say(s, "b", "I'm only looking, and looking is allowed.", "sweat")
 			s:n("{b} made it to dinner, but only just.")
-			s:voice("b", "brag", "sparkle", "cheer")
+			burst(s, "b", {
+				sunny = "I did it! Ehehe, pay up!",
+				gentle = "Oh, my, I actually did it.",
+				bold = "Hah, told you, so pay up.",
+				dreamy = "Hmm... I forgot I was even hungry.",
+				easygoing = "Eh, I napped through most of it.",
+				proud = "Naturally, I have excellent willpower.",
+				shy = "Um... I did it, I think.",
+				cheeky = "pay up, hehe",
+				cool = "Told you. Pay up.",
+				prickly = "Obviously. Now pay up.",
+				dramatic = "I have SURVIVED the longest day of my life.",
+				bookish = "I kept busy reading, and it worked.",
+				gloomy = "I did it, and now I'm starving, heh.",
+				polite = "I managed it, and I'll take my winnings politely.",
+				foodie = "I did it, and now I'm eating everything.",
+				nervous = "I-I did it! Can I eat now?",
+				_ = "I did it, so pay up.",
+			}, "sparkle", "cheer")
 		else
 			say(s, "b", "One bun doesn't count, does it?", "sweat")
 			say(s, "a", "It counts, so pay up.", "sparkle")
@@ -753,7 +950,7 @@ event({
 			easygoing = "I need a lie down, ideally on the wardrobe.",
 			gloomy = "My back's gone, but it was on its way out anyway.",
 			dramatic = "My ARMS.|I'm never lifting anything again.",
-			_ = "Promise me you'll never move house.",
+			_ = "Promise me you'll never buy another wardrobe.",
 		}, "sweat")
 		s:rel(7)
 		s:mood("a", 3)
@@ -832,12 +1029,12 @@ event({
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "The last biscuit")
 		s:n("There's one biscuit left on the plate between {a} and {b}.")
-		s:say("a", "You have it.", "question")
-		s:say("b", "No, you have it.", "question")
+		burst(s, "a", { cheeky = "you have it", _ = "You have it." }, "question")
+		burst(s, "b", { cheeky = "no, you have it", _ = "No, you have it." }, "question")
 		s:n("Neither of them moves, and the biscuit just sits there.")
 		s:choice("Split it.", function(c)
 			c:n("It broke into one big half and one small half, and they both looked at the big half.")
-			say(c, "a", "...You have the big half.", "heart")
+			burst(c, "a", { cheeky = "...you have the big half", _ = "...You have the big half." }, "heart")
 			c:rel(5)
 		end)
 		s:choice("Eat it yourself.", function(c)
@@ -933,6 +1130,8 @@ event({
 			proud = "Hmph, that's unacceptable, so you're buying me a bun.",
 			easygoing = "Eh, I sat down and had a nice rest, so it's fine.",
 			gloomy = "It's fine, I'm used to waiting.",
+			sunny = "You're here now, so it's fine!|You're buying, though.",
+			dramatic = "Half an HOUR!|...Fine, you're forgiven, but you're buying.",
 			_ = "Fine, but you're buying.",
 		}, "question")
 		s:rel(2)
@@ -989,7 +1188,25 @@ event({
 		say(s, "a", "Do you want to hear a scary one?|It's about {story}.", "idea")
 		s:n("{a} told it slowly, in a low voice, holding a lantern under their chin.")
 		say(s, "a", "...and the last thing anyone heard was a voice right behind them saying BOO.", "anger", "point")
-		s:voice("b", "scared", "sweat")
+		burst(s, "b", {
+			sunny = "Eek! Okay, okay, I jumped!",
+			gentle = "Oh, my, my heart's racing.",
+			bold = "Hah, I didn't jump.|...Okay, I jumped a bit.",
+			dreamy = "Hmm... I'm sleeping with the light on tonight.",
+			easygoing = "Nope, I'm not walking home on my own after that.",
+			proud = "I wasn't scared, I was just surprised.",
+			shy = "Eep...!|Can I sit closer to you?",
+			cheeky = "ok, that got me, i'll admit it",
+			cool = "...That was a good one.",
+			prickly = "I'm not scared.|...Stay close, but not that close.",
+			dramatic = "*gasp* I nearly fainted!",
+			bookish = "I know it's made up, but I'm still checking under my bed tonight.",
+			gloomy = "Heh... that sounds like my luck.",
+			polite = "Oh, goodness, that gave me quite a fright.",
+			foodie = "I'm so scared I need a biscuit.",
+			nervous = "Oh no, oh no, I'm never going out at night again.",
+			_ = "Eek, that was too scary!",
+		}, "sweat")
 		burst(s, "a", {
 			gentle = "Oh, I'm sorry, it's only a story.|Here, you can hold my hand.",
 			cheeky = "hehehe, got you",
@@ -1009,7 +1226,25 @@ event({
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "Thunder")
 		s:n("There was a crack of thunder, and {a} jumped a foot in the air.")
-		s:voice("a", "scared", "sweat")
+		burst(s, "a", {
+			sunny = "Eek! That was so loud!",
+			gentle = "Oh, my, that made me jump.",
+			bold = "Hah, that was close.|...I didn't jump, for the record.",
+			dreamy = "Hmm... that one shook the windows.",
+			easygoing = "Whoa, that woke me right up.",
+			proud = "I wasn't startled, I was just stretching.",
+			shy = "Eep...!",
+			cheeky = "ok, that was loud, not gonna lie",
+			cool = "...That was close.",
+			prickly = "Ugh, I hate thunder.",
+			dramatic = "*gasp* Did you hear that?",
+			bookish = "That was close, barely a second after the flash.",
+			gloomy = "Of course there's a storm, heh.",
+			polite = "Oh, goodness, pardon me.",
+			foodie = "That made me drop my biscuit.",
+			nervous = "Oh no, oh no, that was so loud.",
+			_ = "Whoa, that was loud!",
+		}, "sweat")
 		burst(s, "b", {
 			bold = "Hah, it's just noise.|Stand next to me and I'll shout back at it.",
 			gentle = "Come here, all right?|We'll count between the flashes together.",
@@ -1055,6 +1290,8 @@ event({
 			proud = "I was enjoying the rain, but fine.",
 			polite = "That's very kind of you, thank you.",
 			gloomy = "I always forget mine.|Thanks.",
+			cheeky = "you're a lifesaver, thanks",
+			sunny = "Thank you, thank you, I'm already soaked!",
 			_ = "You're a lifesaver, thank you.",
 		}, "heart")
 		s:n("They walked home slowly, and both of them got one wet shoulder.")
@@ -1086,7 +1323,25 @@ event({
 			cheeky = "no way|we're basically twins now",
 			_ = "No way, you too?",
 		}, "sparkle")
-		s:voice("b", "excited", "sparkle", "cheer")
+		burst(s, "b", {
+			sunny = "Yes, me too! I thought I was the only one!",
+			gentle = "Oh, my, me too, isn't that lovely?",
+			bold = "Hah, me too, so we're friends now.",
+			dreamy = "Hmm... I always thought I was the only one.",
+			easygoing = "Huh, me too, nice.",
+			proud = "Naturally, it shows you have good taste.",
+			shy = "Um... yes, me too.",
+			cheeky = "no way, me too, hehe",
+			cool = "Same. Huh.",
+			prickly = "Fine, me too, so don't make it weird.",
+			dramatic = "Me TOO! This changes everything.",
+			bookish = "Me too, and I've never met anyone else who does.",
+			gloomy = "Me too, heh... nobody ever gets it.",
+			polite = "Me too, how lovely to find out.",
+			foodie = "Me too, so this calls for a snack.",
+			nervous = "R-really? Me too!",
+			_ = "Me too, I thought I was the only one!",
+		}, "sparkle", "cheer")
 		s:rel(14)
 		s:memo("a", "It turns out {b} and I share {thing}. Who knew?")
 		s:log("{a} and {b} found out they share {thing}.")
@@ -1171,7 +1426,25 @@ event({
 			_ = "I didn't think it was that big a deal.",
 		}, "sweat")
 		s:choice("Tell {a} to say sorry.", function(c)
-			c:voice("a", "sorry", "sad")
+			burst(c, "a", {
+				sunny = "I'm so sorry, I got excited and it just came out!",
+				gentle = "I'm sorry, I should never have told anyone.",
+				bold = "Sorry. I messed up, and I know it.",
+				dreamy = "I'm sorry... I didn't think before I said it.",
+				easygoing = "Sorry, I didn't think it was a big thing, but it was.",
+				proud = "I may have been... careless.|I apologise.",
+				shy = "I'm really sorry... I won't do it again.",
+				cheeky = "ok, i'm sorry, really|my mouth runs faster than my brain",
+				cool = "Sorry. I shouldn't have said anything.",
+				prickly = "Fine, I'm sorry.|...I mean it.",
+				dramatic = "I've betrayed your trust, and I'm SO sorry.",
+				bookish = "You're right, I'm sorry, I should have kept it to myself.",
+				gloomy = "Sorry, that was my fault, as usual.",
+				polite = "I'm terribly sorry, that was wrong of me.",
+				foodie = "I'm sorry, I'll make it up to you with cake.",
+				nervous = "Oh no, I'm sorry, I'm really sorry.",
+				_ = "I'm sorry, I shouldn't have told anyone.",
+			}, "sad")
 			say(c, "b", "Fine, but I'm not telling you anything for a week.", "anger")
 			c:rel(-4)
 		end)
@@ -1194,7 +1467,25 @@ event({
 		s:voice("a", "tease", "sparkle", "point")
 		local score = ctx.rel(a, b)
 		if score >= 30 then
-			s:voice("b", "laugh", "music", "laugh")
+			burst(s, "b", {
+				sunny = "Ehehe, hey!",
+				gentle = "Oh, you.",
+				bold = "Hah, watch it.",
+				dreamy = "Hmm... maybe you're right.",
+				easygoing = "Heh, fair.",
+				proud = "Hmph, I'll let that one go.",
+				shy = "Oh... hehe.",
+				cheeky = "hey, that's my job",
+				cool = "Hm. Funny.",
+				prickly = "Ugh, you're one to talk.",
+				dramatic = "How DARE you.|...Okay, that was a bit funny.",
+				bookish = "That's a fair point, actually.",
+				gloomy = "Heh... yeah, that's me.",
+				polite = "Oh, you are cheeky.",
+				foodie = "Ha, I'll get you back later.",
+				nervous = "W-wait, really? Is it that bad?",
+				_ = "Ha, hey!",
+			}, "music", "laugh")
 			burst(s, "b", {
 				prickly = "You're lucky I put up with you.",
 				cool = "Hm. Lucky for you I like you.",
@@ -1202,7 +1493,25 @@ event({
 			}, "heart")
 			s:rel(4)
 		else
-			s:voice("b", "angry", "anger")
+			burst(s, "b", {
+				sunny = "Hey, that wasn't very nice.",
+				gentle = "That wasn't kind, and I think you know it.",
+				bold = "You think that's funny? It isn't.",
+				dreamy = "Hmm... that wasn't very nice.",
+				easygoing = "Eh, not cool.",
+				proud = "Hmph, how rude.",
+				shy = "Oh... okay.",
+				cheeky = "wow, rude",
+				cool = "Not funny.",
+				prickly = "Ugh, mind your own business.",
+				dramatic = "I have NEVER been so insulted.",
+				bookish = "That's a bit unkind, actually.",
+				gloomy = "Heh... thanks for pointing it out.",
+				polite = "I'd rather you didn't say things like that.",
+				foodie = "Rude, and I haven't even had lunch.",
+				nervous = "Oh no, is it really that bad?",
+				_ = "Hey, that's not very nice.",
+			}, "anger")
 			s:rel(-3)
 		end
 		s:log("{a} teased {b}.")
@@ -1284,7 +1593,7 @@ event({
 		}, "sparkle")
 		if K.trait(ctx, c, "brave") > 0.65 then
 			s:n("{c} dug in their heels and pulled them both over the line.")
-			s:voice("c", "brag", "sparkle", "cheer")
+			burst(s, "c", WINS, "sparkle", "cheer")
 		else
 			s:n("{c} lasted four seconds and then went face first into the grass.")
 			burst(s, "c", {
@@ -1320,6 +1629,7 @@ event({
 		burst(s, "b", {
 			dramatic = "We need a name, something people will chant.|{player}, you choose!",
 			shy = "We need a name...|{player}? Could you pick one?",
+			cheeky = "we need a name|{player}, you pick",
 			_ = "We need a good name.|{player}, will you pick one?",
 		}, "question")
 		for i = 1, 2 do
@@ -1364,7 +1674,25 @@ event({
 		s:choice("Help them hide it.", function(ch)
 			ch:n("You walked {c} the long way round, and when they got back the street was full of balloons.")
 			ch:prop("balloons", "a")
-			ch:voice("c", "excited", "heart", "cheer")
+			burst(ch, "c", {
+				sunny = "All this is for me? Ehehe, I love it!",
+				gentle = "Oh, my, all of this for me?",
+				bold = "Hah! You got me, you really got me.",
+				dreamy = "Hmm... is all this for me?",
+				easygoing = "Whoa, for me? Nice.",
+				proud = "For me? Well, naturally, but thank you.",
+				shy = "Is this... for me? Oh...",
+				cheeky = "wait, this is for me? ok, you got me",
+				cool = "...You got me. Thanks.",
+				prickly = "Ugh, you lot.|...Thank you.",
+				dramatic = "*gasp* For ME? I could cry!",
+				bookish = "I had no idea, actually, and I usually have an idea.",
+				gloomy = "For me? Heh... nobody's ever done this before.",
+				polite = "How wonderful, thank you all so much.",
+				foodie = "Is that cake? For me? You're the best!",
+				nervous = "F-for me? Oh, wow, thank you!",
+				_ = "All this is for me? Thank you!",
+			}, "heart", "cheer")
 			ch:relx("a", "c", 8)
 			ch:relx("b", "c", 8)
 			ch:mood("c", 8)
@@ -1427,7 +1755,7 @@ event({
 	weight = W({ base = 0.3, rel = 55 }),
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "Saying thank you")
-		s:n("{a} has been pacing up and down the roof for an hour.")
+		s:n("{a} has been pacing up and down the roof terrace for an hour.")
 		s:by("a", {
 			nervous = "{player}, {b} looked after me all week when I was ill, and I never said thank you. Sh-should I go and say it now?",
 			prickly = "{player}, {b} looked after me when I was ill and I never thanked them. Don't look at me like that.",
@@ -1546,7 +1874,7 @@ event({
 			nervous = "I-I am, is that okay?|I'm not very good at it yet.",
 			_ = "Since I was little.|Why didn't you ever say?",
 		}, "sparkle")
-		s:n("They spent the rest of the afternoon at it, comparing notes and getting in each other's way.")
+		s:n("They spent the rest of the afternoon comparing notes, and they made plans to do it together.")
 		s:rel(10)
 		s:mood("a", 4)
 		s:mood("b", 4)
@@ -1636,7 +1964,25 @@ event({
 			nervous = "H-how did it get there?|Is my other sock okay?",
 			_ = "How did it get in my sock?",
 		}, "sweat")
-		s:voice("a", "laugh", "music", "laugh")
+		burst(s, "a", {
+			sunny = "Ehehe, of all the places!",
+			gentle = "Oh, my, of all the places.",
+			bold = "Hah! Three evenings, and it was in your sock.",
+			dreamy = "Hmm... socks are where things go to hide.",
+			easygoing = "Heh, well, it's done now.",
+			proud = "I'd never have lost a piece in my sock.",
+			shy = "Hehe... at least we found it.",
+			cheeky = "i'm telling everyone about the sock",
+			cool = "Hm. Put it in, then.",
+			prickly = "Unbelievable.|...Put it in, then.",
+			dramatic = "THREE evenings, and it was in your SOCK!",
+			bookish = "I'm adding 'check socks' to my jigsaw rules.",
+			gloomy = "Heh... of course it was.",
+			polite = "Well, all's well that ends well.",
+			foodie = "Finished, so that's earned us a biscuit.",
+			nervous = "Oh, phew, we found it!",
+			_ = "Ha, of all the places!",
+		}, "music", "laugh")
 		s:rel(7)
 		s:log("{a} and {b} finished a jigsaw. The last piece was in {b}'s sock.")
 		return s:done()
@@ -1735,7 +2081,7 @@ event({
 			c:mood("a", -1)
 		end)
 		s:choice("Leave it half and half.", function(c)
-			c:n("The fence stayed half and half, and people stop to look at it.")
+			c:n("The fence stayed half and half, and people still stop to look at it.")
 			c:say("a", "It's growing on me, actually.", "heart")
 			c:say("b", "It's the only fence like it in town.", "heart")
 			c:rel(6)
@@ -1824,7 +2170,7 @@ event({
 		}, "question")
 		local w, l = winner(ctx, a, b)
 		s:n("It went to best of five in the end.")
-		s:voice(w, "brag", "sparkle", "cheer")
+		burst(s, w, WINS, "sparkle", "cheer")
 		loses(s, ctx, l, ctx.stars[l])
 		s:rel(3)
 		s:log("{a} and {b} played rock, paper, scissors for the comfy chair.")
@@ -1900,16 +2246,73 @@ event({
 			_ = "It's a cushion for your house, and {a} did the stitching.",
 		}, "heart")
 		s:choice("I love it.", function(c)
-			c:voice("a", "excited", "sparkle", "cheer")
-			c:voice("b", "happy", "heart")
+			burst(c, "a", {
+				sunny = "Ehehe, you love it? I'm so happy!",
+				gentle = "Oh, I'm so glad, we hoped you would.",
+				bold = "Hah! Told you they'd love it.",
+				dreamy = "Hmm... I'm so glad.",
+				easygoing = "Nice, all that sitting still was worth it.",
+				proud = "Naturally, we made it very well.",
+				shy = "Oh... really? I'm so glad.",
+				cheeky = "hehe, knew you would",
+				cool = "Good. We hoped so.",
+				prickly = "Good, because it took ages.",
+				dramatic = "They LOVE it! Did you hear that?",
+				bookish = "I'm so pleased, it took us four evenings.",
+				gloomy = "You do? Heh... that's a relief.",
+				polite = "We're very glad, thank you.",
+				foodie = "Brilliant, that calls for cake.",
+				nervous = "R-really? Oh, phew!",
+				_ = "You do? Oh, good!",
+			}, "sparkle", "cheer")
+			burst(c, "b", {
+				sunny = "Put it somewhere everyone can see it!",
+				gentle = "It'll look lovely on your chair.",
+				bold = "Put it somewhere good, all right?",
+				dreamy = "It'll be nice for your naps...",
+				easygoing = "It's perfect for naps, trust me.",
+				proud = "Mind you keep it somewhere it can be admired.",
+				shy = "Um... I'm really glad.",
+				cheeky = "you're welcome, hehe",
+				cool = "Glad you like it.",
+				prickly = "Don't spill anything on it.",
+				dramatic = "Cherish it FOREVER.",
+				bookish = "It's good for reading, too, I tested it.",
+				gloomy = "It'll get squashed, but that's what cushions are for, heh.",
+				polite = "We hope it brings you comfort.",
+				foodie = "Don't eat biscuits on it, I learned that the hard way.",
+				nervous = "Th-the wonky side goes at the back, okay?",
+				_ = "We're really glad you like it.",
+			}, "heart")
 			c:keep("keep_cushion", "a")
 			c:rel(6)
 			c:mood("a", 4)
 			c:mood("b", 4)
 		end)
 		s:choice("Did you stitch it yourselves?", function(c)
-			say(c, "b", "We did, and that corner's a bit wonky, so don't look too closely.", "sweat")
-			c:voice("a", "laugh", "music", "laugh")
+			burst(c, "b", {
+				cheeky = "we did|that corner's a bit wonky, so don't look too closely",
+				_ = "We did, and that corner's a bit wonky, so don't look too closely.",
+			}, "sweat")
+			burst(c, "a", {
+				sunny = "Ehehe, the wonky corner was mine.",
+				gentle = "We did our best, and we had fun doing it.",
+				bold = "Hah, I did the straight bits.",
+				dreamy = "Hmm... the wonky bit is my favourite.",
+				easygoing = "Heh, the wonky bit is my work.",
+				proud = "The good stitches are mine, for the record.",
+				shy = "Hehe... the wonky corner was me.",
+				cheeky = "the wonky bit is art",
+				cool = "The wonky bit was me.",
+				prickly = "It's not that wonky.|...Okay, it's a bit wonky.",
+				dramatic = "Every stitch was made with LOVE.",
+				bookish = "Forty rows by hand, and only one went wrong.",
+				gloomy = "Heh, the wonky corner was me, as usual.",
+				polite = "We did, and we hope you'll forgive the corner.",
+				foodie = "We did, between snacks.",
+				nervous = "I-it was my first time sewing, sorry!",
+				_ = "Ha, we did our best.",
+			}, "music", "laugh")
 			c:keep("keep_cushion", "a")
 			c:rel(6)
 			c:mood("b", 2)
@@ -1937,7 +2340,7 @@ event({
 		}, "question")
 		local w, l = winner(ctx, a, b)
 		s:n("{" .. w .. "} got eight skips on the last throw.")
-		s:voice(w, "brag", "sparkle", "cheer")
+		burst(s, w, WINS, "sparkle", "cheer")
 		loses(s, ctx, l, ctx.stars[l])
 		s:rel(4)
 		s:log("{a} and {b} skipped stones on the beach.")
@@ -1964,7 +2367,7 @@ event({
 		}, "idea")
 		burst(s, "a", {
 			bookish = "I'll draw it, and we can look it up later.",
-			_ = "I'm putting a question mark next to it.",
+			_ = "I'm putting a question mark next to it anyway.",
 		}, "sweat")
 		s:rel(5)
 		s:memo("a", "We counted forty birds on the hill, and one of them is still a mystery.")
@@ -2009,10 +2412,19 @@ event({
 
 -- a lost bet, paid in the square
 local FORFEITS = {
-	"sing a song on the fountain steps",
-	"wear their jumper backwards all day",
-	"say good morning to every gull on the pier",
-	"carry the other one's shopping for a week",
+	{ what = "sing a song on the fountain steps", done = "{a} sang the whole song, and a few people clapped." },
+	{
+		what = "wear their jumper backwards all day",
+		done = "{a} wore it backwards all day, and three people asked if it was a new style.",
+	},
+	{
+		what = "say good morning to every gull on the pier",
+		done = "{a} said good morning to every gull on the pier, and a few people clapped.",
+	},
+	{
+		what = "carry the other one's shopping for a week",
+		done = "{a} carried the shopping all week and only grumbled twice.",
+	},
 }
 
 event({
@@ -2020,7 +2432,8 @@ event({
 	when = "day",
 	weight = W({ base = 0.09, rel = 0, traits = { mischief = 0.2 } }),
 	scene = function(ctx, a, b)
-		local s = K.scene(ctx, "A bet's a bet"):with({ forfeit = ctx.rng:pick(FORFEITS) })
+		local f = ctx.rng:pick(FORFEITS)
+		local s = K.scene(ctx, "A bet's a bet"):with({ forfeit = f.what })
 		s:n("{a} lost a bet to {b}, and now has to {forfeit}.")
 		burst(s, "a", {
 			proud = "I'm doing this with dignity, so don't look.",
@@ -2037,10 +2450,11 @@ event({
 			bold = "Go on, and do all of it.",
 			_ = "Go on, then.",
 		}, "laugh", "laugh")
-		s:n("{a} did all of it, and a few people clapped.")
+		s:n(f.done)
 		burst(s, "a", {
 			proud = "Flawless, naturally.|The next bet's mine.",
 			shy = "That was awful...|...but it was a bit fun, too.",
+			cheeky = "done|rematch next week, and you're going down",
 			_ = "Done.|Rematch next week?",
 		}, "sparkle")
 		s:rel(4)

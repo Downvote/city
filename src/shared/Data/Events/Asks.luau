@@ -651,6 +651,32 @@ event({
 	end,
 })
 
+-- a dinner made around each food (a carrot on its own isn't a dinner)
+local DINNER = {
+	apple = "apple crumble",
+	bread = "soup with fresh bread rolls",
+	carrot = "carrot soup",
+	cheese = "cheese on toast",
+	soup = "mushroom soup",
+	skewer = "fish skewers",
+	tart = "a berry tart",
+	honeycake = "honey cake",
+	riceball = "rice balls",
+	pancakes = "pancakes",
+	curry = "spicy curry",
+	pie = "pumpkin pie",
+	icecream = "ice cream for pudding",
+	salad = "a big garden salad",
+	chocolate = "chocolate cake",
+	pudding = "a steamed pudding",
+	broccoli = "broccoli and cheese bake",
+	pickles = "cheese and pickle sandwiches",
+	stew = "hearty stew",
+	starfruit = "star fruit salad",
+	dragonchili = "a pot of fire chili",
+	goldapple = "golden apple pie",
+}
+
 event({
 	id = "cookfor",
 	cutscene = "kitchen",
@@ -687,8 +713,9 @@ event({
 		}, "question")
 		s:say("a", "What do you think I should make?", "question")
 		for _, f in options do
-			s:choice("What about " .. Foods.phrase(f) .. "?", function(c)
-				c:with({ food = Foods.phrase(f) })
+			local dish = DINNER[f.id] or Foods.phrase(f)
+			s:choice("What about " .. dish .. "?", function(c)
+				c:with({ food = dish })
 				c:n("{a} cooked dinner for {b} that evening, with {food} on the menu.")
 				if fav and f.id == fav.id then
 					say(c, "b", "You made my favourite!|How did you know?", "heart", "cheer")
@@ -1756,11 +1783,11 @@ event({
 				cool = "Hm. A bet's a bet.",
 				prickly = "You knew the deal when you made the bet.",
 				dramatic = "It's a MASTERPIECE of silliness.",
-				bookish = "Actually, the bell was my idea, so I'm quite proud of it.",
+				bookish = "Actually, I designed it myself, so I'm quite proud of it.",
 				gloomy = "Heh... I'd have lost too, if I were you.",
 				polite = "Oh, goodness, I'm sorry, I can't help laughing.",
 				foodie = "You can take it off at dinner time, I promise.",
-				nervous = "I-I'm sorry, is it too much? We can take the bell off.",
+				nervous = "I-I'm sorry, is it too much? I didn't think it would be this silly.",
 				_ = "Ha, a bet's a bet.",
 			}, "music", "laugh")
 			c:rel(2)
@@ -2470,7 +2497,7 @@ event({
 		burst(s, "a", {
 			dramatic = "{player}, the moment has finally come.|From today, you will be {mine}.",
 			cheeky = "{player} congratulations|you're {mine} now, no take backs",
-			sunny = "{player}, I've got big news!|You're going to be {mine}.",
+			sunny = "{player}, I've got big news!|I've picked you to be {mine}.",
 			dreamy = "{player}...|I need {role}, and I decided it's you.",
 			bold = "{player}, I need {role}, and you're it.|You're free today, right?",
 			gentle = "{player}, I need {role} today.|Would you mind? It'd mean a lot.",

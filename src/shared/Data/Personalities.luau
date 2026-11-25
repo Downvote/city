@@ -957,7 +957,7 @@ Personalities.list = {
 			bye = {
 				"Um, bye, thanks for talking to me.",
 				"I'll go now, sorry for keeping you.",
-				"Bye, see you, maybe.",
+				"Um, bye, I hope I see you soon.",
 				"Okay, um, see you tomorrow.",
 				"I have to go, but this was nice.",
 			},
@@ -1237,7 +1237,7 @@ Personalities.list = {
 				"See you, and get home safe.",
 				"I'm off, so see you at the harbour.",
 				"Later, and get some sleep.",
-				"Bye, the pier's quiet if you need it.",
+				"See you around.",
 			},
 			tease = {
 				"You missed a spot.",
@@ -1373,7 +1373,7 @@ Personalities.list = {
 			},
 			bye = {
 				"I'm going, so don't follow me.",
-				"Bye, and fix your fence.",
+				"Bye, and wear a proper coat next time.",
 				"Right, I've wasted enough time, see you.",
 				"Later, and eat something proper, you look pale.",
 				"Bye, and don't do anything silly while I'm gone.",
@@ -1652,8 +1652,8 @@ Personalities.list = {
 			bye = {
 				"Goodbye, and do read something good tonight.",
 				"I must get back to my book, but this was lovely.",
-				"Bye, I'll bring you that book tomorrow.",
-				"See you, and tell me what you think of the ending.",
+				"Goodbye, it was nice to talk properly.",
+				"See you, I'll save you a seat at the library.",
 				"I'll let you go, sorry for talking so long.",
 			},
 			tease = {
