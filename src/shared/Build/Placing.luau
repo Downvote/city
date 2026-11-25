@@ -145,7 +145,8 @@ end
 -- touch.
 local function ignoreSet(made: { [number]: string }?, key: string?): { [string]: boolean }
 	local out: { [string]: boolean } = {}
-	for _, k in made or {} do
+	local list: { [number]: string } = made or {}
+	for _, k in list do
 		out[k] = true
 	end
 	if key then

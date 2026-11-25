@@ -129,7 +129,7 @@ end
 -- The body of a free standing item where it stands in the plot, ready to test. Pieces that
 -- pass (above), and items on a wall, have none.
 function Collide.itemShape(item: any): Shape
-	local def = type(item) == "table" and Catalog.get(item.id)
+	local def: Catalog.Def? = if type(item) == "table" and type(item.id) == "string" then Catalog.get(item.id) else nil
 	if not def or Collide.passes(def) or item.wall ~= nil then
 		return EMPTY
 	end
@@ -185,7 +185,8 @@ function Collide.wallBoxes(w: any, openings: { { number } }?): { Box }
 		})
 	end
 	local at = 0
-	for _, o in openings or {} do
+	local list: { { number } } = openings or {}
+	for _, o in list do
 		local t, wide, y0, y1 = o[1], o[2], o[3], o[4]
 		piece(at, t - wide / 2, 0, height)
 		piece(t - wide / 2, t + wide / 2, 0, y0)
