@@ -147,7 +147,7 @@ Interactions.uses = {
 				near = "cheer",
 				mood = 4,
 				puff = "notes",
-				log = "{name} played the piano without a wrong note, and everyone near clapped.",
+				log = "{name} played the piano without a wrong note, and everyone nearby clapped.",
 			},
 		},
 		player = {
@@ -253,9 +253,9 @@ Interactions.uses = {
 		act = "point",
 		beat = 4.5,
 		lines = {
-			"Hm, where was I up to?",
+			"Hm, where was I?",
 			"I've read this one twice, so this makes three.",
-			"One more chapter... okay, maybe two.",
+			"One more chapter, okay, maybe two.",
 			"Oh, this is the bit I love.",
 		},
 		outcomes = {
@@ -288,7 +288,7 @@ Interactions.uses = {
 				rarity = "rare",
 				weight = 3,
 				say = {
-					"Oh? There's an old letter tucked in here... who wrote this?",
+					"Oh, there's an old letter tucked in here... who wrote this?",
 					"There's a letter between the pages, and it's years old.",
 				},
 				icon = "idea",
@@ -305,7 +305,7 @@ Interactions.uses = {
 					rarity = "usual",
 					weight = 80,
 					say = {
-						"You leaf through a book about boats.",
+						"You flip through a book about boats.",
 						"It's a cookbook with one page folded down.",
 						"It's a book of maps, and half the places look made up.",
 					},
@@ -424,7 +424,7 @@ Interactions.uses = {
 		lines = {
 			"That smells all right, I think?",
 			"A pinch of salt, or maybe two.",
-			"It's nearly done... nearly.",
+			"It's nearly done, just a little longer.",
 			"Please don't burn, please don't burn.",
 		},
 		outcomes = {
@@ -450,7 +450,7 @@ Interactions.uses = {
 				weight = 8,
 				say = {
 					"A bit more salt... okay, that's far too much salt.",
-					"That was sugar, wasn't it? That was definitely sugar.",
+					"Wait, that was sugar, and I wanted salt.",
 				},
 				act = "laugh",
 			},
@@ -482,7 +482,7 @@ Interactions.uses = {
 		lines = {
 			"There you go, have a big drink.",
 			"Look at you, you're getting so big.",
-			"There, that's better, isn't it?",
+			"There, that's better, now drink up.",
 		},
 		outcomes = {
 			{ id = "water", rarity = "usual", weight = 76 },
@@ -558,10 +558,10 @@ Interactions.uses = {
 				weight = 4,
 				trait = "kind",
 				per = 1,
-				say = { "I'm fine, it's just a sad film, okay?", "Nobody look at me, the dog came home." },
+				say = { "I'm fine, it's just a sad movie, okay?", "Nobody look at me, the dog came home." },
 				icon = "sad",
 				mood = 2,
-				log = "{name} cried at a sad film on the TV. They say it was the ending.",
+				log = "{name} cried at a sad movie on the TV. They say it was the ending.",
 			},
 		},
 	},
@@ -673,7 +673,7 @@ Interactions.uses = {
 				weight = 10,
 				pair = true,
 				say = {
-					"Good game, {other}, shall we play again tomorrow?",
+					"Good game, {other}, want to play again tomorrow?",
 					"You got me, {other}, so I want a rematch soon.",
 				},
 				act = "laugh",
@@ -725,12 +725,12 @@ Interactions.uses = {
 				weight = 4,
 				trait = "brave",
 				per = 1,
-				say = { "Now THAT was a proper solo.", "...Did everyone hear that? Good." },
+				say = { "Now THAT was a real solo.", "...Did everyone hear that? Good." },
 				icon = "sparkle",
 				near = "cheer",
 				mood = 4,
 				puff = "notes",
-				log = "{name} played a drum solo and everyone near clapped.",
+				log = "{name} played a drum solo, and everyone nearby clapped.",
 			},
 		},
 		player = {
@@ -821,7 +821,7 @@ Interactions.uses = {
 		base = 0.5,
 		trait = "focus",
 		per = 1,
-		lines = { "Is that the time already?", "This clock runs a minute slow, I've checked.", "Tick, tock... hm." },
+		lines = { "Is that the time already?", "This clock runs a minute slow, I've checked.", "Tick, tock, hm." },
 		outcomes = {
 			{ id = "time", rarity = "usual", weight = 80 },
 			{
@@ -882,7 +882,7 @@ Interactions.uses = {
 				trait = "social",
 				per = 1,
 				say = {
-					"My nan used to tell stories by a fire like this.",
+					"My grandma used to tell stories by a fire like this.",
 					"This smell reminds me of winters at home.",
 				},
 				icon = "heart",
@@ -919,7 +919,7 @@ Interactions.uses = {
 				rarity = "rare",
 				weight = 4,
 				say = {
-					"Look at that, a proper castle with towers and everything.",
+					"Look at that, a real castle with towers and everything.",
 					"Four towers and a flag, so I'm a genius.",
 				},
 				act = "cheer",
@@ -1017,7 +1017,7 @@ Interactions.uses = {
 					id = "loud",
 					rarity = "uncommon",
 					weight = 18,
-					say = { "It's louder than you meant, and everyone nearby looks round." },
+					say = { "It's louder than you meant, and everyone nearby looks around." },
 					near = "look",
 				},
 				{
@@ -1040,7 +1040,7 @@ Interactions.uses = {
 		trait = "mischief",
 		per = 1,
 		act = "point",
-		lines = { "Morning, little man.", "Oh, it's you again, hello.", "Still guarding the path, are you?" },
+		lines = { "Morning, little man.", "Oh, it's you again, hello.", "Are you still guarding the path?" },
 		outcomes = {
 			{ id = "pat", rarity = "usual", weight = 80 },
 			{
@@ -1112,7 +1112,7 @@ Interactions.uses = {
 				rarity = "uncommon",
 				weight = 10,
 				pair = true,
-				say = { "Budge up a bit, {other}.", "{other}, you're on my side of the sofa." },
+				say = { "Move over a bit, {other}.", "{other}, you're on my side of the sofa." },
 				icon = "heart",
 				heart = true,
 				mood = 2,
@@ -1142,7 +1142,7 @@ Interactions.uses = {
 		trait = "social",
 		per = 1,
 		act = "point",
-		lines = { "Is there anything for me today?", "Please let there be some post." },
+		lines = { "Is there anything for me today?", "Please let there be some mail." },
 		outcomes = {
 			{ id = "none", rarity = "usual", weight = 76 },
 			{
@@ -1169,7 +1169,12 @@ Interactions.uses = {
 			verb = "Check",
 			outcomes = {
 				{ id = "none", rarity = "usual", weight = 76, say = { "There's nothing in it today." } },
-				{ id = "leaflet", rarity = "uncommon", weight = 18, say = { "There's a leaflet about gutters." } },
+				{
+					id = "leaflet",
+					rarity = "uncommon",
+					weight = 18,
+					say = { "There's a flyer about cleaning gutters." },
+				},
 				{
 					id = "card",
 					rarity = "rare",

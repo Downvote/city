@@ -64,79 +64,79 @@ end
 -- or one of these, which are for you and use your name.
 local GREET = {
 	sunny = {
-		"{player}, guess what, the ferry's got a new bell!",
-		"{player}, perfect timing, I've got news!",
+		"{player}, {player}, the ferry's got a new bell, so let's go hear it!",
+		"Ehehe, {player}, perfect timing, I've got news!",
 		"Hi, {player}, a gull just stole a whole pie!",
 	},
 	gentle = {
 		"Oh, {player}, I made too much stew, so take some home with you.",
-		"Oh, {player}, come and sit for a bit.",
-		"{player}, there you are, I saved you some beans.",
+		"Oh my, {player}, you look tired, so sit with me, okay?",
+		"{player}, there you are, have you eaten? I saved you some beans.",
 	},
 	bold = {
 		"{player}, you're free, right? The harbour needs a hand.",
-		"{player}, walk with me to the sea wall.",
+		"Hah, {player}, walk with me to the sea wall.",
 		"Hey, {player}, have you seen how high the tide is today?",
 	},
 	dreamy = {
 		"{player}, the boat bells were ringing this morning, did you hear them?",
 		"Oh, {player}, I was counting boats and lost count.",
-		"{player}... oh, hello, I was miles away.",
+		"{player}... oh, hello, sorry, where was I?",
 	},
 	easygoing = {
 		"*yawn* Oh, hey, {player}, is it lunch already?",
-		"Hey, {player}, bring me an apple from the market?",
+		"Hey, {player}, bring me an apple from the market sometime, no rush.",
 		"Mm, hi, {player}, I've been resting since breakfast.",
 	},
 	proud = {
-		"{player}, you'll want to hear this, I beat everyone at chess in the square.",
+		"{player}, I beat everyone at chess today, naturally.",
 		"Ah, {player}, have you noticed my new window boxes? Everyone else has.",
-		"{player}, you've come just in time, I've finished my best painting yet.",
+		"Hmph, {player}, come and see my best painting yet.",
 	},
 	shy = {
 		"Um, hi, {player}, I didn't think you'd stop.",
-		"{player}, um, I'm not busy, if you want to talk.",
-		"Oh, {player}, um, I brought an extra biscuit, if you want it.",
+		"{player}, um, s-sorry, I didn't mean to stare.",
+		"{player}, um, I brought you a cookie (you don't have to take it).",
 	},
 	cheeky = {
 		"{player}, don't drink from the fountain today, hehe, no reason.",
 		"{player}, if anyone asks, I was with you all morning, okay?",
-		"Oh, {player}, you're just in time to watch the baker open her flour bag, hehe.",
+		"{player}, quick, watch the baker open her flour bag :P",
 	},
 	cool = {
 		"{player}, hey.",
 		"{player}, your place looks good from the road.",
-		"Oh, {player}, mind the third step on the pier, it's loose.",
+		"Hm, {player}, the pier's third step is loose, so I roped it off.",
 	},
 	prickly = {
 		"{player}, your path's full of weeds, and hi.",
-		"{player}, I brought your bin in for you, and don't make it a thing.",
-		"{player}, your shoelace is undone, and no, I'm not tying it.",
+		"{player}, I brought your trash can in, since I was passing anyway.",
+		"Ugh, {player}, your shoelace is undone, and no, I'm not tying it.",
 	},
 	dramatic = {
 		"{player}, thank goodness, you're the only one who understands me!",
-		"Ah, {player}, something tremendous has happened!",
-		"{player}, stop and listen, the bakery's out of buns, and it's a CATASTROPHE.",
+		"*gasp* {player}, something HUGE has happened!",
+		"{player}, the bakery's out of buns, and it's the WORST day ever.",
 	},
 	bookish = {
 		"Oh, {player}, did you know a group of crows is called a murder?",
-		"{player}, good, I've been saving up a fact for you.",
-		"{player}, I've worked out exactly how old the lighthouse is.",
+		"{player}, good, I've saved up a fact for you.",
+		"{player}, I've worked out exactly how old the lighthouse is (114 years, I think).",
 	},
 	gloomy = {
 		"Oh, {player}, my umbrella broke again, as usual.",
-		"{player}, you look cheerful, so I'll try not to spoil it.",
+		"Heh... {player}, you look cheerful, so I'll try not to spoil it.",
 		"{player}, hi, did you want something, or are you just being nice?",
 	},
 	polite = {
-		"Good day, {player}, I hope I'm not keeping you.",
-		"Hello, {player}, how lovely, I was admiring the harbour.",
-		"{player}, what a nice surprise, I was hoping to see you this week.",
+		"Good day, {player}, I hope I am not keeping you.",
+		"Hello, {player}, how lovely to see you today.",
+		"{player}, what a nice surprise, please sit with me.",
 	},
 	foodie = {
 		"{player}, have you eaten? I've already had two snacks.",
-		"{player}, I've just found out the café does cheese scones now.",
-		"{player}, the fish stall's frying today, so come on!",
+		"Mmm, {player}, the café has cheese buns now!",
+		"Yum, {player}, the fish stall's frying today, come on!",
 	},
 	nervous = {
 		"Oh, {player}, phew, I thought you were the big dog from the hill.",
@@ -148,17 +148,17 @@ local GREET = {
 -- After a talk that answered their wish for one.
 local THANKS = {
 	_ = "Thanks for stopping, {player}, that really helped.",
-	sunny = "{player}, thank you, I feel so much better!",
-	gentle = "Thank you, {player}, I feel much lighter now.",
-	bold = "...Thanks, {player}, I needed that more than I let on.",
+	sunny = "{player}, thank you, thank you, I feel so much better!",
+	gentle = "Thank you, {player}, I feel much better, so go and rest too, okay?",
+	bold = "...Thanks, {player}, I needed that more than I said.",
 	dreamy = "Hmm, the grey feeling's gone now, thank you, {player}.",
-	easygoing = "Heh, thanks, {player}, that was as good as a nap.",
+	easygoing = "Haha, thanks, {player}, that was as good as a nap.",
 	proud = "Th-that wasn't me being sad, but thank you, {player}.",
 	shy = "Um, thank you, {player}, I feel a lot better.",
 	cheeky = "ok, real thanks, {player}, no joke.",
 	cool = "{player}, that helped, thanks.",
-	prickly = "Don't make it a thing, {player}, but thanks.",
-	dramatic = "{player}, you've rescued me from DESPAIR, thank you!",
+	prickly = "Don't read into it, {player}, but thanks.",
+	dramatic = "{player}, you've saved my whole LIFE, thank you!",
 	bookish = "Thank you, {player}, that helped more than a good book.",
 	gloomy = "Huh, I actually feel better, thanks, {player}.",
 	polite = "Thank you kindly, {player}, I feel much more myself now.",
@@ -168,22 +168,22 @@ local THANKS = {
 
 -- No bed yet.
 local NOBED = {
-	_ = "I still don't have a bed, just so you know.",
+	_ = "I still don't have a bed, you know.",
 	sunny = "{player}, I've got no bed, so I'm sleeping on coats!",
-	gentle = "Sorry to fuss, {player}, but I've no bed yet.",
-	bold = "I'm still on the floor, so sort me out a bed, okay?",
+	gentle = "Sorry to fuss, {player}, but without a bed I can't sleep well.",
+	bold = "I'm still on the floor, so get me a bed, right?",
 	dreamy = "A bed would be nice, I keep sleeping in odd places...",
 	easygoing = "Eh, the floor's comfy, but a bed would be comfier.",
-	proud = "I shouldn't be sleeping on a rug, so a bed, please.",
+	proud = "Hmph, someone like me shouldn't be sleeping on a rug.",
 	shy = "Um, I don't have a bed yet, but the rug's okay.",
 	cheeky = "{player}, I'm sleeping in the bath, so a bed, please?",
 	cool = "Still no bed, and the floor's cold.",
-	prickly = "I don't care about a bed, but my back does.",
-	dramatic = "{player}, how many more nights on this cruel floor?",
+	prickly = "Ugh, I don't care about a bed, but my back does.",
+	dramatic = "*sob* {player}, how many more nights on this cruel FLOOR?",
 	bookish = "Actually, I still haven't got a bed, and I've read that floors are bad for your back.",
-	gloomy = "Still no bed, so the floor and I are close now.",
-	polite = "Forgive me, {player}, but I don't have a bed yet.",
-	foodie = "No bed yet, so I doze by the bread bin.",
+	gloomy = "Still no bed, as usual, so the floor and I are close now.",
+	polite = "Forgive me, {player}, but I still do not have a bed.",
+	foodie = "No bed yet, so I sleep next to the bread box.",
 	nervous = "{player}, um, I still don't have a bed, is that okay?",
 }
 
@@ -191,27 +191,27 @@ local NOBED = {
 local QUARREL = {
 	_ = "{y} and I aren't talking at the moment.",
 	sunny = "{y} and I had a fight, and I hate it!",
-	gentle = "{y} and I had words, and I want to make it right.",
+	gentle = "{y} and I had an argument, and I want to make it right.",
 	bold = "Don't bring up {y}, we're not talking.",
 	dreamy = "{y} and I aren't speaking, and I can't remember why...",
-	easygoing = "Me and {y} aren't talking, but give it a day.",
+	easygoing = "Eh, me and {y} aren't talking, but give it a day.",
 	proud = "I'm not speaking to {y} until they apologise.",
-	shy = "{y} and I fell out, and I don't know what to say...",
+	shy = "Um, {y} and I argued, and I don't know what to say...",
 	cheeky = "{y} and I are fighting, and I think I'm winning.",
 	cool = "{y} and I aren't talking, and that's all.",
 	prickly = "Don't say {y}'s name, ugh, fine, I miss them.",
-	dramatic = "{y} and I are sworn enemies, at least until Friday!",
-	bookish = "{y} and I disagree about the tide tables, and neither will budge.",
-	gloomy = "{y} isn't talking to me, which was bound to happen.",
-	polite = "{y} and I disagreed, and I'd like to mend it.",
+	dramatic = "{y} and I are ENEMIES now, at least until Friday!",
+	bookish = "Actually, {y} and I disagree about the tide tables, and we're both stubborn.",
+	gloomy = "{y} isn't talking to me, and I knew that would happen.",
+	polite = "{y} and I disagreed, and I would like to say sorry.",
 	foodie = "{y} and I fell out over the last dumpling.",
-	nervous = "{y} is cross with me, and what if it's forever?",
+	nervous = "{y} is mad at me, and what if it's forever?",
 }
 
 -- Their best friend, the one at the top.
 local FRIEND = {
 	_ = "{y} always makes me laugh.",
-	sunny = "{y} and I sat on the pier till the lamps came on!",
+	sunny = "{y} and I sat on the pier until it got dark, ehehe!",
 	gentle = "{y} walked me home in the rain under their umbrella.",
 	bold = "{y}'s solid, and they've always got my back.",
 	dreamy = "{y} watched the clouds with me for an hour.",
@@ -223,7 +223,7 @@ local FRIEND = {
 	prickly = "{y}'s annoying, but I'd carry their boxes up the hill.",
 	dramatic = "{y} is my dearest friend in the whole world!",
 	bookish = "{y} brought back all four books I lent them, on time.",
-	gloomy = "{y} never minds when I'm gloomy, and they bring biscuits.",
+	gloomy = "{y} never minds when I'm gloomy, and they bring cookies.",
 	polite = "I've kept the card {y} sent when I was ill.",
 	foodie = "{y} shares their chips without me even asking.",
 	nervous = "{y} walks me past the big dog every morning.",
@@ -235,7 +235,7 @@ local SMALL = {
 	"It's a quiet day, and the square's half empty.",
 	"The harbour smelled like rain, but it never came.",
 	"Somebody on a boat waved, so I waved back.",
-	"The bakery queue went round the corner today.",
+	"The bakery line went around the corner today.",
 	"Someone keeps leaving flowers on the pier bench.",
 	"I watched the ferry come in from the hill.",
 	"The fountain's been extra splashy since the wind changed.",
@@ -247,8 +247,8 @@ local SMALL = {
 local OWN = {
 	sunny = {
 		"I counted fourteen boats in the harbour today!",
-		"Somebody planted flowers round the fountain, and I need to know who!",
-		"Wouldn't it be fun if the whole street had lunch on the square?",
+		"Somebody planted flowers around the fountain, and I need to know who!",
+		"Let's get the whole street to have lunch in the square together!",
 		"{player}, I know the baker's middle name now, ehehe.",
 		"I threw the harbour dog's stick eleven times!",
 	},
@@ -263,11 +263,11 @@ local OWN = {
 		"I cleared the fallen branch off the hill path.",
 		"Anything heavy need lifting? Just point at it.",
 		"{player}, you're helping with the sea wall on Saturday, right?",
-		"I'm watching the pier tonight to catch the litterbug.",
+		"Tonight I'm catching whoever drops trash on the pier.",
 		"I carried the baker's new oven up her steps by myself!",
 	},
 	dreamy = {
-		"I followed a cat round the square all morning...",
+		"I followed a cat around the square all morning...",
 		"You can feel the waves through the pier if you lie on it.",
 		"{player}, did you see the moon out at lunchtime?",
 		"I found a grey feather with a white tip.",
@@ -276,9 +276,9 @@ local OWN = {
 	easygoing = {
 		"I had a busy morning, and by busy I mean I watched the tide come in.",
 		"Not much to report, which is how I like it.",
-		"Mm, I had plans today, but they'll keep.",
+		"Mm, I had plans today, but eh, they can wait.",
 		"{player}, you should try lying in the long grass on the hill sometime.",
-		"The baker asked me to sweep her step, and I said the wind would do it for free.",
+		"The baker asked me to sweep her porch, and I said the wind does it for free.",
 	},
 	proud = {
 		"I've started a list of everything I'm best at, and it's on its second page.",
@@ -302,14 +302,14 @@ local OWN = {
 		"ok, it was me who hid the bakery's spoons.",
 	},
 	cool = {
-		"The boats came in early, so I'd keep a coat handy.",
+		"Boats came in early, so keep a coat handy.",
 		"The bakery's out of rye by nine, so go early.",
 		"Someone left a rowing boat untied at the pier, so I tied it.",
-		"{player}, if you want a hand with building, just ask.",
+		"{player}, if you need a hand building, just ask.",
 		"I saw a heron on my run.",
 	},
 	prickly = {
-		"Someone left a cart right in the path, honestly.",
+		"Tsk, someone left a cart right in the path.",
 		"I gave a gull my crust, so don't tell anyone.",
 		"{player}, your mailbox is crooked, so I'll fix it.",
 		"I don't need help, but hold this.",
@@ -317,8 +317,8 @@ local OWN = {
 	},
 	dramatic = {
 		"The baker spelled my name wrong on my cake, and I may never recover.",
-		"My kettle whistled at me, and I took offence.",
-		"{player}, you're in chapter two of my memoirs.",
+		"The fountain splashed me on PURPOSE, and I'm hurt.",
+		"{player}, you're in chapter two of my life story.",
 		"My festival speech is only nine pages so far!",
 		"*gasp* Someone moved my favourite bench three inches!",
 	},
@@ -337,11 +337,11 @@ local OWN = {
 		"Nobody bothered me at the harbour all afternoon.",
 	},
 	polite = {
-		"I've started saying good morning to the gulls.",
-		"If I may, {player}, your garden is coming along nicely.",
-		"The market opens at eight, but I like to be there at quarter to.",
-		"I've taken up writing letters again, and I'd forgotten how much I like it.",
-		"I've reported the loose step on the pier, politely.",
+		"I have started saying good morning to the gulls.",
+		"If I may say so, {player}, your garden looks very nice.",
+		"The market opens at eight, but I like to be there at a quarter to eight.",
+		"I am writing letters again, and I had forgotten how much I like it.",
+		"I told the harbour master about the loose step on the pier, very politely.",
 	},
 	foodie = {
 		"I had two small pies for breakfast.",
@@ -363,7 +363,7 @@ local OWN = {
 local JOKES = {
 	"Why did the baker stop making doughnuts? She got tired of the hole thing.",
 	"Why was the broom late? It overswept.",
-	"Why did the biscuit go to the doctor? It was feeling crummy.",
+	"Why did the cookie go to the doctor? It was feeling crummy.",
 	"What do clouds wear under their coats? Thunderwear.",
 	"Where do fish keep their money? In the river bank.",
 	"Why are fish so clever? They live in schools.",
@@ -427,7 +427,7 @@ local OPINION = {
 	{
 		min = -40,
 		lines = {
-			"{y} and I rub each other up the wrong way.",
+			"{y} and I just don't get along.",
 			"{y} took the last bun right in front of me.",
 		},
 	},
@@ -435,7 +435,7 @@ local OPINION = {
 		min = -101,
 		lines = {
 			"Can we not talk about {y}, please?",
-			"{y} and I are best kept at opposite ends of the square.",
+			"{y} and I should stay at opposite ends of the square.",
 		},
 	},
 }
@@ -443,7 +443,7 @@ local OPINION = {
 -- What a neighbour is like, by their personality.
 local LIKE = {
 	sunny = "{y} said hello to me four times today!",
-	gentle = "{y} left a cake on my step without a note.",
+	gentle = "{y} left a cake outside my door without a note.",
 	bold = "{y} carried my shopping up the hill without asking.",
 	dreamy = "{y} asked if fish get bored, and now I wonder too.",
 	easygoing = "{y} slept on the pier all afternoon.",
@@ -470,14 +470,14 @@ local BEST = {
 	dreamy = "{y}'s my best friend, and we don't need words.",
 	easygoing = "{y}'s my best friend, and the best nap company.",
 	proud = "{y}'s my best friend, and I chose well.",
-	shy = "{y}'s my best friend, um, I've never said that aloud.",
+	shy = "{y}'s my best friend, um, I've never said that out loud.",
 	cheeky = "{y}'s my best friend, and we've got a secret knock.",
 	cool = "{y}'s my best friend, that's all.",
 	prickly = "{y}'s my best friend, ugh, don't tell them.",
 	dramatic = "{y}'s my best friend, so I'm writing them a song!",
 	bookish = "{y} is my best friend, and we argue about every book.",
 	gloomy = "{y}'s my best friend, and they're the only one who laughs at my jokes.",
-	polite = "{y} is a very dear friend, and I count myself lucky.",
+	polite = "{y} is a very good friend, and I feel lucky every day.",
 	foodie = "{y}'s my best friend, so they get my last dumpling.",
 	nervous = "{y} is my best friend, I checked, and they said yes.",
 }
@@ -504,7 +504,7 @@ local SEASON = {
 	{
 		"My fingers have been cold since Monday.",
 		"There was frost on every roof this morning, like sugar.",
-		"My winter plan is a blanket, some tea and a window.",
+		"My winter plan is a blanket and a cup of tea by the window.",
 	},
 }
 
@@ -512,7 +512,7 @@ local WEATHER = {
 	rain = {
 		"Rain on the roof always helps me sleep.",
 		"My boots haven't dried since yesterday.",
-		"It's a good day for a book by the window.",
+		"It's a good day to read by the window.",
 	},
 	storm = {
 		"That thunder rattled every cup in my cupboard.",
@@ -521,7 +521,7 @@ local WEATHER = {
 	},
 	snow = {
 		"Go and stand in the snow, it's quieter than you'd think.",
-		"There's snow on every roof, and the town looks iced.",
+		"The snow on the roofs looks like icing.",
 		"My snowman's leaning like me after a big lunch.",
 	},
 	blossom = {
@@ -530,18 +530,18 @@ local WEATHER = {
 		"I swept up the petals, and they blew straight back.",
 	},
 	leaves = {
-		"I swept my step twice, and the leaves won.",
+		"I swept outside my door twice, and the leaves won.",
 		"I've stepped on every crunchy leaf I could find.",
 		"I had a leaf stuck in my hair all morning, and nobody told me.",
 	},
 	clear = {
 		"There's not a cloud anywhere today.",
 		"You can see every island from the hill today.",
-		"Clear skies all day, so my washing's finally dry.",
+		"Clear skies all day, so my laundry's finally dry.",
 	},
 	cloudy = {
 		"It's grey out, but that's good for walking.",
-		"The clouds are sitting right on top of the hill.",
+		"The clouds are sitting right on the hill.",
 		"It's so grey that I nearly brought an umbrella, just in case.",
 	},
 }
@@ -549,20 +549,20 @@ local WEATHER = {
 -- A craving, in their own words ({food} as it reads inside a sentence: "a rice ball", "ice cream").
 local CRAVE = {
 	_ = "I could really go for {food} right now.",
-	sunny = "{player}, guess what I'm craving? I'd love {food} today!",
+	sunny = "{player}, {player}, let's go get {food} together today!",
 	gentle = "I've been good all week, {player}, so {food} would be such a treat.",
-	bold = "I need {food}, {player}, today if you can manage it.",
+	bold = "Hah, {player}, I need {food} today, so you'll get me some, right?",
 	dreamy = "Hmm... I keep thinking about {food}, I can almost smell it.",
-	easygoing = "Mm, {player}, {food} would really hit the spot, but there's no rush.",
+	easygoing = "Mm, {player}, {food} would be nice, no rush.",
 	proud = "I think I've earned {food}, and only the good kind, please.",
 	shy = "Um, sorry, {player}... {food} would be nice, but you don't have to.",
 	cheeky = "{player}, deal? get me {food} and i won't prank you for a whole day",
 	cool = "{player}. If you're passing the market, I'd like {food}.",
-	prickly = "Don't look at me like that, I just want {food}, okay?",
-	dramatic = "{player}, I'll simply PERISH if I don't have {food} today!",
+	prickly = "Ugh, don't stare, I just want {food}.",
+	dramatic = "{player}, I'll simply DIE if I don't have {food} today!",
 	bookish = "I've been reading an old cookbook, and now I can't stop thinking about {food}.",
 	gloomy = "I'd like {food}, but they'll have sold out, as usual.",
-	polite = "Forgive me, {player}, but {food} would be ever so welcome.",
+	polite = "{player}, if it is no trouble, {food} would be very welcome.",
 	foodie = "{player}, I've been dreaming about {food} since breakfast.",
 	nervous = "S-sorry, {player}, is it greedy if I ask for {food}?",
 }
@@ -571,11 +571,11 @@ local CRAVE = {
 local MEET = {
 	_ = "I'd like to meet {y} properly, could you help?",
 	sunny = "{player}, introduce me to {y}, I want us to be friends!",
-	gentle = "{y} looks a little lonely, so would you introduce us?",
+	gentle = "{y} looks lonely, so would you introduce us?",
 	bold = "{player}, introduce me to {y}, I tried and they ran off.",
 	dreamy = "{y} looks at the sea like I do, so could you introduce us?",
-	easygoing = "{y} seems all right, so introduce us sometime, no rush.",
-	proud = "{y} should meet me, so could you arrange it, {player}?",
+	easygoing = "{y} seems nice, so introduce us, no rush.",
+	proud = "Naturally, {y} should meet me, so arrange it, {player}.",
 	shy = "Um, {player}, would you stand with me while I meet {y}?",
 	cheeky = "{y} looks fun to prank, I mean, to know, so introduce us?",
 	cool = "{player}, introduce me to {y} sometime.",
@@ -583,7 +583,7 @@ local MEET = {
 	dramatic = "{player}, fate says I must meet {y}, so make it happen!",
 	bookish = "I've seen {y} reading on the pier, so would you introduce us?",
 	gloomy = "{y} won't like me, but introduce us anyway?",
-	polite = "{player}, would you be so kind as to introduce me to {y}?",
+	polite = "{player}, would you please introduce me to {y}, if it is no trouble?",
 	foodie = "{y} always has the best snacks, so introduce us?",
 	nervous = "{player}, could you introduce me to {y}? What if I say something odd?",
 }
@@ -729,7 +729,7 @@ local function lineFor(profile: any, vid: string, rng: any, opts: { [string]: an
 				add(text)
 			end
 			if v.bed then
-				add("I slept like a log last night, which was lovely.")
+				add("I slept really well last night, which was lovely.")
 			end
 			add(saying and saying.text)
 			local hobby = Sayings.hobby(v.hobby)

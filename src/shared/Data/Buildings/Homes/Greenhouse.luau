@@ -13,8 +13,6 @@ local HomeKit = require(script.Parent.Parent.HomeKit)
 
 type Finish = HomeKit.Finish
 
-local F = HomeKit.F
-
 -- finishes
 local BRICK: Finish = { c = "D8A48E", m = "Brick" } -- soft brick
 local INSIDE: Finish = { c = "F4ECDC", m = "Plaster" }
@@ -88,8 +86,14 @@ return function(add: any)
 			k:open("door_wood", "bathF", 9.6, WHITE, FOREST)
 
 			-- the outside --------------------------------------------------------------------------
-			k:dress("front", { shutters = { FOREST, FOREST_DARK }, hood = { WHITE, TILE_ROOF.c }, box = { WHITE, PINK } })
-			k:dress("left", { shutters = { FOREST, FOREST_DARK }, hood = { WHITE, TILE_ROOF.c }, box = { WHITE, BUTTER } })
+			k:dress(
+				"front",
+				{ shutters = { FOREST, FOREST_DARK }, hood = { WHITE, TILE_ROOF.c }, box = { WHITE, PINK } }
+			)
+			k:dress(
+				"left",
+				{ shutters = { FOREST, FOREST_DARK }, hood = { WHITE, TILE_ROOF.c }, box = { WHITE, BUTTER } }
+			)
 			for _, w in { "front", "left", "leftB", "back" } do
 				k:footing(w, STONE, PALE_STONE)
 			end

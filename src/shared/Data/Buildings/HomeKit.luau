@@ -125,17 +125,7 @@ end
 
 -- A small piece standing on top of `base` (a lamp on a nightstand, a kettle on a counter), on
 -- level `lv`.
-function K.on(
-	k: Kit,
-	id: string,
-	base: string,
-	x: number,
-	z: number,
-	r: number?,
-	c1: string?,
-	c2: string?,
-	lv: number?
-)
+function K.on(k: Kit, id: string, base: string, x: number, z: number, r: number?, c1: string?, c2: string?, lv: number?)
 	k.b:item(id, x, z, r or 0, lv or 0, HomeKit.top(base, lv))
 	k:paint(c1, c2)
 end
@@ -232,17 +222,25 @@ function K.row(k: Kit, id: string, a: number, b: number, n: number, at: number, 
 	end
 end
 
+-- Whether a gate goes at `v` along a fence.
+local function gateAt(gates: { number }?, v: number): boolean
+	if gates then
+		for _, g in gates do
+			if math.abs(v - g) < 0.01 then
+				return true
+			end
+		end
+	end
+	return false
+end
+
 -- A picket fence along x at `z` from x `a` to `b`, panel middles four apart from a + 2, with a
 -- garden gate in place of the panel at each of `gates` (a gate is a little wider than a panel, so
 -- it closes the gap).
 function K.fenceX(k: Kit, z: number, a: number, b: number, gates: { number }?, c1: string?, c2: string?)
 	local x = a + 2
 	while x <= b - 2 + 1e-6 do
-		local gate = false
-		for _, g in gates or {} do
-			gate = gate or math.abs(x - g) < 0.01
-		end
-		k:put(if gate then "gate_garden" else "fence_picket", x, z, 0, c1, c2)
+		k:put(if gateAt(gates, x) then "gate_garden" else "fence_picket", x, z, 0, c1, c2)
 		x += 4
 	end
 end
@@ -251,11 +249,7 @@ end
 function K.fenceZ(k: Kit, x: number, a: number, b: number, gates: { number }?, c1: string?, c2: string?)
 	local z = a + 2
 	while z <= b - 2 + 1e-6 do
-		local gate = false
-		for _, g in gates or {} do
-			gate = gate or math.abs(z - g) < 0.01
-		end
-		k:put(if gate then "gate_garden" else "fence_picket", x, z, 90, c1, c2)
+		k:put(if gateAt(gates, z) then "gate_garden" else "fence_picket", x, z, 90, c1, c2)
 		z += 4
 	end
 end

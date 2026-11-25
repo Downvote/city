@@ -37,7 +37,7 @@ local list: { Job } = {
 		likes = { "sunny", "proud", "polite" },
 		lines = {
 			"The fresh stock came in this morning.",
-			"Have a look round, there's no rush.",
+			"Take a look around, there's no rush.",
 			"The apples are two for one today.",
 			"That's the last of the pears gone.",
 		},
@@ -50,7 +50,7 @@ local list: { Job } = {
 		income = 1125,
 		likes = { "sunny", "gentle", "foodie" },
 		lines = {
-			"Mind, that one's hot, I've only just made it.",
+			"Careful, that one's hot, I've only just made it.",
 			"Next, please, what can I get you?",
 			"I tried to draw a leaf in the foam, and it nearly looks like one.",
 			"I'm grinding a fresh batch, so give me two minutes.",
@@ -65,7 +65,7 @@ local list: { Job } = {
 		likes = { "easygoing", "gentle", "foodie" },
 		lines = {
 			"The rolls are fresh out and still warm.",
-			"Mind the tray, it's just come out of the oven.",
+			"Careful with the tray, it's just come out of the oven.",
 			"The sourdough's sold out, but there'll be more tomorrow.",
 			"I've got flour in my eyebrows again.",
 		},
@@ -80,7 +80,7 @@ local list: { Job } = {
 		lines = {
 			"These yellow ones last the longest in a vase.",
 			"The tulips only came in this morning.",
-			"Go on, have a smell of this one.",
+			"Here, smell this one.",
 			"Would you like them wrapped?",
 		},
 	},
@@ -88,7 +88,7 @@ local list: { Job } = {
 		id = "artist",
 		place = "studio",
 		name = "Artist",
-		blurb = "Paints, sells the odd picture.",
+		blurb = "Paints, and sells a picture now and then.",
 		income = 900,
 		likes = { "dreamy", "shy", "dramatic" },
 		lines = {
@@ -109,7 +109,7 @@ local list: { Job } = {
 			"Open wide and say ahh for me.",
 			"You need to drink more water, and I mean it.",
 			"Come on in, whoever's next.",
-			"Sit yourself down, and let me have a look.",
+			"Sit down, and let me take a look.",
 		},
 	},
 	{
@@ -151,19 +151,19 @@ local list: { Job } = {
 			"Can you hold that end steady for me?",
 			"Pass me the hammer, please, the big one.",
 			"That'll hold, it's as good as new.",
-			"Mind the sawdust on the floor.",
+			"Watch out for the sawdust on the floor.",
 		},
 	},
 	{
 		id = "postie",
 		place = "post office",
-		name = "Postie",
+		name = "Mail carrier",
 		blurb = "Sorts the town's letters.",
 		income = 975,
 		likes = { "shy", "easygoing", "cool" },
 		lines = {
-			"The post is in, and there's one for you.",
-			"There are parcels everywhere today.",
+			"The mail is in, and there's a letter for you.",
+			"There are packages everywhere today.",
 			"Stamps are on the left, please.",
 			"I'm sorting it all by street, and I'm nearly there.",
 		},
@@ -177,7 +177,7 @@ local list: { Job } = {
 		likes = { "cheeky", "sunny", "foodie" },
 		lines = {
 			"Would you like a cone or a cup?",
-			"Sprinkles are on the house today.",
+			"Sprinkles are free today.",
 			"Quick, it's dripping down the side.",
 			"The strawberry is nearly all gone.",
 		},

@@ -85,7 +85,14 @@ return function(add: any)
 			k:hang("string_lights", "front", 10, 9.6, "a")
 			k:hang("string_lights", "front", 25.4, 9.6, "a")
 			for _, p in { { 6, 10 }, { 30, 10 }, { 30, 30 }, { 6, 30 } } do
-				k:corner(p[1], p[2], if p[2] == 10 then (if p[1] == 6 then 180 else 90) else (if p[1] == 6 then 270 else 0), 1, WHITE, WHITE)
+				k:corner(
+					p[1],
+					p[2],
+					if p[2] == 10 then (if p[1] == 6 then 180 else 90) else (if p[1] == 6 then 270 else 0),
+					1,
+					WHITE,
+					WHITE
+				)
 			end
 			k:up("chair_lounge", 9.6, 7.0, 180, 1, WHITE, AQUA)
 			k:up("chair_lounge", 12.8, 7.0, 180, 1, WHITE, CORAL)
@@ -105,20 +112,22 @@ return function(add: any)
 
 			-- the posts: under every corner of the house and the decks, and along their edges
 			-- (each set in a little from the floor's edges, its top hidden in the floor)
-			for _, p in {
-				{ 6.6, 4.6 },
-				{ 14, 4.6 },
-				{ 22, 4.6 },
-				{ 29.5, 4.6 },
-				{ 35.4, 4.6 },
-				{ 6.6, 10 },
-				{ 35.4, 10 },
-				{ 6.6, 20 },
-				{ 35.4, 15.4 },
-				{ 6.6, 29.4 },
-				{ 18, 29.4 },
-				{ 29.5, 29.4 },
-			} do
+			for _, p in
+				{
+					{ 6.6, 4.6 },
+					{ 14, 4.6 },
+					{ 22, 4.6 },
+					{ 29.5, 4.6 },
+					{ 35.4, 4.6 },
+					{ 6.6, 10 },
+					{ 35.4, 10 },
+					{ 6.6, 20 },
+					{ 35.4, 15.4 },
+					{ 6.6, 29.4 },
+					{ 18, 29.4 },
+					{ 29.5, 29.4 },
+				}
+			do
 				k:putY("pillar_square", p[1], p[2], 0, F - 0.1, WHITE, WHITE)
 			end
 

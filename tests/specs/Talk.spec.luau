@@ -281,7 +281,7 @@ describe("Talk", function()
 		local nobed = Voice.speak(v.pers, "Robin, I've got no bed, so I'm sleeping on coats!")
 		expect(atHome[Voice.speak(v.pers, Sayings.hobby("fishing").line)]).toBe(true)
 		expect(atHome[Voice.speak(v.pers, Sayings.get("tea").text)]).toBe(true)
-		expect(atHome[Voice.speak(v.pers, "V2 and I sat on the pier till the lamps came on!")]).toBe(true)
+		expect(atHome[Voice.speak(v.pers, "V2 and I sat on the pier until it got dark, ehehe!")]).toBe(true)
 		expect(atHome[quarrel]).toBe(true)
 		expect(atHome[nobed]).toBe(true)
 		-- the quarrel blows over, and a bed turns up
@@ -312,8 +312,8 @@ describe("Talk", function()
 		end
 		local shy, bold = heard("shy"), heard("bold")
 		local shyBed = Voice.speak("shy", "Um, I don't have a bed yet, but the rug's okay.")
-		local boldBed = Voice.speak("bold", "I'm still on the floor, so sort me out a bed, okay?")
-		local shyFell = Voice.speak("shy", "V2 and I fell out, and I don't know what to say...")
+		local boldBed = Voice.speak("bold", "I'm still on the floor, so get me a bed, right?")
+		local shyFell = Voice.speak("shy", "Um, V2 and I argued, and I don't know what to say...")
 		local boldFell = Voice.speak("bold", "Don't bring up V2, we're not talking.")
 		expect(shy[shyBed]).toBe(true)
 		expect(bold[boldBed]).toBe(true)
@@ -383,7 +383,7 @@ describe("Talk", function()
 				or text:find("saved me a seat", 1, true) ~= nil
 			cross = cross
 				or text == Voice.speak(v.pers, "Can we not talk about V3, please?")
-				or text == Voice.speak(v.pers, "V3 and I are best kept at opposite ends of the square.")
+				or text == Voice.speak(v.pers, "V3 and I should stay at opposite ends of the square.")
 		end
 		expect(fond).toBe(true)
 		expect(cross).toBe(true)

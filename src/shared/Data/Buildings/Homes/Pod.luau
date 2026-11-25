@@ -30,7 +30,6 @@ local PAD: Finish = { c = "C8CCD0", m = "Concrete" }
 local GLOW: Finish = { c = "9FD8E0", m = "Neon" }
 -- paint for the pieces
 local CYAN = "6CC4CC"
-local CYAN_DARK = "3F8C96"
 local WHITE = "F2F4F6"
 local SILVER = "B4BEC8"
 local CHARCOAL = "4A4E56"

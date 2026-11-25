@@ -115,7 +115,9 @@ return function(add: any)
 			k:put("mailbox", 26.4, 1.4, 0, RED, WHITE)
 			k:put("lamp_post", 12.0, 4.6, 0)
 			-- the vegetable garden through the side door, a woodpile and a sawhorse by the wall
-			for _, p in { { 38.6, 16.4 }, { 43.4, 16.4 }, { 38.6, 22.4 }, { 43.4, 22.4 }, { 38.6, 28.4 }, { 43.4, 28.4 } } do
+			for _, p in
+				{ { 38.6, 16.4 }, { 43.4, 16.4 }, { 38.6, 22.4 }, { 43.4, 22.4 }, { 38.6, 28.4 }, { 43.4, 28.4 } }
+			do
 				k:put("veg_patch", p[1], p[2], 0)
 			end
 			k:put("water_butt", 44.6, 33.8, 0, SAGE, WALNUT)
