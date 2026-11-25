@@ -354,7 +354,7 @@ Personalities.list = {
 				"Hah, you think that's fair? It isn't.",
 				"Don't you talk to me like that!",
 				"Right, we're sorting this out now.",
-				"You'd better fix that, and today.",
+				"You'd better take that back, right now.",
 			},
 			thanks = {
 				"...Thanks, I owe you one.",
