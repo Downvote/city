@@ -15,9 +15,9 @@ type Finish = { c: string, m: string }
 
 local F = Tuning.Plot.Foundation
 
--- finishes: butter plaster and pale stone under slate blue
+-- finishes: butter boards and pale boards under slate blue
 local BUTTER: Finish = { c = "F3DFA6", m = "WoodPlanks" }
-local STONE: Finish = { c = "DAD4C8", m = "Limestone" }
+local BAKEHOUSE: Finish = { c = "DAD4C8", m = "WoodPlanks" } -- the bakehouse outside
 local SHOP_IN: Finish = { c = "F6EBD6", m = "WoodPlanks" }
 local BAKE_IN: Finish = { c = "F6F0E2", m = "WoodPlanks" }
 local SLATE: Finish = { c = "6E8CA8", m = "Slate" }
@@ -108,12 +108,12 @@ return function(add: any)
 			b:wall("mid", 18, 8, 18, 24, BAKE_IN, SHOP_IN)
 			b:wall("back", 18, 24, 2, 24, BUTTER, SHOP_IN)
 			b:wall("left", 2, 24, 2, 6, BUTTER, SHOP_IN)
-			b:wall("bhfront", 18, 8, 28, 8, STONE, BAKE_IN)
-			b:wall("bhright", 28, 8, 28, 24, STONE, BAKE_IN)
-			b:wall("bhback", 28, 24, 18, 24, STONE, BAKE_IN)
+			b:wall("bhfront", 18, 8, 28, 8, BAKEHOUSE, BAKE_IN)
+			b:wall("bhright", 28, 8, 28, 24, BAKEHOUSE, BAKE_IN)
+			b:wall("bhback", 28, 24, 18, 24, BAKEHOUSE, BAKE_IN)
 			-- a steep gable over the shop and a lower one over the bakehouse, both to the street
 			b:roof(2, 6, 18, 24, "gable", 10, 1, SLATE, BUTTER, 0, 1.2)
-			b:roof(18, 8, 28, 24, "gable", 6, 1, SLATE, STONE, 0, 0.8)
+			b:roof(18, 8, 28, 24, "gable", 6, 1, SLATE, BAKEHOUSE, 0, 0.8)
 
 			-- doors and windows
 			b:open("door_front", "front", 3.6)
