@@ -34,10 +34,10 @@ local list: { Job } = {
 		income = 1050,
 		likes = { "sunny", "proud", "polite" },
 		lines = {
-			"Fresh stock in this morning.",
-			"Have a look, no rush.",
-			"Apples are two for one today.",
-			"That's the last of the pears.",
+			"The fresh stock came in this morning.",
+			"Have a look round, there's no rush.",
+			"The apples are two for one today.",
+			"That's the last of the pears gone.",
 		},
 	},
 	{
@@ -47,10 +47,10 @@ local list: { Job } = {
 		income = 1125,
 		likes = { "sunny", "gentle", "foodie" },
 		lines = {
-			"Milky one for you. Mind, it's hot.",
-			"Next, please. What can I get you?",
-			"I drew a leaf in the foam. Sort of a leaf.",
-			"Grinding a fresh batch. Two minutes.",
+			"Here's your milky one, but mind, it's hot.",
+			"Next, please, what can I get you?",
+			"I tried to draw a leaf in the foam, and it nearly looks like one.",
+			"I'm grinding a fresh batch, so give me two minutes.",
 		},
 	},
 	{
@@ -60,10 +60,10 @@ local list: { Job } = {
 		income = 1200,
 		likes = { "easygoing", "gentle", "foodie" },
 		lines = {
-			"Fresh rolls, still warm.",
-			"Mind the tray, it's just out.",
-			"Sourdough's sold out. Back tomorrow.",
-			"There's flour in my eyebrows again.",
+			"The rolls are fresh out and still warm.",
+			"Mind the tray, it's just come out of the oven.",
+			"The sourdough's sold out, but there'll be more tomorrow.",
+			"I've got flour in my eyebrows again.",
 		},
 	},
 	{
@@ -73,10 +73,10 @@ local list: { Job } = {
 		income = 975,
 		likes = { "gentle", "dreamy", "shy", "gloomy" },
 		lines = {
-			"These yellow ones last the longest.",
-			"Tulips just came in.",
-			"Smell this one. Go on.",
-			"Want them wrapped?",
+			"These yellow ones last the longest in a vase.",
+			"The tulips only came in this morning.",
+			"Go on, have a smell of this one.",
+			"Would you like them wrapped?",
 		},
 	},
 	{
@@ -86,10 +86,10 @@ local list: { Job } = {
 		income = 900,
 		likes = { "dreamy", "shy", "dramatic" },
 		lines = {
-			"Don't move, I've nearly got your nose.",
-			"Nearly done. Just the sky left.",
-			"Needs more blue. It always needs more blue.",
-			"That one's drying. Don't touch.",
+			"Don't move, I've nearly got your nose right.",
+			"It's nearly done, there's just the sky left.",
+			"It needs more blue, it always needs more blue.",
+			"That one's still drying, so please don't touch it.",
 		},
 	},
 	{
@@ -99,9 +99,9 @@ local list: { Job } = {
 		income = 1650,
 		likes = { "gentle", "shy", "nervous" },
 		lines = {
-			"Open wide. Say ahh.",
-			"Drink more water. I mean it.",
-			"Who's next? Come in.",
+			"Open wide and say ahh for me.",
+			"You need to drink more water, and I mean it.",
+			"Come on in, whoever's next.",
 			"Keep that arm still for me.",
 		},
 	},
@@ -112,10 +112,10 @@ local list: { Job } = {
 		income = 1425,
 		likes = { "proud", "gentle", "bookish" },
 		lines = {
-			"Eyes up here, please.",
+			"Eyes up here, please, everyone.",
 			"Who knows the answer? Anyone?",
-			"Homework's due Monday. No excuses.",
-			"Good. Now try the next one.",
+			"Your homework is due on Monday, and no excuses this time.",
+			"Good, now try the next one.",
 		},
 	},
 	{
@@ -125,10 +125,10 @@ local list: { Job } = {
 		income = 1050,
 		likes = { "sunny", "cheeky", "bold", "dramatic" },
 		lines = {
-			"This next one's new. Be kind.",
-			"Requests? I know about six.",
-			"Clap if you know it.",
-			"Thank you! There's a hat for coins.",
+			"This next one's new, so be kind.",
+			"I take requests, but I only know about six songs.",
+			"Clap along if you know this one.",
+			"Thank you, and there's a hat for coins if you liked it.",
 		},
 	},
 	{
@@ -138,10 +138,10 @@ local list: { Job } = {
 		income = 1350,
 		likes = { "bold", "proud", "prickly" },
 		lines = {
-			"Hold that end steady.",
-			"Hammer, please. The big one.",
-			"That'll hold. Good as new.",
-			"Mind the sawdust.",
+			"Can you hold that end steady for me?",
+			"Pass me the hammer, please, the big one.",
+			"That'll hold, it's as good as new.",
+			"Mind the sawdust on the floor.",
 		},
 	},
 	{
@@ -151,10 +151,10 @@ local list: { Job } = {
 		income = 975,
 		likes = { "shy", "easygoing", "cool" },
 		lines = {
-			"Post's in. One for you.",
-			"Parcels everywhere today.",
-			"Stamps on the left, please.",
-			"Sorting by street. Nearly there.",
+			"The post is in, and there's one for you.",
+			"There are parcels everywhere today.",
+			"Stamps are on the left, please.",
+			"I'm sorting it all by street, and I'm nearly there.",
 		},
 	},
 	{
@@ -164,10 +164,10 @@ local list: { Job } = {
 		income = 1050,
 		likes = { "cheeky", "sunny", "foodie" },
 		lines = {
-			"Cone or a cup?",
+			"Would you like a cone or a cup?",
 			"Sprinkles are on the house today.",
-			"Quick, it's dripping.",
-			"Strawberry's nearly gone.",
+			"Quick, it's dripping down the side.",
+			"The strawberry is nearly all gone.",
 		},
 	},
 	{
@@ -177,10 +177,10 @@ local list: { Job } = {
 		income = 1125,
 		likes = { "shy", "dreamy", "bookish" },
 		lines = {
-			"Quiet voices, please.",
-			"Back by Friday, please.",
-			"Try this one. You'll like it.",
-			"Returns go in the box.",
+			"Quiet voices in here, please.",
+			"Please have it back by Friday.",
+			"Try this one, I think you'll like it.",
+			"Returns go in the box by the door.",
 		},
 	},
 }

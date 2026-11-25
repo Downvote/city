@@ -276,8 +276,8 @@ describe("Talk", function()
 		-- (a sunny villager, in their own words, calling the player by name)
 		local quarrel = "V3 and I had a fight and I hate it! Can it just be over?"
 		local nobed = "Robin! Still no bed! I've been sleeping on a pile of coats. Nice coats, but still."
-		expect(atHome["Sat on the pier for hours. Caught one boot. Threw it back."]).toBe(true)
-		expect(atHome["Kettle on. Then we'll sort it."]).toBe(true)
+		expect(atHome["I sat on the pier for hours and only caught a boot, so I threw it back."]).toBe(true)
+		expect(atHome["Put the kettle on, and then we'll sort it out."]).toBe(true)
 		expect(atHome["V2 and I sat on the pier till the lamps came on. We talked about everything!"]).toBe(true)
 		expect(atHome[quarrel]).toBe(true)
 		expect(atHome[nobed]).toBe(true)

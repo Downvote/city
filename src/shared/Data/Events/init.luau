@@ -23,9 +23,11 @@
 -- leave one for a while, give you a keepsake, or teach them a saying or a hobby.
 --
 -- The villagers talk the way a friend texts you (the user's reference was a messaging app's
--- chats): the villager speaks first, in bursts of two or three short messages where one long one
--- would do, each personality in its own way; your answer is one of two short replies; and now
--- and then they use your name, {player} (filled by ctx.f with the player's display name).
+-- chats): the villager speaks first, a few messages at a time, each one a natural sentence (two
+-- only when they belong together, never a string of clipped bits), each personality with its own
+-- habits; your answer is one of two short replies; and now and then they use your name,
+-- {player} (filled by ctx.f with the player's display name). The word banks below are dropped
+-- into sentences, so each one has to read naturally in the sentence it fills.
 
 local Personalities = require(script.Parent.Personalities)
 local Foods = require(script.Parent.Foods)
@@ -48,51 +50,118 @@ local function voice(ctx: Ctx, who: string, vid: string, kind: string, icon: str
 	return line(who, Kit.voiceText(ctx, vid, kind), icon, gesture)
 end
 
+-- what two villagers fall out over ("arguing about ...", "fell out over ...")
 local QUARREL = {
 	"the last slice of pie",
-	"whose turn it was to sweep",
-	"a board game rule",
-	"who snores louder",
+	"whose turn it was to sweep the porch",
+	"a rule in a board game",
+	"which of them snores louder",
 	"the right way to fold socks",
-	"a borrowed umbrella that never came back",
-	"whether toast counts as bread",
+	"an umbrella that was borrowed and never came back",
+	"whether toast still counts as bread",
 	"who saw the shooting star first",
 }
 
-local PLACES = { "the fountain", "the hill behind town", "the old gate", "the shady trees by the road", "the market" }
+-- where two friends go for an afternoon ("come to ... with me")
+local PLACES = { "the beach", "the harbour", "the market", "the hill behind town", "the fountain" }
 
 local JOKES = {
-	{ "Why did the scarecrow win a prize? It was outstanding in its field.", "groan" },
-	{ "I told my plant a joke. It didn't laugh, but it grew a little.", "laugh" },
-	{ "What do you call a sleeping bull? A bulldozer.", "groan" },
-	{ "I'm reading a book about anti-gravity. I can't put it down.", "laugh" },
-	{ "Why don't eggs tell jokes? They'd crack each other up.", "laugh" },
+	{ "Why did the scarecrow win a prize? Because he was outstanding in his field.", "groan" },
+	{ "What did the sea say to the beach? Nothing, it just waved.", "laugh" },
+	{ "Why don't crabs ever share their snacks? Because they're shellfish.", "groan" },
+	{ "Why did the baker stop making doughnuts? He got tired of the whole thing.", "groan" },
+	{ "I asked the librarian for a book about paranoia, and she whispered, 'It's right behind you.'", "laugh" },
 }
 
-local LOST = { "lucky sock", "favourite pencil", "house key", "lunch box", "tiny notebook", "hair clip" }
+-- something small to lose ("has anyone seen my ...?")
+local LOST = {
+	"lucky striped sock",
+	"good drawing pencil",
+	"spare house key",
+	"blue lunch box",
+	"little green notebook",
+	"shell hair clip",
+}
 
+-- an afternoon to themselves ("spent the afternoon ...")
 local HOBBIES = {
 	"painting the fence a slightly different shade of white",
-	"doing push-ups behind the house",
+	"doing push ups behind the house",
 	"reading under a tree",
 	"jogging laps round the garden",
-	"stretching very seriously",
-	"humming to the flowers",
+	"doing stretches on the lawn",
+	"humming to the plants while watering them",
 }
 
+-- "I had the strangest dream last night about ..."
 local DREAMS = {
-	"a giant pancake that could talk",
-	"being chased by a polite goose",
-	"living inside a teapot",
-	"winning a race against the wind",
-	"a town where all the doors were round",
-	"meeting a cloud that wanted to be a sheep",
+	"a pancake the size of the town square",
+	"being chased round the market by a goose that kept saying sorry",
+	"living inside a teapot with a tiny front door",
+	"racing the wind along the beach and winning",
+	"a town where every single door was round",
+	"a cloud that came down to ask for directions",
 }
 
-local SKILLS =
-	{ "whistle with two fingers", "juggle three apples", "tie a proper knot", "skip stones", "do a cartwheel" }
+-- "I'll show you how to ..."
+local SKILLS = {
+	"whistle with two fingers",
+	"juggle three apples",
+	"tie a proper sailor's knot",
+	"skip stones across the harbour",
+	"do a cartwheel",
+}
 
-local WANTS = { "a new pair of boots", "a fancy hat", "a fishing rod", "a set of paints", "a kite", "a guitar" }
+-- "I've had my eye on ..."
+local WANTS = {
+	"a new pair of boots",
+	"a straw hat from the market",
+	"a fishing rod",
+	"a set of paints",
+	"a kite with a long tail",
+	"a second hand guitar",
+}
+
+-- How a food is named in a sentence: "an apple", "a bread roll", but "mushroom soup" and
+-- "pancakes" as they are. (Foods has only the bare name, and "I really want bread roll" isn't
+-- how anyone talks.)
+local COUNTED = {
+	apple = "an",
+	bread = "a",
+	carrot = "a",
+	skewer = "a",
+	tart = "a",
+	riceball = "a",
+	starfruit = "a",
+	dragonchili = "a",
+	goldapple = "a",
+}
+
+local function foodPhrase(food: any): string
+	local name = food.name:lower()
+	local article = COUNTED[food.id]
+	return if article then article .. " " .. name else name
+end
+
+local function capital(s: string): string
+	return s:sub(1, 1):upper() .. s:sub(2)
+end
+
+-- what two villagers can make together in a kitchen (a carrot or an apple isn't a dish)
+local DISHES = {
+	bread = true,
+	soup = true,
+	skewer = true,
+	tart = true,
+	honeycake = true,
+	riceball = true,
+	pancakes = true,
+	curry = true,
+	pie = true,
+	salad = true,
+	pudding = true,
+	stew = true,
+}
 
 -- A burst: what they'd send as two or three quick messages. A map keyed by personality like
 -- Kit.byPers ("_" for anyone else; a value may be a list to pick one from), and "|" splits a
@@ -132,48 +201,49 @@ end
 
 -- What someone says when you take their side in a quarrel, in their own way.
 local WIN = {
-	sunny = "Ha! See?|I told you!",
-	proud = "Thank you. Finally, someone sensible.",
-	bold = "Hah.|Told you.",
-	prickly = "See?|Obviously.",
-	cool = "Told you.",
-	shy = "...!|Thank you.",
+	sunny = "Ha, see, I told you so!|Thanks for backing me up, {player}!",
+	proud = "Thank you, finally someone sensible.|Hmph, I knew I was right all along.",
+	bold = "Hah, told you, right?",
+	prickly = "See, obviously I was right.|...But thanks for saying so.",
+	cool = "Thanks, {player}, I knew I had it right.",
+	shy = "...!|Thank you for siding with me.",
 	gentle = "Thank you, {player}.|I'm sorry it came to this, though.",
-	cheeky = "hehe|the judge has spoken",
-	dramatic = "Justice!|At LAST.",
-	bookish = "Thank you. The facts were on my side.",
-	gloomy = "Oh. I was right?|That doesn't usually happen.",
-	polite = "Thank you, {player}. I appreciate it.",
-	foodie = "Thank you.|Now. About that pie.",
-	nervous = "I-I was right?|Oh. Okay. Thank you.",
-	easygoing = "Heh. Told you.|Can we stop now?",
-	dreamy = "Oh. I was right.|How nice.",
-	_ = "Thank you.|See? I said so.",
+	cheeky = "hehe, the judge has spoken|no take backs",
+	dramatic = "JUSTICE, at long last!",
+	bookish = "Thank you, the facts were on my side all along.",
+	gloomy = "Oh, I was right?|Heh... that doesn't usually happen.",
+	polite = "Thank you kindly, {player}.|I appreciate you hearing us both out.",
+	foodie = "Thank you, I'm going to celebrate with a snack.",
+	nervous = "I-I was right?|Oh, okay, thank you.",
+	easygoing = "Heh, told you.|Can we stop arguing now?",
+	dreamy = "Oh, I was right.|Hmm... that's nice.",
+	_ = "Thank you.|See, I said so.",
 }
 
 -- What someone says when you take the other side in a quarrel, in their own way.
 local SULK = {
-	proud = "Fine. You'll see I was right.",
-	shy = "Oh...|okay.",
-	gentle = "All right, {player}. If that's how it is.",
-	cheeky = "wow|ok|noted",
+	proud = "Fine, but you'll see I was right in the end.",
+	shy = "Oh... okay.",
+	gentle = "All right, {player}, if that's how you see it.",
+	cheeky = "wow, ok|noted, and remembered",
 	dreamy = "Oh.|I'll go and be wrong somewhere else, then.",
-	easygoing = "Eh. Fine.",
-	sunny = "Oh. Okay. I'm not upset.|...I'm a bit upset.",
-	bold = "Fine. Your call.",
-	cool = "...Fine.",
-	prickly = "Whatever. Don't talk to me for a bit.",
-	dramatic = "Betrayed, {player}. By YOU!",
+	easygoing = "Eh, fine.|I wasn't that bothered anyway.",
+	sunny = "Oh, okay, I'm not upset.|...I'm a little bit upset.",
+	bold = "Fine, your call.",
+	cool = "...Fine, if you say so.",
+	prickly = "Whatever.|Ugh, don't talk to me for a bit.",
+	dramatic = "Betrayed, {player}, and by you of all people!",
 	bookish = "I still think the facts were on my side.|But fine.",
-	gloomy = "Yeah. Figures.",
-	polite = "I see. Thank you for listening, at least.",
-	foodie = "Fine.|I'm going to go and eat something about it.",
-	nervous = "Oh. Was I wrong?|Was I being awful? Oh no.",
-	_ = "Fine. Whatever.",
+	gloomy = "Yeah, figures.|That's how it usually goes.",
+	polite = "I see.|Thank you for listening, at least.",
+	foodie = "Fine, I'm going to go and eat something about it.",
+	nervous = "Oh, was I wrong?|Was I being awful? Oh no, oh no.",
+	_ = "Fine, whatever.",
 }
 
 -- A line in the villager's own way (Kit.byPers): a map keyed by personality, "_" for anyone else.
--- (filled, so a line may name the stars or call the player by name: {player})
+-- (filled, so a line may name the stars or call the player by name: {player}) It is one message,
+-- so it never holds a "|".
 local function by(ctx: Ctx, who: string, vid: string, map: any, icon: string?, gesture: string?): any
 	return line(who, ctx.f(Kit.byPers(ctx, vid, map)), icon, gesture)
 end
@@ -192,8 +262,23 @@ local GIFTS = {
 	"a pressed flower in a card",
 	"a scarf they knitted",
 	"a shell from the beach",
-	"a book they had finished",
+	"a book they'd just finished",
 	"a drawing of the two of them",
+}
+
+-- What a villager asks for by their bed, in their own words, where Catalog.Tags (which the log
+-- uses) speaks of them ("a place for their things").
+local ASKS = { storage = "somewhere to keep my things" }
+
+-- What a customer asks for at a workplace that doesn't sell things over a counter.
+local SERVICE = {
+	artist = "Could you do a quick sketch of me?|I'll pay, of course.",
+	doctor = "I've had a sore throat since Tuesday.|Could you have a look at it?",
+	teacher = "I'd like to sign up for your evening class, if there's still room.",
+	musician = "Could you play the one about the harbour?|Here's a coin for the hat.",
+	builder = "My gate's come off its hinges.|Could you fix it some time this week?",
+	postie = "I need to send this parcel to the next island, please.",
+	librarian = "I'm looking for a good book for a rainy day.|What would you pick?",
 }
 
 -- the list ----------------------------------------------------------------------------------------
@@ -254,7 +339,7 @@ event({
 				line(nil, ctx.f("{a} and {b} are arguing about {cause}.", { cause = cause })),
 				voice(ctx, "a", a, "angry", "anger", "point"),
 				voice(ctx, "b", b, "angry", "anger"),
-				line(nil, "They both turn to you."),
+				line(nil, "Then they both turn to you."),
 			},
 			choices = {
 				{
@@ -282,36 +367,36 @@ event({
 					lines = if works
 						then join(
 							burst(ctx, "a", a, {
-								proud = "...Fine.|I may have got a bit carried away.",
-								bold = "...Yeah. Sorry. I got loud.",
-								shy = "...Sorry.|I didn't mean it.",
-								cool = "...Yeah.|My bad.",
-								prickly = "...Fine. Sorry.|There. I said it.",
-								dramatic = "I was a monster!|A MONSTER. Sorry.",
-								polite = "You're right, {player}. I apologise. Sincerely.",
-								nervous = "Sorry. S-sorry. Are we okay?|Are we okay now?",
-								_ = "...Sorry. I got carried away.",
+								proud = "...Fine, I may have got a bit carried away.",
+								bold = "...Yeah, sorry, I got loud.|Anyway, let's drop it.",
+								shy = "...Sorry, I didn't mean it.",
+								cool = "...Yeah, that was my fault.",
+								prickly = "...Fine, I'm sorry.|There, I said it.",
+								dramatic = "I was a monster, and I'm so sorry!",
+								polite = "You're right, {player}.|I apologise, sincerely.",
+								nervous = "S-sorry, I'm really sorry.|Are we okay now?",
+								_ = "...Sorry, I got carried away.",
 							}, "sweat"),
 							burst(ctx, "b", b, {
-								gentle = "Me too. Let's forget it, shall we?",
-								cheeky = "me too|hug?|no? ok",
-								proud = "...So did I. A little.",
-								gloomy = "Yeah. Me too. It's fine.",
-								foodie = "Me too.|Want to go and get a bun?",
-								sunny = "Me too! Okay. Friends again?",
-								_ = "Me too. Let's forget about it.",
+								gentle = "Me too, so let's forget it, shall we?",
+								cheeky = "me too|hug? no? ok, fair",
+								proud = "...So did I, a little.",
+								gloomy = "Yeah, me too.|It's fine.",
+								foodie = "Me too.|Do you want to go and get a bun?",
+								sunny = "Me too, so are we friends again?",
+								_ = "Me too, let's forget about it.",
 							}, "heart")
 						)
 						else join(
 							burst(ctx, "a", a, {
 								shy = "...I don't want to talk about it.",
-								easygoing = "Nah. Not today.",
-								cool = "No.",
-								prickly = "No.|Not till they say sorry. First.",
-								dramatic = "Never! Not in a hundred years!",
+								easygoing = "Nah, not today.",
+								cool = "No, not today.",
+								prickly = "No, not until they say sorry first.",
+								dramatic = "Never, not in a hundred years!",
 								_ = "Not until they say sorry first.",
 							}, "anger"),
-							line("b", "Then we'll be here all week.", "anger")
+							line("b", "Then we'll be standing here all week.", "anger")
 						),
 					effects = if works
 						then {
@@ -345,34 +430,38 @@ event({
 		return {
 			title = "Making up",
 			lines = {
-				line(nil, ctx.f("{a} walked over to {b} holding {food}.", { food = food.name:lower() })),
+				line(nil, ctx.f("{a} walked over to {b} holding {food}.", { food = foodPhrase(food) })),
 				by(ctx, "a", a, {
-					proud = "Here. I may have been... a bit much.",
-					shy = "Um. I brought you this... I'm sorry about before.",
-					bold = "Here. I was out of line. Truce?",
-					cheeky = "peace offering. you can't stay cross with your mouth full",
-					sunny = "Hi. I brought you this. I hate being cross with you.",
-					cool = "Here. Sorry.",
-					prickly = "Take it. It's an apology. Don't make me say it twice.",
-					dramatic = "I come bearing a gift. And my deepest sorry!",
-					bookish = "I thought about it all night. You had a point. Here.",
-					gloomy = "I figured you wouldn't want to see me... I brought this anyway.",
-					polite = "I'd like to apologise properly. Please, take this.",
-					foodie = "I brought the good one. That's how sorry I am.",
-					nervous = "Is it okay if I... I brought this. Are we okay?",
-					_ = "I brought you this. I was being silly.",
+					proud = "Here, I may have been a bit much the other day.",
+					shy = "Um, I brought you this... I'm sorry about before.",
+					bold = "Here, I was out of line, so let's call it a truce.",
+					cheeky = "peace offering, you can't stay cross with your mouth full",
+					sunny = "Hi, I brought you this, because I hate being cross with you.",
+					cool = "Here, I'm sorry about the other day.",
+					prickly = "Take it, it's an apology, and don't make me say it twice.",
+					dramatic = "I come bearing a gift and my deepest apologies!",
+					bookish = "Actually, I thought about it all night, and you had a point.",
+					gloomy = "I figured you wouldn't want to see me, but I brought this anyway.",
+					polite = "I'd like to apologise properly, so please take this.",
+					foodie = "I brought you the good one, that's how sorry I am.",
+					nervous = "I-I brought you this to say sorry, is that okay?",
+					gentle = "I brought you this, and I'm sorry for how I was.",
+					easygoing = "Mm, I brought you this, so can we stop being cross now?",
+					dreamy = "Hmm... I kept thinking about what I said, so I brought you this.",
+					_ = "I brought you this, because I was being silly.",
 				}, "sweat"),
 				by(ctx, "b", b, {
-					proud = "...Fine. I was a bit much too.",
-					gentle = "Oh, come here. I was silly too.",
-					shy = "...Me too. Thank you.",
-					cool = "...Thanks. Me too.",
-					prickly = "...Fine. Apology accepted. I'm sorry too. Happy?",
-					dramatic = "All is forgiven!",
-					gloomy = "...Thanks. I missed you, honestly.",
-					foodie = "You brought the good one. Okay. We're fine.",
-					cheeky = "apology accepted. the bun is mine now",
-					_ = "...I was too. Thanks.",
+					proud = "...Fine, I was a bit much too.",
+					gentle = "Oh, come here, I was being silly too.",
+					shy = "...Me too, thank you.",
+					cool = "...Thanks, I'm sorry too.",
+					prickly = "...Fine, apology accepted, and I'm sorry too, happy?",
+					dramatic = "All is FORGIVEN!",
+					gloomy = "...Thanks, I missed you, honestly.",
+					foodie = "You brought the good one, so okay, we're fine.",
+					cheeky = "apology accepted, and the snack is mine now",
+					bold = "Hah, fine, truce, I was out of line too.",
+					_ = "...I was too, thanks.",
 				}, "heart"),
 			},
 			effects = { { t = "makeup", a = "a", b = "b" }, { t = "rel", a = "a", b = "b", d = 10 } },
@@ -398,19 +487,20 @@ event({
 		local roll = ctx.rng:float(0, 1)
 		local food = if roll < 0.15 and fav then fav elseif roll < 0.5 then ctx.rng:pick(Foods.list) else nil
 		local loves = food ~= nil and fav ~= nil and food.id == fav.id
-		local thing = if food then food.name:lower() else ctx.rng:pick(GIFTS)
+		local thing = if food then foodPhrase(food) else ctx.rng:pick(GIFTS)
 		local lines = join(
-			line(nil, ctx.f("{a} has a present for {b}: {thing}.", { thing = thing })),
+			line(nil, ctx.f("{a} has brought {b} {thing} as a present.", { thing = thing })),
 			burst(ctx, "a", a, {
-				shy = "Um.|I got you this...|you don't have to like it.",
-				bold = "Here. Got you something.",
-				sunny = "Surprise!|I saw it and it was SO you!",
-				cool = "Here.|Thought you'd like it.",
-				prickly = "Here. It was just lying around.|Don't read into it.",
-				dramatic = "A gift! For you!|Because you deserve it.",
+				shy = "Um... I got you this.|You don't have to like it.",
+				bold = "Here, I got you something.",
+				sunny = "Surprise!|I saw it and thought of you straight away!",
+				cool = "Here, I thought you might like this.",
+				prickly = "Here, it was just lying around.|Don't read into it.",
+				dramatic = "A gift, for you, because you deserve it!",
 				polite = "I hope you don't mind.|I thought you might like this.",
-				nervous = "I got you this. Is that okay?|You don't have to like it.",
-				cheeky = "for you|it's not a prank|this time",
+				nervous = "I-I got you this, is that okay?|You don't have to like it.",
+				cheeky = "for you, and no, it's not a prank this time",
+				gentle = "I saw this and thought of you, so I hope you like it.",
 				_ = "I saw this and thought of you.",
 			}, "sparkle", "wave")
 		)
@@ -418,7 +508,7 @@ event({
 		if loves and food then
 			table.insert(
 				lines,
-				line("b", ctx.f("{food}. That's my favourite.", { food = food.name }), "heart", "cheer")
+				line("b", ctx.f("{Food}? That's my favourite.", { Food = capital(foodPhrase(food)) }), "heart", "cheer")
 			)
 			effects = {
 				{ t = "rel", a = "a", b = "b", d = 14 },
@@ -429,12 +519,12 @@ event({
 			lines = join(
 				lines,
 				burst(ctx, "b", b, {
-					proud = "Oh. How...|thoughtful.",
-					cheeky = "oh|wow|you shouldn't have. really",
-					cool = "...Thanks.",
-					prickly = "Oh. It's... a thing.|Thanks. I guess.",
-					gloomy = "Oh. Thanks. I'll find somewhere for it.",
-					_ = "Oh. Um. Thank you.|I'll... save it for later.",
+					proud = "Oh, how... thoughtful.",
+					cheeky = "oh, wow|you really shouldn't have, like, really",
+					cool = "...Thanks, I'll find a use for it.",
+					prickly = "Oh, it's... a thing.|Thanks, I guess.",
+					gloomy = "Oh, thanks.|I'll find somewhere to put it.",
+					_ = "Oh, um, thank you.|I'll save it for later.",
 				}, "sweat")
 			)
 			effects = { { t = "rel", a = "a", b = "b", d = 2 } }
@@ -469,24 +559,26 @@ event({
 			title = "An outing",
 			lines = join(
 				burst(ctx, "a", a, {
-					sunny = "{b}! {b}! Come to {place} with me!|Now. Right now.",
-					bold = "{b}.|You're free, right? We're going to {place}.",
-					shy = "Um, {b}?|If you're not busy...|would you come to {place}?",
-					cool = "{b}.|Going to {place}. Coming?",
-					_ = "Hey, {b}.|Want to go to {place} with me?",
+					sunny = "{b}, {b}, come to {place} with me!|Let's go right now!",
+					bold = "{b}, you're free, right?|Good, we're going to {place}.",
+					shy = "Um, {b}?|If you're not busy, would you come to {place} with me?",
+					cool = "{b}, I'm going to {place}.|Do you want to come?",
+					foodie = "{b}, have you eaten yet?|Let's go to {place} and get something on the way.",
+					dreamy = "{b}... the light at {place} is really pretty today.|Do you want to come and see?",
+					_ = "Hey, {b}, do you want to go to {place} with me?",
 				}, "idea", "point", vars),
 				burst(ctx, "b", b, {
-					shy = "Me?|Okay...|if that's all right.",
-					easygoing = "Sure. If there's somewhere to sit.",
-					cool = "Sure.",
-					prickly = "I've got nothing better on. Fine.",
-					dramatic = "An adventure! Yes!",
-					bookish = "Oh, I've read about it. Yes, let's.",
-					gloomy = "It'll rain... Okay. Yes.",
-					polite = "I'd love to. Thank you for asking.",
-					foodie = "Is there anywhere to eat there?|Yes. Okay. Yes.",
-					nervous = "Now? Right now? Okay.|Let me get my coat. Two coats.",
-					_ = "Ooh, sure. Can we, {player}?",
+					shy = "Me?|Okay, if that's all right.",
+					easygoing = "Sure, as long as there's somewhere to sit.",
+					cool = "Sure, let's go.",
+					prickly = "I've got nothing better to do, so fine.",
+					dramatic = "An adventure, yes, I'll pack a bag!",
+					bookish = "Oh, I've been meaning to go, actually.|Yes, let's.",
+					gloomy = "It'll probably rain on us, but okay, yes.",
+					polite = "I'd love to, thank you for asking.",
+					foodie = "Is there anywhere to eat there?|Then yes, okay, yes.",
+					nervous = "Now, right now?|Okay, let me get my coat first.",
+					_ = "Ooh, sure.|Can we, {player}?",
 				}, "question")
 			),
 			choices = {
@@ -494,7 +586,7 @@ event({
 					text = "Have fun, you two.",
 					lines = {
 						line(nil, ctx.f("{a} and {b} headed off to {place}.", vars)),
-						line(nil, "They came back at teatime, a bit sunburnt."),
+						line(nil, "They came back at teatime, both smiling."),
 					},
 					effects = {
 						{ t = "away", who = { "a", "b" }, seconds = 30 },
@@ -506,9 +598,9 @@ event({
 				{
 					text = "Maybe another day?",
 					lines = burst(ctx, "a", a, {
-						sunny = "Aw. Later then!",
-						shy = "Oh.|Of course. Sorry.",
-						_ = "Aw. Okay.",
+						sunny = "Aw, later, then!",
+						shy = "Oh, of course, sorry.",
+						_ = "Aw, okay, another day.",
 					}, "sad"),
 					effects = { { t = "mood", who = "a", d = -3 }, { t = "mood", who = "b", d = -2 } },
 				},
@@ -531,7 +623,7 @@ event({
 		local pranks = {
 			"put a squeaky cushion on {b}'s chair",
 			"swapped the sugar for salt in {b}'s tea",
-			"hid behind a door and shouted BOO at {b}",
+			"hid behind a door and shouted boo at {b}",
 			"tied {b}'s shoelaces together while they napped",
 		}
 		local prank = ctx.f(ctx.rng:pick(pranks))
@@ -541,47 +633,54 @@ event({
 			lines = join(
 				line(nil, ctx.f("{a} {prank}.", { prank = prank })),
 				burst(ctx, "a", a, {
-					cheeky = "hehe|hehehe|got you",
-					dramatic = "*evil cackle* <- me Got you.",
-					cool = "Got you.",
-					_ = "Heh. Got you.",
+					cheeky = "hehe, got you good|your face, though",
+					dramatic = "*evil cackle* I got you GOOD.",
+					cool = "Hm, got you.",
+					_ = "Heh, got you.",
 				}, "sparkle", "laugh"),
 				if goodSport
-					then burst(ctx, "b", b, "Okay, okay. That was good.|You'll pay for it, though.", "music", "laugh")
+					then burst(
+						ctx,
+						"b",
+						b,
+						"Okay, okay, that was a good one.|You'll pay for it, though.",
+						"music",
+						"laugh"
+					)
 					else burst(ctx, "b", b, {
-						bold = "Hey. Not funny.",
-						proud = "How childish.",
-						shy = "That...|wasn't funny.",
-						gentle = "That wasn't very nice.",
-						dreamy = "Oh.|Was that a joke?|I didn't like it.",
-						cool = "...Really.",
-						prickly = "Seriously?|Seriously. Go away.",
-						dramatic = "The BETRAYAL.",
-						bookish = "I'll be writing that down. For later.",
-						gloomy = "Yeah. That's my luck.",
+						bold = "Hey, that's not funny.",
+						proud = "Hmph, how childish.",
+						shy = "That... wasn't funny.",
+						gentle = "Oh, my, that wasn't very nice.",
+						dreamy = "Oh, was that a joke?|I didn't like it.",
+						cool = "...Really?",
+						prickly = "Seriously?|Ugh, go away.",
+						dramatic = "*gasp* How could you do this to me?",
+						bookish = "I'm writing that down for later, you know.",
+						gloomy = "Yeah, that's my luck.",
 						polite = "I'd rather you didn't do that again, please.",
-						foodie = "Salt? In tea?|That's a crime against tea.",
-						nervous = "My heart!|My heart's going so fast.",
+						foodie = "You made me drop my snack, you know.",
+						nervous = "My heart!|It's still going so fast.",
 						_ = "That wasn't funny.",
 					}, "anger")
 			),
 			choices = {
 				{
-					text = "Ha. Good one.",
+					text = "Ha, good one.",
 					lines = if goodSport
-						then burst(ctx, "b", b, "Ha. Alright.|Truce.", "music")
-						else burst(ctx, "b", b, "You're both terrible.", "anger"),
+						then burst(ctx, "b", b, "Ha, all right, truce.", "music")
+						else burst(ctx, "b", b, "You're both as bad as each other.", "anger"),
 					effects = if goodSport
 						then { { t = "rel", a = "a", b = "b", d = 8 }, { t = "mood", who = "a", d = 4 } }
 						else { { t = "rel", a = "a", b = "b", d = -8 }, { t = "mood", who = "b", d = -6 } },
 				},
 				{
-					text = ctx.f("{a}. Not cool."),
+					text = ctx.f("{a}, that's not cool."),
 					lines = join(
 						burst(ctx, "a", a, {
-							cheeky = "fine fine|sorry|...mostly",
-							proud = "Fine. It was a little much.",
-							_ = "Fine, fine. Sorry.",
+							cheeky = "fine, fine, sorry|i'll stop for today",
+							proud = "Fine, it was a little much.",
+							_ = "Fine, fine, I'm sorry.",
 						}, "sweat"),
 						line("b", ctx.f("Thank you, {player}."), "heart")
 					),
@@ -615,14 +714,17 @@ event({
 			title = "A compliment",
 			lines = join(
 				burst(ctx, "a", a, {
-					shy = "Um, {b}?|I really like your {thing}.|That's all.",
-					cool = "{b}.|Good {thing}.",
-					cheeky = "{b}|nice {thing}|not even joking",
-					sunny = "{b}!|I love your {thing}!",
-					_ = "{b}.|I really like your {thing}.",
+					shy = "Um, {b}?|I really like your {thing}, that's all.",
+					cool = "{b}, I like your {thing}.",
+					cheeky = "{b}, nice {thing}|not even joking",
+					sunny = "{b}, I love your {thing}!",
+					gentle = "{b}, has anyone told you your {thing} is lovely?",
+					bookish = "{b}, I've been meaning to say that I really admire your {thing}.",
+					polite = "Excuse me, {b}, I only wanted to say your {thing} is lovely.",
+					_ = "{b}, I really like your {thing}.",
 				}, "sparkle", nil, vars),
 				if proud
-					then burst(ctx, "b", b, "Naturally. But thank you for noticing.", "sparkle")
+					then burst(ctx, "b", b, "Naturally, but thank you for noticing.", "sparkle")
 					else voice(ctx, "b", b, "thanks", "heart")
 			),
 			effects = { { t = "rel", a = "a", b = "b", d = 6 }, { t = "mood", who = "b", d = 5 } },
@@ -647,35 +749,35 @@ event({
 			title = "Arm wrestling",
 			lines = join(
 				burst(ctx, "a", a, {
-					bold = "{b}.|Arm wrestle. Loser does the dishes.",
-					cheeky = "{b}|arm wrestle|loser does the dishes. go",
-					proud = "{b}. A contest.|Arm wrestling. Loser does the dishes.",
-					_ = "{b}.|Arm wrestle? Loser does the dishes.",
+					bold = "{b}, arm wrestle, right now.|Loser does the dishes, right?",
+					cheeky = "{b}, arm wrestle|loser does the dishes, go",
+					proud = "{b}, I challenge you to an arm wrestle.|The loser does the dishes.",
+					_ = "{b}, do you fancy an arm wrestle?|Loser does the dishes.",
 				}, "idea", "point"),
 				burst(ctx, "b", b, {
-					shy = "Um.|Okay?",
-					easygoing = "Do I have to?",
-					cool = "Sure.",
-					prickly = "Fine. You'll regret it.",
+					shy = "Um... okay?",
+					easygoing = "Do I have to?|Mm, fine, just one go.",
+					cool = "Sure, let's go.",
+					prickly = "Fine, but you'll regret it.",
 					dramatic = "I accept your challenge!",
-					nervous = "Now? Okay. Don't pull too hard.|Okay. Ready.",
+					nervous = "Now? Okay, don't pull too hard.|Okay, I'm ready.",
 					_ = "You're on.",
 				}, "sparkle"),
-				line(nil, "A lot of grunting later..."),
+				line(nil, "After a lot of grunting, one of them finally wins."),
 				burst(ctx, winner, if aWins then a else b, {
-					proud = "As expected. Enjoy the dishes.",
-					shy = "Oh.|I won?|Sorry about the dishes...",
-					cool = "Dishes.|Yours.",
-					dramatic = "Victory is MINE!",
-					_ = "Hah. Dishes are all yours.",
+					proud = "As expected.|Enjoy the dishes.",
+					shy = "Oh, I won?|Sorry about the dishes...",
+					cool = "The dishes are yours.",
+					dramatic = "VICTORY is mine!",
+					_ = "Hah, the dishes are all yours.",
 				}, "sparkle", "cheer"),
 				burst(ctx, loser, if aWins then b else a, {
-					proud = "I let you win. Obviously.",
-					easygoing = "Eh. I like doing dishes anyway.",
-					bold = "Again. Right now.",
-					prickly = "My elbow slipped. That doesn't count.",
-					gloomy = "Knew it.",
-					_ = "Next time.|Next time for sure.",
+					proud = "Th-that's because I let you win, obviously.",
+					easygoing = "Eh, I like doing dishes anyway.",
+					bold = "Again, right now.",
+					prickly = "My elbow slipped, so that doesn't count.",
+					gloomy = "I knew that would happen.",
+					_ = "Next time, for sure.",
 				}, "sweat")
 			),
 			effects = {
@@ -703,21 +805,28 @@ event({
 		return w
 	end,
 	scene = function(ctx: Ctx, a: string, b: string): Scene
-		local food = ctx.rng:pick(Foods.list)
+		local dishes = {}
+		for _, f in Foods.list do
+			if DISHES[f.id] then
+				table.insert(dishes, f)
+			end
+		end
+		local food = ctx.rng:pick(if #dishes > 0 then dishes else Foods.list)
+		local dish = foodPhrase(food)
 		local burnt = ctx.rng:chance(0.2)
 		return {
 			title = "In the kitchen",
 			lines = join(
-				line(nil, ctx.f("{a} and {b} are making {food} together.", { food = food.name:lower() })),
+				line(nil, ctx.f("{a} and {b} are making {food} together.", { food = dish })),
 				if burnt
-					then burst(ctx, "a", a, "Is it meant to smell like that?|...It's not, is it.", "sweat")
-					else burst(ctx, "a", a, "Pass me the spoon. No, the big one.", "music"),
+					then burst(ctx, "a", a, "Is it meant to smell like that?|...It's not, is it?", "sweat")
+					else burst(ctx, "a", a, "Can you pass me the spoon?|No, the big one.", "music"),
 				if burnt
-					then burst(ctx, "b", b, "...|We'll call it extra crispy.", "sweat")
+					then burst(ctx, "b", b, "...We'll just call it extra crispy.", "sweat")
 					else burst(ctx, "b", b, {
-						foodie = "Oh, this is going to be so good.|Can I taste it now? Now?",
-						cool = "Smells good.",
-						prickly = "You're stirring it wrong. ...It's fine. Keep going.",
+						foodie = "Mmm, this is going to be so good.|Can I taste it now?",
+						cool = "It smells good.",
+						prickly = "You're stirring it wrong.|...It's fine, keep going.",
 						_ = "This is going to be so good.",
 					}, "heart")
 			),
@@ -729,7 +838,7 @@ event({
 					{ t = "mood", who = "a", d = 4 },
 					{ t = "mood", who = "b", d = 4 },
 				},
-			log = ctx.f("{a} and {b} cooked {food}.", { food = food.name:lower() }),
+			log = ctx.f("{a} and {b} cooked {food}.", { food = dish }),
 		}
 	end,
 })
@@ -751,19 +860,19 @@ event({
 			lines = join(
 				line(nil, ctx.f("{a} and {b} stayed up late talking.")),
 				burst(ctx, "a", a, {
-					shy = "Um...|can I tell you something?|You can't laugh.",
+					shy = "Um... can I tell you something?|Promise you won't laugh.",
 					prickly = "I'm going to tell you something.|If you laugh, I'm leaving.",
-					cool = "Can I tell you something.|Don't laugh.",
-					_ = "Can I tell you something? You can't laugh.",
+					cool = "Can I tell you something?|Don't laugh.",
+					_ = "Can I tell you something?|You can't laugh, though.",
 				}, "sweat"),
 				burst(ctx, "b", b, {
-					cheeky = "I promise|...I'll try",
-					cool = "Promise.",
-					prickly = "Just say it.|I won't laugh. Much.",
-					nervous = "I promise. Is it bad?|You can tell me.",
+					cheeky = "i promise|...i'll try, anyway",
+					cool = "I promise.",
+					prickly = "Just say it.|I won't laugh, much.",
+					nervous = "I promise, is it something bad?|You can tell me.",
 					_ = "I promise.",
 				}, "heart"),
-				line(nil, "Whatever it was, it stays between them.")
+				line(nil, "Whatever it was, it stays between the two of them.")
 			),
 			effects = { { t = "rel", a = "a", b = "b", d = 14 } },
 			log = ctx.f("{a} told {b} a secret."),
@@ -789,30 +898,30 @@ event({
 			title = "A race",
 			lines = join(
 				burst(ctx, "a", a, {
-					cheeky = "race you to the fence, {b}|go",
-					sunny = "{b}! Race you to the fence!|Three, two, one!",
+					cheeky = "race you to the fence, {b}, go",
+					sunny = "{b}, race you to the fence!|Three, two, one, go!",
 					_ = "Race you to the fence, {b}.",
 				}, "idea", "point"),
 				line(nil, "And they're off."),
 				burst(ctx, winner, if aWins then a else b, {
-					proud = "As expected.",
-					shy = "Oh.|I won?",
-					bold = "YES. First.",
-					cool = "First.",
+					proud = "Hmph, as expected.",
+					shy = "Oh... I won?",
+					bold = "Hah, first!",
+					cool = "I win.",
 					dramatic = "The crowd goes wild!",
-					nervous = "I won?|I won. Did I win? I won.",
+					nervous = "I won?|I-I actually won!",
 					_ = "I win.",
 				}, "sparkle", "cheer"),
 				if sore
-					then burst(ctx, loser, loserVid, "That didn't count. I wasn't ready.", "anger")
+					then burst(ctx, loser, loserVid, "That didn't count, I wasn't ready.", "anger")
 					else burst(ctx, loser, loserVid, {
 						shy = "You're really fast...",
-						easygoing = "Nope. I'm done.|You win.",
-						dreamy = "I was watching a butterfly.|Well done, though.",
-						prickly = "You started early. ...Fine. Well run.",
-						gloomy = "Yeah. I'm slow.|I know.",
-						foodie = "I'd have won if I hadn't had lunch.",
-						_ = "Wow. You're fast.",
+						easygoing = "Mm, nope, I'm done, you win.",
+						dreamy = "Hmm... I was watching a boat go past.|Well done, though.",
+						prickly = "You started early.|...Fine, well run.",
+						gloomy = "Yeah, I'm slow, I know.",
+						foodie = "I'd have won if I hadn't just had lunch.",
+						_ = "Wow, you're fast.",
 					}, "sweat")
 			),
 			effects = {
@@ -840,30 +949,30 @@ event({
 			title = "A joke",
 			lines = join(
 				burst(ctx, "a", a, {
-					cheeky = "ok ok listen",
-					shy = "Um. I heard a joke.",
-					_ = "Okay. Listen to this.",
+					cheeky = "ok ok, listen to this one",
+					shy = "Um... I heard a joke.",
+					_ = "Okay, listen to this.",
 				}, "idea"),
 				line("a", joke[1], "music", "point"),
 				if laughs
 					then burst(ctx, "b", b, {
-						dreamy = "Hee.|I'll laugh again later, too.",
-						cheeky = "ha|I'm stealing that one",
+						dreamy = "Hee...|I'll laugh about that again later.",
+						cheeky = "ha, i'm stealing that one",
 						cool = "...Heh.",
 						dramatic = "HA! Oh, that's wonderful.",
-						gloomy = "Heh. Okay.|That got me.",
-						_ = "Hahaha. Okay, that's a good one.",
+						gloomy = "Heh, okay, that got me.",
+						_ = "Hahaha, okay, that's a good one.",
 					}, "music", "laugh")
 					else burst(ctx, "b", b, {
 						proud = "That was beneath both of us.",
-						gentle = "Oh dear. ...Ha.",
-						shy = "Um.|Heehee?",
-						bold = "Boo.",
+						gentle = "Oh, dear... ha.",
+						shy = "Um... heehee?",
+						bold = "Boo, that was terrible.",
 						cool = "No.",
 						prickly = "I'm going to pretend you didn't say that.",
-						bookish = "I've heard that one.|It's in a joke book older than both of us.",
-						polite = "Very good. Ha.|Thank you.",
-						_ = "...|I'm leaving.",
+						bookish = "I've heard that one before.|It's in a joke book older than both of us.",
+						polite = "Very good, ha.|Thank you.",
+						_ = "...I'm leaving now.",
 					}, "sweat")
 			),
 			effects = { { t = "rel", a = "a", b = "b", d = if laughs then 6 else -1 } },
@@ -888,16 +997,16 @@ event({
 			title = "Lost and found",
 			lines = join(
 				burst(ctx, "a", a, {
-					dramatic = "{player}.|My {thing}. I've turned the whole house upside down!",
-					nervous = "Has anyone seen my {thing}?|I've looked everywhere. Twice. Three times.",
-					prickly = "Has anyone seen my {thing}?|Don't ask if I've looked. I've looked.",
-					cool = "{player}.|Lost my {thing}.",
-					sunny = "{player}! Have you seen my {thing}?|It was RIGHT here!",
-					_ = "Has anyone seen my {thing}? I've looked everywhere.",
+					dramatic = "{player}, my {thing} is gone forever!|I've turned the whole house upside down.",
+					nervous = "Has anyone seen my {thing}?|I've looked everywhere, twice, three times.",
+					prickly = "Has anyone seen my {thing}?|Don't ask if I've looked, I've looked.",
+					cool = "{player}, I've lost my {thing}.",
+					sunny = "{player}, have you seen my {thing}?|It was right here a minute ago!",
+					_ = "Has anyone seen my {thing}?|I've looked everywhere.",
 				}, "question", nil, vars),
 				if helps
-					then burst(ctx, "b", b, "Let's look together.", "idea")
-					else burst(ctx, "b", b, "Did you check your pocket?", "question")
+					then burst(ctx, "b", b, "Come on, let's look together.", "idea")
+					else burst(ctx, "b", b, "Have you checked your pockets?", "question")
 			),
 			choices = {
 				{
@@ -905,16 +1014,16 @@ event({
 					lines = join(
 						line(nil, ctx.f("It was under a flowerpot the whole time.")),
 						burst(ctx, "a", a, {
-							prickly = "...Under a flowerpot.|Don't say anything. Thanks.",
-							cool = "Found it.|...Thanks.",
-							_ = "Thank you both. Thanks, {player}. I owe you.",
+							prickly = "...Under a flowerpot.|Don't say anything, but thanks.",
+							cool = "There it is.|...Thanks, both of you.",
+							_ = "Thank you both.|I owe you one, {player}.",
 						}, "heart", "cheer")
 					),
 					effects = { { t = "rel", a = "a", b = "b", d = 8 }, { t = "mood", who = "a", d = 6 } },
 				},
 				{
 					text = "It'll turn up.",
-					lines = burst(ctx, "a", a, "I suppose...", "sad"),
+					lines = burst(ctx, "a", a, "I hope so...", "sad"),
 					effects = { { t = "mood", who = "a", d = -3 } },
 				},
 			},
@@ -942,29 +1051,29 @@ event({
 			title = "A lesson",
 			lines = join(
 				burst(ctx, "a", a, {
-					proud = "I'll show you how to {skill}.|I'm very good at it.",
-					cheeky = "want to learn to {skill}|I'll only laugh a bit",
-					_ = "Want me to show you how to {skill}?",
+					proud = "I'll show you how to {skill}.|I'm very good at it, naturally.",
+					cheeky = "want to learn how to {skill}?|i'll only laugh a little bit",
+					_ = "Do you want me to show you how to {skill}?",
 				}, "idea", nil, vars),
 				burst(ctx, "b", b, {
-					cool = "Sure.",
-					prickly = "...Fine. Go on, then.",
-					polite = "Yes please. Thank you.",
-					nervous = "What if I can't? ...Okay. Yes please.",
-					_ = "Yes please.",
+					cool = "Sure, show me.",
+					prickly = "...Fine, go on, then.",
+					polite = "Yes, please, thank you.",
+					nervous = "What if I can't do it?|...Okay, yes, please.",
+					_ = "Yes, please.",
 				}, "sparkle"),
-				line(nil, "A few tries later, they get it."),
+				line(nil, ctx.f("After a few tries, {b} gets the hang of it.")),
 				burst(ctx, "b", b, {
 					shy = "I did it...|I actually did it.",
-					proud = "There. I knew I'd get it.",
-					cool = "Got it.",
-					prickly = "That was easy. ...Thanks.",
-					dramatic = "I have learned! I am changed!",
+					proud = "There, I knew I'd get it.",
+					cool = "Got it, thanks.",
+					prickly = "That was easy.|...Thanks, though.",
+					dramatic = "I have learned, and I'm a changed person!",
 					bookish = "Oh, it's all in the timing.|That makes sense now.",
-					gloomy = "Huh. I can do it.|I didn't think I could.",
+					gloomy = "Huh, I can do it.|I really didn't think I could.",
 					polite = "Thank you so much for showing me.",
-					nervous = "Did I do it right?|I did it right. I did it!",
-					_ = "I did it. Look.",
+					nervous = "Did I do it right?|I did it, I really did it!",
+					_ = "Look, I did it.",
 				}, "sparkle", "cheer")
 			),
 			effects = { { t = "xp", who = "b", d = 35 }, { t = "rel", a = "a", b = "b", d = 5 } },
@@ -990,29 +1099,29 @@ event({
 			lines = join(
 				line(nil, ctx.f("{b} and {c} are laughing together again.")),
 				burst(ctx, "a", a, {
-					shy = "They never ask me...|It's fine.",
-					proud = "I don't need them. ...They could ask, though.",
-					bold = "They could at least ask.",
-					sunny = "{player}...|do they not like me?|I thought they liked me.",
-					cool = "...Whatever.",
-					prickly = "Don't look at me like that.|I don't care. I don't.",
-					dramatic = "Forgotten. Cast aside!",
-					gloomy = "Nobody ever asks me. It's fine.|I'm used to it.",
-					polite = "I don't want to intrude.|They seem to be having fun.",
+					shy = "They never ask me to come along...|It's fine, really.",
+					proud = "Hmph, I don't need them.|...They could ask, though.",
+					bold = "They could at least ask me, right?",
+					sunny = "{player}... do they not like me?|I really thought they did.",
+					cool = "...Whatever, it's fine.",
+					prickly = "Don't look at me like that.|I don't care, I really don't.",
+					dramatic = "Forgotten, cast aside like an old shoe!",
+					gloomy = "Nobody ever asks me, as usual.|It's fine, I'm used to it.",
+					polite = "I don't want to intrude.|They seem to be having such fun.",
 					nervous = "Did I do something?|Did I say something wrong?",
-					_ = "They always do stuff without me.",
+					_ = "They always do things without me.",
 				}, "sad")
 			),
 			choices = {
 				{
 					text = ctx.f("Ask them to invite {a}."),
 					lines = join(
-						line("b", ctx.f("Hey {a}. Come and join us."), "wave"),
+						line("b", ctx.f("Hey, {a}, come and join us."), "wave"),
 						burst(ctx, "a", a, {
-							prickly = "...Okay. Fine.|If you want.",
-							gloomy = "Really? ...Okay.",
+							prickly = "...Okay, fine, if you want.",
+							gloomy = "Really?|...Okay, I'd like that.",
 							shy = "...!|Okay.",
-							_ = "Really? Okay.",
+							_ = "Really?|Okay, I'd like that.",
 						}, "heart")
 					),
 					effects = {
@@ -1024,11 +1133,11 @@ event({
 				{
 					text = ctx.f("Hang out with me instead?"),
 					lines = burst(ctx, "a", a, {
-						shy = "...!|Thanks.|That helps.",
-						prickly = "...Thanks. Don't tell anyone I was sulking.",
-						gloomy = "Thanks, {player}. I mean it.",
-						cool = "...Okay.|Thanks.",
-						_ = "Thanks, {player}. You're a good friend.",
+						shy = "...!|Thanks, that really helps.",
+						prickly = "...Thanks.|Don't tell anyone I was sulking.",
+						gloomy = "Thanks, {player}, I mean it.",
+						cool = "...Okay, thanks.",
+						_ = "Thanks, {player}, you're a good friend.",
 					}, "heart"),
 					effects = { { t = "mood", who = "a", d = 8 } },
 				},
@@ -1061,25 +1170,28 @@ event({
 		local loves = fav ~= nil and food.id == fav.id
 		local price = ctx.cravingPrice(food.id)
 		local L = Tuning.Life
-		local name = food.name:lower()
-		local vars = { food = name, Food = name:sub(1, 1):upper() .. name:sub(2) }
+		local name = foodPhrase(food)
+		local vars = { food = name, Food = capital(name) }
 		return {
 			title = "A craving",
 			lines = join(
 				line("a", ctx.f("{player}...", {}), "idea"),
 				burst(ctx, "a", a, {
-					sunny = "I want {food} so much!|Sooo much. Like, right now.",
-					bold = "I need {food}. Now.",
-					shy = "Um.|I really want some {food}...|sorry.",
-					cool = "{Food}.|Want some.",
-					prickly = "I want {food}. Don't laugh.",
-					dramatic = "If I don't have some {food} today|I'll simply fade away!",
-					polite = "Might I trouble you for some {food}?|Only if it's no bother.",
-					foodie = "I've been thinking about {food} since breakfast.|Since yesterday's breakfast.",
-					nervous = "Is it okay to want {food}?|I really want {food}.",
-					easygoing = "You know what would be nice?|{Food}. Just saying.",
-					cheeky = "{food}|{food}|{food}",
-					_ = "I really want some {food}. Like, really.",
+					sunny = "I really, really want {food} right now!|Can we go and get it together?",
+					bold = "I need {food}, and I need it now.",
+					shy = "Um... I really want {food}.|Sorry, I know it's silly.",
+					cool = "I could really go for {food} right now.",
+					prickly = "I want {food}, so don't laugh.",
+					dramatic = "If I don't have {food} today, I'll simply FADE away!",
+					polite = "Might I ask for {food}, if it's no trouble?|I've been thinking about it all day.",
+					foodie = "I've been thinking about {food} since breakfast.|Actually, since yesterday's breakfast.",
+					nervous = "Is it okay that I really want {food}?|I-I can't stop thinking about it.",
+					easygoing = "Mm, you know what would be nice right now?|{Food}, just saying.",
+					cheeky = "you know what i want? {food}|i'll keep saying it until it happens",
+					gentle = "Oh, my, I've been dreaming about {food} all afternoon.",
+					bookish = "Actually, I read a recipe this morning, and now all I want is {food}.",
+					dreamy = "Hmm... I keep thinking about {food}.|It's all I can think about today.",
+					_ = "I really want {food} right now.",
 				}, "idea", nil, vars)
 			),
 			choices = {
@@ -1091,15 +1203,15 @@ event({
 							ctx,
 							"a",
 							a,
-							"{Food}! My favourite.|You're the best, {player}.",
+							"{Food}, my favourite!|You're the best, {player}.",
 							"heart",
 							"cheer",
 							vars
 						)
 						else burst(ctx, "a", a, {
-							prickly = "...Thanks. You didn't have to.",
-							cool = "Thanks.",
-							polite = "Thank you so much. That's very kind.",
+							prickly = "...Thanks, you didn't have to.",
+							cool = "Thanks, I owe you.",
+							polite = "Thank you so much, that's very kind.",
 							shy = "...!|Thank you.",
 							_ = "You're the best, {player}.",
 						}, "heart", "cheer"),
@@ -1112,15 +1224,15 @@ event({
 				{
 					text = "Not right now.",
 					lines = burst(ctx, "a", a, {
-						proud = "Fine. I didn't need it.",
-						bold = "Ugh. Fine.",
-						cool = "Okay.",
-						prickly = "Fine. Whatever.|I'll stop thinking about it. Soon.",
-						dramatic = "Then I shall suffer!",
-						gloomy = "Yeah. Figured.",
-						foodie = "Okay... my tummy is so sad, though.",
-						sunny = "Aw. Later then!",
-						_ = "Okay... my tummy is sad, though.",
+						proud = "Hmph, fine, I didn't need it anyway.",
+						bold = "Ugh, fine.",
+						cool = "Okay, another time.",
+						prickly = "Fine, whatever.|I'll stop thinking about it soon.",
+						dramatic = "Then I shall suffer, quietly, all afternoon.",
+						gloomy = "Yeah, I figured.",
+						foodie = "Okay... my stomach's going to be so sad, though.",
+						sunny = "Aw, later, then!",
+						_ = "Okay... my stomach's sad, though.",
 					}, "sad"),
 					effects = { { t = "mood", who = "a", d = -4 } },
 				},
@@ -1146,40 +1258,41 @@ event({
 		return {
 			title = "A favour",
 			lines = burst(ctx, "a", a, {
-				shy = "Um, {player}.|Can I ask you something?|You can say no.|Could I have {cost} coins? For {thing}.",
-				proud = "{player}. A small matter. I've had my eye on {thing}.|{cost} coins would do it.",
-				cool = "{player}.|{cost} coins.|For {thing}. Can I?",
-				nervous = "S-sorry, {player}, can I ask something? Sorry.|Could I have {cost} coins? For {thing}?",
-				cheeky = "{player}|hypothetically|if someone wanted {cost} coins for {thing}",
-				polite = "Good afternoon, {player}. I hope this isn't rude.|Might I ask for {cost} coins?|I've had my eye on {thing}.",
-				_ = "{player}.|Can I ask you something?|Could I have {cost} coins? I've had my eye on {thing}.",
+				shy = "Um, {player}, can I ask you something?|You can say no.|Could I have {cost} coins for {thing}?",
+				proud = "{player}, I have a small request.|I've had my eye on {thing}, and {cost} coins would cover it.",
+				cool = "{player}, could I have {cost} coins?|It's for {thing}.",
+				nervous = "S-sorry, {player}, can I ask you something?|Could I have {cost} coins for {thing}?",
+				cheeky = "{player}, hypothetically speaking|if someone wanted {cost} coins for {thing}, would you say yes",
+				polite = "Good afternoon, {player}, I hope this isn't rude.|Might I ask for {cost} coins?|I've had my eye on {thing}.",
+				sunny = "{player}, guess what I saw at the market!|It's {thing}, and it's only {cost} coins!|Could you help me get it?",
+				_ = "{player}, can I ask you something?|Could I have {cost} coins?|I've had my eye on {thing}.",
 			}, "question", nil, vars),
 			choices = {
 				{
 					text = ctx.f("Here you go ({cost} coins)", vars),
 					cost = cost,
 					lines = burst(ctx, "a", a, {
-						sunny = "Really? Thank you thank you!",
-						cool = "Thanks.|Really.",
-						prickly = "...Thanks. I'll pay you back.|Somehow.",
-						polite = "Thank you. I'm very grateful.",
+						sunny = "Really? Thank you, thank you!",
+						cool = "Thanks, really.",
+						prickly = "...Thanks, I'll pay you back somehow.",
+						polite = "Thank you, I'm very grateful.",
 						shy = "...!|Thank you.",
-						_ = "Thank you. I love it already.",
+						_ = "Thank you, I'm going to buy it this afternoon.",
 					}, "sparkle", "cheer"),
 					effects = { { t = "coins", d = -cost }, { t = "mood", who = "a", d = 12 } },
 				},
 				{
 					text = "Not this time.",
 					lines = burst(ctx, "a", a, {
-						proud = "Fine.|I'll save up. I'm good at saving.",
-						shy = "Oh.|Of course. Sorry for asking.",
-						sunny = "Aw.|Later then!",
-						prickly = "Fine.|Didn't really need it.",
-						gloomy = "Yeah.|Figured.",
-						cool = "Okay.",
-						dramatic = "Then I shall go without.|Bravely.",
-						nervous = "Okay.|S-sorry for asking.",
-						_ = "Okay.|Maybe next time.",
+						proud = "Fine, I'll save up.|I'm good at saving.",
+						shy = "Oh, of course.|Sorry for asking.",
+						sunny = "Aw, later, then!",
+						prickly = "Fine, I didn't really need it.",
+						gloomy = "Yeah, I figured.",
+						cool = "Okay, that's fair.",
+						dramatic = "Then I shall go without, BRAVELY.",
+						nervous = "Okay, s-sorry for asking.",
+						_ = "Okay, maybe next time.",
 					}, "sad"),
 					effects = { { t = "mood", who = "a", d = -4 } },
 				},
@@ -1214,33 +1327,33 @@ event({
 			return {
 				title = "A happy room",
 				lines = burst(ctx, "a", a, {
-					cool = "{player}.|My room's good.|...Really good.",
-					prickly = "My room's fine. ...It's great, actually.|Don't let it go to your head.",
-					_ = "{player}.|My room has everything. I love it here.",
+					cool = "{player}, I like my room.|It's got everything I need.",
+					prickly = "My room's fine.|...It's great, actually, so don't let it go to your head.",
+					_ = "{player}, my room has everything now.|I love it here.",
 				}, "heart"),
 				effects = { { t = "mood", who = "a", d = 5 } },
 				log = ctx.f("{a} loves their room."),
 			}
 		end
 		local tag = ctx.rng:pick(tags)
-		local vars = { thing = Catalog.Tags[tag] }
+		local vars = { thing = ASKS[tag] or Catalog.Tags[tag] }
 		return {
 			title = "A wish",
 			lines = join(
 				burst(ctx, "a", a, {
-					sunny = "{player}! Idea!|Could I have {thing} near my bed?",
-					shy = "Um, {player}...|only if it's okay...|could I have {thing} near my bed?",
-					bold = "{player}.|I want {thing} by my bed.|Can you sort it?",
-					cool = "{player}.|Could I get {thing} by my bed?",
-					prickly = "My room's missing something. {thing}. By the bed.|If you're not busy.",
+					sunny = "{player}, I've had an idea!|Could I have {thing} near my bed?",
+					shy = "Um, {player}... only if it's okay.|Could I have {thing} near my bed?",
+					bold = "{player}, I want {thing} by my bed.|You can sort that out, right?",
+					cool = "{player}, could I get {thing} by my bed?",
+					prickly = "My room's missing something.|I'd like {thing} by the bed, if you're not busy.",
 					polite = "Good morning, {player}.|Would it be possible to have {thing} near my bed?",
-					nervous = "Can I ask for something? Sorry.|Could I have {thing} near my bed?",
-					_ = "Hey, {player}.|Do you think I could have {thing} near my bed?",
+					nervous = "C-can I ask for something?|Could I have {thing} near my bed?",
+					_ = "Hey, {player}, do you think I could have {thing} near my bed?",
 				}, "idea", nil, vars),
 				line(nil, "Put one within a few steps of their bed in Build mode.")
 			),
 			effects = { { t = "request", who = "a", tag = tag } },
-			log = ctx.f("{a} would like {thing} near their bed.", vars),
+			log = ctx.f("{a} would like {thing} near their bed.", { thing = Catalog.Tags[tag] }),
 		}
 	end,
 })
@@ -1258,21 +1371,21 @@ event({
 			title = "Nowhere to sleep",
 			lines = join(
 				burst(ctx, "a", a, {
-					bold = "Right. Where's my bed, then?",
-					proud = "I'll need a bed. A good one.",
-					easygoing = "So... where do I nap?",
-					sunny = "{player}! Quick question! Where do I sleep?",
-					cool = "No bed yet.",
+					bold = "Right, so where's my bed?",
+					proud = "I'll need a bed, and a good one.",
+					easygoing = "So... where am I supposed to nap?",
+					sunny = "{player}, quick question!|Where do I sleep?",
+					cool = "Hm, I don't have a bed yet.",
 					prickly = "I'm not sleeping on the floor.|Just so you know.",
-					dramatic = "I have nowhere to lay my head, {player}!|Nowhere.",
-					bookish = "I measured the floor.|It's not long enough for me.",
-					gloomy = "Floor again tonight, I guess...",
+					dramatic = "I have nowhere to lay my head, {player}!",
+					bookish = "I measured the floor, and it's not long enough for me.",
+					gloomy = "It's the floor again tonight, I guess.",
 					polite = "Sorry to ask, {player}.|Is there a bed for me somewhere?",
-					foodie = "Where do I sleep?|And where do I keep my snacks?",
-					nervous = "Is there a bed? Is it coming?|Where do I go tonight?",
-					shy = "Um, {player}...|where do I sleep?",
-					cheeky = "found a nice bush to sleep in|kidding|where's my bed",
-					_ = "Um. Where do I sleep?",
+					foodie = "Where am I meant to sleep?|And where do I keep my snacks?",
+					nervous = "Is there a bed for me?|Where do I go tonight?",
+					shy = "Um, {player}... where do I sleep?",
+					cheeky = "found a nice bush to sleep in|kidding, where's my bed",
+					_ = "Um, where do I sleep?",
 				}, "sad"),
 				line(nil, "Every villager needs a bed. Find beds under Furniture in Build mode.")
 			),
@@ -1295,20 +1408,28 @@ event({
 		return {
 			title = "A dream",
 			lines = {
-				line("a", ctx.f("{player}. Last night I dreamed about {dream}.", { dream = dream }), "zzz"),
+				line(
+					"a",
+					ctx.f("{player}, I had the strangest dream last night about {dream}.", { dream = dream }),
+					"zzz"
+				),
 				by(ctx, "a", a, {
-					dreamy = "I think it was trying to tell me something.",
-					easygoing = "Weird. Anyway.",
-					proud = "Even my dreams are interesting.",
-					cool = "Weird one.",
-					prickly = "Don't analyse it. I can see you analysing it.",
-					dramatic = "It felt so real, {player}. So very real!",
-					bookish = "Dreams sort out the day's memories, apparently. I had a strange day.",
-					gloomy = "Even in my dreams things go wrong...",
-					foodie = "I woke up hungry. That's a good sign, I think.",
-					nervous = "What does it mean? D-does it mean something bad?",
-					cheeky = "it means I should get the day off. obviously",
-					_ = "I think it means something. Or I was hungry.",
+					dreamy = "Hmm... I think it was trying to tell me something.",
+					easygoing = "Mm, it was weird, but I slept really well.",
+					proud = "Even my dreams are more interesting than most people's.",
+					cool = "Hm, it was a weird one.",
+					prickly = "Don't analyse it, I can see you analysing it.",
+					dramatic = "It felt so real, I woke up gasping!",
+					bookish = "Apparently dreams sort through the day's memories, and I had a strange day.",
+					gloomy = "Even in my dreams things go wrong, as usual.",
+					foodie = "I woke up hungry, which I think is a good sign.",
+					nervous = "W-what does it mean, is it something bad?",
+					cheeky = "it means i should get the day off, obviously",
+					sunny = "It was so much fun, I want to dream it again tonight!",
+					gentle = "It was a sweet dream, and I woke up smiling.",
+					shy = "Um... is that a strange thing to dream about?",
+					polite = "It was a rather pleasant dream, all told.",
+					_ = "I think it means something, or maybe I was just hungry.",
 				}, "question"),
 			},
 			effects = { { t = "mood", who = "a", d = 2 } },
@@ -1331,11 +1452,13 @@ event({
 		return {
 			title = "Lucky find",
 			lines = burst(ctx, "a", a, {
-				sunny = "{player}! {player}! Look!|{coins} coins in the grass!",
-				cool = "{player}.|{coins} coins. In the grass.",
-				cheeky = "finders keepers|...{coins} coins for the town, fine",
-				gloomy = "{coins} coins in the grass.|Somebody must have lost them.|...Finders keepers, I suppose.",
-				_ = "{player}. Look. {coins} coins in the grass.",
+				sunny = "{player}, {player}, look!|I found {coins} coins in the grass!",
+				cool = "{player}, I found {coins} coins in the grass.",
+				cheeky = "finders keepers|...fine, {coins} coins for the town",
+				gloomy = "I found {coins} coins in the grass.|Somebody must have lost them.|...Heh, finders keepers, I suppose.",
+				polite = "Good afternoon, {player}, I found {coins} coins by the path.|I think they should go to the town.",
+				foodie = "I found {coins} coins in the grass!|That's a lot of buns, but it's for the town.",
+				_ = "{player}, look, I found {coins} coins in the grass.",
 			}, "sparkle", "point", vars),
 			effects = { { t = "coins", d = amount } },
 			log = ctx.f("{a} found {coins} coins.", vars),
@@ -1370,14 +1493,15 @@ event({
 		local lines = join(
 			line("a", "Achoo.", "sweat"),
 			burst(ctx, "a", a, {
-				dramatic = "I'm dying, {player}. Tell everyone I said goodbye!",
+				dramatic = "I'm DYING, {player}.|Tell everyone I said goodbye.",
 				prickly = "It's just a cold.|Stop looking at me like that.",
-				gloomy = "Of course I caught a cold. Of course.",
-				nervous = "Is it a cold? It's a cold.|It's only a cold, right?",
-				cool = "Cold.|Great.",
-				easygoing = "Achoo. ...Excuse to lie down, at least.",
-				sunny = "{player}! I'm fine! Achoo. Mostly fine.",
-				_ = "I think I caught a cold.",
+				gloomy = "Of course I caught a cold, as usual.",
+				nervous = "Is it a cold?|It's only a cold, right?",
+				cool = "I've caught a cold.|Great timing.",
+				easygoing = "*sniff* Well, at least it's a good excuse to lie down.",
+				sunny = "{player}, I'm fine, really!|Achoo... okay, maybe not completely fine.",
+				gentle = "Oh, my, I think I've caught a cold.|Don't come too close, all right?",
+				_ = "I think I've caught a cold.",
 			}, "sweat")
 		)
 		if doctor then
@@ -1386,7 +1510,7 @@ event({
 				text = ctx.f("Go and see {doctor}.", { doctor = name }),
 				lines = join(
 					line(nil, ctx.f("{doctor} had a look and sent {a} off with a hot lemon drink.", { doctor = name })),
-					burst(ctx, "a", a, "Tastes awful. ...Feeling better, though.", "sparkle")
+					burst(ctx, "a", a, "It tastes awful.|...I do feel better, though.", "sparkle")
 				),
 				effects = {
 					{ t = "mood", who = "a", d = 4 },
@@ -1395,17 +1519,20 @@ event({
 				},
 			})
 		else
-			table.insert(lines, line(nil, "A doctor in town would see to this. A clinic desk opens the job."))
+			table.insert(
+				lines,
+				line(nil, "A town doctor could see to this, and a clinic desk in Build mode opens the job.")
+			)
 		end
 		table.insert(choices, {
-			text = "Bed. Rest it off.",
-			lines = burst(ctx, "a", a, "Okay... Wake me when I'm better, {player}.", "zzz"),
+			text = "Go to bed and rest.",
+			lines = burst(ctx, "a", a, "Okay... wake me up when I'm better, {player}.", "zzz"),
 			effects = { { t = "sick", who = "a", minutes = 5 }, { t = "mood", who = "a", d = -2 } },
 		})
 		if not doctor then
 			table.insert(choices, {
 				text = "Can you carry on?",
-				lines = burst(ctx, "a", a, "Fine. Achoo.|Fine.", "sad"),
+				lines = burst(ctx, "a", a, "Fine, I'll keep going.|Achoo.", "sad"),
 				effects = { { t = "mood", who = "a", d = -8 } },
 			})
 		end
@@ -1434,19 +1561,20 @@ event({
 			lines = join(
 				line(nil, ctx.f("{a} spent the afternoon {hobby}.", { hobby = hobby })),
 				burst(ctx, "a", a, {
-					easygoing = "Good afternoon, that.",
-					proud = "I'm getting very good at it.",
-					dreamy = "Is it evening already?",
-					shy = "That was nice.",
-					cool = "Good afternoon.",
-					prickly = "What. It's a perfectly normal thing to do.",
-					dramatic = "Hours, {player}! Gone like that!",
-					bookish = "I timed it. Four hours.|Felt like one.",
-					gloomy = "That was actually fine.",
-					polite = "A lovely afternoon. Thank you for asking.",
-					foodie = "I've worked up an appetite now.",
-					nervous = "Was that a waste of a day?|It didn't feel like it.",
-					_ = "Time well spent.",
+					easygoing = "Mm, that was a good afternoon.",
+					proud = "I'm getting very good at it, if I say so myself.",
+					dreamy = "Hmm... is it evening already?",
+					shy = "That was nice...",
+					cool = "That was a good afternoon.",
+					prickly = "What, it's a perfectly normal thing to do.",
+					dramatic = "Hours, {player}, gone in the blink of an eye!",
+					bookish = "I timed it, and it was four hours.|It only felt like one.",
+					gloomy = "That was actually fine.|I don't get many afternoons like that.",
+					polite = "That was a lovely afternoon, all told.",
+					foodie = "I've worked up a real appetite now.|What's for dinner?",
+					nervous = "Was that a waste of a whole day?|It didn't feel like one.",
+					sunny = "That was so much fun!|Let's do it together next time!",
+					_ = "That was time well spent.",
 				}, "sparkle")
 			),
 			effects = { { t = "mood", who = "a", d = 4 } },
@@ -1469,12 +1597,12 @@ event({
 			lines = join(
 				line(nil, ctx.f("{a} is sleepwalking again.")),
 				burst(ctx, "a", a, {
-					foodie = "Mmm... more gravy...|on the pancakes...",
-					dramatic = "Mmm... the crown...|is mine...",
-					bookish = "Mmm... chapter nine...|no, ten...",
-					nervous = "Mm... did I lock...|the door...",
-					cheeky = "mmm...|hehe...|got you...",
-					_ = "Mmm... five more pancakes...",
+					foodie = "Mmm... more gravy on the pancakes, please...",
+					dramatic = "Mmm... the crown is mine, all mine...",
+					bookish = "Mmm... chapter nine, no, chapter ten...",
+					nervous = "Mm... did I remember to lock the door...",
+					cheeky = "mmm... hehe, got you...",
+					_ = "Mmm... five more pancakes, please...",
 				}, "zzz")
 			),
 			effects = { { t = "mood", who = "a", d = 1 } },
@@ -1502,14 +1630,16 @@ event({
 			lines = join(
 				line(nil, ctx.f("{a} stayed late at the {place} to practise.", { place = place })),
 				burst(ctx, "a", a, {
-					proud = "I was good already. Now I'm better.",
+					proud = "I was good already, and now I'm even better.",
 					shy = "I think I'm getting it...",
-					cool = "Getting there.",
-					prickly = "I'm not staying late for fun.|...Okay. A bit for fun.",
-					dramatic = "Practice makes perfect, {player}! Nearly perfect.",
-					gloomy = "Still not right. Closer, though.",
-					nervous = "One more go. Then one more.|Just to be sure.",
-					easygoing = "Okay. That's enough practice. For the week.",
+					cool = "I'm getting there.",
+					prickly = "I'm not staying late for fun.|...Okay, maybe a little for fun.",
+					dramatic = "Practice makes perfect, {player}, or nearly perfect!",
+					gloomy = "It's still not right, but it's closer.",
+					nervous = "Just one more go, then one more.|I-I want to be sure.",
+					easygoing = "Okay, that's enough practice for the week.",
+					bookish = "Actually, I've been timing myself, and I'm faster every round.",
+					sunny = "One more time, and then I've got it!",
 					_ = "I'm getting the hang of this.",
 				}, "sparkle", "point")
 			),
@@ -1534,34 +1664,34 @@ event({
 		return {
 			title = "A bit lonely",
 			lines = burst(ctx, "a", a, {
-				shy = "Um, {player}.|Everyone's got someone to talk to.|Except me...",
-				proud = "I don't need friends. ...It'd be nice, though.",
-				bold = "Nobody ever asks me along.",
-				sunny = "{player}...|I keep saying hi to people.|They say hi back. That's it.",
-				cool = "...It's quiet.|That's all.",
-				prickly = "I'm fine on my own. ...Mostly.",
-				dramatic = "Alone, {player}. In a town full of people!",
-				gloomy = "Nobody really talks to me... I get it.",
-				polite = "I don't want to bother anyone.|But it's a bit lonely.",
-				nervous = "What if nobody likes me here?|What if it's me?",
-				_ = "Everyone seems to have friends but me.",
+				shy = "Um, {player}... everyone seems to have someone to talk to.|Everyone except me...",
+				proud = "Hmph, I don't need friends.|...It would be nice, though.",
+				bold = "Nobody ever asks me along, you know?",
+				sunny = "{player}... I keep saying hi to people.|They say hi back, and that's it.",
+				cool = "Hm, it's quiet, that's all.",
+				prickly = "I'm fine on my own.|...Most of the time.",
+				dramatic = "Alone, {player}, in a town FULL of people!",
+				gloomy = "Nobody really talks to me.|Heh... I get it.",
+				polite = "I don't want to bother anyone.|But it does get a little lonely.",
+				nervous = "What if nobody here likes me?|What if it's something I'm doing?",
+				_ = "Everyone seems to have friends except me.",
 			}, "sad"),
 			choices = {
 				{
 					text = ctx.f("Come and meet {b}."),
 					lines = join(
-						line("b", ctx.f("Hi {a}. I've been meaning to say hello."), "wave"),
+						line("b", ctx.f("Hi, {a}, I've been meaning to say hello."), "wave"),
 						burst(ctx, "a", a, {
-							shy = "Oh.|Hi...",
-							prickly = "...Hi. Hello.|Hi.",
-							_ = "Oh. Hi.",
+							shy = "Oh... hi.",
+							prickly = "...Hi.|Hello, I mean.",
+							_ = "Oh, hi.",
 						}, "heart")
 					),
 					effects = { { t = "rel", a = "a", b = "b", d = 12 }, { t = "mood", who = "a", d = 6 } },
 				},
 				{
-					text = "Want some space?",
-					lines = burst(ctx, "a", a, "Yeah. Maybe tomorrow.", "sad"),
+					text = "Do you want some space?",
+					lines = burst(ctx, "a", a, "Yeah, maybe tomorrow.", "sad"),
 					effects = { { t = "mood", who = "a", d = -2 } },
 				},
 			},
@@ -1600,23 +1730,25 @@ event({
 			title = "Happy birthday",
 			lines = {
 				line(nil, ctx.f("It's {a}'s birthday today.")),
-				line(nil, "Everyone gathers round with cake."),
+				line(nil, "Everyone gathers round with a cake."),
 				by(ctx, "a", a, {
 					shy = "You all remembered? Oh... thank you.",
-					proud = "Of course you remembered. Thank you, though.",
-					bold = "Cake. Right. Who's cutting it?",
-					easygoing = "Aw. You didn't have to. Is there cake?",
-					sunny = "You all remembered! {player}, you too! Best day!",
-					cool = "...Thanks. Really.",
-					prickly = "You didn't have to do all this. ...Thanks.",
-					dramatic = "For me? All of this? I can't. I can! Thank you!",
-					bookish = "Three hundred and sixty five days older. I counted.",
+					proud = "Of course you remembered, but thank you all the same.",
+					bold = "Cake, right, so who's cutting it?",
+					easygoing = "Aw, you didn't have to do all this, but is there cake?",
+					sunny = "You all remembered, {player} too, it's the best day ever!",
+					cool = "...Thanks, really.",
+					prickly = "You didn't have to do all this... but thanks.",
+					dramatic = "For me, all of this? I can't believe it, thank you!",
+					bookish = "That's three hundred and sixty five days older, I counted.",
 					gloomy = "I thought nobody knew... this is really nice.",
-					polite = "Thank you all so much. I'm very touched.",
-					foodie = "Is that lemon? It's lemon. I can tell from here.",
-					nervous = "For me? Is it really for me? Oh. Thank you.",
-					cheeky = "a cake? for me? I'm having the first three slices",
-					_ = "You all remembered. This is the best.",
+					polite = "Thank you all so much, I'm very touched.",
+					foodie = "Is that lemon? Mmm, I can smell it from here.",
+					nervous = "Is it really for me? Oh, thank you.",
+					cheeky = "a cake, for me? i'm having the first three slices",
+					gentle = "Oh, my, you're all too kind to me.",
+					dreamy = "Hmm... I forgot it was today, thank you all.",
+					_ = "You all remembered, and this is the best.",
 				}, "heart", "cheer"),
 			},
 			effects = effects,
@@ -1645,7 +1777,7 @@ event({
 		end
 		return {
 			title = "Dance party",
-			lines = { line(nil, "Someone turned the music up. Everyone's dancing.") },
+			lines = { line(nil, "Someone turned the music up, and now everyone's dancing.") },
 			effects = effects,
 			log = "There was a dance party.",
 		}
@@ -1671,8 +1803,8 @@ event({
 		return {
 			title = "Shooting stars",
 			lines = {
-				line(nil, "Shooting stars over town. Everyone makes a wish."),
-				line(nil, "Nobody says what they wished for. They all stay up far too late."),
+				line(nil, "Shooting stars streak over town, and everyone makes a wish."),
+				line(nil, "Nobody says what they wished for, and they all stay up far too late."),
 			},
 			effects = effects,
 			log = "Shooting stars lit up the sky.",
@@ -1697,7 +1829,7 @@ event({
 		end
 		return {
 			title = "Thunder",
-			lines = { line(nil, "Thunder rolls over town and everyone runs for a roof.") },
+			lines = { line(nil, "Thunder rolls over town, and everyone runs for a roof.") },
 			effects = effects,
 			log = "A thunderstorm rolled through.",
 		}
@@ -1719,26 +1851,31 @@ event({
 		local w = ctx.job(a)
 		local place = w.def.name:lower()
 		local coins = Tuning.Jobs.VisitCoins * ctx.rng:int(2, 5)
+		-- at a counter that sells things they pick one out, anywhere else they ask for the service, and
+		-- the worker answers with something they'd say at work
+		local service = SERVICE[w.job.id]
 		return {
 			title = "A customer",
 			lines = join(
 				line(nil, ctx.f("{b} stopped by {a}'s {place}.", { place = place })),
-				line("a", ctx.rng:pick(w.job.lines), "music", "wave"),
-				burst(ctx, "b", b, {
-					shy = "Um.|One of those, please?",
-					bold = "One of those. Thanks.",
-					proud = "I'll have your best one.",
-					cool = "One of those.",
-					prickly = "That one.|No, the other one. Yes.",
-					dramatic = "I'll take that one! It's calling to me.",
-					bookish = "Which is the most popular?|...I'll have that one.",
-					gloomy = "Whatever's left. That one's fine.",
-					polite = "May I have one of those, please?|Thank you.",
-					foodie = "Two of those. No, three.|One's for later. Two are for later.",
-					nervous = "Is that one okay?|Is it the right one? Okay. That one.",
-					cheeky = "one of those|and a discount|worth a try",
-					_ = "I'll take one of those, please.",
-				}, "sparkle")
+				if service
+					then burst(ctx, "b", b, service, "sparkle")
+					else burst(ctx, "b", b, {
+						shy = "Um... could I have one of those, please?",
+						bold = "One of those, thanks.",
+						proud = "I'll have your very best one.",
+						cool = "One of those, please.",
+						prickly = "That one.|No, the other one, yes.",
+						dramatic = "I'll take that one, it's calling to me!",
+						bookish = "Which one's the most popular?|...I'll have that, then.",
+						gloomy = "Whatever's left is fine.|That one, I suppose.",
+						polite = "May I have one of those, please?|Thank you kindly.",
+						foodie = "Two of those, no, three.|One's for now and two are for later.",
+						nervous = "Is that one okay?|I-is it the right one? Okay, that one.",
+						cheeky = "one of those, and a discount|worth a try",
+						_ = "I'll take one of those, please.",
+					}, "sparkle"),
+				line("a", ctx.rng:pick(w.job.lines), "music", "wave")
 			),
 			effects = {
 				{ t = "coins", d = coins },
@@ -1770,20 +1907,21 @@ event({
 			lines = {
 				line(nil, ctx.f("Customers keep queueing up at {a}'s counter.", { place = place })),
 				by(ctx, "a", a, {
-					easygoing = "So many people. I need a sit down after this.",
+					easygoing = "So many people, I'm going to need a long sit down after this.",
 					shy = "So many people... I'm doing okay, aren't I?",
-					proud = "Of course they're queueing. It's me.",
-					sunny = "{player}! Look at the queue! Look at it!",
-					cool = "Busy one.",
-					prickly = "One at a time. ONE at a time.",
-					dramatic = "The whole island is here!",
-					bookish = "Sixty customers before noon. Sixty one, actually.",
-					gloomy = "Busy... something must be wrong with the other shops.",
-					polite = "Thank you all for your patience. Next, please.",
-					foodie = "I haven't had a second to eat. Not one second.",
-					nervous = "So many. Am I being quick enough? Am I?",
-					cheeky = "queue's past the fountain. I'm famous now",
-					_ = "I've never been this busy. I love it.",
+					proud = "Hmph, of course they're queueing, they know who's behind the counter.",
+					sunny = "{player}, look at the queue, look at it!",
+					cool = "It's a busy one today.",
+					prickly = "Ugh, one at a time, please, and stop pushing.",
+					dramatic = "The WHOLE island is here!",
+					bookish = "That's sixty customers before noon, sixty one, actually.",
+					gloomy = "This busy? Something must be wrong at all the other shops.",
+					polite = "Thank you all for your patience, next, please.",
+					foodie = "I haven't had a second to eat, not one.",
+					nervous = "So many people, am I being quick enough?",
+					cheeky = "the queue goes past the fountain, i'm basically famous now",
+					gentle = "Oh, my, what a crowd, I hope nobody's waiting too long.",
+					_ = "I've never been this busy, and I love it.",
 				}, "sparkle", "cheer"),
 			},
 			effects = { { t = "coins", d = coins }, { t = "mood", who = "a", d = 5 }, { t = "xp", who = "a", d = 15 } },
@@ -1807,18 +1945,18 @@ event({
 		return {
 			title = "A day off",
 			lines = join(
-				line("a", ctx.f("{player}? Got a minute?", {}), "sweat"),
+				line("a", ctx.f("{player}, have you got a minute?", {}), "sweat"),
 				burst(ctx, "a", a, {
-					proud = "I'd like the rest of the day off.|I've earned it.",
-					shy = "Um.|Could I maybe go home early?|Sorry...",
-					cool = "I need the afternoon.|That okay?",
+					proud = "I'd like the rest of the day off.|I think I've earned it, don't you?",
+					shy = "Um... could I maybe go home early today?|Sorry, you can say no.",
+					cool = "I need the afternoon off.|Is that all right?",
 					prickly = "I need a break.|Don't make it a whole thing.",
-					dramatic = "I'm exhausted.|Utterly. Spent.",
+					dramatic = "I'm exhausted, utterly and completely spent.",
 					gloomy = "I'm worn out.|I'd be no use to anyone today.",
-					polite = "Would it be all right|if I finished early today?",
-					foodie = "I can't think.|I need a nap and a very big lunch.",
-					nervous = "Is it okay to ask for the day off?|Is it too much?",
-					easygoing = "*yawn*|So. Hypothetically. The afternoon off.",
+					polite = "Would it be all right if I finished early today?",
+					foodie = "I can't think straight.|I need a nap and a very big lunch.",
+					nervous = "Is it okay to ask for the day off?|Is that too much to ask?",
+					easygoing = "*yawn*|So, hypothetically, how would you feel about me taking the afternoon off?",
 					_ = "Could I take the rest of today off?|I'm worn out.",
 				}, "sweat")
 			),
@@ -1826,17 +1964,17 @@ event({
 				{
 					text = "Go and rest.",
 					lines = burst(ctx, "a", a, {
-						easygoing = "Thank you. Hammock, here I come.",
-						prickly = "...Thanks. I'll be back tomorrow. Early.",
+						easygoing = "Thanks, the hammock's calling me.",
+						prickly = "...Thanks, I'll be back early tomorrow.",
 						polite = "Thank you so much.|I'll make it up to you.",
 						shy = "...!|Thank you.",
-						_ = "Thank you. Hammock, here I come.",
+						_ = "Thank you, I'll be back tomorrow.",
 					}, "heart", "cheer"),
 					effects = { { t = "dayoff", who = "a" }, { t = "mood", who = "a", d = 10 } },
 				},
 				{
 					text = "We need you today.",
-					lines = burst(ctx, "a", a, "Okay... back to it.", "sad"),
+					lines = burst(ctx, "a", a, "Okay... back to it, then.", "sad"),
 					effects = { { t = "mood", who = "a", d = -6 } },
 				},
 			},
@@ -1862,20 +2000,20 @@ event({
 			title = "Looking for work",
 			lines = join(
 				burst(ctx, "a", a, {
-					proud = "I'd like a job. A good one, ideally.",
-					bold = "Give me a job. Any job.",
-					shy = "Um.|Is there any work going?|I don't mind what...",
-					sunny = "{player}!|Is there anything I could do?|Anything at all!",
-					cool = "Got any work?",
-					prickly = "I'm bored.|Find me something to do. Please.",
-					dramatic = "I need a purpose, {player}. A PURPOSE!",
-					bookish = "I've been reading about jobs.|I'd like to try one. Any of them.",
-					gloomy = "Nobody needs me for anything... Is there work?",
-					polite = "If there's any work going|I'd be glad of it.",
-					foodie = "Is there a job with snacks?|Any job is fine. Snacks would be nice.",
-					nervous = "Is there a job for me?|Would I be any good at it?",
-					easygoing = "I suppose I should get a job.|Eventually. Today, maybe.",
-					_ = "I'd love a job. Anything, really.",
+					proud = "I'd like a job, ideally a good one.",
+					bold = "Give me a job, any job.",
+					shy = "Um... is there any work going?|I don't mind what it is.",
+					sunny = "{player}, is there anything I could do?|Anything at all!",
+					cool = "Have you got any work for me?",
+					prickly = "I'm bored.|Find me something to do, please.",
+					dramatic = "I need a PURPOSE, {player}!",
+					bookish = "Actually, I've been reading about all the jobs in town.|I'd like to try one, any of them.",
+					gloomy = "Nobody needs me for anything.|Is there any work?",
+					polite = "If there's any work going, I'd be glad of it.",
+					foodie = "Is there a job with snacks?|Any job's fine, but snacks would be nice.",
+					nervous = "Is there a job for me?|Would I even be any good at it?",
+					easygoing = "I suppose I should get a job at some point.|Maybe today, even.",
+					_ = "I'd love a job, anything at all.",
 				}, "question"),
 				line(nil, "Put a workplace down from the Work tab in Build mode and they'll take it.")
 			),
@@ -1904,7 +2042,7 @@ event({
 			title = "A tourist",
 			lines = {
 				line(nil, ctx.f("A tourist wandered through town and {words}.", { words = words })),
-				line(nil, ctx.f("They left a tip of {coins} coins.", { coins = tip })),
+				line(nil, ctx.f("They left a tip of {coins} coins on the way out.", { coins = tip })),
 			},
 			effects = { { t = "coins", d = tip } },
 			log = "A tourist visited and left a tip.",
@@ -1966,47 +2104,47 @@ event({
 		s:n("{a} waves you over to the bench by the fountain.")
 		for _, l in
 			burst(ctx, "a", a, {
-				sunny = "{player}! Sit, sit!|You've been running round all day.",
-				gentle = "{player}, come and sit a minute.|Have you eaten today? Properly, I mean.",
-				bold = "{player}.|Sit down. You look done in.",
-				dreamy = "There's room on the bench.|The sun's nice here.",
-				easygoing = "Sit. Seriously.|The town won't fall over in five minutes.",
-				proud = "Even I take breaks, {player}. Sit.",
-				shy = "Um. {player}?|Do you want to sit?|Only if you want.",
-				cheeky = "you've been building so much|I thought you'd turned into a hammer",
-				cool = "{player}.|Sit for a bit?",
-				prickly = "You look tired.|Not that I was watching. Sit down.",
-				dramatic = "You'll wear yourself out, {player}. REST!",
-				bookish = "People work better after a short rest.|It's well known, actually.",
-				gloomy = "You'll burn out like that.|Sit with me. It's fine.",
+				sunny = "{player}, sit, sit!|You've been running round all day.",
+				gentle = "{player}, come and sit for a minute.|Have you eaten today, properly, I mean?",
+				bold = "{player}, sit down.|You look done in, you know that?",
+				dreamy = "There's room on the bench.|Hmm... the sun's nice right here.",
+				easygoing = "Sit down, seriously.|The town won't fall over in five minutes.",
+				proud = "Even I take breaks, {player}, so sit.",
+				shy = "Um, {player}?|Do you want to sit down? Only if you want to.",
+				cheeky = "you've been building so much i thought you'd turned into a hammer|sit down, hammer",
+				cool = "{player}, sit for a bit.|You've earned it.",
+				prickly = "You look tired.|I wasn't watching you or anything, so just sit down.",
+				dramatic = "You'll wear yourself out, {player}, so rest!",
+				bookish = "{player}, did you know people work better after a short rest?|Sit with me for a minute and we'll test it.",
+				gloomy = "You'll burn out like that.|Sit with me for a bit, it's fine.",
 				polite = "Good afternoon, {player}.|Would you care to join me for a moment?",
-				foodie = "Sit. I've got half a sandwich.|It's the good half.",
-				nervous = "Are you okay? You look tired.|Are you okay?",
-				_ = "Come and sit a minute, {player}.",
+				foodie = "Sit down, I've got half a sandwich.|It's the good half.",
+				nervous = "Are you okay?|You look really tired.",
+				_ = "Come and sit for a minute, {player}.",
 			}, "heart", "wave")
 		do
 			table.insert(s.lines, l)
 		end
-		s:choice("Budge up.", function(c)
+		s:choice("Budge up, then.", function(c)
 			c:n("You sat on the bench with {a} for a while and watched the pigeons.")
 			c:by("a", {
 				cool = "...Good, right?",
-				prickly = "See? Not so hard. ...I liked that.",
-				gloomy = "That was nice. Come back tomorrow?",
-				gentle = "There. Better. Go gently today.",
-				_ = "Better? Good.",
+				prickly = "See, that wasn't so hard... I liked that, actually.",
+				gloomy = "That was nice, will you come back tomorrow?",
+				gentle = "There, isn't that better? Take care of yourself today.",
+				_ = "Feeling a bit better now?",
 			}, "heart")
 			c:hearts("a", 1)
 			c:mood("a", 5)
-			c:memo("a", "We sat by the fountain, remember, {player}? Do that more.")
+			c:memo("a", "Remember when we sat by the fountain, {player}? We should do that more.")
 		end)
-		s:choice("Can't. Too busy.", function(c)
+		s:choice("Sorry, I'm too busy.", function(c)
 			c:by("a", {
-				prickly = "Fine. Don't say I didn't tell you.",
-				nervous = "Okay. Just... don't forget to rest. Okay?",
-				sunny = "Aw. Later then!",
-				gentle = "All right. I'll bring you soup later, though.",
-				_ = "Okay. Don't forget to stop sometime.",
+				prickly = "Fine, don't say I didn't warn you.",
+				nervous = "Okay, just don't forget to rest, okay?",
+				sunny = "Aw, later, then!",
+				gentle = "All right, but I'm bringing you soup later.",
+				_ = "Okay, don't forget to stop at some point.",
 			}, "sad")
 			c:mood("a", -1)
 		end)
@@ -2024,36 +2162,36 @@ event({
 	scene = function(ctx: Ctx, a: string): Scene
 		local s = Kit.scene(ctx, "A light home")
 		s:prop("item:keep_lantern", "a")
-		s:n("It's dark on the path. A lantern comes bobbing up behind you. It's {a}.")
+		s:n("It's dark on the path, and then a lantern comes bobbing up behind you with {a} holding it.")
 		for _, l in
 			burst(ctx, "a", a, {
-				sunny = "{player}! It's pitch black!|You'll fall in a ditch. I'll walk you!",
-				gentle = "It's dark tonight.|Let me light the way for you.",
-				bold = "You'll trip. Walk with me.",
-				dreamy = "The moon's hiding.|Share my light?",
-				cool = "Dark out.|I'll walk you.",
+				sunny = "{player}, it's pitch black out here!|You'll fall in a ditch, so I'm walking you home!",
+				gentle = "It's very dark tonight.|Let me light the way for you, all right?",
+				bold = "You'll trip in this, so walk with me.",
+				dreamy = "The moon's hiding tonight.|Hmm... do you want to share my light?",
+				cool = "It's dark out.|I'll walk you back.",
 				prickly = "I was going this way anyway.|Don't read into it.",
-				dramatic = "Through the darkness I bring LIGHT!",
-				gloomy = "There's a hole by the gate.|I fell in it once. Walk with me.",
+				dramatic = "Through the darkness, I bring you light!",
+				gloomy = "There's a hole by the gate.|I fell in it once, so walk with me.",
 				polite = "Good evening, {player}.|May I walk with you? It's very dark tonight.",
-				foodie = "Going to the bakery's back door for yesterday's buns.|Same way as you.",
-				nervous = "It's so dark. Can I walk with you?|For both of us?",
-				_ = "It's dark. I'll walk you back.",
+				foodie = "I'm heading to the bakery's back door for yesterday's buns.|It's the same way as you.",
+				nervous = "It's so dark out here.|C-can I walk with you? It's for both of us.",
+				_ = "It's dark, so I'll walk you back.",
 			}, "idea")
 		do
 			table.insert(s.lines, l)
 		end
-		s:choice("Thanks. Lead the way.", function(c)
-			c:n("You walked back under {a}'s lantern. Neither of you fell in the ditch.")
+		s:choice("Thanks, lead the way.", function(c)
+			c:n("You walked back under {a}'s lantern without tripping once.")
 			c:hearts("a", 1)
 			c:mood("a", 4)
 		end)
 		s:choice("I know the way.", function(c)
 			c:by("a", {
-				prickly = "Fine. Don't come crying to me with a muddy knee.",
-				nervous = "Okay. Be careful. Really careful.",
-				cool = "Okay. Night.",
-				_ = "Okay. Night, {player}. Watch the ditch.",
+				prickly = "Fine, but don't come crying to me with a muddy knee.",
+				nervous = "Okay, be careful, really careful.",
+				cool = "Okay, night, then.",
+				_ = "Okay, good night, {player}, and watch out for the ditch.",
 			}, "wave")
 			c:mood("a", 1)
 		end)
@@ -2072,20 +2210,20 @@ event({
 	weight = Kit.W({ base = 0.07, traits = { focus = 0.1 } }),
 	scene = function(ctx: Ctx, a: string): Scene
 		local s = Kit.scene(ctx, "The right word")
-		s:n("{a} is writing a letter to a friend on another island. The pen has stopped.")
+		s:n("{a} is writing a letter to a friend on another island, but the pen has stopped.")
 		for _, l in
 			burst(ctx, "a", a, {
-				sunny = "{player}! Help!|I want to say the sea looked...|ugh, what's the word?",
-				dreamy = "{player}.|The sea this morning.|It looked... it looked...",
-				cool = "{player}.|The sea looked...|what?",
-				prickly = "{player}.|One word. I need one word. Don't laugh.",
-				dramatic = "{player}. How do I describe the sea?|Words fail me!",
-				bookish = "{player}, help me. I've crossed out six words already.|None of them were right.",
-				gloomy = "{player}.|I want to say the sea looked something.|Not sad, for once.",
+				sunny = "{player}, help!|I want to say the sea looked... ugh, what's the word?",
+				dreamy = "{player}...|The sea this morning looked... hmm, how did it look?",
+				cool = "{player}, I need a word for how the sea looked this morning.",
+				prickly = "{player}, I need one word.|Don't laugh, I'm stuck on how to describe the sea.",
+				dramatic = "{player}, how do I describe the sea?|Words FAIL me!",
+				bookish = "{player}, could you help me?|I've crossed out six words already, and none of them were right.",
+				gloomy = "{player}, I want to say the sea looked like something.|Something that isn't sad, for once.",
 				polite = "Forgive me, {player}.|Might you help? I can't think how to describe the sea.",
-				foodie = "{player}. The sea looked like...|soup. No. Not soup. Something.",
-				nervous = "{player}, help.|What if I pick the wrong word|and they think it's weird?",
-				_ = "{player}. Help me.|I want to say the sea looked...|what's the word?",
+				foodie = "{player}, the sea looked like... soup.|No, not soup, something else.",
+				nervous = "{player}, help me.|What if I pick the wrong word and they think it's weird?",
+				_ = "{player}, can you help me?|I want to say the sea looked... what's the word?",
 			}, "question", "point")
 		do
 			table.insert(s.lines, l)
@@ -2096,14 +2234,14 @@ event({
 			s:choice(w[1] .. "?", function(c)
 				c:with({ word = w[2], Word = w[1] })
 				c:by("a", {
-					prickly = "{Word}. ...Yes. Fine. That's it. Thanks.",
-					gloomy = "{Word}. Huh. Yes, that's right.",
-					bookish = "{Word}. Oh, that's exactly it. Simple is best.",
-					cool = "{Word}. ...Yes.",
-					_ = "{Word}. Yes. That's it exactly.",
+					prickly = "{Word}... yes, fine, that's it, thanks.",
+					gloomy = "{Word}... huh, yes, that's right.",
+					bookish = "{Word}, oh, that's exactly it, simple is best.",
+					cool = "{Word}, yes, that's the one.",
+					_ = "{Word}, yes, that's it exactly.",
 				}, "idea", "cheer")
 				c:mood("a", 4)
-				c:memo("a", "I told my friend the sea looked {word}. They wrote back saying they could see it.")
+				c:memo("a", "I told my friend the sea looked {word}, and they wrote back saying they could picture it.")
 			end)
 		end
 		s:log("{a} asked you for the right word.")
