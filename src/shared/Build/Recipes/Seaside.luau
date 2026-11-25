@@ -1710,21 +1710,24 @@ local items: { Item } = {
 				r:block(x0, y + 0.02, 0.16, x0 + 0.04, y + 0.1, 0.72, cover, "SmoothPlastic")
 				r:block(x0 + 0.04, y + 0.02, 0.18, x0 + 0.77, y + 0.1, 0.69, C.Paper, "SmoothPlastic")
 			end
+			-- the conch: a fat body whorl with its spire to one side and the canal to the other
+			local conch = CFrame.new(0.55, 0.8, 0.45) * CFrame.Angles(0, 0.4, 0)
+			r:lump(conch, 0.5, 0.34, 0.36, Color3.fromRGB(240, 206, 186), "SmoothPlastic")
+			r:lump(conch * CFrame.new(0.02, -0.02, 0.1), 0.3, 0.2, 0.2, Color3.fromRGB(232, 160, 150), "SmoothPlastic")
 			r:add({
 				shape = "Cone",
-				cf = CFrame.new(0.55, 0.78, 0.45) * CFrame.Angles(0, 0.4, math.pi / 2),
-				size = Vector3.new(0.3, 0.6, 0.3),
-				color = Color3.fromRGB(240, 206, 186),
+				cf = conch * CFrame.new(0.3, 0.04, 0) * CFrame.Angles(0, 0, -math.pi / 2),
+				size = Vector3.new(0.24, 0.24, 0.24),
+				color = Color3.fromRGB(226, 190, 168),
 				mat = "SmoothPlastic",
 			})
-			r:lump(
-				CFrame.new(0.4, 0.74, 0.47) * CFrame.Angles(0, 0.4, 0),
-				0.24,
-				0.22,
-				0.2,
-				Color3.fromRGB(232, 170, 160),
-				"SmoothPlastic"
-			)
+			r:add({
+				shape = "Cone",
+				cf = conch * CFrame.new(-0.3, -0.03, 0) * CFrame.Angles(0, 0, math.pi / 2),
+				size = Vector3.new(0.12, 0.22, 0.12),
+				color = Color3.fromRGB(226, 190, 168),
+				mat = "SmoothPlastic",
+			})
 		end,
 	},
 

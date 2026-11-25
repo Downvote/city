@@ -348,8 +348,8 @@ function Service.start()
 	end)
 	-- the lawn is drawn again when a plot changes hands or grows (Plots.drawLand): cut it again
 	for i = 1, Tuning.Plot.Count do
-		local folder = Plots.buildFolder(i)
-		local plot = folder and folder.Parent
+		local found, folder = pcall(Plots.buildFolder, i)
+		local plot = found and folder and folder.Parent
 		if plot then
 			plot.ChildAdded:Connect(function(child)
 				if child.Name == "Land" then

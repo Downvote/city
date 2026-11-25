@@ -344,7 +344,8 @@ describe("Build service, water", function()
 					out.SolidMaterial[a][b], out.SolidOccupancy[a][b], out.LiquidOccupancy[a][b] = {}, {}, {}
 					for c = 1, nz do
 						local v = get(i0 + a - 1, j0 + b - 1, k0 + c - 1)
-						out.SolidMaterial[a][b][c], out.SolidOccupancy[a][b][c], out.LiquidOccupancy[a][b][c] = v.m, v.o, v.l
+						out.SolidMaterial[a][b][c], out.SolidOccupancy[a][b][c], out.LiquidOccupancy[a][b][c] =
+							v.m, v.o, v.l
 					end
 				end
 			end
@@ -388,12 +389,18 @@ describe("Build service, water", function()
 		-- a lily pad floats on it, and nothing else may stand in it
 		local lily = Catalog.get("water_lilies")
 		ok, err = now({
-			{ type = "add", kind = "items", obj = { id = lily.id, x = x0 + 30, y = Water.pieceY(lily), z = 156, r = 0, lv = 0 } },
+			{
+				type = "add",
+				kind = "items",
+				obj = { id = lily.id, x = x0 + 30, y = Water.pieceY(lily), z = 156, r = 0, lv = 0 },
+			},
 		})
 		if not ok then
 			error(tostring(err))
 		end
-		ok, err = now({ { type = "add", kind = "items", obj = { id = "tree_oak", x = x0 + 30, y = 0, z = 158, r = 0, lv = 0 } } })
+		ok, err = now({
+			{ type = "add", kind = "items", obj = { id = "tree_oak", x = x0 + 30, y = 0, z = 158, r = 0, lv = 0 } },
+		})
 		expect(ok).toBe(false)
 		expect(err).toBe("that can't go in the water")
 	end)
@@ -480,7 +487,12 @@ describe("Build service, water", function()
 			end
 		end
 		local function inside(i, j, k)
-			return i >= lo.X // 4 and i < hi.X // 4 and j >= lo.Y // 4 and j < hi.Y // 4 and k >= lo.Z // 4 and k < hi.Z // 4
+			return i >= lo.X // 4
+				and i < hi.X // 4
+				and j >= lo.Y // 4
+				and j < hi.Y // 4
+				and k >= lo.Z // 4
+				and k < hi.Z // 4
 		end
 
 		Service.sync(1, profile.plan, p)
