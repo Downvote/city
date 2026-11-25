@@ -859,7 +859,23 @@ describe("Event engine", function()
 			n += 1
 		end
 		expect(n >= 40).toBeTruthy()
-		for _, id in { "toomuchbread", "pierwalk", "doorpaint", "cantsleep", "walkedpast", "whowaves" } do
+		for _, id in
+			{
+				"toomuchbread",
+				"pierwalk",
+				"doorpaint",
+				"cantsleep",
+				"walkedpast",
+				"whowaves",
+				-- and the chats that open with it, the way a friend texts
+				"invite",
+				"askabout",
+				"favour",
+				"sidekick",
+				"walkyouhome",
+				"sorryday",
+			}
+		do
 			if not byName[id] then
 				error(id .. " never says the player's name")
 			end

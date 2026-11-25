@@ -21,7 +21,7 @@ export type Job = {
 	blurb: string,
 	income: number, -- coins per work day at skill 1 and a middling mood
 	likes: { string },
-	lines: { string }, -- what they say at work
+	lines: { string }, -- what they say at work, plainly, the way someone on shift does
 }
 
 local Jobs = {}
@@ -33,7 +33,12 @@ local list: { Job } = {
 		blurb = "Runs a market stall.",
 		income = 1050,
 		likes = { "sunny", "proud", "polite" },
-		lines = { "Fresh stock today.", "Take a look, no rush.", "Two for one on apples." },
+		lines = {
+			"Fresh stock in this morning.",
+			"Have a look, no rush.",
+			"Apples are two for one today.",
+			"That's the last of the pears.",
+		},
 	},
 	{
 		id = "barista",
@@ -41,7 +46,12 @@ local list: { Job } = {
 		blurb = "Makes the coffee.",
 		income = 1125,
 		likes = { "sunny", "gentle", "foodie" },
-		lines = { "One latte, coming up.", "Mind the foam, it's hot.", "I drew a heart on that one." },
+		lines = {
+			"Milky one for you. Mind, it's hot.",
+			"Next, please. What can I get you?",
+			"I drew a leaf in the foam. Sort of a leaf.",
+			"Grinding a fresh batch. Two minutes.",
+		},
 	},
 	{
 		id = "baker",
@@ -49,7 +59,12 @@ local list: { Job } = {
 		blurb = "Bakes bread every morning.",
 		income = 1200,
 		likes = { "easygoing", "gentle", "foodie" },
-		lines = { "Rolls are out of the oven.", "Flour everywhere again.", "Mind, the tray's hot." },
+		lines = {
+			"Fresh rolls, still warm.",
+			"Mind the tray, it's just out.",
+			"Sourdough's sold out. Back tomorrow.",
+			"There's flour in my eyebrows again.",
+		},
 	},
 	{
 		id = "florist",
@@ -57,7 +72,12 @@ local list: { Job } = {
 		blurb = "Sells flowers from a cart.",
 		income = 975,
 		likes = { "gentle", "dreamy", "shy", "gloomy" },
-		lines = { "These ones mean friendship.", "Tulips are in today.", "Sniff this. Go on." },
+		lines = {
+			"These yellow ones last the longest.",
+			"Tulips just came in.",
+			"Smell this one. Go on.",
+			"Want them wrapped?",
+		},
 	},
 	{
 		id = "artist",
@@ -65,7 +85,12 @@ local list: { Job } = {
 		blurb = "Paints, sells the odd picture.",
 		income = 900,
 		likes = { "dreamy", "shy", "dramatic" },
-		lines = { "Hold still, I'm painting you.", "Nearly done with this one.", "Needs more blue." },
+		lines = {
+			"Don't move, I've nearly got your nose.",
+			"Nearly done. Just the sky left.",
+			"Needs more blue. It always needs more blue.",
+			"That one's drying. Don't touch.",
+		},
 	},
 	{
 		id = "doctor",
@@ -73,7 +98,12 @@ local list: { Job } = {
 		blurb = "Keeps the town healthy.",
 		income = 1650,
 		likes = { "gentle", "shy", "nervous" },
-		lines = { "Say ahh.", "Drink more water.", "Next, please." },
+		lines = {
+			"Open wide. Say ahh.",
+			"Drink more water. I mean it.",
+			"Who's next? Come in.",
+			"Keep that arm still for me.",
+		},
 	},
 	{
 		id = "teacher",
@@ -81,7 +111,12 @@ local list: { Job } = {
 		blurb = "Teaches at the school.",
 		income = 1425,
 		likes = { "proud", "gentle", "bookish" },
-		lines = { "Eyes on the board, please.", "Who knows the answer?", "Homework is due Monday." },
+		lines = {
+			"Eyes up here, please.",
+			"Who knows the answer? Anyone?",
+			"Homework's due Monday. No excuses.",
+			"Good. Now try the next one.",
+		},
 	},
 	{
 		id = "musician",
@@ -89,7 +124,12 @@ local list: { Job } = {
 		blurb = "Plays for tips on a small stage.",
 		income = 1050,
 		likes = { "sunny", "cheeky", "bold", "dramatic" },
-		lines = { "This one's an original.", "Any requests?", "Clap along if you know it." },
+		lines = {
+			"This next one's new. Be kind.",
+			"Requests? I know about six.",
+			"Clap if you know it.",
+			"Thank you! There's a hat for coins.",
+		},
 	},
 	{
 		id = "builder",
@@ -97,7 +137,12 @@ local list: { Job } = {
 		blurb = "Fixes and makes things at a workbench.",
 		income = 1350,
 		likes = { "bold", "proud", "prickly" },
-		lines = { "Measure twice, cut once.", "Pass me that hammer.", "Good as new." },
+		lines = {
+			"Hold that end steady.",
+			"Hammer, please. The big one.",
+			"That'll hold. Good as new.",
+			"Mind the sawdust.",
+		},
 	},
 	{
 		id = "postie",
@@ -105,7 +150,12 @@ local list: { Job } = {
 		blurb = "Sorts the town's letters.",
 		income = 975,
 		likes = { "shy", "easygoing", "cool" },
-		lines = { "Letter for you.", "So many parcels today.", "Stamps are on the left." },
+		lines = {
+			"Post's in. One for you.",
+			"Parcels everywhere today.",
+			"Stamps on the left, please.",
+			"Sorting by street. Nearly there.",
+		},
 	},
 	{
 		id = "icecream",
@@ -113,7 +163,12 @@ local list: { Job } = {
 		blurb = "Scoops all day.",
 		income = 1050,
 		likes = { "cheeky", "sunny", "foodie" },
-		lines = { "Cone or cup?", "Sprinkles are free today.", "Eat it before it drips." },
+		lines = {
+			"Cone or a cup?",
+			"Sprinkles are on the house today.",
+			"Quick, it's dripping.",
+			"Strawberry's nearly gone.",
+		},
 	},
 	{
 		id = "librarian",
@@ -121,7 +176,12 @@ local list: { Job } = {
 		blurb = "Looks after the library.",
 		income = 1125,
 		likes = { "shy", "dreamy", "bookish" },
-		lines = { "Shh, please.", "That one's due back Friday.", "Have you read this one?" },
+		lines = {
+			"Quiet voices, please.",
+			"Back by Friday, please.",
+			"Try this one. You'll like it.",
+			"Returns go in the box.",
+		},
 	},
 }
 
