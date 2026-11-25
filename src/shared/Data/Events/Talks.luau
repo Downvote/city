@@ -319,7 +319,7 @@ event({
 		burst(s, "a", {
 			dreamy = "Hmm... I had the strangest dream.|I dreamed {one}, and part of me is still there.",
 			nervous = "I had the oddest dream last night.|I dreamed {one}, and I woke up so confused.",
-			cheeky = "ok so last night I dreamed {one}",
+			cheeky = "ok so last night i dreamed {one}",
 			sunny = "I had the funniest dream last night!|I dreamed {one}!",
 			gentle = "I had such a sweet dream last night.|I dreamed {one}.",
 			bold = "Listen to this, I dreamed {one} last night.",
