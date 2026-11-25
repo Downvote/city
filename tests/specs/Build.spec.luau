@@ -144,6 +144,69 @@ describe("Catalog", function()
 	end)
 end)
 
+describe("Painting a piece", function()
+	-- the user: "some objects, when painted, seem to keep their texture, such as grass"
+	local function grassy(): any
+		for _, def in Catalog.all() do
+			for _, p in Geometry.flatten(Catalog.prims(def)) do
+				if p.mat == "Grass" and p.color == Colors.fromHex(def.c1) then
+					return def
+				end
+			end
+		end
+		return nil
+	end
+
+	it("puts the brush's material on with its colour", function()
+		local def = grassy()
+		expect(def ~= nil).toBeTruthy()
+		local painted = Geometry.flatten(Catalog.prims(def, "D9707F", nil, nil, "SmoothPlastic"))
+		local grass, pink = 0, 0
+		for _, p in painted do
+			if p.color == Colors.fromHex("D9707F") then
+				pink += 1
+				expect(p.mat == "SmoothPlastic" or p.mat == "Neon" or p.mat == "Glass").toBeTruthy()
+			end
+			if p.mat == "Grass" and p.color == Colors.fromHex("D9707F") then
+				grass += 1
+			end
+		end
+		expect(pink > 0 and grass == 0).toBeTruthy()
+	end)
+
+	it("leaves a piece never painted in its own materials, and keeps light and glass", function()
+		for _, def in Catalog.all() do
+			local plain = Geometry.flatten(Catalog.prims(def))
+			local again = Geometry.flatten(Catalog.prims(def, nil, nil, nil, nil, nil))
+			expect(#plain).toBe(#again)
+			for i, p in plain do
+				expect(again[i].mat).toBe(p.mat)
+			end
+			-- painted in wood, what glows still glows and glass is still glass
+			local lit, glass = 0, 0
+			for _, p in plain do
+				lit += if p.mat == "Neon" then 1 else 0
+				glass += if p.mat == "Glass" then 1 else 0
+			end
+			for _, p in Geometry.flatten(Catalog.prims(def, nil, nil, nil, "Wood", "Wood")) do
+				lit -= if p.mat == "Neon" then 1 else 0
+				glass -= if p.mat == "Glass" then 1 else 0
+			end
+			expect(lit == 0 and glass == 0).toBeTruthy()
+		end
+	end)
+
+	it("only takes the palette's materials", function()
+		local it = { id = "chair_wood", x = 200, y = 0.4, z = 100, r = 0, lv = 0, m1 = "Wood" }
+		local plan = Plan.new()
+		local ok = Plan.validate(plan, "items", it)
+		local bad = table.clone(it)
+		bad.m1 = "ForceField"
+		local okBad = Plan.validate(plan, "items", bad)
+		expect(ok == true and okBad == false).toBeTruthy()
+	end)
+end)
+
 describe("Plan rules", function()
 	it("accepts a normal wall and refuses bad ones", function()
 		expect(Plan.validWall(wall(0, 0, 10, 0))).toBe(true)

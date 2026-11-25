@@ -316,10 +316,14 @@ end
 -- Draws an item in its own space with the given paint (hex; nil for the defaults). A piece that
 -- takes a picture is drawn with `img` (a library id, Plan) showing on it, or with its
 -- placeholder when there is none. A mark is never solid: people and pieces go over it.
-function Catalog.prims(def: Def, c1: string?, c2: string?, img: number?): { Recipe.Prim }
+-- `m1` and `m2` are what the paint tool painted the slots in (a piece never painted keeps its
+-- recipe's own materials).
+function Catalog.prims(def: Def, c1: string?, c2: string?, img: number?, m1: string?, m2: string?): { Recipe.Prim }
 	local col1 = Colors.fromHex(c1 or def.c1)
 	local col2 = Colors.fromHex(c2 or def.c2 or def.c1)
 	local r = Recipe.new(col1, col2)
+	local ra: any = r
+	ra.m1, ra.m2 = m1, m2
 	def.build(r)
 	local prims = r.prims
 	if def.picture then

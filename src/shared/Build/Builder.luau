@@ -583,7 +583,7 @@ function Builder.primsFor(plan: Plan.PlanData, kind: string, key: string): { Pri
 		if not def or not frame then
 			return nil
 		end
-		local prims = Catalog.prims(def, item.c1, item.c2, item.img)
+		local prims = Catalog.prims(def, item.c1, item.c2, item.img, item.m1, item.m2)
 		-- only the piece's body is solid, not its little parts (Build/Solid: "villagers and the
 		-- player can sometimes get stuck in objects")
 		prims = Solid.apply(def, prims)

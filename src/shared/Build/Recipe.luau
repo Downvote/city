@@ -55,7 +55,20 @@ function Recipe.new(c1: Color3, c2: Color3): Recipe
 	return setmetatable({ c1 = c1, c2 = c2, prims = {} }, Recipe)
 end
 
+-- What a painted piece's slots are painted in: the paint tool's material goes on with its colour
+-- (the user: "some objects, when painted, seem to keep their texture, such as grass"), so every
+-- part in a slot's colour takes it. Light and glass keep their own.
+local KEEPS = { Neon = true, Glass = true, ForceField = true }
+
 function Recipe.add(self: Recipe, prim: Prim): Prim
+	local m1, m2 = (self :: any).m1, (self :: any).m2
+	if (m1 or m2) and not KEEPS[prim.mat] and not (prim.transp and prim.transp > 0) then
+		if m1 and prim.color == self.c1 then
+			prim.mat = m1
+		elseif m2 and prim.color == self.c2 then
+			prim.mat = m2
+		end
+	end
 	table.insert(self.prims, prim)
 	return prim
 end
@@ -68,7 +81,29 @@ end
 function Recipe.piece(self: Recipe, draw: (Recipe) -> (), collide: boolean?): Prim
 	local q = Recipe.new(self.c1, self.c2)
 	draw(q)
-	return self:add(Geometry.piece(q.prims, collide))
+	-- (a piece is one material: when any of it is in a painted slot's colour, the whole of it
+	-- takes that slot's material, before it is merged)
+	local sa: any = self
+	local m1, m2 = sa.m1, sa.m2
+	if (m1 or m2) and #q.prims > 0 and not KEEPS[q.prims[1].mat] then
+		local to = nil
+		for _, p in q.prims do
+			if m1 and p.color == self.c1 then
+				to = m1
+				break
+			elseif m2 and p.color == self.c2 then
+				to = to or m2
+			end
+		end
+		if to then
+			for _, p in q.prims do
+				p.mat = to
+			end
+		end
+	end
+	local made = Geometry.piece(q.prims, collide)
+	table.insert(self.prims, made) -- (already in its slots' materials)
+	return made
 end
 
 -- An axis aligned box by its centre and size.

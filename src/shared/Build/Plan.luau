@@ -56,6 +56,8 @@ export type Item = {
 	lv: number,
 	c1: string?,
 	c2: string?,
+	m1: string?, -- what the paint tool painted the slots in (Palette.Materials), if it did
+	m2: string?,
 	wall: string?,
 	t: number?,
 	side: string?,
@@ -633,6 +635,13 @@ function Plan.validItem(plan: PlanData, item: any, ignoreKey: string?): (boolean
 	if item.c2 ~= nil and not Colors.isHex(item.c2) then
 		return false, "bad paint"
 	end
+	-- (what the paint tool painted its slots in: one of the palette's materials)
+	if
+		item.m1 ~= nil and Palette.MaterialSet[item.m1] ~= true
+		or item.m2 ~= nil and Palette.MaterialSet[item.m2] ~= true
+	then
+		return false, "bad paint"
+	end
 	if not finite(item.y) then
 		return false, "bad number"
 	end
@@ -808,7 +817,7 @@ local FIELDS = {
 	walls = { "x1", "z1", "x2", "z2", "lv", "style" },
 	floors = { "x1", "z1", "x2", "z2", "lv", "c", "m" },
 	roofs = { "x1", "z1", "x2", "z2", "lv", "style", "rise", "dir", "over", "c", "m", "c2", "m2" },
-	items = { "id", "x", "y", "z", "r", "lv", "c1", "c2", "wall", "t", "side", "img", "sx", "sy", "sz" },
+	items = { "id", "x", "y", "z", "r", "lv", "c1", "c2", "m1", "m2", "wall", "t", "side", "img", "sx", "sy", "sz" },
 }
 
 function Plan.clean(kind: string, obj: any): any

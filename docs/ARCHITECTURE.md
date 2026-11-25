@@ -738,7 +738,10 @@ way back, where it stays (not while drawing); its buttons and a step's outcome a
   and "water". New categories: `shapes`, `pictures`, `markings`, `pillars`, `water`; `OtherTags.path`.
   `Catalog.withStyle(style)` (a look's pieces in category order, `Catalog.categoryOrder`), `isPath`/`paths` (tagged
   `path`, a flat ground piece, or a path word in its id), `standsOn` (what a piece can stand on: marks and the like are
-  looked through), `prims(def, c1, c2, img)` (marks never collide). Recipe modules: `Shapes` (50), `Pictures` (12),
+  looked through), `prims(def, c1, c2, img, m1, m2)` (marks never collide; `m1`/`m2` are the materials the paint tool
+  painted the two slots in, saved on the item as `m1`/`m2` from `Palette.Materials`: `Recipe.add` gives every part in a
+  slot's colour that material, a merged piece with any part in it takes it whole, and Neon, Glass and see-through parts
+  keep theirs; the user: "some objects, when painted, seem to keep their texture, such as grass"). Recipe modules: `Shapes` (50), `Pictures` (12),
   `Markings` (85: one 5x7 stroke table, `GLYPHS`, draws every letter and number), `Pillars` (31: a full one's capital
   ends at 11, its head at 11.9, hidden in the slab under a floor and meeting a roof; c1 the body, c2 the trim), `Water`
   (20), the looks' `Cozy`, `Rustic`, `Modern`, `SciFi`, `GardenMore` (with the path pieces, 4 stud squares that tile),

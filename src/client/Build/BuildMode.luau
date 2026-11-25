@@ -867,8 +867,10 @@ local function placeTool()
 		return
 	end
 	-- (stretched as it will stand: Build/Stretch)
-	local prims =
-		Geometry.transform(Stretch.prims(Catalog.prims(def, item.c1, item.c2, item.img), Stretch.of(item)), frame)
+	local prims = Geometry.transform(
+		Stretch.prims(Catalog.prims(def, item.c1, item.c2, item.img, item.m1, item.m2), Stretch.of(item)),
+		frame
+	)
 	local key = string.format(
 		"i%s|%.2f|%.2f|%.2f|%.2f|%s|%s|%s|%s|%s|%s|%s",
 		item.id,
@@ -932,10 +934,11 @@ local function paintRequest(hit: RaycastResult): any?
 			obj.c, obj.m = c, m
 		end
 	elseif kind == "items" then
+		-- (the brush's material goes on with its colour, as on walls and floors)
 		if s.paint.slot == "trim" then
-			obj.c2 = c
+			obj.c2, obj.m2 = c, m
 		else
-			obj.c1 = c
+			obj.c1, obj.m1 = c, m
 		end
 	end
 	return { type = "set", kind = kind, key = key, obj = obj }
@@ -963,6 +966,10 @@ local function pickColor(hit: RaycastResult)
 		local def = Catalog.get(obj.id)
 		if def then
 			s.paint.c = if s.paint.slot == "trim" then (obj.c2 or def.c2 or def.c1) else (obj.c1 or def.c1)
+			local m = if s.paint.slot == "trim" then obj.m2 else obj.m1
+			if m then
+				s.paint.m = m
+			end
 		end
 	end
 	s.paint.pick = false
