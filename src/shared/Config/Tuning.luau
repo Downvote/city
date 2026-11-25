@@ -109,7 +109,9 @@ Tuning.Unstick = {
 	Core = 0.6,
 	-- villagers' pathfinding (Npc): a disc narrower than our narrowest door (4 studs) with room
 	-- to spare, so paths go through doorways; the Unstick spec holds it to the catalog's doors
-	Agent = { Radius = 1.3, Height = 5, Spacing = 3 },
+	-- WaterCost: a stud through terrain water (pools, ponds) counts as this many on dry ground,
+	-- so a path goes round a pool unless there is no other way
+	Agent = { Radius = 1.3, Height = 5, Spacing = 3, WaterCost = 200 },
 }
 
 Tuning.Scales = {

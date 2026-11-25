@@ -7,6 +7,10 @@
 --   * a player or a villager wedged in a solid placed part for more than a moment (pushed in,
 --     come out of a seat into a sofa's back): freed the same way, by a look a few times a second
 --   * villagers walking, sitting and sleeping see to themselves (Npc.walkTo, Npc.standUp)
+-- Somebody swimming in a pool or a pond (terrain water, Services/Water) is never stuck: they move
+-- slowly, under the ground, inside the basin's rim. They are left alone, a pool's own rim and
+-- lining (and the ground cut round it) never count as something to be stuck in (Npc/Room), and
+-- nobody is moved into water.
 -- Where to stand them is Npc/Room (the world) and Sim/Unstick (the search); what of a piece is
 -- solid at all is Build/Solid.
 
@@ -29,11 +33,15 @@ local K = Tuning.Unstick
 -- since when each body has been wedged (weak: a body that goes is forgotten)
 local wedgedSince: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
 
--- Somebody who can be moved: alive, standing on their own (not lying in bed: anchored).
+-- Somebody who can be moved: alive, standing on their own (not lying in bed: anchored), and
+-- not swimming.
 local function movable(model: Model): (Humanoid?, BasePart?)
 	local hum = model:FindFirstChildOfClass("Humanoid")
 	local root = model:FindFirstChild("HumanoidRootPart")
 	if not hum or not root or not root:IsA("BasePart") or hum.Health <= 0 or root.Anchored then
+		return nil, nil
+	end
+	if hum:GetState() == Enum.HumanoidStateType.Swimming then
 		return nil, nil
 	end
 	return hum, root

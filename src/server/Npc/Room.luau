@@ -42,6 +42,29 @@ function Room.rootAbove(model: Model): number
 	return 2 + root.Size.Y / 2 -- R6: two studs of leg
 end
 
+-- Swimming (in a pool or a pond on a plot: terrain water, Services/Water)? A swimmer moves
+-- slowly and sits under the ground, inside the basin's rim: never taken for stuck.
+function Room.swimming(model: Model): boolean
+	local hum = model:FindFirstChildOfClass("Humanoid")
+	return hum ~= nil and hum:GetState() == Enum.HumanoidStateType.Swimming
+end
+
+-- Part of a pool or a pond: its rim and lining (a plan's "waters", Build/Water) or the ground
+-- cut round it (WaterPiece, Services/Water). Nobody counts as stuck in those.
+function Room.waterPart(part: Instance): boolean
+	if part:GetAttribute("WaterPiece") ~= nil then
+		return true
+	end
+	local node = part.Parent
+	while node and node ~= workspace do
+		if node:GetAttribute("BuildKind") == "waters" then
+			return true
+		end
+		node = node.Parent
+	end
+	return false
+end
+
 -- Where a standing body's feet are.
 function Room.feet(model: Model): Vector3?
 	local root = rootOf(model)
@@ -52,16 +75,17 @@ function Room.feet(model: Model): Vector3?
 end
 
 -- The height of the first solid thing under `origin` within `length` studs, nobody's body
--- counted; nil when there is nothing.
+-- counted; nil when there is nothing, or water (nobody is stood in a pool, or under one).
 function Room.floorUnder(origin: Vector3, length: number, skip: { Instance }): number?
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	params.RespectCanCollide = true
+	params.IgnoreWater = false
 	local list = table.clone(skip)
 	for _ = 1, 4 do
 		params.FilterDescendantsInstances = list
 		local hit = workspace:Raycast(origin, Vector3.new(0, -length, 0), params)
-		if not hit then
+		if not hit or hit.Material == Enum.Material.Water then
 			return nil
 		end
 		local who = Room.personOf(hit.Instance)
@@ -154,6 +178,9 @@ end
 -- Moves somebody out of whatever they are in to the nearest spot with room. Returns how
 -- (Sim/Unstick.find: "here" when they were in nothing and stay put).
 function Room.moveOut(model: Model, opts: Opts?): string
+	if Room.swimming(model) then
+		return "here"
+	end
 	local spot, how = Room.freeSpot(model, nil, opts)
 	if spot and how ~= "here" then
 		Room.unseat(model)
@@ -187,7 +214,11 @@ function Room.touching(box: Unstick.Box, within: { Instance }): boolean
 	params.FilterDescendantsInstances = within
 	params.RespectCanCollide = true
 	for _, part in workspace:GetPartBoundsInBox(box.cf, box.size, params) do
-		if part.CanCollide and Unstick.overlaps(box, { cf = part.CFrame, size = part.Size }) then
+		if
+			part.CanCollide
+			and not Room.waterPart(part)
+			and Unstick.overlaps(box, { cf = part.CFrame, size = part.Size })
+		then
 			return true
 		end
 	end
@@ -236,16 +267,20 @@ end
 -- were moved.
 function Room.free(model: Model, waypoint: Vector3?): boolean
 	local feet = Room.feet(model)
-	if not feet then
+	if not feet or Room.swimming(model) then
 		return false
 	end
 	if waypoint then
 		local flat = Vector3.new(waypoint.X - feet.X, 0, waypoint.Z - feet.Z)
 		if flat.Magnitude <= K.Hop then
 			-- a path's waypoints lie on the floor (a walk's own target may be a little over it)
+			-- (never one in water)
 			local ground = Room.floorUnder(waypoint + Vector3.new(0, 1, 0), 6, { model })
 			local at = Vector3.new(waypoint.X, ground or waypoint.Y, waypoint.Z)
-			local spot, how = Room.freeSpot(model, at)
+			local spot, how = nil, "none"
+			if ground then
+				spot, how = Room.freeSpot(model, at)
+			end
 			if spot and (how == "here" or (how == "beside" and (spot - at).Magnitude <= K.Width)) then
 				Room.place(model, spot, if flat.Magnitude > 0.1 then flat else nil)
 				return true

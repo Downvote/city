@@ -208,7 +208,8 @@ local AGENT = {
 	AgentCanJump = true,
 	AgentCanClimb = false,
 	WaypointSpacing = Tuning.Unstick.Agent.Spacing,
-	Costs = { Water = 20, Door = 1 },
+	-- terrain water (a plot's pools and ponds, Services/Water) costs so much they walk round it
+	Costs = { Water = Tuning.Unstick.Agent.WaterCost, Door = 1 },
 }
 
 -- Is the straight line from the villager to a point free of walls and furniture?

@@ -38,7 +38,7 @@ Remotes.Functions = {
 	"VillagerJob", -- (vid, workplaceKey?) -> ok, err
 	"PlotExpand", -- () -> ok, err
 	"SettingSet", -- (key, value) -> ok
-	"TutorialStep", -- (step) -> ok
+	"TutorialStep", -- (step done, or Sim/Tutorial.Skipped) -> ok, progress recorded
 	"VisitPlot", -- (plotIndex) -> ok
 	"WishGrant", -- (vid, "friend" | "cheer", otherVid?) -> ok, err
 	"WishBuy", -- (vid) -> ok, message: pays Life.wishPrice for the food a villager is craving and grants the wish

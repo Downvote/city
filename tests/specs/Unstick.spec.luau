@@ -366,6 +366,8 @@ describe("Unstick", function()
 			expect(K.Agent.Height <= Tuning.Plot.LevelHeight - 4).toBeTruthy()
 			-- and a hop comes before a new path, a new path before being moved
 			expect(K.JumpAfter < K.ReplanAfter).toBeTruthy()
+			-- a plot's pools and ponds are walked round, not waded through
+			expect(K.Agent.WaterCost >= 100).toBeTruthy()
 		end)
 
 		local function signal()
@@ -619,7 +621,13 @@ describe("Unstick", function()
 		local function person(at, opts)
 			opts = opts or {}
 			local seat = opts.seat
-			local hum = { Health = 100, SeatPart = seat }
+			local hum = {
+				Health = 100,
+				SeatPart = seat,
+				GetState = function()
+					return if opts.swimming then Enum.HumanoidStateType.Swimming else Enum.HumanoidStateType.Running
+				end,
+			}
 			local root = {
 				Position = at + Vector3.new(0, 3, 0),
 				Anchored = opts.anchored == true,
@@ -631,6 +639,7 @@ describe("Unstick", function()
 				feet = at,
 				inPiece = opts.inPiece,
 				wedged = opts.wedged,
+				hum = hum,
 				IsA = function(_, c)
 					return c == "Model"
 				end,
@@ -648,7 +657,9 @@ describe("Unstick", function()
 			local inIt = person(Vector3.new(10.5, 0, 10.8), { inPiece = sofa })
 			local nearBy = person(Vector3.new(14, 0, 10))
 			local asleep = person(Vector3.new(10, 0, 10), { inPiece = sofa, anchored = true })
-			players = { { Character = inIt } }
+			-- in a pool, where a boat was just put down: swimmers are never moved
+			local swimmer = person(Vector3.new(9.5, -2, 10), { inPiece = sofa, swimming = true })
+			players = { { Character = inIt }, { Character = swimmer } }
 			villagers = { nearBy, asleep }
 			-- (its watch loop never ends, and the harness's waits don't wait: left out here)
 			local realSpawn = task.spawn
@@ -695,6 +706,13 @@ describe("Unstick", function()
 			Service.look(100 + K.WedgedFor + 0.01)
 			expect(#moved).toBe(1)
 			expect(moved[1].body).toBe(wedged)
+			-- a swimmer in a pool's rim is not wedged in it, however long
+			local swimmer = person(Vector3.new(0, -3, 0), { wedged = true, swimming = true })
+			players = { { Character = swimmer } }
+			Service.look(150)
+			Service.look(150 + K.WedgedFor * 3)
+			expect(#moved).toBe(1)
+			players = { { Character = wedged }, { Character = fine } }
 			-- got out of it in between: the clock starts again
 			wedged.wedged = false
 			Service.look(200)

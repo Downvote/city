@@ -732,7 +732,7 @@ end
 
 function Tutorial.open(_arg: any?)
 	Tutorial.close()
-	panel = Kit.panel("Welcome to Catalog Town", UDim2.fromOffset(620, 506), function()
+	panel = Kit.panel("Welcome to Catalog Town", UDim2.fromOffset(620, 526), function()
 		Tutorial.close()
 	end, "house", T.Pink, { Dialog = true })
 	local body = panel.body
