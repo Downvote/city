@@ -377,6 +377,17 @@ local function hasWall(w: any): boolean
 	return false
 end
 
+-- The plan a room drawn in the basement is checked against: with its own floor in, since its walls
+-- stand on it (Build/Basement) and the floor is sent first. Anywhere else, the plan as it is.
+local function basementRoomView(x1: number, z1: number, x2: number, z2: number): any
+	if s.level >= 0 or s.wallStyle ~= "wall" then
+		return State.plan
+	end
+	local floors = table.clone(State.plan.floors)
+	floors["?room"] = { x1 = x1, z1 = z1, x2 = x2, z2 = z2, lv = s.level, c = s.floorPaint.c, m = s.floorPaint.m }
+	return setmetatable({ floors = floors }, { __index = State.plan })
+end
+
 local function wallTool()
 	local p = planePoint()
 	if not p then
@@ -416,8 +427,10 @@ local function wallTool()
 		local prims = {}
 		local cost = 0
 		local valid, reason = true, nil
+		-- (in the basement the room's walls stand on its own floor, which goes down first)
+		local against = basementRoomView(x1, z1, x2, z2)
 		for _, w in walls do
-			local ok, err = Plan.validate(State.plan, "walls", w)
+			local ok, err = Plan.validate(against, "walls", w)
 			if not ok then
 				valid, reason = false, err
 			end
@@ -430,7 +443,7 @@ local function wallTool()
 		if s.wallStyle == "wall" then
 			local f = { x1 = x1, z1 = z1, x2 = x2, z2 = z2, lv = s.level, c = s.floorPaint.c, m = s.floorPaint.m }
 			if Plan.validate(State.plan, "floors", f) then
-				table.insert(requests, { type = "add", kind = "floors", obj = f })
+				table.insert(requests, if s.level < 0 then 1 else #requests + 1, { type = "add", kind = "floors", obj = f })
 				cost += Plan.cost("floors", f)
 				Geometry.append(prims, Shapes.floor(f, Plan.holes(State.plan, s.level)))
 			end

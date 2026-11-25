@@ -145,7 +145,7 @@ function Lively.cabin(r: R, hangY: number, draw: () -> ())
 		local p = r.prims[i]
 		p.name = Lively.Cabin
 		p.collide = false
-		local attrs = p.attrs or {}
+		local attrs: { [string]: any } = p.attrs or {}
 		attrs.Hang = hangY - p.cf.Position.Y
 		p.attrs = attrs
 	end
@@ -155,7 +155,7 @@ end
 function Lively.twinkle(prim: Prim, hue: boolean?): Prim
 	prim.name = Lively.Twinkle
 	if hue then
-		local attrs = prim.attrs or {}
+		local attrs: { [string]: any } = prim.attrs or {}
 		attrs.Hue = true
 		prim.attrs = attrs
 	end

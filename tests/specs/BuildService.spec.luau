@@ -905,7 +905,11 @@ describe("Build service, floors and the basement", function()
 				kind = "items",
 				obj = { id = "stairs_straight", x = x0 + 140, y = Plan.levelBase(B), z = 110, r = 180, lv = B },
 			},
-			{ type = "add", kind = "items", obj = { id = "bed_single", x = x0 + 128, y = Plan.levelBase(B), z = 110, r = 0, lv = B } },
+			{
+				type = "add",
+				kind = "items",
+				obj = { id = "bed_single", x = x0 + 128, y = Plan.levelBase(B), z = 110, r = 0, lv = B },
+			},
 		})
 		if not ok then
 			error(tostring(why))

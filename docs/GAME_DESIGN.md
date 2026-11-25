@@ -316,6 +316,51 @@ Bloxburg style, all on a grid and all saved:
   canvases, sculptures, rows of seats, stage curtains, timber racks, ward beds, school desks, a pillar box, sorting
   shelves, tall bookcases with ladders, hanging signs and more), on sale in Build mode like everything else.
 
+### Floors, a basement and bigger land
+
+> add gamepasses, just like bloxburg. add collisions, and a gamepass should be there to remove it, another for
+> basement, another for more levels, another for bigger plot, (make the biggest size smaller without paying
+> smaller) ...
+
+**Floors.** Everyone builds on the first three floors. Tall Builds takes a house up to eight. Everyone had four
+floors before the passes, so an old save keeps whatever it has on the fourth: villagers still sleep and work there,
+and it can be repainted, moved about, moved down or sold, but nothing new goes up there without the pass. In Build
+mode the up arrow stops at the top floor you may build on; where Tall Builds would open more, a small lock sits on
+its corner and pressing it offers the pass. The hint says "Floors past the third come with Tall Builds". Stairs
+on the third floor would lead into the fourth, so they need the pass too. A ceiling lamp an old save hung right
+under the roof of the fourth floor now hangs under its ceiling, as on any floor with one over it.
+
+**A basement.** The Basement pass opens a floor under the ground floor, as in the genre's best known builder. Its
+rooms are dug where you lay a basement floor: the ground over it opens, the earth is taken out down to the floor,
+and it is put back exactly when the floor is sold. Walls, doors, stairs and furniture go down there as on any floor,
+standing over a basement floor; selling a floor takes along what stands only on it. A stair from the basement climbs
+to the ground floor and cuts its own hole there. A ground floor laid over the room is its ceiling, and a basement
+wall stops at the ground, under it. Where nobody has built a wall, the sides of the room are plain concrete, with
+the turf's edge showing at the top. A basement floor keeps two studs in from the edge of your land and never shares
+its ground with a pool. In Build mode the down arrow goes to the basement for an owner (with the lock and the
+pass on the ground floor for anyone else); while it is shown, the ground over your plot hides on your screen alone,
+so you can see the rooms and lay new ones, and the camera stays up over the ground looking down into it. Going up
+a floor or leaving Build mode brings the ground back. With no lamps a basement room is lit only by the town's indoor
+light (the dim violet ambient that lights any room the sky can't see) and whatever comes down an open stairwell:
+dim but not black. Lamps work as they do anywhere.
+
+**Bigger land.** Land grows in four steps (200, 256, 320 and 400 a side). The last, 400, the whole plot, comes with
+Big Plot; without it the biggest is 320. Land a player already has stays theirs whatever they own: an old save with
+400 keeps all of it and goes on building there (the save notes it as `ownLand`). The city panel's land row shows
+the 400 step with a lock and a Big Plot button, and nothing else changes: the prices, the levels and the economy's
+bounds are as they were.
+
+Held by `tests/specs/Floors.spec.luau`, the Build service spec's "floors and the basement" and the Build mode
+simulation's floors step.
+
+**The ground under the plots.** The user, with a picture of the island's golden grass standing up through a plot's
+ground in a long strip where nothing was built: "there seems to be a bug in the first image". Roblox draws far
+terrain with coarser voxels, which can rise a stud or two through a part lying just over it. So under a plot the
+terrain now lies a whole voxel down, 4 studs under the floor, away from the plot's edges, and the plot's own
+ground part reaches down to it (it was 1 stud deep). Within a voxel of the edges the ground keeps its old height,
+so it steps down out of sight under that part, never as a dip beside it. A pool's sides are that part down to 4
+and the terrain under it. The Terrain spec holds it.
+
 ## 6. The villager creator
 
 Works like a catalog avatar editor:

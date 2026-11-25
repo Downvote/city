@@ -57,7 +57,23 @@ local function plinth(r: R, d: number, h: number, color: Color3, mat: string)
 	r:cyl(0, h - 0.04, 0, 0.08, d, "y", shade(color, 1.06), mat)
 end
 
-return {
+type Item = {
+	id: string,
+	name: string,
+	cat: string,
+	style: string?,
+	price: number,
+	place: string,
+	size: Vector3,
+	c1: string,
+	c2: string?,
+	tags: { string }?,
+	lively: boolean?,
+	vip: boolean?,
+	build: (r: R) -> (),
+}
+
+local items: { Item } = {
 	{
 		id = "fx_sparkles",
 		name = "Sparkle stone",
@@ -111,13 +127,28 @@ return {
 			r:block(-0.5, 1.5, -0.5, 0.5, 1.62, 0.5, dk, "Slate")
 			for _, sx in { -1, 1 } do
 				for _, sz in { -1, 1 } do
-					r:block(sx * 0.4 - 0.08, 1.62, sz * 0.4 - 0.08, sx * 0.4 + 0.08, 2.3, sz * 0.4 + 0.08, stone, "Slate")
+					r:block(
+						sx * 0.4 - 0.08,
+						1.62,
+						sz * 0.4 - 0.08,
+						sx * 0.4 + 0.08,
+						2.3,
+						sz * 0.4 + 0.08,
+						stone,
+						"Slate"
+					)
 				end
 			end
 			local light = r:block(-0.3, 1.62, -0.3, 0.3, 2.2, 0.3, mix(r.c1, C.Warm, 0.5), "SmoothPlastic")
 			r:glow(light, 10, 0.8, mix(r.c1, C.Warm, 0.6))
 			r:block(-0.62, 2.3, -0.62, 0.62, 2.42, 0.62, dk, "Slate")
-			r:add({ shape = "Cone", cf = CFrame.new(0, 2.72, 0), size = Vector3.new(1.5, 0.6, 1.5), color = stone, mat = "Slate" })
+			r:add({
+				shape = "Cone",
+				cf = CFrame.new(0, 2.72, 0),
+				size = Vector3.new(1.5, 0.6, 1.5),
+				color = stone,
+				mat = "Slate",
+			})
 			r:ball(0, 3.08, 0, 0.22, dk, "Slate")
 			-- moss on the footing
 			for i, p in { { -0.55, 0.45 }, { 0.5, -0.5 }, { 0.45, 0.55 } } do
@@ -225,11 +256,24 @@ return {
 			-- a little tripod, a tube on a swivel pointing up and a band of stripes round it
 			for k = 0, 2 do
 				local a = k * math.pi * 2 / 3
-				rod(r, Vector3.new(math.cos(a) * 0.65, 0, math.sin(a) * 0.65), Vector3.new(0, 1.1, 0), 0.08, IRON, "Metal")
+				rod(
+					r,
+					Vector3.new(math.cos(a) * 0.65, 0, math.sin(a) * 0.65),
+					Vector3.new(0, 1.1, 0),
+					0.08,
+					IRON,
+					"Metal"
+				)
 			end
 			r:ball(0, 1.12, 0, 0.24, IRON, "Metal")
 			local tube = CFrame.new(0, 1.7, 0.1) * CFrame.Angles(math.rad(12), 0, 0)
-			r:add({ shape = "Cylinder", cf = tube * CFrame.Angles(0, 0, math.pi / 2), size = Vector3.new(1.3, 0.5, 0.5), color = r.c2, mat = "SmoothPlastic" })
+			r:add({
+				shape = "Cylinder",
+				cf = tube * CFrame.Angles(0, 0, math.pi / 2),
+				size = Vector3.new(1.3, 0.5, 0.5),
+				color = r.c2,
+				mat = "SmoothPlastic",
+			})
 			for k = -1, 1 do
 				r:add({
 					shape = "Cylinder",
@@ -239,8 +283,20 @@ return {
 					mat = "SmoothPlastic",
 				})
 			end
-			r:add({ shape = "Cylinder", cf = tube * CFrame.new(0, 0.66, 0) * CFrame.Angles(0, 0, math.pi / 2), size = Vector3.new(0.06, 0.62, 0.62), color = C.White, mat = "SmoothPlastic" })
-			r:add({ shape = "Cylinder", cf = tube * CFrame.new(0, 0.7, 0) * CFrame.Angles(0, 0, math.pi / 2), size = Vector3.new(0.03, 0.4, 0.4), color = INK, mat = "SmoothPlastic" })
+			r:add({
+				shape = "Cylinder",
+				cf = tube * CFrame.new(0, 0.66, 0) * CFrame.Angles(0, 0, math.pi / 2),
+				size = Vector3.new(0.06, 0.62, 0.62),
+				color = C.White,
+				mat = "SmoothPlastic",
+			})
+			r:add({
+				shape = "Cylinder",
+				cf = tube * CFrame.new(0, 0.7, 0) * CFrame.Angles(0, 0, math.pi / 2),
+				size = Vector3.new(0.03, 0.4, 0.4),
+				color = INK,
+				mat = "SmoothPlastic",
+			})
 			-- a pull string with a tassel
 			rod(r, Vector3.new(0.25, 1.2, 0.0), Vector3.new(0.35, 0.8, 0.05), 0.03, C.White, "Fabric")
 			r:ball(0.35, 0.76, 0.05, 0.1, C.Yellow, "Fabric")
@@ -280,11 +336,25 @@ return {
 			}
 			for i, l in leaves do
 				local col = shade(r.c1, 0.86 + (i % 3) * 0.08)
-				local p = r:lump(CFrame.new(l[1], l[2], l[3]) * CFrame.Angles(0, i, 0), l[4], l[5], l[4] * 0.9, col, "SmoothPlastic")
+				local p = r:lump(
+					CFrame.new(l[1], l[2], l[3]) * CFrame.Angles(0, i, 0),
+					l[4],
+					l[5],
+					l[4] * 0.9,
+					col,
+					"SmoothPlastic"
+				)
 				p.name = "Leaf"
 			end
 			for i, p in { { -0.4, 0.3 }, { 0.3, -0.35 }, { 0.45, 0.4 } } do
-				r:boxAt(CFrame.new(p[1], 0.945, p[2]) * CFrame.Angles(0, i, 0), 0.22, 0.03, 0.16, shade(r.c1, 0.9), "SmoothPlastic")
+				r:boxAt(
+					CFrame.new(p[1], 0.945, p[2]) * CFrame.Angles(0, i, 0),
+					0.22,
+					0.03,
+					0.16,
+					shade(r.c1, 0.9),
+					"SmoothPlastic"
+				)
 			end
 			Lively.fx(r, "leaves", 0, 2.9, 0, { w = 2.0, h = 0.4, d = 2.0 })
 		end,
@@ -313,7 +383,14 @@ return {
 				{ 0, -1.32, 0.1, 1.6, 0.45 },
 			}
 			for i, p in puffs do
-				r:lump(CFrame.new(p[1], p[2], p[3]) * CFrame.Angles(0, i, 0), p[4], p[5], p[4] * 0.8, if i % 2 == 0 then r.c2 else C.White, "Fabric")
+				r:lump(
+					CFrame.new(p[1], p[2], p[3]) * CFrame.Angles(0, i, 0),
+					p[4],
+					p[5],
+					p[4] * 0.8,
+					if i % 2 == 0 then r.c2 else C.White,
+					"Fabric"
+				)
 			end
 			Lively.fx(r, "snow", 0, -1.5, 0, { w = 1.6, h = 0.1, d = 0.9 })
 		end,
@@ -417,7 +494,13 @@ return {
 				local a = i / 8 * math.pi * 2
 				local x, z = math.cos(a) * 0.98, math.sin(a) * 0.98
 				rod(r, Vector3.new(x, -0.28, z), Vector3.new(x, -0.5, z), 0.02, r.c2, "Metal")
-				local drop = r:add({ shape = "Cone", cf = CFrame.new(x, -0.6, z) * CFrame.Angles(math.pi, 0, 0), size = Vector3.new(0.12, 0.22, 0.12), color = C.Glass, mat = "Glass" })
+				local drop = r:add({
+					shape = "Cone",
+					cf = CFrame.new(x, -0.6, z) * CFrame.Angles(math.pi, 0, 0),
+					size = Vector3.new(0.12, 0.22, 0.12),
+					color = C.Glass,
+					mat = "Glass",
+				})
 				drop.transp = 0.2
 			end
 			Lively.fx(r, "rays", 0, -0.4, 0, { w = 1.2, d = 1.2 })
@@ -444,13 +527,27 @@ return {
 			for _, sx in { -1, 1 } do
 				r:cyl(sx * 0.25, 1.1, 0, 0.6, 0.7, "z", r.c1, "SmoothPlastic")
 			end
-			r:boxAt(heart * CFrame.new(0, 0.05, 0.32) * CFrame.Angles(0, 0, math.pi / 4), 0.36, 0.36, 0.03, r.c2, "SmoothPlastic")
+			r:boxAt(
+				heart * CFrame.new(0, 0.05, 0.32) * CFrame.Angles(0, 0, math.pi / 4),
+				0.36,
+				0.36,
+				0.03,
+				r.c2,
+				"SmoothPlastic"
+			)
 			for _, sx in { -1, 1 } do
 				r:cyl(sx * 0.13, 1.1, 0.32, 0.03, 0.36, "z", r.c2, "SmoothPlastic")
 			end
 			r:block(-0.25, 1.42, -0.05, 0.25, 1.46, 0.05, INK, "SmoothPlastic")
 			for _, sx in { -1, 1 } do
-				r:lump(CFrame.new(sx * 0.16, 1.52, -0.2) * CFrame.Angles(0, 0, sx * 0.5), 0.26, 0.14, 0.1, C.Yellow, "Fabric")
+				r:lump(
+					CFrame.new(sx * 0.16, 1.52, -0.2) * CFrame.Angles(0, 0, sx * 0.5),
+					0.26,
+					0.14,
+					0.1,
+					C.Yellow,
+					"Fabric"
+				)
 			end
 			r:ball(0, 1.52, -0.2, 0.1, C.Yellow, "Fabric")
 			Lively.fx(r, "hearts", 0, 1.5, 0, { w = 0.4, d = 0.2 })
@@ -485,7 +582,14 @@ return {
 				for k = 0, 2 do
 					local x = t[3] + (k - 1) * 0.18
 					local y = t[4] + (k % 2) * 0.12
-					r:lump(CFrame.new(x, y, t[5] + (k - 1) * 0.1) * CFrame.Angles(0, i + k, 0), 0.32, 0.26, 0.3, shade(r.c1, 0.95 + k * 0.04), "Fabric")
+					r:lump(
+						CFrame.new(x, y, t[5] + (k - 1) * 0.1) * CFrame.Angles(0, i + k, 0),
+						0.32,
+						0.26,
+						0.3,
+						shade(r.c1, 0.95 + k * 0.04),
+						"Fabric"
+					)
 				end
 				r:ball(t[3], t[4] + 0.06, t[5], 0.08, C.Yellow, "SmoothPlastic")
 			end
@@ -493,3 +597,5 @@ return {
 		end,
 	},
 }
+
+return items

@@ -21,7 +21,7 @@ local SavesTray = {}
 
 local T = Kit.Theme
 
-local CARD_W, CARD_H = 264, 152
+local CARD_W, CARD_H = 270, 152
 local DIALOG = UDim2.fromOffset(540, 300)
 
 -- the server's last word on the page: { slots, max, free, saves = { { slot, name, t, pieces } } }
@@ -148,7 +148,7 @@ end
 local function costLine(cost: number): string
 	if cost > 0 then
 		return Text.fill(
-			"It costs {n} coins: what this build needs, less what yours sells back for.",
+			"It costs {n} coins, which is what this build needs less what yours sells back for.",
 			{ n = Text.commas(cost) }
 		)
 	elseif cost < 0 then
@@ -157,7 +157,7 @@ local function costLine(cost: number): string
 			{ n = Text.commas(-cost) }
 		)
 	end
-	return "It costs nothing: the two come to the same."
+	return "It costs nothing, since the two come to the same."
 end
 
 local function act(kit: TrayKit, action: string, slot: number, name: string?, done: ((any) -> ())?)
@@ -224,7 +224,7 @@ local function load(kit: TrayKit, e: any)
 	end)
 end
 
-local function slotCard(kit: TrayKit, row: Instance, i: number)
+local function slotCard(kit: TrayKit, row: Instance, i: number, more: number?)
 	local e = saveIn(i)
 	local locked = i > ((page and page.slots) or Tuning.Passes.FreeSlots)
 	local card = Kit.frame({
@@ -248,7 +248,7 @@ local function slotCard(kit: TrayKit, row: Instance, i: number)
 		Wrap = false,
 	})
 	if locked and not e then
-		-- a slot that comes with More Saves
+		-- the slots that come with More Saves, on one card
 		Icons.make("lock", 30, {
 			Name = "Lock",
 			Parent = card,
@@ -264,7 +264,11 @@ local function slotCard(kit: TrayKit, row: Instance, i: number)
 			AlignX = Enum.TextXAlignment.Center,
 			Wrap = false,
 		})
-		Kit.text(Text.fill("Keep {n} builds instead of {m}.", { n = Tuning.Passes.MoreSlots, m = Tuning.Passes.FreeSlots }), {
+		Kit.text(Text.fill("{n} more slots, for {all} builds in all.", {
+			n = more or 1,
+			all = Tuning.Passes.MoreSlots,
+			m = Tuning.Passes.FreeSlots,
+		}), {
 			Parent = card,
 			Size = UDim2.new(1, -24, 0, 18),
 			Position = UDim2.fromOffset(12, 76),
@@ -366,11 +370,11 @@ local function slotCard(kit: TrayKit, row: Instance, i: number)
 		end)
 		return
 	end
-	button("Load", "Load", 72, T.Blue, nil, 1, function()
+	button("Load", "Load", 66, T.Blue, nil, 1, function()
 		load(kit, e)
 	end)
 	if not locked then
-		button("SaveOver", "Save over", 98, T.Card, T.Ink, 2, function()
+		button("SaveOver", "Save over", 100, T.Orange, T.Dark, 2, function()
 			confirm(Text.fill("Save over {name}?", { name = e.name }), {
 				"Your plot as it is now takes this slot.",
 				"The build saved here can't be brought back after.",
@@ -381,7 +385,7 @@ local function slotCard(kit: TrayKit, row: Instance, i: number)
 			end)
 		end)
 	end
-	button("Delete", "Delete", 64, T.Coral, T.Dark, 3, function()
+	button("Delete", "Delete", 68, T.Coral, T.Dark, 3, function()
 		confirm(Text.fill("Delete {name}?", { name = e.name }), {
 			"This build goes for good.",
 			"Your plot stays just as it is.",
@@ -403,8 +407,20 @@ function SavesTray.tray(kit: TrayKit)
 		return
 	end
 	local row = kit.row(kit.height)
+	-- the player's slots, and any save kept in a slot they no longer have; then one card for the
+	-- empty slots More Saves would open
+	local slots = page.slots or Tuning.Passes.FreeSlots
+	local lockedAt, more = nil :: number?, 0
 	for i = 1, page.max or Tuning.Passes.MoreSlots do
-		slotCard(kit, row, i)
+		if i <= slots or saveIn(i) then
+			slotCard(kit, row, i)
+		else
+			lockedAt = lockedAt or i
+			more += 1
+		end
+	end
+	if lockedAt then
+		slotCard(kit, row, lockedAt, more)
 	end
 end
 

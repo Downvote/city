@@ -172,16 +172,26 @@ run("floors: the third is the top without Tall Builds, and the basement opens wi
 	check(said.Text:find("Tall Builds", 1, true) ~= nil, "and says Tall Builds opens more floors")
 	-- nothing new goes up past it, whatever a client sends
 	local ok, why = Sim.remoteFn("BuildApply"):InvokeServer({
-		{ type = "add", kind = "floors", obj = { x1 = 240, z1 = 150, x2 = 250, z2 = 160, lv = 3, c = "C8B49A", m = "WoodPlanks" } },
+		{
+			type = "add",
+			kind = "floors",
+			obj = { x1 = 240, z1 = 150, x2 = 250, z2 = 160, lv = 3, c = "C8B49A", m = "WoodPlanks" },
+		},
 	})
-	check(ok == false and tostring(why):find("Tall Builds", 1, true) ~= nil, "the server turns down a floor past the third")
+	check(
+		ok == false and tostring(why):find("Tall Builds", 1, true) ~= nil,
+		"the server turns down a floor past the third"
+	)
 	passes({ floors = true })
 	check(up:GetAttribute("Locked") == false, "with Tall Builds the lock goes")
 	for _ = 1, 6 do
 		press("FloorUp")
 	end
 	check(BuildMode.state.level == 7, "and the arrows go up to the eighth floor")
-	check(up:GetAttribute("Locked") == false and up:GetAttribute("On") == false, "where the up arrow is dim, with no lock")
+	check(
+		up:GetAttribute("Locked") == false and up:GetAttribute("On") == false,
+		"where the up arrow is dim, with no lock"
+	)
 	BuildMode.setLevel(0)
 	frames(2)
 
@@ -204,7 +214,9 @@ run("floors: the third is the top without Tall Builds, and the basement opens wi
 		if v then
 			return v
 		end
-		return if j < -1 then { m = Enum.Material.LeafyGrass, o = 1, l = 0 } else { m = Enum.Material.Air, o = 0, l = 0 }
+		return if j < -1
+			then { m = Enum.Material.LeafyGrass, o = 1, l = 0 }
+			else { m = Enum.Material.Air, o = 0, l = 0 }
 	end
 	local function span(region)
 		local lo = region.CFrame.Position - region.Size / 2
@@ -225,7 +237,8 @@ run("floors: the third is the top without Tall Builds, and the basement opens wi
 				out.SolidMaterial[a][b], out.SolidOccupancy[a][b], out.LiquidOccupancy[a][b] = {}, {}, {}
 				for c = 1, nz do
 					local v = get(i0 + a - 1, j0 + b - 1, k0 + c - 1)
-					out.SolidMaterial[a][b][c], out.SolidOccupancy[a][b][c], out.LiquidOccupancy[a][b][c] = v.m, v.o, v.l
+					out.SolidMaterial[a][b][c], out.SolidOccupancy[a][b][c], out.LiquidOccupancy[a][b][c] =
+						v.m, v.o, v.l
 				end
 			end
 		end
@@ -236,8 +249,11 @@ run("floors: the third is the top without Tall Builds, and the basement opens wi
 		for a = 1, nx do
 			for b = 1, ny do
 				for c = 1, nz do
-					vox[(i0 + a - 1) .. "," .. (j0 + b - 1) .. "," .. (k0 + c - 1)] =
-						{ m = ch.SolidMaterial[a][b][c], o = ch.SolidOccupancy[a][b][c], l = ch.LiquidOccupancy[a][b][c] }
+					vox[(i0 + a - 1) .. "," .. (j0 + b - 1) .. "," .. (k0 + c - 1)] = {
+						m = ch.SolidMaterial[a][b][c],
+						o = ch.SolidOccupancy[a][b][c],
+						l = ch.LiquidOccupancy[a][b][c],
+					}
 					writes += 1
 				end
 			end
@@ -250,7 +266,10 @@ run("floors: the third is the top without Tall Builds, and the basement opens wi
 	check(BuildMode.state.level == -1, "and the down arrow goes under the ground floor")
 	check(said.Text == "Basement", "the hint says the basement")
 	check(Underground.isHidden(), "the ground over the plot hides on this screen")
-	check(base.LocalTransparencyModifier == 1 and grass.LocalTransparencyModifier == 1, "the plot's ground parts fade out")
+	check(
+		base.LocalTransparencyModifier == 1 and grass.LocalTransparencyModifier == 1,
+		"the plot's ground parts fade out"
+	)
 	check(writes > 0, "and the terrain under the land is cleared")
 	local Town = Sim.Harness.require("ReplicatedStorage.Shared.Data.Town")
 	local under = Town.plotFrame(1) * Vector3.new(170, -6, 150)
@@ -272,6 +291,17 @@ run("floors: the third is the top without Tall Builds, and the basement opens wi
 	local walls = count("walls")
 	drag(240, 150, 260, 150)
 	check(count("walls") == walls + 1, "a wall goes up along its edge")
+	-- a whole room dragged out down there: its floor goes first, its four walls stand on it
+	press("Rooms")
+	walls, floors = count("walls"), count("floors")
+	drag(266, 150, 280, 162)
+	check(count("walls") == walls + 4 and count("floors") == floors + 1, "a room dragged out in the basement")
+	local roomKey
+	for k, f in profile.plan.floors do
+		if f.lv == -1 and k ~= key then
+			roomKey = k
+		end
+	end
 	-- the server would have dug the room; here only this screen's ground is checked
 	press("FloorUp")
 	check(BuildMode.state.level == 0, "up again to the ground floor")
@@ -279,9 +309,15 @@ run("floors: the third is the top without Tall Builds, and the basement opens wi
 	check(base.LocalTransparencyModifier == 0 and grass.LocalTransparencyModifier == 0, "its parts show again")
 	check(get(ui, uj, uk).o == 1, "and the terrain away from the room is as it was")
 	local room = Town.plotFrame(1) * Vector3.new(250, -6, 158)
-	check(get(math.floor(room.X / 4), math.floor(room.Y / 4), math.floor(room.Z / 4)).o == 0, "while the room's own ground is left dug, as the server digs it")
+	check(
+		get(math.floor(room.X / 4), math.floor(room.Y / 4), math.floor(room.Z / 4)).o == 0,
+		"while the room's own ground is left dug, as the server digs it"
+	)
 	-- sold, with its wall: back as it was
-	ok, why = Sim.remoteFn("BuildApply"):InvokeServer({ { type = "remove", kind = "floors", key = key } })
+	ok, why = Sim.remoteFn("BuildApply"):InvokeServer({
+		{ type = "remove", kind = "floors", key = key },
+		{ type = "remove", kind = "floors", key = roomKey },
+	})
 	check(ok == true, "selling the basement floor takes its wall with it (" .. tostring(why) .. ")")
 	local left = 0
 	for _, w in profile.plan.walls do
@@ -298,7 +334,6 @@ run("floors: the third is the top without Tall Builds, and the basement opens wi
 	press("Pick")
 	check(#errors == warned, "no warnings from any of it")
 end)
-
 run("putting a roof on", function()
 	press("Roofs")
 	local before = count("roofs")
@@ -1293,9 +1328,10 @@ run("the Select tool: a box picks many, they move together, Undo puts them back,
 	local Vector2 = roblox.Vector2
 	local plotFrame = Town.plotFrame(1)
 	BuildMode.setTool("select")
+	BuildMode.setLevel(0)
 	frames(2)
-	-- three chairs in a row on open ground
-	local spots = { { 262, 176 }, { 266, 176 }, { 270, 176 } }
+	-- three chairs in a row on open ground, past the pond
+	local spots = { { 276, 184 }, { 280, 184 }, { 284, 184 } }
 	local requests = {}
 	for _, at in spots do
 		table.insert(requests, {
@@ -1375,7 +1411,7 @@ run("the Select tool: a box picks many, they move together, Undo puts them back,
 	local coins = profile.coins
 	press("GroupMove")
 	check(SelectTool.holding(), "Move picks the group up")
-	mouseAtPlot(266, 166)
+	check(mouseAtPlot(280, 194), "the spot is on screen")
 	Sim.advance(0.5)
 	local ui = gui:FindFirstChild("BuildUI")
 	check(not ui:FindFirstChild("Catalog").Visible, "the bars slide away while the group is held")
@@ -1389,7 +1425,11 @@ run("the Select tool: a box picks many, they move together, Undo puts them back,
 		local it = profile.plan.items[key]
 		same = same and it.x == was[key].x and it.z - was[key].z == dz
 	end
-	check(dz == -10 and same, "clicking puts all three down 10 nearer the street, in a row as they were")
+	if dz ~= 10 then
+		local said = ws:FindFirstChild("BuildMarkers"):FindFirstChild("Text", true)
+		print("  (the label by the cursor says: " .. tostring(said and said.Text) .. ")")
+	end
+	check(dz == 10 and same, "clicking puts all three down 10 further back, in a row as they were")
 	check(profile.coins == coins, "moving costs nothing")
 	check(not SelectTool.holding() and SelectTool.count() == 3, "and they stay picked")
 	Sim.advance(0.5)
@@ -1409,11 +1449,11 @@ run("the Select tool: a box picks many, they move together, Undo puts them back,
 	end
 	check(turned, "Turn turns all three about their middle")
 	local mid = profile.plan.items[keys[2]]
-	check(mid.x == 266 and mid.z == 176, "the middle one stays where it was")
+	check(mid.x == 280 and mid.z == 184, "the middle one stays where it was")
 	-- copied: a second row put down beside the first
 	local items = count("items")
 	press("GroupCopy")
-	mouseAtPlot(266, 186)
+	mouseAtPlot(280, 174)
 	click()
 	check(count("items") == items + 3, "Copy puts three more down at once")
 	input(Enum.UserInputType.MouseButton2, true)

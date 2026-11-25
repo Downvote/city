@@ -456,8 +456,26 @@ local function endsIn(body: string, tag: string): boolean
 	return before == "" or not before:match("[%w']")
 end
 
+-- a sentence that ends in a laugh or a grunt keeps it last ("ehehe, buddy" reads wrong)
+local NOISES = {
+	hehe = true,
+	ehehe = true,
+	heh = true,
+	haha = true,
+	hahaha = true,
+	hah = true,
+	hmm = true,
+	hmph = true,
+	ugh = true,
+	tsk = true,
+	phew = true,
+	mmm = true,
+	yum = true,
+}
+
 -- Can a sentence take an ending without turning into nonsense? Three words or more, and it ends in
--- a word: not a face (":P"), a bracket, a hum ("♪") or somebody's name (a capital past the first word).
+-- a word: not a face (":P"), a bracket, a hum ("♪"), a laugh ("hehe") or somebody's name (a capital
+-- past the first word).
 local function fits(body: string): boolean
 	local n = 0
 	for _ in body:gmatch("%S+") do
@@ -467,7 +485,7 @@ local function fits(body: string): boolean
 		return false
 	end
 	local last = body:match("([%a'][%w']*)$")
-	if not last then
+	if not last or NOISES[squeeze(last:lower())] or NOISES[last:lower()] then
 		return false
 	end
 	return not last:sub(1, 1):match("%u")

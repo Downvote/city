@@ -106,7 +106,7 @@ local function setPicks(api: Api, list: { Group.Pick })
 	local present = Group.present(State.plan, list)
 	local most = Tuning.Select.MaxPieces
 	if #present > most then
-		Toasts.show(Text.fill("That's as many as you can pick at once: {n}.", { n = most }), "info")
+		Toasts.show(Text.fill("You can pick up to {n} pieces at once.", { n = most }), "info")
 		local cut = {}
 		for i = 1, most do
 			cut[i] = present[i]

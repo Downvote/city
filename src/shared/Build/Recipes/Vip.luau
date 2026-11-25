@@ -16,7 +16,6 @@ type Prim = Recipe.Prim
 
 local INK = Color3.fromRGB(52, 48, 56)
 local GOLD = Color3.fromRGB(218, 182, 98)
-local MARBLE = Color3.fromRGB(232, 228, 218)
 
 local function shade(c: Color3, k: number): Color3
 	return Colors.shade(c, k)
@@ -93,7 +92,23 @@ local function spill(r: R, x: number, y: number, z: number, drop: number, color:
 	p.collide = false
 end
 
-return {
+type Item = {
+	id: string,
+	name: string,
+	cat: string,
+	style: string?,
+	price: number,
+	place: string,
+	size: Vector3,
+	c1: string,
+	c2: string?,
+	tags: { string }?,
+	lively: boolean?,
+	vip: boolean?,
+	build: (r: R) -> (),
+}
+
+local items: { Item } = {
 	{
 		id = "vip_firework",
 		name = "Firework fountain",
@@ -116,7 +131,13 @@ return {
 			for k = 0, 3 do
 				flatStar(r, CFrame.Angles(0, k * math.pi / 2, 0) * CFrame.new(0, 0.75, 0.62), 0.26, 0.03, GOLD, "Metal")
 			end
-			r:add({ shape = "Cone", cf = CFrame.new(0, 1.8, 0), size = Vector3.new(0.9, 0.9, 0.9), color = Color3.fromRGB(246, 236, 210), mat = "SmoothPlastic" })
+			r:add({
+				shape = "Cone",
+				cf = CFrame.new(0, 1.8, 0),
+				size = Vector3.new(0.9, 0.9, 0.9),
+				color = Color3.fromRGB(246, 236, 210),
+				mat = "SmoothPlastic",
+			})
 			for k = 0, 2 do
 				r:cyl(0, 1.5 + k * 0.2, 0, 0.06, 0.78 - k * 0.2, "y", r.c2, "SmoothPlastic")
 			end
@@ -308,7 +329,14 @@ return {
 					local p = Vector3.new(math.cos(a) * 1.3, -2.9, math.sin(a) * 1.3)
 					rod(r, Vector3.new(0, -2.9, 0), p, 0.03, brass, "Metal")
 					rod(r, p, p - Vector3.new(0, 0.5, 0), 0.015, brass, "Metal")
-					flatStar(r, CFrame.new(p - Vector3.new(0, 0.62, 0)) * CFrame.Angles(0, -a, 0), 0.24, 0.04, GOLD, "Metal")
+					flatStar(
+						r,
+						CFrame.new(p - Vector3.new(0, 0.62, 0)) * CFrame.Angles(0, -a, 0),
+						0.24,
+						0.04,
+						GOLD,
+						"Metal"
+					)
 				end
 			end)
 			Lively.fx(r, "sparkles", 0, -3.3, 0, { w = 2.6, h = 0.4, d = 2.6, color = C.White })
@@ -349,9 +377,17 @@ return {
 			end
 			-- a cloud at each foot
 			for _, sx in { -1, 1 } do
-				local puffs = { { 0, 0.55, 0, 1.4 }, { 0.5, 0.45, 0.2, 1.0 }, { -0.5, 0.42, -0.1, 1.0 }, { 0.1, 0.95, 0.1, 0.9 } }
+				local puffs =
+					{ { 0, 0.55, 0, 1.4 }, { 0.5, 0.45, 0.2, 1.0 }, { -0.5, 0.42, -0.1, 1.0 }, { 0.1, 0.95, 0.1, 0.9 } }
 				for i, p in puffs do
-					r:lump(CFrame.new(sx * 2.8 + p[1], p[2], p[3]) * CFrame.Angles(0, i, 0), p[4], p[4] * 0.75, p[4] * 0.8, if i % 2 == 0 then r.c2 else mix(r.c2, C.Blue, 0.06), "Fabric")
+					r:lump(
+						CFrame.new(sx * 2.8 + p[1], p[2], p[3]) * CFrame.Angles(0, i, 0),
+						p[4],
+						p[4] * 0.75,
+						p[4] * 0.8,
+						if i % 2 == 0 then r.c2 else mix(r.c2, C.Blue, 0.06),
+						"Fabric"
+					)
 				end
 				Lively.fx(r, "sparkles", sx * 2.8, 1.0, 0, { w = 1.4, h = 0.6, d = 1.0 })
 			end
@@ -459,8 +495,22 @@ return {
 			r:block(-1.08, 4.4, -1.0, 1.08, 4.6, -0.72, gold, "Metal")
 			for k = -2, 2 do
 				local h = if k == 0 then 0.7 else if math.abs(k) == 1 then 0.5 else 0.36
-				r:tri(Vector3.new(k * 0.42 - 0.2, 4.6, -0.86), Vector3.new(k * 0.42 + 0.2, 4.6, -0.86), Vector3.new(k * 0.42, 4.6 + h, -0.86), 0.18, gold, "Metal")
-				r:ball(k * 0.42, 4.75, -0.75, 0.12, if k % 2 == 0 then Color3.fromRGB(150, 196, 240) else Color3.fromRGB(240, 150, 170), "Glass")
+				r:tri(
+					Vector3.new(k * 0.42 - 0.2, 4.6, -0.86),
+					Vector3.new(k * 0.42 + 0.2, 4.6, -0.86),
+					Vector3.new(k * 0.42, 4.6 + h, -0.86),
+					0.18,
+					gold,
+					"Metal"
+				)
+				r:ball(
+					k * 0.42,
+					4.75,
+					-0.75,
+					0.12,
+					if k % 2 == 0 then Color3.fromRGB(150, 196, 240) else Color3.fromRGB(240, 150, 170),
+					"Glass"
+				)
 			end
 			for k = 0, 2 do
 				r:ball(0, 2.3 + k * 0.7, -0.76, 0.1, gold, "Metal")
@@ -475,3 +525,5 @@ return {
 		end,
 	},
 }
+
+return items

@@ -121,7 +121,8 @@ local function readGroup(pivot: BasePart, members: { BasePart }, cabins: { BaseP
 		table.insert(g.parts, p)
 		table.insert(g.locals, g.pivot:ToObjectSpace(p.CFrame))
 	end
-	for _, p in cabins or {} do
+	local riders: { BasePart } = cabins or {}
+	for _, p in riders do
 		local hang = num(p, "Hang", 0)
 		table.insert(g.cabins, p)
 		table.insert(g.cabinAt, g.pivot:PointToObjectSpace(p.Position + Vector3.new(0, hang, 0)))
@@ -298,7 +299,8 @@ end
 
 local function switch(f: Fx, on: boolean)
 	f.on = on
-	for _, inst in f.made or {} do
+	local made: { Instance } = f.made or {}
+	for _, inst in made do
 		pcall(function()
 			(inst :: any).Enabled = on
 		end)
@@ -403,7 +405,7 @@ local function look()
 				local burst = f.preset.burst
 				if burst and f.on and now >= f.due then
 					f.due = now + burst.every
-					local made = f.made or {}
+					local made: { Instance } = f.made or {}
 					for _, inst in made do
 						if inst:IsA("ParticleEmitter") then
 							pcall(function()

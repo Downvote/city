@@ -56,22 +56,25 @@ local function owns(...)
 end
 
 describe("Floors", function()
-	it("lets a player build on the first three floors, all eight with Tall Builds, and the basement with Basement", function()
-		local lo, hi = Floors.range(noPasses())
-		expect(lo).toBe(0)
-		expect(hi).toBe(2)
-		lo, hi = Floors.range(owns("floors"))
-		expect(hi).toBe(Plan.Highest)
-		expect(Plan.Highest).toBe(7)
-		lo = Floors.range(owns("basement"))
-		expect(lo).toBe(-1)
-		expect(Plan.Lowest).toBe(-1)
-		-- which pass would let them, for the floor buttons' lock
-		expect(Floors.passFor(noPasses(), 3)).toBe("floors")
-		expect(Floors.passFor(noPasses(), -1)).toBe("basement")
-		expect(Floors.passFor(noPasses(), 2)).toBe(nil)
-		expect(Floors.passFor(owns("floors"), 7)).toBe(nil)
-	end)
+	it(
+		"lets a player build on the first three floors, all eight with Tall Builds, and the basement with Basement",
+		function()
+			local lo, hi = Floors.range(noPasses())
+			expect(lo).toBe(0)
+			expect(hi).toBe(2)
+			lo, hi = Floors.range(owns("floors"))
+			expect(hi).toBe(Plan.Highest)
+			expect(Plan.Highest).toBe(7)
+			lo = Floors.range(owns("basement"))
+			expect(lo).toBe(-1)
+			expect(Plan.Lowest).toBe(-1)
+			-- which pass would let them, for the floor buttons' lock
+			expect(Floors.passFor(noPasses(), 3)).toBe("floors")
+			expect(Floors.passFor(noPasses(), -1)).toBe("basement")
+			expect(Floors.passFor(noPasses(), 2)).toBe(nil)
+			expect(Floors.passFor(owns("floors"), 7)).toBe(nil)
+		end
+	)
 
 	it("turns down a new piece past the player's floors, and stairs that would lead up into one", function()
 		local plan = Plan.new()
@@ -94,55 +97,64 @@ describe("Floors", function()
 		expect(Floors.check(owns("basement"), plan, { add("items", item("stairs_straight", 30, 30, B)) })).toBe(true)
 	end)
 
-	it("keeps an old save's fourth floor whole, and lets it be repainted, moved down and sold but not added to", function()
-		-- a save from when everyone had four floors (0..3)
-		local raw = Plan.new()
-		raw.floors["1"] = floor(10, 10, 30, 30, 3)
-		raw.walls["2"] = wall(10, 10, 30, 10, 3)
-		raw.items["3"] = item("chair_wood", 20, 20, 3)
-		raw.items["4"] = item("light_ceiling", 20, 24, 3, Plan.levelTop(3)) -- right under the roof, as it was then
-		raw.items["5"] = item("bed_single", 16, 16, 3)
-		local plan = Plan.sanitize(raw)
-		for _, kind in { "floors", "walls" } do
-			local n = 0
-			for _ in plan[kind] do
-				n += 1
+	it(
+		"keeps an old save's fourth floor whole, and lets it be repainted, moved down and sold but not added to",
+		function()
+			-- a save from when everyone had four floors (0..3)
+			local raw = Plan.new()
+			raw.floors["1"] = floor(10, 10, 30, 30, 3)
+			raw.walls["2"] = wall(10, 10, 30, 10, 3)
+			raw.items["3"] = item("chair_wood", 20, 20, 3)
+			raw.items["4"] = item("light_ceiling", 20, 24, 3, Plan.levelTop(3)) -- right under the roof, as it was then
+			raw.items["5"] = item("bed_single", 16, 16, 3)
+			local plan = Plan.sanitize(raw)
+			for _, kind in { "floors", "walls" } do
+				local n = 0
+				for _ in plan[kind] do
+					n += 1
+				end
+				expect(n).toBe(1)
 			end
-			expect(n).toBe(1)
+			expect(plan.items["3"] ~= nil and plan.items["5"] ~= nil).toBe(true)
+			-- the ceiling light hangs under the ceiling of the floor that can go over it now
+			expect(plan.items["4"] ~= nil).toBe(true)
+			expect(plan.items["4"].y).toBeNear(Plan.ceilingY(3), 1e-6)
+			expect(Plan.ceilingY(3)).toBeNear(Plan.levelTop(3) - 1, 1e-6)
+			-- the floors Build mode can show reach it, though the player can't build there
+			local lo, hi = Floors.shown(noPasses(), plan)
+			expect(lo).toBe(0)
+			expect(hi).toBe(3)
+			-- repainted where it is
+			local painted = table.clone(plan.walls["2"])
+			painted.a = { c = "AABBCC", m = "Plaster" }
+			expect(Floors.check(noPasses(), plan, { { type = "set", kind = "walls", key = "2", obj = painted } })).toBe(
+				true
+			)
+			-- moved along its floor, and down to the second
+			local along = table.clone(plan.items["3"])
+			along.x += 2
+			expect(Floors.check(noPasses(), plan, { { type = "set", kind = "items", key = "3", obj = along } })).toBe(
+				true
+			)
+			local down = table.clone(plan.items["3"])
+			down.lv, down.y = 1, Plan.levelBase(1)
+			expect(Floors.check(noPasses(), plan, { { type = "set", kind = "items", key = "3", obj = down } })).toBe(
+				true
+			)
+			-- sold
+			expect(Floors.check(noPasses(), plan, { { type = "remove", kind = "items", key = "5" } })).toBe(true)
+			-- but nothing new goes up there, nor up from the second floor to there
+			local ok, why = Floors.check(noPasses(), plan, { add("items", item("chair_wood", 24, 24, 3)) })
+			expect(ok).toBe(false)
+			expect(why).toBe(Floors.Why.floors)
+			local up = table.clone(plan.items["3"])
+			up.lv, up.y = 3, Plan.levelBase(3)
+			local fromBelow = table.clone(up)
+			plan.items["6"] = item("chair_wood", 24, 24, 1)
+			ok = Floors.check(noPasses(), plan, { { type = "set", kind = "items", key = "6", obj = fromBelow } })
+			expect(ok).toBe(false)
 		end
-		expect(plan.items["3"] ~= nil and plan.items["5"] ~= nil).toBe(true)
-		-- the ceiling light hangs under the ceiling of the floor that can go over it now
-		expect(plan.items["4"] ~= nil).toBe(true)
-		expect(plan.items["4"].y).toBeNear(Plan.ceilingY(3), 1e-6)
-		expect(Plan.ceilingY(3)).toBeNear(Plan.levelTop(3) - 1, 1e-6)
-		-- the floors Build mode can show reach it, though the player can't build there
-		local lo, hi = Floors.shown(noPasses(), plan)
-		expect(lo).toBe(0)
-		expect(hi).toBe(3)
-		-- repainted where it is
-		local painted = table.clone(plan.walls["2"])
-		painted.a = { c = "AABBCC", m = "Plaster" }
-		expect(Floors.check(noPasses(), plan, { { type = "set", kind = "walls", key = "2", obj = painted } })).toBe(true)
-		-- moved along its floor, and down to the second
-		local along = table.clone(plan.items["3"])
-		along.x += 2
-		expect(Floors.check(noPasses(), plan, { { type = "set", kind = "items", key = "3", obj = along } })).toBe(true)
-		local down = table.clone(plan.items["3"])
-		down.lv, down.y = 1, Plan.levelBase(1)
-		expect(Floors.check(noPasses(), plan, { { type = "set", kind = "items", key = "3", obj = down } })).toBe(true)
-		-- sold
-		expect(Floors.check(noPasses(), plan, { { type = "remove", kind = "items", key = "5" } })).toBe(true)
-		-- but nothing new goes up there, nor up from the second floor to there
-		local ok, why = Floors.check(noPasses(), plan, { add("items", item("chair_wood", 24, 24, 3)) })
-		expect(ok).toBe(false)
-		expect(why).toBe(Floors.Why.floors)
-		local up = table.clone(plan.items["3"])
-		up.lv, up.y = 3, Plan.levelBase(3)
-		local fromBelow = table.clone(up)
-		plan.items["6"] = item("chair_wood", 24, 24, 1)
-		ok = Floors.check(noPasses(), plan, { { type = "set", kind = "items", key = "6", obj = fromBelow } })
-		expect(ok).toBe(false)
-	end)
+	)
 
 	it("holds eight floors in a plan, roofs and ceilings on the top one", function()
 		local plan = Plan.new()
@@ -193,7 +205,17 @@ describe("Basement", function()
 		expect(bottom + height).toBeNear(0, 1e-6)
 		expect(Plan.levelBase(B)).toBeNear(P.Foundation - P.LevelHeight, 1e-6)
 		plan.walls["2"] = wall(20, 20, 40, 20, B)
-		local door = { id = "door_wood", x = 0, y = Plan.openingY(plan.walls["2"], 0), z = 0, r = 0, lv = B, wall = "2", t = 5, side = "a" }
+		local door = {
+			id = "door_wood",
+			x = 0,
+			y = Plan.openingY(plan.walls["2"], 0),
+			z = 0,
+			r = 0,
+			lv = B,
+			wall = "2",
+			t = 5,
+			side = "a",
+		}
 		expect(Plan.validItem(plan, door)).toBe(true)
 		-- furniture and a lamp on the ceiling
 		expect(Plan.validItem(plan, item("bed_single", 30, 28, B))).toBe(true)
@@ -254,11 +276,19 @@ describe("Basement", function()
 		-- a floor right at the land's edge would dig past it
 		local x1, z1, x2, z2 = Plan.bounds(Plan.new())
 		local plan = Plan.new()
-		local ok, why = Plan.validate(plan, "floors", { x1 = x1, z1 = 20, x2 = x1 + 10, z2 = 30, lv = B, c = "C8B49A", m = "WoodPlanks" })
+		local ok, why = Plan.validate(
+			plan,
+			"floors",
+			{ x1 = x1, z1 = 20, x2 = x1 + 10, z2 = 30, lv = B, c = "C8B49A", m = "WoodPlanks" }
+		)
 		expect(ok).toBe(false)
 		expect(why).toBe(Basement.Why.edge)
 		local m = Tuning.Basement.Margin
-		ok = Plan.validate(plan, "floors", { x1 = x1 + m, z1 = z1 + m, x2 = x2 - m, z2 = z2 - m, lv = B, c = "C8B49A", m = "WoodPlanks" })
+		ok = Plan.validate(
+			plan,
+			"floors",
+			{ x1 = x1 + m, z1 = z1 + m, x2 = x2 - m, z2 = z2 - m, lv = B, c = "C8B49A", m = "WoodPlanks" }
+		)
 		expect(ok).toBe(true)
 		-- every land's margin puts the dig's edge on the grid
 		for _, land in Tuning.City.Land do
@@ -277,9 +307,19 @@ describe("Basement", function()
 		expect(Plan.validate(wet, "floors", floor(20, 20, 40, 36, B))).toBe(true)
 		expect(Basement.block({ X0 + 20, 20, X0 + 40, 36 })[3] <= X0 + 42).toBe(true)
 		local dry = room()
-		ok = Plan.validate(dry, "waters", { x1 = X0 + 38, z1 = 22, x2 = X0 + 50, z2 = 34, lv = 0, edge = "tile", depth = "swim" })
+		ok = Plan.validate(
+			dry,
+			"waters",
+			{ x1 = X0 + 38, z1 = 22, x2 = X0 + 50, z2 = 34, lv = 0, edge = "tile", depth = "swim" }
+		)
 		expect(ok).toBe(false)
-		expect(Plan.validate(dry, "waters", { x1 = X0 + 42, z1 = 22, x2 = X0 + 54, z2 = 34, lv = 0, edge = "tile", depth = "swim" })).toBe(true)
+		expect(
+			Plan.validate(
+				dry,
+				"waters",
+				{ x1 = X0 + 42, z1 = 22, x2 = X0 + 54, z2 = 34, lv = 0, edge = "tile", depth = "swim" }
+			)
+		).toBe(true)
 		-- (and should a dig ever reach a water, the water is turned down)
 		dry.floors["1"] = floor(20, 20, 43, 36, B)
 		ok, why = Basement.clearOfWater(dry, { x1 = X0 + 42, z1 = 22, x2 = X0 + 54, z2 = 34 })

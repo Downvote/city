@@ -264,7 +264,17 @@ describe("Voice", function()
 		end
 		expect(cheeky > 0).toBeTruthy()
 		-- never on a word or two, a name, a face, a hum or a bracket, nor where it's said already
-		for _, t in { "Good.", "Hah, easy.", "Thanks, Robin.", "Got you :P", "La la la ♪", "Okay (I think)." } do
+		for _, t in
+			{
+				"Good.",
+				"Hah, easy.",
+				"Thanks, Robin.",
+				"Got you :P",
+				"La la la ♪",
+				"Okay (I think).",
+				"I won the race, ehehe.",
+			}
+		do
 			for _, p in Personalities.list do
 				expect(Voice.speak(p.id, t, "buddy")).toBe(Voice.speak(p.id, t))
 			end

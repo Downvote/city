@@ -2518,7 +2518,14 @@ for _, def in items do
 		local draw = def.build
 		def.build = function(r: R)
 			draw(r)
-			Lively.fx(r, fx.kind, fx.at.X, fx.at.Y, fx.at.Z, { w = fx.w, h = fx.h, d = fx.d, work = true, color = fx.color })
+			Lively.fx(
+				r,
+				fx.kind,
+				fx.at.X,
+				fx.at.Y,
+				fx.at.Z,
+				{ w = fx.w, h = fx.h, d = fx.d, work = true, color = fx.color }
+			)
 		end
 	end
 end

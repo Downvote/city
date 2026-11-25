@@ -293,7 +293,10 @@ far south the grass reaches at x, `Around` the coast's length), the coast (a pos
 water's edge, the grass edge and the deep drop are sums of sine waves that close on themselves), `natural(x, z)`
 (height and material: grass at -0.1 or `Hills.at - 0.1`, rock on slopes past 0.45, sand falling to the sea at -1.2
 and on down, Slate for the deep floor), `plan(cover)` (every column; grass under anything built becomes LeafyGrass,
-or Ground under the hill's stepping stones, and columns fully under paving sink out of sight), `voxels()`,
+or Ground under the hill's stepping stones, and columns fully under paving sink out of sight; a cover of kind
+"plot" sinks too, and its columns more than a voxel from its edges go down to `PlotFloor`, -4, a whole voxel under
+the plot's floor, where far terrain drawn with coarser voxels can't rise through it: World's `Base` reaches down
+to it, so a pool's sides are solid; the Terrain spec checks it), `voxels()`,
 `preview()` (triangles: the preview JSON's `Tri` shape) and the colours, water and wind (`Wind`, `StormWind`).
 `TownMap.cover(ground?, placements?, drawn?)` lists what is built by rule (every ground part, every plot, every
 shape of a placed model that touches the ground and covers about 3 square studs or more). `Hills.at` is the smooth
@@ -477,7 +480,7 @@ Item  { id, x, y, z, r, lv, c1?, c2?, wall?, t?, side?, img? }
 ```
 
 Coordinates are studs in the plot's own frame (`Town.plotFrame(i)`): x and z run 0 to `Plot.Size`, z = 0 is the
-street edge, y is height. `size` is the land bought so far (`Tuning.City.Land`: 200, 256, 320, 400);
+street edge, y is height. `lv` runs from -1 (the basement) to 7 (see "Floors, the basement and land"). `size` is the land bought so far (`Tuning.City.Land`: 200, 256, 320, 400);
 `Plan.bounds(plan)` is that land, centred left to right. `v` is `Plan.Version`, 2 since the plots grew from 200 to
 400: `Plan.sanitize` moves a plan of `v` 1 onto today's plot first (`Plan.fromOldPlot`: its land of 100, 128, 160 or
 200 becomes that step of today's, and every x moves by 100, so the build keeps its place at the land's front middle).
@@ -511,6 +514,65 @@ height (`Plan.markY(plan, item, support, ignoreKey)`), at most `Plan.MarkReach` 
 anything standing on it. Wall styles carry their own default finish (`paint`); the fences added for "more fences" are
 `brickLow`, `rail`, `iron`, `bamboo`, `log`, `woven`, `rope`, `glassRail` and `lightRail` (drawn in `Shapes.fence`).
 
+## Floors, the basement and land
+
+The passes' floors and land (docs/GAME_DESIGN.md, "Floors, a basement and bigger land").
+
+- Levels. A plan holds `Plan.Lowest` (-1, the basement: `Tuning.Plot.Lowest`) to `Plan.Highest` (7:
+  `Tuning.Plot.Levels` is 8; it was 4 for everyone). `Plan.levelBase(lv)` is `Foundation + lv * LevelHeight`, so the
+  basement's floor is at -11.6. `Plan.ceilingY(lv)` is where a ceiling piece hangs: 1 under the floor above, right
+  under the roof on floor 7, and under the ground floor's slab (0) in the basement. `Plan.oldCeiling` moves a
+  ceiling piece an old save hung right under the roof of floor 3 (the old top) down to `ceilingY(3)` as it loads.
+  `Plan.wallSpan` stops a full basement wall at 0, where a ground floor wall starts. Stairs on -1 climb to the
+  ground floor and cut their hole in it (`Plan.holes(plan, 0)`).
+- `Sim/Floors` (pure, server and client): `range(profile)` (0 to 2, to 7 with Tall Builds, from -1 with Basement:
+  `Sim/Passes.levels`, `lowestLevel`), `allowed`, `used(plan)` (the lowest and highest floors with anything on),
+  `shown(profile, plan)` (where Build mode may go: `range` and `used` together), `passFor(profile, lv)` ("floors",
+  "basement" or nil), `Why` (the refusals) and `check(profile, plan, requests)`: a remove is always allowed, a set
+  that leaves a piece on the floor it was on is too (a repaint, a move along its floor), anything else lands on an
+  allowed floor, and stairs may not climb into a floor that isn't. `Services/Build.apply` runs it after
+  `vipCheck`; a saved build's load skips a piece it refuses (`prepareEach`).
+- `Build/Basement` (pure): a basement room is its floor on -1. `rects(plan, ignoreKey?, extra?)`, `has`,
+  `onFloor`, `covers(rects, x1, z1, x2, z2, slack)`, `carries(rects, x1, z1, x2, z2)` (a wall over floors all the
+  way); `block(rect)` (the rectangle out to the terrain's 4 stud grid, 2 past every 4 on a plot: `Offset`) and
+  `blocks(plan)`; `Bottom` (-12, under the slab), `Top` (0). Rules (`Plan.validate` and `Plan.validItem` call them
+  for lv -1): `check(plan, kind, obj, ignoreKey, bounds)` (no roofs; a floor keeps `Tuning.Basement.Margin` (2)
+  inside the land so its dig stays on the plot, its block clear of the water, and moved or made smaller it may not
+  strand anything), `checkItem` (a free standing piece stands over basement floors), `clearOfWater(plan, w)` (a
+  water's checks), `stranded(plan, rects)` (what stands over no floor: `Plan.removeOps` of a basement floor takes
+  those walls, what hangs on them and those pieces with it). `lining(plan, key)` draws the concrete round a floor's
+  open sides (`Tuning.Basement.Lining` thick, from -12 to -0.06, 0.04 into the room, none where two floors meet);
+  `Builder.primsFor("floors")` adds it, `Shapes.floor` draws a basement slab from -12 to -11.6, and `Plan.affected`
+  redraws every basement floor when one changes. `Plan.sanitize` loads floors before walls, since basement walls
+  stand on them.
+- `Services/Basement` (after Water): `sync(index, plan, player?)` digs each column of the plan's blocks out of the
+  terrain from -12 to 0 (`ReadVoxelChannels` first, kept per column; `WriteVoxels` the fallback) and writes back
+  exactly what was there once no floor needs it; `clear(index)`; `dug(index)` (columns, for the specs);
+  `columns(index, block)` (world voxel columns and whether the block is on the grid; one that isn't is never dug);
+  `holes(index)` (the floors' rectangles), added to `Services/Water.holeSources`, so `Water.cutGround` cuts the
+  plot's ground round the rooms with the pools. It listens to `Build.Changed` (a basement floor in the ops),
+  `Plots.Ready` and `PlayerRemoving`. `Service.terrain` is the specs' stand-in.
+- Client: `BuildMode.setLevel(n)` clamps to `Floors.shown`; on -1 `Build/Underground` hides the ground on this
+  screen alone (`hide(plotModel, frame, plan)`: the plot's `Base`, its water pieces and the `Land` model fade with
+  `LocalTransparencyModifier` and `CanQuery` off, and the terrain's solid voxels under the land from -12 to 0 are
+  read and cleared locally; `refresh()` clears them again after a plan change, since the server's terrain writes
+  reach the screen; `show(plan)` puts back what it cleared except where the plan has dug since, a basement block or
+  a water; `isHidden()`; `Underground.terrain` for the sim). `BuildCamera` keeps the eye `ABOVE_GROUND` (4) over the
+  ground while the focus is under it. `BuildUI`'s floor arrows (`floorStep`, `floorTip`, `floorPress`,
+  `paintFloorButtons`): "go", "end" (dim) or "lock" (a small `lock` icon named `Lock` on the corner, attribute
+  `Locked`; pressing offers the pass with `Purchase.prompt`); the hint calls -1 "Basement".
+- Land. `City.landCap(profile)` is the biggest land a player may have: `Passes.maxLand` (320, or 400 with Big Plot),
+  `profile.ownLand` or the plan's own `size`. `City.stats` adds `landCap` and `landLocked` (the next step needs Big
+  Plot); `City.canExpand` refuses it then. `City.keepLand(profile)` sets `ownLand` to the plan's land when it is past
+  `Tuning.Passes.FreeLand`: `Schema.migrate` calls it on every load and `PlotExpand` after a purchase. Nothing makes
+  a plan's `size` smaller. The city panel's land row (`lockedLandRow`) shows a Big Plot button with the lock.
+- Specs: `Floors` (the floors and passes, an old save's fourth floor, eight floors in a plan, the basement's rules,
+  its dig on the grid, selling with what it held up, the lining, land and Big Plot, `ownLand` on load);
+  `BuildService` ("floors and the basement": the server's refusals, and a room dug in a stand-in terrain and filled
+  back exactly). The build client sim's "floors" step drives the arrows, the locks, the passes, the hidden ground
+  and a basement room. Previews: `render.sh basement` (and `basement:open`), `ui.sh build:top` and
+  `build:basement`.
+
 ## Build mode's catalog: looks, shapes, pictures, marks, pillars, water
 
 - Catalog: a def may carry `style` (one of `Catalog.Styles`: cozy, modern, scifi, garden, seaside, rustic, fancy,
@@ -536,7 +598,9 @@ anything standing on it. Wall styles carry their own default finish (`paint`); t
   to 0.5 under the ground (`WriteVoxelChannels`, falling back to `WriteVoxels`); a water that goes, or changes depth,
   gets its saved voxels back exactly. `cutGround` hides World's `Base` and the plot's lawn under it and covers the rest
   with copies marked `WaterPiece` (and `WaterHidden`/`WaterTransparency`/`WaterCollide`/`WaterQuery`/`WaterShadow` to
-  put them back); `clear(index)`; `region`, `dug`, `terrain`. Client: `Build/WaterTool` (the drag, the tray, a picked
+  put them back), round the rectangles of `holeSources` too (the basement's rooms: `Services/Basement`); `clear(index)`;
+  `region`, `dug`, `terrain`. World's `Base` is 4 deep (down to `Terrain.PlotFloor`), so a pool's sides are the cut
+  ground part down to there and the terrain below. Client: `Build/WaterTool` (the drag, the tray, a picked
   water's page). Numbers: `Tuning.Water`.
 - Ready-made buildings: `Data/Presets` loads the workplaces by name and then every module in `Data/Buildings/Homes/`
   (`home_*`, laid out with `Data/Buildings/HomeKit`: `k:wall`, `open`/`openT`, `hang`/`hangT`, `put`, `putY`, `up`,
@@ -712,9 +776,10 @@ The creator's remotes: `CreatorPeople` (the people here and your friends, and th
 | Service | Job |
 |---|---|
 | `Data` | Loads with a session lock, autosaves every two minutes, saves on leave and shutdown, pushes state patches (`State`), toasts (`Notify`), coins, the town log, the daily gift. |
-| `World` | Builds the town from `Data/TownMap` (streets, plaza, street furniture, decoration, hills, prompts) and the plot bases; sets the stylised lighting (colour grading tinted by the hour, a bloom from `Tuning.Look.Bloom`, sun rays, haze); the clock (real time, 12 minute days) and calendar; night lights; doors that open for anyone walking up; seasonal weather. |
+| `World` | Builds the town from `Data/TownMap` (streets, plaza, street furniture, decoration, hills, prompts) and the plot bases (each `Base` from the floor down to `Terrain.PlotFloor`); sets the stylised lighting (colour grading tinted by the hour, a bloom from `Tuning.Look.Bloom`, sun rays, haze); the clock (real time, 12 minute days) and calendar; night lights; doors that open for anyone walking up; seasonal weather. |
 | `Plots` | Hands out plots, draws the saved build and the owned land, sells more land (`PlotExpand`). A server holds one player to a plot (`Tuning.Game.MaxPlayers`, also `MaxPlayers` on Players in default.project.json; a published game takes its server size from the game's settings). One more is put on a waiting list, gets a body in the square at once and a note, and is given the next plot that comes free (`GoHome` tells them they have none yet). Characters don't load by themselves (`Players.CharacterAutoLoads` is off in the place): `Plots.spawn` loads one once the player's plot is ready (or after 20 s if their profile never loads), and again `Players.RespawnTime` after a death; every character arrives at its plot. Once a second anyone below `Plots.FallLimit` (-40) is put back on their plot, or in the square. |
 | `Build` | `BuildApply`, `BuildUndo`, `BuildRedo`: checks requests, charges or refunds, keeps history, redraws, syncs the plan to its owner (`PlanSync`). Fires `Changed`. A batch is up to 320 requests (a whole ready-made building); an item's `wall = "@n"` means the wall made by the batch's n-th request. `Build.prepare` is exported for the specs. |
+| `Basement` | Digs each basement room out of the terrain under the plot and fills it back exactly when it goes, and has the plot's ground cut round the rooms (see "Floors, the basement and land"). After `Water`. |
 | `Avatar` | The creator: a private stage (an empty Model `CreatorStage<slot>` with an `Origin` attribute, high over the meadow; nothing is built there) and an anchored mannequin per player, catalog search fallback, bundles, copying users, outfits, asset checks, the text filter. `toDescription`, `buildModel` for everyone else. |
 | `Interact` | Puts a `UsePrompt` (E, no `Opens`) on an attachment `UseSpot` on each placed piece that has a player use (`Data/Interactions`), in every plot's Build folder; checks the player is within `Tuning.Uses.Reaches` (14 studs), a `Cooldown` per player and a `Rest` per piece; picks the outcome (`Sim/Uses`), has villagers near react to the loud ones and fires `Used`. Nothing is bought or saved. Starts after `Villagers`. |
 | `Work` | A player working at a workplace themselves (see "Working at a workplace yourself"): a `WorkPrompt` at every placed workplace's work spot, `Work.asked`, `Work.begin`, `Work.stop(player, say?)`, `Work.at(player)` (plot and key, or nil), `Work.step(now)` every `Tuning.Jobs.Player.Check` seconds, the `WorkStop` remote. Pays through `Villagers.payPlayer`. Starts after `Villagers`. |

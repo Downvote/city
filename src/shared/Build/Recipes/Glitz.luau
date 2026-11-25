@@ -121,7 +121,23 @@ local function fish(r: R, at: CFrame, len: number, col: Color3)
 	end
 end
 
-return {
+type Item = {
+	id: string,
+	name: string,
+	cat: string,
+	style: string?,
+	price: number,
+	place: string,
+	size: Vector3,
+	c1: string,
+	c2: string?,
+	tags: { string }?,
+	lively: boolean?,
+	vip: boolean?,
+	build: (r: R) -> (),
+}
+
+local items: { Item } = {
 	{
 		id = "glitz_disco",
 		name = "Disco ball",
@@ -148,7 +164,8 @@ return {
 			Lively.moving(r, 1, function()
 				r:cyl(0, -0.86, 0, 0.12, 0.24, "y", CHROME, "Metal")
 				r:ball(0, -1.55, 0, 1.4, r.c1, "Foil")
-				local spots = { Color3.fromRGB(250, 170, 200), Color3.fromRGB(150, 200, 250), Color3.fromRGB(250, 226, 150) }
+				local spots =
+					{ Color3.fromRGB(250, 170, 200), Color3.fromRGB(150, 200, 250), Color3.fromRGB(250, 226, 150) }
 				for k, col in spots do
 					local lamp = r:boxAt(
 						mid * CFrame.Angles(0, k * math.pi * 2 / 3, 0) * CFrame.Angles(math.rad(40), 0, 0),
@@ -261,7 +278,16 @@ return {
 			r:block(-0.9, 2.1, 0.7, 0.9, 2.5, 0.78, CREAM, "SmoothPlastic")
 			for row = 0, 1 do
 				for k = 0, 6 do
-					r:block(-0.75 + k * 0.22, 2.18 + row * 0.16, 0.78, -0.63 + k * 0.22, 2.28 + row * 0.16, 0.82, if (k + row) % 3 == 0 then C.Red else C.White, "SmoothPlastic")
+					r:block(
+						-0.75 + k * 0.22,
+						2.18 + row * 0.16,
+						0.78,
+						-0.63 + k * 0.22,
+						2.28 + row * 0.16,
+						0.82,
+						if (k + row) % 3 == 0 then C.Red else C.White,
+						"SmoothPlastic"
+					)
 				end
 			end
 			r:block(0.98, 2.15, 0.7, 1.12, 2.45, 0.8, CHROME, "Metal")
@@ -291,7 +317,8 @@ return {
 			r:block(-3, 0, 2.8, 3, 0.2, 3, r.c2, "Metal")
 			r:block(-3, 0, -2.8, -2.8, 0.2, 2.8, r.c2, "Metal")
 			r:block(2.8, 0, -2.8, 3, 0.2, 2.8, r.c2, "Metal")
-			local colours = { r.c1, Color3.fromRGB(150, 200, 246), Color3.fromRGB(250, 222, 140), Color3.fromRGB(160, 222, 170) }
+			local colours =
+				{ r.c1, Color3.fromRGB(150, 200, 246), Color3.fromRGB(250, 222, 140), Color3.fromRGB(160, 222, 170) }
 			for i = 0, 3 do
 				for j = 0, 3 do
 					local x, z = -2.75 + i * 1.4, -2.75 + j * 1.4
@@ -387,7 +414,18 @@ return {
 			r:cyl(-0.9, 4.9, 1.6, 2.0, 0.06, "x", CHROME, "Metal")
 			for k = 0, 4 do
 				local x = -1.8 + k * 0.26
-				r:noCollide(r:block(x, 1.2, if k % 2 == 0 then 1.52 else 1.58, x + 0.28, 4.88, if k % 2 == 0 then 1.58 else 1.64, Color3.fromRGB(192, 90, 100), "Fabric"))
+				r:noCollide(
+					r:block(
+						x,
+						1.2,
+						if k % 2 == 0 then 1.52 else 1.58,
+						x + 0.28,
+						4.88,
+						if k % 2 == 0 then 1.58 else 1.64,
+						Color3.fromRGB(192, 90, 100),
+						"Fabric"
+					)
+				)
 			end
 			-- inside: a stool, and the camera on the back wall with its screen and flash
 			r:cyl(-0.9, 0.85, 0.5, 1.4, 0.18, "y", CHROME, "Metal")
@@ -405,7 +443,16 @@ return {
 			r:block(0.9, 1.8, 1.7, 1.5, 1.9, 1.76, INK, "SmoothPlastic")
 			r:block(1.05, 1.0, 1.7, 1.35, 1.82, 1.74, C.White, "SmoothPlastic")
 			for k = 0, 3 do
-				r:block(1.1, 1.05 + k * 0.19, 1.74, 1.3, 1.2 + k * 0.19, 1.77, if k % 2 == 0 then C.Blue else C.Pink, "SmoothPlastic")
+				r:block(
+					1.1,
+					1.05 + k * 0.19,
+					1.74,
+					1.3,
+					1.2 + k * 0.19,
+					1.77,
+					if k % 2 == 0 then C.Blue else C.Pink,
+					"SmoothPlastic"
+				)
 			end
 			star(r, CFrame.new(1.0, 4.1, 1.72), 0.6, 0.03, r.c2, "SmoothPlastic")
 		end,
@@ -435,7 +482,16 @@ return {
 			r:block(-3.85, 1.35, -0.75, 3.85, 1.65, 0.75, Color3.fromRGB(230, 210, 166), "Sand")
 			for _, sx in { -1, 1 } do
 				for _, sz in { -1, 1 } do
-					r:block(sx * 3.94 - 0.06, 1.35, sz * 0.84 - 0.06, sx * 3.94 + 0.06, 6.4, sz * 0.84 + 0.06, frame, "Metal")
+					r:block(
+						sx * 3.94 - 0.06,
+						1.35,
+						sz * 0.84 - 0.06,
+						sx * 3.94 + 0.06,
+						6.4,
+						sz * 0.84 + 0.06,
+						frame,
+						"Metal"
+					)
 				end
 			end
 			r:block(-4, 6.4, -0.9, 4, 6.6, 0.9, frame, "Metal")
@@ -444,19 +500,27 @@ return {
 			r:glow(strip, 14, 0.9, Color3.fromRGB(170, 220, 250))
 			local rocks = { { -2.6, 2.0, -0.3, 1.2 }, { 1.4, 1.9, -0.4, 1.0 }, { 3.1, 1.8, 0.2, 0.7 } }
 			for i, p in rocks do
-				r:lump(CFrame.new(p[1], p[2], p[3]) * CFrame.Angles(0, i, 0.2), p[4] * 1.3, p[4], p[4], Color3.fromRGB(150, 146, 150), "Slate")
+				r:lump(
+					CFrame.new(p[1], p[2], p[3]) * CFrame.Angles(0, i, 0.2),
+					p[4] * 1.3,
+					p[4],
+					p[4],
+					Color3.fromRGB(150, 146, 150),
+					"Slate"
+				)
 			end
 			local corals = {
-				{ -1.4, 2.0, 0.1, C.Pink },
-				{ -1.1, 2.3, -0.3, Color3.fromRGB(240, 150, 100) },
-				{ 2.2, 2.1, 0.3, Color3.fromRGB(246, 200, 110) },
-				{ 0.2, 1.95, -0.4, Color3.fromRGB(200, 150, 220) },
+				{ at = Vector3.new(-1.4, 2.0, 0.1), col = C.Pink },
+				{ at = Vector3.new(-1.1, 2.3, -0.3), col = Color3.fromRGB(240, 150, 100) },
+				{ at = Vector3.new(2.2, 2.1, 0.3), col = Color3.fromRGB(246, 200, 110) },
+				{ at = Vector3.new(0.2, 1.95, -0.4), col = Color3.fromRGB(200, 150, 220) },
 			}
 			for i, c in corals do
-				local col = c[4] :: Color3
+				local col = c.col
 				for k = 0, 2 do
 					r:lump(
-						CFrame.new((c[1] :: number) + (k - 1) * 0.18, (c[2] :: number) + k * 0.15, c[3] :: number) * CFrame.Angles(0, i + k, 0.3 * (k - 1)),
+						CFrame.new(c.at.X + (k - 1) * 0.18, c.at.Y + k * 0.15, c.at.Z)
+							* CFrame.Angles(0, i + k, 0.3 * (k - 1)),
 						0.24,
 						0.6,
 						0.24,
@@ -467,7 +531,14 @@ return {
 			end
 			for k = 0, 7 do
 				local x = -3.4 + k * 0.95
-				r:beam(Vector3.new(x, 1.65, -0.5 + (k % 3) * 0.2), Vector3.new(x + 0.15, 3.0 + (k % 4) * 0.5, -0.45 + (k % 3) * 0.2), 0.08, 0.2, if k % 2 == 0 then C.Leaf else C.DarkLeaf, "Grass")
+				r:beam(
+					Vector3.new(x, 1.65, -0.5 + (k % 3) * 0.2),
+					Vector3.new(x + 0.15, 3.0 + (k % 4) * 0.5, -0.45 + (k % 3) * 0.2),
+					0.08,
+					0.2,
+					if k % 2 == 0 then C.Leaf else C.DarkLeaf,
+					"Grass"
+				)
 			end
 			r:block(0.6, 1.65, 0.1, 1.0, 1.9, 0.4, Color3.fromRGB(150, 110, 70), "Wood")
 			r:block(0.58, 1.9, 0.08, 1.02, 1.98, 0.42, C.Gold, "Metal")
@@ -482,21 +553,54 @@ return {
 			glass.transp = 0.85
 			-- the fish, swimming the length of the tank and turning round at the ends
 			local school = {
-				{ 0, 4.8, 0.2, 2.6, 0.35, 0, 0.6, Color3.fromRGB(246, 200, 76) },
-				{ 0.5, 3.6, -0.3, 2.2, 0.5, 2, 0.5, Color3.fromRGB(238, 140, 70) },
-				{ -0.5, 2.7, 0.35, 2.8, 0.28, 4, 0.7, Color3.fromRGB(110, 170, 230) },
-				{ 1.0, 5.6, -0.2, 1.6, 0.6, 1, 0.3, Color3.fromRGB(244, 160, 190) },
+				{
+					at = Vector3.new(0, 4.8, 0.2),
+					reach = 2.6,
+					speed = 0.35,
+					phase = 0,
+					len = 0.6,
+					col = Color3.fromRGB(246, 200, 76),
+				},
+				{
+					at = Vector3.new(0.5, 3.6, -0.3),
+					reach = 2.2,
+					speed = 0.5,
+					phase = 2,
+					len = 0.5,
+					col = Color3.fromRGB(238, 140, 70),
+				},
+				{
+					at = Vector3.new(-0.5, 2.7, 0.35),
+					reach = 2.8,
+					speed = 0.28,
+					phase = 4,
+					len = 0.7,
+					col = Color3.fromRGB(110, 170, 230),
+				},
+				{
+					at = Vector3.new(1.0, 5.6, -0.2),
+					reach = 1.6,
+					speed = 0.6,
+					phase = 1,
+					len = 0.3,
+					col = Color3.fromRGB(244, 160, 190),
+				},
 			}
 			for g, f in school do
-				local at = CFrame.new(f[1] :: number, f[2] :: number, f[3] :: number)
-				Lively.pivot(r, at, "pace", { speed = f[5] :: number, amount = f[4] :: number, axis = "X", phase = f[6] :: number, group = g })
+				local at = CFrame.new(f.at)
+				Lively.pivot(
+					r,
+					at,
+					"pace",
+					{ speed = f.speed, amount = f.reach, axis = "X", phase = f.phase, group = g }
+				)
 				Lively.moving(r, g, function()
 					if g == 4 then
 						for k = 0, 2 do
-							fish(r, at * CFrame.new(k * 0.25 - 0.25, (k % 2) * 0.2, (k - 1) * 0.2), f[7] :: number, f[8] :: Color3)
+							fish(r, at * CFrame.new(k * 0.25 - 0.25, (k % 2) * 0.2, (k - 1) * 0.2), f.len, f.col)
 						end
 					else
-						fish(r, at, f[7] :: number, f[8] :: Color3)
+						fish(r, at, f.len, f.col)
 					end
 				end)
 			end
@@ -537,7 +641,16 @@ return {
 			-- the glass case on top: posts, panes, a lid, a heap of popcorn and the kettle
 			for _, sx in { -1, 1 } do
 				for _, sz in { -1, 1 } do
-					r:block(sx * 1.4 - 0.05, 2.45, sz * 0.75 - 0.05, sx * 1.4 + 0.05, 4.3, sz * 0.75 + 0.05, r.c2, "Metal")
+					r:block(
+						sx * 1.4 - 0.05,
+						2.45,
+						sz * 0.75 - 0.05,
+						sx * 1.4 + 0.05,
+						4.3,
+						sz * 0.75 + 0.05,
+						r.c2,
+						"Metal"
+					)
 				end
 			end
 			for _, sz in { -1, 1 } do
@@ -558,13 +671,40 @@ return {
 			-- the striped roof on four thin posts, a scalloped edge and a knob on top
 			for _, sx in { -1, 1 } do
 				for _, sz in { -1, 1 } do
-					r:block(sx * 1.4 - 0.04, 4.45, sz * 0.75 - 0.04, sx * 1.4 + 0.04, 5.0, sz * 0.75 + 0.04, r.c2, "Metal")
+					r:block(
+						sx * 1.4 - 0.04,
+						4.45,
+						sz * 0.75 - 0.04,
+						sx * 1.4 + 0.04,
+						5.0,
+						sz * 0.75 + 0.04,
+						r.c2,
+						"Metal"
+					)
 				end
 			end
 			for k = 0, 4 do
-				r:block(-1.6 + k * 0.64, 5.0, -1.0, -0.96 + k * 0.64, 5.15, 1.0, if k % 2 == 0 then r.c1 else r.c2, "Fabric")
+				r:block(
+					-1.6 + k * 0.64,
+					5.0,
+					-1.0,
+					-0.96 + k * 0.64,
+					5.15,
+					1.0,
+					if k % 2 == 0 then r.c1 else r.c2,
+					"Fabric"
+				)
 				for _, sz in { -1, 1 } do
-					r:block(-1.6 + k * 0.64 + 0.08, 4.85, sz * 1.0 - 0.03, -0.96 + k * 0.64 - 0.08, 5.0, sz * 1.0 + 0.03, if k % 2 == 0 then r.c2 else r.c1, "Fabric")
+					r:block(
+						-1.6 + k * 0.64 + 0.08,
+						4.85,
+						sz * 1.0 - 0.03,
+						-0.96 + k * 0.64 - 0.08,
+						5.0,
+						sz * 1.0 + 0.03,
+						if k % 2 == 0 then r.c2 else r.c1,
+						"Fabric"
+					)
 				end
 			end
 			r:ball(0, 5.3, 0, 0.3, C.Gold, "Metal")
@@ -572,3 +712,5 @@ return {
 		end,
 	},
 }
+
+return items

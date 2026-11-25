@@ -97,12 +97,22 @@ return function(R, which: string?)
 	for _, r in Water.cutRects(patch, dug) do
 		table.insert(
 			out,
-			Geometry.span(Vector3.new(r[1], Basement.Bottom, r[2]), Vector3.new(r[3], Terrain.PlotFloor, r[4]), earth, "Ground")
+			Geometry.span(
+				Vector3.new(r[1], Basement.Bottom, r[2]),
+				Vector3.new(r[3], Terrain.PlotFloor, r[4]),
+				earth,
+				"Ground"
+			)
 		)
 	end
 	table.insert(
 		out,
-		Geometry.span(Vector3.new(patch[1], Basement.Bottom - 2, patch[2]), Vector3.new(patch[3], Basement.Bottom, patch[4]), earth, "Ground")
+		Geometry.span(
+			Vector3.new(patch[1], Basement.Bottom - 2, patch[2]),
+			Vector3.new(patch[3], Basement.Bottom, patch[4]),
+			earth,
+			"Ground"
+		)
 	)
 	return out
 end

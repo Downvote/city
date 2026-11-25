@@ -71,7 +71,10 @@ function Service.columns(index: number, block: { number }): (number, number, num
 end
 
 local function region(i1: number, i2: number, k: number): Region3
-	return Region3.new(Vector3.new(i1 * V, Basement.Bottom, k * V), Vector3.new((i2 + 1) * V, Basement.Top, (k + 1) * V))
+	return Region3.new(
+		Vector3.new(i1 * V, Basement.Bottom, k * V),
+		Vector3.new((i2 + 1) * V, Basement.Top, (k + 1) * V)
+	)
 end
 
 -- Runs of columns along x, a row at a time: { k, i1, i2 } for each stretch of `set`'s keys.

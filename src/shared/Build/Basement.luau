@@ -200,7 +200,13 @@ function Basement.stranded(plan: any, rects: { Rect }): { { kind: string, key: s
 		end
 	end
 	for key, item in (plan and plan.items) or {} do
-		if type(item) == "table" and item.lv == Basement.Level and item.wall == nil and finite(item.x) and finite(item.z) then
+		if
+			type(item) == "table"
+			and item.lv == Basement.Level
+			and item.wall == nil
+			and finite(item.x)
+			and finite(item.z)
+		then
 			local x1, z1, x2, z2 = footprint(item)
 			if not Basement.covers(rects, x1, z1, x2, z2, 0.05) then
 				table.insert(items, key)

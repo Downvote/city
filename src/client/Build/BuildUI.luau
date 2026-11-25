@@ -2308,7 +2308,9 @@ local function floorTip(dir: number): string
 		end
 		return Text.fill(if dir > 0 then "Up to floor {n}" else "Down to floor {n}", { n = nextLv + 1 })
 	elseif what == "lock" then
-		return if dir > 0 then "Floors past the third come with Tall Builds" else "A basement comes with the Basement pass"
+		return if dir > 0
+			then "Floors past the third come with Tall Builds"
+			else "A basement comes with the Basement pass"
 	end
 	if dir > 0 then
 		return "This is the top floor"
@@ -2431,7 +2433,7 @@ refreshChrome = function()
 		hint = "Pick something from the tray below."
 	elseif s.tool == "multi" then
 		hint = SelectTool.hint(Kit.isTouch()) -- (the Select tool: Build/SelectTool)
-	elseif trayMode == "saves" and s.tool == "select" and not s.selected then
+	elseif subTab == "saves" and s.tool == "select" and not s.selected then
 		hint = "Keep your plot as it is in a slot, or load one back."
 	end
 	if holdingNow and Kit.isTouch() and TOUCH_HINTS[s.tool] then

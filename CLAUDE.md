@@ -529,6 +529,17 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
   a new showpiece one in `Data/Buildings/Showpieces/`; keep the dearest ready-made building under 4 days of a
   builder's pay (the City spec); a railing can't meet a wall end on (both bottoms at floor height z-fight).
 
+- Floors and the basement (the user: "another [gamepass] for basement, another for more levels"): a plan holds
+  floors -1 to 7 (`Plan.Lowest`, `Plan.Highest`); who may build on which is `Sim/Floors` (the Build service checks
+  every request with it, a saved build's load too, and Build mode's arrows ask it), so never test a level against a
+  bare 0 or `Tuning.Plot.Levels`, and hang a ceiling piece at `Plan.ceilingY(lv)`. An old save's fourth floor stays.
+  A basement room is its floor on -1 (`Build/Basement`): what goes on -1 stands over one, `Services/Basement` digs
+  the terrain under it and puts it back exactly, and Build mode hides the plot's ground on the player's own screen
+  while -1 is shown (`Build/Underground`). Land past `Tuning.Passes.FreeLand` needs Big Plot (`City.landCap`), and
+  nothing ever makes a plan's `size` smaller.
+- The ground under a plot lies a voxel down (`Terrain.PlotFloor`, the "plot" cover in `Terrain.plan`: the user's
+  picture of the island's grass standing up through a plot) and World's `Base` reaches down to it, so far terrain
+  drawn coarser can't rise through and a pool's sides are solid. Keep both when changing the plots' ground.
 - Every catalog item stays inside its `size` box (the Build spec checks it), uses `r.c1`/`r.c2` for paintable
   parts, marks seats with `r:seat`, beds with `r:sleep` and the tag `bed`, lights with `r:glow`, workplaces with
   `job`, `workSpot`, `workYaw` and the tag `work`.

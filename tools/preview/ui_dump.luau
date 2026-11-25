@@ -371,7 +371,7 @@ elseif scene:sub(1, 5) == "build" then
 		Sim.press("Paint")
 	end
 	if scene:sub(1, 12) == "build:select" then
-		-- (the Select tool: three armchairs beside the house, picked with a box drawn round them)
+		-- (the Select tool: three armchairs in the garden, picked with a box drawn round them)
 		Sim.press("Select")
 		if scene ~= "build:select:none" then
 			local Town = Sim.Harness.require("ReplicatedStorage.Shared.Data.Town")
@@ -380,7 +380,7 @@ elseif scene:sub(1, 5) == "build" then
 				table.insert(requests, {
 					type = "add",
 					kind = "items",
-					obj = { id = "armchair", x = 124 + i * 6, y = 0, z = 64, r = 0, lv = 0 },
+					obj = { id = "armchair", x = 194 + i * 6, y = 0, z = 150, r = 0, lv = 0 },
 				})
 			end
 			Sim.advance(0.2)
@@ -390,7 +390,7 @@ elseif scene:sub(1, 5) == "build" then
 			local frame = Town.plotFrame(1)
 			local lo, hi = roblox.Vector2.new(math.huge, math.huge), roblox.Vector2.new(-math.huge, -math.huge)
 			for i = 0, 2 do
-				local v = Sim.cam:WorldToViewportPoint(frame * roblox.Vector3.new(124 + i * 6, 1.5, 64))
+				local v = Sim.cam:WorldToViewportPoint(frame * roblox.Vector3.new(194 + i * 6, 1.5, 150))
 				lo = roblox.Vector2.new(math.min(lo.X, v.X), math.min(lo.Y, v.Y))
 				hi = roblox.Vector2.new(math.max(hi.X, v.X), math.max(hi.Y, v.Y))
 			end
@@ -464,7 +464,11 @@ elseif scene:sub(1, 5) == "build" then
 			}
 		end
 		Sim.remoteFn("BuildApply"):InvokeServer({
-			{ type = "add", kind = "floors", obj = { x1 = 230, z1 = 120, x2 = 254, z2 = 138, lv = -1, c = "B89A78", m = "WoodPlanks" } },
+			{
+				type = "add",
+				kind = "floors",
+				obj = { x1 = 230, z1 = 120, x2 = 254, z2 = 138, lv = -1, c = "B89A78", m = "WoodPlanks" },
+			},
 			side(230, 120, 254, 120),
 			side(230, 120, 230, 138),
 		})

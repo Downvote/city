@@ -302,6 +302,10 @@ function Villagers.spawn(player: Player, vid: string)
 		Villagers.talkedTo(who, player, vid)
 	end)
 	task.spawn(Villagers.brain, player, vid, npc)
+	-- a memory's accessory the catalog hasn't been asked for yet (Sim/Memory)
+	if Memory.unfound(v, os.time()) then
+		task.spawn(Villagers.dress, player, vid, true)
+	end
 end
 
 function Villagers.despawn(player: Player, vid: string)
@@ -1948,8 +1952,9 @@ end
 
 -- Dresses a villager as they are today (Memory.dressed): finds what a new memory has them wearing
 -- first, then puts the look on the body they have (Humanoid:ApplyDescription), or builds them again
--- with it when that won't take.
-function Villagers.dress(player: Player, vid: string)
+-- with it when that won't take. `justBuilt`: the body was built from Memory.dressed a moment ago, so
+-- only something found now is worth putting on, and it is never built again from here.
+function Villagers.dress(player: Player, vid: string, justBuilt: boolean?)
 	local profile = Data.get(player)
 	local v = profile and profile.villagers[vid]
 	if not v then
@@ -1957,11 +1962,15 @@ function Villagers.dress(player: Player, vid: string)
 	end
 	local now = os.time()
 	local waiting = Memory.unfound(v, now)
+	local found = nil
 	if waiting and waiting.what then
-		local found = findAccessory(waiting.what)
+		found = findAccessory(waiting.what)
 		if found then
 			waiting.acc = { id = found.id, t = found.t }
 		end
+	end
+	if justBuilt and not found then
+		return
 	end
 	local npc = Villagers.get(player, vid)
 	local model = npc and npc.model
@@ -1972,7 +1981,7 @@ function Villagers.dress(player: Player, vid: string)
 	local ok = pcall(function()
 		hum:ApplyDescription(Avatar.toDescription(Memory.dressed(v, now)))
 	end)
-	if not ok and Villagers.control(player, vid) == nil then
+	if not ok and not justBuilt and Villagers.control(player, vid) == nil then
 		task.spawn(Villagers.spawn, player, vid)
 	end
 end
