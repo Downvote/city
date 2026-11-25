@@ -380,7 +380,8 @@ local items: { Item } = {
 			-- two chalkboards hinged at the top, to stand outside a shop: c1 the frames, c2 the
 			-- boards. Today's is chalked on both.
 			for _, s in { -1, 1 } do
-				local cf = CFrame.new(0, 1.72, s * 0.5) * CFrame.Angles(math.rad(s * 15), 0, 0)
+				-- (each leans in at the top, so the two meet under the hinge like an A)
+				local cf = CFrame.new(0, 1.72, s * 0.5) * CFrame.Angles(math.rad(-s * 15), 0, 0)
 				r:boxAt(cf, 2.1, 3.5, 0.12, r.c1, "Wood")
 				r:boxAt(cf * CFrame.new(0, 0.15, s * 0.07), 1.78, 2.7, 0.04, r.c2, "Slate")
 				local face = cf * CFrame.new(0, 0.15, s * 0.11)
@@ -622,22 +623,61 @@ local items: { Item } = {
 			-- A cone as tall as a door with two scoops and a cherry, on a block: for the pavement
 			-- outside a parlour, or for its roof (stand it on the level above a flat roof and the
 			-- block comes up through the slab). c1 the bottom scoop and the block's band, c2 the block.
+			-- The cone is four corner wedges meeting at its point, which show in any server (a
+			-- round cone needs the low poly kit, and without it became a plain post: the user, "the
+			-- ice cream dosent look like an ice cream sign"), with a rim and a criss-cross of waffle.
 			r:block(-1.1, 0.04, -1.1, 1.1, 1.8, 1.1, r.c2, "Concrete")
 			r:block(-1.16, 1.2, -1.16, 1.16, 1.5, 1.16, r.c1, "SmoothPlastic")
-			r:add({
-				shape = "Cone",
-				cf = CFrame.new(0, 4.05, 0) * CFrame.Angles(math.pi, 0, 0),
-				size = Vector3.new(2.5, 4.5, 2.5),
-				color = WAFER,
-				mat = "SmoothPlastic",
-			})
-			r:cyl(0, 6.3, 0, 0.36, 2.7, "y", shade(WAFER, 0.9), "SmoothPlastic")
-			r:ball(0, 7.2, 0, 2.9, r.c1, "SmoothPlastic")
-			r:ball(0, 8.6, 0, 2.2, MINT, "SmoothPlastic")
-			r:noCollide(r:ball(0, 9.7, 0, 0.6, APPLE, "SmoothPlastic"))
-			-- two drips down the cone
-			r:noCollide(r:lump(CFrame.new(0.9, 6.1, 0.7), 0.5, 0.9, 0.5, r.c1, "SmoothPlastic"))
-			r:noCollide(r:lump(CFrame.new(-1.0, 6.2, -0.5), 0.5, 0.7, 0.5, r.c1, "SmoothPlastic"))
+			local a, h, tip = 1.3, 4.3, 1.8
+			-- (built point up about its middle, then turned over so the point is at the bottom)
+			local over = CFrame.new(0, tip + h / 2, 0) * CFrame.Angles(math.pi, 0, 0)
+			for _, q in { { -1, 1, 0 }, { 1, 1, 90 }, { 1, -1, 180 }, { -1, -1, -90 } } do
+				r:add({
+					shape = "CornerWedge",
+					cf = over * CFrame.new(q[1] * a / 2, 0, q[2] * a / 2) * CFrame.Angles(0, math.rad(q[3]), 0),
+					size = Vector3.new(a, h, a),
+					color = WAFER,
+					mat = "SmoothPlastic",
+				})
+			end
+			-- the waffle: darker bands across each face, a little proud of it
+			local slope = math.atan2(h, a)
+			for k = 0, 3 do
+				local face = CFrame.Angles(0, math.rad(k * 90), 0)
+				for i, t in { 0.35, 0.62 } do
+					-- (t of the way down from the rim: the face is narrower there)
+					local w = 2 * a * (1 - t) - 0.1
+					local at = CFrame.new(0, tip + h * (1 - t), -a * (1 - t) - 0.03)
+					r:noCollide(
+						r:boxAt(
+							face * at * CFrame.Angles(-(math.pi / 2 - slope), 0, 0),
+							w,
+							0.12,
+							0.05,
+							shade(WAFER, 0.78),
+							"SmoothPlastic"
+						)
+					)
+					local _ = i
+				end
+			end
+			r:block(
+				-a - 0.08,
+				tip + h - 0.06,
+				-a - 0.08,
+				a + 0.08,
+				tip + h + 0.3,
+				a + 0.08,
+				shade(WAFER, 0.88),
+				"SmoothPlastic"
+			)
+			-- two scoops wider than the cone, the bottom one in c1, and a cherry
+			r:ball(0, tip + h + 0.9, 0, 3.2, r.c1, "SmoothPlastic")
+			r:ball(0, tip + h + 2.2, 0, 2.5, MINT, "SmoothPlastic")
+			r:noCollide(r:ball(0, tip + h + 3.35, 0, 0.6, APPLE, "SmoothPlastic"))
+			-- drips over the rim
+			r:noCollide(r:lump(CFrame.new(0.95, tip + h + 0.1, 0.8), 0.5, 0.9, 0.5, r.c1, "SmoothPlastic"))
+			r:noCollide(r:lump(CFrame.new(-1.05, tip + h + 0.2, -0.6), 0.5, 0.7, 0.5, r.c1, "SmoothPlastic"))
 		end,
 	},
 }
