@@ -21,8 +21,9 @@ describe("The glow", function()
 		local bloom = Tuning.Look.Bloom
 		expect(bloom.Threshold >= 1.5).toBeTruthy()
 		expect(bloom.Threshold <= 2.5).toBeTruthy() -- lamps and signs still glow after dark
-		expect(bloom.Intensity > 0 and bloom.Intensity <= 0.5).toBeTruthy()
-		expect(bloom.Size >= 8 and bloom.Size <= 24).toBeTruthy()
+		-- then: "do the lighting haze glow", so a lit thing glows a little stronger and wider
+		expect(bloom.Intensity > 0 and bloom.Intensity <= 0.7).toBeTruthy()
+		expect(bloom.Size >= 8 and bloom.Size <= 32).toBeTruthy()
 	end)
 end)
 

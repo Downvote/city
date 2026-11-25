@@ -562,8 +562,8 @@ Tuning.Look = {
 	-- It was 0.92 at nearly full strength and a pale wall or a lamp at night washed the whole
 	-- view out (the user: "the bloom might be too much").
 	-- (the user, of a polished game's screenshots beside ours: "do the lighting haze glow". The glow is
-	-- stronger and wider and starts lower, so neon, lamps and lit signs shine; sunlit white stays under it)
-	Bloom = { Intensity = 0.8, Size = 32, Threshold = 1.3 },
+	-- stronger and wider, so neon, lamps and lit signs shine; it starts above white, so a sunlit wall never glows)
+	Bloom = { Intensity = 0.65, Size = 28, Threshold = 1.5 },
 	-- The air. The user, with a picture of a hilltop in a warm sunset haze: "make the shader
 	-- something like this, add fog and set the lighting to shadowmap/future". So a thick soft
 	-- haze that turns the far island pink and gold, a glare round the sun, rays through the haze,
@@ -596,19 +596,19 @@ Tuning.Look = {
 	-- sunlight at midday (the World spec holds it by look.py's model), still violet, and the sun
 	-- is a little lower so pale walls in it don't wash out to white.
 	Light = {
-		Brightness = 1.8, -- the sun (was 3.1, then 1.7, then 1.6; up a little with the brighter shade)
+		Brightness = 1.45, -- the sun (was 3.1, then 1.7, then 1.6: eased with the brighter shade, so a pale wall in the sun keeps its warmth)
 		Exposure = 0, -- ExposureCompensation: 1 is twice as bright (was 0.12)
 		-- the shade is a soft lavender fill now, not near black: shadows still show, but a wall in shade
 		-- keeps its colour (was 84, 78, 110 and 96, 90, 124)
-		Ambient = { 104, 100, 128 }, -- what lights a place the sky can't see (indoors)
-		OutdoorAmbient = { 132, 130, 156 }, -- what lights the shade outdoors
+		Ambient = { 100, 96, 124 }, -- what lights a place the sky can't see (indoors)
+		OutdoorAmbient = { 112, 110, 140 }, -- what lights the shade outdoors
 		SunTint = { 255, 226, 186 }, -- ColorShift_Top: the sun's colour on what faces it (warm)
 		-- GeographicLatitude. Roblox tilts the sun's path by the latitude less the earth's tilt
 		-- (23.5), so at 54 the sun stood 59 degrees up at noon on the +Z side, behind the houses on
 		-- the north side of Main Street, whose fronts face -Z (plot 1, the first player's, is one).
 		-- At -20 it stands 46 degrees up on the -Z side: over the harbour, on those fronts.
 		Latitude = -20,
-		SkyDiffuse = 0.4, -- EnvironmentDiffuseScale: soft light off the sky into the shade (was 0.24)
+		SkyDiffuse = 0.32, -- EnvironmentDiffuseScale: soft light off the sky into the shade (was 0.24)
 		SkySpecular = 0.18, -- EnvironmentSpecularScale: shine off the sky (was 0.12)
 		ShadowSoftness = 0.18, -- a softer edge (was 0.12)
 		-- after dark, with only the moon, the shade is lifted again so the town stays readable
@@ -623,7 +623,7 @@ Tuning.Look = {
 		Brightness = 0.01,
 		Hours = {
 			-- (warmer all day for the user's sunset picture: the gold hours are long)
-			{ From = 10, To = 14.5, Tint = { 255, 244, 232 }, Saturation = 0.1, Contrast = 0.1, Air = "day" },
+			{ From = 10, To = 14.5, Tint = { 255, 244, 232 }, Saturation = 0.06, Contrast = 0.06, Air = "day" },
 			{ From = 7.5, To = 16.5, Tint = { 255, 236, 216 }, Saturation = 0.08, Contrast = 0.07, Air = "gold" },
 			{ From = 5, To = 19.5, Tint = { 255, 216, 200 }, Saturation = 0.12, Contrast = 0.1, Air = "dusk" },
 		},

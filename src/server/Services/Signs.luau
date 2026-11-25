@@ -26,7 +26,7 @@ type Design = Data.Design
 
 local Signs = {}
 
-local DAY_BRIGHTNESS = 1.1
+local DAY_BRIGHTNESS = 1
 -- how much harder a board shines once the lamps are on: past the glow's threshold (Tuning.Look.Bloom),
 -- so a lit sign glows at night (it was 1.5, under it)
 local NIGHT_BRIGHTNESS = 2.4
