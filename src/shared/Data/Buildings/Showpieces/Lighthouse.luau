@@ -40,13 +40,15 @@ return function(add: any)
 		36,
 		30,
 		function(b: any)
-			-- the tower, a storey at a time, and the floors inside it
+			-- the tower on its square stone plinth, a storey at a time, and the floors inside it
+			b:floor(6, 6, 20, 20, FLAGS)
 			for lv = 0, 2 do
 				Lay.ring(b, "t" .. lv .. "_", OCTAGON, if lv == 1 then RED_PLASTER else WHITE_PLASTER, INSIDE, lv)
-				local floor = if lv == 0 then FLAGS else BOARDS
-				b:floor(10, 6, 16, 20, floor, lv)
-				b:floor(6, 10, 10, 16, floor, lv)
-				b:floor(16, 10, 20, 16, floor, lv)
+				if lv > 0 then
+					b:floor(10, 6, 16, 20, BOARDS, lv)
+					b:floor(6, 10, 10, 16, BOARDS, lv)
+					b:floor(16, 10, 20, 16, BOARDS, lv)
+				end
 			end
 			-- the gallery on top, and the lantern standing on it
 			b:roof(6, 6, 20, 20, "flat", 0, 0, GALLERY, TRIM, 2, 1)
@@ -104,7 +106,7 @@ return function(add: any)
 			put(b, "chair_wood", 33.0, 12.4, 270, nil, OAK, NAVY)
 			put(b, "kettle", 31.3, 12.2, 200, Lay.top("table_round"))
 			put(b, "lamp_pendant", 31, 12.4, 0)
-			hang(b, "art_landscape", "cback", 7.6, 6.2, "b")
+			hang(b, "art_flowers", "cleft", 1.5, 6, "b")
 			hang(b, "clock_wall", "cleft", 8.4, 8.4, "b")
 
 			-- outside: the paths, rocks round the tower's foot, the fog bell, a bench

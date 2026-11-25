@@ -190,7 +190,8 @@ local function uncut(part: BasePart)
 		end
 	end
 	if part:GetAttribute("WaterHidden") then
-		part.Transparency = part:GetAttribute("WaterTransparency") or 0
+		local was = part:GetAttribute("WaterTransparency")
+		part.Transparency = if type(was) == "number" then was else 0
 		part.CanCollide = part:GetAttribute("WaterCollide") ~= false
 		part.CanQuery = part:GetAttribute("WaterQuery") ~= false
 		part.CastShadow = part:GetAttribute("WaterShadow") ~= false
@@ -242,7 +243,8 @@ function Service.cutGround(index: number)
 	end
 	local frame = Plots.frame(index)
 	local holes = {}
-	for _, rec in filled[index] or {} do
+	local dug: { [string]: Record } = filled[index] or {}
+	for _, rec in dug do
 		table.insert(holes, { rec.w.x1, rec.w.z1, rec.w.x2, rec.w.z2 })
 	end
 	local base = original(plot, "Base")
@@ -261,7 +263,7 @@ end
 -- Makes plot `index`'s terrain match the plan's water: what went or changed is put back first (a
 -- water moved may lie partly where it was), then what is new is dug, then the ground is cut.
 function Service.sync(index: number, plan: any, player: Player?)
-	local have = filled[index] or {}
+	local have: { [string]: Record } = filled[index] or {}
 	filled[index] = have
 	if player then
 		owners[index] = player
@@ -292,7 +294,8 @@ end
 
 -- Puts plot `index`'s ground back as it was before any water.
 function Service.clear(index: number)
-	for _, rec in filled[index] or {} do
+	local dug: { [string]: Record } = filled[index] or {}
+	for _, rec in dug do
 		local ok, why = pcall(restore, rec)
 		if not ok then
 			warn("[Water] couldn't put the ground back: " .. tostring(why))
@@ -306,7 +309,8 @@ end
 -- What is dug on a plot now (for the specs): its keys.
 function Service.dug(index: number): { string }
 	local out = {}
-	for key in filled[index] or {} do
+	local dug: { [string]: Record } = filled[index] or {}
+	for key in dug do
 		table.insert(out, key)
 	end
 	table.sort(out)

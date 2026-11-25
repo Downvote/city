@@ -40,9 +40,9 @@ return function(add: any)
 			Lay.styled(b, "railr", 18, 6, 18, 18, RAIL, "railing")
 			Lay.styled(b, "railb", 18, 18, 6, 18, RAIL, "railing")
 			Lay.styled(b, "raill", 6, 18, 6, 6, RAIL, "railing")
-			-- a flat ceiling to hang the lamp from, and the pyramid over it (the pillars stand a stud
-			-- inside its corners, so their caps stay under the roof)
-			b:floor(6, 6, 18, 18, CEILING, 1)
+			-- a ceiling panel to hang the lamp from, inside the pillars, and the pyramid over it
+			-- (the pillars stand a stud inside its corners, so their caps stay under the roof)
+			b:floor(8, 8, 16, 16, CEILING, 1)
 			b:roof(6, 6, 18, 18, "pyramid", 6, 0, SAGE, RAIL, 0, 2)
 			for _, p in { { 7, 7 }, { 17, 7 }, { 7, 17 }, { 17, 17 } } do
 				put(b, "pillar_round", p[1], p[2], 0, nil, WHITE, WHITE)

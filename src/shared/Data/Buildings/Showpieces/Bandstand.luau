@@ -40,7 +40,8 @@ return function(add: any)
 				put(b, "deck_platform", p[1], p[2], 0, Lay.F, OAK, WALNUT)
 			end
 			put(b, "porch_steps", 14, 8.5, 180, Lay.F)
-			-- the posts and the rail between them
+			-- the posts and the rail between them (the rail a hair up, so its own end posts
+			-- inside the white ones don't share their feet)
 			local posts = {
 				{ 8, 12 },
 				{ 12, 12 },
@@ -72,7 +73,7 @@ return function(add: any)
 				{ 18, 24, 0 },
 			}
 			for _, r in rails do
-				put(b, "porch_rail", r[1], r[2], r[3], stage, WHITE, TEAL_PAINT)
+				put(b, "porch_rail", r[1], r[2], r[3], stage + 0.05, WHITE, TEAL_PAINT)
 			end
 			-- the ceiling and the roof
 			b:floor(6, 10, 22, 26, CEILING, 1)

@@ -52,11 +52,10 @@ return function(add: any)
 			Lay.footing(b, "left", 8, nil, STONE)
 			Lay.footing(b, "right", 8, nil, STONE)
 			Lay.footing(b, "back", 8, nil, STONE)
-			Lay.corners(b, { { 6, 6, 180 }, { 14, 6, 90 }, { 14, 14, 0 }, { 6, 14, 270 } }, STONE)
 
 			-- the platform on its legs, the rail (open where the ladder comes up) and the tank
 			b:floor(4, 4, 16, 16, DECK, 1)
-			for _, p in { { 4.5, 4.5 }, { 15.5, 4.5 }, { 4.5, 15.5 }, { 15.5, 15.5 } } do
+			for _, p in { { 4.6, 4.6 }, { 15.4, 4.6 }, { 4.6, 15.4 }, { 15.4, 15.4 } } do
 				put(b, "pillar_square", p[1], p[2], 0, 0, WALNUT, WALNUT)
 			end
 			Lay.styled(b, "railf", 4, 4, 16, 4, RAIL, "railing", 1)
@@ -65,13 +64,13 @@ return function(add: any)
 			Lay.styled(b, "railb", 16, 16, 4, 16, RAIL, "railing", 1)
 			Lay.styled(b, "raill", 4, 16, 4, 4, RAIL, "railing", 1)
 			put(b, "show_water_tank", 10, 10, 0, nil, nil, nil, 1)
-			put(b, "show_ladder", 16.5, 10, 90, 0, WALNUT, WALNUT)
+			put(b, "show_ladder", 16.5, 10, 90, Lay.F, WALNUT, WALNUT)
 
 			-- inside the pump house
 			b:item("doormat", 10, 7.2, 0)
 			put(b, "water_butt", 7.6, 12.4, 0, nil, NAVY, WALNUT)
-			put(b, "water_butt", 9.8, 12.6, 20, nil, NAVY, WALNUT)
-			put(b, "workbench", 11.6, 12.4, 180, nil, OAK, WALNUT)
+			put(b, "water_butt", 7.6, 9.6, 20, nil, NAVY, WALNUT)
+			put(b, "workbench", 11.2, 12.4, 180, nil, OAK, WALNUT)
 			hang(b, "tool_board", "back", 2.4, 6.4, "b", WALNUT, OAK)
 			put(b, "lamp_pendant", 10, 10, 0)
 

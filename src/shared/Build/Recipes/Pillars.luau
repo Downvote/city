@@ -183,7 +183,6 @@ local TOY_GREEN = Color3.fromRGB(150, 204, 162)
 
 local PALE_STONE = Color3.fromRGB(214, 208, 198)
 local SCI_DARK = Color3.fromRGB(70, 74, 84)
-local ROPE_DARK = Color3.fromRGB(150, 126, 92)
 local ROSE_STEM = Color3.fromRGB(96, 104, 62)
 
 -- One catalog entry (Build/Catalog explains the fields).
@@ -1492,40 +1491,37 @@ local items: { Item } = {
 					)
 				end
 				q:lump(CFrame.new(0, 4.6, 0), 0.6, 0.5, 0.6, C.Leaf, "Grass")
-				for k = 0, 3 do
+				-- ivy trailing over the rim, each trail a few leaves down the bowl's side
+				for k, len in { 4, 2, 3, 2 } do
 					local a = k * math.pi / 2 + 0.6
-					local x, z = math.cos(a) * 0.86, math.sin(a) * 0.86
-					q:lump(CFrame.new(x, 3.7, z) * CFrame.Angles(0, -a, 0.2), 0.2, 0.9, 0.18, C.Leaf, "Grass")
-					q:lump(
-						CFrame.new(x * 1.02, 3.2, z * 1.02) * CFrame.Angles(0, a, 0),
-						0.24,
-						0.16,
-						0.24,
-						C.DarkLeaf,
-						"Grass"
-					)
+					for m = 0, len - 1 do
+						local out, side = 0.9 - m * 0.02, (if m % 2 == 0 then 0.05 else -0.05)
+						local x = math.cos(a) * out - math.sin(a) * side
+						local z = math.sin(a) * out + math.cos(a) * side
+						local leaf = if (k + m) % 2 == 0 then C.Leaf else C.DarkLeaf
+						q:lump(
+							CFrame.new(x, 4.06 - m * 0.22, z) * CFrame.Angles(0.3, a, 0.2),
+							0.26,
+							0.24,
+							0.22,
+							leaf,
+							"Grass"
+						)
+					end
 				end
 			end)
+			local heads = { C.Pink, C.White, C.Pink, C.Yellow, C.White, C.Yellow }
 			for k, f in
 				{
-					{ 0.3, 4.86, 0.2, C.Pink },
-					{ -0.36, 4.8, 0.1, C.White },
-					{ 0.02, 4.98, -0.32, C.Pink },
-					{ -0.12, 4.74, 0.5, C.Yellow },
-					{ 0.5, 4.7, -0.3, C.White },
-					{ -0.5, 4.76, -0.36, C.Yellow },
+					Vector3.new(0.3, 4.86, 0.2),
+					Vector3.new(-0.36, 4.8, 0.1),
+					Vector3.new(0.02, 4.98, -0.32),
+					Vector3.new(-0.12, 4.74, 0.5),
+					Vector3.new(0.5, 4.7, -0.3),
+					Vector3.new(-0.5, 4.76, -0.36),
 				}
 			do
-				r:noCollide(
-					r:lump(
-						CFrame.new(f[1], f[2], f[3]) * CFrame.Angles(0.2, k, 0),
-						0.3,
-						0.14,
-						0.3,
-						f[4],
-						"SmoothPlastic"
-					)
-				)
+				r:noCollide(r:lump(CFrame.new(f) * CFrame.Angles(0.2, k, 0), 0.3, 0.14, 0.3, heads[k], "SmoothPlastic"))
 			end
 		end,
 	},

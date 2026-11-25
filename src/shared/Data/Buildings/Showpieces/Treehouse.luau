@@ -54,19 +54,18 @@ return function(add: any)
 			b:box("hut", 10, 10, 24, 18, LOGS, LOGS_IN, 1)
 			b:roof(10, 10, 24, 18, "gable", 3, 0, MOSS, LOGS, 1, 1)
 			Lay.open(b, "door_wood", "hutfront", 7, SKY, CREAM)
-			b:open("win_square", "hutfront", 2.8)
-			b:open("win_square", "hutfront", 11.2)
+			b:open("win_square", "hutfront", 2.4)
+			b:open("win_square", "hutfront", 11.6)
 			b:open("win_small", "hutleft", 4)
 			b:open("win_small", "hutright", 4)
 			b:open("win_small", "hutback", 3)
 			hang(b, "bunting", "hutfront", 7, 9.4, "a")
-			for _, t in { 2.8, 11.2 } do
+			for _, t in { 2.4, 11.6 } do
 				hang(b, "window_box", "hutfront", t, 1.25, "a", WALNUT, if t < 5 then CORAL else MUSTARD)
 			end
 			hang(b, "lantern_wall", "hutleft", 1.2, 5.2, "a")
 
 			-- inside the hut
-			b:item("doormat", 17, 11.2, 0, 1)
 			put(b, "bed_kids", 20.2, 14, 90, nil, nil, nil, 1)
 			put(b, "teddy", 21.4, 13.6, 250, Lay.level(1) + 1.6, nil, nil, 1)
 			put(b, "toy_chest", 14.4, 16.7, 180, nil, nil, nil, 1)

@@ -199,4 +199,10 @@ function WaterTool.selection(kit: TrayKit, stack: Instance, obj: any)
 	)
 end
 
+-- A picked water's name over it, in the action bar: its edge and its size.
+function WaterTool.title(obj: any): string
+	local edge = Water.Edges[obj.edge] or Water.Edges.tile
+	return Text.fill("{name} {w} x {d}", { name = edge.name, w = obj.x2 - obj.x1, d = obj.z2 - obj.z1 })
+end
+
 return WaterTool

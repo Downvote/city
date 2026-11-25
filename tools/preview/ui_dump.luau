@@ -1459,6 +1459,10 @@ local function dump(inst)
 	local itemId = inst:GetAttribute("ItemId")
 	if itemId then
 		node.itemId = itemId
+		-- (a flat mark's card sees it from above: BuildUI's itemTile)
+		if inst:GetAttribute("TopDown") then
+			node.itemId = "top:" .. itemId
+		end
 	end
 	local presetId = inst:GetAttribute("PresetId")
 	if presetId then

@@ -33,7 +33,7 @@ return function(add: any)
 		28,
 		function(b: any)
 			b:floor(2, 10, 20, 24, MARBLE)
-			b:floor(4, 12, 18, 22, CEILING, 1)
+			b:floor(6, 14, 16, 20, CEILING, 1)
 			b:roof(4, 12, 18, 22, "gable", 3.5, 1, COPPER, PEDIMENT, 0, 1.2)
 			for _, z in { 13, 21 } do
 				for _, x in { 5, 9, 13, 17 } do

@@ -175,7 +175,9 @@ function Room.inside(model: Model, within: { Instance }): boolean
 	local flat = Vector3.new(look.X, 0, look.Z)
 	local at = feet + Vector3.new(0, K.Step + tall / 2, 0)
 	local cf = if flat.Magnitude > 0.01 then CFrame.lookAt(at, at + flat) else CFrame.new(at)
-	return Room.touching({ cf = cf, size = Vector3.new(root.Size.X, tall, root.Size.Z) }, within)
+	-- (a hair narrower: standing against a wall is not being in it)
+	local size = Vector3.new(root.Size.X - 2 * K.Touch, tall, root.Size.Z - 2 * K.Touch)
+	return Room.touching({ cf = cf, size = size }, within)
 end
 
 -- Is the box in a solid part of `within`? (an exact test, past the bounds Roblox gives)

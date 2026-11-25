@@ -33,7 +33,7 @@ return function(add: any)
 		16,
 		function(b: any)
 			b:floor(0, 0, 36, 16, COBBLES)
-			Lay.styled(b, "hedge", 0, 14, 36, 14, HEDGE, "hedge")
+			Lay.styled(b, "hedge", 2, 14, 34, 14, HEDGE, "hedge")
 			local z = 9.6
 			local counter = Lay.top("show_stall")
 			local cz = z - 1.3 -- the middle of a counter's top

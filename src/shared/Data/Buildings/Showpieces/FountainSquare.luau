@@ -2,7 +2,7 @@
 -- A fountain square: four paved paths meet at a fountain in a paler square, with benches round it
 -- turned to face the water. In each corner a raised bed behind a low stone wall holds a blossom
 -- tree with flowers under it and an urn on the corner of its wall; lamps stand at the ends of the
--- paths and more flowers line the outside of the beds.
+-- paths.
 --
 -- The frame: x across, z back from the street. The paths are 10 wide on the middle lines, the
 -- square where they meet x 10..20, z 10..20; the beds fill the corners from 2 to 10 in, each
@@ -72,11 +72,6 @@ return function(add: any)
 				put(b, "flower_border", inX, if iz > cz then cz - 0.5 else cz + 0.5, 90, Lay.F)
 				-- an urn on the corner of the wall by the square
 				put(b, "show_urn", ix, iz, 0, 3, nil, bed[7])
-				-- and flowers along the outside, on the grass
-				local outX = if ix > cx then x0 - 1 else x1 + 1
-				local outZ = if iz > cz then z0 - 1 else z1 + 1
-				put(b, "flower_bed", cx, outZ, 0)
-				put(b, "flower_bed", outX, cz, 90)
 			end
 
 			-- lamps at the ends of the paths

@@ -666,12 +666,17 @@ def item_thumb(item_id, size):
     cache_dir = os.path.join(HERE, "..", "..", "out", "ui_thumbs")
     os.makedirs(cache_dir, exist_ok=True)
     # a ready-made building comes as "preset:<id>"; anything else is a catalog item
-    scene = item_id if item_id.startswith("preset:") else "item:" + item_id
+    # and "top:<id>" is a flat mark, seen from above as its card shows it (BuildUI's itemTile)
+    view = []
+    if item_id.startswith("top:"):
+        scene, view = "item:" + item_id[4:], ["--yaw", "0", "--pitch", "76"]
+    else:
+        scene = item_id if item_id.startswith("preset:") else "item:" + item_id
     path = os.path.join(cache_dir, item_id.replace(":", "_") + ".png")
     if not os.path.exists(path):
         try:
             subprocess.run(["sh", os.path.join(HERE, "render.sh"), scene, path, "--size", "220",
-                            "--transparent"], check=True, capture_output=True, cwd=os.path.join(HERE, "..", ".."))
+                            "--transparent"] + view, check=True, capture_output=True, cwd=os.path.join(HERE, "..", ".."))
         except Exception:
             return None
     key = (item_id, size)

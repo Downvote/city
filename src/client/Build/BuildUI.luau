@@ -462,6 +462,7 @@ local function itemTile(parent: Instance, def: any, order: number, onPick: () ->
 	b:SetAttribute("ItemId", def.id)
 	-- a flat mark is seen from above (from the side it would show almost nothing)
 	local flat = def.place == "mark"
+	b:SetAttribute("TopDown", if flat then true else nil)
 	task.spawn(function()
 		ModelPreview.fromPrims(Catalog.prims(def), {
 			Parent = pic,
@@ -940,7 +941,7 @@ picturePanel = function(parent, owner, title, current, useLabel, onUse, extra, o
 	if draft.owner ~= owner then
 		draft = {
 			owner = owner,
-			text = if current then tostring(current) else "",
+			text = if current then string.format("%d", current) else "",
 			id = current,
 			state = if current then "current" else "",
 			why = nil,
@@ -1124,11 +1125,9 @@ local function picturePlaceTray(def: any)
 	-- how it works, beside the page
 	local note = Kit.box({ Parent = row, Size = UDim2.new(1, -620, 0, INNER_H), LayoutOrder = 2 })
 	Kit.list(note, 0).VerticalAlignment = Enum.VerticalAlignment.Center
-	Kit.hint("Find a decal or an image in the Creator Store and copy the number in its link. You can change it later by picking the piece.", {
-		Name = "PictureHelp",
-		Parent = note,
-		Size = UDim2.new(1, -8, 0, 0),
-	})
+	local help = "Find a decal or an image in the Creator Store and copy the number in its link."
+		.. " You can change it later by picking the piece."
+	Kit.hint(help, { Name = "PictureHelp", Parent = note, Size = UDim2.new(1, -8, 0, 0) })
 end
 
 local function catalogTray(cat: string)
@@ -1209,9 +1208,8 @@ local function wallTray(styles: { string }, room: boolean)
 		local fences = trayRow(STYLE_H + 6, stack, 1)
 		for i, id in styles do
 			local def = Plan.WallStyles[id]
-			styleTile(fences, def.name, STYLE_ICONS[id], i, s.wallStyle == id, Text.fill("{n} a stud", {
-				n = Tuning.Prices.FencePerStud,
-			}), function()
+			local per = Text.fill("{n} a stud", { n = Tuning.Prices.FencePerStud })
+			styleTile(fences, def.name, STYLE_ICONS[id], i, s.wallStyle == id, per, function()
 				armTool()
 				s.wallStyle = id
 				refreshTray()
@@ -2027,6 +2025,8 @@ local function refreshActionBar()
 		name = string.format("Floor %d x %d", obj.x2 - obj.x1, obj.z2 - obj.z1)
 	elseif kind == "roofs" then
 		name = (Plan.RoofStyles[obj.style] or Plan.RoofStyles.gable).name .. " roof"
+	elseif kind == "waters" then
+		name = WaterTool.title(obj) -- (water: "Pond 16 x 12")
 	end
 	actionTitle.Text = name
 	-- what it sells for: coins with the coin, or plainly nothing when it was a gift

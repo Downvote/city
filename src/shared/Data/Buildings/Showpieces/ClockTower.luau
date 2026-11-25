@@ -81,8 +81,7 @@ return function(add: any)
 			put(b, "clock_grandfather", 10, 15, 180, nil, WALNUT, "D4AE5E")
 			put(b, "bench_wood", 7.3, 12.4, 90, nil, NAVY, OAK)
 			put(b, "lamp_pendant", 10, 12, 0)
-			hang(b, "coat_hooks", "right", 4, 5.4, "b")
-			hang(b, "art_landscape", "left", 4, 6.4, "b")
+			hang(b, "art_landscape", "back", 4, 8.7, "b")
 
 			-- the square: a bench each side, lamps at the corners, flowers at the back
 			put(b, "flower_pot", 6.9, 7.0, 0, nil, nil, CORAL)

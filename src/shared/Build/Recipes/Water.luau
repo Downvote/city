@@ -161,7 +161,7 @@ local function fish(r: R, x: number, y: number, z: number, s: number, yaw: numbe
 	end
 end
 
-local list = {
+local list: { any } = {
 	-- plants -------------------------------------------------------------------------------------------
 	{
 		id = "water_lilies",
@@ -762,10 +762,10 @@ local list = {
 				local p1 = Vector3.new(0, 4.35, 0)
 				local p2 = out * 0.95 + Vector3.new(0, 3.4, 0)
 				local p3 = out * 1.15 + Vector3.new(0, 1.8, 0)
-				for i, seg in { { p1, p2, 0.3 }, { p2, p3, 0.5 } } do
-					local b = r:beam(seg[1], seg[2], 0.12 - i * 0.02, 0.06, SPRAY, "Glass")
+				for i, seg in { { a = p1, b = p2, see = 0.3 }, { a = p2, b = p3, see = 0.5 } } do
+					local b = r:beam(seg.a, seg.b, 0.12 - i * 0.02, 0.06, SPRAY, "Glass")
 					if b then
-						b.transp = seg[3]
+						b.transp = seg.see
 						b.collide = false
 					end
 				end
