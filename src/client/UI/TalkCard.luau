@@ -9,9 +9,12 @@
 -- are craving something, an answer under the words buys it for them, with its price (the user:
 -- "when a character gets a craving, allow the player to simply pay to buy it").
 --
--- It is built when it opens and goes when it closes. It closes when you say bye, walk off, keep
--- them waiting too long, open a menu, Build mode or the creator, and the moment an event starts
--- (no talk card opens while one is going on).
+-- It is built when it opens and goes when it closes. Nothing on it moves on by itself (the user:
+-- "sometimes, chats suddenly cut to the next dialogue without the player input"): it closes when
+-- you say bye, walk off, open a menu, Build mode or the creator, when the villager goes, or when
+-- you leave them waiting a good while (Tuning.Talk.StaySeconds). An event starting while it is up
+-- waits its turn (its prompt comes up once the card has gone), and no talk card opens while an
+-- event is going on.
 
 local Players = game:GetService("Players")
 
@@ -54,9 +57,10 @@ function TalkCard.close()
 	end
 end
 
--- Does something else have the screen: an event being told, a menu, Build mode, the creator?
-local function blocked(): boolean
-	if EventCard.isPlaying() then
+-- Does something else have the screen: an event being told (only for a card about to open: one
+-- already up stays, and the event waits for it), a menu, Build mode, the creator?
+local function blocked(opening: boolean): boolean
+	if EventCard.isWatching() or (opening and EventCard.isPlaying()) then
 		return true
 	end
 	local gui = Kit.root()
@@ -277,7 +281,7 @@ local function watch(mine: number)
 		if serial ~= mine or not talk then
 			return
 		end
-		if blocked() or apart(talk.model) or os.clock() - talk.at > K.StaySeconds then
+		if blocked(false) or apart(talk.model) or os.clock() - talk.at > K.StaySeconds then
 			TalkCard.close()
 			return
 		end
@@ -290,10 +294,11 @@ function TalkCard.show(msg: any)
 		return
 	end
 	local v = State.villager(msg.vid)
-	if not v or blocked() then
+	local again = current and current.vid == msg.vid and scene
+	if not v or blocked(not again) then
 		return -- their bubble still shows over their head
 	end
-	if current and current.vid == msg.vid and scene then
+	if again then
 		-- E held on them again: the card stays and the words change
 		say(msg)
 		return
@@ -308,10 +313,6 @@ end
 
 function TalkCard.start()
 	Remotes.event("Talk").OnClientEvent:Connect(TalkCard.show)
-	-- an event starting takes the card's place
-	Remotes.event("EventShow").OnClientEvent:Connect(function()
-		TalkCard.close()
-	end)
 end
 
 return TalkCard

@@ -286,8 +286,226 @@ function Shapes.wall(w: Plan.Wall, openings: { { number } }?, reach1: any, reach
 	elseif w.style == "stone" then
 		slab(-e1, len + e2, 0, height - 0.3, 0, thick, ca, ma)
 		slab(-e1 - 0.1, len + e2 + 0.1, height - 0.3, height, 0, thick + 0.2, Colors.shade(ca, 0.85), "Concrete")
+	else
+		Shapes.fence(w.style, out, slab, base, d, n, len, height, thick, e1, e2, ca, ma)
 	end
 	return out
+end
+
+-- The fences that came later (Plan.WallStyles, after the stone wall). `slab` is Shapes.wall's own
+-- (a box along the wall); the rest are the wall's frame: `base` its start at the bottom, `d`
+-- along it, `n` across it, and its length, height, thickness, end reaches and paint.
+local POST_EVERY = 5
+
+-- Where the posts of a run go: both ends and evenly between, about `every` apart.
+local function postsAlong(len: number, every: number): { number }
+	local count = math.max(1, math.ceil(len / every - 0.01))
+	local out = {}
+	for i = 0, count do
+		table.insert(out, i * len / count)
+	end
+	return out
+end
+
+function Shapes.fence(
+	style: string,
+	out: { Prim },
+	slab: (number, number, number, number, number, number, Color3, string) -> Prim?,
+	base: Vector3,
+	d: Vector3,
+	n: Vector3,
+	len: number,
+	height: number,
+	thick: number,
+	e1: number,
+	e2: number,
+	ca: Color3,
+	ma: string
+)
+	-- a point on the wall: s along it, y up from its bottom, o across it (towards side a)
+	local function at(s: number, y: number, o: number): Vector3
+		return base + d * s + n * o + Vector3.new(0, y, 0)
+	end
+	-- an upright cylinder (a post, a cane, a stake) at s, from y0 to y1
+	local function post(s: number, y0: number, y1: number, o: number, dia: number, color: Color3, mat: string): Prim
+		local prim: Prim = {
+			shape = "Cylinder",
+			cf = CFrame.fromMatrix(at(s, (y0 + y1) / 2, o), Vector3.yAxis, d),
+			size = Vector3.new(y1 - y0, dia, dia),
+			color = color,
+			mat = mat,
+		}
+		table.insert(out, prim)
+		return prim
+	end
+	-- a round rail along the wall from s0 to s1 at height y
+	local function pole(s0: number, s1: number, y: number, o: number, dia: number, color: Color3, mat: string): Prim
+		local prim: Prim = {
+			shape = "Cylinder",
+			cf = CFrame.fromMatrix(at((s0 + s1) / 2, y, o), d, Vector3.yAxis),
+			size = Vector3.new(s1 - s0, dia, dia),
+			color = color,
+			mat = mat,
+		}
+		table.insert(out, prim)
+		return prim
+	end
+	local function add(prim: Prim?)
+		if prim then
+			table.insert(out, prim)
+		end
+	end
+
+	if style == "brick" then
+		-- a low wall of brick under a stone coping, with a pier at each end and every few studs
+		local stone = Color3.fromRGB(214, 208, 198)
+		slab(-e1, len + e2, 0, height - 0.3, 0, thick, ca, ma)
+		slab(-e1 - 0.08, len + e2 + 0.08, height - 0.3, height, 0, thick + 0.16, stone, "Concrete")
+		for _, s in postsAlong(len, 7) do
+			slab(s - 0.75, s + 0.75, 0, height + 0.2, 0, thick + 0.3, ca, ma)
+			slab(s - 0.9, s + 0.9, height + 0.2, height + 0.45, 0, thick + 0.56, stone, "Concrete")
+		end
+	elseif style == "bamboo" then
+		-- canes side by side, a little uneven at the top, a thicker one at each post, lashed to
+		-- two rails of split cane on either side
+		local tie = Colors.shade(ca, 0.72)
+		local count = math.max(2, math.floor(len / 0.46))
+		local posts = postsAlong(len, 4)
+		for i = 0, count do
+			local s = i * len / count
+			local near = false
+			for _, p in posts do
+				if math.abs(p - s) < 0.3 then
+					near = true
+				end
+			end
+			if not near then
+				local top = height - 0.15 - ((i * 7) % 5) * 0.07
+				post(s, 0, top, ((i % 2) * 2 - 1) * 0.04, 0.36, ca, ma)
+				-- a joint ring part way up each cane
+				post(s, top * 0.55, top * 0.55 + 0.08, ((i % 2) * 2 - 1) * 0.04, 0.42, tie, ma)
+			end
+		end
+		for _, p in posts do
+			post(p, 0, height + 0.15, 0, 0.5, Colors.shade(ca, 0.9), ma)
+		end
+		for _, y in { height * 0.3, height * 0.72 } do
+			pole(-e1, len + e2, y, 0.27, 0.16, tie, ma)
+			pole(-e1, len + e2, y, -0.27, 0.16, tie, ma)
+		end
+	elseif style == "iron" then
+		-- square posts with a ball on top, two rails and close set bars ending in spear points
+		for _, p in postsAlong(len, POST_EVERY) do
+			slab(p - 0.18, p + 0.18, 0, height + 0.1, 0, 0.36, ca, ma)
+			slab(p - 0.24, p + 0.24, height + 0.1, height + 0.2, 0, 0.48, ca, ma)
+			add({
+				shape = "Ball",
+				cf = CFrame.new(at(p, height + 0.4, 0)),
+				size = Vector3.new(0.4, 0.4, 0.4),
+				color = ca,
+				mat = ma,
+			})
+		end
+		slab(-e1, len + e2, 0.45, 0.65, 0, 0.16, ca, ma)
+		slab(-e1, len + e2, height - 0.75, height - 0.55, 0, 0.16, ca, ma)
+		local count = math.max(2, math.floor(len / 0.5))
+		for i = 1, count - 1 do
+			local s = i * len / count
+			slab(s - 0.05, s + 0.05, 0.15, height - 0.2, 0, 0.1, ca, ma)
+			add({
+				shape = "Cone",
+				cf = CFrame.new(at(s, height - 0.05, 0)),
+				size = Vector3.new(0.2, 0.3, 0.2),
+				color = ca,
+				mat = ma,
+			})
+		end
+	elseif style == "rail" then
+		-- a ranch fence: square posts with a capped top, three wide boards across one face
+		for _, p in postsAlong(len, 6) do
+			slab(p - 0.25, p + 0.25, 0, height, 0, 0.5, ca, ma)
+			slab(p - 0.32, p + 0.32, height, height + 0.12, 0, 0.64, Colors.shade(ca, 0.92), ma)
+		end
+		for _, y in { 0.75, 1.85, 2.95 } do
+			slab(-e1, len + e2, y - 0.25, y + 0.25, 0.32, 0.14, ca, ma)
+		end
+	elseif style == "log" then
+		-- round log posts with two log rails run through them
+		for _, p in postsAlong(len, POST_EVERY) do
+			post(p, 0, height + 0.2, 0, 0.75, ca, ma)
+			post(p, height + 0.2, height + 0.28, 0, 0.55, Colors.shade(ca, 1.15), ma)
+		end
+		for _, y in { 1.1, 2.6 } do
+			pole(-e1, len + e2, y, 0, 0.5, Colors.shade(ca, 0.9), ma)
+		end
+	elseif style == "balustrade" then
+		-- glass panels between slim posts, under a flat handrail, on a low shoe
+		for _, p in postsAlong(len, 4) do
+			slab(p - 0.13, p + 0.13, 0.25, height - 0.15, 0, 0.26, ca, ma)
+		end
+		slab(-e1, len + e2, height - 0.15, height, 0, 0.36, ca, ma)
+		slab(-e1, len + e2, 0, 0.25, 0, 0.3, Colors.shade(ca, 0.8), ma)
+		local pane = slab(0, len, 0.25, height - 0.15, 0, 0.1, Color3.fromRGB(196, 230, 242), "Glass")
+		if pane then
+			pane.transp = 0.6
+		end
+	elseif style == "lightrail" then
+		-- slim dark posts, a top rail and a low rail, each with a strip of light under it in the
+		-- fence's paint (so the paint tool picks the colour of the light)
+		local frame = Color3.fromRGB(58, 62, 74)
+		for _, p in postsAlong(len, 4) do
+			slab(p - 0.15, p + 0.15, 0, height, 0, 0.3, frame, "Metal")
+			slab(p - 0.1, p + 0.1, height, height + 0.12, 0, 0.2, ca, "Neon")
+		end
+		slab(-e1, len + e2, height - 0.3, height - 0.08, 0, 0.36, frame, "Metal")
+		slab(-e1, len + e2, height - 0.42, height - 0.3, 0, 0.2, ca, "Neon")
+		slab(-e1, len + e2, 0.55, 0.75, 0, 0.3, frame, "Metal")
+		slab(-e1, len + e2, 0.43, 0.55, 0, 0.16, ca, "Neon")
+		for _, y in { height * 0.42, height * 0.62 } do
+			slab(-e1, len + e2, y - 0.04, y + 0.04, 0, 0.1, frame, "Metal")
+		end
+	elseif style == "rope" then
+		-- wooden posts with a cap, and two ropes hanging in a dip from one to the next
+		local rope = Color3.fromRGB(212, 190, 146)
+		local posts = postsAlong(len, POST_EVERY)
+		for _, p in posts do
+			post(p, 0, height, 0, 0.5, ca, ma)
+			add({
+				shape = "Cone",
+				cf = CFrame.new(at(p, height + 0.15, 0)),
+				size = Vector3.new(0.6, 0.3, 0.6),
+				color = Colors.shade(ca, 0.85),
+				mat = ma,
+			})
+		end
+		for i = 1, #posts - 1 do
+			local s0, s1 = posts[i], posts[i + 1]
+			local mid = (s0 + s1) / 2
+			for _, y in { height - 0.45, height * 0.45 } do
+				local dip = math.min(0.45, (s1 - s0) * 0.08)
+				add(Geometry.beam(at(s0, y, 0), at(mid, y - dip, 0), 0.16, 0.16, rope, "Fabric"))
+				add(Geometry.beam(at(mid, y - dip, 0), at(s1, y, 0), 0.16, 0.16, rope, "Fabric"))
+			end
+		end
+	elseif style == "willow" then
+		-- withies woven in and out of upright stakes: each row passes in front of one stake and
+		-- behind the next, the rows two shades of the paint
+		local stakes = postsAlong(len, 1.5)
+		local row, y = 0, 0.2
+		while y + 0.34 <= height - 0.15 do
+			local color = if row % 2 == 0 then ca else Colors.shade(ca, 0.86)
+			for i = 1, #stakes - 1 do
+				local side = if (i + row) % 2 == 0 then 0.09 else -0.09
+				slab(stakes[i], stakes[i + 1], y, y + 0.34, side, 0.12, color, ma)
+			end
+			row += 1
+			y += 0.4
+		end
+		-- (the stakes a little thicker than the weave, so their sides stand clear of it)
+		for _, s in stakes do
+			post(s, 0, height, 0, 0.38, Colors.shade(ca, 0.7), ma)
+		end
+	end
 end
 
 -- Floors ----------------------------------------------------------------------------------------

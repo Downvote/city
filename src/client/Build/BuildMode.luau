@@ -158,14 +158,16 @@ local function planePoint(height: number?): Vector3?
 	return origin + dir * t
 end
 
-local function raycast(): RaycastResult?
+-- What is under the pointer. `also` are more things to look through (pieces a held piece
+-- doesn't stand on: placeCandidate).
+local function raycast(also: { Instance }?): RaycastResult?
 	local ray = currentRay()
 	if not ray then
 		return nil
 	end
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
-	local ignore = {}
+	local ignore: { Instance } = if also then table.clone(also) else {}
 	if player.Character then
 		table.insert(ignore, player.Character)
 	end
@@ -278,7 +280,12 @@ local function newWall(a: Vector3, b: Vector3): any
 	local style = s.wallStyle
 	local paintA = s.wallPaint.a
 	local paintB = s.wallPaint.b
-	if style == "hedge" then
+	local own = Plan.WallStyles[style] and Plan.WallStyles[style].paint
+	if own then
+		-- a fence with a finish of its own (Plan.WallStyles: paint)
+		paintA = { c = own.c, m = own.m }
+		paintB = paintA
+	elseif style == "hedge" then
 		paintA = { c = Palette.Defaults.Hedge.c, m = Palette.Defaults.Hedge.m }
 		paintB = paintA
 	elseif style == "stone" then
@@ -554,19 +561,33 @@ local function placeCandidate(): (any?, string?)
 			side = side,
 			c1 = pl.c1,
 			c2 = pl.c2,
+			img = pl.img,
 		},
 			nil
 	end
-	-- free standing: stand on whatever is under the pointer, or on the floor plane
+	-- free standing: stand on whatever is under the pointer, or on the floor plane. A piece it
+	-- can't stand on (Catalog.standsOn: furniture for furniture, a mark for anything) is looked
+	-- through to what is under it, so a chair over a rug or a table over a painted line stands on
+	-- the floor.
 	local base = if s.level == 0 then 0 else Plan.levelBase(s.level)
 	local top = Plan.levelTop(s.level)
 	local pos: Vector3?
-	if hit then
+	local through: { Instance } = {}
+	for _ = 1, 6 do
+		if not hit then
+			break
+		end
 		local l = plotFrame:PointToObjectSpace(hit.Position)
 		local onLevel = l.Y >= base - 0.6 and l.Y <= top - 0.5
-		local hitKind, _, hitModel = objectOf(hit.Instance)
-		if hitKind == "items" and hitModel and def.place ~= "surface" then
-			onLevel = false -- only small things stack on furniture
+		local hitKind, hitKey, hitModel = objectOf(hit.Instance)
+		if hitKind == "items" and hitModel then
+			local under = hitKey and State.plan.items[hitKey]
+			local below = under and Catalog.get(under.id)
+			if not (below and Catalog.standsOn(def, below)) then
+				table.insert(through, hitModel)
+				hit = raycast(through)
+				continue
+			end
 		end
 		if hitKind == "walls" or hitKind == "roofs" then
 			onLevel = false
@@ -574,6 +595,7 @@ local function placeCandidate(): (any?, string?)
 		if onLevel and hit.Normal.Y > 0.7 then
 			pos = l
 		end
+		break
 	end
 	if not pos then
 		pos = planePoint(if s.level == 0 then 0 else base)
@@ -590,7 +612,8 @@ local function placeCandidate(): (any?, string?)
 	elseif s.level > 0 then
 		y = math.max(y, base)
 	end
-	return { id = pl.id, x = x, y = y, z = z, r = pl.r % 360, lv = s.level, c1 = pl.c1, c2 = pl.c2 }, nil
+	return { id = pl.id, x = x, y = y, z = z, r = pl.r % 360, lv = s.level, c1 = pl.c1, c2 = pl.c2, img = pl.img },
+		nil
 end
 
 -- Placing a ready-made building: its ghost is built once per building and turn (in a model of
@@ -692,7 +715,7 @@ local function placeTool()
 		candidate = nil
 		return
 	end
-	local prims = Geometry.transform(Catalog.prims(def, item.c1, item.c2), frame)
+	local prims = Geometry.transform(Catalog.prims(def, item.c1, item.c2, item.img), frame)
 	local key = string.format(
 		"i%s|%.2f|%.2f|%.2f|%d|%s|%s|%s|%s",
 		item.id,
@@ -712,6 +735,7 @@ local function placeTool()
 		local before = State.plan.items[moveKey]
 		item.c1 = before and before.c1
 		item.c2 = before and before.c2
+		item.img = before and before.img
 		candidate =
 			{ requests = { { type = "set", kind = "items", key = moveKey, obj = item } }, valid = valid, reason = why }
 	else
@@ -1203,14 +1227,16 @@ function BuildMode.setTool(tool: string)
 	changed("tool")
 end
 
-function BuildMode.startPlacing(id: string, c1: string?, c2: string?)
+-- Picks a piece up to place (`img`: the picture it shows, for a piece that takes one).
+function BuildMode.startPlacing(id: string, c1: string?, c2: string?, img: number?)
 	local def = Catalog.get(id)
 	if not def then
 		return
 	end
-	s.placing = { id = id, r = 0, c1 = c1, c2 = c2 }
+	local shown = if def.picture and Plan.validPictureId(img) then img else nil
+	s.placing = { id = id, r = 0, c1 = c1, c2 = c2, img = shown }
 	BuildMode.setTool("place")
-	s.placing = { id = id, r = 0, c1 = c1, c2 = c2 }
+	s.placing = { id = id, r = 0, c1 = c1, c2 = c2, img = shown }
 	changed("tool")
 end
 
@@ -1269,7 +1295,7 @@ function BuildMode.moveSelected()
 		return
 	end
 	BuildMode.setTool("place")
-	s.placing = { id = obj.id, r = obj.r, c1 = obj.c1, c2 = obj.c2, moveKey = sel.key }
+	s.placing = { id = obj.id, r = obj.r, c1 = obj.c1, c2 = obj.c2, img = obj.img, moveKey = sel.key }
 	changed("tool")
 end
 
@@ -1280,7 +1306,7 @@ function BuildMode.copySelected()
 	end
 	local obj = State.plan.items[sel.key]
 	if obj then
-		BuildMode.startPlacing(obj.id, obj.c1, obj.c2)
+		BuildMode.startPlacing(obj.id, obj.c1, obj.c2, obj.img)
 		s.placing.r = obj.r
 	end
 end
@@ -1295,7 +1321,20 @@ function BuildMode.deleteSelected()
 	changed("selected")
 end
 
--- Changes fields of the selected object (roof shape, wall style, item colours).
+-- Asks the server whether an id is a picture the library has (a decal or an image): ok, or why
+-- not. Yields. (The server asks again when the piece is saved: Services/Build.)
+function BuildMode.checkPicture(id: number): (boolean, string?)
+	local called, ok, why = pcall(function()
+		return Remotes.fn("BuildPicture"):InvokeServer(id)
+	end)
+	if not called then
+		return false, "couldn't reach the server"
+	end
+	return ok == true, if type(why) == "string" then why else nil
+end
+
+-- Changes fields of the selected object (roof shape, wall style, item colours, the picture: a
+-- field set to false is taken off).
 function BuildMode.editSelected(fields: { [string]: any })
 	local sel = s.selected
 	if not sel then

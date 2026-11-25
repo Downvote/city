@@ -3,23 +3,32 @@
 -- itself: a small prompt comes up at the bottom of the screen with the event's name and a Watch
 -- button, and the event goes on in the town as it would anyway. Pressing Watch puts up the
 -- dialogue scene (UI/Dialogue): the villagers in it slide in, and the line being said is typed
--- into the textbox, then the lines after it, with the villagers' names picked out in colour. The
--- camera stays where the player has it (it used to swing round to the event; the user: "no need
--- for the camera to jump after clicking on watch, just make the characters appear and the
--- dialogue speech appears"). When the event asks what you do, the prompt says so ("They want
--- your say"), Watch becomes Answer and a thin bar runs down the time left; the answers are pills
--- in the scene's textbox. Nobody is made to answer: the server picks the gentle option when the
--- time is up. Stop (or the event ending) takes the scene down.
+-- into the textbox, with the villagers' names picked out in colour. The camera stays where the
+-- player has it (it used to swing round to the event; the user: "no need for the camera to jump
+-- after clicking on watch, just make the characters appear and the dialogue speech appears").
+-- When the event asks what you do, the prompt says so ("They want your say"), Watch becomes
+-- Answer and a thin bar runs down the time left; the answers are pills in the scene's textbox.
+-- Nobody is made to answer: the server picks the gentle option when the time is up. Stop (or the
+-- event ending while nobody watches) takes the scene down.
 --
 -- The server keeps the time in the town. It says each line over the villagers' heads and sends it
 -- here as it does (EventLine), and every line the client hears for the event is kept. Watch plays
 -- the scene from its first line (the user: "make watching conversations restart the conversation
--- from the start"; an earlier request had it pick up at the line being said now): each line is
--- typed and stays as long as the villagers take to say one, a click moves on sooner, and once it
--- has caught up the lines come as the villagers say them. A choice that is waiting while it plays
--- has its answers up in the scene at once, with the time left running down over the box, so
--- watching from the start never costs the player their say. A click on the box shows the rest of
--- the line at once, and on the last line closes the scene.
+-- from the start"; an earlier request had it pick up at the line being said now).
+--
+-- The scene moves only when the player says so (the user: "sometimes, chats suddenly cut to the
+-- next dialogue without the player input"). A line stays until a click, a tap or a key (UI/Dialogue:
+-- the first press shows the rest of a line still being typed, the next goes on), with the small
+-- arrow at the box's corner once it is all there. Lines the villagers say meanwhile wait their
+-- turn, never skipped. After the last line there is, the scene waits for the next, and shows it the
+-- moment it comes. The question ("What do you do?") and its answers come when the player reaches
+-- it, and only then does the time to answer start: the client tells the server (EventWatch
+-- "asked"; "open" and "close" as the scene goes up and down), and the server, which decides it all,
+-- holds the time while the player is still reading the lines before it, never past its own cap.
+-- How it turned out stays in the box until a click. A click on the last line (or on how it turned
+-- out) closes the scene (the user: "when clicking on the last part of the conversation, the
+-- conversation should close"). A new event that comes while one is going on, or while the talk
+-- card (UI/TalkCard) is up, waits its turn and never takes the screen from it.
 --
 -- The big moments (Data/Cutscenes) play as cutscenes when watched (the user: "add cutscenes and
 -- scenes like tomodachi life as well"): the same scene, with the villagers acting on a set of
@@ -49,19 +58,22 @@ local timeTrack: Frame
 local timeFill: Frame
 local scene: any = nil -- the dialogue scene, while you watch
 local current: any = nil
-local queue: { any } = {}
+local queue: { any } = {} -- events that came while one was going on, waiting their turn
 local playing = false
 local hidden = false -- while you build or make a villager, the prompt and the scene step aside
 local heard: { any } = {} -- every line of the event so far, in order (so Watch can play it from the start)
-local shown = 0 -- how many of them the scene has shown
-local pacing = 0 -- goes up whenever the scene moves on, so an old wait stops
-local idle = false -- the scene has shown every line it has and waits for the next one
+local shown = 0 -- how many of them the scene has shown (the one up is heard[shown])
+-- what the scene shows now: "line" (heard[shown]), "ask" (the question, its answers up), "end" (how
+-- it turned out), nil before the first line or once an answer is sent
+local page: string? = nil
+local waiting = false -- the player went on past all there is: what comes next shows at once
 local sceneSeen: { string } = {} -- who the scene has brought in so far
 local sceneTime: Frame? = nil -- the time left to answer, over the scene's box
 local asking = false -- the event is waiting for your answer
-local askedAt = 0
+local timerEnds: number? = nil -- when the time to answer runs out on this screen (nil: held, not running)
 local typing = 0 -- goes up with every line typed, so an old one stops
 local cursor: Cutscenes.Place? = nil -- where the line being said falls (Cutscenes.follow)
+local CHOICE = Tuning.Events.ChoiceTimeout
 
 -- The villagers' names in a warm colour.
 local NAME_COLOR = "#F07A3A"
@@ -102,13 +114,23 @@ local function menuUp(): boolean
 	return false
 end
 
+-- Is the prompt up? Not over the scene, a menu or the talk card (another Dialogue scene), and not
+-- once a scene has been closed on its last line.
+local function promptShown(): boolean
+	return playing
+		and not hidden
+		and scene == nil
+		and not Dialogue.isOpen()
+		and not menuUp()
+		and not (current and current.closed)
+end
+
 -- What the prompt says: what's going on, or that they want your say (with the time left).
 local function updatePrompt()
 	if not holder then
 		return
 	end
-	-- (a scene closed on its last line doesn't bring the prompt back)
-	holder.Visible = playing and not hidden and scene == nil and not menuUp() and not (current and current.closed)
+	holder.Visible = promptShown()
 	if not current then
 		return
 	end
@@ -223,6 +245,29 @@ local function bring(l: any)
 	end
 end
 
+-- Tells the server how the scene stands (the EventWatch remote): "open" when it goes up, "close"
+-- when it goes, "asked" when the question reaches the screen. The server decides what that means
+-- for the time to answer.
+local function tell(what: string)
+	local ev = current
+	if not ev or type(ev.token) ~= "string" then
+		return
+	end
+	pcall(function()
+		Remotes.event("EventWatch"):FireServer(ev.token, what)
+	end)
+end
+
+-- The arrow at the box's corner: up once the page is all there and a press goes on (never over
+-- the answers, nor while the scene waits for the villagers' next line).
+local function marker()
+	local s = scene
+	if not s then
+		return
+	end
+	s.more.Visible = page ~= "ask" and not waiting and s.words.MaxVisibleGraphemes == -1
+end
+
 -- Types a line into the scene's box, a couple of letters at a time.
 local function typeOut(text: string)
 	local s = scene
@@ -237,17 +282,17 @@ local function typeOut(text: string)
 	s.more.Visible = false
 	task.spawn(function()
 		local count = utf8.len(text) or #text
-		local shown = 0
-		while shown < count and typing == mine and label.Parent and label.MaxVisibleGraphemes ~= -1 do
-			shown = math.min(count, shown + 2)
-			label.MaxVisibleGraphemes = shown
+		local typed = 0
+		while typed < count and typing == mine and label.Parent and label.MaxVisibleGraphemes ~= -1 do
+			typed = math.min(count, typed + 2)
+			label.MaxVisibleGraphemes = typed
 			task.wait(0.03)
 		end
 		if typing == mine then
 			label.MaxVisibleGraphemes = -1
 			typing += 1
 			if scene == s then
-				s.more.Visible = not asking or shown < #heard
+				marker()
 			end
 		end
 	end)
@@ -259,6 +304,7 @@ local function showLine(l: any)
 	if not s or not l then
 		return
 	end
+	page = "line"
 	bring(l)
 	s.beat(l)
 	s.speak(if type(l.who) == "string" then l.who else nil)
@@ -277,19 +323,46 @@ local function clearAnswers()
 	end
 end
 
--- The question, once the scene has shown every line before it.
-local function askLine()
-	local s = scene
-	if not s then
+-- The question is over (answered, or the server moved on): its answers and the time go, and a
+-- scene that was showing it waits for what comes next.
+local function stopAsking()
+	if not asking then
 		return
 	end
-	s.beat({ ask = true })
-	s.speak(nil)
-	typeOut("What do you do?")
+	asking = false
+	timerEnds = nil
+	clearAnswers()
+	if sceneTime then
+		sceneTime.Visible = false
+	end
+	if page == "ask" then
+		page = nil
+		waiting = true
+		marker()
+	end
+	updatePrompt()
 end
 
--- The answers, as pills in the box under the words (up as soon as the event asks, even while the
--- scene is still showing the lines before it), and the time left over the box.
+local function closeScene(now: boolean?)
+	if scene then
+		local s = scene
+		scene = nil
+		sceneTime = nil
+		typing += 1
+		page = nil
+		waiting = false
+		s.close(now)
+		tell("close")
+		-- a question not reached yet: the server's time runs again from now, and the prompt shows it
+		if asking and timerEnds == nil then
+			timerEnds = os.clock() + CHOICE
+		end
+	end
+	updatePrompt()
+end
+
+-- The answers, as pills in the box under the words, and the time left over the box.
+local showQuestion: () -> ()
 local function showAnswers()
 	local s = scene
 	local ev = current
@@ -317,18 +390,24 @@ local function showAnswers()
 			Rich = true,
 			Disabled = not affordable,
 		}, function()
-			if not affordable or not asking then
+			if not affordable or not asking or page ~= "ask" or scene ~= s then
 				return
 			end
-			asking = false
-			clearAnswers()
-			if sceneTime then
-				sceneTime.Visible = false
-			end
-			updatePrompt()
+			-- sent: the scene waits for what they say to it
+			local ends = timerEnds
+			stopAsking()
+			local lines = #heard
 			task.spawn(function()
 				local ok, err = Remotes.fn("EventChoose"):InvokeServer(ev.token, i)
-				if not ok and err and scene then
+				if ok or scene ~= s or current ~= ev or ev.ended or #heard ~= lines then
+					return
+				end
+				if type(err) == "string" and err ~= "" then
+					-- refused (not enough coins after all): the question again, with why, on the
+					-- time it already had
+					asking = true
+					showQuestion()
+					timerEnds = ends or timerEnds
 					typeOut(err)
 				end
 			end)
@@ -336,69 +415,115 @@ local function showAnswers()
 	end
 end
 
-local function closeScene(now: boolean?)
-	if scene then
-		local s = scene
-		scene = nil
-		sceneTime = nil
-		typing += 1
-		pacing += 1
-		s.close(now)
-	end
-	updatePrompt()
-end
-
--- How long a line stays before the scene moves on: as long as the villagers take to say it (the
--- server's own pace, Services/Events), a little less so a replay keeps up.
-local function readFor(l: any): number
-	return math.clamp(#(l.text or "") / 18, 2.2, 4.2) - 0.2
-end
-
--- Shows the next line the scene hasn't shown, and moves on by itself once it has been read. With
--- nothing more to show it waits for the villagers' next line (and puts the question, if they
--- asked one).
-local function nextLine()
+-- The question, once the player has gone through the lines before it. The time to answer starts
+-- now: the bar runs from full, and the server is told (its own time never ends before this one).
+function showQuestion()
 	local s = scene
 	if not s then
 		return
 	end
-	pacing += 1
-	local mine = pacing
-	if shown >= #heard then
-		idle = true
-		if asking then
-			askLine()
-		end
+	page = "ask"
+	waiting = false
+	s.beat({ ask = true })
+	s.speak(nil)
+	typeOut("What do you do?")
+	showAnswers()
+	timerEnds = os.clock() + CHOICE
+	tell("asked")
+end
+
+-- How it turned out, in the box until a click.
+local function showOutcome()
+	local s = scene
+	local ev = current
+	if not s or not ev then
 		return
 	end
-	idle = false
-	shown += 1
-	local l = heard[shown]
-	showLine(l)
-	local started = os.clock()
-	local wait = readFor(l)
-	task.spawn(function()
-		while pacing == mine and scene == s do
-			if s.words.MaxVisibleGraphemes == -1 and os.clock() - started >= wait then
-				break
-			end
-			task.wait(0.1)
-		end
-		if pacing == mine and scene == s then
-			nextLine()
-		end
-	end)
+	page = "end"
+	waiting = false
+	s.beat({ ending = true })
+	s.speak(nil)
+	typeOut(table.concat(ev.notices, "\n"))
+end
+
+-- Is there more for the scene to show after what it shows now?
+local function more(): boolean
+	local ev = current
+	if not ev then
+		return false
+	end
+	if shown < #heard or (asking and page ~= "ask") then
+		return true
+	end
+	return ev.ended == true and page ~= "end" and type(ev.notices) == "table" and #ev.notices > 0
+end
+
+-- The player goes on (a press once the page is all there): to the next line the scene has, then
+-- the question, then how it turned out; past the end it closes. With nothing more yet, it waits.
+local function goOn()
+	local s, ev = scene, current
+	if not s or not ev then
+		return
+	end
+	if page == "ask" then
+		return -- the answers are the way on
+	end
+	if page == "end" then
+		ev.closed = true
+		closeScene()
+		return
+	end
+	if shown < #heard then
+		waiting = false
+		shown += 1
+		showLine(heard[shown])
+		return
+	end
+	if asking then
+		showQuestion()
+		return
+	end
+	if more() then
+		showOutcome()
+		return
+	end
+	local last = heard[shown]
+	if ev.ended or (page == "line" and last and last.last) then
+		-- the last part of the conversation
+		ev.closed = true
+		closeScene()
+		return
+	end
+	-- caught up: the next line shows when the villagers say it
+	waiting = true
+	marker()
+end
+
+-- Something new for the scene (a line, the question, the end): shown at once if the player is
+-- waiting for it, otherwise it waits its turn.
+local function arrived()
+	if not scene or not waiting then
+		return
+	end
+	if more() then
+		goOn()
+	elseif current and current.ended then
+		-- nothing more is coming: the arrow says the next press closes it
+		waiting = false
+		marker()
+	end
 end
 
 -- Puts the scene up and plays it from its first line: the villagers slide in as their lines come
--- and each line is typed out, then the ones the villagers say after. The camera is left alone.
+-- and each line is typed out, one per press. The camera is left alone.
 local function openScene()
 	if scene or not current or hidden then
 		return
 	end
 	local ev = current
 	shown = 0
-	idle = false
+	page = nil
+	waiting = false
 	sceneSeen = {}
 	-- a big moment plays on a set of its own
 	local story, stage = Cutscenes.forEvent(ev.id, ev)
@@ -406,25 +531,8 @@ local function openScene()
 		Name = "EventScene",
 		Stage = if story then { script = story, stage = stage, event = ev, modelOf = Dialogue.modelOf } else nil,
 		Caption = if type(ev.title) == "string" then ev.title else nil,
-		OnClick = function()
-			-- (Dialogue shows the rest of a line being typed first.) On the last line, or how it
-			-- turned out, a click closes the scene (the user: "when clicking on the last part of
-			-- the conversation, the conversation should close"); before that the next line comes
-			-- when the villagers say it.
-			if not scene or not current then
-				return
-			end
-			if shown < #heard then
-				-- a line still to come from before: on to it now
-				nextLine()
-				return
-			end
-			local last = heard[shown]
-			if (current.ended or (last and last.last)) and not asking then
-				current.closed = true
-				closeScene()
-			end
-		end,
+		-- (Dialogue shows the rest of a line being typed first)
+		OnClick = goOn,
 	})
 	Dialogue.answer("Stop watching", {
 		Name = "Stop",
@@ -447,7 +555,7 @@ local function openScene()
 			bring({ who = letter, text = "" })
 		end
 	end
-	-- the time left to answer, a thin bar along the box's foot, while the event waits for you
+	-- the time left to answer, a thin bar along the box's foot, once the question is up
 	local track = Kit.new("Frame", {
 		Name = "TimeLeft",
 		BackgroundColor3 = T.Glass:Lerp(T.White, 0.16),
@@ -469,54 +577,59 @@ local function openScene()
 	})
 	Kit.corner(fill, "pill")
 	sceneTime = track
+	-- the server holds the time to answer while the player reads up to the question
+	tell("open")
 	if asking then
-		-- they want your say already: the answers are up at once, while the lines play
-		showAnswers()
+		timerEnds = nil
 	end
-	nextLine()
+	goOn()
 end
 
 -- The lines -----------------------------------------------------------------------------------------------
 
 -- A line the villagers are saying now: kept with the rest, and shown at once if the scene is up
--- and has caught up (otherwise it comes in its turn).
+-- and waiting for it (otherwise it comes in its turn).
 local function say(l: any)
 	cursor = Cutscenes.follow(cursor, current, l)
 	l.at = cursor
 	table.insert(heard, l)
 	note(l)
-	if scene and (idle or shown >= #heard - 1) then
-		shown = #heard - 1
-		nextLine()
-	end
+	arrived()
 end
 
--- The event waits for your answer (the server's timer has started).
-local function ask()
+-- The event waits for your answer. `left`: the server's time to answer, while nobody watches (a
+-- scene that is up holds it until the question reaches the screen).
+local function ask(left: number?)
 	cursor = Cutscenes.asked()
 	asking = true
-	askedAt = os.clock()
+	timerEnds = if scene then nil else os.clock() + (left or CHOICE)
 	updatePrompt()
-	if scene then
-		showAnswers()
-		-- (the question itself once the scene has shown the lines before it)
-		if idle or shown >= #heard then
-			askLine()
-		end
-	end
+	arrived()
+end
+
+-- The event is over on the server: the question goes, and a scene that waits shows how it turned out.
+local function finished()
+	stopAsking()
+	arrived()
 end
 
 local function play(ev: any)
+	if ev.ended then
+		-- it played out in town while another had the screen
+		return
+	end
 	playing = true
 	current = ev
 	asking = false
+	timerEnds = nil
 	heard = {}
 	shown = 0
-	idle = false
+	page = nil
+	waiting = false
 	cursor = nil
 	seen = {}
 	updatePrompt()
-	if not hidden then
+	if not hidden and holder.Visible then
 		Kit.popIn(holder)
 	end
 	-- what was said while it waited behind another event
@@ -525,34 +638,28 @@ local function play(ev: any)
 	end
 	ev.said = nil
 	if ev.asking and ev.choices then
-		ask()
-		askedAt = ev.askedAt or askedAt
+		ask(if ev.timerEnds then math.max(0, ev.timerEnds - os.clock()) else nil)
 	end
 	while current == ev and not ev.ended do
 		task.wait(0.1)
 	end
-	asking = false
-	clearAnswers()
-	-- a scene still playing what came before lets it finish first (a while at most)
-	local waited = 0
-	while scene and shown < #heard and waited < 60 do
-		task.wait(0.25)
-		waited += 0.25
-	end
-	if ev.notices and #ev.notices > 0 and scene then
-		-- how it turned out, a moment, before the scene goes
-		scene.beat({ ending = true })
-		scene.speak(nil)
-		typeOut(table.concat(ev.notices, "\n"))
-		task.wait(3)
+	finished()
+	-- a scene still up stays until the player has gone through it and closes it (or puts it away)
+	while scene and current == ev do
+		task.wait(0.1)
 	end
 	closeScene()
 	holder.Visible = false
 	current = nil
 	heard = {}
 	shown = 0
+	asking = false
+	timerEnds = nil
 	playing = false
 	local nextEv = table.remove(queue, 1)
+	while nextEv and nextEv.ended do
+		nextEv = table.remove(queue, 1)
+	end
 	if nextEv then
 		task.spawn(play, nextEv)
 	end
@@ -685,13 +792,17 @@ function EventCard.start(_hud: any)
 				if scene and menuUp() then
 					closeScene()
 				end
-				local show = not hidden and scene == nil and not menuUp()
+				local show = promptShown()
 				if holder.Visible ~= show then
 					updatePrompt()
+					if show then
+						Kit.popIn(holder)
+					end
 				end
 			end
 			if asking then
-				local left = 1 - (os.clock() - askedAt) / Tuning.Events.ChoiceTimeout
+				-- the time left, on the prompt and (once the question is up) over the scene's box
+				local left = if timerEnds then (timerEnds - os.clock()) / CHOICE else 1
 				timeFill.Size = UDim2.fromScale(math.clamp(left, 0, 1), 1)
 				local bar = sceneTime
 				local fill = bar and bar:FindFirstChild("Fill")
@@ -703,17 +814,19 @@ function EventCard.start(_hud: any)
 	end)
 
 	Remotes.event("EventShow").OnClientEvent:Connect(function(ev)
-		if type(ev) ~= "table" then
+		if type(ev) ~= "table" or type(ev.token) ~= "string" then
 			return
 		end
 		ev.names = if type(ev.names) == "table" then ev.names else {}
+		-- one that comes while another is going on waits its turn
 		if playing then
 			table.insert(queue, ev)
 		else
 			task.spawn(play, ev)
 		end
 	end)
-	-- each line as the villagers say it, and the moment they want your say
+	-- each line as the villagers say it, the moment they want your say, and the time to answer
+	-- when the server's changes ({ token, left })
 	Remotes.event("EventLine").OnClientEvent:Connect(function(msg)
 		if type(msg) ~= "table" then
 			return
@@ -722,19 +835,23 @@ function EventCard.start(_hud: any)
 		if line and msg.last == true then
 			line.last = true
 		end
+		local left = if type(msg.left) == "number" and msg.left == msg.left
+			then math.clamp(msg.left, 0, CHOICE)
+			else nil
 		if current and current.token == msg.token then
 			if line then
-				if asking then
-					asking = false
-					clearAnswers()
-					if sceneTime then
-						sceneTime.Visible = false
-					end
-					updatePrompt()
-				end
+				-- a line after the question: the server has moved on
+				stopAsking()
 				say(line)
 			elseif msg.ask == true and current.choices then
-				ask()
+				ask(left)
+			elseif left and asking then
+				if not scene then
+					timerEnds = os.clock() + left
+				elseif page == "ask" then
+					-- (never later than the bar this screen started when the question came up)
+					timerEnds = math.min(timerEnds or math.huge, os.clock() + left)
+				end
 			end
 			return
 		end
@@ -746,7 +863,9 @@ function EventCard.start(_hud: any)
 					q.asking = false
 				elseif msg.ask == true then
 					q.asking = true
-					q.askedAt = os.clock()
+					q.timerEnds = os.clock() + (left or CHOICE)
+				elseif left and q.asking then
+					q.timerEnds = os.clock() + left
 				end
 			end
 		end
@@ -757,6 +876,7 @@ function EventCard.start(_hud: any)
 		end
 		local target = current
 		if not target or target.token ~= msg.token then
+			target = nil
 			for _, q in queue do
 				if q.token == msg.token then
 					target = q
@@ -764,8 +884,17 @@ function EventCard.start(_hud: any)
 			end
 		end
 		if target then
-			target.notices = msg.notices
+			local notices = {}
+			for _, n in (if type(msg.notices) == "table" then msg.notices else {}) do
+				if type(n) == "string" and n ~= "" then
+					table.insert(notices, n)
+				end
+			end
+			target.notices = notices
 			target.ended = true
+			if target == current then
+				finished()
+			end
 		end
 	end)
 end

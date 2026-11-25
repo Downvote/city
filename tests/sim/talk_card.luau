@@ -7,7 +7,9 @@
 -- third villager joining, the one talking lit, an answer sent), and a big moment watched as a
 -- cutscene (its set in place of the busts, the camera easing between shots while the player's
 -- own stays put, a villager walking to her mark, the last click closing it). Then a craving, bought for the
--- villager from the talk card and from the Villagers screen, with and without the coins.
+-- villager from the talk card and from the Villagers screen, with and without the coins, and from the
+-- popup a click on the wish bubble over their head brings up (UI/WishPopup), with the other wishes
+-- answered there too.
 --   lune run tests/sim/talk_card.luau          (from the repository root)
 
 local process = require("@lune/process")
@@ -208,19 +210,28 @@ run("every other way it closes", function()
 	advance(1)
 end)
 
-run("an event has the spot", function()
+run("an event waits for the talk card", function()
 	heldE("v1")
-	check(card() ~= nil, "the card is up")
+	local c = card()
+	check(c ~= nil, "the card is up")
+	-- the user: "sometimes, chats suddenly cut to the next dialogue without the player input"
 	Sim.remoteEvent("EventShow"):FireClient(Sim.player, {
 		token = "e1",
 		title = "A parcel",
 		names = {},
 		lines = { { text = "A parcel came for Mara." } },
 	})
+	Sim.remoteEvent("EventLine"):FireClient(Sim.player, { token = "e1", line = { text = "A parcel came for Mara." } })
 	frames(2)
-	check(card() == nil, "an event starting closes it")
+	advance(5)
+	check(card() == c and words("Line") == "Hello there.", "an event starting leaves the card up as it was")
 	local event = gui:FindFirstChild("EventCard")
-	check(event ~= nil and Fake.shown(event), "and the event is told in its place")
+	check(event ~= nil and not Fake.shown(event), "and its prompt waits behind it")
+	heldE("v1", "Still here.")
+	check(card() == c and words("Line") == "Still here.", "holding E on her again still answers")
+	press("Bye")
+	advance(0.5)
+	check(card() == nil and Fake.shown(event), "once the card has gone, the event's prompt comes up")
 	heldE("v1")
 	check(card() == nil, "no talk card opens over an event")
 	Sim.remoteEvent("EventEnd"):FireClient(Sim.player, { token = "e1", notices = {} })
@@ -259,6 +270,20 @@ end
 local function askNow(token)
 	Sim.remoteEvent("EventLine"):FireClient(Sim.player, { token = token, ask = true })
 	frames(2)
+end
+-- The player goes on: a click on the box once the line is all there (a click while it is still
+-- being typed only finishes it). Nothing in a scene moves without one.
+local function goOn()
+	local box = scene() and scene():FindFirstChild("Box", true)
+	local typed = box and box:FindFirstChild("Line", true)
+	if typed then
+		typed.MaxVisibleGraphemes = -1
+	end
+	frames(1)
+	if box then
+		box.InputBegan:Fire({ UserInputType = Enum.UserInputType.MouseButton1 })
+	end
+	frames(3)
 end
 local function quarrel(token)
 	return {
@@ -332,9 +357,11 @@ run("an event you watch", function()
 	check((words(s, "Line") or ""):find('<font color="#F07A3A">Mara</font>', 1, true) ~= nil, "her name in colour")
 	check(s and not s:FindFirstChild("Speaker", true).Visible, "a line nobody says has no name up")
 	advance(3)
-	check((words(s, "Line") or ""):find("pacing") ~= nil, "the line stays until the villagers say the next")
 	line("e3", ev.lines[2])
-	advance(1)
+	advance(4)
+	check((words(s, "Line") or ""):find("pacing") ~= nil, "the line stays until the player goes on")
+	check(s:FindFirstChild("Bust_b", true) == nil, "and the next one the villagers say waits its turn")
+	goOn()
 	local a, b = s:FindFirstChild("Bust_a", true), s:FindFirstChild("Bust_b", true)
 	check(b ~= nil, "a second villager joins when they speak")
 	local function lit(bust)
@@ -349,12 +376,15 @@ run("an event you watch", function()
 	check(words(s:FindFirstChild("Other", true), "Text") == "Tobin", "his name on the tag at the right")
 	line("e3", ev.lines[3])
 	advance(1)
+	goOn()
 	local c = s:FindFirstChild("Bust_c", true)
 	check(c ~= nil, "a third villager joins")
 	check(lit(c) and not lit(b) and not lit(a), "and the light moves to her")
 	check(c and c.Position.X.Scale > 0.2 and c.Position.X.Scale < 0.8, "further in toward the middle")
 	askNow("e3")
 	advance(1)
+	check(s:FindFirstChild("Choice1", true) == nil, "the question waits for the player to get to it")
+	goOn()
 	check(s:FindFirstChild("Choice1", true) ~= nil, "the answers come up in the scene")
 	press("Choice2")
 	check(#chosen == 1 and chosen[1].token == "e3" and chosen[1].i == 2, "an answer goes to the server")
@@ -392,14 +422,17 @@ run("watching an event already going", function()
 	check(said() == "Mara is pacing by the fountain.", "Watch starts the conversation from its first line")
 	check(s and s:FindFirstChild("Bust_a", true) ~= nil, "with whoever is in it")
 	check(s and s:FindFirstChild("Bust_c", true) == nil, "and nobody who only comes in later")
-	advance(3)
-	check(said() == "I only took one bun.", "the next line comes at the pace the villagers say them")
-	advance(3)
+	advance(8)
+	check(said() == "Mara is pacing by the fountain.", "it stays on that line until the player goes on")
+	goOn()
+	check(said() == "I only took one bun.", "a click goes on to the next line")
+	goOn()
 	check(said() == "You took three. I counted.", "and so on to the line being said now")
 	check(
 		s and s:FindFirstChild("Bust_b", true) ~= nil and s:FindFirstChild("Bust_c", true) ~= nil,
 		"with everyone in it so far"
 	)
+	goOn()
 	advance(6)
 	check(said() == "You took three. I counted.", "then nothing is said again while the villagers are quiet")
 	press("Stop watching")
@@ -408,22 +441,10 @@ run("watching an event already going", function()
 	frames(10)
 	check(said() == "Mara is pacing by the fountain.", "watching again starts from the first line again")
 	-- the user: "when clicking on the last part of the conversation, the conversation should close"
-	-- a click once the line is all there (a click while it is still being typed only finishes it)
-	local function click()
-		local box = scene() and scene():FindFirstChild("Box", true)
-		local typed = box and box:FindFirstChild("Line", true)
-		if typed then
-			typed.MaxVisibleGraphemes = -1
-		end
-		frames(1)
-		if box then
-			box.InputBegan:Fire({ UserInputType = Enum.UserInputType.MouseButton1 })
-		end
-		frames(3)
-	end
+	local click = goOn
 	advance(1)
 	click()
-	check(scene() ~= nil and said() == "I only took one bun.", "a click moves on to the next line sooner")
+	check(scene() ~= nil and said() == "I only took one bun.", "a click moves on to the next line")
 	Sim.remoteEvent("EventLine")
 		:FireClient(Sim.player, { token = "e4", line = { who = "a", text = "Fine, three." }, last = true })
 	frames(2)
@@ -463,12 +484,18 @@ run("watching from the start while they wait for your say", function()
 	local s = scene()
 	local said = ((s and words(s, "Line")) or ""):gsub("<[^>]+>", "")
 	check(said == "Mara is pacing by the fountain.", "the scene still starts from the first line")
-	check(s and s:FindFirstChild("Choice1", true) ~= nil, "with the answers up at once")
 	local bar = s and s:FindFirstChild("Box", true):FindFirstChild("TimeLeft")
-	check(bar ~= nil and bar.Visible, "and the time left running down over the box")
-	advance(10)
+	check(s and s:FindFirstChild("Choice1", true) == nil and bar and not bar.Visible, "with no answers up yet")
+	advance(Tuning.Events.ChoiceTimeout + 10)
 	said = ((s and words(s, "Line")) or ""):gsub("<[^>]+>", "")
-	check(said == "What do you do?", "once the lines are shown, the question")
+	check(said == "Mara is pacing by the fountain.", "and nothing moves on while the player reads")
+	goOn()
+	goOn()
+	goOn()
+	said = ((s and words(s, "Line")) or ""):gsub("<[^>]+>", "")
+	check(said == "What do you do?", "once the lines are gone through, the question")
+	check(s and s:FindFirstChild("Choice1", true) ~= nil, "with its answers")
+	check(bar ~= nil and bar.Visible, "and the time left running down over the box")
 	press("Choice1")
 	check(#chosen > 0 and chosen[#chosen].token == "e6" and chosen[#chosen].i == 1, "and the answer goes to the server")
 	check(s and s:FindFirstChild("Choice1", true) == nil and not bar.Visible, "the answers and the time left go")
@@ -540,7 +567,9 @@ run("a big moment, watched as a cutscene", function()
 	-- the second line: a close shot on her, eased into
 	local before = view.CurrentCamera.CFrame.Position
 	line("e5", ev.lines[2])
-	frames(3)
+	advance(2)
+	check((view.CurrentCamera.CFrame.Position - before).Magnitude < 0.3, "the set holds its shot until the player goes on")
+	goOn()
 	local close = Stages.close(rooftop, 3)
 	local mid = view.CurrentCamera.CFrame.Position
 	check(
@@ -555,6 +584,7 @@ run("a big moment, watched as a cutscene", function()
 	-- the answers, then she walks over and says it
 	askNow("e5")
 	advance(1)
+	goOn()
 	check(s:FindFirstChild("Choice1", true) ~= nil, "the answers come up in the box")
 	press("Choice1")
 	line("e5", { who = "a", text = "Tobin, I never said thank you. It meant a lot.", icon = "heart" })
@@ -571,12 +601,10 @@ run("a big moment, watched as a cutscene", function()
 	})
 	frames(2)
 	advance(2)
-	check(words(s:FindFirstChild("Speaker", true), "Text") ~= nil, "the lines after the answer are said on the set")
-	local box = scene() and scene():FindFirstChild("Box", true)
-	if box then
-		box.InputBegan:Fire({ UserInputType = Enum.UserInputType.MouseButton1 })
-	end
-	frames(3)
+	check(words(s:FindFirstChild("Speaker", true), "Text") == "Mara", "the lines after the answer are said on the set")
+	goOn()
+	check(words(s:FindFirstChild("Other", true), "Text") == "Tobin", "his answer after a click")
+	goOn()
 	check(scene() == nil, "a click on the last line closes it")
 	advance(1)
 	check(gui:FindFirstChild("Cutscene", true) == nil, "and the set goes with it")
@@ -686,6 +714,154 @@ run("a craving, bought from the Villagers screen", function()
 	check(wish() == nil, "and the wish row goes once the craving is granted")
 	Hud.closeAll()
 	frames(2)
+	check(#errors == warned, "no warnings from any of it")
+end)
+
+-- wishes, from the bubble over a villager's head ----------------------------------------------------------
+-- (the user: "clicking the bubble that appears above villagers when they have a craving should show
+-- a popup what they want and allow the player to satisfy it instead of their whole profile page")
+
+local WishPopup = Harness.require(Sim.CLIENT .. "UI.WishPopup")
+local granted = {}
+-- the server's side of WishGrant: someone to meet, or a chat
+Sim.remoteFn("WishGrant").OnServerInvoke = function(_, vid, how, arg)
+	table.insert(granted, { vid = vid, how = how, arg = arg })
+	local w = villagers[vid] and villagers[vid].wish
+	if not w or w.kind ~= how or (how == "friend" and w.arg ~= arg) then
+		return false, "That's not what they wished for."
+	end
+	villagers[vid].wish = nil
+	push({ villagers = table.clone(villagers) })
+	return true
+end
+local function popup()
+	local found = gui:FindFirstChild("WishPopup")
+	return if found and Fake.shown(found) then found else nil
+end
+local function inPopup(name)
+	local p = popup()
+	return p and p:FindFirstChild(name, true)
+end
+local function textOf(name)
+	local found = inPopup(name)
+	return found and found.Text or ""
+end
+
+run("a craving, bought from the bubble's popup", function()
+	local warned = #errors
+	coins = 500
+	push({ coins = coins })
+	crave("v1", "curry")
+	local price = Life.wishPrice({ villagers = villagers }, "v1")
+	-- the bubble over Mara's head, as the server marks her model
+	local head = Fake.new("Part", models.v1)
+	head.Name = "Head"
+	head.Position = Vector3.new(5, 4.5, 3)
+	models.v1:SetAttribute("Wish", Life.WishIcons.food)
+	Harness.require(Sim.CLIENT .. "World.Wishes").start()
+	advance(2)
+	local bubble = Sim.playerGui:FindFirstChild("WishBubble")
+	check(bubble ~= nil, "a wish bubble hangs over her head")
+	local open = bubble and bubble:FindFirstChild("Open", true)
+	check(open ~= nil, "and it can be clicked")
+	open.Activated:Fire()
+	frames(3)
+	check(popup() ~= nil and WishPopup.isOpen(), "a click brings up the popup")
+	check(gui:FindFirstChild("Villagers") == nil, "and not her page")
+	check(textOf("Line") == "Mara would love spicy curry.", "it says what she wants")
+	check(inPopup("Craving") ~= nil, "with the picture of it")
+	local buy = inPopup("Buy")
+	check(buy ~= nil and buy:GetAttribute("Disabled") ~= true, "the Buy button is lit with the coins to pay")
+	check(buy and Sim.labelOf(buy):find(Text.commas(price), 1, true) ~= nil, "and shows the price")
+	buy.Activated:Fire()
+	frames(3)
+	check(#bought == 3 and bought[3] == "v1", "pressed, it buys it for her")
+	check(coins == 500 - price, "for what it costs")
+	check(popup() == nil and not WishPopup.isOpen(), "and the popup goes once it's bought")
+	local thanked = Fake.find(gui, function(d)
+		return d:IsA("TextLabel") and d.Text:find("You bought Mara spicy curry", 1, true) ~= nil
+	end)
+	check(#thanked > 0, "a notice says what was bought")
+
+	-- without the coins
+	coins = 10
+	push({ coins = coins })
+	crave("v1", "curry")
+	WishPopup.open("v1")
+	frames(3)
+	buy = inPopup("Buy")
+	check(buy ~= nil and buy:GetAttribute("Disabled") == true, "without the coins the button is dim")
+	check(textOf("Note"):find("more coins", 1, true) ~= nil, "and the line under it says how many more")
+	buy.Activated:Fire()
+	frames(2)
+	check(#bought == 3, "pressing it asks nothing of the server")
+	coins = 500
+	push({ coins = coins })
+	buy = inPopup("Buy")
+	check(buy ~= nil and buy:GetAttribute("Disabled") ~= true, "the coins come in and it lights up")
+	-- the wish goes some other way (it faded): so does the popup
+	villagers.v1.wish = nil
+	push({ villagers = table.clone(villagers) })
+	check(popup() == nil, "it goes when the wish does")
+
+	-- the close button, and their page
+	crave("v1", "apple")
+	WishPopup.open("v1")
+	frames(3)
+	check(textOf("Line") == "Mara would love an apple.", "a food you count gets its a or an")
+	local close = inPopup("Close")
+	check(close ~= nil, "it has a close button")
+	close.Activated:Fire()
+	frames(2)
+	check(popup() == nil, "which shuts it")
+	WishPopup.open("v1")
+	frames(3)
+	press("See their page")
+	frames(3)
+	check(popup() == nil, "See their page shuts it")
+	local page = Hud.panel("Residents")
+	check(page.isOpen(), "and opens her page")
+	Hud.closeAll()
+	frames(2)
+	check(#errors == warned, "no warnings from any of it")
+end)
+
+run("other wishes, answered from the popup", function()
+	local warned = #errors
+	villagers.v1.wish = { kind = "friend", arg = "v2", untilT = os.time() + 9999 }
+	push({ villagers = table.clone(villagers) })
+	WishPopup.open("v1")
+	frames(3)
+	check(textOf("Line") == "Mara would like to get to know Tobin.", "someone to meet: who")
+	check(textOf("How"):find("Introduce", 1, true) ~= nil, "and how to help")
+	check(inPopup("Other") ~= nil, "with their face")
+	local answer = inPopup("Buy")
+	check(answer ~= nil and Sim.labelOf(answer):find("Introduce", 1, true) ~= nil, "the button introduces them")
+	answer.Activated:Fire()
+	frames(3)
+	local last = granted[#granted]
+	check(last and last.vid == "v1" and last.how == "friend" and last.arg == "v2", "it asks the server to")
+	check(popup() == nil, "and the popup goes")
+
+	villagers.v1.wish = { kind = "cheer", untilT = os.time() + 9999 }
+	push({ villagers = table.clone(villagers) })
+	WishPopup.open("v1")
+	frames(3)
+	check(textOf("Line") == "Mara feels a bit down and wants to talk.", "feeling down: said plainly")
+	answer = inPopup("Buy")
+	check(answer ~= nil and Sim.labelOf(answer):find("Have a chat", 1, true) ~= nil, "the button has a chat")
+	answer.Activated:Fire()
+	frames(3)
+	last = granted[#granted]
+	check(last and last.vid == "v1" and last.how == "cheer", "it asks the server to")
+	check(popup() == nil, "and the popup goes")
+
+	-- nothing to show: nothing opens
+	WishPopup.open("v1")
+	WishPopup.open("nobody")
+	WishPopup.open(7)
+	frames(2)
+	check(popup() == nil, "no wish, no popup")
 	check(#errors == warned, "no warnings from any of it")
 end)
 

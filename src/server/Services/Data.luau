@@ -16,6 +16,7 @@ local Remotes = require(Shared.Net.Remotes)
 local Plan = require(Shared.Build.Plan)
 local Schema = require(Shared.Sim.Schema)
 local Life = require(Shared.Sim.Life)
+local Tutorial = require(Shared.Sim.Tutorial)
 local StarterHouse = require(Shared.Data.StarterHouse)
 
 local Data = {}
@@ -258,7 +259,11 @@ local function onJoin(player: Player)
 		return
 	end
 	-- a brand new player starts with the cottage; anyone else gets their saved build back, checked
-	profile.plan = if profile.plan == nil then StarterHouse.plan() else Plan.sanitize(profile.plan)
+	-- (less the bed and the workbench, which the tutorial has them put down: StarterHouse.newPlot)
+	profile.plan = if profile.plan == nil then StarterHouse.newPlot() else Plan.sanitize(profile.plan)
+	-- the tutorial counts what the town already has: an old save with a villager, a bed and a job
+	-- starts at its last step (Sim/Tutorial)
+	Tutorial.catchUp(profile)
 	-- what the villagers call them ({player} in their lines)
 	profile.name = player.DisplayName
 	-- heart level thank yous an old save was still waiting to pick are paid out now (there is no
@@ -341,13 +346,20 @@ function Data.start()
 		return true
 	end
 
+	-- The client says a step of the tutorial is done (or that the player skipped it): the step is
+	-- recorded only when the profile itself shows it (Tutorial.advance checks the villagers, their
+	-- beds and jobs and the cravings bought). Returns whether it is done, and the progress.
 	Remotes.fn("TutorialStep").OnServerInvoke = function(player, step)
 		local p = profiles[player]
-		if not p or type(step) ~= "number" or step % 1 ~= 0 then
-			return false
+		if not p then
+			return false, 0
 		end
-		p.tutorial = math.clamp(math.max(p.tutorial, step), 0, 99)
-		return true
+		local before = p.tutorial
+		local ok, now = Tutorial.advance(p, step)
+		if now ~= before then
+			Data.push(player, "tutorial")
+		end
+		return ok, now
 	end
 
 	Remotes.fn("DailyClaim").OnServerInvoke = function(player)

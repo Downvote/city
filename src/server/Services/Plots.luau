@@ -148,7 +148,7 @@ local function assign(player: Player, profile: any)
 	player:SetAttribute("Plot", index)
 	player:SetAttribute("Arrival", "Your plot is ready")
 	if profile.plan == nil then
-		profile.plan = StarterHouse.plan()
+		profile.plan = StarterHouse.newPlot()
 	end
 	Plots.drawLand(index, profile.plan)
 	local folder = Plots.buildFolder(index)

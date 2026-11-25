@@ -55,6 +55,9 @@ local Catalog = {}
 
 Catalog.Categories = {
 	{ id = "structure", name = "Structure" },
+	-- columns and posts a storey tall (and shorter), in the Build group (the user: "add pillars to
+	-- building as well")
+	{ id = "pillars", name = "Pillars" },
 	-- cubes, cylinders, balls, wedges and the rest, in a few sizes, to build anything from (the
 	-- user: "there should also be basic shapes, like cube, cylinder, etc")
 	{ id = "shapes", name = "Shapes" },

@@ -698,11 +698,19 @@ function Hud.start()
 		if kind == "action" then
 			local vid = text:match("^open:creator:(.*)$")
 			if vid ~= nil then
-				if vid ~= "" then
-					Hud.open("Creator", { mode = "edit", vid = vid })
-				else
-					Hud.open("Creator", { mode = "new" })
-				end
+				-- (an event's answer can ask for it: it opens once the player has closed the scene
+				-- or the talk card they are reading, never over it)
+				task.spawn(function()
+					local Dialogue = require(script.Parent.Dialogue) :: any
+					while Dialogue.isOpen() do
+						task.wait(0.25)
+					end
+					if vid ~= "" then
+						Hud.open("Creator", { mode = "edit", vid = vid })
+					else
+						Hud.open("Creator", { mode = "new" })
+					end
+				end)
 			end
 			return
 		end
@@ -726,16 +734,9 @@ function Hud.start()
 	-- events (the weather's rain and snow start on their own, from Main)
 	Hud.panel("EventCard").start(Hud)
 
-	-- the first visit: make yourself first
-	task.spawn(function()
-		while State.data.order == nil do
-			task.wait(0.3)
-		end
-		task.wait(1.5)
-		if #State.data.order == 0 then
-			Hud.panel("Welcome").open(Hud)
-		end
-	end)
+	-- the tutorial (UI/Tutorial): on a first visit its welcome, then a card at the side for each
+	-- step, pointing at what to press next
+	Hud.panel("Tutorial").start(Hud)
 end
 
 return Hud

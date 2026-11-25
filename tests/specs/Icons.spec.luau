@@ -317,7 +317,7 @@ describe("Icons", function()
 				error(food.id .. " has no shape list to fall back on")
 			end
 			local whole: { any } = {}
-			local cuts = 0
+			local cuts, details = 0, 0
 			for _, layer in art do
 				local l = if type(layer) == "string" then { layer } else layer
 				expect(l.fill == nil or l.fill == true).toBeTruthy()
@@ -325,12 +325,21 @@ describe("Icons", function()
 				expect(l.opacity == nil).toBeTruthy()
 				if l.cut then
 					cuts += 1
+					-- a hole or a gap, not the room cleared round one of its parts
+					if not (l.fill ~= nil and l.w ~= nil) then
+						details += 1
+					end
 				else
 					table.insert(whole, layer)
 				end
 			end
 			if cuts == 0 then
 				error(food.id .. " has nothing cut out of it")
+			end
+			-- and kept simple (the user: "make food/item icons much simpler"): a few shapes and
+			-- the one or two cuts that say what it is, nothing finer
+			if #art > 7 or details > 3 then
+				error(food.id .. " has too much in it: " .. #art .. " layers, " .. details .. " cuts")
 			end
 			-- at 48 across (what a 16 to 24 pixel icon is drawn from) the cuts take away a fair
 			-- few pixels, so the details show
@@ -391,9 +400,18 @@ describe("Icons", function()
 	end)
 
 	it("builds a food from its shape list when the game can't make pictures", function()
+		local IconArt = require("StarterPlayer.StarterPlayerScripts.Client.UI.IconArt")
 		local own, hole = Color3.fromRGB(229, 65, 75), Color3.fromRGB(250, 240, 230)
 		Icons.setVector(false)
 		for _, food in Foods.list do
+			-- what the picture cuts out of itself (a hole, a gap) and not only the room cleared
+			-- round one of its parts (the apple's leaf), which the shape list leaves out
+			local cutsOut = false
+			for _, layer in IconArt.art[food.id] do
+				local l = if type(layer) == "string" then { layer } else layer
+				local cleared = l.fill ~= nil and l.w ~= nil
+				cutsOut = cutsOut or (l.cut == true and not cleared)
+			end
 			local icon = Icons.item(food.id, 40, own, { Hole = hole })
 			expect(icon.Name ~= "Swatch").toBeTruthy()
 			expect(icon:FindFirstChild("Art")).toBe(nil)
@@ -409,8 +427,8 @@ describe("Icons", function()
 					holes += if c:ToHex() == hole:ToHex() then 1 else 0
 				end
 			end
-			-- its details are cut out of it as the picture's are (pancakes are only stacked)
-			if food.id ~= "pancakes" and food.id ~= "stew" and food.id ~= "broccoli" and holes == 0 then
+			-- its details are cut out of it as the picture's are
+			if cutsOut and holes == 0 then
 				error(food.id .. "'s shape list has nothing cut out of it")
 			end
 		end

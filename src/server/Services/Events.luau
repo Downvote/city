@@ -8,6 +8,15 @@
 -- stars when they have gathered and taken away when it ends, an answer can bring its own, and a
 -- "leave" effect keeps one about for some hours (a snowman, a sandcastle). They are plain parts
 -- that nobody bumps into, kept in Workspace.EventProps, a few per town at most.
+--
+-- The time to answer is the server's to keep, but it waits for the player (the user: "sometimes,
+-- chats suddenly cut to the next dialogue without the player input"). The owner's client says
+-- when the event's scene goes up and down and when the question reaches it (EventWatch). Nobody
+-- watching, the gentle option comes Tuning.Events.ChoiceTimeout after the question was asked (or
+-- after the scene was put away); watching, the time doesn't run while they are still reading the
+-- lines before it, and runs from when it reached their screen. Never past ChoiceCap after asking,
+-- whatever a client says. While the owner still has an ended event's scene up, the next event
+-- waits (ReadHold at most).
 
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
@@ -37,6 +46,8 @@ local rng = Rng.new()
 local running: { [Player]: any } = {} -- the scene being played
 local nextAt: { [Player]: number } = {}
 local paused: { [Player]: boolean } = {}
+local reading: { [Player]: string } = {} -- the token of the event whose scene the owner has up
+local lastEnded: { [Player]: { token: string, at: number } } = {} -- the event that ended last
 
 local showEvent: RemoteEvent
 local lineEvent: RemoteEvent
@@ -53,6 +64,31 @@ end
 
 function Events.busy(player: Player): boolean
 	return running[player] ~= nil
+end
+
+-- Does the owner still have the scene of the event that just ended up (so the next one waits)?
+-- Never longer than ReadHold after it ended.
+function Events.reading(player: Player): boolean
+	local token = reading[player]
+	local last = lastEnded[player]
+	if not token or running[player] or not last or last.token ~= token then
+		return false
+	end
+	return os.clock() - last.at < E.ReadHold
+end
+
+-- When an unanswered question takes the gentle option: from when it reached the owner's screen;
+-- while their scene is up and they haven't reached it yet, not at all (held: true); with nobody
+-- watching, from when it was asked or the scene was put away. Never past ChoiceCap after it was
+-- asked.
+local function choiceDeadline(r: any): (number, boolean)
+	local hard = r.askedAt + E.ChoiceCap
+	if r.seenAt then
+		return math.min(r.seenAt + E.ChoiceTimeout, hard), false
+	elseif r.watching then
+		return hard, true
+	end
+	return math.min(math.max(r.askedAt, r.closedAt or 0) + E.ChoiceTimeout, hard), false
 end
 
 -- Villagers who are around and free to star in an event.
@@ -399,7 +435,9 @@ local function play(player: Player, ev: any)
 	end
 	local token = HttpService:GenerateGUID(false)
 	local scene = ev.scene
-	running[player] = { token = token, ev = ev, choice = nil }
+	-- (watching, seenAt and closedAt: the owner's scene, as their client tells it)
+	local run = { token = token, ev = ev, choice = nil, asking = false, watching = false }
+	running[player] = run
 	for _, vid in ev.order do
 		Villagers.setControl(player, vid, "event")
 	end
@@ -437,12 +475,33 @@ local function play(player: Player, ev: any)
 	local effects = scene.effects or {}
 	local after = {}
 	if scene.choices then
-		local deadline = os.clock() + E.ChoiceTimeout
-		lineEvent:FireClient(player, { token = token, ask = true })
-		while running[player] and running[player].choice == nil and os.clock() < deadline and player.Parent do
+		run.askedAt = os.clock()
+		run.asking = true
+		local first, held = choiceDeadline(run)
+		local told = if held then nil else first
+		lineEvent:FireClient(player, {
+			token = token,
+			ask = true,
+			left = if told then told - run.askedAt else nil,
+		})
+		while running[player] == run and run.choice == nil and player.Parent do
+			local now = os.clock()
+			local deadline, holding = choiceDeadline(run)
+			if now >= deadline + E.ChoiceGrace then
+				break
+			end
+			-- the client shows the time left: tell it when that changes (nothing while it is held)
+			local shown = if holding then nil else deadline
+			if shown ~= told then
+				told = shown
+				if shown then
+					lineEvent:FireClient(player, { token = token, left = math.max(0, shown - now) })
+				end
+			end
 			task.wait(0.2)
 		end
-		local picked = running[player] and running[player].choice
+		run.asking = false
+		local picked = run.choice
 		local _, c = EventEngine.choice(scene, picked, profile.coins)
 		if c then
 			effects = c.effects or {}
@@ -479,6 +538,7 @@ local function play(player: Player, ev: any)
 	end
 	clearStage(player)
 	running[player] = nil
+	lastEnded[player] = { token = token, at = os.clock() }
 end
 
 -- A party right now (an event's or a birthday's). False if a scene is already playing.
@@ -647,6 +707,10 @@ function Events.start()
 		if not r or r.token ~= token or type(index) ~= "number" then
 			return false
 		end
+		-- only while the event waits for the answer, and only one
+		if not r.asking or r.choice ~= nil then
+			return false
+		end
 		local scene = r.ev.scene
 		local c = scene.choices and scene.choices[index]
 		if not c then
@@ -659,6 +723,38 @@ function Events.start()
 		r.choice = index
 		return true
 	end
+
+	-- The owner's scene of an event: up ("open": watching it from the start, so the question waits
+	-- to be reached again), down ("close"), or at the question ("asked"). Only for the event playing
+	-- now (or, for "open" and "close", the one that ended last), and it only moves the time to answer
+	-- within the server's own bounds.
+	Remotes.event("EventWatch").OnServerEvent:Connect(function(player, token, what)
+		if type(token) ~= "string" or (what ~= "open" and what ~= "close" and what ~= "asked") then
+			return
+		end
+		local r = running[player]
+		local last = lastEnded[player]
+		if what == "open" then
+			if (r and r.token == token) or (last and last.token == token) then
+				reading[player] = token
+			end
+		elseif what == "close" and reading[player] == token then
+			reading[player] = nil
+		end
+		if not r or r.token ~= token then
+			return
+		end
+		local now = os.clock()
+		if what == "open" then
+			r.watching = true
+			r.seenAt = nil
+		elseif what == "close" then
+			r.watching = false
+			r.closedAt = now
+		elseif r.asking and r.seenAt == nil then
+			r.seenAt = now
+		end
+	end)
 
 	Villagers.Met:Connect(function(player, a, b)
 		local profile = Data.get(player)
@@ -700,6 +796,8 @@ function Events.start()
 		running[player] = nil
 		nextAt[player] = nil
 		paused[player] = nil
+		reading[player] = nil
+		lastEnded[player] = nil
 		clearStage(player)
 		local list: { Left } = lingering[player] or {}
 		for _, left in list do
@@ -717,7 +815,12 @@ function Events.start()
 				if profile and Plots.indexOf(player) and #profile.order > 0 then
 					if not nextAt[player] then
 						nextAt[player] = now + E.FirstDelay
-					elseif now >= nextAt[player] and not running[player] and not paused[player] then
+					elseif
+						now >= nextAt[player]
+						and not running[player]
+						and not paused[player]
+						and not Events.reading(player)
+					then
 						if Events.trigger(player) then
 							nextAt[player] = now + rng:int(E.MinGap, E.MaxGap)
 						else

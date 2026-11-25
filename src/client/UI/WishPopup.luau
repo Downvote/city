@@ -244,7 +244,7 @@ local function paintAction(c: any)
 	c.button = Kit.button(label, {
 		Name = "Buy",
 		Parent = c.action,
-		Size = UDim2.fromOffset(if food then 196 else 176, 46),
+		Size = UDim2.fromOffset(if food then 190 else 170, 46),
 		Color = if short > 0 then T.PaperDark elseif food then T.Green else T.Orange,
 		TextColor = if short > 0 then T.InkSoft else T.White,
 		TextSize = 19,
@@ -266,8 +266,8 @@ local function paintAction(c: any)
 	c.note = Kit.text(noteText, {
 		Name = "Note",
 		Parent = c.action,
-		Size = UDim2.new(1, -170, 0, 22),
-		Position = UDim2.fromOffset(0, 62),
+		Size = UDim2.new(1, 0, 0, 22),
+		Position = UDim2.fromOffset(0, 60),
 		TextSize = 15,
 		Wrap = false,
 		Color = if short > 0 then nil else T.InkSoft,
@@ -433,13 +433,13 @@ function WishPopup.open(vid: any)
 		short = 0,
 	}
 	paintAction(current)
-	-- their page, as the bubble used to open
+	-- their page, as the bubble used to open, level with the button
 	Kit.button("See their page", {
 		Name = "Page",
 		Parent = body,
-		Size = UDim2.fromOffset(150, 34),
-		Position = UDim2.new(1, 0, 1, 0),
-		AnchorPoint = Vector2.new(1, 1),
+		Size = UDim2.fromOffset(140, 34),
+		Position = UDim2.new(1, 0, 1, -86 + 23),
+		AnchorPoint = Vector2.new(1, 0.5),
 		Color = T.Card,
 		TextColor = T.Ink,
 		TextSize = 15,

@@ -120,7 +120,14 @@ Tuning.Events = {
 	FirstDelay = 45, -- seconds after a player joins before the first event
 	MinGap = 75,
 	MaxGap = 150,
-	ChoiceTimeout = 45, -- seconds before an unanswered choice picks the gentle option
+	-- An unanswered choice picks the gentle option this many seconds after the question reached the
+	-- owner's screen (watching), or after it was asked or the scene was put away (nobody watching).
+	-- While they watch and are still reading the lines before it, the time doesn't run (Services/Events).
+	ChoiceTimeout = 45,
+	ChoiceGrace = 1, -- seconds an answer still counts after the time shown runs out (it is on its way)
+	ChoiceCap = 180, -- seconds after asking that an event waits for an answer at most, whatever the client says
+	-- seconds after an event ends that the next one waits while the owner still has its scene up
+	ReadHold = 90,
 	LogSize = 40,
 	-- The events remembered, newest first: one just seen is very unlikely to come again, and the
 	-- chance climbs back as it slips down the list (Sim/EventEngine.recentPenalty).
@@ -237,7 +244,9 @@ Tuning.Talk = {
 	ChatsPerDay = 3, -- per villager: only the first few chats a day lift their mood and fill hearts
 	ChatHearts = 1, -- far less than a granted wish: a chat costs nothing
 	ChatMood = 2,
-	StaySeconds = 12, -- how long they wait for the owner's next answer before going back to their day
+	-- how long they wait for the owner's next answer before going back to their day (the card goes
+	-- then too: long enough that nobody still reading is cut off)
+	StaySeconds = 60,
 	VisitorSeconds = 5, -- how long they stop for somebody visiting
 	Cooldown = 0.4, -- seconds between two lines to one player: shorter than the hold, it only stops a flood
 }

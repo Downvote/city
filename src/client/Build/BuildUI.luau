@@ -45,6 +45,8 @@ local MAIN = {
 			{ id = "doors", icon = "door", name = "Doors" },
 			{ id = "windows", icon = "window", name = "Windows" },
 			{ id = "structure", icon = "stairs", name = "Stairs" },
+			-- cubes, cylinders, wedges and the rest, to build anything from (Recipes/Shapes)
+			{ id = "shapes", icon = "shapes", name = "Shapes" },
 		},
 	},
 	{
@@ -62,6 +64,8 @@ local MAIN = {
 			{ id = "fun", icon = "gamepad", name = "Fun" },
 			{ id = "decor", icon = "plant", name = "Decor" },
 			{ id = "walldecor", icon = "frame", name = "On walls" },
+			-- posters, frames and decals showing a picture from the Roblox library (Recipes/Pictures)
+			{ id = "pictures", icon = "picture", name = "Pictures" },
 			-- what villagers made you in events: free, as many as you were given (Sim/Keepsakes)
 			{ id = "keepsakes", icon = "gift", name = "Keepsakes" },
 		},
@@ -74,8 +78,15 @@ local MAIN = {
 			{ id = "garden", icon = "flower", name = "Garden" },
 			{ id = "fences", icon = "fence", name = "Fences" },
 			{ id = "paths", icon = "path", name = "Paths" },
+			-- flat paint on floors, paths and the ground (the user: "add another section where
+			-- players can put down markings, like in bloxburg": Recipes/Markings)
+			{ id = "markings", icon = "marking", name = "Markings" },
 		},
 	},
+	-- Every piece of one look across every category (Catalog.Styles; the user: "there should be
+	-- many to choose from from different categories, like garden, sci fi, cozy, etc, just like
+	-- bloxburg"). Its tiles are filled in from Catalog.Styles below.
+	{ id = "styles", icon = "styles", name = "Styles", subs = {} },
 	{
 		id = "work",
 		icon = "store",
@@ -84,9 +95,43 @@ local MAIN = {
 	},
 }
 
+-- the tiles of the Styles group, one a look, and the icon each wears
+local LOOK_ICONS: { [string]: string } = {
+	cozy = "mug",
+	modern = "city",
+	scifi = "rocket",
+	garden = "flower",
+	seaside = "anchor",
+	rustic = "barrel",
+	fancy = "gem",
+	playful = "balloon",
+}
+for _, m in MAIN do
+	if m.id == "styles" then
+		for _, look in Catalog.Styles do
+			table.insert(m.subs, { id = "style:" .. look.id, icon = LOOK_ICONS[look.id] or "layers", name = look.name })
+		end
+	end
+end
+
 local WALL_STYLES = { "wall", "half", "glass" }
-local FENCE_STYLES = { "fence", "railing", "hedge", "stone" }
+-- every kind of fence, in Plan's order
+local FENCE_STYLES: { string } = {}
+for _, id in Plan.WallStyleOrder do
+	if Plan.WallStyles[id].fence then
+		table.insert(FENCE_STYLES, id)
+	end
+end
 local STYLE_ICONS = {
+	brick = "brickWall",
+	rail = "railFence",
+	iron = "ironFence",
+	bamboo = "bamboo",
+	log = "logFence",
+	willow = "wovenFence",
+	rope = "ropeFence",
+	balustrade = "glassRail",
+	lightrail = "lightRail",
 	wall = "wall",
 	half = "wallHalf",
 	glass = "wallGlass",
@@ -192,6 +237,10 @@ local holdTray = 0 -- while a slider is moving, plan updates don't rebuild the t
 local sliderToken = 0
 local hovering: string? = nil -- a ready-made building's description in the hint while the mouse is on its card
 local coinsNow = 0
+-- the picture page: the piece it is for (picked from the Pictures tab, before it is placed), and
+-- what was typed and what the server said, kept so a rebuilt tray shows them again
+local pictureDef: string? = nil
+local draft: { [string]: any } = { owner = "", text = "", id = nil, state = "", why = nil }
 -- the price tags on show, to turn coral while a card costs more than you have
 local priceTags: { [Frame]: number } = setmetatable({}, { __mode = "k" }) :: any
 
@@ -839,6 +888,230 @@ local function presetTray()
 	end
 end
 
+-- The page for choosing a picture from the Roblox library, for a piece that shows one (Catalog:
+-- `picture`): what it looks like, a box to paste a decal's or an image's id into, a line saying
+-- whether that one works, and the buttons. `owner` names what the page is for (a card's piece or
+-- a placed one), so what was typed stays while it is the same thing. `current` is the picture
+-- already on it; `onUse(id)` puts the checked one on, and `extra` adds buttons after it.
+local picturePanel: (
+	parent: Instance,
+	owner: string,
+	title: string,
+	current: number?,
+	useLabel: string,
+	onUse: (number) -> (),
+	extra: { { name: string, icon: string?, color: Color3?, run: () -> () } },
+	order: number?
+) -> Frame
+
+local function pictureWords(): (string, Color3?)
+	if draft.state == "checking" then
+		return "Checking with Roblox...", nil
+	elseif draft.state == "ok" then
+		return "That one works.", T.Green
+	elseif draft.state == "bad" then
+		local why: string = draft.why or "that one won't work"
+		return string.upper(why:sub(1, 1)) .. why:sub(2) .. ".", T.Coral
+	elseif draft.state == "noid" then
+		return "That isn't an id. Copy the number from the picture's Creator Store link.", T.Coral
+	end
+	return "Paste the id of a decal or an image from the Creator Store.", nil
+end
+
+picturePanel = function(parent, owner, title, current, useLabel, onUse, extra, order)
+	if draft.owner ~= owner then
+		draft = {
+			owner = owner,
+			text = if current then tostring(current) else "",
+			id = current,
+			state = if current then "ok" else "",
+			why = nil,
+		}
+	end
+	local PREVIEW = 132
+	local COLUMN = 452
+	local box = Kit.box({
+		Name = "PicturePage",
+		Parent = parent,
+		Size = UDim2.fromOffset(PREVIEW + GAP + 4 + COLUMN, PREVIEW + 12),
+		LayoutOrder = order or 0,
+	})
+	-- the picture as it will look, or an empty frame waiting for one
+	local view = Kit.frame({
+		Name = "PicturePreview",
+		Parent = box,
+		Size = UDim2.fromOffset(PREVIEW, PREVIEW),
+		Position = UDim2.fromOffset(0, 6),
+		Color = T.Picture,
+		Radius = 8,
+	})
+	Kit.rim(view, T.Line, 1)
+	local shown: number? = draft.id
+	if shown then
+		Kit.new("ImageLabel", {
+			Name = "Image",
+			BackgroundTransparency = 1,
+			Size = UDim2.new(1, -12, 1, -12),
+			Position = UDim2.fromOffset(6, 6),
+			Image = Builder.pictureUri(shown),
+			ScaleType = Enum.ScaleType.Fit,
+			Parent = view,
+		})
+	else
+		Icons.make("picture", 48, {
+			Name = "Empty",
+			Parent = view,
+			Position = UDim2.new(0.5, -24, 0.5, -24),
+			Color = T.InkSoft,
+			Hole = T.Picture,
+		})
+	end
+	local column = Kit.box({
+		Parent = box,
+		Size = UDim2.fromOffset(COLUMN, PREVIEW + 12),
+		Position = UDim2.fromOffset(PREVIEW + GAP + 4, 0),
+	})
+	Kit.list(column, 6).VerticalAlignment = Enum.VerticalAlignment.Center
+	Kit.title(title, {
+		Parent = column,
+		Size = UDim2.new(1, 0, 0, 22),
+		TextSize = 19,
+		Wrap = false,
+		LayoutOrder = 1,
+	})
+	local words, tint = pictureWords()
+	local status = Kit.text(words, {
+		Name = "PictureStatus",
+		Parent = column,
+		Size = UDim2.new(1, 0, 0, 34),
+		TextSize = 14,
+		Color = T.InkSoft,
+		Tint = tint,
+		LayoutOrder = 2,
+	})
+	status.TextYAlignment = Enum.TextYAlignment.Top
+	local entry = Kit.box({ Parent = column, Size = UDim2.new(1, 0, 0, 36), LayoutOrder = 3 })
+	Kit.list(entry, GAP, true)
+	local field = Kit.textbox("Decal or image id", {
+		Name = "PictureId",
+		Parent = entry,
+		Text = draft.text,
+		TextSize = 16,
+		Size = UDim2.fromOffset(COLUMN - 112 - GAP, 36),
+		LayoutOrder = 1,
+	})
+	local function check()
+		draft.text = field.Text
+		local id = Plan.pictureId(field.Text)
+		if not id then
+			draft.id, draft.state, draft.why = nil, if field.Text:match("%S") then "noid" else "", nil
+			refreshTray()
+			return
+		end
+		draft.id, draft.state, draft.why = id, "checking", nil
+		refreshTray()
+		task.spawn(function()
+			local ok, why = BuildMode.checkPicture(id)
+			-- (only if the page still asks about this one)
+			if draft.owner == owner and draft.id == id then
+				draft.state = if ok then "ok" else "bad"
+				draft.why = why
+				refreshTray()
+			end
+		end)
+	end
+	field.FocusLost:Connect(function(enter)
+		if enter then
+			check()
+		else
+			draft.text = field.Text
+		end
+	end)
+	Kit.button("Check", {
+		Name = "CheckPicture",
+		Parent = entry,
+		Size = UDim2.fromOffset(112, 36),
+		TextSize = 16,
+		Color = T.Blue,
+		LayoutOrder = 2,
+	}, check)
+	local buttons = Kit.box({ Parent = column, Size = UDim2.new(1, 0, 0, 34), LayoutOrder = 4 })
+	Kit.list(buttons, GAP, true)
+	local ready = draft.state == "ok" and draft.id ~= nil
+	local use = Kit.button(useLabel, {
+		Name = "UsePicture",
+		Parent = buttons,
+		Size = UDim2.fromOffset(0, 34),
+		AutomaticSize = Enum.AutomaticSize.X,
+		TextSize = 16,
+		Icon = "check",
+		Color = if ready then T.Green else T.Card,
+		TextColor = if ready then T.White else T.InkSoft,
+		LayoutOrder = 1,
+	}, function()
+		if draft.state == "ok" and draft.id then
+			onUse(draft.id)
+		elseif draft.state == "checking" then
+			Toasts.show("Still checking that picture.", "info")
+		else
+			Toasts.show("Check a picture id first.", "info")
+		end
+	end)
+	use:SetAttribute("Ready", ready)
+	Kit.pad(use, 12, 0)
+	for i, x in extra do
+		local b = Kit.button(x.name, {
+			Name = x.name,
+			Parent = buttons,
+			Size = UDim2.fromOffset(0, 34),
+			AutomaticSize = Enum.AutomaticSize.X,
+			TextSize = 16,
+			Icon = x.icon,
+			Color = x.color or T.Card,
+			TextColor = if x.color then T.White else T.Ink,
+			LayoutOrder = 1 + i,
+		}, x.run)
+		Kit.pad(b, 12, 0)
+	end
+	return box
+end
+
+-- Placing a piece that shows a picture: the page for choosing one first, then it is picked up
+-- with it (or without one, to choose later by picking it).
+local function picturePlaceTray(def: any)
+	local stack = trayStack()
+	local row = Kit.box({ Parent = stack, Size = UDim2.new(1, 0, 0, INNER_H), LayoutOrder = 1 })
+	Kit.list(row, GAP * 2, true).VerticalAlignment = Enum.VerticalAlignment.Center
+	picturePanel(row, "new:" .. def.id, def.name, nil, "Place it", function(id)
+		pictureDef = nil
+		BuildMode.startPlacing(def.id, nil, nil, id)
+	end, {
+		{
+			name = "Place it blank",
+			run = function()
+				pictureDef = nil
+				BuildMode.startPlacing(def.id)
+			end,
+		},
+		{
+			name = "Back",
+			icon = "back",
+			run = function()
+				pictureDef = nil
+				refreshTray()
+			end,
+		},
+	}, 1)
+	-- how it works, beside the page
+	local note = Kit.box({ Parent = row, Size = UDim2.new(1, -620, 0, INNER_H), LayoutOrder = 2 })
+	Kit.list(note, 0).VerticalAlignment = Enum.VerticalAlignment.Center
+	Kit.hint("Find a decal or an image in the Creator Store and copy the number in its link. You can change it later by picking the piece.", {
+		Name = "PictureHelp",
+		Parent = note,
+		Size = UDim2.new(1, -8, 0, 0),
+	})
+end
+
 local function catalogTray(cat: string)
 	if cat == "keepsakes" then
 		local entries = Keepsakes.list(State.data.keepsakes, State.plan)
@@ -855,19 +1128,34 @@ local function catalogTray(cat: string)
 		end
 		return
 	end
-	local row = trayRow()
+	if cat == "pictures" and pictureDef and Catalog.get(pictureDef) then
+		picturePlaceTray(Catalog.get(pictureDef))
+		return
+	end
 	local list = Catalog.list(cat)
 	if cat == "paths" then
-		list = {}
-		for _, def in Catalog.list("garden") do
-			if def.id:find("path") or def.id:find("stone") then
-				table.insert(list, def)
-			end
-		end
+		-- the pieces to walk on (Catalog.isPath), then the floors, which double as paths
+		list = Catalog.paths()
+	elseif cat:sub(1, 6) == "style:" then
+		-- a whole look, across every category (Catalog.withStyle)
+		list = Catalog.withStyle(cat:sub(7))
 	end
+	if #list == 0 and cat ~= "paths" then
+		trayNote(trayStack(), "layers", T.Blue, "Nothing here yet", {
+			"Pieces of this kind will show up here.",
+		})
+		return
+	end
+	local row = trayRow()
 	for i, def in list do
 		itemTile(row, def, i, function()
-			BuildMode.startPlacing(def.id)
+			if def.picture then
+				-- a picture to choose before it is placed
+				pictureDef = def.id
+				refreshTray()
+			else
+				BuildMode.startPlacing(def.id)
+			end
 		end)
 	end
 	if cat == "paths" then
@@ -896,6 +1184,27 @@ end
 -- up in beside them, outside and inside (and for a room, its floor).
 local function wallTray(styles: { string }, room: boolean)
 	local stack = trayStack()
+	if styles == FENCE_STYLES then
+		-- the fences: many kinds, in a row that scrolls sideways, and how to colour one under it
+		local fences = trayRow(STYLE_H + 6, stack, 1)
+		for i, id in styles do
+			local def = Plan.WallStyles[id]
+			styleTile(fences, def.name, STYLE_ICONS[id], i, s.wallStyle == id, Text.fill("{n} a stud", {
+				n = Tuning.Prices.FencePerStud,
+			}), function()
+				armTool()
+				s.wallStyle = id
+				refreshTray()
+			end)
+		end
+		Kit.hint("To change a fence's colour, use the Paint tool once it's up.", {
+			Name = "FenceNote",
+			Parent = stack,
+			Size = UDim2.new(1, -8, 0, 0),
+			LayoutOrder = 2,
+		})
+		return
+	end
 	local row = Kit.box({ Parent = stack, Size = UDim2.new(1, 0, 0, STYLE_H), LayoutOrder = 1 })
 	Kit.list(row, GAP, true).VerticalAlignment = Enum.VerticalAlignment.Top
 	for i, id in styles do
@@ -908,16 +1217,6 @@ local function wallTray(styles: { string }, room: boolean)
 		end)
 	end
 	local taken = #styles * (STYLE_W + GAP) + GAP
-	if Plan.WallStyles[s.wallStyle].fence then
-		-- how fences are coloured, in a hint strip level with the middle of the tiles
-		local note = Kit.box({ Parent = row, Size = UDim2.new(1, -taken, 0, STYLE_H), LayoutOrder = 20 })
-		Kit.list(note, 0).VerticalAlignment = Enum.VerticalAlignment.Center
-		Kit.hint("To change a fence's colour, use the Paint tool once it's up.", {
-			Parent = note,
-			Size = UDim2.new(1, -8, 0, 0),
-		})
-		return
-	end
 	-- the finish for new walls: it takes the rest of the row, whatever the screen's width, so a
 	-- wide screen shows more finishes at once
 	if not room and paintSide == "floor" then
@@ -1098,7 +1397,38 @@ local function selectionTray()
 		})
 		return
 	end
-	if kind == "items" then
+	if kind == "items" and Catalog.get(obj.id) and (Catalog.get(obj.id) :: any).picture then
+		-- a piece that shows a picture: the page for choosing it, and its colours beside it
+		local def = Catalog.get(obj.id) :: any
+		local key = s.selected.key
+		local row = Kit.box({ Parent = stack, Size = UDim2.new(1, 0, 0, INNER_H), LayoutOrder = 1 })
+		local extra = {}
+		if obj.img then
+			table.insert(extra, {
+				name = "Take it off",
+				run = function()
+					draft.owner = ""
+					BuildMode.editSelected({ img = false })
+				end,
+			})
+		end
+		picturePanel(row, "item:" .. key, def.name, obj.img, "Use it", function(id)
+			BuildMode.editSelected({ img = id })
+		end, extra, 1)
+		local colours = Kit.box({
+			Parent = row,
+			Size = UDim2.new(1, -612, 0, 2 * (SWATCH + RING * 2) + GAP),
+			Position = UDim2.new(0, 612, 0.5, 0),
+			AnchorPoint = Vector2.new(0, 0.5),
+		})
+		Kit.list(colours, GAP)
+		for i, slot in { { "c1", "Main colour" }, { "c2", "Second colour" } } do
+			local cur = obj[slot[1]] or (if slot[1] == "c1" then def.c1 else (def.c2 or def.c1))
+			swatchRow(colours, slot[2], cur, function(hex)
+				BuildMode.editSelected({ [slot[1]] = hex })
+			end, i)
+		end
+	elseif kind == "items" then
 		local def = Catalog.get(obj.id) :: any
 		-- its name, then its two colours
 		local head = Kit.box({ Parent = stack, Size = UDim2.new(1, 0, 0, 24), LayoutOrder = 0 })
@@ -1149,19 +1479,18 @@ local function selectionTray()
 			end
 		end, 1)
 	elseif kind == "walls" then
-		local row = Kit.box({ Parent = stack, Size = UDim2.new(1, 0, 0, STYLE_H), LayoutOrder = 1 })
-		Kit.list(row, GAP, true).VerticalAlignment = Enum.VerticalAlignment.Top
+		-- every kind of wall and fence it can become, in a row that scrolls sideways
+		local row = trayRow(STYLE_H + 6, stack, 1)
 		for i, id in Plan.WallStyleOrder do
 			styleTile(row, Plan.WallStyles[id].name, STYLE_ICONS[id], i, obj.style == id, nil, function()
 				BuildMode.editSelected({ style = id })
 			end)
 		end
-		local taken = #Plan.WallStyleOrder * (STYLE_W + GAP) + GAP
-		local note = Kit.box({ Parent = row, Size = UDim2.new(1, -taken, 0, STYLE_H), LayoutOrder = 20 })
-		Kit.list(note, 0).VerticalAlignment = Enum.VerticalAlignment.Center
 		Kit.hint("Each side of a wall takes its own colour. Use the Paint tool on either side.", {
-			Parent = note,
+			Name = "WallNote",
+			Parent = stack,
 			Size = UDim2.new(1, -8, 0, 0),
+			LayoutOrder = 2,
 		})
 	elseif kind == "floors" then
 		local row = labelledRow(stack, "Finish", CHIP_H, 1)
@@ -1226,6 +1555,7 @@ end
 local function openSub(id: string)
 	local was = subTab
 	subTab = id
+	pictureDef = nil
 	for sid, b in subButtons do
 		Kit.setButtonColor(b, if sid == id then T.Yellow else T.Paper, if sid == id then T.Dark else T.Ink)
 	end

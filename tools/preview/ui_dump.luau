@@ -37,6 +37,9 @@
 --                       :a<n> n lines after the first answer (the set itself is drawn by
 --                       tools/preview/stage.py into the viewport; the villagers are stand-ins)
 --   talk                the talk card: a villager you held E on tells you their wish
+--   wish                what a click on a wish bubble brings up (UI/WishPopup): Mara craves a rice
+--                       ball and the coins are there; wish:short the same without the coins,
+--                       wish:friend she'd like to meet Tobin, wish:cheer she's feeling down
 --   talk:again          the talk card after the day's chats are used up
 --   toasts              a few notices
 --   earned              the main screen as a pay packet comes in, and the coins that rise over the
@@ -463,6 +466,26 @@ elseif scene == "talk" or scene == "talk:again" or scene == "talk:craving" then
 		note = Talk.note(town, vid, chat),
 	})
 	Sim.advance(4)
+elseif scene == "wish" or scene:sub(1, 5) == "wish:" then
+	-- the popup a wish bubble opens (UI/WishPopup), for each kind of wish Mara can have
+	local page = scene:sub(6)
+	if page == "friend" then
+		first.wish = { kind = "friend", arg = order[2], untilT = os.time() + 9999 }
+	elseif page == "cheer" then
+		first.wish = { kind = "cheer", untilT = os.time() + 9999 }
+	else
+		first.wish = { kind = "food", arg = "riceball", untilT = os.time() + 9999 }
+	end
+	Sim.remoteEvent("State"):FireClient(Sim.player, {
+		villagers = villagers,
+		coins = if page == "short" then 30 else Sim.profile.coins,
+	})
+	Sim.frames(2)
+	villagerModels()
+	startHud()
+	Hud.open("WishPopup", order[1])
+	Sim.frames(3)
+	Sim.advance(1)
 elseif scene == "earned" then
 	startHud()
 	local Earnings = Harness.require(Sim.CLIENT .. "World.Earnings")

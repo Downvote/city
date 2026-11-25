@@ -19,6 +19,13 @@
 -- as busts, and each line tells the set what is happening (beat). The box, the tags and the way it
 -- closes are the same.
 --
+-- A scene that goes on (a watched event: OnClick) moves only when the player says so: a click or
+-- a tap on the box, or Space, Enter or a gamepad's A (the user: "sometimes, chats suddenly cut to
+-- the next dialogue without the player input"). The first press shows the rest of a line still
+-- being typed, the next goes on; the keys are taken from the character while the scene is up, so
+-- Space doesn't jump, and handed back while the answers are up or a text box has the keys. A
+-- small arrow at the bottom right of the words says a press goes on (the caller shows it).
+--
 -- The box and the name tags are dark glass with white words in both looks, like the slabs over
 -- the 3D view. Each bust is a copy of the villager's own model (UI/ModelPreview, the whole of them
 -- in a frame cut off at the hips by its holder). A villager whose model can't be found gets no
@@ -26,6 +33,8 @@
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
+local ContextActionService = game:GetService("ContextActionService")
+local UserInputService = game:GetService("UserInputService")
 
 local Kit = require(script.Parent.Kit)
 local Icons = require(script.Parent.Icons)
@@ -56,6 +65,10 @@ local SLOTS = {
 }
 local DIM = Color3.fromRGB(112, 112, 122) -- a bust that isn't talking, multiplied in
 local BACK = 14 -- how far down a dimmed bust sits
+
+-- The keys that go on as a click does, while a scene that goes on is up.
+Dialogue.Keys = { Enum.KeyCode.Space, Enum.KeyCode.Return, Enum.KeyCode.KeypadEnter, Enum.KeyCode.ButtonA }
+Dialogue.Action = "DialogueNext" -- the ContextActionService action that holds them
 
 -- the glass's own shades, the same in both looks
 local function glass(k: number): Color3
@@ -243,13 +256,13 @@ function Dialogue.isOpen(): boolean
 	return current ~= nil
 end
 
--- Opens a scene, putting away any other at once. opts: Name (the root's name), OnClick (a click
--- on the box once the line is all there: move on), Caption (dim words at the box's foot, left),
--- Stage (a cutscene to play behind the box: the options UI/Cutscene takes). Returns the
--- scene: { root, box, words (the line, "Line"), note ("Note", at the foot), answers (a box under
--- the words for buttons), tools (a row at the foot's right for small buttons), more (the arrow),
--- stage (the cutscene, if any) } and its methods join(actor), speak(key?), has(key), beat(line),
--- close().
+-- Opens a scene, putting away any other at once. opts: Name (the root's name), OnClick (a press
+-- once the line is all there, by a click, a tap or a key: go on), Caption (dim words at the box's
+-- foot, left), Stage (a cutscene to play behind the box: the options UI/Cutscene takes). Returns
+-- the scene: { root, box, words (the line, "Line"), note ("Note", at the foot), answers (a box
+-- under the words for buttons), tools (a row at the foot's right for small buttons), more (the
+-- arrow), stage (the cutscene, if any) } and its methods join(actor), speak(key?), has(key),
+-- beat(line), next() (what a press does), close().
 function Dialogue.open(opts: { [string]: any }?): any
 	local o = opts or {}
 	if current then
@@ -402,12 +415,13 @@ function Dialogue.open(opts: { [string]: any }?): any
 	})
 	tools.ZIndex = 6
 	Kit.list(tools, 8, true, Enum.HorizontalAlignment.Right)
-	-- the arrow that says a click moves on
+	-- the arrow that says a press goes on, at the bottom right corner of the words (in the gap
+	-- left at their right)
 	local more = Icons.make("down", 18, {
 		Name = "More",
-		Parent = box,
-		Position = UDim2.new(1, -22, 0, 30),
-		AnchorPoint = Vector2.new(1, 0),
+		Parent = words,
+		Position = UDim2.new(1, 4, 1, -6),
+		AnchorPoint = Vector2.new(0, 1),
 		Color = T.Yellow,
 		ZIndex = 7,
 	})
@@ -419,12 +433,9 @@ function Dialogue.open(opts: { [string]: any }?): any
 	-- the name tags on the box's top edge
 	local left = tag(box, "Speaker", false)
 	local right = tag(box, "Other", true)
-	-- a click on the box shows the rest of a line being typed, or (once it is all there) moves on
-	box.InputBegan:Connect(function(input)
-		if
-			input.UserInputType ~= Enum.UserInputType.MouseButton1
-			and input.UserInputType ~= Enum.UserInputType.Touch
-		then
+	-- a press shows the rest of a line being typed, or (once it is all there) goes on
+	local function press()
+		if not root.Parent then
 			return
 		end
 		if words.MaxVisibleGraphemes ~= -1 then
@@ -432,6 +443,16 @@ function Dialogue.open(opts: { [string]: any }?): any
 		elseif o.OnClick then
 			o.OnClick()
 		end
+	end
+	-- a click or a tap on the box
+	box.InputBegan:Connect(function(input)
+		if
+			input.UserInputType ~= Enum.UserInputType.MouseButton1
+			and input.UserInputType ~= Enum.UserInputType.Touch
+		then
+			return
+		end
+		press()
 	end)
 
 	local cast: { any } = {} -- { actor, bust? } in the order they joined
@@ -500,6 +521,9 @@ function Dialogue.open(opts: { [string]: any }?): any
 		return entryOf(key) ~= nil
 	end
 
+	-- What a click, a tap or a key does.
+	self.next = press
+
 	-- Someone joins the scene: they slide in at the next free place (at most four stand; anyone
 	-- after that is on the tags only).
 	function self.join(actor: Actor)
@@ -556,6 +580,12 @@ function Dialogue.open(opts: { [string]: any }?): any
 		if current == self then
 			current = nil
 			State.set("talking", false)
+			-- (only the scene up now holds the keys: one put away later must not take them off it)
+			if o.OnClick then
+				pcall(function()
+					ContextActionService:UnbindAction(Dialogue.Action)
+				end)
+			end
 		end
 		if not root.Parent then
 			return
@@ -592,6 +622,26 @@ function Dialogue.open(opts: { [string]: any }?): any
 
 	current = self
 	State.set("talking", true)
+	-- the keys that go on, taken from the character while it is up (so Space doesn't jump) and
+	-- handed back while the answers are up or the player is typing somewhere
+	if o.OnClick then
+		pcall(function()
+			ContextActionService:BindActionAtPriority(Dialogue.Action, function(_, state: Enum.UserInputState)
+				if current ~= self or UserInputService:GetFocusedTextBox() ~= nil then
+					return Enum.ContextActionResult.Pass
+				end
+				for _, c in answers:GetChildren() do
+					if c:IsA("GuiButton") then
+						return Enum.ContextActionResult.Pass
+					end
+				end
+				if state == Enum.UserInputState.Begin then
+					press()
+				end
+				return Enum.ContextActionResult.Sink
+			end, false, Enum.ContextActionPriority.High.Value, table.unpack(Dialogue.Keys))
+		end)
+	end
 	-- the box rises into place
 	box.Position = UDim2.new(0.5, 0, 1, 200)
 	TweenService:Create(box, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {

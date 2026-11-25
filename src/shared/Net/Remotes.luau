@@ -13,6 +13,7 @@ Remotes.Functions = {
 	"BuildApply", -- (ops) -> ok, err
 	"BuildUndo", -- () -> ok, err
 	"BuildRedo", -- () -> ok, err
+	"BuildPicture", -- (id) -> ok, err: is it a decal or an image in the Roblox library (Services/Build)
 	"CreatorOpen", -- (vid?) -> stage frame
 	"CreatorClose", -- ()
 	"CreatorPreview", -- (appearance) -> cleaned appearance
@@ -54,8 +55,13 @@ Remotes.Events = {
 	"PlanSync", -- server -> client: (full plan) or (ops) after a change
 	"Notify", -- server -> client: (text, kind)
 	"EventShow", -- server -> client: an event scene (lines, choices)
-	"EventLine", -- server -> client: (token, line, last?) as it is said, or (token, ask) at a choice
+	-- server -> client: { token, line, last? } as it is said, { token, ask = true, left? } at a choice,
+	-- { token, left } when the time to answer changes (seconds left; none while it is held)
+	"EventLine",
 	"EventEnd", -- server -> client: (token, summary)
+	-- client -> server: (token, "open" | "close" | "asked"): the owner's scene of the event went up,
+	-- went, or reached the question. Services/Events times the answer by it (and checks it all).
+	"EventWatch",
 	-- server -> client, every few seconds while villagers work: { coins (the town's now), earned
 	-- (all it has earned at work), lines = { { vid, n } } (who earned how many since the last) }; the
 	-- player's own work (Services/Work) is a line { you = true, n, today } (today: theirs so far)

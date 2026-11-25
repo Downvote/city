@@ -82,7 +82,7 @@ function Schema.newProfile(): any
 		log = {},
 		outfits = {},
 		settings = table.clone(Schema.Settings),
-		tutorial = 0,
+		tutorial = 0, -- steps of the tutorial done, or Sim/Tutorial.Skipped (Tutorial.advance records it)
 		daily = { last = 0, streak = 0 },
 		stats = {
 			events = 0,
@@ -90,6 +90,7 @@ function Schema.newProfile(): any
 			earned = 0,
 			paydays = 0,
 			wishes = 0,
+			cravings = 0, -- cravings bought (Life.buyWish)
 			hearts = 0,
 			found = 0,
 		},

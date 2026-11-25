@@ -1,7 +1,7 @@
 --!strict
 -- What every new plot starts with: a cottage and its little workshop, side by side in the middle
--- of the land, so the first villager has a bed and a job on day one. The street runs along the
--- plot's front edge (z = 0).
+-- of the land, with a bedroom for the first villager and a workshop to work in. The street runs
+-- along the plot's front edge (z = 0).
 --
 -- The user: "players should spawn at their plot, which starts out with a single house in the
 -- middle", then "redo our map, and our starting house as well", then "improve the starting house
@@ -13,6 +13,13 @@
 --
 -- Every piece of it is an ordinary plan object (walls, floors, roofs, catalog items), so the
 -- player can move, repaint or sell any of it in Build mode.
+--
+-- A new plot gets it less two pieces: the bed and the builder's bench (StarterHouse.newPlot). The
+-- user: "make the tutorial more visual and structured, starting with creating a villager, then
+-- building a place for them to sleep, then a place to work". So the bedroom and the workshop
+-- stand ready and the tutorial (Sim/Tutorial, UI/Tutorial) has the player put the two down
+-- themselves; a new player's coins cover both. StarterHouse.plan() is the whole of it, bed and
+-- bench too, for the specs and previews that want a town that already works.
 
 local Plan = require(script.Parent.Parent.Build.Plan)
 local Catalog = require(script.Parent.Parent.Build.Catalog)
@@ -20,6 +27,9 @@ local Spread = require(script.Parent.Parent.Build.Spread)
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 
 local StarterHouse = {}
+
+-- What a new plot leaves out, for the tutorial's second and third steps to put down.
+StarterHouse.Held = { "bed_single", "work_builder" }
 
 type Finish = { c: string, m: string }
 
@@ -474,6 +484,19 @@ function StarterHouse.plan(): Plan.PlanData
 	dress("shopleft", 6, false)
 	dress("shopright", 6, false)
 
+	return plan
+end
+
+-- What a new plot starts with: the whole of it but the pieces in Held (the bedroom without its
+-- bed, the workshop without its bench). A saved plan is never changed: this is only for a player
+-- who has none.
+function StarterHouse.newPlot(): Plan.PlanData
+	local plan = StarterHouse.plan()
+	for key, item in plan.items do
+		if table.find(StarterHouse.Held, item.id) then
+			plan.items[key] = nil
+		end
+	end
 	return plan
 end
 

@@ -31,6 +31,7 @@ export type Preset = {
 	d: number,
 	objects: { Obj },
 	spread: { Spread.Cuts }, -- how it was opened up (Blueprint.spread), for the previews
+	style: string?, -- the look it belongs to (Catalog.Styles), so Build mode can list it with that look's pieces
 }
 
 -- finishes, from the town's palette: light walls, roofs a few steps darker and only gently
@@ -213,14 +214,33 @@ end
 
 local list: { Preset } = {}
 
-local function add(id: string, name: string, desc: string, icon: string, w: number, d: number, build: (Blueprint) -> ())
+local function add(
+	id: string,
+	name: string,
+	desc: string,
+	icon: string,
+	w: number,
+	d: number,
+	build: (Blueprint) -> (),
+	style: string?
+)
 	local b = blueprint()
 	build(b)
 	-- w and d are the tight plan's; opened up, the building takes more ground
 	for _, cuts in b.cuts do
 		w, d = Spread.size(cuts, w, d)
 	end
-	local made = { id = id, name = name, desc = desc, icon = icon, w = w, d = d, objects = b.objects, spread = b.cuts }
+	local made = {
+		id = id,
+		name = name,
+		desc = desc,
+		icon = icon,
+		w = w,
+		d = d,
+		objects = b.objects,
+		spread = b.cuts,
+		style = style,
+	}
 	-- a building defined again takes the place of the one before it
 	for i, old in list do
 		if old.id == id then
@@ -283,7 +303,7 @@ add("cottage", "Garden cottage", "A small house with a bedroom and a kitchen cor
 	b:item("bookshelf", 30.9, 15.4, 270)
 	b:item("light_ceiling", 25.6, 12)
 	b:item("counter", 21, 28.4, 180)
-end)
+end, "cozy")
 
 add("family", "Family house", "A living room, a kitchen, two bedrooms and a bathroom.", "house", 32, 28, function(b)
 	b:floor(2, 6, 30, 16, OAK)
@@ -358,7 +378,7 @@ add("family", "Family house", "A living room, a kitchen, two bedrooms and a bath
 	b:item("vase_flowers", 21.4, 12.4, 0, 0, F + (Catalog.get("table_dining_long") :: any).surface)
 	b:item("lamp_pendant", 21.4, 12.4)
 	b:item("nightstand", 12.4, 34.6, 180)
-end)
+end, "cozy")
 
 add(
 	"townhouse",
@@ -426,7 +446,8 @@ add(
 		b:item("lamp_pendant", 16, 20)
 		b:item("nightstand", 11.7, 28.6, 180, 1)
 		b:item("dresser", 12.2, 10, 0, 1)
-	end
+	end,
+	"fancy"
 )
 
 add(
@@ -456,7 +477,8 @@ add(
 		for _, p in { { 2.6, 12 }, { 21.4, 12 } } do
 			b:item("flower_bed", p[1], p[2], 90)
 		end
-	end
+	end,
+	"garden"
 )
 
 -- One building for every workplace, each in a file of its own under Data/Buildings. The user:

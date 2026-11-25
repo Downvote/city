@@ -27,6 +27,8 @@ local history: { [Player]: { undo: { any }, redo: { any } } } = {}
 local busy: { [Player]: boolean } = {}
 local lastCall: { [Player]: number } = {}
 
+local checkPictures: (plan: any, requests: { any }) -> (boolean, string?)
+
 local changed = Instance.new("BindableEvent")
 Build.Changed = changed.Event -- (player, ops)
 
@@ -172,6 +174,83 @@ local function commit(player: Player, ops: { any }, record: string?): (boolean, 
 	return true
 end
 
+-- Pictures from the library ---------------------------------------------------------------------
+--
+-- A piece that shows a picture (Plan: Pictures) keeps the id the player pasted. Before one is
+-- saved, Roblox is asked what that id is (MarketplaceService:GetProductInfo): only a decal or an
+-- image will do. What the client says about it counts for nothing. Answers are kept for a while,
+-- so a picture used again (or put back with undo) isn't asked about twice.
+
+local PICTURE_TYPES = { [1] = true, [13] = true } -- Enum.AssetType Image, Decal
+local PICTURE_KEEP = 3600 -- seconds a yes is kept
+local PICTURE_KEEP_NO = 60 -- and a no (Roblox may have been slow, or the picture new)
+local PICTURE_NEW_PER_CHANGE = 4 -- pictures not seen before that one change may ask about
+local pictures: { [number]: { ok: boolean, why: string?, at: number } } = {}
+local pictureCount = 0
+
+-- (the specs hand in a stand-in for Roblox's answer)
+Build.productInfo = function(id: number): any
+	return game:GetService("MarketplaceService"):GetProductInfo(id, Enum.InfoType.Asset)
+end
+
+local function pictureKnown(id: number): boolean
+	local hit = pictures[id]
+	return hit ~= nil and os.clock() - hit.at < (if hit.ok then PICTURE_KEEP else PICTURE_KEEP_NO)
+end
+
+-- Is this id a decal or an image in the Roblox library? (yields on the first ask)
+function Build.checkPicture(id: any): (boolean, string?)
+	if not Plan.validPictureId(id) then
+		return false, "that isn't a picture id"
+	end
+	if pictureKnown(id) then
+		local hit = pictures[id]
+		return hit.ok, hit.why
+	end
+	local called, info = pcall(Build.productInfo, id)
+	local ok, why
+	if not called or type(info) ~= "table" then
+		ok, why = false, "couldn't find that one in the library"
+	elseif PICTURE_TYPES[info.AssetTypeId] then
+		ok, why = true, nil
+	else
+		ok, why = false, "that isn't a decal or an image"
+	end
+	if pictureCount > 5000 then
+		pictures, pictureCount = {}, 0
+	end
+	pictureCount += 1
+	pictures[id] = { ok = ok, why = why, at = os.clock() }
+	return ok, why
+end
+
+-- Every picture a list of requests puts on a piece, checked. One already on that piece (a move, a
+-- repaint) isn't asked about again; a bad id or one on a piece that takes none is left for
+-- Plan.validItem to turn down with the rest.
+checkPictures = function(plan: any, requests: { any }): (boolean, string?)
+	local asked = 0
+	for _, req in requests do
+		local obj = if type(req) == "table" and req.kind == "items" then req.obj else nil
+		local id = if type(obj) == "table" then obj.img else nil
+		if id ~= nil and Plan.validPictureId(id) then
+			local before = if req.type == "set" and type(req.key) == "string" then plan.items[req.key] else nil
+			if not (type(before) == "table" and before.img == id) then
+				if not pictureKnown(id) then
+					asked += 1
+					if asked > PICTURE_NEW_PER_CHANGE then
+						return false, "too many new pictures at once"
+					end
+				end
+				local ok, why = Build.checkPicture(id)
+				if not ok then
+					return false, why
+				end
+			end
+		end
+	end
+	return true
+end
+
 local function throttle(player: Player): boolean
 	local t = os.clock()
 	if lastCall[player] and t - lastCall[player] < 0.05 then
@@ -198,6 +277,11 @@ function Build.apply(player: Player, requests: any): (boolean, string?)
 		local allowed, why = Keepsakes.check(profile, requests)
 		if not allowed then
 			return { false, why }
+		end
+		-- a picture from the library is one Roblox says is a decal or an image (Build.checkPicture)
+		local pictureOk, pictureWhy = checkPictures(profile.plan, requests)
+		if not pictureOk then
+			return { false, pictureWhy }
 		end
 		local ops, err = prepare(profile.plan, requests)
 		if not ops then
@@ -272,6 +356,20 @@ function Build.start()
 	Remotes.fn("BuildApply").OnServerInvoke = function(player, requests)
 		return Build.apply(player, requests)
 	end
+	-- Build mode asks about a picture before it is put on a piece, to show the player whether it
+	-- works; the same check runs again when the piece is saved
+	local lastPicture: { [Player]: number } = {}
+	Remotes.fn("BuildPicture").OnServerInvoke = function(player, id)
+		local t = os.clock()
+		if lastPicture[player] and t - lastPicture[player] < 0.5 then
+			return false, "slow down a little"
+		end
+		lastPicture[player] = t
+		return Build.checkPicture(id)
+	end
+	game:GetService("Players").PlayerRemoving:Connect(function(player)
+		lastPicture[player] = nil
+	end)
 	Remotes.fn("BuildUndo").OnServerInvoke = function(player)
 		if not throttle(player) then
 			return false, "slow down a little"

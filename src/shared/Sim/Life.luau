@@ -267,6 +267,8 @@ function Life.buyWish(profile: any, vid: any, rng: any): (boolean, number, { str
 		return false, 0, {}, "That isn't something you can buy for them."
 	end
 	profile.coins -= price
+	-- how many cravings have been bought, all told (the tutorial's last step waits for the first)
+	profile.stats.cravings = (profile.stats.cravings or 0) + 1
 	return true, price, notices, nil
 end
 

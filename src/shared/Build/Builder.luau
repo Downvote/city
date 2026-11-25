@@ -42,6 +42,34 @@ function Builder.hasKit(): boolean
 	return next(kit) ~= nil
 end
 
+-- Pictures from the Roblox library (Plan: Pictures). Roblox's own thumbnail of an asset shows a
+-- decal's picture as well as an image's, and only once its moderation has passed it.
+function Builder.pictureUri(id: number): string
+	return string.format("rbxthumb://type=Asset&id=%d&w=420&h=420", id)
+end
+
+-- Shows the picture on one face of a part: a SurfaceGui with the picture filling it.
+function Builder.showPicture(part: BasePart, face: string, id: number)
+	local normal = (Enum.NormalId :: any)[face]
+	if not normal then
+		return
+	end
+	local gui = Instance.new("SurfaceGui")
+	gui.Name = "Picture"
+	gui.Face = normal
+	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	gui.PixelsPerStud = 60
+	gui.LightInfluence = 1
+	local image = Instance.new("ImageLabel")
+	image.Name = "Image"
+	image.BackgroundTransparency = 1
+	image.Size = UDim2.fromScale(1, 1)
+	image.Image = Builder.pictureUri(id)
+	image.ScaleType = Enum.ScaleType.Crop
+	image.Parent = gui
+	gui.Parent = part
+end
+
 export type Options = {
 	ghost: boolean?, -- see-through, no collisions, no lights (placement previews)
 	plain: boolean?, -- pieces as their shapes, never merged (what players build in Build mode)
@@ -113,6 +141,11 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 	part.CanCollide = prim.collide ~= false
 	if prim.name then
 		part.Name = prim.name
+	end
+	-- a picture from the library on the face the piece named (Catalog: `picture`)
+	local attrs = prim.attrs
+	if attrs and type(attrs.Picture) == "string" and type(attrs.PictureId) == "number" then
+		Builder.showPicture(part, attrs.Picture, attrs.PictureId)
 	end
 	if ghost then
 		part.CanCollide = false
@@ -535,7 +568,7 @@ function Builder.primsFor(plan: Plan.PlanData, kind: string, key: string): { Pri
 		if not def or not frame then
 			return nil
 		end
-		local prims = Catalog.prims(def, item.c1, item.c2)
+		local prims = Catalog.prims(def, item.c1, item.c2, item.img)
 		for _, p in prims do
 			if p.role == "door" then
 				p.frame = frame

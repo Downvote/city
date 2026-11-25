@@ -909,9 +909,11 @@ D.leaves = {
 }
 
 -- the foods (UI/ItemArt) ---------------------------------------------------------------------------
--- Their silhouettes again, roughly, for when the game can't make pictures: the big shapes in one
--- colour and the cuts (`INK`, inside the shape they cut) drawn in the hole colour, as the icons
--- above are. Icons.item draws them in the food's own colour.
+-- Their silhouettes again, roughly, for when the game can't make pictures: the few big shapes in
+-- one colour and the cuts that name the thing (`INK`, inside the shape they cut: the holes in the
+-- cheese, the scores in the bread) drawn in the hole colour, as the icons above are. Where the
+-- picture only has clear space between its parts (the apple's leaf) the parts are just laid
+-- together. Icons.item draws them in the food's own colour.
 
 local function food(color: Color3, shapes: { any }): { any }
 	for _, s in shapes do
@@ -923,180 +925,146 @@ local function food(color: Color3, shapes: { any }): { any }
 end
 
 D.apple = food(C.red, {
-	{ "c", 12, 27, 76, 63 },
-	{ "r", 46, 6, 9, 26, nil, r = 0.5, rot = 12 },
-	{ "c", 58, 6, 30, 14, nil, rot = -25 },
-	{ "r", 22, 42, 8, 22, INK, r = 0.5, rot = 25, o = false },
+	{ "c", 12, 26, 76, 64 },
+	{ "r", 47, 8, 9, 26, nil, r = 0.5, rot = 10 },
+	{ "c", 60, 9, 28, 14, nil, rot = -25 },
 })
 
 D.goldapple = food(C.gold, {
-	{ "c", 12, 27, 76, 63 },
-	{ "r", 46, 6, 9, 26, nil, r = 0.5, rot = 12 },
-	{ "c", 58, 6, 30, 14, nil, rot = -25 },
-	{ "r", 8, 10, 12, 12, nil, r = 0.15, rot = 45 },
-	{ "r", 28, 48, 16, 16, INK, r = 0.15, rot = 45, o = false },
+	{ "c", 12, 26, 76, 64 },
+	{ "r", 47, 8, 9, 26, nil, r = 0.5, rot = 10 },
+	{ "c", 60, 9, 28, 14, nil, rot = -25 },
+	{ "r", 12, 12, 16, 16, nil, r = 0.15, rot = 45 },
 })
 
 D.bread = food(C.wood, {
-	{ "half", 10, 23, 80, 70, nil, dir = "up" },
-	{ "r", 10, 52, 80, 29, nil, r = 0.2 },
-	{ "r", 26, 42, 7, 18, INK, r = 0.5, rot = 35, o = false },
-	{ "r", 45, 40, 7, 18, INK, r = 0.5, rot = 35, o = false },
-	{ "r", 64, 42, 7, 18, INK, r = 0.5, rot = 35, o = false },
+	{ "half", 10, 25, 80, 80, nil, dir = "up" },
+	{ "r", 10, 55, 80, 27, nil, r = 0.2 },
+	{ "r", 32, 42, 9, 24, INK, r = 0.5, rot = 35, o = false },
+	{ "r", 59, 42, 9, 24, INK, r = 0.5, rot = 35, o = false },
 })
 
 D.carrot = food(C.orange, {
 	{ "r", 26, 30, 22, 70, nil, r = 0.5, rot = 45 },
-	{ "c", 60, 4, 12, 26, C.leaf, rot = -15 },
-	{ "c", 72, 6, 12, 28, C.leaf, rot = 40 },
-	{ "c", 72, 26, 24, 11, C.leaf, rot = 15 },
-	{ "r", 27, 57, 8, 4, INK, rot = 45, o = false },
-	{ "r", 41, 71, 8, 4, INK, rot = 45, o = false },
+	{ "c", 55, 7, 15, 30, nil, rot = -22 },
+	{ "c", 67, 25, 26, 15, nil, rot = -21 },
 })
 
 D.cheese = food(C.yellow, {
 	{ "t", 32, 8, 60, "up" },
 	{ "r", 8, 42, 84, 40, nil, r = 0.08 },
-	{ "c", 20, 54, 18, 18, INK, o = false },
-	{ "c", 52, 48, 13, 13, INK, o = false },
-	{ "c", 68, 62, 12, 12, INK, o = false },
+	{ "c", 22, 52, 21, 21, INK, o = false },
+	{ "c", 57, 48, 19, 19, INK, o = false },
 })
 
 D.soup = food(C.wood, {
-	{ "r", 27, 8, 8, 30, nil, r = 0.5, rot = 15 },
-	{ "r", 46, 4, 8, 34, nil, r = 0.5, rot = 15 },
-	{ "r", 65, 8, 8, 30, nil, r = 0.5, rot = 15 },
-	{ "half", 10, 22, 80, 66 },
-	{ "r", 10, 48, 80, 8, nil, r = 0.5 },
-	{ "r", 10, 56, 80, 4, INK, o = false },
+	{ "r", 33, 10, 9, 30, nil, r = 0.5, rot = 12 },
+	{ "r", 58, 10, 9, 30, nil, r = 0.5, rot = 12 },
+	{ "half", 10, 17, 80, 70 },
+	{ "r", 10, 48, 80, 10, nil, r = 0.5 },
+	{ "r", 12, 58, 76, 5, INK, o = false },
 })
 
 D.skewer = food(C.blue, {
-	{ "r", 46, 4, 8, 92, nil, r = 0.5, rot = 60 },
-	{ "c", 44, 17, 33, 54, nil, rot = 60 },
-	{ "r", 18, 55, 17, 17, nil, r = 0.15, rot = 105 },
-	{ "c", 69, 32, 9, 9, INK, o = false },
+	{ "r", 46, 4, 9, 92, nil, r = 0.5, rot = 45 },
+	{ "c", 36, 18, 40, 53, nil, rot = 45 },
+	{ "r", 22, 60, 18, 18, nil, r = 0.15, rot = 45 },
+	{ "c", 56, 30, 14, 14, INK, o = false },
 })
 
 D.tart = food(C.purple, {
-	{ "r", 8, 64, 84, 24, nil, r = 0.15 },
-	{ "c", 10, 46, 20, 20 },
-	{ "c", 70, 46, 20, 20 },
-	{ "c", 29, 43, 22, 22 },
-	{ "c", 49, 43, 22, 22 },
-	{ "c", 20, 29, 20, 20 },
-	{ "c", 39, 26, 22, 22 },
-	{ "c", 60, 29, 20, 20 },
-	{ "r", 30, 74, 5, 14, INK, o = false },
-	{ "r", 48, 74, 5, 14, INK, o = false },
-	{ "r", 66, 74, 5, 14, INK, o = false },
+	{ "r", 10, 67, 80, 19, nil, r = 0.15 },
+	{ "c", 14, 40, 28, 28 },
+	{ "c", 58, 40, 28, 28 },
+	{ "c", 35, 26, 30, 30 },
 })
 
 D.honeycake = food(C.gold, {
 	{ "t", 20, 12, 64, "up" },
-	{ "r", 10, 46, 80, 26, nil, r = 0.05 },
-	{ "r", 8, 44, 84, 5, INK, o = false },
-	{ "r", 32, 44, 6, 12, INK, r = 0.5, o = false },
-	{ "r", 60, 44, 6, 10, INK, r = 0.5, o = false },
-	{ "r", 8, 61, 84, 4, INK, o = false },
-	{ "r", 7, 82, 86, 10, nil, r = 0.5 },
+	{ "r", 10, 48, 80, 36, nil, r = 0.05 },
+	{ "r", 30, 46, 7, 15, INK, r = 0.5, o = false },
+	{ "r", 59, 46, 7, 11, INK, r = 0.5, o = false },
+	{ "r", 10, 66, 80, 6, INK, o = false },
 })
 
 D.riceball = food(C.greyLight, {
 	{ "r", 22, 18, 56, 56, nil, r = 0.25, rot = 45 },
 	{ "r", 8, 56, 84, 32, nil, r = 0.4 },
-	{ "r", 34, 58, 32, 30, INK, o = false },
-	{ "r", 40, 64, 20, 24, nil, o = false },
+	{ "r", 32, 57, 36, 31, INK, o = false },
+	{ "r", 37, 62, 26, 26, nil, o = false },
 })
 
 D.pancakes = food(C.woodLight, {
-	{ "r", 36, 9, 28, 13, nil, r = 0.15 },
-	{ "r", 10, 26, 80, 16, nil, r = 0.5 },
-	{ "r", 8, 46, 84, 16, nil, r = 0.5 },
-	{ "r", 10, 66, 80, 16, nil, r = 0.5 },
-	{ "r", 7, 86, 86, 8, nil, r = 0.5 },
+	{ "r", 35, 14, 30, 15, nil, r = 0.2 },
+	{ "r", 10, 36, 80, 18, nil, r = 0.5 },
+	{ "r", 8, 53, 84, 18, nil, r = 0.5 },
+	{ "r", 10, 70, 80, 18, nil, r = 0.5 },
+	{ "r", 16, 52, 68, 4, INK, o = false },
+	{ "r", 16, 69, 68, 4, INK, o = false },
 })
 
 D.curry = food(C.orange, {
-	{ "r", 74, 10, 9, 40, nil, r = 0.5, rot = 22 },
-	{ "half", 42, 46, 50, 40, nil, dir = "up" },
-	{ "r", 58, 52, 9, 9, INK, r = 0.2, o = false },
-	{ "r", 74, 55, 8, 8, INK, r = 0.2, o = false },
-	{ "half", 10, 30, 48, 70, nil, dir = "up" },
-	{ "half", 7, 54, 86, 36 },
+	{ "half", 12, 27, 50, 62, nil, dir = "up" },
+	{ "half", 44, 40, 46, 36, nil, dir = "up" },
+	{ "half", 8, 44, 84, 44 },
 })
 
 D.pie = food(C.orange, {
-	{ "r", 12, 54, 76, 32, nil, r = 0.15 },
-	{ "c", 8, 34, 84, 32 },
-	{ "ring", 22, 42, 56, 16, C.woodDark, 4, o = false },
-	{ "c", 38, 10, 24, 26 },
+	{ "r", 12, 58, 76, 24, nil, r = 0.15 },
+	{ "c", 8, 40, 84, 33 },
+	{ "ring", 23, 50, 54, 15, C.woodDark, 8, o = false },
+	{ "c", 35, 17, 30, 30 },
 })
 
 D.icecream = food(C.pink, {
 	{ "t", 22, 58, 56, "down" },
-	{ "r", 42, 60, 5, 14, INK, rot = 45, o = false },
-	{ "r", 54, 62, 5, 12, INK, rot = 45, o = false },
-	{ "r", 66, 4, 8, 22, nil, r = 0.5, rot = 45 },
-	{ "c", 20, 10, 60, 52 },
-	{ "r", 20, 36, 60, 18, nil, r = 0.4 },
-	{ "r", 36, 30, 5, 9, INK, r = 0.5, rot = 45, o = false },
-	{ "r", 52, 22, 5, 9, INK, r = 0.5, rot = 45, o = false },
+	{ "half", 21, 17, 58, 58, nil, dir = "up" },
+	{ "r", 21, 40, 58, 15, nil, r = 0.4 },
 })
 
 D.salad = food(C.green, {
-	{ "c", 12, 30, 32, 32 },
-	{ "c", 54, 28, 34, 34 },
-	{ "c", 30, 14, 40, 40 },
-	{ "c", 66, 36, 12, 12, INK, o = false },
-	{ "half", 10, 34, 80, 54 },
+	{ "c", 12, 30, 34, 34 },
+	{ "c", 54, 30, 34, 34 },
+	{ "c", 29, 13, 42, 42 },
+	{ "r", 12, 53, 76, 8, INK, o = false },
+	{ "half", 10, 39, 80, 49 },
 })
 
 D.chocolate = food(C.woodDark, {
-	{ "r", 28, 10, 44, 42, nil, r = 0.1, rot = 15 },
-	{ "r", 48, 12, 4, 38, INK, rot = 15, o = false },
-	{ "r", 28, 30, 44, 4, INK, rot = 15, o = false },
-	{ "r", 25, 52, 50, 36, nil, r = 0.1, rot = 15 },
-	{ "r", 23, 68, 54, 5, INK, rot = 15, o = false },
+	{ "r", 19, 8, 62, 84, nil, r = 0.08 },
+	{ "r", 46, 8, 8, 84, INK, o = false },
+	{ "r", 19, 32, 62, 8, INK, o = false },
+	{ "r", 19, 59, 62, 8, INK, o = false },
 })
 
 D.pudding = food(C.gold, {
-	{ "c", 38, 16, 18, 18 },
-	{ "r", 52, 8, 4, 12, nil, r = 0.5, rot = 40 },
-	{ "r", 22, 36, 56, 42, nil, r = 0.12 },
-	{ "r", 22, 50, 56, 5, INK, r = 0.5, o = false },
-	{ "r", 7, 82, 86, 10, nil, r = 0.5 },
+	{ "r", 22, 25, 56, 50, nil, r = 0.12 },
+	{ "r", 22, 44, 56, 6, INK, o = false },
+	{ "r", 7, 81, 86, 11, nil, r = 0.5 },
 })
 
 D.broccoli = food(C.greenDark, {
-	{ "c", 8, 28, 30, 30 },
-	{ "c", 62, 28, 30, 30 },
-	{ "c", 22, 12, 32, 32 },
-	{ "c", 46, 12, 32, 32 },
-	{ "c", 33, 22, 34, 34 },
-	{ "r", 30, 54, 10, 22, nil, r = 0.3, rot = -45 },
-	{ "r", 60, 54, 10, 22, nil, r = 0.3, rot = 45 },
-	{ "r", 40, 64, 20, 28, nil, r = 0.15 },
+	{ "r", 39, 54, 22, 36, nil, r = 0.15 },
+	{ "r", 39, 56, 22, 7, INK, o = false },
+	{ "c", 10, 26, 36, 36 },
+	{ "c", 54, 26, 36, 36 },
+	{ "c", 28, 10, 44, 44 },
 })
 
 D.pickles = food(C.leaf, {
-	{ "r", 20, 8, 60, 16, nil, r = 0.15 },
-	{ "r", 34, 16, 5, 8, INK, o = false },
-	{ "r", 48, 16, 5, 8, INK, o = false },
-	{ "r", 62, 16, 5, 8, INK, o = false },
-	{ "r", 16, 32, 68, 58, nil, r = 0.2 },
-	{ "r", 40, 38, 18, 46, INK, r = 0.5, rot = 30, o = false },
+	{ "r", 23, 9, 54, 17, nil, r = 0.15 },
+	{ "r", 16, 33, 68, 58, nil, r = 0.2 },
+	{ "r", 40, 41, 21, 44, INK, r = 0.5, rot = 30, o = false },
 })
 
 D.stew = food(C.redDark, {
-	{ "r", 60, 4, 9, 34, nil, r = 0.5, rot = 45 },
-	{ "c", 22, 22, 22, 22 },
-	{ "c", 38, 16, 26, 26 },
-	{ "c", 56, 24, 20, 20 },
-	{ "r", 10, 43, 80, 10, nil, r = 0.5 },
-	{ "r", 18, 58, 64, 32, nil, r = 0.3 },
-	{ "r", 7, 62, 16, 11, nil, r = 0.4 },
-	{ "r", 77, 62, 16, 11, nil, r = 0.4 },
+	{ "c", 19, 24, 25, 25 },
+	{ "c", 56, 24, 25, 25 },
+	{ "c", 34, 13, 32, 32 },
+	{ "r", 10, 42, 80, 11, nil, r = 0.5 },
+	{ "r", 19, 60, 62, 30, nil, r = 0.3 },
+	{ "r", 7, 62, 17, 13, nil, r = 0.4 },
+	{ "r", 76, 62, 17, 13, nil, r = 0.4 },
 })
 
 D.starfruit = food(C.yellow, {
@@ -1106,16 +1074,14 @@ D.starfruit = food(C.yellow, {
 	{ "r", 51.8, 47.2, 20, 44, nil, r = 0.3, rot = 144 },
 	{ "r", 28.2, 47.2, 20, 44, nil, r = 0.3, rot = 216 },
 	{ "r", 21, 24.8, 20, 44, nil, r = 0.3, rot = 288 },
-	{ "c", 42, 45, 16, 16, INK, o = false },
+	{ "c", 41, 44, 18, 18, INK, o = false },
 })
 
 D.dragonchili = food(C.red, {
 	{ "r", 30, 32, 24, 64, nil, r = 0.5, rot = 50 },
 	{ "c", 58, 30, 28, 24 },
 	{ "r", 70, 12, 8, 20, nil, r = 0.5, rot = 30 },
-	{ "c", 8, 18, 34, 38 },
-	{ "t", 13, 4, 24, "up" },
-	{ "c", 20, 34, 12, 14, INK, o = false },
+	{ "r", 58, 42, 28, 7, INK, r = 0.5, rot = -8, o = false },
 })
 
 -- making them -------------------------------------------------------------------------------------
