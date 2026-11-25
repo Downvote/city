@@ -656,18 +656,16 @@ local list: { any } = {
 		c2 = "E8655A",
 		tags = { "toy" },
 		build = function(r: R)
-			r:ball(0, 0.65, 0, 1.3, r.c1, "Plastic")
-			-- three bands round it, in three colours, fading into the white at the top and bottom
-			local bands = { r.c2, rgb(240, 196, 92), rgb(79, 156, 198) }
-			for k, col in bands do
-				r:lump(
-					CFrame.new(0, 0.65, 0) * CFrame.Angles(0, (k - 1) * math.pi / 3, 0),
-					1.38,
-					1.1,
-					0.3,
-					col,
-					"Plastic"
-				)
+			-- made of six slices round its axis, white between the coloured ones, so it shows its
+			-- stripes from every side
+			local stripes = { r.c2, rgb(240, 196, 92), rgb(79, 156, 198) }
+			for k = 0, 5 do
+				local col = if k % 2 == 0 then r.c1 else stripes[(k - 1) // 2 + 1]
+				r:lump(CFrame.new(0, 0.65, 0) * CFrame.Angles(0, k * math.pi / 6, 0), 1.3, 1.3, 0.62, col, "Plastic")
+			end
+			-- a white cap over each end, where the slices meet
+			for _, y in { -0.02, 1.32 } do
+				r:cyl(0, y, 0, 0.18, 0.46, "y", r.c1, "Plastic")
 			end
 		end,
 	},

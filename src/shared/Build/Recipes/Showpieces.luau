@@ -224,6 +224,24 @@ local items: { any } = {
 					q:block(-4.2, 8.95, z - 0.13, 4.2, 9.45, z + 0.13, r.c1, "Wood")
 				end
 			end)
+			-- roses grown over the top, across the rafters
+			for i, p in
+				{
+					{ -2.2, -6.0 },
+					{ 1.4, -4.4 },
+					{ 2.4, -2.4 },
+					{ -0.6, -1.2 },
+					{ 2.6, 1.0 },
+					{ -2.8, 3.4 },
+					{ 0.8, 5.2 },
+					{ -1.4, 6.8 },
+				}
+			do
+				clump(r, p[1], 9.5, p[2], 1.7, 0.7, 1.5, i * 0.9, if i % 2 == 0 then C.Leaf else C.DarkLeaf)
+				if i % 3 ~= 0 then
+					r:ball(p[1] + 0.4, 9.75, p[2] - 0.3, 0.32, r.c2, "SmoothPlastic")
+				end
+			end
 			-- roses up three posts, leaves trailing along the beams
 			climber(r, -3.6, -7.4, 1.0, 8.2, r.c2, 0.3)
 			climber(r, 3.6, 0, 1.0, 8.2, r.c2, 1.7)
@@ -360,7 +378,8 @@ local items: { any } = {
 			-- A huge old oak to build a treehouse round: a broad trunk (c2) on flaring roots
 			-- runs up past a platform at the first floor's height, boughs leave it above the
 			-- second and hold a wide crown (c1) high over a house's roof. No bough leans out to
-			-- the front (-z), so a hut can stand on that side of the trunk.
+			-- the front (-z), so a hut can stand on that side of the trunk; three lower ones
+			-- with leaves of their own reach out behind and to the right, over a deck's rail.
 			local bark = r.c2
 			for i = 0, 5 do
 				local a = i / 6 * math.pi * 2 + 0.3
@@ -398,6 +417,13 @@ local items: { any } = {
 					bark,
 					"Wood"
 				)
+			end
+			-- two lower boughs out to the back and one to the side, each with its own clump of leaves
+			for _, lb in { { 1.2, 5.6, 16, 21 }, { 2.1, 5.0, 17, 22 }, { 0.3, 6.0, 18, 23 } } do
+				local a, reach = lb[1], lb[2]
+				local tip = Vector3.new(math.cos(a) * reach, lb[4], math.sin(a) * reach)
+				rod(r, Vector3.new(0, lb[3], 0), tip, 0.7, bark, "Wood")
+				clump(r, tip.X, tip.Y + 0.6, tip.Z, 4.6, 3.4, 4.2, a, shade(r.c1, 0.86))
 			end
 			-- the crown: a ring of clumps low down, a ring above it and a top, darker underneath
 			local under = shade(r.c1, 0.74)

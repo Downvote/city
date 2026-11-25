@@ -247,10 +247,18 @@ describe("Unstick", function()
 			drawn(r)
 			local def = { id = "t", place = "floor", size = Vector3.new(4, 3.3, 2), cat = "decor" }
 			local out = Solid.apply(def, r.prims)
-			expect(#out).toBe(2)
-			expect(out[1].shape).toBe("Block")
-			expect(out[1].collide).toBe(nil) -- the body: solid
-			expect(out[2].collide).toBe(false) -- the knob: too small
+			-- still one piece (the same parts are made), now solid, its shapes each saying
+			expect(#out).toBe(1)
+			expect(out[1].shape).toBe("Piece")
+			expect(out[1].collide).toBe(true)
+			expect(out[1].parts[1].collide).toBe(nil) -- the body: solid
+			expect(out[1].parts[2].collide).toBe(false) -- the knob: too small
+			local shapes = Geometry.flatten(out)
+			expect(shapes[1].collide).toBe(true)
+			expect(shapes[2].collide).toBe(false)
+			-- what Catalog.prims drew is left as it was
+			expect(r.prims[1].collide).toBe(false)
+			expect(r.prims[1].parts[2].collide).toBe(nil)
 			-- a workplace and a door keep theirs as drawn
 			for _, other in
 				{

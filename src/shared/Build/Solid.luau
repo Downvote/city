@@ -12,12 +12,11 @@
 -- The basic shapes, stairs and paths keep every part: they are for building with and walking on.
 -- A piece drawn as pieces (Recipe.piece: details for show, never solid) used to be walked
 -- through whole when its body was one of them (a stall, an arch's columns, a deck's boards): on
--- a floor or the ground its pieces are opened into their shapes and those go by the same rules,
--- so its body is solid like any other. (What players build is drawn from plain parts anyway, so
--- it looks the same.) Pieces stay as drawn where the drawing already says what is solid: a
--- door's or a window's (clear of the doorway), a workplace's (its loop of spots round it,
--- Sim/Routine, was laid out to them), the shapes', stairs' and paths' (stairs are walked up a
--- hidden ramp, and their treads must not catch a foot) and any piece with a hidden solid box.
+-- a floor or the ground its pieces are opened, each of their shapes going by the same rules, so
+-- its body is solid like any other. Pieces stay as drawn where the drawing already says what is
+-- solid: a door's or a window's (clear of the doorway), a workplace's (its loop of spots round
+-- it, Sim/Routine, was laid out to them), the shapes', stairs' and paths' (stairs are walked up
+-- a hidden ramp, and their treads must not catch a foot) and any piece with a hidden solid box.
 -- A part that isn't solid can still be clicked (CanQuery stays on), so Build mode picks it as
 -- before. Plain data, so the specs can hold the catalog to it; Build/Builder applies it to every
 -- piece it draws on a plot.
@@ -101,34 +100,39 @@ function Solid.keeps(def: Catalog.Def, prim: Geometry.Prim): boolean
 end
 
 -- The piece's prims with what isn't solid marked (collide = false) and, on a floor or the
--- ground, its pieces opened into their shapes. Call it on the prims Catalog.prims drew, before
--- they are moved into the plot, and use the list it returns.
+-- ground, its pieces opened (see above). Call it on the prims Catalog.prims drew, before they are
+-- moved into the plot, and use the list it returns. An opened piece stays a piece (the same
+-- parts are made either way): it is marked solid, and each of its shapes says for itself
+-- whether it is (Builder's expandPiece and Geometry.flatten go by that). Plots draw pieces from
+-- plain parts, so an opened one is never merged.
 function Solid.apply(def: Catalog.Def, prims: { Geometry.Prim }): { Geometry.Prim }
-	local out = prims
 	local all = Solid.opens(def, prims)
 	-- (a piece drawn solid, `collide`, is opened wherever the rules apply at all: that only
 	-- ever takes its little parts out of it)
 	local solidOnes = not Solid.none(def) and not Solid.whole(def)
-	if all or solidOnes then
-		out = table.create(#prims)
-		for _, p in prims do
-			if p.shape == "Piece" and p.parts and (all or p.collide == true) then
-				for _, q in p.parts do
-					local c = table.clone(q)
-					c.cf = p.cf * q.cf
-					c.name = p.name -- (a named piece's name goes on every part it is made as)
-					c.collide = nil
-					table.insert(out, c)
-				end
-			else
-				table.insert(out, p)
+	local out = table.create(#prims)
+	for _, p in prims do
+		local q = p
+		if p.shape == "Piece" and p.parts and (all or (solidOnes and p.collide == true)) then
+			q = table.clone(p)
+			q.collide = true
+			local parts = table.create(#p.parts)
+			for i, sub in p.parts do
+				-- the shape where it stands in the piece's space, for the rules
+				local at = table.clone(sub)
+				at.cf = p.cf * sub.cf
+				at.name = p.name -- (a named piece's name goes on every part it is made as)
+				at.collide = nil
+				local c = table.clone(sub)
+				c.collide = if Solid.keeps(def, at) then nil else false
+				parts[i] = c
 			end
+			q.parts = parts
 		end
-	end
-	for _, p in out do
-		if not Solid.keeps(def, p) then
-			p.collide = false
+		if not Solid.keeps(def, q) then
+			q.collide = false
 		end
+		table.insert(out, q)
 	end
 	return out
 end

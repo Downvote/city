@@ -331,7 +331,9 @@ function Geometry.flatten(prims: { Prim }): { Prim }
 			for _, q in p.parts do
 				local c = table.clone(q)
 				c.cf = p.cf * q.cf
-				c.collide = p.collide
+				-- as the Builder makes them: a piece that isn't solid has no solid shape, and in
+				-- one that is, each shape says for itself (Build/Solid takes little ones out)
+				c.collide = if p.collide == true then q.collide ~= false else p.collide
 				table.insert(out, c)
 			end
 		else

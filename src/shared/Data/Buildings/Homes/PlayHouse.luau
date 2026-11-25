@@ -6,7 +6,7 @@
 -- on sand with swings, a slide, a sandpit and a picnic table, and a swing on the tree out the back.
 --
 -- The frame: x across, z back from the street (z = 0). The house is x 4..32 and z 12..34, the
--- playground x 34..48 and z 4..30.
+-- playground x 34..48 and z 4..28 inside its fence.
 
 local HomeKit = require(script.Parent.Parent.HomeKit)
 
@@ -55,8 +55,8 @@ return function(add: any)
 			b:floor(4, 22, 16, 34, OAK) -- the bedroom
 			b:floor(16, 22, 26, 34, KITCHEN_TILES)
 			b:floor(26, 22, 32, 34, BATH_TILES)
-			b:floor(34, 4, 48, 30, SAND) -- the playground
-			b:floor(16, 0, 20, 12, PAVING) -- the path
+			b:floor(34, 4, 48, 28, SAND) -- the playground
+			b:floor(16, 0, 20, 10, PAVING) -- the path
 
 			-- the walls ----------------------------------------------------------------------------
 			k:wall("front", 4, 12, 32, 12, BUTTER, INSIDE)
@@ -87,9 +87,9 @@ return function(add: any)
 			k:hang("bunting", "front", 9, 9.4)
 			k:hang("bunting", "front", 27, 9.4)
 			k:hang("awning", "front", 18, 9.0, "a", CORAL, WHITE)
-			k:hang("window_box", "front", 9, 2.9, "a", WHITE, PINK)
-			k:hang("window_box", "front", 27, 2.9, "a", WHITE, SUN)
-			k:hang("window_box", "left", 17, 2.9, "a", WHITE, SUN)
+			k:hang("window_box", "front", 9, 3.05, "a", WHITE, PINK)
+			k:hang("window_box", "front", 27, 3.05, "a", WHITE, SUN)
+			k:hang("window_box", "left", 17, 3.05, "a", WHITE, SUN)
 			k:hang("string_lights", "right", 16, 9.6)
 			k:hang("lantern_wall", "front", 14.8, 5.6, "a", TEAL)
 			k:hang("downpipe", "back", 31.3, 0, "a", TEAL, TEAL)
@@ -118,8 +118,8 @@ return function(add: any)
 			k:putY("swing_set", 39.6, 9.4, 0, F, SKY, SUN)
 			k:putY("slide", 45.0, 19.6, 0, F, PINK, SUN)
 			k:putY("sandbox", 38.4, 19.6, 0, F, TEAL, SUN)
-			k:putY("picnic_table", 39.0, 26.0, 90, F, SUN, WHITE)
-			k:putY("umbrella_sun", 39.0, 26.0, 0, F, WHITE, CORAL)
+			k:putY("picnic_table", 39.0, 25.2, 90, F, SUN, WHITE)
+			k:putY("umbrella_sun", 39.0, 25.2, 0, F, WHITE, CORAL)
 			k:putY("flower_pot", 35.0, 5.6, 0, F, nil, PINK)
 			k:putY("bench_garden", 45.6, 10.0, 270, F, WHITE, TEAL)
 
@@ -135,14 +135,14 @@ return function(add: any)
 			k:hang("tv_wall", "left", 17, 4.0, "b")
 			k:put("rug_round", 8.8, 17, 0, SKY, SUN)
 			k:put("beanbag", 9.6, 14.4, 0, CORAL)
-			k:put("beanbag", 11.6, 17.2, 0, SUN)
+			k:put("beanbag", 12.2, 18.6, 0, SUN)
 			k:put("beanbag", 9.6, 20.0, 0, MINT_PAINT)
 			k:put("toy_chest", 5.6, 14.2, 90, PINK)
 			k:put("bookshelf", 6.5, 20.85, 180, WHITE)
-			k:put("rocking_horse", 14.6, 15.0, 30, WHITE, PINK)
+			k:put("rocking_horse", 13.4, 15.0, 30, WHITE, PINK)
 			k:put("table_games", 25.4, 16.8, 0, SUN, TEAL)
-			k:put("stool", 22.4, 16.8, 0, TEAL, SUN)
-			k:put("stool", 28.4, 16.8, 0, TEAL, PINK)
+			k:put("stool", 21.9, 16.8, 0, TEAL, SUN)
+			k:put("stool", 28.9, 16.8, 0, TEAL, PINK)
 			k:put("arcade", 30.45, 14.6, 270, PINK, TEAL)
 			k:put("shelf_cubes", 25.0, 20.95, 180, WHITE)
 			k:on("teddy", "shelf_cubes", 24.4, 20.9, 200)
