@@ -521,6 +521,19 @@ Tuning.Lights = {
 	Town = { Brightness = 0.8, Range = 1 },
 }
 
+-- Placed pieces that move and give off effects (Build/Lively, client World/Lively; the user: "make
+-- animated decor, workplaces with special effects, particle makers")
+Tuning.Lively = {
+	MoveRange = 160, -- studs from the camera that a piece moves within
+	FxRange = 200, -- and gives off its effects within
+	MoveRate = 30, -- moves a second
+	GlintRate = 10, -- glimmers a second
+	Look = 0.5, -- seconds between looks at what is near, at work or due a burst
+	Settle = 1, -- seconds after a piece arrives before it is read (BuildFx springs a new one up)
+	MarkEvery = 1, -- seconds between the server's looks at who is at work where (Services/Work)
+	MaxAlive = 60, -- particles one effect may keep in the air at once (Data/Effects, the spec)
+}
+
 -- Building the town when the server starts ----------------------------------
 Tuning.World = {
 	-- seconds spent merging the town's detail pieces before any of it goes up (the most used

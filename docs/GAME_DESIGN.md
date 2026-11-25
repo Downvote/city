@@ -370,7 +370,8 @@ Move, Turn and Copy work on the group too, as do M, R, C and Delete. Up to 300 p
   can't go there. While it is held the interface slides away, as it does for one piece.
 - **Turn** turns the group about its middle where it stands.
 - **Copy** holds a copy of the group to put down, and another after it, until it is put away.
-- **Sell** sells the lot, and what hangs on its walls.
+- **Sell** sells the lot, and what goes with it: what hangs on its walls, what is in its pools, and what only a
+  basement floor in it held up.
 - **A colour** paints the whole group: both sides of each wall, the floors, the roofs and the pieces, each keeping
   its own material.
 

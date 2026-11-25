@@ -228,6 +228,7 @@ local ui: Frame
 local passButtons: { [string]: TextButton } = {}
 local stretchCard: Frame? = nil
 local stretchFor = "" -- the piece the stretch card was made for
+local stretchShow: ((Vector3) -> ())? = nil -- moves its sliders to the piece's stretch
 local pickerOpen = false -- Any Colour's picker showing in the Paint tray
 local pickerHue, pickerShade = 0, 0.5
 -- what one of the passes' switches would do, for the hint (nil for any other button)
@@ -1430,15 +1431,38 @@ local STRETCH_SIDES = { "Width", "Height", "Depth" }
 
 -- A slider for each side a piece may stretch along (Build/Stretch.axes), from Tuning.Passes'
 -- StretchMin to StretchMax. `scale` is how far it is stretched now; `onSet(scale)` when one moves.
-local function stretchSliders(parent: Instance, def: any, scale: Vector3, w: number, onSet: (Vector3) -> ())
+-- Returns a function that moves the sliders to another stretch without calling onSet.
+local function stretchSliders(
+	parent: Instance,
+	def: any,
+	scale: Vector3,
+	w: number,
+	onSet: (Vector3) -> ()
+): (Vector3) -> ()
 	local allowed = { Stretch.axes(def) }
 	local now = { scale.X, scale.Y, scale.Z }
+	local setters: { [number]: (number) -> () } = {}
 	for i, name in STRETCH_SIDES do
 		if allowed[i] then
-			Kit.slider(name, Tuning.Passes.StretchMin, Tuning.Passes.StretchMax, now[i], Stretch.Step, function(v)
-				now[i] = v
-				onSet(Vector3.new(now[1], now[2], now[3]))
-			end, { Parent = parent, Size = UDim2.fromOffset(w, 44), LayoutOrder = i })
+			local _, set = Kit.slider(
+				name,
+				Tuning.Passes.StretchMin,
+				Tuning.Passes.StretchMax,
+				now[i],
+				Stretch.Step,
+				function(v)
+					now[i] = v
+					onSet(Vector3.new(now[1], now[2], now[3]))
+				end,
+				{ Parent = parent, Size = UDim2.fromOffset(w, 44), LayoutOrder = i }
+			)
+			setters[i] = set
+		end
+	end
+	return function(v: Vector3)
+		now = { v.X, v.Y, v.Z }
+		for i, set in setters do
+			set(now[i])
 		end
 	end
 end
@@ -1532,7 +1556,8 @@ end
 local function placeOnBars(hex: string)
 	local h, sat, v = Colors.fromHex(hex):ToHSV()
 	pickerHue = h
-	if v < 0.95 then
+	-- a strong colour sits on the dark half (black to the hue), a soft one on the light half
+	if sat >= 0.6 then
 		pickerShade = math.clamp(v / 0.96 / 2, 0, 0.5)
 	else
 		pickerShade = math.clamp(0.5 + (1 - sat / 0.8) / 2, 0.5, 1)
@@ -2585,6 +2610,7 @@ refreshStretchCard = function()
 	if stretchCard then
 		stretchCard:Destroy()
 		stretchCard = nil
+		stretchShow = nil
 	end
 	if want == "" or not ui then
 		return
@@ -2606,7 +2632,6 @@ refreshStretchCard = function()
 		Cut = CUT,
 		Parent = ui,
 	})
-	Kit.rim(card, T.Line, 1)
 	Kit.title("Stretch", {
 		Parent = card,
 		Size = UDim2.new(1, -SIDE * 2, 0, 24),
@@ -2620,7 +2645,7 @@ refreshStretchCard = function()
 		Position = UDim2.fromOffset(SIDE, 34),
 	})
 	Kit.list(list, 2)
-	stretchSliders(list, def, scale or Vector3.one, 240 - SIDE * 2, function(v)
+	stretchShow = stretchSliders(list, def, scale or Vector3.one, 240 - SIDE * 2, function(v)
 		BuildMode.setStretch(v)
 	end)
 	stretchCard = card
@@ -3364,6 +3389,11 @@ function BuildUI.init(exitCallback: () -> ())
 		-- (Stretch's sliders follow the piece in hand)
 		if what == "tool" or what == "passes" then
 			refreshStretchCard()
+		elseif what == "stretch" and stretchShow then
+			local _, scale = BuildMode.stretchTarget()
+			if scale then
+				stretchShow(scale)
+			end
 		end
 	end)
 end

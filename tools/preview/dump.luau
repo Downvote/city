@@ -5,6 +5,8 @@
 --   item:<id>          one catalog item
 --   cat:<category>     every item of a Build mode tab in a row
 --   items:<id>,<id>    those items in a row
+--   stretch:<id>       one item plain, then stretched with the Stretch pass (Build/Stretch): twice as
+--                      wide, half again as tall, twice as deep, and half its size all round
 --   style:<look>       every catalog item of a look (cozy, modern, scifi, garden, seaside, rustic,
 --                      fancy, playful), category by category
 --   fences             every kind of fence in its own finish
@@ -111,6 +113,28 @@ elseif scene:sub(1, 6) == "items:" then
 		table.insert(defs, (assert(Catalog.get(id), "no item " .. id)))
 	end
 	itemRow(defs, 8)
+elseif scene:sub(1, 8) == "stretch:" then
+	-- drawn the way a plot draws it (Builder.primsFor: its solid parts, then the stretch)
+	local def = assert(Catalog.get(scene:sub(9)), "no item " .. scene)
+	local plan = Plan.new()
+	local x = 0
+	for i, s in { { 1, 1, 1 }, { 2, 1, 1 }, { 1, 1.5, 1 }, { 1, 1, 2 }, { 0.5, 0.5, 0.5 } } do
+		local w = def.size.X * s[1]
+		local key = tostring(i)
+		plan.items[key] = {
+			id = def.id,
+			x = x + w / 2,
+			y = if def.place == "ceiling" then def.size.Y * s[2] else 0,
+			z = 0,
+			r = 0,
+			lv = 0,
+			sx = s[1],
+			sy = s[2],
+			sz = s[3],
+		}
+		addPrims(Builder.primsFor(plan, "items", key))
+		x += w + 2
+	end
 elseif scene:sub(1, 4) == "cat:" then
 	itemRow(Catalog.list(scene:sub(5)), 6)
 elseif scene:sub(1, 6) == "style:" then

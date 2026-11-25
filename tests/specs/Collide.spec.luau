@@ -126,6 +126,34 @@ describe("Collide: what keeps out of what", function()
 		expect((Collide.check(sofa, "walls", wall(10, 66, 30, 66)))).toBe(true)
 	end)
 
+	it("takes stairs as their run and width, so they go down against a wall at either end", function()
+		local stairs = Catalog.get("stairs_straight")
+		local lo, hi = Vector3.new(1e9, 1e9, 1e9), Vector3.new(-1e9, -1e9, -1e9)
+		for _, b in Collide.body(stairs) do
+			lo = lo:Min(b.cf.Position - b.size / 2)
+			hi = hi:Max(b.cf.Position + b.size / 2)
+		end
+		expect(hi.Z - lo.Z).toBeNear(stairs.size.Z)
+		expect(hi.X - lo.X).toBeNear(stairs.size.X)
+		expect(lo.Y).toBeNear(0)
+		-- a wall along z = 50; its face toward the stairs at 49.7
+		local plan = planWith({ { "walls", wall(4, 50, 40, 50) } })
+		local z = 50 - Plan.wallThickness("wall") / 2 - stairs.size.Z / 2
+		local function stair(r)
+			return { id = "stairs_straight", x = X0 + 20, y = Tuning.Plot.Foundation, z = z, r = r, lv = 0 }
+		end
+		expect((Plan.validItem(plan, stair(0)))).toBe(true)
+		expect((Collide.check(plan, "items", stair(0)))).toBe(true) -- its top end at the wall
+		expect((Collide.check(plan, "items", stair(180)))).toBe(true) -- its foot at the wall
+		-- one step further in, it is in the wall
+		local into = stair(0)
+		into.z += 1
+		expect((Collide.check(plan, "items", into))).toBe(false)
+		-- and things can't go where the stairs climb
+		local climbed = planWith({ { "items", stair(0) } })
+		expect((Collide.check(climbed, "items", item("shape_cube_small", 20, z)))).toBe(false)
+	end)
+
 	it("lets fence panels and porch rails share their posts", function()
 		local plan = planWith({ { "items", item("fence_picket", 20, 20) } })
 		-- a corner: the next panel turned a quarter, sharing the end post

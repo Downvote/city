@@ -20,6 +20,7 @@
 -- has pieces in each other (an old save, a ready-made building's own pieces, which touch) loads
 -- and stays as it is. Plain data, so the specs run it.
 
+local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Catalog = require(script.Parent.Catalog)
 local Geometry = require(script.Parent.Geometry)
 local Plan = require(script.Parent.Plan)
@@ -39,6 +40,9 @@ Collide.Touch = 0.08
 -- and porch posts. Two of these may overlap where they meet (a corner of a fence shares its post).
 Collide.Joins = { fence_picket = true, gate_garden = true, porch_rail = true, porch_post = true } :: { [string]: boolean }
 
+-- how many steps a stair's body is cut into (Collide.body)
+Collide.StairSteps = 7
+
 -- Does this piece stay out of the reckoning altogether (it sits on or in others)?
 function Collide.passes(def: Catalog.Def): boolean
 	if def.place == "opening" or Solid.none(def) then
@@ -56,7 +60,21 @@ function Collide.body(def: Catalog.Def): { Box }
 		return known
 	end
 	local out: { Box } = {}
-	if not Collide.passes(def) then
+	if def.place == "stairs" then
+		-- stairs are their run and their width, rising toward their top end (+Z) a storey: a
+		-- stepped block under the line of the treads. Their drawing's hidden ramp is a long
+		-- tilted slab whose box reaches well past both ends, so a stair against a wall would
+		-- bump into it.
+		local n = Collide.StairSteps
+		local run = def.size.Z / n
+		for i = 1, n do
+			local top = Tuning.Plot.LevelHeight * i / n
+			table.insert(out, {
+				cf = CFrame.new(0, top / 2, -def.size.Z / 2 + run * (i - 0.5)),
+				size = Vector3.new(def.size.X, top, run),
+			})
+		end
+	elseif not Collide.passes(def) then
 		local prims = Geometry.flatten(Solid.apply(def, Catalog.prims(def)))
 		for _, p in prims do
 			if p.collide ~= false and p.size.X > 1e-3 and p.size.Y > 1e-3 and p.size.Z > 1e-3 then

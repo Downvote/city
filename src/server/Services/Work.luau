@@ -387,7 +387,7 @@ function Work.start()
 	end)
 	task.spawn(function()
 		while true do
-			task.wait(1)
+			task.wait(Tuning.Lively.MarkEvery)
 			for i = 1, Tuning.Plot.Count do
 				Work.markBusy(i)
 			end

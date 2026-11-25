@@ -529,8 +529,9 @@ each, walls first), `coarse` (holds anything but free standing furniture: moves 
 the pivot the way `CFrame.Angles(0, r, 0)` turns, then moved; a roof's `dir` goes up a step a quarter turn;
 furniture back on its grid after an odd turn; nil for what hangs on a wall), and the request lists:
 `moveRequests` (a `set` a piece, none for what hangs on a wall), `copyRequests` (an `add` a piece, `gift` dropped,
-what hangs on a copied wall copied with `wall = "@n"`), `sellRequests` (pieces first, then walls, water, floors,
-roofs), `paintRequests(plan, picks, c, m?, slot?)` (without `m` each keeps its material; unchanged pieces left
+what hangs on a copied wall copied with `wall = "@n"`), `sellRequests` (worked out on a copy of the plan: pieces
+first, then walls, water, floors, roofs, and no request for what an earlier removal in it took along, such as what
+only a basement floor held up), `paintRequests(plan, picks, c, m?, slot?)` (without `m` each keeps its material; unchanged pieces left
 out), `reach` and `sellValue` (what a sale takes and gives back). `Group.moves(plan, requests)` is true for a list of
 only `set`s that move more than one piece; `Group.check(plan, requests, profile?)` tries a list on a copy as the
 server does, lifting a moving group first, and with a profile holds it to `Sim/Floors` and `Build/Placing`.
@@ -725,7 +726,8 @@ player's own screen plays it near the camera; the server only builds the parts, 
   near, makes a spot's emitters (and Fire) the first time it comes within `Lively.FxRange` (200), switches them by
   distance and `Working`, and fires the bursts that are due. Emitters and fires are made and switched in pcalls. A
   piece drawn again (moved, repainted) is a new model and read afresh. `Lively.read`, `Lively.add`, `Lively.step` and
-  `Lively.count` are for the simulation.
+  `Lively.count` are for the simulation. The numbers (ranges, rates, the server's look, `MaxAlive`) are
+  `Tuning.Lively`.
 
 ## Tutorial, wishes, unsticking
 
@@ -1459,7 +1461,8 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
 
 - The Select tool and saved builds: the `Group` spec (a room moved as one with its door going with its wall, turned
   about its middle with each wall landing where another stood, copied with its door, painted, sold; walls never
-  stretched, sent to another floor or put on another; furniture alone on its own grid) and the `Saves` spec (the
+  stretched, sent to another floor or put on another; furniture alone on its own grid; a basement floor sold with
+  the wall and the bed on it, picked in any order) and the `Saves` spec (the
   real Saves and Build services with stubbed neighbours: slots and More Saves, names through the filter, the
   DataStore caps, rename and delete, a load that keeps what is the same, sells and buys the rest, keeps a gift free,
   shows in Changed what went, is one Undo, is refused when it can't be paid for, leaves out what no longer fits the

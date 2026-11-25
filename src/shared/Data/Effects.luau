@@ -16,6 +16,8 @@
 -- Pictures: Roblox's own particle pictures, and a few from the Creator Store, white so a colour
 -- tints them (decal ids and makers noted; python3 scripts/library_textures.py can look them up).
 
+local Tuning = require(script.Parent.Parent.Config.Tuning)
+
 local Effects = {}
 
 Effects.Textures = {
@@ -34,7 +36,7 @@ Effects.Textures = {
 
 -- the most particles one effect may have in the air at once (rate times the longest life, or a
 -- burst's count times its life over its gap)
-Effects.MaxAlive = 60
+Effects.MaxAlive = Tuning.Lively.MaxAlive
 
 export type Preset = {
 	texture: string, -- a key of Effects.Textures

@@ -12,6 +12,12 @@
 --   build:pick          Build mode with a gift from the starting house picked (the action bar)
 --   build:bought        Build mode with a bought armchair picked: it sells for coins
 --   build:paint         Build mode on the Paint tool (finishes and colours)
+--   build:blocked       Build mode holding an armchair over another, without Free Placing: the
+--                       hint says what it bumps into (Build/Collide)
+--   build:stretch       Build mode with the build mode passes owned, holding an armchair stretched
+--                       wide: Stretch's sliders at the bottom right (build:stretch:pick a stretched
+--                       armchair picked, its page in the tray with the sliders)
+--   build:colour        Build mode's Paint tool with Any Colour owned, its picker open
 --   build:sell          Build mode on the Sell tool
 --   build:view          Build mode just after the up arrow and See-through walls (the hint says so)
 --   build:top           Build mode on the third floor without Tall Builds, the up arrow locked
@@ -382,6 +388,53 @@ elseif scene:sub(1, 5) == "build" then
 	end
 	if scene == "build:paint" then
 		Sim.press("Paint")
+	end
+	-- the build mode passes (Build/Placing): a piece that bumps into another, Stretch's sliders and
+	-- Any Colour's picker; build:blocked owns none of them, the others all four
+	if scene == "build:blocked" or scene:sub(1, 13) == "build:stretch" or scene == "build:colour" then
+		local owned = if scene == "build:blocked"
+			then {}
+			else { freeplace = true, finegrid = true, stretch = true, anycolour = true }
+		Sim.profile.passes = owned
+		Sim.remoteEvent("State"):FireClient(Sim.player, { passes = owned })
+		Sim.frames(2)
+	end
+	if scene == "build:blocked" or scene:sub(1, 13) == "build:stretch" then
+		-- an armchair put down where the simulation puts its furniture, and another picked up
+		Sim.press("Furniture")
+		local function armchair()
+			return Fake.find(Sim.gui:FindFirstChild("Tray", true), function(d)
+				return d:IsA("TextButton") and Fake.shown(d) and d:GetAttribute("ItemId") == "armchair"
+			end)[1]
+		end
+		armchair().Activated:Fire()
+		Sim.frames(2)
+		Sim.mouseAtPlot(124, 64)
+		Sim.click()
+		if scene == "build:blocked" then
+			-- held a stud over from the one down: it bumps into it
+			Sim.mouseAtPlot(125, 64)
+		elseif scene == "build:stretch" then
+			Sim.BuildMode.setStretch(roblox.Vector3.new(1.75, 1, 1.25))
+			Sim.mouseAtPlot(134, 72)
+		else
+			-- put away, the one down picked and stretched wide
+			Sim.input(Enum.UserInputType.MouseButton2, true)
+			Sim.input(Enum.UserInputType.MouseButton2, false)
+			Sim.frames(2)
+			Sim.press("Pick")
+			Sim.mouseAtPlot(124, 64, 1)
+			Sim.click()
+			Sim.BuildMode.setStretch(roblox.Vector3.new(1.5, 1, 1))
+			Sim.frames(2)
+			Sim.mouseAtPlot(150, 96)
+		end
+		Sim.frames(2)
+		Sim.advance(0.5)
+	end
+	if scene == "build:colour" then
+		Sim.press("Paint")
+		Sim.press("Any colour")
 	end
 	if scene:sub(1, 12) == "build:select" then
 		-- (the Select tool: three armchairs in the garden, picked with a box drawn round them)

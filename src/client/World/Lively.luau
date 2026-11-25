@@ -19,15 +19,17 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Catalog = require(Shared.Build.Catalog)
 local Rules = require(Shared.Build.Lively)
 local Effects = require(Shared.Data.Effects)
+local Tuning = require(Shared.Config.Tuning)
 
 local Lively = {}
 
-Lively.MoveRange = 160 -- studs from the camera that a piece moves within
-Lively.FxRange = 200 -- and gives off its effects within
-local STEP = 1 / 30 -- seconds between two moves
-local GLINT_STEP = 1 / 10 -- between two glimmers
-local LOOK = 0.5 -- between two looks at what is near, at work, or due a burst
-local SETTLE = 1 -- seconds after a piece arrives before it is looked inside (BuildFx springs it up)
+local K = Tuning.Lively
+Lively.MoveRange = K.MoveRange -- studs from the camera that a piece moves within
+Lively.FxRange = K.FxRange -- and gives off its effects within
+local STEP = 1 / K.MoveRate -- seconds between two moves
+local GLINT_STEP = 1 / K.GlintRate -- between two glimmers
+local LOOK = K.Look -- between two looks at what is near, at work, or due a burst
+local SETTLE = K.Settle -- seconds after a piece arrives before it is looked inside (BuildFx springs it up)
 
 type Group = {
 	pivot: CFrame,

@@ -403,6 +403,84 @@ describe("Select tool groups", function()
 		end
 	end)
 
+	it("sells a basement floor with the wall and the bed on it, whatever order they were picked in", function()
+		-- (a basement floor takes along what only it holds up: Plan.removeOps; a sale never asks to
+		-- remove what an earlier removal in it already took)
+		profile.passes = { basement = true }
+		local B = Plan.Lowest
+		local below = wall(200, 200, 226, 200)
+		below.lv = B
+		local ok, why = apply({
+			{
+				type = "add",
+				kind = "floors",
+				obj = { x1 = 200, z1 = 200, x2 = 226, z2 = 218, lv = B, c = "C8B49A", m = "Concrete" },
+			},
+			{ type = "add", kind = "walls", obj = below },
+		})
+		if not ok then
+			error(tostring(why))
+		end
+		ok, why = apply({
+			{
+				type = "add",
+				kind = "items",
+				obj = { id = "bed_single", x = 210, y = Plan.levelBase(B), z = 210, r = 0, lv = B },
+			},
+		})
+		if not ok then
+			error(tostring(why))
+		end
+		local floorKey, wallKey, bedKey
+		for key, f in profile.plan.floors do
+			if f.lv == B then
+				floorKey = key
+			end
+		end
+		for key, w in profile.plan.walls do
+			if w.lv == B then
+				wallKey = key
+			end
+		end
+		for key, it in profile.plan.items do
+			if it.lv == B then
+				bedKey = key
+			end
+		end
+		local picks = {
+			{ kind = "floors", key = floorKey },
+			{ kind = "walls", key = wallKey },
+			{ kind = "items", key = bedKey },
+		}
+		local requests = Group.sellRequests(profile.plan, picks)
+		expect(#requests).toBe(3)
+		local value = Group.sellValue(profile.plan, picks)
+		local coins = profile.coins
+		ok, why = apply(requests)
+		if not ok then
+			error(tostring(why))
+		end
+		expect(profile.plan.floors[floorKey] == nil and profile.plan.walls[wallKey] == nil).toBe(true)
+		expect(profile.plan.items[bedKey]).toBe(nil)
+		expect(profile.coins).toBe(coins + value)
+		expect(Build.undo(p)).toBe(true)
+		-- the floor alone: one request, and what it holds up goes with it and is counted
+		local alone = { { kind = "floors", key = floorKey } }
+		requests = Group.sellRequests(profile.plan, alone)
+		expect(#requests).toBe(1)
+		expect(#Group.reach(profile.plan, alone)).toBe(3)
+		value = Group.sellValue(profile.plan, alone)
+		coins = profile.coins
+		ok, why = apply(requests)
+		if not ok then
+			error(tostring(why))
+		end
+		expect(profile.plan.walls[wallKey] == nil and profile.plan.items[bedKey] == nil).toBe(true)
+		expect(profile.coins).toBe(coins + value)
+		expect(Build.undo(p)).toBe(true)
+		profile.passes = nil
+	end)
+
 	it("drops what has gone from a group, and keeps each piece once", function()
 		local twice = table.clone(picks)
 		table.insert(twice, picks[1])

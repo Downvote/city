@@ -15,7 +15,6 @@
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Plan = require(script.Parent.Plan)
 local Catalog = require(script.Parent.Catalog)
-local Water = require(script.Parent.Water)
 -- (the passes' rules: keeping out of other pieces, angles, colours, floors)
 local Placing = require(script.Parent.Placing)
 local Floors = require(script.Parent.Parent.Sim.Floors)
@@ -265,62 +264,61 @@ function Group.copyRequests(plan: any, picks: { Pick }, dx: number, dz: number, 
 	return out
 end
 
--- Everything a sale of the group takes away: the picks, what hangs on a picked wall and what is
--- in a picked pool. As { kind, key } in a steady order.
-function Group.reach(plan: any, picks: { Pick }): { Pick }
+-- A sale of the group worked out on a copy of the plan: a "remove" for each picked piece still
+-- there when its turn comes, pieces first (so nothing is left hanging on a wall or standing in
+-- water that went before it), then walls, water, floors and roofs, and every op that takes
+-- away. A piece an earlier removal already took along (what hangs on a wall, what is in a pool,
+-- what only a basement floor held up: Plan.removeOps) gets no request of its own, so the batch never
+-- asks to remove what is already gone.
+local function sale(plan: any, picks: { Pick }): ({ any }, { any })
 	local list = Group.present(plan, picks)
-	local all: { Pick } = table.clone(list)
-	local seen: { [string]: boolean } = {}
-	for _, p in list do
-		seen[Group.id(p.kind, p.key)] = true
-	end
-	for _, p in list do
-		local more: { string } = {}
-		if p.kind == "walls" then
-			more = Plan.attached(plan, p.key)
-		elseif p.kind == "waters" then
-			more = Water.piecesIn(plan, p.key)
-		end
-		for _, key in more do
-			local id = Group.id("items", key)
-			if not seen[id] then
-				seen[id] = true
-				table.insert(all, { kind = "items", key = key })
+	local trial = Plan.copy(plan)
+	local requests, ops = {}, {}
+	for _, kind in { "items", "walls", "waters", "floors", "roofs" } do
+		for _, p in list do
+			if p.kind == kind and objOf(trial, kind, p.key) ~= nil then
+				local taken = Plan.removeOps(trial, kind, p.key)
+				Plan.apply(trial, taken)
+				table.insert(requests, { type = "remove", kind = kind, key = p.key })
+				for _, op in taken do
+					table.insert(ops, op)
+				end
 			end
 		end
+	end
+	return requests, ops
+end
+
+-- Everything a sale of the group takes away: the picks and what goes with them. As { kind, key }
+-- in a steady order.
+function Group.reach(plan: any, picks: { Pick }): { Pick }
+	local _, ops = sale(plan, picks)
+	local all: { Pick } = {}
+	for _, op in ops do
+		table.insert(all, { kind = op.kind, key = op.key })
 	end
 	table.sort(all, byKey)
 	return all
 end
 
--- The requests that sell the group: the pieces first, so nothing is left hanging on a wall or
--- standing in water that went before it, then the walls, water, floors and roofs.
+-- The requests that sell the group (see `sale`).
 function Group.sellRequests(plan: any, picks: { Pick }): { any }
-	local list = Group.present(plan, picks)
-	local out = {}
-	for _, kind in { "items", "walls", "waters", "floors", "roofs" } do
-		for _, p in list do
-			if p.kind == kind then
-				table.insert(out, { type = "remove", kind = kind, key = p.key })
-			end
-		end
-	end
-	return out
+	local requests = sale(plan, picks)
+	return requests
 end
 
--- What selling the group gives back (what hangs on its walls and is in its water too), and
--- whether any of it was a gift (Plan: Gifts).
+-- What selling the group gives back (what goes with it too), and whether any of it was a gift
+-- (Plan: Gifts).
 function Group.sellValue(plan: any, picks: { Pick }): (number, boolean)
-	local total, gift = 0, false
-	for _, p in Group.reach(plan, picks) do
-		local obj = objOf(plan, p.kind, p.key)
-		total += Plan.price(p.kind, obj)
-		local g = obj.gift
+	local _, ops = sale(plan, picks)
+	local gift = false
+	for _, op in ops do
+		local g = op.obj and op.obj.gift
 		if type(g) == "number" and g > 0 then
 			gift = true
 		end
 	end
-	return total, gift
+	return -Plan.changeCost(ops), gift
 end
 
 -- The requests that paint the group: a wall on both sides, a floor, a roof (its trim with slot
