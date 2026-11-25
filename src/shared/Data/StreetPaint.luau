@@ -125,28 +125,27 @@ local function grating(q: R)
 	end
 end
 
--- Wear on the road (the user: "stains and road paint"). Drawn with y = 0 on the road, a small
--- thing's height over it. An oil stain: three dark blobs run together, the sort a parked or
+-- Wear on the road (the user: "stains and road paint"). Drawn with y = 0 on the road and standing
+-- a tenth over it, as all the paint does (nearer than that flickers from across the town). An oil stain: three dark blobs run together, the sort a parked or
 -- waiting car leaves; a crack: a thin dark line that wanders. Each a single piece.
 local OIL = rgb(66, 66, 72)
 local CRACK = rgb(70, 72, 80)
 local TAR = rgb(92, 94, 104)
-local WEAR = 0.01 -- (a hair over the road, so nothing of it lies in the road's own face)
 local function stain(q: R)
-	q:box(0, WEAR + STEP / 2, 0, 2.6, STEP, 1.7, OIL, "Asphalt")
-	q:boxAt(CFrame.new(0.8, WEAR + STEP / 2, 0.6) * CFrame.Angles(0, 1.2, 0), 1.8, STEP, 1.3, OIL, "Asphalt")
-	q:boxAt(CFrame.new(-0.9, WEAR + STEP / 2, -0.5) * CFrame.Angles(0, 2.1, 0), 1.2, STEP, 1.0, OIL, "Asphalt")
+	q:box(0, LIFT / 2, 0, 2.6, LIFT, 1.7, OIL, "Asphalt")
+	q:boxAt(CFrame.new(0.8, LIFT / 2, 0.6) * CFrame.Angles(0, 1.2, 0), 1.8, LIFT, 1.3, OIL, "Asphalt")
+	q:boxAt(CFrame.new(-0.9, LIFT / 2, -0.5) * CFrame.Angles(0, 2.1, 0), 1.2, LIFT, 1.0, OIL, "Asphalt")
 end
 local function crack(q: R)
 	local x, z = -2.4, 0
-	q:box(x, WEAR + STEP / 2, z, 0.22, STEP, 0.22, CRACK, "Asphalt") -- (its one square box, where it starts)
+	q:box(x, LIFT / 2, z, 0.22, LIFT, 0.22, CRACK, "Asphalt") -- (its one square box, where it starts)
 	for _, step in { { 1.4, 0.35 }, { 1.2, -0.5 }, { 1.5, 0.2 }, { 1.1, -0.3 } } do
 		local nx, nz = x + step[1], z + step[2]
 		local len = math.sqrt(step[1] ^ 2 + step[2] ^ 2)
 		q:boxAt(
-			CFrame.new((x + nx) / 2, WEAR + STEP / 2, (z + nz) / 2) * CFrame.Angles(0, -math.atan2(step[2], step[1]), 0),
+			CFrame.new((x + nx) / 2, LIFT / 2, (z + nz) / 2) * CFrame.Angles(0, -math.atan2(step[2], step[1]), 0),
 			len + 0.2,
-			STEP,
+			LIFT,
 			0.22,
 			CRACK,
 			"Asphalt"
@@ -627,7 +626,8 @@ function StreetPaint.ground(region: Region?): { Prim }
 		while w < road.a2 - 18 do
 			local byCar = false
 			for _, spot in carsHere do
-				byCar = byCar or (spot.road == road and math.abs(spot.u - w) < 16)
+				-- (a row of bays is up to 39 long round its car, and a patch up to 8)
+				byCar = byCar or (spot.road == road and math.abs(spot.u - w) < 26)
 			end
 			-- (a crossing's stop line and arrow reach about 20 studs back from it)
 			if fromJunction(road, w) > 14 and not nearZebra(w, 24) and not nearCover(w) and not byCar then
@@ -639,16 +639,7 @@ function StreetPaint.ground(region: Region?): { Prim }
 					mark("stain", going(w, v, ROAD, 1) * CFrame.Angles(0, math.rad(turn), 0), stain)
 				elseif kind % 3 == 1 then
 					local long, wide = 4 + wear:NextNumber() * 4, 2.6 + wear:NextNumber() * 1.4
-					rect(
-						w - long / 2,
-						v - wide / 2,
-						w + long / 2,
-						v + wide / 2,
-						ROAD + WEAR,
-						ROAD + STEP,
-						TAR,
-						"Asphalt"
-					)
+					rect(w - long / 2, v - wide / 2, w + long / 2, v + wide / 2, ROAD, PAINT, TAR, "Asphalt")
 				else
 					mark("crack", going(w, v * 0.6, ROAD, 1) * CFrame.Angles(0, math.rad(turn), 0), crack)
 				end

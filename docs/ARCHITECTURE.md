@@ -466,8 +466,8 @@ strips and yellow kerbs at zebras, manhole covers and gratings, Main Street's cy
 junctions, parking bays (`StreetPaint.parked()` follows TownMap's seeded parking), the square's rings and aprons,
 and a zebra on Hill Road at the stair's foot (`StreetPaint.StairCrossing`). Each road also gets wear, seeded by
 the road: an oil stain, a mended patch of darker tar or a crack every 16 to 38 studs down the middle of a lane, kept
-off crossings and their arrows, junctions, the manhole covers and gratings, and the parking bays; each lies 0.01 over
-the road and 0.04 thick (`stain` and `crack` are pieces). Paint stands a tenth over the road or
+off crossings and their arrows, junctions, the manhole covers and gratings, and the parking bays; each stands a tenth over
+the road like the paint (`stain` and `crack` are pieces). Paint stands a tenth over the road or
 pavement it marks (`StreetPaint.Heights`: `lift` 0.11), a small thing on a mark 0.04 over that, and big layers in
 one mark lie side by side. What is set into the square's paving (the fountain's rings, the aprons, the hall's
 bands, the threshold) is listed by `StreetPaint.inlays()` as `{ x1, z1, x2, z2 }`; `TownMap.ground` cuts those out
