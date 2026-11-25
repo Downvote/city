@@ -125,22 +125,8 @@ local WANTS = {
 -- How a food is named in a sentence: "an apple", "a bread roll", but "mushroom soup" and
 -- "pancakes" as they are. (Foods has only the bare name, and "I really want bread roll" isn't
 -- how anyone talks.)
-local COUNTED = {
-	apple = "an",
-	bread = "a",
-	carrot = "a",
-	skewer = "a",
-	tart = "a",
-	riceball = "a",
-	starfruit = "a",
-	dragonchili = "a",
-	goldapple = "a",
-}
-
 local function foodPhrase(food: any): string
-	local name = food.name:lower()
-	local article = COUNTED[food.id]
-	return if article then article .. " " .. name else name
+	return Foods.phrase(food)
 end
 
 local function capital(s: string): string

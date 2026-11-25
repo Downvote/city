@@ -51,9 +51,9 @@ Personalities.list = {
 		lines = {
 			hello = {
 				"Oh, hi, I was hoping I'd run into someone!",
-				"There you are, I saved you a spot on the wall.",
+				"There you are, I was just looking for you!",
 				"Hey, hey, walk with me, I've got news!",
-				"Hi, have you seen the bunting yet?",
+				"Hi, how's your day going so far?",
 				"Ehehe, that's the third time I've seen you today.",
 			},
 			happy = {
@@ -100,7 +100,7 @@ Personalities.list = {
 				"A gull swooped so close that I nearly lost my hat.",
 			},
 			sorry = {
-				"Oh no, that was my elbow, I'm so sorry!",
+				"Oh no, I'm so sorry, that was me!",
 				"Sorry, I was talking and not looking.",
 				"That was my fault, so I'll bring you muffins.",
 				"I'm really sorry, can I help you fix it?",
@@ -115,7 +115,7 @@ Personalities.list = {
 			},
 			no = {
 				"Aww, I can't, but thanks for asking.",
-				"Ooh, not that one, can we do the other?",
+				"Ooh, not that, but I've got a better idea!",
 				"I want to, but I promised I'd help at the bakery.",
 				"Nope, nope, what else have you got?",
 				"Not today, but ask me again tomorrow, okay?",
@@ -190,9 +190,9 @@ Personalities.list = {
 		lines = {
 			hello = {
 				"Oh, hello, have you eaten yet today?",
-				"There you are, sit down, I've just made tea.",
+				"There you are, I hope you slept well.",
 				"Hello, your cheeks are pink, did you walk far?",
-				"Hello, mind the step, I've only just washed it.",
+				"Hello, it's nice to see a friendly face.",
 				"Oh, hello, I was hoping you'd come this way.",
 			},
 			happy = {
@@ -220,7 +220,7 @@ Personalities.list = {
 			thanks = {
 				"Oh, thank you, that was very kind.",
 				"Thank you, I'll pay you back in soup.",
-				"You remembered, thank you so much.",
+				"Thank you, that means a lot.",
 				"Oh, my, you didn't have to, but thank you.",
 				"Thank you, that's made my week easier.",
 			},
@@ -239,7 +239,7 @@ Personalities.list = {
 				"Oh, my, I slipped on the wet pier, but I'm all right.",
 			},
 			sorry = {
-				"Oh, I'm so sorry, are you hurt?",
+				"Oh, I'm so sorry, I feel awful.",
 				"That was my fault, and I'm sorry.",
 				"I'm sorry, I should have asked you first.",
 				"Forgive me, I wasn't thinking.",
@@ -248,7 +248,7 @@ Personalities.list = {
 			yes = {
 				"Of course, I'd be happy to.",
 				"Yes, that sounds lovely.",
-				"I'll bring some sandwiches, then.",
+				"All right, if you think it's best.",
 				"Mm, yes, let's do that.",
 				"Yes, if you promise to eat something first.",
 			},
@@ -282,7 +282,7 @@ Personalities.list = {
 			},
 			worry = {
 				"{player}, you look tired, are you sleeping properly?",
-				"I worry about the old fisher going out in this wind.",
+				"I worry about the old fisher going out on his own.",
 				"Have you eaten yet today? Be honest with me.",
 				"{player}, you were hammering until nine last night, so rest today, okay?",
 				"My neighbour's been very quiet this week, and I hope she's all right.",
@@ -372,7 +372,7 @@ Personalities.list = {
 			},
 			scared = {
 				"I'm not scared of much, but the dark under the pier gets me.",
-				"{player}, the storm's getting worse, so stay in tonight, all right?",
+				"{player}, that last storm had me worried for the boats.",
 				"A rope snapped at the harbour and nearly took my head off.",
 				"The wind nearly blew me off a roof today.",
 				"Something big splashed by the boats last night, and I jumped.",
@@ -389,7 +389,7 @@ Personalities.list = {
 				"Hah, obviously!",
 				"I'm in, so tell me where to be.",
 				"Sure, I'll carry the heavy stuff.",
-				"Yes, and I'll pick you up on the way.",
+				"Yes, and I'll lead the way.",
 			},
 			no = {
 				"No, and that's final.",
@@ -401,9 +401,9 @@ Personalities.list = {
 			bye = {
 				"I'm off, so see you at the harbour tomorrow.",
 				"Later, and shout if you need a hand!",
-				"I'll walk you to the square.",
+				"Right, I'm off, so stay out of trouble.",
 				"Got to go, the boats won't tie themselves up.",
-				"Don't let anyone push you around.",
+				"See you, and don't let anyone push you around.",
 			},
 			tease = {
 				"Hah, you call that a lift?",
@@ -422,7 +422,7 @@ Personalities.list = {
 			worry = {
 				"{player}, you're not working too hard, are you?",
 				"That cliff path needs a rail before somebody falls.",
-				"I don't like the look of those clouds over the sea.",
+				"I don't like how fast the tide's been coming in.",
 				"{player}, if anyone gives you trouble, you'll tell me, right?",
 				"The old pier creaks more every week.",
 			},
@@ -430,8 +430,8 @@ Personalities.list = {
 				"Hm, give me a second.",
 				"Both of them, why not?",
 				"Let's just pick one and go.",
-				"The left one, final answer.",
-				"I don't overthink things, so the first one.",
+				"The first one, final answer.",
+				"I don't overthink things, so let's just go.",
 			},
 			excited = {
 				"Hah, I've been training for the boat race for weeks!",
@@ -491,13 +491,13 @@ Personalities.list = {
 			angry = {
 				"Hmm, that wasn't very nice...",
 				"I don't want to talk to you right now.",
-				"You knocked over my sandcastle, and it took all morning.",
+				"Hmm, I'm cross with you, and I don't like being cross.",
 				"Please leave me alone for a little while.",
 				"That made me sad and cross at once.",
 			},
 			thanks = {
 				"Oh, thank you, that's really kind.",
-				"Thank you, I'll keep it on my windowsill.",
+				"Thank you, I'll remember this.",
 				"Hmm, thank you, I'll think about this all day.",
 				"That's lovely, thank you.",
 				"Thank you, I didn't expect that at all.",
@@ -507,7 +507,7 @@ Personalities.list = {
 				"The rock pools by the cape are full of tiny blue fish.",
 				"Hmm, I found a stone on the beach that's almost perfectly round.",
 				"The fountain made a little rainbow, and nobody else stopped to look.",
-				"There was frost on the spider webs, so they looked like lace.",
+				"There's a spider web on my gate, and it's covered in dew.",
 			},
 			scared = {
 				"It went very quiet in the trees, so I came back down.",
@@ -520,13 +520,13 @@ Personalities.list = {
 				"Oh, sorry, I wasn't looking.",
 				"Sorry, I forgot, I always forget.",
 				"Hmm, I think that was my fault, sorry.",
-				"Sorry, I was watching a cloud and walked into you.",
-				"I'm sorry, I didn't mean to wander off.",
+				"Sorry, I was watching a cloud and not paying attention.",
+				"I'm sorry, my head was somewhere else.",
 			},
 			yes = {
 				"Hmm, yes, I'd like that.",
 				"Okay, let's go now, before I forget.",
-				"Yes, if we can stop and look at things on the way.",
+				"Hmm, okay, why not.",
 				"That sounds nice, yes.",
 				"Mm, all right.",
 			},
@@ -570,7 +570,7 @@ Personalities.list = {
 				"Sorry, where was I?",
 				"They both look nice in different ways...",
 				"I was going to say something, but it floated away.",
-				"Hmm, the blue one, because it's like the sea.",
+				"Hmm, whichever feels nicer, I think.",
 			},
 			excited = {
 				"{player}, the tide's so low you can walk out to the rocks.",
@@ -607,8 +607,8 @@ Personalities.list = {
 		lines = {
 			hello = {
 				"Hey, *yawn*, sorry, I only just woke up.",
-				"Oh, hey, is it lunch already?",
-				"Mm, hi, grab some grass and sit down.",
+				"Oh, hey, what time is it?",
+				"Mm, hi, I was just about to sit down.",
 				"Hey, no rush, I'm not going anywhere.",
 				"Oh, hi, I was just resting my eyes.",
 			},
@@ -637,9 +637,9 @@ Personalities.list = {
 			thanks = {
 				"Oh, nice, thanks.",
 				"Thanks, I'll pay you back eventually.",
-				"Mm, thanks, that saves me a walk.",
+				"Mm, thanks, that's really nice of you.",
 				"Heh, thanks, you're good to me.",
-				"Thanks, that's easier than doing it myself.",
+				"Thanks, that perked me right up.",
 			},
 			wow = {
 				"{player}, did you see the big ship? I watched it all the way.",
@@ -659,8 +659,8 @@ Personalities.list = {
 				"Oops, sorry, my bad.",
 				"Sorry, I forgot, I'll do it tomorrow.",
 				"Eh, sorry, I wasn't really listening.",
-				"My fault, I fell asleep.",
-				"Sorry, I meant to come, but I sat down on the way.",
+				"My fault, I was half asleep.",
+				"Sorry, I'll try harder, honestly.",
 			},
 			yes = {
 				"Sure, why not.",
@@ -774,11 +774,11 @@ Personalities.list = {
 				"You'll see how well I do without you.",
 			},
 			thanks = {
-				"Hmph, thank you, I suppose you've earned a compliment.",
-				"Thank you, you have very good taste.",
+				"Thank you, I suppose you've earned a compliment.",
+				"Thank you, and I won't forget it.",
 				"Naturally, I'll remember this.",
-				"Th-thank you, I mean, of course you did!",
-				"Thank you, that was nearly as good as mine.",
+				"Th-thank you, I mean, of course, I deserved it!",
+				"Hmph, that was nearly as kind as I'd have been.",
 			},
 			wow = {
 				"{player}, did you see that sunset? I'd paint it, but better.",
@@ -797,7 +797,7 @@ Personalities.list = {
 			sorry = {
 				"Fine, my mistake, and it won't happen again.",
 				"I suppose I owe you an apology.",
-				"Hmph, sorry, but you were in the way.",
+				"Hmph, sorry, but it wasn't entirely my fault.",
 				"That was beneath me, and I'm sorry.",
 				"I apologise, and I don't do that often.",
 			},
@@ -915,7 +915,7 @@ Personalities.list = {
 			thanks = {
 				"Oh, um, thank you.",
 				"Thank you, you didn't have to.",
-				"Um, thank you so much, I'll keep it safe.",
+				"Um, thank you so much, really.",
 				"Thank you, that means a lot to me.",
 				"Sorry, I'm not good at this, but thank you.",
 			},
@@ -1077,7 +1077,7 @@ Personalities.list = {
 				"Sorry, it was meant to be funny.",
 				"hehe, oops, sorry about that.",
 				"Fine, I'm sorry, are we good?",
-				"Sorry, I'll put it back where I found it.",
+				"Sorry, I'll make it up to you, no tricks.",
 			},
 			yes = {
 				"Yes, let's do it!",
@@ -1206,7 +1206,7 @@ Personalities.list = {
 			},
 			scared = {
 				"The cliff path crumbled under me today, so take the road.",
-				"{player}, the ice on the hill is bad, so go round.",
+				"{player}, a loose rock nearly hit me on the hill path.",
 				"Something followed me home in the dark, and it was a cat.",
 				"A wave nearly took me off the rocks this morning.",
 				"I heard the pier creak under me, so I'm staying off it.",
@@ -1234,7 +1234,7 @@ Personalities.list = {
 			},
 			bye = {
 				"Later.",
-				"See you, and take a coat, it'll rain at four.",
+				"See you, and get home safe.",
 				"I'm off, so see you at the harbour.",
 				"Later, and get some sleep.",
 				"Bye, the pier's quiet if you need it.",
@@ -1254,14 +1254,14 @@ Personalities.list = {
 				"I climbed the cliff the short way, and it was fine.",
 			},
 			worry = {
-				"{player}, it'll rain at four, so take the long coat.",
+				"{player}, take a coat up the hill, it's colder there.",
 				"The harbour wall's cracked by the steps, so watch your feet.",
 				"{player}, you're working late too often.",
-				"A storm's coming in tonight, so tie everything down.",
-				"The hill path's icy this morning, so go round.",
+				"The third plank on the pier is loose, so step over it.",
+				"The hill path's muddy by the stream, so go round.",
 			},
 			hmm = {
-				"Hm, the left one.",
+				"Hm, the first one.",
 				"Give me a second.",
 				"Either works.",
 				"Hm, let me think.",
@@ -1304,7 +1304,7 @@ Personalities.list = {
 				"Oh, it's you, hi, I suppose.",
 				"What do you want? Fine, hello.",
 				"Hi, and don't make a fuss about it.",
-				"You again, so sit down, but not there.",
+				"You again, huh, fine, hi.",
 				"Hello, I was passing anyway, so don't get excited.",
 			},
 			happy = {
@@ -1332,7 +1332,7 @@ Personalities.list = {
 			thanks = {
 				"Ugh, fine, thanks.",
 				"Thanks, but don't read into it.",
-				"I could have done it myself, but thanks.",
+				"I didn't need that, but thanks.",
 				"Don't make it a thing, but thank you.",
 				"Hmph, that actually helped, thanks.",
 			},
@@ -1397,12 +1397,12 @@ Personalities.list = {
 				"Your roof will leak in the next storm, and I'm not fixing it.",
 				"{player}, your back's going to hurt tomorrow, you know that?",
 				"Ugh, the cliff path's a mess, so go the long way.",
-				"Your fence is going to fall on someone.",
+				"That old ladder of yours is going to fall on someone.",
 			},
 			hmm = {
 				"Ugh, fine, that one.",
 				"Do I have to choose?",
-				"Neither, but if I have to, the left one.",
+				"Neither, but if I have to, the first one.",
 				"Hm, give me a minute.",
 				"Whatever, they're both fine.",
 			},
@@ -1470,10 +1470,10 @@ Personalities.list = {
 			},
 			thanks = {
 				"Thank you, I'll never forget this as long as I live!",
-				"You've saved me from total DISASTER.",
+				"This is the BEST thing anyone's done for me.",
 				"I'll write a song about this, I swear!",
 				"Thank you, you're a hero, and everyone will hear about it.",
-				"*gasp* For me? I don't deserve it!",
+				"*gasp* I don't deserve such kindness!",
 			},
 			wow = {
 				"{player}, did you see the sky go pink over the harbour?",
@@ -1603,15 +1603,15 @@ Personalities.list = {
 			angry = {
 				"Actually, that's simply not true.",
 				"I don't think that was fair, and I'd like you to know it.",
-				"Please don't fold the pages, it ruins the book.",
+				"Honestly, you could at least be polite about it.",
 				"That's rude, and I'm going back to my book.",
 				"I'm too cross to think of a clever reply, which makes me crosser.",
 			},
 			thanks = {
 				"Thank you, that was very thoughtful of you.",
 				"Thank you, I'll make a note of it.",
-				"Oh, thank you, this is exactly the edition I wanted.",
-				"Thank you, you've saved me at least an hour.",
+				"Oh, thank you, I'll write that down so I remember.",
+				"I don't say it enough, but thank you.",
 				"Thank you, I'll lend you something good.",
 			},
 			wow = {
@@ -1633,7 +1633,7 @@ Personalities.list = {
 				"Sorry, I'm rambling again.",
 				"I apologise, I should have checked first.",
 				"Sorry, I got that wrong, and I'll correct it.",
-				"I'm sorry, I was reading while walking again.",
+				"Sorry, I had my nose in a book again.",
 			},
 			yes = {
 				"Yes, that sounds very sensible.",
@@ -1650,7 +1650,7 @@ Personalities.list = {
 				"No, thank you, I've read what happens when people try that.",
 			},
 			bye = {
-				"Do read chapter three, it's the good part.",
+				"Goodbye, and do read something good tonight.",
 				"I must get back to my book, but this was lovely.",
 				"Bye, I'll bring you that book tomorrow.",
 				"See you, and tell me what you think of the ending.",
@@ -1720,7 +1720,7 @@ Personalities.list = {
 			hello = {
 				"Oh, it's you, hi.",
 				"Hi, I was just thinking nobody would stop today.",
-				"Hello, mind the puddle, I already stepped in it.",
+				"Hi, how's your day been? Mine's been grey.",
 				"Oh, hi, I'm a bit gloomy today, as usual.",
 				"Hey, you came over, huh, that's nice.",
 			},
@@ -1749,9 +1749,9 @@ Personalities.list = {
 			thanks = {
 				"Oh, thanks, nobody ever does that.",
 				"Thank you, heh, I don't know what to say.",
-				"Thanks, I'll try not to break it.",
+				"Thanks, that's the nicest thing all week.",
 				"Huh, that was nice of you, thanks.",
-				"Thanks, I'll keep it somewhere safe.",
+				"Thanks, that actually helped.",
 			},
 			wow = {
 				"{player}, I saw a rainbow, and it didn't even rain on me first.",
@@ -1793,7 +1793,7 @@ Personalities.list = {
 				"Okay, I'll go and stare at the sea for a bit.",
 				"Bye, that was nice, which is unusual.",
 				"See you, and mind the loose step.",
-				"Night, and try not to get rained on.",
+				"Bye, and try not to get rained on.",
 			},
 			tease = {
 				"Heh, you look as tired as I feel.",
@@ -1821,7 +1821,7 @@ Personalities.list = {
 				"Whichever one's less likely to fall apart.",
 				"I don't know, I always pick the wrong one.",
 				"Heh, you pick, then it's not my fault.",
-				"The grey one, it suits my mood.",
+				"I'll pick whatever you don't want.",
 			},
 			excited = {
 				"I'm excited, but I'm keeping quiet about it in case it all goes wrong.",
@@ -1859,9 +1859,9 @@ Personalities.list = {
 			hello = {
 				"Good day to you, I hope you're keeping well.",
 				"Hello, I hope I'm not interrupting.",
-				"Oh, good day, what a pleasure to see you.",
+				"Hello, what a pleasure to see you.",
 				"Hello, how are you keeping today?",
-				"Good day, and do mind the step, it's uneven.",
+				"How do you do, I hope all's well.",
 			},
 			happy = {
 				"I took the new neighbours a cake, and they seem very pleasant.",
@@ -1916,7 +1916,7 @@ Personalities.list = {
 			yes = {
 				"Certainly, I'd be delighted.",
 				"Yes, if it's no trouble.",
-				"Of course, what time would suit you?",
+				"Of course, I'd be glad to.",
 				"I'd be happy to, thank you for asking.",
 				"Yes, and I'll bring tea.",
 			},
@@ -1951,7 +1951,7 @@ Personalities.list = {
 			worry = {
 				"{player}, I do hope you're getting enough rest.",
 				"I worry that I'm a bother to the neighbours, with all my visits.",
-				"{player}, the sun's very strong today, so do wear a hat.",
+				"{player}, do wear a hat when the sun's strong.",
 				"The bridge could use a new rail, if anyone has the time.",
 				"I hope I didn't offend anyone at the market this morning.",
 			},
@@ -1996,9 +1996,9 @@ Personalities.list = {
 		color = "F2A65A",
 		lines = {
 			hello = {
-				"Hey, have you had lunch yet? I've had two.",
+				"Hey, have you eaten? I've already had two snacks.",
 				"Hi, can you smell that? The bakery's doing cinnamon.",
-				"Oh, hello, I'm just on my way to lunch.",
+				"Oh, hello, I'm just off to get a snack.",
 				"Hey, do you want half of my roll?",
 				"Hello, I've got crumbs on me, haven't I?",
 			},
@@ -2018,9 +2018,9 @@ Personalities.list = {
 				"The market had no lemons today, so lunch is ruined.",
 			},
 			angry = {
-				"Hey, that was the last bun, and it was mine!",
+				"Hey, I'm far too hungry for this!",
 				"I'm too hungry to argue with you.",
-				"You don't put jam on fish, and you know it.",
+				"Ugh, you've put me right off my lunch.",
 				"Ugh, I'm cross and hungry, the worst kind of cross.",
 				"Don't touch my lunch, I mean it.",
 			},
@@ -2046,7 +2046,7 @@ Personalities.list = {
 				"I ate a chili at the market, and I still can't feel my tongue.",
 			},
 			sorry = {
-				"Sorry, I ate the last one, and I'm not proud of it.",
+				"Sorry, that was me, and I'm not proud of it.",
 				"Sorry, I'll buy you a bun to make up for it.",
 				"My fault, I was thinking about lunch.",
 				"Sorry, I didn't mean to snap, I'm just hungry.",
@@ -2062,7 +2062,7 @@ Personalities.list = {
 			no = {
 				"No, I've just eaten, and I can't move.",
 				"Not before lunch, sorry.",
-				"No, thanks, it smells funny.",
+				"No, thanks, I'd rather have a snack.",
 				"I'd rather not, I've got bread in the oven.",
 				"Nope, I'm saving myself for dinner.",
 			},
@@ -2166,7 +2166,7 @@ Personalities.list = {
 			thanks = {
 				"Oh, th-thank you so much!",
 				"Thank you, sorry, thank you.",
-				"Oh, thank goodness, thank you.",
+				"Oh, that's so kind, thank you.",
 				"Thank you, I don't know what I'd do without you.",
 				"Thank you, I can breathe again now.",
 			},

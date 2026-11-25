@@ -188,7 +188,7 @@ local function craving(s: any, vid: string, v: any)
 	local short = math.max(0, price - (State.data.coins or 0))
 	Kit.list(s.answers, 8, true)
 	local button: TextButton
-	button = Dialogue.answer(Text.fill("Buy {food} for {n}", { food = food.name:lower(), n = Text.commas(price) }), {
+	button = Dialogue.answer(Text.fill("Buy {food} for {n}", { food = Foods.phrase(food), n = Text.commas(price) }), {
 		Name = "BuyWish",
 		Parent = s.answers,
 		Size = UDim2.fromOffset(320, 40),
@@ -217,8 +217,8 @@ local function craving(s: any, vid: string, v: any)
 				button:Destroy()
 				typeOut(
 					s.words,
-					Text.fill("{food}. That's just what I wanted. Thank you.", {
-						food = food.name:sub(1, 1):upper() .. food.name:sub(2),
+					Text.fill("Oh, {food}, that's just what I wanted! Thank you.", {
+						food = Foods.phrase(food),
 					})
 				)
 				s.note.Text = if type(msg) == "string" and msg ~= ""

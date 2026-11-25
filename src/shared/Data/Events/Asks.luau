@@ -129,14 +129,14 @@ event({
 			prickly = "{player}, I've got an awkward question, and I don't want a lecture.|{b} keeps cooking for me, and it's honestly awful.|I've eaten every bite so far, so should I say something?",
 			nervous = "{player}, s-sorry, can I ask you something awkward?|{b} keeps cooking for me, and it's really, really bad.|What if they ask me straight out whether I liked it?",
 			foodie = "I need to ask you as someone who takes food seriously.|{b} keeps cooking dinner for me, and the soup tastes like seawater.|Do I tell them, or do I keep smiling?",
-			gentle = "{player}, could I ask for some advice?|{b} keeps bringing me dinner, which is so sweet of them.|It's just very, very salty, and I don't know whether to tell them.",
+			gentle = "{player}, could I ask for some advice?|{b} keeps bringing me dinner, which is so sweet of them.|Oh, my, it's just very, very salty, and I don't know whether to tell them.",
 			shy = "Um, {player}, can I ask you something?|{b} keeps bringing me dinner, and it's... not very good.|I don't want to hurt their feelings, so I haven't said anything.",
-			cheeky = "{player} i need advice and you're not allowed to laugh|{b} keeps cooking me dinner and it tastes like a burnt boot|do i tell them or keep feeding it to the gulls",
+			cheeky = "{player} i need advice and you're not allowed to laugh|{b} keeps cooking me dinner and it tastes like they cooked it in the sea|do i tell them or keep feeding it to the gulls",
 			cool = "{player}.|{b} keeps cooking for me, and it isn't good.|Should I tell them?",
 			bold = "I'll be straight with you.|{b}'s cooking is bad, and they keep making me more of it.|I should tell them, right?",
 			dreamy = "{player}, can I ask you something?|{b} keeps bringing me dinner, and it all tastes a bit like the sea...|I think they use far too much salt, but I don't know how to say so.",
-			sunny = "{player}, I need your advice!|{b} keeps cooking for me, which is so nice of them, but the food is really salty.|Should I say something?",
-			easygoing = "{player}, got a minute? No rush.|{b}'s been bringing me dinner every night, which is great, except it's always burnt.|Should I say something, or just keep eating it?",
+			sunny = "I need your advice about something.|{b} keeps cooking for me, which is so nice of them, but the food is really salty.|Should I say something?",
+			easygoing = "{player}, got a minute? No rush.|{b}'s been bringing me dinner every night, which is great, except it's always far too salty.|Should I say something, or just keep eating it?",
 			_ = "I've got an awkward question for you.|{b} keeps cooking dinner for me, and it's really not good.|Should I tell them the truth?",
 		}, "sweat")
 		s:choice("Tell them, but kindly.", function(c)
@@ -240,12 +240,12 @@ event({
 		local s = K.scene(ctx, "A present for {b}")
 		burst(s, "a", {
 			nervous = "{player}, I want to get {b} a present, but I'm scared I'll get it wrong.|What if they open it and have to pretend to like it?|What do you think they'd want?",
-			bookish = "I'm choosing a present for {b}.|I've narrowed it down to three, which took most of the morning.|Which one do you think they'd like best?",
+			bookish = "I'm choosing a present for {b}.|I've narrowed it down to three, after reading a whole chapter on what people like to be given.|Which one do you think they'd like best?",
 			sunny = "{player}, help me, help me!|I want to get {b} a present, and I've got no idea what they like.|You know them, so you choose.",
 			shy = "Um, {player}, I'd like to give {b} something.|I don't know them that well yet, though.|What do you think they'd like?",
 			cool = "{player}.|I'm getting {b} a present.|Any idea what they'd like?",
 			foodie = "I want to get {b} a present, and I can't give everyone cake.|Well, I could, but I want this one to be special.|What would they like?",
-			gentle = "{player}, I'd like to give {b} a little something.|They've seemed tired lately, and I want to cheer them up.|What do you think they'd like?",
+			gentle = "I'd like to give {b} a little something.|They've seemed tired lately, and I want to cheer them up.|What do you think they'd like?",
 			dreamy = "{player}, I want to give {b} something...|I keep picturing them opening it, but the present is always blurry.|What would they like?",
 			bold = "{player}, I'm getting {b} a present today.|You know them better than I do, right?|So tell me what they'd like.",
 			_ = "{player}, I want to get {b} something nice.|What do you think they'd like?",
@@ -301,7 +301,7 @@ event({
 			dramatic = "{player}, every great person has a line they're known for.|I've just realised I don't have one, and it's a TRAGEDY.|Will you choose mine?",
 			cool = "{player}.|Everyone round here has a thing they always say.|I don't, so pick one for me.",
 			nervous = "{player}, I just noticed that everyone has a thing they always say.|I-I don't have one, and what if people have noticed?|Could you pick one for me?",
-			sunny = "{player}, I want a catchphrase like everyone else has!|Help me pick one, and I'll start saying it today.",
+			sunny = "I want a catchphrase like everyone else has.|Help me pick one, and I'll start saying it today.",
 			gloomy = "{player}, everyone has a thing they say, except me.|Heh... mine's just a long sigh.|Could you pick me something better?",
 			proud = "Someone like me deserves a proper saying.|Choose me something worthy, and I'll make it famous.",
 			bookish = "Did you know most people repeat the same few phrases every day?|I've been listening, and I realised I don't have one of my own.|Would you choose one for me?",
@@ -355,7 +355,7 @@ event({
 			cheeky = "{player} i'm bored|entertain me or give me a hobby, your choice",
 			bookish = "I've finished every book I borrowed this week.|Actually, I think I need something to do that isn't reading.",
 			nervous = "{player}, I've got nothing to do today, and it's making me jittery.|What if I just sit here fidgeting all afternoon?",
-			gentle = "{player}, have you got a minute?|I've had a very quiet week, and I think I'd like a hobby.",
+			gentle = "Have you got a minute?|I've had a very quiet week, and I think I'd like a hobby.",
 			dreamy = "{player}...|I've been sitting by the window all morning, watching the gulls.|I think I need something to do.",
 			_ = "I'm so bored that I've started counting the tiles on my floor.",
 		}, "sad")
@@ -443,8 +443,8 @@ event({
 			bold = "There's a dance at the hall on Friday, and I'm going.|I'm just not turning up on my own.",
 			dramatic = "{player}, the hall dance is on Friday.|I need someone beside me when I walk in, purely for the effect.",
 			nervous = "The hall's having a dance on Friday.|What if I go alone and end up standing by the wall all night?",
-			sunny = "{player}, there's a dance at the hall on Friday!|It'll be so much more fun if I bring a friend.",
-			gentle = "{player}, there's a dance at the hall on Friday.|I'd love to go, but I'd feel better with a friend beside me.",
+			sunny = "There's a dance at the hall on Friday, and I really want to go.|It'll be so much more fun if I bring a friend.",
+			gentle = "There's a dance at the hall on Friday.|I'd love to go, but I'd feel better with a friend beside me.",
 			dreamy = "{player}, they're hanging lanterns in the hall for Friday's dance...|I want to go, but not on my own.",
 			polite = "{player}, there's to be a dance at the hall on Friday.|I'd rather not go alone, if I can help it.",
 			_ = "There's a dance at the hall on Friday.|I'd rather not go on my own.",
@@ -492,11 +492,11 @@ event({
 		burst(s, "a", {
 			dramatic = "I've brought home a new fern.|It's a very serious fern, so it needs a name with some weight to it.",
 			gloomy = "I got a fern from the market.|It droops a bit and looks worried all the time, like me.|It needs a name.",
-			sunny = "{player}, I got a fern!|It needs a name, and I want you to choose it.",
+			sunny = "I got a fern from the market today.|It needs a name, and I want you to choose it.",
 			bookish = "{player}, I've got a new fern, and it needs a name.|Did you know ferns are older than trees?|It deserves a good one.",
 			shy = "Um, {player}, I got a little fern.|It doesn't have a name yet, and I thought you might pick one.",
 			cheeky = "{player} i got a fern|it needs a name and you're picking, no take backs",
-			gentle = "{player}, I've brought home a little fern.|It needs a name, and I'd like you to choose it.",
+			gentle = "I've brought home a little fern.|It needs a name, and I'd like you to choose it.",
 			dreamy = "{player}, my new fern keeps leaning towards the window...|I think it's waiting for a name.",
 			_ = "{player}, I've got a new fern for my windowsill.|It needs a name, and I can't think of a good one.",
 		}, "question")
@@ -533,7 +533,7 @@ event({
 			proud = "I'm considering bright blue hair.|It would suit me, naturally, but I'd like a second opinion.",
 			gloomy = "I keep thinking about dyeing my hair blue.|It'll look awful, I expect, but I can't stop thinking about it.",
 			gentle = "{player}, can I ask what you think?|I've been wondering about dyeing my hair blue, just a soft blue.",
-			dreamy = "{player}, I saw a blue fishing boat this morning...|Now I can't stop thinking about having hair that colour.",
+			dreamy = "I saw a blue fishing boat this morning...|Now I can't stop thinking about having hair that colour.",
 			sunny = "{player}, I've had a fun idea!|I want to dye my hair bright blue, so should I?",
 			_ = "I'm thinking of dyeing my hair bright blue.|Should I go for it?",
 		}, "idea")
@@ -593,9 +593,9 @@ event({
 			proud = "{player}, I'm cooking dinner for {b} tonight.|It'll be excellent, naturally, but I still need to choose a dish.",
 			shy = "Um, {player}, I offered to cook dinner for {b} tonight.|I don't really know what they like, though.",
 			bold = "{b}'s coming round for dinner tonight, and I'm cooking.|You know what they like, right?",
-			gentle = "{player}, I've invited {b} round for dinner tonight.|They've had a long week, so I want to make something they love.",
+			gentle = "I've invited {b} round for dinner tonight.|They've had a long week, so I want to make something they love.|Have you eaten, by the way? There'll be plenty left over.",
 			dreamy = "{player}, I'm cooking for {b} tonight...|I've been staring into my cupboard for ten minutes.",
-			sunny = "{player}, {b}'s coming to dinner tonight!|I want it to be the best meal they've had all week.",
+			sunny = "{b}'s coming to dinner tonight, and I'm cooking.|I want it to be the best meal they've had all week.",
 			_ = "{player}, I'm cooking dinner for {b} tonight.|I want to make something they'll really enjoy.",
 		}, "question")
 		s:say("a", "What do you think I should make?", "question")
@@ -633,8 +633,8 @@ event({
 			sunny = "{player}, {b} and I still aren't talking.|I hate it so much, it's making my whole day grey.",
 			shy = "Um, {player}, {b} and I still haven't made up.|I keep seeing them in the square and looking away.",
 			bold = "{b} and I still aren't talking, and I'm sick of it.",
-			gentle = "{player}, {b} and I still haven't made up.|I keep thinking about how upset they looked.",
-			dreamy = "{player}, I walked past {b}'s house today...|We still aren't talking, and it feels strange not to wave.",
+			gentle = "{player}, {b} and I still haven't made up.|Oh, my, I keep thinking about how upset they looked.",
+			dreamy = "I walked past {b}'s house today...|We still aren't talking, and it feels strange not to wave.",
 			_ = "{player}, {b} and I still aren't talking.|It's been days now, and I hate it.",
 		}, "sad")
 		s:say("a", "Should I say sorry first, even though it was half their fault?", "sad")
@@ -659,7 +659,7 @@ event({
 					cool = "Yeah, I'm sorry too.",
 					gloomy = "I thought you'd never speak to me again.|...I'm sorry too.",
 					gentle = "Oh, I'm sorry too.|Let's not do that again, all right?",
-					sunny = "I'm sorry too!|I missed you so much, it was awful.",
+					sunny = "I'm sorry too, really.|I missed you so much, it was awful.",
 					_ = "...Yes, I'm sorry too.|I really missed you.",
 				}, "heart")
 				c:fx({ t = "makeup", a = "a", b = "b" })
@@ -704,9 +704,9 @@ event({
 			bookish = "I'd like to learn something new this week.|Something practical, ideally, rather than something I can read about.",
 			easygoing = "I'm thinking of learning something new.|Nothing too tiring, mind you, since I have naps to fit in.",
 			nervous = "{player}, I want to learn something new, but I don't know what.|What if I pick something and I'm hopeless at it?",
-			sunny = "{player}, I want to learn something new this week!|You choose, and I'll practise every single day.",
-			gentle = "{player}, I'd like to learn something new this week.|Nothing difficult, just something to do in the evenings.",
-			dreamy = "{player}, I watched someone on the beach yesterday who could do something amazing...|It made me want to learn a new skill.",
+			sunny = "I want to learn something new this week!|You choose, and I'll practise every single day.",
+			gentle = "I'd like to learn something new this week.|Nothing difficult, just something to do in the evenings.",
+			dreamy = "I watched someone on the beach yesterday who could do something amazing...|It made me want to learn a new skill.",
 			cheeky = "{player} i'm learning a new trick this week|pick one and i'll show off with it at the market",
 			_ = "I want to learn something new this week.|Which one should I try?",
 		}, "question")
@@ -746,7 +746,7 @@ event({
 			cheeky = "{player} guess what|i'm throwing {b} a surprise party|you didn't hear it from me and you won't tell, right",
 			sunny = "{player}, I'm planning a surprise party for {b}!|Don't tell them, don't tell them, okay?",
 			polite = "{player}, I'm arranging a small surprise party for {b} on Friday.|I'd be very grateful if you kept it to yourself.",
-			gentle = "{player}, I'm planning a little surprise party for {b}.|They've been working so hard lately.|You'll keep it quiet, won't you?",
+			gentle = "I'm planning a little surprise party for {b}.|They've been working so hard lately.|You'll keep it quiet, won't you?",
 			dreamy = "{player}, I'm planning a surprise party for {b}...|I've already hung all the lanterns in my head.|You won't tell them, will you?",
 			bold = "{player}, I'm throwing {b} a surprise party on Friday.|You can keep a secret, right?",
 			_ = "{player}, I'm planning a surprise party for {b}.|You won't tell them, will you?",
@@ -780,18 +780,18 @@ event({
 		local s = K.scene(ctx, "Too much bread")
 		burst(s, "a", {
 			foodie = "{player}, this is a bread emergency!|I got carried away at the oven and made far too much.",
-			sunny = "{player}, okay, so, I made some bread.|I made so much bread that you wouldn't believe it!",
-			gentle = "I'm sorry to bother you.|I've baked far too much bread, and I'm not sure what to do with it.",
+			sunny = "{player}, okay, so, I made some bread.|I made so much bread that you wouldn't believe it.",
+			gentle = "I'm sorry to bother you, but have you eaten yet?|I've baked far too much bread this morning.",
 			dramatic = "{player}, there has been a bread SITUATION in my kitchen.",
 			nervous = "I think I made too much bread.|Is eleven loaves too many for one person?",
 			gloomy = "I made too much bread.|Heh... of course I did.",
 			cool = "{player}.|I made too much bread.",
-			dreamy = "{player}, I got lost in a book while the dough was rising...|Now there's bread everywhere.",
+			dreamy = "I got lost in a book while the dough was rising...|Now there's bread everywhere.",
 			_ = "{player}, I made way too much bread.",
 		}, "sweat")
 		burst(s, "a", {
 			foodie = "There are eleven loaves on the table right now.|The dough kept rising, and so did my hopes.",
-			bookish = "I doubled the recipe, then doubled it again by mistake.|That's four times the bread, and I've counted every loaf.",
+			bookish = "I doubled the recipe, then doubled it again by mistake.|That's four times the bread, and I've counted every loaf.|Sorry, I'm rambling again, but what do I do with it all?",
 			nervous = "There are eleven of them, and they're everywhere.|The kitchen's so full I can't even reach the kettle.",
 			easygoing = "I think it's eleven loaves, but I stopped counting.|They're all over the kitchen, and one of them is on my chair.",
 			_ = "There are eleven loaves, and the kitchen's full.|What do I do with them all?",
@@ -832,14 +832,14 @@ event({
 		local s = K.scene(ctx, "A shell from the beach")
 		s:prop("box", "a")
 		burst(s, "a", {
-			sunny = "{player}, look, look!|I found the most perfect shell on the beach!",
+			sunny = "{player}, look, look!|I found the most perfect shell on the beach.",
 			dreamy = "I found a shell this morning.|When I hold it to my ear it sounds like the sea, which makes sense, I suppose.",
 			bookish = "Look at this spiral shell I found.|Actually, it turns to the right, which is what most of them do.",
 			cool = "{player}.|I found a shell on the beach this morning.",
 			shy = "Um, {player}?|I found this on the beach, and I wanted to show someone.",
 			dramatic = "{player}, the sea has given me a GIFT.",
-			gentle = "{player}, I found such a pretty shell on the beach this morning.|I thought of you straight away.",
-			easygoing = "{player}, I was lying on the beach doing nothing, and a shell rolled right up to my hand.|It's a really nice one.",
+			gentle = "{player}, I found such a pretty shell on the beach this morning.|I carried it home in both hands so it wouldn't break.",
+			easygoing = "I was lying on the beach doing nothing, and a shell rolled right up to my hand.|It's a really nice one.",
 			_ = "{player}, look what I found on the beach.",
 		}, "sparkle")
 		s:say("a", "There isn't a single chip on it, so what should I do with it?", "question")
@@ -909,7 +909,7 @@ event({
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "A new colour")
 		burst(s, "a", {
-			sunny = "{player}, I need your help with something!|I'm painting my front door, and I can't decide on a colour.",
+			sunny = "{player}, can you help me with something?|I'm painting my front door, and I can't decide on a colour.",
 			proud = "{player}, I'm repainting my front door.|It needs a colour that says something about me.",
 			nervous = "{player}, I'm painting my front door this weekend.|What if I pick a bad colour and have to look at it every day?",
 			bookish = "{player}, I've got my door colours down to two.|It took me a whole week of staring at paint cards.",
@@ -944,7 +944,7 @@ event({
 		local s = K.scene(ctx, "The pier")
 		burst(s, "a", {
 			shy = "Um, {player}?|Would you walk to the pier with me?|I don't like going out there on my own in the dark.",
-			sunny = "{player}, do you want to walk down to the pier?|The stars are out, and it's so clear tonight!",
+			sunny = "{player}, do you want to walk down to the pier?|The stars are out, and it's so clear tonight.",
 			gloomy = "I'm going down to the pier, though it'll be cold.|You could come, if you want.",
 			dreamy = "{player}, the water at the pier goes silver at night.|Have you ever seen it?|Come with me...",
 			nervous = "Would you come to the pier with me?|The boards creak a lot, and I keep thinking one of them will snap.",
@@ -1007,7 +1007,7 @@ event({
 			cool = "{player}.|I made a stool.|Take a look.",
 			cheeky = "{player} i made a stool|sit on it, it's fine, i promise|...mostly fine",
 			gentle = "{player}, I finished the stool I was making.|Would you come and look at it?",
-			dreamy = "{player}, I made a stool...|I sanded it until it felt like a pebble.",
+			dreamy = "I made a stool...|I sanded it until it felt like a pebble.",
 			_ = "{player}, look, I made a stool.",
 		}, "sparkle")
 		burst(s, "a", {
@@ -1062,8 +1062,8 @@ event({
 			bold = "{b} plays music until midnight every night.|I'm about to go round there.",
 			shy = "Um, {player}, {b}'s music keeps me awake.|I don't know how to tell them.",
 			gentle = "{player}, I don't like to complain.|{b}'s music goes on very late, and I'm so tired.",
-			dreamy = "{player}, {b}'s music drifts over the fence every night...|It's nice music, but it goes on until midnight.",
-			sunny = "{player}, I love music, I really do!|But {b} plays it until midnight, and I'm so tired.",
+			dreamy = "{b}'s music drifts over the fence every night...|It's nice music, but it goes on until midnight.",
+			sunny = "I love music, I really do.|But {b} plays it until midnight, and I'm so tired.",
 			_ = "{b} plays music really late every night.|I haven't had a proper night's sleep all week.",
 		}, "sweat")
 		s:say("a", "What should I do about it?", "question")
@@ -1089,7 +1089,7 @@ event({
 			c:mood("a", 4)
 		end)
 		s:choice("Ask {b} for a song you like.", function(c)
-			say(c, "a", "Join in, you mean?|Huh, I hadn't thought of that.", "idea")
+			say(c, "a", "Ask them to play something I like, you mean?|Huh, I hadn't thought of that.", "idea")
 			c:n("That night {a} knocked on {b}'s door with a song request.")
 			c:voice("b", "excited", "music", "cheer")
 			c:rel(4)
@@ -1166,12 +1166,12 @@ event({
 			nervous = "{player}, it's a big day at the {job} tomorrow.|What if nobody comes?|What if everybody comes at once?",
 			gloomy = "Tomorrow's a big day at the {job}.|It'll go wrong, because things usually do.",
 			proud = "{player}, I'm running the {job} on my own tomorrow.|I'm not nervous.|...Well, maybe a little.",
-			sunny = "{player}, tomorrow's a big day at the {job}!|I'm excited, but I also feel a bit sick.",
+			sunny = "Tomorrow's a big day at the {job}!|I'm excited, but I also feel a bit sick.",
 			polite = "{player}, may I ask your advice?|Tomorrow is a very big day at the {job}.",
 			shy = "Um, {player}, it's a big day at the {job} tomorrow.|There are going to be so many people.",
 			bold = "It's a big day at the {job} tomorrow.|I'm ready for it, mostly.",
 			gentle = "{player}, tomorrow's a big day at the {job}.|I want everyone to have a nice time, and I'm a little nervous.",
-			dreamy = "{player}, tomorrow's a big day at the {job}...|I dreamed I forgot to open the door.",
+			dreamy = "Tomorrow's a big day at the {job}...|I dreamed I forgot to open the door.",
 			easygoing = "{player}, tomorrow's a busy one at the {job}.|I'll have to be awake the whole day, which is a lot.",
 			_ = "Tomorrow's a big day at the {job}.|I keep going over everything in my head.",
 		}, "sweat")
@@ -1187,7 +1187,7 @@ event({
 			c:mood("a", 6)
 		end)
 		s:choice("Practise on me now.", function(c)
-			c:n("{a} ran through the whole day out loud while you played the customers.")
+			c:n("{a} ran through the whole day out loud while you played everyone who might turn up.")
 			burst(c, "a", {
 				cheeky = "you were a terrible customer|perfect practice, honestly",
 				bookish = "That really helped.|I found two things I need to fix.",
@@ -1219,7 +1219,7 @@ event({
 			cool = "{player}.|I made soup.|Will you taste it?",
 			gentle = "{player}, have you eaten yet?|I made soup, and I'd love you to try it.",
 			dreamy = "{player}, I made soup...|It tastes like something's missing, but I can't tell what.",
-			easygoing = "{player}, I made soup, and I've tasted it so many times that I can't tell any more.|Can you try it?",
+			easygoing = "I made soup, and I've tasted it so many times that I can't tell any more.|Can you try it?",
 			_ = "{player}, will you taste my soup?|I can't tell if it needs salt.",
 		}, "question")
 		s:choice("Add a pinch of salt.", function(c)
@@ -1259,9 +1259,9 @@ event({
 			cool = "{player}.|I'm writing to my gran, and I'm stuck.",
 			shy = "Um, {player}, I'm writing to my gran.|What do people usually put in letters?",
 			polite = "{player}, I'm writing to my gran this afternoon.|Would you help me decide what to say?",
-			sunny = "{player}, I'm writing to my gran!|I want to tell her everything, but I don't know where to start.",
-			gentle = "{player}, I'm writing to my gran.|I want her to know I'm happy here, but I don't know what to say.",
-			dreamy = "{player}, I've been writing to my gran...|So far it just says 'Dear Gran'.",
+			sunny = "I'm writing a letter to my gran.|I want to tell her everything, but I don't know where to start.",
+			gentle = "I'm writing to my gran.|I want her to know I'm happy here and eating properly, but I don't know what to say.",
+			dreamy = "I've been writing to my gran...|So far it just says 'Dear Gran'.",
 			_ = "I'm writing to my gran, and I don't know what to put.|She always wants to hear everything.",
 		}, "question")
 		s:choice("Tell her about the town.", function(c)
@@ -1300,7 +1300,7 @@ event({
 			dramatic = "{player}, my fern is WILTING.|I can't bear to look at it.",
 			bookish = "My plant's drooping.|I've ruled out three causes, and there are seven left on my list.",
 			dreamy = "{player}, my plant's leaning over like it's tired...|I think it's sad about something.",
-			sunny = "{player}, my plant's gone all droopy!|I don't know what it needs, can you help?",
+			sunny = "My plant's gone all droopy, and I don't know why.|Can you help me work out what it needs?",
 			_ = "My plant's gone all droopy.|I don't know what's wrong with it.",
 		}, "sad")
 		-- one of the two fixes works, this time
@@ -1311,7 +1311,7 @@ event({
 				burst(c, "a", {
 					gloomy = "It's alive...|Huh, something actually went right.",
 					dramatic = "It LIVES!|You saved it, {player}.",
-					gentle = "It's standing up straight again.|Thank you, I was so worried about it.",
+					gentle = "Oh, my, it's standing up straight again.|Thank you, I was so worried about it.",
 					_ = "Look, it's perked right up.|Thank you, I was really worried about it.",
 				}, "sparkle", "cheer")
 				c:mood("a", 5)
@@ -1357,7 +1357,7 @@ event({
 			dreamy = "It's raining...|I could do anything today, and that's the trouble.",
 			gloomy = "It's raining, of course.|What does anyone even do on a day like this?",
 			nervous = "It's raining, and it doesn't look like it'll stop.|What if it rains all day and I just sit here?",
-			gentle = "{player}, it's pouring out there, so stay dry, okay?|I'm stuck inside and can't think what to do.",
+			gentle = "It's pouring out there, so stay dry, okay?|I'm stuck inside and can't think what to do.",
 			cheeky = "{player} it's raining|i'm bored already and it's only been an hour|give me something to do",
 			proud = "{player}, the rain has ruined my plans for the day.|What would you do?",
 			foodie = "{player}, it's raining, and I've already eaten all my snacks.|What do I do now?",
@@ -1410,11 +1410,13 @@ event({
 			nervous = "I keep thinking about tomorrow, and then the day after that.",
 			foodie = "I think it's the cheese I had after dinner.|It was a lot of cheese.",
 			dramatic = "My thoughts won't be quiet.|It's like they're throwing a party in my head.",
-			bookish = "I tried counting sheep.|Then I started wondering how many sheep there are on the whole island.",
+			bookish = "I tried counting sheep.|Then I started wondering how many sheep there are on the whole island.|Did you know nobody has ever actually counted them?",
 			gloomy = "I've been lying here listing everything that could go wrong.|It's a long list.",
 			shy = "I keep thinking about something silly I said today.",
 			gentle = "I keep worrying about everyone, and then I can't stop.",
-			_ = "My head just won't switch off.",
+			sunny = "I keep planning tomorrow, and it's going to be such a good day.",
+			dreamy = "I keep wondering where the gulls sleep at night.",
+			_ = "I keep going over today in my head.",
 		}, "question")
 		s:choice("Try to get some sleep.", function(c)
 			burst(c, "a", {
@@ -1460,7 +1462,7 @@ event({
 			gloomy = "I've forgotten their name again.|And now they're coming over, as usual.",
 			cool = "{player}.|Quick, what's their name?",
 			gentle = "{player}, oh, my, the person coming over...|I've forgotten their name, and they're always so kind to me.",
-			dreamy = "{player}, someone's waving at me...|I know their face, but the name has floated away.",
+			dreamy = "Someone's waving at me...|I know their face, but the name has floated away.",
 			sunny = "{player}, quick, quick!|What's the name of the person coming over?",
 			_ = "Who's that coming over?|I've completely forgotten their name.",
 		}, "sweat")
@@ -1477,7 +1479,7 @@ event({
 		s:choice("Just ask them.", function(c)
 			say(c, "a", "I'm so sorry, this is awful.|What's your name again?", "sweat")
 			burst(c, "b", {
-				gentle = "It's {b}, and don't worry.|I forget names all the time.",
+				gentle = "It's {b}, and don't worry, all right?|I forget names all the time.",
 				proud = "It's {b}.|I'll try not to be hurt.",
 				prickly = "It's {b}.|Write it down this time.",
 				gloomy = "It's {b}.|Heh... nobody remembers, so it's fine.",
@@ -1505,7 +1507,7 @@ event({
 			cool = "{player}.|There's a spot I like up on the hill.|Want to see it?",
 			bookish = "I found a hollow up on the hill.|You can see the whole bay from it.|Would you like to see?",
 			gentle = "{player}, would you like to see a place I go when I need some quiet?|I'd like to show you.",
-			sunny = "{player}, I want to show you my secret spot!|Come on, it's not far.",
+			sunny = "I want to show you my secret spot!|Come on, it's not far.",
 			_ = "Do you want to see my secret spot?|It's not far, and nobody else goes there.",
 		}, "idea")
 		s:choice("I'd love to see it.", function(c)
@@ -1515,7 +1517,7 @@ event({
 				cheeky = "tell no one|not even the gulls",
 				shy = "I've never shown anyone before.|You're the first.",
 				gloomy = "It's the one place where nothing ever goes wrong.",
-				gentle = "I come here when I've had a long day.|You're welcome here any time.",
+				gentle = "I come here when I've had a long day.|You're welcome here any time, all right?",
 				_ = "You can come up here too, whenever you like.|It's our spot now.",
 			}, "heart")
 			c:hearts("a", 1)
@@ -1552,8 +1554,8 @@ event({
 			nervous = "{player}, is it bad? It's bad, isn't it?|Is everyone looking at me?",
 			sunny = "Look at my hat!|It has a feather and a little bell on it.",
 			cool = "{player}.|I lost a bet.|Don't ask about the hat.",
-			gentle = "{player}, I lost a bet, so I'm stuck with this hat.|Please be kind about it.",
-			dreamy = "{player}, there's a bell on my hat...|It jingles every time I nod, so I'm trying not to nod.",
+			gentle = "{player}, I lost a bet, so I'm stuck with this hat.|Please be kind about it, okay?",
+			dreamy = "There's a bell on my hat...|It jingles every time I nod, so I'm trying not to nod.",
 			_ = "{player}, be honest with me.|How silly does this hat look?",
 		}, "sweat")
 		s:choice("It suits you, honestly.", function(c)
@@ -1595,7 +1597,7 @@ event({
 			proud = "I'm asking {b} to join my quiz team.|I've prepared a short speech, naturally.",
 			bookish = "I'm asking {b} to join our quiz team.|I've written out three different ways to ask.",
 			gentle = "{player}, I'd like to ask {b} to join our quiz team.|Could I practise on you first?",
-			sunny = "{player}, I want {b} on my quiz team!|Can I practise asking you first?",
+			sunny = "I really want {b} on my quiz team.|Can I practise asking you first?",
 			dreamy = "{player}, I want to ask {b} to join my quiz team...|But every time I try, the words float off.",
 			_ = "{player}, can I practise asking {b} to join my quiz team?|I always go quiet when I try to ask people things.",
 		}, "sweat")
@@ -1609,7 +1611,7 @@ event({
 			if keen then
 				burst(c, "b", {
 					cool = "Sure, when is it?",
-					bookish = "Yes, I'd love to.|I know nearly all the capitals.",
+					bookish = "Yes, I'd love to.|Actually, I know nearly all the capitals.",
 					foodie = "Is there food at the quiz?|Then yes.",
 					dramatic = "I thought you'd never ask!|Yes, a thousand times.",
 					gloomy = "You want me on the team?|I'll get every question wrong, but okay.",
@@ -1648,11 +1650,11 @@ event({
 		local s = K.scene(ctx, "A bet on the weather")
 		burst(s, "a", {
 			cheeky = "{player} bet you it rains tomorrow|go on, take the bet",
-			bold = "I bet you it's sunny tomorrow.|Go on, bet against me.",
-			bookish = "I've been reading the clouds all afternoon.|Would you like to bet on tomorrow's weather?",
-			gloomy = "It's going to rain tomorrow.|I'd bet on it, actually.",
-			sunny = "{player}, let's make a bet!|Sun or rain tomorrow, you pick.",
-			dreamy = "{player}, the clouds look heavy this afternoon...|Do you think it'll rain tomorrow, or not?",
+			bold = "Let's bet on tomorrow's weather.|Sun or rain, you choose, and I'll take the other one.",
+			bookish = "Did you know you can tell tomorrow's weather from today's clouds?|I've been reading them all afternoon, so would you like to bet on it?",
+			gloomy = "Want to bet on tomorrow's weather?|I'll lose, as usual, so you might as well pick first.",
+			sunny = "Let's make a bet!|Sun or rain tomorrow, you pick.",
+			dreamy = "The clouds look heavy this afternoon...|Do you think it'll rain tomorrow, or not?",
 			_ = "{player}, sun or rain tomorrow?|Pick one, and we'll see who's right.",
 		}, "idea")
 		s:say("a", "Whoever loses has to sing a song by the fountain.", "music")
@@ -1695,7 +1697,7 @@ event({
 			bold = "{player}, knock on my door at six tomorrow, and knock loud.|I want to see the sunrise.",
 			gloomy = "I want to see the sunrise tomorrow.|I'll sleep through it, as usual.",
 			gentle = "{player}, I've always wanted to watch the sunrise from the hill.|Would you knock on my door at six tomorrow, if it's not too early for you?",
-			sunny = "{player}, I want to see the sunrise tomorrow!|Can you knock on my door at six?",
+			sunny = "I want to see the sunrise tomorrow, just once.|Can you knock on my door at six?",
 			_ = "{player}, could you knock on my door at six tomorrow?|I want to see the sunrise.",
 		}, "question")
 		s:choice("I'll knock, don't worry.", function(c)
@@ -1780,7 +1782,7 @@ event({
 			dramatic = "{player}, my room is PERFECT.|I cried a little when I first saw it.",
 			foodie = "My room is lovely.|It's close to the kitchen, and that's all I ever ask.",
 			gentle = "{player}, I wanted to thank you for my room.|I sleep so well in it.",
-			dreamy = "{player}, the light comes through my window in stripes in the morning...|I love my room, thank you.",
+			dreamy = "The light comes through my window in stripes in the morning...|I love my room, thank you.",
 			easygoing = "{player}, my bed is the comfiest bed I've ever napped in.|Thanks for the room.",
 			_ = "{player}, my room's really nice.|Thank you.",
 		}, "heart")
@@ -1888,7 +1890,7 @@ event({
 			nervous = "{player}, s-sorry about last night.|Did I say anything strange? I can't remember half of it.",
 			easygoing = "I woke up and found twelve messages to you on my phone.|They're from me, sent at three in the morning.",
 			gentle = "{player}, I hope I didn't keep you up last night.|Did I say anything odd? I was half asleep.",
-			dreamy = "{player}, I think I sent you something about the moon last night...|Did it make any sense?",
+			dreamy = "I think I sent you something about the moon last night...|Did it make any sense?",
 			sunny = "{player}, I just read what I sent you last night!|Did I really say all that?",
 			_ = "{player}, did I say anything odd last night?|I was so tired that I can't remember.",
 		}, "sweat")
@@ -1944,7 +1946,7 @@ event({
 			cool = "{player}.|Look at this.",
 			foodie = "Look what I saw on my way to lunch.",
 			gentle = "{player}, I took a picture this morning, and it made me smile.|I wanted to show you.",
-			dreamy = "{player}, I took a picture this morning...|It's my favourite one so far.",
+			dreamy = "I took a picture this morning...|It's my favourite one so far.",
 			_ = "{player}, look at the picture I took this morning.",
 		}, "sparkle")
 		s:n("It was {pic}.")
@@ -1952,7 +1954,7 @@ event({
 			proud = "It's good, isn't it?|Go on, say it.",
 			shy = "Is it okay?",
 			gloomy = "It actually came out, which is a first.",
-			bookish = "I waited twenty minutes for the light to be right.",
+			bookish = "Actually, I waited twenty minutes for the light to be right.",
 			_ = "It's good, right?",
 		}, "question")
 		s:choice("That's a great picture.", function(c)
@@ -1987,10 +1989,10 @@ event({
 
 -- an invite for tomorrow
 local TOMORROWS = {
-	{ what = "a morning's fishing off the pier", place = "the end of the pier", time = "seven" },
-	{ what = "breakfast at the café", place = "the café", time = "nine" },
+	{ what = "a morning's fishing", place = "the end of the pier", time = "seven" },
+	{ what = "breakfast", place = "the café", time = "nine" },
 	{ what = "a walk up the hill", place = "the fountain", time = "ten" },
-	{ what = "a look round the market", place = "the market", time = "eleven" },
+	{ what = "a look round the market", place = "the market gate", time = "eleven" },
 }
 
 event({
@@ -2065,7 +2067,7 @@ event({
 			cool = "{player}, about yesterday.|I'm sorry.",
 			gentle = "{player}, about yesterday.|I was very short with you, and I'm sorry, I didn't mean it.",
 			dreamy = "{player}, I was in a strange mood yesterday...|I think I snapped at you, and I'm sorry.",
-			sunny = "{player}, I'm really sorry about yesterday!|I was grumpy, and it wasn't fair on you.",
+			sunny = "{player}, I'm really sorry about yesterday.|I was grumpy, and it wasn't fair on you.",
 			_ = "{player}, about yesterday.|I was in a mood, and I'm sorry.",
 		}, "sad")
 		s:choice("It's already forgotten.", function(c)
@@ -2109,7 +2111,7 @@ event({
 			foodie = "Guess what's in my pocket.|Here's a hint, it's still warm.",
 			dramatic = "There is a MYSTERY in my pocket.|Can you guess what it is?",
 			gentle = "{player}, I've got a little something in my pocket.|Can you guess what it is?",
-			dreamy = "{player}, there's something in my pocket that I found this morning...|Can you guess what it is?",
+			dreamy = "There's something in my pocket that I found this morning...|Can you guess what it is?",
 			_ = "{player}, guess what's in my pocket.|I'll give you two tries.",
 		}, "idea")
 		-- either way, the answer
@@ -2153,9 +2155,9 @@ event({
 			gloomy = "Everything went wrong at the {job} today.|Even the things that never go wrong went wrong, as usual.",
 			bold = "Two people were off today, so I ran the {job} on my own.|I did all of it, and now I'm done.",
 			nervous = "I got so many things mixed up at the {job} today.|Nobody was cross with me, but I was cross with myself.",
-			gentle = "{player}, I'm sorry, I need to tell someone about my day.|Everything at the {job} took twice as long as it should have.",
-			dreamy = "{player}, today at the {job} went wrong from the very start...|I feel like I've been underwater all day.",
-			sunny = "{player}, today at the {job} was the worst!|Everything that could go wrong did.",
+			gentle = "I'm sorry, I need to tell someone about my day.|Everything at the {job} took twice as long as it should have.",
+			dreamy = "Today at the {job} went wrong from the very start...|I feel like I've been underwater all day.",
+			sunny = "Today at the {job} was the worst!|Everything that could go wrong did.",
 			_ = "{player}, it was such a long day at the {job}.|Everything piled up at once.",
 		}, "sad")
 		s:say("a", "...Sorry, that was a lot to dump on you.", "sweat")
@@ -2255,9 +2257,12 @@ event({
 			burst(c, "a", {
 				dramatic = "Why you? WHY YOU?|...Because everyone else said no.",
 				cheeky = "you were the nearest, that's why",
-				sunny = "Because you're the best, obviously!|Meet me at the fountain in ten minutes.",
+				sunny = "Because you're the best, obviously.|Meet me at the fountain in ten minutes.",
 				dreamy = "Yours was the first name I thought of.",
-				_ = "Because I said so.|Meet me at the fountain in ten minutes.",
+				gentle = "Because you're the kindest person I know.|Meet me at the fountain in ten minutes, all right?",
+				shy = "Um, because I trust you...|Could you meet me at the fountain in ten minutes?",
+				polite = "Because I couldn't think of anyone better.|Shall we meet at the fountain in ten minutes?",
+				_ = "Because you're good at this sort of thing.|Meet me at the fountain in ten minutes.",
 			}, "question")
 			c:mood("a", 3)
 		end)
@@ -2288,7 +2293,7 @@ event({
 		local f = ctx.rng:pick(FAVOURS)
 		local s = K.scene(ctx, "A favour"):with({ ask = f.ask, after = f.after })
 		burst(s, "a", {
-			sunny = "{player}, are you free right now?|Could you {ask}?|You only need to be there, I promise!",
+			sunny = "{player}, are you free right now?|Could you {ask}?|You only need to be there, I promise.",
 			shy = "Um, {player}, if you're not busy...|Could you {ask}?|You wouldn't have to do much.",
 			bold = "{player}, you're free, right?|I need you to {ask}.|It won't take long.",
 			polite = "Hello, {player}, I'm sorry to interrupt.|Might you {ask}, if it's no trouble?",
@@ -2309,6 +2314,7 @@ event({
 				polite = "Thank you, {player}.|I'll return the favour properly.",
 				cool = "...Thanks.",
 				gloomy = "That actually went well.|Heh... thanks.",
+				proud = "...You were a great help, I'll admit.|I'll return the favour, naturally.",
 				_ = "Thanks so much.|Next time it's on me.",
 			}, "heart")
 			c:hearts("a", 1)
@@ -2406,8 +2412,8 @@ local QUESTIONS = {
 		twoBack = "Ha, that's a builder's answer.",
 		own = {
 			nervous = "Me? Lots of things, but mostly the dark.|And geese, now that you mention it.",
-			bold = "Nothing.|...Deep water, but don't tell anyone.",
-			gloomy = "Being forgotten.|Heh... sorry, that was a bit much.",
+			bold = "Me? Nothing.|...Deep water, but don't tell anyone.",
+			gloomy = "I'm scared of being forgotten.|Heh... sorry, that was a bit much.",
 			proud = "Nothing at all, naturally.|...Spiders, a little.",
 			_ = "I'm scared of thunder.|I hide under the table when it starts.",
 		},
@@ -2431,11 +2437,11 @@ local QUESTIONS = {
 		two = "A pirate.",
 		twoBack = "Ha, you'd make a good pirate.",
 		own = {
-			dramatic = "A famous actor.|I'm still deciding when that happens.",
-			proud = "The best at something, anything at all.|And I got there, naturally.",
-			dreamy = "A cloud...|I still think about it sometimes.",
-			bookish = "A lighthouse keeper, for all the reading time.",
-			_ = "A baker, and I still might be one day.",
+			dramatic = "I wanted to be a famous actor.|I'm still deciding when that happens.",
+			proud = "I wanted to be the best at something, anything at all.|And I got there, naturally.",
+			dreamy = "I wanted to be a cloud...|I still think about it sometimes.",
+			bookish = "I wanted to be a lighthouse keeper, for all the reading time.",
+			_ = "I wanted to be a baker, and I still might be one day.",
 		},
 	},
 }
@@ -2448,7 +2454,7 @@ event({
 		local item = ctx.rng:pick(QUESTIONS)
 		local s = K.scene(ctx, "A question"):with({ q = item.q })
 		burst(s, "a", {
-			sunny = "{player}, I've got a question for you!|{q}",
+			sunny = "{player}, I've got a question for you.|{q}",
 			shy = "Um, {player}, could I ask you something?|{q}",
 			bookish = "{player}, I've been asking everyone this for a little study.|{q}",
 			cheeky = "{player} question time|{q}|answer honestly, i'll know if you don't",
@@ -2487,8 +2493,8 @@ event({
 			easygoing = "You were up late again, weren't you?|I saw your lamp on.|Even builders need a nap now and then.",
 			foodie = "When did you last eat?|A biscuit doesn't count, by the way.",
 			cool = "{player}.|Your lamp was on at two in the morning.|Get some sleep.",
-			dreamy = "{player}, your lamp was still on when I looked out last night...|Are you sleeping all right?",
-			sunny = "{player}, you've been working so hard lately!|Are you remembering to rest?",
+			dreamy = "Your lamp was still on when I looked out last night...|Are you sleeping all right?",
+			sunny = "You've been working so hard lately!|Are you remembering to rest?",
 			shy = "Um, {player}, you looked really tired today.|Sorry, it's not my business, but are you okay?",
 			_ = "{player}, you've been working late every night.|Are you looking after yourself?",
 		}, "sweat")
@@ -2510,7 +2516,7 @@ event({
 		end)
 		s:choice("You're right, I'll rest.", function(c)
 			burst(c, "a", {
-				gentle = "Good, and get the barley loaf, it keeps you going.|Take care of yourself.",
+				gentle = "Good, and eat something warm before bed.|Take care of yourself.",
 				prickly = "Good.|...Took you long enough.",
 				bold = "Good, I knew you'd see sense.",
 				polite = "I'm very glad, and thank you for listening.",
@@ -2579,7 +2585,7 @@ event({
 			cheeky = "{player}|{q}|real answers only",
 			nervous = "Can I ask you something silly?|{q}",
 			gentle = "{player}, I've got a silly question for you.|{q}",
-			dreamy = "{player}, I was just thinking about something...|{q}",
+			dreamy = "I was just thinking about something...|{q}",
 			_ = "{player}, settle something for me.|{q}",
 		}, "question")
 		for _, pair in { { item.one, item.oneBack }, { item.two, item.twoBack } } do
@@ -2611,10 +2617,10 @@ event({
 			prickly = "The bakery queue is out the door.|I'm not standing in that, so are you going past?",
 			gloomy = "I woke up late and missed the good bread, as usual.|Are you anywhere near the bakery?",
 			foodie = "Are you near the bakery?|They've got seed rolls today, and I'm stuck at home waiting for a parcel.",
-			sunny = "{player}, are you going past the bakery?|Could you get me a bun? I'll pay you back!",
+			sunny = "{player}, are you going past the bakery?|Could you get me a bun? I'll pay you back.",
 			shy = "Um, {player}, if you're going past the bakery...|Could you get me a roll? Only if it's no trouble.",
 			gentle = "{player}, are you going past the bakery this morning?|Could you pick me up a roll? I'll pay you back, of course.",
-			dreamy = "{player}, I can smell the bakery from here...|Could you bring me a roll if you go past?",
+			dreamy = "I can smell the bakery from here...|Could you bring me a roll if you go past?",
 			_ = "{player}, are you going past the bakery?|Could you grab me a roll?",
 		}, "question")
 		s:choice("I'll bring you one.", function(c)
@@ -2662,7 +2668,7 @@ event({
 			nervous = "{player}, it's so dark tonight.|Could we walk back together? It's for you, and a bit for me.",
 			cool = "{player}.|The lamps are out.|I'll walk you back.",
 			dreamy = "{player}, the lamps have gone out on the hill road...|Shall we walk back together? I don't mind the dark with company.",
-			sunny = "{player}, it's so dark out tonight!|Let's walk back together, it's more fun anyway.",
+			sunny = "{player}, it's so dark out tonight.|Let's walk back together, it's more fun anyway.",
 			shy = "Um, {player}, it's really dark out.|Could I walk back with you? Only if you don't mind.",
 			_ = "{player}, it's really dark out.|I'll walk you home.",
 		}, "question")
@@ -2718,10 +2724,10 @@ event({
 			cheeky = "{player} go check your step|no, it's not a frog this time",
 			shy = "Um, {player}, there's something on your step.|It's from me, but you don't have to like it.",
 			foodie = "Go and look at your step.|I hope you like it as much as I liked getting it ready.",
-			gentle = "{player}, I left you a little something on your step.|It's only small.",
+			gentle = "{player}, I left you a little something on your step.|It's only small, so don't make a fuss, okay?",
 			proud = "There's a gift on your doorstep.|It's from me, and you're welcome.",
 			polite = "Good afternoon, {player}.|I've left a small something on your step.|Please don't feel you have to return it.",
-			dreamy = "{player}, I left something on your step...|I saw it at the market and thought of you.",
+			dreamy = "I left something on your step...|I saw it at the market and thought of you.",
 			sunny = "{player}, go and look at your step!|I left you a surprise.",
 			_ = "{player}, I left something on your step.|I hope you like it.",
 		}, "heart")
@@ -2731,7 +2737,7 @@ event({
 				prickly = "I know.|I had spare, that's all.",
 				shy = "I wanted to.|...That's all.",
 				proud = "I know, I'm very generous.",
-				gentle = "I wanted to.|You do so much round here.",
+				gentle = "I wanted to.|You do so much round here, so take care of yourself, all right?",
 				cheeky = "i know|i'm amazing",
 				_ = "I know, but I wanted to.",
 			}, "heart")
@@ -2742,7 +2748,7 @@ event({
 			if st.edible then
 				burst(c, "a", {
 					foodie = "Yes, that's the whole point!",
-					cheeky = "yes|that's why it's sticky",
+					cheeky = "yes, why else would i leave food on your step",
 					_ = "Yes, please eat it.",
 				}, "laugh", "laugh")
 			else

@@ -135,7 +135,9 @@ service), `ctx.stars`, `EventEngine.stage(ctx, def, order)` and a graded `recent
 requests)` (an add past what was given is refused; removes in the same change count) and `clean`. `Build.apply` runs
 `Keepsakes.check` first, `Data.clientState` sends `keepsakes`, and Build mode has a Keepsakes sub tab under Furniture
 (cards read "Free, N left" or "None left"; `ui.sh build:keepsakes[:empty]`). `Sim/Talk.line` takes `season` and
-`weather`, and `Talk.memo(v, now)` is the last event's memo while fresh. Previews: `render.sh props[:ids]`.
+`weather`, and `Talk.memo(v, now)` is the last event's memo while fresh. `Data/Foods.phrase(food)` is a food as it
+reads inside a sentence ("a rice ball", "an apple", "mushroom soup"); the cravings, the talk card's Buy button and the
+events' gifts all name food through it. Previews: `render.sh props[:ids]`.
 
 ## Cutscenes
 

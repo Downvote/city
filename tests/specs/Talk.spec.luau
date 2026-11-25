@@ -211,7 +211,7 @@ describe("Talk", function()
 		expect(Talk.chat(p, "v1", 1, rng).wish).toBe(false)
 		expect(v.wish ~= nil).toBeTruthy()
 		local said = Talk.line(p, "v1", rng, { first = true })
-		expect(said:find(Foods.get(v.fav).name, 1, true) ~= nil).toBeTruthy()
+		expect(said:find(Foods.phrase(Foods.get(v.fav) :: any), 1, true) ~= nil).toBeTruthy()
 		v.wish = { kind = "friend", arg = "v2", untilT = 1e9 }
 		expect(Talk.line(p, "v1", rng, { first = true }):find("V2", 1, true) ~= nil).toBeTruthy()
 		-- a wish for a talk isn't told, the talk answers it
@@ -274,11 +274,11 @@ describe("Talk", function()
 			expect(atHome[text]).toBe(nil)
 		end
 		-- (a sunny villager, in their own words, calling the player by name)
-		local quarrel = "V3 and I had a fight and I hate it! Can it just be over?"
-		local nobed = "Robin! Still no bed! I've been sleeping on a pile of coats. Nice coats, but still."
-		expect(atHome["I sat on the pier for hours and only caught a boot, so I threw it back."]).toBe(true)
-		expect(atHome["Put the kettle on, and then we'll sort it out."]).toBe(true)
-		expect(atHome["V2 and I sat on the pier till the lamps came on. We talked about everything!"]).toBe(true)
+		local quarrel = "V3 and I had a fight, and I hate it!"
+		local nobed = "Robin, I've got no bed, so I'm sleeping on coats!"
+		expect(atHome[Sayings.hobby("fishing").line]).toBe(true)
+		expect(atHome[Sayings.get("tea").text]).toBe(true)
+		expect(atHome["V2 and I sat on the pier till the lamps came on!"]).toBe(true)
 		expect(atHome[quarrel]).toBe(true)
 		expect(atHome[nobed]).toBe(true)
 		-- the quarrel blows over, and a bed turns up
@@ -308,10 +308,10 @@ describe("Talk", function()
 			return seen
 		end
 		local shy, bold = heard("shy"), heard("bold")
-		local shyBed = "Um... I don't have a bed yet. Sorry. It's okay. The rug's okay."
-		local boldBed = "No bed yet. Three nights on the floor. Sort it, okay?"
-		local shyFell = "V2 and I had a falling out... I feel awful. I don't know what to say to them."
-		local boldFell = "Don't bring up V2. We had it out. We're not talking."
+		local shyBed = "Um, I don't have a bed yet, but the rug's okay."
+		local boldBed = "I'm still on the floor, so sort me out a bed, okay?"
+		local shyFell = "V2 and I fell out, and I don't know what to say..."
+		local boldFell = "Don't bring up V2, we're not talking."
 		expect(shy[shyBed]).toBe(true)
 		expect(bold[boldBed]).toBe(true)
 		expect(shy[shyFell]).toBe(true)
@@ -328,7 +328,7 @@ describe("Talk", function()
 			v.wish = { kind = "food", arg = v.fav, untilT = 1e9 }
 			local said = Talk.wishLine(p, "v1")
 			expect(readable(said)).toBeTruthy()
-			expect(said:find(Foods.get(v.fav).name, 1, true) ~= nil).toBeTruthy()
+			expect(said:find(Foods.phrase(Foods.get(v.fav) :: any), 1, true) ~= nil).toBeTruthy()
 			cravings[said] = true
 			v.wish = { kind = "friend", arg = "v2", untilT = 1e9 }
 			said = Talk.wishLine(p, "v1")
@@ -370,22 +370,22 @@ describe("Talk", function()
 		local now = 1000 + 60
 		local all = heard({ now = now, season = 4, weather = "snow" })
 		expect(all["I built a snowman yesterday. He's called Gerald."]).toBe(true)
-		expect(all["V2's my best friend. We've got a secret knock. It goes on for ages."]).toBe(true)
-		expect(all["V3's my best friend. We've got a secret knock. It goes on for ages."]).toBe(nil)
-		expect(all["V2 asked me if fish get bored. I've been thinking about it all day."]).toBe(true)
+		expect(all["V2's my best friend, and we've got a secret knock."]).toBe(true)
+		expect(all["V3's my best friend, and we've got a secret knock."]).toBe(nil)
+		expect(all["V2 asked if fish get bored, and now I wonder too."]).toBe(true)
 		local fond, cross = false, false
 		for text in all do
 			fond = fond
-				or text == "If V2 needed a hand moving house, I'd be there before they asked."
+				or text == "If V2 needed help, I'd be there before they asked."
 				or text:find("saved me a seat", 1, true) ~= nil
 			cross = cross
-				or text == "Can we not talk about V3? Thanks."
+				or text == "Can we not talk about V3, please?"
 				or text == "V3 and I are best kept at opposite ends of the square."
 		end
 		expect(fond).toBe(true)
 		expect(cross).toBe(true)
 		expect(all["My fingers have been cold since Monday."]).toBe(true)
-		expect(all["Go and stand in the snow for a bit. It's quieter than you'd think."]).toBe(true)
+		expect(all["Go and stand in the snow, it's quieter than you'd think."]).toBe(true)
 		local worried = false
 		for _, text in Personalities.get("cheeky").lines.worry do
 			worried = worried or all[text] == true
@@ -540,14 +540,16 @@ describe("Talk", function()
 		-- no exclamation on every line: the chats the user gave us shout in about one message in
 		-- five, the loud people far more and the quiet ones hardly at all
 		need(bang / #lines < 0.2, string.format("%d of %d lines shout", bang, #lines))
-		-- the cool ones: seven words at most, and never a raised voice
+		-- the cool ones: short, even sentences, twelve words at most (the user: "avoid having strings
+		-- of short sentences", so a complete sentence runs a little longer than a clipped one), and
+		-- never a raised voice
 		for kind, list in Personalities.get("cool").lines do
 			for _, text in list do
 				local words = 0
 				for _ in text:gmatch("%S+") do
 					words += 1
 				end
-				need(words <= 7 and not text:find("!", 1, true), "cool." .. kind .. " says too much: " .. text)
+				need(words <= 12 and not text:find("!", 1, true), "cool." .. kind .. " says too much: " .. text)
 			end
 		end
 		-- each personality's share of lines with a "!": the quiet ones hardly ever raise their voice,
@@ -619,21 +621,17 @@ describe("Talk", function()
 			expect(readable(said) and said:find("Robin", 1, true) == nil).toBeTruthy()
 			theirs[said] = true
 		end
-		expect(mine["Robin! Had lunch? I've had two."]).toBe(true)
-		expect(theirs["Sam! Had lunch? I've had two."]).toBe(true)
-		expect(mine["Hey! Had lunch? I've had two."]).toBe(true)
+		expect(mine["Robin, have you eaten? I've already had two snacks."]).toBe(true)
+		expect(theirs["Sam, have you eaten? I've already had two snacks."]).toBe(true)
+		expect(mine["Hey, have you eaten? I've already had two snacks."]).toBe(true)
 		-- and a wish, told by name
 		local v = p.villagers.v1
 		v.wish = { kind = "food", arg = v.fav, untilT = 1e9 }
-		local food = Foods.get(v.fav).name
-		expect(Talk.wishLine(p, "v1")).toBe(
-			"Robin! " .. food .. "! I've been dreaming about it since breakfast. Please?"
-		)
+		local food = Foods.phrase(Foods.get(v.fav) :: any)
+		expect(Talk.wishLine(p, "v1")).toBe("Robin, I've been dreaming about " .. food .. " since breakfast.")
 		-- someone with no name yet is a friend
 		p.name = nil
-		expect(Talk.wishLine(p, "v1")).toBe(
-			"friend! " .. food .. "! I've been dreaming about it since breakfast. Please?"
-		)
+		expect(Talk.wishLine(p, "v1")).toBe("Friend, I've been dreaming about " .. food .. " since breakfast.")
 	end)
 
 	it("chats with villagers from old saves", function()

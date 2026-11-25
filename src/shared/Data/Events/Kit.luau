@@ -190,21 +190,41 @@ K.React = {
 			"Everything looks a bit brighter now.",
 		},
 		easygoing = { "Oh, nice, that's good.", "Mm, I might even stand up for this.", "Heh, that worked out nicely." },
-		proud = { "Naturally, this was always going to happen.", "Splendid, just as I expected.", "Hmph, good, very good." },
-		shy = { "Oh, um, I'm really happy.", "That's so nice, I don't know what to say.", "Oh... I'm so glad it worked out." },
+		proud = {
+			"Naturally, this was always going to happen.",
+			"Splendid, just as I expected.",
+			"Hmph, good, very good.",
+		},
+		shy = {
+			"Oh, um, I'm really happy.",
+			"That's so nice, I don't know what to say.",
+			"Oh... I'm so glad it worked out.",
+		},
 		cheeky = { "yes, this is great.", "hehe, nice one.", "ok, I'll admit it, that's brilliant." },
 		cool = { "Good.", "Hm, nice.", "Okay, that's good." },
 		prickly = { "Fine, that's good, happy now?", "Hmph, not bad at all.", "Okay, that's actually great." },
-		dramatic = { "This is the GREATEST moment of my life!", "*gasp* It's perfect!", "I could cry, I really might cry." },
+		dramatic = {
+			"This is the GREATEST moment of my life!",
+			"*gasp* It's perfect!",
+			"I could cry, I really might cry.",
+		},
 		bookish = {
 			"Oh, that's wonderful.",
 			"Splendid, I'm writing this down.",
 			"I'm so pleased I could tidy a whole shelf.",
 		},
-		gloomy = { "Oh, something good, huh.", "Wait, that actually went right? Heh.", "I'm happy, but quietly, in case it stops." },
+		gloomy = {
+			"Oh, something good, huh.",
+			"Wait, that actually went right? Heh.",
+			"I'm happy, but quietly, in case it stops.",
+		},
 		polite = { "Oh, how wonderful.", "That's splendid news, thank you.", "How very lovely." },
 		foodie = { "Yes, this calls for cake!", "Mmm, I'm so happy I'm hungry.", "That's better than warm bread!" },
-		nervous = { "R-really? Oh, that's such a relief!", "It went fine, it actually went fine!", "Oh, phew, that's good." },
+		nervous = {
+			"R-really? Oh, that's such a relief!",
+			"It went fine, it actually went fine!",
+			"Oh, phew, that's good.",
+		},
 	},
 	brag = {
 		sunny = { "Did you see that? That was me!", "First try, well, third, but still!", "Go on, say it was good!" },
@@ -225,11 +245,19 @@ K.React = {
 		bookish = { "Exactly as I worked it out.", "I did read up on it beforehand.", "Correct, right to the minute." },
 		gloomy = { "It worked, and now I'm suspicious.", "Nothing broke, which is new.", "I did it, huh." },
 		polite = { "I'm rather pleased with that.", "Thank you, I did practise.", "I hope that was all right." },
-		foodie = { "That's what a proper breakfast does.", "Done, so I've earned a snack!", "Mmm, that went down well." },
+		foodie = {
+			"That's what a proper breakfast does.",
+			"Done, so I've earned a snack!",
+			"Mmm, that went down well.",
+		},
 		nervous = { "I did it? I-I did it!", "It worked, sorry, I mean, yes!", "Nobody got hurt, so that counts!" },
 	},
 	scared = {
-		sunny = { "Eek, okay, I'm fine, I think.", "Can I hold your sleeve for a bit?", "I'm not scared, I'm just walking fast!" },
+		sunny = {
+			"Eek, okay, I'm fine, I think.",
+			"Can I hold your sleeve for a bit?",
+			"I'm not scared, I'm just walking fast!",
+		},
 		gentle = { "Stay close to me, all right?", "Oh dear, careful now.", "Let's take this slowly." },
 		bold = { "Get behind me.", "Stay close, I've got this.", "Okay, let's move, and quickly." },
 		dreamy = {

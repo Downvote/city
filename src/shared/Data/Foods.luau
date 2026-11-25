@@ -51,4 +51,26 @@ function Foods.get(id: string): Food?
 	return byId[id]
 end
 
+-- The foods you count take "a" or "an" in a sentence; the rest go without ("some" reads wrong
+-- in half the places a food is named).
+local COUNTED: { [string]: string } = {
+	apple = "an",
+	bread = "a",
+	carrot = "a",
+	skewer = "a",
+	tart = "a",
+	riceball = "a",
+	starfruit = "a",
+	dragonchili = "a",
+	goldapple = "a",
+	salad = "a",
+}
+
+-- A food as it reads inside a sentence: "a rice ball", "an apple", "mushroom soup".
+function Foods.phrase(food: Food): string
+	local name = food.name:lower()
+	local article = COUNTED[food.id]
+	return if article then article .. " " .. name else name
+end
+
 return Foods
