@@ -38,6 +38,7 @@ export type Def = {
 	workYaw: number?,
 	build: (r: Recipe.Recipe) -> (),
 	order: number?,
+	style: string?, -- the look it belongs to (Catalog.Styles): Build mode can list a whole style together
 }
 
 local Catalog = {}
@@ -60,6 +61,21 @@ Catalog.Categories = {
 	{ id = "work", name = "Work" },
 	-- things villagers made you in events: free, and only as many as you were given (Sim/Keepsakes)
 	{ id = "keepsakes", name = "Keepsakes" },
+}
+
+-- The looks a piece can belong to, besides what it is (a chair is Seating and maybe Cozy). The
+-- user: "there should be many to choose from from different categories, like garden, sci fi,
+-- cozy, etc, just like bloxburg". A piece names one with `style`; Build mode lists each style
+-- across every category.
+Catalog.Styles = {
+	{ id = "cozy", name = "Cozy" },
+	{ id = "modern", name = "Modern" },
+	{ id = "scifi", name = "Sci-fi" },
+	{ id = "garden", name = "Garden" },
+	{ id = "seaside", name = "Seaside" },
+	{ id = "rustic", name = "Rustic" },
+	{ id = "fancy", name = "Fancy" },
+	{ id = "playful", name = "Playful" },
 }
 
 Catalog.Places = {
