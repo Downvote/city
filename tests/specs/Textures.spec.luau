@@ -81,6 +81,18 @@ describe("Textures", function()
 		end
 	end)
 
+	it("gives every texture a normal map", function()
+		-- the user: "can you make it such that every texture you use has a normal map?" (`sheen`
+		-- is no texture, only the roughness map of the ones without their own)
+		for name, ids in TextureIds do
+			if name ~= "sheen" and ids.color then
+				if not (type(ids.normal) == "string" and ids.normal:match("^rbxassetid://%d+$")) then
+					error(name .. " has no normal map")
+				end
+			end
+		end
+	end)
+
 	it("gives the terrain's two grasses one soft picture", function()
 		-- the user: "change ... the grass texture to a softer one, which dosent have too high
 		-- contrast". Grass and LeafyGrass (under what is built) wear the same grey picture, so the

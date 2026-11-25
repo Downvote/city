@@ -30,6 +30,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 UA = {"User-Agent": "texture-finder"}
+CONTRAST = 0.09  # the most a colour picture's greys may spread (their standard deviation, 0 to 1)
 SKIP = ("minecraft", "nintendo", "tomodachi", "mario", "zelda", "pokemon", "animal crossing", "fortnite", "sims",
         "roblox logo", "meme", "face", "logo")
 
@@ -213,7 +214,25 @@ def cmd_check(args):
     for label, i, how in gone:
         print(f"{label}: image {i}: {how}")
     print(f"{len(want)} images in Data/TextureIds and Data/Effects, {len(gone)} that Roblox shows no picture for")
-    if gone:
+    # every texture's colour picture is soft (the user: "make sure the materials used arent too high
+    # contrast"): the spread of its greys, away from the edges, stays under CONTRAST
+    harsh = []
+    pictures = {}
+    for name, got in sync_materials.read_ids().items():
+        if name != "sheen" and "color" in got:
+            pictures.setdefault(int(got["color"].split("//")[1]), []).append(name)
+    urls = thumbs(list(pictures))
+    for i, names in pictures.items():
+        if i not in urls:
+            continue
+        a = np.asarray(Image.open(io.BytesIO(get(urls[i], raw=True))).convert("L"), float) / 255
+        spread = float(a[40:380, 40:380].std())
+        if spread > CONTRAST:
+            harsh.append(f"{'/'.join(names)}: image {i}: contrast {spread:.3f}")
+    for line in harsh:
+        print(line)
+    print(f"{len(pictures)} colour pictures, {len(harsh)} with more contrast than {CONTRAST}")
+    if gone or harsh:
         sys.exit(1)
 
 
