@@ -530,7 +530,7 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
 - A part's paint decides its colour: the grass and clay tile pictures in `Data/TextureIds` are grey, with `light`
   where a picture is dark. Never give a material a picture that brings its own strong colour.
 - The light and the grade live in `Tuning.Look` (`Light`, `Light.Night`, `Grade`), read by the game and by the
-  previews alike. Shade is about half of sunlight and violet, so shadows show; the grade only nudges colour. Judge
+  previews alike. Shade is a soft lavender fill (the user: "do the lighting haze glow", after comparing with a polished game): shadows show but a wall in shade keeps its colour; the haze is a blue fade that layers what is far off, and the glow catches neon, lamps and lit signs at night; the grade only nudges colour. Judge
   colours in previews with `--textures` (the grade is on by default). Roblox's sun path is tilted by latitude
   minus 23.5: `Latitude = -20` keeps it over the harbour, on the north plots' fronts.
 - Roblox drops shadow map shadows below graphics quality 4; `PrioritizeLightingQuality` keeps them close by.

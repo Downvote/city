@@ -26,8 +26,10 @@ type Design = Data.Design
 
 local Signs = {}
 
-local DAY_BRIGHTNESS = 1
-local NIGHT_BRIGHTNESS = 1.5 -- how much harder a board shines once the lamps are on
+local DAY_BRIGHTNESS = 1.1
+-- how much harder a board shines once the lamps are on: past the glow's threshold (Tuning.Look.Bloom),
+-- so a lit sign glows at night (it was 1.5, under it)
+local NIGHT_BRIGHTNESS = 2.4
 local SHORT = 150 -- pixels across a board's short side, so its biggest words come to about 100
 local LONG = 2000 -- and never more than this along its long one
 local LEAN = 16 -- degrees a leaning block leans

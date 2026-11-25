@@ -561,7 +561,9 @@ Tuning.Look = {
 	-- bright a thing must be before it glows: above white, so only what gives off light does.
 	-- It was 0.92 at nearly full strength and a pale wall or a lamp at night washed the whole
 	-- view out (the user: "the bloom might be too much").
-	Bloom = { Intensity = 0.45, Size = 24, Threshold = 1.5 },
+	-- (the user, of a polished game's screenshots beside ours: "do the lighting haze glow". The glow is
+	-- stronger and wider and starts lower, so neon, lamps and lit signs shine; sunlit white stays under it)
+	Bloom = { Intensity = 0.8, Size = 32, Threshold = 1.3 },
 	-- The air. The user, with a picture of a hilltop in a warm sunset haze: "make the shader
 	-- something like this, add fog and set the lighting to shadowmap/future". So a thick soft
 	-- haze that turns the far island pink and gold, a glare round the sun, rays through the haze,
@@ -571,13 +573,14 @@ Tuning.Look = {
 	-- default.project.json: scripts can't set it). Then: "make the fog less", so the haze is about
 	-- half as thick and the far island stays clear (it was 0.36 and 2.2, in rain 0.48 and 3).
 	Air = {
-		Clear = { Density = 0.22, Haze = 1 },
-		Dense = { Density = 0.32, Haze = 1.8 },
-		Glare = 0.7,
-		Offset = 0.22,
+		-- a blue haze that starts nearer, so what is far off fades back in layers (it was a thin pink wash)
+		Clear = { Density = 0.3, Haze = 1.5 },
+		Dense = { Density = 0.4, Haze = 2.2 },
+		Glare = 0.45,
+		Offset = 0.12,
 		Colors = {
-			day = { Color = { 236, 220, 232 }, Decay = { 255, 196, 176 } },
-			gold = { Color = { 255, 214, 206 }, Decay = { 255, 172, 132 } },
+			day = { Color = { 204, 220, 240 }, Decay = { 170, 190, 222 } },
+			gold = { Color = { 238, 220, 214 }, Decay = { 226, 186, 170 } },
 			dusk = { Color = { 255, 188, 196 }, Decay = { 255, 138, 112 } },
 			night = { Color = { 150, 156, 214 }, Decay = { 72, 78, 132 } },
 		},
@@ -593,19 +596,21 @@ Tuning.Look = {
 	-- sunlight at midday (the World spec holds it by look.py's model), still violet, and the sun
 	-- is a little lower so pale walls in it don't wash out to white.
 	Light = {
-		Brightness = 1.6, -- the sun (was 3.1, then 1.7: a touch less under the haze, so a pale wall in the sun keeps its warmth)
+		Brightness = 1.8, -- the sun (was 3.1, then 1.7, then 1.6; up a little with the brighter shade)
 		Exposure = 0, -- ExposureCompensation: 1 is twice as bright (was 0.12)
-		Ambient = { 84, 78, 110 }, -- what lights a place the sky can't see (indoors; was 126, 118, 158)
-		OutdoorAmbient = { 96, 90, 124 }, -- what lights the shade outdoors: violet (was 152, 146, 186)
-		SunTint = { 255, 228, 192 }, -- ColorShift_Top: the sun's colour on what faces it (warmer for the haze)
+		-- the shade is a soft lavender fill now, not near black: shadows still show, but a wall in shade
+		-- keeps its colour (was 84, 78, 110 and 96, 90, 124)
+		Ambient = { 104, 100, 128 }, -- what lights a place the sky can't see (indoors)
+		OutdoorAmbient = { 132, 130, 156 }, -- what lights the shade outdoors
+		SunTint = { 255, 226, 186 }, -- ColorShift_Top: the sun's colour on what faces it (warm)
 		-- GeographicLatitude. Roblox tilts the sun's path by the latitude less the earth's tilt
 		-- (23.5), so at 54 the sun stood 59 degrees up at noon on the +Z side, behind the houses on
 		-- the north side of Main Street, whose fronts face -Z (plot 1, the first player's, is one).
 		-- At -20 it stands 46 degrees up on the -Z side: over the harbour, on those fronts.
 		Latitude = -20,
-		SkyDiffuse = 0.24, -- EnvironmentDiffuseScale: light off the sky (was 0.38)
-		SkySpecular = 0.12, -- EnvironmentSpecularScale: shine off the sky (was 0.18)
-		ShadowSoftness = 0.12, -- a firm edge that isn't a razor (was 0.14)
+		SkyDiffuse = 0.4, -- EnvironmentDiffuseScale: soft light off the sky into the shade (was 0.24)
+		SkySpecular = 0.18, -- EnvironmentSpecularScale: shine off the sky (was 0.12)
+		ShadowSoftness = 0.18, -- a softer edge (was 0.12)
 		-- after dark, with only the moon, the shade is lifted again so the town stays readable
 		Night = { Ambient = { 104, 108, 150 }, OutdoorAmbient = { 124, 128, 176 } },
 	},
@@ -618,7 +623,7 @@ Tuning.Look = {
 		Brightness = 0.01,
 		Hours = {
 			-- (warmer all day for the user's sunset picture: the gold hours are long)
-			{ From = 10, To = 14.5, Tint = { 255, 244, 232 }, Saturation = 0.06, Contrast = 0.06, Air = "day" },
+			{ From = 10, To = 14.5, Tint = { 255, 244, 232 }, Saturation = 0.1, Contrast = 0.1, Air = "day" },
 			{ From = 7.5, To = 16.5, Tint = { 255, 236, 216 }, Saturation = 0.08, Contrast = 0.07, Air = "gold" },
 			{ From = 5, To = 19.5, Tint = { 255, 216, 200 }, Saturation = 0.12, Contrast = 0.1, Air = "dusk" },
 		},

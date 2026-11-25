@@ -2497,3 +2497,14 @@ Villagers call the player "Mayor" now, where before they used the player's Roblo
 what I'd like for my room"). Someone visiting another player's town is still called by their own name on that town's
 talk card, since they aren't its mayor.
 
+### Softer shade, a blue haze and a glow
+
+> do the lighting haze glow
+
+(After comparing our streets with a polished game's: the shade was so dark that shadows came out nearly black, the
+haze was a thin pink wash, and almost nothing glowed.) The shade is a soft lavender fill now, with more light off the
+sky and softer shadow edges, so shadows still show but a wall in shade keeps its colour; the sun is a little stronger
+to keep the contrast. The haze is a light blue that starts nearer, so far buildings and hills fade back in layers.
+The glow is stronger and wider and starts lower, so neon, lamps and lit signs shine (signs shine harder at night),
+while a white wall in the sun stays clear of it. The midday grade has a touch more contrast and colour.
+
