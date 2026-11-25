@@ -488,7 +488,7 @@ function Group.check(plan: any, requests: { any }, profile: any?): (boolean, str
 				return false, why, cost
 			end
 			if Plan.count(trial, req.kind) >= Plan.limit(req.kind) then
-				return false, "you've hit the limit for that", cost
+				return false, Plan.fullReason(req.kind), cost
 			end
 			if req.kind == "walls" and Group.wallThere(trial, obj) then
 				return false, "there's already a wall there", cost

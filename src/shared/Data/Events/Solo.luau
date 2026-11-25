@@ -79,7 +79,7 @@ local function makes(o: { [string]: any })
 					sunny = "You really want it?|Here, here, take it, and put it somewhere I can see it when I come over.",
 					cool = "Sure, it's yours.|...I'm glad you like it.",
 					prickly = "Ugh, fine, take it before I change my mind.|And don't let it get dusty, okay?",
-					dramatic = "Then it is DECIDED, it goes home with {player}!|Treat it like the treasure it is.",
+					dramatic = "Then it is DECIDED, it goes home with the {player}!|Treat it like the treasure it is.",
 					bookish = "Of course you can.|Actually, if you keep it out of the sun, it should last for years.",
 					gloomy = "You actually want it?|Heh... okay, that's really nice of you.",
 					polite = "I would be honoured, {player}.|Thank you kindly for asking.",
@@ -5876,7 +5876,7 @@ event({
 			}, "heart", "cheer")
 			c:mood("a", 6)
 			c:hearts("a", 1)
-			c:memo("a", "{band} played in the square, and {player} was right at the front.")
+			c:memo("a", "{band} played in the square, and the {player} was right at the front.")
 		end)
 		s:choice("Play the one about the gulls.", function(c)
 			burst(c, "a", {
@@ -6007,7 +6007,7 @@ event({
 			}, "heart")
 			c:mood("a", 5)
 			c:hearts("a", 1)
-			c:memo("a", "I gave {player} the first of my {crop}, and there are plenty more coming.")
+			c:memo("a", "I gave the {player} the first of my {crop}, and there are plenty more coming.")
 		end)
 		s:choice("Cook something with them.", function(c)
 			burst(c, "a", {

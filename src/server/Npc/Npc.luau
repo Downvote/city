@@ -582,9 +582,9 @@ end
 
 -- Shows a speech bubble for a few seconds.
 function Npc.say(self: Npc, text: string, seconds: number?)
-	-- villagers call their player by name ({player})
+	-- villagers call their player "Mayor" ({player}: Text.playerName)
 	text = text:gsub("{player}", function()
-		return self.playerName or "friend"
+		return self.playerName or "Mayor"
 	end)
 	-- and say it in their own hand, with the ending the player gave them on some (Sim/Voice; `pers`
 	-- and `ending` are set when they're spawned)

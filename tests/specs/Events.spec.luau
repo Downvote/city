@@ -964,7 +964,9 @@ describe("Event engine", function()
 							if text:lower():find("sensei", 1, true) then
 								error(def.id .. ": calls the player Sensei: " .. text)
 							end
-							if text:find("Robin", 1, true) then
+							-- (the player is "Mayor" now: the user, "make it such that the villagers
+							-- refer to the player as Mayor"; a cheeky villager writes it small)
+							if text:lower():find("mayor", 1, true) then
 								byName[def.id] = true
 							end
 						end
@@ -980,7 +982,7 @@ describe("Event engine", function()
 		if #missing > 0 then
 			error("never staged: " .. table.concat(missing, ", "))
 		end
-		-- and plenty of them turn to the player by name (the asks most of all)
+		-- and plenty of them turn to the player, as "Mayor" (the asks most of all)
 		local n = 0
 		for _ in byName do
 			n += 1

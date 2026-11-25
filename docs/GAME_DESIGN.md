@@ -397,9 +397,19 @@ can't build on, VIP pieces without VIP, or more keepsakes than you were given ar
 many. A villager whose bed or workplace went loses it, as when a piece is sold. One Undo takes the whole load back,
 as long as you stay in the server; the dialog says so.
 
-A whole profile is one DataStore key, and a key holds at most 4 MB, so a save is capped at 320 KB written out (the
-biggest plot Build mode allows comes to about 290 KB) and all saves together at 2.6 MB. A build too big to save is
-turned down in plain words.
+A whole profile is one DataStore key, and a key holds at most 4 MB, so each saved build keeps its plan in a key of
+its own and the profile only its name, when it was saved and how many pieces. A plot built to every limit is about
+1.8 MB written out, so it always fits. A build too big to save is turned down in plain words.
+
+### Much more room on a plot
+
+> [of "Can't do that: you've hit the limit for that"] what is this? can the limit be raised to much much higher?
+
+That was a plot's cap on one kind of thing, and the message didn't say which. The caps went up a long way: 4,000
+walls and fences (from 500), 3,000 floors and paths (from 300), 1,000 roofs (from 80), 8,000 pieces of furniture
+and decor (from 1,500) and 20 pools and ponds (from 8). When one is reached, the message says which and how many:
+"this plot holds 4,000 walls and fences at most". A plot built that full is about 1.8 MB saved, which still fits in
+a player's save, and saved builds moved to saves of their own so they don't crowd it.
 
 **The ground under the plots.** The user, with a picture of the island's golden grass standing up through a plot's
 ground in a long strip where nothing was built: "there seems to be a bug in the first image". Roblox draws far
@@ -2477,4 +2487,13 @@ corner of a room, a floor or path, a roof or a pool, everything but the hint sli
 beside it. A wall chain keeps the screen clear until a right click or the way back stops it; a drag or a second
 corner brings the bars back as soon as the piece is down. Picking a wall style or a floor's finish still happens with
 the tray up, before the first click.
+
+### The Mayor
+
+> also, make it such that the villagers refer to the player as Mayor
+
+Villagers call the player "Mayor" now, where before they used the player's Roblox name: "Mayor, have you eaten?",
+"thanks Mayor", "Dear Mayor". When they talk about the player to someone else, it's "the Mayor" ("I told the Mayor
+what I'd like for my room"). Someone visiting another player's town is still called by their own name on that town's
+talk card, since they aren't its mayor.
 

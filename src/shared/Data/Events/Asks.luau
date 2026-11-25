@@ -1628,7 +1628,7 @@ event({
 				_ = "Oh, yes, it does.|I'll put a bit of card under that leg.",
 			}, "sweat")
 			c:xp("a", 8)
-			c:memo("a", "My stool doesn't wobble any more, because {player} spotted it.")
+			c:memo("a", "My stool doesn't wobble any more, because the {player} spotted it.")
 		end)
 		s:log("{a} showed you a stool they made.")
 		return s:done()
@@ -2033,7 +2033,7 @@ event({
 				_ = "The town, yes.|She'd really like that.",
 			}, "idea")
 			c:mood("a", 4)
-			c:memo("a", "I told my grandma all about the town, and now she wants to know who {player} is.")
+			c:memo("a", "I told my grandma all about the town, and now she wants to know who the {player} is.")
 		end)
 		s:choice("Keep it short and sweet.", function(c)
 			burst(c, "a", {
@@ -2112,7 +2112,7 @@ event({
 					_ = "Look, it's perked right up.|Thank you, I was really worried about it.",
 				}, "sparkle", "cheer")
 				c:mood("a", 5)
-				c:memo("a", "My plant's doing really well now, because {player} knew what it needed.")
+				c:memo("a", "My plant's doing really well now, because the {player} knew what it needed.")
 			else
 				c:n("By the next morning it was drooping a little more.")
 				burst(c, "a", {
@@ -2520,7 +2520,7 @@ event({
 			}, "heart")
 			c:hearts("a", 1)
 			c:mood("a", 5)
-			c:memo("a", "I showed {player} my secret spot, so now it's our spot.")
+			c:memo("a", "I showed the {player} my secret spot, so now it's our spot.")
 		end)
 		s:choice("Maybe another day.", function(c)
 			burst(c, "a", {
@@ -2768,7 +2768,7 @@ event({
 			burst(c, "b", QUIZ_YES, "heart")
 			c:rel(8)
 			c:mood("a", 3)
-			c:memo("a", "{b} joined our quiz team, and I practised on {player} first.")
+			c:memo("a", "{b} joined our quiz team, and I practised on the {player} first.")
 		end)
 		s:log("{a} wanted to ask {b} to join their quiz team.")
 		return s:done()
@@ -3094,7 +3094,7 @@ event({
 				_ = "Maybe a rug.|My feet get cold in the mornings.",
 			}, "idea")
 			c:mood("a", 2)
-			c:memo("a", "I told {player} what I'd like for my room, but there's no rush.")
+			c:memo("a", "I told the {player} what I'd like for my room, but there's no rush.")
 		end)
 		s:log("{a} thanked you for their room.")
 		return s:done()
@@ -3450,7 +3450,7 @@ event({
 				_ = "Good.|How about {what}?|We could meet at {place} at {time}.",
 			}, "heart")
 			c:mood("a", 4)
-			c:memo("a", "Tomorrow it's {what} with {player}, and we're meeting at {place} at {time}.")
+			c:memo("a", "Tomorrow it's {what} with the {player}, and we're meeting at {place} at {time}.")
 		end)
 		s:choice("Depends what for.", function(c)
 			burst(c, "a", {
@@ -3473,7 +3473,7 @@ event({
 				_ = "I was thinking {what}.|Could we meet at {place} at {time}?",
 			}, "idea")
 			c:mood("a", 3)
-			c:memo("a", "Tomorrow it's {what} with {player}, and we're meeting at {place} at {time}.")
+			c:memo("a", "Tomorrow it's {what} with the {player}, and we're meeting at {place} at {time}.")
 		end)
 		s:log("{a} asked you along for {what} tomorrow.")
 		return s:done()

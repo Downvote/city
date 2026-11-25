@@ -133,7 +133,7 @@ local function prepare(plan: any, requests: { any }): ({ any }?, string?)
 				return fail(err or "can't place that")
 			end
 			if Plan.count(plan, req.kind) >= Plan.limit(req.kind) then
-				return fail("you've hit the limit for that")
+				return fail(Plan.fullReason(req.kind))
 			end
 			if req.kind == "walls" then
 				for _, w in plan.walls do

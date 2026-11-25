@@ -577,8 +577,10 @@ describe("Build service, water", function()
 		-- up to the limit in one go, and not one more
 		local requests = {}
 		for i = 1, Tuning.Water.Max - waters() do
-			local x = 2 + (i - 1) * 12
-			table.insert(requests, { type = "add", kind = "waters", obj = pool(x, 178, x + 8, 186, "shallow") })
+			-- (in rows of ten, across the land)
+			local x = 2 + ((i - 1) % 10) * 12
+			local z = 178 - ((i - 1) // 10) * 16 -- (on the terrain's grid, as the pools are)
+			table.insert(requests, { type = "add", kind = "waters", obj = pool(x, z, x + 8, z + 8, "shallow") })
 		end
 		ok, err = now(requests)
 		if not ok then
@@ -587,7 +589,7 @@ describe("Build service, water", function()
 		expect(waters()).toBe(Tuning.Water.Max)
 		ok, err = now({ { type = "add", kind = "waters", obj = pool(2, 190, 10, 198, "shallow") } })
 		expect(ok).toBe(false)
-		expect(err).toBe("you've hit the limit for that")
+		expect(err).toBe(Plan.fullReason("waters"))
 		-- undo takes the whole batch back
 		local undone = Build.undo(p)
 		expect(undone).toBe(true)

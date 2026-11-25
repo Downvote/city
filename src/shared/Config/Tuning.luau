@@ -31,10 +31,14 @@ Tuning.Plot = {
 	WallThickness = 0.6,
 	MinWallLength = 2,
 	MaxWallLength = 80,
-	MaxWalls = 500,
-	MaxFloors = 300,
-	MaxRoofs = 80,
-	MaxItems = 1500,
+	-- what one plot holds (the user, of "you've hit the limit for that": "can the limit be raised to
+	-- much much higher?"; they were 500, 300, 80 and 1500). A plot built to every one of them is
+	-- about 1.8 MB saved, inside the 4 MB a profile may be (the Saves spec holds it); saved builds
+	-- keep their plans in keys of their own (Services/Saves)
+	MaxWalls = 4000, -- fences too
+	MaxFloors = 3000, -- paths laid as floor too
+	MaxRoofs = 1000,
+	MaxItems = 8000,
 	RoofThickness = 0.6,
 	RoofMaxRise = 18,
 	RoofMaxOverhang = 3,
@@ -75,8 +79,9 @@ Tuning.Select = {
 -- biggest plot Build mode allows comes to about 290 KB written out, and eight of them and the live
 -- plot still leave room for the rest of the profile.
 Tuning.Saves = {
-	MaxBytes = 320_000, -- one saved build, as JSON
-	MaxTotal = 2_600_000, -- every saved build together
+	-- one saved build, as JSON: each is kept in a DataStore key of its own (4 MB at most), so a plot
+	-- built to every limit (about 1.8 MB) always fits
+	MaxBytes = 3_500_000,
 	NameLength = 24,
 	Every = 0.4, -- seconds between two asks of the Saves page
 	LoadEvery = 3, -- and between two loads
@@ -627,7 +632,7 @@ Tuning.Look = {
 -- or a pond is dragged out in Build mode (Build/Water) and is Roblox terrain water in the game
 -- (Services/Water), so people wade and swim in it.
 Tuning.Water = {
-	Max = 8, -- pools and ponds on one plot
+	Max = 20, -- pools and ponds on one plot (it was 8)
 	MinSide = 8, -- studs along each side, at least
 	MaxSide = 64, -- and at most
 	PerCell = { shallow = 2, swim = 3 }, -- coins for each WallSnap square of water, by its depth

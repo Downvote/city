@@ -1422,7 +1422,7 @@ event({
 			nervous = "D-do you like it?|Read the plaque first, then tell me.",
 			_ = "Read the plaque, {player}.",
 		}, "heart", "point")
-		s:n("The plaque says 'For {player}, who built this place.'")
+		s:n("The plaque says 'For the {player}, who built this place.'")
 		s:hearts("a", 1)
 		s:all(2)
 		s:log("The town put up a bench by the harbour with your name on it.")

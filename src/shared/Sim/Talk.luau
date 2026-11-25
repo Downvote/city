@@ -925,12 +925,15 @@ local function wishFor(profile: any, vid: string): string?
 	return nil
 end
 
--- {player} in a line is the player's name (the user: "the player is to be referred to as their
--- player name"): filled in here, as the line leaves. `name` is whoever is talking to them when
--- that isn't the town's owner (a visitor); otherwise it is the owner's own name.
+-- {player} in a line is what the villager calls the player: "Mayor" for the town's owner (the
+-- user: "make it such that the villagers refer to the player as Mayor"; Text.playerName), filled
+-- in here as the line leaves. `name` is whoever is talking to them when that isn't the town's
+-- owner (a visitor): they are called by their own name, being nobody's mayor here.
 local function named(profile: any, text: string, name: any): string
+	-- "the {player}" is the town's owner talked about, whoever is listening: always the Mayor
+	text = string.gsub(text, "the {player}", "the " .. Text.playerName(profile))
 	local who = if type(name) == "string" and name ~= "" then name else Text.playerName(profile)
-	-- a line that opens with the name starts with a capital, even when the name is "friend"
+	-- a line that opens with the name starts with a capital
 	if text:sub(1, 8) == "{player}" then
 		who = who:sub(1, 1):upper() .. who:sub(2)
 	end

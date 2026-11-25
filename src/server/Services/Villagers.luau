@@ -289,7 +289,7 @@ function Villagers.spawn(player: Player, vid: string)
 		end)
 	end
 	local npc = Npc.new(model, vid)
-	npc.playerName = player.DisplayName
+	npc.playerName = Text.playerName(Data.get(player)) -- ("Mayor": what the town calls its owner)
 	npc.pers = v.pers -- how they write (Sim/Voice, in Npc.say)
 	npc.ending = Flair.get(v, "ending") -- and the ending the player gave them (Sim/Flair)
 	npc:setName(v.name, Colors.fromHex(v.color))

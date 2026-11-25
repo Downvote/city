@@ -2,8 +2,13 @@
 -- Saved builds (the user: "add loading and saving of plots"). A player keeps their whole plot as a
 -- build in a slot and can load it back later, save over it, rename it or delete it.
 --
---   profile.saves = { ["1"] = { name, t, plan }, ["2"] = ..., } one to a slot, up to
+--   profile.saves = { ["1"] = { name, t, pieces }, ["2"] = ..., } one to a slot, up to
 --   Sim/Passes.saveSlots(profile) slots (two, or eight with More Saves)
+--
+-- The plan itself is kept in a DataStore key of its own (Saves.key; Services/Saves reads and writes
+-- it), so a plot built to every limit fits in a save and eight of them don't fill the profile's
+-- one key. A save from before that (its `plan` still in the profile) loads as it is and is moved to
+-- its own key the next time the Saves page is asked for.
 --
 -- A save is the plan as it stood, `gift` and all: it is written by the server from the player's
 -- own plan and never comes from the client, so what of the starting house was given stays given
@@ -19,7 +24,7 @@ local Passes = require(script.Parent.Passes)
 
 local Saves = {}
 
-export type Entry = { name: string, t: number, plan: any }
+export type Entry = { name: string, t: number, pieces: number?, plan: any? }
 export type Summary = { slot: number, name: string, t: number, pieces: number }
 
 -- Slots are stored under their number as a string: a list with a gap in it doesn't keep in a
@@ -42,11 +47,20 @@ function Saves.validSlot(i: any): boolean
 	return type(i) == "number" and i % 1 == 0 and i >= 1 and i <= Saves.maxSlots()
 end
 
--- The save in a slot, or nil (anything that isn't one reads as an empty slot).
+-- The DataStore key a player's saved build in slot `i` is kept under.
+function Saves.key(userId: number, i: number): string
+	return "p_" .. userId .. "_build" .. i
+end
+
+-- The save in a slot, or nil (anything that isn't one reads as an empty slot). Its plan is in its
+-- own key, unless it is an old save that still carries it (`plan`).
 function Saves.get(profile: any, i: number): Entry?
 	local saves = type(profile) == "table" and profile.saves
 	local e = if type(saves) == "table" then saves[slotKey(i)] else nil
-	if type(e) == "table" and type(e.name) == "string" and type(e.t) == "number" and type(e.plan) == "table" then
+	if type(e) == "table" and type(e.name) == "string" and type(e.t) == "number" then
+		if e.plan ~= nil and type(e.plan) ~= "table" then
+			return nil
+		end
 		return e :: any
 	end
 	return nil
@@ -127,24 +141,21 @@ function Saves.snapshot(plan: any): any
 	return Plan.copy(plan)
 end
 
--- Can this plan be saved in slot `i` of the profile? Not when it is too big for one save, or would
--- take every save together past what a profile can hold.
-function Saves.fits(profile: any, i: number, plan: any): (boolean, string?)
-	local size = Saves.bytes(plan)
-	if size > Tuning.Saves.MaxBytes then
+-- Can this plan be saved? Not when it is too big for the key it goes in (a plot inside every
+-- limit always is small enough).
+function Saves.fits(_profile: any, _i: number, plan: any): (boolean, string?)
+	if Saves.bytes(plan) > Tuning.Saves.MaxBytes then
 		return false, "This build is too big to save. Sell a few things first."
 	end
-	local total = size
-	for j = 1, Saves.maxSlots() do
-		local e = if j ~= i then Saves.get(profile, j) else nil
-		if e then
-			total += Saves.bytes(e.plan)
-		end
-	end
-	if total > Tuning.Saves.MaxTotal then
-		return false, "Your saves are full of big builds. Delete one to make room."
-	end
 	return true
+end
+
+-- How many pieces a save holds, as its page shows it.
+function Saves.count(e: Entry): number
+	if type(e.pieces) == "number" then
+		return e.pieces
+	end
+	return Saves.pieces(e.plan)
 end
 
 -- What the Saves page shows: how many slots the player has and, for each save, its name, when it
@@ -154,7 +165,7 @@ function Saves.summary(profile: any): { slots: number, max: number, free: number
 	for i = 1, Saves.maxSlots() do
 		local e = Saves.get(profile, i)
 		if e then
-			table.insert(list, { slot = i, name = e.name, t = e.t, pieces = Saves.pieces(e.plan) })
+			table.insert(list, { slot = i, name = e.name, t = e.t, pieces = Saves.count(e) })
 		end
 	end
 	return { slots = Saves.slots(profile), max = Saves.maxSlots(), free = Tuning.Passes.FreeSlots, saves = list }

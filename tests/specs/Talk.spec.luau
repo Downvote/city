@@ -276,9 +276,9 @@ describe("Talk", function()
 			expect(atWork[said]).toBe(true)
 			expect(atHome[said]).toBe(nil)
 		end
-		-- (a sunny villager, in their own words, calling the player by name)
+		-- (a sunny villager, in their own words, calling the player "Mayor")
 		local quarrel = Voice.speak(v.pers, "V3 and I had a fight, and I hate it!")
-		local nobed = Voice.speak(v.pers, "Robin, I've got no bed, so I'm sleeping on coats!")
+		local nobed = Voice.speak(v.pers, "Mayor, I've got no bed, so I'm sleeping on coats!")
 		expect(atHome[Voice.speak(v.pers, Sayings.hobby("fishing").line)]).toBe(true)
 		expect(atHome[Voice.speak(v.pers, Sayings.get("tea").text)]).toBe(true)
 		expect(atHome[Voice.speak(v.pers, "V2 and I sat on the pier until it got dark, ehehe!")]).toBe(true)
@@ -578,13 +578,16 @@ describe("Talk", function()
 		end
 	end)
 
-	it("calls the player by name and never anything else", function()
-		-- the user: "the player is to be referred to as their player name instead of sensei"
+	it("calls the player through {player} and never anything else", function()
+		-- the user: "the player is to be referred to as their player name instead of sensei", then
+		-- "make it such that the villagers refer to the player as Mayor": a line says {player},
+		-- filled with "Mayor" (Text.playerName) as it leaves, so it is never written in by hand
+		expect(Text.playerName(nil)).toBe("Mayor")
 		for _, l in everyLine() do
 			local lower = l.text:lower()
 			need(
 				not lower:find("sensei", 1, true) and not lower:find("mayor", 1, true),
-				l.where .. ": calls the player something other than their name: " .. l.text
+				l.where .. ": calls the player something written in by hand: " .. l.text
 			)
 		end
 		local named, total = 0, 0
@@ -614,7 +617,7 @@ describe("Talk", function()
 		for _, say in Sayings.list do
 			need(not say.text:find("{", 1, true), "saying " .. say.id .. " has a blank")
 		end
-		-- the name goes in as the line leaves: the owner's, or a visitor's own
+		-- the name goes in as the line leaves: "Mayor" for the owner, or a visitor's own name
 		local p = town(2, "foodie")
 		local rng = Rng.new(12)
 		local mine, theirs = {}, {}
@@ -623,20 +626,20 @@ describe("Talk", function()
 			expect(readable(said)).toBeTruthy()
 			mine[said] = true
 			said = Talk.line(p, "v1", rng, { first = true, name = "Sam" })
-			expect(readable(said) and said:find("Robin", 1, true) == nil).toBeTruthy()
+			expect(readable(said) and said:find("Mayor", 1, true) == nil).toBeTruthy()
 			theirs[said] = true
 		end
-		expect(mine["Robin, have you eaten? I've already had two snacks."]).toBe(true)
+		expect(mine["Mayor, have you eaten? I've already had two snacks."]).toBe(true)
 		expect(theirs["Sam, have you eaten? I've already had two snacks."]).toBe(true)
 		expect(mine["Hey, have you eaten? I've already had two snacks."]).toBe(true)
-		-- and a wish, told by name
+		-- and a wish, told to the Mayor
 		local v = p.villagers.v1
 		v.wish = { kind = "food", arg = v.fav, untilT = 1e9 }
 		local food = Foods.phrase(Foods.get(v.fav) :: any)
-		expect(Talk.wishLine(p, "v1")).toBe("Robin, I've been dreaming about " .. food .. " since breakfast.")
-		-- someone with no name yet is a friend
+		expect(Talk.wishLine(p, "v1")).toBe("Mayor, I've been dreaming about " .. food .. " since breakfast.")
+		-- whatever the player's own name is, or with none yet, they are the Mayor
 		p.name = nil
-		expect(Talk.wishLine(p, "v1")).toBe("Friend, I've been dreaming about " .. food .. " since breakfast.")
+		expect(Talk.wishLine(p, "v1")).toBe("Mayor, I've been dreaming about " .. food .. " since breakfast.")
 	end)
 
 	-- the user: "villagers could have a custom saying, thing they add to the end of their sentances

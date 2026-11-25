@@ -861,6 +861,22 @@ function Plan.limit(kind: string): number
 	return LIMITS[kind] or 0
 end
 
+-- What a refusal says when a plot holds all it can of a kind (it said "you've hit the limit for
+-- that", which named neither): "this plot holds 4,000 walls and fences at most".
+local FULL_NAMES = {
+	walls = "walls and fences",
+	floors = "floors and paths",
+	roofs = "roofs",
+	items = "pieces",
+	waters = "pools and ponds",
+}
+function Plan.fullReason(kind: string): string
+	local n = tostring(Plan.limit(kind))
+	-- (thousands set apart with commas)
+	local formatted = n:reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", "")
+	return "this plot holds " .. formatted .. " " .. (FULL_NAMES[kind] or "of those") .. " at most"
+end
+
 -- Plans and changes ----------------------------------------------------------------------------
 
 -- What `v` a plan has: 2 since the plots grew to 400 a side (Plan.sanitize moves a 1 onto them).

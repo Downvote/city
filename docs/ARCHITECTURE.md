@@ -549,11 +549,21 @@ counts it, patches each new piece's `gift` from the save, charges `Plan.changeCo
 entry. `dry` works it out on a copy and changes nothing. Returns `ok, { cost, skipped, changed }`. A commit of more
 than 400 ops syncs the whole plan (`PlanSync { full }`) rather than the ops.
 
+`Services/Saves` keeps each save's plan in its own DataStore key (`Saves.store`: `read`, `write`, `remove`; in a
+game that can't save, the session's memory), and the profile only `{ name, t, pieces }`: a plot built to every limit
+is about 1.8 MB, and the profile's one key holds 4 MB. A save from before that still carries `plan` in the profile; the
+next ask of the page moves it to its key (left where it is if the write fails). Build mode's limits are
+`Tuning.Plot.MaxWalls` 4,000 (fences too), `MaxFloors` 3,000 (paths laid as floor too), `MaxRoofs` 1,000, `MaxItems`
+8,000 and `Tuning.Water.Max` 20 (the user: "can the limit be raised to much much higher?"; they were 500, 300, 80,
+1,500 and 8), and a refusal names what is full (`Plan.fullReason(kind)`: "this plot holds 4,000 walls and fences at
+most").
+
 `Sim/Saves` (shared): slots are stored under `tostring(i)` (`Saves.get`, `Saves.set`), `validSlot`, `slots(profile)`
 (`Sim/Passes.saveSlots`), `maxSlots` (`Tuning.Passes.MoreSlots`), `pieces`, `bytes` (JSON size, never under what the
 DataStore writes), `cleanName(text, slot)` (no control characters, `Tuning.Saves.NameLength`, "Build <slot>" when
-empty), `snapshot`, `fits(profile, slot, plan)` (`MaxBytes` a save, `MaxTotal` all of them: a profile is one key of
-at most 4 MB), `summary(profile)` (`{ slots, max, free, saves = { { slot, name, t, pieces } } }`, never the plans),
+empty), `snapshot`, `key(userId, slot)` (`p_<id>_build<slot>`, the DataStore key a save's plan is kept under),
+`fits(profile, slot, plan)` (`MaxBytes` a save, 3.5 MB: each has a key of its own), `count(entry)`,
+`summary(profile)` (`{ slots, max, free, saves = { { slot, name, t, pieces } } }`, never the plans),
 `target(saved, size)` (the save checked for today's land with `Plan.sanitize`, and how many pieces that left out) and
 `requests(current, target)` (a piece the same in both under the same key stays, a hanging piece only with its wall,
 a piece in a pool only with its pool; the rest of the plot goes pieces first, the rest of the save comes walls
@@ -841,8 +851,10 @@ profile = {
   lastPayday, calendarDay, offers (old saves only: emptied on load), goals = { [goalId] = true },
   found = { [placeId] = true }, arrived = { [newcomerKey] = true },
   work = { day, owed, paid },  -- what the player earned at a workplace themselves on town day `day`
-  name,  -- the player's display name, set by `Data` each time they join: villagers call them by it. A line
-         -- says `{player}` and `Text.playerName(profile)` fills it: the event context's `ctx.f`, `Talk.line`,
+  name,  -- the player's display name, set by `Data` each time they join (their own villagers call them "Mayor";
+         -- another town's call a visitor by this name). A line
+         -- says `{player}` and `Text.playerName(profile)` fills it ("Mayor", `Text.Mayor`; "the {player}" when a
+         -- line talks about them): the event context's `ctx.f`, `Talk.line`,
          -- `Talk.wishLine`, and `Npc.say` on the server (each villager's `playerName`).
                                -- (Sim/PlayerWork.purse; at most Tuning.Jobs.Player.DayCap a day)
   gems,  -- the rare currency (Sim/Gems; Data.addGems)

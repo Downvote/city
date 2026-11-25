@@ -182,13 +182,15 @@ parts; a new event goes in one of its modules), props they bring into the world 
 villager makes for the player (free Build mode pieces in `Build/Recipes/Keepsakes`, counted in `profile.keepsakes`,
 checked by `Sim/Keepsakes` on the server), and things villagers use on breaks with a chance of something unusual or
 rare (`Data/Interactions`, chosen by `Sim/Uses`, acted by `server/Npc/Use`; players hold E on some through
-`Services/Interact`). Villagers call the player by name, never "you there", "Sensei" or "Mayor" (the user: "the
-player is to be referred to as their player name instead of sensei"): a line says `{player}` and it is filled with the
-player's display name (`profile.name`, `Text.playerName`). They talk the way a friend texts, short bursts in their own
+`Services/Interact`). Villagers call the player "Mayor" (the user's latest: "make it such that the villagers refer to
+the player as Mayor"; it was their display name before that, never "you there" or "Sensei"): a line says `{player}`
+and it is filled with `Text.playerName` ("Mayor"); a line about the player rather than to them says "the {player}"
+("I told the Mayor what I'd like"), and someone visiting another player's town is called by their own name on that
+talk card (never "the" before it). Never write "Mayor" into a line by hand: it goes through `{player}`. They talk the way a friend texts, short bursts in their own
 voice (the user pointed at a messaging app's chats as the reference, then sent them all: "here are all the
 momotalks. please redo every dialogue and event". Their feel only, nothing of their lines or characters). The shape
 is in docs/GAME_DESIGN.md (the villager opens with two to four short messages, the player picks one of two short
-replies, a reaction burst follows; exclamations and "..." by personality, the player's name in about one line in
+replies, a reaction burst follows; exclamations and "..." by personality, the player ("Mayor") in about one line in
 seven): write a burst as one string with "|" between the messages and send it with `s:burst` (a line or a map by
 personality, like `s:by`). Then: "Try to avoid having stirings of short sentaces, and redo the contents of sentances,
 some of them are too unnatural for people to say or dont make sense". So a message is one complete, natural sentence

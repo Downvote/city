@@ -95,7 +95,7 @@ function WaterTool.update(api: Api, rectStart: Vector3?): any
 	local w = { x1 = x1, z1 = z1, x2 = x2, z2 = z2, lv = 0, edge = st.edge, depth = st.depth }
 	local valid, reason = Plan.validate(State.plan, "waters", w)
 	if valid and Plan.count(State.plan, "waters") >= Plan.limit("waters") then
-		valid, reason = false, "you've hit the limit for water"
+		valid, reason = false, Plan.fullReason("waters")
 	end
 	local cost = Plan.cost("waters", w)
 	if valid and cost > api.coins() then

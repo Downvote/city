@@ -65,6 +65,28 @@ Harness.stub(Shared .. "Net.Remotes", nil)
 Saves.filter = function(_, text)
 	return (string.gsub(text, "bad", "###"))
 end
+-- each save's own DataStore key, stood in for (`failing` makes Roblox say no)
+local stored = {}
+local failing = false
+Saves.store = {
+	read = function(_, i)
+		if failing then
+			return false, nil
+		end
+		return true, stored[i]
+	end,
+	write = function(_, i, plan)
+		if failing then
+			return false
+		end
+		stored[i] = plan
+		return true
+	end,
+	remove = function(_, i)
+		stored[i] = nil
+		return true
+	end,
+}
 local changes = {}
 Build.Changed:Connect(function(_, ops)
 	table.insert(changes, ops)
@@ -156,9 +178,12 @@ describe("Saved builds", function()
 		expect(page.saves[1].pieces).toBe(SavesSim.pieces(profile.plan))
 		local saved = profile.saves["1"]
 		expect(saved.t > 0).toBeTruthy()
+		-- the plan in a key of its own, out of the profile (which keeps how many pieces)
+		expect(saved.plan).toBe(nil)
+		expect(saved.pieces).toBe(SavesSim.pieces(profile.plan))
 		-- the plan as it stands, gifts and all, and a copy: building on doesn't change the save
-		expect(sameBuild(saved.plan, profile.plan)).toBe(true)
-		expect(saved.plan ~= profile.plan and saved.plan.items ~= profile.plan.items).toBeTruthy()
+		expect(sameBuild(stored[1], profile.plan)).toBe(true)
+		expect(stored[1] ~= profile.plan and stored[1].items ~= profile.plan.items).toBeTruthy()
 		-- no name: "Build 2"
 		pause()
 		ok, page = ask("save", 2, "   ")
@@ -192,7 +217,7 @@ describe("Saved builds", function()
 		expect(page.slots).toBe(Tuning.Passes.FreeSlots)
 	end)
 
-	it("turns down a build too big for the profile's one DataStore key", function()
+	it("turns down a build too big for its key", function()
 		-- (the estimate is never under what the DataStore writes)
 		local json = Harness.env().game:GetService("HttpService"):JSONEncode(profile.plan)
 		expect(SavesSim.bytes(profile.plan) >= #json).toBeTruthy()
@@ -203,13 +228,62 @@ describe("Saved builds", function()
 		expect(ok).toBe(false)
 		expect(why:find("too big", 1, true) ~= nil).toBeTruthy()
 		Tuning.Saves.MaxBytes = was
-		local wasTotal = Tuning.Saves.MaxTotal
-		Tuning.Saves.MaxTotal = #json * 2
+	end)
+
+	it("fits a plot built to every limit in one save, and in the profile", function()
+		-- the user, of "you've hit the limit for that": "can the limit be raised to much much
+		-- higher?" Each kind's pieces from the starting house, as many as the limit allows, written
+		-- out: under what one key holds, with room to spare for the rest of the profile
+		local plan = StarterHouse.plan()
+		local total = 2000 -- (the plan's own fields, and then some)
+		for _, kind in Plan.Kinds do
+			local n, bytes = 0, 0
+			for key, obj in plan[kind] or {} do
+				n += 1
+				bytes += SavesSim.bytes(obj) + #tostring(key) + 4
+			end
+			local each = if n > 0 then bytes / n else 200
+			total += each * Plan.limit(kind)
+		end
+		expect(total < Tuning.Saves.MaxBytes).toBeTruthy()
+		expect(total < 3_000_000).toBeTruthy() -- (the profile's key holds 4 MB: a megabyte spare)
+		-- and the limits are well up from what they were (500 walls, 300 floors, 80 roofs, 1500 pieces)
+		expect(Plan.limit("walls") >= 4000 and Plan.limit("floors") >= 3000).toBeTruthy()
+		expect(Plan.limit("roofs") >= 1000 and Plan.limit("items") >= 8000).toBeTruthy()
+		-- a refusal names what is full, and how many
+		expect(Plan.fullReason("walls")).toBe("this plot holds 4,000 walls and fences at most")
+		expect(Plan.fullReason("items")).toBe("this plot holds 8,000 pieces at most")
+	end)
+
+	it("moves an old save's plan out of the profile, and says so when its key can't be had", function()
+		-- a save from before, its plan still in the profile: it loads as it is, and the next ask
+		-- of the page moves it to its own key
+		local wasEntry, wasPlan = profile.saves["2"], stored[2]
+		local old = Plan.copy(profile.plan)
+		profile.saves["2"] = { name = "Old one", t = 1, plan = old }
+		stored[2] = nil
+		local ok, page = ask("list")
+		expect(ok).toBe(true)
+		expect(profile.saves["2"].plan).toBe(nil)
+		expect(stored[2] == old).toBeTruthy()
+		local listed
+		for _, e in page.saves do
+			if e.slot == 2 then
+				listed = e
+			end
+		end
+		expect(listed ~= nil and listed.pieces == SavesSim.pieces(old)).toBeTruthy()
+		-- when Roblox can't take a save, nothing is said to be saved
+		failing = true
 		pause()
-		ok, why = ask("save", 2, "One more")
+		local why
+		ok, why = ask("save", 2, "Not now")
 		expect(ok).toBe(false)
-		expect(why:find("Delete one", 1, true) ~= nil).toBeTruthy()
-		Tuning.Saves.MaxTotal = wasTotal
+		expect(why:find("Couldn't save", 1, true) ~= nil).toBeTruthy()
+		expect(profile.saves["2"].name).toBe("Old one")
+		failing = false
+		-- (slot 2 back as the tests before left it)
+		profile.saves["2"], stored[2] = wasEntry, wasPlan
 	end)
 
 	it("renames and deletes, and says so when a slot is empty", function()
@@ -234,7 +308,7 @@ describe("Saved builds", function()
 	it("loads a save back: what's the same stays, the rest is sold and bought, and Undo takes it back", function()
 		pause()
 		ask("save", 1, "Cottage")
-		local saved = profile.saves["1"].plan
+		local saved = stored[1]
 		-- since then: a tree bought, the bed moved, a gift sold (for nothing) and another kept as it is
 		local bedKey, giftKey, stayKey
 		for key, it in profile.plan.items do
@@ -380,6 +454,6 @@ describe("Saved builds", function()
 		expect(answer.cost < 0).toBeTruthy() -- the chairs sell back, the cottage comes free
 		local last = synced[#synced]
 		expect(last.full ~= nil and last.ops == nil).toBe(true)
-		expect(sameBuild(profile.plan, profile.saves["1"].plan)).toBe(true)
+		expect(sameBuild(profile.plan, stored[1])).toBe(true)
 	end)
 end)
