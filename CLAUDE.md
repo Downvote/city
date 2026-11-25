@@ -34,7 +34,10 @@ the contract (update it with every API, remote or saved data change), `src/share
 
 Specs today (511 at the last full run; `Voice`: each personality's own hand, and a villager's ending; `Memory`: what events leave
 with a villager for a few days, the accessory on and off; `FlairService`: buying flair with gems on the server, with
-stubbed neighbours; `Tutorial`: the four steps, checked
+stubbed neighbours; `Store`: passes owned, a gem pack's receipt paid once, the pay boost from Double Pay, VIP and the group;
+`Offline`: what the town earned while the player was away; `Rewards`: gems from the daily gift, playtime and
+achievements; `Collide`: what a piece bumps into, stairs, doorways, Stretch; `Group`: the Select tool's moves and
+sales of many pieces; `Saves`: saved builds, loading one onto the plot; `Lively`: moving pieces and their effects; `Tutorial`: the four steps, checked
 by the server, the first craving coming quickly; `Water`: pools and ponds on the terrain grid, what may stand in them; `Floors`: the floors the passes allow, an old
 save's fourth floor, the basement's rules, its dig and its lining, land and Big Plot;
 `Unstick`: finding room to stand, what of a piece is solid, villagers getting up and getting unstuck, swimmers left

@@ -344,15 +344,52 @@ end
 -- piece and wall it makes, checked against what `plan` had before it. `made` lists them by kind
 -- and key in `trial`, the copy with them in.
 function Collide.checkMade(plan: any, trial: any, made: { { kind: string, key: string } }): (boolean, string?)
+	-- (only what is near the change is looked at: the plan's pieces and walls within the box
+	-- round everything it puts down)
+	local lo = Vector3.new(math.huge, math.huge, math.huge)
+	local hi = -lo
+	local objs = {}
 	for _, m in made do
-		if m.kind == "items" or m.kind == "walls" then
-			local obj = trial[m.kind][m.key]
-			if obj then
-				local ok, why = Collide.check(plan, m.kind, obj)
-				if not ok then
-					return false, why
-				end
+		local obj = if m.kind == "items" or m.kind == "walls" then trial[m.kind][m.key] else nil
+		if obj then
+			table.insert(objs, { kind = m.kind, obj = obj })
+			local shape = if m.kind == "items" then Collide.itemShape(obj) else wallShape(trial, nil, obj)
+			if #shape.boxes > 0 then
+				lo, hi = lo:Min(shape.lo), hi:Max(shape.hi)
 			end
+		end
+	end
+	if lo.X > hi.X then
+		return true
+	end
+	local around = { items = {}, walls = {} }
+	for key, it in plan.items do
+		local shape = Collide.itemShape(it)
+		if #shape.boxes > 0 and near(shape, { boxes = shape.boxes, lo = lo, hi = hi }) then
+			around.items[key] = it
+		end
+	end
+	for key, w in plan.walls do
+		local t = Plan.wallThickness(w.style) + 1
+		if
+			math.min(w.x1, w.x2) - t < hi.X
+			and math.max(w.x1, w.x2) + t > lo.X
+			and math.min(w.z1, w.z2) - t < hi.Z
+			and math.max(w.z1, w.z2) + t > lo.Z
+		then
+			around.walls[key] = w
+		end
+	end
+	-- (and the doors and windows in those walls, which cut their doorways)
+	for key, it in plan.items do
+		if type(it.wall) == "string" and around.walls[it.wall] then
+			around.items[key] = it
+		end
+	end
+	for _, o in objs do
+		local hitKind, hitKey = Collide.hit({ items = around.items, walls = around.walls }, o.kind, o.obj)
+		if hitKind and hitKey then
+			return false, "bumps into " .. Collide.nameOf(hitKind, plan[hitKind][hitKey])
 		end
 	end
 	return true

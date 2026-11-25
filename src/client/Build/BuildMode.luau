@@ -815,6 +815,10 @@ local function placeTool()
 		clearGhost()
 		setLabel(reason, if reason then planePoint() else nil)
 		candidate = nil
+		if s.blocked then
+			s.blocked = nil -- (off the plot it bumps into nothing)
+			changed("blocked")
+		end
 		return
 	end
 	local def = Catalog.get(item.id) :: any
