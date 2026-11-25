@@ -87,7 +87,25 @@ event({
 		local s = K.scene(ctx, "Power cut")
 		s:prop("item:keep_lantern", "a")
 		s:n("Every light in town went out at once.")
-		s:voice("b", "scared", "sweat")
+		burst(s, "b", {
+			sunny = "Eek, it's so dark!|Can I hold your sleeve for a bit?",
+			gentle = "Oh dear, is everyone all right?",
+			bold = "Stay where you are, everyone.",
+			dreamy = "Oh... it's so dark you can see every star.",
+			easygoing = "Eh, I was about to go to bed anyway.",
+			proud = "I'm not scared of the dark, I'm just standing very still.",
+			shy = "Um... is anyone there?",
+			cheeky = "who turned the town off?",
+			cool = "Quiet, and don't move.",
+			prickly = "Great, who tripped over the cable this time?",
+			dramatic = "*gasp* We've been plunged into DARKNESS!",
+			bookish = "I can't see my own hand, and I was halfway down a page.",
+			gloomy = "Of course the power's gone, as usual.",
+			polite = "Oh dear, does anyone have a light?",
+			foodie = "My dinner was still in the oven!",
+			nervous = "Oh no, oh no, I can't see anything!",
+			_ = "Who turned the lights off?",
+		}, "sweat")
 		burst(s, "a", {
 			bold = "Nobody panic, I've got candles somewhere.|Ow, that was a table.",
 			gentle = "Here, I've got a lantern.|Come and sit with me until the lights come back, all right?",
@@ -286,7 +304,7 @@ event({
 		s:n("A scruffy dog with a red collar has been following {a} round all morning.")
 		burst(s, "a", {
 			gentle = "{player}, this poor dog is lost.|His tag says 'Biscuit', so someone must be worried, don't you think?",
-			bold = "{player}, looks like I've got a new friend, right?|His tag says Biscuit.",
+			bold = "Looks like I've got a new friend, {player}.|His tag says Biscuit, so we're on first names already.",
 			shy = "Um, {player}, this dog keeps sitting on my feet.|I don't mind, though.",
 			sunny = "{player}, look who found me!|His name's Biscuit, it says so on his tag!",
 			cool = "{player}. This dog's lost.|His tag says Biscuit, so someone's missing him.",
@@ -501,7 +519,7 @@ event({
 	weight = W({ base = 0.04, weather = { "clear", "cloudy" } }),
 	scene = function(ctx)
 		local s = K.scene(ctx, "A balloon")
-		s:n("A big striped hot air balloon drifted over town this afternoon.")
+		s:n("A big striped hot air balloon drifted low over the town.")
 		s:n("The people in the basket waved, and everybody waved back for quite a long time.")
 		s:all(3)
 		s:log("A hot air balloon drifted over town.")
@@ -647,7 +665,7 @@ event({
 			prickly = "Don't, {player}, don't say anything.|They're just flowers.",
 			dramatic = "*gasp* My secret is out!|You must tell no one, {player}.",
 			gloomy = "People have seemed a bit sad lately.|I thought flowers might help a little.",
-			polite = "Good morning, {player}.|I hope you don't mind, I only wanted to do something kind.",
+			polite = "Oh, {player}, you saw me.|I hope you don't mind, I only wanted to do something kind.",
 			nervous = "Y-you won't tell anyone, will you?|Promise? Okay, okay.",
 			_ = "Shh, it's better as a secret.",
 		}, "heart")
@@ -745,7 +763,25 @@ event({
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "A noise in the dark")
 		s:n("Something has been rustling in {a}'s garden all night.")
-		s:voice("a", "scared", "sweat")
+		burst(s, "a", {
+			gentle = "Oh dear, what's that rustling out there?",
+			bold = "Right, whoever's in my garden, I'm coming out.",
+			shy = "Um... is somebody out there?",
+			cheeky = "if that's a burglar, they're a very noisy one",
+			cool = "Something's in the garden.|I'll take a look.",
+			prickly = "Ugh, whatever that is, it's been at it all night.",
+			dramatic = "*gasp* There's a CREATURE in my garden!",
+			bookish = "It's too heavy for a mouse and too light for a fox, so what is it?",
+			gloomy = "It's probably something awful, as usual.",
+			polite = "Hello? Is someone in the garden?",
+			foodie = "If that's somebody after my vegetables, I'm not sharing.",
+			nervous = "Wh-what's that noise?|Oh no, oh no, it's getting closer.",
+			sunny = "Ooh, something's in the garden!|I'm going to go and look!",
+			dreamy = "Hmm... something's out there in the dark...|Maybe it's lost.",
+			easygoing = "Eh, whatever it is, it can have the garden.|...Okay, fine, I'll look.",
+			proud = "I'm not scared, I'm simply going to investigate.",
+			_ = "What's that rustling out there?",
+		}, "sweat")
 		s:n("{a} crept out with a torch and found a hedgehog eating the cat's dinner.")
 		burst(s, "a", {
 			gentle = "Oh, look at you.|Eat up, little one.",
@@ -1032,7 +1068,11 @@ event({
 			c:hearts("a", 1)
 		end)
 		s:choice("You pick first.", function(c)
-			burst(c, "a", "Okay, this one.|No, wait, this one.", "question")
+			burst(c, "a", {
+				cool = "I've already got mine, thanks.|You have a look.",
+				bookish = "This one, obviously.|...And maybe this one too.",
+				_ = "Okay, this one.|No, wait, this one.",
+			}, "question")
 			c:mood("a", 3)
 			c:memo("a", "I got a book from the box by the fountain, and I'm putting it back when I'm done.")
 		end)
@@ -1076,7 +1116,11 @@ event({
 			cool = "...Huh. I've never seen that before.",
 			gloomy = "I've lived here for years and never seen this.",
 			sunny = "{player}, come here, you have to see this!",
-			_ = "Look at the waves, look!",
+			proud = "I always said this was the best beach on the island.|Look at it.",
+			polite = "Oh, how extraordinary.|Have you ever seen anything like it?",
+			gentle = "Oh, my, look at the water.",
+			cheeky = "kick the water, go on, it glows",
+			_ = "Look, the waves are glowing!",
 		}, "sparkle", "point")
 		burst(s, "b", {
 			nervous = "I-is it safe to touch?|It's safe, right?",
@@ -1117,6 +1161,8 @@ event({
 			gloomy = "I'm going to fall, I just know it.",
 			cool = "...I'm good here, thanks.",
 			shy = "Um... maybe in a minute.",
+			proud = "I'm simply resting.|I could skate if I wanted to.",
+			dramatic = "I shall stay here and admire you from the side!",
 			_ = "I'm fine here, really.",
 		}, "sweat")
 		s:choice("A gentle push?", function(c)
@@ -1129,6 +1175,8 @@ event({
 				shy = "...!|That was actually fun.",
 				cool = "...Again.",
 				dreamy = "Hmm... it felt like flying.",
+				proud = "Th-that was entirely on purpose.|...Again.",
+				dramatic = "I FLEW, {player}!",
 				_ = "Okay, that was really fun.",
 			}, "laugh", "laugh")
 			c:rel(6)
@@ -1218,7 +1266,7 @@ event({
 			proud = "{player}, the harbour wall needs mending, and naturally I volunteered.|You can be my assistant.",
 			cool = "{player}. The harbour wall has a gap in it.|Can you help me fix it?",
 			prickly = "The harbour wall's falling apart, and nobody else is fixing it.|So it's you and me, okay?",
-			polite = "Good afternoon, {player}.|The harbour wall needs a few stones replaced, if you could lend a hand.",
+			polite = "Excuse me, {player}.|The harbour wall needs a few stones replaced, if you could lend a hand.",
 			nervous = "Um, {player}? There's a gap in the harbour wall.|What if a boat hits it?|C-could you help me fix it?",
 			_ = "{player}, are you free?|The harbour wall's lost a few stones, and I need help putting them back.",
 		}, "idea", "point")
@@ -1229,9 +1277,9 @@ event({
 			)
 			burst(c, "a", {
 				bold = "Not bad at all.|Lunch is on me, and I always pay back.",
-				prickly = "That's done.|...You were useful, but don't get used to me saying it.",
-				cool = "Good work. Thanks.",
-				gloomy = "It'll hold for a while, anyway.|Thanks, {player}.",
+				prickly = "That's done.|...You were useful, so I'm buying lunch, but don't get used to it.",
+				cool = "Good work. Thanks.|Lunch is on me.",
+				gloomy = "It'll hold for a while, anyway.|Thanks, {player}, I'll get us some lunch.",
 				proud = "Excellent work, most of it mine.|You did well too, so you've earned lunch.",
 				_ = "All done, thanks, {player}.|Let's go and get some lunch, my treat.",
 			}, "heart")
@@ -1271,7 +1319,7 @@ event({
 	weight = W({ base = 0.12, weather = { "storm", "rain" }, traits = { brave = -0.3, kind = 0.2 } }),
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "After the storm")
-		s:n("{a} comes round first thing in the morning, still in their boots.")
+		s:n("{a} comes round to check on you, still in their storm boots.")
 		burst(s, "a", {
 			nervous = "S-sorry, {player}, can I ask you something?|Is your roof okay after the storm?|I heard a bang last night and thought it was your house.",
 			gentle = "{player}, are you all right?|That wind was awful, and I couldn't sleep for thinking about everyone's roofs.",
@@ -1279,9 +1327,10 @@ event({
 			sunny = "{player}, you're okay!|That storm was so loud, did you hear the bins rolling down the street?",
 			gloomy = "Your house is still standing, good.|I was sure something would blow away.",
 			cool = "{player}. Is your roof okay?",
-			polite = "Good morning, {player}, I do hope I'm not intruding.|Did your house come through the storm all right?",
+			polite = "Hello, {player}, I do hope I'm not intruding.|Did your house come through the storm all right?",
 			prickly = "You're fine, then, good.|I wasn't worried, I was passing anyway.",
-			_ = "{player}, are you okay?|That was quite a storm last night.",
+			cheeky = "you survived, nice|that storm was wild",
+			_ = "{player}, are you okay?|That was quite a storm.",
 		}, "question")
 		s:choice("We're fine, a bin lid blew off.", function(c)
 			burst(c, "a", {

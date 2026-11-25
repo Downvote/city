@@ -482,7 +482,7 @@ Interactions.uses = {
 		lines = {
 			"There you go, have a big drink.",
 			"Look at you, you're getting so big.",
-			"Drink up, it's a warm one today.",
+			"There, that's better, isn't it?",
 		},
 		outcomes = {
 			{ id = "water", rarity = "usual", weight = 76 },
@@ -512,7 +512,7 @@ Interactions.uses = {
 				weight = 4,
 				trait = "kind",
 				per = 1,
-				say = { "Oh, look, it's started flowering.", "It flowered. While I was standing right here." },
+				say = { "Oh, look, it's started flowering.", "It flowered while I was standing right here." },
 				icon = "sparkle",
 				mood = 3,
 				puff = "petals",
@@ -532,7 +532,7 @@ Interactions.uses = {
 		lines = {
 			"Shh, this is the good bit.",
 			"I've seen this one before, but I'm still watching.",
-			"Five more minutes, and then bed.",
+			"Just five more minutes, and then I'll get up.",
 		},
 		outcomes = {
 			{ id = "watch", rarity = "usual", weight = 76 },
@@ -686,7 +686,10 @@ Interactions.uses = {
 				rarity = "rare",
 				weight = 4,
 				pair = true,
-				say = { "That was the best game we've ever played.", "Is it dark already? I don't even know who won." },
+				say = {
+					"That was the best game we've ever played.",
+					"How long were we playing? I don't even know who won.",
+				},
 				act = "cheer",
 				icon = "heart",
 				heart = true,

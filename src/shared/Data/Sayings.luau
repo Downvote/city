@@ -26,7 +26,7 @@ Sayings.list = {
 	{ id = "breeze", text = "Smell that? Nothing beats the sea air." },
 	{ id = "fivemore", text = "Just five more minutes, and then I'll start." },
 	{ id = "wave", text = "Give me a wave if you're passing." },
-	{ id = "dontask", text = "Hehe, that's a long story." },
+	{ id = "dontask", text = "Don't ask, it's a long story." },
 	{ id = "itllbefine", text = "It'll turn out fine, it usually does." },
 	{ id = "gulls", text = "Mind your bun, the gulls are about." },
 	{ id = "tomorrow", text = "I'll do it tomorrow, definitely tomorrow." },
@@ -35,10 +35,10 @@ Sayings.list = {
 	{ id = "allgood", text = "All fine at this end." },
 	{ id = "interesting", text = "Huh, now that's interesting." },
 	{ id = "remind", text = "Remind me later, or I'll forget." },
-	{ id = "story", text = "That reminds me of something, but it's a long one." },
+	{ id = "story", text = "That reminds me of something my nan used to say." },
 	{ id = "pier", text = "See you down at the pier." },
 	{ id = "crumbs", text = "Oh, crumbs, not again." },
-	{ id = "onething", text = "One thing at a time, then the next." },
+	{ id = "onething", text = "One thing at a time, that's how it gets done." },
 	{ id = "smells", text = "Mm, is somebody baking?" },
 }
 

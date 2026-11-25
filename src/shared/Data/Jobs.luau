@@ -50,7 +50,7 @@ local list: { Job } = {
 		income = 1125,
 		likes = { "sunny", "gentle", "foodie" },
 		lines = {
-			"Here's your milky one, but mind, it's hot.",
+			"Mind, that one's hot, I've only just made it.",
 			"Next, please, what can I get you?",
 			"I tried to draw a leaf in the foam, and it nearly looks like one.",
 			"I'm grinding a fresh batch, so give me two minutes.",
@@ -93,7 +93,7 @@ local list: { Job } = {
 		likes = { "dreamy", "shy", "dramatic" },
 		lines = {
 			"Don't move, I've nearly got your nose right.",
-			"It's nearly done, there's just the sky left.",
+			"I'll have it framed for you by Friday.",
 			"It needs more blue, it always needs more blue.",
 			"That one's still drying, so please don't touch it.",
 		},
@@ -109,7 +109,7 @@ local list: { Job } = {
 			"Open wide and say ahh for me.",
 			"You need to drink more water, and I mean it.",
 			"Come on in, whoever's next.",
-			"Keep that arm still for me.",
+			"Sit yourself down, and let me have a look.",
 		},
 	},
 	{
@@ -121,9 +121,9 @@ local list: { Job } = {
 		likes = { "proud", "gentle", "bookish" },
 		lines = {
 			"Eyes up here, please, everyone.",
-			"Who knows the answer? Anyone?",
+			"There's always room for one more at the back.",
 			"Your homework is due on Monday, and no excuses this time.",
-			"Good, now try the next one.",
+			"Class starts at seven, so bring a pencil.",
 		},
 	},
 	{
@@ -137,7 +137,7 @@ local list: { Job } = {
 			"This next one's new, so be kind.",
 			"I take requests, but I only know about six songs.",
 			"Clap along if you know this one.",
-			"Thank you, and there's a hat for coins if you liked it.",
+			"Thanks, this one's an old favourite of mine.",
 		},
 	},
 	{

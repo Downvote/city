@@ -207,7 +207,7 @@ Chatter.Topics = {
 			"Hear me out, because I think the market needs a spoon stall.",
 		},
 		yes = { "Big ones and little ones, and I'd buy five.", "I'd buy a few, honestly." },
-		no = { "Who needs that many spoons?", "I think it needs a stall where you can sit down and have a nap." },
+		no = { "Who needs that many spoons?", "Spoons? I'd rather have a stall that sells socks." },
 		more = { "I'd run it myself and call it Spoon Corner." },
 		back = { "Everyone needs more spoons than they think." },
 	},
@@ -269,7 +269,7 @@ Chatter.Topics = {
 		},
 		no = { "I think that was a duck.", "Every cloud looks like a teapot to you." },
 		more = { "I took it as a sign and had two cups." },
-		back = { "Ducks don't have lids, though." },
+		back = { "It had a spout and a lid, so it was a teapot." },
 	},
 	{
 		about = "singing in the bath",
@@ -277,7 +277,7 @@ Chatter.Topics = {
 		yes = { "The bathroom has the best echo in the house.", "Me too, and I always go for the high notes." },
 		no = { "I know, because I heard you through two walls.", "The bath's for thinking, quietly." },
 		more = { "I'm learning a new song, and it has a key change in it." },
-		back = { "Thinking can wait, I'm singing." },
+		back = { "Well, I'm not stopping, so you'll have to get used to it." },
 	},
 	{
 		about = "borrowed umbrellas",
@@ -336,7 +336,7 @@ Chatter.Topics = {
 	{
 		about = "their one tomato",
 		open = { "My tomato plant has grown exactly one tomato, and I'm very proud of it." },
-		yes = { "One good tomato beats ten bad ones.", "Have you given it a name yet?" },
+		yes = { "One good tomato beats ten bad ones.", "That's one more tomato than I've got." },
 		no = { "That's a lot of watering for one tomato.", "Mine has nine, not that I'm counting." },
 		more = { "I'm going to put it in a sandwich and eat it very slowly." },
 		back = { "It's a very good tomato, though." },
@@ -368,12 +368,12 @@ Chatter.Topics = {
 	{
 		about = "a quiet hobby that still impresses people",
 		open = { "I want a hobby that's quiet but still impresses people." },
-		yes = { "You could knit very small hats.", "Card towers are quiet, as long as you hold your breath." },
+		yes = { "You could knit very small hats.", "You could build card towers, as long as you hold your breath." },
 		no = {
 			"Quiet and impressive don't really go together, so try the drums.",
 			"You could be impressive at napping.",
 		},
-		more = { "Small hats it is, maybe for mice." },
+		more = { "Ooh, I'll start tonight and see who notices." },
 		back = { "That isn't what I had in mind at all." },
 	},
 	{
@@ -458,7 +458,7 @@ Chatter.Topics = {
 		},
 		no = { "You need to tell them today.", "They've been calling you the wrong name back, I bet." },
 		more = { "I'm in too deep to fix it now." },
-		back = { "It's too late, they sign their notes with it now." },
+		back = { "It's too late, it's been a whole week." },
 	},
 	{
 		about = "the best spot on the beach",
@@ -517,7 +517,7 @@ Chatter.Topics = {
 		yes = { "I hope it's a pond with ducks.", "I saw the string too, and there was loads of it." },
 		no = { "People measure things all the time, so it doesn't mean much.", "It'll be a shed, it's always a shed." },
 		more = { "I'm keeping a spot free for my chair next to it." },
-		back = { "Nobody needs that much string for a shed." },
+		back = { "Nobody pegs out that much string for nothing." },
 	},
 	{
 		about = "a glove on the fence",
@@ -536,7 +536,7 @@ Chatter.Topics = {
 		yes = { "Keep the envelope if it's got a nice stamp.", "Even boring post is good post." },
 		no = { "It's always a bill, though.", "I'd rather someone just knocked on the door." },
 		more = { "I'm going to write to my cousin tonight and hope they write back." },
-		back = { "A bill is still post, technically." },
+		back = { "I still love hearing the post land on the mat." },
 	},
 	{
 		about = "jumping in puddles",
@@ -544,7 +544,7 @@ Chatter.Topics = {
 		yes = { "Never, so keep your wellies on.", "The day you stop is a sad day." },
 		no = { "Your socks would disagree.", "I stopped years ago, and I don't miss it." },
 		more = { "There's a big one by the gate, and I'm going in." },
-		back = { "My socks have made their peace with it." },
+		back = { "Wet socks are half the fun, honestly." },
 	},
 	{
 		about = "the cat that visits everyone",
@@ -561,7 +561,7 @@ Chatter.Topics = {
 		about = "the lighthouse",
 		open = {
 			"Does anyone actually live in the lighthouse?",
-			"The lighthouse came on early tonight, so someone must be up there.",
+			"The lighthouse came on early last night, so someone must be up there.",
 		},
 		yes = {
 			"Someone does, because there's washing on a line up there.",
@@ -596,7 +596,7 @@ Chatter.Topics = {
 		yes = { "Crumpet. Okay, that's a good one.", "Mine's puddle, and it has the same feel." },
 		no = { "That's a food, though.", "Mine's nap, short and useful." },
 		more = { "I'm going to start saying it more often." },
-		back = { "Food words count, and crumpet most of all." },
+		back = { "Crumpet's still the best, and I'm not changing my mind." },
 	},
 	{
 		about = "sea glass",
@@ -644,7 +644,7 @@ Chatter.Topics = {
 		yes = { "They have no shame at all.", "It was the same gull that got me, I know it." },
 		no = { "You have to eat faster round here.", "You were waving it about, though." },
 		more = { "I'm eating indoors from now on." },
-		back = { "I wasn't waving it, I was pointing at the view." },
+		back = { "I'll hold on with both hands next time, then." },
 	},
 }
 
@@ -813,15 +813,15 @@ local FOLLOW_BY = {
 	sunny = { "Okay, so, listen to this.", "Sorry, I've got loads to tell you." },
 	gentle = { "Can I tell you something, if you've got a minute?", "I've been meaning to tell you something." },
 	bold = "This'll be quick, I promise.",
-	dreamy = { "Hmm... sorry, where was I?", "Wait, I just had a thought, and now it's gone." },
+	dreamy = { "Hmm... I had something to tell you.", "Wait, I just had a thought, and now it's gone." },
 	easygoing = "No rush, I've got all day.",
 	proud = "You'll want to hear this, trust me.",
 	shy = "If you're not busy, I mean...",
 	cheeky = { "hehe", "don't look at me like that" },
 	cool = "It's a quick one.",
-	prickly = "Don't make it a whole thing.",
+	prickly = "I'll be quick, I've got things to do.",
 	dramatic = "You might want to sit down for this.",
-	bookish = "I've been thinking about it all morning.",
+	bookish = "I've been wanting to ask you something all morning.",
 	gloomy = "It's nothing much, as usual.",
 	polite = "I wanted to tell you something, if it's no trouble.",
 	foodie = { "Can you smell toast, or is it just me?", "Is that a bun in your pocket? Never mind." },
@@ -864,6 +864,68 @@ local function opener(ctx: any, a: string): string
 	return ctx.rng:pick(list)
 end
 
+-- Hello back from somebody they get on with well enough.
+local GREET = {
+	sunny = "Oh, hi! What's up?",
+	gentle = "Oh, hello, how are you doing?",
+	bold = "Hey. What's up?",
+	dreamy = "Oh... hello.",
+	easygoing = "Mm, hey.",
+	proud = "Ah, hello there.",
+	shy = "Oh, um, hi.",
+	cheeky = "oh, hey you",
+	cool = "Hey.",
+	prickly = "What is it?",
+	dramatic = "Oh, hello, hello!",
+	bookish = "Oh, hello, what is it?",
+	gloomy = "Hey... what's up?",
+	polite = "Good day, how are you?",
+	foodie = "Oh, hi, I was just thinking about lunch.",
+	nervous = "Oh! H-hi.",
+	_ = "Oh, hi.",
+}
+
+-- What the second says once the first has had the last word: when they agreed, and when they
+-- didn't. These follow any topic, so they say nothing about the topic itself.
+local AGREED = {
+	sunny = "Ehehe, that's so you.",
+	gentle = "Oh, that does sound like you.",
+	bold = "Hah, of course you would.",
+	dreamy = "Hmm... I like that.",
+	easygoing = "Heh, fair enough.",
+	proud = "Hmph, not a bad idea.",
+	shy = "Hehe... that's nice.",
+	cheeky = "hehe, of course you would",
+	cool = "Hm. Fair.",
+	prickly = "Ugh, of course you would.",
+	dramatic = "That is SO you.",
+	bookish = "Ha, I'd expect nothing less.",
+	gloomy = "Heh... that's very you.",
+	polite = "How very like you.",
+	foodie = "Ha, I like the way you think.",
+	nervous = "Ha, that's so you.",
+	_ = "Ha, that's so you.",
+}
+local DISAGREED = {
+	sunny = "Ehehe, okay, we'll agree to disagree.",
+	gentle = "Well, we can't agree on everything, can we?",
+	bold = "Hah, you're still wrong.",
+	dreamy = "Hmm... maybe we're both a bit right.",
+	easygoing = "Eh, I'm not going to argue about it.",
+	proud = "Hmph, I know I'm right, though.",
+	shy = "Um... maybe you're right.",
+	cheeky = "nope, still wrong, hehe",
+	cool = "Agree to disagree.",
+	prickly = "Whatever, I'm still right.",
+	dramatic = "We'll NEVER agree on this, will we?",
+	bookish = "Let's say the jury's still out.",
+	gloomy = "Heh... we'll never settle that one.",
+	polite = "Well, we'll have to agree to disagree.",
+	foodie = "Let's argue about it over lunch.",
+	nervous = "O-okay, maybe you've got a point.",
+	_ = "Ha, we'll have to agree to disagree.",
+}
+
 -- How they say hello back, by how well they get on, in their own way.
 local function greet(ctx: any, s: any, score: number)
 	if score <= -10 then
@@ -888,16 +950,16 @@ local function greet(ctx: any, s: any, score: number)
 		}, "anger")
 	elseif score >= 40 then
 		Chatter.burst(s, "b", {
-			sunny = { "Oh good, it's you!", "There you are, I was just looking for you." },
+			sunny = { "Oh good, it's you!", "Oh, hi, hi! I was hoping I'd see you." },
 			gentle = "{a}, I was hoping I'd see you today.",
-			bold = "There you are, finally.",
+			bold = "Hah, good, I was getting bored.",
 			dreamy = "Oh, {a}... I was just thinking about you.",
 			easygoing = "Oh, hey, good, come and sit down.",
 			proud = "Ah, my second favourite person, after me.",
 			shy = "Oh, {a}... I'm glad it's you.",
 			cheeky = "oh no, it's you... kidding, hi",
 			cool = "Hey, good timing.",
-			prickly = "You took your time. Sit down.",
+			prickly = "Oh, it's you.|...Good, actually. Sit down.",
 			dramatic = "{a}! My favourite person in this whole town.",
 			bookish = "{a}, good, I've got so much to tell you.",
 			gloomy = "Oh, it's you. Good, that's... good.",
@@ -907,7 +969,7 @@ local function greet(ctx: any, s: any, score: number)
 			_ = "Oh good, it's you.",
 		}, "heart")
 	else
-		s:voice("b", "hello")
+		Chatter.burst(s, "b", GREET)
 	end
 end
 
@@ -933,8 +995,9 @@ function Chatter.agrees(ctx: any, a: string, b: string): boolean
 end
 
 -- A whole chat onto scene `s` between stars a and b. Returns the topic, whether they agreed,
--- and how much it did for their friendship.
-function Chatter.chat(ctx: any, s: any, a: string, b: string, topic: any?): (any, boolean, number)
+-- and how much it did for their friendship. `goesOn` leaves off the goodbye, for a chat that
+-- carries on to another topic (Data/Events/Talks' long chat).
+function Chatter.chat(ctx: any, s: any, a: string, b: string, topic: any?, goesOn: boolean?): (any, boolean, number)
 	local t = topic or ctx.rng:pick(Chatter.Topics)
 	local score = ctx.rel(a, b)
 	Chatter.say(s, "a", opener(ctx, a), nil, "wave")
@@ -948,20 +1011,17 @@ function Chatter.chat(ctx: any, s: any, a: string, b: string, topic: any?): (any
 	if yes then
 		Chatter.pick(s, "b", t.yes, "music")
 		Chatter.pick(s, "a", t.more, "sparkle")
-		-- a laugh fits after any topic; a "yes" (to a plan) or a cheer would come out of nowhere
 		if ctx.rng:chance(0.6) then
-			s:voice("b", "laugh", "music", "laugh")
+			Chatter.burst(s, "b", AGREED, "music", "laugh")
 		end
 	else
 		Chatter.pick(s, "b", t.no, "question")
 		Chatter.pick(s, "a", t.back, if score <= -10 then "anger" else "sweat")
-		if K.isPers(ctx, b, "cheeky", "prickly") and score >= 20 then
-			s:voice("b", "tease", "sparkle", "laugh")
-		elseif ctx.rng:chance(0.5) then
-			s:voice("b", "laugh", "question")
+		if ctx.rng:chance(0.5) then
+			Chatter.burst(s, "b", DISAGREED, "question")
 		end
 	end
-	if ctx.rng:chance(0.7) then
+	if not goesOn and ctx.rng:chance(0.7) then
 		s:voice(ctx.rng:pick({ "a", "b" }), "bye", nil, "wave")
 	end
 	local d = if yes then 6 elseif score <= -10 then -2 else 2
@@ -994,7 +1054,7 @@ function Chatter.small(ctx: any, a: string, b: string): { { who: string, text: s
 	}
 	if ctx.rng:chance(0.6) then
 		table.insert(out, { who = "a", text = ctx.f(Chatter.flat(ctx.rng:pick(if yes then t.more else t.back))) })
-		table.insert(out, { who = "b", text = K.voiceText(ctx, b, "laugh") })
+		table.insert(out, { who = "b", text = ctx.f(Chatter.flat(K.byPers(ctx, b, if yes then AGREED else DISAGREED))) })
 	end
 	return out
 end

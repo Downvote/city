@@ -10,7 +10,6 @@ local CollectionService = game:GetService("CollectionService")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Tuning = require(Shared.Config.Tuning)
 local Schema = require(Shared.Sim.Schema)
-local Personalities = require(Shared.Data.Personalities)
 local Foods = require(Shared.Data.Foods)
 local Catalog = require(Shared.Build.Catalog)
 local Builder = require(Shared.Build.Builder)
@@ -25,6 +24,7 @@ local Routine = require(Shared.Sim.Routine)
 local Uses = require(Shared.Sim.Uses)
 local Sayings = require(Shared.Data.Sayings)
 local Chatter = require(Shared.Data.Events.Chatter)
+local Kit = require(Shared.Data.Events.Kit)
 local Rng = require(Shared.Util.Rng)
 local Text = require(Shared.Util.Text)
 local Remotes = require(Shared.Net.Remotes)
@@ -372,10 +372,11 @@ end
 
 -- The daily routine ------------------------------------------------------------------------------
 
+-- A line of their personality's own, said to another villager in the street, so never one of the
+-- lines that call the player by name (those are for the talk card: Kit.sceneLines leaves them out).
 local function line(pers: string, kind: string): string
-	local p = Personalities.get(pers)
-	local lines = p and p.lines[kind]
-	if not lines then
+	local lines = Kit.sceneLines(pers, kind)
+	if #lines == 0 then
 		return "..."
 	end
 	return rng:pick(lines)
