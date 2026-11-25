@@ -15,6 +15,16 @@ local Goals = require(Shared .. "Data.Goals")
 local Geometry = require(Shared .. "Build.Geometry")
 
 describe("The glow", function()
+	it("blurs the background, never what is near", function()
+		-- the user: "also, add background blur". The lens is focused on what the camera looks at
+		-- (client/World/Focus), sharp well round it, and only what lies behind goes soft
+		local lens = Tuning.Look.Lens
+		expect(lens.FarIntensity > 0.15 and lens.FarIntensity <= 0.5).toBeTruthy()
+		expect(lens.InFocusRadius >= 40).toBeTruthy()
+		expect(lens.Reach >= 1).toBeTruthy()
+		expect(lens.Ease > 0).toBeTruthy()
+	end)
+
 	it("starts above white, and is gentle", function()
 		-- the user: "the bloom might be too much". With a threshold under 1 anything pale glowed
 		-- (a white wall in the sun), and at nearly full strength a lamp washed the view out

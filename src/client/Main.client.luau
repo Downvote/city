@@ -53,3 +53,4 @@ require(World.Work).start() -- working at a workplace yourself: its prompts, you
 require(World.Prompts).start() -- no prompts while you sit, work or talk
 require(World.Explore).start()
 require(World.Outlines).start()
+require(World.Focus).start() -- the background blur follows what the camera looks at

@@ -496,7 +496,8 @@ local function stylize()
 	bloom.Size = Tuning.Look.Bloom.Size
 	bloom.Threshold = Tuning.Look.Bloom.Threshold
 	bloom.Parent = Lighting
-	-- rays through the haze, and only the far distance softened
+	-- rays through the haze, and the background blurred (each screen keeps the lens focused on
+	-- what its camera looks at: client/World/Focus)
 	local rays = Instance.new("SunRaysEffect")
 	rays.Name = "Rays"
 	rays.Intensity = Tuning.Look.SunRays.Intensity

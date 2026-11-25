@@ -586,8 +586,11 @@ Tuning.Look = {
 		},
 	},
 	SunRays = { Intensity = 0.14, Spread = 0.7 },
-	-- what softens far off (a DepthOfFieldEffect): only the distance, and only a little
-	Lens = { FocusDistance = 120, InFocusRadius = 240, FarIntensity = 0.1 },
+	-- Background blur (a DepthOfFieldEffect). The user: "also, add background blur" (it only
+	-- softened the far distance, a little: 120, 240 and 0.1). Each player's screen keeps it
+	-- focused on what the camera looks at (client/World/Focus), sharp `Reach` times that far round
+	-- it and never less than InFocusRadius, and blurs what lies behind; `Ease` how fast it follows.
+	Lens = { FocusDistance = 30, InFocusRadius = 60, FarIntensity = 0.32, Reach = 1.4, Ease = 5 },
 	-- The light (World.stylize puts it on Lighting; colours are 0 to 255). The preview tools read
 	-- these same numbers (tools/preview/look.py), so a render shows the game's light and grade.
 	-- The user: "it seems like shadows dont render on models". They did, but the shade was lit

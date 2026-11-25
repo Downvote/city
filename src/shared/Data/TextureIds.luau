@@ -32,9 +32,9 @@ local TextureIds: { [string]: Ids } = {
 	brick = { color = "rbxassetid://15826262054", normal = "rbxassetid://15826267601", studs = 8, decal = 15826262079 }, -- "brick color" and "brick normal" by latechicagonightz
 	cobble = { color = "rbxassetid://79170514243126", normal = "rbxassetid://135713644746103", studs = 8, light = 0.54, decal = 109103115932604 }, -- "PavingStones005_2K-JPG_Color" and "_NormalGL" by PixBay_YT
 	paving = { color = "rbxassetid://133622340383137", studs = 6, decal = 134144901412773 }, -- "brick" by goatysan
-	concrete = { color = "rbxassetid://17528667950", normal = "rbxassetid://10266817549", studs = 12, decal = 17528667984 }, -- "Old Concrete Texture" by VastChadJavelin; normal "concrete_floor_02_nor_gl_2k" by Chrn_E
+	concrete = { color = "rbxassetid://92960457218078", normal = "rbxassetid://10266817549", studs = 14, light = 0.55, decal = 138997834312338 }, -- "floor for me1" by coolrobloxian171 (worn: stains and hairline cracks, for the user's "painted textures with wear"); normal "concrete_floor_02_nor_gl_2k" by Chrn_E
 	asphalt = { color = "rbxassetid://74051293306053", normal = "rbxassetid://11226165423", studs = 12, light = 0.48, decal = 104048479913484 }, -- "Asphalt texture (worn)" by DaHood_lover123; normal "asphalt_01_nor_gl_1k" by dorndaft
-	plaster = { color = "rbxassetid://7339363282", normal = "rbxassetid://5437994223", studs = 8, decal = 7339363321 }, -- "Dry Wall Texture" by hamzahassan6; normal "Concrete_Wall_Nor" from the library
+	plaster = { color = "rbxassetid://104528602434593", normal = "rbxassetid://5437994223", studs = 12, light = 0.62, decal = 90702185673414 }, -- "Concrete1" by SkedichX (pale, with soft grime stains); normal "Concrete_Wall_Nor" from the library
 	clay = { color = "rbxassetid://6436676312", studs = 8, light = 0.52, decal = 6436676320 }, -- "BCFBC793-7B38-4635-B77A-B226FDC43928" by elixiric (grey tiles, so the paint decides the roof's colour)
 	tiles = { color = "rbxassetid://15246763549", normal = "rbxassetid://12477337856", studs = 6, decal = 15246763593 }, -- "Tiles107_2K-PNG_Color" by mycardgo; normal "Tiles107_2K_NormalGL" by Omair1962
 	carpet = { color = "rbxassetid://10538536313", normal = "rbxassetid://108650587944937", studs = 4, light = 0.54, decal = 10538536325 }, -- "Carpet" by attmpt9; normal "Carpet Normal Map" by Bunniekell

@@ -168,8 +168,8 @@
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Concrete",
-          "ColorMap": "rbxassetid://17528667950",
-          "StudsPerTile": 12,
+          "ColorMap": "rbxassetid://92960457218078",
+          "StudsPerTile": 14,
           "MaterialPattern": "Regular",
           "NormalMap": "rbxassetid://10266817549",
           "RoughnessMap": "rbxassetid://16600089027"
@@ -190,8 +190,8 @@
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "Plaster",
-          "ColorMap": "rbxassetid://7339363282",
-          "StudsPerTile": 8,
+          "ColorMap": "rbxassetid://104528602434593",
+          "StudsPerTile": 12,
           "MaterialPattern": "Regular",
           "NormalMap": "rbxassetid://5437994223",
           "RoughnessMap": "rbxassetid://16600089027"
