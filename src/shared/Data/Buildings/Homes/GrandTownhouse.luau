@@ -1,10 +1,9 @@
 --!strict
 -- The grand townhouse (fancy): two storeys of pale limestone under a slate hipped roof, a bay
--- window either side of a porch on two round pillars under a pediment, a chimney up the end
--- wall. A hall runs through the middle with the stair along one side of it. Downstairs the
+-- window either side of a porch on two round pillars under a pediment. A hall runs through the middle with the stair along one side of it. Downstairs the
 -- drawing room (the fire, the sofa facing it, the piano at the back) and the kitchen with the
 -- dining table in the bay; upstairs a canopy bed in the main bedroom, the bathroom behind it and
--- a second bedroom across the landing. Clipped hedges along the street, a blossom tree behind.
+-- a second bedroom across the landing. Clipped hedges along the street, flowers behind.
 --
 -- The frame: x across, z back from the street (z = 0). The house is x 4..34 and z 12..36 on both
 -- storeys, the hall x 14..24 through the middle of it, the porch x 14..24 and z 6..12.
@@ -124,7 +123,6 @@ return function(add: any)
 			k:dress("upfront", { hood = { WHITE, ROOF.c }, box = { WHITE, ROSE } })
 			k:dress("upback", { hood = { WHITE, ROOF.c }, box = { WHITE, GOLD } })
 			k:dress("back", { hood = { WHITE, ROOF.c }, box = { WHITE, PLUM } })
-			k:putY("chimney", 1.8, 22, 90, 0, "C9B8A4", "68686E")
 			k:hang("downpipe", "back", 33.3, 0, "a", ROOF.c, ROOF.c)
 			-- the porch: two round pillars under the pediment, lanterns either side of the door
 			k:putY("pillar_round", 15.2, 7.4, 0, F, WHITE, WHITE)
@@ -140,7 +138,7 @@ return function(add: any)
 			end
 			k:put("flower_border", 9, 5.0, 0, STONE, ROSE)
 			k:put("flower_border", 29, 5.0, 0, STONE, PLUM)
-			-- the garden behind: stones from the back door to a bench under the blossom
+			-- the garden behind: stepping stones to a bench among the flowers
 			k:put("path_stones", 26.0, 38.6, 0)
 			k:put("path_stones", 23.6, 40.2, 20)
 			k:put("bench_garden", 19.0, 42.4, 180, WALNUT, SAGE)
@@ -166,7 +164,6 @@ return function(add: any)
 			k:on("candles", "table_coffee", 8.5, 20.2, 0)
 			k:on("books_stack", "table_coffee", 8.6, 21.8, 15)
 			k:put("armchair", 9, 14.6, 0, TEAL)
-			k:put("lamp_floor", 12.8, 13.3, 0, GOLD)
 			k:put("piano", 9, 33.65, 180, WALNUT)
 			k:put("bookshelf", 5.15, 28, 90, WALNUT)
 			k:put("chandelier", 8.6, 21, 0, GOLD)
@@ -190,8 +187,7 @@ return function(add: any)
 			k:hang("clock_wall", "hallR", 26.5, 7.6, "a", TEAL)
 
 			-- upstairs -----------------------------------------------------------------------------
-			-- the landing: a bench under the front window, a bookshelf closing off the stairwell
-			k:up("bench_wood", 19, 13.4, 0, 1, WALNUT)
+			-- the landing: a bookshelf closing off the stairwell
 			k:up("bookshelf", 21.8, 32.85, 180, 1, WALNUT)
 			k:up("light_ceiling", 16, 25, 0, 1)
 

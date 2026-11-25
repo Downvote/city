@@ -147,17 +147,13 @@ local function staves(
 	return w
 end
 
--- An iron hoop round staves whose middles are `rad` out at height y: a solid band just wide
--- enough to go round every stave's corners (for a closed barrel or a churn with a lid on).
-local function hoop(r: R, cx: number, cz: number, y: number, rad: number, w: number, color: Color3)
-	local d = 2 * (math.sqrt((rad + 0.05) ^ 2 + (w / 2) ^ 2) + 0.03)
-	r:cyl(cx, y, cz, 0.14, d, "y", color, "Metal")
-end
-
--- An iron hoop made of short straps, one on each stave, for a tub you can see into.
-local function hoopRing(r: R, cx: number, cz: number, y: number, rad: number, n: number, w: number, color: Color3)
+-- An iron hoop round staves whose middles are `rad` out at height y: a short strap on each
+-- stave, so it follows the staves round and leaves a tub open to look into.
+local function hoopRing(r: R, cx: number, cz: number, y: number, rad: number, n: number, color: Color3)
+	local w = 2 * (rad + 0.07) * math.tan(math.pi / n) + 0.01
+	local a0 = math.pi / n
 	r:piece(function(q: R)
-		q:box(cx + rad - 0.02, y, cz, 0.02, 0.02, 0.02, color, "Metal")
+		q:box(cx + math.cos(a0) * rad, y, cz + math.sin(a0) * rad, 0.02, 0.02, 0.02, color, "Metal")
 		for i = 0, n - 1 do
 			local a = (i + 0.5) * 2 * math.pi / n
 			q:boxAt(
@@ -277,11 +273,11 @@ end
 
 -- A small bucket of staves with two hoops, water in it and a wire handle.
 local function bucket(r: R, x: number, y: number, z: number, rad: number, h: number, wood: Color3)
-	local w = staves(r, x, z, y, h, rad, rad, rad, 10, wood)
+	staves(r, x, z, y, h, rad, rad, rad, 10, wood)
 	r:cyl(x, y + (h - 0.12) / 2, z, h - 0.12, 2 * (rad - 0.06), "y", INSIDE, "Wood")
-	clear(r:cyl(x, y + h - 0.09, z, 0.04, 2 * (rad - 0.05), "y", WATER, "Glass"), 0.3)
+	clear(r:cyl(x, y + h - 0.09, z, 0.04, 2 * (rad - 0.05), "y", WATER, "Glass"), 0.15)
 	for _, f in { 0.15, 0.55 } do
-		hoop(r, x, z, y + h * f, rad, w, IRON)
+		hoopRing(r, x, z, y + h * f, rad, 10, IRON)
 	end
 	path(r, {
 		V(x - rad - 0.02, y + h * 0.8, z),
@@ -341,16 +337,6 @@ local items: { Item } = {
 				local x0 = sx * 2.6
 				r:block(x0, yc - s, zc - rad + 0.08, x0 + sx * 0.03, yc, zc + rad - 0.08, ENDGRAIN, "Wood")
 				r:block(x0, yc - rad + 0.08, zc - s + 0.03, x0 + sx * 0.03, yc - s, zc + s - 0.03, ENDGRAIN, "Wood")
-				r:block(
-					x0 + sx * 0.03,
-					yc - 0.3,
-					zc - 0.14,
-					x0 + sx * 0.06,
-					yc - 0.08,
-					zc + 0.14,
-					shade(ENDGRAIN, 0.85),
-					"Wood"
-				)
 				-- the stumps, with a knot or two
 				r:cyl(sx * 1.9, 0.6, zc, 1.2, 0.8, "y", bark, "Wood")
 				r:lump(CFrame.new(sx * 1.9 + sx * 0.38, 0.5, zc + 0.1), 0.12, 0.18, 0.14, shade(bark, 0.8), "Wood")
@@ -530,10 +516,10 @@ local items: { Item } = {
 			-- an old barrel stood on end: bulging staves, four iron hoops and its bung
 			local rEnd, rMid = 0.92, 1.04
 			r:cyl(0, 1.5, 0, 2.96, 2 * (rEnd - 0.06), "y", INSIDE, "Wood")
-			local w = staves(r, 0, 0, 0, 3.0, rEnd, rMid, rEnd, 14, r.c1)
+			staves(r, 0, 0, 0, 3.0, rEnd, rMid, rEnd, 14, r.c1)
 			for _, y in { 0.22, 0.95, 2.05, 2.78 } do
 				local rad = rEnd + (rMid - rEnd) * (1 - math.abs(y - 1.5) / 1.5)
-				hoop(r, 0, 0, y, rad, w, r.c2)
+				hoopRing(r, 0, 0, y, rad, 14, r.c2)
 			end
 			r:cyl(0, 1.5, 1.12, 0.12, 0.22, "z", shade(r.c1, 0.7), "Wood")
 			-- a round top of planks
@@ -993,9 +979,9 @@ local items: { Item } = {
 			-- a tall tapered churn of staves on a board, a lid and the dasher's handle
 			r:block(-0.75, 0, -0.75, 0.75, 0.1, 0.75, shade(r.c1, 0.8), "Wood")
 			r:cyl(0, 1.4, 0, 2.56, 2 * (0.45 - 0.06), "y", INSIDE, "Wood")
-			local w = staves(r, 0, 0, 0.1, 2.6, 0.6, 0.525, 0.45, 12, r.c1)
+			staves(r, 0, 0, 0.1, 2.6, 0.6, 0.525, 0.45, 12, r.c1)
 			for _, y in { 0.35, 1.4, 2.45 } do
-				hoop(r, 0, 0, y, 0.6 - 0.15 * (y - 0.1) / 2.6, w, r.c2)
+				hoopRing(r, 0, 0, y, 0.6 - 0.15 * (y - 0.1) / 2.6, 12, r.c2)
 			end
 			for _, sx in { -1, 1 } do
 				r:block(sx * 0.42, 2.18, -0.1, sx * 0.66, 2.32, 0.1, r.c1, "Wood")
@@ -1330,7 +1316,7 @@ local items: { Item } = {
 			local dir = (V(0, 3.7, -1.05) - V(0, 2.1, -0.75)).Unit
 			r:boxAt(
 				CFrame.fromMatrix(mid, Vector3.xAxis, dir, Vector3.xAxis:Cross(dir)) * CFrame.new(0, 0, 0.1),
-				1.5,
+				1.0,
 				1.6,
 				0.07,
 				fleece,
@@ -1338,11 +1324,11 @@ local items: { Item } = {
 			)
 			r:piece(function(q: R)
 				q:box(0, 1.98, 0, 0.1, 0.04, 0.1, fleece, "Fabric")
-				for i = 0, 6 do
-					q:ball(-0.84 + i * 0.28, 1.99, 0.76, 0.18, shade(fleece, 0.96), "Fabric")
-				end
 				for i = 0, 5 do
-					q:ball(-0.7 + i * 0.28, 3.72, -0.97, 0.18, shade(fleece, 0.96), "Fabric")
+					q:lump(CFrame.new(-0.75 + i * 0.3, 1.99, 0.76), 0.26, 0.12, 0.14, shade(fleece, 0.96), "Fabric")
+				end
+				for i = 0, 3 do
+					q:lump(CFrame.new(-0.42 + i * 0.28, 3.72, -0.97), 0.24, 0.14, 0.12, shade(fleece, 0.96), "Fabric")
 				end
 			end)
 			r:seat(0, 2.02, 0.1)
@@ -1413,10 +1399,10 @@ local items: { Item } = {
 			end
 			r:cyl(0, 0.35, cz, 0.2, 3.9, "y", shade(wood, 0.7), "Wood")
 			r:cyl(0, 1.25, cz, 1.8, 3.84, "y", shade(wood, 0.5), "Wood")
-			clear(r:cyl(0, 2.15, cz, 0.06, 3.86, "y", WATER, "Glass"), 0.35)
+			clear(r:cyl(0, 2.15, cz, 0.06, 3.86, "y", WATER, "Glass"), 0.15)
 			local w = staves(r, 0, cz, 0.2, 2.4, 2.0, 2.0, 2.0, 20, wood)
 			for _, y in { 0.5, 1.4, 2.3 } do
-				hoopRing(r, 0, cz, y, 2.0, 20, w, r.c2)
+				hoopRing(r, 0, cz, y, 2.0, 20, r.c2)
 			end
 			-- steps up to it, a bucket and a ladle on the top one
 			r:block(-1.0, 0, 2.05, 1.0, 0.84, 2.8, wood, "Wood")
