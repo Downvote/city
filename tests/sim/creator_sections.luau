@@ -644,7 +644,10 @@ Sim.run("friends, shared looks, outfits, my items and my avatars can be searched
 	check(table.find(queries, "people jun") ~= nil, "what is typed goes to the server as you type")
 	check(count("Person", "TextButton") == 2, "and only the names holding it come back")
 	typeIn(box, "zz")
-	check(count("Person", "TextButton") == 0 and showing("Nobody here or in your friends goes by that."), "nobody, said so")
+	check(
+		count("Person", "TextButton") == 0 and showing("Nobody here or in your friends goes by that."),
+		"nobody, said so"
+	)
 
 	press("Shared")
 	Sim.advance(1)
@@ -673,7 +676,10 @@ Sim.run("friends, shared looks, outfits, my items and my avatars can be searched
 	typeIn(box, "owned")
 	check(table.concat(cardNames(), ",") == "Owned HairAccessory", "a name holding the words stays")
 	typeIn(box, "more")
-	check(#cardNames() == 0 and noteText():find("Load more to look further", 1, true) ~= nil, "none loaded yet: load more")
+	check(
+		#cardNames() == 0 and noteText():find("Load more to look further", 1, true) ~= nil,
+		"none loaded yet: load more"
+	)
 	press("Show more")
 	check(table.concat(cardNames(), ",") == "More HairAccessory", "the next page is searched too")
 
