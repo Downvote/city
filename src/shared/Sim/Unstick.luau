@@ -210,7 +210,7 @@ function Unstick.find(boxes: { Box }, feet: Vector3, opts: Opts?): (Vector3?, st
 	local touching: { Near } = {}
 	local inside: { [Near]: boolean } = {}
 	local here = Unstick.body(feet, shape)
-	local core = Unstick.body(feet, { width = w * K.Core, height = h, step = step })
+	local core = Unstick.body(feet, { width = K.Middle + 2 * K.Touch, height = h, step = step })
 	for _, n in near do
 		if Unstick.overlaps(here, n.box) then
 			table.insert(touching, n)

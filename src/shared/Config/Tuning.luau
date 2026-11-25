@@ -93,6 +93,7 @@ Tuning.Unstick = {
 	Step = 0.6, -- what is lower than this over the feet is stepped on, not bumped into
 	Level = 1.2, -- how far the floor at a spot may sit above or below their feet
 	Touch = 0.05, -- an overlap this thin is two things touching, not one in the other
+	Middle = 0.5, -- what this wide a column up the middle of a body is in, they are in
 	Reach = 14, -- how far out to look for room to stand
 	Ring = 1, -- studs between one ring of spots and the next
 	Hop = 6, -- the furthest a stuck villager is put on to the waypoint they were making for

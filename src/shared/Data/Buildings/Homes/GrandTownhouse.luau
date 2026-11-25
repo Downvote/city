@@ -63,7 +63,7 @@ return function(add: any)
 			b:floor(14, 12, 24, 36, OAK, 1) -- the landing
 			b:floor(24, 12, 34, 36, OAK, 1) -- the second bedroom
 			b:floor(14, 6, 24, 12, MARBLE) -- the porch
-			b:floor(17, 0, 21, 4, PAVING) -- the path
+			b:floor(16, 0, 22, 4, PAVING) -- the path
 
 			-- the walls, both storeys --------------------------------------------------------------
 			k:wall("front", 4, 12, 34, 12, LIMESTONE, INSIDE)
@@ -156,9 +156,9 @@ return function(add: any)
 			-- the hall: the stair up its right side, a way past it on the left
 			k:putY("stairs_straight", 21.6, 25, 0, F, WALNUT, WHITE)
 			k:put("lamp_pendant", 19, 15, 0, GOLD)
-			k:hang("mirror_wall", "hallL", 20, 4.6, "a")
-			k:hang("art_landscape", "hallL", 26, 6.4, "a")
-			k:put("plant_big", 16.0, 33.9, 0)
+			k:hang("mirror_wall", "hallL", 17, 4.6, "a")
+			k:hang("art_landscape", "hallL", 22.5, 6.4, "a")
+			k:put("plant_big", 15.9, 16.4, 0)
 
 			-- the drawing room: the fire on the end wall with the sofa facing it, an armchair in
 			-- the bay, the piano at the back by the books
@@ -215,7 +215,7 @@ return function(add: any)
 			k:up("toilet", 6.0, 29.75, 0, 1)
 			k:up("sink_vanity", 10.0, 29.35, 0, 1, WHITE)
 			k:hang("mirror_wall", "upsplit", 10.0, 4.8, "b")
-			k:up("towel_rail", 12.4, 35.1, 180, 1, nil, GOLD)
+			k:up("towel_rail", 13.15, 29.5, 270, 1, nil, GOLD)
 			k:up("light_ceiling", 9, 32, 0, 1)
 
 			-- the second bedroom

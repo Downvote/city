@@ -166,7 +166,14 @@ personality, like `s:by`). Then: "Try to avoid having stirings of short sentaces
 some of them are too unnatural for people to say or dont make sense". So a message is one complete, natural sentence
 (two only when they belong together, never three), never a string of clipped bits ("Rain. Can't go out."); it makes
 sense said aloud and follows from the line before; and each personality's speech habits (GAME_DESIGN lists them)
-show in about one message in four or five. Every line follows the writing rule, in the speaker's voice (the user: "for the humanization, make sure to take
+show in about one message in four or five. Then: "make every single personality have a unique and distinct speech
+pattern, like using ~ at the end of sentances, ... and other details" and "try not use less used words ... like
+'on your step', instead using common terms like 'outside your door'". So every line a villager says passes through
+`Sim/Voice.speak(pers, text)` on its way out (`EventEngine.stage` for events, `Talk.line` and `Talk.wishLine` for
+the talk card, `Npc.say` over their heads), which puts on that personality's marks (only Gentle ends with "~", only
+Dreamy hums "♪", Cheeky is all lower case, Cool and Gloomy never "!", Polite never contracts, Nervous stammers;
+the table is in GAME_DESIGN and the Voice spec holds it); each personality's own words are written into their
+lines. Never write a mark another personality owns, and use everyday words a player anywhere knows. Every line follows the writing rule, in the speaker's voice (the user: "for the humanization, make sure to take
 note of the personalities of the villagers as well"): each personality talks its own way (`Data/Personalities`'
 `lines`, `Sim/Talk`'s maps keyed by personality), and a line only one kind of villager would say goes through
 `s:by`. There is no romance (the user: "remove any romance, just

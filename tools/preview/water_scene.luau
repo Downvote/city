@@ -79,14 +79,12 @@ return function(R, which: string?)
 			end
 		end
 	end
-	-- the lawn round them, cut where they are
-	local lawn = Color3.fromRGB(140, 186, 112)
+	-- the lawn round them over the soil, cut where they are (as the game cuts the plot's ground)
+	local lawn, soil = Color3.fromRGB(140, 186, 112), Color3.fromRGB(122, 98, 72)
 	local ground = { lo.X - 8, lo.Z - 8, hi.X + 8, hi.Z + 8 }
 	for _, r in Water.cutRects(ground, holes) do
-		table.insert(
-			out,
-			Geometry.span(Vector3.new(r[1], -0.3, r[2]), Vector3.new(r[3], 0, r[4]), lawn, "Grass")
-		)
+		table.insert(out, Geometry.span(Vector3.new(r[1], -0.3, r[2]), Vector3.new(r[3], 0, r[4]), lawn, "Grass"))
+		table.insert(out, Geometry.span(Vector3.new(r[1], -9, r[2]), Vector3.new(r[3], -0.3, r[4]), soil, "Ground"))
 	end
 	return out
 end

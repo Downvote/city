@@ -120,26 +120,30 @@ local function staves(
 	local ym = y0 + h / 2
 	local bulge = math.abs(rMid - (rBot + rTop) / 2) > 1e-3
 	local straight = math.abs(rBot - rTop) < 1e-3 and not bulge
-	r:piece(function(q: R)
-		q:box(cx, ym, cz, 0.1, 0.1, 0.1, wood, "Wood")
-		for i = 0, n - 1 do
-			local a = (i + 0.5) * 2 * math.pi / n
-			local dx, dz = math.cos(a), math.sin(a)
-			local col = shade(wood, 0.9 + ((i * 7) % 5) * 0.05)
-			local function at(rad: number, y: number): Vector3
-				return V(cx + dx * rad, y, cz + dz * rad)
+	-- (a piece holds at most 28 shapes, so bulging staves go in batches)
+	local per = if bulge then 13 else 27
+	for first = 0, n - 1, per do
+		r:piece(function(q: R)
+			q:box(cx, ym, cz, 0.1, 0.1, 0.1, wood, "Wood")
+			for i = first, math.min(n, first + per) - 1 do
+				local a = (i + 0.5) * 2 * math.pi / n
+				local dx, dz = math.cos(a), math.sin(a)
+				local col = shade(wood, 0.9 + ((i * 7) % 5) * 0.05)
+				local function at(rad: number, y: number): Vector3
+					return V(cx + dx * rad, y, cz + dz * rad)
+				end
+				if straight then
+					q:boxAt(CFrame.new(at(rBot, ym)) * CFrame.Angles(0, -a, 0), 0.1, h, w, col, "Wood")
+				elseif bulge then
+					local e = V(0, 0.02, 0)
+					q:beam(at(rBot, y0), at(rMid, ym) + e, w, 0.1, col, "Wood")
+					q:beam(at(rMid, ym) - e, at(rTop, y0 + h), w, 0.1, col, "Wood")
+				else
+					q:beam(at(rBot, y0), at(rTop, y0 + h), w, 0.1, col, "Wood")
+				end
 			end
-			if straight then
-				q:boxAt(CFrame.new(at(rBot, ym)) * CFrame.Angles(0, -a, 0), 0.1, h, w, col, "Wood")
-			elseif bulge then
-				local e = V(0, 0.02, 0)
-				q:beam(at(rBot, y0), at(rMid, ym) + e, w, 0.1, col, "Wood")
-				q:beam(at(rMid, ym) - e, at(rTop, y0 + h), w, 0.1, col, "Wood")
-			else
-				q:beam(at(rBot, y0), at(rTop, y0 + h), w, 0.1, col, "Wood")
-			end
-		end
-	end)
+		end)
+	end
 	return w
 end
 
@@ -275,22 +279,16 @@ end
 local function bucket(r: R, x: number, y: number, z: number, rad: number, h: number, wood: Color3)
 	local w = staves(r, x, z, y, h, rad, rad, rad, 10, wood)
 	r:cyl(x, y + (h - 0.12) / 2, z, h - 0.12, 2 * (rad - 0.06), "y", INSIDE, "Wood")
-	clear(r:cyl(x, y + h - 0.12, z, 0.04, 2 * (rad - 0.05), "y", WATER, "Glass"), 0.3)
-	for _, f in { 0.15, 0.6 } do
+	clear(r:cyl(x, y + h - 0.09, z, 0.04, 2 * (rad - 0.05), "y", WATER, "Glass"), 0.3)
+	for _, f in { 0.15, 0.55 } do
 		hoop(r, x, z, y + h * f, rad, w, IRON)
 	end
-	path(
-		r,
-		{
-			V(x - rad - 0.02, y + h * 0.8, z),
-			V(x - rad * 0.6, y + h + 0.3, z),
-			V(x + rad * 0.6, y + h + 0.3, z),
-			V(x + rad + 0.02, y + h * 0.8, z),
-		},
-		0.04,
-		IRON,
-		"Metal"
-	)
+	path(r, {
+		V(x - rad - 0.02, y + h * 0.8, z),
+		V(x - rad * 0.6, y + h + 0.3, z),
+		V(x + rad * 0.6, y + h + 0.3, z),
+		V(x + rad + 0.02, y + h * 0.8, z),
+	}, 0.04, IRON, "Metal")
 end
 
 -- One catalog entry (Build/Catalog explains the fields).
@@ -498,7 +496,7 @@ local items: { Item } = {
 			r:cyl(0, 4.2, -0.5, 0.9, 0.05, "x", iron, "Metal")
 			r:cyl(0.48, 4.2, -0.5, 0.12, 0.14, "x", trim, "Metal")
 			r:ball(0, 7.3, -0.5, 0.62, iron, "Metal")
-			r:cyl(0, 7.3, -1.0, 1.0, 0.6, "z", iron, "Metal")
+			r:cyl(0, 7.3, -0.985, 0.97, 0.6, "z", iron, "Metal")
 			r:cyl(0, 7.3, -1.47, 0.06, 0.95, "z", trim, "Metal")
 			-- a kettle warming on the right hand lid
 			local enamel = Color3.fromRGB(124, 152, 170)
@@ -916,7 +914,7 @@ local items: { Item } = {
 			-- a straw hat with a ribbon
 			r:cyl(-2.0, 1.15, 0.6, 0.05, 1.0, "z", STRAW, "Fabric")
 			r:cyl(-2.0, 1.15, 0.73, 0.22, 0.56, "z", STRAW, "Fabric")
-			r:cyl(-2.0, 1.15, 0.66, 0.06, 0.62, "z", ROSE, "Fabric")
+			r:cyl(-2.0, 1.15, 0.68, 0.06, 0.62, "z", ROSE, "Fabric")
 			-- a coil of rope
 			local rope = Color3.fromRGB(196, 170, 128)
 			r:piece(function(q: R)
@@ -1056,7 +1054,7 @@ local items: { Item } = {
 			r:block(-2.42, 0.55, -0.2, -2.39, 0.85, 0.1, shade(a, 1.15), "Wood")
 			-- jars of preserves, a pile of apples, folded cloths
 			for i, f in { Color3.fromRGB(176, 70, 80), Color3.fromRGB(232, 160, 70), Color3.fromRGB(130, 160, 90) } do
-				jar(r, -2.05 + i * 0.36, 0.08, 0.05, 0.32, 0.48, f, if i == 2 then GINGHAM else nil)
+				jar(r, -2.4 + i * 0.4, 0.08, 0.05, 0.32, 0.48, f, if i == 2 then GINGHAM else nil)
 			end
 			local apples = { Color3.fromRGB(186, 74, 64), Color3.fromRGB(150, 176, 90), Color3.fromRGB(196, 92, 70) }
 			for i = 0, 4 do
@@ -1257,18 +1255,12 @@ local items: { Item } = {
 			r:cyl(0, 1.55, 1.02, 0.04, 0.12, "z", iron, "Metal")
 			-- rope handles at the ends
 			for _, sx in { -1, 1 } do
-				path(
-					r,
-					{
-						V(sx * 2.05, 1.35, -0.3),
-						V(sx * 2.22, 1.08, -0.2),
-						V(sx * 2.22, 1.08, 0.2),
-						V(sx * 2.05, 1.35, 0.3),
-					},
-					0.08,
-					TWINE,
-					"Fabric"
-				)
+				path(r, {
+					V(sx * 2.05, 1.35, -0.3),
+					V(sx * 2.22, 1.08, -0.2),
+					V(sx * 2.22, 1.08, 0.2),
+					V(sx * 2.05, 1.35, 0.3),
+				}, 0.08, TWINE, "Fabric")
 				for _, z in { -0.3, 0.3 } do
 					r:ball(sx * 2.08, 1.35, z, 0.14, shade(TWINE, 0.85), "Fabric")
 				end
@@ -1320,9 +1312,9 @@ local items: { Item } = {
 			end
 			-- a seat of five poles with pale cut ends
 			for _, z in { -0.6, -0.3, 0, 0.3, 0.6 } do
-				r:cyl(0, 1.8, z, 2.4, 0.3, "x", wood, "Wood")
+				r:cyl(0, 1.8, z, 2.3, 0.3, "x", wood, "Wood")
 				for _, sx in { -1, 1 } do
-					r:cyl(sx * 1.215, 1.8, z, 0.03, 0.22, "x", ENDGRAIN, "Wood")
+					r:cyl(sx * 1.165, 1.8, z, 0.03, 0.22, "x", ENDGRAIN, "Wood")
 				end
 			end
 			-- a back of three boards between two rails
@@ -1419,7 +1411,7 @@ local items: { Item } = {
 			for _, z in { cz - 1.05, cz + 1.05 } do
 				r:block(-1.7, 0, z - 0.15, 1.7, 0.25, z + 0.15, shade(wood, 0.75), "Wood")
 			end
-			r:cyl(0, 0.3, cz, 0.2, 3.9, "y", shade(wood, 0.7), "Wood")
+			r:cyl(0, 0.35, cz, 0.2, 3.9, "y", shade(wood, 0.7), "Wood")
 			r:cyl(0, 1.25, cz, 1.8, 3.84, "y", shade(wood, 0.5), "Wood")
 			clear(r:cyl(0, 2.15, cz, 0.06, 3.86, "y", WATER, "Glass"), 0.35)
 			local w = staves(r, 0, cz, 0.2, 2.4, 2.0, 2.0, 2.0, 20, wood)

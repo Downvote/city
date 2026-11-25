@@ -19,7 +19,6 @@ local LILAC = Color3.fromRGB(200, 184, 232)
 local BUTTER = Color3.fromRGB(246, 224, 160)
 local SKY = Color3.fromRGB(168, 208, 236)
 local PEACH = Color3.fromRGB(246, 196, 160)
-local CREAM = Color3.fromRGB(244, 236, 221)
 local SNOW = Color3.fromRGB(248, 246, 240)
 local WOOD = Color3.fromRGB(226, 196, 150)
 local INK = Color3.fromRGB(64, 56, 66)
@@ -605,8 +604,13 @@ local items: { Item } = {
 		build = function(r: R)
 			r:block(-2.2, 0, -0.55, 2.2, 0.15, 0.55, r.c2, "Wood")
 			-- three bands of the rainbow, each an arch of short bars
-			for k, band in { { 1.9, 8, r.c1 }, { 1.25, 6, BUTTER }, { 0.6, 4, MINT } } do
-				local R0, n, col = band[1] :: number, band[2] :: number, band[3] :: Color3
+			local bands: { { rad: number, n: number, col: Color3 } } = {
+				{ rad = 1.9, n = 8, col = r.c1 },
+				{ rad = 1.25, n = 6, col = BUTTER },
+				{ rad = 0.6, n = 4, col = MINT },
+			}
+			for k, band in bands do
+				local R0, n, col = band.rad, band.n, band.col
 				local pts: { Vector3 } = {}
 				for i = 0, n do
 					local a = i * math.pi / n
@@ -687,18 +691,26 @@ local items: { Item } = {
 				r:cyl(sx * 1.7, 2.3, 0, 0.1, 1.4, "x", r.c1, "Wood")
 			end
 			-- three tiers of bins leaning forward on rails
-			local tiers = {
-				{ 0.12, { { -0.8, 1.5, r.c2 }, { 0.8, 1.5, PINK } } },
-				{ 0.98, { { -0.8, 1.5, MINT }, { 0.8, 1.5, BUTTER } } },
-				{ 1.84, { { -1.08, 0.98, LILAC }, { 0, 0.98, PEACH }, { 1.08, 0.98, r.c2 } } },
+			type Bin = { x: number, w: number, col: Color3 }
+			local tiers: { { y: number, bins: { Bin } } } = {
+				{ y = 0.12, bins = { { x = -0.8, w = 1.5, col = r.c2 }, { x = 0.8, w = 1.5, col = PINK } } },
+				{ y = 0.98, bins = { { x = -0.8, w = 1.5, col = MINT }, { x = 0.8, w = 1.5, col = BUTTER } } },
+				{
+					y = 1.84,
+					bins = {
+						{ x = -1.08, w = 0.98, col = LILAC },
+						{ x = 0, w = 0.98, col = PEACH },
+						{ x = 1.08, w = 0.98, col = r.c2 },
+					},
+				},
 			}
 			local tops: { CFrame } = {}
 			for _, t in tiers do
-				local y = t[1] :: number
+				local y = t.y
 				r:block(-1.65, y, -0.62, 1.65, y + 0.1, -0.5, shade(r.c1, 0.9), "Wood")
 				r:block(-1.65, y + 0.12, 0.5, 1.65, y + 0.22, 0.6, shade(r.c1, 0.9), "Wood")
-				for _, b in t[2] :: { { any } } do
-					local x, w, col = b[1] :: number, b[2] :: number, b[3] :: Color3
+				for _, b in t.bins do
+					local x, w, col = b.x, b.w, b.col
 					local cf = CFrame.new(x, y + 0.45, -0.02) * CFrame.Angles(0.25, 0, 0)
 					r:boxAt(cf, w, 0.62, 1.04, col, "SmoothPlastic")
 					r:boxAt(cf * CFrame.new(0, 0.3, 0.51), w + 0.08, 0.08, 0.1, shade(col, 0.85), "SmoothPlastic")
@@ -776,9 +788,14 @@ local items: { Item } = {
 		surface = 1.95,
 		build = function(r: R)
 			-- four crayon legs standing on their points
-			local legs = { { -1.45, -0.9, RED }, { 1.45, -0.9, BLUE }, { -1.45, 0.9, GREEN }, { 1.45, 0.9, YELLOW } }
+			local legs: { { x: number, z: number, col: Color3 } } = {
+				{ x = -1.45, z = -0.9, col = RED },
+				{ x = 1.45, z = -0.9, col = BLUE },
+				{ x = -1.45, z = 0.9, col = GREEN },
+				{ x = 1.45, z = 0.9, col = YELLOW },
+			}
 			for _, l in legs do
-				local x, z, col = l[1] :: number, l[2] :: number, l[3] :: Color3
+				local x, z, col = l.x, l.z, l.col
 				coneDown(r, x, 0.15, z, 0.3, 0.3, col)
 				r:cyl(x, 0.34, z, 0.08, 0.3, "y", shade(col, 0.9), "SmoothPlastic")
 				r:cyl(x, 0.9, z, 1.04, 0.34, "y", mix(col, C.White, 0.6), "SmoothPlastic")
@@ -1192,16 +1209,16 @@ local items: { Item } = {
 				r:lump(CFrame.new(sx * 0.12, 0.49, 0) * CFrame.Angles(0, 0, sx * 0.5), 0.2, 0.12, 0.1, r.c1, "Fabric")
 			end
 			local string = Color3.fromRGB(220, 214, 206)
-			local balloons = {
-				{ 0, 5.4, 0, r.c1 },
-				{ -0.75, 4.9, 0.3, r.c2 },
-				{ 0.7, 5.0, -0.25, BUTTER },
-				{ -0.35, 4.3, -0.6, MINT },
-				{ 0.45, 4.2, 0.55, LILAC },
-				{ -0.85, 3.85, -0.15, PEACH },
+			local balloons: { { p: Vector3, col: Color3 } } = {
+				{ p = Vector3.new(0, 5.4, 0), col = r.c1 },
+				{ p = Vector3.new(-0.75, 4.9, 0.3), col = r.c2 },
+				{ p = Vector3.new(0.7, 5.0, -0.25), col = BUTTER },
+				{ p = Vector3.new(-0.35, 4.3, -0.6), col = MINT },
+				{ p = Vector3.new(0.45, 4.2, 0.55), col = LILAC },
+				{ p = Vector3.new(-0.85, 3.85, -0.15), col = PEACH },
 			}
 			for _, b in balloons do
-				local x, y, z, col = b[1] :: number, b[2] :: number, b[3] :: number, b[4] :: Color3
+				local x, y, z, col = b.p.X, b.p.Y, b.p.Z, b.col
 				r:lump(CFrame.new(x, y, z), 0.9, 1.05, 0.9, col, "SmoothPlastic")
 				coneDown(r, x, y - 0.56, z, 0.12, 0.14, shade(col, 0.9))
 				rod(r, Vector3.new(x, y - 0.62, z), Vector3.new(0, 0.48, 0), 0.025, string, "Fabric")
@@ -1254,23 +1271,23 @@ local items: { Item } = {
 				)
 			end
 			-- things hanging from it at different lengths: stars, clouds and a moon
-			local hang = {
-				{ "star", 2.3 },
-				{ "cloud", 2.0 },
-				{ "star", 2.7 },
-				{ "moon", 2.2 },
-				{ "star", 2.5 },
-				{ "cloud", 2.6 },
+			local hang: { { kind: string, drop: number } } = {
+				{ kind = "star", drop = 2.3 },
+				{ kind = "cloud", drop = 2.0 },
+				{ kind = "star", drop = 2.7 },
+				{ kind = "moon", drop = 2.2 },
+				{ kind = "star", drop = 2.5 },
+				{ kind = "cloud", drop = 2.6 },
 			}
 			for i, h in hang do
 				local a = (i - 1) * math.pi / 3
 				local x, z = math.cos(a) * 1.1, math.sin(a) * 1.1
-				local y = -(h[2] :: number)
+				local y = -h.drop
 				rod(r, Vector3.new(x, -1.42, z), Vector3.new(x, y + 0.2, z), 0.02, cord, "Fabric")
 				local cf = CFrame.new(x, y, z) * CFrame.Angles(0, -a + math.pi / 2, 0)
-				if h[1] == "star" then
+				if h.kind == "star" then
 					star(r, cf, 0.38, 0.08, r.c1, "SmoothPlastic")
-				elseif h[1] == "cloud" then
+				elseif h.kind == "cloud" then
 					r:lump(cf * CFrame.new(-0.16, 0, 0), 0.34, 0.26, 0.18, SNOW, "SmoothPlastic")
 					r:lump(cf * CFrame.new(0.02, 0.06, 0), 0.42, 0.36, 0.2, SNOW, "SmoothPlastic")
 					r:lump(cf * CFrame.new(0.2, -0.02, 0), 0.3, 0.24, 0.18, SNOW, "SmoothPlastic")
@@ -1312,8 +1329,9 @@ local items: { Item } = {
 				end
 			end)
 			-- two heights marked with little flags
-			for i, f in { { 2.55, RED }, { 3.4, BLUE } } do
-				local y, col = f[1] :: number, f[2] :: Color3
+			local flags: { { y: number, col: Color3 } } = { { y = 2.55, col = RED }, { y = 3.4, col = BLUE } }
+			for i, f in flags do
+				local y, col = f.y, f.col
 				r:tri(
 					Vector3.new(-0.1, y, 0.12),
 					Vector3.new(0.3, y + 0.12, 0.12),

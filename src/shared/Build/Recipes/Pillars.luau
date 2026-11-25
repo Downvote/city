@@ -549,45 +549,39 @@ local items: { Item } = {
 				square(q, CEIL - 0.44, CEIL, 1.5, r.c2, "Limestone")
 				square(q, CEIL, TOP, 1.4, shade(r.c2, 0.95), "Limestone")
 			end, true)
-			square(r, 0.76, CEIL - 0.6, 1.2, r.c1, "Plaster")
-			-- the bracket: a back plate on the column, an arm out with a curl under it, a hook
-			local z0, zl, y0 = 0.6, 0.8, 6.4 -- the column's face, the lantern's middle, its foot
+			square(r, 0.76, CEIL - 0.6, 1.1, r.c1, "Plaster")
+			-- the bracket: a back plate on the column, an arm out with a strut under it, a hook
+			local z0, zl, y0 = 0.55, 0.8, 6.3 -- the column's face, the lantern's middle, its foot
+			local hw, ht = 0.2, 0.74 -- the lantern's half width and its height to the top plate
+			local iron = C.DarkMetal
 			r:piece(function(q: R)
-				q:block(-0.2, y0 + 0.4, z0, 0.2, y0 + 1.5, z0 + 0.06, C.DarkMetal, "Metal")
-				q:block(-0.04, y0 + 1.2, z0 + 0.06, 0.04, y0 + 1.28, zl + 0.04, C.DarkMetal, "Metal")
+				q:block(-0.22, y0 + 0.5, z0, 0.22, y0 + 1.7, z0 + 0.06, iron, "Metal")
+				q:block(-0.04, y0 + 1.36, z0 + 0.06, 0.04, y0 + 1.44, zl + 0.04, iron, "Metal")
 				q:beam(
-					Vector3.new(0, y0 + 0.75, z0 + 0.06),
-					Vector3.new(0, y0 + 1.22, zl - 0.06),
+					Vector3.new(0, y0 + 0.9, z0 + 0.06),
+					Vector3.new(0, y0 + 1.38, zl - 0.06),
 					0.06,
 					0.06,
-					C.DarkMetal,
+					iron,
 					"Metal"
 				)
-				q:block(-0.02, y0 + 1.02, zl - 0.02, 0.02, y0 + 1.2, zl + 0.02, C.DarkMetal, "Metal")
-				-- the lantern: a foot plate, four corner bars, a top plate
-				q:block(-0.17, y0, zl - 0.17, 0.17, y0 + 0.06, zl + 0.17, C.DarkMetal, "Metal")
+				q:block(-0.02, y0 + ht + 0.4, zl - 0.02, 0.02, y0 + 1.36, zl + 0.02, iron, "Metal")
+				-- the lantern: a foot plate, four corner bars, a top plate, a drop under it
+				q:block(-hw, y0, zl - hw, hw, y0 + 0.06, zl + hw, iron, "Metal")
 				for _, sx in { -1, 1 } do
 					for _, sz in { -1, 1 } do
-						q:block(
-							sx * 0.15 - 0.025,
-							y0 + 0.06,
-							zl + sz * 0.15 - 0.025,
-							sx * 0.15 + 0.025,
-							y0 + 0.62,
-							zl + sz * 0.15 + 0.025,
-							C.DarkMetal,
-							"Metal"
-						)
+						local x, z = sx * (hw - 0.025), zl + sz * (hw - 0.025)
+						q:block(x - 0.025, y0 + 0.06, z - 0.025, x + 0.025, y0 + ht, z + 0.025, iron, "Metal")
 					end
 				end
-				q:block(-0.18, y0 + 0.62, zl - 0.18, 0.18, y0 + 0.68, zl + 0.18, C.DarkMetal, "Metal")
-				q:block(-0.04, y0 - 0.1, zl - 0.04, 0.04, y0, zl + 0.04, C.DarkMetal, "Metal")
+				q:block(-hw - 0.01, y0 + ht, zl - hw - 0.01, hw + 0.01, y0 + ht + 0.06, zl + hw + 0.01, iron, "Metal")
+				q:block(-0.04, y0 - 0.12, zl - 0.04, 0.04, y0, zl + 0.04, iron, "Metal")
 			end)
-			r:cone(0, y0 + 0.83, zl, 0.3, 0.4, C.DarkMetal, "Metal")
-			r:ball(0, y0 + 1.0, zl, 0.08, C.DarkMetal, "Metal")
-			r:glass(-0.13, y0 + 0.06, zl - 0.13, 0.13, y0 + 0.62, zl + 0.13)
-			r:cyl(0, y0 + 0.14, zl, 0.16, 0.12, "y", C.Cream, "SmoothPlastic")
-			local flame = r:ball(0, y0 + 0.3, zl, 0.14, C.Warm, "SmoothPlastic")
+			r:cone(0, y0 + ht + 0.06 + 0.17, zl, 0.34, 0.4, iron, "Metal")
+			r:ball(0, y0 + ht + 0.4, zl, 0.1, iron, "Metal")
+			r:glass(-hw + 0.04, y0 + 0.06, zl - hw + 0.04, hw - 0.04, y0 + ht, zl + hw - 0.04)
+			r:cyl(0, y0 + 0.16, zl, 0.2, 0.14, "y", C.Cream, "SmoothPlastic")
+			local flame = r:ball(0, y0 + 0.36, zl, 0.16, C.Warm, "SmoothPlastic")
 			r:glow(flame, 14, 1.1)
 		end,
 	},
@@ -1334,33 +1328,29 @@ local items: { Item } = {
 				square(q, CEIL - 0.3, CEIL, 1.5, r.c1, "Limestone")
 				square(q, CEIL, TOP, 1.4, shade(r.c1, 0.95), "Limestone")
 			end, true)
-			local y1, y2, turns, rad, phase = 0.5, CEIL - 0.6, 2.5, 0.64, 0.4
+			local y1, y2, turns, rad, phase = 0.5, CEIL - 0.6, 3.5, 0.64, 0.4
 			local function along(t: number, off: number, out: number): (Vector3, number)
 				local a = phase + turns * 2 * math.pi * t + off
 				return around(a, y1 + (y2 - y1) * t, out), a
 			end
 			r:piece(function(q: R)
-				helix(q, 0, 20, 20, y1, y2, turns, rad, phase, 0.12, 0.12, ROSE_STEM, "Grass")
+				helix(q, 0, 27, 27, y1, y2, turns, rad, phase, 0.12, 0.12, ROSE_STEM, "Grass")
 			end)
-			r:piece(function(q: R)
-				q:block(-0.1, 5, -0.1, 0.1, 5.2, 0.1, C.Leaf, "Grass")
-				for i = 0, 21 do
-					-- (thicker toward the top, where the rose gets the sun)
-					local t = ((i + 0.5) / 22) ^ 0.8
-					local p, a = along(t, if i % 2 == 0 then 0.4 else -0.35, 0.68)
-					local sz = 0.46 + (i % 4) * 0.05
-					q:lump(
-						CFrame.new(p) * CFrame.Angles(0, a, 0.4),
-						sz,
-						sz * 0.7,
-						sz,
-						if i % 3 == 0 then C.DarkLeaf else C.Leaf,
-						"Grass"
-					)
-				end
-			end)
-			for i = 0, 11 do
-				local t = 0.22 + 0.74 * ((i + 0.5) / 12) ^ 0.7
+			-- thirty clumps of leaves in two pieces, thicker toward the top where the sun is
+			for half = 0, 1 do
+				r:piece(function(q: R)
+					q:block(-0.1, 3 + half * 4, -0.1, 0.1, 3.2 + half * 4, 0.1, C.Leaf, "Grass")
+					for i = half * 15, half * 15 + 14 do
+						local t = ((i + 0.5) / 30) ^ 0.85
+						local p, a = along(t, if i % 2 == 0 then 0.4 else -0.35, 0.68)
+						local sz = 0.44 + (i % 4) * 0.05
+						local leaf = if i % 3 == 0 then C.DarkLeaf else C.Leaf
+						q:lump(CFrame.new(p) * CFrame.Angles(0, a, 0.4), sz, sz * 0.7, sz, leaf, "Grass")
+					end
+				end)
+			end
+			for i = 0, 13 do
+				local t = 0.16 + 0.8 * ((i + 0.5) / 14) ^ 0.7
 				local p, a = along(t, if i % 2 == 0 then 0.15 else 0.6, 0.78)
 				local d = 0.28 + (i % 3) * 0.03
 				local bloom = r:lump(

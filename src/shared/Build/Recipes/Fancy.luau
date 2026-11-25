@@ -12,7 +12,6 @@ local C = Recipe.Colors
 type R = Recipe.Recipe
 
 local GOLD = C.Gold
-local MARBLE = Color3.fromRGB(236, 232, 226)
 local WALNUT = Color3.fromRGB(107, 74, 54)
 local IVORY = Color3.fromRGB(244, 238, 226)
 local SHEET = Color3.fromRGB(250, 248, 243)
@@ -282,11 +281,14 @@ local items: { Item } = {
 			end
 			path(r, tops, 0.4, frame, "Fabric")
 			-- buttons in rows across the back
-			for _, row in
-				{ { 1.95, { -2.4, -1.2, 0, 1.2, 2.4 } }, { 2.5, { -1.8, -0.6, 0.6, 1.8 } }, { 3.0, { -0.6, 0.6 } } }
-			do
-				for _, x in row[2] :: { number } do
-					button(r, x, row[1] :: number, -0.85, r.c1)
+			local rows: { { y: number, xs: { number } } } = {
+				{ y = 1.95, xs = { -2.4, -1.2, 0, 1.2, 2.4 } },
+				{ y = 2.5, xs = { -1.8, -0.6, 0.6, 1.8 } },
+				{ y = 3.0, xs = { -0.6, 0.6 } },
+			}
+			for _, row in rows do
+				for _, x in row.xs do
+					button(r, x, row.y, -0.85, r.c1)
 				end
 			end
 			-- rolled arms with a scroll face and a gold rosette at the front

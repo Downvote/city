@@ -135,7 +135,11 @@ service), `ctx.stars`, `EventEngine.stage(ctx, def, order)` and a graded `recent
 requests)` (an add past what was given is refused; removes in the same change count) and `clean`. `Build.apply` runs
 `Keepsakes.check` first, `Data.clientState` sends `keepsakes`, and Build mode has a Keepsakes sub tab under Furniture
 (cards read "Free, N left" or "None left"; `ui.sh build:keepsakes[:empty]`). `Sim/Talk.line` takes `season` and
-`weather`, and `Talk.memo(v, now)` is the last event's memo while fresh. `Data/Foods.phrase(food)` is a food as it
+`weather`, and `Talk.memo(v, now)` is the last event's memo while fresh. `Sim/Voice.speak(pers, text)` writes one message in a personality's own hand (marks only, never words:
+"~", "...", "!!", a drawl, a stammer, lower case, no contractions), the same every time for the same words and
+unchanged when spoken twice; `EventEngine.stage` runs it over every villager line of a scene (narration and answers
+untouched), `Talk.line`/`Talk.wishLine` over the talk card's, and `Npc.say` over what's said over a head (`npc.pers`,
+set in `Villagers.spawn`). `Data/Foods.phrase(food)` is a food as it
 reads inside a sentence ("a rice ball", "an apple", "mushroom soup"); the cravings, the talk card's Buy button and the
 events' gifts all name food through it. Each job in `Data/Jobs` has a `place`, where it's done as people say
 it ("bakery", "workshop": `Jobs.placeOf(id)`), and `K.workplace(ctx, vid)` gives a star's, so no line names a

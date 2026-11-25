@@ -7,6 +7,8 @@
 --   build               Build mode on the Furniture tab
 --   build:walls         Build mode on Walls (build:rooms, build:floors, build:roofs, build:fences,
 --                       build:paths and build:buildings: those trays)
+--   build:water         Build mode's Water tray: edges, depths and what goes in water
+--                       (build:water:pick: a dug pool picked, its edge and depth to change)
 --   build:pick          Build mode with a gift from the starting house picked (the action bar)
 --   build:bought        Build mode with a bought armchair picked: it sells for coins
 --   build:paint         Build mode on the Paint tool (finishes and colours)
@@ -288,6 +290,26 @@ elseif scene:sub(1, 5) == "build" then
 	end
 	for _, tab in TABS[scene] or {} do
 		Sim.press(tab)
+	end
+	if scene == "build:water" or scene == "build:water:pick" then
+		-- (water: the Outdoor group's Water tile, by its name, since cards say "water" too; for
+		-- :pick a tiled pool dug beside the house and picked)
+		Sim.press("Outdoor")
+		local tile = Sim.buttons(function(b)
+			return b.Name == "Water"
+		end)
+		tile[1].Activated:Fire()
+		Sim.frames(2)
+		if scene == "build:water:pick" then
+			Sim.press("Tiled pool")
+			Sim.drag(130, 70, 146, 82)
+			Sim.press("Pick")
+			Sim.mouseAtPlot(130.6, 76, 0.2)
+			Sim.click()
+			Sim.mouseAtPlot(150, 96)
+		else
+			Sim.mouseAtPlot(138, 76)
+		end
 	end
 	if scene == "build:bought" then
 		-- an armchair put down where the simulation puts its furniture, then picked

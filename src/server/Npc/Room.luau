@@ -107,7 +107,8 @@ function Room.freeSpot(model: Model, feet: Vector3?, opts: Opts?): (Vector3?, st
 	end
 	local o: Opts = opts or {}
 	local skip: { Instance } = { model }
-	for _, s in o.skip or {} do
+	local extra: { Instance } = o.skip or {}
+	for _, s in extra do
 		table.insert(skip, s)
 	end
 	local boxes = Room.boxes(at, K.Reach, skip)

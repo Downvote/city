@@ -92,7 +92,6 @@ local ROPE = Color3.fromRGB(216, 200, 166)
 local SAND = Color3.fromRGB(230, 206, 156)
 local CORAL = Color3.fromRGB(226, 140, 120)
 local SEA = Color3.fromRGB(92, 150, 176)
-local IRON = Color3.fromRGB(74, 82, 79)
 
 -- A herring gull on q (a piece in SmoothPlastic) standing at (x, y, z), looking along +x or -x
 -- (dir). Its beak is a plain box, so it can start the piece.
@@ -1702,10 +1701,10 @@ local items: { Item } = {
 				"Grass"
 			)
 			-- books lying flat and a conch on the lower plank
-			for _, b in { { 0.62, 0.0, Color3.fromRGB(92, 128, 160) }, { 0.74, 0.12, CORAL } } do
-				local y = b[1] :: number
-				local x0 = -1.1 + (b[2] :: number) * 0.2
-				local cover = b[3] :: Color3
+			for _, b in
+				{ { y = 0.62, x0 = -1.1, c = Color3.fromRGB(92, 128, 160) }, { y = 0.74, x0 = -1.08, c = CORAL } }
+			do
+				local y, x0, cover = b.y, b.x0, b.c
 				r:block(x0, y, 0.16, x0 + 0.8, y + 0.02, 0.72, cover, "SmoothPlastic")
 				r:block(x0, y + 0.1, 0.16, x0 + 0.8, y + 0.12, 0.72, cover, "SmoothPlastic")
 				r:block(x0, y + 0.02, 0.16, x0 + 0.04, y + 0.1, 0.72, cover, "SmoothPlastic")

@@ -2451,9 +2451,8 @@ local items: { Item } = {
 			end)
 			r:cyl(-1.1, 2.4, 0.33, 3.9, 0.1, "y", handle, "Wood")
 			-- the spade and the fork: a D grip over a peg, the shaft, the blade or the tines
-			for _, t in { { -0.35, true }, { 0.45, false } } do
-				local x = t[1] :: number
-				local spade = t[2] :: boolean
+			for _, t in { { x = -0.35, spade = true }, { x = 0.45, spade = false } } do
+				local x, spade = t.x, t.spade
 				r:piece(function(q: R)
 					q:block(x - 0.17, 4.35, 0.28, x + 0.17, 4.43, 0.38, handle, "Wood")
 					q:beam(
@@ -2821,8 +2820,15 @@ local items: { Item } = {
 			end
 			mallet(CFrame.new(-1.6, 0.15, 1.15), r.c2)
 			mallet(CFrame.new(-1.75, 0.15, -1.2) * CFrame.Angles(0, -math.pi / 2 + 0.25, 0), C.Red)
-			for _, b in { { 0.2, 0.9, C.Blue }, { 1.45, -0.2, C.Red }, { -0.2, -0.2, C.Black }, { 0.8, 1.3, C.Yellow } } do
-				r:ball(b[1] :: number, 0.17, b[2] :: number, 0.34, b[3] :: Color3, "Plastic")
+			for _, b in
+				{
+					{ x = 0.2, z = 0.9, c = C.Blue },
+					{ x = 1.45, z = -0.2, c = C.Red },
+					{ x = -0.2, z = -0.2, c = C.Black },
+					{ x = 0.8, z = 1.3, c = C.Yellow },
+				}
+			do
+				r:ball(b.x, 0.17, b.z, 0.34, b.c, "Plastic")
 			end
 		end,
 	},

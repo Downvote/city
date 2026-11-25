@@ -2075,3 +2075,32 @@ second time:
   rambling, Gloomy says "Heh..." and expects rain on the day, Polite greets properly and thanks you kindly, Foodie
   says "Mmm!" and plans round meals, and Nervous stammers the first word and imagines the worst.
 - Lines on the talk card and over a villager's head are one message each: one sentence, or two that flow.
+
+> just like the blue archive momotalks, make every single personality have a unique and distinct speech pattern,
+> like using ~ at the end of sentances, ... and other details. also, try not use less used words or uncommonly used
+> ways to put words into sentances like "on your step", instead using common terms like "outside your door"
+
+So every personality now writes in its own hand, on every line it says, even the lines every villager shares (an
+event's default, a job line, a reaction). The marks are put on as the line is said (`Sim/Voice`):
+
+| Personality | How they write |
+|---|---|
+| Sunny | lots of "!", "Ehehe!", a word said twice when excited |
+| Gentle | a soft "~" at the end (nobody else uses it), asks if you've eaten |
+| Bold | never trails off, "Hah!", "right?" |
+| Dreamy | drifts off into "...", hums "♪" (nobody else does) |
+| Easygoing | drawls a word ("heyyy", "sooo"), "*yawn*", "no rush" |
+| Proud | "Hmph!", "Naturally." |
+| Shy | "..." before a full stop, a question or a surprise, "Um..." |
+| Cheeky | all lower case, no full stop at the end, "hehe", ":P" |
+| Cool | plain full stops, never "!", "~" or a trailing "...", "Later." |
+| Prickly | "Ugh.", "Tsk.", "...or whatever." |
+| Dramatic | "!!", one word in capitals, "*gasp*" |
+| Bookish | "Actually,", an aside in brackets |
+| Gloomy | never "!", trails off "...", "Heh..." |
+| Polite | never a contraction ("I am", "do not"), "thank you kindly" |
+| Foodie | "Mmm!", "yum", everything is about the next meal |
+| Nervous | stammers the first word ("I-I", "S-sorry"), "Oh no, oh no" |
+
+And the words are everyday ones a player anywhere knows: "outside your door", not "on your step"; no regional
+slang, no old or bookish words, no unusual ways of putting a sentence together.
