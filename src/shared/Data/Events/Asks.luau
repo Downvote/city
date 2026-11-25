@@ -1927,7 +1927,7 @@ event({
 			easygoing = "I made soup, and I've tasted it so many times that I can't tell any more.|Can you try it?",
 			bold = "{player}, taste this soup.|Be honest, right? I can take it.",
 			shy = "Um, {player}, I made soup.|Would you taste it? (It's okay if not.)",
-			cheeky = "{player} taste my soup|it's not poisoned, i promise, jk, it's fine",
+			cheeky = "{player} taste my soup|i only put one weird thing in it, jk, it's normal",
 			prickly = "I made soup, and I need someone to taste it.|You're here, so you'll do.",
 			dramatic = "{player}, I've made a soup, and it might be my MASTERPIECE.|Or it might be a disaster, so taste it, quick.",
 			polite = "Good afternoon, {player}, I have made soup.|Would you taste it for me, please?",
