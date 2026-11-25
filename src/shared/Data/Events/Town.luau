@@ -59,7 +59,7 @@ event({
 			polite = "Is everyone all right? Please, come and sit by my lantern.",
 			foodie = "My fridge! ...Okay, lantern first. Then we eat what's in the fridge.",
 			nervous = "Is it just us? Is it everyone? Okay. Lantern. I have a lantern.",
-			_ = "Hang on. I've got a lantern in here somewhere.",
+			_ = "Hang on, {player}. I've got a lantern in here somewhere.",
 		}, "idea")
 		s:n("By the time the lights came back on, half the street was sitting on {a}'s step, telling stories.")
 		s:rel(6)
@@ -255,7 +255,7 @@ event({
 			polite = "Excuse me, does anyone know this dog? He's called Biscuit.",
 			foodie = "He's called Biscuit. I like him already.",
 			nervous = "What if nobody comes? What if he's been lost for days?",
-			_ = "Its tag says Biscuit. Somebody must be missing it.",
+			_ = "{player}, its tag says Biscuit. Somebody must be missing him.",
 		}, "heart")
 		s:choice("Put up posters", function(c)
 			c:n("An hour after the posters went up, a farmer from over the hill came running.")
@@ -430,7 +430,7 @@ event({
 			polite = "Excuse me. Those are... oh. All right then.",
 			foodie = "Not the chips. Anything but the chips.",
 			nervous = "Too many. There are too many. {player}, how many is too many?",
-			_ = "My chips. My lovely chips.",
+			_ = "My chips. {player}, my lovely chips.",
 		}, "anger")
 		s:mood("a", -2)
 		s:log("Gulls took {a}'s chips.")
@@ -582,17 +582,17 @@ event({
 			proud = "Well. Someone had to make this town beautiful.",
 			cheeky = "Act natural. Act natural.",
 			sunny = "{player}! Shh! You didn't see me!",
-			cool = "...You saw nothing.",
-			prickly = "Don't. Don't say anything. It's just flowers.",
+			cool = "...You saw nothing, {player}.",
+			prickly = "Don't, {player}. Don't say anything. It's just flowers.",
 			dramatic = "My secret is out! To you alone, {player}.",
 			gloomy = "People seemed sad. Flowers help. A bit.",
-			polite = "I hope you don't mind. I wanted to do something kind.",
-			nervous = "You won't tell? Promise? Okay. Okay.",
+			polite = "I hope you don't mind, {player}. I wanted to do something kind.",
+			nervous = "You won't tell, {player}? Promise? Okay. Okay.",
 			_ = "Shh. It's better as a secret.",
 		}, "heart")
 		s:choice("Keep their secret", function(c)
 			c:by("a", {
-				shy = "Thank you. Here. This one's yours.",
+				shy = "Thank you, {player}. Here. This one's yours.",
 				cheeky = "Good. Here's yours, then. Act natural.",
 				prickly = "...Good. Here. Take one. Don't make a thing of it.",
 				_ = "Thank you, {player}. Here, have one too.",
@@ -699,7 +699,7 @@ event({
 			polite = "Oh, pardon me. Please, go on.",
 			foodie = "The cat's dinner is chicken. Good choice, hedgehog.",
 			nervous = "Oh thank goodness. A hedgehog. Only a hedgehog.",
-			_ = "Well. Mystery solved.",
+			_ = "Well. Mystery solved, {player}.",
 		}, "heart")
 		s:mood("a", 2)
 		s:log("{a} found a hedgehog in the garden at night.")
@@ -773,7 +773,7 @@ event({
 			polite = "Terribly sorry, has anyone seen my other slipper?",
 			foodie = "I'm up. Might as well have toast.",
 			nervous = "Is it a ship? Is something wrong? Should we do something?",
-			_ = "What was that? It's three in the morning.",
+			_ = "{player}? What was that? It's three in the morning.",
 		}, "zzz")
 		s:n("It was a gull standing on the button.")
 		s:mood("a", -1)
@@ -813,7 +813,7 @@ event({
 		s:prop("item:keep_boat", "a")
 		s:n("{a} and {b} each made a toy boat and set them off from the harbour steps. You're the judge.")
 		s:by("a", {
-			proud = "Mine has a proper keel. Watch it go.",
+			proud = "Mine has a proper keel. Watch it go, {player}.",
 			bold = "Mine's faster. Obviously. Look at it.",
 			sunny = "{player}, cheer for mine! The one with the red sail!",
 			cool = "Mine's the blue one.",
@@ -826,7 +826,7 @@ event({
 			cheeky = "I put a pebble in the back of yours. Kidding. Maybe.",
 			gentle = "Oh, look at them both. They're doing so well.",
 			shy = "Mine's... going sideways. That's fine.",
-			prickly = "Mine's winning. Don't argue. Just judge.",
+			prickly = "Mine's winning. Don't argue, {player}. Just judge.",
 			gloomy = "Mine's going to sink. Any moment. ...Still going.",
 			foodie = "I made mine from a lunch box. It still smells of cheese.",
 			_ = "Mine's catching up. Look.",
@@ -962,7 +962,7 @@ event({
 			gloomy = "They're all sad ones. Good. I'll take this one.",
 			foodie = "Cookbook. Cookbook. Another cookbook. Yes.",
 			nervous = "Can I take one if I haven't brought one yet? I'll bring one. I will.",
-			_ = "There's a cookbook in here from before I was born.",
+			_ = "{player}, look. There's a cookbook in here from before I was born.",
 		}, "sparkle")
 		s:choice("Leave one of yours", function(c)
 			c:n("You put in an old book about boats. {a} took it out again straight away.")
@@ -1111,14 +1111,14 @@ event({
 			dreamy = "It's got the best view of the boats. Read the little sign.",
 			easygoing = "Sit down. Try it. It's a good bench.",
 			proud = "It was my idea. Mostly. Read the plaque.",
-			shy = "Um. It's for you... read the plaque.",
+			shy = "Um. It's for you, {player}... read the plaque.",
 			cheeky = "It's a bench. Very normal. Read the plaque. Hehe.",
 			cool = "Read the plaque.",
 			prickly = "Everyone chipped in. It was not my idea. Read it.",
 			dramatic = "A monument, {player}! Well. A bench. Read the plaque!",
 			bookish = "Oak. It'll last fifty years if it's oiled. Read the plaque.",
-			gloomy = "It's a nice bench. You deserve a nice bench. Read it.",
-			polite = "We hoped you'd like it. There's a plaque, if you'd care to read it.",
+			gloomy = "It's a nice bench, {player}. You deserve a nice bench. Read it.",
+			polite = "We hoped you'd like it, {player}. There's a plaque, if you'd care to read it.",
 			foodie = "It's the perfect lunch bench. Read the plaque, then we eat.",
 			nervous = "Do you like it? Read the plaque. Do you like it?",
 			_ = "Read the plaque, {player}.",

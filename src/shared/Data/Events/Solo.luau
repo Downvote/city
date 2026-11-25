@@ -72,7 +72,7 @@ local function makes(o: { [string]: any })
 					gloomy = "Okay. Somebody should like it, I guess. Me, then.",
 					polite = "Thank you. I'll take good care of it.",
 					nervous = "Phew. I'd have worried about it the whole time.",
-					_ = "I'll find it a good spot at home.",
+					_ = "I'll find it a good spot at home, {player}.",
 				}, "heart")
 				c:mood("a", 6)
 				c:memo("a", o.memo)
@@ -175,7 +175,7 @@ event({
 			polite = "If you've any tips, I'd be grateful.",
 			foodie = "Is there a snack that goes with it? There should be.",
 			nervous = "What if I'm terrible? Tell me if I'm terrible.",
-			_ = "I bought everything for it already.",
+			_ = "I bought everything for it already. Don't tell me it's silly, {player}.",
 		}, "sparkle")
 		s:choice("Go for it", function(c)
 			c:by("a", {
@@ -198,7 +198,7 @@ event({
 				shy = "Okay... it was a silly idea.",
 				dramatic = "Another dream, folded away. Fine.",
 				cool = "Fair.",
-				_ = "Hm. Maybe you're right.",
+				_ = "Hm. Maybe you're right, {player}.",
 			}, "sad")
 			c:mood("a", -2)
 		end)
@@ -255,7 +255,7 @@ event({
 			prickly = "If you hum it too I'm leaving.",
 			nervous = "Is it annoying? It's annoying, isn't it. Sorry.",
 			dramatic = "It haunts me, {player}. Day and night.",
-			_ = "Make it stop. Please.",
+			_ = "Make it stop, {player}. Please.",
 		}, "sweat")
 		s:choice("Hum along", function(c)
 			c:by("a", {
@@ -309,7 +309,7 @@ event({
 			gloomy = "Something'll eat it before the show. You watch.",
 			foodie = "I'm thinking soup. Or stuffed. Or soup AND stuffed.",
 			nervous = "What if it keeps growing? Where does it stop?",
-			_ = "I don't know what to do with it. I just wanted to see how big it'd get.",
+			_ = "I don't know what to do with it, {player}. I just wanted to see how big it'd get.",
 		}, "sparkle", "point")
 		s:choice("Keep watering it", function(c)
 			c:by("a", {
@@ -357,7 +357,7 @@ makes({
 		gloomy = "I expected last. So this is a lot.",
 		polite = "The judges were very kind. I sent them a note.",
 		nervous = "My hands were shaking the whole time. But second!",
-		_ = "Second place. I'll take that.",
+		_ = "Second place, {player}. I'll take that.",
 	},
 	ask = "Can I see it on my shelf?",
 	keep = "You earned it, keep it",
@@ -398,7 +398,7 @@ event({
 				prickly = "...You're just saying that. ...Thanks.",
 				gloomy = "Huh. Okay. Maybe it's not the worst.",
 				nervous = "Oh thank goodness. Really? Okay. Phew.",
-				_ = "Really? Okay. I'm keeping it.",
+				_ = "Really, {player}? Okay. I'm keeping it.",
 			}, "heart")
 			c:mood("a", 5)
 			c:hearts("a", 1)
@@ -579,7 +579,7 @@ event({
 			dramatic = "He stands tall against the winter. My finest work.",
 			gloomy = "He'll melt by Thursday. Still. Look at him.",
 			foodie = "I gave him a biscuit for buttons. Then I ate one. He has two buttons.",
-			_ = "Doesn't he look smart? I lent him my scarf.",
+			_ = "Doesn't he look smart, {player}? I lent him my scarf.",
 		}, "sparkle", "point")
 		s:choice("Add a carrot nose", function(c)
 			c:say("a", "Perfect. Now he can smell the bakery like the rest of us.", "heart", "cheer")
@@ -733,7 +733,7 @@ event({
 			bookish = "Stars don't blink like that. Actually, nothing does but planes.",
 			dramatic = "A new star, born tonight! ...With little lights on its wings.",
 			gloomy = "It's a plane. Things are usually planes.",
-			_ = "...It might be a plane.",
+			_ = "...It might be a plane, {player}.",
 		}, "question")
 		s:mood("a", 4)
 		s:memo("a", "I found a new star last night. It was a plane.")
@@ -855,7 +855,7 @@ event({
 				shy = "Can you stay? Just till I'm sleepy?",
 				prickly = "I know that. ...You can stay a minute. If you want.",
 				gloomy = "Yeah. ...Thanks for coming, {player}.",
-				_ = "I know. Can you stay till I'm sleepy again?",
+				_ = "I know. Can you stay till I'm sleepy again, {player}?",
 			}, "heart")
 			c:mood("a", 4)
 			c:hearts("a", 1)
@@ -996,7 +996,7 @@ event({
 			gloomy = "I thought they'd forgotten me. They hadn't.",
 			polite = "How thoughtful of them. I must reply properly.",
 			nervous = "What if it's bad news? ...It's not. Phew. It's a cat drawing.",
-			_ = "It's from an old friend. They're doing well. They drew me a cat.",
+			_ = "It's from an old friend, {player}. They're doing well. They drew me a cat.",
 		}, "heart")
 		s:choice("Write back today", function(c)
 			c:say("a", "I will. I'll tell them all about this place.", "heart", "cheer")
@@ -1149,7 +1149,7 @@ event({
 			gloomy = "It's the harbour on a grey day. So, most days.",
 			foodie = "It's a bowl of fruit. I've eaten two of the models.",
 			nervous = "Don't look yet. Okay, look. No, wait. Okay. Look.",
-			_ = "Hold still. I might put you in it.",
+			_ = "Hold still, {player}. I might put you in it.",
 		}, "sparkle")
 		s:choice("Could you paint me?", function(c)
 			c:n("{a} had you sit on a crate for an hour. Then they turned the canvas round.")
@@ -1216,7 +1216,7 @@ makes({
 		gloomy = "It looks a bit sad. Like me. I like it.",
 		nervous = "I only cut myself twice. That's good, right?",
 		dramatic = "It sings, {player}. In its own wooden way.",
-		_ = "I think it's the nicest thing I've ever made.",
+		_ = "I think it's the nicest thing I've ever made, {player}.",
 	},
 	memo = "I carved a little bird. My thumb has a plaster on it now.",
 	log = "{a} carved a wooden bird.",
@@ -1542,7 +1542,7 @@ event({
 			bookish = "Cats pick their people, actually. Not the other way round.",
 			gloomy = "It'll leave. They always... oh. It's still here.",
 			polite = "I'd be honoured if you'd help me name it, {player}.",
-			_ = "I think I have a cat now. Help me name it?",
+			_ = "I think I have a cat now. Help me name it, {player}?",
 		}, "heart")
 		for i = 1, 3 do
 			local name = names[i]
@@ -1583,7 +1583,7 @@ event({
 			polite = "Excuse me. Sorry. Would you mind terribly moving?",
 			foodie = "It's bigger than a meatball. Why did I think of a meatball.",
 			nervous = "Don't move. Is it moving? It's moving. Don't move.",
-			_ = "Can someone else deal with this? Anyone?",
+			_ = "Can someone else deal with this? {player}? Anyone?",
 		}, "sweat")
 		s:choice("Put it outside", function(c)
 			c:n("You took it out in a cup and let it go by the hedge.")
@@ -1707,7 +1707,7 @@ event({
 			cool = "It's staying, apparently.",
 			dramatic = "I am a new person now, {player}. A person with a moustache.",
 			nervous = "What if it never comes off? What if this is my face now?",
-			_ = "I'll have to wear it to work. Tell me it suits me.",
+			_ = "I'll have to wear it to work. Tell me it suits me, {player}.",
 		}, "sweat", "laugh")
 		s:mood("a", 1)
 		s:memo("a", "The moustache is nearly gone. You can still see the curly bit.")
@@ -1965,7 +1965,7 @@ event({
 				easygoing = "Yeah. You're right. Too much effort anyway.",
 				gloomy = "Maybe. ...Thanks for saying it, though.",
 				nervous = "You think? Really? Okay. Okay. Breathing.",
-				_ = "You think? Okay. I'll stop thinking about it.",
+				_ = "You think, {player}? Okay. I'll stop thinking about it.",
 			}, "heart")
 			c:mood("a", 4)
 			c:hearts("a", 1)
@@ -2152,7 +2152,7 @@ event({
 			proud = "That's going to be famous.",
 			shy = "It was better in the dream...",
 			cool = "Gone. Oh well.",
-			_ = "Hm. It's gone. Did you get it? Hum it back.",
+			_ = "Hm. It's gone. Did you get it, {player}? Hum it back.",
 		}, "question")
 		s:mood("a", 2)
 		s:log("{a} sang a song from a dream.")
@@ -2446,7 +2446,7 @@ event({
 			gloomy = "The fine's going to be huge. I know it.",
 			polite = "I must apologise in person. And maybe bring a cake.",
 			nervous = "What's the fine? What if there's a list? Am I on a list?",
-			_ = "I'd forgotten I even had it.",
+			_ = "I'd forgotten I even had it, {player}.",
 		}, "sweat")
 		s:choice("Take it back with them", function(c)
 			c:n("You went together. The librarian looked at the date, looked at {a}, and stamped it.")
@@ -2726,7 +2726,7 @@ event({
 			dramatic = "I am one with the winter!",
 			gloomy = "I'll be cold for hours. Still.",
 			nervous = "Is the snow deep enough? I hit the ground a bit.",
-			_ = "Come on. There's room for two.",
+			_ = "Come on, {player}. There's room for two.",
 		}, "sparkle")
 		s:mood("a", 4)
 		s:log("{a} made snow angels.")
@@ -2804,7 +2804,7 @@ event({
 			dramatic = "The heavens are furious!",
 			gloomy = "The roof's going to leak. I know it.",
 			nervous = "Was that close? That sounded close. Was it close?",
-			_ = "Is it going to get louder? It's going to get louder.",
+			_ = "Is it going to get louder, {player}? It's going to get louder.",
 		}, "sweat")
 		s:choice("Sit with them till it passes", function(c)
 			c:n("You sat with {a} until the rain went soft. They fell asleep sitting up.")
@@ -2881,7 +2881,7 @@ event({
 			bookish = "I've narrowed it down. I can't get further. You choose.",
 			nervous = "What colour? What if I pick wrong and it's wrong for years?",
 			polite = "Might I ask your opinion on the door?",
-			_ = "What colour should my door be?",
+			_ = "What colour should my door be? You choose.",
 		}, "question")
 		for _, d in DOORS do
 			s:choice(d[1], function(c)

@@ -563,7 +563,7 @@ event({
 		s:prop("telescope", "a")
 		s:n("{a} and {b} are lying on the grass, passing a telescope back and forth.")
 		s:by("b", {
-			bookish = "That one's a bear. The three in a row are its belt. Probably.",
+			bookish = "That one's a bear. The three in a row are its belt, I read.",
 			_ = "That one's a bear. Those three are its belt.",
 		}, "point")
 		s:say("a", "Bears don't wear belts.", "question")
@@ -671,7 +671,7 @@ event({
 		local s = K.scene(ctx, "A bet")
 		s:say("a", "Bet you can't go a whole day without a snack.", "idea", "point")
 		s:by("b", {
-			foodie = "A whole day? ...Fine. Easy. Probably.",
+			foodie = "A whole day? ...Fine. Easy. I've got snacks hidden.",
 			cool = "Easy.",
 			_ = "Easy. Watch me.",
 		}, "sparkle")
@@ -749,7 +749,7 @@ event({
 		s:say("a", "Everyone squeeze in. {b}, you're blinking. Again. Okay. Cheese.", "sparkle", "point")
 		s:n("Click. It came out lovely. Even the gull in the corner.")
 		s:choice("Could I have a copy?", function(c)
-			c:say("a", "Course, {player}. You're in it. Sort of. That's your elbow.", "heart", "cheer")
+			c:say("a", "Course, {player}. You're in it. That's your elbow.", "heart", "cheer")
 			c:keep("keep_photo", "a")
 			c:rel(5)
 			c:all(2)
@@ -1878,7 +1878,7 @@ event({
 		s:by("b", {
 			bookish = "A wagtail. See how it bobs? Wagtail.",
 			gloomy = "A gull. It's always a gull.",
-			dramatic = "That's the rarest bird I've ever seen. Probably.",
+			dramatic = "That's the rarest bird I've ever seen. Write it down. In capitals.",
 			cool = "Pigeon.",
 			cheeky = "That's {player} in a hat. Hehe.",
 			_ = "No idea. Write 'small brown one'.",

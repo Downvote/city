@@ -68,7 +68,7 @@ event({
 			polite = "How kind of them to think of us. I'll do my very best.",
 			foodie = "I'll need a snack first. A big one. For energy.",
 			nervous = "So many. What if I miss one? What if I miss ten?",
-			_ = "That's the biggest order we've ever had.",
+			_ = "{player}, that's the biggest order we've ever had.",
 		}, "sweat")
 		s:choice("Work late and get it done", function(c)
 			c:n("{a} worked till the stars came out. The order went out on time.")
@@ -105,9 +105,9 @@ event({
 			prickly = "It's practice. Stop looking at it like that.",
 			dramatic = "My tower rises, {player}!",
 			bookish = "As long as the middle stays over the base, it can't fall. Actually, it's quite close.",
-			gloomy = "It's going to fall. Look at it. Still standing, though.",
-			nervous = "Don't breathe on it. Please don't breathe on it.",
-			_ = "It's practice. For what, I don't know yet.",
+			gloomy = "It's going to fall. Look at it, {player}. Still standing, though.",
+			nervous = "Don't breathe on it, {player}. Please don't breathe on it.",
+			_ = "It's practice, {player}. For what, I don't know yet.",
 		}, "sparkle", "point")
 		s:choice("Add one more", function(c)
 			if ctx.rng:chance(0.5) then
@@ -265,15 +265,15 @@ event({
 			shy = "Please say something. Anything. Even 'hm'.",
 			dreamy = "This one's called 'Wednesday'. You can tell.",
 			cool = "Have a look.",
-			prickly = "Don't tell me which ones you don't like. Just the good ones.",
+			prickly = "Don't tell me which ones you don't like, {player}. Just the good ones.",
 			dramatic = "A season of my soul, {player}, on one street!",
 			gloomy = "Nobody's stopped yet. You're the first.",
 			nervous = "Is it too many? Should I take some down?",
-			_ = "Which one's your favourite? Lie if you have to.",
+			_ = "Which one's your favourite, {player}? Lie if you have to.",
 		}, "sparkle")
 		s:choice("The portrait", function(c)
 			c:by("a", {
-				shy = "That one? You can have it. If you want.",
+				shy = "That one? You can have it, {player}. If you want.",
 				proud = "Good eye. It's yours.",
 				prickly = "...That's my favourite too. Take it. Before I change my mind.",
 				_ = "That one? It's yours, {player}. No arguing.",
@@ -287,7 +287,7 @@ event({
 				shy = "Really? All of them? ...Thank you.",
 				proud = "Of course. They're all good.",
 				cool = "...Thanks.",
-				gloomy = "You mean that? Huh. Okay. Thanks.",
+				gloomy = "You mean that, {player}? Huh. Okay. Thanks.",
 				_ = "You're only saying that. Say it again.",
 			}, "heart")
 			c:xp("a", 15)
@@ -506,7 +506,7 @@ event({
 				shy = "Oh. That's okay. Vanilla's nice.",
 				proud = "Vanilla. Of course. Your loss.",
 				prickly = "Vanilla. Wow. Fine.",
-				foodie = "Vanilla's a classic. But you're missing out. A lot.",
+				foodie = "Vanilla's a classic, {player}. But you're missing out. A lot.",
 				_ = "Fair enough. Vanilla it is.",
 			}, "sweat")
 		end)
@@ -557,7 +557,7 @@ event({
 			gloomy = "There goes the morning.",
 			polite = "I'm so sorry, everyone. Please mind your feet.",
 			nervous = "Did anything break? Is anyone hurt? Is it just me?",
-			_ = "Well, now it's a floor display.",
+			_ = "Well, {player}. Now it's a floor display.",
 		}, "sweat")
 		s:mood("a", -2)
 		s:xp("a", 5)
@@ -590,7 +590,7 @@ event({
 			gloomy = "Me? Huh. That's... actually nice.",
 			polite = "Thank you, everyone. I'm very grateful.",
 			nervous = "Are they sure? It's not a mistake? Okay. Wow.",
-			_ = "I'm putting this on my fridge.",
+			_ = "I'm putting this on my fridge, {player}.",
 		}, "sparkle", "cheer")
 		s:xp("a", 20)
 		s:mood("a", 6)
@@ -705,7 +705,7 @@ event({
 		s:n("{a} has been practising {trick} at the {place} all week. Today it finally worked.")
 		s:say("a", "{player}. Watch this.", "idea", "point")
 		s:by("a", {
-			sunny = "Did you see? Did you see it? Again, again!",
+			sunny = "Did you see, {player}? Did you see it? Again, again!",
 			gentle = "There. It took me a while, but there.",
 			bold = "Got it. Took a week. Got it.",
 			dreamy = "My hands knew before I did.",
@@ -714,11 +714,11 @@ event({
 			shy = "I did it... I actually did it.",
 			cheeky = "Now I'm going to show off to every single customer.",
 			cool = "Yeah. Got it.",
-			prickly = "Don't clap. ...Okay, a little clap.",
+			prickly = "Don't clap, {player}. ...Okay, a little clap.",
 			dramatic = "Mastery! At last!",
 			bookish = "The trick was in the wrist. Actually, it's always in the wrist.",
 			gloomy = "I'll probably forget how by tomorrow. But today, I've got it.",
-			polite = "Thank you for watching. It means a lot.",
+			polite = "Thank you for watching, {player}. It means a lot.",
 			foodie = "I'm celebrating with a bun. Two buns.",
 			nervous = "Was it right? It looked right. Did it look right?",
 			_ = "I've been trying that all week.",
@@ -796,7 +796,7 @@ event({
 			easygoing = "Honestly? I don't mind. I've had a lovely sit.",
 			proud = "I've rearranged it by colour. Then by size. Then back.",
 			cool = "Quiet one.",
-			prickly = "Don't come in out of pity. ...Come in, though.",
+			prickly = "Don't come in out of pity, {player}. ...Come in, though.",
 			dramatic = "Alone, {player}. Utterly alone.",
 			bookish = "I've been reading the labels. All of them. Some are very interesting.",
 			gloomy = "This is how it'll be now. Forever.",
@@ -827,7 +827,7 @@ event({
 			prickly = "People. Always leaving things. Every single day.",
 			bookish = "I've seen that on someone. Tall, blue coat. Went towards the harbour.",
 			nervous = "What if they need it? What if it's their only one?",
-			_ = "Whose is this?",
+			_ = "Whose is this? {player}, did you see who left it?",
 		}, "question")
 		s:choice("Run after them", function(c)
 			c:n("{a} caught them at the end of the street, out of breath.")
@@ -1021,7 +1021,7 @@ event({
 			gloomy = "It's all going. Like everything.",
 			foodie = "I can't let it go to waste. I'll eat it. I'll eat all of it.",
 			nervous = "What do I do? Do I sell it cheap? Do I give it away?",
-			_ = "It's melting faster than I can scoop.",
+			_ = "It's melting faster than I can scoop, {player}.",
 		}, "sweat")
 		s:choice("Hand out free cones", function(c)
 			c:n("{a} gave a cone to everyone in the square before it could melt. Some people had three.")
@@ -1058,7 +1058,7 @@ event({
 			gloomy = "It'll fade in the sun. Give it ten years. Still.",
 			foodie = "It's going to have a bun in it somewhere. A big bun.",
 			nervous = "Is it okay that it's on the bakery? I asked. They said yes. I think.",
-			_ = "There's a corner left. What goes there?",
+			_ = "There's a corner left, {player}. What goes there?",
 		}, "question")
 		s:choice("A gull", function(c)
 			c:n("{a} painted a gull in the corner, holding a chip.")

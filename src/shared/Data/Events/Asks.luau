@@ -211,7 +211,7 @@ event({
 						shy = "Oh. You got me {gift}. Thank you. Really.",
 						cheeky = "{Gift}. Is this a prank? It feels like a prank.",
 						cool = "{Gift}. Thanks.",
-						prickly = "{Gift}? Hm. I'll find a use for it. Probably.",
+						prickly = "{Gift}? Hm. I'll find a use for it. Don't check.",
 						gloomy = "{Gift}. Okay. Nobody ever knows what to get me.",
 						polite = "{Gift}. How kind of you. Thank you.",
 						foodie = "{Gift}. Can you eat it? No? Okay. Thanks.",
@@ -244,7 +244,7 @@ event({
 		s:by("a", {
 			dramatic = "Everyone has a line. A signature. I need mine.",
 			cool = "Everyone's got one. Pick mine.",
-			nervous = "Everyone has one and I don't and people have noticed. Probably. Pick one?",
+			nervous = "Everyone has one and I don't. What if people have noticed? Pick one?",
 			_ = "Everyone's got a thing they say. Pick one for me?",
 		}, "question")
 		for _, say in options do
@@ -919,7 +919,7 @@ event({
 			nervous = "{player}. Last night. Lights on the islet. Three of them. Moving.",
 			dramatic = "{player}. I saw something last night I cannot explain.",
 			bookish = "{player}, I saw lights on the islet last night. I wrote down the times. Look.",
-			gloomy = "Saw lights on the islet last night. Probably nothing. Probably.",
+			gloomy = "Saw lights on the islet last night. It's nothing. It's always nothing.",
 			dreamy = "{player}... there were little lights on the islet last night. Dancing, sort of.",
 			cool = "Lights on the islet last night. Odd.",
 			cheeky = "{player}. Lights. On the islet. Last night. Spooky.",

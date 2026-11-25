@@ -1860,7 +1860,7 @@ event({
 	id = "lanternwalk",
 	actors = 1,
 	when = "night",
-	weight = Kit.W({ base = 0.12, traits = { kind = 0.3 } }),
+	weight = Kit.W({ base = 0.06, traits = { kind = 0.2 } }),
 	scene = function(ctx: Ctx, a: string): Scene
 		local s = Kit.scene(ctx, "A light home")
 		s:prop("item:keep_lantern", "a")
@@ -1904,7 +1904,7 @@ event({
 	id = "rightword",
 	actors = 1,
 	when = "any",
-	weight = Kit.W({ base = 0.12, traits = { focus = 0.2 } }),
+	weight = Kit.W({ base = 0.07, traits = { focus = 0.1 } }),
 	scene = function(ctx: Ctx, a: string): Scene
 		local s = Kit.scene(ctx, "The right word")
 		s:n("{a} is writing a letter to a friend on another island. The pen has stopped.")
