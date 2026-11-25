@@ -32,7 +32,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (629 at the last full run; `Voice`: each personality's own hand, and a villager's ending; `Memory`: what events leave
+Specs today (641 at the last full run; `Voice`: each personality's own hand, and a villager's ending; `Memory`: what events leave
 with a villager for a few days, the accessory on and off; `FlairService`: buying flair with gems on the server, with
 stubbed neighbours; `Store`: passes owned, a gem pack's receipt paid once, the pay boost from Double Pay, VIP and the group;
 `Offline`: what the town earned while the player was away; `Rewards`: gems from the daily gift, playtime and
@@ -218,6 +218,12 @@ note of the personalities of the villagers as well"): each personality talks its
 `s:by`. There is no romance (the user: "remove any romance, just
 best friends is the highest"): no crushes, dates, proposals or bonds, and best friends (the top of
 `Tuning.Relationships.Levels`, `K.BestFriends` in the events) is as close as two villagers get. Don't bring it back.
+
+Vehicles (the user: "make vehicles, with faster ones with bigger capacities costing more, and gem ones being the
+fastest") are `Data/Vehicles` (each one up the coin list faster, roomier and dearer, the gem ones the fastest: the
+Vehicles spec holds the order), bought and brought out by `Services/Vehicles`, driven by `client/World/Driving`
+(`Sim/Vehicles` has the rules) and picked in `UI/Garage`; a new vehicle is a line in the list with its drawing
+(`render.sh vehicles`).
 
 Server start: `init` everything, `start` everything, then `Data.open()` lets players in. Never load a profile
 before every service is listening (a player can be in the server before the town is built).

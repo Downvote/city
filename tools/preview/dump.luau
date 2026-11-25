@@ -25,6 +25,7 @@
 --                      toys, flowers, post, lobby, flats, home, library, museum, cinema, station,
 --                      school, clinic, department); a kind may carry a size: library=56x28x12
 --   map                the middle of town: streets, plaza and street furniture, on the terrain
+--   vehicles           every vehicle side by side (Data/Vehicles)
 --   map:x1,z1,x2,z2    another part of town (the terrain is drawn as faceted ground of its
 --                      materials' colours, finer the smaller the part, with the sea over it)
 --   stage:<id>         a cutscene's set (Data/Stages); tools/preview/stage.sh draws it from its shots
@@ -300,6 +301,14 @@ elseif scene:sub(1, 7) == "preset:" or scene:sub(1, 7) == "presets" then
 		end
 		plan = trial
 		x += p.w + 6
+	end
+elseif scene == "vehicles" then
+	-- vehicles: every vehicle side by side (Data/Vehicles), standing on the ground
+	local VehicleData = R(Shared .. "Data.Vehicles")
+	local x = 0
+	for _, v in VehicleData.list do
+		addPrims(VehicleData.prims(v), CFrame.new(x + v.size.X / 2, v.hover, 0))
+		x += v.size.X + 3
 	end
 elseif scene == "props" or scene:sub(1, 6) == "props:" then
 	-- props or props:<id>,<id>... : the things events bring into the world (Data/EventProps)

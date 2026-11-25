@@ -25,6 +25,9 @@ Remotes.Functions = {
 	"CreatorFromUser", -- (name or "") -> appearance
 	"CreatorSearch", -- (query) -> items (used when the client can't search the catalog itself)
 	"CreatorPeople", -- (page?, search?) -> { people = { { id, name, kind } }, more }: the Players tab, a page at a time, only names holding the search
+	"VehicleBuy", -- (id) -> ok, why: buys a vehicle with coins or gems (Services/Vehicles)
+	"VehicleOut", -- (id) -> ok, why: brings one you own out in front of you (one at a time)
+	"VehicleAway", -- () -> ok: puts yours away
 	"SlipOut", -- (direction) -> moved: a stuck player slips out the way they were pushing (Services/Unstick)
 	"CreatorShared", -- (page?, search?) -> { looks = { { name, by, who, app } }, more }: the Shared tab, a page at a time, only looks whose name or sharer holds the search
 	"CreatorFromUserId", -- (userId) -> appearance

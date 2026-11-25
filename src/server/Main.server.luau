@@ -23,6 +23,7 @@ local order = {
 	"Events",
 	"Explore",
 	"Signs",
+	"Vehicles", -- buying and bringing out vehicles (Data/Vehicles)
 	-- passes, gem packs, rewards, offline earnings, the group: listens for Data.Loaded, so it starts
 	-- before Data.open lets anyone in
 	"Store",

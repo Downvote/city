@@ -45,6 +45,14 @@ local solid, flat, hole, gap, clear, line =
 
 A.plus = { solid("M10.5 3 H13.5 V10.5 H21 V13.5 H13.5 V21 H10.5 V13.5 H3 V10.5 H10.5 Z") }
 A.minus = { solid("M3 10.5 H21 V13.5 H3 Z") }
+-- a car from the side: the body with its two windows cut out, two wheels under it (the Garage)
+A.car = {
+	solid("M2 15.5 V12.2 L4.6 11 L7.6 6.5 H15.6 L19 11 L21.6 12 L22 15.5 Z"),
+	hole("M9 8.2 H11.4 V11 H7.2 Z M13 8.2 H14.9 L16.9 11 H13 Z"),
+	clear(circle(7, 16.5, 2.6) .. " " .. circle(17, 16.5, 2.6), 1.5),
+	flat(circle(7, 16.5, 2.6) .. " " .. circle(17, 16.5, 2.6)),
+	hole(circle(7, 16.5, 0.9) .. " " .. circle(17, 16.5, 0.9)),
+}
 A.close = { solid("M12 10 L18 4 L20 6 L14 12 L20 18 L18 20 L12 14 L6 20 L4 18 L10 12 L4 6 L6 4 Z") }
 A.check = { solid("M9 19.5 L21 7.5 L19 5.5 L9 15.5 L5 11.5 L3 13.5 Z") }
 -- the arrows: a block arrow with a notch in its tail

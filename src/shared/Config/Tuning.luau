@@ -104,6 +104,21 @@ Tuning.Gems = {
 	Max = 1_000_000,
 }
 
+-- Driving (Sim/Vehicles; the vehicles themselves are Data/Vehicles). Accel, Brake and Coast are
+-- fractions of a vehicle's top speed a second; Turn and TurnFast degrees a second with the wheel hard
+-- over, soon after it moves and flat out. Each player has one out at a time, ready OutRange studs
+-- ahead of them on the ground.
+Tuning.Vehicles = {
+	Accel = 0.45,
+	Brake = 1.4,
+	Coast = 0.5,
+	Reverse = 0.35,
+	Turn = 90,
+	TurnFast = 50,
+	OutRange = 9,
+	Settle = 10, -- how hard it rides back to its height over the road (a spring, a second)
+}
+
 -- What the game passes change (Data/Passes, Sim/Passes).
 Tuning.Passes = {
 	FreeLevels = 3, -- floors 0..2 without a pass (it was 4 for everyone: what is built higher stays)

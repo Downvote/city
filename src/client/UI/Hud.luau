@@ -432,6 +432,8 @@ function Hud.start()
 			{ "news", "News", "News" },
 			-- passes and gems for Robux (the user: "add gamepasses, just like bloxburg")
 			{ "store", "Store", "Store" },
+			-- vehicles to buy and drive (the user: "make vehicles")
+			{ "car", "Garage", "Cars" },
 		}
 	do
 		cornerButton(e[1], e[2], e[3], i + 1, function()

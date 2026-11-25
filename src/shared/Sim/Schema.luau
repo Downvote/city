@@ -118,6 +118,7 @@ function Schema.newProfile(): any
 		receipts = {}, -- gem packs already paid out, by purchase id, so a receipt Roblox sends twice pays once
 		seen = 0, -- os.time() when the profile was last saved with the player in the game (offline earnings)
 		saves = {}, -- saved builds: { name, t, plan } (Build mode's Saves; Sim/Passes.saveSlots how many)
+		vehicles = {}, -- the vehicles bought, by id (Data/Vehicles, Sim/Vehicles)
 		achieved = {}, -- achievements claimed, by id
 		playtime = { day = -1, secs = 0, got = 0 }, -- today's play in seconds and the rewards taken for it
 		ownLand = 0, -- the biggest land bought before Big Plot was a pass, kept without it
@@ -204,6 +205,10 @@ function Schema.migrate(raw: any): any
 	end
 	profile.villagers = clean
 	profile.keepsakes = Keepsakes.clean(profile.keepsakes)
+	-- (only true marks: Services/Vehicles also drops any vehicle there no longer is)
+	if type(profile.vehicles) ~= "table" then
+		profile.vehicles = {}
+	end
 	local order = {}
 	for _, vid in profile.order do
 		if clean[vid] and not table.find(order, vid) then

@@ -353,6 +353,13 @@ do
 	D["face_" .. id] = D.smile
 end
 
+D.car = {
+	{ "r", 6, 40, 88, 26, C.white, r = 0.3 },
+	{ "r", 26, 22, 44, 24, C.white, r = 0.3 },
+	{ "c", 16, 56, 24, 24, C.white },
+	{ "c", 60, 56, 24, 24, C.white },
+}
+
 D.minus = {
 	{ "r", 10, 38, 80, 24, C.white, r = 0.35 },
 }

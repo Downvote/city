@@ -1562,6 +1562,17 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   top, color }`: blobs of two or three turned boxes inside a circle, the circles `Gap` apart on the land, one patch
   for every `Every` square studs up to `Most`, each layer `Lift` over the last from `Base`. The LawnPatches spec
   holds them on the land, at their own heights and green.
+- Vehicles (the user: "make vehicles, with faster ones with bigger capacities costing more, and gem ones being the
+  fastest"): `Data/Vehicles` (`list` of { id, name, blurb, speed, seats, coins or gems, size, hover, driver,
+  passengers, color, draw }, `get(id)`, `prims(v)`: drawn in its own frame, the wheels' middle at y 0, front to -Z);
+  `Sim/Vehicles` (`owns`, `canBuy`, `buy`, `clean`, and driving: `step(speed, throttle, top, dt)` and
+  `turnRate(speed, top)` by `Tuning.Vehicles`); `profile.vehicles` (by id, true); `Services/Vehicles` (`VehicleBuy`,
+  `VehicleOut`, `VehicleAway`: one out a player, `player:GetAttribute("VehicleOut")`, built as an invisible `Chassis`
+  with every part welded to it, a `Driver` VehicleSeat only its owner may take, a seat per passenger, and a
+  `Push` LinearVelocity and an `Upright` AlignOrientation, switched off; the chassis is anchored with nobody at the
+  wheel and handed to the driver when they sit); `client/World/Driving` (at the wheel, every frame: the pedal and
+  wheel through `Sim/Vehicles`, riding `hover` over the ground by a raycast); `UI/Garage` (the menu, the `car` icon,
+  the HUD's Cars button). Preview: `render.sh vehicles`, `ui.sh panel:Garage`.
 - `client/World/Outlines`: ink outlines on people. `Outlines.step(from)` gives the `Most` (20) nearest players'
   characters and villagers within `Reach` a Highlight named `Ink` (no fill, dark outline) and takes it off the
   rest; `start` runs it every 0.4 s from the camera.

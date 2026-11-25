@@ -2616,3 +2616,25 @@ mid placement. The keys do the same: [ and ] for a finer or bigger grid, - and =
 - The favourite colour is a grid of little squares, twelve colours across in four shades from pale to deep.
 - There is no birthday to pick. A villager's birthday is the town's date on the day they move in, and editing them
   later never changes it.
+
+### Vehicles
+
+> make vehicles, with faster ones with bigger capacities costing more, and gem ones being the fastest
+
+A Cars button on the main screen opens the Garage. Each vehicle there shows its top speed and how many it seats.
+
+| Vehicle | Top speed | Seats | Price |
+| --- | --- | --- | --- |
+| Scooter | 28 | 1 | 1,200 coins |
+| Little hatchback | 36 | 2 | 4,000 coins |
+| Family car | 44 | 4 | 9,000 coins |
+| Camper van | 50 | 6 | 18,000 coins |
+| Little bus | 54 | 8 | 30,000 coins |
+| Sports car | 76 | 2 | 90 gems |
+| Glide cruiser | 88 | 4 | 160 gems |
+
+Each one up the coin list is faster, takes more people and costs more; the two for gems are faster than anything
+coins can buy. Bought once, a vehicle is yours to keep. Drive brings it out in front of you (one at a time); sit at
+the wheel to drive it, W and S for the pedal and A and D to turn. It gathers speed, brakes harder than it speeds
+up, rolls to a stop with no pedal and turns less sharply the faster it goes. Friends can take the other seats, but
+only its owner can drive. Put it away from the Garage, and it goes when you leave.

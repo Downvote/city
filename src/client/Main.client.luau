@@ -55,3 +55,4 @@ require(World.Explore).start()
 require(World.Outlines).start()
 require(World.Focus).start() -- the background blur follows what the camera looks at
 require(World.Stuck).start() -- stuck and pushing: a button to slip out
+require(World.Driving).start() -- at the wheel of your own vehicle
