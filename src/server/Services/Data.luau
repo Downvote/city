@@ -17,6 +17,7 @@ local Plan = require(Shared.Build.Plan)
 local Schema = require(Shared.Sim.Schema)
 local Life = require(Shared.Sim.Life)
 local Tutorial = require(Shared.Sim.Tutorial)
+local Gems = require(Shared.Sim.Gems)
 local StarterHouse = require(Shared.Data.StarterHouse)
 
 local Data = {}
@@ -191,6 +192,8 @@ function Data.clientState(player: Player): any
 		goals = p.goals,
 		found = p.found,
 		keepsakes = p.keepsakes, -- what villagers made you, for Build mode's Keepsakes tab
+		gems = p.gems,
+		passes = p.passes,
 		unsaved = unsaved[player] == true,
 		plot = player:GetAttribute("Plot"),
 		plan = p.plan,
@@ -229,6 +232,25 @@ function Data.addCoins(player: Player, amount: number, quiet: boolean?): boolean
 	player:SetAttribute("Coins", p.coins)
 	if not quiet then
 		Data.push(player, "coins")
+	end
+	return true
+end
+
+-- Gems (Sim/Gems): adds `amount` (a negative takes some, if there are enough). Returns whether it did.
+function Data.addGems(player: Player, amount: number, quiet: boolean?): boolean
+	local p = profiles[player]
+	if not p then
+		return false
+	end
+	if amount < 0 then
+		if not Gems.spend(p, -amount) then
+			return false
+		end
+	else
+		Gems.add(p, amount)
+	end
+	if not quiet then
+		Data.push(player, "gems")
 	end
 	return true
 end

@@ -61,6 +61,33 @@ Tuning.Economy = {
 	MaxCoins = 10_000_000,
 }
 
+-- Gems, passes and the group --------------------------------------------------
+-- Gems are the rare currency (Sim/Gems): a handful a day, never from work. What they buy and how
+-- they come is set beside each thing that pays or charges them.
+Tuning.Gems = {
+	Start = 5, -- a new player's first few
+	Max = 1_000_000,
+}
+
+-- What the game passes change (Data/Passes, Sim/Passes).
+Tuning.Passes = {
+	FreeLevels = 3, -- floors 0..2 without a pass (it was 4 for everyone: what is built higher stays)
+	TallLevels = 8, -- floors 0..7 with Tall Builds
+	FreeLand = 320, -- the biggest land without Big Plot (Tuning.City.Land; land already bought stays)
+	FreeSlots = 2, -- saved builds
+	MoreSlots = 8,
+	VipPay = 0.1, -- VIP's share more from work
+	StretchMin = 0.5, -- how far Stretch scales a piece along each side
+	StretchMax = 2,
+}
+
+-- The game's Roblox group (the user: "add group rewards, such as percentage increase of
+-- earnings"). Id 0 until the group is made; its members earn PayBonus more at work.
+Tuning.Group = {
+	Id = 0,
+	PayBonus = 0.1,
+}
+
 -- Villagers -----------------------------------------------------------------
 Tuning.Villagers = {
 	Max = 16,
