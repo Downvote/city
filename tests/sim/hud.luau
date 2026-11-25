@@ -68,8 +68,9 @@ run("the round buttons under the clock: home, the city hall, the news, the store
 	for _, c in names do
 		table.insert(order, (c.Name:gsub("Cell$", "")))
 	end
-	-- (the store came in beside the news: "add gamepasses, just like bloxburg")
-	check(table.concat(order, " ") == "Home CityPanel News Store Look", "five of them, in that order")
+	-- (the store came in beside the news: "add gamepasses, just like bloxburg", then the garage beside
+	-- it: "make vehicles")
+	check(table.concat(order, " ") == "Home CityPanel News Store Garage Look", "six of them, in that order")
 	check(corner:FindFirstChild("MapPanel", true) == nil, "no Map button")
 	check(corner:FindFirstChild("ShopPanel", true) == nil, "and no Shop button")
 	check(Hud.panel("MapPanel") == nil, "there is no map screen to open")
