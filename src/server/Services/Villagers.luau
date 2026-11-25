@@ -1711,6 +1711,10 @@ local function create(player: Player, raw: any): (boolean, string?)
 	input.app = Avatar.validate(input.app, 30)
 	local vid = "v" .. profile.nextVid
 	profile.nextVid += 1
+	-- (their birthday is today in town: the user, "remove birthday and day from customization, these
+	-- will always be the date the villager is created")
+	local today = World.calendar()
+	input.bday = { s = today.s, d = today.d }
 	local v = Schema.newVillager(vid, input, rng)
 	if #profile.order == 0 then
 		v.isYou = true
@@ -1737,7 +1741,7 @@ local function update(player: Player, vid: any, fields: any): (boolean, string?)
 		name = fields.name or v.name,
 		pers = fields.pers or v.pers,
 		color = fields.color or v.color,
-		bday = fields.bday or v.bday,
+		bday = v.bday, -- (a birthday never changes: it is the day they moved in)
 		app = fields.app or v.app,
 	}
 	local input, err = Schema.cleanVillagerInput(merged)

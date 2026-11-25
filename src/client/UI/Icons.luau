@@ -329,6 +329,30 @@ D.plus = {
 	{ "r", 39, 39, 22, 22, C.white, o = false },
 }
 
+-- (the personalities' faces fall back to the smile's shapes where the art can't be painted)
+for _, id in
+	{
+		"sunny",
+		"gentle",
+		"bold",
+		"dreamy",
+		"easygoing",
+		"proud",
+		"shy",
+		"cheeky",
+		"cool",
+		"prickly",
+		"dramatic",
+		"bookish",
+		"gloomy",
+		"polite",
+		"foodie",
+		"nervous",
+	}
+do
+	D["face_" .. id] = D.smile
+end
+
 D.minus = {
 	{ "r", 10, 38, 80, 24, C.white, r = 0.35 },
 }

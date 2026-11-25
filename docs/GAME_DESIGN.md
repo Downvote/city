@@ -2604,3 +2604,15 @@ mid placement. The keys do the same: [ and ] for a finer or bigger grid, - and =
   the next level brings more, and the villagers' list counts against that room.
 - Land still unlocks by level ("Reach level 3"). There are achievements for levels 10 and 20 and for 30 and 50
   villagers, with a few gems each, so gems stay rare.
+
+### Faces for personalities, a grid of colours, birthdays on moving in
+
+> make the color selection like this for villager creation, remove birthday and day from customization, these will always be the date the villager is created. for personality, make it diferent faces to select from with their personality name below each face
+
+- Personality is a grid of faces, one for each of the sixteen, in the personality's own colour with its name under
+  it. Each face is its own: Sunny grins with happy eyes, Prickly frowns under angry brows, Cool wears shades,
+  Bookish has glasses, Nervous has a wobbly mouth, Foodie sticks its tongue out, and so on. The one picked is ringed
+  in yellow, and its line shows under the grid.
+- The favourite colour is a grid of little squares, twelve colours across in four shades from pale to deep.
+- There is no birthday to pick. A villager's birthday is the town's date on the day they move in, and editing them
+  later never changes it.

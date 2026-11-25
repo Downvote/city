@@ -789,9 +789,10 @@ Sim.run("picking somebody takes their look and their name", function()
 	frames(2)
 end)
 
-Sim.run("name and personality: a slider of personalities and a bar of colours", function()
-	-- the user: "for name and personality, the personality should be a slider, the color a
-	-- pallette bar slider"
+Sim.run("name and personality: faces to pick from, a grid of colours, no birthday", function()
+	-- the user: "make the color selection like this for villager creation, remove birthday and day
+	-- from customization, these will always be the date the villager is created. for personality,
+	-- make it diferent faces to select from with their personality name below each face"
 	local Personalities = Harness.require("ReplicatedStorage.Shared.Data.Personalities")
 	local Palette = Harness.require("ReplicatedStorage.Shared.Data.Palette")
 	local Schema = Harness.require("ReplicatedStorage.Shared.Sim.Schema")
@@ -811,61 +812,42 @@ Sim.run("name and personality: a slider of personalities and a bar of colours", 
 	press("Name and personality")
 	local creator = gui:FindFirstChild("Creator")
 	local pers = creator:FindFirstChild("Personality", true)
-	local slide = pers:FindFirstChild("Slide")
-	check(#Fake.find(pers, function(d)
-		return d:GetAttribute("Stop") ~= nil
-	end) == #Personalities.list, "a stop on the track for each personality")
-	-- (the sim's engine puts every box at 100 across, 100 wide: a press at x is that far along)
-	local function stopAt(i)
-		return 100 + 14 + 72 * (i - 1) / (#Personalities.list - 1)
+	local tiles = {}
+	for _, p in Personalities.list do
+		local tile = pers:FindFirstChild(p.name, true)
+		if tile and tile:FindFirstChild("Face") and tile:FindFirstChild("Name").Text == p.name then
+			table.insert(tiles, tile)
+		end
 	end
-	local MB1 = Enum.UserInputType.MouseButton1
+	check(#tiles == #Personalities.list, "a face for each personality with its name under it")
 	local all = true
 	for i, p in Personalities.list do
-		slide.InputBegan:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(stopAt(i), 0, 0) })
-		Sim.UIS.InputEnded:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(stopAt(i), 0, 0) }, false)
+		tiles[i].Activated:Fire()
 		frames(1)
-		all = all
-			and pers:GetAttribute("Picked") == i
-			and pers:FindFirstChild("Picked").Text == p.name
-			and pers:FindFirstChild("Blurb").Text == p.blurb
+		all = all and pers:FindFirstChild("Blurb").Text == p.blurb
 	end
-	check(all, "a press on each stop picks that personality, its name and its line over the track")
-	-- dragging along the track slides from one to another
-	slide.InputBegan:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(stopAt(1), 0, 0) })
-	Sim.UIS.InputChanged:Fire(
-		{ UserInputType = Enum.UserInputType.MouseMovement, Position = roblox.Vector3.new(stopAt(4), 0, 0) },
-		false
-	)
+	check(all, "pressing a face picks that personality, and its line shows under them")
+	tiles[4].Activated:Fire()
 	frames(1)
-	check(pers:GetAttribute("Picked") == 4, "dragging slides the knob to another")
-	Sim.UIS.InputEnded:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(stopAt(4), 0, 0) }, false)
-	Sim.UIS.InputChanged:Fire(
-		{ UserInputType = Enum.UserInputType.MouseMovement, Position = roblox.Vector3.new(stopAt(7), 0, 0) },
-		false
-	)
-	frames(1)
-	check(pers:GetAttribute("Picked") == 4, "and stops when it is let go")
-	-- the colour: a bar of the palette's colours, the knob on the one picked, a chip showing it
-	local colour = creator:FindFirstChild("Colour", true)
-	local n = #Palette.Colors
-	local function colourAt(k)
-		return 100 + 100 * (k - 0.5) / n
-	end
-	local bar = colour:FindFirstChild("Slide")
-	local swatches = Fake.find(colour:FindFirstChild("Palette"), function(d)
-		return d.Name == "Swatch"
+	-- the colour: a grid of little swatches
+	local swatches = Fake.find(creator, function(d)
+		return d.Name == "Swatch" and Fake.shown(d)
 	end)
-	check(#swatches == n, "the bar shows every colour of the palette (" .. #swatches .. ")")
+	check(#swatches >= #Palette.Favourites, "a grid of colours to pick from (" .. #swatches .. ")")
 	local k = 31
-	bar.InputBegan:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(colourAt(k), 0, 0) })
-	Sim.UIS.InputEnded:Fire({ UserInputType = MB1, Position = roblox.Vector3.new(colourAt(k), 0, 0) }, false)
-	frames(1)
-	check(colour:GetAttribute("Picked") == k, "a press on the bar picks the colour under it")
-	check(
-		colour:FindFirstChild("Swatch").BackgroundColor3:ToHex():upper() == Palette.Colors[k],
-		"and the chip beside it shows it"
-	)
+	local pick = nil
+	for _, sw in swatches do
+		if sw.BackgroundColor3:ToHex():upper() == Palette.Favourites[k] and sw:IsA("GuiButton") then
+			pick = sw
+		end
+	end
+	check(pick ~= nil, "the colour is in the grid")
+	if pick then
+		pick.Activated:Fire()
+		frames(1)
+	end
+	-- no birthday to set: it is the day they move in
+	check(creator:FindFirstChild("Birthday", true) == nil and not has("Day"), "no birthday or day to pick")
 	local box = Fake.find(creator, function(d)
 		return d:IsA("TextBox") and d.PlaceholderText == "What are they called?"
 	end)[1]
@@ -873,9 +855,9 @@ Sim.run("name and personality: a slider of personalities and a bar of colours", 
 	press("Move them in")
 	Sim.advance(1)
 	check(sent ~= nil and sent.pers == Personalities.list[4].id, "the personality picked is the one sent")
-	check(sent ~= nil and sent.color == Palette.Colors[k], "and the colour is one of the palette's")
+	check(sent ~= nil and sent.color == Palette.Favourites[k], "and the colour picked in the grid")
 	local cleaned = sent and Schema.cleanVillagerInput(sent)
-	check(cleaned ~= nil and cleaned.color == Palette.Colors[k], "which the server keeps as it is")
+	check(cleaned ~= nil and cleaned.color == Palette.Favourites[k], "which the server keeps as it is")
 	if Creator.isOpen() then
 		Creator.close()
 	end

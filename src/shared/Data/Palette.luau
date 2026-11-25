@@ -47,6 +47,17 @@ end
 -- pleasing to look at"): soft walls, then roofs that go with them, so a player's own buildings
 -- come out well. The rows after them are the older, stronger set; plans keep any hex colour, so a
 -- wall painted with one of them still loads whatever the list holds.
+-- A villager's favourite colour, picked from a grid in the creator (the user: "make the color
+-- selection like this for villager creation", with a picture of rows of little squares): twelve
+-- colours across, four shades down from pale to deep.
+-- stylua: ignore
+Palette.Favourites = {
+	"F6C6C6", "F8D6B8", "F8EDB0", "DDEDB4", "C6E6C8", "BFE6DE", "C4E4F4", "C4D4F2", "CFCBF0", "E0CCF0", "F4CADF", "FFFFFF",
+	"EE8E8E", "F2AE78", "F2DA6A", "BBDC78", "8CCC92", "7FCCBE", "86C8E8", "88A8E4", "9C94DE", "BE96DE", "EA94BE", "C8C8CC",
+	"D95050", "E5843E", "E8C030", "92C040", "4FAA5A", "3BA898", "4FA9D9", "4F78C8", "6A5CC0", "9460C0", "D45C96", "8E8E94",
+	"A83434", "B85E22", "B08A18", "6A8E26", "2F7A3A", "237A6C", "2A7AA8", "2E4E96", "463A8E", "66388E", "A03A6C", "45454A",
+}
+
 Palette.Colors = {
 	-- soft walls
 	"F6F0E2",

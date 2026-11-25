@@ -87,6 +87,9 @@ The contract between the parts of the game. Update it with every change to an AP
 - `Sim/`: `Schema` (profile and villager shapes, defaults, migration), `Relationships`, `EventEngine` (picks events,
   applies their effects, including `hearts` and `xpv vid d`, skill for one villager by id; `ctx.cravingPrice`;
   no food, item or merchant ops since the shop went, and no `bond`, `ctx.bond` or `ctx.free` since romance went), `City` (stats, levels, land, workplaces, wages earned as they work: `City.wages(profile, day, now)`, `City.workDay`, `City.workSeconds`, `City.dayPay`, `City.rate` (coins a second at the workplace), the purse `City.Purse` / `City.newPurse()` / `City.earn(purse, day, rate, seconds)` that carries part coins, starts again each day, caps a day at a whole work day and pays nothing for bad input, and `City.dayXp`;
+  (A villager's `bday` is set by `Villagers` create to `World.calendar()`'s season and day and kept on edits; the
+  creator has no birthday to pick. `Palette.Favourites` is the creator's grid of favourite colours, and the
+  personalities' faces are the icons `face_<id>` in `UI/IconArt`.)
   `City.level(value)` (worth alone: "make the only requirements for growing towns worth instead of villagers or work
   requirement"; no top: "uncap level"), `City.levelValue(n)` (`Tuning.City.Levels[n].Value`, then each level
   `LevelStep` more than the last and `LevelGrow` more again each level after), `City.levelName(n)` ("Level n": "no need

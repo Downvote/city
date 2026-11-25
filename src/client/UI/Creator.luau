@@ -17,7 +17,6 @@ local Appearance = require(Shared.Avatar.Appearance)
 local Categories = require(Shared.Avatar.Categories)
 local Personalities = require(Shared.Data.Personalities)
 local Palette = require(Shared.Data.Palette)
-local Schema = require(Shared.Sim.Schema)
 local Colors = require(Shared.Util.Colors)
 local Text = require(Shared.Util.Text)
 local City = require(Shared.Sim.City)
@@ -941,7 +940,8 @@ local function colourGrid(
 	px: number,
 	current: string?,
 	onPick: (string) -> (),
-	order: number
+	order: number,
+	across: number? -- (so many to a row, squares: the favourite colours' grid)
 ): (Frame, (string?) -> ())
 	local ring = 3
 	local g = Kit.box({
@@ -950,7 +950,12 @@ local function colourGrid(
 		AutomaticSize = Enum.AutomaticSize.Y,
 		LayoutOrder = order,
 	})
-	Kit.grid(g, UDim2.fromOffset(px + ring * 2, px + ring * 2), 4)
+	local layout = Kit.grid(g, UDim2.fromOffset(px + ring * 2, px + ring * 2), 4)
+	if across then
+		-- (and the grid exactly that many cells wide, so it wraps there whatever the panel's width)
+		layout.FillDirectionMaxCells = across
+		g.Size = UDim2.fromOffset(across * (px + ring * 2) + (across - 1) * 4, 0)
+	end
 	local rings: { [string]: Frame } = {}
 	local function mark(hex: string?)
 		for h, r in rings do
@@ -964,7 +969,7 @@ local function colourGrid(
 			Parent = cell,
 			Size = UDim2.fromScale(1, 1),
 			Color = T.Yellow,
-			Radius = "round",
+			Radius = if across then 7 else "round",
 			Visible = false,
 		})
 		local b = Kit.swatch(Colors.fromHex(hex), px, function()
@@ -972,6 +977,13 @@ local function colourGrid(
 			onPick(hex)
 		end, { Parent = cell })
 		b.Position = UDim2.fromOffset(ring, ring)
+		if across then
+			-- (little squares, as in the user's picture)
+			local corner = b:FindFirstChildOfClass("UICorner")
+			if corner then
+				corner.CornerRadius = UDim.new(0, 4)
+			end
+		end
 		-- a thin rim, so a white or a charcoal one still shows on the panel in either look (the
 		-- swatch's own stroke, switched on: an object draws only one)
 		local edge = b:FindFirstChildOfClass("UIStroke")
@@ -1930,44 +1942,84 @@ local function buildProfilePage()
 		profile.name = nameBox.Text
 	end)
 	heading("Personality", 3)
-	-- One track with a stop for each personality (the user: "the personality should be a
-	-- slider"): the one picked big over it with its line under it in its own colour; click or tap
-	-- a stop, or drag the knob along.
+	-- A face for each personality with its name under it (the user: "for personality, make it
+	-- diferent faces to select from with their personality name below each face"), the one picked
+	-- ringed in yellow, and its line under them in its own colour.
 	local list = Personalities.list
 	local pers = Kit.box({
 		Name = "Personality",
 		Parent = scroll,
-		Size = UDim2.new(1, -10, 0, 104 + 14 * (stopNameRows(#list) - 1)),
+		Size = UDim2.new(1, -10, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
 		LayoutOrder = 4,
 	})
-	local persName = Kit.title("", {
-		Name = "Picked",
+	Kit.list(pers, 6)
+	local faces = Kit.box({
+		Name = "Faces",
 		Parent = pers,
-		Size = UDim2.new(1, 0, 0, 28),
-		TextSize = 24,
-		Wrap = false,
+		Size = UDim2.new(1, 0, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		LayoutOrder = 1,
 	})
+	Kit.grid(faces, UDim2.fromOffset(76, 90), 6)
 	local persBlurb = Kit.text("", {
 		Name = "Blurb",
 		Parent = pers,
 		Size = UDim2.new(1, 0, 0, 20),
-		Position = UDim2.fromOffset(0, 30),
 		TextSize = 15,
 		Wrap = false,
+		LayoutOrder = 2,
 	})
-	local stops = stopSlider(pers, #list, 72, function(i)
-		return Colors.fromHex(list[i].color)
-	end, function(i)
-		return list[i].name
-	end)
+	local rims: { UIStroke } = {}
+	local names: { TextLabel } = {}
 	local function showPers(i: number)
 		local p = list[i]
 		profile.pers = p.id
-		persName.Text = p.name
 		persBlurb.Text = p.blurb
 		persBlurb.TextColor3 = Kit.tint(Colors.fromHex(p.color))
 		persBlurb:SetAttribute("Tint", p.color)
-		stops.set(i)
+		for j, rim in rims do
+			local on = j == i
+			rim.Color = if on then T.Yellow else T.Line
+			rim.Thickness = if on then 3 else 1
+			names[j].TextColor3 = if on then T.Ink else T.InkSoft
+		end
+	end
+	for i, p in list do
+		local tile = Kit.new("TextButton", {
+			Name = p.name,
+			Text = "",
+			AutoButtonColor = false,
+			BackgroundColor3 = T.Card,
+			LayoutOrder = i,
+			Parent = faces,
+		})
+		Kit.corner(tile, 12)
+		local rim = Kit.new("UIStroke", { Color = T.Line, Thickness = 1, Parent = tile }) :: UIStroke
+		rim.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+		rims[i] = rim
+		Icons.make("face_" .. p.id, 46, {
+			Name = "Face",
+			Parent = tile,
+			Position = UDim2.new(0.5, -23, 0, 8),
+			Color = Colors.fromHex(p.color),
+			Hole = T.Card,
+			Centre = true,
+		})
+		local label = Kit.text(p.name, {
+			Name = "Name",
+			Parent = tile,
+			Size = UDim2.new(1, -4, 0, 18),
+			Position = UDim2.fromOffset(2, 62),
+			TextSize = 13,
+			Font = Kit.Fonts.Bold,
+			AlignX = Enum.TextXAlignment.Center,
+			Wrap = false,
+		})
+		names[i] = label
+		tile.Activated:Connect(function()
+			showPers(i)
+		end)
 	end
 	local at = 1
 	for i, p in list do
@@ -1975,46 +2027,23 @@ local function buildProfilePage()
 			at = i
 		end
 	end
-	stops.onPick = showPers
 	showPers(at)
 
 	heading("Favourite colour", 5)
-	-- One bar of the palette's colours side by side (the user: "the color a pallette bar
-	-- slider"), a knob on the one picked and a chip beside it showing it. It snaps to the
-	-- palette's own colours: the ones the rest of the game paints with.
-	local colours = Kit.box({ Name = "Colour", Parent = scroll, Size = UDim2.new(1, -10, 0, 40), LayoutOrder = 6 })
-	local chip = Kit.frame({
-		Name = "Swatch",
-		Parent = colours,
-		Size = UDim2.fromOffset(40, 40),
-		Position = UDim2.new(1, -40, 0, 0),
-		Color = T.Blue,
-		Radius = 10,
-	})
-	Kit.rim(chip, T.Line, 1.5)
-	local bar = paletteBar(colours, UDim2.new(1, -52, 0, 40))
-	local index = table.find(Palette.Colors, (profile.color or ""):upper()) or 1
-	bar.onPick = function(i: number)
-		local hex = Palette.Colors[i]
+	-- A grid of little swatches, twelve colours across in four shades (the user: "make the color
+	-- selection like this for villager creation"), the one picked ringed.
+	local current = (profile.color or ""):upper()
+	if not table.find(Palette.Favourites, current) and not table.find(Palette.Colors, current) then
+		current = Palette.Favourites[31]
+		profile.color = current
+	end
+	colourGrid(scroll, Palette.Favourites, 28, current, function(hex: string)
 		profile.color = hex
-		chip.BackgroundColor3 = Colors.fromHex(hex)
-		bar.set(i)
 		paintStudio()
-	end
-	bar.set(index)
-	chip.BackgroundColor3 = Colors.fromHex(Palette.Colors[index])
-	heading("Birthday", 7)
-	local seasons = {}
-	for i, name in Schema.Seasons do
-		table.insert(seasons, { id = tostring(i), name = name })
-	end
-	local _, selectSeason = Kit.tabs(seasons, function(id)
-		profile.bday.s = tonumber(id) :: number
-	end, { Parent = scroll, LayoutOrder = 8, Size = UDim2.new(1, -10, 0, 38), Height = 34, TextSize = 15 })
-	selectSeason(tostring(profile.bday.s))
-	Kit.slider("Day", 1, Schema.DaysPerSeason, profile.bday.d, 1, function(v)
-		profile.bday.d = v
-	end, { Parent = scroll, LayoutOrder = 9, Size = UDim2.new(1, -10, 0, 46) })
+	end, 6, 12)
+	-- (no birthday to pick: a villager's birthday is the day they move in, set by the server;
+	-- the user, "remove birthday and day from customization, these will always be the date the
+	-- villager is created")
 
 	local save = Kit.button(if mode == "new" then "Move them in" else "Save changes", {
 		Parent = profilePage,

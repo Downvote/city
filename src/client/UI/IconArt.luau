@@ -180,6 +180,67 @@ A.smile = {
 	gap("M6.8 14.5 A6 6 0 0 0 17.2 14.5"),
 }
 A.heart = { flat("M12 21.5 L3.33 11.74 A5.25 5.25 0 1 1 12 6.01 A5.25 5.25 0 1 1 20.67 11.74 Z") }
+
+-- A face for each personality, for the creator's picker (the user: "for personality, make it
+-- diferent faces to select from with their personality name below each face"): the disc with its
+-- eyes and mouth cut out, a different pair for each (Data/Personalities). `face_<id>`.
+local EYES: { [string]: { Vector.Layer } } = {
+	dot = { hole(circle(8.5, 10, 1.7) .. " " .. circle(15.5, 10, 1.7)) },
+	wide = { hole(circle(8.5, 9.5, 2.3) .. " " .. circle(15.5, 9.5, 2.3)) },
+	up = { hole(circle(8.8, 8.6, 1.6) .. " " .. circle(15.8, 8.6, 1.6)) },
+	down = { hole(circle(8.3, 11.2, 1.6) .. " " .. circle(15.3, 11.2, 1.6)) },
+	happy = { gap("M6.6 10.6 A2 2 0 0 1 10.4 10.6 M13.6 10.6 A2 2 0 0 1 17.4 10.6") },
+	closed = { gap("M6.6 9.4 A2 2 0 0 0 10.4 9.4 M13.6 9.4 A2 2 0 0 0 17.4 9.4") },
+	sleepy = { gap("M6.4 10.4 H10.6 M13.4 10.4 H17.6") },
+	wink = { hole(circle(8.5, 10, 1.7)), gap("M13.4 10 H17.6") },
+	cross = {
+		hole(circle(8.5, 10.6, 1.6) .. " " .. circle(15.5, 10.6, 1.6)),
+		gap("M5.8 6.6 L10.4 8.2 M18.2 6.6 L13.6 8.2"),
+	},
+	brow = { hole(circle(8.5, 10.4, 1.6) .. " " .. circle(15.5, 10.4, 1.6)), gap("M13.4 6.8 L17.6 6.2") },
+	shades = { hole("M5.2 8.4 H18.8 V11.8 H13.2 L12 10.6 L10.8 11.8 H5.2 Z") },
+	glasses = { gap(circle(8.4, 10, 2.6) .. " " .. circle(15.6, 10, 2.6), 1.5) },
+}
+local MOUTH: { [string]: { Vector.Layer } } = {
+	smile = { gap("M7.6 14.6 A5 5 0 0 0 16.4 14.6") },
+	small = { gap("M9.6 15.2 A3 3 0 0 0 14.4 15.2") },
+	grin = { hole("M7 14 H17 A5 5 0 0 1 7 14 Z") },
+	flat = { gap("M9 16.2 H15") },
+	frown = { gap("M8 18 A5 5 0 0 1 16 18") },
+	o = { hole(circle(12, 16.4, 2)) },
+	smirk = { gap("M8.8 15.8 L12.6 16.6 L15.6 14.4") },
+	wavy = { gap("M7.8 16.4 L9.9 15.2 L12 16.4 L14.1 15.2 L16.2 16.4") },
+	open = { hole("M8 14.2 H16 A4 4 0 0 1 8 14.2 Z") },
+	tongue = { hole("M7.6 13.6 H16.4 A4.4 4.4 0 0 1 7.6 13.6 Z"), flat(circle(13.4, 17.1, 1.6)) },
+}
+local FACES: { [string]: { string } } = {
+	sunny = { "happy", "grin" },
+	gentle = { "closed", "small" },
+	bold = { "cross", "grin" },
+	dreamy = { "up", "small" },
+	easygoing = { "sleepy", "smile" },
+	proud = { "brow", "smirk" },
+	shy = { "down", "flat" },
+	cheeky = { "wink", "smirk" },
+	cool = { "shades", "flat" },
+	prickly = { "cross", "frown" },
+	dramatic = { "wide", "o" },
+	bookish = { "glasses", "small" },
+	gloomy = { "sleepy", "frown" },
+	polite = { "dot", "small" },
+	foodie = { "dot", "tongue" },
+	nervous = { "wide", "wavy" },
+}
+for id, f in FACES do
+	local layers: { Vector.Layer } = { flat(circle(12, 12, 10.25)) }
+	for _, l in EYES[f[1]] do
+		table.insert(layers, l)
+	end
+	for _, l in MOUTH[f[2]] do
+		table.insert(layers, l)
+	end
+	A["face_" .. id] = layers
+end
 A.medal = {
 	solid("M4 2 H9.5 L13.5 10 H8 Z"),
 	solid("M14.5 2 H20 L16 10 H10.5 Z"),
