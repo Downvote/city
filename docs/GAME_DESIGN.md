@@ -2656,3 +2656,34 @@ only its owner can drive. Put it away from the Garage, and it goes when you leav
 - The grass has a soft picture of its own now: grey clumps of grass in low contrast, coloured by the grass's green.
   It covers the island's terrain, the plots' lawns and the grass under what is built alike, laid without a grid so
   no repeat shows across the island. (This replaces Roblox's own grass texture, which the game kept until now.)
+
+### Lights stay on, with a switch
+
+> also, make it such that lights are on by default and dont change based on time. players can turn them off or on, and villagers will turn nearby ones off when sleeping
+
+- A light you place is on from the moment it goes down, day and night. The clock no longer switches it. The town's
+  own street lamps, lit windows and signs still come on at dusk and go off in the morning.
+- Walk up to one of your lights and hold E to turn it off, and again to turn it back on. The prompt shows on your own
+  plot only, and not in Build mode. The switch is saved with your build, so a light you turned off is still off the
+  next time you play. Lights from a save made before this come back on.
+- When a villager goes to bed, the lights near their bed on that floor go out (about a room's worth, 12 studs). They
+  come back on when the villager gets up, whatever wakes them. A light you turned off yourself stays off.
+- If you turn on a light a sleeper put out, it stays on until they get up. The next night it goes out again.
+- Anything that glows counts as a light: lamps, candles and lanterns, and also glowing screens and fires.
+- Moving, turning or repainting a light leaves its switch as it was, and so do undo and redo.
+
+### A normal map on every texture, and nothing harsh
+
+> can you make it such that every texture you use has a normal map? make sure the materials used arent too high contrast
+
+- Every texture has a normal map now, so walls, floors, roofs and the ground catch the light with their grain,
+  joints and bumps. Where a picture came from a set, the normal map is that set's own, so the bumps sit on the
+  pattern. The library has no normal map for roller shutters, so a shutter is plain pale metal with the slats in
+  its normal map. Corrugated sheet keeps its picture with a fine metal normal map for the same reason.
+- The harsh pictures are gone. Carpet is a soft pile, planks are pale boards of mixed lengths, slats are pale
+  upright boards, the checker floor is light and mid grey squares, and the grass is a fine grey grass. Paving is
+  pale pavers in rows, slabs the same at full size, mosaic small white squares, panels a pale board with fine
+  joints, stucco a smooth render, the cliffs a pale cracked rock, metal a plain brushed grey, and the small bricks
+  the brick picture at a smaller size.
+- Every picture is grey and light, so the paint still decides the colour and a pale wall stays pale.
+

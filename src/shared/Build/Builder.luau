@@ -20,6 +20,9 @@ local Builder = {}
 
 Builder.Tags = {
 	NightLight = "NightLight", -- parts that glow and light up after dark
+	-- parts that glow on a piece a player placed: on at every hour, switched by its owner and put
+	-- out near a sleeping villager (Sim/Lights, Services/Lights); the clock leaves them alone
+	PlacedLight = "PlacedLight",
 	DoorLeaf = "DoorLeaf",
 	SeatSpot = "SeatSpot",
 	BedSpot = "BedSpot",
@@ -77,6 +80,7 @@ end
 export type Options = {
 	ghost: boolean?, -- see-through, no collisions, no lights (placement previews)
 	plain: boolean?, -- pieces as their shapes, never merged (what players build in Build mode)
+	placed: boolean?, -- a piece on a player's plot (Builder.render): what glows is PlacedLight
 	tint: Color3?, -- ghost colour override (red when a spot is not allowed)
 }
 
@@ -187,7 +191,8 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 			modifier.Parent = part
 		end)
 	elseif prim.role == "glow" then
-		part:AddTag(Builder.Tags.NightLight)
+		-- the town's own lamps follow the hour (Services/World); a player's lights are theirs
+		part:AddTag(if opts and opts.placed then Builder.Tags.PlacedLight else Builder.Tags.NightLight)
 		part:SetAttribute("DayMaterial", prim.mat)
 	end
 	if prim.light then
@@ -650,8 +655,9 @@ function Builder.render(plan: Plan.PlanData, kind: string, key: string, folder: 
 	end
 	-- what players build is drawn from plain parts, as the piece looked while they held it (the
 	-- user: "alot of the objects seem to have its pieces wrong after putting them down in build
-	-- mode"); merging is for the town's own models, which never change
-	Builder.instantiate(prims, model, plotFrame, { plain = true })
+	-- mode"); merging is for the town's own models, which never change. Its lights are the
+	-- player's own (Sim/Lights): on at every hour, not switched by the clock.
+	Builder.instantiate(prims, model, plotFrame, { plain = true, placed = true })
 	model.Parent = folder
 	return model
 end

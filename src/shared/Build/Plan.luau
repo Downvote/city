@@ -8,6 +8,7 @@
 --   items  { id, x, y, z, r, lv, c1?, c2?, wall?, t?, side?, img? }
 --          (img: a picture from the Roblox library, by its id, on a piece that takes one)
 --          (sx?, sy?, sz?: how far it is stretched along its width, height and depth, Build/Stretch)
+--          (off?: true when its owner switched a light off, Sim/Lights; without it a light is on)
 --   waters { x1, z1, x2, z2, lv = 0, edge, depth }   a pool or a pond on the ground (Build/Water)
 -- Coordinates are studs in the plot's own frame: x and z run 0..Plot.Size, y is height above the ground.
 -- `lv` is the floor: 0 the ground floor, up to Plan.Highest (7), and -1 the basement (Build/Basement).
@@ -65,6 +66,7 @@ export type Item = {
 	sx: number?, -- (stretched along its width, height and depth: Build/Stretch)
 	sy: number?,
 	sz: number?,
+	off: boolean?, -- (a light its owner switched off: Sim/Lights; nil is on)
 }
 export type PlanData = {
 	v: number,
@@ -655,6 +657,10 @@ function Plan.validItem(plan: PlanData, item: any, ignoreKey: string?): (boolean
 			return false, "that isn't a picture id"
 		end
 	end
+	-- (a light's switch: true when its owner switched it off, else left off: Sim/Lights)
+	if item.off ~= nil and item.off ~= true then
+		return false, "bad switch"
+	end
 	-- (stretched: within the range, and only along the sides the piece may stretch: Build/Stretch)
 	local stretchOk, stretchWhy = Stretch.valid(def, item)
 	if not stretchOk then
@@ -833,6 +839,11 @@ function Plan.clean(kind: string, obj: any): any
 		if type(v) == "number" or (type(v) == "string" and #v <= 32) then
 			out[k] = v
 		end
+	end
+	-- (a light switched off by its owner keeps that through a copy or a saved build: Sim/Lights;
+	-- a move or a repaint keeps the switch the server has, Services/Build)
+	if kind == "items" and obj.off == true then
+		out.off = true
 	end
 	if kind == "walls" then
 		for _, side in { "a", "b" } do
@@ -1199,6 +1210,11 @@ function Plan.sanitize(raw: any): PlanData
 			-- (a stretch past the range is brought back into it: Build/Stretch)
 			if type(obj) == "table" and type(obj.id) == "string" then
 				obj = Stretch.clamped(Catalog.get(obj.id), obj)
+			end
+			-- (a switch that isn't one is dropped, so the light loads on: Sim/Lights)
+			if type(obj) == "table" and obj.off ~= nil and obj.off ~= true then
+				obj = table.clone(obj)
+				obj.off = nil
 			end
 			if type(key) == "string" and Plan.validItem(plan, obj, key) then
 				local copy = deepCopy(obj)

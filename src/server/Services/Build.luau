@@ -21,6 +21,7 @@ local Catalog = require(Shared.Build.Catalog)
 local Passes = require(Shared.Sim.Passes)
 local Group = require(Shared.Build.Group) -- (the Select tool's groups: wall moves, moves checked lifted)
 local SavesSim = require(Shared.Sim.Saves) -- (saved builds: what a load changes)
+local LightsSim = require(Shared.Sim.Lights) -- (a light's switch, which a move or an undo keeps)
 
 local Data = require(script.Parent.Data)
 local Plots = require(script.Parent.Plots)
@@ -191,6 +192,10 @@ local function prepare(plan: any, requests: { any }): ({ any }?, string?)
 			end
 			-- what of it was given stays given, whatever the client sent (Plan: Gifts)
 			obj.gift = before.gift
+			-- and a light keeps the switch it has: only its prompt changes that (Services/Lights)
+			if req.kind == "items" then
+				obj.off = before.off
+			end
 			ops = { { op = "set", kind = req.kind, key = req.key, obj = Plan.copy(obj), before = Plan.copy(before) } }
 		else
 			return fail("bad request")
@@ -272,6 +277,8 @@ local function commit(player: Player, ops: { any }, record: string?): (boolean, 
 		return false, "not enough coins"
 	end
 	if record ~= "applied" then
+		-- (undo and redo move pieces back, not a light's switch: Sim/Lights)
+		ops = LightsSim.keepSwitches(profile.plan, ops)
 		local ok, err = Plan.apply(profile.plan, ops)
 		if not ok then
 			return false, err

@@ -205,6 +205,17 @@ local function same(a: any, b: any): boolean
 	return true
 end
 
+-- A piece as built: a light's switch is left out (Sim/Lights), so switching a lamp off after saving
+-- doesn't have a load sell it and buy it again. A piece that stays keeps the switch it has now.
+local function built(obj: any): any
+	if type(obj) == "table" and obj.off ~= nil then
+		local copy = table.clone(obj)
+		copy.off = nil
+		return copy
+	end
+	return obj
+end
+
 local function sortedKeys(list: any): { string }
 	local out: { string } = {}
 	if type(list) == "table" then
@@ -243,7 +254,7 @@ function Saves.requests(current: any, target: any): ({ any }, { [number]: number
 		local mine, theirs = current[kind], target[kind]
 		if type(mine) == "table" and type(theirs) == "table" then
 			for key, obj in mine do
-				if theirs[key] ~= nil and same(obj, theirs[key]) then
+				if theirs[key] ~= nil and same(built(obj), built(theirs[key])) then
 					kept[kind][key] = true
 				end
 			end

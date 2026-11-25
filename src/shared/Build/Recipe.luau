@@ -316,7 +316,8 @@ function Recipe.glass(self: Recipe, x1: number, y1: number, z1: number, x2: numb
 end
 
 -- Marks a prim as lit at night (it glows and its light switches on). A range of 0 makes it glow
--- with no light of its own, for the extra bulbs of something that already has one.
+-- with no light of its own, for the extra bulbs of something that already has one. On a player's
+-- plot it is on at every hour instead, until its owner switches it off (Sim/Lights).
 function Recipe.glow(self: Recipe, prim: Prim, range: number?, brightness: number?, color: Color3?): Prim
 	prim.role = "glow"
 	if range == 0 then

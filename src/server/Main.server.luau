@@ -19,6 +19,7 @@ local order = {
 	"Villagers",
 	"Interact", -- holding E on a piece (Data/Interactions): after Villagers, whose villagers react
 	"Work", -- a player working at a workplace themselves: after Villagers, whose pay packets it uses
+	"Lights", -- the lights players place: their switches, and put out near sleepers (after Villagers)
 	"Unstick", -- people moved out of what they get stuck in: after Build and Villagers
 	"Events",
 	"Explore",

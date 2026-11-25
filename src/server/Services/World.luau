@@ -417,6 +417,10 @@ local function setLight(p: Instance, on: boolean)
 	end
 end
 
+-- (the lights players place are switched the same way, by Services/Lights, never by the clock)
+World.setLight = setLight
+
+-- The town's own lamps, lit windows and signs (NightLight) follow the hour.
 local function setAllLights(on: boolean)
 	lightsOn = on
 	for _, p in CollectionService:GetTagged(Builder.Tags.NightLight) do

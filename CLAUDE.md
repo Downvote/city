@@ -506,9 +506,15 @@ there are no overlapping outlines".
 
 The user asked for custom textures, then for "textures from the roblox library that fits": the materials use
 Creator Store pictures listed in `Data/TextureIds` (find more with `scripts/library_textures.py search`, get the
-image id with `resolve`; prefer greys, mark ones with their own colour `own = true`, credit the maker). A texture can
-carry a `normal` map and a `rough` map too (the user asked for normal maps): take them from the same set as the
-colour when the picture has a pattern, and keep one texture to a line in `Data/TextureIds`. Then
+image id with `resolve`; prefer greys, mark ones with their own colour `own = true`, credit the maker). Every
+texture carries a `normal` map (the user: "can you make it such that every texture you use has a normal map? make
+sure the materials used arent too high contrast"; the Textures spec holds it), and may carry a `rough` map: take
+them from the same set as the colour when the picture has a pattern (a set's roughness or colour map in grey with
+its NormalGL is the usual find), or, where the library has no normal for the pattern, put the pattern in the normal
+over a plain colour (the shutter). Keep every colour picture soft (`python3 scripts/library_textures.py check` fails
+on one whose greys spread more than `CONTRAST`, 0.09) and light where it is painted pale (a picture darker than
+about 0.75 turns a cream wall grey; `light` can't brighten paint past white), and keep one texture to a line in
+`Data/TextureIds`. Then
 `python3 scripts/sync_materials.py` writes them into the place file (check.sh fails if it's out of date), and
 `render.sh <scene> <png> --textures` shows them. Our own painted set (`scripts/gen_textures.py`, art/textures)
 covers the rest and can be uploaded with `scripts/upload_textures.py`. The town's looks (the user: "you can make your own textures
@@ -617,6 +623,13 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
   labels and chalk 0.04), big flat layers 0.1 (street paint stands 0.11 over the road), layers in one mark lie
   side by side, and what is set into paving is cut into it. Check with `lune run tools/preview/zfight.luau
   <catalog|models|town|interiors|starter|presets|all>`; the Zfight spec fails on any new pair.
+- Lights players place stay on (the user: "make it such that lights are on by default and dont change based on
+  time. players can turn them off or on, and villagers will turn nearby ones off when sleeping"): a placed piece's
+  glowing parts carry `PlacedLight`, which the clock never switches (only the town's own `NightLight` lamps,
+  windows and signs follow the hour). The owner's "Turn off" / "Turn on" prompt (`Services/Lights`, owner only,
+  checked on the server) saves the item's `off`; Build mode's moves, repaints and undo keep it. A villager asleep
+  puts out the lights within `Tuning.Lights.SleepReach` of their bed on its floor until they are up (`Sim/Lights`,
+  held on the server, never saved, never touching `off`). Never switch a placed light by the hour.
 
 ## Writing (always)
 

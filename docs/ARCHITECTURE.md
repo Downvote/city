@@ -294,6 +294,50 @@ character for a `you` line. The camera is left alone. Specs: `PlayerWork` (the s
 the purse, the bounds, who may start, why it stops) and `WorkService` (the real Work service and the villagers' pay
 packets with their neighbours stubbed, on a wound clock).
 
+## The lights players place
+
+The user: "also, make it such that lights are on by default and dont change based on time. players can turn them off
+or on, and villagers will turn nearby ones off when sleeping". A light is any catalog piece with a part that glows
+(`Recipe.glow`, role `"glow"`; `Sim/Lights.isLight(def)`, kept per id). `Builder.render` draws a plot's pieces with
+`{ plain = true, placed = true }`, and `makePart` tags a placed piece's glowing parts `Builder.Tags.PlacedLight`
+instead of `NightLight`. The clock (`Services/World`'s `setAllLights`, by `World.isNight`) only ever switches
+`NightLight` parts, so the town's own lamps, lit windows (`NightColor`) and signs follow the hour as before, as do an
+event's props and a cutscene's set, while what players place never does. `World.setLight(part, on)` is exported for
+`Services/Lights`.
+
+`Sim/Lights` (no services): `isOn(item, key, dark, kept)` is false when the item's `off` is true, else true unless a
+sleeper keeps it dark (`dark[key]`) and the player hasn't turned it back on since (`kept[key]`); the hour has no
+say. `dark(plan, sleepers)` (sleepers: villager id to bed key) is every light within `Tuning.Lights.SleepReach`
+(12) studs of a sleeper's bed across the floor (`Plan.itemFrame`'s x and z) and on the bed's `lv`; `near(plan,
+bedKey)` the same for one bed, as sorted keys. `settle(kept, dark)` forgets a kept light no sleeper keeps dark.
+`press(item, key, dark, kept)` returns the item's new `off`: a lit light goes off (`true`), an unlit one comes on
+(`nil`, and kept when a sleeper had it dark). `action(on)` is the prompt's words, `TurnOff` ("Turn off") or `TurnOn`
+("Turn on"); `Tag` is `"LightPrompt"`. `keepSwitches(plan, ops)` gives undo and redo's `set` ops on items the
+switch the plan has now.
+
+`Services/Lights` (after `Villagers`): on every piece drawn into a plot's Build folder that is a light it puts a
+ProximityPrompt `LightPrompt` on the glowing part that has the Light (or the first glowing part): E, held
+`Tuning.Lights.Hold`, from `Distance` studs, no line of sight, no `Opens`, attributes `Plot` and `BuildKey`, tag
+`LightPrompt`, `ObjectText` the piece's name; then lights it (`Lights.show`: every `PlacedLight` part through
+`World.setLight`, the prompt worded to match). `Lights.pressed(player, plot, key)` answers it: only the plot's owner,
+their root within `Reach` studs of the piece, at most one press each `Cooldown` seconds; it writes `item.off` on the
+plan (saved with the profile), shows it and sends the owner `PlanSync` with one `set` op (no redraw, no undo step,
+no `Build.Changed`). Every `SleepCheck` seconds `Lights.step` asks `Villagers.sleepers(owner)` (each villager whose
+body is asleep, `npc.sleeping`, with a bed: id to bed key) and shows the lights that went dark or came back. The
+sleepers' dark and the kept lights live on the server only, per plot, started afresh when it changes hands, and are
+never saved. Whatever ends a sleep (the morning, an event's `standUp`, the body going, the bed sold) lights them
+again at the next look; the unstick failsafe leaves sleepers alone, so nobody it moves holds a light dark.
+
+`client/World/LightSwitch` (started from `Main.client`) enables the tagged prompts only on the player's own plot
+(`Plot` against the player's `Plot` attribute) and outside Build mode. `Services/Build` keeps the switch on a
+`set` (a move, a turn, a repaint: `obj.off = before.off`, whatever the client sent) and runs undo and redo through
+`keepSwitches`; `Plan.clean` keeps `off` only when it is `true`, so a copy or a saved build's new pieces carry it;
+`Sim/Saves.requests` leaves `off` out when it compares a piece, so a load keeps a piece that differs only by its
+switch (with the switch it has now). Spec: `Lights` (on by default whatever the hour, the tags, the switch, a sleeper
+putting out only what is near on their floor, the starting house's bedroom lights and not the kitchen's, waking,
+a switched off light staying off, turning one on over a sleeper, old saves, the field's checks, undo and redo);
+`BuildService` checks a move, a repaint and undo keep the switch.
+
 ## The island's terrain
 
 `Data/Terrain` lays out the island's natural ground, which `World.buildTerrain` writes as Roblox terrain when the
@@ -424,6 +468,11 @@ a new square, a square looked at again, and every time the focus has moved `Move
   `scripts/library_textures.py resolve` prints whether an image shows (`ok`, `pending`, `no picture`) and `check`
   asks it of every id in `TextureIds`. The Textures spec fails on a look a model asks for that `Data/Textures`
   doesn't have, and on a place file out of step with `TextureIds`.
+- Every line of `Data/TextureIds` but `sheen` has a `normal` (the Textures spec fails without one), and
+  `scripts/library_textures.py check` measures each colour picture's contrast (the standard deviation of its greys
+  away from the edges) and fails over `CONTRAST` (0.09), besides failing on a picture Roblox doesn't show. Where
+  the library has no normal map for a pattern (roller shutters), the look is a plain colour with the pattern in its
+  normal map. No line is `own` any more.
 - `Textures.list` gives every material its texture, Grass and LeafyGrass included (`grass` and `leafy`, one
   picture, written with `MaterialPattern` Organic; the rest Regular). The terrain's colours go through
   `Textures.tint` as parts' do, so a lawn part and the terrain beside it come out alike. Clay roof tiles (`clay`, and
@@ -501,8 +550,12 @@ Wall  { x1, z1, x2, z2, lv, style, a = { c, m }, b = { c, m } }
 Floor { x1, z1, x2, z2, lv, c, m }
 Roof  { x1, z1, x2, z2, lv, style, rise, dir, over, c, m, c2, m2 }
 Water { x1, z1, x2, z2, lv = 0, edge = "tile" | "stone" | "pond", depth = "shallow" | "swim" }
-Item  { id, x, y, z, r, lv, c1?, c2?, wall?, t?, side?, img?, sx?, sy?, sz? }
+Item  { id, x, y, z, r, lv, c1?, c2?, wall?, t?, side?, img?, sx?, sy?, sz?, off? }
 ```
+
+(`off`: `true` when the owner switched a light off with its prompt, left off when it is on, so an older save's
+lights load on; `Plan.validItem` takes nothing else and `Plan.sanitize` drops anything else. See "The lights players
+place".)
 
 (`sx`, `sy`, `sz`: how far a piece is stretched along its width, height and depth with the Stretch pass, left off
 at 1; see "Placing: collisions, angles, Fine Grid, Stretch and Any Colour".)
@@ -1039,6 +1092,7 @@ loaded that hold it, saying to Load more when nothing loaded does. The mannequin
 | `Avatar` | The creator: a private stage (an empty Model `CreatorStage<slot>` with an `Origin` attribute, high over the meadow; nothing is built there) and an anchored mannequin per player, catalog search fallback, bundles, copying users, outfits, asset checks, the text filter. `toDescription`, `buildModel` for everyone else. |
 | `Interact` | Puts a `UsePrompt` (E, no `Opens`) on an attachment `UseSpot` on each placed piece that has a player use (`Data/Interactions`), in every plot's Build folder; checks the player is within `Tuning.Uses.Reaches` (14 studs), a `Cooldown` per player and a `Rest` per piece; picks the outcome (`Sim/Uses`), has villagers near react to the loud ones and fires `Used`. Nothing is bought or saved. Starts after `Villagers`. |
 | `Work` | A player working at a workplace themselves (see "Working at a workplace yourself"): a `WorkPrompt` at every placed workplace's work spot, `Work.asked`, `Work.begin`, `Work.stop(player, say?)`, `Work.at(player)` (plot and key, or nil), `Work.step(now)` every `Tuning.Jobs.Player.Check` seconds, the `WorkStop` remote. Pays through `Villagers.payPlayer`. Starts after `Villagers`. Once a second `Work.markBusy(i)` marks each placed workplace somebody (villager or player) is at with `Working` (see "Pieces that move and give off effects"). |
+| `Lights` | The lights players place (see "The lights players place"): a `LightPrompt` ("Turn off" / "Turn on") on every placed light, `Lights.pressed` (owner only, within `Tuning.Lights.Reach`, a `Cooldown`), the switch saved as the item's `off`, and every `SleepCheck` seconds the lights near sleeping villagers' beds put out (`Villagers.sleepers`) until they get up. Starts after `Villagers`. |
 | `Villagers` | Creating, editing, moving out, beds, jobs, buying a craving (`Villagers.buyWish`, the `WishBuy` remote). Spawns NPCs and runs their routine (`Villagers.brain` acts out what `Sim/Routine` chooses): sleep at night; in work hours each worker goes round their job's loop at the workplace and takes breaks; those with no job or done for the day potter. Pay goes to whoever is earning at that moment: every `Tuning.Jobs.EarnStep` seconds it checks `npc.atWork` in work hours with control nil, chat or talk (an event, an outing, a day off or sickness pays nothing), keeps a purse per villager in server memory, and every `PayEvery` seconds sends the coins (`Data.addCoins(..., quiet)`, `stats.earned`, the `Earned` event); what is left goes when the player leaves. `Villagers.endOfWork` at 5 PM sends the last of it, grants skill by the share of the day earned and says "Your villagers earned {n} coins today." (it still writes `stats.paydays` and `lastPayday`). Talking: `Villagers.spawn` puts `Npc.talkPrompt(name)` on each body (a ProximityPrompt `TalkPrompt` on the HumanoidRootPart: E, held `Tuning.Talk.HoldSeconds`, from `Distance` studs, no `Opens` attribute) and `setControl` switches it with `Npc.setTalkable(Talk.free(mode))`; it is off while they sleep. `Villagers.talkedTo(who, owner, vid)` answers it: it refuses a sleeper, someone in an event or away, a player more than `Range` studs off and a second line within `Cooldown`; then holds them (`setControl(owner, vid, "talk")` for `StaySeconds`, `VisitorSeconds` for a visitor, or until the player walks off), turns them with `Npc.face`, and has them say `Talk.line`. The owner also gets `Talk.chat`'s gain and the `Talk` event. |
 | `Store` | Passes, gem packs, rewards, offline earnings and the group (see "Passes, gems, rewards and time away"). Listens for `Data.Loaded`, so it starts before `Data.open`. |
 | `Events` | Picks and plays random events, waits for choices, applies effects, room request rewards, small friendship gains from chats, parties. A scene's props (`Data/EventProps`) are put down by their star after the gather, facing the group on the ground (a raycast that skips villagers, characters and props), made with `Builder.instantiate(..., { plain = true })`, not collidable, queryable or touchable, in `Workspace.EventProps` (attributes `Prop`, `Owner`); a choice's props come after the choice; `leave` keeps one for some hours (at most `PropsMax` a town, oldest out); tidied every 10 s and cleared when the player leaves. It pushes `keepsakes` when one is given. |

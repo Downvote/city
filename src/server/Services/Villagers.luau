@@ -1443,6 +1443,26 @@ function Villagers.workingAt(player: Player): { [string]: boolean }
 	return out
 end
 
+-- Who is asleep in bed this moment, and in which: a villager's id to their bed's key on the
+-- owner's plan. Services/Lights puts out the lights near those beds until they get up, however
+-- that comes about (the morning, an event, the body going); anyone the unstick failsafe moves is
+-- up already (it leaves sleepers alone), so nothing of theirs stays out.
+function Villagers.sleepers(player: Player): { [string]: string }
+	local out: { [string]: string } = {}
+	local profile = Data.get(player)
+	local list = npcs[player]
+	if not profile or not list then
+		return out
+	end
+	for vid, npc in list do
+		local v = profile.villagers[vid]
+		if npc.sleeping and v and type(v.bed) == "string" and npc.model and npc.model.Parent ~= nil then
+			out[vid] = v.bed
+		end
+	end
+	return out
+end
+
 -- Pays everyone at work for the last `seconds`.
 local function earnFor(player: Player, seconds: number)
 	local profile = Data.get(player)

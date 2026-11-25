@@ -586,6 +586,16 @@ Tuning.Uses = {
 Tuning.Lights = {
 	Placed = { Brightness = 0.4, Range = 0.75 },
 	Town = { Brightness = 0.8, Range = 1 },
+	-- the lights players place are on at every hour, their owner switches each one, and a villager
+	-- asleep puts out the ones near their bed (the user: "make it such that lights are on by default
+	-- and dont change based on time. players can turn them off or on, and villagers will turn
+	-- nearby ones off when sleeping"; Sim/Lights, Services/Lights)
+	Hold = 0.3, -- seconds the key is held at a light's prompt
+	Distance = 10, -- studs: how close you stand for the prompt to show (a ceiling light hangs high)
+	Reach = 16, -- studs: the server's check of where you stand when you press
+	Cooldown = 0.3, -- seconds between two presses for one player
+	SleepReach = 12, -- studs across the floor from a sleeper's bed, on its floor: about one room
+	SleepCheck = 1, -- seconds between the server's looks at who is asleep
 }
 
 -- Placed pieces that move and give off effects (Build/Lively, client World/Lively; the user: "make

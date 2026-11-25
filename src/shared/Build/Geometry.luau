@@ -22,7 +22,7 @@ export type Prim = {
 	name: string?,
 	light: Light?,
 	effect: string?, -- "fire" | "smoke" | "sparkles"
-	role: string?, -- "door" (the swinging leaf), "seat", "bed", "glow" (switched on at night)
+	role: string?, -- "door" (the swinging leaf), "seat", "bed", "glow" (lit at night; a player's own: Sim/Lights)
 	attrs: { [string]: any }?,
 	frame: CFrame?, -- a door leaf's own doorway (where its hinge is measured from), set by the Builder
 	-- a "Piece" only: the shapes it is made of, in its own frame (its box's middle), and a key

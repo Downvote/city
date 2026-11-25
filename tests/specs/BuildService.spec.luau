@@ -169,6 +169,48 @@ describe("Build service", function()
 		expect(profile.coins < coins).toBeTruthy()
 	end)
 
+	it("keeps a light's switch through a move and an undo, however a client sends it", function()
+		local Lights = require("ReplicatedStorage.Shared.Sim.Lights")
+		local Catalog = require("ReplicatedStorage.Shared.Build.Catalog")
+		local key, item
+		for k, it in profile.plan.items do
+			if not it.wall and Lights.isLight(Catalog.get(it.id)) then
+				key, item = k, it
+				break
+			end
+		end
+		expect(key ~= nil).toBeTruthy()
+		-- switched off with its prompt (Services/Lights writes it on the plan)
+		item.off = true
+		local moved = table.clone(item)
+		moved.r = (item.r + 90) % 360
+		moved.off = nil -- a client that never heard of the switch
+		pause()
+		profile.passes = { freeplace = true }
+		local ok, why = Build.apply(p, { { type = "set", kind = "items", key = key, obj = moved } })
+		profile.passes = nil
+		if not ok then
+			error(tostring(why))
+		end
+		expect(profile.plan.items[key].r).toBe(moved.r)
+		expect(profile.plan.items[key].off).toBe(true)
+		-- a client can't switch it from Build mode either
+		local painted = table.clone(profile.plan.items[key])
+		painted.off = nil
+		pause()
+		expect((Build.apply(p, { { type = "set", kind = "items", key = key, obj = painted } }))).toBe(true)
+		expect(profile.plan.items[key].off).toBe(true)
+		-- switched on again, then the move undone: it turns back and stays on
+		profile.plan.items[key].off = nil
+		expect(Build.undo(p)).toBe(true)
+		expect(Build.undo(p)).toBe(true)
+		expect(profile.plan.items[key].r).toBe(item.r)
+		expect(profile.plan.items[key].off).toBe(nil)
+		local last = fired[#fired]
+		expect(last.name).toBe("PlanSync")
+		expect(last.msg.ops[1].obj.off).toBe(nil)
+	end)
+
 	it("checks a picture with Roblox before it goes on a piece, and only on one that shows one", function()
 		-- Roblox's answer, stood in for: what kind of asset each id is (13 a decal, 1 an image,
 		-- 9 a place), and nothing at all for one that isn't there
