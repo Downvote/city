@@ -16,12 +16,19 @@
 -- their feel only, never a line of them), and then: "Try to avoid having strings of short
 -- sentences, and redo the contents of sentences". So a line is one complete, natural sentence,
 -- or two that belong together, never three and never a run of clipped bits, and it is short
--- because the thought is small. Each personality has a small kit of speech habits
--- (docs/GAME_DESIGN.md lists them: the sunny "Ehehe!", the gentle "Oh, my.", the shy "Um...",
--- the cheeky lower case, the cool full stops, the prickly "Ugh.", the dramatic word in capitals,
--- the bookish "Actually,", the nervous stammer and the rest), used in about one line in four or
--- five on top of a normal sentence. The sunny and dramatic ones raise their voice often and the
--- cool ones never.
+-- because the thought is small. Then: "just like the blue archive momotalks, make every single
+-- personality have a unique and distinct speech pattern ... also, try not use less used words".
+-- So each personality has its own words, written here (the header of each says which: the sunny
+-- "Ehehe!", the gentle "Oh my" and "have you eaten?", the bold "right?", the dreamy "La la ♪",
+-- the easygoing "*yawn*" and "no rush", the proud "Hmph", the shy "Um" and an aside in
+-- brackets, the cheeky "hehe" and ":P", the cool "Hm." and "Later.", the prickly "Ugh" and
+-- "Tsk", the dramatic word in capitals and "*gasp*", the bookish "Actually," and exact numbers,
+-- the gloomy "Heh..." and "as usual", the polite "please" and "thank you kindly", the foodie
+-- "Mmm" and meals, the nervous "Oh no, oh no" and "What if"), used in about one line in three
+-- or four on top of a normal sentence, and Sim/Voice puts each one's marks on as the line is
+-- said ("~", "...", the drawl, the stammer, the cheeky lower case). The words are everyday ones
+-- a player anywhere knows ("outside your door", never "on your step"). The sunny and dramatic
+-- ones raise their voice often and the cool ones never.
 -- `{player}` is the player's name (the user: "the player is to be referred to as their player
 -- name"), filled in where the line is said: about one line in seven, mostly first. It goes in the
 -- kinds a villager tells the player as news from their day (happy, sad, wow, scared, worry,
@@ -53,14 +60,14 @@ Personalities.list = {
 				"Oh, hi, I was hoping I'd run into someone!",
 				"Hey, hey, walk with me, I've got news!",
 				"Hi, how's your day going so far?",
-				"Ehehe, that's the third time I've seen you today!",
+				"Ehehe, that's the third time I've seen you today.",
 				"There you are, let's walk to the square together!",
 			},
 			happy = {
 				"{player}, the cherry buns are out, and they're still warm!",
 				"I got my first pay and spent half of it on buns, ehehe.",
 				"There's a duck in the fountain, a real live duck!",
-				"Everyone I passed today waved at me!",
+				"Everyone I passed today waved at me.",
 				"{player}, I learned the fisher's name, and his dog's name too!",
 				"Today was so good, so let's do it all again tomorrow!",
 			},
@@ -76,7 +83,7 @@ Personalities.list = {
 				"I'm mad now, so ask me again after lunch.",
 				"That really hurt my feelings, you know.",
 				"No, no, you don't get to say that to me!",
-				"Fine, I'm taking my bun and going home!",
+				"Fine, I'm taking my bun and going home.",
 			},
 			thanks = {
 				"Thank you so much, you're the best!",
@@ -97,12 +104,12 @@ Personalities.list = {
 				"{player}, a crab got into my kitchen last night!",
 				"The thunder was so loud that I slept with the lamp on.",
 				"That rustle in my garden was only a hedgehog, ehehe.",
-				"A gull flew so close that I nearly lost my hat!",
+				"A gull flew so close that I nearly lost my hat.",
 			},
 			sorry = {
 				"Oh no, I'm so sorry, that was me!",
 				"Sorry, I was talking and not looking.",
-				"That was my fault, so I'll bring you muffins!",
+				"That was my fault, so I'll bring you muffins.",
 				"I'm really sorry, can I make it up to you?",
 				"Oops, sorry, sorry!",
 			},
@@ -116,22 +123,22 @@ Personalities.list = {
 			no = {
 				"Aww, no, I really don't think so.",
 				"Ooh, not that, but I've got a better idea!",
-				"Sorry, sorry, but it's a no from me!",
-				"Nope, nope, I'm not changing my mind on this one!",
-				"Hmm, no, I really can't, sorry!",
+				"Sorry, sorry, but it's a no from me.",
+				"Nope, nope, I'm not changing my mind on this one.",
+				"Hmm, no, I really can't, sorry.",
 			},
 			bye = {
 				"Okay, same spot tomorrow?",
 				"I'll let you go, but let's have lunch later!",
 				"Bye, bye, and wave if you see me!",
-				"See you tomorrow, and I'll bring the buns!",
+				"See you tomorrow, and I'll bring the buns.",
 				"I'm off, and next time let's climb the hill together!",
 			},
 			tease = {
 				"You're smiling, I saw it!",
 				"Ehehe, you've got icing on your nose.",
-				"Somebody's grumpy because they haven't had lunch!",
-				"I saw you skipping when nobody was looking!",
+				"Somebody's grumpy because they haven't had lunch.",
+				"I saw you skipping when nobody was looking.",
 				"Your hair's sticking up at the back, you know.",
 			},
 			brag = {
@@ -149,7 +156,7 @@ Personalities.list = {
 				"I said I'd bring a cake, and I've forgotten which kind.",
 			},
 			hmm = {
-				"Ooh, give me a second, I'm thinking!",
+				"Ooh, give me a second, I'm thinking.",
 				"Wait, wait, I had it, and now it's gone.",
 				"Ooh, I don't know, but I love that you asked!",
 				"Hmm, that's a tricky one, so let's ask the baker together.",
@@ -167,14 +174,14 @@ Personalities.list = {
 				"I need a bun and a nap, and then maybe another bun.",
 				"I ran up the hill twice today just to wave at a boat.",
 				"Can we sit for five minutes? Then I'll be fine!",
-				"{player}, I've said hello to forty people, and I'm out of hellos!",
+				"{player}, I've said hello to forty people, and I'm out of hellos.",
 				"I'm so sleepy that I just waved at a lamp post, ehehe.",
 			},
 			laugh = {
 				"Ehehe, stop it, my cheeks hurt!",
 				"Ahaha, that's the silliest thing all week!",
 				"Ahaha, oh, I needed that so much!",
-				"Ahaha, okay, okay, you got me!",
+				"Ahaha, okay, okay, you got me.",
 				"Ehehe, that's so silly, I love it!",
 			},
 		},
@@ -600,7 +607,7 @@ Personalities.list = {
 		},
 	},
 	{
-		-- Relaxed and slow: "Mm." or "Eh, it's fine.", a "*yawn*" now and then, "no rush", and long easy
+		-- Relaxed and slow: "Eh, it's fine.", a "*yawn*" now and then, "no rush", and long easy
 		-- sentences that wander off to a nap. Laughs "Haha" and "Pfft". Cares sideways, like an old aunt.
 		id = "easygoing",
 		name = "Easygoing",
@@ -611,14 +618,14 @@ Personalities.list = {
 			hello = {
 				"Hey, *yawn*, sorry, I only just woke up.",
 				"Oh, hey, what time is it?",
-				"Mm, hi, I was just about to sit down.",
+				"*yawn* Hi, I was just about to sit down.",
 				"Hey, no rush, I'm not going anywhere.",
 				"Oh, hi, I was just resting my eyes.",
 			},
 			happy = {
 				"I found a spot on the hill that's sunny but out of the wind, so I napped there all afternoon.",
 				"{player}, the hammock by the harbour was free all afternoon.",
-				"Mm, I had a long nap and a warm roll, so life's good.",
+				"Ahh, I had a long nap and a warm roll, so life's good.",
 				"I was going to fix my fence, but the sun came out, so I napped instead.",
 				"The baker gave me yesterday's buns, and eh, they were still fine.",
 				"{player}, I had nothing to do today, and it was great.",
@@ -634,13 +641,13 @@ Personalities.list = {
 				"Eh, that's not cool.",
 				"Hey, come on, there's no need for that.",
 				"I'm too tired to argue, but you're wrong.",
-				"Mm, I'm going to go be annoyed somewhere else.",
+				"Eh, I'm going to go be annoyed somewhere else.",
 				"Don't wake me up just to say that.",
 			},
 			thanks = {
 				"Oh, nice, thanks.",
 				"Thanks, I'll pay you back eventually, I promise.",
-				"Mm, thanks, that's really nice of you.",
+				"Yeah, thanks, that's really nice of you.",
 				"Haha, thanks, you're good to me.",
 				"Thanks, that woke me right up.",
 			},
@@ -649,7 +656,7 @@ Personalities.list = {
 				"Somebody built a hammock big enough for three by the beach.",
 				"Huh, the baker's made a loaf the size of a pillow.",
 				"A cat's been asleep on the bakery roof all day, and honestly, good for her.",
-				"Mm, the sunset was worth staying up for today.",
+				"Yeah, the sunset was worth staying up for today.",
 			},
 			scared = {
 				"Something landed on my roof last night, but I was too sleepy to look.",
@@ -667,7 +674,7 @@ Personalities.list = {
 			},
 			yes = {
 				"Sure, why not.",
-				"Mm, okay, sounds good.",
+				"Yeah, okay, sounds good.",
 				"Yeah, as long as there's a bench.",
 				"Sure, no rush, though.",
 				"Okay, I'll come along, slowly.",
@@ -675,16 +682,16 @@ Personalities.list = {
 			no = {
 				"Eh, I'll pass.",
 				"Nah, that sounds like too much work.",
-				"Mm, no, but no hard feelings.",
+				"Nah, but no hard feelings.",
 				"Eh, nah, I don't agree with you on that one.",
-				"Mm, not really my thing.",
+				"Eh, not really my thing.",
 			},
 			bye = {
 				"Okay, I'm off for a nap.",
 				"See you, and there's no rush on anything.",
 				"Bye, I'll be up on the hill, probably asleep.",
 				"Bye, and don't work too hard, there's always tomorrow.",
-				"Mm, I'm going to go and sit somewhere comfy.",
+				"Well, I'm going to go sit somewhere comfy.",
 			},
 			tease = {
 				"You walk like you're late for something.",
@@ -708,11 +715,11 @@ Personalities.list = {
 				"My roof's got a drip, but it's small, so eh, it can wait.",
 			},
 			hmm = {
-				"Mm, no idea, but it's a good question.",
+				"Eh, no idea, but it's a good question.",
 				"Eh, that's too much thinking for one day.",
 				"Let me sleep on it.",
 				"Haha, ask me again after my nap.",
-				"Mm, I'll think about it eventually, no rush.",
+				"I'll think about it eventually, no rush.",
 			},
 			excited = {
 				"Oh, nice, that's actually great news.",
@@ -720,14 +727,14 @@ Personalities.list = {
 				"Huh, I'm wide awake now, so this must be good.",
 				"I'm excited, I'm just excited lying down.",
 				"The new hammocks go up on the beach tomorrow, and I'm first in line.",
-				"Mm, that's worth getting out of the hammock for.",
+				"Oh, that's worth getting out of the hammock for.",
 			},
 			tired = {
 				"*yawn* I could sleep right here on the path.",
 				"I fell asleep halfway through my lunch.",
 				"{player}, wake me up when it's dinner.",
 				"I was going to go home, but this bench was closer.",
-				"Mm, it's time for my afternoon nap, and maybe my evening one too.",
+				"Well, it's time for my afternoon nap, and maybe my evening one too.",
 			},
 			laugh = {
 				"Haha, good one.",
@@ -1544,7 +1551,7 @@ Personalities.list = {
 			},
 			hmm = {
 				"Hmm, that's a question for the AGES.",
-				"Let me ask my heart.",
+				"Let me listen to my heart.",
 				"That's the hardest question anyone's ever asked me.",
 				"Ooh, I sense a deeper meaning, a DARK one.",
 				"I need a moment, and maybe some music.",
@@ -2146,7 +2153,7 @@ Personalities.list = {
 				"Hello, is everything okay? It's okay?",
 				"Oh, hi, I was just checking that my door is locked.",
 				"H-hello, sorry, I'm a bit jumpy today.",
-				"Hi, um, did I say hi already? Hi.",
+				"Hi, sorry, did I say hi already? Hi.",
 			},
 			happy = {
 				"I didn't drop a single tray today, not one!",

@@ -251,4 +251,31 @@ describe("Tutorial", function()
 		expect((Life.buyWish(p, v.id, rng))).toBe(false)
 		expect(p.stats.cravings).toBe(1)
 	end)
+	it("brings the first craving on the next hour while its last step waits for one", function()
+		local p = fresh()
+		addVillager(p, 1)
+		addVillager(p, 2)
+		-- a die that never comes up: by chance alone nobody would want anything
+		local never = {
+			chance = function()
+				return false
+			end,
+			pick = function(_, list)
+				return list[#list]
+			end,
+		}
+		p.tutorial = 2 -- still on the work step: no help
+		expect(Life.maybeWish(p, "v2", never, 0)).toBe(nil)
+		p.tutorial = 3 -- waiting on the craving
+		local wish = Life.maybeWish(p, "v2", never, 0)
+		expect(wish ~= nil and wish.kind == "food").toBeTruthy()
+		-- the player's own villager never craves, and one craving open is enough
+		expect(Life.maybeWish(p, "v1", never, 0)).toBe(nil)
+		addVillager(p, 3)
+		expect(Life.maybeWish(p, "v3", never, 0)).toBe(nil)
+		-- done or skipped, wishes come by chance again
+		p.villagers.v2.wish = nil
+		p.tutorial = Tutorial.Skipped
+		expect(Life.maybeWish(p, "v2", never, 0)).toBe(nil)
+	end)
 end)

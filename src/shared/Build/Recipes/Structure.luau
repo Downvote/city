@@ -184,7 +184,7 @@ local items: { any } = {
 	{
 		id = "pillar_round",
 		name = "Round pillar",
-		cat = "structure",
+		cat = "pillars", -- (with the rest of the columns: Recipes/Pillars)
 		style = "fancy",
 		price = 80,
 		place = "floor",
@@ -210,7 +210,7 @@ local items: { any } = {
 	{
 		id = "pillar_square",
 		name = "Square post",
-		cat = "structure",
+		cat = "pillars", -- (with the rest of the columns: Recipes/Pillars)
 		price = 50,
 		place = "floor",
 		size = Vector3.new(1, H, 1),
@@ -309,7 +309,7 @@ local items: { any } = {
 	{
 		id = "porch_post",
 		name = "Porch post",
-		cat = "structure",
+		cat = "pillars", -- (with the rest of the columns: Recipes/Pillars)
 		style = "cozy",
 		price = 50,
 		place = "floor",

@@ -714,6 +714,18 @@ function Hud.start()
 			end
 			return
 		end
+		-- how an event turned out waits while its scene is still being read, so the notice never
+		-- gives the ending away (it shows when the scene closes)
+		local card = if kind == "event" then Hud.panel("EventCard") else nil
+		if card and card.isWatching and card.isWatching() then
+			task.spawn(function()
+				while card.isWatching() do
+					task.wait(0.25)
+				end
+				Toasts.show(text, kind)
+			end)
+			return
+		end
 		Toasts.show(text, kind)
 	end)
 

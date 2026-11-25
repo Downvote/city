@@ -196,7 +196,7 @@ K.React = {
 		},
 		easygoing = {
 			"Oh, nice, that's good.",
-			"Mm, I might even stand up for this.",
+			"Oh, I might even stand up for this.",
 			"Eh, see, it all worked out fine.",
 		},
 		proud = {

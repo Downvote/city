@@ -179,6 +179,18 @@ describe("Voice", function()
 		end
 	end)
 
+	it("keeps a polite question's tag whole, a cheeky face's shape, and the drawl off other people's words", function()
+		expect(Voice.speak("polite", "It's lovely, isn't it?")).toBe("It is lovely, is it not?")
+		expect(Voice.speak("polite", "Don't you think so?")).toBe("Do you not think so?")
+		expect(Voice.speak("polite", "You'll come, won't you?")).toBe("You will come, will you not?")
+		expect(Voice.speak("polite", "I can't, sorry.")).toBe("I cannot, sorry.")
+		expect(Voice.speak("cheeky", "Got you :P")).toBe("got you :P")
+		-- "Mmm" is the foodie's, "Hmm..." the dreamy one's
+		for _, t in { "Mm, sure.", "Hmm, maybe." } do
+			expect(Voice.speak("easygoing", t)).toBe(t)
+		end
+	end)
+
 	it("never stammers on a name, and leaves narration and silence alone", function()
 		for _ = 1, 3 do
 			expect(Voice.speak("nervous", "Robin, are you free?")).toBe("Robin, are you free?")

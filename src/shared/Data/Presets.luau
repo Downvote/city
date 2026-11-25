@@ -187,7 +187,46 @@ function Blueprint.item(self: Blueprint, id: string, x: number, z: number, r: nu
 	table.insert(self.objects, {
 		kind = "items",
 		obj = { id = id, x = x, y = height, z = z, r = r or 0, lv = level },
+		-- (a floor piece on the ground storey whose height wasn't given: it stands on the floor
+		-- if the building has one under it, and on the ground if not; settled once it's drawn)
+		ground = y == nil and level == 0 and (def.place == "floor" or def.place == "surface"),
 	})
+end
+
+-- A piece set down outside, where the building has no floor under it, stands on the ground and
+-- not a floor's height above it (crates in a yard and the doorsteps floated: the doorstep's top step
+-- is drawn to meet the floor from the ground).
+local function settle(objects: { any })
+	local floors = {}
+	for _, o in objects do
+		if o.kind == "floors" and (o.obj.lv or 0) == 0 then
+			table.insert(floors, o.obj)
+		end
+	end
+	for _, o in objects do
+		if o.ground then
+			local it = o.obj
+			-- (any of its footprint on a floor and it stays at the floor's height: a doorstep's back
+			-- rests on the paving it leads up from)
+			local x1, z1, x2, z2 = Plan.itemRect(it)
+			local on = false
+			for _, f in floors do
+				if
+					x1 < math.max(f.x1, f.x2)
+					and x2 > math.min(f.x1, f.x2)
+					and z1 < math.max(f.z1, f.z2)
+					and z2 > math.min(f.z1, f.z2)
+				then
+					on = true
+					break
+				end
+			end
+			if not on then
+				it.y = 0
+			end
+			o.ground = nil
+		end
+	end
 end
 
 -- Opens up what is drawn so far: floor let in along lines across it, `cuts` = { x = { { at, by },
@@ -226,6 +265,7 @@ local function add(
 )
 	local b = blueprint()
 	build(b)
+	settle(b.objects)
 	-- w and d are the tight plan's; opened up, the building takes more ground
 	for _, cuts in b.cuts do
 		w, d = Spread.size(cuts, w, d)

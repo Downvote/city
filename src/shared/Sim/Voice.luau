@@ -108,8 +108,48 @@ local CONTRACTIONS = {
 	{ "let's", "let us" },
 }
 
+-- a "n't" before a pronoun is a question's tag or its start: "isn't it?" -> "is it not?",
+-- "Don't you think so?" -> "Do you not think so?" (never "is not it?")
+local NOT_BASE = {
+	isn = "is",
+	aren = "are",
+	wasn = "was",
+	weren = "were",
+	don = "do",
+	doesn = "does",
+	didn = "did",
+	haven = "have",
+	hasn = "has",
+	hadn = "had",
+	wouldn = "would",
+	couldn = "could",
+	shouldn = "should",
+}
+local PRONOUN =
+	{ it = true, i = true, you = true, we = true, they = true, he = true, she = true, there = true, that = true }
+
+local function untag(text: string): string
+	return (
+		(text :: any):gsub("(%a+)'t (%a+)", function(head: string, pron: string): string?
+			if not PRONOUN[pron:lower()] then
+				return nil
+			end
+			local low = head:lower()
+			local base = if low == "won" then "will" elseif low == "can" then "can" else NOT_BASE[low]
+			if not base then
+				return nil
+			end
+			if head:sub(1, 1):match("%u") then
+				base = base:sub(1, 1):upper() .. base:sub(2)
+			end
+			return base .. " " .. pron .. " not"
+		end)
+	)
+end
+
 -- "I'm" -> "I am", keeping a capital at the start of a sentence
 local function uncontract(text: string): string
+	text = untag(text)
 	for _, pair in CONTRACTIONS do
 		local from, to = pair[1], pair[2]
 		local cap = from:sub(1, 1):upper() .. from:sub(2)
@@ -128,11 +168,9 @@ local DRAWL = {
 	okay = "okaaay",
 	ok = "okaaay",
 	yeah = "yeahhh",
-	mm = "mmm",
 	nice = "niiice",
 	oh = "ohhh",
 	well = "welll",
-	hmm = "hmmm",
 	right = "riiight",
 	sure = "suuure",
 	no = "nooo",
@@ -273,7 +311,8 @@ RULES.shy = function(t)
 end
 
 RULES.cheeky = function(t)
-	t = t:lower()
+	-- all lower case, but a face keeps its shape (":P", ":D", "XD")
+	t = t:lower():gsub(":p%f[%W]", ":P"):gsub(":d%f[%W]", ":D"):gsub("%f[%w]xd%f[%W]", "XD")
 	local body, tail = split(t)
 	if tail == "." or tail == "~" then
 		return body

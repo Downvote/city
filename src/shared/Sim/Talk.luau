@@ -86,7 +86,7 @@ local GREET = {
 	easygoing = {
 		"*yawn* Oh, hey, {player}, is it lunch already?",
 		"Hey, {player}, bring me an apple from the market sometime, no rush.",
-		"Mm, hi, {player}, I've been resting since breakfast.",
+		"Oh, hi, {player}, I've been resting since breakfast.",
 	},
 	proud = {
 		"{player}, I beat everyone at chess today, naturally.",
@@ -276,7 +276,7 @@ local OWN = {
 	easygoing = {
 		"I had a busy morning, and by busy I mean I watched the tide come in.",
 		"Not much to report, which is how I like it.",
-		"Mm, I had plans today, but eh, they can wait.",
+		"Yeah, I had plans today, but eh, they can wait.",
 		"{player}, you should try lying in the long grass on the hill sometime.",
 		"The baker asked me to sweep her porch, and I said the wind does it for free.",
 	},
@@ -553,7 +553,7 @@ local CRAVE = {
 	gentle = "I've been good all week, {player}, so {food} would be such a treat.",
 	bold = "Hah, {player}, I need {food} today, so you'll get me some, right?",
 	dreamy = "Hmm... I keep thinking about {food}, I can almost smell it.",
-	easygoing = "Mm, {player}, {food} would be nice, no rush.",
+	easygoing = "So, {player}, {food} would be nice, no rush.",
 	proud = "I think I've earned {food}, and only the good kind, please.",
 	shy = "Um, sorry, {player}... {food} would be nice, but you don't have to.",
 	cheeky = "{player}, deal? get me {food} and i won't prank you for a whole day",
