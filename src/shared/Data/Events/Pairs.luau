@@ -1246,6 +1246,7 @@ event({
 				_ = "I'm a natural.|Who's next?",
 			}, "sparkle", "cheer")
 			s:rel(6)
+			s:remember("b", "haircut")
 		else
 			s:say("b", "Why is it shorter on one side?", "question")
 			say(s, "a", "That's the style, it's called the Lopsided.", "sweat")
@@ -2379,6 +2380,11 @@ event({
 				ch:relx("a", "c", 5)
 				ch:relx("b", "c", 5)
 				ch:memo("c", "I'm in a band called {band}, and I play the pans.")
+				-- and they're a band for a while (Sim/Memory): practice and gigs come up in chats, and
+				-- the band's own events can happen
+				for _, who in { "a", "b", "c" } do
+					ch:remember(who, "band", { name = "{band}" })
+				end
 			end)
 		end
 		s:log("{a}, {b} and {c} started a band.")

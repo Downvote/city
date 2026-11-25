@@ -43,11 +43,13 @@ require(UI.TalkCard).start() -- hold E on a villager: what they say back, and yo
 -- life around town, and the show when you build
 local World = script.Parent.World
 require(World.Ambience).start()
+require(World.Lively).start() -- placed pieces that move and give off effects (Build/Lively)
 require(World.BuildFx).start()
 require(World.Materials).start()
 require(World.Wishes).start()
 require(World.Earnings).start() -- coins over the villagers as they earn them
 require(World.Interact).start() -- a go at a piece: a puff from it, and what happened over it
 require(World.Work).start() -- working at a workplace yourself: its prompts, your motion and the notice
+require(World.Prompts).start() -- no prompts while you sit, work or talk
 require(World.Explore).start()
 require(World.Outlines).start()

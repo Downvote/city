@@ -30,6 +30,13 @@
 --                       Residents:short (the same without the coins), News:empty, News:busy (news from several
 --                       days and a request), Goals:claimed (a claimed goal picked), CityPanel:ready
 --                       (the next land can be bought)
+--   panel:Store         the store on its passes (VIP and Fine Grid owned, More Saves not on sale
+--                       yet); panel:Store:gems its gem packs
+--   panel:Rewards       the rewards on today's gift (a run of four days); panel:Rewards:playtime
+--                       20 minutes played today, the first step ready; panel:Rewards:achievements;
+--                       panel:Rewards:group with a group to join; panel:Rewards:member joined, the
+--                       gems to claim
+--   welcome             the welcome back dialog after five hours away (welcome:long after two days)
 --   talk:craving        the talk card with a villager who craves something: the answer that buys it
 --   tutorial:<page>     the tutorial (UI/Tutorial): tutorial:welcome its first page on a first visit,
 --                       tutorial:1 the card on step one with the Create tile pointed at, tutorial:2
@@ -415,16 +422,60 @@ elseif scene:sub(1, 6) == "panel:" then
 		local Tuning = Harness.require("ReplicatedStorage.Shared.Config.Tuning")
 		Tuning.City.Land[2].Level = 1
 	end
+	if name == "Store" or name == "Rewards" then
+		-- the passes as they will be once made on Roblox (More Saves still waiting for its id), VIP
+		-- and Fine Grid owned, a handful of gems, 20 minutes played today, an achievement claimed
+		local PassData = Harness.require("ReplicatedStorage.Shared.Data.Passes")
+		for i, pass in PassData.list do
+			pass.id = if pass.key == "saveslots" then 0 else 9000 + i
+		end
+		for i, pack in PassData.packs do
+			pack.id = 9100 + i
+		end
+		local today = math.floor(Sim.env.os.time() / 86400)
+		patch({
+			passes = { vip = true, finegrid = true },
+			gems = 23,
+			playtime = { day = today, secs = 20 * 60, got = 0 },
+			achieved = { villager1 = true },
+			daily = { last = today - 1, streak = 4, run = 4 },
+		})
+		local Tuning = Harness.require("ReplicatedStorage.Shared.Config.Tuning")
+		if state == "group" or state == "member" then
+			Tuning.Group.Id = 4242
+			Sim.player:SetAttribute("InGroup", state == "member")
+		end
+	end
 	startHud()
 	Hud.open(name)
 	Sim.frames(3)
-	if state == "friends" then
+	if name == "Store" and state == "gems" then
+		Sim.press("Gems")
+	elseif name == "Rewards" and state ~= "" then
+		-- its tabs: playtime, achievements, group (and member: the group, joined)
+		local tabs = { playtime = "Playtime", achievements = "Achievements", group = "Group", member = "Group" }
+		if tabs[state] then
+			Sim.press(tabs[state])
+		end
+	elseif state == "friends" then
 		Sim.press("Friends")
 	elseif state == "claimed" then
 		-- the first goal, claimed already
 		local row = Sim.gui:FindFirstChild("settlers", true)
 		row.Activated:Fire()
 	end
+	Sim.frames(3)
+elseif scene == "welcome" or scene == "welcome:long" then
+	-- the welcome back dialog (UI/WelcomeBack): what the town earned while the player was away.
+	-- welcome:long after two days, of which the first eight hours were paid for
+	startHud()
+	local long = scene == "welcome:long"
+	Hud.open("WelcomeBack", {
+		secs = if long then 2 * 86400 + 3 * 3600 else 5 * 3600 + 20 * 60,
+		counted = if long then 8 * 3600 else 5 * 3600 + 20 * 60,
+		coins = if long then 21600 else 14400,
+		workers = 3,
+	})
 	Sim.frames(3)
 elseif scene == "hover" or scene == "hover:menu" then
 	-- the motion under the pointer (UI/Kit's Kit.press), caught at its height: tweens finish at

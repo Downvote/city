@@ -24,6 +24,7 @@ local Plan = require(Shared.Build.Plan)
 local Town = require(Shared.Data.Town)
 local PlayerWork = require(Shared.Sim.PlayerWork)
 local Remotes = require(Shared.Net.Remotes)
+local Lively = require(Shared.Build.Lively)
 
 local Data = require(script.Parent.Data)
 local Plots = require(script.Parent.Plots)
@@ -302,6 +303,57 @@ function Work.addPrompt(i: number, model: Instance): ProximityPrompt?
 	return prompt
 end
 
+-- Somebody at work shows (the user: "workplaces with special effects"): every placed workplace
+-- that a villager (Villagers.workingAt, by the brain's `atWork`) or a player here is working at
+-- this moment carries the attribute `Working` (Build/Lively.Working), and each player's screen
+-- plays its effect while it does (steam over the cafe's machine, sparks at the bench: client
+-- World/Lively). Looked at once a second; set only when it changes, so nothing is sent while
+-- nothing changes. The workplaces on each plot are kept as they are drawn, so the look is short.
+local workplaces: { [number]: { [Instance]: string } } = {}
+
+local function noteWorkplace(i: number, model: Instance)
+	if not model:IsA("Model") or model:GetAttribute("BuildKind") ~= "items" then
+		return
+	end
+	local id = model:GetAttribute("ItemId")
+	local key = model:GetAttribute("BuildKey")
+	local def = if type(id) == "string" then Catalog.get(id) else nil
+	if def and def.job and type(key) == "string" then
+		workplaces[i] = workplaces[i] or {}
+		workplaces[i][model] = key
+	end
+end
+
+function Work.markBusy(i: number)
+	local mine = workplaces[i]
+	if not mine or next(mine) == nil then
+		return
+	end
+	local owner = Plots.owner(i)
+	local busy: { [string]: boolean } = {}
+	if owner then
+		local ok, at = pcall(Villagers.workingAt, owner)
+		if ok and type(at) == "table" then
+			busy = at
+		end
+	end
+	for _, s in sessions do
+		if s.plot == i then
+			busy[s.key] = true
+		end
+	end
+	for model, key in mine do
+		if model.Parent == nil then
+			mine[model] = nil
+		else
+			local want = if busy[key] then true else nil
+			if model:GetAttribute(Lively.Working) ~= want then
+				model:SetAttribute(Lively.Working, want)
+			end
+		end
+	end
+end
+
 function Work.start()
 	Remotes.fn("WorkStop").OnServerInvoke = function(player)
 		Work.stop(player, nil)
@@ -313,9 +365,16 @@ function Work.start()
 			-- every piece is drawn afresh into the folder when placed, moved or repainted
 			folder.ChildAdded:Connect(function(model)
 				Work.addPrompt(i, model)
+				noteWorkplace(i, model)
+			end)
+			folder.ChildRemoved:Connect(function(model)
+				if workplaces[i] then
+					workplaces[i][model] = nil
+				end
 			end)
 			for _, model in folder:GetChildren() do
 				Work.addPrompt(i, model)
+				noteWorkplace(i, model)
 			end
 		end
 	end
@@ -328,6 +387,14 @@ function Work.start()
 		while true do
 			task.wait(K.Check)
 			Work.step(os.clock())
+		end
+	end)
+	task.spawn(function()
+		while true do
+			task.wait(1)
+			for i = 1, Tuning.Plot.Count do
+				Work.markBusy(i)
+			end
 		end
 	end)
 end

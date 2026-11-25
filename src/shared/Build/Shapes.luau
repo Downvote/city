@@ -564,6 +564,14 @@ function Shapes.floor(f: Plan.Floor, holes: { { number } }?, under: { { number }
 				out,
 				Geometry.span(Vector3.new(r[1], 0, r[2]), Vector3.new(r[3], P.Foundation, r[4]), color, f.m)
 			)
+		elseif f.lv < 0 then
+			-- the basement's: a slab as deep as the ground floor's, on the bottom of the dig
+			-- (Build/Basement), with nothing under it to show a ceiling
+			local top = Plan.levelBase(f.lv)
+			table.insert(
+				out,
+				Geometry.span(Vector3.new(r[1], top - P.Foundation, r[2]), Vector3.new(r[3], top, r[4]), color, f.m)
+			)
 		else
 			local top = Plan.levelBase(f.lv)
 			table.insert(

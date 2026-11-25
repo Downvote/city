@@ -43,6 +43,11 @@ function Text.coins(n: number): string
 	return Text.commas(n) .. " coins"
 end
 
+-- "1 gem", "3 gems" (the rare currency, Sim/Gems)
+function Text.gems(n: number): string
+	return Text.commas(n) .. (if math.floor(n + 0.5) == 1 then " gem" else " gems")
+end
+
 -- "an" before a vowel sound, "a" otherwise. Good enough for the game's own nouns.
 function Text.an(word: string): string
 	local first = word:sub(1, 1):lower()

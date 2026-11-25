@@ -27,6 +27,16 @@
 -- Speaking is the same every time for the same words (a choice is made from the words themselves,
 -- not at random), and speaking twice changes nothing more: Voice.speak(p, Voice.speak(p, t)) is
 -- Voice.speak(p, t).
+--
+-- A villager may also have an ending of their own, a word or two the player gave them (Sim/Flair:
+-- the user, "thing they add to the end of their sentances sometimes"). It goes on after the
+-- personality's marks, on about one sentence in five (Tuning.Flair.EndingShare, the same sentences
+-- every time), in front of the closing mark: "That's fine, buddy!", never "That's fine!buddy". It
+-- goes only on a sentence of three words or more that ends in a word (not a name, a face or a
+-- bracket), never twice, and saying it again changes nothing. Voice.as(v, text) speaks as a
+-- villager: their personality and their ending.
+
+local Tuning = require(script.Parent.Parent.Config.Tuning)
 
 local Voice = {}
 
@@ -397,11 +407,8 @@ RULES.nervous = function(t)
 	return t
 end
 
--- One message (no "|" bursts: those are split before they're said), as this personality writes it.
-function Voice.speak(pers: string?, text: string): string
-	if type(text) ~= "string" or text == "" or text:match("^[%s%.]*$") then
-		return text
-	end
+-- One message as this personality writes it, before any ending.
+local function marks(pers: string?, text: string): string
 	if pers ~= "gentle" then
 		-- the soft "~" is the gentle ones' alone: anyone else ends where the words end
 		local body, tail = split(text)
@@ -415,6 +422,95 @@ function Voice.speak(pers: string?, text: string): string
 		return rule(text)
 	end
 	return text
+end
+
+-- The ending as this personality says it: trimmed, no marks of its own, lower case for the cheeky
+-- ones (who write everything that way). Nil when there is none.
+local function tagFor(pers: string?, ending: string?): string?
+	if type(ending) ~= "string" then
+		return nil
+	end
+	local tag = ending:gsub("[%.!%?~,;:]+", ""):gsub("^%s+", ""):gsub("%s+$", "")
+	if tag == "" then
+		return nil
+	end
+	return if pers == "cheeky" then tag:lower() else tag
+end
+
+-- `body` with ", <tag>" taken off its end, if that is how it ends (any case); nil otherwise.
+local function cutTag(body: string, tag: string): string?
+	local with = ", " .. tag:lower()
+	if #body > #with and body:lower():sub(-#with) == with then
+		return body:sub(1, #body - #with)
+	end
+	return nil
+end
+
+-- Does `body` end with the tag's words already ("Thanks, buddy" with the ending "buddy")?
+local function endsIn(body: string, tag: string): boolean
+	local low, t = body:lower(), tag:lower()
+	if #low < #t or low:sub(-#t) ~= t then
+		return false
+	end
+	local before = low:sub(-#t - 1, -#t - 1)
+	return before == "" or not before:match("[%w']")
+end
+
+-- Can a sentence take an ending without turning into nonsense? Three words or more, and it ends in
+-- a word: not a face (":P"), a bracket, a hum ("♪") or somebody's name (a capital past the first word).
+local function fits(body: string): boolean
+	local n = 0
+	for _ in body:gmatch("%S+") do
+		n += 1
+	end
+	if n < 3 then
+		return false
+	end
+	local last = body:match("([%a'][%w']*)$")
+	if not last then
+		return false
+	end
+	return not last:sub(1, 1):match("%u")
+end
+
+-- One message (no "|" bursts: those are split before they're said), as this personality writes it,
+-- with their ending (Sim/Flair) on some sentences when they have one.
+function Voice.speak(pers: string?, text: string, ending: string?): string
+	if type(text) ~= "string" or text == "" or text:match("^[%s%.]*$") then
+		return text
+	end
+	local tag = tagFor(pers, ending)
+	if not tag then
+		return marks(pers, text)
+	end
+	-- an ending it carries already comes off first and goes back on after, so speaking again
+	-- changes nothing
+	local had = false
+	do
+		local body, tail = split(text)
+		local cut = cutTag(body, tag)
+		if cut then
+			text, had = cut .. tail, true
+		end
+	end
+	text = marks(pers, text)
+	local body, tail = split(text)
+	if had or (fits(body) and not endsIn(body, tag) and some(text, Tuning.Flair.EndingShare, 13)) then
+		return body .. ", " .. tag .. tail
+	end
+	return text
+end
+
+-- The ending a villager was given (Sim/Flair), or nil.
+function Voice.endingOf(v: any): string?
+	local f = type(v) == "table" and v.flair
+	local e = type(f) == "table" and f.ending
+	return if type(e) == "string" and e ~= "" then e else nil
+end
+
+-- A message as this villager says it: their personality's hand and their ending.
+function Voice.as(v: any, text: string): string
+	return Voice.speak(if type(v) == "table" then v.pers else nil, text, Voice.endingOf(v))
 end
 
 Voice.Rules = RULES

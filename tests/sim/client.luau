@@ -270,6 +270,18 @@ Fake.extend(lighting, { ClockTime = 12 })
 Harness.addService("Lighting", lighting)
 Harness.addService("Debris", { AddItem = function() end })
 Harness.addService("ProximityPromptService", { PromptTriggered = Fake.signal() })
+-- buying passes and gems (Controllers/Purchase): what the client asked Roblox to sell, in order
+local prompted = {}
+Harness.addService("MarketplaceService", {
+	PromptGamePassPurchase = function(_, _, id)
+		table.insert(prompted, { pass = id })
+	end,
+	PromptProductPurchase = function(_, _, id)
+		table.insert(prompted, { product = id })
+	end,
+	PromptGamePassPurchaseFinished = Fake.signal(),
+	PromptProductPurchaseFinished = Fake.signal(),
+})
 
 -- remotes: client calls go straight to the server's handlers -------------------------------------------
 
@@ -522,6 +534,7 @@ return {
 	profile = profile,
 	remoteFn = remoteFn,
 	remoteEvent = remoteEvent,
+	prompted = prompted, -- what Controllers/Purchase asked Roblox to sell
 	buildFolder = buildFolder,
 	State = State,
 	Kit = Kit,

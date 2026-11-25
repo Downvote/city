@@ -14,10 +14,17 @@
 --   hearts who n                 fills their hearts with you (Sim/Life)
 --   keepsake item who?           something they made you: a free Build mode piece (Sim/Keepsakes)
 --   memo who text                what they'll tell you about it when you stop them for a chat
---   saying who id | hobby who id a new saying or hobby of theirs (Data/Sayings)
+--   saying who id | hobby who id a new saying or hobby of theirs (Data/Sayings); a new hobby is
+--                                also remembered for a few days (Sim/Memory)
+--   remember who kind what? name? with?
+--                                something that lasts a few days (Sim/Memory): a band, a hat, a pet,
+--                                a dish, a garden... `with` is the letter of somebody it's about.
+--                                A quarrel is remembered by both as a falling out, until they make up
+--   forget who kind              that's over now (the race is run)
 -- Handled by the service (returned in `service`):
 --   away who seconds | festival | creator who? | dayoff who
 --   leave prop hours by?         a thing (Data/EventProps) left lying about for a while
+--   dress vid                    (made here, never in a scene) a memory changed what they wear
 -- (Nobody moves in from the road: the user, "remove random villager coming in events". New
 -- villagers are the ones the player makes. There is no food to give, take, count or eat and no
 -- shop things: the shop and feeding went.
@@ -36,6 +43,7 @@ local Life = require(script.Parent.Life)
 local Keepsakes = require(script.Parent.Keepsakes)
 local Sayings = require(script.Parent.Parent.Data.Sayings)
 local Rng = require(script.Parent.Parent.Util.Rng)
+local Memory = require(script.Parent.Memory)
 
 local EventEngine = {}
 
@@ -145,6 +153,16 @@ function EventEngine.context(profile: any, o: Options): any
 	function ctx.bdayDone(vid: string): number?
 		return profile.bdays and profile.bdays[vid]
 	end
+	-- what a villager remembers of that kind right now (Sim/Memory), and the words it fills a line with
+	function ctx.memory(vid: string, kind: string): any
+		local v = profile.villagers[vid]
+		return v and Memory.has(v, kind, o.now)
+	end
+	function ctx.memoryWords(vid: string, kind: string): { [string]: string }
+		local v = profile.villagers[vid]
+		local m = v and Memory.has(v, kind, o.now)
+		return if m then Memory.words(profile, m) else {}
+	end
 	-- fills {a} {b} {c} with the stars' names and any extra words
 	function ctx.f(template: string, vars: { [string]: any }?): string
 		local all = table.clone(ctx.names)
@@ -247,14 +265,14 @@ function EventEngine.stage(ctx: any, def: any, order: { string }): any
 	for i, vid in order do
 		actors[LETTERS[i]] = vid
 	end
-	-- every line a villager says comes out in their own hand (Sim/Voice); narration and your
-	-- answers stay as written
+	-- every line a villager says comes out in their own hand (Sim/Voice), with the ending the
+	-- player gave them on some (Sim/Flair); narration and your answers stay as written
 	local function voiced(lines: { any }?)
 		for _, l in (lines or {}) :: { any } do
 			local vid = l.who and actors[l.who]
 			local v = vid and (ctx :: any).v(vid)
 			if v and type(l.text) == "string" then
-				l.text = Voice.speak(v.pers, l.text)
+				l.text = Voice.as(v, l.text)
 			end
 		end
 	end
@@ -331,11 +349,16 @@ function EventEngine.apply(profile: any, ev: any, effects: { any }, now: number)
 			local a, b = vid(e.a), vid(e.b)
 			if a and b then
 				Relationships.quarrel(profile, a, b, now, e.min)
+				-- they both remember it for as long as it lasts (Sim/Memory)
+				Memory.start(profile, a, "fallout", { who = b }, now)
+				Memory.start(profile, b, "fallout", { who = a }, now)
 			end
 		elseif t == "makeup" then
 			local a, b = vid(e.a), vid(e.b)
 			if a and b then
 				Relationships.makeUp(profile, a, b)
+				Memory.forget(profile, a, "fallout", b)
+				Memory.forget(profile, b, "fallout", a)
 			end
 		elseif t == "request" then
 			local who = vid(e.who)
@@ -397,9 +420,32 @@ function EventEngine.apply(profile: any, ev: any, effects: { any }, now: number)
 				v.saying = e.id
 			end
 		elseif t == "hobby" then
-			local v = profile.villagers[vid(e.who) or ""]
-			if v and Sayings.hobby(e.id) then
+			local who = vid(e.who)
+			local v = profile.villagers[who or ""]
+			if v and who and Sayings.hobby(e.id) then
 				v.hobby = e.id
+				-- and it's what they're full of for a few days
+				Memory.start(profile, who, "hobby", { what = e.id }, now)
+			end
+		elseif t == "remember" then
+			local who = vid(e.who)
+			if who and type(e.kind) == "string" then
+				local _, dressed = Memory.start(
+					profile,
+					who,
+					e.kind,
+					{ what = e.what, name = e.name, who = vid(e.with), days = e.days },
+					now
+				)
+				if dressed then
+					-- what they wear changed: the service finds the thing and dresses them
+					table.insert(service, { t = "dress", vid = who })
+				end
+			end
+		elseif t == "forget" then
+			local who = vid(e.who)
+			if who and type(e.kind) == "string" and Memory.forget(profile, who, e.kind) then
+				table.insert(service, { t = "dress", vid = who })
 			end
 		else
 			-- away, festival, creator, dayoff, leave

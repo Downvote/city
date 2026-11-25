@@ -567,6 +567,7 @@ event({
 			}, "heart")
 			c:mood("a", 5)
 			c:hearts("a", 1)
+			c:remember("a", "haircut")
 		end)
 		s:choice("Maybe wear a hat for a week.", function(c)
 			burst(c, "a", {
@@ -590,6 +591,8 @@ event({
 			}, "sad")
 			c:mood("a", -3)
 			c:memo("a", "I'm wearing a hat until my bangs grow out, so please don't ask.")
+			-- and they do, for a few days (Sim/Memory)
+			c:remember("a", "accessory", { what = "beanie" })
 		end)
 		s:log("{a} cut their own bangs.")
 		return s:done()
@@ -1691,6 +1694,7 @@ event({
 				burst(c, "a", BRAG, "sparkle", "cheer")
 				c:mood("a", 5)
 				c:memo("a", "My {one} and {two} dish actually worked, so I'm making it again on Sunday.")
+				c:remember("a", "dish", { what = "{one} and {two} dish" })
 			else
 				c:n("You chewed slowly while {a} watched your face.")
 				burst(c, "a", "Is it that bad?|...It's that bad, I'll write 'no' next to it.", "sweat")

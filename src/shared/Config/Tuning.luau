@@ -22,7 +22,10 @@ Tuning.Plot = {
 	HomeCooldown = 3, -- seconds between two trips home with the Home button
 	WallSnap = 2, -- walls, floors and roofs snap to this grid
 	ItemSnap = 1, -- furniture snaps to this unless free placement is on
-	Levels = 4, -- floors 0..3
+	-- floors 0..7 the plan can hold (it was 4 for everyone): who may build how high is the
+	-- passes' say (Tuning.Passes, Sim/Floors), and what an old save has up there stays
+	Levels = 8,
+	Lowest = -1, -- the basement, under the ground floor (the Basement pass: Build/Basement)
 	Foundation = 0.4, -- the ground floor slab is this tall (low enough to walk onto without a step)
 	LevelHeight = 12, -- wall height of one storey
 	WallThickness = 0.6,
@@ -39,6 +42,13 @@ Tuning.Plot = {
 	OpeningMargin = 0.2, -- min gap between an opening and a wall end or another opening
 }
 
+-- The basement (the Basement pass, Build/Basement): floor -1, under the ground floor. Its rooms are
+-- dug out of the ground under the plot (Services/Basement) and put back when they go.
+Tuning.Basement = {
+	Margin = 2, -- studs a basement floor keeps inside the land's edges (its dig reaches up to 2 past it)
+	Lining = 0.4, -- the concrete round a basement's open sides, under the ground
+}
+
 -- The user: "could you make working give much more coins, and make buildings cheaper?" So
 -- building costs about half what it did: walls and roofs went from 2 to 1, and every piece in the
 -- catalog costs its recipe's price times Items (Build/Catalog, when it loads). Floors and fences
@@ -50,6 +60,26 @@ Tuning.Prices = {
 	RoofPerCell = 1,
 	Items = 0.5, -- a catalog piece costs its recipe's price times this, to a whole coin (5 from 50 up)
 	Repaint = 0, -- painting is free so people experiment
+}
+
+-- Build mode's Select tool (Build/Group, Build/SelectTool): how many pieces one group may hold (a
+-- group's change is one BuildApply, and the server takes at most 320 requests in one), and how far
+-- the mouse goes before a press becomes a box drawn across the screen.
+Tuning.Select = {
+	MaxPieces = 300,
+	DragPixels = 8,
+}
+
+-- Saved builds (the user: "add loading and saving of plots"; Sim/Saves, Services/Saves). A whole
+-- profile is one DataStore key, and a key holds at most 4 MB, so every save is capped: the
+-- biggest plot Build mode allows comes to about 290 KB written out, and eight of them and the live
+-- plot still leave room for the rest of the profile.
+Tuning.Saves = {
+	MaxBytes = 320_000, -- one saved build, as JSON
+	MaxTotal = 2_600_000, -- every saved build together
+	NameLength = 24,
+	Every = 0.4, -- seconds between two asks of the Saves page
+	LoadEvery = 3, -- and between two loads
 }
 
 -- Economy -------------------------------------------------------------------
@@ -86,6 +116,42 @@ Tuning.Passes = {
 Tuning.Group = {
 	Id = 0,
 	PayBonus = 0.1,
+}
+
+-- Where gems come from, besides buying them (Sim/Rewards, Services/Store). The user: "allow
+-- players to buy gems, as a daily reward, certain achievements, playtime rewards, etc. and buying
+-- with robux. it should be a rare currency". So a day of play brings a handful at most: the daily
+-- gift's, the playtime steps' (Data/Playtime) and VIP's. Achievements (Data/Achievements) and
+-- joining the group pay once each. tests/specs/Rewards.spec.luau holds a day to DayMax.
+Tuning.GemRewards = {
+	Daily = 1, -- with the daily gift
+	Seventh = 3, -- in place of Daily on every seventh day running (7, 14, 21...)
+	Week = 7, -- the days in that run
+	Vip = 1, -- one more with the daily gift for VIP
+	Group = 10, -- once, for joining the game's group (Tuning.Group.Id)
+	DayMax = 6, -- the most a usual day of play may bring (the seventh day's extra aside)
+}
+
+-- Playtime rewards (Data/Playtime): the server counts a player's minutes in the game each day (UTC,
+-- the daily gift's day) in profile.playtime.
+Tuning.Playtime = {
+	Tick = 10, -- seconds between two counts
+	Push = 60, -- seconds between two sends of the count to the client (and whenever a step comes due)
+}
+
+-- Offline earnings (Sim/Offline; the user: "add offline earnings"). Coming back after a while,
+-- the town is paid a share of what its working villagers would have earned in that time, the
+-- time counted up to Hours. A town day is 12 real minutes, so an hour away is five days' wages.
+Tuning.Offline = {
+	Share = 0.1, -- of what their villagers would have earned at work
+	Hours = 8, -- the most time away that counts
+	MinMinutes = 5, -- away less than this, nothing (a rejoin)
+}
+
+-- The store (Services/Store).
+Tuning.Store = {
+	Receipts = 50, -- gem pack purchase ids kept on a profile, so one Roblox sends twice pays once
+	VipHeight = 3.4, -- studs over a VIP's head where their gold tag hangs
 }
 
 -- Villagers -----------------------------------------------------------------
@@ -313,6 +379,43 @@ Tuning.Talk = {
 	StaySeconds = 60,
 	VisitorSeconds = 5, -- how long they stop for somebody visiting
 	Cooldown = 0.4, -- seconds between two lines to one player: shorter than the hold, it only stops a flood
+}
+
+-- A villager's own flair (Sim/Flair), bought with gems on their page. The user: "make it such that
+-- villagers could have a custom saying, thing they add to the end of their sentances sometimes,
+-- custom thing they like the most which they will mention ... players can also buy the before
+-- mentioned customization for villagers ... with gems". Each is typed by the player and filtered by
+-- the server; setting one costs its price, the first time and every change after (clearing it is
+-- free). Gems are rare (a usual day brings six at most), so these are a few each.
+Tuning.Flair = {
+	Prices = { phrase = 4, ending = 3, thing = 3 },
+	PhraseMax = 60, -- characters in a catchphrase (a sentence they say now and then)
+	EndingMax = 14, -- in an ending (a word or two on the end of a sentence)
+	EndingWords = 3,
+	ThingMax = 30, -- in their favourite thing (what they bring up in chats)
+	EndingShare = 0.2, -- of their sentences that get the ending (Sim/Voice, the same lines every time)
+	PhraseChance = 0.25, -- of the lines over their head that are the catchphrase, when they have one
+}
+
+-- What villagers remember from their events (Sim/Memory): a band they joined, a hat they wear for a
+-- few days, a pet, a garden. The user: "along with their conversations and events having more
+-- impact, such as remembering if they joined a band, started wearing a new accessory
+-- (temporarily), etc.". Days are town days (Day.Length each: twelve real minutes).
+Tuning.Memory = {
+	Days = {
+		band = 6,
+		accessory = 3,
+		hobby = 4,
+		haircut = 3,
+		pet = 8,
+		dish = 4,
+		fallout = 2, -- (it ends sooner when the two make up)
+		garden = 6,
+		penpal = 6,
+		training = 4,
+	},
+	Max = 5, -- memories kept on a villager at once; a new one pushes out the oldest
+	TalkWeight = 3, -- how much a memory counts among what they might say in a chat (Sim/Talk)
 }
 
 -- A villager's day (Sim/Routine) ---------------------------------------------

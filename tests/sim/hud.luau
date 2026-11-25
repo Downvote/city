@@ -41,7 +41,8 @@ run("the stats sit in a strip under the town's level", function()
 			table.insert(names, c.Name)
 		end
 	end
-	check(#names == 3, "money, people and happiness")
+	check(#names == 4, "money, gems, people and happiness")
+	check(pills:FindFirstChild("Gems", true) ~= nil, "the gems beside the money")
 	check(
 		pills:FindFirstChild("Body") ~= nil and pills:FindFirstChild("Tone") ~= nil,
 		"on one painted slab with a tone of dots on it"
@@ -49,7 +50,7 @@ run("the stats sit in a strip under the town's level", function()
 	check(pills:FindFirstChild("Plus", true) == nil, "with no + beside the money any more")
 end)
 
-run("the round buttons under the clock: home, the city hall, the news and the look", function()
+run("the round buttons under the clock: home, the city hall, the news, the store and the look", function()
 	-- the user: "remove the shop, buying of things and food and feeding" and "remove the map
 	-- button and the map interface"
 	local corner = gui:FindFirstChild("Corner", true)
@@ -67,14 +68,15 @@ run("the round buttons under the clock: home, the city hall, the news and the lo
 	for _, c in names do
 		table.insert(order, (c.Name:gsub("Cell$", "")))
 	end
-	check(table.concat(order, " ") == "Home CityPanel News Look", "four of them, in that order")
+	-- (the store came in beside the news: "add gamepasses, just like bloxburg")
+	check(table.concat(order, " ") == "Home CityPanel News Store Look", "five of them, in that order")
 	check(corner:FindFirstChild("MapPanel", true) == nil, "no Map button")
 	check(corner:FindFirstChild("ShopPanel", true) == nil, "and no Shop button")
 	check(Hud.panel("MapPanel") == nil, "there is no map screen to open")
 	check(Hud.panel("ShopPanel") == nil, "and no shop screen")
-	-- the row is no wider than its four buttons need, and still hangs from the right edge
-	local need = 4 * 54 + 3 * 8
-	check(corner.Size.X.Offset >= need and corner.Size.X.Offset <= need + 16, "the row is as wide as four buttons")
+	-- the row is no wider than its five buttons need, and still hangs from the right edge
+	local need = 5 * 54 + 4 * 8
+	check(corner.Size.X.Offset >= need and corner.Size.X.Offset <= need + 16, "the row is as wide as five buttons")
 	check(corner.AnchorPoint.X == 1 and corner.Position.X.Scale == 1, "at the right edge")
 end)
 
@@ -189,14 +191,14 @@ run("the quick menu comes out of the bottom left corner, its tiles from the left
 	-- the user: "remove this button and flush the rest to the left"
 	check(menu:FindFirstChild("Portrait", true) == nil, "the round portrait button is gone")
 	local names, row = {}, nil
-	for _, name in { "Villagers", "Create", "Goals", "Gift" } do
+	for _, name in { "Villagers", "Create", "Goals", "Rewards" } do
 		local b = menu:FindFirstChild(name, true)
 		if b and b:IsA("TextButton") then
 			table.insert(names, name)
 			row = b.Parent
 		end
 	end
-	check(#names == 4, "the four tiles are still there: villagers, the creator, goals and the gift")
+	check(#names == 4, "the four tiles are still there: villagers, the creator, goals and the rewards")
 	check(row ~= nil and row.Position.X.Scale == 0 and row.Position.X.Offset <= 16, "starting at the left edge")
 	local list = row and row:FindFirstChildOfClass("UIListLayout")
 	check(
@@ -356,6 +358,101 @@ run("a pay packet counts the coins up quietly and floats a coin over who earned 
 	check(popsUnderPill() == 1, "a gain that isn't wages still says +500 under the money")
 	Sim.advance(2)
 	folder:Destroy()
+end)
+
+run("the gems sit beside the money and open the store on its gems", function()
+	-- the user: "players can also buy ... with gems, as another currency. allow players to buy gems"
+	local pill = gui:FindFirstChild("Gems", true)
+	check(pill ~= nil, "the gems are on the strip")
+	State.set("gems", 7)
+	frames(2)
+	local value = pill and pill:FindFirstChild("Value")
+	check(value ~= nil and value.Text == "7", "showing how many there are (7)")
+	State.set("gems", 1234)
+	frames(2)
+	check(value ~= nil and value.Text == "1,234", "and keeping up with the server (1,234)")
+	pill:FindFirstChild("OpenGems").Activated:Fire()
+	frames(3)
+	check(Hud.panel("Store").isOpen(), "a press opens the store")
+	check(gui:FindFirstChild("gems10", true) ~= nil, "on the gem packs")
+	check(gui:FindFirstChild("Have", true) ~= nil, "with what the player has")
+	Hud.closeAll()
+	Sim.advance(1)
+end)
+
+run("the store: a card for every pass, Buy asks Roblox, and what is owned says so", function()
+	local PassData = Harness.require("ReplicatedStorage.Shared.Data.Passes")
+	local fine = PassData.get("finegrid")
+	local was = fine.id
+	fine.id = 777
+	State.set("passes", { vip = true })
+	press("Store")
+	frames(3)
+	check(Hud.panel("Store").isOpen(), "the round Store button opens it")
+	local cards = 0
+	for _, pass in PassData.list do
+		if gui:FindFirstChild(pass.key, true) then
+			cards += 1
+		end
+	end
+	check(cards == #PassData.list, "a card for each of the " .. #PassData.list .. " passes")
+	local vip = gui:FindFirstChild("vip", true)
+	check(vip ~= nil and vip:FindFirstChild("Owned", true) ~= nil, "VIP is owned, and says so")
+	check(vip ~= nil and vip:FindFirstChild("Buy", true) == nil, "with no Buy on it")
+	table.clear(Sim.prompted)
+	gui:FindFirstChild("finegrid", true):FindFirstChild("Buy", true).Activated:Fire()
+	frames(2)
+	check(#Sim.prompted == 1 and Sim.prompted[1].pass == 777, "Buy asks Roblox to sell that pass")
+	-- bought: the server says so and the card changes
+	State.set("passes", { vip = true, finegrid = true })
+	frames(3)
+	local card = gui:FindFirstChild("finegrid", true)
+	check(card ~= nil and card:FindFirstChild("Owned", true) ~= nil, "once it's bought the card says Owned")
+	press("Gems")
+	frames(3)
+	check(gui:FindFirstChild("gems25", true) ~= nil, "the Gems tab shows the packs")
+	fine.id = was
+	Hud.closeAll()
+	Sim.advance(1)
+end)
+
+run("the Rewards tile carries a badge while something waits, and opens the rewards", function()
+	local claims = 0
+	Sim.remoteFn("DailyClaim").OnServerInvoke = function()
+		claims += 1
+		State.set("daily", { last = math.floor(Sim.env.os.time() / 86400), streak = 3, run = 3 })
+		return true, 350, 1
+	end
+	-- (the simulation's clock starts near nothing: day 0 is today, so -5 is long ago)
+	State.set("daily", { last = -5, streak = 2, run = 2 })
+	-- every achievement the sample town has done is claimed already, so the gift is all that waits
+	local SimRewards = Harness.require("ReplicatedStorage.Shared.Sim.Rewards")
+	local done = {}
+	for _, st in SimRewards.achievements(Hud.panel("Rewards").view()) do
+		if st.done then
+			done[st.a.id] = true
+		end
+	end
+	State.set("achieved", done)
+	frames(2)
+	local tile = gui:FindFirstChild("Menu", true):FindFirstChild("Rewards", true)
+	local badge = tile and tile:FindFirstChild("Badge")
+	check(badge ~= nil and badge.Visible, "today's gift is waiting: the badge shows")
+	tile.Activated:Fire()
+	frames(3)
+	check(Hud.panel("Rewards").isOpen(), "the tile opens the rewards")
+	check(gui:FindFirstChild("Day3", true) ~= nil, "on the daily gift, a row a day of the week")
+	press("Claim")
+	Sim.advance(1)
+	check(claims == 1, "Claim asks the server for today's gift")
+	check(not badge.Visible, "and with it claimed (and nothing else waiting) the badge goes")
+	for _, name in { "Playtime", "Achievements", "Group" } do
+		press(name)
+		frames(3)
+	end
+	check(gui:FindFirstChild("Pay", true) ~= nil, "every tab builds, the group's last")
+	Hud.closeAll()
+	Sim.advance(1)
 end)
 
 print(

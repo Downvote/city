@@ -12,7 +12,9 @@ local order = {
 	"Materials",
 	"Plots",
 	"Build",
+	"Saves", -- saved builds: loads go through Build
 	"Water", -- pools and ponds as terrain water: after Build, whose changes it follows
+	"Basement", -- basement rooms dug out of the ground: after Water, whose ground cut it shares
 	"Avatar",
 	"Villagers",
 	"Interact", -- holding E on a piece (Data/Interactions): after Villagers, whose villagers react
@@ -21,6 +23,9 @@ local order = {
 	"Events",
 	"Explore",
 	"Signs",
+	-- passes, gem packs, rewards, offline earnings, the group: listens for Data.Loaded, so it starts
+	-- before Data.open lets anyone in
+	"Store",
 }
 
 local loaded = {}

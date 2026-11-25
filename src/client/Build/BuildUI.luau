@@ -24,6 +24,7 @@ local Icons = require(script.Parent.Parent.UI.Icons)
 local Toasts = require(script.Parent.Parent.UI.Toasts)
 local ModelPreview = require(script.Parent.Parent.UI.ModelPreview)
 local State = require(script.Parent.Parent.Controllers.State)
+local Purchase = require(script.Parent.Parent.Controllers.Purchase) -- (VIP pieces: the pass on their cards)
 local BuildMode = require(script.Parent.BuildMode)
 local WaterTool = require(script.Parent.WaterTool) -- (water: its tray and a picked water's page)
 
@@ -67,6 +68,8 @@ local MAIN = {
 			{ id = "fun", icon = "gamepad", name = "Fun" },
 			{ id = "decor", icon = "plant", name = "Decor" },
 			{ id = "walldecor", icon = "frame", name = "On walls" },
+			-- small pieces that give off sparkles, smoke, bubbles, snow (Recipes/Effects)
+			{ id = "effects", icon = "sparkle", name = "Effects" },
 			-- posters, frames and decals showing a picture from the Roblox library (Recipes/Pictures)
 			{ id = "pictures", icon = "picture", name = "Pictures" },
 			-- what villagers made you in events: free, as many as you were given (Sim/Keepsakes)
@@ -472,6 +475,20 @@ local function itemTile(parent: Instance, def: any, order: number, onPick: () ->
 	end)
 	cardName(b, def.name, foot, 13)
 	priceTag(b, def.price, CARD_H - 22)
+	-- a VIP piece says so on its picture's corner (only VIP owners put one down: Sim/Passes)
+	if def.vip then
+		b:SetAttribute("Vip", true)
+		Kit.leanMark({
+			Name = "Vip",
+			Parent = pic,
+			Size = 18,
+			Width = 40,
+			Text = "VIP",
+			Color = T.Purple,
+			Position = UDim2.fromOffset(6, 4),
+			ZIndex = 3,
+		})
+	end
 	return b
 end
 
@@ -1168,7 +1185,10 @@ local function catalogTray(cat: string)
 	local row = trayRow()
 	for i, def in list do
 		itemTile(row, def, i, function()
-			if def.picture then
+			if def.vip and not Purchase.has("vip") then
+				-- a VIP piece offers the pass instead (the server would turn it down anyway)
+				Purchase.prompt("vip")
+			elseif def.picture then
 				-- a picture to choose before it is placed
 				pictureDef = def.id
 				refreshTray()

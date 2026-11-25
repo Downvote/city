@@ -3,7 +3,7 @@
 -- wish bubble (World/Wishes). The user: "improve villager bubbles above their head, and make it
 -- such that you cant see the bubbles through walls. also, they sometimes intersect villager speech
 -- bubbles". So they wear the interface's look (the dark glass over the 3D view, a thin pale rim,
--- small corner brackets, a short stroke of colour, a little tail pointing down at the head), and
+-- a short stroke of colour, a little tail pointing down at the head), and
 -- they all hang from one point over the head, one above the other: World/Bubbles stacks them, keeps
 -- two villagers' stacks apart and hides what a wall is in front of.
 --
@@ -25,7 +25,6 @@ Bubble.Leave = 0.35
 -- a card's edge doesn't show as a darker patch
 local GLASS = Color3.fromRGB(12, 12, 15)
 Bubble.Glass = GLASS
-local WHITE = Color3.fromRGB(255, 255, 255)
 -- a speech card's thin rim: the pale white it was, mixed into the glass so it's solid too
 local RIM = Color3.fromRGB(84, 84, 88)
 -- The widest a speech card's words run before they wrap (the user: "make it such that textboxes
@@ -111,36 +110,6 @@ local function group(parent: Instance?, at: number): CanvasGroup
 	return g
 end
 
--- Two small brackets, on the top left and the bottom right corners of `card`, just inside it.
-local function brackets(card: Instance, color: Color3, alpha: number)
-	for _, c in { "tl", "br" } do
-		local right, bottom = c == "br", c == "br"
-		local anchor = Vector2.new(if right then 1 else 0, if bottom then 1 else 0)
-		local holder = new("Frame", {
-			Name = "Bracket",
-			BackgroundTransparency = 1,
-			Size = UDim2.fromOffset(7, 7),
-			AnchorPoint = anchor,
-			Position = UDim2.new(anchor.X, if right then -5 else 5, anchor.Y, if bottom then -5 else 5),
-			ZIndex = 3,
-			Parent = card,
-		})
-		for _, across in { true, false } do
-			local leg = new("Frame", {
-				BackgroundColor3 = color,
-				BackgroundTransparency = alpha,
-				BorderSizePixel = 0,
-				Size = if across then UDim2.fromOffset(7, 2) else UDim2.fromOffset(2, 7),
-				AnchorPoint = anchor,
-				Position = UDim2.fromScale(anchor.X, anchor.Y),
-				ZIndex = 3,
-				Parent = holder,
-			})
-			corner(leg, UDim.new(0.5, 0))
-		end
-	end
-end
-
 -- A turned square of `side`, its middle at `x`, `y` in `parent`.
 local function diamond(parent: Instance, name: string, side: number, x: number, y: number, color: Color3, z: number)
 	return new("Frame", {
@@ -187,7 +156,9 @@ local function tail(g: Instance, rim: Color3, thick: number, order: number)
 	})
 end
 
--- The dark card things sit on: glass, round corners, a thin pale rim and the brackets.
+-- The dark card things sit on: glass, round corners and a thin pale rim. (It had two small
+-- brackets in its corners; the user: "for text and icon bubbles, remove the two squarish corners
+-- inside the bubbles".)
 function Bubble.card(parent: Instance, props: { [string]: any }?): Frame
 	local p = props or {}
 	local card = new("Frame", {
@@ -210,7 +181,6 @@ function Bubble.card(parent: Instance, props: { [string]: any }?): Frame
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 		Parent = card,
 	})
-	brackets(card, WHITE, 0.45)
 	return card
 end
 

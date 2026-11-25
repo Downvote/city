@@ -22,6 +22,7 @@ local Life = require(Shared.Sim.Life)
 local Talk = require(Shared.Sim.Talk)
 local Routine = require(Shared.Sim.Routine)
 local Uses = require(Shared.Sim.Uses)
+local Passes = require(Shared.Sim.Passes)
 local Sayings = require(Shared.Data.Sayings)
 local Chatter = require(Shared.Data.Events.Chatter)
 local Kit = require(Shared.Data.Events.Kit)
@@ -1351,6 +1352,17 @@ local purses: { [Player]: { [string]: City.Purse } } = {}
 local packets: { [Player]: { [string]: number } } = {} -- whole coins earned since the last message
 local YOU = "@you" -- the player's own work in a packet (Services/Work)
 local yourDay: { [Player]: number } = {} -- and what they have earned at it today, for the client
+local yourCarry: { [Player]: number } = {} -- the part of a coin of the pay boost not handed over yet
+
+-- What everything earned at work is multiplied by, once, here where it is paid: Double Pay, VIP
+-- and the group's bonus (Sim/Passes.payBoost; Services/Store keeps the passes on the profile and
+-- the player's `InGroup` attribute). 1 with none of them, so the base rates are untouched.
+local function payBoost(player: Player, profile: any): number
+	local ok, member = pcall(function()
+		return player:GetAttribute("InGroup")
+	end)
+	return Passes.payBoost(profile, ok and member == true)
+end
 
 -- A player's own work at a workplace (Services/Work, Sim/PlayerWork): their whole coins go out
 -- with the next pay packet, as a line of their own, so the "+N" rises over their head the way it
@@ -1359,9 +1371,13 @@ function Villagers.payPlayer(player: Player, coins: number, today: number)
 	if not (coins > 0 and coins < math.huge) then
 		return
 	end
+	-- the day's cap is on the work itself (Sim/PlayerWork); the boost comes on top of what it paid
+	local boosted = math.floor(coins) * payBoost(player, Data.get(player)) + (yourCarry[player] or 0)
+	local whole = math.floor(boosted + 1e-6)
+	yourCarry[player] = math.max(0, boosted - whole)
 	local packet = packets[player] or {}
 	packets[player] = packet
-	packet[YOU] = (packet[YOU] or 0) + math.floor(coins)
+	packet[YOU] = (packet[YOU] or 0) + whole
 	yourDay[player] = today
 end
 
@@ -1377,6 +1393,25 @@ local function earning(player: Player, vid: string, npc: any, v: any): boolean
 	return isWorkTime(World.hour())
 end
 
+-- The workplaces (their keys on the owner's plan) with a villager at work at them this moment,
+-- as `earning` counts it: Services/Work marks those pieces `Working`, and each player's screen
+-- plays their effect (steam over the cafe's machine, sparks at the bench: client World/Lively).
+function Villagers.workingAt(player: Player): { [string]: boolean }
+	local out: { [string]: boolean } = {}
+	local profile = Data.get(player)
+	local list = npcs[player]
+	if not profile or not list then
+		return out
+	end
+	for vid, npc in list do
+		local v = profile.villagers[vid]
+		if v and type(v.job) == "string" and earning(player, vid, npc, v) then
+			out[v.job] = true
+		end
+	end
+	return out
+end
+
 -- Pays everyone at work for the last `seconds`.
 local function earnFor(player: Player, seconds: number)
 	local profile = Data.get(player)
@@ -1388,12 +1423,14 @@ local function earnFor(player: Player, seconds: number)
 	local now = os.time()
 	local mine = purses[player] or {}
 	purses[player] = mine
+	local boost = payBoost(player, profile)
 	for vid, npc in list do
 		local v = profile.villagers[vid]
 		if v and earning(player, vid, npc, v) then
 			local purse = mine[vid] or City.newPurse()
 			mine[vid] = purse
-			local coins = City.earn(purse, day, City.rate(profile, vid, day, now), seconds)
+			-- (the boost in the rate: the purse, its day's cap and the five o'clock sum all carry it)
+			local coins = City.earn(purse, day, City.rate(profile, vid, day, now) * boost, seconds)
 			if coins > 0 then
 				local packet = packets[player] or {}
 				packets[player] = packet
@@ -1451,7 +1488,8 @@ function Villagers.endOfWork(player: Player)
 		if v and purse.day == day and purse.paid > 0 then
 			total += purse.paid
 			local full = City.dayPay(profile, vid, day, os.time())
-			EventEngine.addXp(v, City.dayXp(purse.paid, full), notices)
+			-- (skill goes by the work done, so the share of the day is taken before the pay boost)
+			EventEngine.addXp(v, City.dayXp(purse.paid / payBoost(player, profile), full), notices)
 		end
 	end
 	if total <= 0 then
@@ -2132,6 +2170,7 @@ function Villagers.start()
 		payOut(player)
 		purses[player] = nil
 		yourDay[player] = nil
+		yourCarry[player] = nil
 		talkTokens[player] = nil
 		talkedAt[player] = nil
 		lastSaid[player] = nil

@@ -14,6 +14,9 @@ Remotes.Functions = {
 	"BuildUndo", -- () -> ok, err
 	"BuildRedo", -- () -> ok, err
 	"BuildPicture", -- (id) -> ok, err: is it a decal or an image in the Roblox library (Services/Build)
+	-- (action, slot?, name?) -> ok, answer or why: Build mode's saved builds, "list", "save",
+	-- "rename", "delete", "quote" (what a load would cost) and "load" (Services/Saves)
+	"BuildSaves",
 	"CreatorOpen", -- (vid?) -> stage frame
 	"CreatorClose", -- ()
 	"CreatorPreview", -- (appearance) -> cleaned appearance
@@ -34,7 +37,7 @@ Remotes.Functions = {
 	"OutfitSave", -- (name, appearance) -> ok
 	"OutfitDelete", -- (index) -> ok
 	"EventChoose", -- (token, choice) -> ok
-	"DailyClaim", -- () -> ok, coins
+	"DailyClaim", -- () -> ok, coins, gems (Sim/Rewards.claimDaily)
 	"VillagerJob", -- (vid, workplaceKey?) -> ok, err
 	"PlotExpand", -- () -> ok, err
 	"SettingSet", -- (key, value) -> ok
@@ -48,6 +51,11 @@ Remotes.Functions = {
 	"SpawnMe", -- () -> status: the loading card asks for a body when none has come (Services/Plots)
 	"VillagerTalk", -- (vid, bye?) -> ok, { vid, text, note, model } or err: the talk card's Chat, or its Bye
 	"WorkStop", -- () -> ok: the player stops their own work at a workplace (Services/Work)
+	-- the rewards and the store (Services/Store, Sim/Rewards): each checked on the server
+	"PlaytimeClaim", -- (index?) -> ok, gems or why: the next playtime step reached today
+	"AchievementClaim", -- (id) -> ok, gems: a finished achievement's gems, once
+	"GroupClaim", -- () -> ok, gems or why: the group's gems, once, for a member
+	"WelcomeBack", -- () -> { secs, counted, coins, workers } or nil: what the town earned while away, once
 }
 
 Remotes.Events = {

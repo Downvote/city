@@ -91,6 +91,8 @@ event({
 				_ = "The hat it is, then.|Thanks, you've saved me ten more minutes at the mirror.",
 			}, "sparkle", "cheer")
 			c:mood("a", 4)
+			-- and they wear it for a few days, for real (Sim/Memory)
+			c:remember("a", "accessory", { what = "yellowhat" })
 		end)
 		s:choice("The stripy scarf, definitely.", function(c)
 			burst(c, "a", {
@@ -113,6 +115,7 @@ event({
 				_ = "The scarf, good call.|It's colder out than it looks today.",
 			}, "heart")
 			c:mood("a", 4)
+			c:remember("a", "accessory", { what = "scarf" })
 		end)
 		s:choice("Why not try a whole new look?", function(c)
 			burst(c, "a", {
@@ -2595,6 +2598,8 @@ event({
 				_ = "Really?|Huh, maybe it's not so bad after all.",
 			}, "sparkle")
 			c:say("b", "That was meant to be a punishment, you know.", "sweat")
+			-- so they keep it on for a few days (Sim/Memory)
+			c:remember("a", "accessory", { what = "sillyhat" })
 			c:mood("a", 5)
 		end)
 		s:choice("It's very silly.", function(c)

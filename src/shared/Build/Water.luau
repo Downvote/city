@@ -33,6 +33,7 @@
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Catalog = require(script.Parent.Catalog)
 local Geometry = require(script.Parent.Geometry)
+local Stretch = require(script.Parent.Stretch) -- (a stretched piece's footprint)
 
 type Prim = Geometry.Prim
 
@@ -199,8 +200,9 @@ end
 local function footprint(item: any, def: Catalog.Def): (number, number, number, number)
 	local a = math.rad(item.r or 0)
 	local c, s = math.abs(math.cos(a)), math.abs(math.sin(a))
-	local hx = (def.size.X * c + def.size.Z * s) / 2
-	local hz = (def.size.X * s + def.size.Z * c) / 2
+	local size = Stretch.size(def, item)
+	local hx = (size.X * c + size.Z * s) / 2
+	local hz = (size.X * s + size.Z * c) / 2
 	return item.x - hx, item.z - hz, item.x + hx, item.z + hz
 end
 

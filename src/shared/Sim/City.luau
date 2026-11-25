@@ -8,6 +8,7 @@ local Plan = require(script.Parent.Parent.Build.Plan)
 local Catalog = require(script.Parent.Parent.Build.Catalog)
 local Jobs = require(script.Parent.Parent.Data.Jobs)
 local Text = require(script.Parent.Parent.Util.Text)
+local Passes = require(script.Parent.Passes) -- (Big Plot: how big the land may grow)
 
 local City = {}
 
@@ -141,6 +142,7 @@ function City.stats(profile: any): any
 			break
 		end
 	end
+	local cap = City.landCap(profile)
 	return {
 		population = population,
 		happiness = if population > 0 then math.floor(moodTotal / population + 0.5) else 0,
@@ -152,7 +154,38 @@ function City.stats(profile: any): any
 		nextLevel = nextLevel,
 		land = size,
 		nextLand = nextLand,
+		landCap = cap, -- the biggest land they may have (City.landCap)
+		landLocked = nextLand ~= nil and nextLand.Size > cap, -- the next step needs Big Plot
 	}
+end
+
+-- Land and Big Plot ----------------------------------------------------------------------------------
+--
+-- The user: "another [gamepass] for bigger plot, (make the biggest size smaller without paying
+-- smaller)". Land grows up to Tuning.Passes.FreeLand (320 a side) for everyone and to the whole
+-- plot (400) with Big Plot (Sim/Passes.maxLand). Land a player already has stays theirs whatever
+-- they own: the land is the plan's `size`, which nothing ever makes smaller, and on load
+-- profile.ownLand keeps the biggest they had past FreeLand (City.keepLand).
+
+-- The biggest land this player may have: what Big Plot allows (or not), or what they own already.
+function City.landCap(profile: any): number
+	local own = if type(profile) == "table" and type(profile.ownLand) == "number" then profile.ownLand else 0
+	local have = if type(profile) == "table" and profile.plan then Plan.size(profile.plan) else 0
+	return math.max(Passes.maxLand(profile), own, have)
+end
+
+-- On load (Schema.migrate): the land the plan already has past what is free, kept as theirs in
+-- profile.ownLand, so it stays whatever passes they own.
+function City.keepLand(profile: any)
+	if type(profile) ~= "table" then
+		return
+	end
+	local own = if type(profile.ownLand) == "number" and profile.ownLand == profile.ownLand then profile.ownLand else 0
+	local have = if profile.plan then Plan.size(profile.plan) else 0
+	if have > Tuning.Passes.FreeLand then
+		own = math.max(own, have)
+	end
+	profile.ownLand = own
 end
 
 -- Can the city buy its next piece of land? Returns the land entry or nil and a reason.
@@ -161,6 +194,9 @@ function City.canExpand(profile: any): (any?, string?)
 	local land = stats.nextLand
 	if not land then
 		return nil, "Your land can't get any bigger."
+	end
+	if stats.landLocked then
+		return nil, Text.fill("Big Plot lets your land grow past {n} by {n}.", { n = Tuning.Passes.FreeLand })
 	end
 	if stats.level < land.Level then
 		return nil,

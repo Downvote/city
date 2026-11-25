@@ -7,8 +7,11 @@
 --   roofs  { x1, z1, x2, z2, lv, style, rise, dir, over, c, m, c2, m2 }
 --   items  { id, x, y, z, r, lv, c1?, c2?, wall?, t?, side?, img? }
 --          (img: a picture from the Roblox library, by its id, on a piece that takes one)
+--          (sx?, sy?, sz?: how far it is stretched along its width, height and depth, Build/Stretch)
 --   waters { x1, z1, x2, z2, lv = 0, edge, depth }   a pool or a pond on the ground (Build/Water)
 -- Coordinates are studs in the plot's own frame: x and z run 0..Plot.Size, y is height above the ground.
+-- `lv` is the floor: 0 the ground floor, up to Plan.Highest (7), and -1 the basement (Build/Basement).
+-- Who may build on which floor is the passes' say (Sim/Floors); a plan holds them all.
 --
 -- Changes are lists of ops ({ op = "add" | "remove" | "set", kind, key, obj, before? }). The server
 -- applies them, charges or refunds the cost difference, and keeps the inverse for undo.
@@ -19,6 +22,10 @@ local Colors = require(script.Parent.Parent.Util.Colors)
 local Catalog = require(script.Parent.Catalog)
 -- (water: pools and ponds, the plan's fifth kind, and what may stand in them)
 local Water = require(script.Parent.Water)
+-- (the basement: level -1, what stands down there and what a basement floor holds up)
+local Basement = require(script.Parent.Basement)
+-- (a piece made wider, deeper or taller with the Stretch pass)
+local Stretch = require(script.Parent.Stretch)
 
 local P = Tuning.Plot
 
@@ -53,6 +60,9 @@ export type Item = {
 	t: number?,
 	side: string?,
 	img: number?,
+	sx: number?, -- (stretched along its width, height and depth: Build/Stretch)
+	sy: number?,
+	sz: number?,
 }
 export type PlanData = {
 	v: number,
@@ -162,12 +172,29 @@ function Plan.levelTop(lv: number): number
 	return Plan.levelBase(lv) + P.LevelHeight
 end
 
--- The bottom and height of a wall of this style on this level.
+-- The levels a plan can hold: the basement (-1) up to the top floor (Tuning.Plot.Levels - 1).
+-- Which of them a player may build on is the passes' say (Sim/Floors).
+Plan.Lowest = P.Lowest
+Plan.Highest = P.Levels - 1
+
+-- Where a piece that hangs from the ceiling of level lv hangs from: under the floor above (its
+-- ceiling is a metre deep), under the ground floor's slab in the basement, or right up under the
+-- roof on the top floor.
+function Plan.ceilingY(lv: number): number
+	if lv < 0 then
+		return Plan.levelTop(lv) - P.Foundation
+	end
+	return Plan.levelTop(lv) - (if lv < Plan.Highest then 1 else 0)
+end
+
+-- The bottom and height of a wall of this style on this level. A full wall in the basement stops
+-- at the ground, under the ground floor's slab, as a ground floor wall starts there.
 function Plan.wallSpan(style: string, lv: number): (number, number)
 	local def = Plan.WallStyles[style] or Plan.WallStyles.wall
 	local bottom = if lv == 0 and not def.onFloor then 0 else Plan.levelBase(lv)
 	if def.full then
-		return bottom, Plan.levelTop(lv) - bottom
+		local top = if lv < 0 then Plan.levelTop(lv) - P.Foundation else Plan.levelTop(lv)
+		return bottom, top - bottom
 	end
 	return bottom, def.height :: number
 end
@@ -238,7 +265,8 @@ end
 -- The axis aligned rectangle an item covers on the ground (rotation included), as x1, z1, x2, z2.
 function Plan.itemRect(item: Item): (number, number, number, number)
 	local def = Catalog.get(item.id)
-	local size = if def then def.size else Vector3.new(1, 1, 1)
+	-- (as it stands, stretched or not: Build/Stretch)
+	local size = Stretch.size(def, item)
 	local a = math.rad(item.r)
 	local c, s = math.abs(math.cos(a)), math.abs(math.sin(a))
 	local hx = (size.X * c + size.Z * s) / 2
@@ -246,10 +274,11 @@ function Plan.itemRect(item: Item): (number, number, number, number)
 	return item.x - hx, item.z - hz, item.x + hx, item.z + hz
 end
 
--- Rectangles cut out of the floors of level lv (stairwells coming up from lv - 1).
+-- Rectangles cut out of the floors of level lv (stairwells coming up from lv - 1, the ground floor's
+-- from the basement too).
 function Plan.holes(plan: PlanData, lv: number): { { number } }
 	local out = {}
-	if lv <= 0 then
+	if lv <= Plan.Lowest then
 		return out
 	end
 	for _, item in plan.items do
@@ -397,7 +426,7 @@ local function boundsList(plan: any): Bounds
 end
 
 local function validLevel(lv: any): boolean
-	return type(lv) == "number" and lv % 1 == 0 and lv >= 0 and lv < P.Levels
+	return type(lv) == "number" and lv % 1 == 0 and lv >= Plan.Lowest and lv <= Plan.Highest
 end
 
 local function validSide(s: any): boolean
@@ -615,6 +644,11 @@ function Plan.validItem(plan: PlanData, item: any, ignoreKey: string?): (boolean
 			return false, "that isn't a picture id"
 		end
 	end
+	-- (stretched: within the range, and only along the sides the piece may stretch: Build/Stretch)
+	local stretchOk, stretchWhy = Stretch.valid(def, item)
+	if not stretchOk then
+		return false, stretchWhy
+	end
 	if def.place == "opening" or def.place == "wall" then
 		if type(item.wall) ~= "string" then
 			return false, "needs a wall"
@@ -662,7 +696,7 @@ function Plan.validItem(plan: PlanData, item: any, ignoreKey: string?): (boolean
 			if (item.t :: number) < 0 or (item.t :: number) > len then
 				return false, "off the wall"
 			end
-			if item.y < 0 or item.y + def.size.Y > height + 1e-6 then
+			if item.y < 0 or item.y + Stretch.size(def, item).Y > height + 1e-6 then
 				return false, "off the wall"
 			end
 		end
@@ -687,6 +721,13 @@ function Plan.validItem(plan: PlanData, item: any, ignoreKey: string?): (boolean
 	if def.place == "ground" and item.lv ~= 0 then
 		return false, "goes outside on the ground"
 	end
+	-- (the basement: a piece down there stands over a basement floor, Build/Basement)
+	if item.lv == Plan.Lowest then
+		local held, whyNot = Basement.checkItem(plan, x1, z1, x2, z2)
+		if not held then
+			return false, whyNot
+		end
+	end
 	-- (water: a piece made for water goes only in it, at its own height; nothing else stands in
 	-- it unless it is up on something over it. Build/Water decides, or says nothing.)
 	local wet, why = Water.checkItem(plan, item, def, x1, z1, x2, z2)
@@ -696,7 +737,7 @@ function Plan.validItem(plan: PlanData, item: any, ignoreKey: string?): (boolean
 		return true
 	end
 	if def.place == "stairs" then
-		if item.lv >= P.Levels - 1 then
+		if item.lv >= Plan.Highest then
 			return false, "no floor above"
 		end
 		if item.r % 90 ~= 0 then
@@ -709,7 +750,7 @@ function Plan.validItem(plan: PlanData, item: any, ignoreKey: string?): (boolean
 		return true
 	end
 	if def.place == "ceiling" then
-		local expected = Plan.levelTop(item.lv) - (if item.lv < P.Levels - 1 then 1 else 0)
+		local expected = Plan.ceilingY(item.lv)
 		if math.abs(item.y - expected) > 1e-3 then
 			return false, "goes on the ceiling"
 		end
@@ -739,12 +780,20 @@ function Plan.validate(plan: PlanData, kind: string, obj: any, ignoreKey: string
 		else
 			ok, err = Plan.validRoof(obj, b)
 		end
+		-- (the basement: what goes on level -1 stands over a basement floor, Build/Basement)
+		if ok and obj.lv == Plan.Lowest then
+			ok, err = Basement.check(plan, kind, obj, ignoreKey, b)
+		end
 		if ok then
 			return Water.clearOf(plan, kind, obj)
 		end
 		return ok, err
 	elseif kind == "waters" then
-		return Water.valid(plan, obj, ignoreKey, b)
+		local ok, err = Water.valid(plan, obj, ignoreKey, b)
+		if ok then
+			return Basement.clearOfWater(plan, obj) -- (a basement's dig and a water's never meet)
+		end
+		return ok, err
 	elseif kind == "items" then
 		return Plan.validItem(plan, obj, ignoreKey)
 	end
@@ -757,7 +806,7 @@ local FIELDS = {
 	walls = { "x1", "z1", "x2", "z2", "lv", "style" },
 	floors = { "x1", "z1", "x2", "z2", "lv", "c", "m" },
 	roofs = { "x1", "z1", "x2", "z2", "lv", "style", "rise", "dir", "over", "c", "m", "c2", "m2" },
-	items = { "id", "x", "y", "z", "r", "lv", "c1", "c2", "wall", "t", "side", "img" },
+	items = { "id", "x", "y", "z", "r", "lv", "c1", "c2", "wall", "t", "side", "img", "sx", "sy", "sz" },
 }
 
 function Plan.clean(kind: string, obj: any): any
@@ -933,9 +982,43 @@ function Plan.removeOps(plan: PlanData, kind: string, key: string): { Op }
 		for _, itemKey in Water.piecesIn(plan, key) do
 			table.insert(ops, { op = "remove", kind = "items", key = itemKey, obj = deepCopy(plan.items[itemKey]) })
 		end
+	elseif kind == "floors" and type(obj) == "table" and obj.lv == Plan.Lowest then
+		-- (the basement: what only this floor held up goes with it, and what hangs on those walls)
+		for _, s in Basement.stranded(plan, Basement.rects(plan, key)) do
+			for _, op in Plan.removeOps(plan, s.kind, s.key) do
+				table.insert(ops, op)
+			end
+		end
 	end
 	table.insert(ops, { op = "remove", kind = kind, key = key, obj = deepCopy(obj) })
 	return ops
+end
+
+-- A wall moved whole (the Select tool, Build/Group): what hangs on it goes with it and is drawn
+-- again where it is now, and so are the walls it met at its ends before and meets now, whose
+-- corners close round it (Shapes.wallReach). Adds them to `out`, Plan.affected's answer.
+function Plan.noteMovedWall(plan: PlanData, op: Op, out: { [string]: { [string]: boolean } })
+	local a, b = op.obj, op.before
+	if op.op ~= "set" or type(a) ~= "table" or type(b) ~= "table" then
+		return
+	end
+	if a.x1 == b.x1 and a.z1 == b.z1 and a.x2 == b.x2 and a.z2 == b.z2 then
+		return
+	end
+	for _, itemKey in Plan.attached(plan, op.key) do
+		out.items[itemKey] = true
+	end
+	for _, w in { a, b } do
+		for key, o in plan.walls do
+			if key ~= op.key and o.lv == w.lv then
+				for _, e in { { o.x1, o.z1 }, { o.x2, o.z2 } } do
+					if (e[1] == w.x1 and e[2] == w.z1) or (e[1] == w.x2 and e[2] == w.z2) then
+						out.walls[key] = true
+					end
+				end
+			end
+		end
+	end
 end
 
 -- What has to be drawn again after these ops: { kind = { key = true } }.
@@ -968,6 +1051,15 @@ function Plan.affected(plan: PlanData, ops: { Op }): { [string]: { [string]: boo
 					floorLevels[w.lv + 1] = true
 				end
 			end
+			Plan.noteMovedWall(plan, op, out)
+		elseif op.kind == "floors" then
+			-- (the basement: a floor's lining stops where another floor of it meets it, so they are
+			-- all drawn again)
+			for _, f in { op.obj, op.before } do
+				if type(f) == "table" and f.lv == Plan.Lowest then
+					floorLevels[Plan.Lowest] = true
+				end
+			end
 		end
 	end
 	for lv in floorLevels do
@@ -977,7 +1069,7 @@ function Plan.affected(plan: PlanData, ops: { Op }): { [string]: { [string]: boo
 			end
 		end
 	end
-	-- items hanging on a wall that was repainted or moved keep their frame, so nothing else to do
+	-- items hanging on a wall that was only repainted keep their frame, so nothing else to do
 	return out
 end
 
@@ -1018,6 +1110,24 @@ function Plan.fromOldPlot(raw: any): any
 	return copy
 end
 
+-- A save from when a plan held four floors (0..3) hung a ceiling piece on floor 3 right up under the
+-- roof, since nothing could be built over it. Floor 3 has a floor above it now, so such a piece
+-- hangs under that floor's ceiling as on any other floor. Returns the piece as it hangs now (a copy
+-- when it moved).
+local OLD_TOP = 3
+function Plan.oldCeiling(obj: any): any
+	if type(obj) ~= "table" or obj.lv ~= OLD_TOP or type(obj.y) ~= "number" or type(obj.id) ~= "string" then
+		return obj
+	end
+	local def = Catalog.get(obj.id)
+	if def and def.place == "ceiling" and math.abs(obj.y - Plan.levelTop(OLD_TOP)) < 1e-3 then
+		local moved = table.clone(obj)
+		moved.y = Plan.ceilingY(OLD_TOP)
+		return moved
+	end
+	return obj
+end
+
 -- Makes loaded data safe: drops anything that no longer validates (an item removed from the
 -- catalog, a corrupted entry) and fixes nextId. An old save is moved onto today's plot first.
 function Plan.sanitize(raw: any): PlanData
@@ -1040,8 +1150,9 @@ function Plan.sanitize(raw: any): PlanData
 			maxId = n
 		end
 	end
-	-- (water after the walls, floors and roofs it must keep clear of, and before the items in it)
-	for _, kind in { "walls", "floors", "roofs", "waters" } do
+	-- (water after the walls, floors and roofs it must keep clear of, and before the items in it;
+	-- floors before walls, since the basement's walls stand on its floors)
+	for _, kind in { "floors", "walls", "roofs", "waters" } do
 		local src = raw[kind]
 		if type(src) == "table" then
 			for key, obj in src do
@@ -1056,7 +1167,12 @@ function Plan.sanitize(raw: any): PlanData
 	end
 	-- items last, since wall items need their walls
 	if type(raw.items) == "table" then
-		for key, obj in raw.items do
+		for key, saved in raw.items do
+			local obj = Plan.oldCeiling(saved)
+			-- (a stretch past the range is brought back into it: Build/Stretch)
+			if type(obj) == "table" and type(obj.id) == "string" then
+				obj = Stretch.clamped(Catalog.get(obj.id), obj)
+			end
 			if type(key) == "string" and Plan.validItem(plan, obj, key) then
 				local copy = deepCopy(obj)
 				copy.gift = if giftOf(obj) > 0 then giftOf(obj) else nil

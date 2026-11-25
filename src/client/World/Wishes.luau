@@ -33,7 +33,7 @@ local function clear(model: Model)
 end
 
 -- The wish bubble's look: a square of the dark glass with an orange rim (a craving's rim is
--- yellow), the thing they want in it, small corner brackets and a tail toward their head
+-- yellow), the thing they want in it and a tail toward their head
 -- (Util/Bubble, as the speech cards and the mood badges are). Returns the group.
 function Wishes.face(parent: Instance?, icon: string, food: any?): CanvasGroup
 	local g, card = Bubble.square(parent, 60, if food then T.Yellow else T.Orange)

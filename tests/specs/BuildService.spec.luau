@@ -120,13 +120,16 @@ describe("Build service", function()
 		end
 		expect(key ~= nil).toBeTruthy()
 		local gift = item.gift
-		-- a client sends it back moved, with its gift "forgotten"
+		-- a client sends it back moved, with its gift "forgotten" (turned where it stands, with
+		-- Free Placing, so whatever it stands against doesn't get in the way: Build/Collide)
 		local moved = table.clone(item)
 		moved.r = (item.r + 90) % 360
 		moved.gift = 0
 		pause()
 		local coins = profile.coins
+		profile.passes = { freeplace = true }
 		local ok, why = Build.apply(p, { { type = "set", kind = "items", key = key, obj = moved } })
+		profile.passes = nil
 		if not ok then
 			error(tostring(why))
 		end
@@ -269,6 +272,153 @@ describe("Build service", function()
 		expect(ok).toBe(false)
 		expect(why).toBe("too many new pictures at once")
 	end)
+end)
+
+-- The build mode passes (Build/Placing, Build/Collide; the user: "add collisions, and a gamepass
+-- should be there to remove it ... another for smaller grid size placement, another for x y
+-- scaling"): the server holds every change to them, whatever the client says it owns.
+describe("Build service, the passes' rules", function()
+	local Builder = require("ReplicatedStorage.Shared.Build.Builder")
+	local x0 = Plan.bounds(profile.plan)
+	local had = {}
+	for k in profile.plan.items do
+		had[k] = true
+	end
+	local function cube(x, z, extra)
+		local obj = { id = "shape_cube_medium", x = x0 + x, y = 0, z = z, r = 0, lv = 0 }
+		for k, v in extra or {} do
+			obj[k] = v
+		end
+		return obj
+	end
+	local function add(obj)
+		pause()
+		return Build.apply(p, { { type = "add", kind = "items", obj = obj } })
+	end
+	local function keyAt(x, z)
+		for k, it in profile.plan.items do
+			if it.id == "shape_cube_medium" and it.x == x0 + x and it.z == z then
+				return k
+			end
+		end
+		return nil
+	end
+
+	it("turns down a piece in another, and lets a Free Placing owner put it there", function()
+		profile.passes = nil
+		expect((add(cube(60, 150)))).toBe(true)
+		local ok, why = add(cube(61, 150))
+		expect(ok).toBe(false)
+		expect(why).toBe("bumps into the medium cube")
+		expect(keyAt(61, 150)).toBe(nil)
+		-- a wall drawn through it
+		pause()
+		local wok, wwhy = Build.apply(p, {
+			{
+				type = "add",
+				kind = "walls",
+				obj = {
+					x1 = x0 + 54,
+					z1 = 150,
+					x2 = x0 + 66,
+					z2 = 150,
+					lv = 0,
+					style = "wall",
+					a = { c = "F2E6CC", m = "Plaster" },
+					b = { c = "F7F3EA", m = "SmoothPlastic" },
+				},
+			},
+		})
+		expect(wok).toBe(false)
+		expect(wwhy).toBe("bumps into the medium cube")
+		profile.passes = { freeplace = true }
+		expect((add(cube(61, 150)))).toBe(true)
+		-- the owner turns it to any angle
+		local key = keyAt(61, 150)
+		local turned = table.clone(profile.plan.items[key])
+		turned.r = 20
+		pause()
+		expect((Build.apply(p, { { type = "set", kind = "items", key = key, obj = turned } }))).toBe(true)
+		profile.passes = nil
+		-- without the pass it can still be painted where it is, but not moved within the other
+		local painted = table.clone(profile.plan.items[key])
+		painted.c1 = "C27E63"
+		pause()
+		expect((Build.apply(p, { { type = "set", kind = "items", key = key, obj = painted } }))).toBe(true)
+		local nudged = table.clone(profile.plan.items[key])
+		nudged.z += 1
+		pause()
+		expect((Build.apply(p, { { type = "set", kind = "items", key = key, obj = nudged } }))).toBe(false)
+		-- and turned on by eighths from where it is
+		local eighth = table.clone(profile.plan.items[key])
+		eighth.r = 65
+		eighth.x += 20
+		pause()
+		expect((Build.apply(p, { { type = "set", kind = "items", key = key, obj = eighth } }))).toBe(true)
+		local odd = table.clone(profile.plan.items[key])
+		odd.r = 80
+		pause()
+		local tok, twhy = Build.apply(p, { { type = "set", kind = "items", key = key, obj = odd } })
+		expect(tok).toBe(false)
+		expect(twhy).toBe("turning to any angle needs the Free Placing pass")
+	end)
+
+	it("lets a whole change's own pieces touch, but not what is there", function()
+		profile.passes = nil
+		pause()
+		local ok = Build.apply(p, {
+			{ type = "add", kind = "items", obj = cube(90, 150) },
+			{ type = "add", kind = "items", obj = cube(91, 150) },
+		})
+		expect(ok).toBe(true)
+		pause()
+		ok = Build.apply(p, {
+			{ type = "add", kind = "items", obj = cube(120, 150) },
+			{ type = "add", kind = "items", obj = cube(91, 151) },
+		})
+		expect(ok).toBe(false)
+		expect(keyAt(120, 150)).toBe(nil)
+	end)
+
+	it("stretches only for the Stretch pass, and paints off the palette only for Any Colour", function()
+		profile.passes = nil
+		local ok, why = add(cube(60, 180, { sx = 1.5 }))
+		expect(ok).toBe(false)
+		expect(why).toBe("stretching needs the Stretch pass")
+		-- out of the range for anyone
+		profile.passes = { stretch = true }
+		expect((add(cube(60, 180, { sx = 3 })))).toBe(false)
+		expect((add(cube(60, 180, { sx = 1.5, sy = 2 })))).toBe(true)
+		local key = keyAt(60, 180)
+		expect(profile.plan.items[key].sx).toBe(1.5)
+		expect(profile.plan.items[key].sy).toBe(2)
+		-- its model is drawn stretched
+		local model = folder:FindFirstChild(Builder.modelName("items", key))
+		expect(model ~= nil).toBeTruthy()
+		profile.passes = nil
+		local odd = table.clone(profile.plan.items[key])
+		odd.c1 = "13579B"
+		pause()
+		local cok, cwhy = Build.apply(p, { { type = "set", kind = "items", key = key, obj = odd } })
+		expect(cok).toBe(false)
+		expect(cwhy).toBe("that colour needs the Any Colour pass")
+		profile.passes = { anycolour = true }
+		pause()
+		expect((Build.apply(p, { { type = "set", kind = "items", key = key, obj = odd } }))).toBe(true)
+		profile.passes = nil
+	end)
+
+	-- (what these put down is sold again, so the water below finds the plot as it was)
+	local gone = {}
+	for k in profile.plan.items do
+		if not had[k] then
+			table.insert(gone, { type = "remove", kind = "items", key = k })
+		end
+	end
+	if #gone > 0 then
+		pause()
+		Build.apply(p, gone)
+	end
 end)
 
 -- Water (Build/Water, Services/Water): the user, "also, add ability to add water, along with things

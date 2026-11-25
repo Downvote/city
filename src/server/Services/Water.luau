@@ -234,6 +234,10 @@ local function cut(part: BasePart, frame: CFrame, holes: { { number } })
 	part.CastShadow = false
 end
 
+-- More holes in a plot's ground: each source gives the rectangles on plot `index` to cut it round
+-- as well (the basement's rooms: Services/Basement), so one cut covers everything dug there.
+Service.holeSources = {} :: { (index: number) -> { { number } } }
+
 -- Cuts plot `index`'s ground round what is dug there now (or makes it whole when nothing is).
 function Service.cutGround(index: number)
 	local folder = Plots.buildFolder(index)
@@ -246,6 +250,14 @@ function Service.cutGround(index: number)
 	local dug: { [string]: Record } = filled[index] or {}
 	for _, rec in dug do
 		table.insert(holes, { rec.w.x1, rec.w.z1, rec.w.x2, rec.w.z2 })
+	end
+	for _, source in Service.holeSources do
+		local ok, more = pcall(source, index)
+		if ok and type(more) == "table" then
+			for _, h in more do
+				table.insert(holes, h)
+			end
+		end
 	end
 	local base = original(plot, "Base")
 	if base then

@@ -12,6 +12,11 @@
 --           villager lift their mood a touch and fill their hearts by a point (Sim/Life); after
 --           that they still answer and nothing is gained. A chat is also the answer to a wish
 --           for one. Somebody visiting gets the line and nothing else.
+-- Since the user asked for villagers' own flair and for events with "more impact": the catchphrase
+-- the player gave them comes up now and then, their favourite thing in lines of their own
+-- (FAVOURITE), and what their events left them with lately (Sim/Memory: a band, a hat, a pet) in
+-- each personality's words (LATELY). Every line leaves in their hand and with their ending
+-- (Sim/Voice.as).
 
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Personalities = require(script.Parent.Parent.Data.Personalities)
@@ -22,6 +27,8 @@ local City = require(script.Parent.City)
 local Life = require(script.Parent.Life)
 local Relationships = require(script.Parent.Relationships)
 local Voice = require(script.Parent.Voice)
+local Flair = require(script.Parent.Flair)
+local Memory = require(script.Parent.Memory)
 
 local K = Tuning.Talk
 
@@ -588,6 +595,283 @@ local MEET = {
 	nervous = "{player}, could you introduce me to {y}? What if I say something odd?",
 }
 
+-- Their favourite thing, which the player gave them (Sim/Flair), in their own words. {thing} is
+-- what the player typed ("pancakes", "the lighthouse", "old maps"), so no line hangs a verb on it
+-- ("{thing} is" reads wrong for "pancakes").
+local FAVOURITE = {
+	_ = { "Did I ever tell you how much I love {thing}?", "I was thinking about {thing} again today." },
+	sunny = {
+		"{player}, did I tell you how much I love {thing}? Because I really, really do!",
+		"Ehehe, guess what I was thinking about all morning, {thing}!",
+	},
+	gentle = {
+		"Oh, I was thinking about {thing} again, and it made me smile.",
+		"I'd love to share {thing} with you sometime, {player}.",
+	},
+	bold = {
+		"Nothing on this island beats {thing}, and that's that.",
+		"Hah, ask me about {thing} and I'll talk all day.",
+	},
+	dreamy = {
+		"Hmm... I was daydreaming about {thing} again.",
+		"Some days all I want is {thing} and a quiet window.",
+	},
+	easygoing = {
+		"Give me {thing} and a slow afternoon, and I'm happy.",
+		"I spent the morning thinking about {thing}, no rush to do anything else.",
+	},
+	proud = {
+		"I know more about {thing} than anyone on this island, naturally.",
+		"Hmph, people say I have good taste, and I do love {thing}.",
+	},
+	shy = {
+		"Um, can I tell you something? I really like {thing}.",
+		"I don't tell many people, but {thing} makes me really happy.",
+	},
+	cheeky = {
+		"bet you didn't know i'm obsessed with {thing}",
+		"if you ever need to bribe me, {thing} works every time hehe",
+	},
+	cool = { "I've been thinking about {thing} all day.", "If you ever want to talk about {thing}, I'm around." },
+	prickly = {
+		"Ugh, don't laugh, but I really like {thing}.",
+		"I'm not soft about much, but I'm soft about {thing}.",
+	},
+	dramatic = {
+		"{player}, if I couldn't have {thing}, I would simply fall APART.",
+		"*sigh* Nobody loves {thing} the way I do.",
+	},
+	bookish = {
+		"Actually, I've been reading all about {thing}, and there's so much to know.",
+		"I could tell you about {thing} for an hour (I'll keep it to ten minutes).",
+	},
+	gloomy = {
+		"Heh... the only thing that cheers me up lately is {thing}.",
+		"Everything goes wrong eventually, except {thing}.",
+	},
+	polite = {
+		"If I may say so, I am very fond of {thing}.",
+		"I hope you will forgive me for going on about {thing} again.",
+	},
+	foodie = {
+		"Mmm, I love {thing} nearly as much as I love lunch.",
+		"Second only to dessert, my favourite thing is {thing}.",
+	},
+	nervous = {
+		"Is it silly that I love {thing} so much? Please say it isn't.",
+		"When I'm worried I think about {thing}, and it helps a bit.",
+	},
+}
+
+-- What their events left them with lately (Sim/Memory), as they'd bring it up: {what} is the thing
+-- (the hat, the dish, the hobby, what's in the garden), {name} the band's or the pet's name, {y}
+-- whoever they fell out with. One line each, in their own words.
+local LATELY = {
+	band = {
+		_ = "I'm in a band called {name} now, and we practise every week.",
+		sunny = "We've got band practice tonight, and {name} sounds better every time!",
+		gentle = "Our band practises in my kitchen now, so I bake something for everyone.",
+		bold = "My band's playing the square soon, so you're coming, right?",
+		dreamy = "Hmm... I keep hearing our band's songs in the sound of the waves.",
+		easygoing = "Band practice is mostly us eating snacks, but we play a bit too.",
+		proud = "I'm the best one in {name}, naturally, but don't tell the others.",
+		shy = "Um, I'm in a band now, it's called {name}... I still can't believe it.",
+		cheeky = "my band {name} got told to keep it down twice this week hehe",
+		cool = "I'm in {name} now, and we practise on Thursdays.",
+		prickly = "Ugh, band practice ran late again, and my fingers hurt.",
+		dramatic = "{player}, {name} is going to be FAMOUS, I can feel it.",
+		bookish = "Actually, I've written out every song {name} plays, with the chords.",
+		gloomy = "Heh... I'm in a band now, so somebody will probably ask us to stop.",
+		polite = "I play in a band called {name} now, and we would be glad to have you listen.",
+		foodie = "Band practice goes better with buns, so I bring a whole bag.",
+		nervous = "W-what if I play the wrong note at our first proper show?",
+	},
+	accessory = {
+		_ = "I'm wearing my new {what} all week.",
+		sunny = "Do you like my {what}? I'm wearing it everywhere this week, ehehe!",
+		gentle = "I'm still wearing the {what}, and people keep saying it suits me.",
+		bold = "The {what} stays on all week, and nobody can talk me out of it.",
+		dreamy = "My {what} makes every day feel a bit like a holiday...",
+		easygoing = "I keep forgetting I've got the {what} on, so it must be comfy.",
+		proud = "Everyone's noticed my {what}, naturally.",
+		shy = "Um, is the {what} too much? People keep looking at me.",
+		cheeky = "three people asked where i got the {what}, and i said it's a secret hehe",
+		cool = "I'm keeping the {what} on for a few days.",
+		prickly = "Yes, I'm still wearing the {what}, and no, you can't borrow it.",
+		dramatic = "This {what} has changed my whole LIFE, honestly.",
+		bookish = "Actually, I wrote down every compliment the {what} got, and there are nine.",
+		gloomy = "I like this {what}, so the wind will probably take it.",
+		polite = "I hope the {what} is not too bright, I am rather fond of it.",
+		foodie = "I got a crumb on my new {what} at lunch, but it brushed right off.",
+		nervous = "What if the {what} blows away? I keep holding on to it.",
+	},
+	hobby = {
+		_ = "I've taken up {what}, and I'm enjoying it.",
+		sunny = "I've taken up {what}, and I can't stop, ehehe!",
+		gentle = "Taking up {what} was a good idea, it calms me down after work.",
+		bold = "I'm going to be good at {what} by the end of the week, watch me.",
+		dreamy = "I lose whole afternoons to {what} now...",
+		easygoing = "I've been doing a bit of {what}, nothing serious, just when I feel like it.",
+		proud = "I've taken up {what}, and I'm already better than most.",
+		shy = "Um, I've started {what}... I'm not very good yet.",
+		cheeky = "guess who's into {what} now? me, that's who",
+		cool = "I took up {what}, and it's good for clearing my head.",
+		prickly = "Don't laugh, but I've taken up {what}, and I actually like it.",
+		dramatic = "{player}, {what} is my whole WORLD now.",
+		bookish = "I've read three books about {what} this week, and now I'm actually trying it.",
+		gloomy = "I took up {what}, and I haven't given up yet, which is a first.",
+		polite = "I have taken up {what}, and I find it very pleasant.",
+		foodie = "I took up {what}, but mostly for the snacks I bring along.",
+		nervous = "I took up {what}, and I'm so worried I'm doing it wrong.",
+	},
+	haircut = {
+		_ = "I got my hair cut, did you notice?",
+		sunny = "Did you notice my hair? I got it cut, and it feels so light!",
+		gentle = "I had my hair cut, and the barber was so patient with the messy bit at the back.",
+		bold = "New haircut, short and easy, just how I like it.",
+		dreamy = "My hair's shorter now, and the wind feels different on my neck...",
+		easygoing = "I got a haircut, so now I don't have to brush it, heh.",
+		proud = "My new haircut is the best on the island, obviously.",
+		shy = "Um, I got my hair cut... does it look okay?",
+		cheeky = "new haircut, i told the barber to surprise me and he really did",
+		cool = "I got a haircut, and it's shorter than last time.",
+		prickly = "Yes, I got a haircut, and no, I don't want to talk about it.",
+		dramatic = "My new haircut is the start of a whole NEW me.",
+		bookish = "I got my hair cut, and it took exactly eleven minutes, I timed it.",
+		gloomy = "I got a haircut, and it'll grow back wrong, as usual.",
+		polite = "I have had my hair cut, and I hope it looks tidy.",
+		foodie = "I got a haircut, and the barber gave me a mint after, which was the best part.",
+		nervous = "I got a haircut, is it too short? Be honest.",
+	},
+	pet = {
+		_ = "I've got a {what} called {name} now.",
+		sunny = "My {what}, {name}, is the best thing that's happened all year!",
+		gentle = "I've been taking good care of my {what}, {name}, so don't worry.",
+		bold = "I've got a {what} called {name} now, and we're a team.",
+		dreamy = "{name} and I watched the rain together all morning...",
+		easygoing = "My {what}, {name}, naps more than I do, which I didn't think was possible.",
+		proud = "My {what}, {name}, is clearly the finest pet in town.",
+		shy = "Um, I have a {what} now, called {name}... I talk to them a lot.",
+		cheeky = "{name} the {what} is the boss of my house now hehe",
+		cool = "I've got a {what} called {name}, and we get along fine.",
+		prickly = "I didn't want a {what}, but {name} picked me, so that's that.",
+		dramatic = "{player}, {name} is the most beautiful {what} who has EVER lived.",
+		bookish = "I've read everything I could find on looking after a {what}, so {name} is in good hands.",
+		gloomy = "{name} actually likes me, which no {what} has ever done before, heh.",
+		polite = "I have a {what} called {name} now, and they are very well behaved.",
+		foodie = "{name} and I have breakfast together now, well, I eat and my {what} watches.",
+		nervous = "What if {name} doesn't like the food I got? I bought three kinds just in case.",
+	},
+	dish = {
+		_ = "I made my {what} again last night.",
+		sunny = "I made my {what} again, and it came out even better this time!",
+		gentle = "I'll make you some of my {what} next time, okay?",
+		bold = "I've made my {what} three nights running, and I'm not stopping.",
+		dreamy = "Hmm... I made my {what} again, and the whole house smelled lovely.",
+		easygoing = "I've been making my {what} every night, because it's easy and I'm lazy.",
+		proud = "I cooked my {what} for half the street, and they all asked for more, naturally.",
+		shy = "Um, I made my {what} again... would you like to try some?",
+		cheeky = "made my {what} for the neighbours and didn't tell them what was in it hehe",
+		cool = "I've got my {what} just right now, so come by sometime.",
+		prickly = "I made my {what} again, and it was good, so don't look so surprised.",
+		dramatic = "{player}, my {what} made the baker cry, HAPPY tears.",
+		bookish = "I've written my {what} down as a proper recipe, with notes in the margin.",
+		gloomy = "I made my {what} again, and I didn't burn it, which is new.",
+		polite = "I have been practising my {what}, and I would be glad to cook it for you.",
+		foodie = "Mmm, I could eat my {what} every day this week.",
+		nervous = "I made my {what} for the neighbours, and what if they're only being nice?",
+	},
+	fallout = {
+		_ = "{y} and I still aren't talking.",
+		sunny = "{y} and I still aren't talking, and I hate it so much!",
+		gentle = "I miss {y}, so I hope we can make up soon.",
+		bold = "{y} knows where to find me when they're ready to say sorry.",
+		dreamy = "I saw {y} at the market, and we both looked at the sky instead...",
+		easygoing = "Me and {y} still aren't talking, but it'll blow over.",
+		proud = "I'm waiting for {y} to apologise, and I can wait a long time.",
+		shy = "Um, {y} still isn't talking to me... I don't know what to do.",
+		cheeky = "{y} keeps pretending not to see me, so i keep waving extra hard",
+		cool = "{y} and I are giving each other some space.",
+		prickly = "I'm not upset about {y}, I'm just not talking to them, and that's different.",
+		dramatic = "{y} walked right past me like I wasn't even THERE.",
+		bookish = "Actually, I've written {y} a letter to explain, but I haven't sent it.",
+		gloomy = "{y} still isn't talking to me, which I saw coming.",
+		polite = "I would like to make things right with {y}, if they will let me.",
+		foodie = "{y} and I used to share lunch, and now I eat on my own.",
+		nervous = "What if {y} never talks to me again? It's been days.",
+	},
+	garden = {
+		_ = "My {what} are coming up nicely.",
+		sunny = "My {what} are coming up, {player}, I counted six little shoots!",
+		gentle = "I water my {what} every morning before work, and they're doing well.",
+		bold = "My garden's going to grow the biggest {what} this island has seen.",
+		dreamy = "I sit with my {what} in the evening and listen to the bees...",
+		easygoing = "The {what} mostly grow on their own, which is my kind of garden.",
+		proud = "My {what} are coming along beautifully, naturally.",
+		shy = "Um, my {what} have little leaves now... I'm a bit proud of them.",
+		cheeky = "someone keeps stealing my {what} and i think it's a gull",
+		cool = "The {what} are coming along, slowly.",
+		prickly = "Ugh, slugs got two of my {what}, and I'm not happy about it.",
+		dramatic = "If anything happens to my {what}, I will NOT survive it.",
+		bookish = "Actually, {what} grow better next to marigolds, so I planted some.",
+		gloomy = "My {what} are still alive, for now.",
+		polite = "My garden is coming along, and I will save you some {what}.",
+		foodie = "I can't wait to eat my own {what}, and I've already picked the recipes.",
+		nervous = "Is it normal for {what} to droop in the afternoon? Should I be worried?",
+	},
+	penpal = {
+		_ = "I've got a pen pal over the sea now, and we write every week.",
+		sunny = "My pen pal over the sea wrote back, and I've read the letter five times!",
+		gentle = "I'm writing to my pen pal tonight, so I'll tell them about you.",
+		bold = "My pen pal says their island has bigger boats, so I'm writing back to argue.",
+		dreamy = "I wonder what my pen pal can see from their window right now...",
+		easygoing = "I owe my pen pal a letter, and I'll write it, eventually.",
+		proud = "My pen pal says my letters are the best they've ever had, naturally.",
+		shy = "Um, I have a pen pal now... writing is easier than talking for me.",
+		cheeky = "told my pen pal i live in a castle, so now i have to keep it up hehe",
+		cool = "I write to a pen pal over the sea, and I like it.",
+		prickly = "My pen pal writes really long letters, and I read every word, so what?",
+		dramatic = "My pen pal and I will meet one day, and it'll be like something out of a FILM.",
+		bookish = "My pen pal sent me a list of four books, and I've read two already.",
+		gloomy = "My pen pal hasn't written back yet, so the post probably lost it.",
+		polite = "I have a pen pal now, and I always write back the same day.",
+		foodie = "My pen pal sent me a recipe from their island, and I'm making it tonight.",
+		nervous = "I sent my pen pal a letter, and what if I spelled their name wrong?",
+	},
+	training = {
+		_ = "I'm training for the harbour race, so I run every morning.",
+		sunny = "I ran to the lighthouse and back twice today, and the race is going to be so fun!",
+		gentle = "I'm training for the harbour race, so I go to bed early now.",
+		bold = "I'm winning the harbour race, and that's not a guess.",
+		dreamy = "I train for the race in the mornings, when the sea's all quiet...",
+		easygoing = "I'm training for the race, which mostly means walking fast to lunch.",
+		proud = "Everyone else in the race is running for second place, naturally.",
+		shy = "Um, I signed up for the harbour race... I hope I don't come last.",
+		cheeky = "training for the race by running away from the baker hehe",
+		cool = "Training's going fine, and I've cut a minute off my time.",
+		prickly = "My legs hurt from training, so don't ask me to take the stairs.",
+		dramatic = "{player}, the harbour race is my DESTINY.",
+		bookish = "Actually, I've worked out a training plan, and I'm on day four of twelve.",
+		gloomy = "I'm training for the race, and I'll probably trip at the start.",
+		polite = "I am training for the harbour race, and I would be glad of your support.",
+		foodie = "Training makes me so hungry that I've had two breakfasts every day.",
+		nervous = "I'm training for the race, but what if I get a stitch halfway?",
+	},
+}
+
+-- A memory as they'd bring it up, in their own words (Sim/Memory). Nil for a kind with no lines.
+function Talk.mention(profile: any, vid: string, m: any): string?
+	local v = profile.villagers[vid]
+	local map = type(m) == "table" and LATELY[m.kind]
+	if not v or not map then
+		return nil
+	end
+	return Text.fill(own(map, v.pers), Memory.words(profile, m))
+end
+
+-- The lines of the flair and the memories, for the specs (as Talk.Voices is).
+Talk.Flair = { FAVOURITE = FAVOURITE, LATELY = LATELY }
+
 -- The maps keyed by personality, for the specs (every personality has a voice in each).
 Talk.Voices = {
 	GREET = GREET,
@@ -657,7 +941,7 @@ end
 function Talk.wishLine(profile: any, vid: string): string?
 	local line = wishFor(profile, vid)
 	local v = profile.villagers[vid]
-	return if line then Voice.speak(v and v.pers, named(profile, line, nil)) else nil
+	return if line then Voice.as(v, named(profile, line, nil)) else nil
 end
 
 -- What a villager says to someone who stops to talk. opts:
@@ -690,6 +974,7 @@ local function lineFor(profile: any, vid: string, rng: any, opts: { [string]: an
 		end
 	end
 	local saying = Sayings.get(v.saying)
+	local phrase = Flair.get(v, "phrase")
 	local chat: Chat? = o.chat
 	if chat and chat.wish then
 		add(own(THANKS, v.pers))
@@ -705,6 +990,8 @@ local function lineFor(profile: any, vid: string, rng: any, opts: { [string]: an
 			add(text, 2)
 		end
 		add(saying and saying.text)
+		-- the catchphrase the player gave them, now and then
+		add(phrase, 2)
 	else
 		local sad = v.mood < 35
 		if sad then
@@ -732,6 +1019,20 @@ local function lineFor(profile: any, vid: string, rng: any, opts: { [string]: an
 				add("I slept really well last night, which was lovely.")
 			end
 			add(saying and saying.text)
+			add(phrase, 2)
+			-- their favourite thing, which the player gave them (Sim/Flair)
+			local thing = Flair.get(v, "thing")
+			if thing then
+				for _, text in FAVOURITE[v.pers] or FAVOURITE._ do
+					add(Text.fill(text, { thing = thing }))
+				end
+			end
+			-- what their events left them with lately (Sim/Memory): the band, the hat, the pet
+			if type(o.now) == "number" then
+				for _, m in Memory.active(v, o.now) do
+					add(Talk.mention(profile, vid, m), Tuning.Memory.TalkWeight)
+				end
+			end
 			local hobby = Sayings.hobby(v.hobby)
 			add(hobby and hobby.line, 2)
 			local friend = Relationships.bestFriend(profile, vid)
@@ -789,7 +1090,7 @@ local function lineFor(profile: any, vid: string, rng: any, opts: { [string]: an
 		local fresh = {}
 		for _, text in pool do
 			local said = named(profile, text, o.name)
-			if text ~= o.last and said ~= o.last and Voice.speak(v.pers, said) ~= o.last then
+			if text ~= o.last and said ~= o.last and Voice.as(v, said) ~= o.last then
 				table.insert(fresh, text)
 			end
 		end
@@ -807,8 +1108,8 @@ end
 -- people they know, or what they're wishing for. opts.name is what to call a visitor (see above).
 function Talk.line(profile: any, vid: string, rng: any, opts: { [string]: any }?): string
 	local v = profile.villagers[vid]
-	-- in their own hand (Sim/Voice)
-	return Voice.speak(v and v.pers, named(profile, lineFor(profile, vid, rng, opts), opts and opts.name))
+	-- in their own hand, with their ending on some (Sim/Voice)
+	return Voice.as(v, named(profile, lineFor(profile, vid, rng, opts), opts and opts.name))
 end
 
 -- The good a chat does ---------------------------------------------------------------------------------

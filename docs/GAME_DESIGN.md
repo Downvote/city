@@ -2203,3 +2203,15 @@ for sleep, a rain cloud for sad and the notes for music. Where a screen can't dr
 sized by letters. The wish bubble's picture is bigger too. Art keeps its place on its 24 grid (a half wall sits at the
 bottom, a food stands low), so an icon on a block, a disc, a notice, a bubble or a picture tile is now centred by
 what it draws instead of by its grid.
+
+### Bubbles without corners, and no prompts while you're busy
+
+> also, in the second image, for text and icon bubbles, remove the two squarish corners inside the bubbles
+
+> interaction bubbles shouldnt appear when you are interacting with objects
+
+The speech cards and the wish bubbles over a villager's head lost the two small brackets they had in their corners:
+a plain dark card with its rim and its point. And while you sit, work at a workplace or are in a conversation, no
+prompt shows anywhere on your screen (the "Sit" over the seat you're already on was the picture). They come back the
+moment you get up, step away or the conversation closes.
+

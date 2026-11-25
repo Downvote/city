@@ -900,6 +900,12 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   motion to the clients. `World/MoodArt.dress(root, kind)` (client, no services) swaps a badge's `Symbol` for the
   mood's icon (`SymbolArt`, `MoodIcon` across, centred, in the symbol's colour) and hides the letters; once only.
   World/Bubbles does it as each `Mood` billboard comes (the user: "the icons within bubbles are too small").
+  `Bubble.card` is the glass, the rounded corners and the rim; the corner brackets it had are gone (the user: "remove
+  the two squarish corners inside the bubbles").
+- `World/Prompts` (client): `Prompts.busy(humanoid, working, talking)` and a switch on `ProximityPromptService.Enabled`:
+  every prompt is off on the player's screen while they sit (`Humanoid.Sit` or a `SeatPart`), work at a workplace
+  (`World/Work.isWorking()`) or a conversation scene is up (State's `talking`). The user: "interaction bubbles shouldnt
+  appear when you are interacting with objects".
 - `World/Bubbles` (client, started by `Wishes.start`): every 0.15 seconds it finds what is showing over each villager
   (`Bubble`, `Mood` in the model, and what `Bubbles.track(model, gui)` was handed: the wish bubble), casts a ray from
   the camera to `head.Position + Anchor` (excluding every `Villagers` folder and every player's character, through

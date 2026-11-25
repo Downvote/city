@@ -6,7 +6,10 @@
 --   c1, c2 (default paint, hex), build(r) (draws it with Build/Recipe),
 --   optional: tags (what villagers ask for), surface (height of a top you can set things on),
 --   opening = { w, h, sill } for doors and windows,
---   job, workSpot, workYaw for workplaces (Recipes/Work).
+--   job, workSpot, workYaw for workplaces (Recipes/Work),
+--   lively = true for a piece that moves or gives off an effect (Build/Lively: the client looks
+--   inside those), vip = true for one only VIP owners can place (Services/Build refuses it to
+--   anyone else, Sim/Passes; Build mode tags its card).
 -- place is one of:
 --   "floor"   stands on a floor or the ground
 --   "surface" small things that can also stand on a table or counter
@@ -54,6 +57,8 @@ export type Def = {
 	picture: boolean?, -- takes a picture from the library (see above)
 	water: string?, -- (water) how a piece of place "water" sits: "float", "bottom" or "edge"
 	draft: number?, -- (water) how far its frame's floor is under the surface, or under the ground
+	lively: boolean?, -- moves or gives off an effect (Build/Lively, client World/Lively)
+	vip: boolean?, -- only for VIP owners (Sim/Passes.has(profile, "vip"))
 }
 
 local Catalog = {}
@@ -78,6 +83,9 @@ Catalog.Categories = {
 	{ id = "fun", name = "Fun" },
 	{ id = "decor", name = "Decor" },
 	{ id = "walldecor", name = "On walls" },
+	-- small pieces that give off an effect: sparkles, smoke, bubbles, confetti, falling leaves,
+	-- snow, a fire pit's flames (the user: "particle makers"; Recipes/Effects, Data/Effects)
+	{ id = "effects", name = "Effects" },
 	-- posters, frames, signs and decals showing a picture the player picks from the Roblox library
 	-- (the user: "allow the player to use custom decal in the roblox library")
 	{ id = "pictures", name = "Pictures" },

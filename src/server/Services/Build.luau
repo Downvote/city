@@ -14,6 +14,13 @@ local Plan = require(Shared.Build.Plan)
 local Builder = require(Shared.Build.Builder)
 local Remotes = require(Shared.Net.Remotes)
 local Keepsakes = require(Shared.Sim.Keepsakes)
+-- (what the passes change about placing: collisions, angles, stretch, colours)
+local Placing = require(Shared.Build.Placing)
+local Floors = require(Shared.Sim.Floors) -- (which floors a player may build on: Tall Builds, Basement)
+local Catalog = require(Shared.Build.Catalog)
+local Passes = require(Shared.Sim.Passes)
+local Group = require(Shared.Build.Group) -- (the Select tool's groups: wall moves, moves checked lifted)
+local SavesSim = require(Shared.Sim.Saves) -- (saved builds: what a load changes)
 
 local Data = require(script.Parent.Data)
 local Plots = require(script.Parent.Plots)
@@ -48,6 +55,47 @@ local function sameWall(a: any, b: any): boolean
 	local same = a.x1 == b.x1 and a.z1 == b.z1 and a.x2 == b.x2 and a.z2 == b.z2
 	local flipped = a.x1 == b.x2 and a.z1 == b.z2 and a.x2 == b.x1 and a.z2 == b.z1
 	return same or flipped
+end
+
+-- The rules a change is held to while Build.apply runs it (Build/Placing): the player's profile
+-- (their passes), and the keys its pieces may touch besides what the change itself puts down (the
+-- pieces of a group moved together). nil for a change the game makes itself (undo, redo, another
+-- service, the specs' Build.prepare), which isn't held to them.
+local placing: { profile: any, ignore: { string } }? = nil
+
+local function placingFor(profile: any, requests: { any }): { profile: any, ignore: { string } }
+	local ignore = {}
+	if #requests > 1 then
+		for _, req in requests do
+			if type(req) == "table" and req.type == "set" and type(req.key) == "string" then
+				table.insert(ignore, req.key)
+			end
+		end
+	end
+	return { profile = profile, ignore = ignore }
+end
+
+-- One request held to the rules (Placing.check): `made` the keys the change has put down so far.
+local function placingCheck(
+	plan: any,
+	req: any,
+	obj: any,
+	before: any,
+	made: { [number]: string },
+	alone: boolean
+): (boolean, string?)
+	local rules = placing
+	if not rules then
+		return true
+	end
+	local keys = {}
+	for _, k in made do
+		table.insert(keys, k)
+	end
+	for _, k in rules.ignore do
+		table.insert(keys, k)
+	end
+	return Placing.check(plan, rules.profile, req, obj, before, keys, alone)
 end
 
 -- Turns requests into ops, applying them as it goes so later requests see earlier ones.
@@ -94,6 +142,11 @@ local function prepare(plan: any, requests: { any }): ({ any }?, string?)
 					end
 				end
 			end
+			-- the passes' rules: keeping out of other pieces, angles, stretch, colours (Build/Placing)
+			local placed, notPlaced = placingCheck(plan, req, obj, nil, made, #requests == 1)
+			if not placed then
+				return fail(notPlaced or "can't place that")
+			end
 			local key = Plan.newKey(plan)
 			made[i] = key
 			ops = { { op = "add", kind = req.kind, key = key, obj = Plan.copy(obj) } }
@@ -116,19 +169,25 @@ local function prepare(plan: any, requests: { any }): ({ any }?, string?)
 				return fail(err or "can't do that")
 			end
 			if req.kind == "walls" then
-				-- walls only change paint and style: moving one would leave its doors floating
-				if
-					obj.x1 ~= before.x1
-					or obj.z1 ~= before.z1
-					or obj.x2 ~= before.x2
-					or obj.z2 ~= before.z2
-					or obj.lv ~= before.lv
-				then
-					return fail("walls can't be moved, so sell it and draw it again")
+				-- a wall moves only whole, on its own floor and keeping its length, so what hangs on
+				-- it still fits and goes with it (the Select tool: Build/Group)
+				if Group.wallMoved(before, obj) or obj.lv ~= before.lv then
+					local movable, why = Group.wallMoveOk(before, obj)
+					if not movable then
+						return fail(why or "walls can't be moved, so sell it and draw it again")
+					end
+					if Group.wallThere(plan, obj, req.key) then
+						return fail("there's already a wall there")
+					end
 				end
 				if obj.style ~= before.style and #Plan.attached(plan, req.key) > 0 and obj.style ~= "wall" then
 					return fail("take the doors and windows off first")
 				end
+			end
+			-- the passes' rules for a move, a turn, a stretch or a repaint (Build/Placing)
+			local placed, notPlaced = placingCheck(plan, req, obj, before, made, #requests == 1)
+			if not placed then
+				return fail(notPlaced or "can't do that")
 			end
 			-- what of it was given stays given, whatever the client sent (Plan: Gifts)
 			obj.gift = before.gift
@@ -145,6 +204,60 @@ local function prepare(plan: any, requests: { any }): ({ any }?, string?)
 		end
 	end
 	return applied
+end
+
+-- A group moved or turned with the Select tool (Build/Group): every piece of it is lifted first,
+-- then put down where it goes one at a time and checked as prepare checks any move. So each is
+-- checked against everything else where it will be, never against a piece of the group that
+-- hasn't moved yet (a room turned about its middle has each wall land where another stood). On any
+-- problem everything is put back as it was.
+local function prepareMoves(plan: any, requests: { any }): ({ any }?, string?)
+	for _, req in requests do
+		if type(req) ~= "table" or not Plan.KindSet[req.kind] or type(req.key) ~= "string" then
+			return nil, "bad request"
+		end
+	end
+	local lifted: { [number]: any } = {}
+	for i, req in requests do
+		local list = (plan :: any)[req.kind]
+		lifted[i] = list and list[req.key]
+		if list then
+			list[req.key] = nil
+		end
+	end
+	local applied = {}
+	for i, req in requests do
+		local list = (plan :: any)[req.kind]
+		if lifted[i] ~= nil then
+			list[req.key] = lifted[i]
+		end
+		local ops, err = prepare(plan, { req })
+		if not ops then
+			for j = i + 1, #requests do
+				local later = requests[j]
+				if lifted[j] ~= nil then
+					(plan :: any)[later.kind][later.key] = lifted[j]
+				end
+			end
+			if #applied > 0 then
+				Plan.apply(plan, Plan.invert(applied))
+			end
+			return nil, err
+		end
+		for _, op in ops do
+			table.insert(applied, op)
+		end
+	end
+	return applied
+end
+
+-- What the owner's client is told after a change: the ops, or for a big change (a saved build
+-- loaded, or taken back) the whole plan, which is no bigger and is drawn again in one go.
+local function syncOf(plan: any, ops: { any }): any
+	if #ops > 400 then
+		return { full = plan }
+	end
+	return { ops = ops }
 end
 
 -- Applies ready-made ops (undo, redo) after checking they still fit.
@@ -169,7 +282,7 @@ local function commit(player: Player, ops: { any }, record: string?): (boolean, 
 	end
 	local affected = Plan.affected(profile.plan, ops)
 	Builder.update(profile.plan, affected, Plots.buildFolder(index), Plots.frame(index))
-	Remotes.event("PlanSync"):FireClient(player, { ops = ops })
+	Remotes.event("PlanSync"):FireClient(player, syncOf(profile.plan, ops))
 	changed:Fire(player, ops)
 	return true
 end
@@ -251,6 +364,24 @@ checkPictures = function(plan: any, requests: { any }): (boolean, string?)
 	return true
 end
 
+-- VIP pieces (Catalog: `vip`) go down only for a VIP owner (Sim/Passes.mayPlace). One already on
+-- the plot can still be moved, turned or repainted by anyone who has it (a "set" keeping its id).
+function Build.vipCheck(profile: any, requests: { any }): (boolean, string?)
+	for _, req in requests do
+		local obj = if type(req) == "table" and req.kind == "items" then req.obj else nil
+		local id = if type(obj) == "table" then obj.id else nil
+		local def = if type(id) == "string" then Catalog.get(id) else nil
+		if def and not Passes.mayPlace(profile, def) then
+			local items = profile.plan and profile.plan.items
+			local before = if req.type == "set" and type(req.key) == "string" and items then items[req.key] else nil
+			if not (type(before) == "table" and before.id == id) then
+				return false, "that one is for VIP owners"
+			end
+		end
+	end
+	return true
+end
+
 local function throttle(player: Player): boolean
 	local t = os.clock()
 	if lastCall[player] and t - lastCall[player] < 0.05 then
@@ -278,12 +409,31 @@ function Build.apply(player: Player, requests: any): (boolean, string?)
 		if not allowed then
 			return { false, why }
 		end
+		-- a VIP piece goes down only for a VIP owner (Build.vipCheck)
+		local vipOk, vipWhy = Build.vipCheck(profile, requests)
+		if not vipOk then
+			return { false, vipWhy }
+		end
+		-- nothing new goes on a floor past the passes the player owns (Sim/Floors)
+		local floorOk, floorWhy = Floors.check(profile, profile.plan, requests)
+		if not floorOk then
+			return { false, floorWhy }
+		end
 		-- a picture from the library is one Roblox says is a decal or an image (Build.checkPicture)
 		local pictureOk, pictureWhy = checkPictures(profile.plan, requests)
 		if not pictureOk then
 			return { false, pictureWhy }
 		end
-		local ops, err = prepare(profile.plan, requests)
+		-- (a group moved with the Select tool is checked with its pieces lifted: prepareMoves)
+		local ops, err
+		-- held to the passes' rules while it is worked out (Build/Placing)
+		placing = placingFor(profile, requests)
+		if Group.moves(profile.plan, requests) then
+			ops, err = prepareMoves(profile.plan, requests)
+		else
+			ops, err = prepare(profile.plan, requests)
+		end
+		placing = nil
 		if not ops then
 			return { false, err }
 		end
@@ -306,6 +456,7 @@ function Build.apply(player: Player, requests: any): (boolean, string?)
 		return { true }
 	end)
 	busy[player] = nil
+	placing = nil -- (in case working it out failed halfway)
 	if not ok then
 		warn("[Build] error:", result)
 		return false, "something went wrong"
@@ -315,6 +466,128 @@ end
 
 -- For the specs: turns requests into ops on a plan, as Build.apply does, without coins or players.
 Build.prepare = prepare
+
+-- Saved builds (Services/Saves, Sim/Saves) -----------------------------------------------------------
+--
+-- Loading a save is a change like any other, only bigger: Sim/Saves.requests lists what of the plot
+-- goes and what of the save comes, and each request goes through prepare on its own, so every piece
+-- is checked as it would be if the player put it down now (their land, their floors, their passes).
+-- A piece of the save that doesn't fit any more is left out and counted, rather than the whole load
+-- turned down. What of a piece was given (`gift`) stays given, as the save had it.
+
+-- The requests one at a time, on `plan`: the ops, how many of the save's pieces were left out, or
+-- nil and why when something already on the plot couldn't be taken away.
+local function prepareEach(profile: any, plan: any, requests: { any }, gifts: { [number]: number }): ({ any }?, number, string?)
+	local all = {}
+	local made: { [number]: string } = {}
+	local skipped = 0
+	-- (keepsakes: as many down as were given, counted on the plan being changed)
+	local counting = { plan = plan, keepsakes = profile.keepsakes }
+	for i, req in requests do
+		local one = req
+		if req.type == "add" and req.kind == "items" and type(req.obj.wall) == "string" then
+			local n = string.match(req.obj.wall, "^@(%d+)$")
+			if n then
+				local wallKey = made[tonumber(n) :: number]
+				if not wallKey then
+					skipped += 1 -- its wall was left out
+					continue
+				end
+				local obj = table.clone(req.obj)
+				obj.wall = wallKey
+				one = { type = "add", kind = "items", obj = obj }
+			end
+		end
+		if req.type == "add" and not Keepsakes.check(counting, { one }) then
+			skipped += 1
+			continue
+		end
+		-- (a VIP piece comes back only for a VIP owner, as it goes down: Build.vipCheck)
+		if req.type == "add" and not Build.vipCheck(profile, { one }) then
+			skipped += 1
+			continue
+		end
+		-- (and only on a floor the player may build on: Sim/Floors)
+		if req.type == "add" and not Floors.check(profile, plan, { one }) then
+			skipped += 1
+			continue
+		end
+		local ops, err = prepare(plan, { one })
+		if not ops then
+			if req.type ~= "add" then
+				if #all > 0 then
+					Plan.apply(plan, Plan.invert(all))
+				end
+				return nil, 0, err
+			end
+			skipped += 1
+			continue
+		end
+		if req.type == "add" then
+			local op = ops[1]
+			made[i] = op.key
+			local g = gifts[i]
+			if g and g > 0 then
+				op.obj.gift = g;
+				(plan :: any)[op.kind][op.key].gift = g
+			end
+		end
+		for _, op in ops do
+			table.insert(all, op)
+		end
+	end
+	return all, skipped
+end
+
+-- Replaces the player's build with `target` (a saved build, already checked with Sim/Saves.target):
+-- charges what the save's new pieces cost less what the plot's old ones sell back for (or pays the
+-- difference back), refused when they can't afford it. One step for Undo. With `dry`, only works
+-- out what it would come to, on a copy. Returns ok and { cost, skipped, changed }, or false and why.
+function Build.replace(player: Player, target: any, dry: boolean?): (boolean, any)
+	local profile = Data.get(player)
+	if not profile or not Plots.indexOf(player) then
+		return false, "no plot yet"
+	end
+	if busy[player] then
+		return false, "slow down a little"
+	end
+	busy[player] = true
+	local ok, result = pcall(function()
+		local requests, gifts = SavesSim.requests(profile.plan, target)
+		local plan = if dry then Plan.copy(profile.plan) else profile.plan
+		local ops, skipped, err = prepareEach(profile, plan, requests, gifts)
+		if not ops then
+			return { false, err or "something went wrong" }
+		end
+		local cost = Plan.changeCost(ops)
+		local answer = { cost = cost, skipped = skipped, changed = #ops }
+		if dry or #ops == 0 then
+			return { true, answer }
+		end
+		if cost > 0 and not Data.canAfford(player, cost) then
+			Plan.apply(plan, Plan.invert(ops))
+			return { false, "not enough coins" }
+		end
+		local done, why = commit(player, ops, "applied")
+		if not done then
+			Plan.apply(plan, Plan.invert(ops))
+			return { false, why }
+		end
+		local h = hist(player)
+		table.insert(h.undo, ops)
+		if #h.undo > MAX_HISTORY then
+			table.remove(h.undo, 1)
+		end
+		h.redo = {}
+		return { true, answer }
+	end)
+	busy[player] = nil
+	if not ok then
+		warn("[Build] error:", result)
+		return false, "something went wrong"
+	end
+	return result[1], result[2]
+end
 
 function Build.undo(player: Player): (boolean, string?)
 	local h = hist(player)

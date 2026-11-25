@@ -197,8 +197,9 @@ describe("Plan rules", function()
 		s.r = 0
 		s.y = 5
 		expect(Plan.validItem(plan, s)).toBe(false)
-		s.y = Plan.levelBase(3)
-		s.lv = 3
+		-- stairs on the top floor a plan holds lead nowhere
+		s.y = Plan.levelBase(Plan.Highest)
+		s.lv = Plan.Highest
 		expect(Plan.validItem(plan, s)).toBe(false)
 	end)
 

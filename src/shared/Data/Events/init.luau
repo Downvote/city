@@ -129,6 +129,13 @@ local function foodPhrase(food: any): string
 	return Foods.phrase(food)
 end
 
+-- A dish as said after "my" ("my mushroom soup", "my bread rolls"), for what a cook remembers
+-- making (Sim/Memory): the ones you make a batch of are said as many.
+local MANY = { bread = "bread rolls", skewer = "fish skewers", riceball = "rice balls" }
+local function dishWords(food: any): string
+	return MANY[food.id] or food.name:lower()
+end
+
 local function capital(s: string): string
 	return s:sub(1, 1):upper() .. s:sub(2)
 end
@@ -1057,13 +1064,15 @@ event({
 						_ = "This is going to be so good.",
 					}, "heart")
 			),
-			-- they eat what they make: a good one cheers them both up
+			-- they eat what they make: a good one cheers them both up, and the one who led keeps
+			-- making it for a few days (Sim/Memory)
 			effects = if burnt
 				then { { t = "rel", a = "a", b = "b", d = 5 } }
 				else {
 					{ t = "rel", a = "a", b = "b", d = 6 },
 					{ t = "mood", who = "a", d = 4 },
 					{ t = "mood", who = "b", d = 4 },
+					{ t = "remember", who = "a", kind = "dish", what = dishWords(food) },
 				},
 			log = ctx.f("{a} and {b} cooked {food}.", { food = dish }),
 		}

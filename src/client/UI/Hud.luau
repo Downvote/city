@@ -1,4 +1,4 @@
--- The always-on screen: coins and city stats, the clock, the main buttons, the daily gift,
+-- The always-on screen: coins, gems and city stats, the clock, the main buttons, the rewards,
 -- and the wiring that opens panels from buttons, prompts in the world and server notices.
 
 local Lighting = game:GetService("Lighting")
@@ -46,6 +46,16 @@ function Hud.open(name: string, arg: any?)
 	if p and p.open then
 		p.open(arg)
 	end
+end
+
+-- Is any panel up? (The welcome back dialog waits for whatever is being read.)
+function Hud.anyOpen(): boolean
+	for _, p in panels do
+		if p.isOpen and p.isOpen() then
+			return true
+		end
+	end
+	return false
 end
 
 function Hud.closeAll()
@@ -196,7 +206,8 @@ function Hud.start()
 	-- currency/stats tab should also be part of the left side edge"), the three side by side in it.
 	local pills = Kit.darkPill({
 		Name = "Pills",
-		Size = UDim2.fromOffset(350, 46),
+		-- (wider for the gems beside the coins: 350 before them)
+		Size = UDim2.fromOffset(460, 46),
 		Position = UDim2.fromOffset(0, 96),
 		Parent = hud,
 	})
@@ -219,6 +230,23 @@ function Hud.start()
 	-- (the money had a green + beside it that opened the shop. The user: "remove the + button next
 	-- to coins". The shop itself went later.)
 	local coinPill, coins = cell("coin", 134, 1)
+	-- the gems beside the coins: the rare currency (the user: "players can also buy ... with gems,
+	-- as another currency"). A press opens the store on its gems.
+	local gemPill, gemLabel = Kit.pill("gem", {
+		Name = "Gems",
+		Parent = pillRow,
+		Size = UDim2.fromOffset(96, 40),
+		LayoutOrder = 2,
+		IconColor = T.Purple,
+	})
+	Kit.paint(gemPill, nil, 1)
+	local gemButton = Kit.new(
+		"TextButton",
+		{ Name = "OpenGems", Text = "", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), ZIndex = 4, Parent = gemPill }
+	)
+	gemButton.Activated:Connect(function()
+		Hud.open("Store", "gems")
+	end)
 	local _, popLabel = cell("people", 82, 3)
 	local moodPill, moodLabel = cell("smile", 98, 5)
 	-- and under that, the quests: the town's next goals
@@ -299,6 +327,18 @@ function Hud.start()
 	State.on("coins", function(n)
 		setCoins(n or 0)
 	end)
+	local gemsShown: number? = nil
+	State.on("gems", function(n)
+		local now = if type(n) == "number" then n else 0
+		gemLabel.Text = Text.commas(now)
+		if gemsShown ~= nil and now ~= gemsShown then
+			Kit.bump(gemPill, 0.12)
+		end
+		gemsShown = now
+	end)
+	if State.data.gems == nil then
+		gemLabel.Text = "0"
+	end
 	State.on("villagers", refreshCity)
 	State.onPlan(function()
 		refreshCity()
@@ -336,7 +376,8 @@ function Hud.start()
 	-- buying of things and food and feeding" and "remove the map button and the map interface".)
 	local corner = Kit.box({
 		Name = "Corner",
-		Size = UDim2.fromOffset(248, 76),
+		-- (wide enough for five: the Store came in beside the news)
+		Size = UDim2.fromOffset(310, 76),
 		-- under the clock's glass, which ends 72 from the top of the screen
 		Position = UDim2.new(1, -14, 0, 88 - inset),
 		AnchorPoint = Vector2.new(1, 0),
@@ -385,6 +426,8 @@ function Hud.start()
 		{
 			{ "city", "CityPanel", "City" },
 			{ "news", "News", "News" },
+			-- passes and gems for Robux (the user: "add gamepasses, just like bloxburg")
+			{ "store", "Store", "Store" },
 		}
 	do
 		cornerButton(e[1], e[2], e[3], i + 1, function()
@@ -509,7 +552,7 @@ function Hud.start()
 			refreshVisible()
 		end
 	end)
-	-- the quick menu, bottom left: the town's people, the creator, goals and the gift ------------------
+	-- the quick menu, bottom left: the town's people, the creator, goals and the rewards ---------------
 	-- one bar out of the bottom left corner, leaning the other way so it widens toward the bottom.
 	-- (There was a round portrait button at its left end, which opened the villagers as the first
 	-- tile does. The user: "remove this button and flush the rest to the left".)
@@ -568,19 +611,10 @@ function Hud.start()
 	local goalsTile = menuButton("trophy", "Goals", T.Orange, 3, function()
 		Hud.open("Goals")
 	end)
-	local giftReady = false
-	local gift = menuButton("gift", "Gift", T.Coral, 4, function()
-		if not giftReady then
-			Toasts.show("Your next gift comes tomorrow.", "info")
-			return
-		end
-		giftReady = false
-		task.spawn(function()
-			local ok, amount = Remotes.fn("DailyClaim"):InvokeServer()
-			if ok then
-				Toasts.show(Text.fill("Daily gift: {n} coins.", { n = amount }), "good")
-			end
-		end)
+	-- (it was the daily gift alone; the gift is the Rewards menu's first tab now, beside gems for
+	-- time played, achievements and the group)
+	local rewardsTile = menuButton("gift", "Rewards", T.Coral, 4, function()
+		Hud.open("Rewards")
 	end)
 
 	-- the big Build button, bottom right
@@ -611,11 +645,30 @@ function Hud.start()
 		State.on(key, refreshGoals)
 	end
 	refreshGoals()
-	local giftBadge = Kit.badge(gift)
-	State.on("daily", function(daily)
-		local today = math.floor(os.time() / 86400)
-		giftReady = daily == nil or daily.last ~= today
-		giftBadge.Visible = giftReady
+	-- the Rewards tile's while anything there is waiting: today's gift, a playtime step, an
+	-- achievement or the group's gems
+	local rewardsBadge = Kit.badge(rewardsTile)
+	local RewardsPanel = Hud.panel("Rewards")
+	local function refreshRewards()
+		rewardsBadge.Visible = RewardsPanel.waiting() > 0
+	end
+	for _, key in { "daily", "playtime", "achieved", "villagers", "rel", "stats" } do
+		State.on(key, refreshRewards)
+	end
+	State.onPlan(function()
+		refreshRewards()
+	end)
+	local me = game:GetService("Players").LocalPlayer
+	if me then
+		me:GetAttributeChangedSignal("InGroup"):Connect(refreshRewards)
+	end
+	refreshRewards()
+	task.spawn(function()
+		-- (a new day brings a new gift with nobody pushing anything)
+		while true do
+			task.wait(60)
+			refreshRewards()
+		end
 	end)
 
 	-- While somebody is talking in a scene (a villager you stopped, an event you chose to watch:
@@ -645,11 +698,11 @@ function Hud.start()
 	end)
 
 	-- everything slides into place when the game starts, one piece after another
-	Kit.slideIn(pills, -420, 0, 0.1)
+	Kit.slideIn(pills, -500, 0, 0.1)
 	Kit.slideIn(card, -360, 0, 0.2)
 	Kit.slideIn(clockTab, 260, 0, 0.15)
 	Kit.slideIn(clock, 260, 0, 0.15)
-	Kit.slideIn(corner, 240, 0, 0.2)
+	Kit.slideIn(corner, 320, 0, 0.2)
 	Kit.slideIn(menu, -480, 0, 0.25)
 	Kit.slideIn(buildButton, 260, 0, 0.3)
 	-- and the quick menu's tiles rise into it one after another
@@ -749,6 +802,9 @@ function Hud.start()
 	-- the tutorial (UI/Tutorial): on a first visit its welcome, then a card at the side for each
 	-- step, pointing at what to press next
 	Hud.panel("Tutorial").start(Hud)
+
+	-- what the town earned while the player was away (UI/WelcomeBack; Sim/Offline)
+	Hud.panel("WelcomeBack").start(Hud)
 end
 
 return Hud

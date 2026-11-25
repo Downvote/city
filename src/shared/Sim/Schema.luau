@@ -8,6 +8,9 @@ local Personalities = require(script.Parent.Parent.Data.Personalities)
 local Foods = require(script.Parent.Parent.Data.Foods)
 local Colors = require(script.Parent.Parent.Util.Colors)
 local Keepsakes = require(script.Parent.Keepsakes)
+local City = require(script.Parent.City) -- (the land a save already has stays theirs: City.keepLand)
+local Flair = require(script.Parent.Flair)
+local Memory = require(script.Parent.Memory)
 
 local Schema = {}
 
@@ -66,6 +69,10 @@ export type Villager = {
 	chats: number?,
 	from: string?, -- who they came as when they moved in from the road (nobody does any more; old saves keep it)
 	memo: { text: string, t: number }?, -- the last event they were in, as they'd tell it (Sim/Talk)
+	-- what the player gave them to say, bought with gems (Sim/Flair): a catchphrase, an ending for
+	-- their sentences and a favourite thing
+	flair: { phrase: string?, ending: string?, thing: string? }?,
+	lately: { Memory.Memory }?, -- what their events left them with for a few days (Sim/Memory)
 }
 
 function Schema.newProfile(): any
@@ -83,7 +90,9 @@ function Schema.newProfile(): any
 		outfits = {},
 		settings = table.clone(Schema.Settings),
 		tutorial = 0, -- steps of the tutorial done, or Sim/Tutorial.Skipped (Tutorial.advance records it)
-		daily = { last = 0, streak = 0 },
+		-- the daily gift: the day it was last claimed, the days running (capped: the coins) and the
+		-- days running uncapped (the gems: more on every seventh, Sim/Rewards)
+		daily = { last = 0, streak = 0, run = 0 },
 		stats = {
 			events = 0,
 			made = 0,
@@ -176,6 +185,9 @@ function Schema.migrate(raw: any): any
 			if memo ~= nil and (type(memo) ~= "table" or type(memo.text) ~= "string" or type(memo.t) ~= "number") then
 				v.memo = nil
 			end
+			-- their flair and their memories, each checked again (Sim/Flair, Sim/Memory)
+			v.flair = Flair.sanitize(v.flair)
+			v.lately = Memory.sanitize(raw, vid, v.lately)
 			if type(v.fav) ~= "string" or not Foods.get(v.fav) then
 				v.fav = Foods.list[1].id
 			end
@@ -208,6 +220,8 @@ function Schema.migrate(raw: any): any
 	if profile.plan ~= nil then
 		profile.plan = Plan.sanitize(profile.plan)
 	end
+	-- land bought past what is free stays theirs without Big Plot (Sim/City: Land and Big Plot)
+	City.keepLand(profile)
 	profile.v = Schema.Version
 	return profile
 end

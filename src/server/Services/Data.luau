@@ -18,6 +18,8 @@ local Schema = require(Shared.Sim.Schema)
 local Life = require(Shared.Sim.Life)
 local Tutorial = require(Shared.Sim.Tutorial)
 local Gems = require(Shared.Sim.Gems)
+local Rewards = require(Shared.Sim.Rewards)
+local SimPasses = require(Shared.Sim.Passes)
 local StarterHouse = require(Shared.Data.StarterHouse)
 
 local Data = {}
@@ -29,6 +31,7 @@ local store: DataStore? = nil
 local profiles: { [Player]: any } = {}
 local saving: { [Player]: boolean } = {}
 local unsaved: { [Player]: boolean } = {}
+local seenBefore: { [Player]: number } = {} -- profile.seen as it loaded (offline earnings: Services/Store)
 local loadedSignal = Instance.new("BindableEvent")
 local jobId = if game.JobId ~= "" then game.JobId else "studio-" .. HttpService:GenerateGUID(false)
 
@@ -132,6 +135,9 @@ function Data.save(player: Player, release: boolean?): boolean
 		return false
 	end
 	saving[player] = true
+	-- when they were last here, for offline earnings (Sim/Offline): every save is made with them
+	-- in the game, the last one as they leave
+	profile.seen = os.time()
 	local ok, err = pcall(function()
 		(store :: DataStore):UpdateAsync(key(player), function(old)
 			old = old or {}
@@ -152,6 +158,12 @@ end
 
 function Data.get(player: Player): any
 	return profiles[player]
+end
+
+-- os.time() when the player's profile was last saved with them in the game, as it loaded this
+-- visit (0 on a first visit): what offline earnings count from (Services/Store, Sim/Offline).
+function Data.seenBefore(player: Player): number
+	return seenBefore[player] or 0
 end
 
 function Data.isUnsaved(player: Player): boolean
@@ -194,6 +206,8 @@ function Data.clientState(player: Player): any
 		keepsakes = p.keepsakes, -- what villagers made you, for Build mode's Keepsakes tab
 		gems = p.gems,
 		passes = p.passes,
+		playtime = p.playtime, -- today's play and the steps claimed (Sim/Rewards, the Rewards menu)
+		achieved = p.achieved, -- achievements claimed, and the group's gems ("group")
 		unsaved = unsaved[player] == true,
 		plot = player:GetAttribute("Plot"),
 		plan = p.plan,
@@ -291,6 +305,8 @@ local function onJoin(player: Player)
 	-- heart level thank yous an old save was still waiting to pick are paid out now (there is no
 	-- picking any more: Sim/Life)
 	local owed = Life.settleOffers(profile)
+	-- when they were last here, before this visit's saves move it on (Data.seenBefore)
+	seenBefore[player] = if type(profile.seen) == "number" then profile.seen else 0
 	profiles[player] = profile
 	player:SetAttribute("Coins", profile.coins)
 	if #owed > 0 then
@@ -322,6 +338,7 @@ local function onLeave(player: Player)
 	Data.save(player, true)
 	profiles[player] = nil
 	unsaved[player] = nil
+	seenBefore[player] = nil
 end
 
 -- Lets players in: loads the profile of everyone already here and of everyone who joins from now
@@ -389,20 +406,17 @@ function Data.start()
 		if not p then
 			return false
 		end
-		local today = math.floor(os.time() / 86400)
-		if p.daily.last == today then
-			return false, 0
+		-- the coins grow with the streak; a gem a day comes with them, more on every seventh day
+		-- running and one more for VIP (Sim/Rewards; the user: "allow players to buy gems, as a
+		-- daily reward ...")
+		local ok, amount, gems = Rewards.claimDaily(p, Rewards.today(), SimPasses.has(p, "vip"))
+		if not ok then
+			return false, 0, 0
 		end
-		if p.daily.last == today - 1 then
-			p.daily.streak = math.min(p.daily.streak + 1, Tuning.Economy.DailyStreakCap)
-		else
-			p.daily.streak = 1
-		end
-		p.daily.last = today
-		local amount = Tuning.Economy.DailyGift + (p.daily.streak - 1) * Tuning.Economy.DailyStreakBonus
 		Data.addCoins(player, amount)
+		Data.addGems(player, gems)
 		Data.push(player, "daily")
-		return true, amount
+		return true, amount, gems
 	end
 
 	Players.PlayerRemoving:Connect(onLeave)

@@ -61,6 +61,15 @@ function Passes.payBoost(profile: any, inGroup: boolean?): number
 	return m
 end
 
+-- May this player put down a piece of this kind? VIP pieces (Catalog: `vip`) are for VIP owners
+-- (Services/Build refuses them to anyone else; Build mode offers the pass on their cards).
+function Passes.mayPlace(profile: any, def: any): boolean
+	if type(def) == "table" and def.vip == true then
+		return Passes.has(profile, "vip")
+	end
+	return true
+end
+
 -- Every pass's key (for the specs and the store).
 function Passes.keys(): { string }
 	local out = {}

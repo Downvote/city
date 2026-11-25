@@ -9,6 +9,8 @@
 --   job         the first star works ("any", or a job id such as "baker")
 --   nojob       the first star has no job
 --   hobby       the first star has this hobby (Data/Sayings)
+--   memory      the first star remembers this right now (Sim/Memory: "band", "pet", "garden"...),
+--               or one of a list; the scene's words for it are ctx.memoryWords(vid, kind)
 --   season      1..4 (spring, summer, autumn, winter) or a list of them
 --   weather     a weather or a list of them ("clear", "cloudy", "rain", "storm", "snow", "blossom", "leaves")
 --   rel, relMax the first two stars' friendship score is at least / at most this (K.BestFriends
@@ -34,6 +36,9 @@
 --                                    with the first
 --   s:mood(who, d) s:rel(d) s:relx(x, y, d) s:coins(d) s:hearts(who, n) s:xp(who, d) s:all(d)
 --   s:memo(who, text)                what they might say about it later when you stop for a chat
+--   s:remember(who, kind, opts)      something that lasts a few days (Sim/Memory): opts.what, .name,
+--                                    .with (a star's letter); the band they joined, the hat they wear
+--   s:forget(who, kind)              and that's over now
 --   s:keep(item, who)                a keepsake for you (Build/Recipes/Keepsakes)
 --   s:prop(id, by)                   a thing that appears by them while the scene plays (Data/EventProps)
 --   s:leave(id, hours, by)           a thing that stays a while after the scene
@@ -116,6 +121,18 @@ function K.W(spec: { [string]: any }): (any, string?, string?, string?) -> numbe
 			end
 			if spec.hobby and not inList(v.hobby, spec.hobby) then
 				return 0
+			end
+			if spec.memory then
+				local kinds = if type(spec.memory) == "table" then spec.memory else { spec.memory }
+				local found = false
+				for _, kind in kinds do
+					if ctx.memory(a, kind) then
+						found = true
+					end
+				end
+				if not found then
+					return 0
+				end
 			end
 			if spec.bed and not v.bed then
 				return 0
@@ -465,6 +482,24 @@ end
 
 function S:memo(who: string, text: string): any
 	return self:fx({ t = "memo", who = who, text = self:fill(text) })
+end
+
+-- something that lasts a few days (Sim/Memory); its words are filled like a line's
+function S:remember(who: string, kind: string, opts: { [string]: any }?): any
+	local o = opts or {}
+	return self:fx({
+		t = "remember",
+		who = who,
+		kind = kind,
+		what = if type(o.what) == "string" then self:fill(o.what) else nil,
+		name = if type(o.name) == "string" then self:fill(o.name) else nil,
+		with = o.with,
+		days = o.days,
+	})
+end
+
+function S:forget(who: string, kind: string): any
+	return self:fx({ t = "forget", who = who, kind = kind })
 end
 
 function S:keep(item: string, who: string?): any

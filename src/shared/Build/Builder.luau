@@ -8,6 +8,8 @@ local Shapes = require(script.Parent.Shapes)
 local Catalog = require(script.Parent.Catalog)
 local Solid = require(script.Parent.Solid) -- (what of a placed piece is solid)
 local Water = require(script.Parent.Water) -- (water: pools and ponds)
+local Stretch = require(script.Parent.Stretch) -- (a piece made wider, deeper or taller)
+local Basement = require(script.Parent.Basement) -- (the basement's lining round its open sides)
 local Textures = require(script.Parent.Parent.Data.Textures)
 local LowPoly = require(script.Parent.LowPoly)
 local Tuning = require(script.Parent.Parent.Config.Tuning)
@@ -553,7 +555,11 @@ function Builder.primsFor(plan: Plan.PlanData, kind: string, key: string): { Pri
 				end
 			end
 		end
-		return Shapes.floor(f, Plan.holes(plan, f.lv), under)
+		local prims = Shapes.floor(f, Plan.holes(plan, f.lv), under)
+		if f.lv == Basement.Level then
+			Geometry.append(prims, Basement.lining(plan, key))
+		end
+		return prims
 	elseif kind == "roofs" then
 		local r = plan.roofs[key]
 		if not r then
@@ -581,6 +587,8 @@ function Builder.primsFor(plan: Plan.PlanData, kind: string, key: string): { Pri
 		-- only the piece's body is solid, not its little parts (Build/Solid: "villagers and the
 		-- player can sometimes get stuck in objects")
 		prims = Solid.apply(def, prims)
+		-- stretched with the Stretch pass: every part scaled from the piece's pivot (Build/Stretch)
+		prims = Stretch.prims(prims, Stretch.of(item))
 		for _, p in prims do
 			if p.role == "door" then
 				p.frame = frame
