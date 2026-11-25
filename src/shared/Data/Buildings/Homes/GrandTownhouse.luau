@@ -63,7 +63,7 @@ return function(add: any)
 			b:floor(14, 12, 24, 36, OAK, 1) -- the landing
 			b:floor(24, 12, 34, 36, OAK, 1) -- the second bedroom
 			b:floor(14, 6, 24, 12, MARBLE) -- the porch
-			b:floor(16, 0, 22, 4, PAVING) -- the path
+			b:floor(16, 0, 22, 6, PAVING) -- the path, up to the porch
 
 			-- the walls, both storeys --------------------------------------------------------------
 			k:wall("front", 4, 12, 34, 12, LIMESTONE, INSIDE)
@@ -89,7 +89,7 @@ return function(add: any)
 			-- the roofs: hipped slate over the house, a pediment over the porch that dies into the
 			-- upper wall
 			b:roof(4, 12, 34, 36, "hip", 8, 0, ROOF, LIMESTONE, 1, 1)
-			b:roof(14, 6, 24, 12, "gable", 4, 1, ROOF, PEDIMENT, 0, 0.3)
+			b:roof(14, 6, 24, 12, "gable", 4, 1, ROOF, PEDIMENT, 0, 0.2)
 
 			-- doors and windows ------------------------------------------------------------------
 			k:open("door_double", "front", 19, TEAL, WHITE)
@@ -102,14 +102,14 @@ return function(add: any)
 			k:open("win_tall", "left", 31, WHITE, WHITE)
 			k:open("win_tall", "right", 26, WHITE, WHITE)
 			k:open("win_square", "back", 26.55, WHITE, WHITE)
-			k:open("door_wood", "back", 16.9, TEAL, WHITE)
+			k:open("win_tall", "back", 16.9, WHITE, WHITE)
 			k:open("win_square", "upback", 9, WHITE, WHITE)
 			k:open("win_square", "upback", 29, WHITE, WHITE)
 			k:open("arch_open", "hallL", 28.5)
 			k:open("arch_open", "hallR", 15)
-			k:open("door_panel", "uphallL", 15, WHITE, GOLD)
-			k:open("door_panel", "uphallL", 33.3, WHITE, GOLD)
-			k:open("door_panel", "uphallR", 15, WHITE, GOLD)
+			k:open("door_wood", "uphallL", 15, WHITE, GOLD)
+			k:open("door_wood", "uphallL", 33.3, WHITE, GOLD)
+			k:open("door_wood", "uphallR", 15, WHITE, GOLD)
 
 			-- the outside --------------------------------------------------------------------------
 			for _, w in { "front", "right", "back", "left" } do
@@ -124,31 +124,28 @@ return function(add: any)
 			k:dress("upfront", { hood = { WHITE, ROOF.c }, box = { WHITE, ROSE } })
 			k:dress("upback", { hood = { WHITE, ROOF.c }, box = { WHITE, GOLD } })
 			k:dress("back", { hood = { WHITE, ROOF.c }, box = { WHITE, PLUM } })
-			k:putY("chimney", 2.15, 22, 90, 0, "C9B8A4", "68686E")
+			k:putY("chimney", 1.8, 22, 90, 0, "C9B8A4", "68686E")
 			k:hang("downpipe", "back", 33.3, 0, "a", ROOF.c, ROOF.c)
 			-- the porch: two round pillars under the pediment, lanterns either side of the door
 			k:putY("pillar_round", 15.2, 7.4, 0, F, WHITE, WHITE)
 			k:putY("pillar_round", 22.8, 7.4, 0, F, WHITE, WHITE)
-			k:putY("doorstep", 19, 4.8, 180, 0, PALE, STONE)
 			k:hang("lantern_wall", "front", 14.9, 5.8)
 			k:hang("lantern_wall", "front", 23.1, 5.8)
 			k:putY("flower_pot", 15.4, 10.6, 0, F, nil, ROSE)
 			k:putY("flower_pot", 22.6, 10.6, 0, F, nil, ROSE)
 			k:put("doormat", 19, 10.9, 0)
 			-- the front garden: a lamp at the gap in the hedge, clipped bushes under the bays
-			k:put("lamp_post", 15.6, 2.4, 0)
 			for _, x in { 3.6, 31.6 } do
 				k:put("bush", x, 6.6, 0)
 			end
 			k:put("flower_border", 9, 5.0, 0, STONE, ROSE)
 			k:put("flower_border", 29, 5.0, 0, STONE, PLUM)
-			k:put("planter_box", 11.4, 9.4, 0, STONE, GOLD)
-			k:put("planter_box", 26.6, 9.4, 0, STONE, GOLD)
 			-- the garden behind: stones from the back door to a bench under the blossom
-			k:put("path_stones", 16.9, 37.6, 0)
-			k:put("path_stones", 17.4, 39.8, 20)
-			k:put("bench_garden", 22.0, 42.4, 180, WALNUT, SAGE)
-			k:put("tree_blossom", 30.4, 40.2, 0)
+			k:put("path_stones", 26.0, 38.6, 0)
+			k:put("path_stones", 23.6, 40.2, 20)
+			k:put("bench_garden", 19.0, 42.4, 180, WALNUT, SAGE)
+			k:put("bush", 30.6, 40.6, 0)
+			k:put("bird_house", 33.6, 41.6, 0, WHITE, SAGE)
 			k:put("flower_bed", 9.0, 38.4, 0, nil, ROSE)
 			k:put("flower_bed", 13.4, 41.8, 0, nil, PLUM)
 
@@ -171,7 +168,6 @@ return function(add: any)
 			k:put("armchair", 9, 14.6, 0, TEAL)
 			k:put("lamp_floor", 12.8, 13.3, 0, GOLD)
 			k:put("piano", 9, 33.65, 180, WALNUT)
-			k:put("stool", 9, 30.4, 0, WALNUT, PLUM)
 			k:put("bookshelf", 5.15, 28, 90, WALNUT)
 			k:put("chandelier", 8.6, 21, 0, GOLD)
 			k:hang("art_flowers", "hallL", 21, 6.6, "b")
@@ -180,11 +176,10 @@ return function(add: any)
 			k:put("table_dining_long", 29, 20.5, 0, WALNUT)
 			k:on("vase_flowers", "table_dining_long", 29, 20.5, 0, WHITE, ROSE)
 			for _, x in { 27, 31 } do
-				k:put("chair_dining", x, 17.4, 0, WALNUT, TEAL)
-				k:put("chair_dining", x, 23.6, 180, WALNUT, TEAL)
+				k:put("chair_wood", x, 17.4, 0, WALNUT, TEAL)
+				k:put("chair_wood", x, 23.6, 180, WALNUT, TEAL)
 			end
-			k:put("lamp_pendant", 27, 20.5, 0, GOLD)
-			k:put("lamp_pendant", 31, 20.5, 0, GOLD)
+			k:put("lamp_pendant", 29, 20.5, 0, GOLD)
 			k:put("counter_corner", 32.35, 34.35, 180, WHITE, PALE)
 			k:put("stove", 29.55, 34.35, 180, WHITE, PALE)
 			k:put("counter_sink", 26.55, 34.35, 180, WHITE, PALE)
@@ -219,16 +214,12 @@ return function(add: any)
 			k:up("light_ceiling", 9, 32, 0, 1)
 
 			-- the second bedroom
-			k:up("bed_double", 29.85, 26, 270, 1, WALNUT, SAGE)
-			k:up("nightstand", 32.75, 21.95, 270, 1, WALNUT)
-			b:item("lamp_table", 32.75, 21.95, 0, 1, HomeKit.top("nightstand", 1))
-			k:up("nightstand", 32.75, 30.05, 270, 1, WALNUT)
-			b:item("lamp_table", 32.75, 30.05, 0, 1, HomeKit.top("nightstand", 1))
-			k:up("desk", 28, 34.45, 180, 1, WALNUT)
-			k:up("chair_wood", 28, 32.2, 0, 1, WALNUT, SAGE)
-			b:item("books_stack", 29.2, 34.6, 10, 1, HomeKit.top("desk", 1))
-			k:up("armchair", 29.5, 14.6, 0, 1, ROSE)
-			k:up("lamp_floor", 32.8, 13.3, 0, 1, GOLD)
+			k:up("bed_single", 30.05, 26, 270, 1, WALNUT, SAGE)
+			k:up("nightstand", 32.75, 22.95, 270, 1, WALNUT)
+			b:item("lamp_table", 32.75, 22.95, 0, 1, HomeKit.top("nightstand", 1))
+			k:up("dresser", 29, 34.75, 180, 1, WALNUT)
+			b:item("plant_small", 30.4, 34.8, 0, 1, HomeKit.top("dresser", 1))
+			k:up("chair_wood", 29.5, 15.0, 20, 1, WALNUT, ROSE)
 			k:up("rug_round", 29.5, 18.8, 0, 1, "C9D6C4", WHITE)
 			k:up("light_ceiling", 29, 22, 0, 1)
 		end,
