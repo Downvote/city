@@ -682,7 +682,11 @@ and pure, so the ghost and the server go by the same rules.
   `Plan.itemRect` and `Water`'s footprint use `Stretch.size`; `Plan.validItem` checks `Stretch.valid` and a wall
   piece's stretched height; `Plan.clean` keeps the fields; `Plan.sanitize` clamps them (`Stretch.clamped`) before it
   checks an item; `Builder.primsFor` stretches an item after `Solid.apply`.
-- `Build/Placing`: `Turn` (45), `FreeTurn` (15), `FineTurn` (5), `turnStep(free, fine)`, `plainAngle(r)`,
+- `Build/Placing`: `Turn` (45), `FreeTurn` (15), `FineTurn` (5), `turnStep(free, fine)`, the steps a player picks
+  from (`Grids` 4, 2, 1, 0.5, 0.25 studs; `Turns` 90, 45, 30, 15, 5, 1 degrees), `grids(fineGrid)` (down to
+  `Tuning.Plot.ItemSnap` without Fine Grid), `turns(freePlace)` (90 and 45 without Free Placing, which the server's
+  angle rule allows), `stepFrom(list, now, finer)` (the next step and whether there was one) and `allowed(list,
+  want)` (the nearest allowed), `plainAngle(r)`,
   `roundAngle(r)`, `plainColour(plan, hex, def?)` (the palette, `Palette.Presets` and `Defaults`, the fences' own
   finishes, the piece's own colours, or any colour already on the plot), `moved(obj, before)` and
   `check(plan, profile, req, obj, before, made, alone)`. The rules: a change of one thing (`alone`, or any `set`)
@@ -696,16 +700,22 @@ and pure, so the ghost and the server go by the same rules.
   several pieces the keys of the ones it moves) while `prepare` (or `prepareMoves`) works the change out, and
   `prepare` calls `Placing.check` through `placingCheck` for each add and set after `Plan.validate`. Undo, redo,
   `Build.system` and the specs' `Build.prepare` run without it.
-- Client: `BuildMode.owns(key)`, `collides()` (Free Placing owned and `state.freePlace` on), `fineGrid()` (Fine Grid
-  owned and `state.fineGrid` on: furniture snaps to `Sim/Passes.itemSnap`), `turnStep(fine)` (R: 45, or with Free
-  Placing 15, 5 with Shift; the Turn tile and the touch button turn 45), `toggleFreePlace()` and `toggleFineGrid()`
-  (each asks `Purchase.prompt` without its pass; G is Fine Grid's), `stretchTarget()` (the held piece, else the
+- Client: `BuildMode.owns(key)`, `collides()` (Free Placing owned and `state.freePlace` on), `gridStep()` (the grid
+  furniture snaps to: `state.grid` as far as the passes allow, a quarter of a stud to start with), `fineGrid()` (that
+  grid under a stud), `turnAngle()` (`state.turn` as far as the passes allow, 45 to start with), `turnStep(fine)`
+  (R, the Turn tile and the touch button: `turnAngle()`, or 5 with Shift for Free Placing's owner), `stepGrid(finer)`
+  and `stepTurn(finer)` (one step along `Placing.grids` or `Placing.turns`, held piece or not; past the passes they
+  ask `Purchase.prompt`; `BuildMode.lastStep` says what came of it and `changed("steps")` fires; keys [ and ] for the
+  grid, - and = for the turn), `toggleFreePlace()` and `toggleFineGrid()` (between the usual grid and a quarter of
+  it; each asks `Purchase.prompt` without its pass; G is Fine Grid's), `stretchTarget()` (the held piece, else the
   picked one: its def and stretch) and `setStretch(scale)` (the held piece at once, the picked one through
   `editSelected`). The place, wall and room tools and the ready-made building tool run `Placing.check`
   (`Collide.checkMade` for a building) with the passes the server says the player owns, less Free Placing while its
   owner has it off, worked out again only when the piece, the plan or the passes change; `state.blocked` holds why a
   held piece can't go, and the hint says it ("Bumps into the sofa"). Copy rounds an older piece's free angle to an
-  eighth without Free Placing and copies a stretch only for an owner. `BuildUI`: the `Placing` card at the right end
+  eighth without Free Placing and copies a stretch only for an owner. `BuildUI`'s `Steps` slab (a minus and a plus for
+the grid, `GridStep`, and for the turn, `TurnStep`) sits over the floors card and, while a piece is held, beside the
+way back, where it stays (not while drawing); its buttons and a step's outcome are said in the hint. `BuildUI`: the `Placing` card at the right end
   of the tools (`Free placing`, an icon button like the floors card's; slides away while a piece is held), the floors
   card's `Fine grid` switch (it was `Snap to grid`), a `Lock` badge (`lockBadge(holder, locked)`, the `lock` icon on a
   yellow disc) and the attribute `Locked` on a switch whose pass isn't owned, the hint's words for each

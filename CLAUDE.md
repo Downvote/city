@@ -32,7 +32,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (628 at the last full run; `Voice`: each personality's own hand, and a villager's ending; `Memory`: what events leave
+Specs today (629 at the last full run; `Voice`: each personality's own hand, and a villager's ending; `Memory`: what events leave
 with a villager for a few days, the accessory on and off; `FlairService`: buying flair with gems on the server, with
 stubbed neighbours; `Store`: passes owned, a gem pack's receipt paid once, the pay boost from Double Pay, VIP and the group;
 `Offline`: what the town earned while the player was away; `Rewards`: gems from the daily gift, playtime and
@@ -451,7 +451,10 @@ right part with all the decor and details filling the whole screen horizontally,
 moved up"): size those bars by scale (`UDim2.new(1, -28, 0, h)`), never to a fixed width. The floor card is one
 row of five icon buttons with no words ("change this part to 5 icons, 2 arrows, 3 toggleable icons in a row with
 no need for text"): floor down, floor up, then Hide roofs, See-through walls and Fine grid (Fine Grid's switch:
-finer placing is that pass's now, so it carries a padlock without it), yellow when on. What
+finer placing is that pass's now, so it carries a padlock without it), yellow when on. Over the floors card sits a
+slab of steps for furniture's grid and R's turn (the user: "make options for increasing/decreasing grid size, and
+rotation angle, which also can be adjusted while putting down things": `Placing.grids`/`turns`, `BuildMode.stepGrid`/
+`stepTurn`, keys [ ] and - =); while a piece is held it stays beside the way back. What
 a press did, and what a button under the pointer would do, is said in the hint line over the tools ("Floor 2",
 "Roofs hidden"); never put words back on the card. While a piece is held to place (picked from a card, a ready-made
 building, a door or window, a piece being moved or copied), the whole interface slides off the screen and only

@@ -16,6 +16,7 @@ local Catalog = require(Shared.Build.Catalog)
 local Palette = require(Shared.Data.Palette)
 local Colors = require(Shared.Util.Colors)
 local Text = require(Shared.Util.Text)
+local Placing = require(Shared.Build.Placing)
 local Keepsakes = require(Shared.Sim.Keepsakes)
 
 local Kit = require(script.Parent.Parent.UI.Kit)
@@ -265,6 +266,9 @@ local shownLevel = 0
 local holdingNow = false
 local slideToken = 0
 local touchButtons: Frame
+local stepsPill: Frame -- the grid and turn steps (BuildMode.stepGrid, stepTurn)
+local gridLabel: TextLabel
+local turnLabel: TextLabel
 local built = false
 local mainTab = "build"
 local subTab = "walls"
@@ -2205,9 +2209,9 @@ local TOOLS = {
 			if grouping() then
 				BuildMode.groupTurn()
 			elseif s.placing then
-				BuildMode.rotate(45)
+				BuildMode.rotate()
 			elseif needSelection() then
-				BuildMode.rotate(45)
+				BuildMode.rotate()
 			end
 		end,
 	},
@@ -2346,11 +2350,63 @@ local function floorTip(dir: number): string
 end
 
 -- What the floors card's button under the mouse would do, for the hint.
+-- The grid and turn steps' words: a grid of so many studs, a turn of so many degrees.
+local function stepValue(what: string): string
+	if what == "grid" then
+		return Text.fill("Grid {n}", { n = string.format("%g", BuildMode.gridStep()) })
+	end
+	return Text.fill("Turn {n}°", { n = string.format("%g", BuildMode.turnAngle()) })
+end
+
+-- What a step button would do from here (ids gridDown, gridUp, turnDown, turnUp), for the hint.
+local function stepTip(id: string): string?
+	local what = if string.sub(id, 1, 4) == "grid" then "grid" elseif string.sub(id, 1, 4) == "turn" then "turn" else nil
+	if not what then
+		return nil
+	end
+	local finer = string.sub(id, -4) == "Down"
+	local pass = if what == "grid" then "finegrid" else "freeplace"
+	local owned = BuildMode.owns(pass)
+	local list = if what == "grid" then Placing.grids(owned) else Placing.turns(owned)
+	local now = if what == "grid" then BuildMode.gridStep() else BuildMode.turnAngle()
+	local nextStep, moves = Placing.stepFrom(list, now, finer)
+	if moves then
+		return if what == "grid"
+			then Text.fill("Snap furniture to {n} studs", { n = string.format("%g", nextStep) })
+			else Text.fill("Turn pieces {n}° at a time", { n = string.format("%g", nextStep) })
+	end
+	if finer and not owned then
+		return if what == "grid" then "A finer grid needs Fine Grid" else "Smaller turns need Free Placing"
+	end
+	if what == "grid" then
+		return if finer then "That's the finest grid" else "That's the biggest grid"
+	end
+	return if finer then "That's the smallest turn" else "That's the biggest turn"
+end
+
+-- What the last step press came to, said in the hint for a moment.
+local function stepWords(): string?
+	local last = BuildMode.lastStep
+	if not last then
+		return nil
+	end
+	if last.stop then
+		return stepTip(last.what .. (if last.finer then "Down" else "Up"))
+	end
+	return if last.what == "grid"
+		then Text.fill("Furniture snaps to {n} studs", { n = string.format("%g", BuildMode.gridStep()) })
+		else Text.fill("R turns pieces {n}°", { n = string.format("%g", BuildMode.turnAngle()) })
+end
+
 local function viewTip(id: string): string
 	-- (the switches of the build mode passes say their own: passTip, further down)
 	local own = passTip(id)
 	if own then
 		return own
+	end
+	local step = stepTip(id)
+	if step then
+		return step
 	end
 	if id == "down" then
 		return floorTip(-1)
@@ -2482,6 +2538,12 @@ refreshChrome = function()
 	end
 	hintLabel.Text = hint
 	hintPill.Visible = not actionBar.Visible or overView ~= nil or flashText ~= nil
+	-- the grid and turn steps say where they are
+	if stepsPill then
+		gridLabel.Text = stepValue("grid")
+		turnLabel.Text = stepValue("turn")
+		stepsPill.Visible = not BuildMode.isDrawing()
+	end
 end
 
 -- the build mode passes' switches --------------------------------------------------------------------------
@@ -2663,10 +2725,26 @@ local HINT_HOME = UDim2.new(0, EDGE + 12, 1, -HINT_AT)
 -- click does) and, on a touch screen, a round button that turns it
 local HOLD_W = 84
 local TURN_W = 52
-local function hintLow(): UDim2
-	-- (the round turn button stands there on a touch screen, unless a drawing has nothing to turn)
+-- the grid and turn steps: over the floors card, and while a piece is held beside the way back
+-- (a drawing has no furniture to snap or turn: they step aside for it)
+local STEPS_W = 330
+local STEPS_HOME = UDim2.new(1, -EDGE - STEPS_W, 1, -HINT_AT)
+local function stepsShown(): boolean
+	return not BuildMode.isDrawing()
+end
+local function stepsLow(): UDim2
 	local turns = Kit.isTouch() and not BuildMode.isDrawing()
 	return UDim2.new(0, EDGE + 12 + HOLD_W + GAP + (if turns then TURN_W + GAP else 0), 1, -(EDGE + 12))
+end
+local function hintLow(): UDim2
+	-- (the round turn button stands there on a touch screen, unless a drawing has nothing to turn,
+	-- and the steps after it)
+	local turns = Kit.isTouch() and not BuildMode.isDrawing()
+	local x = EDGE + 12 + HOLD_W + GAP + (if turns then TURN_W + GAP else 0)
+	if stepsShown() then
+		x += STEPS_W + GAP
+	end
+	return UDim2.new(0, x, 1, -(EDGE + 12))
 end
 
 -- Is a piece in hand, following the pointer to be placed (from a card, or picked up to move or
@@ -2728,7 +2806,15 @@ local function setHolding(on: boolean, instant: boolean?)
 		end
 	end
 	-- the hint stays, down where the bars were (and on a touch screen the two round buttons that
-	-- turn the piece and put it away stand beside it)
+	-- turn the piece and put it away stand beside it), with the grid and turn steps before it
+	local stepsTo = if on then stepsLow() else STEPS_HOME
+	if instant then
+		stepsPill.Position = stepsTo
+	else
+		TweenService:Create(stepsPill, TweenInfo.new(0.34, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+			Position = stepsTo,
+		}):Play()
+	end
 	local target = if on then hintLow() else HINT_HOME
 	if instant then
 		hintPill.Position = target
@@ -2834,12 +2920,12 @@ local function refreshActionBar()
 	if kind == "items" then
 		act("move", "Move", BuildMode.moveSelected, 1)
 		act("rotate", "Turn", function()
-			BuildMode.rotate(45)
+			BuildMode.rotate()
 		end, 2)
 		act("copy", "Copy", BuildMode.copySelected, 3)
 	elseif kind == "roofs" then
 		act("rotate", "Turn", function()
-			BuildMode.rotate(45)
+			BuildMode.rotate()
 		end, 2)
 	end
 	act("trash", "Sell", BuildMode.deleteSelected, 9)
@@ -3112,7 +3198,67 @@ function BuildUI.init(exitCallback: () -> ())
 	putAway.Name = "Put it away"
 	putAway.LayoutOrder = 0
 	Kit.roundButton("rotate", { Name = "Turn it", Parent = touchButtons, Size = TURN_W, LayoutOrder = 1 }, function()
-		BuildMode.rotate(45)
+		BuildMode.rotate()
+	end)
+
+	-- The grid and turn steps (the user: "make options for increasing/decreasing grid size, and
+	-- rotation angle, which also can be adjusted while putting down things"): a glass slab with a
+	-- minus and a plus for each, over the floors card, and while a piece is held down beside the
+	-- way back, where it stays. The keys do the same: [ and ] for the grid, - and = for the turn.
+	stepsPill = Kit.darkPill({
+		Name = "Steps",
+		Size = UDim2.fromOffset(STEPS_W, 34),
+		Position = STEPS_HOME,
+		AnchorPoint = Vector2.new(0, 1),
+		Parent = ui,
+	})
+	local stepsRow = Kit.box({
+		Name = "Row",
+		Parent = stepsPill,
+		Size = UDim2.new(1, -28, 1, 0),
+		Position = UDim2.fromOffset(14, 0),
+	})
+	Kit.list(stepsRow, 4, true, Enum.HorizontalAlignment.Center)
+	local function stepButton(icon: string, name: string, id: string, order: number, run: () -> ())
+		local b = Kit.roundButton(icon, { Name = name, Parent = stepsRow, Size = 26, LayoutOrder = order }, run)
+		b.MouseEnter:Connect(function()
+			overView = id
+			refreshChrome()
+		end)
+		b.MouseLeave:Connect(function()
+			if overView == id then
+				overView = nil
+				refreshChrome()
+			end
+		end)
+		return b
+	end
+	local function stepLabel(name: string, order: number): TextLabel
+		return Kit.title("", {
+			Name = name,
+			Parent = stepsRow,
+			Size = UDim2.fromOffset(84, 34),
+			TextSize = 15,
+			Color = T.White,
+			AlignX = Enum.TextXAlignment.Center,
+			Wrap = false,
+			LayoutOrder = order,
+		})
+	end
+	stepButton("minus", "Smaller grid", "gridDown", 1, function()
+		BuildMode.stepGrid(true)
+	end)
+	gridLabel = stepLabel("GridStep", 2)
+	stepButton("plus", "Bigger grid", "gridUp", 3, function()
+		BuildMode.stepGrid(false)
+	end)
+	Kit.box({ Name = "Gap", Parent = stepsRow, Size = UDim2.fromOffset(10, 34), LayoutOrder = 4 })
+	stepButton("minus", "Smaller turn", "turnDown", 5, function()
+		BuildMode.stepTurn(true)
+	end)
+	turnLabel = stepLabel("TurnStep", 6)
+	stepButton("plus", "Bigger turn", "turnUp", 7, function()
+		BuildMode.stepTurn(false)
 	end)
 
 	-- the floors and the view switches, at the right on top of the catalog (level with the tools):
@@ -3370,6 +3516,12 @@ function BuildUI.init(exitCallback: () -> ())
 		if what == "level" and s.level ~= shownLevel then
 			shownLevel = s.level
 			flash(floorName(s.level))
+		end
+		if what == "steps" then
+			local words = stepWords()
+			if words then
+				flash(words)
+			end
 		end
 		refreshChrome()
 		if what == "tool" then

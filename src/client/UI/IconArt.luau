@@ -44,6 +44,7 @@ local solid, flat, hole, gap, clear, line =
 -- signs ------------------------------------------------------------------------------------------------
 
 A.plus = { solid("M10.5 3 H13.5 V10.5 H21 V13.5 H13.5 V21 H10.5 V13.5 H3 V10.5 H10.5 Z") }
+A.minus = { solid("M3 10.5 H21 V13.5 H3 Z") }
 A.close = { solid("M12 10 L18 4 L20 6 L14 12 L20 18 L18 20 L12 14 L6 20 L4 18 L10 12 L4 6 L6 4 Z") }
 A.check = { solid("M9 19.5 L21 7.5 L19 5.5 L9 15.5 L5 11.5 L3 13.5 Z") }
 -- the arrows: a block arrow with a notch in its tail

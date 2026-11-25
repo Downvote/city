@@ -2552,3 +2552,17 @@ Players it also finds a friend by their user name, and on Shared it finds a look
 two look through everybody and every shared look, not only the page on show. My items and My avatars look through what
 has been loaded so far, and say to load more when nothing loaded matches. These tabs have no sort, and moving to
 another tab starts with an empty box; the catalog's tabs keep their own last search and sort.
+
+### Grid and turn steps
+
+> make options for increasing/decreasing grid size, and rotation angle, which also can be adjusted while putting down things
+
+Build mode has a small slab with a minus and a plus for the grid and for the turn. It sits over the floors card, and
+while a piece is in hand it moves down beside the red way back and stays on the screen, so either can be changed
+mid placement. The keys do the same: [ and ] for a finer or bigger grid, - and = for a smaller or bigger turn.
+
+- Furniture's grid goes 4, 2, 1, then 0.5 and 0.25 studs with Fine Grid. Everybody starts on the finest they have.
+- R turns a piece by 90 or 45 degrees, then 30, 15, 5 or 1 with Free Placing (Shift still gives 5). Everybody starts
+  on 45.
+- Asking for a finer grid or a smaller turn than the passes give offers the pass, and the hint says why. The hint
+  also says what each button would do, and what a press did ("Furniture snaps to 2 studs").

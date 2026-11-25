@@ -329,6 +329,10 @@ D.plus = {
 	{ "r", 39, 39, 22, 22, C.white, o = false },
 }
 
+D.minus = {
+	{ "r", 10, 38, 80, 24, C.white, r = 0.35 },
+}
+
 D.up = {
 	arrowHead("up", 10, 10, 80, C.white),
 	{ "r", 32, 46, 36, 44, C.white, r = 0.2 },

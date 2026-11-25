@@ -74,10 +74,14 @@ local s = {
 	paint = { c = "F2E8D5", m = "SmoothPlastic", slot = "main", pick = false },
 	placing = nil :: any, -- { id, r, c1, c2, img, sx, sy, sz, moveKey }
 	selected = nil :: any, -- { kind, key }
-	-- the build mode passes' switches, for their owners (Build/Placing): Free Placing on (pieces may
-	-- go inside each other) and Fine Grid on (furniture snaps four times finer)
+	-- Free Placing's switch, for its owner (Build/Placing): pieces may go inside each other
 	freePlace = true,
-	fineGrid = true,
+	-- furniture's grid and how far R turns a piece, as the player set them (Build/Placing's steps;
+	-- the user: "make options for increasing/decreasing grid size, and rotation angle, which also
+	-- can be adjusted while putting down things"). The grid starts at a quarter of a stud, so Fine
+	-- Grid's owner starts on it as before and everybody else on the finest they may use.
+	grid = P.ItemSnap / 4,
+	turn = Placing.Turn,
 	blocked = nil :: string?, -- why the held piece can't go where it is (the hint says it)
 	roofsHidden = true,
 	seeThrough = false,
@@ -160,8 +164,8 @@ local function snapZ(v: number): number
 end
 
 local function snapItem(v: number): number
-	-- (Fine Grid: a quarter of the step, while its owner has it on)
-	local g = if BuildMode.fineGrid() then SimPasses.itemSnap(State.data) else P.ItemSnap
+	-- (the grid the player picked, as far as their passes allow)
+	local g = BuildMode.gridStep()
 	return math.floor(v / g + 0.5) * g
 end
 
@@ -1038,7 +1042,7 @@ local selectApi: SelectTool.Api = {
 		(BuildMode :: any).send(requests, onDone)
 	end,
 	itemStep = function()
-		return if (BuildMode :: any).fineGrid() then SimPasses.itemSnap(State.data) else P.ItemSnap
+		return (BuildMode :: any).gridStep()
 	end,
 	itemTurn = function(fine)
 		return (BuildMode :: any).turnStep(fine)
@@ -1532,7 +1536,7 @@ function BuildMode.rotate(step: number?)
 	end
 	if pl then
 		local def = Catalog.get(pl.id)
-		local d = step or 45
+		local d = step or BuildMode.turnStep()
 		if def and def.place == "stairs" then
 			d = 90
 		end
@@ -1545,7 +1549,7 @@ function BuildMode.rotate(step: number?)
 		local obj = Plan.copy(State.plan.items[sel.key])
 		local def = obj and Catalog.get(obj.id)
 		if obj and def and def.place ~= "opening" and def.place ~= "wall" then
-			obj.r = (obj.r + (if def.place == "stairs" then 90 else (step or 45))) % 360
+			obj.r = (obj.r + (if def.place == "stairs" then 90 else (step or BuildMode.turnStep()))) % 360
 			BuildMode.send({ { type = "set", kind = "items", key = sel.key, obj = obj } })
 		elseif obj and def then
 			obj.side = if obj.side == "a" then "b" else "a"
@@ -1642,15 +1646,73 @@ function BuildMode.collides(): boolean
 	return not (BuildMode.owns("freeplace") and s.freePlace)
 end
 
--- Is furniture snapping to the fine grid? (Fine Grid, while its owner has it on)
-function BuildMode.fineGrid(): boolean
-	return BuildMode.owns("finegrid") and s.fineGrid
+-- Furniture's grid step now: the one the player picked, or the nearest their passes allow.
+function BuildMode.gridStep(): number
+	return Placing.allowed(Placing.grids(BuildMode.owns("finegrid")), s.grid)
 end
 
--- How far a press of R turns a piece: an eighth of a turn, or with Free Placing 15 degrees (5
--- with Shift held).
+-- Is furniture snapping finer than the usual grid? (Fine Grid's switch shows it)
+function BuildMode.fineGrid(): boolean
+	return BuildMode.gridStep() < P.ItemSnap - 1e-6
+end
+
+-- How far a press of R turns a piece now: the step the player picked, or the nearest their passes
+-- allow.
+function BuildMode.turnAngle(): number
+	return Placing.allowed(Placing.turns(BuildMode.owns("freeplace")), s.turn)
+end
+
+-- The turn for one press: the picked step, or 5 degrees with Shift held for Free Placing's owner.
 function BuildMode.turnStep(fine: boolean?): number
-	return Placing.turnStep(BuildMode.owns("freeplace"), fine)
+	if fine and BuildMode.owns("freeplace") then
+		return Placing.FineTurn
+	end
+	return BuildMode.turnAngle()
+end
+
+-- What the last step press came to: "grid" or "turn", and whether it was stopped at the end
+-- ("end") or by a pass ("pass"). BuildUI says it in the hint.
+BuildMode.lastStep = nil :: { what: string, stop: string?, finer: boolean? }?
+
+-- One step finer (`finer`) or coarser along the grid, held piece or not. A finer step than the
+-- player's passes allow asks to sell Fine Grid. Returns whether the grid changed.
+function BuildMode.stepGrid(finer: boolean): boolean
+	local owned = BuildMode.owns("finegrid")
+	local nextStep, moved = Placing.stepFrom(Placing.grids(owned), BuildMode.gridStep(), finer)
+	if not moved then
+		local pass = finer and not owned
+		BuildMode.lastStep = { what = "grid", stop = if pass then "pass" else "end", finer = finer }
+		if pass then
+			Purchase.prompt("finegrid")
+		end
+		changed("steps")
+		return false
+	end
+	s.grid = nextStep
+	BuildMode.lastStep = { what = "grid", finer = finer }
+	lastGhostKey = ""
+	changed("steps")
+	return true
+end
+
+-- One step smaller (`finer`) or bigger for how far R turns a piece. A smaller step than eighths of
+-- a turn asks to sell Free Placing. Returns whether it changed.
+function BuildMode.stepTurn(finer: boolean): boolean
+	local owned = BuildMode.owns("freeplace")
+	local nextStep, moved = Placing.stepFrom(Placing.turns(owned), BuildMode.turnAngle(), finer)
+	if not moved then
+		local pass = finer and not owned
+		BuildMode.lastStep = { what = "turn", stop = if pass then "pass" else "end", finer = finer }
+		if pass then
+			Purchase.prompt("freeplace")
+		end
+		changed("steps")
+		return false
+	end
+	s.turn = nextStep
+	BuildMode.lastStep = { what = "turn", finer = finer }
+	changed("steps")
+	return true
 end
 
 -- Free Placing's switch: pieces may overlap, or keep out of each other again. Asks to sell the
@@ -1673,7 +1735,8 @@ function BuildMode.toggleFineGrid(): boolean
 		Purchase.prompt("finegrid")
 		return false
 	end
-	s.fineGrid = not s.fineGrid
+	-- (between the usual grid and a quarter of it; the grid steps go further either way)
+	s.grid = if BuildMode.fineGrid() then P.ItemSnap else P.ItemSnap / 4
 	lastGhostKey = ""
 	changed("view")
 	return true
@@ -1856,7 +1919,7 @@ local function bindKeys()
 					or UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
 				local shift = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift)
 				if input.KeyCode == Enum.KeyCode.R then
-					-- an eighth of a turn, or with Free Placing 15 degrees (5 with Shift)
+					-- the turn the player picked (with Free Placing, 5 degrees with Shift)
 					BuildMode.rotate(BuildMode.turnStep(shift))
 				elseif
 					input.KeyCode == Enum.KeyCode.Escape
@@ -1875,6 +1938,14 @@ local function bindKeys()
 					BuildMode.redo()
 				elseif input.KeyCode == Enum.KeyCode.G then
 					BuildMode.toggleFineGrid() -- (Fine Grid's switch)
+				elseif input.KeyCode == Enum.KeyCode.LeftBracket then
+					BuildMode.stepGrid(true) -- [ a finer grid, ] a coarser one
+				elseif input.KeyCode == Enum.KeyCode.RightBracket then
+					BuildMode.stepGrid(false)
+				elseif input.KeyCode == Enum.KeyCode.Minus then
+					BuildMode.stepTurn(true) -- - a smaller turn, = a bigger one
+				elseif input.KeyCode == Enum.KeyCode.Equals then
+					BuildMode.stepTurn(false)
 				elseif input.KeyCode == Enum.KeyCode.PageUp or input.KeyCode == Enum.KeyCode.Period then
 					BuildMode.setLevel(s.level + 1)
 				elseif input.KeyCode == Enum.KeyCode.PageDown or input.KeyCode == Enum.KeyCode.Comma then

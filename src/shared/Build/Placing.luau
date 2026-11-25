@@ -5,9 +5,10 @@
 -- mode"). Build mode goes by these rules before a click and the server holds every change to
 -- them (Services/Build), so the two always agree. Sim/Passes says who owns what.
 --
---   Free Placing   pieces may go inside each other (Build/Collide), and R turns them in steps of
---                  15 degrees, 5 with Shift held. Without it a piece turns in eighths of a turn.
---   Fine Grid      furniture snaps to a grid four times finer (Sim/Passes.itemSnap).
+--   Free Placing   pieces may go inside each other (Build/Collide), and R may turn them by 30, 15,
+--                  5 or 1 degrees (Placing.turns), 5 with Shift held. Without it a piece turns
+--                  by a quarter or an eighth of a turn.
+--   Fine Grid      furniture's grid may go four times finer (Placing.grids).
 --   Stretch        a piece made wider, deeper or taller (Build/Stretch).
 --   Any Colour     any colour at all, picked by hue and shade or typed as a hex code; without it
 --                  the palette, the ready-made finishes and any colour already on the plot.
@@ -25,6 +26,7 @@ local Plan = require(script.Parent.Plan)
 local Stretch = require(script.Parent.Stretch)
 local Palette = require(script.Parent.Parent.Data.Palette)
 local Passes = require(script.Parent.Parent.Sim.Passes)
+local Tuning = require(script.Parent.Parent.Config.Tuning)
 
 local Placing = {}
 
@@ -38,6 +40,67 @@ function Placing.turnStep(free: boolean, fine: boolean?): number
 		return Placing.Turn
 	end
 	return if fine then Placing.FineTurn else Placing.FreeTurn
+end
+
+-- The steps a player can pick for furniture's grid and for how far R turns a piece (the user:
+-- "make options for increasing/decreasing grid size, and rotation angle, which also can be
+-- adjusted while putting down things"), coarsest first. Anyone may use the grids down to
+-- Tuning.Plot.ItemSnap and the turns that keep a piece on eighths of a turn; Fine Grid opens the
+-- finer grids and Free Placing the smaller turns.
+Placing.Grids = { 4, 2, 1, 0.5, 0.25 }
+Placing.Turns = { 90, 45, 30, 15, 5, 1 }
+
+-- The grid steps this player may pick.
+function Placing.grids(fineGrid: boolean): { number }
+	local out = {}
+	for _, g in Placing.Grids do
+		if fineGrid or g >= Tuning.Plot.ItemSnap - 1e-6 then
+			table.insert(out, g)
+		end
+	end
+	return out
+end
+
+-- The turn steps this player may pick.
+function Placing.turns(freePlace: boolean): { number }
+	local out = {}
+	for _, t in Placing.Turns do
+		if freePlace or t % Placing.Turn == 0 then
+			table.insert(out, t)
+		end
+	end
+	return out
+end
+
+-- The step next to `now` in `list` (finer or coarser), and whether there was one to go to. A
+-- value that isn't in the list (a pass gone since) goes to the nearest one there.
+function Placing.stepFrom(list: { number }, now: number, finer: boolean): (number, boolean)
+	local at = 1
+	for i, v in list do
+		if math.abs(v - now) < math.abs(list[at] - now) then
+			at = i
+		end
+	end
+	local exact = math.abs(list[at] - now) < 1e-6
+	if not exact then
+		return list[at], true
+	end
+	local to = if finer then at + 1 else at - 1
+	if to < 1 or to > #list then
+		return list[at], false
+	end
+	return list[to], true
+end
+
+-- The step to use now: `want` if it's one this player may pick, else the nearest that is.
+function Placing.allowed(list: { number }, want: number): number
+	local best = list[1]
+	for _, v in list do
+		if math.abs(v - want) < math.abs(best - want) then
+			best = v
+		end
+	end
+	return best
 end
 
 -- Is this an angle anyone may turn a piece to (a whole number of eighths of a turn)?

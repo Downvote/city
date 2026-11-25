@@ -221,6 +221,31 @@ describe("Placing: the passes' rules for one change", function()
 		)
 	end)
 
+	it("lets the grid and the turn be stepped, finer ones with the passes", function()
+		-- the user: "make options for increasing/decreasing grid size, and rotation angle, which also
+		-- can be adjusted while putting down things"
+		expect(table.concat(Placing.grids(false), ",")).toBe("4,2,1")
+		expect(table.concat(Placing.grids(true), ",")).toBe("4,2,1,0.5,0.25")
+		expect(table.concat(Placing.turns(false), ",")).toBe("90,45")
+		expect(table.concat(Placing.turns(true), ",")).toBe("90,45,30,15,5,1")
+		-- every turn anyone may pick keeps a piece on eighths of a turn, as the server holds it
+		for _, t in Placing.turns(false) do
+			expect(Placing.plainAngle(t)).toBe(true)
+		end
+		local g, moved = Placing.stepFrom(Placing.grids(false), 1, true)
+		expect(g == 1 and not moved).toBeTruthy() -- (no finer grid without Fine Grid)
+		g, moved = Placing.stepFrom(Placing.grids(false), 1, false)
+		expect(g == 2 and moved).toBeTruthy()
+		g, moved = Placing.stepFrom(Placing.grids(true), 1, true)
+		expect(g == 0.5 and moved).toBeTruthy()
+		local t, turned = Placing.stepFrom(Placing.turns(false), 90, false)
+		expect(t == 90 and not turned).toBeTruthy() -- (nothing bigger than a quarter of a turn)
+		-- a step a pass gave, once the pass has gone, comes back to the nearest allowed
+		expect(Placing.allowed(Placing.grids(false), 0.25)).toBe(1)
+		expect(Placing.allowed(Placing.turns(false), 15)).toBe(45)
+		expect(Placing.allowed(Placing.turns(true), 15)).toBe(15)
+	end)
+
 	it("turns in eighths without Free Placing, and in small steps with it", function()
 		expect(Placing.turnStep(false)).toBe(45)
 		expect(Placing.turnStep(false, true)).toBe(45)
