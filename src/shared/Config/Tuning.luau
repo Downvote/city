@@ -657,32 +657,33 @@ Tuning.Look = {
 	Lens = { FocusDistance = 30, InFocusRadius = 60, FarIntensity = 0.32, Reach = 1.4, Ease = 5 },
 	-- The light (World.stylize puts it on Lighting; colours are 0 to 255). The preview tools read
 	-- these same numbers (tools/preview/look.py), so a render shows the game's light and grade.
-	-- The user: "it seems like shadows dont render on models". They did, but the shade was lit
-	-- nearly as brightly as the sun (ambients of 152 and 126 with light off the sky and extra
-	-- exposure on top), so a shadow had almost nothing to darken. Now shade is about half of
-	-- sunlight at midday (the World spec holds it by look.py's model), still violet, and the sun
-	-- is a little lower so pale walls in it don't wash out to white.
+	-- The user: "could you make hyperrealitic shading? also, it seems like dark areas dont go dark
+	-- all the way, they become flat shading instead". The shade used to be a strong lavender fill
+	-- (ambients of 100 to 140) that lit every face the same, so an underside or a corner showed as
+	-- bright as an open wall in shade: flat. Now the ambients are dim and neutral and the light in
+	-- the shade comes off the sky (EnvironmentDiffuseScale near 1), which Roblox works out per face
+	-- and per place: what faces the open sky is lit, what faces down or hides under an eave goes
+	-- dark. By look.py's model, at midday a wall in shade is about half of one in the sun, a cast
+	-- shadow on the ground about two thirds, and an underside about a tenth (the Palette spec).
 	Light = {
-		Brightness = 1.45, -- the sun (was 3.1, then 1.7, then 1.6: eased with the brighter shade, so a pale wall in the sun keeps its warmth)
-		Exposure = 0, -- ExposureCompensation: 1 is twice as bright (was 0.12)
-		-- the shade is a soft lavender fill now, not near black: shadows still show, but a wall in shade
-		-- keeps its colour (was 84, 78, 110 and 96, 90, 124)
-		Ambient = { 100, 96, 124 }, -- what lights a place the sky can't see (indoors)
-		OutdoorAmbient = { 112, 110, 140 }, -- what lights the shade outdoors
-		SunTint = { 255, 226, 186 }, -- ColorShift_Top: the sun's colour on what faces it (warm)
+		Brightness = 1.75, -- the sun (was 1.45 under the bright fill)
+		Exposure = 0, -- ExposureCompensation: 1 is twice as bright
+		Ambient = { 40, 40, 46 }, -- what lights a place the sky can't see (indoors): dim, so lamps matter
+		OutdoorAmbient = { 42, 44, 52 }, -- the least light in the shade outdoors; the sky adds the rest
+		SunTint = { 255, 238, 216 }, -- ColorShift_Top: the sun's colour on what faces it (a little warm)
 		-- GeographicLatitude. Roblox tilts the sun's path by the latitude less the earth's tilt
 		-- (23.5), so at 54 the sun stood 59 degrees up at noon on the +Z side, behind the houses on
 		-- the north side of Main Street, whose fronts face -Z (plot 1, the first player's, is one).
 		-- At -20 it stands 46 degrees up on the -Z side: over the harbour, on those fronts.
 		Latitude = -20,
-		SkyDiffuse = 0.32, -- EnvironmentDiffuseScale: soft light off the sky into the shade (was 0.24)
-		-- EnvironmentSpecularScale: shine off the sky. The user: "could you make materials interact
-		-- with lighting more, making all materials at least abit glossy?", so it is well up (was 0.18),
-		-- and every texture has a roughness map (Data/TextureIds' sheen where it has none of its own)
-		SkySpecular = 0.6,
-		ShadowSoftness = 0.18, -- a softer edge (was 0.12)
-		-- after dark, with only the moon, the shade is lifted again so the town stays readable
-		Night = { Ambient = { 104, 108, 150 }, OutdoorAmbient = { 124, 128, 176 } },
+		SkyDiffuse = 0.9, -- EnvironmentDiffuseScale: light off the sky into the shade, by how much sky a face sees (was 0.32)
+		-- EnvironmentSpecularScale: the sky's reflection. The user: "could you make materials interact
+		-- with lighting more, making all materials at least abit glossy?" (every texture has a
+		-- roughness map: Data/TextureIds' sheen where it has none of its own); full, as real surfaces do
+		SkySpecular = 1,
+		ShadowSoftness = 0.08, -- a crisp edge near what casts it, as in sunlight (was 0.18)
+		-- after dark, with only the moon, the shade is lifted a little so the town stays readable
+		Night = { Ambient = { 52, 56, 78 }, OutdoorAmbient = { 88, 94, 130 } },
 	},
 	-- The colour grade laid over the picture (a ColorCorrectionEffect), by the hour: the first
 	-- entry whose hours hold the clock is used, and Night when none does. World eases toward it.
@@ -690,15 +691,16 @@ Tuning.Look = {
 	-- which is what made roofs and grass harsh in the game while they looked fine in previews.
 	-- Now the colours on screen are close to the colours in the files.
 	Grade = {
-		Brightness = 0.01,
+		Brightness = 0, -- (was 0.01: the realistic light needs no lift, and it pushed a sunlit pale wall to white)
 		Hours = {
 			-- (warmer all day for the user's sunset picture: the gold hours are long)
-			{ From = 10, To = 14.5, Tint = { 255, 244, 232 }, Saturation = 0.06, Contrast = 0.06, Air = "day" },
-			{ From = 7.5, To = 16.5, Tint = { 255, 236, 216 }, Saturation = 0.08, Contrast = 0.07, Air = "gold" },
-			{ From = 5, To = 19.5, Tint = { 255, 216, 200 }, Saturation = 0.12, Contrast = 0.1, Air = "dusk" },
+			-- (nearly neutral for the realistic light: the warmth comes from the sun, not a wash)
+			{ From = 10, To = 14.5, Tint = { 255, 248, 240 }, Saturation = 0.04, Contrast = 0.08, Air = "day" },
+			{ From = 7.5, To = 16.5, Tint = { 255, 242, 228 }, Saturation = 0.05, Contrast = 0.08, Air = "gold" },
+			{ From = 5, To = 19.5, Tint = { 255, 228, 212 }, Saturation = 0.08, Contrast = 0.1, Air = "dusk" },
 		},
 		-- blue, and a little more push, so lit signs and windows stand out of the dark
-		Night = { Tint = { 184, 196, 255 }, Saturation = 0.15, Contrast = 0.12, Air = "night" },
+		Night = { Tint = { 196, 206, 255 }, Saturation = 0.08, Contrast = 0.12, Air = "night" },
 	},
 }
 

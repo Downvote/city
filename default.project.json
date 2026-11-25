@@ -35,23 +35,23 @@
     "Lighting": {
       "$properties": {
         "ClockTime": 13,
-        "Brightness": 1.7,
+        "Brightness": 1.75,
         "ExposureCompensation": 0,
         "GlobalShadows": true,
         "OutdoorAmbient": [
-          0.376,
-          0.353,
-          0.486
+          0.165,
+          0.173,
+          0.204
         ],
         "Ambient": [
-          0.329,
-          0.306,
-          0.431
+          0.157,
+          0.157,
+          0.18
         ],
         "ColorShift_Top": [
           1.0,
           0.933,
-          0.808
+          0.847
         ],
         "GeographicLatitude": -20,
         "Technology": "Future",
@@ -61,9 +61,9 @@
         "PrioritizeLightingQuality": {
           "Bool": true
         },
-        "EnvironmentDiffuseScale": 0.24,
-        "EnvironmentSpecularScale": 0.12,
-        "ShadowSoftness": 0.12
+        "EnvironmentDiffuseScale": 0.9,
+        "EnvironmentSpecularScale": 1,
+        "ShadowSoftness": 0.08
       }
     },
     "Workspace": {

@@ -2687,3 +2687,19 @@ only its owner can drive. Put it away from the Garage, and it goes when you leav
   the brick picture at a smaller size.
 - Every picture is grey and light, so the paint still decides the colour and a pale wall stays pale.
 
+### Realistic shading
+
+> could you make hyperrealitic shading? also, it seems like dark areas dont go dark all the way, they become flat shading instead
+
+- The shade was lit by a strong lavender fill that came from every side at once, so a corner, an underside or the
+  space under an eave showed about as bright as an open wall in shade. That is the flat look.
+- Now the fill is dim and nearly grey, and the light in the shade comes off the sky instead. Roblox works that out
+  for each face and each spot, so what faces the open sky is lit softly and what faces down or hides from the sky
+  goes properly dark. At midday a wall in shade is about half as bright as one in the sun, a shadow on open ground
+  about two thirds, and the underside of a roof or a table about a tenth.
+- The sun is a little stronger and less golden, its shadows have a crisp edge, every material reflects the sky in
+  full (with its normal and roughness maps), and the colour grade is nearly neutral, so the warmth comes from the
+  sun and not from a wash over the picture.
+- Indoors lies out of the sky's reach, so rooms are lit by their lamps, which now stay on all day. Nights keep a
+  little more light in the shade so the town stays readable.
+

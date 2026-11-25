@@ -1,8 +1,9 @@
 --!nocheck
 -- The town's colours and light. The user: "make the colors of the buildings, such as the roof of
 -- the buildings, more pleasing to look at. make the overall color pallete pleasing to look at as
--- well", and "it seems like shadows dont render on models" (the shade was lit nearly as brightly
--- as the sun, so a shadow had almost nothing to darken). The light is worked out with the same
+-- well", "it seems like shadows dont render on models" (the shade was lit nearly as brightly
+-- as the sun, so a shadow had almost nothing to darken), and "could you make hyperrealitic
+-- shading? also, it seems like dark areas dont go dark all the way". The light is worked out with the same
 -- model as tools/preview/look.py (its notes say what is assumed), from the numbers in
 -- Tuning.Look that the game puts on Lighting.
 
@@ -97,26 +98,36 @@ describe("The light", function()
 		expect(sunDir(9, Tuning.Look.Light.Latitude)[1] > 0).toBeTruthy()
 	end)
 
-	it("keeps the shade a soft fill, well under the sun at midday", function()
-		-- the user: "do the lighting haze glow". Shade is a lavender fill that keeps a wall's colour,
-		-- so it sits a little over half the sun now, still clearly in shade
-		-- the brief: a shaded face at roughly 45 to 55 percent of a sunlit one, and a cast shadow
-		-- as dark as that; it was over 80 percent
+	it("shades like daylight, with what the sky can't see going dark", function()
+		-- the user: "could you make hyperrealitic shading? also, it seems like dark areas dont go dark
+		-- all the way, they become flat shading instead". A wall in shade is about half a sunlit one,
+		-- a cast shadow on the open ground lighter (it still sees the whole sky), and a face turned
+		-- down from the sky a small part of either: it was about half, as flat as everything else
 		for _, h in { 11, 13 } do
 			local s = sunDir(h, Tuning.Look.Light.Latitude)
 			local flat = math.sqrt(s[1] ^ 2 + s[3] ^ 2)
 			local toward = { s[1] / flat, 0, s[3] / flat }
 			local away = { -toward[1], 0, -toward[3] }
+			local sunlit = luma(shown(WARM_WHITE, { 0, 1, 0 }, h, 1))
 			local wall = luma(shown(WARM_WHITE, away, h, 1)) / luma(shown(WARM_WHITE, toward, h, 1))
-			local ground = luma(shown(WARM_WHITE, { 0, 1, 0 }, h, 0)) / luma(shown(WARM_WHITE, { 0, 1, 0 }, h, 1))
-			expect(wall >= 0.45 and wall <= 0.7).toBeTruthy()
-			expect(ground >= 0.45 and ground <= 0.72).toBeTruthy()
+			local ground = luma(shown(WARM_WHITE, { 0, 1, 0 }, h, 0)) / sunlit
+			local under = luma(shown(WARM_WHITE, { 0, -1, 0 }, h, 0)) / sunlit
+			expect(wall >= 0.4 and wall <= 0.6).toBeTruthy()
+			expect(ground >= 0.55 and ground <= 0.75).toBeTruthy()
+			expect(under <= 0.2).toBeTruthy()
+			expect(under < wall * 0.5).toBeTruthy()
 		end
 	end)
 
-	it("keeps the shade violet", function()
+	it("keeps the shade a cool sky light, not a tinted fill", function()
+		-- blue from the sky, and no strong colour of its own (it was a violet fill)
 		local shade = shown(WARM_WHITE, { 0, 1, 0 }, 13, 0)
-		expect(shade[3] > shade[1] and shade[3] > shade[2]).toBeTruthy()
+		expect(shade[3] > shade[1]).toBeTruthy()
+		local L = Tuning.Look.Light
+		for _, c in { L.Ambient, L.OutdoorAmbient } do
+			expect(math.max(c[1], c[2], c[3]) - math.min(c[1], c[2], c[3]) <= 16).toBeTruthy()
+			expect(math.max(c[1], c[2], c[3]) <= 64).toBeTruthy()
+		end
 	end)
 
 	it("doesn't wash a pale wall out in the sun", function()

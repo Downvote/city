@@ -1613,8 +1613,10 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   filmic curve, then the colour correction), and `render.py` and `walk.py` use it by default (`--no-grade` leaves the
   correction off, `render.py --plain` the old flat look). `walk.py` stands the sun where Roblox does for the hour and
   `GeographicLatitude`: the sun's path is tilted by latitude minus 23.5, so latitude -20 puts it over the harbour at
-  46 degrees at noon. The Palette spec holds the ratios: shade 45 to 70 percent of sunlight, violet, a pale wall
-  below white, readable nights, the grade's saturation and contrast at most 0.15.
+  46 degrees at noon. The Palette spec holds the ratios: a wall in shade 40 to 60 percent of a sunlit one, a cast
+  shadow on the ground 55 to 75, a face turned from the sky at most 20 (and under half the shaded wall), ambients
+  dim and nearly grey (at most 64, channels within 16), a pale wall below white, readable nights, the grade's
+  saturation and contrast at most 0.15.
 - `client/World/Focus`: the background blur. World puts a DepthOfFieldEffect named `Lens` on Lighting
   (`Tuning.Look.Lens`); every frame `Focus` sets its `FocusDistance` to the camera's distance from `Camera.Focus`
   and its `InFocusRadius` to `Reach` times that (never under `InFocusRadius`), eased by `Ease`, so near things stay

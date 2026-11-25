@@ -136,7 +136,7 @@ previews show the facets (`--smooth` shows the fallback without the kit).
 The user asked for a drawn city ("stylize everything, including the map, to zenless zone zero style. Make
 shaders, new models and textures if necessary. The map should look similar to a city in the game"). Take the
 direction, never the game: none of its streets, shops, names, logos or art. Roblox has no shaders of our own,
-so the look is `World.stylize` (hard shadows, violet shade, flat walls, a gentle grade, a gentle glow on what
+so the look is `World.stylize` (now realistic light, see the colours section below, a gentle grade, a gentle glow on what
 gives off light: `Tuning.Look.Bloom`, its threshold above white since "the bloom might be too much") and ink outlines
 on people (`client/World/Outlines`: Highlights, the 20 nearest). The street scene is `Data/StreetModels`,
 placed by rule in `TownMap`'s `streetScene` (poles and wires, drinks machines, billboards, clutter). Signs are
@@ -551,7 +551,7 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
 - A part's paint decides its colour: the grass and clay tile pictures in `Data/TextureIds` are grey, with `light`
   where a picture is dark. Never give a material a picture that brings its own strong colour.
 - The light and the grade live in `Tuning.Look` (`Light`, `Light.Night`, `Grade`), read by the game and by the
-  previews alike. Shade is a soft lavender fill (the user: "do the lighting haze glow", after comparing with a polished game): shadows show but a wall in shade keeps its colour; the haze is a blue fade that layers what is far off, and the glow catches neon, lamps and lit signs at night; the grade only nudges colour. Judge
+  previews alike. The shading is realistic (the user: "could you make hyperrealitic shading? also, it seems like dark areas dont go dark all the way, they become flat shading instead"): dim neutral ambients and the shade lit by the sky (`SkyDiffuse` near 1), so what sees little sky goes properly dark; never bring back a bright tinted fill (it was a lavender one, from "do the lighting haze glow", and it flattened every shadow). The haze is a blue fade that layers what is far off, the glow catches neon, lamps and lit signs at night, and the grade only nudges colour. Judge
   colours in previews with `--textures` (the grade is on by default). Roblox's sun path is tilted by latitude
   minus 23.5: `Latitude = -20` keeps it over the harbour, on the north plots' fronts.
 - Roblox drops shadow map shadows below graphics quality 4; `PrioritizeLightingQuality` keeps them close by.

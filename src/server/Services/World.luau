@@ -440,14 +440,16 @@ local FOG = {
 	dense = { density = Tuning.Look.Air.Dense.Density, haze = Tuning.Look.Air.Dense.Haze },
 }
 
--- The drawn look. The user: "stylize everything, including the map, to zenless zone zero style.
--- Make shaders, new models and textures if necessary". Roblox runs no shaders of our own, so the
--- look of a drawn city comes from the light and from the effects laid over the picture:
---   shadows with a hard edge, the way a cel is painted, not a soft blur
---   shade that is a colour (violet) and not grey, under warm sunlight
---   hardly any shine or bounce from the sky, so a wall is one flat colour
---   stronger colours and more contrast over the whole picture
---   a bloom on anything bright, which is what makes the signs glow after dark
+-- The look of the world. Roblox runs no shaders of our own, so it comes from the light and from
+-- the effects laid over the picture. It was a drawn look once (the user: "stylize everything ... to
+-- zenless zone zero style"), with a violet fill in the shade; then the user asked "could you make
+-- hyperrealitic shading? also, it seems like dark areas dont go dark all the way, they become flat
+-- shading instead". So now:
+--   a warm sun with crisp shadows, and dim neutral ambients
+--   the shade lit by the sky itself (EnvironmentDiffuseScale), so what sees little sky (an
+--   underside, a corner, under an eave) goes properly dark instead of one flat fill
+--   the sky's reflection on every material, each with its normal and roughness maps
+--   a near neutral grade, and a bloom only on what gives off light
 -- People get ink outlines on each player's own screen (the client's World/Outlines).
 local function rgb(c: { number }): Color3
 	return Color3.fromRGB(c[1], c[2], c[3])
