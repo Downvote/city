@@ -2045,3 +2045,8 @@ them. Polite greets properly, thanks you for everything and signs off with good 
 plans the day round meals. Nervous stumbles on the first word, says sorry and says things that sound too final by
 accident ("I'm off now. Only home!"). Cheeky writes in lower case and laughs "hahaha"; Shy says "um" and takes the
 question back.
+
+A personality's own lines are news from their day ("The plum buns are back!") and are said on the talk card and over
+their heads. In the middle of an event a villager reacts instead, with short lines that fit any moment, in the same
+voice ("*applause* <- that's me", "Nothing exploded. That's new."), and a line said to another villager never has
+the player's name in it.

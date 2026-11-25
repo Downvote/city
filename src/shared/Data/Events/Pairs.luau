@@ -807,7 +807,7 @@ event({
 			burst(c, "a", {
 				cheeky = "wow|{player}|wow",
 				polite = "Well.|That's one way to settle it.",
-				_ = "Bold, {player}.",
+				_ = "Bold move, {player}.",
 			}, "anger")
 			say(c, "b", "We'll remember this.", "anger")
 			c:rel(4)

@@ -120,8 +120,10 @@ from a short spec `K.W{ base, traits, season, weather, job, rel, quarrel, count,
 for best friends, and a scene builder:
 `s:say`, `s:by` (a line per personality), `s:burst` (a line or a personality map whose "|" splits it into quick
 messages: `"Wait.|Wrong person.|Hi, {player}."` is three lines; `K.parts` splits, `K.flat` runs them back into one),
-`s:voice`, `s:choice`, `s:prop`, `s:leave`, `s:keep`, `s:memo`; effects common to every answer are copied into each
-choice), `Chatter` (topics, dreams, debates, spats, openers by hour and weather, greetings by friendship, written as
+`s:voice` (a stock line: `happy`, `excited` and `wow` come from `K.React.glad`, `brag` and `scared` from their banks,
+short reactions that fit any moment; the other kinds from the personality's own lines, leaving out the ones with
+`{player}`, `K.sceneLines`), `s:choice`, `s:prop`, `s:leave`, `s:keep`, `s:memo`; effects common to every answer are
+copied into each choice), `Chatter` (topics, dreams, debates, spats, openers by hour and weather, greetings by friendship, written as
 bursts; `Chatter.say`, `pick` and `burst` send them through `s:burst`; `Chatter.chat` builds a scene, `Chatter.small`
 two to four street lines, each burst flattened to one bubble, which `Villagers` uses for street chats), `Talks`, `Solo`, `Pairs`, `Town`, `Work` and `Asks`. A scene or a choice may carry
 `props = { { id, by } }`; a def may carry `cutscene` (see Cutscenes). `Sim/EventEngine` adds the effects `keepsake

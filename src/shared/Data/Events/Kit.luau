@@ -26,7 +26,8 @@
 --   s:by(who, map, icon, gesture)    something in their own way: map is keyed by personality id
 --                                    (Data/Personalities), with "_" for everyone else; a value is a
 --                                    line or a list of lines
---   s:voice(who, kind, icon, gesture) a line of their personality's own (Personalities' lines)
+--   s:voice(who, kind, icon, gesture) a line of their personality's own (Personalities' lines;
+--                                    happy, excited, wow, brag and scared from K.React)
 --   s:burst(who, map, icon, gesture) what they'd send as two or three quick messages: a line or a
 --                                    map like s:by, and "|" splits a line into its messages
 --                                    ("Wait.|Wrong person.|Hi, {player}."); the gesture goes
@@ -149,16 +150,122 @@ end
 
 -- A line of a personality's own: "hello", "happy", "sad", "angry", "thanks", "wow", "scared",
 -- "sorry", "yes", "no", "bye", "tease", "brag", "worry", "hmm", "excited", "tired", "laugh".
+-- In a scene it is a reaction, often to another villager, so the lines that call the player by
+-- name ({player}: those are for the talk card) are left out; an event that turns to the player
+-- writes that line itself.
+function K.sceneLines(pers: string?, kind: string): { string }
+	local p = pers and Personalities.get(pers)
+	local all: { string } = p and p.lines[kind] or {}
+	local out = {}
+	for _, text in all do
+		if not string.find(text, "{player}", 1, true) then
+			table.insert(out, text)
+		end
+	end
+	return if #out > 0 then out else all
+end
+
 function K.voiceText(ctx: any, vid: string?, kind: string): string
 	local v = vid and ctx.v(vid)
-	local p = v and Personalities.get(v.pers)
-	local lines = p and p.lines[kind]
-	if not lines or #lines == 0 then
+	local bank = K.ReactKind[kind] and K.React[K.ReactKind[kind]]
+	local lines = if bank and v and bank[v.pers] then bank[v.pers] else K.sceneLines(v and v.pers, kind)
+	if #lines == 0 then
 		return "..."
 	end
-	-- (filled here: a personality's line may call the player by name, {player})
 	return ctx.f(ctx.rng:pick(lines))
 end
+
+-- Reactions in a scene. A personality's own "happy", "excited", "wow", "brag" and "scared" lines
+-- are news from their day for the talk card ("The plum buns are back!"); in the middle of an event
+-- they'd come out of nowhere. So s:voice reaches here for those kinds instead: short reactions
+-- that fit any moment, in each personality's voice.
+K.React = {
+	glad = {
+		sunny = { "Yes! Yes yes yes!", "Oh, this is the best!", "Okay. Okay! I'm so happy!" },
+		gentle = { "Oh, how lovely.", "That's wonderful. Really.", "Oh my. I'm so pleased." },
+		bold = { "Yes. Now we're talking.", "Good. Let's go.", "Hah! Knew it." },
+		dreamy = {
+			"Oh... it's like the first warm day.",
+			"Mm. My heart did a little skip.",
+			"Look. Everything's shining a bit.",
+		},
+		easygoing = { "Oh nice. Nice nice.", "Heh. That's good, that.", "Wow. I might even stand up." },
+		proud = { "Naturally. This was always going to happen.", "Splendid. As expected.", "Ha! Yes! I mean. Good." },
+		shy = { "...!", "Um. I'm really happy...", "Oh... that's so nice." },
+		cheeky = { "yesss", "ok this is great", "hahaha. yes" },
+		cool = { "...Good.", "Heh. Nice.", "Okay. That's good." },
+		prickly = { "Fine. That's good. Happy now?", "Hmph. Not bad. At all.", "Okay. That's... actually great." },
+		dramatic = { "This is the GREATEST moment of my life!", "*trumpet noise*", "I could cry. I might cry." },
+		bookish = {
+			"Oh! That's wonderful.",
+			"Splendid. I'm writing this down.",
+			"I'm so pleased I could reorganise a shelf.",
+		},
+		gloomy = { "Oh. Something good. Huh.", "That went right? Heh...", "I'm happy. Quietly. In case it stops." },
+		polite = { "Oh, how wonderful.", "That's splendid news. Thank you.", "How very lovely." },
+		foodie = { "Yes! This calls for cake.", "Ooh! I'm so happy I'm hungry.", "Best thing since warm bread!" },
+		nervous = { "R-really? Oh! Good!", "It went fine! It actually went fine!", "Oh! Oh good. Phew." },
+	},
+	brag = {
+		sunny = { "Did you see? That was me!", "First try! Well, third.", "Say it was good. Go on!" },
+		gentle = {
+			"It came out rather well, didn't it?",
+			"I'm a little proud of that one.",
+			"Not bad at all, if I say so.",
+		},
+		bold = { "Hah. Easy.", "Told you I'd do it.", "Next." },
+		dreamy = { "Oh. Did I do that?", "It came out the way I dreamed it.", "I think the wind helped." },
+		easygoing = { "Didn't even try. Mostly.", "Not bad for someone half asleep.", "Yeah. I'll take that." },
+		proud = { "Naturally.", "Did anyone doubt me? No.", "Say it was good. Louder." },
+		shy = { "It, um, worked...", "I did it? I did it.", "...Was that okay?" },
+		cheeky = { "boom. first try", "who's the best. me", "did you see. you saw" },
+		cool = { "Easy.", "Told you.", "Clean." },
+		prickly = { "Obviously.", "Don't make a fuss. ...It was good, though. Right?", "Who else was going to do it?" },
+		dramatic = { "BEHOLD!", "*applause* <- that's me", "Remember this day." },
+		bookish = { "Exactly as I worked it out.", "I did read up on it beforehand.", "Correct, to the minute." },
+		gloomy = { "It worked. I'm suspicious.", "Nothing exploded. That's new.", "I did it. Huh." },
+		polite = { "I'm rather pleased with that.", "Thank you. I did practise.", "I hope that was all right." },
+		foodie = { "Told you. Proper fuel.", "Did it! Snack break earned.", "That's what breakfast is for." },
+		nervous = { "I did it? I-I did it!", "It worked! Sorry. I mean. Yes!", "Nobody got hurt! That counts!" },
+	},
+	scared = {
+		sunny = {
+			"Eek! Okay. I'm fine. Mostly.",
+			"Hold my sleeve? Just for a bit?",
+			"I'm not scared! I'm walking fast for fun!",
+		},
+		gentle = { "Stay close to me, all right?", "Oh dear. Careful now.", "Let's take this slowly." },
+		bold = { "Behind me. Now.", "Stay close. I've got this.", "...Okay. Moving on. Quickly." },
+		dreamy = {
+			"The shadows are moving wrong...",
+			"I don't like how quiet it went.",
+			"Hold on. Something's watching.",
+		},
+		easygoing = { "Nope. Nope nope.", "Uh. I'll just be back here.", "That's a lot of noise for a nap." },
+		proud = { "I'm not scared. I'm being careful.", "Th-that noise was nothing. Anyway!", "After you. I insist." },
+		shy = { "Um... can we go back?", "...!! Sorry. It startled me.", "Can I stand behind you...?" },
+		cheeky = { "nope", "ok. not funny. not funny", "you go first. i'll hold the snacks" },
+		cool = { "Stay behind me.", "Hm. Back the way we came.", "Quiet. Don't move." },
+		prickly = { "I'm not scared. You're scared.", "Ugh. Can we go?", "Stay close. Not that close." },
+		dramatic = { "This is how it ends!", "*gasp* Did you hear that?", "Tell my plants I loved them!" },
+		bookish = {
+			"Statistically, this is fine. It doesn't feel fine.",
+			"I'd like to leave now, please.",
+			"That's most likely the wind. Most likely.",
+		},
+		gloomy = { "Of course this happens...", "This is it. This is how it ends.", "Ah. A noise. Naturally." },
+		polite = { "Oh dear. Shall we step back?", "Pardon me. I'd like to leave.", "Please, after me. I insist." },
+		foodie = {
+			"Eek! I eat when I'm nervous. Hand me that.",
+			"I'm scared. And now I'm hungry.",
+			"Can we go somewhere with food?",
+		},
+		nervous = { "Oh no. Oh no no.", "S-sorry, can we go back now?", "Is that meant to happen?" },
+	},
+}
+
+-- which bank a kind of reaction is drawn from in a scene (other kinds use the personality's own)
+K.ReactKind = { happy = "glad", excited = "glad", wow = "glad", brag = "brag", scared = "scared" }
 
 -- Picks from a map keyed by personality ("_" for anybody else).
 function K.byPers(ctx: any, vid: string?, map: { [string]: any }): string

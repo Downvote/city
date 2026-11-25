@@ -778,7 +778,36 @@ describe("Event engine", function()
 					-- checked as said: {player} is filled with the player's name (ctx.f)
 					checkString((text:gsub("{player}", "Sam")), p.id .. "." .. kind)
 				end
+				-- in a scene a stock reaction is often said to another villager, so the lines that
+				-- call the player by name stay on the talk card, and every kind still has some left
+				local scene = Kit.sceneLines(p.id, kind)
+				expect(#scene >= 2).toBeTruthy()
+				for _, text in scene do
+					if string.find(text, "{player}", 1, true) then
+						error(p.id .. "." .. kind .. " gives an event a line with the player's name: " .. text)
+					end
+				end
 			end
+		end
+	end)
+
+	-- a reaction in a scene fits any moment: every personality has its own in every bank
+	it("has scene reactions for every personality", function()
+		for bank, byPers in Kit.React do
+			for _, p in Personalities.list do
+				local lines = byPers[p.id]
+				if not lines or #lines < 3 then
+					error(p.id .. " has no " .. bank .. " reactions")
+				end
+				for _, text in lines do
+					expect(string.find(text, "{", 1, true)).toBe(nil)
+					checkString(text, p.id .. "." .. bank)
+				end
+			end
+		end
+		for kind, bank in Kit.ReactKind do
+			expect(Kit.React[bank] ~= nil).toBeTruthy()
+			expect(kind ~= "").toBeTruthy()
 		end
 	end)
 

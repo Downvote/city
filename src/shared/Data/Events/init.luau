@@ -45,9 +45,7 @@ end
 
 -- A personality line ("hello", "happy", "sad", "angry", "thanks") for a star.
 local function voice(ctx: Ctx, who: string, vid: string, kind: string, icon: string?, gesture: string?): any
-	local p = Personalities.get(ctx.v(vid).pers)
-	local lines = p and p.lines[kind] or { "..." }
-	return line(who, ctx.f(ctx.rng:pick(lines)), icon, gesture)
+	return line(who, Kit.voiceText(ctx, vid, kind), icon, gesture)
 end
 
 local QUARREL = {
