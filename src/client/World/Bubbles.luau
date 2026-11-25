@@ -28,6 +28,7 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Bubble = require(Shared.Util.Bubble)
 
 local BubbleLayout = require(script.Parent.BubbleLayout)
+local MoodArt = require(script.Parent.MoodArt)
 
 local Bubbles = {}
 
@@ -120,12 +121,19 @@ local function going(gui: Instance): boolean
 	return gui:GetAttribute("Going") == true
 end
 
+-- A mood badge's symbol drawn as an icon that fills it (World/MoodArt).
+Bubbles.dress = MoodArt.dress
+
 -- Watches one head piece the server made: shown, hidden, marked going, a new line.
 local function hook(gui: BillboardGui)
 	if hooked[gui] then
 		return
 	end
 	hooked[gui] = true
+	if gui.Name == "Mood" then
+		local kind = gui:GetAttribute("Kind")
+		Bubbles.dress(gui, if type(kind) == "string" then kind else nil)
+	end
 	gui.Destroying:Connect(function()
 		hooked[gui] = nil
 	end)

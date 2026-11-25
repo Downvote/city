@@ -23,6 +23,38 @@ local function boxes(head, place)
 end
 
 describe("Bubbles", function()
+	it("draws every mood as an icon that fills its badge", function()
+		-- (the user: "the icons within bubbles are too small"): a player's screen swaps the
+		-- badge's letters for a drawn icon most of the badge across
+		local Icons = require("StarterPlayer.StarterPlayerScripts.Client.UI.Icons")
+		local Bubbles = require("StarterPlayer.StarterPlayerScripts.Client.World.MoodArt")
+		for kind in Bubble.Moods do
+			local icon = Bubble.MoodIcons[kind]
+			expect(icon ~= nil and Icons.hasArt(icon)).toBeTruthy()
+			local badge = Bubble.mood(nil, kind)
+			Bubbles.dress(badge, kind)
+			local art = badge:FindFirstChild("SymbolArt", true)
+			local symbol = badge:FindFirstChild("Symbol", true)
+			expect(art ~= nil).toBeTruthy()
+			expect(symbol.Visible).toBe(false)
+			expect(art.Size.X.Offset >= symbol.Size.X.Offset * 0.7).toBeTruthy()
+			-- dressed twice, it is drawn once
+			Bubbles.dress(badge, kind)
+			local n = 0
+			for _, d in badge:GetDescendants() do
+				if d.Name == "SymbolArt" then
+					n += 1
+				end
+			end
+			expect(n).toBe(1)
+		end
+		-- and the letters a screen falls back on are sized by letters, not bytes: the heart is
+		-- one letter, so it is big
+		local heart = Bubble.mood(nil, "heart"):FindFirstChild("Symbol", true)
+		local zzz = Bubble.mood(nil, "zzz"):FindFirstChild("Symbol", true)
+		expect(heart.TextSize > zzz.TextSize).toBeTruthy()
+	end)
+
 	it("stacks a speech card, a mood badge and a wish bubble over one head with gaps", function()
 		local head = {
 			key = "a",

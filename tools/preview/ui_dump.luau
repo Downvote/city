@@ -90,7 +90,7 @@
 -- Any scene can carry a prefix: light:<scene> builds it in the light look, relight:<scene>
 -- builds it dark and then switches (what a player who presses the button mid game sees), and
 -- plain:<scene> builds it with the painted shapes off (what a game with Allow Mesh / Image APIs
--- off shows: sharp ends on the slabs and no textures).
+-- off shows: sharp ends on the slabs, no textures, the icons built from their shape lists).
 
 local fs = require("@lune/fs")
 local process = require("@lune/process")
@@ -110,10 +110,12 @@ elseif scene:sub(1, 8) == "relight:" then
 end
 
 local Sim = require("../../tests/sim/client")
-if plain then
-	Sim.Skin.set(false)
-end
 local Harness = Sim.Harness
+if plain then
+	-- (the icons too: without the picture APIs each one is built from its shape list)
+	Sim.Skin.set(false)
+	Harness.require(Sim.CLIENT .. "UI.Icons").setVector(false)
+end
 local Fake = Sim.Fake
 local UDim2, Color3, Enum, Instance = roblox.UDim2, roblox.Color3, roblox.Enum, Sim.env.Instance
 
@@ -610,12 +612,14 @@ elseif scene == "bubbles" then
 	-- would be and placed by World/BubbleLayout as World/Bubbles places them: one head with a
 	-- speech card, a mood badge and a craving stacked over it, a second close beside it whose
 	-- speech card has gone up over the first one's stack, and a third further off with a wish and
-	-- a sleepy badge (the BillboardGuis themselves can't be drawn here)
+	-- a sleepy badge (the BillboardGuis themselves can't be drawn here); every mood badge along
+	-- the top
 	startHud()
 	local Bubble = Harness.require("ReplicatedStorage.Shared.Util.Bubble")
 	local Foods = Harness.require("ReplicatedStorage.Shared.Data.Foods")
 	local Wishes = Harness.require(Sim.CLIENT .. "World.Wishes")
 	local BubbleLayout = Harness.require(Sim.CLIENT .. "World.BubbleLayout")
+	local Bubbles = Harness.require(Sim.CLIENT .. "World.Bubbles")
 	local function speechSize(text)
 		return { w = math.min(Bubble.SpeechWidth + 30, #text * 8.2 + 30), h = 51 }
 	end
@@ -659,11 +663,25 @@ elseif scene == "bubbles" then
 			put((Bubble.speech(nil, h.said)))
 		end
 		if h.mood then
-			put(Bubble.mood(nil, h.mood))
+			local badge = Bubble.mood(nil, h.mood)
+			Bubbles.dress(badge, h.mood)
+			put(badge)
 		end
 		if h.food or h.wish then
 			put(Wishes.face(nil, h.wish or "heart", h.food))
 		end
+	end
+	-- and every mood badge in a row along the top, as a player's screen draws them
+	local kinds = {}
+	for kind in Bubble.Moods do
+		table.insert(kinds, kind)
+	end
+	table.sort(kinds)
+	for i, kind in kinds do
+		local badge = Bubble.mood(nil, kind)
+		Bubbles.dress(badge, kind)
+		badge.Parent = Sim.gui
+		badge.Position = UDim2.fromOffset(330 + i * 62, 230)
 	end
 	Sim.frames(2)
 elseif scene == "loading" then

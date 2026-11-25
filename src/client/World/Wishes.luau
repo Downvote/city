@@ -38,20 +38,22 @@ end
 function Wishes.face(parent: Instance?, icon: string, food: any?): CanvasGroup
 	local g, card = Bubble.square(parent, 60, if food then T.Yellow else T.Orange)
 	if food then
-		Icons.item(food.id, 42, Colors.fromHex(food.color), {
+		Icons.item(food.id, 46, Colors.fromHex(food.color), {
 			Parent = card,
 			Position = UDim2.fromScale(0.5, 0.5),
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			ZIndex = 3,
+			Centre = true,
 		})
 	else
-		Icons.make(icon, 34, {
+		Icons.make(icon, 42, {
 			Parent = card,
 			Position = UDim2.fromScale(0.5, 0.5),
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			ZIndex = 3,
 			Color = T.Orange,
 			Hole = T.Glass,
+			Centre = true,
 		})
 	end
 	return g

@@ -2639,6 +2639,7 @@ function Kit.iconButton(icon: string, caption: string?, props: { [string]: any }
 			ZIndex = z + 1,
 			Color = p.IconColor or (if light then T.Dark else T.White),
 			Hole = color,
+			Centre = true,
 		})
 	else
 		Kit.new("TextLabel", {
@@ -2810,6 +2811,7 @@ function Kit.leanMark(props: { [string]: any }?): Frame
 			Hole = color,
 			-- (in one colour, the coin too: its gold doesn't read on a yellow block)
 			Mono = true,
+			Centre = true,
 			ZIndex = z + 1,
 		})
 	elseif p.Text then
@@ -2903,6 +2905,7 @@ function Kit.disc(props: { [string]: any }?): Frame
 			Color = p.IconColor or (if light then T.Dark else T.White),
 			Hole = color,
 			Mono = true,
+			Centre = true,
 			ZIndex = z + 1,
 		})
 	end
@@ -3435,6 +3438,7 @@ function Kit.roundButton(icon: string, props: { [string]: any }?, onClick: (() -
 		Position = UDim2.new(0.5, -ipx / 2, 0.5, -ipx / 2),
 		Color = T.White,
 		Hole = T.Glass,
+		Centre = true,
 	})
 	-- (the dark glass is the same in both looks, so its ring is white in both)
 	pressable(b, { Kind = "round", Ring = T.White })
@@ -3941,6 +3945,7 @@ function Kit.tile(icon: string, caption: string, props: { [string]: any }?, onCl
 			Position = UDim2.new(0.5, -ipx / 2, 0, math.floor((h - foot - ipx) / 2)),
 			Color = textColor,
 			Hole = color,
+			Centre = true,
 			ZIndex = 2,
 		})
 	end

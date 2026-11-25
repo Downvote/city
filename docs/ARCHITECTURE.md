@@ -884,7 +884,9 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
 - `Util/Bubble` (shared, plain instances, used by the server and the client): what hangs over a head. `Anchor` (the
   point over the head every head billboard hangs from), `Tall` (the billboards' height: the point is in their
   middle), `Base` and `Gap` (pixels), `SpeechWidth` (how wide a speech card's words run before they wrap, 340),
-  `Leave` (seconds between a piece being marked going and it going), `Moods` (symbol and colour by kind),
+  `Leave` (seconds between a piece being marked going and it going), `Moods` (symbol and colour by kind; the
+  symbol's text size is counted in letters, not bytes), `MoodIcons` (the icon each mood is drawn as on a player's
+  screen: heart, anger, music, water, moon, bulb, question, sparkle, rain), `MoodIcon` (28, its size), `Glass`,
   `card(parent, props)` (the solid dark glass card with a rim and two brackets), `speech(parent, text?)` (a card of
   words flush at its left, no bar, and an outlined point; returns the group and the `Text` label),
   `mood(parent, kind)` (a round badge whose ring runs round its point too: in one holder, back to front, the ring's
@@ -894,7 +896,10 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   one, a patch of glass over their top halves. Each piece is a CanvasGroup `Fade` (padded 2 so the rims aren't cut)
   with its bottom middle `n` pixels over the point. `Npc.say` shows one in a billboard named `Bubble` (each line sets
   the attribute `Said`; `Going = true` a moment, `Leave`, before it hides), `Npc.icon` one named `Mood` (`Going`,
-  then destroyed `Leave` later). The server starts each `Fade` clear and leaves the motion to the clients.
+  then destroyed `Leave` later, its kind in the attribute `Kind`). The server starts each `Fade` clear and leaves the
+  motion to the clients. `World/MoodArt.dress(root, kind)` (client, no services) swaps a badge's `Symbol` for the
+  mood's icon (`SymbolArt`, `MoodIcon` across, centred, in the symbol's colour) and hides the letters; once only.
+  World/Bubbles does it as each `Mood` billboard comes (the user: "the icons within bubbles are too small").
 - `World/Bubbles` (client, started by `Wishes.start`): every 0.15 seconds it finds what is showing over each villager
   (`Bubble`, `Mood` in the model, and what `Bubbles.track(model, gui)` was handed: the wish bubble), casts a ray from
   the camera to `head.Position + Anchor` (excluding every `Villagers` folder and every player's character, through
@@ -936,7 +941,13 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   is painted once at 48 and once at 96 pixels (`Icons.Weight`, 3.25 and 3, is the width of a line that names none, at each) into a 512 square
   EditableImage sheet, a pixel apart, and shown by an ImageLabel named `Art` through `ImageContent`,
   `ImageRectOffset` and `ImageRectSize`, tinted with `ImageColor3` (art with its own colours is left white). The
-  root carries the attributes `Vector`, `Mono` and `Glyph`. Any failure (the Mesh / Image API off in a published
+  root carries the attributes `Vector`, `Mono` and `Glyph`. With `Centre = true` the picture is moved by whole
+  pixels so the middle of what is painted sits in the middle of the box (`Icons.inkOffset(pixels, n)` measures it
+  once a square, as a share of n; the shape list build moves its pieces by their bounds): every icon on a block, a
+  disc, a notice, a bubble or a picture tile asks for it (`Kit.leanMark`, `Kit.disc`, `Kit.roundButton`,
+  `Kit.iconButton`, `Kit.tile`, `UI/Toasts`, `World/Wishes`, `World/MoodArt`, `UI/Tutorial`'s picture,
+  `UI/WishPopup`), since art keeps its place on the 24 grid (a half wall at the bottom, a food standing low). The
+  user: "some icons within icon backgrounds are not centered". Any failure (the Mesh / Image API off in a published
   game, no memory) warns once and returns nil, and `Icons.flat` builds the icon from its older shape list.
   `Icons.item(id, px, color, props)` is a food's icon in `color`, its own colour (`Data/Foods`' `color`), unless
   props name a `Color` or `Tint` as `Icons.make` takes them; where the game can't make pictures it is built from

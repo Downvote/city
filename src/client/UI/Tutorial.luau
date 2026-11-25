@@ -504,6 +504,7 @@ local function picture(parent: Instance, view: any)
 			Position = UDim2.fromScale(0.5, 0.5),
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			ZIndex = 3,
+			Centre = true,
 		})
 	else
 		Icons.make(view.icon, 38, {
@@ -514,6 +515,7 @@ local function picture(parent: Instance, view: any)
 			Color = view.color,
 			Hole = T.Card,
 			ZIndex = 3,
+			Centre = true,
 		})
 	end
 	if view.badge then

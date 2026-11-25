@@ -157,6 +157,7 @@ local function wanted(body: Frame, v: any, kind: string, food: any, other: any)
 			Position = UDim2.new(0.5, 0, 0, 22),
 			AnchorPoint = Vector2.new(0.5, 0),
 			ZIndex = 2,
+			Centre = true,
 		})
 		name, accent = food.name, color
 	elseif other then
@@ -178,6 +179,7 @@ local function wanted(body: Frame, v: any, kind: string, food: any, other: any)
 			Color = T.Orange,
 			Hole = T.Card,
 			ZIndex = 2,
+			Centre = true,
 		})
 		name, accent = "A chat", T.Orange
 	end

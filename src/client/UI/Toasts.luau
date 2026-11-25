@@ -101,6 +101,7 @@ function Toasts.show(text: string, kind: string?)
 		Color = if light then Kit.Theme.Dark else Kit.Theme.White,
 		Hole = accent,
 		Mono = true,
+		Centre = true,
 		ZIndex = 52,
 	})
 	-- the words, clear of the block, in the middle of the note's height

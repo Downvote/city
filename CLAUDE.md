@@ -246,7 +246,9 @@ showing through walls. A card's or a badge's rim runs round its point too ("make
 pointy part as well"), a speech card has no bar ("remove the bar") and wraps at `Bubble.SpeechWidth` ("a longer max
 width"), and every piece pops in and out ("an animation transition when they appear or disappear"): the server only
 marks a piece `Going` a moment (`Bubble.Leave`) before it hides or removes it, and `World/Bubbles` does the motion. A new thing over heads is a piece from `Util/Bubble` in a billboard with one of those names
-(add the name to `ORDER` in `World/Bubbles`). Preview: `ui.sh bubbles`.
+(add the name to `ORDER` in `World/Bubbles`). A mood badge's symbol is drawn as an icon that fills it ("the icons
+within bubbles are too small"): the server writes letters, each player's screen swaps in the icon named in
+`Bubble.MoodIcons` (`World/MoodArt`), so a new mood needs an icon there too. Preview: `ui.sh bubbles`.
 
 The user asked for things to move "where possible": buttons, screens and the town are animated (docs/GAME_DESIGN.md
 section 10). New buttons get it from `UI/Kit`; new moving scenery goes in `World/Ambience` (client only, one loop,
@@ -450,7 +452,9 @@ food, `LIGHT=1` to see the small ones on the light card; `ui.sh foods` shows the
 with Allow Mesh / Image APIs on (Security, in the game's settings); otherwise each icon falls back to its
 shape list in `UI/Icons` (`D`), so a new icon needs both, and the Icons spec fails without the art. The coin
 keeps its gold and its indent ("the coin icon can have a darker circle inside as an indent"). The Goals button
-is the `trophy`, the Build button the `hammer`. The older rule still holds for the shape lists: "make sure
+is the `trophy`, the Build button the `hammer`. An icon sitting on a block, a disc, a notice, a bubble or a picture
+tile is made with `Centre = true` ("some icons within icon backgrounds are not centered"): art keeps its place on
+the 24 grid, and that centres it by what it draws instead. The older rule still holds for the shape lists: "make sure
 there are no overlapping outlines".
 
 The user asked for custom textures, then for "textures from the roblox library that fits": the materials use

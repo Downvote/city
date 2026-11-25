@@ -51,6 +51,34 @@ A.up = { solid("M12 2.5 L21 11.5 H14 V21.5 L12 19.5 L10 21.5 V11.5 H3 Z") }
 A.down = { solid("M12 21.5 L21 12.5 H14 V2.5 L12 4.5 L10 2.5 V12.5 H3 Z") }
 A.back = { solid("M2.5 12 L11.5 3 V10 H21.5 L19.5 12 L21.5 14 H11.5 V21 Z") }
 A.alert = { flat(circle(12, 12, 10.25)), hole("M10.25 5.5 H13.75 L13 13.5 H11 Z"), hole(circle(12, 17.5, 1.9)) }
+
+-- the moods a villager shows over their head (Util/Bubble's MoodIcons), drawn to fill a badge:
+-- a light bulb for a bright idea, the glass with a gleam cut out of it over a screw base
+A.bulb = {
+	flat("M8.5 15.75 V15.1 A7 7 0 1 1 15.5 15.1 V15.75 Z"),
+	gap("M8.5 9.25 A3.5 3.5 0 0 1 12 5.75", 1.75),
+	solid(rect(8.75, 17.5, 6.5, 3.5, 1)),
+}
+-- a question mark: its hook a line of its own, its dot a disc
+A.question = {
+	line("M7.75 8.25 A4.5 4.5 0 1 1 14.4 12.2 C12.9 13 12 14 12 15.75", 3.5),
+	flat(circle(12, 20, 2.25)),
+}
+-- a sparkle: a star of four points with curved sides
+A.sparkle = {
+	flat(
+		"M12 1.75 C12.75 8.25 15.75 11.25 22.25 12 C15.75 12.75 12.75 15.75 12 22.25 C11.25 15.75 8.25 12.75 1.75 12 C8.25 11.25 11.25 8.25 12 1.75 Z"
+	),
+}
+-- cross: four short curved bars round a middle, each bowed in toward it
+A.anger = {
+	solid(
+		"M3 8 C6.5 8 8 6.5 8 3 H11 C11 8.25 8.25 11 3 11 Z"
+			.. " M21 8 C17.5 8 16 6.5 16 3 H13 C13 8.25 15.75 11 21 11 Z"
+			.. " M21 16 C17.5 16 16 17.5 16 21 H13 C13 15.75 15.75 13 21 13 Z"
+			.. " M3 16 C6.5 16 8 17.5 8 21 H11 C11 15.75 8.25 13 3 13 Z"
+	),
+}
 A.eye = { flat("M1.5 12 A11.25 11.25 0 0 1 22.5 12 A11.25 11.25 0 0 1 1.5 12 Z"), gap(circle(12, 12, 4.25)) }
 A.zoom = { flat(circle(10, 10, 8.25) .. " " .. circle(10, 10, 4.75)), solid("M14.5 16.5 L16.5 14.5 L22 20 L20 22 Z") }
 A.grid = {

@@ -274,6 +274,36 @@ describe("Icons", function()
 		expect(coin.ImageColor3:ToHex():lower()).toBe("ffffff")
 	end)
 
+	it("centres what is drawn when asked, for an icon on a block, a disc or a bubble", function()
+		-- (the user: "some icons within icon backgrounds are not centered"). The half wall sits at
+		-- the bottom of its grid, so centred it is drawn higher; every icon centred has the middle
+		-- of what it paints within a pixel of the middle of its box
+		local Vector = require("StarterPlayer.StarterPlayerScripts.Client.UI.Vector")
+		local IconArt = require("StarterPlayer.StarterPlayerScripts.Client.UI.IconArt")
+		local plain = Icons.make("wallHalf", 40, {}):FindFirstChild("Art")
+		local centred = Icons.make("wallHalf", 40, { Centre = true }):FindFirstChild("Art")
+		expect(plain.Position.Y.Offset).toBe(0)
+		expect(centred.Position.Y.Offset < -3).toBeTruthy()
+		for _, name in Icons.artNames() do
+			for _, px in { 24, 40 } do
+				local n = if px <= 30 then 48 else 96
+				local pixels = Vector.raster(IconArt.art[name], n, { Weight = Icons.Weight[n] })
+				local ox, oy = Icons.inkOffset(pixels, n)
+				local art = Icons.make(name, px, { Centre = true }):FindFirstChild("Art")
+				local dx = ox * px + art.Position.X.Offset
+				local dy = oy * px + art.Position.Y.Offset
+				if math.abs(dx) > 0.5 or math.abs(dy) > 0.5 then
+					error(name .. " is off the middle of its box by " .. dx .. ", " .. dy)
+				end
+			end
+		end
+		-- and built from shapes the same way
+		Icons.setVector(false)
+		local flat = Icons.make("alert", 40, { Centre = true })
+		Icons.setVector(nil)
+		expect(flat:FindFirstChild("Art")).toBe(nil)
+	end)
+
 	it("builds the icon from shapes when the game can't make pictures", function()
 		Icons.setVector(false)
 		local icon = Icons.make("hammer", 40, {})

@@ -768,6 +768,33 @@ D.alert = {
 	{ "c", 41, 66, 18, 18, C.white, o = false },
 }
 
+-- the moods over a villager's head (Util/Bubble's MoodIcons), as shapes
+D.bulb = {
+	{ "c", 20, 6, 60, 60, C.gold },
+	{ "r", 34, 58, 32, 12, C.gold },
+	{ "r", 34, 74, 32, 16, C.goldDark, r = 0.3 },
+}
+D.question = {
+	{ "ring", 28, 6, 44, 40, C.blue, 12 },
+	{ "r", 44, 44, 13, 22, C.blue, r = 0.3 },
+	{ "c", 41, 74, 18, 18, C.blue },
+}
+D.sparkle = {
+	{ "r", 44, 6, 12, 88, C.gold, r = 0.5 },
+	{ "r", 6, 44, 88, 12, C.gold, r = 0.5 },
+	{ "r", 33, 33, 34, 34, C.gold, r = 0.1, rot = 45 },
+}
+D.anger = {
+	{ "r", 10, 28, 24, 10, C.red, r = 0.5 },
+	{ "r", 28, 10, 10, 24, C.red, r = 0.5 },
+	{ "r", 66, 28, 24, 10, C.red, r = 0.5 },
+	{ "r", 62, 10, 10, 24, C.red, r = 0.5 },
+	{ "r", 66, 62, 24, 10, C.red, r = 0.5 },
+	{ "r", 62, 66, 10, 24, C.red, r = 0.5 },
+	{ "r", 10, 62, 24, 10, C.red, r = 0.5 },
+	{ "r", 28, 66, 10, 24, C.red, r = 0.5 },
+}
+
 -- wall and roof styles --------------------------------------------------------------------------------
 
 D.wallHalf = {
@@ -1440,7 +1467,8 @@ end
 -- of `Color`, no outline, no shading,
 -- no shine. `Full = true` draws the old full colour sticker with its outline. props: Parent,
 -- Position, AnchorPoint, LayoutOrder, Name, ZIndex, Color, Hole, Tint, Full, Outline (false for
--- none, full icons only).
+-- none, full icons only), Centre (what is drawn sits in the middle of the box, not where its grid
+-- puts it: for an icon on a block, a disc or a bubble).
 function Icons.make(name: string, px: number, props: { [string]: any }?): Frame
 	local p = props or {}
 	if not p.Full then
@@ -1587,6 +1615,26 @@ function Icons.flat(name: string, px: number, p: { [string]: any }): Frame
 		drawShape(root, s, i, false, 0, 0, if s.dent then Icons.dentOf(glyph) elseif cut[i] then hole else glyph, z)
 	end
 	flat = false
+	if p.Centre then
+		-- the shapes' middle in the middle of the box (Icons.inkOffset says why)
+		local x0, y0, x1, y1 = math.huge, math.huge, -math.huge, -math.huge
+		for _, sh in def do
+			if (sh.t or 0) == 0 then
+				local x, y, w, h = bounds(sh)
+				x0, y0 = math.min(x0, x), math.min(y0, y)
+				x1, y1 = math.max(x1, x + w), math.max(y1, y + h)
+			end
+		end
+		if x1 > x0 then
+			local dx = math.floor(((x0 + x1) / 2 - 50) / 100 * px + 0.5)
+			local dy = math.floor(((y0 + y1) / 2 - 50) / 100 * px + 0.5)
+			for _, f in root:GetChildren() do
+				if f:IsA("GuiObject") then
+					f.Position -= UDim2.fromOffset(dx, dy)
+				end
+			end
+		end
+	end
 	root:SetAttribute("Glyph", glyph:ToHex())
 	root:SetAttribute("Hole", hole:ToHex())
 	for _, f in root:GetChildren() do
@@ -1623,7 +1671,7 @@ local SMALL, BIG = 48, 96 -- the two sizes an icon is painted at
 Icons.Weight = { [SMALL] = 3.25, [BIG] = 3 } -- a line's width on the 24 grid
 
 type Sheet = { image: any, content: any, x: number, y: number, row: number }
-type Cell = { content: any, x: number, y: number, n: number, coloured: boolean }
+type Cell = { content: any, x: number, y: number, n: number, coloured: boolean, ox: number, oy: number }
 local sheets: { Sheet } = {}
 local cells: { [string]: Cell } = {}
 local vectorOn: boolean? = nil -- nil until the first icon has been tried
@@ -1641,6 +1689,37 @@ local function newSheet(): Sheet
 	return sheet
 end
 
+-- How far the middle of what is painted in an n by n picture sits from the picture's middle, as a
+-- share of n across and down. Art is laid out on its 24 grid, where a thing that stands on the
+-- ground may sit low and a half wall sits at the bottom; on a block, a disc or a bubble the icon
+-- is centred by what is painted instead (`Centre`; the user: "some icons within icon backgrounds
+-- are not centered").
+function Icons.inkOffset(pixels: buffer, n: number): (number, number)
+	local x0, y0, x1, y1 = n, n, -1, -1
+	for y = 0, n - 1 do
+		for x = 0, n - 1 do
+			if buffer.readu8(pixels, (y * n + x) * 4 + 3) > 96 then
+				if x < x0 then
+					x0 = x
+				end
+				if x > x1 then
+					x1 = x
+				end
+				if y < y0 then
+					y0 = y
+				end
+				if y > y1 then
+					y1 = y
+				end
+			end
+		end
+	end
+	if x1 < 0 then
+		return 0, 0
+	end
+	return ((x0 + x1 + 1) / 2 - n / 2) / n, ((y0 + y1 + 1) / 2 - n / 2) / n
+end
+
 -- The square of a sheet holding `name` painted n pixels across (painting it first if need be).
 -- Squares sit a pixel apart, so one never bleeds into the next when the picture is scaled.
 local function cellFor(name: string, n: number, mono: boolean?): Cell
@@ -1651,6 +1730,7 @@ local function cellFor(name: string, n: number, mono: boolean?): Cell
 		return have
 	end
 	local pixels, coloured = Vector.raster(art, n, { Weight = Icons.Weight[n] })
+	local ox, oy = Icons.inkOffset(pixels, n)
 	local size = n + 2
 	local sheet = sheets[#sheets] or newSheet()
 	if sheet.x + size > SHEET then
@@ -1662,7 +1742,15 @@ local function cellFor(name: string, n: number, mono: boolean?): Cell
 		sheet = newSheet()
 	end
 	sheet.image:WritePixelsBuffer(Vector2.new(sheet.x + 1, sheet.y + 1), Vector2.new(n, n), pixels)
-	local cell: Cell = { content = sheet.content, x = sheet.x + 1, y = sheet.y + 1, n = n, coloured = coloured }
+	local cell: Cell = {
+		content = sheet.content,
+		x = sheet.x + 1,
+		y = sheet.y + 1,
+		n = n,
+		coloured = coloured,
+		ox = ox,
+		oy = oy,
+	}
 	sheet.x += size
 	sheet.row = math.max(sheet.row, size)
 	cells[key] = cell
@@ -1721,6 +1809,11 @@ function Icons.vector(name: string, px: number, p: { [string]: any }): Frame?
 		art.BackgroundTransparency = 1
 		art.BorderSizePixel = 0
 		art.Size = UDim2.fromScale(1, 1)
+		if p.Centre then
+			-- what is painted in the middle of the box, whatever its place on the grid (whole
+			-- pixels, so it stays crisp)
+			art.Position = UDim2.fromOffset(-math.floor(cell.ox * px + 0.5), -math.floor(cell.oy * px + 0.5))
+		end
 		art.ZIndex = z;
 		(art :: any).ImageContent = cell.content
 		art.ImageRectOffset = Vector2.new(cell.x, cell.y)

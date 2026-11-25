@@ -24,6 +24,7 @@ Bubble.Leave = 0.35
 -- the glass over the 3D view (UI/Kit's Glass), the same in both looks; solid, so a tail laid over
 -- a card's edge doesn't show as a darker patch
 local GLASS = Color3.fromRGB(12, 12, 15)
+Bubble.Glass = GLASS
 local WHITE = Color3.fromRGB(255, 255, 255)
 -- a speech card's thin rim: the pale white it was, mixed into the glass so it's solid too
 local RIM = Color3.fromRGB(84, 84, 88)
@@ -45,6 +46,22 @@ Bubble.Moods = {
 	sparkle = { "✦", Color3.fromRGB(255, 196, 80) },
 	sad = { "T_T", Color3.fromRGB(120, 160, 220) },
 }
+
+-- On a player's screen each symbol is drawn as an icon (UI/Icons) this many pixels across, filling
+-- the badge (the user: "the icons within bubbles are too small"; World/Bubbles swaps it in). The
+-- symbol in words above stays for a screen that can't draw them.
+Bubble.MoodIcons = {
+	heart = "heart",
+	anger = "anger",
+	music = "music",
+	sweat = "water",
+	zzz = "moon",
+	idea = "bulb",
+	question = "question",
+	sparkle = "sparkle",
+	sad = "rain",
+}
+Bubble.MoodIcon = 28
 
 local function new(class: string, props: { [string]: any }): any
 	local inst = Instance.new(class)
@@ -269,7 +286,9 @@ function Bubble.mood(parent: Instance?, kind: string): CanvasGroup
 		Size = UDim2.fromOffset(DISC, DISC),
 		Position = UDim2.fromOffset(RING, RING),
 		Font = Enum.Font.FredokaOne,
-		TextSize = if look and #look[1] > 2 then 14 else 20,
+		-- (a symbol of one letter big, a few small: counted in letters, not bytes, since a heart
+		-- is three bytes on its own)
+		TextSize = if look and (utf8.len(look[1]) or #look[1]) > 1 then 17 else 27,
 		TextColor3 = color,
 		ZIndex = 4,
 		Parent = holder,

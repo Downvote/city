@@ -2188,3 +2188,18 @@ event's default, a job line, a reaction). The marks are put on as the line is sa
 
 And the words are everyday ones a player anywhere knows: "outside your door", not "on your step"; no regional
 slang, no old or bookish words, no unusual ways of putting a sentence together.
+
+### Icons in bubbles and on blocks
+
+> the icons within bubbles are too small
+
+> also, some icons within icon backgrounds are not centered
+
+(The first picture was a mood badge with a tiny heart, the second a trophy on a yellow marker.) A mood badge's symbol
+was a letter or two of text, and the heart came out smallest of all, since its size was picked by counting bytes.
+Each player's screen now draws every mood as an icon that fills most of the badge, in the mood's colour: a heart, a
+light bulb for an idea, a question mark, a sparkle, the cross of four bowed bars for anger, a drop for sweat, a moon
+for sleep, a rain cloud for sad and the notes for music. Where a screen can't draw them, the letters stay and are
+sized by letters. The wish bubble's picture is bigger too. Art keeps its place on its 24 grid (a half wall sits at the
+bottom, a food stands low), so an icon on a block, a disc, a notice, a bubble or a picture tile is now centred by
+what it draws instead of by its grid.
