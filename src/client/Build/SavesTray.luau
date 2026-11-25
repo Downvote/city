@@ -82,7 +82,12 @@ function SavesTray.fetch(kit: TrayKit?)
 		if ok and type(answer) == "table" then
 			page = answer
 		elseif not page then
-			page = { slots = Tuning.Passes.FreeSlots, max = Tuning.Passes.MoreSlots, free = Tuning.Passes.FreeSlots, saves = {} }
+			page = {
+				slots = Tuning.Passes.FreeSlots,
+				max = Tuning.Passes.MoreSlots,
+				free = Tuning.Passes.FreeSlots,
+				saves = {},
+			}
 		end
 		if kit then
 			kit.refresh()
@@ -116,7 +121,12 @@ local function confirm(title: string, lines: { string }, yes: string, color: Col
 			LayoutOrder = i,
 		})
 	end
-	local buttons = Kit.box({ Name = "Buttons", Parent = p.body, Size = UDim2.new(1, 0, 0, 44), Position = UDim2.new(0, 0, 1, -44) })
+	local buttons = Kit.box({
+		Name = "Buttons",
+		Parent = p.body,
+		Size = UDim2.new(1, 0, 0, 44),
+		Position = UDim2.new(0, 0, 1, -44),
+	})
 	Kit.mark(buttons)
 	Kit.button("Not now", {
 		Name = "Cancel",
@@ -206,7 +216,10 @@ local function load(kit: TrayKit, e: any)
 		elseif quote.skipped > 1 then
 			table.insert(
 				lines,
-				Text.fill("{n} pieces don't fit your plot as it is now, so they will be left out.", { n = quote.skipped })
+				Text.fill(
+					"{n} pieces don't fit your plot as it is now, so they will be left out.",
+					{ n = quote.skipped }
+				)
 			)
 		end
 		table.insert(lines, "Undo takes the whole load back, as long as you stay in this server.")
@@ -264,19 +277,21 @@ local function slotCard(kit: TrayKit, row: Instance, i: number, more: number?)
 			AlignX = Enum.TextXAlignment.Center,
 			Wrap = false,
 		})
-		Kit.text(Text.fill("{n} more slots, for {all} builds in all.", {
-			n = more or 1,
-			all = Tuning.Passes.MoreSlots,
-			m = Tuning.Passes.FreeSlots,
-		}), {
-			Parent = card,
-			Size = UDim2.new(1, -24, 0, 18),
-			Position = UDim2.fromOffset(12, 76),
-			TextSize = 14,
-			Color = T.InkSoft,
-			AlignX = Enum.TextXAlignment.Center,
-			Wrap = false,
-		})
+		Kit.text(
+			Text.fill("{n} more slots, for {all} builds in all.", {
+				n = more or 1,
+				all = Tuning.Passes.MoreSlots,
+			}),
+			{
+				Parent = card,
+				Size = UDim2.new(1, -24, 0, 18),
+				Position = UDim2.fromOffset(12, 76),
+				TextSize = 14,
+				Color = T.InkSoft,
+				AlignX = Enum.TextXAlignment.Center,
+				Wrap = false,
+			}
+		)
 		Kit.button("Unlock", {
 			Name = "Unlock",
 			Parent = card,
@@ -344,7 +359,15 @@ local function slotCard(kit: TrayKit, row: Instance, i: number, more: number?)
 		Position = UDim2.new(0, 12, 1, -46),
 	})
 	Kit.list(buttons, 6, true)
-	local function button(name: string, text: string, w: number, color: Color3, ink: Color3?, order: number, fn: () -> ())
+	local function button(
+		name: string,
+		text: string,
+		w: number,
+		color: Color3,
+		ink: Color3?,
+		order: number,
+		fn: () -> ()
+	)
 		Kit.button(text, {
 			Name = name,
 			Parent = buttons,
@@ -375,25 +398,37 @@ local function slotCard(kit: TrayKit, row: Instance, i: number, more: number?)
 	end)
 	if not locked then
 		button("SaveOver", "Save over", 100, T.Orange, T.Dark, 2, function()
-			confirm(Text.fill("Save over {name}?", { name = e.name }), {
-				"Your plot as it is now takes this slot.",
-				"The build saved here can't be brought back after.",
-			}, "Save over", T.Orange, function()
-				act(kit, "save", i, nil, function()
-					Toasts.show(Text.fill("Saved over {name}.", { name = e.name }), "good")
-				end)
-			end)
+			confirm(
+				Text.fill("Save over {name}?", { name = e.name }),
+				{
+					"Your plot as it is now takes this slot.",
+					"The build saved here can't be brought back after.",
+				},
+				"Save over",
+				T.Orange,
+				function()
+					act(kit, "save", i, nil, function()
+						Toasts.show(Text.fill("Saved over {name}.", { name = e.name }), "good")
+					end)
+				end
+			)
 		end)
 	end
 	button("Delete", "Delete", 68, T.Coral, T.Dark, 3, function()
-		confirm(Text.fill("Delete {name}?", { name = e.name }), {
-			"This build goes for good.",
-			"Your plot stays just as it is.",
-		}, "Delete", T.Red, function()
-			act(kit, "delete", i, nil, function()
-				Toasts.show(Text.fill("Deleted {name}.", { name = e.name }), "info")
-			end)
-		end)
+		confirm(
+			Text.fill("Delete {name}?", { name = e.name }),
+			{
+				"This build goes for good.",
+				"Your plot stays just as it is.",
+			},
+			"Delete",
+			T.Red,
+			function()
+				act(kit, "delete", i, nil, function()
+					Toasts.show(Text.fill("Deleted {name}.", { name = e.name }), "info")
+				end)
+			end
+		)
 	end)
 end
 

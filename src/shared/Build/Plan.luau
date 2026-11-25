@@ -188,12 +188,14 @@ function Plan.ceilingY(lv: number): number
 end
 
 -- The bottom and height of a wall of this style on this level. A full wall in the basement stops
--- at the ground, under the ground floor's slab, as a ground floor wall starts there.
+-- just under the ground (Plan.BasementTop), under the ground floor's slab, where a ground floor wall
+-- starts: a hair under it, so its top never lies level with the plot's ground round the room.
+Plan.BasementTop = -0.04
 function Plan.wallSpan(style: string, lv: number): (number, number)
 	local def = Plan.WallStyles[style] or Plan.WallStyles.wall
 	local bottom = if lv == 0 and not def.onFloor then 0 else Plan.levelBase(lv)
 	if def.full then
-		local top = if lv < 0 then Plan.levelTop(lv) - P.Foundation else Plan.levelTop(lv)
+		local top = if lv < 0 then Plan.BasementTop else Plan.levelTop(lv)
 		return bottom, top - bottom
 	end
 	return bottom, def.height :: number

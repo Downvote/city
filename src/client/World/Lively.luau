@@ -124,10 +124,11 @@ local function readGroup(pivot: BasePart, members: { BasePart }, cabins: { BaseP
 	local riders: { BasePart } = cabins or {}
 	for _, p in riders do
 		local hang = num(p, "Hang", 0)
+		local at = p.CFrame.Position
 		table.insert(g.cabins, p)
-		table.insert(g.cabinAt, g.pivot:PointToObjectSpace(p.Position + Vector3.new(0, hang, 0)))
+		table.insert(g.cabinAt, g.pivot:PointToObjectSpace(at + Vector3.new(0, hang, 0)))
 		table.insert(g.cabinHang, hang)
-		table.insert(g.cabinRot, p.CFrame - p.Position)
+		table.insert(g.cabinRot, p.CFrame - at)
 	end
 	return g
 end

@@ -165,7 +165,9 @@ describe("Saved builds", function()
 		expect(ok).toBe(true)
 		expect(profile.saves["2"].name).toBe("Build 2")
 		-- a name too long is cut, a control character dropped
-		expect(SavesSim.cleanName("a\nb" .. string.rep("x", 40), 1)).toBe("ab" .. string.rep("x", Tuning.Saves.NameLength - 2))
+		expect(SavesSim.cleanName("a\nb" .. string.rep("x", 40), 1)).toBe(
+			"ab" .. string.rep("x", Tuning.Saves.NameLength - 2)
+		)
 	end)
 
 	it("has two slots free and eight with More Saves", function()
@@ -323,7 +325,9 @@ describe("Saved builds", function()
 		-- saved on land of 256 with a tree out past what 200 would hold
 		profile.plan.size = 256
 		local bx = Plan.bounds(profile.plan)
-		build({ { type = "add", kind = "items", obj = { id = "tree_oak", x = bx + 250, y = 0, z = 240, r = 0, lv = 0 } } })
+		build({
+			{ type = "add", kind = "items", obj = { id = "tree_oak", x = bx + 250, y = 0, z = 240, r = 0, lv = 0 } },
+		})
 		pause()
 		ask("save", 2, "Big land")
 		build({ { type = "remove", kind = "items", key = tostring(profile.plan.nextId - 1) } })

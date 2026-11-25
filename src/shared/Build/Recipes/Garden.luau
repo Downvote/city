@@ -3,6 +3,7 @@
 -- c1 is the main colour (leaves, stone, paint), c2 the second (bark, trim, fabric).
 
 local Recipe = require(script.Parent.Parent.Recipe)
+local Lively = require(script.Parent.Parent.Lively)
 local Colors = require(script.Parent.Parent.Parent.Util.Colors)
 
 local C = Recipe.Colors
@@ -248,6 +249,7 @@ type Item = {
 	tags: { string }?,
 	surface: number?,
 	style: string?, -- the look it belongs to (Catalog.Styles)
+	lively: boolean?, -- moves or gives off an effect (Build/Lively)
 	build: (r: R) -> (),
 }
 
@@ -536,6 +538,7 @@ local items: { Item } = {
 		size = Vector3.new(6, 5.4, 6),
 		c1 = "B8B4AC",
 		c2 = "6CA6CC",
+		lively = true, -- (it splashes: World/Lively)
 		build = function(r: R)
 			local dk = shade(r.c1, 0.9)
 			r:cyl(0, 0.1, 0, 0.2, 6, "y", dk, "Cobblestone")
@@ -571,6 +574,8 @@ local items: { Item } = {
 				local a = i * math.pi / 3 + math.pi / 6
 				water(r:cyl(math.cos(a) * 1.3, 2.35, math.sin(a) * 1.3, 2.1, 0.14, "y", r.c2, "Glass"), 0.4)
 			end
+			-- and a splash off the top, on each player's screen
+			Lively.fx(r, "splash", 0, 5.25, 0, { w = 0.2, d = 0.2 })
 		end,
 	},
 	{

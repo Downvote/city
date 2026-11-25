@@ -161,12 +161,15 @@ run("floors: the third is the top without Tall Builds, and the basement opens wi
 	frames(2)
 	local up, down = gui:FindFirstChild("FloorUp", true), gui:FindFirstChild("FloorDown", true)
 	check(down:GetAttribute("Locked") == true, "on the ground floor the down arrow has a lock: Basement would open it")
-	check(down:FindFirstChild("Lock") ~= nil and down.Lock.Visible, "and shows it")
+	check(down:FindFirstChild("Lock") ~= nil and Fake.shown(down.Lock), "and shows it")
 	press("FloorUp")
 	press("FloorUp")
 	check(BuildMode.state.level == 2, "up to the third floor")
 	check(said.Text == "Floor 3", "the hint names it")
-	check(up:GetAttribute("Locked") == true and up.Lock.Visible, "the third is the top: the up arrow has a lock")
+	check(
+		up:GetAttribute("Locked") == true and up:FindFirstChild("Lock") ~= nil,
+		"the third is the top: the up arrow has a lock"
+	)
 	press("FloorUp")
 	check(BuildMode.state.level == 2, "pressing it goes nowhere")
 	check(said.Text:find("Tall Builds", 1, true) ~= nil, "and says Tall Builds opens more floors")
@@ -183,7 +186,7 @@ run("floors: the third is the top without Tall Builds, and the basement opens wi
 		"the server turns down a floor past the third"
 	)
 	passes({ floors = true })
-	check(up:GetAttribute("Locked") == false, "with Tall Builds the lock goes")
+	check(up:GetAttribute("Locked") == false and up:FindFirstChild("Lock") == nil, "with Tall Builds the lock goes")
 	for _ = 1, 6 do
 		press("FloorUp")
 	end
@@ -1344,9 +1347,9 @@ run("the Select tool: a box picks many, they move together, Undo puts them back,
 	local placed, why = Sim.remoteFn("BuildApply").OnServerInvoke(Sim.player, requests)
 	check(placed == true, "three chairs go down to pick (" .. tostring(why) .. ")")
 	frames(3)
-	local keys = {}
-	for key, it in profile.plan.items do
-		for _, at in spots do
+	local keys = {} -- in the row's order
+	for _, at in spots do
+		for key, it in profile.plan.items do
 			if it.id == "chair_wood" and it.x == at[1] and it.z == at[2] then
 				table.insert(keys, key)
 			end
@@ -1441,6 +1444,33 @@ run("the Select tool: a box picks many, they move together, Undo puts them back,
 		back = back and profile.plan.items[key].z == was[key].z
 	end
 	check(back, "one Undo puts all three back")
+	-- on a touch screen: taps add and take away, one finger drags a box
+	local UIS = Sim.UIS
+	BuildMode.groupClear()
+	UIS.TouchEnabled, UIS.MouseEnabled = true, false
+	local function screenOf(key)
+		local it = profile.plan.items[key]
+		local v = Sim.cam:WorldToViewportPoint(plotFrame * Vector3.new(it.x, 1, it.z))
+		return Vector2.new(v.X, v.Y - 36)
+	end
+	UIS.TouchTapInWorld:Fire(screenOf(keys[1]), false)
+	frames(2)
+	UIS.TouchTapInWorld:Fire(screenOf(keys[3]), false)
+	frames(2)
+	check(SelectTool.count() == 2, "two taps pick two chairs (" .. SelectTool.count() .. ")")
+	UIS.TouchTapInWorld:Fire(screenOf(keys[1]), false)
+	frames(2)
+	check(SelectTool.count() == 1, "a third tap on one takes it away")
+	local finger = { UserInputType = Enum.UserInputType.Touch, Position = Vector3.new(lo.X - 40, lo.Y - 76, 0) }
+	UIS.InputBegan:Fire(finger, false)
+	finger.Position = Vector3.new(hi.X + 40, hi.Y + 4, 0)
+	finger.Delta = Vector3.new(80, 80, 0)
+	UIS.InputChanged:Fire(finger, false)
+	frames(2)
+	UIS.InputEnded:Fire(finger, false)
+	frames(2)
+	check(SelectTool.count() == 3, "one finger dragged across them adds the rest (" .. SelectTool.count() .. ")")
+	UIS.TouchEnabled, UIS.MouseEnabled = false, true
 	-- turned together about their middle
 	press("GroupTurn")
 	local turned = true
@@ -1468,32 +1498,6 @@ run("the Select tool: a box picks many, they move together, Undo puts them back,
 	check(SelectTool.count() == 0, "and lets them go")
 	press("Undo")
 	check(count("items") == items, "Undo brings them back")
-	-- on a touch screen: taps add and take away, one finger drags a box
-	local UIS = Sim.UIS
-	UIS.TouchEnabled, UIS.MouseEnabled = true, false
-	local function screenOf(key)
-		local it = profile.plan.items[key]
-		local v = Sim.cam:WorldToViewportPoint(plotFrame * Vector3.new(it.x, 1, it.z))
-		return Vector2.new(v.X, v.Y - 36)
-	end
-	UIS.TouchTapInWorld:Fire(screenOf(keys[1]), false)
-	frames(2)
-	UIS.TouchTapInWorld:Fire(screenOf(keys[3]), false)
-	frames(2)
-	check(SelectTool.count() == 2, "two taps pick two chairs (" .. SelectTool.count() .. ")")
-	UIS.TouchTapInWorld:Fire(screenOf(keys[1]), false)
-	frames(2)
-	check(SelectTool.count() == 1, "a third tap on one takes it away")
-	local finger = { UserInputType = Enum.UserInputType.Touch, Position = Vector3.new(lo.X - 40, lo.Y - 76, 0) }
-	UIS.InputBegan:Fire(finger, false)
-	finger.Position = Vector3.new(hi.X + 40, hi.Y + 4, 0)
-	finger.Delta = Vector3.new(80, 80, 0)
-	UIS.InputChanged:Fire(finger, false)
-	frames(2)
-	UIS.InputEnded:Fire(finger, false)
-	frames(2)
-	check(SelectTool.count() == 3, "one finger dragged across them adds the rest (" .. SelectTool.count() .. ")")
-	UIS.TouchEnabled, UIS.MouseEnabled = false, true
 	BuildMode.setTool("select")
 	frames(2)
 	check(SelectTool.count() == 0, "another tool lets the group go")
@@ -1504,6 +1508,79 @@ end)
 -- remove it ... another for smaller grid size placement, another for x y scaling"): a piece bumps
 -- into what is there, Free Placing lets it in and turns it in small steps, Fine Grid snaps finer,
 -- Stretch makes it bigger, Any Colour picks any colour.
+-- the user: "add loading and saving of plots"
+run("saved builds: the plot kept in a slot, changed, loaded back, and Undo", function()
+	local warned = #errors
+	local SavesTray = Sim.Harness.require(Sim.CLIENT .. "Build.SavesTray")
+	press("Saves")
+	frames(2)
+	local slot1 = gui:FindFirstChild("Slot1", true)
+	check(slot1 ~= nil and Fake.shown(slot1), "the Saves page shows a card for the first slot")
+	check(SavesTray.page() ~= nil and SavesTray.page().slots == 2, "two slots without More Saves")
+	local locked = gui:FindFirstChild("Unlock", true)
+	check(locked ~= nil and Fake.shown(locked), "the slots More Saves opens show locked")
+	-- named and saved
+	local name = slot1:FindFirstChild("SaveName", true)
+	name.Text = "Before the sale"
+	name.FocusLost:Fire(true)
+	local function inSlot(slot, button)
+		local card = gui:FindFirstChild("Slot" .. slot, true)
+		return card and card:FindFirstChild(button, true)
+	end
+	inSlot(1, "SaveHere").Activated:Fire()
+	frames(3)
+	local saved = profile.saves["1"]
+	check(saved ~= nil and saved.name == "Before the sale", "Save here keeps the plot under its name")
+	local pieces = 0
+	for _, kind in { "walls", "floors", "roofs", "waters", "items" } do
+		for _ in profile.plan[kind] or {} do
+			pieces += 1
+		end
+	end
+	local Text = Sim.Harness.require("ReplicatedStorage.Shared.Util.Text")
+	local said = labelOf(gui:FindFirstChild("Slot1", true))
+	check(said:find(Text.commas(pieces) .. " pieces", 1, true) ~= nil, "its card says how many pieces it holds")
+	-- some of it sold, then the save loaded back: asked first, it costs what comes back
+	local sold = {}
+	for key, it in profile.plan.items do
+		if it.id == "chair_wood" and #sold < 3 then
+			table.insert(sold, { type = "remove", kind = "items", key = key })
+		end
+	end
+	Sim.advance(0.2)
+	local ok = Sim.remoteFn("BuildApply").OnServerInvoke(Sim.player, sold)
+	frames(2)
+	local items, coins = count("items"), profile.coins
+	check(ok == true and #sold == 3, "three chairs sold since")
+	inSlot(1, "Load").Activated:Fire()
+	frames(3)
+	local dialog = gui:FindFirstChild("SaveConfirm", true)
+	check(dialog ~= nil, "Load asks first")
+	check(
+		dialog ~= nil and labelOf(dialog):find("Undo takes the whole load back", 1, true) ~= nil,
+		"and says Undo can take it back"
+	)
+	check(dialog ~= nil and labelOf(dialog):find("It costs", 1, true) ~= nil, "and what it costs")
+	dialog:FindFirstChild("Confirm", true).Activated:Fire()
+	frames(3)
+	check(count("items") == items + 3, "loading brings the three chairs back")
+	check(profile.coins < coins, "and buys them again")
+	-- one Undo takes the load back
+	Sim.advance(0.2)
+	press("Undo")
+	check(count("items") == items and profile.coins == coins, "one Undo takes the whole load back")
+	-- deleted, after asking
+	inSlot(1, "Delete").Activated:Fire()
+	frames(3)
+	dialog = gui:FindFirstChild("SaveConfirm", true)
+	check(dialog ~= nil, "Delete asks first")
+	dialog:FindFirstChild("Confirm", true).Activated:Fire()
+	frames(3)
+	check(profile.saves["1"] == nil, "and the save goes")
+	check(inSlot(1, "SaveHere") ~= nil, "the slot is empty again")
+	check(#errors == warned, "no warnings from any of it")
+end)
+
 run("the build mode passes: pieces bump, Free Placing, Fine Grid, Stretch and Any Colour", function()
 	local warned = #errors
 	if not BuildMode.isActive() then
@@ -1541,7 +1618,7 @@ run("the build mode passes: pieces bump, Free Placing, Fine Grid, Stretch and An
 	check(blocked ~= nil and blocked:find("bumps into", 1, true) == 1, "held over another piece it bumps into it (" .. tostring(blocked) .. ")")
 	check(said.Text:find("Bumps into", 1, true) == 1, "and the hint says so")
 	local red = Fake.find(ws:FindFirstChild("BuildGhost"), function(d)
-		return d:IsA("BasePart") and d.Color == Color3.fromRGB(235, 80, 80)
+		return d:IsA("BasePart") and d.Color == roblox.Color3.fromRGB(235, 80, 80)
 	end)
 	check(#red > 0, "its ghost turns red")
 	click()
@@ -1587,7 +1664,7 @@ run("the build mode passes: pieces bump, Free Placing, Fine Grid, Stretch and An
 	-- Fine Grid: on for its owner, it snaps to a quarter of a stud
 	local gridSwitch = gui:FindFirstChild("Fine grid", true)
 	check(BuildMode.fineGrid() and gridSwitch:GetAttribute("Locked") == false, "Fine Grid is on for its owner")
-	mouseAtPlot(150.3, 170.6)
+	mouseAtPlot(150.3, 170.6, 0)
 	click()
 	local wide, wideKey = newest(function(it)
 		return it.id == id

@@ -490,8 +490,11 @@ on a wall by key, `t` studs along it, `y` above its bottom, on side `a` or `b`.
 Changes are lists of ops: `{ op = "add" | "remove" | "set", kind, key, obj, before? }`. `Plan.apply` applies them all
 or none, `Plan.invert` makes the undo, `Plan.changeCost` says what they cost (selling refunds in full),
 `Plan.affected` says what to redraw (a wall's change redraws the floor above it too, since a floor stops at the
-walls under it). `Plan.validate` holds every rule: the grid, the land, lengths, levels, paint,
-doors fitting their wall and not overlapping, stairs on quarter turns.
+walls under it; a wall moved whole redraws what hangs on it and the walls it met or meets now:
+`Plan.noteMovedWall`). `Plan.validate` holds every rule: the grid, the land, lengths, levels, paint,
+doors fitting their wall and not overlapping, stairs on quarter turns. A `set` may move a wall only whole: on its own
+floor, keeping its length (`Group.wallMoveOk`), and never onto another wall (`Group.wallThere`); what hangs on it
+keeps its `t` and `side` and goes with it.
 
 Waters (pools and ponds, `Build/Water`) are a fifth kind, before items in `Plan.Kinds`, at most `Tuning.Water.Max`,
 sides `MinSide` to `MaxSide`, on the ground floor inside the land, priced per wall-snap square (`PerCell`: 2
@@ -514,6 +517,62 @@ height (`Plan.markY(plan, item, support, ignoreKey)`), at most `Plan.MarkReach` 
 anything standing on it. Wall styles carry their own default finish (`paint`); the fences added for "more fences" are
 `brickLow`, `rail`, `iron`, `bamboo`, `log`, `woven`, `rope`, `glassRail` and `lightRail` (drawn in `Shapes.fence`).
 
+## The Select tool and saved builds
+
+The user: "add a select tool in build mode" and "add loading and saving of plots" (docs/GAME_DESIGN.md, "A select
+tool, and saved builds").
+
+`Build/Group` (shared, no services) is a group of picks `{ kind, key }`: `present(plan, picks)` (still there, once
+each, walls first), `coarse` (holds anything but free standing furniture: moves on `WallSnap`, turns 90),
+`step(plan, picks, itemStep)`, `turnStep(plan, picks, itemTurn)`, `rect`, `anchor` (a piece's middle, for the box),
+`pivot` (the group's middle on its grid), `placed(kind, obj, px, pz, dx, dz, angle, step)` (a piece turned about
+the pivot the way `CFrame.Angles(0, r, 0)` turns, then moved; a roof's `dir` goes up a step a quarter turn;
+furniture back on its grid after an odd turn; nil for what hangs on a wall), and the request lists:
+`moveRequests` (a `set` a piece, none for what hangs on a wall), `copyRequests` (an `add` a piece, `gift` dropped,
+what hangs on a copied wall copied with `wall = "@n"`), `sellRequests` (pieces first, then walls, water, floors,
+roofs), `paintRequests(plan, picks, c, m?, slot?)` (without `m` each keeps its material; unchanged pieces left
+out), `reach` and `sellValue` (what a sale takes and gives back). `Group.moves(plan, requests)` is true for a list of
+only `set`s that move more than one piece; `Group.check(plan, requests, profile?)` tries a list on a copy as the
+server does, lifting a moving group first, and with a profile holds it to `Sim/Floors` and `Build/Placing`.
+
+The Build service: `Build.apply` runs a list that `Group.moves` as `prepareMoves`: every piece is lifted out of the
+plan, then each is put back and checked through `prepare` on its own, so no piece of the group is checked against
+where another of it stood. Collisions ignore the group's own pieces (`placingFor`). `Build.replace(player, target,
+dry?)` loads a save: `Sim/Saves.requests(plan, target)` lists what goes and what comes, `prepareEach` runs each
+request through `prepare` alone (with `Keepsakes.check`, `Build.vipCheck` and `Floors.check` for each new piece;
+not `Build/Placing`'s angles, colours or collisions: a save comes back as it was), leaves out an add that fails and
+counts it, patches each new piece's `gift` from the save, charges `Plan.changeCost`, commits and pushes one undo
+entry. `dry` works it out on a copy and changes nothing. Returns `ok, { cost, skipped, changed }`. A commit of more
+than 400 ops syncs the whole plan (`PlanSync { full }`) rather than the ops.
+
+`Sim/Saves` (shared): slots are stored under `tostring(i)` (`Saves.get`, `Saves.set`), `validSlot`, `slots(profile)`
+(`Sim/Passes.saveSlots`), `maxSlots` (`Tuning.Passes.MoreSlots`), `pieces`, `bytes` (JSON size, never under what the
+DataStore writes), `cleanName(text, slot)` (no control characters, `Tuning.Saves.NameLength`, "Build <slot>" when
+empty), `snapshot`, `fits(profile, slot, plan)` (`MaxBytes` a save, `MaxTotal` all of them: a profile is one key of
+at most 4 MB), `summary(profile)` (`{ slots, max, free, saves = { { slot, name, t, pieces } } }`, never the plans),
+`target(saved, size)` (the save checked for today's land with `Plan.sanitize`, and how many pieces that left out) and
+`requests(current, target)` (a piece the same in both under the same key stays, a hanging piece only with its wall,
+a piece in a pool only with its pool; the rest of the plot goes pieces first, the rest of the save comes walls
+first; returns the requests and each new piece's gift).
+
+`Services/Saves`: `Saves.handle(player, action, slot, name)` answers `BuildSaves` (see Remotes); a name goes
+through `Saves.filter` (`Avatar.filterText`, "Build <slot>" when it can't be checked); saving is only into a slot
+the player has; quote and load go through `Build.replace`. The remote is throttled (`Tuning.Saves.Every`, a load
+`LoadEvery`).
+
+The client: `Build/SelectTool` is the tool (BuildMode lends it `SelectTool.Api`: rays, the ghost and marker folders,
+the label, the highlight, `send`, the furniture grid and turn, the rules' profile). `update` each frame, `press` and
+`release` for the mouse (a release anywhere ends the box), `tap` and `touch` for fingers (`BuildCamera.boxing` keeps
+one finger off the view), `pickUp(api, "move" | "copy")`, `place`, `putAway`, `turn`, `sell`, `paint`, `clear`,
+`reset`, `onPlan`, `hint`, `tray(kit)`. Picked pieces wear a `SelectionBox` named `Picked` in `BuildMarkers` (no limit,
+as Highlights have); the box on the screen is a frame `SelectBox` too faint for `Kit.overUI`; the held group is a
+model `GroupGhost` in `BuildGhost`. BuildMode's tool id is `"multi"` (Pick stays `"select"`); `BuildMode.groupMove`,
+`groupCopy`, `groupTurn`, `groupSell`, `groupPaint(hex)`, `groupClear`, and its `rotate`, `moveSelected`,
+`copySelected`, `deleteSelected` and `putAway` go to the group while the tool is in hand. `Build/SavesTray` is the
+Saves page (`tray(kit)`, `fetch`, `page`, `ago`) and its confirm dialogs (`Kit.panel` with `Dialog`, root
+`SaveConfirm`, buttons `Confirm` and `Cancel`); a slot card is `Slot<n>` with `SaveName`, `Load`, `SaveOver`,
+`Delete`, `SaveHere` or `Unlock` (`Purchase.prompt("saveslots")`). Icons: `select`, `save`, `lock`.
+
 ## Floors, the basement and land
 
 The passes' floors and land (docs/GAME_DESIGN.md, "Floors, a basement and bigger land").
@@ -523,7 +582,8 @@ The passes' floors and land (docs/GAME_DESIGN.md, "Floors, a basement and bigger
   basement's floor is at -11.6. `Plan.ceilingY(lv)` is where a ceiling piece hangs: 1 under the floor above, right
   under the roof on floor 7, and under the ground floor's slab (0) in the basement. `Plan.oldCeiling` moves a
   ceiling piece an old save hung right under the roof of floor 3 (the old top) down to `ceilingY(3)` as it loads.
-  `Plan.wallSpan` stops a full basement wall at 0, where a ground floor wall starts. Stairs on -1 climb to the
+  `Plan.wallSpan` stops a full basement wall at `Plan.BasementTop` (-0.04), a hair under where a ground floor wall
+  starts, so its top never lies level with the plot's ground round the room. Stairs on -1 climb to the
   ground floor and cut their hole in it (`Plan.holes(plan, 0)`).
 - `Sim/Floors` (pure, server and client): `range(profile)` (0 to 2, to 7 with Tall Builds, from -1 with Basement:
   `Sim/Passes.levels`, `lowestLevel`), `allowed`, `used(plan)` (the lowest and highest floors with anything on),
@@ -614,6 +674,59 @@ The passes' floors and land (docs/GAME_DESIGN.md, "Floors, a basement and bigger
   windows and pieces with a hidden solid box keep theirs. CanQuery stays on so Build mode can pick anything.
   `Geometry.flatten` makes a shape inside a solid piece that says it isn't solid come out not solid.
 
+## Pieces that move and give off effects
+
+The user: "make animated decor, workplaces with special effects, particle makers, and more enticing types of
+things". A placed piece's drawing says what moves and what it gives off, by part names and attributes; every
+player's own screen plays it near the camera; the server only builds the parts, still, as drawn.
+
+- `Build/Lively` (shared, plain): the names, the recipe helpers and the motion maths.
+  - `Pivot`, `Pivot2`..`Pivot4`: a hidden 0.1 box (`Lively.pivot(r, cf, motion, opts)`), its frame the turn's middle
+    and axes, with attributes `Motion` (`Lively.Motions`: `spin`, `swing`, `flutter`, `bob`, `swim`, `pace`,
+    `minute`, `hour`), `Speed`, `Amount`, `Axis` ("X", "Y" or "Z", the pivot's own) and `Phase`. Always a Block, so the
+    Builder never turns it (a gem or a fallback cone would be).
+  - `Move`, `Move2`..`Move4`: the group's parts (`Lively.move(prim, g)`, or `Lively.moving(r, g, draw)` for all a
+    drawing function draws). Never solid. A piece named so names every part it is made as.
+  - `Cabin`: rides round group 1 upright, hanging from the point `Hang` studs over it (`Lively.cabin(r, hangY, draw)`).
+  - `Twinkle`: a light that glimmers (`Lively.twinkle(prim, hue)`); `Hue = true` runs it through soft colours.
+  - `Fx`: a hidden box an effect comes out of (`Lively.fx(r, kind, x, y, z, { w, h, d, work, color, turn })`):
+    `Fx` (a key of `Data/Effects`), `FxColor` (the tint: the piece's first paint unless `color` is given) and
+    `FxWork` (off until the placed model carries `Working`). `Lively.Working` is that attribute's name.
+  - `Lively.roleOf(name)`, `Lively.isLively(name)`, `Lively.offset(motion, speed, amount, axis, phase, t, clock)`:
+    the group's frame at `t` in its pivot's space (clock hands from `Lighting.ClockTime`; speed -1 turns them the
+    right way on a face looking out along +Z).
+- `Data/Effects` (shared, plain): `Effects.list`, one ParticleEmitter's settings per effect (`texture` a key of
+  `Effects.Textures`: Roblox's own sparkle, smoke, fire and spark pictures, and white heart, note, petal, snow, dot,
+  bubble and ray pictures from the Creator Store, their decal ids noted; `tint`, `colors`, `fade`, `size`, `transp`,
+  `life`, `rate`, `speed`, `spread`, `accel`, `drag`, `rot`, `spin`, `light`, `dir`, `squash`, `locked`, `burst`,
+  `fire`). `Effects.alive(p)` is the most particles one keeps in the air; the spec holds every one to
+  `Effects.MaxAlive` (60). A piece's front (+Z where it is drawn) is the face Roblox calls "Back".
+- Catalog fields: `lively = true` on every piece with any of those parts (the Lively spec checks both ways; a
+  workplace's work effect needs none, `job` does it); `vip = true` for a VIP piece. Category `effects` (the particle
+  makers, on Build mode's Outdoor group). Recipe modules: `Moving` (20 pieces that move: a windmill, a pinwheel, a
+  wind spinner, a water wheel, a Ferris wheel, a koi pond, a garden flag, a wind sock, a sprinkler, a ceiling fan, a
+  lava lamp, a goldfish bowl, a crib with a mobile, a gramophone, a waving cat, a hamster cage, a carousel, a station
+  clock, a pendulum clock, a wall fountain), `Effects` (12 particle makers), `Glitz` (a disco ball whose spot lights
+  turn with it, twinkle lights, a jukebox, a dance floor, two neon signs, a photo booth, an aquarium wall, a popcorn
+  cart) and `Vip` (8). `Recipes/Work` gives each workplace its effect at the end of the file (`WORK_FX`).
+- Workplaces at work: `Villagers.workingAt(player)` (the workplace keys with a villager earning there now) and
+  `Services/Work`'s own sessions feed `Work.markBusy(i)`, once a second for each plot, which sets `Working = true` on
+  each placed workplace model somebody is at and clears it from the rest (only when it changes). The workplace models
+  are noted as they are drawn into the plot's folder.
+- VIP pieces: `Sim/Passes.mayPlace(profile, def)`; `Build.vipCheck(profile, requests)` in `Build.apply` refuses an
+  add, or a set that turns a piece into one, without the pass (a VIP piece already down still moves and repaints).
+  Build mode tags the card (`Vip` attribute, a `Kit.leanMark` named `Vip`) and calls `Purchase.prompt("vip")` when it
+  is picked without the pass.
+- Client `World/Lively`: watches every plot's `Build` folder; a placed piece that is `lively` or a workplace is read a
+  second after it arrives (once `BuildFx`'s spring has settled it at full size): its groups' parts with their frames
+  relative to the pivot, cabins, glints and effect spots. Thirty times a second it moves the groups of pieces within
+  `Lively.MoveRange` (160 studs) of the camera in one `workspace:BulkMoveTo` (a seed from the piece's position keeps
+  two of the same out of step); ten times a second it glimmers the `Twinkle` parts; twice a second it looks at what is
+  near, makes a spot's emitters (and Fire) the first time it comes within `Lively.FxRange` (200), switches them by
+  distance and `Working`, and fires the bursts that are due. Emitters and fires are made and switched in pcalls. A
+  piece drawn again (moved, repainted) is a new model and read afresh. `Lively.read`, `Lively.add`, `Lively.step` and
+  `Lively.count` are for the simulation.
+
 ## Tutorial, wishes, unsticking
 
 - `Sim/Tutorial` (no services): `Steps` (villager, bed, work, craving), `Count`, `Skipped` (99), `progress`,
@@ -669,6 +782,8 @@ profile = {
   seen,  -- os.time() at the last save made with the player in the game (Data.save): offline earnings count from it
   playtime = { day, secs, got },  -- today's play (UTC day) and how many of Data/Playtime's steps were claimed
   achieved = { [achievementId] = true, group? = true },  -- achievements claimed; `group`: the group's gems paid
+  saves = { ["1"] = { name, t, plan }, ... },  -- saved builds by slot (Sim/Saves; up to Sim/Passes.saveSlots slots):
+                                               -- the plan as it stood, `gift` and all, at most Tuning.Saves.MaxBytes
 }
 Villager = { id, name, pers, app, color, bday = { s, d }, fav, mood, job?, lv, xp, bed?, sick?,
              dayOff?, isYou?, born, heart, hxp, wish? = { kind, arg?, untilT }, saying?, hobby?, from?,
@@ -778,11 +893,12 @@ The creator's remotes: `CreatorPeople` (the people here and your friends, and th
 | `Data` | Loads with a session lock, autosaves every two minutes, saves on leave and shutdown, pushes state patches (`State`), toasts (`Notify`), coins, the town log, the daily gift. |
 | `World` | Builds the town from `Data/TownMap` (streets, plaza, street furniture, decoration, hills, prompts) and the plot bases (each `Base` from the floor down to `Terrain.PlotFloor`); sets the stylised lighting (colour grading tinted by the hour, a bloom from `Tuning.Look.Bloom`, sun rays, haze); the clock (real time, 12 minute days) and calendar; night lights; doors that open for anyone walking up; seasonal weather. |
 | `Plots` | Hands out plots, draws the saved build and the owned land, sells more land (`PlotExpand`). A server holds one player to a plot (`Tuning.Game.MaxPlayers`, also `MaxPlayers` on Players in default.project.json; a published game takes its server size from the game's settings). One more is put on a waiting list, gets a body in the square at once and a note, and is given the next plot that comes free (`GoHome` tells them they have none yet). Characters don't load by themselves (`Players.CharacterAutoLoads` is off in the place): `Plots.spawn` loads one once the player's plot is ready (or after 20 s if their profile never loads), and again `Players.RespawnTime` after a death; every character arrives at its plot. Once a second anyone below `Plots.FallLimit` (-40) is put back on their plot, or in the square. |
-| `Build` | `BuildApply`, `BuildUndo`, `BuildRedo`: checks requests, charges or refunds, keeps history, redraws, syncs the plan to its owner (`PlanSync`). Fires `Changed`. A batch is up to 320 requests (a whole ready-made building); an item's `wall = "@n"` means the wall made by the batch's n-th request. `Build.prepare` is exported for the specs. |
+| `Build` | `BuildApply`, `BuildUndo`, `BuildRedo`: checks requests, charges or refunds, keeps history, redraws, syncs the plan to its owner (`PlanSync`). Fires `Changed`. A batch is up to 320 requests (a whole ready-made building); an item's `wall = "@n"` means the wall made by the batch's n-th request. `Build.prepare` is exported for the specs. A group moved with the Select tool is checked lifted (`prepareMoves`), and `Build.replace` loads a saved build (see "The Select tool and saved builds"). |
+| `Saves` | `BuildSaves`: saved builds kept in `profile.saves`, renamed, saved over, deleted and loaded through `Build.replace` (see "The Select tool and saved builds"). After `Build`. |
 | `Basement` | Digs each basement room out of the terrain under the plot and fills it back exactly when it goes, and has the plot's ground cut round the rooms (see "Floors, the basement and land"). After `Water`. |
 | `Avatar` | The creator: a private stage (an empty Model `CreatorStage<slot>` with an `Origin` attribute, high over the meadow; nothing is built there) and an anchored mannequin per player, catalog search fallback, bundles, copying users, outfits, asset checks, the text filter. `toDescription`, `buildModel` for everyone else. |
 | `Interact` | Puts a `UsePrompt` (E, no `Opens`) on an attachment `UseSpot` on each placed piece that has a player use (`Data/Interactions`), in every plot's Build folder; checks the player is within `Tuning.Uses.Reaches` (14 studs), a `Cooldown` per player and a `Rest` per piece; picks the outcome (`Sim/Uses`), has villagers near react to the loud ones and fires `Used`. Nothing is bought or saved. Starts after `Villagers`. |
-| `Work` | A player working at a workplace themselves (see "Working at a workplace yourself"): a `WorkPrompt` at every placed workplace's work spot, `Work.asked`, `Work.begin`, `Work.stop(player, say?)`, `Work.at(player)` (plot and key, or nil), `Work.step(now)` every `Tuning.Jobs.Player.Check` seconds, the `WorkStop` remote. Pays through `Villagers.payPlayer`. Starts after `Villagers`. |
+| `Work` | A player working at a workplace themselves (see "Working at a workplace yourself"): a `WorkPrompt` at every placed workplace's work spot, `Work.asked`, `Work.begin`, `Work.stop(player, say?)`, `Work.at(player)` (plot and key, or nil), `Work.step(now)` every `Tuning.Jobs.Player.Check` seconds, the `WorkStop` remote. Pays through `Villagers.payPlayer`. Starts after `Villagers`. Once a second `Work.markBusy(i)` marks each placed workplace somebody (villager or player) is at with `Working` (see "Pieces that move and give off effects"). |
 | `Villagers` | Creating, editing, moving out, beds, jobs, buying a craving (`Villagers.buyWish`, the `WishBuy` remote). Spawns NPCs and runs their routine (`Villagers.brain` acts out what `Sim/Routine` chooses): sleep at night; in work hours each worker goes round their job's loop at the workplace and takes breaks; those with no job or done for the day potter. Pay goes to whoever is earning at that moment: every `Tuning.Jobs.EarnStep` seconds it checks `npc.atWork` in work hours with control nil, chat or talk (an event, an outing, a day off or sickness pays nothing), keeps a purse per villager in server memory, and every `PayEvery` seconds sends the coins (`Data.addCoins(..., quiet)`, `stats.earned`, the `Earned` event); what is left goes when the player leaves. `Villagers.endOfWork` at 5 PM sends the last of it, grants skill by the share of the day earned and says "Your villagers earned {n} coins today." (it still writes `stats.paydays` and `lastPayday`). Talking: `Villagers.spawn` puts `Npc.talkPrompt(name)` on each body (a ProximityPrompt `TalkPrompt` on the HumanoidRootPart: E, held `Tuning.Talk.HoldSeconds`, from `Distance` studs, no `Opens` attribute) and `setControl` switches it with `Npc.setTalkable(Talk.free(mode))`; it is off while they sleep. `Villagers.talkedTo(who, owner, vid)` answers it: it refuses a sleeper, someone in an event or away, a player more than `Range` studs off and a second line within `Cooldown`; then holds them (`setControl(owner, vid, "talk")` for `StaySeconds`, `VisitorSeconds` for a visitor, or until the player walks off), turns them with `Npc.face`, and has them say `Talk.line`. The owner also gets `Talk.chat`'s gain and the `Talk` event. |
 | `Store` | Passes, gem packs, rewards, offline earnings and the group (see "Passes, gems, rewards and time away"). Listens for `Data.Loaded`, so it starts before `Data.open`. |
 | `Events` | Picks and plays random events, waits for choices, applies effects, room request rewards, small friendship gains from chats, parties. A scene's props (`Data/EventProps`) are put down by their star after the gather, facing the group on the ground (a raycast that skips villagers, characters and props), made with `Builder.instantiate(..., { plain = true })`, not collidable, queryable or touchable, in `Workspace.EventProps` (attributes `Prop`, `Owner`); a choice's props come after the choice; `leave` keeps one for some hours (at most `PropsMax` a town, oldest out); tidied every 10 s and cleared when the player leaves. It pushes `keepsakes` when one is given. |
@@ -846,7 +962,10 @@ gem included). The rewards and the store (`Services/Store`): `PlaytimeClaim` (`i
 why`: the next of today's playtime steps, which must be reached), `AchievementClaim` (`id` -> `ok, gems`: once, when
 `Rewards.claimAchievement` finds it done), `GroupClaim` (-> `ok, gems` or `false, why`: once, for a member, asked fresh
 at most every 5 s), `WelcomeBack` (-> `{ secs, counted, coins, workers }` or nil: what the town earned while the
-player was away, once; it waits up to 120 s for their save and passes).
+player was away, once; it waits up to 120 s for their save and passes). `BuildSaves` (`action, slot?, name?` ->
+`ok, answer` or `false, why`; `Services/Saves`): `"list"` -> the page (`Sim/Saves.summary`), `"save"` (into a slot the
+player has; a new name, or the old one kept), `"rename"`, `"delete"` -> the page, `"quote"` -> `{ cost, skipped,
+pieces }` (what a load would come to now), `"load"` -> `{ cost, skipped, pieces, page }`.
 
 Events (server pushes): `State` (patches of the client state), `PlanSync` (`{ full }` or `{ ops }`), `Notify`
 (`text, kind`; kind `action` carries `open:creator:<vid>`), `Used` (`at, puff?, text?, rarity?` to every client: `client/World/Interact` draws the puff and a bubble over the piece, a gold rim for a rare one), `EventShow`, `EventLine` (`{ token, line, last? }`, `{ token, ask = true, left? }`, `{ token, left }`), `EventEnd`, `Earned` (`{ coins, earned, lines = { { vid, n } } }` every `Tuning.Jobs.PayEvery` seconds when anyone earned: `client/World/Earnings` lifts a coin and "+N" off each earner's head and the HUD's count rolls up quietly; the player's own work is a line `{ you = true, n, today }`, its "+N" over their own character), `Say`,
@@ -1109,6 +1228,8 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   at its stop), drifting clouds with shadows, circling birds with flapping wings, swaying trees and waving flags
   (only near the camera), the fountain's spray, fireflies at night. Everything moves with `workspace:BulkMoveTo`
   from one Heartbeat loop; nothing is replicated.
+- `World/Lively` (client only): placed pieces that move, glimmer and give off effects, near the camera (see "Pieces
+  that move and give off effects").
 - `World/BuildFx` (client only): listens to `State.onPlan`; a new piece pops up (`Model:ScaleTo` from 0.4 with an
   overshoot) out of a dust puff with sparkles, a removed one leaves a puff.
 - `UI/Vector`: the vector painter, plain Luau with no services. `Vector.parse(d)` reads a path in SVG's path
@@ -1328,7 +1449,23 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   `build:water`, `build:water:pick`, `wish`, `wish:short`, `wish:friend`, `wish:cheer`, `tutorial:welcome`,
   `tutorial:1`, `tutorial:2`, `tutorial:2:build`, `tutorial:3:build`, `tutorial:4`, `tutorial:4:craving`,
   `tutorial:4:buy`, `tutorial:done`; `panel:Tutorial` is the welcome.
+- Pieces that move and give off effects: the `Lively` spec (every moving group has its pivot and a known motion,
+  nothing that moves is solid, every effect is known and light, every workplace has a work effect, the motions stay
+  near their pivots, the clocks tell the time, VIP pieces go down only with the pass) and `tests/sim/lively.luau`
+  (the real World/Lively on placed pieces: sails turn near the camera and stop far from it, cabins go round upright,
+  tiles change colour, a particle maker's emitter switches with distance, a workplace's with `Working`, a repainted
+  piece is read again, a VIP card offers the pass), run by `scripts/check.sh`. UI scene `build:effects` (in the
+  audit; the VIP card is shown first there).
 
+- The Select tool and saved builds: the `Group` spec (a room moved as one with its door going with its wall, turned
+  about its middle with each wall landing where another stood, copied with its door, painted, sold; walls never
+  stretched, sent to another floor or put on another; furniture alone on its own grid) and the `Saves` spec (the
+  real Saves and Build services with stubbed neighbours: slots and More Saves, names through the filter, the
+  DataStore caps, rename and delete, a load that keeps what is the same, sells and buys the rest, keeps a gift free,
+  shows in Changed what went, is one Undo, is refused when it can't be paid for, leaves out what no longer fits the
+  land, and sends the whole plan when it is big). The Build mode simulation's "the Select tool" step (a box, Shift-
+  click, Move with the bars away, Undo, Turn, Copy, Sell, taps and a one finger box on a touch screen); it also opens
+  the Saves group. UI scenes (in the audit): `build:select`, `build:select:none`, `build:saves`, `build:saves:load`.
 - `tools/preview/walk.sh <scene> <png> --eye x,y,z --look x,y,z [--fov 60] [--size 1280x720] [--hour 16]
   [--textures] [--painted]` draws any `dump.luau` scene as somebody standing in it sees it (`walk.py`: a camera
   with a lens, the sun where a latitude of 54 puts it at that hour and coloured as `Services/World` grades it,

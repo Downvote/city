@@ -53,8 +53,9 @@ if ! lune run tests/sim/build_client.luau >"$SIM_OUT" 2>&1; then
 fi
 tail -n 1 "$SIM_OUT"
 # the card you get when you hold E on a villager, the creator's own sections, the main screen, a
-# watched event moving only when the player says so and the tutorial's steps, driven the same way
-for SIM in talk_card creator_sections hud event_pace tutorial; do
+# watched event moving only when the player says so, the tutorial's steps and placed pieces moving
+# and giving off their effects (World/Lively), driven the same way
+for SIM in talk_card creator_sections hud event_pace tutorial lively; do
 	if ! lune run tests/sim/$SIM.luau >"$SIM_OUT" 2>&1; then
 		cat "$SIM_OUT"
 		rm -f "$SIM_OUT"

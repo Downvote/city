@@ -154,16 +154,22 @@ local function clear(s: Saved)
 	end
 end
 
--- Is the voxel column at (i, k) dug by the plan now (a basement block or a water)?
-local function dugNow(frame: CFrame, plan: any, i: number, k: number): boolean
-	local at = frame:PointToObjectSpace(Vector3.new((i + 0.5) * V, 0, (k + 0.5) * V))
-	for _, b in Basement.blocks(plan) do
-		if at.X > b[1] and at.X < b[3] and at.Z > b[2] and at.Z < b[4] then
-			return true
+-- The rectangles the plan has dug now, on the plot: its basement's blocks and its waters.
+local function dugRects(plan: any): { { number } }
+	local out = Basement.blocks(plan)
+	for _, w in (plan and plan.waters) or {} do
+		if type(w) == "table" and type(w.x1) == "number" then
+			table.insert(out, { w.x1, w.z1, w.x2, w.z2 })
 		end
 	end
-	for _, w in (plan and plan.waters) or {} do
-		if type(w) == "table" and at.X > w.x1 and at.X < w.x2 and at.Z > w.z1 and at.Z < w.z2 then
+	return out
+end
+
+-- Is the voxel column at (i, k) in one of those?
+local function dugNow(frame: CFrame, dug: { { number } }, i: number, k: number): boolean
+	local at = frame:PointToObjectSpace(Vector3.new((i + 0.5) * V, 0, (k + 0.5) * V))
+	for _, b in dug do
+		if at.X > b[1] and at.X < b[3] and at.Z > b[2] and at.Z < b[4] then
 			return true
 		end
 	end
@@ -252,6 +258,7 @@ function Underground.show(plan: any)
 			now = t:ReadVoxelChannels(s.region, V, CHANNELS)
 		end
 		local before = s.before
+		local dug = dugRects(plan)
 		local mat, occ, liq = table.create(s.nx), table.create(s.nx), table.create(s.nx)
 		for x = 1, s.nx do
 			local mx, ox, lx = table.create(s.ny), table.create(s.ny), table.create(s.ny)
@@ -262,7 +269,7 @@ function Underground.show(plan: any)
 		end
 		for x = 1, s.nx do
 			for z = 1, s.nz do
-				local keep = dugNow(s.frame, plan, s.i0 + x - 1, s.k0 + z - 1)
+				local keep = dugNow(s.frame, dug, s.i0 + x - 1, s.k0 + z - 1)
 				for y = 1, s.ny do
 					local back = s.cleared[pack(x, y, z)] and not keep
 					local src = if back then before else now

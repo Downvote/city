@@ -13,6 +13,7 @@
 -- The lifebuoy stand goes on dry ground beside the water, as anything else in the garden does.
 
 local Recipe = require(script.Parent.Parent.Recipe)
+local Lively = require(script.Parent.Parent.Lively)
 local Colors = require(script.Parent.Parent.Parent.Util.Colors)
 
 local C = Recipe.Colors
@@ -723,6 +724,7 @@ local list: { any } = {
 		size = Vector3.new(2.6, 5.4, 2.6),
 		c1 = "CDEEF5",
 		c2 = "6E7480",
+		lively = true, -- (it sprays: World/Lively)
 		build = function(r: R)
 			-- the nozzle just under the surface (0.35 up), and the foam round it
 			r:cyl(0, 0.2, 0, 0.25, 0.7, "y", r.c2, "Metal")
@@ -771,6 +773,8 @@ local list: { any } = {
 				drop.transp = 0.4
 				drop.collide = false
 			end
+			-- and real spray off the top, on each player's screen
+			Lively.fx(r, "splash", 0, 4.6, 0, { w = 0.2, d = 0.2 })
 		end,
 	},
 	-- on the bottom and at the edge -----------------------------------------------------------------------

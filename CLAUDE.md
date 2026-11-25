@@ -27,14 +27,16 @@ the contract (update it with every API, remote or saved data change), `src/share
    the card you get by holding E on a villager; `tests/sim/creator_sections.luau`: the creator's Bodies, Body
    parts, My items and My avatars; `tests/sim/hud.luau`: the main screen's stats strip, quests and Home;
    `tests/sim/event_pace.luau`: a watched event moves only when the player presses; `tests/sim/tutorial.luau`: the
-   tutorial from the welcome to the closing card), the dark and the light look on every screen
+   tutorial from the welcome to the closing card; `tests/sim/lively.luau`: placed pieces moving and giving off
+   their effects), the dark and the light look on every screen
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
 Specs today (511 at the last full run; `Voice`: each personality's own hand, and a villager's ending; `Memory`: what events leave
 with a villager for a few days, the accessory on and off; `FlairService`: buying flair with gems on the server, with
 stubbed neighbours; `Tutorial`: the four steps, checked
-by the server, the first craving coming quickly; `Water`: pools and ponds on the terrain grid, what may stand in them;
+by the server, the first craving coming quickly; `Water`: pools and ponds on the terrain grid, what may stand in them; `Floors`: the floors the passes allow, an old
+save's fourth floor, the basement's rules, its dig and its lining, land and Big Plot;
 `Unstick`: finding room to stand, what of a piece is solid, villagers getting up and getting unstuck, swimmers left
 alone; `EventService`: an answer's time held while the player reads; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `PlayerWork` and `WorkService`: a player working at a workplace themselves, its pay and cap, and the server's side with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
@@ -143,6 +145,17 @@ that sway with the wind") and a clear sky ("remove clouds and birds from the sky
 hanging signs `SwingSign`, fountain jets `Jet`, and `World/Ambience` moves them and the ducks on each player's
 own screen. Name a new tree's crown parts `Leaf` and it sways. (The user later: "remove the butterflies
 and bunnies" and "remove the grass". Don't bring them back.)
+
+Placed pieces move and give off effects too (the user: "make animated decor, workplaces with special effects,
+particle makers, and more enticing types of things"): a piece says it in its drawing, with `Build/Lively`'s helpers,
+and the client's `World/Lively` plays it near the camera, on each player's own screen. A new moving piece draws a
+hidden pivot (`Lively.pivot(r, cf, motion, opts)`, its frame the turn's middle and axis) and names what turns round
+it with `Lively.moving(r, group, draw)` (up to four groups; `Lively.cabin` for a ride's upright seats,
+`Lively.twinkle` for a light that glimmers); a new effect is a line in `Data/Effects` (keep it under
+`Effects.MaxAlive`) given off from `Lively.fx(r, kind, x, y, z, opts)`, tinted by the piece's first paint; a new
+workplace gets its effect in `Recipes/Work`'s `WORK_FX` (on only while somebody works there: `Working`). Mark the
+piece `lively = true` (the Lively spec checks both ways), never make what moves solid, and never move parts or
+make emitters on the server. A VIP piece is `vip = true` (`Recipes/Vip`); the server refuses it without the pass.
 
 The user: "remove the shop, buying of things and food and feeding. when a character gets a craving, allow the
 player to simply pay to buy it" and "remove the map button and the map interface". So there is no shop, no bag

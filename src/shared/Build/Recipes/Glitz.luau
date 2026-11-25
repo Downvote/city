@@ -529,14 +529,21 @@ local items: { Item } = {
 					)
 				end
 			end
+			-- weed in clumps: a stem that bends as it grows, a leaf or two off it
 			for k = 0, 7 do
-				local x = -3.4 + k * 0.95
-				r:beam(
-					Vector3.new(x, 1.65, -0.5 + (k % 3) * 0.2),
-					Vector3.new(x + 0.15, 3.0 + (k % 4) * 0.5, -0.45 + (k % 3) * 0.2),
-					0.08,
-					0.2,
-					if k % 2 == 0 then C.Leaf else C.DarkLeaf,
+				local x, z = -3.4 + k * 0.95, -0.5 + (k % 3) * 0.2
+				local top = 2.8 + (k % 4) * 0.45
+				local lean = if k % 2 == 0 then 0.2 else -0.2
+				local col = if k % 2 == 0 then C.Leaf else C.DarkLeaf
+				local mid = Vector3.new(x + lean, (1.65 + top) / 2, z)
+				r:beam(Vector3.new(x, 1.65, z), mid, 0.08, 0.16, col, "Grass")
+				r:beam(mid, Vector3.new(x - lean * 0.5, top, z + 0.05), 0.07, 0.14, col, "Grass")
+				r:lump(
+					CFrame.new(mid + Vector3.new(lean * 0.8, 0.2, 0)) * CFrame.Angles(0, 0, -lean * 3),
+					0.3,
+					0.12,
+					0.1,
+					col,
 					"Grass"
 				)
 			end

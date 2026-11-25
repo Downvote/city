@@ -75,8 +75,6 @@ local MAIN = {
 			{ id = "fun", icon = "gamepad", name = "Fun" },
 			{ id = "decor", icon = "plant", name = "Decor" },
 			{ id = "walldecor", icon = "frame", name = "On walls" },
-			-- small pieces that give off sparkles, smoke, bubbles, snow (Recipes/Effects)
-			{ id = "effects", icon = "sparkle", name = "Effects" },
 			-- posters, frames and decals showing a picture from the Roblox library (Recipes/Pictures)
 			{ id = "pictures", icon = "picture", name = "Pictures" },
 			-- what villagers made you in events: free, as many as you were given (Sim/Keepsakes)
@@ -89,6 +87,9 @@ local MAIN = {
 		name = "Outdoor",
 		subs = {
 			{ id = "garden", icon = "flower", name = "Garden" },
+			-- small pieces that give off sparkles, smoke, bubbles, snow, a fire's flames (the
+			-- user: "particle makers"; Recipes/Effects), indoors or out
+			{ id = "effects", icon = "sparkle", name = "Effects" },
 			{ id = "fences", icon = "fence", name = "Fences" },
 			{ id = "paths", icon = "path", name = "Paths" },
 			-- a pool or a pond, dug by dragging, and what goes in it (the user: "also, add ability
@@ -2392,10 +2393,7 @@ local function paintFloorButtons()
 		local b, dir = pair[1] :: GuiButton, pair[2] :: number
 		local what = floorStep(dir)
 		paintViewButton(b, false, what == "end")
-		local lock = b:FindFirstChild("Lock")
-		if lock and lock:IsA("GuiObject") then
-			lock.Visible = what == "lock"
-		end
+		lockBadge(b, what == "lock") -- (the padlock the passes' other controls wear)
 		b:SetAttribute("Locked", what == "lock")
 	end
 end
@@ -2429,6 +2427,8 @@ refreshChrome = function()
 			else HINTS.wall
 	elseif s.tool == "paint" and s.paint.pick then
 		hint = HINTS.copy
+	elseif s.tool == "floor" and s.level < 0 then
+		hint = "Drag out a floor to dig a room down here." -- (the basement: Build/Basement)
 	elseif s.tool == "place" and not s.placing then
 		hint = "Pick something from the tray below."
 	elseif s.tool == "multi" then
@@ -3145,18 +3145,7 @@ function BuildUI.init(exitCallback: () -> ())
 	levelUp = viewButton("FloorUp", "up", "up", 2, function()
 		floorPress(1)
 	end)
-	-- the lock on an arrow's corner when a pass would open the floor that way (paintFloorButtons)
-	for _, b in { levelDown, levelUp } do
-		local lock = Icons.make("lock", 16, {
-			Name = "Lock",
-			Parent = b,
-			Position = UDim2.new(1, -19, 0, 3),
-			Color = T.Yellow,
-			ZIndex = 3,
-		})
-		lock.Visible = false
-	end
-	-- a pass bought (or the plan reaching a new floor) changes where the arrows go
+	-- a pass bought changes where the arrows go (and the lock on an arrow's corner: paintFloorButtons)
 	State.on("passes", function()
 		refreshChrome()
 	end)

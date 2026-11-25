@@ -13,7 +13,7 @@ Creator Store's item details list it as the decal's textureId. It also says whet
 that image: a decal can be in the store while its image is private or was taken down, and then the
 image's own thumbnail is only a placeholder ("no picture"). Never use one of those: it would not
 load in the game. check asks the same of every image id already in Data/TextureIds (colour, normal
-and roughness maps) and fails if one has gone.
+and roughness maps) and of the particle pictures in Data/Effects, and fails if one has gone.
 
 Picked textures go in src/shared/Data/TextureIds.luau (with their decal ids noted), then
 python3 scripts/sync_materials.py puts them in the place.
@@ -194,6 +194,14 @@ def cmd_check(args):
         for field in ("color", "normal", "rough"):
             if field in got:
                 want[int(got[field].split("//")[1])] = f"{name}.{field}"
+    # the particle pictures of the effects pieces give off (Data/Effects' Textures)
+    import re
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    with open(os.path.join(root, "src/shared/Data/Effects.luau")) as f:
+        for line in f:
+            m = re.match(r'\s*(\w+) = "rbxassetid://(\d+)"', line)
+            if m:
+                want[int(m.group(2))] = f"effects.{m.group(1)}"
     state = shown(want)
     for attempt in range(3):  # a thumbnail nobody has asked for yet takes a moment to be made
         waiting = [i for i in want if state.get(i) == "pending"]
@@ -204,7 +212,7 @@ def cmd_check(args):
     gone = [(label, i, state.get(i, "no picture")) for i, label in want.items() if state.get(i) != "ok"]
     for label, i, how in gone:
         print(f"{label}: image {i}: {how}")
-    print(f"{len(want)} images in Data/TextureIds, {len(gone)} that Roblox shows no picture for")
+    print(f"{len(want)} images in Data/TextureIds and Data/Effects, {len(gone)} that Roblox shows no picture for")
     if gone:
         sys.exit(1)
 

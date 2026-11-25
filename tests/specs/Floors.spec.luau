@@ -199,10 +199,12 @@ describe("Basement", function()
 		-- its walls stand on it, along its edges and across it
 		expect(Plan.validate(plan, "walls", wall(20, 20, 40, 20, B))).toBe(true)
 		expect(Plan.validate(plan, "walls", wall(30, 20, 30, 36, B))).toBe(true)
-		-- full walls run from its floor up to the ground, under the ground floor's slab
+		-- full walls run from its floor up to just under the ground, under the ground floor's slab, and
+		-- their tops keep clear of the plot's ground round the room (no two faces level)
 		local bottom, height = Plan.wallSpan("wall", B)
 		expect(bottom).toBeNear(Plan.levelBase(B), 1e-6)
-		expect(bottom + height).toBeNear(0, 1e-6)
+		expect(bottom + height).toBeNear(Plan.BasementTop, 1e-6)
+		expect(Plan.BasementTop <= -0.03 and Plan.BasementTop > -0.1).toBe(true)
 		expect(Plan.levelBase(B)).toBeNear(P.Foundation - P.LevelHeight, 1e-6)
 		plan.walls["2"] = wall(20, 20, 40, 20, B)
 		local door = {

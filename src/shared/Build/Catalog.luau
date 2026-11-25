@@ -83,13 +83,13 @@ Catalog.Categories = {
 	{ id = "fun", name = "Fun" },
 	{ id = "decor", name = "Decor" },
 	{ id = "walldecor", name = "On walls" },
-	-- small pieces that give off an effect: sparkles, smoke, bubbles, confetti, falling leaves,
-	-- snow, a fire pit's flames (the user: "particle makers"; Recipes/Effects, Data/Effects)
-	{ id = "effects", name = "Effects" },
 	-- posters, frames, signs and decals showing a picture the player picks from the Roblox library
 	-- (the user: "allow the player to use custom decal in the roblox library")
 	{ id = "pictures", name = "Pictures" },
 	{ id = "garden", name = "Garden" },
+	-- small pieces that give off an effect: sparkles, smoke, bubbles, confetti, falling leaves,
+	-- snow, a fire pit's flames (the user: "particle makers"; Recipes/Effects, Data/Effects)
+	{ id = "effects", name = "Effects" },
 	-- what goes on a pool or a pond: boats, floats, lily pads, a jetty (the user: "also, add
 	-- ability to add water, along with things that can go in the water"; Recipes/Water)
 	{ id = "water", name = "Water" },

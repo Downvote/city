@@ -443,7 +443,11 @@ local function wallTool()
 		if s.wallStyle == "wall" then
 			local f = { x1 = x1, z1 = z1, x2 = x2, z2 = z2, lv = s.level, c = s.floorPaint.c, m = s.floorPaint.m }
 			if Plan.validate(State.plan, "floors", f) then
-				table.insert(requests, if s.level < 0 then 1 else #requests + 1, { type = "add", kind = "floors", obj = f })
+				table.insert(
+					requests,
+					if s.level < 0 then 1 else #requests + 1,
+					{ type = "add", kind = "floors", obj = f }
+				)
 				cost += Plan.cost("floors", f)
 				Geometry.append(prims, Shapes.floor(f, Plan.holes(State.plan, s.level)))
 			end

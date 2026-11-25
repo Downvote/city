@@ -206,14 +206,7 @@ function Group.placed(
 end
 
 -- The requests that move and turn the group: a "set" for each piece, none for what hangs on a wall.
-function Group.moveRequests(
-	plan: any,
-	picks: { Pick },
-	dx: number,
-	dz: number,
-	angle: number,
-	step: number
-): { any }
+function Group.moveRequests(plan: any, picks: { Pick }, dx: number, dz: number, angle: number, step: number): { any }
 	local list = Group.present(plan, picks)
 	local px, pz = Group.pivot(plan, list, Group.step(plan, list, step))
 	local out = {}
@@ -233,14 +226,7 @@ end
 -- The requests that put down a copy of the group, turned and moved: an "add" for each piece. A
 -- door or window is copied with its wall (it names the wall's request, "@n"), never on its own.
 -- What of a piece was given isn't copied: a copy is bought (the server drops `gift` anyway).
-function Group.copyRequests(
-	plan: any,
-	picks: { Pick },
-	dx: number,
-	dz: number,
-	angle: number,
-	step: number
-): { any }
+function Group.copyRequests(plan: any, picks: { Pick }, dx: number, dz: number, angle: number, step: number): { any }
 	local list = Group.present(plan, picks)
 	local px, pz = Group.pivot(plan, list, Group.step(plan, list, step))
 	local out = {}
@@ -467,7 +453,13 @@ function Group.check(plan: any, requests: { any }, profile: any?): (boolean, str
 			end
 		end
 	end
-	local function rules(req: any, obj: any, before: any, made: { [number]: string }, alone: boolean): (boolean, string?)
+	local function rules(
+		req: any,
+		obj: any,
+		before: any,
+		made: { [number]: string },
+		alone: boolean
+	): (boolean, string?)
 		if profile == nil then
 			return true
 		end

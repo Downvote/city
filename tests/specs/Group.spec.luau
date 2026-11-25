@@ -91,7 +91,11 @@ local function room(x, z)
 		{ type = "add", kind = "walls", obj = wall(x + 16, z, x + 16, z + 16) },
 		{ type = "add", kind = "walls", obj = wall(x + 16, z + 16, x, z + 16) },
 		{ type = "add", kind = "walls", obj = wall(x, z + 16, x, z) },
-		{ type = "add", kind = "floors", obj = { x1 = x, z1 = z, x2 = x + 16, z2 = z + 16, lv = 0, c = "C8B49A", m = "WoodPlanks" } },
+		{
+			type = "add",
+			kind = "floors",
+			obj = { x1 = x, z1 = z, x2 = x + 16, z2 = z + 16, lv = 0, c = "C8B49A", m = "WoodPlanks" },
+		},
 		{
 			type = "add",
 			kind = "roofs",
@@ -114,7 +118,17 @@ local function room(x, z)
 		{
 			type = "add",
 			kind = "items",
-			obj = { id = "door_wood", x = 0, y = Plan.openingY(front, door.opening.sill), z = 0, r = 0, lv = 0, wall = "@1", t = 8, side = "a" },
+			obj = {
+				id = "door_wood",
+				x = 0,
+				y = Plan.openingY(front, door.opening.sill),
+				z = 0,
+				r = 0,
+				lv = 0,
+				wall = "@1",
+				t = 8,
+				side = "a",
+			},
 		},
 		{ type = "add", kind = "items", obj = { id = "chair_wood", x = x + 5, y = 0.4, z = z + 6, r = 0, lv = 0 } },
 	})
@@ -125,9 +139,17 @@ local function room(x, z)
 	for _, kind in Plan.Kinds do
 		for key, obj in profile.plan[kind] do
 			local inRoom = if kind == "items"
-				then (obj.wall ~= nil and profile.plan.walls[obj.wall] ~= nil and math.min(profile.plan.walls[obj.wall].x1, profile.plan.walls[obj.wall].x2) >= x and math.min(profile.plan.walls[obj.wall].z1, profile.plan.walls[obj.wall].z2) >= z and math.max(profile.plan.walls[obj.wall].x1, profile.plan.walls[obj.wall].x2) <= x + 16 and math.max(profile.plan.walls[obj.wall].z1, profile.plan.walls[obj.wall].z2) <= z + 16)
-					or (obj.wall == nil and obj.x >= x and obj.x <= x + 16 and obj.z >= z and obj.z <= z + 16)
-				else math.min(obj.x1, obj.x2) >= x and math.max(obj.x1, obj.x2) <= x + 16 and math.min(obj.z1, obj.z2) >= z and math.max(obj.z1, obj.z2) <= z + 16
+				then (obj.wall ~= nil and profile.plan.walls[obj.wall] ~= nil and math.min(
+					profile.plan.walls[obj.wall].x1,
+					profile.plan.walls[obj.wall].x2
+				) >= x and math.min(profile.plan.walls[obj.wall].z1, profile.plan.walls[obj.wall].z2) >= z and math.max(
+					profile.plan.walls[obj.wall].x1,
+					profile.plan.walls[obj.wall].x2
+				) <= x + 16 and math.max(profile.plan.walls[obj.wall].z1, profile.plan.walls[obj.wall].z2) <= z + 16) or (obj.wall == nil and obj.x >= x and obj.x <= x + 16 and obj.z >= z and obj.z <= z + 16)
+				else math.min(obj.x1, obj.x2) >= x and math.max(obj.x1, obj.x2) <= x + 16 and math.min(
+					obj.z1,
+					obj.z2
+				) >= z and math.max(obj.z1, obj.z2) <= z + 16
 			if inRoom then
 				if kind == "items" and obj.wall then
 					doorKey = key

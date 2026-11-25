@@ -72,9 +72,7 @@ function Saves.handle(player: Player, action: any, slot: any, name: any): (boole
 		if not fits then
 			return false, why
 		end
-		local title = if type(name) == "string" or not entry
-			then nameFor(player, name, i)
-			else (entry :: any).name
+		local title = if type(name) == "string" or not entry then nameFor(player, name, i) else (entry :: any).name
 		SavesSim.set(profile, i, { name = title, t = os.time(), plan = SavesSim.snapshot(plan) })
 		return true, SavesSim.summary(profile)
 	elseif action == "rename" then

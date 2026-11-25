@@ -98,12 +98,19 @@ local function town(inside: Frame, stats: any, wages: number)
 		)
 		y += STEP
 		local land = landAt(stats.level + 1)
+		-- (land past what is free comes with Big Plot: City.landCap)
+		local locked = land ~= nil and stats.landCap ~= nil and land.Size > stats.landCap
 		MenuParts.note(
 			if land
-				then Text.fill("{A} can buy more land, up to {n} by {n} studs.", {
-					A = (Text.an(name):gsub("^%l", string.upper)),
-					n = land.Size,
-				})
+				then Text.fill(
+					if locked
+						then "{A} can buy more land with Big Plot, up to {n} by {n} studs."
+						else "{A} can buy more land, up to {n} by {n} studs.",
+					{
+						A = (Text.an(name):gsub("^%l", string.upper)),
+						n = land.Size,
+					}
+				)
 				else "Worth goes up with everything you build.",
 			accent,
 			{ Name = "Unlocks", Parent = inside, Position = UDim2.fromOffset(0, y + 4), Height = 24 }

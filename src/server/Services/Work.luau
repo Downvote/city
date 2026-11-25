@@ -308,7 +308,8 @@ end
 -- this moment carries the attribute `Working` (Build/Lively.Working), and each player's screen
 -- plays its effect while it does (steam over the cafe's machine, sparks at the bench: client
 -- World/Lively). Looked at once a second; set only when it changes, so nothing is sent while
--- nothing changes. The workplaces on each plot are kept as they are drawn, so the look is short.
+-- nothing changes. The workplaces on each plot are noted as they are drawn (and forgotten once
+-- they are gone), so the look is short.
 local workplaces: { [number]: { [Instance]: string } } = {}
 
 local function noteWorkplace(i: number, model: Instance)
@@ -366,11 +367,6 @@ function Work.start()
 			folder.ChildAdded:Connect(function(model)
 				Work.addPrompt(i, model)
 				noteWorkplace(i, model)
-			end)
-			folder.ChildRemoved:Connect(function(model)
-				if workplaces[i] then
-					workplaces[i][model] = nil
-				end
 			end)
 			for _, model in folder:GetChildren() do
 				Work.addPrompt(i, model)

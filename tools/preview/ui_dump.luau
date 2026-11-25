@@ -18,6 +18,7 @@
 --   build:basement      Build mode on the basement with the Basement pass, a room dug there
 --   build:keepsakes     Build mode's Keepsakes tab with six things villagers made you, one of
 --                       them already down (build:keepsakes:empty before anybody has)
+--   build:effects       Build mode's Effects tab: the particle makers, a VIP piece's card tagged
 --   build:placing       Build mode holding an armchair to place: the bars away, the hint left
 --                       (build:placing:touch on a touch screen, with its two round buttons)
 --   build:styles        Build mode's Styles group on its Cozy tile (build:styles:<look> another)
@@ -39,7 +40,8 @@
 --                       bought with gems), Residents:quirks:edit (the editor for her catchphrase),
 --                       Residents:quirks:short (the editor without the gems), News:empty, News:busy (news from several
 --                       days and a request), Goals:claimed (a claimed goal picked), CityPanel:ready
---                       (the next land can be bought)
+--                       (the next land can be bought), CityPanel:bigplot (land at 320: the next
+--                       step offers Big Plot)
 --   panel:Store         the store on its passes (VIP and Fine Grid owned, More Saves not on sale
 --                       yet); panel:Store:gems its gem packs
 --   panel:Rewards       the rewards on today's gift (a run of four days); panel:Rewards:playtime
@@ -281,6 +283,8 @@ elseif scene:sub(1, 5) == "build" then
 		["build:sell"] = { "Sell" },
 		["build:view"] = { "Furniture", "FloorUp", "See-through walls" },
 		["build:keepsakes"] = { "Furniture", "Keepsakes" },
+		-- the particle makers (Recipes/Effects), a VIP piece's card among them
+		["build:effects"] = { "Outdoor", "Effects" },
 		["build:keepsakes:empty"] = { "Furniture", "Keepsakes" },
 		["build:styles"] = { "Styles", "Cozy" },
 		["build:shapes"] = { "Build", "Shapes" },
@@ -309,6 +313,15 @@ elseif scene:sub(1, 5) == "build" then
 	end
 	for _, tab in TABS[scene] or {} do
 		Sim.press(tab)
+	end
+	if scene == "build:effects" then
+		-- (the VIP piece's card comes last in the row: shown first here, so its tag is in the picture)
+		for _, d in Sim.gui:GetDescendants() do
+			if d:IsA("TextButton") and d:GetAttribute("Vip") then
+				d.LayoutOrder = 0
+			end
+		end
+		Sim.frames(2)
 	end
 	if scene == "build:water" or scene == "build:water:pick" then
 		-- (water: the Outdoor group's Water tile, by its name, since cards say "water" too; for
@@ -552,6 +565,10 @@ elseif scene:sub(1, 6) == "panel:" then
 		-- the next piece of land open to a hamlet, to see the button that buys it
 		local Tuning = Harness.require("ReplicatedStorage.Shared.Config.Tuning")
 		Tuning.City.Land[2].Level = 1
+	elseif state == "bigplot" and name == "CityPanel" then
+		-- land at 320, the most there is without Big Plot: the row offers the pass, with its lock
+		Sim.State.plan.size = 320
+		patch({ passes = {} })
 	end
 	if name == "Store" or name == "Rewards" then
 		-- the passes as they will be once made on Roblox (More Saves still waiting for its id), VIP

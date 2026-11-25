@@ -353,6 +353,53 @@ bounds are as they were.
 Held by `tests/specs/Floors.spec.luau`, the Build service spec's "floors and the basement" and the Build mode
 simulation's floors step.
 
+### A select tool, and saved builds
+
+> add loading and saving of plots. add a select tool in build mode.
+
+**Select.** A tool of its own in the tools row, beside Pick, with a box and a pointer for an icon. Click a piece and
+it is picked; Shift-click adds one or takes it away; drag across the screen and everything on the floor being shown
+whose middle is inside the box is picked (roofs of that floor too, even while roofs are hidden, so a house moves
+with its roof). On a touch screen a tap adds a piece or takes it away and one finger dragged draws the box (two
+fingers still move the view). Each picked piece wears a thin blue outline. The tray says how many are picked and
+what they sell for, and has Move, Turn, Copy, Sell and Let go, with a row of colours under them; the tools row's
+Move, Turn and Copy work on the group too, as do M, R, C and Delete. Up to 300 pieces go in one group.
+
+- **Move** picks the group up: a see-through copy of it follows the pointer, every piece keeping its place to the
+  others, snapping as one. R turns it while it is held. A click puts it down; it turns red and says why when it
+  can't go there. While it is held the interface slides away, as it does for one piece.
+- **Turn** turns the group about its middle where it stands.
+- **Copy** holds a copy of the group to put down, and another after it, until it is put away.
+- **Sell** sells the lot, and what hangs on its walls.
+- **A colour** paints the whole group: both sides of each wall, the floors, the roofs and the pieces, each keeping
+  its own material.
+
+Walls, fences, floors, roofs, pools and stairs can be in a group. A group with any of them moves on the wall grid
+and turns in quarter turns, so they stay square on the grid; a group of furniture alone moves on the furniture grid
+and turns as far as one piece does. A wall moves whole and keeps its length, so the doors and windows in it go with
+it; one picked without its wall stays on its wall. Each of these is one change and one step for Undo, and the server
+checks every piece in it as it checks one, with a moving group lifted first so its pieces never trip over where the
+others stood (a room turned about its middle has each wall land where another was).
+
+**Saves.** A sixth group on the bottom bar, Saves, shows a card for each slot. A save shows its name (type over it to
+rename it), when it was saved and how many pieces it holds, with Load, Save over and Delete. An empty slot has Save
+here and keeps the plot as it stands, under the name typed into it. Everyone has two slots; More Saves makes it
+eight, and the slots it would open show on one locked card with an Unlock button. A save kept from when a player
+had the pass still shows and can be loaded or deleted.
+
+Loading, saving over and deleting each ask first, in a small dialog. Loading says what it comes to: what the save's
+pieces cost less what the plot's pieces sell back for, or the coins you get back, and it is refused when you can't
+pay. Whatever is the same in both stays where it is, beds and jobs with it; the rest of the plot is sold and the rest
+of the save bought. What of the starting house was given stays given, so loading a save of it costs nothing for
+those pieces. The save is checked against the plot as it is now: pieces outside the land you have, on a floor you
+can't build on, VIP pieces without VIP, or more keepsakes than you were given are left out, and the dialog says how
+many. A villager whose bed or workplace went loses it, as when a piece is sold. One Undo takes the whole load back,
+as long as you stay in the server; the dialog says so.
+
+A whole profile is one DataStore key, and a key holds at most 4 MB, so a save is capped at 320 KB written out (the
+biggest plot Build mode allows comes to about 290 KB) and all saves together at 2.6 MB. A build too big to save is
+turned down in plain words.
+
 **The ground under the plots.** The user, with a picture of the island's golden grass standing up through a plot's
 ground in a long strip where nothing was built: "there seems to be a bug in the first image". Roblox draws far
 terrain with coarser voxels, which can rise a stud or two through a part lying just over it. So under a plot the
@@ -360,6 +407,40 @@ terrain now lies a whole voxel down, 4 studs under the floor, away from the plot
 ground part reaches down to it (it was 1 stud deep). Within a voxel of the edges the ground keeps its old height,
 so it steps down out of sight under that part, never as a dip beside it. A pool's sides are that part down to 4
 and the terrain under it. The Terrain spec holds it.
+
+### Pieces that move, effects, and VIP pieces
+
+> also, make animated decor, workplaces with special effects, particle makers, and more enticing types of things.
+
+> add gamepasses, just like bloxburg. ... vip
+
+**Pieces that move.** Twenty new pieces move on their own: a little windmill and a water wheel turning, a pinwheel and
+a wind spinner (its small star turns the other way), a garden flag and a wind sock in the breeze, a sprinkler going
+round, koi circling a pond and a goldfish its bowl, a toy carousel and a little Ferris wheel whose cabins hang
+upright as it turns, a ceiling fan, a lava lamp, a mobile over a crib, a gramophone's record, a waving cat, a hamster's
+wheel, a station clock with a sweeping second hand, a pendulum clock and a wall fountain. The clocks show the town's
+own time. Things only move near you, and only on your screen.
+
+**Workplaces at work.** While a villager or a player is working at a workplace it shows: steam over the cafe's
+machine, flour at the bread oven, sparks at the builder's bench, notes over the little stage, chalk dust at the
+board, petals round the flower cart, paint flicking off the easel's palette, small hearts at the clinic desk, paper
+at the post office desk, a cold haze over the ice cream tubs, dust in the light over the library desk and a glint
+over the market's till. It stops when they stop.
+
+**Effects.** A new Effects tab in the Outdoor group, with pieces whose whole point is what they give off: a sparkle
+stone, a firefly lantern, a smoke machine, a bubble machine, a confetti popper, an autumn maple dropping leaves, a
+snow cloud for the ceiling, a mist bowl, a fire pit, a sunbeam lamp, a heart maker and a blossom bough dropping
+petals. The paint tool colours what they give off (gold sparkles can be blue). They give off a little at a time, so a
+garden full of them stays light to draw.
+
+**More to show off.** A disco ball whose coloured spots sweep the room at night, twinkle lights, a jukebox with a
+rainbow of neon round its window, a light-up dance floor whose tiles change colour, a neon heart and a neon star, a
+photo booth with a flash, an aquarium wall with fish swimming its length and a popcorn cart that pops.
+
+**VIP pieces.** Eight pieces only VIP owners can put down: a firework fountain, a golden fountain, a hot tub, a
+starlight chandelier, a rainbow arch, a red carpet with rope posts, a gold star statue and a gold throne. Their
+cards carry a small VIP tag; picking one without the pass offers the pass instead, and the server turns it down
+anyway. One already down stays and can still be moved and repainted if the pass is ever gone.
 
 ## 6. The villager creator
 

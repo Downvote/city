@@ -477,7 +477,12 @@ Build.prepare = prepare
 
 -- The requests one at a time, on `plan`: the ops, how many of the save's pieces were left out, or
 -- nil and why when something already on the plot couldn't be taken away.
-local function prepareEach(profile: any, plan: any, requests: { any }, gifts: { [number]: number }): ({ any }?, number, string?)
+local function prepareEach(
+	profile: any,
+	plan: any,
+	requests: { any },
+	gifts: { [number]: number }
+): ({ any }?, number, string?)
 	local all = {}
 	local made: { [number]: string } = {}
 	local skipped = 0
