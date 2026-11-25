@@ -13,8 +13,8 @@ local F = Tuning.Plot.Foundation
 
 -- finishes (Data/Palette's materials; colours from the town's palette)
 local BRICK: Finish = { c = "D69A82", m = "Brick" }
-local PLASTER: Finish = { c = "F2E6CC", m = "Plaster" }
-local LOBBY: Finish = { c = "F6F0E2", m = "Plaster" }
+local CREAM_IN: Finish = { c = "F2E6CC", m = "WoodPlanks" }
+local LOBBY: Finish = { c = "F6F0E2", m = "WoodPlanks" }
 local BOARDS: Finish = { c = "FAF6EC", m = "WoodPlanks" } -- the belfry
 local SLATE: Finish = { c = "4F6488", m = "Slate" }
 local OAK: Finish = { c = "C49A6C", m = "WoodPlanks" }
@@ -157,12 +157,12 @@ return function(add: any)
 			-- the hall: x 2..26, z 12..28, its front split round the tower
 			b:floor(2, 12, 26, 28, OAK)
 			b:floor(10, 6, 18, 12, TILES)
-			b:wall("fl", 2, 12, 10, 12, BRICK, PLASTER)
-			b:wall("mid", 10, 12, 18, 12, LOBBY, PLASTER)
-			b:wall("fr", 18, 12, 26, 12, BRICK, PLASTER)
-			b:wall("right", 26, 12, 26, 28, BRICK, PLASTER)
-			b:wall("back", 26, 28, 2, 28, BRICK, PLASTER)
-			b:wall("left", 2, 28, 2, 12, BRICK, PLASTER)
+			b:wall("fl", 2, 12, 10, 12, BRICK, CREAM_IN)
+			b:wall("mid", 10, 12, 18, 12, LOBBY, CREAM_IN)
+			b:wall("fr", 18, 12, 26, 12, BRICK, CREAM_IN)
+			b:wall("right", 26, 12, 26, 28, BRICK, CREAM_IN)
+			b:wall("back", 26, 28, 2, 28, BRICK, CREAM_IN)
+			b:wall("left", 2, 28, 2, 12, BRICK, CREAM_IN)
 			-- the tower: a brick porch below, an open belfry of white boards above
 			b:wall("tfront", 10, 6, 18, 6, BRICK, LOBBY)
 			b:wall("tright", 18, 6, 18, 12, BRICK, LOBBY)

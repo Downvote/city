@@ -76,11 +76,20 @@ describe("Textures", function()
 			expect(ok and m ~= nil).toBeTruthy()
 			expect(seen[e.material]).toBe(nil)
 			seen[e.material] = true
-			-- never Grass: the terrain's blades grow only on Roblox's own (ours is the look Lawn)
-			expect(e.material ~= "Grass").toBeTruthy()
 			expect(e.look).toBe(nil)
 			expect(e.studs).toBeBetween(0.5, 50)
 		end
+	end)
+
+	it("gives the terrain's two grasses one soft picture", function()
+		-- the user: "change ... the grass texture to a softer one, which dosent have too high
+		-- contrast". Grass and LeafyGrass (under what is built) wear the same grey picture, so the
+		-- edge of a lawn doesn't show, and it is darker than the rest, so the paint makes up for it.
+		local grass, leafy = TextureIds.grass, TextureIds.leafy
+		expect(grass ~= nil and leafy ~= nil).toBeTruthy()
+		expect(grass.color).toBe(leafy.color)
+		expect(grass.own).toBe(nil)
+		expect(grass.light ~= nil).toBeTruthy()
 	end)
 
 	it("names each look once, on a real material", function()

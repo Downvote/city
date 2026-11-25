@@ -140,6 +140,8 @@ Palette.Colors = {
 -- Ready-made finishes shown as tiles in Build mode, the way house builders offer them.
 Palette.Presets = {
 	walls = {
+		{ name = "Cream boards", c = "F2E6CC", m = "WoodPlanks" },
+		{ name = "White boards", c = "F7F3EA", m = "WoodPlanks" },
 		{ name = "Cream plaster", c = "F2E6CC", m = "Plaster" },
 		{ name = "White plaster", c = "F7F3EA", m = "Plaster" },
 		{ name = "Red brick", c = "B86A54", m = "Brick" },
@@ -148,10 +150,10 @@ Palette.Presets = {
 		{ name = "Dark wood", c = "6B4423", m = "WoodPlanks" },
 		{ name = "Stone", c = "B4B4B8", m = "Cobblestone" },
 		{ name = "Limestone", c = "EADBC0", m = "Limestone" },
-		{ name = "Sage", c = "B9CFB2", m = "Plaster" },
-		{ name = "Sky blue", c = "CCDDEA", m = "Plaster" },
-		{ name = "Blush", c = "EBC8C2", m = "Plaster" },
-		{ name = "Charcoal", c = "45454A", m = "Plaster" },
+		{ name = "Sage", c = "B9CFB2", m = "WoodPlanks" },
+		{ name = "Sky blue", c = "CCDDEA", m = "WoodPlanks" },
+		{ name = "Blush", c = "EBC8C2", m = "WoodPlanks" },
+		{ name = "Charcoal", c = "45454A", m = "WoodPlanks" },
 		{ name = "White tiles", c = "F7F3EA", m = "CeramicTiles" },
 		{ name = "Concrete", c = "B4B4B8", m = "Concrete" },
 	},
@@ -186,13 +188,14 @@ Palette.Presets = {
 }
 
 Palette.Defaults = {
-	WallOut = { c = "F2E6CC", m = "Plaster" },
 	-- (textured, never flat paint: the user, "for interiors and exteriors everywhere for buildings, try to
-	-- not use flat colors, use textures for them instead")
-	WallIn = { c = "F7F3EA", m = "Plaster" },
+	-- not use flat colors, use textures for them instead"; and boards, not stone: "could you use wood
+	-- planks instead of stone for buildings using it for interior and exterior such as the default house?")
+	WallOut = { c = "F2E6CC", m = "WoodPlanks" },
+	WallIn = { c = "F7F3EA", m = "WoodPlanks" },
 	Floor = { c = "C49A6C", m = "WoodPlanks" },
 	Roof = { c = "C27E63", m = "ClayRoofTiles" },
-	RoofGable = { c = "F2E6CC", m = "Plaster" },
+	RoofGable = { c = "F2E6CC", m = "WoodPlanks" },
 	Fence = { c = "FAF6EC", m = "Wood" },
 	Hedge = { c = "6EAA62", m = "Grass" },
 	Stone = { c = "B4B4B8", m = "Cobblestone" },

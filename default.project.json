@@ -109,7 +109,9 @@
         "CarpetName": "CatalogTownCarpet",
         "FabricName": "CatalogTownFabric",
         "SandName": "CatalogTownSand",
-        "MetalName": "CatalogTownMetal"
+        "MetalName": "CatalogTownMetal",
+        "GrassName": "CatalogTownGrass",
+        "LeafyGrassName": "CatalogTownLeafy"
       },
       "CatalogTownWood": {
         "$className": "MaterialVariant",
@@ -201,9 +203,10 @@
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "ClayRoofTiles",
-          "ColorMap": "rbxassetid://6436676312",
-          "StudsPerTile": 8,
+          "ColorMap": "rbxassetid://14413034401",
+          "StudsPerTile": 6,
           "MaterialPattern": "Regular",
+          "NormalMap": "rbxassetid://14413034861",
           "RoughnessMap": "rbxassetid://16600089027"
         }
       },
@@ -259,6 +262,26 @@
           "StudsPerTile": 6,
           "MaterialPattern": "Regular",
           "RoughnessMap": "rbxassetid://16600089027"
+        }
+      },
+      "CatalogTownGrass": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Grass",
+          "ColorMap": "rbxassetid://127721725160024",
+          "StudsPerTile": 12,
+          "MaterialPattern": "Organic",
+          "RoughnessMap": "rbxassetid://127721725160024"
+        }
+      },
+      "CatalogTownLeafy": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "LeafyGrass",
+          "ColorMap": "rbxassetid://127721725160024",
+          "StudsPerTile": 12,
+          "MaterialPattern": "Organic",
+          "RoughnessMap": "rbxassetid://127721725160024"
         }
       },
       "CatalogTownPanel": {
@@ -345,9 +368,10 @@
         "$className": "MaterialVariant",
         "$properties": {
           "BaseMaterial": "ClayRoofTiles",
-          "ColorMap": "rbxassetid://6436676312",
-          "StudsPerTile": 10,
+          "ColorMap": "rbxassetid://14413034401",
+          "StudsPerTile": 8,
           "MaterialPattern": "Regular",
+          "NormalMap": "rbxassetid://14413034861",
           "RoughnessMap": "rbxassetid://16600089027"
         }
       },

@@ -10,8 +10,8 @@ local Lay = require(script.Parent.Kit.Lay)
 type Finish = Lay.Finish
 
 local BRICK: Finish = { c = "C98A72", m = "Brick" }
-local CREAM: Finish = { c = "F2E6CC", m = "Plaster" }
-local INSIDE: Finish = { c = "F4E9D8", m = "Plaster" }
+local CREAM: Finish = { c = "F2E6CC", m = "WoodPlanks" }
+local INSIDE: Finish = { c = "F4E9D8", m = "WoodPlanks" }
 local FLAGS: Finish = { c = "BDB8AE", m = "Cobblestone" }
 local OAK_FLOOR: Finish = { c = "C49A6C", m = "WoodPlanks" }
 local PAVING: Finish = { c = "E6DFD0", m = "Pavement" }

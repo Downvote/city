@@ -11,12 +11,12 @@ local Lay = require(script.Parent.Kit.Lay)
 
 type Finish = Lay.Finish
 
-local WALLS: Finish = { c = "D8D2E6", m = "Plaster" }
-local INSIDE: Finish = { c = "F4E9D8", m = "Plaster" }
+local WALLS: Finish = { c = "D8D2E6", m = "WoodPlanks" }
+local INSIDE: Finish = { c = "F4E9D8", m = "WoodPlanks" }
 local FLOOR: Finish = { c = "9A6B48", m = "WoodPlanks" }
-local CEILING: Finish = { c = "F7F3EA", m = "Plaster" }
+local CEILING: Finish = { c = "F7F3EA", m = "WoodPlanks" }
 local ROOF: Finish = { c = "8A8494", m = "Concrete" }
-local TRIM: Finish = { c = "F4F1EA", m = "Plaster" }
+local TRIM: Finish = { c = "F4F1EA", m = "WoodPlanks" }
 local PAVING: Finish = { c = "EAE6DC", m = "Pavement" }
 
 local WHITE = "FAF6EC"

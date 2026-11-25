@@ -15,12 +15,12 @@ type Finish = HomeKit.Finish
 local F = HomeKit.F
 
 -- finishes
-local WHITEWASH: Finish = { c = "F2F2EC", m = "Plaster" }
-local INSIDE: Finish = { c = "F6F2E8", m = "Plaster" }
-local BEDROOM: Finish = { c = "E2EAF0", m = "Plaster" }
+local WHITEWASH: Finish = { c = "F2F2EC", m = "WoodPlanks" }
+local INSIDE: Finish = { c = "F6F2E8", m = "WoodPlanks" }
+local BEDROOM: Finish = { c = "E2EAF0", m = "WoodPlanks" }
 local BATH: Finish = { c = "E4EEEE", m = "CeramicTiles" }
 local ROOF: Finish = { c = "5E6E7E", m = "Slate" }
-local GABLE: Finish = { c = "F2F2EC", m = "Plaster" }
+local GABLE: Finish = { c = "F2F2EC", m = "WoodPlanks" }
 local SHED: Finish = { c = "B8B0A2", m = "WoodPlanks" } -- weathered boards
 local SHED_ROOF: Finish = { c = "6E7A84", m = "RoofShingles" }
 local FLOOR: Finish = { c = "B8956E", m = "WoodPlanks" }

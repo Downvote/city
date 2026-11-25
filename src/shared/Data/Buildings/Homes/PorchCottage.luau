@@ -15,13 +15,13 @@ type Finish = HomeKit.Finish
 local F = HomeKit.F
 
 -- finishes
-local WALLS: Finish = { c = "F2E4C8", m = "Plaster" } -- warm cream
+local WALLS: Finish = { c = "F2E4C8", m = "WoodPlanks" } -- warm cream
 local GABLE: Finish = { c = "DCC6A2", m = "WoodPlanks" } -- honey boards in the gable ends
 local ROOF: Finish = { c = "8E6E5C", m = "RoofShingles" } -- cocoa shingles
-local FRONT_ROOM: Finish = { c = "F6EEDC", m = "Plaster" }
-local BEDROOM: Finish = { c = "E4E9DD", m = "Plaster" }
+local FRONT_ROOM: Finish = { c = "F6EEDC", m = "WoodPlanks" }
+local BEDROOM: Finish = { c = "E4E9DD", m = "WoodPlanks" }
 local BATH: Finish = { c = "E3EDF0", m = "CeramicTiles" }
-local KITCHEN: Finish = { c = "F6ECCF", m = "Plaster" }
+local KITCHEN: Finish = { c = "F6ECCF", m = "WoodPlanks" }
 local OAK: Finish = { c = "C49A6C", m = "WoodPlanks" }
 local ROSE_CARPET: Finish = { c = "C9A9A0", m = "Carpet" }
 local BATH_TILES: Finish = { c = "DCE6E4", m = "CeramicTiles" }

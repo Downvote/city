@@ -18,7 +18,7 @@ local F = Tuning.Plot.Foundation
 
 -- finishes: mint boards, a warm cream inside, clay tiles over all of it
 local MINT: Finish = { c = "CFE2D0", m = "WoodPlanks" }
-local INSIDE: Finish = { c = "F4E9D8", m = "Plaster" }
+local INSIDE: Finish = { c = "F4E9D8", m = "WoodPlanks" }
 local CLAY: Finish = { c = "C27E63", m = "ClayRoofTiles" }
 local TILES: Finish = { c = "E8DDCB", m = "CeramicTiles" }
 local OAK: Finish = { c = "C49A6C", m = "WoodPlanks" }

@@ -9,12 +9,12 @@ type Finish = { c: string, m: string }
 local F = Tuning.Plot.Foundation
 
 -- finishes (the town's palette)
-local LAVENDER: Finish = { c = "D8D2E6", m = "Plaster" } -- the hall outside
-local FOYER: Finish = { c = "FAF6EC", m = "Plaster" } -- the foyer outside
-local HALL_IN: Finish = { c = "F2E6CC", m = "Plaster" }
-local FOYER_IN: Finish = { c = "F6F0E2", m = "Plaster" }
+local LAVENDER: Finish = { c = "D8D2E6", m = "WoodPlanks" } -- the hall outside
+local FOYER: Finish = { c = "FAF6EC", m = "WoodPlanks" } -- the foyer outside
+local HALL_IN: Finish = { c = "F2E6CC", m = "WoodPlanks" }
+local FOYER_IN: Finish = { c = "F6F0E2", m = "WoodPlanks" }
 local PLUM: Finish = { c = "8A6F90", m = "Slate" }
-local GABLE: Finish = { c = "D8D2E6", m = "Plaster" }
+local GABLE: Finish = { c = "D8D2E6", m = "WoodPlanks" }
 local WALNUT_FLOOR: Finish = { c = "9A6B48", m = "WoodPlanks" }
 local TILES: Finish = { c = "F2E6CC", m = "CeramicTiles" }
 local PAVING: Finish = { c = "EAE6DC", m = "Pavement" }

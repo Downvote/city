@@ -15,11 +15,11 @@ type Finish = HomeKit.Finish
 
 -- finishes
 local BRICK: Finish = { c = "D8A48E", m = "Brick" } -- soft brick
-local INSIDE: Finish = { c = "F4ECDC", m = "Plaster" }
+local INSIDE: Finish = { c = "F4ECDC", m = "WoodPlanks" }
 local BATH: Finish = { c = "E4EDE6", m = "CeramicTiles" }
 local TILE_ROOF: Finish = { c = "B98A72", m = "ClayRoofTiles" }
 local GABLE: Finish = { c = "E8D8C0", m = "WoodPlanks" }
-local FRAMES: Finish = { c = "FAF6EC", m = "Plaster" } -- the glasshouse's white frames
+local FRAMES: Finish = { c = "FAF6EC", m = "WoodPlanks" } -- the glasshouse's white frames
 local PANES: Finish = { c = "CFE0DE", m = "Glass" } -- its roof: pale glass, on purpose
 local FLOOR: Finish = { c = "B48C64", m = "WoodPlanks" }
 local BATH_TILES: Finish = { c = "D8E2DA", m = "CeramicTiles" }

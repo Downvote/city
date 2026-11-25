@@ -11,7 +11,7 @@ local Lay = require(script.Parent.Kit.Lay)
 
 type Finish = Lay.Finish
 
-local FRAME: Finish = { c = "F4F1EA", m = "Plaster" }
+local FRAME: Finish = { c = "F4F1EA", m = "WoodPlanks" }
 local GRAVEL: Finish = { c = "D8D0BE", m = "Pebble" }
 local BRICK_PATH: Finish = { c = "C88A6E", m = "Brick" }
 

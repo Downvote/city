@@ -16,10 +16,10 @@ type Finish = { c: string, m: string }
 local F = Tuning.Plot.Foundation
 
 -- finishes: butter plaster and pale stone under slate blue
-local BUTTER: Finish = { c = "F3DFA6", m = "Plaster" }
+local BUTTER: Finish = { c = "F3DFA6", m = "WoodPlanks" }
 local STONE: Finish = { c = "DAD4C8", m = "Limestone" }
-local SHOP_IN: Finish = { c = "F6EBD6", m = "Plaster" }
-local BAKE_IN: Finish = { c = "F6F0E2", m = "Plaster" }
+local SHOP_IN: Finish = { c = "F6EBD6", m = "WoodPlanks" }
+local BAKE_IN: Finish = { c = "F6F0E2", m = "WoodPlanks" }
 local SLATE: Finish = { c = "6E8CA8", m = "Slate" }
 local OAK: Finish = { c = "C49A6C", m = "WoodPlanks" }
 local BRICK_FLOOR: Finish = { c = "C8A894", m = "Brick" }

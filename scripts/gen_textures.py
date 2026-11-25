@@ -840,6 +840,10 @@ TEXTURES = {
     "sand": (sand, "Sand", 10),
     "rock": (rock, "Rock", 10),
     "metal": (metal, "Metal", 6),
+    # the island's grass and the terrain's grass under what is built (the library's soft grass
+    # picture wears these in the game: "change ... the grass texture to a softer one")
+    "grass": (grass, "Grass", 12),
+    "leafy": (grass, "LeafyGrass", 12),
 }
 
 # name -> (painter, Roblox material, studs per tile, the look's name): a part whose material is
@@ -874,7 +878,7 @@ SAMPLE = {
     "clay": (0.80, 0.40, 0.26), "shingles": (0.36, 0.42, 0.58), "slate": (0.42, 0.44, 0.50),
     "tiles": (0.86, 0.92, 0.95), "carpet": (0.72, 0.40, 0.44), "fabric": (0.40, 0.56, 0.70),
     "marble": (0.95, 0.94, 0.92), "sand": (0.92, 0.84, 0.64), "rock": (0.58, 0.56, 0.54),
-    "metal": (0.70, 0.72, 0.76),
+    "metal": (0.70, 0.72, 0.76), "grass": (0.53, 0.67, 0.34), "leafy": (0.55, 0.69, 0.36),
     "panel": (0.80, 0.79, 0.76), "stucco": (0.96, 0.87, 0.72), "maple": (0.78, 0.40, 0.30),
     "mosaic": (0.92, 0.58, 0.30), "checker": (0.86, 0.34, 0.30), "corrugated": (0.50, 0.66, 0.74),
     "shutter": (0.74, 0.76, 0.78), "slats": (0.74, 0.54, 0.36), "barrel": (0.34, 0.47, 0.58),

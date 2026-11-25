@@ -13,7 +13,7 @@ type Finish = Lay.Finish
 
 local DECK: Finish = { c = "C49A6C", m = "WoodPlanks" }
 local RAIL: Finish = { c = "F4F1EA", m = "Wood" }
-local CEILING: Finish = { c = "F7F3EA", m = "Plaster" }
+local CEILING: Finish = { c = "F7F3EA", m = "WoodPlanks" }
 local SAGE: Finish = { c = "8FA58A", m = "RoofShingles" }
 
 local WHITE = "F4F1EA"

@@ -26,6 +26,8 @@ export type Ids = {
 
 -- stylua: ignore
 local TextureIds: { [string]: Ids } = {
+	grass = { color = "rbxassetid://127721725160024", rough = "rbxassetid://127721725160024", studs = 12, light = 0.65, decal = 108697490214977 }, -- "Grass01_1K_Roughness" by Snakerrz204 (grey clumps of grass in low contrast, for the user's "change ... the grass texture to a softer one, which dosent have too high contrast"; the paint decides the green)
+	leafy = { color = "rbxassetid://127721725160024", rough = "rbxassetid://127721725160024", studs = 12, light = 0.65, decal = 108697490214977 }, -- "Grass01_1K_Roughness" by Snakerrz204 (the terrain's grass under what is built, the same picture so the edge doesn't show)
 	lawn = { color = "rbxassetid://123781418381440", normal = "rbxassetid://74383676401444", rough = "rbxassetid://123781418381440", studs = 16, light = 0.7, decal = 132962949126736 }, -- "Grass005_2K-JPG_Roughness" and "_NormalGL" by gabrieleivazians2041 (the set's grey map, so the paint decides the green)
 	wood = { color = "rbxassetid://127935223360351", normal = "rbxassetid://82700223149662", studs = 4, decal = 125695710899534 }, -- "Wood Texture" by conoluz; normal "Wood092_1K-PNG_NormalGL" by Proville6
 	planks = { color = "rbxassetid://126083643168466", studs = 6, decal = 107218328642902 }, -- "Roblox wood planks texture" by TheDanMan2307
@@ -35,7 +37,7 @@ local TextureIds: { [string]: Ids } = {
 	concrete = { color = "rbxassetid://92960457218078", normal = "rbxassetid://10266817549", studs = 14, light = 0.55, decal = 138997834312338 }, -- "floor for me1" by coolrobloxian171 (worn: stains and hairline cracks, for the user's "painted textures with wear"); normal "concrete_floor_02_nor_gl_2k" by Chrn_E
 	asphalt = { color = "rbxassetid://74051293306053", normal = "rbxassetid://11226165423", studs = 12, light = 0.48, decal = 104048479913484 }, -- "Asphalt texture (worn)" by DaHood_lover123; normal "asphalt_01_nor_gl_1k" by dorndaft
 	plaster = { color = "rbxassetid://104528602434593", normal = "rbxassetid://5437994223", studs = 12, light = 0.62, decal = 90702185673414 }, -- "Concrete1" by SkedichX (pale, with soft grime stains); normal "Concrete_Wall_Nor" from the library
-	clay = { color = "rbxassetid://6436676312", studs = 8, light = 0.52, decal = 6436676320 }, -- "BCFBC793-7B38-4635-B77A-B226FDC43928" by elixiric (grey tiles, so the paint decides the roof's colour)
+	clay = { color = "rbxassetid://14413034401", normal = "rbxassetid://14413034861", studs = 6, light = 0.69, decal = 14413034453 }, -- "PBR-Roof-Red-2K-1K-Roughness" and "-Normal" by codycheck_com (the set's pale grey map: soft, low contrast tiles, the user's "change the roof texture ... to a softer one, which dosent have too high contrast"; the paint decides the colour)
 	tiles = { color = "rbxassetid://15246763549", normal = "rbxassetid://12477337856", studs = 6, decal = 15246763593 }, -- "Tiles107_2K-PNG_Color" by mycardgo; normal "Tiles107_2K_NormalGL" by Omair1962
 	carpet = { color = "rbxassetid://10538536313", normal = "rbxassetid://108650587944937", studs = 4, light = 0.54, decal = 10538536325 }, -- "Carpet" by attmpt9; normal "Carpet Normal Map" by Bunniekell
 	fabric = { color = "rbxassetid://234307070", normal = "rbxassetid://83181758798164", studs = 3, decal = 234307071 }, -- "Seamless Grey Fabric Texture" by joshman601; normal "Fabric Normal Map" by YuvoNet
@@ -49,7 +51,7 @@ local TextureIds: { [string]: Ids } = {
 	corrugated = { color = "rbxassetid://17452681009", studs = 4, decal = 17452681037 }, -- "Images/128_white corrugated metal PBR texture-seam" by CodedAIbania
 	shutter = { color = "rbxassetid://6723969247", studs = 4, decal = 6723969275 }, -- "Metal Shutters Texture" by Czlopek
 	slats = { color = "rbxassetid://4708950958", studs = 10, own = true, decal = 4708950960 }, -- "vertical wood" by dadachonguusu
-	barrel = { color = "rbxassetid://6436676312", studs = 10, light = 0.52, decal = 6436676320 }, -- "BCFBC793-7B38-4635-B77A-B226FDC43928" by elixiric
+	barrel = { color = "rbxassetid://14413034401", normal = "rbxassetid://14413034861", studs = 8, light = 0.69, decal = 14413034453 }, -- "PBR-Roof-Red-2K-1K-Roughness" and "-Normal" by codycheck_com
 	slabs = { color = "rbxassetid://15005538341", studs = 6, light = 0.56, decal = 15005538380 }, -- "Seamless Pavement Light Grey Tiles" by Adilordofwick2
 	street = { color = "rbxassetid://73120610106763", normal = "rbxassetid://11226165423", studs = 16, light = 0.41, decal = 132204323264236 }, -- "07F30FFC-720E-431C-BF04-24E4CEC113D8" by OohIsADuck; normal "asphalt_01_nor_gl_1k" by dorndaft
 	canvas = { color = "rbxassetid://106263716160538", normal = "rbxassetid://82442953804931", rough = "rbxassetid://81106618533486", studs = 3, decal = 110591274644699 }, -- "Color map", "Normal map" and "Roughness Map" by TriangRaroGames

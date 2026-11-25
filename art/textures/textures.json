@@ -71,6 +71,14 @@
     "material": "Metal",
     "studs": 6
   },
+  "grass": {
+    "material": "Grass",
+    "studs": 12
+  },
+  "leafy": {
+    "material": "LeafyGrass",
+    "studs": 12
+  },
   "panel": {
     "material": "Concrete",
     "studs": 12,

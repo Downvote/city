@@ -113,9 +113,11 @@ def write_ids(ids, order, path=IDS):
     open(path, "w").write(text)
 
 
-# Materials that keep Roblox's own face: the island's terrain is Grass, and the user liked Roblox's
-# own grass texture there ("never mind, the previous grass texture was ok"); ours is a look.
-KEEP_OWN = {"Grass"}
+# Materials that keep Roblox's own face. Grass did for a while (the user liked Roblox's own after a
+# plain smooth one: "never mind, the previous grass texture was ok"); then they asked for "the grass
+# texture to a softer one, which dosent have too high contrast", so it wears a soft grass picture.
+KEEP_OWN = set()
+ORGANIC = {"Grass", "LeafyGrass"}
 
 
 def variant_name(name, info=None):
@@ -136,8 +138,10 @@ def material_service(ids, index):
         v = variant_name(name, info)
         if v in variants:
             sys.exit(f"two textures would both be the MaterialVariant {v}: rename {name}")
+        # grass is laid organically, so its copies don't show as a grid across the island
+        organic = info["material"] in ORGANIC and not info.get("look")
         p = {"BaseMaterial": info["material"], "ColorMap": got["color"], "StudsPerTile": got.get("studs", info["studs"]),
-             "MaterialPattern": "Regular"}
+             "MaterialPattern": "Organic" if organic else "Regular"}
         if "normal" in got:
             p["NormalMap"] = got["normal"]
         # a texture without its own roughness map takes the flat grey one (`sheen`), so it shines a little

@@ -14,7 +14,7 @@ local F = Tuning.Plot.Foundation
 
 -- finishes (Data/Palette's materials; colours from the town's palette)
 local BOARDS: Finish = { c = "CCDDEA", m = "WoodPlanks" } -- sky blue weatherboards
-local HALL: Finish = { c = "F2E6CC", m = "Plaster" }
+local HALL: Finish = { c = "F2E6CC", m = "WoodPlanks" }
 local SORTING: Finish = { c = "DDBE94", m = "WoodPlanks" }
 local CLAY: Finish = { c = "C27E63", m = "ClayRoofTiles" }
 local OAK: Finish = { c = "C49A6C", m = "WoodPlanks" }

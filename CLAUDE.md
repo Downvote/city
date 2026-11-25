@@ -102,8 +102,10 @@ golden green Grass, a beach in sine wave curves sloping into terrain water with 
 (`Hills.at`). There is no long grass on it (the user, after several rounds of SkinnedGrass blades: "remove the
 grass"), and Roblox's own terrain blades stay off; don't bring either back. Nothing built may stand on terrain Grass:
 `TownMap.cover` lists what is built and the terrain under it is LeafyGrass, so a new kind of ground part or a
-placed model is covered by rule. Never give MaterialService a Grass override: the floor keeps Roblox's own grass texture (a smooth
-plain one was tried: "never mind, the previous grass texture was ok"). The plots' floors and lawns are visible parts at floor level (an invisible floor over terrain made
+placed model is covered by rule. Grass and LeafyGrass wear one soft grey grass picture (`grass` and `leafy` in
+`Data/TextureIds`, laid Organic; the user: "change the roof texture and the grass texture to a softer one, which
+dosent have too high contrast"). Keep it grassy and low in contrast: a plain smooth one was tried before and taken
+back ("never mind, the previous grass texture was ok"). The plots' floors and lawns are visible parts at floor level (an invisible floor over terrain made
 the ground look sunk). The previews draw the terrain as triangles.
 `Data/TownMap` lays out the ground and where everything stands, `Data/CityModels` draws the buildings and landmarks,
 `Data/Places` lists the places to find. The user wants it detailed like a classic city builder: buildings on
@@ -547,6 +549,11 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
   colours in previews with `--textures` (the grade is on by default). Roblox's sun path is tilted by latitude
   minus 23.5: `Latitude = -20` keeps it over the harbour, on the north plots' fronts.
 - Roblox drops shadow map shadows below graphics quality 4; `PrioritizeLightingQuality` keeps them close by.
+- Walls are boards (the user: "could you use wood planks instead of stone for buildings using it for interior and
+  exterior such as the default house?"): a wall finish, inside or out, is WoodPlanks in its colour (`Palette.Defaults`,
+  the ready-made buildings, the starting house, `Interiors.shell`, the ceilings under roofs). Plaster read as stone;
+  keep stone for what really is stone (pediments, porticos, paving, garden walls). The roof tiles are a pale, low
+  contrast picture; keep roofs soft.
 - Every material is a little glossy (the user: "making all materials at least abit glossy"): a texture without a
   roughness map of its own takes `Data/TextureIds`' `sheen` (a flat grey) as one, and the sky's reflection is up
   (`Light.SkySpecular`). The background is blurred (the user: "add background blur"): `client/World/Focus` keeps the

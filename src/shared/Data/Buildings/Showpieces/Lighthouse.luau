@@ -11,13 +11,13 @@ local Lay = require(script.Parent.Kit.Lay)
 
 type Finish = Lay.Finish
 
-local WHITE_PLASTER: Finish = { c = "F6F0E2", m = "Plaster" }
-local RED_PLASTER: Finish = { c = "C9786A", m = "Plaster" }
-local INSIDE: Finish = { c = "F4E9D8", m = "Plaster" }
+local WHITE_BOARDS: Finish = { c = "F6F0E2", m = "WoodPlanks" }
+local RED_BOARDS: Finish = { c = "C9786A", m = "WoodPlanks" }
+local INSIDE: Finish = { c = "F4E9D8", m = "WoodPlanks" }
 local FLAGS: Finish = { c = "BDB8AE", m = "Cobblestone" }
 local BOARDS: Finish = { c = "C49A6C", m = "WoodPlanks" }
 local GALLERY: Finish = { c = "6E6A72", m = "Concrete" }
-local TRIM: Finish = { c = "F4F1EA", m = "Plaster" }
+local TRIM: Finish = { c = "F4F1EA", m = "WoodPlanks" }
 local TILES: Finish = { c = "BC7468", m = "ClayRoofTiles" }
 
 local WHITE = "FAF6EC"
@@ -42,7 +42,7 @@ return function(add: any)
 			-- the tower on its square stone plinth, a storey at a time, and the floors inside it
 			b:floor(6, 6, 20, 20, FLAGS)
 			for lv = 0, 2 do
-				Lay.ring(b, "t" .. lv .. "_", OCTAGON, if lv == 1 then RED_PLASTER else WHITE_PLASTER, INSIDE, lv)
+				Lay.ring(b, "t" .. lv .. "_", OCTAGON, if lv == 1 then RED_BOARDS else WHITE_BOARDS, INSIDE, lv)
 				if lv > 0 then
 					b:floor(10, 6, 16, 20, BOARDS, lv)
 					b:floor(6, 10, 10, 16, BOARDS, lv)
@@ -81,8 +81,8 @@ return function(add: any)
 
 			-- the keeper's cottage
 			b:floor(24, 10, 34, 20, BOARDS)
-			b:box("c", 24, 10, 34, 20, WHITE_PLASTER, INSIDE)
-			b:roof(24, 10, 34, 20, "gable", 5, 0, TILES, WHITE_PLASTER, 0, 1)
+			b:box("c", 24, 10, 34, 20, WHITE_BOARDS, INSIDE)
+			b:roof(24, 10, 34, 20, "gable", 5, 0, TILES, WHITE_BOARDS, 0, 1)
 			Lay.open(b, "door_front", "cfront", 3, NAVY, WHITE)
 			b:open("win_square", "cfront", 7.6)
 			b:open("win_square", "cleft", 5)

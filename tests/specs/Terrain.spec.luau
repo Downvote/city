@@ -512,9 +512,17 @@ describe("Terrain", function()
 				expect(math.floor(props.WaterColor[i] * 255 + 0.5)).toBe(water.Color[i])
 				expect(ws["$properties"].GlobalWind[i]).toBe(Terrain.Wind[i])
 			end
-			-- Roblox's own Grass keeps its face ("never mind, the previous grass texture was ok")
+			-- the terrain's grass wears the soft picture ("change ... the grass texture to a softer one,
+			-- which dosent have too high contrast"), the grass under what is built the same one, both
+			-- laid organically so no grid of copies shows across the island
 			local ms = project.tree.MaterialService
-			expect(ms and ms["$properties"] and ms["$properties"].GrassName).toBe(nil)
+			local names = ms and ms["$properties"]
+			expect(names and names.GrassName).toBe("CatalogTownGrass")
+			expect(names.LeafyGrassName).toBe("CatalogTownLeafy")
+			local grass, leafy = ms.CatalogTownGrass["$properties"], ms.CatalogTownLeafy["$properties"]
+			expect(grass.ColorMap).toBe(leafy.ColorMap)
+			expect(grass.MaterialPattern).toBe("Organic")
+			expect(leafy.MaterialPattern).toBe("Organic")
 		end)
 	end)
 end)

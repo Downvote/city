@@ -12,7 +12,7 @@ local Lay = require(script.Parent.Kit.Lay)
 type Finish = Lay.Finish
 
 local MARBLE: Finish = { c = "F7F3EA", m = "Marble" }
-local CEILING: Finish = { c = "F7F3EA", m = "Plaster" }
+local CEILING: Finish = { c = "F7F3EA", m = "WoodPlanks" }
 local COPPER: Finish = { c = "8FB0A0", m = "Slate" }
 local PEDIMENT: Finish = { c = "F4F1EA", m = "Marble" }
 

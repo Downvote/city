@@ -43,7 +43,7 @@ The contract between the parts of the game. Update it with every change to an AP
     it. `axis`, `point`, `size`, `bands` say where things end up.
   - `Shapes`: walls (with openings cut out; `wallReach` gives each end's reach per layer `{ a, b }` so walls meeting
     at corners, T junctions and crossings never share space), floors (with stairwells cut out), roofs (five styles;
-    a pitched one carries a plaster `Ceiling` across its footprint, `CeilingInset` in from its edges and `CeilingDrop`
+    a pitched one carries a board (WoodPlanks) `Ceiling` across its footprint, `CeilingInset` in from its edges and `CeilingDrop`
     under the walls' tops).
     A ground floor in an outdoor ground material (`Shapes.Laid`: cobbles, paving, pebble, brick, road, rock,
     sandstone, limestone, and grass and sand without an edging) is laid in the ground (`Shapes.laid(f)`): the
@@ -318,9 +318,10 @@ shape of a placed model that touches the ground and covers about 3 square studs 
 surface (`Hills.prims` is gone). The place file sets what scripts can't: Workspace/Terrain (`Decoration` off,
 `ShorelinesUpgraded`, `SmoothVoxelsUpgraded`, the `Water*` settings) and `Workspace.GlobalWind` (the breeze;
 `World.setWeather` sets `StormWind` in a storm). The haze is `Tuning.Look.Air` (`Clear` 0.22 and 1, `Dense` 0.32 and
-1.8 in rain: "make the fog less"). MaterialService never replaces Grass (`scripts/sync_materials.py`
-refuses it), so the long grass can be coloured to match it (a smooth plain floor was tried and taken back: "never
-mind, the previous grass texture was ok"); the library grass picture is the look `Grass:Lawn`. The Terrain spec checks the shore is wavy,
+1.8 in rain: "make the fog less"). MaterialService gives Grass and LeafyGrass one soft grey picture of grass
+(`grass` and `leafy` in `Data/TextureIds`, `MaterialPattern` Organic: "change ... the grass texture to a softer one,
+which dosent have too high contrast"; a plain smooth one was tried before and taken back), and the look `Grass:Lawn`
+keeps its own. The Terrain spec checks the shore is wavy,
 the water's edge sits on a gentle slope inside the shallows, no grass is under anything built or on a road or a
 plot, the terrain follows `Hills.at`, the tiles, the open sea, the beach props and the place's settings.
 
@@ -423,6 +424,12 @@ a new square, a square looked at again, and every time the focus has moved `Move
   `scripts/library_textures.py resolve` prints whether an image shows (`ok`, `pending`, `no picture`) and `check`
   asks it of every id in `TextureIds`. The Textures spec fails on a look a model asks for that `Data/Textures`
   doesn't have, and on a place file out of step with `TextureIds`.
+- `Textures.list` gives every material its texture, Grass and LeafyGrass included (`grass` and `leafy`, one
+  picture, written with `MaterialPattern` Organic; the rest Regular). The terrain's colours go through
+  `Textures.tint` as parts' do, so a lawn part and the terrain beside it come out alike. Clay roof tiles (`clay`, and
+  the look `barrel`) wear a pale tile picture with its normal map. Walls default to WoodPlanks (`Palette.Defaults`
+  `WallOut`, `WallIn` and `RoofGable`), and so do the ready-made buildings' and the starting house's wall finishes,
+  `Interiors.shell`'s walls and the ceilings `Shapes` draws.
 
 ## The facade kit
 

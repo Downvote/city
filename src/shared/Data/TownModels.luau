@@ -483,7 +483,7 @@ TownModels.Models.tailor = function(r: R)
 	local plum = Color3.fromRGB(196, 100, 140)
 	shopShell(r, {
 		wall = Color3.fromRGB(242, 192, 204),
-		wallMat = "Plaster",
+		wallMat = "WoodPlanks",
 		inner = Color3.fromRGB(250, 238, 232),
 		trim = CREAM,
 		base = plum,
@@ -631,7 +631,7 @@ TownModels.Models.shop = function(r: R)
 	local green = Color3.fromRGB(72, 146, 104)
 	shopShell(r, {
 		wall = Color3.fromRGB(243, 223, 166),
-		wallMat = "Plaster",
+		wallMat = "WoodPlanks",
 		inner = Color3.fromRGB(255, 248, 228),
 		trim = CREAM,
 		base = green,

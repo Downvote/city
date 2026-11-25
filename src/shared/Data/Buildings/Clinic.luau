@@ -12,12 +12,12 @@ type Finish = { c: string, m: string }
 local F = Tuning.Plot.Foundation
 
 -- finishes (Data/Palette's materials; colours from the town's palette)
-local WALL: Finish = { c = "F6F0E2", m = "Plaster" }
-local WAITING: Finish = { c = "CFE2D0", m = "Plaster" } -- mint inside the hall
-local WARD: Finish = { c = "F6F0E2", m = "Plaster" }
+local WALL: Finish = { c = "F6F0E2", m = "WoodPlanks" }
+local WAITING: Finish = { c = "CFE2D0", m = "WoodPlanks" } -- mint inside the hall
+local WARD: Finish = { c = "F6F0E2", m = "WoodPlanks" }
 local ROOF: Finish = { c = "4F8A8C", m = "Slate" }
 local FLAT: Finish = { c = "DAD4C8", m = "Pebble" } -- the ward's gravel roof
-local PARAPET: Finish = { c = "FAF6EC", m = "Plaster" }
+local PARAPET: Finish = { c = "FAF6EC", m = "WoodPlanks" }
 local FLOOR: Finish = { c = "F2E6CC", m = "CeramicTiles" }
 local WARD_FLOOR: Finish = { c = "CFE2D0", m = "CeramicTiles" }
 local PAVING: Finish = { c = "DAD4C8", m = "Pavement" }

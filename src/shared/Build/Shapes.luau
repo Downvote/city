@@ -685,7 +685,12 @@ function Shapes.floor(f: Plan.Floor, holes: { { number } }?, under: { { number }
 			local top = Plan.levelBase(f.lv)
 			table.insert(
 				out,
-				Geometry.span(Vector3.new(r[1], top - 1, r[2]), Vector3.new(r[3], top - 0.2, r[4]), CEILING, "Plaster")
+				Geometry.span(
+					Vector3.new(r[1], top - 1, r[2]),
+					Vector3.new(r[3], top - 0.2, r[4]),
+					CEILING,
+					"WoodPlanks"
+				)
 			)
 			table.insert(
 				out,
@@ -762,7 +767,7 @@ function Shapes.roof(r: Plan.Roof): { Prim }
 		end
 	end
 
-	-- under a pitched roof, a flat plaster ceiling across the rooms at the top of the walls (the
+	-- under a pitched roof, a flat ceiling of boards across the rooms at the top of the walls (the
 	-- user: "make it such that roofs create a flat bottom below it as a ceiling instead of letting
 	-- players see the inner pyramid of the roof"). Its top sits a little under the walls' tops so
 	-- the two never lie level, and it goes with the roof (hidden with it in Build mode).
@@ -771,7 +776,7 @@ function Shapes.roof(r: Plan.Roof): { Prim }
 		local i = Shapes.CeilingInset
 		local c1, c2 =
 			Pt(i, y0 - Shapes.CeilingDrop - Shapes.CeilingThick, i), Pt(U - i, y0 - Shapes.CeilingDrop, V - i)
-		local ceiling = Geometry.span(c1:Min(c2), c1:Max(c2), CEILING, "Plaster")
+		local ceiling = Geometry.span(c1:Min(c2), c1:Max(c2), CEILING, "WoodPlanks")
 		ceiling.name = "Ceiling"
 		table.insert(out, ceiling)
 	end

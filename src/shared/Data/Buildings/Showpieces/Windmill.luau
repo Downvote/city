@@ -13,7 +13,7 @@ local Lay = require(script.Parent.Kit.Lay)
 type Finish = Lay.Finish
 
 local BRICK: Finish = { c = "D8A48E", m = "Brick" }
-local PLASTER: Finish = { c = "F2E6CC", m = "Plaster" }
+local CREAM_IN: Finish = { c = "F2E6CC", m = "WoodPlanks" }
 local BOARDS: Finish = { c = "F2E6CC", m = "WoodPlanks" }
 local BOARDS_IN: Finish = { c = "E6D5B4", m = "WoodPlanks" }
 local FLAGS: Finish = { c = "BDB8AE", m = "Cobblestone" }
@@ -43,7 +43,7 @@ return function(add: any)
 		function(b: any)
 			-- the base, the gallery floor over it, the boarded top and its cap
 			b:floor(8, 10, 20, 22, FLAGS)
-			b:box("", 8, 10, 20, 22, BRICK, PLASTER)
+			b:box("", 8, 10, 20, 22, BRICK, CREAM_IN)
 			b:floor(8, 10, 20, 22, OAK_FLOOR, 1)
 			Lay.styled(b, "galf", 8, 10, 20, 10, RAIL, "railing", 1)
 			Lay.styled(b, "galr", 20, 10, 20, 22, RAIL, "railing", 1)

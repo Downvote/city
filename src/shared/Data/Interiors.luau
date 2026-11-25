@@ -1335,7 +1335,7 @@ export type Shell = {
 function Interiors.shell(r: R, s: Shell): Box
 	local w, d, h = s.w, s.d, s.h
 	local T = 0.8
-	local mat = s.mat or "Plaster"
+	local mat = s.mat or "WoodPlanks"
 	local trim = s.trim or WHITE
 	local doorX = s.doorX or 0
 	local dw, dh = s.doorW or 4.2, math.min(s.doorH or 6.8, h - 0.8)

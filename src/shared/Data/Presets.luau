@@ -36,7 +36,7 @@ export type Preset = {
 
 -- finishes, from the town's palette: light walls, roofs a few steps darker and only gently
 -- coloured, the same trim white on every house
-local PLASTER = { c = "F6F0E2", m = "Plaster" } -- warm white
+local WHITE_BOARDS = { c = "F6F0E2", m = "WoodPlanks" } -- warm white
 local WHITE = { c = "F7F3EA", m = "SmoothPlastic" }
 local CREAM = { c = "F2E6CC", m = "SmoothPlastic" }
 local BRICK = { c = "D8A48E", m = "Brick" } -- soft brick
@@ -293,9 +293,9 @@ end
 
 add("cottage", "Garden cottage", "A small house with a bedroom and a kitchen corner.", "house", 24, 24, function(b)
 	b:floor(2, 6, 22, 22, OAK)
-	b:box("", 2, 6, 22, 22, PLASTER, WHITE)
+	b:box("", 2, 6, 22, 22, WHITE_BOARDS, WHITE)
 	b:wall("inner", 12, 22, 12, 14, WHITE, WHITE)
-	b:roof(2, 6, 22, 22, "gable", 6, 0, SAGE_TILE, PLASTER)
+	b:roof(2, 6, 22, 22, "gable", 6, 0, SAGE_TILE, WHITE_BOARDS)
 	b:open("door_front", "front", 10)
 	b:open("win_shutters", "front", 4)
 	b:open("win_shutters", "front", 16)

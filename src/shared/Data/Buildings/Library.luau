@@ -14,12 +14,12 @@ local F = Tuning.Plot.Foundation
 
 -- finishes (Data/Palette's materials; colours from the town's palette)
 local SANDSTONE: Finish = { c = "E6D5B4", m = "Sandstone" }
-local INSIDE: Finish = { c = "F2E6CC", m = "Plaster" }
+local INSIDE: Finish = { c = "F2E6CC", m = "WoodPlanks" }
 local ROOF: Finish = { c = "6A5C5A", m = "Slate" } -- cocoa slate
 local PEDIMENT: Finish = { c = "DAD4C8", m = "Limestone" }
 local WALNUT_FLOOR: Finish = { c = "9A6B48", m = "WoodPlanks" }
 local OAK_FLOOR: Finish = { c = "C49A6C", m = "WoodPlanks" }
-local CEILING: Finish = { c = "F6F0E2", m = "Plaster" }
+local CEILING: Finish = { c = "F6F0E2", m = "WoodPlanks" }
 local PORTICO: Finish = { c = "DAD4C8", m = "Marble" }
 local RAIL: Finish = { c = "9A6B48", m = "Wood" }
 local GARDEN_WALL: Finish = { c = "BDB8AE", m = "Cobblestone" }

@@ -18,10 +18,10 @@ local F = Tuning.Plot.Foundation
 -- finishes: boards in two colours for the stripes, a sage parapet and pavilion roof
 local BLUSH: Finish = { c = "E6BAB4", m = "WoodPlanks" }
 local WHITE: Finish = { c = "F6F0E2", m = "WoodPlanks" }
-local INSIDE: Finish = { c = "F6EDE6", m = "Plaster" }
+local INSIDE: Finish = { c = "F6EDE6", m = "WoodPlanks" }
 local FLAT: Finish = { c = "D8D2C6", m = "Concrete" }
 local SAGE: Finish = { c = "86A886", m = "RoofShingles" }
-local SAGE_BAND: Finish = { c = "86A886", m = "Plaster" }
+local SAGE_BAND: Finish = { c = "86A886", m = "WoodPlanks" }
 local TILES: Finish = { c = "EADFD8", m = "CeramicTiles" }
 local DECK: Finish = { c = "DDBE94", m = "WoodPlanks" }
 local PAVING: Finish = { c = "EAE6DC", m = "Pavement" }

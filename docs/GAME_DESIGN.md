@@ -2638,3 +2638,21 @@ coins can buy. Bought once, a vehicle is yours to keep. Drive brings it out in f
 the wheel to drive it, W and S for the pedal and A and D to turn. It gathers speed, brakes harder than it speeds
 up, rolls to a stop with no pedal and turns less sharply the faster it goes. Friends can take the other seats, but
 only its owner can drive. Put it away from the Garage, and it goes when you leave.
+
+### Boards for walls, a softer roof and softer grass
+
+> could you use wood planks instead of stone for buildings using it for interior and exterior such as the default house? also, change the roof texture and the grass texture to a softer one, which dosent have too high contrast
+
+- The plaster picture read as stone. Walls are boards now, inside and out: the starting house (cream outside with
+  sage gables, the rooms in their own pale colours), every ready-made home, workplace and showpiece, the ceilings
+  under roofs and between floors, the town's furnished rooms and its little shops. The board picture is a light grey,
+  so each wall keeps the colour it is painted. The white pod and the glass house's dark trim are metal instead.
+- In Build mode a new wall starts as cream boards outside and white boards inside, and a roof's gable ends match.
+  Cream boards and White boards lead the wall swatches, and the coloured ones (sage, sky blue, blush, charcoal) are
+  boards too. Cream and white plaster, brick, stone and the rest are still there to pick.
+- Stone stays where it is really stone: pediments, porticos, paving, garden walls and floors.
+- Clay roof tiles wear a pale grey tile picture with its own normal map. The tiles show as a gentle pattern with
+  their shape picked out by the light, instead of the old picture's dark gaps and bright ridges.
+- The grass has a soft picture of its own now: grey clumps of grass in low contrast, coloured by the grass's green.
+  It covers the island's terrain, the plots' lawns and the grass under what is built alike, laid without a grid so
+  no repeat shows across the island. (This replaces Roblox's own grass texture, which the game kept until now.)

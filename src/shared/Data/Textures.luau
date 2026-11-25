@@ -36,9 +36,11 @@ export type Ready = {
 
 local Textures = {}
 
--- One texture for each material: it takes the material's place everywhere. Never Grass: the
--- island's terrain is Grass too, and Roblox only grows its long blades on its own grass (the user
--- asked for grass "like in the image", Roblox's own), so our grass picture is the look Lawn.
+-- One texture for each material: it takes the material's place everywhere, terrain included. Grass
+-- kept Roblox's own face for a while ("never mind, the previous grass texture was ok", after a
+-- plain smooth one); then the user asked to "change ... the grass texture to a softer one, which
+-- dosent have too high contrast", so Grass and LeafyGrass (the terrain's grass under what is
+-- built) wear a grey picture of grass in clumps, soft but still grass.
 Textures.list = {
 	{ name = "wood", material = "Wood", studs = 4 },
 	{ name = "planks", material = "WoodPlanks", studs = 8 },
@@ -58,6 +60,8 @@ Textures.list = {
 	{ name = "sand", material = "Sand", studs = 10 },
 	{ name = "rock", material = "Rock", studs = 10 },
 	{ name = "metal", material = "Metal", studs = 6 },
+	{ name = "grass", material = "Grass", studs = 12 },
+	{ name = "leafy", material = "LeafyGrass", studs = 12 },
 } :: { Entry }
 
 -- The looks. `name` is the picture in art/textures and the key in Data/TextureIds, and is the
