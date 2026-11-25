@@ -420,11 +420,12 @@ it belongs to, and the budgets (set pieces at most 1,400 parts, paint at most 1,
 A plot's build is a `PlanData`:
 
 ```
-{ v, size, nextId, walls = { [key] = Wall }, floors = {...}, roofs = {...}, items = {...} }
+{ v, size, nextId, walls = { [key] = Wall }, floors = {...}, roofs = {...}, waters = {...}, items = {...} }
 Wall  { x1, z1, x2, z2, lv, style, a = { c, m }, b = { c, m } }
 Floor { x1, z1, x2, z2, lv, c, m }
 Roof  { x1, z1, x2, z2, lv, style, rise, dir, over, c, m, c2, m2 }
-Item  { id, x, y, z, r, lv, c1?, c2?, wall?, t?, side? }
+Water { x1, z1, x2, z2, lv = 0, edge = "tile" | "stone" | "pond", depth = "shallow" | "swim" }
+Item  { id, x, y, z, r, lv, c1?, c2?, wall?, t?, side?, img? }
 ```
 
 Coordinates are studs in the plot's own frame (`Town.plotFrame(i)`): x and z run 0 to `Plot.Size`, z = 0 is the
@@ -440,6 +441,97 @@ or none, `Plan.invert` makes the undo, `Plan.changeCost` says what they cost (se
 `Plan.affected` says what to redraw (a wall's change redraws the floor above it too, since a floor stops at the
 walls under it). `Plan.validate` holds every rule: the grid, the land, lengths, levels, paint,
 doors fitting their wall and not overlapping, stairs on quarter turns.
+
+Waters (pools and ponds, `Build/Water`) are a fifth kind, before items in `Plan.Kinds`, at most `Tuning.Water.Max`,
+sides `MinSide` to `MaxSide`, on the ground floor inside the land, priced per wall-snap square (`PerCell`: 2
+paddling, 3 swimming); their edges lie 2 past every 4 in the plot's frame, because every plot corner sits 2 off the
+terrain's 4 stud grid, so a water is always whole voxels (the Water spec checks all four plots). No wall crosses a
+water, no floor or roof covers one, and two never overlap; a fence along its edge is allowed. Pieces made for water
+have `place = "water"` and `water` = "float" (open water, clear of the rim), "bottom" (shallow water) or "edge" (part
+over water, part on the side), with `draft`; `Water.pieceY` fixes their height. Anything else keeps out of the water
+unless it stands 0.25 or higher (on the rim, a raft, a jetty); stairs never. Selling a water sells its pieces and
+what stands over its open water. Plan's hooks: `clean`, `cost`, `validate`/`clearOf`, `validItem`/`checkItem`,
+`removeOps`/`piecesIn`, `affected`, `sanitize` (after roofs, before items), `count`/`apply`; a save with no waters
+loads with none. `Builder.primsFor("waters")` draws a rim and basin per edge (a tiled pool with a waterline band and a
+lane line when deep, flagstones, or a pond's sloped banks, pebbles and reeds) and, in previews and the placing ghost
+only, a see-through surface (`Water.drawSurface`).
+
+An item may carry `img`, a picture's library id: `Plan.validItem` takes it only on a `picture` piece, as a whole
+number from 1 to `Plan.MaxPictureId` (2^52; `Plan.validPictureId`, `Plan.pictureId(text)` reads one out of a link).
+A mark (`place = "mark"`) lies `Plan.MarkLift` (0.05) over what it is on, over any mark it overlaps by that mark's
+height (`Plan.markY(plan, item, support, ignoreKey)`), at most `Plan.MarkReach` (2) over its floor, and never stops
+anything standing on it. Wall styles carry their own default finish (`paint`); the fences added for "more fences" are
+`brickLow`, `rail`, `iron`, `bamboo`, `log`, `woven`, `rope`, `glassRail` and `lightRail` (drawn in `Shapes.fence`).
+
+## Build mode's catalog: looks, shapes, pictures, marks, pillars, water
+
+- Catalog: a def may carry `style` (one of `Catalog.Styles`: cozy, modern, scifi, garden, seaside, rustic, fancy,
+  playful), `stack` (shapes stack), `picture` (a picture piece: its canvas part carries `attrs.Picture`, a NormalId,
+  and its placeholder parts are named "Placeholder"), `water` and `draft` (water pieces). Places now include "mark"
+  and "water". New categories: `shapes`, `pictures`, `markings`, `pillars`, `water`; `OtherTags.path`.
+  `Catalog.withStyle(style)` (a look's pieces in category order, `Catalog.categoryOrder`), `isPath`/`paths` (tagged
+  `path`, a flat ground piece, or a path word in its id), `standsOn` (what a piece can stand on: marks and the like are
+  looked through), `prims(def, c1, c2, img)` (marks never collide). Recipe modules: `Shapes` (50), `Pictures` (12),
+  `Markings` (85: one 5x7 stroke table, `GLYPHS`, draws every letter and number), `Pillars` (31: a full one's capital
+  ends at 11, its head at 11.9, hidden in the slab under a floor and meeting a roof; c1 the body, c2 the trim), `Water`
+  (20), the looks' `Cozy`, `Rustic`, `Modern`, `SciFi`, `GardenMore` (with the path pieces, 4 stud squares that tile),
+  `Seaside`, `Fancy`, `Playful`, and `Showpieces` (what the showpiece buildings need: mill sails, a lighthouse
+  lantern, a great oak, a glass roof...). The old pillars (`pillar_round`, `pillar_square`, `porch_post`) are on the
+  Pillars tab too.
+- Pictures: `Builder.pictureUri(id)` is `rbxthumb://type=Asset&id=<id>&w=420&h=420` and `Builder.showPicture` puts a
+  SurfaceGui "Picture" with an ImageLabel "Image" on the canvas. The server's `Build.checkPicture` asks
+  `Build.productInfo` (MarketplaceService:GetProductInfo in a pcall, stubbable) and takes only asset type 1 (Image)
+  or 13 (Decal), caching a yes for an hour and a no for a minute; one change may ask about at most 4 new ids. Build
+  mode: `BuildMode.checkPicture`, `startPlacing(id, c1, c2, img)`, `editSelected` (false removes a field).
+- Water in the game (`Services/Water`): on `Build.Changed`, `Plots.Ready`, the owner leaving and the plot's land being
+  redrawn, `sync(index, plan, player)` reads the voxels under each water and keeps them, then writes air with water up
+  to 0.5 under the ground (`WriteVoxelChannels`, falling back to `WriteVoxels`); a water that goes, or changes depth,
+  gets its saved voxels back exactly. `cutGround` hides World's `Base` and the plot's lawn under it and covers the rest
+  with copies marked `WaterPiece` (and `WaterHidden`/`WaterTransparency`/`WaterCollide`/`WaterQuery`/`WaterShadow` to
+  put them back); `clear(index)`; `region`, `dug`, `terrain`. Client: `Build/WaterTool` (the drag, the tray, a picked
+  water's page). Numbers: `Tuning.Water`.
+- Ready-made buildings: `Data/Presets` loads the workplaces by name and then every module in `Data/Buildings/Homes/`
+  (`home_*`, laid out with `Data/Buildings/HomeKit`: `k:wall`, `open`/`openT`, `hang`/`hangT`, `put`, `putY`, `up`,
+  `on`, `corner`, `dress`, `footing`, `fenceX`/`fenceZ`, `row`, `HomeKit.top`) and `Data/Buildings/Showpieces/`
+  (`show_*`, helpers in its `Kit/Lay`, which the loader skips), each a `function(add)`. `add` takes an optional
+  `style`. A floor piece given no height on the ground storey stands on the building's floor if any of its footprint
+  is on one, and on the ground if not (`settle`).
+- What of a placed piece is solid (`Build/Solid.apply(def, prims)`, called in `Builder.primsFor` for items): nothing
+  on hanging, surface, flat or mark pieces; never a part shorter than `Tuning.Unstick.Tiny` on its longest side,
+  foliage, or what starts above the piece's `surface`; every part on shapes, stairs and paths; workplaces, doors,
+  windows and pieces with a hidden solid box keep theirs. CanQuery stays on so Build mode can pick anything.
+  `Geometry.flatten` makes a shape inside a solid piece that says it isn't solid come out not solid.
+
+## Tutorial, wishes, unsticking
+
+- `Sim/Tutorial` (no services): `Steps` (villager, bed, work, craving), `Count`, `Skipped` (99), `progress`,
+  `finished`, `met`, `reached`, `current`, `advance` (the server side of `TutorialStep`) and `catchUp` (on join: an old
+  town that already has a villager, a bed and a job starts at the craving). `profile.tutorial` is the steps done (0
+  to 4) or 99; `stats.cravings` counts cravings bought (`Life.buyWish`). While `current` is the craving step and no
+  food wish is open, `Life.maybeWish` gives a food craving on the next hour instead of by chance.
+  `Data/StarterHouse.newPlot()` is a new plot's plan, the furnished one without `StarterHouse.Held` (`bed_single`,
+  `work_builder`); `plan()` is still the furnished one. Client: `UI/Tutorial` (`start(hud)`, `open`, `close`,
+  `isOpen`; a Hud panel; the welcome is its first page), the step card `TutorialCard` on its own layer `Tutorial`,
+  and a pointer (`TutorialRing`, `TutorialArrow`) made inside the thing to press, found by name.
+- `UI/WishPopup` (`open(vid)`, `isOpen()`, `close()`; a Hud panel): what a villager wishes for, opened by a click on
+  their wish bubble (`World/Wishes`, `Hud.open("WishPopup", vid)`). Food: the icon big, a line with `Foods.phrase`,
+  Buy through `WishBuy`; a friend: Introduce through `WishGrant(vid, "friend", arg)`; cheer: Have a chat through
+  `WishGrant(vid, "cheer")`. Its button is always named "Buy" (with `Kind` and `Disabled` attributes), the popup
+  "WishPopup", for the tutorial's pointer. "See their page" opens Residents.
+- Events (`Services/Events`): an answer is timed by `choiceDeadline`: nobody watching, `ChoiceTimeout` after it asks
+  or after the scene is put away; watching but not at the question yet, held; the question on screen, `ChoiceTimeout`
+  from then; never past `ChoiceCap` after it asked (plus `ChoiceGrace` for an answer on its way). `Events.reading(player)`
+  keeps the next event from starting while the owner still has the last one's scene up (at most `ReadHold`). The talk
+  card no longer closes when an event starts, and stays `Tuning.Talk.StaySeconds` (60) without input.
+- Unsticking: `Sim/Unstick` (no services: `find(boxes, feet, opts)` searches rings outward for room to stand and says
+  how ("here", "beside", "through", "top"), never through a wall while the room side has space; `overlaps`, `crosses`,
+  `body`, `inside`); `Npc/Room` (the world side: `boxes`, `floorUnder` (terrain water is no floor), `freeSpot`,
+  `place`, `moveOut`, `unseat`, `inside`, `wedged`, `standBeside`, `free`, `landing`, `swimming`, `waterPart`);
+  `Services/Unstick` (after Work in `Main.server`): on `Build.Changed` it moves anyone inside what was just drawn out
+  of it, and every `CheckEvery` frees anyone wedged for `WedgedFor`; sleeping and seated villagers and swimmers are
+  left alone, and a pool's rim and lining never count. `Npc.free(self, waypoint)` (hop, new path, then moved on),
+  `npc.bed` and `Npc.standUp` (beside the bed or the seat). Arrivals and Home use `Room.landing`. Numbers:
+  `Tuning.Unstick` (with `Agent` = { Radius 1.3, Height 5, WaterCost 200 } for pathfinding).
 
 ## Saved profile
 
@@ -559,7 +651,9 @@ Functions (client asks, server answers): `GetState`, `BuildApply`, `BuildUndo`, 
 `CreatorClose`, `CreatorPreview`, `CreatorBundle`, `CreatorFromUser`, `CreatorSearch`, `CreatorItemInfo`,
 `VillagerCreate`, `VillagerUpdate`, `VillagerRemove`, `VillagerBed`, `VillagerJob`,
 `VillagerFocus`, `OutfitSave`, `OutfitDelete`, `EventChoose`, `DailyClaim`, `PlotExpand`, `SettingSet`,
-`TutorialStep`, `VisitPlot`, `WishGrant` (`vid, "friend" | "cheer", otherVid?`), `WishBuy` (`vid` -> `ok, message?`:
+`TutorialStep` (`step | 99` -> `ok, progress`: records only what `Sim/Tutorial.advance` finds true of the profile,
+then pushes `tutorial`; 99 skips it for good), `BuildPicture` (`id` -> `ok, why`: what a picture id is, at most one
+call every 0.5 s), `VisitPlot`, `WishGrant` (`vid, "friend" | "cheer", otherVid?`), `WishBuy` (`vid` -> `ok, message?`:
 buys the villager's craving at `Life.wishPrice`; true with no message, the notices go through `Notify`; refused with
 a plain reason when there is no craving or not enough coins),
 `GoalClaim` (`goalId`), `PlaceFound` (`placeId`), `CreatorFromOutfit` (`outfitId` -> appearance or nil: one of the player's own saved Roblox avatars, through
@@ -572,10 +666,14 @@ counts as not said), `CreatorSearch` (its query may carry `offSale` and `inside`
 caller stops working at a workplace, `Services/Work`).
 
 Events (server pushes): `State` (patches of the client state), `PlanSync` (`{ full }` or `{ ops }`), `Notify`
-(`text, kind`; kind `action` carries `open:creator:<vid>`), `Used` (`at, puff?, text?, rarity?` to every client: `client/World/Interact` draws the puff and a bubble over the piece, a gold rim for a rare one), `EventShow`, `EventLine`, `EventEnd`, `Earned` (`{ coins, earned, lines = { { vid, n } } }` every `Tuning.Jobs.PayEvery` seconds when anyone earned: `client/World/Earnings` lifts a coin and "+N" off each earner's head and the HUD's count rolls up quietly; the player's own work is a line `{ you = true, n, today }`, its "+N" over their own character), `Say`,
+(`text, kind`; kind `action` carries `open:creator:<vid>`), `Used` (`at, puff?, text?, rarity?` to every client: `client/World/Interact` draws the puff and a bubble over the piece, a gold rim for a rare one), `EventShow`, `EventLine` (`{ token, line, last? }`, `{ token, ask = true, left? }`, `{ token, left }`), `EventEnd`, `Earned` (`{ coins, earned, lines = { { vid, n } } }` every `Tuning.Jobs.PayEvery` seconds when anyone earned: `client/World/Earnings` lifts a coin and "+N" off each earner's head and the HUD's count rolls up quietly; the player's own work is a line `{ you = true, n, today }`, its "+N" over their own character), `Say`,
 `Talk` (`{ vid, text, note, model }`: to the town's owner, what their villager said when they held E on them),
 `Work` (`{ on = true, plot, key, name, act, beat, today, cap }` when the player starts work at a workplace, `{ on
 = false }` when it stops: `client/World/Work`).
+
+Client to server events: `EventWatch` (`token, "open" | "close" | "asked"`: the scene went up, was put away, or put
+the question on screen; the server only times an answer from "asked", see Events below). `EventChoose` is accepted
+only while the event is asking, and only once.
 
 Every handler checks its arguments: types, ranges, ownership. Build requests go through `Plan.validate` on the
 server, whatever the client did.
@@ -905,22 +1003,22 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   onClick)` is a pill for the answers row, `Dialogue.isOpen()` says whether a scene is up. While one is,
   `State.data.talking` is true.
 - `UI/EventCard`: an event never takes the screen by itself. `EventShow` brings up a small dark glass prompt at
-  the bottom middle (the event's name and Watch). At a choice it reads "They want your say", Watch becomes a yellow
-  Answer and a thin bar runs down `Tuning.Events.ChoiceTimeout`; the server still picks the gentle option when it
-  runs out. Watch or Answer opens the `Dialogue` scene (the camera stays put) and plays it from the first line:
-  the client keeps every line it hears for the event (`heard`) and the scene shows them in turn, each for as long
-  as the server takes to say one (`math.clamp(#text / 18, 2.2, 4.2)`, a little less) or until a click, bringing
-  each villager in when their first line comes; once it has caught up, each new line shows the moment it arrives.
-  A choice already waiting puts its answers (pills in the box, sent with `EventChoose`) and a `TimeLeft` bar over
-  the box up at once, while the lines play; "What do you do?" is typed when they are done. An event that ends while
-  its scene is still catching up lets it finish (a minute at most) before how it turned out. The server keeps the time: the stars walk together, then `EventShow` (token, title, lines, names, actors,
-  choices, focus) brings up the prompt, and each line goes out as the villagers say it over their heads as
-  `EventLine` `{ token, line, last? }` (`last` on the scene's final line), then `{ token, ask = true }` when the
-  answer timer starts; the lines after an answer come the same way. A click on the box shows the rest of a line
-  being typed, moves on to the next line the scene still has to show, and on the last line (or how it turned out)
-  closes the scene, which then leaves no prompt behind. "Stop watching" puts the
-  scene away and leaves the prompt until `EventEnd`. `EventCard.isPlaying()` is true while an event is going on, `EventCard.isWatching()` while its scene
-  is up. The prompt and the scene give way to a full menu.
+  the bottom middle (the event's name and Watch; at a choice "They want your say" and a yellow Answer). Watch or
+  Answer opens the `Dialogue` scene (the camera stays put) and plays it from the first line, one line a press (the
+  user: "sometimes, chats suddenly cut to the next dialogue without the player input"): the client keeps every line it
+  hears (`heard`), and each click, tap or key (`Dialogue.Keys`: Space, Return, KeypadEnter, gamepad A, bound at high
+  priority as `Dialogue.Action` "DialogueNext" while a scene with `OnClick` is up, passed through while answers or a
+  text box have the input) first finishes a line being typed and then shows the next (`scene.next()`); the `More`
+  arrow sits at the words' bottom right when a line is done. The scene keeps `shown`, `page` ("line", "ask", "end")
+  and `waiting`: lines that come while the player is still reading are kept, never skipped, and only once the player
+  has pressed past everything does the next line, question or outcome show the moment it arrives. The answers come up
+  when the player reaches the question, with the `TimeLeft` bar full, and the client sends `EventWatch "asked"`; how it
+  turned out stays until a click, a press past the end closes the scene (so does a press on the last line), and
+  `play()` waits for the scene to close before taking the next event (one that ended while it waited is dropped).
+  The prompt waits while another `Dialogue` (the talk card) is up. "Stop watching" puts the scene away and leaves the
+  prompt until `EventEnd`. `EventCard.isPlaying()` is true while an event is going on, `EventCard.isWatching()` while
+  its scene is up; the HUD holds an event's notices (`Notify` kind "event") until the scene closes. The prompt and the
+  scene give way to a full menu.
 - `UI/Quests`: the quest list on the main screen. `Quests.mount(parent, position, open)` builds it (a header that
   folds it, a list of at most `Quests.Shown` (3) quests) and refreshes it on any state that moves a goal;
   `Quests.next(profile, count)` picks them (done and unclaimed first, then by how far along). A finished one claims
@@ -937,7 +1035,8 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   false. `Hud.goHome()` shuts the menus, dips the screen
   (a `Veil` frame) and asks `GoHome`; H does the same when the HUD shows and nothing has the keyboard. It opens one
   panel at a time:
-  `Creator`, `Residents`, `CityPanel`, `News`, `Welcome`. `EventCard` (the dialogue box) runs all the time.
+  `Creator`, `Residents`, `CityPanel`, `News`, `Tutorial`, `WishPopup`. `EventCard` (the dialogue box) runs all the
+  time. A `Notify` `open:creator:<vid>` waits until no `Dialogue` is open.
   `UI/Weather` (rain, snow, blossom, leaves) is started by `Main.client` on its own, in a pcall, before the HUD:
   one emitter on a clear 90 stud square 32 studs over the camera, each setting put on by itself (`set`), rain
   as streaks (`VelocityParallel`, `Squash` 3, the most Roblox allows) with a little `LightEmission` so it shows at
@@ -1012,6 +1111,17 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   Brightness and switches on a SurfaceLight on fascias, drinks machines and big low adverts.
 
 ## Tests and tools
+
+- Specs added in this round: `Voice` (each personality's hand), `Tutorial`, `Water`, `Unstick`, `EventService` (the
+  real Events service with stubbed neighbours and a wound clock: the answer timer held while reading). Simulations:
+  `tests/sim/event_pace.luau` (a watched event moves only on presses) and `tests/sim/tutorial.luau` (the tutorial from
+  the welcome to the closing card), both run by `scripts/check.sh`. Render scenes: `style:<look>`, `items:<id>,<id>`,
+  `fences`, `water` (`water:pool`, `water:pond`, `water:rim`), `preset:<id>:up1` (roofs off, the first floor up kept),
+  `preset:show_<id>` and `preset:home_<id>`. UI scenes (all in the audit): `build:styles` (`build:styles:<look>`),
+  `build:shapes`, `build:pillars`, `build:markings`, `build:picture`, `build:picture:bad`, `build:picture:pick`,
+  `build:water`, `build:water:pick`, `wish`, `wish:short`, `wish:friend`, `wish:cheer`, `tutorial:welcome`,
+  `tutorial:1`, `tutorial:2`, `tutorial:2:build`, `tutorial:3:build`, `tutorial:4`, `tutorial:4:craving`,
+  `tutorial:4:buy`, `tutorial:done`; `panel:Tutorial` is the welcome.
 
 - `tools/preview/walk.sh <scene> <png> --eye x,y,z --look x,y,z [--fov 60] [--size 1280x720] [--hour 16]
   [--textures] [--painted]` draws any `dump.luau` scene as somebody standing in it sees it (`walk.py`: a camera

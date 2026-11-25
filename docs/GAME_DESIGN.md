@@ -1642,6 +1642,9 @@ from the start never costs you the choice; the question itself comes when the li
 the event ends while the scene is still catching up, it plays to the end first. A villager you stop to chat with
 (the talk card) is as before.
 
+(Later the user: "sometimes, chats suddenly cut to the next dialogue without the player input". Lines no longer
+move on by themselves: see "A guided start" below.)
+
 ### A warm haze
 
 > make the shader something like this, add fog and set the lighting to shadowmap/future
@@ -1706,6 +1709,8 @@ floor, as it was before the terrain, and the island alone is terrain. The card c
 written.
 
 ### Long grass you can walk through
+
+(All of this went later: "remove the grass". The island keeps its grass ground, with no blades on it.)
 
 > https://devforum.roblox.com/t/introducing-grass/386129 can you use realistic grass?
 
@@ -1981,6 +1986,85 @@ the foods are all there is to draw.
 - **Without the painted pictures** (Allow Mesh / Image APIs off) a food is built from simple shapes like the other
   icons, in its own colour with its cuts in the card's colour, where it used to be a coloured dot.
 - The shaded pictures above (glints, a darker far side, bowls and plates with rims) are gone.
+
+### A guided start, more to build, water, and fixes from play
+
+> make the tutorial more visual and structured, starting with creating a villager, then building a place for them
+> to sleep, then a place to work. the first time a craving pops up, guide the user how to do it.
+
+The welcome is now the first page of a tutorial in four steps: make your first villager, give them a bed, give
+them somewhere to work, and answer a first craving. Each step sits on a card at the side of the screen (step N of
+4, a picture, one line on what to do, a way to skip), and a pulsing ring and arrow point at what to press next:
+the creator, the Build button, the Beds and Workplaces tiles and the card to place, then the craving bubble and
+the popup's Buy button. A step is done when the town shows it, never by a click alone, and the server checks
+before it records anything. So that the bed and work steps mean something, a new plot's bedroom and workshop
+start empty (the cottage and the workshop building are still there), and the starting coins cover both. While the
+last step waits, the first craving comes within the hour instead of by chance. An old town that already has a
+villager, a bed and a job starts at the craving.
+
+> clicking the bubble that appears above villagers when they have a craving should show a popup what they want and
+> allow the player to satisfy it instead of their whole profile page.
+
+A click on a wish bubble opens a small popup: their face, what they want in one line ("Mara would love a rice
+ball"), the food big in its own colour, the price and Buy (or Introduce, or Have a chat, for the other wishes),
+and a small link to their page.
+
+> sometimes, chats suddenly cut to the next dialogue without the player input.
+
+A watched conversation now moves only when the player clicks, taps or presses Space: the first press finishes a
+line being typed, the next shows the next one, with a small arrow in the corner when a line is done. The answers
+come up when the player reaches the question, and the time to answer only starts then (with a long cap, so an
+event can't hang); how it turned out stays until a click, and its notice waits until the scene is closed. A new
+event waits until the one on screen is closed, and the talk card no longer closes when an event starts.
+
+> make food/item icons much simpler.
+
+Every food icon is now a handful of bold shapes, at most seven, with no more than three cuts.
+
+> add much much more buildings, decoration, paths, fences and other options. there should be many to choose from
+> from different categories, like garden, sci fi, cozy, etc, just like bloxburg. there should also be basic shapes,
+> like cube, cylinder, etc. also, allow the player to use custom decal in the roblox library
+
+> remove the grass. also, add another section where players can put down markings, like in bloxburg. also, make
+> much more building types, including decorative ones
+
+> also, add ability to add water, along with things that can go in the water
+
+> also, add pillars to building as well
+
+Build mode grew a lot:
+- Looks. Every piece can belong to one of eight looks (Cozy, Modern, Sci-fi, Garden, Seaside, Rustic, Fancy,
+  Playful), and a Styles group lists a whole look across every category. Over two hundred new pieces were made for
+  them, a module per look, with the house's level of detail.
+- Shapes: fifty basic shapes (cube, cylinder, ball, wedge, corner wedge, cone, pyramid, half cylinder, arch, ring,
+  tube, plank, pillar, quarter round) in several sizes, one paint each, that stack.
+- Pictures: posters, frames, signs, a billboard and decals for walls and floors. The player pastes the id of a
+  decal or image from the Roblox library, the server asks Roblox what it is and only accepts a decal or an image,
+  and the game shows it through Roblox's own thumbnail of it. Nothing is uploaded.
+- Fences: nine more (low brick wall, rail, iron, bamboo, log, woven, rope, glass rail and a light rail).
+- Paths: stepping logs, gravel, brick, crazy paving, a boardwalk, a curve and a rose arch, on a 4 stud square so
+  they meet; the Paths tab lists them with the floor finishes.
+- Markings: flat paint on floors, paths and the ground (lines, dashed lines, arrows, parking bays, a zebra
+  crossing, court lines, hopscotch, chalk drawings, a compass, numbers and letters) that furniture stands over.
+  We couldn't find how that game's own markings work, so these are our own idea of them.
+- Pillars: thirty columns and posts in every look, a storey tall so they meet a ceiling or hold up a porch roof,
+  and shorter piers and posts.
+- Water: drag out a pool or a pond on the ground floor outside, with a tiled edge, a stone rim or a natural bank,
+  paddling or swimming deep. It is real water in the game, so people can wade and swim, and it gives the ground back
+  exactly when it is sold. Twenty pieces go in it: lily pads, reeds, a rowing boat, a kayak, a pedalo, floats, a
+  floating lantern, a fountain jet, a jetty, stepping stones, a ladder, a diving board and a slide.
+- Ready-made buildings: ten new homes (a porch cottage, a glass house, a sci-fi pod, a log cabin, a beach house,
+  a grand townhouse, a greenhouse cottage, a barn, a play house, a fisher's cottage) and nineteen showpieces to make
+  the land lovely (a gazebo, a bandstand, a windmill, a clock tower, a lighthouse, a fountain square, a pergola
+  walk, a garden gate, a greenhouse, a potting shed, a treehouse, market stalls, a picnic shelter, an observatory,
+  a beacon tower, beach huts, a hedge maze, a garden temple and a water tower).
+
+> villagers and the player can sometimes get stuck in objects
+
+Only the bodies of furniture are solid now; small parts, clutter on tables, leaves, rugs, things on walls and
+markings aren't. Anyone a piece lands on is moved to the nearest free spot on the room's side; a villager stands
+up beside a chair or a bed instead of inside it; a villager who stops getting anywhere hops, then finds a new way,
+then is moved on; the Home button always lands on open ground; and nobody swimming is ever moved.
 
 ## 11. Writing
 

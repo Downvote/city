@@ -25,11 +25,16 @@ the contract (update it with every API, remote or saved data change), `src/share
 5. `sh scripts/check.sh` must pass: format, types (luau-lsp against Roblox's definitions), specs, the client
    simulations (`tests/sim/build_client.luau`: the real Build mode driven by clicks; `tests/sim/talk_card.luau`:
    the card you get by holding E on a villager; `tests/sim/creator_sections.luau`: the creator's Bodies, Body
-   parts, My items and My avatars; `tests/sim/hud.luau`: the main screen's stats strip, quests and Home), the dark and the light look on every screen
+   parts, My items and My avatars; `tests/sim/hud.luau`: the main screen's stats strip, quests and Home;
+   `tests/sim/event_pace.luau`: a watched event moves only when the player presses; `tests/sim/tutorial.luau`: the
+   tutorial from the welcome to the closing card), the dark and the light look on every screen
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (443 at the last full run; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `PlayerWork` and `WorkService`: a player working at a workplace themselves, its pay and cap, and the server's side with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+Specs today (SPECCOUNT at the last full run; `Voice`: each personality's own hand; `Tutorial`: the four steps, checked
+by the server, the first craving coming quickly; `Water`: pools and ponds on the terrain grid, what may stand in them;
+`Unstick`: finding room to stand, what of a piece is solid, villagers getting up and getting unstuck, swimmers left
+alone; `EventService`: an answer's time held while the player reads; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `PlayerWork` and `WorkService`: a player working at a workplace themselves, its pay and cap, and the server's side with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off; what kind a bundle
 is, the outfit that holds the body, single body parts, the player's own items and avatars; preview scenes
@@ -37,7 +42,10 @@ is, the outfit that holds the body, single body parts, the player's own items an
 `creator:wearing`, `creator:skin`, `creator:shape`, `creator:outfits`, `creator:outfits:saved`, `creator:people`;
 Build mode's are `build`, `build:walls`, `build:rooms`, `build:floors`, `build:roofs`, `build:fences`,
 `build:paths`, `build:buildings`, `build:bought`, `build:pick`, `build:paint`, `build:sell`, `build:view`,
-`build:placing`, `build:placing:touch`; any scene takes the
+`build:placing`, `build:placing:touch`, `build:styles` (`build:styles:<look>`), `build:shapes`, `build:pillars`,
+`build:markings`, `build:picture`, `build:picture:bad`, `build:picture:pick`, `build:water`, `build:water:pick`; the
+wish popup's `wish`, `wish:short`, `wish:friend`, `wish:cheer`; render scenes `style:<look>`, `items:<id>,<id>`,
+`fences`, `water`, `preset:<id>:up1`; any scene takes the
 prefix `plain:` to show it with the painted shapes off), Build (catalog, plan rules, field cleaning, shapes, builder), BuildService (the server's
 Build service with stubbed neighbours: charges, syncs, strips junk, refuses land you don't own), Events (3000 seeded
 events, every kind reachable, text filled, numbers in range, nobody moving in on their own: the user, "remove random
@@ -136,8 +144,9 @@ and bunnies" and "remove the grass". Don't bring them back.)
 
 The user: "remove the shop, buying of things and food and feeding. when a character gets a craving, allow the
 player to simply pay to buy it" and "remove the map button and the map interface". So there is no shop, no bag
-(`inv`), no feeding and no map screen. A craving is bought from the villager's page or the talk card through
-`WishBuy` at `Life.wishPrice`. Don't add anything for sale but cravings and Build mode's pieces. The user also
+(`inv`), no feeding and no map screen. A craving is bought from the villager's page, the talk card, or the popup a click on their wish bubble brings up
+(`UI/WishPopup`: the user, "clicking the bubble ... should show a popup what they want and allow the player to satisfy
+it instead of their whole profile page") through `WishBuy` at `Life.wishPrice`. Don't add anything for sale but cravings and Build mode's pieces. The user also
 asked that "progression is much more based on villagers working": wages are most of a town's income; the City spec
 holds that balance. A town level asks for worth and nothing else (the user: "make the only requirements for growing
 towns worth instead of villagers or work requirement": `Tuning.City.Levels[i]` is `Name` and `Value`, `City.level(value)`).
@@ -196,8 +205,11 @@ card and the event card both build it; never write a second dialogue box. A rand
 screen by itself ("in the cast of random villager text events, make this only happen when the player chooses to
 watch"): `EventShow` brings up only a small prompt with Watch (Answer, with a timer, when a choice is waiting), and
 the scene goes up when the player presses it and plays from the first line ("make watching conversations restart
-the conversation from the start": the client keeps every `EventLine` it hears and shows them in turn at the
-villagers' pace or a click's, then the live ones; a waiting choice's answers and timer are up at once)
+the conversation from the start": the client keeps every `EventLine` it hears), one line a click, tap or key and
+never by itself ("sometimes, chats suddenly cut to the next dialogue without the player input"); the question's
+answers come when the player reaches it and only then does the answer's time start (`EventWatch "asked"`, held by the
+server up to `Tuning.Events.ChoiceCap`); how it turned out stays until a click, its notice waits for the scene to
+close, and the next event waits its turn; the talk card stays up through an event (`Tuning.Talk.StaySeconds` 60)
 (`EventCard.isWatching()`; a big moment scripted in `Data/Cutscenes`
 plays as a cutscene on a set of its own from `Data/Stages` behind the same box, in a ViewportFrame: "add cutscenes and
 scenes like tomodachi life as well"; preview with `sh tools/preview/stage.sh <id> <dir>` and `ui.sh cutscene:<event>`),
@@ -426,7 +438,8 @@ solid silhouette in one colour with its details cut out of it (the door out of t
 clock), never an outline: cuts and gaps 1.5 to 2 wide so they last at 16 pixels, signs that are all line (plus,
 cross, tick, arrows) 4 wide with square ends, true circles and firm corners, points that really point, a notch
 in every arrow's tail, 1.5 clear of the edge (the rules are at the top of IconArt, and the Icons spec holds
-them). Foods are icons too (the user: "make food and thing icons sillouhettes like normal icons as well"):
+them). Foods are icons too (the user: "make food and thing icons sillouhettes like normal icons as well", then "make
+food/item icons much simpler": as few shapes as say what it is, at most 7 layers and 3 cuts, the Icons spec holds it):
 silhouettes in `UI/ItemArt` drawn by the same rules (the leaf apart from the apple, the scores cut out of the
 bread), with no colour of their own; `Icons.item` shows one in the food's own colour (`Data/Foods`' `color`,
 which must read on the dark glass and on a card in either look) unless the caller passes `Color`, as with
@@ -463,7 +476,12 @@ leave, NPC network ownership, spawn races). Playtest in Studio after changing th
 
 Every plot starts with `Data/StarterHouse`: a detailed house, a workshop where the first villager works as a
 builder, and a fenced garden, all of it ordinary Build mode pieces carrying `gift` (the user: "improve the starting
-house detail by alot, and add a workspace next to it"). Specs find the bed by "bed" in an item's id, so the
+house detail by alot, and add a workspace next to it"). A new plot (`StarterHouse.newPlot()`) leaves out the bed and
+the builder's bench (`StarterHouse.Held`) for the tutorial's steps (the user: "make the tutorial more visual and
+structured, starting with creating a villager, then building a place for them to sleep, then a place to work. the
+first time a craving pops up, guide the user how to do it"); `plan()` is the furnished one for specs and previews.
+The tutorial is `Sim/Tutorial` (steps from the town's own state, recorded by the server) and `UI/Tutorial` (the
+welcome, a step card and a pointer found by name; scenes `tutorial:*`). Specs find the bed by "bed" in an item's id, so the
 starter must not use `flower_bed`; the Build mode sim clicks at plot (222, 101) and (224, 114) (they moved by
 100 and 50 when the plots grew), and the house stands near the street, the fence at z 30 and the buildings to
 z 74, so keep the house and the workshop in front of z 94 and low.
@@ -482,6 +500,21 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
 - Roblox drops shadow map shadows below graphics quality 4; `PrioritizeLightingQuality` keeps them close by.
 
 ## Rules
+
+- What of a placed piece is solid is `Build/Solid`: hanging, surface, flat and mark pieces, parts under
+  `Tuning.Unstick.Tiny`, foliage and clutter on top never are (the user: "villagers and the player can sometimes get
+  stuck in objects"). Draw a piece's body with real parts or a solid piece; the Unstick spec holds the catalog to it.
+  Never move a swimmer; `Npc/Room` treats water as no floor.
+- Build mode (the user: "add much much more buildings, decoration, paths, fences and other options ... like garden, sci
+  fi, cozy, etc, just like bloxburg ... basic shapes ... custom decal in the roblox library", "add another section
+  where players can put down markings", "make much more building types, including decorative ones", "add ability to
+  add water, along with things that can go in the water", "add pillars to building as well"): a new piece carries a
+  `style` from `Catalog.Styles` where one fits; a mark (`place = "mark"`) is paint whose top sits 0.1 over its floor; a
+  picture shows only through `rbxthumb`, after the server's `Build.checkPicture`; a water piece needs `place =
+  "water"`, `water` and `draft`; water edges assume the plot corners sit 2 off the terrain's 4 stud grid (moving the
+  plots breaks it; the Water spec will say); a new home is a file in `Data/Buildings/Homes/` laid out with `HomeKit`,
+  a new showpiece one in `Data/Buildings/Showpieces/`; keep the dearest ready-made building under 4 days of a
+  builder's pay (the City spec); a railing can't meet a wall end on (both bottoms at floor height z-fight).
 
 - Every catalog item stays inside its `size` box (the Build spec checks it), uses `r.c1`/`r.c2` for paintable
   parts, marks seats with `r:seat`, beds with `r:sleep` and the tag `bed`, lights with `r:glow`, workplaces with

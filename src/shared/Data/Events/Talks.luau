@@ -749,13 +749,13 @@ event({
 			easygoing = "Eh, fair enough, I'll go and sit inside.",
 			proud = "Hmph, I was only mentioning it.",
 			shy = "Um, yes, you're right.",
-			cheeky = "ok fine, moaning over",
+			cheeky = "ok fine, complaining over",
 			cool = "Hm, fair enough.",
 			prickly = "Ugh, fine, I'll stop.",
 			dramatic = "Then I will SUFFER in silence.",
 			bookish = "You're right, it can't last much longer.",
 			gloomy = "Heh... we'll see.",
-			polite = "Quite right, I'll stop grumbling.",
+			polite = "Quite right, I will stop complaining.",
 			foodie = "Okay, but I'm still getting soup.",
 			nervous = "O-okay, I'll try not to worry about it.",
 			_ = "Ha, okay, I feel a bit better now.",
@@ -1709,7 +1709,7 @@ event({
 		s:n("{a} and {b} are stuck under the same porch, waiting for the rain to stop.")
 		s:say("a", "We could just run for it.", "idea")
 		burst(s, "b", {
-			gloomy = "We'd be soaked in two steps, I've done the maths.",
+			gloomy = "We'd be soaked in two steps, I've worked it out.",
 			bold = "I'd run for it, but it's coming down even harder now.",
 			easygoing = "Or we could just stay here, because it's nice under here.",
 			nervous = "B-but what if it gets worse halfway?",
