@@ -52,7 +52,7 @@ return function(add: any)
 				local boards: Finish = { c = h.walls, m = "WoodPlanks" }
 				b:floor(x0, 6, x0 + 8, 18, DECK)
 				b:box(n, x0, 10, x0 + 8, 18, boards, INSIDE)
-				b:roof(x0, 10, x0 + 8, 18, "gable", 4, 1, { c = h.roof, m = "RoofShingles" }, boards, 0, 0.5)
+				b:roof(x0, 10, x0 + 8, 18, "gable", 4, 1, { c = h.roof, m = "RoofShingles" }, boards, 0, 0.4)
 				Lay.open(b, "door_panel", n .. "front", 4, h.door, WHITE)
 				b:open("win_small", n .. "left", 4)
 				b:open("win_small", n .. "right", 4)

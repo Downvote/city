@@ -22,7 +22,6 @@ local WALNUT = "9A6B48"
 local OAK = "C49A6C"
 local SAGE = "6F8F6A"
 local NAVY = "46608E"
-local CORAL = "E08566"
 
 local put, hang = Lay.put, Lay.hang
 

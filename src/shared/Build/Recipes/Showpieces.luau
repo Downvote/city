@@ -444,7 +444,7 @@ local items: { any } = {
 					q:block(x0, 0.3, 1.55, x0 + 0.9, 3.1, 1.75, if k % 2 == 0 then wood else shade(wood, 0.94), "Wood")
 				end
 				q:block(-2.85, 0.3, 0.6, 2.85, 3.1, 1.55, dk, "Wood")
-				q:block(-3.15, 3.1, 0.5, 3.15, 3.3, 2.15, shade(wood, 1.06), "Wood")
+				q:block(-3.22, 3.1, 0.5, 3.22, 3.3, 2.15, shade(wood, 1.06), "Wood")
 				q:block(-2.85, 0, 0.6, 2.85, 0.3, 1.8, dk, "Wood")
 				-- the shelf at the back on its brackets
 				q:block(-2.85, 2.2, -1.75, 2.85, 2.4, -0.85, wood, "Wood")
@@ -627,7 +627,7 @@ local items: { any } = {
 			-- (c2) at the top, a dish half way up and a red light on its very tip.
 			r:cyl(0, 0.3, 0, 0.6, 5.8, "y", shade(r.c1, 0.85), "Metal")
 			r:cyl(0, 0.75, 0, 0.3, 4.6, "y", r.c1, "Metal")
-			local band = r:cyl(0, 0.62, 0, 0.08, 5.84, "y", r.c2, "Neon")
+			local band = r:cyl(0, 0.45, 0, 0.1, 5.96, "y", r.c2, "Neon")
 			r:glow(band, 0)
 			local function leg(sx: number, sz: number, y: number): Vector3
 				local t = (y - 0.9) / 11.1
@@ -826,20 +826,20 @@ local items: { any } = {
 				q:block(-2.3, 1.0, -0.95, 2.3, 1.2, -0.71, wood, "Wood")
 			end)
 			local boards = {
-				{ -1.4, r.c1, 0.2 },
-				{ 0, Color3.fromRGB(224, 133, 102), -0.05 },
-				{ 1.4, Color3.fromRGB(240, 220, 170), 0.15 },
+				{ x = -1.4, color = r.c1, tilt = 0.2 },
+				{ x = 0, color = Color3.fromRGB(224, 133, 102), tilt = -0.05 },
+				{ x = 1.4, color = Color3.fromRGB(240, 220, 170), tilt = 0.15 },
 			}
 			for _, b in boards do
-				local lean = CFrame.new(b[1], 3.05, 0.25) * CFrame.Angles(math.rad(-14), 0, b[3])
-				r:lump(lean, 1.2, 6.0, 0.22, b[2], "SmoothPlastic")
-				r:lump(lean * CFrame.new(0, 0, 0.1), 0.18, 5.2, 0.06, IVORY, "SmoothPlastic")
+				local lean = CFrame.new(b.x, 3.05, 0.25) * CFrame.Angles(math.rad(-14), 0, b.tilt)
+				r:lump(lean, 1.2, 6.0, 0.22, b.color, "SmoothPlastic")
+				r:lump(lean * CFrame.new(0, 0, 0.15), 0.18, 5.2, 0.06, IVORY, "SmoothPlastic")
 				r:wedge(
 					lean * CFrame.new(0, -2.2, 0.32) * CFrame.Angles(0, math.pi / 2, 0),
 					0.4,
 					0.45,
 					0.06,
-					shade(b[2], 0.7),
+					shade(b.color, 0.7),
 					"SmoothPlastic"
 				)
 			end

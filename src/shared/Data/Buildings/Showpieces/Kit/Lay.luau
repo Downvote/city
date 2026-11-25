@@ -100,7 +100,8 @@ end
 -- in `skip` (doors).
 function Lay.footing(b: any, wall: string, len: number, skip: { { number } }?, color: string?)
 	local spans = { { 0, len } }
-	for _, s in skip or {} do
+	local cuts: { { number } } = skip or {}
+	for _, s in cuts do
 		local out = {}
 		for _, span in spans do
 			if s[2] <= span[1] or s[1] >= span[2] then

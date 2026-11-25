@@ -46,15 +46,15 @@ return function(add: any)
 				put(b, "bench_garden", s[1], s[2], s[3], Lay.F, OAK, IRON)
 			end
 
-			-- the four beds: x0, z0, x1, z1, the inner corner (by the square), the flowers' colour
+			-- the four beds, each with its inner corner (by the square) and its flowers' colour
 			local beds = {
-				{ 2, 2, 10, 10, 10, 10, CORAL },
-				{ 20, 2, 28, 10, 20, 10, LILAC },
-				{ 2, 20, 10, 28, 10, 20, BUTTER },
-				{ 20, 20, 28, 28, 20, 20, ROSE },
+				{ x0 = 2, z0 = 2, x1 = 10, z1 = 10, ix = 10, iz = 10, flowers = CORAL },
+				{ x0 = 20, z0 = 2, x1 = 28, z1 = 10, ix = 20, iz = 10, flowers = LILAC },
+				{ x0 = 2, z0 = 20, x1 = 10, z1 = 28, ix = 10, iz = 20, flowers = BUTTER },
+				{ x0 = 20, z0 = 20, x1 = 28, z1 = 28, ix = 20, iz = 20, flowers = ROSE },
 			}
 			for i, bed in beds do
-				local x0, z0, x1, z1 = bed[1], bed[2], bed[3], bed[4]
+				local x0, z0, x1, z1 = bed.x0, bed.z0, bed.x1, bed.z1
 				local n = "bed" .. i
 				b:floor(x0, z0, x1, z1, LAWN)
 				Lay.styled(b, n .. "f", x0, z0, x1, z0, STONE, "stone")
@@ -64,14 +64,14 @@ return function(add: any)
 				local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
 				put(b, "tree_blossom", cx, cz, i * 40, Lay.F)
 				-- flowers along the two inner sides, by the paths
-				local ix, iz = bed[5], bed[6]
+				local ix, iz = bed.ix, bed.iz
 				local inX = if ix > cx then ix - 1.6 else ix + 1.6
 				local inZ = if iz > cz then iz - 1.6 else iz + 1.6
 				-- (each kept back from the corner, so the two don't overlap there)
 				put(b, "flower_border", if ix > cx then cx - 0.5 else cx + 0.5, inZ, 0, Lay.F)
 				put(b, "flower_border", inX, if iz > cz then cz - 0.5 else cz + 0.5, 90, Lay.F)
 				-- an urn on the corner of the wall by the square
-				put(b, "show_urn", ix, iz, 0, 3, nil, bed[7])
+				put(b, "show_urn", ix, iz, 0, 3, nil, bed.flowers)
 			end
 
 			-- lamps at the ends of the paths

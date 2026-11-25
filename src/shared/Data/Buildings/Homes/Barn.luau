@@ -187,7 +187,7 @@ return function(add: any)
 			k:up("armchair", 25.6, 27.6, 225, 1, SAGE)
 			k:up("dresser", 12.5, 31, 90, 1, WALNUT)
 			b:item("plant_small", 12.5, 30.0, 0, 1, HomeKit.top("dresser", 1))
-			k:up("toy_chest", 19, 30.9, 180, 1, RED)
+			k:up("toy_chest", 19, 28.9, 180, 1, RED)
 			k:up("lamp_pendant", 19, 28.2, 0, 1, WALNUT)
 		end,
 		"rustic"
