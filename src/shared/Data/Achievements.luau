@@ -7,6 +7,7 @@
 -- once (profile.achieved).
 
 local Tuning = require(script.Parent.Parent.Config.Tuning)
+local Text = require(script.Parent.Parent.Util.Text)
 
 local Achievements = {}
 
@@ -46,14 +47,11 @@ local function level(_p: any, city: any): number
 end
 
 local function townLevel(i: number, gems: number): Achievement
-	local name = Tuning.City.Levels[i].Name
+	-- (levels have numbers, not names: the user, "no need for level names, like city, etc.")
 	return {
 		id = "level" .. i,
-		name = name,
-		desc = "Grow into "
-			.. (if string.match(name, "^[AEIOUaeiou]") then "an " else "a ")
-			.. string.lower(name)
-			.. ".",
+		name = Text.fill("Level {n}", { n = i }),
+		desc = Text.fill("Grow your town to level {n}.", { n = i }),
 		icon = "city",
 		need = i,
 		gems = gems,
@@ -129,13 +127,34 @@ Achievements.list = {
 	{
 		id = "villager16",
 		name = "Every bed taken",
-		desc = "Have " .. Tuning.Villagers.Max .. " villagers living in town.",
+		desc = "Have 16 villagers living in town.",
 		icon = "house",
-		need = Tuning.Villagers.Max,
+		need = Tuning.Villagers.Start,
 		gems = 8,
 		value = population,
 	},
 	townLevel(5, 8),
+	-- (levels have no top now, and the milestones give room for more villagers)
+	townLevel(10, 3),
+	{
+		id = "villager30",
+		name = "A full street",
+		desc = "Have 30 villagers living in town.",
+		icon = "people",
+		need = 30,
+		gems = 3,
+		value = population,
+	},
+	townLevel(20, 4),
+	{
+		id = "villager50",
+		name = "Fifty neighbours",
+		desc = Text.fill("Have {n} villagers living in town.", { n = Tuning.Villagers.Max }),
+		icon = "house",
+		need = Tuning.Villagers.Max,
+		gems = 4,
+		value = population,
+	},
 } :: { Achievement }
 
 local byId: { [string]: Achievement } = {}

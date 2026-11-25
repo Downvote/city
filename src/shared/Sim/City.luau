@@ -71,14 +71,55 @@ end
 -- coins to build it still come mostly from villagers working.
 function City.level(value: number): number
 	local level = 1
-	for i, lv in Tuning.City.Levels do
-		if value >= lv.Value then
-			level = i
-		else
-			break
-		end
+	-- (no top: the user, "uncap level")
+	while level < 10000 and City.levelValue(level + 1) <= value do
+		level += 1
 	end
 	return level
+end
+
+-- The worth level n asks for: Tuning.City.Levels for the first few, then each LevelStep more than
+-- the last and LevelGrow more again every level after.
+function City.levelValue(n: number): number
+	local list = Tuning.City.Levels
+	if n <= #list then
+		return list[math.max(n, 1)].Value
+	end
+	local k = n - #list
+	return list[#list].Value + Tuning.City.LevelStep * k + Tuning.City.LevelGrow * k * (k - 1) / 2
+end
+
+-- What a level is called: its number ("no need for level names, like city, etc.").
+function City.levelName(n: number): string
+	return Text.fill("Level {n}", { n = n })
+end
+
+-- How many villagers a town of that level may have: Tuning.Villagers.Start, raised at each
+-- milestone it has reached, never past Max.
+function City.villagerCap(level: number): number
+	local cap = Tuning.Villagers.Start
+	for _, m in Tuning.Villagers.Milestones do
+		if level >= m.Level then
+			cap = math.max(cap, m.Villagers)
+		end
+	end
+	return math.min(cap, Tuning.Villagers.Max)
+end
+
+-- The next milestone past this level, if there is one: { Level, Villagers }.
+function City.nextMilestone(level: number): any
+	for _, m in Tuning.Villagers.Milestones do
+		if m.Level > level then
+			return m
+		end
+	end
+	return nil
+end
+
+-- How many more villagers this town may take in now.
+function City.villagerRoom(profile: any): number
+	local level = City.level(if profile.plan then City.worth(profile.plan) else 0)
+	return math.max(0, City.villagerCap(level) - #(profile.order or {}))
 end
 
 -- How many villagers have a job at a workplace that still stands.
@@ -133,7 +174,7 @@ function City.stats(profile: any): any
 	end
 	local value = if profile.plan then City.worth(profile.plan) else 0
 	local level = City.level(value)
-	local nextLevel = Tuning.City.Levels[level + 1]
+	local nextLevel = { Name = City.levelName(level + 1), Value = City.levelValue(level + 1) }
 	local size = Plan.size(profile.plan)
 	local nextLand = nil
 	for _, land in Tuning.City.Land do
@@ -150,8 +191,10 @@ function City.stats(profile: any): any
 		jobs = #City.workplaces(profile.plan),
 		employed = employed,
 		level = level,
-		levelName = Tuning.City.Levels[level].Name,
+		levelName = City.levelName(level),
 		nextLevel = nextLevel,
+		villagerCap = City.villagerCap(level), -- how many villagers it may have
+		nextMilestone = City.nextMilestone(level), -- { Level, Villagers } or nil
 		land = size,
 		nextLand = nextLand,
 		landCap = cap, -- the biggest land they may have (City.landCap)
@@ -199,8 +242,7 @@ function City.canExpand(profile: any): (any?, string?)
 		return nil, Text.fill("Big Plot lets your land grow past {n} by {n}.", { n = Tuning.Passes.FreeLand })
 	end
 	if stats.level < land.Level then
-		return nil,
-			Text.fill("Your town needs to be {a} first.", { a = Text.an(Tuning.City.Levels[land.Level].Name:lower()) })
+		return nil, Text.fill("Your town needs to reach level {n} first.", { n = land.Level })
 	end
 	if profile.coins < land.Price then
 		return nil, "Not enough coins."

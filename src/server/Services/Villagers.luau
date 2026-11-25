@@ -1695,8 +1695,9 @@ local function create(player: Player, raw: any): (boolean, string?)
 	if not profile then
 		return false, "Still loading."
 	end
-	if #profile.order >= V.Max then
-		return false, Text.fill("Your town is full ({n} villagers).", { n = V.Max })
+	if City.villagerRoom(profile) <= 0 then
+		local cap = City.villagerCap(City.level(City.worth(profile.plan)))
+		return false, Text.fill("Your town has room for {n} villagers. Grow it to make room for more.", { n = cap })
 	end
 	local input, err = Schema.cleanVillagerInput(raw)
 	if not input then

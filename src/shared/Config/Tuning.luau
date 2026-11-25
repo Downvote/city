@@ -169,7 +169,22 @@ Tuning.Creator = {
 
 -- Villagers -----------------------------------------------------------------
 Tuning.Villagers = {
-	Max = 16,
+	-- how many villagers a town may have: Start, and more at each milestone of the town's level, up
+	-- to Max (Sim/City.villagerCap; the user: "add milestones that increase villager count up to 50
+	-- for level"). Start is what every town had before, so nobody already has too many.
+	Start = 16,
+	Max = 50,
+	Milestones = {
+		{ Level = 3, Villagers = 20 },
+		{ Level = 5, Villagers = 24 },
+		{ Level = 7, Villagers = 28 },
+		{ Level = 9, Villagers = 32 },
+		{ Level = 11, Villagers = 36 },
+		{ Level = 13, Villagers = 40 },
+		{ Level = 15, Villagers = 44 },
+		{ Level = 17, Villagers = 47 },
+		{ Level = 20, Villagers = 50 },
+	},
 	NameMaxLength = 20,
 	MaxAccessories = 16,
 	StartMood = 70,
@@ -346,14 +361,20 @@ Tuning.Jobs = {
 -- ask for so many villagers and so many of them in work too). Each level lets you buy more land.
 -- Value is what the town's buildings are worth at today's prices: it halved with the prices (it
 -- was 3000, 10000, 25000 and 50000), so a level asks for as much building as before.
+-- The user later: "uncap level. add milestones that increase villager count up to 50 for level.
+-- no need for level names, like city, etc." So a level is just its number and there is no top:
+-- past the last of these, each asks LevelStep more worth than the last, and LevelGrow more again
+-- for every level after that (Sim/City.levelValue).
 Tuning.City = {
 	Levels = {
-		{ Name = "Hamlet", Value = 0 },
-		{ Name = "Village", Value = 1500 },
-		{ Name = "Town", Value = 5000 },
-		{ Name = "Big town", Value = 12500 },
-		{ Name = "City", Value = 25000 },
+		{ Value = 0 },
+		{ Value = 1500 },
+		{ Value = 5000 },
+		{ Value = 12500 },
+		{ Value = 25000 },
 	},
+	LevelStep = 15000,
+	LevelGrow = 2500,
 	-- how much of the starting house counts toward the town's level (Sim/City.worth): what the
 	-- small cottage it replaced was worth, so the bigger house skips no level (2610 at the old prices)
 	StarterWorth = 1305,

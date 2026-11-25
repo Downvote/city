@@ -1046,7 +1046,9 @@ local function refreshList()
 		})
 	end
 	-- the room left in town, as a dim slot that opens the creator
-	local room = Tuning.Villagers.Max - #list
+	-- (the town's level sets how many it may have: City.villagerCap)
+	local cap = City.stats(State.data).villagerCap
+	local room = cap - #list
 	if room > 0 then
 		MenuParts.slot("Make a villager", {
 			Name = "Room",
@@ -1061,7 +1063,7 @@ local function refreshList()
 		end)
 	end
 	if count then
-		count.Text = Text.fill("{n} of {max}", { n = #list, max = Tuning.Villagers.Max })
+		count.Text = Text.fill("{n} of {max}", { n = #list, max = cap })
 	end
 end
 

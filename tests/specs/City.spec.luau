@@ -462,7 +462,37 @@ describe("City", function()
 			expect((lv :: any).Pop).toBe(nil)
 			expect((lv :: any).Workers).toBe(nil)
 		end
-		expect(City.level(1e9)).toBe(#levels)
+		-- and no top (the user: "uncap level"): past the list, each level asks more than the last
+		expect(City.level(1e9) > #levels).toBeTruthy()
+		for n = 2, 60 do
+			expect(City.levelValue(n) > City.levelValue(n - 1)).toBeTruthy()
+			expect(City.level(City.levelValue(n))).toBe(n)
+			expect(City.level(City.levelValue(n) - 1)).toBe(n - 1)
+			expect(City.levelName(n)).toBe("Level " .. n)
+		end
+	end)
+
+	it("makes room for more villagers at the level milestones, up to 50", function()
+		-- the user: "add milestones that increase villager count up to 50 for level"
+		local V = Tuning.Villagers
+		expect(City.villagerCap(1)).toBe(V.Start)
+		local last = V.Start
+		for n = 2, 60 do
+			local cap = City.villagerCap(n)
+			expect(cap >= last and cap <= V.Max).toBeTruthy()
+			last = cap
+		end
+		expect(last).toBe(50)
+		expect(V.Max).toBe(50)
+		-- the milestones come in order, each with more room than the last
+		for i = 2, #V.Milestones do
+			expect(V.Milestones[i].Level > V.Milestones[i - 1].Level).toBeTruthy()
+			expect(V.Milestones[i].Villagers > V.Milestones[i - 1].Villagers).toBeTruthy()
+		end
+		-- a town takes in no more than its level's room
+		local p = Schema.newProfile()
+		p.plan = StarterHouse.plan()
+		expect(City.villagerRoom(p)).toBe(City.villagerCap(City.stats(p).level))
 	end)
 
 	it("lets a town with nobody in work grow on its worth, and still counts who has a job", function()

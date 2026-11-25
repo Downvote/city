@@ -23,6 +23,7 @@ local HttpService = game:GetService("HttpService")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Tuning = require(Shared.Config.Tuning)
+local City = require(Shared.Sim.City)
 local EventEngine = require(Shared.Sim.EventEngine)
 local Relationships = require(Shared.Sim.Relationships)
 local Catalog = require(Shared.Build.Catalog)
@@ -590,7 +591,7 @@ function Events.trigger(player: Player, forceId: string?): boolean
 		weather = World.weather(),
 		rng = rng,
 		present = present,
-		freeSlots = Tuning.Villagers.Max - #profile.order,
+		freeSlots = City.villagerRoom(profile),
 	})
 	profile.calendarDay = World.dayIndex()
 	local ev

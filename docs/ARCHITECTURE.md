@@ -87,8 +87,12 @@ The contract between the parts of the game. Update it with every change to an AP
 - `Sim/`: `Schema` (profile and villager shapes, defaults, migration), `Relationships`, `EventEngine` (picks events,
   applies their effects, including `hearts` and `xpv vid d`, skill for one villager by id; `ctx.cravingPrice`;
   no food, item or merchant ops since the shop went, and no `bond`, `ctx.bond` or `ctx.free` since romance went), `City` (stats, levels, land, workplaces, wages earned as they work: `City.wages(profile, day, now)`, `City.workDay`, `City.workSeconds`, `City.dayPay`, `City.rate` (coins a second at the workplace), the purse `City.Purse` / `City.newPurse()` / `City.earn(purse, day, rate, seconds)` that carries part coins, starts again each day, caps a day at a whole work day and pays nothing for bad input, and `City.dayXp`;
-  `City.level(value)` (worth alone: `Tuning.City.Levels[i]` is `Name` and `Value`; "make the only requirements for
-  growing towns worth instead of villagers or work requirement"), `City.workers(profile)` the villagers with a job,
+  `City.level(value)` (worth alone: "make the only requirements for growing towns worth instead of villagers or work
+  requirement"; no top: "uncap level"), `City.levelValue(n)` (`Tuning.City.Levels[n].Value`, then each level
+  `LevelStep` more than the last and `LevelGrow` more again each level after), `City.levelName(n)` ("Level n": "no need
+  for level names"), `City.villagerCap(level)` (`Tuning.Villagers.Start`, raised at each of `Milestones` reached, at
+  most `Max` 50), `City.nextMilestone(level)`, `City.villagerRoom(profile)` (what the server's create and the event
+  move-ins and the client's creator and list go by; `City.stats` adds `villagerCap` and `nextMilestone`), `City.workers(profile)` the villagers with a job,
   `City.addSkill(v, n)`; `City.stats(profile)` still gives `population` and `employed` to show), `Life` (hearts, wishes, goals; a new
   heart level pays at once, `Life.heartReward(level)` -> coins, skill points, through `Life.addHearts`' notices, and
   `Life.settleOffers(profile)` pays out an old save's unpicked thank yous on load; no romance: best friends, the top of `Tuning.Relationships.Levels`, is as

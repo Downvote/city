@@ -202,7 +202,8 @@ describe("Rewards", function()
 		for _, n in { 1, 5, 10 } do
 			expect(Achievements.get("villager" .. n).need).toBe(n)
 		end
-		expect(Achievements.get("villager16").need).toBe(Tuning.Villagers.Max)
+		expect(Achievements.get("villager16").need).toBe(Tuning.Villagers.Start)
+		expect(Achievements.get("villager50").need).toBe(Tuning.Villagers.Max)
 		-- every one has a name, words and an icon, and the words read as a person would say them
 		for _, a in Achievements.list do
 			expect(#a.name > 0 and #a.desc > 0 and #a.icon > 0).toBeTruthy()

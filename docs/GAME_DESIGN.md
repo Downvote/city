@@ -2591,3 +2591,16 @@ mid placement. The keys do the same: [ and ] for a finer or bigger grid, - and =
   plaster now, and bathrooms are ceramic tiles. Build mode's own wall swatches that were flat paint (white, sage, sky
   blue, blush, charcoal) are plaster too, and a new wall's inside starts as white plaster. The town's own buildings
   were already textured; their signs, adverts and trims stay flat on purpose.
+
+### Levels without a top, and room for more villagers
+
+> uncap level. add milestones that increase villager count up to 50 for level. no need for level names, like city, etc.
+
+- A town's level is just its number. The first five ask for the same worth as before (0, 1,500, 5,000, 12,500 and
+  25,000). After that each level asks for 15,000 more than the last, plus 2,500 more for every level since, and
+  there is no top.
+- A town has room for 16 villagers to start with, as every town had. Levels 3, 5, 7 and on every other level make
+  room for a few more, up to 50 at level 20. The town panel says how many villagers the town has room for and when
+  the next level brings more, and the villagers' list counts against that room.
+- Land still unlocks by level ("Reach level 3"). There are achievements for levels 10 and 20 and for 30 and 50
+  villagers, with a few gems each, so gems stay rare.

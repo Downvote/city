@@ -168,7 +168,9 @@ player to simply pay to buy it" and "remove the map button and the map interface
 it instead of their whole profile page") through `WishBuy` at `Life.wishPrice`. Don't add anything for sale but cravings and Build mode's pieces. The user also
 asked that "progression is much more based on villagers working": wages are most of a town's income; the City spec
 holds that balance. A town level asks for worth and nothing else (the user: "make the only requirements for growing
-towns worth instead of villagers or work requirement": `Tuning.City.Levels[i]` is `Name` and `Value`, `City.level(value)`).
+towns worth instead of villagers or work requirement": `City.level(value)`), has no top and no name ("uncap level ...
+no need for level names": `City.levelValue`, "Level n"), and milestones raise how many villagers a town may have
+to 50 ("add milestones that increase villager count up to 50 for level": `City.villagerCap`, `City.villagerRoom`).
 Then: "could
 you make working give much more coins, and make buildings cheaper?" and "make it such that villagers earn coins as
 they work, not after every day": a villager at their workplace earns a little every few seconds (`City.earn` purses

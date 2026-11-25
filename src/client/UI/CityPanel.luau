@@ -65,7 +65,8 @@ local function town(inside: Frame, stats: any, wages: number)
 		TextSize = 40,
 		Wrap = false,
 	})
-	Kit.text(Text.fill("Level {n} of {max}", { n = stats.level, max = #Tuning.City.Levels }), {
+	-- (no top level now: the line under it says how many villagers the town has room for)
+	Kit.text(Text.fill("Room for {n} villagers", { n = stats.villagerCap }), {
 		Name = "LevelOf",
 		Parent = inside,
 		Size = UDim2.new(1, -88, 0, 20),
@@ -79,15 +80,23 @@ local function town(inside: Frame, stats: any, wages: number)
 	local nextLevel = stats.nextLevel
 	local STEP = 48
 	if nextLevel then
-		local name = nextLevel.Name:lower()
-		Kit.text(Text.fill("To become {a}", { a = Text.an(name) }), {
-			Name = "Next",
-			Parent = inside,
-			Size = UDim2.new(1, 0, 0, 22),
-			Position = UDim2.fromOffset(0, 86),
-			TextSize = 17,
-			Font = Kit.Fonts.Bold,
-		})
+		local milestone = stats.nextMilestone
+		Kit.text(
+			if milestone and milestone.Level == stats.level + 1
+				then Text.fill(
+					"To reach level {n}, with room for {v} villagers",
+					{ n = stats.level + 1, v = milestone.Villagers }
+				)
+				else Text.fill("To reach level {n}", { n = stats.level + 1 }),
+			{
+				Name = "Next",
+				Parent = inside,
+				Size = UDim2.new(1, 0, 0, 22),
+				Position = UDim2.fromOffset(0, 86),
+				TextSize = 17,
+				Font = Kit.Fonts.Bold,
+			}
+		)
 		local y = 116
 		local worth, wneed = stats.value, nextLevel.Value
 		MenuParts.progress(
@@ -104,10 +113,10 @@ local function town(inside: Frame, stats: any, wages: number)
 			if land
 				then Text.fill(
 					if locked
-						then "{A} can buy more land with Big Plot, up to {n} by {n} studs."
-						else "{A} can buy more land, up to {n} by {n} studs.",
+						then "At level {lv} you can buy more land with Big Plot, up to {n} by {n} studs."
+						else "At level {lv} you can buy more land, up to {n} by {n} studs.",
 					{
-						A = (Text.an(name):gsub("^%l", string.upper)),
+						lv = stats.level + 1,
 						n = land.Size,
 					}
 				)
@@ -143,7 +152,7 @@ local function town(inside: Frame, stats: any, wages: number)
 		Name = "People",
 		Parent = grid,
 		LayoutOrder = 1,
-		Sub = Text.fill("of {n}", { n = Tuning.Villagers.Max }),
+		Sub = Text.fill("of {n}", { n = stats.villagerCap }),
 	})
 	MenuParts.stat("smile", "Happiness", Text.fill("{n}%", { n = stats.happiness }), T.Yellow, {
 		Name = "Happiness",
@@ -226,11 +235,10 @@ local function landRow(list: ScrollingFrame, stats: any, coins: number, order: n
 		lockedLandRow(list, land, order)
 		return
 	end
-	local needLevel = Tuning.City.Levels[land.Level]
 	local short = land.Price - coins
 	local can = stats.level >= land.Level and short <= 0
 	local why = if stats.level < land.Level
-		then Text.fill("Your town needs to be {a} first.", { a = Text.an(needLevel.Name:lower()) })
+		then Text.fill("Your town needs to reach level {n} first.", { n = land.Level })
 		elseif short > 0 then Text.fill("You need {n} more coins.", { n = Text.commas(short) })
 		else nil
 	local row, inner = Kit.row({
@@ -283,7 +291,7 @@ local function landRow(list: ScrollingFrame, stats: any, coins: number, order: n
 	local button = Kit.button(
 		if can
 			then Text.fill("Buy for {n}", { n = Text.commas(land.Price) })
-			elseif stats.level < land.Level then Text.fill("Reach {name}", { name = needLevel.Name:lower() })
+			elseif stats.level < land.Level then Text.fill("Reach level {n}", { n = land.Level })
 			else Text.fill("{n} coins", { n = Text.commas(land.Price) }),
 		{
 			Name = "BuyLand",

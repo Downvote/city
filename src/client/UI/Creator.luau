@@ -20,6 +20,7 @@ local Palette = require(Shared.Data.Palette)
 local Schema = require(Shared.Sim.Schema)
 local Colors = require(Shared.Util.Colors)
 local Text = require(Shared.Util.Text)
+local City = require(Shared.Sim.City)
 local Tuning = require(Shared.Config.Tuning)
 
 local Kit = require(script.Parent.Kit)
@@ -3088,8 +3089,12 @@ function Creator.open(arg: any)
 	local a = arg or {}
 	mode = if a.mode == "edit" then "edit" else "new"
 	editVid = a.vid
-	if mode == "new" and #(State.data.order or {}) >= Tuning.Villagers.Max then
-		Toasts.show(Text.fill("Your town is full ({n} villagers).", { n = Tuning.Villagers.Max }), "warn")
+	if mode == "new" and City.villagerRoom(State.data) <= 0 then
+		local cap = City.stats(State.data).villagerCap
+		Toasts.show(
+			Text.fill("Your town has room for {n} villagers. Grow it to make room for more.", { n = cap }),
+			"warn"
+		)
 		return
 	end
 	isOpen = true
