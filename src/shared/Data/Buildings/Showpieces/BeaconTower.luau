@@ -1,8 +1,7 @@
 --!strict
 -- A beacon tower: a cool white control room with glass doors and tall panes, a terrace on its roof
 -- behind a rail, a glass room on the terrace and the lit beacon mast standing on top of that.
--- Inside, a pair of computer desks, a screen on the wall and an arcade machine for the quiet
--- nights; out on the paving, planters and lamps.
+-- Inside, a pair of computer desks, a clock and an arcade machine for the quiet nights; out on the paving, planters and lamps.
 --
 -- The frame: x across, z back from the street. The control room is x 6..16, z 6..16, the glass
 -- room x 8..14, z 8..14 on the terrace over it.
@@ -59,8 +58,7 @@ return function(add: any)
 			-- doors and windows
 			Lay.open(b, "door_glass", "front", 5, SLATE, WHITE)
 			for _, w in { "left", "right", "back" } do
-				b:open("win_floor", w, 2.8)
-				b:open("win_floor", w, 7.2)
+				b:open("win_floor", w, 5)
 			end
 			hang(b, "lantern_wall", "front", 1.4, 5.6, "a", SLATE, CYAN)
 			hang(b, "lantern_wall", "front", 8.6, 5.6, "a", SLATE, CYAN)
@@ -68,18 +66,17 @@ return function(add: any)
 
 			-- the control room
 			b:item("doormat", 11, 7.2, 0)
-			put(b, "desk_computer", 9.4, 14.6, 180, nil, WHITE, SLATE)
-			put(b, "desk_computer", 13.4, 14.6, 180, nil, WHITE, SLATE)
-			put(b, "chair_wood", 9.4, 12.4, 0, nil, WHITE, SLATE)
-			put(b, "chair_wood", 13.4, 12.4, 0, nil, WHITE, SLATE)
-			put(b, "arcade", 7.6, 8.2, 90)
-			put(b, "shelf_cubes", 14.9, 9, 270, nil, WHITE)
-			hang(b, "tv_wall", "left", 5, 6.4, "b")
+			put(b, "desk_computer", 8.7, 14.5, 180, nil, WHITE, SLATE)
+			put(b, "desk_computer", 13.3, 14.5, 180, nil, WHITE, SLATE)
+			put(b, "chair_wood", 8.7, 12.2, 0, nil, WHITE, SLATE)
+			put(b, "chair_wood", 13.3, 12.2, 0, nil, WHITE, SLATE)
+			put(b, "arcade", 7.6, 7.6, 90)
+			put(b, "plant_big", 14.2, 8, 0)
+			hang(b, "clock_wall", "front", 8.6, 8.6, "b")
 			put(b, "light_ceiling", 11, 11, 0)
 			-- the lookout
-			put(b, "chair_lounge", 11, 10.6, 0, nil, CYAN, SLATE, 1)
-			put(b, "lamp_floor", 9, 13, 0, nil, nil, nil, 1)
-			put(b, "plant_big", 13, 13, 0, nil, nil, nil, 1)
+			put(b, "chair_lounge", 10.6, 11, 0, nil, CYAN, SLATE, 1)
+			put(b, "lamp_floor", 12.9, 9.2, 0, nil, nil, nil, 1)
 
 			-- outside
 			put(b, "planter_box", 3, 4, 0, Lay.F, SLATE, CYAN)

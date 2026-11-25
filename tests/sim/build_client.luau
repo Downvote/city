@@ -595,6 +595,15 @@ run("a mark goes under a table, and nothing stands on a mark", function()
 		mark ~= nil and math.abs(mark.y - (tbl.y + Plan.MarkLift)) < 0.02,
 		"on the floor, not on the table (" .. tostring(mark and mark.y) .. ")"
 	)
+	-- another of it in the same spot lies over the first, never at the same height
+	click()
+	local second = newest(function(it)
+		return it.id == markId
+	end)
+	check(
+		second ~= mark and math.abs(second.y - (mark.y + Catalog.get(markId).size.Y)) < 0.02,
+		"a second mark over the first lies on top of it (" .. tostring(second and second.y) .. ")"
+	)
 	putAway()
 	-- a big floor decal, and a cube put over it stands on the ground, not on the paint
 	press("Furniture")

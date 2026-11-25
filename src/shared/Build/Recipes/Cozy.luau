@@ -796,7 +796,9 @@ local items: { Item } = {
 				q:block(-2.8, 3.6, -1.3, 2.8, 7.0, 0.2, stone, "Slate")
 				for row = 0, 4 do
 					local y = 3.95 + row * 0.65
-					local xs = if row % 2 == 0 then { -2.2, -1.1, 0, 1.1, 2.2 } else { -1.65, -0.55, 0.55, 1.65 }
+					local xs: { number } = if row % 2 == 0
+						then { -2.2, -1.1, 0, 1.1, 2.2 }
+						else { -1.65, -0.55, 0.55, 1.65 }
 					for _, x in xs do
 						q:lump(CFrame.new(x, y, 0.2), 0.95, 0.56, 0.2, tone(), "Slate")
 					end
@@ -1319,7 +1321,7 @@ local items: { Item } = {
 		build = function(r: R)
 			-- an oval of braids in rings of colour, each ring a layer 0.025 over the last
 			local a = 0.9
-			local rings = {
+			local rings: { { any } } = {
 				{ 2.1, shade(r.c1, 0.85) },
 				{ 1.78, r.c2 },
 				{ 1.46, r.c1 },
@@ -1491,7 +1493,9 @@ local items: { Item } = {
 				Color3.fromRGB(176, 206, 222),
 				function(q: R, x1: number, y1: number, x2: number, y2: number)
 					q:block(x1, y1, 0.08, x2, y1 + 0.35, 0.11, SAGE, "SmoothPlastic")
-					for i, p in { { -0.22, skin1, ROSE, WALNUT }, { 0.22, skin2, Color3.fromRGB(90, 140, 140), INK } } do
+					for i, p in
+						{ { -0.22, skin1, ROSE, WALNUT }, { 0.22, skin2, Color3.fromRGB(90, 140, 140), INK } } :: { { any } }
+					do
 						local x = (x1 + x2) / 2 + p[1]
 						local top = y1 + 0.75 + (i - 1) * 0.06
 						q:block(x - 0.18, y1, 0.11, x + 0.18, top, 0.14, p[3], "SmoothPlastic")
@@ -1563,7 +1567,9 @@ local items: { Item } = {
 					local cx = (x1 + x2) / 2
 					q:block(x1, y1, 0.08, x2, y1 + 0.15, 0.11, WALNUT, "SmoothPlastic")
 					q:block(cx - 0.14, y1 + 0.15, 0.08, cx + 0.14, y1 + 0.45, 0.11, DUSK, "SmoothPlastic")
-					for i, b in { { -0.18, 0.75, ROSE }, { 0.05, 0.85, MUSTARD }, { 0.2, 0.68, C.Cream } } do
+					for i, b in
+						{ { -0.18, 0.75, ROSE }, { 0.05, 0.85, MUSTARD }, { 0.2, 0.68, C.Cream } } :: { { any } }
+					do
 						q:beam(
 							V(cx, y1 + 0.45, 0.095),
 							V(cx + b[1], y1 + b[2], 0.095),
@@ -1771,7 +1777,7 @@ local items: { Item } = {
 			end
 			-- three rolled blankets standing in it, their ends rolled in a spiral
 			for _, b in
-				{ { -0.35, 0.18, 0.62, 2.35, r.c2 }, { 0.38, 0.22, 0.56, 2.1, LINEN }, { 0.0, -0.4, 0.58, 2.5, SAGE } }
+				{ { -0.35, 0.18, 0.62, 2.35, r.c2 }, { 0.38, 0.22, 0.56, 2.1, LINEN }, { 0.0, -0.4, 0.58, 2.5, SAGE } } :: { { any } }
 			do
 				local x, z, d, top, col = b[1], b[2], b[3], b[4], b[5]
 				r:cyl(x, (1.68 + top) / 2, z, top - 1.68, d, "y", col, "Fabric")
@@ -1991,7 +1997,7 @@ local items: { Item } = {
 				r:tri(V(sx * 1.3, 1.5, 0.08), V(sx * 1.3, 0.92, 0.08), V(sx * 1.3, 1.5, 0.7), 0.1, r.c2, "Wood")
 			end
 			-- tins for tea and coffee, a sugar jar, a plant and two plates on the shelf
-			local tins = {
+			local tins: { { any } } = {
 				{ -1.15, Color3.fromRGB(150, 176, 150) },
 				{ -0.6, Color3.fromRGB(226, 210, 180) },
 				{ -0.05, Color3.fromRGB(196, 120, 110) },
@@ -2155,7 +2161,7 @@ local items: { Item } = {
 				end
 			end
 			-- open below: bottles of bath salts on a shelf and a basket of rolled towels
-			for i, b in { { -0.7, DUSK }, { -0.3, ROSE }, { 0.15, SAGE } } do
+			for i, b in { { -0.7, DUSK }, { -0.3, ROSE }, { 0.15, SAGE } } :: { { any } } do
 				local h = 0.4 + (i % 2) * 0.12
 				r:cyl(b[1], 1.5 + h / 2, -0.1, h, 0.26, "y", b[2], "Glass")
 				r:cyl(b[1], 1.5 + h + 0.06, -0.1, 0.12, 0.14, "y", Color3.fromRGB(176, 140, 100), "Wood")

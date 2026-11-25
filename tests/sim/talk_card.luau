@@ -568,7 +568,10 @@ run("a big moment, watched as a cutscene", function()
 	local before = view.CurrentCamera.CFrame.Position
 	line("e5", ev.lines[2])
 	advance(2)
-	check((view.CurrentCamera.CFrame.Position - before).Magnitude < 0.3, "the set holds its shot until the player goes on")
+	check(
+		(view.CurrentCamera.CFrame.Position - before).Magnitude < 0.3,
+		"the set holds its shot until the player goes on"
+	)
 	goOn()
 	local close = Stages.close(rooftop, 3)
 	local mid = view.CurrentCamera.CFrame.Position

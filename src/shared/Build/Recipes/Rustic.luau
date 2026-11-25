@@ -372,7 +372,7 @@ local items: { Item } = {
 		build = function(r: R)
 			local wood, frame = r.c1, r.c2
 			-- a thick slab with its bark left on the edges, in three uneven runs
-			local runs = {
+			local runs: { { any } } = {
 				{ -3.3, -1.0, -1.38, 1.42, { -2.9, -1.7 } },
 				{ -1.2, 1.4, -1.45, 1.36, { -0.6, 0.7 } },
 				{ 1.2, 3.3, -1.32, 1.45, { 1.8, 2.9 } },
@@ -1347,13 +1347,13 @@ local items: { Item } = {
 		style = "rustic",
 		build = function(r: R)
 			-- three splayed legs wedged through a thick round seat, a rung between two of them
-			local legs = {}
+			local legs: { { Vector3 } } = {}
 			for i = 0, 2 do
 				local a = i * math.pi * 2 / 3 + math.pi / 2
 				local dx, dz = math.cos(a), math.sin(a)
 				local top, foot = V(dx * 0.33, 1.25, dz * 0.33), V(dx * 0.62, 0, dz * 0.62)
 				rod(r, top, foot, 0.16, r.c2, "Wood")
-				table.insert(legs, { top, foot, dx, dz })
+				table.insert(legs, { top, foot })
 				r:cyl(dx * 0.33, 1.445, dz * 0.33, 0.03, 0.16, "y", ENDGRAIN, "Wood")
 				r:boxAt(
 					CFrame.new(dx * 0.33, 1.475, dz * 0.33) * CFrame.Angles(0, -a, 0),
@@ -1364,7 +1364,7 @@ local items: { Item } = {
 					"Wood"
 				)
 			end
-			local function at(l: any, t: number): Vector3
+			local function at(l: { Vector3 }, t: number): Vector3
 				return l[2]:Lerp(l[1], t)
 			end
 			rod(r, at(legs[2], 0.36), at(legs[3], 0.36), 0.08, r.c2, "Wood")
@@ -1400,7 +1400,7 @@ local items: { Item } = {
 			r:cyl(0, 0.35, cz, 0.2, 3.9, "y", shade(wood, 0.7), "Wood")
 			r:cyl(0, 1.25, cz, 1.8, 3.84, "y", shade(wood, 0.5), "Wood")
 			clear(r:cyl(0, 2.15, cz, 0.06, 3.86, "y", WATER, "Glass"), 0.15)
-			local w = staves(r, 0, cz, 0.2, 2.4, 2.0, 2.0, 2.0, 20, wood)
+			staves(r, 0, cz, 0.2, 2.4, 2.0, 2.0, 2.0, 20, wood)
 			for _, y in { 0.5, 1.4, 2.3 } do
 				hoopRing(r, 0, cz, y, 2.0, 20, r.c2)
 			end

@@ -135,7 +135,7 @@ return function(add: any)
 			k:putY("woodpile", 32.0, 12.9, 0, F)
 
 			-- the front garden
-			k:fenceX(0.6, 1, 37, 19, WHITE, WHITE)
+			k:fenceX(0.6, 1, 37, { 19 }, WHITE, WHITE)
 			k:fenceZ(1, 0.8, 8.8, nil, WHITE, WHITE)
 			k:fenceZ(37, 0.8, 8.8, nil, WHITE, WHITE)
 			for _, x in { 5, 9, 13 } do

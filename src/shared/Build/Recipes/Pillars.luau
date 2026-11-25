@@ -313,7 +313,7 @@ local items: { Item } = {
 			r:piece(function(q: R)
 				square(q, 0.14, CEIL - 0.14, 1.6, r.c1, "Concrete")
 				square(q, CEIL, TOP, 1.6, r.c1, "Concrete")
-				square(q, 5.4, 5.44, 1.64, shade(r.c1, 0.9), "Concrete")
+				square(q, 5.4, 5.44, 1.66, shade(r.c1, 0.9), "Concrete")
 			end, true)
 			-- (two rows of ties to each pour, a piece each)
 			for _, rows in { { 1.8, 3.9 }, { 7.0, 9.1 } } do
@@ -1242,8 +1242,8 @@ local items: { Item } = {
 					local a = s[1]
 					turned(
 						q,
-						math.cos(a) * 0.71,
-						math.sin(a) * 0.71,
+						math.cos(a) * 0.75,
+						math.sin(a) * 0.75,
 						s[2],
 						s[3],
 						0.05,

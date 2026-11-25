@@ -232,32 +232,31 @@ function K.row(k: Kit, id: string, a: number, b: number, n: number, at: number, 
 	end
 end
 
--- A picket fence along x at `z` from x `a` to `b` (panel middles four apart), leaving a gap for a
--- gate at `gate` if given (the gate goes in its middle).
-function K.fenceX(k: Kit, z: number, a: number, b: number, gate: number?, c1: string?, c2: string?)
+-- A picket fence along x at `z` from x `a` to `b`, panel middles four apart from a + 2, with a
+-- garden gate in place of the panel at each of `gates` (a gate is a little wider than a panel, so
+-- it closes the gap).
+function K.fenceX(k: Kit, z: number, a: number, b: number, gates: { number }?, c1: string?, c2: string?)
 	local x = a + 2
 	while x <= b - 2 + 1e-6 do
-		if gate == nil or math.abs(x - gate) >= 4 then
-			k:put("fence_picket", x, z, 0, c1, c2)
+		local gate = false
+		for _, g in gates or {} do
+			gate = gate or math.abs(x - g) < 0.01
 		end
+		k:put(if gate then "gate_garden" else "fence_picket", x, z, 0, c1, c2)
 		x += 4
-	end
-	if gate then
-		k:put("gate_garden", gate, z, 0, c1, c2)
 	end
 end
 
 -- The same along z at `x`.
-function K.fenceZ(k: Kit, x: number, a: number, b: number, gate: number?, c1: string?, c2: string?)
+function K.fenceZ(k: Kit, x: number, a: number, b: number, gates: { number }?, c1: string?, c2: string?)
 	local z = a + 2
 	while z <= b - 2 + 1e-6 do
-		if gate == nil or math.abs(z - gate) >= 4 then
-			k:put("fence_picket", x, z, 90, c1, c2)
+		local gate = false
+		for _, g in gates or {} do
+			gate = gate or math.abs(z - g) < 0.01
 		end
+		k:put(if gate then "gate_garden" else "fence_picket", x, z, 90, c1, c2)
 		z += 4
-	end
-	if gate then
-		k:put("gate_garden", x, gate, 90, c1, c2)
 	end
 end
 

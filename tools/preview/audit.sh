@@ -17,6 +17,7 @@ creator:profile creator:bodies creator:parts creator:items creator:items:ask cre
 creator:wearing creator:skin creator:shape creator:outfits creator:outfits:saved creator:people creator:profile:set creator:end build:rooms build:floors build:roofs build:fences
 build:paths build:buildings build:bought build:sell build:view build:placing build:placing:touch
 build:keepsakes build:keepsakes:empty build:styles build:shapes build:pillars build:markings build:picture
+build:water build:water:pick
 build:picture:bad build:picture:pick hover hover:menu bubbles
 tutorial:welcome tutorial:1 tutorial:2 tutorial:2:build tutorial:3:build tutorial:4 tutorial:4:craving
 tutorial:4:buy tutorial:done"

@@ -191,7 +191,7 @@ function WaterTool.selection(kit: TrayKit, stack: Instance, obj: any)
 	choices(kit, row, 1, obj.edge, obj.depth, function(field, id)
 		kit.editSelected({ [field] = id })
 	end)
-	local note = Kit.box({ Parent = row, Size = UDim2.fromOffset(320, kit.styleH), LayoutOrder = 2 })
+	local note = Kit.box({ Parent = row, Size = UDim2.fromOffset(440, kit.styleH), LayoutOrder = 2 })
 	Kit.list(note, 0).VerticalAlignment = Enum.VerticalAlignment.Center
 	Kit.hint(
 		Text.fill("{w} by {d}. Selling it sells what's in it too.", { w = obj.x2 - obj.x1, d = obj.z2 - obj.z1 }),
