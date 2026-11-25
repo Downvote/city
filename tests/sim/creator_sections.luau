@@ -579,6 +579,119 @@ Sim.run("players and shared looks are two tabs, each with Show more", function()
 	frames(2)
 end)
 
+Sim.run("friends, shared looks, outfits, my items and my avatars can be searched", function()
+	-- the user: "allow for search in friends, shared outfits, my items, and outfits"
+	local queries = {}
+	local function holds(name, q)
+		return q == nil or q == "" or string.find(string.lower(name), string.lower(q), 1, true) ~= nil
+	end
+	Sim.remoteFn("CreatorPeople").OnServerInvoke = function(_, page, q)
+		table.insert(queries, "people " .. tostring(q))
+		local people = {}
+		for i, name in { "Juniper", "Juno", "Basil", "Wren" } do
+			if holds(name, q) then
+				table.insert(people, { id = i, name = name, kind = "friend" })
+			end
+		end
+		return { people = people, more = false }
+	end
+	Sim.remoteFn("CreatorShared").OnServerInvoke = function(_, page, q)
+		table.insert(queries, "shared " .. tostring(q))
+		local looks = {}
+		for i, l in { { "Beach day", "Someone" }, { "Rainy walk", "Juno" } } do
+			if holds(l[1], q) or holds(l[2], q) then
+				table.insert(looks, { name = l[1], by = i, who = l[2], app = Appearance.default() })
+			end
+		end
+		return { looks = looks, more = false }
+	end
+	local State = Harness.require(Sim.CLIENT .. "Controllers.State")
+	State.data.outfits = {
+		{ name = "Picnic", app = Appearance.default() },
+		{ name = "Snow day", app = Appearance.default() },
+		{ name = "Sunday best", app = Appearance.default() },
+	}
+	local function count(name, class)
+		return #Fake.find(gui, function(d)
+			return d.Name == name and (class == nil or d:IsA(class)) and Fake.shown(d)
+		end)
+	end
+	local function showing(text)
+		return #Fake.find(gui:FindFirstChild("Creator"), function(d)
+			return d:IsA("TextLabel") and d.Text == text and Fake.shown(d)
+		end) > 0
+	end
+	local function typeIn(box, words)
+		box.Text = words
+		Sim.advance(0.5)
+		frames(2)
+		Sim.advance(1)
+		frames(2)
+	end
+	Creator.open({ mode = "new" })
+	frames(3)
+	Sim.advance(1)
+	local box = gui:FindFirstChild("Search", true):FindFirstChildOfClass("TextBox")
+	local sort = gui:FindFirstChild("Sort", true)
+
+	press("Players")
+	Sim.advance(1)
+	frames(2)
+	check(box.TextEditable and box.PlaceholderText == "Search friends and players", "Players has a search box")
+	check(not Fake.shown(sort), "and no sort")
+	check(count("Person", "TextButton") == 4, "everybody shows with nothing typed")
+	typeIn(box, "jun")
+	check(table.find(queries, "people jun") ~= nil, "what is typed goes to the server as you type")
+	check(count("Person", "TextButton") == 2, "and only the names holding it come back")
+	typeIn(box, "zz")
+	check(count("Person", "TextButton") == 0 and showing("Nobody here or in your friends goes by that."), "nobody, said so")
+
+	press("Shared")
+	Sim.advance(1)
+	frames(2)
+	check(box.Text == "" and box.PlaceholderText == "Search shared looks", "Shared starts with an empty box of its own")
+	check(count("Look") == 2, "both looks show")
+	typeIn(box, "juno")
+	check(table.find(queries, "shared juno") ~= nil and count("Look") == 1, "a look is found by who shared it")
+
+	press("Outfits")
+	frames(2)
+	check(box.PlaceholderText == "Search your outfits", "Outfits has a search box")
+	check(showing("Picnic") and showing("Snow day") and showing("Sunday best"), "every saved outfit shows")
+	typeIn(box, "s")
+	check(not showing("Picnic") and showing("Snow day") and showing("Sunday best"), "only the names holding it stay")
+	typeIn(box, "SUN")
+	check(showing("Sunday best") and not showing("Snow day"), "whatever the case")
+	typeIn(box, "party")
+	check(showing("No outfit has that in its name."), "none, said so")
+
+	press("My items")
+	Sim.advance(1)
+	frames(2)
+	check(box.PlaceholderText == "Search your items" and box.TextEditable, "My items has a search box")
+	check(table.concat(cardNames(), ",") == "Owned HairAccessory", "with its first page")
+	typeIn(box, "owned")
+	check(table.concat(cardNames(), ",") == "Owned HairAccessory", "a name holding the words stays")
+	typeIn(box, "more")
+	check(#cardNames() == 0 and noteText():find("Load more to look further", 1, true) ~= nil, "none loaded yet: load more")
+	press("Show more")
+	check(table.concat(cardNames(), ",") == "More HairAccessory", "the next page is searched too")
+
+	press("My avatars")
+	Sim.advance(1)
+	frames(2)
+	check(box.Text == "" and box.PlaceholderText == "Search your avatars", "My avatars has a search box")
+	typeIn(box, "rain")
+	check(table.concat(cardNames(), ",") == "Rainy day", "and finds an avatar by name")
+
+	press("Hair")
+	frames(2)
+	check(box.PlaceholderText == "Search" and Fake.shown(sort), "the catalog keeps its own search and its sort")
+	State.data.outfits = nil
+	Creator.close()
+	frames(2)
+end)
+
 Sim.run("picking somebody takes their look and their name", function()
 	-- the user: "when selecting friend, also add their name to the name field"
 	local asked = {}

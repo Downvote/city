@@ -18,6 +18,7 @@ local Categories = require(Shared.Avatar.Categories)
 local Colors = require(Shared.Util.Colors)
 local Remotes = require(Shared.Net.Remotes)
 local Tuning = require(Shared.Config.Tuning)
+local Text = require(Shared.Util.Text)
 
 local Data = require(script.Parent.Data)
 
@@ -643,7 +644,7 @@ end
 -- the Roblox avatars of the people here and of your friends, and looks that players of this game
 -- have shared from the creator (kept in one small list in a data store, newest first).
 
-type Person = { id: number, name: string, kind: string }
+type Person = { id: number, name: string, kind: string, user: string? }
 local lastShare: { [Player]: number } = {}
 local MAX_PEOPLE = Tuning.Creator.MaxPeople
 local MAX_SHARED = Tuning.Creator.MaxShared
@@ -673,7 +674,12 @@ local function friendsUpTo(player: Player, want: number): { Person }
 				local name = if type(friend.DisplayName) == "string" and friend.DisplayName ~= ""
 					then friend.DisplayName
 					else friend.Username
-				table.insert(entry.list, { id = friend.Id, name = name, kind = "friend" })
+				table.insert(entry.list, {
+					id = friend.Id,
+					name = name,
+					kind = "friend",
+					user = if type(friend.Username) == "string" then friend.Username else nil,
+				})
 			end
 			if entry.pages.IsFinished then
 				entry.done = true
@@ -862,14 +868,41 @@ function Avatar.start()
 		end
 		return out, #list > n * PAGE
 	end
-	Remotes.fn("CreatorPeople").OnServerInvoke = function(player, n)
-		local page = pageOf(n)
-		-- (one more than the page asks for, so `more` knows if there is another)
-		local list, more = slice(people(player, page * PAGE + 1), page)
+	-- what was typed in the creator's search box on that tab, if anything
+	local function queryOf(q: any): string
+		return if type(q) == "string" then Text.clean(q):sub(1, 40) else ""
+	end
+	Remotes.fn("CreatorPeople").OnServerInvoke = function(player, n, q)
+		local page, query = pageOf(n), queryOf(q)
+		-- (one more than the page asks for, so `more` knows if there is another; a search looks
+		-- through everybody there is, a display name or a user name)
+		local all = people(player, if query ~= "" then MAX_PEOPLE else page * PAGE + 1)
+		if query ~= "" then
+			local found = {}
+			for _, person in all do
+				if Text.matches(query, person.name, person.user) then
+					table.insert(found, person)
+				end
+			end
+			all = found
+		end
+		local list, more = slice(all, page)
 		return { people = list, more = more }
 	end
-	Remotes.fn("CreatorShared").OnServerInvoke = function(_, n)
-		local list, more = slice(sharedLooks(), pageOf(n))
+	Remotes.fn("CreatorShared").OnServerInvoke = function(_, n, q)
+		local query = queryOf(q)
+		local all = sharedLooks()
+		if query ~= "" then
+			local found = {}
+			for _, look in all do
+				-- the look's name or who shared it
+				if Text.matches(query, look.name, look.who) then
+					table.insert(found, look)
+				end
+			end
+			all = found
+		end
+		local list, more = slice(all, pageOf(n))
 		return { looks = list, more = more }
 	end
 

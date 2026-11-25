@@ -974,13 +974,20 @@ returns the `Arrival`). Building the town yields (the low
 poly kit), so a player can be in before the services are listening; nothing may load a profile before they are.
 `Plots.start` and `Villagers.start` also pick up players whose profile or plot is already there.
 
-The creator's remotes: `CreatorPeople(page)` (the Players tab: you, the people here and your friends, asked of
-Roblox a page of friends at a time as more are wanted, up to `Tuning.Creator.MaxPeople`), `CreatorShared(page)` (the
-Shared tab: looks players shared), each `{ list, more }` a page of `Tuning.Creator.PageSize` (24) at a time, so the
-client's Show more asks for the next; `CreatorFromUserId`, `LookShare` (name filtered; kept newest first,
+The creator's remotes: `CreatorPeople(page, search?)` (the Players tab: you, the people here and your friends, asked of
+Roblox a page of friends at a time as more are wanted, up to `Tuning.Creator.MaxPeople`), `CreatorShared(page, search?)`
+(the Shared tab: looks players shared), each `{ list, more }` a page of `Tuning.Creator.PageSize` (24) at a time, so the
+client's Show more asks for the next. With a search the server looks through everybody (all the friends, up to the
+cap) or every look and pages only those whose display name or user name, or look name or sharer, holds it
+(`Text.matches`: case left aside, plain letters, nothing typed matches all); `CreatorFromUserId`, `LookShare` (name filtered; kept newest first,
 `Tuning.Creator.MaxShared` (120) at most, one a player, in the data store `<name>_Looks` under `recent`). The
 creator's tabs come from `Avatar/Categories` (Players and Shared are two since the user: "make a different tab for
-shared by players split from players. then, add show more like the other tabs"). The mannequin is stood again (`stand`) and plays its own Animate animations (`act`) after every change.
+shared by players split from players. then, add show more like the other tabs"). The header's search box searches the
+catalog on the catalog's tabs (with the sort) and, on Players, Shared, Outfits, My items and My avatars, filters by name
+as you type, 0.3 s after the last key, with no sort (`FIND` in `UI/Creator`, its words in `find`, cleared on every
+change of tab; the user: "allow for search in friends, shared outfits, my items, and outfits"): Players and Shared ask
+the server again with it, Outfits rebuilds its rows, and My items and My avatars show again only the rows already
+loaded that hold it, saying to Load more when nothing loaded does. The mannequin is stood again (`stand`) and plays its own Animate animations (`act`) after every change.
 
 | Service | Job |
 |---|---|

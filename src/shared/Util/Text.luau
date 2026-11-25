@@ -65,6 +65,23 @@ function Text.clean(s: string): string
 	return s
 end
 
+-- Does any of the words given hold what was typed? Case and spaces at either end don't count, and
+-- nothing typed matches everything. The creator's own lists use it for their search box (the
+-- user: "allow for search in friends, shared outfits, my items, and outfits").
+function Text.matches(query: string?, ...: string?): boolean
+	local q = string.lower(Text.clean(query or ""))
+	if q == "" then
+		return true
+	end
+	for i = 1, select("#", ...) do
+		local s = select(i, ...)
+		if type(s) == "string" and string.find(string.lower(s), q, 1, true) then
+			return true
+		end
+	end
+	return false
+end
+
 -- Clock hours (13.5) -> "1:30 PM"
 function Text.clock(hours: number): string
 	local h = math.floor(hours) % 24

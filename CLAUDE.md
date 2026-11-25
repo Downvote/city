@@ -32,7 +32,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (618 at the last full run; `Voice`: each personality's own hand, and a villager's ending; `Memory`: what events leave
+Specs today (628 at the last full run; `Voice`: each personality's own hand, and a villager's ending; `Memory`: what events leave
 with a villager for a few days, the accessory on and off; `FlairService`: buying flair with gems on the server, with
 stubbed neighbours; `Store`: passes owned, a gem pack's receipt paid once, the pay boost from Double Pay, VIP and the group;
 `Offline`: what the town earned while the player was away; `Rewards`: gems from the daily gift, playtime and
@@ -385,7 +385,9 @@ air high over the meadow, with nothing under it ("remove the plate the character
 screen"), and the client puts the backdrop on a part behind it that follows the camera (no town, no fade: "no need
 for the gradient background or the city background"). Picking somebody on its Players tab takes their look and,
 for a new villager, their name too ("when selecting friend, also add their name to the name field"); one being
-edited keeps the name they have. That backdrop is a SurfaceGui kept in PlayerGui, and the
+edited keeps the name they have. Players, Shared, Outfits, My items and My avatars search by name in the header's box
+as you type ("allow for search in friends, shared outfits, my items, and outfits": `FIND` in `UI/Creator`,
+`Text.matches`; Players and Shared are searched on the server, across everyone). That backdrop is a SurfaceGui kept in PlayerGui, and the
 engine reports what is on it as under the pointer, which once stopped every drag ("you cant drag to rotate in the
 avatar creator"): it is `Active = false`, and `Kit.overUI` counts only what is under a ScreenGui. Never put a
 ViewportFrame inside a CanvasGroup: it comes out pale. The old header bar and its wave are gone.

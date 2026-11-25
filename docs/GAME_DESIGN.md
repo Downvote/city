@@ -2540,3 +2540,15 @@ the sun stays clear of it.
 - **Stains and road wear.** Every road has oil stains down the middle of the lanes, mended patches of darker tar and
   the odd crack, kept off crossings, junctions, covers and parking bays. The road paint itself (stop lines with
   arrows, crossings, bays, yellow kerbs, cycle lanes) was already there.
+
+### Searching your own lists in the creator
+
+> allow for search in friends, shared outfits, my items, and outfits
+
+The creator's search box used to say "No search here" outside the catalog. Now it works on Players (friends and the
+people in the server), Shared, Outfits, My items and My avatars too, and says what it looks through ("Search your
+outfits"). It finds names as you type, a moment after the last key, whatever the case and anywhere in the name. On
+Players it also finds a friend by their user name, and on Shared it finds a look by its name or by who shared it. Those
+two look through everybody and every shared look, not only the page on show. My items and My avatars look through what
+has been loaded so far, and say to load more when nothing loaded matches. These tabs have no sort, and moving to
+another tab starts with an empty box; the catalog's tabs keep their own last search and sort.

@@ -12,6 +12,7 @@ local Shared = "ReplicatedStorage.Shared."
 local Appearance = require(Shared .. "Avatar.Appearance")
 local Bundles = require(Shared .. "Avatar.Bundles")
 local Categories = require(Shared .. "Avatar.Categories")
+local Text = require(Shared .. "Util.Text")
 
 local function body(n, head)
 	return {
@@ -635,5 +636,28 @@ describe("Creator sections", function()
 		expect(arms[1].AssetType).toBe("LeftArm")
 		expect(#Categories.partsIn(results, { "RightLeg" })).toBe(0)
 		expect(#Categories.partsIn(nil, { "Torso" })).toBe(0)
+	end)
+end)
+
+describe("Searching your own lists", function()
+	-- the user: "allow for search in friends, shared outfits, my items, and outfits"
+	it("finds the words anywhere in a name, whatever the case", function()
+		expect(Text.matches("jun", "Juniper")).toBe(true)
+		expect(Text.matches("PER", "Juniper")).toBe(true)
+		expect(Text.matches("  day ", "Snow day")).toBe(true)
+		expect(Text.matches("rain", "Snow day")).toBe(false)
+	end)
+
+	it("looks at every name it is given, and lets everything through with nothing typed", function()
+		expect(Text.matches("juno", "Rainy walk", "Juno")).toBe(true)
+		expect(Text.matches("juno", "Rainy walk", nil)).toBe(false)
+		expect(Text.matches("", "anything")).toBe(true)
+		expect(Text.matches(nil, nil)).toBe(true)
+	end)
+
+	it("takes what is typed as plain letters, not a pattern", function()
+		expect(Text.matches("a.b", "a.b c")).toBe(true)
+		expect(Text.matches("a.b", "axb")).toBe(false)
+		expect(Text.matches("%", "100%")).toBe(true)
 	end)
 end)

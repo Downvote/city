@@ -60,6 +60,20 @@ local saving = false
 local tabId = "hair"
 local filterIndex = 1
 local keyword = ""
+-- The tabs of your own things and other players' looks search them by name as you type (the
+-- user: "allow for search in friends, shared outfits, my items, and outfits"), in the same box
+-- the catalog is searched in; what is typed there is `find`, and each says what it looks through.
+local FIND = {
+	people = "Search friends and players",
+	shared = "Search shared looks",
+	outfits = "Search your outfits",
+	inventory = "Search your items",
+	avatars = "Search your avatars",
+}
+local find = ""
+local findToken = 0
+-- every row My items or My avatars has had so far, for its search to look through
+local loaded: { any } = {}
 local sortId = "Relevance"
 local pages: any = nil
 -- turns a later page of `pages` into rows for cards, where a page isn't catalog results already
@@ -555,25 +569,45 @@ local function nothingText(tab: any, f: any): string
 	return "Nothing found. Try another word."
 end
 
-local function showItems(items: { any }, append: boolean?)
+-- `again` shows the rows already had once more (the search on My items or My avatars changed).
+local function showItems(items: { any }, append: boolean?, again: boolean?)
 	if not append then
 		clearGrid()
 		forgetCards()
 	end
 	note(nil)
-	remember(items)
+	if not again then
+		if not append then
+			loaded = {}
+		end
+		for _, item in items do
+			table.insert(loaded, item)
+		end
+		remember(items)
+	end
+	local tab = currentTab()
+	-- (only your own things are searched here: the catalog is searched by Roblox)
+	local filtering = tab ~= nil and tab.source ~= nil and find ~= ""
 	local f = currentFilter()
 	local kind = if f then f.kind else nil
 	local n = #grid:GetChildren()
 	for i, item in items do
-		if type(item.Id) == "number" then
+		if type(item.Id) == "number" and (not filtering or Text.matches(find, item.Name)) then
 			itemCard(item, n + i, nil, kind)
 		end
 	end
 	refreshWorn()
 	loadMore.Visible = pages ~= nil and not pages.IsFinished
 	if next(cards) == nil then
-		note(nothingText(currentTab(), f))
+		if filtering then
+			note(
+				if loadMore.Visible
+					then "Nothing so far has that in its name. Load more to look further."
+					else "Nothing here has that in its name."
+			)
+		else
+			note(nothingText(tab, f))
+		end
 	end
 end
 
@@ -1081,7 +1115,12 @@ local function outfitsPage()
 			n.Position = UDim2.fromOffset(0, ROW_H + 12)
 		end
 	end
+	local matching = 0
 	for i, o in outfits do
+		if not Text.matches(find, o.name) then
+			continue
+		end
+		matching += 1
 		local r, inner = Kit.row({
 			Parent = list,
 			Size = UDim2.new(1, -8, 0, 52),
@@ -1117,6 +1156,14 @@ local function outfitsPage()
 				end
 			end)
 		end)
+	end
+	if #outfits > 0 and matching == 0 then
+		Kit.text("No outfit has that in its name.", {
+			Parent = list,
+			Size = UDim2.new(1, -8, 0, 22),
+			TextSize = 15,
+			Color = T.InkSoft,
+		})
 	end
 end
 
@@ -1252,7 +1299,7 @@ local function peoplePage()
 	-- a page of people: true or false for whether there are more, nil if it couldn't be had
 	local function fetch(page: number): boolean?
 		local ok, data = pcall(function()
-			return Remotes.fn("CreatorPeople"):InvokeServer(page)
+			return Remotes.fn("CreatorPeople"):InvokeServer(page, find)
 		end)
 		if not holder.Parent or not ok or type(data) ~= "table" then
 			return nil
@@ -1274,6 +1321,13 @@ local function peoplePage()
 		if more == nil then
 			Kit.text("Couldn't look anyone up just now.", { Parent = faces, TextSize = 15, Color = T.InkSoft })
 			return
+		end
+		if shown == 0 and find ~= "" then
+			Kit.text("Nobody here or in your friends goes by that.", {
+				Parent = faces,
+				TextSize = 15,
+				Color = T.InkSoft,
+			})
 		end
 		setMore(more)
 	end)
@@ -1373,7 +1427,7 @@ local function sharedPage()
 	end
 	local function fetch(page: number): boolean?
 		local ok, data = pcall(function()
-			return Remotes.fn("CreatorShared"):InvokeServer(page)
+			return Remotes.fn("CreatorShared"):InvokeServer(page, find)
 		end)
 		if not holder.Parent or not ok or type(data) ~= "table" then
 			return nil
@@ -1395,7 +1449,13 @@ local function sharedPage()
 			Kit.text("Couldn't load the shared looks just now.", { Parent = looks, TextSize = 15, Color = T.InkSoft })
 			return
 		end
-		if shown == 0 then
+		if shown == 0 and find ~= "" then
+			Kit.text("No shared look has that in its name or its maker's.", {
+				Parent = looks,
+				TextSize = 15,
+				Color = T.InkSoft,
+			})
+		elseif shown == 0 then
 			Kit.hint("Nobody has shared a look yet. Name yours above and share it.", {
 				Parent = looks,
 			})
@@ -1490,17 +1550,19 @@ end
 -- Shows what the header offers for the section you are in: the search box and the sort only
 -- where the catalog is searched (dimmed, and taking no words, where it isn't), the row of kinds
 -- only where there is more than one.
-local function layoutBrowse(showSearch: boolean, showFilterRow: boolean)
+-- A tab of your own things searches by name (`placeholder` says what) and has no sort.
+local function layoutBrowse(showSearch: boolean, showFilterRow: boolean, placeholder: string?)
 	searchBox.TextEditable = showSearch
-	searchBox.PlaceholderText = if showSearch then "Search" else "No search here"
+	searchBox.PlaceholderText = if showSearch then placeholder or "Search" else "No search here"
 	searchRow:SetAttribute("Off", not showSearch)
 	local glass = searchRow:FindFirstChild("Glass")
 	if glass then
 		Kit.recolorIcon(glass, if showSearch then T.InkSoft else T.Line, T.PaperDark)
 	end
-	sortButton.Visible = showSearch
+	local sort = showSearch and placeholder == nil
+	sortButton.Visible = sort
 	filterRow.Visible = showFilterRow
-	filterRow.Size = UDim2.new(1, if showSearch then -(SORT_W + 8) else 0, 0, FILTER_H)
+	filterRow.Size = UDim2.new(1, if sort then -(SORT_W + 8) else 0, 0, FILTER_H)
 end
 
 local function showFilters(tab: any)
@@ -1514,7 +1576,9 @@ local function showFilters(tab: any)
 	-- filters wait for their yes.
 	local own = tab ~= nil and tab.source ~= nil
 	local open = filters ~= nil and (not own or access == "yes")
-	layoutBrowse(filters ~= nil and not own, open and #filters > 1)
+	-- (your own things are searched by name, once Roblox has said this game may see them)
+	local findWords = if FIND[tabId] and (not own or access == "yes") then FIND[tabId] else nil
+	layoutBrowse((filters ~= nil and not own) or findWords ~= nil, open and #filters > 1, findWords)
 	if not filters or not open then
 		return
 	end
@@ -1556,6 +1620,12 @@ selectTab = function(id: string)
 		markTab(id)
 	end
 	local tab = Categories.tab(id)
+	-- a tab of your own things starts with nothing typed; the catalog keeps its last search
+	find = ""
+	findToken += 1
+	if searchBox then
+		searchBox.Text = if FIND[id] then "" else keyword
+	end
 	-- whatever was being fetched for the last tab is no longer wanted
 	searchToken += 1
 	pages, pageRows = nil, nil
@@ -1581,6 +1651,36 @@ selectTab = function(id: string)
 		peoplePage()
 	elseif id == "shared" then
 		sharedPage()
+	end
+end
+
+-- What is typed in the search box on a tab of your own things: its page again, or the rows already
+-- had again, with only what holds the words. (Players and Shared ask the server, which looks
+-- through everybody and every look, not only the pages shown.)
+local function applyFind()
+	if not FIND[tabId] then
+		return
+	end
+	local words = Text.clean(searchBox.Text):sub(1, 40)
+	if words == find then
+		return
+	end
+	find = words
+	local tab = currentTab()
+	if tab and tab.source then
+		if access == "yes" and grid.Visible then
+			showItems(loaded, false, true)
+		end
+	elseif tabId == "people" or tabId == "shared" or tabId == "outfits" then
+		clearContent()
+		forgetCards()
+		if tabId == "people" then
+			peoplePage()
+		elseif tabId == "shared" then
+			sharedPage()
+		else
+			outfitsPage()
+		end
 	end
 end
 
@@ -2573,8 +2673,27 @@ local function build()
 		if not searchBox.TextEditable then
 			return
 		end
+		if FIND[tabId] then
+			findToken += 1
+			applyFind()
+			return
+		end
 		keyword = Text.clean(searchBox.Text):sub(1, 50)
 		search()
+	end)
+	-- on a tab of your own things the list follows the words as they are typed, a moment after
+	-- the last key
+	searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+		if not FIND[tabId] or not searchBox.TextEditable then
+			return
+		end
+		findToken += 1
+		local token = findToken
+		task.delay(0.3, function()
+			if token == findToken and isOpen then
+				applyFind()
+			end
+		end)
 	end)
 
 	-- the sections, as a row of words beside it: more than fit, so it scrolls sideways, with an
