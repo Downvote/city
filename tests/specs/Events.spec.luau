@@ -234,6 +234,42 @@ end
 
 local shouts, said = 0, 0
 
+-- The shape of a message (the user: "Try to avoid having stirings of short sentaces"): the chats it
+-- follows are one complete sentence a message nearly always. So we count the sentences in each line
+-- and the clipped bits of three words or fewer ("Rain. Can't go out." is two such bits).
+local function sentences(text: string): { string }
+	local out = {}
+	for part in (text .. " "):gmatch("(.-[%.!%?]+)%s+") do
+		table.insert(out, part)
+	end
+	local rest = text:match("[%.!%?]%s+([^%.!%?]+)$") or (if #out == 0 then text else nil)
+	if rest and rest:find("%a") then
+		table.insert(out, rest)
+	end
+	return out
+end
+
+local function wordCount(text: string): number
+	local n = 0
+	for _ in text:gmatch("[%a'{}]+") do
+		n += 1
+	end
+	return n
+end
+
+local function shape(text: string): (number, boolean)
+	local parts = sentences(text)
+	local short = 0
+	for _, part in parts do
+		if wordCount(part) <= 3 then
+			short += 1
+		end
+	end
+	return #parts, #parts >= 2 and short >= 2
+end
+
+local long3, choppy = 0, 0
+
 local function checkString(s, where)
 	if type(s) ~= "string" then
 		return
@@ -265,6 +301,13 @@ local function checkLine(l, where)
 	said += 1
 	if l.text:find("!") then
 		shouts += 1
+	end
+	local n, isChoppy = shape(l.text)
+	if n >= 3 then
+		long3 += 1
+	end
+	if isChoppy then
+		choppy += 1
 	end
 	if l.who ~= nil and l.who ~= "a" and l.who ~= "b" and l.who ~= "c" then
 		error(where .. ": bad speaker " .. tostring(l.who))
@@ -552,6 +595,13 @@ describe("Event engine", function()
 		if shouts / said >= 0.12 then
 			error(string.format("%d of %d lines shout", shouts, said))
 		end
+		-- and a message is one sentence, or two that belong together, not a string of clipped bits
+		if long3 / said >= 0.03 then
+			error(string.format("%d of %d lines run to three sentences or more", long3, said))
+		end
+		if choppy / said >= 0.06 then
+			error(string.format("%d of %d lines are strings of clipped bits", choppy, said))
+		end
 	end)
 
 	-- the user: "remove any romance, just best friends is the highest"
@@ -777,6 +827,11 @@ describe("Event engine", function()
 				for _, text in p.lines[kind] do
 					-- checked as said: {player} is filled with the player's name (ctx.f)
 					checkString((text:gsub("{player}", "Sam")), p.id .. "." .. kind)
+					-- one bubble: a sentence, or two that flow, never a string of clipped bits
+					local n, isChoppy = shape(text)
+					if n >= 3 or isChoppy then
+						error(p.id .. "." .. kind .. " reads like a telegram: " .. text)
+					end
 				end
 				-- in a scene a stock reaction is often said to another villager, so the lines that
 				-- call the player by name stay on the talk card, and every kind still has some left
@@ -802,6 +857,10 @@ describe("Event engine", function()
 				for _, text in lines do
 					expect(string.find(text, "{", 1, true)).toBe(nil)
 					checkString(text, p.id .. "." .. bank)
+					local n, isChoppy = shape(text)
+					if n >= 3 or isChoppy then
+						error(p.id .. "." .. bank .. " reads like a telegram: " .. text)
+					end
 				end
 			end
 		end

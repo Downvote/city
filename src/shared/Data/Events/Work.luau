@@ -5,8 +5,8 @@
 -- a villager with a job (Data/Jobs), and what it pays comes from the job's own income, so it
 -- stays in step with wages. The villagers text the way a friend does: one natural sentence a
 -- message, two or three messages at a time, each personality with its own habits, and now and
--- then your name ({player}). A workplace's name ({place}) is a thing such as "bread oven" or
--- "chalkboard", so a line says "at the {place}" or "by the {place}", never "into" it.
+-- then your name ({player}). Where they work ({place}) is the place as people say it ("bakery",
+-- "workshop": K.workplace), so a line says "at the {place}" or "by the {place}".
 
 local K = require(script.Parent.Kit)
 local Tuning = require(script.Parent.Parent.Parent.Config.Tuning)
@@ -58,7 +58,7 @@ end
 
 local function place(ctx, vid): string
 	local w = ctx.job(vid)
-	return if w then w.def.name:lower() else "workplace"
+	return if w then K.workplace(ctx, vid) else "workplace"
 end
 
 -- what a big order looks like, by job

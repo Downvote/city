@@ -1160,8 +1160,7 @@ event({
 	when = "any",
 	weight = W({ base = 0.12, job = "any" }),
 	scene = function(ctx, a)
-		local w = ctx.job(a)
-		local s = K.scene(ctx, "Tomorrow"):with({ job = if w then w.def.name:lower() else "work" })
+		local s = K.scene(ctx, "Tomorrow"):with({ job = K.workplace(ctx, a) })
 		burst(s, "a", {
 			nervous = "{player}, it's a big day at the {job} tomorrow.|What if nobody comes?|What if everybody comes at once?",
 			gloomy = "Tomorrow's a big day at the {job}.|It'll go wrong, because things usually do.",
@@ -2147,8 +2146,7 @@ event({
 	when = "any",
 	weight = W({ base = 0.1, job = "any", traits = { temper = 0.2 } }),
 	scene = function(ctx, a)
-		local w = ctx.job(a)
-		local s = K.scene(ctx, "A long one"):with({ job = if w then w.def.name:lower() else "work" })
+		local s = K.scene(ctx, "A long one"):with({ job = K.workplace(ctx, a) })
 		burst(s, "a", {
 			prickly = "{player}, today at the {job} was a mess from start to finish.|Then the kettle broke, and someone asked if I was tired.|Of course I'm tired!",
 			polite = "Forgive me, {player}, I just need to say this to someone.|The {job} was very trying today, and everything went wrong at once.",

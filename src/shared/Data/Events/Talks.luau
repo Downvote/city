@@ -24,20 +24,6 @@ local function event(def)
 end
 
 -- where each job is done, for "at the café" and the like (Data/Jobs)
-local WORKPLACE = {
-	shopkeeper = "the market stall",
-	barista = "the café",
-	baker = "the bakery",
-	florist = "the flower cart",
-	artist = "the easel",
-	doctor = "the clinic",
-	teacher = "the school",
-	musician = "the stage",
-	builder = "the workbench",
-	postie = "the post office",
-	icecream = "the ice cream cart",
-	librarian = "the library",
-}
 
 -- a long chat: one topic, then another
 event({
@@ -901,7 +887,7 @@ event({
 	weight = W({ base = 0.14, job = "any", rel = 0 }),
 	scene = function(ctx, a, b)
 		local w = ctx.job(a)
-		local place = if w then WORKPLACE[w.job.id] or "work" else "work"
+		local place = if w then "the " .. K.workplace(ctx, a) else "work"
 		local s = K.scene(ctx, "A long day"):with({ work = place })
 		burst(s, "a", {
 			gloomy = "Today at {work} was awful, and then it got worse, as usual.",

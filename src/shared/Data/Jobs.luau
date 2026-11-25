@@ -18,6 +18,7 @@ local Tuning = require(script.Parent.Parent.Config.Tuning)
 export type Job = {
 	id: string,
 	name: string,
+	place: string, -- where it's done, as said in a sentence ("bakery", "workshop")
 	blurb: string,
 	income: number, -- coins per work day at skill 1 and a middling mood
 	likes: { string },
@@ -29,6 +30,7 @@ local Jobs = {}
 local list: { Job } = {
 	{
 		id = "shopkeeper",
+		place = "market stall",
 		name = "Shopkeeper",
 		blurb = "Runs a market stall.",
 		income = 1050,
@@ -42,6 +44,7 @@ local list: { Job } = {
 	},
 	{
 		id = "barista",
+		place = "café",
 		name = "Barista",
 		blurb = "Makes the coffee.",
 		income = 1125,
@@ -55,6 +58,7 @@ local list: { Job } = {
 	},
 	{
 		id = "baker",
+		place = "bakery",
 		name = "Baker",
 		blurb = "Bakes bread every morning.",
 		income = 1200,
@@ -68,6 +72,7 @@ local list: { Job } = {
 	},
 	{
 		id = "florist",
+		place = "flower stall",
 		name = "Florist",
 		blurb = "Sells flowers from a cart.",
 		income = 975,
@@ -81,6 +86,7 @@ local list: { Job } = {
 	},
 	{
 		id = "artist",
+		place = "studio",
 		name = "Artist",
 		blurb = "Paints, sells the odd picture.",
 		income = 900,
@@ -94,6 +100,7 @@ local list: { Job } = {
 	},
 	{
 		id = "doctor",
+		place = "clinic",
 		name = "Doctor",
 		blurb = "Keeps the town healthy.",
 		income = 1650,
@@ -107,6 +114,7 @@ local list: { Job } = {
 	},
 	{
 		id = "teacher",
+		place = "school",
 		name = "Teacher",
 		blurb = "Teaches at the school.",
 		income = 1425,
@@ -120,6 +128,7 @@ local list: { Job } = {
 	},
 	{
 		id = "musician",
+		place = "stage",
 		name = "Musician",
 		blurb = "Plays for tips on a small stage.",
 		income = 1050,
@@ -133,6 +142,7 @@ local list: { Job } = {
 	},
 	{
 		id = "builder",
+		place = "workshop",
 		name = "Builder",
 		blurb = "Fixes and makes things at a workbench.",
 		income = 1350,
@@ -146,6 +156,7 @@ local list: { Job } = {
 	},
 	{
 		id = "postie",
+		place = "post office",
 		name = "Postie",
 		blurb = "Sorts the town's letters.",
 		income = 975,
@@ -159,6 +170,7 @@ local list: { Job } = {
 	},
 	{
 		id = "icecream",
+		place = "ice cream cart",
 		name = "Ice cream seller",
 		blurb = "Scoops all day.",
 		income = 1050,
@@ -172,6 +184,7 @@ local list: { Job } = {
 	},
 	{
 		id = "librarian",
+		place = "library",
 		name = "Librarian",
 		blurb = "Looks after the library.",
 		income = 1125,
@@ -190,6 +203,13 @@ Jobs.list = list
 local byId: { [string]: Job } = {}
 for _, j in list do
 	byId[j.id] = j
+end
+
+-- Where the job is done, as people say it in a sentence ("at the bakery", "at the workshop"):
+-- the workplace pieces have names like "builder's bench" that nobody would say.
+function Jobs.placeOf(id: string?): string
+	local job = id and Jobs.get(id)
+	return if job and job.place then job.place else "work"
 end
 
 function Jobs.get(id: string): Job?

@@ -40,6 +40,7 @@
 --   s:choice(text, fn, cost)         an answer: fn(c) builds what happens with the same calls
 --   s:default(i) s:log(text) s:done()
 
+local Jobs = require(script.Parent.Parent.Jobs)
 local Personalities = require(script.Parent.Parent.Personalities)
 local Tuning = require(script.Parent.Parent.Parent.Config.Tuning)
 
@@ -290,6 +291,13 @@ K.React = {
 
 -- which bank a kind of reaction is drawn from in a scene (other kinds use the personality's own)
 K.ReactKind = { happy = "glad", excited = "glad", wow = "glad", brag = "brag", scared = "scared" }
+
+-- Where a villager works, as people say it ("bakery", "workshop"; "work" when they have no job),
+-- for lines like "at the {place}". Never the workplace piece's own name.
+function K.workplace(ctx: any, vid: string?): string
+	local w = vid and ctx.job(vid)
+	return if w then Jobs.placeOf(w.job.id) else "work"
+end
 
 -- Picks from a map keyed by personality ("_" for anybody else).
 function K.byPers(ctx: any, vid: string?, map: { [string]: any }): string

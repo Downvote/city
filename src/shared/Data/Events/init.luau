@@ -1609,8 +1609,7 @@ event({
 		return 0.4 + trait(ctx, a, "focus") * 0.6
 	end,
 	scene = function(ctx: Ctx, a: string): Scene
-		local w = ctx.job(a)
-		local place = w.def.name:lower()
+		local place = Kit.workplace(ctx, a)
 		return {
 			title = "Practice",
 			lines = join(
@@ -1835,7 +1834,7 @@ event({
 	end,
 	scene = function(ctx: Ctx, a: string, b: string): Scene
 		local w = ctx.job(a)
-		local place = w.def.name:lower()
+		local place = Kit.workplace(ctx, a)
 		local coins = Tuning.Jobs.VisitCoins * ctx.rng:int(2, 5)
 		-- at a counter that sells things they pick one out, anywhere else they ask for the service, and
 		-- the worker answers with something they'd say at work
@@ -1886,7 +1885,7 @@ event({
 	end,
 	scene = function(ctx: Ctx, a: string): Scene
 		local w = ctx.job(a)
-		local place = w.def.name:lower()
+		local place = Kit.workplace(ctx, a)
 		local coins = math.floor(w.job.income * Tuning.Jobs.BusyDayShare)
 		return {
 			title = "A busy day",

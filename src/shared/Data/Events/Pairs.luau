@@ -1845,8 +1845,7 @@ event({
 		end,
 	}),
 	scene = function(ctx, a, b)
-		local w = ctx.job(a)
-		local s = K.scene(ctx, "The walk home"):with({ job = if w then w.def.name:lower() else "work" })
+		local s = K.scene(ctx, "The walk home"):with({ job = K.workplace(ctx, a) })
 		s:n("{a} finished at the {job} and found {b} waiting where the road bends.")
 		burst(s, "a", {
 			sunny = "You waited for me!|That's so nice, thank you!",
