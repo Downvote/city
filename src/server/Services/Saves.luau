@@ -35,7 +35,7 @@ local Saves = {}
 local lastAsk: { [Player]: number } = {}
 local lastLoad: { [Player]: number } = {}
 local cache: { [Player]: { [number]: any } } = {} -- the plans read or written this session, by slot
-local memory: { [number]: { [number]: any } } = {} -- by UserId: plans kept where the game can't save
+local memory: { [Player]: { [number]: any } } = {} -- plans kept for the session where the game can't save
 
 local storeObj: any = nil
 local function dataStore(): any
@@ -54,10 +54,10 @@ local function unsaved(player: Player): boolean
 end
 
 local function kept(player: Player): { [number]: any }
-	local m = memory[player.UserId]
+	local m = memory[player]
 	if not m then
 		m = {}
-		memory[player.UserId] = m
+		memory[player] = m
 	end
 	return m
 end
@@ -263,7 +263,7 @@ function Saves.start()
 		lastAsk[player] = nil
 		lastLoad[player] = nil
 		cache[player] = nil
-		memory[player.UserId] = nil
+		memory[player] = nil
 	end)
 end
 
