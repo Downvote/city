@@ -45,6 +45,8 @@ local MAIN = {
 			{ id = "doors", icon = "door", name = "Doors" },
 			{ id = "windows", icon = "window", name = "Windows" },
 			{ id = "structure", icon = "stairs", name = "Stairs" },
+			-- columns and posts, a storey tall and shorter (Recipes/Pillars)
+			{ id = "pillars", icon = "pillar", name = "Pillars" },
 			-- cubes, cylinders, wedges and the rest, to build anything from (Recipes/Shapes)
 			{ id = "shapes", icon = "shapes", name = "Shapes" },
 		},

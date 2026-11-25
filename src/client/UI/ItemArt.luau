@@ -226,7 +226,8 @@ Art.soup = {
 
 -- A grilled fish on a stick laid corner to corner, the stick out at both ends: its body and
 -- tail, and an eye.
-local FISH = "M12 3.5 C15.5 4.75 17.25 8.25 16.75 11.25 C16.4 13.5 14.5 15.25 12 16.25 C9.5 15.25 7.6 13.5 7.25 11.25 C6.75 8.25 8.5 4.75 12 3.5 Z"
+local FISH =
+	"M12 3.5 C15.5 4.75 17.25 8.25 16.75 11.25 C16.4 13.5 14.5 15.25 12 16.25 C9.5 15.25 7.6 13.5 7.25 11.25 C6.75 8.25 8.5 4.75 12 3.5 Z"
 local TAIL = "M12 15 L16.75 20.5 Q12 18.5 7.25 20.5 Z"
 Art.skewer = turned({
 	line("M12 0.75 L12 23.25", 2.25),
