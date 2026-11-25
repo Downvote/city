@@ -27,6 +27,10 @@
 --                                    (Data/Personalities), with "_" for everyone else; a value is a
 --                                    line or a list of lines
 --   s:voice(who, kind, icon, gesture) a line of their personality's own (Personalities' lines)
+--   s:burst(who, map, icon, gesture) what they'd send as two or three quick messages: a line or a
+--                                    map like s:by, and "|" splits a line into its messages
+--                                    ("Wait.|Wrong person.|Hi, {player}."); the gesture goes
+--                                    with the first
 --   s:mood(who, d) s:rel(d) s:relx(x, y, d) s:coins(d) s:hearts(who, n) s:xp(who, d) s:all(d)
 --   s:memo(who, text)                what they might say about it later when you stop for a chat
 --   s:keep(item, who)                a keepsake for you (Build/Recipes/Keepsakes)
@@ -165,6 +169,25 @@ function K.byPers(ctx: any, vid: string?, map: { [string]: any }): string
 	return choice or "..."
 end
 
+-- A burst's messages: "First.|Second." is two (K.flat runs them back into one line).
+function K.parts(text: string): { string }
+	local out = {}
+	for part in string.gmatch(text, "[^|]+") do
+		local trimmed = part:match("^%s*(.-)%s*$")
+		if trimmed and #trimmed > 0 then
+			table.insert(out, trimmed)
+		end
+	end
+	if #out == 0 then
+		table.insert(out, text)
+	end
+	return out
+end
+
+function K.flat(text: string): string
+	return table.concat(K.parts(text), " ")
+end
+
 -- Scenes --------------------------------------------------------------------------------------------
 
 local S = {}
@@ -208,6 +231,14 @@ end
 
 function S:by(who: string, map: { [string]: any }, icon: string?, gesture: string?): any
 	table.insert(self.lines, K.line(who, self:fill(K.byPers(self.ctx, self:vid(who), map)), icon, gesture))
+	return self
+end
+
+function S:burst(who: string, map: any, icon: string?, gesture: string?): any
+	local text = if type(map) == "string" then map else K.byPers(self.ctx, self:vid(who), map)
+	for i, part in K.parts(text) do
+		self:say(who, part, icon, if i == 1 then gesture else nil)
+	end
 	return self
 end
 

@@ -18,17 +18,10 @@ local function event(def)
 	table.insert(list, def)
 end
 
--- A burst: what they'd send as two or three quick messages. Like s:by, a map keyed by
--- personality ("_" for anyone else; a value may be a list to pick one from), and "|" splits a
--- line into the messages it is sent as. A plain string is the same burst for everyone.
+-- A burst: what they'd send as two or three quick messages (Kit's s:burst: a line or a map
+-- keyed by personality, "|" between the messages).
 local function burst(s, who: string, map: any, icon: string?, gesture: string?)
-	local text = if type(map) == "string" then map else K.byPers(s.ctx, s:vid(who), map)
-	local first = true
-	for part in string.gmatch(text, "[^|]+") do
-		s:say(who, part, icon, if first then gesture else nil)
-		first = false
-	end
-	return s
+	return s:burst(who, map, icon, gesture)
 end
 
 -- How they take it when the thing they tried comes off.
@@ -743,7 +736,14 @@ event({
 				c:mood("a", -3)
 			end)
 		else
-			s:voice("a", "excited", "music", "cheer")
+			burst(s, "a", {
+				sunny = "Higher! Higher!|Look at it go!",
+				cool = "Good wind.",
+				gloomy = "It's staying up.|Huh.",
+				dramatic = "It FLIES!",
+				shy = "...!|It's so high.",
+				_ = "Look at it go.|It's nearly at the clouds.",
+			}, "music", "cheer")
 			s:mood("a", 5)
 		end
 		s:log("{a} flew a kite.")
@@ -1178,7 +1178,7 @@ event({
 		s:choice("Let me taste it.", function(c)
 			if ctx.rng:chance(0.5) then
 				c:n("It was... good. Weirdly good.")
-				c:voice("a", "excited", "sparkle", "cheer")
+				burst(c, "a", BRAG, "sparkle", "cheer")
 				c:mood("a", 5)
 				c:memo("a", "My {one} and {two} thing worked. I'm making it again on Sunday.")
 			else

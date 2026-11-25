@@ -111,7 +111,7 @@ local function burst(
 ): { any }
 	local text = if type(map) == "string" then map else Kit.byPers(ctx, vid, map)
 	local out = {}
-	for part in string.gmatch(text, "[^|]+") do
+	for _, part in Kit.parts(text) do
 		table.insert(out, line(who, ctx.f(part, vars or {}), icon, if #out == 0 then gesture else nil))
 	end
 	return out

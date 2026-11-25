@@ -118,10 +118,12 @@ The contract between the parts of the game. Update it with every change to an AP
 `Data/Events` is a folder: `init` (the first 38 and the loader, which errors on a duplicate id) and `Kit` (weights
 from a short spec `K.W{ base, traits, season, weather, job, rel, quarrel, count, cond }`, `K.BestFriends` the score
 for best friends, and a scene builder:
-`s:say`, `s:by` (a line per personality), `s:voice`, `s:choice`, `s:prop`, `s:leave`, `s:keep`, `s:memo`; effects
-common to every answer are copied into each choice), `Chatter` (topics, dreams, debates, spats, openers by hour and
-weather, greetings by friendship; `Chatter.chat` builds a scene, `Chatter.small` two to four street lines, which
-`Villagers` uses for street chats), `Talks`, `Solo`, `Pairs`, `Town`, `Work` and `Asks`. A scene or a choice may carry
+`s:say`, `s:by` (a line per personality), `s:burst` (a line or a personality map whose "|" splits it into quick
+messages: `"Wait.|Wrong person.|Hi, {player}."` is three lines; `K.parts` splits, `K.flat` runs them back into one),
+`s:voice`, `s:choice`, `s:prop`, `s:leave`, `s:keep`, `s:memo`; effects common to every answer are copied into each
+choice), `Chatter` (topics, dreams, debates, spats, openers by hour and weather, greetings by friendship, written as
+bursts; `Chatter.say`, `pick` and `burst` send them through `s:burst`; `Chatter.chat` builds a scene, `Chatter.small`
+two to four street lines, each burst flattened to one bubble, which `Villagers` uses for street chats), `Talks`, `Solo`, `Pairs`, `Town`, `Work` and `Asks`. A scene or a choice may carry
 `props = { { id, by } }`; a def may carry `cutscene` (see Cutscenes). `Sim/EventEngine` adds the effects `keepsake
 item who?`, `memo who text`, `saying who id`, `hobby who id` (all checked) and `leave prop hours by?` (for the
 service), `ctx.stars`, `EventEngine.stage(ctx, def, order)` and a graded `recentPenalty` (`Tuning.Events.RecentMemory`

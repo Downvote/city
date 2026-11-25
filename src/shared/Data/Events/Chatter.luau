@@ -19,42 +19,23 @@ local Chatter = {}
 
 -- Bursts ---------------------------------------------------------------------------------------------
 
-local function parts(text: string): { string }
-	local out = {}
-	for part in string.gmatch(text, "[^|]+") do
-		local trimmed = part:match("^%s*(.-)%s*$")
-		if trimmed and #trimmed > 0 then
-			table.insert(out, trimmed)
-		end
-	end
-	if #out == 0 then
-		table.insert(out, text)
-	end
-	return out
-end
-
--- Says `text` as a burst, one message for each part. The gesture goes with the first.
+-- Says `text` as a burst, one message for each part (Kit's s:burst). The gesture goes with the first.
 function Chatter.say(s: any, who: string, text: string, icon: string?, gesture: string?): any
-	for i, part in parts(text) do
-		s:say(who, part, icon, if i == 1 then gesture else nil)
-	end
-	return s
+	return s:burst(who, text, icon, gesture)
 end
 
 -- One of several, as a burst.
 function Chatter.pick(s: any, who: string, list: { string }, icon: string?, gesture: string?): any
-	return Chatter.say(s, who, s.ctx.rng:pick(list), icon, gesture)
+	return s:burst(who, s.ctx.rng:pick(list), icon, gesture)
 end
 
 -- In their own way, as a burst: `map` is keyed by personality, "_" for anyone else (K.byPers).
 function Chatter.burst(s: any, who: string, map: { [string]: any }, icon: string?, gesture: string?): any
-	return Chatter.say(s, who, K.byPers(s.ctx, s:vid(who), map), icon, gesture)
+	return s:burst(who, map, icon, gesture)
 end
 
 -- A burst as one bubble (the street has room for one card a head).
-function Chatter.flat(text: string): string
-	return table.concat(parts(text), " ")
-end
+Chatter.flat = K.flat
 
 -- Topics ---------------------------------------------------------------------------------------------
 

@@ -2019,3 +2019,29 @@ tics you can hear in a single line. They call the player by their name (their Ro
 would: to get their attention, to say thanks, to tease them. Eight more personalities joined the first eight: Cool,
 Prickly, Dramatic, Bookish, Gloomy, Polite, Foodie and Nervous. And there are many more events, the conversation
 kind most of all.
+
+> here are all the momotalks. please redo every dialogue and event
+
+The user then sent every chat as text. We read them all (271 files) and measured how they go, and every line in the
+game was written again to that shape. Nothing in them was copied: no line, name, place or story, and a scan checks
+that no run of five words in the game matches theirs beyond everyday English. What we took is how a chat moves:
+
+- The villager always starts it. They open with a burst of two to four short messages (about six words each), often
+  the player's name on its own first, then the small thing: news from their day, a favour, a worry, a photo.
+- The player answers with one of two short replies (about five words), often the same answer said plainly and as a
+  joke. A third stays only where an event needs one (picking between two villagers, or one right answer).
+- They react in another short burst and sign off in their own way, usually with the next plan, not a goodbye.
+- The player's name is in about one villager line in seven, most often first in a burst. Never in a line meant for
+  another villager.
+- Exclamation marks follow the personality: Sunny and Dramatic use them in about half their lines, Cool never, Gloomy,
+  Polite, Shy and Gentle seldom. Over a whole conversation it comes to well under one line in five.
+- "..." does the work of a pause: Shy and Gloomy use it most, Nervous and Prickly some.
+
+The sixteen voices, after the eight above: Cool gives the name and a full stop, warns you about the weather instead of
+saying they care, and never shouts. Prickly complains, helps "since I was passing" and goes soft only at the end.
+Dramatic writes one word in capitals and their own sound effects ("*thud*"). Bookish writes full sentences with an odd
+fact and checks whether that was too much. Gloomy expects the small disaster and keeps every little thing you gave
+them. Polite greets properly, thanks you for everything and signs off with good wishes. Foodie opens with a food and
+plans the day round meals. Nervous stumbles on the first word, says sorry and says things that sound too final by
+accident ("I'm off now. Only home!"). Cheeky writes in lower case and laughs "hahaha"; Shy says "um" and takes the
+question back.

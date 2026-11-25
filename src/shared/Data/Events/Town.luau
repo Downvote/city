@@ -17,18 +17,32 @@ local function event(def)
 	table.insert(list, def)
 end
 
--- A burst: what they'd send as two or three quick messages. Like s:by, a map keyed by
--- personality ("_" for anyone else; a value may be a list to pick one from), and "|" splits a
--- line into the messages it is sent as. A plain string is the same burst for everyone.
+-- A burst: what they'd send as two or three quick messages (Kit's s:burst: a line or a map
+-- keyed by personality, "|" between the messages).
 local function burst(s, who: string, map: any, icon: string?, gesture: string?)
-	local text = if type(map) == "string" then map else K.byPers(s.ctx, s:vid(who), map)
-	local first = true
-	for part in string.gmatch(text, "[^|]+") do
-		s:say(who, part, icon, if first then gesture else nil)
-		first = false
-	end
-	return s
+	return s:burst(who, map, icon, gesture)
 end
+
+-- How somebody takes winning, when you were the judge.
+local WINNER = {
+	sunny = "Me? ME?|Thank you thank you!",
+	proud = "Of course.|I accept this with grace.",
+	bold = "Hah.|Knew it.",
+	shy = "...!|Me?|Thank you...",
+	cheeky = "the judge has taste|hehe",
+	cool = "...Huh.|Thanks.",
+	prickly = "Obviously.|...Thanks.",
+	dramatic = "VICTORY!|I'd like to thank the gulls.",
+	bookish = "Oh. I didn't expect that.|Thank you.",
+	gloomy = "I won?|Something's wrong.|...Thanks.",
+	gentle = "Oh, my.|Thank you, {player}.",
+	dreamy = "Oh.|I won.|That's nice.",
+	easygoing = "Heh.|Didn't even try.",
+	polite = "Thank you, {player}.|That's very kind.",
+	foodie = "Is there a prize?|Can you eat it?",
+	nervous = "M-me?|Are you sure?|Oh. Thank you!",
+	_ = "Me?|Thanks, {player}.",
+}
 
 local function night(ctx): boolean
 	return ctx.hour >= Tuning.Day.NightStart or ctx.hour < Tuning.Day.NightEnd
@@ -125,7 +139,7 @@ event({
 		end
 		for _, who in { "a", "b", "c" } do
 			s:choice("{" .. who .. "}.", function(ch)
-				ch:voice(who, "excited", "sparkle", "cheer")
+				burst(ch, who, WINNER, "sparkle", "cheer")
 				ch:mood(who, 8)
 				ch:hearts(who, 1)
 				ch:memo(who, "I won talent night. The trophy's on my pillow.")
@@ -507,7 +521,7 @@ event({
 		if ctx.rng:chance(0.5) then
 			s:say("b", "{ans}.", "idea", "point")
 			s:n("Right answer. Quiz Team wins a tin of biscuits.")
-			s:voice("a", "excited", "sparkle", "cheer")
+			burst(s, "a", WINNER, "sparkle", "cheer")
 			s:mood("a", 4)
 			s:mood("b", 4)
 		else
@@ -846,12 +860,12 @@ event({
 			_ = "Mine's catching up. Look.",
 		}, "sparkle")
 		s:choice("{a}'s boat wins.", function(c)
-			c:voice("a", "excited", "sparkle", "cheer")
+			burst(c, "a", WINNER, "sparkle", "cheer")
 			c:mood("a", 6)
 			c:mood("b", -1)
 		end)
 		s:choice("{b}'s boat wins.", function(c)
-			c:voice("b", "excited", "sparkle", "cheer")
+			burst(c, "b", WINNER, "sparkle", "cheer")
 			c:mood("b", 6)
 			c:mood("a", -1)
 		end)
