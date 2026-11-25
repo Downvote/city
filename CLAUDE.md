@@ -534,6 +534,14 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
   colours in previews with `--textures` (the grade is on by default). Roblox's sun path is tilted by latitude
   minus 23.5: `Latitude = -20` keeps it over the harbour, on the north plots' fronts.
 - Roblox drops shadow map shadows below graphics quality 4; `PrioritizeLightingQuality` keeps them close by.
+- Every material is a little glossy (the user: "making all materials at least abit glossy"): a texture without a
+  roughness map of its own takes `Data/TextureIds`' `sheen` (a flat grey) as one, and the sky's reflection is up
+  (`Light.SkySpecular`). The background is blurred (the user: "add background blur"): `client/World/Focus` keeps the
+  `Lens` focused on what the camera looks at; tune it in `Tuning.Look.Lens`.
+- The ground (the user: "varied grass, curbs, sidewalks, driveways, flush paths, stains and road paint"): a ground
+  floor in an outdoor material is laid in the grass with a bank and an edging course (`Shapes.laid`), the lawn has
+  patches of other greens (`Data/LawnPatches`, hidden over a dug pool by `Water.cutGround`), and the roads carry
+  oil stains, tar patches and cracks (`StreetPaint`'s wear, off crossings, covers and bays).
 
 ## Rules
 

@@ -2509,3 +2509,34 @@ light blue that starts nearer, so far buildings and hills fade back in layers. T
 neon, lamps and lit signs shine, and signs shine harder at night; it still starts above white, so a white wall in
 the sun stays clear of it.
 
+### Worn textures, glossy materials, a blurred background and better ground
+
+> could you do Painted textures with wear and Ground: varied grass, curbs, sidewalks, driveways, flush paths, stains and road paint
+
+> could you make materials interact with lighting more, making all materials at least abit glossy?
+
+> also, add background blur
+
+(The first was two items from a list of what made our town look less finished than a polished game's.)
+
+- **Textures with wear.** As before, the pictures come from the Creator Store (our own painted set needs an upload).
+  Plaster is now a pale picture with soft grime stains, and concrete a worn one with stains and hairline cracks. Both
+  are grey, so the paint still decides the colour. Brick, planks, paving, roof tiles and asphalt kept their pictures:
+  nothing in the library was greyer and more worn than what they had (the asphalt was already a worn picture).
+- **Gloss.** Every texture has a roughness map now. Where its set has none, it takes a flat 50% grey, which gives
+  each surface a soft sheen. The sky's reflection is turned well up (EnvironmentSpecularScale 0.6 from 0.18), so
+  walls, roofs and roads pick up the sky's light and the sun shows a highlight on them. Roblox's own grass is left
+  alone, as the user asked before.
+- **Background blur.** The lens is focused on whatever the camera looks at: you in town, or your plot from Build
+  mode's height. Near things stay sharp and the town behind goes soft. The sharp zone grows as the camera pulls back,
+  so a wide Build mode view isn't blurred.
+- **Paths laid in the ground.** A ground floor in cobbles, paving, brick, pebble, road or stone used to stand on the
+  lawn as a slab with its side showing. Now the grass banks up to meet its top all round, and a darker edging course
+  runs round its rim (a pale concrete kerb round a road). It keeps its height, so anything standing on it stays put.
+  Floors inside rooms are untouched.
+- **A driveway.** The starting house has a paved driveway from the street up beside the workshop.
+- **Varied grass.** Each player's lawn has patches of other greens over it, lighter, deeper, drier and cooler, each
+  a few turned shapes run together. They are only colour on the ground, and a pool or a basement dug under one hides it.
+- **Stains and road wear.** Every road has oil stains down the middle of the lanes, mended patches of darker tar and
+  the odd crack, kept off crossings, junctions, covers and parking bays. The road paint itself (stop lines with
+  arrows, crossings, bays, yellow kerbs, cycle lanes) was already there.

@@ -125,6 +125,36 @@ local function grating(q: R)
 	end
 end
 
+-- Wear on the road (the user: "stains and road paint"). Drawn with y = 0 on the road, a small
+-- thing's height over it. An oil stain: three dark blobs run together, the sort a parked or
+-- waiting car leaves; a crack: a thin dark line that wanders. Each a single piece.
+local OIL = rgb(66, 66, 72)
+local CRACK = rgb(70, 72, 80)
+local TAR = rgb(92, 94, 104)
+local WEAR = 0.01 -- (a hair over the road, so nothing of it lies in the road's own face)
+local function stain(q: R)
+	q:box(0, WEAR + STEP / 2, 0, 2.6, STEP, 1.7, OIL, "Asphalt")
+	q:boxAt(CFrame.new(0.8, WEAR + STEP / 2, 0.6) * CFrame.Angles(0, 1.2, 0), 1.8, STEP, 1.3, OIL, "Asphalt")
+	q:boxAt(CFrame.new(-0.9, WEAR + STEP / 2, -0.5) * CFrame.Angles(0, 2.1, 0), 1.2, STEP, 1.0, OIL, "Asphalt")
+end
+local function crack(q: R)
+	local x, z = -2.4, 0
+	q:box(x, WEAR + STEP / 2, z, 0.22, STEP, 0.22, CRACK, "Asphalt") -- (its one square box, where it starts)
+	for _, step in { { 1.4, 0.35 }, { 1.2, -0.5 }, { 1.5, 0.2 }, { 1.1, -0.3 } } do
+		local nx, nz = x + step[1], z + step[2]
+		local len = math.sqrt(step[1] ^ 2 + step[2] ^ 2)
+		q:boxAt(
+			CFrame.new((x + nx) / 2, WEAR + STEP / 2, (z + nz) / 2) * CFrame.Angles(0, -math.atan2(step[2], step[1]), 0),
+			len + 0.2,
+			STEP,
+			0.22,
+			CRACK,
+			"Asphalt"
+		)
+		x, z = nx, nz
+	end
+end
+
 -- Six studs of tactile paving at a crossing: yellow, with raised bars.
 local function tactile(q: R)
 	q:box(0, LIFT / 2, 0, 1.3, LIFT, 6, TACTILE, "Concrete")
@@ -578,6 +608,53 @@ function StreetPaint.ground(region: Region?): { Prim }
 			end
 			g += 59
 			n += 1
+		end
+
+		-- Wear: oil down the middle of a lane, a mended patch of darker tar, a crack. Never on a
+		-- crossing or by a junction, and clear of the manhole covers (these, and TownMap's square
+		-- ones half way between) and the gratings at the kerb.
+		local function nearCover(u: number): boolean
+			for _, start in { road.a1 + 105, road.a1 + 46 } do
+				local k = (u - start) / 118
+				if math.abs(k - math.floor(k + 0.5)) * 118 < 5 then
+					return true
+				end
+			end
+			return false
+		end
+		local wear = Random.new(math.floor(math.abs(road.at) * 7 + math.abs(road.a1)))
+		local w, kind = road.a1 + 18 + wear:NextNumber() * 20, 0
+		while w < road.a2 - 18 do
+			local byCar = false
+			for _, spot in carsHere do
+				byCar = byCar or (spot.road == road and math.abs(spot.u - w) < 16)
+			end
+			-- (a crossing's stop line and arrow reach about 20 studs back from it)
+			if fromJunction(road, w) > 14 and not nearZebra(w, 24) and not nearCover(w) and not byCar then
+				local s = if wear:NextNumber() < 0.5 then 1 else -1
+				-- the middle of a lane: half way across the half of the road a driver keeps to
+				local v = right(s) * (if road.main then hw * 0.4 else hw * 0.5)
+				local turn = wear:NextNumber() * 360
+				if kind % 3 == 0 then
+					mark("stain", going(w, v, ROAD, 1) * CFrame.Angles(0, math.rad(turn), 0), stain)
+				elseif kind % 3 == 1 then
+					local long, wide = 4 + wear:NextNumber() * 4, 2.6 + wear:NextNumber() * 1.4
+					rect(
+						w - long / 2,
+						v - wide / 2,
+						w + long / 2,
+						v + wide / 2,
+						ROAD + WEAR,
+						ROAD + STEP,
+						TAR,
+						"Asphalt"
+					)
+				else
+					mark("crack", going(w, v * 0.6, ROAD, 1) * CFrame.Angles(0, math.rad(turn), 0), crack)
+				end
+				kind += 1
+			end
+			w += 16 + wear:NextNumber() * 22
 		end
 
 		if road.main then

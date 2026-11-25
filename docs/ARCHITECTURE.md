@@ -43,6 +43,11 @@ The contract between the parts of the game. Update it with every change to an AP
     it. `axis`, `point`, `size`, `bands` say where things end up.
   - `Shapes`: walls (with openings cut out; `wallReach` gives each end's reach per layer `{ a, b }` so walls meeting
     at corners, T junctions and crossings never share space), floors (with stairwells cut out), roofs (five styles).
+    A ground floor in an outdoor ground material (`Shapes.Laid`: cobbles, paving, pebble, brick, road, rock,
+    sandstone, limestone, and grass and sand without an edging) is laid in the ground (`Shapes.laid(f)`): the
+    same height as any ground floor, a darker edging course `EdgeWidth` round its rim (a concrete kerb round road),
+    and a grass bank (wedges named `Bank`, the plots' own green) `BankRun` out from each side, stopped at the plot's
+    edge.
   - `Builder`: prims to Parts and plan objects to Models; tags night lights, door leaves, seats and beds. A door
     leaf carries `Closed` (its shut CFrame) and `Frame` (its own doorway in the world: `primsFor` notes the item's
     frame on the prim as `frame`); `Builder.doorOpen(leaf)` is where it stands open (swung round `HingeX`, slid by
@@ -71,7 +76,8 @@ The contract between the parts of the game. Update it with every change to an AP
   `Textures` (the painted texture for each material and its studs per tile; `ready()` lists the uploaded ones,
   `install(materialService)` sets each material to its MaterialVariant and makes missing variants where Roblox
   allows it, which is only the command bar and plugins), `TextureIds` (image ids by texture name: Creator Store pictures with their
-  decal and maker, or our uploaded ones; `studs` and `own` per texture). `Textures.tint(material, colour)` is the
+  decal and maker, or our uploaded ones; `studs` and `own` per texture; `sheen` is no texture but the flat grey picture
+  every texture without a roughness map of its own takes as one, so every material shines a little). `Textures.tint(material, colour)` is the
   colour a part of that material gets: lifted most of the way to white when its texture brings its own colour
   (Builder, World and Plots all use it).
 - `Avatar/`: `Appearance` (the saved look, sanitising, which asset types fit which slot), `Categories` (creator tabs,
@@ -458,7 +464,10 @@ are visual pieces with an invisible ramp along their noses. `Data/StreetPaint` l
 by rule from `Town.Roads` (`StreetPaint.ground(region)`, added by `TownMap.ground`): stop lines, arrows, tactile
 strips and yellow kerbs at zebras, manhole covers and gratings, Main Street's cycle lanes, the bus bay, box
 junctions, parking bays (`StreetPaint.parked()` follows TownMap's seeded parking), the square's rings and aprons,
-and a zebra on Hill Road at the stair's foot (`StreetPaint.StairCrossing`). Paint stands a tenth over the road or
+and a zebra on Hill Road at the stair's foot (`StreetPaint.StairCrossing`). Each road also gets wear, seeded by
+the road: an oil stain, a mended patch of darker tar or a crack every 16 to 38 studs down the middle of a lane, kept
+off crossings and their arrows, junctions, the manhole covers and gratings, and the parking bays; each lies 0.01 over
+the road and 0.04 thick (`stain` and `crack` are pieces). Paint stands a tenth over the road or
 pavement it marks (`StreetPaint.Heights`: `lift` 0.11), a small thing on a mark 0.04 over that, and big layers in
 one mark lie side by side. What is set into the square's paving (the fountain's rings, the aprons, the hall's
 bands, the threshold) is listed by `StreetPaint.inlays()` as `{ x1, z1, x2, z2 }`; `TownMap.ground` cuts those out
@@ -977,7 +986,7 @@ shared by players split from players. then, add show more like the other tabs").
 |---|---|
 | `Data` | Loads with a session lock, autosaves every two minutes, saves on leave and shutdown, pushes state patches (`State`), toasts (`Notify`), coins, the town log, the daily gift. |
 | `World` | Builds the town from `Data/TownMap` (streets, plaza, street furniture, decoration, hills, prompts) and the plot bases (each `Base` from the floor down to `Terrain.PlotFloor`); sets the stylised lighting (colour grading tinted by the hour, a bloom from `Tuning.Look.Bloom`, sun rays, haze); the clock (real time, 12 minute days) and calendar; night lights; doors that open for anyone walking up; seasonal weather. |
-| `Plots` | Hands out plots, draws the saved build and the owned land, sells more land (`PlotExpand`). A server holds one player to a plot (`Tuning.Game.MaxPlayers`, also `MaxPlayers` on Players in default.project.json; a published game takes its server size from the game's settings). One more is put on a waiting list, gets a body in the square at once and a note, and is given the next plot that comes free (`GoHome` tells them they have none yet). Characters don't load by themselves (`Players.CharacterAutoLoads` is off in the place): `Plots.spawn` loads one once the player's plot is ready (or after 20 s if their profile never loads), and again `Players.RespawnTime` after a death; every character arrives at its plot. Once a second anyone below `Plots.FallLimit` (-40) is put back on their plot, or in the square. |
+| `Plots` | Hands out plots, draws the saved build and the owned land (a lighter grass sheet with a curb, and patches of other greens over it from `Data/LawnPatches`: parts named `Patch`, no collision or queries, which `Water.cutGround` hides where a pool or a basement is dug under them), sells more land (`PlotExpand`). A server holds one player to a plot (`Tuning.Game.MaxPlayers`, also `MaxPlayers` on Players in default.project.json; a published game takes its server size from the game's settings). One more is put on a waiting list, gets a body in the square at once and a note, and is given the next plot that comes free (`GoHome` tells them they have none yet). Characters don't load by themselves (`Players.CharacterAutoLoads` is off in the place): `Plots.spawn` loads one once the player's plot is ready (or after 20 s if their profile never loads), and again `Players.RespawnTime` after a death; every character arrives at its plot. Once a second anyone below `Plots.FallLimit` (-40) is put back on their plot, or in the square. |
 | `Build` | `BuildApply`, `BuildUndo`, `BuildRedo`: checks requests, charges or refunds, keeps history, redraws, syncs the plan to its owner (`PlanSync`). Fires `Changed`. A batch is up to 320 requests (a whole ready-made building); an item's `wall = "@n"` means the wall made by the batch's n-th request. `Build.prepare` is exported for the specs. A group moved with the Select tool is checked lifted (`prepareMoves`), and `Build.replace` loads a saved build (see "The Select tool and saved builds"). |
 | `Saves` | `BuildSaves`: saved builds kept in `profile.saves`, renamed, saved over, deleted and loaded through `Build.replace` (see "The Select tool and saved builds"). After `Build`. |
 | `Basement` | Digs each basement room out of the terrain under the plot and fills it back exactly when it goes, and has the plot's ground cut round the rooms (see "Floors, the basement and land"). After `Water`. |
@@ -1504,8 +1513,16 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   filmic curve, then the colour correction), and `render.py` and `walk.py` use it by default (`--no-grade` leaves the
   correction off, `render.py --plain` the old flat look). `walk.py` stands the sun where Roblox does for the hour and
   `GeographicLatitude`: the sun's path is tilted by latitude minus 23.5, so latitude -20 puts it over the harbour at
-  46 degrees at noon. The Palette spec holds the ratios: shade 40 to 60 percent of sunlight, violet, a pale wall
+  46 degrees at noon. The Palette spec holds the ratios: shade 45 to 70 percent of sunlight, violet, a pale wall
   below white, readable nights, the grade's saturation and contrast at most 0.15.
+- `client/World/Focus`: the background blur. World puts a DepthOfFieldEffect named `Lens` on Lighting
+  (`Tuning.Look.Lens`); every frame `Focus` sets its `FocusDistance` to the camera's distance from `Camera.Focus`
+  and its `InFocusRadius` to `Reach` times that (never under `InFocusRadius`), eased by `Ease`, so near things stay
+  sharp and the town behind goes soft, on each player's own screen (`Focus.lens(distance)` is the rule).
+- `Data/LawnPatches`: `layout(seed, x1, z1, x2, z2)` gives the boxes of the lawn's patches `{ x, z, sx, sz, yaw,
+  top, color }`: blobs of two or three turned boxes inside a circle, the circles `Gap` apart on the land, one patch
+  for every `Every` square studs up to `Most`, each layer `Lift` over the last from `Base`. The LawnPatches spec
+  holds them on the land, at their own heights and green.
 - `client/World/Outlines`: ink outlines on people. `Outlines.step(from)` gives the `Most` (20) nearest players'
   characters and villagers within `Reach` a Highlight named `Ink` (no fill, dark outline) and takes it off the
   rest; `start` runs it every 0.4 s from the camera.

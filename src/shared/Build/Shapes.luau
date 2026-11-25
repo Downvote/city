@@ -538,6 +538,107 @@ end
 
 local CEILING = Color3.fromRGB(247, 243, 234)
 
+-- A ground floor in one of these is a path or a yard laid in the ground, not a slab on it (the
+-- user's "paths flush with the ground, with an edge": a cobble path used to stand on the lawn as a
+-- slab with its side showing). It keeps the ground floor's height, so whatever stands on it stays
+-- put, but the grass rises to meet it in a gentle bank all round, and a darker edging course runs
+-- round its rim. Soft ground (grass, sand) gets the bank and no edging. Anything else on the ground
+-- floor is a room's floor and stays a plain slab.
+Shapes.Laid = {
+	Cobblestone = true,
+	Pavement = true,
+	Pebble = true,
+	Brick = true,
+	Asphalt = true,
+	Rock = true,
+	Sandstone = true,
+	Limestone = true,
+	Grass = false,
+	Sand = false,
+} :: { [string]: boolean }
+Shapes.EdgeWidth = 0.5 -- the edging course round a laid floor's rim
+Shapes.BankRun = 1.4 -- how far out the grass bank round it reaches
+Shapes.Turf = Color3.fromRGB(138, 192, 112) -- the plots' own grass (Services/World)
+local KERB = Color3.fromRGB(214, 212, 206)
+
+-- Is this ground floor laid in the ground (true with an edging course, false with none), or a
+-- room's slab (nil)?
+function Shapes.laid(f: Plan.Floor): boolean?
+	if f.lv ~= 0 then
+		return nil
+	end
+	local base = string.match(f.m, "^[^:]+") or f.m
+	return Shapes.Laid[base]
+end
+
+-- A floor laid in the ground: the edging course along the floor's own sides and the rest inside
+-- it, side by side so no two faces lie over each other, both cut by the floor's holes; then the
+-- grass bank outside each side, from a little under the ground up to the floor's top. A bank's
+-- back is set a little into the floor, and its ends run past the corners so the banks meet.
+local function laidFloor(out: { Prim }, f: Plan.Floor, edged: boolean, cuts: { { number } }, color: Color3)
+	local top = P.Foundation
+	local function cut(rect: { number }): { { number } }
+		local rects = { rect }
+		for _, h in cuts do
+			rects = Shapes.subtract(rects, h)
+		end
+		return rects
+	end
+	local x1, z1, x2, z2 = f.x1, f.z1, f.x2, f.z2
+	local w = if edged then math.min(Shapes.EdgeWidth, (x2 - x1) / 4, (z2 - z1) / 4) else 0
+	for _, r in cut({ x1 + w, z1 + w, x2 - w, z2 - w }) do
+		table.insert(out, Geometry.span(Vector3.new(r[1], 0, r[2]), Vector3.new(r[3], top, r[4]), color, f.m))
+	end
+	if w > 0 then
+		local base = string.match(f.m, "^[^:]+") or f.m
+		local edgeColor = if base == "Asphalt" then KERB else Colors.shade(color, 0.8)
+		local edgeMat = if base == "Asphalt" then "Concrete" else f.m
+		for _, e in
+			{
+				{ x1, z1, x2, z1 + w },
+				{ x1, z2 - w, x2, z2 },
+				{ x1, z1 + w, x1 + w, z2 - w },
+				{ x2 - w, z1 + w, x2, z2 - w },
+			}
+		do
+			for _, r in cut(e) do
+				table.insert(
+					out,
+					Geometry.span(Vector3.new(r[1], 0, r[2]), Vector3.new(r[3], top, r[4]), edgeColor, edgeMat)
+				)
+			end
+		end
+	end
+	-- the bank: a wedge is full height at its +Z and slopes down to -Z, so each is turned to
+	-- face away from the floor. None runs off the plot (onto the sidewalk at the front), so a
+	-- side whose bank would is left as it is and the others stop at the edge.
+	local run, low, into = Shapes.BankRun, -0.1, 0.08
+	local h, size = top - low, P.Size
+	local yMid = low + h / 2
+	-- (stopped a hair inside the plot's edge, so a bank never ends flush with the floor's own end)
+	local ax1, ax2 = math.max(0.05, x1 - run), math.min(size - 0.05, x2 + run)
+	local az1, az2 = math.max(0.05, z1 - run), math.min(size - 0.05, z2 + run)
+	local function bank(cf: CFrame, length: number)
+		local p = Geometry.box(cf, Vector3.new(length, h, run), Shapes.Turf, "Grass")
+		p.shape = "Wedge"
+		p.name = "Bank"
+		table.insert(out, p)
+	end
+	local back = run / 2 - into -- from the floor's edge to the bank's middle
+	if z1 - run >= 0 then
+		bank(CFrame.new((ax1 + ax2) / 2, yMid, z1 - back), ax2 - ax1)
+	end
+	if z2 + run <= size then
+		bank(CFrame.new((ax1 + ax2) / 2, yMid, z2 + back) * CFrame.Angles(0, math.pi, 0), ax2 - ax1)
+	end
+	if x1 - run >= 0 then -- (local +Z turned to +X)
+		bank(CFrame.new(x1 - back, yMid, (az1 + az2) / 2) * CFrame.Angles(0, math.pi / 2, 0), az2 - az1)
+	end
+	if x2 + run <= size then
+		bank(CFrame.new(x2 + back, yMid, (az1 + az2) / 2) * CFrame.Angles(0, -math.pi / 2, 0), az2 - az1)
+	end
+end
+
 -- `under` are the walls of the storey below, as { x1, z1, x2, z2 } on the plan: an upper floor
 -- stops at them and their own tops carry on level with it, so a floor never lies over the top of a
 -- wall and flickers with it (in an upstairs doorway, at the edge of a terrace).
@@ -558,6 +659,11 @@ function Shapes.floor(f: Plan.Floor, holes: { { number } }?, under: { { number }
 		end
 	end
 	local color = Colors.fromHex(f.c)
+	local laid = Shapes.laid(f)
+	if laid ~= nil then
+		laidFloor(out, f, laid, cuts, color)
+		return out
+	end
 	for _, r in rects do
 		if f.lv == 0 then
 			table.insert(

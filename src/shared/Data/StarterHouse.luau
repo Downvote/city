@@ -77,6 +77,7 @@ local KITCHEN_TILES: Finish = { c = "EADBC0", m = "CeramicTiles" }
 local DECK: Finish = { c = "B48C64", m = "WoodPlanks" }
 local PAVING: Finish = { c = "E2D6BE", m = "Pavement" }
 local FLAGS: Finish = { c = "C2BDB2", m = "Cobblestone" }
+local DRIVE: Finish = { c = "BDB8AE", m = "Pavement" } -- the driveway: pale grey paving
 -- paint for the pieces that take it
 local GREEN = "3F8C86" -- the door and the shutters: teal
 local GREEN_DARK = "2E6B67"
@@ -483,6 +484,11 @@ function StarterHouse.plan(): Plan.PlanData
 	opening("win_square", "shopright", 6)
 	dress("shopleft", 6, false)
 	dress("shopright", 6, false)
+
+	-- a driveway from the street up the right of the workshop, laid in the grass with an edging
+	-- course (Shapes.laid: the user's "curbs, sidewalks, driveways" round a house on its own)
+	ox, oz = OX + W + 4, 0
+	floor(0, 0, 10, OZ + 16, DRIVE)
 
 	return plan
 end
