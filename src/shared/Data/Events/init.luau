@@ -132,6 +132,27 @@ local function join(...: any): { any }
 	return out
 end
 
+-- What someone says when you take their side in a quarrel, in their own way.
+local WIN = {
+	sunny = "Ha! See?|I told you!",
+	proud = "Thank you. Finally, someone sensible.",
+	bold = "Hah.|Told you.",
+	prickly = "See?|Obviously.",
+	cool = "Told you.",
+	shy = "...!|Thank you.",
+	gentle = "Thank you, {player}.|I'm sorry it came to this, though.",
+	cheeky = "hehe|the judge has spoken",
+	dramatic = "Justice!|At LAST.",
+	bookish = "Thank you. The facts were on my side.",
+	gloomy = "Oh. I was right?|That doesn't usually happen.",
+	polite = "Thank you, {player}. I appreciate it.",
+	foodie = "Thank you.|Now. About that pie.",
+	nervous = "I-I was right?|Oh. Okay. Thank you.",
+	easygoing = "Heh. Told you.|Can we stop now?",
+	dreamy = "Oh. I was right.|How nice.",
+	_ = "Thank you.|See? I said so.",
+}
+
 -- What someone says when you take the other side in a quarrel, in their own way.
 local SULK = {
 	proud = "Fine. You'll see I was right.",
@@ -240,7 +261,7 @@ event({
 			choices = {
 				{
 					text = ctx.f("{a}'s right."),
-					lines = join(voice(ctx, "a", a, "happy", "sparkle", "cheer"), burst(ctx, "b", b, SULK, "anger")),
+					lines = join(burst(ctx, "a", a, WIN, "sparkle", "cheer"), burst(ctx, "b", b, SULK, "anger")),
 					effects = {
 						{ t = "rel", a = "a", b = "b", d = -12 },
 						{ t = "mood", who = "a", d = 6 },
@@ -250,7 +271,7 @@ event({
 				},
 				{
 					text = ctx.f("{b}'s right."),
-					lines = join(voice(ctx, "b", b, "happy", "sparkle", "cheer"), burst(ctx, "a", a, SULK, "anger")),
+					lines = join(burst(ctx, "b", b, WIN, "sparkle", "cheer"), burst(ctx, "a", a, SULK, "anger")),
 					effects = {
 						{ t = "rel", a = "a", b = "b", d = -12 },
 						{ t = "mood", who = "b", d = 6 },
@@ -453,7 +474,7 @@ event({
 					sunny = "{b}! {b}! Come to {place} with me!|Now. Right now.",
 					bold = "{b}.|You're free, right? We're going to {place}.",
 					shy = "Um, {b}?|If you're not busy...|would you come to {place}?",
-					cool = "{b}.|{place}. Coming?",
+					cool = "{b}.|Going to {place}. Coming?",
 					_ = "Hey, {b}.|Want to go to {place} with me?",
 				}, "idea", "point", vars),
 				burst(ctx, "b", b, {
@@ -1151,7 +1172,17 @@ event({
 				},
 				{
 					text = "Not this time.",
-					lines = { voice(ctx, "a", a, "sad", "sad") },
+					lines = burst(ctx, "a", a, {
+						proud = "Fine.|I'll save up. I'm good at saving.",
+						shy = "Oh.|Of course. Sorry for asking.",
+						sunny = "Aw.|Later then!",
+						prickly = "Fine.|Didn't really need it.",
+						gloomy = "Yeah.|Figured.",
+						cool = "Okay.",
+						dramatic = "Then I shall go without.|Bravely.",
+						nervous = "Okay.|S-sorry for asking.",
+						_ = "Okay.|Maybe next time.",
+					}, "sad"),
 					effects = { { t = "mood", who = "a", d = -4 } },
 				},
 			},
@@ -1202,7 +1233,7 @@ event({
 					sunny = "{player}! Idea!|Could I have {thing} near my bed?",
 					shy = "Um, {player}...|only if it's okay...|could I have {thing} near my bed?",
 					bold = "{player}.|I want {thing} by my bed.|Can you sort it?",
-					cool = "{player}.|{thing} by my bed?",
+					cool = "{player}.|Could I get {thing} by my bed?",
 					prickly = "My room's missing something. {thing}. By the bed.|If you're not busy.",
 					polite = "Good morning, {player}.|Would it be possible to have {thing} near my bed?",
 					nervous = "Can I ask for something? Sorry.|Could I have {thing} near my bed?",

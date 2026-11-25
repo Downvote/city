@@ -30,6 +30,27 @@ local function burst(s, who: string, map: any, icon: string?, gesture: string?)
 	return s
 end
 
+-- How they take it when the thing they tried comes off.
+local BRAG = {
+	sunny = "Did you see that?|Did you SEE that?",
+	proud = "Naturally.|Say it was good. Louder.",
+	bold = "Hah.|Easy.",
+	shy = "...!|It worked...",
+	cheeky = "boom|first try|ok third",
+	cool = "...Good.",
+	prickly = "Don't make a fuss.|...It was good, though. Right?",
+	dramatic = "BEHOLD!|*applause* <- that's me",
+	bookish = "It worked exactly as planned.|I'm writing that down.",
+	gloomy = "It worked?|Huh. That never happens.",
+	gentle = "Oh, it worked.|How lovely.",
+	dreamy = "Oh.|It wanted to work today.",
+	easygoing = "Heh.|Didn't even try that hard.",
+	polite = "Oh, how pleasing.|Thank you for watching.",
+	foodie = "That calls for a bun.|Two buns.",
+	nervous = "It worked?|It worked!|Oh, thank goodness.",
+	_ = "It worked.|Did you see?",
+}
+
 -- a share of a day's takings at their job
 local function share(ctx, vid, k: number): number
 	local w = ctx.job(vid)
@@ -125,7 +146,7 @@ event({
 		s:choice("One more brick.", function(c)
 			if ctx.rng:chance(0.5) then
 				c:n("It held. It wobbled, and it held.")
-				c:voice("a", "brag", "sparkle", "cheer")
+				burst(c, "a", BRAG, "sparkle", "cheer")
 				c:xp("a", 15)
 				c:mood("a", 5)
 				c:leave("bricks", 8, "a")
@@ -240,7 +261,7 @@ event({
 			:with({ thing = NEWTHINGS[w.job.id] or "something new", place = place(ctx, a) })
 		burst(s, "a", {
 			sunny = "{player}! {player}! New at the {place} today!|It's {thing}. Try it!",
-			proud = "{player}. A new creation at the {place}.|{thing}. You may try it first.",
+			proud = "{player}. A new creation at the {place}.|It's {thing}.|You may try it first.",
 			shy = "Um, {player}...|I made something new.|It's {thing}.|You don't have to try it.",
 			cool = "{player}.|New thing. {thing}.|Try it.",
 			cheeky = "new at the {place}|{thing}|you're the test subject",
@@ -428,7 +449,7 @@ event({
 		s:n("{a} is trying to pour a heart into the foam.")
 		if ctx.rng:chance(0.5) then
 			s:n("It came out a perfect heart. {a} held it up for everyone to see.")
-			s:voice("a", "brag", "sparkle", "cheer")
+			burst(s, "a", BRAG, "sparkle", "cheer")
 			s:xp("a", 10)
 			s:mood("a", 4)
 		else
@@ -508,7 +529,7 @@ event({
 	scene = function(ctx, a)
 		local flavours = { "toast and marmalade", "seaweed and lemon", "birthday cake", "cucumber and mint" }
 		local s = K.scene(ctx, "A new flavour"):with({ flavour = ctx.rng:pick(flavours) })
-		burst(s, "a", "New flavour. {flavour}.|First scoop's free, {player}.", "idea", "point")
+		burst(s, "a", "New flavour today.|It's {flavour}.|First scoop's free, {player}.", "idea", "point")
 		s:choice("One scoop, please.", function(c)
 			c:n("Odd. Then lovely. Then odd again.")
 			burst(c, "a", "That face. Is that a good face?", "question")

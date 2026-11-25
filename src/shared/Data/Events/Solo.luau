@@ -31,6 +31,27 @@ local function burst(s, who: string, map: any, icon: string?, gesture: string?)
 	return s
 end
 
+-- How they take it when the thing they tried comes off.
+local BRAG = {
+	sunny = "Did you see that?|Did you SEE that?",
+	proud = "Naturally.|Say it was good. Louder.",
+	bold = "Hah.|Easy.",
+	shy = "...!|It worked...",
+	cheeky = "boom|first try|ok third",
+	cool = "...Good.",
+	prickly = "Don't make a fuss.|...It was good, though. Right?",
+	dramatic = "BEHOLD!|*applause* <- that's me",
+	bookish = "It worked exactly as planned.|I'm writing that down.",
+	gloomy = "It worked?|Huh. That never happens.",
+	gentle = "Oh, it worked.|How lovely.",
+	dreamy = "Oh.|It wanted to work today.",
+	easygoing = "Heh.|Didn't even try that hard.",
+	polite = "Oh, how pleasing.|Thank you for watching.",
+	foodie = "That calls for a bun.|Two buns.",
+	nervous = "It worked?|It worked!|Oh, thank goodness.",
+	_ = "It worked.|Did you see?",
+}
+
 -- Something they made, which they may let you keep: shown while the scene plays, given as a
 -- keepsake (Build/Recipes/Keepsakes) if you ask for it, kept if you tell them to.
 local function makes(o: { [string]: any })
@@ -1081,7 +1102,24 @@ event({
 			local p = ctx.rng:pick(PARCEL)
 			c:with({ inside = p[1] })
 			c:n("Inside was {inside}")
-			c:voice("a", if p[2] > 0 then "wow" else "hmm", if p[2] > 0 then "sparkle" else "question")
+			if p[2] > 0 then
+				burst(c, "a", {
+					sunny = "Oh! Oh, I love it!",
+					cool = "...Huh.|Nice.",
+					prickly = "Hm.|...I'm keeping it.",
+					shy = "...!|For me?",
+					gloomy = "Something nice.|For me. Huh.",
+					cheeky = "ok this is better than a prank",
+					_ = "Oh.|Oh, that's nice.",
+				}, "sparkle")
+			else
+				burst(c, "a", {
+					prickly = "A button.|Seriously.",
+					dramatic = "A BUTTON.|All that for a button.",
+					cheeky = "a button|respect, honestly",
+					_ = "...A button.|Okay.",
+				}, "question")
+			end
 			c:mood("a", p[2])
 			c:memo("a", "Someone sent me a parcel. I still don't know who.")
 		end)
@@ -2088,7 +2126,7 @@ event({
 		}, "idea", "point")
 		if ctx.rng:chance(0.35) then
 			s:n("It worked. Everyone was as surprised as {a} was.")
-			s:voice("a", "brag", "sparkle", "cheer")
+			burst(s, "a", BRAG, "sparkle", "cheer")
 			s:mood("a", 6)
 		else
 			s:n("There was a bang and a smell like burnt toast.")
@@ -3108,6 +3146,7 @@ event({
 				prickly = "That wasn't for you.|...Okay, the last bit was. Ladder. Saturday. Please.",
 				_ = "Oh. That was my list.|...Since you're here. Can I borrow your ladder?",
 			}, "sweat")
+			c:n("On Saturday the shed went green, and so did one of {a}'s elbows.")
 		end)
 		s:choice("Ask who about the ladder?", function(c)
 			burst(c, "a", {
@@ -3116,6 +3155,7 @@ event({
 				dramatic = "You, {player}. It was always you!|Saturday. The shed awaits.",
 				_ = "Oh. You, actually.|Saturday, if you can spare it.",
 			}, "sweat")
+			c:n("On Saturday the shed went green, and so did one of {a}'s elbows.")
 		end)
 		s:mood("a", 4)
 		s:hearts("a", 1)
@@ -3481,7 +3521,7 @@ event({
 		}, "idea", "point")
 		if ctx.rng:chance(0.55) then
 			s:n("A perfect cartwheel. Then another one, for luck.")
-			s:voice("a", "brag", "sparkle", "cheer")
+			burst(s, "a", BRAG, "sparkle", "cheer")
 		else
 			s:n("Half a cartwheel. Then a sit down on the grass.")
 			burst(s, "a", {
