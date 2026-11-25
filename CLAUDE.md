@@ -32,7 +32,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (511 at the last full run; `Voice`: each personality's own hand, and a villager's ending; `Memory`: what events leave
+Specs today (618 at the last full run; `Voice`: each personality's own hand, and a villager's ending; `Memory`: what events leave
 with a villager for a few days, the accessory on and off; `FlairService`: buying flair with gems on the server, with
 stubbed neighbours; `Store`: passes owned, a gem pack's receipt paid once, the pay boost from Double Pay, VIP and the group;
 `Offline`: what the town earned while the player was away; `Rewards`: gems from the daily gift, playtime and
