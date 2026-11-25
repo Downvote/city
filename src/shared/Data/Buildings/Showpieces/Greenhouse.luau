@@ -28,7 +28,7 @@ return function(add: any)
 	add(
 		"show_greenhouse",
 		"Greenhouse",
-		"A glass house with staging full of pots, vegetable beds and a potting bench.",
+		"A glass house with pots on staging down both sides and vegetable beds in the middle.",
 		"plant",
 		24,
 		28,

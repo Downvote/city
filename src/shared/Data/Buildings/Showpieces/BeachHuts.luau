@@ -32,7 +32,7 @@ return function(add: any)
 	add(
 		"show_beach_huts",
 		"Beach huts",
-		"Three painted huts on the sand with decks, deck chairs and sun umbrellas.",
+		"Three painted huts on the sand, with deck chairs and sun umbrellas out front.",
 		"sun",
 		32,
 		22,

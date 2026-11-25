@@ -30,7 +30,7 @@ return function(add: any)
 	add(
 		"show_treehouse",
 		"Treehouse",
-		"A log hut on a deck round a great oak, with stairs up, swings and a sandbox below.",
+		"A log hut on a deck round a great oak, with stairs up to it and swings below.",
 		"tree",
 		34,
 		34,

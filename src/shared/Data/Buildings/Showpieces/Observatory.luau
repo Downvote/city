@@ -33,7 +33,7 @@ return function(add: any)
 	add(
 		"show_observatory",
 		"Observatory",
-		"A study with a domed telescope on its roof, star charts inside and a sundial out front.",
+		"A study with a domed telescope on its roof and a sundial out front.",
 		"moon",
 		26,
 		28,
