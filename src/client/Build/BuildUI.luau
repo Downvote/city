@@ -2664,14 +2664,23 @@ local HINT_HOME = UDim2.new(0, EDGE + 12, 1, -HINT_AT)
 local HOLD_W = 84
 local TURN_W = 52
 local function hintLow(): UDim2
-	return UDim2.new(0, EDGE + 12 + HOLD_W + GAP + (if Kit.isTouch() then TURN_W + GAP else 0), 1, -(EDGE + 12))
+	-- (the round turn button stands there on a touch screen, unless a drawing has nothing to turn)
+	local turns = Kit.isTouch() and not BuildMode.isDrawing()
+	return UDim2.new(0, EDGE + 12 + HOLD_W + GAP + (if turns then TURN_W + GAP else 0), 1, -(EDGE + 12))
 end
 
 -- Is a piece in hand, following the pointer to be placed (from a card, or picked up to move or
--- copy)? The tools that draw keep their trays.
+-- copy), or is something being drawn (a wall, a fence, a room, a floor or path, a roof, a pool:
+-- from its first point until it is down or stopped)? The user: "when putting down anything, even
+-- the paths, fences and walls, hide the ui just like when putting down buildings and other decor".
 local function isHolding(): boolean
 	return s.active
-		and ((s.tool == "place" and s.placing ~= nil) or s.tool == "preset" or (grouping() and SelectTool.holding()))
+		and (
+			(s.tool == "place" and s.placing ~= nil)
+			or s.tool == "preset"
+			or (grouping() and SelectTool.holding())
+			or BuildMode.isDrawing()
+		)
 end
 
 -- Slides the interface away while a piece is held, and back when it is put away. `instant` puts
@@ -2730,11 +2739,13 @@ local function setHolding(on: boolean, instant: boolean?)
 	end
 	-- the way back (and on a touch screen the round button that turns the piece) beside it
 	local touch = Kit.isTouch()
+	-- (a drawing has nothing to turn: only the way back stands beside the hint)
+	local turns = touch and not BuildMode.isDrawing()
 	local turn = touchButtons:FindFirstChild("Turn it")
 	if turn and turn:IsA("GuiObject") then
-		turn.Visible = touch
+		turn.Visible = turns
 	end
-	touchButtons.Size = UDim2.fromOffset(HOLD_W + (if touch then TURN_W + GAP else 0), 52)
+	touchButtons.Size = UDim2.fromOffset(HOLD_W + (if turns then TURN_W + GAP else 0), 52)
 	touchButtons.Visible = on
 	refreshStretchCard() -- (Stretch's sliders beside it, for the piece in hand)
 	refreshChrome()

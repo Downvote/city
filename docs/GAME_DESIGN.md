@@ -1689,7 +1689,7 @@ left corner. Place a piece and carry on with another copy and it all stays away;
 Esc or Backspace) or leave Build mode and it slides back where it was.
 
 - It counts as holding when the piece came from a card, is a ready-made building, a door or a window, or is being
-  moved or copied. The tools that draw (walls, rooms, floors, roofs, fences, paths, paint, sell) keep their trays.
+  moved or copied. The tools that draw (walls, rooms, floors, roofs, fences, paths) keep their trays until something is being drawn (paint and sell always keep theirs).
 - R, Ctrl+Z and PageUp and PageDown still work, and a floor change still says "Floor 2" in the hint.
 - The hint reads "Click to place it. R turns it, right click puts it away." for a piece and "Click to put it down.
   R turns it, right click puts it away." for a ready-made building.
@@ -2467,4 +2467,14 @@ moment you get up, step away or the conversation closes.
 In the creator, Players is the people in the server and your friends, and Shared is the looks other players shared,
 with the box to share yours at the top. Each shows 24 at a time with Show more at the foot, the way the catalog's
 tabs do, and asks the server for the next lot only when it's pressed. Up to 200 people and 120 shared looks.
+
+### Drawing clears the screen too
+
+> when putting down anything, even the paths, fences and walls, hide the ui just like when putting down buildings and other decor
+
+Drawing now clears the screen the way holding a piece does. From the first point of a wall or a fence, and the first
+corner of a room, a floor or path, a roof or a pool, everything but the hint slides away, with the red way back
+beside it. A wall chain keeps the screen clear until a right click or the way back stops it; a drag or a second
+corner brings the bars back as soon as the piece is down. Picking a wall style or a floor's finish still happens with
+the tray up, before the first click.
 

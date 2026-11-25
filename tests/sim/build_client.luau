@@ -113,14 +113,50 @@ run("drawing a wall by dragging", function()
 end)
 
 run("drawing a wall click by click", function()
+	-- while something is being drawn the interface steps aside as for a piece in hand (the user:
+	-- "when putting down anything, even the paths, fences and walls, hide the ui just like when
+	-- putting down buildings and other decor")
+	local ui = gui:FindFirstChild("BuildUI")
+	local function shown(name)
+		local f = ui:FindFirstChild(name)
+		return f ~= nil and f.Visible
+	end
+	check(shown("Catalog") and shown("Tools"), "with the wall tool on and nothing drawn yet, the bars are there")
 	local before = count("walls")
 	mouseAtPlot(212, 130)
 	click()
+	Sim.advance(0.5)
+	frames(2)
+	check(BuildMode.isDrawing(), "the first click starts a wall")
+	check(
+		not shown("Dock") and not shown("Catalog") and not shown("Tools") and not shown("Floors"),
+		"and the bars slide away while it is drawn"
+	)
+	check(ui:FindFirstChild("Hint").Visible, "the hint stays")
+	local away = ui:FindFirstChild("Put it away", true)
+	check(away ~= nil and Fake.shown(away), "with the way back beside it")
 	mouseAtPlot(232, 130)
 	click()
 	check(count("walls") == before + 1, "two clicks build a wall")
+	frames(2)
+	check(BuildMode.isDrawing() and not shown("Catalog"), "the chain goes on from its end, the bars still away")
 	input(Enum.UserInputType.MouseButton2, true)
 	input(Enum.UserInputType.MouseButton2, false)
+	frames(2)
+	check(
+		not BuildMode.isDrawing() and shown("Catalog") and shown("Tools"),
+		"a right click stops it and the bars come back"
+	)
+	-- the way back stops a drawing too
+	mouseAtPlot(212, 140)
+	click()
+	Sim.advance(0.5)
+	frames(2)
+	check(not shown("Catalog"), "a new wall: the bars go again")
+	press("Put it away")
+	frames(2)
+	check(not BuildMode.isDrawing() and shown("Catalog"), "the way back stops it and brings them back")
+	check(count("walls") == before + 1, "with no wall built")
 end)
 
 run("dragging out a room", function()
@@ -136,6 +172,19 @@ run("laying a floor", function()
 	local before = count("floors")
 	drag(220, 134, 232, 144)
 	check(count("floors") == before + 1, "a dragged floor is laid")
+	-- a floor (or a path) laid corner by corner: the bars are away from the first corner to the second
+	local ui = gui:FindFirstChild("BuildUI")
+	mouseAtPlot(220, 150)
+	click()
+	Sim.advance(0.5)
+	frames(2)
+	check(BuildMode.isDrawing() and not ui:FindFirstChild("Catalog").Visible, "the first corner sends the bars away")
+	mouseAtPlot(230, 158)
+	click()
+	Sim.advance(0.5)
+	frames(2)
+	check(count("floors") == before + 2, "the second corner lays it")
+	check(not BuildMode.isDrawing() and ui:FindFirstChild("Catalog").Visible, "and the bars come back")
 end)
 
 -- Floors and the basement (Sim/Floors, Build/Basement, Build/Underground): the user, "another

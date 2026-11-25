@@ -1469,11 +1469,13 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   the left with `Hint` over it, `Floors` above it at the right (a row of five icon buttons named `FloorDown`,
   `FloorUp`, `Hide roofs`, `See-through walls` and `Fine grid`; the hint line says what a press did), `Placing`
   beside the tools (Free Placing's switch; see "Placing: collisions, angles, Fine Grid, Stretch and Any Colour"), the coin
-  `Pill` top left. While a piece is held to place, every one of them but `Hint` slides off the screen (down, or up
+  `Pill` top left. While a piece is held to place, or something is being drawn (`BuildMode.isDrawing()`: a wall or
+  fence from its first point, a chain of them until stopped, a room, floor, path, roof or pool from its first
+  corner), every one of them but `Hint` slides off the screen (down, or up
   for the pill and the camera help) and is hidden once gone; a check once a frame decides it, and they slide back
-  when the holding ends or Build mode closes. `BuildMode.putAway()` ends holding, as a right click does: `Holding`
+  when the holding or the drawing ends or Build mode closes. `BuildMode.putAway()` ends holding or stops a drawing, as a right click does: `Holding`
   beside the hint shows while a piece is held, for every player, with the red `Kit.backButton` named
-  `Put it away` that calls it and, on a touch screen, the round `Turn it`. The catalog's well keeps `SubNote` at its
+  `Put it away` that calls it and, on a touch screen, the round `Turn it` (not while drawing: there's nothing to turn). The catalog's well keeps `SubNote` at its
   right end (the picked category's `Index`, "01 / 11", over its name set wide). `Kit.glide` slides the yellow between
   the main groups and between the categories.
 

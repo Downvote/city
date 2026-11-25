@@ -2083,9 +2083,22 @@ end
 -- Puts down what you are holding to place without placing it (the right click and Esc of a
 -- screen with no mouse and no keys: Build mode's round button while the interface is away).
 function BuildMode.putAway()
-	if s.tool == "place" or s.tool == "preset" or (s.tool == "multi" and SelectTool.holding()) then
+	if
+		s.tool == "place"
+		or s.tool == "preset"
+		or (s.tool == "multi" and SelectTool.holding())
+		or BuildMode.isDrawing()
+	then
 		cancel()
 	end
+end
+
+-- Is something being drawn: a wall or a fence from its first point (a chain of them until it is
+-- stopped), or a room, a floor, a roof or a pool from its first corner? BuildUI steps the
+-- interface aside for it as for a piece in hand (the user: "when putting down anything, even the
+-- paths, fences and walls, hide the ui just like when putting down buildings and other decor").
+function BuildMode.isDrawing(): boolean
+	return s.active and (wallStart ~= nil or rectStart ~= nil)
 end
 
 -- The Select tool's group, for BuildUI's tray and tools (Build/SelectTool).

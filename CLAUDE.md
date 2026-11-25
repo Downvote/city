@@ -454,7 +454,10 @@ building, a door or window, a piece being moved or copied), the whole interface 
 the hint stays, at the bottom left ("when placing down things in build mode, make the whole interface slide down
 other than this tooltip, then reappear once the player puts it away"); it comes back when the piece is put away
 or Build mode is left. `BuildUI`'s holding check, once a frame, is the one place that decides it, and what has slid
-off is hidden so it can't catch a click. The tools that draw keep their trays. Beside the hint stands the red
+off is hidden so it can't catch a click. Drawing counts too (the user: "when putting down anything, even the
+paths, fences and walls, hide the ui just like when putting down buildings and other decor"): from a wall's or a
+fence's first point (a chain until it's stopped) and a room's, floor's, path's, roof's or pool's first corner until
+it is down or stopped (`BuildMode.isDrawing`); with nothing being drawn, a drawing tool keeps its tray. Beside the hint stands the red
 leaning way back (`Kit.backButton`, named "Put it away"), for every player, doing what a right click does
 (`BuildMode.putAway`; the user: "add a back button while having a building being put down that does the same as
 right click"), and a touch player gets a round "Turn it" button beside it too.
