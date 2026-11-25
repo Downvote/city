@@ -485,6 +485,23 @@ if buildings then
 			(require(module) :: any)(add)
 		end
 	end
+	-- Homes and showpieces (the user: "make much more building types, including decorative
+	-- ones"): every module in Buildings/Homes and Buildings/Showpieces is a function(add) like the
+	-- workplaces, loaded in name order, so a new one only needs its file.
+	for _, folderName in { "Homes", "Showpieces" } do
+		local folder = buildings:FindFirstChild(folderName)
+		if folder then
+			local modules = folder:GetChildren()
+			table.sort(modules, function(a, b)
+				return a.Name < b.Name
+			end)
+			for _, module in modules do
+				if module:IsA("ModuleScript") then
+					(require(module) :: any)(add)
+				end
+			end
+		end
+	end
 end
 
 Presets.list = list

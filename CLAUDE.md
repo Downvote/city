@@ -83,26 +83,12 @@ avenues (`Terrain.Cape`, `Terrain.south(x)`) and the hills start further north b
 island's natural ground is Roblox terrain (`Data/Terrain`, written by `World.buildTerrain` when the server starts:
 "the shoreline should be wavy, with water lapping up to it" and "make the grass and plants like in the image"):
 golden green Grass, a beach in sine wave curves sloping into terrain water with small waves, smooth hills
-(`Hills.at`). The long grass on it is SkinnedGrass by xander_z22 (the user: "you should use this for grass", with
-its forum post; Roblox's own terrain blades never showed for them and stay off): the pack ships as it came in
-`vendor/SkinnedGrass.rbxm` (ServerStorage; `World.shareGrass` hands the clients a copy without its sample
-scripts), and `client/World/Grass` lays its patches round the camera. A tuft is drawn where its bone is, and the
-pack's bones are bunched in the middle of its mesh (one tall clump per patch: "too shiny and too big, and only at
-some areas"), so each patch's 100 bones are laid out again on our own fine grid and the mesh is shrunk and wears
-the plain matt look Blade; the grass runs taller and shorter in drifts with bare spots ("too even, grass should be
-more random"), each square has patches in two greens with their tufts mixed ("make the colors of grass
-random? and dense enough to cover all the floor?", then three were "too laggy, make it less dense"), and tufts are
-always placed with the patch's origin bone at rest (otherwise they fly); the blades are slightly see-through
-("could you make it such that the grass is slightly transparent?", `Transparency`) and fade out in a circle round
-the player instead of stopping at the pack's squares ("instead of grass hard cutting, can it become less opaque as
-they go futher from the player instead, in a circle?": `Tuning.Grass.Fade`, each tuft sinking by its own distance,
-each patch more see-through; keep `Start` past `WindReach` and `End` short of `Distance`);
-each tuft stands on the ground under it where that is Grass all round (terrain, a plot's lawn, a grass lawn in
-town) and sinks anywhere else, again when a plot changes (numbers in `Tuning.Grass`). Keep the author's credit with it. Nothing built may stand on terrain Grass:
+(`Hills.at`). There is no long grass on it (the user, after several rounds of SkinnedGrass blades: "remove the
+grass"), and Roblox's own terrain blades stay off; don't bring either back. Nothing built may stand on terrain Grass:
 `TownMap.cover` lists what is built and the terrain under it is LeafyGrass, so a new kind of ground part or a
 placed model is covered by rule. Never give MaterialService a Grass override: the floor keeps Roblox's own grass texture (a smooth
-plain one was tried: "never mind, the previous grass texture was ok"), and the long grass is coloured to match it. The plots' floors and lawns are visible parts at floor level (an invisible floor over terrain made
-the ground look sunk). The previews draw the terrain as triangles and show no long grass.
+plain one was tried: "never mind, the previous grass texture was ok"). The plots' floors and lawns are visible parts at floor level (an invisible floor over terrain made
+the ground look sunk). The previews draw the terrain as triangles.
 `Data/TownMap` lays out the ground and where everything stands, `Data/CityModels` draws the buildings and landmarks,
 `Data/Places` lists the places to find. The user wants it detailed like a classic city builder: buildings on
 landscaped lots (`CityModels.lot`), window bays, signs, roof details, parked cars, groves, textured ground, all
@@ -145,8 +131,8 @@ Preview the layouts with `sh tools/preview/ui.sh signs <png>` (also `signs:board
 The user asked for a lively world ("animated blades of grass, animated details, small creatures, trees with leaves
 that sway with the wind") and a clear sky ("remove clouds and birds from the sky"): leaves are parts named `Leaf`,
 hanging signs `SwingSign`, fountain jets `Jet`, and `World/Ambience` moves them and the ducks on each player's
-own screen (the grass is `World/Grass`). Name a new tree's crown parts `Leaf` and it sways. (The user later: "remove the butterflies
-and bunnies". Don't bring them back.)
+own screen. Name a new tree's crown parts `Leaf` and it sways. (The user later: "remove the butterflies
+and bunnies" and "remove the grass". Don't bring them back.)
 
 The user: "remove the shop, buying of things and food and feeding. when a character gets a craving, allow the
 player to simply pay to buy it" and "remove the map button and the map interface". So there is no shop, no bag
@@ -456,8 +442,7 @@ colour when the picture has a pattern, and keep one texture to a line in `Data/T
 `render.sh <scene> <png> --textures` shows them. Our own painted set (`scripts/gen_textures.py`, art/textures)
 covers the rest and can be uploaded with `scripts/upload_textures.py`. The town's looks (the user: "you can make your own textures
 for these too") are second faces for a material that only the parts naming them wear (`"Concrete:Panel"`,
-`"Brick:Maple"`, `"CeramicTiles:Mosaic"` and twelve more: `Textures.looks`; `"SmoothPlastic:Blade"` is the long grass's
-plain matt face). We painted our own
+`"Brick:Maple"`, `"CeramicTiles:Mosaic"` and eleven more: `Textures.looks`). We painted our own
 (`python3 scripts/gen_textures.py --looks`), but asked how to get them into the game the user chose "use roblox
 library images that are similar", so each wears a Creator Store picture like the materials do; the painted set
 stays in art/textures, unused. A `light` on a line of `Data/TextureIds` brightens the paint under a dark picture,

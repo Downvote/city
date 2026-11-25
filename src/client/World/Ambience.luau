@@ -1,5 +1,5 @@
 -- Life around town that nobody builds: cars and a bus on the street (they stop at the
--- crossings for anyone walking over), leaves leaning with the wind (the grass is World/Grass), flags waving,
+-- crossings for anyone walking over), leaves leaning with the wind, flags waving,
 -- fountains spraying, traffic lights changing, boats bobbing, ducks on the ponds, and fireflies
 -- over the lawns at night. (Butterflies and rabbits were here too until the user said "remove
 -- the butterflies and bunnies".) All of it is local to each player's screen: nothing here is

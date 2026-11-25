@@ -128,10 +128,6 @@ local function underRoof(at: Vector3): boolean
 	if char then
 		table.insert(skip, char)
 	end
-	local grass = workspace:FindFirstChild("Grass")
-	if grass then
-		table.insert(skip, grass)
-	end
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	params.FilterDescendantsInstances = skip

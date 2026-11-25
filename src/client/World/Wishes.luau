@@ -1,7 +1,10 @@
 -- A bubble over every villager with a wish (the server marks their model's "Wish" attribute with
--- the wish's icon): the icon on a square of dark glass with a tail toward their head, and a click
--- opens their page to see what they want. A craving shows the very thing they crave, which
--- the player can buy for them from their page (the Villagers screen) or by talking to them.
+-- the wish's icon): the icon on a square of dark glass with a tail toward their head. A craving
+-- shows the very thing they crave. A click brings up a small popup (UI/WishPopup) that says what
+-- they want and answers it there: the user, "clicking the bubble that appears above villagers
+-- when they have a craving should show a popup what they want and allow the player to satisfy it
+-- instead of their whole profile page". Their page (the Villagers screen) and the talk card can
+-- still do it too.
 
 local Players = game:GetService("Players")
 
@@ -71,7 +74,7 @@ local function show(model: Model, icon: string)
 	local v = if type(vid) == "string" then State.villager(vid) else nil
 	local food = v and v.wish and v.wish.kind == "food" and Foods.get(v.wish.arg)
 	local g = Wishes.face(bb, icon, food or nil)
-	-- a click on it opens their page
+	-- a click on it brings up what they want, to answer it there
 	local button = Kit.new("TextButton", {
 		Name = "Open",
 		Text = "",
@@ -85,7 +88,7 @@ local function show(model: Model, icon: string)
 		local id = model:GetAttribute("Vid")
 		if type(id) == "string" then
 			local Hud = require(script.Parent.Parent.UI.Hud)
-			Hud.open("Residents", id)
+			Hud.open("WishPopup", id)
 		end
 	end)
 	bb.Parent = gui

@@ -15,6 +15,14 @@
 --   "opening" a door or window that cuts the wall
 --   "ceiling" hangs from the ceiling
 --   "stairs"  climbs one storey and cuts the floor above
+--   "mark"    flat paint lying on a floor, a path or the ground, on any level (Recipes/Markings):
+--             it never stops anything standing over it, and another mark can go over it
+-- Two more optional fields:
+--   stack = true      stands on top of other pieces as well as on floors (the basic shapes)
+--   picture = true    shows a picture the player picks from the Roblox library (Recipes/Pictures):
+--                     the part it shows on carries attrs.Picture (the face, a NormalId name), the
+--                     placeholder drawn until there is one is named "Placeholder", and the
+--                     placed item keeps the picture's id as `img` (Plan)
 
 local Recipe = require(script.Parent.Recipe)
 local Colors = require(script.Parent.Parent.Util.Colors)
@@ -39,12 +47,17 @@ export type Def = {
 	build: (r: Recipe.Recipe) -> (),
 	order: number?,
 	style: string?, -- the look it belongs to (Catalog.Styles): Build mode can list a whole style together
+	stack: boolean?, -- stands on other pieces too (see above)
+	picture: boolean?, -- takes a picture from the library (see above)
 }
 
 local Catalog = {}
 
 Catalog.Categories = {
 	{ id = "structure", name = "Structure" },
+	-- cubes, cylinders, balls, wedges and the rest, in a few sizes, to build anything from (the
+	-- user: "there should also be basic shapes, like cube, cylinder, etc")
+	{ id = "shapes", name = "Shapes" },
 	{ id = "doors", name = "Doors" },
 	{ id = "windows", name = "Windows" },
 	{ id = "seating", name = "Seating" },
@@ -57,7 +70,13 @@ Catalog.Categories = {
 	{ id = "fun", name = "Fun" },
 	{ id = "decor", name = "Decor" },
 	{ id = "walldecor", name = "On walls" },
+	-- posters, frames, signs and decals showing a picture the player picks from the Roblox library
+	-- (the user: "allow the player to use custom decal in the roblox library")
+	{ id = "pictures", name = "Pictures" },
 	{ id = "garden", name = "Garden" },
+	-- flat paint on floors, paths and the ground: lines, arrows, crossings, court lines, chalk (the
+	-- user: "add another section where players can put down markings, like in bloxburg")
+	{ id = "markings", name = "Markings" },
 	{ id = "work", name = "Work" },
 	-- things villagers made you in events: free, and only as many as you were given (Sim/Keepsakes)
 	{ id = "keepsakes", name = "Keepsakes" },
@@ -86,6 +105,7 @@ Catalog.Places = {
 	opening = true,
 	ceiling = true,
 	stairs = true,
+	mark = true,
 }
 
 -- Tags villagers can ask for in a room request, with how they say it.
@@ -108,7 +128,9 @@ Catalog.Tags = {
 }
 
 -- Tags that aren't asked for in requests but mean something.
-Catalog.OtherTags = { bed = true, stairs = true, kitchen = true, bath = true, work = true, keepsake = true }
+-- (`path`: a piece to walk on outdoors, listed on Build mode's Paths tab: Catalog.isPath)
+Catalog.OtherTags =
+	{ bed = true, stairs = true, kitchen = true, bath = true, work = true, keepsake = true, path = true }
 
 local byId: { [string]: Def } = {}
 local byCat: { [string]: { Def } } = {}
@@ -193,13 +215,108 @@ function Catalog.hasTag(def: Def, tag: string): boolean
 	return def.tags ~= nil and table.find(def.tags, tag) ~= nil
 end
 
--- Draws an item in its own space with the given paint (hex; nil for the defaults).
-function Catalog.prims(def: Def, c1: string?, c2: string?): { Recipe.Prim }
+-- Where a category comes in Catalog.Categories (one not listed goes last).
+local catOrder: { [string]: number } = {}
+for i, cat in Catalog.Categories do
+	catOrder[cat.id] = i
+end
+function Catalog.categoryOrder(cat: string): number
+	return catOrder[cat] or #Catalog.Categories + 1
+end
+
+-- Every piece of one style (Catalog.Styles), across every category: by category in the order
+-- Build mode shows them, then in catalog order. Keepsakes are left out (they are gifts).
+function Catalog.withStyle(style: string): { Def }
+	local out = {}
+	for _, def in all do
+		if def.style == style and def.cat ~= "keepsakes" then
+			table.insert(out, def)
+		end
+	end
+	table.sort(out, function(a, b)
+		local ca, cb = Catalog.categoryOrder(a.cat), Catalog.categoryOrder(b.cat)
+		if ca ~= cb then
+			return ca < cb
+		end
+		return (a.order or 0) < (b.order or 0)
+	end)
+	return out
+end
+
+-- A piece to walk on outdoors (stepping stones, a boardwalk, paving): tagged `path`, or a low
+-- flat piece that goes on the ground, or one named as a path. Build mode's Paths tab lists them.
+function Catalog.isPath(def: Def): boolean
+	if Catalog.hasTag(def, "path") then
+		return true
+	end
+	if def.cat == "keepsakes" or def.place == "mark" then
+		return false
+	end
+	if def.place == "ground" and def.size.Y <= 0.6 then
+		return true
+	end
+	return string.find(def.id, "path", 1, true) ~= nil
+end
+
+function Catalog.paths(): { Def }
+	local out = {}
+	for _, def in all do
+		if Catalog.isPath(def) then
+			table.insert(out, def)
+		end
+	end
+	return out
+end
+
+-- Can a piece of `def` stand on top of a placed piece of `below`? Small things go on any top
+-- (a table, a counter, a shape), the basic shapes stack on each other and on tops, and a mark
+-- lies on a path, a low platform (a deck) or another mark. A mark never holds anything up: what
+-- is put over one stands on whatever the mark lies on.
+function Catalog.standsOn(def: Def, below: Def): boolean
+	if def.place == "mark" then
+		if below.place == "mark" or Catalog.isPath(below) then
+			return true
+		end
+		return below.surface ~= nil
+			and below.surface <= 1.2
+			and (below.place == "floor" or below.place == "ground" or below.place == "surface")
+	end
+	if below.place == "mark" then
+		return false
+	end
+	return def.place == "surface" or def.stack == true
+end
+
+-- Draws an item in its own space with the given paint (hex; nil for the defaults). A piece that
+-- takes a picture is drawn with `img` (a library id, Plan) showing on it, or with its
+-- placeholder when there is none. A mark is never solid: people and pieces go over it.
+function Catalog.prims(def: Def, c1: string?, c2: string?, img: number?): { Recipe.Prim }
 	local col1 = Colors.fromHex(c1 or def.c1)
 	local col2 = Colors.fromHex(c2 or def.c2 or def.c1)
 	local r = Recipe.new(col1, col2)
 	def.build(r)
-	return r.prims
+	local prims = r.prims
+	if def.picture then
+		local shown = {}
+		for _, p in prims do
+			if img and p.name == "Placeholder" then
+				continue
+			end
+			if img and p.attrs and p.attrs.Picture then
+				local attrs = table.clone(p.attrs)
+				attrs.PictureId = img
+				p.attrs = attrs
+			end
+			table.insert(shown, p)
+		end
+		prims = shown
+	end
+	if def.place == "mark" then
+		for _, p in prims do
+			p.collide = false
+		end
+	end
+	return prims
 end
 
 return Catalog

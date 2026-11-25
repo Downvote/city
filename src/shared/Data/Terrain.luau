@@ -3,9 +3,8 @@
 -- way round whose edge at the water is a run of soft curves, the shallows and the deep sea. The
 -- user: "the shoreline should be wavy, with water lapping up to it", then, with a picture of a
 -- Roblox place covered in tall golden green grass, "make the grass and plants like in the image".
--- The water is Roblox's terrain water with waves that run up the sand. The long grass on top is
--- SkinnedGrass's (client World/Grass: the user, when Roblox's own blades didn't show for them,
--- "you should use this for grass"); it grows only where this terrain is Grass.
+-- The water is Roblox's terrain water with waves that run up the sand. There is no long grass on
+-- top any more (the user: "remove the grass"), and Roblox's own blades stay off.
 --
 -- Shared and free of services: this module says what to fill (heights and materials, column by
 -- column, and the voxels from them), the World service writes it into workspace.Terrain when the

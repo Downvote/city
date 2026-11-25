@@ -13,13 +13,7 @@
       }
     },
     "ServerStorage": {
-      "$className": "ServerStorage",
-      "Vendor": {
-        "$className": "Folder",
-        "SkinnedGrass": {
-          "$path": "vendor/SkinnedGrass.rbxm"
-        }
-      }
+      "$className": "ServerStorage"
     },
     "StarterPlayer": {
       "$properties": {
@@ -383,16 +377,6 @@
           "MaterialPattern": "Regular",
           "NormalMap": "rbxassetid://74383676401444",
           "RoughnessMap": "rbxassetid://123781418381440"
-        }
-      },
-      "CatalogTownBlade": {
-        "$className": "MaterialVariant",
-        "$properties": {
-          "BaseMaterial": "SmoothPlastic",
-          "ColorMap": "rbxassetid://79514706284696",
-          "StudsPerTile": 16,
-          "MaterialPattern": "Regular",
-          "RoughnessMap": "rbxassetid://79514706284696"
         }
       }
     }

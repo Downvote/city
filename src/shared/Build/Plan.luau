@@ -5,7 +5,8 @@
 --   walls  { x1, z1, x2, z2, lv, style, a = Side, b = Side }     (side a faces up x dir: see Plan.wallNormal)
 --   floors { x1, z1, x2, z2, lv, c, m }
 --   roofs  { x1, z1, x2, z2, lv, style, rise, dir, over, c, m, c2, m2 }
---   items  { id, x, y, z, r, lv, c1?, c2?, wall?, t?, side? }
+--   items  { id, x, y, z, r, lv, c1?, c2?, wall?, t?, side?, img? }
+--          (img: a picture from the Roblox library, by its id, on a piece that takes one)
 -- Coordinates are studs in the plot's own frame: x and z run 0..Plot.Size, y is height above the ground.
 --
 -- Changes are lists of ops ({ op = "add" | "remove" | "set", kind, key, obj, before? }). The server
@@ -48,6 +49,7 @@ export type Item = {
 	wall: string?,
 	t: number?,
 	side: string?,
+	img: number?,
 }
 export type PlanData = {
 	v: number,
@@ -65,6 +67,19 @@ local Plan = {}
 Plan.Kinds = { "walls", "floors", "roofs", "items" }
 Plan.KindSet = { walls = true, floors = true, roofs = true, items = true }
 
+export type WallStyle = {
+	name: string,
+	full: boolean?, -- as tall as the storey
+	openings: boolean?, -- takes doors and windows
+	height: number?, -- otherwise this tall
+	thick: number,
+	fence: boolean,
+	onFloor: boolean?, -- stands on the floor even on the ground floor (a railing round a deck)
+	paint: Side?, -- what a new one goes up in (Build mode); otherwise the walls' own finish
+}
+
+-- (The fences after the stone wall came with the user's: "add much much more buildings,
+-- decoration, paths, fences and other options". Each is drawn in Build/Shapes.)
 Plan.WallStyles = {
 	wall = { name = "Wall", full = true, openings = true, thick = P.WallThickness, fence = false },
 	glass = { name = "Glass wall", full = true, thick = 0.4, fence = false },
@@ -73,8 +88,54 @@ Plan.WallStyles = {
 	fence = { name = "Picket fence", height = 4, thick = 0.3, fence = true },
 	hedge = { name = "Hedge", height = 5, thick = 2, fence = true },
 	stone = { name = "Stone wall", height = 3, thick = 1.4, fence = true },
+	brick = {
+		name = "Low brick wall",
+		height = 3,
+		thick = 1,
+		fence = true,
+		paint = { c = "B86A52", m = "Brick" },
+	},
+	bamboo = { name = "Bamboo fence", height = 5, thick = 0.6, fence = true, paint = { c = "C9B26E", m = "Wood" } },
+	iron = { name = "Iron fence", height = 4.5, thick = 0.4, fence = true, paint = { c = "3A3A40", m = "Metal" } },
+	rail = { name = "Rail fence", height = 3.5, thick = 0.5, fence = true, paint = { c = "F4F1EA", m = "Wood" } },
+	log = { name = "Log fence", height = 3.5, thick = 0.9, fence = true, paint = { c = "8A6446", m = "Wood" } },
+	balustrade = {
+		name = "Glass rail",
+		height = 3.5,
+		thick = 0.4,
+		fence = true,
+		onFloor = true,
+		paint = { c = "B8BCC4", m = "Metal" },
+	},
+	lightrail = {
+		name = "Light rail",
+		height = 3.5,
+		thick = 0.4,
+		fence = true,
+		onFloor = true,
+		paint = { c = "7FD8F0", m = "Metal" },
+	},
+	rope = { name = "Rope fence", height = 3, thick = 0.5, fence = true, paint = { c = "9A7A58", m = "Wood" } },
+	willow = { name = "Woven fence", height = 4, thick = 0.5, fence = true, paint = { c = "A8865E", m = "Wood" } },
+} :: { [string]: WallStyle }
+Plan.WallStyleOrder = {
+	"wall",
+	"half",
+	"glass",
+	"railing",
+	"fence",
+	"hedge",
+	"stone",
+	"brick",
+	"rail",
+	"iron",
+	"bamboo",
+	"log",
+	"willow",
+	"rope",
+	"balustrade",
+	"lightrail",
 }
-Plan.WallStyleOrder = { "wall", "half", "glass", "railing", "fence", "hedge", "stone" }
 
 Plan.RoofStyles = {
 	gable = { name = "Gable" },

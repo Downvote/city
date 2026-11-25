@@ -454,7 +454,7 @@ describe("Terrain", function()
 			local project = decodeJson(readFile("default.project.json"))
 			local ws = project.tree.Workspace
 			local props = ws.Terrain["$properties"]
-			-- (Roblox's own blades are off: the long grass is SkinnedGrass's, client World/Grass)
+			-- (Roblox's own blades are off, and there is no long grass: the user, "remove the grass")
 			expect(props.Decoration).toBe(false)
 			expect(props.ShorelinesUpgraded).toBe(true)
 			local water = Terrain.Water
@@ -466,7 +466,7 @@ describe("Terrain", function()
 				expect(math.floor(props.WaterColor[i] * 255 + 0.5)).toBe(water.Color[i])
 				expect(ws["$properties"].GlobalWind[i]).toBe(Terrain.Wind[i])
 			end
-			-- Roblox's own Grass keeps its face: the long grass is coloured to match it
+			-- Roblox's own Grass keeps its face ("never mind, the previous grass texture was ok")
 			local ms = project.tree.MaterialService
 			expect(ms and ms["$properties"] and ms["$properties"].GrassName).toBe(nil)
 		end)

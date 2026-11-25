@@ -140,10 +140,5 @@
     "material": "Grass",
     "studs": 8,
     "look": "Lawn"
-  },
-  "blade": {
-    "material": "SmoothPlastic",
-    "studs": 16,
-    "look": "Blade"
   }
 }
