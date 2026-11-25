@@ -2050,3 +2050,28 @@ A personality's own lines are news from their day ("The plum buns are back!") an
 their heads. In the middle of an event a villager reacts instead, with short lines that fit any moment, in the same
 voice ("*applause* <- that's me", "Nothing exploded. That's new."), and a line said to another villager never has
 the player's name in it.
+
+> Follow even closer to the format of the momotalks, noting the speech quirk of the students. Try to avoid having
+> stirings of short sentaces, and redo the contents of sentances, some of them are too unnatural for people to say or
+> dont make sense
+
+The first rewrite cut words out to keep messages short and came out as telegrams ("Rain. Can't go out.", "Robin.
+Tomorrow. Free?"). In the chats themselves a message is short because the thought is small: 83% of messages are one
+complete sentence, under 2% have three or more, and strings of clipped bits are rare. So every line was written a
+second time:
+
+- One message is one natural sentence with the small words left in, as people text ("It's raining too hard to go
+  anywhere."). Two go together in one message only when they belong together; never three. A name, an "Um...", a
+  "Really?" can be a message on its own, but bits are never strung together.
+- Most messages run four to twelve words, and now and then one runs longer to explain something.
+- Every line has to make sense said aloud by somebody in a seaside town: a clear reason, concrete detail, following
+  from the line before. No odd poetic images, no jokes that need explaining, no reactions that don't fit the moment.
+- Each personality has a few speech habits, used in about one message in four or five and never on every line:
+  Sunny laughs "Ehehe!" and repeats a word when excited, Gentle says "Oh, my." and asks if you've eaten, Bold says
+  "Hah!" and decides for you, Dreamy trails off and loses the thread, Easygoing yawns and says "no rush", Proud says
+  "Hmph." and fishes for praise, Shy starts with "Um..." and takes the question back, Cheeky writes in lower case and
+  owns up to pranks, Cool talks in even, complete sentences and signs off "Later.", Prickly grumbles "Ugh." and was
+  "passing anyway", Dramatic puts one word in capitals and gasps, Bookish starts with "Actually," and apologises for
+  rambling, Gloomy says "Heh..." and expects rain on the day, Polite greets properly and thanks you kindly, Foodie
+  says "Mmm!" and plans round meals, and Nervous stammers the first word and imagines the worst.
+- Lines on the talk card and over a villager's head are one message each: one sentence, or two that flow.

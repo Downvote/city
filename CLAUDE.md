@@ -176,7 +176,11 @@ momotalks. please redo every dialogue and event". Their feel only, nothing of th
 is in docs/GAME_DESIGN.md (the villager opens with two to four short messages, the player picks one of two short
 replies, a reaction burst follows; exclamations and "..." by personality, the player's name in about one line in
 seven): write a burst as one string with "|" between the messages and send it with `s:burst` (a line or a map by
-personality, like `s:by`). Every line follows the writing rule, in the speaker's voice (the user: "for the humanization, make sure to take
+personality, like `s:by`). Then: "Try to avoid having stirings of short sentaces, and redo the contents of sentances,
+some of them are too unnatural for people to say or dont make sense". So a message is one complete, natural sentence
+(two only when they belong together, never three), never a string of clipped bits ("Rain. Can't go out."); it makes
+sense said aloud and follows from the line before; and each personality's speech habits (GAME_DESIGN lists them)
+show in about one message in four or five. Every line follows the writing rule, in the speaker's voice (the user: "for the humanization, make sure to take
 note of the personalities of the villagers as well"): each personality talks its own way (`Data/Personalities`'
 `lines`, `Sim/Talk`'s maps keyed by personality), and a line only one kind of villager would say goes through
 `s:by`. There is no romance (the user: "remove any romance, just
