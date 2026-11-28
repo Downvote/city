@@ -166,16 +166,17 @@ local function wisp(x: number, bottom: number, top: number): Vector.Layer
 	)
 end
 
--- The apple: a round body dimpled at the top, its stalk, and one leaf standing off its shoulder
--- with clear space round it. The golden apple shares it.
-local APPLE =
-	"M12 7.7 C10 6.1 3 5.6 3 12.6 C3 18.1 6.5 21.6 9.2 21.6 C10.6 21.6 11.2 21 12 21 C12.8 21 13.4 21.6 14.8 21.6 C17.5 21.6 21 18.1 21 12.6 C21 5.6 14 6.1 12 7.7 Z"
-local APPLE_LEAF = leaf(13.75, 6.75, 20.5, 3.25, 1.75)
+-- The apple: a round body dimpled at the top and bottom, its stalk, and one leaf standing off
+-- its shoulder with clear space round it. The golden apple shares it.
+local APPLE = "M12 7.25 C10.75 6.25 9.25 5.75 7.75 5.75 C4.5 5.75 2.5 8.5 2.5 12.25 C2.5 17.25 5.75 21.5 8.75 21.5 "
+	.. "C10 21.5 10.75 20.75 12 20.75 C13.25 20.75 14 21.5 15.25 21.5 C18.25 21.5 21.5 17.25 21.5 12.25 "
+	.. "C21.5 8.5 19.5 5.75 16.25 5.75 C14.75 5.75 13.25 6.25 12 7.25 Z"
+local APPLE_LEAF = leaf(13.75, 6.5, 20.5, 3, 1.75)
 local function apple(): Layers
 	return {
 		flat(APPLE),
-		line("M12 8.5 C12 6.25 12.25 4.5 13 3", 2.25),
-		clear(APPLE_LEAF, 1.75),
+		line("M12 7.75 C12 5.75 12.25 4.25 13.25 2.75", 2),
+		clear(APPLE_LEAF, 1.5),
 		flat(APPLE_LEAF),
 	}
 end
@@ -185,157 +186,145 @@ local Art: { [string]: Layers } = {}
 Art.apple = apple()
 
 -- The golden apple: the apple, and a sparkle off its shoulder.
+local GLINT = sparkle(4.5, 4.25, 2.75)
 Art.goldapple = apple()
-table.insert(Art.goldapple, flat(sparkle(4.75, 4.75, 3.25)))
+table.insert(Art.goldapple, clear(GLINT, 1.5))
+table.insert(Art.goldapple, flat(GLINT))
 
--- A bread roll: a domed loaf with two scores across its top.
+-- A bread roll: a domed loaf on a flat foot, two scores across its top.
 Art.bread = {
 	solid(
-		"M2.5 17.5 C2.5 10.75 6.75 6 12 6 C17.25 6 21.5 10.75 21.5 17.5 C21.5 19 20.5 19.75 19 19.75 H5 C3.5 19.75 2.5 19 2.5 17.5 Z"
+		"M2.5 17 C2.5 10.75 6.75 6.25 12 6.25 C17.25 6.25 21.5 10.75 21.5 17 C21.5 18.6 20.6 19.5 19 19.5 H5 C3.4 19.5 2.5 18.6 2.5 17 Z"
 	),
-	gap("M7 15.5 L10.5 10.5"),
-	gap("M13.5 15.5 L17 10.5"),
+	gap("M7.25 15 L10 10.25 M14 15 L16.75 10.25"),
 }
 
--- A carrot pointing down to the left, and two leaves off its top with clear space round them.
+-- A carrot pointing down to the left, and its leaves off the top with clear space round them.
 local ROOT = "M2.75 21.25 C5 16 8.5 11.25 12.35 7.65 A3.5 3.5 0 0 1 17.35 12.65 C13.75 16.5 8 19 2.75 21.25 Z"
-local GREENS = { leaf(16.25, 8.75, 13.5, 2, 1.75), leaf(16.25, 8.75, 22, 6.5, 1.75) }
-Art.carrot = { flat(ROOT) }
-for _, green in GREENS do
-	table.insert(Art.carrot, clear(green, 1.5))
-end
-for _, green in GREENS do
-	table.insert(Art.carrot, flat(green))
-end
+local GREENS = leaf(16.5, 7.5, 13.75, 2, 1.6) .. " " .. leaf(16.5, 7.5, 22, 5.5, 1.6)
+Art.carrot = { flat(ROOT), clear(GREENS, 1.5), flat(GREENS) }
 
 -- Cheese: a wedge, its top apart from its side, and two holes in the side.
 Art.cheese = {
-	solid("M2 11 L15.5 4 L22 7.5 V19.5 H2 Z"),
-	gap("M0.5 11.26 L23.5 7.24", 2),
-	hole(circle(7.75, 15, 2.5)),
-	hole(circle(16, 13.75, 2.25)),
+	solid("M2.5 11.5 L15.5 4.5 L21.5 7.75 V19.5 H2.5 Z"),
+	gap("M1 12.25 L23 8.5"),
+	hole(circle(8.25, 15.5, 2.25) .. " " .. circle(16, 14.25, 2.25)),
 }
 
 -- Soup: a bowl with its rim apart, and two wisps of steam over it.
 Art.soup = {
-	wisp(9, 9.5, 2.75),
-	wisp(15, 9.5, 2.75),
-	solid("M2.5 12 H21.5 C21.5 17.25 17.25 21 12 21 C6.75 21 2.5 17.25 2.5 12 Z"),
-	gap("M1 14.5 H23", 2),
+	line("M8.75 9.5 C7 8 10.5 5.5 8.75 3", 2),
+	line("M15.25 9.5 C13.5 8 17 5.5 15.25 3", 2),
+	solid("M2.5 11.5 H21.5 C21.5 17 17.25 20.75 12 20.75 C6.75 20.75 2.5 17 2.5 11.5 Z"),
+	gap("M1 14 H23"),
 }
 
--- A grilled fish on a stick laid corner to corner, the stick out at both ends: its body and
--- tail, and an eye.
+-- A grilled fish on a stick laid corner to corner, the stick out of its mouth: its body and
+-- forked tail, its gills apart from its head, and an eye.
 local FISH =
-	"M12 3.5 C15.5 4.75 17.25 8.25 16.75 11.25 C16.4 13.5 14.5 15.25 12 16.25 C9.5 15.25 7.6 13.5 7.25 11.25 C6.75 8.25 8.5 4.75 12 3.5 Z"
-local TAIL = "M12 15 L16.75 20.5 Q12 18.5 7.25 20.5 Z"
+	"M3 12 C5 8 8.5 6.5 12 6.5 C14 6.5 15.5 7.25 16.5 8.75 L22 7.5 L20.25 12 L22 16.5 L16.5 15.25 C15.5 16.75 14 17.5 12 17.5 C8.5 17.5 5 16 3 12 Z"
 Art.skewer = turned({
-	line("M12 0.75 L12 23.25", 2.25),
-	flat(TAIL),
+	line("M-1 12 L6 12", 2),
 	flat(FISH),
-}, 45, 12, 12)
--- the eye, near the head (a circle can't be turned: it is put where the turn takes its middle)
-table.insert(Art.skewer, hole(circle(12 + 4.5 * math.sin(math.rad(45)), 12 - 4.5 * math.cos(math.rad(45)), 1.75)))
+	gap("M10 7.25 C11.25 9.25 11.25 14.75 10 16.75", 1.75),
+	-- the eye, ahead of the gills (a circle can't be turned, so it is drawn as curves)
+	hole(
+		"M6.5 9.4 C7.27 9.4 7.9 10.03 7.9 10.8 C7.9 11.57 7.27 12.2 6.5 12.2 C5.73 12.2 5.1 11.57 5.1 10.8 C5.1 10.03 5.73 9.4 6.5 9.4 Z"
+	),
+}, -45, 12, 12)
 
--- A berry tart: a shallow crust, three berries heaped on it.
-local BERRIES = { circle(6.75, 13, 3.25), circle(17.25, 13, 3.25), circle(12, 9.75, 3.5) }
+-- A berry tart: three berries peeping over the rim of a shallow crust, apart from each other.
+local CRUST = "M2 13.25 H22 L20.5 19 H3.5 Z"
 Art.tart = {
-	solid("M2 16.25 H22 L20 20.75 H4 Z"),
+	flat(circle(5, 10.25, 3.25) .. " " .. circle(12, 8.25, 3.5) .. " " .. circle(19, 10.25, 3.25)),
+	clear(CRUST, 1.75),
+	solid(CRUST),
 }
-for _, berry in BERRIES do
-	table.insert(Art.tart, clear(berry, 1.5))
-	table.insert(Art.tart, flat(berry))
-end
 
--- A slice of honey cake: its top apart from its side by the honey running down in two drips,
--- and a layer across it.
+-- Honey cake: a round cake, the honey on its top running down its side in two drips, and a
+-- layer across it.
 Art.honeycake = {
-	solid("M2.5 11.75 L15.5 3.75 L21.5 7.25 V20 H2.5 Z"),
-	gap("M0.75 12.1 L8 10.65 V14.5 V10.65 L15 9.25 V13 V9.25 L23.25 7.6", 2),
-	gap("M1 16.25 H23", 2),
+	solid(rect(2.5, 6.5, 19, 14, 2)),
+	gap("M1 10.5 H6 C6 13.75 9.5 13.75 9.5 10.5 H14 C14 15 17.5 15 17.5 10.5 H23"),
+	gap("M1 16.75 H23"),
 }
 
 -- A rice ball: rice pressed into a rounded triangle, a strip of seaweed round its foot.
 Art.riceball = {
 	solid(
-		"M12 3 C13.5 3 14.5 4 15.5 5.7 L21 15.75 C22.4 18.4 21 21 18.2 21 H5.8 C3 21 1.6 18.4 3 15.75 L8.5 5.7 C9.5 4 10.5 3 12 3 Z"
+		"M12 2.75 C13.5 2.75 14.5 3.75 15.5 5.5 L21 15.5 C22.4 18.25 21 21 18.25 21 H5.75 C3 21 1.6 18.25 3 15.5 L8.5 5.5 C9.5 3.75 10.5 2.75 12 2.75 Z"
 	),
-	gap("M7.75 22.5 V13.75 H16.25 V22.5", 2),
+	gap("M7.75 22.5 V13.5 H16.25 V22.5"),
 }
 
 -- Pancakes: a stack of three, and a pat of butter on top.
 Art.pancakes = {
-	flat(rect(8.5, 3.5, 7, 3.5, 1)),
-	flat(rect(2.5, 8.75, 19, 4.25, 2.125)),
-	flat(rect(2, 12.75, 20, 4.25, 2.125)),
-	flat(rect(2.5, 16.75, 19, 4.25, 2.125)),
-	gap("M1 7.75 H23", 2),
-	gap("M1 12.75 H23", 1.75),
-	gap("M1 16.75 H23", 1.75),
+	flat(rect(8.5, 2.5, 7, 3, 1)),
+	flat(rect(3, 7.5, 18, 4, 2) .. " " .. rect(2, 12.5, 20, 4, 2) .. " " .. rect(3, 17.5, 18, 4, 2)),
+	gap("M1 12 H23 M1 17 H23", 1.75),
 }
 
--- Curry: a mound of rice and the curry beside it, on a plate.
-local RICE = "M3 14 C3 9.5 5.5 6.5 9 6.5 C12.5 6.5 15 9.5 15 14 Z"
-local CURRY = "M10.5 14 C10.5 11.25 13.25 9.5 16.25 9.5 C19.25 9.5 21.5 11.25 21.5 14 Z"
+-- Curry: a mound of rice on a plate, and a spoon resting beside it.
+local BOWL =
+	"M15.75 14.25 C14.9 13.4 15.15 11.9 16.25 10.75 C17.4 9.65 18.9 9.4 19.75 10.25 C20.6 11.1 20.35 12.6 19.25 13.75 C18.1 14.85 16.6 15.1 15.75 14.25 Z"
 Art.curry = {
-	flat(RICE),
-	clear(CURRY, 1.75),
-	flat(CURRY),
-	flat("M2 15.75 H22 C21.25 19.25 17.25 21.25 12 21.25 C6.75 21.25 2.75 19.25 2 15.75 Z"),
+	flat("M2.5 14.75 C2.5 9.25 5.5 6 9.25 6 C13 6 16 9.25 16 14.75 Z"),
+	clear(BOWL .. " M19 11 L21.5 3.5", 1.5),
+	line("M19 11 L21 4", 1.75),
+	flat(BOWL),
+	solid("M2 16.5 H22 C21.5 19.25 17.5 21 12 21 C6.5 21 2.5 19.25 2 16.5 Z"),
 }
 
--- A pumpkin pie in its dish, seen a little from above: the crust round its top, and a dollop
--- of cream in the middle.
-local CREAM =
-	"M12 4.25 C13.25 6 15.5 6.75 15.5 8.75 C15.5 10.25 14 11 12 11 C10 11 8.5 10.25 8.5 8.75 C8.5 6.75 10.75 6 12 4.25 Z"
+-- A slice of pumpkin pie: its top, its side and the crust at its back.
 Art.pie = {
-	solid("M2.75 14 H21.25 L19.5 19.75 H4.5 Z"),
-	flat(Vector.ellipse(12, 13.5, 10, 4)),
-	gap(Vector.ellipse(12, 13.75, 6.5, 1.75), 2),
-	clear(CREAM, 1.75),
-	flat(CREAM),
+	solid(
+		"M2.5 16 L16.25 6.5 C18.5 5 21.5 6 21.5 9.25 V18.5 C21.5 19.6 20.6 20.5 19.5 20.5 H4.5 C3.4 20.5 2.5 19.6 2.5 18.5 Z"
+	),
+	gap("M1 16.25 H23 M15.25 6.25 C15.75 8.75 17.5 10.5 22.5 10.5"),
 }
 
--- An ice cream: a scoop on a cone.
-local SCOOP = "M5 11 A7 7 0 0 1 19 11 Q19 13.25 16.75 13.25 H7.25 Q5 13.25 5 11 Z"
+-- An ice cream: a scoop with a scalloped foot on a cone.
+local SCOOP =
+	"M4.75 10.25 A7.25 7.25 0 0 1 19.25 10.25 C19.25 12 18.25 13 17 13 C16 13 15.25 12.25 14.5 12.25 C13.5 12.25 13 13.25 12 13.25 C11 13.25 10.5 12.25 9.5 12.25 C8.75 12.25 8 13 7 13 C5.75 13 4.75 12 4.75 10.25 Z"
 Art.icecream = {
-	flat("M6.25 13.5 H17.75 L12.75 21.75 Q12 22.75 11.25 21.75 Z"),
+	solid("M6.75 13 H17.25 L12.9 21.25 Q12 22.75 11.1 21.25 Z"),
 	clear(SCOOP, 1.75),
 	flat(SCOOP),
 }
 
--- A salad: a bowl heaped with leaves, the heap apart from the bowl.
+-- A salad: a bowl, and three leaves standing up out of it with clear space round each.
+local LEAVES = leaf(9.5, 13.5, 4.5, 4.75, 2)
+	.. " "
+	.. leaf(12, 13.5, 12, 2.25, 2.25)
+	.. " "
+	.. leaf(14.5, 13.5, 19.5, 4.75, 2)
 Art.salad = {
-	flat(circle(7, 11.25, 4)),
-	flat(circle(17, 11.25, 4)),
-	flat(circle(12, 8.25, 5)),
-	gap("M1 13.75 H23", 2),
-	solid("M2.5 15.25 H21.5 C21.5 18.75 17.25 21 12 21 C6.75 21 2.5 18.75 2.5 15.25 Z"),
+	flat(LEAVES),
+	gap(leaf(12, 13.5, 12, 2.25, 2.25), 1.5),
+	solid("M2.5 14.75 H21.5 C21.5 18.5 17.25 21 12 21 C6.75 21 2.5 18.5 2.5 14.75 Z"),
 }
 
--- A bar of chocolate: six squares, two by three.
+-- A bar of chocolate: six squares, two by three, and a bite out of its corner.
 Art.chocolate = {
 	solid(rect(4.5, 2, 15, 20, 1.5)),
-	gap("M12 0.5 V23.5", 2),
-	gap("M3 8.75 H21", 2),
-	gap("M3 15.25 H21", 2),
+	gap("M12 0.5 V23.5 M3 8.75 H21 M3 15.25 H21"),
+	hole(circle(19.75, 2.25, 3.75)),
 }
 
--- A caramel pudding on a plate: the custard wider at its foot, the caramel over its top.
+-- A caramel pudding on a plate: the custard wider at its foot, the caramel running over its top.
 Art.pudding = {
-	solid("M7 6 H17 L20 18 H4 Z"),
-	gap("M2 10 C4.75 10 5.5 12.75 8.25 12.75 C11 12.75 11.5 10 14.25 10 C17 10 17.5 12.75 22 12.75", 2),
-	flat(rect(1.75, 19.5, 20.5, 2.75, 1.375)),
+	solid("M7.25 5 H16.75 L20 17.25 H4 Z"),
+	gap("M2 9.25 H7 C7 12.25 10.25 12.25 10.25 9.25 H14.5 C14.5 11.25 17 11.25 17 9.25 H22"),
+	flat(rect(2, 19, 20, 3, 1.5)),
 }
 
--- Broccoli: a head of three florets on a thick stalk, the stalk apart from the head.
-local STALK = "M9.5 21.5 L10 15.5 L7.5 13 H16.5 L14 15.5 L14.5 21.5 Z"
+-- Broccoli: a cloud of florets on a thick stalk, the stalk apart from the head.
+local FLORETS =
+	"M5.5 13 C3.25 13 2 11.25 2.25 9.25 C2.5 7.25 4.25 6 6.25 6.25 C6.75 3.75 9.25 2.25 12 2.5 C14.75 2.25 17.25 3.75 17.75 6.25 C19.75 6 21.5 7.25 21.75 9.25 C22 11.25 20.75 13 18.5 13 Z"
 Art.broccoli = {
-	solid(STALK),
-	gap("M6 14.25 Q12 17.5 18 14.25", 2),
-	flat(circle(6.75, 10.5, 4.25)),
-	flat(circle(17.25, 10.5, 4.25)),
-	flat(circle(12, 7.75, 5.25)),
+	solid("M8.5 12 H15.5 L14.5 21.5 H9.5 Z"),
+	clear(FLORETS, 1.75),
+	flat(FLORETS),
 }
 
 -- Pickles: a jar with its lid apart, a gherkin standing in it.
@@ -363,29 +352,28 @@ local function gherkin(x: number, y: number, w: number, h: number): string
 	)
 end
 Art.pickles = {
-	flat(rect(5.5, 2.25, 13, 4, 1)),
-	solid(rect(4, 8, 16, 14, 3)),
+	flat(rect(6, 2, 12, 3.75, 1)),
+	solid(rect(4, 7.5, 16, 14.5, 3.5)),
 }
-for _, layer in turned({ hole(gherkin(12, 15, 5, 10.5)) }, 30, 12, 15) do
+for _, layer in turned({ hole(gherkin(12, 14.75, 5, 10)) }, 30, 12, 14.75) do
 	table.insert(Art.pickles, layer)
 end
 
 -- A hearty stew: a pot with two handles, food heaped over its rim.
-local RIM = rect(2.5, 10, 19, 2.75, 1.375)
+local HEAP =
+	"M5 10.75 C4.25 8.25 6 6.5 8.25 7 C9 4.75 11 3.75 13 4.25 C15.25 3.75 17.25 5.25 17.25 7.25 C19.25 7 20.5 8.75 19.5 10.75 Z"
 Art.stew = {
-	flat(circle(7.5, 8.75, 3)),
-	flat(circle(16.5, 8.75, 3)),
-	flat(circle(12, 7, 3.75)),
-	clear(RIM, 1.75),
-	flat(RIM),
-	solid("M4.5 14.5 H19.5 V16.75 C19.5 19.75 17.5 21.5 14.5 21.5 H9.5 C6.5 21.5 4.5 19.75 4.5 16.75 Z"),
-	flat(rect(1.75, 15, 4, 3, 1) .. " " .. rect(18.25, 15, 4, 3, 1)),
+	flat(HEAP),
+	solid(
+		"M2.5 12.5 H21.5 V14.5 H19.75 V16.75 C19.75 19.5 17.75 21.5 15 21.5 H9 C6.25 21.5 4.25 19.5 4.25 16.75 V14.5 H2.5 Z"
+	),
+	gap("M1 14.75 H23", 1.75),
 }
 
 -- A slice of star fruit: five fat points round a star cut out of its middle.
 Art.starfruit = {
 	solid(star(12, 12.75, 9.75, 4.9, 0.6), 1.5),
-	hole(star(12, 12.75, 3.75, 1.75, 0.15)),
+	hole(star(12, 12.75, 3.5, 1.6, 0.15)),
 }
 
 -- A fire chili: a fat pepper curling to a point, its cap apart from it, and its stalk.
@@ -394,7 +382,7 @@ local CHILI =
 Art.dragonchili = {
 	flat(CHILI),
 	gap("M12.5 11.75 Q16.5 9.75 21.25 11.25", 2),
-	line("M17 8.5 C17 6 17.75 4.25 19.5 3.25", 2.25),
+	line("M17 8.5 C17 6 17.75 4.25 19.5 3.25", 2),
 }
 
 -- The other things a player carries (Data/Items: the bag and gifts), by the same rules. ------------

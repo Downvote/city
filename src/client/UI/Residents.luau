@@ -193,6 +193,9 @@ local function pickJob(vid: string)
 			end
 		end
 		table.insert(options, {
+			-- each job by its own icon (Data/Jobs)
+			item = Jobs.icon(w.job.id),
+			color = T.Purple,
 			label = Text.fill("{job} at the {place}", { job = w.job.name, place = w.def.name:lower() }),
 			sub = if worker
 				then Text.fill("Swaps with {name}", { name = worker })
@@ -1015,7 +1018,8 @@ local function showDetail()
 			LayoutOrder = order,
 		}, fn)
 	end
-	action("briefcase", "Job", T.Blue, 1, function()
+	local work = City.jobOf(p, vid)
+	action(Jobs.icon(work and work.job.id), "Job", T.Blue, 1, function()
 		pickJob(vid)
 	end)
 	action("bed", "Bed", T.Purple, 2, function()

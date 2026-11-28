@@ -21,6 +21,8 @@ local Tuning = require(Shared.Config.Tuning)
 local Remotes = require(Shared.Net.Remotes)
 local Text = require(Shared.Util.Text)
 local PlayerWork = require(Shared.Sim.PlayerWork)
+local Catalog = require(Shared.Build.Catalog)
+local Jobs = require(Shared.Data.Jobs)
 
 local Kit = require(script.Parent.Parent.UI.Kit)
 local Icons = require(script.Parent.Parent.UI.Icons)
@@ -87,10 +89,40 @@ function Work.skillWords(skill: Skill): (string, number)
 	return PlayerWork.skillLine(skill.name, skill.level, skill.top), math.clamp(ratio, 0, 1)
 end
 
--- The notice itself: a slab of the dark glass over the 3D view with a coin at its left end, two
--- lines in white (the glass is dark in both looks) and the skill with its bar under them. Returns
--- it, its two lines, the skill's words and the bar's fill.
-function Work.card(parent: Instance?): (Frame, TextLabel, TextLabel, TextLabel, Frame)
+-- The job's own icon at the notice's left end (Data/Jobs: the user, "for work and news, make
+-- different icons for different news and work types"), in white on the glass. Drawn again only
+-- when the job changes.
+function Work.mark(pill: Frame, icon: string)
+	local old = pill:FindFirstChild("Mark")
+	if old and old:GetAttribute("Icon") == icon then
+		return
+	end
+	if old then
+		old:Destroy()
+	end
+	local mark = Icons.make(icon, 34, {
+		Name = "Mark",
+		Parent = pill,
+		AnchorPoint = Vector2.new(0, 0.5),
+		Position = UDim2.new(0, 16, 0.5, 0),
+		Color = T.White,
+		Centre = true,
+		ZIndex = pill.ZIndex + 1,
+	})
+	mark:SetAttribute("Icon", icon)
+end
+
+-- The icon for the workplace at plan key `key` (its job's, a briefcase if it can't be told).
+function Work.iconAt(key: string?): string
+	local item = key and State.plan and State.plan.items[key]
+	local def = item and Catalog.get(item.id)
+	return Jobs.icon(def and def.job)
+end
+
+-- The notice itself: a slab of the dark glass over the 3D view with the job's icon at its left
+-- end, two lines in white (the glass is dark in both looks) and the skill with its bar under them.
+-- Returns it, its two lines, the skill's words and the bar's fill.
+function Work.card(parent: Instance?, icon: string?): (Frame, TextLabel, TextLabel, TextLabel, Frame)
 	local pill = Kit.darkPill({
 		Name = "WorkNotice",
 		Size = UDim2.fromOffset(W, H),
@@ -98,13 +130,7 @@ function Work.card(parent: Instance?): (Frame, TextLabel, TextLabel, TextLabel, 
 		Position = HIDDEN,
 		Parent = parent,
 	})
-	Icons.make("coin", 34, {
-		Name = "Coin",
-		Parent = pill,
-		AnchorPoint = Vector2.new(0, 0.5),
-		Position = UDim2.new(0, 16, 0.5, 0),
-		ZIndex = pill.ZIndex + 1,
-	})
+	Work.mark(pill, icon or "briefcase")
 	local top = Kit.title("", {
 		Name = "Title",
 		Parent = pill,
@@ -161,6 +187,7 @@ local function showNotice()
 	if not notice or not notice.Parent then
 		notice, title, line, skillText, skillFill = Work.card(Kit.root())
 	end
+	Work.mark(notice :: Frame, Work.iconAt(job.key))
 	local a, b = Work.words(job.name, job.today, job.cap)
 	if title and line then
 		title.Text, line.Text = a, b

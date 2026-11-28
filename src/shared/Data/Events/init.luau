@@ -2982,6 +2982,8 @@ for _, name in { "Talks", "Solo", "Pairs", "Town", "Work", "Asks" } do
 	local module = script:FindFirstChild(name)
 	if module then
 		for _, def in require(module) :: any do
+			-- which part of town life it is (Data/NewsKinds tells its story in the news by it)
+			def.group = def.group or string.lower(name)
 			event(def)
 		end
 	end

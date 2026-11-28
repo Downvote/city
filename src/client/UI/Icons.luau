@@ -15,8 +15,6 @@
 --   { "r", x, y, w, h, colour, r = corner (0..0.5), rot = degrees, o = false (not part of the
 --     outlined silhouette: details inside it), t = transparency }
 --   { "c", x, y, w, h, colour, ... }             an ellipse
---   dent = true on a shape: pressed into the piece under it. A flat icon draws it in a darker
---     shade of its one colour (the coin's middle), where other details are cut out
 --   { "t", x, y, base, dir, colour, ... }       a right angled triangle with this base; dir up, down,
 --                                                left or right; its height is half the base
 --   { "ring", x, y, w, h, colour, width }       a hollow ring
@@ -75,12 +73,11 @@ Icons.defs = D
 
 -- money and people ---------------------------------------------------------------------------------
 
--- The user: "the coin icon can have a darker circle inside as an indent".
+-- The coin is one flat gold with a slot cut down it (the user: "the coins should be only one
+-- color"), as IconArt draws it.
 D.coin = {
-	{ "c", 6, 6, 88, 88, C.goldDark },
-	{ "c", 12, 11, 76, 76, C.gold, o = false },
-	{ "c", 24, 24, 52, 52, C.goldDark, o = false, dent = true },
-	{ "r", 20, 16, 10, 20, C.white, r = 0.5, rot = 35, o = false, t = 0.35 },
+	{ "c", 8, 8, 84, 84, C.gold },
+	{ "r", 44.5, 27, 11, 46, INK, r = 0.5, o = false },
 }
 
 D.people = {
@@ -602,13 +599,9 @@ D.road = {
 }
 
 D.coins = {
-	{ "c", 36, 30, 60, 60, C.goldDark },
-	{ "c", 41, 34, 50, 50, C.gold, o = false },
-	{ "c", 49, 43, 34, 34, C.goldDark, o = false, dent = true },
-	{ "c", 4, 10, 60, 60, C.goldDark },
-	{ "c", 9, 14, 50, 50, C.gold, o = false },
-	{ "c", 17, 23, 34, 34, C.goldDark, o = false, dent = true },
-	{ "r", 14, 17, 8, 16, C.white, r = 0.5, rot = 35, o = false, t = 0.35 },
+	{ "c", 33.5, 31.25, 60, 60, C.gold },
+	{ "c", 7.5, 8.3, 60, 60, C.gold },
+	{ "r", 32.5, 23, 10, 31, INK, r = 0.5, o = false },
 }
 
 -- furniture tabs --------------------------------------------------------------------------------------
@@ -1052,10 +1045,10 @@ D.barrel = {
 	{ "r", 12, 68, 76, 8, C.woodDark, r = 0.5, o = false },
 }
 
+-- one solid shape, nothing drawn inside it
 D.gem = {
-	{ "r", 22, 10, 56, 26, C.purple, r = 0.1 },
-	{ "t", 6, 36, 88, "down", C.purple },
-	{ "r", 4, 34, 92, 6, C.purpleDark, r = 0.5, o = false },
+	{ "r", 29, 15, 42, 23, C.purple, r = 0.1 },
+	{ "t", 10, 37.5, 80, "down", C.purple },
 }
 
 D.balloon = {
@@ -1163,6 +1156,81 @@ D.leaves = {
 	{ "r", 46, 16, 5, 66, C.orangeDark, r = 0.5, rot = 40, o = false },
 }
 
+-- the news and the jobs (Data/NewsKinds, Data/Jobs) -------------------------------------------------
+
+D.chat = {
+	{ "r", 8, 14, 84, 57, C.blue, r = 0.2 },
+	{ "t", 22, 66, 26, "down", C.blue },
+	{ "c", 24, 36, 13, 13, INK, o = false },
+	{ "c", 43.5, 36, 13, 13, INK, o = false },
+	{ "c", 62, 36, 13, 13, INK, o = false },
+}
+D.star = {
+	{ "t", 10, 26, 80, "up", C.yellow },
+	{ "t", 18, 38, 64, "down", C.yellow },
+	{ "r", 22, 50, 24, 36, C.yellow, r = 0.3, rot = 25 },
+	{ "r", 54, 50, 24, 36, C.yellow, r = 0.3, rot = -25 },
+}
+D.paw = {
+	{ "c", 21, 51, 58, 39, C.wood },
+	{ "c", 8, 36, 19, 19, C.wood },
+	{ "c", 26, 13, 21, 21, C.wood },
+	{ "c", 53, 13, 21, 21, C.wood },
+	{ "c", 73, 36, 19, 19, C.wood },
+}
+D.letter = {
+	{ "r", 8, 21, 84, 60, C.white, r = 0.08 },
+	{ "r", 13, 33, 44, 7, INK, r = 0.5, rot = 34, o = false },
+	{ "r", 43, 33, 44, 7, INK, r = 0.5, rot = -34, o = false },
+}
+D.book = {
+	{ "r", 8, 20, 37, 62, C.red, r = 0.1 },
+	{ "r", 55, 20, 37, 62, C.red, r = 0.1 },
+}
+D.aid = {
+	{ "r", 10, 10, 80, 80, C.red, r = 0.18 },
+	{ "r", 43, 27, 14, 46, INK, o = false },
+	{ "r", 27, 43, 46, 14, INK, o = false },
+}
+D.personAdd = {
+	{ "c", 18, 10, 37, 37, C.blue },
+	{ "r", 7, 58, 59, 32, C.blue, r = 0.45 },
+	{ "r", 73, 15, 10, 39, C.green },
+	{ "r", 62, 29, 32, 10, C.green },
+}
+D.personLeave = {
+	{ "c", 18, 10, 37, 37, C.blue },
+	{ "r", 7, 58, 59, 32, C.blue, r = 0.45 },
+	{ "r", 62, 29, 32, 10, C.red },
+}
+D.flag = {
+	{ "r", 17, 12, 9, 78, C.greyDark, r = 0.5 },
+	{ "r", 31, 12, 54, 38, C.red, r = 0.08 },
+}
+D.stall = {
+	{ "r", 10, 8, 80, 25, C.red, r = 0.15 },
+	{ "r", 15, 40, 10, 26, C.wood },
+	{ "r", 75, 40, 10, 26, C.wood },
+	{ "r", 8, 64, 84, 26, C.wood, r = 0.1 },
+}
+D.coffee = {
+	{ "r", 22, 10, 56, 18, C.white, r = 0.15 },
+	{ "r", 25, 36, 50, 54, C.wood, r = 0.1 },
+	{ "r", 25, 50, 50, 7, INK, o = false },
+	{ "r", 25, 69, 50, 7, INK, o = false },
+}
+D.gradcap = {
+	{ "r", 26, 44, 48, 38, C.greyDark, r = 0.3 },
+	{ "r", 22, 16, 56, 56, C.greyDark, r = 0.08, rot = 45 },
+	{ "r", 81, 40, 7, 30, C.yellow, r = 0.5 },
+}
+D.guitar = {
+	{ "c", 27, 48, 46, 46, C.wood },
+	{ "c", 33, 30, 34, 34, C.wood },
+	{ "r", 45, 6, 10, 34, C.woodDark, r = 0.3 },
+	{ "c", 43, 53, 14, 14, INK, o = false },
+}
+
 -- the foods (UI/ItemArt) ---------------------------------------------------------------------------
 -- Their silhouettes again, roughly, for when the game can't make pictures: the few big shapes in
 -- one colour and the cuts that name the thing (`INK`, inside the shape they cut: the holes in the
@@ -1221,25 +1289,25 @@ D.soup = food(C.wood, {
 })
 
 D.skewer = food(C.blue, {
-	{ "r", 46, 4, 9, 92, nil, r = 0.5, rot = 45 },
-	{ "c", 36, 18, 40, 53, nil, rot = 45 },
-	{ "r", 22, 60, 18, 18, nil, r = 0.15, rot = 45 },
-	{ "c", 56, 30, 14, 14, INK, o = false },
+	{ "r", 16, 66, 8, 30, nil, r = 0.5, rot = 45 },
+	{ "r", 64, 14, 22, 22, nil, r = 0.1, rot = 45 },
+	{ "c", 17, 30, 62, 44, nil, rot = -45 },
+	{ "c", 25, 58, 11, 11, INK, o = false },
 })
 
 D.tart = food(C.purple, {
-	{ "r", 10, 67, 80, 19, nil, r = 0.15 },
-	{ "c", 14, 40, 28, 28 },
-	{ "c", 58, 40, 28, 28 },
-	{ "c", 35, 26, 30, 30 },
+	{ "c", 7, 29, 25, 25 },
+	{ "c", 36.5, 21, 27, 27 },
+	{ "c", 68, 29, 25, 25 },
+	{ "r", 9, 53, 82, 29, nil, r = 0.12 },
 })
 
 D.honeycake = food(C.gold, {
-	{ "t", 20, 12, 64, "up" },
-	{ "r", 10, 48, 80, 36, nil, r = 0.05 },
-	{ "r", 30, 46, 7, 15, INK, r = 0.5, o = false },
-	{ "r", 59, 46, 7, 11, INK, r = 0.5, o = false },
-	{ "r", 10, 66, 80, 6, INK, o = false },
+	{ "r", 10, 27, 80, 58, nil, r = 0.12 },
+	{ "r", 10, 41, 80, 7, INK, o = false },
+	{ "r", 26, 41, 8, 13, INK, r = 0.5, o = false },
+	{ "r", 59, 41, 8, 17, INK, r = 0.5, o = false },
+	{ "r", 10, 67, 80, 7, INK, o = false },
 })
 
 D.riceball = food(C.greyLight, {
@@ -1259,16 +1327,17 @@ D.pancakes = food(C.woodLight, {
 })
 
 D.curry = food(C.orange, {
-	{ "half", 12, 27, 50, 62, nil, dir = "up" },
-	{ "half", 44, 40, 46, 36, nil, dir = "up" },
-	{ "half", 8, 44, 84, 44 },
+	{ "half", 10, 25, 56, 72, nil, dir = "up" },
+	{ "r", 82, 14, 7, 30, nil, r = 0.5, rot = 15 },
+	{ "c", 64, 40, 20, 16, nil, rot = -45 },
+	{ "half", 8, 51.5, 84, 36 },
 })
 
 D.pie = food(C.orange, {
-	{ "r", 12, 58, 76, 24, nil, r = 0.15 },
-	{ "c", 8, 40, 84, 33 },
-	{ "ring", 23, 50, 54, 15, C.woodDark, 8, o = false },
-	{ "c", 35, 17, 30, 30 },
+	{ "r", 10, 66, 80, 19, nil, r = 0.15 },
+	{ "r", 14, 42, 72, 16, nil, r = 0.2, rot = -34 },
+	{ "c", 66, 22, 24, 30 },
+	{ "r", 10, 64, 80, 5, INK, o = false },
 })
 
 D.icecream = food(C.pink, {
@@ -1278,11 +1347,11 @@ D.icecream = food(C.pink, {
 })
 
 D.salad = food(C.green, {
-	{ "c", 12, 30, 34, 34 },
-	{ "c", 54, 30, 34, 34 },
-	{ "c", 29, 13, 42, 42 },
-	{ "r", 12, 53, 76, 8, INK, o = false },
-	{ "half", 10, 39, 80, 49 },
+	{ "c", 20, 18, 18, 40, nil, rot = -40 },
+	{ "c", 41, 8, 18, 48 },
+	{ "c", 62, 18, 18, 40, nil, rot = 40 },
+	{ "half", 10, 35, 80, 52 },
+	{ "r", 10, 58, 80, 4, INK, o = false },
 })
 
 D.chocolate = food(C.woodDark, {
@@ -1320,6 +1389,7 @@ D.stew = food(C.redDark, {
 	{ "r", 19, 60, 62, 30, nil, r = 0.3 },
 	{ "r", 7, 62, 17, 13, nil, r = 0.4 },
 	{ "r", 76, 62, 17, 13, nil, r = 0.4 },
+	{ "r", 19, 59, 62, 5, INK, o = false },
 })
 
 D.starfruit = food(C.yellow, {
@@ -1680,8 +1750,8 @@ end
 
 -- Draws icon `name` into a new px x px Frame. Icons are flat and one colour by default (the
 -- user asked for simple icons): every piece in `Color` (or `Tint`; light if neither), dark
--- details like eyes and lines cut out in `Hole` (the dark card colour if not given), a dent in a darker shade
--- of `Color`, no outline, no shading,
+-- details like eyes and lines cut out in `Hole` (the dark card colour if not given), no outline,
+-- no shading,
 -- no shine. `Full = true` draws the old full colour sticker with its outline. props: Parent,
 -- Position, AnchorPoint, LayoutOrder, Name, ZIndex, Color, Hole, Tint, Full, Outline (false for
 -- none, full icons only), Centre (what is drawn sits in the middle of the box, not where its grid
@@ -1768,11 +1838,6 @@ Icons.Colors = {
 	alert = Color3.fromRGB(255, 108, 98),
 }
 
--- The shade a flat icon draws a dent in: its own colour, a step darker.
-function Icons.dentOf(color: Color3): Color3
-	return color:Lerp(Color3.new(0, 0, 0), 0.2)
-end
-
 -- The flat, one colour drawing of an icon (see Icons.make).
 function Icons.flat(name: string, px: number, p: { [string]: any }): Frame
 	local root = Instance.new("Frame")
@@ -1829,7 +1894,7 @@ function Icons.flat(name: string, px: number, p: { [string]: any }): Frame
 		if (s.t or 0) > 0 then
 			continue -- shines and see-through glints
 		end
-		drawShape(root, s, i, false, 0, 0, if s.dent then Icons.dentOf(glyph) elseif cut[i] then hole else glyph, z)
+		drawShape(root, s, i, false, 0, 0, if cut[i] then hole else glyph, z)
 	end
 	flat = false
 	if p.Centre then

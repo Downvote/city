@@ -626,11 +626,13 @@ elseif scene:sub(1, 6) == "panel:" then
 		patch({
 			requests = { { vid = order[2], tag = "light" } },
 			log = {
-				{ t = now - 40, text = "Mara and Tobin made up after their quarrel." },
-				{ t = now - 600, text = "Ivy found 40 coins by the fountain." },
-				{ t = now - 3 * 3600, text = "You threw a party." },
-				{ t = now - 26 * 3600, text = "Pell moved in." },
-				{ t = now - 27 * 3600, text = "You bought more land. It's now 128 by 128." },
+				{ t = now - 40, text = "Mara and Tobin made up after their quarrel.", kind = "friends" },
+				{ t = now - 300, text = "Pell had a strange dream about a teapot.", kind = "dream" },
+				{ t = now - 600, text = "Ivy found 40 coins by the fountain.", kind = "luck" },
+				{ t = now - 900, text = "Tobin baked a tray of rolls for the whole street.", kind = "job:baker" },
+				{ t = now - 3 * 3600, text = "You threw a party.", kind = "party" },
+				{ t = now - 26 * 3600, text = "Pell moved in.", kind = "movein" },
+				{ t = now - 27 * 3600, text = "You bought more land. It's now 128 by 128.", kind = "land" },
 				{ t = now - 4 * 86400, text = "Tobin moved in." },
 			},
 		})

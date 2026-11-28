@@ -335,7 +335,7 @@ function Plots.start()
 		City.keepLand(profile) -- (land past what is free stays theirs, Big Plot or not)
 		Plots.drawLand(i, profile.plan)
 		Remotes.event("PlanSync"):FireClient(player, { full = profile.plan })
-		Data.log(player, Text.fill("You bought more land. It's now {n} by {n}.", { n = land.Size }))
+		Data.log(player, Text.fill("You bought more land. It's now {n} by {n}.", { n = land.Size }), "land")
 		Data.notify(player, Text.fill("Land bought. Your plot is now {n} by {n} studs.", { n = land.Size }), "good")
 		return true
 	end

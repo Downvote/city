@@ -285,13 +285,14 @@ function Data.canAfford(player: Player, amount: number): boolean
 	return p ~= nil and p.coins >= amount
 end
 
--- Appends a line to the town log the Residents panel shows.
-function Data.log(player: Player, text: string)
+-- Appends a line to the town log the news shows. `kind` says what sort of story it is, which
+-- picks its icon there (Data/NewsKinds).
+function Data.log(player: Player, text: string, kind: string?)
 	local p = profiles[player]
 	if not p then
 		return
 	end
-	table.insert(p.log, 1, { t = os.time(), text = text })
+	table.insert(p.log, 1, { t = os.time(), text = text, kind = kind })
 	while #p.log > Tuning.Events.LogSize do
 		table.remove(p.log)
 	end

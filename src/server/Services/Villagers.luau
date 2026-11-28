@@ -24,6 +24,7 @@ local Routine = require(Shared.Sim.Routine)
 local Uses = require(Shared.Sim.Uses)
 local Passes = require(Shared.Sim.Passes)
 local Sayings = require(Shared.Data.Sayings)
+local NewsKinds = require(Shared.Data.NewsKinds)
 local Flair = require(Shared.Sim.Flair)
 local Memory = require(Shared.Sim.Memory)
 local Visits = require(Shared.Sim.Visits)
@@ -1256,7 +1257,7 @@ local function useThing(
 				Use.trace(folder and folder.Parent, o.trace, frame * CFrame.new(Uses.drop(c.id)))
 			end
 			if o.log then
-				Data.log(player, Uses.fill(o.log, vars))
+				Data.log(player, Uses.fill(o.log, vars), NewsKinds.use(c.use.id))
 			end
 			if o.mood then
 				Data.push(player, "villagers")
@@ -2023,7 +2024,7 @@ local function create(player: Player, raw: any): (boolean, string?)
 	table.insert(profile.order, vid)
 	profile.stats.made += 1
 	Data.push(player, "villagers", "order", "stats")
-	Data.log(player, Text.fill("{name} moved in.", { name = v.name }))
+	Data.log(player, Text.fill("{name} moved in.", { name = v.name }), "movein")
 	task.spawn(Villagers.spawn, player, vid)
 	createdEvent:Fire(player, vid)
 	return true, vid
@@ -2092,7 +2093,7 @@ local function remove(player: Player, vid: any): boolean
 		end
 	end
 	Villagers.despawn(player, vid)
-	Data.log(player, Text.fill("{name} moved away.", { name = v.name }))
+	Data.log(player, Text.fill("{name} moved away.", { name = v.name }), "moveout")
 	Data.push(player, "villagers", "order", "rel", "requests")
 	return true
 end
