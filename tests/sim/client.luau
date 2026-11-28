@@ -281,6 +281,18 @@ Harness.addService("MarketplaceService", {
 	end,
 	PromptGamePassPurchaseFinished = Fake.signal(),
 	PromptProductPurchaseFinished = Fake.signal(),
+	-- avatar items (UI/BuyLook): one asset, one bundle, or a whole look at once
+	PromptPurchase = function(_, _, id)
+		table.insert(prompted, { asset = id })
+	end,
+	PromptBundlePurchase = function(_, _, id)
+		table.insert(prompted, { bundle = id })
+	end,
+	PromptBulkPurchase = function(_, _, items)
+		table.insert(prompted, { bulk = items })
+	end,
+	PromptPurchaseFinished = Fake.signal(),
+	PromptBundlePurchaseFinished = Fake.signal(),
 })
 
 -- remotes: client calls go straight to the server's handlers -------------------------------------------

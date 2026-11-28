@@ -30,10 +30,14 @@ Remotes.Functions = {
 	"VehicleAway", -- () -> ok: puts yours away
 	"SlipOut", -- (direction) -> moved: a stuck player slips out the way they were pushing (Services/Unstick)
 	"CreatorShared", -- (page?, search?) -> { looks = { { name, by, who, app } }, more }: the Shared tab, a page at a time, only looks whose name or sharer holds the search
+	-- (it also takes (page, search, sort?, colour?): sort "new" or "likes", colour a hex the looks go
+	-- with; each look carries `at`, `likes` and `liked`)
 	"CreatorFromUserId", -- (userId) -> appearance
 	"CreatorFromOutfit", -- (outfitId) -> appearance: one of the player's own saved avatars on Roblox
 	"LookShare", -- (name, appearance) -> ok, err
 	"CreatorItemInfo", -- (ids) -> { id = { name, type } }
+	"LookLike", -- (by, at) -> { likes, liked } or nil, why: likes a shared look, or takes the like back
+	"LookSave", -- (appearance or false) -> ok, why: your own look in this game (false: back to your Roblox avatar)
 	"VillagerCreate", -- (profile) -> ok, vid or err
 	"VillagerUpdate", -- (vid, fields) -> ok, err
 	"VillagerRemove", -- (vid) -> ok

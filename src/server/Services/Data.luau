@@ -197,6 +197,7 @@ function Data.clientState(player: Player): any
 		requests = p.requests,
 		log = p.log,
 		outfits = p.outfits,
+		look = p.look or false, -- your own look in this game, or false for your Roblox avatar
 		settings = p.settings,
 		tutorial = p.tutorial,
 		daily = p.daily,

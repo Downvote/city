@@ -908,7 +908,7 @@ local function showDetail()
 		Size = UDim2.new(1, 0, 0, 48),
 		Wrap = false,
 	})
-	Kit.text(if pers then pers.name .. ". " .. pers.blurb else "", {
+	Kit.text(if pers then pers.name .. ". " .. Personalities.short(pers) else "", {
 		Name = "Personality",
 		Parent = info,
 		TextSize = 15,
@@ -945,8 +945,14 @@ local function showDetail()
 		local Hud = require(script.Parent.Hud)
 		Hud.open("Creator", { mode = "edit", vid = vid })
 	end)
+	-- what they wear, from Roblox (the user: "allow players to buy the outfit of the villager,
+	-- including from the profile of the villager")
+	action("cart", "Buy outfit", T.Green, 4, function()
+		local BuyLook = require(script.Parent.BuyLook) :: any
+		BuyLook.look(v.app)
+	end)
 	local confirm = false
-	action("door", "Move out", T.Coral, 4, function()
+	action("door", "Move out", T.Coral, 5, function()
 		if not confirm then
 			confirm = true
 			Toasts.show(Text.fill("Press Move out again to say goodbye to {name}.", { name = v.name }), "warn")

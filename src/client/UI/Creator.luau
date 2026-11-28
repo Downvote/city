@@ -3,6 +3,7 @@
 -- and single body parts, wear what you own on Roblox or an avatar you saved there, set skin
 -- colours and body shape, copy any player's avatar, save outfits, undo and redo.
 -- The look is shown on a mannequin on a private stage; then you give them a name and a personality.
+-- The You tab edits the player's own look the same way, worn on their character in this game.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -15,6 +16,10 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Remotes = require(Shared.Net.Remotes)
 local Appearance = require(Shared.Avatar.Appearance)
 local Categories = require(Shared.Avatar.Categories)
+local ColorWords = require(Shared.Avatar.ColorWords)
+local Shuffle = require(Shared.Avatar.Shuffle)
+local Shop = require(Shared.Avatar.Shop)
+local Likes = require(Shared.Avatar.Likes)
 local Personalities = require(Shared.Data.Personalities)
 local Palette = require(Shared.Data.Palette)
 local Colors = require(Shared.Util.Colors)
@@ -26,6 +31,8 @@ local Kit = require(script.Parent.Kit)
 local Icons = require(script.Parent.Icons)
 local Toasts = require(script.Parent.Toasts)
 local Theme = require(script.Parent.Theme)
+local ColorWheel = require(script.Parent.ColorWheel)
+local BuyLook = require(script.Parent.BuyLook)
 local State = require(script.Parent.Parent.Controllers.State)
 
 local Creator = {}
@@ -55,6 +62,18 @@ local previewToken = 0
 local previewPending = false
 local openToken = 0
 local saving = false
+-- "new", "edit" or "self": your own look (the user: "add another tab to edit self in the catalog
+-- just like editing villagers"). While you are on yourself, the villager you were making waits here.
+local stash: any = nil
+local markMode: ((string) -> ())? = nil
+-- The colour searched for, from the colour wheel (the user: "allow players to search things in the
+-- creator by color, with a color picker wheel"), and the colour word the catalog is searched with.
+local colorPick: Color3? = nil
+local colorWord: string? = nil
+local sharedSort = "new" -- the Shared tab's order: "new" or "likes" (Avatar/Likes)
+local ownLook: any = nil -- the player's own Roblox avatar as a look, which seeds Shuffle
+local createdEvent = Instance.new("BindableEvent")
+Creator.Created = createdEvent.Event -- (vid, name): a villager made in the creator has moved in
 
 -- browsing
 local tabId = "hair"
@@ -64,14 +83,26 @@ local keyword = ""
 -- user: "allow for search in friends, shared outfits, my items, and outfits"), in the same box
 -- the catalog is searched in; what is typed there is `find`, and each says what it looks through.
 local FIND = {
-	people = "Search friends and players",
-	shared = "Search shared looks",
-	outfits = "Search your outfits",
-	inventory = "Search your items",
-	avatars = "Search your avatars",
+	people = "Search players",
+	shared = "Search looks",
+	outfits = "Search outfits",
+	inventory = "Search items",
+	avatars = "Search avatars",
 }
 local find = ""
 local findToken = 0
+-- where the colour wheel searches nothing (the colour stays picked for the other tabs)
+local NO_COLOUR = { wearing = true, shape = true, people = true }
+local function colourHere(): boolean
+	return colorPick ~= nil and not NO_COLOUR[tabId]
+end
+-- What the catalog is searched for: what was typed and the picked colour's word.
+local function searchWords(): string
+	if colorWord then
+		return Text.clean(keyword .. " " .. colorWord)
+	end
+	return keyword
+end
 -- every row My items or My avatars has had so far, for its search to look through
 local loaded: { any } = {}
 local sortId = "Relevance"
@@ -97,6 +128,9 @@ local searchRow: Frame
 local searchBox: TextBox
 local sortButton: TextButton
 local loadMore: TextButton
+local colourButton: TextButton? = nil -- the round colour button at the search box's end
+local colourTag: TextButton? = nil -- the picked colour's word, under it, with a cross to clear it
+local colourPop: Instance? = nil -- the colour wheel, while it is open
 local lookPage: Frame
 local profilePage: Frame
 local stepButtons: { [string]: TextButton } = {}
@@ -104,6 +138,7 @@ local titleLabel: TextLabel? = nil
 local titleGhost: TextLabel? = nil -- the title again, large and faint, behind it
 local stepCaption: TextLabel? = nil -- which step this is, set wide under the title
 local selectTab: (string) -> ()
+local switchMode: (string) -> ()
 local markTab: ((string) -> ())? = nil
 local profile = { name = "", pers = "sunny", color = "4FA9D9", bday = { s = 1, d = 1 } }
 local nameField: TextBox? = nil -- the name box on the second step, once that step has been built
@@ -135,7 +170,7 @@ local PANEL_W, PANEL_PAD = 720, 12 -- what the panel holds is this wide, inside 
 local ROW_H = 36 -- the boxes to type in on the pages are this tall
 -- the Look step: the search box and the row of sections, the row of kinds under them, the copy
 -- box and the tools along the bottom
-local SEARCH_W, SECTION_H, FILTER_H = 200, 36, 28
+local SEARCH_W, SECTION_H, FILTER_H = 236, 36, 28
 local SORT_W = 168
 local ARROW = 26 -- the round arrows at each end of the row of sections
 local WORD_PAD = 12 -- room each side of a word in the rows
@@ -151,6 +186,17 @@ local function textWidth(text: string, size: number): number
 		return math.ceil(bounds.X)
 	end
 	return math.ceil(#text * size * 0.56)
+end
+
+-- The sort button's words on the Shared tab.
+local function sharedSortWords(): string
+	local name = Likes.Sorts[1].name
+	for _, sort in Likes.Sorts do
+		if sort.id == sharedSort then
+			name = sort.name
+		end
+	end
+	return Text.fill("Sort: {name}", { name = name })
 end
 
 -- The sort button's words.
@@ -177,6 +223,7 @@ end
 -- Look changes ------------------------------------------------------------------------------------
 
 local refreshWorn: () -> ()
+local buyable: (any) -> boolean
 
 local function sendPreview()
 	previewToken += 1
@@ -193,7 +240,7 @@ local function sendPreview()
 		end
 		if cleaned and removed and #removed > 0 then
 			app = Appearance.sanitize(cleaned)
-			Toasts.show("Some of that can't be worn in that spot, so it came off.", "warn")
+			Toasts.show("Some of that can't be worn there, so it came off.", "warn")
 			refreshWorn()
 		end
 	end)
@@ -282,7 +329,6 @@ local function note(text: string?, buttonText: string?, onClick: (() -> ())?)
 		Color = T.Card,
 		Radius = 12,
 	})
-	Kit.rim(holder, T.Line, 1)
 	Kit.pad(holder, 16, 14)
 	Kit.list(holder, 10)
 	Kit.text(text, {
@@ -325,7 +371,7 @@ local function wear(item: any, kind: string?)
 				bundleParts[key] = part
 				setApp(Categories.merge(app, part))
 			else
-				Toasts.show("Couldn't open that bundle just now.", "warn")
+				Toasts.show("Couldn't open that set just now.", "warn")
 			end
 		end)
 		return
@@ -348,7 +394,7 @@ local function wear(item: any, kind: string?)
 	end
 	local typeName = Categories.assetTypeName(item.AssetType)
 	if not typeName or not Categories.slotFor(typeName) then
-		Toasts.show("That item can't be worn by villagers.", "warn")
+		Toasts.show("That can't be worn.", "warn")
 		return
 	end
 	setApp(Categories.toggle(app, id, typeName))
@@ -425,6 +471,30 @@ local function kindOf(item: any, kind: string?): string
 	return "Item"
 end
 
+-- Can a card's thing be bought by itself on Roblox? A set can; an asset can unless the row says
+-- it is off sale, or it is a body part or a move (only ever sold inside a set).
+local NOT_SOLD = {
+	Head = true,
+	DynamicHead = true,
+	Torso = true,
+	LeftArm = true,
+	RightArm = true,
+	LeftLeg = true,
+	RightLeg = true,
+}
+function buyable(item: any): boolean
+	if item.ItemType == "Bundle" then
+		return Shop.forSale(item) ~= false
+	elseif item.ItemType ~= "Asset" then
+		return false
+	end
+	local typeName = Categories.assetTypeName(item.AssetType)
+	if typeName and (NOT_SOLD[typeName] or typeName:find("Animation")) then
+		return false
+	end
+	return Shop.forSale(item) ~= false
+end
+
 -- What they have on is picked, so its picture's square is yellow with a tick on its corner and
 -- its small line says "Wearing" (on Wearing everything is on, so there only the tick shows).
 refreshWorn = function()
@@ -434,10 +504,6 @@ refreshWorn = function()
 		local face = card:FindFirstChild("Square")
 		if face and face:IsA("Frame") then
 			face.BackgroundColor3 = if lit then T.Yellow else T.Card
-			local rim = face:FindFirstChild("Rim")
-			if rim and rim:IsA("UIStroke") then
-				rim.Color = if lit then T.YellowDark else T.Line
-			end
 		end
 		local sub = card:FindFirstChild("Sub", true)
 		if sub and sub:IsA("TextLabel") then
@@ -450,6 +516,10 @@ refreshWorn = function()
 		local badge = card:FindFirstChild("Worn")
 		if badge and badge:IsA("GuiObject") then
 			badge.Visible = worn
+		end
+		local buy = card:FindFirstChild("Buy")
+		if buy and buy:IsA("GuiObject") then
+			buy.Visible = worn
 		end
 	end
 end
@@ -479,7 +549,6 @@ local function itemCard(item: any, order: number, onClick: (() -> ())?, kind: st
 		Color = T.Card,
 		Radius = 12,
 	})
-	Kit.rim(face, T.Line, 1)
 	local picture = Kit.frame({
 		Name = "Picture",
 		Parent = face,
@@ -511,6 +580,36 @@ local function itemCard(item: any, order: number, onClick: (() -> ())?, kind: st
 		ZIndex = 4,
 	})
 	worn.Visible = false
+	-- Buy, on what they have on (the user: "allow players to buy items they select from the
+	-- villager customization screen"): Roblox's own prompt for that item
+	if buyable(item) then
+		local buy = Kit.new("TextButton", {
+			Name = "Buy",
+			Text = "",
+			AutoButtonColor = false,
+			BackgroundColor3 = T.Green,
+			Size = UDim2.fromOffset(30, 30),
+			Position = UDim2.fromOffset(CARD_W - 6, CARD_PIC - 6),
+			AnchorPoint = Vector2.new(1, 1),
+			ZIndex = 5,
+			Visible = false,
+			Parent = card,
+		})
+		Kit.corner(buy, "round")
+		Icons.make("cart", 18, {
+			Name = "IconArt",
+			Parent = buy,
+			Position = UDim2.new(0.5, -9, 0.5, -9),
+			Color = T.White,
+			Hole = T.Green,
+			ZIndex = 6,
+			Centre = true,
+		})
+		Kit.press(buy, { Kind = "round" })
+		buy.Activated:Connect(function()
+			BuyLook.item(item.Id, item.ItemType == "Bundle")
+		end)
+	end
 	-- the name in bold on up to two lines, the small line straight under it
 	local words = Kit.box({
 		Name = "Words",
@@ -560,13 +659,11 @@ end
 -- What to say when a search comes back with nothing, by where the cards come from.
 local function nothingText(tab: any, f: any): string
 	if tab and tab.source == "inventory" then
-		return "You don't own any of these on Roblox."
+		return "You don't own any."
 	elseif tab and tab.source == "outfits" then
-		return if f and f.outfits == "Purchased"
-			then "You haven't bought a character on Roblox."
-			else "You haven't saved an avatar on Roblox yet."
+		return if f and f.outfits == "Purchased" then "None bought yet." else "None saved yet."
 	end
-	return "Nothing found. Try another word."
+	return "Nothing found."
 end
 
 -- `again` shows the rows already had once more (the search on My items or My avatars changed).
@@ -586,13 +683,17 @@ local function showItems(items: { any }, append: boolean?, again: boolean?)
 		remember(items)
 	end
 	local tab = currentTab()
-	-- (only your own things are searched here: the catalog is searched by Roblox)
-	local filtering = tab ~= nil and tab.source ~= nil and find ~= ""
+	-- (only your own things are searched here, by name and by the colour's word: the catalog is
+	-- searched by Roblox)
+	local own = tab ~= nil and tab.source ~= nil
+	local filtering = own and (find ~= "" or colourHere())
 	local f = currentFilter()
 	local kind = if f then f.kind else nil
 	local n = #grid:GetChildren()
 	for i, item in items do
-		if type(item.Id) == "number" and (not filtering or Text.matches(find, item.Name)) then
+		local fits = not filtering
+			or (Text.matches(find, item.Name) and (not colourHere() or ColorWords.named(item.Name, colorWord)))
+		if type(item.Id) == "number" and fits then
 			itemCard(item, n + i, nil, kind)
 		end
 	end
@@ -600,11 +701,7 @@ local function showItems(items: { any }, append: boolean?, again: boolean?)
 	loadMore.Visible = pages ~= nil and not pages.IsFinished
 	if next(cards) == nil then
 		if filtering then
-			note(
-				if loadMore.Visible
-					then "Nothing so far has that in its name. Load more to look further."
-					else "Nothing here has that in its name."
-			)
+			note(if loadMore.Visible then "None yet. Load more to look further." else "None found.")
 		else
 			note(nothingText(tab, f))
 		end
@@ -614,7 +711,7 @@ end
 -- The sort a search runs in. With nothing typed and no sort picked, a filter may have a better
 -- order to browse in than the catalog's own.
 local function sortFor(f: any): string
-	if f.browse and keyword == "" and sortId == "Relevance" then
+	if f.browse and searchWords() == "" and sortId == "Relevance" then
 		return f.browse
 	end
 	return sortId
@@ -634,7 +731,7 @@ end
 
 local function buildParams(f: any, bundles: { string }?): CatalogSearchParams
 	local params = CatalogSearchParams.new()
-	params.SearchKeyword = keyword
+	params.SearchKeyword = searchWords()
 	if f.assets then
 		params.AssetTypes = enumList(Enum.AvatarAssetType, f.assets)
 	end
@@ -678,7 +775,7 @@ local function searchCatalog(f: any): ({ any }, any)
 		return page, result
 	end
 	local items = Remotes.fn("CreatorSearch"):InvokeServer({
-		keyword = keyword,
+		keyword = searchWords(),
 		assets = f.assets,
 		bundles = f.bundles,
 		sort = sortFor(f),
@@ -740,8 +837,8 @@ local function fetch(tab: any, f: any): ({ any }?, any, ((any) -> { any })?)
 end
 
 local LOOKING = {
-	inventory = "Looking through your items...",
-	outfits = "Looking for your avatars...",
+	inventory = "Loading your items...",
+	outfits = "Loading your avatars...",
 }
 
 local function search()
@@ -755,18 +852,18 @@ local function search()
 	forgetCards()
 	pages, pageRows = nil, nil
 	loadMore.Visible = false
-	note(LOOKING[tab.source] or "Looking through the catalog...")
+	note(LOOKING[tab.source] or "Searching...")
 	task.spawn(function()
 		local items, p, rows = fetch(tab, f)
 		if token ~= searchToken or not isOpen then
 			return
 		end
 		if not items then
-			note("Roblox didn't answer. Give it a moment and try again.", "Try again", search)
+			note("Roblox didn't answer.", "Try again", search)
 			return
 		end
 		pages, pageRows = p, rows
-		if keyword == "" and not tab.source then
+		if searchWords() == "" and not tab.source then
 			resultCache[f.id .. sortId] = items
 		end
 		showItems(items)
@@ -796,48 +893,125 @@ local function more()
 	end)
 end
 
--- Picks a random outfit from popular items.
+-- Shuffle (the user: "for shuffle the whole look, make it such that it chooses from the ones
+-- roblox recommends to the player the most"): for each slot in Avatar/Shuffle, Roblox's
+-- recommendations seeded by what is worn there or by what the player wears on Roblox, a pick among
+-- the first few; where Roblox recommends nothing, the catalog's most popular page stands in. A
+-- body set worn is swapped for one Roblox recommends after it. One undo step for all of it.
+
+-- Roblox's recommendations of one asset type (seeded by an asset of that type), as card rows.
+local function recommended(typeName: string, seed: number?): { any }
+	local kind = (Enum.AvatarAssetType :: any)[typeName]
+	if not kind then
+		return {}
+	end
+	for _, method in { "GetRecommendedAssetsAsync", "GetRecommendedAssets" } do
+		local ok, result = pcall(function()
+			return (AvatarEditorService :: any)[method](AvatarEditorService, kind, seed)
+		end)
+		if ok then
+			return Shuffle.rows(result, typeName)
+		end
+	end
+	return {}
+end
+
+local function recommendedSets(bundleId: number): { any }
+	for _, method in { "GetRecommendedBundlesAsync", "GetRecommendedBundles" } do
+		local ok, result = pcall(function()
+			return (AvatarEditorService :: any)[method](AvatarEditorService, bundleId)
+		end)
+		if ok then
+			return Shuffle.bundleRows(result)
+		end
+	end
+	return {}
+end
+
+-- The catalog's popular page of one asset type (kept for the session), when Roblox recommends
+-- nothing.
+local function popular(typeName: string): { any }
+	local key = "shuffle:" .. typeName
+	local cached = resultCache[key]
+	if not cached then
+		local oldKeyword, oldWord, oldSort = keyword, colorWord, sortId
+		keyword, colorWord, sortId = "", nil, "Bestselling"
+		cached = searchCatalog({ id = key, assets = { typeName } })
+		keyword, colorWord, sortId = oldKeyword, oldWord, oldSort
+		resultCache[key] = cached
+	end
+	return cached or {}
+end
+
+-- The bundles worn now that the creator has looked up: { id, part }.
+local function wornSets(look: any): { any }
+	local out = {}
+	local seen = {}
+	for key, part in bundleParts do
+		local id = tonumber(key:match(":(%d+)$"))
+		if id and not seen[id] and Categories.bundleWorn(look, part) then
+			seen[id] = true
+			table.insert(out, { id = id, part = part, kind = key:match("^(%a*):") })
+		end
+	end
+	return out
+end
+
+local shuffling = false
 local function shuffle()
+	if shuffling then
+		return
+	end
+	shuffling = true
 	task.spawn(function()
+		if not ownLook then
+			local ok, look = pcall(function()
+				return Remotes.fn("CreatorFromUser"):InvokeServer("")
+			end)
+			ownLook = if ok and look then Appearance.sanitize(look) else Appearance.default()
+		end
 		local new = Appearance.sanitize(app)
-		local picks = {
-			{ filter = { id = "hair", assets = { "HairAccessory" } }, type = "HairAccessory" },
-			{ filter = { id = "shirts", assets = { "Shirt" } }, type = "Shirt" },
-			{ filter = { id = "pants", assets = { "Pants" } }, type = "Pants" },
-			{ filter = { id = "faces", assets = { "Face" } }, type = "Face" },
-		}
-		local oldKeyword, oldSort = keyword, sortId
-		keyword, sortId = "", "Bestselling"
-		for _, p in picks do
-			local cached = resultCache[p.filter.id .. "Bestselling"]
-			if not cached then
-				cached = searchCatalog(p.filter)
-				resultCache[p.filter.id .. "Bestselling"] = cached
-			end
-			if cached and #cached > 0 then
-				local item = cached[math.random(1, #cached)]
-				remember({ item })
-				-- clear that slot first so a toggle always puts it on
-				if p.type == "HairAccessory" then
-					for i = #new.acc, 1, -1 do
-						if new.acc[i].t == "Hair" then
-							table.remove(new.acc, i)
-						end
-					end
+		local top = Tuning.CreatorMore.ShuffleTop
+		-- a body set: one Roblox recommends after the one worn
+		for _, set in wornSets(new) do
+			if set.kind == "body" then
+				local rows = recommendedSets(set.id)
+				local pick = Shuffle.pick(rows, math.random(), top, { [set.id] = true })
+				local part = pick and Remotes.fn("CreatorBundle"):InvokeServer(pick.Id, "body")
+				if pick and part then
+					bundleParts[bundleKey(pick.Id, "body")] = part
+					new = Categories.merge(new, part)
 				end
-				if not Categories.isWorn(new, item.Id) then
-					new = Categories.toggle(new, item.Id, p.type)
-				end
+				break
 			end
 		end
-		keyword, sortId = oldKeyword, oldSort
+		for _, slot in Shuffle.Slots do
+			if slot.chance and math.random() > slot.chance then
+				continue
+			end
+			local seed = Shuffle.seed(new, ownLook, slot.type)
+			local rows = recommended(slot.type, seed)
+			if #rows == 0 and slot.type ~= "Face" then
+				-- (no faces are on sale any more: none popular to fall back on)
+				rows = popular(slot.type)
+			end
+			local worn = Shuffle.wornIn(new, slot.type)
+			local pick = Shuffle.pick(rows, math.random(), top, if worn then { [worn] = true } else nil)
+			if pick then
+				remember({ pick })
+				new = Shuffle.wear(new, pick, slot)
+			end
+		end
 		local skin = Appearance.SkinTones[math.random(1, 10)]
 		for _, k in { "head", "la", "ra", "ll", "rl", "torso" } do
 			new.colors[k] = skin
 		end
 		new.scale.height = math.random(90, 110) / 100
 		new.scale.width = math.random(80, 100) / 100
-		setApp(new)
+		shuffling = false
+		if isOpen then
+			setApp(new)
+		end
 	end)
 end
 
@@ -859,7 +1033,7 @@ local function wearingPage()
 	forgetCards()
 	local assets = Appearance.assets(app)
 	if #assets == 0 then
-		note("Nothing on yet. Pick something from the other tabs.")
+		note("Nothing on yet.")
 		return
 	end
 	note(nil)
@@ -895,7 +1069,7 @@ local function wearingPage()
 	end
 	if not content:FindFirstChild("Hint") then
 		-- how this page works, in a hint strip under the cards
-		local hint = Kit.hint("Click something to take it off. Undo puts it back on.", { Parent = content })
+		local hint = Kit.hint("Click to take it off.", { Parent = content })
 		hint.Position = UDim2.fromScale(0, 1)
 		hint.AnchorPoint = Vector2.new(0, 1)
 	end
@@ -933,7 +1107,8 @@ local function inputWell(placeholder: string, props: { [string]: any }): TextBox
 end
 
 -- A grid of colours to pick from; the one they have stands in a yellow ring, which moves to
--- whatever is clicked. Returns the grid and a function that rings a colour.
+-- whatever is clicked. Returns the grid and a function that rings a colour. The swatches have no
+-- border (the user: "remove the borders around the rectangles ... eveywhere").
 local function colourGrid(
 	parent: Instance,
 	list: { string },
@@ -941,20 +1116,23 @@ local function colourGrid(
 	current: string?,
 	onPick: (string) -> (),
 	order: number,
-	across: number? -- (so many to a row, squares: the favourite colours' grid)
+	across: number? -- (so many to a row, filling it: the favourite colours' grid)
 ): (Frame, (string?) -> ())
 	local ring = 3
+	local gap = 4
 	local g = Kit.box({
 		Parent = parent,
 		Size = UDim2.new(1, -10, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		LayoutOrder = order,
 	})
-	local layout = Kit.grid(g, UDim2.fromOffset(px + ring * 2, px + ring * 2), 4)
+	local layout = Kit.grid(g, UDim2.fromOffset(px + ring * 2, px + ring * 2), gap)
 	if across then
-		-- (and the grid exactly that many cells wide, so it wraps there whatever the panel's width)
+		-- that many to a row, stretched across the whole of it with no gap left at the right (the
+		-- user: "for the color, make it fill horizontally instead of leaving a gap at the right")
 		layout.FillDirectionMaxCells = across
-		g.Size = UDim2.fromOffset(across * (px + ring * 2) + (across - 1) * 4, 0)
+		layout.CellSize = UDim2.new(1 / across, -math.ceil(gap * (across - 1) / across), 0, px + ring * 2)
+		layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 	end
 	local rings: { [string]: Frame } = {}
 	local function mark(hex: string?)
@@ -978,17 +1156,12 @@ local function colourGrid(
 		end, { Parent = cell })
 		b.Position = UDim2.fromOffset(ring, ring)
 		if across then
-			-- (little squares, as in the user's picture)
+			-- (little rounded rectangles, as wide as the row lets them be)
+			b.Size = UDim2.new(1, -ring * 2, 1, -ring * 2)
 			local corner = b:FindFirstChildOfClass("UICorner")
 			if corner then
 				corner.CornerRadius = UDim.new(0, 4)
 			end
-		end
-		-- a thin rim, so a white or a charcoal one still shows on the panel in either look (the
-		-- swatch's own stroke, switched on: an object draws only one)
-		local edge = b:FindFirstChildOfClass("UIStroke")
-		if edge then
-			edge.Enabled, edge.Color, edge.Thickness, edge.Transparency = true, T.Line, 1, 0
 		end
 	end
 	mark(current)
@@ -1034,15 +1207,39 @@ local function skinPage()
 		setApp(new)
 		ring()
 	end
-	Kit.text(
-		"Skin tones",
-		{ Parent = holder, TextSize = 15, Font = Kit.Fonts.Bold, Color = T.InkSoft, LayoutOrder = 2 }
-	)
+	local function heading(text: string, order: number)
+		Kit.text(
+			text,
+			{ Parent = holder, TextSize = 15, Font = Kit.Fonts.Bold, Color = T.InkSoft, LayoutOrder = order }
+		)
+	end
+	if colorPick then
+		-- the colour from the wheel itself, then the tones and colours near it, nearest first
+		local near = Tuning.CreatorMore.ColorNear
+		local most = Tuning.CreatorMore.ColorShown
+		heading("Picked colour", 2)
+		local _, exact = colourGrid(holder, { Colors.toHex(colorPick) }, 36, now(), pick, 3)
+		marks = { exact }
+		local tones = ColorWords.near(Appearance.SkinTones, colorPick, near, most)
+		if #tones > 0 then
+			heading("Skin tones", 4)
+			local _, a = colourGrid(holder, tones, 36, now(), pick, 5)
+			table.insert(marks, a)
+		end
+		local any = ColorWords.near(Palette.Colors, colorPick, near, most)
+		if #any > 0 then
+			heading("Any colour", 6)
+			local _, b = colourGrid(holder, any, 30, now(), pick, 7)
+			table.insert(marks, b)
+		end
+		if #tones == 0 and #any == 0 then
+			heading("Nothing else is close to it.", 8)
+		end
+		return
+	end
+	heading("Skin tones", 2)
 	local _, a = colourGrid(holder, Appearance.SkinTones, 36, now(), pick, 3)
-	Kit.text(
-		"Any colour",
-		{ Parent = holder, TextSize = 15, Font = Kit.Fonts.Bold, Color = T.InkSoft, LayoutOrder = 4 }
-	)
+	heading("Any colour", 4)
 	local _, b = colourGrid(holder, Palette.Colors, 30, now(), pick, 5)
 	marks = { a, b }
 end
@@ -1122,7 +1319,7 @@ local function outfitsPage()
 	local outfits = State.data.outfits or {}
 	if #outfits == 0 then
 		-- nothing saved: say how, on a card of its own (the note under the cards)
-		note("No saved outfits yet. Name this look and save it to keep it here.")
+		note("No outfits yet.")
 		local n = content:FindFirstChild("Note")
 		if n and n:IsA("GuiObject") then
 			n.Position = UDim2.fromOffset(0, ROW_H + 12)
@@ -1131,6 +1328,10 @@ local function outfitsPage()
 	local matching = 0
 	for i, o in outfits do
 		if not Text.matches(find, o.name) then
+			continue
+		end
+		-- (and with a colour picked, only what goes with it: its name, or its own colours)
+		if colourHere() and not ColorWords.lookMatches(o.name, o.app, colorPick, Tuning.CreatorMore.ColorNear) then
 			continue
 		end
 		matching += 1
@@ -1171,7 +1372,7 @@ local function outfitsPage()
 		end)
 	end
 	if #outfits > 0 and matching == 0 then
-		Kit.text("No outfit has that in its name.", {
+		Kit.text("None found.", {
 			Parent = list,
 			Size = UDim2.new(1, -8, 0, 22),
 			TextSize = 15,
@@ -1225,7 +1426,7 @@ local function peoplePage()
 	local holder = Kit.scroll({ Parent = content, Size = UDim2.fromScale(1, 1) })
 	holder.ScrollBarThickness = 4
 	Kit.list(holder, 8)
-	Kit.text("People here and your friends", {
+	Kit.text("People here and friends", {
 		Name = "Caption",
 		Parent = holder,
 		Size = UDim2.new(1, -12, 0, 20),
@@ -1262,7 +1463,6 @@ local function peoplePage()
 			Parent = faces,
 		})
 		Kit.corner(card, 12)
-		Kit.rim(card, T.Line, 1)
 		-- a circle with a border ("make portraits a circle with a border instead of a square")
 		local face = Kit.portrait({
 			Parent = card,
@@ -1332,11 +1532,11 @@ local function peoplePage()
 		end
 		waiting:Destroy()
 		if more == nil then
-			Kit.text("Couldn't look anyone up just now.", { Parent = faces, TextSize = 15, Color = T.InkSoft })
+			Kit.text("Couldn't load anyone just now.", { Parent = faces, TextSize = 15, Color = T.InkSoft })
 			return
 		end
 		if shown == 0 and find ~= "" then
-			Kit.text("Nobody here or in your friends goes by that.", {
+			Kit.text("Nobody by that name.", {
 				Parent = faces,
 				TextSize = 15,
 				Color = T.InkSoft,
@@ -1346,8 +1546,10 @@ local function peoplePage()
 	end)
 end
 
--- The Shared tab: looks players of this game have shared from this creator, newest first, with
--- a box to share the one you are making. A page at a time, like the Players tab.
+-- The Shared tab: looks players of this game have shared from this creator, newest first or most
+-- liked first (the sort pill), with a box to share the one you are making. A page at a time, like
+-- the Players tab. Each has a like (the user: "for shared avatars, could there be a liking system
+-- for it as well?"): one a player, pressed again to take it back, never on your own.
 local function sharedPage()
 	local holder = Kit.scroll({ Parent = content, Size = UDim2.fromScale(1, 1) })
 	holder.ScrollBarThickness = 4
@@ -1367,7 +1569,7 @@ local function sharedPage()
 			task.spawn(function()
 				local ok, err = Remotes.fn("LookShare"):InvokeServer(name, app)
 				if ok then
-					Toasts.show("Shared. Other players can wear it now.", "good")
+					Toasts.show("Shared.", "good")
 					task.wait(0.4)
 					if isOpen and tabId == "shared" then
 						selectTab("shared")
@@ -1407,7 +1609,7 @@ local function sharedPage()
 			Sub = Text.fill("by {who}", { who = look.who or "" }),
 			TextSize = 17,
 			LeftSpace = 58,
-			RightSpace = 104,
+			RightSpace = 196,
 			LayoutOrder = shown,
 		})
 		local face = Kit.portrait({
@@ -1437,10 +1639,63 @@ local function sharedPage()
 		}, function()
 			setApp(look.app)
 		end)
+		-- the like: a heart and how many, pink once you have liked it
+		local mine = look.by == player.UserId
+		local liked = look.liked == true
+		local likes = if type(look.likes) == "number" then look.likes else 0
+		local heart: TextButton
+		local function paint()
+			heart.Text = tostring(likes)
+			Kit.setButtonColor(heart, if liked then T.Pink else T.PaperDark, if liked then T.White else T.Ink)
+		end
+		local asking = false
+		heart = Kit.button(tostring(likes), {
+			Name = "Like",
+			Parent = inner,
+			Size = UDim2.fromOffset(80, 36),
+			Position = UDim2.new(1, -104, 0.5, 0),
+			AnchorPoint = Vector2.new(1, 0.5),
+			Color = T.PaperDark,
+			TextColor = T.Ink,
+			TextSize = 16,
+			Icon = "heart",
+			ZIndex = 3,
+		}, function()
+			if mine then
+				Toasts.show("That one's yours.", "info")
+				return
+			end
+			if asking then
+				return
+			end
+			asking = true
+			task.spawn(function()
+				local ok, result, why = pcall(function()
+					return Remotes.fn("LookLike"):InvokeServer(look.by, look.at)
+				end)
+				asking = false
+				if ok and type(result) == "table" then
+					liked = result.liked == true
+					likes = if type(result.likes) == "number" then result.likes else likes
+					if heart.Parent then
+						paint()
+					end
+				elseif ok and type(why) == "string" then
+					Toasts.show(why, "warn")
+				end
+			end)
+		end)
+		heart:SetAttribute("Liked", liked)
+		paint()
 	end
 	local function fetch(page: number): boolean?
 		local ok, data = pcall(function()
-			return Remotes.fn("CreatorShared"):InvokeServer(page, find)
+			return Remotes.fn("CreatorShared"):InvokeServer(
+				page,
+				find,
+				sharedSort,
+				if colourHere() then Colors.toHex(colorPick :: Color3) else nil
+			)
 		end)
 		if not holder.Parent or not ok or type(data) ~= "table" then
 			return nil
@@ -1459,17 +1714,17 @@ local function sharedPage()
 			return
 		end
 		if more == nil then
-			Kit.text("Couldn't load the shared looks just now.", { Parent = looks, TextSize = 15, Color = T.InkSoft })
+			Kit.text("Couldn't load them just now.", { Parent = looks, TextSize = 15, Color = T.InkSoft })
 			return
 		end
-		if shown == 0 and find ~= "" then
-			Kit.text("No shared look has that in its name or its maker's.", {
+		if shown == 0 and (find ~= "" or colourHere()) then
+			Kit.text("None found.", {
 				Parent = looks,
 				TextSize = 15,
 				Color = T.InkSoft,
 			})
 		elseif shown == 0 then
-			Kit.hint("Nobody has shared a look yet. Name yours above and share it.", {
+			Kit.hint("Nothing shared yet.", {
 				Parent = looks,
 			})
 		end
@@ -1488,13 +1743,13 @@ end
 
 local OWN = {
 	inventory = {
-		unasked = "Dress your villager in things you own on Roblox. Roblox will ask you first if this game may see your items.",
-		no = "You said no, so this game can't see your items.",
+		unasked = "Wear what you own on Roblox. Roblox asks you first.",
+		no = "You said no, so your items stay hidden.",
 		button = "Show my items",
 	},
 	outfits = {
-		unasked = "Dress your villager in an avatar you saved on Roblox. Roblox will ask you first if this game may see them.",
-		no = "You said no, so this game can't see your saved avatars.",
+		unasked = "Wear an avatar you saved on Roblox. Roblox asks you first.",
+		no = "You said no, so your avatars stay hidden.",
 		button = "Show my avatars",
 	},
 }
@@ -1549,7 +1804,7 @@ local function askPage(tab: any)
 	local words = OWN[tab.source]
 	local text, button
 	if access == "asking" then
-		text = "Roblox is asking you now. Answer it to carry on."
+		text = "Roblox is asking you now."
 	elseif access == "no" then
 		text, button = words.no, "Ask me again"
 	elseif access == "failed" then
@@ -1572,10 +1827,26 @@ local function layoutBrowse(showSearch: boolean, showFilterRow: boolean, placeho
 	if glass then
 		Kit.recolorIcon(glass, if showSearch then T.InkSoft else T.Line, T.PaperDark)
 	end
-	local sort = showSearch and placeholder == nil
+	-- the Shared tab has a sort of its own: newest or most liked
+	local sort = (showSearch and placeholder == nil) or tabId == "shared"
 	sortButton.Visible = sort
+	sortButton.Text = if tabId == "shared" then sharedSortWords() else sortWords(sortId)
+	-- the colour button where a colour can be searched for, and the picked colour's word
+	local colours = not NO_COLOUR[tabId] and (showSearch or tabId == "skin")
+	local tagW = 0
+	if colourButton then
+		colourButton.Visible = colours
+	end
+	local tag = colourTag
+	if tag then
+		tag.Visible = colours and colorPick ~= nil
+		tag.Position = UDim2.new(1, if sort then -(SORT_W + 8) else 0, 0, SECTION_H + 6)
+		if tag.Visible then
+			tagW = tag.Size.X.Offset + 8
+		end
+	end
 	filterRow.Visible = showFilterRow
-	filterRow.Size = UDim2.new(1, if sort then -(SORT_W + 8) else 0, 0, FILTER_H)
+	filterRow.Size = UDim2.new(1, -((if sort then SORT_W + 8 else 0) + tagW), 0, FILTER_H)
 end
 
 local function showFilters(tab: any)
@@ -1627,6 +1898,153 @@ local function showFilters(tab: any)
 	end
 end
 
+-- The colour search ---------------------------------------------------------------------------------
+
+-- The colour button and the tag show the colour picked (or the paint bucket, with none).
+local function paintColour()
+	local b = colourButton
+	if b then
+		local dot = b:FindFirstChild("Swatch")
+		local art = b:FindFirstChild("IconArt")
+		if dot and dot:IsA("GuiObject") then
+			dot.Visible = colorPick ~= nil
+			if colorPick then
+				dot.BackgroundColor3 = colorPick
+			end
+		end
+		if art and art:IsA("GuiObject") then
+			art.Visible = colorPick == nil
+		end
+	end
+	local tag = colourTag
+	if tag and colorPick and colorWord then
+		local word = colorWord:sub(1, 1):upper() .. colorWord:sub(2)
+		local label = tag:FindFirstChild("Word")
+		if label and label:IsA("TextLabel") then
+			label.Text = word
+		end
+		local dot = tag:FindFirstChild("Swatch")
+		if dot and dot:IsA("GuiObject") then
+			dot.BackgroundColor3 = colorPick
+		end
+		tag.Size = UDim2.fromOffset(textWidth(word, 14) + 58, FILTER_H)
+	end
+end
+
+local refreshPage: () -> ()
+
+-- Picks a colour to search by (nil: none), and shows the tab again with it: the catalog searched
+-- for its word (only when the word changes), your own things by their names, saved and shared
+-- looks by their names and their own colours, the skin's colours by colour.
+local function setColour(c: Color3?)
+	local was = colorWord
+	colorPick = c
+	colorWord = if c then ColorWords.nearest(c).word else nil
+	paintColour()
+	local tab = currentTab()
+	showFilters(tab)
+	if not isOpen or NO_COLOUR[tabId] then
+		return
+	end
+	if tab and tab.filters and not tab.source then
+		if colorWord ~= was then
+			search()
+		end
+	elseif tab and tab.source then
+		if access == "yes" and grid.Visible then
+			showItems(loaded, false, true)
+		end
+	else
+		refreshPage()
+	end
+end
+
+local function closeColour()
+	local pop = colourPop
+	if pop then
+		pop:Destroy()
+		colourPop = nil
+	end
+end
+
+-- The colour wheel, dropped down over the cards from the colour button. It searches as soon as a
+-- press on it is let go; Clear takes the colour away, and a click off it puts it away.
+local function openColour()
+	if colourPop then
+		closeColour()
+		return
+	end
+	local catcher = Kit.new("TextButton", {
+		Name = "ColourCatcher",
+		Text = "",
+		AutoButtonColor = false,
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 40,
+		Parent = lookPage,
+	})
+	catcher.Activated:Connect(closeColour)
+	colourPop = catcher
+	local R = 80
+	local wheelW = R * 2 + math.floor(R / 4 * 0.94)
+	local W = wheelW + 28
+	local card = Kit.new("TextButton", {
+		Name = "ColourCard",
+		Text = "",
+		AutoButtonColor = false,
+		BackgroundColor3 = T.Paper,
+		Size = UDim2.fromOffset(W, wheelW + 30 + 118),
+		Position = UDim2.fromOffset(0, SECTION_H + 6),
+		ZIndex = 41,
+		Parent = catcher,
+	})
+	Kit.corner(card, 14)
+	Kit.softShadow(card, 1)
+	Kit.caption("Colour", { Parent = card, Position = UDim2.fromOffset(14, 12), ZIndex = 42 })
+	local word = Kit.title("", {
+		Name = "Word",
+		Parent = card,
+		Size = UDim2.new(1, -28, 0, 24),
+		Position = UDim2.fromOffset(14, 28),
+		TextSize = 19,
+		Color = T.Ink,
+		Wrap = false,
+		ZIndex = 42,
+	})
+	local function say(c: Color3?)
+		local w = if c then ColorWords.nearest(c).word else nil
+		word.Text = if w then w:sub(1, 1):upper() .. w:sub(2) else "Pick a colour"
+	end
+	local wheel = ColorWheel.new({ Parent = card, Position = UDim2.fromOffset(14, 60), Radius = R, ZIndex = 42 })
+	wheel.set(colorPick)
+	say(colorPick)
+	wheel.onChange = say
+	wheel.onPick = function(c: Color3)
+		setColour(c)
+	end
+	local half = math.floor((W - 28 - 8) / 2)
+	Kit.button("Clear", {
+		Parent = card,
+		Size = UDim2.fromOffset(half, 34),
+		Position = UDim2.new(0, 14, 1, -46),
+		Color = T.Coral,
+		TextSize = 16,
+		ZIndex = 42,
+	}, function()
+		closeColour()
+		setColour(nil)
+	end)
+	Kit.button("Done", {
+		Parent = card,
+		Size = UDim2.fromOffset(half, 34),
+		Position = UDim2.new(1, -14, 1, -46),
+		AnchorPoint = Vector2.new(1, 0),
+		Color = T.Green,
+		TextSize = 16,
+		ZIndex = 42,
+	}, closeColour)
+end
+
 selectTab = function(id: string)
 	tabId = id
 	if markTab then
@@ -1667,6 +2085,21 @@ selectTab = function(id: string)
 	end
 end
 
+-- The tab's own page built again where it is (a page with no cards: skin, outfits, shared...).
+refreshPage = function()
+	clearContent()
+	forgetCards()
+	if tabId == "people" then
+		peoplePage()
+	elseif tabId == "shared" then
+		sharedPage()
+	elseif tabId == "outfits" then
+		outfitsPage()
+	elseif tabId == "skin" then
+		skinPage()
+	end
+end
+
 -- What is typed in the search box on a tab of your own things: its page again, or the rows already
 -- had again, with only what holds the words. (Players and Shared ask the server, which looks
 -- through everybody and every look, not only the pages shown.)
@@ -1685,15 +2118,7 @@ local function applyFind()
 			showItems(loaded, false, true)
 		end
 	elseif tabId == "people" or tabId == "shared" or tabId == "outfits" then
-		clearContent()
-		forgetCards()
-		if tabId == "people" then
-			peoplePage()
-		elseif tabId == "shared" then
-			sharedPage()
-		else
-			outfitsPage()
-		end
+		refreshPage()
 	end
 end
 
@@ -1961,7 +2386,10 @@ local function buildProfilePage()
 		AutomaticSize = Enum.AutomaticSize.Y,
 		LayoutOrder = 1,
 	})
-	Kit.grid(faces, UDim2.fromOffset(76, 90), 6)
+	-- eight to a row, stretched across all of it
+	local faceGrid = Kit.grid(faces, UDim2.new(1 / 8, -6, 0, 90), 6)
+	faceGrid.FillDirectionMaxCells = 8
+	faceGrid.HorizontalAlignment = Enum.HorizontalAlignment.Center
 	local persBlurb = Kit.text("", {
 		Name = "Blurb",
 		Parent = pers,
@@ -1975,13 +2403,15 @@ local function buildProfilePage()
 	local function showPers(i: number)
 		local p = list[i]
 		profile.pers = p.id
-		persBlurb.Text = p.blurb
+		-- (in a few words: the user, "under personalities, shorten them")
+		persBlurb.Text = Personalities.short(p)
 		persBlurb.TextColor3 = Kit.tint(Colors.fromHex(p.color))
 		persBlurb:SetAttribute("Tint", p.color)
+		-- no border round a tile (the user: "remove the borders around the rectangles"): only the
+		-- picked one is ringed, in yellow
 		for j, rim in rims do
 			local on = j == i
-			rim.Color = if on then T.Yellow else T.Line
-			rim.Thickness = if on then 3 else 1
+			rim.Enabled = on
 			names[j].TextColor3 = if on then T.Ink else T.InkSoft
 		end
 	end
@@ -1995,7 +2425,7 @@ local function buildProfilePage()
 			Parent = faces,
 		})
 		Kit.corner(tile, 12)
-		local rim = Kit.new("UIStroke", { Color = T.Line, Thickness = 1, Parent = tile }) :: UIStroke
+		local rim = Kit.new("UIStroke", { Color = T.Yellow, Thickness = 3, Enabled = false, Parent = tile }) :: UIStroke
 		rim.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 		rims[i] = rim
 		Icons.make("face_" .. p.id, 46, {
@@ -2086,12 +2516,82 @@ local function buildProfilePage()
 					if mode == "new" then Text.fill("{name} is moving in.", { name = name }) else "Saved.",
 					"good"
 				)
+				local made = mode == "new"
 				Creator.close()
+				if made then
+					-- (err is the new villager's id: the tutorial listens for this)
+					createdEvent:Fire(err, name)
+				end
 			else
 				save.Text = if mode == "new" then "Move them in" else "Save changes"
 				Toasts.show(err or "Couldn't save that. Try again.", "warn")
 			end
 		end)
+	end)
+end
+
+-- The second step on yourself: wear the look in town, or go back to your Roblox avatar.
+local function buildSelfPage()
+	for _, c in profilePage:GetChildren() do
+		if c:IsA("GuiObject") then
+			c:Destroy()
+		end
+	end
+	local body = Kit.box({ Name = "Self", Parent = profilePage, Size = UDim2.new(1, 0, 1, -64) })
+	Kit.list(body, 10)
+	Kit.text("Your look", {
+		Parent = body,
+		Size = UDim2.new(1, -10, 0, 22),
+		TextSize = 15,
+		Font = Kit.Fonts.Bold,
+		Color = T.InkSoft,
+		LayoutOrder = 1,
+	})
+	Kit.text("You wear it in this game.", {
+		Name = "About",
+		Parent = body,
+		Size = UDim2.new(1, -10, 0, 24),
+		TextSize = 17,
+		LayoutOrder = 2,
+	})
+	local function send(look: any)
+		if saving then
+			return
+		end
+		saving = true
+		task.spawn(function()
+			local ok, err = Remotes.fn("LookSave"):InvokeServer(look)
+			saving = false
+			if ok then
+				Toasts.show(if look then "Your look is on." else "Back to your Roblox avatar.", "good")
+				Creator.close()
+			else
+				Toasts.show(err or "Couldn't save that. Try again.", "warn")
+			end
+		end)
+	end
+	if State.data.look then
+		Kit.button("Back to my Roblox avatar", {
+			Name = "Roblox avatar",
+			Parent = body,
+			Size = UDim2.fromOffset(280, 42),
+			Color = T.Blue,
+			TextSize = 17,
+			Icon = "person",
+			LayoutOrder = 3,
+		}, function()
+			send(false)
+		end)
+	end
+	Kit.button("Wear it", {
+		Parent = profilePage,
+		Size = UDim2.new(1, 0, 0, 52),
+		Position = UDim2.new(0, 0, 1, -52),
+		Color = T.Green,
+		TextSize = 22,
+		Icon = "check",
+	}, function()
+		send(app)
 	end)
 end
 
@@ -2114,7 +2614,11 @@ local function showStep(step: string)
 		stepCaption.Text = Kit.spaced(if step == "look" then "Step 1 of 2" else "Step 2 of 2")
 	end
 	if step == "profile" then
-		buildProfilePage()
+		if mode == "self" then
+			buildSelfPage()
+		else
+			buildProfilePage()
+		end
 	end
 end
 
@@ -2544,6 +3048,66 @@ local function setTitle(text: string)
 	end
 end
 
+-- The title, the steps' words and the tab at the top for who is being dressed.
+local function applyMode()
+	local v = editVid and State.villager(editVid)
+	if mode == "self" then
+		setTitle("Your look")
+	elseif mode == "edit" and v then
+		setTitle(Text.fill("{name}'s look", { name = v.name }))
+	else
+		setTitle("Make a villager")
+	end
+	local second = stepButtons.profile
+	if second then
+		second.Text = if mode == "self" then "2  Save" else "2  Name and personality"
+	end
+	if markMode then
+		markMode(if mode == "self" then "self" else "villager")
+	end
+end
+
+local startStage: (string?) -> ()
+
+-- From a villager to yourself and back. The villager being made (or edited) waits, look, undo and
+-- all, while you dress yourself.
+function switchMode(to: string)
+	if not isOpen then
+		return
+	end
+	if to == "self" and mode ~= "self" then
+		stash = { mode = mode, editVid = editVid, app = app, history = history, future = future, profile = profile }
+		mode, editVid = "self", nil
+		history, future = {}, {}
+		applyMode()
+		showStep("look")
+		startStage("self")
+	elseif to == "villager" and mode == "self" then
+		local back = stash
+		stash = nil
+		if back then
+			mode, editVid, history, future, profile = back.mode, back.editVid, back.history, back.future, back.profile
+			app = back.app
+		else
+			-- opened on yourself: a new villager, if the town has room
+			if City.villagerRoom(State.data) <= 0 then
+				Toasts.show("Your town is full. Grow it to make room.", "warn")
+				applyMode()
+				return
+			end
+			mode, editVid = "new", nil
+			history, future = {}, {}
+			profile = { name = "", pers = "sunny", color = "4FA9D9", bday = { s = 1, d = 1 } }
+			app = Appearance.default()
+		end
+		applyMode()
+		showStep("look")
+		sendPreview()
+		refreshWorn()
+		paintStudio()
+	end
+end
+
 local function build()
 	local gui = Kit.root()
 	local frame = Kit.box({ Name = "Creator", Size = UDim2.fromScale(1, 1), Parent = gui })
@@ -2590,6 +3154,15 @@ local function build()
 		Position = UDim2.fromOffset(342, 61),
 		AnchorPoint = Vector2.new(0, 0.5),
 	})
+	-- who is being dressed: a villager, or you (the user: "add another tab to edit self in the
+	-- catalog just like editing villagers")
+	local _, pickMode = Kit.segments({
+		{ id = "villager", name = "Villager" },
+		{ id = "self", name = "You" },
+	}, function(id)
+		switchMode(id)
+	end, { Parent = frame, Position = UDim2.fromOffset(100, 80), Height = 38, TextSize = 16 })
+	markMode = pickMode
 
 	-- Everything to choose from is one panel on the right, a rounded card, its villager's
 	-- favourite colour glowing in from the top right (paintStudio). The villager's side of the
@@ -2687,10 +3260,45 @@ local function build()
 	})
 	searchBox = Kit.textbox("Search", {
 		Parent = searchRow,
-		Size = UDim2.new(1, -52, 1, 0),
+		Size = UDim2.new(1, -84, 1, 0),
 		Text = keyword,
 		TextSize = 16,
 	})
+	-- the colour to search by: a round button at the box's end that opens the colour wheel, filled
+	-- with the colour once one is picked
+	local cb = Kit.new("TextButton", {
+		Name = "Colour",
+		Text = "",
+		AutoButtonColor = false,
+		BackgroundColor3 = T.Card,
+		Size = UDim2.fromOffset(26, 26),
+		Position = UDim2.new(1, -40, 0.5, -13),
+		ZIndex = 3,
+		Parent = searchRow,
+	})
+	Kit.corner(cb, "round")
+	Icons.make("bucket", 16, {
+		Name = "IconArt",
+		Parent = cb,
+		Position = UDim2.new(0.5, -8, 0.5, -8),
+		Color = T.InkSoft,
+		Hole = T.Card,
+		ZIndex = 4,
+		Centre = true,
+	})
+	Kit.frame({
+		Name = "Swatch",
+		Parent = cb,
+		Size = UDim2.new(1, -6, 1, -6),
+		Position = UDim2.fromOffset(3, 3),
+		Color = T.Card,
+		Radius = "round",
+		ZIndex = 4,
+		Visible = false,
+	})
+	Kit.press(cb, { Kind = "round" })
+	cb.Activated:Connect(openColour)
+	colourButton = cb
 	searchBox.Position = UDim2.fromOffset(38, 0)
 	searchBox.BackgroundTransparency = 1
 	searchBox.ClipsDescendants = true
@@ -2830,7 +3438,6 @@ local function build()
 			Parent = strip,
 		})
 		Kit.corner(b, "round")
-		Kit.rim(b, T.Line, 1)
 		local art = Icons.make("back", 16, {
 			Name = "IconArt",
 			Parent = b,
@@ -2897,7 +3504,58 @@ local function build()
 		TextSize = 14,
 		Icon = "layers",
 	})
+	-- the picked colour's word, with a cross: pressed, the colour goes
+	local tag = Kit.new("TextButton", {
+		Name = "ColourTag",
+		Text = "",
+		AutoButtonColor = false,
+		BackgroundColor3 = T.Card,
+		Size = UDim2.fromOffset(110, FILTER_H),
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -(SORT_W + 8), 0, SECTION_H + 6),
+		Visible = false,
+		Parent = header,
+	})
+	Kit.corner(tag, "pill")
+	Kit.frame({
+		Name = "Swatch",
+		Parent = tag,
+		Size = UDim2.fromOffset(14, 14),
+		Position = UDim2.new(0, 10, 0.5, -7),
+		Color = T.Card,
+		Radius = "round",
+	})
+	Kit.text("", {
+		Name = "Word",
+		Parent = tag,
+		Size = UDim2.new(1, -54, 1, 0),
+		Position = UDim2.fromOffset(30, 0),
+		TextSize = 14,
+		Font = Kit.Fonts.Bold,
+		Wrap = false,
+	})
+	Icons.make("close", 12, {
+		Name = "IconArt",
+		Parent = tag,
+		Position = UDim2.new(1, -20, 0.5, -6),
+		Color = T.InkSoft,
+		Hole = T.Card,
+	})
+	Kit.press(tag, { Kind = "pill" })
+	tag.Activated:Connect(function()
+		closeColour()
+		setColour(nil)
+	end)
+	colourTag = tag
+	paintColour()
 	sortButton.Activated:Connect(function()
+		if tabId == "shared" then
+			-- newest first, or the most liked first
+			sharedSort = if sharedSort == "new" then "likes" else "new"
+			sortButton.Text = sharedSortWords()
+			refreshPage()
+			return
+		end
 		local i = 1
 		for k, sort in Categories.Sorts do
 			if sort.id == sortId then
@@ -2963,20 +3621,33 @@ local function build()
 	local toolList = {
 		{ "undo", "Undo", "Undo", undo },
 		{ "redo", "Redo", "Redo", redo },
-		{ "dice", "Shuffle", "Shuffle the whole look", shuffle },
+		{ "dice", "Shuffle", "Shuffle", shuffle },
 		{
 			"trash",
 			"Reset",
-			"Reset to a plain look",
+			"Reset",
 			function()
 				setApp(Appearance.default())
+			end,
+		},
+		-- the whole look from Roblox (the user: "allow players to buy the outfit of the villager")
+		{
+			"cart",
+			"Buy outfit",
+			"Buy outfit",
+			function()
+				local sets = {}
+				for _, set in wornSets(app) do
+					table.insert(sets, { id = set.id, part = set.part })
+				end
+				BuyLook.look(app, sets)
 			end,
 		},
 		-- one button steps through the three distances, for whoever has no wheel and no second finger
 		{
 			"zoom",
 			"Zoom",
-			"Zoom in or out",
+			"Zoom",
 			function()
 				if zoom > (ZOOM_HOME + ZOOM_WHOLE) / 2 then
 					zoom = ZOOM_FACE
@@ -2993,7 +3664,7 @@ local function build()
 		{
 			Theme.icon(),
 			if Theme.name() == "dark" then "Light" else "Dark",
-			if Theme.name() == "dark" then "Switch to light mode" else "Switch to dark mode",
+			if Theme.name() == "dark" then "Light mode" else "Dark mode",
 			Theme.toggle,
 		},
 	}
@@ -3029,7 +3700,6 @@ local function build()
 		})
 		b:SetAttribute("Caption", t[3])
 		Kit.corner(b, 10)
-		Kit.rim(b, T.Line, 1)
 		Icons.make(t[1], 22, {
 			Name = "IconArt",
 			Parent = b,
@@ -3066,7 +3736,7 @@ local function build()
 		Size = UDim2.new(1, -(toolsW + 16), 1, 0),
 	})
 	local userBox =
-		inputWell("Roblox username to copy", { Parent = copy, Size = UDim2.new(1, -156, 0, BOTTOM_H), TextSize = 15 })
+		inputWell("Username to copy", { Parent = copy, Size = UDim2.new(1, -156, 0, BOTTOM_H), TextSize = 15 })
 	Kit.button("Copy", {
 		Parent = copy,
 		Size = UDim2.fromOffset(80, BOTTOM_H),
@@ -3076,7 +3746,7 @@ local function build()
 	}, function()
 		local name = Text.clean(userBox.Text)
 		if name == "" then
-			Toasts.show("Type a Roblox username to copy their avatar.", "info")
+			Toasts.show("Type a username first.", "info")
 			return
 		end
 		task.spawn(function()
@@ -3110,14 +3780,17 @@ function Creator.isOpen(): boolean
 	return isOpen
 end
 
--- arg: { mode = "new" | "edit", vid?, start? = "me" }
+-- arg: { mode = "new" | "edit" | "self", vid?, start? = "me", tab? }: "self" is your own look,
+-- start "me" a new villager that starts as you (your avatar and your name), tab the section to
+-- open on.
 function Creator.open(arg: any)
 	if isOpen then
 		Creator.close()
 	end
 	local a = arg or {}
-	mode = if a.mode == "edit" then "edit" else "new"
-	editVid = a.vid
+	mode = if a.mode == "edit" or a.mode == "self" then a.mode else "new"
+	editVid = if mode == "edit" then a.vid else nil
+	stash = nil
 	if mode == "new" and City.villagerRoom(State.data) <= 0 then
 		local cap = City.stats(State.data).villagerCap
 		Toasts.show(
@@ -3139,32 +3812,63 @@ function Creator.open(arg: any)
 	r.Visible = true
 	local v = editVid and State.villager(editVid)
 	if mode == "edit" and v then
-		setTitle(Text.fill("{name}'s look", { name = v.name }))
 		profile = { name = v.name, pers = v.pers, color = v.color, bday = table.clone(v.bday) }
 	else
-		setTitle("Make a villager")
 		profile = {
-			name = if a.start == "me" then player.DisplayName else "",
+			name = if a.start == "me" then player.DisplayName or "" else "",
 			pers = "sunny",
 			color = "4FA9D9",
 			bday = { s = 1, d = 1 },
 		}
 	end
+	applyMode()
 	showStep("look")
+	if type(a.tab) == "string" and Categories.tab(a.tab) then
+		tabId = a.tab
+		filterIndex = 1
+	end
 	selectTab(tabId)
+	startStage(
+		if mode == "edit" then editVid elseif mode == "self" then "self" elseif a.start == "me" then "me" else nil
+	)
+end
+
+-- Asks the server for the stage with the look to start from (a villager's id, "me", "self" or
+-- nil for a plain one) and starts the camera on it.
+startStage = function(what: string?)
 	openToken += 1
 	local token = openToken
 	task.spawn(function()
-		local stage = Remotes.fn("CreatorOpen")
-			:InvokeServer(if mode == "edit" then editVid elseif a.start == "me" then "me" else nil)
+		local stage = Remotes.fn("CreatorOpen"):InvokeServer(what)
 		if not stage or not isOpen or token ~= openToken then
 			return
 		end
 		origin = stage.origin
 		app = Appearance.sanitize(stage.app)
 		refreshWorn()
-		startCamera()
+		if not camConn then
+			startCamera()
+		end
 	end)
+end
+
+-- For the tutorial and anywhere else that wants a villager made a certain way:
+--   "yourself"  a new villager that starts as the player's own avatar, with their name
+--   "friend"    a new villager, opened on the Players tab (a friend's look and name in one click)
+--   "custom"    a new villager from the plain start
+--   "self"      the player's own look (the You tab)
+-- Creator.Created fires (vid, name) when a new villager moves in.
+function Creator.openFor(kind: string)
+	local Hud = require(script.Parent.Hud) :: any
+	if kind == "yourself" then
+		Hud.open("Creator", { mode = "new", start = "me" })
+	elseif kind == "friend" then
+		Hud.open("Creator", { mode = "new", tab = "people" })
+	elseif kind == "self" then
+		Hud.open("Creator", { mode = "self" })
+	else
+		Hud.open("Creator", { mode = "new" })
+	end
 end
 
 function Creator.close()
@@ -3174,6 +3878,7 @@ function Creator.close()
 	isOpen = false
 	searchToken += 1
 	previewToken += 1
+	closeColour()
 	if root then
 		root.Visible = false
 	end
@@ -3191,17 +3896,15 @@ Kit.onTheme(function()
 	if not old then
 		return
 	end
-	local title = if titleLabel then titleLabel.Text else nil
 	old:Destroy()
 	root = nil
 	titleLabel = nil
+	colourPop, colourButton, colourTag, markMode = nil, nil, nil, nil
 	if not isOpen then
 		return
 	end
 	build()
-	if title then
-		setTitle(title)
-	end
+	applyMode()
 	showStep(stepNow)
 	selectTab(tabId)
 	refreshWorn()
