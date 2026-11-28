@@ -11,7 +11,10 @@
 -- worth more skill (Tuning.Jobs.XpPerDay), and the thank yous, wishes and events pay little
 -- beside it: tests/specs/City.spec.luau holds wages to two thirds of a day's coins or more once
 -- two villagers have jobs. Then: "could you make working give much more coins, and make
--- buildings cheaper?", so every income is three times that again (300 to 550 before).
+-- buildings cheaper?", so every income is three times that again (300 to 550 before). Then: "Also,
+-- halve money gain from work." So a job's day pays its income here times Tuning.Jobs.Pay (0.5), set
+-- at load to 5 coins (`income` is what it pays, `listed` the figure written here): the incomes
+-- below stay as they were written.
 
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 
@@ -20,7 +23,8 @@ export type Job = {
 	name: string,
 	place: string, -- where it's done, as said in a sentence ("bakery", "workshop")
 	blurb: string,
-	income: number, -- coins per work day at skill 1 and a middling mood
+	income: number, -- coins per work day at skill 1 and a middling mood (its listed one times Tuning.Jobs.Pay)
+	listed: number?, -- the income as written below, before Tuning.Jobs.Pay
 	likes: { string },
 	lines: { string }, -- what they say at work, plainly, the way someone on shift does
 }
@@ -203,6 +207,9 @@ Jobs.list = list
 local byId: { [string]: Job } = {}
 for _, j in list do
 	byId[j.id] = j
+	-- what the day pays now: the income written above times Tuning.Jobs.Pay, to 5 coins
+	j.listed = j.income
+	j.income = math.floor(j.income * Tuning.Jobs.Pay / 5 + 0.5) * 5
 end
 
 -- Where the job is done, as people say it in a sentence ("at the bakery", "at the workshop"):

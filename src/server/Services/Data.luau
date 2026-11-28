@@ -209,6 +209,7 @@ function Data.clientState(player: Player): any
 		passes = p.passes,
 		playtime = p.playtime, -- today's play and the steps claimed (Sim/Rewards, the Rewards menu)
 		achieved = p.achieved, -- achievements claimed, and the group's gems ("group")
+		skills = p.skills, -- the player's own experience at each job (Sim/Skills: the City hall's Skills)
 		unsaved = unsaved[player] == true,
 		plot = player:GetAttribute("Plot"),
 		plan = p.plan,

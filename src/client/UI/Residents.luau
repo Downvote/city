@@ -24,6 +24,8 @@ local Relationships = require(Shared.Sim.Relationships)
 local Life = require(Shared.Sim.Life)
 local Flair = require(Shared.Sim.Flair)
 local Memory = require(Shared.Sim.Memory)
+local WorkMove = require(Shared.Sim.WorkMove)
+local Emotes = require(Shared.Data.Emotes)
 local Jobs = require(Shared.Data.Jobs)
 local Colors = require(Shared.Util.Colors)
 local Text = require(Shared.Util.Text)
@@ -613,6 +615,56 @@ local function editFlair(vid: string, kind: string)
 	end
 end
 
+-- The emote a villager works to, picked from Roblox's own (Data/Emotes, Sim/WorkMove). The user:
+-- "players can also pay gems to change this animation to an emote of their choosing."
+local function pickMove(vid: string)
+	local v = State.villager(vid)
+	if not v then
+		return
+	end
+	local price = WorkMove.price()
+	local options = {}
+	if v.move then
+		table.insert(options, {
+			label = "Their job's own",
+			sub = "Free",
+			fn = function()
+				call("VillagerMove", vid, false)
+			end,
+		})
+	end
+	for _, e in Emotes.list do
+		table.insert(options, {
+			label = e.name,
+			sub = if v.move == e.id then "Now" else gemsText(price),
+			fn = function()
+				if v.move == e.id then
+					return
+				end
+				local short = price - (State.data.gems or 0)
+				if short > 0 then
+					Toasts.show(needMore(short), "warn")
+					return
+				end
+				task.spawn(function()
+					local sent, ok, msg = pcall(function()
+						return Remotes.fn("VillagerMove"):InvokeServer(vid, e.id)
+					end)
+					if sent and ok then
+						Toasts.show(if type(msg) == "string" and msg ~= "" then msg else "Saved.", "good")
+					else
+						Toasts.show(
+							if sent and type(msg) == "string" then msg else "That didn't go through. Try again.",
+							"warn"
+						)
+					end
+				end)
+			end,
+		})
+	end
+	choose("Work move", options)
+end
+
 local function quirksOf(parent: Frame, vid: string, v: any)
 	local list = Kit.scroll({ Name = "Quirks", Parent = parent, Size = UDim2.fromScale(1, 1) })
 	Kit.list(list, 8)
@@ -665,6 +717,39 @@ local function quirksOf(parent: Frame, vid: string, v: any)
 		)
 		button:SetAttribute("Short", short > 0)
 	end
+	-- what they do while they work: their job's own moves, or an emote bought for them
+	local move = WorkMove.get(v)
+	local price = WorkMove.price()
+	local row, inner = Kit.row({
+		Name = "workmove",
+		Parent = list,
+		Size = UDim2.new(1, -12, 0, 56),
+		Height = 56,
+		LayoutOrder = #Flair.Kinds + 1,
+		Title = "Work move",
+		Sub = if move then move.name else "Their job's own",
+		TextSize = 16,
+		RightSpace = 124,
+	})
+	local lean: number = row:GetAttribute("Lean") or 6
+	local button = Kit.button(
+		if move then Text.fill("Change {n}", { n = price }) else Text.fill("Set {n}", { n = price }),
+		{
+			Name = "Edit",
+			Parent = inner,
+			Size = UDim2.fromOffset(112, 38),
+			Position = UDim2.new(1, -(lean + 8), 0.5, 0),
+			AnchorPoint = Vector2.new(1, 0.5),
+			Color = T.Blue,
+			TextSize = 15,
+			Icon = "gem",
+			ZIndex = 3,
+		},
+		function()
+			pickMove(vid)
+		end
+	)
+	button:SetAttribute("Short", price > (State.data.gems or 0))
 end
 
 -- Buying what a villager craves: the coins go and the wish is granted on the server.

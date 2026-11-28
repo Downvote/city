@@ -200,6 +200,32 @@ local LOOPS: { [string]: { Step } } = {
 	},
 }
 
+-- How each job looks at work. The user: "let there be animations while a villager works". A step
+-- with no gesture of its own takes its job's move, again every `beat` seconds, and so does one
+-- with a gesture but no beat: nobody stands still at work. (A villager the player bought an emote
+-- for does that at every step instead: Sim/WorkMove.)
+local MOVES: { [string]: { act: string, beat: number } } = {
+	shopkeeper = { act = "point", beat = 3.5 }, -- setting out the stock
+	barista = { act = "point", beat = 3 }, -- at the machine and the cups
+	baker = { act = "toollunge", beat = 4 }, -- the peel in and out of the oven
+	florist = { act = "point", beat = 3.5 }, -- trimming and tying
+	artist = { act = "point", beat = 3 }, -- brush strokes
+	doctor = { act = "point", beat = 4 }, -- notes and checks
+	teacher = { act = "point", beat = 3.5 }, -- at the board
+	musician = { act = "dance", beat = 6 },
+	builder = { act = "toolslash", beat = 2.2 }, -- the hammer
+	postie = { act = "point", beat = 3 }, -- stamping and sorting
+	icecream = { act = "point", beat = 3 }, -- scooping
+	librarian = { act = "point", beat = 4 }, -- stamping the cards
+}
+local PLAIN_MOVE = { act = "point", beat = 4 }
+
+-- The move a job's work looks like at a step with none of its own.
+function Routine.move(job: string?): (string, number)
+	local m = (job and MOVES[job]) or PLAIN_MOVE
+	return m.act, m.beat
+end
+
 -- A workplace whose job has no loop of its own yet: its spot, and a step along it to each side.
 local function plainLoop(def: any, home: Vector3): { Step }
 	local side = math.max(1.5, def.size.X / 4)
@@ -239,6 +265,7 @@ function Routine.loop(def: any): { Stop }
 	local yaw = math.rad(def.workYaw or 0)
 	local ahead = V(math.sin(yaw), 0, math.cos(yaw))
 	local steps = LOOPS[def.job] or plainLoop(def, home)
+	local moveAct, moveBeat = Routine.move(def.job)
 	local out: { Stop } = table.create(#steps)
 	for i, s in steps do
 		local at = s.at or home
@@ -247,8 +274,8 @@ function Routine.loop(def: any): { Stop }
 			at = at,
 			look = s.look or (at + ahead * 10 + V(0, 3, 0)),
 			stay = s.stay,
-			act = s.act,
-			beat = s.beat,
+			act = s.act or moveAct,
+			beat = s.beat or moveBeat,
 			icon = s.icon,
 			say = s.say or 0,
 			home = s.at == nil,
@@ -318,6 +345,11 @@ export type Ctx = {
 	can: { [string]: boolean }?,
 	-- steps of the loop they found no way to (never the workplace's own spot)
 	blocked: { [number]: boolean }?,
+	-- kinds made likelier just now, by how much (Tuning.Visits: the player at work near, or sat
+	-- down with a free seat beside them)
+	boost: { [string]: number }?,
+	-- somebody is serving out of work hours (the player at a workplace): a call there is open
+	serving: boolean?,
 }
 
 -- What they do now.
@@ -387,6 +419,10 @@ local function pick(
 			return 0
 		end
 		local weight = math.max(0, w.base + w.per * Personalities.trait(ctx.pers, w.trait))
+		local boost = ctx.boost and ctx.boost[w.kind]
+		if type(boost) == "number" and boost > 0 and boost < math.huge then
+			weight *= boost
+		end
 		return if w.kind == last then weight * K.Repeat else weight
 	end)
 	return chosen and chosen.kind
@@ -453,7 +489,8 @@ local function potterNow(ctx: Ctx, state: Day, rng: Rng.Rng): Turn
 	local open = ctx.hour >= D.WorkStart and ctx.hour < D.WorkEnd
 	local what = pick(K.Potter, ctx, state.last, rng, function(kind: string): boolean
 		-- workplaces are staffed in work hours only, and nobody stands about twice running
-		return (kind == "visit" and not open) or (kind == "idle" and state.last == "idle")
+		-- (or by the player, when they are at work out of hours)
+		return (kind == "visit" and not open and not ctx.serving) or (kind == "idle" and state.last == "idle")
 	end) or "stroll"
 	local seconds = 0
 	if what == "sit" then

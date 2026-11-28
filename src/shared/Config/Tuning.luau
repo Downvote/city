@@ -338,11 +338,14 @@ Tuning.Events = {
 -- workplace in work hours (Sim/City.earn, Services/Villagers), a day's pay spread over the part of
 -- the work day a worker usually spends there; nothing on a break, off work or asleep.
 Tuning.Jobs = {
+	-- what every job's day pays, against its income in Data/Jobs (set at load, to 5 coins: never
+	-- halve a job's own income there). The user: "Also, halve money gain from work."
+	Pay = 0.5,
 	SkillCap = 30,
 	SkillPay = 0.06, -- each skill level above the first adds this share of the job's income
 	LikePay = 1.2, -- a personality that enjoys the job earns this many times its pay
 	XpPerDay = 25, -- skill points for a whole day's work, less for part of one (it was 12, and skill hardly moved)
-	VisitCoins = 10, -- what a villager spends when they drop by a staffed shop
+	VisitCoins = 5, -- what a villager spends when they drop by a staffed shop (halved with the pay: it was 10)
 	BusyDayShare = 0.3, -- a busy day at work (an event) brings in this share of the job's income on top
 	-- The part of the work day a worker is at their workplace, on average over every personality
 	-- (the rest is the walk there and their breaks): the day's pay is spread over that much of it,
@@ -357,7 +360,9 @@ Tuning.Jobs = {
 	-- villagers' wages (tests/specs/PlayerWork.spec.luau holds it to that).
 	Player = {
 		Share = 0.35, -- of what a villager new to the job earns there a second
-		DayCap = 250, -- coins a player can earn at work in one town day (9:00 to 9:00, World.dayIndex)
+		-- coins a player can earn at work in one town day (9:00 to 9:00, World.dayIndex), at town level 1
+		-- and skill 1 (Sim/PlayerWork.dayCap grows it); halved with the pay (it was 250)
+		DayCap = 125,
 		Hold = 0.5, -- seconds the key is held
 		Distance = 8, -- studs: how close you stand for the prompt to show
 		Reach = 14, -- studs: the server's check of where you stand when you ask
@@ -369,6 +374,24 @@ Tuning.Jobs = {
 		Act = "point", -- the motion when the job has none at its spot
 		PromptHeight = 3, -- studs over the work spot where the prompt hangs
 	},
+}
+
+-- A player's own skill at each job (Sim/Skills) and what their work pays with it. The user: "when
+-- players work, make what they earn scale off town level. each skill also has a level/experience
+-- bar, which you gain while doing the work. This increases the amount of cash you get doing that
+-- particular work as well." The pay and the day's cap (Tuning.Jobs.Player) both grow by the town's
+-- level and by the skill; tests/specs/PlayerWork.spec.luau keeps it small beside a town's wages at
+-- every level, and tests/specs/Skills.spec.luau holds the curve.
+Tuning.Skills = {
+	Top = 20, -- the highest skill level
+	Base = 60, -- experience from one level to the next: Base * level ^ Grow
+	Grow = 1.3,
+	PerSecond = 1, -- experience for a second of work
+	Serve = 6, -- experience for a villager served while you work (Sim/Visits)
+	Pay = 0.05, -- each skill level past the first adds this share (a villager's skill adds 0.06)
+	TownPay = 0.06, -- each town level past the first adds this share
+	TownTop = 30, -- town levels past this add no more
+	SendEvery = 1, -- seconds between two updates of the bar while working
 }
 
 -- City levels: reached by what the town is worth, and nothing else (the user: "make the only
@@ -464,6 +487,14 @@ Tuning.Flair = {
 	PhraseChance = 0.25, -- of the lines over their head that are the catchphrase, when they have one
 }
 
+-- A villager's work move (Sim/WorkMove), bought with gems on their page. The user: "let there be
+-- animations while a villager works. players can also pay gems to change this animation to an
+-- emote of their choosing." Every change costs Price; going back to the job's own move is free.
+Tuning.WorkMove = {
+	Price = 5,
+	Cooldown = 1, -- seconds between two changes from one player
+}
+
 -- What villagers remember from their events (Sim/Memory): a band they joined, a hat they wear for a
 -- few days, a pet, a garden. The user: "along with their conversations and events having more
 -- impact, such as remembering if they joined a band, started wearing a new accessory
@@ -548,6 +579,24 @@ Tuning.Routine = {
 	Stroll = { 1.5, 3.5 }, -- the stop at the end of a stroll
 	Gesture = 3, -- seconds a wave or a little dance takes
 	Idle = { 2, 4 }, -- seconds of just standing there
+}
+
+-- Customers and company (Sim/Visits). The user: "while villagers are working or you are working,
+-- villagers might come up to interact and do chats based on the work that is being done, like
+-- villagers buying ice cream. do this as well with things like the swing, where villagers might sit
+-- with each other or with you." A call at a workplace is Routine's "visit"; sitting beside someone
+-- is a "sit" that picks the free seat next to them.
+Tuning.Visits = {
+	-- how much likelier a call at a workplace is while the player works at one near (it is also
+	-- open to callers out of work hours then)
+	PlayerBoost = 4,
+	PickPlayer = 0.7, -- with the player and villagers at work near, how likely the player is the one called on
+	Beside = 4.5, -- studs between two seats that count as side by side (a bench, a swing set, a table)
+	SitBeside = 0.6, -- a sit down near someone already sitting: how likely it is beside them
+	BesidePlayer = 0.85, -- and beside the player, when they sit
+	SitBoost = 3, -- how much likelier a sit is while the player sits near with a free seat by them
+	Chats = { 1, 3 }, -- rounds of chat sat side by side
+	Gap = 2.4, -- seconds between two lines
 }
 
 -- Using things (Data/Interactions, Sim/Uses) ------------------------------------

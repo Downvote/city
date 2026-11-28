@@ -126,16 +126,22 @@ describe("Wages", function()
 		expect(City.dayXp(400, 0)).toBe(J.XpPerDay)
 	end)
 
-	it("pays about three times what a day of work did before", function()
-		-- the user: "could you make working give much more coins". A day's pay at starting mood
-		-- and skill was 360 to 660 (462 on average); a working villager earns five town days'
-		-- pay in a real hour
+	it("pays about one and a half times what a day of work did before both changes", function()
+		-- the user: "could you make working give much more coins" (three times what it was), then
+		-- "Also, halve money gain from work." A day's pay at starting mood and skill was 360 to 660
+		-- (462 on average) before the first; a working villager earns five town days' pay in a
+		-- real hour
 		local sum = 0
 		for _, job in Jobs.list do
 			sum += Jobs.pay(job, 1, Tuning.Villagers.StartMood, "none")
 		end
 		local mean = sum / #Jobs.list
-		expect(mean / 462.5).toBeBetween(2.7, 3.3)
+		expect(mean / 462.5).toBeBetween(1.35, 1.65)
+		expect(J.Pay).toBe(0.5)
+		-- the halving is on what the day pays, not on the incomes as written
+		for _, job in Jobs.list do
+			expect(job.income).toBe(math.floor(job.listed * J.Pay / 5 + 0.5) * 5)
+		end
 		expect(3600 / D.Length).toBe(5)
 	end)
 end)

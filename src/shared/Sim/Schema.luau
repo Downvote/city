@@ -11,6 +11,8 @@ local Keepsakes = require(script.Parent.Keepsakes)
 local City = require(script.Parent.City) -- (the land a save already has stays theirs: City.keepLand)
 local Flair = require(script.Parent.Flair)
 local Memory = require(script.Parent.Memory)
+local Skills = require(script.Parent.Skills)
+local WorkMove = require(script.Parent.WorkMove)
 
 local Schema = {}
 
@@ -73,6 +75,7 @@ export type Villager = {
 	-- their sentences and a favourite thing
 	flair: { phrase: string?, ending: string?, thing: string? }?,
 	lately: { Memory.Memory }?, -- what their events left them with for a few days (Sim/Memory)
+	move: string?, -- the emote they work to, bought with gems (Sim/WorkMove), or nil for the job's own
 }
 
 function Schema.newProfile(): any
@@ -111,6 +114,7 @@ function Schema.newProfile(): any
 		-- what the player has earned at a workplace with their own hands today (Sim/PlayerWork):
 		-- the town day it is for, the part of a coin not handed over yet, the whole coins that were
 		work = { day = -1, owed = 0, paid = 0 },
+		skills = {}, -- the player's own experience at each job, by Data/Jobs id (Sim/Skills)
 		recent = {},
 		calendar = { s = 1, d = 1, y = 1 },
 		gems = Tuning.Gems.Start, -- the rare currency (Sim/Gems)
@@ -189,6 +193,7 @@ function Schema.migrate(raw: any): any
 			-- their flair and their memories, each checked again (Sim/Flair, Sim/Memory)
 			v.flair = Flair.sanitize(v.flair)
 			v.lately = Memory.sanitize(raw, vid, v.lately)
+			v.move = WorkMove.sanitize(v.move)
 			if type(v.fav) ~= "string" or not Foods.get(v.fav) then
 				v.fav = Foods.list[1].id
 			end
@@ -205,6 +210,7 @@ function Schema.migrate(raw: any): any
 	end
 	profile.villagers = clean
 	profile.keepsakes = Keepsakes.clean(profile.keepsakes)
+	profile.skills = Skills.clean(profile.skills)
 	-- (only true marks: Services/Vehicles also drops any vehicle there no longer is)
 	if type(profile.vehicles) ~= "table" then
 		profile.vehicles = {}

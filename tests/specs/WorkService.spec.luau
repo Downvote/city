@@ -7,7 +7,11 @@
 -- villager's rate through the villagers' `Earned` packets (a line of your own, so the "+N" rises
 -- over you) up to the day's cap; and it ends when you walk off, jump, sit, die, leave, press
 -- again or ask, when the piece moves or goes, or when its villager comes in for the day. Nobody
--- works where it's busy, from far off, or in somebody else's town.
+-- works where it's busy, from far off, or in somebody else's town. Then: "when players work, make
+-- what they earn scale off town level. each skill also has a level/experience bar, which you gain
+-- while doing the work": the rate and the cap come from the town's level and the skill, the skill
+-- grows a little every second of work, a level up says so and pays more at once, and the client
+-- hears the bar as it fills.
 
 local Shared = "ReplicatedStorage.Shared."
 local Services = "ServerScriptService.Server.Services."
@@ -15,6 +19,7 @@ local Tuning = require(Shared .. "Config.Tuning")
 local Schema = require(Shared .. "Sim.Schema")
 local City = require(Shared .. "Sim.City")
 local PlayerWork = require(Shared .. "Sim.PlayerWork")
+local Skills = require(Shared .. "Sim.Skills")
 local Appearance = require(Shared .. "Avatar.Appearance")
 local StarterHouse = require(Shared .. "Data.StarterHouse")
 local Town = require(Shared .. "Data.Town")
@@ -315,11 +320,16 @@ local function reset()
 	end
 	day += 1
 	hour = 12
+	profile.skills = {} -- (a new hand at every job, unless a test says)
 	-- (what is still in the last pay packet goes out first)
 	advance(Tuning.Jobs.PayEvery + 1)
 	table.clear(fired)
 	table.clear(notices)
 	table.clear(coinsAdded)
+end
+-- the town's level, as the service works it out (its worth)
+local function town()
+	return City.level(City.worth(profile.plan))
 end
 local function startAt(model, who)
 	who = who or owner
@@ -391,7 +401,13 @@ describe("Work service", function()
 		expect(m.act).toBe(stance.act)
 		expect(m.beat).toBe(stance.beat)
 		expect(m.today).toBe(0)
-		expect(m.cap).toBe(K.DayCap)
+		expect(m.cap).toBe(PlayerWork.dayCap(town(), 1))
+		-- and the skill, a new hand at it
+		expect(m.skill.job).toBe("shopkeeper")
+		expect(m.skill.name).toBe("Shopkeeper")
+		expect(m.skill.level).toBe(1)
+		expect(m.skill.into).toBe(0)
+		expect(m.skill.need).toBe(Skills.toNext(1))
 		expect(#notices).toBe(0)
 		expect(#errors).toBe(0)
 	end)
@@ -401,7 +417,9 @@ describe("Work service", function()
 		local coins = profile.coins
 		local earned = profile.stats.earned
 		startAt(marketModel)
-		local rate = PlayerWork.rate(Catalog.get("work_market"))
+		-- (the town's level grows the pay: this town is past the first)
+		local rate = PlayerWork.rate(Catalog.get("work_market"), town(), 1)
+		expect(rate >= PlayerWork.rate(Catalog.get("work_market"))).toBeTruthy()
 		advance(20)
 		advance(Tuning.Jobs.PayEvery + 1) -- (what is still in the packet goes out)
 		Work.stop(owner, nil)
@@ -433,9 +451,10 @@ describe("Work service", function()
 		-- on and on to the cap: then it stops by itself and says when it starts again
 		table.clear(fired)
 		holdE(owner, marketModel)
-		advance(K.DayCap / rate + 10)
+		advance(K.DayCap / PlayerWork.rate(Catalog.get("work_market")) + 10)
 		expect(Work.at(owner)).toBe(nil)
-		expect(profile.work.paid).toBe(K.DayCap)
+		-- (the skill grew on the way, and the cap with it)
+		expect(profile.work.paid).toBe(PlayerWork.dayCap(town(), Skills.level(profile, "shopkeeper")))
 		expect(lastNotice().text).toBe("That's a full day's work. You can work again from 9:00 AM.")
 		local told = messages("Work", owner)
 		expect(told[#told].on).toBe(false)
@@ -598,6 +617,51 @@ describe("Work service", function()
 		local told = messages("Work", owner)
 		expect(#told).toBe(3)
 		expect(told[2].on).toBe(false)
+		expect(#errors).toBe(0)
+	end)
+
+	it("teaches the job as they work, says when the skill goes up, and pays more for it", function()
+		reset()
+		startAt(marketModel)
+		advance(K.Settle + 0.5)
+		-- a point or so a second, kept on the profile for the job
+		advance(10)
+		local xp = Skills.info(profile, "shopkeeper").xp
+		expect(xp).toBeBetween(math.floor(10 * Tuning.Skills.PerSecond) - 1, math.ceil(11.6 * Tuning.Skills.PerSecond))
+		-- the client hears the bar about every second, never with `on` (that would start work again)
+		local bars = {}
+		for _, m in messages("Work", owner) do
+			if m.on == nil and m.skill then
+				table.insert(bars, m)
+			end
+		end
+		expect(#bars >= 8).toBeTruthy()
+		expect(bars[#bars].skill.into >= bars[1].skill.into).toBeTruthy()
+		expect(bars[#bars].cap).toBe(PlayerWork.dayCap(town(), 1))
+		-- on to the next level: a notice, and the rest of the day pays more
+		table.clear(notices)
+		advance(Skills.toNext(1) / Tuning.Skills.PerSecond - 8)
+		expect(Skills.level(profile, "shopkeeper")).toBe(2)
+		local up = false
+		for _, n in notices do
+			if n.text == "Shopkeeper skill is now level 2." then
+				up = true
+			end
+		end
+		expect(up).toBeTruthy()
+		local paid = profile.work.paid
+		advance(10)
+		local later = profile.work.paid - paid
+		local rate2 = PlayerWork.rate(Catalog.get("work_market"), town(), 2)
+		expect(later).toBeBetween(math.floor(rate2 * 10) - 2, math.floor(rate2 * 10) + 1)
+		-- another job's skill is its own
+		expect(Skills.level(profile, "builder")).toBe(1)
+		-- and the next start says where they are
+		Work.stop(owner, nil)
+		startAt(marketModel)
+		local told = messages("Work", owner)
+		expect(told[#told].skill.level).toBe(2)
+		expect(told[#told].cap).toBe(PlayerWork.dayCap(town(), 2))
 		expect(#errors).toBe(0)
 	end)
 

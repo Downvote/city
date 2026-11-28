@@ -6,7 +6,9 @@
 -- R6 and R15 both work; Roblox's own for R15 when the body has none), puts a small notice at the
 -- foot of the screen (where you are working, what you have earned today and how to stop), and
 -- asks the server to stop as soon as you move, jump, sit or open Build mode. The camera stays
--- where you have it.
+-- where you have it. The notice also shows the player's skill at the job and its bar (the user:
+-- "each skill also has a level/experience bar, which you gain while doing the work"), kept up by
+-- the server's `Work` { skill, cap } every second or so (Sim/Skills).
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -39,14 +41,25 @@ local R15 = {
 	laugh = "rbxassetid://507770818",
 	cheer = "rbxassetid://507770677",
 	toolslash = "rbxassetid://522635514",
+	toollunge = "rbxassetid://522638767",
 }
 
-local W, H = 400, 60 -- the notice
+local W, H = 400, 84 -- the notice
 local SHOWN = UDim2.new(0.5, 0, 1, -20)
 local HIDDEN = UDim2.new(0.5, 0, 1, H + 40)
 local SLIDE = TweenInfo.new(0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
-type Job = { plot: number, key: string, name: string, act: string, beat: number, today: number, cap: number }
+type Skill = { name: string, level: number, into: number, need: number, top: boolean? }
+type Job = {
+	plot: number,
+	key: string,
+	name: string,
+	act: string,
+	beat: number,
+	today: number,
+	cap: number,
+	skill: Skill?,
+}
 
 local current: Job? = nil
 local token = 0 -- a new one for every start and stop: what belongs to an old one stands down
@@ -56,6 +69,8 @@ local watch: RBXScriptConnection? = nil
 local notice: Frame? = nil
 local title: TextLabel? = nil
 local line: TextLabel? = nil
+local skillText: TextLabel? = nil
+local skillFill: Frame? = nil
 local prompts: { [ProximityPrompt]: boolean } = {}
 
 -- The notice ------------------------------------------------------------------------------------
@@ -66,9 +81,16 @@ function Work.words(name: string, today: number, cap: number): (string, string)
 		Text.fill("{n} of {cap} coins today. Move to stop.", { n = Text.commas(today), cap = Text.commas(cap) })
 end
 
--- The notice itself: a slab of the dark glass over the 3D view with a coin at its left end and
--- two lines in white (the glass is dark in both looks). Returns it and its two lines.
-function Work.card(parent: Instance?): (Frame, TextLabel, TextLabel)
+-- What it says about the skill (Sim/PlayerWork.skillLine), and how full its bar is.
+function Work.skillWords(skill: Skill): (string, number)
+	local ratio = if skill.top then 1 elseif skill.need > 0 then skill.into / skill.need else 0
+	return PlayerWork.skillLine(skill.name, skill.level, skill.top), math.clamp(ratio, 0, 1)
+end
+
+-- The notice itself: a slab of the dark glass over the 3D view with a coin at its left end, two
+-- lines in white (the glass is dark in both looks) and the skill with its bar under them. Returns
+-- it, its two lines, the skill's words and the bar's fill.
+function Work.card(parent: Instance?): (Frame, TextLabel, TextLabel, TextLabel, Frame)
 	local pill = Kit.darkPill({
 		Name = "WorkNotice",
 		Size = UDim2.fromOffset(W, H),
@@ -106,7 +128,29 @@ function Work.card(parent: Instance?): (Frame, TextLabel, TextLabel)
 		ZIndex = pill.ZIndex + 1,
 	})
 	under.TextTruncate = Enum.TextTruncate.AtEnd
-	return pill, top, under
+	-- the skill: its name and level, then the bar to the next level
+	local skill = Kit.text("", {
+		Name = "Skill",
+		Parent = pill,
+		Size = UDim2.fromOffset(170, 18),
+		Position = UDim2.fromOffset(62, 56),
+		TextSize = 14,
+		Color = T.White,
+		Font = Kit.Fonts.Bold,
+		Wrap = false,
+		ZIndex = pill.ZIndex + 1,
+	})
+	skill.TextTruncate = Enum.TextTruncate.AtEnd
+	local track, fill = Kit.bar({
+		Name = "SkillBar",
+		Parent = pill,
+		Size = UDim2.new(1, -(62 + 178 + 22), 0, 8),
+		Position = UDim2.fromOffset(62 + 178, 61),
+		Track = T.Dark,
+	}, 0, T.Yellow)
+	track.ZIndex = pill.ZIndex + 1
+	fill.ZIndex = pill.ZIndex + 2
+	return pill, top, under, skill, fill
 end
 
 local function showNotice()
@@ -115,11 +159,17 @@ local function showNotice()
 		return
 	end
 	if not notice or not notice.Parent then
-		notice, title, line = Work.card(Kit.root())
+		notice, title, line, skillText, skillFill = Work.card(Kit.root())
 	end
 	local a, b = Work.words(job.name, job.today, job.cap)
 	if title and line then
 		title.Text, line.Text = a, b
+	end
+	local skill = job.skill
+	if skill and skillText and skillFill then
+		local words, ratio = Work.skillWords(skill)
+		skillText.Text = words
+		skillFill.Size = UDim2.fromScale(ratio, 1)
 	end
 	-- (out of the way while a scene is up or Build mode has the screen)
 	local away = State.data.talking == true or BuildMode.isActive()
@@ -230,6 +280,20 @@ end
 
 -- Starting and stopping ----------------------------------------------------------------------------
 
+-- The skill as the server sent it, checked.
+local function skillFrom(raw: any): Skill?
+	if type(raw) ~= "table" or type(raw.name) ~= "string" or type(raw.level) ~= "number" then
+		return nil
+	end
+	return {
+		name = raw.name,
+		level = raw.level,
+		into = if type(raw.into) == "number" then raw.into else 0,
+		need = if type(raw.need) == "number" then raw.need else 0,
+		top = raw.top == true,
+	}
+end
+
 local function finish()
 	if not current then
 		return
@@ -269,6 +333,7 @@ local function begin(msg: any)
 		beat = if type(msg.beat) == "number" then msg.beat else Tuning.Jobs.Player.Beat,
 		today = if type(msg.today) == "number" then msg.today else 0,
 		cap = if type(msg.cap) == "number" then msg.cap else Tuning.Jobs.Player.DayCap,
+		skill = skillFrom(msg.skill),
 	}
 	token += 1
 	asked = false
@@ -298,6 +363,16 @@ function Work.start()
 		end
 		if msg.on == true and type(msg.plot) == "number" and type(msg.key) == "string" then
 			begin(msg)
+		elseif msg.on == nil and msg.skill ~= nil then
+			-- the skill's bar as it fills, and the day's cap when a level raised it
+			local job = current
+			if job then
+				job.skill = skillFrom(msg.skill) or job.skill
+				if type(msg.cap) == "number" then
+					job.cap = msg.cap
+				end
+				showNotice()
+			end
 		else
 			finish()
 		end
