@@ -5,15 +5,15 @@ textures, the haze and the grade), plus the plot's own lamps lighting what is ro
 glow round what shines, the way a player's lights are on at every hour (Sim/Lights).
 
     python3 tools/preview/plan_shot.py <scene.json> <out.png> --eye x,y,z --look x,y,z
-        [--fov 60] [--size 1600x900] [--ss 2] [--hour 19.3] [--textures] [--far 900]
+        [--fov 60] [--size 1600x900] [--ss 2] [--hour 19.3] [--textures] [--far 900] [--cull 30]
 
 <scene.json> is what `lune run tools/preview/dump.luau plan:<plan.json>` writes; its lamps are
 read from <scene.json>.lamps.json beside it (tools/preview/plan_shot.sh does both). --ss draws
 the picture that many times bigger and shrinks it, which smooths its edges.
 
-It is a sketch of what Roblox draws, by the same model as tools/preview/look.py and
-tools/preview/stage.py: lamps light what faces them and fade to nothing at their range (a placed
-light has no shadows in the game either, so it reaches through walls); Neon is drawn at its own
+It is a sketch of what Roblox draws, by the same model as tools/preview/look.py: lamps light what
+faces them and fade to nothing at their range (a placed light has no shadows in the game either,
+so it reaches through walls); Neon is drawn at its own
 colour, a little over, with a soft glow round it for the Bloom; the haze takes the air's colour
 for the hour (Tuning.Look.Air), dimmed after dark as the sky's light goes; the sky is a gradient
 with the moon and stars at night. Nothing moves (a ride stands as it was drawn), no particles,
@@ -28,20 +28,103 @@ import os
 import sys
 
 import numpy as np
-from PIL import Image, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import render  # noqa: E402  (the shapes, the textures)
 import walk  # noqa: E402  (clipping, filling triangles, the air)
-import stage  # noqa: E402  (the night sky)
 import look as game_look  # noqa: E402  (the game's light and grade)
 
-LAMP = stage.LAMP  # how strongly a lamp lights what faces it, for its brightness
+LAMP = 1.1  # how strongly a lamp lights what faces it, for its brightness
 NIGHT_SKY = (np.array([0.07, 0.08, 0.2]), np.array([0.2, 0.17, 0.32]))  # overhead, at the horizon
 
 
 def vec(text):
     return np.array([float(x) for x in text.split(",")])
+
+
+def rand(seed):
+    s = seed % 2147483646 + 1
+
+    def nxt():
+        nonlocal s
+        s = (s * 48271) % 2147483647
+        return s / 2147483647
+
+    return nxt
+
+
+def paint_sky(W, H, focal, fwd, right, up, scale, sky_dir, hour):
+    """The sky behind everything: walk.py's colours for the hour from the horizon up, the sun or
+    the moon where the light comes from, and stars at night. (It was the cutscene stages' painter,
+    tools/preview/stage.py, which went with them.)"""
+    zenith, horizon = walk.sky_at(hour)
+    rows = (np.arange(H) + 0.5 - H / 2) / focal
+    pitch = math.asin(max(-1, min(1, fwd[1])))
+    elev = pitch - np.arctan(rows)
+    blend = np.clip(elev / math.radians(38), 0, 1) ** 0.7
+    img = np.zeros((H, W, 3))
+    img[:] = (horizon[None, :] * (1 - blend[:, None]) + zenith[None, :] * blend[:, None])[:, None, :]
+    im = Image.fromarray((np.clip(img, 0, 1) * 255).astype(np.uint8), "RGB").convert("RGBA")
+    layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+
+    def project(v):
+        v = np.array(v, float)
+        v /= np.linalg.norm(v)
+        z = v @ fwd
+        if z <= 0.05:
+            return None
+        return W / 2 + focal * (v @ right) / z, H / 2 - focal * (v @ up) / z
+
+    night = sky_dir[1] < 0 or game_look.sun_dir(hour, -20)[1] < -0.05
+    if night:
+        nxt = rand(11)
+        for _ in range(160):
+            az = nxt() * 2 * math.pi
+            el = math.radians(8 + nxt() * 80)
+            size = (1.2 + nxt() * 1.8) * scale
+            alpha = int(255 * (0.35 + 0.6 * nxt()))
+            p = project([math.sin(az) * math.cos(el), math.sin(el), -math.cos(az) * math.cos(el)])
+            if p:
+                d.ellipse([p[0] - size / 2, p[1] - size / 2, p[0] + size / 2, p[1] + size / 2],
+                          fill=(255, 250, 236, alpha))
+    p = project(sky_dir)
+    if p and sky_dir[1] > -0.1:
+        r = (26 if night else 40) * scale
+        col = (236, 236, 220) if night else (255, 246, 214)
+        glow = (170, 186, 236) if night else (255, 214, 150)
+        for k, a in ((3.0, 30), (2.0, 60), (1.4, 110)):
+            d.ellipse([p[0] - r * k, p[1] - r * k, p[0] + r * k, p[1] + r * k], fill=glow + (a,))
+        d.ellipse([p[0] - r, p[1] - r, p[0] + r, p[1] + r], fill=col + (255,))
+    im.alpha_composite(layer)
+    return np.asarray(im.convert("RGB"), float) / 255
+
+
+def raster(px, py, W, H):
+    """walk.raster's pixels of a screen triangle (the box's slices, the three weights, the mask),
+    the same sums done with plain floats and broadcast rows, which a scene of a million small
+    triangles needs: most cover a pixel or two, or none."""
+    ax, bx, qx = float(px[0]), float(px[1]), float(px[2])
+    ay, by, qy = float(py[0]), float(py[1]), float(py[2])
+    x0 = int(max(0, math.floor(min(ax, bx, qx))))
+    x1 = int(min(W - 1, math.ceil(max(ax, bx, qx))))
+    y0 = int(max(0, math.floor(min(ay, by, qy))))
+    y1 = int(min(H - 1, math.ceil(max(ay, by, qy))))
+    if x1 < x0 or y1 < y0:
+        return None
+    den = (by - qy) * (ax - qx) + (qx - bx) * (ay - qy)
+    if abs(den) < 1e-12:
+        return None
+    xs = np.arange(x0, x1 + 1) + 0.5 - qx
+    ys = (np.arange(y0, y1 + 1) + 0.5 - qy)[:, None]
+    w1 = ((by - qy) * xs + (qx - bx) * ys) / den
+    w2 = ((qy - ay) * xs + (ax - qx) * ys) / den
+    w3 = 1 - w1 - w2
+    inside = (w1 >= -1e-6) & (w2 >= -1e-6) & (w3 >= -1e-6)
+    if not inside.any():
+        return None
+    return (slice(y0, y1 + 1), slice(x0, x1 + 1)), w1, w2, w3, inside
 
 
 def sky_colours(light, hour):
@@ -67,6 +150,8 @@ def main():
     ap.add_argument("--reach", type=float, default=220, help="shadows are worked out this far from the camera")
     ap.add_argument("--no-grade", action="store_true")
     ap.add_argument("--lamps", default=None, help="the lamps (default <inp>.lamps.json)")
+    ap.add_argument("--cull", type=float, default=None,
+                    help="leave out what lies this far or more outside the picture (as walk.py)")
     args = ap.parse_args()
 
     W0, H0 = [int(v) for v in args.size.split("x")]
@@ -96,8 +181,20 @@ def main():
         if p.get("transp", 0) >= 0.99:
             continue
         pos = np.array(p["cf"][0:3])
-        if np.linalg.norm(pos - eye) - np.linalg.norm(p["size"]) / 2 > args.far:
+        reach = np.linalg.norm(p["size"]) / 2
+        if np.linalg.norm(pos - eye) - reach > args.far:
             continue
+        if args.cull is not None:
+            # outside the lens's view, past a margin (what stands just outside still casts its
+            # shadow in)
+            rel = pos - eye
+            z = rel @ fwd
+            if z + reach + args.cull < walk.NEAR:
+                continue
+            half_h = math.tan(math.radians(args.fov) / 2)
+            slack = reach + args.cull
+            if abs(rel @ right) - slack > max(z, 0) * half_h * W / H or abs(rel @ up) - slack > max(z, 0) * half_h:
+                continue
         for t in render.prim_tris(p):
             tris.append(t)
             owners.append(pi)
@@ -125,7 +222,7 @@ def main():
         D = d.reshape(-1, 3)
         solid = (alphas > 0.7) & near & np.array([prims[o].get("mat") != "Neon" for o in owners])
         for i in np.nonzero(solid)[0]:
-            got = walk.raster(U[i], V[i], S, S)
+            got = raster(U[i], V[i], S, S)
             if got is None:
                 continue
             sl, w1, w2, w3, inside = got
@@ -181,11 +278,10 @@ def main():
 
     # the sky behind everything
     zen, hor = sky_colours(light, args.hour)
-    side = {"light": {"hour": args.hour}}
     saved = walk.sky_at
     walk.sky_at = lambda hour: (zen, hor)
     try:
-        img = stage.paint_sky(side, W, H, focal, fwd, right, up, H / 720, sky_dir, args.hour).astype(np.float32)
+        img = paint_sky(W, H, focal, fwd, right, up, H / 720, sky_dir, args.hour).astype(np.float32)
     finally:
         walk.sky_at = saved
 
@@ -196,6 +292,10 @@ def main():
     galb = np.zeros((H, W, 3), dtype=np.float32)
     gglow = np.zeros((H, W), dtype=bool)
     cam = np.stack([(T - eye) @ right, (T - eye) @ up, (T - eye) @ fwd], axis=-1)
+    # every triangle's facing, worked out at once
+    NT = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0])
+    NL = np.linalg.norm(NT, axis=1)
+    NT = NT / np.maximum(NL, 1e-12)[:, None]
     ahead = (cam[:, :, 2] >= walk.NEAR).any(axis=1)
     clear = []
 
@@ -203,18 +303,16 @@ def main():
         """The pixels triangle i covers through the lens and what it shows at each: (slices,
         mask of the pixels nearer than what is there, their depths, world points, normal, paint)."""
         t = T[i]
-        n = np.cross(t[1] - t[0], t[2] - t[0])
-        ln = np.linalg.norm(n)
-        if ln < 1e-9:
+        if NL[i] < 1e-9:
             return None
-        n /= ln
+        n = NT[i].copy()
         if n @ (t[0] - eye) > 0:
             n = -n
         px = W / 2 + focal * c[:, 0] / c[:, 2]
         py = H / 2 - focal * c[:, 1] / c[:, 2]
         if px.max() < 0 or px.min() > W or py.max() < 0 or py.min() > H:
             return None
-        got = walk.raster(px, py, W, H)
+        got = raster(px, py, W, H)
         if got is None:
             return None
         sl, w1, w2, w3, inside = got

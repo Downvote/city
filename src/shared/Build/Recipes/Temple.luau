@@ -624,7 +624,9 @@ end
 -- Five storeys, each a timber frame round white plaster under its own tiled roof, a little smaller
 -- than the one under it, on a stone plinth with steps up the front, and a bronze spire of nine
 -- rings on top. Returns nothing; draws round the origin.
-local PAGODA = {
+type Storey = { w: number, h: number, a: number, rise: number }
+
+local PAGODA: { Storey } = {
 	-- the storey's half width, its walls' height, its roof's eave (half) and the roof's rise
 	{ w = 4.2, h = 5.4, a = 7.3, rise = 3.0 },
 	{ w = 3.7, h = 3.9, a = 6.6, rise = 2.75 },
@@ -633,7 +635,15 @@ local PAGODA = {
 	{ w = 2.5, h = 3.3, a = 5.0, rise = 2.1 },
 }
 
-local function pagoda(r: R, tile: Color3, wood: Color3)
+-- (three storeys, for a smaller pagoda up a hill: a little slimmer, its roofs as wide)
+local PAGODA_THREE: { Storey } = {
+	{ w = 3.9, h = 5.0, a = 7.0, rise = 2.9 },
+	{ w = 3.4, h = 3.8, a = 6.4, rise = 2.65 },
+	{ w = 2.9, h = 3.6, a = 5.8, rise = 2.4 },
+}
+
+local function pagoda(r: R, tile: Color3, wood: Color3, storeys: { Storey }?)
+	local list: { Storey } = storeys or PAGODA
 	local plinth = 1.2
 	r:bevel(-6.0, 0, -6.0, 6.0, plinth - 0.2, 6.0, 0.1, STONE, "Granite", { wear = 0.92 })
 	r:bevel(-6.2, plinth - 0.2, -6.2, 6.2, plinth, 6.2, 0.06, shade(STONE, 1.05), "Granite", { wear = 0.94 })
@@ -642,7 +652,7 @@ local function pagoda(r: R, tile: Color3, wood: Color3)
 	r:bevel(-1.7, 0.4, 6.0, 1.7, 0.8, 6.75, 0.05, shade(STONE, 0.97), "Granite", { wear = 0.92 })
 	local base = plinth
 	local bronze = Color3.fromRGB(112, 110, 96)
-	for i, t in PAGODA do
+	for i, t in list do
 		local w = t.w
 		local top = base + t.h
 		-- the walls: plaster, a sill and a head beam round them, posts at the corners and between
@@ -702,7 +712,7 @@ local function pagoda(r: R, tile: Color3, wood: Color3)
 			end
 		end, false, "Wood")
 		-- the roof over it, the brackets carrying its eaves, cut off where the storey above stands
-		local nxt = PAGODA[i + 1]
+		local nxt = list[i + 1]
 		local s: RoofSpec = {
 			a = t.a,
 			b = t.a,
@@ -1287,7 +1297,8 @@ local items: { any } = {
 		cat = "garden",
 		style = "temple",
 		price = 140,
-		place = "ground",
+		-- (on a floor, so it stands on a hill block a storey or more up: Recipes/TempleHill)
+		place = "floor",
 		size = Vector3.new(7.4, 24, 7.4),
 		c1 = "4C7A56",
 		c2 = "6A4A34",
@@ -1295,15 +1306,19 @@ local items: { any } = {
 		build = function(r: R)
 			-- a tall straight trunk (c2) on its roots under tiers of dark needles (c1), narrowing
 			-- to a point, lighter at the top where the sun gets
+			-- (the roots aren't solid, so the tree stands on a hill block or a terrace as on the
+			-- ground: its body is the trunk)
 			for i = 0, 3 do
 				local a = i / 4 * math.pi * 2 + 0.4
-				r:beam(
-					Vector3.new(0, 0.6, 0),
-					Vector3.new(math.cos(a) * 1.2, 0.05, math.sin(a) * 1.2),
-					0.45,
-					0.36,
-					r.c2,
-					"Wood"
+				r:noCollide(
+					r:beam(
+						Vector3.new(0, 0.6, 0),
+						Vector3.new(math.cos(a) * 1.2, 0.05, math.sin(a) * 1.2),
+						0.45,
+						0.36,
+						r.c2,
+						"Wood"
+					) :: Prim
 				)
 			end
 			r:cyl(0, 3.5, 0, 7, 0.95, "y", r.c2, "Wood")
@@ -1339,7 +1354,8 @@ local items: { any } = {
 		cat = "garden",
 		style = "temple",
 		price = 220,
-		place = "ground",
+		-- (on a floor, so it stands on a hill block a storey or more up: Recipes/TempleHill)
+		place = "floor",
 		size = Vector3.new(15.4, 17.6, 15.4),
 		c1 = "5E9A54",
 		c2 = "6A4A34",
@@ -1349,13 +1365,15 @@ local items: { any } = {
 			-- boughs under a wide crown of leaves (c1), dark underneath and lighter on top
 			for i = 0, 4 do
 				local a = i / 5 * math.pi * 2 + 0.3
-				r:beam(
-					Vector3.new(0, 1.0, 0),
-					Vector3.new(math.cos(a) * 2.0, 0.05, math.sin(a) * 2.0),
-					0.7,
-					0.55,
-					r.c2,
-					"Wood"
+				r:noCollide(
+					r:beam(
+						Vector3.new(0, 1.0, 0),
+						Vector3.new(math.cos(a) * 2.0, 0.05, math.sin(a) * 2.0),
+						0.7,
+						0.55,
+						r.c2,
+						"Wood"
+					) :: Prim
 				)
 			end
 			r:cyl(0, 2.6, 0, 5.2, 1.8, "y", r.c2, "Wood")
@@ -1383,6 +1401,22 @@ local items: { any } = {
 				local a = i / 3 * math.pi * 2 + 1.1
 				clump(r, math.cos(a) * 1.4, 14.8, math.sin(a) * 1.4, 4.8, 3.4, 4.6, a, lit)
 			end
+		end,
+	},
+	{
+		id = "temple_pagoda_three",
+		name = "Three storey pagoda",
+		cat = "decor",
+		style = "temple",
+		price = 1500,
+		-- (on a floor, so it stands up a hill of hill blocks: Recipes/TempleHill)
+		place = "floor",
+		size = Vector3.new(15.6, 27.4, 15.6),
+		c1 = "8A9098",
+		c2 = "5C4636",
+		build = function(r: R)
+			-- the pagoda with three storeys, for the top of a wooded hill
+			pagoda(r, r.c1, r.c2, PAGODA_THREE)
 		end,
 	},
 }
