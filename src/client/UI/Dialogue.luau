@@ -36,6 +36,12 @@
 -- rectangles everywhere, remove the borders"). Each bust is a copy of the villager's own model (UI/ModelPreview, the whole of them
 -- in a frame cut off at the hips by its holder). A villager whose model can't be found gets no
 -- bust, only a round mark in their colour on their name tag.
+--
+-- What an event puts on a villager (a hat, a scarf: Sim/Memory) shows on their bust from the line
+-- they put it on with (the user: "when villagers equip accessories from random event, the
+-- conversation showing it should show it"): scene.wear(key, what) makes the bust again once their
+-- model has it on (the server lists it in the model's `Worn`), and a scene watched from the start
+-- leaves it off their bust until then (an actor's `without`, the accessories the server marked).
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -55,7 +61,15 @@ local player = Players.LocalPlayer
 
 -- (`image`: a picture standing in for a model, as a full length avatar picture: the tutorial's
 -- greeter when the server couldn't build their look)
-export type Actor = { key: string, name: string, color: Color3, model: Model?, vid: string?, image: string? }
+export type Actor = {
+	key: string,
+	name: string,
+	color: Color3,
+	model: Model?,
+	vid: string?,
+	image: string?,
+	without: { [string]: boolean }?, -- what they put on later in the scene, off their bust until then
+}
 
 -- the layout, in the interface's own pixels (a 1280 by 720 screen is about 1350 by 720 of them)
 local BOX_W = 0.74 -- the textbox's share of the screen's width
@@ -197,7 +211,8 @@ local function bust(layer: Frame, actor: Actor, slotIndex: number): any
 	if actor.model then
 		local model = actor.model :: Model
 		pcall(function()
-			vp = ModelPreview.fromModel(model, { Parent = figure, Bust = true, Yaw = slot.yaw })
+			vp =
+				ModelPreview.fromModel(model, { Parent = figure, Bust = true, Yaw = slot.yaw, Without = actor.without })
 		end)
 		if vp then
 			vp.ZIndex = slot.z
@@ -616,6 +631,74 @@ function Dialogue.open(opts: { [string]: any }?): any
 		end
 	end
 
+	-- They put `what` on with this line: their bust is made again once their model wears it (the
+	-- server dresses it as the line is said, which can take a moment the first time).
+	function self.wear(key: string, what: string)
+		local e = entryOf(key)
+		if not e or not root.Parent then
+			return
+		end
+		if e.actor.without then
+			e.actor.without[what] = nil
+		end
+		local model = e.actor.model
+		if not model or not e.bust then
+			return
+		end
+		local function wearing(): boolean
+			for w in string.gmatch(tostring(model:GetAttribute("Worn") or ""), "[^,]+") do
+				if w == what then
+					return true
+				end
+			end
+			return false
+		end
+		local function again()
+			local b = e.bust
+			if not b or not root.Parent or current ~= self then
+				return
+			end
+			local made: ViewportFrame? = nil
+			pcall(function()
+				made = ModelPreview.fromModel(
+					model,
+					{ Parent = b.figure, Bust = true, Yaw = b.slot.yaw, Without = e.actor.without }
+				)
+			end)
+			if not made then
+				return
+			end
+			local old = b.vp
+			made.ZIndex = b.slot.z
+			made.ImageColor3 = if b.lit then T.White else DIM
+			b.vp = made
+			if old then
+				old:Destroy()
+			end
+		end
+		if wearing() then
+			again()
+			return
+		end
+		local done = false
+		local conn: RBXScriptConnection? = nil
+		conn = model:GetAttributeChangedSignal("Worn"):Connect(function()
+			if not done and wearing() then
+				done = true
+				if conn then
+					conn:Disconnect()
+				end
+				again()
+			end
+		end)
+		task.delay(12, function()
+			done = true
+			if conn then
+				conn:Disconnect()
+			end
+		end)
+	end
+
 	-- Who is talking now (nil: nobody in particular).
 	function self.speak(key: string?)
 		speaking = if key and entryOf(key) then key else nil
@@ -703,6 +786,38 @@ function Dialogue.open(opts: { [string]: any }?): any
 		Position = UDim2.new(0.5, 0, 1, -BOX_GAP),
 	}):Play()
 	return self
+end
+
+-- A box to type into in the scene (a name an event asks for: UI/EventCard), the glass of the
+-- answers with white words in both looks. props: Parent, Name, Size, LayoutOrder, Text,
+-- Placeholder, Max (letters).
+function Dialogue.field(props: { [string]: any }?): TextBox
+	local p = props or {}
+	local box = Kit.textbox(p.Placeholder or "", {
+		Name = p.Name or "Field",
+		Parent = p.Parent,
+		Size = p.Size or UDim2.new(1, 0, 0, 44),
+		LayoutOrder = p.LayoutOrder or 0,
+		Text = p.Text or "",
+		TextSize = p.TextSize or 18,
+	})
+	box.BackgroundColor3 = glass(0.14)
+	box.TextColor3 = T.White
+	box.PlaceholderColor3 = glass(0.5)
+	box.Font = Kit.Fonts.Title
+	box.ZIndex = 7
+	box.ClearTextOnFocus = false
+	if type(p.Max) == "number" then
+		local max = p.Max
+		box:GetPropertyChangedSignal("Text"):Connect(function()
+			local n = utf8.len(box.Text)
+			local cut = utf8.offset(box.Text, max + 1)
+			if n and n > max and cut then
+				box.Text = string.sub(box.Text, 1, cut - 1)
+			end
+		end)
+	end
+	return box
 end
 
 -- A pill for an answer, dark in both looks; under the pointer it turns the picked yellow. props:

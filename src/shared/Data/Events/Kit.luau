@@ -18,6 +18,10 @@
 --   quarrel     true: only while the first two are quarreling; "any": either way; otherwise never
 --   count       at least this many villagers around
 --   bed         the first star has a bed
+--   has         a kind of piece on the plot (Sim/PlotHas: a catalog id, { ids }, { tag }, { job },
+--               { water = true }, or a list of them, any one will do). The user: "Make more
+--               interactions, such as events, conversations and chats that only happen when
+--               certain work places are present"
 --   cond        function(ctx, a, b, c) -> boolean, anything else
 --
 -- Scenes: K.scene(ctx, title) is a little builder. Every text is filled with the stars' names
@@ -39,6 +43,21 @@
 --   s:remember(who, kind, opts)      something that lasts a few days (Sim/Memory): opts.what, .name,
 --                                    .with (a star's letter); the band they joined, the hat they wear
 --   s:forget(who, kind)              and that's over now
+--   s:wear(who, what)                they put something on (a key of Sim/Memory.Accessories): what
+--                                    they last said here is what it goes on with, so the
+--                                    scene shows it from there, and it stays on until the player
+--                                    says it doesn't suit them
+--   s:takeOff(who, what?)            the player said it doesn't suit them, so it comes off
+--   s:follow(id, opts)               another event later with the same villagers (Sim/FollowUps):
+--                                    opts.chance (all of the time when left out), opts.hours (town
+--                                    hours from now), opts.a/b/c (which star here plays its a, b
+--                                    and c: the same letters when left out), opts.words (filled
+--                                    here, and the follow-up's lines can say them: { dish = "{dish}" })
+--   s:askName(opts)                  the player types a name (a band's, a pet's) instead of picking
+--                                    an answer: opts.var (the word the answer's lines use),
+--                                    opts.suggest (a name or a list: one is offered, and taken when
+--                                    nobody answers), opts.ask (what the box asks), opts.build (the
+--                                    answer, as s:choice's fn); built again with what was typed
 --   s:keep(item, who)                a keepsake for you (Build/Recipes/Keepsakes)
 --   s:prop(id, by)                   a thing that appears by them while the scene plays (Data/EventProps)
 --   s:leave(id, hours, by)           a thing that stays a while after the scene
@@ -48,6 +67,7 @@
 local Jobs = require(script.Parent.Parent.Jobs)
 local Personalities = require(script.Parent.Parent.Personalities)
 local Tuning = require(script.Parent.Parent.Parent.Config.Tuning)
+local Rng = require(script.Parent.Parent.Parent.Util.Rng)
 
 local K = {}
 
@@ -152,6 +172,9 @@ function K.W(spec: { [string]: any }): (any, string?, string?, string?) -> numbe
 			if spec.relMax and score > spec.relMax then
 				return 0
 			end
+		end
+		if spec.has and not (ctx.has and ctx.has(spec.has)) then
+			return 0
 		end
 		if spec.cond and not spec.cond(ctx, a, b, c) then
 			return 0
@@ -391,7 +414,9 @@ S.__index = S
 
 function K.scene(ctx: any, title: string): any
 	local out = { title = title, lines = {}, effects = {} }
-	return setmetatable({ ctx = ctx, out = out, lines = out.lines, effects = out.effects, vars = {} }, S)
+	-- (a follow-up starts with the words the event before it left: Sim/FollowUps)
+	local vars = if type(ctx.carried) == "table" then table.clone(ctx.carried) else {}
+	return setmetatable({ ctx = ctx, out = out, lines = out.lines, effects = out.effects, vars = vars }, S)
 end
 
 function S:with(vars: { [string]: any }): any
@@ -502,6 +527,44 @@ function S:forget(who: string, kind: string): any
 	return self:fx({ t = "forget", who = who, kind = kind })
 end
 
+-- they put something on, with what they last said here (the first message of it, when it was a
+-- burst of a few)
+function S:wear(who: string, what: string): any
+	local at = nil
+	for i = #self.lines, 1, -1 do
+		if self.lines[i].who == who then
+			at = i
+		elseif at then
+			break
+		end
+	end
+	if at then
+		self.lines[at].wear = what
+	end
+	return self:remember(who, "accessory", { what = what })
+end
+
+-- it doesn't suit them, so it comes off (all they put on, without `what`)
+function S:takeOff(who: string, what: string?): any
+	return self:fx({ t = "forget", who = who, kind = "accessory", what = what })
+end
+
+-- another event later, with the same villagers, by a chance (rolled here)
+function S:follow(id: string, opts: { [string]: any }?): any
+	local o = opts or {}
+	if type(o.chance) == "number" and not self.ctx.rng:chance(o.chance) then
+		return self
+	end
+	local words = nil
+	if type(o.words) == "table" then
+		words = {}
+		for k, v in o.words do
+			words[k] = self:fill(v)
+		end
+	end
+	return self:fx({ t = "follow", id = id, at = o.hours, a = o.a, b = o.b, c = o.c, w = words })
+end
+
 function S:keep(item: string, who: string?): any
 	return self:fx({ t = "keepsake", item = item, who = who })
 end
@@ -541,6 +604,51 @@ function S:choice(text: string, build: (any) -> (), cost: number?): any
 	return self
 end
 
+-- The player types a name for something. There is one answer, made with the suggestion first and
+-- made again with what they typed (EventEngine.named); a scene asking for a name asks nothing else.
+function S:askName(opts: { [string]: any }): any
+	local ctx = self.ctx
+	local var: string = opts.var or "name"
+	local list = if type(opts.suggest) == "table" then opts.suggest else { opts.suggest or "Pip" }
+	local suggestion: string = ctx.rng:pick(list)
+	-- the names and words as they are now, for building it again later, and its own draws, so
+	-- what it rolls (a follow-up's chance) comes out the same each time
+	local seed = ctx.rng:int(1, 2 ^ 30)
+	local names = table.clone(ctx.names or {})
+	local stars = table.clone(ctx.stars or {})
+	local vars = table.clone(self.vars)
+	local function build(text: string): any
+		local keepNames, keepStars, keepRng = ctx.names, ctx.stars, ctx.rng
+		ctx.names, ctx.stars, ctx.rng = names, stars, Rng.new(seed)
+		local holder = { out = { effects = {} }, vars = table.clone(vars) }
+		local c = { text = text, lines = {}, effects = {}, named = true }
+		local sub = setmetatable({
+			ctx = ctx,
+			out = holder.out,
+			choiceOut = c,
+			lines = c.lines,
+			effects = c.effects,
+			vars = holder.vars,
+		}, S)
+		sub:with({ [var] = text })
+		local ok, err = pcall(opts.build, sub)
+		ctx.names, ctx.stars, ctx.rng = keepNames, keepStars, keepRng
+		if not ok then
+			error(err)
+		end
+		return c
+	end
+	local first = build(suggestion)
+	self.out.choices = { first }
+	self.out.name = {
+		var = var,
+		suggest = suggestion,
+		ask = self:fill(opts.ask or "Pick a name"),
+		build = build,
+	}
+	return self
+end
+
 function S:default(i: number): any
 	self.out.default = i
 	return self
@@ -561,6 +669,19 @@ function S:done(): any
 		for _, c in self.out.choices do
 			for i, e in self.out.effects do
 				table.insert(c.effects, i, e)
+			end
+		end
+		-- and a name typed later gets them too
+		local ask = self.out.name
+		if ask then
+			local common = self.out.effects
+			local build = ask.build
+			ask.build = function(text: string): any
+				local c = build(text)
+				for i, e in common do
+					table.insert(c.effects, i, table.clone(e))
+				end
+				return c
 			end
 		end
 		self.out.effects = nil

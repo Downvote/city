@@ -30,6 +30,7 @@ local Voice = require(script.Parent.Voice)
 local Flair = require(script.Parent.Flair)
 local Memory = require(script.Parent.Memory)
 local Needs = require(script.Parent.Needs)
+local PlotHas = require(script.Parent.PlotHas)
 
 local K = Tuning.Talk
 
@@ -688,16 +689,16 @@ local LATELY = {
 		nervous = "W-what if I play the wrong note at our first proper show?",
 	},
 	accessory = {
-		_ = "I'm wearing my new {what} all week.",
-		sunny = "Do you like my {what}? I'm wearing it everywhere this week, ehehe!",
+		_ = "I've been wearing my {what} every day, and I'm keeping it on.",
+		sunny = "Do you like my {what}? I wear it everywhere now, ehehe!",
 		gentle = "I'm still wearing the {what}, and people keep saying it suits me.",
-		bold = "The {what} stays on all week, and nobody can talk me out of it.",
+		bold = "The {what} stays on, and nobody can talk me out of it.",
 		dreamy = "My {what} makes every day feel a bit like a holiday...",
 		easygoing = "I keep forgetting I've got the {what} on, so it must be comfy.",
 		proud = "Everyone's noticed my {what}, naturally.",
 		shy = "Um, is the {what} too much? People keep looking at me.",
 		cheeky = "three people asked where i got the {what}, and i said it's a secret hehe",
-		cool = "I'm keeping the {what} on for a few days.",
+		cool = "I'm keeping the {what} on.",
 		prickly = "Yes, I'm still wearing the {what}, and no, you can't borrow it.",
 		dramatic = "This {what} has changed my whole LIFE, honestly.",
 		bookish = "Actually, I wrote down every compliment the {what} got, and there are nine.",
@@ -860,6 +861,153 @@ local LATELY = {
 	},
 }
 
+-- What they say about a piece in town, only when there is one (the user: "Make more interactions,
+-- such as events, conversations and chats that only happen when certain work places are present
+-- ... things like mailboxes, fridges, etc. can also be present"). Keyed by Sim/PlotHas.Kinds; a
+-- line or two by personality, "_" for anybody else.
+local PIECES: { [string]: { [string]: string } } = {
+	fridge = {
+		_ = "Somebody keeps eating the cheese in the fridge, and I have my suspicions.",
+		foodie = "I reorganised the fridge by colour this morning, and now I'm hungry.",
+		cheeky = "i left a note in the fridge that says don't eat me on a cucumber",
+		gloomy = "I opened the fridge three times today hoping something new had turned up.",
+	},
+	stove = {
+		_ = "I turned the stove off twice before I left the house, just to be sure.",
+		foodie = "I've got a stew on the stove that needs another hour, and I've been counting.",
+		nervous = "I-I checked the stove before I came out, I'm nearly sure I did.",
+	},
+	mailbox = {
+		_ = "I keep checking the mailbox, even when I'm not waiting for anything.",
+		sunny = "There was a postcard in the mailbox this morning, and it had a lighthouse on it!",
+		gloomy = "The mailbox was empty again, but at least there were no bills.",
+	},
+	swing = {
+		_ = "I had a go on the swing this morning and nearly touched the sky.",
+		shy = "Um, I went on the swing when nobody was looking... it was really fun.",
+		bold = "I bet I can swing higher than anyone in town, and that includes you.",
+	},
+	piano = {
+		_ = "I've been learning a song on the piano, one bar a day.",
+		dramatic = "I played the piano so loud last night that the whole street heard my GENIUS.",
+		bookish = "Actually, the piano is a bit out of tune on the low notes, but only I'd notice.",
+	},
+	telescope = {
+		_ = "I looked through the telescope last night and found a star I'd never seen.",
+		dreamy = "The moon through the telescope looks close enough to walk on...",
+	},
+	pond = {
+		_ = "The fish in the pond come up when you stand close, have you noticed?",
+		cheeky = "i dropped a crumb in the pond and three fish fought over it",
+	},
+	icecream = {
+		_ = "I had an ice cream from the cart on my way here, and it was worth every coin.",
+		foodie = "The ice cream cart has a new flavour, and I've had it twice already.",
+	},
+	chalkboard = {
+		_ = "Someone keeps drawing little cats on the school's chalkboard.",
+		bookish = "I read the sums left on the school's chalkboard, and one of them was wrong.",
+	},
+	tv = {
+		_ = "There's a cooking show on TV tonight that I don't want to miss.",
+		easygoing = "I fell asleep in front of the TV again, and it was lovely.",
+	},
+	arcade = {
+		_ = "I'm this close to the top score on the arcade machine.",
+		cheeky = "i put my name at the top of the arcade scores, it says BEST",
+	},
+	bbq = {
+		_ = "We should light the BBQ while the weather holds.",
+		foodie = "I've been thinking about BBQ sausages since breakfast.",
+	},
+	fire = {
+		_ = "We sat round the fire last night until it was only embers.",
+		dreamy = "I could watch a fire all night and never get bored...",
+	},
+	fishtank = {
+		_ = "I think the fish in the tank recognises me now.",
+		gentle = "I gave the fish in the tank a little extra food today, I hope that's all right.",
+	},
+	birds = {
+		_ = "A robin keeps chasing the other birds off the feeder.",
+		bookish = "I counted eleven kinds of bird in the garden this week, actually.",
+	},
+	bees = {
+		_ = "The bees are busy today, so I'm keeping my distance.",
+		foodie = "The bees made enough honey for a whole cake, and I've got plans.",
+	},
+	trampoline = {
+		_ = "I bounced on the trampoline until my legs felt like jelly.",
+		nervous = "I tried a flip on the trampoline and landed on my bottom, but I'm fine.",
+	},
+	bicycle = {
+		_ = "I rode the bike down to the harbour and back before breakfast.",
+		easygoing = "I'd ride the bike more if the hill weren't there.",
+	},
+	well = {
+		_ = "I dropped a coin in the well this morning, and I'm not telling you what I wished for.",
+	},
+	records = {
+		_ = "I've been playing the same old record all week, and I'm not sorry.",
+	},
+	hammock = {
+		_ = "The hammock is the best place in town for a nap, and I'd know.",
+		easygoing = "I'm going back to the hammock after this, no rush.",
+	},
+	kettle = {
+		_ = "I've had four cups of tea today, and the kettle's on again.",
+		polite = "Would you care for a cup of tea later? I have the kettle on.",
+	},
+	vegpatch = {
+		_ = "Something's been eating the lettuce in the veg patch, and I think it's a slug.",
+		foodie = "The beans in the veg patch are nearly ready, and I've got a recipe waiting.",
+	},
+	sandbox = {
+		_ = "Somebody built a really good castle in the sandbox, with a moat and everything.",
+	},
+	bakery = {
+		_ = "The bakery had warm rolls out this morning, and the whole street smelled of them.",
+		foodie = "I'm counting the minutes until the bakery takes the next batch out.",
+	},
+	cafe = {
+		_ = "The café drew a heart in my coffee this morning.",
+	},
+	post = {
+		_ = "There's a parcel waiting for me at the post desk, and I can't think who sent it.",
+	},
+	library = {
+		_ = "I've got a library book that's due back tomorrow, and I'm only halfway through.",
+		bookish = "The library has a new shelf of books about the sea, and I've read two already.",
+	},
+	stage = {
+		_ = "There's music on the little stage tonight, so you should come.",
+	},
+	market = {
+		_ = "The market stall had the first strawberries out this morning.",
+	},
+	artist = {
+		_ = "I watched someone painting at the easel for nearly an hour.",
+	},
+}
+
+-- What they might say about the pieces there are, for the talk card.
+local function piecesLines(profile: any, v: any): { string }
+	local out = {}
+	local index = PlotHas.index(profile.plan)
+	local kinds = {}
+	for kind in PIECES do
+		table.insert(kinds, kind)
+	end
+	table.sort(kinds)
+	for _, kind in kinds do
+		local need = PlotHas.Kinds[kind]
+		if need and PlotHas.met(index, need) then
+			table.insert(out, own(PIECES[kind], v.pers))
+		end
+	end
+	return out
+end
+
 -- A memory as they'd bring it up, in their own words (Sim/Memory). Nil for a kind with no lines.
 function Talk.mention(profile: any, vid: string, m: any): string?
 	local v = profile.villagers[vid]
@@ -872,6 +1020,8 @@ end
 
 -- The lines of the flair and the memories, for the specs (as Talk.Voices is).
 Talk.Flair = { FAVOURITE = FAVOURITE, LATELY = LATELY }
+-- And the lines about pieces in town.
+Talk.Pieces = PIECES
 
 -- The maps keyed by personality, for the specs (every personality has a voice in each).
 Talk.Voices = {
@@ -1039,6 +1189,10 @@ local function lineFor(profile: any, vid: string, rng: any, opts: { [string]: an
 			end
 			local hobby = Sayings.hobby(v.hobby)
 			add(hobby and hobby.line, 2)
+			-- something about a piece in town: the fridge, the swing, the ice cream cart
+			for _, text in piecesLines(profile, v) do
+				add(text)
+			end
 			local friend = Relationships.bestFriend(profile, vid)
 			local fv = friend and profile.villagers[friend]
 			if fv and friend and not Relationships.quarreling(profile, vid, friend, o.now or 0) then

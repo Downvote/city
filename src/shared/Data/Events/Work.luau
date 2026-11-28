@@ -44,7 +44,7 @@ local BRAG = {
 	polite = "Oh, how wonderful.|I am so glad it came out well.",
 	foodie = "Mmm, that calls for a treat.|I'm having a bun at lunch to celebrate.",
 	nervous = "I-it worked?|It worked, and nothing went wrong at all!",
-	_ = "It worked, did you see?|I'm really pleased with that.",
+	_ = "It worked.|I'm really pleased with that.",
 }
 
 -- a share of a day's takings at their job
@@ -1311,7 +1311,7 @@ event({
 			_ = "Can I help?|I'm not doing anything else today.",
 		}, "question")
 		s:choice("Let {b} help out today.", function(c)
-			c:n("{b} stayed until closing and only broke one thing, which was already cracked.")
+			c:n("{b} stayed until closing and only broke one thing.")
 			burst(c, "a", {
 				proud = "Not bad at all.|You might have a gift for this.",
 				gentle = "Thank you, {b}, that was a big help.",
@@ -1504,7 +1504,7 @@ event({
 	weight = W({ base = 0.35, job = "icecream", season = 2, weather = "clear" }),
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "Melting")
-		s:n("It's so hot that the ice cream at {a}'s cart is melting faster than it can be sold.")
+		s:n("It's so hot that {a}'s ice cream is melting faster than it sells.")
 		burst(s, "a", {
 			sunny = "{player}, help, it's all going runny!",
 			bold = "Right, everyone gets one, right now.",
@@ -1525,7 +1525,7 @@ event({
 			_ = "It's melting faster than I can scoop, {player}.",
 		}, "sweat")
 		s:choice("Free cones for everyone?", function(c)
-			c:n("{a} handed a cone to everyone in the square before it could melt, and some people had three.")
+			c:n("{a} gave everyone in the square a cone before it could melt.")
 			c:all(3)
 			c:mood("a", 4)
 			c:xp("a", 5)
@@ -1632,7 +1632,7 @@ event({
 			_ = "If it rains on this before it sets, I'll have to start again.",
 		}, "sweat")
 		s:choice("I'll pass you bricks.", function(c)
-			c:n("You passed bricks and {a} laid them, and the last one went in as the first drop fell.")
+			c:n("You passed the bricks, and the last one went in just as it started to rain.")
 			burst(c, "a", "Done, just in time.|Thanks, {player}, the tea's on me.", "heart", "cheer")
 			c:xp("a", 15)
 			c:hearts("a", 1)
@@ -1821,7 +1821,7 @@ event({
 			c:memo("a", "Nobody's come for the thing I found at work yet, but I check every day.")
 		end)
 		s:choice("Can I see it up close?", function(c)
-			c:n("You turned it over in your hands while {a} watched as if it might break.")
+			c:n("{a} watched you hold it as if it might break.")
 			burst(c, "a", {
 				prickly = "Careful with it.|...Okay, you can hold it a bit longer.",
 				shy = "...!|You like it? I'm glad I told you.",
@@ -1874,7 +1874,7 @@ event({
 			foodie = "{player}, there's smoke at the {place}!|Did somebody leave the toast on?",
 			_ = "{player}, there's smoke coming out of the {place}.",
 		}, "sweat")
-		s:n("You ran over with a bucket, but it was only steam from a kettle someone had left boiling nearby.")
+		s:n("You ran over with a bucket.")
 		burst(s, "a", {
 			nervous = "It was only steam.|I'm going to sit down for a very long time.",
 			sunny = "It was steam, ehehe!|That was a lot of running for some steam.",

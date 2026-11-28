@@ -833,7 +833,7 @@ event({
 			nervous = "Ah, c-cold, that's so cold!|Okay, okay, I'm throwing one back.",
 			_ = "That's it, this means war.",
 		}, "anger")
-		s:n("Ten minutes later they were both white from head to toe and laughing too hard to throw.")
+		s:n("Ten minutes later they were both covered in snow.")
 		s:rel(7)
 		s:mood("a", 4)
 		s:mood("b", 4)
@@ -1343,7 +1343,7 @@ event({
 			_ = "Can you help me get this wardrobe up the stairs?",
 		}, "question")
 		say(s, "b", "Sure, we'll lift on three.|One, two...", "point")
-		s:n("It took an hour, two scraped knuckles and a lot of 'left, no, your other left'.")
+		s:n("It took an hour and two scraped knuckles.")
 		burst(s, "b", {
 			bold = "Done.|I could carry another one, I just won't.",
 			easygoing = "I need a lie down, ideally on the wardrobe.",
@@ -1779,7 +1779,7 @@ event({
 			polite = "I do apologise, I hope that was not too frightening.",
 			foodie = "That calls for hot chocolate, I think.",
 			nervous = "Sorry, was that too much? I scared myself a bit.",
-			_ = "Was that too scary?|Do you want to hear another one?",
+			_ = "Got you.|Do you want to hear another one?",
 		}, "laugh", "laugh")
 		s:rel(5)
 		s:log("{a} told {b} a ghost story.")
@@ -1906,7 +1906,7 @@ event({
 			"a secret love of pickles",
 		})
 		s:with({ thing = thing })
-		s:n("{a} and {b} have never really talked before, and then they found out they share {thing}.")
+		s:n("{a} and {b} have hardly talked before, but it turns out they share {thing}.")
 		burst(s, "a", {
 			sunny = "No way, you too?|Wait, wait, really?",
 			cool = "Huh, same here.",
@@ -2247,7 +2247,7 @@ event({
 		local s = K.scene(ctx, "The same dream"):with({ dream = ctx.rng:pick(Chatter.Dreams) })
 		say(s, "a", "I had the oddest dream last night.|I dreamed {dream}.", "zzz")
 		s:say("b", "...So did I.", "question")
-		s:n("They looked at each other for a long moment.")
+		s:n("They looked at each other.")
 		burst(s, "b", {
 			dreamy = "Hmm... we must be connected somehow.",
 			bold = "Okay, that's weird, and I'm not scared, it's just weird.",
@@ -2346,7 +2346,6 @@ event({
 	when = "any",
 	weight = W({ base = 0.1, count = 3, traits = { social = 0.2 } }),
 	scene = function(ctx, a, b, c)
-		local names = ctx.rng:shuffle(BANDS)
 		local s = K.scene(ctx, "A band")
 		s:prop("guitar", "a")
 		s:prop("microphone", "b")
@@ -2370,10 +2369,11 @@ event({
 			nervous = "We need a name, and what if it's a bad one?|{player}, could you pick?",
 			_ = "We need a good name.|{player}, will you pick one?",
 		}, "question")
-		for i = 1, 2 do
-			local name = names[i]
-			s:choice(name .. ".", function(ch)
-				ch:with({ band = name })
+		s:askName({
+			var = "band",
+			suggest = BANDS,
+			ask = "What should the band be called?",
+			build = function(ch)
 				say(ch, "a", "{band}, that's who we are now.", "music", "cheer")
 				say(ch, "c", "Our first gig is tonight, in my kitchen.", "sparkle")
 				ch:relx("a", "b", 5)
@@ -2385,8 +2385,10 @@ event({
 				for _, who in { "a", "b", "c" } do
 					ch:remember(who, "band", { name = "{band}" })
 				end
-			end)
-		end
+				-- and the first show (Sim/FollowUps)
+				ch:follow("gig", { chance = 0.6, hours = 5 })
+			end,
+		})
 		s:log("{a}, {b} and {c} started a band.")
 		return s:done()
 	end,
@@ -2502,7 +2504,7 @@ event({
 	weight = W({ base = 0.3, rel = 55 }),
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "Saying thank you")
-		s:n("{a} has been pacing up and down the roof terrace for an hour.")
+		s:n("{a} has been pacing the roof terrace for an hour.")
 		s:by("a", {
 			nervous = "{player}, {b} looked after me all week when I was ill, and I never said thank you. Sh-should I go and say it now?",
 			prickly = "{player}, {b} looked after me when I was ill and I never thanked them. Don't look at me like that.",
@@ -2693,7 +2695,7 @@ event({
 			foodie = "I am, and I always do it with a snack.",
 			_ = "Since I was little.|Why didn't you ever say?",
 		}, "sparkle")
-		s:n("They spent the rest of the afternoon comparing notes, and they made plans to do it together.")
+		s:n("They compared notes all afternoon and planned to do it together next time.")
 		s:rel(10)
 		s:mood("a", 4)
 		s:mood("b", 4)
@@ -3201,7 +3203,7 @@ event({
 			polite = "Same time tomorrow?|Though I do hope we both sleep.",
 			foodie = "Same time tomorrow?|I'll bring toast.",
 			nervous = "Same time tomorrow? I-I hope not, I need sleep.",
-			_ = "Same time tomorrow?|Hopefully not.",
+			_ = "Same time tomorrow?|...Actually, let's both try to sleep.",
 		}, "laugh", "laugh")
 		s:rel(7)
 		s:log("{a} and {b} met at the fountain at two in the morning.")

@@ -451,6 +451,22 @@ Tuning.Events = {
 	PropsMax = 6, -- things an event can leave lying about in one town at once (Services/Events)
 }
 
+-- Events that come back later (Sim/FollowUps; the user: "make events / conversations have follow up
+-- ones"). An answer leaves one waiting with a chance and a delay of its own (Data/Events' s:follow,
+-- in town hours); these hold the rest.
+Tuning.FollowUps = {
+	Max = 6, -- waiting at once in one town; a new one past this pushes out the oldest
+	Hours = 3, -- town hours a follow-up waits when its event doesn't say
+	Expire = 1080, -- seconds one may wait past its time for its villagers to be about (a town day and a half)
+}
+
+-- Names the player types in an event (a band's, a pet's: the user, "allow the player to type in
+-- what they desire instead of fixed inputs"). Sim/Naming cleans them, Services/Events filters them.
+Tuning.Naming = {
+	Max = 20, -- letters at most
+	Every = 1, -- seconds between two names one player may send
+}
+
 -- Work and the city -------------------------------------------------------
 -- Wages (Data/Jobs, Jobs.pay) are the town's main income: the City spec holds them to two thirds
 -- of a day's coins or more once two villagers have jobs. The user: "make it such that villagers
@@ -670,6 +686,9 @@ Tuning.Memory = {
 		training = 4,
 	},
 	Max = 5, -- memories kept on a villager at once; a new one pushes out the oldest
+	-- what events put on them stays on until the player says it doesn't suit them (the user: "it gets
+	-- taken off only if the player chooses it dosent suit them"), and doesn't count toward Max
+	Worn = 4, -- of those at once; a new one past this takes the oldest off
 	TalkWeight = 3, -- how much a memory counts among what they might say in a chat (Sim/Talk)
 }
 

@@ -160,6 +160,8 @@ function ModelPreview.fromModel(source: Model, props: { [string]: any }?): (View
 	local world = Instance.new("WorldModel")
 	world.Parent = vp
 	local idle = idleOf(copy)
+	-- (Without: what an event puts on them later in a conversation stays off until then, UI/Dialogue)
+	local without: { [string]: boolean } = if type(p.Without) == "table" then p.Without else {}
 	for _, d in copy:GetDescendants() do
 		-- nothing that runs, floats over their head or asks to be pressed comes along
 		if
@@ -168,6 +170,7 @@ function ModelPreview.fromModel(source: Model, props: { [string]: any }?): (View
 			or d:IsA("BillboardGui")
 			or d:IsA("ProximityPrompt")
 			or d:IsA("Highlight")
+			or (d:IsA("Accessory") and without[tostring(d:GetAttribute("Lately"))])
 		then
 			d:Destroy()
 		end

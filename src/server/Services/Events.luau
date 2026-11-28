@@ -20,6 +20,14 @@
 -- waits (ReadHold at most). The lines keep the town's pace, except that a watching owner who has
 -- read all there is asks for the next one (EventWatch "next") and gets it at once (the user:
 -- "sometimes, clicking on dialogue dosent advance it, lagging behind instead").
+--
+-- A line can put something on a villager (Data/Events' s:wear: a hat, a scarf). It goes on when
+-- that line is said, so the conversation shows it from there (the user: "when villagers equip
+-- accessories from random event, the conversation showing it should show it"), and it stays until
+-- the player says it doesn't suit them: an answer that says so, or Take off on the villager's
+-- Lately list (TakeOff, checked here). An event that asks for a name (a band's, a pet's) takes what
+-- the player typed (EventChoose's third argument): cleaned by Sim/Naming, run through Roblox's
+-- filter, then built into what follows (EventEngine.named).
 
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
@@ -38,11 +46,14 @@ local EventData = require(Shared.Data.Events)
 local NewsKinds = require(Shared.Data.NewsKinds)
 local Builder = require(Shared.Build.Builder)
 local Needs = require(Shared.Sim.Needs)
+local Memory = require(Shared.Sim.Memory)
+local Naming = require(Shared.Sim.Naming)
 
 local Data = require(script.Parent.Data)
 local Plots = require(script.Parent.Plots)
 local World = require(script.Parent.World)
 local Villagers = require(script.Parent.Villagers)
+local Avatar = require(script.Parent.Avatar)
 
 local Events = {}
 
@@ -144,6 +155,13 @@ local function playLines(player: Player, ev: any, lines: { any }, token: string,
 		lineEvent:FireClient(player, { token = token, line = l, last = final and i == #lines or nil })
 		local vid = l.who and ev.actors[l.who]
 		local npc = vid and Villagers.get(player, vid)
+		if vid and type(l.wear) == "string" then
+			-- they put it on now, with this line (it stays on: Sim/Memory)
+			local profile = Data.get(player)
+			if profile and Memory.start(profile, vid, "accessory", { what = l.wear }, os.time()) then
+				task.spawn(Villagers.dress, player, vid)
+			end
+		end
 		if npc then
 			npc:say(l.text, 3.2)
 			if l.icon then
@@ -480,6 +498,10 @@ local function play(player: Player, ev: any)
 	for i, c in scene.choices or {} do
 		choices[i] = { text = c.text, cost = c.cost }
 	end
+	-- a name to type, with the one it suggests (Kit's s:askName)
+	local naming = if type(scene.name) == "table"
+		then { suggest = scene.name.suggest, ask = scene.name.ask, max = Naming.Max }
+		else nil
 	-- the stars walk together first, and the prompt comes up when the first of them speaks
 	if #ev.order >= 2 then
 		gather(player, ev)
@@ -499,6 +521,7 @@ local function play(player: Player, ev: any)
 		names = names,
 		actors = ev.actors,
 		choices = if #choices > 0 then choices else nil,
+		name = naming,
 		focus = focus and focus.model,
 	})
 	playLines(player, ev, scene.lines, token, not scene.choices)
@@ -869,7 +892,8 @@ function Events.start()
 	lineEvent = Remotes.event("EventLine")
 	endEvent = Remotes.event("EventEnd")
 
-	Remotes.fn("EventChoose").OnServerInvoke = function(player, token, index)
+	local namedAt: { [Player]: number } = {}
+	Remotes.fn("EventChoose").OnServerInvoke = function(player, token, index, typed)
 		local r = running[player]
 		if not r or r.token ~= token or type(index) ~= "number" then
 			return false
@@ -882,6 +906,32 @@ function Events.start()
 		local c = scene.choices and scene.choices[index]
 		if not c then
 			return false
+		end
+		if typed ~= nil then
+			-- a name the player typed: only where the scene asks for one, cleaned, then filtered
+			if type(scene.name) ~= "table" or index ~= 1 then
+				return false
+			end
+			if os.clock() - (namedAt[player] or -math.huge) < Tuning.Naming.Every then
+				return false, "One moment."
+			end
+			namedAt[player] = os.clock()
+			local clean, why = Naming.clean(typed)
+			if not clean then
+				return false, why
+			end
+			local filtered = Avatar.filterText(player, clean)
+			if not filtered then
+				return false, "Couldn't check that just now. Try again in a moment."
+			end
+			if filtered:find("#", 1, true) or filtered ~= clean then
+				return false, "That got filtered. Try another name."
+			end
+			-- (the filter takes a moment: is it still waiting for this answer?)
+			if running[player] ~= r or not r.asking or r.choice ~= nil then
+				return false
+			end
+			EventEngine.named(r.ev, filtered)
 		end
 		local profile = Data.get(player)
 		if c.cost and profile and c.cost > profile.coins then
@@ -976,10 +1026,38 @@ function Events.start()
 			rollAsks(player)
 		end
 	end)
+	-- Take off on a villager's Lately list: something an event put on them (Sim/Memory). Only the
+	-- owner's own villager, and only a thing they have on.
+	Remotes.fn("TakeOff").OnServerInvoke = function(player, vid, what)
+		local profile = Data.get(player)
+		if not profile or type(vid) ~= "string" or type(what) ~= "string" then
+			return false, "Can't do that."
+		end
+		local v = profile.villagers[vid]
+		if not v or not Memory.Accessories[what] then
+			return false, "Can't do that."
+		end
+		local m = nil
+		for _, worn in Memory.all(v, "accessory", os.time()) do
+			if worn.what == what then
+				m = worn
+			end
+		end
+		if not m then
+			return false, "They aren't wearing that."
+		end
+		local words = Memory.words(profile, m)
+		Memory.forget(profile, vid, "accessory", nil, what)
+		task.spawn(Villagers.dress, player, vid)
+		Data.push(player, "villagers")
+		return true, Text.fill("{x} took the {what} off.", { x = v.name, what = words.what })
+	end
+
 	Players.PlayerRemoving:Connect(function(player)
 		asks[player] = nil
 		lastAsked[player] = nil
 		running[player] = nil
+		namedAt[player] = nil
 		nextAt[player] = nil
 		paused[player] = nil
 		reading[player] = nil

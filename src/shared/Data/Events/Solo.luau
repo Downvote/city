@@ -46,7 +46,7 @@ local BRAG = {
 	polite = "Oh, how wonderful.|Thank you kindly for watching.",
 	foodie = "That calls for a bun to celebrate.|Maybe two, if the bakery's still open.",
 	nervous = "I-it worked?|Oh, thank goodness, I was so sure it wouldn't.",
-	_ = "It actually worked.|Did you see it?",
+	_ = "It actually worked.|I wasn't sure it would.",
 }
 
 -- Something they made, which they may let you keep: shown while the scene plays, given as a
@@ -592,8 +592,9 @@ event({
 			}, "sad")
 			c:mood("a", -3)
 			c:memo("a", "I'm wearing a hat until my bangs grow out, so please don't ask.")
-			-- and they do, for a few days (Sim/Memory)
-			c:remember("a", "accessory", { what = "beanie" })
+			-- and they do (Sim/Memory), until they ask whether it can come off
+			c:wear("a", "beanie")
+			c:follow("hatoff", { hours = 36 })
 		end)
 		s:log("{a} cut their own bangs.")
 		return s:done()
@@ -611,7 +612,7 @@ event({
 		s:prop("cat", "a")
 		s:n("A cat was asleep on the wall when {a} sneezed right next to it.")
 		s:say("a", "Aaaaachoo!", "sweat")
-		s:n("The cat shot up into the air, landed on its feet and gave {a} a long look.")
+		s:n("The cat jumped a foot in the air, then gave {a} a long look.")
 		burst(s, "a", {
 			shy = "Sorry, sorry, cat...|I didn't mean to.",
 			bold = "Hah, you jumped higher than I've ever seen a cat jump.",
@@ -774,7 +775,7 @@ event({
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "Puddles")
 		s:prop("umbrella", "a")
-		s:n("{a} left their umbrella open on the path and is jumping in every puddle on the street.")
+		s:n("{a} has left their umbrella on the path and is jumping in every puddle.")
 		burst(s, "a", {
 			proud = "Hmph, this is for my health, you know.|Splashing is very good for the legs.",
 			shy = "Hehe, nobody's looking...|Oh, um, except you.",
@@ -911,7 +912,7 @@ event({
 			foodie = "It looks like a giant pile of cornflakes.|I'm jumping in.",
 			_ = "Just one jump, I promise.|Then I'll rake it all up again.",
 		}, "sparkle", "cheer")
-		s:n("Now there are leaves everywhere, and {a} is lying in what's left of the pile.")
+		s:n("Now the leaves are everywhere again, and {a} is lying in the middle.")
 		s:leave("leaves", 10, "a")
 		s:mood("a", 5)
 		s:log("{a} jumped in a pile of leaves.")
@@ -1026,7 +1027,7 @@ event({
 				_ = "Well... at least it's still up high.",
 			}, "sweat")
 			s:choice("Let's get it down.", function(c)
-				c:n("With a long stick and a lot of jumping, the kite came down with only one small hole.")
+				c:n("A long stick got it down, with only one small hole.")
 				burst(c, "a", "Got it back, and it'll still fly with that little hole.|Thanks, {player}.", "heart")
 				c:mood("a", 4)
 				c:hearts("a", 1)
@@ -1181,7 +1182,7 @@ event({
 				dramatic = "Oh, a thousand THINGS, {player}.|But I feel better now, good night.",
 				polite = "Only a small worry, and it feels smaller now.|Thank you, and good night.",
 				foodie = "Breakfast, mostly.|I'm making pancakes, so I need to sleep, good night.",
-				_ = "Nothing really, but thanks for asking.|Good night, {player}.",
+				_ = "Only the things I forgot to do today.|Saying them out loud helped, good night, {player}.",
 			}, "zzz")
 			c:n("{a} was asleep a few minutes later.")
 			c:mood("a", 5)
@@ -1504,7 +1505,7 @@ event({
 			_ = "It's from an old friend, {player}.|They're doing well, and they want to hear all about this place.",
 		}, "heart")
 		s:choice("Write back today.", function(c)
-			burst(c, "a", "I will, and I'll tell them all about this place.|And about you, too.", "heart", "cheer")
+			burst(c, "a", "I will, as soon as I get home.|I'll tell them about you, too.", "heart", "cheer")
 			c:mood("a", 6)
 			c:memo("a", "I wrote back to my old friend and told them all about you, {player}.")
 		end)
@@ -2315,7 +2316,6 @@ event({
 	when = "day",
 	weight = W({ base = 0.15 }),
 	scene = function(ctx, a)
-		local names = ctx.rng:shuffle(PIGEON)
 		local s = K.scene(ctx, "A follower")
 		s:n("A pigeon has been following {a} around town all morning.")
 		burst(s, "a", {
@@ -2338,10 +2338,11 @@ event({
 			_ = "I think it's decided we're friends now.",
 		}, "question")
 		burst(s, "a", "It needs a name, though.|What should I call it?", "idea")
-		for i = 1, 2 do
-			local name = names[i]
-			s:choice(name .. "?", function(c)
-				c:with({ pet = name })
+		s:askName({
+			var = "pet",
+			suggest = PIGEON,
+			ask = "What should the pigeon be called?",
+			build = function(c)
 				burst(c, "a", {
 					prickly = "{pet}.|...Fine, it suits the little pest.",
 					cheeky = "{pet}, hehe|hello, {pet}",
@@ -2363,8 +2364,9 @@ event({
 				}, "heart", "cheer")
 				c:mood("a", 3)
 				c:memo("a", "{pet} the pigeon still follows me everywhere.")
-			end)
-		end
+				c:follow("pigeonback", { chance = 0.5, hours = 8, words = { pet = "{pet}" } })
+			end,
+		})
 		s:log("A pigeon adopted {a}.")
 		return s:done()
 	end,
@@ -2383,7 +2385,6 @@ event({
 		end,
 	}),
 	scene = function(ctx, a)
-		local names = ctx.rng:shuffle(CATS)
 		local s = K.scene(ctx, "A cat moves in")
 		s:prop("cat", "a")
 		s:n("A ginger cat has been sitting outside {a}'s door for three days.")
@@ -2407,10 +2408,11 @@ event({
 			_ = "I think I have a cat now, {player}.",
 		}, "heart")
 		burst(s, "a", "It'll need a name, though.|What do you think suits it?", "question")
-		for i = 1, 2 do
-			local name = names[i]
-			s:choice(name .. "?", function(c)
-				c:with({ pet = name })
+		s:askName({
+			var = "pet",
+			suggest = CATS,
+			ask = "What should the cat be called?",
+			build = function(c)
 				burst(c, "a", {
 					cool = "{pet}.|...Yes, that's right.",
 					shy = "{pet}...|...!|Hello, {pet}.",
@@ -2434,9 +2436,10 @@ event({
 				c:hearts("a", 1)
 				c:memo("a", "{pet} slept on my face last night, and I didn't have the heart to move.")
 				-- and the cat is theirs for a while (Sim/Memory)
-				c:remember("a", "pet", { what = "cat", name = name })
-			end)
-		end
+				c:remember("a", "pet", { what = "cat", name = "{pet}" })
+				c:follow("petnews", { chance = 0.5, hours = 10 })
+			end,
+		})
 		s:log("A stray cat moved in with {a}.")
 		return s:done()
 	end,
@@ -2473,6 +2476,8 @@ event({
 			c:voice("a", "thanks", "heart")
 			c:hearts("a", 1)
 			c:mood("a", 2)
+			-- it may find its way back (Sim/FollowUps)
+			c:follow("spiderback", { chance = 0.35, hours = 6 })
 		end)
 		s:choice("It was here first.", function(c)
 			burst(c, "a", {
@@ -3573,7 +3578,7 @@ event({
 	weight = W({ base = 0.15 }),
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "Missed it")
-		s:n("{a} ran for the bus and missed it by one step, and the doors shut right in front of them.")
+		s:n("{a} ran for the bus, and the doors shut right in front of them.")
 		burst(s, "a", {
 			bold = "Hey!|...It saw me, I know it definitely saw me.",
 			proud = "Th-that's fine, I was going to walk anyway.|It's good for my health.",
@@ -3594,7 +3599,7 @@ event({
 			_ = "I missed it by one step.|One single step.",
 		}, "sweat")
 		s:choice("Walk with me?", function(c)
-			c:n("You walked down to the harbour together, and the bus was still at the stop when you got there.")
+			c:n("You walked down to the harbour together, and the bus was still sitting at the stop.")
 			burst(c, "a", "Of course it was.|...It was a nice walk, though, so thanks, {player}.", "heart")
 			c:mood("a", 4)
 			c:hearts("a", 1)
@@ -3638,7 +3643,7 @@ event({
 	}),
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "Warm bread")
-		s:n("The bakery isn't open yet, and {a} is standing outside it with their eyes shut, breathing in.")
+		s:n("The bakery isn't open yet, and {a} is standing outside, breathing in the smell.")
 		burst(s, "a", {
 			foodie = "Mmm, rye, and something with cinnamon.|And yes, there are definitely buns.",
 			dreamy = "If I stand here long enough, I think I'll turn into toast...",
@@ -3658,7 +3663,7 @@ event({
 			nervous = "Is it okay to stand here?|I'm not in the way, am I?",
 			_ = "Smell that, just smell it.",
 		}, "heart")
-		s:n("The door opened, and the baker handed {a} the first roll of the day, still too hot to hold.")
+		s:n("Then the baker came out and gave {a} the first roll of the day.")
 		burst(s, "a", "Hot, hot, hot!|It's worth it, though.", "sparkle", "cheer")
 		s:mood("a", 4)
 		s:log("{a} waited outside the bakery for the first roll.")
@@ -3776,8 +3781,8 @@ event({
 			_ = "{player}...|I'd forgotten I even had it.",
 		}, "sweat")
 		s:choice("I'll come with you.", function(c)
-			c:n("You went together. The librarian looked at the date, then at {a}, and stamped it.")
-			c:n("There was no fine, only a very long look.")
+			c:n("You took it back together.")
+			c:n("The librarian gave {a} a long look but no fine.")
 			burst(c, "a", "That look was worse than a fine.|...Thanks for coming with me, {player}.", "heart")
 			c:mood("a", 4)
 			c:hearts("a", 1)
@@ -3966,7 +3971,7 @@ event({
 			end
 		end)
 		s:choice("I'll wait with you.", function(c)
-			c:n("The spare key was at the neighbour's, in a teapot, and you had a cup of tea while you were there.")
+			c:n("The spare key was in a teapot at the neighbour's, so you both stayed for tea.")
 			burst(c, "a", {
 				polite = "Thank you for waiting with me.|That was very kind of you.",
 				prickly = "...Thanks for waiting.|You didn't have to.",
@@ -4194,7 +4199,7 @@ event({
 			c:mood("a", 2)
 		end)
 		s:choice("(Say nothing, they suit them.)", function(c)
-			c:n("{a} walked around all day with petals in their hair and was told three times that they looked nice.")
+			c:n("{a} kept the petals in all day, and three people said they looked nice.")
 			c:mood("a", 5)
 			c:memo("a", "Three people told me I looked nice yesterday, and I still don't know why.")
 		end)
@@ -4262,7 +4267,7 @@ event({
 			_ = "Is it going to get louder?|It's going to get louder, isn't it?",
 		}, "sweat")
 		s:choice("I'll sit with you.", function(c)
-			c:n("You sat with {a} until the rain went soft, and they fell asleep sitting up.")
+			c:n("You sat with {a} until the storm passed, and they fell asleep sitting up.")
 			c:mood("a", 5)
 			c:hearts("a", 1)
 			c:memo("a", "Thanks for sitting with me in the storm, {player}. I slept fine after that.")
@@ -4515,7 +4520,7 @@ event({
 			_ = "The boats come in soon, so will you come and watch?",
 		}, "idea")
 		s:choice("Let's go.", function(c)
-			c:n("You sat on the harbour wall with {a} while the boats came in one by one, each with gulls following.")
+			c:n("You sat on the harbour wall with {a} and watched the boats come in.")
 			burst(c, "a", {
 				cool = "It's good, right?",
 				prickly = "See, it was worth it.|...Thanks for coming.",
@@ -4806,7 +4811,7 @@ event({
 			foodie = "{player}?|I brought snacks, so come out.",
 			_ = "{player}?|...Are you around?",
 		}, "question")
-		s:n("You were up on a roof the whole time, and you call down.")
+		s:n("You were up on a roof fixing something, and you call down.")
 		burst(s, "a", {
 			gloomy = "Oh, right, a roof.|That makes sense, I thought you'd had enough of me.",
 			nervous = "Oh, you're on a roof, okay, good.|Please be careful up there, sorry.",
@@ -4917,7 +4922,7 @@ event({
 	weight = W({ base = 0.1, traits = { focus = -0.2 } }),
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "Splash")
-		s:n("{a} slipped on the wet step by the fountain and sat right down in it, and you were the only one who saw.")
+		s:n("{a} slipped by the fountain and sat right down in the water, and only you saw.")
 		burst(s, "a", {
 			shy = "...|Please don't tell anyone, please.",
 			proud = "That didn't happen, do you understand?|It did not happen.",
@@ -5335,7 +5340,7 @@ event({
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "A fire on the beach")
 		s:prop("campfire", "a")
-		s:n("There's a little fire going on the beach, and {a} is sitting by it with a stick and a paper bag.")
+		s:n("{a} is sitting by a little fire on the beach with a bag of marshmallows.")
 		burst(s, "a", {
 			bold = "{player}, over here.|The fire's going, so sit down.",
 			gentle = "Come and get warm, {player}.|There's room on the log.",
@@ -5356,7 +5361,7 @@ event({
 			_ = "Sit for a bit, {player}, it's warm.",
 		}, "heart", "wave")
 		s:choice("Move over.", function(c)
-			c:n("You sat by the fire with {a} until it was only embers, and neither of you said much.")
+			c:n("You sat by the fire with {a} until it burned down.")
 			burst(c, "a", {
 				cool = "It was a good night for it.",
 				prickly = "That was all right.|...Same time next week.",
@@ -5476,7 +5481,6 @@ event({
 	}),
 	scene = function(ctx, a)
 		local stray = ctx.rng:pick(STRAYS)
-		local names = ctx.rng:shuffle(PET_NAMES)
 		local s = K.scene(ctx, "A new friend"):with({ pet = stray.kind })
 		if stray.prop then
 			s:prop(stray.prop, "a")
@@ -5501,10 +5505,11 @@ event({
 			nervous = "{player}, I have a {pet} now, I think?|What if I'm bad at it, and what do I even call it?",
 			_ = "{player}, this {pet} needs a home, so I'm keeping it.|Will you help me name it?",
 		}, "heart", "wave")
-		for i = 1, 2 do
-			local name = names[i]
-			s:choice(name .. ".", function(c)
-				c:with({ name = name })
+		s:askName({
+			var = "name",
+			suggest = PET_NAMES,
+			ask = "What should the {pet} be called?",
+			build = function(c)
 				burst(c, "a", {
 					sunny = "{name}! Ehehe, that's the one.",
 					gentle = "{name}, what a lovely name.|Come on, {name}, let's get you something warm to eat.",
@@ -5525,10 +5530,11 @@ event({
 					_ = "{name}, that's perfect.|Thanks, {player}.",
 				}, "heart", "cheer")
 				c:mood("a", 6)
-				c:remember("a", "pet", { what = stray.kind, name = name })
+				c:remember("a", "pet", { what = stray.kind, name = "{name}" })
+				c:follow("petnews", { chance = 0.5, hours = 10 })
 				c:memo("a", "I took in a {pet} and called it {name}, so come and say hello.")
-			end)
-		end
+			end,
+		})
 		s:log("{a} took in a {pet}.")
 		return s:done()
 	end,
@@ -5753,7 +5759,23 @@ event({
 })
 
 -- something new to wear for a few days, from the market (Sim/Memory's accessories)
-local FINDS = { "strawhat", "glasses", "flowers", "backpack" }
+local FINDS = { "strawhat", "flowers", "backpack", "bowtie", "sunhat" }
+
+-- what they might find at the market that they aren't wearing already
+local function findsFor(ctx, a)
+	local out = {}
+	local v = ctx.v(a)
+	local worn = {}
+	for _, m in Memory.all(v, "accessory", ctx.now) do
+		worn[m.what] = true
+	end
+	for _, f in FINDS do
+		if not worn[f] then
+			table.insert(out, f)
+		end
+	end
+	return out
+end
 
 event({
 	id = "newthing",
@@ -5761,13 +5783,13 @@ event({
 	weight = W({
 		base = 0.12,
 		cond = function(ctx, a)
-			return ctx.memory(a, "accessory") == nil
+			return #Memory.all(ctx.v(a), "accessory", ctx.now) < 2 and #findsFor(ctx, a) > 0
 		end,
 	}),
 	scene = function(ctx, a)
-		local find = ctx.rng:pick(FINDS)
+		local find = ctx.rng:pick(findsFor(ctx, a))
 		local s = K.scene(ctx, "From the market"):with({ thing = Memory.Accessories[find].words })
-		s:n("{a} came back from the market with a {thing} and keeps taking it off and putting it back on.")
+		s:n("{a} bought a {thing} at the market and keeps taking it off and putting it back on.")
 		burst(s, "a", {
 			sunny = "{player}, I bought a {thing} at the market!|Does it look good? Be honest, but say yes.",
 			gentle = "{player}, I bought a {thing}, but I'm not sure it's really me.|What do you think?",
@@ -5808,7 +5830,8 @@ event({
 				_ = "Then I'm wearing it, thanks, {player}.",
 			}, "sparkle", "cheer")
 			c:mood("a", 5)
-			c:remember("a", "accessory", { what = find })
+			c:wear("a", find)
+			c:follow("suitme", { chance = 0.5, hours = 8, words = { worn = find } })
 		end)
 		s:choice("Save it for a special day.", function(c)
 			burst(c, "a", {
@@ -5971,7 +5994,7 @@ event({
 	scene = function(ctx, a)
 		local crop = ctx.memoryWords(a, "garden").what
 		local s = K.scene(ctx, "The first crop"):with({ crop = crop })
-		s:n("{a} has picked the first of their {crop} and is carrying them around in the front of their shirt.")
+		s:n("{a} has picked the first of their {crop} and is showing everyone.")
 		burst(s, "a", {
 			sunny = "{player}, look, my first {crop}!|I grew these myself, ehehe.",
 			gentle = "{player}, the first {crop} were ready this morning.|I saved the best ones for you.",

@@ -82,6 +82,7 @@
 --   event:four          four villagers in the scene, the third talking
 --   event:narration     a line nobody in particular says: both villagers in, dimmed
 --   event:answers       a watched event at its choices: the answers in the textbox
+--   event:name          a watched event that asks for a name: the box with the suggestion, and Done
 --   cutscene:<event>    a big moment watched as a cutscene (UI/Cutscene, Data/Cutscenes): the
 --                       event's own scene for the sample town with all its lines said;
 --                       cutscene:<event>:<n> after its first n lines, :ask at its question,
@@ -991,6 +992,16 @@ elseif scene == "event" or scene:sub(1, 6) == "event:" then
 		watch, wait = true, 3.6
 	elseif page == "answers" then
 		watch, wait = true, 24
+	elseif page == "name" then
+		-- a name to type (Kit's s:askName): one answer, the suggestion
+		ev.title, ev.names, ev.actors = "A cat moves in", { a = "Mara" }, { a = order[1] }
+		ev.lines = {
+			{ who = "a", text = "Mayor, I think I have a cat now." },
+			{ who = "a", text = "It'll need a name, though." },
+		}
+		ev.choices = { { text = "Waffle" } }
+		ev.name = { suggest = "Waffle", ask = "What should the cat be called?", max = 20 }
+		watch, wait = true, 24
 	end
 	Sim.remoteEvent("EventShow"):FireClient(Sim.player, ev)
 	Sim.frames(2)
@@ -1004,17 +1015,21 @@ elseif scene == "event" or scene:sub(1, 6) == "event:" then
 			Sim.frames(2)
 		end
 	end
-	if ev.choices and (page == "" or page == "answers") then
+	if ev.choices and (page == "" or page == "answers" or page == "name") then
 		Sim.remoteEvent("EventLine"):FireClient(Sim.player, { token = ev.token, ask = true })
 		Sim.frames(2)
 	end
 	if watch then
-		Sim.press(if ev.choices and page == "answers" then "Answer" else "Watch")
+		Sim.press(if ev.choices and (page == "answers" or page == "name") then "Answer" else "Watch")
 	end
 	Sim.advance(wait)
 	if watch then
 		-- the second line for event:two and event:four, the question for event:answers
-		local presses = if page == "two" or page == "four" then 1 elseif page == "answers" then #ev.lines else 0
+		local presses = if page == "two" or page == "four"
+			then 1
+			elseif page == "answers" then #ev.lines
+			elseif page == "name" then #ev.lines + 1
+			else 0
 		for _ = 1, presses do
 			goOn()
 		end

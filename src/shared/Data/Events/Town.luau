@@ -131,7 +131,7 @@ event({
 			shy = "Um... I have a lantern.|You can sit with me, if you want.",
 			_ = "Hang on, {player}, I've got a lantern in here somewhere.",
 		}, "idea")
-		s:n("By the time the lights came back on, half the street was sitting outside {a}'s door, telling stories.")
+		s:n("When the lights came back, half the street was outside {a}'s door, telling stories.")
 		s:rel(6)
 		s:all(2)
 		s:log("There was a power cut. Everyone sat outside {a}'s door.")
@@ -206,7 +206,7 @@ event({
 	scene = function(ctx)
 		local s = K.scene(ctx, "A parade")
 		s:prop("balloons")
-		s:n("Somebody decided there'd be a parade today, and nobody knows who. There's a drum and a lot of balloons.")
+		s:n("There's a parade today, and nobody knows whose idea it was.")
 		s:n("Everyone in town joined in at the back and walked around the square twice.")
 		local who = bystander(ctx)
 		if who then
@@ -230,7 +230,7 @@ event({
 		s:prop("stall")
 		local coins = ctx.rng:int(3, 8) * 10
 		s:with({ coins = coins })
-		s:n("Stalls went up all along the square this morning, and one man is selling a single, very large cabbage.")
+		s:n("It's market day, and one stall is selling a single, very large cabbage.")
 		s:n("The stall fees came to {coins} coins for the town.")
 		s:coins(coins)
 		s:all(2)
@@ -394,7 +394,7 @@ event({
 	scene = function(ctx)
 		local s = K.scene(ctx, "Snow")
 		s:n("Snow is falling over the whole town.")
-		s:n("Everybody came out to look, and a few people are trying to catch it on their tongues.")
+		s:n("Everybody came out, and a few people are catching it on their tongues.")
 		s:all(3)
 		s:log("It snowed over the whole town.")
 		return s:done()
@@ -468,7 +468,7 @@ event({
 		local who = bystander(ctx)
 		if who then
 			s:with({ x = ctx.v(who).name })
-			s:n("Then {x} opened a window and put some music on, loud, and people started humming along.")
+			s:n("Then {x} put some music on, and people started humming along.")
 			s:fx({ t = "moodv", vid = who, d = 3 })
 		end
 		s:all(1)
@@ -546,7 +546,7 @@ event({
 	scene = function(ctx)
 		local s = K.scene(ctx, "A balloon")
 		s:n("A big striped hot air balloon drifted low over the town.")
-		s:n("The people in the basket waved, and everybody waved back for quite a long time.")
+		s:n("The people in the basket waved, and everybody waved back.")
 		s:all(3)
 		s:log("A hot air balloon drifted over town.")
 		return s:done()
@@ -674,7 +674,7 @@ event({
 	weight = W({ base = 0.1, count = 3 }),
 	scene = function(ctx)
 		local s = K.scene(ctx, "Clean up day")
-		s:n("Everyone came out with a bag and a pair of gloves and tidied the town, from the hill to the beach.")
+		s:n("Everyone came out with bags and gloves and tidied up the town.")
 		local who = bystander(ctx)
 		if who then
 			s:with({ x = ctx.v(who).name })
@@ -699,7 +699,7 @@ event({
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "Flowers by every door")
 		s:n("For a week now, somebody has been leaving a single flower outside every front door in town.")
-		s:n("This morning you saw who it was, and it was {a}, out with a basket before sunrise.")
+		s:n("This morning you caught {a} at it, out with a basket before sunrise.")
 		burst(s, "a", {
 			shy = "...!|Um, please don't tell anyone.|It's nicer if nobody knows.",
 			proud = "Well, someone had to make this town beautiful.",
@@ -822,7 +822,7 @@ event({
 	scene = function(ctx)
 		local s = K.scene(ctx, "A whale")
 		s:n("Somebody shouted from the pier, because there's a whale out past the harbour.")
-		s:n("Everybody ran to look, and it blew a spout of water and rolled over, flapping one fin.")
+		s:n("Everybody ran to look, and it blew a spout of water.")
 		s:all(5)
 		s:log("A whale was spotted off the pier.")
 		return s:done()
@@ -909,7 +909,7 @@ event({
 	scene = function(ctx)
 		local s = K.scene(ctx, "The ferry")
 		s:prop("parcels")
-		s:n("The ferry came in this morning with a crate of oranges for every house in town, and nobody ordered them.")
+		s:n("The ferry brought a crate of oranges for every house in town, and nobody ordered them.")
 		s:n("The note on the crate says 'From the next island. We had too many.'")
 		local who = bystander(ctx)
 		if who then
@@ -965,7 +965,7 @@ event({
 		local s = K.scene(ctx, "Kites on the hill")
 		s:prop("kite")
 		s:n("The wind came up just right, and half the town went up the hill with kites.")
-		s:n("There's a red one, one shaped like a fish, and one that's mostly a trash bag.")
+		s:n("One of them is shaped like a fish, and one is mostly a trash bag.")
 		local who = bystander(ctx)
 		if who then
 			s:with({ x = ctx.v(who).name })
@@ -1036,7 +1036,7 @@ event({
 			c:mood("a", -1)
 		end)
 		s:choice("Call it a draw.", function(c)
-			c:n("Then a gull landed on both boats at once, which settled it.")
+			c:n("Then a gull landed on both boats at once, and they both sank.")
 			c:say("a", "...That's fair, I suppose.", "laugh")
 			c:rel(6)
 		end)
@@ -1054,7 +1054,7 @@ event({
 		local s = K.scene(ctx, "Lanterns on the water")
 		s:prop("item:keep_lantern")
 		s:n("After dark, everyone took a paper lantern down to the harbour and set it on the water.")
-		s:n("They drifted out slowly in a line, and nobody spoke until the last one was out of sight.")
+		s:n("They drifted out in a line until the last one was out of sight.")
 		s:all(4)
 		s:log("The town floated lanterns on the harbour.")
 		return s:done()
@@ -1069,7 +1069,7 @@ event({
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "A jar of jam")
 		s:prop("stall", "a")
-		s:n("{a} has a table of jam jars at the market, and {b} has been holding the same jar for five minutes.")
+		s:n("{a} is selling jam at the market, and {b} has been holding the same jar for five minutes.")
 		burst(s, "b", {
 			cheeky = "two coins, final offer|ok, three, final final offer",
 			proud = "I'll give you a fair price, which is half.",
@@ -1226,7 +1226,7 @@ event({
 		local s = K.scene(ctx, "A picnic on the hill")
 		s:prop("picnic")
 		s:n("Somebody put a blanket out on the hill, and then everybody did.")
-		s:n("By two o'clock the whole slope was blankets, sandwiches and people lying flat.")
+		s:n("By two o'clock the whole slope was covered in blankets.")
 		for i = 1, #ctx.present do
 			for j = i + 1, #ctx.present do
 				s:fx({ t = "relv", a = ctx.present[i], b = ctx.present[j], d = 2 })
@@ -1245,7 +1245,7 @@ event({
 	weight = W({ base = 0.1, season = { 2, 3 }, weather = { "clear", "cloudy" } }),
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "The glowing sea")
-		s:n("Down on the beach every wave is glowing blue as it breaks, and {a} and {b} are at the water's edge.")
+		s:n("The waves are glowing blue tonight, and {a} and {b} are down at the water's edge.")
 		burst(s, "a", {
 			dreamy = "Hmm... it's like the sea's lit up from the inside.",
 			bookish = "It's tiny creatures in the water.|They glow when the waves stir them up.",
@@ -1300,7 +1300,7 @@ event({
 	weight = W({ base = 0.2, weather = "snow" }),
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "On the ice")
-		s:n("The duck pond froze solid overnight, and {a} is out in the middle while {b} holds on to the edge.")
+		s:n("The duck pond froze overnight, and {a} is skating while {b} holds on to the edge.")
 		burst(s, "a", {
 			bold = "Let go of the side, it's easy, look.",
 			sunny = "Come on, it's so much fun.|{player}, tell them.",
@@ -1381,7 +1381,7 @@ event({
 	scene = function(ctx)
 		local s = K.scene(ctx, "A delivery")
 		s:prop("parcels")
-		s:n("A delivery came for the town hall with three hundred rubber ducks in it, but the order was for three.")
+		s:n("The town hall ordered three rubber ducks, and three hundred came.")
 		s:choice("In the fountain they go.", function(c)
 			c:n("Every duck went in the fountain, and people have been standing around it all afternoon.")
 			c:all(3)
@@ -1402,7 +1402,7 @@ event({
 	weight = W({ base = 0.06, count = 3 }),
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "A new bench")
-		s:n("There's a new bench by the harbour, and {a} is standing next to it, waiting for you.")
+		s:n("There's a new bench by the harbour, and {a} is waiting next to it.")
 		burst(s, "a", {
 			sunny = "{player}, come here, come here.|Look at the little sign.",
 			gentle = "We all put a few coins in for it.|Have a look at the plaque, {player}.",
@@ -1461,9 +1461,7 @@ event({
 		}, "idea", "point")
 		-- the afternoon itself, whichever way you answered
 		local function mended(c)
-			c:n(
-				"Two hours and a lot of heavy stones later, the gap was gone, and a gull sat on the new bit straight away."
-			)
+			c:n("Two hours later the gap was gone, and a gull sat on the new bit straight away.")
 			burst(c, "a", {
 				bold = "Not bad at all.|Lunch is on me, and I won't hear no.",
 				prickly = "That's done.|...You were useful, so I'm buying lunch, but don't get used to it.",

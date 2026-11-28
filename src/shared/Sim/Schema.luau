@@ -20,6 +20,7 @@ local Bag = require(script.Parent.Bag)
 local Titles = require(script.Parent.Titles)
 local PlotLikes = require(script.Parent.PlotLikes)
 local PlotBoard = require(script.Parent.PlotBoard)
+local FollowUps = require(script.Parent.FollowUps) -- (events left waiting for later: profile.follow)
 
 local Schema = {}
 
@@ -140,6 +141,7 @@ function Schema.newProfile(): any
 		work = { day = -1, owed = 0, paid = 0 },
 		skills = {}, -- the player's own experience at each job, by Data/Jobs id (Sim/Skills)
 		recent = {},
+		follow = {}, -- events an answer left waiting for later, with the same villagers (Sim/FollowUps)
 		calendar = { s = 1, d = 1, y = 1 },
 		gems = Tuning.Gems.Start, -- the rare currency (Sim/Gems)
 		passes = {}, -- the game passes owned, by key, as Roblox said this session (Sim/Passes; Services/Store fills it)
@@ -252,6 +254,7 @@ function Schema.migrate(raw: any): any
 	end
 	profile.villagers = clean
 	profile.keepsakes = Keepsakes.clean(profile.keepsakes)
+	profile.follow = FollowUps.clean(profile.follow, clean)
 	profile.gemItems = GemPieces.clean(profile.gemItems)
 	profile.plotName = PlotName.clean(profile.plotName)
 	profile.likedPlots = PlotLikes.clean(profile.likedPlots, Tuning.Visit.LikesKept)

@@ -35,7 +35,7 @@ event({
 		local t1, _, d1 = Chatter.chat(ctx, s, a, b, nil, true)
 		local t2 = t1
 		while t2 == t1 do
-			t2 = ctx.rng:pick(Chatter.Topics)
+			t2 = ctx.rng:pick(Chatter.topics(ctx))
 		end
 		s:n("Then they got onto something else.")
 		burst(s, "b", {
@@ -1460,7 +1460,7 @@ event({
 			nervous = "Oh, sure, come in, sorry about the mess.",
 			_ = "Come in, it's in here somewhere.",
 		}, "heart")
-		s:n("An hour later, {b} left with the sugar, a slice of pie and all the news.")
+		s:n("An hour later, {b} went home with the sugar and a slice of pie.")
 		burst(s, "b", {
 			foodie = "My cake... it's still sitting in the bowl at home.",
 			nervous = "Oh no, oh no, did I leave my oven on?",
@@ -1539,7 +1539,7 @@ event({
 			nervous = "It's so quiet out here... in a good way, I mean.",
 			_ = "It's lovely.",
 		}, "heart")
-		s:n("Neither of them said much after that, and a boat went by.")
+		s:n("They sat quietly for a while after that.")
 		burst(s, "a", {
 			prickly = "Same time tomorrow, and don't be late.",
 			nervous = "Same time tomorrow? I-if that's okay?",
@@ -1612,7 +1612,7 @@ event({
 			nervous = "Oh no, are you okay? What happened?",
 			_ = "Do you want to talk about it?",
 		}, "heart")
-		s:n("{a} talked, and {b} listened and nodded in the right places.")
+		s:n("So {a} told {b} all about it.")
 		burst(s, "a", {
 			prickly = "...Fine, thanks, that helped.",
 			cool = "Thanks.",
@@ -1727,7 +1727,7 @@ event({
 			foodie = "Or we could wait and share this muffin, I've got one in my bag.",
 			_ = "Or we could wait, because it can't rain forever.",
 		}, "question")
-		s:n("They waited, and it rained for another hour while they talked about nothing much.")
+		s:n("It rained for another hour, and they talked the whole time.")
 		burst(s, "a", {
 			sunny = "Look, it's stopping, and there's a rainbow over the harbour!",
 			bold = "Right, it's easing off, so let's go.",
@@ -1915,7 +1915,7 @@ event({
 			nervous = "Who's bringing {bring}? Should I? I'll bring two, just in case.",
 			_ = "Who's bringing {bring}?",
 		}, "question")
-		s:n("They agreed on everything except the time, and then they agreed on that too.")
+		s:n("They planned the whole thing.")
 		say(s, "a", "Nine o'clock, then, more or less.", "heart")
 		s:relx("a", "b", 4)
 		s:relx("a", "c", 4)

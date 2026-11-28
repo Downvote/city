@@ -36,6 +36,13 @@
 -- scenes like tomodachi life as well"): the same scene, with the villagers acting on a set of
 -- their own behind the box (UI/Cutscene) instead of sliding in as busts. Each line tells the set
 -- where it falls among the event's lines, so the camera and the villagers do what that line asks.
+--
+-- A villager who puts something on in the event (a line with `wear`) wears it on their bust from
+-- that line (UI/Dialogue's scene.wear), and watched from the start it stays off them until then.
+-- An event that asks the player to name something (a band, a pet: the user, "allow the player to
+-- type in what they desire instead of fixed inputs") shows a box with the name it suggests and a
+-- Done button where the answers would be; what is typed goes to the server with the answer
+-- (EventChoose's third argument), which cleans it, filters it and says why when it won't do.
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Remotes = require(Shared.Net.Remotes)
@@ -167,12 +174,21 @@ local function actorOf(letter: string): any
 	if not model and ev.focus and ev.focus.Parent and ev.focus:GetAttribute("Vid") == vid then
 		model = ev.focus
 	end
+	-- what they put on in a line still to come stays off them until then
+	local without = {}
+	for i = shown + 1, #heard do
+		local l = heard[i]
+		if l.who == letter and type(l.wear) == "string" then
+			without[l.wear] = true
+		end
+	end
 	return {
 		key = letter,
 		name = name,
 		color = Colors.fromHex(v and v.color, T.Orange),
 		model = model,
 		vid = vid,
+		without = without,
 	}
 end
 
@@ -294,6 +310,10 @@ local function showLine(l: any)
 	bring(l)
 	s.beat(l)
 	s.speak(if type(l.who) == "string" then l.who else nil)
+	if type(l.who) == "string" and type(l.wear) == "string" then
+		-- they put it on with this line
+		s.wear(l.who, l.wear)
+	end
 	typeOut(l.text)
 end
 
@@ -348,6 +368,74 @@ end
 
 -- The answers, as pills in the box under the words, and the time left over the box.
 local showQuestion: () -> ()
+
+-- A name to type in place of the answers: a box with the suggestion in it and Done. An empty box
+-- sends the suggestion. What the server says when it won't do goes in the words over it, and the
+-- box stays for another go.
+local function showNameBox()
+	local s = scene
+	local ev = current
+	if not s or not ev or type(ev.name) ~= "table" then
+		return
+	end
+	local suggest = if type(ev.name.suggest) == "string" then ev.name.suggest else ""
+	local max = if type(ev.name.max) == "number" then ev.name.max else Tuning.Naming.Max
+	local row = Kit.new("Frame", {
+		Name = "Naming",
+		BackgroundTransparency = 1,
+		Size = UDim2.new(1, 0, 0, 44),
+		ZIndex = 7,
+		Parent = s.answers,
+	})
+	local box = Dialogue.field({
+		Name = "Name",
+		Parent = row,
+		Size = UDim2.new(1, -150, 1, 0),
+		Text = suggest,
+		Placeholder = suggest,
+		Max = max,
+	})
+	local sending = false
+	local function send()
+		if sending or not asking or page ~= "ask" or scene ~= s or current ~= ev then
+			return
+		end
+		local typed = Text.clean(box.Text)
+		if typed == "" then
+			typed = suggest
+		end
+		sending = true
+		local lines = #heard
+		task.spawn(function()
+			local ok, err = Remotes.fn("EventChoose"):InvokeServer(ev.token, 1, typed)
+			sending = false
+			if scene ~= s or current ~= ev or ev.ended or #heard ~= lines then
+				return
+			end
+			if ok then
+				-- sent: the scene waits for what they say to it
+				stopAsking()
+			elseif type(err) == "string" and err ~= "" then
+				typeOut(err)
+			end
+		end)
+	end
+	local done = Dialogue.answer("Done", {
+		Name = "Done",
+		Parent = row,
+		Size = UDim2.new(0, 138, 1, 0),
+		TextSize = 17,
+		Icon = "check",
+	}, send)
+	done.Position = UDim2.fromScale(1, 0)
+	done.AnchorPoint = Vector2.new(1, 0)
+	box.FocusLost:Connect(function(enter)
+		if enter then
+			send()
+		end
+	end)
+end
+
 local function showAnswers()
 	local s = scene
 	local ev = current
@@ -357,6 +445,10 @@ local function showAnswers()
 	clearAnswers()
 	if sceneTime then
 		sceneTime.Visible = true
+	end
+	if type(ev.name) == "table" then
+		showNameBox()
+		return
 	end
 	local n = #ev.choices
 	local grid = Kit.grid(s.answers, UDim2.new(1 / math.max(1, math.min(n, 3)), -8, 0, 44), 8)
@@ -404,6 +496,7 @@ end
 -- now: the bar runs from full, and the server is told (its own time never ends before this one).
 function showQuestion()
 	local s = scene
+	local ev = current
 	if not s then
 		return
 	end
@@ -411,7 +504,9 @@ function showQuestion()
 	waiting = false
 	s.beat({ ask = true })
 	s.speak(nil)
-	typeOut("What do you do?")
+	typeOut(
+		if ev and type(ev.name) == "table" and type(ev.name.ask) == "string" then ev.name.ask else "What do you do?"
+	)
 	showAnswers()
 	timerEnds = os.clock() + CHOICE
 	tell("asked")

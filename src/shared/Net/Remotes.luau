@@ -45,7 +45,8 @@ Remotes.Functions = {
 	"VillagerFocus", -- (vid) -> the villager's model, to point the camera at
 	"OutfitSave", -- (name, appearance) -> ok
 	"OutfitDelete", -- (index) -> ok
-	"EventChoose", -- (token, choice) -> ok
+	"EventChoose", -- (token, choice, name?) -> ok, why: an answer, or the name the player typed (Sim/Naming)
+	"TakeOff", -- (vid, what) -> ok, why: takes off a thing an event put on a villager (their Lately list)
 	"DailyClaim", -- () -> ok, coins, gems (Sim/Rewards.claimDaily)
 	"VillagerJob", -- (vid, workplaceKey?) -> ok, err
 	"PlotExpand", -- () -> ok, err

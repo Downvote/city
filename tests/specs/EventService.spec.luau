@@ -122,7 +122,19 @@ Harness.addService("Players", {
 		return listed
 	end,
 })
-local stubbed = { "Data", "Plots", "World", "Villagers" }
+local stubbed = { "Data", "Plots", "World", "Villagers", "Avatar" }
+-- Roblox's text filter: a word it doesn't like comes back as hashes
+local filtered = {}
+Harness.stub(Services .. "Avatar", {
+	filterText = function(_, text)
+		table.insert(filtered, text)
+		if text:lower():find("rude", 1, true) then
+			return (text:gsub("%a", "#"))
+		end
+		return text
+	end,
+})
+local dressed = {}
 Harness.stub(Services .. "Data", {
 	get = function(player)
 		return if player == owner then profile else nil
@@ -183,6 +195,9 @@ Harness.stub(Services .. "Villagers", {
 	data = function(_, vid)
 		return profile.villagers[vid]
 	end,
+	dress = function(_, vid)
+		table.insert(dressed, vid)
+	end,
 })
 Harness.stub(Shared .. "Net.Remotes", {
 	event = function(name)
@@ -236,16 +251,17 @@ end
 local function watch(token, what, who)
 	remoteEvents.EventWatch.OnServerEvent:Fire(who or owner, token, what)
 end
-local function choose(token, index, who)
-	return remoteFns.EventChoose.OnServerInvoke(who or owner, token, index)
+local function choose(token, index, who, typed)
+	return remoteFns.EventChoose.OnServerInvoke(who or owner, token, index, typed)
 end
 
--- Starts "spider" and plays it up to its question. Returns its token and where its messages start.
+-- Starts "spider" (or o.id) and plays it up to its question. Returns its token and where its
+-- messages start.
 local function toQuestion(opts)
 	local o = opts or {}
 	expect(Events.busy(owner)).toBe(false)
 	local from = #fired + 1
-	expect(Events.trigger(owner, "spider")).toBe(true)
+	expect(Events.trigger(owner, o.id or "spider")).toBe(true)
 	local show = heard("EventShow", from)[1]
 	expect(show ~= nil).toBeTruthy()
 	local token = show.token
@@ -546,6 +562,98 @@ describe("Event service: the time to answer", function()
 		listed = {}
 		Events.trigger = trigger
 		profile.tutorial = tutorial
+	end)
+
+	it("takes a name the player typed, cleaned and filtered, into what follows", function()
+		-- the user: "when things happens that requires mayors to input names like band names or pet
+		-- names, allow the player to type in what they desire instead of fixed inputs"
+		local token, from = toQuestion({ id = "nameplant", watch = true })
+		local show = heard("EventShow", from)[1]
+		expect(type(show.name)).toBe("table")
+		expect(type(show.name.suggest)).toBe("string")
+		expect(show.name.max).toBe(Tuning.Naming.Max)
+		expect(#show.choices).toBe(1)
+		watch(token, "asked")
+		-- only with the one answer, and only names that read as one
+		expect(choose(token, 2, owner, "Bob")).toBe(false)
+		local ok, why = choose(token, 1, owner, "{a}|x")
+		expect(ok).toBe(false)
+		expect(type(why)).toBe("string")
+		advance(1.2)
+		expect((choose(token, 1, owner, string.rep("long", 10)))).toBe(false)
+		advance(1.2)
+		-- the filter has the last word
+		local ok2, why2 = choose(token, 1, owner, "rude fern")
+		expect(ok2).toBe(false)
+		expect(why2:find("filtered", 1, true) ~= nil).toBeTruthy()
+		-- (one at a time)
+		expect((choose(token, 1, owner, "Frond"))).toBe(false)
+		advance(1.2)
+		expect(choose(token, 1, stranger, "Frond")).toBe(false)
+		expect(choose(token, 1, owner, "  frond  ")).toBe(true)
+		toEnd()
+		-- what follows says it, and the villager remembers it
+		local said = {}
+		for _, m in heard("EventLine", from) do
+			if m.token == token and m.line then
+				table.insert(said, m.line.text)
+			end
+		end
+		expect(table.concat(said, " "):find("Frond", 1, true) ~= nil).toBeTruthy()
+		expect(profile.villagers.v1.memo.text:find("Frond", 1, true) ~= nil).toBeTruthy()
+		expect(table.find(filtered, "Frond") ~= nil).toBeTruthy()
+		-- and a question that asks no name takes no typing
+		local t2 = toQuestion()
+		expect(choose(t2, 1, owner, "Bob")).toBe(false)
+		expect(choose(t2, 1)).toBe(true)
+		toEnd()
+	end)
+
+	it("puts a thing on with the line that says so, and takes it off when asked", function()
+		-- the user: "when villagers equip accessories from random event, the conversation showing it
+		-- should show it, and it gets taken off only if the player chooses it dosent suit them"
+		local Memory = require(Shared .. "Sim.Memory")
+		local token, from = toQuestion({ id = "outfit", watch = true })
+		watch(token, "asked")
+		table.clear(dressed)
+		expect(choose(token, 1)).toBe(true)
+		-- the first line of the answer carries it, and it is on before the event ends
+		local wearLine = nil
+		for _ = 1, 40 do
+			advance(0.2)
+			for _, m in heard("EventLine", from) do
+				if m.token == token and m.line and m.line.wear then
+					wearLine = m.line
+				end
+			end
+			if wearLine then
+				break
+			end
+		end
+		expect(wearLine ~= nil).toBeTruthy()
+		expect(wearLine.wear).toBe("yellowhat")
+		expect(Events.busy(owner)).toBe(true)
+		expect(Memory.has(profile.villagers.v1, "accessory", os.time()) ~= nil).toBeTruthy()
+		expect(table.find(dressed, "v1") ~= nil).toBeTruthy()
+		toEnd()
+		-- it stays on, days later
+		local m = Memory.has(profile.villagers.v1, "accessory", os.time() + 30 * Tuning.Day.Length)
+		expect(m ~= nil and m.what == "yellowhat").toBeTruthy()
+		-- Take off on their Lately list: the owner's own villager, a thing they have on
+		local takeOff = remoteFns.TakeOff.OnServerInvoke
+		expect(takeOff(stranger, "v1", "yellowhat")).toBe(false)
+		expect(takeOff(owner, "v1", "crown")).toBe(false)
+		expect(takeOff(owner, "nobody", "yellowhat")).toBe(false)
+		expect(takeOff(owner, "v1", 7)).toBe(false)
+		expect(takeOff(owner, "v1", "scarf")).toBe(false)
+		table.clear(dressed)
+		local ok, said = takeOff(owner, "v1", "yellowhat")
+		expect(ok).toBe(true)
+		expect(said).toBe("Mara took the yellow hat off.")
+		expect(Memory.has(profile.villagers.v1, "accessory", os.time())).toBe(nil)
+		advance(0.2)
+		expect(table.find(dressed, "v1") ~= nil).toBeTruthy()
+		profile.follow = {}
 	end)
 
 	it("forgets an owner who leaves", function()
