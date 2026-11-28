@@ -916,7 +916,7 @@ event({
 			local dish = DINNER[f.id] or Foods.phrase(f)
 			s:choice("What about " .. dish .. "?", function(c)
 				c:with({ food = dish })
-				c:n("{a} cooked dinner for {b} that evening, with {food} on the menu.")
+				c:n("{a} made {food} for {b}'s dinner that evening.")
 				if fav and f.id == fav.id then
 					say(c, "b", "You made my favourite!|How did you know?", "heart", "cheer")
 					c:rel(12)
@@ -1887,7 +1887,7 @@ event({
 			c:mood("a", 6)
 		end)
 		s:choice("Practise on me now.", function(c)
-			c:n("{a} ran through the whole day out loud while you played everyone who might turn up.")
+			c:n("You pretended to be the customers while {a} practised.")
 			burst(c, "a", {
 				cheeky = "you were a terrible customer|perfect practice, honestly",
 				bookish = "That really helped.|I found two things I need to fix.",
@@ -2503,7 +2503,7 @@ event({
 			_ = "Do you want to see my secret spot?|It's not far, and nobody else goes there.",
 		}, "idea")
 		s:choice("I'd love to see it.", function(c)
-			c:n("{a} led you up a path behind the hill to a flat rock that looks out over the whole town.")
+			c:n("{a} took you up behind the hill to a rock that looks out over the town.")
 			burst(c, "a", {
 				dreamy = "This is where I come to think.|Or to not think, sometimes.",
 				cheeky = "tell no one|not even the gulls",
@@ -2751,7 +2751,7 @@ event({
 			end
 		end)
 		s:choice("Practise on me first.", function(c)
-			c:n("{a} asked you four times, and the fourth time was very good.")
+			c:n("{a} practised on you four times, and the last one was good.")
 			burst(c, "a", {
 				dramatic = "I've never been more ready for anything in my life!",
 				sunny = "Okay, I'm ready, ready!|Here I go!",
@@ -4447,7 +4447,7 @@ event({
 				foodie = "I know, but I've got a bag of warm chips.|Walk with me and share them.",
 				_ = "Sure.|I'll come anyway.",
 			}, "sweat")
-			c:n("You walked home together, and the lamps came back on halfway.")
+			c:n("You walked home together, talking the whole way.")
 		end)
 		s:choice("Thanks, I'd like that.", function(c)
 			burst(c, "a", {
@@ -4469,7 +4469,7 @@ event({
 				foodie = "Good.|Here, have a chip on the way.",
 				_ = "Good.|It's this way.",
 			}, "heart")
-			c:n("You walked home together, and the lamps came back on halfway.")
+			c:n("You walked home together, talking the whole way.")
 		end)
 		s:hearts("a", 1)
 		s:mood("a", 3)

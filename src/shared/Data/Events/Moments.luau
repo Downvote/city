@@ -78,25 +78,25 @@ event({
 			_ = "Hang on, is somebody behind the tree?",
 		})
 		cue(s, "peek")
-		s:n("A man in a long grey coat is standing behind the trunk, very still, his face hidden under a cap.")
+		s:n("A man in a grey coat is standing behind the trunk, very still.")
 		cue(s, "man")
 		s:n("{a} woke up with a start.")
 		cue(s, "wake")
 		s:by("a", {
-			sunny = "Who was that man?|I wanted to say hello, and then I woke up.",
-			gloomy = "Of course I woke up right then.|I'll never know who he was now.",
-			cheeky = "who was that guy|rude of him to just stand there",
-			nervous = "W-who was that?|I'm leaving the lamp on for the rest of the night.",
-			bookish = "Dreams often put strangers in them, actually.|Still, I'd like to know who he was.",
-			dreamy = "He was just standing there...|I think he was waiting for somebody.",
+			sunny = "Who was that man? I wanted to say hello, and then I woke up.",
+			gloomy = "Of course I woke up right then. I'll never know who he was now.",
+			cheeky = "who was that guy, rude of him to just stand there",
+			nervous = "W-who was that? I'm leaving the lamp on for the rest of the night.",
+			bookish = "Dreams often put strangers in them, actually. Still, I'd like to know who he was.",
+			dreamy = "He was just standing there... I think he was waiting for somebody.",
 			bold = "Next time I'll walk right up and ask who he is.",
 			polite = "I do hope he was a friendly man, whoever he was.",
 			proud = "Hmph, he was hiding from me, obviously.",
 			shy = "Um... I hope he isn't there again tonight.",
 			foodie = "I wonder if that tree had any fruit on it.",
 			dramatic = "A STRANGER behind a tree, and then I woke up.",
-			easygoing = "Weird dream.|Back to sleep, I guess.",
-			_ = "Who was that man behind the tree?|I woke up before I could see his face.",
+			easygoing = "Weird dream. Back to sleep, I guess.",
+			_ = "Who was that man behind the tree? I woke up before I could see his face.",
 		}, "question")
 		s:mood("a", 1)
 		s:memo("a", "I dreamed about a red tree in a purple field, and a man standing behind it.")
@@ -272,13 +272,13 @@ event({
 			c:n("{a} woke up laughing.")
 			cue(c, "wake")
 			c:by("a", {
-				sunny = "I made it to six, ehehe!|Thanks for telling me about the door.",
+				sunny = "I made it to six, ehehe! Thanks for telling me about the door.",
 				bold = "Hah, I beat the robots.",
-				nervous = "I m-made it.|I'm never working nights, even in a dream.",
-				cheeky = "survived the night shift|the robots never stood a chance",
-				gloomy = "I made it to six...|and now I have to get up anyway.",
+				nervous = "I m-made it. I'm never working nights, even in a dream.",
+				cheeky = "survived the night shift, the robots never stood a chance",
+				gloomy = "I made it to six... and now I have to get up anyway.",
 				foodie = "After all that, I really want a pizza.",
-				_ = "I made it to six.|What a strange dream.",
+				_ = "I made it to six. What a strange dream.",
 			}, "sparkle")
 			c:mood("a", 3)
 		end)
@@ -293,7 +293,7 @@ event({
 				dramatic = "That face will haunt me FOREVER.",
 				gloomy = "I knew I shouldn't have looked.",
 				cool = "That was a little too much for one night.",
-				_ = "That face in the window got me.|I'm awake now, that's for sure.",
+				_ = "That face in the window got me. I'm awake now, that's for sure.",
 			}, "sweat")
 			c:mood("a", -1)
 		end)
@@ -451,7 +451,7 @@ event({
 	},
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "A strange room")
-		s:n("{a} is dreaming about a room where everything is in the wrong place, and floating in the middle of it.")
+		s:n("{a} is dreaming of a room where everything is upside down.")
 		s:by("a", {
 			bookish = "Actually, a table shouldn't be on the ceiling.",
 			cheeky = "who put the table up there",
@@ -469,7 +469,7 @@ event({
 			_ = "And that clock has far too many hands.",
 		})
 		cue(s, "clock")
-		s:n("{a} drifts toward the door at the top of the wall, and wakes up before reaching it.")
+		s:n("{a} floats up toward a door in the ceiling, then wakes up.")
 		cue(s, "wake")
 		s:by("a", {
 			sunny = "I was floating, {player}, actually floating!",
@@ -948,7 +948,7 @@ event({
 			ch:n("{a} opens the door a crack, and there is {c}, singing into a hairbrush in front of the mirror.")
 			cue(ch, "open")
 			ch:by("c", {
-				shy = "...!|H-how long have you been standing there?",
+				shy = "...! H-how long have you been standing there?",
 				proud = "I was warming up, obviously.",
 				dramatic = "You've seen my SECRET.",
 				cheeky = "you saw nothing",

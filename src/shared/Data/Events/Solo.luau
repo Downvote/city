@@ -46,7 +46,7 @@ local BRAG = {
 	polite = "Oh, how wonderful.|Thank you kindly for watching.",
 	foodie = "That calls for a bun to celebrate.|Maybe two, if the bakery's still open.",
 	nervous = "I-it worked?|Oh, thank goodness, I was so sure it wouldn't.",
-	_ = "It actually worked.|Did you see it?",
+	_ = "It actually worked.|I wasn't sure it would.",
 }
 
 -- Something they made, which they may let you keep: shown while the scene plays, given as a
@@ -612,7 +612,7 @@ event({
 		s:prop("cat", "a")
 		s:n("A cat was asleep on the wall when {a} sneezed right next to it.")
 		s:say("a", "Aaaaachoo!", "sweat")
-		s:n("The cat shot up into the air, landed on its feet and gave {a} a long look.")
+		s:n("The cat jumped a foot in the air, then gave {a} a long look.")
 		burst(s, "a", {
 			shy = "Sorry, sorry, cat...|I didn't mean to.",
 			bold = "Hah, you jumped higher than I've ever seen a cat jump.",
@@ -775,7 +775,7 @@ event({
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "Puddles")
 		s:prop("umbrella", "a")
-		s:n("{a} left their umbrella open on the path and is jumping in every puddle on the street.")
+		s:n("{a} has left their umbrella on the path and is jumping in every puddle.")
 		burst(s, "a", {
 			proud = "Hmph, this is for my health, you know.|Splashing is very good for the legs.",
 			shy = "Hehe, nobody's looking...|Oh, um, except you.",
@@ -912,7 +912,7 @@ event({
 			foodie = "It looks like a giant pile of cornflakes.|I'm jumping in.",
 			_ = "Just one jump, I promise.|Then I'll rake it all up again.",
 		}, "sparkle", "cheer")
-		s:n("Now there are leaves everywhere, and {a} is lying in what's left of the pile.")
+		s:n("Now the leaves are everywhere again, and {a} is lying in the middle.")
 		s:leave("leaves", 10, "a")
 		s:mood("a", 5)
 		s:log("{a} jumped in a pile of leaves.")
@@ -1027,7 +1027,7 @@ event({
 				_ = "Well... at least it's still up high.",
 			}, "sweat")
 			s:choice("Let's get it down.", function(c)
-				c:n("With a long stick and a lot of jumping, the kite came down with only one small hole.")
+				c:n("A long stick got it down, with only one small hole.")
 				burst(c, "a", "Got it back, and it'll still fly with that little hole.|Thanks, {player}.", "heart")
 				c:mood("a", 4)
 				c:hearts("a", 1)
@@ -1182,7 +1182,7 @@ event({
 				dramatic = "Oh, a thousand THINGS, {player}.|But I feel better now, good night.",
 				polite = "Only a small worry, and it feels smaller now.|Thank you, and good night.",
 				foodie = "Breakfast, mostly.|I'm making pancakes, so I need to sleep, good night.",
-				_ = "Nothing really, but thanks for asking.|Good night, {player}.",
+				_ = "Only the things I forgot to do today.|Saying them out loud helped, good night, {player}.",
 			}, "zzz")
 			c:n("{a} was asleep a few minutes later.")
 			c:mood("a", 5)
@@ -1505,7 +1505,7 @@ event({
 			_ = "It's from an old friend, {player}.|They're doing well, and they want to hear all about this place.",
 		}, "heart")
 		s:choice("Write back today.", function(c)
-			burst(c, "a", "I will, and I'll tell them all about this place.|And about you, too.", "heart", "cheer")
+			burst(c, "a", "I will, as soon as I get home.|I'll tell them about you, too.", "heart", "cheer")
 			c:mood("a", 6)
 			c:memo("a", "I wrote back to my old friend and told them all about you, {player}.")
 		end)
@@ -3578,7 +3578,7 @@ event({
 	weight = W({ base = 0.15 }),
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "Missed it")
-		s:n("{a} ran for the bus and missed it by one step, and the doors shut right in front of them.")
+		s:n("{a} ran for the bus, and the doors shut right in front of them.")
 		burst(s, "a", {
 			bold = "Hey!|...It saw me, I know it definitely saw me.",
 			proud = "Th-that's fine, I was going to walk anyway.|It's good for my health.",
@@ -3599,7 +3599,7 @@ event({
 			_ = "I missed it by one step.|One single step.",
 		}, "sweat")
 		s:choice("Walk with me?", function(c)
-			c:n("You walked down to the harbour together, and the bus was still at the stop when you got there.")
+			c:n("You walked down to the harbour together, and the bus was still sitting at the stop.")
 			burst(c, "a", "Of course it was.|...It was a nice walk, though, so thanks, {player}.", "heart")
 			c:mood("a", 4)
 			c:hearts("a", 1)
@@ -3643,7 +3643,7 @@ event({
 	}),
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "Warm bread")
-		s:n("The bakery isn't open yet, and {a} is standing outside it with their eyes shut, breathing in.")
+		s:n("The bakery isn't open yet, and {a} is standing outside, breathing in the smell.")
 		burst(s, "a", {
 			foodie = "Mmm, rye, and something with cinnamon.|And yes, there are definitely buns.",
 			dreamy = "If I stand here long enough, I think I'll turn into toast...",
@@ -3663,7 +3663,7 @@ event({
 			nervous = "Is it okay to stand here?|I'm not in the way, am I?",
 			_ = "Smell that, just smell it.",
 		}, "heart")
-		s:n("The door opened, and the baker handed {a} the first roll of the day, still too hot to hold.")
+		s:n("Then the baker came out and gave {a} the first roll of the day.")
 		burst(s, "a", "Hot, hot, hot!|It's worth it, though.", "sparkle", "cheer")
 		s:mood("a", 4)
 		s:log("{a} waited outside the bakery for the first roll.")
@@ -3781,8 +3781,8 @@ event({
 			_ = "{player}...|I'd forgotten I even had it.",
 		}, "sweat")
 		s:choice("I'll come with you.", function(c)
-			c:n("You went together. The librarian looked at the date, then at {a}, and stamped it.")
-			c:n("There was no fine, only a very long look.")
+			c:n("You took it back together.")
+			c:n("The librarian gave {a} a long look but no fine.")
 			burst(c, "a", "That look was worse than a fine.|...Thanks for coming with me, {player}.", "heart")
 			c:mood("a", 4)
 			c:hearts("a", 1)
@@ -3971,7 +3971,7 @@ event({
 			end
 		end)
 		s:choice("I'll wait with you.", function(c)
-			c:n("The spare key was at the neighbour's, in a teapot, and you had a cup of tea while you were there.")
+			c:n("The spare key was in a teapot at the neighbour's, so you both stayed for tea.")
 			burst(c, "a", {
 				polite = "Thank you for waiting with me.|That was very kind of you.",
 				prickly = "...Thanks for waiting.|You didn't have to.",
@@ -4199,7 +4199,7 @@ event({
 			c:mood("a", 2)
 		end)
 		s:choice("(Say nothing, they suit them.)", function(c)
-			c:n("{a} walked around all day with petals in their hair and was told three times that they looked nice.")
+			c:n("{a} kept the petals in all day, and three people said they looked nice.")
 			c:mood("a", 5)
 			c:memo("a", "Three people told me I looked nice yesterday, and I still don't know why.")
 		end)
@@ -4267,7 +4267,7 @@ event({
 			_ = "Is it going to get louder?|It's going to get louder, isn't it?",
 		}, "sweat")
 		s:choice("I'll sit with you.", function(c)
-			c:n("You sat with {a} until the rain went soft, and they fell asleep sitting up.")
+			c:n("You sat with {a} until the storm passed, and they fell asleep sitting up.")
 			c:mood("a", 5)
 			c:hearts("a", 1)
 			c:memo("a", "Thanks for sitting with me in the storm, {player}. I slept fine after that.")
@@ -4520,7 +4520,7 @@ event({
 			_ = "The boats come in soon, so will you come and watch?",
 		}, "idea")
 		s:choice("Let's go.", function(c)
-			c:n("You sat on the harbour wall with {a} while the boats came in one by one, each with gulls following.")
+			c:n("You sat on the harbour wall with {a} and watched the boats come in.")
 			burst(c, "a", {
 				cool = "It's good, right?",
 				prickly = "See, it was worth it.|...Thanks for coming.",
@@ -4811,7 +4811,7 @@ event({
 			foodie = "{player}?|I brought snacks, so come out.",
 			_ = "{player}?|...Are you around?",
 		}, "question")
-		s:n("You were up on a roof the whole time, and you call down.")
+		s:n("You were up on a roof fixing something, and you call down.")
 		burst(s, "a", {
 			gloomy = "Oh, right, a roof.|That makes sense, I thought you'd had enough of me.",
 			nervous = "Oh, you're on a roof, okay, good.|Please be careful up there, sorry.",
@@ -4922,7 +4922,7 @@ event({
 	weight = W({ base = 0.1, traits = { focus = -0.2 } }),
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "Splash")
-		s:n("{a} slipped on the wet step by the fountain and sat right down in it, and you were the only one who saw.")
+		s:n("{a} slipped by the fountain and sat right down in the water, and only you saw.")
 		burst(s, "a", {
 			shy = "...|Please don't tell anyone, please.",
 			proud = "That didn't happen, do you understand?|It did not happen.",
@@ -5340,7 +5340,7 @@ event({
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "A fire on the beach")
 		s:prop("campfire", "a")
-		s:n("There's a little fire going on the beach, and {a} is sitting by it with a stick and a paper bag.")
+		s:n("{a} is sitting by a little fire on the beach with a bag of marshmallows.")
 		burst(s, "a", {
 			bold = "{player}, over here.|The fire's going, so sit down.",
 			gentle = "Come and get warm, {player}.|There's room on the log.",
@@ -5361,7 +5361,7 @@ event({
 			_ = "Sit for a bit, {player}, it's warm.",
 		}, "heart", "wave")
 		s:choice("Move over.", function(c)
-			c:n("You sat by the fire with {a} until it was only embers, and neither of you said much.")
+			c:n("You sat by the fire with {a} until it burned down.")
 			burst(c, "a", {
 				cool = "It was a good night for it.",
 				prickly = "That was all right.|...Same time next week.",
@@ -5994,7 +5994,7 @@ event({
 	scene = function(ctx, a)
 		local crop = ctx.memoryWords(a, "garden").what
 		local s = K.scene(ctx, "The first crop"):with({ crop = crop })
-		s:n("{a} has picked the first of their {crop} and is carrying them around in the front of their shirt.")
+		s:n("{a} has picked the first of their {crop} and is showing everyone.")
 		burst(s, "a", {
 			sunny = "{player}, look, my first {crop}!|I grew these myself, ehehe.",
 			gentle = "{player}, the first {crop} were ready this morning.|I saved the best ones for you.",

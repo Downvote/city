@@ -823,7 +823,11 @@ Chatter.Debates = {
 		yes = "It's the same thing, only bigger and saltier.",
 		no = "Puddles don't have whales in them.",
 	},
-	{ q = "Is a hammock a bed?", yes = "You sleep in it, so it's a bed.", no = "It's a net with big ideas." },
+	{
+		q = "Is a hammock a bed?",
+		yes = "You sleep in it, so it's a bed.",
+		no = "It's a net, and you can't tuck a net in.",
+	},
 	{
 		q = "Is it still breakfast if you eat it at noon?",
 		yes = "Breakfast is whenever you wake up.",

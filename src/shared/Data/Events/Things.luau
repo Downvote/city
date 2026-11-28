@@ -154,7 +154,7 @@ event({
 	w = { base = 0.13, btraits = { mischief = 0.2 } },
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "The pudding")
-		s:n("{a} opened the fridge, and the pudding with their name on it is gone. {b} is holding a spoon.")
+		s:n("The pudding with {a}'s name on it is gone from the fridge, and {b} is holding a spoon.")
 		burst(s, "a", {
 			dramatic = "{b}, that was MY pudding!|It had a note on it, with my NAME.",
 			prickly = "Ugh, {b}.|That pudding had my name on it, in pen.",
@@ -251,7 +251,7 @@ event({
 			c:mood("a", 1)
 			c:follow("parcelcame", { chance = 0.85, hours = 3, words = { thing = "{thing}" } })
 		end)
-		s:choice("Wait for it with them.", function(c)
+		s:choice("I'll wait with you.", function(c)
 			c:n("You waited by the door together. The post came just before noon.")
 			burst(c, "a", {
 				cheeky = "it's here|my {thing}, finally",
@@ -1264,7 +1264,7 @@ event({
 			c:rel(2)
 		end)
 		s:choice("Put a rug under them.", function(c)
-			c:n("The rug made it a bit quieter. Only a bit.")
+			c:n("The rug made it a little quieter.")
 			c:rel(1)
 		end)
 		s:log("{b} asked {a} to drum a bit quieter.")
@@ -1282,7 +1282,7 @@ event({
 	w = { base = 0.1, season = { 2, 3 } },
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "One tomato")
-		s:n("{a} grew a tomato in the greenhouse. Just the one.")
+		s:n("{a} has grown a single tomato in the greenhouse.")
 		burst(s, "a", {
 			proud = "{player}, behold, my tomato.|It's small, but it's perfect.",
 			gloomy = "{player}, I grew one tomato.|One, all summer.",
