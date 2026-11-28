@@ -306,7 +306,6 @@ event({
 
 event({
 	id = "dreamtalk",
-	cutscene = "dream",
 	when = "day",
 	weight = W({ base = 0.18, traits = { focus = -0.3 } }),
 	scene = function(ctx, a, b)

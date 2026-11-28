@@ -872,7 +872,6 @@ local DINNER = {
 
 event({
 	id = "cookfor",
-	cutscene = "kitchen",
 	actors = 2,
 	when = "day",
 	weight = W({ base = 0.12, rel = 20 }),
@@ -1468,7 +1467,6 @@ event({
 
 event({
 	id = "pierwalk",
-	cutscene = "pier",
 	when = "night",
 	weight = W({ base = 0.12, weather = { "clear", "cloudy", "snow", "blossom", "leaves" } }),
 	scene = function(ctx, a)
@@ -1917,7 +1915,6 @@ event({
 
 event({
 	id = "soupsalt",
-	cutscene = "kitchen",
 	when = "day",
 	weight = W({ base = 0.1 }),
 	scene = function(ctx, a)

@@ -19,7 +19,7 @@
 --   Town      the whole town: power cuts, talent night, a parade, a lost dog, the seasons
 --   Work      at work: big orders, a tower of bricks, the wrong letters
 --   Asks      a villager asks you: a name for a pet, which outfit, whether to tell the truth
---   Moments   big moments that play as cutscenes on sets of their own: dreams, a race, a cat
+--   Moments   big moments: dreams, a race, a cat in the park, a cloud in somebody's shape
 --   Needs     a villager asks for what they lack: a bed, work, a roof, a comfier bed, something fun,
 --             friends (Sim/Needs), each ending on the same plain line about where to get it
 --   Things    what happens because of a piece on the plot: the stove, the fridge, the post, the pond
@@ -352,8 +352,7 @@ event({
 	end,
 })
 
--- A quarrel, and you get to step in. (Its cutscene counts on four lines before the question: the
--- narrator, one cross line each, and the narrator again.)
+-- A quarrel, and you get to step in.
 event({
 	id = "quarrel",
 	actors = 2,
@@ -488,8 +487,7 @@ event({
 	end,
 })
 
--- A quarreling pair makes up on their own. (Its cutscene counts on three lines: the narrator,
--- then one line each.)
+-- A quarreling pair makes up on their own.
 event({
 	id = "makeup",
 	actors = 2,
@@ -1898,7 +1896,7 @@ event({
 
 -- (No bed and no work: Data/Events/Needs, with the other things a villager asks for.)
 
--- A dream. (Its cutscene counts on two lines, both theirs.)
+-- A dream.
 event({
 	id = "dream",
 	actors = 1,
@@ -2303,8 +2301,7 @@ event({
 	end,
 })
 
--- A birthday (the day matches their birthday on the town calendar). (Its cutscene counts on
--- three lines: the narrator twice, then theirs.)
+-- A birthday (the day matches their birthday on the town calendar).
 event({
 	id = "birthday",
 	actors = 1,
@@ -2493,7 +2490,7 @@ event({
 	end,
 })
 
--- A great day at work. (Its cutscene counts on two lines: the narrator, then theirs.)
+-- A great day at work.
 event({
 	id = "bigday",
 	actors = 1,

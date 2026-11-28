@@ -43,7 +43,7 @@ sales of many pieces; `Saves`: saved builds, loading one onto the plot; `Lively`
 by the server, the friend who greets, old saves done; `Water`: pools and ponds on the terrain grid, what may stand in them; `Floors`: the floors the passes allow, an old
 save's fourth floor, the basement's rules, its dig and its lining, land and Big Plot;
 `Unstick`: finding room to stand, what of a piece is solid, villagers getting up and getting unstuck, swimmers left
-alone; `EventService`: an answer's time held while the player reads, `EventWatch "next"`, the newcomer's asks, typed names; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `PlayerWork` and `WorkService`: a player working at a workplace themselves, its pay and cap, and the server's side with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth; `Lights`: placed lights and their switch; `PlotName`, `PlotBoard` and `VisitService`: naming, likes, the directory and visits; `ClaimAll`: Claim all paying what the single claims would; `Bag` and `Giving`: things, gathering, gifts both ways, hearts with no top, goal rewards and titles; `Visits` and `WorkMove`: customers, company on a bench, work moves; `Needs`: earned mood, a pet on top, and the asks; `Travel`: ways between floors and lifts; `GemPieces`: pieces bought with gems; `Seasons`, `Weather` and `Settings`: the look a player sets, what falls and each season's colours; `FollowUps`: events that need a piece, follow-ups, typed names, worn things; `Trust`: trusted builders, the owner paying and the budget counted; `Social`: friends' pay boost, its chip, the invite nudge, a player's card; `GuestTalk`: what villagers say to a visitor, in every voice; `Babble` and `Sounds`: villagers' voices, the library's sounds and the settings that set them; `Textured` and `Surfaces`: nothing you can see is flat plastic, in Build mode and in the town; `Crates`: work and pet crates, crate jobs paying more than any coin job, pets, their lines and walks; `Bubbles`: what hangs over heads, stacked apart; `Cutscenes`: the sets, the moves and the scripts; `Palette`: soft roofs and the light; `Terrain`: the island's ground; `Uses`: things villagers use; `Vehicles`: the list's order, seats and driving; `Wages`: the purse as villagers work): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+alone; `EventService`: an answer's time held while the player reads, `EventWatch "next"`, the newcomer's asks, typed names; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `PlayerWork` and `WorkService`: a player working at a workplace themselves, its pay and cap, and the server's side with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth; `Lights`: placed lights and their switch; `PlotName`, `PlotBoard` and `VisitService`: naming, likes, the directory and visits; `ClaimAll`: Claim all paying what the single claims would; `Bag` and `Giving`: things, gathering, gifts both ways, hearts with no top, goal rewards and titles; `Visits` and `WorkMove`: customers, company on a bench, work moves; `Needs`: earned mood, a pet on top, and the asks; `Travel`: ways between floors and lifts; `GemPieces`: pieces bought with gems; `Seasons`, `Weather` and `Settings`: the look a player sets, what falls and each season's colours; `FollowUps`: events that need a piece, follow-ups, typed names, worn things; `Trust`: trusted builders, the owner paying and the budget counted; `Social`: friends' pay boost, its chip, the invite nudge, a player's card; `GuestTalk`: what villagers say to a visitor, in every voice; `Babble` and `Sounds`: villagers' voices, the library's sounds and the settings that set them; `Textured` and `Surfaces`: nothing you can see is flat plastic, in Build mode and in the town; `Crates`: work and pet crates, crate jobs paying more than any coin job, pets, their lines and walks; `Bubbles`: what hangs over heads, stacked apart; `Palette`: soft roofs and the light; `Terrain`: the island's ground; `Uses`: things villagers use; `Vehicles`: the list's order, seats and driving; `Wages`: the purse as villagers work): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off; what kind a bundle
 is, the outfit that holds the body, single body parts, the player's own items and avatars; preview scenes
@@ -157,8 +157,8 @@ engine: `Build/LowPoly` cuts a kit of faceted shapes with solid modelling when t
 draws every ball as a gem, every cylinder as an eight sided prism (sixteen when wide) and every cone as an eight
 sided one, flat shaded. A part that is `smooth` (`Geometry.Prim.smooth`) is Roblox's own ball or cylinder, kept
 round (the user: "You are allowed to use spheres, curves or circles where necessary"): made things are drawn that
-way, in Build mode by their material (`Catalog.Round`, `Catalog.rounded`) and in the town by `Surfaces.round`, and
-a cutscene's set draws everything round. What grows or was dug (crowns, rocks, logs, trunks, earth) keeps the
+way, in Build mode by their material (`Catalog.Round`, `Catalog.rounded`) and in the town by `Surfaces.round`.
+What grows or was dug (crowns, rocks, logs, trunks, earth) keeps the
 facets, and so do the basic shapes; a recipe that wants facets on a made thing sets `smooth = false`. So never
 rely on a part being smoothly round unless it is `smooth`. Draw organic things with `r:lump` (a ball
 stretched and turned: crowns, rocks, bushes) and `r:cone` (pines, spires), poles and trunks with `r:cyl`; the
@@ -359,22 +359,13 @@ click, a tap, Enter, E or X (`Dialogue.Keys`). The question's
 answers come when the player reaches it and only then does the answer's time start (`EventWatch "asked"`, held by the
 server up to `Tuning.Events.ChoiceCap`); how it turned out stays until a click, its notice waits for the scene to
 close, and the next event waits its turn; the talk card stays up through an event (`Tuning.Talk.StaySeconds` 60;
-`EventCard.isWatching()` says whether a scene is up), and for an ordinary scene the camera stays where the player has it ("no need for the
-camera to jump after clicking on watch"). A big moment scripted in `Data/Cutscenes` plays as a cutscene behind the
-same box ("add cutscenes and scenes like tomodachi life as well"), on a set built in the world on the player's own
-screen far out over the sea (`UI/Cutscene`, `Stages.Origin`) and lit by the game's own light at the set's `hour`
-("could you not move the camera around in events with special cutscenes? also, make them much more detailed, without
-fake lighting"): never go back to a ViewportFrame or a painted sky. The camera holds still on each shot and cuts: no
-pans, pushes or drift. Everything a cutscene changes (the camera, Lighting, Atmosphere, Grading, the weather's
-emitters) is put back on close, the camera where the player had it; a screen effect that follows the camera stands
-down while the camera has the attribute `Cutscene`. A set's `light` is an hour and a `face` (where its sun or moon
-stands; the set is turned to match); its lamps are `r:glow` with a range (`attrs = { Stays = true }` keeps one on
-through a beat's `fx = "dark"`); what moves or comes and goes on a set is `props` with spots. A villager's own
-animation is a keyed pose in `Data/Moves` (R15 joints in degrees, the root in studs on a hip height of 2): a new one
-needs `act` words, keys starting at 0 and feet that stay on the ground (the Cutscenes spec checks lying, standing and
-push ups). A new cutscene event goes in `Data/Events/Moments` with its `cutscene` script beside it; tag its lines
-with cues rather than counting lines (bursts vary by personality). Preview a set with `sh tools/preview/stage.sh <id>
-<dir> [--shots wide,two]` and a scene with `ui.sh cutscene:<event>[:<n>|:a<n>]`; both draw the game's light. While a scene is up `State`'s `talking`
+`EventCard.isWatching()` says whether a scene is up), and the camera stays where the player has it ("no need for the
+camera to jump after clicking on watch"). The big moments (`Data/Events/Moments`: dreams, a race, a cat in the
+park) play the same way. They had sets of their own for a while, with camera shots and posed moves, until the user
+said "remove the need for special cutscene backgrounds, they will just appear as normal conversations now": don't
+bring back a set, a camera shot or a pose for an event. A new big moment is an ordinary event whose lines say where
+they are and what happens; `ui.sh watch:<event>[:<n>|:ask|:a<n>]` shows any event watched, its own lines for the
+sample town. While a scene is up `State`'s `talking`
 is true and the HUD's bottom bar, Build button and quests slide away. Preview scenes: `event` and `event:talk` (the
 prompt), `event:one`, `event:two`, `event:four`, `event:narration`, `event:answers`, `event:name`, `talk`, `talk:again`,
 `talk:gift`.
@@ -653,7 +644,7 @@ and nothing grows past them. Its search (`Catalog.search`, the `SearchBox` at th
 looks through names, kinds, looks and tags, so name a new piece the way a player would type it. Its time of day
 (`Build/ViewTime`, the slab top right) opens at Noon (`Tuning.ViewTime.Default`; the user: "can you make the default
 for build mode day time?") and goes back to the town's own time when Build mode is left. `Build/ViewTime` is the only
-thing that writes Lighting's hour and grade on a client outside a cutscene: Build mode's pick, or a hold someone asks
+thing that writes Lighting's hour and grade on a client: Build mode's pick, or a hold someone asks
 for (`ViewTime.hold(who, hour, clear)` / `release(who)`; the creator holds a clear noon, since "weather effects and time
 seems to affect the avatar creator"). A hold that asks for `clear` makes `ViewTime.clear()` true, and then
 `UI/Weather` stops what falls and clears the air and `Controllers/Audio` quiets the rain: something new that wants a
@@ -816,7 +807,7 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
   (the Atmosphere's Density and Haze) is each screen's own: `UI/Weather` eases it every frame (`Tuning.Weather.AirRate`)
   and the server sets it once at the start and never again (the user: "it seems like the fog flicker in and out
   constantly": the server's value came in every half second over the screen's own). Never write it from the server,
-  nor from the client outside `UI/Weather` and a cutscene. A streak (rain) stands upright facing the camera
+  nor from the client outside `UI/Weather`. A streak (rain) stands upright facing the camera
   (`FacingCameraWorldUp`): `VelocityParallel` lays a picture's left to right along the fall, and our vertical line fell
   as sideways dashes ("weather like rain seems to fall sideways"). Big particles near or falling through the camera pop
   in and out: keep them off it. There is no fog weather ("could you also remove the fog weather?") and no puddles

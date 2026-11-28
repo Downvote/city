@@ -74,7 +74,6 @@ local ORDER = {
 
 event({
 	id = "bigorder",
-	cutscene = "stall",
 	when = "day",
 	weight = W({ base = 0.3, job = { "baker", "barista", "icecream", "shopkeeper", "florist", "postie", "builder" } }),
 	scene = function(ctx, a)
@@ -318,7 +317,6 @@ local NEWTHINGS = {
 
 event({
 	id = "newproduct",
-	cutscene = "stall",
 	when = "day",
 	weight = W({ base = 0.25, job = { "baker", "barista", "icecream", "shopkeeper" } }),
 	scene = function(ctx, a)
@@ -448,7 +446,6 @@ event({
 
 event({
 	id = "concert",
-	cutscene = { stage = "bandstand", extras = 3, open = "wide", ending = { shot = "wide", act = { all = "dance" } } },
 	when = "any",
 	weight = W({
 		base = 0.3,
@@ -931,7 +928,6 @@ event({
 
 event({
 	id = "lunchrush",
-	cutscene = "stall",
 	when = "day",
 	weight = W({
 		base = 0.2,

@@ -34,7 +34,6 @@
 --                      for some, in their first coats
 --   map:x1,z1,x2,z2    another part of town (the terrain is drawn as faceted ground of its
 --                      materials' colours, finer the smaller the part, with the sea over it)
---   stage:<id>         a cutscene's set (Data/Stages); tools/preview/stage.sh draws it from its shots
 --   basement           two basement rooms dug under a patch of a plot, half under a ground floor
 --                      (basement:open without it; tools/preview/basement_scene.luau)
 --   joins              roofs and paths that meet, fitted together (joins:roofs, joins:paths, or one case
@@ -511,56 +510,6 @@ elseif scene == "ambient" or scene:sub(1, 8) == "ambient:" then
 elseif scene == "town" then
 	local TownModels = R(Shared .. "Data.TownModels")
 	addPrims(TownModels.preview())
-elseif scene:sub(1, 6) == "stage:" then
-	-- stage:<id> a cutscene's set (Data/Stages), with its props where they start. Its light, its
-	-- shots, its lamps and a stand-in on each mark go beside the JSON (<out>.stage.json) for
-	-- tools/preview/stage.py, which draws the set from its shots in the game's light at the set's
-	-- hour (tools/preview/stage.sh does both)
-	local Stages = R(Shared .. "Data.Stages")
-	local Moves = R(Shared .. "Data.Moves")
-	local Lib = require("./stage_lib")
-	local s = assert(Stages.get(scene:sub(7)), "no stage " .. scene:sub(7))
-	addPrims(Stages.prims(s.id))
-	local lamps = if Stages.lampsOn(s) then Lib.lamps(Stages.prims(s.id)) else {}
-	for name, prop in s.props or {} do
-		if prop.start then
-			local made = Stages.propPrims(s.id, name)
-			addPrims(made.still, prop.spots[prop.start])
-			for part, list in made.parts do
-				addPrims(list, Stages.partAt(s, name, part, prop.start, 0.3))
-			end
-			if Stages.lampsOn(s) then
-				for _, l in Lib.lamps(made.still, prop.spots[prop.start]) do
-					table.insert(lamps, l)
-				end
-			end
-		end
-	end
-	local function v(x)
-		return { x.X, x.Y, x.Z }
-	end
-	local shots = {}
-	for _, e in Stages.allShots(s) do
-		shots[e.name] = { eye = v(e.shot.eye), look = v(e.shot.look), fov = e.shot.fov }
-	end
-	local figures = {}
-	for i, m in s.marks do
-		for _, p in Lib.markFigure(Moves, CFrame.identity, m, { shirt = Lib.Shirts[(i - 1) % #Lib.Shirts + 1] }) do
-			table.insert(figures, p)
-		end
-	end
-	fs.writeFile(
-		outPath .. ".stage.json",
-		serde.encode("json", {
-			id = s.id,
-			light = Lib.light(s),
-			sky_dir = v(Stages.skyDir(s)),
-			lamps = lamps,
-			shots = shots,
-			bounds = { lo = v(s.bounds.lo), hi = v(s.bounds.hi) },
-			figures = figures,
-		})
-	)
 else
 	error("unknown scene " .. scene)
 end

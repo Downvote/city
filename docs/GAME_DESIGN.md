@@ -455,45 +455,12 @@ tidied (a capital first, no odd marks, 20 letters at most), run through Roblox's
 they say next, in what they tell you later and in what they remember (the band's name on their Lately list, the
 pet's name). A name that won't do gets a short reason in the box's words and the box stays for another go.
 
-### Cutscenes
+### Cutscenes, and how they went
 
 > add cutscenes and scenes like tomodachi life as well
 
-A watched big moment (a thank you said at last, best friends' day out, a birthday, a dance party, a dream, a
-newcomer at the gate, making up, a quarrel, shooting stars, a busy day, and the bigger new events: concerts,
-picnics, nights on the pier) plays on a set of its own behind the dialogue's textbox: a rooftop at sunset, the pier
-at night, the bandstand lit for a concert, a dream, a party room, the beach at dawn, a park bench, the town gate, a
-kitchen at night, a market stall. The villagers act it out (they wave, cheer, kneel, hug, dance, walk to a seat)
-in a wide shot, a two shot, a close one on whoever talks and a tighter one at the key line, with bars top and
-bottom. (At first the camera eased between them under the set's own light and a painted sky; now it holds still on
-each shot and cuts, in the game's own light: see the next subsection.) As with every event it never takes the
-screen by itself, and the player's camera is put back where it was when the scene ends. Taken from that game: the idea only. No sets, songs, characters or camera
-moves are copied.
-
-### Cutscenes in the world, with a still camera
-
 > also, could you not move the camera around in events with special cutscenes? also, make them much more detailed,
 > without fake lighting.
-
-A watched big moment no longer plays in a little picture with its own flat light and a painted sky. The set is built
-in the world on the player's own screen, far out over the sea and high up where nothing of the town can get into a
-shot, and the game's own light falls on it: Lighting's clock is held at the set's hour while the scene is up, so the
-real sun or moon is in the real sky, shadows fall the way they do in town, the haze and the colour grade are the
-game's for that hour, and the lamps on the set really light what is round them (string lights on the roof, lanterns
-on the pier, the chandeliers in the throne room, the tube light in the pizza place). Each set is turned so its sun or
-moon stands where it wants it (the rooftop has the sun going down behind the town). A dream gets a haze of its own
-(pink, or violet over the purple field) and a softer grade; that is the engine's own air, not paint.
-
-The camera holds still on every shot and cuts to the next one: no pans, no slow pushes, no drifting. A "push" is now
-just a tighter shot on the line that matters. When the scene ends, the screen dips to black and the town comes back
-with the player's camera where it was, the town's own light and the weather.
-
-Every set has more in it: real lamps, grass and flowers underfoot, shells and seaweed on the beach, a bird bath and a
-second lamp in the park, and so on, and the new sets are drawn at the starting house's level, with furniture from
-Build mode's own catalog where a room needs it. Round things may be round now (the user: "You are allowed to use
-spheres, curves or circles where necessary"): a set is built with Roblox's smooth balls and cylinders.
-
-### More cutscene events
 
 > Make more cutscene events, like:
 >
@@ -513,48 +480,38 @@ spheres, curves or circles where necessary"): a set is built with Roblox's smoot
 > much more, reference tomodachi life for event ideas, like in the video attached. make custom animations for
 > villagers for them
 
-Fifteen new events play as cutscenes (Data/Events/Moments), each on its set with its own shots, moves and props, and
-each line in the speaker's own voice:
+For a while a watched big moment played as a cutscene: a set of its own (a rooftop at sunset, the pier at night, a
+dream, a race track, a pizza place after closing) built far out over the sea behind the dialogue's textbox, lit by
+the game's own light at the set's hour, with a still camera cutting between shots and the villagers acting it out in
+keyed poses of our own.
 
-- **A dream of a red tree** (night, in bed): a field of purple grass, one tree with leaves as red as jam. The villager
-  walks over and leans round the trunk, and a man in a long grey coat is standing behind it, very still. They wake up
-  with a start in their bedroom and sit bolt upright.
-- **A race on the track**: two line up at the start, get down, and run the track to the finish banner with dust at
-  their feet while whoever came to watch claps. The winner pumps a fist, the other puffs with their hands on their
-  knees.
-- **A night at the pizza place** (a dream): the night watch's office with four screens, a window into the dark dining
-  room and three clunky robot mascots of our own on the little stage (a tin chef with a pizza tray, one with a pizza
-  for a face, a waiter with a bell). The chef is gone from the stage on the screens, then clanks up to the window and
-  the lights go out. The player picks: shut the side door (the singing robot rolls up to it just in time, the lights
-  come back, six o'clock) or check camera three (a tin face fills the window). They wake in bed either way.
-- **A cat in the park**: a ginger stray sits down on the path in front of the bench; the two crouch and stroke it, and
-  it leans into their hands with its tail going.
-- **Shapes in the clouds**: two lie on a blanket on the hill, one points straight up, and the camera cuts to the sky
-  where a cloud as big as a hill has the shape of a third villager from town (their own body, white and soft and
-  sixteen times as big, floating among the clouds).
-- **A strange room** (a dream): the table and chairs on the ceiling, a door halfway up the wall, stairs into the
-  ceiling, a clock with seven hands, books and a teacup hanging in the air; the villager floats, then wakes.
-- **A funny face contest** in the square, with a judge and a crowd; the player picks the winner.
-- **An eating race** on the beach at a long table of rice balls.
-- **A glowing play fight**: glow bracelets on the beach after dark, hands that really glow and light the sand.
-- **A daydream at work**: staring into space behind the counter, then a golden throne with the town bowing, then a
-  customer coughs.
-- **Stuck on the big wheel**: stopped at the very top for twenty minutes, inside the cabin, the fairground and the sea
-  far below at sunset.
-- **A go on the seesaw**: the seesaw tips up and down with the two on it, until one sits down hard and leaves the
-  other up in the air.
-- **A push up record** on the hill: twelve, a record.
-- **Odd sounds** from a room at night: two listen at the door; the player can open it (somebody is singing into a
-  hairbrush) or leave them be.
-- **A dance in the square**: one starts, and one by one the whole square joins in, with confetti.
+**2026-11-28.** The user took it back:
 
-The villagers' new animations are keyed poses played on their own bodies' joints from code (animations can't be
-uploaded from here): running, getting down at the start line, puffing, pointing at the sky standing or lying, lying on
-the grass or in bed, sitting on the ground, sitting bolt upright, crouching, stroking a cat, leaning round to look,
-jumping back in surprise, tapping buttons, shaking with fright, cowering, pulling a face, eating fast, a play punch, a
-two handed push, push ups, listening at a door, clapping, thinking, shrugging, stretching, floating, pumping a fist, a
-royal wave, a little shuffle dance, holding on, singing into a hairbrush, waving someone over and slumping, bored. The
-old head nods, bows, hops and the rest are keyed the same way now.
+> remove the need for special cutscene backgrounds, they will just appear as normal conversations now
+
+So the sets are gone, and the camera work and the posing with them. Every big moment plays as the usual watched
+conversation: the small prompt with Watch, then the busts sliding in over the town, the camera where the player has
+it, one line a press. The events themselves stay, with their lines, answers and what they do to mood and
+friendship. The fifteen that came from the user's list and the video (Data/Events/Moments) say in their own lines
+where they are and what happens:
+
+- **A dream of a red tree** (night, in bed): a field of purple grass, one tree with leaves as red as jam, and a man
+  in a grey coat standing behind it. They wake up with a start.
+- **A race on the track**: two race to the flag; the winner crows and the other gets their breath back.
+- **A night at the pizza place** (a dream): watching the cameras until six while the robot mascots of our own move
+  about. The player picks: shut the door (they make it to six) or check camera three (a tin face at the window).
+- **A cat in the park**: a ginger stray sits down in front of the bench and lets the two stroke it.
+- **Shapes in the clouds**: two lie on the hill and spot a cloud shaped like a third villager, who never says a word.
+- **A strange room** (a dream): the table on the ceiling, a clock with too many hands, a door up there too.
+- **A funny face contest** in the square, with a judge; the player picks the winner.
+- **An eating race** on the beach with a table of rice balls.
+- **A glowing play fight** with glow bracelets on the beach after dark.
+- **A daydream at work**: a golden throne and the town bowing, until a customer coughs.
+- **Stuck on the big wheel** at the very top for twenty minutes.
+- **A go on the seesaw**, until one sits down hard and leaves the other up in the air.
+- **A push up record**: twelve.
+- **Odd sounds** from a room at night: open the door (somebody singing into a hairbrush) or leave them be.
+- **A dance in the square**: one starts, and the whole square joins in.
 
 Taken from the video: the ideas only (a dream, a contest, an eating race, a play fight, a daydream of a throne, a long
 ride, a seesaw, push ups, odd sounds, a dance). No scenes, characters, robots, lines or places are copied.
@@ -3471,8 +3428,8 @@ The user (2026-11-27):
 
 What the game does now:
 
-- Villagers talk in voices. As a line types out in the dialogue scene (the talk card, a watched event, a
-  cutscene), whoever says it babbles: a short syllable every few letters, pitched and timed by their voice. It is a
+- Villagers talk in voices. As a line types out in the dialogue scene (the talk card, a watched event),
+  whoever says it babbles: a short syllable every few letters, pitched and timed by their voice. It is a
   babble of sounds, not words, so it works in any language. A question rises at its end, a sentence that ends in a
   full stop falls a little, and "!" comes out a touch louder. The same words always babble the same way. A press
   that shows the rest of the line stops it, and a line nobody says (narration) is quiet.

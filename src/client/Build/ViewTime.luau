@@ -12,8 +12,7 @@
 -- Something else may hold an hour for a while, over Build mode's pick: the creator (the user:
 -- "weather effects and time seems to affect the avatar creator") holds a clear noon, and asks for
 -- clear weather too (`ViewTime.clear()`: UI/Weather stops what falls and clears the air,
--- Controllers/Audio quiets the rain). A cutscene owns the light while it plays (the camera's
--- `Cutscene` attribute), so nothing is held here then.
+-- Controllers/Audio quiets the rain).
 
 local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
@@ -250,11 +249,6 @@ local function weatherShown(): string
 	return if ViewTime.clear() then "clear" else ViewTime.townWeather()
 end
 
-local function cutscene(): boolean
-	local cam = workspace.CurrentCamera
-	return cam ~= nil and cam:GetAttribute("Cutscene") == true
-end
-
 -- Holds whatever is to be held now, or lets the town's own time back.
 local function refresh()
 	local h = ViewTime.hour()
@@ -273,7 +267,7 @@ local function refresh()
 	if not conn then
 		conn = RunService.RenderStepped:Connect(function()
 			local held = ViewTime.hour()
-			if held and not cutscene() then
+			if held then
 				switchLamps(held)
 				applyLook(held, weatherShown())
 			end

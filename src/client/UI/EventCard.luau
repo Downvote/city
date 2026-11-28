@@ -32,10 +32,9 @@
 -- conversation should close"). A new event that comes while one is going on, or while the talk
 -- card (UI/TalkCard) is up, waits its turn and never takes the screen from it.
 --
--- The big moments (Data/Cutscenes) play as cutscenes when watched (the user: "add cutscenes and
--- scenes like tomodachi life as well"): the same scene, with the villagers acting on a set of
--- their own behind the box (UI/Cutscene) instead of sliding in as busts. Each line tells the set
--- where it falls among the event's lines, so the camera and the villagers do what that line asks.
+-- Every event plays this way, the big moments too (dreams, a race, a cat in the park): they had
+-- sets of their own behind the box for a while, until the user said "remove the need for special
+-- cutscene backgrounds, they will just appear as normal conversations now".
 --
 -- A villager who puts something on in the event (a line with `wear`) wears it on their bust from
 -- that line (UI/Dialogue's scene.wear), and watched from the start it stays off them until then.
@@ -49,7 +48,6 @@ local Remotes = require(Shared.Net.Remotes)
 local Tuning = require(Shared.Config.Tuning)
 local Text = require(Shared.Util.Text)
 local Colors = require(Shared.Util.Colors)
-local Cutscenes = require(Shared.Data.Cutscenes)
 
 local Kit = require(script.Parent.Kit)
 local Dialogue = require(script.Parent.Dialogue)
@@ -80,7 +78,6 @@ local sceneSeen: { string } = {} -- who the scene has brought in so far
 local sceneTime: Frame? = nil -- the time left to answer, over the scene's box
 local asking = false -- the event is waiting for your answer
 local timerEnds: number? = nil -- when the time to answer runs out on this screen (nil: held, not running)
-local cursor: Cutscenes.Place? = nil -- where the line being said falls (Cutscenes.follow)
 local CHOICE = Tuning.Events.ChoiceTimeout
 
 -- The villagers' names in a warm colour.
@@ -308,7 +305,6 @@ local function showLine(l: any)
 	end
 	page = "line"
 	bring(l)
-	s.beat(l)
 	s.speak(if type(l.who) == "string" then l.who else nil)
 	if type(l.who) == "string" and type(l.wear) == "string" then
 		-- they put it on with this line
@@ -502,7 +498,6 @@ function showQuestion()
 	end
 	page = "ask"
 	waiting = false
-	s.beat({ ask = true })
 	s.speak(nil)
 	typeOut(
 		if ev and type(ev.name) == "table" and type(ev.name.ask) == "string" then ev.name.ask else "What do you do?"
@@ -521,7 +516,6 @@ local function showOutcome()
 	end
 	page = "end"
 	waiting = false
-	s.beat({ ending = true })
 	s.speak(nil)
 	typeOut(table.concat(ev.notices, "\n"))
 end
@@ -611,11 +605,8 @@ local function openScene()
 	page = nil
 	waiting = false
 	sceneSeen = {}
-	-- a big moment plays on a set of its own
-	local story, stage = Cutscenes.forEvent(ev.id, ev)
 	scene = Dialogue.open({
 		Name = "EventScene",
-		Stage = if story then { script = story, stage = stage, event = ev, modelOf = Dialogue.modelOf } else nil,
 		Caption = if type(ev.title) == "string" then ev.title else nil,
 		-- (Dialogue shows the rest of a line being typed first)
 		OnClick = goOn,
@@ -630,17 +621,6 @@ local function openScene()
 		closeScene()
 	end)
 	updatePrompt()
-	if scene.stage then
-		-- everyone in it stands on their mark from the start
-		local letters = {}
-		for letter in ev.names do
-			table.insert(letters, letter)
-		end
-		table.sort(letters)
-		for _, letter in letters do
-			bring({ who = letter, text = "" })
-		end
-	end
 	-- the time left to answer, a thin bar along the box's foot, once the question is up
 	local track = Kit.new("Frame", {
 		Name = "TimeLeft",
@@ -676,8 +656,6 @@ end
 -- A line the villagers are saying now: kept with the rest, and shown at once if the scene is up
 -- and waiting for it (otherwise it comes in its turn).
 local function say(l: any)
-	cursor = Cutscenes.follow(cursor, current, l)
-	l.at = cursor
 	table.insert(heard, l)
 	note(l)
 	arrived()
@@ -686,7 +664,6 @@ end
 -- The event waits for your answer. `left`: the server's time to answer, while nobody watches (a
 -- scene that is up holds it until the question reaches the screen).
 local function ask(left: number?)
-	cursor = Cutscenes.asked()
 	asking = true
 	timerEnds = if scene then nil else os.clock() + (left or CHOICE)
 	updatePrompt()
@@ -712,7 +689,6 @@ local function play(ev: any)
 	shown = 0
 	page = nil
 	waiting = false
-	cursor = nil
 	seen = {}
 	updatePrompt()
 	if not hidden and holder.Visible then
