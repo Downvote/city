@@ -2,6 +2,7 @@
 -- and the wiring that opens panels from buttons, prompts in the world and server notices.
 
 local Lighting = game:GetService("Lighting")
+local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -11,6 +12,7 @@ local Remotes = require(Shared.Net.Remotes)
 local Text = require(Shared.Util.Text)
 local City = require(Shared.Sim.City)
 local Schema = require(Shared.Sim.Schema)
+local PlotName = require(Shared.Sim.PlotName)
 
 local Kit = require(script.Parent.Kit)
 local Icons = require(script.Parent.Icons)
@@ -68,6 +70,20 @@ end
 
 -- Home: back to the player's own plot (the user: "make it such that there is a teleport home
 -- button"). The menus shut, the screen dips to black and comes back up on the doorstep.
+-- Hide and Show: the main screen slides away and comes back (set up by Hud.start).
+local hiddenNow = false
+local setHidden: (boolean) -> () = function(_on: boolean) end
+
+function Hud.setHidden(on: boolean)
+	hiddenNow = on
+	setHidden(on)
+end
+
+-- Is the main screen slid away (Hide pressed)?
+function Hud.isHidden(): boolean
+	return hiddenNow
+end
+
 local goingHome = false
 function Hud.goHome()
 	if goingHome then
@@ -128,22 +144,53 @@ local WEATHER_ICON = {
 	leaves = "leaves",
 }
 
--- How far the town is toward its next level: what it's worth is all a level asks for.
-local function levelProgress(stats: any): (number, string)
+-- How far the town is toward its next level: what it's worth is all a level asks for. (The line
+-- under the bar that said where it was going went: the user, "remove the "Next: level x"". The
+-- detail is in the city hall, a click away.)
+local function levelProgress(stats: any): number
 	local nextLevel = stats.nextLevel
 	if not nextLevel then
-		return 1, "Top level"
+		return 1
 	end
 	local built = if nextLevel.Value > 0 then stats.value / nextLevel.Value else 1
-	-- the detail is in the city hall, a click away: here just where it's going
-	return math.clamp(built, 0, 1), Text.fill("Next: {name}", { name = nextLevel.Name })
+	return math.clamp(built, 0, 1)
 end
+
+-- What the main screen calls the plot: its name, or the owner's town until it has one.
+local function ownerName(): string
+	local me = Players.LocalPlayer
+	if not me then
+		return ""
+	end
+	local ok, shown = pcall(function()
+		return me.DisplayName
+	end)
+	if ok and type(shown) == "string" and shown ~= "" then
+		return shown
+	end
+	return me.Name
+end
+
+local HIDE_ORDER = 100 -- Hide's place in the row under the clock: the last, at the right end
+local QUESTS_AT = UDim2.fromOffset(0, 152) -- the quests' place, under the money and the people
+-- the main screen sliding away and back: off quickly, back in easing out, a piece just after another
+local SLIDE_OFF = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+local SLIDE_BACK_TIME = 0.34
+local SLIDE_BACK = TweenInfo.new(SLIDE_BACK_TIME, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+local SLIDE_STEP = 0.03
+local SLIDE_ENTER = TweenInfo.new(0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out) -- when the game starts
+local NAME_WIDE = 252 -- room for the plot's name beside the dial
+local NAME_SIZE = 29 -- its words' size, smaller for a long name down to NAME_SMALLEST
+local NAME_SMALLEST = 18
 
 function Hud.start()
 	local gui = Kit.root()
 	local hud = Kit.box({ Name = "Hud", Size = UDim2.fromScale(1, 1), Parent = gui })
 
-	-- the town's level, top left: a hexagon badge, the level's name and a bar to the next one --------
+	-- the town at the top left: the level's round dial, the plot's name and a bar to the next level ---
+	-- The name took the big "Level x"'s place (the user: "allow naming of plots, and the name should
+	-- appear in place of the big "Level x" at the top left above the level bar"); the level is on
+	-- the dial and, small, on the bar.
 	local card = Kit.box({
 		Name = "CityCard",
 		Size = UDim2.fromOffset(340, 80),
@@ -152,17 +199,35 @@ function Hud.start()
 	})
 	local _, badgeText = Kit.hexBadge("1", { Parent = card, Size = 74, Position = UDim2.fromOffset(0, 2) })
 	local cityName = Kit.title("", {
+		Name = "PlotName",
 		Parent = card,
-		Size = UDim2.new(1, -88, 0, 30),
-		Position = UDim2.fromOffset(84, 6),
-		TextSize = 29,
+		Size = UDim2.fromOffset(NAME_WIDE, 32),
+		Position = UDim2.fromOffset(84, 4),
+		TextSize = NAME_SIZE,
 		Color = T.White,
 		Outline = T.Glass,
 		OutlineThickness = 2.5,
+		Wrap = false,
 	})
+	cityName.TextTruncate = Enum.TextTruncate.AtEnd
+	local function setName(words: string)
+		-- a long name comes down a size or two before it is cut short
+		local size = NAME_SIZE
+		while size > NAME_SMALLEST and Kit.textWidth(words, size, Kit.Fonts.Title) > NAME_WIDE do
+			size -= 1
+		end
+		cityName.TextSize = size
+		cityName.Text = words
+	end
+	local function refreshName()
+		setName(PlotName.title(State.data.plotName, ownerName()))
+	end
+	State.on("plotName", refreshName)
+	refreshName()
 	local track = Kit.frame({
+		Name = "LevelBar",
 		Parent = card,
-		Size = UDim2.new(1, -96, 0, 12),
+		Size = UDim2.new(1, -96, 0, 18),
 		Position = UDim2.fromOffset(86, 42),
 		Color = T.Glass,
 		Transparency = 0.35,
@@ -171,27 +236,31 @@ function Hud.start()
 	local fill = Kit.frame({ Parent = track, Size = UDim2.fromScale(0, 1), Color = T.Yellow, Radius = "pill" })
 	-- (no notches across it: the user, of the marks on the bar and the strokes between the money,
 	-- people and happiness, "No need for borders where i marked red")
-	local nextLine = Kit.text("", {
-		Parent = card,
-		Size = UDim2.new(1, -150, 0, 18),
-		Position = UDim2.fromOffset(86, 57),
-		TextSize = 15,
-		Font = Kit.Fonts.Bold,
+	-- the level, small, on the bar, and how far along it is at its other end
+	local levelLine = Kit.text("", {
+		Name = "Level",
+		Parent = track,
+		Size = UDim2.new(1, -20, 1, 0),
+		Position = UDim2.fromOffset(10, 0),
+		TextSize = 13,
+		Font = Kit.Fonts.Title,
 		Color = T.White,
 		Wrap = false,
+		ZIndex = 3,
 	})
-	Kit.outlineText(nextLine, T.Glass, 1.5)
-	nextLine.TextTruncate = Enum.TextTruncate.AtEnd
+	Kit.outlineText(levelLine, T.Glass, 1.5)
 	local pctLine = Kit.text("", {
 		Name = "Percent",
-		Parent = card,
+		Parent = track,
 		Size = UDim2.fromOffset(56, 18),
-		Position = UDim2.new(1, -66, 0, 57),
-		TextSize = 15,
+		Position = UDim2.new(1, -10, 0.5, 0),
+		AnchorPoint = Vector2.new(1, 0.5),
+		TextSize = 13,
 		Font = Kit.Fonts.Title,
-		Color = T.Yellow,
+		Color = T.White,
 		AlignX = Enum.TextXAlignment.Right,
 		Wrap = false,
+		ZIndex = 3,
 	})
 	Kit.outlineText(pctLine, T.Glass, 1.5)
 	local cardButton =
@@ -206,8 +275,9 @@ function Hud.start()
 	-- currency/stats tab should also be part of the left side edge"), the three side by side in it.
 	local pills = Kit.darkPill({
 		Name = "Pills",
-		-- (wider for the gems beside the coins: 350 before them)
-		Size = UDim2.fromOffset(460, 46),
+		-- (wider for the gems beside the coins: 350 before them. The happiness went: the user,
+		-- "remove the happiness icon with the percentage on the left side of the main ui")
+		Size = UDim2.fromOffset(366, 46),
 		Position = UDim2.fromOffset(0, 96),
 		Parent = hud,
 	})
@@ -252,9 +322,8 @@ function Hud.start()
 		Hud.open("Store", "gems")
 	end)
 	local _, popLabel = cell("people", 82, 3)
-	local moodPill, moodLabel = cell("smile", 98, 5)
 	-- and under that, the quests: the town's next goals
-	Quests.mount(hud, UDim2.fromOffset(0, 152), function()
+	Quests.mount(hud, QUESTS_AT, function()
 		Hud.open("Goals")
 	end)
 
@@ -299,33 +368,13 @@ function Hud.start()
 			end)
 		end
 	end
-	local moodArt = moodPill:FindFirstChild("IconArt")
-	local moodNow = "smile"
 	local function refreshCity()
 		local stats = Hud.cityStats()
 		popLabel.Text = tostring(stats.population)
-		moodLabel.Text = stats.happiness .. "%"
-		local want = if stats.population > 0 and stats.happiness < 40 then "heart" else "smile"
-		if want ~= moodNow and moodArt then
-			moodNow = want
-			local h = moodPill.Size.Y.Offset
-			moodArt:Destroy()
-			local px = math.floor(h * 0.86)
-			moodArt = Icons.make(want, px, {
-				Name = "IconArt",
-				Parent = moodPill,
-				Position = UDim2.new(0, math.floor(h * 0.12) + px / 2, 0.5, 0),
-				AnchorPoint = Vector2.new(0.5, 0.5),
-				ZIndex = moodPill.ZIndex + 1,
-				Color = if want == "heart" then T.Pink else T.Orange,
-				Hole = T.Glass,
-			})
-		end
 		badgeText.Text = tostring(stats.level)
-		cityName.Text = stats.levelName
-		local t, line = levelProgress(stats)
+		local t = levelProgress(stats)
 		TweenService:Create(fill, TweenInfo.new(0.4), { Size = UDim2.fromScale(math.max(t, 0.04), 1) }):Play()
-		nextLine.Text = line
+		levelLine.Text = stats.levelName
 		pctLine.Text = if stats.nextLevel then Text.fill("{n}%", { n = math.floor(t * 100) }) else ""
 	end
 	State.on("coins", function(n)
@@ -376,8 +425,8 @@ function Hud.start()
 	})
 	clock.ZIndex = 2
 	-- round buttons under the clock, each with its name under it: home, the city hall, the news,
-	-- and dark or light. (A Map and a Shop button stood here too. The user: "remove the shop,
-	-- buying of things and food and feeding" and "remove the map button and the map interface".)
+	-- and Hide. (A Map and a Shop button stood here too. The user: "remove the shop, buying of
+	-- things and food and feeding" and "remove the map button and the map interface".)
 	local corner = Kit.box({
 		Name = "Corner",
 		-- (wide enough for five: the Store came in beside the news)
@@ -440,18 +489,21 @@ function Hud.start()
 			Hud.open(e[2])
 		end)
 	end
-	-- dark or light: the button shows the one you would switch to
-	local lookCell: GuiObject? = nil
-	local function drawLook()
-		if lookCell then
-			lookCell:Destroy()
-		end
-		lookCell = cornerButton(Theme.icon(), "Look", if Theme.name() == "dark" then "Light" else "Dark", 9, function()
-			Theme.toggle()
-		end)
-	end
-	drawLook()
-	Kit.onTheme(drawLook)
+	-- Hide, always the last of the row: it slides the whole main screen away and leaves Show in
+	-- its place (the user: "The light/dark button at the top of the ui should be changed to
+	-- "Hide", which hides all UI elements, sliding them away, leaving a small button "Show" which
+	-- reshows the ui elements"). Dark or light is a setting now (UI/Theme keeps it).
+	local hideCell = cornerButton("eye", "Hide", "Hide", HIDE_ORDER, function()
+		Hud.setHidden(true)
+	end)
+	-- Show stands on its own where Hide is, so it stays while the row slides away
+	local showCell = cornerButton("eye", "Show", "Show", HIDE_ORDER, function()
+		Hud.setHidden(false)
+	end)
+	showCell.Parent = hud
+	showCell.AnchorPoint = Vector2.new(1, 0)
+	showCell.Position = corner.Position
+	showCell.Visible = false
 	UserInputService.InputBegan:Connect(function(input, processed)
 		-- not while typing, in Build mode or in the creator (the HUD is hidden then)
 		if not processed and input.KeyCode == Enum.KeyCode.H and hud.Visible then
@@ -677,40 +729,99 @@ function Hud.start()
 		end
 	end)
 
-	-- While somebody is talking in a scene (a villager you stopped, an event you chose to watch:
-	-- the user, "when text from a villager appears, make the character talking slide into view
-	-- at the side with a textbox"), the bottom of the screen and its left side are theirs. The
-	-- menu bar, the Build button and the quests slide out of the way and come back after. The
-	-- cards say so with State.set("talking", true / false).
-	local aside = false
-	local function stepAside(on: boolean)
-		if on == aside then
-			return
+	-- Every piece of the main screen slides off its own edge and back to where it was. Hide sends
+	-- them all (UI/Toasts' notices still come); while somebody is talking in a scene (a villager
+	-- you stopped, an event you chose to watch: the user, "when text from a villager appears, make
+	-- the character talking slide into view at the side with a textbox") the bottom of the screen
+	-- and its left side are theirs, so the menu bar, the Build button and the quests step aside.
+	-- The cards say so with State.set("talking", true / false).
+	local hidden, aside = false, false
+	local slides: { { frame: GuiObject, home: UDim2, away: UDim2, forScenes: boolean, tween: Tween? } } = {}
+	local function slide(frame: GuiObject?, dx: number, dy: number, forScenes: boolean)
+		if frame then
+			table.insert(slides, {
+				frame = frame,
+				home = frame.Position,
+				away = frame.Position + UDim2.fromOffset(dx, dy),
+				forScenes = forScenes,
+			})
 		end
-		aside = on
-		-- off quickly, back in easing out to rest
-		local ease = if on
-			then TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-			else TweenInfo.new(0.34, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-		TweenService:Create(menu, ease, { Position = UDim2.new(0, if on then -460 else 0, 1, 0) }):Play()
-		TweenService:Create(buildButton, ease, { Position = UDim2.new(1, if on then 320 else 20, 1, 0) }):Play()
-		local quests = Quests.root()
-		if quests then
-			TweenService:Create(quests, ease, { Position = UDim2.fromOffset(if on then -440 else 0, 152) }):Play()
+	end
+	slide(card, -380, 0, false)
+	slide(pills, -(pills.Size.X.Offset + 60), 0, false)
+	slide(Quests.root(), -440, 0, true)
+	-- the clock's slab and the round buttons under it go up off the top
+	slide(clockTab, 0, -(clockTab.Size.Y.Offset + 20), false)
+	slide(clock, 0, -(clock.Size.Y.Offset + 30), false)
+	slide(corner, 0, -(corner.Position.Y.Offset + corner.Size.Y.Offset + inset + 20), false)
+	slide(menu, -460, 0, true)
+	slide(buildButton, 320, 0, true)
+	local function place()
+		for i, s in slides do
+			local off = hidden or (aside and s.forScenes)
+			-- (a slide still on its way, or waiting its turn, gives way to the new one)
+			if s.tween then
+				s.tween:Cancel()
+			end
+			-- off quickly, back in easing out to rest, one just after another
+			s.tween = Kit.tween(s.frame, Kit.later(if off then SLIDE_OFF else SLIDE_BACK, (i - 1) * SLIDE_STEP), {
+				Position = if off then s.away else s.home,
+			})
 		end
 	end
 	State.on("talking", function(v)
-		stepAside(v == true)
+		if (v == true) ~= aside then
+			aside = v == true
+			place()
+		end
 	end)
+	-- Hide leaves Show where it was; Show waits there until the row is back under it
+	local function faces(cell: Instance, on: boolean)
+		for _, c in cell:GetChildren() do
+			if c:IsA("GuiObject") then
+				c.Visible = on
+			end
+		end
+	end
+	local turn = 0
+	setHidden = function(on: boolean)
+		if on == hidden then
+			return
+		end
+		hidden = on
+		turn += 1
+		local mine = turn
+		if on then
+			faces(hideCell, false)
+			showCell.Visible = true
+		else
+			task.delay(SLIDE_BACK_TIME + #slides * SLIDE_STEP, function()
+				if turn == mine then
+					showCell.Visible = false
+					faces(hideCell, true)
+				end
+			end)
+		end
+		place()
+	end
 
 	-- everything slides into place when the game starts, one piece after another
-	Kit.slideIn(pills, -500, 0, 0.1)
-	Kit.slideIn(card, -360, 0, 0.2)
-	Kit.slideIn(clockTab, 260, 0, 0.15)
-	Kit.slideIn(clock, 260, 0, 0.15)
-	Kit.slideIn(corner, 320, 0, 0.2)
-	Kit.slideIn(menu, -480, 0, 0.25)
-	Kit.slideIn(buildButton, 260, 0, 0.3)
+	-- (as Kit.slideIn does, kept with the slides so a Hide pressed meanwhile takes over)
+	local function enter(frame: GuiObject, dx: number, dy: number, delay: number)
+		for _, s in slides do
+			if s.frame == frame then
+				frame.Position = s.home + UDim2.fromOffset(dx, dy)
+				s.tween = Kit.tween(frame, Kit.later(SLIDE_ENTER, delay), { Position = s.home })
+			end
+		end
+	end
+	enter(pills, -500, 0, 0.1)
+	enter(card, -360, 0, 0.2)
+	enter(clockTab, 260, 0, 0.15)
+	enter(clock, 260, 0, 0.15)
+	enter(corner, 320, 0, 0.2)
+	enter(menu, -480, 0, 0.25)
+	enter(buildButton, 260, 0, 0.3)
 	-- and the quick menu's tiles rise into it one after another
 	for i, tile in tiles do
 		for _, name in { "IconArt", "Caption" } do

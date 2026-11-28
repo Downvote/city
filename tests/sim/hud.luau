@@ -4,6 +4,10 @@
 -- level, the quests under it (the user: "put these as a tab below the level, then add quests
 -- below it as well"), a finished quest is claimed from there, and the Home button and the H key
 -- ask the server to take you home (the user: "make it such that there is a teleport home button").
+-- The plot's name over the level bar, Hide and Show, the quests dropping down and the notices at
+-- the top beside the clock (round 7: "allow naming of plots", "changed to "Hide"", "make an
+-- animation for the quests being dropdown and revealed", "make notifications appear as a
+-- transparent, black background").
 --   lune run tests/sim/hud.luau          (from the repository root)
 
 local process = require("@lune/process")
@@ -41,7 +45,15 @@ run("the stats sit in a strip under the town's level", function()
 			table.insert(names, c.Name)
 		end
 	end
-	check(#names == 4, "money, gems, people and happiness")
+	-- (the user: "remove the happiness icon with the percentage on the left side of the main ui")
+	check(#names == 3, "money, gems and people, no happiness")
+	local percent = false
+	for _, d in pills:GetDescendants() do
+		if d:IsA("TextLabel") and d.Text:find("%", 1, true) then
+			percent = true
+		end
+	end
+	check(not percent, "no percentage on the strip")
 	check(pills:FindFirstChild("Gems", true) ~= nil, "the gems beside the money")
 	check(
 		pills:FindFirstChild("Body") ~= nil and pills:FindFirstChild("Tone") ~= nil,
@@ -50,7 +62,7 @@ run("the stats sit in a strip under the town's level", function()
 	check(pills:FindFirstChild("Plus", true) == nil, "with no + beside the money any more")
 end)
 
-run("the round buttons under the clock: home, the city hall, the news, the store and the look", function()
+run("the round buttons under the clock: home, the city hall, the news, the store, cars and Hide", function()
 	-- the user: "remove the shop, buying of things and food and feeding" and "remove the map
 	-- button and the map interface"
 	local corner = gui:FindFirstChild("Corner", true)
@@ -70,7 +82,10 @@ run("the round buttons under the clock: home, the city hall, the news, the store
 	end
 	-- (the store came in beside the news: "add gamepasses, just like bloxburg", then the garage beside
 	-- it: "make vehicles")
-	check(table.concat(order, " ") == "Home CityPanel News Store Garage Look", "six of them, in that order")
+	-- (the light or dark switch went: the user, "The light/dark button at the top of the ui should be
+	-- changed to "Hide"")
+	check(table.concat(order, " ") == "Home CityPanel News Store Garage Hide", "six of them, Hide last")
+	check(corner:FindFirstChild("Look", true) == nil, "no light or dark button")
 	check(corner:FindFirstChild("MapPanel", true) == nil, "no Map button")
 	check(corner:FindFirstChild("ShopPanel", true) == nil, "and no Shop button")
 	check(Hud.panel("MapPanel") == nil, "there is no map screen to open")
@@ -79,6 +94,35 @@ run("the round buttons under the clock: home, the city hall, the news, the store
 	local need = 5 * 54 + 4 * 8
 	check(corner.Size.X.Offset >= need and corner.Size.X.Offset <= need + 16, "the row is as wide as five buttons")
 	check(corner.AnchorPoint.X == 1 and corner.Position.X.Scale == 1, "at the right edge")
+end)
+
+run("the plot's name stands over the level bar, and the level is on the bar", function()
+	-- the user: "allow naming of plots, and the name should appear in place of the big "Level x"
+	-- at the top left above the level bar" and "remove the "Next: level x""
+	local card = gui:FindFirstChild("CityCard", true)
+	local name = card:FindFirstChild("PlotName")
+	local bar = card:FindFirstChild("LevelBar")
+	check(name ~= nil and bar ~= nil, "both are there")
+	check(name.Position.Y.Offset + name.Size.Y.Offset <= bar.Position.Y.Offset + 2, "the name above the bar")
+	check(name.Text == "Tester's town", "with no name yet, the owner's town (" .. tostring(name.Text) .. ")")
+	State.set("plotName", "Juniper Bay")
+	frames(2)
+	check(name.Text == "Juniper Bay", "a name the server sends shows at once")
+	check(name.TextSize == 29, "big")
+	State.set("plotName", "The Very Long Name Of Ours")
+	frames(2)
+	check(name.TextSize < 29 and name.TextSize >= 18, "a long one a size or two smaller")
+	State.set("plotName", "")
+	frames(2)
+	check(name.Text == "Tester's town", "and an empty one is the owner's town again")
+	local level = bar:FindFirstChild("Level")
+	check(level ~= nil and level.Text == "Level 1", "the level, small, on the bar")
+	check(level.TextSize < name.TextSize, "smaller than the name")
+	for _, d in gui:FindFirstChild("Hud", true):GetDescendants() do
+		if d:IsA("TextLabel") and d.Text:find("Next", 1, true) then
+			check(false, 'no "Next: Level 2" anywhere: ' .. d.Text)
+		end
+	end
 end)
 
 run("the clock's glass hangs from the corner, no taller than what it holds", function()
@@ -133,7 +177,7 @@ run("the quests sit under the strip, the next few goals", function()
 	check(#shown >= 1 and #shown <= 3, "one to three quests at a time")
 	local wishes = list:FindFirstChild("wishes3")
 	check(wishes ~= nil and wishes.LayoutOrder == 1, "a finished one comes first")
-	local claim = wishes and wishes:FindFirstChild("Claim")
+	local claim = wishes and wishes:FindFirstChild("Claim", true)
 	check(claim ~= nil, "with its Claim button right there")
 	claim.Activated:Fire()
 	frames(2)
@@ -143,13 +187,89 @@ run("the quests sit under the strip, the next few goals", function()
 	Sim.advance(1)
 	frames(2)
 	check(list:FindFirstChild("wishes3") == nil, "and a claimed one makes way")
-	-- the header folds it
+	-- the header folds it up and drops it down again, a row after another (the user: "make an
+	-- animation for the quests being dropdown and revealed")
+	local TweenService = Harness.game():GetService("TweenService")
+	local create = TweenService.Create
+	local made = {}
+	rawset(TweenService, "Create", function(self, inst, info, goals)
+		table.insert(made, { inst = inst, info = info, goals = goals })
+		return create(self, inst, info, goals)
+	end)
+	local function slotsOf()
+		local out = {}
+		for _, c in list:GetChildren() do
+			if c:IsA("Frame") then
+				table.insert(out, c)
+			end
+		end
+		table.sort(out, function(a, b)
+			return a.LayoutOrder < b.LayoutOrder
+		end)
+		return out
+	end
+	local function delays()
+		-- when each row's slot starts to move, top to bottom
+		local out = {}
+		for i, slot in slotsOf() do
+			for _, m in made do
+				if m.inst == slot and m.goals.Size then
+					out[i] = m.info[6] or 0
+				end
+			end
+		end
+		return out
+	end
+	local rows = #slotsOf()
 	quests:FindFirstChild("Header").Activated:Fire()
 	frames(1)
-	check(list.Visible == false, "the header folds the list away")
+	check(list.Visible == true, "folding, the list stays up while its rows fold")
+	local shut = true
+	for _, slot in slotsOf() do
+		shut = shut and slot.Size.Y.Offset == 0 and slot.ClipsDescendants == true
+	end
+	check(shut, "every row folds up into nothing")
+	local up = delays()
+	check(rows >= 2 and up[rows] < up[1], "the bottom row first")
+	Sim.advance(1)
+	check(list.Visible == false, "and then the list is away")
+	table.clear(made)
 	quests:FindFirstChild("Header").Activated:Fire()
 	frames(1)
-	check(list.Visible == true, "and back")
+	check(list.Visible == true, "the header drops it down again")
+	local down = delays()
+	local inOrder = #down == rows
+	for i = 2, rows do
+		inOrder = inOrder and down[i] > down[i - 1]
+	end
+	check(inOrder, "a row after another from the top")
+	local styles = true
+	for _, m in made do
+		local style = m.info[2]
+		if style ~= nil then
+			styles = styles and (style == roblox.Enum.EasingStyle.Quint or style == roblox.Enum.EasingStyle.Quad)
+		end
+	end
+	check(styles, "easing out to rest, no bounce")
+	Sim.advance(1)
+	local open = true
+	for _, slot in slotsOf() do
+		local slab = slot:FindFirstChild("Slab")
+		open = open
+			and slot.Size.Y.Offset == slab.Size.Y.Offset
+			and slab.Position.Y.Offset == 0
+			and slot.ClipsDescendants == false
+	end
+	check(open, "each row whole and in its place, cut by nothing")
+	rawset(TweenService, "Create", create)
+	-- a refresh while it drops waits for it
+	quests:FindFirstChild("Header").Activated:Fire()
+	Sim.advance(1)
+	quests:FindFirstChild("Header").Activated:Fire()
+	State.set("goals", { wishes3 = true, settlers = true })
+	frames(2)
+	Sim.advance(1)
+	check(list.Visible == true and #slotsOf() >= 1, "and the rows are drawn again after")
 end)
 
 run("Home takes you home: the button and the H key", function()
@@ -247,6 +367,124 @@ run("the main screen steps aside while somebody is talking in a scene", function
 		menu.Position == homeMenu and build.Position == homeBuild and quests.Position == homeQuests,
 		"and they all come back where they were when the talk is over"
 	)
+end)
+
+run("Hide slides the main screen away and leaves Show; Show brings it back", function()
+	-- the user: "The light/dark button at the top of the ui should be changed to "Hide", which
+	-- hides all UI elements, sliding them away, leaving a small button "Show" which reshows the ui
+	-- elements"
+	local pieces = {}
+	for _, name in { "CityCard", "Pills", "Quests", "ClockTab", "Clock", "Corner", "Menu" } do
+		pieces[name] = gui:FindFirstChild(name, true)
+	end
+	pieces.Build = gui:FindFirstChild("Menu", true).Parent:FindFirstChild("Build")
+	local homes = {}
+	for name, f in pieces do
+		homes[name] = f.Position
+	end
+	local hide = gui:FindFirstChild("Hide", true)
+	local show = gui:FindFirstChild("ShowCell", true)
+	check(hide ~= nil and Sim.Fake.shown(hide), "Hide is on the screen")
+	check(show ~= nil and not show.Visible, "and Show isn't yet")
+	press("Hide")
+	Sim.advance(1)
+	local inset = 36
+	local function offLeft(f)
+		return f.Position.X.Scale == 0 and f.Position.X.Offset + f.Size.X.Offset <= 0
+	end
+	check(offLeft(pieces.CityCard), "the town's level off the left")
+	check(offLeft(pieces.Pills), "the money and the people off the left")
+	check(offLeft(pieces.Quests), "the quests off the left")
+	check(offLeft(pieces.Menu), "the quick menu off the left")
+	check(pieces.Build.Position.X.Offset - pieces.Build.Size.X.Offset >= 0, "the Build button off the right")
+	for _, name in { "ClockTab", "Clock", "Corner" } do
+		local f = pieces[name]
+		check(f.Position.Y.Offset + f.Size.Y.Offset + inset <= 0, name .. " up off the top")
+	end
+	check(Hud.isHidden(), "the HUD says it is hidden")
+	check(show.Visible and Sim.Fake.shown(show:FindFirstChild("Show")), "Show stands there")
+	check(not Sim.Fake.shown(hide), "in place of Hide")
+	local corner = pieces.Corner
+	check(
+		show.Position.X == homes.Corner.X
+			and show.Position.Y == homes.Corner.Y
+			and show.AnchorPoint == corner.AnchorPoint,
+		"where Hide was: the right end of the row under the clock"
+	)
+	local caption = show:FindFirstChild("Caption")
+	check(caption ~= nil and caption.Text == "Show", "saying Show")
+	-- a notice still comes
+	local Toasts = Harness.require(Sim.CLIENT .. "UI.Toasts")
+	Toasts.show("Mara made you a mug.", "good")
+	frames(2)
+	local note = gui:FindFirstChild("Toasts", true)
+	check(note ~= nil and Sim.Fake.shown(note) and note:FindFirstChild("Note", true) ~= nil, "notices still show")
+	-- a scene starting and ending in the meantime leaves it hidden
+	State.set("talking", true)
+	Sim.advance(1)
+	State.set("talking", false)
+	Sim.advance(1)
+	check(offLeft(pieces.Menu) and offLeft(pieces.Quests), "a scene ending doesn't bring it back")
+	press("Show")
+	frames(2)
+	check(not Hud.isHidden(), "Show brings it back")
+	check(show.Visible, "Show waits while the row comes back under it")
+	Sim.advance(1)
+	local back = true
+	for name, f in pieces do
+		if f.Position ~= homes[name] then
+			back = false
+			print("    not back: " .. name)
+		end
+	end
+	check(back, "every piece where it was")
+	check(not show.Visible and Sim.Fake.shown(hide), "and Hide in its place again")
+	Sim.advance(4)
+end)
+
+run("a notice: a see-through dark rounded note at the top, level with the clock", function()
+	-- the user: "could you make notifications appear as a transparent, black background instead
+	-- with a white icon, as a rounded rectangle, and appear right on top, at the same y level as
+	-- where the time bar is?"
+	local Toasts = Harness.require(Sim.CLIENT .. "UI.Toasts")
+	Toasts.show("Not enough coins for that.", "warn")
+	frames(2)
+	local holder = gui:FindFirstChild("Toasts", true)
+	local note = holder and holder:FindFirstChild("Note", true)
+	check(note ~= nil, "it shows")
+	local T = Sim.Kit.Theme
+	check(note.BackgroundColor3 == T.Glass, "on the dark glass, the same in either look")
+	check(note.BackgroundTransparency >= 0.15 and note.BackgroundTransparency <= 0.6, "see-through")
+	local round = note:FindFirstChildOfClass("UICorner")
+	check(round ~= nil and round.CornerRadius.Offset >= 8, "a rounded rectangle")
+	check(note:FindFirstChildOfClass("UIStroke") == nil and note:FindFirstChild("Mark") == nil, "no rim and no block")
+	local icon = note:FindFirstChild("IconArt")
+	check(icon ~= nil and icon:GetAttribute("Glyph") == T.White:ToHex(), "a white icon")
+	local words = note:FindFirstChild("Words")
+	check(words ~= nil and words.TextColor3 == T.White and words.Text == "Not enough coins for that.", "white words")
+	check(holder.AnchorPoint.X == 0.5 and holder.Position.X.Scale == 0.5, "in the middle of the screen")
+	local clock = gui:FindFirstChild("Clock", true)
+	local clockMiddle = clock.Position.Y.Offset + clock.Size.Y.Offset / 2
+	local slot = note.Parent
+	local noteMiddle = holder.Position.Y.Offset + slot.Size.Y.Offset / 2
+	check(math.abs(noteMiddle - clockMiddle) <= 4, "level with the clock (" .. noteMiddle .. ", " .. clockMiddle .. ")")
+	check(note.Size.X.Offset < 460, "as wide as its words")
+	Sim.advance(5)
+	check(holder:FindFirstChild("Note", true) == nil, "gone after a few seconds")
+	-- a few at once stack under each other, the newest on top, four at most
+	for i = 1, 6 do
+		Toasts.show("Notice " .. i, "info")
+		Sim.advance(0.01)
+	end
+	frames(2)
+	local up = 0
+	for _, c in holder:GetChildren() do
+		if c:IsA("Frame") and not c:GetAttribute("Going") then
+			up += 1
+		end
+	end
+	check(up == 4, "four at most (" .. up .. ")")
+	Sim.advance(5)
 end)
 
 run("the weather's icon keeps its place on the clock", function()

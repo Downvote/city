@@ -9,7 +9,7 @@ set -e
 cd "$(dirname "$0")/../.."
 export PATH="$HOME/.local/rbx-tools/bin:$PATH"
 TMP=$(mktemp -d /tmp/audit.XXXXXX)
-SCENES="hud build build:walls build:pick build:paint panel:Residents panel:CityPanel
+SCENES="hud hud:named hud:hidden build build:walls build:pick build:paint panel:Residents panel:CityPanel
 panel:News panel:Goals panel:Residents:friends panel:Residents:empty
 panel:Residents:craving panel:Residents:short panel:Residents:lately panel:Residents:quirks panel:Residents:quirks:edit panel:Residents:quirks:short panel:News:empty panel:News:busy panel:Goals:claimed
 panel:CityPanel:ready panel:CityPanel:bigplot earned loading event event:talk event:one event:two event:four event:narration event:answers cutscene:thanks:2 cutscene:thanks:a2 cutscene:festival talk talk:again talk:craving wish wish:short wish:friend wish:cheer toasts creator

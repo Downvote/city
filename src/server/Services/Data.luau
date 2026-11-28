@@ -209,6 +209,7 @@ function Data.clientState(player: Player): any
 		passes = p.passes,
 		playtime = p.playtime, -- today's play and the steps claimed (Sim/Rewards, the Rewards menu)
 		achieved = p.achieved, -- achievements claimed, and the group's gems ("group")
+		plotName = p.plotName, -- the plot's name, over the level bar (Sim/PlotName)
 		unsaved = unsaved[player] == true,
 		plot = player:GetAttribute("Plot"),
 		plan = p.plan,

@@ -3,7 +3,8 @@
 -- (Data/Goals, Sim/Life) that are next: the ones done and waiting to be claimed first, then the
 -- ones furthest along, at most three, each with how far along it is. A finished one has its Claim
 -- button right there; a click anywhere else on a quest opens the goals menu. The header folds the
--- list away and back.
+-- list away and back: it drops down a row after another and folds up the same way (the user: "make
+-- an animation for the quests being dropdown and revealed").
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Remotes = require(Shared.Net.Remotes)
@@ -20,6 +21,17 @@ local T = Kit.Theme
 
 Quests.Shown = 3 -- quests on the screen at once
 local ROW = 48
+local SLAB = ROW - 6 -- a quest's height
+-- Each quest sits in a slot of its own that grows and shrinks as the list drops down and folds,
+-- the quest coming down into it from above. The slot is a little wider than the list, so the
+-- quest's slanted right end and its Claim button stay whole while it cuts what is outside it.
+local SPARE = 16
+local DROP_TIME = 0.3 -- a row dropping down, easing out to rest
+local DROP = TweenInfo.new(DROP_TIME, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+local LIFT_TIME = 0.18 -- and folding up, quicker
+local LIFT = TweenInfo.new(LIFT_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+local STEP = 0.06 -- one row after another
+local FIRST_DROP = 0.35 -- when the game starts, the list drops down once the main screen is in
 local SOFT = Color3.fromRGB(206, 218, 240) -- soft words on the dark glass (it is dark in both looks)
 
 -- A profile-like table from the client state, for Sim/Life.
@@ -72,14 +84,25 @@ local claiming: { [string]: boolean } = {}
 
 local CLAIM_WIDTH = 112 -- the Claim button's width at its middle, flush with a quest's right end
 
-local function quest(g: any, order: number): Frame
-	local ready = g.done and not g.claimed
-	local slab = Kit.darkPill({
-		Name = g.goal.id,
+-- A row's slot in the list, and the slab in it.
+local function slotted(name: string, order: number, tall: number?): (Frame, Frame)
+	local slot = Kit.box({
+		Name = name,
 		Parent = rows,
-		Size = UDim2.new(1, -12, 0, ROW - 6),
+		Size = UDim2.new(1, SPARE, 0, tall or SLAB),
 		LayoutOrder = order,
 	})
+	local slab = Kit.darkPill({
+		Name = "Slab",
+		Parent = slot,
+		Size = UDim2.new(1, -(12 + SPARE), 0, tall or SLAB),
+	})
+	return slot, slab
+end
+
+local function quest(g: any, order: number): Frame
+	local ready = g.done and not g.claimed
+	local slot, slab = slotted(g.goal.id, order)
 	local hit = Kit.new("TextButton", {
 		Name = "Open",
 		Text = "",
@@ -95,7 +118,7 @@ local function quest(g: any, order: number): Frame
 	-- a marker filling the slab's left end, flush with it like the Claim button at the right:
 	-- yellow with a tick when it's done, the goal's own mark otherwise
 	local cap = slab:GetAttribute("Cap")
-	local _, reach = Kit.flushMark(slab, slab, ROW - 6, true, {
+	local _, reach = Kit.flushMark(slab, slab, SLAB, true, {
 		Name = "Marker",
 		-- (the quests come out of the screen's left edge: their slanted end is out of sight)
 		Hidden = if type(cap) == "number" then cap else 0,
@@ -137,7 +160,7 @@ local function quest(g: any, order: number): Frame
 		local claim = Kit.button(Text.fill("Claim {n}", { n = Text.commas(g.goal.reward) }), {
 			Name = "Claim",
 			Parent = slab,
-			Size = UDim2.fromOffset(CLAIM_WIDTH + lean, ROW - 6),
+			Size = UDim2.fromOffset(CLAIM_WIDTH + lean, SLAB),
 			Position = UDim2.new(1, lean, 0, 0),
 			-- its left end a clean slanted cut into the quest, its right end the quest's own
 			Sharp = "left",
@@ -197,12 +220,90 @@ local function quest(g: any, order: number): Frame
 		})
 		Kit.wash(fill, T.Yellow, T.Orange, 0)
 	end
-	return slab
+	return slot
+end
+
+-- The rows in the list, top to bottom.
+local function slots(): { Frame }
+	local out: { Frame } = {}
+	local list = rows
+	if not list then
+		return out
+	end
+	for _, c in list:GetChildren() do
+		if c:IsA("Frame") then
+			table.insert(out, c)
+		end
+	end
+	table.sort(out, function(a, b)
+		return a.LayoutOrder < b.LayoutOrder
+	end)
+	return out
+end
+
+local turn = 0 -- which drop or fold is the latest
+local busy = false -- one is under way: a refresh waits for it
+local dirty = false -- and one came while it was
+
+-- Drops the list down (open) or folds it up, a row after another: each slot grows from nothing
+-- as its quest comes down into it, from the top row; folding, the bottom row goes first.
+local function unroll(open: boolean, delay: number?)
+	local list = rows
+	if not list then
+		return
+	end
+	turn += 1
+	local mine = turn
+	busy = true
+	local all = slots()
+	local n = #all
+	list.Visible = true
+	for i, slot in all do
+		local slab = slot:FindFirstChild("Slab") :: GuiObject?
+		local tall = if slab then slab.Size.Y.Offset else SLAB
+		slot.ClipsDescendants = true
+		if open and slot.Size.Y.Offset >= tall then
+			-- (from closed)
+			slot.Size = UDim2.new(1, SPARE, 0, 0)
+			if slab then
+				slab.Position = UDim2.fromOffset(0, -tall)
+			end
+		end
+		local k = if open then i - 1 else n - i
+		local info = Kit.later(if open then DROP else LIFT, (delay or 0) + k * STEP)
+		Kit.tween(slot, info, { Size = UDim2.new(1, SPARE, 0, if open then tall else 0) })
+		if slab then
+			Kit.tween(slab, info, { Position = UDim2.fromOffset(0, if open then 0 else -tall) })
+		end
+	end
+	local total = (delay or 0) + (if open then DROP_TIME else LIFT_TIME) + math.max(0, n - 1) * STEP
+	task.delay(total, function()
+		if turn ~= mine then
+			return
+		end
+		busy = false
+		list.Visible = open
+		-- at rest nothing is cut: a quest's hover and press show whole
+		for _, slot in all do
+			if slot.Parent then
+				slot.ClipsDescendants = false
+			end
+		end
+		if dirty then
+			dirty = false
+			Quests.refresh()
+		end
+	end)
 end
 
 function Quests.refresh()
 	local list = rows
 	if not list then
+		return
+	end
+	if busy then
+		-- (the list is dropping down or folding: it is drawn again when that is done)
+		dirty = true
 		return
 	end
 	for _, c in list:GetChildren() do
@@ -228,7 +329,7 @@ function Quests.refresh()
 		end
 	end
 	if #shown == 0 then
-		local note = Kit.darkPill({ Name = "Done", Parent = list, Size = UDim2.new(1, -12, 0, 36) })
+		local _, note = slotted("Done", 1, 36)
 		local words = Kit.text("You've done every goal.", {
 			Parent = note,
 			Size = UDim2.new(1, -24, 1, 0),
@@ -324,8 +425,8 @@ function Quests.mount(parent: GuiObject, position: UDim2, open: () -> ()): Frame
 	root = frame
 	head.Activated:Connect(function()
 		folded = not folded
-		arrow.Rotation = if folded then -90 else 0
-		Quests.refresh()
+		Kit.tween(arrow, Kit.Motion.Glide, { Rotation = if folded then -90 else 0 })
+		unroll(not folded)
 	end)
 	-- anything that moves a goal along
 	local pending = false
@@ -344,6 +445,8 @@ function Quests.mount(parent: GuiObject, position: UDim2, open: () -> ()): Frame
 	end
 	State.onPlan(soon)
 	Quests.refresh()
+	-- the list drops down when the game starts, after the rest of the main screen comes in
+	unroll(true, FIRST_DROP)
 	return frame
 end
 

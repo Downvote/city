@@ -11,6 +11,7 @@ local Keepsakes = require(script.Parent.Keepsakes)
 local City = require(script.Parent.City) -- (the land a save already has stays theirs: City.keepLand)
 local Flair = require(script.Parent.Flair)
 local Memory = require(script.Parent.Memory)
+local PlotName = require(script.Parent.PlotName)
 
 local Schema = {}
 
@@ -122,6 +123,7 @@ function Schema.newProfile(): any
 		achieved = {}, -- achievements claimed, by id
 		playtime = { day = -1, secs = 0, got = 0 }, -- today's play in seconds and the rewards taken for it
 		ownLand = 0, -- the biggest land bought before Big Plot was a pass, kept without it
+		plotName = "", -- the plot's name, over the level bar on the main screen ("" until named: Sim/PlotName)
 	}
 end
 
@@ -205,6 +207,7 @@ function Schema.migrate(raw: any): any
 	end
 	profile.villagers = clean
 	profile.keepsakes = Keepsakes.clean(profile.keepsakes)
+	profile.plotName = PlotName.clean(profile.plotName)
 	-- (only true marks: Services/Vehicles also drops any vehicle there no longer is)
 	if type(profile.vehicles) ~= "table" then
 		profile.vehicles = {}

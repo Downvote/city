@@ -46,6 +46,12 @@ Tuning.Plot = {
 	OpeningMargin = 0.2, -- min gap between an opening and a wall end or another opening
 }
 
+-- A plot's name, shown big at the top left of the main screen (Sim/PlotName; the user: "allow naming
+-- of plots, and the name should appear in place of the big "Level x" at the top left")
+Tuning.PlotName = {
+	MaxLength = 24, -- characters a name keeps
+}
+
 -- The basement (the Basement pass, Build/Basement): floor -1, under the ground floor. Its rooms are
 -- dug out of the ground under the plot (Services/Basement) and put back when they go.
 Tuning.Basement = {

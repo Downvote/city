@@ -3,7 +3,8 @@
 -- its GUI tree to JSON for tools/preview/ui_render.py to lay out and draw.
 --   lune run tools/preview/ui_dump.luau <scene> <out.json>
 -- Scenes:
---   hud                 the main screen
+--   hud                 the main screen (hud:named with the plot named, hud:hidden after Hide: only
+--                       Show is left, and a notice still comes)
 --   build               Build mode on the Furniture tab
 --   build:walls         Build mode on Walls (build:rooms, build:floors, build:roofs, build:fences,
 --                       build:paths and build:buildings: those trays)
@@ -80,7 +81,7 @@
 --                       ball and the coins are there; wish:short the same without the coins,
 --                       wish:friend she'd like to meet Tobin, wish:cheer she's feeling down
 --   talk:again          the talk card after the day's chats are used up
---   toasts              a few notices
+--   toasts              a few notices at the top, level with the clock
 --   earned              the main screen as a pay packet comes in, and the coins that rise over the
 --                       villagers who earned it, laid flat where three heads would be (the
 --                       BillboardGuis themselves can't be drawn here)
@@ -257,6 +258,17 @@ end
 
 if scene == "hud" then
 	startHud()
+elseif scene == "hud:named" then
+	-- (Sim/PlotName: the name the player gave their plot, over the level bar)
+	startHud()
+	Sim.remoteEvent("State"):FireClient(Sim.player, { plotName = "Juniper Bay" })
+	Sim.frames(2)
+elseif scene == "hud:hidden" then
+	startHud()
+	Sim.press("Hide")
+	Sim.advance(1)
+	Harness.require(Sim.CLIENT .. "UI.Toasts").show("Mara made you a mug.", "good")
+	Sim.frames(2)
 elseif scene:sub(1, 5) == "build" then
 	startHud()
 	Sim.BuildMode.enter()
