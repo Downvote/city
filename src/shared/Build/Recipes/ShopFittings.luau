@@ -47,7 +47,7 @@ end
 -- A loaf lying along x at (x, y, z): y is what it lies on.
 local function loaf(r: R, x: number, y: number, z: number, len: number, turn: number?)
 	local cf = CFrame.new(x, y + 0.26, z) * CFrame.Angles(0, math.rad(turn or 0), 0)
-	r:lump(cf, len, 0.56, 0.66, CRUST, "SmoothPlastic")
+	r:lump(cf, len, 0.56, 0.66, CRUST, "Sand")
 end
 
 -- Produce, drawn into a piece at a frame (the middle of the fruit): apples have a stalk and now
@@ -150,24 +150,24 @@ local items: { Item } = {
 			local shelf = r:block(-1.86, 2.9, -1.0, 1.86, 2.96, 0.95, C.White, "Glass")
 			shelf.transp = 0.3
 			-- the bottom shelf: a pink cake on a stand, a round of buns and a tart
-			r:cyl(-1.1, 1.93, 0.1, 0.14, 1.2, "y", C.White, "SmoothPlastic")
-			r:cyl(-1.1, 2.25, 0.1, 0.5, 1.0, "y", STRAWBERRY, "SmoothPlastic")
-			r:cyl(-1.1, 2.54, 0.1, 0.08, 1.02, "y", VANILLA, "SmoothPlastic")
-			r:ball(-1.1, 2.68, 0.1, 0.24, APPLE, "SmoothPlastic")
+			r:cyl(-1.1, 1.93, 0.1, 0.14, 1.2, "y", C.White, "Marble")
+			r:cyl(-1.1, 2.25, 0.1, 0.5, 1.0, "y", STRAWBERRY, "Plaster")
+			r:cyl(-1.1, 2.54, 0.1, 0.08, 1.02, "y", VANILLA, "Plaster")
+			r:ball(-1.1, 2.68, 0.1, 0.24, APPLE, "Marble")
 			for i, p in { { 0.05, 0.4 }, { 0.6, 0.45 }, { 0.3, -0.15 }, { 0.85, -0.1 } } do
-				r:ball(p[1], 2.1, p[2], 0.5, if i % 2 == 0 then CRUST_DARK else CRUST, "SmoothPlastic")
+				r:ball(p[1], 2.1, p[2], 0.5, if i % 2 == 0 then CRUST_DARK else CRUST, "Sand")
 			end
-			r:cyl(1.45, 1.96, 0.2, 0.2, 0.9, "y", CRUST, "SmoothPlastic")
-			r:cyl(1.45, 2.08, 0.2, 0.06, 0.7, "y", APPLE, "SmoothPlastic")
+			r:cyl(1.45, 1.96, 0.2, 0.2, 0.9, "y", CRUST, "Sand")
+			r:cyl(1.45, 2.08, 0.2, 0.06, 0.7, "y", APPLE, "Marble")
 			-- the top shelf: iced cakes in a row and a loaf
 			for i, col in { STRAWBERRY, VANILLA, CHOC, MINT } do
 				local x = -1.5 + (i - 1) * 0.6
-				r:cyl(x, 3.1, 0.3, 0.28, 0.42, "y", WAFER, "SmoothPlastic")
-				r:ball(x, 3.32, 0.3, 0.46, col, "SmoothPlastic")
+				r:cyl(x, 3.1, 0.3, 0.28, 0.42, "y", WAFER, "Sand")
+				r:ball(x, 3.32, 0.3, 0.46, col, "Plaster")
 			end
 			loaf(r, 1.05, 2.96, 0.2, 1.3, 12)
-			r:cyl(-0.6, 3.04, -0.45, 0.16, 0.8, "y", CHOC, "SmoothPlastic")
-			r:cyl(0.3, 3.04, -0.45, 0.16, 0.8, "y", VANILLA, "SmoothPlastic")
+			r:cyl(-0.6, 3.04, -0.45, 0.16, 0.8, "y", CHOC, "Plaster")
+			r:cyl(0.3, 3.04, -0.45, 0.16, 0.8, "y", VANILLA, "Plaster")
 		end,
 	},
 	{
@@ -201,7 +201,7 @@ local items: { Item } = {
 				for k = 0, 2 do
 					local x = -1.2 + k * 1.2
 					local at = cf * CFrame.new(x, 0.34, 0.1) * CFrame.Angles(0, math.rad((i + k) % 2 * 16 - 8), 0)
-					r:lump(at, 1.0, 0.56, 0.7, if (i + k) % 3 == 0 then CRUST_DARK else CRUST, "SmoothPlastic")
+					r:lump(at, 1.0, 0.56, 0.7, if (i + k) % 3 == 0 then CRUST_DARK else CRUST, "Sand")
 				end
 			end
 			-- the basket and its long loaves
@@ -209,7 +209,7 @@ local items: { Item } = {
 			for i, x in { -1.2, -0.8, -0.4 } do
 				local cf = CFrame.new(x, 1.7, 0.05 - i * 0.08)
 					* CFrame.Angles(math.rad(-8 - i * 3), 0, math.rad(i * 5 - 10))
-				r:lump(cf, 0.34, 2.4, 0.34, CRUST, "SmoothPlastic")
+				r:lump(cf, 0.34, 2.4, 0.34, CRUST, "Sand")
 			end
 			loaf(r, 0.95, 0.64, 0, 1.3, -10)
 		end,
@@ -242,16 +242,16 @@ local items: { Item } = {
 				local cols = { MUSTARD, BERRY, NAVY, FOREST }
 				for i, col in cols do
 					local x = -1.72 + (i - 1) * 0.88
-					q:block(x, 0.44, -0.5, x + 0.74, 1.6 - (i % 2) * 0.2, 0.4, col, "SmoothPlastic")
-					q:block(x + 0.14, 0.9, 0.4, x + 0.6, 1.3 - (i % 2) * 0.2, 0.44, C.Paper, "SmoothPlastic")
+					q:block(x, 0.44, -0.5, x + 0.74, 1.6 - (i % 2) * 0.2, 0.4, col, "Cardboard")
+					q:block(x + 0.14, 0.9, 0.4, x + 0.6, 1.3 - (i % 2) * 0.2, 0.44, C.Paper, "Cardboard")
 				end
-			end)
+			end, nil, "Cardboard")
 			-- tins, two deep
 			local tins = { BERRY, BERRY, MUSTARD, NAVY, NAVY, FOREST }
 			for i, col in tins do
 				local x = -1.5 + (i - 1) * 0.6
-				r:cyl(x, 2.44, 0.3, 0.8, 0.5, "y", col, "SmoothPlastic")
-				r:cyl(x, 2.44, 0.3, 0.3, 0.58, "y", C.Paper, "SmoothPlastic")
+				r:cyl(x, 2.44, 0.3, 0.8, 0.5, "y", col, "Cardboard")
+				r:cyl(x, 2.44, 0.3, 0.3, 0.58, "y", C.Paper, "Cardboard")
 				if i % 2 == 0 then
 					r:cyl(x, 2.44, -0.3, 0.8, 0.5, "y", C.Metal, "Metal")
 				end
@@ -259,7 +259,7 @@ local items: { Item } = {
 			-- jars with lids, and three bottles
 			for i, col in { APPLE, ORANGE, LEMON } do
 				local x = -1.45 + (i - 1) * 0.66
-				r:cyl(x, 3.99, 0.25, 0.7, 0.54, "y", col, "SmoothPlastic")
+				r:cyl(x, 3.99, 0.25, 0.7, 0.54, "y", col, "Cardboard")
 				r:cyl(x, 4.4, 0.25, 0.12, 0.58, "y", C.Gold, "Metal")
 			end
 			for i, col in { FOREST, CRUST_DARK, FOREST } do
@@ -363,7 +363,7 @@ local items: { Item } = {
 							cabbage(q, cf * CFrame.new(-0.55 + i * 0.55, 0.34, (i % 2) * 0.16 - 0.08), i * 1.3)
 						end
 					end
-				end)
+				end, nil, "Wood")
 			end
 		end,
 	},
@@ -385,11 +385,11 @@ local items: { Item } = {
 				r:boxAt(cf, 2.1, 3.5, 0.12, r.c1, "Wood")
 				r:boxAt(cf * CFrame.new(0, 0.15, s * 0.07), 1.78, 2.7, 0.04, r.c2, "Slate")
 				local face = cf * CFrame.new(0, 0.15, s * 0.11)
-				r:boxAt(face * CFrame.new(0, 1.0, 0), 1.1, 0.16, 0.04, C.White, "SmoothPlastic")
+				r:boxAt(face * CFrame.new(0, 1.0, 0), 1.1, 0.16, 0.04, C.White, "Plaster")
 				for i, w in { 1.3, 0.9, 1.2 } do
-					r:boxAt(face * CFrame.new(-0.1, 0.5 - i * 0.36, 0), w, 0.08, 0.04, C.White, "SmoothPlastic")
+					r:boxAt(face * CFrame.new(-0.1, 0.5 - i * 0.36, 0), w, 0.08, 0.04, C.White, "Plaster")
 				end
-				r:boxAt(face * CFrame.new(0.35, -1.0, 0), 0.5, 0.4, 0.04, LEMON, "SmoothPlastic")
+				r:boxAt(face * CFrame.new(0.35, -1.0, 0), 0.5, 0.4, 0.04, LEMON, "Marble")
 			end
 			r:cyl(0, 3.42, 0, 2.1, 0.16, "x", IRON, "Metal")
 		end,
@@ -407,9 +407,9 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a scooping cabinet: eight tubs under a sloping glass, a stack of cones on the end.
 			-- c1 the cabinet, c2 its stripe and rail.
-			r:block(-2.5, 0, -1.2, 2.5, 0.3, 1.0, shade(r.c1, 0.55), "SmoothPlastic")
-			r:block(-2.5, 0.3, -1.3, 2.5, 2.6, 1.2, r.c1, "SmoothPlastic")
-			r:block(-2.5, 1.3, 1.2, 2.5, 1.9, 1.24, r.c2, "SmoothPlastic")
+			r:block(-2.5, 0, -1.2, 2.5, 0.3, 1.0, shade(r.c1, 0.55), "Metal")
+			r:block(-2.5, 0.3, -1.3, 2.5, 2.6, 1.2, r.c1, "Metal")
+			r:block(-2.5, 1.3, 1.2, 2.5, 1.9, 1.24, r.c2, "Metal")
 			r:block(-2.5, 2.6, -1.3, 2.5, 2.74, 1.24, shade(r.c1, 0.9), "Metal")
 			r:block(-2.3, 2.74, -1.0, 2.3, 2.8, 0.9, Color3.fromRGB(205, 225, 235), "Metal")
 			local tubs = { STRAWBERRY, VANILLA, CHOC, MINT, LEMON, LILAC, CHOC, STRAWBERRY }
@@ -417,8 +417,8 @@ local items: { Item } = {
 				local x = -1.72 + ((i - 1) % 4) * 1.15
 				local z = if i <= 4 then 0.4 else -0.5
 				r:cyl(x, 2.9, z, 0.24, 0.84, "y", C.Metal, "Metal")
-				r:cyl(x, 2.98, z, 0.2, 0.72, "y", col, "SmoothPlastic")
-				r:noCollide(r:ball(x + 0.1, 3.1, z, 0.44, shade(col, 0.94)))
+				r:cyl(x, 2.98, z, 0.2, 0.72, "y", col, "Plaster")
+				r:noCollide(r:ball(x + 0.1, 3.1, z, 0.44, shade(col, 0.94), "Plaster"))
 			end
 			-- the glass: a sloping pane to the customer, a flat one over, and two end cheeks
 			glassAt(r, CFrame.new(0, 3.3, 0.86) * CFrame.Angles(math.rad(-35), 0, 0), 4.8, 1.3, 0.08)
@@ -438,7 +438,7 @@ local items: { Item } = {
 					cf = CFrame.new(2.0, 3.3 + i * 0.22, -1.0) * CFrame.Angles(math.pi, 0, 0),
 					size = Vector3.new(0.5, 0.9, 0.5),
 					color = WAFER,
-					mat = "SmoothPlastic",
+					mat = "Sand",
 					collide = false,
 				})
 			end
@@ -543,12 +543,12 @@ local items: { Item } = {
 		build = function(r: R)
 			-- an apple and a pear on a board
 			signBoard(r, 3.4, 3.0)
-			r:lump(CFrame.new(-0.62, 1.3, FACE + 0.12), 1.3, 1.24, 0.3, APPLE, "SmoothPlastic")
-			r:block(-0.66, 1.86, FACE, -0.58, 2.3, FACE + 0.1, C.Bark, "SmoothPlastic")
-			r:lump(CFrame.new(-0.34, 2.14, FACE + 0.08) * CFrame.Angles(0, 0, math.rad(-30)), 0.6, 0.26, 0.14, CABBAGE)
-			r:lump(CFrame.new(0.72, 1.14, FACE + 0.12), 1.0, 1.0, 0.3, LEMON, "SmoothPlastic")
-			r:lump(CFrame.new(0.72, 1.74, FACE + 0.12), 0.62, 0.9, 0.26, LEMON, "SmoothPlastic")
-			r:block(0.68, 2.14, FACE, 0.76, 2.48, FACE + 0.1, C.Bark, "SmoothPlastic")
+			r:lump(CFrame.new(-0.62, 1.3, FACE + 0.12), 1.3, 1.24, 0.3, APPLE, "Marble")
+			r:block(-0.66, 1.86, FACE, -0.58, 2.3, FACE + 0.1, C.Bark, "Wood")
+			r:lump(CFrame.new(-0.34, 2.14, FACE + 0.08) * CFrame.Angles(0, 0, math.rad(-30)), 0.6, 0.26, 0.14, CABBAGE, "Marble")
+			r:lump(CFrame.new(0.72, 1.14, FACE + 0.12), 1.0, 1.0, 0.3, LEMON, "Marble")
+			r:lump(CFrame.new(0.72, 1.74, FACE + 0.12), 0.62, 0.9, 0.26, LEMON, "Marble")
+			r:block(0.68, 2.14, FACE, 0.76, 2.48, FACE + 0.1, C.Bark, "Wood")
 		end,
 	},
 	{
@@ -564,16 +564,16 @@ local items: { Item } = {
 			-- a cup on its saucer with steam coming off it
 			signBoard(r, 3.4, 3.0)
 			local cup = Color3.fromRGB(63, 140, 134)
-			r:block(-1.0, 0.56, FACE, 1.0, 0.72, FACE + 0.14, cup, "SmoothPlastic")
-			r:block(-0.62, 0.72, FACE, 0.5, 1.7, FACE + 0.2, cup, "SmoothPlastic")
-			r:block(-0.5, 0.62, FACE, 0.38, 0.72, FACE + 0.2, cup, "SmoothPlastic")
-			r:block(-0.62, 1.56, FACE + 0.2, 0.5, 1.7, FACE + 0.23, C.Bark, "SmoothPlastic")
-			r:cyl(0.6, 1.2, FACE + 0.1, 0.12, 0.84, "z", cup, "SmoothPlastic")
-			r:cyl(0.6, 1.2, FACE + 0.11, 0.22, 0.4, "z", r.c1, "SmoothPlastic")
+			r:block(-1.0, 0.56, FACE, 1.0, 0.72, FACE + 0.14, cup, "Marble")
+			r:block(-0.62, 0.72, FACE, 0.5, 1.7, FACE + 0.2, cup, "Marble")
+			r:block(-0.5, 0.62, FACE, 0.38, 0.72, FACE + 0.2, cup, "Marble")
+			r:block(-0.62, 1.56, FACE + 0.2, 0.5, 1.7, FACE + 0.23, C.Bark, "Wood")
+			r:cyl(0.6, 1.2, FACE + 0.1, 0.12, 0.84, "z", cup, "Marble")
+			r:cyl(0.6, 1.2, FACE + 0.11, 0.22, 0.4, "z", r.c1, "Wood")
 			for i, x in { -0.4, 0.0, 0.4 } do
 				local lean = CFrame.new(x - 0.06, 2.16 + (i % 2) * 0.1, FACE + 0.06) * CFrame.Angles(0, 0, math.rad(14))
-				r:boxAt(lean, 0.12, 0.5, 0.08, C.White, "SmoothPlastic")
-				r:boxAt(lean * CFrame.new(0.12, 0.4, 0) * CFrame.Angles(0, 0, math.rad(-28)), 0.12, 0.4, 0.08, C.White)
+				r:boxAt(lean, 0.12, 0.5, 0.08, C.White, "Wood")
+				r:boxAt(lean * CFrame.new(0.12, 0.4, 0) * CFrame.Angles(0, 0, math.rad(-28)), 0.12, 0.4, 0.08, C.White, "Wood")
 			end
 		end,
 	},
@@ -589,10 +589,10 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a round loaf with three cuts across it, and an ear of wheat either side
 			signBoard(r, 3.4, 3.0)
-			r:lump(CFrame.new(0, 1.3, FACE + 0.12), 1.9, 1.2, 0.34, CRUST, "SmoothPlastic")
+			r:lump(CFrame.new(0, 1.3, FACE + 0.12), 1.9, 1.2, 0.34, CRUST, "Sand")
 			for _, x in { -0.45, 0, 0.45 } do
 				local cut = CFrame.new(x, 1.42, FACE + 0.3) * CFrame.Angles(0, 0, math.rad(-28))
-				r:boxAt(cut, 0.1, 0.6, 0.06, VANILLA, "SmoothPlastic")
+				r:boxAt(cut, 0.1, 0.6, 0.06, VANILLA, "Plaster")
 			end
 			for _, sx in { -1, 1 } do
 				r:beam(
@@ -600,11 +600,11 @@ local items: { Item } = {
 					Vector3.new(sx * 1.3, 2.5, FACE + 0.04),
 					0.07,
 					0.07,
-					MUSTARD
+					MUSTARD, "Wood"
 				)
 				for i = 0, 3 do
 					local at = CFrame.new(sx * (1.27 + i * 0.012), 1.5 + i * 0.3, FACE + 0.06)
-					r:lump(at * CFrame.Angles(0, 0, math.rad(sx * 32)), 0.2, 0.42, 0.1, MUSTARD, "SmoothPlastic")
+					r:lump(at * CFrame.Angles(0, 0, math.rad(sx * 32)), 0.2, 0.42, 0.1, MUSTARD, "Wood")
 				end
 			end
 		end,
@@ -627,7 +627,7 @@ local items: { Item } = {
 			-- round cone needs the low poly kit, and without it became a plain post: the user, "the
 			-- ice cream dosent look like an ice cream sign"), with a rim and a criss-cross of waffle.
 			r:block(-1.1, 0.04, -1.1, 1.1, 1.8, 1.1, r.c2, "Concrete")
-			r:block(-1.16, 1.2, -1.16, 1.16, 1.5, 1.16, r.c1, "SmoothPlastic")
+			r:block(-1.16, 1.2, -1.16, 1.16, 1.5, 1.16, r.c1, "Plaster")
 			local a, h, tip = 1.3, 4.3, 1.8
 			-- (built point up about its middle, then turned over so the point is at the bottom)
 			local over = CFrame.new(0, tip + h / 2, 0) * CFrame.Angles(math.pi, 0, 0)
@@ -637,7 +637,7 @@ local items: { Item } = {
 					cf = over * CFrame.new(q[1] * a / 2, 0, q[2] * a / 2) * CFrame.Angles(0, math.rad(q[3]), 0),
 					size = Vector3.new(a, h, a),
 					color = WAFER,
-					mat = "SmoothPlastic",
+					mat = "Sand",
 				})
 			end
 			-- the waffle: darker bands across each face, a little proud of it
@@ -655,7 +655,7 @@ local items: { Item } = {
 							0.12,
 							0.05,
 							shade(WAFER, 0.78),
-							"SmoothPlastic"
+							"Sand"
 						)
 					)
 					local _ = i
@@ -669,15 +669,15 @@ local items: { Item } = {
 				tip + h + 0.3,
 				a + 0.08,
 				shade(WAFER, 0.88),
-				"SmoothPlastic"
+				"Sand"
 			)
 			-- two scoops wider than the cone, the bottom one in c1, and a cherry
-			r:ball(0, tip + h + 0.9, 0, 3.2, r.c1, "SmoothPlastic")
-			r:ball(0, tip + h + 2.2, 0, 2.5, MINT, "SmoothPlastic")
-			r:noCollide(r:ball(0, tip + h + 3.35, 0, 0.6, APPLE, "SmoothPlastic"))
+			r:ball(0, tip + h + 0.9, 0, 3.2, r.c1, "Plaster")
+			r:ball(0, tip + h + 2.2, 0, 2.5, MINT, "Plaster")
+			r:noCollide(r:ball(0, tip + h + 3.35, 0, 0.6, APPLE, "Marble"))
 			-- drips over the rim
-			r:noCollide(r:lump(CFrame.new(0.95, tip + h + 0.1, 0.8), 0.5, 0.9, 0.5, r.c1, "SmoothPlastic"))
-			r:noCollide(r:lump(CFrame.new(-1.05, tip + h + 0.2, -0.6), 0.5, 0.7, 0.5, r.c1, "SmoothPlastic"))
+			r:noCollide(r:lump(CFrame.new(0.95, tip + h + 0.1, 0.8), 0.5, 0.9, 0.5, r.c1, "Plaster"))
+			r:noCollide(r:lump(CFrame.new(-1.05, tip + h + 0.2, -0.6), 0.5, 0.7, 0.5, r.c1, "Plaster"))
 		end,
 	},
 }

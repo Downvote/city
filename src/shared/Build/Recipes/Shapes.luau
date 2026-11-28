@@ -18,7 +18,7 @@ type R = Recipe.Recipe
 -- the corner of an octagon that sits on a circle's flat sides: tan(22.5 degrees)
 local OCT = math.tan(math.rad(22.5))
 
-local MAT = "SmoothPlastic"
+local MAT = "Plaster" -- (paint over plaster: a soft texture that takes any colour; the paint tool changes it)
 
 -- A Roblox wedge part at a frame (full height at its +Z, sloping down to its -Z bottom edge).
 local function wedge(r: R, cf: CFrame, sx: number, sy: number, sz: number)

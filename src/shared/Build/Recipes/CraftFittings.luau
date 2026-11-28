@@ -74,7 +74,7 @@ local function bouquet(r: R, x: number, mouth: number, z: number, kind: string, 
 				q:ball(p.X + 0.09, p.Y - 0.09, p.Z, 0.18, shade(col, 1.1))
 			end
 		end
-	end)
+	end, nil, "Grass")
 end
 
 -- A canvas on its stretcher leaning back against a wall behind it (-z): `w` wide and `h` tall,
@@ -161,9 +161,9 @@ local items: { Item } = {
 			-- a little price card on the edge of each step
 			r:piece(function(q: R)
 				for i, top in tops do
-					q:box(1.9, top - 0.07, mids[i] + 0.47, 0.5, 0.3, 0.04, C.Paper, "SmoothPlastic")
+					q:box(1.9, top - 0.07, mids[i] + 0.47, 0.5, 0.3, 0.04, C.Paper, "Cardboard")
 				end
-			end)
+			end, nil, "Cardboard")
 		end,
 	},
 	{
@@ -235,7 +235,7 @@ local items: { Item } = {
 				q:ball(1.9, 4.2, -0.4, 0.9, C.Leaf, "Grass")
 			end)
 			for _, p in { { 1.65, 4.6, -0.25 }, { 2.1, 4.66, -0.5 }, { 1.92, 4.78, -0.2 }, { 1.8, 4.5, -0.66 } } do
-				r:noCollide(r:ball(p[1], p[2], p[3], 0.36, r.c2, "SmoothPlastic"))
+				r:noCollide(r:ball(p[1], p[2], p[3], 0.36, r.c2, "Fabric"))
 			end
 			-- the watering can at the front
 			r:piece(function(q: R)
@@ -620,8 +620,8 @@ local items: { Item } = {
 				end
 			end, true)
 			-- the ends of the beams are painted, the way a yard marks its stock
-			r:block(3.5, 1.12, -0.6, 3.54, 1.68, -0.1, C.Red, "SmoothPlastic")
-			r:block(3.6, 1.12, 0.02, 3.64, 1.68, 0.52, C.Red, "SmoothPlastic")
+			r:block(3.5, 1.12, -0.6, 3.54, 1.68, -0.1, C.Red, "Metal")
+			r:block(3.6, 1.12, 0.02, 3.64, 1.68, 0.52, C.Red, "Metal")
 		end,
 	},
 	{
