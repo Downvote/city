@@ -4,7 +4,7 @@
 -- mobile of paper birds, chimes of shells, a lantern that sways, a tabletop water wheel, a music
 -- box with a dancer, an orrery, a plasma globe, a bird on a swing in its cage, a robot dog, and
 -- the fog machine, bought with gems (the user: "also, add a fog machine that players can place
--- with gems": Sim/GemPieces), whose fog follows its switch. As in Recipes/Animated, each names
+-- with gems": Sim/GemPieces), whose fog follows its switch. As in Recipes/Twirls, each names
 -- its moving parts and pivots (Build/Lively), nothing that moves is solid, and every surface is a
 -- textured material.
 

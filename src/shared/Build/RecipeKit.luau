@@ -1,6 +1,6 @@
 --!strict
 -- Drawing helpers the recipes share (Build/Recipes): rods along any line, rings, discs, and water
--- that looks like water. The recipes in Recipes/Animated, Recipes/MoreDecor and Recipes/Falls draw
+-- that looks like water. The recipes in Recipes/Twirls, Recipes/MoreDecor and Recipes/Falls draw
 -- with them; older recipe files keep their own copies.
 --
 -- Water (the user: "some objects, like waterfall, can look more like a waterfall, along with

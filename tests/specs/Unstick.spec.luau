@@ -259,7 +259,9 @@ describe("Unstick", function()
 				for _, p in Geometry.flatten(Solid.apply(def, Catalog.prims(def))) do
 					if (p.transp or 0) < 0.99 then
 						table.insert(seen, p)
-					elseif p.collide ~= false and not p.role then
+					elseif p.collide ~= false and not p.role and p.name ~= "LiftFloor" then
+						-- (a lift's landing floor is the shaft's floor behind its own closed doors:
+						-- only the car, standing on it, opens them: Recipes/Travel, Services/Lifts)
 						table.insert(hid, p)
 					end
 				end

@@ -73,7 +73,7 @@ saved build brings back only as many as the player owns.
 - `Build/RecipeKit` (new): drawing helpers for recipes: `rod`, `path`, `ring`, `hoop`, `cylAt`, `disc`, `face`,
   `sphere` (round with `smooth`), `alongY`, `hourMarks`, `hands` (a clock's two hands on the town's time), and water:
   `sheet`, `fall`, `spill` (curtains all round a bowl's rim), `surface`, `roundSurface`, `foam`.
-- New recipe modules: `Recipes/Animated` (garden and street movers), `Recipes/AnimatedIndoor` (indoor movers and the
+- New recipe modules: `Recipes/Twirls` (garden and street movers), `Recipes/TwirlsIndoor` (indoor movers and the
   fog machine), `Recipes/MoreDecor` (still decor), `Recipes/Falls` (`water_falls`, `water_wall_fall`: place
   "water", `water` "edge"). Water redone in `Recipes/Garden` (`fountain`, `pond`), `Recipes/GardenMore`
   (`pond_raised`, `bird_bath`, now `lively`), `Recipes/Moving` (`move_wall_fountain`, `move_water_wheel`,

@@ -320,7 +320,8 @@ local function lift(r: R, spans: number)
 		-- what you stand on and what keeps you out of an empty shaft: hidden, solid
 		local plate = r:block(-3.1, y, -2.6, 3.1, y + 0.19, 2.4, steel, "Metal")
 		plate.name, plate.transp, plate.attrs = "LiftFloor", 1, { Floor = k }
-		local gate = r:block(-1.6, y + 0.2, 2.6, 1.6, y + 8.2, 2.8, steel, "Metal")
+		-- (in the doors' own plane, so what stops you is the closed doors you see)
+		local gate = r:block(-1.6, y + 0.2, 2.47, 1.6, y + 8.05, 2.55, steel, "Metal")
 		gate.name, gate.transp, gate.attrs = "LiftGate", 1, { Floor = k }
 	end
 	-- the car, at its own floor

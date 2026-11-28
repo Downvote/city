@@ -121,11 +121,11 @@ Effects.list = {
 	plunge = { texture = "splashburst", colors = { Color3.fromRGB(236, 246, 252) }, size = { 0.9, 1.8 }, transp = { 0.3, 1 }, life = { 0.5, 0.8 }, rate = 12, speed = { 2, 3.5 }, spread = { 40, 40 }, accel = Vector3.new(0, -6, 0), rot = { 0, 360 }, spin = { -40, 40 }, light = 0.1 },
 	foamring = { texture = "splashring", colors = { Color3.fromRGB(240, 248, 252) }, size = { 1, 2.6 }, transp = { 0.4, 1 }, life = { 1, 1.4 }, rate = 3, speed = { 0.05, 0.1 }, spread = { 0, 0 }, rot = { 0, 360 }, light = 0.1, orient = "VelocityPerpendicular" },
 	fallmist = { texture = "mistpuff", colors = { Color3.fromRGB(236, 244, 250) }, size = { 1.4, 3.4, 4.6 }, transp = { 0.68, 0.78, 1 }, life = { 2.5, 4 }, rate = 4, speed = { 0.6, 1.2 }, spread = { 60, 60 }, accel = Vector3.new(0, 0.15, 0), drag = 0.6, rot = { 0, 360 }, spin = { -12, 12 } },
-	-- the fog machine (Recipes/Animated): puffs out of its nozzle that sink and spread, and a low
+	-- the fog machine (Recipes/Twirls): puffs out of its nozzle that sink and spread, and a low
 	-- bank lying over the floor in front of it, in the colour of its second paint
 	fog = { texture = "cloudpuff", tint = true, size = { 1, 4, 7 }, transp = { 0.6, 0.72, 1 }, life = { 5, 7 }, rate = 7, speed = { 5, 7 }, spread = { 18, 10 }, accel = Vector3.new(0, -0.25, 0), drag = 0.9, rot = { 0, 360 }, spin = { -15, 15 }, dir = "Back" },
 	fogbank = { texture = "fogband", tint = true, size = { 4, 8, 9 }, transp = { 0.85, 0.74, 1 }, life = { 6, 8 }, rate = 5, speed = { 0.3, 0.8 }, spread = { 80, 80 }, accel = Vector3.new(0, -0.05, 0), drag = 1 },
-	-- a pot on the boil (Recipes/Animated): little bubbles popping on its top, in the paint's colour
+	-- a pot on the boil (Recipes/Twirls): little bubbles popping on its top, in the paint's colour
 	simmer = { texture = "bubble", tint = true, size = { 0.12, 0.26, 0 }, transp = { 0.2, 0.3, 1 }, life = { 0.4, 0.7 }, rate = 8, speed = { 0.3, 0.6 }, spread = { 60, 60 } },
 	steam = { texture = "smoke", colors = { WHITE }, size = { 0.3, 1, 1.6 }, transp = { 0.45, 0.7, 1 }, life = { 1.2, 2 }, rate = 5, speed = { 1, 1.6 }, spread = { 10, 10 }, accel = Vector3.new(0, 0.6, 0), rot = { 0, 360 }, spin = { -30, 30 } },
 	-- Workplaces (Recipes/Work), on while somebody is at work there -----------------------------------

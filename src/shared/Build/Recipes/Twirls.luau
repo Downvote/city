@@ -8,7 +8,7 @@
 -- screen moves them near the camera (client World/Lively). Nothing that moves is solid. Drawn at
 -- the starting house's level of detail, in textured materials, round where the real thing is round
 -- (Geometry's `smooth`: the user, "You are allowed to use spheres, curves or circles where
--- necessary"). Indoor ones are in Recipes/AnimatedIndoor.
+-- necessary"). Indoor ones are in Recipes/TwirlsIndoor.
 
 local Recipe = require(script.Parent.Parent.Recipe)
 local Lively = require(script.Parent.Parent.Lively)
