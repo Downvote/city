@@ -525,11 +525,11 @@ they are not fufilled", and "allow players to click on villagers anywhere to eit
 them".
 
 - `Sim/Needs` (shared, no services; works on the client's copy of the town too): `Factors` (bed, comfy, roof, fun,
-  friends, pet), `Asks` (bed, work, roof, comfy, fun, friends: never a pet), `Lines` / `line(kind)` (the asks' last
+  friends: the five the user named), `Asks` (bed, work, roof, comfy, fun, friends), `Lines` / `line(kind)` (the asks' last
   lines; "introduce" too), `bedOf(profile, vid)`, `comfy(def)` (step and points by price), `covered(plan, item)` (a
   roof with `lv >= item.lv` or a floor with `lv > item.lv` over its middle), `isFun(def)`, `funNear(profile, vid)`,
-  `friends(profile, vid)` (points, friends, acquainted), `petOf(profile, vid)` (the pet in `profile.pets` whose `vid`
-  is theirs, or nil), `factors(profile, vid)` (`{ id, points, max, have, text, step? }`), `cap(profile, vid)`,
+  `friends(profile, vid)` (points, friends, acquainted), `factors(profile, vid)` (`{ id, points, max, have, text,
+  step? }`), `cap(profile, vid)`,
   `lift(d)`, `addMood(profile, vid, d)` (returns the change), `drift(profile, hours)`, `missing(profile, vid)`,
   `ask(profile, vid)`, `stranger(profile, vid)`, `teaching(profile)` (the tutorial on its villager, bed or work step).
 - Every mood change goes through `Needs.addMood`: `Life` (wishes, fading), `EventEngine.apply` (`mood`, `moodv`),
@@ -537,8 +537,8 @@ them".
   `Needs.drift(profile, 1)`; the night's `BedMoodPerNight` / `NoBedMoodPerNight` and `Villagers.roomScore` are gone.
   `Schema.migrate` puts a missing or broken villager mood back to `StartMood` and clamps it.
 - `Tuning.Needs` (after `Tuning.Villagers`): Base, Bed, Comfy steps, Roof, FunEach, FunMax, FriendPoints (by level
-  index), FriendsMax, Pet (10: a pet of their own, on top of the rest, which already add up to
-  `Tuning.Villagers.MoodMax`; the cap still stops there), Rise, Fall, BoostShare, ComfyWant, FunWant, FriendsWant,
+  index), FriendsMax (all of them adding up to `Tuning.Villagers.MoodMax`), Rise, Fall, BoostShare, ComfyWant,
+  FunWant, FriendsWant,
   AskChance by kind, AskEvery (town hours), AskWait, AskGap, AskKeep (seconds).
 - The asks: `Data/Events/Needs` (loaded after Moments) holds `nobed` and `jobhunt` (moved from `Data/Events/init`),
   `needroof`, `needcomfy`, `needfun` and `needfriends`; each ends on a narrator line from `ctx.needLine(kind)`, the
@@ -561,8 +561,7 @@ them".
   carries `far = true`; `UI/TalkCard` keeps the spot (`current.from`) for its own walk off check. It fires
   `Villagers.Talked` like a held E chat. `Tuning.TalkClick` (after `Tuning.Talk`): Margin, Tap, Slack, Reach.
 - Specs: `Needs` (each factor, the cap, drift, lifts and knocks, an old save's moods, the asks and their lines against
-  Build mode's real tab names, each ask staged, a pet of their own counted on top but never past the top and never
-  asked for); `Events` (the `wish` op, an open air bed in some towns, a cold with a doctor played on purpose);
+  Build mode's real tab names, each ask staged, the five factors and no others); `Events` (the `wish` op, an open air bed in some towns, a cold with a doctor played on purpose);
   `EventService` (the newcomer's asks ahead of the random events, held while the tutorial teaches); `TalkService` (a
   chat started by a click from afar, its walk off, off the plot, a visitor); `City` (the keen player's town has comfy
   beds under a roof with fun by them; the day's mood is `Needs.drift`); `Life`, `Talk`, `Giving`, `WishService` (lifts
@@ -1523,9 +1522,8 @@ profile = {
   skills = { [jobId] = experience },  -- the player's own skill at each job (Sim/Skills)
   gemItems = { [itemId] = count },  -- Build mode pieces bought with gems (Sim/GemPieces)
   follow = { { id, a, b?, c?, at, from?, w? } },  -- follow-up events waiting (Sim/FollowUps)
-  crates = { work = n, pet = n },  -- crates held to open later (at most Tuning.Crates.Held each; Sim/Crates)
+  crates = { work = n },  -- work crates held to open later (at most Tuning.Crates.Held; Sim/Crates)
   crateItems = { [catalogId] = count },  -- crate workplaces given (at most MaxOwned each)
-  pets = { [petId] = { kind, name, coat, vid? } }, nextPet,  -- the pets ("p1"...) and the next one's number
   crateGems = { day, n },  -- gems crate jobs paid on that real (UTC) day, under Tuning.Crates.GemDayCap
   crateTold,  -- a villager has told the player about the crates (the tip comes once a save)
 }
@@ -1548,8 +1546,9 @@ A town log line is `{ t, text, kind? }` (the kind picks its icon in the news: `D
 `Schema.migrate` fills in anything missing and drops anything broken, so old saves load (it runs the new fields
 through `PlotName.clean`, `Bag.clean`, `Titles.clean`, `Skills.clean`, `GemPieces.clean`, `FollowUps.clean`,
 `WorkMove.sanitize`, `Appearance.sanitize` for `look`, `Likes.clean` for `likedLooks`, `Crates.clean` for the
-crates, crate workplaces and pets, and `Babble.clean` for each villager's `voice`, a broken one dropped, and puts a
-broken villager mood back to `StartMood`). Since the shop went it
+crates and crate workplaces (an old save's held pet crates added to its work crates, up to `Held`), and
+`Babble.clean` for each villager's `voice`, a broken one dropped, and puts a broken villager mood back to
+`StartMood`). Since the pets went it drops an old save's `pets` and `nextPet`. Since the shop went it
 also drops an old save's `inv` (the bag of food and things), `stats.fed`, and each villager's `hate`, `known`,
 `feedDay` and `feeds`; mends a `fav` that is no food; and drops a wish of a kind it doesn't know
 (`Schema.WishKinds`) or a craving for something that is no food. It runs each villager's `flair` through
@@ -1638,51 +1637,36 @@ The money side that isn't coins from work (docs/GAME_DESIGN.md, "Passes, gems, r
   `Data/Achievements` and `Data/Goals`. Spec: `ClaimAll` (everything due claimed in one go and matching the single
   claims, nothing claimed that isn't due, goals once with their coins, the notices).
 
-## Work crates and pet crates
+## Work crates
 
 The user: "add work crates that can be bought with gems or robux, which give exclusive work spaces which are unique
-to crates ... Some work crates are also given through achievements, goals, daily rewards" and "Add pet crates as
-well. These all have unique interactions with villagers, and roam around the city. You can choose to make villagers
-own the pet" (docs/GAME_DESIGN.md, "Work crates and pet crates").
+to crates ... Some work crates are also given through achievements, goals, daily rewards" (docs/GAME_DESIGN.md,
+"Work crates"). Pet crates and pets came with them and went again (the user: "remove pets. the only crate should be
+work crates"): `Data/Pets`, `Sim/Pets`, `Services/Pets`, `client/World/Pets`, the `PetOwner` remote,
+`Tuning.Pets`, `Tuning.Needs.Pet`, the `crate_pet` product, `profile.pets` and `nextPet` are gone. The work crate is
+the only kind.
 
-New modules:
+Modules:
 
 - `Data/Crates`: `Rarities` (common to legendary), `RarityNames`, `Tones` (each rarity's `Kit.Theme` key), `rank`,
-  `Category` ("crates"), `Order` and `Kinds` (`work`, `pet`: name, phrase, blurb, icon, product key), `get`,
-  `entries(kind)`, `odds(kind)` (`{ rarity, chance, entries }`, the chances from `Tuning.Crates.Odds`, adding to 1),
-  `percent`, `prims(kind)` (the crate's own model for the store and the opening) and `Size`.
-- `Data/Pets`: the pet kinds (`id, name, rarity, gait, speed, size, names, coats, acts, joints, fur, draw`), `get`,
-  `coat`, `prims(id, coat)`. A part that moves carries its bone's name (`LegFL`..`LegBR`, `Head`, `Tail`, `EarL/R`,
-  `WingL/R`, `BrushL/R`), turned round `joints[name]`; every coat is drawn in Fabric (or the kind's `fur`), eyes and
-  noses Plastic.
+  `Category` ("crates"), `Order` and `Kinds` (only `work`: name, phrase, blurb "Crate jobs give special workplaces
+  that pay more than regular ones.", icon, product key), `get`, `entries(kind)`, `odds(kind)` (`{ rarity, chance,
+  entries }`, the chances from `Tuning.Crates.Odds`, adding to 1), `percent`, `prims(kind)` (the crate's own model
+  for the store and the opening) and `Size`.
 - `Sim/Crates` (no services): held crates (`held`, `give`), `price`, `blocked`, `roll`, `openHeld`, `buy` (with gems),
   `canAffordOne`; crate workplaces (`isCratePiece`, `owned`, `placed`, `pieces` for the Crate tab, `check` for Build
   requests, as `Sim/Keepsakes.check` is); `jobGems`, `dayGems(profile, worked, today)` (capped by
-  `Tuning.Crates.GemDayCap` a UTC day); pets (`petCount`, `petList`, `petOf`, `assign`, `forget`); `clean` (Schema).
-- `Sim/Pets` (no services): `Acts` (`pet`, `play`, `treat`, `watch`: the villager's gesture, the pet's anim, lines by
-  personality), `FetchLines`, `kindWord`, `acts`, `pickAct`, `line`, `fetchLine`, `nightMood`, `fetchChance`, and the
-  walk maths both sides use: `legTime`, `at(from, to, start, speed, now)`, `besidePoint`, `stepFrom` (inside the land
-  and up to `Street` over its front).
+  `Tuning.Crates.GemDayCap` a UTC day); `clean` (Schema: held crates of known kinds, an old save's held pet crates
+  added to its work crates up to `Tuning.Crates.Held`). A `Result` is `{ kind, id, name, rarity }`.
 - `Build/Recipes/CrateWork`: the eleven crate workplaces (category `crates`, price 0, `crate` = rarity, `job`,
   `workSpot`, `workYaw`, tag `work`, and `loop`, their round of spots written beside their parts), in textured
   materials (the small parts Plaster, or Marble for china).
-- `Services/Crates` (after Visit): the `CrateOpen` and `PetOwner` remotes, the tip (`CrateTip`, `TipLines`,
-  `tipLine`), and `PetsChanged` (BindableEvent, (player)).
-- `Services/Pets` (after Crates): pets in the world. A Configuration a pet in the folder `Pets` under each plot's
-  model, attributes `Kind`, `Coat`, `Name`, `Owner`, `From`, `To`, `Start` (`workspace:GetServerTimeNow()`), `Speed`,
-  `Act`, `Look`. Every `Tuning.Pets.Think` seconds a pet whose walk and rest are over gets its next walk (rays: ground
-  under the end, nothing in the way) or, now and then, a meet with a free villager (control "chat" for a few seconds,
-  a line, a gesture, `MeetMood`). `World.ClockChanged`: the fetch roll (once a town day a pet, while its owner craves
-  a food; `Life.grantWish` for nothing). `World.NewDay`: `Villagers.addMood` by `Sim/Pets.nightMood`.
-  `Pets.sync(player)`.
-- `client/World/Pets`: builds each pet from `Data/Pets` in `workspace.PetModels`, moves it along its walk once a frame
-  near the camera (BulkMoveTo), its bones by gait and act, the ground by a ray a few times a second; a `PatPrompt`
-  ("Pat") on each, on this screen only.
+- `Services/Crates` (after Visit): the `CrateOpen` remote and the tip (`CrateTip`, `TipLines`, `tipLine`).
 - `client/UI/Crates`: `show(body, helpers)` (the Store's Crates tab), `open(kind, how)`, `reveal(result, still?)`
-  (plays `Kit.sound("gift")`, the gift's chime, as it opens), `tip(msg)`, `start()` (listens for `CrateTip`),
+  (plays `Kit.sound("gift")`, the gift's sound, as it opens), `tip(msg)`, `start()` (listens for `CrateTip`),
   `tone(rarity)`.
 
-Changed:
+Elsewhere:
 
 - `Data/Jobs`: `Jobs.crateList` (the crate jobs, with `crate`, `asks`, `serves`, `move`), `Jobs.all` (coin then
   crate), `Jobs.BestCoin`, `Jobs.isCrate`; a crate job's `income` is worked out at load from `BestCoin` times
@@ -1691,35 +1675,33 @@ Changed:
 - `Sim/Routine`: `Routine.loop(def)` takes `def.loop` when the job has no loop of its own; `Routine.move(job)` takes
   the job's `move`.
 - `Sim/Visits`: `ask` and `serve` take a crate job's own `asks` and `serves`.
-- `Sim/Needs`: a pet of their own is the factor `pet` (see "Mood, and what villagers ask for").
 - `Build/Catalog`: the category `crates` ("Crate"), the Def fields `crate` and `loop`; crate pieces are kept out of
   `withStyle`, `isPath` and `search`.
-- `Data/Passes`: `Passes.crates` (`{ key, id, kind, price, name }`, ids 0 until made on Roblox) and
-  `Passes.crateProduct(key)`. `Services/Store`: `Store.crateFor(id)`; `processReceipt` pays a crate product once per
-  PurchaseId by `Sim/Crates.give` and pushes `crates`. `Controllers/Purchase.crate(key)`.
-- `Sim/Rewards`: `dailyCrate(run)` (every `Tuning.Crates.DailyEvery`th day of the run, work and pet by turns);
+- `Data/Passes`: `Passes.crates` (`{ key, id, kind, price, name }`: `crate_work` only, its id 0 until made on Roblox)
+  and `Passes.crateProduct(key)`. `Services/Store`: `Store.crateFor(id)`; `processReceipt` pays a crate product once
+  per PurchaseId by `Sim/Crates.give` and pushes `crates`. `Controllers/Purchase.crate(key)`.
+- `Sim/Rewards`: `dailyCrate(run)` (a work crate every `Tuning.Crates.DailyEvery`th day of the run);
   `claimDaily` returns a fourth value, the crate it gave; `claimAchievement` a third. `Data/Achievements` and
-  `Data/Goals`: `crate` on some; `Sim/Life`'s goal extras give it. `Sim/ClaimAll`: the Haul's `crates`,
-  `cratesNotice(kinds)`. `Services/Claims`, `Services/Data`'s DailyClaim, Store's AchievementClaim and Villagers'
-  GoalClaim push `crates` and say where the crate is.
+  `Data/Goals`: `crate` ("work") on some (villager5, villager10, level5, villager30, level10; work6, bestfriends3,
+  heart10, work10); `Sim/Life`'s goal extras give it. `Sim/ClaimAll`: the Haul's `crates`, `cratesNotice(kinds)`.
+  `Services/Claims`, `Services/Data`'s DailyClaim, Store's AchievementClaim and Villagers' GoalClaim push `crates`
+  and say where the crate is.
 - `Services/Build`: `Crates.check` with the keepsakes' check in `apply`, and in a saved build's load.
-- `Services/Villagers`: `endOfWork` pays crate jobs' gems (`Crates.dayGems`, the share of a full day each worked);
-  moving out leaves a pet nobody's (`Crates.forget`, pushes `pets`).
+- `Services/Villagers`: `endOfWork` pays crate jobs' gems (`Crates.dayGems`, the share of a full day each worked).
 - `UI/Store`: the Crates tab (`Store.open("crates")`). `Build/BuildUI`: the Work group's Crate sub tab
-  (`crateTile`, refreshed on `crateItems` and the plan). `UI/Residents`: the Quirks tab's Pet row and `pickPet`, and
-  the Mood tab's "A pet" row (`FACTORS.pet`, the `paw`). `UI/Rewards`: `pays` shows a crate (`props.Crate`); the
+  (`crateTile`, refreshed on `crateItems` and the plan). `UI/Rewards`: `pays` shows a crate (`props.Crate`); the
   week's rows and the achievement rows say so. `UI/Goals`: a goal's crate in its Also line.
 - `Data/NewsKinds`: the news kind `crate`.
-- Tuning: `Tuning.Crates` and `Tuning.Pets`, beside `Tuning.GemPieces`.
-- Specs: `Crates` (the odds shown and rolled, every crate workplace's job and rarity, textured, kept out of search,
-  always better pay than any coin job and more the rarer, gems only for rare and up and capped a day, buying,
-  opening, holding, putting down only as often as given, pets and owners, cleaning a save, crates from the daily
-  gift, achievements, goals and Claim all, pets' drawings, joints and lines in every voice, mood and fetch numbers,
-  the walk maths). `Store`: a crate's receipt held once per purchase. `Needs`: a pet counted on top. The Build, City,
-  Presets, PlayerWork and Events specs skip crate workplaces where they hold the coin workplaces to prices,
-  buildings and events. Previews: `render.sh cat:crates` (and `item:crate_*`), `render.sh pets` (`pets:<id>,<id>`),
-  `ui.sh panel:Store:crates`, `crate:open:work`, `crate:open:pet`, `crate:tip`, `build:crates`, `build:crates:empty`,
-  `panel:Residents:pets`, `panel:Residents:pets:pick` (all in `audit.sh`).
+- Tuning: `Tuning.Crates`, beside `Tuning.GemPieces`.
+- Specs: `Crates` (the work crate the only kind and its blurb, the odds shown and rolled, every crate workplace's job
+  and rarity, textured, kept out of search, always better pay than any coin job and more the rarer, gems only for
+  rare and up and capped a day, buying, opening, holding, putting down only as often as given, cleaning a save, an
+  old save's pet crates turned into work crates and its pets dropped, crates from the daily gift, achievements,
+  goals and Claim all). `Store`: a crate's receipt held once per purchase. `Giving`: a goal's work crate. The Build,
+  City, Presets, PlayerWork and Events specs skip crate workplaces where they hold the coin workplaces to prices,
+  buildings and events. Previews: `render.sh cat:crates` (and `item:crate_*`), `render.sh crates` (the crate
+  itself), `ui.sh panel:Store:crates`, `crate:open:work`, `crate:tip`, `build:crates`, `build:crates:empty` (all in
+  `audit.sh`).
 
 ## Other players' towns
 
@@ -1797,7 +1779,7 @@ set build budget). Building on another player's plot will use their money, up to
   (nearest of `Tuning.Trust.Budgets`), `step(n, dir)`, `new`, `left`, `setBudget`, `allows(e, cost)`, `spend(e,
   cost)` (a refund never takes `spent` under 0), `short(name)`, `line(e, owner)` ("Building on Sam's plot, budget
   2,500"), `rows(book)`.
-- `Services/Trust` (after Pets in `Main.server`; it needs only Data and Plots, and Build requires it):
+- `Services/Trust` (after Crates in `Main.server`; it needs only Data and Plots, and Build requires it):
   `Trust.set(owner, guest, on, budget)`, `Trust.build(guest, ownerId | nil)` (Build mode on that plot: checks the
   trust and that the guest stands within `Tuning.Trust.Reach` of it; returns the owner's plan, passes, gemItems,
   keepsakes, plot, budget, left), `Trust.siteOf(player)` (the owner and entry while building there),
@@ -1890,9 +1872,8 @@ loaded that hold it, saying to Load more when nothing loaded does. The mannequin
 | `Store` | Passes, gem packs, rewards, offline earnings and the group (see "Passes, gems, rewards and time away"). Listens for `Data.Loaded`, so it starts before `Data.open`. |
 | `Claims` | Claim all in Rewards and the goals (`RewardsClaimAll`, `GoalClaimAll`; see "Passes, gems, rewards and time away"). After Vehicles. |
 | `Visit` | Naming a plot, likes, the directory of towns and visits, here or on a copy (see "Other players' towns"). After Claims. |
-| `Crates` | Opening crates held or bought with gems (`CrateOpen`), a pet's owner (`PetOwner`), the villager's tip once a save (`CrateTip`), `PetsChanged` (see "Work crates and pet crates"). After Visit. |
-| `Pets` | Pets about each plot: their walks and rests written as attributes on a Configuration a pet in the plot's `Pets` folder, meets with free villagers, the night's mood for owners, the fetch of a craving once a town day. Never moves a part. After Crates. |
-| `Trust` | Trusted builders and their budgets, for the session only (`TrustSet`, `TrustBuild`, `Trust.siteOf`; see "Guests, friends, players' cards and trusted builders"). Needs only Data and Plots; Build requires it. After Pets. |
+| `Crates` | Opening work crates held or bought with gems (`CrateOpen`), the villager's tip once a save (`CrateTip`) (see "Work crates"). After Visit. |
+| `Trust` | Trusted builders and their budgets, for the session only (`TrustSet`, `TrustBuild`, `Trust.siteOf`; see "Guests, friends, players' cards and trusted builders"). Needs only Data and Plots; Build requires it. After Crates. |
 | `Social` | Friends in the server (`FriendsHere` on each player, the join notice), players' cards (`PlayerCard`) and villagers greeting visitors who walk by (`Social.greet`). After Trust. |
 | `Bag`, `Gifts`, `Titles` | The bag's prompts, things made at work, holding and dropping; gifts both ways; titles over heads (see "The bag, gifts, titles and prizes"). After Work. |
 | `Lifts` | The elevators' buttons and rides (see "Roofs and paths that meet, and ways between floors"). After Lights. |
@@ -1975,7 +1956,7 @@ rank?, here, mine`), `PlotLike` (`ownerId, on?` -> `{ liked, likes }` or nil, wh
 why`), `PlotLeave` (-> `ok`), `TakeOff` (`vid, what`: a worn thing off, see "Events that need a piece, follow-ups,
 typed names and worn things"); `EventChoose` takes a third value, a typed `name`, for a scene that asks for one.
 Then: `CrateOpen` (`kind, "held" | "gems"` -> `ok, result` or why: open a crate held, or buy one with gems and open
-it), `PetOwner` (`petId, vid | false` -> `ok, why`), `PlayerCard` (`userId` -> card or nil, why), `TrustSet`
+it), `PlayerCard` (`userId` -> card or nil, why), `TrustSet`
 (`userId, on, budget?` -> `ok, why`), `TrustBuild` (`ownerId | nil` -> `ok, site` or why: Build mode on a trusted
 plot; nil: back to your own).
 
@@ -2449,7 +2430,7 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   textbox (`FlairText`), the price and either the gems there are or how many more are needed, `SaveFlair` (dim when
   short, which then only says so) and, when one is set, `ClearFlair`; both go through `VillagerFlair`). A `gems`
   change redraws the Quirks tab, which also has the "Work move" row and its picker (`pickMove`, through
-  `VillagerMove`), and the Pet row and its picker (`pickPet`, through `PetOwner`). The page's actions are Gift
+  `VillagerMove`). The page's actions are Gift
   (`UI/GiftPicker`), Buy outfit (LayoutOrder 4, `UI/BuyLook`) and Move out (5); a personality shows as its few words
   (`Personalities.short`). Previews: `panel:Residents:lately`, `:quirks`, `:quirks:edit`, `:quirks:short`,
   `:quirks:move`, `:mood`, `:gift`. `UI/Weather` is started by `Main.client` on its own, in a pcall, before the HUD
@@ -2458,8 +2439,8 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   still does the switching.
 - Started by `Main.client` this round, each written up in its own section: `Controllers/Audio` (after
   `World/Graphics`; see "Sound"), `UI/Invite` (the nudge), `Build/Site` (`SitePlan` and `trustedBy`) and
-  `World/PlayerClick` (see "Guests, friends, players' cards and trusted builders"), `World/Pets` and `UI/Crates`
-  (the tip; see "Work crates and pet crates"). `UI/PlayerMenu` and `UI/PlayerProfile` are Hud panels.
+  `World/PlayerClick` (see "Guests, friends, players' cards and trusted builders") and `UI/Crates` (the tip; see
+  "Work crates"). `UI/PlayerMenu` and `UI/PlayerProfile` are Hud panels.
 - `UI/Creator`'s view: a Scriptable camera with a 40 degree lens that orbits the mannequin at `zoom` studs
   (`ZOOM_FACE` 3.1, `ZOOM_HOME` 7.2 where it opens, `ZOOM_WHOLE` 12.5; wheel and `TouchPinch` between 2.6 and 20;
   the Zoom tool steps through the three) and looks at a height `focusAt(zoom)` gives. It stands off to one side so
@@ -2846,10 +2827,10 @@ cozy music track in the background. use roblox library for these, dont make your
   the bag and gifts, skills and work moves, six plots and visits, Build mode's search, joins and lifts, vehicles,
   decor and water, cutscenes in the world, events with pieces and follow-ups, settings, weather and seasons, earned
   mood, then other players and trusted builders, voices, sounds and music, textures and worn edges on everything, work
-  and pet crates): 883 specs in 74 files at the last full run. New spec files: `PlotName`, `ClaimAll`, `Visits`,
+  crates): 883 specs in 75 files at the last full run. New spec files: `PlotName`, `ClaimAll`, `Visits`,
   `WorkMove`, `Bag`, `Giving`, `Seasons`, `Settings`, `Weather`, `Travel`, `GemPieces`, `Needs`, `PlotBoard`,
   `VisitService`, `FollowUps`, then `Trust`, `Social`, `GuestTalk`, `Babble`, `Sounds`, `Textured`, `Surfaces` and
-  `Crates` (which covers the pets too); `LawnPatches` is gone. A new simulation, `audio` (the real Controllers/Audio;
+  `Crates`; `LawnPatches` is gone. A new simulation, `audio` (the real Controllers/Audio;
   see "Sound"), runs in `scripts/check.sh`. The simulations gained: `hud` (Hide and Show, the plot's name, the quests'
   drop, a notice, the friends chip), `tutorial` (the friend's three steps under the dim), `creator_sections` (colour,
   likes, buying, the You tab), `talk_card` (a go at a piece over the player's head, Shift to run, a big moment

@@ -1,14 +1,12 @@
 -- Crates on the server (Sim/Crates has the rules, Data/Crates what is in them). The user: "add work
 -- crates that can be bought with gems or robux ... A random villager will pop up and tell the player
--- about these crates right when they have enough gems", then "Add pet crates as well ... You can
--- choose to make villagers own the pet."
+-- about these crates right when they have enough gems". The work crate is the only kind (the user:
+-- "remove pets. the only crate should be work crates").
 --   CrateOpen   opens a crate the player holds (a reward, a Robux purchase: Services/Store), or buys
 --               one with gems and opens it at once. Throttled; everything is checked in Sim/Crates.
---   PetOwner    makes one of the player's villagers a pet's owner, or nobody.
 --   the tip     the first time a player has the gems for a crate, one of their villagers tells them,
 --               once a save (profile.crateTold): the CrateTip event brings up a short scene on their
 --               screen (UI/Crates), and the same line is said over the villager's head.
--- Services/Pets hears PetsChanged to put the pets in the world.
 
 local Players = game:GetService("Players")
 
@@ -17,7 +15,6 @@ local Tuning = require(Shared.Config.Tuning)
 local Remotes = require(Shared.Net.Remotes)
 local SimCrates = require(Shared.Sim.Crates)
 local CrateData = require(Shared.Data.Crates)
-local PetData = require(Shared.Data.Pets)
 local Voice = require(Shared.Sim.Voice)
 local Rng = require(Shared.Util.Rng)
 local Text = require(Shared.Util.Text)
@@ -26,9 +23,6 @@ local Data = require(script.Parent.Data)
 local Villagers = require(script.Parent.Villagers)
 
 local Crates = {}
-
-local changed = Instance.new("BindableEvent")
-Crates.PetsChanged = changed.Event -- (player) after their pets or who owns them changed
 
 local rng = Rng.new()
 local lastOpen: { [Player]: number } = {}
@@ -41,7 +35,7 @@ Crates.TipLines = {
 	sunny = "Ehehe, {player}, you've saved up enough gems for a crate! The Store has them.",
 	gentle = "{player}, you have enough gems for a crate now, so take a look in the Store.",
 	bold = "You've got the gems for a crate, {player}, so go and open one!",
-	dreamy = "I heard there are pets in the crates at the Store, {player}, and you can get one now.",
+	dreamy = "{player}, I had a dream about the crates in the Store, and you've got the gems for one now.",
 	easygoing = "Hey, {player}, no rush, but you've got enough gems for a crate.",
 	proud = "Hmph, with that many gems, {player}, you should get yourself a crate.",
 	shy = "Um, {player}, you have enough gems for a crate now (they're in the Store).",
@@ -52,7 +46,7 @@ Crates.TipLines = {
 	bookish = "Actually, {player}, your gems are enough for a crate now, and they're in the Store.",
 	gloomy = "Heh... you've got enough gems for a crate, {player}, if you want one.",
 	polite = "Excuse me, {player}, you now have enough gems for a crate from the Store.",
-	foodie = "{player}, you could get a crate with those gems, and maybe the pet inside likes snacks.",
+	foodie = "{player}, you could get a crate with those gems, and maybe there's a tasting table inside.",
 	nervous = "Um, {player}, I think you have enough gems for a crate now?",
 } :: { [string]: string }
 
@@ -86,40 +80,9 @@ function Crates.open(player: Player, kind: any, how: any): (boolean, any)
 		return false, why
 	end
 	lastOpen[player] = t
-	Data.push(player, "gems", "crates", "crateItems", "pets", "stats")
-	if kind == "pet" then
-		local pet = PetData.get(result.id)
-		Data.log(
-			player,
-			Text.fill("{name} the {kind} came to live in town.", {
-				name = result.petName or result.name,
-				kind = if pet then string.lower(pet.name) else "pet",
-			}),
-			"crate"
-		)
-		changed:Fire(player)
-	else
-		Data.log(player, Text.fill("A {name} came out of a work crate.", { name = string.lower(result.name) }), "crate")
-	end
+	Data.push(player, "gems", "crates", "crateItems", "stats")
+	Data.log(player, Text.fill("A {name} came out of a work crate.", { name = string.lower(result.name) }), "crate")
 	return true, result
-end
-
--- Makes villager `vid` the owner of pet `pid` (false: nobody).
-function Crates.setOwner(player: Player, pid: any, vid: any): (boolean, string?)
-	local profile = Data.get(player)
-	if not profile then
-		return false, "Your save isn't in yet."
-	end
-	if vid ~= false and type(vid) ~= "string" then
-		return false, "Who?"
-	end
-	local ok, why = SimCrates.assign(profile, pid, vid)
-	if not ok then
-		return false, why
-	end
-	Data.push(player, "pets")
-	changed:Fire(player)
-	return true
 end
 
 -- The tip: once the player has the gems for a crate, a villager of theirs who is up and about says
@@ -173,9 +136,6 @@ function Crates.start()
 	Remotes.fn("CrateOpen").OnServerInvoke = function(player, kind, how)
 		local ok, result = Crates.open(player, kind, how)
 		return ok, result
-	end
-	Remotes.fn("PetOwner").OnServerInvoke = function(player, pid, vid)
-		return Crates.setOwner(player, pid, vid)
 	end
 	-- a look every few seconds at who has the gems for a crate and hasn't been told
 	task.spawn(function()

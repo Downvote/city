@@ -14,7 +14,6 @@
 --   roof     a roof over the bed, or a floor above it
 --   fun      fun pieces near the bed: the Fun tab's, or anything for games, toys, music or a TV
 --   friends  how many friends they have and how close, each other villager counted by level
---   pet      a pet of their own (a pet crate's): on top, so it makes up for something missing
 -- Mood climbs to the cap a little each town hour and sinks to it when it is over (the bed sold, a
 -- friend fallen out): Needs.drift. What happens to them (events, gifts, granted wishes, chats)
 -- still moves it, but a lift counts for less than it says and never goes past the cap; a knock
@@ -38,7 +37,7 @@ local V = Tuning.Villagers
 local Needs = {}
 
 -- The factors, in the order the villager page lists them.
-Needs.Factors = { "bed", "comfy", "roof", "fun", "friends", "pet" }
+Needs.Factors = { "bed", "comfy", "roof", "fun", "friends" }
 
 -- What a villager may ask for, in the order they ask: a bed and work first, then what their mood
 -- lacks.
@@ -189,19 +188,6 @@ function Needs.friends(profile: any, vid: string): (number, number, number)
 	return math.min(points, N.FriendsMax), friends, known
 end
 
--- The pet this villager owns (profile.pets, Sim/Crates), if any.
-function Needs.petOf(profile: any, vid: string): any?
-	if type(profile.pets) ~= "table" then
-		return nil
-	end
-	for _, pet in profile.pets do
-		if type(pet) == "table" and pet.vid == vid then
-			return pet
-		end
-	end
-	return nil
-end
-
 -- Every factor as the villager page shows it: { id, points, max, have } in Needs.Factors' order,
 -- with what it is in words (`text`: "Single bed", "2 friends") and, for the bed, its comfort step.
 export type Factor = { id: string, points: number, max: number, have: boolean, text: string, step: number? }
@@ -260,14 +246,6 @@ function Needs.factors(profile: any, vid: string): { Factor }
 		max = N.FriendsMax,
 		have = points >= N.FriendsWant,
 		text = words,
-	})
-	local pet = Needs.petOf(profile, vid)
-	table.insert(out, {
-		id = "pet",
-		points = if pet then N.Pet else 0,
-		max = N.Pet,
-		have = pet ~= nil,
-		text = if pet and type(pet.name) == "string" then pet.name else "No pet",
 	})
 	return out
 end

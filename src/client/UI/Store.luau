@@ -14,7 +14,7 @@ local Icons = require(script.Parent.Icons)
 local MenuParts = require(script.Parent.MenuParts)
 local State = require(script.Parent.Parent.Controllers.State)
 local Purchase = require(script.Parent.Parent.Controllers.Purchase)
-local Crates = require(script.Parent.Crates) -- (the Crates tab: work and pet crates)
+local Crates = require(script.Parent.Crates) -- (the Crates tab: the work crate)
 
 local Store = {}
 

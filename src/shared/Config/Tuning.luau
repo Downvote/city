@@ -178,12 +178,13 @@ Tuning.GemPieces = {
 
 -- Crates (Data/Crates, Sim/Crates, Services/Crates). The user: "add work crates that can be bought
 -- with gems or robux, which give exclusive work spaces which are unique to crates, giving a random
--- one with effectiveness scaling off rarity, some of the rarer jobs even giving gems", then "Add
--- pet crates as well". A crate gives one thing at random: first its rarity by Odds, then one of
--- that rarity. Bought with gems it opens at once; one bought with Robux or won as a reward waits
--- in the Store's Crates tab until it is opened.
+-- one with effectiveness scaling off rarity, some of the rarer jobs even giving gems". The work
+-- crate is the only kind (the user: "remove pets. the only crate should be work crates"). A crate
+-- gives one workplace at random: first its rarity by Odds, then one of that rarity. Bought with
+-- gems it opens at once; one bought with Robux or won as a reward waits in the Store's Crates tab
+-- until it is opened.
 Tuning.Crates = {
-	Price = { work = 25, pet = 20 }, -- gems
+	Price = { work = 25 }, -- gems
 	-- how often each rarity comes out of a crate, out of the sum (shown before buying)
 	Odds = { common = 50, uncommon = 28, rare = 14, epic = 6, legendary = 2 },
 	-- a crate job's day pays the best coin job's income, with that job's liking bonus on top
@@ -197,44 +198,13 @@ Tuning.Crates = {
 	GemDayCap = 3,
 	Held = 20, -- unopened crates of each kind a player can hold
 	MaxOwned = 10, -- of any one crate workplace
-	-- the daily gift brings a crate every Every days running: a work crate, then a pet crate
+	-- the daily gift brings a work crate every Every days running
 	DailyEvery = 7,
 	-- seconds between two opens (the opening plays meanwhile)
 	OpenEvery = 2,
 	-- once a player first has the gems for a crate, a villager tells them about the crates
 	-- (Services/Crates): this long after the gems came in, at most once a save
 	TipDelay = 6,
-}
-
--- Pets from pet crates (Data/Pets, Sim/Pets, Services/Pets, client World/Pets). The user: "These
--- all have unique interactions with villagers, and roam around the city. You can choose to make
--- villagers own the pet. ... Which increase mood, satisfy cravings sometimes for you, and provide
--- more interactions." The server picks where each pet goes next (a short walk on its plot, or up to
--- a villager), every player's screen moves it there.
-Tuning.Pets = {
-	Max = 20, -- pets a player can keep
-	-- mood a night for a villager who owns a pet, by the pet's rarity
-	Mood = { common = 2, uncommon = 2, rare = 3, epic = 3, legendary = 4 },
-	MeetMood = 2, -- for a villager the pet comes up to
-	-- the chance, once a town day, that a pet brings its owner the food they are craving
-	Fetch = { common = 0.25, uncommon = 0.3, rare = 0.35, epic = 0.4, legendary = 0.5 },
-	Rest = { 3, 9 }, -- seconds a pet stays put after a walk
-	Walk = { 6, 22 }, -- studs a walk goes, least and most
-	Tries = 6, -- places tried for the next walk before it stays put a while
-	Margin = 6, -- studs a walk keeps inside the land's sides and back
-	Street = 4, -- studs it may go past the land's front, onto the pavement
-	Clear = 1.2, -- studs over the ground a walk's line must be clear at
-	MeetChance = 0.22, -- that a pet's next walk is up to a villager, when one is near and free
-	MeetReach = 40, -- studs: how far off a villager can be for that
-	MeetEvery = 25, -- seconds a pet waits between two of those
-	MeetStay = { 5, 8 }, -- seconds they spend together
-	Gap = 1.8, -- studs between a pet and the villager it comes up to
-	Think = 0.5, -- seconds between two looks at every pet on the server
-	-- the client: how far from the camera a pet is moved and animated, and how often it looks
-	-- for the ground under it
-	Range = 180,
-	GroundEvery = 0.2,
-	NameLength = 16,
 }
 
 -- Running (client World/Run; the user: "also, make the ability to run, with shift"). Walk is the
@@ -403,9 +373,6 @@ Tuning.Needs = {
 	-- Strangers, Acquainted, Friends, Good friends, Best friends)
 	FriendPoints = { 0, 0, 0, 1, 3, 5, 8 },
 	FriendsMax = 25,
-	-- a pet of their own (Sim/Pets, a pet crate's): on top of the rest, so it can make up for
-	-- something missing (the cap still stops at Villagers.MoodMax)
-	Pet = 10,
 	Rise = 1, -- mood a town hour toward the cap from under it
 	Fall = 2, -- and from over it
 	BoostShare = 0.5, -- what a lift counts for (a knock counts in full)

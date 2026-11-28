@@ -2,16 +2,16 @@
 -- Crates, as rules (Data/Crates says what is in them). The user: "add work crates that can be bought
 -- with gems or robux, which give exclusive work spaces which are unique to crates, giving a random
 -- one with effectiveness scaling off rarity, some of the rarer jobs even giving gems ... Some work
--- crates are also given through achievements, goals, daily rewards", then "Add pet crates as well".
+-- crates are also given through achievements, goals, daily rewards". Pet crates came and went
+-- (the user: "remove pets. the only crate should be work crates"), so the work crate is the only
+-- kind.
 --
 -- A crate is opened at once when it is bought with gems (Crates.buy); one bought with Robux or won
--- as a reward is held (profile.crates = { work = n, pet = n }) until the player opens it in the
--- Store (Crates.openHeld). Opening rolls a rarity by Tuning.Crates.Odds, then one thing of it:
---   a work crate's workplace is the player's to put down for nothing, as many as they were given
---     (profile.crateItems = { [catalogId] = count }), as keepsakes are: one put away or sold goes
---     down again, and Crates.check holds Build mode to the count (the Build service runs it);
---   a pet crate's pet joins their pets (profile.pets = { [petId] = { kind, name, coat, vid? } },
---     profile.nextPet), and a villager can be made its owner (Crates.assign).
+-- as a reward is held (profile.crates = { work = n }) until the player opens it in the Store
+-- (Crates.openHeld). Opening rolls a rarity by Tuning.Crates.Odds, then one workplace of it, which
+-- is the player's to put down for nothing, as many as they were given (profile.crateItems =
+-- { [catalogId] = count }), as keepsakes are: one put away or sold goes down again, and
+-- Crates.check holds Build mode to the count (the Build service runs it).
 -- Crate jobs pay gems for a day's work (Crates.dayGems), up to Tuning.Crates.GemDayCap a real day
 -- (profile.crateGems = { day, n }). `profile.crateTold` is set once a villager has told the player
 -- about the crates. Nothing here trusts the client; no services, so the specs run it.
@@ -19,7 +19,6 @@
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Catalog = require(script.Parent.Parent.Build.Catalog)
 local CrateData = require(script.Parent.Parent.Data.Crates)
-local Pets = require(script.Parent.Parent.Data.Pets)
 local Jobs = require(script.Parent.Parent.Data.Jobs)
 local Gems = require(script.Parent.Gems)
 
@@ -60,14 +59,13 @@ function Crates.price(kind: string): number?
 end
 
 -- What is in a crate a player could open now: the rarities and their entries, less what they can
--- keep no more of (a workplace they have MaxOwned of). A pet crate always has its pets, unless the
--- player keeps as many pets as they can.
+-- keep no more of (a workplace they have MaxOwned of).
 local function openable(profile: any, kind: string): { CrateData.Odds }
 	local out = {}
 	for _, o in CrateData.odds(kind) do
 		local entries = {}
 		for _, e in o.entries do
-			if kind ~= "work" or Crates.owned(profile, e.id) < K.MaxOwned then
+			if Crates.owned(profile, e.id) < K.MaxOwned then
 				table.insert(entries, e)
 			end
 		end
@@ -82,9 +80,6 @@ end
 function Crates.blocked(profile: any, kind: string): string?
 	if not CrateData.get(kind) then
 		return "There's no crate like that."
-	end
-	if kind == "pet" and Crates.petCount(profile) >= Tuning.Pets.Max then
-		return "You have as many pets as you can keep."
 	end
 	if #openable(profile, kind) == 0 then
 		return "You have all you can keep from these."
@@ -116,55 +111,21 @@ end
 
 export type Result = {
 	kind: string,
-	id: string, -- the catalog id of the workplace, or the pet's kind
+	id: string, -- the catalog id of the workplace
 	name: string,
 	rarity: string,
-	pet: string?, -- the new pet's id in profile.pets
-	petName: string?,
-	coat: number?,
 }
 
--- Gives what was rolled.
-local function grant(profile: any, kind: string, e: CrateData.Entry, rng: any): Result
-	local result: Result = { kind = kind, id = e.id, name = e.name, rarity = e.rarity }
-	if kind == "work" then
-		if type(profile.crateItems) ~= "table" then
-			profile.crateItems = {}
-		end
-		profile.crateItems[e.id] = math.min(Crates.owned(profile, e.id) + 1, K.MaxOwned)
-	else
-		local p = Pets.get(e.id) :: Pets.Pet
-		if type(profile.pets) ~= "table" then
-			profile.pets = {}
-		end
-		local n = if type(profile.nextPet) == "number" and profile.nextPet >= 1 then math.floor(profile.nextPet) else 1
-		while profile.pets["p" .. n] ~= nil do
-			n += 1
-		end
-		local pid = "p" .. n
-		profile.nextPet = n + 1
-		-- a name nobody else in town has, if there is one left
-		local used = {}
-		for _, other in profile.pets do
-			if type(other) == "table" and type(other.name) == "string" then
-				used[other.name] = true
-			end
-		end
-		local free = {}
-		for _, nm in p.names do
-			if not used[nm] then
-				table.insert(free, nm)
-			end
-		end
-		local name = rng:pick(if #free > 0 then free else p.names)
-		local coat = rng:int(1, #p.coats)
-		profile.pets[pid] = { kind = p.id, name = name, coat = coat }
-		result.pet, result.petName, result.coat = pid, name, coat
+-- Gives what was rolled: the workplace is the player's to put down.
+local function grant(profile: any, kind: string, e: CrateData.Entry): Result
+	if type(profile.crateItems) ~= "table" then
+		profile.crateItems = {}
 	end
+	profile.crateItems[e.id] = math.min(Crates.owned(profile, e.id) + 1, K.MaxOwned)
 	if type(profile.stats) == "table" then
 		profile.stats.crates = (profile.stats.crates or 0) + 1
 	end
-	return result
+	return { kind = kind, id = e.id, name = e.name, rarity = e.rarity }
 end
 
 -- Opens a crate the player holds. Returns what it gave, or nil and why.
@@ -184,7 +145,7 @@ function Crates.openHeld(profile: any, kind: any, rng: any): (Result?, string?)
 		return nil, "You have all you can keep from these."
 	end
 	profile.crates[kind] = Crates.held(profile, kind) - 1
-	return grant(profile, kind, e, rng), nil
+	return grant(profile, kind, e), nil
 end
 
 -- Buys a crate with gems and opens it. Returns what it gave, or nil and why.
@@ -205,10 +166,10 @@ function Crates.buy(profile: any, kind: any, rng: any): (Result?, string?)
 		return nil, "You have all you can keep from these."
 	end
 	Gems.spend(profile, price)
-	return grant(profile, kind, e, rng), nil
+	return grant(profile, kind, e), nil
 end
 
--- Does the player have the gems for a crate (the cheaper one)?
+-- Does the player have the gems for a crate (the cheapest one)?
 function Crates.canAffordOne(profile: any): boolean
 	local least = math.huge
 	for _, kind in CrateData.Order do
@@ -334,80 +295,9 @@ function Crates.dayGems(profile: any, worked: { { job: string, share: number } }
 	return pay
 end
 
--- Pets -----------------------------------------------------------------------------------------------
-
-export type OwnedPet = { kind: string, name: string, coat: number, vid: string? }
-
-function Crates.petCount(profile: any): number
-	local n = 0
-	for _, p in if type(profile and profile.pets) == "table" then profile.pets else {} do
-		if type(p) == "table" then
-			n += 1
-		end
-	end
-	return n
-end
-
--- The player's pets in the order they came, each with its id.
-function Crates.petList(profile: any): { { id: string, pet: OwnedPet } }
-	local out = {}
-	for pid, p in if type(profile and profile.pets) == "table" then profile.pets else {} do
-		if type(pid) == "string" and type(p) == "table" then
-			table.insert(out, { id = pid, pet = p })
-		end
-	end
-	table.sort(out, function(a, b)
-		local na, nb = tonumber(string.sub(a.id, 2)) or 0, tonumber(string.sub(b.id, 2)) or 0
-		return na < nb
-	end)
-	return out
-end
-
--- The pet a villager owns, or nil.
-function Crates.petOf(profile: any, vid: string): (string?, OwnedPet?)
-	for pid, p in if type(profile and profile.pets) == "table" then profile.pets else {} do
-		if type(p) == "table" and p.vid == vid then
-			return pid, p
-		end
-	end
-	return nil, nil
-end
-
--- Makes a villager the owner of a pet (false: nobody's). A villager has one pet at most: one they
--- had already is nobody's now. Returns ok, or false and why.
-function Crates.assign(profile: any, pid: any, vid: any): (boolean, string?)
-	local pets = profile.pets
-	local pet = if type(pid) == "string" and type(pets) == "table" then pets[pid] else nil
-	if type(pet) ~= "table" then
-		return false, "That pet isn't yours."
-	end
-	if vid == false or vid == nil then
-		pet.vid = nil
-		return true
-	end
-	if type(vid) ~= "string" or type(profile.villagers) ~= "table" or not profile.villagers[vid] then
-		return false, "Who?"
-	end
-	for other, p in pets do
-		if other ~= pid and type(p) == "table" and p.vid == vid then
-			p.vid = nil
-		end
-	end
-	pet.vid = vid
-	return true
-end
-
--- A villager who moved out leaves their pet with nobody.
-function Crates.forget(profile: any, vid: string)
-	for _, p in if type(profile.pets) == "table" then profile.pets else {} do
-		if type(p) == "table" and p.vid == vid then
-			p.vid = nil
-		end
-	end
-end
-
--- What a save holds, cleaned (Sim/Schema): held crates of known kinds, known crate workplaces with
--- whole counts, pets of known kinds with a name and a coat, owners who still live in town.
+-- What a save holds, cleaned (Sim/Schema): held crates of known kinds and known crate workplaces,
+-- with whole counts. An old save's unopened pet crates are work crates now, so no reward is lost
+-- (the pets themselves are dropped in Schema.migrate).
 function Crates.clean(profile: any)
 	local held = {}
 	for _, kind in CrateData.Order do
@@ -415,6 +305,10 @@ function Crates.clean(profile: any)
 		if n > 0 then
 			held[kind] = n
 		end
+	end
+	local oldPet = Crates.held(profile, "pet")
+	if oldPet > 0 then
+		held.work = math.min((held.work or 0) + oldPet, K.Held)
 	end
 	profile.crates = held
 	local items = {}
@@ -427,29 +321,6 @@ function Crates.clean(profile: any)
 		end
 	end
 	profile.crateItems = items
-	local pets = {}
-	local count = 0
-	local villagers = if type(profile.villagers) == "table" then profile.villagers else {}
-	for _, e in Crates.petList(profile) do
-		local p = e.pet
-		local kind = Pets.get(p.kind)
-		if kind and count < Tuning.Pets.Max and string.match(e.id, "^p%d+$") then
-			local name = if type(p.name) == "string"
-					and #p.name > 0
-					and #p.name <= Tuning.Pets.NameLength * 4
-				then p.name
-				else kind.names[1]
-			local coat = if type(p.coat) == "number" and kind.coats[math.floor(p.coat)] then math.floor(p.coat) else 1
-			local vid = if type(p.vid) == "string" and villagers[p.vid] then p.vid else nil
-			pets[e.id] = { kind = kind.id, name = name, coat = coat, vid = vid }
-			count += 1
-		end
-	end
-	profile.pets = pets
-	if type(profile.nextPet) ~= "number" or profile.nextPet ~= profile.nextPet or profile.nextPet < 1 then
-		profile.nextPet = 1
-	end
-	profile.nextPet = math.floor(profile.nextPet)
 	if type(profile.crateGems) ~= "table" or type(profile.crateGems.day) ~= "number" then
 		profile.crateGems = { day = -1, n = 0 }
 	end

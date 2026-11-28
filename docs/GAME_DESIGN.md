@@ -45,10 +45,9 @@ is, not sources.
 - **Voice.** A babble of little syllables as their lines type out, pitched and paced by four sliders in the
   creator, starting from their personality's (section 10, "Voices, sounds and music").
 - **Mood** (0 to 100). Earned from what they have: a bed of their own, a comfy one, a roof over it, fun things near
-  it, friends and a pet of their own set how high it can climb, and it climbs toward that an hour at a time (see
+  it and friends set how high it can climb, and it climbs toward that an hour at a time (see
   "Mood is earned from what a villager has" below). Wishes, gifts, chats and good events lift it a little; quarrels
   and ignored requests knock it down. Mood scales what they earn at work.
-- **A pet**, if the player gives them one from a pet crate (section 8, "Work crates and pet crates").
 - **A favourite food.** Each villager has one, and when a craving comes it is for that half the time. There is
   nothing to feed them by hand: a craving is bought for them there and then (see Wishes).
 - **Job and skill.** A villager takes a free workplace on their own, or you assign one. Skill rises with each day
@@ -318,14 +317,12 @@ gift, a chat, a good event, a party. But a lift now counts for half of what it d
 and never goes past what they can reach; a knock counts in full. A night in bed no longer lifts mood
 by itself. Mood still scales what they earn at work, so a well kept villager earns more.
 
-A pet of their own counts too (the user, of the pets in pet crates: "Which increase mood"; section 8,
-"Work crates and pet crates"). It gives 10 on top of the factors above, so it can make up for
-something they lack, but mood still never goes past 100. Nobody asks for a pet.
+For a while a pet of their own from a pet crate counted too, 10 on top of these; the pets went
+(section 8, "Work crates"), so it is the five above again.
 
 The villager page has a Mood tab: how they feel now, the most they can reach with what they have, and
-a row for each factor, what helps first and then what's missing, each with what it is ("Single bed",
-"Roof over it", "2 friends", "Nothing yet"), the points it gives and a bar. The last row is "A pet",
-with the pet's name or "No pet".
+a row for each of the five factors, what helps first and then what's missing, each with what it is
+("Single bed", "Roof over it", "2 friends", "Nothing yet"), the points it gives and a bar.
 
 ### Villagers ask for what they lack
 
@@ -1184,8 +1181,7 @@ off the popular page.
   plots doubled: see "Bigger plots" in section 9).
 - **Jobs**: twelve workplaces (market stall, café counter, bread oven, flower cart, artist's easel, clinic desk,
   chalkboard, little stage, builder's bench, post office desk, ice cream cart, library desk), one job each. Work
-  crates give eleven more that can't be bought, each better paid than any of these (section 8, "Work crates and
-  pet crates").
+  crates give eleven more that can't be bought, each better paid than any of these (section 8, "Work crates").
 - **Wages**: each working villager earns `income x mood x skill x liking` a day, a little at a time while at their
   workplace (section 8).
 
@@ -1437,7 +1433,7 @@ Basement (150), Tall Builds (150), Big Plot (300), Double Pay (400), Any Colour 
 What each does in Build mode is in section 5; here are the two that touch money. Double Pay doubles everything your
 villagers earn at work. VIP adds a tenth to it, a gem to every daily gift, VIP pieces in Build mode and a small gold
 VIP tag over your head. A pass or a pack has to be made on the Roblox website before it can be sold; until then
-its button says Soon. Crates holds the work crate and the pet crate (see "Work crates and pet crates" below).
+its button says Soon. Crates holds the work crate (see "Work crates" below).
 
 **Gems are rare.** Coins come every few seconds from work. Gems come a few a day: one with the daily gift (three on
 every seventh day running, one more for VIP), and one each for 15, 40 and 90 minutes played that day. That is
@@ -1468,7 +1464,7 @@ claim pays once; playtime goes in order and starts again each day), `Offline.spe
 more than an hour of play) and `Store.spec.luau` (passes from Roblox, a receipt pays once and is granted only once
 saved, the boost, the claims).
 
-### Work crates and pet crates
+### Work crates
 
 > Also, add work crates that can be bought with gems or robux, which give exclusive work spaces which are unique to
 > crates, giving a random one with effectiveness scaling off rarity, some of the rarer jobs even giving gems. Crate
@@ -1481,13 +1477,27 @@ saved, the boost, the claims).
 > choose to make villagers own the pet. There are pets like cats, dogs, roomba, bunny, etc. Which increase mood,
 > satisfy cravings sometimes for you, and provide more interactions.
 
-**Crates.** There are two: a work crate (25 gems or R$ 99) and a pet crate (20 gems or R$ 79). The Store's third tab,
-Crates, has a card for each: its picture, how many are waiting to be opened, and what is inside by rarity with the
-chance of each (Common 50%, Uncommon 28%, Rare 14%, Epic 6%, Legendary 2%, and the names in each), then Open, the gem
-price and the Robux price. Bought with gems, a crate opens at once; one bought with Robux or won as a reward waits in
-the tab until the player opens it. Opening plays the gift's chime and shows the crate rocking and popping, then what
-came out with its rarity and where to find it. The passes and gem packs aside, the crates are the one thing for
-sale besides cravings and Build mode's pieces.
+On 2026-11-28 the user took the pets back:
+
+> remove pets. the only crate should be work crates
+
+So there are no pets and no pet crates any more: nothing roams the plots, nobody owns one, the Quirks tab has no
+Pet row and the Mood tab is back to its five factors. Everything that gave a pet crate (the daily gift's fourteenth
+day, two achievements and two goals) gives a work crate instead, and an old save's unopened pet crates are work
+crates when it loads; its pets are let go. The villagers who take in a stray or name a pet in an event still do:
+those are conversations and memories for a few days (sections 3 and 4), never the crates' pets.
+
+Then, of the crate's line in the Store:
+
+> Crate jobs gives special workspaces that pay more than regular ones.
+
+**Crates.** There is one, the work crate (25 gems or R$ 99). The Store's third tab, Crates, has its card: its
+picture, the line "Crate jobs give special workplaces that pay more than regular ones.", how many are waiting to be
+opened, and what is inside by rarity with the chance of each (Common 50%, Uncommon 28%, Rare 14%, Epic 6%, Legendary
+2%, and the names in each), then Open, the gem price and the Robux price. Bought with gems, a crate opens at once;
+one bought with Robux or won as a reward waits in the tab until the player opens it. Opening plays the gift's sound
+and shows the crate rocking and popping, then what came out with its rarity and where to find it. The passes and gem
+packs aside, the work crate is the one thing for sale besides cravings and Build mode's pieces.
 
 **Work crates** give a workplace you can't buy, each with a job of its own (our own names: the third example became
 the Anomaly keeper, who watches a glowing thing in a tank):
@@ -1509,27 +1519,13 @@ The workplaces are free to put down from Build mode's Work group, on its Crate t
 them; one put away or sold goes down again. Customers who drop by ask for what that job is for ("Can I pick a
 card?", "Is it awake?").
 
-**Pet crates** give a pet: a cat, a dog or a bunny (common), a robot vacuum or a hedgehog (uncommon), a red panda or a
-penguin (rare), a capybara (epic) or a baby dragon (legendary), each in one of a few coats and with a name of its
-own. A town keeps up to 20. Pets wander their plot's land and the pavement in front of it, a short walk and a rest at
-a time: a cat or a dog walks with its legs going and its tail up, a bunny hops, the robot vacuum glides with its
-brushes spinning, the penguin waddles, the dragon flies a little off the ground. Now and then a pet goes up to a
-villager who is free nearby, its owner more often than not: they stop for it, do one of its things together (a pat,
-a game, a treat, watching the robot vacuum go round) and the villager says a line about it in their own voice and
-cheers up a little. On a villager's page, the Quirks tab has a Pet row with Pick: one pet each, and a pet one
-villager. An owner is a little happier every night (more for a rarer pet), their mood can climb 10 higher (section
-3, "Mood is earned from what a villager has"), and once a town day there is a chance (a quarter for a common pet,
-half for the dragon) that their pet brings them the food they are craving, which grants it for nothing ("Biscuit
-brought Mara an apple."). A player can hold E on any pet to give it a pat.
-
 **The tip.** The first time a player has the gems for a crate, one of their villagers who is up and about tells
 them, in their own voice, in a short scene with Show me (the Store's Crates tab) and Later, and says it over their
 head too. It happens once a save.
 
-**Rewards.** The daily gift brings a work crate on the seventh day running, a pet crate on the fourteenth, and so
-on by turns. Five achievements (Five in town, Ten in town, Level 5, A full street, Level 10) and four town goals
-(All hands, Close knit, Inseparable, A working town) give a crate as well. Claim all gives them too, and a notice
-says the crate is in the Store.
+**Rewards.** The daily gift brings a work crate every seventh day running. Five achievements (Five in town, Ten in
+town, Level 5, A full street, Level 10) and four town goals (All hands, Close knit, Inseparable, A working town)
+give a work crate as well. Claim all gives them too, and a notice says the crate is in the Store.
 
 ## 9. The town
 

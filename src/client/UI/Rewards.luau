@@ -78,10 +78,9 @@ local function minutes(secs: number): string
 	return if m == 1 then "1 minute" else Text.fill("{n} minutes", { n = m })
 end
 
--- What a reward pays, on a leaning slab: the coins and the gems side by side, and a crate when it
--- gives one (props.Crate: "work" or "pet", Data/Crates).
 -- What a reward pays, beside the card's picture: a caption (props.Word, "Pays" by default) over
--- the coins and gems in big numbers, and a crate on a line under them (MenuParts.payout).
+-- the coins and gems in big numbers, and a crate on a line under them when it gives one
+-- (props.Crate: "work", Data/Crates; MenuParts.payout).
 local function pays(parent: Instance, coins: number, gems: number, props: { [string]: any })
 	local crate = props.Crate and CrateData.get(props.Crate)
 	MenuParts.payout(parent, props.Word or "Pays", {
