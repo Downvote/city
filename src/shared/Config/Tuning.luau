@@ -517,7 +517,7 @@ Tuning.Jobs = {
 -- bar, which you gain while doing the work. This increases the amount of cash you get doing that
 -- particular work as well." The pay and the day's cap (Tuning.Jobs.Player) both grow by the town's
 -- level and by the skill; tests/specs/PlayerWork.spec.luau keeps it small beside a town's wages at
--- every level, and the PlayerWork spec holds the curve.
+-- every level and holds the curve.
 Tuning.Skills = {
 	Top = 20, -- the highest skill level
 	Base = 60, -- experience from one level to the next: Base * level ^ Grow
