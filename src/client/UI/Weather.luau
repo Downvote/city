@@ -23,6 +23,7 @@ local Rules = require(Shared.Sim.Graphics)
 
 local Graphics = require(script.Parent.Parent.World.Graphics)
 local Audio = require(script.Parent.Parent.Controllers.Audio)
+local ViewTime = require(script.Parent.Parent.Build.ViewTime) -- (clear weather while the creator is open)
 
 local Weather = {}
 
@@ -31,6 +32,7 @@ local MOST_RATE = 400 -- the most one emitter is given a second (a layer past it
 
 local folder: Folder? = nil
 local boxes: { [string]: Part } = {}
+local rings: { [string]: { Part } } = {} -- a ring box's four parts (Data/Weather.ringParts)
 local cells: { Part } = {}
 local emitters: { { e: ParticleEmitter, box: string } } = {}
 local sheltered = false
@@ -112,7 +114,9 @@ local function emitter(layer: Data.Layer, holder: BasePart, color: Color3, rate:
 		set(e, "ShapeStyle", Enum.ParticleEmitterShapeStyle.Volume)
 	end
 	if layer.orient == "streak" then
-		set(e, "Orientation", Enum.ParticleOrientation.VelocityParallel)
+		-- upright, facing the camera: the streak's picture is a vertical line, and VelocityParallel
+		-- would lay its left to right along the fall (the rain fell as sideways dashes)
+		set(e, "Orientation", Enum.ParticleOrientation.FacingCameraWorldUp)
 	elseif layer.orient == "flat" then
 		set(e, "Orientation", Enum.ParticleOrientation.VelocityPerpendicular)
 	else
@@ -146,9 +150,23 @@ local function layersNow(): { Data.Layer }
 	return Data.drawn(kindNow(), level.Layers, level.Particles, look.air, K.SeasonAir)
 end
 
+-- While a cutscene plays it owns the light and stops what falls itself (UI/Cutscene), so nothing
+-- here touches either.
+local function inCutscene(): boolean
+	local cam = workspace.CurrentCamera
+	return cam ~= nil and cam:GetAttribute("Cutscene") == true
+end
+
+-- Whether the weather stands down on this screen: something wants a clear day (the creator: the
+-- user, "weather effects and time seems to affect the avatar creator"; Build/ViewTime.clear).
+local function calm(): boolean
+	return ViewTime.clear()
+end
+
 local function enableAll()
+	local still = calm()
 	for _, x in emitters do
-		x.e.Enabled = x.box == "ground" or not sheltered
+		x.e.Enabled = not still and (x.box == "ground" or not sheltered)
 	end
 end
 
@@ -163,16 +181,29 @@ local function draw()
 	clear()
 	for _, layer in layersNow() do
 		local holders: { BasePart } = {}
+		-- (a ring's four parts share its rate by their size; a patch of ground gets it all)
+		local shares: { number } = {}
 		if layer.box == "ground" then
 			for _, c in cells do
 				table.insert(holders, c)
+				table.insert(shares, 1)
+			end
+		elseif rings[layer.box] then
+			local total = 0
+			for _, p in rings[layer.box] do
+				total += p.Size.X * p.Size.Z
+			end
+			for _, p in rings[layer.box] do
+				table.insert(holders, p)
+				table.insert(shares, p.Size.X * p.Size.Z / math.max(total, 1))
 			end
 		elseif boxes[layer.box] then
 			table.insert(holders, boxes[layer.box])
+			table.insert(shares, 1)
 		end
 		local colors = layer.colors
-		for _, holder in holders do
-			local rate = layer.rate / #colors
+		for h, holder in holders do
+			local rate = layer.rate * shares[h] / #colors
 			local pieces = math.max(1, math.ceil(rate / MOST_RATE))
 			for _, color in colors do
 				for _ = 1, pieces do
@@ -350,22 +381,39 @@ local function strike(at: Vector3)
 	end)
 end
 
--- The air on this screen: the weather's, eased, or clear with the haze off (Settings).
+-- The air on this screen, every frame: the weather's, eased (Tuning.Weather.AirRate), clear at once
+-- while the weather stands down, thin at once with the haze off (Settings). This screen is the
+-- only one that sets it (Services/World leaves it after the start), so it never jumps between two
+-- values: it did, the server's every half second over this one's, and the fog flickered.
 local airDensity, airHaze = -1, -1
-local function stepAir()
+local function stepAir(dt: number)
 	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
 	if not atmosphere then
 		return
 	end
-	local density, haze = Rules.air(Graphics.settings(), kindNow())
+	local still = calm()
+	local density, haze = Rules.air(Graphics.settings(), if still then "clear" else kindNow())
 	if airDensity < 0 then
 		airDensity, airHaze = atmosphere.Density, atmosphere.Haze
 	end
-	local k = if Graphics.settings().haze then K.Ease * 2 else 1
+	local k = if still or not Graphics.settings().haze then 1 else 1 - math.exp(-K.AirRate * dt)
 	airDensity += (density - airDensity) * k
 	airHaze += (haze - airHaze) * k
-	atmosphere.Density = airDensity
-	atmosphere.Haze = airHaze
+	if atmosphere.Density ~= airDensity then
+		atmosphere.Density = airDensity
+	end
+	if atmosphere.Haze ~= airHaze then
+		atmosphere.Haze = airHaze
+	end
+end
+
+-- Where the ground is under what the camera looks at (the rings sit on it), found a few times a
+-- second.
+local groundY: number? = nil
+local function findGround(at: Vector3)
+	groundParams.FilterDescendantsInstances = skipList()
+	local hit = workspace:Raycast(at + Vector3.new(0, 40, 0), Vector3.new(0, -200, 0), groundParams)
+	groundY = if hit then hit.Position.Y else at.Y - 4
 end
 
 function Weather.start()
@@ -377,7 +425,13 @@ function Weather.start()
 	f.Parent = workspace
 	folder = f
 	for name, box in Data.Boxes do
-		if name ~= "ground" then
+		if box.ring then
+			local parts = {}
+			for i, piece in Data.ringParts(name) do
+				table.insert(parts, hidden("Weather" .. name .. i, piece.size))
+			end
+			rings[name] = parts
+		elseif name ~= "ground" then
 			boxes[name] = hidden("Weather" .. name, box.size)
 		end
 	end
@@ -395,18 +449,43 @@ function Weather.start()
 	workspace:GetAttributeChangedSignal("Season"):Connect(redraw)
 	Graphics.Changed.Event:Connect(redraw)
 
-	local roofClock, cellClock, airClock = 0, 0, 0
+	local roofClock, cellClock = 0, 0
 	local cellsAt: Vector3? = nil
 	local nextStrike = os.clock() + 8
+	local wasCalm = false
 	RunService.RenderStepped:Connect(function(dt)
 		local cam = workspace.CurrentCamera
-		if not cam then
+		if not cam or inCutscene() then
 			return
 		end
 		local eye = cam.CFrame.Position
 		for name, part in boxes do
 			local box = Data.Boxes[name]
 			part.CFrame = CFrame.new(eye + Vector3.new(0, box.up, 0))
+		end
+		-- the rings round the spot the camera looks at, on the ground under it
+		local spot = cam.Focus.Position
+		if not groundY then
+			findGround(spot)
+		end
+		for name, parts in rings do
+			local box = Data.Boxes[name]
+			local middle = Vector3.new(spot.X, (groundY :: number) + box.up, spot.Z)
+			for i, piece in Data.ringParts(name) do
+				local part = parts[i]
+				if part then
+					part.CFrame = CFrame.new(middle + piece.at)
+				end
+			end
+		end
+		-- the creator wants a clear day: nothing falls, no puddles, no lightning
+		local still = calm()
+		if still ~= wasCalm then
+			wasCalm = still
+			enableAll()
+			if still then
+				dropPuddles(false)
+			end
 		end
 		roofClock += dt
 		if roofClock > 0.3 then
@@ -423,24 +502,21 @@ function Weather.start()
 		cellClock += dt
 		if cellClock > 0.4 then
 			cellClock = 0
-			if wet and (not cellsAt or (eye - (cellsAt :: Vector3)).Magnitude > K.Cell / 2) then
+			findGround(spot)
+			if wet and not still and (not cellsAt or (eye - (cellsAt :: Vector3)).Magnitude > K.Cell / 2) then
 				cellsAt = eye
 				placeCells(eye)
 			end
 			-- puddles while it rains, where the detail allows; they dry when it stops
-			local want = wet and Graphics.level().Puddles
+			local want = wet and not still and Graphics.level().Puddles
 			if want and (not puddleAt or (eye - (puddleAt :: Vector3)).Magnitude > K.PuddleReach * 0.6) then
 				placePuddles(eye)
 			elseif not want and #puddles > 0 then
 				dropPuddles(true)
 			end
 		end
-		airClock += dt
-		if airClock > 0.5 then
-			airClock = 0
-			stepAir()
-		end
-		if Data.Lightning[kind] and os.clock() > nextStrike then
+		stepAir(dt)
+		if Data.Lightning[kind] and not still and os.clock() > nextStrike then
 			nextStrike = os.clock() + rng:NextNumber(K.Lightning.Every[1], K.Lightning.Every[2])
 			strike(eye)
 			Audio.thunder()

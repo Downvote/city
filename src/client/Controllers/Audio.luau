@@ -31,6 +31,7 @@ local Builder = require(Shared.Build.Builder)
 
 local State = require(script.Parent.State)
 local Graphics = require(script.Parent.Parent.World.Graphics)
+local ViewTime = require(script.Parent.Parent.Build.ViewTime) -- (a clear day in the creator)
 local Kit = require(script.Parent.Parent.UI.Kit)
 
 local Audio = {}
@@ -334,8 +335,12 @@ function Audio.overHead(model: Model, text: string)
 	end)
 end
 
--- The weather's loops: each eased toward what the weather and the roof over the camera ask for.
+-- The weather's loops: each eased toward what the weather and the roof over the camera ask for
+-- (quiet while the creator holds a clear day: Build/ViewTime.clear).
 local function weatherNow(): string
+	if ViewTime.clear() then
+		return "clear"
+	end
 	local w = workspace:GetAttribute("Weather")
 	return if type(w) == "string" then w else "clear"
 end

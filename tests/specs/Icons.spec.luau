@@ -108,9 +108,9 @@ describe("Icons", function()
 		end
 	end)
 
-	it("draws the coin in one flat colour and the gem as one shape with nothing inside", function()
-		-- (the user: "redo the coins and gems icon, the coins should be only one color, and the gem
-		-- icon shouldnt have outlines inside")
+	it("draws the coin in one flat colour and the gem with its facets cut out of it", function()
+		-- (the user: "redo the coins and gems icon, the coins should be only one color", then, with a
+		-- picture of coin stacks and a cut gem: "make gem and coin icons like this")
 		local Vector = require("StarterPlayer.StarterPlayerScripts.Client.UI.Vector")
 		local IconArt = require("StarterPlayer.StarterPlayerScripts.Client.UI.IconArt")
 		for _, name in { "coin", "coins" } do
@@ -137,13 +137,17 @@ describe("Icons", function()
 				end
 			end
 		end
+		-- the gem: one solid shape in one colour, its facets cut out of it (never drawn on in a
+		-- second tone)
+		local cuts = 0
 		for _, layer in IconArt.art.gem do
-			local l = if type(layer) == "string" then { layer } else layer
-			expect(l.cut ~= true).toBeTruthy()
+			local l: any = if type(layer) == "string" then { layer } else layer
+			expect(typeof(l.fill) ~= "Color3").toBeTruthy()
+			if l.cut then
+				cuts += 1
+			end
 		end
-		for _, sh in Icons.defs.gem do
-			expect(sh.o ~= false).toBeTruthy()
-		end
+		expect(cuts >= 2).toBeTruthy()
 	end)
 
 	it("draws the hammer with a heavy head square across its handle", function()

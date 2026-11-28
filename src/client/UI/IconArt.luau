@@ -265,21 +265,53 @@ A.trophy = {
 
 -- money ------------------------------------------------------------------------------------------------
 
--- The coin is one flat gold with a slot cut down its face, and nothing in a second tone (the
--- user: "redo the coins and gems icon, the coins should be only one color"). It keeps its own
--- colour wherever it shows; the two coins of `coins` are apart, the back one behind the front.
+-- The coin is two stacks of coins, the tall one behind and the short one in front (the user, with
+-- a picture of coin stacks: "make gem and coin icons like this"). One flat gold, and nothing in a
+-- second tone (the user: "the coins should be only one color"): the edges between the coins and
+-- the front stack's outline are cut out of it. It keeps its own colour wherever it shows.
 local GOLD = Color3.fromRGB(236, 162, 28)
-local SLOT = rect(10.75, 6.5, 2.5, 11, 1.25)
+
+-- A stack of coins seen a little from above: its middle across, its half width, the middle of its
+-- top face, the middle of its bottom, and how deep its faces curve.
+local function stack(cx: number, rx: number, top: number, bottom: number, ry: number): string
+	local l, r = cx - rx, cx + rx
+	return string.format(
+		"M%g %g A%g %g 0 0 1 %g %g V%g A%g %g 0 0 1 %g %g Z",
+		l,
+		top,
+		rx,
+		ry,
+		r,
+		top,
+		bottom,
+		rx,
+		ry,
+		l,
+		bottom
+	)
+end
+
+-- The edges between its coins: the top face's front rim, then one a coin down at each step.
+local function rims(cx: number, rx: number, top: number, step: number, n: number, ry: number): string
+	local parts = {}
+	for k = 0, n - 1 do
+		local y = top + k * step
+		table.insert(parts, string.format("M%g %g A%g %g 0 0 0 %g %g", cx - rx, y, rx, ry, cx + rx, y))
+	end
+	return table.concat(parts, " ")
+end
+
+-- (four coins behind, two in front, each thick enough to show between its rims at 16 pixels)
+local BACK = stack(15.5, 6.25, 4.5, 19, 2.5)
+local FRONT = stack(8.5, 6.25, 12, 19.5, 2.5)
 A.coin = {
-	{ circle(12, 12, 10), fill = GOLD },
-	hole(SLOT),
+	{ BACK, fill = GOLD },
+	gap(rims(15.5, 6.25, 4.5, 3.625, 4, 2.5), 1.5),
+	clear(FRONT, 1.5),
+	{ FRONT, fill = GOLD },
+	gap(rims(8.5, 6.25, 12, 3.75, 2, 2.5), 1.5),
 }
-A.coins = {
-	{ circle(15.25, 14.75, 7.25), fill = GOLD },
-	{ circle(9, 9.25, 9), fill = true, cut = true },
-	{ circle(9, 9.25, 7.25), fill = GOLD },
-	hole(rect(7.75, 5.5, 2.5, 7.5, 1.25)),
-}
+A.coins = A.coin
 
 -- The one colour forms of the art that has colours of its own, for where its own colours won't
 -- read: the coin on a yellow block (the user: "make a black icon for coins as well where it is
@@ -658,7 +690,15 @@ A.barrel = {
 }
 -- fancy, and the gems you buy: a cut gem as one solid shape, nothing drawn inside it (the user:
 -- "the gem icon shouldnt have outlines inside")
-A.gem = { solid("M7 3.5 H17 L21.5 9 L12 21 L2.5 9 Z") }
+-- a cut gem (the user, with a picture of one: "make gem and coin icons like this"): its outline
+-- solid, its facets cut out of it in lines, the girdle across, the crown's three triangles over it
+-- and two lines down the pavilion that stop short of the point
+A.gem = {
+	solid("M6.5 4 H17.5 L22 9.5 L12 21.5 L2 9.5 Z"),
+	gap("M1.5 9.5 H22.5", 1.5),
+	gap("M7.1 5.6 L8 9.5 L11.25 5.5 M12.75 5.5 L16 9.5 L16.9 5.6", 1.5),
+	gap("M8 9.5 L10.6 17 M16 9.5 L13.4 17", 1.5),
+}
 -- playful: a balloon on its string
 A.balloon = {
 	flat(ellipse(12, 9, 7, 7.5)),

@@ -3695,7 +3695,8 @@ function BuildUI.init(exitCallback: () -> ())
 
 	-- The time the town is shown at, on this screen only, top right across from the coins (the
 	-- user: "in build mode, allow the player to toggle what time they see their city in"): the
-	-- arrows go through Now (the town's own time), Morning, Noon, Evening and Night (Build/ViewTime).
+	-- arrows go through Now (the town's own time), Morning, Noon, Evening and Night (Build/ViewTime),
+	-- and Build mode opens at Noon.
 	local timePill = Kit.darkPill({
 		Name = "TimeOfDay",
 		Size = UDim2.fromOffset(TIME_W, COINS_H),
@@ -3825,6 +3826,10 @@ function BuildUI.init(exitCallback: () -> ())
 			ui.Visible = true
 			openMain(mainTab)
 			BuildMode.setTool("select")
+			-- the town shown by day to build in (the user: "can you make the default for build mode
+			-- day time?"); the arrows still go to any other hour, or the town's own
+			ViewTime.set(ViewTime.defaultIndex())
+			showTime()
 			-- the bars slide in from the edges
 			for _, f in ui:GetChildren() do
 				if f:IsA("GuiObject") then

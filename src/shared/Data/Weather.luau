@@ -10,8 +10,12 @@
 -- as a few values spread evenly over a particle's life, ranges as { low, high }, studs and
 -- seconds. `box` is where it comes from round the camera (Weather.Boxes; "ground" is the rain's
 -- patches set on whatever is under them); `level` is the least of Tuning.Graphics' Layers that
--- draws it (1 at every detail level); `orient` "streak" draws it along its fall, "flat" lays it on
--- the ground, else it faces the camera; `flip` is a flipbook's grid (8: eight by eight frames).
+-- draws it (1 at every detail level); `orient` "streak" stands it upright facing the camera (a
+-- picture of a vertical line falls as a streak), "flat" lays it on the ground, else it faces the
+-- camera; `flip` is a flipbook's grid (8: eight by eight frames). (A streak was drawn "along its
+-- fall", ParticleOrientation.VelocityParallel, but that lays a picture's left to right along the
+-- motion, as Roblox's own rain guide has it: our line fell as sideways dashes. The user: "weather
+-- like rain seems to fall sideways".)
 --
 -- Pictures: Roblox's own and a few from the Creator Store, white or grey so a colour tints them
 -- (decal ids and makers noted; python3 scripts/library_textures.py check confirms they still show).
@@ -37,14 +41,38 @@ Weather.Textures = {
 
 -- Where a layer comes from, round the camera: a flat square `size` across `up` studs over it, or
 -- a box of that size round it (`volume`). "ground" is the rain's patches (Tuning.Weather.Cells).
+-- A `ring` box sits on the ground (`up` over the ground under what the camera looks at) with a
+-- square hole `ring` studs from its middle each way: four boxes round the camera's spot, so what
+-- comes from it never starts where the camera is. Mist comes from rings: big soft puffs born round
+-- the camera, or falling through it, popped in and out of view (the user: "it seems like the fog
+-- flicker in and out constantly").
 Weather.Boxes = {
 	near = { size = Vector3.new(40, 1, 40), up = 22 },
 	mid = { size = Vector3.new(110, 1, 110), up = 34 },
 	far = { size = Vector3.new(240, 1, 240), up = 50 },
 	air = { size = Vector3.new(90, 36, 90), up = 6, volume = true },
-	mist = { size = Vector3.new(150, 6, 150), up = -4, volume = true },
+	mist = { size = Vector3.new(140, 4, 140), up = 1.5, volume = true, ring = 18 },
+	haze = { size = Vector3.new(320, 10, 320), up = 4, volume = true, ring = 70 },
 	ground = { size = Vector3.new(18, 0.2, 18), up = 0 },
 }
+
+-- The four boxes of a ring box, as { offset from its middle, size }: the strips in front and
+-- behind run its whole width, the two at the sides fill the gap between them.
+function Weather.ringParts(name: string): { { at: Vector3, size: Vector3 } }
+	local box = Weather.Boxes[name]
+	if not box or not box.ring then
+		return {}
+	end
+	local half, hole, h = box.size.X / 2, box.ring, box.size.Y
+	local depth = half - hole
+	local mid = hole + depth / 2
+	return {
+		{ at = Vector3.new(0, 0, mid), size = Vector3.new(box.size.X, h, depth) },
+		{ at = Vector3.new(0, 0, -mid), size = Vector3.new(box.size.X, h, depth) },
+		{ at = Vector3.new(mid, 0, 0), size = Vector3.new(depth, h, hole * 2) },
+		{ at = Vector3.new(-mid, 0, 0), size = Vector3.new(depth, h, hole * 2) },
+	}
+end
 
 export type Layer = {
 	texture: string, -- a key of Weather.Textures
@@ -217,34 +245,35 @@ local SNOW: { Layer } = {
 	},
 }
 
--- mist drifting low over the ground, a band of it close by and a thinner one further out
+-- mist lying low over the ground round the camera's spot, a band of it near and a thinner one
+-- further out, never born where the camera is (rings) and low enough to pass under it; the fog
+-- itself is the air's (Tuning.Weather.Looks.fog)
 local FOG: { Layer } = {
 	{
 		texture = "mist",
 		box = "mist",
 		level = 1,
 		colors = { rgb(226, 230, 236) },
-		size = { 16, 22, 26 },
+		size = { 7, 10, 12 },
 		transp = { 1, 0.84, 0.84, 1 },
 		life = { 10, 14 },
-		rate = 4,
-		speed = { 0.6, 1.4 },
-		spread = { 180, 20 },
+		rate = 6,
+		speed = { 0.3, 0.8 },
+		spread = { 180, 10 },
 		rot = { 0, 360 },
 		spin = { -6, 6 },
 	},
 	{
 		texture = "mist",
-		box = "far",
+		box = "haze",
 		level = 2,
 		colors = { rgb(220, 226, 234) },
-		size = { 30, 40 },
+		size = { 22, 30 },
 		transp = { 1, 0.88, 0.88, 1 },
 		life = { 14, 18 },
-		rate = 3,
-		speed = { 1, 2 },
-		spread = { 180, 20 },
-		accel = Vector3.new(0, -2.8, 0),
+		rate = 4,
+		speed = { 0.5, 1.2 },
+		spread = { 180, 10 },
 		rot = { 0, 360 },
 		spin = { -4, 4 },
 	},

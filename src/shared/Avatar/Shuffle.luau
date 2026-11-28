@@ -8,6 +8,7 @@
 
 local Appearance = require(script.Parent.Appearance)
 local Categories = require(script.Parent.Categories)
+local Tuning = require(script.Parent.Parent.Config.Tuning)
 
 local Shuffle = {}
 
@@ -22,6 +23,25 @@ Shuffle.Slots = {
 	{ type = "Face" },
 	{ type = "Hat", chance = 0.4, clear = "Hat" },
 } :: { Slot }
+
+-- The sets Shuffle swaps too (the user: "the randomize button should also select things from moves
+-- and heads"). `kind` is what a set is looked up as (the tab's: Categories' bundle kinds); the pick
+-- is one Roblox recommends after the set of that kind worn now, else one off the catalog's popular
+-- page of `bundle`. `chance` is how often it changes at all, and a head set skipped comes off
+-- (`offWhenSkipped`), so the plain head and the face Shuffle picked show. A whole body is swapped
+-- only when one is worn (`onlyWorn`).
+export type SetSlot = {
+	kind: string,
+	bundle: string?,
+	chance: number?,
+	onlyWorn: boolean?,
+	offWhenSkipped: boolean?,
+}
+Shuffle.Sets = {
+	{ kind = "body", onlyWorn = true },
+	{ kind = "head", bundle = "DynamicHead", chance = Tuning.CreatorMore.ShuffleHead, offWhenSkipped = true },
+	{ kind = "anim", bundle = "Animations" },
+} :: { SetSlot }
 
 -- The id worn in the slot for that asset type, or nil.
 function Shuffle.wornIn(app: any, typeName: string): number?

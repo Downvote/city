@@ -1180,6 +1180,17 @@ another Roblox avatar game. Its layout is taken, drawn our own way.)
 - **Shorter words.** Personalities show a few words in the creator and on a villager's page ("Chatty and upbeat."),
   and the creator's notes and placeholders are cut down ("Search looks", "None found.", "Roblox asks you first.").
 
+### A clear noon in the creator, the switch at the bottom left, Shuffle with heads and moves
+
+The user (2026-11-28): "weather effects and time seems to affect the avatar creator", "could you also put this at the
+bottom left?" (the Villager / You switch) and "the randomize button should also select things from moves and heads".
+
+While the creator is open, the player's own screen shows a clear noon whatever the town's hour and weather: nothing
+falls, the air is clear, the rain goes quiet, and it all comes back when the creator closes. The switch between
+making a villager and dressing yourself sits at the bottom left. Shuffle now picks a set of moves every time and a
+head half the time (the other half, the plain head and a face), each one Roblox recommends after what is worn, or
+off the popular page.
+
 ## 7. The city
 
 - **City level** comes from population, villagers in work and the build's total value: Hamlet, Village, Town,
@@ -3373,6 +3384,22 @@ trees red, orange and gold, leaves drifting. Winter: snow on the ground (the isl
 lawn), on the trees and firs, and on every roof open to the sky. Hedges stay green. When the season
 turns, a short notice says so ("Winter is here").
 
+### Steady fog, upright rain
+
+The user (2026-11-28): "it seems like the fog flicker in and out constantly. also, weather like rain seems to fall
+sideways".
+
+The fog flickered because two things set how thick the air was: the server, easing it slowly, and each player's
+screen, easing it faster (or keeping it thin for a player who turned the haze off). The server's value arrived every
+half second over the screen's own, so the air jumped between the two. Now the air is each screen's alone: it eases
+smoothly every frame toward the weather's, and the server leaves it be. The mist puffs used to be big and to start
+round the camera or fall through it, so they popped in and out of view; now they lie low on the ground in a ring
+round where the camera looks, never starting where it is.
+
+The rain fell sideways because of how Roblox turns a particle that lines up with its motion: it lays the picture's
+left to right along the fall, so our streak, a vertical line, came down as sideways dashes. The drops now stand
+upright facing the camera.
+
 ### Lawn patches
 
 The user (2026-11-27): "remove the patches across the terrain that you made before". The patches of
@@ -3527,6 +3554,16 @@ Fixed while there:
   as far as the points go. All six factors fit above the wish's row; the last ones used to go under it.
 - **Notices** stand as near the middle of the top as they can while keeping clear of the round buttons under the
   clock (at 1280 across, four notices in the middle lay over Home and Visit), and wrap a little narrower.
+
+### Build mode by day; coins in stacks, a cut gem
+
+The user (2026-11-28): "can you make the default for build mode day time?", and, with a picture of coin stacks and
+one of a cut gem, "make gem and coin icons like this".
+
+Build mode opens with the town shown at noon on the player's screen; the arrows still go to the morning, the
+evening, the night or the town's own time, and leaving Build mode goes back to the town's own. The coin is two stacks
+of coins in one flat gold, the edges between the coins cut out of it, and the gem a cut gem with its girdle and
+facets cut out of one solid shape. Both are our own drawings.
 
 ## 11. Writing
 

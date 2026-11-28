@@ -73,12 +73,27 @@ Icons.defs = D
 
 -- money and people ---------------------------------------------------------------------------------
 
--- The coin is one flat gold with a slot cut down it (the user: "the coins should be only one
--- color"), as IconArt draws it.
-D.coin = {
-	{ "c", 8, 8, 84, 84, C.gold },
-	{ "r", 44.5, 27, 11, 46, INK, r = 0.5, o = false },
-}
+-- The coin is two stacks of coins in one flat gold (the user: "make gem and coin icons like this",
+-- and "the coins should be only one color"), as IconArt draws it: the tall stack behind, the short
+-- one in front, a dark line under each coin's rim.
+local function stackDef(x: number, top: number, bottom: number, rims: { number }): { any }
+	local out: { any } = {
+		{ "c", x, top - 10.4, 52, 20.8, C.gold },
+		{ "r", x, top, 52, bottom - top, C.gold },
+		{ "c", x, bottom - 10.4, 52, 20.8, C.gold },
+	}
+	for _, y in rims do
+		table.insert(out, { "r", x + 3, y + 8, 46, 3, INK, r = 0.5, o = false })
+	end
+	return out
+end
+D.coin = {}
+for _, part in stackDef(38.5, 18.75, 79.2, { 18.75, 33.9, 49, 64 }) do
+	table.insert(D.coin, part)
+end
+for _, part in stackDef(9.4, 50, 81.25, { 50, 65.6 }) do
+	table.insert(D.coin, part)
+end
 
 D.people = {
 	{ "c", 50, 12, 30, 30, C.blueDark },
@@ -598,11 +613,7 @@ D.road = {
 	{ "r", 74, 4, 4, 92, C.white, o = false },
 }
 
-D.coins = {
-	{ "c", 33.5, 31.25, 60, 60, C.gold },
-	{ "c", 7.5, 8.3, 60, 60, C.gold },
-	{ "r", 32.5, 23, 10, 31, INK, r = 0.5, o = false },
-}
+D.coins = D.coin
 
 -- furniture tabs --------------------------------------------------------------------------------------
 
@@ -1045,10 +1056,11 @@ D.barrel = {
 	{ "r", 12, 68, 76, 8, C.woodDark, r = 0.5, o = false },
 }
 
--- one solid shape, nothing drawn inside it
+-- a cut gem: one solid shape with its girdle cut across it (IconArt cuts its facets too)
 D.gem = {
 	{ "r", 29, 15, 42, 23, C.purple, r = 0.1 },
 	{ "t", 10, 37.5, 80, "down", C.purple },
+	{ "r", 8, 36.5, 84, 3, INK, o = false },
 }
 
 D.balloon = {

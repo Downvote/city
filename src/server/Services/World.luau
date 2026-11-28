@@ -589,15 +589,13 @@ local function grade(h: number)
 		atmosphere.Color = atmosphere.Color:Lerp(air.color, 0.08)
 		atmosphere.Decay = atmosphere.Decay:Lerp(air.decay, 0.08)
 	end
-	-- the weather's light and air: dimmer and softer under cloud, thicker in rain and fog (each
-	-- player's screen keeps its own air if they turned the haze off: client UI/Weather)
+	-- the weather's light: dimmer and softer under cloud. Its air (how thick, how hazy) is each
+	-- player's own screen's to set (client UI/Weather eases it every frame, clear in the creator,
+	-- thin with the haze off): set here too, the server's value came in every half second over the
+	-- screen's own and the fog flickered in and out
 	local ease = Tuning.Weather.Ease
 	Lighting.Brightness += (light.Brightness * weather.Sun - Lighting.Brightness) * ease
 	Lighting.ShadowSoftness += (weather.Soft - Lighting.ShadowSoftness) * ease
-	if atmosphere then
-		atmosphere.Density += (weather.Density - atmosphere.Density) * ease
-		atmosphere.Haze += (weather.Haze - atmosphere.Haze) * ease
-	end
 end
 
 local function clockLoop()

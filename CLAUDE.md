@@ -581,7 +581,10 @@ The creator dresses the player too ("add another tab to edit self in the catalog
 color, with a color picker wheel"): the catalog only takes words, so a colour is searched by its nearest word
 (`Avatar/ColorWords`); only what the game keeps itself (skin, the palette, a look's own colours) is compared by colour.
 Classic faces are all off sale on Roblox, so the Faces filter keeps `offSale = true` or the tab comes up empty.
-Shuffle picks from Roblox's recommendations (`Avatar/Shuffle`), the popular page only where there are none. Buying
+Shuffle picks from Roblox's recommendations (`Avatar/Shuffle`), the popular page only where there are none, and
+swaps the sets in `Shuffle.Sets` too: a body worn, a head half the time (`Tuning.CreatorMore.ShuffleHead`) and moves
+(the user: "the randomize button should also select things from moves and heads"). The Villager / You switch sits at
+the creator's bottom left ("could you also put this at the bottom left?"), and the creator is shown on a clear noon. Buying
 goes through Roblox's own prompts (`UI/BuyLook`); body parts and moves are only bought as their set, and selling
 other creators' items may need Allow Third Party Sales in the game's settings. Shared looks are liked once a player
 (`Avatar/Likes`), the counts written in batches, never once a press.
@@ -639,9 +642,14 @@ it in the menus"). Build mode is kept small ("try to simplify the build mode int
 the screen space"): its sizes are the constants at the top of `Build/BuildUI`, every tray page fits `INNER_H` (136),
 and nothing grows past them. Its search (`Catalog.search`, the `SearchBox` at the right end of the category well)
 looks through names, kinds, looks and tags, so name a new piece the way a player would type it. Its time of day
-(`Build/ViewTime`, the slab top right) is the only thing that writes Lighting on a client outside a cutscene, and only
-while an hour is picked in Build mode; it follows `Tuning.Look`'s grade by the same rules as `Services/World.grade`,
-so change both together. Build mode is laid out like the genre's best known builder ("The building ui should be
+(`Build/ViewTime`, the slab top right) opens at Noon (`Tuning.ViewTime.Default`; the user: "can you make the default
+for build mode day time?") and goes back to the town's own time when Build mode is left. `Build/ViewTime` is the only
+thing that writes Lighting's hour and grade on a client outside a cutscene: Build mode's pick, or a hold someone asks
+for (`ViewTime.hold(who, hour, clear)` / `release(who)`; the creator holds a clear noon, since "weather effects and time
+seems to affect the avatar creator"). A hold that asks for `clear` makes `ViewTime.clear()` true, and then
+`UI/Weather` stops what falls and clears the air and `Controllers/Audio` quiets the rain: something new that wants a
+calm, lit scene holds one the same way, never by writing Lighting itself. It follows `Tuning.Look`'s grade and
+`Tuning.Weather.Looks` by the same rules as `Services/World.grade`, so change them together. Build mode is laid out like the genre's best known builder ("The building ui should be
 exactly like bloxburg"): the catalog docked at the bottom, coins top left. From the top: the tools row, then one
 card that holds the category tiles and under them the cards (or the page for paint, walls and the rest), then one
 bar across the whole screen with the main groups at its left end and Done at its right. The user on that: "the
@@ -691,10 +699,11 @@ is taken and never the pictures: no icon, dish, logo or lettering of that game i
 of its files is in the repository. Look at art with `sh tools/preview/art.sh <png> <names>` (`foods` for every
 food, `LIGHT=1` to see the small ones on the light card; `ui.sh foods` shows them as the game does). A published game only paints them
 with Allow Mesh / Image APIs on (Security, in the game's settings); otherwise each icon falls back to its
-shape list in `UI/Icons` (`D`), so a new icon needs both, and the Icons spec fails without the art. The coin is one
-flat gold with a slot cut in it and the gem one solid shape with nothing inside (the user: "the coins should be only
-one color, and the gem icon shouldnt have outlines inside"); don't give either a second tone, an indent or inner
-lines again. Every line in the town log carries a kind (`Data.log(player, text, kind)`): its icon comes from the one
+shape list in `UI/Icons` (`D`), so a new icon needs both, and the Icons spec fails without the art. The coin is two
+stacks of coins in one flat gold, the rims between coins and the front stack's edge cut out of it, and the gem a cut
+gem whose girdle and facets are cut out of one solid shape (the user, with pictures of both: "make gem and coin icons
+like this"; before that, "the coins should be only one color"); never a second tone or lines drawn on in another
+colour. Every line in the town log carries a kind (`Data.log(player, text, kind)`): its icon comes from the one
 table in `Data/NewsKinds`, a new event takes its topic there (or its module's), a new log source passes a kind, and a
 new job needs its icon in `Jobs.Icons` (no two jobs share one). The Goals button is the `trophy`, the Build button the
 `hammer`. An icon sitting on a block, a disc, a notice, a bubble or a picture
@@ -794,7 +803,14 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
 - Weather ("could you use better weather effects?"): what falls is layers in `Data/Weather`, drawn round the camera by
   `UI/Weather` on each screen, never on the server; each weather's light and air are `Tuning.Weather.Looks` (clear is
   `Tuning.Look`'s own, the Weather spec holds it). A new particle picture goes in `Data/Weather.Textures` and must
-  pass `python3 scripts/library_textures.py check`. Keep a storm at full detail under about 5,000 particles.
+  pass `python3 scripts/library_textures.py check`. Keep a storm at full detail under about 5,000 particles. The air
+  (the Atmosphere's Density and Haze) is each screen's own: `UI/Weather` eases it every frame (`Tuning.Weather.AirRate`)
+  and the server sets it once at the start and never again (the user: "it seems like the fog flicker in and out
+  constantly": the server's value came in every half second over the screen's own). Never write it from the server,
+  nor from the client outside `UI/Weather` and a cutscene. A streak (rain) stands upright facing the camera
+  (`FacingCameraWorldUp`): `VelocityParallel` lays a picture's left to right along the fall, and our vertical line fell
+  as sideways dashes ("weather like rain seems to fall sideways"). Mist comes from a `ring` box on the ground round the
+  camera's spot, low and never born where the camera is; big particles near or falling through the camera pop.
 - Seasons ("make seasons more noticeable and better polished"): `Data/Seasons` is the colour rule for the server (the
   terrain), the client (`World/Seasons`: leaves, lawns, roofs) and the previews (`SEASON=`). A tree's crown named
   `Leaf` in the Grass material turns with the seasons, a shrub in another material only a little, a fir (a merged

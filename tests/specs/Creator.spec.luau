@@ -816,6 +816,28 @@ describe("Shuffle", function()
 		out = Shuffle.wear(out, { Id = 50 }, { type = "Shirt" })
 		expect(out.shirt).toBe(50)
 	end)
+
+	it("picks a head and moves too, from the sets their tabs show", function()
+		-- the user: "the randomize button should also select things from moves and heads"
+		local wanted = { head = "heads", anim = "moves" }
+		local found = {}
+		for _, slot in Shuffle.Sets do
+			local tabId = wanted[slot.kind]
+			if tabId then
+				local tab = Categories.tab(tabId)
+				local matches = false
+				for _, f in (tab and tab.filters) or {} do
+					if f.kind == slot.kind and f.bundles and table.find(f.bundles, slot.bundle) then
+						matches = true
+					end
+				end
+				expect(matches).toBeTruthy()
+				found[slot.kind] = true
+			end
+		end
+		expect(found.head).toBe(true)
+		expect(found.anim).toBe(true)
+	end)
 end)
 
 describe("Buying a look", function()

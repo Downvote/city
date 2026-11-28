@@ -37,6 +37,7 @@ local ColorWheel = require(script.Parent.ColorWheel)
 local BuyLook = require(script.Parent.BuyLook)
 local State = require(script.Parent.Parent.Controllers.State)
 local Audio = require(script.Parent.Parent.Controllers.Audio)
+local ViewTime = require(script.Parent.Parent.Build.ViewTime) -- (the creator is shown on a clear noon)
 
 local Creator = {}
 
@@ -914,7 +915,9 @@ end
 -- roblox recommends to the player the most"): for each slot in Avatar/Shuffle, Roblox's
 -- recommendations seeded by what is worn there or by what the player wears on Roblox, a pick among
 -- the first few; where Roblox recommends nothing, the catalog's most popular page stands in. A
--- body set worn is swapped for one Roblox recommends after it. One undo step for all of it.
+-- body set worn is swapped for one Roblox recommends after it, and a head (half the time) and
+-- moves are picked the same way (the user: "the randomize button should also select things from
+-- moves and heads"). One undo step for all of it.
 
 -- Roblox's recommendations of one asset type (seeded by an asset of that type), as card rows.
 local function recommended(typeName: string, seed: number?): { any }
@@ -960,6 +963,27 @@ local function popular(typeName: string): { any }
 	return cached or {}
 end
 
+-- The catalog's popular sets of one bundle type (kept for the session), as set rows, when Roblox
+-- recommends nothing after the one worn.
+local function popularSets(bundleType: string): { any }
+	local key = "shuffle:" .. bundleType
+	local cached = resultCache[key]
+	if not cached then
+		local oldKeyword, oldWord, oldSort = keyword, colorWord, sortId
+		keyword, colorWord, sortId = "", nil, "Bestselling"
+		cached = searchCatalog({ id = key, bundles = { bundleType } })
+		keyword, colorWord, sortId = oldKeyword, oldWord, oldSort
+		resultCache[key] = cached
+	end
+	local out = {}
+	for _, row in cached or {} do
+		if type(row) == "table" and type(row.Id) == "number" then
+			table.insert(out, { Id = row.Id, Name = row.Name, ItemType = "Bundle" })
+		end
+	end
+	return out
+end
+
 -- The bundles worn now that the creator has looked up: { id, part }.
 local function wornSets(look: any): { any }
 	local out = {}
@@ -989,17 +1013,40 @@ local function shuffle()
 		end
 		local new = Appearance.sanitize(app)
 		local top = Tuning.CreatorMore.ShuffleTop
-		-- a body set: one Roblox recommends after the one worn
-		for _, set in wornSets(new) do
-			if set.kind == "body" then
-				local rows = recommendedSets(set.id)
-				local pick = Shuffle.pick(rows, math.random(), top, { [set.id] = true })
-				local part = pick and Remotes.fn("CreatorBundle"):InvokeServer(pick.Id, "body")
-				if pick and part then
-					bundleParts[bundleKey(pick.Id, "body")] = part
+		-- the sets: a body (only one worn is swapped), a head and moves (Avatar/Shuffle.Sets), each
+		-- one Roblox recommends after the one worn, else one off the popular page
+		for _, slot in Shuffle.Sets do
+			local worn: any = nil
+			for _, set in wornSets(new) do
+				if set.kind == slot.kind then
+					worn = set
+					break
+				end
+			end
+			if slot.onlyWorn and not worn then
+				continue
+			end
+			if slot.chance and math.random() > slot.chance then
+				if slot.offWhenSkipped and worn then
+					new = Categories.unmerge(new, worn.part)
+				end
+				continue
+			end
+			local rows = if worn then recommendedSets(worn.id) else {}
+			if #rows == 0 and slot.bundle then
+				rows = popularSets(slot.bundle)
+			end
+			local pick = Shuffle.pick(rows, math.random(), top, if worn then { [worn.id] = true } else nil)
+			if pick then
+				local key = bundleKey(pick.Id, slot.kind)
+				local part = bundleParts[key] or Remotes.fn("CreatorBundle"):InvokeServer(pick.Id, slot.kind)
+				if part then
+					bundleParts[key] = part
+					if worn and slot.kind ~= "body" then
+						new = Categories.unmerge(new, worn.part)
+					end
 					new = Categories.merge(new, part)
 				end
-				break
 			end
 		end
 		for _, slot in Shuffle.Slots do
@@ -3267,13 +3314,20 @@ local function build()
 		AnchorPoint = Vector2.new(0, 0.5),
 	})
 	-- who is being dressed: a villager, or you (the user: "add another tab to edit self in the
-	-- catalog just like editing villagers")
+	-- catalog just like editing villagers"), at the bottom left (the user: "could you also put this
+	-- at the bottom left?")
 	local _, pickMode = Kit.segments({
 		{ id = "villager", name = "Villager" },
 		{ id = "self", name = "You" },
 	}, function(id)
 		switchMode(id)
-	end, { Parent = frame, Position = UDim2.fromOffset(100, 80), Height = 38, TextSize = 16 })
+	end, {
+		Parent = frame,
+		Position = UDim2.new(0, 16, 1, -16),
+		AnchorPoint = Vector2.new(0, 1),
+		Height = 38,
+		TextSize = 16,
+	})
 	markMode = pickMode
 
 	-- Everything to choose from is one panel on the right, a rounded card, its villager's
@@ -3912,6 +3966,10 @@ function Creator.open(arg: any)
 		return
 	end
 	isOpen = true
+	-- a clear noon on this screen while it's open, whatever the town's hour and weather (the user:
+	-- "weather effects and time seems to affect the avatar creator"): Build/ViewTime holds the light,
+	-- UI/Weather stops what falls and clears the air, Controllers/Audio quiets the rain
+	ViewTime.hold("creator", Tuning.ViewTime.Creator, true)
 	history, future = {}, {}
 	if access == "asking" then
 		-- a question left unanswered the last time: it can be put again
@@ -3988,6 +4046,7 @@ function Creator.close()
 		return
 	end
 	isOpen = false
+	ViewTime.release("creator")
 	searchToken += 1
 	previewToken += 1
 	closeColour()

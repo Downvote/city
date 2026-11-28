@@ -207,6 +207,44 @@ end
 local warned = #Sim.errors
 local Creator = Harness.require(Sim.CLIENT .. "UI.Creator")
 
+Sim.run("a clear noon while it is open, whatever the town's hour and weather", function()
+	-- the user: "weather effects and time seems to affect the avatar creator"
+	local Tuning = Harness.require("ReplicatedStorage.Shared.Config.Tuning")
+	local ViewTime = Harness.require(Sim.CLIENT .. "Build.ViewTime")
+	local Lighting = Harness.game():GetService("Lighting")
+	Harness.game():GetService("Workspace"):SetAttribute("Weather", "storm")
+	Creator.open({ mode = "new" })
+	frames(3)
+	check(ViewTime.clear(), "the weather stands down on this screen")
+	check(Lighting.ClockTime == Tuning.ViewTime.Creator, "the town shown at noon")
+	local clear = ViewTime.lookAt(Tuning.ViewTime.Creator, "clear")
+	check(Lighting.Brightness == clear.brightness, "in a clear day's sun, not the storm's")
+	-- the server's clock comes in all the time: the noon is held over it
+	Lighting.ClockTime = 22
+	frames(2)
+	check(Lighting.ClockTime == Tuning.ViewTime.Creator, "held over the server's hour")
+	Creator.close()
+	frames(2)
+	check(not ViewTime.clear(), "and let go when it closes")
+	Harness.game():GetService("Workspace"):SetAttribute("Weather", "clear")
+	-- the switch between a villager and you sits at the bottom left
+	-- (the user: "could you also put this at the bottom left?")
+	Creator.open({ mode = "new" })
+	frames(3)
+	local switch = Fake.find(gui, function(d)
+		return d:IsA("GuiObject") and d:FindFirstChild("You", true) ~= nil and d:FindFirstChild("Villager", true) ~= nil
+	end)
+	local low = false
+	for _, w in switch do
+		if w.Position.X.Scale == 0 and w.Position.Y.Scale == 1 and w.AnchorPoint.X == 0 and w.AnchorPoint.Y == 1 then
+			low = true
+		end
+	end
+	check(low, "the Villager and You switch at the bottom left")
+	Creator.close()
+	frames(2)
+end)
+
 Sim.run("the sections: a row of words, every one in reach", function()
 	Creator.open({ mode = "new" })
 	frames(3)

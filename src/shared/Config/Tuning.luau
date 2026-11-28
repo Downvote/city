@@ -335,6 +335,7 @@ Tuning.CreatorMore = {
 	ColorNear = 40, -- how close (Lab distance) a colour is to count as near the picked one
 	ColorShown = 12, -- the most near colours a palette shows
 	ShuffleTop = 6, -- Shuffle picks among Roblox's first few recommendations
+	ShuffleHead = 0.5, -- how often Shuffle puts on a head set (the rest: the plain head and a face)
 	BuyMax = 20, -- the most things one Buy outfit asks Roblox for
 	LookEvery = 4, -- seconds between saves of your own look
 }
@@ -1104,6 +1105,10 @@ Tuning.Weather = {
 		leaves = { Sun = 0.95, Soft = 0.12, Density = 0.31, Haze = 1.6, Grey = 0, Sway = 1.8, Gust = 0.5 },
 	},
 	Ease = 0.04, -- how far the light moves toward the weather's every half second (a change takes a minute or so)
+	-- the air (Atmosphere's Density and Haze) is each screen's own, eased this much a second toward
+	-- the weather's (UI/Weather); the server sets it once and leaves it, so the two never take
+	-- turns at it (the user: "it seems like the fog flicker in and out constantly")
+	AirRate = 0.17,
 	-- the air on a screen whose player turned the haze off in Settings, whatever the weather
 	NoHaze = { Density = 0.1, Haze = 0 },
 	-- the sea in a storm (Terrain's WaterWaveSize and WaterWaveSpeed; Data/Terrain has the calm)
@@ -1172,6 +1177,11 @@ Tuning.ViewTime = {
 	Noon = 12.5,
 	Evening = 18.25,
 	Night = 22.5,
+	-- Build mode opens at this one (the user: "can you make the default for build mode day time?")
+	Default = "noon",
+	-- what the creator shows its mannequin at, on a clear day (the user: "weather effects and time
+	-- seems to affect the avatar creator")
+	Creator = 12.5,
 }
 
 -- Water on a plot ---------------------------------------------------------------

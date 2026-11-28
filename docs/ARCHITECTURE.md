@@ -2581,6 +2581,13 @@ shared."
   `PromptBulkPurchase` in `Sim.prompted`. Preview scenes (in audit.sh): `creator:colour`, `creator:colour:skin`,
   `creator:self`, `creator:self:save`, `creator:wornbuy`; `creator:shared` shows likes and the sort.
 
+- (2026-11-28) `Avatar/Shuffle.Sets` (`kind`, `bundle`, `chance`, `onlyWorn`, `offWhenSkipped`): the body (only one
+  worn is swapped), a head (`Tuning.CreatorMore.ShuffleHead`; skipped, a worn head set comes off) and moves.
+  `UI/Creator`'s shuffle picks each from `recommendedSets(worn)` or `popularSets(bundleType)` (the catalog's
+  best selling page of that bundle type, kept for the session) and wears it as its tab would
+  (`CreatorBundle(id, kind)`, `Categories.merge`). The Villager / You switch is anchored at the bottom left. The Creator
+  spec checks the sets match the Heads and Moves tabs' bundle kinds.
+
 ## The drawn city
 
 - `Services/World.stylize` sets the light from `Tuning.Look.Light` (Brightness, Exposure, Ambient, OutdoorAmbient,
@@ -2758,6 +2765,23 @@ The user: "add settings for graphic quality, background blur, bloom, etc.", "cou
   `Settings`. Previews: `SEASON=1..4` before `render.sh` or `walk.sh` draws any scene in that season
   (`tools/preview/dump.luau`); `walk.py --weather <kind>` draws the weather's light and air and a sketch of what falls;
   `tools/preview/look.luau` writes `Tuning.Weather` beside `Tuning.Look`.
+
+- (2026-11-28) The air is each screen's own: `Services/World.grade` no longer eases the Atmosphere's Density and Haze
+  (it sets them once in `stylize`); `UI/Weather.stepAir(dt)` eases them every frame by `Tuning.Weather.AirRate`,
+  clear at once while `ViewTime.clear()`, and skips while the camera has `Cutscene`. A streak's emitter is
+  `FacingCameraWorldUp`. `Data/Weather.Boxes` entries may carry `ring` (a hole that many studs each way round the
+  camera's spot, the box set on the ground under `camera.Focus`); `Data/Weather.ringParts(name)` gives its four
+  boxes, and `UI/Weather` splits a ring layer's rate over them by area. The fog's layers come from the rings `mist`
+  and `haze`. While `ViewTime.clear()`, `UI/Weather` turns every emitter off, drops the puddles and strikes no
+  lightning, and `Controllers/Audio`'s weather loops play the clear weather's.
+- `Build/ViewTime`: `Options`, `defaultIndex()` (`Tuning.ViewTime.Default`, noon), `townHour()`, `townWeather()`,
+  `lookAt(hour, weather?)` (with the weather's `brightness`, `softness` and grey), `index()`, `current()`, `hour()`
+  (a hold's, else the pick's), `set(i)`, `step(dir)`, `hold(who, hour, clear?)`, `release(who)`, `clear()`. BuildUI
+  sets `defaultIndex()` when Build mode opens; `UI/Creator` holds `"creator"` at `Tuning.ViewTime.Creator` with
+  `clear` while it is open. A hold is skipped while a cutscene owns the light.
+- Specs and sims: the Weather spec holds the mist's rings and `AirRate`; `creator_sections` checks the clear noon in
+  a storm and the switch at the bottom left; `build_client` checks Build mode opening at noon and a hold winning over
+  the pick; `talk_card` compares the cutscene's restored light with the light before it.
 
 ## Sound
 

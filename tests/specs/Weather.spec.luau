@@ -131,4 +131,39 @@ describe("Weather", function()
 		local blossom = Weather.drawn("blossom", 3, 1, "blossom", K.SeasonAir)
 		expect(#blossom).toBe(#Weather.Layers.blossom)
 	end)
+
+	it("keeps the mist low and never born where the camera is", function()
+		-- the user: "it seems like the fog flicker in and out constantly". Big puffs born round the
+		-- camera, or falling through it, popped in and out of view: mist comes from a ring on the
+		-- ground with a hole round the camera's spot, and lies low.
+		for _, layer in Weather.Layers.fog do
+			local box = Weather.Boxes[layer.box]
+			expect(box.ring ~= nil).toBeTruthy()
+			expect(layer.accel == nil or layer.accel.Y >= 0).toBeTruthy()
+			local biggest = 0
+			for _, size in layer.size do
+				biggest = math.max(biggest, size)
+			end
+			-- a puff born at the hole's edge doesn't reach its middle
+			expect(biggest / 2 < box.ring).toBeTruthy()
+			-- the near one passes under a camera behind the player's head
+			if box.ring < 40 then
+				expect(box.up + box.size.Y / 2 + biggest / 2 <= 10).toBeTruthy()
+			end
+		end
+		-- a ring's four parts cover its square but the hole, without overlapping
+		for name, box in Weather.Boxes do
+			if box.ring then
+				local area = 0
+				for _, p in Weather.ringParts(name) do
+					area += p.size.X * p.size.Z
+					local nearest = math.max(math.abs(p.at.X) - p.size.X / 2, math.abs(p.at.Z) - p.size.Z / 2)
+					expect(nearest).toBeNear(box.ring, 1e-6)
+				end
+				expect(area).toBeNear(box.size.X * box.size.Z - (box.ring * 2) ^ 2, 1e-6)
+			end
+		end
+		-- the air is each screen's own: one rate for it, a gentle one
+		expect(K.AirRate > 0 and K.AirRate < 1).toBeTruthy()
+	end)
 end)
