@@ -1,17 +1,16 @@
 --!strict
--- Crates: what a work crate and a pet crate can give, and how likely each rarity is. The user:
--- "add work crates that can be bought with gems or robux, which give exclusive work spaces which are
--- unique to crates, giving a random one with effectiveness scaling off rarity ... Some work crates
--- are also given through achievements, goals, daily rewards", then "Add pet crates as well".
--- A work crate gives a workplace from Build/Recipes/CrateWork (the catalog's "crates" category,
--- each with its `crate` rarity and its own job in Data/Jobs' crate list); a pet crate gives a pet
--- from Data/Pets. The odds (Tuning.Crates.Odds) are shown before buying. Sim/Crates opens them.
+-- Crates: what a work crate can give, and how likely each rarity is. The user: "add work crates
+-- that can be bought with gems or robux, which give exclusive work spaces which are unique to
+-- crates, giving a random one with effectiveness scaling off rarity ... Some work crates are also
+-- given through achievements, goals, daily rewards". (Pet crates came and went: "remove pets. the
+-- only crate should be work crates".) A work crate gives a workplace from Build/Recipes/CrateWork
+-- (the catalog's "crates" category, each with its `crate` rarity and its own job in Data/Jobs'
+-- crate list). The odds (Tuning.Crates.Odds) are shown before buying. Sim/Crates opens them.
 
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Catalog = require(script.Parent.Parent.Build.Catalog)
 local Recipe = require(script.Parent.Parent.Build.Recipe)
 local Colors = require(script.Parent.Parent.Util.Colors)
-local Pets = require(script.Parent.Pets)
 
 type R = Recipe.Recipe
 
@@ -49,23 +48,15 @@ export type Kind = {
 	product: string, -- its developer product's key in Data/Passes
 }
 
-Crates.Order = { "work", "pet" }
+Crates.Order = { "work" }
 Crates.Kinds = {
 	work = {
 		id = "work",
 		name = "Work crate",
 		phrase = "a work crate",
-		blurb = "Pays more than any job you can buy.",
+		blurb = "Crate jobs give special workplaces that pay more than regular ones.",
 		icon = "briefcase",
 		product = "crate_work",
-	},
-	pet = {
-		id = "pet",
-		name = "Pet crate",
-		phrase = "a pet crate",
-		blurb = "A pet that cheers up its owner.",
-		icon = "paw",
-		product = "crate_pet",
 	},
 } :: { [string]: Kind }
 
@@ -84,10 +75,6 @@ function Crates.entries(kind: string): { Entry }
 			if type(r) == "string" and rank[r] then
 				table.insert(out, { id = def.id, name = def.name, rarity = r })
 			end
-		end
-	elseif kind == "pet" then
-		for _, p in Pets.list do
-			table.insert(out, { id = p.id, name = p.name, rarity = p.rarity })
 		end
 	end
 	table.sort(out, function(a, b)
@@ -181,76 +168,11 @@ local function workCrate(r: R)
 	r:boxAt(CFrame.new(0.78, 1.66, h + 0.09) * CFrame.Angles(0, 0, 0.1), 0.02, 0.22, 0.02, IRON, "Metal")
 end
 
--- A pet crate: a carrier with a rounded shell, air holes along its sides, a wire door at the front
--- and a handle on top.
-local function petCrate(r: R)
-	local shell = Color3.fromRGB(122, 178, 196)
-	local base = Color3.fromRGB(236, 232, 224)
-	local wire = Color3.fromRGB(176, 180, 188)
-	r:block(-1.2, 0, -1.4, 1.2, 0.9, 1.4, base, "Plastic")
-	r:block(-1.12, 0.9, -1.32, 1.12, 2.0, 1.32, shell, "Plastic")
-	r:cyl(0, 2.0, 0, 2.64, 2.24, "z", shell, "Plastic")
-	-- the seam and the clips that hold the two halves
-	r:block(-1.24, 0.86, -1.44, 1.24, 0.96, 1.44, Colors.shade(base, 0.85), "Plastic")
-	for _, z in { -0.9, 0.9 } do
-		for _, x in { -1, 1 } do
-			r:block(
-				x * 1.22 - 0.06,
-				0.7,
-				z - 0.16,
-				x * 1.22 + 0.06,
-				1.12,
-				z + 0.16,
-				Colors.shade(shell, 0.8),
-				"Plastic"
-			)
-		end
-	end
-	-- air holes in rows along each side
-	for _, x in { -1, 1 } do
-		for i = 0, 3 do
-			r:block(
-				x * 1.13 - 0.03,
-				1.5,
-				-0.8 + i * 0.5,
-				x * 1.13 + 0.03,
-				1.66,
-				-0.6 + i * 0.5,
-				Colors.shade(shell, 0.62),
-				"Plastic"
-			)
-		end
-	end
-	-- the door: a frame and its wires
-	r:block(-0.86, 0.96, 1.34, 0.86, 2.36, 1.44, Colors.shade(base, 0.9), "Plastic")
-	for i = 0, 6 do
-		local x = -0.66 + i * 0.22
-		r:cyl(x, 1.66, 1.46, 1.2, 0.05, "y", wire, "Metal")
-	end
-	for _, y in { 1.24, 2.08 } do
-		r:cyl(0, y, 1.47, 1.5, 0.05, "x", wire, "Metal")
-	end
-	-- the handle on top
-	for _, z in { -0.5, 0.5 } do
-		r:block(-0.12, 3.06, z - 0.08, 0.12, 3.4, z + 0.08, base, "Plastic")
-	end
-	r:block(-0.16, 3.34, -0.58, 0.16, 3.5, 0.58, base, "Plastic")
-	-- a paw on the side
-	r:cyl(-1.14, 1.22, 0.1, 0.03, 0.32, "x", Colors.shade(base, 0.92), "Plastic")
-	for k = -1, 1 do
-		r:cyl(-1.14, 1.46, 0.1 + k * 0.16, 0.03, 0.12, "x", Colors.shade(base, 0.92), "Plastic")
-	end
-end
+Crates.Size = { work = Vector3.new(2.7, 2.6, 2.7) }
 
-Crates.Size = { work = Vector3.new(2.7, 2.6, 2.7), pet = Vector3.new(2.5, 3.5, 3) }
-
-function Crates.prims(kind: string): { Recipe.Prim }
+function Crates.prims(_kind: string): { Recipe.Prim }
 	local r = Recipe.new(WOOD, IRON)
-	if kind == "pet" then
-		petCrate(r)
-	else
-		workCrate(r)
-	end
+	workCrate(r)
 	return r.prims
 end
 

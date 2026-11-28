@@ -1,20 +1,20 @@
 -- Crates in the Store, and opening one (the user: "add work crates that can be bought with gems or
--- robux, which give exclusive work spaces which are unique to crates, giving a random one ...", then
--- "Add pet crates as well"). The Store's Crates tab (Crates.show) has a card for each kind: its
--- picture, how many are waiting to be opened, what is inside by rarity with each one's chance
--- (shown before buying), and Open, the gem price and the Robux price. Opening (the CrateOpen remote:
+-- robux, which give exclusive work spaces which are unique to crates, giving a random one ..."; the
+-- work crate is the only kind: "remove pets. the only crate should be work crates"). The Store's
+-- Crates tab (Crates.show) has a card for each kind: its picture, how many are waiting to be
+-- opened, what is inside by rarity with each one's chance (shown before buying), and Open, the gem
+-- price and the Robux price. Opening (the CrateOpen remote:
 -- Services/Crates decides everything) brings up a small dialog: the crate shakes and pops, and what
 -- came out stands in its place with its rarity and where to find it (Crates.reveal).
 -- Crates.tip is the scene a villager pops up in when the player first has the gems for a crate (the
 -- CrateTip event: "A random villager will pop up and tell the player about these crates right when
 -- they have enough gems").
--- Scenes: panel:Store:crates, crate:open:<work|pet>, crate:tip.
+-- Scenes: panel:Store:crates, crate:open:work, crate:tip.
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Tuning = require(Shared.Config.Tuning)
 local Remotes = require(Shared.Net.Remotes)
 local CrateData = require(Shared.Data.Crates)
-local PetData = require(Shared.Data.Pets)
 local PassData = require(Shared.Data.Passes)
 local Catalog = require(Shared.Build.Catalog)
 local SimCrates = require(Shared.Sim.Crates)
@@ -40,8 +40,8 @@ function Crates.tone(rarity: string?): Color3
 	return if typeof(c) == "Color3" then c else T.Blue
 end
 
-local function accentOf(kind: string): Color3
-	return if kind == "pet" then T.Teal else T.Orange
+local function accentOf(_kind: string): Color3
+	return T.Orange
 end
 
 -- Asks the server to open one: held ("held") or bought with gems ("gems"). What came out is shown.
@@ -109,11 +109,13 @@ local function card(parent: Instance, kind: string, order: number, w: number, h:
 		Wrap = false,
 		ZIndex = 2,
 	})
+	-- (room for two lines: the blurb wraps)
 	Kit.text(def.blurb, {
 		Name = "Blurb",
 		Parent = f,
-		Size = UDim2.new(1, -220, 0, 22),
+		Size = UDim2.new(1, -220, 0, 42),
 		Position = UDim2.fromOffset(204, 52),
+		AlignY = Enum.TextYAlignment.Top,
 		TextSize = 16,
 		Color = T.InkSoft,
 		ZIndex = 2,
@@ -123,7 +125,7 @@ local function card(parent: Instance, kind: string, order: number, w: number, h:
 			Name = "Held",
 			Parent = f,
 			Height = 32,
-			Position = UDim2.fromOffset(214, 86),
+			Position = UDim2.fromOffset(214, 104),
 			Color = T.Yellow,
 			TextColor = T.Dark,
 			TextSize = 16,
@@ -261,26 +263,14 @@ function Crates.isOpen(): boolean
 	return reveal ~= nil
 end
 
--- The prize's picture: the workplace, or the pet in its coat.
+-- The prize's picture: the workplace.
 local function prizePrims(result: any): { any }
-	if result.kind == "pet" then
-		return PetData.prims(result.id, result.coat)
-	end
 	local def = Catalog.get(result.id)
 	return if def then Catalog.prims(def) else {}
 end
 
 -- Where to find it, in a line.
-local function whereLine(result: any): string
-	if result.kind == "pet" then
-		local p = PetData.get(result.id)
-		local _ = p
-		return Text.fill("{name} lives in town now. Give them an owner from a villager's page.", {
-			name = result.petName or "Your pet",
-		})
-	end
-	return "Free to put down in Build mode, under Work > Crate."
-end
+local WHERE = "Free to put down in Build mode, under Work > Crate."
 
 -- Shows a crate opening: it shakes, pops, and what came out stands in its place. `result` is
 -- Sim/Crates.Result as the server sent it. `still` (the previews) shows the prize at once.
@@ -341,13 +331,7 @@ function Crates.reveal(result: any, still: boolean?)
 			Wrap = false,
 		})
 		words.ZIndex = 3
-		local shown = if result.kind == "pet" and type(result.petName) == "string"
-			then Text.fill("{name} the {kind}", {
-				name = result.petName,
-				kind = string.lower(result.name),
-			})
-			else result.name
-		Kit.title(shown, {
+		Kit.title(result.name, {
 			Name = "PrizeName",
 			Parent = body,
 			Size = UDim2.new(1, -40, 0, 34),
@@ -357,7 +341,7 @@ function Crates.reveal(result: any, still: boolean?)
 			AlignX = Enum.TextXAlignment.Center,
 			Wrap = false,
 		})
-		Kit.text(whereLine(result), {
+		Kit.text(WHERE, {
 			Name = "Where",
 			Parent = body,
 			Size = UDim2.new(1, -60, 0, 44),

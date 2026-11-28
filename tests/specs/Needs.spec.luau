@@ -64,8 +64,8 @@ describe("Needs", function()
 	it("adds up to the most a mood can reach, everything in place", function()
 		local total = N.Base + N.Bed + N.Comfy[#N.Comfy].Points + N.Roof + N.FunMax + N.FriendsMax
 		expect(total).toBe(V.MoodMax)
-		-- (a pet is on top of that, to make up for something missing)
-		expect(N.Pet > 0).toBeTruthy()
+		-- the five the user named and nothing else (a pet was one for a while: "remove pets")
+		expect(table.concat(Needs.Factors, " ")).toBe("bed comfy roof fun friends")
 		-- with nothing at all, a villager reaches only Base
 		local p = town(1)
 		expect(Needs.cap(p, "v1")).toBe(N.Base)
@@ -420,22 +420,5 @@ describe("Needs", function()
 			m = "Slate",
 		}
 		expect(staged(alone, "needroof")).toBe(nil)
-	end)
-
-	it("counts a pet of their own on top, never past the most a mood can be", function()
-		-- the user: pets "raise mood"
-		local p = town(1)
-		local before = Needs.cap(p, "v1")
-		p.pets = { p1 = { kind = "cat", name = "Biscuit", coat = 1, vid = "v1" } }
-		expect(Needs.cap(p, "v1")).toBe(before + N.Pet)
-		local f = factor(p, "v1", "pet")
-		expect(f.have).toBe(true)
-		expect(f.text).toBe("Biscuit")
-		-- somebody else's pet counts for nothing here, and nobody asks for a pet
-		p.pets.p1.vid = "v2"
-		expect(Needs.cap(p, "v1")).toBe(before)
-		expect(table.find(Needs.missing(p, "v1"), "pet")).toBe(nil)
-		-- and the cap still stops at the top
-		expect(Needs.cap(p, "v1") <= V.MoodMax).toBeTruthy()
 	end)
 end)

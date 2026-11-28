@@ -75,14 +75,14 @@ function Rewards.dailyGift(streak: number, run: number, vip: boolean?): (number,
 	return coins, gems
 end
 
--- The crate a day of the run brings with the daily gift, or nil: every Tuning.Crates.DailyEvery
--- days running, a work crate, then a pet crate the next time, and so on.
+-- The crate a day of the run brings with the daily gift, or nil: a work crate every
+-- Tuning.Crates.DailyEvery days running.
 function Rewards.dailyCrate(run: number): string?
 	local every = Tuning.Crates.DailyEvery
 	if run <= 0 or run % every ~= 0 then
 		return nil
 	end
-	return if (run // every) % 2 == 1 then "work" else "pet"
+	return "work"
 end
 
 -- Claims today's gift: moves the streak on. Returns whether it did, the coins and gems it pays and

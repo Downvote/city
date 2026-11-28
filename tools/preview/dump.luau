@@ -27,8 +27,7 @@
 --                      school, clinic, department); a kind may carry a size: library=56x28x12
 --   map                the middle of town: streets, plaza and street furniture, on the terrain
 --   vehicles           every vehicle side by side (Data/Vehicles); vehicles:<id>,<id> for some
---   pets               every pet in every coat, and the two crates (Data/Pets, Data/Crates); pets:<id>,<id>
---                      for some, in their first coats
+--   crates             every kind of crate, as the Store shows it (Data/Crates: the work crate)
 --   map:x1,z1,x2,z2    another part of town (the terrain is drawn as faceted ground of its
 --                      materials' colours, finer the smaller the part, with the sea over it)
 --   stage:<id>         a cutscene's set (Data/Stages); tools/preview/stage.sh draws it from its shots
@@ -354,32 +353,13 @@ elseif scene == "vehicles" or scene:sub(1, 9) == "vehicles:" then
 		addPrims(VehicleData.prims(v), CFrame.new(x + v.size.X / 2, v.hover, 0))
 		x += v.size.X + 3
 	end
-elseif scene == "pets" or scene:sub(1, 5) == "pets:" then
-	-- pets: every pet in each of its coats, a row a kind, then the two crates (Data/Pets, Data/Crates)
-	local PetData = R(Shared .. "Data.Pets")
+elseif scene == "crates" then
+	-- crates: every kind side by side (Data/Crates)
 	local CrateData = R(Shared .. "Data.Crates")
-	local list = PetData.list
-	if scene ~= "pets" then
-		list = {}
-		for id in scene:sub(6):gmatch("[^,]+") do
-			table.insert(list, (assert(PetData.get(id), "no pet " .. id)))
-		end
-	end
-	local z = 0
-	for _, p in list do
-		local x = 0
-		for i = 1, if scene == "pets" then #p.coats else 1 do
-			addPrims(PetData.prims(p.id, i), CFrame.new(x + p.size.X / 2, 0, z) * CFrame.Angles(0, math.rad(-35), 0))
-			x += p.size.X + 1.2
-		end
-		z += p.size.Z + 1
-	end
-	if scene == "pets" then
-		local x = 0
-		for _, kind in CrateData.Order do
-			addPrims(CrateData.prims(kind), CFrame.new(x, 0, z + 2))
-			x += 4
-		end
+	local x = 0
+	for _, kind in CrateData.Order do
+		addPrims(CrateData.prims(kind), CFrame.new(x, 0, 0))
+		x += 4
 	end
 elseif scene == "props" or scene:sub(1, 6) == "props:" then
 	-- props or props:<id>,<id>... : the things events bring into the world (Data/EventProps)

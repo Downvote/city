@@ -34,7 +34,7 @@ the contract (update it with every API, remote or saved data change), `src/share
    screen (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (883 in 74 files at the last full run; `Voice`: each personality's own hand, and a villager's ending; `Memory`: what events leave
+Specs today (883 in 75 files at the last full run; `Voice`: each personality's own hand, and a villager's ending; `Memory`: what events leave
 with a villager for a few days, the accessory on and off; `FlairService`: buying flair with gems on the server, with
 stubbed neighbours; `Store`: passes owned, a gem pack's or a crate's receipt paid once, the pay boost from Double Pay, VIP and the group;
 `Offline`: what the town earned while the player was away; `Rewards`: gems from the daily gift, playtime and
@@ -43,7 +43,7 @@ sales of many pieces; `Saves`: saved builds, loading one onto the plot; `Lively`
 by the server, the friend who greets, old saves done; `Water`: pools and ponds on the terrain grid, what may stand in them; `Floors`: the floors the passes allow, an old
 save's fourth floor, the basement's rules, its dig and its lining, land and Big Plot;
 `Unstick`: finding room to stand, what of a piece is solid, villagers getting up and getting unstuck, swimmers left
-alone; `EventService`: an answer's time held while the player reads, `EventWatch "next"`, the newcomer's asks, typed names; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `PlayerWork` and `WorkService`: a player working at a workplace themselves, its pay and cap, and the server's side with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth; `Lights`: placed lights and their switch; `PlotName`, `PlotBoard` and `VisitService`: naming, likes, the directory and visits; `ClaimAll`: Claim all paying what the single claims would; `Bag` and `Giving`: things, gathering, gifts both ways, hearts with no top, goal rewards and titles; `Visits` and `WorkMove`: customers, company on a bench, work moves; `Needs`: earned mood, a pet on top, and the asks; `Travel`: ways between floors and lifts; `GemPieces`: pieces bought with gems; `Seasons`, `Weather` and `Settings`: the look a player sets, what falls and each season's colours; `FollowUps`: events that need a piece, follow-ups, typed names, worn things; `Trust`: trusted builders, the owner paying and the budget counted; `Social`: friends' pay boost, its chip, the invite nudge, a player's card; `GuestTalk`: what villagers say to a visitor, in every voice; `Babble` and `Sounds`: villagers' voices, the library's sounds and the settings that set them; `Textured` and `Surfaces`: nothing you can see is flat plastic, in Build mode and in the town; `Crates`: work and pet crates, crate jobs paying more than any coin job, pets, their lines and walks; `Bubbles`: what hangs over heads, stacked apart; `Cutscenes`: the sets, the moves and the scripts; `Palette`: soft roofs and the light; `Terrain`: the island's ground; `Uses`: things villagers use; `Vehicles`: the list's order, seats and driving; `Wages`: the purse as villagers work): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+alone; `EventService`: an answer's time held while the player reads, `EventWatch "next"`, the newcomer's asks, typed names; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `PlayerWork` and `WorkService`: a player working at a workplace themselves, its pay and cap, and the server's side with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth; `Lights`: placed lights and their switch; `PlotName`, `PlotBoard` and `VisitService`: naming, likes, the directory and visits; `ClaimAll`: Claim all paying what the single claims would; `Bag` and `Giving`: things, gathering, gifts both ways, hearts with no top, goal rewards and titles; `Visits` and `WorkMove`: customers, company on a bench, work moves; `Needs`: earned mood from the five factors, and the asks; `Travel`: ways between floors and lifts; `GemPieces`: pieces bought with gems; `Seasons`, `Weather` and `Settings`: the look a player sets, what falls and each season's colours; `FollowUps`: events that need a piece, follow-ups, typed names, worn things; `Trust`: trusted builders, the owner paying and the budget counted; `Social`: friends' pay boost, its chip, the invite nudge, a player's card; `GuestTalk`: what villagers say to a visitor, in every voice; `Babble` and `Sounds`: villagers' voices, the library's sounds and the settings that set them; `Textured` and `Surfaces`: nothing you can see is flat plastic, in Build mode and in the town; `Crates`: the work crate the only kind, crate jobs paying more than any coin job, an old save's pet crates turned into work crates; `Bubbles`: what hangs over heads, stacked apart; `Cutscenes`: the sets, the moves and the scripts; `Palette`: soft roofs and the light; `Terrain`: the island's ground; `Uses`: things villagers use; `Vehicles`: the list's order, seats and driving; `Wages`: the purse as villagers work): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off; what kind a bundle
 is, the outfit that holds the body, single body parts, the player's own items and avatars; preview scenes
@@ -215,7 +215,7 @@ thing is a line in `Data/Items` with art in `UI/ItemArt` and a shape list in `UI
 interface icon's name (ItemArt is merged into IconArt over them). A craving is bought from the villager's page, the talk card, or the popup a click on their wish bubble brings up
 (`UI/WishPopup`: the user, "clicking the bubble ... should show a popup what they want and allow the player to satisfy
 it instead of their whole profile page") through `WishBuy` at `Life.wishPrice`. Don't add anything for sale but
-cravings, Build mode's pieces and the two crates (below), the passes and gem packs aside. The user also
+cravings, Build mode's pieces and the work crate (below), the passes and gem packs aside. The user also
 asked that "progression is much more based on villagers working": wages are most of a town's income; the City spec
 holds that balance. A town level asks for worth and nothing else (the user: "make the only requirements for growing
 towns worth instead of villagers or work requirement": `City.level(value)`), has no top and no name ("uncap level ...
@@ -231,7 +231,7 @@ never halve a recipe's own price). Then: "Also, halve money gain from work." So 
 `Tuning.Jobs.Pay` (0.5), applied in `Data/Jobs` at load (`listed` keeps the written one): never halve an income by
 hand. The City spec's bounds in days of work doubled with it.
 
-Crates (the user: "add work crates that can be bought with gems or robux ... Add pet crates as well"): `Data/Crates`
+Work crates (the user: "add work crates that can be bought with gems or robux"): `Data/Crates`
 and `Sim/Crates` (no services), `Services/Crates`, the Store's Crates tab (`UI/Crates`). The Robux products are
 `Data/Passes.crates` with id 0 until the owner makes them on Roblox (Creations > Monetization > Developer Products)
 and pastes the ids in; `Services/Store.processReceipt` pays them once per purchase. A crate workplace is a piece in
@@ -239,12 +239,12 @@ and pastes the ids in; `Services/Store.processReceipt` pays them once per purcha
 every piece) with a job in `Data/Jobs.crateList`. Keep `Jobs.list` the coin jobs: the economy's specs bound those. A
 crate job's income is worked out from the best coin job (`Tuning.Crates.Pay`), so it stays ahead of every coin job,
 liked or not (the Crates spec holds it); never write a crate job's income by hand. Gems from crate jobs stay rare:
-`Tuning.Crates.GemDayCap` a real day, at most `Tuning.GemRewards.DayMax`. Pets move on each screen, never on the
-server: the server writes each pet's walk as attributes on its Configuration in the plot's `Pets` folder
-(`Services/Pets`) and `client/World/Pets` moves the parts. A new pet is a kind in `Data/Pets` with its bones named and
-their joints; a new thing a pet does with a villager is an act in `Sim/Pets.Acts` with a line for anybody (`_`) and
-its own for some personalities, `{pet}` in every one. A pet of their own counts toward a villager's mood (`Needs`'
-`pet`, below).
+`Tuning.Crates.GemDayCap` a real day, at most `Tuning.GemRewards.DayMax`. The work crate is the only crate: there
+were pet crates and pets for a while, and the user took them back ("remove pets. the only crate should be work
+crates"). Don't bring back pets, pet crates or a pet factor in mood. Whatever gave a pet crate gives a work crate,
+and `Crates.clean` turns an old save's held pet crates into work crates (`Schema.migrate` drops its `pets`). A
+villager taking in a stray or naming a pet in an event is a conversation and a memory (`Sim/Memory`'s `pet`), not
+one of those pets: it stays.
 
 Life in the town, in the spirit of the life sim the user named (its ideas only, never its content): well over two
 hundred events in `Data/Events/` (a folder: `Kit` builds weights and scenes, `Chatter` builds conversations from
@@ -315,10 +315,9 @@ Mood is earned (the user: "Villager mood bars should also not be that easy to fi
 should be: amount and relationship of friends, quality of bed, roof over bed, fun objects near bed"): `Sim/Needs`
 says the most a villager's mood can reach from what they have (`Needs.cap`), mood climbs to it each town hour
 (`Needs.drift`), and every change to a villager's mood goes through `Needs.addMood` (a lift counts for
-`Tuning.Needs.BoostShare` and stops at the cap). Never write `v.mood` by hand. A pet of their own (a pet crate's,
-"Which increase mood") is a sixth factor, `pet`, worth `Tuning.Needs.Pet` (10) on top of the five the user named,
-which already come to `Tuning.Villagers.MoodMax`; the cap still stops there, the Mood tab lists it, and nobody asks
-for one (it stays out of `Needs.Asks`). Villagers ask for what they lack ("if
+`Tuning.Needs.BoostShare` and stops at the cap). Never write `v.mood` by hand. The factors are the five the user
+named (`Needs.Factors`), which come to `Tuning.Villagers.MoodMax`, and the Mood tab lists those five (a pet was a
+sixth for a while and went with the pets). Villagers ask for what they lack ("if
 a villager dosent have a workspace or bed, they will ask the player for it"): the asks are `Data/Events/Needs`, each
 ending on `Needs.line(kind)`, the fixed "Villagers need ... Build it in Build mode > ..." line; keep those paths Build
 mode's real group and tab names (the Needs spec reads `Build/BuildUI`), and a new kind of ask is a kind in
@@ -745,10 +744,9 @@ gather prompts (E, or F beside another prompt) and their rests, things made at w
 one, the title tag over the head with Roblox's name off, a villager's gift on the talk card, and the lifts (the server
 anchors and moves the riders), buying and opening a crate (gems, and the Robux products once they have ids), the
 opening's shake, the crate tip's scene, a crate workplace put down from the Crate tab and worked at (its loop and
-effect), the crate jobs' gems at five o'clock, pets walking about a plot (rays against real floors, furniture and
-water), meeting villagers and fetching a craving, the Pat prompt, the Pet row on a villager's page, a trusted builder
-on somebody's plot, and the sounds, voices and music. In Lune, Enum items are not the same userdata twice: compare
-them with `==`, never use them as table keys.
+effect), the crate jobs' gems at five o'clock, an old save with pets and pet crates loading (its pet crates in the
+Store's Crates tab as work crates), a trusted builder on somebody's plot, and the sounds, voices and music. In Lune,
+Enum items are not the same userdata twice: compare them with `==`, never use them as table keys.
 
 Every plot starts with `Data/StarterHouse`: a detailed house, a workshop where the first villager works as a
 builder, and a fenced garden, all of it ordinary Build mode pieces carrying `gift` (the user: "improve the starting

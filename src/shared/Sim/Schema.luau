@@ -22,7 +22,7 @@ local PlotLikes = require(script.Parent.PlotLikes)
 local PlotBoard = require(script.Parent.PlotBoard)
 local FollowUps = require(script.Parent.FollowUps) -- (events left waiting for later: profile.follow)
 local Babble = require(script.Parent.Babble)
-local Crates = require(script.Parent.Crates) -- (crates held, crate workplaces and pets: Sim/Crates)
+local Crates = require(script.Parent.Crates) -- (crates held and crate workplaces: Sim/Crates)
 
 local Schema = {}
 
@@ -175,12 +175,10 @@ function Schema.newProfile(): any
 		plotKeys = {},
 		plotAt = 0,
 		-- crates (Sim/Crates): the ones held to open later, by kind; the crate workplaces given, by
-		-- catalog id; the pets, by id ("p1"...), and the next pet's number; the gems crate jobs paid
-		-- on which real day; whether a villager has told the player about the crates
+		-- catalog id; the gems crate jobs paid on which real day; whether a villager has told the
+		-- player about the crates
 		crates = {},
 		crateItems = {},
-		pets = {},
-		nextPet = 1,
 		crateGems = { day = -1, n = 0 },
 		crateTold = false,
 	}
@@ -217,6 +215,9 @@ function Schema.migrate(raw: any): any
 	-- and food and feeding"): an old save's bag and what it had learnt of each villager's tastes
 	-- are dropped here.
 	profile.inv = nil
+	-- Pets went too (the user: "remove pets. the only crate should be work crates"): an old save's
+	-- pets are dropped here, and its unopened pet crates become work crates (Crates.clean).
+	profile.pets, profile.nextPet = nil, nil
 	if type(profile.stats) == "table" then
 		profile.stats.fed = nil
 		-- and the romance went too: its counts and its goals

@@ -248,10 +248,9 @@ function Data.clientState(player: Player): any
 		gather = p.gather,
 		titles = p.titles,
 		title = p.title or false,
-		-- crates held to open, the crate workplaces given and the pets (Sim/Crates)
+		-- crates held to open and the crate workplaces given (Sim/Crates)
 		crates = p.crates,
 		crateItems = p.crateItems,
-		pets = p.pets,
 		unsaved = unsaved[player] == true,
 		plot = player:GetAttribute("Plot"),
 		plan = p.plan,
