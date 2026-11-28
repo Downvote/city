@@ -466,6 +466,49 @@ function Catalog.search(query: string?): { Def }
 	return out
 end
 
+-- Round where the real thing is round (the user: "You are allowed to use spheres, curves or circles
+-- where necessary"). A ball or a cylinder of a made thing (metal, glass, china, rubber, cloth,
+-- paint, card) is drawn truly round: a cup, a knob, a wheel, a pipe, a lampshade, a ball. What grows
+-- or was dug keeps the low poly kit's facets (crowns, rocks, logs, trunks, earth), as does a shape a
+-- recipe marked `smooth = false` (the basic shapes, which keep their eight sides together). Only a
+-- shape that is round every way it is seen takes it: a ball the same size every way, a cylinder
+-- the same across.
+Catalog.Round = {
+	Metal = true,
+	Glass = true,
+	Neon = true,
+	Marble = true,
+	Rubber = true,
+	Plaster = true,
+	Fabric = true,
+	Leather = true,
+	Cardboard = true,
+	Foil = true,
+	Ice = true,
+	Concrete = true,
+	Sandstone = true,
+	CeramicTiles = true,
+	DiamondPlate = true,
+	CorrodedMetal = true,
+} :: { [string]: boolean }
+
+local function rounded(prims: { Recipe.Prim })
+	for _, p in prims do
+		if p.parts then
+			rounded(p.parts)
+		elseif p.smooth == nil and Catalog.Round[p.mat] then
+			local s = p.size
+			if
+				(p.shape == "Ball" and math.abs(s.X - s.Y) < 1e-6 and math.abs(s.Y - s.Z) < 1e-6)
+				or (p.shape == "Cylinder" and math.abs(s.Y - s.Z) < 1e-6)
+			then
+				p.smooth = true
+			end
+		end
+	end
+end
+Catalog.rounded = rounded
+
 -- Draws an item in its own space with the given paint (hex; nil for the defaults). A piece that
 -- takes a picture is drawn with `img` (a library id, Plan) showing on it, or with its
 -- placeholder when there is none. A mark is never solid: people and pieces go over it.
@@ -479,6 +522,7 @@ function Catalog.prims(def: Def, c1: string?, c2: string?, img: number?, m1: str
 	ra.m1, ra.m2 = m1, m2
 	def.build(r)
 	local prims = r.prims
+	rounded(prims)
 	if def.picture then
 		local shown = {}
 		for _, p in prims do

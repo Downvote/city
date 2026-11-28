@@ -333,6 +333,136 @@ function Recipe.quad(
 	return out
 end
 
+-- Edges ------------------------------------------------------------------------------------------
+--
+-- The user: "for edges and corners where faces meet, is it possible to detail and weather them such
+-- that edges have weathering detail on their textures or is smoothed?" Roblox shades no edge of its
+-- own, so the edge is drawn: a box whose top edges are cut back at 45 degrees (a chamfer, the way a
+-- table top, a counter's nosing or a shelf is finished), or rounded over. The cut catches the light
+-- differently from the faces either side, so the edge reads, and `wear` paints it a little lighter
+-- or darker than the face, where hands and feet rub the paint and the grime collects.
+
+export type BevelOpts = {
+	round: boolean?, -- rounded over (truly round rods and balls) rather than cut at 45 degrees
+	under: boolean?, -- the bottom edges too (a slab seen from below: a shelf, a floating top)
+	wear: number?, -- the edges' paint times this (0.9 a shade darker, 1.08 rubbed lighter)
+}
+
+-- What a shape in `color` drawn in `mat` is made of once the paint tool's material is on (the
+-- edges of a bevel are a shade off their face's colour, so they ask for it by the face's).
+function Recipe.slotMat(self: Recipe, color: Color3, mat: string?): string
+	local m = mat or self.mat or Geometry.Default
+	local m1, m2 = (self :: any).m1, (self :: any).m2
+	if not KEEPS[m] then
+		if m1 and color == self.c1 then
+			return m1
+		elseif m2 and color == self.c2 then
+			return m2
+		end
+	end
+	return m
+end
+
+local function shaded(c: Color3, k: number?): Color3
+	if not k or k == 1 then
+		return c
+	end
+	return Color3.new(math.clamp(c.R * k, 0, 1), math.clamp(c.G * k, 0, 1), math.clamp(c.B * k, 0, 1))
+end
+
+-- A box between two corners with its top edges cut back by `b` (or rounded over: opts.round), in
+-- one line where a recipe would draw a plain block. The top stays where the block's was, so what
+-- stands on it stands as before; only its rim is taken in. Returns the box's body (the part a
+-- recipe would mark or name). A bevel too big for the box is made to fit; a tiny one is no bevel.
+function Recipe.bevel(
+	self: Recipe,
+	x1: number,
+	y1: number,
+	z1: number,
+	x2: number,
+	y2: number,
+	z2: number,
+	b: number,
+	color: Color3,
+	mat: string?,
+	opts: BevelOpts?
+): Prim
+	local o: BevelOpts = opts or {}
+	x1, x2 = math.min(x1, x2), math.max(x1, x2)
+	y1, y2 = math.min(y1, y2), math.max(y1, y2)
+	z1, z2 = math.min(z1, z2), math.max(z1, z2)
+	local h = y2 - y1
+	b = math.min(b, (x2 - x1) / 2 - 0.02, (z2 - z1) / 2 - 0.02, if o.under then h * 0.45 else h * 0.9)
+	if b < 0.02 then
+		return self:block(x1, y1, z1, x2, y2, z2, color, mat)
+	end
+	local edge = shaded(color, o.wear)
+	local em = self:slotMat(color, mat)
+	local bottom = if o.under then y1 + b else y1
+	local body = self:block(x1, bottom, z1, x2, y2 - b, z2, color, mat)
+	self:block(x1 + b, y2 - b, z1 + b, x2 - b, y2, z2 - b, color, mat)
+	if o.under then
+		self:block(x1 + b, y1, z1 + b, x2 - b, y1 + b, z2 - b, color, mat)
+	end
+	local xm, zm = (x1 + x2) / 2, (z1 + z2) / 2
+	local lx, lz = x2 - x1, z2 - z1
+	-- the four top edges (and the four bottom ones), each a wedge full height on its inner side:
+	-- the front and back run the whole length, the sides between them
+	local function edges(y: number, flip: boolean)
+		local turn = if flip then CFrame.Angles(0, 0, math.pi) else CFrame.identity
+		if o.round then
+			-- (a rod along each edge, a ball at each corner, all truly round)
+			local c = y
+			for _, z in { z1 + b, z2 - b } do
+				local rod = self:cyl(xm, c, z, lx - 2 * b, 2 * b, "x", edge, em)
+				rod.smooth = true
+			end
+			for _, x in { x1 + b, x2 - b } do
+				local rod = self:cyl(x, c, zm, lz - 2 * b, 2 * b, "z", edge, em)
+				rod.smooth = true
+				for _, z in { z1 + b, z2 - b } do
+					local ball = self:ball(x, c, z, 2 * b, edge, em)
+					ball.smooth = true
+				end
+			end
+			return
+		end
+		local yc = if flip then y + b / 2 else y - b / 2
+		self:wedge(CFrame.new(xm, yc, z2 - b / 2) * CFrame.Angles(0, math.pi, 0) * turn, lx, b, b, edge, em)
+		self:wedge(CFrame.new(xm, yc, z1 + b / 2) * turn, lx, b, b, edge, em)
+		if lz - 2 * b > 0.01 then
+			self:wedge(
+				CFrame.new(x1 + b / 2, yc, zm) * CFrame.Angles(0, math.pi / 2, 0) * turn,
+				lz - 2 * b,
+				b,
+				b,
+				edge,
+				em
+			)
+			self:wedge(
+				CFrame.new(x2 - b / 2, yc, zm) * CFrame.Angles(0, -math.pi / 2, 0) * turn,
+				lz - 2 * b,
+				b,
+				b,
+				edge,
+				em
+			)
+		end
+	end
+	if o.round then
+		edges(y2 - b, false)
+		if o.under then
+			edges(y1 + b, true)
+		end
+	else
+		edges(y2, false)
+		if o.under then
+			edges(y1, true)
+		end
+	end
+	return body
+end
+
 -- See-through glass between two corners.
 function Recipe.glass(self: Recipe, x1: number, y1: number, z1: number, x2: number, y2: number, z2: number): Prim
 	local p = self:block(x1, y1, z1, x2, y2, z2, Recipe.Colors.Glass, "Glass")

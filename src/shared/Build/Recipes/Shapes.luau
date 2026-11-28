@@ -38,11 +38,11 @@ local function cube(r: R, w: number, h: number, d: number)
 end
 
 local function cylinder(r: R, w: number, h: number, _d: number)
-	r:cyl(0, h / 2, 0, h, w, "y", r.c1, MAT)
+	r:cyl(0, h / 2, 0, h, w, "y", r.c1, MAT).smooth = false -- (eight sides, like the half cylinder and the arch)
 end
 
 local function sphere(r: R, w: number, _h: number, _d: number)
-	r:ball(0, w / 2, 0, w, r.c1, MAT)
+	r:ball(0, w / 2, 0, w, r.c1, MAT).smooth = false
 end
 
 -- a ramp: low at the front (+Z), up to full height at the back
