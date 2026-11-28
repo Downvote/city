@@ -446,8 +446,8 @@ describe("Pets", function()
 			last = Tuning.Pets.Mood[r]
 			expect(Tuning.Pets.Fetch[r] > 0 and Tuning.Pets.Fetch[r] <= 0.5).toBeTruthy()
 		end
-		-- a little: never more than a good night's sleep in a nice room does
-		expect(Tuning.Pets.Mood.legendary <= Tuning.Villagers.BedMoodPerNight).toBeTruthy()
+		-- a little: never more a night than owning a pet adds to how happy they can be (Sim/Needs)
+		expect(Tuning.Pets.Mood.legendary <= Tuning.Needs.Pet).toBeTruthy()
 		expect(Pets.nightMood("cat")).toBe(Tuning.Pets.Mood.common)
 		expect(Pets.nightMood("dragon")).toBe(Tuning.Pets.Mood.legendary)
 		expect(Pets.nightMood("nothing")).toBe(0)
