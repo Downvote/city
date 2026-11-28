@@ -520,7 +520,19 @@ run("a notice: a see-through dark rounded note at the top, level with the clock"
 	check(icon ~= nil and icon:GetAttribute("Glyph") == T.White:ToHex(), "a white icon")
 	local words = note:FindFirstChild("Words")
 	check(words ~= nil and words.TextColor3 == T.White and words.Text == "Not enough coins for that.", "white words")
-	check(holder.AnchorPoint.X == 0.5 and holder.Position.X.Scale == 0.5, "in the middle of the screen")
+	-- in the middle of the screen, or just left of the round buttons under the clock where the
+	-- middle would run the notes under the first into them (at 1280 across it would)
+	local corner = gui:FindFirstChild("Corner", true)
+	local wide = Sim.cam.ViewportSize.X / gui.Scale.Scale
+	local cornerLeft = wide + corner.Position.X.Offset - corner.Size.X.Offset
+	local middleX = holder.Position.X.Offset
+	check(
+		holder.AnchorPoint.X == 0.5
+			and holder.Position.X.Scale == 0
+			and middleX <= wide / 2
+			and middleX + holder.Size.X.Offset / 2 <= cornerLeft - 8,
+		"in the middle, or as near it as keeps clear of the round buttons"
+	)
 	local clock = gui:FindFirstChild("Clock", true)
 	local clockMiddle = clock.Position.Y.Offset + clock.Size.Y.Offset / 2
 	local slot = note.Parent
