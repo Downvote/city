@@ -2985,6 +2985,11 @@ cozy music track in the background. use roblox library for these, dont make your
 
 ## Tests and tools
 
+- Round 8 (fog and rain fixes, the creator on a clear noon, things in the hand, titles over names and in chat, lights
+  across rooms, cutscenes become conversations, pets removed and kept, a crate opening that takes the screen, gems for
+  looks and the Shopping track, the neon street, fairground and temple pieces): 892 specs in 76 files at the last full
+  run. New spec files: `ThingModels`, `TitleTag`, `Shopping`; `Cutscenes` is gone. A new simulation, `crate_open` (a
+  crate opening played through), runs in `scripts/check.sh`; `tools/preview/video.sh` records a screen with its sound.
 - Round 7 (the main screen's Hide, borders and Claim all, icons, the friend's tutorial, the creator's extras, bubbles,
   the bag and gifts, skills and work moves, six plots and visits, Build mode's search, joins and lifts, vehicles,
   decor and water, cutscenes in the world, events with pieces and follow-ups, settings, weather and seasons, earned
