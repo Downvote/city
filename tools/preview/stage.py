@@ -8,12 +8,15 @@ It is a sketch of what Roblox draws, good for judging a set and its shots, not a
 
     python3 tools/preview/stage.py <set.json> <out.png> [--shot wide | --all <dir>] [--shots a,b]
         [--eye x,y,z --look x,y,z --fov 40] [--size 1280x720] [--ss 1] [--clear] [--bars]
+        [--textures] [--hour 22]
 
 <set.json> is what `lune run tools/preview/dump.luau stage:<id>` writes; the light, the shots, the
 lamps and a stand-in on each mark are read from <set.json>.stage.json beside it, or from --side.
 --all draws every shot into <dir> as <id>_<shot>.png (--shots only those). --clear leaves the sky
 out (see-through), which is how tools/preview/ui_dump.luau lays the picture under the screen it
-builds. --bars draws the letterbox. tools/preview/stage.sh runs the lot.
+builds. --bars draws the letterbox. --textures lays the materials' pictures on, as walk.py does,
+and --hour draws it at another hour. tools/preview/stage.sh runs the lot; tools/preview/plan.sh draws
+a player's build the same way (dump.luau's plan:<file> scene, with its lamps beside it).
 """
 import argparse
 import json
@@ -113,7 +116,31 @@ def paint_sky(side, W, H, focal, fwd, right, up, scale, sky_dir, hour):
     return np.asarray(im.convert("RGB"), float) / 255
 
 
-def draw(prims, side, eye, look, fov, W, H, clear=False):
+def textured(textures, p, n, world, base, scale):
+    """The colour of a prim's face at these points with its material's picture on, or None."""
+    key = textures.key(p.get("mat"))
+    if key is None:
+        return None
+    cf = p["cf"]
+    ppos = np.array(cf[0:3])
+    rot = np.array([[cf[3], cf[4], cf[5]], [cf[6], cf[7], cf[8]], [cf[9], cf[10], cf[11]]])
+    lp = (world - ppos) @ rot + np.array(p["size"]) / 2
+    nl = n @ rot
+    axis = int(np.argmax(np.abs(nl)))
+    if axis == 0:
+        tu, tv = (-lp[:, 2] if nl[0] > 0 else lp[:, 2]), -lp[:, 1]
+    elif axis == 1:
+        tu, tv = lp[:, 0], lp[:, 2]
+    else:
+        tu, tv = (lp[:, 0] if nl[2] > 0 else -lp[:, 0]), -lp[:, 1]
+    tex = textures.sample(key, tu, tv, scale)
+    if tex is None:
+        return None
+    _, _, own, bright = textures.by_mat[key]
+    return render.shade_paint(base, own, bright)[None, :] * tex
+
+
+def draw(prims, side, eye, look, fov, W, H, clear=False, textures=None):
     light_info = side["light"]
     hour = light_info["hour"]
     sky_dir = np.array(side["sky_dir"], float)
@@ -198,6 +225,7 @@ def draw(prims, side, eye, look, fov, W, H, clear=False):
     order = sorted(np.nonzero(ahead)[0], key=lambda i: alphas[i] < 1)
     zbuf = np.full((H, W), np.inf)
     lamp_pos = np.array([l["at"] for l in lamps]) if lamps else None
+    lamp_range = np.array([l["range"] for l in lamps]) if lamps else None
     for i in order:
         t = T[i]
         n = np.cross(t[1] - t[0], t[2] - t[0])
@@ -212,6 +240,12 @@ def draw(prims, side, eye, look, fov, W, H, clear=False):
         glow = p.get("mat") == "Neon"
         facing = max(0.0, float(n @ toward))
         a = alphas[i]
+        # (only the lamps whose reach meets this triangle)
+        near_lamps = []
+        if lamp_pos is not None:
+            mid = t.mean(axis=0)
+            rad = float(np.linalg.norm(t - mid, axis=1).max())
+            near_lamps = np.nonzero(np.linalg.norm(lamp_pos - mid, axis=1) < lamp_range + rad)[0]
         for c, wts in walk.clip_near(cam[i]):
             px = W / 2 + focal * c[:, 0] / c[:, 2]
             py = H / 2 - focal * c[:, 1] / c[:, 2]
@@ -232,6 +266,11 @@ def draw(prims, side, eye, look, fov, W, H, clear=False):
             b2 = (w2 / c[1, 2] * z)[closer]
             b3 = (w3 / c[2, 2] * z)[closer]
             world = b1[:, None] * corners[0] + b2[:, None] * corners[1] + b3[:, None] * corners[2]
+            col = None
+            if textures is not None and not glow:
+                col = textured(textures, p, n, world, base, focal / float(z[closer].mean()))
+            if col is None:
+                col = np.tile(base, (len(world), 1))
             if glow:
                 shaded = np.tile(np.clip(base * 1.12, 0, 1), (len(world), 1))
             else:
@@ -252,7 +291,8 @@ def draw(prims, side, eye, look, fov, W, H, clear=False):
                     lit[off] = 1
                 irr = light.irradiance(n, lit, toward=toward)
                 if lamp_pos is not None:
-                    for li, l in enumerate(lamps):
+                    for li in near_lamps:
+                        l = lamps[li]
                         dv = lamp_pos[li][None, :] - world
                         dist = np.linalg.norm(dv, axis=1)
                         near_l = dist < l["range"]
@@ -262,7 +302,7 @@ def draw(prims, side, eye, look, fov, W, H, clear=False):
                         fall = np.clip(1 - dist / l["range"], 0, 1) ** 2
                         irr = irr + (game_look.to_lin(np.array(l["color"]))[None, :]
                                      * (l["brightness"] * LAMP * cosv * fall)[:, None])
-                shaded = light.shade(np.tile(base, (len(world), 1)), irr)
+                shaded = light.shade(col, irr)
             dist = np.linalg.norm(world - eye, axis=1)
             fog = (1 - np.exp(-dist / reach))[:, None]
             shaded = shaded * (1 - fog) + haze * fog
@@ -286,9 +326,9 @@ def draw(prims, side, eye, look, fov, W, H, clear=False):
     return img, alpha
 
 
-def shot_picture(prims, side, eye, look, fov, W, H, clear=False, bars=False, ss=1):
+def shot_picture(prims, side, eye, look, fov, W, H, clear=False, bars=False, ss=1, textures=None):
     w, h = W * ss, H * ss
-    img, alpha = draw(prims, side, eye, look, fov, w, h, clear)
+    img, alpha = draw(prims, side, eye, look, fov, w, h, clear, textures)
     if clear:
         rgba = np.dstack([np.clip(img, 0, 1) * 255, alpha * 255]).astype(np.uint8)
         pic = Image.fromarray(rgba, "RGBA")
@@ -318,12 +358,21 @@ def main():
     ap.add_argument("--no-cast", action="store_true", help="leave the stand-ins off the marks")
     ap.add_argument("--bars", action="store_true", help="the letterbox over the top and the bottom")
     ap.add_argument("--ss", type=int, default=1)
+    ap.add_argument("--textures", action="store_true", help="the materials' pictures (as walk.py)")
+    ap.add_argument("--hour", type=float, default=None, help="draw it at this hour instead")
     args = ap.parse_args()
     W, H = [int(v) for v in args.size.split("x")]
     prims = json.load(open(args.inp))
     side = json.load(open(args.side or args.inp + ".stage.json"))
     if "look" not in side:
         side["look"] = game_look.load()
+    if args.hour is not None:
+        side["light"]["hour"] = args.hour
+    if "sky_dir" not in side:
+        # (a plan's: where the game's sun, or the moon after dark, stands at the hour, look.py; a
+        # set keeps its own, turned to its face)
+        side["sky_dir"] = list(game_look.Light(side["look"], side["light"]["hour"]).dir)
+    textures = render.Textures(library=True) if args.textures else None
     if not args.no_cast:
         prims = prims + side.get("figures", [])
     if args.all:
@@ -333,7 +382,7 @@ def main():
             if want and name not in want:
                 continue
             pic = shot_picture(prims, side, np.array(sh["eye"]), np.array(sh["look"]), sh["fov"], W, H,
-                               args.clear, args.bars, args.ss)
+                               args.clear, args.bars, args.ss, textures)
             path = os.path.join(args.out, "%s_%s.png" % (side.get("id", "stage"), name.replace(":", "-")))
             pic.convert("RGB").save(path)
             print("wrote", path)
@@ -343,7 +392,7 @@ def main():
     else:
         sh = side["shots"][args.shot]
         eye, lk, fov = np.array(sh["eye"]), np.array(sh["look"]), args.fov or sh["fov"]
-    pic = shot_picture(prims, side, eye, lk, fov, W, H, args.clear, args.bars, args.ss)
+    pic = shot_picture(prims, side, eye, lk, fov, W, H, args.clear, args.bars, args.ss, textures)
     (pic if args.clear else pic.convert("RGB")).save(args.out)
     print("wrote", args.out)
 

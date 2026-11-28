@@ -41,6 +41,8 @@
 --                      such as joins:roofs:L; Z.joins in tools/preview/zfight_lib.luau)
 --   water              a tiled pool, a pond and a stone rimmed pool with things in them
 --                      (water:pool, water:pond, water:rim for one; tools/preview/water_scene.luau)
+--   plan:<file.json>   a player's build saved as JSON, on its land; its lamps beside the output
+--                      for tools/preview/stage.py (tools/preview/plan.sh draws it at night)
 -- SEASON=1..4 in the environment draws any scene in that season (Data/Seasons, as the game's
 -- client World/Seasons and the server's terrain do): spring blossom, autumn reds and golds, snow on
 -- the grass, the trees and the roofs in winter (every roof here: the game asks the sky too).
@@ -500,6 +502,64 @@ elseif scene == "joins" or scene:sub(1, 6) == "joins:" then
 elseif scene == "water" or scene:sub(1, 6) == "water:" then
 	-- (water: pools and ponds with things in them)
 	addPrims(require("./water_scene")(R, scene:sub(7)))
+elseif scene:sub(1, 5) == "plan:" then
+	-- plan:<file.json> a player's build, saved as a plan is (walls, floors, roofs, waters, items in
+	-- the plot's own space), drawn as a plot draws it (Builder.primsFor) on its land and the plot's
+	-- lawn round it. Its lamps, the light at HOUR (22 if not given) and no shots go beside the JSON
+	-- (<out>.stage.json) for tools/preview/stage.py; tools/preview/plan.sh does both
+	local Lib = require("./stage_lib")
+	local Textures = R(Shared .. "Data.Textures")
+	local plan = serde.decode("json", fs.readFile(scene:sub(6)))
+	for _, kind in Plan.Kinds do
+		plan[kind] = plan[kind] or {}
+	end
+	local lamps = {}
+	local Water = R(Shared .. "Build.Water")
+	Water.drawSurface = true
+	for _, kind in Plan.Kinds do
+		for key, obj in plan[kind] do
+			local list = Builder.primsFor(plan, kind, key) or {}
+			-- (a placed light is on at every hour unless its owner put it out: its glowing parts
+			-- turn to Neon, as Services/World.setLight does in the game)
+			for _, p in Geometry.flatten(list) do
+				if p.role == "glow" and not obj.off then
+					p.mat = "Neon"
+				end
+			end
+			if not obj.off then
+				-- (as Builder lights a player's lamps: Tuning.Lights.Placed, no further than MaxRange)
+				local K = R(Shared .. "Config.Tuning").Lights
+				for _, l in Lib.lamps(list) do
+					l.range = math.min(l.range * K.Placed.Range, K.MaxRange)
+					l.brightness *= K.Placed.Brightness
+					table.insert(lamps, l)
+				end
+			end
+			addPrims(list)
+		end
+	end
+	-- the land (Services/Plots.landModel: grass a hair under the floor line, a low curb round it)
+	-- and the plot's lawn past it
+	local C3, V3 = roblox.Color3, roblox.Vector3
+	local x1, z1, x2, z2 = Plan.bounds(plan)
+	local function slab(cx, cy, cz, sx, sy, sz, col, mat)
+		addPrims({ Geometry.box(CFrame.new(cx, cy, cz), V3.new(sx, sy, sz), col, mat) })
+	end
+	local grass = Textures.tint("Grass", C3.fromRGB(148, 200, 120))
+	slab((x1 + x2) / 2, -0.04, (z1 + z2) / 2, x2 - x1, 0.1, z2 - z1, grass, "Grass")
+	local curb = C3.fromRGB(232, 228, 216)
+	slab((x1 + x2) / 2, 0.1, z1, x2 - x1 + 0.6, 0.3, 0.6, curb, "Concrete")
+	slab((x1 + x2) / 2, 0.1, z2, x2 - x1 + 0.6, 0.3, 0.6, curb, "Concrete")
+	slab(x1, 0.1, (z1 + z2) / 2, 0.6, 0.3, z2 - z1, curb, "Concrete")
+	slab(x2, 0.1, (z1 + z2) / 2, 0.6, 0.3, z2 - z1, curb, "Concrete")
+	local lawn = Textures.tint("Grass", C3.fromRGB(138, 192, 112))
+	local m = 160
+	slab((x1 + x2) / 2, -0.6, (z1 + z2) / 2, x2 - x1 + 2 * m, 1, z2 - z1 + 2 * m, lawn, "Grass")
+	local hour = tonumber(process.env.HOUR or "") or 22
+	fs.writeFile(
+		outPath .. ".stage.json",
+		serde.encode("json", { id = "plan", light = { hour = hour }, lamps = lamps, shots = {}, figures = {} })
+	)
 elseif scene == "ambient" or scene:sub(1, 8) == "ambient:" then
 	-- ambient: the town's cars, the bus and a duck; ambient:<name> one of them (car, parked, bus)
 	local AmbientModels = R(Shared .. "Data.AmbientModels")
