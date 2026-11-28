@@ -7,6 +7,7 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Tuning = require(Shared.Config.Tuning)
 local Bubble = require(Shared.Util.Bubble)
 local Voice = require(Shared.Sim.Voice)
+local Emotes = require(Shared.Data.Emotes)
 local Room = require(script.Parent.Room)
 
 local Npc = {}
@@ -55,13 +56,16 @@ local DEFAULT_ANIMS = {
 	-- the swing of a held tool, which the Animate script keeps under this name: a hammer blow
 	-- at the builder's bench (Sim/Routine)
 	toolslash = "rbxassetid://522635514",
+	-- the lunge of a held tool: the baker's peel into the oven (Sim/Routine's job moves)
+	toollunge = "rbxassetid://522638767",
 }
 
 local LOOPED = { idle = true, walk = true, run = true, sit = true, dance = true, dance2 = true }
 
 -- Roblox plays the tool swing over whatever else the body is doing, by giving it this priority
 -- itself each time. So do we, or the idle animation would hide it.
-local PRIORITY: { [string]: Enum.AnimationPriority } = { toolslash = Enum.AnimationPriority.Action }
+local PRIORITY: { [string]: Enum.AnimationPriority } =
+	{ toolslash = Enum.AnimationPriority.Action, toollunge = Enum.AnimationPriority.Action }
 
 -- Reads the animation id the character's Animate script would use for an action.
 local function animId(model: Model, action: string): string
@@ -142,7 +146,10 @@ function Npc.track(self: Npc, action: string): AnimationTrack?
 	if not self.animator then
 		return nil
 	end
-	local id = animId(self.model, action) or DEFAULT_ANIMS[action]
+	-- an emote the player bought them to work to (Data/Emotes, Sim/WorkMove) is Roblox's own,
+	-- whatever pack they wear
+	local emote = Emotes.get(action)
+	local id = if emote then emote.anim else animId(self.model, action) or DEFAULT_ANIMS[action]
 	if not id then
 		return nil
 	end
@@ -154,9 +161,11 @@ function Npc.track(self: Npc, action: string): AnimationTrack?
 	if not ok or not track then
 		return nil
 	end
-	track.Looped = LOOPED[action] == true
+	track.Looped = if emote then emote.looped else LOOPED[action] == true
 	if PRIORITY[action] then
 		track.Priority = PRIORITY[action]
+	elseif emote then
+		track.Priority = Enum.AnimationPriority.Action
 	end
 	self.tracks[action] = track
 	return track

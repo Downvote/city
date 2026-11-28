@@ -57,6 +57,9 @@ Remotes.Functions = {
 	-- (vid, "phrase" | "ending" | "thing", text | false) -> ok, message: sets a villager's flair for its
 	-- price in gems (Sim/Flair), filtered on the server; false takes it off, for nothing
 	"VillagerFlair",
+	-- (vid, emote id | false) -> ok, message: the emote a villager works to, for Tuning.WorkMove.Price
+	-- gems (Sim/WorkMove); false is back to their job's own moves, for nothing
+	"VillagerMove",
 	"GoalClaim", -- (goalId) -> ok, coins
 	"GoalClaimAll", -- () -> ok, { count, coins } or why: every finished goal at once (Services/Claims)
 	"PlaceFound", -- (placeId) -> ok: the player is at a place (checked against where they stand)

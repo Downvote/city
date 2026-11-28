@@ -26,6 +26,8 @@ local Passes = require(Shared.Sim.Passes)
 local Sayings = require(Shared.Data.Sayings)
 local Flair = require(Shared.Sim.Flair)
 local Memory = require(Shared.Sim.Memory)
+local Visits = require(Shared.Sim.Visits)
+local WorkMove = require(Shared.Sim.WorkMove)
 local Appearance = require(Shared.Avatar.Appearance)
 local Categories = require(Shared.Avatar.Categories)
 local Chatter = require(Shared.Data.Events.Chatter)
@@ -345,25 +347,53 @@ local function station(player: Player, vid: string): Station?
 	return { job = w.def.job, frame = world, loop = loop, home = world * loop[Routine.home(loop)].at }
 end
 
+-- The spot in front of a workplace (`item` on the plan, `def` its catalog piece) where a customer
+-- stands: on the other side from the worker.
+local function frontOf(player: Player, item: any, def: any): Vector3?
+	local profile = Data.get(player)
+	local i = Plots.indexOf(player)
+	local frame = profile and Plan.itemFrame(profile.plan, item)
+	if not i or not frame then
+		return nil
+	end
+	local spot = def.workSpot or Vector3.new(0, 0, -(def.size.Z / 2 + 1.5))
+	local front = Vector3.new(spot.X, 0, if spot.Z < 0 then def.size.Z / 2 + 2 else -(def.size.Z / 2 + 2))
+	return Town.plotFrame(i) * frame * front
+end
+
 -- The spot in front of someone else's workplace where a customer stands.
 local function customerSpot(player: Player, vid: string): Vector3?
 	local profile = Data.get(player)
-	local i = Plots.indexOf(player)
-	if not profile or not i then
-		return nil
-	end
-	local w = City.jobOf(profile, vid)
+	local w = profile and City.jobOf(profile, vid)
 	if not w then
 		return nil
 	end
-	local frame = Plan.itemFrame(profile.plan, w.item)
-	if not frame then
+	return frontOf(player, w.item, w.def)
+end
+
+-- The player at work at a workplace of their own (Services/Work tells this as it starts and
+-- stops): the piece's key and its job, so villagers come and buy from them (Sim/Visits).
+local YOU = "@you"
+local playerWork: { [Player]: { key: string, job: string } } = {}
+local servedEvent = Instance.new("BindableEvent")
+Villagers.Served = servedEvent.Event -- (player, vid): a villager the player served at their work
+
+function Villagers.setPlayerWork(player: Player, key: string?, job: string?)
+	if key and job then
+		playerWork[player] = { key = key, job = job }
+	else
+		playerWork[player] = nil
+	end
+end
+
+-- The player's body while they work at a workplace of this town: its root, or nil.
+local function workerRoot(player: Player): BasePart?
+	if not playerWork[player] then
 		return nil
 	end
-	local spot = w.def.workSpot or Vector3.new(0, 0, -(w.def.size.Z / 2 + 1.5))
-	-- customers stand on the other side from the worker
-	local front = Vector3.new(spot.X, 0, if spot.Z < 0 then w.def.size.Z / 2 + 2 else -(w.def.size.Z / 2 + 2))
-	return Town.plotFrame(i) * frame * front
+	local char = player.Character
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+	return if root and root:IsA("BasePart") then root else nil
 end
 
 local function isWorkTime(h: number): boolean
@@ -695,20 +725,74 @@ end
 -- Somebody at work is somebody to talk to only for a worker on a break (a word with a
 -- neighbour over their counter); anyone else calls on them as a customer, or they would never
 -- get any work done. And the pieces they could use. `can` is what Routine.next is told.
+type Beside = { seat: Seat, by: Seat, who: string } -- a free seat beside somebody sat down: a vid, or YOU
 type Around = {
 	seats: { Seat },
 	friends: { string },
-	open: { string },
+	open: { string }, -- villagers at work, and YOU when the player is
 	uses: { Uses.Candidate },
+	beside: { Beside },
 	can: { [string]: boolean },
+	boost: { [string]: number }?, -- what Routine.next is told is likelier just now
+	serving: boolean?, -- the player is at work: a call there is open out of work hours too
 }
+
+local VK = Tuning.Visits
+
+-- The free seats beside somebody already sat down on the plot (a bench, a swing set, two chairs at
+-- a table: seats within Tuning.Visits.Beside of each other): a villager of the town on their own
+-- time (nothing else has them), or the owner. The user: "do this as well with things like the
+-- swing, where villagers might sit with each other or with you."
+local function besideSeats(player: Player, vid: string): { Beside }
+	local folder = buildFolder(player)
+	if not folder then
+		return {}
+	end
+	local free, freePos, taken, takenPos, who = {}, {}, {}, {}, {}
+	for _, d in CollectionService:GetTagged(Builder.Tags.SeatSpot) do
+		if d:IsA("Seat") and d:IsDescendantOf(folder) then
+			local model = d.Parent
+			local id = model and model:GetAttribute("ItemId")
+			local def = type(id) == "string" and Catalog.get(id)
+			local occupant = d.Occupant
+			if def and Catalog.hasTag(def, "bath") then
+				continue
+			elseif not occupant then
+				table.insert(free, d)
+				table.insert(freePos, d.Position)
+			else
+				local body = occupant.Parent
+				local sitter: string? = nil
+				if player.Character ~= nil and body == player.Character then
+					sitter = YOU
+				elseif body then
+					local other = body:GetAttribute("Vid")
+					local o = type(other) == "string" and Villagers.get(player, other)
+					if o and o.model == body and other ~= vid and not Villagers.control(player, other) then
+						sitter = other
+					end
+				end
+				if sitter then
+					table.insert(taken, d)
+					table.insert(takenPos, d.Position)
+					table.insert(who, sitter)
+				end
+			end
+		end
+	end
+	local out = {}
+	for _, pair in Visits.beside(freePos, takenPos, VK.Beside) do
+		table.insert(out, { seat = free[pair[1]], by = taken[pair[2]], who = who[pair[2]] })
+	end
+	return out
+end
 
 local function around(player: Player, vid: string, from: Vector3?, reach: number?): Around
 	local function near(p: Vector3): boolean
 		return from == nil or reach == nil or flat(p, from) <= reach
 	end
 	local onBreak = from ~= nil
-	local out: Around = { seats = {}, friends = {}, open = {}, uses = {}, can = {} }
+	local out: Around = { seats = {}, friends = {}, open = {}, uses = {}, beside = {}, can = {} }
 	for _, seat in seats(player) do
 		if near(seat.Position) then
 			table.insert(out.seats, seat)
@@ -739,6 +823,24 @@ local function around(player: Player, vid: string, from: Vector3?, reach: number
 	if at then
 		out.uses = usable(player, at, reach or UK.Reach)
 	end
+	-- the player at work near: somebody to buy from, even out of work hours, and likelier
+	local root = workerRoot(player)
+	if root and near(root.Position) then
+		table.insert(out.open, YOU)
+		out.boost = { visit = VK.PlayerBoost }
+		out.serving = true
+	end
+	-- a free seat beside somebody sat down near
+	for _, b in besideSeats(player, vid) do
+		if near(b.seat.Position) then
+			table.insert(out.beside, b)
+			if b.who == YOU then
+				local boost = out.boost or {}
+				boost.sit = VK.SitBoost
+				out.boost = boost
+			end
+		end
+	end
 	out.can = { sit = #out.seats > 0, chat = #out.friends > 0, visit = #out.open > 0, use = #out.uses > 0 }
 	return out
 end
@@ -750,19 +852,11 @@ local function sitOn(npc: any, seat: Seat, timeout: number, maxPath: number?): b
 	return npc:walkTo(front, timeout, maxPath) and npc:sit(seat)
 end
 
-local ORDERS = { "One of those, please.", "What's good today?", "The usual, please." }
-
--- Drops by somebody's workplace while they are at it and buys something: a few coins for the
--- town, a little practice for the worker. They stand on the customer's side unless that is a
--- long way round (a counter against a wall puts it outside, behind the building), and then up
--- beside the worker. The worker stops to serve them.
-local function visit(player: Player, vid: string, npc: any, worker: string, maxPath: number?): boolean
-	local wnpc = Villagers.get(player, worker)
-	local spot = customerSpot(player, worker)
-	if not wnpc or not spot then
-		return false
-	end
-	local wpos, mine = wnpc:position(), npc:position()
+-- Walks up to be served at a workplace: to `spot` on the customer's side unless that is a long way
+-- round (a counter against a wall puts it outside, behind the building), and then up beside the
+-- worker at `wpos`. False when they never got there.
+local function walkToCounter(npc: any, spot: Vector3, wpos: Vector3, maxPath: number?): boolean
+	local mine = npc:position()
 	local dir = Vector3.new(mine.X - wpos.X, 0, mine.Z - wpos.Z)
 	dir = if dir.Magnitude > 0.1 then dir.Unit else Vector3.xAxis
 	local toWorker = npc:routeLength(wpos + dir * 3) or flat(mine, wpos) * 1.5
@@ -771,20 +865,84 @@ local function visit(player: Player, vid: string, npc: any, worker: string, maxP
 	if not ok and why ~= "cancelled" then
 		ok = walkUpTo(npc, wpos, 3, 25, maxPath)
 	end
+	return ok
+end
+
+-- Drops by somebody's workplace while they are at it and is served there: a few coins for the
+-- town, a little practice for the worker. The user: "villagers might come up to interact and do
+-- chats based on the work that is being done, like villagers buying ice cream." So they ask for
+-- what that job is for in their own words (Sim/Visits), the worker answers, they say thanks.
+-- `worker` is a villager, or YOU for the player at a workplace of their own.
+local function visitYou(player: Player, vid: string, npc: any, maxPath: number?): boolean
+	local pw = playerWork[player]
+	local profile = Data.get(player)
+	local item = pw and profile and profile.plan.items[pw.key]
+	local def = item and Catalog.get(item.id)
+	local root = workerRoot(player)
+	local spot = item and def and frontOf(player, item, def)
+	if not pw or not spot or not root then
+		return false
+	end
+	if not walkToCounter(npc, spot, root.Position, maxPath) then
+		return false
+	end
+	local v = Villagers.data(player, vid)
+	root = workerRoot(player)
+	if not v or not root or playerWork[player] ~= pw or Villagers.control(player, vid) then
+		return false
+	end
+	npc:face(root.Position)
+	-- now and then a word for the player first: it isn't every day they're behind the counter
+	if rng:chance(0.5) then
+		npc:say(Visits.greet(v.pers), 3)
+		task.wait(VK.Gap)
+	end
+	npc:say(Visits.ask(pw.job, v.pers, rng), 3.5)
+	task.wait(VK.Gap)
+	root = workerRoot(player)
+	if not root or playerWork[player] ~= pw then
+		return false
+	end
+	-- the player's answer, over their head for everyone near (client World/Interact)
+	Use.show(root.Position + Vector3.new(0, 3.4, 0), nil, Visits.serve(pw.job, v.name, rng))
+	task.wait(VK.Gap)
+	npc:say(Visits.thanks(v.pers, rng), 2.5)
+	npc:icon("sparkle")
+	Data.addCoins(player, Tuning.Jobs.VisitCoins)
+	servedEvent:Fire(player, vid)
+	task.wait(1)
+	return true
+end
+
+local function visit(player: Player, vid: string, npc: any, worker: string, maxPath: number?): boolean
+	if worker == YOU then
+		return visitYou(player, vid, npc, maxPath)
+	end
+	local wnpc = Villagers.get(player, worker)
+	local spot = customerSpot(player, worker)
+	if not wnpc or not spot then
+		return false
+	end
+	local ok = walkToCounter(npc, spot, wnpc:position(), maxPath)
 	if not ok or Villagers.control(player, vid) or not wnpc.atWork or not Villagers.working(player, worker) then
 		return false
 	end
+	local profile = Data.get(player)
+	local w = profile and City.jobOf(profile, worker)
+	local job = if w then w.def.job else ""
+	local v, wv = Villagers.data(player, vid), Villagers.data(player, worker)
 	Villagers.setControl(player, worker, "chat")
 	npc:face(wnpc:position())
 	wnpc:face(npc:position())
-	npc:say(rng:pick(ORDERS), 3)
-	task.wait(1.5)
+	npc:say(Visits.ask(job, v and v.pers, rng), 3.5)
+	task.wait(VK.Gap)
 	if Villagers.control(player, worker) == "chat" then
-		wnpc:say("Thanks, come again.", 2.5)
+		wnpc:say(Visits.serve(job, v and v.name, rng), 3)
+		task.wait(VK.Gap)
 	end
+	npc:say(Visits.thanks(v and v.pers, rng), 2.5)
 	npc:icon("sparkle")
 	Data.addCoins(player, Tuning.Jobs.VisitCoins)
-	local wv = Villagers.data(player, worker)
 	if wv then
 		EventEngine.addXp(wv, 2)
 	end
@@ -792,6 +950,111 @@ local function visit(player: Player, vid: string, npc: any, worker: string, maxP
 	task.wait(1)
 	if Villagers.control(player, worker) == "chat" then
 		Villagers.setControl(player, worker, nil)
+	end
+	return true
+end
+
+-- Which workplace a caller goes to: the player's, more often than not, when they are at one.
+local function pickOpen(open: { string }): string
+	if table.find(open, YOU) and (#open == 1 or rng:chance(VK.PickPlayer)) then
+		return YOU
+	end
+	local others = {}
+	for _, w in open do
+		if w ~= YOU then
+			table.insert(others, w)
+		end
+	end
+	return rng:pick(others)
+end
+
+-- Sitting down beside somebody already sat (Around's `beside`): with the player more often than not
+-- when they are one of them, else now and then. Nil to sit somewhere of their own.
+local function pickBeside(near: Around): Beside?
+	local mine: Beside? = nil
+	for _, b in near.beside do
+		if b.who == YOU then
+			mine = b
+		end
+	end
+	if mine and rng:chance(VK.BesidePlayer) then
+		return mine
+	end
+	if #near.beside > 0 and rng:chance(VK.SitBeside) then
+		return rng:pick(near.beside)
+	end
+	return nil
+end
+
+-- Sits down beside somebody (`b`) and has a word: a line from Sim/Visits as they sit, then a round
+-- or two of chat with a villager (who answers from where they sit, their own sit or swing going
+-- on), or a line or two to the player. Then they stay sat for the rest of `seconds`. False when
+-- they never got the seat.
+local function sitBeside(
+	player: Player,
+	vid: string,
+	npc: any,
+	b: Beside,
+	seconds: number,
+	ctx: Routine.Ctx,
+	maxPath: number?
+): boolean
+	local start = os.clock()
+	if b.seat.Occupant or not sitOn(npc, b.seat, 15, maxPath) then
+		return false
+	end
+	local profile = Data.get(player)
+	local v = Villagers.data(player, vid)
+	if not profile or not v then
+		return true
+	end
+	local toYou = b.who == YOU
+	-- still sat there beside them, and nothing else has either
+	local function together(): boolean
+		if Villagers.control(player, vid) or npc.seat ~= b.seat then
+			return false
+		end
+		if toYou then
+			local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+			return hum ~= nil and b.by.Occupant == hum
+		end
+		local o = Villagers.get(player, b.who)
+		return o ~= nil and o.seat == b.by and not Villagers.control(player, b.who)
+	end
+	npc:say(Visits.sit(v.pers, rng, toYou), 3)
+	local ov = if toYou then nil else Villagers.data(player, b.who)
+	local other = if toYou then nil else Villagers.get(player, b.who)
+	local rel = if ov then profile.rel[Schema.pairKey(vid, b.who)] else nil
+	local score = if rel then rel.s else 0
+	local rounds = rng:int(VK.Chats[1], VK.Chats[2])
+	for round = 1, rounds do
+		task.wait(VK.Gap)
+		if not together() then
+			break
+		end
+		if toYou then
+			-- a word to the player about their day, now and then
+			if round > 1 or rng:chance(0.5) then
+				npc:say(line(v.pers, feeling(v, 0)), 3)
+			end
+		elseif other and ov then
+			other:say(ownLine(ov, if round == 1 then "hello" else feeling(ov, score)), 3)
+			task.wait(VK.Gap)
+			if round < rounds and together() then
+				npc:say(ownLine(v, feeling(v, score)), 3)
+			end
+		end
+	end
+	if together() then
+		if toYou then
+			npc:icon("heart")
+		elseif other then
+			npc:icon(if score < -20 then "anger" elseif score > 30 then "heart" else "music")
+			metEvent:Fire(player, vid, b.who)
+		end
+	end
+	if npc.seat == b.seat and rest(player, vid, npc, math.max(RK.BreakStay, seconds - (os.clock() - start)), ctx) then
+		npc:standUp()
 	end
 	return true
 end
@@ -1133,12 +1396,14 @@ local function workTurn(
 	if stop.icon and rng:chance(0.5) then
 		npc:icon(stop.icon)
 	end
-	-- the work: the step's gesture, and again every beat for work that repeats (hammering)
+	-- the work: the step's gesture, and again every beat for work that repeats (hammering), or
+	-- the emote the player bought them to work to (Sim/WorkMove)
+	local act, beat = WorkMove.act(Villagers.data(player, vid), stop.act, stop.beat)
 	local left = turn.seconds
 	while left > 0 do
-		local bit = math.min(stop.beat or left, left)
-		if stop.act then
-			npc:gesture(stop.act, bit)
+		local bit = math.min(beat or left, left)
+		if act then
+			npc:gesture(act, bit)
 		end
 		if not rest(player, vid, npc, bit, ctx) then
 			break
@@ -1163,6 +1428,11 @@ local function breakTurn(
 	local start = os.clock()
 	local what = turn.what
 	if what == "sit" and #near.seats > 0 then
+		-- beside somebody sat down near, now and then (Sim/Visits)
+		local b = pickBeside(near)
+		if b and sitBeside(player, vid, npc, b, stayFor(start, turn), ctx, RK.BreakReach) then
+			return os.clock() - start
+		end
 		if sitOn(npc, rng:pick(near.seats), 15, RK.BreakReach) then
 			-- (cut short by a talk, they stay seated: the next walk stands them up)
 			if rest(player, vid, npc, stayFor(start, turn), ctx) then
@@ -1176,7 +1446,7 @@ local function breakTurn(
 			return os.clock() - start
 		end
 	elseif what == "visit" and #near.open > 0 then
-		if visit(player, vid, npc, rng:pick(near.open), RK.BreakReach) then
+		if visit(player, vid, npc, pickOpen(near.open), RK.BreakReach) then
 			return os.clock() - start
 		end
 	elseif what == "use" and #near.uses > 0 then
@@ -1215,6 +1485,10 @@ end
 local function potterTurn(player: Player, vid: string, npc: any, turn: Routine.Turn, near: Around?, ctx: Routine.Ctx)
 	local what = turn.what
 	if what == "sit" and near and #near.seats > 0 then
+		local b = pickBeside(near)
+		if b and sitBeside(player, vid, npc, b, turn.seconds, ctx) then
+			return
+		end
 		if sitOn(npc, rng:pick(near.seats), 20) then
 			if rest(player, vid, npc, turn.seconds, ctx) then
 				npc:standUp()
@@ -1226,7 +1500,7 @@ local function potterTurn(player: Player, vid: string, npc: any, turn: Routine.T
 			return
 		end
 	elseif what == "visit" and near and #near.open > 0 then
-		if visit(player, vid, npc, rng:pick(near.open)) then
+		if visit(player, vid, npc, pickOpen(near.open)) then
 			return
 		end
 	elseif what == "use" and near and #near.uses > 0 then
@@ -1330,6 +1604,8 @@ function Villagers.brain(player: Player, vid: string, npc: any)
 			near = around(player, vid, st.home, RK.BreakReach)
 		end
 		ctx.can = if near then near.can else nil
+		ctx.boost = if near then near.boost else nil
+		ctx.serving = if near then near.serving else nil
 		local turn = Routine.next(ctx, day, rng)
 		if turn.kind ~= "work" then
 			npc.atWork = false
@@ -1381,7 +1657,7 @@ end
 
 local purses: { [Player]: { [string]: City.Purse } } = {}
 local packets: { [Player]: { [string]: number } } = {} -- whole coins earned since the last message
-local YOU = "@you" -- the player's own work in a packet (Services/Work)
+-- (YOU, above, is also the player's own work in a packet: Services/Work)
 local yourDay: { [Player]: number } = {} -- and what they have earned at it today, for the client
 local yourCarry: { [Player]: number } = {} -- the part of a coin of the pay boost not handed over yet
 
@@ -2086,6 +2362,52 @@ function Villagers.setFlair(player: Player, vid: any, kind: any, text: any): (bo
 	return true, said
 end
 
+-- A villager's work move (Sim/WorkMove) ------------------------------------------------------------
+--
+-- The user: "let there be animations while a villager works. players can also pay gems to change
+-- this animation to an emote of their choosing." The villager's page sends the emote's id (or false
+-- to go back to the job's own moves, which is free); everything is checked here (a villager of
+-- theirs, an emote on the list, not what they have, enough gems) before the gems go.
+
+local moveAt: { [Player]: number } = {} -- the last change each player made, so a flood of asks is turned away
+
+function Villagers.setWorkMove(player: Player, vid: any, id: any): (boolean, string?)
+	local profile = Data.get(player)
+	if not profile then
+		return false, "Not ready yet."
+	end
+	local v = type(vid) == "string" and profile.villagers[vid]
+	if not v then
+		return false, "Who?"
+	end
+	if id == false then
+		if not WorkMove.clear(profile, vid) then
+			return false, "They do their job's own moves already."
+		end
+		Data.push(player, "villagers")
+		return true, Text.fill("{x} is back to their job's own moves.", { x = v.name })
+	end
+	if os.clock() - (moveAt[player] or -math.huge) < Tuning.WorkMove.Cooldown then
+		return false, "One moment."
+	end
+	moveAt[player] = os.clock()
+	local ok, cost, why = WorkMove.set(profile, vid, id)
+	if not ok then
+		return false, why
+	end
+	-- they try it out where they stand
+	local npc = Villagers.get(player, vid)
+	if npc and not npc.sleeping and not npc.seat then
+		npc:gesture(id, 3)
+	end
+	Data.push(player, "villagers", "gems")
+	return true,
+		Text.fill(if cost == 1 then "{x} works to it now. 1 gem." else "{x} works to it now. {n} gems.", {
+			x = v.name,
+			n = cost,
+		})
+end
+
 -- Talking to a villager --------------------------------------------------------------------------
 --
 -- The user: "allow the option to interact/chat with villagers by holding e on them". Every
@@ -2423,6 +2745,9 @@ function Villagers.start()
 	Remotes.fn("VillagerFlair").OnServerInvoke = function(player, vid, kind, text)
 		return Villagers.setFlair(player, vid, kind, text)
 	end
+	Remotes.fn("VillagerMove").OnServerInvoke = function(player, vid, id)
+		return Villagers.setWorkMove(player, vid, id)
+	end
 	Remotes.fn("VillagerFocus").OnServerInvoke = function(player, vid)
 		local npc = type(vid) == "string" and Villagers.get(player, vid)
 		return npc and npc.model or nil
@@ -2490,6 +2815,8 @@ function Villagers.start()
 		payOut(player)
 		purses[player] = nil
 		yourDay[player] = nil
+		playerWork[player] = nil
+		moveAt[player] = nil
 		yourCarry[player] = nil
 		talkTokens[player] = nil
 		talkedAt[player] = nil

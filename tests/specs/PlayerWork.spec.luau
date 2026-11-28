@@ -5,7 +5,12 @@
 -- new villager's rate there in whole coins and never past the day's cap, kept on their profile;
 -- who may start where, and what they are told when not; why work stops by itself; and that a
 -- player's own work stays small beside their town's wages, so progression is still "much more
--- based on villagers working".
+-- based on villagers working". Then: "when players work, make what they earn scale off town level.
+-- each skill also has a level/experience bar, which you gain while doing the work. This increases
+-- the amount of cash you get doing that particular work as well." So the pay and the day's cap grow
+-- with the town's level and the skill (Sim/Skills), the bound grows with the room a town's level
+-- gives for villagers, and the skill curve asks more for every level. And "Also, halve money gain
+-- from work.": the cap was halved with the villagers' pay, so every bound here holds as before.
 
 local Shared = "ReplicatedStorage.Shared."
 local Tuning = require(Shared .. "Config.Tuning")
@@ -15,13 +20,23 @@ local City = require(Shared .. "Sim.City")
 local Routine = require(Shared .. "Sim.Routine")
 local Schema = require(Shared .. "Sim.Schema")
 local PlayerWork = require(Shared .. "Sim.PlayerWork")
+local Skills = require(Shared .. "Sim.Skills")
 
 local K = Tuning.Jobs.Player
 local D = Tuning.Day
 local START = Tuning.Villagers.StartMood
 
 -- the animations a body has under these names (its Animate script's, or Roblox's own: Npc's)
-local MOTIONS = { wave = true, point = true, dance = true, dance2 = true, laugh = true, cheer = true, toolslash = true }
+local MOTIONS = {
+	wave = true,
+	point = true,
+	dance = true,
+	dance2 = true,
+	laugh = true,
+	cheer = true,
+	toolslash = true,
+	toollunge = true,
+}
 
 local function near(a, b, eps)
 	return (a - b).Magnitude <= (eps or 1e-3)
@@ -57,12 +72,16 @@ describe("PlayerWork", function()
 		expect(bench.act).toBe("toolslash")
 		expect(bench.beat).toBeNear(2.2)
 		expect(PlayerWork.standFrame(CFrame.new(), bench, 3).LookVector.Z < -0.99).toBeTruthy()
-		-- the artist paints, the musician dances; a job with nothing at its spot gets the plain motion
+		-- the artist paints, the musician dances, the baker works the peel in and out of the oven;
+		-- and every job goes at its work at its spot now ("let there be animations while a villager
+		-- works"): the florist trims, at the job's own move
 		expect(PlayerWork.stance(Catalog.get("work_easel")).act).toBe("point")
 		expect(PlayerWork.stance(Catalog.get("work_stage")).act).toBe("dance")
+		expect(PlayerWork.stance(Catalog.get("work_bakery")).act).toBe("toollunge")
 		local florist = PlayerWork.stance(Catalog.get("work_flowers"))
-		expect(florist.act).toBe(K.Act)
-		expect(florist.beat).toBe(K.Beat)
+		local act, beat = Routine.move("florist")
+		expect(florist.act).toBe(act)
+		expect(florist.beat).toBe(beat)
 		-- and where the workplace stands and how it is turned carries them with it
 		local frame = CFrame.new(40, 0.4, 70) * CFrame.Angles(0, math.rad(90), 0)
 		local cf = PlayerWork.standFrame(frame, bench, 3)
@@ -117,6 +136,119 @@ describe("PlayerWork", function()
 			expect(PlayerWork.earn(purse, 8, bad, 1)).toBe(0)
 		end
 		expect(purse.paid).toBe(before)
+	end)
+
+	it("pays more in a bigger town and with more skill, the cap with it, the time to it the same", function()
+		local def = Catalog.get("work_market")
+		local base = PlayerWork.rate(def)
+		expect(PlayerWork.rate(def, 1, 1)).toBeNear(base)
+		expect(PlayerWork.dayCap()).toBe(K.DayCap)
+		expect(PlayerWork.dayCap(1, 1)).toBe(K.DayCap)
+		local SK = Tuning.Skills
+		local lastRate, lastCap = 0, 0
+		for level = 1, SK.TownTop + 5 do
+			local rate, cap = PlayerWork.rate(def, level, 1), PlayerWork.dayCap(level, 1)
+			-- a share more for each town level, up to the top that counts
+			expect(rate).toBeNear(base * (1 + SK.TownPay * (math.min(level, SK.TownTop) - 1)))
+			expect(rate >= lastRate and cap >= lastCap).toBeTruthy()
+			-- and the day's work takes as long as ever
+			expect(cap / rate).toBeNear(K.DayCap / base, 2)
+			lastRate, lastCap = rate, cap
+		end
+		lastRate = 0
+		for skill = 1, SK.Top do
+			local rate = PlayerWork.rate(def, 1, skill)
+			expect(rate).toBeNear(base * (1 + SK.Pay * (skill - 1)))
+			expect(rate > lastRate).toBeTruthy()
+			lastRate = rate
+		end
+		-- a skill past the top or a broken level counts as the nearest there is
+		expect(PlayerWork.rate(def, 1, SK.Top + 9)).toBeNear(PlayerWork.rate(def, 1, SK.Top))
+		expect(PlayerWork.rate(def, 0 / 0, 1)).toBeNear(base)
+		expect(PlayerWork.rate(def, -4, -4)).toBeNear(base)
+		-- the purse keeps to the cap it is given
+		local purse = PlayerWork.purse(Schema.newProfile(), 3)
+		local cap = PlayerWork.dayCap(12, 9)
+		local got = 0
+		for _ = 1, 20000 do
+			got += PlayerWork.earn(purse, 3, PlayerWork.rate(def, 12, 9), K.Check, cap)
+		end
+		expect(got).toBe(cap)
+		expect(PlayerWork.full(purse, cap)).toBe(true)
+		expect(PlayerWork.full(purse, cap + 1)).toBe(false)
+		expect(PlayerWork.earn(purse, 3, 1, 1, cap)).toBe(0)
+		-- what the notice says about the skill
+		expect(PlayerWork.skillLine("Shopkeeper", 3)).toBe("Shopkeeper, level 3")
+		expect(PlayerWork.skillLine("Shopkeeper", SK.Top, true)).toBe("Shopkeeper, top level")
+	end)
+
+	it("asks more experience for every skill level, and keeps it per job on the profile", function()
+		local SK = Tuning.Skills
+		local last = 0
+		for level = 1, SK.Top - 1 do
+			local need = Skills.toNext(level)
+			expect(need > last).toBeTruthy()
+			expect(Skills.startOf(level + 1)).toBe(Skills.startOf(level) + need)
+			last = need
+		end
+		-- a level from its total: the start of each, just under the next, and the top
+		for level = 1, SK.Top do
+			local lv, into, need = Skills.levelOf(Skills.startOf(level))
+			expect(lv).toBe(level)
+			expect(into).toBe(0)
+			expect(need).toBe(if level < SK.Top then Skills.toNext(level) else 0)
+			if level > 1 then
+				expect((Skills.levelOf(Skills.startOf(level) - 1))).toBe(level - 1)
+			end
+		end
+		expect((Skills.levelOf(1e12))).toBe(SK.Top)
+		expect((Skills.levelOf(-5))).toBe(1)
+		expect((Skills.levelOf(0 / 0))).toBe(1)
+		-- the first level up comes inside the first day's work (a cap's worth of seconds at the
+		-- best paid workplace), and the top takes a long while: weeks of town days at one job
+		local best = 0
+		for _, def in Catalog.workplaces() do
+			best = math.max(best, PlayerWork.rate(def))
+		end
+		local daySeconds = K.DayCap / best -- the shortest full day there is, at the start
+		expect(Skills.toNext(1) / SK.PerSecond <= daySeconds * 1.5).toBeTruthy()
+		expect(Skills.most() / SK.PerSecond / daySeconds >= 60).toBeTruthy()
+		-- per job, on the profile; nothing for a job there isn't or a number that isn't one
+		local p = Schema.newProfile()
+		expect(type(p.skills)).toBe("table")
+		expect(Skills.level(p, "icecream")).toBe(1)
+		local before, after = Skills.add(p, "icecream", Skills.toNext(1))
+		expect(before).toBe(1)
+		expect(after).toBe(2)
+		expect(Skills.level(p, "baker")).toBe(1)
+		for _, bad in { 0, -10, 0 / 0, math.huge } do
+			Skills.add(p, "icecream", bad)
+		end
+		expect(Skills.info(p, "icecream").xp).toBe(Skills.toNext(1))
+		expect(select(2, Skills.add(p, "pirate", 50))).toBe(1)
+		expect(p.skills.pirate).toBe(nil)
+		Skills.add(p, "icecream", 1e9)
+		expect(Skills.level(p, "icecream")).toBe(SK.Top)
+		expect(p.skills.icecream).toBe(Skills.most())
+		local info = Skills.info(p, "icecream")
+		expect(info.top).toBe(true)
+		expect(info.name).toBe(Jobs.get("icecream").name)
+		-- the list shows only the jobs worked, best first
+		Skills.add(p, "baker", 30)
+		local list = Skills.list(p)
+		expect(#list).toBe(2)
+		expect(list[1].job).toBe("icecream")
+		expect(list[2].job).toBe("baker")
+		-- a save loads with its skills checked: unknown jobs, broken numbers and too much go
+		p.skills = { baker = 40.7, pirate = 9, icecream = 1e12, doctor = -3, teacher = 0 / 0, [5] = 3 }
+		local loaded = Schema.migrate(p)
+		expect(loaded.skills.baker).toBe(40)
+		expect(loaded.skills.icecream).toBe(Skills.most())
+		expect(loaded.skills.pirate).toBe(nil)
+		expect(loaded.skills.doctor).toBe(nil)
+		expect(loaded.skills.teacher).toBe(nil)
+		p.skills = "lots"
+		expect(next(Schema.migrate(p).skills)).toBe(nil)
 	end)
 
 	it("keeps the day's purse on the profile, and starts a broken one fresh", function()
@@ -176,6 +308,37 @@ describe("PlayerWork", function()
 		-- work day at the least paid (a town day is 12 minutes)
 		expect(K.DayCap / best >= 60).toBeTruthy()
 		expect(K.DayCap / worst <= City.workDay()).toBeTruthy()
+		-- At every town level and skill: a day at the cap stays inside a quarter of what the least
+		-- paid villager of the same skill earns in one, times how many more villagers the town's
+		-- level gives room for than a new town has (a bigger town has more of them at work). The
+		-- player's skill adds less than a villager's does, and the town's level less than its room.
+		local SK = Tuning.Skills
+		expect(SK.Pay <= Tuning.Jobs.SkillPay).toBeTruthy()
+		for level = 1, 40 do
+			local room = City.villagerCap(level) / City.villagerCap(1)
+			for skill = 1, SK.Top do
+				local leastAt = math.huge
+				for _, job in Jobs.list do
+					leastAt = math.min(leastAt, Jobs.pay(job, skill, START, "none"))
+				end
+				local cap = PlayerWork.dayCap(level, skill)
+				if cap > leastAt / 4 * room then
+					error(
+						string.format(
+							"town level %d, skill %d: a day's cap of %d is too much beside wages",
+							level,
+							skill,
+							cap
+						)
+					)
+				end
+				-- and a keen player in a town of three with two at work still earns four fifths of
+				-- it from their wages, their own work at a town of that level included
+				if level == 1 then
+					expect(2 * leastAt / (2 * leastAt + 2 * leastAt / 8 + cap) >= 0.8).toBeTruthy()
+				end
+			end
+		end
 		-- the checks are often enough to catch a walk off, and the settling short
 		expect(K.Check <= 0.5).toBeTruthy()
 		expect(K.Settle <= 2).toBeTruthy()

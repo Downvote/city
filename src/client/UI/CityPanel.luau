@@ -1,6 +1,7 @@
 -- The city hall panel: your town's level and what the next one needs, the numbers that matter
--- (people, happiness, worth, a day's wages), buying more land, and the workplaces with who fills
--- them.
+-- (people, happiness, worth, a day's wages), buying more land, the workplaces with who fills
+-- them, and the player's own skills at the jobs they have worked themselves (Sim/Skills: the
+-- user, "each skill also has a level/experience bar, which you gain while doing the work").
 -- A full menu (Kit.panel): the town on the card at the left with its level as the headline, the
 -- land and the work down the right.
 
@@ -8,6 +9,8 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Remotes = require(Shared.Net.Remotes)
 local Tuning = require(Shared.Config.Tuning)
 local City = require(Shared.Sim.City)
+local Skills = require(Shared.Sim.Skills)
+local PlayerWork = require(Shared.Sim.PlayerWork)
 local Text = require(Shared.Util.Text)
 
 local Kit = require(script.Parent.Kit)
@@ -415,6 +418,24 @@ function draw()
 		Wrap = false,
 		LayoutOrder = 3,
 	})
+	-- the player's own skills: each job they have worked, its level and its bar
+	local skills = Skills.list({ skills = State.data.skills })
+	MenuParts.heading(list, "Your skills", T.Purple, 1010, nil)
+	if #skills == 0 then
+		MenuParts.note(
+			"Work at a workplace to learn its job.",
+			T.Purple,
+			{ Name = "NoSkills", Parent = list, LayoutOrder = 1011 }
+		)
+	end
+	for n, info in skills do
+		MenuParts.progress(
+			PlayerWork.skillLine(info.name, info.level, info.top),
+			if info.top then "" else Text.fill("{a} of {b}", { a = info.into, b = info.need }),
+			if info.top then 1 elseif info.need > 0 then info.into / info.need else 0,
+			{ Name = "Skill", Parent = list, Size = UDim2.new(1, -12, 0, 44), LayoutOrder = 1010 + n, Color = T.Purple }
+		)
+	end
 end
 
 -- The coins moved (a pay packet, a purchase): the panel built again only if the land's button
@@ -463,6 +484,7 @@ function CityPanel.open()
 	table.insert(unbind, State.on("coins", onCoins))
 	table.insert(unbind, State.on("villagers", draw))
 	table.insert(unbind, State.on("passes", draw)) -- (Big Plot bought: the land row opens)
+	table.insert(unbind, State.on("skills", draw)) -- (work done: the skills grew)
 end
 
 -- a change of look builds what's open again in the new one (a row's shading is made for a look)

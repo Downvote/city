@@ -7,6 +7,11 @@
 -- lower rate and only up to a cap each town day (Tuning.Jobs.Player), so a town still lives on
 -- its villagers' wages. Walking off, a jump, a seat, a second press, the piece moving or going,
 -- Build mode, or the place's own villager coming in for the day ends it.
+-- Then: "when players work, make what they earn scale off town level. each skill also has a
+-- level/experience bar, which you gain while doing the work. This increases the amount of cash you
+-- get doing that particular work as well." So the pay and the day's cap grow with the town's level
+-- and with the player's skill at the job (Sim/Skills), both by the same share, so a day's work
+-- takes as long as ever and comes to more.
 -- Nothing here touches the world: Services/Work asks this who may work where, what it pays and
 -- when it stops, and tests/specs/PlayerWork.spec.luau holds it to the economy's bounds.
 
@@ -15,6 +20,7 @@ local Jobs = require(script.Parent.Parent.Data.Jobs)
 local Text = require(script.Parent.Parent.Util.Text)
 local Routine = require(script.Parent.Routine)
 local City = require(script.Parent.City)
+local Skills = require(script.Parent.Skills)
 
 local K = Tuning.Jobs.Player
 local D = Tuning.Day
@@ -37,7 +43,16 @@ PlayerWork.Say = {
 	moved = "Your workplace moved, so you stopped work.",
 	gone = "Your workplace is gone, so you stopped work.",
 	arrived = "{name} is here for work, so you stepped aside.",
+	levelUp = "{job} skill is now level {n}.",
 }
+
+-- What the work notice says about the skill: the job and its level.
+function PlayerWork.skillLine(job: string, level: number, top: boolean?): string
+	if top then
+		return Text.fill("{job}, top level", { job = job })
+	end
+	return Text.fill("{job}, level {n}", { job = job, n = level })
+end
 local Say = PlayerWork.Say
 
 -- Where to stand and what to do ------------------------------------------------------------------
@@ -97,15 +112,27 @@ end
 
 -- Pay --------------------------------------------------------------------------------------------
 
+-- What the town's level and the player's skill at the job make of the pay and the day's cap: a
+-- share more for each (Sim/Skills.townK and payK). 1 for a new player in a new town.
+function PlayerWork.boost(townLevel: number?, skill: number?): number
+	return Skills.townK(townLevel or 1) * Skills.payK(skill or 1)
+end
+
 -- Coins a second for a player at this workplace: Tuning.Jobs.Player.Share of what a villager new
 -- to the job earns there (skill 1, a middling mood, work that is nothing special to them), over
--- the seconds of a work day a villager's pay is spread over (City.workSeconds).
-function PlayerWork.rate(def: any): number
+-- the seconds of a work day a villager's pay is spread over (City.workSeconds), grown by the
+-- town's level and the player's own skill at the job (PlayerWork.boost).
+function PlayerWork.rate(def: any, townLevel: number?, skill: number?): number
 	local job = def and def.job and Jobs.get(def.job)
 	if not job then
 		return 0
 	end
-	return Jobs.pay(job, 1, 50, "none") * K.Share / City.workSeconds()
+	return Jobs.pay(job, 1, 50, "none") * K.Share / City.workSeconds() * PlayerWork.boost(townLevel, skill)
+end
+
+-- The most a player can earn at work in a town day: Tuning.Jobs.Player.DayCap, grown the same way.
+function PlayerWork.dayCap(townLevel: number?, skill: number?): number
+	return math.floor(K.DayCap * PlayerWork.boost(townLevel, skill) + 0.5)
 end
 
 -- The player's own purse for town day `day` (World.dayIndex), kept on their profile as `work`
@@ -131,14 +158,16 @@ function PlayerWork.purse(profile: any, day: number): City.Purse
 	return p
 end
 
--- Has the player earned all they can today?
-function PlayerWork.full(purse: City.Purse): boolean
-	return purse.paid >= K.DayCap
+-- Has the player earned all they can today? `cap` is the day's (PlayerWork.dayCap; the plain one
+-- when not given).
+function PlayerWork.full(purse: City.Purse, cap: number?): boolean
+	return purse.paid >= (cap or K.DayCap)
 end
 
 -- Pays `seconds` of work at `rate` coins a second into the purse for `day`, never past the day's
--- cap, and takes out the whole coins in it: those go to the town now, the rest waits.
-function PlayerWork.earn(purse: City.Purse, day: number, rate: number, seconds: number): number
+-- cap (`cap`, PlayerWork.dayCap; the plain one when not given), and takes out the whole coins in
+-- it: those go to the town now, the rest waits.
+function PlayerWork.earn(purse: City.Purse, day: number, rate: number, seconds: number, cap: number?): number
 	if purse.day ~= day then
 		purse.day, purse.owed, purse.paid = day, 0, 0
 	end
@@ -146,7 +175,11 @@ function PlayerWork.earn(purse: City.Purse, day: number, rate: number, seconds: 
 	if not (rate > 0 and rate < math.huge and seconds > 0 and seconds < math.huge) then
 		return 0
 	end
-	local room = math.max(0, K.DayCap - purse.paid - purse.owed)
+	local most = cap or K.DayCap
+	if not (most >= 0 and most < math.huge) then
+		most = K.DayCap
+	end
+	local room = math.max(0, most - purse.paid - purse.owed)
 	purse.owed += math.min(rate * seconds, room)
 	local whole = math.floor(purse.owed + 1e-6)
 	purse.owed = math.max(0, purse.owed - whole)

@@ -14,6 +14,13 @@
 -- the piece, and the town map has no workplaces of its own (its shops are scenery). Everything is
 -- checked here: where the player stands, whose plot it is, who else is at it, what it pays.
 -- The prompts open no panel, so they carry no `Opens` attribute.
+-- Then: "when players work, make what they earn scale off town level. each skill also has a
+-- level/experience bar, which you gain while doing the work. This increases the amount of cash you
+-- get doing that particular work as well." So the rate and the day's cap are worked out from the
+-- town's level and the player's skill at the job (Sim/PlayerWork.rate, dayCap), experience comes
+-- with every second of work and every villager served there (Sim/Skills, Villagers.Served), and the
+-- client hears the bar every Tuning.Skills.SendEvery seconds (`Work` { skill, cap }). The villagers
+-- know who is at work (Villagers.setPlayerWork) and come and buy from them (Sim/Visits).
 
 local Players = game:GetService("Players")
 
@@ -23,8 +30,11 @@ local Catalog = require(Shared.Build.Catalog)
 local Plan = require(Shared.Build.Plan)
 local Town = require(Shared.Data.Town)
 local PlayerWork = require(Shared.Sim.PlayerWork)
+local Skills = require(Shared.Sim.Skills)
+local City = require(Shared.Sim.City)
 local Remotes = require(Shared.Net.Remotes)
 local Lively = require(Shared.Build.Lively)
+local Text = require(Shared.Util.Text)
 
 local Data = require(script.Parent.Data)
 local Plots = require(script.Parent.Plots)
@@ -32,6 +42,7 @@ local Villagers = require(script.Parent.Villagers)
 local World = require(script.Parent.World)
 
 local K = Tuning.Jobs.Player
+local SK = Tuning.Skills
 
 local Work = {}
 
@@ -45,6 +56,12 @@ type Session = {
 	since: number, -- os.clock() when it began
 	last: number, -- when the pay was last worked out
 	rate: number, -- coins a second (PlayerWork.rate)
+	job: string, -- the job (Data/Jobs' id): the skill it teaches
+	town: number, -- the town's level when work began
+	cap: number, -- the day's most (PlayerWork.dayCap)
+	carry: number, -- experience not yet a whole point
+	gained: boolean, -- any experience this time (the client's state hears of it when work stops)
+	sent: number, -- when the bar was last sent
 }
 
 local sessions: { [Player]: Session } = {}
@@ -89,6 +106,25 @@ local function sameFrame(a: CFrame, b: CFrame): boolean
 	return (a.Position - b.Position).Magnitude < 0.01 and a.LookVector:Dot(b.LookVector) > 0.9999
 end
 
+-- The town's level on plot `i` (its owner's worth: City.level), 1 when there is nobody.
+local function townLevel(i: number): number
+	local owner = Plots.owner(i)
+	local profile = owner and Data.get(owner)
+	if not profile or not profile.plan then
+		return 1
+	end
+	local ok, level = pcall(function()
+		return City.level(City.worth(profile.plan))
+	end)
+	return if ok and type(level) == "number" then level else 1
+end
+
+-- The skill bar as the client shows it.
+local function skillOf(profile: any, job: string): any
+	local info = Skills.info(profile, job)
+	return { job = info.job, name = info.name, level = info.level, into = info.into, need = info.need, top = info.top }
+end
+
 -- Whose working day it is at a workplace, by name (PlayerWork.staffedBy, on its owner's town).
 local function staffOf(i: number, key: string, day: number): string?
 	local owner = Plots.owner(i)
@@ -121,11 +157,40 @@ function Work.stop(player: Player, say: string?)
 		return
 	end
 	sessions[player] = nil
+	Villagers.setPlayerWork(player, nil, nil)
 	if player.Parent then
 		Remotes.event("Work"):FireClient(player, { on = false })
 		if say then
 			Data.notify(player, say, "info")
 		end
+		if s.gained then
+			Data.push(player, "skills")
+		end
+	end
+end
+
+-- Experience for the player's skill at the job they are at (`xp`, any part of a point carried to
+-- the next time). A level up raises the pay and the day's cap at once and says so.
+local function learn(player: Player, s: Session, xp: number)
+	local mine = Data.get(player)
+	if not mine or not (xp > 0) then
+		return
+	end
+	s.carry += xp
+	local whole = math.floor(s.carry + 1e-6)
+	if whole <= 0 then
+		return
+	end
+	s.carry -= whole
+	s.gained = true
+	local before, after = Skills.add(mine, s.job, whole)
+	if after > before then
+		s.rate = PlayerWork.rate(Catalog.get(s.id), s.town, after)
+		s.cap = PlayerWork.dayCap(s.town, after)
+		local info = Skills.info(mine, s.job)
+		Data.notify(player, Text.fill(PlayerWork.Say.levelUp, { job = info.name, n = after }), "good")
+		Data.push(player, "skills")
+		s.sent = -math.huge -- (the bar goes at once)
 	end
 end
 
@@ -146,6 +211,9 @@ function Work.begin(player: Player, i: number, key: string): (boolean, string?)
 	local mine = Data.get(player)
 	local day = World.dayIndex()
 	local purse = if mine then PlayerWork.purse(mine, day) else nil
+	local town = townLevel(i)
+	local skill = if mine and def then Skills.level(mine, def.job) else 1
+	local cap = PlayerWork.dayCap(town, skill)
 	local ok, why = PlayerWork.canStart({
 		job = def ~= nil,
 		own = Plots.owner(i) == player and mine ~= nil,
@@ -153,9 +221,9 @@ function Work.begin(player: Player, i: number, key: string): (boolean, string?)
 		staff = staffOf(i, key, day),
 		taken = takenBy(i, key, player) ~= nil,
 		seated = hum.SeatPart ~= nil,
-		full = purse ~= nil and PlayerWork.full(purse),
+		full = purse ~= nil and PlayerWork.full(purse, cap),
 	})
-	if not ok or not def or not frame or not stance or not purse then
+	if not ok or not def or not frame or not stance or not purse or not mine then
 		return false, why
 	end
 	-- at another workplace still: that one ends first
@@ -172,8 +240,15 @@ function Work.begin(player: Player, i: number, key: string): (boolean, string?)
 		character = char,
 		since = now,
 		last = now,
-		rate = PlayerWork.rate(def),
+		rate = PlayerWork.rate(def, town, skill),
+		job = def.job,
+		town = town,
+		cap = cap,
+		carry = 0,
+		gained = false,
+		sent = now,
 	}
+	Villagers.setPlayerWork(player, key, def.job)
 	Remotes.event("Work"):FireClient(player, {
 		on = true,
 		plot = i,
@@ -182,7 +257,8 @@ function Work.begin(player: Player, i: number, key: string): (boolean, string?)
 		act = stance.act,
 		beat = stance.beat,
 		today = purse.paid,
-		cap = K.DayCap,
+		cap = cap,
+		skill = skillOf(mine, def.job),
 	})
 	return true, nil
 end
@@ -227,7 +303,7 @@ local function look(player: Player, s: Session, now: number)
 		settling = settling,
 		piece = piece,
 		staff = staffOf(s.plot, s.key, day),
-		full = purse ~= nil and PlayerWork.full(purse),
+		full = purse ~= nil and PlayerWork.full(purse, s.cap),
 	})
 	if reason or not purse then
 		Work.stop(player, say)
@@ -240,13 +316,20 @@ local function look(player: Player, s: Session, now: number)
 	-- (a long stall in the server is not paid for: a few looks' worth at most)
 	local seconds = math.clamp(now - s.last, 0, K.Check * 4)
 	s.last = now
-	local coins = PlayerWork.earn(purse, day, s.rate, seconds)
+	local coins = PlayerWork.earn(purse, day, s.rate, seconds, s.cap)
 	if coins > 0 then
 		Villagers.payPlayer(player, coins, purse.paid)
 	end
-	if PlayerWork.full(purse) then
+	-- and the skill grows with the time put in
+	learn(player, s, seconds * SK.PerSecond)
+	if PlayerWork.full(purse, s.cap) then
 		local _, full = PlayerWork.stopWhy({ here = true, off = 0, rise = 0, piece = "same", full = true })
 		Work.stop(player, full)
+		return
+	end
+	if now - s.sent >= SK.SendEvery and mine then
+		s.sent = now
+		Remotes.event("Work"):FireClient(player, { skill = skillOf(mine, s.job), cap = s.cap })
 	end
 end
 
@@ -378,6 +461,14 @@ function Work.start()
 		-- (what they earned so far went out with their pay packets; the rest of a coin waits on
 		-- their profile for the next time)
 		sessions[player] = nil
+		Villagers.setPlayerWork(player, nil, nil)
+	end)
+	-- a villager the player served at their work: a little more of the skill (Sim/Visits)
+	Villagers.Served:Connect(function(player: Player, _vid: string)
+		local s = sessions[player]
+		if s then
+			learn(player, s, SK.Serve)
+		end
 	end)
 	task.spawn(function()
 		while true do

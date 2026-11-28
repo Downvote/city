@@ -45,10 +45,11 @@
 --                       Residents:short (the same without the coins), Residents:lately (what Mara's
 --                       events left her with), Residents:quirks (her catchphrase, ending and favourite,
 --                       bought with gems), Residents:quirks:edit (the editor for her catchphrase),
---                       Residents:quirks:short (the editor without the gems), News:empty, News:busy (news from several
+--                       Residents:quirks:short (the editor without the gems), Residents:quirks:move (her
+--                       work move picked from the emotes), News:empty, News:busy (news from several
 --                       days and a request), Goals:claimed (a claimed goal picked), CityPanel:ready
 --                       (the next land can be bought), CityPanel:bigplot (land at 320: the next
---                       step offers Big Plot)
+--                       step offers Big Plot), CityPanel:skills (the player's skills at three jobs)
 --   panel:Store         the store on its passes (VIP and Fine Grid owned, More Saves not on sale
 --                       yet); panel:Store:gems its gem packs
 --   panel:Rewards       the rewards on today's gift (a run of four days); panel:Rewards:playtime
@@ -56,6 +57,8 @@
 --                       panel:Rewards:group with a group to join; panel:Rewards:member joined, the
 --                       gems to claim
 --   welcome             the welcome back dialog after five hours away (welcome:long after two days)
+--   work                the notice while the player works at a workplace: the day's coins and the
+--                       skill with its bar (client World/Work)
 --   talk:craving        the talk card with a villager who craves something: the answer that buys it
 --   tutorial:<page>     the tutorial (UI/Tutorial): tutorial:welcome its first page on a first visit,
 --                       tutorial:1 the card on step one with the Create tile pointed at, tutorial:2
@@ -632,11 +635,22 @@ elseif scene:sub(1, 6) == "panel:" then
 	elseif state:sub(1, 6) == "quirks" and name == "Residents" then
 		-- what the player gave Mara to say, and the gems there are (Sim/Flair)
 		first.flair = { phrase = "Smells like rain to me.", ending = "buddy" }
+		first.move = if state == "quirks:move" then "em_dance2" else nil
 		patch({ villagers = villagers, gems = if state == "quirks:short" then 2 else 9 })
 	elseif state == "ready" and name == "CityPanel" then
 		-- the next piece of land open to a hamlet, to see the button that buys it
 		local Tuning = Harness.require("ReplicatedStorage.Shared.Config.Tuning")
 		Tuning.City.Land[2].Level = 1
+	elseif state == "skills" and name == "CityPanel" then
+		-- the player has worked the ice cream cart a good while, the bench and the stall a little
+		local Skills = Harness.require("ReplicatedStorage.Shared.Sim.Skills")
+		patch({
+			skills = {
+				icecream = Skills.startOf(4) + 90,
+				builder = Skills.startOf(2) + 20,
+				shopkeeper = 35,
+			},
+		})
 	elseif state == "bigplot" and name == "CityPanel" then
 		-- land at 320, the most there is without Big Plot: the row offers the pass, with its lock
 		Sim.State.plan.size = 320
@@ -683,6 +697,14 @@ elseif scene:sub(1, 6) == "panel:" then
 		Sim.press("Lately")
 	elseif state:sub(1, 6) == "quirks" then
 		Sim.press("Quirks")
+		if state == "quirks:move" then
+			Sim.frames(2)
+			local row = Sim.gui:FindFirstChild("workmove", true)
+			local edit = row and row:FindFirstChild("Edit", true)
+			if edit then
+				edit.Activated:Fire()
+			end
+		end
 		if state == "quirks:edit" or state == "quirks:short" then
 			Sim.frames(2)
 			local row = Sim.gui:FindFirstChild("phrase", true)
@@ -872,6 +894,30 @@ elseif scene == "wish" or scene:sub(1, 5) == "wish:" then
 	Hud.open("WishPopup", order[1])
 	Sim.frames(3)
 	Sim.advance(1)
+elseif scene == "work" then
+	-- the notice at the foot of the screen while the player works: the ice cream cart, 48 of the
+	-- day's coins, the skill at level 3 about half way to the next
+	startHud()
+	-- (the module only reads tagged prompts once it starts, which it doesn't here)
+	pcall(Harness.addService, "CollectionService", {
+		GetTagged = function()
+			return {}
+		end,
+		GetInstanceAddedSignal = function()
+			return Harness.signal()
+		end,
+		GetInstanceRemovedSignal = function()
+			return Harness.signal()
+		end,
+	})
+	local Work = Harness.require(Sim.CLIENT .. "World.Work")
+	local card, top, under, skill, fill = Work.card(Sim.gui)
+	card.Position = UDim2.new(0.5, 0, 1, -20)
+	top.Text, under.Text = Work.words("Ice cream cart", 48, 131)
+	local words, ratio = Work.skillWords({ name = "Ice cream seller", level = 3, into = 120, need = 248 })
+	skill.Text = words
+	fill.Size = UDim2.fromScale(ratio, 1)
+	Sim.frames(2)
 elseif scene == "earned" then
 	startHud()
 	local Earnings = Harness.require(Sim.CLIENT .. "World.Earnings")

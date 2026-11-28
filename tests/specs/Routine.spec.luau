@@ -1228,8 +1228,17 @@ describe("Villager routine", function()
 			-- paid nothing while the event has them (once the last packet from before is in)
 			expect(paid(taken + Tuning.Jobs.PayEvery + Tuning.Jobs.EarnStep, now, "v1")).toBe(0)
 			Villagers.setControl(owner, "v1", nil)
-			advance(20)
-			expect(spotOf(w.pos) ~= nil).toBeTruthy()
+			-- back at the bench soon after (a break that came due while the event had them may
+			-- come first, as after a talk)
+			local back = false
+			for _ = 1, math.ceil((K.BreakCap + 20) / 0.5) do
+				advance(0.5)
+				if spotOf(w.pos) ~= nil and w.atWork then
+					back = true
+					break
+				end
+			end
+			expect(back).toBeTruthy()
 			expect(w.atWork).toBe(true)
 		end)
 	end)
