@@ -79,7 +79,8 @@ local function reaches(obj: any, kind: string, lv: number): number
 	if kind == "items" and type(obj.id) == "string" then
 		local def = Catalog.get(obj.id)
 		if def and def.place == "stairs" then
-			return lv + 1
+			-- (a lift runs up as many floors as it spans: Build/Recipes/Travel)
+			return lv + math.max(1, def.spans or 1)
 		end
 	end
 	return lv

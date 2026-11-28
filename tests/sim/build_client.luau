@@ -259,7 +259,10 @@ run("floors: the third is the top without Tall Builds, and the basement opens wi
 	check(BuildMode.state.level == 0, "without Basement the ground floor is the bottom")
 	check(said.Text:find("Basement pass", 1, true) ~= nil, "and the hint says the Basement pass opens one")
 	-- the plot's ground, as the World and Plots services lay it, and a stand-in for the terrain:
-	-- solid ground a voxel down under the plot, every write counted
+	-- solid ground a voxel down under the plot, every write counted. Over it, in the voxel under
+	-- the plot's ground part, the sea's water as the island's terrain once held it there: what the
+	-- basement showed instead of the rooms (the user: "basement is bugged, it seems to only show
+	-- water below"), so this screen clears water there too
 	local plot = Sim.buildFolder.Parent
 	local base = Fake.new("Part", plot)
 	base.Name = "Base"
@@ -273,9 +276,27 @@ run("floors: the third is the top without Tall Builds, and the basement opens wi
 		if v then
 			return v
 		end
-		return if j < -1
-			then { m = Enum.Material.LeafyGrass, o = 1, l = 0 }
-			else { m = Enum.Material.Air, o = 0, l = 0 }
+		if j < -1 then
+			return { m = Enum.Material.LeafyGrass, o = 1, l = 0 }
+		elseif j == -1 then
+			return { m = Enum.Material.Air, o = 0, l = 0.7 }
+		end
+		return { m = Enum.Material.Air, o = 0, l = 0 }
+	end
+	-- the server digging a basement floor's block, as its writes reach this screen
+	local Basement = Sim.Harness.require("ReplicatedStorage.Shared.Build.Basement")
+	local function serverDigs(f)
+		local b = Basement.block({ f.x1, f.z1, f.x2, f.z2 })
+		local frame = Sim.Harness.require("ReplicatedStorage.Shared.Data.Town").plotFrame(1)
+		for x = b[1] + 2, b[3] - 2, 4 do
+			for z = b[2] + 2, b[4] - 2, 4 do
+				local w = frame * Vector3.new(x, 0, z)
+				for j = -3, -1 do
+					vox[math.floor(w.X / 4) .. "," .. j .. "," .. math.floor(w.Z / 4)] =
+						{ m = Enum.Material.Air, o = 0, l = 0 }
+				end
+			end
+		end
 	end
 	local function span(region)
 		local lo = region.CFrame.Position - region.Size / 2
@@ -334,6 +355,7 @@ run("floors: the third is the top without Tall Builds, and the basement opens wi
 	local under = Town.plotFrame(1) * Vector3.new(170, -6, 150)
 	local ui, uj, uk = math.floor(under.X / 4), math.floor(under.Y / 4), math.floor(under.Z / 4)
 	check(get(ui, uj, uk).o == 0, "the ground under the land is gone (on this screen)")
+	check(get(ui, -1, uk).l == 0, "and so is any water lying in it")
 	-- a room down there: its floor dragged out, then a wall along its edge
 	press("Floors")
 	local floors = count("floors")
@@ -346,6 +368,11 @@ run("floors: the third is the top without Tall Builds, and the basement opens wi
 		end
 	end
 	check(key ~= nil, "on the basement level")
+	-- the server digs it; its terrain reaches this screen after the plan does, and the ground is
+	-- cleared again a moment later
+	serverDigs(profile.plan.floors[key])
+	Sim.advance(1.2)
+	frames(2)
 	press("Walls")
 	local walls = count("walls")
 	drag(240, 150, 260, 150)
@@ -367,10 +394,13 @@ run("floors: the third is the top without Tall Builds, and the basement opens wi
 	check(not Underground.isHidden(), "the ground comes back")
 	check(base.LocalTransparencyModifier == 0 and grass.LocalTransparencyModifier == 0, "its parts show again")
 	check(get(ui, uj, uk).o == 1, "and the terrain away from the room is as it was")
+	check(get(ui, -1, uk).l == 0.7, "water and all")
 	local room = Town.plotFrame(1) * Vector3.new(250, -6, 158)
+	local ri, rk = math.floor(room.X / 4), math.floor(room.Z / 4)
+	check(get(ri, math.floor(room.Y / 4), rk).o == 0, "while the room's own ground is left dug, as the server digs it")
 	check(
-		get(math.floor(room.X / 4), math.floor(room.Y / 4), math.floor(room.Z / 4)).o == 0,
-		"while the room's own ground is left dug, as the server digs it"
+		get(ri, -1, rk).l == 0 and get(ri, -1, rk).o == 0,
+		"with no water put back over it (it was left there for good)"
 	)
 	-- sold, with its wall: back as it was
 	ok, why = Sim.remoteFn("BuildApply"):InvokeServer({

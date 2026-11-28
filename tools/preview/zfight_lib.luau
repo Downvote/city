@@ -1005,7 +1005,7 @@ local function supportFor(place: string?)
 	return FLOOR
 end
 
-Z.Scopes = { "catalog", "models", "town", "interiors", "starter", "presets" }
+Z.Scopes = { "catalog", "models", "town", "interiors", "starter", "presets", "joins" }
 
 Z.RoomKinds = {
 	"bakery",
@@ -1081,6 +1081,158 @@ local function planPrims(plan, made)
 	return prims, unit
 end
 
+-- Roofs and paths that meet, as plans, for the "joins" scope here and the "joins" preview scenes
+-- (tools/preview/dump.luau). The user: "it seems like when roofs are put together, z fighting
+-- occurs" and "make it such that paths dont z fight if interesecting each other, and their edges
+-- merge together so it outlines their entire combined shape". Each case is its own plan on a plot
+-- of 400, built near (100, 100). Neighbours are painted a little differently, so a face two of
+-- them share would show as z-fighting. `which`: "roofs", "paths" or nil for both.
+function Z.joins(which: string?): { any }
+	local Plan = need("Build.Plan")
+	local out = {}
+	local X, Z = 100, 100
+	local function plan()
+		local p = Plan.new(400)
+		p.size = 400
+		return p
+	end
+	local function case(name, build)
+		local p = plan()
+		build(p)
+		table.insert(out, { name = name, plan = p })
+	end
+	local n = 0
+	local function add(p, kind, obj)
+		n += 1
+		p[kind][tostring(n)] = obj
+	end
+	local ROOFS = { "B86A5A", "9C6A50", "7E8A96", "A08A6A" }
+	local function roof(p, x1, z1, x2, z2, style, dir, rise, over, lv, i)
+		add(p, "roofs", {
+			x1 = X + x1,
+			z1 = Z + z1,
+			x2 = X + x2,
+			z2 = Z + z2,
+			lv = lv or 0,
+			style = style,
+			rise = rise,
+			dir = dir,
+			over = over,
+			c = ROOFS[(i or 1)],
+			m = "Slate",
+			c2 = if (i or 1) % 2 == 1 then "F2EADC" else "E6D8C0",
+			m2 = "WoodPlanks",
+		})
+	end
+	local function floor(p, x1, z1, x2, z2, m, c)
+		add(p, "floors", { x1 = X + x1, z1 = Z + z1, x2 = X + x2, z2 = Z + z2, lv = 0, c = c, m = m })
+	end
+
+	if which == nil or which == "roofs" then
+		case("roofs:row", function(p) -- two gables in a row, end to end
+			roof(p, 0, 0, 20, 12, "gable", 0, 5, 1, 0, 1)
+			roof(p, 20, 0, 36, 12, "gable", 0, 5, 1, 0, 2)
+		end)
+		case("roofs:side", function(p) -- two gables side by side, eave to eave
+			roof(p, 0, 0, 20, 12, "gable", 0, 5, 1, 0, 1)
+			roof(p, 0, 12, 20, 24, "gable", 0, 5, 1, 0, 2)
+		end)
+		case("roofs:L", function(p) -- an L: a wing's gable against the main roof's side
+			roof(p, 0, 0, 24, 12, "gable", 0, 5, 1, 0, 1)
+			roof(p, 12, 12, 24, 26, "gable", 1, 5, 1, 0, 2)
+		end)
+		case("roofs:T", function(p) -- a ridge meeting a ridge
+			roof(p, 0, 0, 30, 12, "gable", 0, 5, 1, 0, 1)
+			roof(p, 10, 12, 20, 26, "gable", 1, 4, 1, 0, 2)
+		end)
+		case("roofs:cross", function(p) -- two gables across each other
+			roof(p, 0, 6, 24, 18, "gable", 0, 5, 1, 0, 1)
+			roof(p, 6, 0, 18, 24, "gable", 1, 5, 1, 0, 2)
+		end)
+		case("roofs:ends", function(p) -- gable ends touching, a lower and narrower one
+			roof(p, 0, 0, 16, 12, "gable", 0, 5, 1, 0, 1)
+			roof(p, 16, 2, 30, 10, "gable", 0, 3, 1, 0, 2)
+		end)
+		case("roofs:overlap", function(p) -- one gable laid half over another in its line
+			roof(p, 0, 0, 20, 12, "gable", 0, 5, 1, 0, 1)
+			roof(p, 12, 0, 30, 12, "gable", 0, 5, 1, 0, 2)
+		end)
+		case("roofs:hips", function(p) -- hips in a row, and a pyramid against one's side
+			roof(p, 0, 0, 20, 12, "hip", 0, 5, 1, 0, 1)
+			roof(p, 20, 0, 40, 12, "hip", 0, 5, 1, 0, 2)
+			roof(p, 6, 12, 16, 22, "pyramid", 0, 4, 1, 0, 3)
+		end)
+		case("roofs:flat", function(p) -- flat roofs side by side, and a gable against one
+			roof(p, 0, 0, 16, 12, "flat", 0, 0, 1, 0, 1)
+			roof(p, 16, 0, 30, 12, "flat", 0, 0, 1, 0, 2)
+			roof(p, 0, 12, 16, 24, "gable", 0, 4, 1, 0, 3)
+		end)
+		case("roofs:sheds", function(p) -- lean-tos in a row, and one against a gable's end
+			roof(p, 0, 0, 14, 10, "shed", 0, 4, 1, 0, 1)
+			roof(p, 14, 0, 28, 10, "shed", 0, 4, 1, 0, 2)
+			roof(p, 28, 0, 40, 10, "gable", 1, 5, 1, 0, 3)
+		end)
+	end
+	if which == nil or which == "travel" then
+		-- the ways between floors in their floors (Build/Recipes/Travel): each cuts its hole
+		local function slab(p, lv, x1, z1, x2, z2)
+			add(p, "floors", {
+				x1 = X + x1,
+				z1 = Z + z1,
+				x2 = X + x2,
+				z2 = Z + z2,
+				lv = lv,
+				c = if lv % 2 == 0 then "C8B49A" else "B89470",
+				m = "WoodPlanks",
+			})
+		end
+		local function piece(p, id, x, z, lv, r)
+			add(p, "items", { id = id, x = X + x, y = Plan.levelBase(lv), z = Z + z, r = r or 0, lv = lv })
+		end
+		case("travel:holes", function(p)
+			slab(p, 0, 0, 0, 40, 20)
+			slab(p, 1, 0, 0, 40, 20)
+			piece(p, "hole_hatch", 4, 4, 0)
+			piece(p, "hole_trapdoor", 10, 4, 0, 90)
+			piece(p, "hole_pole", 16, 4, 0)
+			piece(p, "hole_slide", 24, 10, 0)
+			piece(p, "stairwell", 33.5, 10, 0, 180)
+		end)
+		case("travel:lift", function(p)
+			for lv = 0, 3 do
+				slab(p, lv, 0, 0, 20, 16)
+			end
+			piece(p, "lift_4", 10.5, 8, 0)
+		end)
+	end
+	if which == nil or which == "paths" then
+		case("paths:cross", function(p) -- two paths across each other
+			floor(p, 0, 8, 30, 12, "Cobblestone", "B8B0A4")
+			floor(p, 12, 0, 16, 22, "Cobblestone", "A8A094")
+		end)
+		case("paths:T", function(p) -- a path running into another
+			floor(p, 0, 0, 30, 4, "Pavement", "C8C2B8")
+			floor(p, 12, 4, 16, 20, "Brick", "B07860")
+		end)
+		case("paths:L", function(p) -- a corner, and a wide yard on its side
+			floor(p, 0, 0, 20, 4, "Pebble", "C0B6A6")
+			floor(p, 16, 4, 20, 20, "Pebble", "B4AA9A")
+			floor(p, 20, 10, 30, 20, "Sandstone", "D8C49C")
+		end)
+		case("paths:over", function(p) -- one laid half over another of another stone
+			floor(p, 0, 0, 16, 10, "Brick", "A86A58")
+			floor(p, 10, 4, 26, 14, "Limestone", "D8D0C0")
+		end)
+		case("paths:mixed", function(p) -- a path meeting grass, a room's floor and a road
+			floor(p, 0, 0, 24, 4, "Cobblestone", "B8B0A4")
+			floor(p, 24, -4, 34, 8, "WoodPlanks", "B89470")
+			floor(p, 4, 4, 10, 14, "Grass", "8CB46E")
+			floor(p, 14, 4, 20, 18, "Asphalt", "5A5A60")
+		end)
+	end
+	return out
+end
+
 -- The jobs of a scope: { scope, name, build = function() -> prims, opts, names }. `match` picks
 -- names (nil: all of them).
 function Z.jobs(scope: string, match: ((string) -> boolean)?): { any }
@@ -1151,6 +1303,14 @@ function Z.jobs(scope: string, match: ((string) -> boolean)?): { any }
 				local _, why, _, trial, made = Presets.check(plan, Presets.requests(p.id, 0, 0, 0))
 				assert(why == nil, p.id .. ": " .. tostring(why))
 				local prims, unit = planPrims(trial, made)
+				return prims, { unit = unit, supports = { FLOOR }, group = {}, layout = true }
+			end)
+		end
+	elseif scope == "joins" then
+		-- roofs and paths that meet, fitted together (Shapes.roofIn, Shapes.groundFloor)
+		for _, c in Z.joins(nil) do
+			one(c.name, function()
+				local prims, unit = planPrims(c.plan)
 				return prims, { unit = unit, supports = { FLOOR }, group = {}, layout = true }
 			end)
 		end

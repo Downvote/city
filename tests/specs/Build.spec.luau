@@ -592,6 +592,176 @@ describe("Shapes", function()
 	end)
 end)
 
+describe("Roofs and paths that meet", function()
+	-- the user: "it seems like when roofs are put together, z fighting occurs" and "make it such
+	-- that paths dont z fight if interesecting each other, and their edges merge together so it
+	-- outlines their entire combined shape". The Zfight spec's "joins" scope looks at every case.
+	local function newRoof(x1, z1, x2, z2, style, dir, rise)
+		return {
+			x1 = x1,
+			z1 = z1,
+			x2 = x2,
+			z2 = z2,
+			lv = 0,
+			style = style or "gable",
+			rise = rise or 5,
+			dir = dir or 0,
+			over = 1,
+			c = "B86A5A",
+			m = "Slate",
+			c2 = "F2EADC",
+			m2 = "WoodPlanks",
+		}
+	end
+	local function named(prims, name)
+		local n = 0
+		for _, p in prims do
+			if p.name == name then
+				n += 1
+			end
+		end
+		return n
+	end
+
+	it("draws a roof that meets none as it always was", function()
+		local plan = Plan.new(400)
+		plan.roofs["1"] = newRoof(100, 100, 120, 112)
+		plan.roofs["2"] = newRoof(200, 100, 220, 112) -- (far off)
+		local alone = Shapes.roof(plan.roofs["1"])
+		local drawn = Builder.primsFor(plan, "roofs", "1")
+		expect(#drawn).toBe(#alone)
+		for i, p in alone do
+			expect((p.cf.Position - drawn[i].cf.Position).Magnitude).toBeNear(0, 1e-6)
+		end
+	end)
+
+	it("stops two roofs in a row at their joint, with no gable between them", function()
+		local plan = Plan.new(400)
+		plan.roofs["1"] = newRoof(100, 100, 120, 112)
+		plan.roofs["2"] = newRoof(120, 100, 136, 112)
+		local a = Builder.primsFor(plan, "roofs", "1")
+		local b = Builder.primsFor(plan, "roofs", "2")
+		-- the gables: one at each outer end, none at the joint
+		local function gablesAt(prims, x)
+			local n = 0
+			for _, p in prims do
+				if p.shape == "Wedge" and math.abs(p.cf.Position.X - x) < 0.5 then
+					n += 1
+				end
+			end
+			return n
+		end
+		expect(gablesAt(a, 120) + gablesAt(b, 120)).toBe(0)
+		expect(gablesAt(a, 100) > 0 and gablesAt(b, 136) > 0).toBe(true)
+		-- the ceilings run on to the joint and meet there
+		local hi, lo = -math.huge, math.huge
+		for _, p in a do
+			if p.name == "Ceiling" then
+				hi = math.max(hi, p.cf.Position.X + p.size.X / 2)
+			end
+		end
+		for _, p in b do
+			if p.name == "Ceiling" then
+				lo = math.min(lo, p.cf.Position.X - p.size.X / 2)
+			end
+		end
+		expect(hi).toBeNear(120, 1e-3)
+		expect(lo).toBeNear(120, 1e-3)
+		-- what the first keeps of their shared overhang the second leaves out: nothing of the
+		-- second's boards lies past the joint's line over the first's room
+		for _, p in Geometry.flatten(b) do
+			if p.name ~= "Ceiling" then
+				for _, c in Geometry.corners(p) do
+					if c.Z > 100.5 and c.Z < 111.5 then
+						expect(c.X > 119.4).toBe(true)
+					end
+				end
+			end
+		end
+	end)
+
+	it("redraws the roofs a change meets", function()
+		local plan = Plan.new(400)
+		plan.roofs["1"] = newRoof(100, 100, 120, 112)
+		plan.roofs["3"] = newRoof(300, 100, 320, 112)
+		local obj = newRoof(120, 100, 136, 112)
+		plan.roofs["2"] = obj
+		local touched = Plan.affected(plan, { { op = "add", kind = "roofs", key = "2", obj = obj } })
+		expect(touched.roofs["1"]).toBe(true)
+		expect(touched.roofs["2"]).toBe(true)
+		expect(touched.roofs["3"]).toBe(nil)
+	end)
+
+	local function path(x1, z1, x2, z2, m)
+		return { x1 = x1, z1 = z1, x2 = x2, z2 = z2, lv = 0, c = "B8B0A4", m = m or "Cobblestone" }
+	end
+
+	it("draws paths across each other as one, the edging and the bank round the outside", function()
+		local plan = Plan.new(400)
+		plan.floors["1"] = path(100, 108, 130, 112)
+		plan.floors["2"] = path(112, 100, 116, 122)
+		local all = {}
+		for _, key in { "1", "2" } do
+			for _, p in Builder.primsFor(plan, "floors", key) do
+				table.insert(all, p)
+			end
+		end
+		-- the tops never lie over each other
+		local tops = {}
+		for _, p in all do
+			if p.name ~= "Bank" then
+				local c, h = p.cf.Position, p.size / 2
+				table.insert(tops, { c.X - h.X, c.Z - h.Z, c.X + h.X, c.Z + h.Z })
+			end
+		end
+		for i = 1, #tops do
+			for k = i + 1, #tops do
+				local a, b = tops[i], tops[k]
+				local ox = math.min(a[3], b[3]) - math.max(a[1], b[1])
+				local oz = math.min(a[4], b[4]) - math.max(a[2], b[2])
+				expect(ox <= 1e-3 or oz <= 1e-3).toBe(true)
+			end
+		end
+		-- every bit of both is covered once: the cross's area
+		local area = 0
+		for _, t in tops do
+			area += (t[3] - t[1]) * (t[4] - t[2])
+		end
+		expect(area).toBeNear(30 * 4 + 22 * 4 - 16, 1e-3)
+		-- no edging where they cross, and no bank over either
+		for _, p in all do
+			local c = p.cf.Position
+			if p.name == "Bank" then
+				local inX = c.X > 100 and c.X < 130 and c.Z > 108 and c.Z < 112
+				local inZ = c.X > 112 and c.X < 116 and c.Z > 100 and c.Z < 122
+				expect(inX or inZ).toBe(false)
+			elseif p.color ~= Colors.fromHex("B8B0A4") then
+				expect(c.X > 113 and c.X < 115 and c.Z > 109 and c.Z < 111).toBe(false)
+			end
+		end
+		expect(named(all, "Bank") >= 8).toBe(true)
+	end)
+
+	it("lays the newer path over the older and redraws the ground floors a change meets", function()
+		local plan = Plan.new(400)
+		plan.floors["1"] = path(100, 100, 116, 110, "Brick")
+		plan.floors["2"] = path(110, 104, 126, 114, "Limestone")
+		plan.floors["3"] = path(300, 100, 310, 110)
+		local older = Builder.primsFor(plan, "floors", "1")
+		for _, p in older do
+			if p.name ~= "Bank" then
+				local c, h = p.cf.Position, p.size / 2
+				local ox = math.min(c.X + h.X, 126) - math.max(c.X - h.X, 110)
+				local oz = math.min(c.Z + h.Z, 114) - math.max(c.Z - h.Z, 104)
+				expect(ox <= 1e-3 or oz <= 1e-3).toBe(true)
+			end
+		end
+		local touched = Plan.affected(plan, { { op = "add", kind = "floors", key = "2", obj = plan.floors["2"] } })
+		expect(touched.floors["1"]).toBe(true)
+		expect(touched.floors["3"]).toBe(nil)
+	end)
+end)
+
 describe("Trim, garden and workshop pieces", function()
 	-- the user: "improve the starting house detail by alot". What the starter house is dressed with
 	-- are ordinary catalog pieces, so these hold wherever a player puts them too.

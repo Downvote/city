@@ -60,6 +60,18 @@ Tuning.Basement = {
 	Lining = 0.4, -- the concrete round a basement's open sides, under the ground
 }
 
+-- Lifts between floors (the user: "make ways to travel down, like different hole types, and add
+-- elevators"): Build/Recipes/Travel, Sim/Lifts, Services/Lifts, client World/Lifts.
+Tuning.Lifts = {
+	PerFloor = 2.2, -- seconds the car takes a floor
+	Doors = 0.8, -- seconds the doors take to open or shut
+	Board = 0.8, -- seconds they stand open to get in
+	Open = 3, -- seconds they stand open at the floor it went to
+	Hold = 0.3, -- seconds E is held at the buttons
+	Reach = 6, -- how far from the buttons the prompt shows (studs)
+	Cooldown = 1, -- seconds between one player's presses
+}
+
 -- The user: "could you make working give much more coins, and make buildings cheaper?" So
 -- building costs about half what it did: walls and roofs went from 2 to 1, and every piece in the
 -- catalog costs its recipe's price times Items (Build/Catalog, when it loads). Floors and fences

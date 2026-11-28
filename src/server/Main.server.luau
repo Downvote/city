@@ -23,6 +23,7 @@ local order = {
 	"Gifts", -- gifts to and from villagers (Sim/Gifts): after Villagers, whose talks it hears
 	"Titles", -- the titles players wear under their names (Sim/Titles)
 	"Lights", -- the lights players place: their switches, and put out near sleepers (after Villagers)
+	"Lifts", -- the elevators players place: their buttons, and the riders carried (Sim/Lifts)
 	"Unstick", -- people moved out of what they get stuck in: after Build and Villagers
 	"Events",
 	"Explore",

@@ -280,8 +280,30 @@ function Plan.itemRect(item: Item): (number, number, number, number)
 	return item.x - hx, item.z - hz, item.x + hx, item.z + hz
 end
 
+-- How many floors up a piece runs: stairs, a hatch, a pole or a slide one, a lift as many as it
+-- has landings over its own (Build/Recipes/Travel).
+function Plan.spans(def: any): number
+	if not def or def.place ~= "stairs" then
+		return 0
+	end
+	return math.max(1, def.spans or 1)
+end
+
+-- The rectangle a piece cuts out of the floors over it: its `hole` turned as it stands, or all of it.
+function Plan.holeRect(item: Item): (number, number, number, number)
+	local def = Catalog.get(item.id)
+	local h = def and def.hole
+	if not h then
+		return Plan.itemRect(item)
+	end
+	local frame = CFrame.new(item.x, 0, item.z) * CFrame.Angles(0, math.rad(item.r), 0)
+	local a, b = frame * Vector3.new(h[1], 0, h[2]), frame * Vector3.new(h[3], 0, h[4])
+	local lo, hi = a:Min(b), a:Max(b)
+	return lo.X, lo.Z, hi.X, hi.Z
+end
+
 -- Rectangles cut out of the floors of level lv (stairwells coming up from lv - 1, the ground floor's
--- from the basement too).
+-- from the basement too, and a lift's shaft from any floor it runs up from).
 function Plan.holes(plan: PlanData, lv: number): { { number } }
 	local out = {}
 	if lv <= Plan.Lowest then
@@ -289,8 +311,8 @@ function Plan.holes(plan: PlanData, lv: number): { { number } }
 	end
 	for _, item in plan.items do
 		local def = Catalog.get(item.id)
-		if def and def.place == "stairs" and item.lv == lv - 1 then
-			local x1, z1, x2, z2 = Plan.itemRect(item)
+		if def and def.place == "stairs" and item.lv < lv and item.lv >= lv - Plan.spans(def) then
+			local x1, z1, x2, z2 = Plan.holeRect(item)
 			table.insert(out, { x1, z1, x2, z2 })
 		end
 	end
@@ -754,7 +776,7 @@ function Plan.validItem(plan: PlanData, item: any, ignoreKey: string?): (boolean
 		return true
 	end
 	if def.place == "stairs" then
-		if item.lv >= Plan.Highest then
+		if item.lv + Plan.spans(def) > Plan.Highest then
 			return false, "no floor above"
 		end
 		if item.r % 90 ~= 0 then
@@ -1074,7 +1096,9 @@ function Plan.affected(plan: PlanData, ops: { Op }): { [string]: { [string]: boo
 		if def.place == "opening" and obj.wall then
 			out.walls[obj.wall] = true
 		elseif def.place == "stairs" then
-			floorLevels[obj.lv + 1] = true
+			for up = 1, Plan.spans(def) do
+				floorLevels[obj.lv + up] = true
+			end
 		end
 	end
 	for _, op in ops do
@@ -1096,6 +1120,38 @@ function Plan.affected(plan: PlanData, ops: { Op }): { [string]: { [string]: boo
 			for _, f in { op.obj, op.before } do
 				if type(f) == "table" and f.lv == Plan.Lowest then
 					floorLevels[Plan.Lowest] = true
+				end
+				-- (ground floors that meet are drawn as one: Shapes.groundFloor)
+				if type(f) == "table" and f.lv == 0 then
+					for key, g in plan.floors do
+						if
+							g.lv == 0
+							and g.x1 <= f.x2 + 1e-4
+							and g.x2 >= f.x1 - 1e-4
+							and g.z1 <= f.z2 + 1e-4
+							and g.z2 >= f.z1 - 1e-4
+						then
+							out.floors[key] = true
+						end
+					end
+				end
+			end
+		elseif op.kind == "roofs" then
+			-- (roofs on one floor that meet are fitted together: Shapes.roofIn)
+			for _, r in { op.obj, op.before } do
+				if type(r) == "table" and type(r.lv) == "number" then
+					local reach = (tonumber(r.over) or 0) + P.RoofMaxOverhang + 0.1
+					for key, q in plan.roofs do
+						if
+							q.lv == r.lv
+							and q.x1 <= r.x2 + reach
+							and q.x2 >= r.x1 - reach
+							and q.z1 <= r.z2 + reach
+							and q.z2 >= r.z1 - reach
+						then
+							out.roofs[key] = true
+						end
+					end
 				end
 			end
 		end

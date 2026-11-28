@@ -579,17 +579,17 @@ function Builder.primsFor(plan: Plan.PlanData, kind: string, key: string): { Pri
 				end
 			end
 		end
-		local prims = Shapes.floor(f, Plan.holes(plan, f.lv), under)
+		-- (a ground floor is drawn with the ground floors it meets: Shapes.groundFloor)
+		local prims = if f.lv == 0
+			then Shapes.groundFloor(plan, key, Plan.holes(plan, f.lv))
+			else Shapes.floor(f, Plan.holes(plan, f.lv), under)
 		if f.lv == Basement.Level then
 			Geometry.append(prims, Basement.lining(plan, key))
 		end
 		return prims
 	elseif kind == "roofs" then
-		local r = plan.roofs[key]
-		if not r then
-			return nil
-		end
-		return Shapes.roof(r)
+		-- (fitted to the roofs it meets on its floor: Shapes.roofIn)
+		return Shapes.roofIn(plan, key)
 	elseif kind == "waters" then
 		-- (water: its rim or bank and the basin's lining; the water itself is terrain in the game)
 		local w = plan.waters and plan.waters[key]

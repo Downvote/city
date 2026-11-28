@@ -63,9 +63,10 @@ function Collide.body(def: Catalog.Def): { Box }
 		return known
 	end
 	local out: { Box } = {}
-	if def.place == "stairs" then
-		-- stairs are their run and their width, rising a storey from their foot (+Z) to their top
-		-- end (-Z, Recipes/Structure): a band of steps along the line of the treads, as deep under
+	if def.place == "stairs" and (def.travel == nil or def.travel == "stairs") then
+		-- plain stairs (not a hatch, pole, slide or lift: Recipes/Travel) are their run and their
+		-- width, rising a storey from their foot (+Z) to their top end (-Z, Recipes/Structure): a
+		-- band of steps along the line of the treads, as deep under
 		-- it as the strings and the hidden ramp reach (StairUnder). Under the high end there is
 		-- room, as there is to see: a cupboard can go there. (Their drawing's ramp is tilted
 		-- wedges, whose boxes would reach past both ends.)
