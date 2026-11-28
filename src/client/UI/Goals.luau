@@ -283,7 +283,6 @@ local function showTitle(name: string?)
 		Parent = frame,
 		Size = UDim2.new(1, 0, 0, 16),
 		TextSize = 12,
-		AlignX = Enum.TextXAlignment.Center,
 	})
 	local stage = Kit.frame({
 		Name = "Preview",
@@ -302,25 +301,17 @@ local function showTitle(name: string?)
 	tag.Position = UDim2.fromScale(0.5, 0.5)
 	tag.ZIndex = 3
 	tag.Parent = stage
-	Kit.text(if name then "Everyone sees it under your name." else "Win titles from goals and wear one here.", {
-		Name = "Hint",
-		Parent = frame,
-		Size = UDim2.new(1, -24, 0, 44),
-		Position = UDim2.fromOffset(12, 164),
-		TextSize = 16,
-		Color = T.InkSoft,
-		AlignX = Enum.TextXAlignment.Center,
-		AlignY = Enum.TextYAlignment.Top,
-	})
+	MenuParts.headline(
+		frame,
+		name or "No title",
+		if name then "Everyone sees it under your name." else "Win titles from goals and wear one here.",
+		164
+	)
 	if name then
-		Kit.button("Take it off", {
+		MenuParts.footButton(frame, "Take it off", {
 			Name = "TakeOff",
-			Parent = frame,
-			Size = UDim2.fromOffset(220, 50),
-			Position = UDim2.new(0.5, 0, 1, 0),
-			AnchorPoint = Vector2.new(0.5, 1),
 			Color = T.Coral,
-			TextSize = 19,
+			TextSize = 20,
 		}, function()
 			wear(false)
 		end)

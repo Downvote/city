@@ -219,16 +219,13 @@ draw = function()
 	local function part(name: string, words: string, y: number)
 		local h =
 			Kit.box({ Name = name, Parent = inside, Size = UDim2.new(1, 0, 0, 28), Position = UDim2.fromOffset(0, y) })
-		Kit.caption(
-			words,
-			{
-				Name = "Title",
-				Parent = h,
-				Size = UDim2.new(1, 0, 0, 16),
-				Position = UDim2.fromOffset(0, 3),
-				TextSize = 11,
-			}
-		)
+		Kit.caption(words, {
+			Name = "Title",
+			Parent = h,
+			Size = UDim2.new(1, 0, 0, 16),
+			Position = UDim2.fromOffset(0, 3),
+			TextSize = 11,
+		})
 		Kit.rule({
 			Name = "Rule",
 			Parent = h,
