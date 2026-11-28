@@ -946,12 +946,16 @@ Tuning.Bag = {
 
 -- Lights ---------------------------------------------------------------------------------
 -- How bright the lamps' lights are and how far they reach, against what each piece asks for
--- (Recipe.glow): the user, of a room lit by Build mode's lamps, "the placeable lights are too
--- bright". A room is small and Future lighting fills it, so what players place is dimmed a good
--- deal more than the town's street lamps and windows.
+-- (Recipe.glow). They were dimmed once (the user: "the placeable lights are too bright", when a
+-- bright fill lit every room anyway); the shade is dark and real now (Tuning.Look.Light), and the
+-- user: "could you also make lights in general stronger, so they fill up the whole room?". So a
+-- lamp reaches much further than it is bright: its light spreads across a room (the rooms are
+-- roomy, Build/Spread) without burning white next to the lamp. Roblox's lights reach 60 at most.
 Tuning.Lights = {
-	Placed = { Brightness = 0.4, Range = 0.75 },
-	Town = { Brightness = 0.8, Range = 1 },
+	Placed = { Brightness = 0.9, Range = 1.8 },
+	Town = { Brightness = 1, Range = 1.3 },
+	MaxRange = 60,
+	SpotAngle = 120, -- degrees a ceiling light's cone spreads (it was 80: a small pool under it)
 	-- the lights players place are on at every hour, their owner switches each one, and a villager
 	-- asleep puts out the ones near their bed (the user: "make it such that lights are on by default
 	-- and dont change based on time. players can turn them off or on, and villagers will turn
@@ -967,8 +971,9 @@ Tuning.Lights = {
 -- The lamps in the rooms of the town's buildings (Data/Interiors), against what each lamp is drawn
 -- with: lit at every hour (a shop keeps its lights on by day) and a little brighter than the
 -- street's, since a room sees little of the sky (the user: "make the lights and interior in them
--- work")
-Tuning.RoomLights = { Brightness = 1.3, Range = 1.15 }
+-- work"), and reaching across the room ("make lights in general stronger, so they fill up the
+-- whole room")
+Tuning.RoomLights = { Brightness = 1.6, Range = 1.8 }
 
 -- Placed pieces that move and give off effects (Build/Lively, client World/Lively; the user: "make
 -- animated decor, workplaces with special effects, particle makers")

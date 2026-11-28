@@ -622,7 +622,7 @@ a switched off light staying off, turning one on over a sleeper, old saves, the 
 
 Lamps in the town's own rooms (the user: "detail the town more, and make the lights and interior in them work"):
 `Build/Builder` has the tag `RoomLight`. A glow prim with `attrs.RoomLight` (never on a player's plot) is Neon and lit
-from the start, scaled by `Tuning.RoomLights` (Brightness 1.3, Range 1.15) instead of `Tuning.Lights.Town`, and the
+from the start, scaled by `Tuning.RoomLights` (Brightness 1.6, Range 1.8) instead of `Tuning.Lights.Town` (1, 1.3; a placed piece's `Tuning.Lights.Placed`, 0.9 and 1.8; every reach capped at `Tuning.Lights.MaxRange`, 60, and a spot's cone `Tuning.Lights.SpotAngle`, 120), and the
 clock never switches it. `Interiors.fill` marks every glow it draws as a room light, and so does `TownModels`'
 pendant (the square's shops); the row houses' ceiling lamps cast light now. Street lamps, lit windows and signs stay
 `NightLight`.

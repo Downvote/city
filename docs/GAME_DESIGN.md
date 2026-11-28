@@ -3573,6 +3573,15 @@ of names in chat".
 A title worn now sits over its wearer's name in gold, both just words with a soft dark edge and nothing behind them.
 In the chat, the title shows in gold, in brackets, before the name on every message its wearer sends.
 
+### Lights that fill the room
+
+The user (2026-11-28): "could you also make lights in general stronger, so they fill up the whole room?"
+
+Every lamp now reaches much further than before and is a little brighter: the lamps players place, the town's own
+lamps and windows, and the lamps in the town's rooms. A ceiling light spreads its light wide rather than in a small
+pool under it. They had been turned down when a bright fill lit every room anyway; with the darker, truer shade
+since, a lamp has to light its room itself.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

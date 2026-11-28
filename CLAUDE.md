@@ -935,7 +935,11 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
   windows and signs follow the hour; the lamps in the town's rooms, `RoomLight`, are always on). The owner's "Turn off" / "Turn on" prompt (`Services/Lights`, owner only,
   checked on the server) saves the item's `off`; Build mode's moves, repaints and undo keep it. A villager asleep
   puts out the lights within `Tuning.Lights.SleepReach` of their bed on its floor until they are up (`Sim/Lights`,
-  held on the server, never saved, never touching `off`). Never switch a placed light by the hour.
+  held on the server, never saved, never touching `off`). Never switch a placed light by the hour. A light reaches
+across the room it is in (the user: "could you also make lights in general stronger, so they fill up the whole room?"):
+`Tuning.Lights` and `Tuning.RoomLights` scale what `r:glow` asks for, reach well over brightness so a room fills
+without burning white by the lamp, ceiling spots spread `SpotAngle` wide, and nothing past `MaxRange` (60, Roblox's
+most). Don't dim them back to the old 0.4 and 0.75: those were set under a bright fill that's gone.
 
 ## Writing (always)
 

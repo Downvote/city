@@ -216,17 +216,19 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 	end
 	if prim.light then
 		local l = prim.light
-		-- what players place is dimmer than the town's own lamps (Tuning.Lights: "the placeable
-		-- lights are too bright"); a room is small and Future lighting fills it
+		-- each kind of lamp by its own numbers (Tuning.Lights, Tuning.RoomLights): a light reaches
+		-- across the room it is in ("make lights in general stronger, so they fill up the whole
+		-- room"), Roblox's lights no further than Tuning.Lights.MaxRange
 		local scale = if opts and opts.plain
 			then Tuning.Lights.Placed
 			elseif room then Tuning.RoomLights
 			else Tuning.Lights.Town
+		local reach = math.min(l.range * scale.Range, Tuning.Lights.MaxRange)
 		if l.kind == "spot" then
 			local spot = Instance.new("SpotLight")
 			spot.Face = (Enum.NormalId :: any)[l.face or "Bottom"] or Enum.NormalId.Bottom
-			spot.Angle = 80
-			spot.Range = l.range * scale.Range
+			spot.Angle = Tuning.Lights.SpotAngle
+			spot.Range = reach
 			spot.Brightness = l.brightness * scale.Brightness
 			spot.Color = l.color
 			spot.Shadows = false
@@ -234,7 +236,7 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 			spot.Parent = part
 		else
 			local point = Instance.new("PointLight")
-			point.Range = l.range * scale.Range
+			point.Range = reach
 			point.Brightness = l.brightness * scale.Brightness
 			point.Color = l.color
 			point.Shadows = false
