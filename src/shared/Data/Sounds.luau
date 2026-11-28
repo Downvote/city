@@ -86,16 +86,21 @@ Sounds.VoiceOrder = { "pluck", "block", "chatter", "beep" }
 
 -- The music: calm tracks played one at a time with quiet between, picked at random from the
 -- Playlist (Sim/Sound.nextTrack), never the same twice running. `day` ones only by day, `night`
--- ones only at night.
+-- ones only at night. Each track's volume sets it to the same loudness over the whole song
+-- (`python3 scripts/library_sounds.py level <ids>`: weighted as the ear hears, the quiet stretches
+-- left out), so no song plays quieter than the rest (the user: "some songs are quieter than
+-- others"; they had been set by their loudest moment). A new track takes `Sounds.MusicLevel`.
 -- stylua: ignore
 Sounds.Music = {
-	lakefront = { id = 9038622066, volume = 0.153, day = true, name = "Lakefront Days (Ukulele Underscore Version)", by = "Inside Tracks (APMOfficial)" }, -- loudest -7.7 dB, 135.21 s heard
-	ukulele = { id = 1842619720, volume = 0.178, day = true, name = "Ukulele Lullaby", by = "Jacob King (APMOfficial)" }, -- loudest -9.0 dB, 152.59 s heard
-	peaceful = { id = 122584281971383, volume = 0.105, name = "Peaceful Days", by = "Franck Sarkissian (APMOfficial)" }, -- loudest -4.4 dB, 94.87 s heard
-	cozy = { id = 1847848565, volume = 0.143, name = "Calm And Cozy C", by = "Otto Sieben (APMOfficial)" }, -- loudest -7.1 dB, 105.7 s heard
-	musicbox = { id = 9047785119, volume = 0.219, night = true, name = "Music Box Lullaby", by = "Erazoff (APMOfficial)" }, -- loudest -11.8 dB, 136.18 s heard
-	evening = { id = 1847848511, volume = 0.102, night = true, name = "Calm And Cozy A", by = "Otto Sieben (APMOfficial)" }, -- loudest -5.2 dB, 119.3 s heard
+	lakefront = { id = 9038622066, volume = 0.157, day = true, name = "Lakefront Days (Ukulele Underscore Version)", by = "Inside Tracks (APMOfficial)" }, -- whole song -16.5 dB, 135.21 s heard
+	ukulele = { id = 1842619720, volume = 0.108, day = true, name = "Ukulele Lullaby", by = "Jacob King (APMOfficial)" }, -- whole song -13.2 dB, 152.59 s heard
+	peaceful = { id = 122584281971383, volume = 0.129, name = "Peaceful Days", by = "Franck Sarkissian (APMOfficial)" }, -- whole song -14.7 dB, 94.87 s heard
+	cozy = { id = 1847848565, volume = 0.138, name = "Calm And Cozy C", by = "Otto Sieben (APMOfficial)" }, -- whole song -15.4 dB, 105.7 s heard
+	musicbox = { id = 9047785119, volume = 0.332, night = true, name = "Music Box Lullaby", by = "Erazoff (APMOfficial)" }, -- whole song -23.0 dB, 136.18 s heard
+	evening = { id = 1847848511, volume = 0.091, night = true, name = "Calm And Cozy A", by = "Otto Sieben (APMOfficial)" }, -- whole song -11.7 dB, 119.3 s heard
 } :: { [string]: Entry }
+-- the loudness every track is set to, in dB over the whole song (library_sounds.py level)
+Sounds.MusicLevel = -32.6
 Sounds.Playlist = { "lakefront", "ukulele", "peaceful", "cozy", "musicbox", "evening" }
 
 function Sounds.asset(id: number): string

@@ -385,7 +385,9 @@ background. use roblox library for these, dont make your own."): every sound is 
 `Data/Sounds`, from Roblox's own uploads or the libraries Roblox licensed for every game (Pro Sound Effects, APM,
 DistroKid), never one we made and never a stranger's upload that might go private. Find more with
 `python3 scripts/library_sounds.py search "<words>" --by pse --measure --sheet <png>` (`info <id> --syllables` cuts
-a babble into syllables), set a new one's `volume` from its measured loudness so it sits as softly as the rest, and
+a babble into syllables), set a new one's `volume` from its measured loudness so it sits as softly as the rest (a music
+track by its loudness over the whole song, `python3 scripts/library_sounds.py level <id>`, to `Sounds.MusicLevel`:
+by its loudest moment one song came out much quieter than another, "some songs are quieter than others"), and
 run `python3 scripts/library_sounds.py check` now and then. Everything is played on the player's own screen by
 `client/Controllers/Audio` (never on the server), in the Music, Effects or Voices group: a new effect is a line in
 `Sounds.Effects` played with `Audio.play(key)` (or `Kit.sound(key)` from the interface, as a crate's opening plays

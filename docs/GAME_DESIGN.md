@@ -3589,6 +3589,12 @@ The user (2026-11-28): "the buy outfit button isnt working". Roblox puts up its 
 when the game's server asks for it; the button asked from the player's own screen, where nothing happened. Now the
 server asks, and if Roblox won't, the player is asked about each thing in turn.
 
+### Every song as loud as the rest
+
+The user (2026-11-28): "some songs are quieter than others". Each song's volume had been set by its loudest moment,
+so a song with long quiet stretches (the music box lullaby most of all) played well under the others. Now every song
+is set by how loud it is over the whole of it, weighted the way the ear hears, and they all play at the same level.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

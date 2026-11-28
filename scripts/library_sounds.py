@@ -263,6 +263,59 @@ def show(ids, info, do_measure, sheet_path=None, most=None, sylls=False):
             shutil.rmtree(folder, ignore_errors=True)
 
 
+def _biquad(x, b, a):
+    """One filter step after another (no scipy here); slow but fine for a few songs."""
+    import numpy as np
+    y = np.zeros_like(x)
+    x1 = x2 = y1 = y2 = 0.0
+    b0, b1, b2 = b
+    _, a1, a2 = a
+    for i, v in enumerate(x):
+        o = b0 * v + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2
+        x2, x1, y2, y1 = x1, v, y1, o
+        y[i] = o
+    return y
+
+
+def _k_weight(x, fs):
+    """The ear's weighting, as loudness meters use it: a shelf up over 1.5 kHz, a cut under 40 Hz."""
+    import math
+    g, q, fc = 3.999843853973347, 0.7071752369554196, 1681.974450955533
+    A = 10 ** (g / 40); w = 2 * math.pi * fc / fs; al = math.sin(w) / (2 * q); c = math.cos(w); r = 2 * math.sqrt(A) * al
+    a0 = (A + 1) - (A - 1) * c + r
+    shelf = ((A * ((A + 1) + (A - 1) * c + r) / a0, -2 * A * ((A - 1) + (A + 1) * c) / a0,
+              A * ((A + 1) + (A - 1) * c - r) / a0), (1, 2 * ((A - 1) - (A + 1) * c) / a0, ((A + 1) - (A - 1) * c - r) / a0))
+    q, fc = 0.5003270373238773, 38.13547087602444
+    w = 2 * math.pi * fc / fs; al = math.sin(w) / (2 * q); c = math.cos(w); a0 = 1 + al
+    high = (((1 + c) / 2 / a0, -(1 + c) / a0, (1 + c) / 2 / a0), (1, -2 * c / a0, (1 - al) / a0))
+    return _biquad(_biquad(x, *shelf), *high)
+
+
+def level(samples, fs=RATE):
+    """How loud a whole song is, in dB: weighted as the ear hears, averaged over 0.4 s blocks with
+    the silent ones and the quiet stretches (10 dB under the rest) left out, as loudness meters do.
+    Music is set by this, not by its loudest moment (Data/Sounds' Music, Sounds.MusicLevel)."""
+    import numpy as np
+    a = _k_weight(samples.astype(np.float64), fs)
+    block, hop = int(0.4 * fs), int(0.1 * fs)
+    ms = np.array([np.mean(a[i:i + block] ** 2) for i in range(0, max(1, len(a) - block), hop)])
+    lk = 10 * np.log10(ms + 1e-12)
+    loud = ms[lk > -70]
+    rel = 10 * np.log10(np.mean(loud) + 1e-12) - 10
+    kept = ms[(lk > -70) & (lk > rel)]
+    return float(10 * np.log10(np.mean(kept) + 1e-12))
+
+
+def cmd_level(args):
+    import math
+    import tempfile
+    target = args.target
+    with tempfile.TemporaryDirectory() as folder:
+        for i in args.ids:
+            lv = level(decode(fetch(int(i), folder)))
+            print(f"{i}: whole song {lv:.1f} dB, volume {10 ** ((target - lv) / 20):.3f} for {target} dB")
+
+
 def cmd_search(args):
     ids = search(args.keywords, args.by, args.limit)
     show(ids, details(ids), args.measure or bool(args.sheet), args.sheet, args.most)
@@ -341,8 +394,11 @@ def main():
     i.add_argument("--sheet")
     i.add_argument("--syllables", action="store_true", help="list the separate sounds in each (a babble's syllables)")
     sub.add_parser("check")
+    lv = sub.add_parser("level", help="a song's loudness over the whole of it, and the volume for Sounds.MusicLevel")
+    lv.add_argument("ids", nargs="+")
+    lv.add_argument("--target", type=float, default=-32.6)
     args = ap.parse_args()
-    {"search": cmd_search, "info": cmd_info, "check": cmd_check}[args.cmd](args)
+    {"search": cmd_search, "info": cmd_info, "check": cmd_check, "level": cmd_level}[args.cmd](args)
 
 
 if __name__ == "__main__":
