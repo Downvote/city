@@ -86,6 +86,14 @@ Remotes.Functions = {
 	"PlotLike", -- (ownerId, on?) -> { likes, liked } or nil, why: likes a town, or takes the like back
 	"PlotVisit", -- (ownerId) -> ok, why: to their plot if they're here, else onto a copy of their town
 	"PlotLeave", -- () -> ok: off a copy and back home (or to the square without a plot)
+	-- other players (Services/Social, Services/Trust, Sim/Social, Sim/Trust): each checked on the server
+	-- (userId) -> { id, name, user, town, level, people, likes, liked, friend, trusted?, trustsYou?,
+	-- top = { { vid, name, color, pers, heart, job } }, plot? } or nil, why: another player's card
+	"PlayerCard",
+	"TrustSet", -- (userId, on, budget?) -> ok, why: trust a player in the server to build on your plot, change their budget, or stop
+	-- (ownerId | nil) -> ok, { owner, name, plot, plan, passes, gemItems, keepsakes, budget, left } or
+	-- why: open Build mode on a plot whose owner trusts you (nil: back to your own)
+	"TrustBuild",
 }
 
 Remotes.Events = {
@@ -116,6 +124,9 @@ Remotes.Events = {
 	-- server -> client: { on = true, id, name, who, likes, liked, copy } while the player looks round
 	-- another player's town (`copy`: a copy of it, its owner away), { on = false } when they leave it
 	"Visiting",
+	-- server -> client: (ownerId, { full } | { ops }) a change on the plot this player is building on
+	-- as somebody's trusted builder (Services/Trust), as PlanSync is for their own
+	"SitePlan",
 }
 
 local folder: Folder? = nil

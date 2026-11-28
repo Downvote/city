@@ -16,7 +16,7 @@ local Geometry = require(Shared.Build.Geometry)
 local Catalog = require(Shared.Build.Catalog)
 local Text = require(Shared.Util.Text)
 
-local State = require(script.Parent.Parent.Controllers.State)
+local State = require(script.Parent.Site).view -- (the plot being built on: Build/Site)
 local Kit = require(script.Parent.Parent.UI.Kit)
 
 local WaterTool = {}

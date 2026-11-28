@@ -464,6 +464,48 @@ describe("Talk service", function()
 		expect(ok).toBe(false)
 	end)
 
+	-- the user: "Create dialogue for villagers interacting with players that arent their mayor"
+	it("talks to a visitor as a guest, by their own name, a few times a day in each town", function()
+		reset()
+		local GuestTalk = require(Shared .. "Sim.GuestTalk")
+		visitor.DisplayName = "Sam"
+		local body = bodies.v2
+		local lines = {}
+		for _, list in GuestTalk.Lines.sunny do
+			for _, text in list do
+				lines[GuestTalk.fill(profile, text, { name = "Sam", town = "", home = "" })] = true
+			end
+		end
+		local said = #body.said
+		holdE(visitor, "v2")
+		expect(#body.said).toBe(said + 1)
+		local text = body.said[#body.said]
+		-- a guest's line (a hello), with their name in, and nobody called "the Sam"
+		expect(text:find("Sam", 1, true) ~= nil).toBe(true)
+		expect(text:find("the Sam", 1, true)).toBe(nil)
+		local mine = false
+		for line in lines do
+			local Voice = require(Shared .. "Sim.Voice")
+			mine = mine or Voice.speak("sunny", line) == text
+		end
+		expect(mine).toBe(true)
+		-- past the day's cap in this town the villager has things to do, and doesn't stop
+		for _ = 1, Tuning.Guests.ChatsPerDay + 2 do
+			advance(K.VisitorSeconds + 1)
+			holdE(visitor, "v2")
+		end
+		advance(K.VisitorSeconds + 1)
+		local before = #body.said
+		holdE(visitor, "v2")
+		expect(#body.said).toBe(before + 1)
+		expect(Villagers.control(owner, "v2")).toBe(nil)
+		expect(body.said[#body.said]:lower():find("promised", 1, true) ~= nil).toBe(true)
+		-- the owner still chats as ever
+		holdE(owner, "v2")
+		expect(Villagers.control(owner, "v2")).toBe("talk")
+		visitor.DisplayName = nil
+	end)
+
 	it("needs you to stand by them", function()
 		reset()
 		local body = bodies.v1

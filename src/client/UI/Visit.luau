@@ -13,6 +13,7 @@
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Remotes = require(Shared.Net.Remotes)
 local PlotBoard = require(Shared.Sim.PlotBoard)
+local Social = require(Shared.Sim.Social) -- (friends playing here: the line about inviting them)
 local Text = require(Shared.Util.Text)
 
 local Kit = require(script.Parent.Kit)
@@ -429,6 +430,30 @@ function drawList()
 	end
 	local order = 1
 	local accent = T.Teal
+	-- friends to play with: a tenth more wages each while they're here (UI/Invite, Sim/Social)
+	if query == "" then
+		local _, inner = Kit.row({
+			Name = "Friends",
+			Parent = scroll,
+			Size = MenuParts.rowSize(56),
+			Height = 56,
+			LayoutOrder = order,
+			Title = "Play with friends",
+			Sub = Text.fill("Each one here adds {n}% to wages", { n = Social.percent(1) }),
+			Marker = "people",
+			MarkerColor = accent,
+			RightSpace = 150,
+		})
+		require(script.Parent.Invite).button("Invite", {
+			Parent = inner,
+			Size = UDim2.fromOffset(120, 38),
+			Position = UDim2.new(1, -8, 0.5, 0),
+			AnchorPoint = Vector2.new(1, 0.5),
+			TextSize = 16,
+			ZIndex = 3,
+		})
+		order += 1
+	end
 	if #here > 0 and query == "" then
 		MenuParts.heading(scroll, "In this server", accent, order, tostring(#here))
 		order += 1

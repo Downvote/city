@@ -31,6 +31,7 @@ Schema.Settings = {
 	bubbles = true,
 	eventCamera = true,
 	theme = "dark", -- the interface's look: "dark" or "light"
+	inviteTip = true, -- the one-time nudge to invite friends may still come up (false once put away: Sim/Social)
 	-- what this player's own screen draws (Settings; client World/Graphics, Tuning.Graphics)
 	detail = "high", -- "low", "medium" or "high": shadows, how far things move, particles, outlines
 	blur = true, -- the background blur

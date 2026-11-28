@@ -42,6 +42,8 @@ task.delay(4, function()
 end)
 require(UI.TalkCard).start() -- hold E on a villager: what they say back, and your answers
 require(UI.Visit).start() -- the bar while looking round another player's town: Like and Home
+require(UI.Invite).start() -- the one-time nudge to invite friends, once the town has two villagers
+require(script.Parent.Build.Site).start() -- building on a plot whose owner trusts you: its plan as it changes
 
 -- life around town, and the show when you build
 local World = script.Parent.World
@@ -51,6 +53,7 @@ require(World.BuildFx).start()
 require(World.Materials).start()
 require(World.Wishes).start()
 require(World.VillagerClick).start() -- a click on one of your villagers: Profile or Chat (UI/VillagerMenu)
+require(World.PlayerClick).start() -- a click on another player: their card (UI/PlayerMenu)
 require(World.Earnings).start() -- coins over the villagers as they earn them
 require(World.Interact).start() -- a go at a piece: a puff from it, and what happened over the player
 require(World.Work).start() -- working at a workplace yourself: its prompts, your motion and the notice

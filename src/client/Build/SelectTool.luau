@@ -21,7 +21,7 @@ local Builder = require(Shared.Build.Builder)
 local Geometry = require(Shared.Build.Geometry)
 local Text = require(Shared.Util.Text)
 
-local State = require(script.Parent.Parent.Controllers.State)
+local State = require(script.Parent.Site).view -- (the plot being built on: Build/Site)
 local Kit = require(script.Parent.Parent.UI.Kit)
 local Icons = require(script.Parent.Parent.UI.Icons)
 local Toasts = require(script.Parent.Parent.UI.Toasts)

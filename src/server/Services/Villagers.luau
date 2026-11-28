@@ -47,6 +47,9 @@ local Npc = require(script.Parent.Parent.Npc.Npc)
 local Use = require(script.Parent.Parent.Npc.Use)
 local Room = require(script.Parent.Parent.Npc.Room)
 local UnstickSim = require(Shared.Sim.Unstick)
+local GuestTalk = require(Shared.Sim.GuestTalk) -- (what they say to a visitor: somebody who isn't their mayor)
+local Social = require(Shared.Sim.Social) -- (friends playing here: the town's pay boost)
+local PlotName = require(Shared.Sim.PlotName)
 
 local Villagers = {}
 
@@ -1674,7 +1677,12 @@ local function payBoost(player: Player, profile: any): number
 	local ok, member = pcall(function()
 		return player:GetAttribute("InGroup")
 	end)
-	return Passes.payBoost(profile, ok and member == true)
+	-- and on top, a tenth more for each Roblox friend playing in this server (the user: "add a 10%
+	-- income boosy per friend playing"): Services/Social keeps the count on `FriendsHere`
+	local okFriends, friends = pcall(function()
+		return player:GetAttribute("FriendsHere")
+	end)
+	return Passes.payBoost(profile, ok and member == true) * Social.boost(if okFriends then friends else 0)
 end
 
 -- A player's own work at a workplace (Services/Work, Sim/PlayerWork): their whole coins go out
@@ -2382,6 +2390,8 @@ local lastSaid: { [Player]: { [string]: string } } = {} -- what each villager sa
 -- villagers anywhere to either open their profile or chat with them"): where they stood when it
 -- began. While it lasts, standing within Talk.Range of there counts as standing by them.
 local farFrom: { [Player]: { [string]: Vector3 } } = {}
+-- How many talks each visitor has had in each town today (Sim/GuestTalk.take): "<visitor>:<owner>"
+local guestBook: { [string]: { day: number, n: number } } = {}
 
 local function rootOf(who: Player): BasePart?
 	local char = who.Character
@@ -2484,6 +2494,20 @@ local function talk(who: Player, owner: Player, vid: string, far: boolean?): (an
 	talkedAt[who] = now
 
 	local mine = who == owner
+	-- a visitor: past a few talks a day in this town the villagers have things to do (Sim/GuestTalk)
+	local guest = if mine then nil else Villagers.guestCtx(who, owner)
+	if
+		guest
+		and not GuestTalk.take(
+			guestBook,
+			who.UserId .. ":" .. owner.UserId,
+			World.dayIndex(),
+			Tuning.Guests.ChatsPerDay
+		)
+	then
+		npc:say(GuestTalk.busy(profile, vid, guest))
+		return nil, nil
+	end
 	local first = mode ~= "talk" -- walked up to just now, or already talking
 	holdForTalk(who, owner, vid, npc, if mine then TK.StaySeconds else TK.VisitorSeconds)
 	if not npc.seat then
@@ -2500,18 +2524,21 @@ local function talk(who: Player, owner: Player, vid: string, far: boolean?): (an
 		said = {}
 		lastSaid[owner] = said
 	end
-	local text = Talk.line(profile, vid, rng, {
-		-- (a visitor is called by their own name, not the owner's)
-		name = if mine then nil else who.DisplayName,
-		first = first,
-		last = said[vid],
-		working = v.job ~= nil and v.dayOff ~= World.dayIndex() and isWorkTime(World.hour()),
-		now = os.time(),
-		chat = chat,
-		-- (the specs' stand-in World may keep no calendar or weather)
-		season = if World.calendar then World.calendar().s else nil,
-		weather = if World.weather then World.weather() else nil,
-	})
+	-- somebody who isn't their mayor gets lines of their own, by their own name (Sim/GuestTalk)
+	local text = if guest
+		then GuestTalk.line(profile, vid, rng, guest, first, said[vid])
+		else Talk.line(profile, vid, rng, {
+			-- (a visitor is called by their own name, not the owner's)
+			name = if mine then nil else who.DisplayName,
+			first = first,
+			last = said[vid],
+			working = v.job ~= nil and v.dayOff ~= World.dayIndex() and isWorkTime(World.hour()),
+			now = os.time(),
+			chat = chat,
+			-- (the specs' stand-in World may keep no calendar or weather)
+			season = if World.calendar then World.calendar().s else nil,
+			weather = if World.weather then World.weather() else nil,
+		})
 	said[vid] = text
 	npc:say(text)
 	if first then
@@ -2533,6 +2560,18 @@ local function talk(who: Player, owner: Player, vid: string, far: boolean?): (an
 		text = text,
 		note = if chat then Talk.note(profile, vid, chat) else nil,
 		model = npc.model,
+	}
+end
+
+-- What a villager needs to talk to a visitor (Sim/GuestTalk): their name, this town's name and
+-- the visitor's own town's name.
+function Villagers.guestCtx(who: Player, owner: Player): GuestTalk.Ctx
+	local mine = Data.get(owner)
+	local theirs = Data.get(who)
+	return {
+		name = who.DisplayName or "",
+		town = PlotName.clean(mine and mine.plotName),
+		home = PlotName.clean(theirs and theirs.plotName),
 	}
 end
 

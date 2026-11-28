@@ -73,6 +73,8 @@ local function busy(at: Vector2): boolean
 	return Kit.overUI(at + inset)
 end
 
+VillagerClick.busy = busy -- (a click on another player waits for the same: World/PlayerClick)
+
 function VillagerClick.start()
 	local down: { pos: Vector2, t: number }? = nil
 	UserInputService.InputBegan:Connect(function(input: InputObject, processed: boolean)
