@@ -18,6 +18,11 @@ local Skin = require(script.Parent.Skin)
 
 local Kit = {}
 
+-- What a control, a menu or a notice sounds like: "click", "tab", "open", "close", "notice",
+-- "good", "warn". Controllers/Audio puts its player here when the game starts (the user: "add
+-- sounds where necessary"); the previews and the simulations leave it quiet.
+Kit.sound = function(_kind: string) end
+
 Kit.Theme = {
 	-- what a full menu covers the screen with, and the far end of a fade
 	Black = Color3.fromRGB(8, 8, 10),
@@ -2184,6 +2189,10 @@ function Kit.press(b: GuiButton, opts: { [string]: any }?)
 	b.Activated:Connect(function()
 		if down then
 			settle()
+		end
+		-- a soft click (a tab's is smaller); `Sound` names another, false for none
+		if o.Sound ~= false then
+			Kit.sound(o.Sound or (if kind == "plain" then "tab" else "click"))
 		end
 	end)
 end
@@ -4553,6 +4562,7 @@ function Kit.panel(
 			Kit.revealIn(holder, since, { Delay = 0.1 })
 		end
 	end)
+	Kit.sound("open")
 	return self
 end
 
@@ -4575,6 +4585,7 @@ function Kit.closePanel(p: any, now: boolean?)
 	if p.dim then
 		p.dim.Active = false
 	end
+	Kit.sound("close")
 	root.Parent = leavingGui()
 	if p.dim then
 		tween(p.dim, M.Out, { BackgroundTransparency = 1 })
@@ -5255,6 +5266,7 @@ end
 -- Coins that fly from a point on screen into a counter, the way games show money coming in.
 -- `from` is in screen pixels (or nil for the middle of the screen); `to` is the counter.
 function Kit.flyCoins(from: Vector2?, to: GuiObject, count: number?)
+	Kit.sound("coins")
 	local gui = Kit.root()
 	local scale = gui:FindFirstChild("Scale") :: UIScale?
 	local k = if scale then scale.Scale else 1

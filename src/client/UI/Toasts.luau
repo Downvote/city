@@ -88,9 +88,13 @@ local function leave(slot: Frame)
 	end)
 end
 
+-- the sound each kind of note comes in with (Kit.sound: Controllers/Audio)
+local SOUNDS = { info = "notice", good = "good", warn = "warn", event = "notice" }
+
 function Toasts.show(text: string, kind: string?)
 	local h = getHolder()
 	local k = if kind and ICONS[kind] then kind else "info"
+	Kit.sound(SOUNDS[k] or "notice")
 	-- The note is as wide and as tall as its words, worked out here, never left to AutomaticSize
 	-- (a notice that sized itself once came out half the screen tall: "notifications are bugged").
 	local words = textSize(text, TEXT, MOST_WIDE - PAD - ICON - GAP - END)

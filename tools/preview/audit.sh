@@ -13,7 +13,7 @@ SCENES="hud hud:named hud:hidden build build:walls build:pick build:paint panel:
 panel:News panel:Goals panel:Residents:friends panel:Residents:empty
 panel:Residents:craving panel:Residents:short panel:Residents:lately panel:Residents:quirks panel:Residents:quirks:edit panel:Residents:quirks:short panel:Residents:quirks:move panel:CityPanel:skills work panel:News:empty panel:News:busy panel:Goals:claimed
 panel:CityPanel:ready panel:CityPanel:bigplot earned loading event event:talk event:one event:two event:four event:narration event:answers cutscene:thanks:2 cutscene:thanks:a2 cutscene:festival talk talk:again talk:craving wish wish:short wish:friend wish:cheer toasts creator
-creator:profile creator:bodies creator:parts creator:items creator:items:ask creator:items:no creator:avatars
+creator:profile creator:profile:voice creator:bodies creator:parts creator:items creator:items:ask creator:items:no creator:avatars
 creator:wearing creator:skin creator:shape creator:outfits creator:outfits:saved creator:people creator:shared creator:shared:none creator:profile:set creator:end creator:colour creator:colour:skin creator:self creator:self:save creator:wornbuy build:rooms build:floors build:roofs build:fences
 build:paths build:buildings build:bought build:sell build:view build:placing build:placing:touch
 build:keepsakes build:keepsakes:empty build:effects build:styles build:shapes build:pillars build:markings build:picture

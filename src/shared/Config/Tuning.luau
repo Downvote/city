@@ -530,6 +530,24 @@ Tuning.Talk = {
 	Cooldown = 0.4, -- seconds between two lines to one player: shorter than the hold, it only stops a flood
 }
 
+-- A villager's voice (Sim/Babble): a babble of short sounds as their words type out, not words. The
+-- user: "Like tomodachi life, can you make it such that villagers have voices ... players can
+-- configure them". Each slider runs 0 to 1 in steps of Step.
+Tuning.Voices = {
+	Step = 0.05,
+	Pitch = { -8, 8 }, -- semitones off the sound's own pitch, low to high
+	Gap = { 0.13, 0.06 }, -- seconds between two syllables, slow to fast
+	Length = { 0.11, 0.07 }, -- seconds a syllable lasts at most, slow to fast
+	Lilt = 5, -- semitones up and down at the most melodic (a flat voice: none)
+	Rise = 4, -- semitones a question rises at its end
+	Fall = 2, -- semitones a sentence falls at its end
+	Nudge = 0.1, -- an old save's villager: their personality's voice, moved this far at most by their id
+	Typing = 66, -- letters a second as UI/Dialogue types (Dialogue.TypeStep / Dialogue.TypeEvery)
+	Card = 1.4, -- seconds at most of babble for a line over a head
+	Hear = 40, -- studs: a line over a head further than this from the camera is not heard
+	Together = 2, -- lines over heads heard at once at the most
+}
+
 -- A villager's own flair (Sim/Flair), bought with gems on their page. The user: "make it such that
 -- villagers could have a custom saying, thing they add to the end of their sentances sometimes,
 -- custom thing they like the most which they will mention ... players can also buy the before
@@ -930,6 +948,28 @@ Tuning.Graphics = {
 	-- lens's FarIntensity is Tuning.Look.Lens.FarIntensity times twice the strength, so Medium is
 	-- the look the game had before there was a choice
 	BlurSteps = { 0.25, 0.5, 1 },
+}
+
+-- Sound on this player's own screen (client Controllers/Audio, Sim/Sound, Data/Sounds). The user:
+-- "add sounds where necessary, along with a calm cozy music track in the background". The Music
+-- and Effects settings (0 to 1) are multiplied by these, so even all the way up nothing is loud;
+-- the voices follow Effects and are switched with Voices.
+Tuning.Audio = {
+	Music = 0.55, -- the music's group at the Music setting's top
+	Effects = 0.8,
+	Voices = 0.7, -- the villagers' babble, under Effects
+	Night = 0.7, -- the music from NightFrom to NightTo
+	NightFrom = 21,
+	NightTo = 5.5,
+	Talking = 0.6, -- the music while a conversation is up, so the voices come through
+	Fade = 2.5, -- seconds a track fades in and out over
+	Rest = { 25, 50 }, -- seconds of quiet between two tracks
+	FirstAfter = 4, -- seconds after joining before the first track
+	UnderRoof = 0.45, -- the rain and the wind under a roof
+	Gap = 0.05, -- seconds: the same effect twice closer together than this plays once
+	Coins = 1.2, -- seconds between two coin sounds from villagers' pay
+	Heard = 60, -- studs: a sound in the town (a door, a coin) further than this isn't played
+	Thunder = { 0.6, 2.4 }, -- seconds from a flash to its rumble
 }
 
 -- The time Build mode shows the town at, on the player's own screen (the user: "in build mode,

@@ -134,6 +134,7 @@ function GiftPicker.open(parent: Instance, vid: string, onGiven: ((any) -> ())?)
 					return
 				end
 				if ok and sent and type(result) == "table" then
+					Kit.sound("gift")
 					GiftPicker.close()
 					if onGiven then
 						onGiven(result)

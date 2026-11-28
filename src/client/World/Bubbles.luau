@@ -34,6 +34,7 @@ local Bubble = require(Shared.Util.Bubble)
 
 local BubbleLayout = require(script.Parent.BubbleLayout)
 local MoodArt = require(script.Parent.MoodArt)
+local Audio = require(script.Parent.Parent.Controllers.Audio)
 
 local Bubbles = {}
 
@@ -179,6 +180,19 @@ end
 -- A mood badge's symbol drawn as an icon that fills it (World/MoodArt).
 Bubbles.dress = MoodArt.dress
 
+-- A speech card's new line, babbled in the villager's voice when they are near (Controllers/Audio:
+-- the user, "can you make it such that villagers have voices"). The words come with `Said`, a
+-- moment before or after it, so they are read a moment later.
+local function voice(gui: BillboardGui)
+	task.delay(0.05, function()
+		local model = gui.Parent
+		local words = gui:FindFirstChild("Text", true)
+		if model and model:IsA("Model") and words and words:IsA("TextLabel") and gui.Enabled and not going(gui) then
+			Audio.overHead(model, words.Text)
+		end
+	end)
+end
+
 -- Watches one head piece the server made: shown, hidden, marked going, a new line.
 local function hook(gui: BillboardGui)
 	if hooked[gui] then
@@ -208,6 +222,9 @@ local function hook(gui: BillboardGui)
 		if gui.Enabled and not going(gui) then
 			bump(gui)
 		end
+		if gui.Name == "Bubble" then
+			voice(gui)
+		end
 	end)
 	-- (new words can come a moment before or after `Said`: the stack is looked at again either way)
 	local words = gui:FindFirstChild("Text", true)
@@ -220,6 +237,9 @@ local function hook(gui: BillboardGui)
 	end
 	if gui.Enabled and not going(gui) then
 		arrive(gui)
+		if gui.Name == "Bubble" then
+			voice(gui) -- (a line that came with its card: the card is new)
+		end
 	end
 end
 

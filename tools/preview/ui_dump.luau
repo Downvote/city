@@ -103,6 +103,8 @@
 --   creator             the villager creator on the hair tab
 --   creator:profile     the creator's second step (name and personality)
 --   creator:profile:set the second step with a name typed, Bold's face and a green picked
+--   creator:profile:voice  the second step's voice sliders (what is above them left out, as the
+--                       previews can't scroll)
 --   creator:end         the Look step with the row of sections moved on to its last page
 --   creator:bodies      the creator's Bodies, one of them on
 --   creator:parts       the creator's Body parts (torsos), one of them on
@@ -1196,6 +1198,15 @@ elseif scene == "creator" or scene:sub(1, 8) == "creator:" then
 	Sim.advance(1)
 	if page == "profile" then
 		Sim.press("2  Name and personality")
+	elseif page == "profile:voice" then
+		Sim.press("2  Name and personality")
+		local creator = Sim.gui:FindFirstChild("Creator")
+		local voice = creator:FindFirstChild("Voice", true)
+		for _, c in voice.Parent:GetChildren() do
+			if c:IsA("GuiObject") and c.LayoutOrder < 7 then
+				c.Visible = false
+			end
+		end
 	elseif page == "profile:set" then
 		Sim.press("2  Name and personality")
 		-- Bold's face picked, and a green from the grid of colours

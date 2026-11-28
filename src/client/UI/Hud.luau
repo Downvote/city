@@ -374,10 +374,17 @@ function Hud.start()
 			end)
 		end
 	end
-	local function refreshCity()
+	-- the level the town had: one reached by building gets a little fanfare (a whole plan
+	-- arriving, as when joining, is no level up)
+	local levelHeard: number? = nil
+	local function refreshCity(ops: any?)
 		local stats = Hud.cityStats()
 		popLabel.Text = tostring(stats.population)
 		badgeText.Text = tostring(stats.level)
+		if ops and levelHeard and stats.level > levelHeard then
+			Kit.sound("levelup")
+		end
+		levelHeard = stats.level
 		local t = levelProgress(stats)
 		TweenService:Create(fill, TweenInfo.new(0.4), { Size = UDim2.fromScale(math.max(t, 0.04), 1) }):Play()
 		levelLine.Text = stats.levelName
@@ -398,9 +405,11 @@ function Hud.start()
 	if State.data.gems == nil then
 		gemLabel.Text = "0"
 	end
-	State.on("villagers", refreshCity)
-	State.onPlan(function()
+	State.on("villagers", function()
 		refreshCity()
+	end)
+	State.onPlan(function(ops: any?)
+		refreshCity(ops)
 	end)
 	refreshCity()
 

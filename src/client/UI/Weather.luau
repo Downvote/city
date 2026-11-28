@@ -22,6 +22,7 @@ local Seasons = require(Shared.Data.Seasons)
 local Rules = require(Shared.Sim.Graphics)
 
 local Graphics = require(script.Parent.Parent.World.Graphics)
+local Audio = require(script.Parent.Parent.Controllers.Audio)
 
 local Weather = {}
 
@@ -414,6 +415,7 @@ function Weather.start()
 			if covered ~= sheltered then
 				sheltered = covered
 				enableAll()
+				Audio.setSheltered(covered) -- (the rain and the wind heard softer indoors)
 			end
 		end
 		local kind = kindNow()
@@ -441,6 +443,7 @@ function Weather.start()
 		if Data.Lightning[kind] and os.clock() > nextStrike then
 			nextStrike = os.clock() + rng:NextNumber(K.Lightning.Every[1], K.Lightning.Every[2])
 			strike(eye)
+			Audio.thunder()
 		end
 	end)
 end

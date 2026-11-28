@@ -25,6 +25,8 @@ local Palette = require(Shared.Data.Palette)
 local Colors = require(Shared.Util.Colors)
 local Text = require(Shared.Util.Text)
 local City = require(Shared.Sim.City)
+local Babble = require(Shared.Sim.Babble)
+local Voice = require(Shared.Sim.Voice)
 local Tuning = require(Shared.Config.Tuning)
 
 local Kit = require(script.Parent.Kit)
@@ -34,6 +36,7 @@ local Theme = require(script.Parent.Theme)
 local ColorWheel = require(script.Parent.ColorWheel)
 local BuyLook = require(script.Parent.BuyLook)
 local State = require(script.Parent.Parent.Controllers.State)
+local Audio = require(script.Parent.Parent.Controllers.Audio)
 
 local Creator = {}
 
@@ -140,7 +143,7 @@ local stepCaption: TextLabel? = nil -- which step this is, set wide under the ti
 local selectTab: (string) -> ()
 local switchMode: (string) -> ()
 local markTab: ((string) -> ())? = nil
-local profile = { name = "", pers = "sunny", color = "4FA9D9", bday = { s = 1, d = 1 } }
+local profile: any = { name = "", pers = "sunny", color = "4FA9D9", bday = { s = 1, d = 1 } } -- (and its voice: buildProfilePage)
 local nameField: TextBox? = nil -- the name box on the second step, once that step has been built
 
 -- A villager made to look like somebody takes their name too, ready to change on the next step.
@@ -2398,11 +2401,33 @@ local function buildProfilePage()
 		Wrap = false,
 		LayoutOrder = 2,
 	})
+	-- The voice (Sim/Babble: the user, "players can configure them just like in tomodachi life"):
+	-- a new villager's starts as their personality's, a little their own, and follows the
+	-- personality until a slider is moved; one being edited starts as they sound now.
+	if profile.voice == nil then
+		local v = if mode == "edit" and editVid then State.villager(editVid) else nil
+		if v then
+			profile.voice = Babble.of(v)
+			profile.voiceOwn = v.voice ~= nil
+			profile.voiceSeed = v.id
+		else
+			profile.voiceSeed = tostring(math.random(1, 999999))
+			profile.voice = Babble.default(profile.pers, profile.voiceSeed)
+			profile.voiceOwn = false
+		end
+	end
+	local setVoice: ((any) -> ())? = nil
 	local rims: { UIStroke } = {}
 	local names: { TextLabel } = {}
 	local function showPers(i: number)
 		local p = list[i]
 		profile.pers = p.id
+		if not profile.voiceOwn then
+			profile.voice = Babble.default(p.id, profile.voiceSeed)
+			if setVoice then
+				setVoice(profile.voice)
+			end
+		end
 		-- (in a few words: the user, "under personalities, shorten them")
 		persBlurb.Text = Personalities.short(p)
 		persBlurb.TextColor3 = Kit.tint(Colors.fromHex(p.color))
@@ -2471,6 +2496,74 @@ local function buildProfilePage()
 		profile.color = hex
 		paintStudio()
 	end, 6, 12)
+
+	heading("Voice", 7)
+	-- four sliders, two to a row, then a button to hear it and one to go back to their
+	-- personality's voice (Reset)
+	local voiceBox = Kit.box({
+		Name = "Voice",
+		Parent = scroll,
+		Size = UDim2.new(1, -10, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		LayoutOrder = 8,
+	})
+	Kit.list(voiceBox, 8)
+	local sliders = Kit.box({
+		Name = "Sliders",
+		Parent = voiceBox,
+		Size = UDim2.new(1, 0, 0, 100),
+		LayoutOrder = 1,
+	})
+	Kit.grid(sliders, UDim2.new(0.5, -12, 0, 46), 8).CellPadding = UDim2.fromOffset(24, 8)
+	local steps = math.floor(1 / Tuning.Voices.Step + 0.5)
+	local setters: { [string]: (number) -> () } = {}
+	for i, slider in Babble.Sliders do
+		local _, set = Kit.slider(slider.name, 0, steps, profile.voice[slider.key] * steps, 1, function(n: number)
+			local now = table.clone(profile.voice)
+			now[slider.key] = n / steps
+			profile.voice = Babble.clean(now)
+			profile.voiceOwn = true
+		end, { Parent = sliders, LayoutOrder = i })
+		setters[slider.key] = set
+	end
+	setVoice = function(voice: any)
+		for key, set in setters do
+			set(voice[key] * steps)
+		end
+	end
+	local buttons = Kit.box({
+		Name = "Buttons",
+		Parent = voiceBox,
+		Size = UDim2.new(1, 0, 0, 40),
+		LayoutOrder = 2,
+	})
+	Kit.list(buttons, 10, true)
+	Kit.button("Test", {
+		Name = "Test",
+		Parent = buttons,
+		Size = UDim2.fromOffset(120, 40),
+		Color = T.Blue,
+		TextSize = 18,
+		Icon = "music",
+		LayoutOrder = 1,
+	}, function()
+		Audio.babble(profile.voice, Voice.speak(profile.pers, "Hi, it's me. How are you doing today?"))
+	end)
+	Kit.button("Reset", {
+		Name = "Reset",
+		Parent = buttons,
+		Size = UDim2.fromOffset(120, 40),
+		Color = T.Purple,
+		TextSize = 18,
+		Icon = "undo",
+		LayoutOrder = 2,
+	}, function()
+		profile.voiceOwn = false
+		profile.voice = Babble.default(profile.pers, profile.voiceSeed)
+		if setVoice then
+			setVoice(profile.voice)
+		end
+	end)
 	-- (no birthday to pick: a villager's birthday is the day they move in, set by the server;
 	-- the user, "remove birthday and day from customization, these will always be the date the
 	-- villager is created")
@@ -2503,12 +2596,17 @@ local function buildProfilePage()
 					color = profile.color,
 					bday = profile.bday,
 					app = app,
+					voice = profile.voice,
 				})
 			else
-				ok, err = Remotes.fn("VillagerUpdate"):InvokeServer(
-					editVid,
-					{ name = name, pers = profile.pers, color = profile.color, bday = profile.bday, app = app }
-				)
+				ok, err = Remotes.fn("VillagerUpdate"):InvokeServer(editVid, {
+					name = name,
+					pers = profile.pers,
+					color = profile.color,
+					bday = profile.bday,
+					app = app,
+					voice = profile.voice,
+				})
 			end
 			saving = false
 			if ok then
