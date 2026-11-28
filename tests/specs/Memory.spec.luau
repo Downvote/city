@@ -181,7 +181,10 @@ describe("Memory", function()
 		expect(count(m.untilT + 1)).toBe(0)
 	end)
 
-	it("puts the accessory on for real, and takes it off when it ends", function()
+	it("puts the accessory on for real, beside what they wear, until the player takes it off", function()
+		-- the user: "accessories that villagers decide to wear on their own seem to remove other
+		-- accessories of the same category. can you make it such that it dosent?" and "it gets taken
+		-- off only if the player chooses it dosent suit them"
 		local p = town({ "Mara" })
 		local v = p.villagers.v1
 		-- their own look: hair and a hat of their own
@@ -202,24 +205,46 @@ describe("Memory", function()
 		end
 		expect(ids[333]).toBe("Hat") -- on
 		expect(ids[11]).toBe("Hair") -- their hair stays
-		expect(ids[22]).toBe(nil) -- their own hat makes way for it
+		expect(ids[22]).toBe("Hat") -- and so does their own hat
 		-- their saved look is never changed
 		expect(Appearance.equal(v.app, own)).toBe(true)
-		-- it runs out: it ends, the server is told to dress them, and it is off
-		local ended, notices = Memory.tick(p, m.untilT + 1)
-		expect(#ended).toBe(1)
-		expect(ended[1].vid).toBe("v1")
-		expect(ended[1].dressed).toBe(true)
-		expect(notices[1]).toBe("Mara put the yellow hat away.")
-		expect(#v.lately).toBe(0)
-		local after = Memory.dressed(v, m.untilT + 1)
-		expect(Appearance.equal(after, own)).toBe(true)
-		-- forgetting it early does the same
+		-- it doesn't run out: long after its days it's still on, and nothing ends
+		local later = m.untilT + 40 * DAY
+		local ended, notices = Memory.tick(p, later)
+		expect(#ended).toBe(0)
+		expect(#notices).toBe(0)
+		expect(Memory.has(v, "accessory", later)).toBe(m)
+		local rows = Memory.lately(p, "v1", later)
+		expect(rows[1].stays).toBe(true)
+		expect(rows[1].what).toBe("yellowhat")
+		expect(rows[1].text).toBe("Wearing their yellow hat")
+		-- a second thing goes on beside it, and the same thing again keeps what was found
 		local m2 = Memory.start(p, "v1", "accessory", { what = "scarf" }, 5000)
 		m2.acc = { id = 444, t = "Neck" }
-		expect(#Memory.dressed(v, 5001).acc).toBe(3)
+		expect(#Memory.all(v, "accessory", 5001)).toBe(2)
+		expect(#Memory.dressed(v, 5001).acc).toBe(4)
+		local again = Memory.start(p, "v1", "accessory", { what = "yellowhat" }, 6000)
+		expect(again.acc.id).toBe(333)
+		expect(#Memory.all(v, "accessory", 6001)).toBe(2)
+		-- the player says the scarf doesn't suit them: only the scarf comes off
+		expect(Memory.forget(p, "v1", "accessory", nil, "scarf")).toBe(true)
+		expect(#Memory.dressed(v, 6001).acc).toBe(3)
+		expect(Memory.forget(p, "v1", "accessory", nil, "scarf")).toBe(false)
+		-- and everything off, as it was
 		expect(Memory.forget(p, "v1", "accessory")).toBe(true)
-		expect(Appearance.equal(Memory.dressed(v, 5001), own)).toBe(true)
+		expect(Appearance.equal(Memory.dressed(v, 6001), own)).toBe(true)
+		-- at most Worn at once: the oldest comes off for a new one
+		local t = 7000
+		for _, what in { "scarf", "strawhat", "glasses", "flowers", "backpack" } do
+			Memory.start(p, "v1", "accessory", { what = what }, t)
+			t += 10
+		end
+		local on = Memory.all(v, "accessory", t)
+		expect(#on).toBe(Tuning.Memory.Worn)
+		expect(on[1].what).toBe("backpack")
+		for _, x in on do
+			expect(x.what ~= "scarf").toBe(true)
+		end
 	end)
 
 	it("ends a falling out when its time runs out, quarrel and all", function()
@@ -250,22 +275,27 @@ describe("Memory", function()
 		Memory.start(p, "v1", "accessory", { what = "scarf" }, 100)
 		local _, dressed = Memory.start(p, "v1", "accessory", { what = "glasses" }, 200)
 		expect(dressed).toBe(true)
-		expect(#v.lately).toBe(1) -- the glasses in place of the scarf
-		expect(v.lately[1].what).toBe("glasses")
+		expect(#v.lately).toBe(2) -- the glasses beside the scarf
+		expect(v.lately[2].what).toBe("glasses")
 		local t = 300
 		for _, kind in { "band", "pet", "garden", "penpal", "training", "haircut" } do
 			Memory.start(p, "v1", kind, { name = "Pickle Jar", what = if kind == "pet" then "rabbit" else "peas" }, t)
 			t += 100
 		end
-		expect(#v.lately).toBe(Tuning.Memory.Max)
-		-- the oldest went, the glasses with them
-		expect(Memory.has(v, "accessory", t)).toBe(nil)
+		-- Max of the rest, and what they wear on top (it doesn't count)
+		expect(#v.lately).toBe(Tuning.Memory.Max + 2)
+		expect(Memory.has(v, "accessory", t).what).toBe("glasses")
 		local lately = Memory.lately(p, "v1", t)
-		expect(#lately).toBe(Tuning.Memory.Max)
+		expect(#lately).toBe(Tuning.Memory.Max + 2)
 		expect(lately[1].kind).toBe("haircut") -- newest first
 		for _, row in lately do
 			expect(readable(row.text)).toBe(true)
-			expect(row.days >= 1).toBe(true)
+			if row.stays then
+				expect(row.kind).toBe("accessory")
+				expect(type(row.what)).toBe("string")
+			else
+				expect(row.days >= 1).toBe(true)
+			end
 		end
 		local texts = {}
 		for _, row in lately do

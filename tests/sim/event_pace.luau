@@ -482,6 +482,109 @@ run("a creator an answer asks for waits for the scene", function()
 	check(#errors == warned, "no warnings from any of it")
 end)
 
+run("a name to type, in a box with the one it suggests", function()
+	-- the user: "when things happens that requires mayors to input names like band names or pet
+	-- names, allow the player to type in what they desire instead of fixed inputs"
+	local warned = #errors
+	local sent = {}
+	local invoke = Sim.remoteFn("EventChoose").OnServerInvoke
+	Sim.remoteFn("EventChoose").OnServerInvoke = function(_, token, i, typed)
+		table.insert(sent, { token = token, i = i, typed = typed })
+		if typed == "Rude" then
+			return false, "That got filtered. Try another name."
+		end
+		return true
+	end
+	show({
+		token = "n1",
+		title = "A cat moves in",
+		names = { a = "Mara" },
+		actors = { a = "v1" },
+		lines = { { who = "a", text = "It needs a name, though." } },
+		choices = { { text = "Biscuit" } },
+		name = { suggest = "Biscuit", ask = "What should the cat be called?", max = 20 },
+	})
+	line("n1", { who = "a", text = "It needs a name, though." })
+	ask("n1", CHOICE)
+	press("Answer")
+	settle()
+	click()
+	settle()
+	check(said() == "What should the cat be called?", "the question asks for the name")
+	local box = find("Name")
+	check(box ~= nil and box:IsA("TextBox") and box.Text == "Biscuit", "a box with the suggestion in it")
+	check(find("Done") ~= nil and not answers(), "and Done, where the answers would be")
+	check(told("n1", "asked"), "the time to answer starts")
+	box.Text = "Rude"
+	press("Done")
+	settle()
+	check(sent[1] and sent[1].i == 1 and sent[1].typed == "Rude", "what was typed goes to the server")
+	check(said() == "That got filtered. Try another name.", "and why it won't do comes back")
+	check(find("Name") ~= nil, "with the box still there for another go")
+	box = find("Name")
+	box.Text = string.rep("Mittens", 6)
+	check(utf8.len(box.Text) <= 20, "no longer than a name may be")
+	box.Text = "   "
+	press("Done")
+	settle()
+	check(sent[2] and sent[2].typed == "Biscuit", "an empty box sends the suggestion")
+	check(find("Name") == nil, "and the box goes once it's taken")
+	line("n1", { who = "a", text = "Biscuit, that's perfect." }, true)
+	settle()
+	check(said() == "Biscuit, that's perfect.", "what follows comes as it is said")
+	finish("n1", {})
+	click()
+	advance(2)
+	Sim.remoteFn("EventChoose").OnServerInvoke = invoke
+	check(#errors == warned, "no warnings from any of it")
+end)
+
+run("what they put on shows on their bust from the line they put it on with", function()
+	-- the user: "when villagers equip accessories from random event, the conversation showing it
+	-- should show it"
+	local warned = #errors
+	local model = models.v1
+	model:SetAttribute("Worn", "")
+	show({
+		token = "w1",
+		title = "Hat or scarf",
+		names = { a = "Mara" },
+		actors = { a = "v1" },
+		lines = {
+			{ who = "a", text = "Should I wear the yellow hat?" },
+			{ who = "a", text = "The hat it is, then.", wear = "yellowhat" },
+			{ who = "a", text = "How do I look?" },
+		},
+	})
+	line("w1", { who = "a", text = "Should I wear the yellow hat?" })
+	press("Watch")
+	settle()
+	local bust = find("Bust_a")
+	local function view()
+		local b = find("Bust_a")
+		return b and b:FindFirstChildWhichIsA("ViewportFrame", true)
+	end
+	local before = view()
+	check(bust ~= nil, "they're in the scene")
+	line("w1", { who = "a", text = "The hat it is, then.", wear = "yellowhat" })
+	click()
+	settle()
+	check(said() == "The hat it is, then.", "the line they put it on with")
+	check(view() == before, "their bust waits for the hat to be on them")
+	-- the server dresses them and says so on their model
+	model:SetAttribute("Worn", "yellowhat")
+	frames(3)
+	check(before ~= nil and view() ~= nil and view() ~= before, "then their bust is made again, wearing it")
+	line("w1", { who = "a", text = "How do I look?" }, true)
+	click()
+	settle()
+	click()
+	finish("w1", {})
+	advance(2)
+	model:SetAttribute("Worn", "")
+	check(#errors == warned, "no warnings from any of it")
+end)
+
 print(
 	string.format(
 		"\nevent pace sim: %s (%d warnings)",

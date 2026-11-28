@@ -32,6 +32,7 @@ local WorkMove = require(Shared.Sim.WorkMove)
 local Appearance = require(Shared.Avatar.Appearance)
 local Categories = require(Shared.Avatar.Categories)
 local Chatter = require(Shared.Data.Events.Chatter)
+local PlotHas = require(Shared.Sim.PlotHas)
 local Kit = require(Shared.Data.Events.Kit)
 local Rng = require(Shared.Util.Rng)
 local Text = require(Shared.Util.Text)
@@ -273,6 +274,14 @@ function Villagers.spawn(player: Player, vid: string)
 	if not model then
 		return
 	end
+	-- (what events have them wearing, as Villagers.dress keeps it)
+	local worn = {}
+	for _, m in Memory.all(v, "accessory", os.time()) do
+		if m.acc and m.what then
+			table.insert(worn, m.what)
+		end
+	end
+	model:SetAttribute("Worn", table.concat(worn, ","))
 	if
 		not player.Parent
 		or spawnTokens[tokenKey] ~= token
@@ -591,6 +600,10 @@ local function chat(player: Player, vid: string, npc: any, friend: string, round
 						end,
 						rel = function()
 							return score
+						end,
+						-- (a topic about a piece in town needs that piece: Sim/PlotHas)
+						has = function(need: any): boolean
+							return PlotHas.has(profile, need)
 						end,
 					}, vid, friend)
 					npc:say(small[1].text)
@@ -2267,12 +2280,12 @@ function Villagers.dress(player: Player, vid: string, justBuilt: boolean?)
 		return
 	end
 	local now = os.time()
-	local waiting = Memory.unfound(v, now)
-	local found = nil
-	if waiting and waiting.what then
-		found = findAccessory(waiting.what)
-		if found then
-			waiting.acc = { id = found.id, t = found.t }
+	local found = false
+	for _, waiting in Memory.waiting(v, now) do
+		local acc = waiting.what and findAccessory(waiting.what)
+		if acc then
+			waiting.acc = { id = acc.id, t = acc.t }
+			found = true
 		end
 	end
 	if justBuilt and not found then
@@ -2281,15 +2294,50 @@ function Villagers.dress(player: Player, vid: string, justBuilt: boolean?)
 	local npc = Villagers.get(player, vid)
 	local model = npc and npc.model
 	local hum = model and model:FindFirstChildOfClass("Humanoid")
-	if not hum then
+	if not model or not hum then
 		return
+	end
+	-- What events have them wearing, so a conversation can show a thing from the line it goes on
+	-- (UI/Dialogue): the model's `Worn` lists the things on it ("yellowhat,scarf"), and the one
+	-- accessory a dress adds is marked with what it is (`Lately`) when that can be told for sure.
+	local before: { [Instance]: boolean } = {}
+	for _, child in model:GetChildren() do
+		if child:IsA("Accessory") then
+			before[child] = true
+		end
+	end
+	local had: { [string]: boolean } = {}
+	for what in string.gmatch(tostring(model:GetAttribute("Worn") or ""), "[^,]+") do
+		had[what] = true
 	end
 	local ok = pcall(function()
 		hum:ApplyDescription(Avatar.toDescription(Memory.dressed(v, now)))
 	end)
-	if not ok and not justBuilt and Villagers.control(player, vid) == nil then
-		task.spawn(Villagers.spawn, player, vid)
+	if not ok then
+		if not justBuilt and Villagers.control(player, vid) == nil then
+			task.spawn(Villagers.spawn, player, vid)
+		end
+		return
 	end
+	local worn, added = {}, {}
+	for _, m in Memory.all(v, "accessory", now) do
+		if m.acc and m.what then
+			table.insert(worn, m.what)
+			if not had[m.what] then
+				table.insert(added, m.what)
+			end
+		end
+	end
+	local fresh = {}
+	for _, child in model:GetChildren() do
+		if child:IsA("Accessory") and not before[child] then
+			table.insert(fresh, child)
+		end
+	end
+	if #added == 1 and #fresh == 1 then
+		fresh[1]:SetAttribute("Lately", added[1])
+	end
+	model:SetAttribute("Worn", table.concat(worn, ","))
 end
 
 -- A villager's flair (Sim/Flair) ------------------------------------------------------------------

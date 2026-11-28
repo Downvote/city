@@ -91,8 +91,10 @@ event({
 				_ = "The hat it is, then.|Thanks, you've saved me ten more minutes at the mirror.",
 			}, "sparkle", "cheer")
 			c:mood("a", 4)
-			-- and they wear it for a few days, for real (Sim/Memory)
-			c:remember("a", "accessory", { what = "yellowhat" })
+			-- and they put it on, for real, and keep it on (Sim/Memory); later they may ask whether
+			-- it really suits them
+			c:wear("a", "yellowhat")
+			c:follow("suitme", { chance = 0.5, hours = 8, words = { worn = "yellowhat" } })
 		end)
 		s:choice("The stripy scarf, definitely.", function(c)
 			burst(c, "a", {
@@ -115,7 +117,8 @@ event({
 				_ = "The scarf, good call.|It's colder out than it looks today.",
 			}, "heart")
 			c:mood("a", 4)
-			c:remember("a", "accessory", { what = "scarf" })
+			c:wear("a", "scarf")
+			c:follow("suitme", { chance = 0.5, hours = 8, words = { worn = "scarf" } })
 		end)
 		s:choice("Why not try a whole new look?", function(c)
 			burst(c, "a", {
@@ -711,7 +714,6 @@ event({
 	when = "day",
 	weight = W({ base = 0.1 }),
 	scene = function(ctx, a)
-		local names = ctx.rng:shuffle(PLANTNAMES)
 		local s = K.scene(ctx, "A plant with no name")
 		burst(s, "a", {
 			dramatic = "I've brought home a new fern.|It's a very serious fern, so it needs a name with some weight to it.",
@@ -732,10 +734,11 @@ event({
 			nervous = "{player}, I got a fern, and I've already moved it three times.|What if it doesn't like my house?|Could you pick a name for it?",
 			_ = "{player}, I've got a new fern for my windowsill.|It needs a name, and I can't think of a good one.",
 		}, "question")
-		for i = 1, 2 do
-			local name = names[i]
-			s:choice("How about " .. name .. "?", function(c)
-				c:with({ plant = name })
+		s:askName({
+			var = "plant",
+			suggest = PLANTNAMES,
+			ask = "What should the fern be called?",
+			build = function(c)
 				burst(c, "a", {
 					dramatic = "{plant}, a name to be remembered!|Hello, {plant}, welcome to your new home.",
 					cheeky = "{plant} hehe|ok fine, it actually suits it",
@@ -756,9 +759,11 @@ event({
 					_ = "{plant}, I like that.|Hello, {plant}, welcome to your new windowsill.",
 				}, "heart", "cheer")
 				c:mood("a", 3)
-				c:memo("a", "{plant} the fern has a new leaf, and I'm very proud of it.")
-			end)
-		end
+				c:memo("a", "I named my fern {plant}, and I say good morning to it every day.")
+				-- and it grows (Sim/FollowUps)
+				c:follow("ferngrows", { chance = 0.7, hours = 12, words = { plant = "{plant}" } })
+			end,
+		})
 		s:log("{a} asked you to name their plant.")
 		return s:done()
 	end,
@@ -2597,9 +2602,10 @@ event({
 				nervous = "Really? You're not just saying that?|Oh, thank goodness.",
 				_ = "Really?|Huh, maybe it's not so bad after all.",
 			}, "sparkle")
+			-- so they put it on for good (Sim/Memory), and may ask about it again later
+			c:wear("a", "sillyhat")
 			c:say("b", "That was meant to be a punishment, you know.", "sweat")
-			-- so they keep it on for a few days (Sim/Memory)
-			c:remember("a", "accessory", { what = "sillyhat" })
+			c:follow("suitme", { chance = 0.6, hours = 6, words = { worn = "sillyhat" } })
 			c:mood("a", 5)
 		end)
 		s:choice("It's very silly.", function(c)

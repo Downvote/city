@@ -6,9 +6,14 @@
 --   { kind, what?, name?, who?, t (when it started, os time), untilT (when it ends), acc? }
 -- The kinds:
 --   band       they joined a band (name: the band's name)
---   accessory  they wear something new for a few days (what: a key of Memory.Accessories; acc: the
---              catalog accessory the server found for it, { id, t }). It goes on their body for real
---              (Memory.dressed, which the server builds them from) and comes off when it ends
+--   accessory  they wear something new (what: a key of Memory.Accessories; acc: the catalog
+--              accessory the server found for it, { id, t }). It goes on their body for real
+--              (Memory.dressed, which the server builds them from), on top of what they wear
+--              already, and stays on until the player says it doesn't suit them (an event's answer,
+--              or Take off on their page's Lately list: the user, "it gets taken off only if the
+--              player chooses it dosent suit them ... also, allow players to remove them in the
+--              lately menu"). One of each kind of thing at once, up to Tuning.Memory.Worn, and
+--              these don't count toward Tuning.Memory.Max
 --   hobby      they took up a hobby (what: a Data/Sayings hobby id; the hobby itself stays)
 --   haircut    a new haircut
 --   pet        they took in a pet (what: a key of Memory.Pets, name: its name)
@@ -52,24 +57,27 @@ end
 -- What a villager might wear for a few days: the words for it, the catalog search that finds one
 -- (Services/Villagers asks the catalog, as the creator does) and the slot it goes in (Avatar/
 -- Appearance's AccessoryTypes). Only things worn over a look, never hair or clothes.
+-- `one` is how a line says one of it ("a straw hat", "a pair of round glasses").
 Memory.Accessories = {
-	yellowhat = { words = "yellow hat", search = "yellow hat", slot = "Hat" },
-	scarf = { words = "stripy scarf", search = "striped scarf", slot = "Neck" },
-	sillyhat = { words = "hat with the bell", search = "jester hat", slot = "Hat" },
-	strawhat = { words = "straw hat", search = "straw hat", slot = "Hat" },
-	glasses = { words = "round glasses", search = "round glasses", slot = "Face" },
-	flowers = { words = "flower crown", search = "flower crown", slot = "Hat" },
-	backpack = { words = "little backpack", search = "backpack", slot = "Back" },
-	beanie = { words = "knitted hat", search = "beanie", slot = "Hat" },
+	yellowhat = { words = "yellow hat", one = "a yellow hat", search = "yellow hat", slot = "Hat" },
+	scarf = { words = "stripy scarf", one = "a stripy scarf", search = "striped scarf", slot = "Neck" },
+	sillyhat = { words = "hat with the bell", one = "a hat with a bell", search = "jester hat", slot = "Hat" },
+	strawhat = { words = "straw hat", one = "a straw hat", search = "straw hat", slot = "Hat" },
+	glasses = { words = "round glasses", one = "a pair of round glasses", search = "round glasses", slot = "Face" },
+	flowers = { words = "flower crown", one = "a flower crown", search = "flower crown", slot = "Hat" },
+	backpack = { words = "little backpack", one = "a little backpack", search = "backpack", slot = "Back" },
+	beanie = { words = "knitted hat", one = "a knitted hat", search = "beanie", slot = "Hat" },
+	bowtie = { words = "bow tie", one = "a bow tie", search = "bow tie", slot = "Neck" },
+	sunhat = { words = "sun hat", one = "a sun hat", search = "sun hat", slot = "Hat" },
 }
 
 -- Pets someone might take in, as said in a sentence ("a kitten called Biscuit").
-Memory.Pets = { cat = "cat", kitten = "kitten", puppy = "puppy", rabbit = "rabbit" }
+Memory.Pets = { cat = "cat", kitten = "kitten", puppy = "puppy", rabbit = "rabbit", fish = "fish" }
 
 -- What a memory is, as the villager's page lists it under Lately.
 local LATELY: { [string]: string } = {
 	band = "Plays in a band called {name}",
-	accessory = "Wearing a new {what} for a few days",
+	accessory = "Wearing their {what}",
 	hobby = "Took up {what}",
 	haircut = "Got a new haircut",
 	pet = "Has a {what} called {name}",
@@ -83,12 +91,17 @@ local LATELY: { [string]: string } = {
 -- What the player is told when one ends, for the ones that change something you can see.
 local ENDS: { [string]: string } = {
 	band = "{name} are taking a break from playing.",
-	accessory = "{x} put the {what} away.",
+	accessory = "{x} took the {what} off.",
 	fallout = "{x} and {y} are talking again.",
 }
 
 local function day(): number
 	return Tuning.Day.Length
+end
+
+-- Does this memory last until somebody ends it, whatever its time? What they put on does.
+function Memory.stays(m: any): boolean
+	return type(m) == "table" and m.kind == "accessory"
 end
 
 local function list(v: any): { Memory }
@@ -221,17 +234,40 @@ function Memory.start(
 	local dressed = kind == "accessory"
 	for i = #mine, 1, -1 do
 		local old = mine[i]
-		if old.kind == kind and (kind ~= "fallout" or old.who == m.who) then
+		if
+			old.kind == kind
+			and (kind ~= "fallout" or old.who == m.who)
+			and (kind ~= "accessory" or old.what == m.what)
+		then
+			-- (the same thing put on again keeps what the server found for it)
+			if kind == "accessory" and old.acc then
+				m.acc = old.acc
+			end
 			table.remove(mine, i)
 		end
 	end
 	table.insert(mine, m)
-	while #mine > M.Max do
-		local oldest = table.remove(mine, 1) :: Memory
-		if oldest.kind == "accessory" then
-			dressed = true
+	-- what they wear: up to Worn of those, the oldest off first; the rest: up to Max, the oldest first
+	local function trim(worn: boolean, cap: number)
+		local count = 0
+		for _, x in mine do
+			if Memory.stays(x) == worn then
+				count += 1
+			end
+		end
+		local i = 1
+		while count > cap and i <= #mine do
+			if Memory.stays(mine[i]) == worn then
+				table.remove(mine, i)
+				count -= 1
+				dressed = dressed or worn
+			else
+				i += 1
+			end
 		end
 	end
+	trim(true, M.Worn)
+	trim(false, M.Max)
 	return m, dressed
 end
 
@@ -243,7 +279,7 @@ function Memory.active(v: any, now: number): { Memory }
 	end
 	for i = #v.lately, 1, -1 do
 		local m = v.lately[i]
-		if type(m) == "table" and type(m.untilT) == "number" and m.untilT > now then
+		if type(m) == "table" and type(m.untilT) == "number" and (m.untilT > now or Memory.stays(m)) then
 			table.insert(out, m)
 		end
 	end
@@ -260,9 +296,20 @@ function Memory.has(v: any, kind: string, now: number): Memory?
 	return nil
 end
 
--- Takes off a villager's memory of a kind (with `who`, only the one about them). Returns whether
--- what they wear changed.
-function Memory.forget(profile: any, vid: string, kind: string, who: string?): boolean
+-- Every memory of that kind they have now, newest first (what they wear: one of each thing).
+function Memory.all(v: any, kind: string, now: number): { Memory }
+	local out = {}
+	for _, m in Memory.active(v, now) do
+		if m.kind == kind then
+			table.insert(out, m)
+		end
+	end
+	return out
+end
+
+-- Takes off a villager's memory of a kind (with `who`, only the one about them; with `what`, only
+-- that thing). Returns whether what they wear changed.
+function Memory.forget(profile: any, vid: string, kind: string, who: string?, what: string?): boolean
 	local v = type(profile) == "table" and profile.villagers[vid]
 	if not v or type(v.lately) ~= "table" then
 		return false
@@ -270,7 +317,7 @@ function Memory.forget(profile: any, vid: string, kind: string, who: string?): b
 	local dressed = false
 	for i = #v.lately, 1, -1 do
 		local m = v.lately[i]
-		if m.kind == kind and (who == nil or m.who == who) then
+		if m.kind == kind and (who == nil or m.who == who) and (what == nil or m.what == what) then
 			table.remove(v.lately, i)
 			dressed = dressed or m.kind == "accessory"
 		end
@@ -297,7 +344,10 @@ function Memory.tick(profile: any, now: number): ({ Ended }, { string })
 		if type(v) == "table" and type(v.lately) == "table" then
 			for i = #v.lately, 1, -1 do
 				local m = v.lately[i]
-				local over = type(m) ~= "table" or type(m.untilT) ~= "number" or m.untilT <= now
+				-- (what they put on stays until the player says otherwise)
+				local over = type(m) ~= "table"
+					or type(m.untilT) ~= "number"
+					or (m.untilT <= now and not Memory.stays(m))
 				local madeUp = false
 				if not over and m.kind == "fallout" and m.who then
 					-- made up (the quarrel taken off), or the quarrel ran its time
@@ -338,40 +388,61 @@ function Memory.tick(profile: any, now: number): ({ Ended }, { string })
 	return ended, notices
 end
 
--- Their look as it is today: their own (v.app) with what a memory has them wearing on top, in place
--- of anything else in that slot. v.app itself is never changed, so the accessory comes off when the
--- memory ends.
+-- Their look as it is today: their own (v.app) with what their events have them wearing on top.
+-- Nothing of their own comes off for it (the user: "accessories that villagers decide to wear on
+-- their own seem to remove other accessories of the same category. can you make it such that it
+-- dosent?"): a hat goes on beside the hat they have. v.app itself is never changed, so a thing
+-- comes off when its memory goes.
 function Memory.dressed(v: any, now: number): Appearance.Appearance
 	local app = Appearance.sanitize(v and v.app)
-	local m = Memory.has(v, "accessory", now)
-	local acc = m and m.acc
-	if not acc then
+	local worn = Memory.all(v, "accessory", now)
+	if #worn == 0 then
 		return app
 	end
-	local keep = {}
-	for _, a in app.acc do
-		if a.t ~= acc.t and a.id ~= acc.id then
-			table.insert(keep, a)
+	local keep = table.clone(app.acc)
+	-- oldest first, so the order they put things on in stays the same
+	for i = #worn, 1, -1 do
+		local acc = worn[i].acc
+		if acc then
+			local already = false
+			for _, a in keep do
+				if a.id == acc.id then
+					already = true
+				end
+			end
+			if not already then
+				table.insert(keep, { id = acc.id, t = acc.t, l = false })
+			end
 		end
 	end
-	-- (inside the cap on accessories: something else gives way)
-	while #keep >= Tuning.Villagers.MaxAccessories do
-		table.remove(keep)
-	end
-	table.insert(keep, { id = acc.id, t = acc.t, l = false })
 	app.acc = keep
 	return app
 end
 
--- The accessory memory still waiting for the server to find something in the catalog for it.
-function Memory.unfound(v: any, now: number): Memory?
-	local m = Memory.has(v, "accessory", now)
-	return if m and not m.acc then m else nil
+-- What they put on that the server hasn't found in the catalog yet, newest first.
+function Memory.waiting(v: any, now: number): { Memory }
+	local out = {}
+	for _, m in Memory.all(v, "accessory", now) do
+		if not m.acc then
+			table.insert(out, m)
+		end
+	end
+	return out
 end
 
--- What the villager's page lists under Lately: { kind, text, days } newest first, days being how
--- many town days are left (rounded up).
-function Memory.lately(profile: any, vid: string, now: number): { { kind: string, text: string, days: number } }
+-- The newest of those, if any.
+function Memory.unfound(v: any, now: number): Memory?
+	return Memory.waiting(v, now)[1]
+end
+
+-- What the villager's page lists under Lately: { kind, text, days, what?, stays? } newest first,
+-- days being how many town days are left (rounded up). What they put on `stays` (no days to it),
+-- with `what` for its Take off button.
+function Memory.lately(
+	profile: any,
+	vid: string,
+	now: number
+): { { kind: string, text: string, days: number, what: string?, stays: boolean? } }
 	local out = {}
 	local v = type(profile) == "table" and profile.villagers and profile.villagers[vid]
 	if not v then
@@ -380,10 +451,13 @@ function Memory.lately(profile: any, vid: string, now: number): { { kind: string
 	for _, m in Memory.active(v, now) do
 		local template = LATELY[m.kind]
 		if template then
+			local stays = Memory.stays(m)
 			table.insert(out, {
 				kind = m.kind,
 				text = Text.fill(template, Memory.words(profile, m)),
-				days = math.max(1, math.ceil((m.untilT - now) / day())),
+				days = if stays then 0 else math.max(1, math.ceil((m.untilT - now) / day())),
+				what = if stays then m.what else nil,
+				stays = if stays then true else nil,
 			})
 		end
 	end
@@ -396,12 +470,20 @@ function Memory.sanitize(profile: any, vid: string, raw: any): { Memory }
 	if type(raw) ~= "table" then
 		return out
 	end
+	local worn, rest = 0, 0
 	for _, m in raw do
-		if #out >= M.Max then
-			break
-		end
 		if valid(profile, vid, m) then
-			table.insert(out, m)
+			if Memory.stays(m) then
+				worn += 1
+				if worn <= M.Worn then
+					table.insert(out, m)
+				end
+			else
+				rest += 1
+				if rest <= M.Max then
+					table.insert(out, m)
+				end
+			end
 		end
 	end
 	return out

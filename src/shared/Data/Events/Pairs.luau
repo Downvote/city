@@ -2346,7 +2346,6 @@ event({
 	when = "any",
 	weight = W({ base = 0.1, count = 3, traits = { social = 0.2 } }),
 	scene = function(ctx, a, b, c)
-		local names = ctx.rng:shuffle(BANDS)
 		local s = K.scene(ctx, "A band")
 		s:prop("guitar", "a")
 		s:prop("microphone", "b")
@@ -2370,10 +2369,11 @@ event({
 			nervous = "We need a name, and what if it's a bad one?|{player}, could you pick?",
 			_ = "We need a good name.|{player}, will you pick one?",
 		}, "question")
-		for i = 1, 2 do
-			local name = names[i]
-			s:choice(name .. ".", function(ch)
-				ch:with({ band = name })
+		s:askName({
+			var = "band",
+			suggest = BANDS,
+			ask = "What should the band be called?",
+			build = function(ch)
 				say(ch, "a", "{band}, that's who we are now.", "music", "cheer")
 				say(ch, "c", "Our first gig is tonight, in my kitchen.", "sparkle")
 				ch:relx("a", "b", 5)
@@ -2385,8 +2385,10 @@ event({
 				for _, who in { "a", "b", "c" } do
 					ch:remember(who, "band", { name = "{band}" })
 				end
-			end)
-		end
+				-- and the first show (Sim/FollowUps)
+				ch:follow("gig", { chance = 0.6, hours = 5 })
+			end,
+		})
 		s:log("{a}, {b} and {c} started a band.")
 		return s:done()
 	end,

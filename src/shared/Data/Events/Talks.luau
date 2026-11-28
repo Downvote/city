@@ -35,7 +35,7 @@ event({
 		local t1, _, d1 = Chatter.chat(ctx, s, a, b, nil, true)
 		local t2 = t1
 		while t2 == t1 do
-			t2 = ctx.rng:pick(Chatter.Topics)
+			t2 = ctx.rng:pick(Chatter.topics(ctx))
 		end
 		s:n("Then they got onto something else.")
 		burst(s, "b", {

@@ -15,6 +15,7 @@
 -- has to read well both ways.
 
 local K = require(script.Parent.Kit)
+local PlotHas = require(script.Parent.Parent.Parent.Sim.PlotHas)
 
 local Chatter = {}
 
@@ -649,6 +650,84 @@ Chatter.Topics = {
 		more = { "I'm eating indoors from now on." },
 		back = { "I'll hold on with both hands next time, then." },
 	},
+	-- and some only where there's something to talk about (`need`: a kind of piece in town,
+	-- Sim/PlotHas.Kinds; the user, "conversations and chats that only happen when certain work
+	-- places are present ... things like mailboxes, fridges, etc. can also be present")
+	{
+		about = "the new ice cream flavour",
+		need = "icecream",
+		open = {
+			"The ice cream cart has a honey flavour now, and I've had it twice today.",
+			"Have you tried the new flavour at the ice cream cart?",
+		},
+		yes = { "The honey one? I had it for lunch.", "I went back for a second scoop, it's that good." },
+		no = { "I always get strawberry, I can't help it.", "Honey in ice cream sounds wrong to me." },
+		more = { "Let's go before it sells out." },
+		back = { "One spoonful, that's all I ask." },
+	},
+	{
+		about = "who keeps eating things from the fridge",
+		need = "fridge",
+		open = {
+			"Somebody ate the last of the cheese in my fridge, and it wasn't me.",
+			"I put a note on my pudding in the fridge, and it still went.",
+		},
+		yes = { "It's always the cheese, isn't it?", "I've started hiding mine behind the jam." },
+		no = { "Are you sure you didn't eat it yourself at midnight?", "Maybe you just forgot you ate it." },
+		more = { "I'm buying a lock for the fridge." },
+		back = { "I'd remember eating a whole cheese." },
+	},
+	{
+		about = "the swing",
+		need = "swing",
+		open = {
+			"I went so high on the swing this morning that I could see over the roofs.",
+			"I still think the swing is the best thing in town, and I'm a grown up.",
+		},
+		yes = { "Me too, I go on it when nobody's looking.", "It's the best seat in town, honestly." },
+		no = { "The swing makes me dizzy.", "I'm too old for swings, sadly." },
+		more = { "Race you to it later." },
+		back = { "One go, and you'll change your mind." },
+	},
+	{
+		about = "the post being late",
+		need = "mailbox",
+		open = {
+			"The post came at two today, and I'd been checking since nine.",
+			"I've been waiting for a parcel all week, and the mailbox is still empty.",
+		},
+		yes = { "Mine came late too, it must be the hill.", "I check the mailbox about ten times a day." },
+		no = { "Mine came on time this morning.", "The post always comes, you just have to stop looking." },
+		more = { "I'm going to sit by the mailbox and wait." },
+		back = { "Easy to say when yours has come." },
+	},
+	{
+		about = "the stars through the telescope",
+		need = "telescope",
+		open = {
+			"I looked at the moon through the telescope last night, and you can see the craters.",
+			"Somebody left the telescope pointing at the lighthouse, and I watched a gull land on it.",
+		},
+		yes = { "I saw a planet through it once, a bright one.", "It's even better on a really clear night." },
+		no = { "I looked once and only saw my own eyelashes.", "I can never find anything through it." },
+		more = { "Come and look with me tonight." },
+		back = { "You've got to keep the other eye shut." },
+	},
+	{
+		about = "the BBQ",
+		need = "bbq",
+		open = {
+			"We should light the BBQ while the weather's nice.",
+			"I can still smell last night's BBQ on my jumper.",
+		},
+		yes = {
+			"I'll bring the sausages if you bring the buns.",
+			"I've been waiting all week for someone to say that.",
+		},
+		no = { "Last time it rained the second we lit it.", "The smoke always follows me round the garden." },
+		more = { "Saturday, then, and nobody burns anything." },
+		back = { "Stand on the other side, then." },
+	},
 }
 
 -- Dreams they tell each other. Each finishes "I dreamed ..." (no {words}: it is filled in once).
@@ -1019,11 +1098,23 @@ function Chatter.agrees(ctx: any, a: string, b: string): boolean
 	return ctx.rng:chance(math.clamp(p, 0.15, 0.9))
 end
 
+-- The topics two villagers can talk about here: every topic with no `need`, and those whose
+-- piece is in town (ctx.has; the street's chats hand theirs in too).
+function Chatter.topics(ctx: any): { any }
+	local out = {}
+	for _, t in Chatter.Topics do
+		if t.need == nil or (ctx.has ~= nil and ctx.has(PlotHas.Kinds[t.need])) then
+			table.insert(out, t)
+		end
+	end
+	return out
+end
+
 -- A whole chat onto scene `s` between stars a and b. Returns the topic, whether they agreed,
 -- and how much it did for their friendship. `goesOn` leaves off the goodbye, for a chat that
 -- carries on to another topic (Data/Events/Talks' long chat).
 function Chatter.chat(ctx: any, s: any, a: string, b: string, topic: any?, goesOn: boolean?): (any, boolean, number)
-	local t = topic or ctx.rng:pick(Chatter.Topics)
+	local t = topic or ctx.rng:pick(Chatter.topics(ctx))
 	local score = ctx.rel(a, b)
 	Chatter.say(s, "a", opener(ctx, a), nil, "wave")
 	local follow = FOLLOW_BY[K.pers(ctx, a)]
@@ -1071,7 +1162,7 @@ end
 -- run together into one.
 function Chatter.small(ctx: any, a: string, b: string): { { who: string, text: string } }
 	ctx = plain(ctx)
-	local t = ctx.rng:pick(Chatter.Topics)
+	local t = ctx.rng:pick(Chatter.topics(ctx))
 	local yes = Chatter.agrees(ctx, a, b)
 	local out = {
 		{ who = "a", text = ctx.f(Chatter.flat(ctx.rng:pick(t.open))) },

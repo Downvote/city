@@ -85,6 +85,28 @@ local WEATHERS = { "clear", "cloudy", "rain", "storm", "snow", "blossom", "leave
 -- every workplace in the catalog, so any job can be somebody's
 local WORKPLACES = Catalog.workplaces()
 
+-- the pieces some events need (Sim/PlotHas.Kinds), one of each kind
+local EVERYDAY = {
+	"piano",
+	"show_telescope",
+	"pond",
+	"tv_stand",
+	"arcade",
+	"bbq",
+	"campfire",
+	"aquarium",
+	"beehive",
+	"play_trampoline",
+	"washing_machine",
+	"well",
+	"record_player",
+	"sea_hammock",
+	"water_boat",
+	"drum_kit",
+	"greenhouse_mini",
+	"sandbox",
+}
+
 -- what can last a few days that a scene doesn't need a second villager for (a falling out comes
 -- with a quarrel)
 local LASTING = { "band", "accessory", "hobby", "haircut", "pet", "dish", "garden", "penpal", "training" }
@@ -111,6 +133,14 @@ local function makeProfile(rng, count, withBeds)
 		-- a few more garden pieces, so the inspector has something to look at
 		for k = 1, 8 do
 			p.plan.items["g" .. k] = { id = "flower_bed", x = 56 + k * 6, y = 0, z = 84, r = 0, lv = 0 }
+		end
+	end
+	-- and, in some towns, the things that only some events need (Data/Events/Things): drawn on a
+	-- stream of their own, so the towns are the same as they were in every other way
+	local prng = Rng.new(count * 104729 + (if clinic then 7 else 3))
+	for k, id in EVERYDAY do
+		if prng:chance(0.45) then
+			p.plan.items["x" .. k] = { id = id, x = 20 + k * 4, y = 0, z = 120, r = 0, lv = 0 }
 		end
 	end
 	for i = 1, count do
@@ -163,7 +193,7 @@ local function makeProfile(rng, count, withBeds)
 			if kind == "band" then
 				opts.name = "Pickle Jar"
 			elseif kind == "accessory" then
-				opts.what = mrng:pick({ "yellowhat", "scarf", "strawhat", "glasses" })
+				opts.what = mrng:pick({ "yellowhat", "scarf", "strawhat", "glasses", "beanie" })
 			elseif kind == "pet" then
 				opts.what, opts.name = "kitten", "Biscuit"
 			elseif kind == "dish" then
@@ -346,6 +376,14 @@ end
 local function checkText(scene, where)
 	checkString(scene.title, where)
 	checkString(scene.log, where)
+	if scene.name then
+		-- a name to type (Kit's s:askName): what the box asks and the name it suggests, and the one
+		-- answer made with it
+		checkString(scene.name.ask, where)
+		checkString(scene.name.suggest, where)
+		expect(#scene.choices).toBe(1)
+		expect(scene.choices[1].text).toBe(scene.name.suggest)
+	end
 	for _, l in scene.lines do
 		checkLine(l, where)
 	end
@@ -389,6 +427,7 @@ for _, t in
 		"leave",
 		"remember",
 		"forget",
+		"follow",
 	}
 do
 	OPS[t] = true
@@ -437,6 +476,15 @@ local function checkOps(scene, where)
 				expect(Sayings.get(e.id) ~= nil).toBeTruthy()
 			elseif e.t == "hobby" then
 				expect(Sayings.hobby(e.id) ~= nil).toBeTruthy()
+			elseif e.t == "follow" then
+				-- another event later with the same villagers (Sim/FollowUps): one there is
+				if not Events.get(e.id) then
+					error(where .. ": a follow-up that isn't an event: " .. tostring(e.id))
+				end
+				expect(e.at == nil or (type(e.at) == "number" and e.at > 0)).toBeTruthy()
+				for _, w in e.w or {} do
+					checkString(w, where)
+				end
 			elseif e.t == "remember" or e.t == "forget" then
 				-- something that lasts a few days (Sim/Memory): a kind it knows, its words filled
 				expect(table.find(Memory.Order, e.kind) ~= nil).toBeTruthy()

@@ -592,8 +592,9 @@ event({
 			}, "sad")
 			c:mood("a", -3)
 			c:memo("a", "I'm wearing a hat until my bangs grow out, so please don't ask.")
-			-- and they do, for a few days (Sim/Memory)
-			c:remember("a", "accessory", { what = "beanie" })
+			-- and they do (Sim/Memory), until they ask whether it can come off
+			c:wear("a", "beanie")
+			c:follow("hatoff", { hours = 36 })
 		end)
 		s:log("{a} cut their own bangs.")
 		return s:done()
@@ -2315,7 +2316,6 @@ event({
 	when = "day",
 	weight = W({ base = 0.15 }),
 	scene = function(ctx, a)
-		local names = ctx.rng:shuffle(PIGEON)
 		local s = K.scene(ctx, "A follower")
 		s:n("A pigeon has been following {a} around town all morning.")
 		burst(s, "a", {
@@ -2338,10 +2338,11 @@ event({
 			_ = "I think it's decided we're friends now.",
 		}, "question")
 		burst(s, "a", "It needs a name, though.|What should I call it?", "idea")
-		for i = 1, 2 do
-			local name = names[i]
-			s:choice(name .. "?", function(c)
-				c:with({ pet = name })
+		s:askName({
+			var = "pet",
+			suggest = PIGEON,
+			ask = "What should the pigeon be called?",
+			build = function(c)
 				burst(c, "a", {
 					prickly = "{pet}.|...Fine, it suits the little pest.",
 					cheeky = "{pet}, hehe|hello, {pet}",
@@ -2363,8 +2364,9 @@ event({
 				}, "heart", "cheer")
 				c:mood("a", 3)
 				c:memo("a", "{pet} the pigeon still follows me everywhere.")
-			end)
-		end
+				c:follow("pigeonback", { chance = 0.5, hours = 8, words = { pet = "{pet}" } })
+			end,
+		})
 		s:log("A pigeon adopted {a}.")
 		return s:done()
 	end,
@@ -2383,7 +2385,6 @@ event({
 		end,
 	}),
 	scene = function(ctx, a)
-		local names = ctx.rng:shuffle(CATS)
 		local s = K.scene(ctx, "A cat moves in")
 		s:prop("cat", "a")
 		s:n("A ginger cat has been sitting outside {a}'s door for three days.")
@@ -2407,10 +2408,11 @@ event({
 			_ = "I think I have a cat now, {player}.",
 		}, "heart")
 		burst(s, "a", "It'll need a name, though.|What do you think suits it?", "question")
-		for i = 1, 2 do
-			local name = names[i]
-			s:choice(name .. "?", function(c)
-				c:with({ pet = name })
+		s:askName({
+			var = "pet",
+			suggest = CATS,
+			ask = "What should the cat be called?",
+			build = function(c)
 				burst(c, "a", {
 					cool = "{pet}.|...Yes, that's right.",
 					shy = "{pet}...|...!|Hello, {pet}.",
@@ -2434,9 +2436,10 @@ event({
 				c:hearts("a", 1)
 				c:memo("a", "{pet} slept on my face last night, and I didn't have the heart to move.")
 				-- and the cat is theirs for a while (Sim/Memory)
-				c:remember("a", "pet", { what = "cat", name = name })
-			end)
-		end
+				c:remember("a", "pet", { what = "cat", name = "{pet}" })
+				c:follow("petnews", { chance = 0.5, hours = 10 })
+			end,
+		})
 		s:log("A stray cat moved in with {a}.")
 		return s:done()
 	end,
@@ -2473,6 +2476,8 @@ event({
 			c:voice("a", "thanks", "heart")
 			c:hearts("a", 1)
 			c:mood("a", 2)
+			-- it may find its way back (Sim/FollowUps)
+			c:follow("spiderback", { chance = 0.35, hours = 6 })
 		end)
 		s:choice("It was here first.", function(c)
 			burst(c, "a", {
@@ -5476,7 +5481,6 @@ event({
 	}),
 	scene = function(ctx, a)
 		local stray = ctx.rng:pick(STRAYS)
-		local names = ctx.rng:shuffle(PET_NAMES)
 		local s = K.scene(ctx, "A new friend"):with({ pet = stray.kind })
 		if stray.prop then
 			s:prop(stray.prop, "a")
@@ -5501,10 +5505,11 @@ event({
 			nervous = "{player}, I have a {pet} now, I think?|What if I'm bad at it, and what do I even call it?",
 			_ = "{player}, this {pet} needs a home, so I'm keeping it.|Will you help me name it?",
 		}, "heart", "wave")
-		for i = 1, 2 do
-			local name = names[i]
-			s:choice(name .. ".", function(c)
-				c:with({ name = name })
+		s:askName({
+			var = "name",
+			suggest = PET_NAMES,
+			ask = "What should the {pet} be called?",
+			build = function(c)
 				burst(c, "a", {
 					sunny = "{name}! Ehehe, that's the one.",
 					gentle = "{name}, what a lovely name.|Come on, {name}, let's get you something warm to eat.",
@@ -5525,10 +5530,11 @@ event({
 					_ = "{name}, that's perfect.|Thanks, {player}.",
 				}, "heart", "cheer")
 				c:mood("a", 6)
-				c:remember("a", "pet", { what = stray.kind, name = name })
+				c:remember("a", "pet", { what = stray.kind, name = "{name}" })
+				c:follow("petnews", { chance = 0.5, hours = 10 })
 				c:memo("a", "I took in a {pet} and called it {name}, so come and say hello.")
-			end)
-		end
+			end,
+		})
 		s:log("{a} took in a {pet}.")
 		return s:done()
 	end,
@@ -5753,7 +5759,23 @@ event({
 })
 
 -- something new to wear for a few days, from the market (Sim/Memory's accessories)
-local FINDS = { "strawhat", "glasses", "flowers", "backpack" }
+local FINDS = { "strawhat", "flowers", "backpack", "bowtie", "sunhat" }
+
+-- what they might find at the market that they aren't wearing already
+local function findsFor(ctx, a)
+	local out = {}
+	local v = ctx.v(a)
+	local worn = {}
+	for _, m in Memory.all(v, "accessory", ctx.now) do
+		worn[m.what] = true
+	end
+	for _, f in FINDS do
+		if not worn[f] then
+			table.insert(out, f)
+		end
+	end
+	return out
+end
 
 event({
 	id = "newthing",
@@ -5761,13 +5783,13 @@ event({
 	weight = W({
 		base = 0.12,
 		cond = function(ctx, a)
-			return ctx.memory(a, "accessory") == nil
+			return #Memory.all(ctx.v(a), "accessory", ctx.now) < 2 and #findsFor(ctx, a) > 0
 		end,
 	}),
 	scene = function(ctx, a)
-		local find = ctx.rng:pick(FINDS)
+		local find = ctx.rng:pick(findsFor(ctx, a))
 		local s = K.scene(ctx, "From the market"):with({ thing = Memory.Accessories[find].words })
-		s:n("{a} came back from the market with a {thing} and keeps taking it off and putting it back on.")
+		s:n("{a} bought a {thing} at the market and keeps taking it off and putting it back on.")
 		burst(s, "a", {
 			sunny = "{player}, I bought a {thing} at the market!|Does it look good? Be honest, but say yes.",
 			gentle = "{player}, I bought a {thing}, but I'm not sure it's really me.|What do you think?",
@@ -5808,7 +5830,8 @@ event({
 				_ = "Then I'm wearing it, thanks, {player}.",
 			}, "sparkle", "cheer")
 			c:mood("a", 5)
-			c:remember("a", "accessory", { what = find })
+			c:wear("a", find)
+			c:follow("suitme", { chance = 0.5, hours = 8, words = { worn = find } })
 		end)
 		s:choice("Save it for a special day.", function(c)
 			burst(c, "a", {

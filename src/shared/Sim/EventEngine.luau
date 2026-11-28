@@ -20,7 +20,11 @@
 --                                something that lasts a few days (Sim/Memory): a band, a hat, a pet,
 --                                a dish, a garden... `with` is the letter of somebody it's about.
 --                                A quarrel is remembered by both as a falling out, until they make up
---   forget who kind              that's over now (the race is run)
+--   forget who kind what?        that's over now (the race is run); with `what`, only that thing
+--                                they wear (Memory.forget), as when you say a hat doesn't suit them
+--   follow id at a? b? c? w?     another event later with the same villagers (Sim/FollowUps): `at`
+--                                in town hours from now, a/b/c the letters here its stars are, w the
+--                                words it carries over. The scene rolled its chance already
 -- Handled by the service (returned in `service`):
 --   away who seconds | festival | creator who? | dayoff who
 --   leave prop hours by?         a thing (Data/EventProps) left lying about for a while
@@ -44,6 +48,8 @@ local Keepsakes = require(script.Parent.Keepsakes)
 local Sayings = require(script.Parent.Parent.Data.Sayings)
 local Rng = require(script.Parent.Parent.Util.Rng)
 local Memory = require(script.Parent.Memory)
+local PlotHas = require(script.Parent.PlotHas)
+local FollowUps = require(script.Parent.FollowUps)
 
 local EventEngine = {}
 
@@ -163,6 +169,13 @@ function EventEngine.context(profile: any, o: Options): any
 		local m = v and Memory.has(v, kind, o.now)
 		return if m then Memory.words(profile, m) else {}
 	end
+	-- is there a piece of that kind on the plot (Sim/PlotHas: a catalog id, a tag, a job, water)?
+	-- The plan is read once for the context.
+	local index: PlotHas.Index? = nil
+	function ctx.has(need: any): boolean
+		index = index or PlotHas.index(profile.plan)
+		return PlotHas.met(index :: PlotHas.Index, need)
+	end
 	-- fills {a} {b} {c} with the stars' names and any extra words
 	function ctx.f(template: string, vars: { [string]: any }?): string
 		local all = table.clone(ctx.names)
@@ -213,9 +226,14 @@ end
 function EventEngine.pick(ctx: any, recent: { string }?): any
 	local rng = ctx.rng
 	local present = ctx.present
+	-- one that an earlier answer left waiting comes first, once it's due and its villagers are here
+	local due = EventEngine.followUp(ctx)
+	if due then
+		return due
+	end
 	local candidates = {}
 	for _, def in Events.list do
-		if EventEngine.allowedNow(def, ctx.hour) then
+		if not def.followup and EventEngine.allowedNow(def, ctx.hour) then
 			local penalty = EventEngine.recentPenalty(recent, def.id)
 			local tries: { { string } } = {}
 			if def.actors == 0 then
@@ -256,6 +274,46 @@ function EventEngine.pick(ctx: any, recent: { string }?): any
 	return EventEngine.stage(ctx, choice.def, choice.actors)
 end
 
+-- The follow-up (Sim/FollowUps) that is due now and can be played, staged and taken off the list,
+-- or nil. One whose event is gone is dropped; one whose villagers aren't about, or that can't
+-- happen now (the stove sold, the hour wrong), waits until Tuning.FollowUps.Expire is up.
+function EventEngine.followUp(ctx: any): any
+	local profile = ctx.profile
+	for _, e in FollowUps.due(profile, ctx.now) do
+		local def = Events.get(e.id)
+		if not def then
+			FollowUps.remove(profile, e)
+		else
+			local stars = {}
+			local here = true
+			for i, letter in LETTERS do
+				if i <= def.actors then
+					local vid = (e :: any)[letter]
+					if not vid or not table.find(ctx.present, vid) or table.find(stars, vid) then
+						here = false
+					end
+					stars[i] = vid
+				end
+			end
+			local ok, w = false, 0
+			if here and EventEngine.allowedNow(def, ctx.hour) then
+				ok, w = pcall(def.weight, ctx, stars[1], stars[2], stars[3])
+			end
+			if ok and type(w) == "number" and w > 0 then
+				FollowUps.remove(profile, e)
+				ctx.carried = e.w
+				local ev = EventEngine.stage(ctx, def, stars)
+				ctx.carried = nil
+				ev.from = e.from
+				return ev
+			elseif FollowUps.stale(e, ctx.now) then
+				FollowUps.remove(profile, e)
+			end
+		end
+	end
+	return nil
+end
+
 -- Builds one event's scene with these stars (in order: a, b, c), as pick does once it has chosen.
 -- The specs and Studio's forced events use it to play a given event.
 function EventEngine.stage(ctx: any, def: any, order: { string }): any
@@ -281,8 +339,32 @@ function EventEngine.stage(ctx: any, def: any, order: { string }): any
 		for _, c in scene.choices or {} do
 			voiced(c.lines)
 		end
+		-- a name the player types (Kit's s:askName): the answer built again with it is voiced too
+		local ask = scene.name
+		if type(ask) == "table" and type(ask.build) == "function" then
+			local build = ask.build
+			ask.build = function(text: string): any
+				local c = build(text)
+				voiced(c.lines)
+				return c
+			end
+		end
 	end
 	return { id = def.id, actors = actors, order = order, scene = scene }
+end
+
+-- An event that asks the player to name something (Kit's s:askName) takes the name they typed:
+-- its one answer is built again with it, in place of the suggestion, and returned. `text` has
+-- been cleaned (Sim/Naming) and, on the server, filtered. Nil when the scene asks no name.
+function EventEngine.named(ev: any, text: string): any
+	local scene = ev and ev.scene
+	local ask = scene and scene.name
+	if type(ask) ~= "table" or type(ask.build) ~= "function" or type(text) ~= "string" or text == "" then
+		return nil
+	end
+	local c = ask.build(text)
+	scene.choices[1] = c
+	return c
 end
 
 -- Applies effects to the profile. Returns notices (strings for the player) and effects the service
@@ -444,8 +526,22 @@ function EventEngine.apply(profile: any, ev: any, effects: { any }, now: number)
 			end
 		elseif t == "forget" then
 			local who = vid(e.who)
-			if who and type(e.kind) == "string" and Memory.forget(profile, who, e.kind) then
+			local what = if type(e.what) == "string" then e.what else nil
+			if who and type(e.kind) == "string" and Memory.forget(profile, who, e.kind, nil, what) then
 				table.insert(service, { t = "dress", vid = who })
+			end
+		elseif t == "follow" then
+			-- another event later, with these villagers in its parts (Sim/FollowUps)
+			local hours = if type(e.at) == "number" and e.at > 0 then e.at else Tuning.FollowUps.Hours
+			local def = Events.get(e.id or "")
+			if def then
+				local entry: any = { id = e.id, at = now + hours * Tuning.Day.Length / 24, from = ev.id, w = e.w }
+				for i, letter in LETTERS do
+					if i <= def.actors then
+						entry[letter] = vid(e[letter] or letter)
+					end
+				end
+				FollowUps.add(profile, entry)
 			end
 		else
 			-- away, festival, creator, dayoff, leave

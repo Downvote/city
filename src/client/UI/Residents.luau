@@ -407,7 +407,7 @@ local function friendsOf(parent: Frame, vid: string, p: any)
 end
 
 -- The Lately tab: what their events left them with for a few days (Sim/Memory), newest first, each
--- with how long it has left. The user: "along with their conversations and events having more
+-- with how long it has left; what an event put on them has a Take off button instead. The user: "along with their conversations and events having more
 -- impact, such as remembering if they joined a band, started wearing a new accessory (temporarily)".
 local LATELY_ICONS = {
 	band = "music",
@@ -448,18 +448,53 @@ local function latelyOf(parent: Frame, vid: string, p: any)
 		return
 	end
 	for i, row in rows do
-		Kit.row({
+		local worn = row.stays == true and type(row.what) == "string"
+		local line, inner = Kit.row({
 			Name = row.kind,
 			Parent = list,
 			Size = UDim2.new(1, -12, 0, 52),
 			Height = 52,
 			LayoutOrder = i,
 			Title = row.text,
-			Sub = if row.days <= 1 then "Ends today" else Text.fill("{n} more days", { n = row.days }),
+			-- what an event put on them stays until it's taken off (the user: "allow players to
+			-- remove them in the lately menu"); the rest run out
+			Sub = if worn
+				then "Until you take it off"
+				elseif row.days <= 1 then "Ends today"
+				else Text.fill("{n} more days", { n = row.days }),
 			TextSize = 16,
 			Marker = LATELY_ICONS[row.kind] or "sparkle",
 			MarkerColor = (T :: any)[LATELY_COLORS[row.kind] or "Yellow"] or T.Yellow,
+			RightSpace = if worn then 124 else nil,
 		})
+		if worn then
+			local lean: number = line:GetAttribute("Lean") or 6
+			local what = row.what :: string
+			Kit.button("Take off", {
+				Name = "TakeOff",
+				Parent = inner,
+				Size = UDim2.fromOffset(112, 38),
+				Position = UDim2.new(1, -(lean + 8), 0.5, 0),
+				AnchorPoint = Vector2.new(1, 0.5),
+				Color = T.Coral,
+				TextSize = 15,
+				ZIndex = 3,
+			}, function()
+				task.spawn(function()
+					local sent, ok, msg = pcall(function()
+						return Remotes.fn("TakeOff"):InvokeServer(vid, what)
+					end)
+					if sent and ok then
+						Toasts.show(if type(msg) == "string" and msg ~= "" then msg else "Taken off.", "good")
+					else
+						Toasts.show(
+							if sent and type(msg) == "string" then msg else "That didn't go through. Try again.",
+							"warn"
+						)
+					end
+				end)
+			end)
+		end
 	end
 end
 

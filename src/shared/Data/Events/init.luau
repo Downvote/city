@@ -20,6 +20,8 @@
 --   Work      at work: big orders, a tower of bricks, the wrong letters
 --   Asks      a villager asks you: a name for a pet, which outfit, whether to tell the truth
 --   Moments   big moments that play as cutscenes on sets of their own: dreams, a race, a cat
+--   Things    what happens because of a piece on the plot: the stove, the fridge, the post, the pond
+--   Later     events an earlier answer left waiting (Sim/FollowUps): does the hat suit them, a new leaf
 -- A scene may name props (Data/EventProps) to put by its stars while it plays; an answer may
 -- leave one for a while, give you a keepsake, or teach them a saying or a hobby.
 --
@@ -470,7 +472,12 @@ event({
 							{ t = "mood", who = "a", d = 3 },
 							{ t = "mood", who = "b", d = 3 },
 						}
-						else { { t = "rel", a = "a", b = "b", d = -8 }, { t = "quarrel", a = "a", b = "b" } },
+						else {
+							{ t = "rel", a = "a", b = "b", d = -8 },
+							{ t = "quarrel", a = "a", b = "b" },
+							-- they make it up later, now and then (Sim/FollowUps)
+							if ctx.rng:chance(0.5) then { t = "follow", id = "makeup", at = 8 } else nil,
+						},
 				},
 			},
 			default = 3,
@@ -2077,7 +2084,12 @@ event({
 		table.insert(choices, {
 			text = "Go to bed and rest.",
 			lines = burst(ctx, "a", a, "Okay... wake me up when I'm better, {player}.", "zzz"),
-			effects = { { t = "sick", who = "a", minutes = 5 }, { t = "mood", who = "a", d = -2 } },
+			effects = {
+				{ t = "sick", who = "a", minutes = 5 },
+				{ t = "mood", who = "a", d = -2 },
+				-- and up and about again later (Sim/FollowUps)
+				{ t = "follow", id = "coldbetter", at = 12 },
+			},
 		})
 		if not doctor then
 			table.insert(choices, {
@@ -2979,7 +2991,7 @@ event({
 	end,
 })
 
-for _, name in { "Talks", "Solo", "Pairs", "Town", "Work", "Asks", "Moments" } do
+for _, name in { "Talks", "Solo", "Pairs", "Town", "Work", "Asks", "Moments", "Things", "Later" } do
 	local module = script:FindFirstChild(name)
 	if module then
 		for _, def in require(module) :: any do
