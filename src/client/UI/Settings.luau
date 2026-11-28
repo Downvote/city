@@ -214,25 +214,41 @@ draw = function()
 
 	-- the card: the interface's look, and where Roblox's own quality is set
 	local _, inside = MenuParts.card(panel.body, T.Blue)
-	Kit.title("Look", {
-		Name = "LookTitle",
-		Parent = inside,
-		Size = UDim2.new(1, 0, 0, 36),
-		TextSize = 28,
-		Wrap = false,
-	})
+	-- each part of the card under a caption set wide with a hairline under it, as the list's
+	-- groups are (they were big titles, as loud as the menu's own name)
+	local function part(name: string, words: string, y: number)
+		local h =
+			Kit.box({ Name = name, Parent = inside, Size = UDim2.new(1, 0, 0, 28), Position = UDim2.fromOffset(0, y) })
+		Kit.caption(words, {
+			Name = "Title",
+			Parent = h,
+			Size = UDim2.new(1, 0, 0, 16),
+			Position = UDim2.fromOffset(0, 3),
+			TextSize = 11,
+		})
+		Kit.rule({
+			Name = "Rule",
+			Parent = h,
+			Size = UDim2.new(1, 0, 0, 6),
+			Position = UDim2.fromOffset(0, 23),
+			AnchorPoint = Vector2.new(0, 0.5),
+			Color = T.Line,
+			Transparency = 0.35,
+		})
+	end
+	part("LookTitle", "Look", 0)
 	local _, pickLook = Kit.segments({
 		{ id = "dark", name = "Dark" },
 		{ id = "light", name = "Light" },
 	}, function(id: string)
 		Theme.set(id)
-	end, { Parent = inside, Position = UDim2.fromOffset(0, 46), Height = 44, TextSize = 16 })
+	end, { Parent = inside, Position = UDim2.fromOffset(0, 40), Height = 44, TextSize = 16 })
 	pickLook(Theme.name())
 	MenuParts.hint("Graphics quality is set in Roblox's menu (Esc, then Settings).", {
 		Name = "Quality",
 		Parent = inside,
 		Size = UDim2.new(1, 0, 0, 0),
-		Position = UDim2.fromOffset(0, 108),
+		Position = UDim2.fromOffset(0, 100),
 	})
 	-- friends: Roblox's invite box (UI/Invite; the user: "prompt the player to invite friends")
 	local Invite = require(script.Parent.Invite) :: any
@@ -245,14 +261,7 @@ draw = function()
 
 	-- and under it, what this player hears: a line each, its name at the left and its slider or
 	-- switch at the right
-	Kit.title("Sound", {
-		Name = "SoundTitle",
-		Parent = inside,
-		Size = UDim2.new(1, 0, 0, 36),
-		Position = UDim2.fromOffset(0, 186),
-		TextSize = 28,
-		Wrap = false,
-	})
+	part("SoundTitle", "Sound", 186)
 	local function line(name: string, title: string, y: number): Frame
 		local f = Kit.box({
 			Name = name,
@@ -272,12 +281,12 @@ draw = function()
 		return f
 	end
 	for i, vol in Settings.Volumes do
-		local f = line(vol.key, vol.title, 186 + 46 + (i - 1) * 52)
+		local f = line(vol.key, vol.title, 186 + 40 + (i - 1) * 52)
 		local v = settings[vol.key]
 		volumeSlider(f, vol.key, if type(v) == "number" then v else 0.5)
 	end
 	local choice = Settings.Voices
-	local f = line(choice.key, choice.title, 186 + 46 + #Settings.Volumes * 52)
+	local f = line(choice.key, choice.title, 186 + 40 + #Settings.Volumes * 52)
 	local _, pickVoices = Kit.segments(choice.options, function(id: string)
 		Graphics.set(choice.key, Settings.value(choice.key, id))
 		shownKey = keyOf(Graphics.settings())

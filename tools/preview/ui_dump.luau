@@ -1998,7 +1998,18 @@ elseif scene:sub(1, 9) == "cutscene:" then
 	if step == "ask" or step:sub(1, 1) == "a" then
 		Sim.remoteEvent("EventLine"):FireClient(Sim.player, { token = "c1", ask = true })
 		Sim.frames(2)
-		goOn()
+		-- (a press a message, as the player reads them: the last line can be a burst of a few,
+		-- so it takes as many presses as it holds before the answers come)
+		for _ = 1, 6 do
+			goOn()
+			Sim.advance(0.5)
+			local shown = Sim.buttons(function(b)
+				return b.Name == "Choice1"
+			end)
+			if #shown > 0 then
+				break
+			end
+		end
 		Sim.advance(2)
 	end
 	local after = tonumber(step:match("^a(%d+)$") or "")

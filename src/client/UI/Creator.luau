@@ -500,7 +500,21 @@ end
 
 -- What they have on is picked, so its picture's square is yellow with a tick on its corner and
 -- its small line says "Wearing" (on Wearing everything is on, so there only the tick shows).
+-- Otherwise the small line is what the thing is, where a page holds more than one kind.
 refreshWorn = function()
+	-- the small line says what a thing is only where the cards are of more than one kind: on Hair,
+	-- "Hair" under every card said the tab's name over again
+	local mixed = false
+	local first: string? = nil
+	for _, card in cards do
+		local k = card:GetAttribute("Kind")
+		if type(k) == "string" then
+			first = first or k
+			if k ~= first then
+				mixed = true
+			end
+		end
+	end
 	for id, card in cards do
 		local worn = isOn(id)
 		local lit = worn and tabId ~= "wearing"
@@ -513,7 +527,7 @@ refreshWorn = function()
 			local plain = card:GetAttribute("Kind")
 			sub.Text = if worn and tabId ~= "wearing"
 				then "Wearing"
-				else (if type(plain) == "string" then plain else "")
+				else (if type(plain) == "string" and mixed then plain else "")
 			sub.TextColor3 = if worn and tabId ~= "wearing" then Kit.tint(T.Yellow) else T.InkSoft
 		end
 		local badge = card:FindFirstChild("Worn")

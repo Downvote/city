@@ -84,7 +84,6 @@ local function card(parent: Instance, kind: string, order: number, w: number, h:
 		Cut = 14,
 	})
 	Kit.glow(f, accent, 0.2, "tr")
-	Kit.brackets(f, { Corners = { "tl", "br" }, Arm = 10, Inset = 6, Color = T.Line, ZIndex = 1 })
 	Kit.mark(f)
 	-- the crate itself
 	local pic = Kit.frame({

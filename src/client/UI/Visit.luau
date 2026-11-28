@@ -400,13 +400,16 @@ local function townRow(parent: ScrollingFrame, t: any, order: number)
 		ZIndex = 2,
 	})
 	if not t.mine then
+		-- dark on every row, so the list reads as towns and not as a column of green buttons (the
+		-- card's own Visit is the green one)
 		Kit.button("Visit", {
 			Name = "Go",
 			Parent = inner,
 			Size = UDim2.fromOffset(104, 38),
 			Position = UDim2.new(1, -(lean + 8), 0.5, 0),
 			AnchorPoint = Vector2.new(1, 0.5),
-			Color = T.Green,
+			Color = T.PaperDark,
+			TextColor = T.Ink,
 			TextSize = 16,
 			ZIndex = 3,
 		}, function()

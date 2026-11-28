@@ -707,7 +707,11 @@ function Hud.start()
 	rowList.VerticalAlignment = Enum.VerticalAlignment.Center
 	local tiles = {}
 	local function menuButton(icon: string, caption: string, color: Color3, order: number, fn: () -> ()): TextButton
-		local b = Kit.menuButton(icon, caption, { Parent = row, LayoutOrder = order, Color = color }, fn)
+		-- the icons in the words' colour, as the round buttons under the clock are white: four
+		-- pastel icons side by side read like stickers. Each tile's colour is the line that grows
+		-- under its name.
+		local b =
+			Kit.menuButton(icon, caption, { Parent = row, LayoutOrder = order, Color = color, IconColor = T.Ink }, fn)
 		-- a small index number at its top left
 		Kit.text(Kit.index(order), {
 			Name = "Index",

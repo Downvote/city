@@ -74,10 +74,17 @@ draw = function()
 
 	-- the card: the one out now
 	local _, inside = MenuParts.card(panel.body, T.Orange)
+	Kit.caption("Out now", {
+		Name = "Caption",
+		Parent = inside,
+		Size = UDim2.new(1, 0, 0, 16),
+		TextSize = 11,
+	})
 	Kit.title(if current then current.name else "Nothing out", {
 		Name = "OutName",
 		Parent = inside,
 		Size = UDim2.new(1, 0, 0, 40),
+		Position = UDim2.fromOffset(0, 20),
 		TextSize = 32,
 		Wrap = false,
 	})
@@ -89,19 +96,16 @@ draw = function()
 			Name = "OutLine",
 			Parent = inside,
 			Size = UDim2.new(1, 0, 0, 60),
-			Position = UDim2.fromOffset(0, 44),
+			Position = UDim2.fromOffset(0, 64),
 			TextSize = 15,
 			Color = T.InkSoft,
 		}
 	)
 	if current then
-		Kit.button("Put it away", {
+		MenuParts.footButton(inside, "Put it away", {
 			Name = "PutAway",
-			Parent = inside,
-			Size = UDim2.fromOffset(180, 44),
-			Position = UDim2.fromOffset(0, 112),
 			Color = T.Coral,
-			TextSize = 17,
+			TextSize = 20,
 		}, function()
 			ask("VehicleAway", nil, nil)
 		end)
@@ -129,16 +133,22 @@ draw = function()
 					MarkerColor = Color3.fromHex(v.color),
 					RightSpace = 170,
 				})
+				-- a price is its number with the coin or the gem on a dark slab, so a list of eight
+				-- reads as prices and not as eight green buttons; what you own says Drive in blue
+				local isOut = owned and outId == v.id
 				local label = if owned
-					then (if outId == v.id then "Out now" else "Drive")
-					else Text.fill("Buy for {p}", { p = Garage.price(v) })
+					then (if isOut then "Out now" else "Drive")
+					else Text.commas(if v.gems then v.gems else v.coins or 0)
 				local b = Kit.button(label, {
 					Name = if owned then "Drive" else "Buy",
 					Parent = inner,
-					Size = UDim2.fromOffset(160, 38),
-					Position = UDim2.new(1, -166, 0.5, -19),
-					Color = if owned then T.Blue elseif v.gems then T.Purple else T.Green,
-					TextSize = 15,
+					Size = UDim2.fromOffset(140, 38),
+					Position = UDim2.new(1, -146, 0.5, -19),
+					Color = if isOut then T.PaperDark elseif owned then T.Blue else T.PaperDark,
+					TextColor = if owned and not isOut then T.White else (if isOut then T.InkSoft else T.Ink),
+					IconColor = if owned then nil elseif v.gems then T.Purple else T.Yellow,
+					Icon = if owned then nil elseif v.gems then "gem" else "coin",
+					TextSize = 17,
 				}, function()
 					if owned then
 						if outId ~= v.id then
