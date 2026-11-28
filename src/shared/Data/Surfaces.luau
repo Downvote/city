@@ -44,6 +44,13 @@ function Surfaces.plain(mat: string?): boolean
 	return mat == nil or Surfaces.Plain[base(mat)] == true
 end
 
+-- Whether a material is one a drawing got by naming none: flat plastic, or the kit's own default
+-- (Geometry.Default, Plaster). The town's things in it are given one by their look here; a
+-- material a model names itself is kept.
+function Surfaces.undressed(mat: string?): boolean
+	return Surfaces.plain(mat) or mat == Geometry.Default
+end
+
 -- Whether a shape takes a texture at all: not light, glass or see-through.
 function Surfaces.wears(p: Prim): boolean
 	return (p.transp or 0) <= 0 and p.role ~= "glow" and not Surfaces.Keeps[base(p.mat)]
@@ -111,7 +118,7 @@ end
 -- Gives one shape a texture if it is plain and shows: `default` when given, else by its look.
 -- Returns the shape.
 function Surfaces.dressOne(p: Prim, default: string?): Prim
-	if not Surfaces.plain(p.mat) or not Surfaces.wears(p) then
+	if not Surfaces.undressed(p.mat) or not Surfaces.wears(p) then
 		return p
 	end
 	if p.shape == "Piece" then
@@ -124,7 +131,7 @@ function Surfaces.dressOne(p: Prim, default: string?): Prim
 		-- (a stamp's shapes are shared by every copy of it: they change once, the same way)
 		local parts: { Prim } = p.parts or {}
 		for _, q in parts do
-			if Surfaces.plain(q.mat) then
+			if Surfaces.undressed(q.mat) then
 				q.mat = to
 			end
 		end
@@ -201,14 +208,14 @@ function Surfaces.dress(prims: { Prim }, default: string?): { Prim }
 	end
 	local big: { [string]: boolean } = {}
 	for _, p in prims do
-		if p.shape ~= "Piece" and Surfaces.plain(p.mat) and Surfaces.wears(p) then
+		if p.shape ~= "Piece" and Surfaces.undressed(p.mat) and Surfaces.wears(p) then
 			if Surfaces.pick(p.color, p.shape, p.size) == Surfaces.Render then
 				big[p.color:ToHex()] = true
 			end
 		end
 	end
 	for _, p in prims do
-		if p.shape ~= "Piece" and Surfaces.plain(p.mat) and Surfaces.wears(p) and big[p.color:ToHex()] then
+		if p.shape ~= "Piece" and Surfaces.undressed(p.mat) and Surfaces.wears(p) and big[p.color:ToHex()] then
 			local picked = Surfaces.pick(p.color, p.shape)
 			p.mat = if picked == Surfaces.Painted then Surfaces.Render else picked
 		else

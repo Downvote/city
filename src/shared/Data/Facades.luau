@@ -240,11 +240,11 @@ local function piece(id: string, draw: (R) -> ()): Prim
 	local q = Recipe.new(WHITE, WHITE)
 	draw(q)
 	local mat = MADE_OF[id] or MADE_OF[string.match(id, "^[^:]+") or ""]
-	if mat then
-		for _, p in q.prims do
-			if p.mat == PLAIN then
-				p.mat = mat
-			end
+	-- (a shape that names no material, SmoothPlastic or the kit's default, takes the stamp's own;
+	-- with none named they all stay one plain, for Surfaces.dress to pick by look)
+	for _, p in q.prims do
+		if p.mat == "SmoothPlastic" or p.mat == Geometry.Default then
+			p.mat = mat or "SmoothPlastic"
 		end
 	end
 	local new = Geometry.piece(q.prims, false)
