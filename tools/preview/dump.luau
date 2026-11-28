@@ -31,6 +31,8 @@
 --   stage:<id>         a cutscene's set (Data/Stages); tools/preview/stage.sh draws it from its shots
 --   basement           two basement rooms dug under a patch of a plot, half under a ground floor
 --                      (basement:open without it; tools/preview/basement_scene.luau)
+--   joins              roofs and paths that meet, fitted together (joins:roofs, joins:paths, or one case
+--                      such as joins:roofs:L; Z.joins in tools/preview/zfight_lib.luau)
 --   water              a tiled pool, a pond and a stone rimmed pool with things in them
 --                      (water:pool, water:pond, water:rim for one; tools/preview/water_scene.luau)
 -- SEASON=1..4 in the environment draws any scene in that season (Data/Seasons, as the game's
@@ -353,6 +355,27 @@ elseif scene == "props" or scene:sub(1, 6) == "props:" then
 elseif scene == "basement" or scene == "basement:open" then
 	-- (the basement: two rooms dug under the ground, tools/preview/basement_scene.luau)
 	addPrims(require("./basement_scene")(R, scene:sub(10)))
+elseif scene == "joins" or scene:sub(1, 6) == "joins:" then
+	-- (roofs and paths that meet, fitted together: Z.joins in tools/preview/zfight_lib.luau; a name picks one,
+	-- joins:roofs:L)
+	local want = scene:sub(7)
+	local which = if want == "" then nil else want:match("^[^:]+")
+	local cases = Harness.loadFile("tools/preview/zfight_lib.luau")().joins(which)
+	local col, row = 0, 0
+	for _, c in cases do
+		if want == "" or want == which or c.name == want then
+			local frame = CFrame.new(col * 56 - 100, 0, row * 44 - 100)
+			for _, kind in Plan.Kinds do
+				for key in c.plan[kind] do
+					addPrims(Builder.primsFor(c.plan, kind, key) or {}, frame)
+				end
+			end
+			col += 1
+			if col == 4 then
+				col, row = 0, row + 1
+			end
+		end
+	end
 elseif scene == "water" or scene:sub(1, 6) == "water:" then
 	-- (water: pools and ponds with things in them)
 	addPrims(require("./water_scene")(R, scene:sub(7)))

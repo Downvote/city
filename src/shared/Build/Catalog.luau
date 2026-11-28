@@ -19,7 +19,9 @@
 --   "wall"    hangs on a wall (pictures, shelves, wall lights)
 --   "opening" a door or window that cuts the wall
 --   "ceiling" hangs from the ceiling
---   "stairs"  climbs one storey and cuts the floor above
+--   "stairs"  climbs one storey and cuts the floor above (and the ways between floors, Recipes/Travel:
+--             `travel` says which, `hole` what it cuts if less than all of it, `spans` how many
+--             floors a lift runs up)
 --   "mark"    flat paint lying on a floor, a path or the ground, on any level (Recipes/Markings):
 --             it never stops anything standing over it, and another mark can go over it
 -- Two more optional fields:
@@ -63,6 +65,10 @@ export type Def = {
 	vip: boolean?, -- only for VIP owners (Sim/Passes.has(profile, "vip"))
 	gives: string?, -- holding E on it gives the player a thing: a source in Data/Items.Sources (Services/Bag)
 	prize: boolean?, -- a keepsake a town goal gives, not a villager (Build/Recipes/Prizes, Data/Goals' `piece`)
+	-- (a way between floors, place "stairs": Build/Recipes/Travel)
+	travel: string?, -- "stairs", "ladder", "pole", "slide" or "lift" (Sim/Lifts)
+	hole: { number }?, -- the hole it cuts in the floor above, x1, z1, x2, z2 in its own space (all of it if nil)
+	spans: number?, -- how many floors up it runs (1 if nil): a lift's floors less one
 }
 
 local Catalog = {}

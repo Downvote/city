@@ -2221,8 +2221,10 @@ State.onPlan(function(ops)
 	planVersion += 1
 	if s.active and Underground.isHidden() then
 		-- (the terrain the server sends may fill some of the hidden ground in again)
-		Underground.refresh()
-		task.delay(1, Underground.refresh)
+		Underground.refresh(State.plan)
+		task.delay(1, function()
+			Underground.refresh(State.plan)
+		end)
 	end
 	if s.active then
 		lastGhostKey = ""

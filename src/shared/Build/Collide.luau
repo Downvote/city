@@ -61,7 +61,7 @@ function Collide.body(def: Catalog.Def): { Box }
 		return known
 	end
 	local out: { Box } = {}
-	if def.place == "stairs" then
+	if def.place == "stairs" and (def.travel == nil or def.travel == "stairs") then
 		-- stairs are their run and their width, rising toward their top end (+Z) a storey: a
 		-- stepped block under the line of the treads. Their drawing's hidden ramp is a long
 		-- tilted slab whose box reaches well past both ends, so a stair against a wall would

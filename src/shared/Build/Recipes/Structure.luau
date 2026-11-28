@@ -165,6 +165,58 @@ local items: { any } = {
 		end,
 	},
 	{
+		-- an open stair in a well: the hole in the floor over it has a steel and glass rail round its
+		-- sides and its foot (the user: "make ways to travel down, like different hole types";
+		-- the rest are in Recipes/Travel)
+		id = "stairwell",
+		name = "Open stairwell",
+		cat = "structure",
+		style = "modern",
+		travel = "stairs",
+		price = 460,
+		place = "stairs",
+		size = Vector3.new(5, H + 3.4, 14),
+		hole = { -2.05, -7, 2.05, 6.5 },
+		c1 = "45454A",
+		c2 = "B8BCC4",
+		tags = { "stairs" },
+		build = function(r: R)
+			stairs(r, 4, 14, false)
+			local steel, glass = r.c2, Color3.fromRGB(186, 214, 226)
+			-- the rail stands on the floor left round the hole: along both sides and across the foot
+			local runs = {
+				{ Vector3.new(-2.3, H, -7), Vector3.new(-2.3, H, 6.75) },
+				{ Vector3.new(2.3, H, -7), Vector3.new(2.3, H, 6.75) },
+				{ Vector3.new(-2.15, H, 6.75), Vector3.new(2.15, H, 6.75) },
+			}
+			for _, run in runs do
+				local a, b = run[1], run[2]
+				local len = (b - a).Magnitude
+				local dir = (b - a) / len
+				r:beam(
+					a + Vector3.new(0, 0.08, 0),
+					b + Vector3.new(0, 0.08, 0),
+					0.24,
+					0.16,
+					shade(steel, 0.85),
+					"Metal"
+				)
+				r:beam(a + Vector3.new(0, 3.3, 0), b + Vector3.new(0, 3.3, 0), 0.2, 0.12, steel, "Metal")
+				local n = math.max(1, math.ceil(len / 3.4))
+				for i = 0, n do
+					local p = a + dir * (len * i / n)
+					r:block(p.X - 0.08, H + 0.16, p.Z - 0.08, p.X + 0.08, H + 3.24, p.Z + 0.08, steel, "Metal")
+				end
+				for i = 0, n - 1 do
+					local p, q = a + dir * (len * i / n + 0.12), a + dir * (len * (i + 1) / n - 0.12)
+					local across = Vector3.new(dir.Z, 0, -dir.X) * 0.03
+					local lo, hi = (p - across):Min(q + across), (p - across):Max(q + across)
+					r:block(lo.X, H + 0.36, lo.Z, hi.X, H + 3.06, hi.Z, glass, "Glass").transp = 0.6
+				end
+			end
+		end,
+	},
+	{
 		id = "porch_steps",
 		name = "Porch steps",
 		cat = "structure",

@@ -5,6 +5,8 @@ local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Colors = require(script.Parent.Parent.Util.Colors)
 local Geometry = require(script.Parent.Geometry)
 local Plan = require(script.Parent.Plan)
+-- (convex polygons on the ground plane: fitting roofs that meet)
+local Poly = require(script.Parent.Poly)
 
 type Prim = Geometry.Prim
 
@@ -701,7 +703,305 @@ function Shapes.floor(f: Plan.Floor, holes: { { number } }?, under: { { number }
 	return out
 end
 
+-- Ground floors that meet ---------------------------------------------------------------------------
+--
+-- Ground floors that touch or overlap are drawn as one (the user: "make it such that paths dont z
+-- fight if interesecting each other, and their edges merge together so it outlines their entire
+-- combined shape"). Where two overlap, the one laid last lies on top and the other leaves that part
+-- out, so no two tops lie in one place. A laid floor's edging course runs only round the outside of
+-- all of them together (round a room's floor or a grass path it meets, none), turning in at an
+-- inside corner, and its grass bank only along that outside, carried round an outside corner and
+-- stopped at an inside one. Each floor draws what lies over its own part, so a change redraws the
+-- floors it touches (Plan.affected). A floor touching none is drawn as it always was.
+
+local function laidLater(a: string, b: string): boolean
+	local na, nb = tonumber(a), tonumber(b)
+	if na and nb and na ~= nb then
+		return na > nb
+	end
+	return a > b
+end
+
+-- Do two floors' rectangles touch or overlap?
+function Shapes.floorsMeet(a: Plan.Floor, b: Plan.Floor): boolean
+	return a.lv == b.lv and a.x1 <= b.x2 + EPS and a.x2 >= b.x1 - EPS and a.z1 <= b.z2 + EPS and a.z2 >= b.z1 - EPS
+end
+
+-- Rectangles of one kind merged into as few as will do: `cells[j][i]` is the kind of the cell
+-- between xs[i], xs[i + 1] and zs[j], zs[j + 1] (nil for none).
+local function mergeCells(xs: { number }, zs: { number }, cells: { { string? } }): { { any } }
+	local out: { { any } } = {}
+	local open: { [string]: { any } } = {}
+	for j = 1, #zs - 1 do
+		local runs: { [string]: { any } } = {}
+		local i = 1
+		while i <= #xs - 1 do
+			local kind = cells[j][i]
+			local k = i
+			while k + 1 <= #xs - 1 and cells[j][k + 1] == kind do
+				k += 1
+			end
+			if kind then
+				local id = xs[i] .. "," .. xs[k + 1] .. "," .. kind
+				local was = open[id]
+				if was then
+					was[4] = zs[j + 1]
+					runs[id] = was
+				else
+					local made: { any } = { xs[i], zs[j], xs[k + 1], zs[j + 1], kind }
+					table.insert(out, made)
+					runs[id] = made
+				end
+			end
+			i = k + 1
+		end
+		open = runs
+	end
+	return out
+end
+
+-- Ground floor `key` of the plan, drawn with the ground floors it meets. `holes` are cut from it.
+function Shapes.groundFloor(plan: Plan.PlanData, key: string, holes: { { number } }?): { Prim }
+	local f = plan.floors[key]
+	local near: { Plan.Floor } = {}
+	local over: { { number } } = {} -- the parts of it laid over later
+	for k, g in plan.floors do
+		if k ~= key and Shapes.floorsMeet(f, g) then
+			table.insert(near, g)
+			if
+				laidLater(k, key)
+				and math.min(f.x2, g.x2) - math.max(f.x1, g.x1) > EPS
+				and math.min(f.z2, g.z2) - math.max(f.z1, g.z1) > EPS
+			then
+				table.insert(over, { g.x1, g.z1, g.x2, g.z2 })
+			end
+		end
+	end
+	local laid = Shapes.laid(f)
+	if #near == 0 or (laid == nil and #over == 0) then
+		return Shapes.floor(f, holes)
+	end
+	local out: { Prim } = {}
+	local top = P.Foundation
+	local color = Colors.fromHex(f.c)
+	local mine = { { f.x1, f.z1, f.x2, f.z2 } }
+	for _, h in over do
+		mine = Shapes.subtract(mine, h)
+	end
+	local cuts: { { number } } = holes or {}
+	local function slab(r: { number }, c: Color3, m: string, cutBy: { { number } })
+		local rs = { r }
+		for _, h in cutBy do
+			rs = Shapes.subtract(rs, h)
+		end
+		for _, q in rs do
+			table.insert(out, Geometry.span(Vector3.new(q[1], 0, q[2]), Vector3.new(q[3], top, q[4]), c, m))
+		end
+	end
+	if laid == nil then
+		-- a room's floor: its slab, less what is laid over it (its stairwells a hair wider, as alone)
+		local wide = {}
+		for _, h in cuts do
+			table.insert(wide, { h[1] - 0.05, h[2] - 0.05, h[3] + 0.05, h[4] + 0.05 })
+		end
+		for _, r in mine do
+			slab(r, color, f.m, wide)
+		end
+		return out
+	end
+
+	-- all of them together
+	local union = { { f.x1, f.z1, f.x2, f.z2 } }
+	for _, g in near do
+		table.insert(union, { g.x1, g.z1, g.x2, g.z2 })
+	end
+	local function inside(x: number, z: number): boolean
+		for _, u in union do
+			if x > u[1] and x < u[3] and z > u[2] and z < u[4] then
+				return true
+			end
+		end
+		return false
+	end
+	local function covered(x1: number, z1: number, x2: number, z2: number): boolean
+		local rs = { { x1, z1, x2, z2 } }
+		for _, u in union do
+			rs = Shapes.subtract(rs, u)
+			if #rs == 0 then
+				return true
+			end
+		end
+		return false
+	end
+
+	-- the top: the edging course within `w` of the outside of them all, the rest inside it
+	local x1, z1, x2, z2 = f.x1, f.z1, f.x2, f.z2
+	local w = if laid then math.min(Shapes.EdgeWidth, (x2 - x1) / 4, (z2 - z1) / 4) else 0
+	local base = string.match(f.m, "^[^:]+") or f.m
+	local edgeColor = if base == "Asphalt" then KERB else Colors.shade(color, 0.8)
+	local edgeMat = if base == "Asphalt" then "Concrete" else f.m
+	for _, r in mine do
+		if w <= 0 then
+			slab(r, color, f.m, cuts)
+			continue
+		end
+		-- (the lines where the course can change: this part's sides, every edge of them all, and
+		-- those moved in and out by the course's width)
+		local function breaks(lo: number, hi: number, edges: { number }): { number }
+			local list = { lo, hi, lo + w, hi - w }
+			for _, e in edges do
+				table.insert(list, e - w)
+				table.insert(list, e)
+				table.insert(list, e + w)
+			end
+			table.sort(list)
+			local cut = {}
+			for _, v in list do
+				local c = math.clamp(v, lo, hi)
+				if #cut == 0 or c > cut[#cut] + 1e-4 then
+					table.insert(cut, c)
+				end
+			end
+			return cut
+		end
+		local ex, ez = {}, {}
+		for _, u in union do
+			table.insert(ex, u[1])
+			table.insert(ex, u[3])
+			table.insert(ez, u[2])
+			table.insert(ez, u[4])
+		end
+		local xs = breaks(r[1], r[3], ex)
+		local zs = breaks(r[2], r[4], ez)
+		local cells: { { string? } } = {}
+		for j = 1, #zs - 1 do
+			cells[j] = {}
+			local cz = (zs[j] + zs[j + 1]) / 2
+			for i = 1, #xs - 1 do
+				local cx = (xs[i] + xs[i + 1]) / 2
+				local g = w - 1e-4
+				cells[j][i] = if covered(cx - g, cz - g, cx + g, cz + g) then "inner" else "edge"
+			end
+		end
+		for _, q in mergeCells(xs, zs, cells) do
+			if q[5] == "inner" then
+				slab({ q[1], q[2], q[3], q[4] }, color, f.m, cuts)
+			else
+				slab({ q[1], q[2], q[3], q[4] }, edgeColor, edgeMat, cuts)
+			end
+		end
+	end
+
+	-- the bank, along the outside of them all next to this floor's own part
+	local run, low, into = Shapes.BankRun, -0.1, 0.08
+	local h, size = top - low, P.Size
+	local yMid = low + h / 2
+	local back = run / 2 - into
+	local d = 1e-3
+	type Side = { alongX: boolean, at: number, out: number, from: number, to: number }
+	local sides: { [string]: { Side } } = {}
+	for _, r in mine do
+		for _, sd in
+			{
+				{ alongX = true, at = r[2], out = -1, from = r[1], to = r[3] },
+				{ alongX = true, at = r[4], out = 1, from = r[1], to = r[3] },
+				{ alongX = false, at = r[1], out = -1, from = r[2], to = r[4] },
+				{ alongX = false, at = r[3], out = 1, from = r[2], to = r[4] },
+			} :: { Side }
+		do
+			local stops = { sd.from, sd.to }
+			for _, u in union do
+				local ends: { number } = if sd.alongX then { u[1], u[3] } else { u[2], u[4] }
+				for _, e in ends do
+					if e > sd.from and e < sd.to then
+						table.insert(stops, e)
+					end
+				end
+			end
+			table.sort(stops)
+			for i = 1, #stops - 1 do
+				local a, b = stops[i], stops[i + 1]
+				if b > a + 1e-4 then
+					local mid = (a + b) / 2
+					local px, pz
+					if sd.alongX then
+						px, pz = mid, sd.at + sd.out * d
+					else
+						px, pz = sd.at + sd.out * d, mid
+					end
+					if not inside(px, pz) then
+						local id = tostring(sd.alongX) .. "," .. sd.at .. "," .. sd.out
+						sides[id] = sides[id] or {}
+						table.insert(sides[id], { alongX = sd.alongX, at = sd.at, out = sd.out, from = a, to = b })
+					end
+				end
+			end
+		end
+	end
+	for _, list in sides do
+		table.sort(list, function(p, q)
+			return p.from < q.from
+		end)
+		-- (runs end to end along one line are one bank)
+		local merged: { Side } = {}
+		for _, sd in list do
+			local last = merged[#merged]
+			if last and math.abs(last.to - sd.from) < 1e-4 then
+				last.to = sd.to
+			else
+				table.insert(merged, { alongX = sd.alongX, at = sd.at, out = sd.out, from = sd.from, to = sd.to })
+			end
+		end
+		for _, sd in merged do
+			if sd.at + sd.out * run < 0 or sd.at + sd.out * run > size then
+				continue -- (it would run off the plot: left as it is)
+			end
+			-- round an outside corner the bank carries on to meet the next; at an inside one, or where
+			-- another floor's part carries the edge on, it stops
+			local function turns(atEnd: number, past: number): boolean
+				local px, pz
+				if sd.alongX then
+					px, pz = atEnd + past * d, sd.at - sd.out * d
+				else
+					px, pz = sd.at - sd.out * d, atEnd + past * d
+				end
+				return not inside(px, pz)
+			end
+			local a = if turns(sd.from, -1) then sd.from - run else sd.from
+			local b = if turns(sd.to, 1) then sd.to + run else sd.to
+			a, b = math.max(0.05, a), math.min(size - 0.05, b)
+			if b <= a + 1e-3 then
+				continue
+			end
+			local p = Geometry.box(CFrame.new(), Vector3.new(b - a, h, run), Shapes.Turf, "Grass")
+			if sd.alongX then
+				local z = sd.at + sd.out * back
+				p.cf = CFrame.new((a + b) / 2, yMid, z)
+					* (if sd.out < 0 then CFrame.identity else CFrame.Angles(0, math.pi, 0))
+			else
+				local x = sd.at + sd.out * back
+				p.cf = CFrame.new(x, yMid, (a + b) / 2)
+					* CFrame.Angles(0, if sd.out < 0 then math.pi / 2 else -math.pi / 2, 0)
+			end
+			p.shape = "Wedge"
+			p.name = "Bank"
+			table.insert(out, p)
+		end
+	end
+	return out
+end
+
 -- Roofs -----------------------------------------------------------------------------------------
+--
+-- A roof alone is drawn as it always was. Roofs on one floor that meet or overlap are fitted
+-- together the way a roofer would build them (the user: "it seems like when roofs are put
+-- together, z fighting occurs"): each face of a roof is cut where another roof's face lies over it
+-- inside that roof's own walls (a valley where two meet, an eave that runs in under its
+-- neighbour), and where two faces lie in one plane (two roofs in a row, their overhangs over the
+-- same strip) only the roof that was there first keeps it. A gable or a lean-to's end that
+-- another roof closes is left out, one that stands against another roof is set back inside its
+-- own roof so it never shares a plane with the other's end, and the ceiling runs on to the joint.
+-- Ridge caps in one line, and a flat roof's low walls, are cut the same way. (Roofs.)
 
 -- Maps a roof's own (u along the ridge, v across) frame onto the plot for each direction.
 local function mapper(r: Plan.Roof, dir: number): ((number, number, number) -> Vector3, number, number)
@@ -725,17 +1025,87 @@ local function mapper(r: Plan.Roof, dir: number): ((number, number, number) -> V
 	end
 end
 
-function Shapes.roof(r: Plan.Roof): { Prim }
-	local out: { Prim } = {}
+-- One flat face of a roof, as Shapes.roof would draw it alone (`call` with `pts`), with its plane
+-- (the top of its boards: h = A + Bx x + Bz z, and its underside's A) and its outline on the plot.
+type Face = {
+	call: string, -- "quad" or "tri" (Geometry's), or "slab" (a flat roof's box)
+	pts: { Vector3 },
+	color: Color3,
+	mat: string,
+	plan: Poly.Polygon,
+	top: Poly.Polygon, -- the outline of its top (its boards grow out from `plan` along their normal)
+	sx: number, -- how far the top lies from the underside across the ground
+	sz: number,
+	A: number,
+	Bx: number,
+	Bz: number,
+	under: number, -- the underside's A
+	lo: Vector3?, -- (a flat roof's box)
+	hi: Vector3?,
+}
+-- A vertical end: a gable (or a lean-to's side) across the line u, or a lean-to's high wall.
+type End = { kind: string, u: number }
+type Drawn = {
+	r: Plan.Roof,
+	style: string,
+	Pt: (number, number, number) -> Vector3,
+	U: number,
+	V: number,
+	y0: number,
+	top: number,
+	o: number,
+	faces: { Face },
+	caps: { { Vector3 } },
+	parapets: { { Vector3 } },
+}
+
+local RT = P.RoofThickness
+-- the gable ends: a little thinner than a wall, so where a wall of the storey above runs
+-- through one the gable is hidden inside it rather than flickering on its faces
+local GABLE = P.WallThickness - 0.06
+
+local function face(call: string, pts: { Vector3 }, color: Color3, mat: string, t: number): Face
+	local n = if call == "tri"
+		then (pts[2] - pts[1]):Cross(pts[3] - pts[1])
+		else (pts[2] - pts[1]):Cross(pts[4] - pts[1])
+	if n.Magnitude < 1e-9 then
+		n = Vector3.yAxis
+	end
+	n = n.Unit
+	if n.Y < 0 then
+		n = -n
+	end
+	local ny = math.max(n.Y, 1e-3)
+	local q = pts[1] + n * t
+	local plan: Poly.Polygon = {}
+	local topPlan: Poly.Polygon = {}
+	for _, p in pts do
+		table.insert(plan, { p.X, p.Z })
+		table.insert(topPlan, { p.X + n.X * t, p.Z + n.Z * t })
+	end
+	local bx, bz = -n.X / ny, -n.Z / ny
+	return {
+		call = call,
+		pts = pts,
+		color = color,
+		mat = mat,
+		plan = Poly.ccw(Poly.clean(plan)),
+		top = Poly.ccw(Poly.clean(topPlan)),
+		sx = n.X * t,
+		sz = n.Z * t,
+		A = q.Y - bx * q.X - bz * q.Z,
+		Bx = bx,
+		Bz = bz,
+		under = pts[1].Y - bx * pts[1].X - bz * pts[1].Z,
+	}
+end
+
+-- What a roof is made of, worked out once, before anything is drawn.
+local function roofParts(r: Plan.Roof): Drawn
 	local color = Colors.fromHex(r.c)
-	local color2 = Colors.fromHex(r.c2)
-	local t = P.RoofThickness
-	-- the gable ends: a little thinner than a wall, so where a wall of the storey above runs
-	-- through one the gable is hidden inside it rather than flickering on its faces
-	local GABLE = P.WallThickness - 0.06
+	local t = RT
 	local o = r.over
 	local y0 = Plan.levelTop(r.lv)
-	local up = Vector3.yAxis
 	local style = r.style
 	if r.rise <= 0.01 then
 		style = "flat"
@@ -747,91 +1117,45 @@ function Shapes.roof(r: Plan.Roof): { Prim }
 		Pt, U, V = mapper(r, dir)
 	end
 	local top = y0 + r.rise
-
-	local function add(list: { Prim })
-		Geometry.append(out, list)
+	local d: Drawn = {
+		r = r,
+		style = style,
+		Pt = Pt,
+		U = U,
+		V = V,
+		y0 = y0,
+		top = top,
+		o = o,
+		faces = {},
+		caps = {},
+		parapets = {},
+	}
+	local function slope(call: string, pts: { Vector3 })
+		table.insert(d.faces, face(call, pts, color, r.m, t))
 	end
-	local function cap(a: Vector3, b: Vector3)
-		-- a hair past the roof's own ends, so its end faces don't lie on the gable ends' faces
-		local along = if (b - a).Magnitude > 1e-3 then (b - a).Unit * 0.04 else Vector3.zero
-		local prim = Geometry.beam(
-			a - along + Vector3.new(0, t * 0.9, 0),
-			b + along + Vector3.new(0, t * 0.9, 0),
-			0.9,
-			0.45,
-			Colors.shade(color, 0.85),
-			r.m
-		)
-		if prim then
-			table.insert(out, prim)
-		end
-	end
-
-	-- under a pitched roof, a flat ceiling of boards across the rooms at the top of the walls (the
-	-- user: "make it such that roofs create a flat bottom below it as a ceiling instead of letting
-	-- players see the inner pyramid of the roof"). Its top sits a little under the walls' tops so
-	-- the two never lie level, and it goes with the roof (hidden with it in Build mode).
-	if style ~= "flat" then
-		-- (in a hair from the roof's edges, inside the walls standing on them but on no face of theirs)
-		local i = Shapes.CeilingInset
-		local c1, c2 =
-			Pt(i, y0 - Shapes.CeilingDrop - Shapes.CeilingThick, i), Pt(U - i, y0 - Shapes.CeilingDrop, V - i)
-		local ceiling = Geometry.span(c1:Min(c2), c1:Max(c2), CEILING, "WoodPlanks")
-		ceiling.name = "Ceiling"
-		table.insert(out, ceiling)
-	end
-
 	if style == "flat" then
-		local lo = Pt(-o, y0, -o)
-		local hi = Pt(U + o, y0 + 0.8, V + o)
-		table.insert(out, Geometry.span(lo, hi, color, r.m))
+		local lo, hi = Pt(-o, y0, -o), Pt(U + o, y0 + 0.8, V + o)
+		local f = face("slab", {
+			Vector3.new(lo.X, y0 + 0.8, lo.Z),
+			Vector3.new(hi.X, y0 + 0.8, lo.Z),
+			Vector3.new(hi.X, y0 + 0.8, hi.Z),
+			Vector3.new(lo.X, y0 + 0.8, hi.Z),
+		}, color, r.m, 0)
+		f.lo, f.hi = lo, hi
+		f.under = y0
+		table.insert(d.faces, f)
 		local y1, y2 = y0 + 0.8, y0 + 2
 		local corners = { Pt(-o, 0, -o), Pt(U + o, 0, -o), Pt(U + o, 0, V + o), Pt(-o, 0, V + o) }
 		for i = 1, 4 do
 			local a, b = corners[i], corners[i % 4 + 1]
-			local prim = Geometry.beam(
-				Vector3.new(a.X, (y1 + y2) / 2, a.Z),
-				Vector3.new(b.X, (y1 + y2) / 2, b.Z),
-				0.5,
-				y2 - y1,
-				color2,
-				r.m2
-			)
-			if prim then
-				table.insert(out, prim)
-			end
+			table.insert(d.parapets, { Vector3.new(a.X, (y1 + y2) / 2, a.Z), Vector3.new(b.X, (y1 + y2) / 2, b.Z) })
 		end
 	elseif style == "gable" then
 		local s = r.rise / (V / 2)
 		local ye = y0 - s * o
-		add(
-			Geometry.quad(
-				Pt(-o, ye, -o),
-				Pt(U + o, ye, -o),
-				Pt(U + o, top, V / 2),
-				Pt(-o, top, V / 2),
-				t,
-				color,
-				r.m,
-				up
-			)
-		)
-		add(
-			Geometry.quad(
-				Pt(-o, ye, V + o),
-				Pt(U + o, ye, V + o),
-				Pt(U + o, top, V / 2),
-				Pt(-o, top, V / 2),
-				t,
-				color,
-				r.m,
-				up
-			)
-		)
-		cap(Pt(-o, top, V / 2), Pt(U + o, top, V / 2))
-		for _, u in { 0, U } do
-			add(Geometry.triangle(Pt(u, y0, 0), Pt(u, y0, V), Pt(u, top, V / 2), GABLE, color2, r.m2))
-		end
+		slope("quad", { Pt(-o, ye, -o), Pt(U + o, ye, -o), Pt(U + o, top, V / 2), Pt(-o, top, V / 2) })
+		slope("quad", { Pt(-o, ye, V + o), Pt(U + o, ye, V + o), Pt(U + o, top, V / 2), Pt(-o, top, V / 2) })
+		table.insert(d.caps, { Pt(-o, top, V / 2), Pt(U + o, top, V / 2) })
 	elseif style == "hip" or style == "pyramid" then
 		local half = if style == "hip" then V / 2 else math.min(U, V) / 2
 		local s = r.rise / half
@@ -845,43 +1169,634 @@ function Shapes.roof(r: Plan.Roof): { Prim }
 			r2 = r1
 		end
 		if (r2 - r1).Magnitude > 0.01 then
-			add(Geometry.quad(e1, e2, r2, r1, t, color, r.m, up))
-			add(Geometry.quad(e4, e3, r2, r1, t, color, r.m, up))
-			cap(r1, r2)
+			slope("quad", { e1, e2, r2, r1 })
+			slope("quad", { e4, e3, r2, r1 })
+			table.insert(d.caps, { r1, r2 })
 		else
-			add(Geometry.tri(e1, e2, r1, t, color, r.m, up))
-			add(Geometry.tri(e4, e3, r1, t, color, r.m, up))
+			slope("tri", { e1, e2, r1 })
+			slope("tri", { e4, e3, r1 })
 		end
-		add(Geometry.tri(e1, e4, r1, t, color, r.m, up))
-		add(Geometry.tri(e2, e3, r2, t, color, r.m, up))
+		slope("tri", { e1, e4, r1 })
+		slope("tri", { e2, e3, r2 })
 	elseif style == "shed" then
 		local s = r.rise / V
 		local yLow = y0 - s * o
 		local yHigh = top + s * o
-		add(
-			Geometry.quad(
-				Pt(-o, yLow, -o),
-				Pt(U + o, yLow, -o),
-				Pt(U + o, yHigh, V + o),
-				Pt(-o, yHigh, V + o),
-				t,
-				color,
-				r.m,
-				up
-			)
+		slope("quad", { Pt(-o, yLow, -o), Pt(U + o, yLow, -o), Pt(U + o, yHigh, V + o), Pt(-o, yHigh, V + o) })
+	end
+	return d
+end
+
+-- Where the roof's top is over a point, by one of its faces.
+local function heightOf(f: Face, x: number, z: number): number
+	return f.A + f.Bx * x + f.Bz * z
+end
+local function undersideOf(f: Face, x: number, z: number): number
+	return f.under + f.Bx * x + f.Bz * z
+end
+
+-- Which of two roofs was there first (keys are the plan's numbers; it keeps what they share).
+local function first(a: string, b: string): boolean
+	local na, nb = tonumber(a), tonumber(b)
+	if na and nb and na ~= nb then
+		return na < nb
+	end
+	return a < b
+end
+
+type Other = { key: string, roof: Plan.Roof, parts: Drawn? }
+export type RoofJoin = { key: string, others: { Other } }
+
+local function partsOf(o: Other): Drawn
+	local p = o.parts
+	if p then
+		return p
+	end
+	local made = roofParts(o.roof)
+	o.parts = made
+	return made
+end
+
+local function footOf(r: Plan.Roof): Poly.Polygon
+	return Poly.rect(r.x1, r.z1, r.x2, r.z2)
+end
+
+-- What of face `f` of roof `r` (its top's outline, on the ground) the others hide. Over the two
+-- roofs' rooms the higher top hides the lower; over the other's room this one keeps only what stands
+-- clear over the other's top (an eave or a flat roof's edge running in under it goes); out past both
+-- the higher hides the lower. Faces in one plane: the roof that was there first keeps what they share.
+local function hiders(f: Face, r: Plan.Roof, join: RoofJoin): { Poly.Polygon }
+	local out: { Poly.Polygon } = {}
+	local mine = footOf(r)
+	local function add(poly: Poly.Polygon, a: number, b: number, c: number)
+		if #poly >= 3 then
+			local part = Poly.clip(poly, a, b, c)
+			if #part >= 3 and math.abs(Poly.area(part)) > 1e-3 then
+				table.insert(out, part)
+			end
+		end
+	end
+	for _, o in join.others do
+		local parts = partsOf(o)
+		local foot = footOf(o.roof)
+		local before = first(o.key, join.key)
+		for _, g in parts.faces do
+			local over = Poly.intersect(f.top, g.top)
+			if #over >= 3 and math.abs(Poly.area(over)) > 1e-3 then
+				local same = true
+				for _, p in over do
+					if math.abs(heightOf(g, p[1], p[2]) - heightOf(f, p[1], p[2])) > 0.02 then
+						same = false
+						break
+					end
+				end
+				if same then
+					if before then
+						table.insert(out, over)
+					end
+				else
+					-- (g's top over f's top: dA + dBx x + dBz z > 0; over f's underside: the same less f's thickness)
+					local dx, dz, dTop = g.Bx - f.Bx, g.Bz - f.Bz, g.A - f.A
+					local dUnder = g.A - f.under
+					local inFoot = Poly.intersect(over, foot)
+					add(Poly.intersect(inFoot, mine), dx, dz, dTop)
+					for _, piece in Poly.subtract(inFoot, mine) do
+						add(piece, dx, dz, dUnder)
+					end
+					for _, piece in Poly.subtractAll(over, { mine, foot }) do
+						add(piece, dx, dz, dTop)
+					end
+				end
+			end
+		end
+	end
+	return out
+end
+
+-- Draws a face, or what is left of it.
+local function drawFace(out: { Prim }, f: Face, pieces: { Poly.Polygon }?)
+	local up = Vector3.yAxis
+	if not pieces then
+		if f.call == "slab" then
+			table.insert(out, Geometry.span(f.lo :: Vector3, f.hi :: Vector3, f.color, f.mat))
+		elseif f.call == "quad" then
+			Geometry.append(out, Geometry.quad(f.pts[1], f.pts[2], f.pts[3], f.pts[4], RT, f.color, f.mat, up))
+		else
+			Geometry.append(out, Geometry.tri(f.pts[1], f.pts[2], f.pts[3], RT, f.color, f.mat, up))
+		end
+		return
+	end
+	for _, piece in pieces do
+		if f.call == "slab" then
+			local lo, hi = f.lo :: Vector3, f.hi :: Vector3
+			local box, x1, z1, x2, z2 = Poly.box(piece)
+			if box then
+				table.insert(out, Geometry.span(Vector3.new(x1, lo.Y, z1), Vector3.new(x2, hi.Y, z2), f.color, f.mat))
+			else
+				for i = 2, #piece - 1 do
+					local a, b, c = piece[1], piece[i], piece[i + 1]
+					Geometry.append(
+						out,
+						Geometry.tri(
+							Vector3.new(a[1], lo.Y, a[2]),
+							Vector3.new(b[1], lo.Y, b[2]),
+							Vector3.new(c[1], lo.Y, c[2]),
+							hi.Y - lo.Y,
+							f.color,
+							f.mat,
+							up
+						)
+					)
+				end
+			end
+		else
+			local pts = {}
+			for _, p in piece do
+				table.insert(pts, Vector3.new(p[1], undersideOf(f, p[1], p[2]), p[2]))
+			end
+			if #pts == 4 then
+				Geometry.append(out, Geometry.quad(pts[1], pts[2], pts[3], pts[4], RT, f.color, f.mat, up))
+			else
+				for i = 2, #pts - 1 do
+					Geometry.append(out, Geometry.tri(pts[1], pts[i], pts[i + 1], RT, f.color, f.mat, up))
+				end
+			end
+		end
+	end
+end
+
+-- Spans of a line (from s0 to s1 along it) less the spans in `cuts`, each { from, to }.
+local function spansLeft(s0: number, s1: number, cuts: { { number } }): { { number } }
+	local spans = { { s0, s1 } }
+	for _, c in cuts do
+		local next = {}
+		for _, sp in spans do
+			if c[2] <= sp[1] + 1e-4 or c[1] >= sp[2] - 1e-4 then
+				table.insert(next, sp)
+			else
+				if c[1] > sp[1] + 0.05 then
+					table.insert(next, { sp[1], c[1] })
+				end
+				if c[2] < sp[2] - 0.05 then
+					table.insert(next, { c[2], sp[2] })
+				end
+			end
+		end
+		spans = next
+	end
+	return spans
+end
+
+-- A beam along the top of a roof from a to b (a ridge cap, or a flat roof's low wall), as the spans
+-- along it, from a, that the others take away: theirs in the same line where they were there first
+-- (`lines` finds them, each reaching `ext` past its ends), and what lies under their faces inside
+-- their walls (when `buried` gives the beam's height).
+local function cutLine(
+	a: Vector3,
+	b: Vector3,
+	join: RoofJoin,
+	lines: (Drawn) -> { { Vector3 } },
+	ext: number,
+	buried: number?
+): { { number } }
+	local d = b - a
+	local len = Vector3.new(d.X, 0, d.Z).Magnitude
+	if len < 1e-3 then
+		return {}
+	end
+	local dir = Vector3.new(d.X, 0, d.Z) / len
+	local cuts: { { number } } = {}
+	for _, o in join.others do
+		local parts = partsOf(o)
+		if first(o.key, join.key) then
+			for _, line in lines(parts) do
+				local p, q = line[1], line[2]
+				local e = Vector3.new(q.X - p.X, 0, q.Z - p.Z)
+				local el = e.Magnitude
+				if el > 1e-3 and math.abs(p.Y - a.Y) < 0.02 and math.abs(e.Unit:Dot(dir)) > 0.9999 then
+					local rel = Vector3.new(p.X - a.X, 0, p.Z - a.Z)
+					local off = rel - dir * rel:Dot(dir)
+					if off.Magnitude < 0.02 then
+						local s1 = rel:Dot(dir)
+						local s2 = Vector3.new(q.X - a.X, 0, q.Z - a.Z):Dot(dir)
+						table.insert(cuts, { math.min(s1, s2) - ext, math.max(s1, s2) + ext })
+					end
+				elseif el > 1e-3 and math.abs(p.Y - a.Y) < 0.02 then
+					-- (one across it at its height: the two tops would lie in one plane where they
+					-- cross, so this one stops at the sides of that one)
+					local eu = e / el
+					local cross = dir.X * eu.Z - dir.Z * eu.X
+					if math.abs(cross) > 1e-3 then
+						local rx, rz = p.X - a.X, p.Z - a.Z
+						local s = (rx * eu.Z - rz * eu.X) / cross -- along this one
+						local w = (rx * dir.Z - rz * dir.X) / cross -- along that one
+						if w > -ext - 0.5 and w < el + ext + 0.5 and s > -0.5 and s < len + 0.5 then
+							local half = 0.45 / math.abs(cross) + 0.45 * math.abs(eu:Dot(dir)) / math.abs(cross) + 0.04
+							table.insert(cuts, { s - half, s + half })
+						end
+					end
+				end
+			end
+		end
+		if buried then
+			local foot = footOf(o.roof)
+			for _, g in parts.faces do
+				local s0, s1 = Poly.segment(Poly.intersect(g.top, foot), a.X, a.Z, dir.X, dir.Z, -1, len + 1)
+				if s0 and s1 then
+					-- where g's top is over the line: h(s) = h0 + k s > buried
+					local h0 = heightOf(g, a.X, a.Z)
+					local k = g.Bx * dir.X + g.Bz * dir.Z
+					local lo, hi = s0, s1
+					if math.abs(k) < 1e-6 then
+						if h0 <= buried then
+							lo = hi
+						end
+					elseif k > 0 then
+						lo = math.max(lo, (buried - h0) / k)
+					else
+						hi = math.min(hi, (buried - h0) / k)
+					end
+					if hi > lo + 1e-3 then
+						-- (a hair more, so its cut end never lies on the cut end of the boards under it)
+						table.insert(cuts, { lo - 0.04, hi + 0.04 })
+					end
+				end
+			end
+		end
+	end
+	return cuts
+end
+
+-- How an end of roof `d` across the line `u` (its own frame) meets the others: "skip" (another
+-- roof closes it), "back" (it stands against another: drawn inside its own roof) or nil.
+-- `profile(v)` is the height of its top edge `v` along it, `v0`..`v1` its run.
+local function endState(
+	d: Drawn,
+	join: RoofJoin,
+	along: (number) -> Vector3,
+	v0: number,
+	v1: number,
+	profile: (number) -> number
+): string?
+	local a, b = along(v0), along(v1)
+	local state: string? = nil
+	for _, o in join.others do
+		local q = o.roof
+		local lo, hi = a:Min(b), a:Max(b)
+		local g = 0.01
+		-- (it stands against the other where it meets its walls or runs under its overhang)
+		local w = q.over + g
+		local touches = lo.X <= q.x2 + w
+			and hi.X >= q.x1 - w
+			and lo.Z <= q.z2 + w
+			and hi.Z >= q.z1 - w
+			and math.max(
+					math.min(hi.X, q.x2 + q.over) - math.max(lo.X, q.x1 - q.over),
+					math.min(hi.Z, q.z2 + q.over) - math.max(lo.Z, q.z1 - q.over)
+				)
+				> 0.05
+		if touches then
+			state = "back"
+			local inside = lo.X >= q.x1 - g and hi.X <= q.x2 + g and lo.Z >= q.z1 - g and hi.Z <= q.z2 + g
+			if inside then
+				local parts = partsOf(o)
+				local closed = true
+				for i = 0, 12 do
+					local v = v0 + (v1 - v0) * i / 12
+					local p = along(v)
+					local best = -math.huge
+					for _, f in parts.faces do
+						if Poly.inside(f.plan, p.X, p.Z, 1e-3) then
+							best = math.max(best, undersideOf(f, p.X, p.Z))
+						end
+					end
+					if best < profile(v) - 0.05 then
+						closed = false
+						break
+					end
+				end
+				if closed then
+					return "skip"
+				end
+			end
+		end
+	end
+	return state
+end
+
+-- A roof drawn on its own, or (`join`) fitted to the roofs it meets.
+function Shapes.roof(r: Plan.Roof, join: RoofJoin?): { Prim }
+	local out: { Prim } = {}
+	local d = roofParts(r)
+	local color = Colors.fromHex(r.c)
+	local color2 = Colors.fromHex(r.c2)
+	local t = RT
+	local Pt, U, V, y0, top = d.Pt, d.U, d.V, d.y0, d.top
+	local style = d.style
+	local joined = join ~= nil and #join.others > 0
+	local function add(list: { Prim })
+		Geometry.append(out, list)
+	end
+	local function cap(a: Vector3, b: Vector3, ends: { boolean }?)
+		-- a hair past the roof's own ends, so its end faces don't lie on the gable ends' faces
+		local along = if (b - a).Magnitude > 1e-3 then (b - a).Unit * 0.04 else Vector3.zero
+		local a2 = if not ends or ends[1] then a - along else a
+		local b2 = if not ends or ends[2] then b + along else b
+		local prim = Geometry.beam(
+			a2 + Vector3.new(0, t * 0.9, 0),
+			b2 + Vector3.new(0, t * 0.9, 0),
+			0.9,
+			0.45,
+			Colors.shade(color, 0.85),
+			r.m
 		)
+		if prim then
+			table.insert(out, prim)
+		end
+	end
+	-- a beam from a to b less what the others take, at its original ends or where it is cut
+	local function cutBeam(a: Vector3, b: Vector3, cuts: { { number } }, draw: (Vector3, Vector3, { boolean }) -> ())
+		local flat = Vector3.new(b.X - a.X, 0, b.Z - a.Z)
+		local len = flat.Magnitude
+		if len < 1e-3 then
+			return
+		end
+		local dir = (b - a) / len
+		for _, sp in spansLeft(0, len, cuts) do
+			draw(a + dir * sp[1], a + dir * sp[2], { sp[1] <= 1e-4, sp[2] >= len - 1e-4 })
+		end
+	end
+
+	-- under a pitched roof, a flat ceiling of boards across the rooms at the top of the walls (the
+	-- user: "make it such that roofs create a flat bottom below it as a ceiling instead of letting
+	-- players see the inner pyramid of the roof"). Its top sits a little under the walls' tops so
+	-- the two never lie level, and it goes with the roof (hidden with it in Build mode).
+	if style ~= "flat" then
+		-- (in a hair from the roof's edges, inside the walls standing on them but on no face of theirs)
+		local i = Shapes.CeilingInset
+		local c1, c2 =
+			Pt(i, y0 - Shapes.CeilingDrop - Shapes.CeilingThick, i), Pt(U - i, y0 - Shapes.CeilingDrop, V - i)
+		local lo, hi = c1:Min(c2), c1:Max(c2)
+		if not joined then
+			local ceiling = Geometry.span(lo, hi, CEILING, "WoodPlanks")
+			ceiling.name = "Ceiling"
+			table.insert(out, ceiling)
+		else
+			-- (run on to a side another roof meets, and left out under one that was there first)
+			local x1, z1, x2, z2 = lo.X, lo.Z, hi.X, hi.Z
+			local cuts = {}
+			for _, other in (join :: RoofJoin).others do
+				local q = other.roof
+				local overX = math.min(r.x2, q.x2) - math.max(r.x1, q.x1)
+				local overZ = math.min(r.z2, q.z2) - math.max(r.z1, q.z1)
+				if overX > -1e-3 and overZ > 0.05 then
+					if q.x1 <= r.x1 + 1e-3 and q.x2 >= r.x1 - 1e-3 then
+						x1 = r.x1
+					end
+					if q.x2 >= r.x2 - 1e-3 and q.x1 <= r.x2 + 1e-3 then
+						x2 = r.x2
+					end
+				end
+				if overZ > -1e-3 and overX > 0.05 then
+					if q.z1 <= r.z1 + 1e-3 and q.z2 >= r.z1 - 1e-3 then
+						z1 = r.z1
+					end
+					if q.z2 >= r.z2 - 1e-3 and q.z1 <= r.z2 + 1e-3 then
+						z2 = r.z2
+					end
+				end
+				local qStyle = if q.rise <= 0.01 then "flat" else q.style
+				if qStyle ~= "flat" and first(other.key, (join :: RoofJoin).key) and overX > 1e-3 and overZ > 1e-3 then
+					table.insert(cuts, { q.x1, q.z1, q.x2, q.z2 })
+				end
+			end
+			local rects = { { x1, z1, x2, z2 } }
+			for _, h in cuts do
+				rects = Shapes.subtract(rects, h)
+			end
+			for _, rc in rects do
+				local ceiling = Geometry.span(
+					Vector3.new(rc[1], lo.Y, rc[2]),
+					Vector3.new(rc[3], hi.Y, rc[4]),
+					CEILING,
+					"WoodPlanks"
+				)
+				ceiling.name = "Ceiling"
+				table.insert(out, ceiling)
+			end
+		end
+	end
+
+	-- the faces, each less what the others hide
+	for _, f in d.faces do
+		if joined then
+			local hide = hiders(f, r, join :: RoofJoin)
+			if #hide > 0 then
+				-- (what is hidden of its top, taken off its underside: the boards grow out to the top,
+				-- so where two meet in a valley their tops meet on the line and their boards don't cross)
+				for i, h in hide do
+					local moved = {}
+					for _, p in h do
+						table.insert(moved, { p[1] - f.sx, p[2] - f.sz })
+					end
+					hide[i] = moved
+				end
+				drawFace(out, f, Poly.subtractAll(f.plan, hide, 1e-3))
+			else
+				drawFace(out, f, nil)
+			end
+		else
+			drawFace(out, f, nil)
+		end
+	end
+
+	-- the ridge caps
+	local function capsOf(p: Drawn)
+		return p.caps
+	end
+	for _, c in d.caps do
+		if joined then
+			local cuts = cutLine(c[1], c[2], join :: RoofJoin, capsOf, 0.04, c[1].Y + t * 0.9)
+			-- (a hair past its ends when they are its own: cut by 0.04 from them)
+			local a, b = c[1], c[2]
+			local along = if (b - a).Magnitude > 1e-3 then (b - a).Unit * 0.04 else Vector3.zero
+			local len = (b - a).Magnitude + 0.08
+			if #cuts == 0 then
+				cap(a, b)
+			else
+				for i, cc in cuts do
+					cuts[i] = { cc[1] + 0.04, cc[2] + 0.04 }
+				end
+				local a0 = a - along
+				local dir = (b - a).Unit
+				for _, sp in spansLeft(0, len, cuts) do
+					cap(a0 + dir * sp[1], a0 + dir * sp[2], { false, false })
+				end
+			end
+		else
+			cap(c[1], c[2])
+		end
+	end
+
+	if style == "flat" then
+		local function parapetsOf(p: Drawn)
+			return p.parapets
+		end
+		for _, seg in d.parapets do
+			local a, b = seg[1], seg[2]
+			local function draw(p: Vector3, q: Vector3)
+				local prim = Geometry.beam(p, q, 0.5, 1.2, color2, r.m2)
+				if prim then
+					table.insert(out, prim)
+				end
+			end
+			if joined then
+				local cuts = cutLine(a, b, join :: RoofJoin, parapetsOf, 0)
+				-- (and where another roof's reach lies just outside it: the roofs join there. Tested
+				-- a little out from the wall, so one along the line of a shared edge stays.)
+				local flat = Vector3.new(b.X - a.X, 0, b.Z - a.Z)
+				local len = flat.Magnitude
+				local dir = flat / math.max(len, 1e-6)
+				local outward = Vector3.new(-dir.Z, 0, dir.X)
+				local mid = Vector3.new((r.x1 + r.x2) / 2, 0, (r.z1 + r.z2) / 2)
+				if outward:Dot(Vector3.new(a.X - mid.X, 0, a.Z - mid.Z)) < 0 then
+					outward = -outward
+				end
+				local p0 = a + outward * 0.3
+				for _, other in (join :: RoofJoin).others do
+					local q = other.roof
+					local g = q.over
+					local s0, s1 = Poly.segment(
+						Poly.rect(q.x1 - g, q.z1 - g, q.x2 + g, q.z2 + g),
+						p0.X,
+						p0.Z,
+						dir.X,
+						dir.Z,
+						0,
+						len
+					)
+					if s0 and s1 then
+						table.insert(cuts, { s0, s1 })
+					end
+				end
+				cutBeam(a, b, cuts, function(p, q)
+					draw(p, q)
+				end)
+			else
+				draw(a, b)
+			end
+		end
+	elseif style == "gable" then
+		for _, u in { 0, U } do
+			local inward = if u == 0 then 1 else -1
+			local state = if joined
+				then endState(
+					d,
+					join :: RoofJoin,
+					function(v)
+						return Pt(u, y0, v)
+					end,
+					0,
+					V,
+					function(v)
+						return y0 + r.rise * (1 - math.abs(v - V / 2) / (V / 2))
+					end
+				)
+				else nil
+			if state ~= "skip" then
+				local uc = if state == "back" then u + inward * GABLE / 2 else u
+				add(Geometry.triangle(Pt(uc, y0, 0), Pt(uc, y0, V), Pt(uc, top, V / 2), GABLE, color2, r.m2))
+			end
+		end
+	elseif style == "shed" then
 		-- The ends stop at the high side's face, which runs on over them to their outer faces:
 		-- the same shape, but where the high side leans on a taller wall the ends' feet keep off
 		-- the joints of the walls under that wall's foot.
 		local g = GABLE / 2
-		local vEnd = V - g
-		local topEnd = y0 + r.rise * vEnd / V
-		for _, u in { 0, U } do
-			add(Geometry.triangle(Pt(u, y0, 0), Pt(u, y0, vEnd), Pt(u, topEnd, vEnd), GABLE, color2, r.m2))
+		local ends: { string? } = { nil, nil }
+		local wall: string? = nil
+		if joined then
+			for i, u in { 0, U } do
+				ends[i] = endState(
+					d,
+					join :: RoofJoin,
+					function(v)
+						return Pt(u, y0, v)
+					end,
+					0,
+					V,
+					function(v)
+						return y0 + r.rise * v / V
+					end
+				)
+			end
+			wall = endState(
+				d,
+				join :: RoofJoin,
+				function(u)
+					return Pt(u, y0, V)
+				end,
+				0,
+				U,
+				function()
+					return top
+				end
+			)
 		end
-		add(Geometry.quad(Pt(-g, y0, V), Pt(U + g, y0, V), Pt(U + g, top, V), Pt(-g, top, V), GABLE, color2, r.m2))
+		local vWall = if wall == "back" then V - g else V
+		local vEnd = if wall == "skip" then V elseif wall == "back" then V - 2 * g else V - g
+		local topEnd = y0 + r.rise * vEnd / V
+		for i, u in { 0, U } do
+			if ends[i] ~= "skip" then
+				local inward = if u == 0 then 1 else -1
+				local uc = if ends[i] == "back" then u + inward * g else u
+				add(Geometry.triangle(Pt(uc, y0, 0), Pt(uc, y0, vEnd), Pt(uc, topEnd, vEnd), GABLE, color2, r.m2))
+			end
+		end
+		if wall ~= "skip" then
+			local u0 = if ends[1] == nil then -g else 0
+			local u1 = if ends[2] == nil then U + g else U
+			add(
+				Geometry.quad(
+					Pt(u0, y0, vWall),
+					Pt(u1, y0, vWall),
+					Pt(u1, top, vWall),
+					Pt(u0, top, vWall),
+					GABLE,
+					color2,
+					r.m2
+				)
+			)
+		end
 	end
 	return out
+end
+
+-- Do two roofs on one floor reach each other (their overhangs included)?
+function Shapes.roofsMeet(a: Plan.Roof, b: Plan.Roof): boolean
+	if a.lv ~= b.lv then
+		return false
+	end
+	local ga, gb = a.over + 0.05, b.over + 0.05
+	return a.x1 - ga <= b.x2 + gb and a.x2 + ga >= b.x1 - gb and a.z1 - ga <= b.z2 + gb and a.z2 + ga >= b.z1 - gb
+end
+
+-- Roof `key` of the plan, fitted to the roofs on its floor it meets.
+function Shapes.roofIn(plan: Plan.PlanData, key: string): { Prim }?
+	local r = plan.roofs[key]
+	if not r then
+		return nil
+	end
+	local others: { Other } = {}
+	for k, q in plan.roofs do
+		if k ~= key and Shapes.roofsMeet(r, q) then
+			table.insert(others, { key = k, roof = q })
+		end
+	end
+	if #others == 0 then
+		return Shapes.roof(r)
+	end
+	return Shapes.roof(r, { key = key, others = others })
 end
 
 return Shapes

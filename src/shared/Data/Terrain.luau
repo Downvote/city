@@ -453,7 +453,12 @@ end
 -- the channels (SolidMaterial, SolidOccupancy, LiquidOccupancy), each indexed [x][y][z].
 -- `mats` turns a material's name into what the channel holds (Enum.Material in the game).
 -- A voxel's sand and the sea in it are both kept (Roblox's shorelines), so the water's edge
--- lies on the slope and not on the voxels' steps.
+-- lies on the slope and not on the voxels' steps. The sea fills in only over its own floor (the
+-- sand and the slate, Terrain.SeaFloor): a plot's ground lies a voxel down, under the sea's level,
+-- and once had the sea over it there, hidden in the plot's ground part until Build mode showed the
+-- basement and that sheet of water was all there was to see (the user: "basement is bugged, it
+-- seems to only show water below").
+Terrain.SeaFloor = { Sand = true, Slate = true } :: { [string]: boolean }
 function Terrain.voxels(plan: Plan, tile: { number }, mats: { [string]: any }): (Vector3, Vector3, { [string]: any })
 	local V = Terrain.Voxel
 	local i0, j0, ni, nj = tile[1], tile[2], tile[3], tile[4]
@@ -483,6 +488,7 @@ function Terrain.voxels(plan: Plan, tile: { number }, mats: { [string]: any }): 
 			local k = row + a
 			local h = plan.height[k]
 			local mat = mats[plan.material[k]]
+			local sea = Terrain.SeaFloor[plan.material[k]] == true
 			local ma, oa, la = solidMat[a], solidOcc[a], liquidOcc[a]
 			for y = 1, ny do
 				local y0 = Terrain.Bottom + (y - 1) * V
@@ -495,7 +501,7 @@ function Terrain.voxels(plan: Plan, tile: { number }, mats: { [string]: any }): 
 						ma[y][c] = mat
 						oa[y][c] = solid
 					end
-					if h < wy and y0 < wy then
+					if sea and h < wy and y0 < wy then
 						la[y][c] = math.min(1, (wy - y0) / V)
 					end
 				end

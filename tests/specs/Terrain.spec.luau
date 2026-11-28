@@ -370,7 +370,9 @@ describe("Terrain", function()
 		end)
 
 		it("fill each column to its height, and the sea to its level over the sand", function()
-			local land, sea, shore = 0, 0, 0
+			-- (and only over the sea's own floor: the ground under a plot lies under the sea's
+			-- level, and the sea over it once showed as the whole basement, Build/Underground)
+			local land, sea, shore, dry = 0, 0, 0, 0
 			for _, tile in Terrain.tiles(plan, 48) do
 				-- (every fifth tile: they are all made the same way)
 				if (tile[1] + tile[2]) % 5 == 0 then
@@ -394,7 +396,7 @@ describe("Terrain", function()
 								end
 							end
 							expect(lo.Y + filled * V).toBeNear(h, 0.02)
-							if h < Terrain.WaterY then
+							if h < Terrain.WaterY and Terrain.SeaFloor[plan.material[k]] then
 								expect(water).toBeNear(Terrain.WaterY, 1e-6)
 								sea += 1
 								if h > Terrain.WaterY - 1 then
@@ -403,12 +405,18 @@ describe("Terrain", function()
 							else
 								expect(water).toBe(nil)
 								land += 1
+								if h < Terrain.WaterY then
+									for y = 1, #ch.LiquidOccupancy[a] do
+										expect(ch.LiquidOccupancy[a][y][c]).toBe(0)
+									end
+									dry += 1
+								end
 							end
 						end
 					end
 				end
 			end
-			expect(land > 1000 and sea > 1000 and shore > 50).toBeTruthy()
+			expect(land > 1000 and sea > 1000 and shore > 50 and dry > 100).toBeTruthy()
 		end)
 
 		it("fill the open sea out to the horizon, round the island's region and not over it", function()

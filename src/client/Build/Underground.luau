@@ -6,11 +6,14 @@
 -- so the rooms, the grid and what is being placed down there show from above. Going up a floor or
 -- leaving Build mode brings the ground back as the server has it.
 --
--- Only solid ground is cleared, and what was there is kept to put back. What the server digs or
--- fills meanwhile (a room dug or sold, a pool) reaches this screen as the server writes it: when
--- the ground comes back, a voxel the plan has dug now (a basement block, a water) is left as the
--- server made it, and the rest is put back as it was. The terrain the server sends may fill some
--- of the cleared ground in again, so it is cleared again after each change to the plan.
+-- The ground and any water in it are cleared, and what was there is kept to put back. What the
+-- plan digs (a basement block, a pool) is the server's: this screen never writes over it, so what
+-- the server digs or fills meanwhile (a room dug or sold) reaches this screen as the server writes
+-- it. (It once wrote back what it had kept over a room dug while the basement was shown, which left
+-- the sea's water there for good: the user, "moving up after viewing the basement also causes water
+-- patches to appear permanantly".) The terrain the server sends may fill some of the cleared ground
+-- in again, so it is cleared again after each change to the plan; a voxel filled again is the
+-- server's truth, and that is what goes back when the ground comes back.
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Plan = require(Shared.Build.Plan)
@@ -21,7 +24,9 @@ local Underground = {}
 local V = Basement.Voxel
 local CHANNELS = { "SolidMaterial", "SolidOccupancy", "LiquidOccupancy" }
 
+type Voxel = { m: any, o: number, l: number }
 type Saved = {
+	plotModel: Instance,
 	region: Region3,
 	frame: CFrame,
 	i0: number, -- the region's corner, in the world's voxels
@@ -30,8 +35,9 @@ type Saved = {
 	ny: number,
 	nz: number,
 	classic: boolean,
-	before: any, -- the channels (or materials and occupancy) read when it was hidden
-	cleared: { [number]: boolean }, -- which voxels were solid and cleared: x, y, z packed
+	-- what this screen cleared, as the server last had it: x, y, z packed. A voxel the plan digs
+	-- (a basement block, a water) is the server's and never in here.
+	orig: { [number]: Voxel },
 }
 
 local saved: Saved? = nil
@@ -65,23 +71,29 @@ local function isGround(part: Instance): boolean
 	return false
 end
 
+-- Fades the plot's ground out on this screen. Called again after every change, since the server
+-- cuts the ground afresh round what it digs, and the new pieces come in shown.
 local function fadeParts(plotModel: Instance)
 	for _, child in plotModel:GetChildren() do
-		if isGround(child) then
+		if isGround(child) and faded[child :: BasePart] == nil then
 			faded[child :: BasePart] = (child :: BasePart).CanQuery
 		end
 	end
 	local land = plotModel:FindFirstChild("Land")
 	if land then
 		for _, d in land:GetDescendants() do
-			if d:IsA("BasePart") then
+			if d:IsA("BasePart") and faded[d] == nil then
 				faded[d] = d.CanQuery
 			end
 		end
 	end
 	for part in faded do
-		part.LocalTransparencyModifier = 1
-		part.CanQuery = false
+		if part.Parent then
+			part.LocalTransparencyModifier = 1
+			part.CanQuery = false
+		else
+			faded[part] = nil
+		end
 	end
 end
 
@@ -120,40 +132,6 @@ local function landRegion(frame: CFrame, plan: any): (Region3?, number, number, 
 	return region, i0, k0, nx, ny, nz
 end
 
--- Writes air into every voxel that was cleared.
-local function clear(s: Saved)
-	local t = terrain()
-	if not t then
-		return
-	end
-	local air = Enum.Material.Air
-	local before = s.before
-	local mat, occ, liq = table.create(s.nx), table.create(s.nx), table.create(s.nx)
-	for x = 1, s.nx do
-		local mx, ox, lx = table.create(s.ny), table.create(s.ny), table.create(s.ny)
-		for y = 1, s.ny do
-			local ml, ol, ll = table.create(s.nz), table.create(s.nz), table.create(s.nz)
-			for z = 1, s.nz do
-				if s.cleared[pack(x, y, z)] then
-					ml[z], ol[z], ll[z] = air, 0, 0
-				elseif s.classic then
-					ml[z], ol[z], ll[z] = before.materials[x][y][z], before.occupancy[x][y][z], 0
-				else
-					ml[z], ol[z], ll[z] =
-						before.SolidMaterial[x][y][z], before.SolidOccupancy[x][y][z], before.LiquidOccupancy[x][y][z]
-				end
-			end
-			mx[y], ox[y], lx[y] = ml, ol, ll
-		end
-		mat[x], occ[x], liq[x] = mx, ox, lx
-	end
-	if s.classic then
-		t:WriteVoxels(s.region, V, mat, occ)
-	else
-		t:WriteVoxelChannels(s.region, V, { SolidMaterial = mat, SolidOccupancy = occ, LiquidOccupancy = liq })
-	end
-end
-
 -- The rectangles the plan has dug now, on the plot: its basement's blocks and its waters.
 local function dugRects(plan: any): { { number } }
 	local out = Basement.blocks(plan)
@@ -176,6 +154,95 @@ local function dugNow(frame: CFrame, dug: { { number } }, i: number, k: number):
 	return false
 end
 
+-- What the terrain holds in the region now, as one voxel reader.
+local function readNow(t: any, s: Saved): (number, number, number) -> Voxel
+	if s.classic then
+		local materials, occupancy = t:ReadVoxels(s.region, V)
+		return function(x, y, z)
+			local m = materials[x][y][z]
+			local o = occupancy[x][y][z]
+			if m == Enum.Material.Water then
+				return { m = Enum.Material.Air, o = 0, l = o }
+			end
+			return { m = m, o = o, l = 0 }
+		end
+	end
+	local ch = t:ReadVoxelChannels(s.region, V, CHANNELS)
+	return function(x, y, z)
+		return { m = ch.SolidMaterial[x][y][z], o = ch.SolidOccupancy[x][y][z], l = ch.LiquidOccupancy[x][y][z] }
+	end
+end
+
+-- Is there anything in a voxel: ground, or water? (Both hide the rooms. The sea once lay under
+-- every plot's ground, hidden in the plot's own ground part, and was all the basement showed.)
+local function filled(v: Voxel): boolean
+	return (v.o > 0 and v.m ~= Enum.Material.Air and v.m ~= Enum.Material.Water) or v.l > 0
+end
+
+-- Writes the region: `pick(x, y, z)` says what each voxel holds.
+local function write(t: any, s: Saved, pick: (number, number, number) -> Voxel)
+	local mat, occ, liq = table.create(s.nx), table.create(s.nx), table.create(s.nx)
+	for x = 1, s.nx do
+		local mx, ox, lx = table.create(s.ny), table.create(s.ny), table.create(s.ny)
+		for y = 1, s.ny do
+			local ml, ol, ll = table.create(s.nz), table.create(s.nz), table.create(s.nz)
+			for z = 1, s.nz do
+				local v = pick(x, y, z)
+				if s.classic then
+					-- (one material a voxel: water where there is no ground)
+					if v.l > 0 and not (v.o > 0 and v.m ~= Enum.Material.Air) then
+						ml[z], ol[z] = Enum.Material.Water, v.l
+					else
+						ml[z], ol[z] = v.m, v.o
+					end
+				else
+					ml[z], ol[z], ll[z] = v.m, v.o, v.l
+				end
+			end
+			mx[y], ox[y], lx[y] = ml, ol, ll
+		end
+		mat[x], occ[x], liq[x] = mx, ox, lx
+	end
+	if s.classic then
+		t:WriteVoxels(s.region, V, mat, occ)
+	else
+		t:WriteVoxelChannels(s.region, V, { SolidMaterial = mat, SolidOccupancy = occ, LiquidOccupancy = liq })
+	end
+end
+
+local AIR: Voxel = { m = Enum.Material.Air, o = 0, l = 0 }
+
+-- Clears the ground and the water under the land on this screen, as the plan has it now. What the
+-- plan digs is left as the server has it (the server writes it, and its writes reach this screen);
+-- everything else that is filled is cleared, and kept as it is now to put back. A voxel cleared
+-- before and filled again has been sent again by the server, so what it holds now is the truth.
+local function clear(s: Saved, plan: any)
+	local t = terrain()
+	if not t then
+		return
+	end
+	local now = readNow(t, s)
+	local dug = dugRects(plan)
+	local keep: { [number]: boolean } = {}
+	for x = 1, s.nx do
+		for z = 1, s.nz do
+			keep[x * 4096 + z] = dugNow(s.frame, dug, s.i0 + x - 1, s.k0 + z - 1)
+		end
+	end
+	write(t, s, function(x, y, z)
+		local v = now(x, y, z)
+		local p = pack(x, y, z)
+		if keep[x * 4096 + z] then
+			s.orig[p] = nil
+			return v
+		end
+		if filled(v) then
+			s.orig[p] = v
+		end
+		return AIR
+	end)
+end
+
 -- Hides the ground over plot `plotModel` (its frame `frame`, its plan `plan`) on this screen.
 function Underground.hide(plotModel: Instance?, frame: CFrame, plan: any)
 	if saved or not plotModel then
@@ -187,60 +254,44 @@ function Underground.hide(plotModel: Instance?, frame: CFrame, plan: any)
 	if not t or not region then
 		return
 	end
-	local ok, why = pcall(function()
-		local classic = false
-		local before: any
-		local got, ch = pcall(function()
-			return t:ReadVoxelChannels(region, V, CHANNELS)
-		end)
-		if got and type(ch) == "table" and ch.SolidMaterial then
-			before = ch
-		else
-			classic = true
-			local materials, occupancy = t:ReadVoxels(region, V)
-			before = { materials = materials, occupancy = occupancy }
-		end
-		local cleared = {}
-		for x = 1, nx do
-			for y = 1, ny do
-				for z = 1, nz do
-					local solid = if classic then before.occupancy[x][y][z] else before.SolidOccupancy[x][y][z]
-					local mat = if classic then before.materials[x][y][z] else before.SolidMaterial[x][y][z]
-					if solid > 0 and mat ~= Enum.Material.Air and mat ~= Enum.Material.Water then
-						cleared[pack(x, y, z)] = true
-					end
-				end
-			end
-		end
-		local s: Saved = {
-			region = region,
-			frame = frame,
-			i0 = i0,
-			k0 = k0,
-			nx = nx,
-			ny = ny,
-			nz = nz,
-			classic = classic,
-			before = before,
-			cleared = cleared,
-		}
-		saved = s
-		clear(s)
+	local classic = false
+	local got, ch = pcall(function()
+		return t:ReadVoxelChannels(region, V, CHANNELS)
 	end)
+	if not (got and type(ch) == "table" and ch.SolidMaterial) then
+		classic = true
+	end
+	local s: Saved = {
+		plotModel = plotModel,
+		region = region,
+		frame = frame,
+		i0 = i0,
+		k0 = k0,
+		nx = nx,
+		ny = ny,
+		nz = nz,
+		classic = classic,
+		orig = {},
+	}
+	saved = s
+	local ok, why = pcall(clear, s, plan)
 	if not ok then
 		warn("[Underground] couldn't hide the ground: " .. tostring(why))
 	end
 end
 
--- Clears the ground again (the terrain the server sends after a change may fill some of it in).
-function Underground.refresh()
+-- Clears the ground again after a change to the plan (`plan`, as it is now): the terrain the
+-- server sends may fill some of it in, and the server cuts the plot's ground afresh.
+function Underground.refresh(plan: any)
 	local s = saved
 	if s then
-		pcall(clear, s)
+		fadeParts(s.plotModel)
+		pcall(clear, s, plan)
 	end
 end
 
--- Brings the ground back: what was cleared as it was, unless the plan has dug it since.
+-- Brings the ground back as the server has it: what this screen cleared goes back, unless the plan
+-- digs it now or the server has sent it again since.
 function Underground.show(plan: any)
 	unfadeParts()
 	local s = saved
@@ -250,43 +301,22 @@ function Underground.show(plan: any)
 		return
 	end
 	local ok, why = pcall(function()
-		local now: any
-		if s.classic then
-			local materials, occupancy = t:ReadVoxels(s.region, V)
-			now = { materials = materials, occupancy = occupancy }
-		else
-			now = t:ReadVoxelChannels(s.region, V, CHANNELS)
-		end
-		local before = s.before
+		local now = readNow(t, s)
 		local dug = dugRects(plan)
-		local mat, occ, liq = table.create(s.nx), table.create(s.nx), table.create(s.nx)
-		for x = 1, s.nx do
-			local mx, ox, lx = table.create(s.ny), table.create(s.ny), table.create(s.ny)
-			for y = 1, s.ny do
-				mx[y], ox[y], lx[y] = table.create(s.nz), table.create(s.nz), table.create(s.nz)
-			end
-			mat[x], occ[x], liq[x] = mx, ox, lx
-		end
+		local keep: { [number]: boolean } = {}
 		for x = 1, s.nx do
 			for z = 1, s.nz do
-				local keep = dugNow(s.frame, dug, s.i0 + x - 1, s.k0 + z - 1)
-				for y = 1, s.ny do
-					local back = s.cleared[pack(x, y, z)] and not keep
-					local src = if back then before else now
-					if s.classic then
-						mat[x][y][z], occ[x][y][z], liq[x][y][z] = src.materials[x][y][z], src.occupancy[x][y][z], 0
-					else
-						mat[x][y][z], occ[x][y][z], liq[x][y][z] =
-							src.SolidMaterial[x][y][z], src.SolidOccupancy[x][y][z], src.LiquidOccupancy[x][y][z]
-					end
-				end
+				keep[x * 4096 + z] = dugNow(s.frame, dug, s.i0 + x - 1, s.k0 + z - 1)
 			end
 		end
-		if s.classic then
-			t:WriteVoxels(s.region, V, mat, occ)
-		else
-			t:WriteVoxelChannels(s.region, V, { SolidMaterial = mat, SolidOccupancy = occ, LiquidOccupancy = liq })
-		end
+		write(t, s, function(x, y, z)
+			local v = now(x, y, z)
+			local back = s.orig[pack(x, y, z)]
+			if back and not keep[x * 4096 + z] and not filled(v) then
+				return back
+			end
+			return v
+		end)
 	end)
 	if not ok then
 		warn("[Underground] couldn't bring the ground back: " .. tostring(why))
