@@ -2505,6 +2505,29 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   picked category's `Index`, "01 / 11", over its name set wide). `Kit.glide` slides the yellow between the main groups
   and between the categories.
 
+
+### The interface polished again: flush left cards, one ornament per surface
+
+- `UI/MenuParts`: new `MenuParts.payout(parent, caption, parts, props)` (big numbers beside a card's picture:
+  `coins`, `gems`, `number = { text, tint }`, `line = { text, icon, tint }`), `MenuParts.headline(parent, title,
+  desc, top?)` (a card's name and line, flush left), `MenuParts.footButton(parent, label, props, onClick)` (the
+  button across a card's foot; `Share`, `At = "right"` for two side by side), and the constants `MenuParts.Hero`
+  (150, the picture's size), `HeroX` (176) and `HeadTop` (170). `MenuParts.card` no longer draws brackets;
+  `MenuParts.stat` no longer draws its disc (its `icon` argument is kept and unused).
+- `UI/Kit`: `Kit.button` takes `IconColor` (the icon in a colour of its own, kept through `Kit.setButtonColor`: the
+  icon carries `OwnColor`); `Kit.menuButton` takes `IconColor`; `Kit.motion` takes `Kinds` (the shapes in turn) and
+  by default draws bars, ticks and wedges only; `Kit.panel` lost the tick row on its card and the backdrop's second
+  glow (`Low`).
+- `UI/Toasts`: the column stands at `middle()`, the screen's middle or just left of the HUD's `Corner` (worked out
+  from the Corner's placing, so the previews agree), `MOST_WIDE` 360.
+- `UI/Residents`: the actions are a `UIGridLayout` of `Kit.button`s (names unchanged: Job, Bed, Look, Buy outfit,
+  Gift, Move out); the Mood tab's rows are plain boxes named by factor id, each with `Icon`, `Label`, `What`,
+  `Points` and a `Bar` with its `Fill`.
+- `tools/preview/ui_dump.luau`: a cutscene's `:ask` and `:a<n>` press through the last line's burst until the
+  answers show (`cutscene:thanks:a2` failed to build before, so `audit.sh` stopped at 160 of 161 screens).
+- Sims: `hud` checks the notices stand in the middle or just clear of the round buttons; `creator_sections` checks a
+  card on a one kind page has no small line.
+
 ## The creator: your own look, colour search, Shuffle, buying and likes
 
 The user: "add another tab to edit self in the catalog just like editing villagers. also, allow players to search
