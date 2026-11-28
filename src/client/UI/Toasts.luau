@@ -15,7 +15,8 @@ local T = Kit.Theme
 local holder: Frame? = nil
 
 local ICONS = { info = "news", good = "check", warn = "alert", event = "people" }
-local MOST_WIDE = 460 -- a note across at the most; longer words wrap
+local MOST_WIDE = 360 -- a note across at the most; longer words wrap
+local CLEAR = 12 -- kept between the notes and the round buttons under the clock
 local TEXT = 16 -- its words' size
 local ICON = 22 -- its icon across
 local PAD = 14 -- room at its left end, before the icon
@@ -50,8 +51,33 @@ local function textSize(text: string, size: number, width: number): Vector2
 	return Vector2.new(wide, math.ceil(lines * size * 1.25))
 end
 
+-- Where the column of notes stands across the screen: in the middle, unless that would run the
+-- notes under the first into the round buttons under the clock (Hud's `Corner`): then just left
+-- of them. (Four notes in the middle at 1280 across lay over Home and Visit.)
+local function middle(): number
+	local gui = Kit.root()
+	local cam = workspace.CurrentCamera
+	local scale = gui:FindFirstChild("Scale")
+	local k = if scale and scale:IsA("UIScale") and scale.Scale > 0 then scale.Scale else 1
+	local wide = (if cam then cam.ViewportSize.X else 1280) / k
+	local x = wide / 2
+	local corner = gui:FindFirstChild("Corner", true)
+	if corner and corner:IsA("GuiObject") and corner.Parent and corner.Parent.Name == "Hud" then
+		-- (from its placing on the main screen, which spans the screen: the same in the game and in
+		-- the previews, which have no engine to work out where things are)
+		local left = corner.Position.X.Scale * wide
+			+ corner.Position.X.Offset
+			- corner.AnchorPoint.X * corner.Size.X.Offset
+		if left > MOST_WIDE then
+			x = math.min(x, left - CLEAR - MOST_WIDE / 2)
+		end
+	end
+	return math.floor(x)
+end
+
 local function getHolder(): Frame
 	if holder and holder.Parent then
+		holder.Position = UDim2.new(0, middle(), holder.Position.Y.Scale, holder.Position.Y.Offset)
 		return holder
 	end
 	local f = Kit.box({
@@ -59,7 +85,7 @@ local function getHolder(): Frame
 		Size = UDim2.fromOffset(MOST_WIDE, 300),
 		-- (the screen's own interface starts under the strip Roblox keeps at the top, where the
 		-- clock hangs: the notes go up into it beside the clock)
-		Position = UDim2.new(0.5, 0, 0, MIDDLE - LOW / 2 - Kit.topInset()),
+		Position = UDim2.new(0, middle(), 0, MIDDLE - LOW / 2 - Kit.topInset()),
 		AnchorPoint = Vector2.new(0.5, 0),
 		Parent = Kit.root(),
 	})

@@ -104,41 +104,44 @@ local CARD_W, CARD_H, GAP = 206, 250, 12
 local function passCard(parent: Instance, pass: PassData.Pass, i: number)
 	local accent = accentOf(i, pass.key)
 	local owned = Purchase.has(pass.key)
+	-- a plain card: its mark, its number, its name big and what it does, the price at its foot
+	-- over a hairline. (Every card had its own glow and corner brackets too: ten of the same
+	-- ornament in a grid read as filler.) One you own sinks back a shade.
 	local card = Kit.frame({
 		Name = pass.key,
 		Parent = parent,
 		LayoutOrder = i,
-		Color = T.Paper,
+		Color = if owned then T.PaperDark else T.Paper,
 		Cut = 14,
 	})
-	Kit.glow(card, accent, if owned then 0.12 else 0.2, "tr")
-	Kit.brackets(card, { Corners = { "tl", "br" }, Arm = 10, Inset = 6, Color = T.Line, ZIndex = 1 })
 	Kit.mark(card)
-	Kit.disc({
+	Kit.leanMark({
 		Name = "Mark",
 		Parent = card,
-		Size = 52,
-		Position = UDim2.fromOffset(16, 16),
+		Size = 36,
+		Position = UDim2.fromOffset(16, 18),
 		Color = accent,
 		Icon = pass.icon,
 		ZIndex = 2,
 	})
-	Kit.caption(Kit.index(i), {
+	Kit.title(Kit.index(i), {
 		Name = "Index",
 		Parent = card,
-		Size = UDim2.fromOffset(40, 16),
+		Size = UDim2.fromOffset(40, 20),
 		Position = UDim2.new(1, -16, 0, 18),
 		AnchorPoint = Vector2.new(1, 0),
-		TextSize = 11,
+		TextSize = 16,
+		Color = T.InkSoft,
 		AlignX = Enum.TextXAlignment.Right,
+		Wrap = false,
 	})
 	Kit.title(pass.name, {
 		Name = "PassName",
 		Parent = card,
 		Size = UDim2.new(1, -32, 0, 28),
-		Position = UDim2.fromOffset(16, 78),
-		TextSize = 21,
-		Color = T.Ink,
+		Position = UDim2.fromOffset(16, 70),
+		TextSize = 22,
+		Color = if owned then T.InkSoft else T.Ink,
 		Wrap = false,
 		ZIndex = 2,
 	})
@@ -146,11 +149,21 @@ local function passCard(parent: Instance, pass: PassData.Pass, i: number)
 		Name = "Blurb",
 		Parent = card,
 		Size = UDim2.new(1, -32, 0, 84),
-		Position = UDim2.fromOffset(16, 108),
+		Position = UDim2.fromOffset(16, 100),
 		TextSize = 15,
 		Color = T.InkSoft,
 		AlignY = Enum.TextYAlignment.Top,
 		ZIndex = 2,
+	})
+	Kit.new("Frame", {
+		Name = "Rule",
+		BackgroundColor3 = T.Line,
+		BackgroundTransparency = 0.5,
+		BorderSizePixel = 0,
+		Size = UDim2.new(1, -32, 0, 1),
+		Position = UDim2.new(0, 16, 1, -66),
+		ZIndex = 2,
+		Parent = card,
 	})
 	-- at its foot: the price and Buy, or that it is theirs
 	local foot = Kit.box({
@@ -176,7 +189,7 @@ local function passCard(parent: Instance, pass: PassData.Pass, i: number)
 		Name = "Price",
 		Parent = foot,
 		Size = UDim2.new(0.5, 0, 1, 0),
-		TextSize = 20,
+		TextSize = 22,
 		Tint = T.YellowDark,
 		Wrap = false,
 	})
@@ -235,8 +248,8 @@ local function showGems()
 			Color = T.Paper,
 			Cut = 14,
 		})
+		-- (the bigger the pack, the stronger its glow: the one thing the glow says here)
 		Kit.glow(card, T.Purple, 0.12 + i * 0.03, "tr")
-		Kit.brackets(card, { Corners = { "tl", "br" }, Arm = 10, Inset = 6, Color = T.Line, ZIndex = 1 })
 		Kit.mark(card)
 		-- the bigger the pack, the more gems in its picture
 		local pile = Kit.box({
@@ -250,14 +263,13 @@ local function showGems()
 		for k = 1, count do
 			local px = if k == 1 then 64 else 44
 			local dx = if k == 1 then 0 elseif k == 2 then -46 else 46
-			Kit.disc({
+			-- the gem itself, not a gem on a disc
+			Icons.make("gem", px, {
 				Name = "Gem" .. k,
 				Parent = pile,
-				Size = px,
-				Position = UDim2.new(0.5, dx, 0, if k == 1 then 10 else 34),
-				AnchorPoint = Vector2.new(0.5, 0),
-				Color = T.Purple,
-				Icon = "gem",
+				Position = UDim2.new(0.5, dx - px / 2, 0, if k == 1 then 10 else 34),
+				Color = if k == 1 then T.Purple else Kit.deep(T.Purple),
+				Centre = true,
 				ZIndex = if k == 1 then 4 else 3,
 			})
 		end

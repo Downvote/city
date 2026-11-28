@@ -3403,11 +3403,12 @@ function Kit.menuButton(icon: string, caption: string, props: { [string]: any }?
 	})
 	b:SetAttribute("KitButton", true)
 	local px = math.floor(b.Size.Y.Offset * 0.56)
+	-- (IconColor: the icon in one colour of its own, the line under the name still in Color)
 	local art = Icons.make(icon, px, {
 		Name = "IconArt",
 		Parent = b,
 		Position = UDim2.new(0.5, -px / 2, 0, 4),
-		Color = p.Color,
+		Color = p.IconColor or p.Color,
 		Hole = T.Paper,
 	})
 	Kit.new("TextLabel", {
