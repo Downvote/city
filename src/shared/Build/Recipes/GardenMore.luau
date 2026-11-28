@@ -50,7 +50,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or "Metal",
 	})
 end
 
@@ -73,7 +73,7 @@ local TOMATO = Color3.fromRGB(208, 96, 78)
 -- One flower drawn on q (a piece's recipe): a stem from y0 up to its head at h, a leaf part way
 -- up, the head (a flat cup of petals, tipped a little) and the middle on top of it.
 local function bloom(q: R, x: number, z: number, y0: number, h: number, head: Color3, turn: number)
-	q:block(x - 0.035, y0, z - 0.035, x + 0.035, h, z + 0.035, C.DarkLeaf, "SmoothPlastic")
+	q:block(x - 0.035, y0, z - 0.035, x + 0.035, h, z + 0.035, C.DarkLeaf, "Grass")
 	local side = if math.floor(turn * 3) % 2 == 0 then 1 else -1
 	q:lump(
 		CFrame.new(x + side * 0.12, y0 + (h - y0) * 0.5, z) * CFrame.Angles(0, turn, side * -0.6),
@@ -81,10 +81,10 @@ local function bloom(q: R, x: number, z: number, y0: number, h: number, head: Co
 		0.09,
 		0.16,
 		C.Leaf,
-		"SmoothPlastic"
+		"Grass"
 	)
-	q:lump(CFrame.new(x, h, z) * CFrame.Angles(0.2, turn, 0), 0.4, 0.14, 0.4, head, "SmoothPlastic")
-	q:ball(x, h + 0.08, z + 0.02, 0.14, if head == C.Yellow then AMBER else C.Yellow, "SmoothPlastic")
+	q:lump(CFrame.new(x, h, z) * CFrame.Angles(0.2, turn, 0), 0.4, 0.14, 0.4, head, "Grass")
+	q:ball(x, h + 0.08, z + 0.02, 0.14, if head == C.Yellow then AMBER else C.Yellow, "Grass")
 end
 
 -- A trailing stem hanging over an edge at (x, y, z), its leaves ending in a little tuft.
@@ -119,21 +119,21 @@ end
 -- (dir): a body, a paler breast, a head, a beak, a tail and two eyes. Its beak is a plain box, so
 -- it can start the piece.
 local function bird(q: R, x: number, y: number, z: number, dir: number, back: Color3, breast: Color3)
-	q:box(x + dir * 0.235, y + 0.27, z, 0.07, 0.035, 0.045, AMBER, "SmoothPlastic")
-	q:lump(CFrame.new(x, y + 0.14, z), 0.34, 0.2, 0.22, back, "SmoothPlastic")
-	q:lump(CFrame.new(x + dir * 0.08, y + 0.11, z), 0.2, 0.16, 0.18, breast, "SmoothPlastic")
-	q:ball(x + dir * 0.14, y + 0.27, z, 0.18, back, "SmoothPlastic")
+	q:box(x + dir * 0.235, y + 0.27, z, 0.07, 0.035, 0.045, AMBER, "Plaster")
+	q:lump(CFrame.new(x, y + 0.14, z), 0.34, 0.2, 0.22, back, "Plaster")
+	q:lump(CFrame.new(x + dir * 0.08, y + 0.11, z), 0.2, 0.16, 0.18, breast, "Plaster")
+	q:ball(x + dir * 0.14, y + 0.27, z, 0.18, back, "Plaster")
 	q:boxAt(
 		CFrame.new(x - dir * 0.22, y + 0.2, z) * CFrame.Angles(0, 0, dir * -0.5),
 		0.18,
 		0.035,
 		0.1,
 		shade(back, 0.8),
-		"SmoothPlastic"
+		"Plaster"
 	)
 	for _, sz in { -1, 1 } do
-		q:ball(x + dir * 0.19, y + 0.3, z + sz * 0.065, 0.045, C.Black, "SmoothPlastic")
-		q:box(x + dir * 0.02, y + 0.03, z + sz * 0.05, 0.025, 0.06, 0.025, AMBER, "SmoothPlastic")
+		q:ball(x + dir * 0.19, y + 0.3, z + sz * 0.065, 0.045, C.Black, "Plaster")
+		q:box(x + dir * 0.02, y + 0.03, z + sz * 0.05, 0.025, 0.06, 0.025, AMBER, "Plaster")
 	end
 end
 
@@ -591,7 +591,7 @@ local items: { Item } = {
 				end
 			end)
 			r:piece(function(q: R)
-				q:box(-2.05, 1.25, 0.98, 0.06, 0.06, 0.06, shade(r.c2, 0.8), "SmoothPlastic")
+				q:box(-2.05, 1.25, 0.98, 0.06, 0.06, 0.06, shade(r.c2, 0.8), "Fabric")
 				local roses = {
 					{ -2.05, 1.2, 0.95 },
 					{ -2.55, 2.1, 0.7 },
@@ -619,10 +619,10 @@ local items: { Item } = {
 						0.24,
 						0.32,
 						col,
-						"SmoothPlastic"
+						"Fabric"
 					)
 				end
-			end)
+			end, nil, "Fabric")
 		end,
 	},
 
@@ -866,7 +866,7 @@ local items: { Item } = {
 				end
 			end)
 			r:piece(function(q: R)
-				q:box(-1.42, 1.43, 1.02, 0.06, 0.03, 0.06, C.DarkLeaf, "SmoothPlastic")
+				q:box(-1.42, 1.43, 1.02, 0.06, 0.03, 0.06, C.DarkLeaf, "Grass")
 				for _, sx in { -1, 1 } do
 					for k, p in
 						{
@@ -883,11 +883,11 @@ local items: { Item } = {
 							p[3],
 							0.22,
 							if k == 4 then Color3.fromRGB(150, 180, 90) else TOMATO,
-							"SmoothPlastic"
+							"Grass"
 						)
 					end
 				end
-			end)
+			end, nil, "Grass")
 		end,
 	},
 	{
@@ -987,7 +987,7 @@ local items: { Item } = {
 				trail(q, 1.05, soil + 0.15, 1.3, 0.35, 0.2)
 			end)
 			r:piece(function(q: R)
-				q:box(-1.12, 1.4, -0.32, 0.06, 0.03, 0.06, C.DarkLeaf, "SmoothPlastic")
+				q:box(-1.12, 1.4, -0.32, 0.06, 0.03, 0.06, C.DarkLeaf, "Grass")
 				for _, x in { -1.25, -0.1 } do
 					for k, p in
 						{
@@ -1004,14 +1004,14 @@ local items: { Item } = {
 							p[3],
 							0.2,
 							if k == 5 then Color3.fromRGB(150, 180, 90) else r.c2,
-							"SmoothPlastic"
+							"Grass"
 						)
 					end
 				end
 				for _, p in { { 1.55, soil - 0.2, 1.32 }, { 1.08, soil - 0.16, 1.3 }, { 1.7, soil + 0.2, 0.62 } } do
-					q:lump(CFrame.new(p[1], p[2], p[3]), 0.13, 0.16, 0.13, Color3.fromRGB(214, 70, 74), "SmoothPlastic")
+					q:lump(CFrame.new(p[1], p[2], p[3]), 0.13, 0.16, 0.13, Color3.fromRGB(214, 70, 74), "Grass")
 				end
-			end)
+			end, nil, "Grass")
 		end,
 	},
 	{
@@ -1066,10 +1066,10 @@ local items: { Item } = {
 				end
 			end, true)
 			for _, p in { { -1.5, 0.6, 0.8 }, { 0.4, -0.7, 0.7 }, { 1.6, 0.5, 0.6 } } do
-				r:noCollide(r:cyl(p[1], 1.255, p[2], 0.03, p[3], "y", C.Leaf, "SmoothPlastic"))
+				r:noCollide(r:cyl(p[1], 1.255, p[2], 0.03, p[3], "y", C.Leaf, "Grass"))
 			end
 			r:piece(function(q: R)
-				q:box(-1.5, 1.29, 0.6, 0.06, 0.03, 0.06, C.Yellow, "SmoothPlastic")
+				q:box(-1.5, 1.29, 0.6, 0.06, 0.03, 0.06, C.Yellow, "Marble")
 				for k = 0, 4 do
 					local a = k / 5 * math.pi * 2
 					q:lump(
@@ -1078,15 +1078,15 @@ local items: { Item } = {
 						0.08,
 						0.12,
 						C.Pink,
-						"SmoothPlastic"
+						"Marble"
 					)
 				end
-				q:ball(-1.5, 1.37, 0.6, 0.12, C.Yellow, "SmoothPlastic")
+				q:ball(-1.5, 1.37, 0.6, 0.12, C.Yellow, "Marble")
 				-- the frog on the next pad
-				q:lump(CFrame.new(0.42, 1.36, -0.7), 0.26, 0.18, 0.3, Color3.fromRGB(120, 160, 80), "SmoothPlastic")
+				q:lump(CFrame.new(0.42, 1.36, -0.7), 0.26, 0.18, 0.3, Color3.fromRGB(120, 160, 80), "Marble")
 				for _, sx in { -1, 1 } do
-					q:ball(0.42 + sx * 0.07, 1.44, -0.6, 0.08, Color3.fromRGB(120, 160, 80), "SmoothPlastic")
-					q:ball(0.42 + sx * 0.07, 1.46, -0.57, 0.035, C.Black, "SmoothPlastic")
+					q:ball(0.42 + sx * 0.07, 1.44, -0.6, 0.08, Color3.fromRGB(120, 160, 80), "Marble")
+					q:ball(0.42 + sx * 0.07, 1.46, -0.57, 0.035, C.Black, "Marble")
 				end
 				-- two koi, their backs at the surface
 				for i, p in { { 0.5, 0.7, 0.4 }, { -0.6, -0.5, -0.5 } } do
@@ -1097,7 +1097,7 @@ local items: { Item } = {
 						0.14,
 						0.56,
 						col,
-						"SmoothPlastic"
+						"Marble"
 					)
 					q:lump(
 						CFrame.new(p[1] - math.sin(p[3]) * 0.33, 1.2, p[2] - math.cos(p[3]) * 0.33)
@@ -1106,7 +1106,7 @@ local items: { Item } = {
 						0.05,
 						0.16,
 						col,
-						"SmoothPlastic"
+						"Marble"
 					)
 					q:lump(
 						CFrame.new(p[1] + math.sin(p[3]) * 0.06, 1.25, p[2] + math.cos(p[3]) * 0.06)
@@ -1115,10 +1115,10 @@ local items: { Item } = {
 						0.06,
 						0.2,
 						if i == 1 then C.White else Color3.fromRGB(236, 140, 72),
-						"SmoothPlastic"
+						"Marble"
 					)
 				end
-			end)
+			end, nil, "Marble")
 			-- the iris: blades up out of the water and two purple flowers
 			r:piece(function(q: R)
 				q:box(-2.2, 1.26, -1.2, 0.3, 0.04, 0.3, C.DarkLeaf, "Grass")
@@ -1136,7 +1136,7 @@ local items: { Item } = {
 				end
 			end)
 			r:piece(function(q: R)
-				q:box(-2.1, 2.15, -1.1, 0.06, 0.06, 0.06, C.Yellow, "SmoothPlastic")
+				q:box(-2.1, 2.15, -1.1, 0.06, 0.06, 0.06, C.Yellow, "Fabric")
 				for _, p in { { -2.1, 2.2, -1.1 }, { -2.32, 2.05, -1.3 } } do
 					for k = 0, 2 do
 						local a = k / 3 * math.pi * 2
@@ -1147,11 +1147,11 @@ local items: { Item } = {
 							0.06,
 							0.12,
 							LILAC,
-							"SmoothPlastic"
+							"Fabric"
 						)
 					end
 				end
-			end)
+			end, nil, "Fabric")
 		end,
 	},
 	{
@@ -1242,14 +1242,14 @@ local items: { Item } = {
 				end
 			end)
 			r:piece(function(q: R)
-				q:box(1.2, 2.06, 0.1, 0.06, 0.06, 0.06, C.White, "SmoothPlastic")
+				q:box(1.2, 2.06, 0.1, 0.06, 0.06, 0.06, C.White, "Ground")
 				q:lump(
 					CFrame.new(0.75, 2.0, -0.1) * CFrame.Angles(0, 0.6, 0.4),
 					0.5,
 					0.1,
 					0.12,
 					C.Yellow,
-					"SmoothPlastic"
+					"Ground"
 				)
 				q:lump(
 					CFrame.new(0.82, 2.0, 0.02) * CFrame.Angles(0, -0.4, -0.3),
@@ -1257,20 +1257,20 @@ local items: { Item } = {
 					0.1,
 					0.12,
 					C.Yellow,
-					"SmoothPlastic"
+					"Ground"
 				)
-				q:lump(CFrame.new(1.25, 2.04, 0.15), 0.2, 0.12, 0.16, C.White, "SmoothPlastic")
-				q:lump(CFrame.new(1.4, 2.02, 0.0), 0.18, 0.1, 0.14, C.White, "SmoothPlastic")
-				q:ball(1.55, 1.95, 0.45, 0.22, Color3.fromRGB(196, 96, 80), "SmoothPlastic")
+				q:lump(CFrame.new(1.25, 2.04, 0.15), 0.2, 0.12, 0.16, C.White, "Ground")
+				q:lump(CFrame.new(1.4, 2.02, 0.0), 0.18, 0.1, 0.14, C.White, "Ground")
+				q:ball(1.55, 1.95, 0.45, 0.22, Color3.fromRGB(196, 96, 80), "Ground")
 				q:lump(
 					CFrame.new(-1.0, 1.06, 0.1) * CFrame.Angles(0, 1, 0),
 					0.34,
 					0.08,
 					0.2,
 					Color3.fromRGB(214, 160, 70),
-					"SmoothPlastic"
+					"Ground"
 				)
-			end)
+			end, nil, "Ground")
 			-- a digging fork against the boards: its tines down in the grass
 			r:piece(function(q: R)
 				q:box(-1.0, 0.05, 1.32, 0.5, 0.06, 0.06, C.Metal, "Metal")
@@ -1331,20 +1331,20 @@ local items: { Item } = {
 			r:block(-0.98, 3.05, -0.08, 0.98, 3.15, 0.08, shade(r.c2, 0.8), "WoodPlanks")
 			-- the bees: a plain box body on the first, the rest striped balls with wings
 			r:piece(function(q: R)
-				q:box(0.2, 1.32, 0.95, 0.1, 0.08, 0.14, C.Yellow, "SmoothPlastic")
+				q:box(0.2, 1.32, 0.95, 0.1, 0.08, 0.14, C.Yellow, "Plaster")
 				for i, p in { { -0.3, 1.6, 1.05 }, { 0.5, 1.9, 1.0 }, { -0.1, 2.3, 1.08 }, { 0.65, 1.45, 0.98 } } do
-					q:ball(p[1], p[2], p[3], 0.12, C.Yellow, "SmoothPlastic")
-					q:ball(p[1] - 0.07, p[2], p[3] - 0.02, 0.09, C.Black, "SmoothPlastic")
+					q:ball(p[1], p[2], p[3], 0.12, C.Yellow, "Plaster")
+					q:ball(p[1] - 0.07, p[2], p[3] - 0.02, 0.09, C.Black, "Plaster")
 					q:lump(
 						CFrame.new(p[1], p[2] + 0.07, p[3]) * CFrame.Angles(0, i, 0.3),
 						0.14,
 						0.03,
 						0.08,
 						C.White,
-						"SmoothPlastic"
+						"Plaster"
 					)
 				end
-			end)
+			end, nil, "Plaster")
 		end,
 	},
 	{
@@ -1639,7 +1639,7 @@ local items: { Item } = {
 				end
 			end)
 			r:piece(function(q: R)
-				q:box(0.75, 0.9, 0.75, 0.06, 0.06, 0.06, r.c2, "SmoothPlastic")
+				q:box(0.75, 0.9, 0.75, 0.06, 0.06, 0.06, r.c2, "Fabric")
 				local cols = { r.c2, Color3.fromRGB(240, 166, 192), C.White, Color3.fromRGB(186, 122, 168) }
 				for i = 0, 23 do
 					local y = 0.7 + i * 0.18
@@ -1652,10 +1652,10 @@ local items: { Item } = {
 						0.3,
 						0.08,
 						cols[i % 4 + 1],
-						"SmoothPlastic"
+						"Fabric"
 					)
 				end
-			end)
+			end, nil, "Fabric")
 		end,
 	},
 	{
@@ -1869,7 +1869,7 @@ local items: { Item } = {
 			r:ramp(-1.0, 5.2, 0, 1.0, 5.75, 1.0, false, r.c2, "WoodPlanks")
 			r:block(-1.04, 5.7, -0.07, 1.04, 5.8, 0.07, shade(r.c2, 0.8), "WoodPlanks")
 			r:piece(function(q: R)
-				q:box(-0.3, 4.32, -0.2, 0.08, 0.04, 0.06, Color3.fromRGB(214, 186, 130), "SmoothPlastic")
+				q:box(-0.3, 4.32, -0.2, 0.08, 0.04, 0.06, Color3.fromRGB(214, 186, 130), "Plaster")
 				for i = 1, 12 do
 					q:lump(
 						CFrame.new(-0.55 + hash(i, 51) * 1.1, 4.32, -0.55 + hash(i, 52) * 1.1) * CFrame.Angles(0, i, 0),
@@ -1877,7 +1877,7 @@ local items: { Item } = {
 						0.05,
 						0.06,
 						if i % 3 == 0 then C.Bark else Color3.fromRGB(214, 186, 130),
-						"SmoothPlastic"
+						"Plaster"
 					)
 				end
 				q:lump(
@@ -1886,7 +1886,7 @@ local items: { Item } = {
 					0.12,
 					0.3,
 					Color3.fromRGB(196, 90, 80),
-					"SmoothPlastic"
+					"Plaster"
 				)
 				q:lump(
 					CFrame.new(0.35, 4.43, -0.35) * CFrame.Angles(0, 0.5, 0),
@@ -1894,9 +1894,9 @@ local items: { Item } = {
 					0.02,
 					0.24,
 					Color3.fromRGB(240, 226, 190),
-					"SmoothPlastic"
+					"Plaster"
 				)
-			end)
+			end, nil, "Plaster")
 			r:piece(function(q: R)
 				bird(q, -0.3, 4.3, 0.35, 1, Color3.fromRGB(140, 110, 84), Color3.fromRGB(222, 120, 80))
 			end)
@@ -1904,7 +1904,7 @@ local items: { Item } = {
 				bird(q, 0.3, 5.78, 0, -1, C.Blue, C.Yellow)
 			end)
 			r:cyl(0.5, 4.95, 0.92, 0.5, 0.03, "y", C.DarkMetal, "Metal")
-			r:ball(0.5, 4.56, 0.92, 0.32, Color3.fromRGB(214, 186, 130), "SmoothPlastic")
+			r:ball(0.5, 4.56, 0.92, 0.32, Color3.fromRGB(214, 186, 130), "Sand")
 			r:ball(0.5, 4.56, 0.92, 0.36, C.DarkMetal, "Metal").transp = 0.6
 		end,
 	},
@@ -2001,7 +2001,7 @@ local items: { Item } = {
 				end
 			end)
 			r:piece(function(q: R)
-				q:box(-2.0, 6.9, 0.2, 0.08, 0.08, 0.08, shade(r.c2, 0.9), "SmoothPlastic")
+				q:box(-2.0, 6.9, 0.2, 0.08, 0.08, 0.08, shade(r.c2, 0.9), "Fabric")
 				for i, p in
 					{
 						{ -2.0, -1.0 },
@@ -2022,11 +2022,11 @@ local items: { Item } = {
 							0.48,
 							s,
 							if k == 2 then Colors.mix(r.c2, C.White, 0.35) elseif k == 1 then shade(r.c2, 1.06) else r.c2,
-							"SmoothPlastic"
+							"Fabric"
 						)
 					end
 				end
-			end)
+			end, nil, "Fabric")
 		end,
 	},
 	{
@@ -2329,11 +2329,11 @@ local items: { Item } = {
 				r:seat(cx, 1.6, 0, if sx < 0 then 90 else -90)
 			end
 			r:piece(function(q: R)
-				q:box(0.15, 2.62, -0.1, 0.24, 0.04, 0.24, C.White, "SmoothPlastic")
-				q:cyl(0.15, 2.82, -0.1, 0.38, 0.3, "y", C.White, "SmoothPlastic")
-				q:cyl(0.15, 3.0, -0.1, 0.06, 0.24, "y", C.Blue, "SmoothPlastic")
-				q:beam(Vector3.new(0.3, 2.95, -0.1), Vector3.new(0.4, 2.75, -0.1), 0.04, 0.05, C.White, "SmoothPlastic")
-			end)
+				q:box(0.15, 2.62, -0.1, 0.24, 0.04, 0.24, C.White, "Marble")
+				q:cyl(0.15, 2.82, -0.1, 0.38, 0.3, "y", C.White, "Marble")
+				q:cyl(0.15, 3.0, -0.1, 0.06, 0.24, "y", C.Blue, "Marble")
+				q:beam(Vector3.new(0.3, 2.95, -0.1), Vector3.new(0.4, 2.75, -0.1), 0.04, 0.05, C.White, "Marble")
+			end, nil, "Marble")
 			r:piece(function(q: R)
 				bloom(q, 0.1, -0.12, 3.0, 3.3, C.Pink, 0.4)
 				bloom(q, 0.24, -0.02, 3.0, 3.22, C.Yellow, 1.5)
@@ -2526,7 +2526,7 @@ local items: { Item } = {
 				0.08,
 				0.05,
 				Color3.fromRGB(184, 80, 90),
-				"Plastic"
+				"Metal"
 			)
 			r:beam(
 				Vector3.new(1.15, 3.32, 0.39),
@@ -2534,7 +2534,7 @@ local items: { Item } = {
 				0.08,
 				0.05,
 				Color3.fromRGB(184, 80, 90),
-				"Plastic"
+				"Metal"
 			)
 			r:cyl(1.15, 2.1, 0.33, 0.5, 0.1, "y", handle, "Wood")
 			r:lump(CFrame.new(1.15, 1.6, 0.33), 0.24, 0.5, 0.05, r.c2, "Metal")
@@ -2617,11 +2617,11 @@ local items: { Item } = {
 				end
 			end)
 			r:piece(function(q: R)
-				q:box(0.25, 2.28, 0.42, 0.06, 0.06, 0.06, LILAC, "SmoothPlastic")
+				q:box(0.25, 2.28, 0.42, 0.06, 0.06, 0.06, LILAC, "Fabric")
 				for _, p in { { 0.15, 2.31, 0.47 }, { 0.36, 2.34, 0.4 }, { 0.26, 2.37, 0.32 }, { 0.2, 2.27, 0.36 } } do
-					q:ball(p[1], p[2], p[3], 0.16, LILAC, "SmoothPlastic")
+					q:ball(p[1], p[2], p[3], 0.16, LILAC, "Fabric")
 				end
-			end)
+			end, nil, "Fabric")
 			-- rosemary: upright grey green sprigs
 			r:piece(function(q: R)
 				q:box(-0.2, 3.0, 0.42, 0.1, 0.04, 0.1, Color3.fromRGB(92, 124, 104), "Grass")
@@ -2682,8 +2682,8 @@ local items: { Item } = {
 			r:block(-0.4, 4.0, -0.4, 0.4, 4.06, 0.4, r.c1, "Metal")
 			r:cone(0, 4.22, 0, 0.32, 0.9, r.c2, "Metal")
 			r:ball(0, 4.44, 0, 0.16, r.c2, "Metal")
-			r:cyl(0, 3.45, 0, 0.34, 0.16, "y", C.Cream, "SmoothPlastic")
-			r:glow(r:lump(CFrame.new(0, 3.72, 0), 0.08, 0.16, 0.08, C.Warm, "SmoothPlastic"), 16, 1.1)
+			r:cyl(0, 3.45, 0, 0.34, 0.16, "y", C.Cream, "Plaster")
+			r:glow(r:lump(CFrame.new(0, 3.72, 0), 0.08, 0.16, 0.08, C.Warm, "Glass"), 16, 1.1)
 			r:piece(function(q: R)
 				q:box(0.42, 0.02, 0.1, 0.08, 0.04, 0.08, C.DarkLeaf, "Grass")
 				tuft(q, 0.42, 0.1, 0, 0.3)
@@ -2741,7 +2741,7 @@ local items: { Item } = {
 					{ 0.0, 0.58, -0.17 },
 				}
 			do
-				local fly = r:ball(p[1], p[2], p[3], 0.07, r.c2, "SmoothPlastic")
+				local fly = r:ball(p[1], p[2], p[3], 0.07, r.c2, "Glass")
 				if i == 1 then
 					r:glow(fly, 8, 0.8, light)
 				else
@@ -2833,7 +2833,7 @@ local items: { Item } = {
 					{ x = 0.8, z = 1.3, c = C.Yellow },
 				}
 			do
-				r:ball(b.x, 0.17, b.z, 0.34, b.c, "Plastic")
+				r:ball(b.x, 0.17, b.z, 0.34, b.c, "Wood")
 			end
 		end,
 	},
