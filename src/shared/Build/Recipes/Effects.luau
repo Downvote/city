@@ -41,13 +41,13 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or "Metal",
 	})
 end
 
 -- A cone at a frame, its point along the frame's Y.
 local function coneAt(r: R, cf: CFrame, h: number, d: number, color: Color3, mat: string?): Prim
-	return r:add({ shape = "Cone", cf = cf, size = Vector3.new(d, h, d), color = color, mat = mat or "SmoothPlastic" })
+	return r:add({ shape = "Cone", cf = cf, size = Vector3.new(d, h, d), color = color, mat = mat or "Wood" })
 end
 
 -- A round plinth `d` across and `h` tall: a foot, a body and a lip, the lip's top at h.
@@ -139,7 +139,7 @@ local items: { Item } = {
 					)
 				end
 			end
-			local light = r:block(-0.3, 1.62, -0.3, 0.3, 2.2, 0.3, mix(r.c1, C.Warm, 0.5), "SmoothPlastic")
+			local light = r:block(-0.3, 1.62, -0.3, 0.3, 2.2, 0.3, mix(r.c1, C.Warm, 0.5), "Glass")
 			r:glow(light, 10, 0.8, mix(r.c1, C.Warm, 0.6))
 			r:block(-0.62, 2.3, -0.62, 0.62, 2.42, 0.62, dk, "Slate")
 			r:add({
@@ -207,34 +207,34 @@ local items: { Item } = {
 		build = function(r: R)
 			local body = r.c2
 			-- a rounded toy box with a fan grille, a tray of soap and a turning wheel of wands
-			r:block(-0.7, 0.1, -0.5, 0.7, 0.9, 0.4, body, "SmoothPlastic")
+			r:block(-0.7, 0.1, -0.5, 0.7, 0.9, 0.4, body, "Metal")
 			for _, sx in { -1, 1 } do
-				r:cyl(sx * 0.7, 0.5, -0.05, 0.8, 0.9, "z", body, "SmoothPlastic")
+				r:cyl(sx * 0.7, 0.5, -0.05, 0.8, 0.9, "z", body, "Metal")
 			end
-			r:block(-0.55, 0, -0.4, 0.55, 0.1, 0.3, shade(body, 0.8), "SmoothPlastic")
-			r:cyl(0, 0.55, -0.52, 0.04, 0.6, "z", shade(body, 0.7), "SmoothPlastic")
+			r:block(-0.55, 0, -0.4, 0.55, 0.1, 0.3, shade(body, 0.8), "Metal")
+			r:cyl(0, 0.55, -0.52, 0.04, 0.6, "z", shade(body, 0.7), "Metal")
 			for k = -2, 2 do
-				r:block(k * 0.1 - 0.015, 0.3, -0.56, k * 0.1 + 0.015, 0.8, -0.53, INK, "SmoothPlastic")
+				r:block(k * 0.1 - 0.015, 0.3, -0.56, k * 0.1 + 0.015, 0.8, -0.53, INK, "Metal")
 			end
-			local tray = r:block(-0.45, 0.35, 0.4, 0.45, 0.5, 0.62, C.Yellow, "SmoothPlastic")
+			local tray = r:block(-0.45, 0.35, 0.4, 0.45, 0.5, 0.62, C.Yellow, "Metal")
 			tray.collide = false
 			local soap = r:block(-0.4, 0.5, 0.43, 0.4, 0.53, 0.59, mix(r.c1, C.White, 0.3), "Glass")
 			soap.transp = 0.3
-			r:cyl(0.5, 0.95, 0, 0.1, 0.16, "y", C.Red, "SmoothPlastic")
+			r:cyl(0.5, 0.95, 0, 0.1, 0.16, "y", C.Red, "Metal")
 			local hub = CFrame.new(0, 0.75, 0.52)
 			Lively.pivot(r, hub, "spin", { speed = 1.6, axis = "X" })
 			Lively.moving(r, 1, function()
-				r:cyl(0, 0.75, 0.52, 0.8, 0.1, "x", C.White, "SmoothPlastic")
+				r:cyl(0, 0.75, 0.52, 0.8, 0.1, "x", C.White, "Metal")
 				for k = 0, 5 do
 					local a = k * math.pi / 3
 					local tip = Vector3.new(0, 0.75 + math.cos(a) * 0.34, 0.52 + math.sin(a) * 0.34)
-					rod(r, Vector3.new(0, 0.75, 0.52), tip, 0.04, C.White, "SmoothPlastic")
+					rod(r, Vector3.new(0, 0.75, 0.52), tip, 0.04, C.White, "Metal")
 					r:add({
 						shape = "Cylinder",
 						cf = CFrame.new(tip),
 						size = Vector3.new(0.03, 0.18, 0.18),
 						color = if k % 2 == 0 then C.Pink else C.Blue,
-						mat = "SmoothPlastic",
+						mat = "Metal",
 					})
 				end
 			end)
@@ -272,7 +272,7 @@ local items: { Item } = {
 				cf = tube * CFrame.Angles(0, 0, math.pi / 2),
 				size = Vector3.new(1.3, 0.5, 0.5),
 				color = r.c2,
-				mat = "SmoothPlastic",
+				mat = "Cardboard",
 			})
 			for k = -1, 1 do
 				r:add({
@@ -280,7 +280,7 @@ local items: { Item } = {
 					cf = tube * CFrame.new(0, k * 0.36, 0) * CFrame.Angles(0, 0, math.pi / 2),
 					size = Vector3.new(0.12, 0.58, 0.58),
 					color = if k == 0 then C.Yellow else r.c1,
-					mat = "SmoothPlastic",
+					mat = "Cardboard",
 				})
 			end
 			r:add({
@@ -288,14 +288,14 @@ local items: { Item } = {
 				cf = tube * CFrame.new(0, 0.66, 0) * CFrame.Angles(0, 0, math.pi / 2),
 				size = Vector3.new(0.06, 0.62, 0.62),
 				color = C.White,
-				mat = "SmoothPlastic",
+				mat = "Cardboard",
 			})
 			r:add({
 				shape = "Cylinder",
 				cf = tube * CFrame.new(0, 0.7, 0) * CFrame.Angles(0, 0, math.pi / 2),
 				size = Vector3.new(0.03, 0.4, 0.4),
 				color = INK,
-				mat = "SmoothPlastic",
+				mat = "Metal",
 			})
 			-- a pull string with a tassel
 			rod(r, Vector3.new(0.25, 1.2, 0.0), Vector3.new(0.35, 0.8, 0.05), 0.03, C.White, "Fabric")
@@ -342,7 +342,7 @@ local items: { Item } = {
 					l[5],
 					l[4] * 0.9,
 					col,
-					"SmoothPlastic"
+					"Grass"
 				)
 				p.name = "Leaf"
 			end
@@ -353,7 +353,7 @@ local items: { Item } = {
 					0.03,
 					0.16,
 					shade(r.c1, 0.9),
-					"SmoothPlastic"
+					"Grass"
 				)
 			end
 			Lively.fx(r, "leaves", 0, 2.9, 0, { w = 2.0, h = 0.4, d = 2.0 })
@@ -372,7 +372,7 @@ local items: { Item } = {
 		lively = true,
 		build = function(r: R)
 			-- a cloud of soft lumps on a fine wire from the ceiling
-			r:cyl(0, -0.03, 0, 0.06, 0.3, "y", C.White, "SmoothPlastic")
+			r:cyl(0, -0.03, 0, 0.06, 0.3, "y", C.White, "Snow")
 			rod(r, Vector3.new(0, -0.06, 0), Vector3.new(0, -0.7, 0), 0.02, Color3.fromRGB(200, 200, 206), "Metal")
 			local puffs = {
 				{ 0, -1.05, 0, 1.2, 0.8 },
@@ -520,12 +520,12 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a heart shaped box on little legs, a bow on top and a slot the hearts come out of
 			for _, sx in { -1, 1 } do
-				r:cyl(sx * 0.3, 0.12, 0, 0.24, 0.12, "y", r.c2, "SmoothPlastic")
+				r:cyl(sx * 0.3, 0.12, 0, 0.24, 0.12, "y", r.c2, "Metal")
 			end
 			local heart = CFrame.new(0, 0.85, 0)
-			r:boxAt(heart * CFrame.Angles(0, 0, math.pi / 4), 0.7, 0.7, 0.6, r.c1, "SmoothPlastic")
+			r:boxAt(heart * CFrame.Angles(0, 0, math.pi / 4), 0.7, 0.7, 0.6, r.c1, "Metal")
 			for _, sx in { -1, 1 } do
-				r:cyl(sx * 0.25, 1.1, 0, 0.6, 0.7, "z", r.c1, "SmoothPlastic")
+				r:cyl(sx * 0.25, 1.1, 0, 0.6, 0.7, "z", r.c1, "Metal")
 			end
 			r:boxAt(
 				heart * CFrame.new(0, 0.05, 0.32) * CFrame.Angles(0, 0, math.pi / 4),
@@ -533,12 +533,12 @@ local items: { Item } = {
 				0.36,
 				0.03,
 				r.c2,
-				"SmoothPlastic"
+				"Metal"
 			)
 			for _, sx in { -1, 1 } do
-				r:cyl(sx * 0.13, 1.1, 0.32, 0.03, 0.36, "z", r.c2, "SmoothPlastic")
+				r:cyl(sx * 0.13, 1.1, 0.32, 0.03, 0.36, "z", r.c2, "Metal")
 			end
-			r:block(-0.25, 1.42, -0.05, 0.25, 1.46, 0.05, INK, "SmoothPlastic")
+			r:block(-0.25, 1.42, -0.05, 0.25, 1.46, 0.05, INK, "Metal")
 			for _, sx in { -1, 1 } do
 				r:lump(
 					CFrame.new(sx * 0.16, 1.52, -0.2) * CFrame.Angles(0, 0, sx * 0.5),
@@ -591,7 +591,7 @@ local items: { Item } = {
 						"Fabric"
 					)
 				end
-				r:ball(t[3], t[4] + 0.06, t[5], 0.08, C.Yellow, "SmoothPlastic")
+				r:ball(t[3], t[4] + 0.06, t[5], 0.08, C.Yellow, "Fabric")
 			end
 			Lively.fx(r, "petals", 0, -1.45, 0, { w = 2.6, h = 0.1, d = 0.9 })
 		end,

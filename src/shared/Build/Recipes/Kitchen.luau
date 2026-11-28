@@ -33,7 +33,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or "Metal",
 	})
 end
 
@@ -229,8 +229,8 @@ local items: { Item } = {
 			rod(r, Vector3.new(0, TOP + 0.97, -0.84), Vector3.new(0, TOP + 0.9, -0.55), 0.13, STEEL, "Metal")
 			rod(r, Vector3.new(0, TOP + 0.92, -0.56), Vector3.new(0, TOP + 0.66, -0.5), 0.13, STEEL, "Metal")
 			rod(r, Vector3.new(0.08, TOP + 0.5, -1.02), Vector3.new(0.35, TOP + 0.62, -1.02), 0.06, STEEL, "Metal")
-			r:cyl(0.65, TOP + 0.22, -1.0, 0.44, 0.24, "y", Color3.fromRGB(143, 179, 154), "SmoothPlastic")
-			r:cyl(0.65, TOP + 0.5, -1.0, 0.12, 0.06, "y", C.White, "SmoothPlastic")
+			r:cyl(0.65, TOP + 0.22, -1.0, 0.44, 0.24, "y", Color3.fromRGB(143, 179, 154), "Marble")
+			r:cyl(0.65, TOP + 0.5, -1.0, 0.12, 0.06, "y", C.White, "Marble")
 			r:block(-0.85, TOP, -1.12, -0.45, TOP + 0.08, -0.9, C.Yellow, "Fabric")
 			r:block(-0.85, TOP + 0.08, -1.12, -0.45, TOP + 0.12, -0.9, Color3.fromRGB(126, 154, 122), "Fabric")
 			-- a false drawer front over two doors, a tea towel over one door's handle
@@ -255,27 +255,27 @@ local items: { Item } = {
 		c2 = "2E2E33",
 		tags = { "kitchen" },
 		build = function(r: R)
-			r:block(-1.45, 0, -1.25, 1.45, 0.15, 1.1, C.Black, "SmoothPlastic")
+			r:block(-1.45, 0, -1.25, 1.45, 0.15, 1.1, C.Black, "Metal")
 			r:block(-1.5, 0.15, -1.3, 1.5, TOP - 0.1, 1.2, r.c1, "Metal")
 			-- a black glass cooktop with four rings
 			r:block(-1.5, TOP - 0.1, -1.3, 1.5, TOP, 1.25, C.Black, "Glass")
 			for _, x in { -0.7, 0.7 } do
 				for _, z in { -0.5, 0.55 } do
 					local d = if z > 0 then 0.75 else 0.95
-					r:cyl(x, TOP + 0.015, z, 0.03, d, "y", Color3.fromRGB(90, 70, 70), "SmoothPlastic")
+					r:cyl(x, TOP + 0.015, z, 0.03, d, "y", Color3.fromRGB(90, 70, 70), "Metal")
 					r:cyl(x, TOP + 0.045, z, 0.03, d - 0.12, "y", C.Black, "Glass")
 				end
 			end
 			-- a control strip with five knobs
 			r:block(-1.5, 2.75, 1.2, 1.5, TOP - 0.1, 1.24, shade(r.c1, 0.92), "Metal")
 			for _, x in { -1.1, -0.55, 0, 0.55, 1.1 } do
-				r:cyl(x, 3.02, 1.29, 0.1, 0.26, "z", r.c2, "SmoothPlastic")
+				r:cyl(x, 3.02, 1.29, 0.1, 0.26, "z", r.c2, "Metal")
 				r:block(x - 0.02, 3.05, 1.34, x + 0.02, 3.13, 1.37, STEEL, "Metal")
 			end
 			-- the oven door with a big window and a bar handle, and a drawer under it
 			r:block(-1.42, 0.68, 1.2, 1.42, 2.65, 1.27, r.c2, "Metal")
 			r:block(-1.1, 0.95, 1.27, 1.1, 2.15, 1.3, Color3.fromRGB(60, 52, 50), "Glass")
-			r:block(-0.9, 1.05, 1.3, 0.9, 1.15, 1.33, Color3.fromRGB(110, 90, 80), "SmoothPlastic")
+			r:block(-0.9, 1.05, 1.3, 0.9, 1.15, 1.33, Color3.fromRGB(110, 90, 80), "Metal")
 			r:cyl(0, 2.42, 1.42, 2.3, 0.1, "x", STEEL, "Metal")
 			for _, x in { -1.0, 1.0 } do
 				r:block(x - 0.04, 2.38, 1.27, x + 0.04, 2.46, 1.42, STEEL, "Metal")
@@ -288,7 +288,7 @@ local items: { Item } = {
 			r:block(-0.22, TOP + 0.28, -1.07, 0.12, TOP + 0.37, -1.04, Color3.fromRGB(120, 220, 160), "Neon")
 			r:cyl(-0.7, TOP + 0.36, -0.5, 0.6, 0.8, "y", C.Red, "Metal")
 			r:cyl(-0.7, TOP + 0.69, -0.5, 0.06, 0.86, "y", shade(C.Red, 0.85), "Metal")
-			r:ball(-0.7, TOP + 0.76, -0.5, 0.14, C.Black, "SmoothPlastic")
+			r:ball(-0.7, TOP + 0.76, -0.5, 0.14, C.Black, "Metal")
 			for _, sx in { -1, 1 } do
 				r:block(
 					-0.7 + sx * 0.4,
@@ -298,7 +298,7 @@ local items: { Item } = {
 					TOP + 0.58,
 					-0.44,
 					C.Black,
-					"SmoothPlastic"
+					"Metal"
 				)
 			end
 		end,
@@ -339,23 +339,23 @@ local items: { Item } = {
 			-- a badge, a vent at the foot, and a child's drawing held up by magnets
 			r:block(-0.4, 4.6, 1.13, 0.4, 4.72, 1.16, r.c2, "Metal")
 			for _, y in { 0.12, 0.2 } do
-				r:block(-1.2, y, 1.0, 1.2, y + 0.04, 1.03, C.Black, "SmoothPlastic")
+				r:block(-1.2, y, 1.0, 1.2, y + 0.04, 1.03, C.Black, "Metal")
 			end
 			local note = CFrame.new(-0.6, 3.4, 1.145) * CFrame.Angles(0, 0, 0.08)
-			r:boxAt(note, 0.6, 0.75, 0.03, C.Paper, "SmoothPlastic")
-			r:boxAt(note * CFrame.new(0, -0.18, 0.03), 0.44, 0.14, 0.03, Color3.fromRGB(126, 160, 120), "SmoothPlastic")
+			r:boxAt(note, 0.6, 0.75, 0.03, C.Paper, "Cardboard")
+			r:boxAt(note * CFrame.new(0, -0.18, 0.03), 0.44, 0.14, 0.03, Color3.fromRGB(126, 160, 120), "Cardboard")
 			r:boxAt(
 				note * CFrame.new(-0.08, 0.02, 0.03),
 				0.22,
 				0.2,
 				0.03,
 				Color3.fromRGB(184, 102, 92),
-				"SmoothPlastic"
+				"Cardboard"
 			)
-			r:boxAt(note * CFrame.new(0.16, 0.2, 0.03), 0.12, 0.12, 0.03, C.Yellow, "SmoothPlastic")
-			r:cyl(-0.6, 3.72, 1.19, 0.06, 0.16, "z", C.Red, "SmoothPlastic")
-			r:cyl(0.2, 2.6, 1.155, 0.05, 0.18, "z", C.Yellow, "SmoothPlastic")
-			r:cyl(-0.9, 5.7, 1.155, 0.05, 0.16, "z", Color3.fromRGB(94, 122, 150), "SmoothPlastic")
+			r:boxAt(note * CFrame.new(0.16, 0.2, 0.03), 0.12, 0.12, 0.03, C.Yellow, "Cardboard")
+			r:cyl(-0.6, 3.72, 1.19, 0.06, 0.16, "z", C.Red, "Cardboard")
+			r:cyl(0.2, 2.6, 1.155, 0.05, 0.18, "z", C.Yellow, "Cardboard")
+			r:cyl(-0.9, 5.7, 1.155, 0.05, 0.16, "z", Color3.fromRGB(94, 122, 150), "Cardboard")
 		end,
 	},
 	{
@@ -491,7 +491,7 @@ local items: { Item } = {
 				for i, col in jars do
 					local x = -1.0 + (i - 1) * 0.62
 					local h = if (i + row) % 2 == 0 then 0.7 else 0.5
-					r:cyl(x, y + 0.08 + h * 0.36, 0.2, h * 0.72, 0.42, "y", col, "SmoothPlastic")
+					r:cyl(x, y + 0.08 + h * 0.36, 0.2, h * 0.72, 0.42, "y", col, "Cardboard")
 					r:cyl(x, y + 0.08 + h * 0.86, 0.2, h * 0.28, 0.42, "y", Color3.fromRGB(214, 232, 236), "Glass")
 					r:cyl(x, y + 0.08 + h + 0.05, 0.2, 0.1, 0.46, "y", if i % 2 == 0 then r.c2 else C.Red, "Wood")
 				end
@@ -529,7 +529,7 @@ local items: { Item } = {
 		tags = { "kitchen" },
 		build = function(r: R)
 			for _, x in { -0.72, 0.72 } do
-				r:block(x - 0.1, 0, -0.5, x + 0.1, 0.05, 0.5, C.Black, "SmoothPlastic")
+				r:block(x - 0.1, 0, -0.5, x + 0.1, 0.05, 0.5, C.Black, "Glass")
 			end
 			r:block(-0.9, 0.05, -0.65, 0.9, 1.05, 0.58, r.c1, "Metal")
 			r:block(-0.86, 1.05, -0.61, 0.86, 1.1, 0.54, shade(r.c1, 0.92), "Metal")
@@ -543,7 +543,7 @@ local items: { Item } = {
 			r:block(0.54, 0.85, 0.65, 0.72, 0.92, 0.68, Color3.fromRGB(120, 220, 160), "Neon")
 			for _, y in { 0.3, 0.45, 0.6 } do
 				for _, x in { 0.55, 0.72 } do
-					r:block(x - 0.05, y, 0.62, x + 0.05, y + 0.08, 0.65, C.DarkMetal, "SmoothPlastic")
+					r:block(x - 0.05, y, 0.62, x + 0.05, y + 0.08, 0.65, C.DarkMetal, "Metal")
 				end
 			end
 		end,
@@ -561,17 +561,17 @@ local items: { Item } = {
 		c2 = "45454A",
 		tags = { "kitchen" },
 		build = function(r: R)
-			r:cyl(0, 0.04, 0, 0.08, 0.84, "y", r.c2, "SmoothPlastic")
+			r:cyl(0, 0.04, 0, 0.08, 0.84, "y", r.c2, "Metal")
 			r:cyl(0, 0.32, 0, 0.48, 0.82, "y", r.c1, "Metal")
 			r:cyl(0, 0.68, 0, 0.26, 0.72, "y", r.c1, "Metal")
 			r:cyl(0, 0.83, 0, 0.06, 0.56, "y", shade(r.c1, 0.8), "Metal")
 			r:cyl(0, 0.88, 0, 0.06, 0.5, "y", r.c1, "Metal")
-			r:ball(0, 0.95, 0, 0.16, r.c2, "SmoothPlastic")
+			r:ball(0, 0.95, 0, 0.16, r.c2, "Metal")
 			rod(r, Vector3.new(0.3, 0.42, 0), Vector3.new(0.56, 0.76, 0), 0.12, r.c1, "Metal")
 			-- the handle over the back
-			rod(r, Vector3.new(-0.3, 0.75, 0), Vector3.new(-0.5, 0.95, 0), 0.1, r.c2, "SmoothPlastic")
-			rod(r, Vector3.new(-0.5, 0.95, 0), Vector3.new(-0.5, 0.35, 0), 0.1, r.c2, "SmoothPlastic")
-			rod(r, Vector3.new(-0.5, 0.38, 0), Vector3.new(-0.36, 0.25, 0), 0.1, r.c2, "SmoothPlastic")
+			rod(r, Vector3.new(-0.3, 0.75, 0), Vector3.new(-0.5, 0.95, 0), 0.1, r.c2, "Metal")
+			rod(r, Vector3.new(-0.5, 0.95, 0), Vector3.new(-0.5, 0.35, 0), 0.1, r.c2, "Metal")
+			rod(r, Vector3.new(-0.5, 0.38, 0), Vector3.new(-0.36, 0.25, 0), 0.1, r.c2, "Metal")
 		end,
 	},
 	{
@@ -586,7 +586,7 @@ local items: { Item } = {
 		c2 = "D9A86C",
 		tags = { "kitchen" },
 		build = function(r: R)
-			r:block(-0.52, 0, -0.32, 0.52, 0.06, 0.32, C.Black, "SmoothPlastic")
+			r:block(-0.52, 0, -0.32, 0.52, 0.06, 0.32, C.Black, "Metal")
 			-- a rounded body with two slots and a chrome band round the middle
 			r:block(-0.5, 0.06, -0.35, 0.5, 0.5, 0.35, r.c1, "Metal")
 			r:block(-0.5, 0.5, -0.2, 0.5, 0.65, 0.2, r.c1, "Metal")
@@ -595,15 +595,15 @@ local items: { Item } = {
 			end
 			r:block(-0.53, 0.26, -0.38, 0.53, 0.32, 0.38, C.Metal, "Metal")
 			for _, z in { -0.12, 0.12 } do
-				r:block(-0.36, 0.65, z - 0.065, 0.36, 0.68, z + 0.065, C.Black, "SmoothPlastic")
+				r:block(-0.36, 0.65, z - 0.065, 0.36, 0.68, z + 0.065, C.Black, "Metal")
 			end
 			-- two slices of toast popping up, golden with a darker crust on the top
 			for _, z in { -0.12, 0.12 } do
-				r:block(-0.3, 0.5, z - 0.035, 0.3, 0.88, z + 0.035, r.c2, "SmoothPlastic")
-				r:lump(CFrame.new(0, 0.88, z), 0.64, 0.16, 0.09, shade(r.c2, 0.72), "SmoothPlastic")
+				r:block(-0.3, 0.5, z - 0.035, 0.3, 0.88, z + 0.035, r.c2, "Metal")
+				r:lump(CFrame.new(0, 0.88, z), 0.64, 0.16, 0.09, shade(r.c2, 0.72), "Metal")
 			end
 			-- the lever and a dial on the side
-			r:block(0.53, 0.38, -0.05, 0.6, 0.46, 0.05, C.Black, "SmoothPlastic")
+			r:block(0.53, 0.38, -0.05, 0.6, 0.46, 0.05, C.Black, "Metal")
 			r:cyl(0.55, 0.16, 0.18, 0.06, 0.12, "x", C.Metal, "Metal")
 		end,
 	},
