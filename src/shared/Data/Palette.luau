@@ -5,8 +5,6 @@
 local Palette = {}
 
 Palette.Materials = {
-	{ id = "SmoothPlastic", name = "Paint" },
-	{ id = "Plastic", name = "Plastic" },
 	{ id = "Wood", name = "Wood" },
 	{ id = "WoodPlanks", name = "Planks" },
 	{ id = "Brick", name = "Brick" },
@@ -37,9 +35,27 @@ Palette.Materials = {
 	{ id = "Leather", name = "Leather" },
 }
 
+-- Flat paint and plastic were offered once; now every finish has a texture (the user: "for all
+-- buildings and decor, make it such that textures are used, never make them untextured"). A save
+-- that holds one still loads, and what it painted is drawn in the textured finish beside it
+-- (Palette.drawn, as Build/Builder draws a plot).
+Palette.Retired = {
+	SmoothPlastic = "Plaster",
+	Plastic = "Plaster",
+} :: { [string]: string }
+
 Palette.MaterialSet = {} :: { [string]: boolean }
 for _, m in Palette.Materials do
 	Palette.MaterialSet[m.id] = true
+end
+for old in Palette.Retired do
+	Palette.MaterialSet[old] = true
+end
+
+-- The material a saved finish is drawn in: its own, or for a retired one the finish that took
+-- its place.
+function Palette.drawn(m: string): string
+	return Palette.Retired[m] or m
 end
 
 -- Rows of swatches, light to dark, warm to cool. The first three rows are the town's own

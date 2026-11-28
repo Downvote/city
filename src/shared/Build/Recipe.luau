@@ -24,6 +24,9 @@ export type Recipe = typeof(setmetatable(
 		c1: Color3,
 		c2: Color3,
 		prims: { Prim },
+		-- what a shape drawn here without a material of its own is made of (a piece's material:
+		-- Recipe.piece); nil for Geometry.Default
+		mat: string?,
 	},
 	Recipe
 ))
@@ -59,8 +62,14 @@ end
 -- (the user: "some objects, when painted, seem to keep their texture, such as grass"), so every
 -- part in a slot's colour takes it. Light and glass keep their own.
 local KEEPS = { Neon = true, Glass = true, ForceField = true }
+-- the untextured materials a piece's own material takes the place of
+local PLAIN = { SmoothPlastic = true, Plastic = true }
 
 function Recipe.add(self: Recipe, prim: Prim): Prim
+	-- (a shape that names no material is made of this recipe's own, or the kit's default)
+	if prim.mat == nil then
+		prim.mat = self.mat or Geometry.Default
+	end
 	local m1, m2 = (self :: any).m1, (self :: any).m2
 	if (m1 or m2) and not KEEPS[prim.mat] and not (prim.transp and prim.transp > 0) then
 		if m1 and prim.color == self.c1 then
@@ -78,9 +87,19 @@ end
 -- Builder makes as one mesh. For details used over and over: a window's frame, an awning, a
 -- shutter. Keep them plain (one material, no names, lights or see-through) and start with a box
 -- that isn't turned. `collide` lets people bump into it (off by default: details are for show).
-function Recipe.piece(self: Recipe, draw: (Recipe) -> (), collide: boolean?): Prim
+-- `mat` is what the piece is made of: every shape in it that names no material of its own (or
+-- names plain plastic) takes it.
+function Recipe.piece(self: Recipe, draw: (Recipe) -> (), collide: boolean?, mat: string?): Prim
 	local q = Recipe.new(self.c1, self.c2)
+	q.mat = mat
 	draw(q)
+	if mat then
+		for _, p in q.prims do
+			if PLAIN[p.mat] then
+				p.mat = mat
+			end
+		end
+	end
 	-- (a piece is one material: when any of it is in a painted slot's colour, the whole of it
 	-- takes that slot's material, before it is merged)
 	local sa: any = self
@@ -118,7 +137,7 @@ function Recipe.box(
 	color: Color3,
 	mat: string?
 ): Prim
-	return self:add(Geometry.box(CFrame.new(cx, cy, cz), Vector3.new(sx, sy, sz), color, mat))
+	return self:add(Geometry.box(CFrame.new(cx, cy, cz), Vector3.new(sx, sy, sz), color, mat or self.mat))
 end
 
 -- An axis aligned box between two corners.
@@ -133,12 +152,12 @@ function Recipe.block(
 	color: Color3,
 	mat: string?
 ): Prim
-	return self:add(Geometry.span(Vector3.new(x1, y1, z1), Vector3.new(x2, y2, z2), color, mat))
+	return self:add(Geometry.span(Vector3.new(x1, y1, z1), Vector3.new(x2, y2, z2), color, mat or self.mat))
 end
 
 -- A box at any frame.
 function Recipe.boxAt(self: Recipe, cf: CFrame, sx: number, sy: number, sz: number, color: Color3, mat: string?): Prim
-	return self:add(Geometry.box(cf, Vector3.new(sx, sy, sz), color, mat))
+	return self:add(Geometry.box(cf, Vector3.new(sx, sy, sz), color, mat or self.mat))
 end
 
 -- A WedgePart at a frame. Roblox's wedge is full height at its back (+Z) and slopes down to its
@@ -149,7 +168,7 @@ function Recipe.wedge(self: Recipe, cf: CFrame, sx: number, sy: number, sz: numb
 		cf = cf,
 		size = Vector3.new(sx, sy, sz),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or self.mat or Geometry.Default,
 	})
 end
 
@@ -171,8 +190,14 @@ function Recipe.ramp(
 	local zh = if lowAtZ1 then z2 else z1
 	local xm = (x1 + x2) / 2
 	local width = math.abs(x2 - x1)
-	local out =
-		Geometry.triangle(Vector3.new(xm, y1, zl), Vector3.new(xm, y1, zh), Vector3.new(xm, y2, zh), width, color, mat)
+	local out = Geometry.triangle(
+		Vector3.new(xm, y1, zl),
+		Vector3.new(xm, y1, zh),
+		Vector3.new(xm, y2, zh),
+		width,
+		color,
+		mat or self.mat
+	)
 	for _, p in out do
 		self:add(p)
 	end
@@ -203,7 +228,7 @@ function Recipe.cyl(
 		cf = CFrame.new(cx, cy, cz) * rot,
 		size = Vector3.new(length, diameter, diameter),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or self.mat or Geometry.Default,
 	})
 end
 
@@ -223,7 +248,7 @@ function Recipe.cone(
 		cf = CFrame.new(cx, cy, cz),
 		size = Vector3.new(diameter, height, diameter),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or self.mat or Geometry.Default,
 	})
 end
 
@@ -234,7 +259,7 @@ function Recipe.lump(self: Recipe, cf: CFrame, sx: number, sy: number, sz: numbe
 		cf = cf,
 		size = Vector3.new(sx, sy, sz),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or self.mat or Geometry.Default,
 	})
 end
 
@@ -252,7 +277,7 @@ function Recipe.ball(
 		cf = CFrame.new(cx, cy, cz),
 		size = Vector3.new(diameter, diameter, diameter),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or self.mat or Geometry.Default,
 	})
 end
 
@@ -266,7 +291,7 @@ function Recipe.beam(
 	color: Color3,
 	mat: string?
 ): Prim?
-	local prim = Geometry.beam(p1, p2, width, height, color, mat)
+	local prim = Geometry.beam(p1, p2, width, height, color, mat or self.mat)
 	if prim then
 		self:add(prim)
 	end
@@ -283,7 +308,7 @@ function Recipe.tri(
 	color: Color3,
 	mat: string?
 ): { Prim }
-	local out = Geometry.triangle(a, b, c, thickness, color, mat)
+	local out = Geometry.triangle(a, b, c, thickness, color, mat or self.mat)
 	for _, p in out do
 		self:add(p)
 	end
@@ -301,7 +326,7 @@ function Recipe.quad(
 	color: Color3,
 	mat: string?
 ): { Prim }
-	local out = Geometry.quad(p1, p2, p3, p4, thickness, color, mat)
+	local out = Geometry.quad(p1, p2, p3, p4, thickness, color, mat or self.mat)
 	for _, p in out do
 		self:add(p)
 	end
@@ -354,7 +379,7 @@ function Recipe.seat(self: Recipe, x: number, y: number, z: number, yaw: number?
 		cf = CFrame.new(x, y + 0.1, z) * CFrame.Angles(0, math.rad((yaw or 0) + 180), 0),
 		size = Vector3.new(1.6, 0.2, 1.6),
 		color = Recipe.Colors.White,
-		mat = "SmoothPlastic",
+		mat = Geometry.Default,
 		transp = 1,
 		collide = false,
 		role = "seat",
@@ -369,7 +394,7 @@ function Recipe.sleep(self: Recipe, x: number, y: number, z: number, yaw: number
 		cf = CFrame.new(x, y + 0.1, z) * CFrame.Angles(0, math.rad(yaw or 0), 0),
 		size = Vector3.new(2, 0.2, 5),
 		color = Recipe.Colors.White,
-		mat = "SmoothPlastic",
+		mat = Geometry.Default,
 		transp = 1,
 		collide = false,
 		role = "bed",
@@ -400,7 +425,7 @@ function Recipe.legs(
 	local hz = d / 2 - inset - leg / 2
 	for _, sx in { -1, 1 } do
 		for _, sz in { -1, 1 } do
-			self:box(sx * hx, h / 2, sz * hz, leg, h, leg, color, mat)
+			self:box(sx * hx, h / 2, sz * hz, leg, h, leg, color, mat or self.mat)
 		end
 	end
 end
