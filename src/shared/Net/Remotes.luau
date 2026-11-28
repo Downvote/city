@@ -51,6 +51,7 @@ Remotes.Functions = {
 	"PlotExpand", -- () -> ok, err
 	"SettingSet", -- (key, value) -> ok
 	"TutorialStep", -- (step done, or Sim/Tutorial.Skipped) -> ok, progress recorded
+	"TutorialGreeter", -- () -> { name, id?, friend, model? } or nil: the friend who talks a new player through the tutorial (Services/Avatar)
 	"VisitPlot", -- (plotIndex) -> ok
 	"WishGrant", -- (vid, "friend" | "cheer", otherVid?) -> ok, err
 	"WishBuy", -- (vid) -> ok, message: pays Life.wishPrice for the food a villager is craving and grants the wish

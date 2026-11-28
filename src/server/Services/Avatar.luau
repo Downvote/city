@@ -23,6 +23,7 @@ local Tuning = require(Shared.Config.Tuning)
 local Text = require(Shared.Util.Text)
 
 local Data = require(script.Parent.Data)
+local Tutorial = require(Shared.Sim.Tutorial)
 
 local Avatar = {}
 
@@ -646,7 +647,7 @@ end
 -- the Roblox avatars of the people here and of your friends, and looks that players of this game
 -- have shared from the creator (kept in one small list in a data store, newest first).
 
-type Person = { id: number, name: string, kind: string, user: string? }
+type Person = { id: number, name: string, kind: string, user: string?, online: boolean? }
 local lastShare: { [Player]: number } = {}
 local MAX_PEOPLE = Tuning.Creator.MaxPeople
 local MAX_SHARED = Tuning.Creator.MaxShared
@@ -681,6 +682,7 @@ local function friendsUpTo(player: Player, want: number): { Person }
 					name = name,
 					kind = "friend",
 					user = if type(friend.Username) == "string" then friend.Username else nil,
+					online = friend.IsOnline == true, -- (the tutorial's greeter is one online if it can be)
 				})
 			end
 			if entry.pages.IsFinished then
@@ -888,6 +890,54 @@ function Avatar.dressPlayer(player: Player, char: Model?)
 			end
 		end
 	end
+end
+
+-- The tutorial's greeter ----------------------------------------------------------------------------
+--
+-- One of the player's friends talks a new player through the tutorial (UI/Tutorial; the user: "at
+-- the start of the tutorial, make one of the player's friends (most interacted with if possible)
+-- greet the player"). Roblox doesn't tell a game who a player plays with most, so it is a friend
+-- who is online now, or else the first on their list (Sim/Tutorial.greeter), and with none a
+-- neighbour of the game's own (Tutorial.StandIn). Their look is built here once a session and
+-- handed over in ReplicatedStorage.Greeters, where the client copies it into the scene's bust. A
+-- friend whose look can't be built comes without a model, and the client shows their picture.
+
+type Greeter = { name: string, id: number?, friend: boolean, model: Model? }
+local greeters: { [Player]: Greeter | false } = {} -- (false while it is being made)
+local greeterFolder: Folder? = nil
+
+local function greeterHome(): Folder
+	local f = greeterFolder
+	if f and f.Parent then
+		return f
+	end
+	local made = Instance.new("Folder")
+	made.Name = "Greeters"
+	made.Parent = game:GetService("ReplicatedStorage")
+	greeterFolder = made
+	return made
+end
+
+local function makeGreeter(player: Player): Greeter
+	local pick = Tutorial.greeter(friendsUpTo(player, Tuning.Tutorial.FriendsLooked))
+	local name, id, friend = Tutorial.StandIn.name, nil, false
+	local app: Appearance.Appearance? = nil
+	if pick then
+		name, id, friend = pick.name, pick.id, true
+		app = Avatar.fromUserId(pick.id)
+	else
+		local look = Appearance.default()
+		look.colors.torso = Tutorial.StandIn.torso
+		look.colors.ll = Tutorial.StandIn.legs
+		look.colors.rl = Tutorial.StandIn.legs
+		app = look
+	end
+	local model = if app then Avatar.buildModel(app, "Greeter") else nil
+	if model then
+		model.Name = "Greeter" .. tostring(player.UserId)
+		model.Parent = greeterHome()
+	end
+	return { name = name, id = id, friend = friend, model = model }
 end
 
 -- Remotes ------------------------------------------------------------------------------------------
@@ -1266,6 +1316,45 @@ function Avatar.start()
 	Players.PlayerRemoving:Connect(function(player)
 		closeStage(player)
 		lastPreview[player] = nil
+	end)
+
+	-- Who greets a new player in the tutorial: { name, id?, friend, model? }, or nil once it is
+	-- over (or while the first ask is still being answered).
+	Remotes.fn("TutorialGreeter").OnServerInvoke = function(player)
+		local profile = Data.get(player)
+		if not profile or Tutorial.finished(profile.tutorial) then
+			return nil
+		end
+		local known = greeters[player]
+		if known == false then
+			return nil
+		end
+		if not known then
+			greeters[player] = false
+			local ok, made = pcall(makeGreeter, player)
+			if not ok then
+				warn("[Avatar] greeter: " .. tostring(made))
+				made = { name = Tutorial.StandIn.name, friend = false }
+			end
+			if player.Parent == nil then
+				if made.model then
+					made.model:Destroy()
+				end
+				greeters[player] = nil
+				return nil
+			end
+			greeters[player] = made
+			known = made
+		end
+		local g = known :: Greeter
+		return { name = g.name, id = g.id, friend = g.friend, model = g.model }
+	end
+	Players.PlayerRemoving:Connect(function(player)
+		local g = greeters[player]
+		if g and g.model then
+			g.model:Destroy()
+		end
+		greeters[player] = nil
 	end)
 end
 

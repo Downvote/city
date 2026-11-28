@@ -1,11 +1,15 @@
 --!nocheck
--- The tutorial's steps (Sim/Tutorial). The user: "make the tutorial more visual and structured,
--- starting with creating a villager, then building a place for them to sleep, then a place to
--- work. the first time a craving pops up, guide the user how to do it." A step is done by what
--- is true of the town, in order; the server records only what the profile itself shows; Skip
--- ends it for good; an old save that already has a villager, a bed and a job starts at the
--- craving. And a new plot leaves the bed and the workbench for the player to put down
--- (Data/StarterHouse.newPlot), with the coins to do it.
+-- The tutorial's steps (Sim/Tutorial). The user: "for the tutorial, remove the box in the right
+-- and the creation text that appears on join. first, darken the screen and highlight only
+-- "create" in the bottom menu ... once a villager is created, do the same, darkning the screen and
+-- pointing to build mode, prompting: Build a bed for your villager to sleep in! The step continues
+-- to prompt: Build a work place for your villager to work in! After this, the tutorial ends,
+-- stating: Grow your town and create more villagers!" A step is done by what is true of the town,
+-- in order; the server records only what the profile itself shows; Skip ends it for good; an old
+-- save that already has a villager, a bed and a job is done with it. A new plot leaves the bed
+-- and the workbench for the player to put down (Data/StarterHouse.newPlot), with the coins to do
+-- it. And a friend greets them ("make one of the player's friends (most interacted with if
+-- possible) greet the player"): one online first, else the first, else the game's own stand-in.
 
 local Shared = "ReplicatedStorage.Shared."
 local Tuning = require(Shared .. "Config.Tuning")
@@ -54,13 +58,13 @@ local function idsOf(plan)
 end
 
 describe("Tutorial", function()
-	it("has the four steps the user asked for, in their order", function()
-		expect(Tutorial.Count).toBe(4)
+	it("has the three steps the user asked for, in their order", function()
+		expect(Tutorial.Count).toBe(3)
 		local ids = {}
 		for _, s in Tutorial.Steps do
 			table.insert(ids, s.id)
 		end
-		expect(table.concat(ids, " ")).toBe("villager bed work craving")
+		expect(table.concat(ids, " ")).toBe("villager bed work")
 		-- the two built steps name a real bed and a real workplace
 		local bed = Catalog.get(Tutorial.Steps[2].piece)
 		local bench = Catalog.get(Tutorial.Steps[3].piece)
@@ -142,21 +146,19 @@ describe("Tutorial", function()
 		local bedKey = put(p, "bed_single", 200, 120)
 		v.bed = bedKey
 		expect(Tutorial.met(p, 2)).toBe(true)
-		-- 3 was already true, so both count
+		-- 3 was already true, so both count, and that is the lot
 		expect(Tutorial.reached(p, 0)).toBe(3)
-		expect(Tutorial.current(p, 0)).toBe(4)
+		expect(Tutorial.current(p, 0)).toBe(nil)
+		expect(Tutorial.finished(3)).toBe(true)
 		-- the workplace gone, the job is no job
 		p.plan.items[benchKey] = nil
 		expect(Tutorial.met(p, 3)).toBe(false)
 		expect(Tutorial.reached(p, 0)).toBe(2)
+		expect(Tutorial.current(p, 0)).toBe(3)
 		-- but a step once recorded stays done
 		expect(Tutorial.reached(p, 3)).toBe(3)
-		-- 4: a craving bought for somebody
+		-- (there is no fourth: buying a craving went with the old tutorial)
 		expect(Tutorial.met(p, 4)).toBe(false)
-		p.stats.cravings = 1
-		expect(Tutorial.reached(p, 3)).toBe(4)
-		expect(Tutorial.current(p, 3)).toBe(nil)
-		expect(Tutorial.finished(4)).toBe(true)
 	end)
 
 	it("lets the server record only what the profile shows", function()
@@ -175,7 +177,7 @@ describe("Tutorial", function()
 		expect(ok).toBe(true)
 		expect(p.tutorial).toBe(2)
 		-- nothing a client sends moves it on its own
-		for _, junk in { "3", 2.5, 0 / 0, math.huge, -1, 0, 5, 98, true, {} } do
+		for _, junk in { "3", 2.5, 0 / 0, math.huge, -1, 0, 4, 5, 98, true, {} } do
 			local was = p.tutorial
 			expect((Tutorial.advance(p, junk))).toBe(false)
 			expect(p.tutorial).toBe(was)
@@ -202,11 +204,14 @@ describe("Tutorial", function()
 		expect(Tutorial.progress(-3)).toBe(0)
 		expect(Tutorial.progress(7)).toBe(Tutorial.Count)
 		expect(Tutorial.progress(0 / 0)).toBe(0)
+		-- an old save that had done three of the old four steps, or all of them, is done
+		expect(Tutorial.finished(3)).toBe(true)
+		expect(Tutorial.finished(4)).toBe(true)
 	end)
 
-	it("starts an old save that has a villager, a bed and a job at the craving", function()
+	it("is done for an old save that has a villager, a bed and a job", function()
 		-- a town from before the tutorial: the whole cottage (bed and bench), a villager in it,
-		-- nothing recorded and no count of cravings
+		-- nothing recorded
 		local old = Schema.newProfile()
 		old.plan = StarterHouse.plan()
 		local v = addVillager(old, 1)
@@ -217,11 +222,9 @@ describe("Tutorial", function()
 		end
 		v.job = City.freeWorkplace(old)
 		old.tutorial = nil
-		old.stats.cravings = nil
 		local p = Schema.migrate(old)
-		expect(p.stats.cravings).toBe(0)
 		expect(Tutorial.catchUp(p)).toBe(3)
-		expect(Tutorial.current(p, p.tutorial)).toBe(4)
+		expect(Tutorial.current(p, p.tutorial)).toBe(nil)
 		-- an old save with nobody in it starts at the beginning
 		local empty = Schema.migrate({ coins = 50, plan = StarterHouse.plan() })
 		expect(Tutorial.catchUp(empty)).toBe(0)
@@ -229,33 +232,11 @@ describe("Tutorial", function()
 		expect(Tutorial.catchUp(fresh())).toBe(0)
 	end)
 
-	it("counts a bought craving, and no other wish, for the last step", function()
-		local p = fresh()
-		local you = addVillager(p, 1)
-		local v = addVillager(p, 2)
-		local rng = Rng.new(5)
-		-- a wish to meet somebody, granted: not a craving
-		v.wish = { kind = "friend", arg = you.id, untilT = 1e9 }
-		expect((Life.grantWish(p, v.id, "friend", you.id, rng))).toBe(true)
-		expect(p.stats.cravings or 0).toBe(0)
-		-- a craving bought: it counts
-		v.wish = { kind = "food", arg = Foods.list[1].id, untilT = 1e9 }
-		p.coins = 1000
-		local ok = Life.buyWish(p, v.id, rng)
-		expect(ok).toBe(true)
-		expect(p.stats.cravings).toBe(1)
-		expect(Tutorial.met(p, 4)).toBe(true)
-		-- one refused (no coins) doesn't
-		v.wish = { kind = "food", arg = Foods.list[1].id, untilT = 1e9 }
-		p.coins = 0
-		expect((Life.buyWish(p, v.id, rng))).toBe(false)
-		expect(p.stats.cravings).toBe(1)
-	end)
-	it("brings the first craving on the next hour while its last step waits for one", function()
+	it("leaves cravings to chance: none is brought on for the tutorial", function()
 		local p = fresh()
 		addVillager(p, 1)
 		addVillager(p, 2)
-		-- a die that never comes up: by chance alone nobody would want anything
+		-- a die that never comes up: by chance alone nobody wants anything, at any step
 		local never = {
 			chance = function()
 				return false
@@ -264,18 +245,75 @@ describe("Tutorial", function()
 				return list[#list]
 			end,
 		}
-		p.tutorial = 2 -- still on the work step: no help
-		expect(Life.maybeWish(p, "v2", never, 0)).toBe(nil)
-		p.tutorial = 3 -- waiting on the craving
-		local wish = Life.maybeWish(p, "v2", never, 0)
-		expect(wish ~= nil and wish.kind == "food").toBeTruthy()
-		-- the player's own villager never craves, and one craving open is enough
-		expect(Life.maybeWish(p, "v1", never, 0)).toBe(nil)
-		addVillager(p, 3)
-		expect(Life.maybeWish(p, "v3", never, 0)).toBe(nil)
-		-- done or skipped, wishes come by chance again
-		p.villagers.v2.wish = nil
-		p.tutorial = Tutorial.Skipped
-		expect(Life.maybeWish(p, "v2", never, 0)).toBe(nil)
+		for _, step in { 0, 1, 2, 3, Tutorial.Skipped } do
+			p.tutorial = step
+			expect(Life.maybeWish(p, "v2", never, 0)).toBe(nil)
+		end
+		-- a bought craving is still counted, for the goals
+		local v = p.villagers.v2
+		v.wish = { kind = "food", arg = Foods.list[1].id, untilT = 1e9 }
+		p.coins = 1000
+		expect((Life.buyWish(p, v.id, Rng.new(5)))).toBe(true)
+		expect(p.stats.cravings).toBe(1)
+	end)
+
+	it("says the user's own words", function()
+		expect(Tutorial.Lines[1]).toBe("Welcome to Catalog Town! To get started, let's create our first villager!")
+		expect(Tutorial.Lines[2]).toBe(
+			"You made your first villager! They need a place to sleep in. Build a bed for them!"
+		)
+		expect(Tutorial.Lines.done).toBe("Grow your town and create more villagers!")
+		expect(Tutorial.Prompts[1]).toBe("Create your first villager!")
+		expect(Tutorial.Prompts[2]).toBe("Build a bed for your villager to sleep in!")
+		expect(Tutorial.Prompts[3]).toBe("Build a workplace for your villager to work in!")
+		expect(Tutorial.Ask).toBe(
+			"Would you like to create yourself, a friend, or a custom villager as the first villager?"
+		)
+		-- a line and a prompt for every step, the three ways the creator opens, and no dashes
+		expect(#Tutorial.Lines).toBe(Tutorial.Count)
+		expect(#Tutorial.Prompts).toBe(Tutorial.Count)
+		local kinds = {}
+		for _, way in Tutorial.Ways do
+			table.insert(kinds, way.kind)
+		end
+		expect(table.concat(kinds, " ")).toBe("yourself friend custom")
+		local all = { Tutorial.Ask, Tutorial.Lines.done }
+		for i = 1, Tutorial.Count do
+			table.insert(all, Tutorial.Lines[i])
+			table.insert(all, Tutorial.Prompts[i])
+		end
+		for _, line in all do
+			expect(line:find("\u{2014}") == nil and line:find("\u{2013}") == nil and line:find(" %- ") == nil).toBe(
+				true
+			)
+		end
+	end)
+
+	it("picks a friend online first, else the first friend, else nobody (the stand-in)", function()
+		local friends = {
+			{ id = 11, name = "Ada" },
+			{ id = 12, name = "Bo", online = false },
+			{ id = 13, name = "Cy", online = true },
+			{ id = 14, name = "Di", online = true },
+		}
+		expect(Tutorial.greeter(friends).name).toBe("Cy")
+		friends[3].online, friends[4].online = false, false
+		expect(Tutorial.greeter(friends).name).toBe("Ada")
+		expect(Tutorial.greeter({})).toBe(nil)
+		expect(Tutorial.greeter(nil)).toBe(nil)
+		-- anything Roblox sent that isn't a friend is passed over
+		local junk = {
+			"x",
+			{ id = 0, name = "Zero", online = true },
+			{ id = 2.5, name = "Half", online = true },
+			{ id = 0 / 0, name = "Nan", online = true },
+			{ id = 5, name = "", online = true },
+			{ id = 6, online = true },
+			{ id = 7, name = "Ed" },
+		}
+		expect(Tutorial.greeter(junk).name).toBe("Ed")
+		-- the stand-in has a name and a look of its own
+		expect(type(Tutorial.StandIn.name)).toBe("string")
+		expect(#Tutorial.StandIn.torso).toBe(6)
 	end)
 end)

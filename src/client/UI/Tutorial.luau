@@ -1,91 +1,84 @@
--- The tutorial. The user: "make the tutorial more visual and structured, starting with creating a
--- villager, then building a place for them to sleep, then a place to work. the first time a
--- craving pops up, guide the user how to do it."
+-- The tutorial. The user: "for the tutorial, remove the box in the right and the creation text
+-- that appears on join. first, darken the screen and highlight only "create" in the bottom menu,
+-- and a prompt saying "Create your first villager!" upon click, this opens a pop up which asks:
+-- Would you like to create yourself, a friend, or a custom villager as the first villager?
+-- Clicking yourself creates yourself, a friend moves you to the players tab, and custom leaves the
+-- player to it. once a villager is created, do the same, darkning the screen and pointing to
+-- build mode, prompting: Build a bed for your villager to sleep in! The step continues to prompt:
+-- Build a work place for your villager to work in! After this, the tutorial ends, stating: Grow
+-- your town and create more villagers!" And then: "at the start of the tutorial, make one of the
+-- player's friends (most interacted with if possible) greet the player, saying "Welcome to Catalog
+-- Town! To get started, lets create our first villager!", then clicking the dialogue points to
+-- the create icon as usual. Then, once created, they state: "You made your first villager! They
+-- need a place to sleep in. Build a bed for them!". This continues for the work step, and then
+-- for ending the tutorial as well."
 --
--- Four steps (Sim/Tutorial says what each asks of the town and when it is done):
---   1 make your first villager       the Create tile on the quick menu
---   2 give them a bed                the Build button, then in Build mode Furniture, Beds and the
---                                    single bed's card (the new plot's bedroom is empty:
---                                    Data/StarterHouse.newPlot)
---   3 give them a job                the Build button, then Work and the builder's bench's card
---                                    (the workshop is empty too), and Done to go back out
---   4 buy them a craving             it waits for the first villager who craves a snack, points
---                                    at the bubble over their head (World/Wishes), then at Buy
---                                    in the popup it opens (UI/WishPopup)
--- On a first visit the welcome comes first, as the tutorial's opening page: what the game is in
--- two lines, the four steps in a row, and the two ways to make the first villager. After that a
--- step card sits at the right edge of the screen (it comes out of the edge, as the clock and the
--- Build button do): which step of four with a dot for each, a picture drawn from the icons, a
--- short title, one line saying what to do now, and Skip. A yellow ring round the thing to press
--- next pulses, with an arrow over it where there is room. The ring and the arrow are made inside
--- that thing, so they move with it, slide off with it and hide with it. A short card closes it
--- once all four are done.
+-- Three steps (Sim/Tutorial says what each asks of the town and when it is done, and holds the
+-- words). As each comes up, the friend (asked of the server: TutorialGreeter) slides in in the
+-- game's own dialogue scene (UI/Dialogue) and says its line. A click closes the scene, and then
+-- the screen darkens everywhere but the one thing to press, which stays pressable, with a yellow
+-- ring round it (and an arrow over it where there is room) and the step's prompt beside it:
+--   1 a villager   the Create tile on the quick menu, which opens a small popup instead of the
+--                  creator: Yourself, A friend or Custom (UI/Creator.openFor)
+--   2 a bed        the Build button, then in Build mode Furniture, Beds and the single bed's card
+--                  (the new plot's bedroom is empty: Data/StarterHouse.newPlot)
+--   3 a workplace  the Build button, then Work and the builder's bench's card (the workshop is
+--                  empty too)
+-- Once the workplace is down the friend says the last line and it is over. The darkened screen
+-- is four dark pieces round a hole over the thing to press; they catch every click that isn't on
+-- it. It steps aside while a menu, the creator or another scene is up, and while a piece is held
+-- in Build mode (the world must be pressable then); a step done with a piece in hand puts it away
+-- so the friend can talk.
 --
 -- A step is done when the town shows it, never on a click: this reads State, asks the server to
 -- record it (TutorialStep), and the server checks the profile itself. Skip ends it for good.
 -- Until the server has said how far the player is (State's `tutorial`), nothing shows.
 
-local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Remotes = require(Shared.Net.Remotes)
 local Steps = require(Shared.Sim.Tutorial)
-local Foods = require(Shared.Data.Foods)
-local Colors = require(Shared.Util.Colors)
-local Text = require(Shared.Util.Text)
+local Tuning = require(Shared.Config.Tuning)
 
 local Kit = require(script.Parent.Kit)
 local Icons = require(script.Parent.Icons)
+local Dialogue = require(script.Parent.Dialogue)
 local State = require(script.Parent.Parent.Controllers.State)
 
 local Tutorial = {}
 
 local T = Kit.Theme
-local player = Players.LocalPlayer
-
--- the card at the side
-local W, H = 384, 150
-local OVER = 18 -- how far it runs off the right edge of the screen
-local PAD = 16
-local PIC = 64 -- the picture
-local TUCKED = PAD + PIC + PAD -- what still shows of it tucked away: the picture
-local AT_HUD = 142 -- its top on the main screen: under the round buttons at the top right
-local AT_BUILD = 14 -- and in Build mode, where the top right is clear
+local K = Tuning.Tutorial
 local EVERY = 0.25 -- seconds between looks at the screen
 
--- What each step is called and what its picture is: the step's own icon in its colour, and a
--- small round badge with what you do it with.
-local LOOK = {
-	{ title = "Make your first villager", color = T.Pink, badge = "shirt", short = "A villager" },
-	{ title = "Give them a bed", color = T.Blue, badge = "hammer", short = "A bed" },
-	{ title = "Give them a job", color = T.Orange, badge = "hammer", short = "A job" },
-	{ title = "Buy them a craving", color = T.Coral, badge = "coin", short = "A craving" },
-}
 -- Build mode's names for where each built step's piece is: the group on the bar along the
 -- bottom, the category tile and the piece's card (Build/BuildUI names them so)
 local WHERE = {
 	[2] = { group = "Furniture", category = "Beds", piece = Steps.Steps[2].piece :: string },
 	[3] = { group = "Work", category = "Workplaces", piece = Steps.Steps[3].piece :: string },
 }
+local SIDES = { "Top", "Bottom", "Left", "Right" }
 
 local hudApi: any = nil
 local started = false
+local knownAt: number? = nil -- when the server first said how far the player is
 local layer: Frame? = nil
-local card: Frame? = nil
-local content: Frame? = nil
-local showHit: TextButton? = nil
-local painted = "" -- what the card shows now, as a key
-local cardAt: UDim2? = nil
-local tucked = false
+local dim: Frame? = nil -- the darkened screen: the four pieces and the prompt
+local aimed: { target: GuiObject, how: string }? = nil -- what the hole is over
+local holeConn: RBXScriptConnection? = nil
 local skipped = false
 local asked = 0 -- the furthest step asked of the server
-local sawSteps = false -- a step card was up this session (the closing card follows only then)
-local closing: number? = nil -- when the closing card went up
-local closed = false
-local welcomed = false
-local panel: any = nil -- the welcome
-local pointer: { target: Instance?, how: string?, parts: { Instance } } = { parts = {} }
+local sawSteps = false -- a step was shown this session (the last line follows only then)
+local said: { [any]: boolean } = {} -- the friend's lines said this session: by step, and "done"
+local putAway: { [any]: boolean } = {} -- the steps a piece in hand was put away for
+local scene: any = nil -- the friend's scene, while it is up
+local greeter: any = nil -- { name, id?, friend, model? } once the server has said
+local greeterAskedAt: number? = nil
+local panel: any = nil -- the popup that asks how to make the first villager
+local hookedCreator = false
+local pointer: { target: GuiObject?, how: string?, parts: { Instance } } = { parts = {} }
 
 -- Is it on screen: it and everything it is in visible?
 local function shown(o: Instance?): boolean
@@ -105,23 +98,42 @@ end
 -- The town as Sim/Tutorial reads it, from the client's copy.
 local function town(): any
 	local d = State.data
-	return { villagers = d.villagers or {}, order = d.order or {}, plan = State.plan, stats = d.stats or {} }
+	return { villagers = d.villagers or {}, order = d.order or {}, plan = State.plan }
 end
 
--- Build mode, and whether a piece is in hand (the bars have slid away then: Build/BuildUI).
+-- Build mode, and whether a piece is in hand or something is being drawn (the bars have slid
+-- away then, and the world must take the clicks: Build/BuildUI).
 local function building(): (boolean, boolean)
 	local BuildMode = require(script.Parent.Parent.Build.BuildMode) :: any
 	if not BuildMode.isActive() then
 		return false, false
 	end
 	local s = BuildMode.state
-	return true, (s.tool == "place" and s.placing ~= nil) or s.tool == "preset"
+	return true, (s.tool == "place" and s.placing ~= nil) or s.tool == "preset" or BuildMode.isDrawing()
 end
 
 -- Does the creator have the screen?
 local function creating(): boolean
 	local c = Kit.root():FindFirstChild("Creator")
 	return c ~= nil and c:IsA("GuiObject") and c.Visible
+end
+
+-- Is a menu up (this popup among them)?
+local function menuUp(): boolean
+	return hudApi ~= nil and hudApi.anyOpen ~= nil and hudApi.anyOpen()
+end
+
+-- The step being worked on, or nil when there is none (not known yet, over or skipped).
+local function currentStep(): number?
+	local d = State.data
+	if skipped or d.tutorial == nil or d.villagers == nil then
+		return nil
+	end
+	local done = Steps.progress(d.tutorial)
+	if done >= Steps.Count then
+		return nil
+	end
+	return Steps.current(town(), done)
 end
 
 -- the pointer ----------------------------------------------------------------------------------------
@@ -131,6 +143,9 @@ local function unpoint()
 		part:Destroy()
 	end
 	pointer.parts = {}
+	if pointer.target then
+		pointer.target:SetAttribute("TutorialTarget", nil)
+	end
 	pointer.target = nil
 	pointer.how = nil
 end
@@ -171,9 +186,9 @@ end
 
 -- Points at `target`. how: "out" (a ring just outside it and an arrow over it), "ring" (the ring
 -- only: it sits where something else would cover an arrow), "in" (the ring just inside its edge:
--- it is in a row that cuts off what reaches past it), "arrow" (the arrow only), "stack" (a wish
--- bubble's group: the arrow goes in over the bubble, in the stack).
-local function point(target: GuiObject?, how: string?)
+-- it is in a row that cuts off what reaches past it), "arrow" (the arrow only). The ring is made
+-- inside the target, so it moves with it; the arrow stands over the hole (placeHole).
+local function point(target: GuiObject, how: string)
 	if target == pointer.target and how == pointer.how and #pointer.parts > 0 then
 		local alive = true
 		for _, part in pointer.parts do
@@ -186,16 +201,9 @@ local function point(target: GuiObject?, how: string?)
 		end
 	end
 	unpoint()
-	if not target or not how then
-		return
-	end
 	pointer.target, pointer.how = target, how
-	if how == "stack" then
-		local a = arrow(target, 30)
-		a.LayoutOrder = 0
-		table.insert(pointer.parts, a)
-		return
-	end
+	-- (what the darkened screen is cut round: the previews cut it from their own layout by this)
+	target:SetAttribute("TutorialTarget", true)
 	if how ~= "arrow" and target.AutomaticSize == Enum.AutomaticSize.None then
 		local m = if how == "in" then -3 else 4
 		local ring = Kit.new("Frame", {
@@ -219,14 +227,7 @@ local function point(target: GuiObject?, how: string?)
 		TweenService:Create(stroke, PULSE, { Transparency = 0.45 }):Play()
 		table.insert(pointer.parts, ring)
 	end
-	if how == "out" or how == "arrow" then
-		local a = arrow(target, 30)
-		a.AnchorPoint = Vector2.new(0.5, 1)
-		-- (a slab that runs off the right edge of the screen: over the part of it that shows)
-		local off = if target.AnchorPoint.X == 1 and target.Position.X.Scale == 1 then target.Position.X.Offset else 0
-		a.Position = UDim2.new(0.5, -off / 2, 0, -2)
-		table.insert(pointer.parts, a)
-	end
+	-- (the arrow is the darkened screen's: over the hole, where nothing dims it)
 end
 
 -- the things pointed at, by the names they are made with ---------------------------------------------
@@ -248,427 +249,324 @@ local function buildPart(where: string, name: string): GuiObject?
 end
 
 -- The way to a step's piece in Build mode: its card when its category is open, the category's
--- tile when its group is, or else the group. Returns the target, how to point and where it is.
-local function buildWay(step: number): (GuiObject?, string, string)
+-- tile when its group is, or else the group.
+local function buildWay(step: number): (GuiObject?, string)
 	local w = WHERE[step]
 	local piece = buildPart("Tray", w.piece)
 	if piece then
-		return piece, "in", "card"
+		return piece, "in"
 	end
 	local tile = buildPart("Subs", w.category)
 	if tile then
-		return tile, "in", "tile"
+		return tile, "in"
 	end
-	return buildPart("Dock", w.group), "ring", "group"
+	return buildPart("Dock", w.group), "ring"
 end
 
--- The villagers on this player's own plot, by id.
-local function models(): { [string]: Model }
-	local out = {}
-	local index = player:GetAttribute("Plot")
-	local plots = workspace:FindFirstChild("Plots")
-	local plot = plots and index and plots:FindFirstChild("Plot" .. tostring(index))
-	local folder = plot and plot:FindFirstChild("Villagers")
-	for _, m in if folder then folder:GetChildren() else {} do
-		local vid = m:GetAttribute("Vid")
-		if m:IsA("Model") and type(vid) == "string" then
-			out[vid] = m
-		end
-	end
-	return out
-end
-
--- The bubble over a villager's head (World/Wishes), as the group it is drawn in.
-local function bubbleOf(model: Model): GuiObject?
-	local gui = player:FindFirstChild("PlayerGui")
-	for _, b in if gui then gui:GetChildren() else {} do
-		if b.Name == "WishBubble" and b:IsA("BillboardGui") then
-			local on = b.Adornee
-			if on and on:IsDescendantOf(model) then
-				local fade = b:FindFirstChild("Fade")
-				return if fade and fade:IsA("GuiObject") then fade else nil
-			end
-		end
-	end
-	return nil
-end
-
--- The popup's button that buys a craving (UI/WishPopup), while it is up for one.
-local function buyButton(): GuiObject?
-	local popup = Kit.root():FindFirstChild("WishPopup")
-	local buy = popup and popup:FindFirstChild("Buy", true)
-	if not buy or not buy:IsA("GuiObject") or not shown(buy) then
-		return nil
-	end
-	local kind = buy:GetAttribute("Kind")
-	return if kind == nil or kind == "food" then buy else nil
-end
-
--- what to show ---------------------------------------------------------------------------------------
-
--- The card's words and what to point at, for step `step` as things are now.
-local function now(step: number, t: any): any
-	local look = LOOK[step]
-	local view = {
-		step = step,
-		title = look.title,
-		color = look.color,
-		icon = Steps.Steps[step].icon,
-		badge = look.badge,
-		line = "",
-		target = nil :: GuiObject?,
-		how = nil :: string?,
-		phase = "",
-	}
+-- What to press for step `step` as things are now, and how to point at it.
+local function targetFor(step: number): (GuiObject?, string)
 	local inBuild = building()
 	if step == 1 then
 		if inBuild then
-			view.line = "Press Done, then Create at the bottom left."
-			view.target, view.how, view.phase = buildPart("Dock", "Done"), "ring", "done"
-		else
-			view.line = "Press Create at the bottom left and dress them up."
-			view.target, view.how, view.phase = hudPart("Create"), "out", "create"
+			-- (out of Build mode first: Create is on the main screen)
+			return buildPart("Dock", "Done"), "ring"
 		end
-	elseif step == 2 or step == 3 then
-		if inBuild then
-			local target, how, where = buildWay(step)
-			view.target, view.how, view.phase = target, how, where
-			if step == 2 then
-				view.line = if where == "card"
-					then "Pick the single bed and put it in the empty bedroom."
-					elseif where == "tile" then "Now open Beds."
-					else "Open Furniture on the bar at the bottom."
-			else
-				view.line = if where == "card"
-					then "Pick the builder's bench and put it in the workshop."
-					elseif where == "tile" then "Now open Workplaces."
-					else "Open Work on the bar at the bottom."
-			end
-		else
-			view.line = if step == 2
-				then "Press Build and put a bed in the cottage's empty bedroom."
-				else "Press Build and put a workbench in the empty workshop."
-			view.target, view.how, view.phase = hudPart("Build"), "arrow", "build"
-		end
-	else
-		-- the first craving: who has one, and whether anybody but you can have one
-		local craving, others = nil, 0
-		for _, vid in t.order do
-			local v = t.villagers[vid]
-			if v and not v.isYou then
-				others += 1
-			end
-			local w = v and v.wish
-			if not craving and type(w) == "table" and w.kind == "food" and Foods.get(w.arg) then
-				craving = { vid = vid, v = v, food = Foods.get(w.arg) }
-			end
-		end
-		view.food = craving and craving.food
-		local buy = buyButton()
-		if buy then
-			view.line = "Press Buy to get it for them."
-			view.target, view.how, view.phase = buy, "out", "buy"
-		elseif craving then
-			local what = Text.fill("{x} is craving {food}.", { x = craving.v.name, food = Foods.phrase(craving.food) })
-			local model = models()[craving.vid]
-			local bubble = model and not inBuild and bubbleOf(model)
-			if inBuild then
-				view.line = what .. " Press Done to go and get it."
-				view.target, view.how, view.phase = buildPart("Dock", "Done"), "ring", "done"
-			elseif bubble then
-				view.line = what .. " Press the bubble over their head."
-				view.target, view.how, view.phase = bubble, "stack", "bubble"
-			else
-				view.line = what .. " Find them and press the bubble over their head."
-				view.phase = "find"
-			end
-			view.phase ..= ":" .. craving.vid .. ":" .. craving.food.id
-		elseif others == 0 then
-			view.line = "You don't get cravings yourself. Make a second villager with Create."
-			if not inBuild then
-				view.target, view.how = hudPart("Create"), "out"
-			end
-			view.phase = "another"
-		else
-			view.line = "Wait for a villager to crave a snack. A bubble pops up over their head."
-			view.phase = "wait"
-		end
+		return hudPart("Create"), "out"
 	end
-	return view
+	if inBuild then
+		return buildWay(step)
+	end
+	return hudPart("Build"), "arrow"
 end
 
--- the card -------------------------------------------------------------------------------------------
+-- the darkened screen --------------------------------------------------------------------------------
 
-local function homeOf(): UDim2
-	local inBuild = building()
-	return UDim2.new(1, OVER, 0, if inBuild then AT_BUILD else AT_HUD)
+-- The four dark pieces round a hole at (x, y, w, h) on a screen `sw` by `sh` (the layer's own
+-- pixels), each { x, y, w, h }: the top and bottom run the whole width, the sides fill between
+-- them, so they meet without overlapping. The hole is kept on the screen.
+function Tutorial.cut(sw: number, sh: number, x: number, y: number, w: number, h: number): { [string]: { number } }
+	local x0 = math.clamp(math.floor(x), 0, sw)
+	local y0 = math.clamp(math.floor(y), 0, sh)
+	local x1 = math.clamp(math.ceil(x + w), x0, sw)
+	local y1 = math.clamp(math.ceil(y + h), y0, sh)
+	return {
+		Top = { 0, 0, sw, y0 },
+		Bottom = { 0, y1, sw, sh - y1 },
+		Left = { 0, y0, x0, y1 - y0 },
+		Right = { x1, y0, sw - x1, y1 - y0 },
+	}
 end
 
--- Slides the card where it belongs now: home, tucked to the edge, or off the screen.
-local function place(away: boolean)
-	if not card then
-		return
+-- Where the prompt goes beside a hole: centred over it (or under it, for a hole in the top half),
+-- `gap` clear of it, kept 16 from the screen's edges. Returns x, y and which side.
+function Tutorial.promptAt(
+	sw: number,
+	sh: number,
+	hole: { number },
+	w: number,
+	h: number,
+	gap: number
+): (number, number, string)
+	local hx, hy, hw, hh = hole[1], hole[2], hole[3], hole[4]
+	local x = math.clamp(math.floor(hx + hw / 2 - w / 2), 16, math.max(16, sw - 16 - w))
+	if hy + hh / 2 > sh / 2 then
+		return x, math.max(8, math.floor(hy - gap - h)), "above"
 	end
-	local home = homeOf()
-	local want = if away
-		then home + UDim2.fromOffset(W + 40, 0)
-		elseif tucked then home + UDim2.fromOffset(W - TUCKED - OVER, 0)
-		else home
-	if cardAt == want then
-		return
-	end
-	local first = cardAt == nil
-	cardAt = want
-	if showHit then
-		showHit.Visible = tucked and not away
-	end
-	if first then
-		card.Position = want + UDim2.fromOffset(W + 40, 0)
-	end
-	TweenService:Create(
-		card,
-		if away
-			then TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-			else TweenInfo.new(0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
-		{ Position = want }
-	):Play()
+	return x, math.min(sh - 8 - h, math.floor(hy + hh + gap)), "below"
 end
-
-local refresh: () -> ()
 
 local function skip()
 	skipped = true
-	unpoint()
-	Tutorial.close()
-	place(true)
+	said.done = true
 	task.spawn(function()
 		pcall(function()
 			Remotes.fn("TutorialStep"):InvokeServer(Steps.Skipped)
 		end)
 	end)
+	Tutorial.stop()
 end
 
-local function clearContent()
-	if content then
-		for _, c in content:GetChildren() do
-			c:Destroy()
-		end
-	end
-end
+local PROMPT_H = 72
+local PROMPT_SIZE = 20
 
--- A dot for each step: done ones green, this one a yellow pill, the rest dim.
-local function dots(parent: Instance, step: number)
-	local row = Kit.box({
-		Name = "Dots",
-		Parent = parent,
-		Size = UDim2.fromOffset(60, 8),
-		Position = UDim2.new(1, -(OVER + PAD + 34), 0, 17),
-		AnchorPoint = Vector2.new(1, 0),
-	})
-	row.ZIndex = 3
-	Kit.list(row, 5, true, Enum.HorizontalAlignment.Right).VerticalAlignment = Enum.VerticalAlignment.Center
-	for i = 1, Steps.Count do
-		local here = i == step
-		local dot = Kit.frame({
-			Name = "Dot" .. i,
-			Parent = row,
-			Size = UDim2.fromOffset(if here then 18 else 8, 8),
-			Color = if i < step then T.Green elseif here then T.Yellow else T.PaperDark,
-			Radius = "pill",
-			LayoutOrder = i,
-			ZIndex = 3,
+local function makeDim(): Frame
+	local d = Kit.box({ Name = "TutorialDim", Parent = layer, Size = UDim2.fromScale(1, 1) })
+	d.Visible = false
+	d:SetAttribute("HolePad", K.Pad)
+	-- black in both looks: it darkens the screen, as the user asked, light look or not
+	d:SetAttribute("KeepColors", true)
+	for _, side in SIDES do
+		local f = Kit.new("Frame", {
+			Name = side,
+			BackgroundColor3 = T.Shadow,
+			BackgroundTransparency = K.Dim,
+			BorderSizePixel = 0,
+			Size = UDim2.new(),
+			ZIndex = 1,
+			Parent = d,
 		})
-		if i > step then
-			Kit.rim(dot, T.Line, 1)
-		end
+		-- (it takes the clicks, so only the thing in the hole can be pressed)
+		f.Active = true
+		f:SetAttribute("Hole", side)
 	end
-end
-
--- The picture: the step's icon big in its colour on a tile, a badge with what it is done with.
-local function picture(parent: Instance, view: any)
-	local pic = Kit.frame({
-		Name = "Picture",
-		Parent = parent,
-		Size = UDim2.fromOffset(PIC, PIC),
-		Position = UDim2.fromOffset(PAD, 38),
-		Color = T.Card,
-		Radius = 14,
-		ZIndex = 2,
-	})
-	Kit.rim(pic, T.Line, 1)
-	Kit.halo(pic, PIC + 10, view.color, 0.22)
-	if view.food then
-		Icons.item(view.food.id, 40, Colors.fromHex(view.food.color, view.color), {
-			Name = "IconArt",
-			Parent = pic,
-			Position = UDim2.fromScale(0.5, 0.5),
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			ZIndex = 3,
-			Centre = true,
-		})
-	else
-		Icons.make(view.icon, 38, {
-			Name = "IconArt",
-			Parent = pic,
-			Position = UDim2.fromScale(0.5, 0.5),
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Color = view.color,
-			Hole = T.Card,
-			ZIndex = 3,
-			Centre = true,
-		})
-	end
-	if view.badge then
-		Kit.disc({
-			Name = "Badge",
-			Parent = pic,
-			Size = 24,
-			Position = UDim2.new(1, 6, 1, 6),
-			AnchorPoint = Vector2.new(1, 1),
-			Color = T.Yellow,
-			Icon = view.badge,
-			IconColor = T.Dark,
-			ZIndex = 4,
-		})
-	end
-end
-
--- Draws what the card says.
-local function paint(view: any)
-	if not content then
-		return
-	end
-	clearContent()
-	local box = content :: Frame
-	local glow = Kit.glow(box, view.color, 0.16, "tl")
-	glow:SetAttribute("KeepColors", true)
-	local done = view.step > Steps.Count
-	Kit.caption(
-		if done then "All done" else Text.fill("Step {n} of {all}", { n = view.step, all = Steps.Count }),
-		{ Name = "Step", Parent = box, Position = UDim2.fromOffset(PAD, 12), Tint = view.color, ZIndex = 3 }
-	)
-	if not done then
-		dots(box, view.step)
-	end
-	picture(box, view)
-	local x = PAD + PIC + 14
-	local wide = W - x - OVER - PAD
-	local title = Kit.title(view.title, {
-		Name = "Title",
-		Parent = box,
-		Size = UDim2.fromOffset(wide, 24),
-		Position = UDim2.fromOffset(x, 38),
-		TextSize = 20,
-		Color = T.Ink,
-		Wrap = false,
+	-- the arrow over the hole, where there is room for one
+	local a = arrow(d, 30)
+	a.Visible = false
+	a.ZIndex = 2
+	a:SetAttribute("HoleArrow", true)
+	-- the prompt: dark glass with white words, the same in both looks, and Skip under the words
+	local card = Kit.frame({
+		Name = "TutorialPrompt",
+		Parent = d,
+		Size = UDim2.fromOffset(300, PROMPT_H),
+		Color = T.Glass,
+		Transparency = T.GlassAlpha,
+		Radius = 12,
 		ZIndex = 3,
 	})
-	title.TextTruncate = Enum.TextTruncate.AtEnd
-	Kit.text(view.line, {
+	card.Active = true
+	Kit.softShadow(card, 1)
+	Kit.new("TextLabel", {
 		Name = "Line",
-		Parent = box,
-		Size = UDim2.fromOffset(wide, 54),
-		Position = UDim2.fromOffset(x, 64),
-		TextSize = 15,
-		Color = T.Ink,
-		AlignY = Enum.TextYAlignment.Top,
-		ZIndex = 3,
-	})
-	-- at the bottom right: Skip (Close on the last card), and at the top right the round button
-	-- that tucks it to the edge
-	local link = Kit.new("TextButton", {
-		Name = if done then "Close" else "Skip",
-		Text = if done then "Close" else "Skip",
-		Font = Kit.Fonts.Body,
-		TextSize = 14,
-		TextColor3 = T.InkSoft,
-		TextXAlignment = Enum.TextXAlignment.Right,
-		BackgroundTransparency = 1,
-		AutoButtonColor = false,
-		Size = UDim2.fromOffset(70, 22),
-		Position = UDim2.new(1, -(OVER + PAD - 4), 1, -8),
-		AnchorPoint = Vector2.new(1, 1),
-		ZIndex = 4,
-		Parent = box,
-	})
-	Kit.press(link, { Kind = "plain", Face = false })
-	link.Activated:Connect(function()
-		if done then
-			closed = true
-			place(true)
-		else
-			skip()
-		end
-	end)
-	-- what comes next, under the picture
-	Kit.caption(
-		if done then "" elseif view.step < Steps.Count then "Next: " .. LOOK[view.step + 1].short else "Last step",
-		{
-			Name = "Next",
-			Parent = box,
-			Position = UDim2.new(0, PAD, 1, -12),
-			AnchorPoint = Vector2.new(0, 1),
-			ZIndex = 3,
-		}
-	)
-	if done then
-		return
-	end
-	local tuck = Kit.roundButton("back", {
-		Name = "Tuck",
-		Parent = box,
-		Size = 26,
-		Position = UDim2.new(1, -(OVER + PAD - 6), 0, 8),
-		AnchorPoint = Vector2.new(1, 0),
-	}, function()
-		tucked = true
-		place(false)
-	end)
-	tuck.ZIndex = 4
-	local art = tuck:FindFirstChild("IconArt")
-	if art and art:IsA("GuiObject") then
-		art.Rotation = 180 -- toward the edge it goes to
-	end
-end
-
-local function makeCard()
-	if card then
-		card:Destroy()
-	end
-	painted = ""
-	cardAt = nil
-	local c = Kit.frame({
-		Name = "TutorialCard",
-		Parent = layer,
-		Size = UDim2.fromOffset(W, H),
-		Position = homeOf() + UDim2.fromOffset(W + 40, 0),
-		AnchorPoint = Vector2.new(1, 0),
-		Color = T.Paper,
-		Radius = 16,
-	})
-	Kit.rim(c, T.Line, 1)
-	Kit.softShadow(c, 1)
-	Kit.dots(c, T.Ink, 0.94, 16)
-	content = Kit.box({ Name = "Content", Parent = c, Size = UDim2.fromScale(1, 1) })
-	-- tucked, what still shows of it brings it back
-	showHit = Kit.new("TextButton", {
-		Name = "Show",
 		Text = "",
 		BackgroundTransparency = 1,
-		Size = UDim2.new(0, TUCKED, 1, 0),
-		ZIndex = 6,
-		Visible = false,
-		Parent = c,
+		Font = Kit.Fonts.Title,
+		TextSize = PROMPT_SIZE,
+		TextColor3 = T.White,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Size = UDim2.new(1, -36, 0, 26),
+		Position = UDim2.fromOffset(18, 12),
+		ZIndex = 4,
+		Parent = card,
 	})
-	local hit = showHit :: TextButton
-	hit.Activated:Connect(function()
-		tucked = false
-		place(false)
-	end)
-	card = c
+	local link = Kit.new("TextButton", {
+		Name = "Skip",
+		Text = "Skip tutorial",
+		Font = Kit.Fonts.Body,
+		TextSize = 14,
+		TextColor3 = T.Glass:Lerp(T.White, 0.62),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		BackgroundTransparency = 1,
+		AutoButtonColor = false,
+		Size = UDim2.fromOffset(110, 20),
+		Position = UDim2.fromOffset(18, 42),
+		ZIndex = 4,
+		Parent = card,
+	})
+	Kit.press(link, { Kind = "plain", Face = false })
+	link.Activated:Connect(skip)
+	return d
 end
 
--- the welcome: the tutorial's first page -------------------------------------------------------------
+local function uiScale(): number
+	local s = Kit.root():FindFirstChildOfClass("UIScale")
+	return if s and s.Scale > 0 then s.Scale else 1
+end
+
+-- Cuts the darkened screen round what it is aimed at, where the engine has it now (every frame
+-- while it is up: what is in the hole can slide). It reaches up through the strip Roblox keeps at
+-- the top of the screen too, where the clock's slab hangs.
+local function placeHole()
+	local d, a = dim, aimed
+	if not d or not a then
+		return
+	end
+	local k = uiScale()
+	local inset = Kit.topInset() / k
+	d.Position = UDim2.fromOffset(0, -inset)
+	d.Size = UDim2.new(1, 0, 1, inset)
+	local screen = d.AbsoluteSize / k
+	local at = (a.target.AbsolutePosition - d.AbsolutePosition) / k
+	local size = a.target.AbsoluteSize / k
+	local pad = K.Pad
+	local hole = { at.X - pad, at.Y - pad, size.X + pad * 2, size.Y + pad * 2 }
+	local arrowF = d:FindFirstChild("TutorialArrow")
+	if arrowF and arrowF:IsA("GuiObject") then
+		arrowF.Visible = a.how == "out" or a.how == "arrow"
+		local aw, ah = arrowF.Size.X.Offset, arrowF.Size.Y.Offset
+		-- (a slab that runs off the screen's edge: over the part of it that shows)
+		local x0 = math.max(hole[1], 0)
+		local x1 = math.min(hole[1] + hole[3], screen.X)
+		arrowF.Position = UDim2.fromOffset(math.floor((x0 + x1) / 2 - aw / 2), math.floor(hole[2] + pad - 2 - ah))
+	end
+	local pieces = Tutorial.cut(screen.X, screen.Y, hole[1], hole[2], hole[3], hole[4])
+	for side, r in pieces do
+		local f = d:FindFirstChild(side)
+		if f and f:IsA("GuiObject") then
+			f.Position = UDim2.fromOffset(r[1], r[2])
+			f.Size = UDim2.fromOffset(r[3], r[4])
+		end
+	end
+	local card = d:FindFirstChild("TutorialPrompt")
+	if card and card:IsA("GuiObject") then
+		local gap = if a.how == "out" or a.how == "arrow" then 46 else 12
+		card:SetAttribute("HoleGap", gap)
+		local x, y, side = Tutorial.promptAt(screen.X, screen.Y, hole, card.Size.X.Offset, PROMPT_H, gap)
+		card:SetAttribute("HoleNear", side)
+		card.Position = UDim2.fromOffset(x, y)
+	end
+end
+
+local function undim()
+	unpoint()
+	aimed = nil
+	if dim then
+		dim.Visible = false
+	end
+	if holeConn then
+		holeConn:Disconnect()
+		holeConn = nil
+	end
+end
+
+-- Darkens the screen round `target` with the step's prompt beside it.
+local function dimAt(step: number, target: GuiObject, how: string)
+	if not dim then
+		dim = makeDim()
+	end
+	local d = dim :: Frame
+	local text = Steps.Prompts[step]
+	local card = d:FindFirstChild("TutorialPrompt")
+	local line = card and card:FindFirstChild("Line")
+	if card and card:IsA("GuiObject") and line and line:IsA("TextLabel") and line.Text ~= text then
+		line.Text = text
+		card.Size = UDim2.fromOffset(math.max(220, Kit.textWidth(text, PROMPT_SIZE, Kit.Fonts.Title) + 36), PROMPT_H)
+	end
+	point(target, how)
+	aimed = { target = target, how = how }
+	if not d.Visible then
+		d.Visible = true
+		-- the dark comes up
+		for _, side in SIDES do
+			local f = d:FindFirstChild(side)
+			if f and f:IsA("GuiObject") then
+				f.BackgroundTransparency = 1
+				TweenService:Create(f, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+					BackgroundTransparency = K.Dim,
+				}):Play()
+			end
+		end
+	end
+	placeHole()
+	if not holeConn then
+		holeConn = RunService.RenderStepped:Connect(placeHole)
+	end
+end
+
+-- the friend -----------------------------------------------------------------------------------------
+
+-- Who greets them, once the server has said (or the stand-in, once it has had long enough).
+local function greeterReady(): boolean
+	if greeter then
+		return true
+	end
+	if not greeterAskedAt then
+		greeterAskedAt = os.clock()
+		task.spawn(function()
+			local ok, got = pcall(function()
+				return Remotes.fn("TutorialGreeter"):InvokeServer()
+			end)
+			-- (an answer after the stand-in has spoken is too late: one friend talks them through it)
+			if not greeter and ok and type(got) == "table" and type(got.name) == "string" and got.name ~= "" then
+				greeter = {
+					name = got.name,
+					id = if type(got.id) == "number" then got.id else nil,
+					friend = got.friend == true,
+					model = if typeof(got.model) == "Instance" and got.model:IsA("Model") then got.model else nil,
+				}
+			end
+		end)
+		return false
+	end
+	if os.clock() - (greeterAskedAt :: number) >= K.GreeterWait then
+		greeter = { name = Steps.StandIn.name, friend = false }
+		return true
+	end
+	return false
+end
+
+-- The friend says `line` in the dialogue scene; a press once it is all there closes it, and then
+-- the step's darkened screen comes.
+local function sayLine(key: any, line: string)
+	local g = greeter or { name = Steps.StandIn.name }
+	local s
+	s = Dialogue.open({
+		Name = "TutorialScene",
+		OnClick = function()
+			said[key] = true
+			if scene == s then
+				scene = nil
+			end
+			s.close()
+			task.defer(function()
+				pcall(Tutorial.refresh)
+			end)
+		end,
+	})
+	scene = s
+	s.join({
+		key = "greeter",
+		name = g.name,
+		color = T.Pink,
+		model = g.model,
+		-- (their picture from Roblox when the server couldn't build their look)
+		image = if not g.model and g.id then string.format("rbxthumb://type=Avatar&id=%d&w=420&h=420", g.id) else nil,
+	})
+	s.speak("greeter")
+	s.type(line, nil, function()
+		s.more.Visible = true
+	end)
+	if key ~= "done" then
+		Dialogue.answer("Skip tutorial", {
+			Name = "Skip",
+			Parent = s.tools,
+			Size = UDim2.fromOffset(132, 32),
+			TextSize = 15,
+		}, skip)
+	end
+end
+
+-- the popup the Create tile opens on the first step ---------------------------------------------------
 
 function Tutorial.isOpen(): boolean
 	return panel ~= nil and panel.root.Parent ~= nil
@@ -681,168 +579,122 @@ function Tutorial.close()
 	end
 end
 
-local function openCreator(start: string?)
+-- Opens the creator the way picked (UI/Creator.openFor: "yourself", "friend" or "custom").
+local function choose(kind: string)
 	Tutorial.close()
-	if hudApi then
-		hudApi.open("Creator", { mode = "new", start = start })
+	said[1] = true
+	local Creator = hudApi and hudApi.panel("Creator")
+	if not Creator then
+		return
 	end
-end
-
--- The four steps in a row, the first picked.
-local function stepRow(parent: Instance, order: number)
-	local row = Kit.box({ Name = "Steps", Parent = parent, Size = UDim2.new(1, 0, 0, 76), LayoutOrder = order })
-	Kit.list(row, 10, true)
-	for i, look in LOOK do
-		local here = i == 1
-		local chip = Kit.frame({
-			Name = "Step" .. i,
-			Parent = row,
-			Size = UDim2.new(0.25, -8, 1, 0),
-			Color = if here then T.Yellow else T.Card,
-			Radius = 12,
-			LayoutOrder = i,
-		})
-		if here then
-			chip:SetAttribute("KeepColors", true)
-		else
-			Kit.rim(chip, T.Line, 1)
-		end
-		Icons.make(Steps.Steps[i].icon, 28, {
-			Name = "IconArt",
-			Parent = chip,
-			Position = UDim2.new(0.5, 0, 0, 10),
-			AnchorPoint = Vector2.new(0.5, 0),
-			Color = if here then T.Dark else look.color,
-			Hole = if here then T.Yellow else T.Card,
-			ZIndex = 2,
-		})
-		Kit.text(Kit.index(i) .. "  " .. look.short, {
-			Name = "Name",
-			Parent = chip,
-			Size = UDim2.new(1, -8, 0, 20),
-			Position = UDim2.new(0.5, 0, 1, -8),
-			AnchorPoint = Vector2.new(0.5, 1),
-			TextSize = 14,
-			Font = Kit.Fonts.Bold,
-			Color = if here then T.Dark else T.Ink,
-			AlignX = Enum.TextXAlignment.Center,
-			Wrap = false,
-			ZIndex = 2,
-		})
+	if not hookedCreator and Creator.Created then
+		hookedCreator = true
+		Creator.Created:Connect(function()
+			task.defer(function()
+				pcall(Tutorial.refresh)
+			end)
+		end)
 	end
+	Creator.openFor(kind)
 end
 
 function Tutorial.open(_arg: any?)
 	Tutorial.close()
-	panel = Kit.panel("Welcome to Catalog Town", UDim2.fromOffset(620, 526), function()
+	panel = Kit.panel("Your first villager", UDim2.fromOffset(600, 290), function()
 		Tutorial.close()
-	end, "house", T.Pink, { Dialog = true })
+	end, "person", T.Pink, { Dialog = true })
 	local body = panel.body
-	Kit.list(body, 10)
-	for i, l in
-		{
-			"This plot is yours to build on, and you make the villagers who live here.",
-			"They work in town for coins, and now and then one of them asks you for something.",
-		}
-	do
-		Kit.text(l, {
-			Name = "About",
-			Parent = body,
-			Size = UDim2.new(1, 0, 0, 0),
-			AutomaticSize = Enum.AutomaticSize.Y,
+	Kit.list(body, 16)
+	Kit.text(Steps.Ask, {
+		Name = "Ask",
+		Parent = body,
+		Size = UDim2.new(1, 0, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		TextSize = 18,
+		LayoutOrder = 1,
+	})
+	local ways = Kit.box({ Name = "Ways", Parent = body, Size = UDim2.new(1, 0, 0, 120), LayoutOrder = 2 })
+	Kit.list(ways, 12, true)
+	local colors = { T.Green, T.Blue, T.Pink }
+	for i, way in Steps.Ways do
+		local tile = Kit.tile(way.icon, way.text, {
+			Name = way.text,
+			Parent = ways,
+			Size = UDim2.new(1 / 3, -8, 0, 120),
+			Color = colors[i],
+			TextColor = T.Dark,
 			TextSize = 17,
 			LayoutOrder = i,
-		})
+		}, function()
+			choose(way.kind)
+		end)
+		tile:SetAttribute("Way", way.kind)
+		Kit.mark(tile)
 	end
-	Kit.caption("Four steps to get going", { Parent = body, LayoutOrder = 3, Size = UDim2.new(1, 0, 0, 18) })
-	stepRow(body, 4)
-	local first = Kit.box({ Name = "First", Parent = body, Size = UDim2.new(1, 0, 0, 48), LayoutOrder = 5 })
-	Kit.caption(Text.fill("Step 1 of {all}", { all = Steps.Count }), {
-		Name = "Step",
-		Parent = first,
-		Position = UDim2.fromOffset(0, 2),
-		Tint = LOOK[1].color,
-	})
-	Kit.title(LOOK[1].title, {
-		Name = "Title",
-		Parent = first,
-		Size = UDim2.new(1, 0, 0, 28),
-		Position = UDim2.fromOffset(0, 20),
-		TextSize = 21,
-		Color = T.Ink,
-	})
-	local ways = Kit.box({ Name = "Ways", Parent = body, Size = UDim2.new(1, 0, 0, 112), LayoutOrder = 6 })
-	Kit.list(ways, 12, true)
-	Kit.tile("person", "Make me", {
-		Name = "Make me",
-		Parent = ways,
-		Size = UDim2.new(0.5, -6, 0, 112),
-		Color = T.Green,
-		TextColor = T.Dark,
-		TextSize = 16,
-		LayoutOrder = 1,
-	}, function()
-		openCreator("me")
-	end)
-	Kit.tile("shirt", "Start from scratch", {
-		Name = "Start from scratch",
-		Parent = ways,
-		Size = UDim2.new(0.5, -6, 0, 112),
-		TextSize = 16,
-		LayoutOrder = 2,
-	}, function()
-		openCreator(nil)
-	end)
-	local foot = Kit.box({ Name = "Foot", Parent = body, Size = UDim2.new(1, 0, 0, 24), LayoutOrder = 7 })
-	Kit.text("A card at the right shows the next step.", {
-		Name = "Note",
-		Parent = foot,
-		Size = UDim2.new(1, -150, 1, 0),
-		TextSize = 14,
-		Color = T.InkSoft,
-		Wrap = false,
-	})
-	local link = Kit.new("TextButton", {
-		Name = "Skip",
-		Text = "Skip the tutorial",
-		Font = Kit.Fonts.Body,
-		TextSize = 14,
-		TextColor3 = T.InkSoft,
-		TextXAlignment = Enum.TextXAlignment.Right,
-		BackgroundTransparency = 1,
-		AutoButtonColor = false,
-		Size = UDim2.new(0, 140, 1, 0),
-		Position = UDim2.new(1, 0, 0, 0),
-		AnchorPoint = Vector2.new(1, 0),
-		Parent = foot,
-	})
-	Kit.press(link, { Kind = "plain", Face = false })
-	link.Activated:Connect(skip)
+end
+
+-- The Create tile on the quick menu asks this first (UI/Hud): on the first step it opens the
+-- popup in place of the creator, and says so.
+function Tutorial.takeCreate(): boolean
+	if currentStep() ~= 1 then
+		return false
+	end
+	said[1] = true
+	if scene then
+		scene.close(true)
+		scene = nil
+	end
+	if hudApi then
+		hudApi.open("Tutorial")
+	else
+		Tutorial.open()
+	end
+	return true
 end
 
 -- keeping it up to date --------------------------------------------------------------------------------
 
--- The key of what a view shows, so the card is only drawn again when that changes.
-local function keyOf(view: any): string
-	return table.concat({ view.step, view.phase, view.title, view.line, Kit.ThemeName }, "|")
+-- Takes everything down: the darkened screen, the friend's scene and the popup.
+function Tutorial.stop()
+	undim()
+	if scene then
+		scene.close()
+		scene = nil
+	end
+	Tutorial.close()
 end
 
-refresh = function()
+-- Puts away a piece in hand, once for `key` (a step just done with the piece still held).
+local function putAwayFor(key: any)
+	if putAway[key] then
+		return
+	end
+	putAway[key] = true
+	local BuildMode = require(script.Parent.Parent.Build.BuildMode) :: any
+	if BuildMode.putAway then
+		BuildMode.putAway()
+	end
+end
+
+function Tutorial.refresh()
 	if not layer then
 		return
 	end
+	if scene and (scene.root.Parent == nil or scene.root.Name ~= "TutorialScene") then
+		-- (put away by another scene: it says its line again later)
+		scene = nil
+	end
 	local d = State.data
 	if d.tutorial == nil or d.villagers == nil or skipped then
-		unpoint()
-		place(true)
+		Tutorial.stop()
 		return
 	end
 	local done = Steps.progress(d.tutorial)
 	if done == Steps.Skipped then
-		unpoint()
-		place(true)
+		Tutorial.stop()
 		return
 	end
+	knownAt = knownAt or os.clock()
 	local t = town()
 	local reached = Steps.reached(t, done)
 	-- what the town shows goes to the server, which looks for itself
@@ -862,61 +714,56 @@ refresh = function()
 			end
 		end)
 	end
-	-- the welcome, once, on a first visit
-	if not welcomed and done == 0 and #(d.order or {}) == 0 then
-		welcomed = true
-		task.delay(1.5, function()
-			local dd = State.data
-			if not skipped and #(dd.order or {}) == 0 and not creating() then
-				Tutorial.open()
+	local step: number? = if reached >= Steps.Count then nil else reached + 1
+	if step ~= 1 and panel then
+		Tutorial.close()
+	end
+	if step or (sawSteps and not said.done) then
+		-- (the server is asked who greets them as soon as there is anything to say)
+		greeterReady()
+	end
+	local inBuild, holding = building()
+	local busy = creating() or menuUp() or Dialogue.isOpen() or d.talking == true
+	if not step then
+		-- all done: the last line, if a step was shown this session
+		undim()
+		if sawSteps and not said.done then
+			if holding then
+				putAwayFor("done")
+			elseif not busy and greeterReady() then
+				sayLine("done", Steps.Lines.done)
 			end
-		end)
+		end
+		return
 	end
-	if not card then
-		makeCard()
-	end
-	local view
-	if reached >= Steps.Count then
-		unpoint()
-		if not sawSteps or closed then
-			place(true)
+	local here = step :: number
+	if not said[here] then
+		-- the friend says what this step is first
+		undim()
+		if here == 1 and os.clock() - (knownAt :: number) < K.FirstAfter then
 			return
 		end
-		closing = closing or os.clock()
-		if os.clock() - (closing :: number) > 14 then
-			closed = true
-			place(true)
-			return
+		if holding and here > 1 then
+			putAwayFor(here)
+		elseif not busy and not holding and greeterReady() then
+			sawSteps = true
+			sayLine(here, Steps.Lines[here])
 		end
-		view = {
-			step = Steps.Count + 1,
-			title = "That's the tutorial",
-			line = "You know the basics now. The rest of the plot is yours to build on.",
-			color = T.Green,
-			icon = "check",
-			phase = "done",
-		}
-	else
-		sawSteps = true
-		view = now(reached + 1, t)
+		return
 	end
-	local key = keyOf(view)
-	if key ~= painted then
-		-- a new step brings a tucked card back out
-		if painted:match("^(%d+)") ~= tostring(view.step) then
-			tucked = false
-		end
-		painted = key
-		paint(view)
+	sawSteps = true
+	-- (with the main screen slid away by Hide, nothing is darkened: Show must stay pressable)
+	local hidden = not inBuild and hudApi ~= nil and hudApi.isHidden ~= nil and hudApi.isHidden()
+	if busy or holding or hidden then
+		undim()
+		return
 	end
-	local _, holding = building()
-	local away = holding or creating() or d.talking == true
-	-- a craving turning up brings a tucked card back out
-	if tucked and (view.phase:sub(1, 6) == "bubble" or view.phase == "buy") then
-		tucked = false
+	local target, how = targetFor(here)
+	if not target or not shown(target) then
+		undim()
+		return
 	end
-	place(away)
-	point(view.target, view.how)
+	dimAt(here, target, how)
 end
 
 function Tutorial.start(hud: any)
@@ -926,31 +773,33 @@ function Tutorial.start(hud: any)
 	started = true
 	hudApi = hud
 	local l = Kit.box({ Name = "Tutorial", Parent = Kit.root(), Size = UDim2.fromScale(1, 1) })
-	-- over the main screen and Build mode, under the menus (a menu's holder is 5)
+	-- over the main screen and Build mode, under the menus (a menu's holder is 5) and the scenes
 	l.ZIndex = 4
 	layer = l
 	local function soon()
 		task.defer(function()
-			local ok, err = pcall(refresh)
+			local ok, err = pcall(Tutorial.refresh)
 			if not ok then
 				warn("[Tutorial] " .. tostring(err))
 			end
 		end)
 	end
-	for _, key in { "tutorial", "villagers", "order", "stats", "talking" } do
+	for _, key in { "tutorial", "villagers", "order", "talking" } do
 		State.on(key, soon)
 	end
 	State.onPlan(soon)
 	Kit.onTheme(function()
 		-- drawn again in the new look
-		if card then
-			makeCard()
+		if dim then
+			undim()
+			dim:Destroy()
+			dim = nil
 			soon()
 		end
 	end)
 	task.spawn(function()
 		while true do
-			local ok, err = pcall(refresh)
+			local ok, err = pcall(Tutorial.refresh)
 			if not ok then
 				warn("[Tutorial] " .. tostring(err))
 			end
