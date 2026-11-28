@@ -37,8 +37,9 @@ export type Preset = {
 -- finishes, from the town's palette: light walls, roofs a few steps darker and only gently
 -- coloured, the same trim white on every house
 local WHITE_BOARDS = { c = "F6F0E2", m = "WoodPlanks" } -- warm white
-local WHITE = { c = "F7F3EA", m = "SmoothPlastic" }
-local CREAM = { c = "F2E6CC", m = "SmoothPlastic" }
+-- (inside walls are boards too, as everywhere: never plain plastic)
+local WHITE = { c = "F7F3EA", m = "WoodPlanks" }
+local CREAM = { c = "F2E6CC", m = "WoodPlanks" }
 local BRICK = { c = "D8A48E", m = "Brick" } -- soft brick
 local SIDING_BLUE = { c = "B4CFEA", m = "WoodPlanks" } -- sky
 local OAK = { c = "C49A6C", m = "WoodPlanks" }
@@ -167,6 +168,24 @@ function Blueprint.open(self: Blueprint, id: string, wallName: string, t: number
 		},
 		wallName = wallName,
 	})
+end
+
+-- Something hung on a named wall: `t` along it, its bottom at `y` (from the ground), on side
+-- "a" (outside, for the walls of a box) or "b".
+function Blueprint.hang(self: Blueprint, id: string, wallName: string, t: number, y: number, side: string)
+	local w = self.walls[wallName]
+	assert(Catalog.get(id) and w, "bad wall piece " .. id .. " on " .. wallName)
+	table.insert(self.objects, {
+		kind = "items",
+		obj = { id = id, x = 0, y = y, z = 0, r = 0, lv = w.lv, t = t, side = side },
+		wallName = wallName,
+	})
+end
+
+-- The top of a piece standing on the floor, for what stands on it.
+local function onTop(id: string): number
+	local def = Catalog.get(id)
+	return F + (if def and def.surface then def.surface else 0)
 end
 
 -- A free-standing piece. Indoors it stands on the floor; `ground` pieces go on the grass.
@@ -332,6 +351,27 @@ add("cottage", "Garden cottage", "A small house with a bedroom and a kitchen cor
 	b:item("flower_bed", 19, 3)
 	b:item("bush", 8.4, 2.6)
 	b:item("mailbox", 22.6, 1.6)
+	-- lanterns either side of the path, a bird bath in the corner, boxes of flowers under the
+	-- windows and hoods over the front ones
+	b:item("lantern_garden", 10, 1.2)
+	b:item("lantern_garden", 14, 1.2)
+	b:item("bird_bath", 1.3, 1.3)
+	for _, wall in { "right", "left" } do
+		b:hang("window_box", wall, 5, F + 1.65, "a")
+		b:hang("window_box", wall, 12, F + 1.65, "a")
+	end
+	b:hang("window_box", "back", 5, F + 1.65, "a")
+	b:hang("window_box", "back", 15, F + 1.65, "a")
+	b:hang("window_hood", "front", 4, F + 7.38, "a")
+	b:hang("window_hood", "front", 16, F + 7.38, "a")
+	-- inside: a picture in the bedroom and a clock in the kitchen on the wall between them, the
+	-- kettle on the counter, flowers on the table, a lamp by the bed and books on the coffee table
+	b:hang("art_flowers", "inner", 6.5, F + 3.6, "a")
+	b:hang("clock_wall", "inner", 6.5, F + 5.2, "b")
+	b:item("kettle", 13.4, 20.5, 180, 0, onTop("counter"))
+	b:item("vase_flowers", 17, 15.6, 0, 0, onTop("table_dining_small"))
+	b:item("lamp_table", 8.6, 20.6, 180, 0, onTop("nightstand"))
+	b:item("books_stack", 7.6, 11.1, 20, 0, onTop("table_coffee"))
 
 	-- opened up: the bedroom and the kitchen wider and deeper, the front room deeper
 	b:spread({ x = { { 9.5, 4 }, { 13, 6 } }, z = { { 13.2, 4 }, { 17.5, 4 } } })
@@ -403,6 +443,26 @@ add("family", "Family house", "A living room, a kitchen, two bedrooms and a bath
 	b:item("bush", 10, 3)
 	b:item("bush", 22, 3)
 	b:item("mailbox", 30.8, 1.6)
+	-- lanterns by the path, a bird bath, and boxes of flowers under the windows
+	b:item("lantern_garden", 14.2, 1.2)
+	b:item("lantern_garden", 17.8, 1.2)
+	b:item("bird_bath", 1.4, 1.4)
+	b:hang("window_box", "front", 6, F + 1.65, "a")
+	b:hang("window_box", "front", 22, F + 1.65, "a")
+	for _, wall in { "right", "left" } do
+		b:hang("window_box", wall, 5, F + 1.65, "a")
+		b:hang("window_box", wall, 15, F + 1.65, "a")
+	end
+	b:hang("window_box", "back", 5, F + 1.65, "a")
+	b:hang("window_box", "back", 23, F + 1.65, "a")
+	-- inside: a clock over the television, a shelf over the sink, a mirror in the bathroom,
+	-- flowers on the island, a lamp by the bed and books on the desk
+	b:hang("clock_wall", "hall", 3.5, F + 5.6, "a")
+	b:hang("shelf_wall", "hall", 20, F + 5.2, "a")
+	b:hang("mirror_wall", "hall", 12, F + 4.2, "b")
+	b:item("vase_flowers", 24, 10, 0, 0, onTop("kitchen_island"))
+	b:item("lamp_table", 4.2, 24.6, 180, 0, onTop("nightstand"))
+	b:item("books_stack", 21.6, 24.6, 180, 0, onTop("desk"))
 
 	-- opened up: every room wider and deeper
 	b:spread({ x = { { 11.6, 6 }, { 15.8, 4 }, { 26.6, 6 } }, z = { { 12.5, 4 }, { 20, 6 } } })
@@ -476,6 +536,16 @@ add(
 		b:item("path_stones", 16, 5.6)
 		b:item("path_stones", 16, 3.4)
 		b:item("lamp_post", 3, 5.4)
+		-- boxes of flowers under the windows down the side and at the back, a drainpipe down the
+		-- blank side, the kettle on, flowers on the table and a lamp by the bed
+		b:hang("window_box", "left", 5, F + 1.65, "a")
+		b:hang("window_box", "left", 11, F + 1.65, "a")
+		b:hang("window_box", "back", 6, F + 1.65, "a")
+		b:hang("window_box", "back", 14, F + 1.65, "a")
+		b:hang("downpipe", "right", 0.8, 0, "a")
+		b:item("kettle", 3.6, 10, 0, 0, onTop("counter"))
+		b:item("vase_flowers", 12, 14, 0, 0, onTop("table_round"))
+		b:item("lamp_table", 3.5, 22.6, 180, 1, Plan.levelBase(1) + onTop("nightstand") - F)
 
 		-- opened up: wider rooms on both sides of the stairs, deeper behind the kitchen
 		b:spread({ x = { { 11.8, 4 }, { 16.9, 4 } }, z = { { 12.2, 6 } } })
@@ -486,6 +556,8 @@ add(
 		b:item("lamp_pendant", 16, 20)
 		b:item("nightstand", 11.7, 28.6, 180, 1)
 		b:item("dresser", 12.2, 10, 0, 1)
+		-- a lantern beside the door (at 20 now)
+		b:hang("lantern_wall", "front", 21.4, F + 4.8, "a")
 	end,
 	"fancy"
 )

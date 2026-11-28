@@ -65,6 +65,11 @@ return function(add: any)
 			put(b, "tree_pine", 2.6, 25.4, 0)
 			put(b, "tree_pine", 19.4, 25.4, 0)
 			put(b, "bush", 11, 26, 0)
+			-- stone lanterns at the pond's front corners, a hare and a clipped spiral behind
+			put(b, "decor_stone_lantern", 6.2, 1.2, 0)
+			put(b, "decor_stone_lantern", 15.8, 1.2, 0)
+			put(b, "statue_hare", 6.6, 26, 200)
+			put(b, "topiary_spiral", 15.4, 26, 0)
 		end
 	)
 end

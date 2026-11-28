@@ -59,6 +59,10 @@ local STEP = 0.04 -- and a small one over a mark it lies on
 local PAINT = ROAD + LIFT -- the top of the paint on a road
 StreetPaint.Heights = { road = ROAD, walk = WALK, paving = PAVING, paint = PAINT, lift = LIFT }
 
+-- Paint on a road takes the grain of the asphalt under it, worn where the wheels run (the user:
+-- "for all buildings and decor, make it such that textures are used, never make them untextured").
+local ROAD_PAINT = "Asphalt"
+
 -- The fountain's rings reach this far from its middle (as the flats of a sixteen sided ring).
 StreetPaint.FountainReach = 24
 
@@ -166,15 +170,15 @@ end
 -- width, `lane` how far out the middle of the lane is.
 local function stopLine(half: number, lane: number): (R) -> ()
 	return function(q: R)
-		q:box((half - 0.5) / 2 + 0.4, LIFT / 2, 0, half - 1.3, LIFT, 0.9, WHITE, "SmoothPlastic")
-		q:box(lane, LIFT / 2, 13.2, 0.5, LIFT, 4, WHITE, "SmoothPlastic")
+		q:box((half - 0.5) / 2 + 0.4, LIFT / 2, 0, half - 1.3, LIFT, 0.9, WHITE, ROAD_PAINT)
+		q:box(lane, LIFT / 2, 13.2, 0.5, LIFT, 4, WHITE, ROAD_PAINT)
 		q:tri(
 			Vector3.new(lane, LIFT / 2, 8.6),
 			Vector3.new(lane - 1, LIFT / 2, 11.2),
 			Vector3.new(lane + 1, LIFT / 2, 11.2),
 			LIFT,
 			WHITE,
-			"SmoothPlastic"
+			ROAD_PAINT
 		)
 	end
 end
@@ -183,9 +187,9 @@ end
 local function bays(half: number, count: number): (R) -> ()
 	return function(q: R)
 		local long = 13 * count
-		q:box(half - 5.6, LIFT / 2, 0, 0.3, LIFT, long + 0.3, WHITE, "SmoothPlastic")
+		q:box(half - 5.6, LIFT / 2, 0, 0.3, LIFT, long + 0.3, WHITE, ROAD_PAINT)
 		for i = 0, count do
-			q:box(half - 3.1, LIFT / 2, -long / 2 + i * 13, 4.7, LIFT, 0.3, WHITE, "SmoothPlastic")
+			q:box(half - 3.1, LIFT / 2, -long / 2 + i * 13, 4.7, LIFT, 0.3, WHITE, ROAD_PAINT)
 		end
 	end
 end
@@ -194,38 +198,24 @@ end
 -- (Drawn with y = 0 on the lane's own paint: the frame and the wheels on it, the red middles of
 -- the wheels on those.)
 local function bicycle(q: R)
-	q:box(0, STEP / 2, 0.1, 0.22, STEP, 2.2, WHITE, "SmoothPlastic")
+	q:box(0, STEP / 2, 0.1, 0.22, STEP, 2.2, WHITE, ROAD_PAINT)
 	for _, z in { -1.1, 1.3 } do
-		q:cyl(0, STEP / 2, z, STEP, 1.4, "y", WHITE, "SmoothPlastic")
-		q:cyl(0, STEP * 1.5, z, STEP, 0.86, "y", CYCLE, "SmoothPlastic")
+		q:cyl(0, STEP / 2, z, STEP, 1.4, "y", WHITE, ROAD_PAINT)
+		q:cyl(0, STEP * 1.5, z, STEP, 0.86, "y", CYCLE, ROAD_PAINT)
 	end
-	q:box(0, STEP / 2, -0.5, 1, STEP, 0.2, WHITE, "SmoothPlastic")
-	q:boxAt(
-		CFrame.new(-0.42, STEP / 2, -3.3) * CFrame.Angles(0, math.rad(40), 0),
-		0.24,
-		STEP,
-		1.3,
-		WHITE,
-		"SmoothPlastic"
-	)
-	q:boxAt(
-		CFrame.new(0.42, STEP / 2, -3.3) * CFrame.Angles(0, math.rad(-40), 0),
-		0.24,
-		STEP,
-		1.3,
-		WHITE,
-		"SmoothPlastic"
-	)
+	q:box(0, STEP / 2, -0.5, 1, STEP, 0.2, WHITE, ROAD_PAINT)
+	q:boxAt(CFrame.new(-0.42, STEP / 2, -3.3) * CFrame.Angles(0, math.rad(40), 0), 0.24, STEP, 1.3, WHITE, ROAD_PAINT)
+	q:boxAt(CFrame.new(0.42, STEP / 2, -3.3) * CFrame.Angles(0, math.rad(-40), 0), 0.24, STEP, 1.3, WHITE, ROAD_PAINT)
 end
 
 -- A bus bay: a yellow box at the kerb, hatched.
 local function busBay(q: R)
 	local long, wide = 26, 3.4
 	for _, sx in { -1, 1 } do
-		q:box(sx * wide / 2, LIFT / 2, 0, 0.3, LIFT, long, YELLOW, "SmoothPlastic")
+		q:box(sx * wide / 2, LIFT / 2, 0, 0.3, LIFT, long, YELLOW, ROAD_PAINT)
 	end
 	for _, sz in { -1, 1 } do
-		q:box(0, LIFT / 2, sz * long / 2, wide + 0.3, LIFT, 0.3, YELLOW, "SmoothPlastic")
+		q:box(0, LIFT / 2, sz * long / 2, wide + 0.3, LIFT, 0.3, YELLOW, ROAD_PAINT)
 	end
 	for i = -2, 2 do
 		q:boxAt(
@@ -234,7 +224,7 @@ local function busBay(q: R)
 			LIFT,
 			4.2,
 			YELLOW,
-			"SmoothPlastic"
+			ROAD_PAINT
 		)
 	end
 end
@@ -243,10 +233,10 @@ end
 local function junctionBox(w: number, d: number): (R) -> ()
 	return function(q: R)
 		for _, sx in { -1, 1 } do
-			q:box(sx * w / 2, LIFT / 2, 0, 0.36, LIFT, d + 0.36, YELLOW, "SmoothPlastic")
+			q:box(sx * w / 2, LIFT / 2, 0, 0.36, LIFT, d + 0.36, YELLOW, ROAD_PAINT)
 		end
 		for _, sz in { -1, 1 } do
-			q:box(0, LIFT / 2, sz * d / 2, w, LIFT, 0.36, YELLOW, "SmoothPlastic")
+			q:box(0, LIFT / 2, sz * d / 2, w, LIFT, 0.36, YELLOW, ROAD_PAINT)
 		end
 		-- three lines each way, parallel to the box's own diagonals
 		local long = math.sqrt(w * w + d * d)
@@ -254,7 +244,7 @@ local function junctionBox(w: number, d: number): (R) -> ()
 			local turn = CFrame.Angles(0, math.atan2(w, s * d), 0)
 			for _, k in { -0.5, 0, 0.5 } do
 				local at = turn * CFrame.new(k * w * d / long, LIFT / 2, 0)
-				q:boxAt(at, 0.3, LIFT, long * (1 - math.abs(k)) - 1, YELLOW, "SmoothPlastic")
+				q:boxAt(at, 0.3, LIFT, long * (1 - math.abs(k)) - 1, YELLOW, ROAD_PAINT)
 			end
 		end
 	end
@@ -481,7 +471,7 @@ function StreetPaint.ground(region: Region?): { Prim }
 				math.max(x1, region[1]), math.max(z1, region[2]), math.min(x2, region[3]), math.min(z2, region[4])
 		end
 		if x1 < x2 and z1 < z2 then
-			r:block(x1, y1, z1, x2, y2, z2, color, mat).collide = solid == true
+			r:block(x1, y1, z1, x2, y2, z2, color, mat or ROAD_PAINT).collide = solid == true
 		end
 	end
 	-- a piece, kept whole when its middle is in the region
@@ -553,7 +543,7 @@ function StreetPaint.ground(region: Region?): { Prim }
 				if dir == 0 or s == -dir then
 					for _, side in { -1, 1 } do
 						local u1, u2 = u - s * (half + 0.5), u - s * (half + 8.5)
-						rect(u1, side * hw, u2, side * (hw + 0.6), KERB, KERB + LIFT, YELLOW)
+						rect(u1, side * hw, u2, side * (hw + 0.6), KERB, KERB + LIFT, YELLOW, "Concrete")
 					end
 				end
 			end

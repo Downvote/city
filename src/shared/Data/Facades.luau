@@ -27,6 +27,7 @@ local Recipe = require(script.Parent.Parent.Build.Recipe)
 local Geometry = require(script.Parent.Parent.Build.Geometry)
 local CityModels = require(script.Parent.CityModels)
 local Interiors = require(script.Parent.Interiors)
+local Edging = require(script.Parent.Edging) -- (worn edges on the steps)
 
 type R = Recipe.Recipe
 type Prim = Geometry.Prim
@@ -207,6 +208,30 @@ end
 -- the same numbers every time, so its key never wavers; using it again is a copy with a new place.
 local kit: { [string]: Prim } = {}
 
+-- What a piece is made of where its drawing doesn't say (a piece is one material), by the first
+-- word of its name: a door in painted timber; windows and shop fronts, whose glass is drawn into
+-- the same piece, in painted metal, the plainest picture, so the glass shows no grain; the
+-- fittings on a wall in painted metal, a banner in cloth. (Data/Surfaces picks for any other.)
+local MADE_OF: { [string]: string } = {
+	win = "Metal",
+	glazed = "Metal",
+	door = "Wood",
+	back = "Metal",
+	meter = "Metal",
+	aircon = "Metal",
+	pipe = "Metal",
+	arms = "Metal",
+	banner = "Fabric",
+	["roof:tank"] = "Metal",
+	["roof:vents"] = "Metal",
+	["roof:aerial"] = "Metal",
+	["roof:line"] = "Metal",
+	["roof:rail"] = "Metal",
+	["roof:frame"] = "Metal",
+	["roof:skylight"] = "Metal",
+	["roof:hut"] = "Concrete:Stucco",
+}
+
 local function piece(id: string, draw: (R) -> ()): Prim
 	local made: Prim? = kit[id]
 	if made then
@@ -214,6 +239,14 @@ local function piece(id: string, draw: (R) -> ()): Prim
 	end
 	local q = Recipe.new(WHITE, WHITE)
 	draw(q)
+	local mat = MADE_OF[id] or MADE_OF[string.match(id, "^[^:]+") or ""]
+	if mat then
+		for _, p in q.prims do
+			if p.mat == PLAIN then
+				p.mat = mat
+			end
+		end
+	end
 	local new = Geometry.piece(q.prims, false)
 	kit[id] = new
 	return new
@@ -266,12 +299,17 @@ end
 local SILL, HEAD = 1, 3.5
 
 -- An opening `hw` either side of the middle: the glass, a head, two jambs and a sill.
-local function opening(q: R, hw: number, y1: number, y2: number, trim: Color3)
+-- (and a keystone in the middle of its head, standing proud of it, unless something hangs over
+-- the head: `plain`)
+local function opening(q: R, hw: number, y1: number, y2: number, trim: Color3, plain: boolean?)
 	q:block(-hw, y1, -0.1, hw, y2, 0, PANE)
 	q:block(-hw - 0.3, y2, -0.4, hw + 0.3, y2 + 0.3, 0, trim)
 	q:block(-hw - 0.3, y1, -0.3, -hw, y2, 0, trim)
 	q:block(hw, y1, -0.3, hw + 0.3, y2, 0, trim)
 	q:block(-hw - 0.5, y1 - 0.25, -0.6, hw + 0.5, y1, 0, trim)
+	if not plain then
+		q:block(-0.36, y2 - 0.16, -0.52, 0.36, y2 + 0.48, 0, trim)
+	end
 end
 
 local function single(q: R, trim: Color3)
@@ -392,7 +430,7 @@ local WINDOWS: { [string]: Window } = {
 		y1 = SILL,
 		y2 = HEAD,
 		draw = function(q: R, trim: any, _awning: any)
-			opening(q, 2.3, SILL, HEAD, trim.color)
+			opening(q, 2.3, SILL, HEAD, trim.color, true)
 			q:block(-0.3, SILL, -0.3, 0.3, HEAD, 0, trim.color)
 			q:wedge(CFrame.new(0, 3.85, -0.85), 5.8, 0.6, 1.7, trim.shade)
 			q:block(-2.9, 3.2, -1.7, 2.9, 3.56, -1.62, CREAM)
@@ -422,7 +460,8 @@ local function glazed(q: R, w: number, trim: Color3, riser: Color3, door: Color3
 	q:block(-1.6, 0.15, -0.22, 1.6, 6.4, 0, door)
 	q:block(-1.1, 2.4, -0.27, 1.1, 5.9, -0.22, PANE)
 	q:block(0.95, 3, -0.36, 1.1, 3.8, -0.27, BRASS)
-	q:block(-2.1, 0, -1, 2.1, 0.15, 0, STONE)
+	-- (a step a little taller than it was, so its worn edge keeps clear of the paving)
+	Edging.slab(q, -2.1, 0, -1, 2.1, 0.2, 0, STONE, PLAIN, 0.07, Edging.Open)
 end
 
 -- A roller shutter, half down over a dim shop with a couple of crates inside, or right down.
@@ -498,7 +537,7 @@ local function houseDoor(q: R, trim: Color3, door: Color3)
 	q:block(-0.6, 5.5, -0.25, 2.6, 5.7, 0, trim)
 	q:block(-0.6, 5.7, -0.1, 2.6, 6.4, 0, PANE)
 	q:block(0.93, 5.7, -0.2, 1.07, 6.4, -0.1, trim)
-	q:block(-1.1, 0, -0.9, 3.1, 0.15, 0, STONE)
+	Edging.slab(q, -1.1, 0, -0.9, 3.1, 0.2, 0, STONE, PLAIN, 0.07, Edging.Open)
 	-- the little window
 	q:block(-2.6, 3.4, -0.1, -1.5, 5.6, 0, PANE)
 	q:block(-2.8, 5.6, -0.3, -1.3, 5.8, 0, trim)
@@ -800,6 +839,20 @@ local function chimney(q: R)
 	q:block(-0.35, 2.3, -0.35, 0.35, 3, 0.35, rgb(196, 134, 110), MAT)
 end
 
+-- Quoins: the dressed stones up a corner, long and short by turns, flush with the wall's end.
+-- Drawn for the right hand end of a face, `n` storeys tall round y = 0 (turned half round about
+-- the wall's normal it is the left hand end's, its long stones flush with that end). The joints
+-- between them are left open, so the wall shows in a line between every stone.
+local QUOIN = rgb(228, 222, 210)
+local function quoins(q: R, n: number)
+	local half = n * FH / 2
+	for k = 0, 2 * n - 1 do
+		local y = -half + k * FH / 2
+		local x = if k % 2 == 0 then -1.2 else -0.8
+		q:block(x, y + 0.05, -0.17, 0, y + FH / 2 - 0.05, 0, QUOIN, "Concrete")
+	end
+end
+
 -- Laying a wall out -----------------------------------------------------------------------------------
 
 -- The window bays across a wall `fw` wide: each a class ("W" wide, "N" narrow) and where its
@@ -868,6 +921,7 @@ type Plan = {
 	feature: string?, -- another kind for the middle bays
 	crown: string?, -- another kind for the top storey
 	cap: Color3,
+	quoins: number, -- how many storeys of quoins go up its corners (none on tiles or panels)
 }
 
 -- How much wider than its shop front an awning is: 0.4, or less where the next front is so close
@@ -1138,6 +1192,28 @@ local function drawFace(face: Face, plan: Plan, main: boolean)
 	end
 	if not plan.pitched then
 		block(face, left, plan.h - 0.5, -0.4, right, plan.h + 1, 0.5, plan.cap)
+		-- a cove under the band, so it is a moulded cornice and not a box laid on the wall
+		add(face, {
+			shape = "Wedge",
+			cf = CFrame.new((left + right) / 2, plan.h - 0.68, -0.2) * CFrame.Angles(0, 0, math.pi),
+			size = Vector3.new(right - left, 0.36, 0.4),
+			color = plan.cap,
+			mat = PLAIN,
+		})
+	end
+	-- the quoins up both ends (on a corner's side face, only the end at the street corner: its
+	-- back end meets whatever stands behind)
+	if plan.quoins > 0 then
+		local made = piece("quoins:" .. plan.quoins, function(q: R)
+			quoins(q, plan.quoins)
+		end)
+		local ends: { number } = if main then { -1, 1 } elseif spec.corner == "right" then { -1 } else { 1 }
+		for _, sx in ends do
+			local p = table.clone(made)
+			local turn = if sx < 0 then CFrame.Angles(0, 0, math.pi) else CFrame.identity
+			p.cf = face.f * CFrame.new(sx * half, G + plan.quoins * FH / 2, 0) * turn * made.cf
+			table.insert(face.out, p)
+		end
 	end
 	local pipeSide = if d.chance(0.5) then 1 else -1
 	if main and d.chance(0.6) then
@@ -1221,6 +1297,11 @@ local function build(spec: Spec): { Prim }
 		feature = if wide ~= "balcony" and d.chance(0.3) then "balcony" else nil,
 		crown = if d.chance(0.22) then pick(d, { "wide", "shutter", "pair" }) else nil,
 		cap = if look.trim == 1 then CREAM else shade(wall.color, 0.82),
+		-- (render and brick get dressed stone at the corners, from the ground floor's top up
+		-- to the band along the top, or to the sheet metal storey)
+		quoins = if wall.mat == "Concrete:Stucco" or wall.mat == "Brick:Maple"
+			then storeys - 1 - (if attic then 1 else 0)
+			else 0,
 	}
 
 	-- the body: a room to walk into under the storeys, or one solid box (two when the ground

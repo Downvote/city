@@ -18,6 +18,7 @@ local CityModels = require(script.Parent.CityModels)
 local StreetModels = require(script.Parent.StreetModels)
 local Facades = require(script.Parent.Facades)
 local Landmarks = require(script.Parent.Landmarks)
+local Surfaces = require(script.Parent.Surfaces) -- (nothing in the town left in flat plastic)
 local Signs = require(script.Parent.Signs)
 local StreetPaint = require(script.Parent.StreetPaint)
 
@@ -110,6 +111,9 @@ local function palm(
 		end
 	end
 	local fronds = if far then 5 else 7
+	-- (a palm in town has its fronds in one piece named Leaf, so they are one part and sway in
+	-- the wind together; the islets' far palms keep theirs loose, each palm being different)
+	local q: R = if far then r else Recipe.new(LEAF, LEAF)
 	for f = 0, fronds - 1 do
 		local a = math.rad(yaw + f * 360 / fronds + (f % 2) * 12)
 		local out = Vector3.new(math.cos(a), 0, math.sin(a))
@@ -119,9 +123,14 @@ local function palm(
 		-- two pieces a frond: up and out, then drooping
 		for _, k in { 1.4, 3 } do
 			local p1 = top + out * (k * reach * 1.3) + Vector3.new(0, 1.1 * k - 0.62 * k * k + 0.4, 0)
-			r:beam(p0, p1, 2.6 - k * 0.55, 0.26, color, "SmoothPlastic")
+			q:beam(p0, p1, 2.6 - k * 0.55, 0.26, color, "LeafyGrass")
 			p0 = p1
 		end
+	end
+	if not far then
+		-- (the box a piece hangs its shapes on, inside the crown's ball)
+		q:box(top.X, top.Y + 0.3, top.Z, 0.6, 0.6, 0.6, LEAF, "LeafyGrass")
+		r:add(Geometry.piece(q.prims)).name = "Leaf"
 	end
 end
 
@@ -345,7 +354,7 @@ TownMap.Models.flowerBed = function(r: R)
 		for z = -1, 1, 1 do
 			i += 1
 			r:cyl(x, 0.95, z, 0.5, 0.12, "y", C.DarkLeaf, "Grass")
-			r:ball(x, 1.35, z, 0.75, colours[i % #colours + 1], "SmoothPlastic")
+			r:ball(x, 1.35, z, 0.75, colours[i % #colours + 1], "Fabric")
 		end
 	end
 end
@@ -539,13 +548,13 @@ TownMap.Models.hillS = hill(55, 14)
 TownMap.Models.hillM = hill(80, 22)
 TownMap.Models.hillL = hill(110, 30)
 
-function TownMap.prims(name: string): { Prim }
+local function made(name: string): { Prim }
 	local build = TownMap.Models[name]
 	if not build then
 		-- the newer kits first: street buildings from the facade kit, then the set pieces
-		local made = Facades.prims(name) or Landmarks.prims(name)
-		if made then
-			return made
+		local kit = Facades.prims(name) or Landmarks.prims(name)
+		if kit then
+			return kit
 		end
 		-- (the street scene first: its billboard takes the place of the older one)
 		local street = StreetModels.prims(name)
@@ -565,6 +574,11 @@ function TownMap.prims(name: string): { Prim }
 	local r = Recipe.new(C.White, C.White)
 	build(r)
 	return r.prims
+end
+
+-- A model's shapes by name, every one of them textured where it shows (Data/Surfaces).
+function TownMap.prims(name: string): { Prim }
+	return Surfaces.dress(made(name))
 end
 
 -- The ground ---------------------------------------------------------------------------------------
@@ -700,7 +714,8 @@ function TownMap.ground(region: Region?): { Prim }
 	)
 		local a, b, c, d = clip(region, x1, z1, x2, z2)
 		if a then
-			r:block(a, y1, b, c, y2, d, color, if mat == "" then "SmoothPlastic" else mat)
+			-- ("" is paint on the road, which takes the asphalt's grain)
+			r:block(a, y1, b, c, y2, d, color, if mat == "" then "Asphalt" else mat)
 		end
 	end
 
@@ -1057,7 +1072,7 @@ function TownMap.ground(region: Region?): { Prim }
 		local bz1, bz2 = -run.shore - 0.04, -run.back -- (a hair past the grass, so its edge is hidden)
 		slab(run.x1, bz1, run.x2, bz2, -0.15, 0.32, Color3.fromRGB(214, 172, 124), "WoodPlanks")
 		if run.rail2 > run.rail1 then
-			slab(run.rail1, bz1, run.rail2, bz1 + 0.5, 0.32, 2.6, Color3.fromRGB(250, 250, 246), "SmoothPlastic")
+			slab(run.rail1, bz1, run.rail2, bz1 + 0.5, 0.32, 2.6, Color3.fromRGB(250, 250, 246), "Wood")
 		end
 	end
 
@@ -1076,7 +1091,7 @@ function TownMap.ground(region: Region?): { Prim }
 				local gz = (Hills.at(x, z + 2) - Hills.at(x, z - 2)) / 4
 				local up = Vector3.new(-gx, 1, -gz).Unit
 				local at = Vector3.new(x, Hills.at(x, z) + Terrain.Ground, z) + up * 0.1
-				local stone = r:cyl(x, 0, z, 0.3, 4.2, "y", Color3.fromRGB(226, 216, 196), "SmoothPlastic")
+				local stone = r:cyl(x, 0, z, 0.3, 4.2, "y", Color3.fromRGB(226, 216, 196), "Slate")
 				local side = up:Cross(Vector3.zAxis).Unit
 				stone.cf = CFrame.fromMatrix(at, up, side)
 				stone.name = "PathStone"
@@ -1088,7 +1103,7 @@ function TownMap.ground(region: Region?): { Prim }
 	for _, p in StreetPaint.ground(region) do
 		r:add(p)
 	end
-	return r.prims
+	return Surfaces.dress(r.prims)
 end
 
 -- What is built on the island, for the terrain under it: Roblox's grass blades show through a
