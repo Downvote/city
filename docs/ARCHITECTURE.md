@@ -359,8 +359,8 @@ level is uncapped" and "add more rewards to quests, like titles, special buildin
   value, the notices for its title, piece and thing (a thing that doesn't fit is owed: `Bag.owe`). `Data/Goals`:
   `title`, `piece`, `thing` on a goal; new goals `gifts5`, `gather20`, `cook10`, `gifts30`, `heart20`.
 - Services (in `Main.server` after Work): `Bag` (prompts on giving pieces tagged `GatherPrompt`, owner only, per
-  piece rest, the day's cap; things made at work from `Work.at`; picking up traces; holding a little model in the
-  right hand, `Holding` attribute; dropping with a "Pick up" prompt for the dropper alone; owed things settled on
+  piece rest, the day's cap; things made at work from `Work.at`; picking up traces; holding the thing's model
+  (`Data/ThingModels`) in the right hand, `Holding` attribute; dropping with a "Pick up" prompt for the dropper alone; owed things settled on
   join), `Gifts` (GiftGive; a villager's gift on `Villagers.Talked`, a BindableEvent fired when the owner talks to a
   villager, the line sent as a `Talk` message so the card shows it), `Titles` (TitleWear; the `NameTag`
   BillboardGui on the head, Roblox's own name off while a title is worn). The GoalClaim handler notifies the extras
@@ -377,6 +377,41 @@ level is uncapped" and "add more rewards to quests, like titles, special buildin
   Studio playtest: the gather prompts (E, or F beside another prompt) and their rests, things made at work, holding
   a thing (the weld to RightHand or Right Arm) and dropping one, picking up a villager's book or letter, the title
   tag, a villager's gift arriving on the talk card.
+
+The things in the hand (the user: "check the models for handheld items. make them look more detailed and more
+recognizable for the things they are. also, some of them are held wrongly, such as the flowers being held upside
+down"):
+
+- `Data/ThingModels` (new, shared, no services): `draw(item | id) -> Thing` (`{ id, prims, lie, on }`: the model's
+  prims in the hand's space, the grip at the origin, +Y up and +Z out in front of the player; `lie` the frame from a
+  spot on the ground to that space; `on` when it stands on the fist's top), `inHand(thing, grip, handSize?)` (the
+  thing's space from the hand's RightGripAttachment WorldCFrame: turned to face forward, and what stands on the fist
+  lifted to the top of a hand bigger or smaller than the blocky R15 one), `gripIn(handSize)` (where a hand without a
+  RightGripAttachment holds things, as Roblox places that attachment), `lying(thing, spot)`, `has(id)`, `ids()`,
+  `Fist` and `CarryPose` (the fist's box and the arm in Util/Figure's degrees, for the previews and the spec). Flower
+  heads are prims named `Bloom`.
+- `Services/Bag`: `drawThing` is gone. `hold` draws `ThingModels.draw` at `ThingModels.inHand` of the hand's
+  `RightGripAttachment` (R15 and R6; `gripIn` without one), welded to the hand as before; `lay` places the model at
+  `ThingModels.lying`, the spot turned so its front faces the player who dropped it, `Tuning.Carry.Lift` over the
+  ground the ray found (it was 0.3).
+- `client/World/Carry` (new, started in `Main.client` after Work): while the player's `Holding` attribute is set,
+  plays the body's own `toolnone` animation from its Animate script (Roblox's `rbxassetid://507768375` for R15,
+  `rbxassetid://182393478` for R6 when there is none), looped at Idle priority (as Roblox's Animate plays a tool's
+  hold: it moves only the right arm, over walking and standing, under a job's motion and an emote) on the local
+  character, so it replicates. Stops when `Holding` clears or the character changes. `Carry.animId(char)`,
+  `Carry.isHolding()`.
+- `Tuning.Carry` (after `Tuning.Bag`): `Parts` (24, shapes in one model at most), `Fade` (0.2 s, the arm coming up
+  and down), `Lift` (0.02 studs, a dropped thing over the ground).
+- Spec `ThingModels`: every thing has a model of its own and only things have one; 3 to `Tuning.Carry.Parts` shapes;
+  at hand size round the grip; no SmoothPlastic or Plastic and only materials Roblox has; smooth balls and cylinders
+  kept round; no z-fighting in any model (tools/preview/zfight_lib); a flower held by its stem through the fist with
+  its `Bloom` over the hand, also with the arm in `CarryPose` on a plain R15 body (Util/Figure.figure); the tea
+  upright and facing forward in that hand, a stand-on thing lifted to a smaller hand's top; nothing held pokes into
+  the body or reaches the ground; a dropped thing on the ground with its middle over the spot, a book on its back,
+  a cup standing.
+- Previews (tools/preview/dump.luau): `things` (every thing as held, over a skin coloured fist, eight a row),
+  `things:<id>,<id>`, `things:lying` (and `things:lying:<id>,<id>`) as dropped, `holding:<id>,<id>` a plain body in
+  `CarryPose` holding each.
 
 ## Working at a workplace yourself
 

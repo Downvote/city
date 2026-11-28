@@ -205,6 +205,31 @@ own design (`Sim/Life`):
   picked thing big on the left with who in town would love it, and the things down the right by kind. Hold puts it
   in your hand for everyone to see; Drop lays one on the ground in front of you, which you can pick up again for two
   minutes.
+
+> check the models for handheld items. make them look more detailed and more recognizable for the things they are.
+> also, some of them are held wrongly, such as the flowers being held upside down
+
+- **Things in the hand.** Every thing in the bag has its own little model, made of the parts the real one has, at a
+  size that reads in a hand: a tulip is a stem, two leaves and a cup of petals; a daisy a ring of white petals round
+  a yellow middle; a sunflower a big head on a thick stem with two broad leaves; a bouquet roses, a tulip, a daisy
+  and baby's breath in a kraft paper cone with a ribbon and a bow. The tea is a cup with a blue band and a handle
+  on a saucer with a spoon; the orange juice a glass with juice, ice, a straw and a slice on the rim; the honey a
+  jar with a cloth tied over its lid and a label. Books have boards, pages and a spine (the storybook a title plate
+  and a star, the poems a gold frame, a feather and a ribbon marker); the letter is an envelope with its flaps and a
+  wax seal; the drawing a sheet with a house, a tree, grass, sky and the sun in crayon; the toy boat a hull, a deck,
+  a mast and two sails. The shell is a scallop, the coin has a four leaf clover on it, the music box stands open
+  with a mirror, a dancer and its key, and the snow globe holds a fir and a snowman. Foods look like the food: an
+  apple with its stalk and leaf, a bread roll with scores, a carrot held by its greens, a wedge of cheese with holes,
+  a fish grilled on a stick, a rice ball with its seaweed, an ice cream cone with two scoops and a cherry, a
+  chocolate bar half out of its wrapper; what you would carry on a plate or in a bowl is (pancakes, curry, a slice of
+  honey cake, pudding, soup, stew, salad).
+- **Held the right way.** A thing stands up out of the fist the way a tool's handle does, and while you hold one
+  your arm comes out in front, as it does for a tool, so it shows in front of you: a flower by its stem with its head
+  up, a glass or a jar in the hand, a book upright with its cover out, plates and bowls level on the hand. Everyone
+  in the server sees the arm and the thing. Working at a workplace or an emote plays over the arm while it lasts.
+- **Dropped.** A dropped thing lies the way it would: a cup, a jar, a bowl and a plate stand; a book, a letter, the
+  drawing, the coin and a flower lie flat with their fronts up; every one sits on the ground facing you.
+
 - **Where things come from.** On your own plot, pieces that give something carry a prompt: a bookshelf "Take a
   book", a flower bed "Pick a flower", a vegetable patch, a herb planter, a greenhouse, an oak (acorns), a beehive,
   a fridge or a pantry "Take a snack", a kettle or a tea set "Make tea", a sandbox "Dig", the well, a toy chest, the

@@ -212,7 +212,16 @@ inventory system to the player"): `profile.bag` (`Sim/Bag`) holds things (`Data/
 work, given by villagers and goals. A piece that gives something says so in its drawing, `gives = "<source>"`
 (`Data/Items.Sources`; the Bag spec checks every source is used and a `work` source sits only on a workplace). A new
 thing is a line in `Data/Items` with art in `UI/ItemArt` and a shape list in `UI/Icons`, and its id must not be an
-interface icon's name (ItemArt is merged into IconArt over them). A craving is bought from the villager's page, the talk card, or the popup a click on their wish bubble brings up
+interface icon's name (ItemArt is merged into IconArt over them). It also needs its model in `Data/ThingModels` (the
+user: "make them look more detailed and more recognizable ... some of them are held wrongly, such as the flowers being
+held upside down"; the ThingModels spec fails without one): drawn in the hand's space, the grip at the origin, +Y up
+and +Z out in front, held one of three ways (a stem or handle through the fist at `IN`, in the hand in front of the
+fist, or standing on the fist's top at `ON`), made of the parts the real one has, at most `Tuning.Carry.Parts` plain
+parts (never pieces: `Services/Bag` welds each to the hand), never flat plastic, leaves and petals in Fabric, a
+flower's head named `Bloom`, a `lie` of "stand" or "flat" for when it is dropped, and no z-fighting. Look with
+`render.sh things:<id>`, `things:lying:<id>` and `holding:<id>`. While `Holding` is set the player's own screen holds
+the arm out with the body's `toolnone` (`client/World/Carry`): never draw a held thing for a hanging arm, and never set
+`Holding` anywhere but `Services/Bag`. A craving is bought from the villager's page, the talk card, or the popup a click on their wish bubble brings up
 (`UI/WishPopup`: the user, "clicking the bubble ... should show a popup what they want and allow the player to satisfy
 it instead of their whole profile page") through `WishBuy` at `Life.wishPrice`. Don't add anything for sale but
 cravings, Build mode's pieces and the two crates (below), the passes and gem packs aside. The user also
@@ -737,8 +746,8 @@ Nothing here runs inside Roblox. Build mode's client runs end to end on the simu
 screens are built on it for the UI previews; the server services and NPCs are only type checked. A review pass found
 and fixed a batch of runtime bugs (starter house never given, walls refused on bought land, camera loops, saves on
 leave, NPC network ownership, spawn races). Playtest in Studio after changing those parts, and these too: the
-gather prompts (E, or F beside another prompt) and their rests, things made at work, holding a thing and dropping
-one, the title tag over the head with Roblox's name off, a villager's gift on the talk card, and the lifts (the server
+gather prompts (E, or F beside another prompt) and their rests, things made at work, holding a thing (the arm out and
+the thing upright, on R15, R6 and a small handed bundle, walking, sitting and working) and dropping one, the title tag over the head with Roblox's name off, a villager's gift on the talk card, and the lifts (the server
 anchors and moves the riders), buying and opening a crate (gems, and the Robux products once they have ids), the
 opening's shake, the crate tip's scene, a crate workplace put down from the Crate tab and worked at (its loop and
 effect), the crate jobs' gems at five o'clock, pets walking about a plot (rays against real floors, furniture and
