@@ -26,7 +26,8 @@ function Focus.start()
 	RunService.RenderStepped:Connect(function(dt)
 		local lens = Lighting:FindFirstChild("Lens")
 		local camera = workspace.CurrentCamera
-		if not (lens and lens:IsA("DepthOfFieldEffect") and camera) then
+		-- (off when the player turned the blur off: World/Graphics)
+		if not (lens and lens:IsA("DepthOfFieldEffect") and camera and lens.Enabled) then
 			return
 		end
 		local wantFocus, wantRadius = Focus.lens((camera.CFrame.Position - camera.Focus.Position).Magnitude)

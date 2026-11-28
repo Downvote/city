@@ -8,4 +8,7 @@ local process = require("@lune/process")
 local serde = require("@lune/serde")
 local Tuning = require("../../src/shared/Config/Tuning")
 
-fs.writeFile(process.args[1] or "out/look.json", serde.encode("json", Tuning.Look))
+-- (with the weather's light and air beside it, for walk.py's --weather)
+local look = table.clone(Tuning.Look)
+look.Weather = Tuning.Weather
+fs.writeFile(process.args[1] or "out/look.json", serde.encode("json", look))

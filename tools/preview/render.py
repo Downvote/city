@@ -278,6 +278,7 @@ SHAPES["CornerWedge"] = polytope_tris(
     [((0, -1, 0), 0.5), ((1, 0, 0), 0.5), ((0, 0, -1), 0.5), ((-1, 1, 0), 0), ((0, 1, 1), 0)]
 )
 KIT = {"Gem": gem_tris(), "Prism": prism_tris(8), "Disc": prism_tris(16), "Cone": cone_tris()}
+ROUND = {"Cylinder": cylinder_tris(28), "Ball": ball_tris(18, 12)}  # a prim marked smooth
 USE_KIT = True
 DISC_FROM = 9
 
@@ -300,7 +301,9 @@ def prim_tris(p):
     rot = np.array([[c[3], c[4], c[5]], [c[6], c[7], c[8]], [c[9], c[10], c[11]]])
     size = np.array(p["size"])
     base = SHAPES.get(p["shape"], SHAPES["Block"])
-    if USE_KIT:
+    if p.get("smooth") and p["shape"] in ROUND:  # drawn truly round in the game (Geometry: smooth)
+        base = ROUND[p["shape"]]
+    elif USE_KIT:
         if p["shape"] == "Ball":
             base = KIT["Gem"]
             if size[0] == size[1] == size[2]:

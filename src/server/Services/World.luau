@@ -18,6 +18,8 @@ local LowPoly = require(Shared.Build.LowPoly)
 local Textures = require(Shared.Data.Textures)
 local Rng = require(Shared.Util.Rng)
 local Schema = require(Shared.Sim.Schema)
+local Seasons = require(Shared.Data.Seasons)
+local WeatherData = require(Shared.Data.Weather)
 
 local World = {}
 
@@ -573,8 +575,9 @@ local function grade(h: number)
 		end
 	end
 	local air = AIR[look.Air] or AIR.day
+	local weather = Tuning.Weather.Looks[World.weather()] or Tuning.Weather.Looks.clear
 	cc.TintColor = cc.TintColor:Lerp(rgb(look.Tint), 0.08)
-	cc.Saturation += (look.Saturation - cc.Saturation) * 0.08
+	cc.Saturation += (look.Saturation + weather.Grey - cc.Saturation) * 0.08
 	cc.Contrast += (look.Contrast - cc.Contrast) * 0.08
 	-- the shade is darker by day than it used to be, so after dark it is lifted again
 	local light = Tuning.Look.Light
@@ -585,6 +588,15 @@ local function grade(h: number)
 	if atmosphere then
 		atmosphere.Color = atmosphere.Color:Lerp(air.color, 0.08)
 		atmosphere.Decay = atmosphere.Decay:Lerp(air.decay, 0.08)
+	end
+	-- the weather's light and air: dimmer and softer under cloud, thicker in rain and fog (each
+	-- player's screen keeps its own air if they turned the haze off: client UI/Weather)
+	local ease = Tuning.Weather.Ease
+	Lighting.Brightness += (light.Brightness * weather.Sun - Lighting.Brightness) * ease
+	Lighting.ShadowSoftness += (weather.Soft - Lighting.ShadowSoftness) * ease
+	if atmosphere then
+		atmosphere.Density += (weather.Density - atmosphere.Density) * ease
+		atmosphere.Haze += (weather.Haze - atmosphere.Haze) * ease
 	end
 end
 
@@ -604,6 +616,9 @@ local function clockLoop()
 			lastDay = day
 			workspace:SetAttribute("Calendar", nil)
 			local cal = World.calendar()
+			if cal.s ~= workspace:GetAttribute("Season") then
+				World.applySeason(cal.s)
+			end
 			workspace:SetAttribute("Season", cal.s)
 			workspace:SetAttribute("Day", cal.d)
 			World.NewDay:Fire(cal)
@@ -619,19 +634,22 @@ end
 
 -- Weather -----------------------------------------------------------------------------------------
 
-World.Weathers = { "clear", "cloudy", "rain", "storm", "snow", "blossom", "leaves" }
+World.Weathers = WeatherData.Kinds
 
 function World.setWeather(kind: string)
+	if not WeatherData.known(kind) then
+		kind = "clear"
+	end
 	workspace:SetAttribute("Weather", kind)
-	-- the wind the grass leans in: a breeze, a gale in a storm
+	-- the wind the leaves lean in: a breeze, a gale in a storm
 	local wind = if kind == "storm" then Ground.StormWind else Ground.Wind
 	workspace.GlobalWind = Vector3.new(wind[1], wind[2], wind[3])
-	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
-	if atmosphere then
-		local fog = if kind == "rain" or kind == "storm" or kind == "cloudy" then FOG.dense else FOG.clear
-		atmosphere.Density = fog.density
-		atmosphere.Haze = fog.haze
-	end
+	-- the sea gets up in a storm (the light and the air follow the weather in the clock's loop)
+	local water = Ground.Water
+	local waves = Tuning.Weather.StormWaves
+	local terrain = workspace.Terrain
+	terrain.WaterWaveSize = if kind == "storm" then waves.Size else water.WaveSize
+	terrain.WaterWaveSpeed = if kind == "storm" then waves.Speed else water.WaveSpeed
 end
 
 function World.weather(): string
@@ -639,23 +657,27 @@ function World.weather(): string
 	return if type(w) == "string" then w else "clear"
 end
 
--- A fresh weather for the season every few in-game hours.
+-- A fresh weather for the season every few hours of the town's day.
 local function weatherLoop()
 	local rng = Rng.new()
 	while true do
-		local cal = World.calendar()
-		local options
-		if cal.s == 1 then
-			options = { "clear", "clear", "blossom", "blossom", "rain", "cloudy" }
-		elseif cal.s == 2 then
-			options = { "clear", "clear", "clear", "cloudy", "storm", "rain" }
-		elseif cal.s == 3 then
-			options = { "clear", "leaves", "leaves", "cloudy", "rain" }
-		else
-			options = { "snow", "snow", "clear", "cloudy" }
-		end
-		World.setWeather(rng:pick(options))
-		task.wait(Tuning.Day.Length / 4)
+		World.setWeather(WeatherData.pick(World.calendar().s, rng:float(0, 1)))
+		task.wait(Tuning.Day.Length * Tuning.Weather.Every / 24)
+	end
+end
+
+-- Seasons ------------------------------------------------------------------------------------------
+
+-- The terrain's colours for the season (Data/Seasons): fresh green grass in spring, golden in
+-- autumn, snow lying in winter. Everything else that turns (the trees, the lawns, the roofs) turns
+-- on each player's screen (client World/Seasons).
+function World.applySeason(season: number)
+	local terrain = workspace.Terrain
+	for name, c in Ground.Colors do
+		local color = Seasons.terrain(season, name, Color3.fromRGB(c[1], c[2], c[3]))
+		pcall(function()
+			terrain:SetMaterialColor((Enum.Material :: any)[name], Textures.tint(name, color))
+		end)
 	end
 end
 
@@ -847,6 +869,7 @@ function World.init()
 		end
 	end)
 	local cal = World.calendar()
+	World.applySeason(cal.s)
 	workspace:SetAttribute("Season", cal.s)
 	workspace:SetAttribute("Day", cal.d)
 	workspace:SetAttribute("Weather", "clear")

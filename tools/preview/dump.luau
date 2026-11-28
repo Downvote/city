@@ -19,13 +19,13 @@
 --   preset:<id>        a ready-made building (cottage, family, townhouse, library, cafe...)
 --   presets            all of them in a row (add :inside to leave the roofs off, or :up1 to leave
 --                      the roofs off and keep the floor above the ground storey, to see upstairs)
---   ambient            the cars and the bus
+--   ambient            the cars and the bus (ambient:<name> for one: car, parked, bus)
 --   props              what random events bring into the world (props:<id>,<id> for some)
 --   inside:<kind>,...  furnished rooms with the roof off (bakery, grocer, books, clothes, cafe,
 --                      toys, flowers, post, lobby, flats, home, library, museum, cinema, station,
 --                      school, clinic, department); a kind may carry a size: library=56x28x12
 --   map                the middle of town: streets, plaza and street furniture, on the terrain
---   vehicles           every vehicle side by side (Data/Vehicles)
+--   vehicles           every vehicle side by side (Data/Vehicles); vehicles:<id>,<id> for some
 --   map:x1,z1,x2,z2    another part of town (the terrain is drawn as faceted ground of its
 --                      materials' colours, finer the smaller the part, with the sea over it)
 --   stage:<id>         a cutscene's set (Data/Stages); tools/preview/stage.sh draws it from its shots
@@ -33,6 +33,9 @@
 --                      (basement:open without it; tools/preview/basement_scene.luau)
 --   water              a tiled pool, a pond and a stone rimmed pool with things in them
 --                      (water:pool, water:pond, water:rim for one; tools/preview/water_scene.luau)
+-- SEASON=1..4 in the environment draws any scene in that season (Data/Seasons, as the game's
+-- client World/Seasons and the server's terrain do): spring blossom, autumn reds and golds, snow on
+-- the grass, the trees and the roofs in winter (every roof here: the game asks the sky too).
 
 local fs = require("@lune/fs")
 local process = require("@lune/process")
@@ -56,8 +59,20 @@ local outPath = process.args[2] or "out/preview.json"
 
 local prims = {}
 local tris = {} -- the terrain's triangles (Terrain.preview)
+local SEASON = tonumber(process.env.SEASON or "")
+local Seasons = R(Shared .. "Data.Seasons")
 
 local function addPrims(list, frame)
+	-- a fir drawn as one piece is a fir in every one of its shapes (the season's snow)
+	if SEASON then
+		for _, p in list do
+			if p.shape == "Piece" and p.parts and p.name == "Leaf" then
+				for _, q in p.parts do
+					q.seasonFir = true
+				end
+			end
+		end
+	end
 	-- a piece (Geometry.piece) is drawn as the shapes it is made of
 	for _, p in Geometry.flatten(list) do
 		local q = table.clone(p)
@@ -302,11 +317,19 @@ elseif scene:sub(1, 7) == "preset:" or scene:sub(1, 7) == "presets" then
 		plan = trial
 		x += p.w + 6
 	end
-elseif scene == "vehicles" then
-	-- vehicles: every vehicle side by side (Data/Vehicles), standing on the ground
+elseif scene == "vehicles" or scene:sub(1, 9) == "vehicles:" then
+	-- vehicles: every vehicle side by side (Data/Vehicles), standing on the ground; vehicles:<id>,<id>
+	-- for some of them
 	local VehicleData = R(Shared .. "Data.Vehicles")
+	local list = VehicleData.list
+	if scene ~= "vehicles" then
+		list = {}
+		for id in scene:sub(10):gmatch("[^,]+") do
+			table.insert(list, (assert(VehicleData.get(id), "no vehicle " .. id)))
+		end
+	end
 	local x = 0
-	for _, v in VehicleData.list do
+	for _, v in list do
 		addPrims(VehicleData.prims(v), CFrame.new(x + v.size.X / 2, v.hover, 0))
 		x += v.size.X + 3
 	end
@@ -341,9 +364,14 @@ elseif scene == "basement" or scene == "basement:open" then
 elseif scene == "water" or scene:sub(1, 6) == "water:" then
 	-- (water: pools and ponds with things in them)
 	addPrims(require("./water_scene")(R, scene:sub(7)))
-elseif scene == "ambient" then
+elseif scene == "ambient" or scene:sub(1, 8) == "ambient:" then
+	-- ambient: the town's cars, the bus and a duck; ambient:<name> one of them (car, parked, bus)
 	local AmbientModels = R(Shared .. "Data.AmbientModels")
-	addPrims(AmbientModels.preview())
+	if scene == "ambient" then
+		addPrims(AmbientModels.preview())
+	else
+		addPrims(AmbientModels.prims(scene:sub(9)))
+	end
 elseif scene == "town" then
 	local TownModels = R(Shared .. "Data.TownModels")
 	addPrims(TownModels.preview())
@@ -443,19 +471,60 @@ else
 	error("unknown scene " .. scene)
 end
 
+-- A prim's colour in SEASON (Data/Seasons).
+local function seasonal(p)
+	if not SEASON then
+		return p.color
+	end
+	local mat = tostring(p.mat or "Plastic"):match("^[^:]+")
+	if p.seasonFir then
+		return Seasons.leaf(SEASON, "fir", p.color, 0)
+	elseif p.name == "Leaf" then
+		local at = p.cf.Position
+		local kind = Seasons.leafKind({ material = mat, shape = p.shape })
+		return Seasons.leaf(SEASON, kind, p.color, Seasons.seed(at.X, at.Z))
+	elseif mat == "Grass" or mat == "LeafyGrass" then
+		return Seasons.grass(SEASON, p.color)
+	end
+	local cf, size = p.cf, p.size
+	local function across(axis)
+		return math.abs(cf.XVector:Dot(axis)) * size.X
+			+ math.abs(cf.YVector:Dot(axis)) * size.Y
+			+ math.abs(cf.ZVector:Dot(axis)) * size.Z
+	end
+	local tall = across(roblox.Vector3.yAxis)
+	local info = {
+		name = p.name,
+		material = mat,
+		shape = p.shape,
+		top = cf.Position.Y + tall / 2,
+		tall = tall,
+		area = across(roblox.Vector3.xAxis) * across(roblox.Vector3.zAxis),
+	}
+	if Seasons.isRoof(info) then
+		return Seasons.roof(SEASON, p.color)
+	end
+	return p.color
+end
+
 local out = {}
 for _, p in prims do
 	local c = { p.cf:GetComponents() }
+	local color = seasonal(p)
 	table.insert(out, {
 		shape = p.shape,
 		cf = c,
 		size = { p.size.X, p.size.Y, p.size.Z },
-		color = { p.color.R, p.color.G, p.color.B },
+		color = { color.R, color.G, color.B },
 		transp = p.transp or 0,
 		mat = p.mat,
+		smooth = p.smooth,
 	})
 end
 for _, t in tris do
+	if SEASON and t.mat then
+		t.color = Seasons.terrain(SEASON, t.mat, t.color)
+	end
 	local a, b, c = t.a, t.b, t.c
 	local lo, hi = a:Min(b):Min(c), a:Max(b):Max(c)
 	local mid = (lo + hi) / 2

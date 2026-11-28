@@ -5,7 +5,7 @@ across the ground and the walls, a sky, and a little haze with distance.
 
     python3 tools/preview/walk.py <scene.json> <out.png> --eye x,y,z --look x,y,z
         [--fov 60] [--size 1280x720] [--hour 16] [--far 700] [--textures] [--painted]
-        [--no-shadows] [--smooth]
+        [--no-shadows] [--smooth] [--weather rain]
 
 tools/preview/render.py draws the same scenes from above with no lens, which is right for judging
 a model or a layout. This one is for judging a place: does a street read as a street, how long
@@ -14,6 +14,10 @@ draws (no bloom, no reflections, one hard shadow test a pixel), but the sun stan
 puts it for the hour and the latitude, and the light, the shade, the tone map and the colour
 grade come from the game's own numbers in Tuning.Look (tools/preview/look.py says how).
 --no-grade leaves the colour correction off. tools/preview/walk.sh dumps a scene and runs this on it.
+--weather <kind> draws the town in that weather (Tuning.Weather.Looks: a dimmer sun, softer
+shadows and thicker air under cloud) with what falls laid over the picture as a sketch of
+UI/Weather's particles: rain streaks and splashes, snow, petals, leaves, mist, a lightning bolt.
+The season is the scene's own: SEASON=1..4 before walk.sh (tools/preview/dump.luau).
 """
 import argparse
 import json
@@ -54,6 +58,71 @@ def sky_at(hour):
     if 5 <= hour <= 19.5:
         return np.array([0.5, 0.56, 0.8]), np.array([0.98, 0.76, 0.6])
     return np.array([0.1, 0.13, 0.28]), np.array([0.22, 0.25, 0.42])
+
+
+def falling(im, kind):
+    """What falls in a weather laid over the picture, a sketch of UI/Weather's layers: near drops
+    big and few, far ones small and many."""
+    from PIL import ImageDraw, ImageFilter
+    W, H = im.size
+    k = W * H / (1280 * 720)
+    rng = np.random.default_rng(7)
+    layer = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    if kind in ("rain", "storm"):
+        slant = 0.08 if kind == "rain" else 0.3
+        n = int((1300 if kind == "rain" else 2100) * k)
+        for _ in range(n):
+            near = rng.random() ** 3  # most are far and faint
+            x, y = rng.uniform(-60, W), rng.uniform(-40, H)
+            ln = 10 + near * 34
+            a = int(45 + near * 90)
+            d.line([(x, y), (x + slant * ln, y + ln)], fill=(205, 216, 234, a), width=1 if near < 0.6 else 2)
+        # splashes and rings where it lands, on the lower half of the picture
+        for _ in range(int(260 * k)):
+            x, y = rng.uniform(0, W), rng.uniform(H * 0.55, H)
+            r = 1.5 + (y - H * 0.55) / (H * 0.45) * 5
+            d.ellipse([x - r * 2, y - r * 0.6, x + r * 2, y + r * 0.6], outline=(220, 230, 242, 80), width=1)
+    elif kind == "snow":
+        for _ in range(int(1100 * k)):
+            near = rng.random() ** 3
+            x, y = rng.uniform(0, W), rng.uniform(0, H)
+            r = 0.7 + near * 3
+            d.ellipse([x - r, y - r, x + r, y + r], fill=(255, 255, 255, int(150 + near * 100)))
+    elif kind in ("blossom", "leaves"):
+        colors = [(255, 196, 214), (255, 222, 232), (246, 170, 196)] if kind == "blossom" else [
+            (214, 112, 56), (232, 168, 64), (190, 74, 52), (204, 150, 70)]
+        for _ in range(int(150 * k)):
+            near = rng.random() ** 2
+            x, y = rng.uniform(0, W), rng.uniform(0, H)
+            r = 1.5 + near * 5
+            c = colors[rng.integers(len(colors))]
+            leaf = Image.new("RGBA", (int(r * 4) + 2, int(r * 4) + 2), (0, 0, 0, 0))
+            ImageDraw.Draw(leaf).ellipse([1, r, r * 4, r * 2.6], fill=c + (230,))
+            leaf = leaf.rotate(rng.uniform(0, 360), expand=True)
+            layer.alpha_composite(leaf, (int(x), int(y)))
+    elif kind == "fog":
+        # mist lying low: a soft band rising from the ground
+        band = np.zeros((H, W, 4), dtype=np.uint8)
+        band[..., :3] = (226, 230, 236)
+        rows = np.clip((np.arange(H) - H * 0.45) / (H * 0.55), 0, 1)
+        band[..., 3] = (rows[:, None] * 90).astype(np.uint8)
+        layer = Image.alpha_composite(layer, Image.fromarray(band, "RGBA"))
+    if kind == "storm":
+        # a bolt far off, and the flash on everything
+        x = rng.uniform(W * 0.2, W * 0.8)
+        y, pts = 0.0, []
+        while y < H * 0.42:
+            pts.append((x, y))
+            x += rng.uniform(-14, 14)
+            y += rng.uniform(18, 34)
+        glow = Image.new("RGBA", im.size, (0, 0, 0, 0))
+        ImageDraw.Draw(glow).line(pts, fill=(200, 210, 255, 160), width=9)
+        layer = Image.alpha_composite(layer, glow.filter(ImageFilter.GaussianBlur(6)))
+        ImageDraw.Draw(layer).line(pts, fill=(240, 244, 255, 255), width=2)
+        flat = np.asarray(im, float) * 1.12
+        im = Image.fromarray(np.clip(flat, 0, 255).astype(np.uint8))
+    return Image.alpha_composite(im.convert("RGBA"), layer).convert("RGB")
 
 
 def vec(text):
@@ -121,6 +190,7 @@ def main():
     ap.add_argument("--no-shadows", action="store_true")
     ap.add_argument("--reach", type=float, default=320, help="shadows are worked out this far from the camera")
     ap.add_argument("--smooth", action="store_true")
+    ap.add_argument("--weather", default="clear", help="the weather: clear, cloudy, rain, storm, snow, fog, blossom, leaves")
     args = ap.parse_args()
     render.USE_KIT = not args.smooth
     W, H = [int(v) for v in args.size.split("x")]
@@ -135,6 +205,16 @@ def main():
     sky, haze = sky_at(args.hour)
     look_json = game_look.load()
     haze, fog_reach = air_at(look_json, args.hour)
+    weather = look_json.get("Weather", {}).get("Looks", {}).get(args.weather)
+    overcast = 0.0
+    if weather:
+        # under cloud: a dimmer sun, faint shadows, thicker greyer air and a grey sky
+        overcast = 1 - weather["Sun"]
+        light.direct = light.direct * weather["Sun"]
+        fog_reach = 360.0 / weather["Density"]
+        grey = np.array([0.74, 0.77, 0.81]) * (1 - 0.5 * overcast)
+        haze = haze * (1 - overcast) + grey * overcast
+        sky = sky * (1 - min(1, overcast * 1.4)) + grey * min(1, overcast * 1.4)
 
     prims = json.load(open(args.inp))
     textures = render.Textures(painted=args.painted, library=args.textures) if (args.textures or args.painted) else None
@@ -249,6 +329,8 @@ def main():
                 # past the map's edge everything is in the sun
                 off = (fu < 1) | (fv < 1) | (fu > S - 2) | (fv > S - 2)
                 lit[off] = 1
+                if overcast > 0:
+                    lit = 1 - (1 - lit) * (1 - overcast) ** 1.5
             col = np.tile(base, (len(world), 1))
             if textures is not None:
                 key = textures.key(p.get("mat"))
@@ -286,7 +368,10 @@ def main():
     if not args.no_grade:
         img = game_look.grade(img, light)
     rgb8 = (np.clip(img, 0, 1) * 255).astype(np.uint8)
-    Image.fromarray(rgb8).save(args.out)
+    out = Image.fromarray(rgb8)
+    if weather:
+        out = falling(out, args.weather)
+    out.save(args.out)
     print("wrote", args.out)
 
 

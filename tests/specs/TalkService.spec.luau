@@ -545,12 +545,14 @@ describe("Talk service", function()
 		profile.villagers.v2.mood = 60
 		holdE(owner, "v2")
 		local heard = {}
-		for _ = 1, 80 do
+		-- (over several town days: a day holds only so many chats, and the season comes up among
+		-- many other topics, so one day's handful could miss it by chance)
+		for i = 1, 400 do
 			local ok, more = ask(owner, "v2")
 			if ok then
 				heard[more.text] = true
 			end
-			advance(1)
+			advance(if i % 40 == 0 then Tuning.Day.Length else 1)
 		end
 		-- something about winter or the snow (Sim/Talk's lines for them)
 		local wintry = false

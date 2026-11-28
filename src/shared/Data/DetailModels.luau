@@ -911,7 +911,7 @@ M.pocketParking = function(r: R)
 	}
 	for _, c in parked do
 		group(r, c.at, function(q: R)
-			for _, prim in AmbientModels.prims("car", c.color) do
+			for _, prim in AmbientModels.prims("parked", c.color) do
 				q:add(prim)
 			end
 		end)

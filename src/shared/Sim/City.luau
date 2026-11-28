@@ -89,6 +89,19 @@ function City.levelValue(n: number): number
 	return list[#list].Value + Tuning.City.LevelStep * k + Tuning.City.LevelGrow * k * (k - 1) / 2
 end
 
+-- The level a town with this plan has reached.
+function City.levelOf(plan: any): number
+	return City.level(if type(plan) == "table" then City.worth(plan) else 0)
+end
+
+-- May a town with this plan put down a piece of this kind? A grand piece (Catalog: `level`) waits
+-- for its level (the user: "make more vehicles, buildings that cost more for the endgame"); the
+-- level is the one the town has before it goes down.
+function City.unlocked(plan: any, def: any): boolean
+	local need = if type(def) == "table" then def.level else nil
+	return type(need) ~= "number" or City.levelOf(plan) >= need
+end
+
 -- What a level is called: its number ("no need for level names, like city, etc.").
 function City.levelName(n: number): string
 	return Text.fill("Level {n}", { n = n })
