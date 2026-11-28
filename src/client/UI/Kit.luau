@@ -2473,7 +2473,15 @@ function Kit.button(text: string, props: { [string]: any }?, onClick: (() -> ())
 	local iconPx = math.floor(textSize * 1.3)
 	if p.Icon then
 		if Icons.has(p.Icon) then
-			Icons.make(p.Icon, iconPx, { Parent = content, LayoutOrder = 1, ZIndex = b.ZIndex, Color = textColor })
+			-- (IconColor: the icon in an accent of its own beside plain words; it keeps it)
+			local art = Icons.make(
+				p.Icon,
+				iconPx,
+				{ Parent = content, LayoutOrder = 1, ZIndex = b.ZIndex, Color = p.IconColor or textColor }
+			)
+			if p.IconColor then
+				art:SetAttribute("OwnColor", true)
+			end
 		else
 			Kit.new("TextLabel", {
 				Name = "Emoji",
@@ -2573,7 +2581,7 @@ function Kit.setButtonColor(b: GuiButton, color: Color3, textColor: Color3?)
 	local content = b:FindFirstChild("Content")
 	if content then
 		for _, c in content:GetChildren() do
-			if c:GetAttribute("Glyph") ~= nil then
+			if c:GetAttribute("Glyph") ~= nil and not c:GetAttribute("OwnColor") then
 				Kit.recolorIcon(c, tc, color)
 			end
 		end
@@ -4035,7 +4043,8 @@ end
 -- their own speeds and coming round again. One loop moves them, and it stops when the menu goes.
 -- opts: W, H (the layer's size), Count, Faint ({ from, to } transparency), Second (the colour of
 -- every third shape, the words' colour by default), Sizes ({ from, to } pixels), Speed (a scale),
--- Bands (true or a number: long leaning strips of the colour drifting sideways behind the shapes).
+-- Bands (true or a number: long leaning strips of the colour drifting sideways behind the shapes),
+-- Kinds (which shapes, in turn: "bar", "tri", "diamond" (a ring), "plus", "ticks").
 function Kit.motion(parent: GuiObject, accent: Color3, seed: number, opts: { [string]: any }?): Frame
 	local o: { [string]: any } = opts or {}
 	local W: number, H: number = o.W or 2600, o.H or 1500
@@ -4092,7 +4101,7 @@ function Kit.motion(parent: GuiObject, accent: Color3, seed: number, opts: { [st
 			)
 		end
 	end
-	local kinds = { "bar", "tri", "diamond", "bar", "plus", "ticks", "tri", "bar", "diamond" }
+	local kinds: { string } = o.Kinds or { "bar", "tri", "diamond", "bar", "plus", "ticks", "tri", "bar", "diamond" }
 	for k = 1, count do
 		local kind = kinds[(k - 1) % #kinds + 1]
 		local color = if k % 3 == 0 then second else accent
@@ -4313,16 +4322,11 @@ function Kit.panel(
 		table.insert(glows, Kit.glow(screenGlow, accent, 0.26, "tl"))
 		-- and a faint tone of dots over the whole backdrop
 		Kit.dots(screenGlow, T.Ink, 0.965, false, true)
-		local low = Kit.box({
-			Name = "Low",
-			Size = UDim2.fromOffset(2400, 1400),
-			Position = UDim2.fromScale(0.5, 0.5),
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Parent = wide,
-		})
-		low.ZIndex = 0
-		table.insert(glows, Kit.glow(low, accent, 0.14, "br"))
-		Kit.motion(holder, accent, seed)
+		-- (a second glow came up from the bottom right: one light, from one side, reads as
+		-- light; two read as decoration)
+		-- the drifting shapes: leaning bars, rows of ticks and a few wedges, fewer and fainter
+		-- than they were, so they read as one pattern moving and not as scattered confetti
+		Kit.motion(holder, accent, seed, { Count = 18, Kinds = { "bar", "ticks", "bar", "tri" } })
 	end
 	local _ = icon
 	-- the panel: the card a few pixels inside its box, with no line round it (the user: "for
@@ -4378,7 +4382,7 @@ function Kit.panel(
 	Kit.glow(frame, accent, if dialog then 0.16 else 0.14, "tr")
 	-- a tone of dots over the card, thinning out toward the bottom left
 	Kit.dots(frame, T.Ink, 0.93, ROUND - GAP)
-	-- details: a band of hatching in the bottom right corner, ticks along the top
+	-- a band of hatching in the bottom right corner
 	local hatch = Kit.hatch({
 		Parent = frame,
 		Size = UDim2.fromOffset(120, 12),
@@ -4390,19 +4394,7 @@ function Kit.panel(
 	if hatch then
 		hatch:SetAttribute("KeepColors", true)
 	end
-	if not dialog then
-		for t = 0, 5 do
-			Kit.new("Frame", {
-				Name = "Tick",
-				BackgroundColor3 = accent,
-				BackgroundTransparency = 0.45,
-				BorderSizePixel = 0,
-				Size = UDim2.fromOffset(if t == 0 then 26 else 5, 3),
-				Position = UDim2.fromOffset(ROUND + 10 + (if t == 0 then 0 else 24 + t * 10), 9),
-				Parent = frame,
-			})
-		end
-	end
+	-- (a row of ticks ran along the card's top left: a mark that said nothing, cut)
 	local title: TextLabel
 	local close: TextButton
 	local header: Frame

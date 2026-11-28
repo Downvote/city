@@ -20,8 +20,8 @@ MenuParts.Pad = 24 -- inside the card, on every side
 MenuParts.Row = 58 -- a row in a list
 MenuParts.RowGap = 8 -- between rows
 
--- The card on the left of a menu, showing the picked thing: a rounded card in a thin rim, a soft
--- glow of the menu's colour from its top right, and a padded box inside to fill. Returns the card
+-- The card on the left of a menu, showing the picked thing: a rounded card, a soft glow of the
+-- menu's colour from its top right, and a padded box inside to fill. Returns the card
 -- and that box: clear and fill the box, never the card (the card's own shape is a child of it).
 -- props: Name, Size, Position, Pad, Caption (a dim word or two at its top left, over the box).
 function MenuParts.card(parent: Instance, accent: Color3, props: { [string]: any }?): (Frame, Frame)
@@ -35,8 +35,7 @@ function MenuParts.card(parent: Instance, accent: Color3, props: { [string]: any
 		Cut = 16,
 	})
 	Kit.glow(card, accent, 0.22, "tr")
-	-- brackets on two of its corners, just inside its edge
-	Kit.brackets(card, { Corners = { "tl", "br" }, Arm = 12, Inset = 7, Color = T.Line, ZIndex = 1 })
+	-- (it had brackets on two corners too, inside the panel's own: one set of corners is enough)
 	local pad = p.Pad or MenuParts.Pad
 	if p.Caption then
 		Kit.caption(p.Caption, {
@@ -131,8 +130,9 @@ function MenuParts.heading(parent: Instance, text: string, accent: Color3, order
 	return h
 end
 
--- A stat tile: a sunk rounded well with a round mark and a small label at the top and the number
--- big under them. props: Parent, Size, Position, LayoutOrder, Sub (a soft word after the number),
+-- A stat tile: a sunk rounded well with a small label set wide at its top and the number big
+-- under it, a bracket in its colour on the top right corner. (`icon` is kept for the callers; the
+-- tile no longer draws it.) props: Parent, Size, Position, LayoutOrder, Sub (a soft word after the number),
 -- Tint (the number in an accent), TextSize, Coin (the number is coins: the coin goes in front of
 -- it), Bar (a share from 0 to 1: a thin bar in the tile's colour along its foot). Returns the
 -- tile and the number's label.
@@ -153,12 +153,14 @@ function MenuParts.stat(
 		Color = T.PaperDark,
 		Cut = 12,
 	})
-	Kit.disc({ Name = "Mark", Parent = tile, Size = 24, Position = UDim2.fromOffset(10, 9), Color = color, Icon = icon })
+	-- the label alone, set wide: a coloured disc with an icon beside every label said nothing the
+	-- words didn't, so the tile's colour is only its bracket (and its bar)
+	local _ = icon
 	Kit.caption(label, {
 		Name = "Label",
 		Parent = tile,
-		Size = UDim2.new(1, -52, 0, 16),
-		Position = UDim2.fromOffset(42, 13),
+		Size = UDim2.new(1, -34, 0, 16),
+		Position = UDim2.fromOffset(12, 12),
 		TextSize = 11,
 	})
 	-- a bracket in its colour on the top right corner

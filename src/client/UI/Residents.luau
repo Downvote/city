@@ -396,11 +396,11 @@ local FACTORS = {
 local function moodOf(parent: Frame, vid: string, v: any, p: any)
 	local mood = math.floor(v.mood)
 	local cap = Needs.cap(p, vid)
-	local head = Kit.box({ Name = "Now", Parent = parent, Size = UDim2.new(1, 0, 0, 40) })
+	local head = Kit.box({ Name = "Now", Parent = parent, Size = UDim2.new(1, 0, 0, 34) })
 	Kit.title(Text.fill("{n}%", { n = mood }), {
 		Name = "Mood",
 		Parent = head,
-		Size = UDim2.fromOffset(84, 36),
+		Size = UDim2.fromOffset(84, 32),
 		TextSize = 30,
 		Tint = moodColor(mood),
 		Wrap = false,
@@ -409,16 +409,20 @@ local function moodOf(parent: Frame, vid: string, v: any, p: any)
 		Name = "Cap",
 		Parent = head,
 		Size = UDim2.new(1, -92, 0, 16),
-		Position = UDim2.fromOffset(92, 12),
+		Position = UDim2.fromOffset(92, 10),
 		TextSize = 12,
 	})
+	-- one line a factor, as a table: its icon, what it is, what they have, the points it gives,
+	-- and a hairline under it that fills with those points. Six lines fit above the wish's row
+	-- (they were cards, and the last ones went under it); a long list scrolls.
+	local LINE = 27
 	local rows = Kit.scroll({
 		Name = "Factors",
 		Parent = parent,
-		Size = UDim2.new(1, 0, 1, -48),
-		Position = UDim2.fromOffset(0, 48),
+		Size = UDim2.new(1, 0, 1, -38),
+		Position = UDim2.fromOffset(0, 38),
 	})
-	Kit.list(rows, 6)
+	Kit.list(rows, 1)
 	local list = Needs.factors(p, vid)
 	-- what helps first, then what's missing, each in Needs.Factors' order
 	local order = 0
@@ -427,29 +431,26 @@ local function moodOf(parent: Frame, vid: string, v: any, p: any)
 			if f.have == helps then
 				order += 1
 				local info = FACTORS[f.id]
-				local row = Kit.frame({
+				local row = Kit.box({
 					Name = f.id,
 					Parent = rows,
-					Size = UDim2.new(1, -12, 0, 38),
-					Color = T.Card,
-					Radius = 10,
+					Size = UDim2.new(1, -12, 0, LINE),
 					LayoutOrder = order,
 				})
 				row:SetAttribute("Helps", helps)
 				local accent = if helps then T.Green elseif f.points > 0 then T.Yellow else T.Coral
-				Icons.make(info.icon, 20, {
+				Icons.make(info.icon, 16, {
 					Name = "Icon",
 					Parent = row,
-					Position = UDim2.fromOffset(12, 9),
+					Position = UDim2.fromOffset(2, 4),
 					Color = accent,
-					Hole = T.Card,
 					Centre = true,
 				})
 				Kit.text(info.name, {
 					Name = "Label",
 					Parent = row,
-					Size = UDim2.new(0.5, -36, 0, 18),
-					Position = UDim2.fromOffset(42, 3),
+					Size = UDim2.new(0.5, -26, 0, 22),
+					Position = UDim2.fromOffset(26, 1),
 					TextSize = 15,
 					Font = Kit.Fonts.Bold,
 					Wrap = false,
@@ -457,8 +458,8 @@ local function moodOf(parent: Frame, vid: string, v: any, p: any)
 				Kit.text(f.text, {
 					Name = "What",
 					Parent = row,
-					Size = UDim2.new(0.5, -14, 0, 18),
-					Position = UDim2.new(0.5, 0, 0, 3),
+					Size = UDim2.new(0.5, -46, 0, 22),
+					Position = UDim2.new(0.5, 0, 0, 1),
 					TextSize = 14,
 					Color = if helps then T.InkSoft else nil,
 					Tint = if helps then nil else T.Coral,
@@ -466,22 +467,33 @@ local function moodOf(parent: Frame, vid: string, v: any, p: any)
 					Wrap = false,
 				}).TextTruncate =
 					Enum.TextTruncate.AtEnd
-				Kit.bar({
-					Parent = row,
-					Size = UDim2.new(1, -100, 0, 6),
-					Position = UDim2.fromOffset(42, 25),
-				}, f.points / math.max(1, f.max), accent)
-				Kit.text(Text.fill("+{n}", { n = f.points }), {
+				Kit.title(Text.fill("+{n}", { n = f.points }), {
 					Name = "Points",
 					Parent = row,
-					Size = UDim2.fromOffset(44, 16),
-					Position = UDim2.new(1, -52, 0, 20),
-					TextSize = 13,
-					Font = Kit.Fonts.Bold,
+					Size = UDim2.fromOffset(38, 22),
+					Position = UDim2.new(1, 0, 0, 1),
+					AnchorPoint = Vector2.new(1, 0),
+					TextSize = 16,
 					Color = if f.points > 0 then nil else T.InkSoft,
 					Tint = if f.points > 0 then T.Green else nil,
 					AlignX = Enum.TextXAlignment.Right,
 					Wrap = false,
+				})
+				-- the hairline under the line, filled as far as the points go
+				local track = Kit.new("Frame", {
+					Name = "Bar",
+					BackgroundColor3 = T.Card,
+					BorderSizePixel = 0,
+					Size = UDim2.new(1, -26, 0, 2),
+					Position = UDim2.new(0, 26, 1, -2),
+					Parent = row,
+				})
+				Kit.new("Frame", {
+					Name = "Fill",
+					BackgroundColor3 = accent,
+					BorderSizePixel = 0,
+					Size = UDim2.fromScale(math.clamp(f.points / math.max(1, f.max), 0, 1), 1),
+					Parent = track,
 				})
 			end
 		end
@@ -1219,22 +1231,39 @@ local function showDetail()
 		AlignY = Enum.TextYAlignment.Top,
 	})
 
-	-- what you can do, as round buttons along the bottom
-	local ACT = 80
+	-- what you can do, along the bottom: two rows of three leaning slabs, dark with the icon in its
+	-- own colour, so the six fit the column (six round buttons in a row ran past the card's edge
+	-- and cut Move out short) and the wish's button above them is the one that stands out
+	local ACT_H, ACT_GAP = 36, 8
+	local ACT = ACT_H * 2 + ACT_GAP
 	local actions = Kit.box({
 		Name = "Actions",
 		Parent = info,
 		Size = UDim2.new(1, 0, 0, ACT),
 		Position = UDim2.new(0, 0, 1, -ACT),
 	})
-	Kit.list(actions, 9, true, Enum.HorizontalAlignment.Center)
+	Kit.grid(actions, UDim2.new(1 / 3, -6, 0, ACT_H), ACT_GAP)
 	local function action(icon: string, label: string, color: Color3, order: number, fn: () -> ())
-		Kit.iconButton(icon, label, {
+		local danger = color == T.Coral
+		local b = Kit.button(label, {
+			Name = label,
 			Parent = actions,
-			Size = UDim2.fromOffset(76, ACT),
-			Color = color,
+			Size = UDim2.fromOffset(120, ACT_H),
+			Color = T.Card,
+			TextColor = T.Ink,
+			IconColor = color,
+			TextSize = 15,
+			Icon = icon,
 			LayoutOrder = order,
 		}, fn)
+		if danger then
+			-- the way out of town reads as one: its words in the same red as its icon
+			local words = b:FindFirstChild("Label", true)
+			if words and words:IsA("TextLabel") then
+				words.TextColor3 = Kit.tint(color)
+				words:SetAttribute("Tint", color:ToHex())
+			end
+		end
 	end
 	local work = City.jobOf(p, vid)
 	action(Jobs.icon(work and work.job.id), "Job", T.Blue, 1, function()
@@ -1283,7 +1312,7 @@ local function showDetail()
 	end
 
 	-- the tab's own part, between the name and the buttons
-	local TOP = 100
+	local TOP = 92
 	local content = Kit.box({
 		Name = "Content",
 		Parent = info,
