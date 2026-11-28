@@ -113,7 +113,7 @@ local function palm(
 	local fronds = if far then 5 else 7
 	-- (a palm in town has its fronds in one piece named Leaf, so they are one part and sway in
 	-- the wind together; the islets' far palms keep theirs loose, each palm being different)
-	local q = if far then r else Recipe.new(LEAF, LEAF)
+	local q: R = if far then r else Recipe.new(LEAF, LEAF)
 	for f = 0, fronds - 1 do
 		local a = math.rad(yaw + f * 360 / fronds + (f % 2) * 12)
 		local out = Vector3.new(math.cos(a), 0, math.sin(a))

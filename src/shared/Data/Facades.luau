@@ -1206,7 +1206,7 @@ local function drawFace(face: Face, plan: Plan, main: boolean)
 		local made = piece("quoins:" .. plan.quoins, function(q: R)
 			quoins(q, plan.quoins)
 		end)
-		local ends = if main then { -1, 1 } elseif spec.corner == "right" then { -1 } else { 1 }
+		local ends: { number } = if main then { -1, 1 } elseif spec.corner == "right" then { -1 } else { 1 }
 		for _, sx in ends do
 			local p = table.clone(made)
 			local turn = if sx < 0 then CFrame.Angles(0, 0, math.pi) else CFrame.identity

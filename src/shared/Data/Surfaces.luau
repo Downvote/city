@@ -98,7 +98,8 @@ local function pieceMaterial(p: Prim, default: string?): string
 		return default
 	end
 	local best, most = p, -1
-	for _, q in p.parts or {} do
+	local parts: { Prim } = p.parts or {}
+	for _, q in parts do
 		local a = area(q)
 		if a > most then
 			best, most = q, a
@@ -121,7 +122,8 @@ function Surfaces.dressOne(p: Prim, default: string?): Prim
 			p.key = to .. string.sub(p.key, #from + 1)
 		end
 		-- (a stamp's shapes are shared by every copy of it: they change once, the same way)
-		for _, q in p.parts or {} do
+		local parts: { Prim } = p.parts or {}
+		for _, q in parts do
 			if Surfaces.plain(q.mat) then
 				q.mat = to
 			end
@@ -173,7 +175,8 @@ function Surfaces.round(prims: { Prim }): { Prim }
 	for _, p in prims do
 		if p.shape == "Piece" then
 			if p.name ~= "Leaf" then
-				for _, q in p.parts or {} do
+				local parts: { Prim } = p.parts or {}
+				for _, q in parts do
 					if not q.smooth and Surfaces.rounds(q) then
 						q.smooth = true
 					end
