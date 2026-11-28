@@ -15,7 +15,7 @@ local SHOP_IN: Finish = { c = "F6F0E2", m = "WoodPlanks" }
 local BOARDS: Finish = { c = "FAF6EC", m = "WoodPlanks" } -- the gable end
 local TRIM: Finish = { c = "FAF6EC", m = "WoodPlanks" } -- the glasshouse's frames and white wall
 local TEAL: Finish = { c = "4F8A8C", m = "RoofShingles" }
-local PANES: Finish = { c = "CFE0DE", m = "Glass" } -- the glasshouse roof: pale glass, on purpose
+local PANES: Finish = { c = "9CCBBE", m = "Glass" } -- the glasshouse roof: sea green glass, see-through (Shapes.GlassRoof)
 local TILES: Finish = { c = "F2E6CC", m = "CeramicTiles" }
 local RED_BRICK: Finish = { c = "D69A82", m = "Brick" } -- the glasshouse floor
 local PAVING: Finish = { c = "EAE6DC", m = "Pavement" }

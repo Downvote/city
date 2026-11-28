@@ -864,6 +864,9 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
   its surface (`Water.checkItem`), never in it. No invisible solid part reaches past what can be seen (the Unstick
   spec checks every hidden solid part of every catalog piece): a stair's ramp lies under its treads, never a solid
   wedge to the floor, and kit shapes collide as their hull (`Build/LowPoly`).
+- A glass roof (a roof finish in Glass: the Florist's and the Greenhouse home's glasshouses) is drawn see-through
+  (`Shapes.GlassRoof`) with no board ceiling under it, and a roof joined to it keeps its own ceiling's edge on that
+  side (the user: "the roof of this premade building has no texture or color": drawn solid, it was a flat white sheet).
 - Roofs on one floor and ground floors that meet are drawn together (`Shapes.roofIn`, `Shapes.groundFloor`; "when
   roofs are put together, z fighting occurs"): a change redraws its neighbours through `Plan.affected`, so keep that
   in step if the joining rules reach further, and a roof or a floor alone must draw exactly as before. Check new roof

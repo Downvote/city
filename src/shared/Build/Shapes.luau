@@ -542,6 +542,10 @@ local CEILING = Color3.fromRGB(247, 243, 234)
 Shapes.CeilingDrop = 0.05 -- how far under the walls' tops a roof's ceiling lies
 Shapes.CeilingThick = 0.2
 Shapes.CeilingInset = 0.07
+-- A glass roof (a glasshouse's) is see-through by this much, with no board ceiling under it: drawn
+-- solid, it read as a flat white sheet (the user: "the roof of this premade building has no texture
+-- or color").
+Shapes.GlassRoof = 0.45
 
 -- A ground floor in one of these is a path or a yard laid in the ground, not a slab on it (the
 -- user's "paths flush with the ground, with an edge": a cobble path used to stand on the lawn as a
@@ -1542,11 +1546,15 @@ function Shapes.roof(r: Plan.Roof, join: RoofJoin?): { Prim }
 			ceiling.name = "Ceiling"
 			table.insert(out, ceiling)
 		else
-			-- (run on to a side another roof meets, and left out under one that was there first)
+			-- (run on to a side another roof meets, and left out under one that was there first; a
+			-- glass roof has no ceiling to meet, so this one keeps its edge on that side)
 			local x1, z1, x2, z2 = lo.X, lo.Z, hi.X, hi.Z
 			local cuts = {}
 			for _, other in (join :: RoofJoin).others do
 				local q = other.roof
+				if q.m == "Glass" then
+					continue
+				end
 				local overX = math.min(r.x2, q.x2) - math.max(r.x1, q.x1)
 				local overZ = math.min(r.z2, q.z2) - math.max(r.z1, q.z1)
 				if overX > -1e-3 and overZ > 0.05 then
@@ -1768,6 +1776,19 @@ function Shapes.roof(r: Plan.Roof, join: RoofJoin?): { Prim }
 				)
 			)
 		end
+	end
+	if r.m == "Glass" then
+		-- a glasshouse's roof: its glass see-through, and no board ceiling hiding the sky
+		local kept: { Prim } = {}
+		for _, p in out do
+			if p.name ~= "Ceiling" then
+				if p.mat == "Glass" then
+					p.transp = math.max(p.transp or 0, Shapes.GlassRoof)
+				end
+				table.insert(kept, p)
+			end
+		end
+		out = kept
 	end
 	return out
 end

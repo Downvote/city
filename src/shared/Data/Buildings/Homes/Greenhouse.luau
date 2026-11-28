@@ -20,7 +20,7 @@ local BATH: Finish = { c = "E4EDE6", m = "CeramicTiles" }
 local TILE_ROOF: Finish = { c = "B98A72", m = "ClayRoofTiles" }
 local GABLE: Finish = { c = "E8D8C0", m = "WoodPlanks" }
 local FRAMES: Finish = { c = "FAF6EC", m = "WoodPlanks" } -- the glasshouse's white frames
-local PANES: Finish = { c = "CFE0DE", m = "Glass" } -- its roof: pale glass, on purpose
+local PANES: Finish = { c = "9CCBBE", m = "Glass" } -- its roof: sea green glass, see-through (Shapes.GlassRoof)
 local FLOOR: Finish = { c = "B48C64", m = "WoodPlanks" }
 local BATH_TILES: Finish = { c = "D8E2DA", m = "CeramicTiles" }
 local RED_BRICK: Finish = { c = "D69A82", m = "Brick" } -- the glasshouse floor
