@@ -136,6 +136,10 @@ Catalog.Styles = {
 	{ id = "rustic", name = "Rustic" },
 	{ id = "fancy", name = "Fancy" },
 	{ id = "playful", name = "Playful" },
+	-- an old temple in the woods: tiled roofs sweeping up at the corners, dark timber, white
+	-- plaster, stone (Recipes/Temple; the user, with a picture of one: "Make another for this as
+	-- well")
+	{ id = "temple", name = "Temple" },
 }
 
 Catalog.Places = {

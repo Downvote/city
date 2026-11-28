@@ -137,6 +137,9 @@ Plan.WallStyles = {
 	},
 	rope = { name = "Rope fence", height = 3, thick = 0.5, fence = true, paint = { c = "9A7A58", m = "Wood" } },
 	willow = { name = "Woven fence", height = 4, thick = 0.5, fence = true, paint = { c = "A8865E", m = "Wood" } },
+	-- a temple's wall: stone below, white plaster, a tiled cap (Recipes/Temple; the user, with a
+	-- picture of an old temple: "Make another for this as well")
+	tiled = { name = "Tiled wall", height = 6.4, thick = 1.6, fence = true, paint = { c = "F0ECE2", m = "Plaster" } },
 } :: { [string]: WallStyle }
 Plan.WallStyleOrder = {
 	"wall",
@@ -155,6 +158,7 @@ Plan.WallStyleOrder = {
 	"rope",
 	"balustrade",
 	"lightrail",
+	"tiled",
 }
 
 Plan.RoofStyles = {

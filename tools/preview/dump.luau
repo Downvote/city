@@ -571,6 +571,37 @@ else
 	error("unknown scene " .. scene)
 end
 
+-- (a plan's pools and ponds: the grass and the lawn the plan scene lays round its land are cut
+-- round them, as Sim/PlotCopy's ground is, so the water shows)
+if scene:sub(1, 5) == "plan:" then
+	local Water = R(Shared .. "Build.Water")
+	local plan = serde.decode("json", fs.readFile(scene:sub(6)))
+	local holes = Water.holes(plan)
+	if #holes > 0 then
+		local x1, z1, x2, z2 = Plan.bounds(plan)
+		local kept = {}
+		for _, p in prims do
+			local s = p.size
+			local wide = s.X >= x2 - x1 - 0.01 and s.Z >= z2 - z1 - 0.01
+			if p.shape == "Block" and p.mat == "Grass" and wide then
+				local c = p.cf.Position
+				local rect = { c.X - s.X / 2, c.Z - s.Z / 2, c.X + s.X / 2, c.Z + s.Z / 2 }
+				for _, q in Water.cutRects(rect, holes) do
+					if q[3] - q[1] > 0.05 and q[4] - q[2] > 0.05 then
+						local cut = table.clone(p)
+						cut.cf = CFrame.new((q[1] + q[3]) / 2, c.Y, (q[2] + q[4]) / 2)
+						cut.size = roblox.Vector3.new(q[3] - q[1], s.Y, q[4] - q[2])
+						table.insert(kept, cut)
+					end
+				end
+			else
+				table.insert(kept, p)
+			end
+		end
+		prims = kept
+	end
+end
+
 -- A prim's colour in SEASON (Data/Seasons).
 local function seasonal(p)
 	if not SEASON then

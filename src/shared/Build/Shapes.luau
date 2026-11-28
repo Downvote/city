@@ -489,6 +489,35 @@ function Shapes.fence(
 				add(Geometry.beam(at(mid, y - dip, 0), at(s1, y, 0), 0.16, 0.16, rope, "Fabric"))
 			end
 		end
+	elseif style == "tiled" then
+		-- a temple's wall: a course of stone at the foot, white plaster (the paint) above it, a
+		-- timber band under the cap, and a tiled cap with a ridge, sloping out over both faces
+		local stone = Color3.fromRGB(168, 164, 154)
+		local timber = Color3.fromRGB(92, 70, 54)
+		local tiles = Color3.fromRGB(138, 144, 152)
+		local capY, ridgeY = height - 1.1, height - 0.4
+		slab(-e1, len + e2, 0, 1.8, 0, thick + 0.16, stone, "Cobblestone")
+		slab(-e1, len + e2, 1.8, capY - 0.3, 0, thick, ca, ma)
+		slab(-e1, len + e2, capY - 0.3, capY, 0, thick + 0.12, timber, "Wood")
+		-- the cap: a slope to each side, full height at the ridge (a wedge's high side is its back)
+		local wide = thick / 2 + 0.6
+		local mid = (len + e2 - e1) / 2
+		local span = len + e1 + e2 + 0.4
+		for _, side in { 1, -1 } do
+			local back = n * -side -- toward the ridge from this side's eave
+			local across = d
+			if across:Cross(Vector3.yAxis):Dot(back) < 0 then
+				across = -d
+			end
+			add({
+				shape = "Wedge",
+				cf = CFrame.fromMatrix(at(mid, (capY + ridgeY) / 2, side * wide / 2), across, Vector3.yAxis, back),
+				size = Vector3.new(span, ridgeY - capY, wide),
+				color = tiles,
+				mat = "ClayRoofTiles",
+			})
+		end
+		slab(-e1 - 0.26, len + e2 + 0.26, ridgeY - 0.15, height, 0, 0.6, Colors.shade(tiles, 0.72), "Slate")
 	elseif style == "willow" then
 		-- withies woven in and out of upright stakes: each row passes in front of one stake and
 		-- behind the next, the rows two shades of the paint

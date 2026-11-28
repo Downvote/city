@@ -5,7 +5,7 @@ across the ground and the walls, a sky, and a little haze with distance.
 
     python3 tools/preview/walk.py <scene.json> <out.png> --eye x,y,z --look x,y,z
         [--fov 60] [--size 1280x720] [--hour 16] [--far 700] [--textures] [--painted]
-        [--no-shadows] [--smooth] [--weather rain]
+        [--no-shadows] [--smooth] [--weather rain] [--cull 30] [--depth out.npy]
 
 tools/preview/render.py draws the same scenes from above with no lens, which is right for judging
 a model or a layout. This one is for judging a place: does a street read as a street, how long
@@ -18,6 +18,8 @@ grade come from the game's own numbers in Tuning.Look (tools/preview/look.py say
 shadows and thicker air under cloud) with what falls laid over the picture as a sketch of
 UI/Weather's particles: rain streaks and splashes, snow, petals, leaves, mist, a lightning bolt.
 The season is the scene's own: SEASON=1..4 before walk.sh (tools/preview/dump.luau).
+--cull <studs> leaves out what lies that far or more outside the picture (a whole plot's build is
+quicker so), and --depth <file.npy> saves how far off each pixel is, for tools/preview/mist.py.
 """
 import argparse
 import json
@@ -191,6 +193,9 @@ def main():
     ap.add_argument("--reach", type=float, default=320, help="shadows are worked out this far from the camera")
     ap.add_argument("--smooth", action="store_true")
     ap.add_argument("--weather", default="clear", help="the weather: clear, cloudy, rain, storm, snow, fog, blossom, leaves")
+    ap.add_argument("--depth", help="also save how far off each pixel is (a .npy), for what is laid over the picture")
+    ap.add_argument("--cull", type=float, default=None,
+                    help="leave out what lies this far (studs) or more outside the picture's edges (a big scene)")
     args = ap.parse_args()
     render.USE_KIT = not args.smooth
     W, H = [int(v) for v in args.size.split("x")]
@@ -226,6 +231,18 @@ def main():
         reach = np.linalg.norm(p["size"]) / 2
         if np.linalg.norm(pos - eye) - reach > args.far:
             continue
+        if args.cull is not None:
+            # outside the lens's view, past a margin (what stands just outside still casts its
+            # shadow in)
+            rel = pos - eye
+            z = rel @ forward
+            if z + reach + args.cull < NEAR:
+                continue
+            half_h = math.tan(math.radians(args.fov) / 2)
+            half_w = half_h * W / H
+            slack = reach + args.cull
+            if abs(rel @ right) - slack > max(z, 0) * half_w or abs(rel @ up) - slack > max(z, 0) * half_h:
+                continue
         for t in render.prim_tris(p):
             tris.append(t)
             owners.append(pi)
@@ -365,6 +382,8 @@ def main():
                 sub[closer] = shaded
             else:
                 sub[closer] = sub[closer] * (1 - a) + shaded * a
+    if args.depth:
+        np.save(args.depth, zbuf)
     if not args.no_grade:
         img = game_look.grade(img, light)
     rgb8 = (np.clip(img, 0, 1) * 255).astype(np.uint8)

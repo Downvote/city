@@ -140,6 +140,7 @@ local LOOK_ICONS: { [string]: string } = {
 	rustic = "barrel",
 	fancy = "gem",
 	playful = "balloon",
+	temple = "pagoda",
 }
 for _, m in MAIN do
 	if m.id == "styles" then
@@ -174,6 +175,7 @@ local STYLE_ICONS = {
 	fence = "fence",
 	hedge = "hedge",
 	stone = "stoneWall",
+	tiled = "tiledWall",
 	gable = "roof",
 	hip = "roofHip",
 	pyramid = "roofPyramid",
