@@ -294,6 +294,7 @@ Harness.addService("MarketplaceService", {
 	end,
 	PromptPurchaseFinished = Fake.signal(),
 	PromptBundlePurchaseFinished = Fake.signal(),
+	PromptBulkPurchaseFinished = Fake.signal(), -- (a client hears it: UI/BuyLook tells the server)
 })
 
 -- remotes: client calls go straight to the server's handlers -------------------------------------------

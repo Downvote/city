@@ -63,7 +63,9 @@
 --   panel:Rewards       the rewards on today's gift (a run of four days); panel:Rewards:playtime
 --                       20 minutes played today, the first step ready; panel:Rewards:achievements;
 --                       panel:Rewards:group with a group to join; panel:Rewards:member joined, the
---                       gems to claim
+--                       gems to claim; panel:Rewards:shopping R$ 410 spent on looks, five tiers
+--                       claimed, the next to go; panel:Rewards:shopping:ready R$ 1,040, the penguin
+--                       waiting
 --   welcome             the welcome back dialog after five hours away (welcome:long after two days)
 --   panel:Residents:pets  Mara's Quirks with her cat (a robot vacuum nobody owns yet);
 --                       panel:Residents:pets:pick the list of pets to pick from
@@ -1047,6 +1049,14 @@ elseif scene:sub(1, 6) == "panel:" then
 			achieved = { villager1 = true },
 			daily = { last = today - 1, streak = 4, run = 4 },
 			crates = if state == "crates" then { work = 1 } else {},
+			-- the shopping track (Sim/Shopping)
+			shopping = if state == "shopping"
+				then { spent = 410, got = { s1 = true, s2 = true, s3 = true, s4 = true, s5 = true } }
+				elseif state == "shopping:ready" then {
+					spent = 1040,
+					got = { s1 = true, s2 = true, s3 = true, s4 = true, s5 = true, s6 = true, s7 = true },
+				}
+				else { spent = 0, got = {} },
 		})
 		local Tuning = Harness.require("ReplicatedStorage.Shared.Config.Tuning")
 		if state == "group" or state == "member" then
@@ -1063,7 +1073,14 @@ elseif scene:sub(1, 6) == "panel:" then
 		Sim.press("Crates")
 	elseif name == "Rewards" and state ~= "" then
 		-- its tabs: playtime, achievements, group (and member: the group, joined)
-		local tabs = { playtime = "Playtime", achievements = "Achievements", group = "Group", member = "Group" }
+		local tabs = {
+			playtime = "Playtime",
+			achievements = "Achievements",
+			group = "Group",
+			member = "Group",
+			shopping = "Shopping",
+			["shopping:ready"] = "Shopping",
+		}
 		if tabs[state] then
 			Sim.press(tabs[state])
 		end

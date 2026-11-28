@@ -97,6 +97,33 @@ function Shop.clean(raw: any, most: number): { Line }?
 	return if #out > 0 then out else nil
 end
 
+-- What a whole look's prompt says was bought, from MarketplaceService.PromptBulkPurchaseFinished's
+-- results, read with care (Roblox's docs give { RobuxSpent, Items = { { type, id (a string),
+-- status } } }, `type` an Enum.MarketplaceProductType and `status` an
+-- Enum.MarketplaceItemPurchaseStatus): each item whose status is Success, or says none. When the
+-- results hold no list it can read, `asked` (the lines the prompt was for) is the answer, since
+-- the server asks Roblox about each one anyway (Services/Shopping).
+function Shop.bought(results: any, asked: { Line }?): { Line }
+	local items = if type(results) == "table" then (results.Items or results.items) else nil
+	if type(items) ~= "table" then
+		return asked or {}
+	end
+	local out: { Line } = {}
+	for _, item in items do
+		if type(item) == "table" then
+			local id = tonumber(item.id or item.Id)
+			local kind = item.type or item.Type
+			local status = item.status or item.Status
+			local name = if typeof(kind) == "EnumItem" then (kind :: EnumItem).Name else tostring(kind)
+			local said = if typeof(status) == "EnumItem" then (status :: EnumItem).Name else status
+			if id and id >= 1 and id % 1 == 0 and (said == nil or said == "Success") then
+				table.insert(out, { kind = if string.find(name, "Bundle") then "bundle" else "asset", id = id })
+			end
+		end
+	end
+	return out
+end
+
 -- Is a catalog row for sale, as far as the row says? false when it says it isn't (off sale, or
 -- not sold by itself), true when it gives a price, nil when it doesn't say.
 function Shop.forSale(item: any): boolean?

@@ -30,6 +30,11 @@ local Crates = {}
 local changed = Instance.new("BindableEvent")
 Crates.PetsChanged = changed.Event -- (player) after their pets or who owns them changed
 
+-- Says a player's pets changed somewhere else (a pet from the shopping track: Services/Claims).
+function Crates.petsChanged(player: Player)
+	changed:Fire(player)
+end
+
 local rng = Rng.new()
 local lastOpen: { [Player]: number } = {}
 local tipping: { [Player]: boolean } = {}

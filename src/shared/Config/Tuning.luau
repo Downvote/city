@@ -322,6 +322,23 @@ Tuning.Store = {
 	VipHeight = 3.4, -- studs over a VIP's head where their gold tag hangs
 }
 
+-- Robux spent on avatar items in the creator (Sim/Shopping, Services/Shopping). The user: "make it
+-- such that spending robux on accessories give you gems, and make a reward track based on how much
+-- you spend on accessories". Roblox sells the item and the game only gets a cut of its price, so a
+-- gem for every 10 Robux (the gem packs in Data/Passes give 0.2 to 0.33 a Robux); the part of a gem
+-- left over waits for the next buy. Not held to Tuning.GemRewards.DayMax: these gems are paid for.
+Tuning.Shopping = {
+	Gems = 0.1, -- gems for each Robux spent
+	ItemMax = 10000, -- the most Robux one item counts for
+	Kept = 500, -- the items remembered as counted (each counts once; the oldest is forgotten first)
+	Wait = 900, -- seconds a prompt put up for an item is waited on for its purchase
+	-- seconds after a purchase to ask Roblox again whether the player owns it (it can take a moment)
+	Recheck = { 3, 8 },
+	-- seconds between two of one player's notes of what is about to be prompted (and two reports of
+	-- a whole look bought)
+	Every = 0.5,
+}
+
 -- The creator's Players and Shared tabs (Services/Avatar): how many come at a time (Show more
 -- brings the next lot) and how many there can be in all.
 Tuning.Creator = {

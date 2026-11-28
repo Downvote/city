@@ -772,13 +772,13 @@ function Hud.start()
 	end
 	refreshGoals()
 	-- the Rewards tile's while anything there is waiting: today's gift, a playtime step, an
-	-- achievement or the group's gems
+	-- achievement, the group's gems or a tier of the shopping track (Sim/Shopping)
 	local rewardsBadge = Kit.badge(rewardsTile)
 	local RewardsPanel = Hud.panel("Rewards")
 	local function refreshRewards()
 		rewardsBadge.Visible = RewardsPanel.waiting() > 0
 	end
-	for _, key in { "daily", "playtime", "achieved", "villagers", "rel", "stats" } do
+	for _, key in { "daily", "playtime", "achieved", "villagers", "rel", "stats", "shopping", "pets", "crates" } do
 		State.on(key, refreshRewards)
 	end
 	State.onPlan(function()

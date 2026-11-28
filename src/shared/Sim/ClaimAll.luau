@@ -1,7 +1,7 @@
 --!strict
 -- Claim all (the user: "make a claim all button in rewards and in goals"): one press claims
 -- everything waiting in the Rewards menu (today's gift, the playtime steps reached, finished
--- achievements, the group's gems) or every finished town goal. Each goes through the same claim
+-- achievements, the group's gems, the shopping track's tiers reached) or every finished town goal. Each goes through the same claim
 -- its own button uses (Sim/Rewards, Sim/Life.claimGoal), one after another, so the rules are the
 -- same and nothing is paid twice. Like those, nothing here pays coins or gems out: it marks what
 -- was claimed and says what it came to, and the server (Services/Claims) pays it. No services, so
@@ -14,6 +14,7 @@ local Text = require(script.Parent.Parent.Util.Text)
 local Rewards = require(script.Parent.Rewards)
 local Life = require(script.Parent.Life)
 local CrateData = require(script.Parent.Parent.Data.Crates)
+local Shopping = require(script.Parent.Shopping) -- (the track for Robux spent on looks)
 
 local ClaimAll = {}
 
@@ -26,12 +27,15 @@ export type Haul = {
 	playtime: number, -- how many playtime steps
 	achievements: { string }, -- the ids of the achievements
 	group: boolean, -- the group's gems
-	crates: { string }, -- the crates the gift and the achievements gave, by kind (now held: Sim/Crates)
+	crates: { string }, -- the crates the gift, the achievements and the track gave, by kind (now held: Sim/Crates)
+	shopping: number, -- how many of the shopping track's tiers (Sim/Shopping)
+	pets: { any }, -- the pets the track gave (Sim/Crates.Result each), now in the save
 }
 
 -- Claims everything waiting in the Rewards menu on `today`. `vip` and `inGroup` are what the
--- server knows of the player (Sim/Passes, the InGroup attribute). Returns what it came to.
-function ClaimAll.rewards(profile: any, today: number, vip: boolean?, inGroup: boolean?): Haul
+-- server knows of the player (Sim/Passes, the InGroup attribute); `rng` (Util/Rng) names a pet the
+-- shopping track gives. Returns what it came to.
+function ClaimAll.rewards(profile: any, today: number, vip: boolean?, inGroup: boolean?, rng: any?): Haul
 	local haul: Haul = {
 		count = 0,
 		coins = 0,
@@ -41,6 +45,8 @@ function ClaimAll.rewards(profile: any, today: number, vip: boolean?, inGroup: b
 		achievements = {},
 		group = false,
 		crates = {},
+		shopping = 0,
+		pets = {},
 	}
 	local ok, coins, gems, crate = Rewards.claimDaily(profile, today, vip)
 	if ok then
@@ -79,6 +85,22 @@ function ClaimAll.rewards(profile: any, today: number, vip: boolean?, inGroup: b
 		haul.count += 1
 		haul.gems += groupGems
 	end
+	-- the shopping track's tiers reached, each through its own claim (one that can't be had now,
+	-- no room for its pet or its crates, waits)
+	for _, t in Shopping.Tiers do
+		local ok, result = Shopping.claim(profile, t.id, rng)
+		if ok and type(result) == "table" then
+			haul.shopping += 1
+			haul.count += 1
+			haul.coins += result.coins
+			for _, kind in result.crates do
+				table.insert(haul.crates, kind)
+			end
+			if result.pet then
+				table.insert(haul.pets, result.pet)
+			end
+		end
+	end
 	return haul
 end
 
@@ -107,6 +129,17 @@ function ClaimAll.cratesNotice(kinds: { string }): string?
 		return Text.fill("Your {x} is in the Store.", { x = if kind then string.lower(kind.name) else "crate" })
 	end
 	return Text.fill("{n} crates are in the Store.", { n = #kinds })
+end
+
+-- What pets a claim brought, said once (nil for none): "Bramble the hedgehog came to live in
+-- town.", "2 pets came to live in town."
+function ClaimAll.petsNotice(pets: { any }): string?
+	if #pets == 0 then
+		return nil
+	elseif #pets == 1 then
+		return Shopping.petLine(pets[1])
+	end
+	return Text.fill("{n} pets came to live in town.", { n = #pets })
 end
 
 -- The one notice that says what a press brought in (nil when it brought nothing).
