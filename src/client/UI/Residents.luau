@@ -391,6 +391,7 @@ local FACTORS = {
 	roof = { name = "Roof over bed", icon = "roof" },
 	fun = { name = "Fun by the bed", icon = "gamepad" },
 	friends = { name = "Friends", icon = "people" },
+	pet = { name = "A pet", icon = "paw" },
 }
 local function moodOf(parent: Frame, vid: string, v: any, p: any)
 	local mood = math.floor(v.mood)

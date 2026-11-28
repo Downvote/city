@@ -379,6 +379,9 @@ Tuning.Needs = {
 	-- Strangers, Acquainted, Friends, Good friends, Best friends)
 	FriendPoints = { 0, 0, 0, 1, 3, 5, 8 },
 	FriendsMax = 25,
+	-- a pet of their own (Sim/Pets, a pet crate's): on top of the rest, so it can make up for
+	-- something missing (the cap still stops at Villagers.MoodMax)
+	Pet = 10,
 	Rise = 1, -- mood a town hour toward the cap from under it
 	Fall = 2, -- and from over it
 	BoostShare = 0.5, -- what a lift counts for (a knock counts in full)

@@ -291,6 +291,7 @@ function Crates.reveal(result: any, still: boolean?)
 	end
 	Crates.closeReveal()
 	local def = CrateData.get(result.kind)
+	Kit.sound("gift") -- (Controllers/Audio: the chime a gift makes)
 	local p = Kit.panel(
 		if def then def.name else "Crate",
 		UDim2.fromOffset(560, 540),
