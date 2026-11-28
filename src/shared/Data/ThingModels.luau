@@ -54,7 +54,7 @@ local BACK = -0.12 -- the middle of what stands on the fist, front to back
 -- and size.
 ThingModels.Fist = { at = Vector3.new(0, 0, -0.15), size = Vector3.new(1, 1, 0.3) }
 
--- The arm as Roblox's own `toolnone` animation holds it, near enough, in Data/Moves' degrees: the
+-- The arm as Roblox's own `toolnone` animation holds it, near enough, in Util/Figure's degrees: the
 -- upper arm a little forward, the forearm out in front. Only the previews and the specs use it.
 ThingModels.CarryPose = { RightShoulder = { 15, 0, 0 }, RightElbow = { 75, 0, 0 } }
 

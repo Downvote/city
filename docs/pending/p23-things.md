@@ -36,7 +36,7 @@
   thing's space from the hand's RightGripAttachment WorldCFrame: turned to face forward, and what stands on the fist
   lifted to the top of a hand bigger or smaller than the blocky R15 one), `gripIn(handSize)` (where a hand without a
   RightGripAttachment holds things, as Roblox places that attachment), `lying(thing, spot)`, `has(id)`, `ids()`,
-  `Fist` and `CarryPose` (the fist's box and the arm in Data/Moves' degrees, for the previews and the spec). Flower
+  `Fist` and `CarryPose` (the fist's box and the arm in Util/Figure's degrees, for the previews and the spec). Flower
   heads are prims named `Bloom`.
 - `Services/Bag`: `drawThing` is gone. `hold` draws `ThingModels.draw` at `ThingModels.inHand` of the hand's
   `RightGripAttachment` (R15 and R6; `gripIn` without one), welded to the hand as before; `lay` places the model at
@@ -53,7 +53,7 @@
 - Spec `ThingModels`: every thing has a model of its own and only things have one; 3 to `Tuning.Carry.Parts` shapes;
   at hand size round the grip; no SmoothPlastic or Plastic and only materials Roblox has; smooth balls and cylinders
   kept round; no z-fighting in any model (tools/preview/zfight_lib); a flower held by its stem through the fist with
-  its `Bloom` over the hand, also with the arm in `CarryPose` on a plain R15 body (Data/Moves.figure); the tea
+  its `Bloom` over the hand, also with the arm in `CarryPose` on a plain R15 body (Util/Figure.figure); the tea
   upright and facing forward in that hand, a stand-on thing lifted to a smaller hand's top; nothing held pokes into
   the body or reaches the ground; a dropped thing on the ground with its middle over the spot, a book on its back,
   a cup standing.

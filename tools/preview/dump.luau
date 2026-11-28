@@ -390,7 +390,7 @@ elseif scene == "things" or scene:sub(1, 7) == "things:" or scene:sub(1, 8) == "
 	-- holding:<id>,<id> a plain body holding each, its arm out as Roblox's tool pose holds it
 	local Items = R(Shared .. "Data.Items")
 	local ThingModels = R(Shared .. "Data.ThingModels")
-	local Moves = R(Shared .. "Data.Moves")
+	local Figure = R(Shared .. "Util.Figure")
 	local C3, V3 = roblox.Color3, roblox.Vector3
 	local holding = scene:sub(1, 8) == "holding:"
 	local rest = if holding then scene:sub(9) else scene:sub(8)
@@ -410,8 +410,8 @@ elseif scene == "things" or scene:sub(1, 7) == "things:" or scene:sub(1, 8) == "
 	end
 	local skin = C3.fromRGB(236, 196, 160)
 	local function body(at, pose)
-		local parts = Moves.figure(at, pose)
-		for _, b in Moves.Body do
+		local parts = Figure.figure(at, pose)
+		for _, b in Figure.Body do
 			local name = b.name
 			local col = C3.fromRGB(110, 150, 196)
 			if name == "Head" or name:find("Hand") then
@@ -431,14 +431,16 @@ elseif scene == "things" or scene:sub(1, 7) == "things:" or scene:sub(1, 8) == "
 		local x, z = col * step, row * step
 		if holding then
 			-- facing +Z, to the camera, the arm in the carry pose
-			local root = CFrame.new(x, Moves.Lift, z) * CFrame.Angles(0, math.pi, 0)
+			local root = CFrame.new(x, Figure.Lift, z) * CFrame.Angles(0, math.pi, 0)
 			local parts = body(root, ThingModels.CarryPose)
 			local hand = parts.RightHand
 			local size = V3.new(1, 0.3, 1)
 			local grip = hand * ThingModels.gripIn(size)
 			addPrims(thing.prims, ThingModels.inHand(thing, grip, size))
 		elseif lying then
-			addPrims({ Geometry.box(CFrame.new(x, -0.05, z), V3.new(2.4, 0.1, 2.4), C3.fromRGB(150, 176, 110), "Grass") })
+			addPrims({
+				Geometry.box(CFrame.new(x, -0.05, z), V3.new(2.4, 0.1, 2.4), C3.fromRGB(150, 176, 110), "Grass"),
+			})
 			addPrims(thing.prims, ThingModels.lying(thing, CFrame.new(x, 0, z)))
 		else
 			local fist = ThingModels.Fist

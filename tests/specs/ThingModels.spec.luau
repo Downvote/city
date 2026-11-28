@@ -13,7 +13,7 @@ local Shared = "ReplicatedStorage.Shared."
 local Tuning = require(Shared .. "Config.Tuning")
 local Items = require(Shared .. "Data.Items")
 local ThingModels = require(Shared .. "Data.ThingModels")
-local Moves = require(Shared .. "Data.Moves")
+local Figure = require(Shared .. "Util.Figure")
 local Geometry = require(Shared .. "Build.Geometry")
 
 local Z = Harness.loadFile("tools/preview/zfight_lib.luau")()
@@ -34,8 +34,8 @@ end
 -- A body standing with its feet on y = 0, facing -Z, its arm out as for a tool: its parts' frames,
 -- and the frame of the thing's space in its hand.
 local function carried(thing)
-	local root = CFrame.new(0, Moves.Lift, 0)
-	local parts = Moves.figure(root, ThingModels.CarryPose)
+	local root = CFrame.new(0, Figure.Lift, 0)
+	local parts = Figure.figure(root, ThingModels.CarryPose)
 	local grip = parts.RightHand * ThingModels.gripIn(HAND)
 	return parts, ThingModels.inHand(thing, grip, HAND), root
 end
@@ -199,7 +199,7 @@ describe("ThingModels", function()
 				for _, at in points(p) do
 					local w = frame * at
 					need(w.Y > 0.2, item.id .. " reaches the ground when held")
-					for _, b in Moves.Body do
+					for _, b in Figure.Body do
 						if b.name ~= "RightHand" then
 							need(
 								not inside(parts[b.name], b.size, w, 0.02),

@@ -298,7 +298,7 @@ it `stays`, below.)
 The big moments played as cutscenes for a while (the user: "add cutscenes and scenes like tomodachi life as well",
 then "could you not move the camera around in events with special cutscenes?"), until "remove the need for special
 cutscene backgrounds, they will just appear as normal conversations now" (2026-11-28). Gone with them: `UI/Cutscene`,
-`Data/Stages` (the sets), `Data/Cutscenes` (the scripts), `Data/Moves` (the keyed poses, which nothing else played),
+`Data/Stages` (the sets), `Data/Cutscenes` (the scripts), `Data/Moves` (the keyed poses; its plain R15 body for the previews and the specs is `Util/Figure` now),
 the Cutscenes spec, `tools/preview/stage.sh`, `stage.py` and `stage_lib.luau`, `dump.luau stage:<id>` and the UI
 scenes `cutscene:<event>`. An event def carries no `cutscene` and a line no `cue`; `Dialogue.open` takes no `Stage`
 and a scene has no `beat` or `stage`; `EventCard` no longer marks a line's `at`. Nothing sets the camera's `Cutscene`
