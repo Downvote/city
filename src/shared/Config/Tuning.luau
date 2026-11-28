@@ -710,6 +710,73 @@ Tuning.Look = {
 	},
 }
 
+-- Weather ------------------------------------------------------------------
+-- The user: "could you use better weather effects?". World picks a weather for the season every
+-- `Every` hours of the town's day by the season's `Odds` (Schema.Seasons' order), and eases the light
+-- and the air toward the weather's look. What falls (rain, snow, petals, leaves, mist) is drawn on
+-- each player's own screen near the camera (UI/Weather, from Data/Weather's layers).
+Tuning.Weather = {
+	Every = 3, -- hours of the town's day between two weathers
+	Odds = {
+		{ clear = 3, blossom = 2, rain = 1, cloudy = 1, fog = 1 }, -- spring
+		{ clear = 4, cloudy = 1, rain = 1, storm = 1 }, -- summer
+		{ clear = 2, leaves = 2, cloudy = 1, rain = 1, fog = 1 }, -- autumn
+		{ snow = 3, clear = 1, cloudy = 1, fog = 1 }, -- winter
+	} :: { { [string]: number } },
+	-- The light and the air in each weather. Sun: the sun's Brightness, times Tuning.Look.Light's (an
+	-- overcast sky is dimmer); Soft: ShadowSoftness (no crisp shadow under cloud); Density and Haze:
+	-- the Atmosphere's; Grey: added to the grade's saturation; Sway: how far leaves, flags and
+	-- hanging signs lean, times a breeze's (client World/Ambience); Gust: how much the wind comes and
+	-- goes on top of that. Clear is Tuning.Look's own light and air.
+	Looks = {
+		clear = { Sun = 1, Soft = 0.08, Density = 0.3, Haze = 1.5, Grey = 0, Sway = 1, Gust = 0.2 },
+		cloudy = { Sun = 0.72, Soft = 0.45, Density = 0.36, Haze = 1.9, Grey = -0.06, Sway = 1.3, Gust = 0.3 },
+		rain = { Sun = 0.55, Soft = 0.6, Density = 0.4, Haze = 2.2, Grey = -0.1, Sway = 1.6, Gust = 0.4 },
+		storm = { Sun = 0.42, Soft = 0.7, Density = 0.44, Haze = 2.4, Grey = -0.14, Sway = 3.2, Gust = 0.8 },
+		snow = { Sun = 0.78, Soft = 0.5, Density = 0.38, Haze = 2, Grey = -0.06, Sway = 0.7, Gust = 0.2 },
+		fog = { Sun = 0.62, Soft = 0.6, Density = 0.6, Haze = 3.4, Grey = -0.08, Sway = 0.4, Gust = 0.1 },
+		blossom = { Sun = 1, Soft = 0.1, Density = 0.3, Haze = 1.5, Grey = 0, Sway = 1.2, Gust = 0.3 },
+		leaves = { Sun = 0.95, Soft = 0.12, Density = 0.31, Haze = 1.6, Grey = 0, Sway = 1.8, Gust = 0.5 },
+	},
+	Ease = 0.04, -- how far the light moves toward the weather's every half second (a change takes a minute or so)
+	-- the air on a screen whose player turned the haze off in Settings, whatever the weather
+	NoHaze = { Density = 0.1, Haze = 0 },
+	-- the sea in a storm (Terrain's WaterWaveSize and WaterWaveSpeed; Data/Terrain has the calm)
+	StormWaves = { Size = 0.4, Speed = 16 },
+	-- lightning in a storm: seconds between strikes, how bright the flash (a ColorCorrection's
+	-- Brightness), and how far off the bolt comes down
+	Lightning = { Every = { 7, 20 }, Flash = 0.45, Far = { 220, 480 } },
+	-- rain on the ground round the camera: a square of `Cells` by `Cells` patches `Cell` studs
+	-- across, each set on whatever is under it (a road, a roof, a hill), where the drops splash; and
+	-- puddles on hard ground open to the sky, up to `Puddles` of them within `Reach`
+	Cells = 5,
+	Cell = 18,
+	Puddles = 22,
+	PuddleReach = 60,
+	PuddleSize = { 2.5, 6.5 },
+	-- petals in spring and leaves in autumn drift about whatever the weather does, a few a second
+	SeasonAir = 0.35, -- times the blossom or leaves weather's rate
+}
+
+-- What each player can turn down on their own screen (Settings; client World/Graphics). The user:
+-- "add settings for graphic quality, background blur, bloom, etc.". Roblox's own graphics quality
+-- can't be set by a script: it stays in Roblox's menu. A detail level sets how much of our own
+-- costly things is drawn: Shadows (Lighting.GlobalShadows on this screen), Reach (times how far
+-- pieces move and give off effects, and leaves sway), Particles (times every rate of the weather
+-- and of the pieces' effects), Outlines (how many people wear one), Layers (how many of a
+-- weather's layers fall: near, middle, far), Puddles (rain lying on the ground).
+Tuning.Graphics = {
+	Levels = {
+		low = { Shadows = false, Reach = 0.45, Particles = 0.35, Outlines = 0, Layers = 1, Puddles = false },
+		medium = { Shadows = true, Reach = 0.7, Particles = 0.65, Outlines = 10, Layers = 2, Puddles = true },
+		high = { Shadows = true, Reach = 1, Particles = 1, Outlines = 20, Layers = 3, Puddles = true },
+	},
+	-- the background blur's strengths (the `blurStrength` setting): Soft, Medium and Strong. The
+	-- lens's FarIntensity is Tuning.Look.Lens.FarIntensity times twice the strength, so Medium is
+	-- the look the game had before there was a choice
+	BlurSteps = { 0.25, 0.5, 1 },
+}
+
 -- Water on a plot ---------------------------------------------------------------
 -- The user: "also, add ability to add water, along with things that can go in the water". A pool
 -- or a pond is dragged out in Build mode (Build/Water) and is Roblox terrain water in the game

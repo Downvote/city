@@ -268,23 +268,6 @@ function Service.cutGround(index: number)
 	if grass then
 		cut(grass, frame, holes)
 	end
-	-- the lawn's patches (Data/LawnPatches) are turned, so one over a hole is hidden whole
-	if land then
-		for _, patch in land:GetChildren() do
-			if patch.Name == "Patch" and patch:IsA("BasePart") then
-				local at = frame:ToObjectSpace(patch.CFrame).Position
-				local r = math.sqrt(patch.Size.X ^ 2 + patch.Size.Z ^ 2) / 2
-				local over = false
-				for _, h in holes do
-					if at.X + r > h[1] and at.X - r < h[3] and at.Z + r > h[2] and at.Z - r < h[4] then
-						over = true
-						break
-					end
-				end
-				patch.Transparency = if over then 1 else 0
-			end
-		end
-	end
 end
 
 -- Keeping the terrain in step with the plan ---------------------------------------------------------------

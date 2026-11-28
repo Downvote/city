@@ -130,6 +130,7 @@ local WEATHER = {
 	rain = "Rain",
 	storm = "Storm",
 	snow = "Snow",
+	fog = "Fog",
 	blossom = "Blossom",
 	leaves = "Falling leaves",
 }
@@ -140,6 +141,7 @@ local WEATHER_ICON = {
 	rain = "rain",
 	storm = "storm",
 	snow = "snow",
+	fog = "fog",
 	blossom = "blossom",
 	leaves = "leaves",
 }
@@ -483,6 +485,9 @@ function Hud.start()
 			{ "store", "Store", "Store" },
 			-- vehicles to buy and drive (the user: "make vehicles")
 			{ "car", "Garage", "Cars" },
+			-- what this screen draws, and the look (the user: "add settings for graphic quality,
+			-- background blur, bloom, etc.")
+			{ "gear", "Settings", "Settings" },
 		}
 	do
 		cornerButton(e[1], e[2], e[3], i + 1, function()

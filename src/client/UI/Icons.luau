@@ -1149,6 +1149,30 @@ for i, x in { 22, 44, 66 } do
 	table.insert(D.snow, { "c", x, 72 + (i % 2) * 8, 14, 14, C.blueLight })
 end
 
+D.fog = cloud(C.greyLight, -14)
+table.insert(D.fog, { "r", 14, 70, 72, 9, C.grey, r = 0.5 })
+table.insert(D.fog, { "r", 26, 84, 48, 9, C.grey, r = 0.5 })
+
+-- a cog: eight teeth round a wheel with its middle open
+D.gear = {}
+do
+	for i = 0, 7 do
+		local a = math.rad(i * 45)
+		table.insert(D.gear, {
+			"r",
+			50 + math.sin(a) * 34 - 8,
+			50 - math.cos(a) * 34 - 9,
+			16,
+			18,
+			C.white,
+			r = 0.2,
+			rot = i * 45,
+		})
+	end
+	table.insert(D.gear, { "c", 18, 18, 64, 64, C.white })
+	table.insert(D.gear, { "c", 37, 37, 26, 26, INK, o = false })
+end
+
 D.blossom = {}
 do
 	for i = 0, 4 do
@@ -1608,6 +1632,7 @@ Icons.Colors = {
 	rain = Color3.fromRGB(70, 150, 230),
 	storm = Color3.fromRGB(110, 110, 160),
 	snow = Color3.fromRGB(110, 170, 230),
+	fog = Color3.fromRGB(150, 170, 196),
 	blossom = Color3.fromRGB(255, 120, 170),
 	leaves = Color3.fromRGB(236, 130, 50),
 	alert = Color3.fromRGB(255, 108, 98),

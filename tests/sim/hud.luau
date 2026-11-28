@@ -84,7 +84,8 @@ run("the round buttons under the clock: home, the city hall, the news, the store
 	-- it: "make vehicles")
 	-- (the light or dark switch went: the user, "The light/dark button at the top of the ui should be
 	-- changed to "Hide"")
-	check(table.concat(order, " ") == "Home CityPanel News Store Garage Hide", "six of them, Hide last")
+	-- (and Settings beside Hide: "add settings for graphic quality, background blur, bloom, etc.")
+	check(table.concat(order, " ") == "Home CityPanel News Store Garage Settings Hide", "seven of them, Hide last")
 	check(corner:FindFirstChild("Look", true) == nil, "no light or dark button")
 	check(corner:FindFirstChild("MapPanel", true) == nil, "no Map button")
 	check(corner:FindFirstChild("ShopPanel", true) == nil, "and no Shop button")
