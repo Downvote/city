@@ -16,6 +16,7 @@ local Geometry = require(Shared .. "Build.Geometry")
 local Builder = require(Shared .. "Build.Builder")
 local Recipe = require(Shared .. "Build.Recipe")
 local Palette = require(Shared .. "Data.Palette")
+local Water = require(Shared .. "Build.Water")
 
 local PLAIN = { SmoothPlastic = true, Plastic = true }
 
@@ -55,7 +56,7 @@ describe("Textured", function()
 		end
 	end)
 
-	it("draws walls, fences, floors and roofs textured in every style", function()
+	it("draws walls, fences, floors, roofs, pools and ponds textured in every style", function()
 		local out = {}
 		for id, def in Plan.WallStyles do
 			local side = def.paint or Palette.Defaults.WallOut
@@ -98,26 +99,26 @@ describe("Textured", function()
 		for _, p in Shapes.floor(f, {}) do
 			table.insert(out, { p, "floor" })
 		end
-		local bad = {}
-		for _, e in
-			Geometry.flatten((function()
-				local l = {}
-				for _, e in out do
-					table.insert(l, e[1])
+		-- and the pools and ponds dug on the Water tab, every edge at every depth
+		for _, edge in Water.EdgeOrder do
+			for _, depth in Water.DepthOrder do
+				local w = { x1 = X0 + 22, z1 = 150, x2 = X0 + 38, z2 = 162, lv = 0, edge = edge, depth = depth }
+				for _, p in Water.prims(w) do
+					table.insert(out, { p, "water " .. edge })
 				end
-				return l
-			end)())
-		do
-			if bare(e) then
-				table.insert(bad, e.mat)
 			end
 		end
+		local bad = {}
 		for _, e in out do
-			if bare(e[1]) then
-				table.insert(bad, e[2])
+			for _, p in Geometry.flatten({ e[1] }) do
+				if bare(p) then
+					table.insert(bad, e[2])
+				end
 			end
 		end
-		expect(#bad).toBe(0)
+		if #bad > 0 then
+			error("untextured shapes in: " .. table.concat(bad, ", "))
+		end
 	end)
 
 	it("offers only textured finishes, and draws an old save's flat paint textured", function()
