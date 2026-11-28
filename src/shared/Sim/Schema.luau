@@ -15,6 +15,8 @@ local Memory = require(script.Parent.Memory)
 local PlotName = require(script.Parent.PlotName)
 local Skills = require(script.Parent.Skills)
 local WorkMove = require(script.Parent.WorkMove)
+local Bag = require(script.Parent.Bag)
+local Titles = require(script.Parent.Titles)
 
 local Schema = {}
 
@@ -78,6 +80,9 @@ export type Villager = {
 	flair: { phrase: string?, ending: string?, thing: string? }?,
 	lately: { Memory.Memory }?, -- what their events left them with for a few days (Sim/Memory)
 	move: string?, -- the emote they work to, bought with gems (Sim/WorkMove), or nil for the job's own
+	giftDay: number?, -- the town day they last had a gift from you, and how many that day (Sim/Gifts)
+	gifts: number?,
+	gaveDay: number?, -- the town day they last thought about giving you something (Gifts.offer)
 }
 
 function Schema.newProfile(): any
@@ -109,6 +114,9 @@ function Schema.newProfile(): any
 			cravings = 0, -- cravings bought (Life.buyWish)
 			hearts = 0,
 			found = 0,
+			gifts = 0, -- gifts given to villagers (Sim/Gifts)
+			gathered = 0, -- things taken from pieces or made at work (Sim/Bag)
+			cooked = 0, -- of them, dishes cooked at a stove or a grill
 		},
 		offers = {}, -- (old saves: heart level thank yous left to pick, paid out on load by Life.settleOffers)
 		found = {}, -- places on the island found, by id (Data/Places)
@@ -131,6 +139,12 @@ function Schema.newProfile(): any
 		playtime = { day = -1, secs = 0, got = 0 }, -- today's play in seconds and the rewards taken for it
 		ownLand = 0, -- the biggest land bought before Big Plot was a pass, kept without it
 		plotName = "", -- the plot's name, over the level bar on the main screen ("" until named: Sim/PlotName)
+		-- the bag (Sim/Bag): things by id and how many, what a goal gave while it was full, and how
+		-- many things were taken from pieces on which town day
+		bag = {},
+		owed = {},
+		gather = { day = -1, n = 0 },
+		titles = {}, -- titles won from town goals, by id (Sim/Titles); `title` is the one worn, or nil
 	}
 end
 
@@ -220,6 +234,8 @@ function Schema.migrate(raw: any): any
 	profile.look = if type(profile.look) == "table" then Appearance.sanitize(profile.look) else nil
 	profile.likedLooks = Likes.clean(profile.likedLooks, Tuning.CreatorMore.LikedKept)
 	profile.skills = Skills.clean(profile.skills)
+	Bag.clean(profile)
+	Titles.clean(profile)
 	-- (only true marks: Services/Vehicles also drops any vehicle there no longer is)
 	if type(profile.vehicles) ~= "table" then
 		profile.vehicles = {}

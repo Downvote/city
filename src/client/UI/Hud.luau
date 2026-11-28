@@ -433,8 +433,8 @@ function Hud.start()
 	-- things and food and feeding" and "remove the map button and the map interface".)
 	local corner = Kit.box({
 		Name = "Corner",
-		-- (wide enough for five: the Store came in beside the news)
-		Size = UDim2.fromOffset(310, 76),
+		-- (wide enough for six: the Store came in beside the news, then the Bag)
+		Size = UDim2.fromOffset(372, 76),
 		-- under the clock's glass, which ends 72 from the top of the screen
 		Position = UDim2.new(1, -14, 0, 88 - inset),
 		AnchorPoint = Vector2.new(1, 0),
@@ -487,6 +487,8 @@ function Hud.start()
 			{ "store", "Store", "Store" },
 			-- vehicles to buy and drive (the user: "make vehicles")
 			{ "car", "Garage", "Cars" },
+			-- the things you carry, to hold, drop and give (the user: "add an inventory system to the player")
+			{ "bag", "Bag", "Bag" },
 		}
 	do
 		cornerButton(e[1], e[2], e[3], i + 1, function()

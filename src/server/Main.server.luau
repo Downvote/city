@@ -19,6 +19,9 @@ local order = {
 	"Villagers",
 	"Interact", -- holding E on a piece (Data/Interactions): after Villagers, whose villagers react
 	"Work", -- a player working at a workplace themselves: after Villagers, whose pay packets it uses
+	"Bag", -- things taken from pieces, made at work, held and dropped (Sim/Bag): after Work, whose workers it looks at
+	"Gifts", -- gifts to and from villagers (Sim/Gifts): after Villagers, whose talks it hears
+	"Titles", -- the titles players wear under their names (Sim/Titles)
 	"Lights", -- the lights players place: their switches, and put out near sleepers (after Villagers)
 	"Unstick", -- people moved out of what they get stuck in: after Build and Villagers
 	"Events",

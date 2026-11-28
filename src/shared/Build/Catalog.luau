@@ -9,7 +9,9 @@
 --   job, workSpot, workYaw for workplaces (Recipes/Work),
 --   lively = true for a piece that moves or gives off an effect (Build/Lively: the client looks
 --   inside those), vip = true for one only VIP owners can place (Services/Build refuses it to
---   anyone else, Sim/Passes; Build mode tags its card).
+--   anyone else, Sim/Passes; Build mode tags its card), gives = a source in Data/Items.Sources for
+--   a piece that gives the player something when they hold E on it (a bookshelf a book, a stove a
+--   dish; a workplace's are made while they work there: Services/Bag).
 -- place is one of:
 --   "floor"   stands on a floor or the ground
 --   "surface" small things that can also stand on a table or counter
@@ -59,6 +61,8 @@ export type Def = {
 	draft: number?, -- (water) how far its frame's floor is under the surface, or under the ground
 	lively: boolean?, -- moves or gives off an effect (Build/Lively, client World/Lively)
 	vip: boolean?, -- only for VIP owners (Sim/Passes.has(profile, "vip"))
+	gives: string?, -- holding E on it gives the player a thing: a source in Data/Items.Sources (Services/Bag)
+	prize: boolean?, -- a keepsake a town goal gives, not a villager (Build/Recipes/Prizes, Data/Goals' `piece`)
 }
 
 local Catalog = {}

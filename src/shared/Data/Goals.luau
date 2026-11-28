@@ -1,7 +1,11 @@
 --!strict
 -- Town goals: a list of things to work toward as the town grows, each paying coins when you claim
 -- it. `value` reads how far along you are from the profile (and the city's stats). None is about
--- food or a shop: there is neither. Nor romance: best friends is as close as two villagers get.
+-- a shop: there is none. Nor romance: best friends is as close as two villagers get.
+-- Some pay more than coins (the user: "add more rewards to quests, like titles, special buildings,
+-- special gifts, etc."): `title` a title to wear under your name (Data/Titles), `piece` a Build mode
+-- piece that is yours to put down for free (a keepsake from Build/Recipes/Prizes, Sim/Keepsakes) and
+-- `thing` something for the bag (Data/Items, a treasure most often). Life.claimGoal pays them all.
 
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 
@@ -16,6 +20,9 @@ export type Goal = {
 	desc: string,
 	need: number,
 	reward: number,
+	title: string?,
+	piece: string?,
+	thing: string?,
 	value: (profile: any, city: any) -> number,
 }
 
@@ -60,6 +67,7 @@ Goals.list = {
 		desc = "3 villagers in town.",
 		need = 3,
 		reward = 300,
+		title = "neighbour",
 		value = function(_p, city)
 			return city.population
 		end,
@@ -71,6 +79,26 @@ Goals.list = {
 		need = 3,
 		reward = 300,
 		value = stat("wishes"),
+	},
+	-- the bag and gifts (Sim/Bag, Sim/Gifts)
+	{
+		id = "gifts5",
+		name = "Thoughtful",
+		desc = "Give villagers 5 gifts.",
+		need = 5,
+		reward = 300,
+		title = "giver",
+		value = stat("gifts"),
+	},
+	{
+		id = "gather20",
+		name = "Forager",
+		desc = "Gather 20 things round your town.",
+		need = 20,
+		reward = 300,
+		title = "forager",
+		thing = "luckycoin",
+		value = stat("gathered"),
 	},
 	-- Work is what a town lives on (the user: "progression is much more based on villagers
 	-- working"), so its goals run through the list: people in a job, wages earned, skill.
@@ -85,11 +113,22 @@ Goals.list = {
 		end,
 	},
 	{
+		id = "cook10",
+		name = "Home cooking",
+		desc = "Cook 10 dishes at a stove or a grill.",
+		need = 10,
+		reward = 400,
+		title = "cook",
+		value = stat("cooked"),
+	},
+	{
 		id = "heart5",
 		name = "Close to you",
 		desc = "Reach heart level 5.",
 		need = 5,
 		reward = 500,
+		title = "kind",
+		thing = "musicbox",
 		value = function(p, _city)
 			return bestHeart(p)
 		end,
@@ -100,6 +139,7 @@ Goals.list = {
 		desc = "Make two villagers best friends.",
 		need = 1,
 		reward = 400,
+		title = "friendmaker",
 		value = function(p, _city)
 			return bestFriends(p)
 		end,
@@ -111,6 +151,7 @@ Goals.list = {
 		desc = "Earn 15,000 coins in wages.",
 		need = 15000,
 		reward = 500,
+		thing = "goldacorn",
 		value = stat("earned"),
 	},
 	{
@@ -119,6 +160,8 @@ Goals.list = {
 		desc = "Reach level 3.",
 		need = 3,
 		reward = 800,
+		title = "founder",
+		piece = "prize_clock",
 		value = function(_p, city)
 			return city.level
 		end,
@@ -139,6 +182,7 @@ Goals.list = {
 		desc = "Reach skill 5 in any job.",
 		need = 5,
 		reward = 700,
+		title = "foreman",
 		value = function(p, _city)
 			return bestSkill(p)
 		end,
@@ -149,6 +193,7 @@ Goals.list = {
 		desc = "Find 5 places.",
 		need = 5,
 		reward = 400,
+		title = "wanderer",
 		value = stat("found"),
 	},
 	{
@@ -157,7 +202,17 @@ Goals.list = {
 		desc = "Grant 15 wishes.",
 		need = 15,
 		reward = 1000,
+		title = "wishgranter",
 		value = stat("wishes"),
+	},
+	{
+		id = "gifts30",
+		name = "Generous",
+		desc = "Give villagers 30 gifts.",
+		need = 30,
+		reward = 1200,
+		thing = "musicbox",
+		value = stat("gifts"),
 	},
 	-- (two goals about romance stood here, the first couple and partners for life; the user:
 	-- "remove any romance, just best friends is the highest")
@@ -167,6 +222,7 @@ Goals.list = {
 		desc = "Three pairs of best friends.",
 		need = 3,
 		reward = 1200,
+		piece = "prize_bandstand",
 		value = function(p, _city)
 			return bestFriends(p)
 		end,
@@ -177,6 +233,7 @@ Goals.list = {
 		desc = "10 villagers in town.",
 		need = 10,
 		reward = 1500,
+		title = "host",
 		value = function(_p, city)
 			return city.population
 		end,
@@ -187,6 +244,7 @@ Goals.list = {
 		desc = "Reach heart level 10.",
 		need = 10,
 		reward = 1500,
+		piece = "prize_wishtree",
 		value = function(p, _city)
 			return bestHeart(p)
 		end,
@@ -197,8 +255,21 @@ Goals.list = {
 		desc = "10 villagers with jobs.",
 		need = 10,
 		reward = 2000,
+		title = "boss",
 		value = function(_p, city)
 			return city.employed
+		end,
+	},
+	{
+		id = "heart20",
+		name = "Like family",
+		desc = "Reach heart level 20 with a villager.",
+		need = 20,
+		reward = 3000,
+		title = "bigheart",
+		thing = "goldacorn",
+		value = function(p, _city)
+			return bestHeart(p)
 		end,
 	},
 	{
@@ -207,6 +278,8 @@ Goals.list = {
 		desc = "Find every place.",
 		need = 16,
 		reward = 2000,
+		title = "explorer",
+		thing = "snowglobe",
 		value = stat("found"),
 	},
 	{
@@ -215,6 +288,7 @@ Goals.list = {
 		desc = "Reach level 5.",
 		need = 5,
 		reward = 3000,
+		title = "bigshot",
 		value = function(_p, city)
 			return city.level
 		end,

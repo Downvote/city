@@ -73,6 +73,10 @@ Remotes.Functions = {
 	"GroupClaim", -- () -> ok, gems or why: the group's gems, once, for a member
 	"RewardsClaimAll", -- () -> ok, { count, coins, gems } or why: all the Rewards menu has waiting (Services/Claims)
 	"WelcomeBack", -- () -> { secs, counted, coins, workers } or nil: what the town earned while away, once
+	-- the bag and gifts (Services/Bag, Services/Gifts, Services/Titles): each checked on the server
+	"BagUse", -- ("hold", id) | ("away") | ("drop", id) -> ok, why: hold a thing in the hand, put it away, or drop one
+	"GiftGive", -- (vid, id) -> ok, { taste, line, note } or why: give a villager a thing from the bag
+	"TitleWear", -- (id | false) -> ok, why: wear a title won from a goal, or none
 }
 
 Remotes.Events = {

@@ -1,8 +1,10 @@
 --!strict
 -- The life sim's progression, as pure data in and out so the specs can run it:
---   hearts   how close each villager is to you. Granted wishes and chats fill their hearts;
---            each new heart level brings coins they saved and some practice at their work (so
---            they earn more), with a notice. Hobbies and sayings come from random events.
+--   hearts   how close each villager is to you. Granted wishes, chats and gifts fill their
+--            hearts; each new heart level brings coins they saved and some practice at their work
+--            (so they earn more), with a notice. There is no top level (the user: "also, make it
+--            such that heart level is uncapped"): each asks a little more than the last.
+--            Hobbies and sayings come from random events.
 --   wishes   one at a time per villager, shown over their head: a craving, someone they'd like
 --            to meet, or a chat to cheer them up (no new look: "remove new look cravings"). Granting one fills hearts and
 --            lifts their mood. A craving is bought for them (Life.wishPrice, Life.buyWish); the
@@ -13,7 +15,9 @@
 --   friends  there is no romance (the user: "remove any romance, just best friends is the
 --            highest"): two villagers get no closer than best friends, the top of
 --            Sim/Relationships' levels.
---   goals    the town's list of things to work toward (Data/Goals), claimed for coins.
+--   goals    the town's list of things to work toward (Data/Goals), claimed for coins and, on
+--            some, a title, a free Build mode piece or a special thing for the bag (the user: "add
+--            more rewards to quests, like titles, special buildings, special gifts, etc.").
 
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Foods = require(script.Parent.Parent.Data.Foods)
@@ -22,6 +26,11 @@ local Relationships = require(script.Parent.Relationships)
 local Tutorial = require(script.Parent.Tutorial)
 local City = require(script.Parent.City)
 local Text = require(script.Parent.Parent.Util.Text)
+local Keepsakes = require(script.Parent.Keepsakes)
+local Bag = require(script.Parent.Bag)
+local Titles = require(script.Parent.Titles)
+local Items = require(script.Parent.Parent.Data.Items)
+local Catalog = require(script.Parent.Parent.Build.Catalog)
 
 local L = Tuning.Life
 
@@ -38,8 +47,10 @@ end
 
 -- Hearts ---------------------------------------------------------------------------------------------
 
+-- Points from heart level `level` to the next. Levels have no top, and each step is HeartStep
+-- longer than the last.
 function Life.heartNeed(level: number): number
-	return L.HeartBase + L.HeartStep * level
+	return L.HeartBase + L.HeartStep * math.max(1, level)
 end
 
 -- What a new heart level brings: the coins they saved up and some practice at their work (skill,
@@ -80,7 +91,7 @@ function Life.addHearts(profile: any, vid: string, n: number, rng: any, notices:
 	v.heart = v.heart or 1
 	v.hxp = (v.hxp or 0) + n
 	local gained = 0
-	while v.heart < L.HeartMax and v.hxp >= Life.heartNeed(v.heart) do
+	while v.hxp >= Life.heartNeed(v.heart) do
 		v.hxp -= Life.heartNeed(v.heart)
 		v.heart += 1
 		gained += 1
@@ -89,9 +100,6 @@ function Life.addHearts(profile: any, vid: string, n: number, rng: any, notices:
 		if notices then
 			table.insert(notices, said)
 		end
-	end
-	if v.heart >= L.HeartMax then
-		v.hxp = 0
 	end
 	return gained
 end
@@ -103,7 +111,8 @@ function Life.settleOffers(profile: any): { string }
 	for _, offer in profile.offers or {} do
 		local v = type(offer) == "table" and profile.villagers[offer.vid]
 		if v and type(offer.level) == "number" then
-			table.insert(out, reward(profile, v, math.clamp(math.floor(offer.level), 1, L.HeartMax)))
+			-- (they were made when heart levels stopped at 20)
+			table.insert(out, reward(profile, v, math.clamp(math.floor(offer.level), 1, 20)))
 		end
 	end
 	profile.offers = {}
@@ -314,21 +323,47 @@ function Life.goals(profile: any): { any }
 	return out
 end
 
--- Claims a finished goal's coins. Returns ok and the coins.
-function Life.claimGoal(profile: any, id: any): (boolean, number)
+-- What a goal pays besides its coins, as notices: a title to wear, a Build mode piece for free (a
+-- keepsake, Sim/Keepsakes) and something special for the bag (Sim/Bag). Gives them to `profile`.
+local function extras(profile: any, g: any): { string }
+	local out = {}
+	if g.title and Titles.give(profile, g.title) then
+		local t = Titles.get(g.title)
+		table.insert(out, Text.fill("New title: {t}. Wear it from Goals.", { t = if t then t.name else g.title }))
+	end
+	if g.piece and Keepsakes.give(profile, g.piece) then
+		local def = Catalog.get(g.piece)
+		table.insert(out, Text.fill("{x} is yours to build, free.", { x = if def then def.name else g.piece }))
+	end
+	if g.thing then
+		local item = Items.get(g.thing)
+		if item and Bag.add(profile, g.thing, 1) > 0 then
+			table.insert(out, Text.fill("{x} is in your bag.", { x = Items.capital(item) }))
+		elseif item then
+			-- no room in the bag: it waits there for room (Sim/Bag.owe)
+			Bag.owe(profile, g.thing)
+			table.insert(out, Text.fill("Your bag is full, so {x} waits for room.", { x = Items.phrase(item) }))
+		end
+	end
+	return out
+end
+
+-- Claims a finished goal: its coins and anything else it pays (a title, a free piece, a thing for
+-- the bag). Returns ok, the coins and the notices for what else came.
+function Life.claimGoal(profile: any, id: any): (boolean, number, { string })
 	if type(id) ~= "string" then
-		return false, 0
+		return false, 0, {}
 	end
 	local g = Goals.get(id)
 	if not g or profile.goals[id] then
-		return false, 0
+		return false, 0, {}
 	end
 	if g.value(profile, City.stats(profile)) < g.need then
-		return false, 0
+		return false, 0, {}
 	end
 	profile.goals[id] = true
 	profile.coins = math.clamp(profile.coins + g.reward, 0, Tuning.Economy.MaxCoins)
-	return true, g.reward
+	return true, g.reward, extras(profile, g)
 end
 
 return Life

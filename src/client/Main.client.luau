@@ -51,6 +51,7 @@ require(World.Earnings).start() -- coins over the villagers as they earn them
 require(World.Interact).start() -- a go at a piece: a puff from it, and what happened over the player
 require(World.Work).start() -- working at a workplace yourself: its prompts, your motion and the notice
 require(World.LightSwitch).start() -- the switch on your own lights: shown on your plot only
+require(World.Gather).start() -- what pieces give you (Services/Bag): their prompts on your plot only
 require(World.Prompts).start() -- no prompts while you sit, work or talk
 require(World.Explore).start()
 require(World.Outlines).start()

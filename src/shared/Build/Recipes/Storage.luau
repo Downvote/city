@@ -367,12 +367,14 @@ type Item = {
 	surface: number?,
 	style: string?, -- the look it belongs to (Catalog.Styles)
 	build: (r: R) -> (),
+	gives: string?, -- holding E gives the player something (Data/Items.Sources)
 }
 
 local items: { Item } = {
 	{
 		id = "bookshelf",
 		name = "Bookshelf",
+		gives = "books", -- holding E gives something (Data/Items.Sources)
 		cat = "storage",
 		style = "cozy",
 		price = 120,
@@ -539,6 +541,7 @@ local items: { Item } = {
 	{
 		id = "toy_chest",
 		name = "Toy chest",
+		gives = "toys", -- holding E gives something (Data/Items.Sources)
 		cat = "storage",
 		style = "playful",
 		price = 90,

@@ -23,7 +23,8 @@ hover hover:menu bubbles
 tutorial:welcome tutorial:1 tutorial:2 tutorial:2:build tutorial:3:build tutorial:4 tutorial:4:craving
 tutorial:4:buy tutorial:done
 panel:Garage panel:Store panel:Store:gems panel:Rewards panel:Rewards:playtime panel:Rewards:achievements panel:Rewards:group
-panel:Rewards:member welcome welcome:long"
+panel:Rewards:member welcome welcome:long
+panel:Bag panel:Bag:empty panel:Residents:gift panel:Goals:titles talk:gift"
 COUNT=$(echo $SCENES | wc -w)
 status=0
 for look in dark light; do

@@ -135,6 +135,7 @@ type Item = {
 	tags: { string }?,
 	surface: number?,
 	build: (r: R) -> (),
+	gives: string?, -- holding E gives the player something (Data/Items.Sources)
 }
 
 local items: { Item } = {
@@ -528,6 +529,7 @@ local items: { Item } = {
 	{
 		id = "sea_cool_box",
 		name = "Cool box",
+		gives = "fridge", -- holding E gives something (Data/Items.Sources)
 		cat = "kitchen",
 		style = STYLE,
 		price = 45,
@@ -1735,6 +1737,7 @@ local items: { Item } = {
 	{
 		id = "sea_shell_bowl",
 		name = "Shell bowl",
+		gives = "shells", -- holding E gives something (Data/Items.Sources)
 		cat = "decor",
 		style = STYLE,
 		price = 20,

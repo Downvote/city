@@ -103,6 +103,7 @@ type Item = {
 	opening: { w: number, h: number, sill: number }?,
 	style: string?, -- the look it belongs to (Catalog.Styles)
 	build: (r: R) -> (),
+	gives: string?, -- holding E gives the player something (Data/Items.Sources)
 }
 
 local items: { Item } = {
@@ -110,6 +111,7 @@ local items: { Item } = {
 	{
 		id = "flower_stand",
 		name = "Flower stand",
+		gives = "bunches", -- holding E gives something (Data/Items.Sources)
 		cat = "decor",
 		style = "garden",
 		price = 110,

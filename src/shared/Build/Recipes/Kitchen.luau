@@ -127,6 +127,7 @@ type Item = {
 	surface: number?,
 	style: string?, -- the look it belongs to (Catalog.Styles)
 	build: (r: R) -> (),
+	gives: string?, -- holding E gives the player something (Data/Items.Sources)
 }
 
 local items: { Item } = {
@@ -243,6 +244,7 @@ local items: { Item } = {
 	{
 		id = "stove",
 		name = "Stove",
+		gives = "cook", -- holding E gives something (Data/Items.Sources)
 		cat = "kitchen",
 		style = "modern",
 		price = 260,
@@ -304,6 +306,7 @@ local items: { Item } = {
 	{
 		id = "fridge",
 		name = "Fridge",
+		gives = "fridge", -- holding E gives something (Data/Items.Sources)
 		cat = "kitchen",
 		style = "modern",
 		price = 320,
@@ -459,6 +462,7 @@ local items: { Item } = {
 	{
 		id = "pantry",
 		name = "Pantry",
+		gives = "pantry", -- holding E gives something (Data/Items.Sources)
 		cat = "kitchen",
 		style = "rustic",
 		price = 200,
@@ -547,6 +551,7 @@ local items: { Item } = {
 	{
 		id = "kettle",
 		name = "Kettle",
+		gives = "tea", -- holding E gives something (Data/Items.Sources)
 		cat = "kitchen",
 		style = "cozy",
 		price = 40,

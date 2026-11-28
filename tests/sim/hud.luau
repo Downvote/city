@@ -84,15 +84,19 @@ run("the round buttons under the clock: home, the city hall, the news, the store
 	-- it: "make vehicles")
 	-- (the light or dark switch went: the user, "The light/dark button at the top of the ui should be
 	-- changed to "Hide"")
-	check(table.concat(order, " ") == "Home CityPanel News Store Garage Hide", "six of them, Hide last")
+	check(
+		table.concat(order, " ") == "Home CityPanel News Store Garage Bag Hide",
+		"seven of them, the bag beside the garage and Hide last"
+	)
 	check(corner:FindFirstChild("Look", true) == nil, "no light or dark button")
+	-- (the bag beside the garage: "add an inventory system to the player")
 	check(corner:FindFirstChild("MapPanel", true) == nil, "no Map button")
 	check(corner:FindFirstChild("ShopPanel", true) == nil, "and no Shop button")
 	check(Hud.panel("MapPanel") == nil, "there is no map screen to open")
 	check(Hud.panel("ShopPanel") == nil, "and no shop screen")
-	-- the row is no wider than its five buttons need, and still hangs from the right edge
-	local need = 5 * 54 + 4 * 8
-	check(corner.Size.X.Offset >= need and corner.Size.X.Offset <= need + 16, "the row is as wide as five buttons")
+	-- the row is no wider than its six buttons need, and still hangs from the right edge
+	local need = 6 * 54 + 5 * 8
+	check(corner.Size.X.Offset >= need and corner.Size.X.Offset <= need + 16, "the row is as wide as six buttons")
 	check(corner.AnchorPoint.X == 1 and corner.Position.X.Scale == 1, "at the right edge")
 end)
 

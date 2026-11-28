@@ -157,6 +157,7 @@ type Item = {
 	tags: { string }?,
 	surface: number?,
 	build: (r: R) -> (),
+	gives: string?, -- holding E gives the player something (Data/Items.Sources)
 }
 
 local items: { Item } = {
@@ -634,6 +635,7 @@ local items: { Item } = {
 	{
 		id = "cold_frame",
 		name = "Cold frame",
+		gives = "veg", -- holding E gives something (Data/Items.Sources)
 		cat = "garden",
 		style = STYLE,
 		price = 70,
@@ -718,6 +720,7 @@ local items: { Item } = {
 	{
 		id = "greenhouse_mini",
 		name = "Little greenhouse",
+		gives = "fruit", -- holding E gives something (Data/Items.Sources)
 		cat = "garden",
 		style = STYLE,
 		price = 380,
@@ -895,6 +898,7 @@ local items: { Item } = {
 	{
 		id = "raised_bed_veg",
 		name = "Raised veg bed",
+		gives = "veg", -- holding E gives something (Data/Items.Sources)
 		cat = "garden",
 		style = STYLE,
 		price = 90,
@@ -1286,6 +1290,7 @@ local items: { Item } = {
 	{
 		id = "beehive",
 		name = "Beehive",
+		gives = "honey", -- holding E gives something (Data/Items.Sources)
 		cat = "garden",
 		style = STYLE,
 		price = 110,
@@ -1481,6 +1486,7 @@ local items: { Item } = {
 	{
 		id = "flower_barrow",
 		name = "Flower barrow",
+		gives = "bunches", -- holding E gives something (Data/Items.Sources)
 		cat = "garden",
 		style = STYLE,
 		price = 75,
@@ -1576,6 +1582,7 @@ local items: { Item } = {
 	{
 		id = "obelisk_sweetpea",
 		name = "Sweet pea obelisk",
+		gives = "flowers", -- holding E gives something (Data/Items.Sources)
 		cat = "garden",
 		style = STYLE,
 		price = 55,
@@ -2540,6 +2547,7 @@ local items: { Item } = {
 	{
 		id = "planter_wall_herbs",
 		name = "Herb wall planter",
+		gives = "herbs", -- holding E gives something (Data/Items.Sources)
 		cat = "walldecor",
 		style = STYLE,
 		price = 45,

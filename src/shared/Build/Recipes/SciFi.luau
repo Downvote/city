@@ -98,6 +98,7 @@ type Item = {
 	tags: { string }?,
 	surface: number?,
 	build: (r: R) -> (),
+	gives: string?, -- holding E gives the player something (Data/Items.Sources)
 }
 
 local items: { Item } = {
@@ -684,6 +685,7 @@ local items: { Item } = {
 	{
 		id = "scifi_food_maker",
 		name = "Food maker",
+		gives = "cook", -- holding E gives something (Data/Items.Sources)
 		cat = "kitchen",
 		style = "scifi",
 		price = 420,

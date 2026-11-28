@@ -85,6 +85,11 @@
 --                       wish:friend she'd like to meet Tobin, wish:cheer she's feeling down
 --   talk:again          the talk card after the day's chats are used up
 --   toasts              a few notices at the top, level with the clock
+--   talk:gift           the talk card's Gift answer: the gift picker over it (UI/GiftPicker)
+--   panel:Bag           the bag with a few things in it and a treasure waiting for room
+--                       (panel:Bag:empty: nothing in it)
+--   panel:Residents:gift  Mara's page with the gift picker up
+--   panel:Goals:titles  the Goals menu's Titles tab: three won, one worn, how it looks over a head
 --   earned              the main screen as a pay packet comes in, and the coins that rise over the
 --                       villagers who earned it, laid flat where three heads would be (the
 --                       BillboardGuis themselves can't be drawn here)
@@ -602,6 +607,18 @@ elseif scene:sub(1, 6) == "panel:" then
 		Sim.remoteEvent("State"):FireClient(Sim.player, t)
 		Sim.frames(2)
 	end
+	-- what is in the bag (Sim/Bag) for the Bag menu and the gift picker, and titles won (Sim/Titles)
+	local bagged = { tulip = 3, tea = 1, storybook = 2, apple = 4, musicbox = 1, seashell = 2, cookie = 5 }
+	if name == "Bag" then
+		patch({
+			bag = if state == "empty" then {} else bagged,
+			owed = if state == "empty" then {} else { snowglobe = 1 },
+		})
+	elseif name == "Residents" and state == "gift" then
+		patch({ bag = bagged })
+	elseif name == "Goals" and state == "titles" then
+		patch({ titles = { kind = true, neighbour = true, founder = true }, title = "kind" })
+	end
 	if state == "empty" and name == "News" then
 		patch({ log = {}, requests = {} })
 	elseif state == "busy" and name == "News" then
@@ -713,6 +730,14 @@ elseif scene:sub(1, 6) == "panel:" then
 				edit.Activated:Fire()
 			end
 		end
+	elseif state == "gift" then
+		-- Mara's Gift button: the picker over her page
+		local gift = Sim.gui:FindFirstChild("Gift", true)
+		if gift then
+			gift.Activated:Fire()
+		end
+	elseif state == "titles" then
+		Sim.press("Titles")
 	elseif state == "claimed" then
 		-- the first goal, claimed already
 		local row = Sim.gui:FindFirstChild("settlers", true)
@@ -851,7 +876,7 @@ elseif scene == "event" or scene:sub(1, 6) == "event:" then
 		end
 		Sim.frames(60) -- a second at the game's own pace, so the line being typed is all there
 	end
-elseif scene == "talk" or scene == "talk:again" or scene == "talk:craving" then
+elseif scene == "talk" or scene == "talk:again" or scene == "talk:craving" or scene == "talk:gift" then
 	-- the talk card (UI/TalkCard), in the words Sim/Talk gives the villagers: Mara is walked up
 	-- to and tells her wish; Ivy is asked for one more line once the day's chats are used up;
 	-- talk:craving, Mara craves something and an answer buys it for her
@@ -874,6 +899,15 @@ elseif scene == "talk" or scene == "talk:again" or scene == "talk:craving" then
 		note = Talk.note(town, vid, chat),
 	})
 	Sim.advance(4)
+	if scene == "talk:gift" then
+		-- the Gift answer: the picker over the card, Mara's bag full of things
+		Sim.remoteEvent("State"):FireClient(Sim.player, {
+			bag = { tulip = 3, tea = 1, storybook = 2, apple = 4, cookie = 5, seashell = 2 },
+		})
+		Sim.frames(2)
+		Sim.press("Gift")
+		Sim.advance(1)
+	end
 elseif scene == "wish" or scene:sub(1, 5) == "wish:" then
 	-- the popup a wish bubble opens (UI/WishPopup), for each kind of wish Mara can have
 	local page = scene:sub(6)

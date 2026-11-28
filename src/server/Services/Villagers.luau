@@ -58,6 +58,8 @@ local metEvent = Instance.new("BindableEvent")
 Villagers.Met = metEvent.Event -- (player, vidA, vidB) after a casual chat
 local createdEvent = Instance.new("BindableEvent")
 Villagers.Created = createdEvent.Event -- (player, vid)
+local talkedEvent = Instance.new("BindableEvent")
+Villagers.Talked = talkedEvent.Event -- (owner, vid) after the owner talked to one of their villagers (Services/Gifts)
 
 -- Lookups ----------------------------------------------------------------------------------------
 
@@ -2545,6 +2547,7 @@ function Villagers.talkedTo(who: Player, owner: Player, vid: string)
 	local said = talk(who, owner, vid)
 	if said and who == owner then
 		Remotes.event("Talk"):FireClient(owner, said)
+		talkedEvent:Fire(owner, vid)
 	end
 end
 
@@ -2698,11 +2701,16 @@ function Villagers.start()
 		if not profile then
 			return false, 0
 		end
-		local ok, coins = Life.claimGoal(profile, id)
+		local ok, coins, extras = Life.claimGoal(profile, id)
 		if ok then
 			Data.notify(player, Text.fill("Goal done. +{n} coins", { n = Text.commas(coins) }), "good")
+			-- what else it paid: a title, a free piece, a thing for the bag
+			for _, n in extras do
+				Data.notify(player, n, "good")
+			end
+			player:SetAttribute("Coins", profile.coins)
 		end
-		Data.push(player, "goals", "coins")
+		Data.push(player, "goals", "coins", "titles", "keepsakes", "bag", "owed")
 		return ok, coins
 	end
 	World.ClockChanged.Event:Connect(function(hour)

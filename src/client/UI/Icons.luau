@@ -1339,6 +1339,161 @@ D.dragonchili = food(C.red, {
 	{ "r", 58, 42, 28, 7, INK, r = 0.5, rot = -8, o = false },
 })
 
+-- the other things in the bag (Data/Items), roughly, the same way
+D.strawberry = food(C.red, {
+	{ "c", 12, 24, 76, 66 },
+	{ "r", 28, 12, 44, 18, nil, r = 0.5 },
+	{ "c", 30, 42, 10, 10, INK, o = false },
+	{ "c", 60, 48, 10, 10, INK, o = false },
+	{ "c", 42, 66, 10, 10, INK, o = false },
+})
+
+D.herbs = food(C.green, {
+	{ "c", 14, 12, 26, 44, nil, rot = -35 },
+	{ "c", 37, 6, 26, 46 },
+	{ "c", 60, 12, 26, 44, nil, rot = 35 },
+	{ "r", 40, 50, 20, 40, nil, r = 0.2 },
+	{ "r", 34, 69, 32, 8, INK, o = false },
+})
+
+D.cookie = food(C.wood, {
+	{ "c", 8, 12, 80, 80 },
+	{ "c", 68, 2, 32, 32, INK, o = false },
+	{ "c", 28, 36, 12, 12, INK, o = false },
+	{ "c", 52, 58, 12, 12, INK, o = false },
+})
+
+D.honey = food(C.gold, {
+	{ "r", 25, 10, 50, 17, nil, r = 0.25 },
+	{ "r", 17, 35, 66, 55, nil, r = 0.25 },
+	{ "r", 31, 51, 38, 23, INK, r = 0.15, o = false },
+})
+
+D.tea = food(C.wood, {
+	{ "r", 15, 35, 58, 20, nil, r = 0.1 },
+	{ "half", 15, 30, 58, 50 },
+	{ "ring", 64, 40, 22, 24, C.wood, 8 },
+	{ "r", 8, 83, 84, 10, nil, r = 0.5 },
+	{ "r", 15, 44, 58, 7, INK, o = false },
+})
+
+D.juice = food(C.orange, {
+	{ "t", 21, 27, 50, "down" },
+	{ "r", 21, 27, 50, 20 },
+	{ "r", 28, 45, 36, 45, nil, r = 0.1 },
+	{ "c", 60, 12, 28, 28 },
+	{ "r", 18, 45, 56, 7, INK, o = false },
+})
+
+D.storybook = food(C.blue, {
+	{ "r", 17, 10, 66, 80, nil, r = 0.1 },
+	{ "r", 31, 10, 7, 80, INK, o = false },
+	{ "c", 50, 38, 22, 22, INK, o = false },
+})
+
+D.poems = food(C.purple, {
+	{ "r", 10, 20, 38, 62, nil, r = 0.08 },
+	{ "r", 52, 20, 38, 62, nil, r = 0.08 },
+	{ "r", 18, 38, 22, 6, INK, o = false },
+	{ "r", 60, 38, 22, 6, INK, o = false },
+})
+
+D.tulip = food(C.pink, {
+	{ "half", 27, 10, 46, 50 },
+	{ "r", 27, 14, 46, 22 },
+	{ "r", 46, 55, 9, 38, nil, r = 0.5 },
+	{ "c", 52, 60, 26, 16, nil, rot = -40 },
+	{ "r", 47, 22, 6, 36, INK, o = false },
+})
+
+D.daisy = food(C.greyLight, {
+	{ "c", 10, 10, 80, 80 },
+	{ "c", 30, 30, 40, 40, INK, o = false },
+	{ "c", 37, 37, 26, 26, nil, o = false },
+})
+
+D.sunflower = food(C.yellow, {
+	{ "r", 14, 14, 72, 72, nil, r = 0.2, rot = 45 },
+	{ "c", 12, 12, 76, 76 },
+	{ "c", 27, 27, 46, 46, INK, o = false },
+	{ "c", 34, 34, 32, 32, nil, o = false },
+})
+
+D.bouquet = food(C.pink, {
+	{ "c", 12, 18, 30, 30 },
+	{ "c", 58, 18, 30, 30 },
+	{ "c", 34, 8, 32, 32 },
+	{ "t", 21, 46, 58, "down" },
+	{ "r", 30, 62, 40, 7, INK, o = false },
+})
+
+D.drawing = food(C.blue, {
+	{ "r", 10, 16, 80, 66, nil, r = 0.08 },
+	{ "t", 22, 50, 40, "up", INK, o = false },
+	{ "c", 62, 26, 16, 16, INK, o = false },
+})
+
+D.toyboat = food(C.wood, {
+	{ "t", 18, 10, 30, "right" },
+	{ "t", 55, 16, 26, "right" },
+	{ "r", 10, 58, 80, 26, nil, r = 0.25 },
+	{ "c", 43, 64, 14, 14, INK, o = false },
+})
+
+D.letter = food(C.woodLight, {
+	{ "r", 8, 21, 84, 60, nil, r = 0.08 },
+	{ "r", 14, 32, 40, 6, INK, rot = 35, o = false },
+	{ "r", 46, 32, 40, 6, INK, rot = -35, o = false },
+})
+
+D.seashell = food(C.orange, {
+	{ "half", 12, 4, 76, 76, nil, dir = "up" },
+	{ "t", 12, 42, 76, "down" },
+	{ "r", 46, 14, 7, 60, INK, o = false },
+})
+
+D.pebble = food(C.grey, {
+	{ "c", 8, 22, 84, 62 },
+	{ "r", 12, 48, 76, 7, INK, rot = -10, o = false },
+})
+
+D.acorn = food(C.wood, {
+	{ "half", 16, 14, 68, 46, nil, dir = "up" },
+	{ "r", 16, 36, 68, 12, nil, r = 0.4 },
+	{ "half", 24, 40, 52, 50 },
+	{ "r", 24, 54, 52, 10 },
+	{ "r", 16, 48, 68, 5, INK, o = false },
+})
+
+D.goldacorn = food(C.gold, {
+	{ "half", 10, 14, 68, 46, nil, dir = "up" },
+	{ "r", 10, 36, 68, 12, nil, r = 0.4 },
+	{ "half", 18, 40, 52, 50 },
+	{ "r", 18, 54, 52, 10 },
+	{ "r", 10, 48, 68, 5, INK, o = false },
+	{ "r", 74, 8, 14, 14, nil, r = 0.15, rot = 45 },
+})
+
+D.luckycoin = food(C.gold, {
+	{ "c", 8, 8, 84, 84 },
+	{ "c", 20, 20, 60, 60, INK, o = false },
+	{ "c", 26, 26, 48, 48, nil, o = false },
+	{ "c", 40, 40, 20, 20, INK, o = false },
+})
+
+D.musicbox = food(C.red, {
+	{ "r", 14, 12, 72, 22, nil, r = 0.1 },
+	{ "r", 12, 42, 76, 46, nil, r = 0.1 },
+	{ "c", 30, 62, 18, 18, INK, o = false },
+	{ "r", 44, 50, 7, 22, INK, o = false },
+})
+
+D.snowglobe = food(C.sky, {
+	{ "c", 16, 6, 68, 68 },
+	{ "r", 18, 79, 64, 15, nil, r = 0.2 },
+	{ "t", 30, 26, 40, "up", INK, o = false },
+})
+
 -- making them -------------------------------------------------------------------------------------
 --
 -- An icon is drawn in two passes so that no outline ever crosses another or runs over a fill:

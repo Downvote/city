@@ -212,6 +212,13 @@ function Data.clientState(player: Player): any
 		achieved = p.achieved, -- achievements claimed, and the group's gems ("group")
 		plotName = p.plotName, -- the plot's name, over the level bar (Sim/PlotName)
 		skills = p.skills, -- the player's own experience at each job (Sim/Skills: the City hall's Skills)
+		-- the bag (Sim/Bag): what is in it, what a goal still owes it, today's gathering; the titles won
+		-- and the one worn (Sim/Titles)
+		bag = p.bag,
+		owed = p.owed,
+		gather = p.gather,
+		titles = p.titles,
+		title = p.title or false,
 		unsaved = unsaved[player] == true,
 		plot = player:GetAttribute("Plot"),
 		plan = p.plan,
