@@ -558,7 +558,7 @@ local items: { Item } = {
 			local wall = 0.12
 			local lidCol = shade(r.c1, 0.88)
 			-- an open box: a plinth, four walls and a floor, with painted corner strips
-			r:bevel(-1.52, 0, -0.87, 1.52, 0.14, 0.87, 0.049, r.c2, "Wood", { wear = 1.06 })
+			r:block(-1.52, 0, -0.87, 1.52, 0.14, 0.87, r.c2, "Wood")
 			r:bevel(-1.5, 0.14, -0.85, 1.5, 0.3, 0.85, 0.056, r.c1, "Wood", { wear = 1.06 })
 			r:block(-1.5, 0.3, 0.85 - wall, 1.5, 1.5, 0.85, r.c1, "Wood")
 			r:block(-1.5, 0.3, -0.85, 1.5, 1.5, -0.85 + wall, r.c1, "Wood")

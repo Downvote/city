@@ -59,7 +59,9 @@ a bezel with a softened edge).
 - Specs: new `Textured` (no visible SmoothPlastic or Plastic in any piece, or in walls, fences, floors and roofs in
   every style, outside the exceptions: hidden, marks, under `Tuning.Unstick.Tiny`; no flat finish on offer; an old
   save's flat paint drawn textured; a shape drawn with no material is textured). `Travel` finds the slide's chute by
-  its metal.
+  its metal. `Zfight`'s KNOWN lists `models:houseRow` and `models:camp`: a Data/CityModels slab still in flat
+  SmoothPlastic beside a stamp drawn with no material, which is plaster now; they come off once the town's own
+  texturing gives the two one finish.
 
 ## CLAUDE.md
 

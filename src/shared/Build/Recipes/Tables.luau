@@ -251,7 +251,7 @@ local items: { Item } = {
 		tags = { "table" },
 		build = function(r: R)
 			top(r, 1.8, 1.8, 2.24, 2.4, r.c1, "Wood")
-			r:bevel(-0.72, 1.7, -0.72, 0.72, 2.18, 0.72, 0.08, shade(r.c1, 0.93), "Wood", { wear = 1.06 })
+			r:block(-0.72, 1.7, -0.72, 0.72, 2.18, 0.72, shade(r.c1, 0.93), "Wood")
 			drawer(r, -0.62, 1.76, 0.62, 2.12, 0.72, r.c2)
 			for _, sx in { -1, 1 } do
 				for _, sz in { -1, 1 } do

@@ -14,7 +14,13 @@
 local Z = Harness.loadFile("tools/preview/zfight_lib.luau")()
 local Recipe = require("ReplicatedStorage.Shared.Build.Recipe")
 
-local KNOWN = {}
+local KNOWN = {
+	-- a slab of the town's still in flat SmoothPlastic (Data/CityModels' house rows) beside a stamp
+	-- drawn with no material, which the drawing kit now makes plaster: the town's own texturing
+	-- gives the two one finish, and then these come off
+	"models:houseRow",
+	"models:camp",
+}
 
 local RED, BLUE, GREEN = Color3.fromRGB(200, 80, 80), Color3.fromRGB(80, 80, 200), Color3.fromRGB(80, 200, 80)
 

@@ -577,7 +577,7 @@ local items: { any } = {
 			-- Two low stone steps up to a porch or a door (its back, -z, against the floor it
 			-- leads to), with a cheek block either side. c1 the treads, c2 the cheeks.
 			r:bevel(-2.2, 0, -1.2, 2.2, F, 0, 0.08, r.c1, "Concrete", { wear = 0.94 })
-			r:bevel(-2.2, 0, 0, 2.2, F / 2, 1.2, 0.07, r.c1, "Concrete", { wear = 0.94 })
+			r:block(-2.2, 0, 0, 2.2, F / 2, 1.2, r.c1, "Concrete")
 			for _, sx in { -1, 1 } do
 				local x1, x2 = math.min(sx * 2.2, sx * 3), math.max(sx * 2.2, sx * 3)
 				r:block(x1, 0, -1.2, x2, 0.86, 1.2, r.c2, "Cobblestone")

@@ -605,7 +605,7 @@ local items: { Item } = {
 					shade(f.col, 0.85),
 					"Marble"
 				)
-				r:ball(f.x - 0.12, f.y + 0.03, f.z + 0.06, 0.05, C.Black, "Rock")
+				r:ball(f.x - 0.12, f.y + 0.03, f.z + 0.06, 0.05, C.Black, "Marble")
 			end
 			for _, b in { { -1.0, 3.2 }, { -0.95, 3.6 }, { -1.05, 3.95 } } do
 				r:ball(b[1], b[2], -0.25, 0.1, C.White, "Glass")
