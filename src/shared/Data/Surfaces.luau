@@ -132,15 +132,69 @@ function Surfaces.dressOne(p: Prim, default: string?): Prim
 	return p
 end
 
--- Gives every plain shape in the list a texture (in place). Returns the list. A colour that is
--- wall sized anywhere in the list is render everywhere in it, so two shapes in one paint that
--- touch never differ in material.
+-- Round things ---------------------------------------------------------------------------------------
+-- The user: "You are allowed to use spheres, curves or circles where necessary". What people make
+-- round is drawn truly round (Geometry's `smooth`): a wheel, a post, a pipe, a pot, a bowl, a lamp's
+-- globe, a bin. What grows keeps the low poly kit's facets: leaves, trunks and logs, rocks, soil.
+Surfaces.Grown = {
+	Grass = true,
+	LeafyGrass = true,
+	Wood = true,
+	Rock = true,
+	Ground = true,
+	Sand = true,
+	Mud = true,
+}
+
+local function near(a: number, b: number): boolean
+	return math.abs(a - b) < 1e-3
+end
+
+-- (and a ball of stone is a boulder)
+Surfaces.Boulders = { Slate = true, Granite = true, Basalt = true, Pebble = true, Cobblestone = true }
+
+-- Whether a shape is a made round thing that should be drawn truly round.
+function Surfaces.rounds(p: Prim): boolean
+	local m = base(p.mat)
+	if p.name == "Leaf" or Surfaces.Grown[m] or (p.shape == "Ball" and Surfaces.Boulders[m]) then
+		return false
+	end
+	local s = p.size
+	if p.shape == "Cylinder" then
+		return near(s.Y, s.Z)
+	elseif p.shape == "Ball" then
+		return near(s.X, s.Y) and near(s.Y, s.Z)
+	end
+	return false
+end
+
+-- Marks the made round things in a list (and in its pieces) to be drawn truly round.
+function Surfaces.round(prims: { Prim }): { Prim }
+	for _, p in prims do
+		if p.shape == "Piece" then
+			if p.name ~= "Leaf" then
+				for _, q in p.parts or {} do
+					if not q.smooth and Surfaces.rounds(q) then
+						q.smooth = true
+					end
+				end
+			end
+		elseif not p.smooth and Surfaces.rounds(p) then
+			p.smooth = true
+		end
+	end
+	return prims
+end
+
+-- Gives every plain shape in the list a texture (in place), and draws its made round things
+-- truly round. Returns the list. A colour that is wall sized anywhere in the list is render
+-- everywhere in it, so two shapes in one paint that touch never differ in material.
 function Surfaces.dress(prims: { Prim }, default: string?): { Prim }
 	if default then
 		for _, p in prims do
 			Surfaces.dressOne(p, default)
 		end
-		return prims
+		return Surfaces.round(prims)
 	end
 	local big: { [string]: boolean } = {}
 	for _, p in prims do
@@ -158,7 +212,7 @@ function Surfaces.dress(prims: { Prim }, default: string?): { Prim }
 			Surfaces.dressOne(p)
 		end
 	end
-	return prims
+	return Surfaces.round(prims)
 end
 
 -- The shapes in a list that are still flat plastic where they show (the Textures spec wants none

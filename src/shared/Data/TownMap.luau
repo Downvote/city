@@ -111,6 +111,9 @@ local function palm(
 		end
 	end
 	local fronds = if far then 5 else 7
+	-- (a palm in town has its fronds in one piece named Leaf, so they are one part and sway in
+	-- the wind together; the islets' far palms keep theirs loose, each palm being different)
+	local q = if far then r else Recipe.new(LEAF, LEAF)
 	for f = 0, fronds - 1 do
 		local a = math.rad(yaw + f * 360 / fronds + (f % 2) * 12)
 		local out = Vector3.new(math.cos(a), 0, math.sin(a))
@@ -120,9 +123,14 @@ local function palm(
 		-- two pieces a frond: up and out, then drooping
 		for _, k in { 1.4, 3 } do
 			local p1 = top + out * (k * reach * 1.3) + Vector3.new(0, 1.1 * k - 0.62 * k * k + 0.4, 0)
-			r:beam(p0, p1, 2.6 - k * 0.55, 0.26, color, "SmoothPlastic")
+			q:beam(p0, p1, 2.6 - k * 0.55, 0.26, color, "LeafyGrass")
 			p0 = p1
 		end
+	end
+	if not far then
+		-- (the box a piece hangs its shapes on, inside the crown's ball)
+		q:box(top.X, top.Y + 0.3, top.Z, 0.6, 0.6, 0.6, LEAF, "LeafyGrass")
+		r:add(Geometry.piece(q.prims)).name = "Leaf"
 	end
 end
 
@@ -346,7 +354,7 @@ TownMap.Models.flowerBed = function(r: R)
 		for z = -1, 1, 1 do
 			i += 1
 			r:cyl(x, 0.95, z, 0.5, 0.12, "y", C.DarkLeaf, "Grass")
-			r:ball(x, 1.35, z, 0.75, colours[i % #colours + 1], "SmoothPlastic")
+			r:ball(x, 1.35, z, 0.75, colours[i % #colours + 1], "Fabric")
 		end
 	end
 end

@@ -191,11 +191,57 @@ end
 local kit: { [string]: Prim } = {}
 local owned: { [string]: boolean } = {}
 
+-- What each piece is made of where its drawing doesn't say (a piece is one material): timber
+-- furniture, cloth for what is soft, glass jars, card parcels, a slate blackboard. Plants indoors
+-- are cloth, never grass (the seasons would frost them).
+local MADE_OF: { [string]: string } = {
+	case = "Wood",
+	booksA = "Fabric",
+	booksB = "Fabric",
+	loaves = "Fabric",
+	jars = "Glass",
+	folds = "Fabric",
+	toys = "Wood",
+	pots = "Concrete",
+	parcels = "Cardboard",
+	counter = "Wood",
+	till = "Metal",
+	plant = "Fabric",
+	pendant = "Metal",
+	landscape = "Wood",
+	stillLife = "Wood",
+	rug = "Carpet",
+	cafe = "Metal",
+	sofa = "Fabric",
+	lowtable = "Wood",
+	seats = "Fabric",
+	bed = "Fabric",
+	dresser = "Wood",
+	clock = "Wood",
+	notices = "Cardboard",
+	lift = "Metal",
+	mannequin = "Plaster",
+	rack = "Metal",
+	cakes = "Plaster",
+	buckets = "Metal",
+	produce = "Wood",
+	fruit = "Wood",
+	coffee = "Metal",
+}
+
 local function stamp(r: R, f: CFrame, id: string, draw: (R) -> ()): Prim
 	local proto = kit[id]
 	if not proto then
 		local q = Recipe.new(WHITE, WHITE)
 		draw(q)
+		local mat = MADE_OF[id]
+		if mat then
+			for _, p in q.prims do
+				if p.mat == "SmoothPlastic" then
+					p.mat = mat
+				end
+			end
+		end
 		local made = Geometry.piece(q.prims, false)
 		kit[id] = made
 		owned[made.key or ""] = true
@@ -1363,18 +1409,18 @@ function Interiors.shell(r: R, s: Shell): Box
 				local pane = slab(r, f, a + 0.3, 0.3 + sill, zf + 0.3, b - 0.3, dh + 0.3, zf + 0.5, GLASS, "Glass")
 				pane.transp = 0.55
 				-- the window's frame: a sill, and a post at each end
-				slab(r, f, a, 0.3 + sill, zf - 0.2, b, 0.6 + sill, zf + T, trim, "SmoothPlastic")
-				slab(r, f, a, 0.6 + sill, zf, a + 0.3, dh + 0.3, zf + T, trim, "SmoothPlastic")
-				slab(r, f, b - 0.3, 0.6 + sill, zf, b, dh + 0.3, zf + T, trim, "SmoothPlastic")
+				slab(r, f, a, 0.3 + sill, zf - 0.2, b, 0.6 + sill, zf + T, trim, "Wood")
+				slab(r, f, a, 0.6 + sill, zf, a + 0.3, dh + 0.3, zf + T, trim, "Wood")
+				slab(r, f, b - 0.3, 0.6 + sill, zf, b, dh + 0.3, zf + T, trim, "Wood")
 			end
 		end
 	end
 	-- the door: its frame, standing proud of the wall inside and out (its head a touch lower than
 	-- the lintel's underside), a step, and a leaf that swings in (the World service opens it for a
 	-- player's prompt and for any villager who walks up)
-	slab(r, f, x1 - 0.3, 0.3, zf - 0.1, x1, dh + 0.3, zf + T + 0.04, trim, "SmoothPlastic")
-	slab(r, f, x2, 0.3, zf - 0.1, x2 + 0.3, dh + 0.3, zf + T + 0.04, trim, "SmoothPlastic")
-	slab(r, f, x1 - 0.3, dh + 0.25, zf - 0.1, x2 + 0.3, dh + 0.6, zf + T + 0.04, trim, "SmoothPlastic")
+	slab(r, f, x1 - 0.3, 0.3, zf - 0.1, x1, dh + 0.3, zf + T + 0.04, trim, "Wood")
+	slab(r, f, x2, 0.3, zf - 0.1, x2 + 0.3, dh + 0.3, zf + T + 0.04, trim, "Wood")
+	slab(r, f, x1 - 0.3, dh + 0.25, zf - 0.1, x2 + 0.3, dh + 0.6, zf + T + 0.04, trim, "Wood")
 	slab(r, f, x1 - 0.6, 0, zf - 1.4, x2 + 0.6, 0.3, zf, rgb(214, 214, 220), "Concrete")
 	-- the doorway's own frame: X along the wall, Z into the room, so the leaf opens inward
 	local doorway = CFrame.new(doorX, 0.3, zf + T / 2)
@@ -1423,7 +1469,7 @@ end
 -- A door to the back room in the back wall at x: a frame, the door, a knob and a plate on it.
 local function staffDoor(r: R, b: Box, x: number)
 	local f = CFrame.new(x, b.y, b.z2)
-	slab(r, f, -2.1, 0, -0.12, 2.1, 7.0, 0, WHITE, "SmoothPlastic")
+	slab(r, f, -2.1, 0, -0.12, 2.1, 7.0, 0, WHITE, "Wood")
 	slab(r, f, -1.8, 0, -0.2, 1.8, 6.7, -0.12, WALNUT, "Wood")
 	r:lump(f * CFrame.new(1.3, 3.2, -0.26), 0.24, 0.24, 0.16, BRASS, "Metal")
 	slab(r, f, -0.5, 5.0, -0.23, 0.5, 5.35, -0.2, PAPER, "SmoothPlastic")

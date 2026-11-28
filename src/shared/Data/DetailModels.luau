@@ -152,13 +152,13 @@ local function plantsInTrough(q: R)
 	end)
 	q:piece(function(p: R)
 		for i, s in TALL do
-			p:ball(s[1], s[3], s[2], 0.6, bloom(i), "SmoothPlastic")
+			p:ball(s[1], s[3], s[2], 0.6, bloom(i), "Fabric")
 		end
 		for i, s in LOW do
-			p:ball(s[1], s[3], s[2], 0.42, bloom(i + 3), "SmoothPlastic")
+			p:ball(s[1], s[3], s[2], 0.42, bloom(i + 3), "Fabric")
 		end
 		-- the yellow eye of the tallest
-		p:box(TALL[2][1], TALL[2][3] + 0.24, TALL[2][2], 0.18, 0.18, 0.18, YELLOW, "SmoothPlastic")
+		p:box(TALL[2][1], TALL[2][3] + 0.24, TALL[2][2], 0.18, 0.18, 0.18, YELLOW, "Fabric")
 	end)
 end
 
@@ -247,9 +247,9 @@ local function wildflowers(r: R, cf: CFrame)
 		end)
 		q:piece(function(p: R)
 			for k, s in ipairs(WILD) do
-				p:ball(s[1], s[3], s[2], 0.6, bloom(k), "SmoothPlastic")
+				p:ball(s[1], s[3], s[2], 0.6, bloom(k), "Fabric")
 			end
-			p:box(WILD[1][1], WILD[1][3] + 0.2, WILD[1][2], 0.14, 0.14, 0.14, YELLOW, "SmoothPlastic")
+			p:box(WILD[1][1], WILD[1][3] + 0.2, WILD[1][2], 0.14, 0.14, 0.14, YELLOW, "Fabric")
 		end)
 	end)
 end
@@ -739,12 +739,12 @@ M.flowerStrip = function(r: R)
 	end)
 	r:piece(function(p: R)
 		for i, s in tall do
-			p:ball(s[1], s[3], s[2], 0.52, bloom(i), "SmoothPlastic")
+			p:ball(s[1], s[3], s[2], 0.52, bloom(i), "Fabric")
 		end
 		for k = 0, 5 do
-			p:ball(-4.2 + k * 1.66, 1.12, (k % 2 - 0.5) * -0.55, 0.42, bloom(k + 3), "SmoothPlastic")
+			p:ball(-4.2 + k * 1.66, 1.12, (k % 2 - 0.5) * -0.55, 0.42, bloom(k + 3), "Fabric")
 		end
-		p:box(-2.2, 1.77, -0.35, 0.16, 0.16, 0.16, YELLOW, "SmoothPlastic")
+		p:box(-2.2, 1.77, -0.35, 0.16, 0.16, 0.16, YELLOW, "Fabric")
 	end)
 end
 

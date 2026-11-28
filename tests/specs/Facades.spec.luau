@@ -234,8 +234,9 @@ describe("Facades", function()
 			local spec = Facades.spec(name)
 			parts += #prims
 			if not spec.inside then
-				-- a solid building is cheap: mostly pieces
-				if #prims > 80 then
+				-- a solid building is cheap: mostly pieces (90 since the quoins up its corners and
+				-- the cove under its cornice: "could you detail everything ... even more?")
+				if #prims > 90 then
 					error(name .. " is " .. #prims .. " parts")
 				end
 			end
@@ -275,9 +276,10 @@ describe("Facades", function()
 				end
 			end
 		end
-		-- the kit as a whole is under a hundred different pieces, used again and again
-		expect(distinct >= 40 and distinct <= 100).toBeTruthy()
-		expect(Facades.pieces() <= 100).toBeTruthy()
+		-- the kit as a whole is about a hundred different pieces, used again and again (110 since
+		-- the quoins, one for each height of wall)
+		expect(distinct >= 40 and distinct <= 110).toBeTruthy()
+		expect(Facades.pieces() <= 110).toBeTruthy()
 		expect(uses > 20 * distinct).toBeTruthy()
 		expect(uses / parts > 0.5).toBeTruthy()
 	end)

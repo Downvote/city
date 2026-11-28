@@ -61,11 +61,51 @@ local LEAVES = { rgb(96, 150, 92), rgb(120, 170, 104), rgb(78, 128, 84) }
 -- server merges each only once. (Drawing it where it stands gives keys that differ in their last
 -- decimal.) `id` names everything that changes its shapes or its colours.
 local protos: { [string]: Prim } = {}
+
+-- What a piece is made of where its drawing doesn't say (a piece is one material), by the first
+-- word of its name: windows and trims in painted timber, a balcony, a car or a lamp in painted
+-- metal, beds of flowers in worn stone round their soil, leaves in grass.
+local MADE_OF: { [string]: string } = {
+	flowerBed = "Concrete",
+	tubPlants = "Grass",
+	balcony = "Metal",
+	shopWindow = "Wood",
+	sideWindow = "Wood",
+	tallWindow = "Wood",
+	houseTrim = "Wood",
+	doorHood = "Wood",
+	carKit = "Metal",
+	carriage = "Metal",
+	bayDoor = "Metal",
+	reeds = "Grass",
+	crop = "LeafyGrass",
+	acUnit = "Metal",
+	tentKit = "Fabric",
+	stallFrame = "Wood",
+	stallAwning = "Fabric:Canvas",
+	sleepers = "Wood",
+	platformCanopy = "Metal",
+	pierRail = "Wood",
+	bridgeRail = "Wood",
+	mastSection = "Metal",
+	museumColumn = "Marble",
+	fenceRun = "Wood",
+	cow = "Leather",
+}
+
 local function stamp(r: R, id: string, at: CFrame, draw: (R) -> (), collide: boolean?): Prim
 	local proto = protos[id]
 	if not proto then
 		local q = Recipe.new(WHITE, WHITE)
 		draw(q)
+		local mat = MADE_OF[id] or MADE_OF[string.match(id, "^[^:]+") or ""]
+		if mat then
+			for _, p in q.prims do
+				if p.mat == "SmoothPlastic" then
+					p.mat = mat
+				end
+			end
+		end
 		proto = Geometry.piece(q.prims, collide)
 		protos[id] = proto
 	end
@@ -857,7 +897,7 @@ local function house(
 		return ridge - rh * math.abs(zz) / run
 	end
 	placed(r, f, function()
-		r:box(0, h + 0.15, 0, w + 0.4, 0.3, d + 0.4, WHITE, "SmoothPlastic")
+		r:box(0, h + 0.15, 0, w + 0.4, 0.3, d + 0.4, WHITE, "Wood")
 		r:wedge(CFrame.new(0, eave + rh / 2, -run / 2), w, rh, run, wall, "Plaster")
 		r:wedge(CFrame.new(0, eave + rh / 2, run / 2) * yaw(180), w, rh, run, wall, "Plaster")
 		local hx = w / 2 + 0.5
@@ -907,6 +947,13 @@ local function house(
 			end
 			q:box(0, ridge + t * math.sqrt(1 - sin * sin), 0, w + 1, 0.26, 2 * t * sin + 0.36, WHITE)
 			q:box(w / 4, h + rh * 0.9 + 1.8, d / 5, 1.7, 0.2, 1.7, WHITE)
+			-- corner boards up the four corners of the walls, so the boards end on a trim and
+			-- not on a bare edge
+			for _, cx in { -1, 1 } do
+				for _, cz in { -1, 1 } do
+					q:box(cx * w / 2, h / 2 + 0.15, cz * d / 2, 0.5, h - 0.3, 0.5, WHITE)
+				end
+			end
 		end)
 		-- a hood over the door on two brackets
 		stamp(r, "doorHood", CFrame.new(0, 0, -d / 2), function(q)
@@ -1099,10 +1146,6 @@ end
 local GLASS_CAR = rgb(120, 156, 184)
 local function carKit(q: R)
 	for _, sx in { -1, 1 } do
-		for _, wz in { -2.85, 2.85 } do
-			q:cyl(sx * 1.85, 0.75, wz, 0.6, 1.5, "x", TYRE)
-			q:cyl(sx * 2.2, 0.75, wz, 0.1, 0.72, "x", rgb(200, 204, 212))
-		end
 		-- side windows, the pillar between them, and a mirror
 		q:box(sx * 1.88, 2.66, -0.35, 0.06, 0.9, 1.5, GLASS_CAR)
 		q:box(sx * 1.88, 2.66, 1.35, 0.06, 0.9, 1.5, GLASS_CAR)
@@ -1125,9 +1168,21 @@ local function carKit(q: R)
 end
 local function car(r: R, x: number, y: number, z: number, yawDeg: number, col: Color3)
 	local f = CFrame.new(x, y, z) * yaw(yawDeg)
-	r:boxAt(f * CFrame.new(0, 1.3, 0), 4.2, 1.5, 8.6, col, "SmoothPlastic")
-	r:boxAt(f * CFrame.new(0, 2.7, 0.5), 3.7, 1.3, 3.4, shade(col, 0.96), "SmoothPlastic")
+	r:boxAt(f * CFrame.new(0, 1.3, 0), 4.2, 1.5, 8.6, col, "Metal")
+	r:boxAt(f * CFrame.new(0, 2.7, 0.5), 3.7, 1.3, 3.4, shade(col, 0.96), "Metal")
 	stamp(r, "carKit", f, carKit)
+	-- the wheels, truly round: a rubber tyre and a hub cap on each (round shapes are parts of
+	-- their own in any case, so they cost nothing more outside the piece)
+	for _, sx in { -1, 1 } do
+		for _, wz in { -2.85, 2.85 } do
+			local tyre = r:cyl(0, 0, 0, 0.6, 1.5, "x", TYRE, "Rubber")
+			tyre.cf = f * CFrame.new(sx * 1.85, 0.75, wz) * tyre.cf
+			tyre.smooth = true
+			local hub = r:cyl(0, 0, 0, 0.1, 0.72, "x", rgb(200, 204, 212), "Metal")
+			hub.cf = f * CFrame.new(sx * 2.2, 0.75, wz) * hub.cf
+			hub.smooth = true
+		end
+	end
 end
 CityModels.car = car
 
