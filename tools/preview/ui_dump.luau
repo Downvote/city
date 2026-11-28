@@ -1926,38 +1926,97 @@ for _, g in Sim.gui.Parent:GetChildren() do
 		end
 	end
 end
--- A cutscene's set can't be drawn from the GUI tree: it is drawn here by tools/preview/stage.py
--- from where the cutscene's camera is, with the stand-ins standing on it and the set's own light,
--- see-through where the painted sky shows, and laid into the viewport as a picture.
+-- A cutscene's set stands in the world, not in the GUI tree: it is drawn here by
+-- tools/preview/stage.py from where the cutscene's camera is, in the game's light at the set's
+-- hour, with its props where they are now and the stand-ins in the poses the cutscene has them
+-- in (Data/Moves), see-through where the sky shows, and laid under the screen as a picture.
 local function stagePicture(root, path, list)
-	local view = Sim.gui:FindFirstChild("StageView", true)
-	local cam = view and view.CurrentCamera
-	if not view or not cam then
+	local CutsceneUI = Harness.require(Sim.CLIENT .. "UI.Cutscene")
+	local CFrame, Color3 = roblox.CFrame, roblox.Color3
+	local cut = CutsceneUI.current
+	if not cut then
 		return
 	end
 	local Stages = Harness.require("ReplicatedStorage.Shared.Data.Stages")
+	local Moves = Harness.require("ReplicatedStorage.Shared.Data.Moves")
 	local Geometry = Harness.require("ReplicatedStorage.Shared.Build.Geometry")
+	local Lib = require("./stage_lib")
+	local frame, id, hour = cut.where()
+	local s = Stages.get(id)
 	local prims = {}
-	local function add(shape, cf, size, color, transp, mat)
+	local function add(p, cf)
 		table.insert(prims, {
-			shape = shape,
-			cf = { cf:GetComponents() },
-			size = { size.X, size.Y, size.Z },
-			color = { color.R, color.G, color.B },
-			transp = transp or 0,
-			mat = mat or "SmoothPlastic",
+			shape = p.shape,
+			cf = { ((cf or CFrame.identity) * p.cf):GetComponents() },
+			size = { p.size.X, p.size.Y, p.size.Z },
+			color = { p.color.R, p.color.G, p.color.B },
+			transp = p.transp or 0,
+			mat = if p.role == "glow"
+					and Stages.lampsOn(s, hour)
+					and (cut.lampsLit() or (p.attrs and p.attrs.Stays))
+				then "Neon"
+				else p.mat,
 		})
 	end
-	for _, p in Geometry.flatten(Stages.prims(view:GetAttribute("Stage"))) do
-		add(p.shape, p.cf, p.size, p.color, p.transp, p.mat)
+	for _, p in Geometry.flatten(Stages.prims(id)) do
+		add(p)
 	end
-	local world = view:FindFirstChild("World")
-	for _, m in world and world:GetChildren() or {} do
-		if m.Name:sub(1, 6) == "Actor_" and m.Parent then
-			for _, d in m:GetDescendants() do
-				if d:IsA("BasePart") and d.Transparency < 0.99 then
-					add("Block", d.CFrame, d.Size, d.Color, d.Transparency)
+	local lit = Stages.lampsOn(s, hour)
+	local lamps = if lit then Lib.lamps(Stages.prims(id), nil, not cut.lampsLit()) else {}
+	for name, spot in cut.propsNow() do
+		local made = Stages.propPrims(id, name)
+		for _, p in Geometry.flatten(made.still) do
+			add(p, s.props[name].spots[spot])
+		end
+		for part, plist in made.parts do
+			local at = Stages.partAt(s, name, part, spot, 0.3)
+			for _, p in Geometry.flatten(plist) do
+				add(p, at)
+			end
+		end
+	end
+	local HAIR = Color3.fromRGB(96, 70, 60)
+	for _, f in cut.figures() do
+		local colors = {}
+		for _, d in f.model:GetDescendants() do
+			if d:IsA("BasePart") then
+				if d.Name == "Torso" then
+					colors.shirt = d.Color
+				elseif d.Name == "Leg" then
+					colors.legs = d.Color
+				elseif d.Name == "Head" then
+					colors.skin = d.Color
+				elseif d.Name == "Hair" then
+					colors.hair = d.Color
 				end
+			end
+		end
+		colors.hair = colors.hair or HAIR
+		for _, p in Lib.figure(Moves, f.root, f.joints, colors, if f.glow then Color3.fromRGB(150, 220, 255) else nil) do
+			table.insert(prims, p)
+		end
+	end
+	-- a cloud in somebody's shape: a big white body floating at the set's cloud spot
+	local folder = Sim.ws:FindFirstChild("CutsceneSet")
+	for _, m in folder and folder:GetChildren() or {} do
+		if m.Name:sub(1, 6) == "Cloud_" and s.spots and s.spots.cloud then
+			local j, r = Moves.sample("float", 0.8)
+			local stand = s.spots.cloud
+			for _, p in
+				Lib.figure(Moves, Moves.place(stand, r), j, {
+					shirt = Color3.fromRGB(246, 248, 252),
+					legs = Color3.fromRGB(240, 242, 248),
+					skin = Color3.fromRGB(250, 250, 252),
+					hair = Color3.fromRGB(236, 238, 244),
+				})
+			do
+				-- (the body's parts, sixteen times as big round its middle)
+				local cf = CFrame.new(table.unpack(p.cf))
+				local rel = stand:ToObjectSpace(cf)
+				local big = stand * CFrame.new(rel.Position * 16) * rel.Rotation
+				p.cf = { big:GetComponents() }
+				p.size = { p.size[1] * 16, p.size[2] * 16, p.size[3] * 16 }
+				table.insert(prims, p)
 			end
 		end
 	end
@@ -1965,20 +2024,20 @@ local function stagePicture(root, path, list)
 	local function v(x)
 		return { x.X, x.Y, x.Z }
 	end
-	local function c(x)
-		return { x.R, x.G, x.B }
-	end
 	fs.writeFile(base .. ".set.json", serde.encode("json", prims))
 	fs.writeFile(
 		base .. ".set.json.stage.json",
 		serde.encode("json", {
-			light = { ambient = c(view.Ambient), color = c(view.LightColor), dir = v(view.LightDirection) },
-			sky = {},
+			id = id,
+			light = Lib.light(s, hour),
+			sky_dir = v(Stages.skyDir(s, hour)),
+			lamps = lamps,
 			shots = {},
 		})
 	)
-	local eye = cam.CFrame.Position
-	local look = eye + cam.CFrame.LookVector * 10
+	local cam = Sim.cam
+	local eye = frame:PointToObjectSpace(cam.CFrame.Position)
+	local look = frame:PointToObjectSpace(cam.CFrame.Position + cam.CFrame.LookVector * 10)
 	local function csv(x)
 		return string.format("%.4f,%.4f,%.4f", x.X, x.Y, x.Z)
 	end
@@ -1991,7 +2050,6 @@ local function stagePicture(root, path, list)
 		"--fov=" .. tostring(cam.FieldOfView),
 		"--size",
 		"1280x720",
-		"--clear",
 	})
 	if not made.ok then
 		print("stage picture: " .. made.stderr)
@@ -2005,7 +2063,7 @@ local function stagePicture(root, path, list)
 	})
 	table.insert(list, { id = 990001, w = 1280, h = 720, file = base .. ".picture990001.rgba" })
 	local function find(node)
-		if node.name == "StageView" then
+		if node.name == "Cutscene" then
 			return node
 		end
 		for _, ch in node.children do
@@ -2018,7 +2076,7 @@ local function stagePicture(root, path, list)
 	end
 	local node = find(root)
 	if node then
-		table.insert(node.children, {
+		table.insert(node.children, 1, {
 			class = "ImageLabel",
 			name = "StageShot",
 			props = {
@@ -2026,8 +2084,8 @@ local function stagePicture(root, path, list)
 				Position = { 0, 0, 0, 0 },
 				BackgroundTransparency = 1,
 				Picture = 990001,
-				ImageColor3 = node.props.ImageColor3 or { 1, 1, 1 },
-				ZIndex = 2,
+				ImageColor3 = { 1, 1, 1 },
+				ZIndex = 0,
 				Visible = true,
 			},
 			children = {},

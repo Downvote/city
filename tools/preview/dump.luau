@@ -376,92 +376,50 @@ elseif scene == "town" then
 	local TownModels = R(Shared .. "Data.TownModels")
 	addPrims(TownModels.preview())
 elseif scene:sub(1, 6) == "stage:" then
-	-- stage:<id> a cutscene's set (Data/Stages). Its light, sky, shots and a stand-in figure on
-	-- each mark go beside the JSON (<out>.stage.json) for tools/preview/stage.py, which draws the
-	-- set from its shots as the game's viewport lights it (tools/preview/stage.sh does both)
+	-- stage:<id> a cutscene's set (Data/Stages), with its props where they start. Its light, its
+	-- shots, its lamps and a stand-in on each mark go beside the JSON (<out>.stage.json) for
+	-- tools/preview/stage.py, which draws the set from its shots in the game's light at the set's
+	-- hour (tools/preview/stage.sh does both)
 	local Stages = R(Shared .. "Data.Stages")
+	local Moves = R(Shared .. "Data.Moves")
+	local Lib = require("./stage_lib")
 	local s = assert(Stages.get(scene:sub(7)), "no stage " .. scene:sub(7))
 	addPrims(Stages.prims(s.id))
+	local lamps = if Stages.lampsOn(s) then Lib.lamps(Stages.prims(s.id)) else {}
+	for name, prop in s.props or {} do
+		if prop.start then
+			local made = Stages.propPrims(s.id, name)
+			addPrims(made.still, prop.spots[prop.start])
+			for part, list in made.parts do
+				addPrims(list, Stages.partAt(s, name, part, prop.start, 0.3))
+			end
+			if Stages.lampsOn(s) then
+				for _, l in Lib.lamps(made.still, prop.spots[prop.start]) do
+					table.insert(lamps, l)
+				end
+			end
+		end
+	end
 	local function v(x)
 		return { x.X, x.Y, x.Z }
 	end
-	local function c(x)
-		return { x.R, x.G, x.B }
-	end
-	local function shot(sh)
-		return { eye = v(sh.eye), look = v(sh.look), fov = sh.fov, sky = sh.sky }
-	end
 	local shots = {}
 	for _, e in Stages.allShots(s) do
-		shots[e.name] = shot(e.shot)
+		shots[e.name] = { eye = v(e.shot.eye), look = v(e.shot.look), fov = e.shot.fov }
 	end
-	for name, sh in s.shots do
-		if sh.to then
-			shots[name .. ":mid"] =
-				shot({ eye = sh.eye:Lerp(sh.to.eye, 0.5), look = sh.look:Lerp(sh.to.look, 0.5), fov = sh.fov })
-		end
-	end
-	-- a stand-in on each mark: legs, body, arms and a head with two eyes on the side it faces
 	local figures = {}
-	local SHIRTS = {
-		roblox.Color3.fromRGB(232, 120, 110),
-		roblox.Color3.fromRGB(110, 156, 222),
-		roblox.Color3.fromRGB(240, 196, 92),
-	}
 	for i, m in s.marks do
-		local cf = CFrame.new(m.at) * CFrame.Angles(0, math.rad(m.yaw) + math.pi, 0)
-		local skin, legs = roblox.Color3.fromRGB(236, 196, 160), roblox.Color3.fromRGB(70, 78, 110)
-		local parts = {}
-		local function box(x, y, z, sx, sy, sz, col)
-			table.insert(parts, { cf = cf * CFrame.new(x, y, z), size = roblox.Vector3.new(sx, sy, sz), color = col })
-		end
-		if m.sit then
-			for _, sx in { -0.5, 0.5 } do
-				box(sx, 0.3, -0.9, 0.9, 0.7, 2.0, legs)
-				box(sx, -0.6, -1.75, 0.9, 1.6, 0.8, legs)
-			end
-		else
-			for _, sx in { -0.5, 0.5 } do
-				box(sx, 1.0, 0, 0.9, 2.0, 0.9, legs)
-			end
-		end
-		local t = if m.sit then 0.3 else 2.0
-		box(0, t + 1.0, 0, 2.0, 2.0, 1.0, SHIRTS[i] or SHIRTS[1])
-		for _, sx in { -1.45, 1.45 } do
-			box(sx, t + 1.0, 0, 0.9, 2.0, 0.9, SHIRTS[i] or SHIRTS[1])
-		end
-		box(0, t + 2.6, 0, 1.2, 1.2, 1.2, skin)
-		box(0, t + 3.3, 0.05, 1.3, 0.35, 1.3, roblox.Color3.fromRGB(96, 70, 60))
-		for _, sx in { -0.25, 0.25 } do
-			box(sx, t + 2.65, -0.62, 0.16, 0.22, 0.06, roblox.Color3.fromRGB(40, 36, 44))
-		end
-		for _, p in parts do
-			table.insert(figures, {
-				shape = "Block",
-				cf = { p.cf:GetComponents() },
-				size = { p.size.X, p.size.Y, p.size.Z },
-				color = { p.color.R, p.color.G, p.color.B },
-				transp = 0,
-				mat = "SmoothPlastic",
-			})
-		end
-	end
-	local sky = {}
-	for k, x in s.sky do
-		if typeof(x) == "Color3" then
-			sky[k] = c(x)
-		elseif type(x) == "table" then
-			sky[k] = { dir = v(x.dir), size = x.size, color = c(x.color), glow = x.glow and c(x.glow), phase = x.phase }
-		else
-			sky[k] = x
+		for _, p in Lib.markFigure(Moves, CFrame.identity, m, { shirt = Lib.Shirts[(i - 1) % #Lib.Shirts + 1] }) do
+			table.insert(figures, p)
 		end
 	end
 	fs.writeFile(
 		outPath .. ".stage.json",
 		serde.encode("json", {
 			id = s.id,
-			light = { ambient = c(s.light.ambient), color = c(s.light.color), dir = v(s.light.dir) },
-			sky = sky,
+			light = Lib.light(s),
+			sky_dir = v(Stages.skyDir(s)),
+			lamps = lamps,
 			shots = shots,
 			bounds = { lo = v(s.bounds.lo), hi = v(s.bounds.hi) },
 			figures = figures,

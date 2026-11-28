@@ -1,289 +1,22 @@
---!strict
--- The sets the big moments of villagers' lives are staged on (UI/Cutscene plays them, Data/Cutscenes
--- says which event plays on which). The user: "add cutscenes and scenes like tomodachi life as
--- well". Taken from that kind of game: a big moment plays as a little scene on a set of its own,
--- with the camera cutting between shots and the light set for the mood. Everything here is our
--- own: the sets, the shots and the light.
---
--- A set is built from primitives like any model in town, in its own space: the origin is the
--- middle of where the villagers stand, at the height of what they stand on, +Y up, and the camera
--- usually looks toward -Z (the back of the set) from the +Z side. It is shown in a ViewportFrame,
--- so it has its own light (ambient, a sun and the way it shines, as the frame takes them) and a
--- painted sky behind it (top, a middle band, the horizon and below it, with a sun or a moon and
--- stars where the hour has them). A viewport has no shadows, no fog and no lamps that light
--- things, so a lit window or a lantern is simply drawn bright (Neon) and the far town is
--- painted in the haze's colours.
---
--- Each set has:
---   marks   where up to three villagers stand: `at` (their feet), `yaw` (which way they face:
---           0 is +Z, toward the camera's side, 90 is +X), `sit` (sitting with `at` on the seat)
---   shots   camera positions by name: `eye`, `look`, `fov` (degrees, top to bottom). A shot with
---           `to` moves from its own eye and look to those over the line (a pan). Every set has a
---           `wide`, a `two` (the first two marks) and a `pan`. A close shot on each mark and a
---           push in on it are worked out from the mark (Stages.close, Stages.push) unless the
---           mark gives its own `close`.
---   bounds  the box the camera keeps inside
---   light   ambient, colour, dir (the way the light travels, as ViewportFrame.LightDirection)
---   sky     top, mid, horizon, low, sun / moon (dir toward it, size in pixels on a 720 high
---           screen, colour, glow, phase: how much of a moon is cut away), stars (how many)
--- The Cutscenes spec holds every shot inside the bounds, clear of the set, looking at something,
--- and every move between two shots clear of the set too.
+--!nonstrict
+-- The first sets (Data/Stages): a rooftop at sunset, the pier at night, the bandstand lit for a
+-- concert, a dream, a birthday party, the beach at dawn, a bench in the park, the town gate, a
+-- kitchen at night and a market stall. Each is a set in its own space (see Data/Stages), built
+-- in the world when its cutscene plays and lit by the game's own light at its hour.
 
-local Recipe = require(script.Parent.Parent.Build.Recipe)
-local Geometry = require(script.Parent.Parent.Build.Geometry)
+local Recipe = require(script.Parent.Parent.Parent.Build.Recipe)
+local K = require(script.Parent.Kit)
 
 type R = Recipe.Recipe
-type Prim = Geometry.Prim
-
-export type Shot = { eye: Vector3, look: Vector3, fov: number, to: Shot?, sky: boolean? }
-export type Mark = { at: Vector3, yaw: number, sit: boolean?, close: Shot? }
-export type Light = { ambient: Color3, color: Color3, dir: Vector3 }
-export type Disc = { dir: Vector3, size: number, color: Color3, glow: Color3?, phase: number? }
-export type Sky = {
-	top: Color3,
-	mid: Color3?,
-	horizon: Color3,
-	low: Color3,
-	sun: Disc?,
-	moon: Disc?,
-	stars: number?,
-}
-export type Stage = {
-	id: string,
-	name: string,
-	marks: { Mark },
-	shots: { [string]: Shot },
-	bounds: { lo: Vector3, hi: Vector3 },
-	light: Light,
-	sky: Sky,
-	build: (R) -> (),
-}
-
-local Stages = {}
-
-Stages.Head = 4.6 -- a standing villager's eyes over their feet
-Stages.SitHead = 2.9 -- and a sitting one's over the seat
--- A close shot: how far, how far round, the lens, how far over their eyes it stands, and how far
--- under them it looks (the textbox covers the bottom of the screen, so the face sits high).
-Stages.Close = { dist = 6.6, side = 52, fov = 30, lift = 0.3, drop = 0.55 }
-Stages.Push = { dist = 5.4, fov = 26, drop = 0.45 } -- where a push in ends
 
 local C = Recipe.Colors
+local rgb, yaw, v3, shade = K.rgb, K.yaw, K.v3, K.shade
+local town, rand, boards, sagging, stringLights = K.town, K.rand, K.boards, K.sagging, K.stringLights
+local bunting, pot, crate, farBlock = K.bunting, K.pot, K.crate, K.farBlock
 
-local function rgb(r: number, g: number, b: number): Color3
-	return Color3.fromRGB(r, g, b)
-end
+local list = {}
 
-local function yaw(deg: number): CFrame
-	return CFrame.Angles(0, math.rad(deg), 0)
-end
-
-local function v3(x: number, y: number, z: number): Vector3
-	return Vector3.new(x, y, z)
-end
-
--- A colour a little darker (k < 1) or lighter (k > 1).
-local function shade(c: Color3, k: number): Color3
-	return Color3.new(math.clamp(c.R * k, 0, 1), math.clamp(c.G * k, 0, 1), math.clamp(c.B * k, 0, 1))
-end
-
--- A model of the town's own (Data/TownMap), set down at `cf`: the bench, the lamp, the trees are
--- the same ones the town has. On a set they are only scenery: no seats, lamps that light things
--- or smoke, and with `lit` what lights up at night is drawn lit. (The list a model comes in may
--- be shared: each prim is copied.)
-local function town(r: R, name: string, cf: CFrame, lit: boolean?)
-	local TownMap = require(script.Parent.TownMap) :: any
-	for _, p in TownMap.prims(name) do
-		if (p.transp or 0) < 0.99 then
-			local q = table.clone(p)
-			q.cf = cf * p.cf
-			if lit and q.role == "glow" then
-				q.mat = "Neon"
-			end
-			q.role, q.light, q.effect = nil, nil, nil
-			r:add(q)
-		end
-	end
-end
-
--- A deterministic little random, so a set is the same every time it is built.
-local function rand(seed: number): () -> number
-	local s = seed % 2147483646 + 1
-	return function(): number
-		s = (s * 48271) % 2147483647
-		return s / 2147483647
-	end
-end
-
--- Boards laid side by side between x1 and x2 (running along X), z1..z2 across them, their tops
--- at `top`, on two bearers. Every other board a shade darker.
-local function boards(r: R, x1: number, z1: number, x2: number, z2: number, top: number, color: Color3, bearer: Color3?)
-	local w, gap = 0.82, 0.1
-	local n = math.max(1, math.floor((z2 - z1 + gap) / (w + gap)))
-	local step = (z2 - z1 + gap) / n
-	for i = 0, n - 1 do
-		local a = z1 + i * step
-		r:block(
-			x1,
-			top - 0.16,
-			a,
-			x2,
-			top,
-			a + step - gap,
-			if i % 2 == 0 then color else shade(color, 0.93),
-			"WoodPlanks"
-		)
-	end
-	local b = bearer or shade(color, 0.6)
-	for _, x in { x1 + 0.8, (x1 + x2) / 2, x2 - 0.8 } do
-		r:block(x - 0.25, top - 0.46, z1 + 0.1, x + 0.25, top - 0.16, z2 - 0.1, b, "Wood")
-	end
-end
-
--- A rope or a wire from a to b that sags by `sag` in the middle, in `n` straight runs.
-local function sagging(
-	r: R,
-	a: Vector3,
-	b: Vector3,
-	sag: number,
-	n: number,
-	thick: number,
-	color: Color3,
-	mat: string?
-): { Vector3 }
-	local pts = {}
-	for i = 0, n do
-		local t = i / n
-		table.insert(pts, a:Lerp(b, t) - Vector3.new(0, sag * 4 * t * (1 - t), 0))
-	end
-	for i = 1, n do
-		r:beam(pts[i], pts[i + 1], thick, thick, color, mat or "Fabric")
-	end
-	return pts
-end
-
--- A string of bulbs on a wire from a to b, lit.
-local function stringLights(r: R, a: Vector3, b: Vector3, sag: number, bulbs: number, colors: { Color3 })
-	local pts = sagging(r, a, b, sag, 8, 0.06, rgb(60, 56, 64), "Plastic")
-	for i = 1, bulbs do
-		local t = (i - 0.5) / bulbs
-		local p = a:Lerp(b, t) - Vector3.new(0, sag * 4 * t * (1 - t), 0)
-		r:box(p.X, p.Y - 0.12, p.Z, 0.12, 0.14, 0.12, rgb(70, 66, 72), "Metal")
-		r:ball(p.X, p.Y - 0.36, p.Z, 0.34, colors[(i - 1) % #colors + 1], "Neon")
-	end
-	return pts
-end
-
--- Little flags on a cord from a to b.
-local function bunting(r: R, a: Vector3, b: Vector3, sag: number, flags: number, colors: { Color3 })
-	sagging(r, a, b, sag, 8, 0.05, rgb(236, 230, 214), "Fabric")
-	local across = (b - a)
-	local flat = Vector3.new(across.X, 0, across.Z).Unit
-	for i = 1, flags do
-		local t = (i - 0.5) / flags
-		local p = a:Lerp(b, t) - Vector3.new(0, sag * 4 * t * (1 - t) + 0.04, 0)
-		local half = 0.42
-		r:tri(
-			p - flat * half,
-			p + flat * half,
-			p - Vector3.new(0, 0.95, 0),
-			0.04,
-			colors[(i - 1) % #colors + 1],
-			"Fabric"
-		)
-	end
-end
-
--- A flower pot: the pot, its rim, the soil and a bush of leaves with a few flowers.
-local function pot(r: R, x: number, y: number, z: number, size: number, potColor: Color3, flower: Color3?)
-	local s = size
-	r:cyl(x, y + 0.45 * s, z, 0.9 * s, 1.1 * s, "y", potColor, "Slate")
-	r:cyl(x, y + 0.91 * s, z, 0.14 * s, 1.26 * s, "y", shade(potColor, 1.08), "Slate")
-	r:cyl(x, y + 0.97 * s, z, 0.1 * s, 1.0 * s, "y", C.Soil, "Ground")
-	r:lump(CFrame.new(x, y + 1.45 * s, z), 1.4 * s, 1.1 * s, 1.4 * s, C.Leaf, "Grass")
-	r:lump(CFrame.new(x + 0.3 * s, y + 1.85 * s, z - 0.2 * s), 0.9 * s, 0.8 * s, 0.9 * s, C.DarkLeaf, "Grass")
-	if flower then
-		for i = 0, 2 do
-			local a = i * 2.1
-			r:ball(
-				x + math.cos(a) * 0.5 * s,
-				y + 1.95 * s,
-				z + math.sin(a) * 0.5 * s,
-				0.32 * s,
-				flower,
-				"SmoothPlastic"
-			)
-		end
-	end
-end
-
--- A wooden crate: its boards and corner posts.
-local function crate(r: R, cf: CFrame, w: number, h: number, d: number, color: Color3)
-	local dark = shade(color, 0.78)
-	r:boxAt(cf * CFrame.new(0, h / 2, 0), w - 0.16, h - 0.16, d - 0.16, dark, "WoodPlanks")
-	for _, sx in { -1, 1 } do
-		for _, sz in { -1, 1 } do
-			r:boxAt(cf * CFrame.new(sx * (w / 2 - 0.1), h / 2, sz * (d / 2 - 0.1)), 0.2, h, 0.2, color, "WoodPlanks")
-		end
-	end
-	for _, y in { 0.18, h - 0.18 } do
-		for _, sz in { -1, 1 } do
-			r:boxAt(cf * CFrame.new(0, y, sz * (d / 2 - 0.04)), w - 0.4, 0.26, 0.08, color, "WoodPlanks")
-		end
-		for _, sx in { -1, 1 } do
-			r:boxAt(cf * CFrame.new(sx * (w / 2 - 0.04), y, 0), 0.08, 0.26, d - 0.4, color, "WoodPlanks")
-		end
-	end
-end
-
--- A far building drawn as a shape against the sky, with a few lit windows on the side that
--- faces the set (+Z). Far away, in the haze's colour.
-local function farBlock(
-	r: R,
-	x: number,
-	z: number,
-	w: number,
-	d: number,
-	base: number,
-	top: number,
-	color: Color3,
-	lit: Color3?,
-	seed: number,
-	roof: string?
-)
-	r:block(x - w / 2, base, z - d / 2, x + w / 2, top, z + d / 2, color, "SmoothPlastic")
-	if roof == "gable" then
-		local rise = math.min(w, 10) * 0.35
-		r:wedge(CFrame.new(x - w / 4, top + rise / 2, z) * yaw(-90), d, rise, w / 2, color, "SmoothPlastic")
-		r:wedge(CFrame.new(x + w / 4, top + rise / 2, z) * yaw(90), d, rise, w / 2, color, "SmoothPlastic")
-	elseif roof == "spire" then
-		r:cone(x, top + 4, z, 8, math.min(w, d) * 0.7, color, "SmoothPlastic")
-	elseif roof == "tank" then
-		r:cyl(x + w * 0.2, top + 1.4, z, 2.8, 2.4, "y", color, "SmoothPlastic")
-	end
-	if lit then
-		local next = rand(seed)
-		local cols = math.max(1, math.floor(w / 3.2))
-		local rows = math.max(1, math.floor((top - base) / 4.2))
-		for i = 0, cols - 1 do
-			for j = 0, rows - 1 do
-				if next() < 0.32 then
-					local wx = x - w / 2 + (i + 0.5) * w / cols
-					local wy = top - 2.4 - j * 4.2
-					if wy > base + 1 then
-						r:box(wx, wy, z + d / 2 + 0.05, 1.1, 1.5, 0.1, lit, "Neon")
-					end
-				end
-			end
-		end
-	end
-end
-
--- The sets -----------------------------------------------------------------------------------------
-
-local list: { Stage } = {}
-
-local function stage(def: Stage)
+local function stage(def: any)
 	table.insert(list, def)
 end
 
@@ -304,23 +37,11 @@ stage({
 		wide = { eye = v3(4, 6.4, 9), look = v3(-1, 3.6, -10), fov = 46 },
 		two = { eye = v3(0.6, 5.2, -1.2), look = v3(0, 4.3, -9.8), fov = 36 },
 		low = { eye = v3(-7.5, 1.6, 2), look = v3(-1, 5.8, -10), fov = 40 },
-		sunset = { eye = v3(-2, 5.6, -1.8), look = v3(-14, 9, -60), fov = 44 },
-		pan = {
-			eye = v3(-11, 7.2, 6),
-			look = v3(-12, 4, -14),
-			fov = 44,
-			to = { eye = v3(6, 6.8, 4), look = v3(0, 4.2, -12), fov = 40 },
-		},
+		sunset = { eye = v3(-2, 5.6, -1.8), look = v3(-14, 9, -60), fov = 44, sky = true },
+		side = { eye = v3(6, 6.8, 4), look = v3(0, 4.2, -12), fov = 40 },
 	},
 	bounds = { lo = v3(-16.5, 0.8, -15), hi = v3(16.5, 16, 12.5) },
-	light = { ambient = rgb(150, 122, 152), color = rgb(255, 178, 122), dir = v3(0.78, -0.34, 0.52) },
-	sky = {
-		top = rgb(84, 82, 156),
-		mid = rgb(206, 120, 150),
-		horizon = rgb(255, 170, 104),
-		low = rgb(160, 104, 120),
-		sun = { dir = v3(-0.3, 0.13, -1), size = 92, color = rgb(255, 214, 140), glow = rgb(255, 150, 96) },
-	},
+	light = { hour = 17.8, face = -30 },
 	build = function(r: R)
 		local FELT = rgb(150, 140, 146)
 		local BRICK = rgb(176, 108, 92)
@@ -358,7 +79,7 @@ stage({
 		r:block(11, 5.7, -7.55, 14, 5.95, -7.35, shade(PLASTER, 0.86), "Wood")
 		r:box(13.3, 2.9, -7.36, 0.2, 0.2, 0.18, C.Gold, "Metal")
 		r:block(12.3, 6.25, -7.6, 12.7, 6.4, -7.0, IRON, "Metal")
-		r:block(12.22, 6.4, -7.2, 12.78, 7.05, -6.68, rgb(255, 214, 150), "Neon")
+		r:glow(r:block(12.22, 6.4, -7.2, 12.78, 7.05, -6.68, rgb(255, 214, 150), "Neon"), 16, 1.4, rgb(255, 214, 150))
 		r:block(12.15, 7.05, -7.25, 12.85, 7.15, -6.62, IRON, "Metal")
 		r:block(9.35, 3.6, -11.2, 9.5, 5.2, -9.2, rgb(70, 74, 96), "Glass")
 		r:block(9.3, 3.45, -11.35, 9.5, 3.6, -9.05, CAP, "Concrete")
@@ -479,29 +200,10 @@ stage({
 		low = { eye = v3(-3.2, 1.5, -20), look = v3(0, 5.2, -31), fov = 42 },
 		moon = { eye = v3(2, 4.6, -23), look = v3(-20, 21, -63), fov = 46, sky = true },
 		high = { eye = v3(0, 12, -14), look = v3(0, 1, -31), fov = 44 },
-		pan = {
-			eye = v3(-6.4, 7, 6),
-			look = v3(-2, 2, -20),
-			fov = 46,
-			to = { eye = v3(6, 6, -12), look = v3(0, 3, -32), fov = 42 },
-		},
+		side = { eye = v3(6, 6, -12), look = v3(0, 3, -32), fov = 42 },
 	},
 	bounds = { lo = v3(-8.5, 1, -36), hi = v3(8.5, 14, 12) },
-	light = { ambient = rgb(84, 94, 142), color = rgb(176, 196, 255), dir = v3(0.86, -0.42, 0.3) },
-	sky = {
-		top = rgb(14, 18, 48),
-		mid = rgb(30, 38, 86),
-		horizon = rgb(66, 74, 128),
-		low = rgb(18, 24, 58),
-		moon = {
-			dir = v3(-0.5, 0.42, -1),
-			size = 74,
-			color = rgb(236, 230, 184),
-			glow = rgb(96, 116, 184),
-			phase = 0.32,
-		},
-		stars = 70,
-	},
+	light = { hour = 21, face = -27 },
 	build = function(r: R)
 		local WOOD = rgb(132, 104, 84)
 		local PILE = rgb(92, 74, 62)
@@ -565,7 +267,7 @@ stage({
 			local hx = x + side * 1.3
 			r:box(hx, 6.7, z, 0.08, 0.6, 0.08, IRON, "Metal")
 			r:box(hx, 6.35, z, 0.9, 0.12, 0.9, IRON, "Metal")
-			r:box(hx, 5.7, z, 0.6, 1.1, 0.6, LAMP, "Neon")
+			r:glow(r:box(hx, 5.7, z, 0.6, 1.1, 0.6, LAMP, "Neon"), 16, 1.4, LAMP)
 			for _, sx in { -1, 1 } do
 				for _, sz in { -1, 1 } do
 					r:box(hx + sx * 0.36, 5.7, z + sz * 0.36, 0.08, 1.1, 0.08, IRON, "Metal")
@@ -653,28 +355,19 @@ stage({
 		},
 		{ at = v3(2.4, 1.7, 1.6), yaw = -14, close = { eye = v3(1.1, 6.4, 7.6), look = v3(2.4, 5.75, 1.6), fov = 30 } },
 		{ at = v3(0, 1.7, -1.6), yaw = 0, close = { eye = v3(0, 6.6, 7.4), look = v3(0, 5.75, -1.6), fov = 30 } },
+		-- and two down on the paving in front, for whoever comes to listen
+		{ at = v3(-5.6, 0.1, 11), yaw = 160 },
+		{ at = v3(5.6, 0.1, 11), yaw = -160 },
 	},
 	shots = {
 		wide = { eye = v3(0, 6.8, 23), look = v3(0, 5, 0), fov = 42 },
 		two = { eye = v3(0, 5.6, 12), look = v3(0, 5.6, 1.6), fov = 34 },
 		crowd = { eye = v3(-6, 2.4, 16), look = v3(0, 6.4, 0), fov = 42 },
 		high = { eye = v3(8, 13, 19), look = v3(0, 3.6, 0), fov = 42 },
-		pan = {
-			eye = v3(-10, 6.5, 22),
-			look = v3(-3, 4.6, 0),
-			fov = 42,
-			to = { eye = v3(10, 6.5, 22), look = v3(3, 4.6, 0), fov = 42 },
-		},
+		side = { eye = v3(10, 6.5, 22), look = v3(3, 4.6, 0), fov = 42 },
 	},
 	bounds = { lo = v3(-16, 1, -6), hi = v3(16, 16, 30) },
-	light = { ambient = rgb(132, 112, 162), color = rgb(255, 196, 176), dir = v3(-0.62, -0.5, -0.6) },
-	sky = {
-		top = rgb(38, 42, 108),
-		mid = rgb(116, 78, 148),
-		horizon = rgb(240, 138, 136),
-		low = rgb(60, 50, 92),
-		stars = 24,
-	},
+	light = { hour = 18.4, face = -10 },
 	build = function(r: R)
 		local GRASS = rgb(108, 150, 96)
 		local PAVING = rgb(206, 196, 180)
@@ -818,28 +511,14 @@ stage({
 		float = { eye = v3(7, 12.5, 10), look = v3(0, 2, -1), fov = 44 },
 		low = { eye = v3(-3, -1.2, 10), look = v3(0, 5.4, -2), fov = 42 },
 		door = { eye = v3(4, 6.4, 7), look = v3(11, 6.5, -12), fov = 40 },
-		pan = {
-			eye = v3(-12.5, 6, 9),
-			look = v3(-3, 4, -4),
-			fov = 44,
-			to = { eye = v3(12.5, 6, 9), look = v3(3, 4, -4), fov = 44 },
-		},
+		side = { eye = v3(12.5, 6, 9), look = v3(3, 4, -4), fov = 44 },
 	},
 	bounds = { lo = v3(-15, -3, -6), hi = v3(15, 16, 20) },
-	light = { ambient = rgb(198, 178, 212), color = rgb(255, 240, 236), dir = v3(0.25, -1, -0.45) },
-	sky = {
-		top = rgb(140, 128, 214),
-		mid = rgb(226, 160, 206),
-		horizon = rgb(255, 196, 176),
-		low = rgb(178, 150, 222),
-		moon = {
-			dir = v3(0.55, 0.42, -1),
-			size = 132,
-			color = rgb(250, 230, 180),
-			glow = rgb(250, 176, 200),
-			phase = 0.36,
-		},
-		stars = 34,
+	light = {
+		hour = 17.2,
+		face = 30,
+		air = { color = rgb(255, 196, 222), decay = rgb(196, 150, 230), density = 0.42, haze = 2.4 },
+		grade = { tint = rgb(255, 232, 246), saturation = 0.14 },
 	},
 	build = function(r: R)
 		local CLOUD = rgb(250, 240, 248)
@@ -1003,16 +682,10 @@ stage({
 		two = { eye = v3(2.8, 5.4, 3.4), look = v3(-2.6, 4.2, -5), fov = 40 },
 		cake = { eye = v3(1.6, 5.6, 1.0), look = v3(0, 3.8, -5.6), fov = 30 },
 		high = { eye = v3(6, 9.4, 7), look = v3(0, 3, -6), fov = 44 },
-		pan = {
-			eye = v3(-10, 6, 7),
-			look = v3(-6, 4, -8),
-			fov = 46,
-			to = { eye = v3(10, 6, 7), look = v3(4, 4, -8), fov = 46 },
-		},
+		side = { eye = v3(10, 6, 7), look = v3(4, 4, -8), fov = 46 },
 	},
 	bounds = { lo = v3(-13, 1, -9), hi = v3(13, 10, 10) },
-	light = { ambient = rgb(190, 160, 150), color = rgb(255, 228, 192), dir = v3(0.36, -0.84, -0.4) },
-	sky = { top = rgb(40, 46, 96), mid = rgb(70, 66, 124), horizon = rgb(124, 92, 140), low = rgb(40, 40, 70) },
+	light = { hour = 21, face = 0, indoor = true },
 	build = function(r: R)
 		local WOOD = rgb(186, 140, 100)
 		local WALL = rgb(244, 214, 186)
@@ -1211,7 +884,7 @@ stage({
 			end
 		end
 		r:cyl(0, 10.6, -4, 0.6, 1.2, "y", TRIM, "Plaster")
-		r:ball(0, 10.0, -4, 0.9, rgb(255, 236, 196), "Neon")
+		r:glow(r:ball(0, 10.0, -4, 0.9, rgb(255, 236, 196), "Neon"), 26, 1.6, rgb(255, 236, 196))
 		bunting(r, v3(-12, 10.2, -10.6), v3(5.2, 10.2, -10.6), 0.9, 11, PARTY)
 		-- two chairs at the ends of the table
 		for _, sx in { -1, 1 } do
@@ -1244,22 +917,77 @@ stage({
 		wide = { eye = v3(3.2, 5.2, 13), look = v3(0, 3.2, -6), fov = 46 },
 		two = { eye = v3(0, 4.7, 6.4), look = v3(0, 4.2, -2), fov = 34 },
 		sunrise = { eye = v3(-1, 4.8, 4.4), look = v3(17, 8.4, -56), fov = 44, sky = true },
+		table = { eye = v3(0.6, 5.8, 9.6), look = v3(0, 3.6, -1), fov = 40 },
 		low = { eye = v3(2.6, 1.4, 5.4), look = v3(0, 5.2, -3), fov = 42 },
-		pan = {
-			eye = v3(-11, 5, 8),
-			look = v3(-4, 3, -6),
-			fov = 46,
-			to = { eye = v3(11, 5, 8), look = v3(4, 3, -6), fov = 46 },
-		},
+		side = { eye = v3(11, 5, 8), look = v3(4, 3, -6), fov = 46 },
 	},
 	bounds = { lo = v3(-13, 1, -7), hi = v3(13, 14, 16) },
-	light = { ambient = rgb(170, 150, 170), color = rgb(255, 204, 156), dir = v3(-0.62, -0.26, 0.74) },
-	sky = {
-		top = rgb(104, 126, 200),
-		mid = rgb(232, 164, 184),
-		horizon = rgb(255, 196, 140),
-		low = rgb(90, 120, 170),
-		sun = { dir = v3(0.3, 0.07, -1), size = 108, color = rgb(255, 226, 160), glow = rgb(255, 170, 120) },
+	light = { hour = 6.3, face = 50 },
+	props = {
+		-- a long table for an eating race: a cloth, stacks of plates, piles of rice balls and
+		-- pancakes, a bell and a banner on two poles
+		table = {
+			spots = { front = CFrame.new(0, 0, 0.4) },
+			build = function(r: R)
+				r:block(-3.6, 2.5, -1.0, 3.6, 2.8, 1.0, rgb(196, 156, 110), "WoodPlanks")
+				for _, sx in { -3.2, 3.2 } do
+					for _, sz in { -0.7, 0.7 } do
+						r:box(sx, 1.25, sz, 0.3, 2.5, 0.3, rgb(150, 112, 84), "Wood")
+					end
+				end
+				for k = 0, 6 do
+					r:block(
+						-3.6 + k * 1.03,
+						2.8,
+						-1.05,
+						-3.6 + k * 1.03 + 0.515,
+						2.82,
+						1.05,
+						rgb(240, 90, 90),
+						"Fabric"
+					)
+				end
+				for _, sx in { -1, 1 } do
+					local x = sx * 1.7
+					for k = 0, 4 do
+						r:cyl(x + sx * 0.9, 2.86 + k * 0.08, -0.3, 0.06, 1.0, "y", rgb(250, 250, 246), "SmoothPlastic")
+					end
+					r:cyl(x, 2.86, -0.3, 0.06, 1.3, "y", rgb(250, 250, 246), "SmoothPlastic")
+					for k = 0, 5 do
+						local a = k * 1.05
+						r:ball(
+							x + math.cos(a) * 0.32,
+							3.1 + (k % 2) * 0.12,
+							-0.3 + math.sin(a) * 0.32,
+							0.4,
+							rgb(248, 248, 244),
+							"SmoothPlastic"
+						)
+						r:box(
+							x + math.cos(a) * 0.32,
+							3.02,
+							-0.3 + math.sin(a) * 0.32 + 0.12,
+							0.3,
+							0.16,
+							0.06,
+							rgb(40, 60, 50),
+							"SmoothPlastic"
+						)
+					end
+					for k = 0, 3 do
+						r:cyl(x - sx * 0.2, 3.0 + k * 0.1, 0.45, 0.09, 0.9, "y", rgb(230, 180, 110), "SmoothPlastic")
+					end
+				end
+				r:cone(0, 3.1, 0.3, 0.5, 0.5, rgb(230, 190, 90), "Metal")
+				for _, sx in { -3.9, 3.9 } do
+					r:cyl(sx, 3.2, -1.2, 6.4, 0.2, "y", rgb(150, 112, 84), "Wood")
+				end
+				r:block(-3.8, 5.2, -1.24, 3.8, 6.2, -1.16, rgb(250, 230, 150), "Fabric")
+				for k = 0, 6 do
+					r:block(-3.2 + k * 0.95, 5.5, -1.16, -2.7 + k * 0.95, 5.9, -1.12, rgb(220, 90, 70), "SmoothPlastic")
+				end
+			end,
+		},
 	},
 	build = function(r: R)
 		local SAND = rgb(236, 214, 172)
@@ -1285,6 +1013,25 @@ stage({
 		end
 		-- palms, driftwood, a sandcastle, a towel, a rowboat pulled up, rocks
 		town(r, "palm", CFrame.new(-17.5, 0, -3.5) * yaw(-10))
+		-- shells and seaweed along the tide line, a bucket and spade, a lantern on a post
+		local SHELLS = { rgb(250, 230, 220), rgb(240, 200, 190), rgb(230, 220, 200) }
+		local shore = rand(91)
+		for i = 1, 24 do
+			local x, z = -14 + shore() * 19, -8.6 + shore() * 4
+			r:lump(CFrame.new(x, 0.06, z) * yaw(shore() * 180), 0.4, 0.16, 0.3, SHELLS[i % 3 + 1], "SmoothPlastic")
+		end
+		for i = 1, 8 do
+			r:boxAt(
+				CFrame.new((shore() - 0.5) * 30, 0.03 + i * 0.02, -9 + shore() * 1.4) * yaw(shore() * 180),
+				1.4,
+				0.05,
+				0.3,
+				rgb(80, 110, 70),
+				"Grass"
+			)
+		end
+		K.item(r, "sea_cool_box", CFrame.new(7.2, 0, 3.6) * yaw(-30))
+		K.item(r, "sea_float_lamp", CFrame.new(-8.6, 0.04, 3.2))
 		town(r, "palmTall", CFrame.new(19, 0, -1) * yaw(200))
 		town(r, "driftwood", CFrame.new(-7, 0, -6.4) * yaw(30))
 		town(r, "sandcastle", CFrame.new(9.5, 0, -6.6) * yaw(-20))
@@ -1347,26 +1094,102 @@ stage({
 		{ at = v3(-1.2, 1.92, -1.6), yaw = 14, sit = true },
 		{ at = v3(1.2, 1.92, -1.6), yaw = -14, sit = true },
 		{ at = v3(4.6, 0, -3.6), yaw = -62 },
+		{ at = v3(-2.2, 0.1, 3.7), yaw = 90 },
+		{ at = v3(2.2, 0.1, 3.7), yaw = -90 },
 	},
 	shots = {
 		wide = { eye = v3(0, 6, 15), look = v3(0, 3, -3), fov = 44 },
+		cat = { eye = v3(0.6, 4.6, 12.4), look = v3(0, 1.8, 3.4), fov = 40 },
 		two = { eye = v3(0, 4.2, 5.8), look = v3(0, 3.8, -1.6), fov = 34 },
 		low = { eye = v3(-3, 1.3, 5), look = v3(0, 6, -4), fov = 42 },
 		tree = { eye = v3(6, 2.6, 6), look = v3(1, 9, -6), fov = 50 },
-		pan = {
-			eye = v3(-12, 5, 10),
-			look = v3(-2, 3, -2),
-			fov = 44,
-			to = { eye = v3(12, 5, 10), look = v3(2, 3, -2), fov = 44 },
-		},
+		side = { eye = v3(12, 5, 10), look = v3(2, 3, -2), fov = 44 },
 	},
 	bounds = { lo = v3(-13, 1, -0.4), hi = v3(13, 14, 18) },
-	light = { ambient = rgb(160, 160, 170), color = rgb(255, 236, 202), dir = v3(-0.5, -0.7, -0.5) },
-	sky = {
-		top = rgb(110, 160, 220),
-		mid = rgb(150, 192, 228),
-		horizon = rgb(232, 222, 182),
-		low = rgb(140, 176, 132),
+	light = { hour = 14.5, face = 135 },
+	props = {
+		-- a stray cat, orange with darker stripes: it sits on the path, its tail going, and
+		-- leans into a hand that strokes it
+		cat = {
+			spots = { path = CFrame.new(0, 0.1, 3.4) * yaw(10), petted = CFrame.new(0, 0.1, 3.4) * yaw(10) },
+			scale = 0.62,
+			build = function(r: R)
+				local FUR, DARK, LIGHT = rgb(232, 150, 80), rgb(190, 104, 56), rgb(250, 230, 200)
+				r:lump(CFrame.new(0, 0.75, -0.2) * CFrame.Angles(-0.35, 0, 0), 1.3, 1.5, 1.7, FUR, "Fabric")
+				r:lump(CFrame.new(0, 0.9, 0.35), 0.9, 1.0, 0.7, LIGHT, "Fabric")
+				for _, sx in { -0.3, 0.3 } do
+					r:cyl(sx, 0.35, 0.45, 0.7, 0.28, "y", FUR, "Fabric")
+					r:ball(sx, 0.1, 0.52, 0.32, LIGHT, "Fabric")
+					r:lump(CFrame.new(sx * 1.6, 0.3, -0.5), 0.5, 0.6, 0.9, FUR, "Fabric")
+				end
+				for k = 0, 2 do
+					r:boxAt(
+						CFrame.new(0, 1.2 - k * 0.25, -0.75) * CFrame.Angles(-0.35, 0, 0),
+						1.1,
+						0.1,
+						0.5,
+						DARK,
+						"Fabric"
+					)
+				end
+			end,
+			parts = {
+				head = {
+					pivot = CFrame.new(0, 1.45, 0.25),
+					build = function(r: R)
+						local FUR, DARK, LIGHT = rgb(232, 150, 80), rgb(190, 104, 56), rgb(250, 230, 200)
+						r:ball(0, 1.85, 0.35, 1.0, FUR, "Fabric")
+						r:lump(CFrame.new(0, 1.7, 0.75), 0.6, 0.4, 0.4, LIGHT, "Fabric")
+						for _, sx in { -1, 1 } do
+							r:tri(
+								v3(sx * 0.18, 2.2, 0.3),
+								v3(sx * 0.5, 2.2, 0.3),
+								v3(sx * 0.38, 2.62, 0.25),
+								0.12,
+								FUR,
+								"Fabric"
+							)
+							r:ball(sx * 0.2, 1.95, 0.8, 0.18, rgb(70, 110, 60), "SmoothPlastic")
+							r:ball(sx * 0.2, 1.95, 0.86, 0.08, rgb(20, 20, 24), "SmoothPlastic")
+							for _, dy in { -0.04, 0.06 } do
+								r:boxAt(
+									CFrame.new(sx * 0.42, 1.72 + dy, 0.82) * CFrame.Angles(0, 0, sx * dy * 2),
+									0.5,
+									0.02,
+									0.02,
+									LIGHT,
+									"SmoothPlastic"
+								)
+							end
+						end
+						r:ball(0, 1.78, 0.93, 0.1, rgb(220, 120, 130), "SmoothPlastic")
+						r:box(0, 2.28, 0.2, 0.12, 0.06, 0.5, DARK, "Fabric")
+					end,
+					motion = { swing = { axis = "y", amp = 16, rate = 0.14 } },
+					by = { petted = { tilt = { axis = "z", deg = 18 }, swing = { axis = "x", amp = 5, rate = 0.5 } } },
+				},
+				tail = {
+					pivot = CFrame.new(0, 0.3, -0.95),
+					build = function(r: R)
+						local FUR, DARK = rgb(232, 150, 80), rgb(190, 104, 56)
+						local pts = { v3(0, 0.3, -0.95), v3(0.5, 0.25, -1.5), v3(1.1, 0.45, -1.4), v3(1.4, 0.9, -1.0) }
+						for i = 1, 3 do
+							r:beam(pts[i], pts[i + 1], 0.32, 0.32, if i == 3 then DARK else FUR, "Fabric")
+							r:ball(
+								pts[i + 1].X,
+								pts[i + 1].Y,
+								pts[i + 1].Z,
+								0.33,
+								if i == 3 then DARK else FUR,
+								"Fabric"
+							)
+						end
+					end,
+					motion = { swing = { axis = "y", amp = 22, rate = 0.5 } },
+					by = { petted = { swing = { axis = "y", amp = 30, rate = 1.1 } } },
+				},
+			},
+		},
 	},
 	build = function(r: R)
 		local GRASS = rgb(126, 176, 104)
@@ -1401,6 +1224,13 @@ stage({
 		town(r, "hedgeRow", CFrame.new(5, 0, -14) * yaw(-4))
 		town(r, "hedgeRow", CFrame.new(21, 0, -13) * yaw(6))
 		town(r, "mushrooms", CFrame.new(5.6, 0, -8.6))
+		-- grass round the bench and the path, wildflowers, a bird bath, a second lamp
+		K.tufts(r, -12, -12, 12, 1.6, 0, 90, 31)
+		K.tufts(r, -12, 6.6, 12, 14, 0, 50, 32)
+		K.flowers(r, -12, -12, -6, 1, 0, 14, 33, { rgb(250, 240, 170), rgb(240, 170, 200) })
+		K.flowers(r, 7, -12, 12, 1, 0, 14, 34, { rgb(200, 180, 250), rgb(250, 250, 250) })
+		K.item(r, "bird_bath", CFrame.new(-8.4, 0, 0.4))
+		K.lampPost(r, 9.6, 0, -1.8, 8)
 		town(r, "lowTree", CFrame.new(-18, 0, -18) * yaw(70))
 		town(r, "lowTreeBig", CFrame.new(20, 0, -22) * yaw(200))
 		-- the pond: stones round the water, lily pads with a flower, reeds
@@ -1482,22 +1312,10 @@ stage({
 		two = { eye = v3(-0.8, 4.8, -5.4), look = v3(0, 4.4, 2.2), fov = 36 },
 		road = { eye = v3(0, 6.0, 12), look = v3(0, 3.4, -40), fov = 40 },
 		out = { eye = v3(0, 4.6, -14.5), look = v3(0, 4.6, 1.5), fov = 42 },
-		pan = {
-			eye = v3(-6.5, 5.6, -16),
-			look = v3(-2, 4.4, 0),
-			fov = 46,
-			to = { eye = v3(6.5, 5.6, -16), look = v3(2, 4.4, 0), fov = 46 },
-		},
+		side = { eye = v3(6.5, 5.6, -16), look = v3(2, 4.4, 0), fov = 46 },
 	},
 	bounds = { lo = v3(-13, 1, -17), hi = v3(13, 14, 16) },
-	light = { ambient = rgb(164, 164, 176), color = rgb(255, 240, 214), dir = v3(-0.55, -0.62, -0.56) },
-	sky = {
-		top = rgb(104, 164, 228),
-		mid = rgb(150, 196, 236),
-		horizon = rgb(226, 224, 180),
-		low = rgb(150, 182, 130),
-		sun = { dir = v3(0.62, 0.5, 0.6), size = 70, color = rgb(255, 236, 170), glow = rgb(255, 220, 170) },
-	},
+	light = { hour = 11, face = 134 },
 	build = function(r: R)
 		local GRASS = rgb(124, 174, 100)
 		local ROAD = rgb(196, 170, 132)
@@ -1660,16 +1478,10 @@ stage({
 		two = { eye = v3(0, 5.0, 4.6), look = v3(0, 4.3, -1.6), fov = 38 },
 		pie = { eye = v3(0.6, 4.8, 2.4), look = v3(0, 3.1, -1.6), fov = 30 },
 		high = { eye = v3(-6, 8.4, 6.4), look = v3(0, 2.6, -3), fov = 44 },
-		pan = {
-			eye = v3(-9.4, 5.4, 6.4),
-			look = v3(-6, 3.5, -7),
-			fov = 46,
-			to = { eye = v3(9.4, 5.4, 6.4), look = v3(6, 3.5, -7), fov = 46 },
-		},
+		side = { eye = v3(9.4, 5.4, 6.4), look = v3(6, 3.5, -7), fov = 46 },
 	},
 	bounds = { lo = v3(-11, 1, -5), hi = v3(11, 9, 10) },
-	light = { ambient = rgb(126, 100, 98), color = rgb(255, 208, 156), dir = v3(0.3, -0.88, -0.36) },
-	sky = { top = rgb(18, 22, 52), mid = rgb(30, 36, 78), horizon = rgb(54, 60, 110), low = rgb(20, 22, 44) },
+	light = { hour = 22.5, face = 0, indoor = true },
 	build = function(r: R)
 		local WALL = rgb(236, 220, 186)
 		local TILE = rgb(176, 210, 206)
@@ -1859,7 +1671,7 @@ stage({
 		-- the lamp hanging low over the table, lit
 		r:box(TX, 8.5, TZ, 0.06, 3.0, 0.06, IRON, "Metal")
 		r:cone(TX, 6.6, TZ, 0.8, 2.2, rgb(240, 150, 100), "Metal")
-		r:ball(TX, 6.15, TZ, 0.6, rgb(255, 222, 168), "Neon")
+		r:glow(r:ball(TX, 6.15, TZ, 0.6, rgb(255, 222, 168), "Neon"), 24, 1.6, rgb(255, 222, 168))
 		-- a clock on the left wall, a calendar beside it
 		r:cyl(-13.95, 7.0, 2, 0.1, 1.6, "x", rgb(250, 246, 236), "Marble")
 		r:cyl(-14.0, 7.0, 2, 0.06, 1.8, "x", rgb(150, 110, 80), "Wood")
@@ -1888,21 +1700,10 @@ stage({
 		two = { eye = v3(1.5, 5.2, 6.5), look = v3(-1.4, 4.4, -0.6), fov = 38 },
 		counter = { eye = v3(-1.4, 5.4, 2.6), look = v3(0.4, 3.4, -1.0), fov = 36 },
 		queue = { eye = v3(8.4, 4.4, 2.4), look = v3(0, 4, 0.6), fov = 40 },
-		pan = {
-			eye = v3(-10, 5, 9),
-			look = v3(-3, 3.5, -2),
-			fov = 44,
-			to = { eye = v3(10, 5, 9), look = v3(3, 3.5, -2), fov = 44 },
-		},
+		side = { eye = v3(10, 5, 9), look = v3(3, 3.5, -2), fov = 44 },
 	},
 	bounds = { lo = v3(-12, 1, -0.4), hi = v3(12, 12, 16) },
-	light = { ambient = rgb(166, 164, 172), color = rgb(255, 244, 224), dir = v3(-0.42, -0.8, -0.44) },
-	sky = {
-		top = rgb(96, 158, 228),
-		mid = rgb(146, 192, 234),
-		horizon = rgb(212, 226, 184),
-		low = rgb(150, 182, 130),
-	},
+	light = { hour = 9.5, face = 136 },
 	build = function(r: R)
 		local PAVE = rgb(214, 204, 188)
 		local WOOD = rgb(170, 124, 84)
@@ -2035,241 +1836,4 @@ stage({
 	end,
 })
 
--- The lookup ---------------------------------------------------------------------------------------
-
-Stages.list = list
-
-local byId: { [string]: Stage } = {}
-for _, s in list do
-	byId[s.id] = s
-end
-
-function Stages.get(id: string): Stage?
-	return byId[id]
-end
-
-local built: { [string]: { Prim } } = {}
-
--- The set's primitives (what can be seen of it), built once. Don't change what comes back.
-function Stages.prims(id: string): { Prim }
-	local known = built[id]
-	if known then
-		return known
-	end
-	local s = byId[id]
-	assert(s, "no stage " .. tostring(id))
-	local r = Recipe.new(C.White, C.White)
-	s.build(r)
-	local made: { Prim } = {}
-	for _, p in r.prims do
-		if (p.transp or 0) < 0.99 then
-			table.insert(made, p)
-		end
-	end
-	built[id] = made
-	return made
-end
-
--- Which way a villager facing `deg` looks (0 is +Z, 90 is +X).
-function Stages.facing(deg: number): Vector3
-	local a = math.rad(deg)
-	return Vector3.new(math.sin(a), 0, math.cos(a))
-end
-
--- Where the eyes of whoever stands on mark i are.
-function Stages.head(s: Stage, i: number): Vector3
-	local m = s.marks[i]
-	return m.at + Vector3.new(0, if m.sit then Stages.SitHead else Stages.Head, 0)
-end
-
--- What the camera must keep clear of: every solid shape of the set (a see-through one, a beam of
--- light or a sheer drape, it may pass through) as its box, with the box round that in the set's
--- own axes to rule most of them out quickly. Round shapes count as their boxes, which is safe.
-type Solid = { cf: CFrame, half: Vector3, lo: Vector3, hi: Vector3 }
-local solidsOf: { [string]: { Solid } } = {}
-
-local function solids(s: Stage): { Solid }
-	local known = solidsOf[s.id]
-	if known then
-		return known
-	end
-	local made: { Solid } = {}
-	for _, p in Geometry.flatten(Stages.prims(s.id)) do
-		if (p.transp or 0) < 0.3 then
-			local half = p.size / 2
-			local lo = Vector3.new(math.huge, math.huge, math.huge)
-			local hi = -lo
-			for _, c in Geometry.corners(p) do
-				lo, hi = lo:Min(c), hi:Max(c)
-			end
-			table.insert(made, { cf = p.cf, half = half, lo = lo, hi = hi })
-		end
-	end
-	solidsOf[s.id] = made
-	return made
-end
-
--- Is the point within `margin` of anything solid on the set?
-function Stages.inside(s: Stage, p: Vector3, margin: number): boolean
-	for _, b in solids(s) do
-		if
-			p.X > b.lo.X - margin
-			and p.X < b.hi.X + margin
-			and p.Y > b.lo.Y - margin
-			and p.Y < b.hi.Y + margin
-			and p.Z > b.lo.Z - margin
-			and p.Z < b.hi.Z + margin
-		then
-			local q = b.cf:PointToObjectSpace(p)
-			if
-				math.abs(q.X) < b.half.X + margin
-				and math.abs(q.Y) < b.half.Y + margin
-				and math.abs(q.Z) < b.half.Z + margin
-			then
-				return true
-			end
-		end
-	end
-	return false
-end
-
--- Does the line from a to b come within `margin` of anything solid (tested every quarter stud)?
-function Stages.blocked(s: Stage, a: Vector3, b: Vector3, margin: number): boolean
-	local n = math.max(1, math.ceil((b - a).Magnitude / 0.25))
-	for k = 0, n do
-		if Stages.inside(s, a:Lerp(b, k / n), margin) then
-			return true
-		end
-	end
-	return false
-end
-
--- Does the line from a to b come within `margin` of anybody standing on a mark other than `skip`
--- (each taken as a post from their feet to over their head)?
-function Stages.crowded(s: Stage, a: Vector3, b: Vector3, margin: number, skip: number?): boolean
-	local n = math.max(1, math.ceil((b - a).Magnitude / 0.25))
-	for j, m in s.marks do
-		if j ~= skip then
-			local foot = m.at + Vector3.new(0, 0.3, 0)
-			local top = Stages.head(s, j) + Vector3.new(0, 0.9, 0)
-			for k = 0, n do
-				local p = a:Lerp(b, k / n)
-				local y = math.clamp(p.Y, foot.Y, top.Y)
-				if (Vector3.new(p.X - foot.X, p.Y - y, p.Z - foot.Z)).Magnitude < margin then
-					return true
-				end
-			end
-		end
-	end
-	return false
-end
-
-Stages.Sides = { 52, 38, 66, 24, 80, 10 } -- how far round from where they face a close shot may go, best first
-Stages.Room = 0.45 -- how near the camera may come to the set
-Stages.Body = 1.3 -- and the line it looks along to anybody else on the set
-
-local closeOf: { [string]: Shot } = {}
-
--- The close shot on mark i: in front of their face and round toward the set's front, at the first
--- angle (Stages.Sides) where nothing on the set and nobody else stands between the camera and
--- their face. Worked out once per mark.
-function Stages.close(s: Stage, i: number): Shot
-	local m = s.marks[i]
-	if m.close then
-		return m.close
-	end
-	local key = s.id .. ":" .. i
-	local known = closeOf[key]
-	if known then
-		return known
-	end
-	local head = Stages.head(s, i)
-	local look = head - Vector3.new(0, Stages.Close.drop, 0)
-	local f = Stages.facing(m.yaw)
-	local k = Stages.Close
-	local first: Shot? = nil
-	local found: Shot? = nil
-	for _, angle in Stages.Sides do
-		local tries = {}
-		for _, side in { -1, 1 } do
-			local d = (CFrame.Angles(0, math.rad(side * angle), 0) :: CFrame):VectorToWorldSpace(f)
-			table.insert(tries, d)
-		end
-		-- the side nearer the set's front first
-		table.sort(tries, function(a: Vector3, b: Vector3): boolean
-			return a.Z > b.Z
-		end)
-		for _, d in tries do
-			local eye = head + d * k.dist + Vector3.new(0, k.lift, 0)
-			local shot = { eye = eye, look = look, fov = k.fov }
-			first = first or shot
-			local lo, hi = s.bounds.lo, s.bounds.hi
-			local within = eye.X >= lo.X
-				and eye.X <= hi.X
-				and eye.Y >= lo.Y
-				and eye.Y <= hi.Y
-				and eye.Z >= lo.Z
-				and eye.Z <= hi.Z
-			-- (the last stud before their face is theirs: a hat brim or a lifted hand). The push
-			-- in comes along the same line to Stages.Push.dist, so the camera needs room that far.
-			local away = (eye - look).Unit
-			local near = look + away * 1.0
-			local push = look + away * Stages.Push.dist
-			local pushIn = push.X >= lo.X
-				and push.X <= hi.X
-				and push.Y >= lo.Y
-				and push.Y <= hi.Y
-				and push.Z >= lo.Z
-				and push.Z <= hi.Z
-			if
-				within
-				and pushIn
-				and not Stages.blocked(s, eye, push, Stages.Room)
-				and not Stages.blocked(s, push, near, 0.2)
-				and not Stages.crowded(s, eye, near, Stages.Body, i)
-			then
-				found = shot
-				break
-			end
-		end
-		if found then
-			break
-		end
-	end
-	local shot = found or first :: Shot
-	closeOf[key] = shot
-	return shot
-end
-
--- The push in on mark i: where a slow push toward their face ends.
-function Stages.push(s: Stage, i: number): Shot
-	local c = Stages.close(s, i)
-	local look = c.look + Vector3.new(0, Stages.Close.drop - Stages.Push.drop, 0)
-	local dir = (c.eye - c.look).Unit
-	return { eye = c.look + dir * Stages.Push.dist, look = look, fov = Stages.Push.fov }
-end
-
--- Every place the camera can be: the named shots (a pan's start and end apart), and the close
--- shot and the push on each mark. { name, shot } in a steady order.
-function Stages.allShots(s: Stage): { { name: string, shot: Shot } }
-	local out = {}
-	local names = {}
-	for name in s.shots do
-		table.insert(names, name)
-	end
-	table.sort(names)
-	for _, name in names do
-		local shot = s.shots[name]
-		table.insert(out, { name = name, shot = { eye = shot.eye, look = shot.look, fov = shot.fov, sky = shot.sky } })
-		if shot.to then
-			table.insert(out, { name = name .. ":to", shot = shot.to })
-		end
-	end
-	for i in s.marks do
-		table.insert(out, { name = "close" .. i, shot = Stages.close(s, i) })
-		table.insert(out, { name = "push" .. i, shot = Stages.push(s, i) })
-	end
-	return out
-end
-
-return Stages
+return list

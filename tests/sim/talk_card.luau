@@ -16,7 +16,7 @@ local process = require("@lune/process")
 local roblox = require("@lune/roblox")
 local Sim = require("./client")
 
-local Vector3, Color3, Enum = roblox.Vector3, roblox.Color3, roblox.Enum
+local Vector3, Color3, Enum, CFrame = roblox.Vector3, roblox.Color3, roblox.Enum, roblox.CFrame
 local Harness, Fake, gui, errors = Sim.Harness, Sim.Fake, Sim.gui, Sim.errors
 local frames, advance, press, check, run = Sim.frames, Sim.advance, Sim.press, Sim.check, Sim.run
 
@@ -534,57 +534,57 @@ run("a big moment, watched as a cutscene", function()
 	local s = scene()
 	check(s ~= nil, "Watch puts the scene up")
 	local stage = s and s:FindFirstChild("Cutscene", true)
-	check(stage ~= nil, "with a set behind the textbox")
+	check(stage ~= nil and stage:GetAttribute("Stage") == "rooftop", "with the rooftop behind the textbox")
 	check(s and s:FindFirstChild("Bust_a", true) == nil, "and no busts sliding in")
-	local view = stage and stage:FindFirstChild("StageView")
+	check(stage and stage:FindFirstChildWhichIsA("ViewportFrame", true) == nil, "no viewport: the set is in the world")
+	local folder = Sim.ws:FindFirstChild("CutsceneSet")
+	local set = folder and folder:FindFirstChild("Set")
+	check(set ~= nil and #set:GetChildren() > 300, "the set built in the world, on this screen")
+	local far = set and set:FindFirstChildWhichIsA("BasePart", true)
 	check(
-		view ~= nil and view:IsA("ViewportFrame") and view:GetAttribute("Stage") == "rooftop",
-		"the rooftop, in a viewport"
+		far ~= nil and (far.CFrame.Position - Stages.Origin).Magnitude < 200,
+		"far out over the sea, where the town can't be seen"
 	)
-	local world = view and view:FindFirstChild("World")
-	local set = world and world:FindFirstChild("Set")
-	check(set ~= nil and #set:GetChildren() > 200, "the set built in it")
-	local a, b = world and world:FindFirstChild("Actor_a"), world and world:FindFirstChild("Actor_b")
+	local a, b = folder and folder:FindFirstChild("Actor_a"), folder and folder:FindFirstChild("Actor_b")
 	check(a ~= nil and b ~= nil, "both of them standing on it")
+	local frame = CFrame.new(Stages.Origin)
 	local function feet(actor)
 		local root = actor and actor:FindFirstChild("HumanoidRootPart")
-		local at = root and root.CFrame.Position
+		local at = root and frame:PointToObjectSpace(root.CFrame.Position)
 		return at and Vector3.new(at.X, 0, at.Z)
 	end
 	local function flat(v)
 		return Vector3.new(v.X, 0, v.Z)
 	end
-	check(
-		feet(a) and (feet(a) - flat(rooftop.marks[3].at)).Magnitude < 0.3,
-		"the one who will say it on the mark the script gives"
-	)
-	check(feet(b) and (feet(b) - flat(rooftop.marks[2].at)).Magnitude < 0.3, "the other on theirs")
+	-- (the set is turned to its sun, so where they stand is measured round the origin)
+	local function near(actor, mark)
+		local f = feet(actor)
+		return f ~= nil and math.abs(f.Magnitude - flat(mark).Magnitude) < 0.4
+	end
+	check(near(a, rooftop.marks[3].at), "the one who will say it on the mark the script gives")
+	check(near(b, rooftop.marks[2].at), "the other on theirs")
 	frames(40)
 	local top = stage and stage:FindFirstChild("BarTop")
 	check(top ~= nil and top.Position.Y.Scale == 0 and top.Size.Y.Scale > 0.05, "the letterbox slides in")
 	check(s and s:FindFirstChild("Box", true).Visible, "the textbox over it")
+	check(cam.CameraType == Enum.CameraType.Scriptable, "the camera is the scene's while it is up")
+	check(Sim.Lighting.ClockTime == rooftop.light.hour, "the town's light held at the set's hour")
 	local said = ((s and words(s, "Line")) or ""):gsub("<[^>]+>", "")
 	check(said == "Mara has been pacing up and down the roof for an hour.", "the line being said is typed")
-	-- the second line: a close shot on her, eased into
-	local before = view.CurrentCamera.CFrame.Position
+	-- the second line: a cut to a close shot on her, held still
+	local before = cam.CFrame
 	line("e5", ev.lines[2])
 	advance(2)
-	check(
-		(view.CurrentCamera.CFrame.Position - before).Magnitude < 0.3,
-		"the set holds its shot until the player goes on"
-	)
-	goOn()
-	local close = Stages.close(rooftop, 3)
-	local mid = view.CurrentCamera.CFrame.Position
-	check(
-		(mid - before).Magnitude > 0.01 and (mid - close.eye).Magnitude > 1,
-		"the camera starts toward the next shot without jumping"
-	)
-	advance(2)
 	frames(2)
-	check((view.CurrentCamera.CFrame.Position - close.eye).Magnitude < 0.5, "and ends on a close shot of whoever talks")
+	check((cam.CFrame.Position - before.Position).Magnitude < 1e-3, "the set holds its shot until the player goes on")
+	goOn()
+	frames(1)
+	local first = cam.CFrame
+	check((first.Position - before.Position).Magnitude > 1, "the camera cuts to the next shot at once")
+	advance(2)
+	frames(10)
+	check((cam.CFrame.Position - first.Position).Magnitude < 1e-3, "and holds it without drifting")
 	check(words(s:FindFirstChild("Speaker", true), "Text") == "Mara", "her name on the tag")
-	check(cam.CameraType == camType and cam.CFrame == camAt, "the player's own camera never moves")
 	-- the answers, then she walks over and says it
 	askNow("e5")
 	advance(1)
@@ -594,10 +594,7 @@ run("a big moment, watched as a cutscene", function()
 	line("e5", { who = "a", text = "Tobin, I never said thank you. It meant a lot.", icon = "heart" })
 	advance(3)
 	frames(2)
-	check(
-		feet(a) and (feet(a) - flat(rooftop.marks[1].at)).Magnitude < 0.3,
-		"she walks over to him for the line that matters"
-	)
+	check(near(a, rooftop.marks[1].at), "she walks over to him for the line that matters")
 	Sim.remoteEvent("EventLine"):FireClient(Sim.player, {
 		token = "e5",
 		line = { who = "b", text = "Oh. I'm glad you did.", icon = "heart", gesture = "cheer" },
@@ -611,9 +608,11 @@ run("a big moment, watched as a cutscene", function()
 	goOn()
 	check(scene() == nil, "a click on the last line closes it")
 	advance(1)
-	check(gui:FindFirstChild("Cutscene", true) == nil, "and the set goes with it")
+	check(gui:FindFirstChild("Cutscene", true) == nil, "and the screen goes with it")
+	check(Sim.ws:FindFirstChild("CutsceneSet") == nil, "and the set")
 	check(Sim.State.data.talking == false, "the main screen comes back")
 	check(cam.CameraType == camType and cam.CFrame == camAt, "with the player's camera where they left it")
+	check(Sim.Lighting.ClockTime == 12, "and the town's own light")
 	Sim.remoteEvent("EventEnd"):FireClient(Sim.player, { token = "e5", notices = {} })
 	advance(8)
 	check(prompt() == nil, "the prompt goes when it ends")

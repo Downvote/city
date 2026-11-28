@@ -1,17 +1,19 @@
 --!nocheck
--- Cutscenes: the sets the big moments play on (Data/Stages) and the scripts that say which event
--- plays where and how (Data/Cutscenes). The user: "add cutscenes and scenes like tomodachi life
--- as well".
+-- Cutscenes: the sets the big moments play on (Data/Stages), the moves the villagers act them out
+-- with (Data/Moves) and the scripts that say which event plays where and how (Data/Cutscenes and
+-- the events' own). The user: "add cutscenes and scenes like tomodachi life as well", then "could
+-- you not move the camera around in events with special cutscenes? also, make them much more
+-- detailed, without fake lighting" and "make custom animations for villagers for them".
 --
--- Every set is built right (right-handed frames, no z-fighting, within its budget of parts, a sky
--- with colour in it so the dark look's check passes), every villager's mark stands on something
--- and has room, and every shot is inside the set's bounds, clear of it, and looks at something
--- (a shot of the sky looks at its moon or sun). The camera eases in a straight line from one shot
--- to the next, so every move between any two of a set's shots, close shots and push ins
--- included, is clear of the set too. A close shot sees the face it is for past everyone else.
--- Every script names a real event, a real set and real marks, and every line the event can say
--- (its own lines and those after each answer, over many seeded scenes) gets a beat whose shot,
--- acts, turns and moves are all real.
+-- Every set is built right (right-handed frames, no z-fighting, within its budget of parts), lit
+-- by an hour and turned to its sun, every villager's mark stands on something and has room, and
+-- every shot is inside the set's bounds, clear of it, and looks at something (a shot of the sky
+-- looks at its sun or moon). The camera cuts between shots and holds still, so no move between
+-- two shots is checked. A close shot sees the face it is for past everyone else. Every prop has
+-- its spots and real motions, and every mark that rides a prop rides a real part. Every move is a
+-- real keyed pose on real joints. Every script names a real event, a real set and real marks, and
+-- every line the event can say (its own lines and those after each answer, over many seeded
+-- scenes) gets a beat whose shot, acts, turns, moves, props and effects are all real.
 
 local Shared = "ReplicatedStorage.Shared."
 local Stages = require(Shared .. "Data.Stages")
@@ -24,8 +26,9 @@ local StarterHouse = require(Shared .. "Data.StarterHouse")
 local Appearance = require(Shared .. "Avatar.Appearance")
 local Geometry = require(Shared .. "Build.Geometry")
 local Rng = require(Shared .. "Util.Rng")
+local Moves = require(Shared .. "Data.Moves")
 
-local BUDGET = 1000 -- parts a set may have: it is drawn in a ViewportFrame
+local BUDGET = Stages.Budget -- parts a set may have: it is built in the world on the player's screen
 local ROOM = Stages.Room
 local LETTERS = { "a", "b", "c" }
 
@@ -86,10 +89,6 @@ local function hit(s, o, d, far)
 	return best
 end
 
-local function pale(c)
-	return math.min(c.R, c.G, c.B) > 0.74
-end
-
 -- each check lists everything it finds before it fails
 local found = {}
 local function fail(msg)
@@ -99,27 +98,51 @@ local function report()
 	local list = found
 	found = {}
 	if #list > 0 then
-		error(#list .. " found:\n    " .. table.concat(list, "\n    ", 1, math.min(#list, 16)))
+		error(#list .. " found:\n    " .. table.concat(list, "\n    ", 1, math.min(#list, 40)))
 	end
 end
 
 describe("Cutscenes", function()
 	describe("the sets", function()
-		it("has at least ten, each with three marks and its wide, two and pan shots", function()
-			expect(#Stages.list >= 10).toBe(true)
+		it("has at least twenty, each with three marks, its wide, two and side shots, and an hour", function()
+			expect(#Stages.list >= 20).toBe(true)
 			local seen = {}
 			for _, s in Stages.list do
 				expect(seen[s.id]).toBe(nil)
 				seen[s.id] = true
 				expect(#s.marks >= 3).toBe(true)
-				for _, name in { "wide", "two", "pan" } do
+				for _, name in { "wide", "two", "side" } do
 					if not s.shots[name] then
 						error(s.id .. " has no " .. name .. " shot")
 					end
 				end
-				expect(s.shots.pan.to ~= nil).toBe(true)
-				expect(s.light.dir.Magnitude > 0.1).toBe(true)
+				for name, shot in s.shots do
+					-- the camera holds still: no shot glides anywhere
+					expect((shot :: any).to).toBe(nil)
+					local _ = name
+				end
+				expect(s.light.hour >= 0 and s.light.hour < 24).toBe(true)
+				expect(type(s.light.face)).toBe("number")
 			end
+		end)
+
+		it("turns each set so its sun or moon stands where it wants it, as high as its hour puts it", function()
+			for _, s in Stages.list do
+				local real = Stages.lightAt(s.light.hour)
+				local turn = Stages.turnFor(s, real)
+				-- the real light seen from the set, turned back into the set's own space
+				local back = (CFrame.Angles(0, -turn, 0) :: any):VectorToWorldSpace(real)
+				local want = Stages.skyDir(s)
+				if (back - want).Magnitude > 1e-3 then
+					error(s.id .. ": its sun or moon isn't where it faces")
+				end
+				expect(want.Y > -0.1).toBe(true)
+			end
+			-- noon is high, the evening low, and after dark the lamps are lit
+			expect(Stages.sunAt(12).Y > 0.6).toBe(true)
+			expect(math.abs(Stages.sunAt(18).Y) < 0.05).toBe(true)
+			expect(Stages.isNight(22)).toBe(true)
+			expect(Stages.isNight(12)).toBe(false)
 		end)
 
 		it("builds every set with right-handed frames and within its budget", function()
@@ -165,38 +188,79 @@ describe("Cutscenes", function()
 				end
 			end
 			if #bad > 0 then
-				error("z-fighting:\n    " .. table.concat(bad, "\n    ", 1, math.min(#bad, 40)))
+				error("z-fighting:\n    " .. table.concat(bad, "\n    ", 1, math.min(#bad, 120)))
 			end
 		end)
 
-		it("paints every sky with some colour in it (the dark look's check takes a pale one for paper)", function()
-			for _, s in Stages.list do
-				for _, k in { "top", "mid", "horizon", "low" } do
-					local c = s.sky[k]
-					if c and pale(c) then
-						error(s.id .. "'s sky " .. k .. " is too pale")
-					end
+		it("gives every prop its spots and real motions, and every riding mark a real part", function()
+			local AXES = { x = true, y = true, z = true }
+			local function motion(where, m)
+				if not m then
+					return
 				end
-				for _, k in { "sun", "moon" } do
-					local d = s.sky[k]
-					if d and (pale(d.color) or (d.glow and pale(d.glow))) then
-						error(s.id .. "'s " .. k .. " is too pale")
+				for _, k in { "tilt", "swing", "spin" } do
+					if m[k] and not AXES[m[k].axis] then
+						fail(where .. ": a " .. k .. " about no axis")
 					end
 				end
 			end
+			for _, s in Stages.list do
+				for name, prop in s.props or {} do
+					local where = s.id .. " " .. name
+					expect(next(prop.spots) ~= nil).toBe(true)
+					if prop.start ~= nil and not prop.spots[prop.start] then
+						fail(where .. ": starts at no spot")
+					end
+					local made = Stages.propPrims(s.id, name)
+					local count = #made.still
+					for part, def in prop.parts or {} do
+						count += #made.parts[part]
+						motion(where .. " " .. part, def.motion)
+						for spot, m in def.by or {} do
+							if not prop.spots[spot] then
+								fail(where .. " " .. part .. ": moves at no spot " .. spot)
+							end
+							motion(where .. " " .. part, m)
+						end
+						for _, p in Geometry.flatten(made.parts[part]) do
+							local why = wrong(p.cf)
+							if why then
+								fail(where .. " " .. part .. ": a part is " .. why)
+							end
+						end
+					end
+					if count == 0 then
+						fail(where .. ": draws nothing")
+					end
+				end
+				for i, m in s.marks do
+					if m.ride then
+						local prop = s.props and s.props[m.ride.prop]
+						if not prop or not (prop.parts and prop.parts[m.ride.part]) then
+							fail(string.format("%s: mark %d rides no part", s.id, i))
+						end
+					end
+					if m.pose and not Moves.list[m.pose] then
+						fail(string.format("%s: mark %d holds no move %s", s.id, i, m.pose))
+					end
+				end
+			end
+			report()
 		end)
 
 		it("stands every mark on something, with room round it", function()
 			for _, s in Stages.list do
 				for i, m in s.marks do
+					-- (a mark that rides a prop stands on the prop)
 					local below = hit(s, m.at + Vector3.new(0, 0.5, 0), Vector3.new(0, -1, 0), 3)
-					if not below or below > 0.62 then
+					if (not below or below > 0.62) and not m.ride then
 						fail(string.format("%s: mark %d has nothing under it", s.id, i))
 					end
-					-- nothing solid where their body is (a seat's own back excepted: they lean on it)
+					-- nothing solid where their body is (a seat's own back excepted: they lean on it;
+					-- and one lying down or floating has a pose of its own)
 					local top = Stages.head(s, i)
 					local body = if m.sit then 0.3 else 0.5
-					if Stages.blocked(s, m.at + Vector3.new(0, 1.2, 0), top, body) and not m.sit then
+					if not m.pose and Stages.blocked(s, m.at + Vector3.new(0, 1.2, 0), top, body) and not m.sit then
 						fail(string.format("%s: mark %d has something in the way of their body", s.id, i))
 					end
 					for j, o in s.marks do
@@ -223,14 +287,11 @@ describe("Cutscenes", function()
 					expect(shot.fov >= 20 and shot.fov <= 60).toBe(true)
 					local d = (shot.look - shot.eye).Unit
 					if shot.sky then
-						-- a shot of the sky: its moon or sun is in the picture
-						local disc = s.sky.moon or s.sky.sun
-						expect(disc ~= nil).toBe(true)
-						local angle = math.deg(math.acos(math.clamp(disc.dir.Unit:Dot(d), -1, 1)))
-						if angle > shot.fov * 0.8 then
-							fail(
-								where .. ": looks at the sky but not at its " .. (if s.sky.moon then "moon" else "sun")
-							)
+						-- a shot of the sky: its sun or moon is in the picture, over the horizon
+						local dir = Stages.skyDir(s)
+						local angle = math.deg(math.acos(math.clamp(dir:Dot(d), -1, 1)))
+						if angle > shot.fov * 0.8 or dir.Y < 0 then
+							fail(where .. ": looks at the sky but not at its sun or moon")
 						end
 					else
 						-- something solid, or somebody on a mark, in the middle of the picture
@@ -268,21 +329,6 @@ describe("Cutscenes", function()
 			report()
 		end)
 
-		it("moves the camera between any two shots without passing through the set", function()
-			for _, s in Stages.list do
-				local all = Stages.allShots(s)
-				for i = 1, #all do
-					for j = i + 1, #all do
-						local a, b = all[i], all[j]
-						if Stages.blocked(s, a.shot.eye, b.shot.eye, 0.25) then
-							fail(string.format("%s: from %s to %s passes through the set", s.id, a.name, b.name))
-						end
-					end
-				end
-			end
-			report()
-		end)
-
 		it("sees each face in its close shot past the set and everyone else", function()
 			for _, s in Stages.list do
 				for i in s.marks do
@@ -299,6 +345,70 @@ describe("Cutscenes", function()
 		end)
 	end)
 
+	describe("the moves", function()
+		it("keys every move on real joints, in order, and a loop ends where it starts", function()
+			for name, m in Moves.list do
+				expect(#m.keys >= 1).toBe(true)
+				expect(m.keys[1].t).toBe(0)
+				for i, k in m.keys do
+					if i > 1 and k.t <= m.keys[i - 1].t then
+						error(name .. ": its keys are out of order")
+					end
+					for joint in k.j or {} do
+						if not Moves.Joints[joint] then
+							error(name .. ": no joint " .. joint)
+						end
+					end
+				end
+				if m.loop then
+					expect(math.abs(m.keys[#m.keys].t - m.loop) < 1e-6).toBe(true)
+				end
+				if not m.act then
+					error(name .. " says nothing of what it looks like")
+				end
+			end
+		end)
+
+		it("stands a body on its feet, lays it on the ground and sits it on a seat", function()
+			local function lowest(name)
+				local j, r = Moves.sample(name, 0.4)
+				local stand = CFrame.new(0, Moves.Lift, 0)
+				local at = Moves.figure(Moves.place(stand, r), j)
+				local low, high = math.huge, -math.huge
+				for _, b in Moves.Body do
+					local cf = at[b.name]
+					for _, sx in { -1, 1 } do
+						for _, sy in { -1, 1 } do
+							for _, sz in { -1, 1 } do
+								local p = cf * Vector3.new(sx * b.size.X / 2, sy * b.size.Y / 2, sz * b.size.Z / 2)
+								low = math.min(low, p.Y)
+								high = math.max(high, p.Y)
+							end
+						end
+					end
+				end
+				return low, high
+			end
+			local low, high = lowest(nil)
+			expect(math.abs(low) < 0.05).toBe(true)
+			expect(high > 5).toBe(true)
+			low, high = lowest("lie")
+			expect(low > -0.4 and high < 1.6).toBe(true)
+			low = lowest("pushup")
+			expect(low > -0.5).toBe(true)
+		end)
+
+		it("plays a move once, holds one, or loops it", function()
+			local _, _, done = Moves.sample("nod", 5)
+			expect(done).toBe(true)
+			_, _, done = Moves.sample("kneel", 5)
+			expect(done).toBe(false)
+			local j1 = Moves.sample("run", 0.1)
+			local j2 = Moves.sample("run", 0.1 + Moves.list.run.loop)
+			expect(math.abs(j1.RightHip[1] - j2.RightHip[1]) < 1e-6).toBe(true)
+		end)
+	end)
+
 	describe("the scripts", function()
 		it("gives a cutscene to every big moment that exists", function()
 			for _, id in
@@ -312,6 +422,22 @@ describe("Cutscenes", function()
 					"quarrel",
 					"stars",
 					"bigday",
+					-- and the newer ones (Data/Events/Moments), each on a set of its own
+					"redtree",
+					"trackrace",
+					"pizzanight",
+					"catpat",
+					"cloudfriend",
+					"oddroom",
+					"facecontest",
+					"eatrace",
+					"glowfight",
+					"thronedream",
+					"bigwheel",
+					"seesaw",
+					"pushups",
+					"oddsounds",
+					"squaredance",
 				}
 			do
 				local script, stage = Cutscenes.forEvent(id, { lines = { { text = "x" } } })
@@ -369,18 +495,43 @@ describe("Cutscenes", function()
 				end
 			end
 			for who, mark in b.cast or {} do
-				if not letters[who] or not s.marks[mark] then
+				if not letters[who] or (mark ~= 0 and not s.marks[mark]) then
 					error(where .. ": " .. tostring(who) .. " on mark " .. tostring(mark) .. " of " .. s.id)
 				end
 			end
-			if b.fx and b.fx ~= "stars" then
-				error(where .. ": no effect " .. b.fx)
+			for who, pace in b.pace or {} do
+				if not letters[who] or type(pace) ~= "number" or pace <= 0 or pace > 30 then
+					error(where .. ": a pace of " .. tostring(pace) .. " for " .. tostring(who))
+				end
+			end
+			for name, spot in b.prop or {} do
+				local prop = s.props and s.props[name]
+				if not prop then
+					error(where .. ": " .. s.id .. " has no prop " .. tostring(name))
+				end
+				if spot ~= false and not prop.spots[spot] then
+					error(where .. ": " .. name .. " has no spot " .. tostring(spot))
+				end
+			end
+			local fx = if type(b.fx) == "table" then b.fx elseif b.fx then { b.fx } else {}
+			for _, f in fx do
+				local kind, letter = string.match(f, "^(%a+):?(%a*)$")
+				local named = kind and Cutscenes.Fx[kind]
+				if named == nil then
+					error(where .. ": no effect " .. tostring(f))
+				end
+				if named and not letters[letter] then
+					error(where .. ": " .. f .. " names nobody in it")
+				end
+				if kind == "cloud" and not (s.spots and s.spots.cloud) then
+					error(where .. ": a cloud on " .. s.id .. ", which has no spot for one")
+				end
 			end
 			return if b.set then b.set else stage
 		end
 
 		it("names real events, sets, marks, shots and acts", function()
-			for id, script in Cutscenes.byEvent do
+			for id, script in Cutscenes.all() do
 				local def = Events.get(id)
 				if not def then
 					error("a cutscene for " .. id .. ", which isn't an event")
@@ -404,11 +555,12 @@ describe("Cutscenes", function()
 					end
 					local used = {}
 					for letter in letters do
+						-- (0: in the event but kept off the set)
 						local m = Cutscenes.markOf(script, letter)
-						if not m or not s.marks[m] then
+						if m ~= 0 and (not m or not s.marks[m]) then
 							error(id .. ": " .. letter .. " has no mark on " .. stage)
 						end
-						if used[m] then
+						if m ~= 0 and used[m] then
 							error(id .. ": two stand on mark " .. m)
 						end
 						used[m] = true
@@ -424,17 +576,45 @@ describe("Cutscenes", function()
 					for n, b in script.lines or {} do
 						now = checkBeat(id .. " lines " .. n, b, now, letters)
 					end
+					-- a cue, the question and the end can come on any set the scene reaches (a dream
+					-- ends in the bedroom): each must be right on one of them
+					local reach = { stage }
+					local function reaches(b)
+						if b and b.set and not table.find(reach, b.set) then
+							table.insert(reach, b.set)
+						end
+					end
+					for _, b in script.lines or {} do
+						reaches(b)
+					end
+					for _, b in script.after or {} do
+						reaches(b)
+					end
+					for _, b in script.cues or {} do
+						reaches(b)
+					end
+					local function onAny(where, b)
+						local first = nil
+						for _, set in reach do
+							local ok, why = pcall(checkBeat, where, b, set, letters)
+							if ok then
+								return
+							end
+							first = first or why
+						end
+						error(first)
+					end
 					if script.ask then
-						checkBeat(id .. " ask", script.ask, now, letters)
+						onAny(id .. " ask", script.ask)
 					end
 					for n, b in script.after or {} do
 						now = checkBeat(id .. " after " .. n, b, now, letters)
 					end
 					if script.ending then
-						checkBeat(id .. " ending", script.ending, now, letters)
+						onAny(id .. " ending", script.ending)
 					end
 					for name, b in script.cues or {} do
-						checkBeat(id .. " cue " .. name, b, stage, letters)
+						onAny(id .. " cue " .. name, b)
 					end
 				end
 			end
@@ -474,7 +654,7 @@ describe("Cutscenes", function()
 			b = Cutscenes.beat(script, { who = "a", text = "Oh.", icon = "sad", at = { phase = "lines", n = 2 } })
 			expect(b.act.a).toBe("sad")
 			b = Cutscenes.beat(script, { text = "Later.", at = { phase = "lines", n = 3 } }, { shot = "wide" })
-			expect(b.shot).toBe("pan")
+			expect(b.shot).toBe("side")
 			-- a beat for a heart line leaves a sweat line alone; a cue gives the speaker the act
 			local with =
 				{ stage = "pier", after = { [1] = { icon = "heart", shot = "push", act = { ["*"] = "kneel" } } } }
@@ -526,7 +706,7 @@ describe("Cutscenes", function()
 					freeSlots = 4,
 					friends = {},
 				})
-				for id, script in Cutscenes.byEvent do
+				for id, script in Cutscenes.all() do
 					local def = Events.get(id)
 					local actors = { "v1", "v2", "v3" }
 					ctx.names, ctx.stars = {}, {}
@@ -547,9 +727,11 @@ describe("Cutscenes", function()
 						for _, c in scene.choices or {} do
 							table.insert(runs, c.lines or {})
 						end
+						-- (the answers' lines go on from the set the question was asked on)
+						local asked = stage
 						for r, lines in runs do
 							local at, prev = nil, nil
-							local now = stage
+							local now = if r > 1 then asked else stage
 							if r > 1 then
 								at = Cutscenes.asked()
 							end
@@ -564,13 +746,20 @@ describe("Cutscenes", function()
 								now = checkBeat(id .. " line " .. at.phase .. " " .. at.n, b, now, letters)
 								prev = b
 							end
+							if r == 1 then
+								asked = now
+								if scene.choices then
+									checkBeat(id .. " ask", Cutscenes.beat(script, { ask = true }), now, letters)
+								end
+							end
+							if r > 1 or not scene.choices then
+								checkBeat(id .. " ending", Cutscenes.beat(script, { ending = true }), now, letters)
+							end
 						end
-						checkBeat(id .. " ask", Cutscenes.beat(script, { ask = true }), stage, letters)
-						checkBeat(id .. " ending", Cutscenes.beat(script, { ending = true }), stage, letters)
 					end
 				end
 			end
-			for id in Cutscenes.byEvent do
+			for id in Cutscenes.all() do
 				if not tried[id] then
 					error("no scene of " .. id .. " could be made to check")
 				end

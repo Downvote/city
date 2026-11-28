@@ -266,6 +266,13 @@ FakeMT.__newindex = function(self, key, value)
 		setParent(self, value)
 		return
 	end
+	-- a property the fake was given (Fake.extend) can be set too (Lighting's clock)
+	local extra = rawget(self, "_extra")
+	if extra[key] ~= nil and type(extra[key]) ~= "function" then
+		extra[key] = value
+		propSignal(self, key):Fire()
+		return
+	end
 	local real = rawget(self, "_real")
 	if key == "Name" then
 		rawset(self, "_name", value)
