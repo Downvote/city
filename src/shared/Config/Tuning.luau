@@ -944,6 +944,16 @@ Tuning.Bag = {
 	Drops = 6, -- dropped things one player can have lying about at once (the oldest goes)
 }
 
+-- Carrying ------------------------------------------------------------------------------
+-- A thing in the hand and on the ground (Data/ThingModels; the user: "check the models for
+-- handheld items. make them look more detailed and more recognizable for the things they are.
+-- also, some of them are held wrongly, such as the flowers being held upside down").
+Tuning.Carry = {
+	Parts = 24, -- shapes in one thing's model, at most
+	Fade = 0.2, -- seconds the arm takes to come up or go down (client World/Carry)
+	Lift = 0.02, -- studs a dropped thing lies over the ground the ray found
+}
+
 -- Lights ---------------------------------------------------------------------------------
 -- How bright the lamps' lights are and how far they reach, against what each piece asks for
 -- (Recipe.glow). They were dimmed once (the user: "the placeable lights are too bright", when a
