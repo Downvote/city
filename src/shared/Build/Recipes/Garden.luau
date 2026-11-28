@@ -251,12 +251,14 @@ type Item = {
 	style: string?, -- the look it belongs to (Catalog.Styles)
 	lively: boolean?, -- moves or gives off an effect (Build/Lively)
 	build: (r: R) -> (),
+	gives: string?, -- holding E gives the player something (Data/Items.Sources)
 }
 
 local items: { Item } = {
 	{
 		id = "tree_oak",
 		name = "Oak tree",
+		gives = "acorns", -- holding E gives something (Data/Items.Sources)
 		cat = "garden",
 		style = "garden",
 		price = 120,
@@ -376,6 +378,7 @@ local items: { Item } = {
 	{
 		id = "flower_bed",
 		name = "Flower bed",
+		gives = "flowers", -- holding E gives something (Data/Items.Sources)
 		cat = "garden",
 		style = "garden",
 		price = 50,
@@ -663,6 +666,7 @@ local items: { Item } = {
 	{
 		id = "mailbox",
 		name = "Mailbox",
+		gives = "mail", -- holding E gives something (Data/Items.Sources)
 		cat = "garden",
 		price = 40,
 		place = "ground",
@@ -799,6 +803,7 @@ local items: { Item } = {
 	{
 		id = "sandbox",
 		name = "Sandbox",
+		gives = "sand", -- holding E gives something (Data/Items.Sources)
 		cat = "garden",
 		style = "playful",
 		price = 80,
@@ -841,6 +846,7 @@ local items: { Item } = {
 	{
 		id = "campfire",
 		name = "Campfire",
+		gives = "grill", -- holding E gives something (Data/Items.Sources)
 		cat = "garden",
 		style = "rustic",
 		price = 60,
@@ -886,6 +892,7 @@ local items: { Item } = {
 	{
 		id = "well",
 		name = "Well",
+		gives = "wish", -- holding E gives something (Data/Items.Sources)
 		cat = "garden",
 		style = "rustic",
 		price = 220,
@@ -1115,6 +1122,7 @@ local items: { Item } = {
 	{
 		id = "bbq",
 		name = "BBQ grill",
+		gives = "grill", -- holding E gives something (Data/Items.Sources)
 		cat = "garden",
 		style = "garden",
 		price = 180,
@@ -1451,6 +1459,7 @@ local items: { Item } = {
 	{
 		id = "flower_border",
 		name = "Flower border",
+		gives = "flowers", -- holding E gives something (Data/Items.Sources)
 		cat = "garden",
 		style = "garden",
 		price = 30,
@@ -1494,6 +1503,7 @@ local items: { Item } = {
 	{
 		id = "veg_patch",
 		name = "Vegetable patch",
+		gives = "veg", -- holding E gives something (Data/Items.Sources)
 		cat = "garden",
 		style = "garden",
 		price = 50,
@@ -1649,6 +1659,7 @@ local items: { Item } = {
 	{
 		id = "flower_pot",
 		name = "Flower pot",
+		gives = "flowers", -- holding E gives something (Data/Items.Sources)
 		cat = "garden",
 		style = "garden",
 		price = 20,

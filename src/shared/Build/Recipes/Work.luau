@@ -264,6 +264,7 @@ local items: { any } = {
 	{
 		id = "work_market",
 		name = "Market stall",
+		gives = "market", -- holding E gives something (Data/Items.Sources)
 		cat = "work",
 		price = 450,
 		place = "floor",
@@ -522,6 +523,7 @@ local items: { any } = {
 	{
 		id = "work_cafe",
 		name = "Cafe counter",
+		gives = "cafe", -- holding E gives something (Data/Items.Sources)
 		cat = "work",
 		price = 520,
 		place = "floor",
@@ -708,6 +710,7 @@ local items: { any } = {
 	{
 		id = "work_bakery",
 		name = "Bread oven",
+		gives = "bakery", -- holding E gives something (Data/Items.Sources)
 		cat = "work",
 		price = 560,
 		place = "floor",
@@ -853,6 +856,7 @@ local items: { any } = {
 	{
 		id = "work_flowers",
 		name = "Flower cart",
+		gives = "florist", -- holding E gives something (Data/Items.Sources)
 		cat = "work",
 		price = 380,
 		place = "floor",
@@ -1028,6 +1032,7 @@ local items: { any } = {
 	{
 		id = "work_easel",
 		name = "Artist's easel",
+		gives = "artist", -- holding E gives something (Data/Items.Sources)
 		cat = "work",
 		price = 300,
 		place = "floor",
@@ -1808,6 +1813,7 @@ local items: { any } = {
 	{
 		id = "work_builder",
 		name = "Builder's bench",
+		gives = "builder", -- holding E gives something (Data/Items.Sources)
 		cat = "work",
 		price = 600,
 		place = "floor",
@@ -1959,6 +1965,7 @@ local items: { any } = {
 	{
 		id = "work_post",
 		name = "Post office desk",
+		gives = "post", -- holding E gives something (Data/Items.Sources)
 		cat = "work",
 		price = 420,
 		place = "floor",
@@ -2189,6 +2196,7 @@ local items: { any } = {
 	{
 		id = "work_icecream",
 		name = "Ice cream cart",
+		gives = "icecream", -- holding E gives something (Data/Items.Sources)
 		cat = "work",
 		price = 400,
 		place = "floor",
@@ -2371,6 +2379,7 @@ local items: { any } = {
 	{
 		id = "work_library",
 		name = "Library desk",
+		gives = "library", -- holding E gives something (Data/Items.Sources)
 		cat = "work",
 		price = 640,
 		place = "floor",

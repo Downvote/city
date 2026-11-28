@@ -33,6 +33,7 @@ local Icons = require(script.Parent.Icons)
 local MenuParts = require(script.Parent.MenuParts)
 local Toasts = require(script.Parent.Toasts)
 local ModelPreview = require(script.Parent.ModelPreview)
+local GiftPicker = require(script.Parent.GiftPicker)
 local State = require(script.Parent.Parent.Controllers.State)
 
 local Residents = {}
@@ -275,8 +276,8 @@ local function about(parent: Frame, vid: string, v: any, p: any)
 		Parent = tiles,
 		LayoutOrder = 2,
 		TextSize = 24,
-		Sub = Text.fill("of {n}", { n = Tuning.Life.HeartMax }),
-		Bar = if level >= Tuning.Life.HeartMax then 1 else (v.hxp or 0) / math.max(1, need),
+		-- (no top level: the bar is the way to the next)
+		Bar = (v.hxp or 0) / math.max(1, need),
 	})
 
 	local grid = Kit.box({
@@ -945,8 +946,16 @@ local function showDetail()
 		local Hud = require(script.Parent.Hud)
 		Hud.open("Creator", { mode = "edit", vid = vid })
 	end)
+	-- a thing from the bag (UI/GiftPicker): what they say comes up as a notice, and over their head
+	action("gift", "Gift", T.Pink, 4, function()
+		GiftPicker.open(panel.root, vid, function(r: any)
+			if type(r) == "table" and type(r.line) == "string" then
+				Toasts.show(Text.fill("{x}: {line}", { x = v.name, line = r.line }), "good")
+			end
+		end)
+	end)
 	local confirm = false
-	action("door", "Move out", T.Coral, 4, function()
+	action("door", "Move out", T.Coral, 5, function()
 		if not confirm then
 			confirm = true
 			Toasts.show(Text.fill("Press Move out again to say goodbye to {name}.", { name = v.name }), "warn")
@@ -1073,6 +1082,7 @@ end
 
 function Residents.close()
 	closePopup()
+	GiftPicker.close()
 	for _, u in unbind do
 		u()
 	end

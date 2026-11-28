@@ -404,8 +404,9 @@ Tuning.City = {
 }
 
 -- Hearts and wishes ---------------------------------------------------------
+-- Heart levels have no top (the user: "also, make it such that heart level is uncapped"): each
+-- level asks HeartStep more points than the last, so the steps keep growing.
 Tuning.Life = {
-	HeartMax = 20,
 	HeartBase = 4, -- points for the next heart level: HeartBase + HeartStep * level
 	HeartStep = 2,
 	WishHearts = 4,
@@ -462,6 +463,31 @@ Tuning.Flair = {
 	ThingMax = 30, -- in their favourite thing (what they bring up in chats)
 	EndingShare = 0.2, -- of their sentences that get the ending (Sim/Voice, the same lines every time)
 	PhraseChance = 0.25, -- of the lines over their head that are the catchphrase, when they have one
+}
+
+-- Gifts (Sim/Gifts, Services/Gifts). The user: "You can then gift villagers different items to
+-- make them happy. Villagers will have a preference to things they like based on personality. Each
+-- villager will have a gift limit of 1 per day, and they can gift you things as well." Days are town
+-- days. A loved gift does what a granted wish does, a so-so one half that, a disliked one sours them a
+-- little; Data/Personalities says what each likes.
+Tuning.Gifts = {
+	PerDay = 1, -- gifts a villager takes from you a town day
+	LoveHearts = 4,
+	LoveMood = 10,
+	OkHearts = 2,
+	OkMood = 4,
+	BadHearts = 0,
+	BadMood = -4,
+	-- what they give you: once a town day, the first time you talk to them, they may have something
+	GiveChance = 0.3,
+	GiveHeart = 2, -- the heart level they need with you first
+	GiveMood = 40, -- and the mood
+}
+
+-- Titles a player wears under their name (Data/Titles, Sim/Titles), won from town goals.
+Tuning.Titles = {
+	Height = 2.6, -- studs over the head's middle the name tag hangs
+	Distance = 60, -- studs: further off than this it doesn't show
 }
 
 -- What villagers remember from their events (Sim/Memory): a band they joined, a hat they wear for a
@@ -576,6 +602,28 @@ Tuning.Uses = {
 	Cooldown = 1.2, -- seconds between two goes for one player
 	Rest = 2.5, -- seconds a piece rests between two goes
 	Bubble = 3.5, -- seconds what happened shows over the piece
+}
+
+-- The bag (Sim/Bag, Services/Bag). The user: "make it such that you can pick up items, and
+-- interactable items give you things, such as a bookshelf giving you a book, you can work on stoves
+-- to make food, flower beds giving you flowers, etc. ... add an inventory system to the player."
+-- A piece that gives something says so in its drawing (`gives`, a source in Data/Items). A day is a
+-- town day (twelve real minutes).
+Tuning.Bag = {
+	Stack = 10, -- of one thing
+	Total = 40, -- things in the bag in all
+	Gathers = 10, -- things a player can take from pieces in a town day (work's count too)
+	Rest = 90, -- seconds before the same piece gives anything again
+	Cooldown = 1.2, -- seconds between two goes for one player
+	HoldSeconds = 0.5, -- how long E is held to take something
+	CookSeconds = 2, -- and to cook at a stove or a grill
+	Distance = 8, -- studs: how close you stand for the prompt to show
+	Reaches = 14, -- studs: the server's check of where you stand
+	RareChance = 0.08, -- a source's rare thing instead of its usual ones
+	WorkEvery = 45, -- seconds working at a workplace that makes things, for each thing made
+	WorkCheck = 5, -- seconds between two looks at who is working
+	DropSeconds = 120, -- how long a dropped thing lies before it goes
+	Drops = 6, -- dropped things one player can have lying about at once (the oldest goes)
 }
 
 -- Lights ---------------------------------------------------------------------------------

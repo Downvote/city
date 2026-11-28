@@ -746,7 +746,8 @@ describe("Event engine", function()
 		end
 		expect(used >= #EventProps.list - 2).toBeTruthy()
 		for _, def in Catalog.list("keepsakes") do
-			if not keepsakesSeen[def.id] then
+			-- (a prize comes from a town goal, not an event: Build/Recipes/Prizes)
+			if not keepsakesSeen[def.id] and not def.prize then
 				-- every keepsake is made in some event
 				local made = false
 				for _, ev in Events.list do

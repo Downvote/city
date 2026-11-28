@@ -301,6 +301,7 @@ type Item = {
 	surface: number?,
 	style: string,
 	build: (r: R) -> (),
+	gives: string?, -- holding E gives the player something (Data/Items.Sources)
 }
 
 local items: { Item } = {
@@ -414,6 +415,7 @@ local items: { Item } = {
 	{
 		id = "rustic_wood_stove",
 		name = "Wood stove",
+		gives = "cook", -- holding E gives something (Data/Items.Sources)
 		cat = "kitchen",
 		price = 320,
 		place = "floor",
@@ -1480,6 +1482,7 @@ local items: { Item } = {
 	{
 		id = "rustic_pantry_shelf",
 		name = "Pantry shelf",
+		gives = "pantry", -- holding E gives something (Data/Items.Sources)
 		cat = "kitchen",
 		price = 80,
 		place = "wall",

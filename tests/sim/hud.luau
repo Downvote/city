@@ -70,14 +70,15 @@ run("the round buttons under the clock: home, the city hall, the news, the store
 	end
 	-- (the store came in beside the news: "add gamepasses, just like bloxburg", then the garage beside
 	-- it: "make vehicles")
-	check(table.concat(order, " ") == "Home CityPanel News Store Garage Look", "six of them, in that order")
+	-- (and the bag beside the garage: "add an inventory system to the player")
+	check(table.concat(order, " ") == "Home CityPanel News Store Garage Bag Look", "seven of them, in that order")
 	check(corner:FindFirstChild("MapPanel", true) == nil, "no Map button")
 	check(corner:FindFirstChild("ShopPanel", true) == nil, "and no Shop button")
 	check(Hud.panel("MapPanel") == nil, "there is no map screen to open")
 	check(Hud.panel("ShopPanel") == nil, "and no shop screen")
-	-- the row is no wider than its five buttons need, and still hangs from the right edge
-	local need = 5 * 54 + 4 * 8
-	check(corner.Size.X.Offset >= need and corner.Size.X.Offset <= need + 16, "the row is as wide as five buttons")
+	-- the row is no wider than its six buttons need, and still hangs from the right edge
+	local need = 6 * 54 + 5 * 8
+	check(corner.Size.X.Offset >= need and corner.Size.X.Offset <= need + 16, "the row is as wide as six buttons")
 	check(corner.AnchorPoint.X == 1 and corner.Position.X.Scale == 1, "at the right edge")
 end)
 

@@ -8,6 +8,9 @@
 --   lazy      naps, skipped chores, skipped turns
 --   brave     charges in, protects friends
 --   focus     sticks to the plan (high) or does something random (low)
+-- `likes` and `dislikes` are the kinds of thing (Data/Items' categories) they love and don't care
+-- for as a gift (the user: "Villagers will have a preference to things they like based on
+-- personality"); what they say to a gift is Data/GiftLines.
 -- `lines` is their own voice, by kind: hello, happy, sad, angry, thanks (the speech bubbles and
 -- Sim/Talk), and the reactions the events reach for (Data/Events/Kit's s:voice): wow, scared,
 -- sorry, yes, no, bye, tease, brag, worry, hmm, excited, tired, laugh. So the same event sounds
@@ -41,6 +44,8 @@ export type Personality = {
 	blurb: string,
 	traits: { [string]: number },
 	color: string,
+	likes: { string }, -- the kinds of thing (Data/Items' categories) they love being given (Sim/Gifts)
+	dislikes: { string }, -- and the kinds they'd rather not have
 	lines: { [string]: { string } },
 }
 
@@ -55,6 +60,9 @@ Personalities.list = {
 		blurb = "Chatty and upbeat, makes friends with anyone and tells you everything.",
 		traits = { social = 0.95, temper = 0.2, kind = 0.65, mischief = 0.3, lazy = 0.2, brave = 0.6, focus = 0.5 },
 		color = "FFD45C",
+		-- what they like and dislike being given (Sim/Gifts; Data/Items' categories)
+		likes = { "sweet", "flower" },
+		dislikes = { "book" },
 		lines = {
 			hello = {
 				"Oh, hi, I was hoping I'd run into someone!",
@@ -195,6 +203,9 @@ Personalities.list = {
 		blurb = "Kind and patient, asks if you've eaten and notices when someone is down.",
 		traits = { social = 0.6, temper = 0.1, kind = 0.95, mischief = 0.05, lazy = 0.3, brave = 0.4, focus = 0.7 },
 		color = "A8DB8A",
+		-- what they like and dislike being given (Sim/Gifts; Data/Items' categories)
+		likes = { "flower", "drink" },
+		dislikes = { "trinket" },
 		lines = {
 			hello = {
 				"Oh, hello, have you eaten yet today?",
@@ -335,6 +346,9 @@ Personalities.list = {
 		blurb = "Brave and loud, says what they think and stands up for their friends.",
 		traits = { social = 0.7, temper = 0.7, kind = 0.5, mischief = 0.4, lazy = 0.15, brave = 0.95, focus = 0.45 },
 		color = "E8667A",
+		-- what they like and dislike being given (Sim/Gifts; Data/Items' categories)
+		likes = { "meal", "trinket" },
+		dislikes = { "flower" },
 		lines = {
 			hello = {
 				"Hey, you look like you need a walk, so come on.",
@@ -475,6 +489,9 @@ Personalities.list = {
 		blurb = "Head in the clouds, notices odd little things and wanders off.",
 		traits = { social = 0.5, temper = 0.2, kind = 0.6, mischief = 0.45, lazy = 0.5, brave = 0.4, focus = 0.1 },
 		color = "C4A8EB",
+		-- what they like and dislike being given (Sim/Gifts; Data/Items' categories)
+		likes = { "flower", "book" },
+		dislikes = { "meal" },
 		lines = {
 			hello = {
 				"Oh, hello, I was watching a snail.",
@@ -614,6 +631,9 @@ Personalities.list = {
 		blurb = "Relaxed and lazy, naps a lot and calls it research.",
 		traits = { social = 0.55, temper = 0.1, kind = 0.6, mischief = 0.25, lazy = 0.95, brave = 0.35, focus = 0.35 },
 		color = "8FD3E8",
+		-- what they like and dislike being given (Sim/Gifts; Data/Items' categories)
+		likes = { "drink", "meal" },
+		dislikes = { "craft" },
 		lines = {
 			hello = {
 				"Hey, *yawn*, sorry, I only just woke up.",
@@ -753,6 +773,9 @@ Personalities.list = {
 		blurb = "Confident and stubborn, wants to be the best and wants you to say so.",
 		traits = { social = 0.5, temper = 0.6, kind = 0.35, mischief = 0.3, lazy = 0.25, brave = 0.7, focus = 0.8 },
 		color = "F5B431",
+		-- what they like and dislike being given (Sim/Gifts; Data/Items' categories)
+		likes = { "trinket", "craft" },
+		dislikes = { "greens" },
 		lines = {
 			hello = {
 				"Ah, there you are, you'll be glad to hear I'm in an excellent mood.",
@@ -893,6 +916,9 @@ Personalities.list = {
 		blurb = "Quiet and careful, warms up slowly but means every word.",
 		traits = { social = 0.25, temper = 0.25, kind = 0.75, mischief = 0.1, lazy = 0.35, brave = 0.2, focus = 0.75 },
 		color = "FFD1DC",
+		-- what they like and dislike being given (Sim/Gifts; Data/Items' categories)
+		likes = { "book", "sweet" },
+		dislikes = { "meal" },
 		lines = {
 			hello = {
 				"Um, hi, sorry, I didn't see you there.",
@@ -1032,6 +1058,9 @@ Personalities.list = {
 		blurb = "A prankster with a big grin who loves getting a reaction.",
 		traits = { social = 0.75, temper = 0.35, kind = 0.45, mischief = 0.95, lazy = 0.3, brave = 0.6, focus = 0.3 },
 		color = "F08A2E",
+		-- what they like and dislike being given (Sim/Gifts; Data/Items' categories)
+		likes = { "sweet", "trinket" },
+		dislikes = { "greens" },
 		lines = {
 			hello = {
 				"Oh, hey, you didn't see me, okay?",
@@ -1171,6 +1200,9 @@ Personalities.list = {
 		blurb = "Calm and hard to impress, with few words, dry jokes and quiet pleasure.",
 		traits = { social = 0.35, temper = 0.3, kind = 0.5, mischief = 0.25, lazy = 0.4, brave = 0.7, focus = 0.75 },
 		color = "7FA7C9",
+		-- what they like and dislike being given (Sim/Gifts; Data/Items' categories)
+		likes = { "drink", "book" },
+		dislikes = { "sweet" },
 		lines = {
 			hello = {
 				"Hey, good to see you.",
@@ -1310,6 +1342,9 @@ Personalities.list = {
 		blurb = "Grumbles that they don't care, then helps anyway.",
 		traits = { social = 0.45, temper = 0.75, kind = 0.65, mischief = 0.3, lazy = 0.3, brave = 0.6, focus = 0.7 },
 		color = "E2795B",
+		-- what they like and dislike being given (Sim/Gifts; Data/Items' categories)
+		likes = { "greens", "drink" },
+		dislikes = { "flower" },
 		lines = {
 			hello = {
 				"Oh, it's you, hi, I suppose.",
@@ -1449,6 +1484,9 @@ Personalities.list = {
 		blurb = "Everything is a big moment, with big words and big entrances.",
 		traits = { social = 0.85, temper = 0.5, kind = 0.5, mischief = 0.45, lazy = 0.3, brave = 0.75, focus = 0.35 },
 		color = "B36BD6",
+		-- what they like and dislike being given (Sim/Gifts; Data/Items' categories)
+		likes = { "flower", "craft" },
+		dislikes = { "fruit" },
 		lines = {
 			hello = {
 				"Ah, at LAST, someone worth talking to!",
@@ -1589,6 +1627,9 @@ Personalities.list = {
 		blurb = "Reads everything and loves telling you odd facts, sometimes for a bit too long.",
 		traits = { social = 0.35, temper = 0.2, kind = 0.6, mischief = 0.15, lazy = 0.25, brave = 0.3, focus = 0.9 },
 		color = "6B8E6B",
+		-- what they like and dislike being given (Sim/Gifts; Data/Items' categories)
+		likes = { "book", "fruit" },
+		dislikes = { "sweet" },
 		lines = {
 			hello = {
 				"Oh, hello, sorry, I was halfway through a chapter.",
@@ -1728,6 +1769,9 @@ Personalities.list = {
 		blurb = "Expects the worst and says so, but is sweet underneath.",
 		traits = { social = 0.3, temper = 0.35, kind = 0.6, mischief = 0.2, lazy = 0.55, brave = 0.35, focus = 0.55 },
 		color = "6F6A8F",
+		-- what they like and dislike being given (Sim/Gifts; Data/Items' categories)
+		likes = { "trinket", "craft" },
+		dislikes = { "fruit" },
 		lines = {
 			hello = {
 				"Oh, it's you, hi.",
@@ -1868,6 +1912,9 @@ Personalities.list = {
 		blurb = "Proper and formal, and thanks you for everything twice.",
 		traits = { social = 0.6, temper = 0.1, kind = 0.8, mischief = 0.1, lazy = 0.2, brave = 0.45, focus = 0.8 },
 		color = "8FB8DE",
+		-- what they like and dislike being given (Sim/Gifts; Data/Items' categories)
+		likes = { "flower", "sweet" },
+		dislikes = { "trinket" },
 		lines = {
 			hello = {
 				"Hello, I hope you are well today.",
@@ -2007,6 +2054,9 @@ Personalities.list = {
 		blurb = "Always thinking about the next meal, and the one after.",
 		traits = { social = 0.7, temper = 0.3, kind = 0.6, mischief = 0.35, lazy = 0.5, brave = 0.45, focus = 0.4 },
 		color = "F2A65A",
+		-- what they like and dislike being given (Sim/Gifts; Data/Items' categories)
+		likes = { "meal", "sweet", "fruit" },
+		dislikes = { "book" },
 		lines = {
 			hello = {
 				"Hey, have you eaten? I've already had two snacks.",
@@ -2147,6 +2197,9 @@ Personalities.list = {
 		blurb = "Worries about what could go wrong, though it usually goes fine.",
 		traits = { social = 0.45, temper = 0.35, kind = 0.65, mischief = 0.1, lazy = 0.3, brave = 0.1, focus = 0.6 },
 		color = "A8C686",
+		-- what they like and dislike being given (Sim/Gifts; Data/Items' categories)
+		likes = { "drink", "book" },
+		dislikes = { "craft" },
 		lines = {
 			hello = {
 				"Oh, h-hi, sorry, you made me jump.",

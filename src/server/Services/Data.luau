@@ -209,6 +209,13 @@ function Data.clientState(player: Player): any
 		passes = p.passes,
 		playtime = p.playtime, -- today's play and the steps claimed (Sim/Rewards, the Rewards menu)
 		achieved = p.achieved, -- achievements claimed, and the group's gems ("group")
+		-- the bag (Sim/Bag): what is in it, what a goal still owes it, today's gathering; the titles won
+		-- and the one worn (Sim/Titles)
+		bag = p.bag,
+		owed = p.owed,
+		gather = p.gather,
+		titles = p.titles,
+		title = p.title or false,
 		unsaved = unsaved[player] == true,
 		plot = player:GetAttribute("Plot"),
 		plan = p.plan,

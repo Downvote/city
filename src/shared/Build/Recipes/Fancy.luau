@@ -178,6 +178,7 @@ type Item = {
 	tags: { string }?,
 	surface: number?,
 	build: (r: R) -> (),
+	gives: string?, -- holding E gives the player something (Data/Items.Sources)
 }
 
 local items: { Item } = {
@@ -563,6 +564,7 @@ local items: { Item } = {
 	{
 		id = "fancy_tea_set",
 		name = "Tea table",
+		gives = "tea", -- holding E gives something (Data/Items.Sources)
 		cat = "tables",
 		style = "fancy",
 		price = 150,
@@ -879,6 +881,7 @@ local items: { Item } = {
 	{
 		id = "fancy_bookcase_glass",
 		name = "Glass front bookcase",
+		gives = "books", -- holding E gives something (Data/Items.Sources)
 		cat = "storage",
 		style = "fancy",
 		price = 380,
@@ -1982,6 +1985,7 @@ local items: { Item } = {
 	{
 		id = "fancy_range",
 		name = "Range cooker",
+		gives = "cook", -- holding E gives something (Data/Items.Sources)
 		cat = "kitchen",
 		style = "fancy",
 		price = 480,

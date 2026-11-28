@@ -179,6 +179,7 @@ type Item = {
 	tags: { string }?,
 	surface: number?,
 	build: (r: R) -> (),
+	gives: string?, -- holding E gives the player something (Data/Items.Sources)
 }
 
 local items: { Item } = {
@@ -1776,6 +1777,7 @@ local items: { Item } = {
 	{
 		id = "play_easel",
 		name = "Kids' easel",
+		gives = "draw", -- holding E gives something (Data/Items.Sources)
 		cat = "fun",
 		style = "playful",
 		price = 90,

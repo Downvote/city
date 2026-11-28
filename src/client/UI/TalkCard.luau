@@ -5,7 +5,8 @@
 -- appears, make the character talking slide into view at the side with a textbox as such"): the
 -- villager slides in at the left as a big bust, their name on a tag on the textbox's edge, what
 -- they said typed into the box, what the chat did under it, and three answers at the box's foot:
--- Chat (they say something else), Profile (their page in the Villagers menu) and Bye. When they
+-- Chat (they say something else), Gift (a thing from the bag: UI/GiftPicker, Sim/Gifts), Profile
+-- (their page in the Villagers menu) and Bye. When they
 -- are craving something, an answer under the words buys it for them, with its price (the user:
 -- "when a character gets a craving, allow the player to simply pay to buy it").
 --
@@ -28,6 +29,7 @@ local Life = require(Shared.Sim.Life)
 
 local Kit = require(script.Parent.Kit)
 local Dialogue = require(script.Parent.Dialogue)
+local GiftPicker = require(script.Parent.GiftPicker)
 local EventCard = require(script.Parent.EventCard)
 local State = require(script.Parent.Parent.Controllers.State)
 
@@ -51,6 +53,7 @@ function TalkCard.close()
 	serial += 1
 	current = nil
 	asking = false
+	GiftPicker.close()
 	if scene then
 		scene.close()
 		scene = nil
@@ -261,13 +264,27 @@ local function build(vid: string, v: any, model: Model?)
 		}, fn)
 	end
 	answer("Chat", 1, chat)
-	answer("Profile", 2, function()
+	-- a thing from the bag: the picker floats over the card, and what they think of it is typed in
+	answer("Gift", 2, function()
+		local mine = serial
+		GiftPicker.open(Kit.root(), vid, function(r: any)
+			if serial ~= mine or scene ~= s or type(r) ~= "table" then
+				return
+			end
+			if type(r.line) == "string" then
+				typeOut(s.words, r.line)
+			end
+			s.note.Text = if type(r.note) == "string" then r.note else ""
+			current.at = os.clock()
+		end)
+	end)
+	answer("Profile", 3, function()
 		TalkCard.close()
 		bye(vid)
 		local Hud = require(script.Parent.Hud) :: any
 		Hud.open("Residents", vid)
 	end)
-	answer("Bye", 3, function()
+	answer("Bye", 4, function()
 		TalkCard.close()
 		bye(vid)
 	end)
