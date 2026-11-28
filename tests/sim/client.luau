@@ -359,6 +359,14 @@ Harness.stub("ServerScriptService.Server.Services.Data", {
 		remoteEvent("State"):FireClient(player, { coins = profile.coins })
 		return true
 	end,
+	-- (sends some of the profile to the client, as Services/Data does: gems and the pieces bought with them)
+	push = function(_, ...)
+		local patch = {}
+		for _, k in { ... } do
+			patch[k] = profile[k]
+		end
+		remoteEvent("State"):FireClient(player, patch)
+	end,
 })
 Harness.stub("ServerScriptService.Server.Services.Plots", {
 	indexOf = function()

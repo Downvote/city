@@ -174,6 +174,79 @@ run("a piece drawn again is taken in afresh", function()
 	check(fresh ~= mill and sail.CFrame ~= was, "and the new one turns")
 end)
 
+run("fireflies drift and blink, water runs, and the fog machine's fog follows its switch", function()
+	-- (the user: "Add much more decor and make animated pieces, such as a swarm of fireflies that
+	-- produce light", "some objects, like waterfall, can look more like a waterfall" and "add a fog
+	-- machine that players can place with gems")
+	profile.gems = 40
+	local pieces = { { "anim_firefly_swarm", 212, 142 }, { "fountain", 228, 142 }, { "anim_fog_machine", 244, 142 } }
+	for _, p in pieces do
+		local ok, why = place(p[1], p[2], p[3])
+		check(ok == true, "the server puts down " .. p[1] .. (if ok then "" else " (" .. tostring(why) .. ")"))
+	end
+	check(profile.gems == 20, "the fog machine took its gems (" .. tostring(profile.gems) .. " left)")
+	lookAt(228, 142)
+	Sim.advance(2)
+	frames(30)
+	local swarm = modelOf("anim_firefly_swarm")
+	local specks = {}
+	for _, d in swarm:GetDescendants() do
+		if d:IsA("BasePart") and d:GetAttribute("Blink") then
+			table.insert(specks, d)
+		end
+	end
+	check(#specks >= 10, "the swarm's fireflies blink (" .. #specks .. ")")
+	local speck = specks[1]
+	local at, seen = speck.CFrame.Position, speck.Transparency
+	local moved, blinked = false, false
+	for _ = 1, 20 do
+		frames(6)
+		moved = moved or (speck.CFrame.Position - at).Magnitude > 0.01
+		blinked = blinked or math.abs(speck.Transparency - seen) > 0.01
+	end
+	check(moved, "a firefly drifts")
+	check(blinked, "and blinks as it goes")
+	check((speck.CFrame.Position - at).Magnitude < 3, "but stays with its swarm")
+	local lit = 0
+	for _, d in swarm:GetDescendants() do
+		if d:IsA("PointLight") then
+			lit += 1
+		end
+	end
+	check(lit >= 4, "and some of them carry a light (" .. lit .. ")")
+	-- the fountain's running water: moving pictures laid on its sheets, sliding down them
+	local fountain = modelOf("fountain")
+	local sheets = named(fountain, Rules.Flow)
+	check(#sheets >= 20, "the fountain's water is running water (" .. #sheets .. ")")
+	local texture
+	for _, sh in sheets do
+		texture = texture or sh:FindFirstChildOfClass("Texture")
+	end
+	check(texture ~= nil, "with a moving picture on it near the camera")
+	if texture then
+		local v = texture.OffsetStudsV
+		frames(12)
+		check(texture.OffsetStudsV ~= v, "which slides as the water runs")
+	end
+	-- the fog: on while the machine's switch is on, off while it is off
+	local machine = modelOf("anim_fog_machine")
+	local function fogging()
+		local any = false
+		for _, spot in named(machine, Rules.Fx) do
+			local e = spot:FindFirstChildOfClass("ParticleEmitter")
+			any = any or (e ~= nil and e.Enabled)
+		end
+		return any
+	end
+	check(fogging(), "the fog machine gives off fog")
+	machine:SetAttribute(Rules.Off, true)
+	frames(40)
+	check(not fogging(), "switched off, the fog stops")
+	machine:SetAttribute(Rules.Off, nil)
+	frames(40)
+	check(fogging(), "and on again, it comes back")
+end)
+
 run("a VIP piece: offered on its card, refused by the server without the pass", function()
 	local ok, why = place("vip_throne", 205, 135)
 	check(ok ~= true and type(why) == "string", "the server won't put a VIP piece down without the pass")

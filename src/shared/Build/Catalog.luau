@@ -14,6 +14,8 @@
 --   dish; a workplace's are made while they work there: Services/Bag).
 --   level = n for one only a town of level n or more can place (Recipes/Grand; Services/Build
 --   refuses it below, Sim/City.unlocked).
+--   gems = n for one bought with gems instead of coins (price 0; the fog machine): Services/Build
+--   takes them the first time one goes down, and it stays the player's (Sim/GemPieces).
 -- place is one of:
 --   "floor"   stands on a floor or the ground
 --   "surface" small things that can also stand on a table or counter
@@ -66,6 +68,7 @@ export type Def = {
 	gives: string?, -- holding E on it gives the player a thing: a source in Data/Items.Sources (Services/Bag)
 	prize: boolean?, -- a keepsake a town goal gives, not a villager (Build/Recipes/Prizes, Data/Goals' `piece`)
 	level: number?, -- only for a town of this level or more (Sim/City.unlocked; Recipes/Grand)
+	gems: number?, -- bought with gems, not coins (its `price` is 0): one bought stays the player's (Sim/GemPieces)
 }
 
 local Catalog = {}

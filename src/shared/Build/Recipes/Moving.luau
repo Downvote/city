@@ -9,6 +9,7 @@
 
 local Recipe = require(script.Parent.Parent.Recipe)
 local Lively = require(script.Parent.Parent.Lively)
+local K = require(script.Parent.Parent.RecipeKit) -- (water that moves: falling sheets, drifting surfaces)
 local Colors = require(script.Parent.Parent.Parent.Util.Colors)
 
 local C = Recipe.Colors
@@ -363,8 +364,7 @@ local items: { Item } = {
 			for _, sz in { -1, 1 } do
 				r:block(-1.15, 0.15, sz * 2.2 - 0.3, 1.15, 0.75, sz * 2.2, STONE, "Slate")
 			end
-			local pool = r:block(-1.15, 0.15, -1.9, 1.15, 0.6, 1.9, r.c2, "Glass")
-			pool.transp = 0.25
+			K.surface(r, -1.15, 0.6, -1.9, 1.15, 1.9, r.c2)
 			-- two A frames holding the axle, a bearing block on each
 			for _, sx in { -1, 1 } do
 				local x = sx * 0.95
@@ -390,8 +390,10 @@ local items: { Item } = {
 					"WoodPlanks"
 				)
 			end
-			local runs = r:block(-0.32, 5.8, -3.1, 0.32, 5.98, -0.72, r.c2, "Glass")
-			runs.transp = 0.2
+			local runs = K.surface(r, -0.32, 5.98, -3.1, 0.32, -0.72, r.c2)
+			Lively.flow(runs, "fall", { faces = "Top", speed = -3 })
+			-- what runs off the flume's end down onto the wheel's paddles
+			K.fall(r, Vector3.new(0, 5.9, -0.72), Vector3.new(0, 5.45, -0.5), 0.56, { speed = 4.5, lip = false })
 			Lively.fx(r, "trickle", 0, 5.86, -0.68, { w = 0.5, h = 0.1, d = 0.1 })
 			Lively.fx(r, "ripple", 0, 0.62, -1.0, { w = 0.8, d = 0.6 })
 			-- the wheel: two rims on spokes, paddles between them, turning on its axle
@@ -525,8 +527,7 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a dark bed, the water over it and a ring of rocks round the edge
 			r:cyl(0, 0.1, 0, 0.2, 4.9, "y", Color3.fromRGB(70, 82, 70), "Mud")
-			local water = r:cyl(0, 0.3, 0, 0.1, 4.8, "y", r.c2, "Glass")
-			water.transp = 0.35
+			K.roundSurface(r, 0, 0.35, 0, 4.8, r.c2).transp = 0.35
 			for i = 0, 13 do
 				local a = i / 14 * math.pi * 2
 				local big = 0.62 + (i * 37 % 5) * 0.06
@@ -1430,8 +1431,7 @@ local items: { Item } = {
 			r:cyl(0, 2.55, 0.26, 0.06, 0.24, "z", dk, "Marble")
 			-- the spout and its stream
 			r:cyl(0, 2.25, 0.4, 0.4, 0.14, "z", C.Gold, "Metal")
-			local stream = r:cyl(0, 1.55, 0.6, 1.3, 0.1, "y", r.c2, "Glass")
-			stream.transp = 0.45
+			K.fall(r, Vector3.new(0, 2.2, 0.58), Vector3.new(0, 0.8, 0.66), 0.16, { speed = 4, lip = false })
 			-- the basin: walls round a pool of water, on a plinth
 			r:block(-1.25, 0, 0.0, 1.25, 0.3, 1.55, dk, "Slate")
 			r:block(-1.2, 0.3, 1.3, 1.2, 0.92, 1.5, r.c1, "Slate")
@@ -1448,8 +1448,9 @@ local items: { Item } = {
 				)
 			end
 			r:block(-1.24, 0.92, 1.26, 1.24, 1.0, 1.54, dk, "Slate")
-			local pool = r:block(-1.0, 0.3, 0.2, 1.0, 0.8, 1.3, r.c2, "Glass")
-			pool.transp = 0.25
+			r:block(-1.0, 0.3, 0.2, 1.0, 0.36, 1.3, shade(r.c2, 0.55), "Slate")
+			K.surface(r, -1.0, 0.8, 0.2, 1.0, 1.3, r.c2)
+			K.foam(r, 0, 0.8, 0.68, 0.5, 0.36)
 			-- ivy over one corner
 			for i, p in { { -1.0, 2.9, 0.26 }, { -0.75, 3.15, 0.24 }, { -1.1, 2.5, 0.28 }, { -0.5, 3.4, 0.2 } } do
 				r:lump(CFrame.new(p[1], p[2], p[3]) * CFrame.Angles(0, 0, i), 0.42, 0.3, 0.14, C.Leaf, "Grass")

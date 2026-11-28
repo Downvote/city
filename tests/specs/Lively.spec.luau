@@ -14,10 +14,11 @@ local Solid = require(Shared .. "Build.Solid")
 local Lively = require(Shared .. "Build.Lively")
 local Effects = require(Shared .. "Data.Effects")
 local Passes = require(Shared .. "Sim.Passes")
+local LightsSim = require(Shared .. "Sim.Lights")
 
 -- what a piece's drawing names: its pivots and moving parts by group, its effects, its lights
 local function read(def)
-	local out = { pivots = {}, movers = {}, cabins = 0, glints = 0, fx = {}, prims = {} }
+	local out = { pivots = {}, movers = {}, cabins = 0, glints = 0, fx = {}, flows = {}, prims = {} }
 	for _, p in Geometry.flatten(Catalog.prims(def)) do
 		table.insert(out.prims, p)
 		local role, g = Lively.roleOf(p.name or "")
@@ -31,13 +32,15 @@ local function read(def)
 			out.glints += 1
 		elseif p.name == Lively.Fx then
 			table.insert(out.fx, p)
+		elseif p.name == Lively.Flow then
+			table.insert(out.flows, p)
 		end
 	end
 	return out
 end
 
 local function anything(seen)
-	return next(seen.pivots) ~= nil or seen.glints > 0 or #seen.fx > 0
+	return next(seen.pivots) ~= nil or seen.glints > 0 or #seen.fx > 0 or #seen.flows > 0
 end
 
 describe("Lively pieces", function()
@@ -119,8 +122,67 @@ describe("Lively pieces", function()
 				if a.FxWork and not def.job then
 					error(def.id .. " has a work effect but is no workplace")
 				end
+				-- (an effect that follows the piece's switch needs a switch: something that glows)
+				if a.FxSwitch and not LightsSim.isLight(def) then
+					error(def.id .. " has an effect on a switch but nothing to switch")
+				end
 			end
 		end
+	end)
+
+	it("gives running water a moving picture Data/Effects has, on faces Roblox knows, never solid", function()
+		local n = 0
+		for _, def in Catalog.all() do
+			for _, p in read(def).flows do
+				n += 1
+				local a = p.attrs or {}
+				if not Effects.Flows[a.Flow] then
+					error(def.id .. " runs an unknown picture " .. tostring(a.Flow))
+				end
+				for face in string.gmatch(a.FlowFaces or "", "%a+") do
+					expect((Enum.NormalId :: any)[face] ~= nil).toBeTruthy()
+				end
+				expect(type(a.FlowSpeed)).toBe("number")
+				expect(p.collide).toBe(false)
+				expect((p.transp or 0) > 0).toBeTruthy()
+			end
+		end
+		for kind, f in Effects.Flows do
+			if not Effects.Textures[f.texture] then
+				error(kind .. " runs an unknown picture " .. tostring(f.texture))
+			end
+			expect(f.studsU > 0 and f.studsV > 0 and f.layers >= 1).toBeTruthy()
+		end
+		-- the waterfalls, the fountains and the ponds
+		expect(n >= 30).toBeTruthy()
+		for _, id in { "water_falls", "water_wall_fall", "fountain", "move_wall_fountain", "vip_golden_fountain" } do
+			expect(#read(Catalog.get(id)).flows > 0).toBeTruthy()
+		end
+	end)
+
+	it("lets a firefly wander but never far, and blink as it goes", function()
+		local seen = read(Catalog.get("anim_firefly_swarm"))
+		local blinking = 0
+		for _, p in seen.prims do
+			if p.attrs and p.attrs.Blink then
+				blinking += 1
+				expect(Lively.roleOf(p.name or "")).toBe("move")
+			end
+		end
+		expect(blinking >= 10).toBeTruthy()
+		local far = 0
+		for t = 0, 60, 0.37 do
+			far = math.max(far, Lively.offset("drift", 0.5, 1.2, "Y", 1, t, 12).Position.Magnitude)
+		end
+		expect(far <= 1.2 and far > 0.6).toBeTruthy()
+		-- the fog machine's fog is on its switch, and it has one
+		local fog = read(Catalog.get("anim_fog_machine"))
+		local switched = 0
+		for _, p in fog.fx do
+			switched += if p.attrs.FxSwitch then 1 else 0
+		end
+		expect(switched).toBe(2)
+		expect(LightsSim.isLight(Catalog.get("anim_fog_machine"))).toBe(true)
 	end)
 
 	it("keeps every effect light, with a picture it knows", function()

@@ -19,6 +19,7 @@ Harness.stub("ServerScriptService.Server.Services.Data", {
 		profile.coins += n
 		return true
 	end,
+	push = function() end,
 })
 Harness.stub("ServerScriptService.Server.Services.Plots", {
 	indexOf = function()
@@ -1069,5 +1070,60 @@ describe("Build service, floors and the basement", function()
 		Service.terrain = nil
 		WaterService.holeSources = {}
 		profile.passes = nil
+	end)
+end)
+
+describe("Pieces bought with gems", function()
+	-- the user: "also, add a fog machine that players can place with gems" (Sim/GemPieces)
+	it("takes the gems once, keeps the piece the player's, and buys another for a second one", function()
+		local x0 = Plan.bounds(profile.plan)
+		profile.gems = 45
+		profile.gemItems = nil
+		local coins = profile.coins
+		local function fog(x)
+			return {
+				type = "add",
+				kind = "items",
+				obj = { id = "anim_fog_machine", x = x0 + 80 + x, y = 0.01, z = 185, r = 0, lv = 0 },
+			}
+		end
+		pause()
+		local ok, why = apply({ fog(20) })
+		expect(ok).toBe(true)
+		expect(why).toBe(nil)
+		expect(profile.gems).toBe(25)
+		expect(profile.coins).toBe(coins)
+		expect(profile.gemItems.anim_fog_machine).toBe(1)
+		local key
+		for k, it in profile.plan.items do
+			if it.id == "anim_fog_machine" then
+				key = k
+			end
+		end
+		-- sold, it stays theirs and goes down again for nothing
+		pause()
+		expect((apply({ { type = "remove", kind = "items", key = key } }))).toBe(true)
+		expect(profile.gems).toBe(25)
+		expect(profile.coins).toBe(coins)
+		pause()
+		local again, againWhy = apply({ fog(26) })
+		expect(againWhy).toBe(nil)
+		expect(again).toBe(true)
+		expect(profile.gems).toBe(25)
+		-- a second one alongside is bought; a third is more than they have
+		pause()
+		expect((apply({ fog(32) }))).toBe(true)
+		expect(profile.gems).toBe(5)
+		expect(profile.gemItems.anim_fog_machine).toBe(2)
+		pause()
+		local no, noWhy = apply({ fog(38) })
+		expect(no).toBe(false)
+		expect(noWhy).toBe("not enough gems")
+		expect(profile.gems).toBe(5)
+		-- undo takes the second one off the plot and gives no gems back: it is still theirs
+		pause()
+		expect(Build.undo(p)).toBe(true)
+		expect(profile.gems).toBe(5)
+		expect(profile.gemItems.anim_fog_machine).toBe(2)
 	end)
 end)

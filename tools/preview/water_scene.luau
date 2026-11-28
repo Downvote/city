@@ -53,8 +53,26 @@ return function(R, which: string?)
 			},
 		},
 	}
+	-- the waterfalls (Recipes/Falls), each set on the line of a side: only with `water:falls`
+	scenes.falls = {
+		water = { x1 = 2, z1 = 54, x2 = 22, z2 = 70, lv = 0, edge = "pond", depth = "shallow" },
+		pieces = {
+			{ "water_falls", 12, 54, 0 },
+			{ "water_lilies", 7, 64, 30 },
+			{ "water_reeds", 19, 66, 0 },
+		},
+	}
+	scenes.wallfall = {
+		water = { x1 = 30, z1 = 54, x2 = 50, z2 = 70, lv = 0, edge = "tile", depth = "swim" },
+		pieces = {
+			{ "water_wall_fall", 40, 54, 0 },
+			{ "water_ring", 36, 64, 0 },
+		},
+	}
 	local order = { "pool", "pond", "rim" }
-	if which and scenes[which] then
+	if which == "falls" then
+		order = { "falls", "wallfall" }
+	elseif which and scenes[which] then
 		order = { which }
 	end
 

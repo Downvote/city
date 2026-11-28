@@ -18,6 +18,7 @@ local Colors = require(Shared.Util.Colors)
 local Text = require(Shared.Util.Text)
 local Placing = require(Shared.Build.Placing)
 local Keepsakes = require(Shared.Sim.Keepsakes)
+local GemPieces = require(Shared.Sim.GemPieces) -- (pieces bought with gems: the fog machine)
 
 local Kit = require(script.Parent.Parent.UI.Kit)
 local Presets = require(Shared.Data.Presets)
@@ -433,6 +434,31 @@ local function priceTag(parent: Instance, price: number, y: number): Frame
 	return tag
 end
 
+-- The price on a card bought with gems (Sim/GemPieces): the gem and the number, or "Yours" while one
+-- the player already bought isn't down.
+local function gemTag(parent: Instance, def: any, y: number): Frame
+	local view = { gemItems = State.data.gemItems, plan = State.plan }
+	local left = GemPieces.left(view, def.id)
+	local tag =
+		Kit.box({ Name = "Price", Parent = parent, Size = UDim2.new(1, 0, 0, 18), Position = UDim2.fromOffset(0, y) })
+	Kit.list(tag, 4, true, Enum.HorizontalAlignment.Center)
+	if left <= 0 then
+		Icons.make("gem", 17, { Parent = tag, LayoutOrder = 1, Color = T.Blue, Centre = true })
+	end
+	local short = left <= 0 and (GemPieces.price(def.id) or 0) > (State.data.gems or 0)
+	Kit.title(if left > 0 then "Yours" else Text.commas(GemPieces.price(def.id) or 0), {
+		Name = "Amount",
+		Parent = tag,
+		Size = UDim2.fromOffset(0, 18),
+		AutomaticSize = Enum.AutomaticSize.X,
+		TextSize = 16,
+		Wrap = false,
+		LayoutOrder = 2,
+		Color = if short then Kit.tint(T.Coral) else T.Ink,
+	})
+	return tag
+end
+
 -- What a card does under the mouse: the motion every tile in the interface has (Kit.press): a
 -- band of light across its face, corner brackets closing in, a dip and a flash when pressed.
 local function hoverable(card: GuiButton): UIScale
@@ -508,7 +534,11 @@ local function itemTile(parent: Instance, def: any, order: number, onPick: () ->
 		})
 	end)
 	cardName(b, def.name, foot, 13)
-	priceTag(b, def.price, CARD_H - 22)
+	if GemPieces.price(def.id) then
+		gemTag(b, def, CARD_H - 22)
+	else
+		priceTag(b, def.price, CARD_H - 22)
+	end
 	-- a grand piece says the level it opens at on its picture's corner (Sim/City.unlocked)
 	if def.level then
 		b:SetAttribute("Level", def.level)

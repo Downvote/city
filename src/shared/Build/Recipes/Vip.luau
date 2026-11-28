@@ -7,6 +7,7 @@
 
 local Recipe = require(script.Parent.Parent.Recipe)
 local Lively = require(script.Parent.Parent.Lively)
+local K = require(script.Parent.Parent.RecipeKit) -- (water that moves: K.roundSurface, K.spill)
 local Colors = require(script.Parent.Parent.Parent.Util.Colors)
 
 local C = Recipe.Colors
@@ -83,13 +84,6 @@ local function starFive(r: R, cf: CFrame, out: number, inner: number, thick: num
 	for k = 1, 10 do
 		r:tri(cf.Position, pts[k], pts[k % 10 + 1], thick, color, mat)
 	end
-end
-
--- Water spilling over a rim: a thin see-through curtain falling `drop` from (x, y, z).
-local function spill(r: R, x: number, y: number, z: number, drop: number, color: Color3)
-	local p = r:cyl(x, y - drop / 2, z, drop, 0.14, "y", color, "Glass")
-	p.transp = 0.45
-	p.collide = false
 end
 
 type Item = {
@@ -169,8 +163,7 @@ local items: { Item } = {
 				r:boxAt(f * CFrame.new(0, 1.14, 2.95), 2.6, 0.08, 0.52, GOLD, "Metal")
 			end
 			r:cyl(0, 0.1, 0, 0.2, 6.0, "y", shade(stone, 0.85), "Marble")
-			local pool = r:cyl(0, 0.85, 0, 0.1, 5.6, "y", r.c2, "Glass")
-			pool.transp = 0.25
+			K.roundSurface(r, 0, 0.9, 0, 5.6, r.c2)
 			-- a pedestal with gold bands, a wide bowl, a little bowl and a gold ball on top
 			r:cyl(0, 1.5, 0, 1.6, 1.0, "y", stone, "Marble")
 			for _, y in { 1.0, 2.0 } do
@@ -178,21 +171,16 @@ local items: { Item } = {
 			end
 			coneDown(r, 0, 2.6, 0, 0.6, 3.0, stone, "Marble")
 			r:cyl(0, 2.95, 0, 0.1, 3.0, "y", GOLD, "Metal")
-			local bowl = r:cyl(0, 3.02, 0, 0.06, 2.7, "y", r.c2, "Glass")
-			bowl.transp = 0.25
+			K.roundSurface(r, 0, 3.05, 0, 2.7, r.c2)
 			r:cyl(0, 3.5, 0, 1.0, 0.5, "y", stone, "Marble")
 			coneDown(r, 0, 4.15, 0, 0.4, 1.6, stone, "Marble")
 			r:cyl(0, 4.4, 0, 0.08, 1.6, "y", GOLD, "Metal")
-			local top = r:cyl(0, 4.45, 0, 0.04, 1.4, "y", r.c2, "Glass")
-			top.transp = 0.25
+			K.roundSurface(r, 0, 4.47, 0, 1.4, r.c2)
 			r:cyl(0, 4.7, 0, 0.4, 0.22, "y", GOLD, "Metal")
 			r:ball(0, 5.0, 0, 0.42, GOLD, "Metal")
-			-- water spilling over both bowls
-			for k = 0, 5 do
-				local a = k * math.pi / 3 + math.pi / 6
-				spill(r, math.cos(a) * 1.45, 2.95, math.sin(a) * 1.45, 2.0, r.c2)
-				spill(r, math.cos(a + 0.5) * 0.75, 4.4, math.sin(a + 0.5) * 0.75, 1.36, r.c2)
-			end
+			-- water spilling over both bowls in rings of curtains
+			K.spill(r, 0, 0, 4.42, 0.74, 3.08, 0.95, 6, 0.5)
+			K.spill(r, 0, 0, 2.98, 1.42, 0.92, 1.72, 10, 0.86)
 			Lively.fx(r, "splash", 0, 5.25, 0, { w = 0.2, d = 0.2 })
 			Lively.fx(r, "sparkles", 0, 4.6, 0, { w = 3.0, h = 1.4, d = 3.0, color = Color3.fromRGB(255, 230, 150) })
 			Lively.fx(r, "ripple", 0, 0.92, 0, { w = 3.6, d = 3.6 })

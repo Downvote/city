@@ -23,6 +23,8 @@ local Group = require(Shared.Build.Group) -- (the Select tool's groups: wall mov
 local SavesSim = require(Shared.Sim.Saves) -- (saved builds: what a load changes)
 local LightsSim = require(Shared.Sim.Lights) -- (a light's switch, which a move or an undo keeps)
 local City = require(Shared.Sim.City) -- (a grand piece waits for the town's level: City.unlocked)
+local GemPieces = require(Shared.Sim.GemPieces) -- (pieces bought with gems: the fog machine)
+local Gems = require(Shared.Sim.Gems)
 
 local Data = require(script.Parent.Data)
 local Plots = require(script.Parent.Plots)
@@ -446,6 +448,15 @@ function Build.apply(player: Player, requests: any): (boolean, string?)
 		if not levelOk then
 			return { false, levelWhy }
 		end
+		-- a piece bought with gems: the ones going down past what the player owns are bought now
+		-- (Sim/GemPieces), so the gems must be there
+		local gems, buys, gemWhy = GemPieces.need(profile, requests)
+		if not gems then
+			return { false, gemWhy }
+		end
+		if gems > 0 and not Gems.canAfford(profile, gems) then
+			return { false, "not enough gems" }
+		end
 		-- nothing new goes on a floor past the passes the player owns (Sim/Floors)
 		local floorOk, floorWhy = Floors.check(profile, profile.plan, requests)
 		if not floorOk then
@@ -474,10 +485,22 @@ function Build.apply(player: Player, requests: any): (boolean, string?)
 			Plan.apply(profile.plan, Plan.invert(ops))
 			return { false, "not enough coins" }
 		end
+		-- (the gems are taken first, and given back if the change can't go through after all)
+		if gems > 0 and not Gems.spend(profile, gems) then
+			Plan.apply(profile.plan, Plan.invert(ops))
+			return { false, "not enough gems" }
+		end
 		local done, why = commit(player, ops, "applied")
 		if not done then
 			Plan.apply(profile.plan, Plan.invert(ops))
+			if gems > 0 then
+				Gems.add(profile, gems)
+			end
 			return { false, why }
+		end
+		if gems > 0 then
+			GemPieces.buy(profile, buys)
+			Data.push(player, "gems", "gemItems")
 		end
 		local h = hist(player)
 		table.insert(h.undo, ops)
@@ -536,6 +559,11 @@ local function prepareEach(
 			end
 		end
 		if req.type == "add" and not Keepsakes.check(counting, { one }) then
+			skipped += 1
+			continue
+		end
+		-- (a piece bought with gems: as many down as are owned, none bought on a load)
+		if req.type == "add" and not GemPieces.fits(profile, plan, { one }) then
 			skipped += 1
 			continue
 		end
