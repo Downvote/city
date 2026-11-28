@@ -389,16 +389,33 @@ local items: { Item } = {
 		build = function(r: R)
 			-- A round box to post letters in (c1) on a dark foot (c2), its slot under a hood
 			-- at the front.
-			r:cyl(0, 0.3, 0, 0.6, 1.9, "y", r.c2, "Metal")
-			r:cyl(0, 2.4, 0, 3.6, 1.6, "y", r.c1, "Metal")
-			r:cyl(0, 4.3, 0, 0.3, 1.9, "y", shade(r.c1, 0.82), "Metal")
+			-- a stepped foot with a bead where the body starts
+			r:cyl(0, 0.1, 0, 0.2, 1.98, "y", shade(r.c2, 0.88), "Metal")
+			r:cyl(0, 0.4, 0, 0.4, 1.86, "y", r.c2, "Metal")
+			r:cyl(0, 0.64, 0, 0.08, 1.72, "y", shade(r.c2, 1.18), "Metal")
+			r:cyl(0, 2.4, 0, 3.44, 1.6, "y", r.c1, "Metal")
+			-- a raised band under the cap, the cap's rim, its dome and the knob on top
+			r:cyl(0, 3.98, 0, 0.14, 1.68, "y", shade(r.c1, 0.9), "Metal")
+			r:cyl(0, 4.24, 0, 0.12, 1.86, "y", shade(r.c1, 0.92), "Metal")
+			r:cyl(0, 4.36, 0, 0.12, 1.9, "y", shade(r.c1, 0.82), "Metal")
 			r:lump(CFrame.new(0, 4.5, 0), 1.8, 1.1, 1.8, r.c1, "Metal")
-			r:cyl(0, 5.08, 0, 0.16, 0.4, "y", r.c2, "Metal")
+			r:cyl(0, 5.02, 0, 0.06, 0.52, "y", shade(r.c2, 1.18), "Metal")
+			r:cyl(0, 5.1, 0, 0.12, 0.4, "y", r.c2, "Metal")
+			-- the slot with its lip, under a hood
 			r:block(-0.52, 3.42, 0.7, 0.52, 3.66, 0.84, r.c2, "Metal")
+			r:block(-0.5, 3.4, 0.84, 0.5, 3.45, 0.88, shade(r.c2, 1.18), "Metal")
 			r:block(-0.64, 3.66, 0.6, 0.64, 3.78, 0.94, shade(r.c1, 0.82), "Metal")
+			-- the door's raised edge round the plate saying when it's emptied, and its keyhole
+			for _, x in { -0.5, 0.5 } do
+				r:block(x - 0.04, 1.2, 0.58, x + 0.04, 3.3, 0.85, shade(r.c1, 0.9), "Metal")
+			end
+			r:block(-0.46, 3.22, 0.7, 0.46, 3.3, 0.85, shade(r.c1, 0.9), "Metal")
+			r:block(-0.46, 1.2, 0.7, 0.46, 1.28, 0.85, shade(r.c1, 0.9), "Metal")
 			r:block(-0.38, 2.4, 0.74, 0.38, 3.1, 0.84, C.Paper, "Cardboard")
 			r:block(-0.26, 2.84, 0.84, 0.26, 2.92, 0.86, r.c2, "Metal")
 			r:block(-0.26, 2.62, 0.84, 0.12, 2.7, 0.86, r.c2, "Metal")
+			r:cyl(0, 1.9, 0.83, 0.06, 0.16, "z", r.c2, "Metal")
+			r:block(-0.02, 1.84, 0.86, 0.02, 1.96, 0.88, shade(r.c2, 0.6), "Metal")
 		end,
 	},
 	{

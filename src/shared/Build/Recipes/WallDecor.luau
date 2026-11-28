@@ -384,9 +384,16 @@ local items: { Item } = {
 		c2 = "283446",
 		tags = { "tv" },
 		build = function(r: R)
+			-- the bracket on the wall, its arm, and the set: a slim back, a bezel round the screen
+			-- with a softened edge, and a cable running down out of sight
 			r:block(-0.8, 1.0, 0, 0.8, 2.2, 0.08, C.DarkMetal, "Metal")
+			for _, x in { -0.55, 0.55 } do
+				r:cyl(x, 1.15, 0.04, 0.06, 0.08, "z", shade(C.DarkMetal, 1.3), "Metal")
+				r:cyl(x, 2.05, 0.04, 0.06, 0.08, "z", shade(C.DarkMetal, 1.3), "Metal")
+			end
 			r:block(-0.3, 1.3, 0.08, 0.3, 1.9, 0.18, C.DarkMetal, "Metal")
-			r:block(-2.7, 0, 0.18, 2.7, 3.2, 0.32, r.c1, "Metal")
+			r:block(-2.6, 0.1, 0.18, 2.6, 3.1, 0.24, shade(r.c1, 0.8), "Metal")
+			r:bevel(-2.7, 0, 0.24, 2.7, 3.2, 0.32, 0.03, r.c1, "Metal", { wear = 1.25 })
 			r:block(-2.62, 0.08, 0.32, 2.62, 3.12, 0.36, r.c2, "Glass")
 			r:boxAt(CFrame.new(0.8, 1.7, 0.375) * CFrame.Angles(0, 0, -0.7), 0.25, 2.4, 0.03, shade(r.c2, 1.5), "Glass")
 			r:boxAt(CFrame.new(1.2, 1.9, 0.375) * CFrame.Angles(0, 0, -0.7), 0.1, 1.8, 0.03, shade(r.c2, 1.35), "Glass")
