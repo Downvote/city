@@ -63,3 +63,5 @@ require(World.Seasons).start() -- the season on the trees, the lawns and the roo
 require(World.Stuck).start() -- stuck and pushing: a button to slip out
 require(World.Driving).start() -- at the wheel of your own vehicle
 require(World.Run).start() -- hold Shift to run (a switch on a touch screen)
+require(World.Pets).start() -- pets about town, moved along the walks the server picks (Services/Pets)
+require(UI.Crates).start() -- a villager telling you about the crates, once you have the gems

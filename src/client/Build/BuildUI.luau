@@ -19,6 +19,7 @@ local Text = require(Shared.Util.Text)
 local Placing = require(Shared.Build.Placing)
 local Keepsakes = require(Shared.Sim.Keepsakes)
 local GemPieces = require(Shared.Sim.GemPieces) -- (pieces bought with gems: the fog machine)
+local Crates = require(Shared.Sim.Crates) -- (workplaces from work crates: the Crate tab)
 
 local Kit = require(script.Parent.Parent.UI.Kit)
 local Presets = require(Shared.Data.Presets)
@@ -112,7 +113,11 @@ local MAIN = {
 		id = "work",
 		icon = "store",
 		name = "Work",
-		subs = { { id = "work", icon = "store", name = "Workplaces" } },
+		subs = {
+			{ id = "work", icon = "store", name = "Workplaces" },
+			-- workplaces that came out of work crates: free, as many as came out (Sim/Crates)
+			{ id = "crates", icon = "briefcase", name = "Crate" },
+		},
 	},
 	-- the whole plot kept as a build in a slot, and loaded back (the user: "add loading and saving
 	-- of plots": Build/SavesTray)
@@ -581,6 +586,37 @@ end
 -- A keepsake's card: its picture and name, and on the band "Free" with how many more of it can go
 -- down. One with none left (every one given is down) says so and picks nothing.
 local function keepsakeTile(parent: Instance, entry: Keepsakes.Entry, order: number): TextButton
+	local def = entry.def
+	local b, pic, foot = card(parent, def.id, order, CARD_W, function()
+		if entry.left > 0 then
+			BuildMode.startPlacing(def.id)
+		else
+			Toasts.show("You've already put all of these down.", "info")
+		end
+	end)
+	b:SetAttribute("ItemId", def.id)
+	b:SetAttribute("Left", entry.left)
+	task.spawn(function()
+		ModelPreview.fromPrims(Catalog.prims(def), { Parent = pic })
+	end)
+	cardName(b, def.name, foot, 12)
+	Kit.title(if entry.left > 0 then Text.fill("Free, {n} left", { n = entry.left }) else "None left", {
+		Name = "Left",
+		Parent = b,
+		Size = UDim2.new(1, -8, 0, 16),
+		Position = UDim2.fromOffset(4, CARD_H - 18),
+		TextSize = 13,
+		AlignX = Enum.TextXAlignment.Center,
+		Color = if entry.left > 0 then T.Ink else T.InkSoft,
+		Wrap = false,
+		ZIndex = 2,
+	})
+	return b
+end
+
+-- A crate workplace's card: like a keepsake's, "Free, N left" on its band, and its rarity's colour on
+-- the name.
+local function crateTile(parent: Instance, entry: Crates.Piece, order: number): TextButton
 	local def = entry.def
 	local b, pic, foot = card(parent, def.id, order, CARD_W, function()
 		if entry.left > 0 then
@@ -1300,6 +1336,21 @@ local function catalogTray(cat: string)
 		local row = trayRow()
 		for i, entry in entries do
 			keepsakeTile(row, entry, i)
+		end
+		return
+	end
+	if cat == "crates" then
+		local entries = Crates.pieces(State.data, State.plan)
+		if #entries == 0 then
+			trayNote(trayStack(), "briefcase", T.Orange, "Nothing here yet", {
+				"Workplaces from work crates go here.",
+				"Get crates in the Store.",
+			})
+			return
+		end
+		local row = trayRow()
+		for i, entry in entries do
+			crateTile(row, entry, i)
 		end
 		return
 	end
@@ -3597,7 +3648,13 @@ function BuildUI.init(exitCallback: () -> ())
 		end
 	end)
 	State.onPlan(function()
-		if trayMode == "catalog:keepsakes" then
+		if trayMode == "catalog:keepsakes" or trayMode == "catalog:crates" then
+			refreshTray()
+		end
+	end)
+	-- and the Crate tray what came out of work crates
+	State.on("crateItems", function()
+		if trayMode == "catalog:crates" then
 			refreshTray()
 		end
 	end)

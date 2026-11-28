@@ -18,6 +18,7 @@ local Skills = require(script.Parent.Skills)
 local WorkMove = require(script.Parent.WorkMove)
 local Bag = require(script.Parent.Bag)
 local Titles = require(script.Parent.Titles)
+local Crates = require(script.Parent.Crates) -- (crates held, crate workplaces and pets: Sim/Crates)
 
 local Schema = {}
 
@@ -155,6 +156,15 @@ function Schema.newProfile(): any
 		owed = {},
 		gather = { day = -1, n = 0 },
 		titles = {}, -- titles won from town goals, by id (Sim/Titles); `title` is the one worn, or nil
+		-- crates (Sim/Crates): the ones held to open later, by kind; the crate workplaces given, by
+		-- catalog id; the pets, by id ("p1"...), and the next pet's number; the gems crate jobs paid
+		-- on which real day; whether a villager has told the player about the crates
+		crates = {},
+		crateItems = {},
+		pets = {},
+		nextPet = 1,
+		crateGems = { day = -1, n = 0 },
+		crateTold = false,
 	}
 end
 
@@ -247,6 +257,7 @@ function Schema.migrate(raw: any): any
 	profile.skills = Skills.clean(profile.skills)
 	Bag.clean(profile)
 	Titles.clean(profile)
+	Crates.clean(profile)
 	-- (only true marks: Services/Vehicles also drops any vehicle there no longer is)
 	if type(profile.vehicles) ~= "table" then
 		profile.vehicles = {}

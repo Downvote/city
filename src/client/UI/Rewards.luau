@@ -18,6 +18,7 @@ local Remotes = require(Shared.Net.Remotes)
 local Playtime = require(Shared.Data.Playtime)
 local SimRewards = require(Shared.Sim.Rewards)
 local Text = require(Shared.Util.Text)
+local CrateData = require(Shared.Data.Crates) -- (a crate in the daily gift or an achievement)
 
 local Kit = require(script.Parent.Kit)
 local Icons = require(script.Parent.Icons)
@@ -78,7 +79,8 @@ local function minutes(secs: number): string
 	return if m == 1 then "1 minute" else Text.fill("{n} minutes", { n = m })
 end
 
--- What a reward pays, on a leaning slab: the coins and the gems side by side.
+-- What a reward pays, on a leaning slab: the coins and the gems side by side, and a crate when it
+-- gives one (props.Crate: "work" or "pet", Data/Crates).
 local function pays(parent: Instance, coins: number, gems: number, props: { [string]: any })
 	local h = 40
 	local slab = Kit.frame({
@@ -130,6 +132,24 @@ local function pays(parent: Instance, coins: number, gems: number, props: { [str
 			Tint = T.Purple,
 			Wrap = false,
 			LayoutOrder = 4,
+		})
+	end
+	local crate = props.Crate and CrateData.get(props.Crate)
+	if crate then
+		Icons.make(
+			crate.icon,
+			26,
+			{ Name = "CrateIcon", Parent = row, LayoutOrder = 5, Color = T.Orange, Centre = true }
+		)
+		Kit.title(crate.name, {
+			Name = "Crate",
+			Parent = row,
+			Size = UDim2.fromOffset(0, 34),
+			AutomaticSize = Enum.AutomaticSize.X,
+			TextSize = 20,
+			Tint = T.Orange,
+			Wrap = false,
+			LayoutOrder = 6,
 		})
 	end
 end
@@ -214,6 +234,7 @@ local function showDaily(card: Frame, list: ScrollingFrame)
 		172
 	)
 	pays(card, coins, gems, {
+		Crate = SimRewards.dailyCrate(run),
 		Word = if ready then "Today" else "Had",
 		Position = UDim2.new(0.5, 0, 0, 262),
 		AnchorPoint = Vector2.new(0.5, 0),
@@ -254,7 +275,9 @@ local function showDaily(card: Frame, list: ScrollingFrame)
 				elseif now then T.Yellow
 				elseif day % Tuning.GemRewards.Week == 0 then T.Purple
 				else T.Coral,
-			Right = Text.fill("{c} coins, {g}", { c = Text.commas(c), g = Text.gems(g) }),
+			Right = if SimRewards.dailyCrate(day)
+				then Text.fill("{c} coins, {g}, crate", { c = Text.commas(c), g = Text.gems(g) })
+				else Text.fill("{c} coins, {g}", { c = Text.commas(c), g = Text.gems(g) }),
 			RightColor = if now then T.Green else nil,
 			Sunk = done,
 			Selected = now,
@@ -379,6 +402,7 @@ local function showAchievement(card: Frame, s: any)
 		)
 	end
 	pays(card, 0, s.a.gems, {
+		Crate = s.a.crate,
 		Word = if s.claimed then "Paid" else "Pays",
 		Position = UDim2.new(0.5, 0, 0, if s.claimed then 250 else 292),
 		AnchorPoint = Vector2.new(0.5, 0),
@@ -423,7 +447,9 @@ local function showAchievements(card: Frame, list: ScrollingFrame)
 				Size = MenuParts.rowSize(),
 				LayoutOrder = order,
 				Title = s.a.name,
-				Sub = Text.gems(s.a.gems),
+				Sub = if s.a.crate
+					then Text.fill("{g} and a crate", { g = Text.gems(s.a.gems) })
+					else Text.gems(s.a.gems),
 				Marker = if s.done then "check" else s.a.icon,
 				MarkerColor = if s.claimed then T.Line elseif ready then T.Green else T.Purple,
 				Right = if s.claimed

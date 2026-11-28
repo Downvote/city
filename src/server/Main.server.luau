@@ -30,6 +30,8 @@ local order = {
 	"Signs",
 	"Vehicles", -- buying and bringing out vehicles (Data/Vehicles)
 	"Claims", -- Claim all in the rewards and the town goals (Sim/ClaimAll)
+	"Crates", -- work and pet crates: opening, pets' owners, the villager's tip (Sim/Crates): after Villagers
+	"Pets", -- pets about town, meeting villagers, bringing cravings (Sim/Pets): after Crates
 	-- passes, gem packs, rewards, offline earnings, the group: listens for Data.Loaded, so it starts
 	-- before Data.open lets anyone in
 	"Store",

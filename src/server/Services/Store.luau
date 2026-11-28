@@ -27,6 +27,8 @@ local Achievements = require(Shared.Data.Achievements)
 local Passes = require(Shared.Sim.Passes)
 local Rewards = require(Shared.Sim.Rewards)
 local Offline = require(Shared.Sim.Offline)
+local Crates = require(Shared.Sim.Crates)
+local CrateData = require(Shared.Data.Crates)
 local Text = require(Shared.Util.Text)
 
 local Data = require(script.Parent.Data)
@@ -68,6 +70,19 @@ function Store.packFor(id: any): PassData.Pack?
 	for _, pack in PassData.packs do
 		if pack.id == id then
 			return pack
+		end
+	end
+	return nil
+end
+
+-- The crate product with this id on Roblox (Data/Passes' crates), or nil.
+function Store.crateFor(id: any): PassData.CrateProduct?
+	if type(id) ~= "number" or id == 0 then
+		return nil
+	end
+	for _, c in PassData.crates do
+		if c.id == id then
+			return c
 		end
 	end
 	return nil
@@ -236,12 +251,13 @@ local function saveNow(player: Player): boolean
 	return false
 end
 
--- Roblox's receipt for a developer product: a gem pack is paid once per purchase id, and granted
--- only once the save has it.
+-- Roblox's receipt for a developer product: a gem pack or a crate is paid once per purchase id,
+-- and granted only once the save has it.
 function Store.processReceipt(info: any): Enum.ProductPurchaseDecision
 	local NOT_YET = Enum.ProductPurchaseDecision.NotProcessedYet
 	local pack = type(info) == "table" and Store.packFor(info.ProductId) or nil
-	if not pack then
+	local crate = type(info) == "table" and Store.crateFor(info.ProductId) or nil
+	if not pack and not crate then
 		warn(
 			"[Store] a receipt for a product the game doesn't sell:",
 			if type(info) == "table" then info.ProductId else nil
@@ -263,12 +279,30 @@ function Store.processReceipt(info: any): Enum.ProductPurchaseDecision
 	end
 	local receipts = profile.receipts
 	if not table.find(receipts, id) then
-		Data.addGems(player, pack.gems)
+		if pack then
+			Data.addGems(player, pack.gems)
+		elseif crate then
+			-- a crate waits in the Store's Crates tab to be opened (Sim/Crates)
+			Crates.give(profile, crate.kind, 1)
+			Data.push(player, "crates")
+		end
 		table.insert(receipts, id)
 		while #receipts > Tuning.Store.Receipts do
 			table.remove(receipts, 1)
 		end
-		Data.notify(player, Text.fill("Thank you. {gems} added.", { gems = Text.gems(pack.gems) }), "good")
+		if pack then
+			Data.notify(player, Text.fill("Thank you. {gems} added.", { gems = Text.gems(pack.gems) }), "good")
+		elseif crate then
+			local kind = CrateData.get(crate.kind)
+			Data.notify(
+				player,
+				Text.fill(
+					"Thank you. Your {x} is in the Store.",
+					{ x = if kind then string.lower(kind.name) else "crate" }
+				),
+				"good"
+			)
+		end
 	end
 	local saved = saveNow(player)
 	busy[id] = nil
@@ -416,7 +450,7 @@ function Store.start()
 		if not profile or type(id) ~= "string" then
 			return false, 0
 		end
-		local ok, gems = Rewards.claimAchievement(profile, id)
+		local ok, gems, crate = Rewards.claimAchievement(profile, id)
 		if ok then
 			Data.addGems(player, gems)
 			local a = Achievements.get(id)
@@ -425,8 +459,12 @@ function Store.start()
 				Text.fill("{name}: +{gems}", { name = if a then a.name else "Done", gems = Text.gems(gems) }),
 				"good"
 			)
+			-- (a crate with it waits in the Store: Sim/Crates)
+			if crate then
+				Data.notify(player, Text.fill("Your {x} crate is in the Store.", { x = crate }), "good")
+			end
 		end
-		Data.push(player, "achieved")
+		Data.push(player, "achieved", "crates")
 		return ok, gems
 	end
 

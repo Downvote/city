@@ -27,6 +27,8 @@ local Memory = require(Shared.Sim.Memory)
 local WorkMove = require(Shared.Sim.WorkMove)
 local Emotes = require(Shared.Data.Emotes)
 local Jobs = require(Shared.Data.Jobs)
+local PetData = require(Shared.Data.Pets)
+local SimCrates = require(Shared.Sim.Crates) -- (the pets: Pet on a villager's page)
 local Colors = require(Shared.Util.Colors)
 local Text = require(Shared.Util.Text)
 
@@ -230,6 +232,50 @@ local function pickBed(vid: string)
 		end
 	end
 	choose("Pick a bed", options)
+end
+
+-- A pet as it is called on the page: "Biscuit the cat".
+local function petTitle(pet: any): string
+	local kind = PetData.get(pet.kind)
+	return Text.fill("{name} the {kind}", { name = pet.name, kind = if kind then string.lower(kind.name) else "pet" })
+end
+
+-- Pick a pet for a villager to own (the user: "You can choose to make villagers own the pet"):
+-- the player's pets from pet crates, who has each now, and No pet. Checked on the server
+-- (PetOwner, Services/Crates).
+local function pickPet(vid: string)
+	local p = profileView()
+	local ownPid = SimCrates.petOf({ pets = State.data.pets }, vid)
+	local options = {}
+	table.insert(options, {
+		label = "No pet",
+		sub = if ownPid then "Their pet goes free" else nil,
+		fn = function()
+			if ownPid then
+				call("PetOwner", ownPid, false)
+			end
+		end,
+	})
+	for _, e in SimCrates.petList({ pets = State.data.pets }) do
+		local owner = e.pet.vid and p.villagers[e.pet.vid]
+		table.insert(options, {
+			item = "paw",
+			color = T.Teal,
+			label = petTitle(e.pet),
+			sub = if e.pet.vid == vid
+				then "Theirs"
+				elseif owner then Text.fill("Lives with {name}", { name = owner.name })
+				else "Nobody's yet",
+			fn = function()
+				call("PetOwner", e.id, vid)
+			end,
+		})
+	end
+	if #options == 1 then
+		Toasts.show("Pets come out of pet crates in the Store.", "info")
+		return
+	end
+	choose("Pick a pet", options)
 end
 
 -- where the stats start on the stage: the villager stands to the left of this
@@ -749,6 +795,34 @@ local function quirksOf(parent: Frame, vid: string, v: any)
 		end
 	)
 	button:SetAttribute("Short", price > (State.data.gems or 0))
+	-- their pet, from a pet crate (the user: "You can choose to make villagers own the pet")
+	local _, pet = SimCrates.petOf({ pets = State.data.pets }, vid)
+	local petRow, petInner = Kit.row({
+		Name = "pet",
+		Parent = list,
+		Size = UDim2.new(1, -12, 0, 56),
+		Height = 56,
+		LayoutOrder = -1, -- (first: a pet costs no gems)
+		Title = "Pet",
+		Sub = if pet then petTitle(pet) else "None yet",
+		TextSize = 16,
+		RightSpace = 124,
+	})
+	local petLean: number = petRow:GetAttribute("Lean") or 6
+	Kit.button(if pet then "Change" else "Pick", {
+		Name = "Edit",
+		Parent = petInner,
+		Size = UDim2.fromOffset(112, 38),
+		Position = UDim2.new(1, -(petLean + 8), 0.5, 0),
+		AnchorPoint = Vector2.new(1, 0.5),
+		Color = T.Teal,
+		TextColor = T.Dark,
+		TextSize = 15,
+		Icon = "paw",
+		ZIndex = 3,
+	}, function()
+		pickPet(vid)
+	end)
 end
 
 -- Buying what a villager craves: the coins go and the wish is granted on the server.
@@ -1263,6 +1337,18 @@ function Residents.open(vid: string?)
 	table.insert(
 		unbind,
 		State.on("rel", function()
+			showDetail()
+		end)
+	)
+	-- who owns which pet shows on their page
+	local skipPets = State.data.pets ~= nil
+	table.insert(
+		unbind,
+		State.on("pets", function()
+			if skipPets then
+				skipPets = false
+				return
+			end
 			showDetail()
 		end)
 	)

@@ -701,8 +701,10 @@ describe("City", function()
 		local bed = Catalog.get("bed_single")
 		local cheapestWork, dearestWork = math.huge, 0
 		for _, def in Catalog.workplaces() do
-			cheapestWork = math.min(cheapestWork, def.price)
-			dearestWork = math.max(dearestWork, def.price)
+			if not def.crate then -- (a crate's is free)
+				cheapestWork = math.min(cheapestWork, def.price)
+				dearestWork = math.max(dearestWork, def.price)
+			end
 		end
 		local cottage = Presets.price("cottage")
 		expect(bed.price + cheapestWork + cottage < Tuning.Economy.StartCoins).toBeTruthy()
@@ -744,7 +746,10 @@ describe("City", function()
 		-- for a trade (the workplace with its shop round it) in 3 to 10 days (the grand ones aside:
 		-- they are held to their level above)
 		for _, def in Catalog.workplaces() do
-			expect(def.price / startPay(Jobs.get(def.job))).toBeBetween(0.1, 1)
+			-- (a crate's workplace costs nothing: it only comes out of a work crate)
+			if not def.crate then
+				expect(def.price / startPay(Jobs.get(def.job))).toBeBetween(0.1, 1)
+			end
 		end
 		local shops = 0
 		for _, preset in Presets.list do

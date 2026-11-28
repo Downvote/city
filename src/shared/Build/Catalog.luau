@@ -75,6 +75,10 @@ export type Def = {
 	hole: { number }?, -- the hole it cuts in the floor above, x1, z1, x2, z2 in its own space (all of it if nil)
 	spans: number?, -- how many floors up it runs (1 if nil): a lift's floors less one
 	gems: number?, -- bought with gems, not coins (its `price` is 0): one bought stays the player's (Sim/GemPieces)
+	-- a workplace that only comes out of a work crate (Build/Recipes/CrateWork, category "crates"):
+	-- its rarity (Data/Crates), price 0, as many down as the player was given (Sim/Crates)
+	crate: string?,
+	loop: { any }?, -- (a crate workplace) its job's round of spots, as Sim/Routine's loops are written
 }
 
 local Catalog = {}
@@ -115,6 +119,8 @@ Catalog.Categories = {
 	{ id = "work", name = "Work" },
 	-- things villagers made you in events: free, and only as many as you were given (Sim/Keepsakes)
 	{ id = "keepsakes", name = "Keepsakes" },
+	-- workplaces from work crates: free, as many as came out of crates (Sim/Crates)
+	{ id = "crates", name = "Crate" },
 }
 
 -- The looks a piece can belong to, besides what it is (a chair is Seating and maybe Cozy). The
@@ -261,11 +267,12 @@ function Catalog.categoryOrder(cat: string): number
 end
 
 -- Every piece of one style (Catalog.Styles), across every category: by category in the order
--- Build mode shows them, then in catalog order. Keepsakes are left out (they are gifts).
+-- Build mode shows them, then in catalog order. Keepsakes and crate workplaces are left out (they
+-- are gifts, on tabs of their own).
 function Catalog.withStyle(style: string): { Def }
 	local out = {}
 	for _, def in all do
-		if def.style == style and def.cat ~= "keepsakes" then
+		if def.style == style and def.cat ~= "keepsakes" and def.cat ~= "crates" then
 			table.insert(out, def)
 		end
 	end
@@ -286,7 +293,7 @@ function Catalog.isPath(def: Def): boolean
 	if Catalog.hasTag(def, "path") then
 		return true
 	end
-	if def.cat == "keepsakes" or def.place == "mark" then
+	if def.cat == "keepsakes" or def.cat == "crates" or def.place == "mark" then
 		return false
 	end
 	if def.place == "ground" and def.size.Y <= 0.6 then
@@ -432,7 +439,7 @@ function Catalog.search(query: string?): { Def }
 	local whole = table.concat(terms, " ")
 	local found: { { def: Def, rank: number } } = {}
 	for _, def in all do
-		if def.cat ~= "keepsakes" then
+		if def.cat ~= "keepsakes" and def.cat ~= "crates" then
 			local text = Catalog.searchWords(def)
 			local every = true
 			for _, word in terms do

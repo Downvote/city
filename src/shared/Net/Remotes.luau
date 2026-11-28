@@ -77,6 +77,9 @@ Remotes.Functions = {
 	"BagUse", -- ("hold", id) | ("away") | ("drop", id) -> ok, why: hold a thing in the hand, put it away, or drop one
 	"GiftGive", -- (vid, id) -> ok, { taste, line, note } or why: give a villager a thing from the bag
 	"TitleWear", -- (id | false) -> ok, why: wear a title won from a goal, or none
+	-- crates and pets (Services/Crates, Sim/Crates): each checked on the server
+	"CrateOpen", -- (kind, "held" | "gems") -> ok, result or why: open a crate held, or buy one with gems and open it
+	"PetOwner", -- (petId, vid | false) -> ok, why: make a villager a pet's owner, or nobody
 }
 
 Remotes.Events = {
@@ -104,6 +107,9 @@ Remotes.Events = {
 	-- server -> client: the player's own work at a workplace (Services/Work): { on = true, plot, key,
 	-- name, act, beat, today, cap } when it starts, { on = false } when it stops
 	"Work",
+	-- server -> client: { vid, text } once, when the player first has the gems for a crate: one of
+	-- their villagers tells them about the crates (Services/Crates, UI/Crates)
+	"CrateTip",
 }
 
 local folder: Folder? = nil

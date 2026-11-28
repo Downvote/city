@@ -305,6 +305,30 @@ describe("Store service", function()
 		expect(p.gems).toBe(55)
 	end)
 
+	it("holds a crate bought with Robux once per purchase, to open in the Store", function()
+		-- the user: "add work crates that can be bought with gems or robux" (and pet crates)
+		reset()
+		local p = profiles[owner]
+		p.receipts, p.crates = {}, {}
+		local work = PassData.crateProduct("crate_work")
+		local old = work.id
+		work.id = 3001
+		expect(Store.processReceipt(receipt("c1", 3001))).toBe(GRANTED)
+		expect(p.crates.work).toBe(1)
+		expect(pushed("crates")).toBeTruthy()
+		expect(notices[#notices].text).toBe("Thank you. Your work crate is in the Store.")
+		-- the same receipt again holds no second crate; a new one does
+		expect(Store.processReceipt(receipt("c1", 3001))).toBe(GRANTED)
+		expect(p.crates.work).toBe(1)
+		expect(Store.processReceipt(receipt("c2", 3001))).toBe(GRANTED)
+		expect(p.crates.work).toBe(2)
+		-- a crate still at id 0 can't come in at all
+		work.id = 0
+		expect(Store.processReceipt(receipt("c3", 3001))).toBe(NOT_YET)
+		expect(p.crates.work).toBe(2)
+		work.id = old
+	end)
+
 	it("says not yet when the save fails, the save isn't in, or the product isn't ours", function()
 		reset()
 		local p = profiles[owner]

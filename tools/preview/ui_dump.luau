@@ -60,6 +60,13 @@
 --                       panel:Rewards:group with a group to join; panel:Rewards:member joined, the
 --                       gems to claim
 --   welcome             the welcome back dialog after five hours away (welcome:long after two days)
+--   panel:Residents:pets  Mara's Quirks with her cat (a robot vacuum nobody owns yet);
+--                       panel:Residents:pets:pick the list of pets to pick from
+--   panel:Store:crates  the store's Crates tab with a work crate held and enough gems for either
+--   crate:open:<kind>   what came out of a work crate (the Hero's lookout) or a pet crate (a cat)
+--   crate:tip           a villager telling the player about the crates (UI/Crates.tip)
+--   build:crates        Build mode's Crate tab with three crate workplaces, one already down
+--                       (build:crates:empty before any came out)
 --   work                the notice while the player works at a workplace: the day's coins and the
 --                       skill with its bar (client World/Work)
 --   talk:craving        the talk card with a villager who craves something: the answer that buys it
@@ -322,6 +329,8 @@ elseif scene:sub(1, 5) == "build" then
 		-- the particle makers (Recipes/Effects), a VIP piece's card among them
 		["build:effects"] = { "Outdoor", "Effects" },
 		["build:keepsakes:empty"] = { "Furniture", "Keepsakes" },
+		["build:crates"] = { "Work", "Crate" },
+		["build:crates:empty"] = { "Work", "Crate" },
 		["build:styles"] = { "Styles", "Cozy" },
 		["build:shapes"] = { "Build", "Shapes" },
 		["build:pillars"] = { "Build", "Pillars" },
@@ -345,6 +354,14 @@ elseif scene:sub(1, 5) == "build" then
 		Sim.profile.keepsakes = given
 		Sim.State.plan.items.keptBird = { id = "keep_bird", x = 150, y = 0, z = 40, r = 0, lv = 0 }
 		Sim.remoteEvent("State"):FireClient(Sim.player, { keepsakes = given })
+		Sim.frames(2)
+	end
+	if scene == "build:crates" then
+		-- out of work crates (Sim/Crates); the magic stage is already on the plot
+		local given = { crate_hero = 1, crate_magic = 2, crate_radio = 1 }
+		Sim.profile.crateItems = given
+		Sim.State.plan.items.stage = { id = "crate_magic", x = 150, y = 0, z = 40, r = 0, lv = 0 }
+		Sim.remoteEvent("State"):FireClient(Sim.player, { crateItems = given })
 		Sim.frames(2)
 	end
 	for _, tab in TABS[scene] or {} do
@@ -656,6 +673,14 @@ elseif scene:sub(1, 6) == "panel:" then
 				{ t = now - 4 * 86400, text = "Tobin moved in." },
 			},
 		})
+	elseif state:sub(1, 4) == "pets" and name == "Residents" then
+		-- two pets from pet crates, Mara owning the cat (Sim/Crates)
+		patch({
+			pets = {
+				p1 = { kind = "cat", name = "Biscuit", coat = 1, vid = order[1] },
+				p2 = { kind = "vacuum", name = "Beep", coat = 2 },
+			},
+		})
 	elseif state == "empty" and name == "Residents" then
 		patch({ villagers = {}, order = {} })
 	elseif (state == "craving" or state == "short") and name == "Residents" then
@@ -705,13 +730,17 @@ elseif scene:sub(1, 6) == "panel:" then
 		for i, pack in PassData.packs do
 			pack.id = 9100 + i
 		end
+		for i, c in PassData.crates do
+			c.id = 9200 + i
+		end
 		local today = math.floor(Sim.env.os.time() / 86400)
 		patch({
 			passes = { vip = true, finegrid = true },
-			gems = 23,
+			gems = if state == "crates" then 40 else 23,
 			playtime = { day = today, secs = 20 * 60, got = 0 },
 			achieved = { villager1 = true },
 			daily = { last = today - 1, streak = 4, run = 4 },
+			crates = if state == "crates" then { work = 1 } else {},
 		})
 		local Tuning = Harness.require("ReplicatedStorage.Shared.Config.Tuning")
 		if state == "group" or state == "member" then
@@ -724,6 +753,8 @@ elseif scene:sub(1, 6) == "panel:" then
 	Sim.frames(3)
 	if name == "Store" and state == "gems" then
 		Sim.press("Gems")
+	elseif name == "Store" and state == "crates" then
+		Sim.press("Crates")
 	elseif name == "Rewards" and state ~= "" then
 		-- its tabs: playtime, achievements, group (and member: the group, joined)
 		local tabs = { playtime = "Playtime", achievements = "Achievements", group = "Group", member = "Group" }
@@ -734,6 +765,16 @@ elseif scene:sub(1, 6) == "panel:" then
 		Sim.press("Friends")
 	elseif state == "lately" then
 		Sim.press("Lately")
+	elseif state:sub(1, 4) == "pets" then
+		Sim.press("Quirks")
+		if state == "pets:pick" then
+			Sim.frames(2)
+			local row = Sim.gui:FindFirstChild("pet", true)
+			local edit = row and row:FindFirstChild("Edit", true)
+			if edit then
+				edit.Activated:Fire()
+			end
+		end
 	elseif state:sub(1, 6) == "quirks" then
 		Sim.press("Quirks")
 		if state == "quirks:move" then
@@ -766,6 +807,26 @@ elseif scene:sub(1, 6) == "panel:" then
 		row.Activated:Fire()
 	end
 	Sim.frames(3)
+elseif scene:sub(1, 11) == "crate:open:" then
+	-- what came out of a crate (UI/Crates.reveal), shown as it stands once the crate has popped
+	startHud()
+	local Crates = Harness.require(Sim.CLIENT .. "UI.Crates")
+	local kind = scene:sub(12)
+	if kind == "pet" then
+		Crates.reveal(
+			{ kind = "pet", id = "cat", name = "Cat", rarity = "common", pet = "p1", petName = "Biscuit", coat = 1 },
+			true
+		)
+	else
+		Crates.reveal({ kind = "work", id = "crate_hero", name = "Hero's lookout", rarity = "epic" }, true)
+	end
+	Sim.frames(3)
+elseif scene == "crate:tip" then
+	-- a villager telling the player about the crates (UI/Crates.tip, the CrateTip event)
+	startHud()
+	local Crates = Harness.require(Sim.CLIENT .. "UI.Crates")
+	Crates.tip({ vid = order[1], text = "Ehehe, Mayor, you've saved up enough gems for a crate! The Store has them." })
+	Sim.frames(4)
 elseif scene == "welcome" or scene == "welcome:long" then
 	-- the welcome back dialog (UI/WelcomeBack): what the town earned while the player was away.
 	-- welcome:long after two days, of which the first eight hours were paid for

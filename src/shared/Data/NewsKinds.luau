@@ -58,6 +58,7 @@ NewsKinds.Icons = {
 	-- what else the town log says
 	movein = "personAdd",
 	moveout = "personLeave",
+	crate = "gift", -- what came out of a crate (Services/Crates)
 	land = "flag",
 	request = "bed",
 	offline = "coins",

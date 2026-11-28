@@ -222,7 +222,9 @@ local PLAIN_MOVE = { act = "point", beat = 4 }
 
 -- The move a job's work looks like at a step with none of its own.
 function Routine.move(job: string?): (string, number)
-	local m = (job and MOVES[job]) or PLAIN_MOVE
+	-- (a crate job carries its own: Data/Jobs' `move`)
+	local own = job and (Jobs.get(job) :: any)
+	local m = (job and MOVES[job]) or (own and own.move) or PLAIN_MOVE
 	return m.act, m.beat
 end
 
@@ -264,7 +266,8 @@ function Routine.loop(def: any): { Stop }
 	local home: Vector3 = def.workSpot or V(0, 0, -(def.size.Z / 2 + 1.5))
 	local yaw = math.rad(def.workYaw or 0)
 	local ahead = V(math.sin(yaw), 0, math.cos(yaw))
-	local steps = LOOPS[def.job] or plainLoop(def, home)
+	-- (a crate workplace draws its loop beside its parts: Build/Recipes/CrateWork's `loop`)
+	local steps = LOOPS[def.job] or def.loop or plainLoop(def, home)
 	local moveAct, moveBeat = Routine.move(def.job)
 	local out: { Stop } = table.create(#steps)
 	for i, s in steps do

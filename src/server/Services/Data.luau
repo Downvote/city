@@ -21,6 +21,7 @@ local Gems = require(Shared.Sim.Gems)
 local Rewards = require(Shared.Sim.Rewards)
 local SimPasses = require(Shared.Sim.Passes)
 local StarterHouse = require(Shared.Data.StarterHouse)
+local Text = require(Shared.Util.Text)
 
 local Data = {}
 
@@ -220,6 +221,10 @@ function Data.clientState(player: Player): any
 		gather = p.gather,
 		titles = p.titles,
 		title = p.title or false,
+		-- crates held to open, the crate workplaces given and the pets (Sim/Crates)
+		crates = p.crates,
+		crateItems = p.crateItems,
+		pets = p.pets,
 		unsaved = unsaved[player] == true,
 		plot = player:GetAttribute("Plot"),
 		plan = p.plan,
@@ -425,14 +430,18 @@ function Data.start()
 		-- the coins grow with the streak; a gem a day comes with them, more on every seventh day
 		-- running and one more for VIP (Sim/Rewards; the user: "allow players to buy gems, as a
 		-- daily reward ...")
-		local ok, amount, gems = Rewards.claimDaily(p, Rewards.today(), SimPasses.has(p, "vip"))
+		local ok, amount, gems, crate = Rewards.claimDaily(p, Rewards.today(), SimPasses.has(p, "vip"))
 		if not ok then
 			return false, 0, 0
 		end
 		Data.addCoins(player, amount)
 		Data.addGems(player, gems)
-		Data.push(player, "daily")
-		return true, amount, gems
+		Data.push(player, "daily", "crates")
+		-- (every seventh day running a crate comes with it, held in the Store: Sim/Crates)
+		if crate then
+			Data.notify(player, Text.fill("Your {x} is in the Store.", { x = crate .. " crate" }), "good")
+		end
+		return true, amount, gems, crate
 	end
 
 	Players.PlayerRemoving:Connect(onLeave)

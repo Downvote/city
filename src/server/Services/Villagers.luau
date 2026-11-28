@@ -46,6 +46,8 @@ local Npc = require(script.Parent.Parent.Npc.Npc)
 local Use = require(script.Parent.Parent.Npc.Use)
 local Room = require(script.Parent.Parent.Npc.Room)
 local UnstickSim = require(Shared.Sim.Unstick)
+local Crates = require(Shared.Sim.Crates) -- (crate jobs' gems at five o'clock, pets left by who moves out)
+local Rewards = require(Shared.Sim.Rewards)
 
 local Villagers = {}
 
@@ -1813,6 +1815,7 @@ function Villagers.endOfWork(player: Player)
 	profile.lastPayday = day
 	local total = 0
 	local notices = {}
+	local crateWork = {} -- the crate jobs worked today and how much of a day each (Sim/Crates.dayGems)
 	for vid, purse in mine do
 		local v = profile.villagers[vid]
 		if v and purse.day == day and purse.paid > 0 then
@@ -1820,10 +1823,20 @@ function Villagers.endOfWork(player: Player)
 			local full = City.dayPay(profile, vid, day, os.time())
 			-- (skill goes by the work done, so the share of the day is taken before the pay boost)
 			EventEngine.addXp(v, City.dayXp(purse.paid / payBoost(player, profile), full), notices)
+			local w = City.jobOf(profile, vid)
+			if w and w.job.crate and full > 0 then
+				table.insert(crateWork, { job = w.job.id, share = purse.paid / payBoost(player, profile) / full })
+			end
 		end
 	end
 	if total <= 0 then
 		return
+	end
+	-- the rarer crate jobs bring in a gem or two as well, up to a few a real day
+	local gems = Crates.dayGems(profile, crateWork, Rewards.today())
+	if gems > 0 then
+		Data.addGems(player, gems)
+		Data.notify(player, Text.fill("Crate jobs brought in {g} today.", { g = Text.gems(gems) }), "good")
 	end
 	profile.stats.paydays = (profile.stats.paydays or 0) + 1
 	Data.notify(player, Text.fill("Your villagers earned {n} coins today.", { n = Text.commas(total) }), "good")
@@ -2092,9 +2105,11 @@ local function remove(player: Player, vid: any): boolean
 			table.remove(profile.requests, j)
 		end
 	end
+	-- their pet stays in town, nobody's now (Sim/Crates)
+	Crates.forget(profile, vid)
 	Villagers.despawn(player, vid)
 	Data.log(player, Text.fill("{name} moved away.", { name = v.name }), "moveout")
-	Data.push(player, "villagers", "order", "rel", "requests")
+	Data.push(player, "villagers", "order", "rel", "requests", "pets")
 	return true
 end
 
@@ -2711,7 +2726,7 @@ function Villagers.start()
 			end
 			player:SetAttribute("Coins", profile.coins)
 		end
-		Data.push(player, "goals", "coins", "titles", "keepsakes", "bag", "owed")
+		Data.push(player, "goals", "coins", "titles", "keepsakes", "bag", "owed", "crates")
 		return ok, coins
 	end
 	World.ClockChanged.Event:Connect(function(hour)

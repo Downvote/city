@@ -110,7 +110,7 @@ end
 -- The skills the player has any experience in, best first (then by name).
 function Skills.list(profile: any): { Info }
 	local out = {}
-	for _, j in Jobs.list do
+	for _, j in Jobs.all do -- (the crate jobs too)
 		if total(profile, j.id) > 0 then
 			table.insert(out, Skills.info(profile, j.id))
 		end

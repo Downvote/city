@@ -10,6 +10,7 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Remotes = require(Shared.Net.Remotes)
 local Life = require(Shared.Sim.Life)
 local Text = require(Shared.Util.Text)
+local CrateData = require(Shared.Data.Crates) -- (a goal's crate)
 local Items = require(Shared.Data.Items)
 local Catalog = require(Shared.Build.Catalog)
 local GoalData = require(Shared.Data.Goals)
@@ -190,6 +191,10 @@ local function showDetail(g: any)
 	local item = Items.get(g.goal.thing)
 	if item then
 		table.insert(also, item.phrase)
+	end
+	local crate = if g.goal.crate then CrateData.get(g.goal.crate) else nil
+	if crate then
+		table.insert(also, crate.phrase)
 	end
 	if #also > 0 then
 		Kit.text(Text.fill("Also {x}", { x = table.concat(also, ", ") }), {
