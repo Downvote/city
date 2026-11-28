@@ -65,9 +65,12 @@
 --                       panel:Rewards:group with a group to join; panel:Rewards:member joined, the
 --                       gems to claim
 --   welcome             the welcome back dialog after five hours away (welcome:long after two days)
---   panel:Store:crates  the store's Crates tab with a work crate held and the gems for another
---   crate:open:work     what came out of a work crate (the Hero's lookout); crate:open:work:<rarity>
---                       a prize of that rarity; :drop, :shake or :burst after it, that beat
+--   panel:Residents:pets  Mara's Quirks with her cat (a robot vacuum nobody owns yet);
+--                       panel:Residents:pets:pick the list of pets to pick from
+--   panel:Store:crates  the store's Crates tab with a work crate held and enough gems for either
+--   crate:open:<kind>   a crate opening, the prize up: a work crate's (the Hero's lookout) or a pet
+--                       crate's (a cat); crate:open:<kind>:<rarity> a prize of that rarity, and :drop,
+--                       :shake or :burst after it that beat (the crate landing, shaking, bursting)
 --   crate:tip           a villager telling the player about the crates (UI/Crates.tip)
 --   build:crates        Build mode's Crate tab with three crate workplaces, one already down
 --                       (build:crates:empty before any came out)
@@ -840,6 +843,14 @@ elseif scene:sub(1, 6) == "panel:" then
 				{ t = now - 4 * 86400, text = "Tobin moved in." },
 			},
 		})
+	elseif state:sub(1, 4) == "pets" and name == "Residents" then
+		-- two pets from pet crates, Mara owning the cat (Sim/Crates)
+		patch({
+			pets = {
+				p1 = { kind = "cat", name = "Biscuit", coat = 1, vid = order[1] },
+				p2 = { kind = "vacuum", name = "Beep", coat = 2 },
+			},
+		})
 	elseif state == "empty" and name == "Residents" then
 		patch({ villagers = {}, order = {} })
 	elseif (state == "craving" or state == "short") and name == "Residents" then
@@ -1062,6 +1073,16 @@ elseif scene:sub(1, 6) == "panel:" then
 		Sim.press("Mood")
 	elseif state == "lately" then
 		Sim.press("Lately")
+	elseif state:sub(1, 4) == "pets" then
+		Sim.press("Quirks")
+		if state == "pets:pick" then
+			Sim.frames(2)
+			local row = Sim.gui:FindFirstChild("pet", true)
+			local edit = row and row:FindFirstChild("Edit", true)
+			if edit then
+				edit.Activated:Fire()
+			end
+		end
 	elseif state:sub(1, 6) == "quirks" then
 		Sim.press("Quirks")
 		if state == "quirks:move" then
@@ -1182,46 +1203,94 @@ elseif scene == "visiting" or scene == "visiting:liked" then
 	Sim.advance(1)
 elseif scene:sub(1, 11) == "crate:open:" then
 	-- a crate opening (UI/Crates.reveal), one beat of it as it stands: crate:open:work is the prize up
-	-- (an Epic, the Hero's lookout), crate:open:work:<rarity> a prize of that rarity, and :drop, :shake
-	-- or :burst at the end the crate landing, late in its shaking, or bursting
+	-- (an Epic, the Hero's lookout), crate:open:pet a pet crate's (a cat), crate:open:<kind>:<rarity> a
+	-- prize of that rarity, and :drop, :shake or :burst at the end the crate landing, late in its
+	-- shaking, or bursting
 	startHud()
 	local Crates = Harness.require(Sim.CLIENT .. "UI.Crates")
 	local Catalog = Harness.require("ReplicatedStorage.Shared.Build.Catalog")
-	local rarity, beat = "epic", true :: any
+	local PetData = Harness.require("ReplicatedStorage.Shared.Data.Pets")
+	local kind, rarity, beat = "work", nil, true :: any
 	for word in scene:sub(12):gmatch("[^:]+") do
 		if word == "drop" or word == "shake" or word == "burst" then
 			beat = word
-		elseif word ~= "work" then
+		elseif word == "work" or word == "pet" then
+			kind = word
+		else
 			rarity = word
 		end
 	end
-	local prize = Catalog.get("crate_hero")
-	if rarity ~= "epic" then
+	if kind == "pet" then
+		local pet = PetData.get("cat")
+		for _, p in PetData.list do
+			if rarity and p.rarity == rarity then
+				pet = p
+				break
+			end
+		end
+		local name = if pet.id == "cat" then "Biscuit" else "Pip"
+		Crates.reveal({
+			kind = "pet",
+			id = pet.id,
+			name = pet.name,
+			rarity = pet.rarity,
+			pet = "p1",
+			petName = name,
+			coat = 1,
+		}, beat)
+	else
+		local prize = Catalog.get("crate_hero")
+		if rarity and rarity ~= "epic" then
+			for _, def in Catalog.list("crates") do
+				if def.crate == rarity then
+					prize = def
+					break
+				end
+			end
+		end
+		Crates.reveal({ kind = "work", id = prize.id, name = prize.name, rarity = prize.crate }, beat)
+	end
+	Sim.frames(3)
+elseif scene:sub(1, 11) == "crate:play:" then
+	-- a crate opening played from its start (tools/preview/video.sh crate:play:<rarity>, or
+	-- crate:play:pet:<rarity> a pet crate's): the main
+	-- screen, then UI/Crates.reveal as it runs in the game
+	startHud()
+	local Crates = Harness.require(Sim.CLIENT .. "UI.Crates")
+	local Catalog = Harness.require("ReplicatedStorage.Shared.Build.Catalog")
+	local PetData = Harness.require("ReplicatedStorage.Shared.Data.Pets")
+	local kind, rarity = "work", scene:sub(12)
+	if rarity:sub(1, 4) == "pet:" then
+		kind, rarity = "pet", rarity:sub(5)
+	end
+	table.clear(soundLog)
+	if kind == "pet" then
+		local pet = PetData.get("cat")
+		for _, p in PetData.list do
+			if p.rarity == rarity then
+				pet = p
+				break
+			end
+		end
+		Crates.reveal({
+			kind = "pet",
+			id = pet.id,
+			name = pet.name,
+			rarity = pet.rarity,
+			pet = "p1",
+			petName = "Pip",
+			coat = 1,
+		})
+	else
+		local prize = Catalog.get("crate_hero")
 		for _, def in Catalog.list("crates") do
 			if def.crate == rarity then
 				prize = def
 				break
 			end
 		end
+		Crates.reveal({ kind = "work", id = prize.id, name = prize.name, rarity = prize.crate })
 	end
-	Crates.reveal({ kind = "work", id = prize.id, name = prize.name, rarity = rarity }, beat)
-	Sim.frames(3)
-elseif scene:sub(1, 11) == "crate:play:" then
-	-- a crate opening played from its start (tools/preview/video.sh crate:play:<rarity>): the main
-	-- screen, then UI/Crates.reveal as it runs in the game
-	startHud()
-	local Crates = Harness.require(Sim.CLIENT .. "UI.Crates")
-	local Catalog = Harness.require("ReplicatedStorage.Shared.Build.Catalog")
-	local rarity = scene:sub(12)
-	local prize = Catalog.get("crate_hero")
-	for _, def in Catalog.list("crates") do
-		if def.crate == rarity then
-			prize = def
-			break
-		end
-	end
-	table.clear(soundLog)
-	Crates.reveal({ kind = "work", id = prize.id, name = prize.name, rarity = prize.crate })
 elseif scene == "crate:tip" then
 	-- a villager telling the player about the crates (UI/Crates.tip, the CrateTip event)
 	startHud()

@@ -30,7 +30,8 @@
 --                      school, clinic, department); a kind may carry a size: library=56x28x12
 --   map                the middle of town: streets, plaza and street furniture, on the terrain
 --   vehicles           every vehicle side by side (Data/Vehicles); vehicles:<id>,<id> for some
---   crates             every kind of crate, as the Store shows it (Data/Crates: the work crate)
+--   pets               every pet in every coat, and the two crates (Data/Pets, Data/Crates); pets:<id>,<id>
+--                      for some, in their first coats
 --   map:x1,z1,x2,z2    another part of town (the terrain is drawn as faceted ground of its
 --                      materials' colours, finer the smaller the part, with the sea over it)
 --   basement           two basement rooms dug under a patch of a plot, half under a ground floor
@@ -362,6 +363,33 @@ elseif scene == "crates" or scene:sub(1, 6) == "crate:" then
 	for _, kind in if scene == "crates" then CrateData.Order else { scene:sub(7) } do
 		addPrims(CrateData.prims(kind), CFrame.new(x, 0, 0))
 		x += 4
+	end
+elseif scene == "pets" or scene:sub(1, 5) == "pets:" then
+	-- pets: every pet in each of its coats, a row a kind, then the two crates (Data/Pets, Data/Crates)
+	local PetData = R(Shared .. "Data.Pets")
+	local CrateData = R(Shared .. "Data.Crates")
+	local list = PetData.list
+	if scene ~= "pets" then
+		list = {}
+		for id in scene:sub(6):gmatch("[^,]+") do
+			table.insert(list, (assert(PetData.get(id), "no pet " .. id)))
+		end
+	end
+	local z = 0
+	for _, p in list do
+		local x = 0
+		for i = 1, if scene == "pets" then #p.coats else 1 do
+			addPrims(PetData.prims(p.id, i), CFrame.new(x + p.size.X / 2, 0, z) * CFrame.Angles(0, math.rad(-35), 0))
+			x += p.size.X + 1.2
+		end
+		z += p.size.Z + 1
+	end
+	if scene == "pets" then
+		local x = 0
+		for _, kind in CrateData.Order do
+			addPrims(CrateData.prims(kind), CFrame.new(x, 0, z + 2))
+			x += 4
+		end
 	end
 elseif scene == "things" or scene:sub(1, 7) == "things:" or scene:sub(1, 8) == "holding:" then
 	-- things: every thing a player carries (Data/Items, Data/ThingModels) as it is held, each over

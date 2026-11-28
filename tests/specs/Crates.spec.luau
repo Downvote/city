@@ -1,13 +1,13 @@
 --!nocheck
--- Work crates (Data/Crates, Sim/Crates). The user: "add work crates that can be bought with gems or
--- robux, which give exclusive work spaces which are unique to crates, giving a random one with
--- effectiveness scaling off rarity, some of the rarer jobs even giving gems. Crate workspaces are
--- always better than any money ones ... Some work crates are also given through achievements,
--- goals, daily rewards". Pet crates came and went ("remove pets. the only crate should be work
--- crates"). Here: the work crate the only kind, what is in it and how likely, the rolls against
--- those odds, crate jobs always paying more than any coin job, the gems they bring kept rare,
--- owning what came out (and putting it down only as often), crates as rewards, and an old save's
--- pet crates and pets.
+-- Work and pet crates (Data/Crates, Sim/Crates, Data/Pets, Sim/Pets). The user: "add work crates that
+-- can be bought with gems or robux, which give exclusive work spaces which are unique to crates,
+-- giving a random one with effectiveness scaling off rarity, some of the rarer jobs even giving gems.
+-- Crate workspaces are always better than any money ones ... Some work crates are also given through
+-- achievements, goals, daily rewards", then "Add pet crates as well ... You can choose to make
+-- villagers own the pet ... Which increase mood, satisfy cravings sometimes for you, and provide
+-- more interactions." Here: what is in each crate and how likely, the rolls against those odds,
+-- crate jobs always paying more than any coin job, the gems they bring kept rare, owning what came
+-- out (and putting it down only as often), pets and their owners, and crates as rewards.
 
 local Shared = "ReplicatedStorage.Shared."
 local Tuning = require(Shared .. "Config.Tuning")
@@ -15,11 +15,12 @@ local Catalog = require(Shared .. "Build.Catalog")
 local Geometry = require(Shared .. "Build.Geometry")
 local Jobs = require(Shared .. "Data.Jobs")
 local CrateData = require(Shared .. "Data.Crates")
-local PassData = require(Shared .. "Data.Passes")
+local PetData = require(Shared .. "Data.Pets")
 local Personalities = require(Shared .. "Data.Personalities")
 local Achievements = require(Shared .. "Data.Achievements")
 local Goals = require(Shared .. "Data.Goals")
 local Crates = require(Shared .. "Sim.Crates")
+local Pets = require(Shared .. "Sim.Pets")
 local Rewards = require(Shared .. "Sim.Rewards")
 local ClaimAll = require(Shared .. "Sim.ClaimAll")
 local Life = require(Shared .. "Sim.Life")
@@ -46,27 +47,11 @@ local function profileWith(villagers: number?)
 	return p
 end
 
-describe("Crates", function()
-	it("has the work crate and no other", function()
-		expect(table.concat(CrateData.Order, " ")).toBe("work")
-		local kinds = 0
-		for _ in CrateData.Kinds do
-			kinds += 1
-		end
-		expect(kinds).toBe(1)
-		expect(CrateData.get("pet")).toBe(nil)
-		expect(CrateData.get("work").blurb).toBe("Crate jobs give special workplaces that pay more than regular ones.")
-		-- nothing to buy or price for a kind there isn't
-		for _, c in PassData.crates do
-			expect(CrateData.get(c.kind) ~= nil).toBeTruthy()
-		end
-		expect(PassData.crateProduct("crate_pet")).toBe(nil)
-		for kind in K.Price do
-			expect(CrateData.get(kind) ~= nil).toBeTruthy()
-		end
-		expect(Crates.price("pet")).toBe(nil)
-	end)
+local function plain(text: string): boolean
+	return not string.find(text, "[{}]") and not string.find(text, "\u{2014}") and not string.find(text, "\u{2013}")
+end
 
+describe("Crates", function()
 	it("shows what each crate holds by rarity, the chances adding up", function()
 		for _, kind in CrateData.Order do
 			local def = CrateData.get(kind)
@@ -209,18 +194,16 @@ describe("Crates", function()
 		expect(Crates.owned(p, r.id)).toBe(1)
 		expect(p.stats.crates).toBe(1)
 		-- nothing held: nothing to open; given one, it opens and is gone
-		expect(Crates.openHeld(p, "work", rng)).toBe(nil)
-		expect(Crates.give(p, "work", 1)).toBe(1)
-		local held = Crates.openHeld(p, "work", rng)
-		expect(held ~= nil and held.kind == "work").toBeTruthy()
-		expect(Crates.held(p, "work")).toBe(0)
-		expect(Crates.owned(p, held.id) >= 1).toBeTruthy()
-		expect(p.stats.crates).toBe(2)
-		-- no crate of a kind there isn't (a pet crate included), and no more held than the cap
-		expect(Crates.give(p, "hat", 1)).toBe(nil)
-		expect(Crates.give(p, "pet", 1)).toBe(nil)
-		expect(Crates.buy(p, "pet", rng)).toBe(nil)
 		expect(Crates.openHeld(p, "pet", rng)).toBe(nil)
+		expect(Crates.give(p, "pet", 1)).toBe(1)
+		local pet = Crates.openHeld(p, "pet", rng)
+		expect(pet ~= nil and pet.pet ~= nil).toBeTruthy()
+		expect(Crates.held(p, "pet")).toBe(0)
+		local owned = p.pets[pet.pet]
+		expect(owned.kind).toBe(pet.id)
+		expect(table.find(PetData.get(pet.id).names, owned.name) ~= nil).toBeTruthy()
+		-- no crate of a kind there isn't, and no more held than the cap
+		expect(Crates.give(p, "hat", 1)).toBe(nil)
 		expect(Crates.give(p, "work", 999)).toBe(K.Held)
 		expect(Crates.openHeld(p, "nonsense", rng)).toBe(nil)
 	end)
@@ -257,6 +240,30 @@ describe("Crates", function()
 		expect(Crates.roll(p, "work", rng)).toBe(nil)
 	end)
 
+	it("lets a villager own one pet, and leaves it nobody's when they move out", function()
+		local p = profileWith(2)
+		p.pets = { p1 = { kind = "cat", name = "Biscuit", coat = 1 }, p2 = { kind = "dog", name = "Bean", coat = 2 } }
+		expect((Crates.assign(p, "p1", "v1"))).toBe(true)
+		expect((Crates.petOf(p, "v1"))).toBe("p1")
+		-- a second pet for the same villager takes the place of the first
+		expect((Crates.assign(p, "p2", "v1"))).toBe(true)
+		expect(p.pets.p1.vid).toBe(nil)
+		expect((Crates.petOf(p, "v1"))).toBe("p2")
+		-- nobody, a stranger, a pet that isn't theirs
+		expect((Crates.assign(p, "p2", "nobody"))).toBe(false)
+		expect((Crates.assign(p, "p9", "v2"))).toBe(false)
+		expect((Crates.assign(p, "p2", false))).toBe(true)
+		expect((Crates.petOf(p, "v1"))).toBe(nil)
+		Crates.assign(p, "p1", "v2")
+		Crates.forget(p, "v2")
+		expect(p.pets.p1.vid).toBe(nil)
+		-- a full house of pets opens no more pet crates
+		for i = 3, Tuning.Pets.Max do
+			p.pets["p" .. i] = { kind = "bunny", name = "Puff", coat = 1 }
+		end
+		expect(Crates.blocked(p, "pet")).toBe("You have as many pets as you can keep.")
+	end)
+
 	it("cleans what a save holds", function()
 		local raw = Schema.newProfile()
 		raw.villagers.v1 = Schema.newVillager(
@@ -267,6 +274,13 @@ describe("Crates", function()
 		raw.order = { "v1" }
 		raw.crates = { work = 2.7, pet = -1, hat = 4 }
 		raw.crateItems = { crate_hero = 3, bed_single = 2, crate_magic = 0 / 0 }
+		raw.pets = {
+			p1 = { kind = "cat", name = "Biscuit", coat = 2, vid = "v1" },
+			p2 = { kind = "unicorn", name = "X" },
+			p3 = { kind = "dog", name = "", coat = 99, vid = "gone" },
+			bad = { kind = "dog" },
+		}
+		raw.nextPet = "x"
 		local p = Schema.migrate(raw)
 		expect(p.crates.work).toBe(2)
 		expect(p.crates.pet).toBe(nil)
@@ -274,85 +288,45 @@ describe("Crates", function()
 		expect(p.crateItems.crate_hero).toBe(3)
 		expect(p.crateItems.bed_single).toBe(nil)
 		expect(p.crateItems.crate_magic).toBe(nil)
+		expect(p.pets.p1.vid).toBe("v1")
+		expect(p.pets.p2).toBe(nil)
+		expect(p.pets.bad).toBe(nil)
+		expect(p.pets.p3.vid).toBe(nil)
+		expect(p.pets.p3.coat).toBe(1)
+		expect(p.pets.p3.name).toBe(PetData.get("dog").names[1])
+		expect(p.nextPet).toBe(1)
 		expect(p.crateTold).toBe(false)
-		-- a new save starts with none of it, and has no pets
+		-- a new save starts with none of it
 		local fresh = Schema.newProfile()
 		expect(next(fresh.crates)).toBe(nil)
-		expect(fresh.pets).toBe(nil)
-		expect(fresh.nextPet).toBe(nil)
-	end)
-
-	it("turns an old save's pet crates into work crates and lets its pets go", function()
-		-- the user: "remove pets. the only crate should be work crates"; no reward is lost
-		local raw = Schema.newProfile()
-		raw.villagers.v1 = Schema.newVillager(
-			"v1",
-			Schema.cleanVillagerInput({ name = "A", pers = "sunny", app = Appearance.default() }),
-			Rng.new(1)
-		)
-		raw.order = { "v1" }
-		raw.crates = { work = 2, pet = 3 }
-		raw.pets = {
-			p1 = { kind = "cat", name = "Biscuit", coat = 2, vid = "v1" },
-			p2 = { kind = "dog", name = "Bean", coat = 1 },
-		}
-		raw.nextPet = 3
-		local p = Schema.migrate(raw)
-		expect(p.crates.work).toBe(5)
-		expect(p.crates.pet).toBe(nil)
-		expect(p.pets).toBe(nil)
-		expect(p.nextPet).toBe(nil)
-		-- the work crates open as any others do
-		local r = Crates.openHeld(p, "work", Rng.new(4))
-		expect(r ~= nil and r.kind == "work").toBeTruthy()
-		expect(Crates.held(p, "work")).toBe(4)
-		-- only pet crates: all of them work crates, never past what can be held
-		local only = Schema.newProfile()
-		only.crates = { pet = 2 }
-		expect(Schema.migrate(only).crates.work).toBe(2)
-		local full = Schema.newProfile()
-		full.crates = { work = K.Held - 1, pet = 5 }
-		expect(Schema.migrate(full).crates.work).toBe(K.Held)
-		-- and it does nothing a second time
-		expect(Schema.migrate(p).crates.work).toBe(4)
+		expect(next(fresh.pets)).toBe(nil)
 	end)
 
 	it("hands crates out with the daily gift, some achievements and some goals", function()
-		-- the daily gift: a work crate every seventh day running (the fourteenth's was a pet crate)
+		-- the daily gift: a work crate on the seventh day running, a pet crate on the fourteenth
 		expect(Rewards.dailyCrate(K.DailyEvery)).toBe("work")
-		expect(Rewards.dailyCrate(K.DailyEvery * 2)).toBe("work")
+		expect(Rewards.dailyCrate(K.DailyEvery * 2)).toBe("pet")
 		expect(Rewards.dailyCrate(K.DailyEvery * 3)).toBe("work")
 		expect(Rewards.dailyCrate(1)).toBe(nil)
-		expect(Rewards.dailyCrate(K.DailyEvery + 1)).toBe(nil)
 		local p = profileWith()
 		p.daily = { last = 99, streak = 6, run = K.DailyEvery - 1 }
 		local ok, _, _, crate = Rewards.claimDaily(p, 100, false)
 		expect(ok).toBe(true)
 		expect(crate).toBe("work")
 		expect(Crates.held(p, "work")).toBe(1)
-		-- achievements and goals: some of each, every one a work crate (the ones that gave a pet
-		-- crate give a work crate now, so none gives less than it did)
-		local count = { a = 0, g = 0 }
+		-- achievements and goals: some of each, of each kind
+		local kinds = {}
 		for _, a in Achievements.list do
 			if a.crate then
-				expect(a.crate).toBe("work")
-				count.a += 1
+				kinds["a" .. a.crate] = true
 			end
 		end
 		for _, g in Goals.list do
 			if g.crate then
-				expect(g.crate).toBe("work")
-				count.g += 1
+				kinds["g" .. g.crate] = true
 			end
 		end
-		expect(count.a).toBe(5)
-		expect(count.g).toBe(4)
-		for _, id in { "villager5", "villager30" } do
-			expect(Achievements.get(id).crate).toBe("work")
-		end
-		for _, id in { "bestfriends3", "heart10" } do
-			expect(Goals.get(id).crate).toBe("work")
-		end
+		expect(kinds.awork and kinds.apet and kinds.gwork and kinds.gpet).toBeTruthy()
 		-- an achievement's crate is held once it's claimed, and once only
 		local a5 = Achievements.get("villager5")
 		local q = profileWith(5)
@@ -369,18 +343,18 @@ describe("Crates", function()
 		p.daily = { last = 99, streak = 6, run = K.DailyEvery - 1 }
 		local haul = ClaimAll.rewards(p, 100, false, false)
 		-- the seventh day's work crate, and the crates of every achievement that was done
-		local want = 1
+		local want = { work = 1, pet = 0 }
 		for _, id in haul.achievements do
 			local a = Achievements.get(id)
 			if a.crate then
-				expect(a.crate).toBe("work")
-				want += 1
+				want[a.crate] += 1
 			end
 		end
-		expect(#haul.crates).toBe(want)
-		expect(Crates.held(p, "work")).toBe(want)
+		expect(#haul.crates).toBe(want.work + want.pet)
+		expect(Crates.held(p, "work")).toBe(want.work)
+		expect(Crates.held(p, "pet")).toBe(want.pet)
 		expect(ClaimAll.cratesNotice({ "work" })).toBe("Your work crate is in the Store.")
-		expect(ClaimAll.cratesNotice({ "work", "work" })).toBe("2 crates are in the Store.")
+		expect(ClaimAll.cratesNotice({ "work", "pet" })).toBe("2 crates are in the Store.")
 		expect(ClaimAll.cratesNotice({})).toBe(nil)
 		-- a goal's crate comes with its claim
 		local goal
@@ -405,5 +379,99 @@ describe("Crates", function()
 			said = said or string.find(n, "crate is in the Store", 1, true) ~= nil
 		end
 		expect(said).toBeTruthy()
+	end)
+end)
+
+describe("Pets", function()
+	it("has a pet of every rarity, each drawn with its joints and coats", function()
+		local rarities = {}
+		for _, pet in PetData.list do
+			rarities[pet.rarity] = true
+			expect(#pet.names >= 3).toBeTruthy()
+			expect(#pet.coats >= 1).toBeTruthy()
+			expect(#pet.acts >= 1).toBeTruthy()
+			for _, act in pet.acts do
+				expect(Pets.Acts[act] ~= nil).toBeTruthy()
+			end
+			for i = 1, #pet.coats do
+				local prims = PetData.prims(pet.id, i)
+				expect(#prims >= 12 and #prims <= 80).toBeTruthy()
+				local bones = {}
+				for _, prim in prims do
+					expect(prim.mat ~= "SmoothPlastic").toBeTruthy()
+					if prim.name then
+						bones[prim.name] = true
+						-- every named part turns round a joint the kind knows
+						expect(pet.joints[prim.name] ~= nil).toBeTruthy()
+					end
+				end
+				for name in pet.joints do
+					expect(bones[name]).toBe(true)
+				end
+				-- inside its box (a little over for the tail and the wings is fine)
+				local lo, hi = Geometry.bounds(prims)
+				local size = hi - lo
+				expect(size.X <= pet.size.X + 0.3 and size.Y <= pet.size.Y + 0.3 and size.Z <= pet.size.Z + 0.3).toBeTruthy()
+			end
+		end
+		for _, r in CrateData.Rarities do
+			expect(rarities[r]).toBe(true)
+		end
+	end)
+
+	it("says a line for every act in every voice, filled in", function()
+		local rng = Rng.new(2)
+		for _, pet in PetData.list do
+			for _, act in pet.acts do
+				for _, pers in Personalities.list do
+					for _ = 1, 4 do
+						local text = Pets.line(act, pers.id, "Biscuit", pet.id, rng)
+						expect(plain(text)).toBeTruthy()
+						expect(string.find(text, "Biscuit", 1, true) ~= nil).toBeTruthy()
+					end
+				end
+			end
+		end
+		for _, pers in Personalities.list do
+			local text = Pets.fetchLine(pers.id, "Biscuit", "cat", "an apple", rng)
+			expect(plain(text)).toBeTruthy()
+			expect(string.find(text, "an apple", 1, true) ~= nil).toBeTruthy()
+		end
+	end)
+
+	it("cheers its owner up a little each night, more the rarer, and fetches now and then", function()
+		local last = 0
+		for _, r in CrateData.Rarities do
+			expect(Tuning.Pets.Mood[r] >= last).toBeTruthy()
+			last = Tuning.Pets.Mood[r]
+			expect(Tuning.Pets.Fetch[r] > 0 and Tuning.Pets.Fetch[r] <= 0.5).toBeTruthy()
+		end
+		-- a little: never more a night than owning a pet adds to how happy they can be (Sim/Needs)
+		expect(Tuning.Pets.Mood.legendary <= Tuning.Needs.Pet).toBeTruthy()
+		expect(Pets.nightMood("cat")).toBe(Tuning.Pets.Mood.common)
+		expect(Pets.nightMood("dragon")).toBe(Tuning.Pets.Mood.legendary)
+		expect(Pets.nightMood("nothing")).toBe(0)
+		expect(Pets.fetchChance("dragon")).toBe(Tuning.Pets.Fetch.legendary)
+	end)
+
+	it("walks a leg in step on every screen, and stays on its land", function()
+		local a, b = Vector3.new(0, 0, 0), Vector3.new(6, 0, 8)
+		expect(Pets.legTime(a, b, 5)).toBeNear(2, 1e-9)
+		local at, moving, gone = Pets.at(a, b, 100, 5, 101)
+		expect(moving).toBe(true)
+		expect((at - Vector3.new(3, 0, 4)).Magnitude).toBeNear(0, 1e-6)
+		expect(gone).toBeNear(5, 1e-6)
+		local done, still = Pets.at(a, b, 100, 5, 200)
+		expect(still).toBe(false)
+		expect(done).toBe(b)
+		-- beside a villager, Gap short of them on the pet's side
+		local by = Pets.besidePoint(Vector3.new(10, 0, 0), Vector3.new(0, 0, 0))
+		expect(by.X).toBeNear(Tuning.Pets.Gap, 1e-6)
+		-- a walk keeps inside the land's sides and back, and only just over its front
+		local P = Tuning.Pets
+		expect(Pets.stepFrom(Vector3.new(50, 0, 50), 0, 10, 0, 0, 100, 100) ~= nil).toBeTruthy()
+		expect(Pets.stepFrom(Vector3.new(95, 0, 50), 0, 10, 0, 0, 100, 100)).toBe(nil)
+		expect(Pets.stepFrom(Vector3.new(50, 0, 2), -math.pi / 2, P.Street + 3, 0, 0, 100, 100)).toBe(nil)
+		expect(Pets.stepFrom(Vector3.new(50, 0, 2), -math.pi / 2, P.Street, 0, 0, 100, 100) ~= nil).toBeTruthy()
 	end)
 end)

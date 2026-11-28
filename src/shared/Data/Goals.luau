@@ -5,9 +5,9 @@
 -- Some pay more than coins (the user: "add more rewards to quests, like titles, special buildings,
 -- special gifts, etc."): `title` a title to wear under your name (Data/Titles), `piece` a Build mode
 -- piece that is yours to put down for free (a keepsake from Build/Recipes/Prizes, Sim/Keepsakes) and
--- `thing` something for the bag (Data/Items, a treasure most often) and `crate` a work crate (the
--- user: "Some work crates are also given through achievements, goals, daily rewards"; set below).
--- Life.claimGoal pays them all.
+-- `thing` something for the bag (Data/Items, a treasure most often) and `crate` a work or pet crate
+-- (the user: "Some work crates are also given through achievements, goals, daily rewards"; set
+-- below). Life.claimGoal pays them all.
 
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 
@@ -25,7 +25,7 @@ export type Goal = {
 	title: string?,
 	piece: string?,
 	thing: string?,
-	crate: string?, -- a crate to open in the Store (Data/Crates: "work"; Sim/Crates)
+	crate: string?, -- a crate to open in the Store (Data/Crates: "work" or "pet"; Sim/Crates)
 	value: (profile: any, city: any) -> number,
 }
 
@@ -301,8 +301,8 @@ Goals.list = {
 -- The goals that give a crate too.
 local CRATES: { [string]: string } = {
 	work6 = "work",
-	bestfriends3 = "work",
-	heart10 = "work",
+	bestfriends3 = "pet",
+	heart10 = "pet",
 	work10 = "work",
 }
 

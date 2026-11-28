@@ -5,7 +5,8 @@
 -- light climbs the rarities to the prize's own, a step and a sound each; then it bursts (the
 -- shimmer stops, the sparkle plays, and the fanfare for an Epic or better), and the prize comes up
 -- with its rarity, its name and OK, which takes it all down. A press while it shakes skips to the
--- burst, and the previews' beats are drawn without playing anything.
+-- burst, a pet crate's pet comes up by its new name, and the previews' beats are drawn without
+-- playing anything.
 --   lune run tests/sim/crate_open.luau          (from the repository root)
 
 local process = require("@lune/process")
@@ -159,6 +160,27 @@ run("a second opening takes the first one's place", function()
 	check(n == 1, "one opening on the screen")
 	Crates.closeReveal()
 	advance(0.4)
+end)
+
+run("a pet crate's pet comes up by its new name", function()
+	table.clear(played)
+	Crates.reveal({
+		kind = "pet",
+		id = "cat",
+		name = "Cat",
+		rarity = "common",
+		pet = "p1",
+		petName = "Biscuit",
+		coat = 1,
+	})
+	frames(1)
+	advance(Show.Drop + Show.Shake + 0.2)
+	frames(2)
+	local holder = find("Prize")
+	check(holder ~= nil and holder:GetAttribute("ItemId") == "pets:cat", "the pet comes up")
+	check(find("PrizeName") and find("PrizeName").Text == "Biscuit the cat", "called by its name")
+	check(find("Where") and find("Where").Text:find("Biscuit", 1, true) ~= nil, "and where it lives")
+	Crates.closeReveal(true)
 end)
 
 run("the previews' beats stand still", function()

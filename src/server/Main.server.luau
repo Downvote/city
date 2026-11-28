@@ -31,7 +31,8 @@ local order = {
 	"Vehicles", -- buying and bringing out vehicles (Data/Vehicles)
 	"Claims", -- Claim all in the rewards and the town goals (Sim/ClaimAll)
 	"Visit", -- other players' towns: naming yours, likes, the directory and visits (after Plots, Build and Avatar)
-	"Crates", -- work crates: opening them, the villager's tip (Sim/Crates): after Villagers
+	"Crates", -- work and pet crates: opening, pets' owners, the villager's tip (Sim/Crates): after Villagers
+	"Pets", -- pets about town, meeting villagers, bringing cravings (Sim/Pets): after Crates
 	"Trust", -- trusted builders and their budgets (Build reads it; it needs only Data and Plots)
 	"Social", -- other players: friends here and their pay boost, players' cards, villagers greeting visitors (after Visit)
 	-- passes, gem packs, rewards, offline earnings, the group: listens for Data.Loaded, so it starts

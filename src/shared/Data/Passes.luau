@@ -135,14 +135,15 @@ for _, p in Passes.packs do
 end
 
 -- Crates bought with Robux: developer products, as the gem packs are (the user: "add work crates
--- that can be bought with gems or robux"). One bought waits in the Store's Crates tab to be opened
--- (Sim/Crates.give; Services/Store pays the receipt once). The ids are 0 until the products are
--- made on Roblox (Creations > the experience > Monetization > Developer Products): paste each
--- one's id here. One left at 0 can't be bought (its button says Soon).
+-- that can be bought with gems or robux", and pet crates "as well"). One bought waits in the Store's
+-- Crates tab to be opened (Sim/Crates.give; Services/Store pays the receipt once). The ids are 0
+-- until the products are made on Roblox (Creations > the experience > Monetization > Developer
+-- Products): paste each one's id here. One left at 0 can't be bought (its button says Soon).
 export type CrateProduct = { key: string, id: number, kind: string, price: number, name: string }
 
 Passes.crates = {
 	{ key = "crate_work", id = 0, kind = "work", price = 99, name = "Work crate" },
+	{ key = "crate_pet", id = 0, kind = "pet", price = 79, name = "Pet crate" },
 } :: { CrateProduct }
 
 function Passes.crateProduct(key: string): CrateProduct?

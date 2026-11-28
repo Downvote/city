@@ -306,7 +306,7 @@ describe("Store service", function()
 	end)
 
 	it("holds a crate bought with Robux once per purchase, to open in the Store", function()
-		-- the user: "add work crates that can be bought with gems or robux"
+		-- the user: "add work crates that can be bought with gems or robux" (and pet crates)
 		reset()
 		local p = profiles[owner]
 		p.receipts, p.crates = {}, {}

@@ -90,8 +90,9 @@ Remotes.Functions = {
 	"PlotLike", -- (ownerId, on?) -> { likes, liked } or nil, why: likes a town, or takes the like back
 	"PlotVisit", -- (ownerId) -> ok, why: to their plot if they're here, else onto a copy of their town
 	"PlotLeave", -- () -> ok: off a copy and back home (or to the square without a plot)
-	-- work crates (Services/Crates, Sim/Crates): checked on the server
+	-- crates and pets (Services/Crates, Sim/Crates): each checked on the server
 	"CrateOpen", -- (kind, "held" | "gems") -> ok, result or why: open a crate held, or buy one with gems and open it
+	"PetOwner", -- (petId, vid | false) -> ok, why: make a villager a pet's owner, or nobody
 	-- other players (Services/Social, Services/Trust, Sim/Social, Sim/Trust): each checked on the server
 	-- (userId) -> { id, name, user, town, level, people, likes, liked, friend, trusted?, trustsYou?,
 	-- top = { { vid, name, color, pers, heart, job } }, plot? } or nil, why: another player's card

@@ -49,7 +49,7 @@ local Npc = require(script.Parent.Parent.Npc.Npc)
 local Use = require(script.Parent.Parent.Npc.Use)
 local Room = require(script.Parent.Parent.Npc.Room)
 local UnstickSim = require(Shared.Sim.Unstick)
-local Crates = require(Shared.Sim.Crates) -- (crate jobs' gems at five o'clock)
+local Crates = require(Shared.Sim.Crates) -- (crate jobs' gems at five o'clock, pets left by who moves out)
 local Rewards = require(Shared.Sim.Rewards)
 local GuestTalk = require(Shared.Sim.GuestTalk) -- (what they say to a visitor: somebody who isn't their mayor)
 local Social = require(Shared.Sim.Social) -- (friends playing here: the town's pay boost)
@@ -2090,9 +2090,11 @@ local function remove(player: Player, vid: any): boolean
 			table.remove(profile.requests, j)
 		end
 	end
+	-- their pet stays in town, nobody's now (Sim/Crates)
+	Crates.forget(profile, vid)
 	Villagers.despawn(player, vid)
 	Data.log(player, Text.fill("{name} moved away.", { name = v.name }), "moveout")
-	Data.push(player, "villagers", "order", "rel", "requests")
+	Data.push(player, "villagers", "order", "rel", "requests", "pets")
 	return true
 end
 
