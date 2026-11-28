@@ -257,7 +257,9 @@ Sim.run("the sections: a row of words, every one in reach", function()
 	-- the cards: the name in bold, a small line under it
 	local names = cardNames()
 	check(#names == 4 and names[1] == "HairAccessory 1", "the cards carry the item's name")
-	check(smallLine("HairAccessory 1") == "Hair", "and a small line saying what it is")
+	-- (a small line saying what it is only where a page mixes kinds: "Hair" under every hair
+	-- said the section's name again)
+	check(smallLine("HairAccessory 1") == "", "and no small line repeating the section")
 	press("HairAccessory 2")
 	check(smallLine("HairAccessory 2") == "Wearing", "the one on says so")
 	check(ticked() == "HairAccessory 2", "and is ticked")
