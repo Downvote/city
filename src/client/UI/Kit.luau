@@ -4039,8 +4039,9 @@ function Kit.backButton(props: { [string]: any }, onClick: (() -> ())?): TextBut
 end
 
 -- Shapes drifting slowly across the black behind a menu. The user: "make an animated
--- background with shapes like it in the menus". Leaning bars, rows of ticks and wedges, faint, in the menu's colour and white, all sliding the same way at
--- their own speeds and coming round again. One loop moves them, and it stops when the menu goes.
+-- background with shapes like it in the menus". Leaning bars, rows of ticks and wedges, faint,
+-- in the menu's colour and white, all sliding the same way at their own speeds and coming round
+-- again. One loop moves them, and it stops when the menu goes.
 -- opts: W, H (the layer's size), Count, Faint ({ from, to } transparency), Second (the colour of
 -- every third shape, the words' colour by default), Sizes ({ from, to } pixels), Speed (a scale),
 -- Bands (true or a number: long leaning strips of the colour drifting sideways behind the shapes),

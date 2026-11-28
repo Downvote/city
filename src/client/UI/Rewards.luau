@@ -21,7 +21,6 @@ local Text = require(Shared.Util.Text)
 local CrateData = require(Shared.Data.Crates) -- (a crate in the daily gift or an achievement)
 
 local Kit = require(script.Parent.Kit)
-local Icons = require(script.Parent.Icons)
 local MenuParts = require(script.Parent.MenuParts)
 local Toasts = require(script.Parent.Toasts)
 local State = require(script.Parent.Parent.Controllers.State)
