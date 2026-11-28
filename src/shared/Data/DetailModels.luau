@@ -821,8 +821,10 @@ end
 
 -- A round fountain on a ring of darker paving, with benches and potted shrubs round it.
 M.pocketFountain = function(r: R)
-	r:cyl(0, 0.06, 0, 0.12, 30, "y", PAVING, "Pavement")
-	r:cyl(0, 0.12, 0, 0.24, 16, "y", shade(PAVING, 0.9), "Pavement")
+	-- (both rings stand a little clear of the ground, so their rims never meet the edge of a path
+	-- laid under them, which reaches 0.02 up)
+	r:cyl(0, 0.08, 0, 0.1, 30, "y", PAVING, "Pavement")
+	r:cyl(0, 0.16, 0, 0.16, 16, "y", shade(PAVING, 0.9), "Pavement")
 	fountain(r, 0, 0.24, 0)
 	for k = 0, 3 do
 		local a = math.rad(45 + k * 90)

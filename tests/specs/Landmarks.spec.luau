@@ -333,15 +333,15 @@ end)
 describe("The stair up the hill", function()
 	local stair = Landmarks.stair()
 	local terrace = Landmarks.terrace()
-	local WALK = 0.3 -- Hill Road's sidewalk
+	local WALK = 0.3 -- Ridge Road's sidewalk
 
-	it("starts at the back of Hill Road's pavement and runs up without a gap", function()
+	it("starts at the back of Ridge Road's pavement and runs up without a gap", function()
 		local first = stair.steps[1]
-		-- (the stretch of Hill Road the stair stands on: round the old town)
+		-- (the road the stair stands on: Ridge Road, behind the plots north of Hill Road)
 		local hill
 		for _, road in Town.Roads do
 			local x1, x2 = math.min(road[1], road[3]), math.max(road[1], road[3])
-			if road.name == "Hill Road" and stair.x >= x1 and stair.x <= x2 then
+			if road.name == "Ridge Road" and stair.x >= x1 and stair.x <= x2 then
 				hill = road
 			end
 		end
@@ -438,7 +438,7 @@ describe("The stair up the hill", function()
 				end
 				if pine then
 					pines += 1
-					expect(pos.Z > Town.RingZ + 17 + 18).toBeTruthy()
+					expect(pos.Z > Town.RidgeZ + 17 + 18).toBeTruthy()
 				else
 					rocks += 1
 				end
@@ -631,7 +631,7 @@ describe("Street paint", function()
 		local stripes, tactile = 0, 0
 		for _, p in paint do
 			local x1, y1, z1, x2, _, z2 = boxOf(p, CFrame.identity)
-			if math.abs((x1 + x2) / 2 - stair.x) < 3.1 and math.abs((z1 + z2) / 2 - Town.RingZ) < 17 then
+			if math.abs((x1 + x2) / 2 - stair.x) < 3.1 and math.abs((z1 + z2) / 2 - Town.RidgeZ) < 17 then
 				if p.shape == "Block" and y1 < 0.1 and math.abs((x2 - x1) - 6) < 0.01 then
 					stripes += 1
 				elseif p.shape == "Piece" and y1 > 0.25 then

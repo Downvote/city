@@ -127,7 +127,8 @@ local function awning(
 	end
 end
 
--- A pendant lamp hanging from a ceiling at height `ceil`.
+-- A pendant lamp hanging from a ceiling at height `ceil`, lit at every hour like the rooms of the
+-- town's other buildings (Builder's RoomLight: a shop keeps its lights on by day).
 local function pendant(r: R, x: number, z: number, ceil: number, color: Color3, lit: boolean)
 	r:cyl(x, ceil - 0.06, z, 0.12, 0.45, "y", IRON, "Metal")
 	r:cyl(x, ceil - 0.85, z, 1.5, 0.05, "y", IRON, "SmoothPlastic")
@@ -139,6 +140,7 @@ local function pendant(r: R, x: number, z: number, ceil: number, color: Color3, 
 	else
 		r:glow(bulb, 0)
 	end
+	bulb.attrs = { RoomLight = true }
 end
 
 -- A potted shrub clipped into a ball, standing at (x, z) on the ground.

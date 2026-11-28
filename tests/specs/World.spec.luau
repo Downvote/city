@@ -52,6 +52,12 @@ describe("Hills", function()
 		expect(Hills.at(0, Town.RingZ + 10)).toBe(0)
 		for x = -Town.AvenueX[1] - 17, Town.AvenueX[1] + 17, 8 do
 			expect(Hills.at(x, Town.RingZ + 17)).toBe(0)
+			-- (and none round the plots north of Hill Road, up to the back of Ridge Road's sidewalk)
+			expect(Hills.at(x, Town.RidgeZ + 17)).toBe(0)
+		end
+		for z = Town.RingZ, Town.RidgeZ + 17, 6 do
+			expect(Hills.at(Town.AvenueX[1] + 17, z)).toBe(0)
+			expect(Hills.at(-Town.AvenueX[1] - 17, z)).toBe(0)
 		end
 		for _, x in { Town.AvenueX[2], -Town.AvenueX[3] } do
 			expect(Hills.at(x, Town.OuterRingZ + 10)).toBe(0)

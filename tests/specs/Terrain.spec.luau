@@ -265,10 +265,10 @@ describe("Terrain", function()
 		it("grows over the open ground: the old town's verges, the hills and the meadow", function()
 			local grass, total = 0, 0
 			for x = -1090, 1090, 13 do
-				for z = 230, 930, 13 do
-					-- (the hills: past the old town's stretch of Hill Road, which runs out behind its
-					-- plots now, and past the ring's old line in front of downtown and the civic quarter)
-					if z > Town.ringAt(x) + 17 then
+				for z = 230, Terrain.IslandN - 10, 13 do
+					-- (the hills: past Ridge Road, behind the plots north of Hill Road, and past the
+					-- ring's old line in front of downtown and the civic quarter)
+					if z > Town.northAt(x) + 17 then
 						total += 1
 						local m = material(x, z)
 						if m == "Grass" or m == "Rock" then
@@ -279,8 +279,10 @@ describe("Terrain", function()
 			end
 			-- most of the hills are open grass (paths, the farm, the camp and the rest are not)
 			expect(grass / total > 0.75).toBeTruthy()
-			-- between the plots and Hill Road, and the creator's meadow
+			-- between the plots and Hill Road, between the plots on Hill Road and Ridge Road, and the
+			-- creator's meadow
 			expect(material(-300, Town.PlotSetback + Tuning.Plot.Size + 4)).toBe("Grass")
+			expect(material(-300, Town.RingZ + Town.HillSetback + Tuning.Plot.Size + 4)).toBe("Grass")
 			expect(material(Town.CreatorSpot.X, Town.CreatorSpot.Z - 30)).toBe("Grass")
 		end)
 

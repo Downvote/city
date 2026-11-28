@@ -10,7 +10,7 @@
 --                   and a canvas awning over each, along the square's west side
 --   marketTentA/B, marketCart, marketGoods   loose stalls and their stock on the east side
 --   footbridge      a steel footbridge over Main Street east of the plots, by the avenue
---   hillStair       the stepped street up the hill from Hill Road: a court, broad steps, four
+--   hillStair       the stepped street up the hill from Ridge Road: a court, broad steps, four
 --                   steep flights with landings, railings and stone lanterns
 --   lookoutBluff    the rock the stair climbs beside, with a paved terrace on top
 --   lookoutShelter  the shelter on that terrace
@@ -873,10 +873,10 @@ end
 
 -- The stair up the hill ---------------------------------------------------------------------------------
 
--- Where it is, and how it is cut. It starts at the back of Hill Road's pavement, opposite the
--- walk up from the square, and climbs north.
+-- Where it is, and how it is cut. It starts at the back of Ridge Road's pavement, at the top of
+-- the walk up from the square between the plots, and climbs north.
 local STAIR_X = 0
-local STAIR_Z = Town.RingZ + 11 + 6
+local STAIR_Z = Town.RidgeZ + 11 + 6
 local STAIR_HALF = 4.5 -- half the width of the steps
 local STAIR_EDGE = 5.4 -- and out to the outside of the walls beside them
 local LIFT = 0.25 -- how far a step sits over the hill under it
@@ -1075,7 +1075,7 @@ function Landmarks.terrace(): {
 	}
 end
 
--- The stepped street: a paved court off Hill Road between two lanterns on plinths, broad steps
+-- The stepped street: a paved court off Ridge Road between two lanterns on plinths, broad steps
 -- with a pale nosing and stepped kerbs, then the flights, their walls, railings and landings.
 -- Drawn where it stands, then moved so its own middle is the foot of the stair.
 M.hillStair = function(r: R)

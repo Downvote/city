@@ -28,7 +28,9 @@ Terrain.Voxel = 4
 -- The island: grass out to here, then the beach, then the shallows, then the deep sea. The
 -- beach's width and the shallows' are on average; the coast waves in and out round them.
 Terrain.IslandX = 1100 -- grass from -IslandX to IslandX
-Terrain.IslandN = 940 -- and from -IslandS to IslandN (the hills run up to the north shore)
+-- (it was 940: the island grew 460 north with the plots added north of Hill Road, the user's
+-- "could you make the max plots 6, expanding the map for it?")
+Terrain.IslandN = 1400 -- and from -IslandS to IslandN (the hills run up to the north shore)
 Terrain.IslandS = 292
 -- The old town's cape. Its plots run 400 back from the main street (the user: "make player plots
 -- much bigger, double the size"), so between the first avenues the south shore stands `out`

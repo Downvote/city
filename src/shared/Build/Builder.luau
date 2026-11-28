@@ -23,6 +23,9 @@ Builder.Tags = {
 	-- parts that glow on a piece a player placed: on at every hour, switched by its owner and put
 	-- out near a sleeping villager (Sim/Lights, Services/Lights); the clock leaves them alone
 	PlacedLight = "PlacedLight",
+	-- the lamps in the rooms of the town's buildings (Data/Interiors): lit at every hour, as a
+	-- shop's are, so a room you walk into is lit by day too; the clock leaves them alone
+	RoomLight = "RoomLight",
 	DoorLeaf = "DoorLeaf",
 	SeatSpot = "SeatSpot",
 	BedSpot = "BedSpot",
@@ -190,6 +193,15 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 			modifier.PassThrough = true
 			modifier.Parent = part
 		end)
+	end
+	-- a lamp in one of the town's rooms is lit at every hour (Data/Interiors marks it)
+	local room = prim.role == "glow"
+		and not (opts and opts.placed)
+		and prim.attrs ~= nil
+		and (prim.attrs :: any).RoomLight == true
+	if room then
+		part:AddTag(Builder.Tags.RoomLight)
+		part.Material = Enum.Material.Neon
 	elseif prim.role == "glow" then
 		-- the town's own lamps follow the hour (Services/World); a player's lights are theirs
 		part:AddTag(if opts and opts.placed then Builder.Tags.PlacedLight else Builder.Tags.NightLight)
@@ -199,7 +211,10 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 		local l = prim.light
 		-- what players place is dimmer than the town's own lamps (Tuning.Lights: "the placeable
 		-- lights are too bright"); a room is small and Future lighting fills it
-		local scale = if opts and opts.plain then Tuning.Lights.Placed else Tuning.Lights.Town
+		local scale = if opts and opts.plain
+			then Tuning.Lights.Placed
+			elseif room then Tuning.RoomLights
+			else Tuning.Lights.Town
 		if l.kind == "spot" then
 			local spot = Instance.new("SpotLight")
 			spot.Face = (Enum.NormalId :: any)[l.face or "Bottom"] or Enum.NormalId.Bottom
@@ -208,7 +223,7 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 			spot.Brightness = l.brightness * scale.Brightness
 			spot.Color = l.color
 			spot.Shadows = false
-			spot.Enabled = false
+			spot.Enabled = room
 			spot.Parent = part
 		else
 			local point = Instance.new("PointLight")
@@ -216,7 +231,7 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 			point.Brightness = l.brightness * scale.Brightness
 			point.Color = l.color
 			point.Shadows = false
-			point.Enabled = false
+			point.Enabled = room
 			point.Parent = part
 		end
 	end

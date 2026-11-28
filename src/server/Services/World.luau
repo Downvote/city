@@ -664,27 +664,21 @@ end
 -- Doors stay shut until someone opens them. A player uses the door's prompt (Open, then Close).
 -- A villager opens a door as they come up to it and shuts it behind them a moment after they've
 -- gone through; a door a player opened is left the way the player left it.
-type Door = { open: boolean, byVillager: boolean, lastNear: number }
-local doorState: { [Instance]: Door } = {}
+--
+-- A door is the leaves that share one doorway (their Frame): a leaf, the glass in it and its
+-- knobs. A model may hold several (a row of houses, the beach huts, a wall with two doors in it),
+-- and each opens on its own, with its own prompt. (They were grouped by model once, so every door
+-- in a building opened together and only one of them had a prompt.)
+type Door = { open: boolean, byVillager: boolean, lastNear: number, leaves: { BasePart }, center: Vector3 }
+local doorState: { [BasePart]: Door } = {} -- by the leaf that carries the door's prompt
 local DOOR_TWEEN = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
-local function leavesOf(model: Instance): { BasePart }
-	local out = {}
-	for _, leaf in model:GetChildren() do
-		if leaf:IsA("BasePart") and leaf:HasTag(Builder.Tags.DoorLeaf) then
-			table.insert(out, leaf)
-		end
-	end
-	return out
-end
-
-local function setDoor(model: Instance, open: boolean)
-	local st = doorState[model]
-	if not st or st.open == open then
+local function setDoor(st: Door, open: boolean)
+	if st.open == open then
 		return
 	end
 	st.open = open
-	for _, leaf in leavesOf(model) do
+	for _, leaf in st.leaves do
 		local goal = if open then Builder.doorOpen(leaf) else leaf:GetAttribute("Closed")
 		if typeof(goal) == "CFrame" then
 			TweenService:Create(leaf, DOOR_TWEEN, { CFrame = goal }):Play()
@@ -696,15 +690,27 @@ local function setDoor(model: Instance, open: boolean)
 	end
 end
 
--- Opens or closes a door for a player or a script. Returns whether it's open now.
-function World.toggleDoor(model: Instance): boolean
-	local st = doorState[model]
-	if not st then
-		return false
+-- Opens or closes a door for a player or a script, by any of its leaves. Returns whether it's open
+-- now.
+function World.toggleDoor(leaf: Instance): boolean
+	for first, st in doorState do
+		if first == leaf or table.find(st.leaves, leaf :: any) then
+			st.byVillager = false
+			setDoor(st, not st.open)
+			return st.open
+		end
 	end
-	st.byVillager = false
-	setDoor(model, not st.open)
-	return st.open
+	return false
+end
+
+-- Which door a leaf belongs to: its model and its doorway, to a tenth of a stud.
+local function doorKey(leaf: BasePart): string?
+	local frame = leaf:GetAttribute("Frame")
+	if typeof(frame) ~= "CFrame" then
+		return nil
+	end
+	local p = (frame :: CFrame).Position
+	return string.format("%d:%d:%d", math.round(p.X * 10), math.round(p.Y * 10), math.round(p.Z * 10))
 end
 
 local function doorLoop()
@@ -723,19 +729,47 @@ local function doorLoop()
 				end
 			end
 		end
-		-- every door, by its model
-		local doors: { [Instance]: BasePart } = {}
-		for _, leaf in CollectionService:GetTagged(Builder.Tags.DoorLeaf) do
-			if leaf:IsA("BasePart") and leaf.Parent and leaf:IsDescendantOf(workspace) and not doors[leaf.Parent] then
-				doors[leaf.Parent] = leaf
+		-- the leaves not yet in a door, grouped by their model and doorway (a door whose leaves
+		-- were all there already keeps its state)
+		local known: { [BasePart]: boolean } = {}
+		for _, st in doorState do
+			for _, leaf in st.leaves do
+				known[leaf] = true
 			end
 		end
-		local now = os.clock()
-		for model, first in doors do
-			local st = doorState[model]
-			if not st then
-				st = { open = false, byVillager = false, lastNear = 0 }
-				doorState[model] = st
+		local fresh: { [Instance]: { [string]: { BasePart } } } = {}
+		for _, leaf in CollectionService:GetTagged(Builder.Tags.DoorLeaf) do
+			if leaf:IsA("BasePart") and not known[leaf] and leaf.Parent and leaf:IsDescendantOf(workspace) then
+				local key = doorKey(leaf)
+				if key then
+					local byKey = fresh[leaf.Parent :: Instance]
+					if not byKey then
+						byKey = {}
+						fresh[leaf.Parent :: Instance] = byKey
+					end
+					byKey[key] = byKey[key] or {}
+					table.insert(byKey[key], leaf)
+				end
+			end
+		end
+		for _, byKey in fresh do
+			for _, leaves in byKey do
+				-- the prompt goes on the biggest leaf, the door itself rather than a knob
+				local first = leaves[1]
+				for _, leaf in leaves do
+					if leaf.Size.Magnitude > first.Size.Magnitude then
+						first = leaf
+					end
+				end
+				local frame = first:GetAttribute("Frame") :: CFrame
+				local st: Door = {
+					open = false,
+					byVillager = false,
+					lastNear = 0,
+					leaves = leaves,
+					center = frame.Position + Vector3.new(0, 3, 0),
+				}
+				doorState[first] = st
 				local prompt = Instance.new("ProximityPrompt")
 				prompt.Name = "DoorPrompt"
 				prompt.ActionText = "Open"
@@ -745,34 +779,33 @@ local function doorLoop()
 				prompt.RequiresLineOfSight = false
 				prompt.Parent = first
 				prompt.Triggered:Connect(function()
-					World.toggleDoor(model)
+					st.byVillager = false
+					setDoor(st, not st.open)
 				end)
 			end
-			local frame = first:GetAttribute("Frame")
-			if typeof(frame) == "CFrame" then
-				local center = (frame :: CFrame).Position + Vector3.new(0, 3, 0)
-				local near = false
-				for _, pos in villagers do
-					if (pos - center).Magnitude < 6.5 then
-						near = true
-						break
-					end
-				end
-				if near then
-					st.lastNear = now
-					if not st.open then
-						st.byVillager = true
-						setDoor(model, true)
-					end
-				elseif st.open and st.byVillager and now - st.lastNear > 1.2 then
-					st.byVillager = false
-					setDoor(model, false)
+		end
+		local now = os.clock()
+		for first, st in doorState do
+			if not first.Parent then
+				doorState[first] = nil
+				continue
+			end
+			local near = false
+			for _, pos in villagers do
+				if (pos - st.center).Magnitude < 6.5 then
+					near = true
+					break
 				end
 			end
-		end
-		for model in doorState do
-			if not model.Parent then
-				doorState[model] = nil
+			if near then
+				st.lastNear = now
+				if not st.open then
+					st.byVillager = true
+					setDoor(st, true)
+				end
+			elseif st.open and st.byVillager and now - st.lastNear > 1.2 then
+				st.byVillager = false
+				setDoor(st, false)
 			end
 		end
 	end

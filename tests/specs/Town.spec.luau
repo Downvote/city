@@ -9,42 +9,63 @@ local Town = require(Shared .. "Data.Town")
 local TownMap = require(Shared .. "Data.TownMap")
 local Geometry = require(Shared .. "Build.Geometry")
 local Terrain = require(Shared .. "Data.Terrain")
+local Hills = require(Shared .. "Data.Hills")
 
 describe("Town", function()
-	it("lays out four big plots in the old town, inside its ring, on the island", function()
+	it("lays out six big plots in the old town, inside its ring, on the island", function()
 		-- The user: "make player plots much bigger, double the size", and asked how, four of 400 a
-		-- side in the old town, two north of the main street and two south. A server holds one
-		-- player to a plot.
-		expect(Tuning.Plot.Count).toBe(4)
+		-- side in the old town, two north of the main street and two south. Then: "could you make
+		-- the max plots 6, expanding the map for it?", so two more of the same size north of Hill
+		-- Road, back to back with the first two, before Ridge Road. A server holds one player to a
+		-- plot.
+		expect(Tuning.Plot.Count).toBe(6)
 		expect(Tuning.Plot.Size).toBe(400)
 		expect(Tuning.Game.MaxPlayers).toBe(Tuning.Plot.Count)
 		local project = decodeJson(readFile("default.project.json"))
 		expect(project.tree.Players["$properties"].MaxPlayers).toBe(Tuning.Game.MaxPlayers)
+		-- plot 1 stays where it always was (the Build mode simulation clicks on it)
+		expect(Town.plotFrame(1).Position).toBe(Vector3.new(-466, 0, 22))
 		local size = Tuning.Plot.Size
-		local ring = Town.RingZ - 11 - 6 -- (the ring road's sidewalk, and the first avenues')
+		local south = Town.RingZ - 11 - 6 -- (Harbour Road's sidewalk, and the first avenues')
+		local north = Town.RidgeZ - 11 - 6 -- (Ridge Road's)
 		local avenue = Town.AvenueX[1] - 11 - 6
 		local rects = {}
 		for i = 1, Tuning.Plot.Count do
 			local f = Town.plotFrame(i)
-			local north = i <= Tuning.Plot.Count / 2
-			-- local z runs back from the street: north for the first two, south for the others
-			expect(f:VectorToWorldSpace(Vector3.new(0, 0, 1)).Z).toBeNear(if north then 1 else -1, 1e-6)
+			local row = Town.plotRow(i)
+			-- local z runs back from the street: north for the plots north of theirs
+			expect(f:VectorToWorldSpace(Vector3.new(0, 0, 1)).Z).toBeNear(row.side, 1e-6)
 			local a, b = f * Vector3.zero, f * Vector3.new(size, 0, size)
 			local r = { math.min(a.X, b.X), math.min(a.Z, b.Z), math.max(a.X, b.X), math.max(a.Z, b.Z) }
-			-- the front on the back of the main street's sidewalk, the rest inside the ring
-			expect(if north then r[2] else -r[4]).toBeNear(Town.StreetHalfWidth + Town.SidewalkWidth, 1e-6)
-			expect(r[1] > -avenue and r[3] < avenue and r[2] > -ring and r[4] < ring).toBeTruthy()
-			-- clear of the square and the market between them
+			-- the front on the back of its street's sidewalk (on Hill Road a verge of grass past it,
+			-- so the corners keep to the terrain's grid), the rest inside the ring
+			local front = if row.side > 0 then r[2] - row.z else row.z - r[4]
+			if row.z == 0 then
+				expect(front).toBeNear(Town.StreetHalfWidth + Town.SidewalkWidth, 1e-6)
+			else
+				expect(front >= 11 + 6 and front <= 11 + 6 + 4).toBeTruthy()
+			end
+			expect(r[1] > -avenue and r[3] < avenue and r[2] > -south and r[4] < north).toBeTruthy()
+			-- clear of the square and the market between them, and of the walk up to the hills
 			expect(r[1] >= Town.SquareCenter.X + 50 or r[3] <= Town.SquareCenter.X - 50).toBeTruthy()
-			-- on the island: the south ones out on the old town's cape
+			-- every corner 2 off the terrain's 4 stud grid (Build/Water, Build/Basement)
+			for _, c in { a, b } do
+				for _, v in { c.X, c.Z } do
+					local m = (v - 2) % 4
+					expect(math.min(m, 4 - m)).toBeNear(0, 1e-3)
+				end
+			end
+			-- on the island: the south ones out on the old town's cape, and flat
 			for _, x in { r[1], (r[1] + r[3]) / 2, r[3] } do
 				expect(Terrain.coast(x, r[2]) < -60).toBeTruthy()
+				expect(Terrain.coast(x, r[4]) < -60).toBeTruthy()
+				expect(Hills.at(x, r[4] + 30)).toBe(0)
 			end
 			-- you arrive in front of your own plot, on the sidewalk
 			local arrive = Town.plotArrival(i).Position
 			local on = Town.toPlot(i, arrive)
 			expect(on).toBe(false)
-			expect(math.abs(arrive.Z) < Town.StreetHalfWidth + Town.SidewalkWidth).toBeTruthy()
+			expect(math.abs(arrive.Z - row.z) < (if row.z == 0 then Town.StreetHalfWidth + Town.SidewalkWidth else 17)).toBeTruthy()
 			table.insert(rects, r)
 		end
 		for i, a in rects do
@@ -70,14 +91,20 @@ describe("Town", function()
 			if p.tag == "backdrop" then
 				-- scenery out at sea (islets): every piece stays well past the plots, beyond them
 				-- to the north or south, or past the last plot at either end of the street
-				local lastX = 0
+				local lastX, northZ, southZ = 0, 0, 0
 				for _, cx in Town.PlotCentersX do
 					lastX = math.max(lastX, math.abs(cx) + Tuning.Plot.Size / 2)
+				end
+				for i = 1, Tuning.Plot.Count do
+					local f = Town.plotFrame(i)
+					for _, c in { f * Vector3.zero, f * Vector3.new(Tuning.Plot.Size, 0, Tuning.Plot.Size) } do
+						northZ, southZ = math.max(northZ, c.Z), math.max(southZ, -c.Z)
+					end
 				end
 				for _, prim in prims do
 					local reach = math.max(prim.size.X, prim.size.Z) / 2
 					local pos = prim.cf.Position
-					local clearZ = math.abs(pos.Z) - reach > Town.PlotSetback + Tuning.Plot.Size + 4
+					local clearZ = if pos.Z > 0 then pos.Z - reach > northZ + 4 else -pos.Z - reach > southZ + 4
 					local clearX = math.abs(pos.X) - reach > lastX + 4
 					if not clearZ and not clearX then
 						error(p.name .. " reaches the plots at " .. tostring(pos))
@@ -186,8 +213,11 @@ describe("Town", function()
 		-- parts of their own, for the user's "alot of the objects seem to have its pieces wrong")
 		expect(parts < 56000).toBeTruthy()
 		-- (opened went up from 110,000 when the civic quarter was built up for the user's "the
-		-- side with less buildings should have much more buildings, as much as in the city side")
-		expect(opened < 126000).toBeTruthy()
+		-- side with less buildings should have much more buildings, as much as in the city side",
+		-- and from 126,000 for the land round the plots north of Hill Road ("could you make the
+		-- max plots 6, expanding the map for it?") and more rooms to walk into ("detail the town
+		-- more, and make the lights and interior in them work"))
+		expect(opened < 136000).toBeTruthy()
 		expect(different < 320).toBeTruthy()
 	end)
 end)

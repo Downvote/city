@@ -29,7 +29,7 @@
     "Players": {
       "$properties": {
         "CharacterAutoLoads": false,
-        "MaxPlayers": 4
+        "MaxPlayers": 6
       }
     },
     "Lighting": {

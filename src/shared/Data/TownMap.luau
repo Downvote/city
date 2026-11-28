@@ -978,7 +978,14 @@ function TownMap.ground(region: Region?): { Prim }
 	end
 	-- the paths on to the ring roads: brick down the middle, paving either side
 	local RZ = Town.RingZ
-	for _, ends in { { Town.SquareCenter.Z + 60, RZ - 17 }, { -(RZ - 17), Town.MarketCenter.Z - 60 } } do
+	for _, ends in
+		{
+			{ Town.SquareCenter.Z + 60, RZ - 17 },
+			{ -(RZ - 17), Town.MarketCenter.Z - 60 },
+			-- (and on between the plots north of Hill Road, up to Ridge Road)
+			{ RZ + 17, Town.RidgeZ - 17 },
+		}
+	do
 		local list: { { any } } = {}
 		put(list, -3, ends[1], 3, ends[2], -0.15, 0.29, PROMENADE, "Brick")
 		put(list, -6, ends[1], 6, ends[2], -0.15, 0.27, PAVING, "Pavement")
@@ -1054,12 +1061,13 @@ function TownMap.ground(region: Region?): { Prim }
 		end
 	end
 
-	-- a path of flat stones up the hills from Hill Road to the lookout, winding a little
+	-- a path of flat stones up the hills from Ridge Road to the lookout, winding a little
 	do
-		local z = RZ + 18
+		local RG = Town.RidgeZ
+		local z = RG + 18
 		local top = Hills.Plateaus[1]
 		while z < top.z - top.r do
-			local t = (z - RZ) / (top.z - RZ)
+			local t = (z - RG) / (top.z - RG)
 			local x = math.sin(t * math.pi * 2.2) * 40 * (1 - t)
 			if not region or (x >= region[1] and x <= region[3] and z >= region[2] and z <= region[4]) then
 				-- each stone lies with the slope, its underside a twentieth into the ground (the
@@ -1620,7 +1628,7 @@ local function streetScene(standing: { Placement }): { Placement }
 	-- (Hill Road and Harbour Road round the old town, and on past the first avenues on the old line)
 	local hill, harbour = roadAt(-AX[1], RZ, AX[1], RZ), roadAt(-AX[1], -RZ, AX[1], -RZ)
 	local hillEast, harbourEast = roadAt(AX[1], OZ, AX[3], OZ), roadAt(AX[1], -OZ, AX[3], -OZ)
-	local firstAvenue, midAvenue = roadAt(AX[1], -RZ, AX[1], RZ), roadAt(AX[2], -OZ, AX[2], OZ)
+	local firstAvenue, midAvenue = roadAt(AX[1], -RZ, AX[1], Town.RidgeZ), roadAt(AX[2], -OZ, AX[2], OZ)
 	local crossNorth, crossSouth = roadAt(AX[1], CZ, AX[3], CZ), roadAt(AX[1], -CZ, AX[3], -CZ)
 	-- (how far a side road's sidewalk reaches from its middle)
 	local reach = hill[5] + hill[6]
@@ -1633,7 +1641,7 @@ local function streetScene(standing: { Placement }): { Placement }
 	poleLine(crossNorth, 1, 578, 986, 68)
 	poleLine(crossSouth, -1, 578, 986, 68)
 	-- and the civic quarter's: its middle avenue and its cross streets
-	local westMid, westFirst = roadAt(-AX[2], -OZ, -AX[2], OZ), roadAt(-AX[1], -RZ, -AX[1], RZ)
+	local westMid, westFirst = roadAt(-AX[2], -OZ, -AX[2], OZ), roadAt(-AX[1], -RZ, -AX[1], Town.RidgeZ)
 	local westNorth, westSouth = roadAt(-AX[1], CZ, -AX[3], CZ), roadAt(-AX[1], -CZ, -AX[3], -CZ)
 	poleLine(westMid, -1, -238, 238, 68)
 	poleLine(westNorth, 1, -986, -578, 68)
@@ -2125,7 +2133,9 @@ local function streetScene(standing: { Placement }): { Placement }
 	kerb(harbour, 1, -520, 520, 110, 200)
 	kerb(hillEast, -1, 560, 1040, 110, 200)
 	kerb(harbourEast, 1, 560, 1040, 110, 200)
-	kerb(roadAt(-AX[1], -RZ, -AX[1], RZ), 1, -240, 240, 110, 200)
+	kerb(westFirst, 1, -240, 240, 110, 200)
+	-- (Hill Road has plots on its north side too now, with their own arrivals kept quiet)
+	kerb(hill, 1, -520, 520, 120, 210)
 	-- (and the civic quarter's own streets, between the rows of houses, a little thinner than
 	-- downtown's)
 	for _, side in { 1, -1 } do
@@ -2357,7 +2367,15 @@ function TownMap.placements(): { Placement }
 		end
 	end
 	-- more bus stops: on Hill Road, by the boardwalk, and one in each quarter
-	for _, p in { { -300, Town.RingZ }, { 380, -Town.RingZ }, { 700, Town.CrossZ }, { -700, Town.CrossZ } } do
+	for _, p in
+		{
+			{ -300, Town.RingZ },
+			{ 380, -Town.RingZ },
+			{ 700, Town.CrossZ },
+			{ -700, Town.CrossZ },
+			{ 300, Town.RidgeZ },
+		}
+	do
 		put("busStop", p[1], p[2] - 14.8, 0)
 		put("bin", p[1] - 8, p[2] - 13, 0)
 	end
@@ -2382,6 +2400,22 @@ function TownMap.placements(): { Placement }
 			else
 				put(if i % 2 == 0 then "lowTreeBig" else "lowTree", sx * 14, z, z * 7)
 				put(if i % 2 == 1 then "lowTreeBig" else "lowTree", sx * 14, -z, z * 11)
+			end
+		end
+		-- (the walk goes on between the plots north of Hill Road to Ridge Road: planters at each
+		-- end, trees between, a bench now and then facing the walk)
+		i = 0
+		for z = Town.RingZ + 17 + 16, Town.RidgeZ - 17 - 16, 19 do
+			i += 1
+			local nearEnd = z < Town.RingZ + 17 + 60 or z > Town.RidgeZ - 17 - 60
+			if nearEnd then
+				put(if i % 2 == 1 then "planterBox" else "shrubPot", sx * 14, z, 90)
+			elseif i % 5 == 0 then
+				put("benchLite", sx * 12, z, if sx > 0 then -90 else 90)
+				local last = out[#out]
+				last.cf = last.cf + Vector3.new(0, 0.3, 0)
+			else
+				put(if i % 3 == 0 then "lowTreeBig" else "lowTree", sx * 14, z, z * 5 + sx * 40)
 			end
 		end
 	end
@@ -2526,6 +2560,16 @@ function TownMap.placements(): { Placement }
 			{ "cafe", 960, -97, 0, 30, 3 },
 			{ "clothes", 890, -228, 0, 28, 2 },
 			{ "flowers", 1012, -228, 0, 24, 2 },
+			-- (and more along the back streets, for "detail the town more, and make the lights and
+			-- interior in them work")
+			{ "bakery", 640, -228, 0, 30, 3 },
+			{ "toys", 700, -228, 0, 26, 2 },
+			{ "grocer", 760, -228, 0, 26, 2 },
+			{ "cafe", 620, 228, 180, 30, 3 },
+			{ "books", 700, 228, 180, 28, 3 },
+			{ "clothes", 760, 228, 180, 28, 2 },
+			{ "cafe", 880, -165, 180, 30, 3 },
+			{ "toys", 990, -165, 180, 26, 2 },
 		} :: { { any } }
 	do
 		local seed = 4000 + s[2] * 3 + math.abs(s[3])
@@ -2912,6 +2956,9 @@ function TownMap.placements(): { Placement }
 	-- (in the civic quarter, in the lawns behind the rows of houses: never nearer a block's edge
 	-- than its paving reaches)
 	local yard = TownMap.WestBand - INSET + 2
+	-- (the civic quarter draws from its own seed, so what is added downtown never moves its
+	-- gardens about)
+	pocketRng = Rng.new(89)
 	for _, b in TownMap.blocks("west") do
 		local block = { b[1] + yard, b[2] + yard, b[3] - yard, b[4] - yard }
 		pockets(block, GARDENS, 0, 6, 15, 3)
@@ -2951,21 +2998,23 @@ function TownMap.placements(): { Placement }
 	-- flower bed and a bench now and then (no trees: they'd stand right by the road)
 	local edge = 0
 	local behind = (Town.PlotSetback + Tuning.Plot.Size + Town.RingZ - 17) / 2 -- (behind the plots)
+	-- (and behind the plots north of Hill Road, before Ridge Road)
+	local behindHill = (Town.RingZ + Town.HillSetback + Tuning.Plot.Size + Town.RidgeZ - 17) / 2
 	local side = Town.AvenueX[1] - 25 -- (along the first avenues, past the plots' ends)
-	for _, sz in { 1, -1 } do
+	for _, line in { behind, -behind, behindHill } do
 		local x = -508.0
 		while x < 510 do
 			if math.abs(x) > 24 then
 				edge += 1
 				local name = if edge % 7 == 0 then "benchLite" elseif edge % 3 == 0 then "flowerStrip" else "hedgeRow"
-				put(name, x, sz * behind, if sz > 0 then 180 else 0)
+				put(name, x, line, if line > 0 then 180 else 0)
 			end
 			x += 24
 		end
 	end
 	for _, sx in { 1, -1 } do
-		for z = -(Town.RingZ - 34), Town.RingZ - 34, 24 do
-			if math.abs(z) > 34 then
+		for z = -(Town.RingZ - 34), Town.RidgeZ - 34, 24 do
+			if math.abs(z) > 34 and math.abs(z - Town.RingZ) > 34 then
 				edge += 1
 				local name = if edge % 7 == 0 then "benchLite" elseif edge % 3 == 0 then "flowerStrip" else "hedgeRow"
 				put(name, sx * side, z, if sx > 0 then 90 else -90)
@@ -3024,6 +3073,19 @@ function TownMap.placements(): { Placement }
 			pockets(strip, GREEN, 0, 3, 8, 3)
 		end
 	end
+	-- the same beside the plots north of Hill Road, between Hill Road and Ridge Road
+	do
+		local z1, z2 = Town.RingZ + 17, Town.RidgeZ - 17
+		for _, sx in { 1, -1 } do
+			local lane = { math.min(sx * walk, sx * plotIn), z1 + 20, math.max(sx * walk, sx * plotIn), z2 - 20 }
+			pockets(lane, GARDENS, 0, 2, 15, 3)
+			pockets(lane, GREEN, 0, 4, 8, 4)
+			local strip = { math.min(sx * plotOut, sx * (side - 2)), z1, math.max(sx * plotOut, sx * (side - 2)), z2 }
+			pockets(strip, GARDENS, 0, 2, 15, 2)
+			treeRow(strip, 26)
+			pockets(strip, GREEN, 0, 3, 8, 3)
+		end
+	end
 
 	-- the hills: the farm, the lookout, the observatory, the radio mast and the camp
 	local function hill(name: string, x: number, z: number, yaw: number, extra: { [string]: any }?)
@@ -3048,8 +3110,10 @@ function TownMap.placements(): { Placement }
 	hill("barn", fx - 610, fz + 445, 200)
 	hill("windmill", fx - 640, fz + 548, 0)
 	hill("lookout", lx, lz, 0)
-	hill("observatory", -380, 760, 0)
-	hill("radioMast", 380, 760, 0)
+	local obsX, obsZ = top("observatory")
+	local radioX, radioZ = top("radio")
+	hill("observatory", obsX, obsZ, 0)
+	hill("radioMast", radioX, radioZ, 0)
 	hill("camp", campX + 650, campZ + 520, 0)
 	for _, p in { { -630, 520 }, { -770, 430 }, { -800, 540 } } do
 		hill("lowTree", fx + p[1], fz + p[2], 0)
@@ -3072,7 +3136,7 @@ function TownMap.placements(): { Placement }
 			{ lx + 24, lz + 12, 20 },
 			{ campX + 676, campZ + 548, -30 },
 			{ campX + 690, campZ + 500, 60 },
-			{ -350, 742, 10 },
+			{ obsX + 30, obsZ - 18, 10 },
 			{ 836, 676, 0 },
 		}
 	do
@@ -3082,11 +3146,11 @@ function TownMap.placements(): { Placement }
 	-- below the observatory and the lake, and by the stones)
 	for _, p in
 		{
-			{ 24, Town.RingZ + 38, 0 },
+			{ 24, Town.RidgeZ + 38, 0 },
 			{ lx + 30, lz - 44, 40 },
 			{ -626, 330, 90 },
 			{ 680, 380, -60 },
-			{ -344, 716, 0 },
+			{ obsX + 36, obsZ - 44, 0 },
 			{ 800, 640, 30 },
 			{ stoneX + 54, stoneZ - 56, -30 },
 		}
@@ -3107,7 +3171,7 @@ function TownMap.placements(): { Placement }
 		if math.abs(x) < 60 and z < lz - 40 then
 			clear = false -- the path up to the lookout
 		end
-		if x > -580 and x < -260 and z < 600 then
+		if x > -580 and x < -260 and z > Town.RidgeZ and z < Town.RidgeZ + 140 then
 			clear = false -- the creator's meadow
 		end
 		if z < Hills.foot(x) + 50 then
@@ -3136,7 +3200,7 @@ function TownMap.placements(): { Placement }
 		for _ = 1, count do
 			local x = wild:float(Hills.X1 + 60, Hills.X2 - 60)
 			local z = wild:float(Hills.Z1 + 44, Hills.Z2 - 60)
-			local clear = not (x > -580 and x < -260 and z < 600)
+			local clear = not (x > -580 and x < -260 and z > Town.RidgeZ and z < Town.RidgeZ + 140)
 				and not (math.abs(x) < 16 and z < lz - 40)
 				and z > Hills.foot(x) + 44
 			for _, pl in Hills.Plateaus do

@@ -397,7 +397,7 @@ end
 -- Where people cross a road on a zebra: { u, half the crossing's width }. The ones TownMap
 -- paints just outside each junction, the main street's own three, and the one this file adds on
 -- Hill Road at the foot of the stair.
-StreetPaint.StairCrossing = 0 -- its x on Hill Road
+StreetPaint.StairCrossing = 0 -- its x on Hill Road and on Ridge Road
 local function zebras(road: Road): { { number } }
 	local out: { { number } } = {}
 	for _, c in road.cross do
@@ -412,7 +412,8 @@ local function zebras(road: Road): { { number } }
 		for _, x in Town.MainCrossings do
 			table.insert(out, { x, 6, 0 })
 		end
-	elseif road.along and road.at == Town.RingZ then
+	elseif road.along and (road.at == Town.RingZ or road.at == Town.RidgeZ) then
+		-- (where the walk between the plots crosses Hill Road, and at the foot of the stair)
 		table.insert(out, { StreetPaint.StairCrossing, 3, 0 })
 	end
 	return out

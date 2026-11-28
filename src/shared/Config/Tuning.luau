@@ -6,7 +6,7 @@ local Tuning = {}
 
 Tuning.Game = {
 	Name = "Catalog Town",
-	MaxPlayers = 4, -- one to a plot (default.project.json sets it on Players; Roblox takes it from the game settings)
+	MaxPlayers = 6, -- one to a plot (default.project.json sets it on Players; Roblox takes it from the game settings)
 	DataVersion = 1,
 	-- (the saves keep the store they were written to under the old name, Maplewick: a new name would
 	-- start every player over)
@@ -16,9 +16,10 @@ Tuning.Game = {
 -- Building ------------------------------------------------------------------
 Tuning.Plot = {
 	-- The user: "make player plots much bigger, double the size", and asked how, four plots of 400
-	-- a side in the old town, two north of Main Street and two south (they were eight of 200)
+	-- a side in the old town, two north of Main Street and two south (they were eight of 200). Then:
+	-- "could you make the max plots 6, expanding the map for it?", so two more north of Hill Road
 	Size = 400, -- studs along each side of a plot at its biggest (see City.Land for what you start with)
-	Count = 4,
+	Count = 6,
 	HomeCooldown = 3, -- seconds between two trips home with the Home button
 	WallSnap = 2, -- walls, floors and roofs snap to this grid
 	ItemSnap = 1, -- furniture snaps to this unless free placement is on
@@ -724,6 +725,12 @@ Tuning.Lights = {
 	SleepReach = 12, -- studs across the floor from a sleeper's bed, on its floor: about one room
 	SleepCheck = 1, -- seconds between the server's looks at who is asleep
 }
+
+-- The lamps in the rooms of the town's buildings (Data/Interiors), against what each lamp is drawn
+-- with: lit at every hour (a shop keeps its lights on by day) and a little brighter than the
+-- street's, since a room sees little of the sky (the user: "make the lights and interior in them
+-- work")
+Tuning.RoomLights = { Brightness = 1.3, Range = 1.15 }
 
 -- Placed pieces that move and give off effects (Build/Lively, client World/Lively; the user: "make
 -- animated decor, workplaces with special effects, particle makers")

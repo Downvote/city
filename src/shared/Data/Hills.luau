@@ -1,5 +1,5 @@
 --!strict
--- The hills north of Hill Road: a smooth height function (a few round peaks, flattened where
+-- The hills north of the town: a smooth height function (a few round peaks, flattened where
 -- things stand on them, nothing at the edges). Shared and free of services, so the terrain
 -- (Data/Terrain) is filled from it, the preview draws it and the specs check it.
 --
@@ -10,50 +10,56 @@
 local Hills = {}
 
 Hills.X1, Hills.X2 = -1100, 1100
-Hills.Z1, Hills.Z2 = 290, 940
+Hills.Z1, Hills.Z2 = 290, 1400
 
 -- Behind the old town the hills start further north: its plots run 400 back from the main street
 -- (the user: "make player plots much bigger, double the size") and Hill Road runs behind them,
 -- so between the first avenues the foot of the hills is `depth` further north, and beside them it
 -- eases back to Z1 over `ease`. Past that, in front of downtown and the civic quarter, the hills
 -- are as they always were. Behind the old town they come up slowly, over `rise`, so the stair
--- up from Hill Road can climb them.
-Hills.Notch = { half = 560, ease = 160, depth = 200, rise = 180 }
+-- up from Ridge Road can climb them. (The notch went 460 further north when two plots were added
+-- north of Hill Road, for the user's "could you make the max plots 6, expanding the map for it?",
+-- and the hills behind the old town went north with it.)
+Hills.Notch = { half = 560, ease = 160, depth = 660, rise = 180 }
 Hills.Rise = 120 -- the hills come up from nothing over this much, north of their foot
 
 -- round peaks: { x, z, height, radius }. When the old town grew the lookout's hill moved north and
 -- broadened, a little lower (it was 96 high at z 640), the observatory's came down a little (it was
 -- 75), the two small hills behind the old town went north with it, and the farm's and the camp's
 -- went out past its sides.
+-- (then those behind the old town went 460 north with the notch, and two more came up beside
+-- them, behind downtown and the civic quarter, where the island grew north)
 local PEAKS = {
-	{ 0, 740, 70, 260 },
-	{ -380, 760, 66, 190 },
-	{ 380, 760, 65, 200 },
+	{ 0, 1200, 70, 260 },
+	{ -380, 1220, 66, 190 },
+	{ 380, 1220, 65, 200 },
 	{ 860, 720, 57, 210 },
 	{ -860, 720, 60, 200 },
 	{ -800, 480, 23, 240 },
 	{ 780, 490, 30, 220 },
-	{ 250, 630, 18, 130 },
-	{ -230, 650, 16, 140 },
+	{ 250, 1090, 18, 130 },
+	{ -230, 1110, 16, 140 },
+	{ 860, 1110, 48, 180 },
+	{ -860, 1100, 52, 185 },
 }
 
 -- flat tops where things stand: { name, x, z, radius } (their height is the hills' there). The
 -- farm and the camp stand clear of the notch behind the old town, the stones out of the farm's way.
 Hills.Plateaus = {
-	{ name = "lookout", x = 0, z = 740, r = 46 },
-	{ name = "observatory", x = -380, z = 760, r = 40 },
+	{ name = "lookout", x = 0, z = 1200, r = 46 },
+	{ name = "observatory", x = -380, z = 1220, r = 40 },
 	{ name = "farm", x = -800, z = 480, r = 130 },
 	{ name = "camp", x = 780, z = 490, r = 86 },
-	{ name = "radio", x = 380, z = 760, r = 30 },
+	{ name = "radio", x = 380, z = 1220, r = 30 },
 	{ name = "tarn", x = 860, z = 720, r = 46 }, -- a mountain lake
 	{ name = "stones", x = -920, z = 750, r = 34 }, -- a ring of standing stones
 }
 
 -- ground kept flat (at 0): { x1, z1, x2, z2 } with a soft edge (FLAT_EDGE). The creator's meadow,
--- behind Hill Road west of the stair, where the hills behind the old town come up: the long soft
+-- behind Ridge Road west of the stair, where the hills behind the old town come up: the long soft
 -- edge keeps the slope up from it gentle.
 local FLATS = {
-	{ -540, 480, -300, 566 },
+	{ -540, 940, -300, 1026 },
 }
 local FLAT_EDGE = 150
 
@@ -83,7 +89,7 @@ local function raw(x: number, z: number): number
 		local dx, dz = x - p[1], z - p[2]
 		h += p[3] * math.exp(-(dx * dx + dz * dz) / (p[4] * p[4]))
 	end
-	-- nothing at the edge by the town: rising from Hill Road
+	-- nothing at the edge by the town: rising from the ring road
 	return h * smoothstep(Hills.Z1, Hills.Z1 + Hills.Rise, z)
 end
 

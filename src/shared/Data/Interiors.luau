@@ -1395,8 +1395,8 @@ end
 
 -- Plain parts that go in many rooms ------------------------------------------------------------------
 
--- A lamp hanging from the ceiling at (x, z), lit after dark. `light` false keeps it from casting
--- light (it only glows), which is cheaper where there are many.
+-- A lamp hanging from the ceiling at (x, z), lit at every hour (Interiors.fill). `light` false
+-- keeps it from casting light (it only glows), which is cheaper where there are many.
 local function lamp(r: R, b: Box, x: number, z: number, light: boolean?)
 	local top = b.y + b.h
 	stamp(r, CFrame.new(x, top, z), "pendant", drawPendant)
@@ -1821,7 +1821,7 @@ local function home(r: R, b: Box, color: Color3)
 	stamp(r, at(b, b.x2 - 1.7, b.z1 + 3.0, 90), "cafe", drawCafeSet)
 	shelves(r, at(b, b.x1 + 0.55, b.z1 + 2.6, -90), "booksA", "booksB")
 	stamp(r, at(b, cx - 0.6, b.z1 + 5.6, 90), "rug", drawRug)
-	lamp(r, b, cx, cz, false)
+	lamp(r, b, cx, cz)
 end
 
 -- A beach hut: a bench along the back, a towel on a peg, a board in the corner, a bucket and
@@ -2385,6 +2385,7 @@ end
 
 -- Furnishes a room for a kind of place. `tint` is a colour of the building's own to pick up.
 function Interiors.fill(r: R, kind: string, b: Box, tint: Color3?)
+	local from = #r.prims
 	if kind == "lobby" then
 		lobby(r, b, false)
 	elseif kind == "flats" then
@@ -2409,6 +2410,17 @@ function Interiors.fill(r: R, kind: string, b: Box, tint: Color3?)
 		department(r, b)
 	else
 		shop(r, kind, b)
+	end
+	-- What glows in a room is lit at every hour, as a shop keeps its lights on by day: the room's
+	-- lamps are its light (Builder marks them RoomLight and the clock leaves them alone). They
+	-- followed the street lamps once, so by day you walked into a dark room (the user: "make the
+	-- lights and interior in them work").
+	for i = from + 1, #r.prims do
+		local prim = r.prims[i]
+		if prim.role == "glow" then
+			prim.attrs = prim.attrs or {};
+			(prim.attrs :: any).RoomLight = true
+		end
 	end
 end
 
