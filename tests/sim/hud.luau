@@ -62,45 +62,49 @@ run("the stats sit in a strip under the town's level", function()
 	check(pills:FindFirstChild("Plus", true) == nil, "with no + beside the money any more")
 end)
 
-run("the round buttons under the clock: home, the city hall, the news, the store, cars and Hide", function()
-	-- the user: "remove the shop, buying of things and food and feeding" and "remove the map
-	-- button and the map interface"
-	local corner = gui:FindFirstChild("Corner", true)
-	check(corner ~= nil, "the row is there")
-	local names = {}
-	for _, c in corner:GetChildren() do
-		if c:IsA("GuiObject") then
-			table.insert(names, c)
+run(
+	"the round buttons under the clock: home, other towns, the city hall, the news, the store, cars and Hide",
+	function()
+		-- the user: "remove the shop, buying of things and food and feeding" and "remove the map
+		-- button and the map interface"
+		local corner = gui:FindFirstChild("Corner", true)
+		check(corner ~= nil, "the row is there")
+		local names = {}
+		for _, c in corner:GetChildren() do
+			if c:IsA("GuiObject") then
+				table.insert(names, c)
+			end
 		end
+		table.sort(names, function(a, b)
+			return a.LayoutOrder < b.LayoutOrder
+		end)
+		local order = {}
+		for _, c in names do
+			table.insert(order, (c.Name:gsub("Cell$", "")))
+		end
+		-- (the store came in beside the news: "add gamepasses, just like bloxburg", then the garage beside
+		-- it: "make vehicles")
+		-- (the light or dark switch went: the user, "The light/dark button at the top of the ui should be
+		-- changed to "Hide"")
+		-- (the bag beside the garage, then Settings beside Hide: "add an inventory system to the player",
+		-- "add settings for graphic quality, background blur, bloom, etc.")
+		-- (Visit beside Home: "allow players to visit plots searching by name")
+		check(
+			table.concat(order, " ") == "Home Visit CityPanel News Store Garage Bag Settings Hide",
+			"nine of them, Visit beside Home, the bag beside the garage, Settings beside Hide and Hide last"
+		)
+		check(corner:FindFirstChild("Look", true) == nil, "no light or dark button")
+		-- (the bag beside the garage: "add an inventory system to the player")
+		check(corner:FindFirstChild("MapPanel", true) == nil, "no Map button")
+		check(corner:FindFirstChild("ShopPanel", true) == nil, "and no Shop button")
+		check(Hud.panel("MapPanel") == nil, "there is no map screen to open")
+		check(Hud.panel("ShopPanel") == nil, "and no shop screen")
+		-- the row is no wider than its nine buttons need, and still hangs from the right edge
+		local need = 9 * 54 + 8 * 8
+		check(corner.Size.X.Offset >= need and corner.Size.X.Offset <= need + 16, "the row is as wide as nine buttons")
+		check(corner.AnchorPoint.X == 1 and corner.Position.X.Scale == 1, "at the right edge")
 	end
-	table.sort(names, function(a, b)
-		return a.LayoutOrder < b.LayoutOrder
-	end)
-	local order = {}
-	for _, c in names do
-		table.insert(order, (c.Name:gsub("Cell$", "")))
-	end
-	-- (the store came in beside the news: "add gamepasses, just like bloxburg", then the garage beside
-	-- it: "make vehicles")
-	-- (the light or dark switch went: the user, "The light/dark button at the top of the ui should be
-	-- changed to "Hide"")
-	-- (the bag beside the garage, then Settings beside Hide: "add an inventory system to the player",
-	-- "add settings for graphic quality, background blur, bloom, etc.")
-	check(
-		table.concat(order, " ") == "Home CityPanel News Store Garage Bag Settings Hide",
-		"eight of them, the bag beside the garage, Settings beside Hide and Hide last"
-	)
-	check(corner:FindFirstChild("Look", true) == nil, "no light or dark button")
-	-- (the bag beside the garage: "add an inventory system to the player")
-	check(corner:FindFirstChild("MapPanel", true) == nil, "no Map button")
-	check(corner:FindFirstChild("ShopPanel", true) == nil, "and no Shop button")
-	check(Hud.panel("MapPanel") == nil, "there is no map screen to open")
-	check(Hud.panel("ShopPanel") == nil, "and no shop screen")
-	-- the row is no wider than its eight buttons need, and still hangs from the right edge
-	local need = 8 * 54 + 7 * 8
-	check(corner.Size.X.Offset >= need and corner.Size.X.Offset <= need + 16, "the row is as wide as eight buttons")
-	check(corner.AnchorPoint.X == 1 and corner.Position.X.Scale == 1, "at the right edge")
-end)
+)
 
 run("the plot's name stands over the level bar, and the level is on the bar", function()
 	-- the user: "allow naming of plots, and the name should appear in place of the big "Level x"
@@ -276,6 +280,36 @@ run("the quests sit under the strip, the next few goals", function()
 	frames(2)
 	Sim.advance(1)
 	check(list.Visible == true and #slotsOf() >= 1, "and the rows are drawn again after")
+end)
+
+run("tapping the plot's name opens the City hall's name box, and Save sends what was typed", function()
+	-- the user: "allow naming of plots": the server filters and keeps it (Services/Visit)
+	local sent = {}
+	Sim.remoteFn("PlotRename").OnServerInvoke = function(_, text)
+		table.insert(sent, text)
+		return true, text
+	end
+	local tap = gui:FindFirstChild("CityCard", true):FindFirstChild("Rename")
+	check(tap ~= nil, "the name is a button")
+	tap.Activated:Fire()
+	frames(3)
+	check(Hud.panel("CityPanel").isOpen(), "the City hall opens")
+	local box = gui:FindFirstChild("Naming", true)
+	local typed = nil
+	for _, d in if box then box:GetDescendants() else {} do
+		if d:IsA("TextBox") then
+			typed = d
+		end
+	end
+	check(typed ~= nil, "with the box to name the town in")
+	typed.Text = "Juniper Bay"
+	frames(1)
+	local save = box:FindFirstChild("SaveName", true)
+	save.Activated:Fire()
+	frames(3)
+	check(sent[1] == "Juniper Bay", "Save sends the name to the server")
+	Hud.closeAll()
+	frames(3)
 end)
 
 run("Home takes you home: the button and the H key", function()

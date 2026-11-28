@@ -53,6 +53,30 @@ Tuning.PlotName = {
 	MaxLength = 24, -- characters a name keeps
 }
 
+-- Other players' towns: the directory, likes and visits (Services/Visit, Sim/PlotBoard,
+-- Sim/PlotLikes, Sim/PlotCopy; the user: "allow players to like other plots. make a leaderboard for
+-- likes with plots. allow players to visit plots searching by name, sort by likes or by recency")
+Tuning.Visit = {
+	PageSize = 20, -- towns on a page of the Visit menu
+	TopKept = 100, -- towns a list (most liked, newest) reads from its store
+	ListFor = 60, -- seconds a server keeps a list it read before reading it again
+	CardFor = 300, -- seconds it keeps a town's card
+	SearchFor = 60, -- seconds it keeps what a search found
+	CopyFor = 60, -- seconds it keeps a saved town read for a copy
+	NameWords = 4, -- words into a town's name the search finds it by (and its owner's name)
+	LikeEvery = 0.6, -- seconds between one player's likes
+	LikeFlush = 30, -- seconds between a server writing its likes into the stores
+	LikesKept = 500, -- towns one player may like at once (taking a like back frees one)
+	ListEvery = 0.5, -- seconds between one player's lists (a search as they type)
+	VisitEvery = 4, -- seconds between one player's visits
+	RenameEvery = 4, -- seconds between one player's renames
+	Lots = 8, -- copies of towns a server shows at once, one to a viewer
+	Margin = 16, -- studs of ground a copy has round the town's land
+	Villagers = 8, -- villagers stood in a copy
+	Reach = 360, -- studs a viewer can stray from the middle of the copy before the visit ends
+	Below = 40, -- studs under a copy's ground where someone who fell off it is caught
+}
+
 -- The basement (the Basement pass, Build/Basement): floor -1, under the ground floor. Its rooms are
 -- dug out of the ground under the plot (Services/Basement) and put back when they go.
 Tuning.Basement = {

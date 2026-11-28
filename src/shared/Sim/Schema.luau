@@ -18,6 +18,8 @@ local Skills = require(script.Parent.Skills)
 local WorkMove = require(script.Parent.WorkMove)
 local Bag = require(script.Parent.Bag)
 local Titles = require(script.Parent.Titles)
+local PlotLikes = require(script.Parent.PlotLikes)
+local PlotBoard = require(script.Parent.PlotBoard)
 
 local Schema = {}
 
@@ -155,6 +157,12 @@ function Schema.newProfile(): any
 		owed = {},
 		gather = { day = -1, n = 0 },
 		titles = {}, -- titles won from town goals, by id (Sim/Titles); `title` is the one worn, or nil
+		-- other towns (Services/Visit): those liked (the owner's user id -> when, Sim/PlotLikes), the
+		-- keys the name search finds this town by (Sim/PlotBoard), and when it last changed as the
+		-- directory's Newest knows it (0 until it is built on or named)
+		likedPlots = {},
+		plotKeys = {},
+		plotAt = 0,
 	}
 end
 
@@ -246,6 +254,11 @@ function Schema.migrate(raw: any): any
 	profile.keepsakes = Keepsakes.clean(profile.keepsakes)
 	profile.gemItems = GemPieces.clean(profile.gemItems)
 	profile.plotName = PlotName.clean(profile.plotName)
+	profile.likedPlots = PlotLikes.clean(profile.likedPlots, Tuning.Visit.LikesKept)
+	profile.plotKeys = PlotBoard.cleanKeys(profile.plotKeys, Tuning.Visit.NameWords + 1)
+	if type(profile.plotAt) ~= "number" or profile.plotAt ~= profile.plotAt or profile.plotAt < 0 then
+		profile.plotAt = 0
+	end
 	-- the player's own look and the shared looks they liked (Services/Avatar, Avatar/Likes)
 	profile.look = if type(profile.look) == "table" then Appearance.sanitize(profile.look) else nil
 	profile.likedLooks = Likes.clean(profile.likedLooks, Tuning.CreatorMore.LikedKept)

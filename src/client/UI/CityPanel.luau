@@ -35,6 +35,10 @@ local draw: () -> () -- (below: everything in the panel, built again)
 local landCan: boolean? = nil
 local landNote: Frame? = nil
 local earnedLabel: TextLabel? = nil
+-- The name box: what is typed in it and not saved yet, kept through the panel being built again
+-- (the villagers' changes build it again often), and the box itself.
+local nameDraft: string? = nil
+local nameBox: TextBox? = nil
 
 local function profileView(): any
 	return {
@@ -176,6 +180,65 @@ local function town(inside: Frame, stats: any, wages: number)
 		Coin = true,
 		Sub = "while they work",
 	})
+end
+
+-- The town's name (the user: "allow naming of plots, and the name should appear in place of the big
+-- "Level x" at the top left above the level bar"): a box to type it in and Save, or Enter. The
+-- server filters it and keeps it (PlotRename, Services/Visit); an empty box takes the name off.
+local function nameRow(list: ScrollingFrame, order: number)
+	local holder = Kit.box({ Name = "Naming", Parent = list, Size = MenuParts.rowSize(46), LayoutOrder = order })
+	local box = MenuParts.input("Name your town", {
+		Name = "PlotName",
+		Parent = holder,
+		Size = UDim2.new(1, -134, 0, 44),
+		Text = nameDraft or State.data.plotName or "",
+	})
+	nameBox = box
+	box:GetPropertyChangedSignal("Text"):Connect(function()
+		if nameBox == box then
+			nameDraft = box.Text
+		end
+	end)
+	local saving = false
+	local function save()
+		if saving then
+			return
+		end
+		saving = true
+		local typed = box.Text
+		task.spawn(function()
+			local ok, done, words = pcall(function()
+				return Remotes.fn("PlotRename"):InvokeServer(typed)
+			end)
+			saving = false
+			if ok and done then
+				nameDraft = nil
+				Toasts.show(
+					if type(words) == "string" and words ~= ""
+						then Text.fill("Your town is {name} now.", { name = words })
+						else "Your town has no name now.",
+					"good"
+				)
+			else
+				Toasts.show(if ok and type(words) == "string" then words else "Couldn't save the name.", "warn")
+			end
+		end)
+	end
+	box.FocusLost:Connect(function(enter)
+		if enter then
+			save()
+		end
+	end)
+	Kit.button("Save", {
+		Name = "SaveName",
+		Parent = holder,
+		Size = UDim2.fromOffset(122, 42),
+		Position = UDim2.new(1, 0, 0.5, 0),
+		AnchorPoint = Vector2.new(1, 0.5),
+		Color = T.Green,
+		TextSize = 17,
+		ZIndex = 3,
+	}, save)
 end
 
 -- Land past what is free (Tuning.Passes.FreeLand): the row offers Big Plot, with a lock on its
@@ -336,6 +399,15 @@ function draw()
 	if not panel then
 		return
 	end
+	-- (someone typing a name keeps typing in the box built again)
+	local typing = false
+	if nameBox then
+		local box = nameBox
+		pcall(function()
+			typing = box:IsFocused()
+		end)
+	end
+	nameBox = nil
 	for _, c in panel.body:GetChildren() do
 		c:Destroy()
 	end
@@ -348,6 +420,14 @@ function draw()
 
 	-- the land and the work down the right
 	local list = MenuParts.list(panel.body)
+	MenuParts.heading(list, "Name", T.Purple, -2, nil)
+	nameRow(list, -1)
+	if typing and nameBox then
+		local box = nameBox
+		pcall(function()
+			box:CaptureFocus()
+		end)
+	end
 	MenuParts.heading(list, "Land", T.Purple, 1, Text.fill("{n} by {n} now", { n = stats.land }))
 	landRow(list, stats, p.coins, 2)
 
@@ -476,12 +556,24 @@ function CityPanel.close()
 		Kit.closePanel(panel)
 		panel = nil
 	end
+	nameBox = nil
 end
 
-function CityPanel.open()
+-- arg: { rename = true } (the name on the main screen was tapped) puts the cursor in the name box.
+function CityPanel.open(arg: any?)
 	CityPanel.close()
+	nameDraft = nil
 	panel = Kit.panel("City hall", Kit.MenuSize, CityPanel.close, "hall", Kit.Theme.Purple, { Caption = "Your town" })
 	draw()
+	if type(arg) == "table" and arg.rename and nameBox then
+		local box = nameBox
+		task.defer(function()
+			pcall(function()
+				box:CaptureFocus()
+			end)
+		end)
+	end
+	table.insert(unbind, State.on("plotName", draw)) -- (named: the box shows it)
 	table.insert(unbind, State.on("coins", onCoins))
 	table.insert(unbind, State.on("villagers", draw))
 	table.insert(unbind, State.on("passes", draw)) -- (Big Plot bought: the land row opens)

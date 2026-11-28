@@ -41,6 +41,7 @@ task.delay(4, function()
 	require(UI.Icons).warm(names)
 end)
 require(UI.TalkCard).start() -- hold E on a villager: what they say back, and your answers
+require(UI.Visit).start() -- the bar while looking round another player's town: Like and Home
 
 -- life around town, and the show when you build
 local World = script.Parent.World

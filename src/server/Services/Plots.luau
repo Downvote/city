@@ -12,6 +12,8 @@ local Remotes = require(Shared.Net.Remotes)
 local Plan = require(Shared.Build.Plan)
 local City = require(Shared.Sim.City)
 local Text = require(Shared.Util.Text)
+local Water = require(Shared.Build.Water)
+local PlotBoard = require(Shared.Sim.PlotBoard)
 
 local Data = require(script.Parent.Data)
 local World = require(script.Parent.World)
@@ -56,29 +58,23 @@ function Plots.ofPlayer(player: Player): (number?, CFrame?)
 	return i, Town.plotFrame(i)
 end
 
--- Shows the land a player owns: lighter grass with a low curb round it.
-function Plots.drawLand(i: number, plan: any)
-	local plot = World.plotModel(i)
-	local old = plot:FindFirstChild("Land")
-	if old then
-		old:Destroy()
-	end
-	if not plan then
-		return
-	end
-	local frame = Town.plotFrame(i)
+-- The land a plan owns, drawn on a plot's frame: lighter grass with a low curb round it, the grass
+-- cut round `holes` (rectangles in the plot's space: a copy's water, Services/Visit).
+function Plots.landModel(plan: any, frame: CFrame, holes: { { number } }?): Model
 	local x1, z1, x2, z2 = Plan.bounds(plan)
 	local land = Instance.new("Model")
 	land.Name = "Land"
-	local grass = Instance.new("Part")
-	grass.Name = "Grass"
-	grass.Anchored = true
-	grass.Size = Vector3.new(x2 - x1, 0.1, z2 - z1)
-	grass.CFrame = frame * CFrame.new((x1 + x2) / 2, -0.04, (z1 + z2) / 2)
-	grass.Color = Textures.tint("Grass", Color3.fromRGB(148, 200, 120))
-	grass.Material = Enum.Material.Grass
-	grass.TopSurface = Enum.SurfaceType.Smooth
-	grass.Parent = land
+	for _, r in Water.cutRects({ x1, z1, x2, z2 }, holes or {}) do
+		local grass = Instance.new("Part")
+		grass.Name = "Grass"
+		grass.Anchored = true
+		grass.Size = Vector3.new(r[3] - r[1], 0.1, r[4] - r[2])
+		grass.CFrame = frame * CFrame.new((r[1] + r[3]) / 2, -0.04, (r[2] + r[4]) / 2)
+		grass.Color = Textures.tint("Grass", Color3.fromRGB(148, 200, 120))
+		grass.Material = Enum.Material.Grass
+		grass.TopSurface = Enum.SurfaceType.Smooth
+		grass.Parent = land
+	end
 	local curb = Color3.fromRGB(232, 228, 216)
 	local edges = {
 		{ (x1 + x2) / 2, z1, x2 - x1 + 0.6, 0.6 },
@@ -96,11 +92,35 @@ function Plots.drawLand(i: number, plan: any)
 		strip.Material = Enum.Material.Concrete
 		strip.Parent = land
 	end
-	land.Parent = plot
+	return land
 end
 
+-- Shows the land a player owns on their plot.
+function Plots.drawLand(i: number, plan: any)
+	local plot = World.plotModel(i)
+	local old = plot:FindFirstChild("Land")
+	if old then
+		old:Destroy()
+	end
+	if not plan then
+		return
+	end
+	Plots.landModel(plan, Town.plotFrame(i)).Parent = plot
+end
+
+-- What the board in front of a plot says: its name and whose it is (the user: "allow naming of
+-- plots"), or with no name yet "Sam's place".
 local function signFor(player: Player): string
-	return player.DisplayName .. "'s\nplace"
+	local profile = Data.get(player)
+	return PlotBoard.sign(profile and profile.plotName, player.DisplayName)
+end
+
+-- Writes the board in front of the player's plot again (after a rename).
+function Plots.updateSign(player: Player)
+	local i = Plots.indexOf(player)
+	if i then
+		World.setPlotSign(i, signFor(player))
+	end
 end
 
 function Plots.sendTo(player: Player, character: Model?)

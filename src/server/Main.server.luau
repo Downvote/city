@@ -30,6 +30,7 @@ local order = {
 	"Signs",
 	"Vehicles", -- buying and bringing out vehicles (Data/Vehicles)
 	"Claims", -- Claim all in the rewards and the town goals (Sim/ClaimAll)
+	"Visit", -- other players' towns: naming yours, likes, the directory and visits (after Plots, Build and Avatar)
 	-- passes, gem packs, rewards, offline earnings, the group: listens for Data.Loaded, so it starts
 	-- before Data.open lets anyone in
 	"Store",

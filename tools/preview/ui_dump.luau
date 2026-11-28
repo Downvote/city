@@ -53,6 +53,11 @@
 --                       days and a request), Goals:claimed (a claimed goal picked), CityPanel:ready
 --                       (the next land can be bought), CityPanel:bigplot (land at 320: the next
 --                       step offers Big Plot), CityPanel:skills (the player's skills at three jobs)
+--   panel:Visit         other players' towns on Most liked: places, likes, a town here now, the
+--                       picked one on the card (panel:Visit:new on Newest, panel:Visit:search with
+--                       "hollow" typed, panel:Visit:empty before there are any: your own on the card)
+--   panel:CityPanel:named  the City hall with the town named, in its name box
+--   visiting            the bar while looking round a copy of somebody's town (visiting:liked liked)
 --   panel:Store         the store on its passes (VIP and Fine Grid owned, More Saves not on sale
 --                       yet); panel:Store:gems its gem packs
 --   panel:Rewards       the rewards on today's gift (a run of four days); panel:Rewards:playtime
@@ -713,6 +718,70 @@ elseif scene:sub(1, 6) == "panel:" then
 		-- land at 320, the most there is without Big Plot: the row offers the pass, with its lock
 		Sim.State.plan.size = 320
 		patch({ passes = {} })
+	elseif state == "named" and name == "CityPanel" then
+		patch({ plotName = "Juniper Bay" })
+	end
+	if name == "Visit" then
+		-- other players' towns as the server would list them (Services/Visit): a leaderboard, the
+		-- newest, a search, or nothing yet
+		local now = Sim.env.os.time()
+		local function town(id, name, who, likes, ago, level, people, extra)
+			local t = {
+				id = id,
+				name = name,
+				who = who,
+				likes = likes,
+				liked = false,
+				at = math.max(1, now - ago), -- (the simulation's clock starts at 1000: all of them today)
+				level = level,
+				people = people,
+				here = false,
+				mine = false,
+			}
+			for k, v in extra or {} do
+				t[k] = v
+			end
+			return t
+		end
+		local top = {
+			town(11, "Juniper Bay", "Sam", 128, 30, 14, 22),
+			town(12, "Old Mill", "Lee", 96, 5, 11, 18, { liked = true }),
+			town(13, "Pine Hollow", "Ada", 96, 70, 9, 15),
+			town(14, "", "Kit", 41, 2, 6, 9),
+			town(15, "Maple Row", "Noor", 37, 200, 8, 12),
+			town(16, "Little Wick", "Ollie", 22, 12, 4, 6),
+			town(17, "Sunday Hill", "Rafa", 9, 1, 3, 4),
+			town(18, "Clover End", "Bea", 3, 400, 2, 3),
+		}
+		local ranks = { 1, 2, 2, 4, 5, 6, 7, 8 }
+		local friend = town(21, "Fig Street", "Mo", 12, 0, 5, 7, { here = true })
+		local own = town(1, "", "Player", 4, 3, 3, 4, { mine = true })
+		Sim.remoteFn("PlotList").OnServerInvoke = function(_, sort, query)
+			local out = {}
+			if state ~= "empty" then
+				for i, t in top do
+					local row = table.clone(t)
+					row.rank = if sort == "likes" and (query or "") == "" then ranks[i] else nil
+					if (query or "") == "" or row.name:lower():find(query:lower(), 1, true) then
+						table.insert(out, row)
+					end
+				end
+				if sort == "new" then
+					table.sort(out, function(a, b)
+						return a.at > b.at
+					end)
+				end
+			end
+			return {
+				plots = out,
+				more = state ~= "empty" and (query or "") == "",
+				here = if state ~= "empty" and (query or "") == "" then { friend } else {},
+				mine = own,
+			}
+		end
+		Sim.remoteFn("PlotLike").OnServerInvoke = function(_, id)
+			return { liked = true, likes = 97 }
+		end
 	end
 	if name == "Store" or name == "Rewards" then
 		-- the passes as they will be once made on Roblox (More Saves still waiting for its id), VIP
@@ -781,6 +850,16 @@ elseif scene:sub(1, 6) == "panel:" then
 		end
 	elseif state == "titles" then
 		Sim.press("Titles")
+	elseif name == "Visit" and state == "new" then
+		Sim.press("Newest")
+	elseif name == "Visit" and state == "search" then
+		-- "hollow" typed in the search box, and the search gone off
+		local box = Sim.gui:FindFirstChild("Search", true)
+		local typed = box and box:FindFirstChildOfClass("TextBox")
+		if typed then
+			typed.Text = "hollow"
+		end
+		Sim.advance(1)
 	elseif state == "claimed" then
 		-- the first goal, claimed already
 		local row = Sim.gui:FindFirstChild("settlers", true)
@@ -794,6 +873,21 @@ elseif scene == "pick" then
 	villagerModels()
 	Hud.open("VillagerMenu", { vid = order[1], at = roblox.Vector2.new(560, 300) })
 	Sim.frames(3)
+elseif scene == "visiting" or scene == "visiting:liked" then
+	-- the bar while looking round a copy of somebody's town (UI/Visit): whose it is, Like and Home
+	startHud()
+	Harness.require(Sim.CLIENT .. "UI.Visit").start()
+	Sim.remoteEvent("Visiting"):FireClient(Sim.player, {
+		on = true,
+		id = 12,
+		name = "Old Mill",
+		who = "Lee",
+		likes = if scene == "visiting:liked" then 97 else 96,
+		liked = scene == "visiting:liked",
+		copy = true,
+	})
+	Sim.frames(3)
+	Sim.advance(1)
 elseif scene == "welcome" or scene == "welcome:long" then
 	-- the welcome back dialog (UI/WelcomeBack): what the town earned while the player was away.
 	-- welcome:long after two days, of which the first eight hours were paid for
