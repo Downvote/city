@@ -265,6 +265,21 @@ straight to the prize. Its beats are `Tuning.Crates.Show`, timed by `os.clock()`
 `task.wait()` hands back), a press while it shakes skips to the burst, and `still` draws one beat for the previews
 (`ui.sh crate:open:<work|pet>[:<rarity>][:drop|:shake|:burst]`); `tests/sim/crate_open.luau` plays it through.
 
+- Avatar items bought in the creator give gems back and count toward the Rewards menu's Shopping track (the user:
+  "make it such that spending robux on accessories give you gems, and make a reward track based on how much you
+  spend on accessories, giving different types of crates, pets and coin rewards"): `Sim/Shopping` (the rules, the
+  tiers), `Services/Shopping` (the purchases), `ShoppingClaim` in `Services/Claims`. Roblox's purchase events can be
+  faked by a client and `PromptBulkPurchaseFinished` can't be heard on the server at all, so an item only counts if
+  the server noted it before its prompt went up (`Shopping.expect`: `BuyLook` for a whole look, `BuyWatch` for one
+  thing, while the player didn't own it), Roblox then says the player owns it, and the price is Roblox's. A new way
+  to buy a look must note its lines the same way (`UI/BuyLook.item` does it), never pay on the event alone, and never
+  trust a price or a `RobuxSpent` from the client. Each item counts once per player, ever (`profile.shopping.counted`).
+- A tier's id stays as it is once players can claim it; add new tiers with new ids. A pet from the track comes through
+  `Crates.givePet` (fires `Crates.petsChanged` on the server), never by writing `profile.pets` by hand.
+- Playtest in Studio and on a live server: an item's Buy and Buy outfit (one prompt for the look, and one by one
+  where that fails), the gems and the notice coming in after a purchase, a cancelled prompt paying nothing, the same
+  item bought again paying nothing, a bundle's price read, and the Shopping tab's Claim and Claim all with a pet.
+
 Life in the town, in the spirit of the life sim the user named (its ideas only, never its content): well over two
 hundred events in `Data/Events/` (a folder: `Kit` builds weights and scenes, `Chatter` builds conversations from
 parts; a new event goes in one of its modules), props they bring into the world (`Data/EventProps`), keepsakes a
@@ -837,6 +852,40 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
   `Leaf` in the Grass material turns with the seasons, a shrub in another material only a little, a fir (a merged
   piece) only under snow; hedges stay green. A part's own colour is kept in `SeasonBase`, so a copy starts from it.
   Look with `SEASON=4 sh tools/preview/walk.sh ... --weather snow`.
+
+Scenes and pieces built for the user's pictures (a neon street, a night fairground, a temple in the woods; the user:
+"You are allowed to create more decor and buildings for these scenes, and put them in the ingame build mode"):
+
+- The neon street pieces are `Build/Recipes/NeonStreet` (the user: "You are allowed to create more decor and
+  buildings for these scenes, and put them in the ingame build mode"). A screen's picture is drawn on its lit face
+  with the file's `face` helper in tones of c2, so painting the light recolours the picture; keep the pictures our own,
+  with no words and nothing from the game in the user's pictures. Lit parts are Glass marked to glow (r:glow, or
+  `role = "glow"`), so they switch like any placed light.
+- To see a player's build at night: write the plan as JSON and run `sh tools/preview/plan_shot.sh <plan> <png> --hour 22 --eye
+  x,y,z --look x,y,z --textures` (dump.luau's `plan:` scene and plan_shot.py). `lune run tools/preview/neon_city.luau
+  <out.json>` builds the neon street through the real Build service, so a refusal there is a rule a player would
+  meet too.
+- Fairground pieces are `Build/Recipes/Showground` (`fair_*`). Coaster pieces join only if their rails stay at
+  `TRACK` over the ground at both ends and nothing of a piece reaches past its own ends (two pieces flush may
+  overlap only `Collide.Touch`), so keep end ties inside the piece.
+- Never draw a `Recipe.piece` inside `Lively.moving`: on a floor or the ground `Solid.apply` opens a piece's
+  shapes and makes the big ones solid whatever the piece's name, so a moving piece would be solid where the server
+  drew it. Draw what moves as plain parts (the wheel and the carousel do).
+- A placed scene can be built and shot without Studio: write a scene file for `tools/preview/plan_scene.luau`, then
+  `sh tools/preview/plan_shot.sh <plan.json> <png> --eye x,y,z --look x,y,z --hour 18.7 --textures`. At 18.7 the
+  sun is just down, so lamps are lit under the dusk grade and its pink air (Tuning.Look's own hours); Build mode's
+  time of day can show the same.
+- The Temple look (`Recipes/Temple`, the user with a picture of an old temple: "Make another for this as well"): a
+  temple roof is a piece standing on the floor over its room, its middle over the room's middle (`temple_roof` for
+  20 by 12, `_small` 8 by 6, `_great` 28 by 20); draw a new curved roof with `curvedRoof` and a `RoofSpec`, never
+  with Shapes' roof styles. A run of the timber frame on a wall is `temple_frame` side by side every 4 studs from the
+  wall's start (half a post each side, so two make a whole one), `temple_frame_narrow` beside a door; keep them off a
+  door's hole and its casing. `temple_stilts` carries a floor 32 by 24 on the storey above it. Keep the pieces' own
+  colours soft: grey tiles, dark timber, white plaster, grey stone.
+- A ready-made building's walls and floors keep to the wall grid (2 studs): the Presets spec says "off the grid".
+- `tools/preview/temple_town.luau` is how a big build is put down for a picture: through `Build.apply`, so a refusal
+  says what a player would be told; single floors and fences in palette colours (no Any Colour), long walls as a
+  chain of at most `Tuning.Plot.MaxWallLength`.
 
 ## Rules
 

@@ -1002,6 +1002,94 @@ walls are boards, as every wall is. The picnic shelter gets a water butt, a crat
 temple stone lanterns at the pond and a hare and a clipped spiral behind it. (The town's own buildings got the same
 pass: section 9, "Textures, round things and worn edges in the town".)
 
+### A street after dark (Build mode pieces)
+
+The user sent three pictures of a neon street at night and asked: "Could you simulate using build mode tools to
+create a city like this, and then frame it like the way the images i sent, and send a screenshot of it?", then
+"You are allowed to create more decor and buildings for these scenes, and put them in the ingame build mode if you
+do create any". The pictures belong to another game; only their mood and framing were taken: tall dark towers, lit
+screens and signs in cyan, pink and soft yellow, a crossing, lights on poles and cars with their lamps on.
+
+So Build mode has twelve new pieces for a city street at night (`Build/Recipes/NeonStreet`):
+
+- On walls: a Big screen (a hot drink), a Wide screen (a bowl of noodles), a Square screen (two music notes over a
+  level meter), a Tall screen (a sun over the sea), a Blade sign that stands out from the wall, a Lit shop sign for
+  over a door with a strip of warm light under it, and a Neon tube for lining a building's edges. The pictures are our
+  own and have no words: shapes and lines stand where words would go.
+- On a roof or a floor: a Rooftop screen on two legs, with a walkway and lamps over it.
+- On the pavement: a Traffic light with an arm out over the road (the top lamp lit, a walk sign and a button box on
+  the pole), a Road light with a long lit head, a Lit pole sign with a ring and a sparkle on it, and a Parked car with
+  its lamps on, drawn like the town's own cars.
+
+Every lit part is a light like any other a player places: on at every hour, put out with its prompt, and put out by
+a sleeping villager close by. Off, a screen is dark glass. The paint tool's second colour is the light, so a screen's
+picture follows it in a lighter and a deeper tone.
+
+### A fairground at night
+
+> Could you simulate using build mode tools to create a city like this, and then frame it like the way the images i
+> sent, and send a screenshot of it?
+
+> Do the same with this
+
+(with two pictures of a fairground at night: a great Ferris wheel, a carousel, coaster track, gothic towers and a
+haunted house across a paved square), then:
+
+> You are allowed to create more decor and buildings for these scenes, and put them in the ingame build mode if you
+> do create any
+
+(Goes under Build mode's pieces, after the moving decor.)
+
+- **A fairground.** Build mode has the pieces to put up a fairground that looks its best after dark. On the Fun tab:
+  a **Big Ferris wheel** (40 wide, 42 tall) of laced iron rims, crossing spokes and a gold hub, its twelve cabins
+  lit from inside and hanging upright as it turns, a bulb at every joint of its rim, standing on four lattice legs
+  over a cobbled plinth with a boarding deck; a **Grand carousel** (23 across) with a striped canopy, a band of
+  panels with diamonds, a scalloped edge and two rows of bulbs, a mirrored middle column, gold posts and eighteen
+  horses prancing on gold poles; a **Ride station**, a lit brick hall with pointed windows raised on iron legs with
+  arches between them, a bulb strip along its deck and a stair up one end; and coaster track in four pieces that
+  join end to end, rails at the same height on every piece: **Coaster track** (a straight run), **Coaster bend** (a
+  quarter turn), **Coaster hill** and **Coaster loop**, each on braced towers. The wheel and the carousel go round
+  near the player's camera, like the other moving pieces.
+- Around them: a **Spire tower** (Decor), a stone tower with corner buttresses and pinnacles, pointed lit windows,
+  an arched door and a tall slate spire with dormers; a **Fairground lamp** (an iron post with scrolls and a glass
+  globe) and a **Pillar lamp** (a stone pier with a glazed lantern on top) on the Lights tab, whose glass sets the
+  colour of their light, so pink glass casts pink light; a **Bare tree** (Garden), crooked and leafless; a **Gothic
+  window** (Windows) with a pointed head, tracery and tinted glass; and a **Ghost house sign** (On walls) with the
+  words in lit tube, a crescent moon and bulbs round it.
+
+### A temple in the woods
+
+> Could you simulate using build mode tools to create a city like this, and then frame it like the way the images i
+> sent, and send a screenshot of it?
+
+> You are allowed to create more decor and buildings for these scenes, and put them in the ingame build mode if you
+> do create any
+
+> Make another for this as well
+
+(The third came with a picture of an old temple compound in a forest seen from high above. Goes under **Build mode**,
+with the looks.)
+
+- **The Temple look.** Build mode's Styles group has a ninth tile, Temple (a pagoda for its icon), for building an
+  old temple in the woods. Its pieces, in their usual tabs:
+  - Structure: three tiled roofs whose slopes curve and whose corners sweep up, a hip and gable roof with a timber
+    gable at each end and a beam with brackets round the walls' tops under it, for a room 8 by 6 (Small temple roof),
+    20 by 12 (Temple roof) and 28 by 20 (Great temple roof). A roof stands on the floor of the storey over the room,
+    in its middle, as the glass roof does. Also a roofed gate for a gap 8 wide in a wall (four posts on stones, its
+    leaves open, a small tiled roof), a storey of timber stilts on a stone base for a floor 32 by 24, a stone terrace
+    12 by 12 to stand things on, and stone steps up to it.
+  - Pillars: a temple post, round dark timber on a dressed stone with brackets on its head.
+  - On walls: a timber frame, 4 or 2 studs of a plain wall in dark timber over white plaster, hung side by side.
+  - Doors: lattice doors, two leaves of timber with paper behind a lattice.
+  - Decor: a five storey pagoda with a bronze spire.
+  - Garden: a gateway of two round posts and two beams, its top beam's ends rising; an arched footbridge to go over a
+    pond; a tall stone lantern that lights up; a cedar and a broad camphor tree.
+  - Fences: the Tiled wall, a compound's wall of stone, white plaster and a tiled cap.
+- **Ready-made buildings** on the Buildings tab, in the Temple look: a Temple hall (a plastered hall with lattice
+  doors, a railed veranda and the temple roof, a gravel path between two lanterns), a Hall on stilts (a great hall a
+  storey up on the stilt frame, stairs up to its veranda, the great roof), a Pagoda square (the pagoda in a square
+  of gravel with a lantern at each corner), and a Temple gate (the roofed gate in two runs of tiled wall).
+
 ## 6. The villager creator
 
 Works like a catalog avatar editor:
@@ -1557,6 +1645,51 @@ head too. It happens once a save.
 on by turns. Five achievements (Five in town, Ten in town, Level 5, A full street, Level 10) and four town goals
 (All hands, Close knit, Inseparable, A working town) give a crate as well. Claim all gives them too, and a notice
 says the crate is in the Store.
+
+### Gems for looks bought, and the Shopping track
+
+> Also, make it such that spending robux on accessories give you gems, and make a reward track based on how much you
+> spend on accessories, giving different types of crates, pets and coin rewards
+
+- **Gems back.** Whatever a player buys from Roblox through the creator (an item's Buy button on what is on, Buy
+  outfit for the whole look, or Buy outfit on a villager's page) gives gems back: 1 gem for every 10 R$ spent, as
+  Roblox prices the item. The part of a gem left over waits for the next buy, so small buys add up. An item counts
+  once per player, ever, and something free counts nothing. When it lands a notice says "+12 gems for your new look."
+  (and "A shopping reward is ready." when a tier came with it). In the creator, over the tools at the bottom right
+  (Buy outfit among them), a small line with a gem says "Buying gives gems back"; it steps aside while a tool's
+  caption shows.
+- Why 1 in 10: the gem packs give 0.2 to 0.33 gems a Robux, and the game only gets a cut of an avatar item's price,
+  so a gem costs more bought as a look than bought as gems. These gems are paid for, so the daily cap on earned gems
+  doesn't touch them.
+- **The Shopping track.** The Robux counted add up, and the Rewards menu's fifth tab, Shopping, is a track of
+  thirteen tiers along that total, each claimed once:
+
+  | Tier | R$ spent in all | Reward |
+  | --- | --- | --- |
+  | 1 | 25 | 500 coins |
+  | 2 | 60 | Work crate |
+  | 3 | 120 | Pet crate |
+  | 4 | 200 | 1,500 coins |
+  | 5 | 320 | Hedgehog (uncommon pet) |
+  | 6 | 480 | 2 work crates |
+  | 7 | 700 | 4,000 coins |
+  | 8 | 1,000 | Penguin (rare pet) |
+  | 9 | 1,400 | 2 pet crates |
+  | 10 | 2,000 | 10,000 coins |
+  | 11 | 2,800 | Capybara (epic pet) |
+  | 12 | 3,800 | 3 work crates |
+  | 13 | 5,000 | Baby dragon (legendary pet) |
+
+  Coins sit next to the daily gift (250 to 550) and the town goals (300 to 3,000) and grow past them; the pets climb
+  the rarities. Crates are held in the Store's Crates tab like the daily gift's; a pet comes straight into town with a
+  name and a coat of its own, as a pet crate's does, and the news says so ("Bramble the hedgehog came to live in
+  town."). A tier with no room for its pet (20 already) or its crates (20 of that kind held) waits, its row saying
+  Full, until there is room.
+- The tab is laid out like Playtime and Achievements: on the left card a ring of how far along from the last tier,
+  the R$ spent in its middle, the tier picked ("R$ 70 to go", "A reward is waiting"), "1 gem per 10 R$ on looks.",
+  what it gives beside the ring (coins; a crate's count over its name; a pet's rarity over its name) and Claim across
+  the foot when it is ready; down the right the tiers in three lots, Ready to claim, To come and Claimed. Claim all
+  takes the track's tiers with everything else, and the Rewards tile's badge counts them.
 
 ## 9. The town
 

@@ -1320,6 +1320,74 @@ way back, where it stays (not while drawing); its buttons and a step's outcome a
   piece on another, and over the water" and "the time of day Build mode shows the town at"; `tests/sim/client.luau`'s
   Lighting is a real Lighting. Previews (in `audit.sh`): `build:search`, `build:search:none`, `build:time`.
 
+## Scenes built in Build mode: the neon street, the fairground, the temple
+
+The user sent pictures of a neon street, a night carnival and a temple in the woods and asked for each to be built with
+Build mode's own tools, framed like the pictures, with new pieces allowed in the game. Each scene's script sends every
+change through `Services/Build.apply` (stubbed as the BuildService spec does), so the plot rules hold.
+
+### The neon street
+
+- `Build/Recipes/NeonStreet` (new): `neon_screen`, `neon_screen_wide`, `neon_screen_square`, `neon_screen_tall`,
+  `neon_blade_sign`, `neon_shop_sign` (walldecor, wall, style scifi), `neon_tube` (lights, wall, scifi),
+  `neon_roof_screen` (decor, floor, scifi), `street_traffic_light` and `street_road_light` (lights, ground, modern),
+  `street_pole_sign` and `street_parked_car` (decor, ground, modern). Tag `light` on all but the car. The file loads
+  after `Lights` and `Modern`, so no tab's first card changed. `street_parked_car` draws with `Data/VehicleKit.car`
+  (the town's car's measurements, no seats inside) and lights the head lamps' and tail lamps' lenses.
+  Helpers in the file: `face(r, cf, w, h, color)` a lit panel with `rect` and `bar` to draw on it in tones,
+  `rowsDisc`, `ticker`, `wallScreen` (rails, a bevelled housing, a bezel, bolts and vents round a lit face).
+- Preview tooling:
+  - `tools/preview/dump.luau` scene `plan:<file.json>`: a plan saved as JSON drawn as a plot draws it
+    (`Builder.primsFor`), on its land and the plot's lawn, its lit parts turned to Neon as `World.setLight` does, and
+    its lamps (scaled by `Tuning.Lights.Placed`) with the hour (`HOUR`, 22 by default) beside it in
+    `<out>.stage.json`.
+  - (The night shots were drawn with a plan renderer of its own; it was folded into p27's `plan_shot.sh`, which
+    does the same: `sh tools/preview/plan_shot.sh <plan.json> <png> --eye x,y,z --look x,y,z --hour 22 --textures`.)
+  - `tools/preview/neon_city.luau <out.json>`: builds a neon street on an empty first land through the real
+    `Services/Build.apply` (Data, Plots and Remotes stubbed as the BuildService spec does), as a player with Tall
+    Builds and Stretch, and writes the plan.
+
+### The fairground
+
+- `Build/Recipes/Showground.luau` (new): the pieces above, ids `fair_big_wheel`, `fair_carousel`,
+  `fair_ride_station`, `fair_coaster_run`, `fair_coaster_bend`, `fair_coaster_hill`, `fair_coaster_loop`,
+  `fair_spire_tower`, `fair_lamp_post`, `fair_pillar_lamp`, `fair_bare_tree`, `fair_window_gothic`,
+  `fair_ghost_sign`. It loads after the files that give each of its tabs their first card, so no tab's first card
+  changed. Coaster pieces share `TRACK` (the rails' height, 10) and `GAUGE`; the bend comes in at the front 2 left
+  of its middle and goes out at the right 2 behind it; the loop comes in on its left (local x -1.6) and goes out on
+  its right (+1.6). The two lamps' light takes their c2 (`r:glow(glass, range, brightness, r.c2)`).
+- Tools (no game code): `tools/preview/plan_scene.luau` builds a plot through the real `Services/Build.apply` with
+  the BuildService spec's stubs, one request a change, held to every rule (land, floors, Collide, the palette unless
+  the scene owns Any Colour), and writes the plan; `tools/preview/dump.luau` has a new scene `plan:<file.json>` (a
+  plan on its plot's grass, lit glows drawn as Neon, its lamps beside it as `<out>.lamps.json` at
+  `Tuning.Lights.Placed`'s reach and strength); `tools/preview/plan_shot.py` / `plan_shot.sh` draw a plan from where
+  someone stands, by day or at night, with the plot's lamps, the glow, textures and the game's grade.
+- Specs: no new spec; the pieces are held by Build, Textured, Zfight, Unstick, Collide, Lively, Frames and Palette.
+
+### The temple
+
+- `Build/Recipes/Temple.luau`: the temple pieces (`temple_roof`, `temple_roof_small`, `temple_roof_great`,
+  `temple_pagoda`, `temple_gate`, `temple_gateway`, `temple_post`, `temple_frame`, `temple_frame_narrow`,
+  `door_temple`, `temple_stilts`, `temple_terrace`, `temple_steps`, `temple_bridge`, `temple_lantern`, `tree_cedar`,
+  `tree_camphor`). Its `curvedRoof(r, RoofSpec)` draws a curved roof over an eave line: every point's height comes
+  from how far in from its own eave it is (a concave curve) plus a lift near each corner, so the slopes meet at the
+  hips; `gable` cuts the ends off at a gable wall (hip and gable), `stop` ends the slopes where a pagoda's next
+  storey stands, `room`/`foot` add the beam, the plaster band and the brackets round the walls' tops. The many faces
+  go into pieces of at most `Geometry.PieceMax` shapes (`sheet`), each with an upright box for the merge.
+- `Catalog.Styles` has `temple`; `Build/BuildUI`'s `LOOK_ICONS.temple = "pagoda"`.
+- `Plan.WallStyles.tiled` ("Tiled wall", 6.4 high, 1.6 thick, painted white plaster), last in `Plan.WallStyleOrder`,
+  drawn in `Shapes.fence` (stone course, the paint, a timber band, a tiled cap of two wedges and a ridge);
+  `BuildUI`'s `STYLE_ICONS.tiled = "tiledWall"`.
+- Icons: `pagoda` and `tiledWall` in `UI/IconArt` with their shape lists in `UI/Icons`.
+- Ready-made buildings: `Data/Buildings/Showpieces/TempleHall.luau` (`show_temple_hall`), `TempleStiltHall.luau`
+  (`show_stilt_hall`), `TemplePagoda.luau` (`show_pagoda`, "Pagoda square"), `TempleGate.luau` (`show_temple_gate`), style `temple`.
+- Previews: `tools/preview/temple_town.luau` builds the whole temple on an empty plot (land 320, no passes) through
+  `Services/Build.apply` with the BuildService spec's stubs, so every piece is placed by the server's rules, and
+  writes the plan as JSON (and where its fog machines stand). `dump.luau`'s `plan:<file>` scene (from p26-neoncity)
+  draws a saved plan on its land; here it also cuts the grass round pools and ponds. `walk.py --depth <npy>` saves the
+  picture's depth, and `tools/preview/mist.py` lays a sketch of the fog machines' mist (Data/Effects `fog` and
+  `fogbank`) over a picture behind what stands in front of it.
+
 ## Pieces that move and give off effects
 
 The user: "make animated decor, workplaces with special effects, particle makers, and more enticing types of
@@ -1732,6 +1800,68 @@ Changed:
   buildings and events. Previews: `render.sh cat:crates` (and `item:crate_*`), `render.sh pets` (`pets:<id>,<id>`),
   `ui.sh panel:Store:crates`, `crate:open:work`, `crate:open:pet`, `crate:tip`, `build:crates`, `build:crates:empty`,
   `panel:Residents:pets`, `panel:Residents:pets:pick` (all in `audit.sh`).
+
+## Gems for looks bought, and the Shopping track
+
+New modules:
+
+- `Sim/Shopping` (shared, no services): `Tiers` (`{ id, spend, coins? | crate? + n? | pet? }`, ids `s1`..`s13`, never
+  renamed once claimed), `tier(id)`, `key(kind, id)` ("a<id>" / "b<id>", nil for anything else), `state(profile)`
+  (mends `profile.shopping`), `counted`, `gems(robux, carry) -> gems, carry`, `reached(spent)`,
+  `record(profile, kind, id, price) -> { gems, robux, reached } | nil, "counted" | "free" | "bad"` (counts an item
+  once, up to `ItemMax` Robux; the caller pays the gems), `next`, `blocked(profile, tier)` (no room for the pet or
+  the crates), `status(profile) -> { tier, reached, claimed, blocked }`, `ready(profile)`, `claim(profile, id, rng?)
+  -> ok, { tier, coins, crates, pet? } | why` (crates held through `Crates.give`, the pet through `Crates.givePet`,
+  coins for the server to pay), `rewardName`, `icon`, `petLine`, `claimNotice`, `boughtNotice(gems, reached)`,
+  `clean(profile)`.
+- `Services/Shopping` (after Avatar): `Shopping.expect(player, lines)` notes what is about to be prompted, each only
+  when `PlayerOwnsAssetAsync` / `PlayerOwnsBundleAsync` says the player doesn't own it yet (or can't say), and waits
+  up to a few seconds for those answers. Listens to `MarketplaceService.PromptPurchaseFinished` and
+  `PromptBundlePurchaseFinished`, and `PromptBulkPurchaseFinished` in a pcall (Roblox lets only a client hear that
+  one for now). A bought item counts only if noted within `Tuning.Shopping.Wait`; Roblox is asked whether the player
+  owns it now (again after each of `Recheck`'s waits while it says no; in Studio the event's word stands), its price
+  is `GetProductInfoAsync`'s `PriceInRobux` (a bundle's read from `Product.PriceInRobux` if not at the top; 0 when
+  `IsForSale` is false; cached ten minutes), then `Sim/Shopping.record`, `Data.addGems`, a push of `gems` and
+  `shopping`, one notice for the lot and a save. Remotes `BuyWatch` and `BuyDone`.
+- `tests/specs/Shopping.spec.luau`.
+
+Changed:
+
+- `Sim/Crates`: `Crates.givePet(profile, kind, rng) -> Result? , why?` (a pet of a given kind, no crate, no
+  `stats.crates`); the pet making is the local `addPet`, shared with a crate's grant (same rolls, same order).
+- `Sim/Rewards.waiting` adds `Shopping.ready`. `Sim/ClaimAll.rewards(profile, today, vip, inGroup, rng?)` claims every
+  tier through `Shopping.claim`; the Haul has `shopping` (tiers) and `pets` (the `Crates.Result`s), its coins and
+  crates take the track's; `ClaimAll.petsNotice(pets)`.
+- `Services/Claims`: `RewardsClaimAll` passes an rng, pushes `shopping` and `pets`, notices the pets, logs each
+  (kind `crate`) and fires `Crates.petsChanged`; new remote `ShoppingClaim` (one tier, same claim).
+- `Services/Crates`: `Crates.petsChanged(player)` fires `PetsChanged` from elsewhere.
+- `Services/Avatar`'s `BuyLook` calls `Shopping.expect(player, lines)` before `PromptBulkPurchase`.
+- `Avatar/Shop.bought(results, asked?) -> { Line }`: what `PromptBulkPurchaseFinished`'s results say was bought,
+  read with care (`{ RobuxSpent, Items = { { type, id (string), status } } }` per Roblox's docs: the `type` an
+  `Enum.MarketplaceProductType`, the `status` an `Enum.MarketplaceItemPurchaseStatus`, Success or none counts);
+  `asked` when the results hold no list.
+- `UI/BuyLook`: `item(id, isBundle?, noted?)` asks `BuyWatch` first unless noted; the one-by-one fallback notes all
+  its lines at once; listens to `PromptBulkPurchaseFinished` on the client and fires `BuyDone` with `Shop.bought`.
+- `UI/Creator`: `GemsBack` (a gem and "Buying gives gems back") in the caption row over the tools, hidden while
+  `ToolCaption` has words.
+- `UI/Rewards`: the `shopping` tab (`showShopping`, `showTier`, `tierPays`), `Rewards.view()` carries `shopping`,
+  `pets` and `crates`, `firstWaiting` opens on it when a tier is ready, refills on `shopping`, `pets`, `crates`.
+- `UI/Hud`: the Rewards badge refreshes on `shopping`, `pets` and `crates` too.
+- `Services/Data.clientState`: `shopping = { spent, got }` (what was counted stays on the server).
+- `Net/Remotes`: functions `BuyWatch` (`{ { kind, id } }` -> ok) and `ShoppingClaim` (`tierId` -> ok, `{ coins,
+  crates, pet? }` or why); event `BuyDone` (client -> server, `{ { kind, id } }`).
+- Saved: `profile.shopping = { spent, carry, counted, got }` (`spent` whole Robux counted, `carry` the part of a gem
+  under 1, `counted` the item keys counted, newest `Tuning.Shopping.Kept`, `got` the tiers claimed by id), in
+  `Schema.newProfile`; `Schema.migrate` runs `Shopping.clean` (an old save starts with nothing spent).
+- Tuning: `Tuning.Shopping` (`Gems` 0.1, `ItemMax` 10000, `Kept` 500, `Wait` 900, `Recheck` { 3, 8 }, `Every` 0.5),
+  after `Tuning.Store`.
+- Specs: `Shopping` (the gem maths and the carry, against the gem packs, once per item, nothing for free or bad
+  items, tiers rising with real rewards of all three kinds, both crates, coins and pets growing, reaching and the
+  badge, claiming each once with its coins, crates and pet, waiting for room, Claim all matching the single claims,
+  an old or broken save, `Shop.bought`). `ClaimAll`: the track's tiers taken with the rest. Sims:
+  `creator_sections` (the gems line and its stepping aside; an item noted before its prompt, the one-by-one
+  fallback noting all, a whole look's prompt closing reporting what it bought). Previews: `panel:Rewards:shopping`,
+  `panel:Rewards:shopping:ready` (both in `audit.sh`).
 
 ## Other players' towns
 
