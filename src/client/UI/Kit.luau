@@ -4039,8 +4039,7 @@ function Kit.backButton(props: { [string]: any }, onClick: (() -> ())?): TextBut
 end
 
 -- Shapes drifting slowly across the black behind a menu. The user: "make an animated
--- background with shapes like it in the menus". Leaning bars, triangles, hollow rings, plus
--- signs and rows of ticks, faint, in the menu's colour and white, all sliding the same way at
+-- background with shapes like it in the menus". Leaning bars, rows of ticks and wedges, faint, in the menu's colour and white, all sliding the same way at
 -- their own speeds and coming round again. One loop moves them, and it stops when the menu goes.
 -- opts: W, H (the layer's size), Count, Faint ({ from, to } transparency), Second (the colour of
 -- every third shape, the words' colour by default), Sizes ({ from, to } pixels), Speed (a scale),
@@ -4102,7 +4101,9 @@ function Kit.motion(parent: GuiObject, accent: Color3, seed: number, opts: { [st
 			)
 		end
 	end
-	local kinds: { string } = o.Kinds or { "bar", "tri", "diamond", "bar", "plus", "ticks", "tri", "bar", "diamond" }
+	-- (by default leaning bars, rows of ticks and wedges: the plus signs and rings that drifted
+	-- with them read as scattered confetti rather than one pattern)
+	local kinds: { string } = o.Kinds or { "bar", "ticks", "bar", "tri", "bar", "ticks" }
 	for k = 1, count do
 		local kind = kinds[(k - 1) % #kinds + 1]
 		local color = if k % 3 == 0 then second else accent
@@ -4327,7 +4328,7 @@ function Kit.panel(
 		-- light; two read as decoration)
 		-- the drifting shapes: leaning bars, rows of ticks and a few wedges, fewer and fainter
 		-- than they were, so they read as one pattern moving and not as scattered confetti
-		Kit.motion(holder, accent, seed, { Count = 18, Kinds = { "bar", "ticks", "bar", "tri" } })
+		Kit.motion(holder, accent, seed, { Count = 18 })
 	end
 	local _ = icon
 	-- the panel: the card a few pixels inside its box, with no line round it (the user: "for
