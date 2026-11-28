@@ -48,7 +48,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "Metal",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -543,14 +543,7 @@ local items: { Item } = {
 			local quill = CFrame.new(1.05, 3.05, 0.32) * CFrame.Angles(0.15, 0, -0.35)
 			r:boxAt(quill, 0.12, 0.5, 0.03, C.White, "Cardboard")
 			rod(r, (quill * CFrame.new(0, -0.25, 0)).Position, Vector3.new(0.95, 2.86, 0.35), 0.025, C.Black)
-			r:boxAt(
-				CFrame.new(-0.2, 2.725, 0.55) * CFrame.Angles(0, 0.12, 0),
-				0.8,
-				0.03,
-				0.58,
-				C.Paper,
-				"Cardboard"
-			)
+			r:boxAt(CFrame.new(-0.2, 2.725, 0.55) * CFrame.Angles(0, 0.12, 0), 0.8, 0.03, 0.58, C.Paper, "Cardboard")
 			r:boxAt(
 				CFrame.new(-0.25, 2.75, 0.5) * CFrame.Angles(0, 0.12, 0),
 				0.5,
@@ -616,16 +609,7 @@ local items: { Item } = {
 				r:cyl(p[1], top + 0.02, p[2], 0.04, 0.44, "y", IVORY, "Marble")
 				r:cyl(p[1], top + 0.14, p[2], 0.2, 0.26, "y", r.c2, "Marble")
 				r:cyl(p[1], top + 0.245, p[2], 0.05, 0.2, "y", Color3.fromRGB(150, 96, 62), "Glass")
-				r:block(
-					p[1] + 0.13,
-					top + 0.08,
-					p[2] - 0.02,
-					p[1] + 0.2,
-					top + 0.18,
-					p[2] + 0.02,
-					r.c2,
-					"Marble"
-				)
+				r:block(p[1] + 0.13, top + 0.08, p[2] - 0.02, p[1] + 0.2, top + 0.18, p[2] + 0.02, r.c2, "Marble")
 			end
 			-- a stand of three plates with little cakes
 			local sx, sz = -0.55, -0.45
@@ -1445,22 +1429,8 @@ local items: { Item } = {
 				q:block(-0.28, 0.66, 0.35, -0.22, 0.7, 0.38, C.Black, "Metal")
 				q:block(0.22, 0.66, 0.35, 0.28, 0.7, 0.38, C.Black, "Metal")
 			end, nil, "Metal")
-			r:boxAt(
-				CFrame.new(-0.06, 0.72, 0.395) * CFrame.Angles(0, 0, 0.9),
-				0.03,
-				0.15,
-				0.03,
-				C.Black,
-				"Metal"
-			)
-			r:boxAt(
-				CFrame.new(0.07, 0.76, 0.395) * CFrame.Angles(0, 0, -0.5),
-				0.025,
-				0.2,
-				0.03,
-				C.Black,
-				"Metal"
-			)
+			r:boxAt(CFrame.new(-0.06, 0.72, 0.395) * CFrame.Angles(0, 0, 0.9), 0.03, 0.15, 0.03, C.Black, "Metal")
+			r:boxAt(CFrame.new(0.07, 0.76, 0.395) * CFrame.Angles(0, 0, -0.5), 0.025, 0.2, 0.03, C.Black, "Metal")
 			r:ball(0, 0.68, 0.4, 0.05, r.c2, "Metal")
 		end,
 	},

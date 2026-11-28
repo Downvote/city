@@ -41,13 +41,13 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "Metal",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
 -- A cone at a frame, its point along the frame's Y.
 local function coneAt(r: R, cf: CFrame, h: number, d: number, color: Color3, mat: string?): Prim
-	return r:add({ shape = "Cone", cf = cf, size = Vector3.new(d, h, d), color = color, mat = mat or "Wood" })
+	return r:add({ shape = "Cone", cf = cf, size = Vector3.new(d, h, d), color = color, mat = mat or r.mat or "Wood" })
 end
 
 -- A round plinth `d` across and `h` tall: a foot, a body and a lip, the lip's top at h.
@@ -336,14 +336,8 @@ local items: { Item } = {
 			}
 			for i, l in leaves do
 				local col = shade(r.c1, 0.86 + (i % 3) * 0.08)
-				local p = r:lump(
-					CFrame.new(l[1], l[2], l[3]) * CFrame.Angles(0, i, 0),
-					l[4],
-					l[5],
-					l[4] * 0.9,
-					col,
-					"Grass"
-				)
+				local p =
+					r:lump(CFrame.new(l[1], l[2], l[3]) * CFrame.Angles(0, i, 0), l[4], l[5], l[4] * 0.9, col, "Grass")
 				p.name = "Leaf"
 			end
 			for i, p in { { -0.4, 0.3 }, { 0.3, -0.35 }, { 0.45, 0.4 } } do

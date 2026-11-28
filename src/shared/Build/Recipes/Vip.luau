@@ -42,7 +42,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -62,7 +62,7 @@ local function coneDown(r: R, x: number, y: number, z: number, h: number, d: num
 		cf = CFrame.new(x, y, z) * CFrame.Angles(math.pi, 0, 0),
 		size = Vector3.new(d, h, d),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -118,7 +118,7 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a stone pad, a drum banded in gold with stars round it, a cone with its fuse lit
 			r:block(-0.95, 0, -0.95, 0.95, 0.15, 0.95, Color3.fromRGB(186, 180, 172), "Slate")
-			r:cyl(0, 0.75, 0, 1.2, 1.2, "y", r.c2, "SmoothPlastic")
+			r:cyl(0, 0.75, 0, 1.2, 1.2, "y", r.c2, "Cardboard")
 			for _, y in { 0.28, 1.22 } do
 				r:cyl(0, y, 0, 0.1, 1.26, "y", GOLD, "Metal")
 			end
@@ -130,10 +130,10 @@ local items: { Item } = {
 				cf = CFrame.new(0, 1.8, 0),
 				size = Vector3.new(0.9, 0.9, 0.9),
 				color = Color3.fromRGB(246, 236, 210),
-				mat = "SmoothPlastic",
+				mat = "Cardboard",
 			})
 			for k = 0, 2 do
-				r:cyl(0, 1.5 + k * 0.2, 0, 0.06, 0.78 - k * 0.2, "y", r.c2, "SmoothPlastic")
+				r:cyl(0, 1.5 + k * 0.2, 0, 0.06, 0.78 - k * 0.2, "y", r.c2, "Cardboard")
 			end
 			local tip = r:ball(0, 2.3, 0, 0.16, C.Warm, "Neon")
 			r:glow(tip, 12, 1.0, Color3.fromRGB(255, 200, 120))
@@ -226,11 +226,11 @@ local items: { Item } = {
 			r:block(-2.8, 2.2, 2.2, 2.8, 2.35, 2.8, rim, "Concrete")
 			r:block(-2.8, 2.2, -2.2, -2.2, 2.35, 2.2, rim, "Concrete")
 			r:block(2.2, 2.2, -2.2, 2.8, 2.35, 2.2, rim, "Concrete")
-			r:block(-2.3, 0, -2.3, 2.3, 0.5, 2.3, shell, "SmoothPlastic")
-			r:block(-2.3, 0.5, -2.3, 2.3, 1.2, -1.6, shell, "SmoothPlastic")
-			r:block(-2.3, 0.5, 1.6, 2.3, 1.2, 2.3, shell, "SmoothPlastic")
-			r:block(-2.3, 0.5, -1.6, -1.6, 1.2, 1.6, shell, "SmoothPlastic")
-			r:block(1.6, 0.5, -1.6, 2.3, 1.2, 1.6, shell, "SmoothPlastic")
+			r:block(-2.3, 0, -2.3, 2.3, 0.5, 2.3, shell, "Marble")
+			r:block(-2.3, 0.5, -2.3, 2.3, 1.2, -1.6, shell, "Marble")
+			r:block(-2.3, 0.5, 1.6, 2.3, 1.2, 2.3, shell, "Marble")
+			r:block(-2.3, 0.5, -1.6, -1.6, 1.2, 1.6, shell, "Marble")
+			r:block(1.6, 0.5, -1.6, 2.3, 1.2, 1.6, shell, "Marble")
 			r:seat(0, 1.2, -1.95, 0)
 			r:seat(0, 1.2, 1.95, 180)
 			r:seat(-1.95, 1.2, 0, 90)
@@ -246,7 +246,7 @@ local items: { Item } = {
 			-- a rolled towel and a tray with two glasses on the rim
 			r:cyl(2.0, 2.5, 2.5, 0.3, 0.3, "y", Color3.fromRGB(240, 236, 228), "Fabric")
 			r:cyl(1.4, 2.5, 2.5, 0.3, 0.3, "y", Color3.fromRGB(150, 190, 220), "Fabric")
-			r:block(-2.3, 2.35, 2.25, -1.4, 2.39, 2.65, INK, "SmoothPlastic")
+			r:block(-2.3, 2.35, 2.25, -1.4, 2.39, 2.65, INK, "Metal")
 			for _, x in { -2.05, -1.7 } do
 				local g = r:cyl(x, 2.53, 2.45, 0.28, 0.16, "y", C.Glass, "Glass")
 				g.transp = 0.4
@@ -289,7 +289,7 @@ local items: { Item } = {
 				}, 0.08, brass, "Metal")
 				local cup = Vector3.new(0, -1.55, 0) + out * 1.9
 				r:cyl(cup.X, cup.Y, cup.Z, 0.1, 0.3, "y", brass, "Metal")
-				r:cyl(cup.X, cup.Y + 0.25, cup.Z, 0.4, 0.14, "y", C.White, "SmoothPlastic")
+				r:cyl(cup.X, cup.Y + 0.25, cup.Z, 0.4, 0.14, "y", C.White, "Glass")
 				local flame = r:lump(CFrame.new(cup.X, cup.Y + 0.55, cup.Z), 0.12, 0.2, 0.12, C.Warm, "Neon")
 				r:glow(flame, if glowing then 0 else 18, 1.4)
 				glowing = true
@@ -360,7 +360,7 @@ local items: { Item } = {
 					table.insert(pts, Vector3.new(math.cos(a) * rad, 0.4 + math.sin(a) * rad, 0))
 				end
 				for k = 1, 14 do
-					r:beam(pts[k], pts[k + 1], 1.1, 0.2, col, "SmoothPlastic")
+					r:beam(pts[k], pts[k + 1], 1.1, 0.2, col, "Marble")
 				end
 			end
 			-- a cloud at each foot

@@ -62,7 +62,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "Wood",
+		mat = mat or r.mat or "Wood",
 	})
 end
 
@@ -108,7 +108,7 @@ local function coneDown(r: R, x: number, y: number, z: number, h: number, d: num
 		cf = CFrame.new(x, y, z) * CFrame.Angles(math.pi, 0, 0),
 		size = Vector3.new(d, h, d),
 		color = color,
-		mat = mat or "Wood",
+		mat = mat or r.mat or "Wood",
 	})
 end
 
@@ -216,14 +216,7 @@ local items: { Item } = {
 			end
 			for i = 0, 3 do
 				local a = i * math.pi / 2 + 0.9
-				r:lump(
-					CFrame.new(math.cos(a) * 0.86, 1.56, math.sin(a) * 0.86),
-					0.14,
-					0.14,
-					0.14,
-					SNOW,
-					"Wood"
-				)
+				r:lump(CFrame.new(math.cos(a) * 0.86, 1.56, math.sin(a) * 0.86), 0.14, 0.14, 0.14, SNOW, "Wood")
 			end
 			-- a few blades of grass round the foot
 			r:piece(function(q: R)
@@ -640,16 +633,7 @@ local items: { Item } = {
 						i += 1
 						local x1, x2 = sx * gap[1], sx * gap[2]
 						local xa = math.min(x1, x2)
-						q:block(
-							xa + 0.02,
-							0.15,
-							-0.3,
-							xa + 0.13,
-							0.75 - gap[1] * 0.1,
-							0.28,
-							cols[i % 4 + 1],
-							"Wood"
-						)
+						q:block(xa + 0.02, 0.15, -0.3, xa + 0.13, 0.75 - gap[1] * 0.1, 0.28, cols[i % 4 + 1], "Wood")
 						q:block(
 							xa + 0.15,
 							0.15,
@@ -813,14 +797,7 @@ local items: { Item } = {
 			r:block(1.75, 1.72, -1.0, 1.83, 1.98, 1.0, r.c2, "Wood")
 			-- a drawing on a sheet of paper: a sun, a house and grass
 			local y = 1.95
-			r:boxAt(
-				CFrame.new(-0.4, y + 0.015, 0.05) * CFrame.Angles(0, 0.12, 0),
-				1.3,
-				0.03,
-				0.95,
-				SNOW,
-				"Wood"
-			)
+			r:boxAt(CFrame.new(-0.4, y + 0.015, 0.05) * CFrame.Angles(0, 0.12, 0), 1.3, 0.03, 0.95, SNOW, "Wood")
 			local sheet = CFrame.new(-0.4, y + 0.045, 0.05) * CFrame.Angles(0, 0.12, 0)
 			r:add({
 				shape = "Cylinder",
@@ -1044,14 +1021,7 @@ local items: { Item } = {
 			end
 			r:cyl(0, 3.68, -0.47, 0.04, 0.5, "z", SNOW, "Wood")
 			r:boxAt(CFrame.new(0, 3.73, -0.43), 0.03, 0.12, 0.03, INK, "Metal")
-			r:boxAt(
-				CFrame.new(0.04, 3.68, -0.43) * CFrame.Angles(0, 0, math.pi / 2),
-				0.03,
-				0.1,
-				0.03,
-				INK,
-				"Metal"
-			)
+			r:boxAt(CFrame.new(0.04, 3.68, -0.43) * CFrame.Angles(0, 0, math.pi / 2), 0.03, 0.1, 0.03, INK, "Metal")
 			r:cyl(1.25, 3.4, -0.47, 0.05, 0.08, "z", C.Metal, "Metal")
 			rod(r, Vector3.new(1.25, 3.38, -0.45), Vector3.new(1.25, 2.8, -0.45), 0.05, YELLOW)
 			r:block(1.15, 2.55, -0.47, 1.35, 2.82, -0.43, YELLOW, "Wood")
@@ -1675,14 +1645,7 @@ local items: { Item } = {
 					Vector3.new(sx * 1.0, 3.45, -1.0),
 					Vector3.new(sx * 1.0, 2.9, -0.88),
 				}, 0.12, r.c1, "Metal")
-				star(
-					r,
-					CFrame.new(sx * 1.1, 1.3, -1.5) * CFrame.Angles(0, math.pi / 2, 0),
-					0.4,
-					0.04,
-					YELLOW,
-					"Wood"
-				)
+				star(r, CFrame.new(sx * 1.1, 1.3, -1.5) * CFrame.Angles(0, math.pi / 2, 0), 0.4, 0.04, YELLOW, "Wood")
 			end
 			for _, y in { 0.75, 1.5, 2.25 } do
 				local z = -2.9 + y / 2.95 * 0.95

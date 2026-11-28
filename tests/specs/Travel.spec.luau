@@ -118,7 +118,7 @@ describe("Travel", function()
 		local def = Catalog.get("hole_slide")
 		local steepest = 0
 		for _, p in Catalog.prims(def) do
-			if p.mat == "Plastic" and p.shape == "Block" and p.size.X > 3 then
+			if p.mat == "Metal" and p.shape == "Block" and p.size.X > 3 then
 				local up = p.cf.UpVector
 				steepest = math.max(steepest, math.deg(math.acos(math.clamp(math.abs(up.Y), 0, 1))))
 			end

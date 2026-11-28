@@ -37,7 +37,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "Metal",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -508,15 +508,30 @@ local items: { Item } = {
 				{ base = Vector2.new(0.2, 0.55), top = Vector2.new(0.48, 1.6) },
 			}
 			for _, f in flowers do
-				r:beam(Vector3.new(f.base.X, f.base.Y, 0.075), Vector3.new(f.top.X, f.top.Y, 0.075), 0.035, 0.03, stem, "Grass")
+				r:beam(
+					Vector3.new(f.base.X, f.base.Y, 0.075),
+					Vector3.new(f.top.X, f.top.Y, 0.075),
+					0.035,
+					0.03,
+					stem,
+					"Grass"
+				)
 				local mid = f.base:Lerp(f.top, 0.45)
-				r:boxAt(CFrame.new(mid.X + 0.08, mid.Y, 0.075) * CFrame.Angles(0, 0, -0.7), 0.22, 0.08, 0.03, C.Leaf, "Grass")
+				r:boxAt(
+					CFrame.new(mid.X + 0.08, mid.Y, 0.075) * CFrame.Angles(0, 0, -0.7),
+					0.22,
+					0.08,
+					0.03,
+					C.Leaf,
+					"Grass"
+				)
 				r:boxAt(
 					CFrame.new(mid.X - 0.08, mid.Y + 0.1, 0.075) * CFrame.Angles(0, 0, 0.7),
 					0.22,
 					0.08,
 					0.03,
-					C.Leaf, "Grass"
+					C.Leaf,
+					"Grass"
 				)
 			end
 			-- the daisy
@@ -528,7 +543,8 @@ local items: { Item } = {
 					0.18,
 					0.07,
 					0.03,
-					C.White, "Fabric"
+					C.White,
+					"Fabric"
 				)
 			end
 			dot(r, d.X, d.Y, 0.12, 0.15, 0.12, C.Yellow)
@@ -591,7 +607,8 @@ local items: { Item } = {
 					0.04,
 					0.23,
 					0.23,
-					shade(green, 1.3), "Marble"
+					shade(green, 1.3),
+					"Marble"
 				)
 			end
 			r:cyl(0.26, 1.37, 0, 0.08, 0.05, "x", C.Bark, "Wood")
@@ -655,7 +672,14 @@ local items: { Item } = {
 			clear(r:ball(0, 0.64, 0, 0.8, C.Glass, "Glass"))
 			r:cyl(0, 0.33, 0, 0.06, 0.5, "y", C.White, "Snow")
 			r:block(-0.12, 0.36, -0.08, 0.08, 0.52, 0.08, C.Cream, "Plaster")
-			r:tri(Vector3.new(-0.15, 0.52, 0), Vector3.new(0.11, 0.52, 0), Vector3.new(-0.02, 0.62, 0), 0.2, r.c2, "Wood")
+			r:tri(
+				Vector3.new(-0.15, 0.52, 0),
+				Vector3.new(0.11, 0.52, 0),
+				Vector3.new(-0.02, 0.62, 0),
+				0.2,
+				r.c2,
+				"Wood"
+			)
 			r:block(-0.05, 0.36, 0.08, 0.01, 0.46, 0.1, C.Bark, "Wood")
 			r:cyl(0.15, 0.4, 0.06, 0.08, 0.04, "y", C.Bark, "Wood")
 			r:cone(0.15, 0.53, 0.06, 0.22, 0.14, C.DarkLeaf, "Grass")

@@ -25,7 +25,7 @@ end
 
 -- A round rod from a to b.
 local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: string?)
-	local beam = r:beam(a, b, d, d, color, mat or "Metal")
+	local beam = r:beam(a, b, d, d, color, mat or r.mat or "Metal")
 	if beam then
 		beam.shape = "Cylinder"
 		beam.cf = beam.cf * CFrame.Angles(0, math.pi / 2, 0)
@@ -105,7 +105,7 @@ local items: { Item } = {
 					)
 					rod(r, Vector3.new(cx * t.reach * 0.7, t.y - 0.15, cz * t.reach * 0.7), tip, 0.1, r.c1)
 					round(r:cyl(tip.X, tip.Y + 0.05, tip.Z, 0.1, 0.36, "y", r.c1, "Metal"))
-					round(r:cyl(tip.X, tip.Y + 0.32, tip.Z, 0.44, 0.14, "y", r.c2, "Plastic"))
+					round(r:cyl(tip.X, tip.Y + 0.32, tip.Z, 0.44, 0.14, "y", r.c2, "Plaster"))
 					local flame = r:cone(tip.X, tip.Y + 0.64, tip.Z, 0.2, 0.1, C.Warm, "Neon")
 					r:glow(flame, 0)
 					drop(r, tip.X, tip.Y - 0.02, tip.Z)

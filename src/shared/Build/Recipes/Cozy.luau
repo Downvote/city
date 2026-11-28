@@ -84,7 +84,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = V(len, d, d),
 		color = color,
-		mat = mat or "Metal",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -143,16 +143,7 @@ local function bookRow(r: R, x0: number, x1: number, y: number, zb: number, hmax
 			local col = BOOKS[1 + math.floor(rand() * #BOOKS)]
 			q:block(x, y, zb, x + w, y + h, zb + d, col, "Cardboard")
 			local band = if rand() < 0.5 then mix(col, C.Cream, 0.55) else BRASS
-			q:block(
-				x + 0.02,
-				y + h * 0.72,
-				zb + d,
-				x + w - 0.02,
-				y + h * 0.72 + 0.07,
-				zb + d + 0.03,
-				band,
-				"Cardboard"
-			)
+			q:block(x + 0.02, y + h * 0.72, zb + d, x + w - 0.02, y + h * 0.72 + 0.07, zb + d + 0.03, band, "Cardboard")
 			x += w + 0.01
 		end
 	end, nil, "Cardboard")
@@ -1512,14 +1503,7 @@ local items: { Item } = {
 				Color3.fromRGB(196, 220, 232),
 				function(q: R, x1: number, y1: number, x2: number, y2: number)
 					q:tri(V(x1, y1, 0.095), V(x2, y1, 0.095), V(x2, y1 + 0.5, 0.095), 0.03, C.DarkLeaf, "Cardboard")
-					q:tri(
-						V(x1, y1, 0.125),
-						V(x1 + 0.7, y1, 0.125),
-						V(x1, y1 + 0.42, 0.125),
-						0.03,
-						C.Leaf,
-						"Cardboard"
-					)
+					q:tri(V(x1, y1, 0.125), V(x1 + 0.7, y1, 0.125), V(x1, y1 + 0.42, 0.125), 0.03, C.Leaf, "Cardboard")
 					q:cyl(x2 - 0.22, y2 - 0.18, 0.095, 0.03, 0.18, "z", MUSTARD, "Cardboard")
 					q:block(x1 + 0.45, y1 + 0.05, 0.14, x1 + 0.5, y1 + 0.2, 0.17, INK, "Cardboard")
 				end
@@ -1572,14 +1556,7 @@ local items: { Item } = {
 					for i, b in
 						{ { -0.18, 0.75, ROSE }, { 0.05, 0.85, MUSTARD }, { 0.2, 0.68, C.Cream } } :: { { any } }
 					do
-						q:beam(
-							V(cx, y1 + 0.45, 0.095),
-							V(cx + b[1], y1 + b[2], 0.095),
-							0.03,
-							0.03,
-							C.Leaf,
-							"Cardboard"
-						)
+						q:beam(V(cx, y1 + 0.45, 0.095), V(cx + b[1], y1 + b[2], 0.095), 0.03, 0.03, C.Leaf, "Cardboard")
 						q:cyl(cx + b[1], y1 + b[2], 0.125 + (i % 2) * 0.03, 0.03, 0.16, "z", b[3], "Cardboard")
 					end
 				end
@@ -1949,27 +1926,13 @@ local items: { Item } = {
 			end
 			-- pebbles and a sprig of eucalyptus round the jars
 			for _, p in { { -0.7, 0.3 }, { -0.12, 0.3 }, { 0.3, -0.3 }, { 0.72, -0.25 }, { -0.68, -0.3 } } do
-				r:lump(
-					CFrame.new(p[1], 0.1, p[2]) * CFrame.Angles(0, p[1], 0),
-					0.14,
-					0.08,
-					0.11,
-					C.Stone,
-					"Rock"
-				)
+				r:lump(CFrame.new(p[1], 0.1, p[2]) * CFrame.Angles(0, p[1], 0), 0.14, 0.08, 0.11, C.Stone, "Rock")
 			end
 			local euc = Color3.fromRGB(140, 170, 156)
 			rod(r, V(-0.15, 0.08, 0.32), V(0.55, 0.08, 0.36), 0.025, euc, "Grass")
 			for i = 0, 4 do
 				local x = -0.05 + i * 0.14
-				r:lump(
-					CFrame.new(x, 0.085, 0.34 + (if i % 2 == 0 then 0.04 else -0.04)),
-					0.1,
-					0.02,
-					0.1,
-					euc,
-					"Grass"
-				)
+				r:lump(CFrame.new(x, 0.085, 0.34 + (if i % 2 == 0 then 0.04 else -0.04)), 0.1, 0.02, 0.1, euc, "Grass")
 			end
 		end,
 	},
@@ -2013,16 +1976,7 @@ local items: { Item } = {
 			local soil = pot(r, 0.62, 1.6, 0.45, 0.4, 0.3, CLAY)
 			leafTuft(r, 0.62, soil, 0.45, 0.75, 31)
 			for i = 0, 1 do
-				r:cyl(
-					1.2 + i * 0.12,
-					1.98,
-					0.22 + i * 0.06,
-					0.05,
-					0.7,
-					"z",
-					if i == 0 then C.White else r.c2,
-					"Marble"
-				)
+				r:cyl(1.2 + i * 0.12, 1.98, 0.22 + i * 0.06, 0.05, 0.7, "z", if i == 0 then C.White else r.c2, "Marble")
 			end
 			-- four mugs hung by their handles from brass cup hooks
 			local mugs = { DUSK, ROSE, MUSTARD, SAGE }

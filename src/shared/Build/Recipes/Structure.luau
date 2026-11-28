@@ -327,7 +327,7 @@ local items: { any } = {
 					q:cyl(x, 29.96, 0, 0.06, 0.46, "y", Color3.fromRGB(56, 46, 46), "Brick")
 				end
 			end)
-			local smoke = r:block(0.62, 29.995, -0.12, 0.88, 30.04, 0.12, Color3.fromRGB(56, 46, 46), "SmoothPlastic")
+			local smoke = r:block(0.62, 29.995, -0.12, 0.88, 30.04, 0.12, Color3.fromRGB(56, 46, 46), "Brick")
 			smoke.effect = "smoke"
 		end,
 	},
@@ -463,7 +463,7 @@ local items: { any } = {
 					q:cyl(x, 22.66, -0.6, 0.68, 0.62, "y", Color3.fromRGB(196, 104, 70), "Brick")
 				end
 			end)
-			local soot = r:block(0.38, 22.97, -0.75, 0.72, 23.04, -0.45, C.Black, "SmoothPlastic")
+			local soot = r:block(0.38, 22.97, -0.75, 0.72, 23.04, -0.45, C.Black, "Brick")
 			soot.effect = "smoke"
 			-- the fire: irons, embers that glow after dark and two logs
 			r:piece(function(q: R)
@@ -471,7 +471,7 @@ local items: { any } = {
 				q:block(0.8, 0.3, -0.9, 0.9, 0.7, 0.5, C.DarkMetal, "Metal")
 				q:block(-0.9, 0.55, -0.2, 0.9, 0.62, -0.1, C.DarkMetal, "Metal")
 			end)
-			local ember = r:block(-0.8, 0.3, -1.1, 0.8, 0.42, 0.3, Color3.fromRGB(255, 120, 50), "SmoothPlastic")
+			local ember = r:block(-0.8, 0.3, -1.1, 0.8, 0.42, 0.3, Color3.fromRGB(255, 120, 50), "Glass")
 			r:glow(ember, 16, 1.3, Color3.fromRGB(255, 160, 90))
 			r:cyl(0, 0.86, -0.6, 1.6, 0.42, "x", C.Bark, "Wood")
 			local top = r:cyl(0, 0.84, -0.12, 1.5, 0.38, "x", shade(C.Bark, 1.15), "Wood")

@@ -39,7 +39,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "Metal",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -768,14 +768,7 @@ local items: { Item } = {
 				r:beam(on(0.45, 3.4 - rise * 0.1), on(0.62, 4.15), 0.04, 0.05, twig, "Wood")
 				for k, t in { 0.2, 0.38, 0.55, 0.7, 0.84 } do
 					local y = 3.4 - rise + rise * 2 * (t - 0.12) / 0.76 + (if k % 2 == 0 then 0.16 else -0.12)
-					r:ball(
-						on(t, y).X,
-						on(t, y).Y,
-						on(t, y).Z,
-						0.16,
-						if k % 2 == 0 then bloom else C.Pink,
-						"Fabric"
-					)
+					r:ball(on(t, y).X, on(t, y).Y, on(t, y).Z, 0.16, if k % 2 == 0 then bloom else C.Pink, "Fabric")
 				end
 				r:ball(on(0.62, 4.2).X, on(0.62, 4.2).Y, on(0.62, 4.2).Z, 0.14, bloom, "Fabric")
 			end

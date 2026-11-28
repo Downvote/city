@@ -44,7 +44,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "Metal",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -93,7 +93,7 @@ local SAND = Color3.fromRGB(230, 206, 156)
 local CORAL = Color3.fromRGB(226, 140, 120)
 local SEA = Color3.fromRGB(92, 150, 176)
 
--- A herring gull on q (a piece in SmoothPlastic) standing at (x, y, z), looking along +x or -x
+-- A herring gull on q (a piece) standing at (x, y, z), looking along +x or -x
 -- (dir). Its beak is a plain box, so it can start the piece.
 local function gull(q: R, x: number, y: number, z: number, dir: number)
 	q:box(x + dir * 0.36, y + 0.47, z, 0.14, 0.05, 0.06, C.Yellow, "Plaster")
@@ -1276,16 +1276,7 @@ local items: { Item } = {
 			r:cyl(0, 0.15, 0, 0.3, 1.6, "y", Color3.fromRGB(110, 112, 120), "Slate")
 			local bands = { { 0.3, 1.1, 1.2 }, { 1.1, 1.9, 1.08 }, { 1.9, 2.7, 0.96 }, { 2.7, 3.5, 0.84 } }
 			for i, b in bands do
-				r:cyl(
-					0,
-					(b[1] + b[2]) / 2,
-					0,
-					b[2] - b[1],
-					b[3],
-					"y",
-					if i % 2 == 1 then r.c2 else r.c1,
-					"Wood"
-				)
+				r:cyl(0, (b[1] + b[2]) / 2, 0, b[2] - b[1], b[3], "y", if i % 2 == 1 then r.c2 else r.c1, "Wood")
 			end
 			r:block(-0.16, 0.3, 0.54, 0.16, 0.85, 0.64, Color3.fromRGB(60, 70, 80), "Wood")
 			for _, w in { { 1.5, 0.5 }, { 2.35, 0.45 } } do
@@ -1755,14 +1746,7 @@ local items: { Item } = {
 			r:piece(function(q: R)
 				q:box(-0.2, 0.34, -0.15, 0.1, 0.04, 0.06, shade(r.c2, 0.85), "Marble")
 				for _, s in { { -0.2, -0.05, 0.4 }, { 0.22, 0.15, -0.6 } } do
-					q:lump(
-						CFrame.new(s[1], 0.35, s[2]) * CFrame.Angles(0.2, s[3], 0),
-						0.32,
-						0.09,
-						0.28,
-						r.c2,
-						"Marble"
-					)
+					q:lump(CFrame.new(s[1], 0.35, s[2]) * CFrame.Angles(0.2, s[3], 0), 0.32, 0.09, 0.28, r.c2, "Marble")
 				end
 				q:box(0.22, 0.34, 0.27, 0.1, 0.04, 0.06, shade(r.c2, 0.85), "Marble")
 				for _, w in { { 0.05, -0.25, 0.3 }, { -0.25, 0.25, 2.1 } } do
@@ -1823,16 +1807,7 @@ local items: { Item } = {
 			r:lump(CFrame.new(-0.15, 0.27, 0), 0.56, 0.12, 0.16, Color3.fromRGB(120, 84, 60), "Wood")
 			r:block(-0.36, 0.3, -0.06, 0.06, 0.34, 0.06, Color3.fromRGB(150, 110, 80), "Wood")
 			for _, m in { { -0.28, 0.58 }, { -0.04, 0.64 } } do
-				r:block(
-					m[1] - 0.012,
-					0.3,
-					-0.012,
-					m[1] + 0.012,
-					m[2],
-					0.012,
-					Color3.fromRGB(110, 80, 56),
-					"Wood"
-				)
+				r:block(m[1] - 0.012, 0.3, -0.012, m[1] + 0.012, m[2], 0.012, Color3.fromRGB(110, 80, 56), "Wood")
 				r:block(m[1] - 0.1, 0.38, -0.003, m[1] + 0.1, m[2] - 0.06, 0.003, C.Paper, "Fabric")
 			end
 			r:tri(V(0.08, 0.32, 0), V(0.08, 0.52, 0), V(0.22, 0.32, 0), 0.006, C.Paper, "Fabric")
@@ -1873,16 +1848,7 @@ local items: { Item } = {
 				q:box(0.4, 0.07, -1.4, 0.12, 0.03, 0.03, C.Black, "Metal")
 				for _, s in { -1, 1 } do
 					q:lump(CFrame.new(0.4 + s * 0.15, 0.08, -1.4), 0.2, 0.04, 0.15, C.Black, "Metal")
-					q:block(
-						0.4 + s * 0.24 - 0.015,
-						0.06,
-						-1.4,
-						0.4 + s * 0.24 + 0.015,
-						0.09,
-						-1.1,
-						C.Black,
-						"Metal"
-					)
+					q:block(0.4 + s * 0.24 - 0.015, 0.06, -1.4, 0.4 + s * 0.24 + 0.015, 0.09, -1.1, C.Black, "Metal")
 				end
 			end, nil, "Metal")
 			-- the paperback, lying shut

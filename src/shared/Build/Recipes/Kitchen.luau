@@ -33,7 +33,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "Metal",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -290,16 +290,7 @@ local items: { Item } = {
 			r:cyl(-0.7, TOP + 0.69, -0.5, 0.06, 0.86, "y", shade(C.Red, 0.85), "Metal")
 			r:ball(-0.7, TOP + 0.76, -0.5, 0.14, C.Black, "Metal")
 			for _, sx in { -1, 1 } do
-				r:block(
-					-0.7 + sx * 0.4,
-					TOP + 0.51,
-					-0.56,
-					-0.7 + sx * 0.52,
-					TOP + 0.58,
-					-0.44,
-					C.Black,
-					"Metal"
-				)
+				r:block(-0.7 + sx * 0.4, TOP + 0.51, -0.56, -0.7 + sx * 0.52, TOP + 0.58, -0.44, C.Black, "Metal")
 			end
 		end,
 	},
@@ -344,14 +335,7 @@ local items: { Item } = {
 			local note = CFrame.new(-0.6, 3.4, 1.145) * CFrame.Angles(0, 0, 0.08)
 			r:boxAt(note, 0.6, 0.75, 0.03, C.Paper, "Cardboard")
 			r:boxAt(note * CFrame.new(0, -0.18, 0.03), 0.44, 0.14, 0.03, Color3.fromRGB(126, 160, 120), "Cardboard")
-			r:boxAt(
-				note * CFrame.new(-0.08, 0.02, 0.03),
-				0.22,
-				0.2,
-				0.03,
-				Color3.fromRGB(184, 102, 92),
-				"Cardboard"
-			)
+			r:boxAt(note * CFrame.new(-0.08, 0.02, 0.03), 0.22, 0.2, 0.03, Color3.fromRGB(184, 102, 92), "Cardboard")
 			r:boxAt(note * CFrame.new(0.16, 0.2, 0.03), 0.12, 0.12, 0.03, C.Yellow, "Cardboard")
 			r:cyl(-0.6, 3.72, 1.19, 0.06, 0.16, "z", C.Red, "Cardboard")
 			r:cyl(0.2, 2.6, 1.155, 0.05, 0.18, "z", C.Yellow, "Cardboard")

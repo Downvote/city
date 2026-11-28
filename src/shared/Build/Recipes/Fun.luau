@@ -28,7 +28,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "Metal",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -147,14 +147,7 @@ local items: { Item } = {
 			r:block(-0.58, 0.66, -0.38, 0.34, 0.7, 0.38, shade(C.White, 0.9), "Metal")
 			local led = r:block(-0.52, 0.53, 0.42, -0.22, 0.57, 0.45, C.Blue, "Neon")
 			r:glow(led, 0)
-			r:lump(
-				CFrame.new(0.55, 0.53, 0.4) * CFrame.Angles(0, 0.4, 0),
-				0.42,
-				0.12,
-				0.26,
-				C.DarkMetal,
-				"Metal"
-			)
+			r:lump(CFrame.new(0.55, 0.53, 0.4) * CFrame.Angles(0, 0.4, 0), 0.42, 0.12, 0.26, C.DarkMetal, "Metal")
 			r:piece(function(q: R)
 				local cols = {
 					Color3.fromRGB(94, 122, 150),
@@ -212,14 +205,7 @@ local items: { Item } = {
 			r:cyl(1.95, 2.06, 0.35, 0.06, 0.34, "y", C.Soil, "Sand")
 			r:lump(CFrame.new(1.95, 2.35, 0.35) * CFrame.Angles(0.3, 0.6, 0.2), 0.5, 0.38, 0.46, C.Leaf, "Grass")
 			r:lump(CFrame.new(2.05, 2.55, 0.3) * CFrame.Angles(0.6, 0.1, 0.5), 0.3, 0.3, 0.3, C.DarkLeaf, "Grass")
-			r:boxAt(
-				CFrame.new(-1.9, 1.75, 0.45) * CFrame.Angles(0, 0.3, 0),
-				0.18,
-				0.06,
-				0.6,
-				C.DarkMetal,
-				"Metal"
-			)
+			r:boxAt(CFrame.new(-1.9, 1.75, 0.45) * CFrame.Angles(0, 0.3, 0), 0.18, 0.06, 0.6, C.DarkMetal, "Metal")
 		end,
 	},
 	{
@@ -341,14 +327,7 @@ local items: { Item } = {
 				r:block(xa, 5.2, -1.2, xb, 6.2, 0.65, r.c1, "Wood")
 				r:block(xa - 0.03, 0, 0.85, xb + 0.03, 3.38, 1.08, r.c2, "Wood")
 				-- a painted stripe down each side
-				r:beam(
-					Vector3.new(sx * 1.225, 0.6, -0.9),
-					Vector3.new(sx * 1.225, 4.6, 0.1),
-					0.03,
-					0.3,
-					r.c2,
-					"Wood"
-				)
+				r:beam(Vector3.new(sx * 1.225, 0.6, -0.9), Vector3.new(sx * 1.225, 4.6, 0.1), 0.03, 0.3, r.c2, "Wood")
 			end
 			r:block(-1.08, 0, -1.2, 1.08, 3.05, 0.95, shade(r.c1, 0.75), "Wood")
 			r:block(-1.08, 0, 0.95, 1.08, 0.2, 1.05, C.Black, "Metal")
@@ -367,8 +346,7 @@ local items: { Item } = {
 			-- the screen, leaning back, with a game on it
 			local scr = CFrame.new(0, 4.25, -0.05) * CFrame.Angles(-0.2, 0, 0)
 			r:boxAt(scr, 2.1, 1.85, 0.2, C.Black, "Metal")
-			local screen =
-				r:boxAt(scr * CFrame.new(0, 0, 0.115), 1.8, 1.5, 0.03, Color3.fromRGB(46, 52, 88), "Glass")
+			local screen = r:boxAt(scr * CFrame.new(0, 0, 0.115), 1.8, 1.5, 0.03, Color3.fromRGB(46, 52, 88), "Glass")
 			r:glow(screen, 8, 0.6, Color3.fromRGB(140, 160, 255))
 			r:boxAt(scr * CFrame.new(-0.4, -0.3, 0.15), 0.2, 0.2, 0.03, C.Yellow, "Neon")
 			r:boxAt(scr * CFrame.new(0.3, 0.2, 0.15), 0.2, 0.2, 0.03, C.Pink, "Neon")

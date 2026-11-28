@@ -83,7 +83,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = V(len, d, d),
 		color = color,
-		mat = mat or "Metal",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -98,7 +98,7 @@ end
 
 -- A cylinder along the X axis of a frame.
 local function cylAt(r: R, cf: CFrame, len: number, d: number, color: Color3, mat: string?): Recipe.Prim
-	return r:add({ shape = "Cylinder", cf = cf, size = V(len, d, d), color = color, mat = mat or "Wood" })
+	return r:add({ shape = "Cylinder", cf = cf, size = V(len, d, d), color = color, mat = mat or r.mat or "Wood" })
 end
 
 -- Staves standing round (cx, cz) from y0 to y0 + h, n of them: each runs from rBot at the foot

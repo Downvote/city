@@ -545,7 +545,14 @@ local items: { Item } = {
 			signBoard(r, 3.4, 3.0)
 			r:lump(CFrame.new(-0.62, 1.3, FACE + 0.12), 1.3, 1.24, 0.3, APPLE, "Marble")
 			r:block(-0.66, 1.86, FACE, -0.58, 2.3, FACE + 0.1, C.Bark, "Wood")
-			r:lump(CFrame.new(-0.34, 2.14, FACE + 0.08) * CFrame.Angles(0, 0, math.rad(-30)), 0.6, 0.26, 0.14, CABBAGE, "Marble")
+			r:lump(
+				CFrame.new(-0.34, 2.14, FACE + 0.08) * CFrame.Angles(0, 0, math.rad(-30)),
+				0.6,
+				0.26,
+				0.14,
+				CABBAGE,
+				"Marble"
+			)
 			r:lump(CFrame.new(0.72, 1.14, FACE + 0.12), 1.0, 1.0, 0.3, LEMON, "Marble")
 			r:lump(CFrame.new(0.72, 1.74, FACE + 0.12), 0.62, 0.9, 0.26, LEMON, "Marble")
 			r:block(0.68, 2.14, FACE, 0.76, 2.48, FACE + 0.1, C.Bark, "Wood")
@@ -573,7 +580,14 @@ local items: { Item } = {
 			for i, x in { -0.4, 0.0, 0.4 } do
 				local lean = CFrame.new(x - 0.06, 2.16 + (i % 2) * 0.1, FACE + 0.06) * CFrame.Angles(0, 0, math.rad(14))
 				r:boxAt(lean, 0.12, 0.5, 0.08, C.White, "Wood")
-				r:boxAt(lean * CFrame.new(0.12, 0.4, 0) * CFrame.Angles(0, 0, math.rad(-28)), 0.12, 0.4, 0.08, C.White, "Wood")
+				r:boxAt(
+					lean * CFrame.new(0.12, 0.4, 0) * CFrame.Angles(0, 0, math.rad(-28)),
+					0.12,
+					0.4,
+					0.08,
+					C.White,
+					"Wood"
+				)
 			end
 		end,
 	},
@@ -600,7 +614,8 @@ local items: { Item } = {
 					Vector3.new(sx * 1.3, 2.5, FACE + 0.04),
 					0.07,
 					0.07,
-					MUSTARD, "Wood"
+					MUSTARD,
+					"Wood"
 				)
 				for i = 0, 3 do
 					local at = CFrame.new(sx * (1.27 + i * 0.012), 1.5 + i * 0.3, FACE + 0.06)
@@ -661,16 +676,7 @@ local items: { Item } = {
 					local _ = i
 				end
 			end
-			r:block(
-				-a - 0.08,
-				tip + h - 0.06,
-				-a - 0.08,
-				a + 0.08,
-				tip + h + 0.3,
-				a + 0.08,
-				shade(WAFER, 0.88),
-				"Sand"
-			)
+			r:block(-a - 0.08, tip + h - 0.06, -a - 0.08, a + 0.08, tip + h + 0.3, a + 0.08, shade(WAFER, 0.88), "Sand")
 			-- two scoops wider than the cone, the bottom one in c1, and a cherry
 			r:ball(0, tip + h + 0.9, 0, 3.2, r.c1, "Plaster")
 			r:ball(0, tip + h + 2.2, 0, 2.5, MINT, "Plaster")

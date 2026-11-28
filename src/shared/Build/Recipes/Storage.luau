@@ -58,7 +58,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -107,9 +107,9 @@ local function pieces(r: R, boxes: { Box })
 	for _, chunk in chunks do
 		r:piece(function(q: R)
 			for _, b in chunk do
-				q:boxAt(b.cf, b.size.X, b.size.Y, b.size.Z, b.color, "SmoothPlastic")
+				q:boxAt(b.cf, b.size.X, b.size.Y, b.size.Z, b.color, "Wood")
 			end
-		end)
+		end, nil, "Wood")
 	end
 end
 
@@ -264,8 +264,8 @@ end
 -- A potted plant on a shelf at (x, y, z): a pot with a rim, soil and a few leafy clumps.
 local function pottedPlant(r: R, x: number, y: number, z: number, size: number, pot: Color3?)
 	local col = pot or Color3.fromRGB(226, 220, 208)
-	r:cyl(x, y + size * 0.25, z, size * 0.5, size * 0.52, "y", col, "SmoothPlastic")
-	r:cyl(x, y + size * 0.55, z, size * 0.12, size * 0.62, "y", shade(col, 0.92), "SmoothPlastic")
+	r:cyl(x, y + size * 0.25, z, size * 0.5, size * 0.52, "y", col, "Sandstone")
+	r:cyl(x, y + size * 0.55, z, size * 0.12, size * 0.62, "y", shade(col, 0.92), "Sandstone")
 	r:cyl(x, y + size * 0.52, z, size * 0.1, size * 0.44, "y", C.Soil, "Sand")
 	r:lump(
 		CFrame.new(x, y + size * 0.8, z) * CFrame.Angles(0.3, 0.5, 0.2),
@@ -341,16 +341,9 @@ end
 local function photo(r: R, x: number, y: number, z: number, yaw: number, w: number, h: number, picture: Color3)
 	local cf = CFrame.new(x, y + h / 2 * math.cos(0.15) + 0.04, z) * CFrame.Angles(-0.15, yaw, 0)
 	r:boxAt(cf, w, h, 0.08, Color3.fromRGB(70, 56, 48), "Wood")
-	r:boxAt(cf * CFrame.new(0, 0, 0.03), w - 0.14, h - 0.14, 0.08, C.Paper, "SmoothPlastic")
-	r:boxAt(cf * CFrame.new(0, 0.03, 0.06), w - 0.3, h - 0.34, 0.08, picture, "SmoothPlastic")
-	r:boxAt(
-		cf * CFrame.new(0, -h * 0.25, 0.09),
-		w - 0.38,
-		(h - 0.34) * 0.4,
-		0.08,
-		shade(picture, 0.72),
-		"SmoothPlastic"
-	)
+	r:boxAt(cf * CFrame.new(0, 0, 0.03), w - 0.14, h - 0.14, 0.08, C.Paper, "Cardboard")
+	r:boxAt(cf * CFrame.new(0, 0.03, 0.06), w - 0.3, h - 0.34, 0.08, picture, "Cardboard")
+	r:boxAt(cf * CFrame.new(0, -h * 0.25, 0.09), w - 0.38, (h - 0.34) * 0.4, 0.08, shade(picture, 0.72), "Cardboard")
 end
 
 -- One catalog entry (Build/Catalog explains the fields).
@@ -409,11 +402,11 @@ local items: { Item } = {
 			shelfBooks(r, -0.42, 1.58, 3.47, 1.22, -0.68, 0.66, 7, "right")
 			shelfBooks(r, -1.58, 0.32, 4.92, 1.06, -0.68, 0.66, 5, "left")
 			-- a lidded box with a little vase on it
-			r:block(0.42, 4.92, -0.42, 1.42, 5.2, 0.38, Color3.fromRGB(110, 140, 168), "SmoothPlastic")
-			r:block(0.39, 5.2, -0.45, 1.45, 5.3, 0.41, shade(Color3.fromRGB(110, 140, 168), 0.88), "SmoothPlastic")
-			r:cyl(0.92, 5.45, -0.02, 0.3, 0.32, "y", Color3.fromRGB(208, 138, 108), "SmoothPlastic")
-			r:cyl(0.92, 5.66, -0.02, 0.12, 0.16, "y", Color3.fromRGB(208, 138, 108), "SmoothPlastic")
-			r:cyl(0.92, 5.75, -0.02, 0.06, 0.24, "y", shade(Color3.fromRGB(208, 138, 108), 0.9), "SmoothPlastic")
+			r:block(0.42, 4.92, -0.42, 1.42, 5.2, 0.38, Color3.fromRGB(110, 140, 168), "Cardboard")
+			r:block(0.39, 5.2, -0.45, 1.45, 5.3, 0.41, shade(Color3.fromRGB(110, 140, 168), 0.88), "Cardboard")
+			r:cyl(0.92, 5.45, -0.02, 0.3, 0.32, "y", Color3.fromRGB(208, 138, 108), "Cardboard")
+			r:cyl(0.92, 5.66, -0.02, 0.12, 0.16, "y", Color3.fromRGB(208, 138, 108), "Cardboard")
+			r:cyl(0.92, 5.75, -0.02, 0.06, 0.24, "y", shade(Color3.fromRGB(208, 138, 108), 0.9), "Cardboard")
 		end,
 	},
 	{
@@ -582,8 +575,8 @@ local items: { Item } = {
 			local cols = { Color3.fromRGB(184, 102, 92), C.Yellow, Color3.fromRGB(126, 154, 122) }
 			for i, col in cols do
 				local x = -0.9 + (i - 1) * 0.9
-				r:block(x - 0.32, 0.42, 0.85, x + 0.32, 1.06, 0.89, col, "SmoothPlastic")
-				r:block(x - 0.13, 0.6, 0.89, x + 0.13, 0.88, 0.92, C.White, "SmoothPlastic")
+				r:block(x - 0.32, 0.42, 0.85, x + 0.32, 1.06, 0.89, col, "Wood")
+				r:block(x - 0.13, 0.6, 0.89, x + 0.13, 0.88, 0.92, C.White, "Wood")
 			end
 			-- rope handles on the ends
 			for _, sx in { -1, 1 } do
@@ -595,8 +588,8 @@ local items: { Item } = {
 			-- toys heaped inside, up to just under the lid
 			local inside = 1.3
 			r:block(-1.38, 0.3, -0.73, 1.38, inside, 0.73, shade(r.c1, 0.6), "Wood")
-			r:ball(0.72, inside + 0.2, 0.22, 0.6, Color3.fromRGB(184, 102, 92), "Plastic")
-			r:cyl(0.72, inside + 0.2, 0.22, 0.08, 0.64, "x", C.White, "Plastic")
+			r:ball(0.72, inside + 0.2, 0.22, 0.6, Color3.fromRGB(184, 102, 92), "Wood")
+			r:cyl(0.72, inside + 0.2, 0.22, 0.08, 0.64, "x", C.White, "Wood")
 			local blocks: { { x: number, z: number, turn: number, col: Color3 } } = {
 				{ x = -0.62, z = 0.3, turn = 0.25, col = C.Yellow },
 				{ x = -0.25, z = -0.2, turn = 0.6, col = Color3.fromRGB(126, 154, 122) },
@@ -614,16 +607,16 @@ local items: { Item } = {
 			r:ball(0.25, inside + 0.14, -0.1, 0.22, Color3.fromRGB(233, 211, 176), "Fabric")
 			for _, sx in { -1, 1 } do
 				r:ball(0.25 + sx * 0.2, inside + 0.4, -0.36, 0.18, bear, "Fabric")
-				r:ball(0.25 + sx * 0.09, inside + 0.27, -0.1, 0.06, C.Black, "SmoothPlastic")
+				r:ball(0.25 + sx * 0.09, inside + 0.27, -0.1, 0.06, C.Black, "Wood")
 			end
 			-- a skipping rope over the right hand side, one handle in and one hanging out
 			local rope = C.Cream
 			local grip = Color3.fromRGB(184, 102, 92)
-			r:cyl(1.2, inside + 0.12, 0.3, 0.32, 0.1, "x", grip, "Plastic")
+			r:cyl(1.2, inside + 0.12, 0.3, 0.32, 0.1, "x", grip, "Rubber")
 			rod(r, Vector3.new(1.36, inside + 0.12, 0.3), Vector3.new(1.45, 1.56, 0.25), 0.04, rope, "Fabric")
 			rod(r, Vector3.new(1.45, 1.56, 0.25), Vector3.new(1.58, 1.42, 0.15), 0.04, rope, "Fabric")
 			rod(r, Vector3.new(1.58, 1.42, 0.15), Vector3.new(1.58, 0.76, 0.05), 0.04, rope, "Fabric")
-			r:cyl(1.58, 0.6, 0.05, 0.32, 0.1, "y", grip, "Plastic")
+			r:cyl(1.58, 0.6, 0.05, 0.32, 0.1, "y", grip, "Rubber")
 			-- the lid, propped open on a wooden block wedged under its front
 			local hinge = CFrame.new(0, 1.5, -0.85) * CFrame.Angles(-0.4, 0, 0)
 			r:boxAt(hinge * CFrame.new(0, 0.12, 0.88), 3.12, 0.24, 1.76, lidCol, "Wood")
@@ -848,8 +841,8 @@ local items: { Item } = {
 					end
 				end
 			end)
-			r:block(1.0, 0.85, -0.35, 1.03, 1.3, 0.3, C.Paper, "SmoothPlastic")
-			r:block(1.03, 1.12, -0.25, 1.06, 1.2, 0.18, Color3.fromRGB(184, 102, 92), "SmoothPlastic")
+			r:block(1.0, 0.85, -0.35, 1.03, 1.3, 0.3, C.Paper, "Cardboard")
+			r:block(1.03, 1.12, -0.25, 1.06, 1.2, 0.18, Color3.fromRGB(184, 102, 92), "Marble")
 		end,
 	},
 }

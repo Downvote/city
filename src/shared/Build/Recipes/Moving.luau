@@ -47,7 +47,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "Metal",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -81,13 +81,13 @@ local function cylAt(r: R, cf: CFrame, length: number, d: number, color: Color3,
 		cf = cf,
 		size = Vector3.new(length, d, d),
 		color = color,
-		mat = mat or "Wood",
+		mat = mat or r.mat or "Wood",
 	})
 end
 
 -- A cone at a frame (point along the frame's Y).
 local function coneAt(r: R, cf: CFrame, h: number, d: number, color: Color3, mat: string?): Prim
-	return r:add({ shape = "Cone", cf = cf, size = Vector3.new(d, h, d), color = color, mat = mat or "Wood" })
+	return r:add({ shape = "Cone", cf = cf, size = Vector3.new(d, h, d), color = color, mat = mat or r.mat or "Wood" })
 end
 
 -- A frame at `pos` whose Y axis points along `dir`.
@@ -566,14 +566,7 @@ local items: { Item } = {
 				for k = 0, 2 do
 					local f = mid * CFrame.Angles(0, k * math.pi * 2 / 3, 0) * CFrame.new(1.55, 0, 0)
 					fish(r, f, 0.7, koi[k + 1], true)
-					r:lump(
-						f * CFrame.new(0, 0.05, -0.12),
-						0.18,
-						0.06,
-						0.24,
-						Color3.fromRGB(230, 96, 64),
-						"Marble"
-					)
+					r:lump(f * CFrame.new(0, 0.05, -0.12), 0.18, 0.06, 0.24, Color3.fromRGB(230, 96, 64), "Marble")
 				end
 			end)
 			Lively.pivot(r, mid, "swim", { speed = -0.5, amount = 0.015, group = 2, phase = 1 })
@@ -709,14 +702,7 @@ local items: { Item } = {
 				r:cyl(0, 0.62, 0, 0.14, 0.22, "y", r.c2, "Metal")
 				for _, sx in { -1, 1 } do
 					rod(r, Vector3.new(0, 0.66, 0), Vector3.new(sx * 0.48, 0.66, 0), 0.07, r.c2, "Metal")
-					rod(
-						r,
-						Vector3.new(sx * 0.48, 0.64, 0),
-						Vector3.new(sx * 0.56, 0.8, 0.06 * sx),
-						0.07,
-						r.c2,
-						"Metal"
-					)
+					rod(r, Vector3.new(sx * 0.48, 0.64, 0), Vector3.new(sx * 0.56, 0.8, 0.06 * sx), 0.07, r.c2, "Metal")
 				end
 			end)
 			Lively.fx(r, "spray", 0, 0.82, 0, { w = 0.4, d = 0.4 })
@@ -1141,14 +1127,7 @@ local items: { Item } = {
 			-- a little house with a round door, a bowl of seeds and a water bottle
 			r:block(-0.95, 0.38, -0.5, -0.4, 0.7, -0.05, Color3.fromRGB(240, 170, 150), "Wood")
 			r:wedge(CFrame.new(-0.675, 0.8, -0.39), 0.6, 0.2, 0.22, r.c2, "Wood")
-			r:wedge(
-				CFrame.new(-0.675, 0.8, -0.16) * CFrame.Angles(0, math.pi, 0),
-				0.6,
-				0.2,
-				0.22,
-				r.c2,
-				"Wood"
-			)
+			r:wedge(CFrame.new(-0.675, 0.8, -0.16) * CFrame.Angles(0, math.pi, 0), 0.6, 0.2, 0.22, r.c2, "Wood")
 			r:cyl(-0.675, 0.52, -0.03, 0.04, 0.2, "z", INK, "Metal")
 			r:cyl(-0.2, 0.42, 0.3, 0.08, 0.3, "y", C.Blue, "Marble")
 			r:cyl(-0.2, 0.47, 0.3, 0.03, 0.24, "y", Color3.fromRGB(214, 176, 110), "Sand")
@@ -1247,22 +1226,8 @@ local items: { Item } = {
 					local trim = manes[k % 3 + 1]
 					r:cyl(hf.X, 2.95, hf.Z, 4.9, 0.1, "y", C.Gold, "Metal")
 					r:lump(hf * CFrame.new(0, 1.8, 0), 0.4, 0.5, 1.05, body, "Wood")
-					r:boxAt(
-						hf * CFrame.new(0, 2.15, -0.45) * CFrame.Angles(-0.6, 0, 0),
-						0.24,
-						0.6,
-						0.28,
-						body,
-						"Wood"
-					)
-					r:lump(
-						hf * CFrame.new(0, 2.42, -0.72) * CFrame.Angles(0.5, 0, 0),
-						0.26,
-						0.28,
-						0.5,
-						body,
-						"Wood"
-					)
+					r:boxAt(hf * CFrame.new(0, 2.15, -0.45) * CFrame.Angles(-0.6, 0, 0), 0.24, 0.6, 0.28, body, "Wood")
+					r:lump(hf * CFrame.new(0, 2.42, -0.72) * CFrame.Angles(0.5, 0, 0), 0.26, 0.28, 0.5, body, "Wood")
 					r:boxAt(
 						hf * CFrame.new(0, 2.24, -0.36) * CFrame.Angles(-0.6, 0, 0),
 						0.1,

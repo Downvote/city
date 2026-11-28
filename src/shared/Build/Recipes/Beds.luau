@@ -32,7 +32,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or r.mat or "Metal",
 	})
 end
 

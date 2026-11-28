@@ -56,7 +56,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "Metal",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -908,16 +908,7 @@ local items: { Item } = {
 			-- a square basin standing on the top, and a tall black tap
 			local bx, bz, w, d, t = -0.15, 0.1, 1.5, 1.0, 0.08
 			r:piece(function(q: R)
-				q:block(
-					bx - w / 2 + t,
-					2.75,
-					bz - d / 2 + t,
-					bx + w / 2 - t,
-					2.82,
-					bz + d / 2 - t,
-					WHITE,
-					"Metal"
-				)
+				q:block(bx - w / 2 + t, 2.75, bz - d / 2 + t, bx + w / 2 - t, 2.82, bz + d / 2 - t, WHITE, "Metal")
 				for _, s in { -1, 1 } do
 					q:block(
 						bx - w / 2,

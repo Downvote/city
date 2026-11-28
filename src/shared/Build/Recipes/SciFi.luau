@@ -48,7 +48,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "Metal",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -733,9 +733,7 @@ local items: { Item } = {
 			-- a touch panel beside the alcove
 			r:block(1.1, 3.4, 1.1, 1.5, 4.4, 1.14, SCREEN, "Glass")
 			for k, col in { GLOW, C.Yellow, CORAL, LILAC } do
-				glowOnly(
-					r:block(1.2, 3.5 + (k - 1) * 0.22, 1.14, 1.4, 3.62 + (k - 1) * 0.22, 1.17, col, "Metal")
-				)
+				glowOnly(r:block(1.2, 3.5 + (k - 1) * 0.22, 1.14, 1.4, 3.62 + (k - 1) * 0.22, 1.17, col, "Metal"))
 			end
 		end,
 	},
@@ -774,9 +772,7 @@ local items: { Item } = {
 					local y1 = 0.36 + k * h
 					r:block(f[1], y1, 1.1, f[2], y1 + h - 0.05, 1.14, shade(r.c1, 0.97), "Metal")
 					local xm = (f[1] + f[2]) / 2
-					glowOnly(
-						r:block(xm - 0.2, y1 + h - 0.2, 1.14, xm + 0.2, y1 + h - 0.14, 1.18, GLOW, "Glass")
-					)
+					glowOnly(r:block(xm - 0.2, y1 + h - 0.2, 1.14, xm + 0.2, y1 + h - 0.14, 1.18, GLOW, "Glass"))
 				end
 			end
 			-- two rings of light to cook on, a little pot on one
@@ -851,9 +847,7 @@ local items: { Item } = {
 			r:glow(r:block(-0.05, 0.5, -1.58, 0.05, 6.5, -1.54, GLOW, "Glass"), 12, 0.8, LIGHT)
 			r:block(0.4, 3.7, -1.58, 0.9, 4.4, -1.52, SLATE, "Metal")
 			for k, col in { GLOW, C.Yellow, CORAL } do
-				glowOnly(
-					r:block(0.5, 3.8 + (k - 1) * 0.2, -1.52, 0.8, 3.9 + (k - 1) * 0.2, -1.49, col, "Metal")
-				)
+				glowOnly(r:block(0.5, 3.8 + (k - 1) * 0.2, -1.52, 0.8, 3.9 + (k - 1) * 0.2, -1.49, col, "Metal"))
 			end
 			rod(r, Vector3.new(0.9, 3.0, 1.55), Vector3.new(0.9, 4.4, 1.55), 0.08, r.c2, "Metal")
 			for _, y in { 3.0, 4.4 } do
@@ -971,26 +965,13 @@ local items: { Item } = {
 				q:box(R, -1.25, 0, 0.01, 0.01, 0.01, r.c1, "Metal")
 				for k = 0, n - 1 do
 					local m = k * 2 * math.pi / n
-					q:boxAt(
-						round(math.cos(m) * R, -1.25, math.sin(m) * R, m),
-						seg + 0.04,
-						0.18,
-						0.24,
-						r.c1,
-						"Metal"
-					)
+					q:boxAt(round(math.cos(m) * R, -1.25, math.sin(m) * R, m), seg + 0.04, 0.18, 0.24, r.c1, "Metal")
 				end
 			end, nil, "Metal")
 			for k = 0, n - 1 do
 				local m = k * 2 * math.pi / n
-				local p = r:boxAt(
-					round(math.cos(m) * R, -1.36, math.sin(m) * R, m),
-					seg - 0.02,
-					0.04,
-					0.12,
-					GLOW,
-					"Glass"
-				)
+				local p =
+					r:boxAt(round(math.cos(m) * R, -1.36, math.sin(m) * R, m), seg - 0.02, 0.04, 0.12, GLOW, "Glass")
 				if k == 0 then
 					r:glow(p, 18, 1.2, LIGHT)
 				else
@@ -1072,14 +1053,7 @@ local items: { Item } = {
 			glowOnly(r:cyl(0, 0.58, 0, 0.04, 1.38, "y", r.c2, "Metal"))
 			r:glow(r:cyl(0, 0.88, 0, 0.06, 0.7, "y", GLOW, "Glass"), 14, 1, LIGHT)
 			for _, p in
-				r:tri(
-					Vector3.new(0, 0.91, 0),
-					Vector3.new(-1.3, 2.0, 0),
-					Vector3.new(1.3, 2.0, 0),
-					0.03,
-					GLOW,
-					"Glass"
-				)
+				r:tri(Vector3.new(0, 0.91, 0), Vector3.new(-1.3, 2.0, 0), Vector3.new(1.3, 2.0, 0), 0.03, GLOW, "Glass")
 			do
 				p.transp = 0.8
 				p.collide = false
@@ -1092,42 +1066,17 @@ local items: { Item } = {
 			for k, h in { 0.4, 0.7, 0.5, 0.9 } do
 				glowOnly(
 					r:noCollide(
-						r:block(
-							-1.1 + (k - 1) * 0.2,
-							2.2,
-							0.03,
-							-0.96 + (k - 1) * 0.2,
-							2.2 + h,
-							0.06,
-							PALE,
-							"Metal"
-						)
+						r:block(-1.1 + (k - 1) * 0.2, 2.2, 0.03, -0.96 + (k - 1) * 0.2, 2.2 + h, 0.06, PALE, "Metal")
 					)
 				)
 			end
 			discAt(r, CFrame.new(0.55, 3.0, 0.045), 0.6, 0.03, CORAL, "Metal")
 			r:noCollide(
-				r:boxAt(
-					CFrame.new(0.55, 3.0, 0.075) * CFrame.Angles(0, 0, -0.3),
-					1.0,
-					0.06,
-					0.03,
-					PALE,
-					"Metal"
-				)
+				r:boxAt(CFrame.new(0.55, 3.0, 0.075) * CFrame.Angles(0, 0, -0.3), 1.0, 0.06, 0.03, PALE, "Metal")
 			)
 			for k, w in { 0.9, 0.6, 0.75 } do
 				r:noCollide(
-					r:block(
-						0.1,
-						2.3 + (k - 1) * 0.16,
-						0.03,
-						0.1 + w,
-						2.36 + (k - 1) * 0.16,
-						0.06,
-						PALE,
-						"Metal"
-					)
+					r:block(0.1, 2.3 + (k - 1) * 0.16, 0.03, 0.1 + w, 2.36 + (k - 1) * 0.16, 0.06, PALE, "Metal")
 				)
 			end
 			for _, sx in { -1, 1 } do
@@ -1446,8 +1395,7 @@ local items: { Item } = {
 			discAt(r, CFrame.new(1.55, 2.25, 0.185), 0.24, 0.03, PALE, "Metal")
 			for _, sx in { -1, 1 } do
 				for _, y in { 0.3, 2.5 } do
-					local p =
-						r:block(sx * 1.7 - 0.05, y - 0.05, 0.17, sx * 1.7 + 0.05, y + 0.05, 0.2, GLOW, "Glass")
+					local p = r:block(sx * 1.7 - 0.05, y - 0.05, 0.17, sx * 1.7 + 0.05, y + 0.05, 0.2, GLOW, "Glass")
 					glowOnly(p)
 				end
 			end
@@ -1496,9 +1444,7 @@ local items: { Item } = {
 			-- a small control box with three lights and a switch on the right panel
 			r:block(1.0, 2.6, 0.2, 1.7, 3.4, 0.28, SLATE, "Metal")
 			for k, col in { GLOW, C.Yellow, CORAL } do
-				glowOnly(
-					r:block(1.1 + (k - 1) * 0.2, 3.15, 0.28, 1.2 + (k - 1) * 0.2, 3.25, 0.31, col, "Metal")
-				)
+				glowOnly(r:block(1.1 + (k - 1) * 0.2, 3.15, 0.28, 1.2 + (k - 1) * 0.2, 3.25, 0.31, col, "Metal"))
 			end
 			r:block(1.25, 2.75, 0.28, 1.45, 2.95, 0.31, r.c2, "Metal")
 			r:block(1.31, 2.83, 0.31, 1.39, 2.98, 0.36, SHELL, "Metal")
@@ -1537,14 +1483,7 @@ local items: { Item } = {
 			local function hand(angle: number, len: number, z: number, ball: number, col: Color3)
 				local dir = Vector3.new(math.sin(angle), math.cos(angle), 0)
 				local c = Vector3.new(0, 1.0, z)
-				r:boxAt(
-					CFrame.new(c + dir * (len / 2)) * CFrame.Angles(0, 0, -angle),
-					0.05,
-					len,
-					0.03,
-					SLATE,
-					"Metal"
-				)
+				r:boxAt(CFrame.new(c + dir * (len / 2)) * CFrame.Angles(0, 0, -angle), 0.05, len, 0.03, SLATE, "Metal")
 				local tip = c + dir * len
 				r:ball(tip.X, tip.Y, tip.Z, ball, col, "Metal")
 			end
@@ -1659,22 +1598,10 @@ local items: { Item } = {
 			end
 			-- a frame over the top carrying a bar of grow light
 			for _, sx in { -1, 1 } do
-				rod(
-					r,
-					Vector3.new(sx * 1.45, 1.2, -0.45),
-					Vector3.new(sx * 1.45, 5.2, -0.45),
-					0.1,
-					r.c1,
-					"Metal"
-				)
+				rod(r, Vector3.new(sx * 1.45, 1.2, -0.45), Vector3.new(sx * 1.45, 5.2, -0.45), 0.1, r.c1, "Metal")
 			end
 			r:block(-1.5, 5.0, -0.6, 1.5, 5.25, 0.2, r.c1, "Metal")
-			r:glow(
-				r:block(-1.35, 4.96, -0.45, 1.35, 5.0, 0.1, LILAC, "Glass"),
-				14,
-				0.8,
-				Color3.fromRGB(220, 200, 255)
-			)
+			r:glow(r:block(-1.35, 4.96, -0.45, 1.35, 5.0, 0.1, LILAC, "Glass"), 14, 0.8, Color3.fromRGB(220, 200, 255))
 		end,
 	},
 	{

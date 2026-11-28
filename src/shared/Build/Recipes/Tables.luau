@@ -30,7 +30,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -146,15 +146,8 @@ local items: { Item } = {
 			end
 			-- a shelf low down with a couple of magazines
 			r:block(-1.6, 0.4, -0.78, 1.6, 0.5, 0.78, r.c2, "Wood")
-			r:boxAt(CFrame.new(0.7, 0.535, -0.1) * CFrame.Angles(0, 0.12, 0), 0.95, 0.07, 0.7, C.Paper, "SmoothPlastic")
-			r:boxAt(
-				CFrame.new(0.75, 0.595, -0.08) * CFrame.Angles(0, -0.1, 0),
-				0.85,
-				0.05,
-				0.62,
-				C.Blue,
-				"SmoothPlastic"
-			)
+			r:boxAt(CFrame.new(0.7, 0.535, -0.1) * CFrame.Angles(0, 0.12, 0), 0.95, 0.07, 0.7, C.Paper, "Cardboard")
+			r:boxAt(CFrame.new(0.75, 0.595, -0.08) * CFrame.Angles(0, -0.1, 0), 0.85, 0.05, 0.62, C.Blue, "Cardboard")
 		end,
 	},
 	{
@@ -364,10 +357,10 @@ local items: { Item } = {
 			r:block(-1.65, 3.75, -1.04, -1.53, 4.75, -0.96, C.Bark, "Wood")
 			r:block(-1.88, 4.6, -1.04, -1.3, 4.84, -0.92, C.DarkMetal, "Metal")
 			r:block(-0.9, 3.7, -1.04, 0.4, 4.35, -1.0, C.Metal, "Metal")
-			r:block(0.4, 3.75, -1.04, 0.8, 4.3, -0.94, C.Red, "SmoothPlastic")
+			r:block(0.4, 3.75, -1.04, 0.8, 4.3, -0.94, C.Red, "Metal")
 			r:block(1.3, 3.6, -1.04, 1.4, 4.45, -0.96, C.Metal, "Metal")
 			r:cyl(1.35, 4.62, -1.0, 0.08, 0.36, "z", C.Metal, "Metal")
-			r:block(1.8, 3.9, -1.04, 1.92, 4.7, -0.96, C.Yellow, "SmoothPlastic")
+			r:block(1.8, 3.9, -1.04, 1.92, 4.7, -0.96, C.Yellow, "Rubber")
 			r:block(1.82, 3.55, -1.04, 1.9, 3.9, -0.98, C.Metal, "Metal")
 			-- a vice on the front corner
 			r:block(1.6, 3.2, 0.62, 2.2, 3.62, 1.0, C.DarkMetal, "Metal")

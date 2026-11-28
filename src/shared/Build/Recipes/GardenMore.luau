@@ -50,7 +50,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "Metal",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -115,7 +115,7 @@ local function tuft(q: R, x: number, z: number, y0: number, turn: number, h: num
 	end
 end
 
--- A small bird on q (a piece in SmoothPlastic) standing at (x, y, z) and looking along -x or +x
+-- A small bird on q (a piece) standing at (x, y, z) and looking along -x or +x
 -- (dir): a body, a paler breast, a head, a beak, a tail and two eyes. Its beak is a plain box, so
 -- it can start the piece.
 local function bird(q: R, x: number, y: number, z: number, dir: number, back: Color3, breast: Color3)
@@ -613,14 +613,7 @@ local items: { Item } = {
 				}
 				for i, p in roses do
 					local col = if i % 5 == 0 then C.White elseif i % 2 == 0 then shade(r.c2, 1.1) else r.c2
-					q:lump(
-						CFrame.new(p[1], p[2], p[3]) * CFrame.Angles(0.4, i, 0.2),
-						0.32,
-						0.24,
-						0.32,
-						col,
-						"Fabric"
-					)
+					q:lump(CFrame.new(p[1], p[2], p[3]) * CFrame.Angles(0.4, i, 0.2), 0.32, 0.24, 0.32, col, "Fabric")
 				end
 			end, nil, "Fabric")
 		end,
@@ -1091,14 +1084,7 @@ local items: { Item } = {
 				-- two koi, their backs at the surface
 				for i, p in { { 0.5, 0.7, 0.4 }, { -0.6, -0.5, -0.5 } } do
 					local col = if i == 1 then Color3.fromRGB(236, 140, 72) else C.White
-					q:lump(
-						CFrame.new(p[1], 1.2, p[2]) * CFrame.Angles(0, p[3], 0),
-						0.2,
-						0.14,
-						0.56,
-						col,
-						"Marble"
-					)
+					q:lump(CFrame.new(p[1], 1.2, p[2]) * CFrame.Angles(0, p[3], 0), 0.2, 0.14, 0.56, col, "Marble")
 					q:lump(
 						CFrame.new(p[1] - math.sin(p[3]) * 0.33, 1.2, p[2] - math.cos(p[3]) * 0.33)
 							* CFrame.Angles(0, p[3], 0),
@@ -1243,22 +1229,8 @@ local items: { Item } = {
 			end)
 			r:piece(function(q: R)
 				q:box(1.2, 2.06, 0.1, 0.06, 0.06, 0.06, C.White, "Ground")
-				q:lump(
-					CFrame.new(0.75, 2.0, -0.1) * CFrame.Angles(0, 0.6, 0.4),
-					0.5,
-					0.1,
-					0.12,
-					C.Yellow,
-					"Ground"
-				)
-				q:lump(
-					CFrame.new(0.82, 2.0, 0.02) * CFrame.Angles(0, -0.4, -0.3),
-					0.4,
-					0.1,
-					0.12,
-					C.Yellow,
-					"Ground"
-				)
+				q:lump(CFrame.new(0.75, 2.0, -0.1) * CFrame.Angles(0, 0.6, 0.4), 0.5, 0.1, 0.12, C.Yellow, "Ground")
+				q:lump(CFrame.new(0.82, 2.0, 0.02) * CFrame.Angles(0, -0.4, -0.3), 0.4, 0.1, 0.12, C.Yellow, "Ground")
 				q:lump(CFrame.new(1.25, 2.04, 0.15), 0.2, 0.12, 0.16, C.White, "Ground")
 				q:lump(CFrame.new(1.4, 2.02, 0.0), 0.18, 0.1, 0.14, C.White, "Ground")
 				q:ball(1.55, 1.95, 0.45, 0.22, Color3.fromRGB(196, 96, 80), "Ground")
