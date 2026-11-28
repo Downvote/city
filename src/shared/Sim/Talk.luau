@@ -29,6 +29,7 @@ local Relationships = require(script.Parent.Relationships)
 local Voice = require(script.Parent.Voice)
 local Flair = require(script.Parent.Flair)
 local Memory = require(script.Parent.Memory)
+local Needs = require(script.Parent.Needs)
 
 local K = Tuning.Talk
 
@@ -1155,9 +1156,8 @@ function Talk.chat(profile: any, vid: string, day: number, rng: any, notices: { 
 	local had: number = v.chats or 0
 	if had < K.ChatsPerDay then
 		v.chats = had + 1
-		local before: number = v.mood
-		v.mood = math.clamp(before + K.ChatMood, Tuning.Villagers.MoodMin, Tuning.Villagers.MoodMax)
-		out.mood = v.mood - before
+		-- (a lift counts for less and stops at what their home and friends let them reach: Sim/Needs)
+		out.mood = Needs.addMood(profile, vid, K.ChatMood)
 		Life.addHearts(profile, vid, K.ChatHearts, rng, notices)
 		out.hearts = K.ChatHearts
 		out.counted = true

@@ -24,6 +24,7 @@ local Text = require(script.Parent.Parent.Util.Text)
 local Voice = require(script.Parent.Voice)
 local Bag = require(script.Parent.Bag)
 local Life = require(script.Parent.Life)
+local Needs = require(script.Parent.Needs)
 
 local K = Tuning.Gifts
 
@@ -111,8 +112,10 @@ function Gifts.line(v: any, kind: string, item: Items.Item, rng: any, name: stri
 	return Voice.as(v, text)
 end
 
-local function moodBy(v: any, d: number)
-	v.mood = math.clamp(v.mood + d, Tuning.Villagers.MoodMin, Tuning.Villagers.MoodMax)
+-- (through Sim/Needs: a lift counts for less and stops at what their home and friends let them
+-- reach; returns the change made)
+local function moodBy(profile: any, vid: string, d: number): number
+	return Needs.addMood(profile, vid, d)
 end
 
 -- The player gives a villager a thing from the bag. Everything is checked; nothing changes when it
@@ -148,7 +151,7 @@ function Gifts.give(profile: any, vid: any, id: any, day: number, rng: any): (bo
 		else
 			hearts, mood = K.BadHearts, K.BadMood
 		end
-		moodBy(v, mood)
+		mood = moodBy(profile, vid, mood)
 		if hearts > 0 then
 			Life.addHearts(profile, vid, hearts, rng, notices)
 		end

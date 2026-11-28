@@ -92,6 +92,8 @@
 --   panel:Bag           the bag with a few things in it and a treasure waiting for room
 --                       (panel:Bag:empty: nothing in it)
 --   panel:Residents:gift  Mara's page with the gift picker up
+--   panel:Residents:mood  Mara's Mood tab: what helps her mood and what's missing (Sim/Needs)
+--   pick                what a click on a villager brings up (UI/VillagerMenu): Profile and Chat
 --   panel:Goals:titles  the Goals menu's Titles tab: three won, one worn, how it looks over a head
 --   earned              the main screen as a pay packet comes in, and the coins that rise over the
 --                       villagers who earned it, laid flat where three heads would be (the
@@ -671,6 +673,23 @@ elseif scene:sub(1, 6) == "panel:" then
 		Memory.start(town, order[1], "accessory", { what = "yellowhat" }, now - 1000)
 		Memory.start(town, order[1], "band", { name = "Pickle Jar" }, now - 200)
 		patch({ villagers = villagers })
+	elseif state == "mood" and name == "Residents" then
+		-- Mara sleeps in the starting house's bed, under its roof, with a good friend and somebody
+		-- she knows (Sim/Needs): what helps and what's missing
+		local Catalog = Harness.require("ReplicatedStorage.Shared.Build.Catalog")
+		for key, item in Sim.State.plan.items do
+			local def = Catalog.get(item.id)
+			if def and Catalog.hasTag(def, "bed") then
+				first.bed = key
+				break
+			end
+		end
+		if not first.bed then
+			Sim.State.plan.items.marabed = { id = "bed_single", x = 180, y = 0, z = 60, r = 0, lv = 0 }
+			first.bed = "marabed"
+		end
+		first.mood = 41
+		patch({ villagers = villagers })
 	elseif state:sub(1, 6) == "quirks" and name == "Residents" then
 		-- what the player gave Mara to say, and the gems there are (Sim/Flair)
 		first.flair = { phrase = "Smells like rain to me.", ending = "buddy" }
@@ -732,6 +751,8 @@ elseif scene:sub(1, 6) == "panel:" then
 		end
 	elseif state == "friends" then
 		Sim.press("Friends")
+	elseif state == "mood" then
+		Sim.press("Mood")
 	elseif state == "lately" then
 		Sim.press("Lately")
 	elseif state:sub(1, 6) == "quirks" then
@@ -765,6 +786,13 @@ elseif scene:sub(1, 6) == "panel:" then
 		local row = Sim.gui:FindFirstChild("settlers", true)
 		row.Activated:Fire()
 	end
+	Sim.frames(3)
+elseif scene == "pick" then
+	-- what a click on one of your villagers brings up (World/VillagerClick, UI/VillagerMenu): Mara's
+	-- name, Profile and Chat, by the pointer
+	startHud()
+	villagerModels()
+	Hud.open("VillagerMenu", { vid = order[1], at = roblox.Vector2.new(560, 300) })
 	Sim.frames(3)
 elseif scene == "welcome" or scene == "welcome:long" then
 	-- the welcome back dialog (UI/WelcomeBack): what the town earned while the player was away.

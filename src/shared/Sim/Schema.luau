@@ -214,6 +214,11 @@ function Schema.migrate(raw: any): any
 			v.app = Appearance.sanitize(v.app)
 			fill(v, Schema.villagerDefaults(v.pers), true)
 			v.hate, v.known, v.feedDay, v.feeds = nil, nil, nil, nil
+			-- a mood in range (it climbs or sinks to what their home gives them from here: Sim/Needs)
+			if type(v.mood) ~= "number" or v.mood ~= v.mood then
+				v.mood = Tuning.Villagers.StartMood
+			end
+			v.mood = math.clamp(v.mood, Tuning.Villagers.MoodMin, Tuning.Villagers.MoodMax)
 			-- what they'd say about their last event: a line and when, or nothing
 			local memo = v.memo
 			if memo ~= nil and (type(memo) ~= "table" or type(memo.text) ~= "string" or type(memo.t) ~= "number") then

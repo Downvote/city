@@ -11,6 +11,7 @@ local Schema = require(Shared .. "Sim.Schema")
 local Talk = require(Shared .. "Sim.Talk")
 local Voice = require(Shared .. "Sim.Voice")
 local Life = require(Shared .. "Sim.Life")
+local Needs = require(Shared .. "Sim.Needs")
 local City = require(Shared .. "Sim.City")
 local Relationships = require(Shared .. "Sim.Relationships")
 local Appearance = require(Shared .. "Avatar.Appearance")
@@ -127,6 +128,7 @@ describe("Talk", function()
 	it("only counts the first few chats a day", function()
 		local p = town(1)
 		local v = p.villagers.v1
+		v.mood = 0 -- (low, so the lifts show under what they can reach: Sim/Needs)
 		local mood, rng = v.mood, Rng.new(1)
 		local counted, hearts = 0, 0
 		for i = 1, K.ChatsPerDay + 4 do
@@ -139,7 +141,7 @@ describe("Talk", function()
 		end
 		expect(counted).toBe(K.ChatsPerDay)
 		expect(hearts).toBe(K.ChatsPerDay * K.ChatHearts)
-		expect(v.mood).toBe(mood + K.ChatsPerDay * K.ChatMood)
+		expect(v.mood).toBe(mood + K.ChatsPerDay * Needs.lift(K.ChatMood))
 		expect(v.hxp + (v.heart - 1) * Life.heartNeed(1)).toBe(hearts)
 		-- tomorrow they count again
 		expect(Talk.left(p, "v1", 8)).toBe(K.ChatsPerDay)
@@ -166,12 +168,19 @@ describe("Talk", function()
 		expect(K.ChatsPerDay * K.ChatHearts < Life.heartNeed(1)).toBeTruthy()
 	end)
 
-	it("keeps mood inside its bounds", function()
+	it("keeps mood inside its bounds, and under what their home and friends let them reach", function()
 		local p = town(1)
-		p.villagers.v1.mood = Tuning.Villagers.MoodMax - 1
+		local cap = Needs.cap(p, "v1")
+		p.villagers.v1.mood = cap - 1
 		local chat = Talk.chat(p, "v1", 1, Rng.new(3))
-		expect(p.villagers.v1.mood).toBe(Tuning.Villagers.MoodMax)
+		expect(p.villagers.v1.mood).toBe(cap)
 		expect(chat.mood).toBe(1)
+		-- over it already (a mood from before), a chat lifts nothing
+		p.villagers.v1.mood = Tuning.Villagers.MoodMax
+		chat = Talk.chat(p, "v1", 1, Rng.new(3))
+		expect(chat.counted).toBe(true)
+		expect(chat.mood).toBe(0)
+		expect(p.villagers.v1.mood).toBe(Tuning.Villagers.MoodMax)
 	end)
 
 	it("answers a wish for a talk once, even after the day's chats", function()

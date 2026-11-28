@@ -24,7 +24,8 @@ tutorial:greet tutorial:1 tutorial:ask tutorial:2:say tutorial:2 tutorial:2:buil
 tutorial:done
 panel:Garage panel:Settings panel:Store panel:Store:gems panel:Rewards panel:Rewards:playtime panel:Rewards:achievements panel:Rewards:group
 panel:Rewards:member welcome welcome:long
-panel:Bag panel:Bag:empty panel:Residents:gift panel:Goals:titles talk:gift"
+panel:Bag panel:Bag:empty panel:Residents:gift panel:Goals:titles talk:gift
+panel:Residents:mood pick"
 COUNT=$(echo $SCENES | wc -w)
 status=0
 for look in dark light; do

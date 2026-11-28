@@ -26,6 +26,7 @@ local Appearance = require(Shared .. "Avatar.Appearance")
 local Rng = require(Shared .. "Util.Rng")
 local Life = require(Shared .. "Sim.Life")
 local Talk = require(Shared .. "Sim.Talk")
+local Needs = require(Shared .. "Sim.Needs")
 local EventEngine = require(Shared .. "Sim.EventEngine")
 local Personalities = require(Shared .. "Data.Personalities")
 local Foods = require(Shared .. "Data.Foods")
@@ -70,8 +71,24 @@ local function workingTown(pop, workers, seed)
 		p.plan.items["w" .. i] = { id = WORK[(i - 2) % #WORK + 1], x = 60 + i * 5, y = 0, z = 20, r = 0, lv = 0 }
 		table.insert(keys, "w" .. i)
 	end
+	-- the keenest player builds all villagers ask for (Sim/Needs): the comfiest beds under a roof,
+	-- with fun things by them, so their mood can reach all but what friends bring
+	p.plan.roofs.keen = {
+		x1 = 60,
+		z1 = 140,
+		x2 = 70 + pop * 5,
+		z2 = 160,
+		lv = 0,
+		style = "flat",
+		rise = 0,
+		dir = 0,
+		over = 1,
+		c = "D9C7B0",
+		m = "Slate",
+	}
 	for i = 1, pop do
-		p.plan.items["b" .. i] = { id = "bed_single", x = 60 + i * 5, y = 0, z = 150, r = 0, lv = 0 }
+		p.plan.items["fun" .. i] = { id = "arcade", x = 62 + i * 5, y = 0, z = 160, r = 0, lv = 0 }
+		p.plan.items["b" .. i] = { id = "bed_canopy", x = 60 + i * 5, y = 0, z = 150, r = 0, lv = 0 }
 		local input = Schema.cleanVillagerInput({
 			name = "V" .. i,
 			pers = Personalities.list[(i - 1) % #Personalities.list + 1].id,
@@ -180,9 +197,9 @@ local function playDays(p, rng, days)
 			end
 			hearts[vid] = v.heart or 1
 		end
-		for _, v in p.villagers do
-			v.mood = math.clamp(v.mood + Tuning.Villagers.BedMoodPerNight, 0, Tuning.Villagers.MoodMax)
-		end
+		-- a day of mood settling toward what their beds, rooms and friends let them reach (Sim/Needs,
+		-- an hour at a time in the game)
+		Needs.drift(p, 24)
 	end
 	got.other = got.events + got.requests + got.wishes + got.thanks
 	return got
@@ -819,7 +836,9 @@ describe("City", function()
 		-- there and half of it in a city, and the thank yous alone paid more than work did; after
 		-- it 72% and 87%. With wages tripled they were 88% and 95%, and these bounds went up with
 		-- them (they were two thirds, 72%, 72% and 80%). With work's pay halved since ("Also, halve
-		-- money gain from work.") they are 84% and 92%, still inside them.
+		-- money gain from work.") they are 84% and 92%, still inside them. Mood is earned now (Sim/Needs:
+		-- "Villager mood bars should also not be that easy to fill up"), so the keen player builds what
+		-- their villagers ask for (workingTown), and they are 82% and 91%.
 		local stages = {
 			{ pop = 3, workers = 2, share = 0.8 },
 			{ pop = 4, workers = 4, share = 0.85 },

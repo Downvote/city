@@ -11,6 +11,7 @@ local Shared = "ReplicatedStorage.Shared."
 local Tuning = require(Shared .. "Config.Tuning")
 local Schema = require(Shared .. "Sim.Schema")
 local Life = require(Shared .. "Sim.Life")
+local Needs = require(Shared .. "Sim.Needs")
 local Relationships = require(Shared .. "Sim.Relationships")
 local Appearance = require(Shared .. "Avatar.Appearance")
 local Foods = require(Shared .. "Data.Foods")
@@ -143,6 +144,8 @@ describe("Life", function()
 		v.wish = { kind = "food", arg = food, untilT = 1e9 }
 		local price = Life.wishPrice(p, "v1")
 		p.coins = price + 7
+		-- (low, so the lift shows under what they can reach: Sim/Needs)
+		v.mood = 4
 		local mood, wishes = v.mood, p.stats.wishes
 		local ok, cost, notices, why = Life.buyWish(p, "v1", Rng.new(1))
 		expect(ok).toBe(true)
@@ -151,7 +154,8 @@ describe("Life", function()
 		expect(p.coins).toBe(7)
 		expect(v.wish).toBe(nil)
 		expect(p.stats.wishes).toBe(wishes + 1)
-		expect(v.mood).toBe(math.min(Tuning.Villagers.MoodMax, mood + L.WishMood))
+		expect(v.mood).toBe(math.min(Needs.cap(p, "v1"), mood + Needs.lift(L.WishMood)))
+		expect(v.mood > mood).toBeTruthy()
 		expect(v.hxp + (v.heart - 1) * Life.heartNeed(1)).toBe(L.WishHearts)
 		expect(#notices >= 1).toBeTruthy()
 		for _, n in notices do
@@ -172,11 +176,14 @@ describe("Life", function()
 		local plain = if b.fav == "apple" then "bread" else "apple"
 		b.wish = { kind = "food", arg = plain, untilT = 1e9 }
 		p.coins = 1e5
+		-- (low, so the lifts show under what they can reach: Sim/Needs)
+		a.mood, b.mood = 0, 0
 		local moodA, moodB = a.mood, b.mood
 		expect((Life.buyWish(p, "v1", Rng.new(1)))).toBe(true)
 		expect((Life.buyWish(p, "v2", Rng.new(1)))).toBe(true)
-		expect(a.mood - moodA).toBe(L.WishMood + L.FavWishMood)
-		expect(b.mood - moodB).toBe(L.WishMood)
+		expect(a.mood - moodA).toBe(Needs.lift(L.WishMood + L.FavWishMood))
+		expect(b.mood - moodB).toBe(Needs.lift(L.WishMood))
+		expect(a.mood > b.mood).toBeTruthy()
 		local function points(v)
 			local n = v.hxp
 			for level = 1, v.heart - 1 do

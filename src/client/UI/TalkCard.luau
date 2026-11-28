@@ -90,19 +90,30 @@ local function blocked(opening: boolean): boolean
 	return false
 end
 
--- Has the player walked off, or the villager gone (away on an outing, or given a new body)?
-local function apart(model: Model?): boolean
+-- Where the player stands, if they have a body.
+local function myPosition(): Vector3?
+	local character = player.Character
+	local mine = character and character:FindFirstChild("HumanoidRootPart")
+	return if mine and mine:IsA("BasePart") then mine.Position else nil
+end
+
+-- Has the player walked off, or the villager gone (away on an outing, or given a new body)? A talk
+-- started by clicking them from afar (World/VillagerClick) is over when the player walks off from
+-- where they stood (`from`), as the server has it.
+local function apart(model: Model?, from: Vector3?): boolean
 	if not model then
 		return false
 	end
 	if not model.Parent then
 		return true
 	end
-	local character = player.Character
-	local mine = character and character:FindFirstChild("HumanoidRootPart")
+	local mine = myPosition()
 	local theirs = model:FindFirstChild("HumanoidRootPart")
-	if mine and mine:IsA("BasePart") and theirs and theirs:IsA("BasePart") then
-		return (mine.Position - theirs.Position).Magnitude > K.Range
+	if mine and theirs and theirs:IsA("BasePart") then
+		if from and (mine - from).Magnitude <= K.Range then
+			return false
+		end
+		return (mine - theirs.Position).Magnitude > K.Range
 	end
 	return false
 end
@@ -283,14 +294,15 @@ local function watch(mine: number)
 		if serial ~= mine or not talk then
 			return
 		end
-		if blocked(false) or apart(talk.model) or os.clock() - talk.at > K.StaySeconds then
+		if blocked(false) or apart(talk.model, talk.from) or os.clock() - talk.at > K.StaySeconds then
 			TalkCard.close()
 			return
 		end
 	end
 end
 
--- One of your villagers said something to you: { vid, text, note, model } (the "Talk" remote).
+-- One of your villagers said something to you: { vid, text, note, model, far? } (the "Talk"
+-- remote, or the answer to a click's Chat: World/VillagerClick).
 function TalkCard.show(msg: any)
 	if type(msg) ~= "table" or type(msg.vid) ~= "string" or type(msg.text) ~= "string" then
 		return
@@ -302,11 +314,15 @@ function TalkCard.show(msg: any)
 	end
 	if again then
 		-- E held on them again: the card stays and the words change
+		if msg.far == true and not current.from then
+			current.from = myPosition()
+		end
 		say(msg)
 		return
 	end
 	TalkCard.close()
-	current = { vid = msg.vid, model = nil, at = os.clock() }
+	-- (`from`: a talk started by a click from afar is held where the player stood)
+	current = { vid = msg.vid, model = nil, at = os.clock(), from = if msg.far == true then myPosition() else nil }
 	local model = if typeof(msg.model) == "Instance" and msg.model:IsA("Model") then msg.model else nil
 	build(msg.vid, v, model)
 	say(msg)

@@ -16,6 +16,8 @@ local Schema = require(Shared .. "Sim.Schema")
 local Appearance = require(Shared .. "Avatar.Appearance")
 local StarterHouse = require(Shared .. "Data.StarterHouse")
 local Rng = require(Shared .. "Util.Rng")
+local Needs = require(Shared .. "Sim.Needs")
+local Tutorial = require(Shared .. "Sim.Tutorial")
 
 local E = Tuning.Events
 local env = Harness.env()
@@ -145,6 +147,7 @@ Harness.stub(Services .. "Plots", {
 })
 Harness.stub(Services .. "World", {
 	NewDay = { Event = Harness.signal() },
+	ClockChanged = { Event = Harness.signal() },
 	hour = function()
 		return 12
 	end,
@@ -161,9 +164,10 @@ Harness.stub(Services .. "World", {
 		return "clear"
 	end,
 })
+local created = Harness.signal()
 Harness.stub(Services .. "Villagers", {
 	Met = Harness.signal(),
-	Created = Harness.signal(),
+	Created = created,
 	list = function()
 		return { "v1" }
 	end,
@@ -497,6 +501,51 @@ describe("Event service: the time to answer", function()
 		listed = {}
 		toEnd()
 		Events.trigger = trigger
+	end)
+
+	-- the user: "if a villager dosent have a workspace or bed, they will ask the player for it,
+	-- confirmed to ask if they just moved in"
+	it("plays the asks of somebody who moved in without a bed or work, ahead of the random ones", function()
+		toEnd()
+		local tutorial = profile.tutorial
+		-- (while the tutorial teaches the bed and the workplace, it does the asking itself)
+		profile.tutorial = 0
+		expect(Needs.teaching(profile)).toBe(true)
+		local from = #fired + 1
+		created:Fire(owner, "v1")
+		listed = { owner }
+		advance(Tuning.Needs.AskWait + 5)
+		expect(#heard("EventShow", from)).toBe(0)
+		-- past the tutorial, Mara asks for a bed, then for work
+		profile.tutorial = Tutorial.Skipped
+		local trigger, tries = Events.trigger, 0
+		Events.trigger = function()
+			tries += 1
+			return false
+		end
+		created:Fire(owner, "v1")
+		advance(Tuning.Needs.AskWait - 3)
+		expect(#heard("EventShow", from)).toBe(0)
+		advance(5)
+		local shows = heard("EventShow", from)
+		expect(#shows).toBe(1)
+		expect(shows[1].id).toBe("nobed")
+		local lines = shows[1].lines
+		expect(lines[#lines].who).toBe(nil)
+		expect(lines[#lines].text).toBe(Needs.line("bed"))
+		toEnd()
+		advance(Tuning.Needs.AskGap + 3)
+		shows = heard("EventShow", from)
+		expect(#shows).toBe(2)
+		expect(shows[2].id).toBe("jobhunt")
+		expect(shows[2].lines[#shows[2].lines].text).toBe(Needs.line("work"))
+		toEnd()
+		-- and that was all: nothing is asked again before it's due
+		advance(Tuning.Needs.AskGap + 3)
+		expect(#heard("EventShow", from)).toBe(2)
+		listed = {}
+		Events.trigger = trigger
+		profile.tutorial = tutorial
 	end)
 
 	it("forgets an owner who leaves", function()

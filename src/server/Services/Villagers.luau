@@ -20,6 +20,7 @@ local City = require(Shared.Sim.City)
 local EventEngine = require(Shared.Sim.EventEngine)
 local Life = require(Shared.Sim.Life)
 local Talk = require(Shared.Sim.Talk)
+local Needs = require(Shared.Sim.Needs)
 local Routine = require(Shared.Sim.Routine)
 local Uses = require(Shared.Sim.Uses)
 local Passes = require(Shared.Sim.Passes)
@@ -488,6 +489,8 @@ local function lifeHour(player: Player)
 	if #ended > 0 then
 		Data.push(player, "rel")
 	end
+	-- mood climbs toward what their bed, room and friends let them reach, or sinks to it (Sim/Needs)
+	Needs.drift(profile, 1)
 	for _, vid in profile.order do
 		if Life.maybeWish(profile, vid, rng, now) then
 			local text = Life.wishText(profile, vid)
@@ -1835,72 +1838,23 @@ end
 
 -- Daily upkeep -----------------------------------------------------------------------------------
 
--- How nice a villager's room is: items near their bed, plus a little for each kind of thing.
-function Villagers.roomScore(profile: any, vid: string): number
-	local v = profile.villagers[vid]
-	local bed = v and v.bed and profile.plan.items[v.bed]
-	if not bed then
-		return 0
-	end
-	local count, kinds = 0, {}
-	for key, item in profile.plan.items do
-		if key ~= v.bed and item.lv == bed.lv and item.wall == nil then
-			local d = math.sqrt((item.x - bed.x) ^ 2 + (item.z - bed.z) ^ 2)
-			if d <= V.RoomRadius then
-				count += 1
-				local def = Catalog.get(item.id)
-				if def and def.tags then
-					for _, t in def.tags do
-						kinds[t] = true
-					end
-				end
-			end
-		elseif key ~= v.bed and item.wall then
-			local w = profile.plan.walls[item.wall]
-			if w and w.lv == bed.lv then
-				local frame = Plan.itemFrame(profile.plan, item)
-				if
-					frame
-					and (Vector3.new(frame.X, 0, frame.Z) - Vector3.new(bed.x, 0, bed.z)).Magnitude <= V.RoomRadius
-				then
-					count += 1
-					local def = Catalog.get(item.id)
-					if def and def.tags then
-						for _, t in def.tags do
-							kinds[t] = true
-						end
-					end
-				end
-			end
-		end
-	end
-	local k = 0
-	for _ in kinds do
-		k += 1
-	end
-	return math.min(count, 12) + k * 2
-end
-
+-- Something happened to them: mood goes through Sim/Needs (a lift counts for less and stops at
+-- what their bed, room and friends let them reach).
 function Villagers.addMood(player: Player, vid: string, delta: number)
-	local v = Villagers.data(player, vid)
-	if not v then
-		return
+	local profile = Data.get(player)
+	if profile and profile.villagers[vid] then
+		Needs.addMood(profile, vid, delta)
 	end
-	v.mood = math.clamp(v.mood + delta, V.MoodMin, V.MoodMax)
 end
 
+-- (A night in a bed no longer lifts mood by itself: what their home gives them is Sim/Needs' cap,
+-- which mood climbs to every town hour.)
 local function newDay(player: Player)
 	local profile = Data.get(player)
 	if not profile then
 		return
 	end
-	for vid, v in profile.villagers do
-		if v.bed and profile.plan.items[v.bed] then
-			local room = Villagers.roomScore(profile, vid)
-			Villagers.addMood(player, vid, V.BedMoodPerNight + math.floor(room / 6))
-		else
-			Villagers.addMood(player, vid, V.NoBedMoodPerNight)
-		end
+	for _, v in profile.villagers do
 		if v.sick and v.sick <= os.time() then
 			v.sick = nil
 		end
@@ -2424,12 +2378,29 @@ local TK = Tuning.Talk
 local talkTokens: { [Player]: { [string]: number } } = {} -- the newest talk with each villager
 local talkedAt: { [Player]: number } = {} -- when each player last got a line
 local lastSaid: { [Player]: { [string]: string } } = {} -- what each villager said last
+-- A talk the owner started by clicking a villager from afar (the user: "allow players to click on
+-- villagers anywhere to either open their profile or chat with them"): where they stood when it
+-- began. While it lasts, standing within Talk.Range of there counts as standing by them.
+local farFrom: { [Player]: { [string]: Vector3 } } = {}
 
--- Where a player stands, if that is close enough to a villager to talk.
-local function standsBy(who: Player, npc: any): Vector3?
+local function rootOf(who: Player): BasePart?
 	local char = who.Character
 	local root = char and char:FindFirstChild("HumanoidRootPart")
-	if root and root:IsA("BasePart") and (root.Position - npc:position()).Magnitude <= TK.Range then
+	return if root and root:IsA("BasePart") then root else nil
+end
+
+-- Where a player stands, if that is close enough to a villager to talk: by them, or (for the owner
+-- in a talk they started from afar) by where they stood when it began.
+local function standsBy(who: Player, npc: any, owner: Player?, vid: string?): Vector3?
+	local root = rootOf(who)
+	if not root then
+		return nil
+	end
+	if (root.Position - npc:position()).Magnitude <= TK.Range then
+		return root.Position
+	end
+	local from = owner == who and vid and farFrom[who] and farFrom[who][vid]
+	if from and (root.Position - from).Magnitude <= TK.Range then
 		return root.Position
 	end
 	return nil
@@ -2454,13 +2425,16 @@ local function holdForTalk(who: Player, owner: Player, vid: string, npc: any, se
 			if tokens[vid] ~= token or Villagers.control(owner, vid) ~= "talk" or Villagers.get(owner, vid) ~= npc then
 				break
 			end
-			if not who.Parent or not standsBy(who, npc) then
+			if not who.Parent or not standsBy(who, npc, owner, vid) then
 				break
 			end
 		end
 		-- still this talk's to end? (When the owner leaves, the lot is cleared.)
 		if talkTokens[owner] == tokens and tokens[vid] == token and Villagers.control(owner, vid) == "talk" then
 			Villagers.setControl(owner, vid, nil)
+			if farFrom[owner] then
+				farFrom[owner][vid] = nil
+			end
 		end
 	end)
 end
@@ -2469,7 +2443,7 @@ end
 -- all checked here, every time: that the villager is up and free, and that the player really is
 -- standing by them. Returns what the talk card shows ({ vid, text, note, model }), or nil and
 -- why not (no reason when it was only too soon after the last line).
-local function talk(who: Player, owner: Player, vid: string): (any?, string?)
+local function talk(who: Player, owner: Player, vid: string, far: boolean?): (any?, string?)
 	local profile = Data.get(owner)
 	local v = profile and profile.villagers[vid]
 	local npc = Villagers.get(owner, vid)
@@ -2480,7 +2454,26 @@ local function talk(who: Player, owner: Player, vid: string): (any?, string?)
 	if not Talk.free(mode) then
 		return nil, "They're busy right now."
 	end
-	local at = standsBy(who, npc)
+	if far then
+		-- started by a click on them: the owner's own villager, from anywhere on their plot
+		local root = rootOf(who)
+		local i = Plots.indexOf(owner)
+		if who ~= owner or not root or not i then
+			return nil, "They can't talk right now."
+		end
+		local _, at = Town.toPlot(i, root.Position)
+		local m, size = Tuning.TalkClick.Margin, Tuning.Plot.Size
+		if at.X < -m or at.X > size + m or at.Z < -m or at.Z > size + m then
+			return nil, "Walk back to your plot to chat."
+		end
+		local list = farFrom[owner]
+		if not list then
+			list = {}
+			farFrom[owner] = list
+		end
+		list[vid] = root.Position
+	end
+	local at = standsBy(who, npc, owner, vid)
 	if not at then
 		return nil, "You're too far away to talk."
 	end
@@ -2560,6 +2553,9 @@ local function endTalk(owner: Player, vid: string)
 	local tokens = talkTokens[owner]
 	if tokens and tokens[vid] then
 		tokens[vid] += 1 -- that talk's own watch stands down
+	end
+	if farFrom[owner] then
+		farFrom[owner][vid] = nil
 	end
 	local npc = Villagers.get(owner, vid)
 	if npc then
@@ -2761,7 +2757,9 @@ function Villagers.start()
 		local npc = type(vid) == "string" and Villagers.get(player, vid)
 		return npc and npc.model or nil
 	end
-	-- the talk card's answers: Chat (one more line from one of your own villagers) and Bye
+	-- the talk card's answers: Chat (one more line from one of your own villagers) and Bye; and a
+	-- chat started by clicking one of them, from anywhere on the plot ("click": client
+	-- World/VillagerClick)
 	Remotes.fn("VillagerTalk").OnServerInvoke = function(player, vid, bye)
 		if type(vid) ~= "string" then
 			return false, "Who?"
@@ -2770,9 +2768,13 @@ function Villagers.start()
 			endTalk(player, vid)
 			return true
 		end
-		local said, why = talk(player, player, vid)
+		local said, why = talk(player, player, vid, bye == "click")
 		if not said then
 			return false, why
+		end
+		if bye == "click" then
+			said.far = true
+			talkedEvent:Fire(player, vid)
 		end
 		return true, said
 	end
@@ -2829,6 +2831,7 @@ function Villagers.start()
 		yourCarry[player] = nil
 		talkTokens[player] = nil
 		talkedAt[player] = nil
+		farFrom[player] = nil
 		flairAt[player] = nil
 		lastSaid[player] = nil
 		inUse[player] = nil

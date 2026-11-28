@@ -1,7 +1,8 @@
 -- Plays random events in each player's town. Every few minutes it asks Sim/EventEngine for an
 -- event, borrows the villagers involved, walks them together, plays the lines as speech bubbles
 -- while the owner's screen shows the scene, waits for a choice if there is one, then applies what
--- happened. Also hands out room request rewards and small friendship gains from casual chats.
+-- happened. Also hands out room request rewards and small friendship gains from casual chats, and
+-- plays villagers' asks for what they lack ahead of the random events (Asks, below).
 --
 -- Events bring things into the world (the user: "make much much more random events. custom
 -- objects, conversations, etc."): the props a scene names (Data/EventProps) are put down by its
@@ -36,6 +37,7 @@ local EventProps = require(Shared.Data.EventProps)
 local EventData = require(Shared.Data.Events)
 local NewsKinds = require(Shared.Data.NewsKinds)
 local Builder = require(Shared.Build.Builder)
+local Needs = require(Shared.Sim.Needs)
 
 local Data = require(script.Parent.Data)
 local Plots = require(script.Parent.Plots)
@@ -448,6 +450,9 @@ local function serviceEffects(player: Player, ev: any, list: { any })
 		elseif e.t == "dress" and e.vid then
 			-- a memory changed what they wear (Sim/Memory): the hat goes on, or comes off
 			task.spawn(Villagers.dress, player, e.vid)
+		elseif e.t == "wishes" and Villagers.syncWishes then
+			-- somebody has a new wish (they asked for friends): its bubble goes up over them
+			Villagers.syncWishes(player)
 		end
 	end
 end
@@ -579,9 +584,8 @@ function Events.party(player: Player): boolean
 	local profile = Data.get(player)
 	if profile then
 		for _, vid in profile.order do
-			local v = profile.villagers[vid]
-			if v then
-				v.mood = math.clamp(v.mood + 8, 0, 100)
+			if profile.villagers[vid] then
+				Needs.addMood(profile, vid, 8)
 			end
 		end
 		for i = 1, #profile.order do
@@ -594,15 +598,8 @@ function Events.party(player: Player): boolean
 	return true
 end
 
--- Tries to start an event now. Returns true if one started.
-function Events.trigger(player: Player, forceId: string?): boolean
-	if running[player] or paused[player] then
-		return false
-	end
-	local profile = Data.get(player)
-	if not profile or not Plots.indexOf(player) then
-		return false
-	end
+-- The event engine's view of a town right now, the hour and who is about to star in it.
+local function contextFor(player: Player, profile: any): (any, number, { string })
 	local hour = World.hour()
 	local cal = World.calendar()
 	local present = presentVillagers(player, World.isNight(hour))
@@ -618,6 +615,19 @@ function Events.trigger(player: Player, forceId: string?): boolean
 		freeSlots = City.villagerRoom(profile),
 	})
 	profile.calendarDay = World.dayIndex()
+	return ctx, hour, present
+end
+
+-- Tries to start an event now. Returns true if one started.
+function Events.trigger(player: Player, forceId: string?): boolean
+	if running[player] or paused[player] then
+		return false
+	end
+	local profile = Data.get(player)
+	if not profile or not Plots.indexOf(player) then
+		return false
+	end
+	local ctx, hour, present = contextFor(player, profile)
 	local ev
 	if forceId then
 		-- for testing in Studio: that event, with whoever around it can happen to
@@ -648,6 +658,134 @@ function Events.trigger(player: Player, forceId: string?): boolean
 	return true
 end
 
+-- Asks ------------------------------------------------------------------------------------------
+--
+-- A villager asking for what they lack (Sim/Needs; the scenes are Data/Events/Needs). The user: "if
+-- a villager dosent have a workspace or bed, they will ask the player for it, confirmed to ask if
+-- they just moved in and a chance to constantly ask it after if not fufilled" and, of what mood
+-- needs, "Villagers will ask for these if they are not fufilled". So somebody who moves in without
+-- a bed or a workplace asks for it AskWait seconds later, and every town hour one villager who is
+-- short of something may ask (AskChance by what it is, never again within AskEvery town hours).
+-- An ask is a small event like any other (the prompt, Watch), played ahead of the random ones as
+-- soon as nothing else is, AskGap after the last; one that can't be played within AskKeep goes.
+-- While the tutorial is still teaching the bed and the workplace, it does the asking.
+
+local N = Tuning.Needs
+-- the event each ask plays
+local ASK_EVENTS = {
+	bed = "nobed",
+	work = "jobhunt",
+	roof = "needroof",
+	comfy = "needcomfy",
+	fun = "needfun",
+	friends = "needfriends",
+}
+type Ask = { vid: string, kind: string, at: number, untilT: number }
+local asks: { [Player]: { Ask } } = {}
+local lastAsked: { [Player]: { [string]: number } } = {} -- os.clock() a villager last asked
+
+local function askedLately(player: Player, vid: string): boolean
+	local t = lastAsked[player] and lastAsked[player][vid]
+	return t ~= nil and os.clock() - t < N.AskEvery * Tuning.Day.Length / 24
+end
+
+-- Has a villager an ask waiting?
+local function waiting(player: Player, vid: string): boolean
+	local list = asks[player]
+	if list then
+		for _, a in list do
+			if a.vid == vid then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+-- Queues a villager's ask for `kind` (one of Sim/Needs.Asks), to play `delay` seconds from now or
+-- later. One waiting per villager and kind.
+function Events.ask(player: Player, vid: string, kind: string, delay: number?)
+	if not ASK_EVENTS[kind] then
+		return
+	end
+	local list = asks[player]
+	if not list then
+		list = {}
+		asks[player] = list
+	end
+	for _, a in list do
+		if a.vid == vid and a.kind == kind then
+			return
+		end
+	end
+	local at = os.clock() + (delay or 0)
+	table.insert(list, { vid = vid, kind = kind, at = at, untilT = at + N.AskKeep })
+end
+
+-- Plays the first ask that is due and can be played now. Asks that are no longer needed, or waited
+-- too long, go. Returns true if one started.
+local function playAsk(player: Player): boolean
+	local list = asks[player]
+	local profile = Data.get(player)
+	if not list or #list == 0 or not profile then
+		return false
+	end
+	local now = os.clock()
+	local ctx, present = nil, {}
+	local i = 1
+	while i <= #list do
+		local a = list[i]
+		local gone = not profile.villagers[a.vid]
+			or now > a.untilT
+			or not table.find(Needs.missing(profile, a.vid), a.kind)
+		if gone then
+			table.remove(list, i)
+		elseif now >= a.at and not Needs.teaching(profile) then
+			if not ctx then
+				ctx, _, present = contextFor(player, profile)
+			end
+			local def = EventData.get(ASK_EVENTS[a.kind])
+			-- (whatever the hour: a random one keeps to its part of the day, an ask doesn't)
+			if def and table.find(present, a.vid) then
+				local ok, w = pcall(def.weight, ctx, a.vid)
+				if ok and type(w) == "number" and w > 0 then
+					table.remove(list, i)
+					local byVid = lastAsked[player]
+					if not byVid then
+						byVid = {}
+						lastAsked[player] = byVid
+					end
+					byVid[a.vid] = now
+					task.spawn(play, player, EventEngine.stage(ctx, def, { a.vid }))
+					return true
+				end
+			end
+			i += 1
+		else
+			i += 1
+		end
+	end
+	return false
+end
+
+-- A town hour: maybe one villager who is short of something asks for it.
+local function rollAsks(player: Player)
+	local profile = Data.get(player)
+	if not profile or Needs.teaching(profile) then
+		return
+	end
+	for _, vid in profile.order do
+		if profile.villagers[vid] and not waiting(player, vid) and not askedLately(player, vid) then
+			local kind = Needs.ask(profile, vid)
+			local chance = kind and N.AskChance[kind]
+			if kind and chance and rng:chance(chance) then
+				Events.ask(player, vid, kind)
+				return
+			end
+		end
+	end
+end
+
 -- Room requests ----------------------------------------------------------------------------------
 
 local function checkRequests(player: Player)
@@ -667,7 +805,7 @@ local function checkRequests(player: Player)
 			table.remove(profile.requests, i)
 			changed = true
 			Data.addCoins(player, Tuning.Rewards.RequestCoins, true)
-			v.mood = math.clamp(v.mood + 10, 0, 100)
+			Needs.addMood(profile, r.vid, 10)
 			local npc = Villagers.get(player, r.vid)
 			if npc then
 				npc:say("You remembered. Thank you.", 4)
@@ -690,7 +828,7 @@ local function checkRequests(player: Player)
 		elseif (r.untilT or 0) < now then
 			table.remove(profile.requests, i)
 			changed = true
-			v.mood = math.clamp(v.mood - 5, 0, 100)
+			Needs.addMood(profile, r.vid, -5)
 			Data.notify(
 				player,
 				Text.fill(
@@ -811,6 +949,15 @@ function Events.start()
 	end)
 
 	Villagers.Created:Connect(function(player, vid)
+		-- what they moved in without, they ask for straight away (Asks, above)
+		local profile = Data.get(player)
+		if profile and profile.villagers[vid] and not Needs.teaching(profile) then
+			for _, kind in Needs.missing(profile, vid) do
+				if kind == "bed" or kind == "work" then
+					Events.ask(player, vid, kind, N.AskWait)
+				end
+			end
+		end
 		-- a little welcome from whoever is around
 		task.delay(6, function()
 			local profile = Data.get(player)
@@ -824,7 +971,14 @@ function Events.start()
 	end)
 
 	World.NewDay.Event:Connect(newDay)
+	World.ClockChanged.Event:Connect(function()
+		for _, player in Players:GetPlayers() do
+			rollAsks(player)
+		end
+	end)
 	Players.PlayerRemoving:Connect(function(player)
+		asks[player] = nil
+		lastAsked[player] = nil
 		running[player] = nil
 		nextAt[player] = nil
 		paused[player] = nil
@@ -845,8 +999,18 @@ function Events.start()
 			for _, player in Players:GetPlayers() do
 				local profile = Data.get(player)
 				if profile and Plots.indexOf(player) and #profile.order > 0 then
+					local last = lastEnded[player]
 					if not nextAt[player] then
 						nextAt[player] = now + E.FirstDelay
+					elseif
+						-- a villager asking for something comes first (Asks, above)
+						not running[player]
+						and not paused[player]
+						and not Events.reading(player)
+						and (not last or os.clock() - last.at >= N.AskGap)
+						and playAsk(player)
+					then
+						nextAt[player] = math.max(nextAt[player], now + E.MinGap)
 					elseif
 						now >= nextAt[player]
 						and not running[player]
