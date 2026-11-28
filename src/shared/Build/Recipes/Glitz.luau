@@ -42,7 +42,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -97,7 +97,7 @@ end
 
 -- A fish facing +X with a tail, a fin and eyes, `len` long.
 local function fish(r: R, at: CFrame, len: number, col: Color3)
-	r:lump(at, len, len * 0.5, len * 0.32, col, "SmoothPlastic")
+	r:lump(at, len, len * 0.5, len * 0.32, col, "Marble")
 	local tail = at * CFrame.new(-len * 0.5, 0, 0)
 	r:tri(
 		tail.Position,
@@ -105,7 +105,7 @@ local function fish(r: R, at: CFrame, len: number, col: Color3)
 		(tail * CFrame.new(-len * 0.32, -len * 0.24, 0)).Position,
 		0.03,
 		shade(col, 0.86),
-		"SmoothPlastic"
+		"Marble"
 	)
 	r:tri(
 		(at * CFrame.new(-len * 0.1, len * 0.2, 0)).Position,
@@ -113,11 +113,11 @@ local function fish(r: R, at: CFrame, len: number, col: Color3)
 		(at * CFrame.new(-len * 0.16, len * 0.36, 0)).Position,
 		0.02,
 		shade(col, 0.86),
-		"SmoothPlastic"
+		"Marble"
 	)
 	for _, s in { -1, 1 } do
 		local eye = at * CFrame.new(len * 0.3, len * 0.06, s * len * 0.13)
-		r:ball(eye.X, eye.Y, eye.Z, len * 0.09, INK, "SmoothPlastic")
+		r:ball(eye.X, eye.Y, eye.Z, len * 0.09, INK, "Marble")
 	end
 end
 
@@ -173,7 +173,7 @@ local items: { Item } = {
 						0.2,
 						0.2,
 						col,
-						"SmoothPlastic"
+						"Glass"
 					)
 					lamp.transp = 1
 					lamp.collide = false
@@ -210,7 +210,7 @@ local items: { Item } = {
 			for i = 1, 16 do
 				local a, b = pts[i], pts[i + 1]
 				local u = (b - a).Unit * 0.02
-				rod(r, a - u, b + u, 0.04, r.c2, "Plastic")
+				rod(r, a - u, b + u, 0.04, r.c2, "Rubber")
 			end
 			for _, i in { 1, 9, 17 } do
 				local p = pts[i]
@@ -218,7 +218,7 @@ local items: { Item } = {
 			end
 			for i = 2, 16 do
 				local p = pts[i]
-				r:cyl(p.X, p.Y - 0.08, p.Z, 0.12, 0.09, "y", r.c2, "Plastic")
+				r:cyl(p.X, p.Y - 0.08, p.Z, 0.12, 0.09, "y", r.c2, "Rubber")
 				local bulb = r:lump(CFrame.new(p.X, p.Y - 0.24, p.Z), 0.15, 0.22, 0.15, r.c1, "Neon")
 				r:glow(bulb, if i == 9 then 10 else 0, 0.8, r.c1)
 				Lively.twinkle(bulb)
@@ -239,20 +239,20 @@ local items: { Item } = {
 		lively = true,
 		build = function(r: R)
 			-- a plinth, the cabinet and its round top
-			r:block(-1.4, 0, -0.8, 1.4, 0.3, 0.8, INK, "SmoothPlastic")
+			r:bevel(-1.4, 0, -0.8, 1.4, 0.3, 0.8, 0.08, INK, "Metal", { wear = 1.06 })
 			r:block(-1.3, 0.3, -0.75, 1.3, 3.8, 0.7, r.c1, "Wood")
 			r:cyl(0, 3.8, -0.025, 1.45, 2.6, "z", r.c1, "Wood")
 			for _, sx in { -1, 1 } do
 				r:block(sx * 1.3 - 0.12, 0.3, 0.6, sx * 1.3 + 0.04, 3.8, 0.78, r.c2, "Metal")
 			end
 			-- the window: a dark arch with the records standing in a row behind clear glass
-			r:block(-0.9, 2.6, 0.7, 0.9, 3.8, 0.74, Color3.fromRGB(40, 44, 70), "SmoothPlastic")
-			r:cyl(0, 3.8, 0.72, 0.04, 1.8, "z", Color3.fromRGB(40, 44, 70), "SmoothPlastic")
+			r:block(-0.9, 2.6, 0.7, 0.9, 3.8, 0.74, Color3.fromRGB(40, 44, 70), "Glass")
+			r:cyl(0, 3.8, 0.72, 0.04, 1.8, "z", Color3.fromRGB(40, 44, 70), "Glass")
 			local labels = { C.Red, C.Yellow, C.Blue, C.Pink, Color3.fromRGB(120, 200, 140) }
 			for i = 0, 4 do
 				local x = -0.7 + i * 0.35
-				r:cyl(x, 3.3, 0.76, 0.04, 0.42, "z", INK, "SmoothPlastic")
-				r:cyl(x, 3.3, 0.795, 0.03, 0.14, "z", labels[i + 1], "SmoothPlastic")
+				r:cyl(x, 3.3, 0.76, 0.04, 0.42, "z", INK, "Metal")
+				r:cyl(x, 3.3, 0.795, 0.03, 0.14, "z", labels[i + 1], "Cardboard")
 			end
 			local front = r:block(-0.9, 2.6, 0.84, 0.9, 3.8, 0.86, C.Glass, "Glass")
 			front.transp = 0.75
@@ -275,7 +275,7 @@ local items: { Item } = {
 				end
 			end
 			-- the buttons to pick a song, a coin slot, and the speaker grille
-			r:block(-0.9, 2.1, 0.7, 0.9, 2.5, 0.78, CREAM, "SmoothPlastic")
+			r:block(-0.9, 2.1, 0.7, 0.9, 2.5, 0.78, CREAM, "Metal")
 			for row = 0, 1 do
 				for k = 0, 6 do
 					r:block(
@@ -286,7 +286,7 @@ local items: { Item } = {
 						2.28 + row * 0.16,
 						0.82,
 						if (k + row) % 3 == 0 then C.Red else C.White,
-						"SmoothPlastic"
+						"Rubber"
 					)
 				end
 			end
@@ -312,7 +312,7 @@ local items: { Item } = {
 		lively = true,
 		build = function(r: R)
 			-- a dark base, a bright frame round it and sixteen tiles that glow and change colour
-			r:block(-2.8, 0, -2.8, 2.8, 0.06, 2.8, INK, "SmoothPlastic")
+			r:block(-2.8, 0, -2.8, 2.8, 0.06, 2.8, INK, "Metal")
 			r:block(-3, 0, -3, 3, 0.2, -2.8, r.c2, "Metal")
 			r:block(-3, 0, 2.8, 3, 0.2, 3, r.c2, "Metal")
 			r:block(-3, 0, -2.8, -2.8, 0.2, 2.8, r.c2, "Metal")
@@ -349,7 +349,7 @@ local items: { Item } = {
 				table.insert(pts, Vector3.new(x * 0.066, 1.36 + y * 0.066, 0.2))
 			end
 			neon(r, pts, r.c1)
-			rod(r, Vector3.new(0, 0.1, 0.1), Vector3.new(0, 0.0, 0.02), 0.04, INK, "Plastic")
+			rod(r, Vector3.new(0, 0.1, 0.1), Vector3.new(0, 0.0, 0.02), 0.04, INK, "Metal")
 		end,
 	},
 	{
@@ -372,7 +372,7 @@ local items: { Item } = {
 				table.insert(pts, Vector3.new(math.cos(a) * rad, 1.25 + math.sin(a) * rad, 0.2))
 			end
 			neon(r, pts, r.c1)
-			rod(r, Vector3.new(0, 0.1, 0.1), Vector3.new(0, 0.0, 0.02), 0.04, INK, "Plastic")
+			rod(r, Vector3.new(0, 0.1, 0.1), Vector3.new(0, 0.0, 0.02), 0.04, INK, "Metal")
 		end,
 	},
 	{
@@ -390,20 +390,20 @@ local items: { Item } = {
 		build = function(r: R)
 			local wall = r.c1
 			-- the booth: a floor plate, walls on three sides and half the front, a roof
-			r:block(-2.1, 0, -1.7, 2.1, 0.15, 1.7, INK, "SmoothPlastic")
-			r:block(-2.1, 0.15, -1.7, 2.1, 6.0, -1.5, wall, "SmoothPlastic")
-			r:block(-2.1, 0.15, -1.5, -1.9, 6.0, 1.7, wall, "SmoothPlastic")
-			r:block(1.9, 0.15, -1.5, 2.1, 6.0, 1.7, wall, "SmoothPlastic")
-			r:block(0.1, 0.15, 1.5, 1.9, 6.0, 1.7, wall, "SmoothPlastic")
-			r:block(-1.9, 5.0, 1.5, 0.1, 6.0, 1.7, wall, "SmoothPlastic")
-			r:block(-2.2, 6.0, -1.8, 2.2, 6.2, 1.8, r.c2, "SmoothPlastic")
+			r:bevel(-2.1, 0, -1.7, 2.1, 0.15, 1.7, 0.052, INK, "Metal", { wear = 1.06 })
+			r:block(-2.1, 0.15, -1.7, 2.1, 6.0, -1.5, wall, "Fabric")
+			r:block(-2.1, 0.15, -1.5, -1.9, 6.0, 1.7, wall, "Fabric")
+			r:block(1.9, 0.15, -1.5, 2.1, 6.0, 1.7, wall, "Fabric")
+			r:block(0.1, 0.15, 1.5, 1.9, 6.0, 1.7, wall, "Fabric")
+			r:block(-1.9, 5.0, 1.5, 0.1, 6.0, 1.7, wall, "Fabric")
+			r:bevel(-2.2, 6.0, -1.8, 2.2, 6.2, 1.8, 0.09, r.c2, "Fabric", { round = true })
 			-- a lit sign box on top with stars and a camera on it, bulbs along its edge
-			local sign = r:block(-1.6, 6.2, 0.9, 1.6, 6.75, 1.4, CREAM, "SmoothPlastic")
+			local sign = r:block(-1.6, 6.2, 0.9, 1.6, 6.75, 1.4, CREAM, "Metal")
 			r:glow(sign, 10, 0.8)
 			for _, x in { -1.1, 1.1 } do
-				star(r, CFrame.new(x, 6.47, 1.42), 0.32, 0.03, r.c1, "SmoothPlastic")
+				star(r, CFrame.new(x, 6.47, 1.42), 0.32, 0.03, r.c1, "Metal")
 			end
-			r:block(-0.3, 6.32, 1.4, 0.3, 6.62, 1.44, INK, "SmoothPlastic")
+			r:block(-0.3, 6.32, 1.4, 0.3, 6.62, 1.44, INK, "Metal")
 			r:cyl(0, 6.47, 1.47, 0.04, 0.18, "z", CHROME, "Metal")
 			for k = 0, 6 do
 				local bulb = r:ball(-1.5 + k * 0.5, 6.78, 1.15, 0.14, C.Yellow, "Neon")
@@ -431,8 +431,8 @@ local items: { Item } = {
 			r:cyl(-0.9, 0.85, 0.5, 1.4, 0.18, "y", CHROME, "Metal")
 			r:cyl(-0.9, 1.6, 0.5, 0.14, 0.9, "y", r.c2, "Fabric")
 			r:seat(-0.9, 1.67, 0.5, 180)
-			r:block(-1.4, 2.2, -1.5, -0.4, 3.4, -1.4, INK, "SmoothPlastic")
-			local screen = r:block(-1.3, 2.3, -1.4, -0.5, 2.9, -1.37, Color3.fromRGB(120, 150, 200), "SmoothPlastic")
+			r:block(-1.4, 2.2, -1.5, -0.4, 3.4, -1.4, INK, "Metal")
+			local screen = r:block(-1.3, 2.3, -1.4, -0.5, 2.9, -1.37, Color3.fromRGB(120, 150, 200), "Cardboard")
 			r:glow(screen, 0)
 			r:cyl(-0.9, 3.12, -1.38, 0.06, 0.24, "z", CHROME, "Metal")
 			local flash = r:block(-1.2, 3.25, -1.4, -0.6, 3.36, -1.36, C.White, "Neon")
@@ -440,8 +440,8 @@ local items: { Item } = {
 			-- outside: a coin box, the slot the photos come out of and a strip waiting in it
 			r:block(0.4, 2.6, 1.7, 0.8, 3.2, 1.8, CHROME, "Metal")
 			r:block(0.55, 2.95, 1.8, 0.65, 3.1, 1.83, INK, "Metal")
-			r:block(0.9, 1.8, 1.7, 1.5, 1.9, 1.76, INK, "SmoothPlastic")
-			r:block(1.05, 1.0, 1.7, 1.35, 1.82, 1.74, C.White, "SmoothPlastic")
+			r:block(0.9, 1.8, 1.7, 1.5, 1.9, 1.76, INK, "Metal")
+			r:block(1.05, 1.0, 1.7, 1.35, 1.82, 1.74, C.White, "Cardboard")
 			for k = 0, 3 do
 				r:block(
 					1.1,
@@ -451,10 +451,10 @@ local items: { Item } = {
 					1.2 + k * 0.19,
 					1.77,
 					if k % 2 == 0 then C.Blue else C.Pink,
-					"SmoothPlastic"
+					"Cardboard"
 				)
 			end
-			star(r, CFrame.new(1.0, 4.1, 1.72), 0.6, 0.03, r.c2, "SmoothPlastic")
+			star(r, CFrame.new(1.0, 4.1, 1.72), 0.6, 0.03, r.c2, "Fabric")
 		end,
 	},
 	{
@@ -478,7 +478,7 @@ local items: { Item } = {
 				r:block(x + 0.85, 0.5, 0.94, x + 0.95, 0.7, 0.98, CHROME, "Metal")
 			end
 			-- the tank: a frame, sand, rocks, coral and weed, the water and the clear front
-			r:block(-4, 1.2, -0.9, 4, 1.35, 0.9, frame, "Metal")
+			r:bevel(-4, 1.2, -0.9, 4, 1.35, 0.9, 0.053, frame, "Metal", { wear = 1.06 })
 			r:block(-3.85, 1.35, -0.75, 3.85, 1.65, 0.75, Color3.fromRGB(230, 210, 166), "Sand")
 			for _, sx in { -1, 1 } do
 				for _, sz in { -1, 1 } do
@@ -494,8 +494,8 @@ local items: { Item } = {
 					)
 				end
 			end
-			r:block(-4, 6.4, -0.9, 4, 6.6, 0.9, frame, "Metal")
-			r:block(-4, 6.6, -0.9, 4, 7.0, 0.9, r.c1, "Wood")
+			r:bevel(-4, 6.4, -0.9, 4, 6.6, 0.9, 0.07, frame, "Metal", { wear = 1.06 })
+			r:bevel(-4, 6.6, -0.9, 4, 7.0, 0.9, 0.08, r.c1, "Wood", { wear = 1.06 })
 			local strip = r:block(-3.8, 6.36, -0.7, 3.8, 6.4, 0.7, C.White, "Neon")
 			r:glow(strip, 14, 0.9, Color3.fromRGB(170, 220, 250))
 			local rocks = { { -2.6, 2.0, -0.3, 1.2 }, { 1.4, 1.9, -0.4, 1.0 }, { 3.1, 1.8, 0.2, 0.7 } }
@@ -525,7 +525,7 @@ local items: { Item } = {
 						0.6,
 						0.24,
 						shade(col, 0.92 + k * 0.06),
-						"SmoothPlastic"
+						"Rock"
 					)
 				end
 			end
@@ -636,14 +636,14 @@ local items: { Item } = {
 			r:cyl(-1.0, 0.7, 0, 1.9, 0.1, "z", CHROME, "Metal")
 			rod(r, Vector3.new(1.58, 2.3, -0.62), Vector3.new(1.58, 2.3, 0.62), 0.08, CHROME, "Metal")
 			-- the cart, trimmed top and bottom, a striped popcorn box painted on its front
-			r:block(-1.5, 1.0, -0.85, 1.5, 2.4, 0.85, r.c1, "SmoothPlastic")
-			r:block(-1.55, 2.3, -0.9, 1.55, 2.45, 0.9, r.c2, "SmoothPlastic")
-			r:block(-1.55, 0.95, -0.9, 1.55, 1.1, 0.9, r.c2, "SmoothPlastic")
+			r:block(-1.5, 1.0, -0.85, 1.5, 2.4, 0.85, r.c1, "Metal")
+			r:block(-1.55, 2.3, -0.9, 1.55, 2.45, 0.9, r.c2, "Cardboard")
+			r:block(-1.55, 0.95, -0.9, 1.55, 1.1, 0.9, r.c2, "Cardboard")
 			for k = 0, 2 do
-				r:block(-0.55 + k * 0.38, 1.35, 0.85, -0.37 + k * 0.38, 2.05, 0.89, C.White, "SmoothPlastic")
+				r:block(-0.55 + k * 0.38, 1.35, 0.85, -0.37 + k * 0.38, 2.05, 0.89, C.White, "Cardboard")
 			end
 			for k = 0, 3 do
-				r:ball(-0.45 + k * 0.3, 2.12, 0.88, 0.22, CREAM, "SmoothPlastic")
+				r:ball(-0.45 + k * 0.3, 2.12, 0.88, 0.22, CREAM, "Sand")
 			end
 			-- the glass case on top: posts, panes, a lid, a heap of popcorn and the kettle
 			for _, sx in { -1, 1 } do
@@ -666,9 +666,9 @@ local items: { Item } = {
 			for _, sx in { -1, 1 } do
 				r:glass(sx * 1.4 - 0.02, 2.45, -0.7, sx * 1.4 + 0.02, 4.3, 0.7)
 			end
-			r:block(-1.5, 4.3, -0.85, 1.5, 4.45, 0.85, r.c2, "SmoothPlastic")
+			r:block(-1.5, 4.3, -0.85, 1.5, 4.45, 0.85, r.c2, "Cardboard")
 			for k, p in { { -0.8, 0.2 }, { -0.4, -0.3 }, { 0.1, 0.1 }, { 0.6, -0.2 }, { 0.9, 0.3 }, { -0.2, 0.4 } } do
-				r:lump(CFrame.new(p[1], 2.62, p[2]) * CFrame.Angles(0, k, 0), 0.7, 0.4, 0.6, CREAM, "SmoothPlastic")
+				r:lump(CFrame.new(p[1], 2.62, p[2]) * CFrame.Angles(0, k, 0), 0.7, 0.4, 0.6, CREAM, "Sand")
 			end
 			rod(r, Vector3.new(0, 4.3, 0), Vector3.new(0, 3.95, 0), 0.06, CHROME, "Metal")
 			r:cyl(0, 3.65, 0, 0.5, 0.7, "y", CHROME, "Metal")

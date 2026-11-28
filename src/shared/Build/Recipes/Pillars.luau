@@ -83,7 +83,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -516,7 +516,7 @@ local items: { Item } = {
 				square(q, 0.3, 3.72, 1.82, r.c2, "Brick")
 				square(q, 1.3, 1.5, 1.88, shade(r.c2, 0.9), "Brick")
 			end, true)
-			r:block(-1, 3.72, -1, 1, 4, 1, PALE_STONE, "Concrete")
+			r:bevel(-1, 3.72, -1, 1, 4, 1, 0.08, PALE_STONE, "Concrete", { wear = 0.94 })
 			r:piece(function(q: R)
 				square(q, 4, 4.32, 1.4, shade(r.c1, 0.97), "Wood")
 				square(q, 4.32, 4.44, 1.3, r.c1, "Wood")
@@ -579,8 +579,8 @@ local items: { Item } = {
 			r:cone(0, y0 + ht + 0.06 + 0.17, zl, 0.34, 0.4, iron, "Metal")
 			r:ball(0, y0 + ht + 0.4, zl, 0.1, iron, "Metal")
 			r:glass(-hw + 0.04, y0 + 0.06, zl - hw + 0.04, hw - 0.04, y0 + ht, zl + hw - 0.04)
-			r:cyl(0, y0 + 0.16, zl, 0.2, 0.14, "y", C.Cream, "SmoothPlastic")
-			local flame = r:ball(0, y0 + 0.36, zl, 0.16, C.Warm, "SmoothPlastic")
+			r:cyl(0, y0 + 0.16, zl, 0.2, 0.14, "y", C.Cream, "Glass")
+			local flame = r:ball(0, y0 + 0.36, zl, 0.16, C.Warm, "Glass")
 			r:glow(flame, 14, 1.1)
 		end,
 	},
@@ -892,7 +892,7 @@ local items: { Item } = {
 			-- a squared oak post (c1) with its edges taken off, on a stone pad, carrying a short
 			-- beam (c2) on its head with a knee brace each side from the post up under it, every
 			-- joint held by oak pegs
-			r:block(-0.62, 0, -0.62, 0.62, 0.36, 0.62, C.Stone, "Slate")
+			r:bevel(-0.62, 0, -0.62, 0.62, 0.36, 0.62, 0.08, C.Stone, "Slate", { wear = 0.94 })
 			local top = CEIL - 0.6
 			r:piece(function(q: R)
 				q:block(-0.4, 0.36, -0.33, 0.4, top, 0.33, r.c1, "Wood")
@@ -1358,7 +1358,7 @@ local items: { Item } = {
 					d * 0.86,
 					d,
 					if i % 3 == 1 then shade(r.c2, 1.1) else r.c2,
-					"SmoothPlastic"
+					"Fabric"
 				)
 				r:noCollide(bloom)
 			end
@@ -1521,7 +1521,7 @@ local items: { Item } = {
 					Vector3.new(-0.5, 4.76, -0.36),
 				}
 			do
-				r:noCollide(r:lump(CFrame.new(f) * CFrame.Angles(0.2, k, 0), 0.3, 0.14, 0.3, heads[k], "SmoothPlastic"))
+				r:noCollide(r:lump(CFrame.new(f) * CFrame.Angles(0.2, k, 0), 0.3, 0.14, 0.3, heads[k], "Fabric"))
 			end
 		end,
 	},
@@ -1538,7 +1538,7 @@ local items: { Item } = {
 		build = function(r: R)
 			-- three bamboo canes (c1) bound together into one slim post, each with its own joints,
 			-- lashed with cord (c2) at the foot, the middle and the head, on a stone pad
-			r:block(-0.45, 0, -0.45, 0.45, 0.22, 0.45, C.Stone, "Slate")
+			r:bevel(-0.45, 0, -0.45, 0.45, 0.22, 0.45, 0.077, C.Stone, "Slate", { wear = 0.94 })
 			for i, p in { { 0.15, 0 }, { -0.08, 0.14 }, { -0.08, -0.14 } } do
 				drum(r, p[1], p[2], 0.22, CEIL, 0.3, if i == 2 then shade(r.c1, 0.94) else r.c1, "Wood")
 				for j = 0, 3 do
@@ -1568,28 +1568,28 @@ local items: { Item } = {
 			-- a round column (c1) with a candy stripe (c2) winding up it and a thin mint one beside
 			-- it, a ring of sweets on a ledge near the top, and a striped band at the ceiling
 			local mint = Color3.fromRGB(150, 210, 186)
-			drum(r, 0, 0, 0, 0.5, 1.9, r.c2, "SmoothPlastic")
-			drum(r, 0, 0, 0.5, 0.7, 1.6, r.c1, "SmoothPlastic")
-			drum(r, 0, 0, 0.7, CEIL, 1.4, r.c1, "SmoothPlastic")
+			drum(r, 0, 0, 0, 0.5, 1.9, r.c2, "Marble")
+			drum(r, 0, 0, 0.5, 0.7, 1.6, r.c1, "Marble")
+			drum(r, 0, 0, 0.7, CEIL, 1.4, r.c1, "Marble")
 			-- (each stripe three times round in 54 lengths, 18 to a piece)
 			local n, y1, y2 = 54, 0.7, 9.9
 			for k = 0, 2 do
 				r:piece(function(q: R)
-					helix(q, k * 18, k * 18 + 18, n, y1, y2, 3, 0.74, 0, 0.1, 0.42, r.c2, "SmoothPlastic")
-				end)
+					helix(q, k * 18, k * 18 + 18, n, y1, y2, 3, 0.74, 0, 0.1, 0.42, r.c2, "Marble")
+				end, nil, "Marble")
 				r:piece(function(q: R)
-					helix(q, k * 18, k * 18 + 18, n, y1, y2, 3, 0.74, math.pi, 0.1, 0.16, mint, "SmoothPlastic")
-				end)
+					helix(q, k * 18, k * 18 + 18, n, y1, y2, 3, 0.74, math.pi, 0.1, 0.16, mint, "Marble")
+				end, nil, "Marble")
 			end
-			drum(r, 0, 0, 9.9, 10.08, 1.72, r.c2, "SmoothPlastic")
+			drum(r, 0, 0, 9.9, 10.08, 1.72, r.c2, "Marble")
 			for k = 0, 7 do
 				local a = k * math.pi / 4 + math.pi / 8
 				local col = ({ C.Yellow, mint, C.Pink, C.Blue })[k % 4 + 1]
-				r:ball(math.cos(a) * 0.74, 10.23, math.sin(a) * 0.74, 0.3, col, "SmoothPlastic")
+				r:ball(math.cos(a) * 0.74, 10.23, math.sin(a) * 0.74, 0.3, col, "Marble")
 			end
-			drum(r, 0, 0, CEIL - 0.3, CEIL, 1.66, r.c2, "SmoothPlastic")
-			drum(r, 0, 0, CEIL - 0.19, CEIL - 0.11, 1.7, r.c1, "SmoothPlastic")
-			drum(r, 0, 0, CEIL, TOP, 1.56, r.c1, "SmoothPlastic")
+			drum(r, 0, 0, CEIL - 0.3, CEIL, 1.66, r.c2, "Marble")
+			drum(r, 0, 0, CEIL - 0.19, CEIL - 0.11, 1.7, r.c1, "Marble")
+			drum(r, 0, 0, CEIL, TOP, 1.56, r.c1, "Marble")
 		end,
 	},
 	{
@@ -1619,16 +1619,16 @@ local items: { Item } = {
 				local f = CFrame.new(((i * 7) % 3 - 1) * 0.04, i * s + s / 2, ((i * 5) % 3 - 1) * 0.04)
 					* CFrame.Angles(0, yaw, 0)
 				r:piece(function(q: R)
-					q:block(-0.1, i * s + s / 2 - 0.1, -0.1, 0.1, i * s + s / 2 + 0.1, 0.1, col, "SmoothPlastic")
-					q:boxAt(f, w, s, w, col, "SmoothPlastic")
+					q:block(-0.1, i * s + s / 2 - 0.1, -0.1, 0.1, i * s + s / 2 + 0.1, 0.1, col, "Wood")
+					q:boxAt(f, w, s, w, col, "Wood")
 					local h = w / 2
 					-- on the front (+z: u runs along x) and the right (+x: u runs along -z)
 					local function strip(face: number, u1: number, v1: number, u2: number, v2: number, color: Color3)
 						local cu, cv, su, sv = (u1 + u2) / 2, (v1 + v2) / 2, u2 - u1, v2 - v1
 						if face == 1 then
-							q:boxAt(f * CFrame.new(cu, cv, h + 0.015), su, sv, 0.05, color, "SmoothPlastic")
+							q:boxAt(f * CFrame.new(cu, cv, h + 0.015), su, sv, 0.05, color, "Wood")
 						else
-							q:boxAt(f * CFrame.new(h + 0.015, cv, -cu), 0.05, sv, su, color, "SmoothPlastic")
+							q:boxAt(f * CFrame.new(h + 0.015, cv, -cu), 0.05, sv, su, color, "Wood")
 						end
 					end
 					for face = 1, 2 do
@@ -1649,7 +1649,7 @@ local items: { Item } = {
 							)
 						end
 					end
-				end, true)
+				end, true, "Wood")
 			end
 			r:piece(function(q: R)
 				q:block(-0.9, CEIL, -0.6, 0.9, TOP, 0.6, shade(r.c2, 0.9), "Wood")
@@ -1678,7 +1678,7 @@ local items: { Item } = {
 				hex(q, 0, 0, 0.98, 1.06, 0.94, shade(C.Metal, 0.9), "Metal")
 			end, true)
 			r:piece(function(q: R)
-				hex(q, 0, 0, 1.2, 4.4, 0.88, r.c1, "SmoothPlastic")
+				hex(q, 0, 0, 1.2, 4.4, 0.88, r.c1, "Wood")
 				-- the letters on the front face: an H and a B
 				local z = 0.88 * math.sqrt(3) / 2
 				local ink = Color3.fromRGB(70, 66, 74)
@@ -1695,9 +1695,9 @@ local items: { Item } = {
 						{ 0.24, 2.62, 0.29, 2.76 },
 					}
 				do
-					q:block(b[1], b[2], z - 0.01, b[3], b[4], z + 0.03, ink, "SmoothPlastic")
+					q:block(b[1], b[2], z - 0.01, b[3], b[4], z + 0.03, ink, "Wood")
 				end
-			end, true)
+			end, true, "Wood")
 			r:cone(0, 4.4 + 0.6, 0, 1.2, 1.56, Color3.fromRGB(232, 201, 154), "Wood")
 			r:cone(0, 5.2 + 0.25, 0, 0.5, 0.54, Color3.fromRGB(70, 66, 74), "Slate")
 		end,

@@ -41,7 +41,7 @@ function Kit.rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: st
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "Metal",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -90,7 +90,7 @@ function Kit.cylAt(r: R, cf: CFrame, length: number, d: number, color: Color3, m
 		cf = cf,
 		size = Vector3.new(length, d, d),
 		color = color,
-		mat = mat or "Metal",
+		mat = mat or r.mat or "Metal",
 	})
 end
 

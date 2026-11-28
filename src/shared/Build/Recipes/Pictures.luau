@@ -23,7 +23,7 @@ end
 
 -- The part the picture shows on: a box between two corners, facing `face`.
 local function canvas(r: R, x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, face: string): Prim
-	local p = r:block(x1, y1, z1, x2, y2, z2, r.c2, "SmoothPlastic")
+	local p = r:block(x1, y1, z1, x2, y2, z2, r.c2, "Fabric")
 	p.attrs = { Picture = face }
 	return p
 end
@@ -47,7 +47,7 @@ local function sketch(r: R, x1: number, y1: number, x2: number, y2: number, z: n
 				Vector3.new(x1 + c.X * w, y1 + c.Y * h, depth),
 				0.03,
 				color,
-				"SmoothPlastic"
+				"Cardboard"
 			)
 		do
 			table.insert(made, p)
@@ -56,7 +56,7 @@ local function sketch(r: R, x1: number, y1: number, x2: number, y2: number, z: n
 	tri(Vector2.new(0.3, 0.08), Vector2.new(0.92, 0.08), Vector2.new(0.66, 0.6), z + 0.045, C.DarkLeaf)
 	tri(Vector2.new(0.08, 0.08), Vector2.new(0.62, 0.08), Vector2.new(0.3, 0.46), z + 0.075, C.Leaf)
 	local d = math.min(w, h) * 0.2
-	table.insert(made, r:cyl(x1 + w * 0.74, y1 + h * 0.76, z + 0.045, 0.03, d, "z", C.Yellow, "SmoothPlastic"))
+	table.insert(made, r:cyl(x1 + w * 0.74, y1 + h * 0.76, z + 0.045, 0.03, d, "z", C.Yellow, "Cardboard"))
 	placeholder(made)
 end
 
@@ -71,7 +71,7 @@ local function sketchFlat(r: R, s: number, y: number)
 				Vector3.new(-s / 2 + c.X * s, y + lift, s / 2 - c.Y * s),
 				0.03,
 				color,
-				"SmoothPlastic"
+				"Cardboard"
 			)
 		do
 			table.insert(made, p)
@@ -80,7 +80,7 @@ local function sketchFlat(r: R, s: number, y: number)
 	-- (each layer 0.03 over the last, so no two tops lie close enough to flicker)
 	tri(Vector2.new(0.3, 0.1), Vector2.new(0.9, 0.1), Vector2.new(0.66, 0.6), 0.015, C.DarkLeaf)
 	tri(Vector2.new(0.1, 0.1), Vector2.new(0.62, 0.1), Vector2.new(0.3, 0.46), 0.045, C.Leaf)
-	table.insert(made, r:cyl(s * 0.24, y + 0.015, -s * 0.26, 0.03, s * 0.2, "y", C.Yellow, "SmoothPlastic"))
+	table.insert(made, r:cyl(s * 0.24, y + 0.015, -s * 0.26, 0.03, s * 0.2, "y", C.Yellow, "Cardboard"))
 	placeholder(made)
 end
 
@@ -103,7 +103,7 @@ end
 local function framed(r: R, w: number, h: number, t: number, mat: string)
 	frame(r, w, h, t, 0.3, 0, 0.03, mat)
 	local mount = Color3.fromRGB(246, 242, 232)
-	r:block(-w / 2 + t - 0.02, t - 0.02, 0.05, w / 2 - t + 0.02, h - t + 0.02, 0.1, mount, "SmoothPlastic")
+	r:block(-w / 2 + t - 0.02, t - 0.02, 0.05, w / 2 - t + 0.02, h - t + 0.02, 0.1, mount, "Cardboard")
 	local m = math.min(w, h) * 0.08
 	canvas(r, -w / 2 + t + m, t + m, 0.1, w / 2 - t - m, h - t - m, 0.14, "Back")
 	sketch(r, -w / 2 + t + m, t + m, w / 2 - t - m, h - t - m, 0.14)
@@ -111,7 +111,7 @@ end
 
 -- A poster: a sheet of paper (c1) with the picture on it, held up by tape at its corners.
 local function poster(r: R, w: number, h: number)
-	r:block(-w / 2, 0, 0.03, w / 2, h, 0.06, r.c1, "SmoothPlastic")
+	r:block(-w / 2, 0, 0.03, w / 2, h, 0.06, r.c1, "Cardboard")
 	local m = 0.15
 	canvas(r, -w / 2 + m, m, 0.06, w / 2 - m, h - m, 0.09, "Back")
 	sketch(r, -w / 2 + m, m, w / 2 - m, h - m, 0.09)
@@ -125,7 +125,7 @@ local function poster(r: R, w: number, h: number)
 				0.16,
 				0.03,
 				tape,
-				"SmoothPlastic"
+				"Cardboard"
 			)
 		end
 	end
@@ -264,7 +264,7 @@ local items: { Item } = {
 				q:block(w / 2 - t, 0.04 + t, -0.06, w / 2, h - t, 0.06, r.c1, "Wood")
 			end)
 			r:block(-w / 2 - 0.02, 0, -0.1, w / 2 + 0.02, 0.04, 0.1, shade(r.c1, 0.85), "Wood")
-			r:block(-w / 2 + t, 0.04 + t, -0.04, w / 2 - t, h - t, 0.02, r.c2, "SmoothPlastic")
+			r:block(-w / 2 + t, 0.04 + t, -0.04, w / 2 - t, h - t, 0.02, r.c2, "Cardboard")
 			canvas(r, -w / 2 + t + 0.02, 0.06 + t, 0.02, w / 2 - t - 0.02, h - t - 0.02, 0.05, "Back")
 			sketch(r, -w / 2 + t + 0.02, 0.06 + t, w / 2 - t - 0.02, h - t - 0.02, 0.05)
 			r:beam(Vector3.new(0, h * 0.7, -0.07), Vector3.new(0, 0.03, -0.32), 0.24, 0.06, shade(r.c1, 0.9), "Wood")
@@ -321,7 +321,7 @@ local items: { Item } = {
 				q:block(-4, 3.4, -0.5, -3.8, 7.6, -0.1, metal, "Metal")
 				q:block(3.8, 3.4, -0.5, 4, 7.6, -0.1, metal, "Metal")
 			end)
-			r:block(-3.8, 3.4, -0.4, 3.8, 7.6, -0.2, r.c2, "SmoothPlastic")
+			r:block(-3.8, 3.4, -0.4, 3.8, 7.6, -0.2, r.c2, "Cardboard")
 			canvas(r, -3.7, 3.5, -0.2, 3.7, 7.5, -0.16, "Back")
 			sketch(r, -3.7, 3.5, 3.7, 7.5, -0.16)
 			-- the walkway along the foot of the board

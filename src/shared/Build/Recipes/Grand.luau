@@ -25,7 +25,7 @@ end
 
 -- A round rod from a to b.
 local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: string?)
-	local beam = r:beam(a, b, d, d, color, mat or "Metal")
+	local beam = r:beam(a, b, d, d, color, mat or r.mat or "Metal")
 	if beam then
 		beam.shape = "Cylinder"
 		beam.cf = beam.cf * CFrame.Angles(0, math.pi / 2, 0)
@@ -105,7 +105,7 @@ local items: { Item } = {
 					)
 					rod(r, Vector3.new(cx * t.reach * 0.7, t.y - 0.15, cz * t.reach * 0.7), tip, 0.1, r.c1)
 					round(r:cyl(tip.X, tip.Y + 0.05, tip.Z, 0.1, 0.36, "y", r.c1, "Metal"))
-					round(r:cyl(tip.X, tip.Y + 0.32, tip.Z, 0.44, 0.14, "y", r.c2, "Plastic"))
+					round(r:cyl(tip.X, tip.Y + 0.32, tip.Z, 0.44, 0.14, "y", r.c2, "Plaster"))
 					local flame = r:cone(tip.X, tip.Y + 0.64, tip.Z, 0.2, 0.1, C.Warm, "Neon")
 					r:glow(flame, 0)
 					drop(r, tip.X, tip.Y - 0.02, tip.Z)
@@ -138,7 +138,7 @@ local items: { Item } = {
 			-- the desk: panels between pilasters under a marble top, a brass rail at its foot,
 			-- facing +Z (the guests); the key cupboard stands along its back
 			local wood = r.c1
-			r:block(-5.8, 0, -0.2, 5.8, 0.3, 2.0, Colors.shade(wood, 0.8), "WoodPlanks")
+			r:bevel(-5.8, 0, -0.2, 5.8, 0.3, 2.0, 0.08, Colors.shade(wood, 0.8), "WoodPlanks", { wear = 1.06 })
 			r:block(-5.6, 0.3, -0.1, 5.6, 3.5, 1.8, wood, "WoodPlanks")
 			local step = 11.2 / 6
 			for k = 0, 5 do
@@ -156,7 +156,7 @@ local items: { Item } = {
 				round(r:ball((x1 + x2) / 2, 3.3, 1.97, 0.16, BRASS, "Metal"))
 			end
 			r:block(-5.7, 0.3, 1.8, 5.7, 0.42, 2.06, BRASS, "Metal")
-			r:block(-5.9, 3.5, -0.3, 5.9, 3.8, 2.2, MARBLE, "Marble")
+			r:bevel(-5.9, 3.5, -0.3, 5.9, 3.8, 2.2, 0.08, MARBLE, "Marble", { wear = 0.94 })
 			round(r:cyl(0, 3.65, 2.2, 11.8, 0.3, "x", MARBLE, "Marble"))
 			-- on the top: the bell, the open book with its pen, two green lamps, flowers
 			round(r:cyl(-1.2, 3.85, 1.0, 0.1, 0.7, "y", INK, "Metal"))
@@ -179,7 +179,7 @@ local items: { Item } = {
 			end
 			-- behind: the key cupboard, rows of pigeonholes with a brass hook and key in each
 			r:block(-4.0, 0, -2.2, 4.0, 6.0, -1.4, Colors.shade(wood, 0.9), "WoodPlanks")
-			r:block(-4.1, 6.0, -2.2, 4.1, 6.2, -1.3, wood, "WoodPlanks")
+			r:bevel(-4.1, 6.0, -2.2, 4.1, 6.2, -1.3, 0.07, wood, "WoodPlanks", { wear = 1.06 })
 			for row = 0, 3 do
 				for col = 0, 7 do
 					local x = -3.5 + col

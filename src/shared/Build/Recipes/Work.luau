@@ -80,7 +80,7 @@ local function carrot(q: R, at: CFrame)
 		cf = at * CFrame.new(0, 0, 0.42) * CFrame.Angles(math.rad(90), 0, 0),
 		size = Vector3.new(0.24, 0.84, 0.24),
 		color = CARROT,
-		mat = "SmoothPlastic",
+		mat = "Marble",
 	})
 	for _, a in { -0.4, 0.4 } do
 		q:boxAt(at * CFrame.Angles(0, a, 0) * CFrame.new(0, 0.06, -0.2), 0.07, 0.06, 0.42, C.Leaf)
@@ -118,7 +118,7 @@ local function cartWheel(r: R, x: number, y: number, z: number, d: number, wood:
 			q:boxAt(c * CFrame.Angles(0, 0, k * math.pi / 3 + math.pi / 6), 0.08, d - 0.4, 0.08, wood)
 		end
 		q:cyl(x, y, z, 0.3, 0.36, "z", shade(wood, 0.8))
-	end)
+	end, nil, "Wood")
 end
 
 -- Turned posts: a square foot, a round shaft with a collar near each end, and a square cap.
@@ -195,7 +195,7 @@ local function books(
 			end
 			n += 1
 		end
-	end)
+	end, nil, "Cardboard")
 end
 
 -- A striped cloth awning on a slope: stripes running back to front, a valance across the front
@@ -246,8 +246,19 @@ end
 -- that stands proud of it all round, raised panels down the front and a dark kick at its foot.
 local function counter(r: R, w: number, d: number, h: number, body: Color3, top: Color3)
 	r:block(-w / 2, 0.2, -d / 2, w / 2, h - 0.2, d / 2, body, "Wood")
-	r:block(-w / 2 + 0.06, 0, -d / 2 + 0.06, w / 2 - 0.06, 0.2, d / 2 - 0.06, shade(body, 0.6), "Wood")
-	r:block(-w / 2 - 0.15, h - 0.2, -d / 2 - 0.1, w / 2 + 0.15, h, d / 2 + 0.15, top, "Wood")
+	r:bevel(
+		-w / 2 + 0.06,
+		0,
+		-d / 2 + 0.06,
+		w / 2 - 0.06,
+		0.2,
+		d / 2 - 0.06,
+		0.07,
+		shade(body, 0.6),
+		"Wood",
+		{ wear = 1.06 }
+	)
+	r:bevel(-w / 2 - 0.15, h - 0.2, -d / 2 - 0.1, w / 2 + 0.15, h, d / 2 + 0.15, 0.07, top, "Wood", { wear = 1.06 })
 	r:piece(function(q: R)
 		q:block(-w / 2 - 0.08, h - 0.32, -d / 2 - 0.04, w / 2 + 0.08, h - 0.2, d / 2 + 0.08, shade(top, 0.86), "Wood")
 		local panels = math.max(2, math.floor(w / 1.6 + 0.5))
@@ -296,7 +307,7 @@ local items: { any } = {
 			stripedAwning(r, 8.4, -3.1, 2.55, 8.86, 7.15, 8, r.c1, r.c2)
 			-- the counter: a dark body, boards down the front and the ends, a thick top
 			r:block(-3.4, 0, -0.55, 3.4, H - 0.2, 0.9, shade(WALNUT, 0.7), "Wood")
-			r:block(-3.6, H - 0.22, -1.12, 3.6, H, 1.1, WALNUT, "WoodPlanks")
+			r:bevel(-3.6, H - 0.22, -1.12, 3.6, H, 1.1, 0.077, WALNUT, "WoodPlanks", { wear = 1.06 })
 			r:piece(function(q: R)
 				for i = 0, 8 do
 					local x = -3.4 + i * (6.8 / 9)
@@ -365,7 +376,7 @@ local items: { any } = {
 					end
 					local foot = cf * CFrame.new(0.5, 0.1, -0.45)
 					ticket(q, foot.X, foot.Y, foot.Z, cards[i])
-				end)
+				end, nil, "Marble")
 			end
 			-- the till in front of the server, facing them, its drawer at the bottom
 			r:piece(function(q: R)
@@ -388,7 +399,7 @@ local items: { any } = {
 					0.06,
 					shade(BRASS, 0.7)
 				)
-			end)
+			end, nil, "Metal")
 			r:piece(function(q: R)
 				local y = H + 0.42
 				local slope = CFrame.new(-0.05, y + 0.62, -0.78) * CFrame.Angles(math.rad(-30), 0, 0)
@@ -404,17 +415,17 @@ local items: { any } = {
 						)
 					end
 				end
-			end)
+			end, nil, "Cardboard")
 			-- the scale: an enamel stand with a round dial to the customer and a pan on top
 			r:piece(function(q: R)
 				local x, y = 2.2, H + 0.42
 				q:block(x - 0.5, y, -0.98, x + 0.5, y + 0.2, -0.36, TRIM)
 				q:block(x - 0.16, y + 0.2, -0.76, x + 0.16, y + 0.62, -0.56, TRIM)
-				q:cyl(x, y + 0.98, -0.66, 0.22, 0.86, "z", TRIM, "SmoothPlastic")
-				q:cyl(x, y + 0.98, -0.66, 0.3, 0.7, "z", C.White, "SmoothPlastic")
+				q:cyl(x, y + 0.98, -0.66, 0.22, 0.86, "z", TRIM, "Metal")
+				q:cyl(x, y + 0.98, -0.66, 0.3, 0.7, "z", C.White, "Metal")
 				q:boxAt(CFrame.new(x + 0.08, y + 1.06, -0.49) * CFrame.Angles(0, 0, -0.7), 0.05, 0.3, 0.04, APPLE)
 				q:block(x - 0.06, y + 1.38, -0.72, x + 0.06, y + 1.52, -0.6, TRIM)
-			end)
+			end, nil, "Metal")
 			r:piece(function(q: R)
 				local x, y = 2.2, H + 1.94
 				q:block(x - 0.06, y - 0.06, -0.72, x + 0.06, y, -0.6, ZINC, "Metal")
@@ -439,7 +450,7 @@ local items: { any } = {
 					)
 					q:lump(CFrame.new(px, H + 0.96, pz), 0.24, 0.24, 0.24, PEAR)
 				end
-			end)
+			end, nil, "Cardboard")
 			r:piece(function(q: R)
 				-- the basket's sides
 				q:block(-2.95, H + 0.42, -1.0, -1.75, H + 0.82, -0.94, KRAFT, "Fabric")
@@ -495,7 +506,7 @@ local items: { any } = {
 					q:block(3.42, y, 1.14, 3.42 + w, y + 0.05, 1.18, CHALK)
 				end
 				q:block(4.0, 4.04, 1.14, 4.2, 4.2, 1.18, LEMON)
-			end)
+			end, nil, "Slate")
 			-- a string of onions at one end of the awning, a bunch of garlic at the other
 			r:piece(function(q: R)
 				local strings = {
@@ -509,7 +520,7 @@ local items: { any } = {
 						q:lump(CFrame.new(x + (k % 2 - 0.5) * 0.24, 6.55 - k * 0.2, 2.2), 0.34, 0.3, 0.32, col)
 					end
 				end
-			end)
+			end, nil, "Cardboard")
 			-- a sack of potatoes on the ground by the front corner
 			r:noCollide(r:lump(CFrame.new(-3.0, 0.55, 1.75), 1.0, 1.1, 0.9, Color3.fromRGB(190, 168, 128), "Fabric"))
 			r:piece(function(q: R)
@@ -517,7 +528,7 @@ local items: { any } = {
 				for k = 0, 2 do
 					q:ball(-3.15 + k * 0.28, 1.2, 1.72 + (k % 2) * 0.12, 0.3, Color3.fromRGB(196, 160, 112))
 				end
-			end)
+			end, nil, "Wood")
 		end,
 	},
 	{
@@ -575,7 +586,7 @@ local items: { any } = {
 				end
 				q:cyl(2.4, 2.4, -1.24, 0.3, 0.34, "y", Color3.fromRGB(122, 88, 66))
 				q:cyl(3.0, 2.45, -1.24, 0.4, 0.34, "y", Color3.fromRGB(122, 88, 66))
-			end)
+			end, nil, "Cardboard")
 			-- the espresso machine, its business end to the barista (-z)
 			local MX1, MX2 = -3.4, -1.4
 			r:piece(function(q: R)
@@ -621,7 +632,7 @@ local items: { any } = {
 					end
 				end
 				q:block(1.8, H, -0.98, 2.04, H + 0.3, -0.74, C.Paper)
-			end)
+			end, nil, "Marble")
 			-- the grinder: a dark stand and a hopper of beans, and a jug of milk beside the steam
 			r:piece(function(q: R)
 				q:block(-1.2, H, -0.75, -0.6, H + 0.7, -0.15, IRON)
@@ -631,12 +642,12 @@ local items: { any } = {
 					cf = CFrame.new(-0.9, H + 1.0, -0.45) * CFrame.Angles(math.pi, 0, 0),
 					size = Vector3.new(0.66, 0.6, 0.66),
 					color = Color3.fromRGB(122, 88, 66),
-					mat = "SmoothPlastic",
+					mat = "Metal",
 				})
 				q:cyl(-0.9, H + 1.33, -0.45, 0.08, 0.66, "y", IRON)
 				q:cyl(-1.28, H + 0.22, -1.02, 0.44, 0.3, "y", ZINC)
 				q:block(-1.31, H + 0.34, -1.24, -1.25, H + 0.42, -1.14, ZINC)
-			end)
+			end, nil, "Metal")
 			-- the till, its screen to the barista and a little one to the customer
 			r:piece(function(q: R)
 				q:block(-0.15, H, -0.95, 0.75, H + 0.3, -0.25, Color3.fromRGB(90, 85, 96))
@@ -646,10 +657,10 @@ local items: { any } = {
 				q:boxAt(screen * CFrame.new(0, 0, -0.06), 0.78, 0.44, 0.06, C.Glass)
 				q:block(0.5, H + 0.3, -0.25, 0.7, H + 0.5, -0.19, IRON)
 				q:block(-0.1, H + 0.3, -0.9, 0.7, H + 0.34, -0.7, CHALK)
-			end)
+			end, nil, "Metal")
 			-- croissants on a board
 			r:piece(function(q: R)
-				q:block(0.9, H, 0.1, 2.15, H + 0.08, 0.95, PALE, "SmoothPlastic")
+				q:block(0.9, H, 0.1, 2.15, H + 0.08, 0.95, PALE, "Sand")
 				for i, p in { { 1.22, 0.35 }, { 1.82, 0.4 }, { 1.52, 0.75 } } do
 					local at = CFrame.new(p[1], H + 0.2, p[2]) * CFrame.Angles(0, i * 0.9, 0)
 					q:lump(at, 0.46, 0.26, 0.28, CRUST)
@@ -663,7 +674,7 @@ local items: { any } = {
 						)
 					end
 				end
-			end)
+			end, nil, "Sand")
 			-- the cake on its stand, under a glass bell
 			r:piece(function(q: R)
 				q:block(2.65, H, -0.2, 3.05, H + 0.04, 0.2, TRIM)
@@ -676,7 +687,7 @@ local items: { any } = {
 					local a = k * math.pi * 2 / 5
 					q:ball(2.85 + math.cos(a) * 0.28, H + 1.08, 0.0 + math.sin(a) * 0.28, 0.12, APPLE)
 				end
-			end)
+			end, nil, "Marble")
 			local bell = r:cyl(2.85, H + 0.98, 0.0, 0.86, 1.2, "y", C.Glass, "Glass")
 			bell.transp = 0.6
 			bell.collide = false
@@ -697,14 +708,14 @@ local items: { any } = {
 				end
 				q:boxAt(CFrame.new(3.55, H + 0.32, 0.98) * CFrame.Angles(math.rad(14), 0, 0), 0.6, 0.66, 0.04, SLATE)
 				q:boxAt(CFrame.new(3.55, H + 0.32, 0.78) * CFrame.Angles(math.rad(-14), 0, 0), 0.6, 0.66, 0.04, SLATE)
-			end)
+			end, nil, "Metal")
 			r:piece(function(q: R)
 				local face = CFrame.new(3.55, H + 0.32, 0.98) * CFrame.Angles(math.rad(14), 0, 0)
 				for i, w in { 0.4, 0.28, 0.36 } do
 					q:boxAt(face * CFrame.new(-0.05, 0.22 - i * 0.12, 0.04), w, 0.05, 0.04, CHALK)
 				end
 				q:block(3.1, H, 1.02, 3.4, H + 0.06, 1.08, CHALK)
-			end)
+			end, nil, "Plaster")
 		end,
 	},
 	{
@@ -732,12 +743,12 @@ local items: { any } = {
 			local HEARTH = 2.7
 			-- the base, its wood store and the hearth
 			r:block(-2.8, 0.25, -1.9, 2.8, 2.4, 1.8, brick, "Brick")
-			r:block(-3.0, 2.4, -2.0, 3.0, HEARTH, 2.2, stone, "Concrete")
-			r:block(-2.9, 0, -1.95, 2.9, 0.25, 1.86, shade(stone, 0.85), "Concrete")
+			r:bevel(-3.0, 2.4, -2.0, 3.0, HEARTH, 2.2, 0.08, stone, "Concrete", { wear = 0.94 })
+			r:bevel(-2.9, 0, -1.95, 2.9, 0.25, 1.86, 0.08, shade(stone, 0.85), "Concrete", { wear = 0.94 })
 			r:piece(function(q: R)
 				q:block(-0.9, 0.25, 1.8, 0.9, 1.1, 1.9, soot)
 				q:cyl(0, 1.1, 1.85, 0.1, 1.8, "z", soot)
-			end)
+			end, nil, "Brick")
 			r:piece(function(q: R)
 				-- the logs in the store, their cut ends out
 				local log = Color3.fromRGB(196, 156, 108)
@@ -750,7 +761,7 @@ local items: { any } = {
 					end
 				end
 				q:block(0.11, 0.38, 1.46, 0.31, 0.52, 1.86, log)
-			end)
+			end, nil, "Wood")
 			-- the stone arch over the store, a stone at a time
 			r:piece(function(q: R)
 				for k = 0, 8 do
@@ -765,12 +776,12 @@ local items: { any } = {
 			-- the dome and the porch round its mouth
 			r:lump(CFrame.new(0, HEARTH, -0.2), 5.0, 4.4, 3.36, brick, "Brick")
 			r:block(-1.25, HEARTH, 0.9, 1.25, 4.7, 1.9, brick, "Brick")
-			r:block(-1.38, 4.7, 0.82, 1.38, 4.9, 2.0, stone, "Concrete")
+			r:bevel(-1.38, 4.7, 0.82, 1.38, 4.9, 2.0, 0.07, stone, "Concrete", { wear = 0.94 })
 			-- the mouth: dark inside, the fire low in it, a ring of light bricks round it
 			r:piece(function(q: R)
 				q:block(-0.72, HEARTH, 1.9, 0.72, 3.5, 1.96, soot)
 				q:cyl(0, 3.5, 1.93, 0.06, 1.44, "z", soot)
-			end)
+			end, nil, "Brick")
 			local fire = r:block(-0.52, HEARTH, 1.96, 0.52, 3.02, 2.0, Color3.fromRGB(255, 150, 60), "Neon")
 			r:fire(fire)
 			r:piece(function(q: R)
@@ -804,7 +815,7 @@ local items: { any } = {
 			end)
 			-- the chimney, its cap and pot
 			r:block(-0.45, 4.2, -1.35, 0.45, 6.55, -0.45, brick, "Brick")
-			r:block(-0.58, 6.55, -1.48, 0.58, 6.8, -0.32, stone, "Concrete")
+			r:bevel(-0.58, 6.55, -1.48, 0.58, 6.8, -0.32, 0.08, stone, "Concrete", { wear = 0.94 })
 			local pot = r:cyl(0, 7.05, -0.9, 0.5, 0.44, "y", Color3.fromRGB(196, 116, 80), "Brick")
 			r:smoke(pot)
 			-- the peel on the ledge with two loaves on it, its handle out past the end
@@ -827,7 +838,7 @@ local items: { any } = {
 						C.Paper
 					)
 				end
-			end)
+			end, nil, "Sand")
 			-- a basket of round loaves on the ledge at the other side, a long one stuck up in it
 			r:piece(function(q: R)
 				q:block(-2.7, HEARTH, 1.22, -1.5, HEARTH + 0.1, 2.08, KRAFT, "Fabric")
@@ -848,7 +859,7 @@ local items: { any } = {
 					q:block(p[1] - 0.14, HEARTH + 0.62, p[2] - 0.03, p[1] + 0.14, HEARTH + 0.68, p[2] + 0.03, C.Paper)
 				end
 				q:lump(CFrame.new(-2.05, HEARTH + 0.9, 1.65) * CFrame.Angles(0.3, 0, -0.35), 0.26, 1.4, 0.26, CRUST)
-			end)
+			end, nil, "Sand")
 			-- a sack of flour against the back corner
 			r:noCollide(r:lump(CFrame.new(2.35, 0.6, -2.2), 0.9, 1.2, 0.6, Color3.fromRGB(232, 222, 200), "Fabric"))
 		end,
@@ -979,14 +990,14 @@ local items: { any } = {
 								cf = face,
 								size = Vector3.new(0.06, 0.44, 0.44),
 								color = Color3.fromRGB(236, 196, 76),
-								mat = "SmoothPlastic",
+								mat = "Grass",
 							})
 							q:add({
 								shape = "Cylinder",
 								cf = face * CFrame.new(0.05, 0, 0),
 								size = Vector3.new(0.06, 0.2, 0.2),
 								color = Color3.fromRGB(110, 76, 50),
-								mat = "SmoothPlastic",
+								mat = "Grass",
 							})
 						elseif kind == 4 then -- lavender: thin spikes
 							q:lump(head * CFrame.new(0, 0.1, 0), 0.1, 0.42, 0.1, Color3.fromRGB(150, 128, 190))
@@ -999,7 +1010,7 @@ local items: { any } = {
 							q:ball(p.X + 0.1, p.Y - 0.1, p.Z, 0.2, cols[(k + 1) % 3 + 1])
 						end
 					end
-				end)
+				end, nil, "Grass")
 			end
 			for i = 0, 5 do
 				local back = i >= 3
@@ -1013,7 +1024,7 @@ local items: { any } = {
 				q:cyl(-2.85, 2.25, 0, 1.5, 0.36, "z", KRAFT)
 				q:block(-3.08, 1.3, -0.6, -3.02, 2.25, 0.6, KRAFT)
 				q:ball(-2.3, 2.77, 0.75, 0.3, C.Paper)
-			end)
+			end, nil, "Cardboard")
 			-- the slate of prices on the customer's side, and a card in each front bucket
 			r:piece(function(q: R)
 				q:block(0.65, 1.5, 1.04, 1.85, 2.36, 1.1, WALNUT)
@@ -1026,7 +1037,7 @@ local items: { any } = {
 					local x = -1.7 + i * 1.4 + 0.3
 					ticket(q, x, 3.1, 0.78, if i == 1 then LEMON else C.Paper)
 				end
-			end)
+			end, nil, "Wood")
 		end,
 	},
 	{
@@ -1193,7 +1204,7 @@ local items: { any } = {
 					q:beam(foot, tip, 0.05, 0.05, if k % 2 == 0 then WALNUT else C.Red)
 					q:beam(tip, tip + (tip - foot).Unit * 0.1, 0.07, 0.07, dabs[k + 1])
 				end
-			end)
+			end, nil, "Wood")
 			-- a finished picture leant against the back leg, facing out
 			r:piece(function(q: R)
 				local pic = CFrame.new(0, 0.55, 1.35) * CFrame.Angles(math.rad(-20), 0, 0)
@@ -1202,7 +1213,7 @@ local items: { any } = {
 				q:boxAt(pic * CFrame.new(0, -0.1, 0.1), 0.5, 0.56, 0.04, Color3.fromRGB(122, 96, 110))
 				q:boxAt(pic * CFrame.new(0, 0.2, 0.14), 0.3, 0.3, 0.04, Color3.fromRGB(232, 196, 170))
 				q:block(-0.5, 0, 1.6, 0.5, 0.06, 1.7, WALNUT)
-			end)
+			end, nil, "Wood")
 		end,
 	},
 	{
@@ -1227,10 +1238,10 @@ local items: { any } = {
 			local steel = Color3.fromRGB(176, 182, 190)
 			local H = 3.2
 			-- the desk: a top, a stand of three drawers, an end panel and a modesty board
-			r:block(-2.4, H - 0.16, -1.0, 1.8, H, 1.0, body, "SmoothPlastic")
-			r:block(-2.36, 0, -0.9, -1.0, H - 0.16, 0.9, body, "SmoothPlastic")
-			r:block(1.56, 0, -0.9, 1.76, H - 0.16, 0.9, body, "SmoothPlastic")
-			r:block(-1.0, 0.8, 0.7, 1.56, H - 0.16, 0.82, body, "SmoothPlastic")
+			r:bevel(-2.4, H - 0.16, -1.0, 1.8, H, 1.0, 0.056, body, "Metal", { wear = 1.06 })
+			r:block(-2.36, 0, -0.9, -1.0, H - 0.16, 0.9, body, "Metal")
+			r:block(1.56, 0, -0.9, 1.76, H - 0.16, 0.9, body, "Metal")
+			r:block(-1.0, 0.8, 0.7, 1.56, H - 0.16, 0.82, body, "Metal")
 			r:piece(function(q: R)
 				for k = 0, 2 do
 					local y = 0.2 + k * 0.92
@@ -1239,7 +1250,7 @@ local items: { any } = {
 				end
 				q:block(-1.0, 1.6, 0.82, 1.56, 1.9, 0.86, r.c2)
 				q:block(-2.44, H - 0.3, -1.04, 1.84, H - 0.16, 1.04, shade(body, 0.9))
-			end)
+			end, nil, "Metal")
 			-- the screen, turned to the doctor, its keyboard and mouse
 			r:piece(function(q: R)
 				q:block(-1.15, H, -0.15, -0.45, H + 0.06, 0.25, Color3.fromRGB(70, 66, 74))
@@ -1263,7 +1274,7 @@ local items: { any } = {
 					)
 				end
 				q:lump(CFrame.new(0.0, H + 0.04, -0.58), 0.16, 0.08, 0.24, Color3.fromRGB(226, 224, 220))
-			end)
+			end, nil, "Metal")
 			-- notes, a clipboard, pens in a cup and a box of tissues
 			r:piece(function(q: R)
 				q:block(0.25, H, -0.75, 1.0, H + 0.06, -0.2, C.Paper)
@@ -1295,7 +1306,7 @@ local items: { any } = {
 				end
 				q:block(0.3, H, 0.3, 0.9, H + 0.36, 0.7, Color3.fromRGB(206, 226, 214))
 				q:lump(CFrame.new(0.6, H + 0.42, 0.5), 0.26, 0.2, 0.18, C.White)
-			end)
+			end, nil, "Cardboard")
 			-- the stethoscope lying by the keyboard
 			r:piece(function(q: R)
 				local y = H + 0.04
@@ -1313,20 +1324,20 @@ local items: { any } = {
 				q:cyl(-1.5, H + 0.05, 0.14, 0.08, 0.22, "y", steel)
 				q:beam(pts[1], Vector3.new(-2.25, y, 0.55), 0.05, 0.05, INK)
 				q:beam(pts[1], Vector3.new(-2.2, y, 0.22), 0.05, 0.05, INK)
-			end)
+			end, nil, "Metal")
 			-- the lamp, an arm over the notes
 			r:piece(function(q: R)
 				q:cyl(1.3, H + 0.04, -0.55, 0.08, 0.44, "y", steel)
 				q:block(1.26, H + 0.08, -0.59, 1.34, H + 0.14, -0.51, steel)
 				q:beam(Vector3.new(1.3, H + 0.08, -0.55), Vector3.new(1.15, H + 0.95, -0.35), 0.07, 0.07, steel)
 				q:beam(Vector3.new(1.15, H + 0.95, -0.35), Vector3.new(0.75, H + 1.05, -0.45), 0.07, 0.07, steel)
-			end)
+			end, nil, "Metal")
 			r:add({
 				shape = "Cone",
 				cf = CFrame.new(0.68, H + 0.92, -0.47),
 				size = Vector3.new(0.44, 0.34, 0.44),
 				color = r.c2,
-				mat = "SmoothPlastic",
+				mat = "Fabric",
 				collide = false,
 			})
 			r:glow(r:noCollide(r:block(0.56, H + 0.7, -0.59, 0.8, H + 0.76, -0.35, C.Warm, "Neon")), 10, 0.7)
@@ -1334,14 +1345,14 @@ local items: { any } = {
 			r:piece(function(q: R)
 				q:block(-3.95, 0, -1.95, -3.45, 0.12, -1.45, steel)
 				q:block(-3.74, 0.12, -1.74, -3.66, 4.9, -1.66, steel)
-			end, true)
+			end, true, "Metal")
 			r:piece(function(q: R)
 				q:block(-4.3, 4.6, -1.66, -3.1, 5.8, -1.6, C.White)
 				q:block(-3.9, 4.75, -1.6, -3.5, 5.65, -1.56, r.c2)
 				q:block(-4.15, 5.0, -1.6, -3.25, 5.4, -1.56, r.c2)
 				q:block(-3.9, 4.75, -1.7, -3.5, 5.65, -1.66, r.c2)
 				q:block(-4.15, 5.0, -1.7, -3.25, 5.4, -1.66, r.c2)
-			end)
+			end, nil, "Fabric")
 			-- the couch: a steel frame on four legs, a padded top that rises at the head
 			r:piece(function(q: R)
 				for _, x in { 2.5, 4.3 } do
@@ -1352,7 +1363,7 @@ local items: { any } = {
 				end
 				q:block(2.4, 2.2, -2.1, 4.4, 2.34, 2.1, steel, "Metal")
 			end, true)
-			r:block(2.45, 2.34, -1.1, 4.35, 2.74, 2.1, Color3.fromRGB(150, 196, 190), "Fabric")
+			r:bevel(2.45, 2.34, -1.1, 4.35, 2.74, 2.1, 0.1, Color3.fromRGB(150, 196, 190), "Fabric", { round = true })
 			r:boxAt(
 				CFrame.new(3.4, 2.82, -1.62) * CFrame.Angles(math.rad(22), 0, 0),
 				1.9,
@@ -1447,10 +1458,10 @@ local items: { any } = {
 				for i, col in { CHALK, CHALK, Color3.fromRGB(236, 186, 196), LEMON } do
 					q:cyl(-2.4 + i * 0.5, 2.74, -0.46 + (i % 2) * 0.06, 0.4, 0.08, "x", col)
 				end
-			end)
+			end, nil, "Wood")
 			-- the lesson: a title underlined and four lines of writing on the left
 			local function stroke(q: R, x: number, y: number, w: number, h: number, col: Color3?)
-				q:block(x, y, FRONT, x + w, y + h, FRONT + 0.04, col or CHALK)
+				q:block(x, y, FRONT, x + w, y + h, FRONT + 0.04, col or CHALK, "Plaster")
 			end
 			r:piece(function(q: R)
 				local x = -2.9
@@ -1484,7 +1495,7 @@ local items: { any } = {
 				stroke(q, x, 3.33, 0.24, 0.05)
 				stroke(q, x, 3.43, 0.24, 0.05)
 				dots(x + 0.36, 5)
-			end)
+			end, nil, "Plaster")
 			-- the drawing: a house with a door, a roof in pink chalk and the sun in yellow
 			r:piece(function(q: R)
 				local pink, yellow = Color3.fromRGB(236, 186, 196), Color3.fromRGB(240, 222, 150)
@@ -1505,9 +1516,9 @@ local items: { any } = {
 						* CFrame.Angles(0, 0, a)
 					q:boxAt(cf, 0.2, 0.05, 0.06, yellow)
 				end
-			end)
+			end, nil, "Plaster")
 			-- the little desk: a top, a drawer to the front and four legs
-			r:block(-1.1, 2.4, 0.4, 1.1, 2.6, 1.5, wood, "Wood")
+			r:bevel(-1.1, 2.4, 0.4, 1.1, 2.6, 1.5, 0.07, wood, "Wood", { wear = 1.06 })
 			r:piece(function(q: R)
 				for _, x in { -0.95, 0.95 } do
 					for _, z in { 0.55, 1.35 } do
@@ -1535,12 +1546,12 @@ local items: { any } = {
 					cf = CFrame.new(0.75, y + 0.14, 0.7),
 					size = Vector3.new(0.34, 0.28, 0.34),
 					color = BRASS,
-					mat = "SmoothPlastic",
+					mat = "Cardboard",
 				})
 				q:block(0.72, y + 0.22, 0.67, 0.78, y + 0.44, 0.73, WALNUT)
 				q:ball(0.75, y + 0.48, 0.7, 0.12, WALNUT)
 				apple(q, CFrame.new(0.55, y + 0.2, 1.2), APPLE, true)
-			end)
+			end, nil, "Cardboard")
 			r:piece(function(q: R)
 				local y = 2.6
 				local c = Vector3.new(0.05, y + 0.72, 0.85)
@@ -1568,13 +1579,13 @@ local items: { any } = {
 						BRASS
 					)
 				end
-			end)
+			end, nil, "Wood")
 			-- the pointer leant against the left post
 			r:piece(function(q: R)
 				q:block(-3.22, 0, -0.05, -3.12, 0.06, 0.05, WALNUT)
 				q:beam(Vector3.new(-3.17, 0.02, 0.0), Vector3.new(-3.34, 3.8, -0.5), 0.07, 0.07, WALNUT)
 				q:beam(Vector3.new(-3.33, 3.6, -0.47), Vector3.new(-3.34, 3.8, -0.5), 0.09, 0.09, CHALK)
-			end)
+			end, nil, "Wood")
 		end,
 	},
 	{
@@ -1599,7 +1610,7 @@ local items: { any } = {
 			local box = r.c2
 			local TOP = 0.5
 			-- the deck: a frame, boards on top, a rounded nosing and a pleated skirt
-			r:block(-3.9, 0, -2.9, 3.9, TOP - 0.08, 1.9, shade(WALNUT, 0.6), "Wood")
+			r:bevel(-3.9, 0, -2.9, 3.9, TOP - 0.08, 1.9, 0.08, shade(WALNUT, 0.6), "Wood", { wear = 1.06 })
 			r:piece(function(q: R)
 				for i = 0, 7 do
 					local z = -2.9 + i * 0.6
@@ -1693,16 +1704,16 @@ local items: { any } = {
 				for i = 1, #sag - 1 do
 					q:beam(sag[i], sag[i + 1], 0.04, 0.04, INK)
 				end
-			end)
+			end, nil, "Metal")
 			for i = 2, #sag - 1 do
 				local p = sag[i]
-				local bulb = r:noCollide(r:ball(p.X, p.Y - 0.16, p.Z, 0.22, C.Warm, "SmoothPlastic"))
+				local bulb = r:noCollide(r:ball(p.X, p.Y - 0.16, p.Z, 0.22, C.Warm, "Glass"))
 				r:glow(bulb, if i == 4 then 14 else 0, 0.9)
 			end
 			-- the speakers: a cabinet with a big cone and a small one, corners capped
 			for _, s in { -1, 1 } do
 				local x = s * 3.2
-				r:block(x - 0.55, TOP, -2.72, x + 0.55, TOP + 2.6, -1.62, box, "SmoothPlastic")
+				r:block(x - 0.55, TOP, -2.72, x + 0.55, TOP + 2.6, -1.62, box, "Wood")
 				r:piece(function(q: R)
 					q:block(x - 0.45, TOP + 0.12, -1.62, x + 0.45, TOP + 2.48, -1.58, shade(box, 0.75))
 					q:cyl(x, TOP + 0.9, -1.56, 0.06, 0.8, "z", Color3.fromRGB(40, 38, 44))
@@ -1723,7 +1734,7 @@ local items: { any } = {
 							)
 						end
 					end
-				end)
+				end, nil, "Fabric")
 			end
 			-- the microphone on its boom stand, a lead running back to the speaker
 			r:piece(function(q: R)
@@ -1765,7 +1776,7 @@ local items: { any } = {
 				for i = 1, #pts - 1 do
 					q:beam(pts[i], pts[i + 1], 0.05, 0.05, C.Black)
 				end
-			end)
+			end, nil, "Metal")
 			-- the guitar on its stand, leant back a little
 			r:piece(function(q: R)
 				local g = CFrame.new(-2.55, TOP + 0.95, -1.9) * CFrame.Angles(math.rad(-12), 0, 0)
@@ -1789,7 +1800,7 @@ local items: { any } = {
 				for _, s in { -1, 1 } do
 					q:boxAt(g * CFrame.new(s * 0.16, 2.05, 0.0), 0.08, 0.06, 0.06, ZINC)
 				end
-			end)
+			end, nil, "Wood")
 			-- a stool for between songs, and two wedges at the front facing the singer
 			r:piece(function(q: R)
 				local x, z = -1.5, -2.2
@@ -1804,9 +1815,9 @@ local items: { any } = {
 						IRON
 					)
 				end
-			end)
+			end, nil, "Metal")
 			for _, x in { -1.7, 1.7 } do
-				r:noCollide(r:wedge(CFrame.new(x, TOP + 0.3, 1.45), 1.0, 0.6, 0.66, box))
+				r:noCollide(r:wedge(CFrame.new(x, TOP + 0.3, 1.45), 1.0, 0.6, 0.66, box, "Wood"))
 			end
 		end,
 	},
@@ -1872,7 +1883,7 @@ local items: { any } = {
 				q:cyl(-3.98, 3.05, 0.6, 0.66, 0.06, "z", IRON)
 				q:ball(-3.98, 3.05, 0.27, 0.12, IRON)
 				q:ball(-3.98, 3.05, 0.93, 0.12, IRON)
-			end)
+			end, nil, "Metal")
 			-- a plank laid across the top, sawn part way, its offcut dropped, and sawdust
 			r:piece(function(q: R)
 				q:block(-0.7, T, -0.2, 1.9, T + 0.16, 0.5, PALE, "Wood")
@@ -1915,7 +1926,7 @@ local items: { any } = {
 				q:block(0.72, T, 0.78, 1.8, T + 0.04, 0.9, steel)
 				q:block(0.56, T, 0.74, 0.72, T + 0.08, 1.24, Color3.fromRGB(150, 84, 60))
 				q:boxAt(CFrame.new(1.4, T + 0.03, 1.08) * CFrame.Angles(0, -0.3, 0), 0.6, 0.06, 0.06, LEMON)
-			end)
+			end, nil, "Metal")
 			r:piece(function(q: R)
 				-- chisels lying side by side, and a jar of nails at the back
 				for i = 0, 1 do
@@ -1926,7 +1937,7 @@ local items: { any } = {
 				q:cyl(-2.6, T + 0.25, -0.75, 0.5, 0.36, "y", Color3.fromRGB(196, 214, 214))
 				q:cyl(-2.6, T + 0.53, -0.75, 0.06, 0.4, "y", IRON)
 				q:cyl(-1.9, T + 0.08, -0.8, 0.16, 0.36, "y", LEMON)
-			end)
+			end, nil, "Metal")
 			-- tools on the pegboard, each on its pegs
 			r:piece(function(q: R)
 				local z = -1.4
@@ -1950,7 +1961,7 @@ local items: { any } = {
 				for i = 0, 2 do
 					q:cyl(2.32 + i * 0.22, 4.46, -1.28, 0.24, 0.2, "y", Color3.fromRGB(196, 214, 214))
 				end
-			end)
+			end, nil, "Metal")
 			-- a toolbox and a bucket on the shelf
 			r:piece(function(q: R)
 				q:block(-2.3, 0.8, -0.5, -0.9, 1.4, 0.4, Color3.fromRGB(184, 80, 90))
@@ -1959,7 +1970,7 @@ local items: { any } = {
 				q:block(-2.0, 1.66, -0.08, -1.2, 1.72, 0.0, IRON)
 				q:cyl(1.6, 1.2, 0.0, 0.8, 0.8, "y", ZINC)
 				q:cyl(1.6, 1.5, 0.0, 0.06, 0.86, "y", shade(ZINC, 0.85))
-			end)
+			end, nil, "Metal")
 		end,
 	},
 	{
@@ -2029,7 +2040,7 @@ local items: { any } = {
 						)
 					end
 				end
-			end)
+			end, nil, "Cardboard")
 			-- the screen: brass posts and rails, two panes
 			r:piece(function(q: R)
 				for _, x in { -2.45, 0.0, 2.45 } do
@@ -2048,7 +2059,7 @@ local items: { any } = {
 				q:block(-0.6, 5.6, -0.04, 0.6, 6.0, 0.04, r.c1)
 				q:block(-0.24, 5.68, 0.04, 0.24, 5.92, 0.08, C.Paper)
 				q:block(-0.24, 5.68, -0.08, 0.24, 5.92, -0.04, C.Paper)
-			end)
+			end, nil, "Cardboard")
 			-- the letter scale: a little balance with a pan each side
 			r:piece(function(q: R)
 				local x, z = -1.08, -0.6
@@ -2083,7 +2094,7 @@ local items: { any } = {
 				end
 				q:block(1.5, H, -0.85, 2.0, H + 0.08, -0.45, IRON)
 				q:block(1.54, H + 0.08, -0.81, 1.96, H + 0.12, -0.49, Color3.fromRGB(84, 112, 142))
-			end)
+			end, nil, "Wood")
 			r:piece(function(q: R)
 				for k = 0, 4 do
 					local lo = H + k * 0.05
@@ -2098,7 +2109,7 @@ local items: { any } = {
 					)
 				end
 				q:block(-0.3, H, -0.99, -0.2, H + 0.29, -0.46, APPLE)
-			end)
+			end, nil, "Cardboard")
 			-- parcels done up with string on the postie's side
 			r:piece(function(q: R)
 				q:block(-2.4, H, -1.0, -1.7, H + 0.5, -0.25, KRAFT, "Fabric")
@@ -2116,7 +2127,7 @@ local items: { any } = {
 					cf = CFrame.new(1.6, H + 0.2, 0.6),
 					size = Vector3.new(0.3, 0.24, 0.3),
 					color = BRASS,
-					mat = "SmoothPlastic",
+					mat = "Metal",
 				})
 				q:block(-1.6, H, 0.4, -0.8, H + 0.1, 0.9, wood)
 				q:boxAt(CFrame.new(-1.2, H + 0.3, 0.6) * CFrame.Angles(math.rad(-15), 0, 0), 0.7, 0.5, 0.06, C.Paper)
@@ -2127,7 +2138,7 @@ local items: { any } = {
 					0.06,
 					Color3.fromRGB(236, 226, 200)
 				)
-			end)
+			end, nil, "Metal")
 			-- the pigeonholes at the end, open toward +x, a cupboard below
 			local X1, X2 = 2.6, 3.5
 			r:piece(function(q: R)
@@ -2167,7 +2178,7 @@ local items: { any } = {
 					end
 				end
 				q:block(X2, 1.34, -0.9, X2 + 0.04, 1.4, 0.9, C.Paper)
-			end)
+			end, nil, "Cardboard")
 			-- a sack of mail against the far end, letters showing at its neck
 			r:noCollide(
 				r:lump(
@@ -2190,7 +2201,7 @@ local items: { any } = {
 						if k == 1 then C.Paper else Color3.fromRGB(236, 226, 200)
 					)
 				end
-			end)
+			end, nil, "Metal")
 		end,
 	},
 	{
@@ -2214,9 +2225,9 @@ local items: { any } = {
 			-- umbrella with a scalloped edge shades it all.
 			local body, trim = r.c1, r.c2
 			local TOPY = 3.36
-			r:block(-1.6, 1.3, -1.0, 1.6, 3.2, 1.0, body, "SmoothPlastic")
+			r:block(-1.6, 1.3, -1.0, 1.6, 3.2, 1.0, body, "Metal")
 			for _, x in { -1.6, 1.6 } do
-				r:cyl(x, 2.25, 0, 1.9, 2.0, "y", body, "SmoothPlastic")
+				r:cyl(x, 2.25, 0, 1.9, 2.0, "y", body, "Metal")
 			end
 			-- bands round the foot and the top, and the lid
 			r:piece(function(q: R)
@@ -2230,7 +2241,7 @@ local items: { any } = {
 				for _, x in { -1.6, 1.6 } do
 					q:cyl(x, 3.28, 0, 0.16, 2.12, "y", trim)
 				end
-			end, true)
+			end, true, "Metal")
 			-- a big cone painted on the side, two scoops and a cherry
 			r:piece(function(q: R)
 				q:tri(
@@ -2245,7 +2256,7 @@ local items: { any } = {
 				q:cyl(-0.68, 2.6, 1.14, 0.08, 0.5, "z", Color3.fromRGB(232, 168, 178))
 				q:cyl(-0.88, 2.84, 1.19, 0.08, 0.44, "z", VANILLA)
 				q:ball(-0.84, 3.07, 1.24, 0.14, APPLE)
-			end)
+			end, nil, "Metal")
 			-- the wheels on one axle, two legs and a push bar at the other end
 			cartWheel(r, 0.9, 1.15, 1.2, 2.3, WALNUT)
 			cartWheel(r, 0.9, 1.15, -1.2, 2.3, WALNUT)
@@ -2260,7 +2271,7 @@ local items: { any } = {
 			end)
 			r:piece(function(q: R)
 				q:block(-3.07, 3.03, -0.5, -2.83, 3.27, 0.5, Color3.fromRGB(70, 66, 74))
-			end)
+			end, nil, "Metal")
 			-- the tubs set in the lid, a mound of ice cream in each
 			local flavours = {
 				{ x = -1.3, z = 0.45, col = VANILLA },
@@ -2304,7 +2315,7 @@ local items: { any } = {
 						cf = CFrame.new(2.0, TOPY + 0.9 + k * 0.16, -0.3) * CFrame.Angles(math.pi, 0, 0),
 						size = Vector3.new(0.42, 0.7, 0.42),
 						color = Color3.fromRGB(226, 184, 124),
-						mat = "SmoothPlastic",
+						mat = "Marble",
 					})
 				end
 				-- paper cups stacked and a pot of spoons
@@ -2329,7 +2340,7 @@ local items: { any } = {
 						C.White
 					)
 				end
-			end)
+			end, nil, "Marble")
 			-- the umbrella: a pole, eight panels in turn, a valance with a scalloped edge
 			local top = Vector3.new(0, 7.25, -0.5)
 			r:cyl(0, 5.3, -0.5, 3.9, 0.15, "y", trim, "Metal")
@@ -2440,7 +2451,7 @@ local items: { any } = {
 						if k == 2 then LEMON else C.Paper
 					)
 				end
-			end)
+			end, nil, "Metal")
 			-- a tray of returns, a pile of books, two standing between bookends and a plant
 			r:piece(function(q: R)
 				q:block(0.1, H, 0.4, 1.3, H + 0.06, 1.0, shade(wood, 1.2))
@@ -2454,7 +2465,7 @@ local items: { any } = {
 					q:block(x - 0.04, H, 0.45, x + 0.04, H + 0.5, 0.85, BRASS)
 					q:block(x - 0.2, H, 0.45, x + 0.2, H + 0.04, 0.85, BRASS)
 				end
-			end)
+			end, nil, "Cardboard")
 			books(r, -2.24, -1.48, H + 0.04, 0.85, 0.85, 0.36, 53)
 			r:piece(function(q: R)
 				q:cyl(2.1, H + 0.22, 0.55, 0.44, 0.42, "y", Color3.fromRGB(196, 116, 80))
@@ -2470,7 +2481,7 @@ local items: { any } = {
 						C.Leaf
 					)
 				end
-			end)
+			end, nil, "Sandstone")
 			-- the stack at the end: two sides, a divider, five shelves, books both ways
 			local X1, X2 = 2.75, 4.45
 			r:piece(function(q: R)
@@ -2494,7 +2505,7 @@ local items: { any } = {
 				end
 				q:block(X2 + 0.04, 5.6, -0.3, X2 + 0.08, 5.9, 0.3, BRASS)
 				q:block(X2 + 0.08, 5.64, -0.24, X2 + 0.12, 5.86, 0.24, C.Paper)
-			end)
+			end, nil, "Wood")
 			for i, y in { 0.3, 1.9, 3.5, 5.1 } do
 				books(r, X1 + 0.14, X2 - 0.14, y, 1.3, -1.22, 0.9, i * 11 + 3, -1)
 				books(r, X1 + 0.14, X2 - 0.14, y, 1.3, 1.22, 0.9, i * 17 + 5)

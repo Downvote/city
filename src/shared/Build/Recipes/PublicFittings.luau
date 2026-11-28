@@ -46,10 +46,10 @@ local function books(r: R, x1: number, x2: number, y: number, maxH: number, zf: 
 			local w = math.min(0.24 + rand() * 0.22, x2 - x)
 			local h = maxH * (0.72 + rand() * 0.28)
 			local col = SPINES[1 + math.floor(rand() * #SPINES)]
-			q:block(x, y, zf - 0.9, x + w - 0.03, y + h, zf - rand() * 0.08, col, "SmoothPlastic")
+			q:block(x, y, zf - 0.9, x + w - 0.03, y + h, zf - rand() * 0.08, col, "Cardboard")
 			x += w
 		end
-	end)
+	end, nil, "Cardboard")
 end
 
 -- A parcel done up with string: a box between two corners with a band round it each way.
@@ -136,9 +136,9 @@ local items: { Item } = {
 				end
 				q:block(-3.45, 8.72, 1.62, 3.45, 9.0, 1.98, shade(post, 0.85), "Metal")
 			end)
-			r:block(-4, 9, -2.2, 4, 9.3, 2.2, post, "SmoothPlastic")
-			r:block(-3.8, 9.3, -2.2, 3.8, 9.42, 2, shade(post, 0.9), "SmoothPlastic")
-			r:block(-4, 8.72, -2.2, 4, 9, -2.02, shade(post, 0.85), "SmoothPlastic")
+			r:bevel(-4, 9, -2.2, 4, 9.3, 2.2, 0.08, post, "Metal", { wear = 1.06 })
+			r:bevel(-3.8, 9.3, -2.2, 3.8, 9.42, 2, 0.042, shade(post, 0.9), "Metal", { wear = 1.06 })
+			r:block(-4, 8.72, -2.2, 4, 9, -2.02, shade(post, 0.85), "Metal")
 			r:piece(function(q: R)
 				q:block(-4, 9.3, 2, 4, 9.8, 2.2, r.c2)
 				q:block(-4, 9.3, -2.2, -3.8, 9.8, 2, r.c2)
@@ -150,7 +150,7 @@ local items: { Item } = {
 				q:block(-4.04, 9.22, 2.2, 4.04, 9.3, 2.26, lip)
 				q:block(-4.06, 9.22, -2.2, -4, 9.3, 2.26, lip)
 				q:block(4, 9.22, -2.2, 4.06, 9.3, 2.26, lip)
-			end)
+			end, nil, "Fabric")
 			-- the lantern on its chain
 			r:piece(function(q: R)
 				q:block(-0.03, 8.3, -0.03, 0.03, 9.0, 0.03, C.DarkMetal, "Metal")
@@ -172,7 +172,7 @@ local items: { Item } = {
 				end
 				q:ball(0, 7.34, 0, 0.14, C.DarkMetal, "Metal")
 			end)
-			r:glow(r:noCollide(r:block(-0.25, 7.5, -0.25, 0.25, 8.12, 0.25, C.Warm, "SmoothPlastic")), 14, 1)
+			r:glow(r:noCollide(r:block(-0.25, 7.5, -0.25, 0.25, 8.12, 0.25, C.Warm, "Glass")), 14, 1)
 		end,
 	},
 	{
@@ -191,7 +191,7 @@ local items: { Item } = {
 			local iron = r.c1
 			for _, sx in { -1, 1 } do
 				for _, sz in { -1, 1 } do
-					r:cyl(sx * 1.62, 0.26, sz * 3.3, 0.22, 0.52, "x", C.Black, "SmoothPlastic")
+					r:cyl(sx * 1.62, 0.26, sz * 3.3, 0.22, 0.52, "x", C.Black, "Metal")
 					r:block(
 						sx * 1.62 - 0.08,
 						0.3,
@@ -205,11 +205,11 @@ local items: { Item } = {
 				end
 				r:block(sx * 1.66 - 0.09, 1.02, -3.5, sx * 1.66 + 0.09, 1.24, 3.5, iron, "Metal")
 			end
-			r:block(-1.6, 1.05, -3.42, 1.6, 1.2, 3.42, shade(iron, 0.8), "Metal")
+			r:bevel(-1.6, 1.05, -3.42, 1.6, 1.2, 3.42, 0.052, shade(iron, 0.8), "Metal", { wear = 1.06 })
 			r:block(-1.6, 1.2, -3.4, 1.6, 1.86, 3.4, SHEET, "Fabric")
 			r:block(-1.68, 1.36, -0.7, 1.68, 1.98, 3.44, r.c2, "Fabric")
 			r:block(-1.72, 1.36, -1.1, 1.72, 2.04, -0.66, Colors.mix(r.c2, C.White, 0.45), "Fabric")
-			r:block(-1.15, 1.86, -3.2, 1.15, 2.26, -2.25, SHEET, "Fabric")
+			r:bevel(-1.15, 1.86, -3.2, 1.15, 2.26, -2.25, 0.1, SHEET, "Fabric", { round = true })
 			-- the head and the foot: two posts, a top rail and a row of bars
 			for _, e in { { -3.55, 4.2 }, { 3.55, 3.1 } } do
 				local z, top = e[1], e[2]
@@ -226,10 +226,10 @@ local items: { Item } = {
 				end)
 			end
 			r:piece(function(q: R)
-				q:block(-0.42, 1.7, 3.66, 0.42, 2.8, 3.7, Color3.fromRGB(122, 96, 70), "SmoothPlastic")
-				q:block(-0.36, 1.76, 3.7, 0.36, 2.62, 3.74, C.Paper, "SmoothPlastic")
-				q:block(-0.18, 2.62, 3.7, 0.18, 2.78, 3.78, C.Metal, "SmoothPlastic")
-			end)
+				q:block(-0.42, 1.7, 3.66, 0.42, 2.8, 3.7, Color3.fromRGB(122, 96, 70), "Cardboard")
+				q:block(-0.36, 1.76, 3.7, 0.36, 2.62, 3.74, C.Paper, "Cardboard")
+				q:block(-0.18, 2.62, 3.7, 0.18, 2.78, 3.78, C.Metal, "Cardboard")
+			end, nil, "Cardboard")
 			r:sleep(0, 1.95, 0.1)
 		end,
 	},
@@ -246,20 +246,20 @@ local items: { Item } = {
 		build = function(r: R)
 			-- A cupboard (its doors c2) with a glazed case of bottles and jars on top.
 			local dk = shade(r.c1, 0.86)
-			r:block(-1.8, 0, -0.8, 1.8, 0.3, 0.62, dk, "SmoothPlastic")
-			r:block(-1.8, 0.3, -0.8, 1.8, 2.6, 0.7, r.c1, "SmoothPlastic")
+			r:bevel(-1.8, 0, -0.8, 1.8, 0.3, 0.62, 0.08, dk, "Metal", { wear = 1.06 })
+			r:block(-1.8, 0.3, -0.8, 1.8, 2.6, 0.7, r.c1, "Metal")
 			for _, sx in { -1, 1 } do
 				local x1, x2 = math.min(sx * 0.06, sx * 1.66), math.max(sx * 0.06, sx * 1.66)
-				r:block(x1, 0.46, 0.7, x2, 2.44, 0.76, r.c2, "SmoothPlastic")
+				r:block(x1, 0.46, 0.7, x2, 2.44, 0.76, r.c2, "Metal")
 				r:block(sx * 0.3 - 0.05, 1.2, 0.76, sx * 0.3 + 0.05, 1.8, 0.82, C.Metal, "Metal")
 			end
-			r:block(-1.86, 2.6, -0.8, 1.86, 2.76, 0.78, dk, "SmoothPlastic")
-			r:block(-1.8, 2.76, -0.8, 1.8, 6.4, -0.68, r.c1, "SmoothPlastic")
-			r:block(-1.8, 2.76, -0.68, -1.66, 6.4, 0.5, r.c1, "SmoothPlastic")
-			r:block(1.66, 2.76, -0.68, 1.8, 6.4, 0.5, r.c1, "SmoothPlastic")
-			r:block(-1.86, 6.4, -0.8, 1.86, 6.58, 0.56, dk, "SmoothPlastic")
+			r:bevel(-1.86, 2.6, -0.8, 1.86, 2.76, 0.78, 0.056, dk, "Metal", { wear = 1.06 })
+			r:block(-1.8, 2.76, -0.8, 1.8, 6.4, -0.68, r.c1, "Metal")
+			r:block(-1.8, 2.76, -0.68, -1.66, 6.4, 0.5, r.c1, "Metal")
+			r:block(1.66, 2.76, -0.68, 1.8, 6.4, 0.5, r.c1, "Metal")
+			r:bevel(-1.86, 6.4, -0.8, 1.86, 6.58, 0.56, 0.063, dk, "Metal", { wear = 1.06 })
 			for _, y in { 3.92, 5.14 } do
-				r:block(-1.66, y, -0.68, 1.66, y + 0.1, 0.42, r.c1, "SmoothPlastic")
+				r:block(-1.66, y, -0.68, 1.66, y + 0.1, 0.42, r.c1, "Metal")
 			end
 			-- bottles and jars, a shelf at a time
 			local amber = Color3.fromRGB(176, 106, 52)
@@ -277,14 +277,14 @@ local items: { Item } = {
 					for i, col in cols do
 						local x = -1.66 + (i - 0.5) * 3.32 / #cols
 						local h = 0.55 + ((i + n) % 3) * 0.14
-						q:cyl(x, y + h / 2, -0.1, h, 0.42, "y", col, "SmoothPlastic")
-						q:block(x - 0.1, y + h, -0.2, x + 0.1, y + h + 0.14, 0, C.DarkMetal, "SmoothPlastic")
+						q:cyl(x, y + h / 2, -0.1, h, 0.42, "y", col, "Metal")
+						q:block(x - 0.1, y + h, -0.2, x + 0.1, y + h + 0.14, 0, C.DarkMetal, "Metal")
 					end
-				end)
+				end, nil, "Metal")
 			end
 			r:glass(-1.66, 2.86, 0.4, 1.66, 6.4, 0.46)
-			r:block(-0.07, 2.76, 0.38, 0.07, 6.4, 0.5, r.c1, "SmoothPlastic")
-			r:block(-1.66, 2.76, 0.38, 1.66, 2.86, 0.5, r.c1, "SmoothPlastic")
+			r:block(-0.07, 2.76, 0.38, 0.07, 6.4, 0.5, r.c1, "Metal")
+			r:block(-1.66, 2.76, 0.38, 1.66, 2.86, 0.5, r.c1, "Metal")
 		end,
 	},
 	{
@@ -300,8 +300,8 @@ local items: { Item } = {
 			-- a hanging board with a cross on both faces: c1 the board, c2 the cross
 			local cross = r.c2
 			hangingSign(r, function(q: R, x: number)
-				q:box(x, 1.85, 1.75, 0.04, 1.5, 0.5, cross, "SmoothPlastic")
-				q:box(x, 1.85, 1.75, 0.04, 0.5, 1.5, cross, "SmoothPlastic")
+				q:box(x, 1.85, 1.75, 0.04, 1.5, 0.5, cross, "Wood")
+				q:box(x, 1.85, 1.75, 0.04, 0.5, 1.5, cross, "Wood")
 			end)
 		end,
 	},
@@ -360,18 +360,18 @@ local items: { Item } = {
 				r:block(x - 0.1, 0.2, 0.55, x + 0.1, 1.7, 0.75, r.c2, "Metal")
 				r:block(x - 0.1, 0.2, 1.42, x + 0.1, 3.2, 1.62, r.c2, "Metal")
 			end
-			r:block(-1.9, 2.5, -1.75, 1.9, 2.7, -0.25, r.c1, "Wood")
+			r:bevel(-1.9, 2.5, -1.75, 1.9, 2.7, -0.25, 0.07, r.c1, "Wood", { wear = 1.06 })
 			r:block(-1.68, 1.0, -1.62, 1.68, 2.5, -1.5, dk, "Wood")
-			r:block(-1.68, 1.85, -1.5, 1.68, 1.97, -0.5, dk, "Wood")
-			r:block(-1.9, 1.7, 0.45, 1.9, 1.9, 1.5, r.c1, "Wood")
+			r:bevel(-1.68, 1.85, -1.5, 1.68, 1.97, -0.5, 0.042, dk, "Wood", { wear = 1.06 })
+			r:bevel(-1.9, 1.7, 0.45, 1.9, 1.9, 1.5, 0.07, r.c1, "Wood", { wear = 1.06 })
 			r:block(-1.82, 2.5, 1.5, 1.82, 3.25, 1.66, r.c1, "Wood")
 			r:piece(function(q: R)
-				q:block(-1.4, 2.7, -1.45, -0.5, 2.76, -0.75, Color3.fromRGB(150, 110, 70), "SmoothPlastic")
-				q:block(-1.32, 2.76, -1.37, -0.58, 2.8, -0.83, Color3.fromRGB(52, 70, 62), "SmoothPlastic")
-				q:block(0.4, 2.7, -1.4, 0.92, 2.75, -0.7, C.Paper, "SmoothPlastic")
-				q:block(0.96, 2.7, -1.4, 1.48, 2.75, -0.7, C.Paper, "SmoothPlastic")
-				q:block(0.5, 2.75, -0.62, 1.2, 2.81, -0.55, C.Yellow, "SmoothPlastic")
-			end)
+				q:block(-1.4, 2.7, -1.45, -0.5, 2.76, -0.75, Color3.fromRGB(150, 110, 70), "Cardboard")
+				q:block(-1.32, 2.76, -1.37, -0.58, 2.8, -0.83, Color3.fromRGB(52, 70, 62), "Cardboard")
+				q:block(0.4, 2.7, -1.4, 0.92, 2.75, -0.7, C.Paper, "Cardboard")
+				q:block(0.96, 2.7, -1.4, 1.48, 2.75, -0.7, C.Paper, "Cardboard")
+				q:block(0.5, 2.75, -0.62, 1.2, 2.81, -0.55, C.Yellow, "Cardboard")
+			end, nil, "Cardboard")
 			r:seat(-0.95, 1.9, 1.0, 180)
 			r:seat(0.95, 1.9, 1.0, 180)
 		end,
@@ -389,16 +389,33 @@ local items: { Item } = {
 		build = function(r: R)
 			-- A round box to post letters in (c1) on a dark foot (c2), its slot under a hood
 			-- at the front.
-			r:cyl(0, 0.3, 0, 0.6, 1.9, "y", r.c2, "Metal")
-			r:cyl(0, 2.4, 0, 3.6, 1.6, "y", r.c1, "Metal")
-			r:cyl(0, 4.3, 0, 0.3, 1.9, "y", shade(r.c1, 0.82), "Metal")
+			-- a stepped foot with a bead where the body starts
+			r:cyl(0, 0.1, 0, 0.2, 1.98, "y", shade(r.c2, 0.88), "Metal")
+			r:cyl(0, 0.4, 0, 0.4, 1.86, "y", r.c2, "Metal")
+			r:cyl(0, 0.64, 0, 0.08, 1.72, "y", shade(r.c2, 1.18), "Metal")
+			r:cyl(0, 2.4, 0, 3.44, 1.6, "y", r.c1, "Metal")
+			-- a raised band under the cap, the cap's rim, its dome and the knob on top
+			r:cyl(0, 3.98, 0, 0.14, 1.68, "y", shade(r.c1, 0.9), "Metal")
+			r:cyl(0, 4.24, 0, 0.12, 1.86, "y", shade(r.c1, 0.92), "Metal")
+			r:cyl(0, 4.36, 0, 0.12, 1.9, "y", shade(r.c1, 0.82), "Metal")
 			r:lump(CFrame.new(0, 4.5, 0), 1.8, 1.1, 1.8, r.c1, "Metal")
-			r:cyl(0, 5.08, 0, 0.16, 0.4, "y", r.c2, "Metal")
+			r:cyl(0, 5.02, 0, 0.06, 0.52, "y", shade(r.c2, 1.18), "Metal")
+			r:cyl(0, 5.1, 0, 0.12, 0.4, "y", r.c2, "Metal")
+			-- the slot with its lip, under a hood
 			r:block(-0.52, 3.42, 0.7, 0.52, 3.66, 0.84, r.c2, "Metal")
+			r:block(-0.5, 3.4, 0.84, 0.5, 3.45, 0.88, shade(r.c2, 1.18), "Metal")
 			r:block(-0.64, 3.66, 0.6, 0.64, 3.78, 0.94, shade(r.c1, 0.82), "Metal")
-			r:block(-0.38, 2.4, 0.74, 0.38, 3.1, 0.84, C.Paper, "SmoothPlastic")
-			r:block(-0.26, 2.84, 0.84, 0.26, 2.92, 0.86, r.c2, "SmoothPlastic")
-			r:block(-0.26, 2.62, 0.84, 0.12, 2.7, 0.86, r.c2, "SmoothPlastic")
+			-- the door's raised edge round the plate saying when it's emptied, and its keyhole
+			for _, x in { -0.5, 0.5 } do
+				r:block(x - 0.04, 1.2, 0.58, x + 0.04, 3.3, 0.85, shade(r.c1, 0.9), "Metal")
+			end
+			r:block(-0.46, 3.22, 0.7, 0.46, 3.3, 0.85, shade(r.c1, 0.9), "Metal")
+			r:block(-0.46, 1.2, 0.7, 0.46, 1.28, 0.85, shade(r.c1, 0.9), "Metal")
+			r:block(-0.38, 2.4, 0.74, 0.38, 3.1, 0.84, C.Paper, "Cardboard")
+			r:block(-0.26, 2.84, 0.84, 0.26, 2.92, 0.86, r.c2, "Metal")
+			r:block(-0.26, 2.62, 0.84, 0.12, 2.7, 0.86, r.c2, "Metal")
+			r:cyl(0, 1.9, 0.83, 0.06, 0.16, "z", r.c2, "Metal")
+			r:block(-0.02, 1.84, 0.86, 0.02, 1.96, 0.88, shade(r.c2, 0.6), "Metal")
 		end,
 	},
 	{
@@ -435,7 +452,7 @@ local items: { Item } = {
 			for row = 1, 4 do
 				local y = 2.84 + row * 0.89
 				r:block(-2.04, y - 0.1, -0.78, 2.04, y, 0.78, r.c1, "Wood")
-				r:block(-2.04, y - 0.14, 0.78, 2.04, y + 0.02, 0.82, r.c2, "SmoothPlastic")
+				r:block(-2.04, y - 0.14, 0.78, 2.04, y + 0.02, 0.82, r.c2, "Cardboard")
 			end
 			for i = 1, 3 do
 				local x = -2.04 + i * 1.02
@@ -458,13 +475,13 @@ local items: { Item } = {
 									y + 0.5 + ((k + col) % 2) * 0.12,
 									0.6 - k * 0.08,
 									paper[(row + col + k) % 4 + 1],
-									"SmoothPlastic"
+									"Cardboard"
 								)
 							end
 						end
 					end
 				end
-			end)
+			end, nil, "Cardboard")
 		end,
 	},
 	{
@@ -483,20 +500,20 @@ local items: { Item } = {
 			for _, sx in { -1, 1 } do
 				local x = sx * 0.9
 				r:block(x - 0.08, 0.5, -1.12, x + 0.08, 4.5, -0.96, r.c1, "Metal")
-				r:cyl(sx * 1.2, 0.6, -1.0, 0.3, 1.2, "x", C.Black, "SmoothPlastic")
+				r:cyl(sx * 1.2, 0.6, -1.0, 0.3, 1.2, "x", C.Black, "Metal")
 				r:cyl(sx * 1.2, 0.6, -1.0, 0.4, 0.46, "x", C.Metal, "Metal")
 			end
 			r:cyl(0, 0.6, -1.0, 2.2, 0.14, "x", C.DarkMetal, "Metal")
 			for _, y in { 1.5, 2.8, 4.1 } do
 				r:block(-0.9, y, -1.1, 0.9, y + 0.14, -0.98, r.c1, "Metal")
 			end
-			r:cyl(0, 4.5, -1.04, 2.3, 0.2, "x", C.Black, "SmoothPlastic")
-			r:block(-1.05, 0.3, -1.1, 1.05, 0.42, 0.9, r.c1, "Metal")
+			r:cyl(0, 4.5, -1.04, 2.3, 0.2, "x", C.Black, "Metal")
+			r:bevel(-1.05, 0.3, -1.1, 1.05, 0.42, 0.9, 0.042, r.c1, "Metal", { wear = 1.06 })
 			r:block(-0.14, 0, 0.6, 0.14, 0.3, 0.86, C.DarkMetal, "Metal")
 			parcel(r, -1.0, 0.42, -0.9, 1.0, 1.7, 0.8, r.c2)
 			parcel(r, -0.8, 1.7, -0.86, 0.7, 2.7, 0.5, shade(r.c2, 0.9))
 			parcel(r, -0.5, 2.7, -0.8, 0.6, 3.4, 0.2, Colors.mix(r.c2, C.White, 0.2))
-			r:block(-0.75, 0.9, 0.8, -0.15, 1.4, 0.84, C.Paper, "SmoothPlastic")
+			r:block(-0.75, 0.9, 0.8, -0.15, 1.4, 0.84, C.Paper, "Cardboard")
 		end,
 	},
 	{
@@ -516,7 +533,7 @@ local items: { Item } = {
 			local z0 = 0.3 -- the gable's face
 			local y = 3 -- the middle of the face
 			r:noCollide(r:cyl(0, y, z0 + 0.16, 0.32, 4.2, "z", r.c2, "Metal"))
-			r:noCollide(r:cyl(0, y, z0 + 0.34, 0.06, 3.6, "z", r.c1, "SmoothPlastic"))
+			r:noCollide(r:cyl(0, y, z0 + 0.34, 0.06, 3.6, "z", r.c1, "Wood"))
 			r:piece(function(q: R)
 				for i = 0, 11 do
 					local a = i * math.pi / 6
@@ -524,9 +541,9 @@ local items: { Item } = {
 					local len = if big then 0.5 else 0.28
 					local cf = CFrame.new(math.cos(a) * 1.45, y + math.sin(a) * 1.45, z0 + 0.39)
 						* CFrame.Angles(0, 0, a)
-					q:boxAt(cf, len, if big then 0.16 else 0.09, 0.04, r.c2, "SmoothPlastic")
+					q:boxAt(cf, len, if big then 0.16 else 0.09, 0.04, r.c2, "Metal")
 				end
-			end)
+			end, nil, "Metal")
 			-- ten past ten
 			r:noCollide(
 				r:boxAt(
@@ -566,13 +583,13 @@ local items: { Item } = {
 			local line = shade(r.c2, 0.6)
 			hangingSign(r, function(q: R, x: number)
 				local out = if x > 0 then 0.04 else -0.04
-				q:box(x, 1.85, 1.75, 0.04, 1.1, 1.7, paper, "SmoothPlastic")
+				q:box(x, 1.85, 1.75, 0.04, 1.1, 1.7, paper, "Wood")
 				-- the flap: two lines down from the top corners to the middle
 				for _, sz in { -1, 1 } do
 					local cf = CFrame.new(x + out, 2.13, 1.75 + sz * 0.42) * CFrame.Angles(sz * 0.58, 0, 0)
-					q:boxAt(cf, 0.04, 0.07, 1.0, line, "SmoothPlastic")
+					q:boxAt(cf, 0.04, 0.07, 1.0, line, "Wood")
 				end
-				q:box(x + out, 1.86, 1.75, 0.04, 0.26, 0.26, BERRY, "SmoothPlastic")
+				q:box(x + out, 1.86, 1.75, 0.04, 0.26, 0.26, BERRY, "Wood")
 			end)
 		end,
 	},
@@ -597,13 +614,13 @@ local items: { Item } = {
 			r:block(-2.5, 0, zb, -2.3, 10.2, zf, r.c1, "Wood")
 			r:block(2.3, 0, zb, 2.5, 10.2, zf, r.c1, "Wood")
 			r:block(-2.3, 0.5, zb, 2.3, 10.2, zb + 0.12, shade(r.c1, 0.68), "Wood")
-			r:block(-2.3, 0, zb + 0.1, 2.3, 0.5, zf - 0.1, dk, "Wood")
-			r:block(-2.58, 10.2, zb, 2.58, 10.4, zf + 0.06, r.c1, "Wood")
-			r:block(-2.64, 10.4, zb, 2.64, 10.6, zf + 0.14, dk, "Wood")
+			r:bevel(-2.3, 0, zb + 0.1, 2.3, 0.5, zf - 0.1, 0.08, dk, "Wood", { wear = 1.06 })
+			r:bevel(-2.58, 10.2, zb, 2.58, 10.4, zf + 0.06, 0.07, r.c1, "Wood", { wear = 1.06 })
+			r:bevel(-2.64, 10.4, zb, 2.64, 10.6, zf + 0.14, 0.07, dk, "Wood", { wear = 1.06 })
 			r:block(-0.08, 0.5, zb + 0.12, 0.08, 10.2, zf - 0.04, r.c1, "Wood")
 			for i = 0, 5 do
 				local y = 0.5 + i * 1.62
-				r:block(-2.3, y, zb + 0.12, 2.3, y + 0.14, zf, r.c1, "Wood")
+				r:bevel(-2.3, y, zb + 0.12, 2.3, y + 0.14, zf, 0.049, r.c1, "Wood", { wear = 1.06 })
 				books(r, -2.24, -0.12, y + 0.14, 1.3, zf - 0.06, 5 + i * 7)
 				books(r, 0.12, 2.24, y + 0.14, 1.3, zf - 0.06, 23 + i * 11)
 			end
@@ -640,11 +657,11 @@ local items: { Item } = {
 			local ink = Color3.fromRGB(96, 92, 88)
 			hangingSign(r, function(q: R, x: number)
 				local out = if x > 0 then 0.04 else -0.04
-				q:box(x, 1.78, 1.75, 0.04, 1.2, 1.9, cover, "SmoothPlastic")
+				q:box(x, 1.78, 1.75, 0.04, 1.2, 1.9, cover, "Cardboard")
 				for _, sz in { -1, 1 } do
-					q:box(x + out, 1.86, 1.75 + sz * 0.46, 0.04, 1.04, 0.8, C.Paper, "SmoothPlastic")
+					q:box(x + out, 1.86, 1.75 + sz * 0.46, 0.04, 1.04, 0.8, C.Paper, "Cardboard")
 					for i = 0, 2 do
-						q:box(x + out * 2, 2.14 - i * 0.26, 1.75 + sz * 0.46, 0.04, 0.06, 0.54, ink, "SmoothPlastic")
+						q:box(x + out * 2, 2.14 - i * 0.26, 1.75 + sz * 0.46, 0.04, 0.06, 0.54, ink, "Cardboard")
 					end
 				end
 			end)

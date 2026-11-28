@@ -74,7 +74,7 @@ local s = {
 		c2 = Palette.Defaults.RoofGable.c,
 		m2 = Palette.Defaults.RoofGable.m,
 	},
-	paint = { c = "F2E8D5", m = "SmoothPlastic", slot = "main", pick = false },
+	paint = { c = "F2E8D5", m = "Plaster", slot = "main", pick = false },
 	placing = nil :: any, -- { id, r, c1, c2, img, sx, sy, sz, moveKey }
 	selected = nil :: any, -- { kind, key }
 	-- Free Placing's switch, for its owner (Build/Placing): pieces may go inside each other
@@ -998,6 +998,8 @@ local function pickColor(hit: RaycastResult)
 			end
 		end
 	end
+	-- (a finish picked off an old save's flat paint comes up as the textured one that took its place)
+	s.paint.m = Palette.drawn(s.paint.m)
 	s.paint.pick = false
 	changed("paint")
 end

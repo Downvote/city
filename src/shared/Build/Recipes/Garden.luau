@@ -31,7 +31,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -156,9 +156,9 @@ end
 
 -- A flower on a stem at (x, z), its head at height h.
 local function flower(r: R, x: number, z: number, y0: number, h: number, head: Color3)
-	r:cyl(x, (y0 + h) / 2, z, h - y0, 0.07, "y", C.DarkLeaf, "SmoothPlastic")
-	r:cyl(x, h, z, 0.1, 0.38, "y", head, "SmoothPlastic")
-	r:ball(x, h + 0.06, z, 0.14, if head == C.Yellow then Color3.fromRGB(200, 132, 62) else C.Yellow, "SmoothPlastic")
+	r:cyl(x, (y0 + h) / 2, z, h - y0, 0.07, "y", C.DarkLeaf, "Grass")
+	r:cyl(x, h, z, 0.1, 0.38, "y", head, "Grass")
+	r:ball(x, h + 0.06, z, 0.14, if head == C.Yellow then Color3.fromRGB(200, 132, 62) else C.Yellow, "Grass")
 end
 
 local AMBER = Color3.fromRGB(200, 132, 62)
@@ -169,7 +169,7 @@ local LILAC = Color3.fromRGB(156, 134, 184)
 -- One flower drawn on q (a piece's recipe): a stem from y0 up to its head at h, a leaf part way
 -- up, the head (a flat cup of petals, tipped a little) and the middle on top of it.
 local function bloom(q: R, x: number, z: number, y0: number, h: number, head: Color3, turn: number)
-	q:block(x - 0.035, y0, z - 0.035, x + 0.035, h, z + 0.035, C.DarkLeaf, "SmoothPlastic")
+	q:block(x - 0.035, y0, z - 0.035, x + 0.035, h, z + 0.035, C.DarkLeaf, "Grass")
 	local side = if math.floor(turn * 3) % 2 == 0 then 1 else -1
 	q:lump(
 		CFrame.new(x + side * 0.12, y0 + (h - y0) * 0.5, z) * CFrame.Angles(0, turn, side * -0.6),
@@ -177,15 +177,15 @@ local function bloom(q: R, x: number, z: number, y0: number, h: number, head: Co
 		0.09,
 		0.16,
 		C.Leaf,
-		"SmoothPlastic"
+		"Grass"
 	)
-	q:lump(CFrame.new(x, h, z) * CFrame.Angles(0.2, turn, 0), 0.4, 0.14, 0.4, head, "SmoothPlastic")
-	q:ball(x, h + 0.08, z + 0.02, 0.14, if head == C.Yellow then AMBER else C.Yellow, "SmoothPlastic")
+	q:lump(CFrame.new(x, h, z) * CFrame.Angles(0.2, turn, 0), 0.4, 0.14, 0.4, head, "Grass")
+	q:ball(x, h + 0.08, z + 0.02, 0.14, if head == C.Yellow then AMBER else C.Yellow, "Grass")
 end
 
 -- A spike of little flowers (lavender, foxglove) on q: a stem and three tufts up its top.
 local function spike(q: R, x: number, z: number, y0: number, h: number, color: Color3)
-	q:block(x - 0.03, y0, z - 0.03, x + 0.03, h - 0.3, z + 0.03, C.DarkLeaf, "SmoothPlastic")
+	q:block(x - 0.03, y0, z - 0.03, x + 0.03, h - 0.3, z + 0.03, C.DarkLeaf, "Grass")
 	for i = 0, 2 do
 		local s = 0.24 - i * 0.05
 		q:lump(
@@ -194,7 +194,7 @@ local function spike(q: R, x: number, z: number, y0: number, h: number, color: C
 			0.24,
 			s,
 			if i % 2 == 0 then color else shade(color, 1.12),
-			"SmoothPlastic"
+			"Grass"
 		)
 	end
 end
@@ -324,7 +324,7 @@ local items: { Item } = {
 			crown(r, 0.8, r.c1, Colors.mix(r.c1, C.White, 0.35))
 			-- petals fallen on the grass
 			for _, p in { { 1.6, 1.2 }, { -1.4, 1.8 }, { 2.2, -1.0 }, { -2.0, -1.2 }, { 0.4, 2.4 }, { -0.6, -2.2 } } do
-				r:noCollide(r:cyl(p[1], 0.02, p[2], 0.04, 0.45, "y", r.c1, "SmoothPlastic"))
+				r:noCollide(r:cyl(p[1], 0.02, p[2], 0.04, 0.45, "y", r.c1, "Fabric"))
 			end
 		end,
 	},
@@ -348,7 +348,7 @@ local items: { Item } = {
 			r:ball(0.5, 1.6, 0.35, 1.0, shade(r.c1, 1.12), "Grass")
 			-- small flowers dotted over it (c2): five petals in a flat cup and a yellow middle
 			r:piece(function(q: R)
-				q:box(0, 1.1, 0, 0.2, 0.2, 0.2, r.c1, "SmoothPlastic")
+				q:box(0, 1.1, 0, 0.2, 0.2, 0.2, r.c1, "Grass")
 				for i, p in
 					{
 						{ 0.6, 2.0, 0.55 },
@@ -363,10 +363,10 @@ local items: { Item } = {
 				do
 					local out = Vector3.new(p[1], p[2] - 1.1, p[3]).Unit
 					local tilt = CFrame.new(p[1], p[2], p[3]) * CFrame.Angles(out.Z * 0.7, i, -out.X * 0.7)
-					q:lump(tilt, 0.42, 0.12, 0.42, r.c2, "SmoothPlastic")
-					q:ball(p[1] + out.X * 0.04, p[2] + 0.07, p[3] + out.Z * 0.04, 0.13, C.Yellow, "SmoothPlastic")
+					q:lump(tilt, 0.42, 0.12, 0.42, r.c2, "Grass")
+					q:ball(p[1] + out.X * 0.04, p[2] + 0.07, p[3] + out.Z * 0.04, 0.13, C.Yellow, "Grass")
 				end
-			end)
+			end, nil, "Grass")
 		end,
 	},
 	{
@@ -516,13 +516,13 @@ local items: { Item } = {
 			end
 			-- lily pads, a flower and some reeds
 			for _, p in { { -1.2, 0.8 }, { 0.9, -1.0 }, { 0.2, 1.5 } } do
-				r:noCollide(r:cyl(p[1], 0.28, p[2], 0.04, 0.8, "y", C.Leaf, "SmoothPlastic"))
+				r:noCollide(r:cyl(p[1], 0.28, p[2], 0.04, 0.8, "y", C.Leaf, "Grass"))
 			end
-			r:ball(-1.1, 0.36, 0.75, 0.26, C.Pink, "SmoothPlastic")
-			r:ball(-1.1, 0.42, 0.75, 0.12, C.Yellow, "SmoothPlastic")
+			r:ball(-1.1, 0.36, 0.75, 0.26, C.Pink, "Fabric")
+			r:ball(-1.1, 0.42, 0.75, 0.12, C.Yellow, "Fabric")
 			for _, p in { { 1.7, -1.5, 1.5 }, { 2.0, -1.0, 1.2 }, { 1.4, -1.9, 1.0 } } do
-				r:noCollide(r:cyl(p[1], p[3] / 2, p[2], p[3], 0.08, "y", C.DarkLeaf, "SmoothPlastic"))
-				r:noCollide(r:cyl(p[1], p[3] - 0.15, p[2], 0.35, 0.16, "y", C.Bark, "SmoothPlastic"))
+				r:noCollide(r:cyl(p[1], p[3] / 2, p[2], p[3], 0.08, "y", C.DarkLeaf, "Grass"))
+				r:noCollide(r:cyl(p[1], p[3] - 0.15, p[2], 0.35, 0.16, "y", C.Bark, "Wood"))
 			end
 		end,
 	},
@@ -678,12 +678,12 @@ local items: { Item } = {
 			r:block(-0.3, 2.45, -0.55, 0.3, 2.6, 0.55, r.c2, "Wood")
 			r:beam(Vector3.new(0, 1.9, 0.12), Vector3.new(0, 2.45, 0.45), 0.12, 0.12, r.c2, "Wood")
 			-- a box with a rounded top, a front door and a red flag on the side
-			r:block(-0.45, 2.6, -0.8, 0.45, 3.1, 0.8, r.c1, "Metal")
+			r:bevel(-0.45, 2.6, -0.8, 0.45, 3.1, 0.8, 0.08, r.c1, "Metal", { wear = 1.06 })
 			r:cyl(0, 3.1, 0, 1.6, 0.9, "z", r.c1, "Metal")
 			r:block(-0.42, 2.63, 0.8, 0.42, 3.1, 0.84, shade(r.c1, 0.85), "Metal")
 			r:cyl(0, 3.1, 0.82, 0.04, 0.84, "z", shade(r.c1, 0.85), "Metal")
 			r:block(-0.1, 3.18, 0.84, 0.1, 3.26, 0.92, C.Metal, "Metal")
-			r:block(-0.25, 2.7, 0.84, 0.25, 2.88, 0.86, C.White, "SmoothPlastic")
+			r:block(-0.25, 2.7, 0.84, 0.25, 2.88, 0.86, C.White, "Metal")
 			r:cyl(0.47, 3.0, -0.25, 0.04, 0.12, "x", C.DarkMetal, "Metal")
 			r:block(0.47, 2.75, -0.3, 0.53, 3.55, -0.22, C.Red, "Metal")
 			r:block(0.47, 3.3, -0.22, 0.53, 3.55, 0.15, C.Red, "Metal")
@@ -768,11 +768,11 @@ local items: { Item } = {
 					r:block(x - 0.04, 4.25, z - 0.04, x + 0.04, 5.1, z + 0.04, r.c1, "Metal")
 				end
 			end
-			r:block(-1.2, 4.0, -2.8, 1.2, 4.25, -1.2, shade(r.c1, 1.25), "WoodPlanks")
+			r:bevel(-1.2, 4.0, -2.8, 1.2, 4.25, -1.2, 0.08, shade(r.c1, 1.25), "WoodPlanks", { wear = 1.06 })
 			r:block(-1.1, 5.1, -2.8, 1.1, 5.22, -2.68, r.c1, "Metal")
-			r:ramp(-1.35, 6.3, -3.0, 1.35, 7.3, -2.0, true, r.c2, "Plastic")
-			r:ramp(-1.35, 6.3, -2.0, 1.35, 7.3, -1.0, false, r.c2, "Plastic")
-			r:block(-1.35, 7.2, -2.08, 1.35, 7.35, -1.92, shade(r.c2, 0.8), "Plastic")
+			r:ramp(-1.35, 6.3, -3.0, 1.35, 7.3, -2.0, true, r.c2, "Metal")
+			r:ramp(-1.35, 6.3, -2.0, 1.35, 7.3, -1.0, false, r.c2, "Metal")
+			r:block(-1.35, 7.2, -2.08, 1.35, 7.35, -1.92, shade(r.c2, 0.8), "Metal")
 			-- the ladder at the back
 			for _, x in { -0.7, 0.7 } do
 				r:beam(Vector3.new(x, 0, -3.8), Vector3.new(x, 4.25, -2.8), 0.15, 0.15, r.c1, "Metal")
@@ -783,7 +783,7 @@ local items: { Item } = {
 			end
 			-- the chute, its sides and the flat end
 			local top, foot = Vector3.new(0, 4.15, -1.2), Vector3.new(0, 0.75, 3.0)
-			r:beam(top, foot, 1.4, 0.12, r.c2, "Plastic")
+			r:beam(top, foot, 1.4, 0.12, r.c2, "Metal")
 			for _, x in { -0.76, 0.76 } do
 				r:beam(
 					top + Vector3.new(x, 0.2, 0),
@@ -791,11 +791,11 @@ local items: { Item } = {
 					0.12,
 					0.45,
 					shade(r.c2, 0.85),
-					"Plastic"
+					"Metal"
 				)
-				r:block(x - 0.06, 0.55, 3.0, x + 0.06, 1.0, 3.9, shade(r.c2, 0.85), "Plastic")
+				r:block(x - 0.06, 0.55, 3.0, x + 0.06, 1.0, 3.9, shade(r.c2, 0.85), "Metal")
 			end
-			r:block(-0.7, 0.55, 2.95, 0.7, 0.7, 3.9, r.c2, "Plastic")
+			r:bevel(-0.7, 0.55, 2.95, 0.7, 0.7, 3.9, 0.052, r.c2, "Metal", { wear = 1.06 })
 			r:block(-0.15, 0, 2.6, 0.15, 0.6, 2.9, r.c1, "Metal")
 		end,
 	},
@@ -835,11 +835,11 @@ local items: { Item } = {
 			-- a sand castle, a bucket and a spade
 			r:block(0.5, 0.6, -0.9, 1.1, 1.0, -0.3, shade(r.c2, 0.95), "Sand")
 			r:block(0.65, 1.0, -0.75, 0.95, 1.2, -0.45, shade(r.c2, 0.95), "Sand")
-			r:cyl(-1.0, 0.7, 0.8, 0.5, 0.55, "y", C.Red, "Plastic")
-			r:beam(Vector3.new(-1.27, 0.9, 0.8), Vector3.new(-1.0, 1.15, 0.8), 0.04, 0.04, C.Red, "Plastic")
-			r:beam(Vector3.new(-0.73, 0.9, 0.8), Vector3.new(-1.0, 1.15, 0.8), 0.04, 0.04, C.Red, "Plastic")
-			r:beam(Vector3.new(-0.2, 0.5, 1.2), Vector3.new(0.4, 0.62, 1.6), 0.08, 0.08, C.Blue, "Plastic")
-			r:boxAt(CFrame.new(-0.35, 0.5, 1.05) * CFrame.Angles(0, -0.6, 0), 0.35, 0.05, 0.4, C.Blue, "Plastic")
+			r:cyl(-1.0, 0.7, 0.8, 0.5, 0.55, "y", C.Red, "Metal")
+			r:beam(Vector3.new(-1.27, 0.9, 0.8), Vector3.new(-1.0, 1.15, 0.8), 0.04, 0.04, C.Red, "Metal")
+			r:beam(Vector3.new(-0.73, 0.9, 0.8), Vector3.new(-1.0, 1.15, 0.8), 0.04, 0.04, C.Red, "Metal")
+			r:beam(Vector3.new(-0.2, 0.5, 1.2), Vector3.new(0.4, 0.62, 1.6), 0.08, 0.08, C.Blue, "Metal")
+			r:boxAt(CFrame.new(-0.35, 0.5, 1.05) * CFrame.Angles(0, -0.6, 0), 0.35, 0.05, 0.4, C.Blue, "Metal")
 		end,
 	},
 	{
@@ -871,7 +871,7 @@ local items: { Item } = {
 					)
 				end
 			end)
-			local ember = r:cyl(0, 0.05, 0, 0.1, 1.3, "y", Color3.fromRGB(255, 120, 50), "SmoothPlastic")
+			local ember = r:cyl(0, 0.05, 0, 0.1, 1.3, "y", Color3.fromRGB(255, 120, 50), "Glass")
 			r:glow(ember, 20, 1.5, Color3.fromRGB(255, 160, 90))
 			for i = 0, 3 do
 				local a = i * math.pi / 2 + 0.3
@@ -939,11 +939,11 @@ local items: { Item } = {
 			-- and a tall pointed hat (c1) tipped back a little
 			local skin = Color3.fromRGB(245, 205, 175)
 			for _, x in { -0.15, 0.15 } do
-				r:lump(CFrame.new(x, 0.09, 0.06), 0.26, 0.18, 0.38, C.Bark, "SmoothPlastic")
+				r:lump(CFrame.new(x, 0.09, 0.06), 0.26, 0.18, 0.38, C.Bark, "Marble")
 			end
-			r:cyl(0, 0.38, 0, 0.44, 0.7, "y", r.c2, "SmoothPlastic")
-			r:cyl(0, 0.7, 0, 0.2, 0.58, "y", r.c2, "SmoothPlastic")
-			r:cyl(0, 0.54, 0, 0.09, 0.78, "y", C.Black, "SmoothPlastic")
+			r:cyl(0, 0.38, 0, 0.44, 0.7, "y", r.c2, "Marble")
+			r:cyl(0, 0.7, 0, 0.2, 0.58, "y", r.c2, "Marble")
+			r:cyl(0, 0.54, 0, 0.09, 0.78, "y", C.Black, "Marble")
 			r:block(-0.09, 0.5, 0.36, 0.09, 0.58, 0.43, C.Gold, "Metal")
 			for _, sx in { -1, 1 } do
 				r:lump(
@@ -952,24 +952,24 @@ local items: { Item } = {
 					0.36,
 					0.22,
 					r.c2,
-					"SmoothPlastic"
+					"Marble"
 				)
-				r:ball(sx * 0.38, 0.45, 0.15, 0.15, skin, "SmoothPlastic")
+				r:ball(sx * 0.38, 0.45, 0.15, 0.15, skin, "Marble")
 			end
-			r:lump(CFrame.new(0, 0.8, 0.2) * CFrame.Angles(0.35, 0, 0), 0.46, 0.56, 0.26, C.White, "SmoothPlastic")
-			r:ball(0, 1.06, 0.04, 0.46, skin, "SmoothPlastic")
-			r:lump(CFrame.new(0, 0.98, 0.24) * CFrame.Angles(0, 0, 0), 0.32, 0.1, 0.12, C.White, "SmoothPlastic")
-			r:ball(0, 1.04, 0.28, 0.15, Color3.fromRGB(232, 150, 140), "SmoothPlastic")
+			r:lump(CFrame.new(0, 0.8, 0.2) * CFrame.Angles(0.35, 0, 0), 0.46, 0.56, 0.26, C.White, "Marble")
+			r:ball(0, 1.06, 0.04, 0.46, skin, "Marble")
+			r:lump(CFrame.new(0, 0.98, 0.24) * CFrame.Angles(0, 0, 0), 0.32, 0.1, 0.12, C.White, "Marble")
+			r:ball(0, 1.04, 0.28, 0.15, Color3.fromRGB(232, 150, 140), "Marble")
 			for _, sx in { -1, 1 } do
-				r:ball(sx * 0.1, 1.13, 0.24, 0.06, C.Black, "SmoothPlastic")
+				r:ball(sx * 0.1, 1.13, 0.24, 0.06, C.Black, "Marble")
 			end
-			r:cyl(0, 1.23, 0, 0.08, 0.6, "y", r.c1, "SmoothPlastic")
+			r:cyl(0, 1.23, 0, 0.08, 0.6, "y", r.c1, "Marble")
 			r:add({
 				shape = "Cone",
 				cf = CFrame.new(0, 1.62, -0.04) * CFrame.Angles(-0.12, 0, 0),
 				size = Vector3.new(0.54, 0.76, 0.54),
 				color = r.c1,
-				mat = "SmoothPlastic",
+				mat = "Marble",
 			})
 		end,
 	},
@@ -1041,7 +1041,18 @@ local items: { Item } = {
 			end
 			for i = 0, 2 do
 				local y = 0.4 + i * 0.3
-				r:block(-2, y, -0.8, 2, y + 0.28, 0.8, if i % 2 == 0 then r.c1 else shade(r.c1, 0.92), "WoodPlanks")
+				r:bevel(
+					-2,
+					y,
+					-0.8,
+					2,
+					y + 0.28,
+					0.8,
+					0.08,
+					if i % 2 == 0 then r.c1 else shade(r.c1, 0.92),
+					"WoodPlanks",
+					{ wear = 1.06 }
+				)
 			end
 			r:piece(function(q: R)
 				q:block(-2.05, 1.3, -0.85, 2.05, 1.4, -0.65, shade(r.c1, 0.85), "Wood")
@@ -1365,7 +1376,7 @@ local items: { Item } = {
 				0.22,
 				0.7,
 				Color3.fromRGB(214, 164, 96),
-				"SmoothPlastic"
+				"Leather"
 			)
 		end,
 	},
@@ -1603,9 +1614,9 @@ local items: { Item } = {
 		c2 = "A65E42",
 		build = function(r: R)
 			-- a rain barrel (c1) on a stand of bricks (c2), with a lid and a tap at the front
-			r:block(-0.8, 0, -0.8, 0.8, 0.5, 0.8, r.c2, "Brick")
-			r:cyl(0, 1.9, 0, 2.8, 1.92, "y", r.c1, "SmoothPlastic")
-			r:cyl(0, 3.36, 0, 0.14, 2.06, "y", shade(r.c1, 0.8), "SmoothPlastic")
+			r:bevel(-0.8, 0, -0.8, 0.8, 0.5, 0.8, 0.08, r.c2, "Brick", { wear = 0.94 })
+			r:cyl(0, 1.9, 0, 2.8, 1.92, "y", r.c1, "Metal")
+			r:cyl(0, 3.36, 0, 0.14, 2.06, "y", shade(r.c1, 0.8), "Metal")
 			r:piece(function(q: R)
 				q:box(0, 0.95, 1.08, 0.16, 0.16, 0.3, C.Gold, "Metal")
 				q:box(0, 1.06, 1.18, 0.08, 0.2, 0.08, C.Gold, "Metal")
@@ -1638,21 +1649,21 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a nest box (c1) with a pitched roof (c2) up a pole, and somebody at home
 			r:cyl(0, 2.6, 0, 5.2, 0.26, "y", C.Bark, "Wood")
-			r:block(-0.62, 5.1, -0.55, 0.62, 5.22, 0.55, shade(r.c1, 0.8), "Wood")
+			r:bevel(-0.62, 5.1, -0.55, 0.62, 5.22, 0.55, 0.042, shade(r.c1, 0.8), "Wood", { wear = 1.06 })
 			r:block(-0.5, 5.22, -0.45, 0.5, 6.2, 0.45, r.c1, "Wood")
 			r:tri(Vector3.new(-0.5, 6.2, 0), Vector3.new(0.5, 6.2, 0), Vector3.new(0, 6.65, 0), 0.9, r.c1, "Wood")
 			for _, sx in { -1, 1 } do
 				r:beam(Vector3.new(sx * 0.72, 6.08, 0), Vector3.new(0, 6.82, 0), 1.2, 0.1, r.c2, "Wood")
 			end
 			r:piece(function(q: R)
-				q:cyl(0, 5.78, 0.47, 0.04, 0.32, "z", C.Black, "SmoothPlastic")
-				q:cyl(0, 5.5, 0.56, 0.24, 0.07, "z", C.Bark, "SmoothPlastic")
+				q:cyl(0, 5.78, 0.47, 0.04, 0.32, "z", C.Black, "Wood")
+				q:cyl(0, 5.5, 0.56, 0.24, 0.07, "z", C.Bark, "Wood")
 				-- a blue tit on the ridge
-				q:ball(0.1, 7.02, 0.1, 0.34, C.Blue, "SmoothPlastic")
-				q:ball(0.22, 7.2, 0.14, 0.22, C.Yellow, "SmoothPlastic")
-				q:block(0.3, 7.17, 0.12, 0.42, 7.22, 0.16, C.Black, "SmoothPlastic")
-				q:block(-0.2, 6.98, 0.07, -0.02, 7.03, 0.13, C.Blue, "SmoothPlastic")
-			end)
+				q:ball(0.1, 7.02, 0.1, 0.34, C.Blue, "Wood")
+				q:ball(0.22, 7.2, 0.14, 0.22, C.Yellow, "Wood")
+				q:block(0.3, 7.17, 0.12, 0.42, 7.22, 0.16, C.Black, "Wood")
+				q:block(-0.2, 6.98, 0.07, -0.02, 7.03, 0.13, C.Blue, "Wood")
+			end, nil, "Wood")
 		end,
 	},
 	{
@@ -1741,7 +1752,7 @@ local items: { Item } = {
 				end
 			end)
 			for _, p in { { 0.5, 1.6 }, { -0.7, 3.1 }, { 0.3, 4.2 }, { -0.6, 5.9 }, { 0.9, 6.3 }, { 0.2, 7.6 } } do
-				r:noCollide(r:ball(p[1], p[2], 0.82, 0.36, r.c2, "SmoothPlastic"))
+				r:noCollide(r:ball(p[1], p[2], 0.82, 0.36, r.c2, "Fabric"))
 			end
 		end,
 	},

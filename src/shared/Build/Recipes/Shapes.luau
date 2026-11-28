@@ -18,7 +18,7 @@ type R = Recipe.Recipe
 -- the corner of an octagon that sits on a circle's flat sides: tan(22.5 degrees)
 local OCT = math.tan(math.rad(22.5))
 
-local MAT = "SmoothPlastic"
+local MAT = "Plaster" -- (paint over plaster: a soft texture that takes any colour; the paint tool changes it)
 
 -- A Roblox wedge part at a frame (full height at its +Z, sloping down to its -Z bottom edge).
 local function wedge(r: R, cf: CFrame, sx: number, sy: number, sz: number)
@@ -38,11 +38,11 @@ local function cube(r: R, w: number, h: number, d: number)
 end
 
 local function cylinder(r: R, w: number, h: number, _d: number)
-	r:cyl(0, h / 2, 0, h, w, "y", r.c1, MAT)
+	r:cyl(0, h / 2, 0, h, w, "y", r.c1, MAT).smooth = false -- (eight sides, like the half cylinder and the arch)
 end
 
 local function sphere(r: R, w: number, _h: number, _d: number)
-	r:ball(0, w / 2, 0, w, r.c1, MAT)
+	r:ball(0, w / 2, 0, w, r.c1, MAT).smooth = false
 end
 
 -- a ramp: low at the front (+Z), up to full height at the back

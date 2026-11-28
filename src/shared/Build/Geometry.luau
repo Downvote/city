@@ -39,8 +39,13 @@ local Geometry = {}
 
 local EPS = 1e-3
 
+-- The material a shape gets when its drawing names none: paint over plaster, a soft texture with a
+-- little wear in it. Never plain plastic (the user: "for all buildings and decor, make it such that
+-- textures are used, never make them untextured").
+Geometry.Default = "Plaster"
+
 function Geometry.box(cf: CFrame, size: Vector3, color: Color3, mat: string?): Prim
-	return { shape = "Block", cf = cf, size = size, color = color, mat = mat or "SmoothPlastic" }
+	return { shape = "Block", cf = cf, size = size, color = color, mat = mat or Geometry.Default }
 end
 
 -- An axis aligned box spanning two corners.
@@ -103,7 +108,7 @@ function Geometry.triangle(a: Vector3, b: Vector3, c: Vector3, thickness: number
 			cf = CFrame.fromMatrix((a + b) / 2, right, up, back),
 			size = Vector3.new(thickness, height, d1),
 			color = color,
-			mat = mat or "SmoothPlastic",
+			mat = mat or Geometry.Default,
 		})
 	end
 	if d2 > EPS then
@@ -112,7 +117,7 @@ function Geometry.triangle(a: Vector3, b: Vector3, c: Vector3, thickness: number
 			cf = CFrame.fromMatrix((a + c) / 2, -right, up, -back),
 			size = Vector3.new(thickness, height, d2),
 			color = color,
-			mat = mat or "SmoothPlastic",
+			mat = mat or Geometry.Default,
 		})
 	end
 	return out

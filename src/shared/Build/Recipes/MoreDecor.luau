@@ -542,10 +542,10 @@ local items: { Item } = {
 		build = function(r: R)
 			local stone = r.c1
 			-- a plinth: a stepped foot, a column with a brass plate and a moulded top
-			r:block(-0.6, 0, -0.6, 0.6, 0.2, 0.6, shade(stone, 0.9), "Marble")
-			r:block(-0.5, 0.2, -0.5, 0.5, 0.32, 0.5, stone, "Marble")
+			r:bevel(-0.6, 0, -0.6, 0.6, 0.2, 0.6, 0.07, shade(stone, 0.9), "Marble", { wear = 0.94 })
+			r:bevel(-0.5, 0.2, -0.5, 0.5, 0.32, 0.5, 0.042, stone, "Marble", { wear = 0.94 })
 			r:block(-0.4, 0.32, -0.4, 0.4, 2.3, 0.4, stone, "Marble")
-			r:block(-0.5, 2.3, -0.5, 0.5, 2.42, 0.5, stone, "Marble")
+			r:bevel(-0.5, 2.3, -0.5, 0.5, 2.42, 0.5, 0.042, stone, "Marble", { wear = 0.94 })
 			r:block(-0.56, 2.42, -0.56, 0.56, 2.5, 0.56, shade(stone, 0.92), "Marble")
 			r:block(-0.22, 1.6, 0.4, 0.22, 1.78, 0.43, r.c2, "Metal")
 			-- the bust: a round foot, shoulders in a draped cloth, a neck and a head looking out
@@ -690,7 +690,7 @@ local items: { Item } = {
 			-- curling up at the corners and a knob on top; moss here and there
 			r:lump(CFrame.new(0, 0.2, 0), 1.4, 0.4, 1.3, shade(stone, 0.92), "Rock")
 			r:cyl(0, 1.0, 0, 1.2, 0.46, "y", stone, "Granite").smooth = true
-			r:block(-0.6, 1.6, -0.6, 0.6, 1.78, 0.6, stone, "Granite")
+			r:bevel(-0.6, 1.6, -0.6, 0.6, 1.78, 0.6, 0.063, stone, "Granite", { wear = 0.94 })
 			r:block(-0.4, 1.78, -0.4, 0.4, 2.42, 0.4, stone, "Granite")
 			for _, sz in { -1, 1 } do
 				local win = r:block(
@@ -708,7 +708,7 @@ local items: { Item } = {
 			for _, sx in { -1, 1 } do
 				r:block(sx * 0.43 - 0.015, 1.92, -0.12, sx * 0.43 + 0.015, 2.22, 0.12, INK, "Granite")
 			end
-			r:block(-0.85, 2.42, -0.85, 0.85, 2.56, 0.85, stone, "Granite")
+			r:bevel(-0.85, 2.42, -0.85, 0.85, 2.56, 0.85, 0.049, stone, "Granite", { wear = 0.94 })
 			r:ramp(-0.85, 2.56, -0.85, 0.85, 2.95, 0, true, shade(stone, 0.95), "Granite")
 			r:ramp(-0.85, 2.56, 0, 0.85, 2.95, 0.85, false, shade(stone, 0.95), "Granite")
 			for _, sx in { -1, 1 } do

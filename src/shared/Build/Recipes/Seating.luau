@@ -30,7 +30,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -43,7 +43,7 @@ end
 local function cushion(r: R, x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, color: Color3)
 	local h = y2 - y1
 	local xm, ym = (x1 + x2) / 2, (y1 + y2) / 2
-	r:block(x1, y1, z1 + h / 2, x2, y2, z2 - h / 2, color, "Fabric")
+	r:bevel(x1, y1, z1 + h / 2, x2, y2, z2 - h / 2, 0.072, color, "Fabric", { round = true })
 	r:cyl(xm, ym, z1 + h / 2, x2 - x1, h, "x", color, "Fabric")
 	r:cyl(xm, ym, z2 - h / 2, x2 - x1, h, "x", color, "Fabric")
 end
@@ -94,7 +94,7 @@ local function upholstered(r: R, w: number, d: number, n: number)
 		local x1 = -iw / 2 + (i - 1) * cw + 0.03
 		local x2 = x1 + cw - 0.06
 		local xm = (x1 + x2) / 2
-		r:block(x1, 1.12, zs, x2, 1.7, d / 2 - 0.29, r.c1, "Fabric")
+		r:bevel(x1, 1.12, zs, x2, 1.7, d / 2 - 0.29, 0.1, r.c1, "Fabric", { round = true })
 		r:cyl(xm, 1.41, d / 2 - 0.29, x2 - x1, 0.58, "x", r.c1, "Fabric")
 		local back = CFrame.new(xm, 1.12, zb + 0.28) * CFrame.Angles(-0.16, 0, 0)
 		r:boxAt(back * CFrame.new(0, 0.82, 0), x2 - x1, 1.64, 0.5, r.c1, "Fabric")
@@ -165,7 +165,7 @@ local items: { Item } = {
 			r:block(-0.7, 1.42, 0.66, 0.7, 1.6, 0.74, dk, "Wood")
 			rod(r, Vector3.new(-0.79, 0.42, 0), Vector3.new(0.79, 0.42, 0), 0.1, dk, "Wood")
 			-- the seat board with a rounded front edge, and a tied on pad
-			r:block(-0.96, 1.6, -0.92, 0.96, 1.82, 0.8, r.c1, "Wood")
+			r:bevel(-0.96, 1.6, -0.92, 0.96, 1.82, 0.8, 0.077, r.c1, "Wood", { wear = 1.06 })
 			r:cyl(0, 1.71, 0.8, 1.92, 0.22, "x", r.c1, "Wood")
 			cushion(r, -0.76, 1.82, -0.74, 0.76, 1.98, 0.78, r.c2)
 			-- a bowed top rail, a lower rail and four spindles
@@ -206,9 +206,9 @@ local items: { Item } = {
 				rod(r, Vector3.new(sx * 0.77, 1.4, -0.76), Vector3.new(sx * 0.74, 4.12, -0.93), 0.18, r.c1, "Wood")
 				rod(r, Vector3.new(sx * 0.78, 0.5, 0.76), Vector3.new(sx * 0.79, 0.5, -0.84), 0.09, r.c1, "Wood")
 			end
-			r:block(-0.9, 1.3, -0.86, 0.9, 1.56, 0.86, r.c1, "Wood")
+			r:bevel(-0.9, 1.3, -0.86, 0.9, 1.56, 0.86, 0.08, r.c1, "Wood", { wear = 1.06 })
 			-- the seat: a padded cushion with a soft rolled front
-			r:block(-0.95, 1.56, -0.9, 0.95, 1.96, 0.76, r.c2, "Fabric")
+			r:bevel(-0.95, 1.56, -0.9, 0.95, 1.96, 0.76, 0.1, r.c2, "Fabric", { round = true })
 			r:cyl(0, 1.76, 0.76, 1.9, 0.4, "x", r.c2, "Fabric")
 			-- a padded back with three buttons, under a wooden top rail
 			local back = CFrame.new(0, 2.95, -0.86) * CFrame.Angles(-0.07, 0, 0)
@@ -405,7 +405,7 @@ local items: { Item } = {
 				r:cyl(x, 2.835, 0.85, 0.28, 0.17, "y", r.c1, "Wood")
 				rod(r, Vector3.new(x, 1.0, 0.68), Vector3.new(x, 1.0, -0.68), 0.08, dk, "Wood")
 			end
-			r:block(-1.04, 1.75, -0.9, 1.04, 1.95, 0.9, r.c1, "Wood")
+			r:bevel(-1.04, 1.75, -0.9, 1.04, 1.95, 0.9, 0.07, r.c1, "Wood", { wear = 1.06 })
 			r:cyl(0, 1.85, 0.9, 2.08, 0.2, "x", r.c1, "Wood")
 			cushion(r, -0.78, 1.95, -0.72, 0.78, 2.12, 0.84, r.c2)
 			r:boxAt(CFrame.new(0, 4.18, -1.24) * CFrame.Angles(-0.22, 0, 0), 2.0, 0.42, 0.18, r.c1, "Wood")
@@ -435,10 +435,10 @@ local items: { Item } = {
 					leg(r, sx * 1.0, z, 0.52, 0.06, 0.2, r.c2)
 				end
 			end
-			r:block(-1.25, 0.5, -2.45, 1.25, 0.95, 2.45, r.c2, "Wood")
+			r:bevel(-1.25, 0.5, -2.45, 1.25, 0.95, 2.45, 0.08, r.c2, "Wood", { wear = 1.06 })
 			r:block(-1.18, 0.95, -2.4, 1.18, 1.0, 2.4, shade(r.c2, 0.8), "Wood")
 			-- the seat cushion, tufted with buttons, and a rounded front
-			r:block(-1.15, 1.0, -0.9, 1.15, 1.45, 2.22, r.c1, "Fabric")
+			r:bevel(-1.15, 1.0, -0.9, 1.15, 1.45, 2.22, 0.1, r.c1, "Fabric", { round = true })
 			r:cyl(0, 1.225, 2.22, 2.3, 0.45, "x", r.c1, "Fabric")
 			for _, x in { -0.5, 0.5 } do
 				for _, z in { 0.2, 1.4 } do

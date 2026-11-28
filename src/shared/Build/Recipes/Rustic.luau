@@ -83,7 +83,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = V(len, d, d),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -98,7 +98,7 @@ end
 
 -- A cylinder along the X axis of a frame.
 local function cylAt(r: R, cf: CFrame, len: number, d: number, color: Color3, mat: string?): Recipe.Prim
-	return r:add({ shape = "Cylinder", cf = cf, size = V(len, d, d), color = color, mat = mat or "SmoothPlastic" })
+	return r:add({ shape = "Cylinder", cf = cf, size = V(len, d, d), color = color, mat = mat or r.mat or "Wood" })
 end
 
 -- Staves standing round (cx, cz) from y0 to y0 + h, n of them: each runs from rBot at the foot
@@ -198,7 +198,7 @@ end
 -- A lidded glass jar of something (jam, peaches, pickles) standing on y.
 local function jar(r: R, x: number, y: number, z: number, d: number, h: number, fill: Color3, cap: Color3?)
 	clear(r:cyl(x, y + h / 2, z, h, d, "y", Color3.fromRGB(222, 234, 230), "Glass"), 0.5)
-	r:cyl(x, y + h * 0.42, z, h * 0.8, d - 0.08, "y", fill, "SmoothPlastic")
+	r:cyl(x, y + h * 0.42, z, h * 0.8, d - 0.08, "y", fill, "Glass")
 	r:cyl(x, y + h + 0.03, z, 0.06, d * 0.92, "y", C.Metal, "Metal")
 	if cap then
 		r:cyl(x, y + h + 0.075, z, 0.03, d + 0.12, "y", cap, "Fabric")
@@ -209,8 +209,8 @@ end
 -- A clay pot standing on y: a body, a rolled rim and soil showing at the top. Returns the
 -- height of the soil.
 local function pot(r: R, x: number, y: number, z: number, d: number, h: number, color: Color3): number
-	r:cyl(x, y + h * 0.4, z, h * 0.8, d * 0.84, "y", color, "SmoothPlastic")
-	r:cyl(x, y + h * 0.88, z, h * 0.24, d, "y", shade(color, 1.06), "SmoothPlastic")
+	r:cyl(x, y + h * 0.4, z, h * 0.8, d * 0.84, "y", color, "Sandstone")
+	r:cyl(x, y + h * 0.88, z, h * 0.24, d, "y", shade(color, 1.06), "Sandstone")
 	r:cyl(x, y + h + 0.015, z, 0.03, d * 0.8, "y", SOIL, "Sand")
 	return y + h + 0.03
 end
@@ -220,21 +220,21 @@ end
 local function herbs(r: R, top: Vector3, len: number, leaf: Color3, seed: number)
 	local rand = rng(seed)
 	r:piece(function(q: R)
-		q:box(top.X, top.Y - 0.05, top.Z, 0.1, 0.1, 0.1, TWINE, "SmoothPlastic")
+		q:box(top.X, top.Y - 0.05, top.Z, 0.1, 0.1, 0.1, TWINE, "Grass")
 		for i = 0, 5 do
 			local a = i * math.pi / 3 + rand() * 0.4
 			local tip = top + V(math.cos(a) * 0.16, -len * (0.8 + rand() * 0.2), math.sin(a) * 0.1)
-			q:beam(top - V(0, 0.08, 0), tip, 0.025, 0.025, shade(leaf, 0.75), "SmoothPlastic")
+			q:beam(top - V(0, 0.08, 0), tip, 0.025, 0.025, shade(leaf, 0.75), "Grass")
 			q:lump(
 				CFrame.new(tip) * CFrame.Angles(0, a, 0.2),
 				0.12,
 				0.26,
 				0.1,
 				if i % 2 == 0 then leaf else shade(leaf, 1.1),
-				"SmoothPlastic"
+				"Grass"
 			)
 		end
-	end)
+	end, nil, "Grass")
 end
 
 -- A cloth patchwork on top of something: nx by nz patches over x1..x2, z1..z2, y to y + 0.03.
@@ -322,7 +322,7 @@ local items: { Item } = {
 			local yc, zc, rad = 1.6, 0.25, 0.5
 			local s = rad * 0.4142
 			r:block(-2.6, yc - rad, zc - s, 2.6, yc, zc + s, bark, "Wood")
-			r:block(-2.6, yc - s, zc - rad, 2.6, yc, zc + rad, bark, "Wood")
+			r:bevel(-2.6, yc - s, zc - rad, 2.6, yc, zc + rad, 0.072, bark, "Wood", { wear = 1.06 })
 			for _, sz in { -1, 1 } do
 				r:tri(
 					V(0, yc - rad, zc + sz * s),
@@ -428,7 +428,7 @@ local items: { Item } = {
 			local iron, trim = r.c1, r.c2
 			local face = shade(iron, 1.18)
 			-- a stone pad, four legs, the firebox and its cooking top
-			r:block(-1.6, 0, -1.5, 1.6, 0.12, 1.5, Color3.fromRGB(150, 146, 140), "Slate")
+			r:bevel(-1.6, 0, -1.5, 1.6, 0.12, 1.5, 0.042, Color3.fromRGB(150, 146, 140), "Slate", { wear = 0.94 })
 			for _, sx in { -1, 1 } do
 				for _, sz in { -1, 1 } do
 					r:block(sx * 0.85 - 0.1, 0.12, sz * 0.7 - 0.1, sx * 0.85 + 0.1, 0.72, sz * 0.7 + 0.1, iron, "Metal")
@@ -437,7 +437,7 @@ local items: { Item } = {
 			end
 			r:block(-1.15, 0.62, -1.05, 1.15, 0.72, 0.95, iron, "Metal")
 			r:block(-1.05, 0.72, -0.95, 1.05, 2.55, 0.85, iron, "Metal")
-			r:block(-1.2, 2.55, -1.1, 1.2, 2.68, 1.0, iron, "Metal")
+			r:bevel(-1.2, 2.55, -1.1, 1.2, 2.68, 1.0, 0.046, iron, "Metal", { wear = 1.06 })
 			for _, sx in { -1, 1 } do
 				r:cyl(sx * 0.5, 2.695, 0.1, 0.03, 0.62, "y", face, "Metal")
 				for _, y in { 1.2, 1.6, 2.0 } do
@@ -446,7 +446,7 @@ local items: { Item } = {
 			end
 			-- the door with a window on the fire, hinges, a latch and a vent; an ash drawer
 			r:block(-0.7, 1.0, 0.85, 0.7, 2.3, 0.93, face, "Metal")
-			local glow = r:block(-0.5, 1.32, 0.93, 0.5, 2.05, 0.96, Color3.fromRGB(255, 150, 80), "SmoothPlastic")
+			local glow = r:block(-0.5, 1.32, 0.93, 0.5, 2.05, 0.96, Color3.fromRGB(255, 150, 80), "Glass")
 			r:glow(glow, 16, 1.2, Color3.fromRGB(255, 160, 90))
 			for _, x in { -0.17, 0.17 } do
 				r:block(x - 0.03, 1.32, 0.96, x + 0.03, 2.05, 0.99, iron, "Metal")
@@ -592,7 +592,7 @@ local items: { Item } = {
 			for _, x in { -1.2, -0.4, 0.4, 1.2 } do
 				r:block(x - 0.04, 1.15, 3.4, x + 0.04, 1.85, 3.43, DUSK, "Fabric")
 			end
-			r:block(-1.92, 1.42, -1.0, 1.92, 1.92, 3.46, quilt, "Fabric")
+			r:bevel(-1.92, 1.42, -1.0, 1.92, 1.92, 3.46, 0.1, quilt, "Fabric", { round = true })
 			patchwork(
 				r,
 				-1.92,
@@ -613,7 +613,7 @@ local items: { Item } = {
 				bedPillow(r, sx * 0.85, 1.85, -2.85, 1.55, CREAM)
 			end
 			-- a striped wool blanket folded at the foot
-			r:block(-1.95, 1.95, 2.3, 1.95, 2.13, 3.2, WOOL, "Fabric")
+			r:bevel(-1.95, 1.95, 2.3, 1.95, 2.13, 3.2, 0.081, WOOL, "Fabric", { round = true })
 			for _, z in { 2.45, 2.95 } do
 				r:block(-1.98, 1.95, z, 1.98, 2.16, z + 0.12, GINGHAM, "Fabric")
 			end
@@ -701,7 +701,7 @@ local items: { Item } = {
 					r:block(sx * 1.85, 0, sz * 0.55, sx * 2.2, 0.32, sz * 0.9, dk, "Wood")
 				end
 			end
-			r:block(-2.2, 0.32, -0.92, 2.2, 0.48, 0.92, wood, "Wood")
+			r:bevel(-2.2, 0.32, -0.92, 2.2, 0.48, 0.92, 0.056, wood, "Wood", { wear = 1.06 })
 			r:block(-2.05, 0.48, -0.95, 2.05, 3.5, 0.82, shade(wood, 0.5), "Wood")
 			for _, sx in { -1, 1 } do
 				r:block(sx * 2.05, 0.48, -0.95, sx * 2.22, 3.5, -0.05, board(), "Wood")
@@ -757,8 +757,8 @@ local items: { Item } = {
 			r:boxAt(f * CFrame.new(0, 0, -0.01), 1.66, 1.26, 0.03, MIRROR, "Glass")
 			r:boxAt(f * CFrame.new(0.3, 0.15, 0.02) * CFrame.Angles(0, 0, -0.6), 0.1, 0.8, 0.02, C.White, "Glass")
 			r:block(-1.6, 3.7, -0.4, 1.6, 3.73, 0.5, CREAM, "Fabric")
-			r:cyl(1.4, 3.93, 0.1, 0.4, 0.24, "y", STONEWARE, "SmoothPlastic")
-			rod(r, V(1.4, 4.1, 0.1), V(1.5, 4.55, 0.12), 0.03, C.DarkLeaf, "SmoothPlastic")
+			r:cyl(1.4, 3.93, 0.1, 0.4, 0.24, "y", STONEWARE, "Marble")
+			rod(r, V(1.4, 4.1, 0.1), V(1.5, 4.55, 0.12), 0.03, C.DarkLeaf, "Grass")
 			r:ball(1.5, 4.58, 0.12, 0.16, ROSE, "Fabric")
 			r:cyl(-1.3, 3.75, 0.15, 0.04, 0.4, "y", BRASS, "Metal")
 		end,
@@ -797,7 +797,7 @@ local items: { Item } = {
 			r:cyl(0, -1.84, 0, 0.14, 0.3, "y", iron, "Metal")
 			r:cyl(0, -1.97, 0, 0.12, 0.5, "y", iron, "Metal")
 			clear(r:lump(CFrame.new(0, -2.55, 0), 0.7, 0.95, 0.7, r.c2, "Glass"), 0.45)
-			local flame = r:ball(0, -2.72, 0, 0.16, C.Warm, "SmoothPlastic")
+			local flame = r:ball(0, -2.72, 0, 0.16, C.Warm, "Glass")
 			r:glow(flame, 14, 1.1)
 			r:cyl(0, -2.86, 0, 0.12, 0.06, "y", CREAM, "Fabric")
 			r:cyl(0, -3.0, 0, 0.1, 0.4, "y", BRASS, "Metal")
@@ -868,7 +868,7 @@ local items: { Item } = {
 			r:cyl(0, 1.28, 1.52, 0.1, 1.2, "y", shadeCol, "Metal")
 			r:cyl(0, 1.2, 1.52, 0.08, 1.56, "y", shadeCol, "Metal")
 			r:cyl(0, 1.145, 1.52, 0.03, 1.5, "y", C.White, "Metal")
-			local bulb = r:ball(0, 1.02, 1.52, 0.34, C.Warm, "SmoothPlastic")
+			local bulb = r:ball(0, 1.02, 1.52, 0.34, C.Warm, "Glass")
 			r:glow(bulb, 16, 1.2)
 		end,
 	},
@@ -942,7 +942,7 @@ local items: { Item } = {
 					0.24,
 					0.18,
 					if i == 2 then CREAM else Color3.fromRGB(214, 176, 140),
-					"SmoothPlastic"
+					"Plaster"
 				)
 			end
 			-- a checked tea towel on a loop
@@ -962,7 +962,7 @@ local items: { Item } = {
 			jar(r, -1.8, 1.8, 0.3, 0.34, 0.44, Color3.fromRGB(176, 84, 92), GINGHAM)
 			jar(r, -1.3, 1.8, 0.3, 0.3, 0.36, Color3.fromRGB(226, 170, 90), nil)
 			r:cyl(1.6, 1.83, 0.3, 0.06, 0.4, "y", C.Metal, "Metal")
-			r:cyl(1.6, 2.0, 0.3, 0.28, 0.16, "y", CREAM, "SmoothPlastic")
+			r:cyl(1.6, 2.0, 0.3, 0.28, 0.16, "y", CREAM, "Fabric")
 			r:block(1.8, 1.83, 0.26, 1.96, 1.86, 0.34, C.Metal, "Metal")
 		end,
 	},
@@ -979,7 +979,7 @@ local items: { Item } = {
 		style = "rustic",
 		build = function(r: R)
 			-- a tall tapered churn of staves on a board, a lid and the dasher's handle
-			r:block(-0.75, 0, -0.75, 0.75, 0.1, 0.75, shade(r.c1, 0.8), "Wood")
+			r:bevel(-0.75, 0, -0.75, 0.75, 0.1, 0.75, 0.035, shade(r.c1, 0.8), "Wood", { wear = 1.06 })
 			r:cyl(0, 1.4, 0, 2.56, 2 * (0.45 - 0.06), "y", INSIDE, "Wood")
 			staves(r, 0, 0, 0.1, 2.6, 0.6, 0.525, 0.45, 12, r.c1)
 			for _, y in { 0.35, 1.4, 2.45 } do
@@ -994,8 +994,8 @@ local items: { Item } = {
 			r:cyl(0, 3.35, 0, 1.1, 0.12, "y", pale, "Wood")
 			r:cyl(0, 3.9, 0, 0.5, 0.12, "x", pale, "Wood")
 			-- a pat of butter in a little dish beside it
-			r:cyl(0.55, 0.13, 0.55, 0.06, 0.34, "y", STONEWARE, "SmoothPlastic")
-			r:block(0.45, 0.16, 0.48, 0.65, 0.26, 0.62, Color3.fromRGB(246, 226, 150), "SmoothPlastic")
+			r:cyl(0.55, 0.13, 0.55, 0.06, 0.34, "y", STONEWARE, "Marble")
+			r:block(0.45, 0.16, 0.48, 0.65, 0.26, 0.62, Color3.fromRGB(246, 226, 150), "Plaster")
 		end,
 	},
 	{
@@ -1046,14 +1046,14 @@ local items: { Item } = {
 			end
 			local apples = { Color3.fromRGB(186, 74, 64), Color3.fromRGB(150, 176, 90), Color3.fromRGB(196, 92, 70) }
 			for i = 0, 4 do
-				r:ball(-0.5 + i * 0.25, 0.23, -0.2 + (i % 2) * 0.3, 0.3, apples[1 + i % 3], "SmoothPlastic")
+				r:ball(-0.5 + i * 0.25, 0.23, -0.2 + (i % 2) * 0.3, 0.3, apples[1 + i % 3], "Marble")
 			end
 			for i = 0, 2 do
-				r:ball(-0.38 + i * 0.25, 0.48, 0.0, 0.3, apples[1 + (i + 1) % 3], "SmoothPlastic")
+				r:ball(-0.38 + i * 0.25, 0.48, 0.0, 0.3, apples[1 + (i + 1) % 3], "Marble")
 			end
 			for i, col in { CREAM, GINGHAM, SAGE } do
 				local y = 0.08 + (i - 1) * 0.2
-				r:block(1.0, y, -0.5, 2.25, y + 0.18, 0.4, col, "Fabric")
+				r:bevel(1.0, y, -0.5, 2.25, y + 0.18, 0.4, 0.081, col, "Fabric", { round = true })
 				r:cyl(1.625, y + 0.09, 0.4, 1.25, 0.18, "x", col, "Fabric")
 			end
 			-- a watering can in one, books and a tin in the next
@@ -1070,8 +1070,8 @@ local items: { Item } = {
 			)
 			for i, col in { Color3.fromRGB(110, 78, 56), DUSK } do
 				local y = 1.48 + (i - 1) * 0.14
-				r:block(0.25, y, -0.5, 1.15, y + 0.13, 0.3, col, "SmoothPlastic")
-				r:block(0.27, y + 0.025, 0.3, 1.13, y + 0.105, 0.33, PAGE, "SmoothPlastic")
+				r:block(0.25, y, -0.5, 1.15, y + 0.13, 0.3, col, "Marble")
+				r:block(0.27, y + 0.025, 0.3, 1.13, y + 0.105, 0.33, PAGE, "Cardboard")
 			end
 			r:cyl(1.35, 1.66, 0, 0.36, 0.3, "y", Color3.fromRGB(186, 110, 96), "Metal")
 			-- eggs in the top crate and a pot of rosemary on it
@@ -1083,12 +1083,12 @@ local items: { Item } = {
 					0.24,
 					0.18,
 					if i % 2 == 0 then CREAM else Color3.fromRGB(214, 176, 140),
-					"SmoothPlastic"
+					"Plaster"
 				)
 			end
 			local s = pot(r, 0.0, 4.2, -0.1, 0.44, 0.36, Color3.fromRGB(196, 122, 90))
 			r:piece(function(q: R)
-				q:box(0.0, s + 0.05, -0.1, 0.06, 0.1, 0.06, C.DarkLeaf, "SmoothPlastic")
+				q:box(0.0, s + 0.05, -0.1, 0.06, 0.1, 0.06, C.DarkLeaf, "Grass")
 				for i = 0, 6 do
 					local a = i * 0.9
 					q:lump(
@@ -1098,10 +1098,10 @@ local items: { Item } = {
 						0.48,
 						0.07,
 						if i % 2 == 0 then C.DarkLeaf else SAGE,
-						"SmoothPlastic"
+						"Grass"
 					)
 				end
-			end)
+			end, nil, "Grass")
 		end,
 	},
 	{
@@ -1118,13 +1118,13 @@ local items: { Item } = {
 		build = function(r: R)
 			local china, wood = r.c1, r.c2
 			-- a wooden base on a kick, rails either side of the sink's apron
-			r:block(-2.0, 0, -1.15, 2.0, 0.25, 0.9, shade(wood, 0.7), "Wood")
+			r:bevel(-2.0, 0, -1.15, 2.0, 0.25, 0.9, 0.08, shade(wood, 0.7), "Wood", { wear = 1.06 })
 			for _, sx in { -1, 1 } do
 				r:block(sx * 1.9, 0.25, -1.2, sx * 2.05, 2.95, 1.0, wood, "Wood")
 				r:block(sx * 1.9, 2.3, 0.85, sx * 1.3, 2.95, 1.0, wood, "Wood")
 			end
 			r:block(-1.9, 0.25, -1.2, 1.9, 2.95, -1.08, shade(wood, 0.8), "Wood")
-			r:block(-1.9, 0.25, -1.08, 1.9, 0.4, 1.0, wood, "Wood")
+			r:bevel(-1.9, 0.25, -1.08, 1.9, 0.4, 1.0, 0.053, wood, "Wood", { wear = 1.06 })
 			-- a checked curtain on a rod in place of doors
 			r:cyl(0, 2.04, 1.1, 3.8, 0.05, "x", BRASS, "Metal")
 			for _, sx in { -1, 1 } do
@@ -1156,11 +1156,11 @@ local items: { Item } = {
 				plank(1.3, z1, 2.1, z1 + 0.325)
 			end
 			-- the deep sink with its apron front, a drain in the bottom
-			r:block(-1.3, 2.1, 1.05, 1.3, 3.2, 1.25, china, "SmoothPlastic")
-			r:block(-1.3, 2.1, -0.2, 1.3, 3.2, 0.0, china, "SmoothPlastic")
-			r:block(-1.3, 2.1, 0.0, -1.1, 3.2, 1.05, china, "SmoothPlastic")
-			r:block(1.1, 2.1, 0.0, 1.3, 3.2, 1.05, china, "SmoothPlastic")
-			r:block(-1.1, 2.1, 0.0, 1.1, 2.3, 1.05, china, "SmoothPlastic")
+			r:block(-1.3, 2.1, 1.05, 1.3, 3.2, 1.25, china, "Marble")
+			r:block(-1.3, 2.1, -0.2, 1.3, 3.2, 0.0, china, "Marble")
+			r:block(-1.3, 2.1, 0.0, -1.1, 3.2, 1.05, china, "Marble")
+			r:block(1.1, 2.1, 0.0, 1.3, 3.2, 1.05, china, "Marble")
+			r:bevel(-1.1, 2.1, 0.0, 1.1, 2.3, 1.05, 0.07, china, "Marble", { wear = 0.94 })
 			r:cyl(0, 2.315, 0.5, 0.03, 0.22, "y", C.Metal, "Metal")
 			-- a bridge tap with cross handles
 			local tap = C.Metal
@@ -1169,20 +1169,20 @@ local items: { Item } = {
 				r:cyl(x, 3.455, -0.75, 0.41, 0.12, "y", tap, "Metal")
 				r:block(x - 0.16, 3.66, -0.79, x + 0.16, 3.72, -0.71, tap, "Metal")
 				r:block(x - 0.04, 3.66, -0.91, x + 0.04, 3.72, -0.59, tap, "Metal")
-				r:cyl(x, 3.75, -0.75, 0.06, 0.1, "y", C.White, "SmoothPlastic")
+				r:cyl(x, 3.75, -0.75, 0.06, 0.1, "y", C.White, "Marble")
 			end
 			r:cyl(0, 3.6, -0.75, 1.0, 0.1, "x", tap, "Metal")
 			path(r, { V(0, 3.6, -0.75), V(0, 4.2, -0.65), V(0, 4.28, -0.3), V(0, 4.0, -0.02) }, 0.1, tap, "Metal")
 			r:cyl(0, 3.95, -0.02, 0.1, 0.12, "y", tap, "Metal")
 			-- a crock of brushes, a bar of soap on a dish and a tea towel over the edge
-			r:cyl(1.7, 3.5, -0.8, 0.5, 0.42, "y", STONEWARE, "SmoothPlastic")
-			r:cyl(1.7, 3.6, -0.8, 0.08, 0.48, "y", DELFT, "SmoothPlastic")
+			r:cyl(1.7, 3.5, -0.8, 0.5, 0.42, "y", STONEWARE, "Marble")
+			r:cyl(1.7, 3.6, -0.8, 0.08, 0.48, "y", DELFT, "Marble")
 			rod(r, V(1.65, 3.6, -0.8), V(1.55, 4.15, -0.7), 0.06, Color3.fromRGB(176, 140, 100), "Wood")
 			r:block(1.45, 4.15, -0.75, 1.62, 4.3, -0.62, STRAW, "Fabric")
 			rod(r, V(1.75, 3.6, -0.82), V(1.85, 4.05, -0.9), 0.05, Color3.fromRGB(176, 140, 100), "Wood")
 			r:lump(CFrame.new(1.87, 4.12, -0.92), 0.14, 0.2, 0.06, Color3.fromRGB(176, 140, 100), "Wood")
-			r:cyl(-1.65, 3.27, -0.5, 0.04, 0.42, "y", STONEWARE, "SmoothPlastic")
-			r:block(-1.8, 3.29, -0.58, -1.5, 3.39, -0.42, Color3.fromRGB(232, 220, 190), "SmoothPlastic")
+			r:cyl(-1.65, 3.27, -0.5, 0.04, 0.42, "y", STONEWARE, "Marble")
+			r:block(-1.8, 3.29, -0.58, -1.5, 3.39, -0.42, Color3.fromRGB(232, 220, 190), "Plaster")
 			r:block(1.45, 3.25, 0.8, 1.95, 3.28, 1.1, CREAM, "Fabric")
 			r:block(1.45, 2.55, 1.1, 1.95, 3.28, 1.14, CREAM, "Fabric")
 			r:block(1.55, 2.55, 1.14, 1.65, 3.28, 1.17, GINGHAM, "Fabric")
@@ -1255,7 +1255,7 @@ local items: { Item } = {
 			end
 			-- a patchwork quilt folded on the lid
 			local quilt = ROSE
-			r:block(-1.3, 2.08, -0.75, 0.9, 2.26, 0.7, quilt, "Fabric")
+			r:bevel(-1.3, 2.08, -0.75, 0.9, 2.26, 0.7, 0.081, quilt, "Fabric", { round = true })
 			patchwork(
 				r,
 				-1.3,
@@ -1440,10 +1440,10 @@ local items: { Item } = {
 					r:block(sx * 1.2, 0, sz * 0.6, sx * 1.35, 3.0, sz * 0.75, wood, "Wood")
 				end
 			end
-			r:block(-1.2, 2.5, -0.6, 1.2, 3.0, 0.6, wood, "Wood")
+			r:bevel(-1.2, 2.5, -0.6, 1.2, 3.0, 0.6, 0.08, wood, "Wood", { wear = 1.06 })
 			r:block(-1.0, 2.55, 0.6, 1.0, 2.95, 0.65, shade(wood, 1.08), "Wood")
 			r:ball(0, 2.75, 0.7, 0.12, shade(wood, 0.7), "Wood")
-			r:block(-1.45, 3.0, -0.82, 1.45, 3.15, 0.82, wood, "Wood")
+			r:bevel(-1.45, 3.0, -0.82, 1.45, 3.15, 0.82, 0.052, wood, "Wood", { wear = 1.06 })
 			r:block(-1.2, 0.5, -0.6, 1.2, 0.6, 0.6, wood, "Wood")
 			-- a splashback with a round top and a round mirror on it
 			r:block(-1.4, 3.15, -0.82, 1.4, 3.9, -0.7, wood, "Wood")
@@ -1462,16 +1462,16 @@ local items: { Item } = {
 			r:block(1.62, 2.25, -0.4, 1.65, 2.85, 0.4, CREAM, "Fabric")
 			r:block(1.65, 2.35, -0.4, 1.68, 2.45, 0.4, DUSK, "Fabric")
 			-- a basin with a jug standing in it, and a soap dish
-			r:cyl(0, 3.2, 0.05, 0.1, 0.7, "y", china, "SmoothPlastic")
-			r:cyl(0, 3.36, 0.05, 0.22, 1.3, "y", china, "SmoothPlastic")
-			r:cyl(0, 3.49, 0.05, 0.04, 1.4, "y", DELFT, "SmoothPlastic")
-			r:cyl(0, 3.525, 0.05, 0.03, 1.1, "y", WATER, "SmoothPlastic")
-			r:cyl(0.15, 3.79, 0.1, 0.5, 0.42, "y", china, "SmoothPlastic")
-			r:cyl(0.15, 3.9, 0.1, 0.06, 0.46, "y", DELFT, "SmoothPlastic")
-			r:block(-0.12, 3.92, 0.06, -0.04, 4.04, 0.14, china, "SmoothPlastic")
-			r:block(0.36, 3.6, 0.07, 0.44, 3.95, 0.13, china, "SmoothPlastic")
-			r:cyl(1.0, 3.17, 0.45, 0.04, 0.4, "y", china, "SmoothPlastic")
-			r:block(0.88, 3.19, 0.38, 1.12, 3.27, 0.52, Color3.fromRGB(226, 210, 180), "SmoothPlastic")
+			r:cyl(0, 3.2, 0.05, 0.1, 0.7, "y", china, "Marble")
+			r:cyl(0, 3.36, 0.05, 0.22, 1.3, "y", china, "Marble")
+			r:cyl(0, 3.49, 0.05, 0.04, 1.4, "y", DELFT, "Marble")
+			r:cyl(0, 3.525, 0.05, 0.03, 1.1, "y", WATER, "Glass")
+			r:cyl(0.15, 3.79, 0.1, 0.5, 0.42, "y", china, "Marble")
+			r:cyl(0.15, 3.9, 0.1, 0.06, 0.46, "y", DELFT, "Marble")
+			r:block(-0.12, 3.92, 0.06, -0.04, 4.04, 0.14, china, "Marble")
+			r:block(0.36, 3.6, 0.07, 0.44, 3.95, 0.13, china, "Marble")
+			r:cyl(1.0, 3.17, 0.45, 0.04, 0.4, "y", china, "Marble")
+			r:block(0.88, 3.19, 0.38, 1.12, 3.27, 0.52, Color3.fromRGB(226, 210, 180), "Plaster")
 			-- on the shelf: a folded towel and a tin jug
 			r:block(-0.9, 0.6, -0.4, 0.1, 0.8, 0.4, CREAM, "Fabric")
 			r:block(-0.9, 0.62, 0.4, 0.1, 0.72, 0.43, DUSK, "Fabric")
@@ -1521,13 +1521,13 @@ local items: { Item } = {
 					1.55 + h * 0.5,
 					0.53 + (if i <= 3 then 0.21 else 0.17),
 					PAGE,
-					"SmoothPlastic"
+					"Cardboard"
 				)
 			end
-			r:cyl(1.45, 1.85, 0.45, 0.6, 0.55, "y", STONEWARE, "SmoothPlastic")
-			r:cyl(1.45, 1.9, 0.45, 0.08, 0.6, "y", DELFT, "SmoothPlastic")
-			r:cyl(1.45, 2.18, 0.45, 0.06, 0.58, "y", shade(STONEWARE, 0.9), "SmoothPlastic")
-			r:ball(1.45, 2.24, 0.45, 0.12, shade(STONEWARE, 0.9), "SmoothPlastic")
+			r:cyl(1.45, 1.85, 0.45, 0.6, 0.55, "y", STONEWARE, "Marble")
+			r:cyl(1.45, 1.9, 0.45, 0.08, 0.6, "y", DELFT, "Marble")
+			r:cyl(1.45, 2.18, 0.45, 0.06, 0.58, "y", shade(STONEWARE, 0.9), "Marble")
+			r:ball(1.45, 2.24, 0.45, 0.12, shade(STONEWARE, 0.9), "Marble")
 			-- a rail under it with herbs drying and a ladle on a hook
 			r:cyl(0, 1.25, 0.7, 2.8, 0.05, "x", iron, "Metal")
 			for i, x in { -0.9, -0.2, 0.5 } do
@@ -1578,19 +1578,19 @@ local items: { Item } = {
 			-- ears of wheat round it in bunches, and a few dried flowers
 			for b = 0, 2 do
 				r:piece(function(q: R)
-					q:box(0, 1.2, 0.3, 0.02, 0.02, 0.02, wheat, "SmoothPlastic")
+					q:box(0, 1.2, 0.3, 0.02, 0.02, 0.02, wheat, "Sand")
 					for k = 0, 3 do
 						local a = (b * 4 + k) * math.pi * 2 / 12
 						local base = c + V(math.cos(a), math.sin(a), 0) * 0.84 + V(0, 0, 0.16)
 						local t = V(-math.sin(a), math.cos(a), 0)
 						for s = -1, 1 do
 							local tip = base + t * 0.32 + V(math.cos(a), math.sin(a), 0) * (s * 0.1)
-							q:beam(base, tip, 0.025, 0.025, shade(wheat, 0.85), "SmoothPlastic")
+							q:beam(base, tip, 0.025, 0.025, shade(wheat, 0.85), "Sand")
 							local ang = math.atan2(tip.Y - base.Y, tip.X - base.X) - math.pi / 2
-							q:lump(CFrame.new(tip) * CFrame.Angles(0, 0, ang), 0.08, 0.24, 0.08, wheat, "SmoothPlastic")
+							q:lump(CFrame.new(tip) * CFrame.Angles(0, 0, ang), 0.08, 0.24, 0.08, wheat, "Sand")
 						end
 					end
-				end)
+				end, nil, "Sand")
 			end
 			for i = 0, 5 do
 				local a = i * math.pi / 3 + 0.3
@@ -1731,10 +1731,10 @@ local items: { Item } = {
 				r:block(sx * 1.6, 0.3, -0.85, sx * 1.75, 5.2, 0.75, paint, "Wood")
 			end
 			r:block(-1.6, 0.3, -0.85, 1.6, 5.2, -0.75, shade(paint, 0.8), "Wood")
-			r:block(-1.6, 0.3, -0.75, 1.6, 0.5, 0.75, paint, "Wood")
+			r:bevel(-1.6, 0.3, -0.75, 1.6, 0.5, 0.75, 0.07, paint, "Wood", { wear = 1.06 })
 			r:block(-1.6, 0.5, -0.75, 1.6, 5.2, 0.7, shade(paint, 0.45), "Wood")
-			r:block(-1.85, 5.2, -0.92, 1.85, 5.35, 0.9, paint, "Wood")
-			r:block(-1.95, 5.35, -0.95, 1.95, 5.5, 0.98, paint, "Wood")
+			r:bevel(-1.85, 5.2, -0.92, 1.85, 5.35, 0.9, 0.052, paint, "Wood", { wear = 1.06 })
+			r:bevel(-1.95, 5.35, -0.95, 1.95, 5.5, 0.98, 0.053, paint, "Wood", { wear = 1.06 })
 			-- lower doors with raised panels, two drawers, upper doors of punched tin
 			for _, sx in { -1, 1 } do
 				local xo, xi = sx * 1.55, sx * 0.03
@@ -1782,8 +1782,8 @@ local items: { Item } = {
 			r:boxAt(CFrame.new(0, 4.35, 0.86) * CFrame.Angles(0, 0, 0.3), 0.08, 0.32, 0.04, shade(paint, 0.6), "Wood")
 			r:cyl(0, 4.35, 0.89, 0.03, 0.06, "z", IRON, "Metal")
 			-- a crock of wooden spoons on top
-			r:cyl(0.6, 5.75, 0.0, 0.5, 0.46, "y", STONEWARE, "SmoothPlastic")
-			r:cyl(0.6, 5.85, 0.0, 0.08, 0.52, "y", DELFT, "SmoothPlastic")
+			r:cyl(0.6, 5.75, 0.0, 0.5, 0.46, "y", STONEWARE, "Marble")
+			r:cyl(0.6, 5.85, 0.0, 0.08, 0.52, "y", DELFT, "Marble")
 			local spoon = Color3.fromRGB(196, 160, 112)
 			for i = 0, 2 do
 				local a = i * 2.1
@@ -1867,12 +1867,12 @@ local items: { Item } = {
 				local x = -0.45 + ((i - 1) % 3) * 0.45 + (rand() - 0.5) * 0.12
 				local z = -1.0 + math.floor((i - 1) / 3) * 0.75 + (rand() - 0.5) * 0.2
 				local h = 0.35 + rand() * 0.3
-				r:box(x, 1.82 + h / 2, z, 0.04, h, 0.04, C.DarkLeaf, "SmoothPlastic")
-				r:ball(x, 1.86 + h, z, 0.26, col, "SmoothPlastic")
-				r:ball(x, 1.9 + h, z, 0.1, if col == MUSTARD then C.White else C.Yellow, "SmoothPlastic")
+				r:box(x, 1.82 + h / 2, z, 0.04, h, 0.04, C.DarkLeaf, "Grass")
+				r:ball(x, 1.86 + h, z, 0.26, col, "Fabric")
+				r:ball(x, 1.9 + h, z, 0.1, if col == MUSTARD then C.White else C.Yellow, "Fabric")
 			end
 			r:piece(function(q: R)
-				q:box(0, 1.85, 0, 0.1, 0.06, 0.1, C.Leaf, "SmoothPlastic")
+				q:box(0, 1.85, 0, 0.1, 0.06, 0.1, C.Leaf, "Grass")
 				for i = 0, 7 do
 					local x = -0.5 + (i % 4) * 0.33
 					local z = -1.1 + math.floor(i / 4) * 1.4 + (i % 2) * 0.3
@@ -1882,12 +1882,12 @@ local items: { Item } = {
 						0.22,
 						0.32,
 						if i % 2 == 0 then C.Leaf else C.DarkLeaf,
-						"SmoothPlastic"
+						"Grass"
 					)
 				end
-			end)
+			end, nil, "Grass")
 			r:piece(function(q: R)
-				q:box(-0.75, 1.85, -0.2, 0.04, 0.1, 0.04, C.DarkLeaf, "SmoothPlastic")
+				q:box(-0.75, 1.85, -0.2, 0.04, 0.1, 0.04, C.DarkLeaf, "Grass")
 				for i = 0, 4 do
 					local y = 1.82 - i * 0.18
 					q:lump(
@@ -1897,11 +1897,11 @@ local items: { Item } = {
 						0.2,
 						0.16,
 						C.Leaf,
-						"SmoothPlastic"
+						"Grass"
 					)
 				end
-				q:box(-0.84, 1.45, -0.15, 0.03, 0.75, 0.03, C.DarkLeaf, "SmoothPlastic")
-			end)
+				q:box(-0.84, 1.45, -0.15, 0.03, 0.75, 0.03, C.DarkLeaf, "Grass")
+			end, nil, "Grass")
 		end,
 	},
 	{
@@ -1943,7 +1943,7 @@ local items: { Item } = {
 					end
 				end
 			end)
-			r:block(-0.9, 0, 0.3, 0.9, 0.15, 1.45, shade(stone, 1.08), "Slate")
+			r:bevel(-0.9, 0, 0.3, 0.9, 0.15, 1.45, 0.052, shade(stone, 1.08), "Slate", { wear = 0.94 })
 			-- the cast iron body, its spout and cap
 			r:cyl(0, 0.58, -0.6, 0.16, 0.7, "y", iron, "Metal")
 			r:cyl(0, 1.75, -0.6, 2.5, 0.42, "y", iron, "Metal")

@@ -38,7 +38,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -67,7 +67,7 @@ local function climber(r: R, x: number, z: number, y0: number, y1: number, flowe
 		local ox, oz = math.cos(a) * 0.32, math.sin(a) * 0.32
 		clump(r, x + ox, y, z + oz, 0.9, 0.75, 0.8, a, if i % 2 == 0 then C.Leaf else C.DarkLeaf)
 		if i % 2 == 1 then
-			r:ball(x + ox * 1.9, y + 0.15, z + oz * 1.9, 0.34, flower, "SmoothPlastic")
+			r:ball(x + ox * 1.9, y + 0.15, z + oz * 1.9, 0.34, flower, "Fabric")
 		end
 	end
 end
@@ -239,7 +239,7 @@ local items: { any } = {
 			do
 				clump(r, p[1], 9.5, p[2], 1.7, 0.7, 1.5, i * 0.9, if i % 2 == 0 then C.Leaf else C.DarkLeaf)
 				if i % 3 ~= 0 then
-					r:ball(p[1] + 0.4, 9.75, p[2] - 0.3, 0.32, r.c2, "SmoothPlastic")
+					r:ball(p[1] + 0.4, 9.75, p[2] - 0.3, 0.32, r.c2, "Fabric")
 				end
 			end
 			-- roses up three posts, leaves trailing along the beams
@@ -250,7 +250,7 @@ local items: { any } = {
 				local x = if i % 2 == 0 then 3.6 else -3.6
 				clump(r, x, 9.0, z, 1.2, 0.8, 1.6, i, if i % 3 == 0 then C.DarkLeaf else C.Leaf)
 				if i % 2 == 1 then
-					r:ball(x + 0.3, 8.75, z + 0.4, 0.32, r.c2, "SmoothPlastic")
+					r:ball(x + 0.3, 8.75, z + 0.4, 0.32, r.c2, "Fabric")
 				end
 			end
 		end,
@@ -343,7 +343,7 @@ local items: { any } = {
 				end)
 			end
 			-- the coping along the top
-			r:block(-5.15, top, -1.25, 5.15, top + 0.55, 1.25, r.c2, "Limestone")
+			r:bevel(-5.15, top, -1.25, 5.15, top + 0.55, 1.25, 0.08, r.c2, "Limestone", { wear = 0.94 })
 			r:block(-4.9, top + 0.55, -1.0, 4.9, top + 0.6, 1.0, shade(r.c2, 0.9), "Limestone")
 			-- ivy up the left pier and over the arch
 			for i, p in
@@ -490,7 +490,7 @@ local items: { any } = {
 						-1.3 + math.sin(a) * 0.3,
 						0.42,
 						if i == 1 then C.Red else Color3.fromRGB(150, 186, 92),
-						"SmoothPlastic"
+						"Fabric"
 					)
 				end
 			end
@@ -590,7 +590,7 @@ local items: { any } = {
 			end
 			-- the telescope on its pier, its tube out of the slit
 			r:cyl(0, 1.6, 0, 1.2, 1.4, "y", shade(r.c1, 0.7), "Metal")
-			r:block(-0.5, 2.2, -0.5, 0.5, 2.8, 0.5, C.DarkMetal, "Metal")
+			r:bevel(-0.5, 2.2, -0.5, 0.5, 2.8, 0.5, 0.08, C.DarkMetal, "Metal", { wear = 1.06 })
 			local up = math.rad(48)
 			local dir = Vector3.new(0, math.sin(up), math.cos(up))
 			local pivot = Vector3.new(0, 3.0, 0)
@@ -761,9 +761,9 @@ local items: { any } = {
 		build = function(r: R)
 			-- A stone urn (c1) on a pedestal, planted with flowers (c2) and ivy over its lip.
 			local s = r.c1
-			r:block(-1.0, 0, -1.0, 1.0, 0.3, 1.0, shade(s, 0.9), "Limestone")
+			r:bevel(-1.0, 0, -1.0, 1.0, 0.3, 1.0, 0.08, shade(s, 0.9), "Limestone", { wear = 0.94 })
 			r:block(-0.8, 0.3, -0.8, 0.8, 1.9, 0.8, s, "Limestone")
-			r:block(-0.95, 1.9, -0.95, 0.95, 2.15, 0.95, shade(s, 0.92), "Limestone")
+			r:bevel(-0.95, 1.9, -0.95, 0.95, 2.15, 0.95, 0.08, shade(s, 0.92), "Limestone", { wear = 0.94 })
 			r:cyl(0, 2.3, 0, 0.3, 0.9, "y", s, "Limestone")
 			r:cyl(0, 2.6, 0, 0.3, 0.55, "y", shade(s, 0.95), "Limestone")
 			r:lump(CFrame.new(0, 3.3, 0), 2.0, 1.4, 2.0, s, "Limestone")
@@ -782,9 +782,9 @@ local items: { any } = {
 					a,
 					if i % 2 == 0 then C.Leaf else C.DarkLeaf
 				)
-				r:ball(math.cos(a + 0.6) * 0.45, 4.5, math.sin(a + 0.6) * 0.45, 0.36, r.c2, "SmoothPlastic")
+				r:ball(math.cos(a + 0.6) * 0.45, 4.5, math.sin(a + 0.6) * 0.45, 0.36, r.c2, "Fabric")
 			end
-			r:ball(0, 4.6, 0, 0.36, shade(r.c2, 1.1), "SmoothPlastic")
+			r:ball(0, 4.6, 0, 0.36, shade(r.c2, 1.1), "Fabric")
 			for _, a in { 0.4, 2.5, 4.4 } do
 				r:lump(
 					CFrame.new(math.cos(a) * 1.08, 3.55, math.sin(a) * 1.08) * CFrame.Angles(0, -a, 0.15),
@@ -858,15 +858,15 @@ local items: { any } = {
 			}
 			for _, b in boards do
 				local lean = CFrame.new(b.x, 3.05, 0.25) * CFrame.Angles(math.rad(-14), 0, b.tilt)
-				r:lump(lean, 1.2, 6.0, 0.22, b.color, "SmoothPlastic")
-				r:lump(lean * CFrame.new(0, 0, 0.15), 0.18, 5.2, 0.06, IVORY, "SmoothPlastic")
+				r:lump(lean, 1.2, 6.0, 0.22, b.color, "Metal")
+				r:lump(lean * CFrame.new(0, 0, 0.15), 0.18, 5.2, 0.06, IVORY, "Metal")
 				r:wedge(
 					lean * CFrame.new(0, -2.2, 0.32) * CFrame.Angles(0, math.pi / 2, 0),
 					0.4,
 					0.45,
 					0.06,
 					shade(b.color, 0.7),
-					"SmoothPlastic"
+					"Metal"
 				)
 			end
 		end,
@@ -906,16 +906,7 @@ local items: { any } = {
 					)
 				)
 				r:piece(function(q: R)
-					q:block(
-						s * half - 0.12,
-						eaveY - 0.3,
-						-half,
-						s * half + 0.12,
-						eaveY + 0.05,
-						half,
-						r.c1,
-						"SmoothPlastic"
-					)
+					q:block(s * half - 0.12, eaveY - 0.3, -half, s * half + 0.12, eaveY + 0.05, half, r.c1, "Metal")
 					for k = 0, 10 do
 						local z = -half + 0.1 + k * (2 * half - 0.2) / 10
 						q:beam(
@@ -924,10 +915,10 @@ local items: { any } = {
 							0.14,
 							0.16,
 							r.c1,
-							"SmoothPlastic"
+							"Metal"
 						)
 					end
-				end)
+				end, nil, "Metal")
 			end
 			-- the gables, over the end walls
 			local function slopeY(x: number): number
@@ -946,17 +937,17 @@ local items: { any } = {
 					)
 				)
 				r:piece(function(q: R)
-					q:block(-8.3, 0, z - 0.1, 8.3, 0.2, z + 0.1, r.c1, "SmoothPlastic")
+					q:block(-8.3, 0, z - 0.1, 8.3, 0.2, z + 0.1, r.c1, "Metal")
 					for _, x in { -6, -3, 0, 3, 6 } do
-						q:block(x - 0.07, 0.2, z - 0.08, x + 0.07, slopeY(x) - 0.05, z + 0.08, r.c1, "SmoothPlastic")
+						q:block(x - 0.07, 0.2, z - 0.08, x + 0.07, slopeY(x) - 0.05, z + 0.08, r.c1, "Metal")
 					end
-					q:block(-5.4, 2.4, z - 0.08, 5.4, 2.54, z + 0.08, r.c1, "SmoothPlastic")
-				end)
+					q:block(-5.4, 2.4, z - 0.08, 5.4, 2.54, z + 0.08, r.c1, "Metal")
+				end, nil, "Metal")
 			end
 			-- the ridge and its finials
-			r:block(-0.2, ridgeY, -half - 0.1, 0.2, ridgeY + 0.3, half + 0.1, r.c2, "SmoothPlastic")
+			r:block(-0.2, ridgeY, -half - 0.1, 0.2, ridgeY + 0.3, half + 0.1, r.c2, "Metal")
 			for _, zs in { -1, 1 } do
-				r:ball(0, ridgeY + 0.45, zs * (half - 0.1), 0.36, r.c2, "SmoothPlastic")
+				r:ball(0, ridgeY + 0.45, zs * (half - 0.1), 0.36, r.c2, "Metal")
 			end
 		end,
 	},

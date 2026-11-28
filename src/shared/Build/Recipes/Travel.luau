@@ -220,7 +220,7 @@ local items: { any } = {
 					Vector3.new(-1.7, y2 - 0.1, z2),
 					0.2,
 					r.c1,
-					"Plastic"
+					"Metal"
 				)
 				for _, x in { -1.85, 1.85 } do
 					r:quad(
@@ -230,7 +230,7 @@ local items: { any } = {
 						Vector3.new(x, y1 + 1.2, z1),
 						0.3,
 						shade(r.c1, 0.92),
-						"Plastic"
+						"Metal"
 					)
 				end
 			end

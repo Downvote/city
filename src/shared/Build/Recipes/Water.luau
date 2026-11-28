@@ -49,7 +49,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -122,7 +122,7 @@ local function lily(r: R, x: number, y: number, z: number, petal: Color3, turn: 
 			0.1,
 			0.2,
 			petal,
-			"SmoothPlastic"
+			"Fabric"
 		)
 	end
 	for k = 0, 4 do
@@ -133,16 +133,16 @@ local function lily(r: R, x: number, y: number, z: number, petal: Color3, turn: 
 			0.09,
 			0.15,
 			light,
-			"SmoothPlastic"
+			"Glass"
 		)
 	end
-	r:ball(x, y + 0.24, z, 0.14, C.Yellow, "SmoothPlastic")
+	r:ball(x, y + 0.24, z, 0.14, C.Yellow, "Fabric")
 end
 
 -- One fish of a shoal: (x, y, z) its middle, s its length, turned to face along yaw.
 local function fish(r: R, x: number, y: number, z: number, s: number, yaw: number, body: Color3, patch: Color3)
 	local f = CFrame.new(x, y, z) * CFrame.Angles(0, yaw, 0)
-	r:noCollide(r:lump(f, 0.34 * s, 0.36 * s, s, body, "SmoothPlastic"))
+	r:noCollide(r:lump(f, 0.34 * s, 0.36 * s, s, body, "Marble"))
 	r:noCollide(
 		r:lump(
 			f * CFrame.new(0, 0, -0.58 * s) * CFrame.Angles(0.3, 0, 0),
@@ -150,16 +150,15 @@ local function fish(r: R, x: number, y: number, z: number, s: number, yaw: numbe
 			0.4 * s,
 			0.32 * s,
 			shade(body, 0.85),
-			"SmoothPlastic"
+			"Marble"
 		)
 	)
 	r:noCollide(
-		r:lump(f * CFrame.new(0, 0.17 * s, -0.05 * s), 0.05 * s, 0.16 * s, 0.32 * s, shade(body, 0.85), "SmoothPlastic")
+		r:lump(f * CFrame.new(0, 0.17 * s, -0.05 * s), 0.05 * s, 0.16 * s, 0.32 * s, shade(body, 0.85), "Marble")
 	)
-	r:noCollide(r:lump(f * CFrame.new(0, 0.1 * s, 0.12 * s), 0.26 * s, 0.14 * s, 0.34 * s, patch, "SmoothPlastic"))
+	r:noCollide(r:lump(f * CFrame.new(0, 0.1 * s, 0.12 * s), 0.26 * s, 0.14 * s, 0.34 * s, patch, "Marble"))
 	for _, sx in { -1, 1 } do
-		r:noCollide(r:ball(0, 0, 0, 0.06 * s, C.Black, "SmoothPlastic")).cf = f
-			* CFrame.new(sx * 0.14 * s, 0.05 * s, 0.34 * s)
+		r:noCollide(r:ball(0, 0, 0, 0.06 * s, C.Black, "Marble")).cf = f * CFrame.new(sx * 0.14 * s, 0.05 * s, 0.34 * s)
 	end
 end
 
@@ -190,7 +189,7 @@ local list: { any } = {
 			for i, p in pads do
 				local x, z, d, turn = p[1], p[2], p[3], p[4]
 				local tone = if i % 2 == 0 then shade(r.c1, 0.9) else r.c1
-				r:noCollide(r:cyl(x, 0.06, z, 0.06, d, "y", tone, "SmoothPlastic"))
+				r:noCollide(r:cyl(x, 0.06, z, 0.06, d, "y", tone, "Grass"))
 				-- the vein from the middle to the notch, a hair above the pad
 				r:noCollide(
 					r:boxAt(
@@ -199,15 +198,15 @@ local list: { any } = {
 						0.03,
 						d * 0.42,
 						shade(r.c1, 0.72),
-						"SmoothPlastic"
+						"Grass"
 					)
 				)
 			end
 			lily(r, -0.95, 0.09, 0.7, r.c2, 0.2)
 			lily(r, 0.9, 0.09, -0.75, r.c2, 1.1)
 			-- a bud still closed, on its stem
-			r:noCollide(r:cyl(0.75, 0.25, 1.05, 0.32, 0.07, "y", C.DarkLeaf, "SmoothPlastic"))
-			r:noCollide(r:cone(0.75, 0.55, 1.05, 0.4, 0.24, r.c2, "SmoothPlastic"))
+			r:noCollide(r:cyl(0.75, 0.25, 1.05, 0.32, 0.07, "y", C.DarkLeaf, "Grass"))
+			r:noCollide(r:cone(0.75, 0.55, 1.05, 0.4, 0.24, r.c2, "Fabric"))
 		end,
 	},
 	{
@@ -450,14 +449,14 @@ local list: { any } = {
 		c2 = "3A3A40",
 		tags = { "seat" },
 		build = function(r: R)
-			r:lump(CFrame.new(0, 0.45, 0), 1.3, 0.9, 7.4, r.c1, "SmoothPlastic")
+			r:lump(CFrame.new(0, 0.45, 0), 1.3, 0.9, 7.4, r.c1, "Metal")
 			-- the cockpit's rim with the seat down in it, and two hatches
-			r:lump(CFrame.new(0, 0.9, -0.4), 0.95, 0.16, 1.5, r.c2, "Plastic")
-			r:lump(CFrame.new(0, 1.0, -0.4), 0.7, 0.06, 1.2, shade(r.c2, 0.7), "Plastic")
+			r:lump(CFrame.new(0, 0.9, -0.4), 0.95, 0.16, 1.5, r.c2, "Metal")
+			r:lump(CFrame.new(0, 1.0, -0.4), 0.7, 0.06, 1.2, shade(r.c2, 0.7), "Metal")
 			r:seat(0, 0.8, -0.4, 0)
 			for _, z in { 2.2, -2.3 } do
 				local y = 0.45 + 0.45 * math.sqrt(1 - (z / 3.7) ^ 2)
-				r:cyl(0, y + 0.02, z, 0.08, 0.55, "y", r.c2, "Plastic")
+				r:cyl(0, y + 0.02, z, 0.08, 0.55, "y", r.c2, "Metal")
 			end
 			-- a stripe along each side
 			for _, sx in { 1, -1 } do
@@ -467,7 +466,7 @@ local list: { any } = {
 					0.05,
 					0.1,
 					C.White,
-					"Plastic"
+					"Metal"
 				)
 			end
 			-- the paddle, laid across the cockpit
@@ -476,7 +475,7 @@ local list: { any } = {
 			local dir = (b - a).Unit
 			for _, e in { { a, -dir }, { b, dir } } do
 				local mid = e[1] + e[2] * 0.4
-				r:boxAt(CFrame.lookAt(mid, mid + e[2]), 0.3, 0.04, 0.75, rgb(240, 196, 92), "Plastic")
+				r:boxAt(CFrame.lookAt(mid, mid + e[2]), 0.3, 0.04, 0.75, rgb(240, 196, 92), "Metal")
 			end
 		end,
 	},
@@ -496,26 +495,26 @@ local list: { any } = {
 		build = function(r: R)
 			-- two floats, the deck across them, the bow faired off
 			for _, sx in { -1, 1 } do
-				r:lump(CFrame.new(sx * 1.5, 0.5, 0), 1.2, 1.0, 6.2, r.c2, "Plastic")
+				r:lump(CFrame.new(sx * 1.5, 0.5, 0), 1.2, 1.0, 6.2, r.c2, "Metal")
 			end
-			r:block(-1.9, 0.95, -2.6, 1.9, 1.15, 2.6, r.c1, "Plastic")
-			r:ramp(-1.6, 1.15, 1.6, 1.6, 1.6, 2.5, false, r.c1, "Plastic")
+			r:bevel(-1.9, 0.95, -2.6, 1.9, 1.15, 2.6, 0.07, r.c1, "Metal", { wear = 1.06 })
+			r:ramp(-1.6, 1.15, 1.6, 1.6, 1.6, 2.5, false, r.c1, "Metal")
 			-- the seat for two, with its cushions and a rolled top to the back
-			r:block(-1.3, 1.15, -1.6, 1.3, 1.65, -0.4, r.c1, "Plastic")
+			r:bevel(-1.3, 1.15, -1.6, 1.3, 1.65, -0.4, 0.08, r.c1, "Metal", { wear = 1.06 })
 			for _, sx in { -1, 1 } do
-				r:block(sx * 0.1, 1.65, -1.55, sx * 1.2, 1.8, -0.45, r.c2, "Fabric")
+				r:bevel(sx * 0.1, 1.65, -1.55, sx * 1.2, 1.8, -0.45, 0.068, r.c2, "Fabric", { round = true })
 				r:seat(sx * 0.65, 1.8, -1.0, 0)
 			end
-			r:block(-1.3, 1.65, -1.78, 1.3, 2.85, -1.55, r.c1, "Plastic")
-			r:cyl(0, 2.88, -1.66, 2.6, 0.24, "x", r.c1, "Plastic")
+			r:block(-1.3, 1.65, -1.78, 1.3, 2.85, -1.55, r.c1, "Metal")
+			r:cyl(0, 2.88, -1.66, 2.6, 0.24, "x", r.c1, "Metal")
 			-- the pedals in front of it, and a little tiller between the two
-			r:block(-1.3, 1.15, 0.6, 1.3, 1.5, 1.45, shade(r.c1, 0.92), "Plastic")
+			r:block(-1.3, 1.15, 0.6, 1.3, 1.5, 1.45, shade(r.c1, 0.92), "Metal")
 			for _, sx in { -1, 1 } do
 				r:cyl(sx * 0.5, 1.6, 0.55, 0.12, 0.5, "x", C.DarkMetal, "Metal")
-				r:block(sx * 0.5 - 0.16, 1.48, 0.25, sx * 0.5 + 0.16, 1.56, 0.5, C.Black, "Plastic")
+				r:block(sx * 0.5 - 0.16, 1.48, 0.25, sx * 0.5 + 0.16, 1.56, 0.5, C.Black, "Rubber")
 			end
 			r:cyl(0, 2.0, -0.6, 0.7, 0.08, "y", C.DarkMetal, "Metal")
-			r:ball(0, 2.38, -0.6, 0.18, C.Black, "Plastic")
+			r:ball(0, 2.38, -0.6, 0.18, C.Black, "Rubber")
 			-- a striped sun roof on four poles
 			for _, sx in { -1, 1 } do
 				for _, z in { -1.9, 1.5 } do
@@ -536,10 +535,10 @@ local list: { any } = {
 					0.07,
 					0.46,
 					r.c2,
-					"Plastic"
+					"Metal"
 				)
 			end
-			r:block(-0.9, 1.0, -3.2, 0.9, 1.25, -2.62, r.c1, "Plastic")
+			r:block(-0.9, 1.0, -3.2, 0.9, 1.25, -2.62, r.c1, "Metal")
 		end,
 	},
 	-- floats and toys ------------------------------------------------------------------------------------
@@ -568,13 +567,13 @@ local list: { any } = {
 				function(k)
 					return if (k // 3) % 2 == 0 then r.c1 else r.c2
 				end,
-				"Plastic",
+				"Rubber",
 				function(k)
 					return if (k // 3) % 2 == 0 then 0.56 else 0.62
 				end
 			)
 			-- the valve
-			r:cyl(math.cos(0.3) * 1.1, 0.6, math.sin(0.3) * 1.1, 0.1, 0.12, "y", shade(r.c2, 0.85), "Plastic")
+			r:cyl(math.cos(0.3) * 1.1, 0.6, math.sin(0.3) * 1.1, 0.1, 0.12, "y", shade(r.c2, 0.85), "Rubber")
 		end,
 	},
 	{
@@ -595,15 +594,15 @@ local list: { any } = {
 			for k = 0, 4 do
 				local x = -1.0 + k * 0.5
 				local col = if k % 2 == 0 then r.c1 else r.c2
-				r:cyl(x, 0.24, -0.3, 5.0, 0.44, "z", col, "Plastic")
-				r:ball(x, 0.24, -2.8, 0.44, col, "Plastic")
-				r:ball(x, 0.24, 2.2, 0.44, col, "Plastic")
+				r:cyl(x, 0.24, -0.3, 5.0, 0.44, "z", col, "Rubber")
+				r:ball(x, 0.24, -2.8, 0.44, col, "Rubber")
+				r:ball(x, 0.24, 2.2, 0.44, col, "Rubber")
 			end
-			r:cyl(0, 0.3, 2.75, 2.4, 0.58, "x", r.c1, "Plastic")
+			r:cyl(0, 0.3, 2.75, 2.4, 0.58, "x", r.c1, "Rubber")
 			for _, sx in { -1, 1 } do
-				r:ball(sx * 1.2, 0.3, 2.75, 0.58, r.c1, "Plastic")
+				r:ball(sx * 1.2, 0.3, 2.75, 0.58, r.c1, "Rubber")
 			end
-			r:cyl(1.0, 0.5, -2.6, 0.1, 0.1, "y", C.White, "Plastic")
+			r:cyl(1.0, 0.5, -2.6, 0.1, 0.1, "y", C.White, "Rubber")
 		end,
 	},
 	{
@@ -620,9 +619,9 @@ local list: { any } = {
 		c2 = "E8894A",
 		tags = { "toy" },
 		build = function(r: R)
-			r:lump(CFrame.new(0, 0.75, -0.2), 2.6, 1.5, 3.0, r.c1, "Plastic")
-			r:lump(CFrame.new(0, 1.1, 0.8), 2.0, 1.4, 1.4, r.c1, "Plastic")
-			r:lump(CFrame.new(0, 1.45, -1.45) * CFrame.Angles(-0.6, 0, 0), 1.0, 1.0, 0.8, r.c1, "Plastic")
+			r:lump(CFrame.new(0, 0.75, -0.2), 2.6, 1.5, 3.0, r.c1, "Rubber")
+			r:lump(CFrame.new(0, 1.1, 0.8), 2.0, 1.4, 1.4, r.c1, "Rubber")
+			r:lump(CFrame.new(0, 1.45, -1.45) * CFrame.Angles(-0.6, 0, 0), 1.0, 1.0, 0.8, r.c1, "Rubber")
 			for _, sx in { -1, 1 } do
 				r:lump(
 					CFrame.new(sx * 1.2, 1.0, -0.3) * CFrame.Angles(0, 0, sx * 0.2),
@@ -630,18 +629,18 @@ local list: { any } = {
 					0.9,
 					1.7,
 					shade(r.c1, 0.9),
-					"Plastic"
+					"Rubber"
 				)
 			end
 			-- the head, its beak and its eyes, and a tuft on top
-			r:ball(0, 2.35, 0.9, 1.4, r.c1, "Plastic")
-			r:lump(CFrame.new(0, 2.2, 1.65), 0.75, 0.28, 0.75, r.c2, "Plastic")
-			r:lump(CFrame.new(0, 2.05, 1.55), 0.6, 0.18, 0.5, shade(r.c2, 0.85), "Plastic")
+			r:ball(0, 2.35, 0.9, 1.4, r.c1, "Rubber")
+			r:lump(CFrame.new(0, 2.2, 1.65), 0.75, 0.28, 0.75, r.c2, "Rubber")
+			r:lump(CFrame.new(0, 2.05, 1.55), 0.6, 0.18, 0.5, shade(r.c2, 0.85), "Rubber")
 			for _, sx in { -1, 1 } do
-				r:ball(sx * 0.38, 2.55, 1.48, 0.18, C.Black, "Plastic")
-				r:ball(sx * 0.4, 2.6, 1.56, 0.06, C.White, "Plastic")
+				r:ball(sx * 0.38, 2.55, 1.48, 0.18, C.Black, "Rubber")
+				r:ball(sx * 0.4, 2.6, 1.56, 0.06, C.White, "Rubber")
 			end
-			r:lump(CFrame.new(0, 3.1, 0.85) * CFrame.Angles(-0.3, 0, 0), 0.3, 0.4, 0.3, r.c1, "Plastic")
+			r:lump(CFrame.new(0, 3.1, 0.85) * CFrame.Angles(-0.3, 0, 0), 0.3, 0.4, 0.3, r.c1, "Rubber")
 		end,
 	},
 	{
@@ -663,11 +662,11 @@ local list: { any } = {
 			local stripes = { r.c2, rgb(240, 196, 92), rgb(79, 156, 198) }
 			for k = 0, 5 do
 				local col = if k % 2 == 0 then r.c1 else stripes[(k - 1) // 2 + 1]
-				r:lump(CFrame.new(0, 0.65, 0) * CFrame.Angles(0, k * math.pi / 6, 0), 1.3, 1.3, 0.62, col, "Plastic")
+				r:lump(CFrame.new(0, 0.65, 0) * CFrame.Angles(0, k * math.pi / 6, 0), 1.3, 1.3, 0.62, col, "Rubber")
 			end
 			-- a white cap over each end, where the slices meet
 			for _, y in { -0.02, 1.32 } do
-				r:cyl(0, y, 0, 0.18, 0.46, "y", r.c1, "Plastic")
+				r:cyl(0, y, 0, 0.18, 0.46, "y", r.c1, "Rubber")
 			end
 		end,
 	},
@@ -922,7 +921,7 @@ local list: { any } = {
 			local grey = rgb(200, 196, 188)
 			-- a plinth on the side with a step up, two brackets holding the board's end and a
 			-- roller under it further out
-			r:block(-1.1, 0, -4.8, 1.1, 0.3, -2.4, grey, "Concrete")
+			r:bevel(-1.1, 0, -4.8, 1.1, 0.3, -2.4, 0.08, grey, "Concrete", { wear = 0.94 })
 			r:block(-0.6, 0.3, -4.78, 0.6, 0.85, -4.45, grey, "Concrete")
 			for _, sx in { -1, 1 } do
 				r:block(sx * 0.75 - 0.08, 0.3, -4.4, sx * 0.75 + 0.08, 1.45, -3.6, r.c2, "Metal")
@@ -931,7 +930,7 @@ local list: { any } = {
 			r:block(-0.6, 1.3, -4.4, 0.6, 1.45, -3.8, shade(r.c2, 0.8), "Metal")
 			r:cyl(0, 1.34, -1.25, 1.7, 0.22, "x", shade(r.c2, 0.8), "Metal")
 			-- the board and the grip along its top
-			r:block(-0.7, 1.45, -4.5, 0.7, 1.65, 4.6, r.c1, "Plastic")
+			r:bevel(-0.7, 1.45, -4.5, 0.7, 1.65, 4.6, 0.07, r.c1, "Metal", { wear = 1.06 })
 			r:block(-0.6, 1.65, -2.0, 0.6, 1.69, 4.45, r.c2, "Fabric")
 			-- hand rails up from the plinth
 			for _, sx in { -1, 1 } do
@@ -967,7 +966,7 @@ local list: { any } = {
 				local z = -5.3 + (y - g) / (7.0 - g) * 0.65
 				r:cyl(0, y, z, 1.3, 0.1, "x", C.Metal, "Metal")
 			end
-			r:block(-1.0, 6.0, -4.8, 1.0, 6.2, -3.4, r.c2, "Metal")
+			r:bevel(-1.0, 6.0, -4.8, 1.0, 6.2, -3.4, 0.07, r.c2, "Metal", { wear = 1.06 })
 			for _, sx in { -1, 1 } do
 				for _, z in { -4.65, -3.55 } do
 					r:cyl(sx * 0.9, (g + 6.0) / 2, z, 6.0 - g, 0.16, "y", r.c2, "Metal")
@@ -987,13 +986,13 @@ local list: { any } = {
 				local a, b = pts[i], pts[i + 1]
 				local step = (b - a).Unit * 0.04
 				local a2, b2 = if i > 1 then a - step else a, if i < n then b + step else b
-				r:beam(a2, b2, 1.4, 0.14, r.c1, "Plastic")
+				r:beam(a2, b2, 1.4, 0.14, r.c1, "Metal")
 				-- (offsets square to the chute, which tilts)
 				local along = (b2 - a2).Unit
 				local up = along:Cross(Vector3.yAxis).Unit:Cross(along).Unit
 				for _, sx in { -1, 1 } do
 					local side = Vector3.new(sx * 0.75, 0, 0) + up * 0.22
-					r:beam(a2 + side, b2 + side, 0.1, 0.5, shade(r.c1, 0.92), "Plastic")
+					r:beam(a2 + side, b2 + side, 0.1, 0.5, shade(r.c1, 0.92), "Metal")
 				end
 				-- water running down it
 				local wet = r:beam(a2 + up * 0.115, b2 + up * 0.115, 1.0, 0.03, running, "Glass")
@@ -1088,14 +1087,14 @@ local list: { any } = {
 		c2 = "F2EEE6",
 		build = function(r: R)
 			-- a post on a concrete foot, a board on its front, the ring on a hook
-			r:block(-0.45, 0, -0.45, 0.45, 0.25, 0.45, rgb(196, 192, 184), "Concrete")
+			r:bevel(-0.45, 0, -0.45, 0.45, 0.25, 0.45, 0.08, rgb(196, 192, 184), "Concrete", { wear = 0.94 })
 			r:block(-0.14, 0.25, -0.14, 0.14, 5.4, 0.14, r.c2, "Wood")
 			r:block(-0.2, 5.4, -0.2, 0.2, 5.6, 0.2, r.c1, "Wood")
 			r:block(-0.8, 2.3, 0.14, 0.8, 4.6, 0.22, r.c2, "Wood")
 			r:block(-0.06, 4.05, 0.22, 0.06, 4.15, 0.46, C.DarkMetal, "Metal")
 			torus(r, CFrame.new(0, 3.35, 0.42) * CFrame.Angles(math.pi / 2, 0, 0), 0.62, 0.22, 8, function(k)
 				return if (k // 2) % 2 == 0 then r.c1 else r.c2
-			end, "Plastic")
+			end, "Rubber")
 			-- the grab line looped round it
 			for k = 0, 3 do
 				local a = k * math.pi / 2 + math.pi / 4
@@ -1103,10 +1102,10 @@ local list: { any } = {
 				r:boxAt(CFrame.new(p) * CFrame.Angles(0, 0, a), 0.12, 0.26, 0.26, ROPE, "Fabric")
 			end
 			-- a plate on the post with a cross on it
-			r:block(-0.35, 4.75, 0.14, 0.35, 5.15, 0.2, r.c1, "Plastic")
-			r:block(-0.05, 4.82, 0.2, 0.05, 5.08, 0.24, C.White, "Plastic")
-			r:block(-0.15, 4.9, 0.2, -0.05, 5.0, 0.24, C.White, "Plastic")
-			r:block(0.05, 4.9, 0.2, 0.15, 5.0, 0.24, C.White, "Plastic")
+			r:block(-0.35, 4.75, 0.14, 0.35, 5.15, 0.2, r.c1, "Rubber")
+			r:block(-0.05, 4.82, 0.2, 0.05, 5.08, 0.24, C.White, "Rubber")
+			r:block(-0.15, 4.9, 0.2, -0.05, 5.0, 0.24, C.White, "Rubber")
+			r:block(0.05, 4.9, 0.2, 0.15, 5.0, 0.24, C.White, "Rubber")
 		end,
 	},
 }

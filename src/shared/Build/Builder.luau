@@ -11,6 +11,7 @@ local Water = require(script.Parent.Water) -- (water: pools and ponds)
 local Stretch = require(script.Parent.Stretch) -- (a piece made wider, deeper or taller)
 local Basement = require(script.Parent.Basement) -- (the basement's lining round its open sides)
 local Textures = require(script.Parent.Parent.Data.Textures)
+local Palette = require(script.Parent.Parent.Data.Palette)
 local LowPoly = require(script.Parent.LowPoly)
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 
@@ -147,7 +148,7 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 		base, look = string.sub(prim.mat, 1, colon - 1), string.sub(prim.mat, colon + 1)
 	end
 	local mat = (Enum.Material :: any)[base]
-	part.Material = mat or Enum.Material.SmoothPlastic
+	part.Material = mat or (Enum.Material :: any)[Geometry.Default]
 	if look then
 		part.MaterialVariant = "CatalogTown" .. look
 	end
@@ -209,7 +210,9 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 	elseif prim.role == "glow" then
 		-- the town's own lamps follow the hour (Services/World); a player's lights are theirs
 		part:AddTag(if opts and opts.placed then Builder.Tags.PlacedLight else Builder.Tags.NightLight)
-		part:SetAttribute("DayMaterial", prim.mat)
+		-- (the material it goes back to when it is put out; a look stays on the part as its
+		-- MaterialVariant, worn again once the material is back)
+		part:SetAttribute("DayMaterial", base)
 	end
 	if prim.light then
 		local l = prim.light
@@ -329,7 +332,7 @@ local function cutPiece(prim: Prim): BasePart?
 		end
 	end
 	local shape: BasePart? = nil
-	local material, look = Enum.Material.SmoothPlastic, ""
+	local material, look = (Enum.Material :: any)[Geometry.Default], ""
 	if main then
 		material, look = main.Material, main.MaterialVariant
 	end
@@ -544,8 +547,25 @@ function Builder.instantiate(prims: { Prim }, parent: Instance, frame: CFrame?, 
 	return out
 end
 
--- The primitives for one plan object, in the plot's frame.
-function Builder.primsFor(plan: Plan.PlanData, kind: string, key: string): { Prim }?
+-- What a save painted in a retired finish (flat paint, plastic) is drawn in now: the textured
+-- finish that took its place (Palette.drawn), on every shape and on the shapes in a piece.
+local function retire(prims: { Prim }): { Prim }
+	for _, p in prims do
+		local now = Palette.drawn(p.mat)
+		if now ~= p.mat then
+			if p.key and string.sub(p.key, 1, #p.mat) == p.mat then
+				p.key = now .. string.sub(p.key, #p.mat + 1)
+			end
+			p.mat = now
+		end
+		if p.parts then
+			retire(p.parts)
+		end
+	end
+	return prims
+end
+
+local function primsOf(plan: Plan.PlanData, kind: string, key: string): { Prim }?
 	if kind == "walls" then
 		local w = plan.walls[key]
 		if not w then
@@ -621,6 +641,12 @@ function Builder.primsFor(plan: Plan.PlanData, kind: string, key: string): { Pri
 		return Geometry.transform(prims, frame)
 	end
 	return nil
+end
+
+-- The primitives for one plan object, in the plot's frame.
+function Builder.primsFor(plan: Plan.PlanData, kind: string, key: string): { Prim }?
+	local prims = primsOf(plan, kind, key)
+	return if prims then retire(prims) else nil
 end
 
 -- Where a door leaf stands when it's open: swung round its hinge (HingeX along its doorway),

@@ -35,7 +35,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or r.mat or "Metal",
 	})
 end
 
@@ -93,7 +93,7 @@ local items: { Item } = {
 			r:cyl(0, 3.3, 0, 0.3, 0.22, "y", shade(r.c2, 0.85), "Metal")
 			r:cyl(0, 4.2, 0, 1.6, 0.09, "y", r.c2, "Metal")
 			r:cyl(0, 4.95, 0, 0.12, 0.26, "y", r.c2, "Metal")
-			r:ball(0, 5.15, 0, 0.42, C.Warm, "SmoothPlastic")
+			r:ball(0, 5.15, 0, 0.42, C.Warm, "Glass")
 			local lampshade = drum(r, 0, 4.85, 6.0, 0, 1.6, r.c1, r.c2)
 			r:glow(lampshade, 16, 1.2)
 			r:cyl(0, 6.05, 0, 0.06, 0.18, "y", r.c2, "Metal")
@@ -113,11 +113,11 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a round ceramic base on a brass foot, and a drum shade
 			r:cyl(0, 0.04, 0, 0.08, 0.6, "y", C.Gold, "Metal")
-			r:ball(0, 0.42, 0, 0.74, r.c2, "SmoothPlastic")
-			r:cyl(0, 0.82, 0, 0.14, 0.34, "y", r.c2, "SmoothPlastic")
+			r:ball(0, 0.42, 0, 0.74, r.c2, "Marble")
+			r:cyl(0, 0.82, 0, 0.14, 0.34, "y", r.c2, "Marble")
 			r:cyl(0, 0.92, 0, 0.06, 0.24, "y", C.Gold, "Metal")
 			r:cyl(0, 1.05, 0, 0.2, 0.08, "y", C.Gold, "Metal")
-			r:ball(0, 1.22, 0, 0.26, C.Warm, "SmoothPlastic")
+			r:ball(0, 1.22, 0, 0.26, C.Warm, "Glass")
 			local lampshade = drum(r, 0, 1.1, 1.9, 0, 1.2, r.c1, C.Gold)
 			r:glow(lampshade, 12, 1)
 			r:ball(0, 1.95, 0, 0.12, C.Gold, "Metal")
@@ -147,7 +147,7 @@ local items: { Item } = {
 			r:cyl(0, 1.44, 0.45, 0.12, 0.3, "y", r.c1, "Metal")
 			r:cyl(0, 1.33, 0.45, 0.12, 0.48, "y", r.c1, "Metal")
 			r:cyl(0, 1.21, 0.45, 0.14, 0.66, "y", r.c1, "Metal")
-			local bulb = r:ball(0, 1.14, 0.45, 0.32, C.Warm, "SmoothPlastic")
+			local bulb = r:ball(0, 1.14, 0.45, 0.32, C.Warm, "Glass")
 			r:glow(bulb, 10, 1)
 		end,
 	},
@@ -189,15 +189,15 @@ local items: { Item } = {
 		build = function(r: R)
 			r:cyl(0, -0.05, 0, 0.1, 0.6, "y", r.c2, "Metal")
 			r:cyl(0, -0.14, 0, 0.08, 0.2, "y", r.c2, "Metal")
-			r:cyl(0, -1.15, 0, 1.95, 0.05, "y", C.Black, "SmoothPlastic")
+			r:cyl(0, -1.15, 0, 1.95, 0.05, "y", C.Black, "Rubber")
 			r:cyl(0, -2.17, 0, 0.12, 0.22, "y", r.c2, "Metal")
 			-- a smooth stepped dome, white inside
 			r:cyl(0, -2.3, 0, 0.16, 0.44, "y", r.c1, "Metal")
 			r:cyl(0, -2.45, 0, 0.16, 0.86, "y", r.c1, "Metal")
 			r:cyl(0, -2.62, 0, 0.2, 1.26, "y", r.c1, "Metal")
 			r:cyl(0, -2.84, 0, 0.26, 1.6, "y", r.c1, "Metal")
-			r:cyl(0, -3.0, 0, 0.02, 1.5, "y", C.White, "SmoothPlastic")
-			local bulb = r:ball(0, -2.92, 0, 0.42, C.Warm, "SmoothPlastic")
+			r:cyl(0, -3.0, 0, 0.02, 1.5, "y", C.White, "Glass")
+			local bulb = r:ball(0, -2.92, 0, 0.42, C.Warm, "Glass")
 			r:glow(bulb, 16, 1.2)
 		end,
 	},
@@ -249,8 +249,8 @@ local items: { Item } = {
 					"Metal"
 				)
 				r:cyl(cx * 1.45, -1.86, cz * 1.45, 0.08, 0.38, "y", r.c1, "Metal")
-				r:cyl(cx * 1.45, -1.55, cz * 1.45, 0.5, 0.16, "y", r.c2, "SmoothPlastic")
-				local flame = r:ball(cx * 1.45, -1.22, cz * 1.45, 0.16, C.Warm, "SmoothPlastic")
+				r:cyl(cx * 1.45, -1.55, cz * 1.45, 0.5, 0.16, "y", r.c2, "Plaster")
+				local flame = r:ball(cx * 1.45, -1.22, cz * 1.45, 0.16, C.Warm, "Glass")
 				if i == 0 then
 					r:glow(flame, 20, 1.5)
 				else
@@ -280,8 +280,8 @@ local items: { Item } = {
 				end
 			end
 			-- a candle inside
-			r:cyl(0, 0.28, 0, 0.36, 0.2, "y", r.c2, "SmoothPlastic")
-			local flame = r:ball(0, 0.55, 0, 0.16, C.Warm, "SmoothPlastic")
+			r:cyl(0, 0.28, 0, 0.36, 0.2, "y", r.c2, "Glass")
+			local flame = r:ball(0, 0.55, 0, 0.16, C.Warm, "Glass")
 			r:glow(flame, 10, 1)
 			-- a stepped roof and a ring to carry it by
 			r:block(-0.38, 0.95, -0.38, 0.38, 1.02, 0.38, r.c1, "Metal")
@@ -316,14 +316,14 @@ local items: { Item } = {
 			local xs = { -3.9, -3, -2, -1, 0, 1, 2, 3, 3.9 }
 			for i = 1, #xs - 1 do
 				local a, b = xs[i], xs[i + 1]
-				r:beam(Vector3.new(a, wireY(a), z), Vector3.new(b, wireY(b), z), 0.05, 0.05, r.c1, "SmoothPlastic")
+				r:beam(Vector3.new(a, wireY(a), z), Vector3.new(b, wireY(b), z), 0.05, 0.05, r.c1, "Rubber")
 			end
 			local colours = { r.c2, C.Pink, r.c2, C.Blue, r.c2, C.Yellow, r.c2, Color3.fromRGB(150, 220, 140) }
 			for i = 1, 8 do
 				local x = -3.5 + (i - 1)
 				local y = wireY(x)
-				r:cyl(x, y - 0.08, z, 0.12, 0.12, "y", r.c1, "SmoothPlastic")
-				local bulb = r:ball(x, y - 0.24, z, 0.26, colours[i], "SmoothPlastic")
+				r:cyl(x, y - 0.08, z, 0.12, 0.12, "y", r.c1, "Rubber")
+				local bulb = r:ball(x, y - 0.24, z, 0.26, colours[i], "Glass")
 				if i == 1 then
 					r:glow(bulb, 12, 0.9)
 				else
@@ -345,14 +345,14 @@ local items: { Item } = {
 		tags = { "light" },
 		build = function(r: R)
 			-- a stepped base, a slim post with collars, and a four sided lantern
-			r:block(-0.62, 0, -0.62, 0.62, 0.3, 0.62, r.c1, "Metal")
-			r:block(-0.48, 0.3, -0.48, 0.48, 0.55, 0.48, r.c1, "Metal")
+			r:bevel(-0.62, 0, -0.62, 0.62, 0.3, 0.62, 0.08, r.c1, "Metal", { wear = 1.06 })
+			r:bevel(-0.48, 0.3, -0.48, 0.48, 0.55, 0.48, 0.08, r.c1, "Metal", { wear = 1.06 })
 			r:cyl(0, 0.85, 0, 0.6, 0.6, "y", r.c1, "Metal")
 			r:cyl(0, 1.2, 0, 0.12, 0.46, "y", shade(r.c1, 1.3), "Metal")
 			r:cyl(0, 4.2, 0, 6.0, 0.26, "y", r.c1, "Metal")
 			r:cyl(0, 6.6, 0, 0.14, 0.4, "y", shade(r.c1, 1.3), "Metal")
 			r:cyl(0, 7.25, 0, 0.2, 0.46, "y", r.c1, "Metal")
-			r:block(-0.48, 7.35, -0.48, 0.48, 7.48, 0.48, r.c1, "Metal")
+			r:bevel(-0.48, 7.35, -0.48, 0.48, 7.48, 0.48, 0.046, r.c1, "Metal", { wear = 1.06 })
 			local glass = r:block(-0.36, 7.48, -0.36, 0.36, 8.35, 0.36, r.c2, "Glass")
 			r:glow(glass, 24, 1.6)
 			for _, sx in { -1, 1 } do

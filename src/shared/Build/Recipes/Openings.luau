@@ -392,7 +392,7 @@ local items: { any } = {
 			end)
 			local hinge = -1.92
 			local parts: { Recipe.Prim? } = {}
-			table.insert(parts, r:block(-1.92, 0.1, -0.1, 1.92, 7.9, 0.1, r.c1, "SmoothPlastic"))
+			table.insert(parts, r:block(-1.92, 0.1, -0.1, 1.92, 7.9, 0.1, r.c1, "Wood"))
 			for _, x in { { -1.55, -0.12 }, { 0.12, 1.55 } } do
 				for _, y in { { 0.55, 3.3 }, { 4.1, 7.45 } } do
 					for _, p in fielded(r, x[1], x[2], y[1], y[2], 0.2, r.c1) do
@@ -463,13 +463,13 @@ local items: { any } = {
 			end)
 			local hinge = -1.92
 			local parts: { Recipe.Prim? } = {
-				r:block(-1.92, 0.1, -0.1, 1.92, 4.6, 0.1, r.c1, "SmoothPlastic"),
-				r:block(-1.92, 6.9, -0.1, 1.92, 7.9, 0.1, r.c1, "SmoothPlastic"),
-				r:block(-1.92, 4.6, -0.1, -1.1, 6.9, 0.1, r.c1, "SmoothPlastic"),
-				r:block(1.1, 4.6, -0.1, 1.92, 6.9, 0.1, r.c1, "SmoothPlastic"),
+				r:block(-1.92, 0.1, -0.1, 1.92, 4.6, 0.1, r.c1, "Wood"),
+				r:block(-1.92, 6.9, -0.1, 1.92, 7.9, 0.1, r.c1, "Wood"),
+				r:block(-1.92, 4.6, -0.1, -1.1, 6.9, 0.1, r.c1, "Wood"),
+				r:block(1.1, 4.6, -0.1, 1.92, 6.9, 0.1, r.c1, "Wood"),
 				r:glass(-1.1, 4.6, -0.04, 1.1, 6.9, 0.04),
-				r:block(-0.04, 4.55, -0.07, 0.04, 6.95, 0.07, r.c1, "SmoothPlastic"),
-				r:block(-1.15, 5.71, -0.07, 1.15, 5.79, 0.07, r.c1, "SmoothPlastic"),
+				r:block(-0.04, 4.55, -0.07, 0.04, 6.95, 0.07, r.c1, "Wood"),
+				r:block(-1.15, 5.71, -0.07, 1.15, 5.79, 0.07, r.c1, "Wood"),
 				r:block(-0.45, 3.45, 0.1, 0.45, 3.75, 0.14, BRASS, "Metal"),
 				r:block(-0.34, 3.55, 0.14, 0.34, 3.65, 0.17, shade(BRASS, 0.7), "Metal"),
 			}

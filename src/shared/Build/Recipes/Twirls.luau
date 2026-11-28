@@ -704,9 +704,9 @@ local items: { Item } = {
 			local iron = r.c1
 			local trim = C.Gold
 			-- a stepped base, a fluted column with collars, and a capital the clock sits on
-			r:block(-0.6, 0, -0.6, 0.6, 0.3, 0.6, STONE, "Granite")
-			r:block(-0.45, 0.3, -0.45, 0.45, 0.7, 0.45, iron, "Metal")
-			r:block(-0.5, 0.7, -0.5, 0.5, 0.8, 0.5, shade(iron, 1.15), "Metal")
+			r:bevel(-0.6, 0, -0.6, 0.6, 0.3, 0.6, 0.08, STONE, "Granite", { wear = 0.94 })
+			r:bevel(-0.45, 0.3, -0.45, 0.45, 0.7, 0.45, 0.08, iron, "Metal", { wear = 1.06 })
+			r:bevel(-0.5, 0.7, -0.5, 0.5, 0.8, 0.5, 0.035, shade(iron, 1.15), "Metal", { wear = 1.06 })
 			r:cyl(0, 3.6, 0, 5.6, 0.36, "y", iron, "Metal").smooth = true
 			for k = 0, 7 do
 				local a = k * math.pi / 4
@@ -776,7 +776,7 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a little stool of a stand, and the skep of coiled straw on it, narrowing to the top
 			local stand = r.c2
-			r:block(-0.6, 0.9, -0.6, 0.6, 1.02, 0.6, stand, "WoodPlanks")
+			r:bevel(-0.6, 0.9, -0.6, 0.6, 1.02, 0.6, 0.042, stand, "WoodPlanks", { wear = 1.06 })
 			for _, sx in { -1, 1 } do
 				for _, sz in { -1, 1 } do
 					r:block(

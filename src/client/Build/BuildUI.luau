@@ -234,7 +234,7 @@ for _, m in Palette.Materials do
 	MATERIAL_NAMES[m.id] = m.name
 end
 local function materialName(id: string): string
-	return MATERIAL_NAMES[id] or id
+	return MATERIAL_NAMES[id] or MATERIAL_NAMES[Palette.drawn(id)] or id
 end
 
 local ui: Frame
