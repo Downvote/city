@@ -231,6 +231,15 @@ Tuning.CreatorMore = {
 	LookEvery = 4, -- seconds between saves of your own look
 }
 
+-- The tutorial (Sim/Tutorial, UI/Tutorial, its greeter in Services/Avatar)
+Tuning.Tutorial = {
+	FriendsLooked = 100, -- how far down the friends list the server looks for one who is online
+	GreeterWait = 6, -- seconds the first scene waits for the server to say who greets them
+	FirstAfter = 1.5, -- seconds after the town loads before the greeting
+	Dim = 0.4, -- how see-through the darkened screen is
+	Pad = 8, -- the clear margin round the thing to press
+}
+
 -- Villagers -----------------------------------------------------------------
 Tuning.Villagers = {
 	-- how many villagers a town may have: Start, and more at each milestone of the town's level, up

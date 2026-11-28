@@ -23,7 +23,6 @@ local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Foods = require(script.Parent.Parent.Data.Foods)
 local Goals = require(script.Parent.Parent.Data.Goals)
 local Relationships = require(script.Parent.Relationships)
-local Tutorial = require(script.Parent.Tutorial)
 local City = require(script.Parent.City)
 local Text = require(script.Parent.Parent.Util.Text)
 local Keepsakes = require(script.Parent.Keepsakes)
@@ -140,17 +139,9 @@ function Life.maybeWish(profile: any, vid: string, rng: any, now: number): any
 	if not v or v.wish or v.isYou or Life.openWishes(profile) >= L.MaxWishes then
 		return nil
 	end
-	-- The tutorial's last step waits on a first craving to answer (Sim/Tutorial), so while it does,
-	-- one comes on the next hour, and it's food, instead of by chance (it took several minutes).
-	local teaching = Tutorial.current(profile, profile.tutorial) == Tutorial.Count
-	if teaching then
-		for _, other in profile.villagers do
-			if other.wish and other.wish.kind == "food" then
-				teaching = false
-			end
-		end
-	end
-	if not teaching and not rng:chance(L.WishChance) then
+	-- (The tutorial's last step once waited on a first craving, which came on the hour while it
+	-- did. The tutorial ends at the workplace now: Sim/Tutorial.)
+	if not rng:chance(L.WishChance) then
 		return nil
 	end
 	local kinds = { "food", "cheer" }
@@ -165,7 +156,7 @@ function Life.maybeWish(profile: any, vid: string, rng: any, now: number): any
 	if #strangers > 0 then
 		table.insert(kinds, "friend")
 	end
-	local kind = if teaching then "food" else rng:pick(kinds)
+	local kind = rng:pick(kinds)
 	local wish: any = { kind = kind, untilT = now + L.WishHours * Tuning.Day.Length / 24 }
 	if kind == "food" then
 		-- their favourite half the time

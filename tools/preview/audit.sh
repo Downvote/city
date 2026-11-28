@@ -20,8 +20,8 @@ build:keepsakes build:keepsakes:empty build:effects build:styles build:shapes bu
 build:water build:water:pick build:top build:basement build:blocked build:stretch build:stretch:pick build:colour
 build:picture:bad build:picture:pick build:select build:select:none build:saves build:saves:load build:search build:search:none build:time
 hover hover:menu bubbles
-tutorial:welcome tutorial:1 tutorial:2 tutorial:2:build tutorial:3:build tutorial:4 tutorial:4:craving
-tutorial:4:buy tutorial:done
+tutorial:greet tutorial:1 tutorial:ask tutorial:2:say tutorial:2 tutorial:2:build tutorial:3:build
+tutorial:done
 panel:Garage panel:Settings panel:Store panel:Store:gems panel:Rewards panel:Rewards:playtime panel:Rewards:achievements panel:Rewards:group
 panel:Rewards:member welcome welcome:long
 panel:Bag panel:Bag:empty panel:Residents:gift panel:Goals:titles talk:gift"

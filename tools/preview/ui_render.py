@@ -938,6 +938,61 @@ def draw_node(cv, node, clip, item_hint=None):
         cv.paste(rotated, 0, 0, outer_clip)
 
 
+def tutorial_hole(root):
+    """UI/Tutorial's darkened screen: four dark pieces round a hole over the thing to press, and a
+    prompt beside it. The game cuts them from where the engine laid that thing out
+    (AbsolutePosition), which the simulation can't know, so they are cut again here from this
+    layout, the way Tutorial.cut and Tutorial.promptAt do it."""
+    target, dims = None, []
+
+    def walk(n):
+        nonlocal target
+        a = n.get("attrs") or {}
+        if a.get("TutorialTarget") and n.get("_rect"):
+            target = n
+        if a.get("HolePad") is not None and n.get("_rect"):
+            dims.append(n)
+        for c in n["children"]:
+            walk(c)
+
+    walk(root)
+    if not target:
+        return
+    tx, ty, tw, th = target["_rect"]
+    for d in dims:
+        dx, dy, sw, sh = d["_rect"]
+        pad = d["attrs"]["HolePad"]
+        x, y, w, h = tx - dx - pad, ty - dy - pad, tw + pad * 2, th + pad * 2
+        x0 = min(max(math.floor(x), 0), sw)
+        y0 = min(max(math.floor(y), 0), sh)
+        x1 = min(max(math.ceil(x + w), x0), sw)
+        y1 = min(max(math.ceil(y + h), y0), sh)
+        pieces = {
+            "Top": (0, 0, sw, y0),
+            "Bottom": (0, y1, sw, sh - y1),
+            "Left": (0, y0, x0, y1 - y0),
+            "Right": (x1, y0, sw - x1, y1 - y0),
+        }
+        for c in d["children"]:
+            a = c.get("attrs") or {}
+            if a.get("Hole") in pieces:
+                px, py, pw, ph = pieces[a["Hole"]]
+                place(c, dx + px, dy + py, pw, ph)
+            elif a.get("HoleArrow") and c.get("_rect"):
+                _, _, aw, ah = c["_rect"]
+                ax = (max(x, 0) + min(x + w, sw)) / 2 - aw / 2
+                place(c, dx + math.floor(ax), dy + math.floor(y + pad - 2 - ah), aw, ah)
+            elif a.get("HoleNear") and c.get("_rect"):
+                _, _, cw, ch = c["_rect"]
+                gap = a.get("HoleGap", 12)
+                cx = min(max(math.floor(x + w / 2 - cw / 2), 16), max(16, sw - 16 - cw))
+                if y + h / 2 > sh / 2:
+                    cy = max(8, math.floor(y - gap - ch))
+                else:
+                    cy = min(sh - 8 - ch, math.floor(y + h + gap))
+                place(c, dx + cx, dy + cy, cw, ch)
+
+
 def backdrop(w, h, path):
     if path and os.path.exists(path):
         im = Image.open(path).convert("RGBA")
@@ -982,6 +1037,7 @@ def main():
             pos = P(c, "Position", [0, 0, 0, 0])
             anc = P(c, "AnchorPoint", [0, 0])
             place(c, udim(pos[:2], gw) - anc[0] * sw, off + udim(pos[2:], gh) - anc[1] * sh, sw, sh)
+    tutorial_hole(root)
     ss = args.ss
     cv = Canvas(vw, vh, ss, scale)
     kids = sorted(enumerate(gui_children(root)), key=lambda e: (P(e[1], "ZIndex", 1), e[0]))

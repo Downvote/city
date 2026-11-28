@@ -53,7 +53,9 @@ local Dialogue = {}
 local T = Kit.Theme
 local player = Players.LocalPlayer
 
-export type Actor = { key: string, name: string, color: Color3, model: Model?, vid: string? }
+-- (`image`: a picture standing in for a model, as a full length avatar picture: the tutorial's
+-- greeter when the server couldn't build their look)
+export type Actor = { key: string, name: string, color: Color3, model: Model?, vid: string?, image: string? }
 
 -- the layout, in the interface's own pixels (a 1280 by 720 screen is about 1350 by 720 of them)
 local BOX_W = 0.74 -- the textbox's share of the screen's width
@@ -185,7 +187,8 @@ local function bust(layer: Frame, actor: Actor, slotIndex: number): any
 		Name = "Avatar",
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		Image = "",
+		Image = if actor.model then "" else actor.image or "",
+		ScaleType = Enum.ScaleType.Crop,
 		Size = UDim2.new(1, 0, 0, fig),
 		ZIndex = slot.z,
 		Parent = holder,
@@ -587,7 +590,7 @@ function Dialogue.open(opts: { [string]: any }?): any
 		local i = #cast
 		if stage then
 			stage.join(actor)
-		elseif actor.model and i <= #SLOTS then
+		elseif (actor.model or actor.image) and i <= #SLOTS then
 			e.bust = bust(layer, actor, i)
 		end
 		refresh()

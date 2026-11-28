@@ -42,7 +42,7 @@
 --   build:saves         Build mode's Saves page: two builds saved, an empty slot and the locked
 --                       ones More Saves opens (build:saves:load the dialog that asks before a load)
 --   panel:<Name>        a panel over the main screen (Residents, CityPanel, News, Goals,
---                       Tutorial: the tutorial's welcome)
+--                       Tutorial: the tutorial's popup for the first villager)
 --   panel:<Name>:<state> a menu in one of its states: Residents:friends, Residents:empty (nobody
 --                       lives here), Residents:craving (Mara craves something: the Buy button),
 --                       Residents:short (the same without the coins), Residents:lately (what Mara's
@@ -63,13 +63,13 @@
 --   work                the notice while the player works at a workplace: the day's coins and the
 --                       skill with its bar (client World/Work)
 --   talk:craving        the talk card with a villager who craves something: the answer that buys it
---   tutorial:<page>     the tutorial (UI/Tutorial): tutorial:welcome its first page on a first visit,
---                       tutorial:1 the card on step one with the Create tile pointed at, tutorial:2
---                       step two with the Build button's arrow, tutorial:2:build Build mode's
---                       Furniture open with the Beds tile ringed, tutorial:3:build Work open with the
---                       bench's card ringed, tutorial:4 waiting for a craving, tutorial:4:craving the
---                       bubble over Tobin's head with its arrow (laid flat), tutorial:4:buy the popup
---                       with Buy ringed, tutorial:done the card that closes it
+--   tutorial:<page>     the tutorial (UI/Tutorial): tutorial:greet the friend's welcome in the
+--                       dialogue scene, tutorial:1 the darkened screen round the Create tile with
+--                       its prompt, tutorial:ask the popup the tile opens (Yourself, A friend,
+--                       Custom), tutorial:2:say the friend's line about the bed, tutorial:2 the
+--                       darkened screen round the Build button, tutorial:2:build Build mode's
+--                       Furniture open with the Beds tile in the hole, tutorial:3:build Work open
+--                       with the bench's card in the hole, tutorial:done the friend's last line
 --   event               an event at its choices, not watched: the small prompt says they want your say
 --   event:talk          an event part way through its lines, not watched: the prompt and Watch
 --   event:one           a watched event's scene with one villager talking
@@ -1674,8 +1674,8 @@ elseif scene:sub(1, 9) == "cutscene:" then
 	Sim.frames(60)
 	stageShot = true
 elseif scene:sub(1, 9) == "tutorial:" then
-	-- the tutorial (UI/Tutorial): its welcome, and its card at each step with the ring or arrow on
-	-- what to press next (see the list at the top)
+	-- the tutorial (UI/Tutorial): the friend's scene at a step, and the darkened screen round what
+	-- to press next (see the list at the top)
 	local page = scene:sub(10)
 	local bedKey
 	for key, item in Sim.State.plan.items do
@@ -1685,65 +1685,78 @@ elseif scene:sub(1, 9) == "tutorial:" then
 	end
 	first.isYou = true
 	first.wish = nil
-	local patch = { tutorial = 0, stats = { cravings = 0 }, villagers = villagers, order = order }
-	if page == "welcome" or page == "1" then
+	-- the friend who greets them, as the server would send them (a stand-in figure in the bust)
+	villagerModels()
+	local friendModel =
+		Sim.ws:FindFirstChild("Plots"):FindFirstChild("Plot1"):FindFirstChild("Villagers"):FindFirstChild("Ivy")
+	Sim.remoteFn("TutorialGreeter").OnServerInvoke = function()
+		return { name = "Robin", id = 1, friend = true, model = friendModel }
+	end
+	local step = tonumber(page:match("^(%d)")) or 1
+	local patch = { tutorial = 0, villagers = villagers, order = order }
+	if step == 1 then
 		patch.villagers, patch.order = {}, {}
-	elseif page == "2" or page == "2:build" then
+	elseif step == 2 then
+		first.bed, first.job = nil, nil
 		patch.tutorial = 1
-	elseif page == "3:build" then
+	elseif step == 3 then
 		first.bed, first.job = bedKey, nil
 		patch.tutorial = 2
-	else
-		first.bed = bedKey
-		patch.tutorial = 3
-		if page ~= "4" then
-			villagers[order[2]].wish = { kind = "food", arg = "curry", untilT = os.time() + 9999 }
-		end
+	end
+	if page == "done" then
+		-- the workplace just went down: the friend's last line (a step was seen this session)
+		first.bed, first.job = bedKey, nil
+		patch.tutorial = 2
 	end
 	Sim.remoteEvent("State"):FireClient(Sim.player, patch)
 	Sim.frames(2)
-	if page == "4:craving" or page == "4:buy" then
-		villagerModels()
-	end
 	startHud()
-	Sim.advance(2)
-	if page == "1" then
-		Hud.closeAll()
+	local Tut = Harness.require(Sim.CLIENT .. "UI.Tutorial")
+	local function sceneUp()
 		Sim.advance(1)
-	elseif page == "2:build" or page == "3:build" then
-		Sim.BuildMode.enter()
-		Sim.frames(3)
-		Sim.press(if page == "2:build" then "Furniture" else "Work")
-		Sim.advance(1)
-	elseif page == "4:craving" then
-		-- the bubble over Tobin's head (World/Wishes), laid flat where his head would be (the
-		-- BillboardGuis themselves can't be drawn here) with the arrow the tutorial put on it
-		local folder = Sim.ws:FindFirstChild("Plots"):FindFirstChild("Plot1"):FindFirstChild("Villagers")
-		local model = folder:FindFirstChild("Tobin")
-		model:SetAttribute("Wish", "apple")
-		Harness.require(Sim.CLIENT .. "World.Wishes").start()
+		Sim.frames(2)
 		Sim.advance(2)
 		Sim.frames(3)
-		local bubble = Sim.playerGui:FindFirstChild("WishBubble")
-		local fade = bubble and bubble:FindFirstChild("Fade")
-		if fade then
-			fade.Parent = Sim.gui
-			fade.Visible = true
-			fade.GroupTransparency = 0
-			fade.Position = UDim2.fromOffset(620, 470)
-			local pop = fade:FindFirstChild("Pop")
-			if pop then
-				pop.Scale = 1
+	end
+	-- a click on the friend's box: the line shows whole, then a second goes on
+	local function clickOn()
+		local found = Sim.gui:FindFirstChild("TutorialScene")
+		local box = found and found:FindFirstChild("Box", true)
+		if box then
+			for _ = 1, 2 do
+				box.InputBegan:Fire({ UserInputType = Enum.UserInputType.MouseButton1 })
+				Sim.frames(2)
 			end
 		end
-	elseif page == "4:buy" then
-		Hud.open("WishPopup", order[2])
+		Sim.advance(1)
 		Sim.frames(3)
-		Sim.advance(1)
+	end
+	sceneUp()
+	if page == "greet" or page == "2:say" then
+		-- (the scene as it stands, its line typed out)
+		Sim.advance(3)
+		Sim.frames(3)
 	elseif page == "done" then
-		Sim.remoteEvent("State"):FireClient(Sim.player, { stats = { cravings = 1 } })
+		clickOn()
+		first.job = City.freeWorkplace({ plan = Sim.State.plan, villagers = villagers })
+		Sim.remoteEvent("State"):FireClient(Sim.player, { villagers = villagers, tutorial = 3 })
 		Sim.frames(2)
-		Sim.advance(1)
+		sceneUp()
+		Sim.advance(3)
+		Sim.frames(3)
+	else
+		clickOn()
+		if page == "ask" then
+			Tut.takeCreate()
+			Sim.frames(3)
+			Sim.advance(1)
+		elseif page == "2:build" or page == "3:build" then
+			Sim.BuildMode.enter()
+			Sim.frames(3)
+			Sim.press(if page == "2:build" then "Furniture" else "Work")
+			Sim.advance(1)
+			Sim.frames(3)
+		end
 	end
 else
 	error("unknown scene " .. scene)
@@ -1915,6 +1928,15 @@ local function dump(inst)
 	local presetId = inst:GetAttribute("PresetId")
 	if presetId then
 		node.itemId = "preset:" .. presetId
+	end
+	-- UI/Tutorial's darkened screen and what it is cut round: the game places them from where the
+	-- engine laid things out, so ui_render places them again from its own layout
+	for _, name in { "Hole", "HolePad", "HoleNear", "HoleGap", "HoleArrow", "TutorialTarget" } do
+		local v = inst:GetAttribute(name)
+		if v ~= nil then
+			node.attrs = node.attrs or {}
+			node.attrs[name] = v
+		end
 	end
 	for _, c in rawget(inst, "_children") do
 		table.insert(node.children, dump(c))

@@ -676,6 +676,10 @@ function Hud.start()
 		Hud.open("Residents")
 	end)
 	menuButton("shirt", "Create", T.Pink, 2, function()
+		-- (on the tutorial's first step it asks how to make the first villager: UI/Tutorial)
+		if Hud.panel("Tutorial").takeCreate() then
+			return
+		end
 		Hud.open("Creator", { mode = "new" })
 	end)
 	local goalsTile = menuButton("trophy", "Goals", T.Orange, 3, function()
@@ -928,8 +932,8 @@ function Hud.start()
 	-- events (the weather's rain and snow start on their own, from Main)
 	Hud.panel("EventCard").start(Hud)
 
-	-- the tutorial (UI/Tutorial): on a first visit its welcome, then a card at the side for each
-	-- step, pointing at what to press next
+	-- the tutorial (UI/Tutorial): a friend says what to do, then the screen darkens round the
+	-- one thing to press
 	Hud.panel("Tutorial").start(Hud)
 
 	-- what the town earned while the player was away (UI/WelcomeBack; Sim/Offline)
