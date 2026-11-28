@@ -32,7 +32,7 @@ local Sounds = {}
 -- One-shot effects, by what they're for: a press (click; a tab: tab), a menu opening and closing,
 -- a notice (good news: good; a warning: warn), coins earned over a villager (coin) and coins
 -- claimed (coins), the town's next level, a gift, something picked up, a piece put down, sold or
--- turned in Build mode, a door, thunder.
+-- turned in Build mode, a door, thunder, a crate opening.
 -- stylua: ignore
 Sounds.Effects = {
 	click = { id = 15675059323, volume = 0.126, len = 0.09, name = "Roblox_UI_Bright_Click", by = "Roblox" }, -- loudest -15.0 dB, 0.09 s heard
@@ -52,6 +52,10 @@ Sounds.Effects = {
 	rotate = { id = 16480568432, volume = 0.044, len = 0.46, name = "Audio/Roblox_Pinball_Bumper_Soft_Click_03", by = "Roblox" }, -- loudest -9.9 dB, 0.46 s heard
 	door = { id = 9114142431, volume = 2.5, len = 0.59, name = "Door Latch Open And Close 2 (SFX)", by = "ProSoundEffects" }, -- loudest -42.2 dB, 0.59 s heard
 	thunder = { id = 9120018050, volume = 0.335, len = 4.04, name = "Thunder Distant Boom Thud Rapid Hits 15 (SFX)", by = "ProSoundEffects" }, -- loudest -21.5 dB, 4.01 s heard
+	-- a crate opening (UI/Crates.reveal; the user: "make the opening crate cutscene much more dramatic"): the
+	-- shimmer under its shaking, stopped when it bursts, and the sparkle as it does
+	crate_hum = { id = 9116420454, volume = 0.372, from = 0.5, len = 5.7, name = "Magic Tone Tonal Shimmer Shaking Rattle 3 (SFX)", by = "ProSoundEffects" }, -- loudest -24.4 dB, 5.7 s heard
+	crate_burst = { id = 9113122722, volume = 0.132, from = 1.14, len = 4.81, name = "Angel Sparkle 2 (SFX)", by = "ProSoundEffects" }, -- loudest -15.4 dB, 4.81 s heard
 } :: { [string]: Entry }
 
 -- The weather's loops (Weather below says how much of each), played over and over.

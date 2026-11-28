@@ -19,6 +19,7 @@ local CALLERS = {
 	"src/client/UI/Toasts.luau",
 	"src/client/UI/Hud.luau",
 	"src/client/UI/GiftPicker.luau",
+	"src/client/UI/Crates.luau",
 	"src/client/UI/Weather.luau",
 	"src/client/Build/BuildMode.luau",
 	"src/client/World/BuildFx.luau",
@@ -53,7 +54,7 @@ describe("Sounds", function()
 		for _, path in CALLERS do
 			local text = readFile(path)
 			expect(text ~= nil).toBeTruthy()
-			for _, pattern in { 'Kit%.sound%("(%w+)"', 'Audio%.play%("(%w+)"', 'Audio%.at%("(%w+)"' } do
+			for _, pattern in { 'Kit%.sound%("([%w_]+)"', 'Audio%.play%("([%w_]+)"', 'Audio%.at%("([%w_]+)"' } do
 				for key in text:gmatch(pattern) do
 					asked += 1
 					if not Sounds.Effects[key] then

@@ -93,20 +93,22 @@ local function applyLevels(ease: boolean)
 end
 
 -- Plays effect `key` (Data/Sounds.Effects) once. opts: Volume (times its own), Rate (times its own).
--- The same effect asked for twice within Tuning.Audio.Gap plays once.
-function Audio.play(key: string, opts: { Volume: number?, Rate: number? }?)
+-- The same effect asked for twice within Tuning.Audio.Gap plays once. Hands back the sound playing
+-- (nil when it doesn't play), so a long one can be stopped early (UI/Crates stops its shimmer).
+function Audio.play(key: string, opts: { Volume: number?, Rate: number? }?): Sound?
 	if not started then
-		return
+		return nil
 	end
 	local entry = Sounds.Effects[key]
 	if not entry then
-		return
+		return nil
 	end
 	local now = os.clock()
 	if now - (lastPlayed[key] or -1) < K.Gap then
-		return
+		return nil
 	end
 	lastPlayed[key] = now
+	local playing: Sound? = nil
 	pcall(function()
 		local t = templates[key]
 		if not t then
@@ -125,11 +127,13 @@ function Audio.play(key: string, opts: { Volume: number?, Rate: number? }?)
 		end
 		s.Parent = service
 		s:Play()
+		playing = s
 		local life = (entry.len or 3) / math.max(0.1, s.PlaybackSpeed) + 0.2
 		task.delay(life, function()
 			s:Destroy()
 		end)
 	end)
+	return playing
 end
 
 -- Plays effect `key` from a place in the town, heard only near the camera (it fades with distance).
@@ -532,8 +536,8 @@ function Audio.start()
 		end
 	end)
 	-- the interface's sounds (Kit.press, Kit.panel, Kit.closePanel, UI/Toasts)
-	Kit.sound = function(kind: string)
-		Audio.play(kind)
+	Kit.sound = function(kind: string, opts: { Volume: number?, Rate: number? }?): Sound?
+		return Audio.play(kind, opts)
 	end
 	task.spawn(musicLoop)
 	-- the weather's loops, a few times a second

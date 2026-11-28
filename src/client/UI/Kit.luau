@@ -21,7 +21,9 @@ local Kit = {}
 -- What a control, a menu or a notice sounds like: "click", "tab", "open", "close", "notice",
 -- "good", "warn". Controllers/Audio puts its player here when the game starts (the user: "add
 -- sounds where necessary"); the previews and the simulations leave it quiet.
-Kit.sound = function(_kind: string) end
+Kit.sound = function(_kind: string, _opts: { Volume: number?, Rate: number? }?): Sound?
+	return nil
+end
 
 Kit.Theme = {
 	-- what a full menu covers the screen with, and the far end of a fade
