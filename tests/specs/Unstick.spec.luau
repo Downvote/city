@@ -236,6 +236,86 @@ describe("Unstick", function()
 			expect(#solidOf(Catalog.get("shape_plank_small")) > 0).toBeTruthy()
 		end)
 
+		-- the user: "some objects, like stairs, have collission boxes that arent part of the mesh
+		-- but are invisible"
+		it("keeps every hidden solid part inside what can be seen: a stair's ramp under its treads", function()
+			-- is a point inside a prim's own shape (a wedge is half its box)?
+			local function inside(p, pt, grow)
+				local l = p.cf:PointToObjectSpace(pt)
+				local h = p.size / 2 + Vector3.new(grow, grow, grow)
+				if math.abs(l.X) > h.X or math.abs(l.Y) > h.Y or math.abs(l.Z) > h.Z then
+					return false
+				end
+				if p.shape == "Wedge" and grow == 0 then
+					-- full height at its back (+Z), down to its bottom front edge
+					return (l.Y + p.size.Y / 2) / p.size.Y <= (l.Z + p.size.Z / 2) / p.size.Z + 1e-6
+				end
+				return true
+			end
+			local REACH = 1.2 -- what is under a tread or a top this far is under it
+			local hidden, checked = 0, 0
+			for _, def in Catalog.all() do
+				local seen, hid = {}, {}
+				for _, p in Geometry.flatten(Solid.apply(def, Catalog.prims(def))) do
+					if (p.transp or 0) < 0.99 then
+						table.insert(seen, p)
+					elseif p.collide ~= false and not p.role then
+						table.insert(hid, p)
+					end
+				end
+				for _, p in hid do
+					hidden += 1
+					-- points through the part's own shape, each with something seen at it or just over it
+					for a = 1, 5 do
+						for b = 1, 5 do
+							for c = 1, 5 do
+								local l = Vector3.new(a / 6 - 0.5, b / 6 - 0.5, c / 6 - 0.5) * p.size
+								local pt = p.cf:PointToWorldSpace(l)
+								if inside(p, pt, 0) then
+									checked += 1
+									local covered = false
+									for k = 0, 6 do
+										local up = pt + Vector3.new(0, REACH * k / 6, 0)
+										for _, q in seen do
+											if inside(q, up, 0.02) then
+												covered = true
+												break
+											end
+										end
+										if covered then
+											break
+										end
+									end
+									if not covered then
+										error(
+											string.format(
+												"%s: a hidden solid part reaches %s, where nothing shows",
+												def.id,
+												tostring(pt)
+											)
+										)
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+			expect(hidden > 0).toBeTruthy()
+			expect(checked > 100).toBeTruthy()
+			-- and the room under the high end of every staircase is open, as it looks
+			for _, def in Catalog.all() do
+				if def.place == "stairs" then
+					local under = Vector3.new(0, 3, -def.size.Z / 2 + 1.5)
+					for _, p in solidOf(def) do
+						if inside(p, under, 0) then
+							error(def.id .. ": something solid under its high end")
+						end
+					end
+				end
+			end
+		end)
+
 		it("opens a body drawn as pieces, but not a workplace's or a door's", function()
 			local function drawn(r)
 				r:piece(function(q)

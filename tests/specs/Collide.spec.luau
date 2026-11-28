@@ -155,15 +155,58 @@ describe("Collide: what keeps out of what", function()
 			return { id = "stairs_straight", x = X0 + 20, y = Tuning.Plot.Foundation, z = z, r = r, lv = 0 }
 		end
 		expect((Plan.validItem(plan, stair(0)))).toBe(true)
-		expect((Collide.check(plan, "items", stair(0)))).toBe(true) -- its top end at the wall
-		expect((Collide.check(plan, "items", stair(180)))).toBe(true) -- its foot at the wall
+		expect((Collide.check(plan, "items", stair(0)))).toBe(true) -- its foot at the wall
+		expect((Collide.check(plan, "items", stair(180)))).toBe(true) -- its top end at the wall
 		-- one step further in, it is in the wall
 		local into = stair(0)
 		into.z += 1
 		expect((Collide.check(plan, "items", into))).toBe(false)
-		-- and things can't go where the stairs climb
+		-- things can't go where the stairs climb: at their foot (+Z) the steps are low
 		local climbed = planWith({ { "items", stair(0) } })
-		expect((Collide.check(climbed, "items", item("shape_cube_small", 20, z)))).toBe(false)
+		expect((Collide.check(climbed, "items", item("shape_cube_small", 20, z + 5)))).toBe(false)
+		-- but under their high end there is room, as there is to see (the user: "some objects, like
+		-- stairs, have collission boxes that arent part of the mesh but are invisible")
+		expect((Collide.check(climbed, "items", item("shape_cube_small", 20, z - 5)))).toBe(true)
+		-- and the body follows the steps up from the foot, never deeper under them than the strings
+		local body = Collide.body(stairs)
+		local first, last = body[1], body[#body]
+		expect(first.cf.Position.Z > last.cf.Position.Z).toBeTruthy()
+		expect(first.cf.Position.Y - first.size.Y / 2).toBeNear(0)
+		expect(last.cf.Position.Y - last.size.Y / 2 > Tuning.Plot.LevelHeight / 2).toBeTruthy()
+	end)
+
+	-- the user: "make it such that you are able to put objects on top of each other or on each
+	-- other, respecting their collision"
+	it("lets a piece stand on top of another, never in its body", function()
+		local table1 = item("table_round", 20, 20)
+		local plan = planWith({ { "items", table1 } })
+		local top = Catalog.get("table_round").surface
+		-- a chair or a cube on the table's top touches it and is fine
+		expect((Collide.check(plan, "items", item("chair_wood", 20, 20, { y = top })))).toBe(true)
+		expect((Collide.check(plan, "items", item("shape_cube_small", 20, 20, { y = top })))).toBe(true)
+		-- sunk into the top it bumps into the table
+		local ok, why = Collide.check(plan, "items", item("chair_wood", 20, 20, { y = top - 0.6 }))
+		expect(ok).toBe(false)
+		expect(why).toBe("bumps into the round table")
+		-- and the passes' rules say the same: up there it goes without Free Placing
+		expect(
+			(
+				Placing.check(
+					plan,
+					nobody,
+					{ type = "add", kind = "items" },
+					item("chair_wood", 20, 20, { y = top }),
+					nil,
+					{},
+					true
+				)
+			)
+		).toBe(true)
+		-- a stack of cubes, each on the one under it
+		local cube = Catalog.get("shape_cube_medium")
+		local stack = planWith({ { "items", item("shape_cube_medium", 30, 30) } })
+		expect((Collide.check(stack, "items", item("shape_cube_medium", 30, 30, { y = cube.size.Y })))).toBe(true)
+		expect((Collide.check(stack, "items", item("shape_cube_medium", 30, 30, { y = cube.size.Y / 2 })))).toBe(false)
 	end)
 
 	it("lets fence panels and porch rails share their posts", function()

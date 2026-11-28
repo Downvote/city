@@ -36,6 +36,7 @@ local WaterTool = require(script.Parent.WaterTool) -- (water: its tray and a pic
 -- (the Select tool's page, and the Saves page: Build/SelectTool, Build/SavesTray)
 local SelectTool = require(script.Parent.SelectTool)
 local SavesTray = require(script.Parent.SavesTray)
+local ViewTime = require(script.Parent.ViewTime) -- (the time of day the town is shown at, on this screen)
 
 local BuildUI = {}
 
@@ -175,21 +176,23 @@ local STYLE_ICONS = {
 
 -- One rhythm for the whole screen: every bar keeps the same distance from the screen's edges and
 -- from the next bar, the same room inside and the same round corners, and the tiles in the tool
--- row and the category row are the same height.
-local EDGE = 12 -- from the screen's edges
-local GAP = 8 -- between bars, and between things side by side
-local PAD = 8 -- inside a bar, above and below
-local SIDE = 12 -- inside a bar, left and right (clear of its round corners)
-local CUT = 12
-local DOCK_H, TOOLS_H = 64, 80
-local TILE_H = 64 -- a category or a tool
-local TOOL_W = 64
+-- row and the category row are the same height. All of it is kept small (the user: "try to
+-- simplify the build mode interface so it dosent take too much of the screen space"), so the plot
+-- shows over most of the screen: about half the height it took before is left to the plot.
+local EDGE = 10 -- from the screen's edges
+local GAP = 6 -- between bars, and between things side by side
+local PAD = 6 -- inside a bar, above and below
+local SIDE = 10 -- inside a bar, left and right (clear of its round corners)
+local CUT = 10
+local DOCK_H, TOOLS_H = 46, 60
+local TILE_H = 48 -- a category or a tool
+local TOOL_W = 54
 -- the floors card: five icon buttons in a row (two arrows, then three switches), as tall as the
 -- tools row beside it, with a quiet line between the two groups
-local VIEW_BTN, VIEW_SPLIT = 64, 13
+local VIEW_BTN, VIEW_SPLIT = 48, 11
 local FLOORS_W, FLOORS_H = 5 * VIEW_BTN + VIEW_SPLIT + SIDE * 2, TOOLS_H
-local LABEL_W = 124 -- the name at the left of a labelled row in the tray
-local INNER_H = 160 -- what the tray holds
+local LABEL_W = 104 -- the name at the left of a labelled row in the tray
+local INNER_H = 136 -- what the tray holds
 -- The catalog is one rounded card: the category tiles in a deeper well along one edge of it, and
 -- the tray (the cards, or a page of finishes, or a note) along the other. The user, of the cards
 -- and the category tiles under them: "the second should move down, shifting the tab below it
@@ -198,23 +201,25 @@ local INNER_H = 160 -- what the tray holds
 -- the one place that says so: set it to false and the categories go back under the cards.
 local CATEGORIES_ON_TOP = true
 local WELL_PAD = 4 -- round the tiles in their well
-local SUB_NOTE = 190 -- kept at the well's right end for the picked category's number and name
+local SEARCH_W = 230 -- the search box, at the well's right end
+local SEARCH_H = 34
 local WELL_H = TILE_H + WELL_PAD * 2
 local CATALOG_H = PAD + WELL_H + PAD + INNER_H + PAD
 -- the bars' bottoms, measured up from the bottom of the screen
 local CATALOG_AT = EDGE + DOCK_H + GAP
 local TOOLS_AT = CATALOG_AT + CATALOG_H + GAP
 local HINT_AT = TOOLS_AT + TOOLS_H + GAP
--- the coins and the camera tip, top left
-local COINS_H, TIP_H = 46, 28
+local HINT_H = 28 -- the hint line over the tools, and the grid and turn steps' slab
+-- the coins and the camera tip, top left (and the time of day, top right)
+local COINS_H, TIP_H = 40, 24
 local TOP_LEFT_W, TOP_LEFT_H = 380, EDGE + COINS_H + GAP + TIP_H
 
 -- the cards in the tray: a picture on the upper face, the name and the price on the deeper band
 -- along the bottom (a third of the card, as on Kit.tile)
-local CARD_W, CARD_H = 120, 156
-local CHIP_W, CHIP_H = 92, 50 -- a finish to paint with
-local STYLE_W, STYLE_H = 92, 92 -- a kind of wall, fence or roof
-local SWATCH = 26 -- a colour to paint with, in a cell this much bigger
+local CARD_W, CARD_H = 104, 132
+local CHIP_W, CHIP_H = 84, 40 -- a finish to paint with
+local STYLE_W, STYLE_H = 80, 80 -- a kind of wall, fence or roof
+local SWATCH = 22 -- a colour to paint with, in a cell this much bigger
 local RING = 3
 
 local MATERIAL_NAMES: { [string]: string } = {}
@@ -242,8 +247,11 @@ local refreshStretchCard: () -> () = function() end
 local tray: Frame -- the catalog's lower part, which the tray's pages fill
 local trayBody: Frame
 local subBar: ScrollingFrame
-local subCaption: TextLabel? = nil -- the picked category's number and name, at the well's right end
-local subIndex: TextLabel? = nil
+-- the search box at the well's right end, what it holds, and its clear button (searchTray)
+local searchBox: TextBox
+local searchClear: TextButton
+local searchText = ""
+local setSearch: (text: string) -> ()
 local mainButtons: { [string]: TextButton } = {}
 local subButtons: { [string]: TextButton } = {}
 local toolButtons: { [string]: TextButton } = {}
@@ -384,7 +392,7 @@ local function tileFace(holder: GuiObject, color: Color3, h: number): (Frame, nu
 	Kit.corner(face, 9)
 	Kit.new("UIGradient", { Name = "Foot", Rotation = 90, Parent = face })
 	Kit.paint(face, color)
-	Kit.rim(face, Kit.edgeOf(color), 1):SetAttribute("Follow", true)
+	-- (no line round it: the user, "remove the borders around the rectangles")
 	return face, math.floor((h - 2) * 0.66 + 0.5) + 1
 end
 
@@ -416,15 +424,15 @@ end
 
 local function priceTag(parent: Instance, price: number, y: number): Frame
 	local tag =
-		Kit.box({ Name = "Price", Parent = parent, Size = UDim2.new(1, 0, 0, 18), Position = UDim2.fromOffset(0, y) })
-	Kit.list(tag, 4, true, Enum.HorizontalAlignment.Center)
-	Icons.make("coin", 17, { Parent = tag, LayoutOrder = 1 })
+		Kit.box({ Name = "Price", Parent = parent, Size = UDim2.new(1, 0, 0, 16), Position = UDim2.fromOffset(0, y) })
+	Kit.list(tag, 3, true, Enum.HorizontalAlignment.Center)
+	Icons.make("coin", 14, { Parent = tag, LayoutOrder = 1 })
 	Kit.title(Text.commas(price), {
 		Name = "Amount",
 		Parent = tag,
-		Size = UDim2.fromOffset(0, 18),
+		Size = UDim2.fromOffset(0, 16),
 		AutomaticSize = Enum.AutomaticSize.X,
-		TextSize = 16,
+		TextSize = 14,
 		Wrap = false,
 		LayoutOrder = 2,
 	})
@@ -485,8 +493,8 @@ local function cardName(b: GuiObject, text: string, foot: number, size: number)
 	Kit.title(text, {
 		Name = "Name",
 		Parent = b,
-		Size = UDim2.new(1, -12, 0, 30),
-		Position = UDim2.fromOffset(6, foot + 2),
+		Size = UDim2.new(1, -8, 0, 26),
+		Position = UDim2.fromOffset(4, foot + 1),
 		TextSize = size,
 		AlignX = Enum.TextXAlignment.Center,
 		ZIndex = 2,
@@ -507,8 +515,8 @@ local function itemTile(parent: Instance, def: any, order: number, onPick: () ->
 			Pitch = if flat then 76 else nil,
 		})
 	end)
-	cardName(b, def.name, foot, 13)
-	priceTag(b, def.price, CARD_H - 22)
+	cardName(b, def.name, foot, 12)
+	priceTag(b, def.price, CARD_H - 18)
 	-- a grand piece says the level it opens at on its picture's corner (Sim/City.unlocked)
 	if def.level then
 		b:SetAttribute("Level", def.level)
@@ -556,13 +564,13 @@ local function keepsakeTile(parent: Instance, entry: Keepsakes.Entry, order: num
 	task.spawn(function()
 		ModelPreview.fromPrims(Catalog.prims(def), { Parent = pic })
 	end)
-	cardName(b, def.name, foot, 13)
+	cardName(b, def.name, foot, 12)
 	Kit.title(if entry.left > 0 then Text.fill("Free, {n} left", { n = entry.left }) else "None left", {
 		Name = "Left",
 		Parent = b,
-		Size = UDim2.new(1, -12, 0, 18),
-		Position = UDim2.fromOffset(6, CARD_H - 22),
-		TextSize = 15,
+		Size = UDim2.new(1, -8, 0, 16),
+		Position = UDim2.fromOffset(4, CARD_H - 18),
+		TextSize = 13,
 		AlignX = Enum.TextXAlignment.Center,
 		Color = if entry.left > 0 then T.Ink else T.InkSoft,
 		Wrap = false,
@@ -683,8 +691,8 @@ local function styleTile(
 	local _, foot = tileFace(b, color, STYLE_H)
 	local ink = if picked then T.Dark else T.Ink
 	-- the icon on the upper face (with what it costs under it), the name on the band
-	local ipx = if sub then 30 else 36
-	local top = if sub then 7 else math.floor((foot - ipx) / 2)
+	local ipx = if sub then 26 else 32
+	local top = if sub then 5 else math.floor((foot - ipx) / 2)
 	Icons.make(icon, ipx, {
 		Name = "IconArt",
 		Parent = b,
@@ -704,12 +712,12 @@ local function styleTile(
 	Kit.title(label, {
 		Name = "Name",
 		Parent = b,
-		Size = UDim2.new(1, -8, 0, STYLE_H - foot - 1),
-		Position = UDim2.fromOffset(4, foot),
-		TextSize = 14,
+		Size = UDim2.new(1, -6, 0, STYLE_H - foot - 1),
+		Position = UDim2.fromOffset(3, foot),
+		TextSize = 12,
 		Color = ink,
 		AlignX = Enum.TextXAlignment.Center,
-		Wrap = false,
+		Wrap = true,
 		ZIndex = 2,
 	})
 	if picked then
@@ -862,6 +870,7 @@ end
 -- trays ------------------------------------------------------------------------------------------------
 
 local refreshTray: () -> ()
+local openSub: (id: string) -> ()
 local refreshChrome: () -> ()
 
 -- Picking a style or a finish in the tray also picks up the tool that uses it.
@@ -944,11 +953,11 @@ local function presetTray()
 		task.spawn(function()
 			ModelPreview.fromPrims(presetLook(preset.id), { Parent = pic })
 		end)
-		cardName(b, preset.name, foot, 14)
+		cardName(b, preset.name, foot, 12)
 		if not presetPrices[preset.id] then
 			presetPrices[preset.id] = Presets.price(preset.id)
 		end
-		priceTag(b, presetPrices[preset.id], CARD_H - 22)
+		priceTag(b, presetPrices[preset.id], CARD_H - 18)
 		-- its size, in a dark pill on the picture's corner
 		local size = Kit.frame({
 			Name = "Size",
@@ -1048,7 +1057,6 @@ picturePanel = function(parent, owner, title, current, useLabel, onUse, extra, o
 		Color = T.Picture,
 		Radius = 8,
 	})
-	Kit.rim(view, T.Line, 1)
 	-- (an id that isn't a picture shows nothing: its thumbnail could be anything)
 	local shown: number? = if draft.state == "bad" then nil else draft.id
 	if shown then
@@ -1209,9 +1217,44 @@ local function picturePlaceTray(def: any)
 	-- how it works, beside the page
 	local note = Kit.box({ Parent = row, Size = UDim2.new(1, -620, 0, INNER_H), LayoutOrder = 2 })
 	Kit.list(note, 0).VerticalAlignment = Enum.VerticalAlignment.Center
-	local help = "Find a decal or an image in the Creator Store and copy the number in its link."
-		.. " You can change it later by picking the piece."
+	local help = "Paste the number from a decal's or an image's Creator Store link."
 	Kit.hint(help, { Name = "PictureHelp", Parent = note, Size = UDim2.new(1, -8, 0, 0) })
+end
+
+-- A card picked from the tray: the piece is picked up to place. A VIP piece offers the pass
+-- instead (the server would turn it down anyway), and a picture piece opens the page for choosing
+-- its picture first.
+local function pickDef(def: any)
+	if def.level and not City.unlocked(State.plan, def) then
+		-- a grand piece waits for the town's level (the server would turn it down anyway)
+		Toasts.show(Text.fill("Opens at Level {n}", { n = def.level }), "info")
+	elseif def.vip and not Purchase.has("vip") then
+		Purchase.prompt("vip")
+	elseif def.picture then
+		pictureDef = def.id
+		refreshTray()
+	else
+		BuildMode.startPlacing(def.id)
+	end
+end
+
+-- What a search found (Catalog.search): their cards in one row, as a category's are.
+local function searchTray()
+	if pictureDef and Catalog.get(pictureDef) then
+		picturePlaceTray(Catalog.get(pictureDef))
+		return
+	end
+	local list = Catalog.search(searchText)
+	if #list == 0 then
+		trayNote(trayStack(), "zoom", T.Blue, "Nothing found", { "Try another word." })
+		return
+	end
+	local row = trayRow()
+	for i, def in list do
+		itemTile(row, def, i, function()
+			pickDef(def)
+		end)
+	end
 end
 
 local function catalogTray(cat: string)
@@ -1252,19 +1295,7 @@ local function catalogTray(cat: string)
 	local row = trayRow()
 	for i, def in list do
 		itemTile(row, def, i, function()
-			if def.level and not City.unlocked(State.plan, def) then
-				-- a grand piece waits for the town's level (the server would turn it down anyway)
-				Toasts.show(Text.fill("Opens at Level {n}", { n = def.level }), "info")
-			elseif def.vip and not Purchase.has("vip") then
-				-- a VIP piece offers the pass instead (the server would turn it down anyway)
-				Purchase.prompt("vip")
-			elseif def.picture then
-				-- a picture to choose before it is placed
-				pictureDef = def.id
-				refreshTray()
-			else
-				BuildMode.startPlacing(def.id)
-			end
+			pickDef(def)
 		end)
 	end
 	if cat == "paths" then
@@ -1305,7 +1336,7 @@ local function wallTray(styles: { string }, room: boolean)
 				refreshTray()
 			end)
 		end
-		Kit.hint("To change a fence's colour, use the Paint tool once it's up.", {
+		Kit.hint("Paint a fence once it's up.", {
 			Name = "FenceNote",
 			Parent = stack,
 			Size = UDim2.new(1, -8, 0, 0),
@@ -1394,10 +1425,10 @@ local function roofControls(parent: Instance, get: () -> any, set: (string, any)
 	Kit.list(sliders, 2)
 	Kit.slider("Height", 0, Tuning.Plot.RoofMaxRise, get().rise, 1, function(v)
 		set("rise", v)
-	end, { Parent = sliders, Size = UDim2.new(1, 0, 0, 44), LayoutOrder = 1 })
+	end, { Parent = sliders, Size = UDim2.new(1, 0, 0, 39), LayoutOrder = 1 })
 	Kit.slider("Overhang", 0, Tuning.Plot.RoofMaxOverhang, get().over, 0.5, function(v)
 		set("over", v)
-	end, { Parent = sliders, Size = UDim2.new(1, 0, 0, 44), LayoutOrder = 2 })
+	end, { Parent = sliders, Size = UDim2.new(1, 0, 0, 39), LayoutOrder = 2 })
 	Kit.button("Turn", {
 		Icon = "rotate",
 		Parent = row,
@@ -1622,19 +1653,18 @@ local function pickBar(
 		Text = "",
 		AutoButtonColor = false,
 		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(PICK_W, 22),
+		Size = UDim2.fromOffset(PICK_W, 20),
 		Parent = parent,
 	})
 	local strip = Kit.frame({
 		Name = "Swatch", -- (a colour to pick from shows its own colours in either look)
 		Parent = hit,
 		Size = UDim2.new(1, 0, 0, 16),
-		Position = UDim2.fromOffset(0, 3),
+		Position = UDim2.fromOffset(0, 2),
 		Color = Color3.new(1, 1, 1),
 		Radius = "pill",
 	})
 	strip:SetAttribute("KeepColors", true)
-	Kit.rim(strip, T.Line, 1)
 	local points = {}
 	for i, c in keys do
 		table.insert(points, ColorSequenceKeypoint.new((i - 1) / math.max(1, #keys - 1), c))
@@ -1706,7 +1736,7 @@ local function colourPicker(stack: Instance, order: number)
 			ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1)),
 		})
 	end
-	pickBar(labelledRow(stack, "Hue", 22, order), "Hue", hues, pickerHue, function(t)
+	pickBar(labelledRow(stack, "Hue", 20, order), "Hue", hues, pickerHue, function(t)
 		pickerHue = t
 		local g = shadeStrip:FindFirstChild("Hues")
 		if g and g:IsA("UIGradient") then
@@ -1715,7 +1745,7 @@ local function colourPicker(stack: Instance, order: number)
 		fromBars()
 	end, refreshTray)
 	shadeStrip = pickBar(
-		labelledRow(stack, "Shade", 22, order + 1),
+		labelledRow(stack, "Shade", 20, order + 1),
 		"Shade",
 		{ Color3.new(0, 0, 0), hueColour(pickerHue), Color3.new(1, 1, 1) },
 		pickerShade,
@@ -1725,11 +1755,11 @@ local function colourPicker(stack: Instance, order: number)
 		end,
 		refreshTray
 	)
-	local hexRow = labelledRow(stack, "Hex code", 30, order + 2)
+	local hexRow = labelledRow(stack, "Hex code", 26, order + 2)
 	hexBox = Kit.textbox("F2E8D5", {
 		Name = "Hex",
 		Parent = hexRow,
-		Size = UDim2.fromOffset(140, 30),
+		Size = UDim2.fromOffset(140, 26),
 		Text = s.paint.c,
 		TextSize = 16,
 		LayoutOrder = 1,
@@ -1737,15 +1767,15 @@ local function colourPicker(stack: Instance, order: number)
 	chip = Kit.frame({
 		Name = "Swatch",
 		Parent = hexRow,
-		Size = UDim2.fromOffset(30, 30),
+		Size = UDim2.fromOffset(26, 26),
 		Color = Colors.fromHex(s.paint.c),
 		Radius = "round",
 		LayoutOrder = 2,
 	})
 	Kit.rim(chip, T.Line, 1.5)
-	Kit.text("Pick a hue and a shade, or type a colour's six digit code.", {
+	Kit.text("Or type its code.", {
 		Parent = hexRow,
-		Size = UDim2.fromOffset(0, 30),
+		Size = UDim2.fromOffset(0, 26),
 		AutomaticSize = Enum.AutomaticSize.X,
 		TextSize = 15,
 		Color = T.InkSoft,
@@ -1768,8 +1798,8 @@ end
 -- The Paint tool: which colour of a piece to paint, the brush, then the finishes, the colours
 -- and the materials, each in a row with its name at the left.
 local function paintTray()
-	local stack = trayStack(6)
-	local top = Kit.box({ Parent = stack, Size = UDim2.new(1, 0, 0, 30), LayoutOrder = 1 })
+	local stack = trayStack(4)
+	local top = Kit.box({ Parent = stack, Size = UDim2.new(1, 0, 0, 28), LayoutOrder = 1 })
 	local left = Kit.box({ Parent = top, Size = UDim2.fromScale(1, 1) })
 	Kit.list(left, 12, true)
 	local _, pickSlot = Kit.segments({
@@ -1778,14 +1808,14 @@ local function paintTray()
 	}, function(id)
 		s.paint.slot = id
 		refreshTray()
-	end, { Parent = left, Height = 30, TextSize = 14, LayoutOrder = 1 })
+	end, { Parent = left, Height = 28, TextSize = 13, LayoutOrder = 1 })
 	pickSlot(s.paint.slot)
 	Kit.button(if s.paint.pick then "Now click something" else "Copy a colour", {
 		Name = "CopyColour",
 		Icon = "bucket",
 		Parent = left,
-		Size = UDim2.fromOffset(190, 30),
-		TextSize = 15,
+		Size = UDim2.fromOffset(176, 28),
+		TextSize = 14,
 		Color = if s.paint.pick then T.Yellow else T.Card,
 		TextColor = if s.paint.pick then T.Dark else T.Ink,
 		LayoutOrder = 2,
@@ -1801,8 +1831,8 @@ local function paintTray()
 		Name = "AnyColour",
 		Icon = if anyOwned then "brush" else "lock",
 		Parent = left,
-		Size = UDim2.fromOffset(if open then 210 else 160, 30),
-		TextSize = 15,
+		Size = UDim2.fromOffset(if open then 196 else 150, 28),
+		TextSize = 14,
 		Color = if open then T.Yellow else T.Card,
 		TextColor = if open then T.Dark else T.Ink,
 		LayoutOrder = 3,
@@ -2046,9 +2076,9 @@ end
 local function sellTray()
 	local stack = trayStack()
 	trayNote(stack, "trash", T.Coral, "Click something to sell it", {
-		"You get back what you paid. Undo brings it back.",
+		"You get back what you paid.",
 	}, 1)
-	Kit.hint("The starting house was a gift, so its pieces sell for nothing.", {
+	Kit.hint("Gifts sell for nothing.", {
 		Parent = stack,
 		Size = UDim2.new(1, -8, 0, 0),
 		LayoutOrder = 2,
@@ -2070,6 +2100,9 @@ refreshTray = function()
 	elseif tool == "multi" then
 		trayMode = "multi" -- (the Select tool's group: Build/SelectTool)
 		SelectTool.tray(selectKit)
+	elseif searchText ~= "" then
+		trayMode = "search" -- (what the search box found: searchTray)
+		searchTray()
 	elseif subTab == "saves" then
 		trayMode = "saves" -- (saved builds: Build/SavesTray)
 		SavesTray.tray(savesKit)
@@ -2100,9 +2133,39 @@ refreshTray = function()
 	end
 end
 
+-- Searching: what is typed in the box shows what it finds in the tray, with nothing in hand (the
+-- tools that keep their own page, Paint and Sell, give way to it); an empty box goes back to the
+-- picked category.
+setSearch = function(text: string)
+	local clean = string.sub(Text.clean(text or ""), 1, Catalog.SearchMax)
+	if clean == searchText then
+		return
+	end
+	searchText = clean
+	searchClear.Visible = clean ~= ""
+	if searchBox.Text ~= text and clean == "" then
+		searchBox.Text = ""
+	end
+	pictureDef = nil
+	-- the category tiles step back while the tray shows a search
+	for sid, b in subButtons do
+		local on = clean == "" and sid == subTab
+		Kit.setButtonColor(b, if on then T.Yellow else T.Paper, if on then T.Dark else T.Ink)
+	end
+	if clean == "" then
+		openSub(subTab) -- (back to the picked category, and the tool it uses)
+	elseif s.tool ~= "place" or s.placing then
+		BuildMode.setTool("place")
+		s.placing = nil
+		refreshTray()
+	else
+		refreshTray()
+	end
+end
+
 -- choosing tabs -------------------------------------------------------------------------------------------
 
-local function openSub(id: string)
+openSub = function(id: string)
 	local was = subTab
 	subTab = id
 	pictureDef = nil
@@ -2112,20 +2175,11 @@ local function openSub(id: string)
 	if was and was ~= id and subButtons[was] and subButtons[id] then
 		Kit.glide(subButtons[was], subButtons[id])
 	end
-	-- at the right end of the well: which one of how many, and its name set wide
-	local main
-	for _, m in MAIN do
-		if m.id == mainTab then
-			main = m
-		end
-	end
-	if main and subCaption and subIndex then
-		for i, sub in main.subs do
-			if sub.id == id then
-				subIndex.Text = Kit.index(i) .. " / " .. Kit.index(#main.subs)
-				subCaption.Text = Kit.spaced(sub.name)
-			end
-		end
+	-- (a category picked ends a search)
+	if searchText ~= "" then
+		searchText = ""
+		searchBox.Text = ""
+		searchClear.Visible = false
 	end
 	if id == "walls" or id == "fences" then
 		s.wallMode = "line"
@@ -2177,7 +2231,8 @@ local function openMain(id: string)
 	for i, sub in main.subs do
 		local b = Kit.tile(sub.icon, sub.name, {
 			Parent = subBar,
-			Size = UDim2.fromOffset(88, TILE_H),
+			Size = UDim2.fromOffset(80, TILE_H),
+			TextSize = 12,
 			LayoutOrder = i,
 			Color = T.Paper,
 		})
@@ -2435,6 +2490,15 @@ local function stepWords(): string?
 		else Text.fill("R turns pieces {n}°", { n = string.format("%g", BuildMode.turnAngle()) })
 end
 
+-- What the time of day's arrows would show, for the hint (Build/ViewTime).
+local TIME_TIPS: { [string]: string } = {
+	now = "Back to the town's own time",
+	morning = "See it in the morning",
+	noon = "See it at noon",
+	evening = "See it in the evening",
+	night = "See it at night",
+}
+
 local function viewTip(id: string): string
 	-- (the switches of the build mode passes say their own: passTip, further down)
 	local own = passTip(id)
@@ -2444,6 +2508,12 @@ local function viewTip(id: string): string
 	local step = stepTip(id)
 	if step then
 		return step
+	end
+	if id == "timeDown" or id == "timeUp" then
+		-- (what a press of the time's arrows would show)
+		local n = #ViewTime.Options
+		local at = (ViewTime.index() - 1 + (if id == "timeDown" then -1 else 1)) % n + 1
+		return TIME_TIPS[ViewTime.Options[at].id] or ""
 	end
 	if id == "down" then
 		return floorTip(-1)
@@ -2626,8 +2696,7 @@ local function passButton(parent: Instance, sw: any, order: number): TextButton
 		Parent = b,
 	})
 	Kit.corner(face, 9)
-	Kit.rim(face, Kit.edgeOf(T.Card), 1):SetAttribute("Follow", true)
-	local ipx = 30
+	local ipx = 24
 	Icons.make(sw.icon, ipx, {
 		Name = "IconArt",
 		Parent = b,
@@ -2755,16 +2824,25 @@ end
 
 -- How far each part goes while a piece is held: the bottom ones down off the screen, the coins
 -- and the camera help at the top left up off it.
-local AWAY: { [string]: number } =
-	{ Dock = 460, Catalog = 460, Tools = 460, Floors = 460, Placing = 460, Pill = -140, CameraTip = -140 }
+local AWAY: { [string]: number } = {
+	Dock = 460,
+	Catalog = 460,
+	Tools = 460,
+	Floors = 460,
+	Placing = 460,
+	Pill = -140,
+	CameraTip = -140,
+	TimeOfDay = -140,
+}
 local HINT_HOME = UDim2.new(0, EDGE + 12, 1, -HINT_AT)
 -- beside the hint while a piece is held: the red way back (it puts the piece away, as a right
 -- click does) and, on a touch screen, a round button that turns it
-local HOLD_W = 84
-local TURN_W = 52
+local HOLD_W = 76
+local HOLD_H = 38
+local TURN_W = 44
 -- the grid and turn steps: over the floors card, and while a piece is held beside the way back
 -- (a drawing has no furniture to snap or turn: they step aside for it)
-local STEPS_W = 330
+local STEPS_W = 296
 local STEPS_HOME = UDim2.new(1, -EDGE - STEPS_W, 1, -HINT_AT)
 local function stepsShown(): boolean
 	return not BuildMode.isDrawing()
@@ -2868,7 +2946,7 @@ local function setHolding(on: boolean, instant: boolean?)
 	if turn and turn:IsA("GuiObject") then
 		turn.Visible = turns
 	end
-	touchButtons.Size = UDim2.fromOffset(HOLD_W + (if turns then TURN_W + GAP else 0), 52)
+	touchButtons.Size = UDim2.fromOffset(HOLD_W + (if turns then TURN_W + GAP else 0), HOLD_H + 6)
 	touchButtons.Visible = on
 	refreshStretchCard() -- (Stretch's sliders beside it, for the piece in hand)
 	refreshChrome()
@@ -3018,6 +3096,32 @@ local function followSelection()
 	actionBar.Position = UDim2.fromOffset(x, bottom)
 end
 
+-- the time of day the town is shown at (Build/ViewTime), top right
+local TIME_W = 212
+local timeShown: Frame
+local timeLabel: TextLabel
+
+-- Shows the picked time on its slab: its icon and its name.
+local function showTime()
+	if not timeShown then
+		return
+	end
+	local now = ViewTime.current()
+	timeLabel.Text = now.name
+	local old = timeShown:FindFirstChild("TimeIcon")
+	if old then
+		old:Destroy()
+	end
+	Icons.make(now.icon, 16, {
+		Name = "TimeIcon",
+		Parent = timeShown,
+		Position = UDim2.new(0, 0, 0.5, -8),
+		Color = if now.hour then T.Yellow else T.White,
+		Hole = T.Glass,
+		Centre = true,
+	})
+end
+
 -- building the screen ----------------------------------------------------------------------------------------
 
 function BuildUI.init(exitCallback: () -> ())
@@ -3044,7 +3148,7 @@ function BuildUI.init(exitCallback: () -> ())
 	-- as the screen, the groups at its left end and Done at its right.
 
 	-- the main groups and the way out, on one bar along the bottom
-	local dockButtonW = 148
+	local dockButtonW = 124
 	local dock = Kit.frame({
 		Name = "Dock",
 		Size = UDim2.new(1, -EDGE * 2, 0, DOCK_H),
@@ -3064,7 +3168,7 @@ function BuildUI.init(exitCallback: () -> ())
 		local b = Kit.button(m.name, {
 			Parent = dockRow,
 			Size = UDim2.fromOffset(dockButtonW, DOCK_H - PAD * 2),
-			TextSize = 20,
+			TextSize = 16,
 			Color = T.Paper,
 			TextColor = T.Ink,
 			LayoutOrder = i,
@@ -3079,10 +3183,10 @@ function BuildUI.init(exitCallback: () -> ())
 	Kit.button("Done", {
 		Parent = dock,
 		Name = "Done",
-		Size = UDim2.fromOffset(196, DOCK_H - PAD * 2),
+		Size = UDim2.fromOffset(140, DOCK_H - PAD * 2),
 		Position = UDim2.new(1, -SIDE, 0, PAD),
 		AnchorPoint = Vector2.new(1, 0),
-		TextSize = 24,
+		TextSize = 18,
 		Color = T.Red,
 		Icon = "close",
 		ZIndex = 2,
@@ -3117,50 +3221,73 @@ function BuildUI.init(exitCallback: () -> ())
 		Radius = 10,
 		ZIndex = 2,
 	})
-	Kit.rim(well, T.Line, 1)
 	subBar = Kit.scroll({
 		Name = "Subs",
 		Parent = well,
-		Size = UDim2.new(1, -WELL_PAD * 2 - SUB_NOTE, 0, TILE_H),
+		Size = UDim2.new(1, -WELL_PAD * 2 - SEARCH_W - GAP * 2, 0, TILE_H),
 		Position = UDim2.fromOffset(WELL_PAD, WELL_PAD),
 		Axis = Enum.AutomaticSize.X,
 	})
-	-- the picked category at the well's right end: its number in yellow over its name set wide,
-	-- with a rule between them that ends in a dot
-	local note = Kit.box({
-		Name = "SubNote",
+	-- the search box at the well's right end (the user: "add searching in build mode"): the cards
+	-- of every piece whose name, kind, look or tags have the words typed, as they are typed
+	local searchRow = Kit.box({
+		Name = "BuildSearch", -- (the creator has a "Search" of its own)
 		Parent = well,
-		Size = UDim2.new(0, SUB_NOTE - 16, 1, 0),
-		Position = UDim2.new(1, -12, 0, 0),
-		AnchorPoint = Vector2.new(1, 0),
+		Size = UDim2.fromOffset(SEARCH_W, SEARCH_H),
+		Position = UDim2.new(1, -WELL_PAD - GAP, 0.5, 0),
+		AnchorPoint = Vector2.new(1, 0.5),
+		ZIndex = 2,
 	})
-	note.ZIndex = 2
-	subIndex = Kit.title("", {
-		Name = "Index",
-		Parent = note,
-		Size = UDim2.new(1, 0, 0, 22),
-		Position = UDim2.fromOffset(0, 10),
-		TextSize = 20,
-		Tint = T.Yellow,
-		AlignX = Enum.TextXAlignment.Right,
-		Wrap = false,
+	local searchWell = Kit.frame({ Name = "Well", Parent = searchRow, Color = T.PaperDark, Radius = false, ZIndex = 2 })
+	Kit.slant(searchWell, SEARCH_H)
+	Icons.make("zoom", 16, {
+		Name = "Glass",
+		Parent = searchRow,
+		Position = UDim2.new(0, 14, 0.5, -8),
+		Color = T.InkSoft,
+		Hole = T.PaperDark,
+		ZIndex = 3,
 	})
-	Kit.rule({
-		Name = "Rule",
-		Parent = note,
-		Size = UDim2.new(1, 0, 0, 6),
-		Position = UDim2.fromOffset(0, 38),
-		AnchorPoint = Vector2.new(0, 0.5),
-		Color = T.Line,
-		Dots = "both",
+	searchBox = Kit.textbox("Search", {
+		Name = "SearchBox",
+		Parent = searchRow,
+		Size = UDim2.new(1, -66, 1, 0),
+		TextSize = 15,
 	})
-	subCaption = Kit.caption("", {
-		Name = "Caption",
-		Parent = note,
-		Size = UDim2.new(1, 0, 0, 14),
-		Position = UDim2.fromOffset(0, 46),
-		AlignX = Enum.TextXAlignment.Right,
-	})
+	searchBox.Position = UDim2.fromOffset(34, 0)
+	searchBox.BackgroundTransparency = 1
+	searchBox.ClipsDescendants = true
+	searchBox.ZIndex = 3
+	local boxPad = searchBox:FindFirstChildOfClass("UIPadding")
+	if boxPad then
+		boxPad.PaddingLeft = UDim.new(0, 2)
+	end
+	searchClear = Kit.roundButton("close", {
+		Name = "ClearSearch",
+		Parent = searchRow,
+		Size = 22,
+		Position = UDim2.new(1, -16, 0.5, 0),
+		AnchorPoint = Vector2.new(1, 0.5),
+	}, function()
+		setSearch("")
+	end)
+	searchClear.ZIndex = 3
+	searchClear.Visible = false
+	-- the tray follows the words a moment after the last key
+	local searchToken = 0
+	searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+		searchToken += 1
+		local token = searchToken
+		task.delay(0.15, function()
+			if token == searchToken then
+				setSearch(searchBox.Text)
+			end
+		end)
+	end)
+	searchBox.FocusLost:Connect(function()
+		searchToken += 1
+		setSearch(searchBox.Text)
+	end)
 	subBar.ScrollBarThickness = 0
 	Kit.list(subBar, 0, true)
 	tray = Kit.box({
@@ -3194,6 +3321,7 @@ function BuildUI.init(exitCallback: () -> ())
 			Size = UDim2.fromOffset(TOOL_W, TILE_H),
 			LayoutOrder = i,
 			Color = T.Paper,
+			TextSize = 12,
 		}, tool.run)
 		toolButtons[tool.id] = b
 	end
@@ -3201,7 +3329,7 @@ function BuildUI.init(exitCallback: () -> ())
 	-- what the tool in hand does, above the tools
 	hintPill = Kit.darkPill({
 		Name = "Hint",
-		Size = UDim2.fromOffset(0, 34),
+		Size = UDim2.fromOffset(0, HINT_H),
 		Position = UDim2.new(0, EDGE + 12, 1, -HINT_AT),
 		AnchorPoint = Vector2.new(0, 1),
 		Parent = ui,
@@ -3210,9 +3338,9 @@ function BuildUI.init(exitCallback: () -> ())
 	Kit.pad(hintPill, 6, 0)
 	hintLabel = Kit.title("", {
 		Parent = hintPill,
-		Size = UDim2.fromOffset(0, 34),
+		Size = UDim2.fromOffset(0, HINT_H),
 		AutomaticSize = Enum.AutomaticSize.X,
-		TextSize = 16,
+		TextSize = 14,
 		Color = T.White,
 		Wrap = false,
 	})
@@ -3222,14 +3350,14 @@ function BuildUI.init(exitCallback: () -> ())
 	-- has no R either, so a round button beside it turns the piece there.
 	touchButtons = Kit.box({
 		Name = "Holding",
-		Size = UDim2.fromOffset(HOLD_W, 52),
+		Size = UDim2.fromOffset(HOLD_W, HOLD_H + 6),
 		Position = UDim2.new(0, EDGE + 12, 1, -(EDGE + 3)),
 		AnchorPoint = Vector2.new(0, 1),
 		Visible = false,
 		Parent = ui,
 	})
 	Kit.list(touchButtons, GAP, true)
-	local putAway = Kit.backButton({ Parent = touchButtons, Size = UDim2.fromOffset(HOLD_W, 46) }, function()
+	local putAway = Kit.backButton({ Parent = touchButtons, Size = UDim2.fromOffset(HOLD_W, HOLD_H) }, function()
 		BuildMode.putAway()
 	end)
 	putAway.Name = "Put it away"
@@ -3244,7 +3372,7 @@ function BuildUI.init(exitCallback: () -> ())
 	-- way back, where it stays. The keys do the same: [ and ] for the grid, - and = for the turn.
 	stepsPill = Kit.darkPill({
 		Name = "Steps",
-		Size = UDim2.fromOffset(STEPS_W, 34),
+		Size = UDim2.fromOffset(STEPS_W, HINT_H),
 		Position = STEPS_HOME,
 		AnchorPoint = Vector2.new(0, 1),
 		Parent = ui,
@@ -3257,7 +3385,7 @@ function BuildUI.init(exitCallback: () -> ())
 	})
 	Kit.list(stepsRow, 4, true, Enum.HorizontalAlignment.Center)
 	local function stepButton(icon: string, name: string, id: string, order: number, run: () -> ())
-		local b = Kit.roundButton(icon, { Name = name, Parent = stepsRow, Size = 26, LayoutOrder = order }, run)
+		local b = Kit.roundButton(icon, { Name = name, Parent = stepsRow, Size = 22, LayoutOrder = order }, run)
 		b.MouseEnter:Connect(function()
 			overView = id
 			refreshChrome()
@@ -3274,8 +3402,8 @@ function BuildUI.init(exitCallback: () -> ())
 		return Kit.title("", {
 			Name = name,
 			Parent = stepsRow,
-			Size = UDim2.fromOffset(84, 34),
-			TextSize = 15,
+			Size = UDim2.fromOffset(76, HINT_H),
+			TextSize = 13,
 			Color = T.White,
 			AlignX = Enum.TextXAlignment.Center,
 			Wrap = false,
@@ -3289,7 +3417,7 @@ function BuildUI.init(exitCallback: () -> ())
 	stepButton("plus", "Bigger grid", "gridUp", 3, function()
 		BuildMode.stepGrid(false)
 	end)
-	Kit.box({ Name = "Gap", Parent = stepsRow, Size = UDim2.fromOffset(10, 34), LayoutOrder = 4 })
+	Kit.box({ Name = "Gap", Parent = stepsRow, Size = UDim2.fromOffset(8, HINT_H), LayoutOrder = 4 })
 	stepButton("minus", "Smaller turn", "turnDown", 5, function()
 		BuildMode.stepTurn(true)
 	end)
@@ -3335,8 +3463,7 @@ function BuildUI.init(exitCallback: () -> ())
 			Parent = b,
 		})
 		Kit.corner(face, 9)
-		Kit.rim(face, Kit.edgeOf(T.Card), 1):SetAttribute("Follow", true)
-		local ipx = 30
+		local ipx = 24
 		Icons.make(icon, ipx, {
 			Name = "IconArt",
 			Parent = b,
@@ -3415,7 +3542,7 @@ function BuildUI.init(exitCallback: () -> ())
 	-- coins, top left, and under them how to look around
 	local coinPill, coinValue = Kit.pill("coin", {
 		Parent = ui,
-		Size = UDim2.fromOffset(196, COINS_H),
+		Size = UDim2.fromOffset(176, COINS_H),
 		Position = UDim2.fromOffset(EDGE + 14, EDGE),
 	})
 	coinsLabel = coinValue
@@ -3465,6 +3592,65 @@ function BuildUI.init(exitCallback: () -> ())
 		}
 	)
 
+	-- The time the town is shown at, on this screen only, top right across from the coins (the
+	-- user: "in build mode, allow the player to toggle what time they see their city in"): the
+	-- arrows go through Now (the town's own time), Morning, Noon, Evening and Night (Build/ViewTime).
+	local timePill = Kit.darkPill({
+		Name = "TimeOfDay",
+		Size = UDim2.fromOffset(TIME_W, COINS_H),
+		Position = UDim2.new(1, -EDGE - 14, 0, EDGE),
+		AnchorPoint = Vector2.new(1, 0),
+		Parent = ui,
+	})
+	local timeRow = Kit.box({
+		Name = "Row",
+		Parent = timePill,
+		Size = UDim2.new(1, -28, 1, 0),
+		Position = UDim2.fromOffset(14, 0),
+	})
+	Kit.list(timeRow, 6, true, Enum.HorizontalAlignment.Center).VerticalAlignment = Enum.VerticalAlignment.Center
+	local function timeButton(name: string, id: string, order: number, dir: number): TextButton
+		local b = Kit.roundButton("back", { Name = name, Parent = timeRow, Size = 26, LayoutOrder = order }, function()
+			ViewTime.step(dir)
+			showTime()
+			local now = ViewTime.current()
+			flash(
+				if now.hour
+					then Text.fill("{when}, on your screen only", { when = now.name })
+					else "The town's own time"
+			)
+		end)
+		b.MouseEnter:Connect(function()
+			overView = id
+			refreshChrome()
+		end)
+		b.MouseLeave:Connect(function()
+			if overView == id then
+				overView = nil
+				refreshChrome()
+			end
+		end)
+		return b
+	end
+	timeButton("Earlier", "timeDown", 1, -1)
+	timeShown =
+		Kit.box({ Name = "Shown", Parent = timeRow, Size = UDim2.fromOffset(TIME_W - 96, COINS_H), LayoutOrder = 2 })
+	timeLabel = Kit.title("", {
+		Name = "TimeName",
+		Parent = timeShown,
+		Size = UDim2.new(1, -22, 1, 0),
+		Position = UDim2.fromOffset(22, 0),
+		TextSize = 15,
+		Color = T.White,
+		Wrap = false,
+	})
+	local later = timeButton("Later", "timeUp", 3, 1)
+	local arrow = later:FindFirstChild("IconArt")
+	if arrow and arrow:IsA("GuiObject") then
+		arrow.Rotation = 180 -- (the way on: the back arrow turned round)
+	end
+	showTime()
+
 	-- the floating action bar over what is picked: its name, what it sells for, and what to do
 	actionBar = Kit.frame({
 		Name = "Action",
@@ -3476,7 +3662,6 @@ function BuildUI.init(exitCallback: () -> ())
 		Parent = ui,
 		Visible = false,
 	})
-	Kit.rim(actionBar, T.Line, 1)
 	Kit.softShadow(actionBar, 1)
 	Kit.pad(actionBar, SIDE, 10)
 	Kit.list(actionBar, 4, false, Enum.HorizontalAlignment.Center)
@@ -3521,6 +3706,16 @@ function BuildUI.init(exitCallback: () -> ())
 			ui.Visible = false
 			actionBar.Visible = false
 			hovering = nil
+			-- back to the town's own time, and no search, for the next visit
+			if ViewTime.index() ~= 1 then
+				ViewTime.set(1)
+				showTime()
+			end
+			if searchText ~= "" then
+				searchText = ""
+				searchBox.Text = ""
+				searchClear.Visible = false
+			end
 			-- everything back where it belongs for the next visit
 			setHolding(false, true)
 			return
@@ -3541,7 +3736,7 @@ function BuildUI.init(exitCallback: () -> ())
 						Kit.slideIn(f, -260, 0, 0.1)
 					elseif name == "Floors" then
 						Kit.slideIn(f, 260, 0, 0.12)
-					elseif name == "Pill" or name == "CameraTip" then
+					elseif name == "Pill" or name == "CameraTip" or name == "TimeOfDay" then
 						Kit.slideIn(f, 0, -120, 0.12)
 					end
 				end
@@ -3567,8 +3762,8 @@ function BuildUI.init(exitCallback: () -> ())
 					refreshTray()
 				end
 			elseif s.tool == "place" and s.placing then
-				-- keep showing the catalog the item came from
-				if trayMode:sub(1, 8) ~= "catalog:" then
+				-- keep showing the catalog (or the search) the item came from
+				if trayMode:sub(1, 8) ~= "catalog:" and trayMode ~= "search" then
 					refreshTray()
 				end
 			elseif s.tool == "wall" or s.tool == "floor" or s.tool == "roof" then

@@ -2,8 +2,8 @@
 -- Water on a plot (Build/Water): a pool or a pond dragged out in Build mode, and what may stand
 -- in it. The user: "also, add ability to add water, along with things that can go in the water".
 -- In the game it is terrain water (Services/Water), so its edges have to lie on the terrain's
--- grid on every plot; nothing is built over it; pieces made for water go only in it, and nothing
--- else does unless it stands up on something over it.
+-- grid on every plot; nothing is built over it; pieces made for water go only in it, and anything
+-- else may stand over it (floating, out from the side or up on something) but never in it.
 
 local Shared = "ReplicatedStorage.Shared."
 local Tuning = require(Shared .. "Config.Tuning")
@@ -194,24 +194,51 @@ describe("Water", function()
 		expect(dry).toBe("that goes at the edge of a pool or a pond")
 		-- the lifebuoy stand goes beside it, on the ground
 		expect(ok(piece("water_buoy", 30, 146, 0, 0))).toBe(true)
-		expect(ok(piece("water_buoy", 30, 156, 0, 0))).toBe(false)
+		-- (and in the water, under its surface, never)
+		expect(ok(piece("water_buoy", 30, 156, 0, -1))).toBe(false)
 	end)
 
-	it("keeps everything else out of the water unless it stands on something over it", function()
+	it("lets anything else stand over the water, floating or up on something, but never in it", function()
+		-- the user: "make it such that objects can go above waters"
 		local plan = withPool()
-		local tree = { id = "tree_oak", x = X0 + 30, y = 0.01, z = 156, r = 0, lv = 0 }
+		local tree = { id = "tree_oak", x = X0 + 30, y = -2, z = 156, r = 0, lv = 0 }
 		local ok, why = Plan.validItem(plan, tree)
 		expect(ok).toBe(false)
 		expect(why).toBe("that can't go in the water")
-		-- on the water itself (where the pointer meets it), still no
+		-- on the water itself, floating, it's fine, and so is over it at the ground or up on a raft
 		tree.y = Water.Surface
-		expect((Plan.validItem(plan, tree))).toBe(false)
-		-- up on a raft or the rim it's fine, and upstairs nothing is in the water
+		expect((Plan.validItem(plan, tree))).toBe(true)
+		tree.y = 0
+		expect((Plan.validItem(plan, tree))).toBe(true)
 		tree.y = 0.3
 		expect((Plan.validItem(plan, tree))).toBe(true)
+		-- floating only where all of it is over the water: half on the side it stands on the ground
+		local edge = { id = "chair_wood", x = X0 + 22, y = Water.Surface, z = 156, r = 0, lv = 0 }
+		expect((Plan.validItem(plan, edge))).toBe(false)
+		edge.y = 0
+		expect((Plan.validItem(plan, edge))).toBe(true)
+		-- what Build mode stands a piece on over the water (Water.standY)
+		local chair = Catalog.get("chair_wood")
+		expect(Water.standY(plan, chair, { x = X0 + 30, z = 156, r = 0, lv = 0 }, -2.5)).toBe(Water.Surface)
+		expect(Water.standY(plan, chair, { x = X0 + 22, z = 156, r = 0, lv = 0 }, -2.5)).toBe(0)
+		expect(Water.standY(plan, chair, { x = X0 + 30, z = 156, r = 0, lv = 0 }, 0.35)).toBe(0.35)
+		expect(Water.standY(plan, chair, { x = X0 + 60, z = 120, r = 0, lv = 0 }, -1)).toBe(-1)
+		-- stairs never go in it
+		local stairs = { id = "stairs_straight", x = X0 + 30, y = Tuning.Plot.Foundation, z = 156, r = 0, lv = 0 }
+		expect((Plan.validItem(plan, stairs))).toBe(false)
 		-- beside the pool it's the usual rules
 		local beside = { id = "tree_oak", x = X0 + 30, y = 0.01, z = 140, r = 0, lv = 0 }
 		expect((Plan.validItem(plan, beside))).toBe(true)
+		-- what floats on it goes with it when it is sold
+		assert(Plan.apply(plan, {
+			{
+				op = "add",
+				kind = "items",
+				key = "7",
+				obj = { id = "chair_wood", x = X0 + 30, y = Water.Surface, z = 156, r = 0, lv = 0 },
+			},
+		}))
+		expect(table.find(Water.piecesIn(plan, "1"), "7") ~= nil).toBeTruthy()
 		-- and a pool can't be dug where something stands
 		local garden = Plan.new()
 		assert(Plan.apply(garden, { { op = "add", kind = "items", key = "1", obj = beside } }))

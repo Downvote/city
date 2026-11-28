@@ -18,7 +18,7 @@ creator:wearing creator:skin creator:shape creator:outfits creator:outfits:saved
 build:paths build:buildings build:bought build:sell build:view build:placing build:placing:touch
 build:keepsakes build:keepsakes:empty build:effects build:styles build:shapes build:pillars build:markings build:picture
 build:water build:water:pick build:top build:basement build:blocked build:stretch build:stretch:pick build:colour
-build:picture:bad build:picture:pick build:select build:select:none build:saves build:saves:load
+build:picture:bad build:picture:pick build:select build:select:none build:saves build:saves:load build:search build:search:none build:time
 hover hover:menu bubbles
 tutorial:welcome tutorial:1 tutorial:2 tutorial:2:build tutorial:3:build tutorial:4 tutorial:4:craving
 tutorial:4:buy tutorial:done
