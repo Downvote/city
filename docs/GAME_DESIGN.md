@@ -42,8 +42,10 @@ is, not sources.
   asked for "more personalities too", Cool, Prickly, Dramatic, Bookish, Gloomy, Polite, Foodie and Nervous. Each has traits
   (social, temper, kind, mischief, lazy, brave, focus) that weight which events they start and how they react, and
   a bank of lines they say.
-- **Mood** (0 to 100). Goes up with a bed, a nice room, granted wishes, good events and paydays they enjoy. Goes
-  down with no bed, quarrels and ignored requests. Mood scales what they earn at work.
+- **Mood** (0 to 100). Earned from what they have: a bed of their own, a comfy one, a roof over it, fun things near
+  it and friends set how high it can climb, and it climbs toward that an hour at a time (see "Mood is earned from
+  what a villager has" below). Wishes, gifts, chats and good events lift it a little; quarrels and ignored requests
+  knock it down. Mood scales what they earn at work.
 - **A favourite food.** Each villager has one, and when a craving comes it is for that half the time. There is
   nothing to feed them by hand: a craving is bought for them there and then (see Wishes).
 - **Job and skill.** A villager takes a free workplace on their own, or you assign one. Skill rises with each day
@@ -88,8 +90,11 @@ is, not sources.
   hangs on each of them. They stop, turn to face you, wave and say something in their speech bubble, which anyone
   nearby sees: a greeting in their own voice or what they are wishing for, then small talk about how they feel,
   their work, their hobby and the people they live with. In your own town a small card opens at the bottom of the
-  screen, where an event is told: their name on a tab in their colour, the line, what the chat did, and three
-  answers. Chat gets another line. Profile opens the villagers' screen on them. Bye closes it, and so does
+  screen, where an event is told: their name on a tab in their colour, the line, what the chat did, and the
+  answers. Chat gets another line. Gift opens the bag to give them something (see "A bag, gifts, hearts with no
+  top, and more from goals" below). Profile opens the villagers' screen on them. A click on one of your own
+  villagers from anywhere brings up Profile and Chat too (see "Click a villager to see them or chat" below). Bye
+  closes it, and so does
   walking off, keeping them waiting, opening a menu, Build mode or the creator, or an event starting. The first
   three chats with a villager each day lift their mood by 2 and give one heart point, less than a granted wish,
   since a chat costs nothing. After that they still answer and nothing is gained. A villager who wished for
@@ -121,8 +126,8 @@ costs nothing and changes nothing.
 We can't copy another game's features one for one, so the town grows the way life sims of this kind do, in our
 own design (`Sim/Life`):
 
-- **Hearts.** Each villager has a heart level with you (up to 20). Granted wishes fill it, and so do chats and
-  the good moments in events. Each new level they thank you straight away, with a notice: coins they saved up and
+- **Hearts.** Each villager has a heart level with you, with no top (it stopped at 20 until "make it such that
+  heart level is uncapped"). Granted wishes fill it, and so do gifts, chats and the good moments in events. Each new level they thank you straight away, with a notice: coins they saved up and
   some extra practice at their work (skill points, so they earn more). Hobbies and sayings come from random events.
 - **Wishes.** Now and then a villager wants something, and a thought bubble floats over their head: a craving for
   a food (the bubble shows the food), someone they'd like to get to know, or a chat because they feel down. Open
@@ -144,7 +149,9 @@ own design (`Sim/Life`):
   café and find out they share a hobby. Friendships show on a villager's Friends tab, best friends in pink.
 - **Town goals.** A list to work toward (Goals on the dock): neighbours, wishes granted, heart levels, best
   friends (one pair, then three), growing into a Town and then a City, a full house, and work: two villagers in
-  jobs, six, ten, 15,000 coins earned in wages, a villager at skill 5. Each pays coins when you claim it.
+  jobs, six, ten, 15,000 coins earned in wages, a villager at skill 5. Each pays coins when you claim it, and
+  many pay a title, a piece or a thing for the bag too (see "More from goals" below); Claim all takes every
+  finished one at once (section 10, "No borders on rounded rectangles, shorter words, and Claim all").
 
 ### Their own flair, and what stays with them
 
@@ -168,11 +175,162 @@ own design (`Sim/Life`):
   chats, events and what they say over their heads.
 - **What stays with them.** Some events now leave something that lasts a few town days, and they talk about it in
   their own voice while it does: they joined a band (and the band plays the square), they wear a new hat or scarf
-  (on their body for real, and it comes off when the days are up), they took up a hobby, got a haircut, took in a pet,
+  (on their body for real, beside what they already wear; it once came off when the days were up, and now stays
+  until you say it doesn't suit them: see "Events that need something in town, events that come back, names you
+  type, and hats that stay on" in section 4), they took up a hobby, got a haircut, took in a pet,
   learned a dish, fell out with somebody (until they make up, or it blows over), started a garden, write to a pen
   pal over the sea or are training for the harbour race. Later events come back to it: the band's show, somebody
   noticing the new hat, how the pet is doing, the first crop, the dish made again, a letter back, race day. Their
   page lists it all under Lately with the days left.
+
+### A bag, gifts, hearts with no top, and more from goals
+
+> also, make it such that you can pick up items, and interactable items give you things, such as a bookshelf giving
+> you a book, you can work on stoves to make food, flower beds giving you flowers, etc. You can then gift villagers
+> different items to make them happy. Villagers will have a preference to things they like based on personality.
+> Each villager will have a gift limit of 1 per day, and they can gift you things as well. each persoality will have
+> a unique line for recieving or giving gifts. add an inventory system to the player.
+
+> also, make it such that heart level is uncapped.
+
+> add more rewards to quests, like titles, special buildings, special gifts, etc.
+
+- **The bag.** Every player has a bag (the Bag button in the row under the clock). It holds up to 10 of one thing and
+  40 things in all. Things are every food a villager can crave, and books, flowers, herbs, fruit, cookies, honey,
+  tea, juice, drawings, toy boats, letters, shells, pebbles, acorns and lucky coins, each drawn as an icon like the
+  foods, plus three treasures only goals give (a music box, a snow globe, a golden acorn). The Bag menu shows the
+  picked thing big on the left with who in town would love it, and the things down the right by kind. Hold puts it
+  in your hand for everyone to see; Drop lays one on the ground in front of you, which you can pick up again for two
+  minutes.
+- **Where things come from.** On your own plot, pieces that give something carry a prompt: a bookshelf "Take a
+  book", a flower bed "Pick a flower", a vegetable patch, a herb planter, a greenhouse, an oak (acorns), a beehive,
+  a fridge or a pantry "Take a snack", a kettle or a tea set "Make tea", a sandbox "Dig", the well, a toy chest, the
+  mailbox "Check for letters", an easel. A stove, a range, a wood stove or a food maker "Cook" and a barbecue or a
+  campfire "Grill", with a longer hold. Where the piece already has an E prompt (a use, a light), this one is F. A
+  piece rests a minute and a half between goes, and a player takes at most 10 things a town day. Working at a
+  workplace makes things too, one every 45 seconds of work: bread and cakes at the bakery, tea and cookies at the
+  café, ice cream, bouquets at the florist, books at the library, drawings at the easel, toy boats at the bench,
+  produce at the market, letters at the post office. A book or a letter a villager left on the floor can be picked
+  up.
+- **Gifts.** The talk card has a Gift answer, and a villager's page a Gift button. Either opens a small picker:
+  what they love and aren't keen on, then the bag's things, the ones they'd love first. Each personality likes two
+  kinds (the foodie three) and dislikes one; their favourite food, the food they crave and a treasure are loved by
+  anyone. A loved gift lifts their mood 10 and fills 4 heart points, as a granted wish does; a so-so one half that; a
+  disliked one sours them a little and fills nothing. The food they crave answers the craving. One gift a villager a
+  town day. They say what they think over their head and on the card, in their own words and hand: every
+  personality has its own lines for a gift they love, one they're so-so about, one they don't like, and for giving
+  one.
+- **Their gifts.** Once a town day, the first time you talk to a villager who is at heart level 2 or more and in a
+  good mood, there's a three in ten chance they have something for you: a thing of a kind they like themselves. They
+  hand it over a moment after their first line, say so, and it goes in the bag.
+- **Hearts have no top.** Heart levels go on past 20; each asks two points more than the last, and each still pays
+  its thank you. The villager page's heart tile shows the level and the way to the next.
+- **More from goals.** Many goals now pay more than coins: a title, a special piece to build for free, or a thing for
+  the bag. Titles (Good Neighbour, Kind Heart, Town Founder, Home Cook and eleven more) are picked on the Goals menu's
+  Titles tab and hang under your name over your head for everyone to see. The special pieces are a town clock, a
+  bandstand and a wishing tree, on Build mode's Keepsakes tab. New goals: give 5 and 30 gifts, gather 20 things,
+  cook 10 dishes, reach heart level 20.
+
+### Customers, and company on a bench
+
+The user: "while villagers are working or you are working, villagers might come up to interact and
+do chats based on the work that is being done, like villagers buying ice cream. do this as well with
+things like the swing, where villagers might sit with each other or with you."
+
+A villager on a break or pottering about sometimes calls at a workplace where somebody is at work,
+a villager or the player, and is served there. They ask for what that job is for in their own words
+(a strawberry cone at the ice cream cart, a book at the library, a look at a sore knee at the clinic,
+a song at the stage), the worker answers, and they say thanks; the town gets a few coins. Every
+personality has its own line at every job, and a few plain ones anybody says. When it is the player
+behind the counter, the villager sometimes says something to them first ("{player}, you're working
+here today? That's so fun!"), the player's answer shows over their head, and each customer served
+adds to the player's skill. Calls at the player are likelier than usual while they work, and happen
+out of work hours too.
+
+When a villager sits down near somebody already sitting (two swings, a bench for two, chairs at one
+table), they often take the free seat beside them and chat: with another villager a round or two of
+lines each, with the player a line or two to them. They are much likelier to come and sit with the
+player than with anyone else.
+
+### Work moves
+
+The user: "let there be animations while a villager works. players can also pay gems to change this
+animation to an emote of their choosing."
+
+Every step of every job's round now has a move, played again every few seconds: pointing at the
+stock, the hammer at the bench, the peel in and out of the baker's oven, dancing on the stage. The
+player gets the same move when they work there. On the villager's page, Quirks has a "Work move" row:
+for 5 gems the player can pick one of Roblox's own emotes (Wave, Point, Cheer, Laugh, the three
+dances, Hello, Stadium, Salute, Shrug, Tilt, Point 2) and the villager does that at every step of
+their work instead. Every change costs again; going back to the job's own moves is free.
+
+### Mood is earned from what a villager has
+
+The user: "Villager mood bars should also not be that easy to fill up, the factors affecting it
+should be: amount and relationship of friends, quality of bed, roof over bed, fun objects near bed.
+Villagers will ask for these if they are not fufilled. The end of the dialogue should be like what is
+seen without bed or workspaces."
+
+(This replaces the Mood line in section 3, "Goes up with a bed, a nice room, granted wishes, good
+events and paydays they enjoy".) A villager's mood can only climb as high as what they have lets it.
+Everybody reaches 20 with nothing. On top of that:
+
+| Factor | Points |
+| --- | --- |
+| A bed of their own | 10 |
+| How comfy the bed is, by its price in Build mode | 0 under 120 coins, 5 from 120, 10 from 200, 15 from 280 |
+| A roof over the bed, or a floor on the storey above it | 15 |
+| Fun things within a few steps of the bed, on its storey (anything on the Fun tab, or for games, toys, music or a TV) | 5 each, 15 at most |
+| Friends: everybody else in town by how close they are (acquainted 1, friends 3, good friends 5, best friends 8) | 25 at most |
+
+With all of it in place they can reach 100. Mood climbs toward that a point every town hour, so going
+from nothing to everything takes three or four town days, and it sinks two points an hour when it is
+over it (the bed sold, a friend fallen out). What happens to them still moves it: a granted wish, a
+gift, a chat, a good event, a party. But a lift now counts for half of what it did (at least a point)
+and never goes past what they can reach; a knock counts in full. A night in bed no longer lifts mood
+by itself. Mood still scales what they earn at work, so a well kept villager earns more.
+
+The villager page has a Mood tab: how they feel now, the most they can reach with what they have, and
+a row for each factor, what helps first and then what's missing, each with what it is ("Single bed",
+"Roof over it", "2 friends", "Nothing yet"), the points it gives and a bar.
+
+### Villagers ask for what they lack
+
+The user: "Also, if a villager dosent have a workspace or bed, they will ask the player for it,
+confirmed to ask if they just moved in and a chance to constantly ask it after if not fufilled. The
+end of these dialogues should be "Villagers need an x to y. Build it in Build mode > z" depending on
+what it is"
+
+A villager who moves in without a bed or a workplace asks for it about twelve seconds later, as a
+small event of its own (the usual prompt with Watch). After that, every town hour one villager who is
+still short of something may ask again: a bed or work most often, a roof, a comfier bed, something fun
+or friends now and then, never the same villager twice within eight town hours. The asks also turn up
+among the random events while the need lasts. Each is a short burst in the villager's own voice and
+ends on a plain line:
+
+- "Villagers need a bed to sleep in. Build it in Build mode > Furniture > Beds"
+- "Villagers need a workplace to earn coins. Build it in Build mode > Work"
+- "Villagers need a roof over their bed to sleep well. Build it in Build mode > Build > Roofs"
+- "Villagers need a comfy bed to sleep well. Build it in Build mode > Furniture > Beds"
+- "Villagers need something fun near their bed to relax. Build it in Build mode > Furniture > Fun"
+- "Villagers need friends to be happy. Introduce them in Villagers" (they get a wish to meet somebody
+  in town they hardly know, answered with Introduce on their page or from the bubble over them)
+- "Villagers need friends to be happy. Make more villagers in Create" (nobody in town to meet)
+
+While the tutorial is still teaching the bed and the workplace it does the asking, so the first
+villager doesn't ask on top of it.
+
+### Click a villager to see them or chat
+
+The user: "Also, allow players to click on villagers anywhere to either open their profile or chat
+with them."
+
+A click or a tap on one of your own villagers, however far off, brings up a small card by the pointer
+with their name and two buttons: Profile opens their page in the Villagers menu, Chat opens the talk
+card. A chat started this way works from anywhere on your own plot (and the street in front of it);
+it is over when you walk off from where you stood, as a held E chat is over when you walk away from
+them. A drag of the camera is no click, and nothing comes up in Build mode, the creator, a menu or an
+event's scene.
 
 ## 4. Random events
 
@@ -222,6 +380,73 @@ times as you were given it. Holding E, villagers also talk about their last even
 joke, the season and the weather. Events that came up lately are much less likely to come again. Nothing in them
 comes from the game the user named: the events, lines, props and keepsakes are this town's own.
 
+### Events that need something in town, events that come back, names you type, and hats that stay on
+
+> Make more interactions, such as events, conversations and chats that only happen when certain work places are
+> present, like ice cream trucks, whiteboards, etc. things like mailboxes, fridges, etc. can also be present.
+
+Some events only happen when a kind of piece is on the plot. A villager wonders whether they left the stove on, a
+pudding with somebody's name on it goes missing from the fridge, someone checks the mailbox four times waiting for
+a parcel, two villagers take turns on the swing, someone is stuck on one bar of a song at the piano, the moon fills
+the telescope, a fish turns up in the pond, the ice cream seller has a new flavour, somebody draws a cat on the
+teacher's chalkboard, two villagers want the TV at eight, the arcade's top score is forty points away, sausages go
+black on the BBQ, marshmallows catch fire at the campfire, the fish in the tank looks bored, a robin guards the bird
+feeder, a bee stings someone and they come back with honey, a flip on the trampoline goes half right, the bike gets
+a flat tyre, a red sock turns the washing pink, someone makes a wish at the well, an old record goes on, someone
+sleeps through lunch in the hammock, rows the boat out and struggles back, buys flowers at the flower cart, drums
+too early in the morning or grows one tomato in the little greenhouse. With none of those pieces in town, none of
+them come up. On the talk card villagers mention the pieces in town too (the fridge, the swing, the ice cream cart,
+the bakery's rolls...), and two neighbours in the street talk about the new ice cream flavour, the fridge thief,
+the swing, the late post, the telescope or the BBQ only where there is one.
+
+> make events / conversations have follow up ones, such as, for example, villager asks if they should check if they
+> left the stove on, has a chance of villager burning something and coming to you for help.
+
+An answer can leave something to happen later, with the same villagers, by a chance and after a few town hours.
+Tell the villager their stove is surely off, and most of the time there is smoke at their window a couple of hours
+later and they come to you for help. The others: the pudding thief makes a new one; the parcel you said would come
+this afternoon comes; the song practised at the piano is played whole for everyone; the arcade score gets beaten
+overnight by "ZZZ"; the bee sting turns into honey cake; the patched tyre holds; the wish at the well comes true;
+the fern you named grows a new leaf; the pigeon you named comes back with a friend; the spider you put outside is
+back in the bath; the knitted hat over the bad bangs asks to come off; the cat you named gets its news; the new
+band plays its first show; two who wouldn't make up do later; the cold you sent to bed gets better; and a villager
+who put on a hat or a scarf asks later whether it really suits them. A follow-up waits for its villagers to be
+about and comes before anything else once it's due; one that can't happen for a town day and a half is dropped.
+
+> when villagers equip accessories from random event, the conversation showing it should show it, and it gets taken
+> off only if the player chooses it dosent suit them.
+
+> also, accessories that villagers decide to wear on their own seem to remove other accessories of the same
+> category. can you make it such that it dosent? also, allow players to remove them in the lately menu.
+
+What an event puts on a villager goes on with the line they put it on with: the server dresses them as that line is
+said, and the conversation's bust of them is made again wearing it. Watched from the start later, the bust shows
+them without it until that line. It stays on for good, beside everything they already wear (their own hat stays
+when a new hat goes on), until the player says it doesn't suit them: "Not really, no." when they ask whether it
+suits them (that event comes now and then by itself, and after an event that put something on), or Take off on the
+row for it in their page's Lately list. Up to four such things at once.
+
+> Also, the narration in conversation dosent feel human sometimes, such as "X nodded in all the right places." Just
+> make it more human and shorten it, like "It went well." instead of overcomplicating it.
+
+> some conversations and events dont make sense, sweep through them and fix them if they dont make sense.
+
+Every event was played through and read again. Narration that tried too hard was cut down to what happened ("So
+Ann told Ben all about it.", "Ten minutes later they were both covered in snow."), lines that didn't follow from the
+answer before them were rewritten (a bus "still at the stop" that a line relied on, a tea that made a locked-out
+morning nice, a dish tasting answered with "did you see it?"), a hammock debate's odd image went, and three cutscene
+lines that showed the burst mark "|" on screen now read as one message.
+
+> when things happens that requires mayors to input names like band names or pet names, allow the player to type
+> in what they desire instead of fixed inputs.
+
+Where an event asks you to name something (the new band, the stray cat, the pet under the porch, the pigeon, the
+fern, the fish in the pond), the scene shows a box with a suggested name in it and a Done button instead of two
+fixed answers. An empty box takes the suggestion, and so does the event when nobody answers. What you type is
+tidied (a capital first, no odd marks, 20 letters at most), run through Roblox's text filter, and then used in what
+they say next, in what they tell you later and in what they remember (the band's name on their Lately list, the
+pet's name). A name that won't do gets a short reason in the box's words and the box stays for another go.
+
 ### Cutscenes
 
 > add cutscenes and scenes like tomodachi life as well
@@ -231,10 +456,100 @@ newcomer at the gate, making up, a quarrel, shooting stars, a busy day, and the 
 picnics, nights on the pier) plays on a set of its own behind the dialogue's textbox: a rooftop at sunset, the pier
 at night, the bandstand lit for a concert, a dream, a party room, the beach at dawn, a park bench, the town gate, a
 kitchen at night, a market stall. The villagers act it out (they wave, cheer, kneel, hug, dance, walk to a seat)
-while the camera eases between a wide shot, a two shot, a close one on whoever talks and a slow push at the key
-line, under the set's own light and sky, with bars top and bottom. As with every event it never takes the screen by
-itself, and the player's camera stays put. Taken from that game: the idea only. No sets, songs, characters or camera
+in a wide shot, a two shot, a close one on whoever talks and a tighter one at the key line, with bars top and
+bottom. (At first the camera eased between them under the set's own light and a painted sky; now it holds still on
+each shot and cuts, in the game's own light: see the next subsection.) As with every event it never takes the
+screen by itself, and the player's camera is put back where it was when the scene ends. Taken from that game: the idea only. No sets, songs, characters or camera
 moves are copied.
+
+### Cutscenes in the world, with a still camera
+
+> also, could you not move the camera around in events with special cutscenes? also, make them much more detailed,
+> without fake lighting.
+
+A watched big moment no longer plays in a little picture with its own flat light and a painted sky. The set is built
+in the world on the player's own screen, far out over the sea and high up where nothing of the town can get into a
+shot, and the game's own light falls on it: Lighting's clock is held at the set's hour while the scene is up, so the
+real sun or moon is in the real sky, shadows fall the way they do in town, the haze and the colour grade are the
+game's for that hour, and the lamps on the set really light what is round them (string lights on the roof, lanterns
+on the pier, the chandeliers in the throne room, the tube light in the pizza place). Each set is turned so its sun or
+moon stands where it wants it (the rooftop has the sun going down behind the town). A dream gets a haze of its own
+(pink, or violet over the purple field) and a softer grade; that is the engine's own air, not paint.
+
+The camera holds still on every shot and cuts to the next one: no pans, no slow pushes, no drifting. A "push" is now
+just a tighter shot on the line that matters. When the scene ends, the screen dips to black and the town comes back
+with the player's camera where it was, the town's own light and the weather.
+
+Every set has more in it: real lamps, grass and flowers underfoot, shells and seaweed on the beach, a bird bath and a
+second lamp in the park, and so on, and the new sets are drawn at the starting house's level, with furniture from
+Build mode's own catalog where a room needs it. Round things may be round now (the user: "You are allowed to use
+spheres, curves or circles where necessary"): a set is built with Roblox's smooth balls and cylinders.
+
+### More cutscene events
+
+> Make more cutscene events, like:
+>
+> villager dreams of being in a purple field with a tree of red leaves. the villager tries to look behind the tree and
+> wakes up after noting there is a man behind the tree
+>
+> villagers racing with each other
+>
+> villager dreaming of being stuck in a pizza place, with animatronics on the loose, managing cameras to make sure
+> they dont catch them
+>
+> villagers petting a cat
+>
+> villager(s) skywatching, pointing to the sky, remarking this cloud looks like x, another villager, and cut to a
+> giant x in the sky amongst the cloud
+>
+> much more, reference tomodachi life for event ideas, like in the video attached. make custom animations for
+> villagers for them
+
+Fifteen new events play as cutscenes (Data/Events/Moments), each on its set with its own shots, moves and props, and
+each line in the speaker's own voice:
+
+- **A dream of a red tree** (night, in bed): a field of purple grass, one tree with leaves as red as jam. The villager
+  walks over and leans round the trunk, and a man in a long grey coat is standing behind it, very still. They wake up
+  with a start in their bedroom and sit bolt upright.
+- **A race on the track**: two line up at the start, get down, and run the track to the finish banner with dust at
+  their feet while whoever came to watch claps. The winner pumps a fist, the other puffs with their hands on their
+  knees.
+- **A night at the pizza place** (a dream): the night watch's office with four screens, a window into the dark dining
+  room and three clunky robot mascots of our own on the little stage (a tin chef with a pizza tray, one with a pizza
+  for a face, a waiter with a bell). The chef is gone from the stage on the screens, then clanks up to the window and
+  the lights go out. The player picks: shut the side door (the singing robot rolls up to it just in time, the lights
+  come back, six o'clock) or check camera three (a tin face fills the window). They wake in bed either way.
+- **A cat in the park**: a ginger stray sits down on the path in front of the bench; the two crouch and stroke it, and
+  it leans into their hands with its tail going.
+- **Shapes in the clouds**: two lie on a blanket on the hill, one points straight up, and the camera cuts to the sky
+  where a cloud as big as a hill has the shape of a third villager from town (their own body, white and soft and
+  sixteen times as big, floating among the clouds).
+- **A strange room** (a dream): the table and chairs on the ceiling, a door halfway up the wall, stairs into the
+  ceiling, a clock with seven hands, books and a teacup hanging in the air; the villager floats, then wakes.
+- **A funny face contest** in the square, with a judge and a crowd; the player picks the winner.
+- **An eating race** on the beach at a long table of rice balls.
+- **A glowing play fight**: glow bracelets on the beach after dark, hands that really glow and light the sand.
+- **A daydream at work**: staring into space behind the counter, then a golden throne with the town bowing, then a
+  customer coughs.
+- **Stuck on the big wheel**: stopped at the very top for twenty minutes, inside the cabin, the fairground and the sea
+  far below at sunset.
+- **A go on the seesaw**: the seesaw tips up and down with the two on it, until one sits down hard and leaves the
+  other up in the air.
+- **A push up record** on the hill: twelve, a record.
+- **Odd sounds** from a room at night: two listen at the door; the player can open it (somebody is singing into a
+  hairbrush) or leave them be.
+- **A dance in the square**: one starts, and one by one the whole square joins in, with confetti.
+
+The villagers' new animations are keyed poses played on their own bodies' joints from code (animations can't be
+uploaded from here): running, getting down at the start line, puffing, pointing at the sky standing or lying, lying on
+the grass or in bed, sitting on the ground, sitting bolt upright, crouching, stroking a cat, leaning round to look,
+jumping back in surprise, tapping buttons, shaking with fright, cowering, pulling a face, eating fast, a play punch, a
+two handed push, push ups, listening at a door, clapping, thinking, shrugging, stretching, floating, pumping a fist, a
+royal wave, a little shuffle dance, holding on, singing into a hairbrush, waving someone over and slumping, bored. The
+old head nods, bows, hops and the rest are keyed the same way now.
+
+Taken from the video: the ideas only (a dream, a contest, an eating race, a play fight, a daydream of a throne, a long
+ride, a seesaw, push ups, odd sounds, a dance). No scenes, characters, robots, lines or places are copied.
 
 ## 5. Building
 
@@ -492,6 +807,169 @@ starlight chandelier, a rainbow arch, a red carpet with rope posts, a gold star 
 cards carry a small VIP tag; picking one without the pass offers the pass instead, and the server turns it down
 anyway. One already down stays and can still be moved and repainted if the pass is ever gone.
 
+### Searching, the time of day, pieces on pieces and over water, and a smaller Build mode
+
+> add searching in build mode
+
+> Also, in build mode, allow the player to toggle what time they see their city in.
+
+> also, make it such that you are able to put objects on top of each other or on each other, respecting their
+> collision.
+
+> also, make it such that objects can go above waters.
+
+> also, some objects, like stairs, have collission boxes that arent part of the mesh but are invisible.
+
+> Also, try to simplify the build mode interface so it dosent take too much of the screen space.
+
+- **Search.** The right end of the category well holds a search box (where the category's number and name used to
+  sit). Typing shows, a moment after the last key, the card of every piece whose name, kind (Seating, Garden), look
+  (Cozy, Sci-fi), tags or what villagers call them ("somewhere to sit") have every word typed; "chairs" finds the
+  chairs too. Names that have the words come first. A card found is picked up like any other (a VIP piece offers the
+  pass, a picture piece opens its picture page). Typing with Paint or Sell in hand goes back to placing. The cross in
+  the box, or picking a category, ends the search. A word nothing has says "Nothing found". Keepsakes are left out.
+- **The time of day.** A glass slab at the top right, across from the coins, shows the town at another time on this
+  player's screen only: its arrows step through Now (the town's own time), Morning, Noon, Evening and Night. The
+  light, the grade and the air go with the hour, and the town's own lamps, lit windows and signs light up for the
+  evening and night views (the player's placed lights are on anyway). Leaving Build mode goes back to the town's own
+  time. The slab slides away with the coins while a piece is held.
+- **Pieces on pieces.** Anything that stands on a floor or the ground can now stand on top of another standing
+  piece: a chair on a table, a lamp on a cupboard, a crate on a crate, a bench on a deck or a raft. The ghost stands
+  it on the solid top under the pointer (leaves, a cushion's tassel or a cup on the top are looked through), and it
+  never goes into the other piece's body: the ghost turns red and the server says no, as for any bump. Small things
+  and the basic shapes stand on anything, as before. Rugs, marks, what hangs on walls and ceilings, and small things
+  on a surface hold nothing bigger than themselves up.
+- **Over water.** A piece can stand over a pool or a pond: out over it from the side, up on the rim, a jetty or a
+  raft, or floating on the water itself when all of it is over the one pool or pond (the ghost puts it on the
+  surface). Nothing goes under the surface, stairs never go in water, and a pool still can't be dug from under
+  something standing on the ground. What floats on a pool goes with it when the pool is sold. Pieces made for water
+  keep their rules.
+- **What you bump into is what you see.** A staircase's hidden ramp was a solid wedge down to the floor, so the open
+  space you can see under the stairs was an invisible wall. It is now a slab along the line of the treads, between the
+  strings and no deeper than they are, so you can walk (and put a cupboard) under the high end. Solid balls and rocks
+  had invisible corners sticking out of them (their collision was their box, turned a different way at every spot);
+  every faceted shape now collides as itself. The stairs' body in Build mode's collisions follows the steps up from
+  their foot, with room under the high end, as it looks.
+- **A smaller Build mode.** Every bar is shorter and closer to the screen's edges: the dock of groups and Done, the
+  category tiles, the cards (104 by 132), the tools row, the floors card, the hint line and the grid and turn steps.
+  About 90 pixels more of the plot show on a 720 high screen, and the category's number and name made way for the
+  search box. The tray's pages (paint, colour picker, walls, roofs, saves, pictures) were fitted to the new height,
+  and a few of their notes cut short ("Gifts sell for nothing.", "Paint a fence once it's up."). No rounded rectangle
+  in Build mode has a line round it any more; round chips and knobs keep theirs.
+
+### Roofs and paths that meet, the basement's ground, and ways between floors
+
+The user (2026-11-27): "it seems like when roofs are put together, z fighting occurs", "make it such
+that paths dont z fight if interesecting each other, and their edges merge together so it outlines
+their entire combined shape", "basement is bugged, it seems to only show water below. moving up after
+viewing the basement also causes water patches to appear permanantly" and "make ways to travel down,
+like different hole types, and add elevators".
+
+- Roofs on one floor that meet or overlap are fitted together the way a roofer would build them. Over
+  both roofs' rooms the higher roof's top hides the lower one, so two roofs side by side meet in a
+  valley and a wing's ridge runs into the main roof's slope. Over the other roof's room a roof keeps
+  only what stands clear above it, so an eave or a flat roof's edge never runs in under its
+  neighbour. Where two faces lie in one plane (two roofs in a row, their overhangs over the same
+  strip) the roof that was put down first keeps what they share. A gable end another roof closes is
+  left out, one that stands against another roof is set back into its own roof, ceilings run on to
+  the joint, ridge caps in one line or crossing are cut to meet, and flat roofs side by side share one
+  low wall round the outside. A roof that meets nothing looks as it always did.
+- Ground floors that touch or overlap are drawn as one. Where two overlap, the one laid last lies on
+  top. A path's edging course runs only round the outside of all of them together (round a room's
+  floor or a grass path it meets, none), turning in at inside corners, and its grass bank runs only
+  along that outside, round outside corners. A floor that meets nothing looks as it always did.
+- The basement shows its rooms. The island's terrain had the sea's water under every plot, a voxel
+  down, hidden by the plot's ground part; the basement view took that part away and the water was all
+  there was to see. The sea now fills in only over its own sand and slate, and the basement view
+  clears any water under the land too. Going back up no longer leaves water behind: the screen never
+  writes over ground the plan has dug, and what it cleared goes back as the server last had it.
+- Ways between floors, on Build mode's Stairs tab: a loft hatch (a white frame and lid over an
+  aluminium ladder), a trapdoor (a plank lid on iron straps over a leaning wooden ladder), a fire pole
+  (a brass pole from a landing mat, a round guard rail round the hole above), a slide (a yellow chute
+  from the hole's edge to the floor below), an open stairwell (open steel stairs with a steel and glass
+  rail round the hole above) and elevators for 2, 3, 4 and 5 floors (a glass shaft on steel posts,
+  sliding doors and buttons at every landing). Each cuts its hole in the floor over it, a lift in every
+  floor it runs up. The ladders are climbed, the pole and the slide are for going down.
+- An elevator: hold E at a landing's up button (left of the doors) or down button (right). The car
+  comes if it is away, its doors open and shut, it carries everyone inside a floor up or down and the
+  doors open there. The car and the doors move on each player's screen; the server moves the riders.
+  Anyone may ride.
+
+### More decor and moving pieces, waterfalls into real water, a fog machine, and pieces bought with gems
+
+> Add much more decor and make animated pieces, such as a swarm of fireflies that produce light, and models that
+> have moving pieces.
+
+> You are allowed to use spheres, curves or circles where necessary.
+
+> also, some objects, like waterfall, can look more like a waterfall, along with having actual water like the water
+> and particles seem to not look too good.
+
+> also, add a fog machine that players can place with gems.
+
+Thirty seven new pieces, twenty six of them moving:
+
+- Garden and outside: a firefly swarm (four little clouds of fireflies wandering over long grass and reeds by a
+  mossy log, each fly blinking on its own, some carrying a light that goes with them, glowing toadstools by the log),
+  a wind turbine, wind chimes on a shepherd's hook (the tubes sway out of step, the striker and its sail swing
+  further), a bubbling pot on a tripod over a fire (bubbles bobbing, steam, flames and embers; hold E to cook), a
+  flagpole whose flag ripples in three strips, a weather station (cups spinning, a vane swinging, a blinking light),
+  a bird feeder with two birds pecking, a garden lighthouse whose lamp goes round throwing two beams across the
+  garden, a street clock with a face front and back on the town's own time, a bee skep with bees wandering to the
+  flowers round it (hold E for honey), and a playground roundabout.
+- Indoors and the porch: a palm leaf ceiling fan, a desk fan, a porch rocker that rocks, a mobile of paper birds, shell
+  chimes, a swinging lantern, a tabletop water wheel, a music box with a dancer turning and notes rising, an orrery,
+  a plasma globe, a gilded birdcage with a bird on a swing and a robot dog that wags and tilts its head.
+- Still decor: a gnome on a toadstool, a herb pot tower (hold E for herbs), a knitting basket, a plant ladder, a
+  driftwood signpost, a clam shell planter, a gumball machine, a marble bust, hay bales with pumpkins, a tall vase of
+  branches and a stone lantern.
+
+Every one is drawn at the starting house's level of detail in textured materials (wood, metal, fabric, stone,
+ceramic, never plain plastic), round where the real thing is round.
+
+**Water.** Water used to be a blue rod for a stream and a flat pane of glass for a pool, and splashed sparkles. Now
+falling water is two thin sheets, a deeper one behind and a paler one in front, with white streaks of different
+lengths, a rounded lip where it tips over an edge, and foam where it lands; a still surface has ripples that drift
+slowly. On each player's screen a moving picture of streaks runs down every falling sheet and a picture of light on
+water drifts across every surface. The spray is drops, not sparkles; where water lands a ring of ripples spreads on
+the surface; mist is a soft puff. The stone fountain, the golden fountain, the wall fountain, the water wheel, the
+koi pond, the pond, the raised pond, the bird bath and the fountain jet all have it. It is all quiet.
+
+**Waterfalls with real water.** Two waterfalls go on the side of a pool or a pond the player digs in Build mode (the
+Water tab), like the jetty and the ladder do: a rock waterfall (a heap of mossy rocks with ferns, an upper fall into
+a little ledge pool and a wider lower fall into the pond) and a pool wall fall (a rendered wall with a steel blade the
+water leaves as one clean sheet, a lit strip under it and planters on top). The water they fall into is the pool's
+own: Roblox terrain water, dug and filled by the game, that people wade and swim in. A waterfall can't make water of
+its own anywhere: terrain water lives on a grid of 4 stud blocks, and a piece can be slid and turned off that grid,
+so its basin water would leak past its rim or leave a dry strip; pools and ponds are already dug on that grid.
+
+**The fog machine.** In Effects, bought with gems (20): a black case with vents, a handle, a tank of fog juice and a
+round nozzle. While it is on, puffs of fog come out of the nozzle, sink and spread, and a low bank lies on the floor
+round it, on each player's own screen; the fog is the colour of its second paint. It has a switch like every placed
+light ("Turn off" / "Turn on", held E, the owner only), and a sleeping villager near it puts it out too.
+
+**Pieces bought with gems.** A Build mode piece can cost gems instead of coins. Its card shows the gem price. The first
+time one goes down the server takes the gems and it is the player's: put away, sold or undone, it stays theirs and
+goes down again for nothing (the card then says "Yours"). A second one out at the same time is bought again. A
+saved build brings back only as many as the player owns.
+
+### Grand buildings for the endgame
+
+> make more vehicles, buildings that cost more for the endgame.
+
+Three ready-made buildings for a big town, far dearer than the rest, each waiting for a town
+level: the Manor house (Level 12, about 24,900 coins: two storeys of stone with a library wing, a glass orangery,
+a crystal chandelier over the hall), the Grand hotel (Level 14, about 34,000: a lobby with a front desk, a cafe
+that gives a barista a job, and eight guest rooms upstairs) and the Town hall (Level 16, about 38,300: a concert
+hall with a stage that gives a musician a job, under a clock tower with a big tower clock). Each holds one grand
+piece that can also be bought on its own in Build mode at the same level: the Crystal chandelier, the Hotel front
+desk and the Tower clock. Their cards say "Level n" (green when the town is there, coral before), picking one
+early says "Opens at Level n", and the server refuses them to a smaller town.
+
+The dearest of the other ready-made buildings is held under eight days of the starting builder's pay (section 8,
+"Work pays half"); the grand ones are held instead to a bound that grows with their level: at least twice the dearest
+of the rest, at most a fifth of the worth their level asks for, and dearer the higher their level.
+
 ## 6. The villager creator
 
 Works like a catalog avatar editor:
@@ -600,6 +1078,57 @@ another Roblox avatar game. Its layout is taken, drawn our own way.)
   side by side, with a knob on the one picked and a chip beside it; it snaps to the palette's own colours, which
   the server takes as they are. The name box, the birthday and Move them in stay.
 
+### Your own look, colour search, faces, Shuffle, buying, likes
+
+> also, add another tab to edit self in the catalog just like editing villagers. also, allow players to search
+> things in the creator by color, with a color picker wheel.
+
+> in the heads tab, it seems like faces tab shows nothing. for shuffle the whole look, make it such that it chooses
+> from the ones roblox recommends to the player the most
+
+> allow players to buy items they select from the villager customization screen, and allow players to buy the
+> outfit of the villager, including from the profile of the villager.
+
+> for shared avatars, could there be a liking system for it as well? allow players to sort by shared.
+
+> remove the borders around the rectangles in the first and second image eveywhere also, for the color, make it
+> fill horizontally instead of leaving a gap at the right.
+
+(The first picture was a personality face tile in the creator, the second the creator's grid of favourite colours.)
+
+- **You.** Under the creator's title sits a small tab: Villager or You. On You the creator dresses the player
+  themselves with every tool it has for a villager. The second step is Save: Wear it puts the look on the player's
+  character straight away, and on every new body after that. Once a look is saved, Back to my Roblox avatar puts
+  their own avatar back. Going from a villager to You and back keeps the villager as they were, undo and all.
+- **Colour search.** A round button at the end of the search box opens a colour wheel: rings of dots, the hue going
+  round and the colour stronger outwards, with a brightness bar under it. Any point can be picked, not only a dot.
+  Roblox's catalog search only takes words, so the picked colour is named by the nearest colour word ("red",
+  "navy", "light blue") and searched with whatever was typed; the word shows in a small tag with a cross that
+  clears it. What the game holds itself is matched by the colour: on Skin the picked colour is offered as it is,
+  then the skin tones and colours close to it; Outfits and Shared keep the looks whose names say the colour or whose
+  own colours are close to it; My items and My avatars go by the colour word in the names. The colour stays picked
+  from tab to tab until it is cleared. Wearing, Shape and Players don't use it.
+- **Faces.** Roblox has taken every classic face off sale, and the Faces list only asked for what is on sale, so it
+  came up empty. It now asks for faces off sale too, the most liked first while nothing is typed. They can still be
+  worn.
+- **Shuffle** asks Roblox what it recommends for the hair, the shirt, the trousers, the face and now and then a hat,
+  starting from what is on in that slot or, failing that, from what the player wears on Roblox, and picks among the
+  first few it gives, the first likeliest. A body set that is on is swapped for one Roblox recommends after it.
+  Where Roblox recommends nothing, the catalog's most popular page stands in.
+- **Buying.** A card that is on has a small green cart at its corner: Roblox's own prompt for that item (or set).
+  Body parts and moves have none, since Roblox only sells them in sets. Buy outfit, a tool under the cards and a
+  round button on a villager's page, asks Roblox for the whole look in one prompt where it can, and one item at a
+  time where it can't: the clothes, the face, the accessories, and a body as the set it came in when the creator
+  knows it.
+- **Likes.** Every shared look has a heart with its count. A press likes it, a second press takes the like back, and
+  nobody can like their own. The Shared tab has a sort: Newest or Most liked. Sharing again replaces your look and
+  starts its count again.
+- **No borders.** The personality tiles and the colour swatches lost their borders (the picked one keeps its yellow
+  ring), and so did the creator's item cards, notes, people cards and tool buttons. The colour grid's twelve
+  swatches and the personality tiles' eight now stretch across the whole row.
+- **Shorter words.** Personalities show a few words in the creator and on a villager's page ("Chatty and upbeat."),
+  and the creator's notes and placeholders are cut down ("Search looks", "None found.", "Roblox asks you first.").
+
 ## 7. The city
 
 - **City level** comes from population, villagers in work and the build's total value: Hamlet, Village, Town,
@@ -632,8 +1161,9 @@ another Roblox avatar game. Its layout is taken, drawn our own way.)
   notice at the foot of the screen says where you are working, what you have earned today and "Move to stop", and
   the prompt you are at reads "Stop work". You earn for your town the way a villager there does, a little every few
   seconds with a "+N" rising over your head, but at about a third of a new villager's rate (35% of the job's
-  income for a beginner: 6 to 11 coins a pay packet) and only up to 250 coins a town day, which takes a minute and a
-  half to under three minutes of work. The count starts again at 9:00 AM. Walking off, a jump, sitting down,
+  income for a beginner) and only up to 125 coins a town day in a new town at skill 1 (250 before work paid half),
+  which takes a minute and a half to under three minutes of work. Both grow with the town's level and your own
+  skill at that job (see "Skills, and pay that grows with the town" below). The count starts again at 9:00 AM. Walking off, a jump, sitting down,
   holding E again, opening Build mode or leaving ends it quietly; the workplace being moved or sold ends it with a
   word why. A workplace is busy while it is its villager's working day (nine to five, unless it is their day off or
   they are sick), even while they are out on a break: "Mara works here until 5:00 PM." If you are at it when their
@@ -642,6 +1172,57 @@ another Roblox avatar game. Its layout is taken, drawn our own way.)
   with no workplace in them. The camera stays where you have it.
 - Other income, all small beside a day's work: a daily gift with a streak, events, room requests, thank yous,
   customers dropping by staffed workplaces, and your own work.
+
+### Skills, and pay that grows with the town
+
+The user: "when players work, make what they earn scale off town level. each skill also has a
+level/experience bar, which you gain while doing the work. This increases the amount of cash you get
+doing that particular work as well."
+
+A player working at a workplace themselves now earns more in a bigger town and more as they get
+better at the job. The pay a second and the day's cap both grow by the same share: 6% for each town
+level past the first (up to level 30) and 5% for each skill level past the first (up to level 20), so
+a day's work takes as long as it always did and comes to more. Every second of work adds a point of
+experience to that job's skill, and each villager served there (below) adds a few more. Skills are
+kept per job, not per piece: two ice cream carts teach one skill. Each level asks more experience
+than the last. When a skill goes up a notice says so ("Shopkeeper skill is now level 3.") and the
+rest of the day pays at the new rate. The work notice at the foot of the screen shows the job's
+skill and its bar under the day's coins, and City hall lists every skill the player has, with its
+level and bar, under "Your skills". A player's own work stays small beside the town's wages at every
+level: a day at the cap is at most a quarter of what the least paid villager of the same skill earns
+in a day, times how much more room for villagers the town's level gives than a new town has.
+
+### Naming your town, liking other towns, and visiting them
+
+> allow naming of plots, and the name should appear in place of the big "Level x" at the top left above the level
+> bar.
+
+> also, allow players to like other plots. make a leaderboard for likes with plots. allow players to visit plots
+> searching by name, sort by likes or by recency, allowing them to view a copy of the town they are visiting and
+> like it, even if the player owning the plot is offline.
+
+- **A name.** The City hall's list opens with a Name box: type a name (up to 24 characters) and press Save or Enter.
+  Tapping the name at the top left of the main screen opens the City hall with the cursor in that box. The name goes
+  through Roblox's text filter before anyone sees it; a filtered name is refused, an empty box takes the name off
+  ("Sam's town" again). It shows over the level bar, on the board in front of the plot ("Juniper Bay" and "Sam's
+  place" under it) and in the Visit menu.
+- **Visit.** A round Visit button (a map pin) sits beside Home in the row under the clock. The menu has two tabs:
+  Most liked, the leaderboard, each town with its place (towns with the same likes share one, the top three in
+  their own colours), and Newest, the towns built on or renamed most recently. Towns of the other players in the
+  server come first, under In this server. A search box over the list finds a town by the start of any word of its
+  name or of its owner's name ("bay" finds Juniper Bay, "sam" finds Sam's town). Each row has the town's name, whose
+  it is and its level, how many like it and a Visit button; the picked town fills the card on the left with its
+  likes, its place (or when it last changed), its level and villagers, and Visit and Like. Your own town shows
+  there too, with a button to name it.
+- **Likes.** One like a player a town, never your own; pressing Like again takes it back. The owner, if they're in
+  the server, gets a notice the first time each player likes their town.
+- **Looking round.** Visit takes you in front of a town whose owner is in your server. Anyone else's, online in
+  another server or away, is shown as a copy of their last save: their whole town as Build mode drew it, less the
+  basement, with up to eight of their villagers standing in it (each at their workplace, the rest on the front
+  lawn), on a piece of ground floating high over the sea south of the island. Each visitor gets a copy of their own,
+  and it goes when they leave it. While you look round, a bar at the bottom says whose town it is with Like and
+  Home. Home, the Home button, H, wandering off or respawning ends the visit; falling off a copy puts you back on
+  it. Doors, seats and lamps in a copy work as anywhere; nothing in it can be built on or worked at.
 
 ## 8. Economy bounds
 
@@ -699,35 +1280,50 @@ the town is worth (1,500 for a village, 5,000 a town, 12,500 a big town, 25,000 
 dial show worth alone. The coins to build still come mostly from villagers working, so a town with people at work
 still grows fastest.
 
-Held by `tests/specs/City.spec.luau` (and the earning itself by `Wages.spec.luau` and `Routine.spec.luau`):
+Held by `tests/specs/City.spec.luau` (and the earning itself by `Wages.spec.luau` and `Routine.spec.luau`), as the
+bounds stand since work pays half (below):
 
-- a day's pay for one villager at starting mood and skill is 900 to 2,100 coins, and never more than 9,000 at the
+- a day's pay for one villager at starting mood and skill is 450 to 1,050 coins, and never more than 4,500 at the
   best of everything;
 - the starting coins buy the second villager a bed and a workplace and a ready-made cottage on top; a day of the
-  builder's wage buys three of the dearest workplace, the cottage takes one to two days of it and the biggest
-  ready-made building less than four; a workplace pays for itself inside half a day of its job, and a trade's
-  ready-made building in 1.5 to 5 days;
-- three workers save up for the first land in half a town day to two, one alone in two to five;
+  builder's wage buys one and a half of the dearest workplace, the cottage takes two to four days of it and the
+  biggest ready-made building less than eight (the grand buildings aside: section 5, "Grand buildings for the
+  endgame"); a workplace pays for itself inside a day of its job, and a trade's ready-made building in 3 to 10 days;
+- three workers save up for the first land in one to four town days, one alone in four to ten;
 - the daily gift, a wish's coins, an event's, a room request's, a customer's and a busy day's are all held small
   beside the least paid job's day;
 - every step from one level to the next (the building its worth asks for, then the land it opens, earned by just
-  the workers the levels ask for) takes 1 to 8 town days, and the whole way to a city 1.5 to 5 hours (it was 3 to
-  25 days and 4 to 15 hours);
+  the workers the levels ask for) takes 2 to 16 town days, and the whole way to a city 3 to 10 hours (it was 1 to 8
+  days and 1.5 to 5 hours before work paid half);
 - ten town days played out for the keenest player: wages are 80% or more of what comes in once two villagers
-  work, and 85% to 90% or more as the town grows (they come to 88% and 95%; it was two thirds and 72% to 80%);
+  work, and 85% to 90% or more as the town grows (with work paying half they come to 84% and 92%; before that 88%
+  and 95%, and at first two thirds and 72% to 80%);
 - buying every craving a town of three with two workers gets takes more than a fiftieth of its wages and less
   than a quarter (it is about 4%);
-- what one villager earns in a pay packet is 10 to 60 coins at the start and never more than 200;
+- what one villager earns in a pay packet is 10 to 60 coins at the start and never more than 200 (`Wages.spec`);
 - a day at the workplace comes to 95% to 105% of a day's pay over every personality, 85% to 112% for each one,
   and never more than a whole work day there would; the builder's day in the brain's own run comes to its pay
   within a few coins, and nothing is paid on a break, after five, at night, on a day off, while sick or while an
   event has them;
 - a player's own work at a workplace (`tests/specs/PlayerWork.spec.luau`) pays 35% of what a new villager earns
-  there and at most 250 coins a town day: a quarter of the least paid villager's day or less, so working to the cap
-  every day still leaves wages four fifths of what a keen player takes in with two villagers at work; the cap takes
-  more than a minute at the best paid workplace and less than a work day at the least paid;
+  there and at most 125 coins a town day in a new town at skill 1, both growing with the town's level and the
+  player's skill: at every level and skill a day at the cap is at most a quarter of the least paid villager's day
+  at the same skill, times how much more room for villagers the level gives than a new town has, so working to the
+  cap every day still leaves wages most of what a keen player takes in; the cap takes more than a minute at the best
+  paid workplace and less than a work day at the least paid;
 - the starting house is a gift: selling any of it refunds nothing (only what was paid on top, say a dearer finish),
   so a new town can't be sold for coins.
+
+### Work pays half
+
+The user: "Also, halve money gain from work." Every job's day now pays half its listed income (to
+5 coins), so the villagers' wages, the busy day bonus and what the town earns while you're away are
+all half what they were; a customer's visit pays 5 coins (it was 10) and a player's own day at work
+is capped at 125 coins in a new town (it was 250). Building costs what it did, so everything takes
+about twice the days of work: a ready-made cottage takes two to four days of the builder's pay, the
+dearest ready-made building under eight, the first land four to ten days of one worker. Wages are
+still most of a keen player's coins: 84% in a town of three with two at work, 92% in a town of
+thirteen.
 
 ### Passes, gems, rewards and time away
 
@@ -772,8 +1368,8 @@ says it isn't open yet. The boosts multiply: Double Pay, VIP and the group toget
 
 **Time away.** When you come back, your town has been paid a tenth of what its villagers at work would have earned
 in the time you were gone, up to eight hours of it. A welcome back card says how long you were away and what came
-in, with an OK. The builder alone makes 1,620 a town day, so eight hours away bring 6,480; an hour of play brings
-8,100. Nothing comes on a first visit, for a rejoin inside five minutes, or for a town with nobody in work.
+in, with an OK. The builder alone makes 810 a town day (since work pays half), so eight hours away bring 3,240; an
+hour of play brings 4,050. Nothing comes on a first visit, for a rejoin inside five minutes, or for a town with nobody in work.
 
 Held by `tests/specs/Rewards.spec.luau` (a usual day's gems from the gift, VIP and playtime are 6 or fewer; each
 claim pays once; playtime goes in order and starts again each day), `Offline.spec.luau` (the share, the cap, never
@@ -844,9 +1440,9 @@ places found and not yet found, and where you are; found places have a Go button
 the big island never means a long walk back.
 
 
-Up to four players share a server, one to a plot (it was eight, on eight smaller plots: see "Bigger plots" below).
-The street runs east to west with two plots on each side: asphalt with lane lines, curbs that drop at the zebra
-crossings, wide paved sidewalks with street trees, lamps, hydrants and a bus stop. In the middle: the square with the fountain ringed by benches, two lawns, a bandstand for festivals, the notice
+Up to six players share a server, one to a plot (it was eight on eight smaller plots, then four: see "Bigger plots"
+and "Six plots" below). The street runs east to west with two plots on each side (two more stand north of Hill
+Road): asphalt with lane lines, curbs that drop at the zebra crossings, wide paved sidewalks with street trees, lamps, hydrants and a bus stop. In the middle: the square with the fountain ringed by benches, two lawns, a bandstand for festivals, the notice
 board (town news) and the tailor (the creator), and across the street the market with its stalls and café tables,
 the shop and the town hall (city stats and land). Every plot starts with one house in the middle of its land (the
 user: "players should spawn at their plot, which starts out with a single house in the middle"), and you arrive at
@@ -882,7 +1478,8 @@ room 20 by 20 (12 by 14) and the workshop 18 by 12 (12 by 8), the porch and the 
 a counter past the sink, and an armchair and a lamp by the fire fill some of the new floor. It stands across the
 middle of the land's width, 30 studs back from the street behind its front lawn, with the rest of the land behind
 it for the player. Time follows a 12 minute day with a calendar of four
-ten-day seasons, and weather suited to the season: rain, storms, snow, blossom, falling leaves.
+ten-day seasons, and weather suited to the season: rain, storms, snow, fog, blossom, falling leaves (section 10,
+"Weather" and "Seasons").
 
 **A city pack, tried and dropped.**
 
@@ -923,8 +1520,53 @@ them, as before. So a server holds four players. Everything else made room:
   the market down to Harbour Road, with gardens beside it; strips of garden and trees run between the plots' ends and
   the first avenues; hedges and flower beds line the backs of the plots. The main street's crossings are in front of
   the square and the market and out past the plots at each end, with the footbridge over the east one.
-- **A fifth player.** If a fifth player ever gets in (a test in Studio, or a server whose size was never set in the
+- **A fifth player** (a seventh, since there are six plots). If one ever gets in (a test in Studio, or a server whose size was never set in the
   game's settings), they look round town from the square and get the next plot that comes free.
+
+### Six plots
+
+The user: "could you make the max plots 6, expanding the map for it?"
+
+A server now holds six players, one to a plot, and every plot is the same 400 by 400 it was. The
+first four stay where they were, two each side of Main Street with the square and the market between
+them. The two new ones stand on the north side of Hill Road, back to back with plots 1 and 2, between
+the first avenues (plots 5 and 6, west to east). Their fronts sit three studs behind Hill Road's
+pavement, on a strip of grass, so every plot's corners still lie two off the terrain's 4 stud grid.
+You arrive on Hill Road's north pavement in front of your plot, as the others arrive on Main Street's.
+
+Behind the new plots runs a new road, Ridge Road, and the first avenues carry on north from Hill Road
+to meet it, so the old town is a ring of roads again. Between plots 5 and 6 the garden walk from the
+square carries on from Hill Road to Ridge Road (brick down the middle, planters at each end, a row of
+trees, benches), with a zebra crossing over Hill Road where it crosses. The strips between the new
+plots and the avenues get trees, gardens and a few small things, as the old ones have, and clipped
+hedges with flowers and benches run behind the plots.
+
+The island grew 460 studs to the north to make room. The hills behind the old town moved north with
+it: the lookout, the observatory and the radio mast are on their peaks 460 further north, the stair
+up to the lookout now starts at the back of Ridge Road's pavement, and the creator's meadow is behind
+Ridge Road. Two new hills rise behind downtown and the civic quarter where the island got longer. The
+farm, the camp, the tarn and the standing stones are where they were.
+
+### Rooms you can walk into, lit
+
+The user: "detail the town more, and make the lights and interior in them work."
+
+The town's rooms (the shops downtown, the department store, the library, museum, cinema, station,
+school, clinic, post office, tower lobbies, flats, the row houses, the beach huts and the two shops on
+the square) had their lamps on only after dark, like the street lamps. Inside, with the realistic
+light, that left every room dark by day. Now the lamps inside a room are lit at every hour, the way
+a shop keeps its lights on, and a little brighter than the street's, since a room sees little sky. The
+lamps in the row houses give light now too (they only glowed before). Lamps out in the street, lit
+windows and signs still follow the clock.
+
+Doors work one doorway at a time. Before, every door leaf in a building answered to one prompt, so a
+row of houses or the beach huts opened every door at once from whichever leaf got the prompt; now
+each doorway has its own Open and Close prompt, on the door itself, and opens alone. The same goes for
+a player's wall with two doors in it.
+
+Eight more shops you can walk into stand along downtown's back streets: a bakery, a toy shop and a
+grocer on Quay Street, a cafe, a bookshop and a clothes shop on Hillside Row, and a cafe and a toy
+shop on the cross street south of Main Street, each furnished and lit like the others.
 
 ## 10. Look and feel
 
@@ -1107,6 +1749,9 @@ In our own drawing:
   pressed into its face in a darker shade of its own gold:
 
   > Change the goals icon to a trophy. Also, the coin icon can have a darker circle inside as an indent.
+
+  (The indent went later: "the coins should be only one color". The coin is one flat gold with a slot cut in it;
+  see "One colour coins, a solid gem, simpler foods, and an icon for each kind of news and each job".)
 
 > Look at Pocket City 2. this should be the ui and graphical direction you should reference from
 
@@ -1781,7 +2426,8 @@ at its top right. The layout is what is taken; the villagers, the shapes and the
   then (section 3). The shop on the plaza stays as a building, with no prompt.
 - **No map.** The Map button and the map screen are gone, and with them the trip back to a place you have found.
   Walking up to a place for the first time still pays its few coins. The round buttons under the clock are now
-  Home, City, News and Dark or light.
+  Home, City, News and Dark or light. (Today the row is Home, Visit, City, News, Store, Cars, Bag, Settings and Hide:
+  dark or light is a setting now, and Hide is the last.)
 - **No butterflies or rabbits.** The ducks still paddle the ponds.
 
 > the weather tab is stretched
@@ -2120,7 +2766,9 @@ piece stands between it and the hint.
   the camera: a wall, a roof, a hill. Leaves and long grass don't count, and neither do other villagers or players.
   The bubbles are still drawn over the villager's own head and hat, so a hat never cuts into a speech card.
   The coins that rise over a villager at work are left as they were, beside the head and over walls, since most
-  work goes on indoors.
+  work goes on indoors. (Taken back later: "could you remove the hiding of bubbles behind walls?". They show
+  through walls again, and lost their rims: see "Bubbles with no rims and through walls, every press counts, jumping
+  in scenes, running".)
 
 > make the outline outline the bottom pointy part as well, for the first image. also, the second image, remove the
 > bar. also, make it such that textboxes that appear over the head of villages have a longer max width. also,
@@ -2140,11 +2788,12 @@ of the stack coming down into its place. A new line on a card already showing gi
 > icons dont seem aligned. also, make a black icon for coins as well where it is required
 
 The notices that pop up at the top (a craving, coins earned) have their icon on a block that fills the note's left
-end, top to bottom, rounded with the note, with no gap round it. The Villagers menu's tabs (About and Friends) stood
+end, top to bottom, rounded with the note, with no gap round it. (Since replaced: a notice is a see-through dark
+note with a white icon, level with the clock. See "Hide, a named plot and quieter notices on the main screen".) The Villagers menu's tabs (About and Friends) stood
 off to the left of the menu on a phone, behind its way back: they're now held against the right end of the menu's
 top strip by a layout of their own, their background follows their own width, and the yellow tab slides the right
 distance on a scaled screen. A coin on a coloured block is drawn in one colour now, dark on yellow and white on the
-others, with its indent cut out of it; on the money strip and on prices it keeps its gold.
+others, with its indent cut out of it (the indent is gone now); on the money strip and on prices it keeps its gold.
 
 > notifications are bugged
 
@@ -2255,7 +2904,8 @@ the popup's Buy button. A step is done when the town shows it, never by a click 
 before it records anything. So that the bed and work steps mean something, a new plot's bedroom and workshop
 start empty (the cottage and the workshop building are still there), and the starting coins cover both. While the
 last step waits, the first craving comes within the hour instead of by chance. An old town that already has a
-villager, a bed and a job starts at the craving.
+villager, a bed and a job starts at the craving. (This tutorial was replaced by three steps that a friend talks you
+through, with the craving step gone: see "A friend talks you through the start".)
 
 > clicking the bubble that appears above villagers when they have a craving should show a popup what they want and
 > allow the player to satisfy it instead of their whole profile page.
@@ -2270,11 +2920,15 @@ A watched conversation now moves only when the player clicks, taps or presses Sp
 line being typed, the next shows the next one, with a small arrow in the corner when a line is done. The answers
 come up when the player reaches the question, and the time to answer only starts then (with a long cap, so an
 event can't hang); how it turned out stays until a click, and its notice waits until the scene is closed. A new
-event waits until the one on screen is closed, and the talk card no longer closes when an event starts.
+event waits until the one on screen is closed, and the talk card no longer closes when an event starts. (Space
+now jumps instead, as the player can in a scene: a click, a tap, Enter, E or a gamepad's X moves it on. See "Bubbles
+with no rims and through walls, every press counts, jumping in scenes, running".)
 
 > make food/item icons much simpler.
 
-Every food icon is now a handful of bold shapes, at most seven, with no more than three cuts.
+Every food icon is now a handful of bold shapes, at most seven, with no more than three cuts. (Simpler again since:
+at most six and two cuts, see "One colour coins, a solid gem, simpler foods, and an icon for each kind of news and
+each job".)
 
 > add much much more buildings, decoration, paths, fences and other options. there should be many to choose from
 > from different categories, like garden, sci fi, cozy, etc, just like bloxburg. there should also be basic shapes,
@@ -2320,6 +2974,265 @@ Only the bodies of furniture are solid now; small parts, clutter on tables, leav
 markings aren't. Anyone a piece lands on is moved to the nearest free spot on the room's side; a villager stands
 up beside a chair or a bed instead of inside it; a villager who stops getting anywhere hops, then finds a new way,
 then is moved on; the Home button always lands on open ground; and nobody swimming is ever moved.
+
+### Hide, a named plot and quieter notices on the main screen
+
+The user, 2026-11-27:
+
+- "The light/dark button at the top of the ui should be changed to "Hide", which hides all UI elements, sliding
+  them away, leaving a small button "Show" which reshows the ui elements."
+- "remove the "Next: level x""
+- "remove the happiness icon with the percentage on the left side of the main ui."
+- "allow naming of plots, and the name should appear in place of the big "Level x" at the top left above the
+  level bar."
+- "could you make notifications appear as a transparent, black background instead with a white icon, as a
+  rounded rectangle, and appear right on top, at the same y level as where the time bar is?"
+- "also, make an animation for the quests being dropdown and revealed."
+
+What the main screen does now:
+
+- The last round button under the clock is Hide (an eye). Pressing it slides every piece of the main screen off
+  its own edge, one just after another: the level card, the money strip, the quests and the quick menu go off
+  the left, the Build button off the right, the clock's slab and the round buttons up off the top. A round Show
+  button stands where Hide was. Pressing Show brings everything back, and Show stays put until the row is back
+  under it. Notices still come while the screen is hidden, and so does an event's prompt. A scene starting or
+  ending meanwhile doesn't bring anything back. Dark or light is no longer on the main screen; it is a setting.
+- The big words at the top left are the plot's name. Until the player names it they read "<display name>'s
+  town". A long name comes down a size or two before it is cut short. The level is still on the round dial,
+  and it is also written small on the left of the level bar ("Level 3"), with how far along it is at the bar's
+  right end. The line under the bar ("Next: Level 2") is gone.
+- The money strip holds the coins, the gems and the people. Happiness is gone from it (the city hall still has
+  it).
+- A notice is a see-through dark rounded note in the middle at the top, level with the clock: a white icon for
+  its kind at the left and white words, as wide as its words (wrapping past 460). The newest drops in at the
+  top and the others move down to make room; each fades after a few seconds and the ones under it close up.
+  Four at most. It looks the same in the dark and the light look.
+- The quests drop down a row after another from the top when the game starts and when the header opens them,
+  and fold up from the bottom row when it closes them. The arrow on the header turns with them. Everything
+  eases out to rest with no bounce.
+
+### No borders on rounded rectangles, shorter words, and Claim all
+
+> remove the borders around the rectangles in the first and second image eveywhere
+
+> for bubbles and text in rounded rectangles everywhere, remove the borders
+
+> remove the "gems are rare" alert in the shop.
+
+> For all UI/menu descriptions, shorten them as much as possible. for example, "10 gems, once" should just be "10 gems"
+> and "Gems for the time you spend in town..." Should just be "Gems for playing", also, under personalities, shorten
+> them, such as writing "Chatty and upbeat." Instead of "Chatty and upbeat, makes friends with..." .
+
+> remove the tooltip "Leavin the groups ends..." in the group tab.
+
+> in rewards, in all tabs, remove the bottom tooltip like "Claimed" "The next gift comes tommorow" .
+
+> make a claim all button in rewards and in goals.
+
+(The first came with a picture of a personality tile and of the creator's colour grid, each square in a light line.)
+
+- **No line round a rounded rectangle.** Cards, tiles, rows, wells, notes and pill bubbles have no border now. A
+  menu's panel lost both of its lines: the thin one a few pixels out and the card's own. Its coloured brackets still
+  mark its corners. The villager's stage in the Villagers menu lost its line too. Round things keep theirs: a
+  portrait's ring, a dial's ring, a disc's faint ring. Something picked can still be ringed in yellow while it is.
+- **The shop** has no note about gems being rare: the Gems tab is what you have and the packs.
+- **Shorter words everywhere in the menus.** Every description, caption, note and hint was cut to the fewest plain
+  words: a pass says what it does in a few words ("Resize any piece.", "Up to eight floors."), an achievement or a
+  goal says what to do ("5 villagers in town.", "Reach level 3."), a personality is a few words ("Chatty and upbeat.",
+  "Kind and patient.", "Worries a lot."), the playtime card says "Gems for playing", the group's gems are "10 gems".
+  City hall, the garage, the welcome back dialog, a wish's popup, the Villagers menu and the news say less the same
+  way. Villagers' own lines are untouched.
+- **Rewards' tabs end at the claim.** The left card's foot is the Claim button when something is due and nothing
+  when it isn't (no "Claimed", no "The next gift comes tomorrow", no "Keep playing"). The VIP note under the week and
+  the group's note about leaving are gone. The town goals' card does the same: the ring and the row say how far along
+  a goal is.
+- **Claim all.** The Rewards menu has a green Claim all button in its top strip, just left of the tabs, and the town
+  goals have one at the right end of theirs. One press claims everything waiting: in Rewards today's gift, every
+  playtime step reached, every finished achievement and the group's gems (for a member); in the goals every finished
+  goal. The server checks each through the same rule its own Claim button uses, so nothing is paid twice or early, and
+  one notice says what came in ("4 rewards claimed. +450 coins, +6 gems", "3 goals done. +1,100 coins"). With nothing
+  waiting the button stays, dim, and does nothing.
+
+### One colour coins, a solid gem, simpler foods, and an icon for each kind of news and each job
+
+The user (2026-11-27): "redo the coins and gems icon, the coins should be only one color, and the gem icon shouldnt
+have outlines inside." The coin is now one flat gold disc with a slot cut down its face, and nothing in a second
+tone (the darker indent is gone). The two coins of `coins` are the same coin twice, the back one behind the front.
+The gem, for gems and for the Fancy style, is one solid cut gem shape with nothing drawn inside it.
+
+"redo the the food icons, make them simpler, and more like vector art." Every food was drawn again as one clean
+silhouette with at most two cuts: the bread roll's two scores, the carrot and its leaves, the cheese wedge with two
+holes, a bowl of soup under two plain wisps of steam, a whole fish on a stick seen from the side, three berries
+peeping over a shallow tart crust, a round honey cake with the honey running down it, a stack of pancakes, rice on a
+plate with a spoon beside it (the curry), a slice of pumpkin pie with its crust, a scalloped ice cream scoop, three
+leaves standing in a salad bowl, a chocolate bar with a bite out of its corner, a caramel pudding, broccoli, a
+pickle jar, a pot of stew, the star fruit, the fire chili, the apple and the golden apple.
+
+"make different icons for different events in news" and "for work and news, make different icons for different
+news and work types." Every story in the town news shows by its own icon: a dream by the moon, a falling out by the
+cross, making up by a heart, a party by a balloon, music by notes, weather by its weather, cooking by a pot, the
+town's animals by a paw, letters by an envelope, crafts by a brush, games by dice, contests by a medal, the sea by
+an anchor, the garden by a plant, books by a book, luck by coins, a new look by a shirt, feeling poorly by a cross
+on a square, something odd by a sparkle; a story with no topic of its own by the part of town life it comes from (a
+chat bubble, one villager, two villagers, the town, a question for you). Someone moving in or away, land bought, a
+request met and the coins earned while away each have theirs too. A story from work is shown by that job's icon.
+Every job has its own icon wherever work is listed (the town panel's job rows, the villager screen's job picker and
+its Job button, the notice while you work yourself): a market stall, a coffee cup, a bread roll, a flower, a
+painter's palette, a cross on a square, a mortarboard, a guitar, a hard hat, an envelope, an ice cream and a book.
+
+### Bubbles with no rims and through walls, every press counts, jumping in scenes, running
+
+> could you remove the hiding of bubbles behind walls?
+
+> for bubbles and text in rounded rectangles everywhere, remove the borders
+
+> could you remove all borders in bubbles and text bubbles?
+
+> it seems like bubbles like heart bubbles overlap with text sometimes when they appear at the same time
+
+> for text bubbles that appear when you interact with objects like the fridge, make the bubbles appear on top of you instead
+
+> no need for a black background when coins appear above villagers
+
+> sometimes, clicking on dialogue dosent advance it, lagging behind instead
+
+> make it such that the player can jump while in conversation, a bug prevents you from doing it
+
+> also, make the ability to run, with shift
+
+What the game does now:
+
+- The bubbles over villagers' heads (speech card, mood badge, wish bubble) show through walls again. They
+  still stack with a gap over each head and keep two heads' stacks apart.
+- No bubble has a rim. A speech card is the dark glass with its point, a mood badge a glass disc with its icon in
+  colour and a point, the wish bubble a glass square with the thing wanted in it. The dialogue scene's textbox has
+  no rim and no corner brackets, a name tag's round mark has no ring, and the event prompt has no brackets.
+- A heart that comes with a speech card no longer lands on its words: every piece is stacked by its full size
+  worked out from what is in it (the words measured), not by what the screen last drew, which for a piece just
+  shown or still popping in was too small.
+- Holding E on a piece (the fridge, the piano, the bell) shows what happened in a speech card over the head of the
+  player who had the go, not over the piece. The puff still comes from the piece. A rare outcome has its words in
+  gold.
+- The "+N" coins rising over a villager are the coin and the number only, with no dark pill behind them.
+- Every click, tap or key in a scene counts at once: a press while a line is typed shows the rest, the next goes
+  on, and a line counts as all there the moment its last letter shows. When the player has read everything the
+  villagers have said so far, a press asks the server for the next line and it comes at once instead of at the
+  town's pace.
+- Space and a gamepad's A belong to the character during a scene, so the player can jump. A scene goes on with a
+  click, a tap, Enter, E or a gamepad's X.
+- Hold Shift to run (a faster walk); let go to walk. On a touch screen a small round button with a shoe over the
+  jump button switches running on and off (yellow while on); a gamepad's left stick press does the same. No
+  running in Build mode, in a seat or a vehicle, or while working at a workplace. Roblox's shift lock moves to Ctrl
+  so it doesn't fight running.
+
+### Settings
+
+The user (2026-11-27): "add settings for graphic quality, background blur, bloom, etc."
+
+A round Settings button (the cog) sits in the row under the clock, just left of Hide. It opens a full
+menu. The card on the left holds the interface's look (Dark or Light: the switch that left the top of
+the screen lives here now) and a short note that graphics quality is set in Roblox's own menu (Esc,
+then Settings), since no script can set it. Down the right, one row a choice:
+
+- Detail: Low, Medium or High. It sets how much of our own costly things this screen draws: shadows
+  (off at Low), how far placed pieces move and give off effects and how far trees sway, how many
+  particles the weather and the pieces give off, how many people wear an outline (none at Low) and how
+  many of a weather's layers fall.
+- Background blur: On or Off, and its strength: Soft, Medium (the look the game had) or Strong.
+- Bloom, Sun rays and Haze: On or Off each. With the haze off the air stays clear in any weather.
+
+Every choice is on at once, on that player's screen only, and saved with their profile.
+
+### Weather
+
+The user (2026-11-27): "could you use better weather effects?"
+
+The weathers are clear, cloudy, rain, storm, snow, fog (new), blossom and falling leaves, picked for
+the season every three hours of the town's day by each season's odds (snow only in winter, blossom in
+spring, falling leaves in autumn). Each has its own light and air: under cloud the sun is dimmer and
+the shadows soft, rain and storms thicken the haze, fog the most. What falls is drawn on each player's
+screen round the camera, in layers:
+
+- Rain: streaks close by, a thicker fall further off and a faint curtain far away; where it lands,
+  rings and small splashes on whatever is under it (a road, a roof, the sea) and a few droplets
+  bouncing up; dark glassy puddles on paving and roads open to the sky, which dry when it stops.
+- Storm: heavier rain blown sideways, the sea's waves up, the wind bending the trees much harder in
+  gusts, and lightning: a flash over the picture and a bolt coming down far off.
+- Snow: big soft flakes near the camera, smaller ones further off, slower and drifting.
+- Fog: thick air and mist drifting low.
+- Blossom and falling leaves: petals and leaves turning over as they come down.
+
+Nothing falls indoors. The pictures are Creator Store particle images (a rain streak, water ripples,
+a splash, a tumbling leaf, a soft puff) checked to show.
+
+### Seasons
+
+The user (2026-11-27): "make seasons more noticeable and better polished".
+
+Each season now changes the whole town. Spring: fresh green grass and about half the town's broadleaf
+trees in pink blossom, petals drifting in the air. Summer: the town as drawn. Autumn: golden grass, the
+trees red, orange and gold, leaves drifting. Winter: snow on the ground (the island's grass and every
+lawn), on the trees and firs, and on every roof open to the sky. Hedges stay green. When the season
+turns, a short notice says so ("Winter is here").
+
+### Lawn patches
+
+The user (2026-11-27): "remove the patches across the terrain that you made before". The patches of
+other greens on the plots' lawns are gone; a lawn is one even grass again.
+
+### A friend talks you through the start
+
+(This replaces the four step tutorial of "A guided start, more to build, water, and fixes from play".)
+
+> for the tutorial, remove the box in the right and the creation text that appears on join. first, darken the
+> screen and highlight only "create" in the bottom menu, and a prompt saying "Create your first villager!" upon
+> click, this opens a pop up which asks: Would you like to create yourself, a friend, or a custom vil lager as the
+> first villager? Clicking yourself creates yourself, a friend moves you to the players tab, and custom leaves the
+> player to it. once a villager is created, do the same, darkning the screen and pointing to build mode, prompting:
+> Build a bed for your villager to sleep in! The step continues to prompt: Build a work place for your villager to
+> work in! After this, the tutorial ends, stating: Grow your town and create more villagers!
+
+> Also, at the start of the tutorial, make one of the player's friends (most interacted with if possible) greet the
+> player, saying "Welcome to Catalog Town! To get started, lets create our first villager!", then clicking the
+> dialogue points to the create icon as usual.
+
+> Then, once created, they state: "You made your first villager! They need a place to sleep in. Build a bed for
+> them!". This continues for the work step, and then for ending the tutorial as well.
+
+What the game does now:
+
+- The welcome panel that came up on joining ("Make me", "Start from scratch") and the step card at the right edge
+  are gone.
+- The tutorial is three steps: a villager, a bed, a workplace. The old fourth step, buying a first craving, is
+  dropped, since the user's tutorial ends at the workplace, and with it the craving that was hurried along while it
+  waited. Cravings come by chance from the start.
+- A friend talks the player through it. Roblox doesn't tell a game who a player plays with most, so it is the first
+  of their friends who is online now, and if none is, the first friend on their list. A player with no friends (or
+  when Roblox can't answer) is greeted by Juniper, a neighbour of the game's own in a plain look. The friend stands
+  in the game's own dialogue scene, in their own avatar, the way a villager does when they talk. If their look can't
+  be built, their Roblox picture stands in.
+- Each step starts with the friend's line. A click closes the scene, and then the whole screen darkens except the
+  one thing to press, which stays pressable, with a yellow ring round it, an arrow over it where there is room, and
+  the step's prompt beside it on a dark card with a small "Skip tutorial" link. The friend's scene has the same link.
+  1. "Welcome to Catalog Town! To get started, let's create our first villager!" The Create tile on the quick menu
+     is let through, with "Create your first villager!". Pressing it opens a small popup in place of the creator:
+     "Would you like to create yourself, a friend, or a custom villager as the first villager?" with three tiles.
+     Yourself opens the creator with the player's own avatar and name, A friend opens it on the Players tab, Custom
+     opens it plain. Closing the popup brings the darkened screen back.
+  2. Once the villager moves in: "You made your first villager! They need a place to sleep in. Build a bed for
+     them!" The Build button is let through ("Build a bed for your villager to sleep in!"), then in Build mode
+     Furniture, Beds and the single bed's card, one after another.
+  3. Once the bed is theirs: "They need somewhere to work. Build them a workplace!" Then Build, Work and the
+     builder's bench's card ("Build a workplace for your villager to work in!").
+  4. Once the workplace is theirs, the friend's last line: "Grow your town and create more villagers!" A click and
+     it is over.
+- While a piece is held in Build mode the darkness steps aside, so the world can be clicked. A step finished with a
+  piece still in hand puts the piece away so the friend can talk. It also steps aside while a menu, the creator or
+  another conversation is up, and while the main screen is hidden with Hide (so Show can still be pressed).
+- Steps are still done by what the town shows, checked by the server. Skip ends it for good. An old save that had
+  done three of the old four steps is done.
+- (The user wrote "work place"; the prompt says "workplace", the game's word for it, as Build mode's Workplaces
+  does.)
 
 ## 11. Writing
 
@@ -2537,6 +3450,7 @@ the sun stays clear of it.
 - **A driveway.** The starting house has a paved driveway from the street up beside the workshop.
 - **Varied grass.** Each player's lawn has patches of other greens over it, lighter, deeper, drier and cooler, each
   a few turned shapes run together. They are only colour on the ground, and a pool or a basement dug under one hides it.
+  (Gone again: "remove the patches across the terrain that you made before". See "Lawn patches" in section 10.)
 - **Stains and road wear.** Every road has oil stains down the middle of the lanes, mended patches of darker tar and
   the odd crack, kept off crossings, junctions, covers and parking bays. The road paint itself (stop lines with
   arrows, crossings, bays, yellow kerbs, cycle lanes) was already there.
@@ -2627,17 +3541,43 @@ A Cars button on the main screen opens the Garage. Each vehicle there shows its 
 | --- | --- | --- | --- |
 | Scooter | 28 | 1 | 1,200 coins |
 | Little hatchback | 36 | 2 | 4,000 coins |
+| Pickup truck | 40 | 3 | 6,500 coins |
 | Family car | 44 | 4 | 9,000 coins |
+| Off-roader | 47 | 5 | 13,500 coins |
 | Camper van | 50 | 6 | 18,000 coins |
 | Little bus | 54 | 8 | 30,000 coins |
+| Tour coach | 58 | 11 | 50,000 coins |
+| Open-top bus | 62 | 17 | 80,000 coins |
 | Sports car | 76 | 2 | 90 gems |
 | Glide cruiser | 88 | 4 | 160 gems |
+| Stretch limo | 96 | 6 | 250 gems |
+| Hover car | 106 | 4 | 400 gems |
 
-Each one up the coin list is faster, takes more people and costs more; the two for gems are faster than anything
+Each one up the coin list is faster, takes more people and costs more; the ones for gems are faster than anything
 coins can buy. Bought once, a vehicle is yours to keep. Drive brings it out in front of you (one at a time); sit at
 the wheel to drive it, W and S for the pedal and A and D to turn. It gathers speed, brakes harder than it speeds
 up, rolls to a stop with no pedal and turns less sharply the faster it goes. Friends can take the other seats, but
 only its owner can drive. Put it away from the Garage, and it goes when you leave.
+
+> also, make cars and vechicles more detailed, especially player bought ones. the scooter dosent look like a scooter.
+
+> You are allowed to use spheres, curves or circles where necessary.
+
+> make more vehicles, buildings that cost more for the endgame.
+
+Every vehicle a player can buy, and the town's own cars and bus, is now drawn from
+one kit of real car parts: round tyres with a rim, a dark dish, spokes and a hub cap; a body with its edges rounded
+off and a bonnet that rises to the windscreen; an arch curving over each wheel; windows framed by pillars with a
+seal along their foot; seats under everyone who rides, a dashboard and a steering wheel; round lamps, a grille,
+bumpers, door seams and handles, mirrors, wipers, an exhaust and blank number plates. What is round is truly round.
+The scooter is a step-through: small wheels, a floorboard with rubber strips, the apron in front of the legs, the
+handlebars with their lamp and mirrors on a column down to the front wheel, and the seat on the rounded body over
+the engine at the back.
+
+The list runs further too: the pickup truck (three on a bench, a bed behind), the off-roader (big wheels, roof rails,
+a spare on the back), the tour coach and the open-top bus (ten seats on a deck with no roof) for coins, and the
+stretch limo and the hover car (no wheels, four glowing lift pads) for gems; the sports car is open-topped now. The
+grand buildings that came with them are in section 5, "Grand buildings for the endgame".
 
 ### Boards for walls, a softer roof and softer grass
 

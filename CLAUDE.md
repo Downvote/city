@@ -25,23 +25,24 @@ the contract (update it with every API, remote or saved data change), `src/share
 5. `sh scripts/check.sh` must pass: format, types (luau-lsp against Roblox's definitions), specs, the client
    simulations (`tests/sim/build_client.luau`: the real Build mode driven by clicks; `tests/sim/talk_card.luau`:
    the card you get by holding E on a villager; `tests/sim/creator_sections.luau`: the creator's Bodies, Body
-   parts, My items and My avatars; `tests/sim/hud.luau`: the main screen's stats strip, quests and Home;
-   `tests/sim/event_pace.luau`: a watched event moves only when the player presses; `tests/sim/tutorial.luau`: the
-   tutorial from the welcome to the closing card; `tests/sim/lively.luau`: placed pieces moving and giving off
+   parts, My items, My avatars, the colour wheel, likes, buying and the You tab; `tests/sim/hud.luau`: the main
+   screen's strip, the plot's name, the quests' drop, Home, Hide and a notice; `tests/sim/event_pace.luau`: a watched
+   event moves only when the player presses, and the name box; `tests/sim/tutorial.luau`: the friend's three steps
+   under the dim, from the welcome to the last line; `tests/sim/lively.luau`: placed pieces moving and giving off
    their effects), the dark and the light look on every screen
    (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (641 at the last full run; `Voice`: each personality's own hand, and a villager's ending; `Memory`: what events leave
+Specs today (821 in 66 files at the last full run; `Voice`: each personality's own hand, and a villager's ending; `Memory`: what events leave
 with a villager for a few days, the accessory on and off; `FlairService`: buying flair with gems on the server, with
 stubbed neighbours; `Store`: passes owned, a gem pack's receipt paid once, the pay boost from Double Pay, VIP and the group;
 `Offline`: what the town earned while the player was away; `Rewards`: gems from the daily gift, playtime and
 achievements; `Collide`: what a piece bumps into, stairs, doorways, Stretch; `Group`: the Select tool's moves and
-sales of many pieces; `Saves`: saved builds, loading one onto the plot; `Lively`: moving pieces and their effects; `Tutorial`: the four steps, checked
-by the server, the first craving coming quickly; `Water`: pools and ponds on the terrain grid, what may stand in them; `Floors`: the floors the passes allow, an old
+sales of many pieces; `Saves`: saved builds, loading one onto the plot; `Lively`: moving pieces and their effects; `Tutorial`: the three steps, checked
+by the server, the friend who greets, old saves done; `Water`: pools and ponds on the terrain grid, what may stand in them; `Floors`: the floors the passes allow, an old
 save's fourth floor, the basement's rules, its dig and its lining, land and Big Plot;
 `Unstick`: finding room to stand, what of a piece is solid, villagers getting up and getting unstuck, swimmers left
-alone; `EventService`: an answer's time held while the player reads; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `PlayerWork` and `WorkService`: a player working at a workplace themselves, its pay and cap, and the server's side with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+alone; `EventService`: an answer's time held while the player reads, `EventWatch "next"`, the newcomer's asks, typed names; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `PlayerWork` and `WorkService`: a player working at a workplace themselves, its pay and cap, and the server's side with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth; `Lights`: placed lights and their switch; `PlotName`, `PlotBoard` and `VisitService`: naming, likes, the directory and visits; `ClaimAll`: Claim all paying what the single claims would; `Bag` and `Giving`: things, gathering, gifts both ways, hearts with no top, goal rewards and titles; `Visits` and `WorkMove`: customers, company on a bench, work moves; `Needs`: earned mood and the asks; `Travel`: ways between floors and lifts; `GemPieces`: pieces bought with gems; `Seasons`, `Weather` and `Settings`: the look a player sets, what falls and each season's colours; `FollowUps`: events that need a piece, follow-ups, typed names, worn things): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off; what kind a bundle
 is, the outfit that holds the body, single body parts, the player's own items and avatars; preview scenes
@@ -89,13 +90,16 @@ pack, then said "never mind, go back to the original map", so this is it): the o
 roads (`Town.Roads`), downtown east, the civic quarter west (built up like downtown but homelier: rows of town
 houses round every block, the civic buildings standing in the rows: "the side with less buildings should have much
 more buildings, as much as in the city side"), the hills north (`Data/Hills`), the waterfront south. The plots
-are four of 400 a side, two each side of Main Street with the square and the market between them (the user: "make
-player plots much bigger, double the size", and their choice of four; `Tuning.Game.MaxPlayers` and the place's
-Players hold a server to four): Hill Road and Harbour Road run round the old town at `Town.RingZ` (462), the first
-avenues run out to meet them, past those the ring keeps its old line (`Town.OuterRingZ`, 262) behind downtown and
-the civic quarter as streets with their own names, the island reaches out to sea as a cape between the first
-avenues (`Terrain.Cape`, `Terrain.south(x)`) and the hills start further north behind the old town
-(`Hills.Notch`). An old save's build is moved onto the bigger plot when it loads (`Plan.fromOldPlot`). The
+are six of 400 a side (the user: "make player plots much bigger, double the size", then "could you make the max
+plots 6, expanding the map for it?"; `Tuning.Plot.Count`, `Tuning.Game.MaxPlayers` and the place's Players are all
+6): two each side of Main Street with the square and the market between them, and two north of Hill Road
+(`Town.PlotRows`), with Ridge Road (`Town.RidgeZ`, 922) behind those. Plot 1 stays at (-466, 0, 22) for the Build
+mode sim, and a plot's corners lie 2 off the terrain's 4 stud grid (the Town spec holds it), which is why the Hill
+Road plots stand 3 back from its pavement. Hill Road and Harbour Road run round the old town at `Town.RingZ` (462),
+the first avenues run from Harbour Road to Ridge Road, past those the ring keeps its old line (`Town.OuterRingZ`, 262)
+behind downtown and the civic quarter as streets with their own names, the island reaches out to sea as a cape
+between the first avenues (`Terrain.Cape`, `Terrain.south(x)`) and the hills start behind Ridge Road
+(`Hills.Notch`), with the stair, the lookout and the creator's meadow up there. An old save's build is moved onto the bigger plot when it loads (`Plan.fromOldPlot`). The
 island's natural ground is Roblox terrain (`Data/Terrain`, written by `World.buildTerrain` when the server starts:
 "the shoreline should be wavy, with water lapping up to it" and "make the grass and plants like in the image"):
 golden green Grass, a beach in sine wave curves sloping into terrain water with small waves, smooth hills
@@ -110,11 +114,16 @@ the ground look sunk). The previews draw the terrain as triangles.
 `Data/TownMap` lays out the ground and where everything stands, `Data/CityModels` draws the buildings and landmarks,
 `Data/Places` lists the places to find. The user wants it detailed like a classic city builder: buildings on
 landscaped lots (`CityModels.lot`), window bays, signs, roof details, parked cars, groves, textured ground, all
-textures from the Roblox library. Budgets (the Town spec holds them): the whole town under 56,000 parts as the game makes them (a merged piece is one
+textures from the Roblox library. Budgets (the Town spec holds them): the whole town under 58,000 parts as the game makes them (a merged piece is one
 part for its boxes and wedges plus one for each round shape in it: `Geometry.served`, since merged round shapes came
-out wrong in the game), under 126,000 with every piece opened into its shapes, and under 320 different pieces (about
-50,200, 123,700 and 296 with the civic quarter built up; every shop, tower, house and public building you can walk into is a furnished room from
-`Data/Interiors`, preview with `render.sh inside:<kind>,<kind>`). Street buildings come from the facade kit
+out wrong in the game), under 137,000 with every piece opened into its shapes, and under 320 different pieces (55,966,
+134,377 and 304 with six plots, so measure before adding much more to the map; every shop, tower, house and public
+building you can walk into is a furnished room from `Data/Interiors`, preview with `render.sh inside:<kind>,<kind>`).
+A lamp inside one of the town's rooms is lit at every hour (the user: "make the lights and interior in them work"):
+draw it in `Interiors.fill` (which marks every glow it makes) or give its prim `attrs.RoomLight`; street lamps, lit
+windows and signs stay `NightLight` and follow the clock, and a player's piece is never a room light. A door is the
+leaves that share one doorway `Frame` (give every leaf of one door the same `frame`); a model may hold many, each with
+its own prompt. Street buildings come from the facade kit
 (`Data/Facades`): a building is a name such as `facade:24x18:4:17:shop=open:cl` (size, storeys, seed and options)
 or one of its presets, so a new one needs only a placement. Downtown is rows of them on every block edge, with a
 market square and a lantern-lit market lane south of Main Street (the user: "emulate the level of detail of these
@@ -129,7 +138,9 @@ The user asked for real low poly models in "a distinct shared style across all o
 shapes put together"). Library models can't be downloaded here (Roblox wants a login), so the style is made in the
 engine: `Build/LowPoly` cuts a kit of faceted shapes with solid modelling when the server starts, and the Builder
 draws every ball as a gem, every cylinder as an eight sided prism (sixteen when wide) and every cone as an eight
-sided one, flat shaded. So never rely on a part being smoothly round. Draw organic things with `r:lump` (a ball
+sided one, flat shaded. So never rely on a part being smoothly round, unless it is `smooth` (`Geometry.Prim.smooth`,
+Roblox's own ball or cylinder, kept round: a wheel, a lamp, a chandelier's crystals, a cutscene's set; the user: "You
+are allowed to use spheres, curves or circles where necessary"). Draw organic things with `r:lump` (a ball
 stretched and turned: crowns, rocks, bushes) and `r:cone` (pines, spires), poles and trunks with `r:cyl`; the
 previews show the facets (`--smooth` shows the fallback without the kit).
 
@@ -162,10 +173,26 @@ it with `Lively.moving(r, group, draw)` (up to four groups; `Lively.cabin` for a
 workplace gets its effect in `Recipes/Work`'s `WORK_FX` (on only while somebody works there: `Working`). Mark the
 piece `lively = true` (the Lively spec checks both ways), never make what moves solid, and never move parts or
 make emitters on the server. A VIP piece is `vip = true` (`Recipes/Vip`); the server refuses it without the pass.
+Recipe modules load in name order and a category's cards follow it: the moving decor is `Recipes/Twirls` and
+`Recipes/TwirlsIndoor` (they were `Animated` and `AnimatedIndoor`), named to come after the plain furniture; new
+recipe helpers go in `Build/RecipeKit` (a module in `Build/Recipes` is read as a list of pieces). Running water is
+never a rod or a pane (the user: "some objects, like waterfall, can look more like a waterfall, along with having
+actual water"): draw it with `RecipeKit` (`K.fall`, `K.spill`, `K.surface` / `K.roundSurface`, `K.foam`), which names
+the parts `Flow` so each screen slides a water picture over them (`Data/Effects` `Flows`); spray, splashes and mist
+use the water pictures, never the sparkles. Water that falls into something people swim in goes on a pool's or a
+pond's side (`water` "edge"): never fill terrain water from a placed piece. Something that moves and glimmers (a
+firefly) is a moving part with `Lively.blink`; an effect that stops with a piece's switch passes `switch = true` to
+`Lively.fx`, and the piece needs a part that glows to have a switch. A piece bought with gems carries `gems` and
+`price = 0` (`Sim/GemPieces`, charged by `Services/Build`); once bought it is the player's for good.
 
 The user: "remove the shop, buying of things and food and feeding. when a character gets a craving, allow the
-player to simply pay to buy it" and "remove the map button and the map interface". So there is no shop, no bag
-(`inv`), no feeding and no map screen. A craving is bought from the villager's page, the talk card, or the popup a click on their wish bubble brings up
+player to simply pay to buy it" and "remove the map button and the map interface". So there is no shop, no feeding
+and no map screen; the old `inv` stays dropped. There is a bag again, but nothing in it is bought (the user: "add an
+inventory system to the player"): `profile.bag` (`Sim/Bag`) holds things (`Data/Items`) taken from pieces, made at
+work, given by villagers and goals. A piece that gives something says so in its drawing, `gives = "<source>"`
+(`Data/Items.Sources`; the Bag spec checks every source is used and a `work` source sits only on a workplace). A new
+thing is a line in `Data/Items` with art in `UI/ItemArt` and a shape list in `UI/Icons`, and its id must not be an
+interface icon's name (ItemArt is merged into IconArt over them). A craving is bought from the villager's page, the talk card, or the popup a click on their wish bubble brings up
 (`UI/WishPopup`: the user, "clicking the bubble ... should show a popup what they want and allow the player to satisfy
 it instead of their whole profile page") through `WishBuy` at `Life.wishPrice`. Don't add anything for sale but cravings and Build mode's pieces. The user also
 asked that "progression is much more based on villagers working": wages are most of a town's income; the City spec
@@ -177,8 +204,11 @@ Then: "could
 you make working give much more coins, and make buildings cheaper?" and "make it such that villagers earn coins as
 they work, not after every day": a villager at their workplace earns a little every few seconds (`City.earn` purses
 in `Services/Villagers`, sent every `Tuning.Jobs.PayEvery` seconds as the `Earned` event, a "+N" coin rising over
-them from `client/World/Earnings`), a break or an event earns nothing, and Build mode prices are the recipes' times
-`Tuning.Prices.Items` (0.5, applied in `Catalog` at load: never halve a recipe's own price).
+them from `client/World/Earnings`, the coin and the number with no pill behind them), a break or an event earns
+nothing, and Build mode prices are the recipes' times `Tuning.Prices.Items` (0.5, applied in `Catalog` at load:
+never halve a recipe's own price). Then: "Also, halve money gain from work." So a job's day pays its income times
+`Tuning.Jobs.Pay` (0.5), applied in `Data/Jobs` at load (`listed` keeps the written one): never halve an income by
+hand. The City spec's bounds in days of work doubled with it.
 
 Life in the town, in the spirit of the life sim the user named (its ideas only, never its content): well over two
 hundred events in `Data/Events/` (a folder: `Kit` builds weights and scenes, `Chatter` builds conversations from
@@ -212,20 +242,53 @@ also carry flair the player bought with gems (`Sim/Flair`: a catchphrase, an end
 "villagers could have a custom saying, thing they add to the end of their sentances sometimes, custom thing they like
 the most which they will mention"): the ending goes on through `Voice.as(v, text)` (or `Voice.speak(pers, text,
 ending)`), so a villager's line is spoken through it, never with words glued on. What an event leaves with them for a
-few days (a band, a hat worn for real, a pet: `Sim/Memory`, "remembering if they joined a band, started wearing a new
-accessory (temporarily)") is started with `s:remember`, asked for with `W{ memory = ... }`, talked about in
-`Sim/Talk`'s `LATELY` lines in each voice, and undone when it ends (the hat comes off: `Memory.dressed`). Every line follows the writing rule, in the speaker's voice (the user: "for the humanization, make sure to take
+few days (a band, a pet: `Sim/Memory`, "remembering if they joined a band, started wearing a new accessory
+(temporarily)") is started with `s:remember`, asked for with `W{ memory = ... }`, talked about in `Sim/Talk`'s
+`LATELY` lines in each voice, and undone when it ends. Something they put on is another matter (the user: "it gets
+taken off only if the player chooses it dosent suit them"): it goes on with `s:wear(who, what)` right after the line
+they put it on with, never `s:remember(who, "accessory")`, and stays beside everything they already wear
+(`Memory.dressed`) until the player says it doesn't suit them (`s:takeOff`, the suitme event, Take off on Lately);
+never time it out and never take off their own accessories for it. An event that needs a piece in town says so with
+`W{ has = need }` (`Sim/PlotHas`; new kinds go in `PlotHas.Kinds`) and goes in `Data/Events/Things` with `need` on
+the def (the FollowUps spec checks the need names real pieces); talk card lines about a piece are `Sim/Talk`'s
+`PIECES`, and street topics take a `need`. A follow-up is `s:follow(id, { chance, hours, words })` on the answer
+that leads to it; one that should only come that way is `followup = true` (never picked at random); keep its lines
+true whichever way it was reached and give its words a fallback (`s.vars.x = s.vars.x or ...`). Where a villager
+asks the player to name something, use `s:askName` (a typed name, filtered on the server), never two fixed names; a
+line about it says `{var}`, and a memory or memo that keeps it is built inside its `build`. Narration is short and
+plain, what happened in a few words ("It went well."; the user: "just make it more human and shorten it"). A
+by-personality map (`s:by`) is one message: a burst goes through `s:burst`, never a "|" in an `s:by` or `s:say`
+line. Every line follows the writing rule, in the speaker's voice (the user: "for the humanization, make sure to take
 note of the personalities of the villagers as well"): each personality talks its own way (`Data/Personalities`'
 `lines`, `Sim/Talk`'s maps keyed by personality), and a line only one kind of villager would say goes through
-`s:by`. There is no romance (the user: "remove any romance, just
+`s:by`. Gift lines live in `Data/GiftLines`, one set per personality, said through `Sim/Voice` (`Gifts.line`): no
+mark another personality owns, and no line starts with `{thing}` (it reads in lower case) except the cheeky ones.
+There is no romance (the user: "remove any romance, just
 best friends is the highest"): no crushes, dates, proposals or bonds, and best friends (the top of
 `Tuning.Relationships.Levels`, `K.BestFriends` in the events) is as close as two villagers get. Don't bring it back.
+Heart levels have no top ("make it such that heart level is uncapped"): never test one against a maximum;
+`Life.heartNeed` grows with the level. A goal can pay `title`, `piece` (a prize keepsake in `Build/Recipes/Prizes`,
+`prize = true`) and `thing` as well as coins; every title comes from exactly one goal and every prize from some goal
+(the Giving spec).
+
+Mood is earned (the user: "Villager mood bars should also not be that easy to fill up, the factors affecting it
+should be: amount and relationship of friends, quality of bed, roof over bed, fun objects near bed"): `Sim/Needs`
+says the most a villager's mood can reach from what they have (`Needs.cap`), mood climbs to it each town hour
+(`Needs.drift`), and every change to a villager's mood goes through `Needs.addMood` (a lift counts for
+`Tuning.Needs.BoostShare` and stops at the cap). Never write `v.mood` by hand. Villagers ask for what they lack ("if
+a villager dosent have a workspace or bed, they will ask the player for it"): the asks are `Data/Events/Needs`, each
+ending on `Needs.line(kind)`, the fixed "Villagers need ... Build it in Build mode > ..." line; keep those paths Build
+mode's real group and tab names (the Needs spec reads `Build/BuildUI`), and a new kind of ask is a kind in
+`Needs.Asks`, an event there and a line in `Needs.Lines`.
 
 Vehicles (the user: "make vehicles, with faster ones with bigger capacities costing more, and gem ones being the
 fastest") are `Data/Vehicles` (each one up the coin list faster, roomier and dearer, the gem ones the fastest: the
 Vehicles spec holds the order), bought and brought out by `Services/Vehicles`, driven by `client/World/Driving`
-(`Sim/Vehicles` has the rules) and picked in `UI/Garage`; a new vehicle is a line in the list with its drawing
-(`render.sh vehicles`).
+(`Sim/Vehicles` has the rules) and picked in `UI/Garage`. They are drawn from `Data/VehicleKit` (the user: "make
+cars and vechicles more detailed"; `Kit.car` plus extras): a new vehicle is a line in `Data/Vehicles` with a seat
+under every rider (the Vehicles spec looks for a fabric or leather cushion at each spot), a roof tall enough for a
+head (seat + 3.8), paint over `Kit.Paint` (Metal) and never plain SmoothPlastic (`render.sh vehicles:<id>`). The
+town's cars use the kit's `lite` mode and the car park's are `parked`: the town's part budget counts them.
 
 Server start: `init` everything, `start` everything, then `Data.open()` lets players in. Never load a profile
 before every service is listening (a player can be in the server before the town is built).
@@ -244,22 +307,41 @@ screen by itself ("in the cast of random villager text events, make this only ha
 watch"): `EventShow` brings up only a small prompt with Watch (Answer, with a timer, when a choice is waiting), and
 the scene goes up when the player presses it and plays from the first line ("make watching conversations restart
 the conversation from the start": the client keeps every `EventLine` it hears), one line a click, tap or key and
-never by itself ("sometimes, chats suddenly cut to the next dialogue without the player input"); the question's
+never by itself ("sometimes, chats suddenly cut to the next dialogue without the player input"). Every press counts
+("sometimes, clicking on dialogue dosent advance it"): a scene types its own lines (`scene.type`; never set
+`MaxVisibleGraphemes` from outside to finish one), a line is all there the moment its last letter shows, and a press
+once the player has read everything asks the server for the next line (`EventWatch "next"`). Space and a gamepad's A
+always jump, scenes included ("make it such that the player can jump while in conversation"); a scene goes on with a
+click, a tap, Enter, E or X (`Dialogue.Keys`). The question's
 answers come when the player reaches it and only then does the answer's time start (`EventWatch "asked"`, held by the
 server up to `Tuning.Events.ChoiceCap`); how it turned out stays until a click, its notice waits for the scene to
-close, and the next event waits its turn; the talk card stays up through an event (`Tuning.Talk.StaySeconds` 60)
-(`EventCard.isWatching()`; a big moment scripted in `Data/Cutscenes`
-plays as a cutscene on a set of its own from `Data/Stages` behind the same box, in a ViewportFrame: "add cutscenes and
-scenes like tomodachi life as well"; preview with `sh tools/preview/stage.sh <id> <dir>` and `ui.sh cutscene:<event>`),
-and the camera stays where the player
-has it ("no need for the camera to jump after clicking on watch"). While a scene is up `State`'s `talking`
+close, and the next event waits its turn; the talk card stays up through an event (`Tuning.Talk.StaySeconds` 60;
+`EventCard.isWatching()` says whether a scene is up), and for an ordinary scene the camera stays where the player has it ("no need for the
+camera to jump after clicking on watch"). A big moment scripted in `Data/Cutscenes` plays as a cutscene behind the
+same box ("add cutscenes and scenes like tomodachi life as well"), on a set built in the world on the player's own
+screen far out over the sea (`UI/Cutscene`, `Stages.Origin`) and lit by the game's own light at the set's `hour`
+("could you not move the camera around in events with special cutscenes? also, make them much more detailed, without
+fake lighting"): never go back to a ViewportFrame or a painted sky. The camera holds still on each shot and cuts: no
+pans, pushes or drift. Everything a cutscene changes (the camera, Lighting, Atmosphere, Grading, the weather's
+emitters) is put back on close, the camera where the player had it; a screen effect that follows the camera stands
+down while the camera has the attribute `Cutscene`. A set's `light` is an hour and a `face` (where its sun or moon
+stands; the set is turned to match); its lamps are `r:glow` with a range (`attrs = { Stays = true }` keeps one on
+through a beat's `fx = "dark"`); what moves or comes and goes on a set is `props` with spots. A villager's own
+animation is a keyed pose in `Data/Moves` (R15 joints in degrees, the root in studs on a hip height of 2): a new one
+needs `act` words, keys starting at 0 and feet that stay on the ground (the Cutscenes spec checks lying, standing and
+push ups). A new cutscene event goes in `Data/Events/Moments` with its `cutscene` script beside it; tag its lines
+with cues rather than counting lines (bursts vary by personality). Preview a set with `sh tools/preview/stage.sh <id>
+<dir> [--shots wide,two]` and a scene with `ui.sh cutscene:<event>[:<n>|:a<n>]`; both draw the game's light. While a scene is up `State`'s `talking`
 is true and the HUD's bottom bar, Build button and quests slide away. Preview scenes: `event` and `event:talk` (the
-prompt), `event:one`, `event:two`, `event:four`, `event:narration`, `event:answers`, `talk`, `talk:again`.
+prompt), `event:one`, `event:two`, `event:four`, `event:narration`, `event:answers`, `event:name`, `talk`, `talk:again`,
+`talk:gift`.
 
 The user asked to "interact/chat with villagers by holding e on them": every villager carries a ProximityPrompt
 (`Npc.talkPrompt`, put on in `Villagers.spawn` and answered by `Villagers.talkedTo`), what they say and what a
 chat is worth is `Sim/Talk` (numbers in `Tuning.Talk`), and the owner's card is `UI/TalkCard`. A prompt that opens a panel carries an `Opens` attribute
-(`Hud` reads it); the talk prompts must not.
+(`Hud` reads it); the talk prompts must not. A click on one of your villagers from anywhere brings up
+`UI/VillagerMenu` (Profile, Chat: "allow players to click on villagers anywhere to either open their profile or chat
+with them"); a chat started that way is `VillagerTalk(vid, "click")`, checked on the server like any other.
 
 The user: "also, allow players to interact and work at work areas". Every placed workplace (a piece with a `job`)
 carries a "Work here" prompt at its work spot (`Services/Work`, rules in `Sim/PlayerWork`, numbers in
@@ -269,20 +351,32 @@ notice and words the prompt "Stop work"), and earns a share of a new villager's 
 (`profile.work`), paid through the villagers' own packets (`Villagers.payPlayer`, a `{ you = true }` line in
 `Earned`, so the "+N" rises over them). A workplace is busy on its villager's working day, breaks included. Moving,
 jumping, sitting, a second press, Build mode, leaving, or the piece moving or going ends it; the server checks
-everything itself. Keep a player's own pay small beside the town's wages (the PlayerWork spec holds it).
+everything itself. The pay is `PlayerWork.rate(def, townLevel, skill)` up to `PlayerWork.dayCap(townLevel, skill)`
+(the user: "make what they earn scale off town level ... This increases the amount of cash you get doing that
+particular work as well"), with skills per job in `profile.skills` (`Sim/Skills`). Keep it small beside the town's
+wages: `Tuning.Skills.Pay <= Tuning.Jobs.SkillPay`, and the PlayerWork spec holds the cap to a quarter of the least
+paid villager's day at the same skill, times `City.villagerCap(level) / City.villagerCap(1)`, at every level and
+skill. Customers and company are `Sim/Visits` ("villagers might come up to interact and do chats based on the work
+that is being done ... villagers might sit with each other or with you"): a new job needs its asks for all sixteen
+personalities and its answers there (the Visits spec fails without them), and the player at work is `YOU` in
+`Villagers`' `around().open`. Every step of a job's loop has a move (`Routine.move` fills the gaps: "let there be
+animations while a villager works"); a villager's bought emote (`v.move`, `Sim/WorkMove`, `Data/Emotes`) replaces it
+at every step. Only add an emote whose id is an Animation made by Roblox, checked.
 
-What hangs over a villager's head (the user: "improve villager bubbles above their head, and make it such that you
-cant see the bubbles through walls. also, they sometimes intersect villager speech bubbles") is drawn by
-`Util/Bubble` on the server and the client alike, in the interface's look: the speech card (`Npc.say`, a
-BillboardGui named `Bubble`), the mood badge (`Npc.icon`, `Mood`) and the wish bubble (`World/Wishes`,
-`WishBubble`). All of them hang from `Bubble.Anchor` in tall billboards, each piece a CanvasGroup named `Fade`, and
-one client loop (`World/Bubbles`, a few times a second) stacks them over each head with a gap, keeps two heads'
-stacks apart on the screen (`World/BubbleLayout`: the nearer keeps its place, the further goes up or hides) and
-hides a stack while a ray from the camera to its point hits anything solid that isn't a villager or a player. They
-are drawn on top (`AlwaysOnTop`), so a head or a hat never cuts into them, and the ray is what keeps them from
-showing through walls. A card's or a badge's rim runs round its point too ("make the outline outline the bottom
-pointy part as well"), a speech card has no bar ("remove the bar") and wraps at `Bubble.SpeechWidth` ("a longer max
-width"), and every piece pops in and out ("an animation transition when they appear or disappear"): the server only
+What hangs over a villager's head (the user: "improve villager bubbles above their head ... also, they sometimes
+intersect villager speech bubbles") is drawn by `Util/Bubble` on the server and the client alike, in the interface's
+look: the speech card (`Npc.say`, a BillboardGui named `Bubble`), the mood badge (`Npc.icon`, `Mood`) and the wish
+bubble (`World/Wishes`, `WishBubble`). All of them hang from `Bubble.Anchor` in tall billboards, each piece a
+CanvasGroup named `Fade`, and one client loop (`World/Bubbles`, a few times a second) stacks them over each head with
+a gap and keeps two heads' stacks apart on the screen (`World/BubbleLayout`: the nearer keeps its place, the further
+goes up or hides). They show through walls (the user: "could you remove the hiding of bubbles behind walls?"): never
+bring back the camera ray. They are drawn on top (`AlwaysOnTop`), so a head or a hat never cuts into them. Stack them
+by `Bubble.size` (what is in them, the words measured), never by AbsoluteSize: a piece just shown or popping in is
+drawn too small, which put hearts over speech cards; a new piece built by `Util/Bubble` is sized by rule if its rows
+have fixed sizes or a self sizing card holds a TextLabel named `Text`. No bubble has a rim or a border ("could you
+remove all borders in bubbles and text bubbles?"), nor do the dialogue's box, its tags or the event prompt; a speech
+card has no bar ("remove the bar") and wraps at `Bubble.SpeechWidth` ("a longer max width"). What a player's go at a
+piece says hangs over that player's head (`Used`'s fifth value), not over the piece. Every piece pops in and out ("an animation transition when they appear or disappear"): the server only
 marks a piece `Going` a moment (`Bubble.Leave`) before it hides or removes it, and `World/Bubbles` does the motion. A new thing over heads is a piece from `Util/Bubble` in a billboard with one of those names
 (add the name to `ORDER` in `World/Bubbles`). A mood badge's symbol is drawn as an icon that fills it ("the icons
 within bubbles are too small"): the server writes letters, each player's screen swaps in the icon named in
@@ -311,11 +405,23 @@ nothing finds it by name. Detail is drawn with `Kit.brackets`, `Kit.rule` (a hai
 The user asked for the genre's own layouts (house builders, avatar editors, city builders), then for a bright,
 cozy look like the life sims they showed, then named a mobile city builder (Pocket City 2) as the UI and graphics
 direction: its layout and clean low poly feel, in our own designs, never copied (docs/GAME_DESIGN.md section 10).
-The HUD is a round level dial top left with the money, people and happiness in one strip under it (no + beside
-the money: "remove the + button next to coins") and the quests
-(`UI/Quests`: the next town goals, claimable there) under that ("put these as a tab below the level, then add quests
-below it as well"); the clock top right with a row of captioned round buttons under it, Home first ("make it such
-that there is a teleport home button": `Hud.goHome`, the `GoHome` remote, the H key); a quick menu of four tiles
+The HUD is a round level dial top left with the plot's name beside it over the level bar (`profile.plotName`,
+`Sim/PlotName.title`; the user: "the name should appear in place of the big "Level x""; the level is on the dial and
+small on the bar, and there is no "Next: Level x" line), the coins, gems and people in one strip under it (no
+happiness: "remove the happiness icon with the percentage"; no + beside the money: "remove the + button next to
+coins") and the quests (`UI/Quests`: the next town goals, claimable there, dropping down and folding up a row after
+another with `unroll`; a quest's row is a slot holding a `Slab`, so look for its Claim and Open inside the slab)
+under that ("put these as a tab below the level, then add quests below it as well"); the clock top right with a row
+of captioned round buttons under it: Home, Visit, City, News, Store, Cars, Bag, Settings and Hide ("make it such
+that there is a teleport home button": `Hud.goHome`, the `GoHome` remote, the H key). Hide is always last
+(`HIDE_ORDER`), so a button added to the row goes before it; it slides the whole main screen off its edges and leaves
+Show ("The light/dark button at the top of the ui should be changed to "Hide""). A new piece of the main screen goes
+in `Hud`'s list of slides (`slide(frame, dx, dy, forScenes)`) so Hide and the talking scenes move it; never tween a
+main screen piece's Position by itself, and ask with `Hud.isHidden()` / bring it back with `Hud.setHidden(false)`.
+Light or dark is no longer on the main screen: it is in Settings, and `UI/Theme` still does the switching. Notices
+(`UI/Toasts`) are see-through dark rounded notes at the top, level with the clock, a white icon and white words,
+sized to their words ("make notifications appear as a transparent, black background instead with a white icon, as
+a rounded rectangle"): no colour block and no rim. A quick menu of four tiles
 bottom left, starting at the left edge (it had a round portrait button first: "remove this button and flush the
 rest to the left") and a big Build button bottom right, the same dark slab as that menu bar with a yellow hammer
 ("make the build button be black as well": it was blue). The clock's slab hangs inside the strip Roblox keeps at
@@ -380,11 +486,16 @@ screen, use zenless zone zero's character menu", "Other menus should also have a
 layout and the parts, draw them our own way, never that game's art, slanted tabs or patterns. A menu is
 `Kit.panel(title, Kit.MenuSize, onClose, icon, colour, opts)`: it takes the whole screen over black, the way back
 is the red leaning button at the top left beside the title, `opts.Tabs` are one long pill at the top right, and the
-content sits in one big rounded card inside a thin rim. `opts.Dialog = true` is the small kind (a welcome, a
+content sits in one big rounded card, with no line round it. `opts.Dialog = true` is the small kind (a welcome, a
 question): its name sits on a darker band across the top with a red cross at the right. Lists are `Kit.row`
 pills; the usual layout is a card for the picked thing on the left and the rows down the right, and the full menus
 build both from `UI/MenuParts` (the left card, the list, headings, stat tiles, empty states, notes) and rebuild
-themselves when the look switches. A menu's states are previewed as `panel:<Name>:<state>`.
+themselves when the look switches. Menu words are as short as they can be ("For all UI/menu descriptions, shorten
+them as much as possible"): "10 gems", not "10 gems, once"; a personality's blurb is a few words; no note on how
+something works where the screen already shows it; a left card's foot is its button or nothing. Claim all
+(`Sim/ClaimAll`, `Services/Claims`, `MenuParts.claimAll`) runs every claim through the single claim's own function:
+a new kind of reward in the Rewards menu goes into `ClaimAll.rewards` too, and a goal reward beyond coins is granted
+inside `Life.claimGoal` (or `Services/Claims` is taught it), or Claim all skips it. A menu's states are previewed as `panel:<Name>:<state>`.
 Yellow with dark words (`T.Yellow`, `T.Dark`) means picked, everywhere: tabs, rows, steps, Build mode's tabs.
 Buttons that do something keep their own colour. The villager screen and the creator are character screens:
 the villager stands on the left in front of a moving backdrop (`Kit.backdrop`: their colour, leaning bands,
@@ -401,6 +512,17 @@ as you type ("allow for search in friends, shared outfits, my items, and outfits
 engine reports what is on it as under the pointer, which once stopped every drag ("you cant drag to rotate in the
 avatar creator"): it is `Active = false`, and `Kit.overUI` counts only what is under a ScreenGui. Never put a
 ViewportFrame inside a CanvasGroup: it comes out pale. The old header bar and its wave are gone.
+The creator dresses the player too ("add another tab to edit self in the catalog just like editing villagers"):
+`mode = "self"`, saved as `profile.look` through `LookSave` and put on every body the player gets
+(`Avatar.dressPlayer`). Something that wants a villager made a certain way calls `Creator.openFor("yourself" |
+"friend" | "custom" | "self")` and listens to `Creator.Created`. Colour search ("search things in the creator by
+color, with a color picker wheel"): the catalog only takes words, so a colour is searched by its nearest word
+(`Avatar/ColorWords`); only what the game keeps itself (skin, the palette, a look's own colours) is compared by colour.
+Classic faces are all off sale on Roblox, so the Faces filter keeps `offSale = true` or the tab comes up empty.
+Shuffle picks from Roblox's recommendations (`Avatar/Shuffle`), the popular page only where there are none. Buying
+goes through Roblox's own prompts (`UI/BuyLook`); body parts and moves are only bought as their set, and selling
+other creators' items may need Allow Third Party Sales in the game's settings. Shared looks are liked once a player
+(`Avatar/Likes`), the counts written in batches, never once a press.
 Shapes were angular for a while (the user: "Use the format in zenless zone zero for buttons and details in ui
 instead of overusing circles and rounded rectangles"). Two later requests replace that rule. Of the slabs on the
 main screen, with a picture of another game's HUD: "could you make these parallelograms textured like these
@@ -424,7 +546,7 @@ replicate the look and feel as much as possible, including the texturing and min
   fill it up with no gaps, just like the claim button"): on a leaning bar it fills the bar's left end flush
   (`Kit.flushMark`, as `Kit.row`'s `Marker` and the quests' and the event prompt's markers do), the way the Claim
   button fills a quest's right end with its left end sharp (`Sharp`); on a rounded card or strip it is a small
-  leaning square (`Kit.leanMark`, `Kit.disc({ Lean = true })`); a notice's icon block fills the notice's left end the same way ("with no gaps"). A
+  leaning square (`Kit.leanMark`, `Kit.disc({ Lean = true })`). A
   marker draws its icon in one colour, the coin too (`Mono`: "make a black icon for coins as well where it is
   required"). Keep what runs along a bar clear of its marker
   (the event prompt's countdown starts after it). `Kit.slant` paints the slab
@@ -433,7 +555,10 @@ replicate the look and feel as much as possible, including the texturing and min
   (the face itself is clear). `Kit.detail` adds the halftone at one end, which starts at the very end of the slab
   and is cut to its shape ("the bars are misaligned, they should start from the very end"): never lay a texture
   on a leaning slab as a loose rectangle. No line runs inside a slab's edge ("remove the borders").
-- Menus are rounded cards in a thin rim (`Kit.frame({ Cut = n })`, `Kit.rim`), rows and tabs and buttons lean
+- No line round a rounded rectangle (the user: "for bubbles and text in rounded rectangles everywhere, remove the
+  borders"): cards, tiles, rows, wells, notes, bubbles and the menus' panels have none. `Kit.rim` is for round things
+  (a dial's ring, a disc), and a yellow ring may show what is picked while it is.
+- Menus are rounded cards (`Kit.frame({ Cut = n })`, no rim), rows and tabs and buttons lean
   (`Kit.row`, `Kit.segments`, `Kit.button`), a tile is a rounded square with its name on a deeper band
   (`Kit.tile`), markers and small buttons are circles (`Kit.disc`, `Kit.roundButton`, `Kit.badge`; a face is
   `Kit.portrait`: "make portraits a circle with a border instead of a square"). Never draw a diamond or a sharp
@@ -448,7 +573,13 @@ replicate the look and feel as much as possible, including the texturing and min
   wedges and the textures are left out, so nothing may depend on a texture being there. The Skin spec checks the
   painting; `Sim.Skin.set(false)` in a simulation builds the fallback.
 A full menu has `Kit.motion` behind it ("make an animated background with shapes like
-it in the menus"). Build mode is laid out like the genre's best known builder ("The building ui should be
+it in the menus"). Build mode is kept small ("try to simplify the build mode interface so it dosent take too much of
+the screen space"): its sizes are the constants at the top of `Build/BuildUI`, every tray page fits `INNER_H` (136),
+and nothing grows past them. Its search (`Catalog.search`, the `SearchBox` at the right end of the category well)
+looks through names, kinds, looks and tags, so name a new piece the way a player would type it. Its time of day
+(`Build/ViewTime`, the slab top right) is the only thing that writes Lighting on a client outside a cutscene, and only
+while an hour is picked in Build mode; it follows `Tuning.Look`'s grade by the same rules as `Services/World.grade`,
+so change both together. Build mode is laid out like the genre's best known builder ("The building ui should be
 exactly like bloxburg"): the catalog docked at the bottom, coins top left. From the top: the tools row, then one
 card that holds the category tiles and under them the cards (or the page for paint, walls and the rest), then one
 bar across the whole screen with the main groups at its left end and Done at its right. The user on that: "the
@@ -488,7 +619,8 @@ clock), never an outline: cuts and gaps 1.5 to 2 wide so they last at 16 pixels,
 cross, tick, arrows) 4 wide with square ends, true circles and firm corners, points that really point, a notch
 in every arrow's tail, 1.5 clear of the edge (the rules are at the top of IconArt, and the Icons spec holds
 them). Foods are icons too (the user: "make food and thing icons sillouhettes like normal icons as well", then "make
-food/item icons much simpler": as few shapes as say what it is, at most 7 layers and 3 cuts, the Icons spec holds it):
+food/item icons much simpler", then "make them simpler, and more like vector art": as few shapes as say what it is,
+at most 6 layers and 2 cuts, the Icons spec holds it):
 silhouettes in `UI/ItemArt` drawn by the same rules (the leaf apart from the apple, the scores cut out of the
 bread), with no colour of their own; `Icons.item` shows one in the food's own colour (`Data/Foods`' `color`,
 which must read on the dark glass and on a card in either look) unless the caller passes `Color`, as with
@@ -497,9 +629,13 @@ is taken and never the pictures: no icon, dish, logo or lettering of that game i
 of its files is in the repository. Look at art with `sh tools/preview/art.sh <png> <names>` (`foods` for every
 food, `LIGHT=1` to see the small ones on the light card; `ui.sh foods` shows them as the game does). A published game only paints them
 with Allow Mesh / Image APIs on (Security, in the game's settings); otherwise each icon falls back to its
-shape list in `UI/Icons` (`D`), so a new icon needs both, and the Icons spec fails without the art. The coin
-keeps its gold and its indent ("the coin icon can have a darker circle inside as an indent"). The Goals button
-is the `trophy`, the Build button the `hammer`. An icon sitting on a block, a disc, a notice, a bubble or a picture
+shape list in `UI/Icons` (`D`), so a new icon needs both, and the Icons spec fails without the art. The coin is one
+flat gold with a slot cut in it and the gem one solid shape with nothing inside (the user: "the coins should be only
+one color, and the gem icon shouldnt have outlines inside"); don't give either a second tone, an indent or inner
+lines again. Every line in the town log carries a kind (`Data.log(player, text, kind)`): its icon comes from the one
+table in `Data/NewsKinds`, a new event takes its topic there (or its module's), a new log source passes a kind, and a
+new job needs its icon in `Jobs.Icons` (no two jobs share one). The Goals button is the `trophy`, the Build button the
+`hammer`. An icon sitting on a block, a disc, a notice, a bubble or a picture
 tile is made with `Centre = true` ("some icons within icon backgrounds are not centered"): art keeps its place on
 the 24 grid, and that centres it by what it draws instead. The older rule still holds for the shape lists: "make sure
 there are no overlapping outlines".
@@ -529,7 +665,11 @@ pictures can be taken down).
 Nothing here runs inside Roblox. Build mode's client runs end to end on the simulation in `tests/sim`; the other
 screens are built on it for the UI previews; the server services and NPCs are only type checked. A review pass found
 and fixed a batch of runtime bugs (starter house never given, walls refused on bought land, camera loops, saves on
-leave, NPC network ownership, spawn races). Playtest in Studio after changing those parts.
+leave, NPC network ownership, spawn races). Playtest in Studio after changing those parts, and these too: the
+gather prompts (E, or F beside another prompt) and their rests, things made at work, holding a thing and dropping
+one, the title tag over the head with Roblox's name off, a villager's gift on the talk card, and the lifts (the server
+anchors and moves the riders). In Lune, Enum items are not the same userdata twice: compare them with `==`, never use
+them as table keys.
 
 Every plot starts with `Data/StarterHouse`: a detailed house, a workshop where the first villager works as a
 builder, and a fenced garden, all of it ordinary Build mode pieces carrying `gift` (the user: "improve the starting
@@ -537,8 +677,18 @@ house detail by alot, and add a workspace next to it"). A new plot (`StarterHous
 the builder's bench (`StarterHouse.Held`) for the tutorial's steps (the user: "make the tutorial more visual and
 structured, starting with creating a villager, then building a place for them to sleep, then a place to work. the
 first time a craving pops up, guide the user how to do it"); `plan()` is the furnished one for specs and previews.
-The tutorial is `Sim/Tutorial` (steps from the town's own state, recorded by the server) and `UI/Tutorial` (the
-welcome, a step card and a pointer found by name; scenes `tutorial:*`). Specs find the bed by "bed" in an item's id, so the
+The tutorial is `Sim/Tutorial` (steps from the town's own state, recorded by the server) and `UI/Tutorial`: three
+steps (a villager, a bed, a workplace) that a friend talks the player through (the user: "make one of the player's
+friends (most interacted with if possible) greet the player"). Roblox doesn't say who a player plays with most, so it
+is a friend online now, else the first friend, else Juniper (`Tutorial.greeter`, the `TutorialGreeter` remote in
+`Services/Avatar`). Their lines and the prompts are the user's own words (`Lines`, `Prompts`, `Ask`): keep them.
+There is no card at the side and no welcome panel; don't bring either back. After the friend's line the screen
+darkens everywhere but the one thing to press (`TutorialDim`: four dark pieces round a hole, which take every other
+click), and it steps aside for a menu, the creator, a scene, a piece in hand and Hide. What it points at is found by
+name (the Create tile, the Build button, Build mode's `Dock`, `Subs` and `Tray`): renaming those breaks it (its sim
+will say). The Create tile asks `Tutorial.takeCreate()` first; on the first step it opens the "Your first villager"
+popup. The previews can't know where the engine puts things, so the dark pieces carry `Hole*` attributes and
+`ui_render.py` cuts them again from its layout; keep those attributes if the dim changes (scenes `tutorial:*`). Specs find the bed by "bed" in an item's id, so the
 starter must not use `flower_bed`; the Build mode sim clicks at plot (222, 101) and (224, 114) (they moved by
 100 and 50 when the plots grew), and the house stands near the street, the fence at z 30 and the buildings to
 z 74, so keep the house and the workshop in front of z 94 and low.
@@ -565,9 +715,23 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
   (`Light.SkySpecular`). The background is blurred (the user: "add background blur"): `client/World/Focus` keeps the
   `Lens` focused on what the camera looks at; tune it in `Tuning.Look.Lens`.
 - The ground (the user: "varied grass, curbs, sidewalks, driveways, flush paths, stains and road paint"): a ground
-  floor in an outdoor material is laid in the grass with a bank and an edging course (`Shapes.laid`), the lawn has
-  patches of other greens (`Data/LawnPatches`, hidden over a dug pool by `Water.cutGround`), and the roads carry
-  oil stains, tar patches and cracks (`StreetPaint`'s wear, off crossings, covers and bays).
+  floor in an outdoor material is laid in the grass with a bank and an edging course (`Shapes.laid`), and the roads
+  carry oil stains, tar patches and cracks (`StreetPaint`'s wear, off crossings, covers and bays). A lawn is one even
+  grass: the patches are gone ("remove the patches across the terrain that you made before"); don't bring them back.
+- Settings ("add settings for graphic quality, background blur, bloom, etc."): what a player turns down is theirs
+  alone, saved in `Schema.Settings` and put on by `client/World/Graphics` (`Sim/Graphics` is the rule,
+  `Tuning.Graphics.Levels` the numbers, `UI/Settings` the menu, which also holds Dark and Light). A new costly thing
+  on the client reads `Graphics.level()` (Reach, Particles, Layers) so Low really draws less. Roblox's own graphics
+  quality can't be set by a script; the menu says where it is.
+- Weather ("could you use better weather effects?"): what falls is layers in `Data/Weather`, drawn round the camera by
+  `UI/Weather` on each screen, never on the server; each weather's light and air are `Tuning.Weather.Looks` (clear is
+  `Tuning.Look`'s own, the Weather spec holds it). A new particle picture goes in `Data/Weather.Textures` and must
+  pass `python3 scripts/library_textures.py check`. Keep a storm at full detail under about 5,000 particles.
+- Seasons ("make seasons more noticeable and better polished"): `Data/Seasons` is the colour rule for the server (the
+  terrain), the client (`World/Seasons`: leaves, lawns, roofs) and the previews (`SEASON=`). A tree's crown named
+  `Leaf` in the Grass material turns with the seasons, a shrub in another material only a little, a fir (a merged
+  piece) only under snow; hedges stay green. A part's own colour is kept in `SeasonBase`, so a copy starts from it.
+  Look with `SEASON=4 sh tools/preview/walk.sh ... --weather snow`.
 
 ## Rules
 
@@ -593,8 +757,26 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
   picture shows only through `rbxthumb`, after the server's `Build.checkPicture`; a water piece needs `place =
   "water"`, `water` and `draft`; water edges assume the plot corners sit 2 off the terrain's 4 stud grid (moving the
   plots breaks it; the Water spec will say); a new home is a file in `Data/Buildings/Homes/` laid out with `HomeKit`,
-  a new showpiece one in `Data/Buildings/Showpieces/`; keep the dearest ready-made building under 4 days of a
-  builder's pay (the City spec); a railing can't meet a wall end on (both bottoms at floor height z-fight).
+  a new showpiece one in `Data/Buildings/Showpieces/`; keep the dearest ready-made building under 8 days of a
+  builder's pay (the City spec; it was 4 before work paid half), except the grand ones ("make more vehicles,
+  buildings that cost more for the endgame"): a grand building (`Data/Buildings/Grand/`) holds a piece with a `level`
+  (`Recipes/Grand`), which the server refuses to a smaller town (`Services/Build.levelCheck`, `Sim/City.unlocked`),
+  and the City spec holds it to at least twice the dearest of the rest and at most a fifth of
+  `City.levelValue(level)`, dearer as the level rises; a railing can't meet a wall end on (both bottoms at floor
+  height z-fight).
+- Pieces stand on each other ("make it such that you are able to put objects on top of each other"): `Catalog.standsOn`,
+  on a solid part only, kept out of each other's bodies by `Build/Collide`. A piece may stand over water at or above
+  its surface (`Water.checkItem`), never in it. No invisible solid part reaches past what can be seen (the Unstick
+  spec checks every hidden solid part of every catalog piece): a stair's ramp lies under its treads, never a solid
+  wedge to the floor, and kit shapes collide as their hull (`Build/LowPoly`).
+- Roofs on one floor and ground floors that meet are drawn together (`Shapes.roofIn`, `Shapes.groundFloor`; "when
+  roofs are put together, z fighting occurs"): a change redraws its neighbours through `Plan.affected`, so keep that
+  in step if the joining rules reach further, and a roof or a floor alone must draw exactly as before. Check new roof
+  or path rules with `lune run tools/preview/zfight.luau joins` and `render.sh joins`.
+- A way between floors ("make ways to travel down, like different hole types, and add elevators") is a place
+  "stairs" piece with `travel`, its `hole` and, for a lift, `spans`. What moves in a lift is never solid and moves
+  only on each player's screen (`World/Lifts`); the server writes the ride on the model and carries the riders
+  (`Services/Lifts`).
 
 - Floors and the basement (the user: "another [gamepass] for basement, another for more levels"): a plan holds
   floors -1 to 7 (`Plan.Lowest`, `Plan.Highest`); who may build on which is `Sim/Floors` (the Build service checks
@@ -606,13 +788,25 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
   nothing ever makes a plan's `size` smaller.
 - The ground under a plot lies a voxel down (`Terrain.PlotFloor`, the "plot" cover in `Terrain.plan`: the user's
   picture of the island's grass standing up through a plot) and World's `Base` reaches down to it, so far terrain
-  drawn coarser can't rise through and a pool's sides are solid. Keep both when changing the plots' ground.
+  drawn coarser can't rise through and a pool's sides are solid. Keep both when changing the plots' ground. The sea
+  fills only over `Terrain.SeaFloor`: never let terrain water lie under a plot's ground part (the basement view takes
+  that part away), and `Build/Underground` never writes over a column the plan digs (the server owns those).
 - Every catalog item stays inside its `size` box (the Build spec checks it), uses `r.c1`/`r.c2` for paintable
   parts, marks seats with `r:seat`, beds with `r:sleep` and the tag `bed`, lights with `r:glow`, workplaces with
   `job`, `workSpot`, `workYaw` and the tag `work`.
 - Land sizes keep their edges on the wall grid (the City spec checks it).
 - The server validates everything the client sends; never trust a client value.
-- Player-written text (villager and outfit names) goes through `Avatar.filterText` before anyone else sees it.
+- Player-written text (villager, outfit and plot names, flair, typed names in events) goes through
+  `Avatar.filterText` before anyone else sees it.
+- Other players' towns are `Services/Visit` (rules in `Sim/PlotBoard`, `Sim/PlotLikes`, `Sim/PlotCopy`; "allow
+  players to like other plots ... even if the player owning the plot is offline"). Every like goes through
+  `Visit.like(player, ownerId, on?)`, one a player a town, never your own: build anything else on likes on it, never on
+  the stores. A plot's name goes through `Visit.rename` (filtered, `PlotName.clean`d, pushed, on the board, listed);
+  never set `profile.plotName` anywhere else. A copy of an away town stands on a viewing lot high over the sea
+  (`Town.viewFrame`), one a viewer, gone when the visit ends; draw nothing else up there. The directory's stores are
+  written in batches and on save only (`Data.onSaved`); keep new writes off the per-press path.
+- Shift runs ("make the ability to run, with shift": `World/Run`, `Tuning.Run`); a touch screen gets the shoe button
+  over the jump button. Nothing else may bind Shift, and only `World/Run` sets the player's WalkSpeed.
 - Detail is at the starting house's level everywhere (the user: "the amount of detail should be similar to the
   default house everywhere", "this includes buildings the player places as well"): a thing is made of the parts
   the real one has, at a believable size, never one box standing for something else (books are thin spines, a
@@ -626,7 +820,7 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
 - Lights players place stay on (the user: "make it such that lights are on by default and dont change based on
   time. players can turn them off or on, and villagers will turn nearby ones off when sleeping"): a placed piece's
   glowing parts carry `PlacedLight`, which the clock never switches (only the town's own `NightLight` lamps,
-  windows and signs follow the hour). The owner's "Turn off" / "Turn on" prompt (`Services/Lights`, owner only,
+  windows and signs follow the hour; the lamps in the town's rooms, `RoomLight`, are always on). The owner's "Turn off" / "Turn on" prompt (`Services/Lights`, owner only,
   checked on the server) saves the item's `off`; Build mode's moves, repaints and undo keep it. A villager asleep
   puts out the lights within `Tuning.Lights.SleepReach` of their bed on its floor until they are up (`Sim/Lights`,
   held on the server, never saved, never touching `off`). Never switch a placed light by the hour.

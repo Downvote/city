@@ -55,15 +55,20 @@ The contract between the parts of the game. Update it with every change to an AP
     frame on the prim as `frame`); `Builder.doorOpen(leaf)` is where it stands open (swung round `HingeX`, slid by
     `Slide` or raised by `Lift`, all measured in that doorway).
 - `Data/`: `Palette` (paint swatches, materials and the ready-made finishes Build mode shows as tiles), `Personalities`, `Foods` (id, name, price and `color`, the colour its icon is drawn in), `Items`, `Jobs`, `Events` (the event list), `Town` (map
-  layout and plot frames: `Tuning.Plot.Count` plots of `Tuning.Plot.Size`, four of 400 a side, `PlotCentersX`
-  { -266, 266 }, plots 1 and 2 north of Main Street west to east facing it, 3 and 4 south of it, turned,
-  `plotFrame(i)`, `plotCenter`, `plotArrival`, `toPlot`; the road network `Roads` as `{ x1, z1, x2, z2, half
-  width, sidewalk }` with `name` on the named ones: Main Street, then Hill Road and Harbour Road round the old town
-  at `RingZ` (462) between the first avenues, the avenues (`AvenueX`; the first ones run out to `RingZ`, the others
-  to `OuterRingZ`, 262), the cross streets at `CrossZ`, and the ring's stretches on its old line past the first
+  layout and plot frames: `Tuning.Plot.Count` plots of `Tuning.Plot.Size`, six of 400 a side (`Tuning.Game.MaxPlayers`
+  and the place's Players `MaxPlayers` are 6 too), `PlotCentersX` { -266, 266 }, laid out row by row
+  (`Town.PlotRows`: each row's street z, side and setback; `Town.plotRow(i)`): plots 1 and 2 north of Main Street west
+  to east facing it (plot 1 at (-466, 0, 22), unchanged), 3 and 4 south of it, turned, 5 and 6 north of Hill Road,
+  their fronts `HillSetback` (20) from its middle, three studs behind its pavement so their corners lie 2 off the
+  terrain's 4 stud grid; `plotFrame(i)`, `plotCenter`, `plotArrival`, `toPlot`; the road network `Roads` as `{ x1,
+  z1, x2, z2, half width, sidewalk }` with `name` on the named ones: Main Street, then Hill Road and Harbour Road
+  round the old town at `RingZ` (462) between the first avenues, Ridge Road at `RidgeZ` (922) behind plots 5 and 6,
+  the avenues (`AvenueX`; the first ones run from Harbour Road to Ridge Road, the others to `OuterRingZ`, 262;
+  `Town.northAt(x)` is how far north the roads reach at x), the cross streets at `CrossZ`, and the ring's stretches on its old line past the first
   avenues (Hillside Row, Mill Row, Quay Street, Strand Road); `ringAt(x)` is where the ring runs at x;
-  `MainCrossings` the main street's own zebras; `Districts`, `CreatorSpot` and `CreatorHeight`: the creator's
-  stage floats that high over its meadow, out of sight of the town), `TownMap` (the island as parts: grass, beach, shallows, deep sea floor, see-through
+  `MainCrossings` the main street's own zebras; `Districts` (grown to match), `CreatorSpot` ((-330, 0, 990), behind
+  Ridge Road) and `CreatorHeight`: the creator's stage floats that high over its meadow, out of sight of the town;
+  the viewing lots for copies of other towns: `viewFrame`, `viewArrival`, `ViewSpot`, `ViewGap`), `TownMap` (the island as parts: grass, beach, shallows, deep sea floor, see-through
   water and invisible walls at the shallows' edge; the streets, sidewalks, square and market; and where every
   building, palm, parasol, islet, the marina and piece of street furniture stands; the
   ground slabs are all SmoothPlastic for a clean flat look), `TownModels` (plaza buildings), `AmbientModels` (cars, the bus, birds,
@@ -102,8 +107,9 @@ The contract between the parts of the game. Update it with every change to an AP
   close as two villagers get; `Life.cravingPrice(foodId)`, `Life.wishPrice(profile, vid)`,
   `Life.buyWish(profile, vid, rng)`; all pure).
 - `Data/Hills` (the northern hills: `smooth(x, z)`, `at(x, z)` the drawn surface's height, `slope`, `Plateaus`;
-  `Notch` and `foot(x)`: between the first avenues they start 200 further north, behind the old town's Hill Road,
-  and come up over `Notch.rise`), `Data/CityModels` (downtown, civic, hill and waterfront buildings and
+  `Notch` and `foot(x)`: between the first avenues they start further north (`Notch.depth` 660), behind Ridge
+  Road, and come up over `Notch.rise`; `Data/Landmarks`' stair starts at `Town.RidgeZ + 17`, its zebras on Hill Road
+  and Ridge Road), `Data/CityModels` (downtown, civic, hill and waterfront buildings and
   landmarks; `lot(w, d, kind, margin)` landscaping, placed by name as `lot:<w>x<d>:<kind>:<margin>`; `parkedCar1..6`; `tower`, `shop` and `house` kinds; spinning parts named `Hub`, `Spin`, `Cabin`), `Data/Places` (places
   to find: id, name, blurb, pos, radius, coins; `near`).
 - `Data/Goals` (the town goals with their `value(profile, city)`; `bestfriends` and `bestfriends3` count pairs of
@@ -194,7 +200,7 @@ plural crops), `penpal`, `training`. `start(profile, vid, kind, opts, now)` (rep
 the memory and whether what they wear changed), `active(v, now)`, `has(v, kind, now)`, `forget(profile, vid, kind,
 who?)`, `tick(profile, now)` (ends what has run out and a falling out the two made up from; a falling out that runs
 out ends its quarrel; returns `{ vid, memory, dressed }` and each end notice once), `dressed(v, now)` (v.app with the
-memory's accessory on, in place of anything in its slot; v.app is never written), `unfound(v, now)`, `lately(profile,
+worn accessories added beside everything of their own, no slot giving way; v.app is never written), `unfound(v, now)`, `lately(profile,
 vid, now)` (the Lately rows: `{ kind, text, days }`), `words(profile, m)` (`{what}`, `{name}`, `{y}`) and
 `sanitize(profile, vid, raw)`. `Sim/EventEngine`: `remember who kind what? name? with? days?` and `forget who kind`
 (both add `{ t = "dress", vid }` to the service's part when what they wear changed); `quarrel` starts a `fallout` on
@@ -212,26 +218,136 @@ and nothing has them, they are spawned again). `Villagers.spawn` builds from `Me
 catchphrase, the favourite, memories, every voice), `Memory`, `FlairService` (the remote with stubbed neighbours),
 `Events` (memories in the sample towns, `remember` and `forget` checked).
 
+### Events that need a piece, follow-ups, typed names and worn things
+
+The user: "Make more interactions, such as events, conversations and chats that only happen when certain work places
+are present", "make events / conversations have follow up ones", "when villagers equip accessories from random event,
+the conversation showing it should show it, and it gets taken off only if the player chooses it dosent suit them" and
+"when things happens that requires mayors to input names like band names or pet names, allow the player to type in
+what they desire instead of fixed inputs". (An accessory memory no longer runs out, as the paragraph above had it:
+it `stays`, below.)
+
+- `Sim/PlotHas` (new, shared): what kinds of piece a plot has. A need is a catalog id, `{ ids }`, `{ tag }`,
+  `{ job }` (a workplace for that job), `{ water = true }` (a pool or pond) or a list of them (any one will do).
+  `index(plan)`, `find(index, need)`, `met(index, need)`, `has(profile, need)`, `names(need)` (ids, tags, jobs, for
+  the specs) and `Kinds` (the named needs: stove, fridge, mailbox, swing, piano, telescope, pond, icecream,
+  chalkboard, tv, arcade, bbq, fire, fishtank, birds, bees, trampoline, bicycle, washer, well, records, hammock,
+  boat, florist, drums, greenhouse, kettle, vegpatch, sandbox and the workplaces bakery, cafe, post, library,
+  stage, clinic, market, artist).
+- `Sim/EventEngine`: `ctx.has(need)` (the plan read once per context). `pick` plays a due follow-up first
+  (`EventEngine.followUp(ctx)`), and never picks a def with `followup = true` at random. New effects: `follow id
+  at? a? b? c? w?` (a follow-up `at` town hours from now, a/b/c naming which star here plays its parts, w the words it
+  carries) and `forget who kind what?` (only that thing). `EventEngine.named(ev, text)` builds the one answer of a
+  scene that asks for a name again with `text`, voiced, and puts it in `scene.choices[1]`. A staged follow-up has
+  `ev.from` (the event that left it).
+- `Sim/FollowUps` (new, shared): `profile.follow = { { id, a, b?, c?, at, from?, w? } }`, `add` (one per event and
+  first villager, Tuning.FollowUps.Max), `due(profile, now)`, `stale(e, now)`, `remove`, `clean(raw, villagers)`.
+  Numbers in `Tuning.FollowUps` (Max 6, Hours 3, Expire 1080 s).
+- `Sim/Naming` (new, shared): `clean(raw)` tidies a typed name or says why it won't do; `Naming.Max`
+  (`Tuning.Naming.Max` 20; `Tuning.Naming.Every` 1 s between two from one player).
+- `Data/Events/Kit`: `W{ has = need }`; `s:wear(who, what)` (marks the first message of their last burst with
+  `wear = what` and remembers the accessory), `s:takeOff(who, what?)`, `s:follow(id, { chance, hours, a, b, c,
+  words })` (the chance rolled as the scene is built), `s:askName({ var, suggest, ask, build })` (one answer made with
+  the suggestion; `scene.name = { var, suggest, ask, build }`; the rebuild gets the scene's common effects and draws
+  the same random numbers). `K.scene` starts with `ctx.carried` (a follow-up's words).
+- `Data/Events/Things` (new): the events that need a piece (`need` on the def, group set per event) and the
+  follow-ups that come from them. `Data/Events/Later` (new): suitme (also random, with an accessory on), hatoff,
+  spiderback, ferngrows, pigeonback, coldbetter. Existing events now leave follow-ups: outfit, sillyhat, newthing
+  (suitme), haircut (hatoff), spider, nameplant, pigeon, stray and foundpet (petnews), band (gig), quarrel (makeup,
+  when they won't make up), cold (coldbetter). band, stray, foundpet, pigeon, nameplant and the new pondfish ask for a
+  typed name.
+- `Data/Events/Chatter`: topics may carry `need` (a `PlotHas.Kinds` name); `Chatter.topics(ctx)` is those that can
+  be talked about here (`ctx.has`; the street's chats in `Services/Villagers` hand in `has`).
+- `Sim/Talk`: `PIECES` (`Talk.Pieces`), lines about a kind of piece, added to the talk card's pool when the plot has
+  one.
+- `Sim/Memory`: an accessory memory `stays` (`Memory.stays(m)`): it never runs out (`active`, `tick`), several can be
+  worn (one per `what`, up to `Tuning.Memory.Worn` 4, the oldest off first) and they don't count toward
+  `Tuning.Memory.Max`. `Memory.all(v, kind, now)`, `Memory.waiting(v, now)`, `forget(profile, vid, kind, who?,
+  what?)`. `Memory.dressed` keeps every accessory of the villager's own and adds the worn ones (no slot gives way).
+  `Memory.lately` rows carry `stays` and `what` for worn things (days 0). `Memory.Accessories` entries have `one`
+  ("a pair of round glasses"); new `bowtie` and `sunhat`; `Memory.Pets.fish`.
+- `Services/Events`: a line with `wear` starts that memory and dresses the villager as it is said. `EventShow` carries
+  `name = { suggest, ask, max }` for a scene that asks one. `EventChoose(token, index, name?)`: a name only for the
+  one answer of a scene that asks for one, once a second, through `Naming.clean` and `Avatar.filterText` (refused if
+  the filter changed it), then `EventEngine.named`. New remote `TakeOff(vid, what)`: the owner's villager, a thing
+  they have on; forgets it, dresses them, pushes villagers, says "X took the Y off."
+- `Services/Villagers`: `dress` finds every worn thing still waiting for a catalog item, and marks the model: `Worn`
+  ("yellowhat,scarf"), and the one new Accessory a dress added gets `Lately = what` when that can be told for sure.
+  `spawn` sets `Worn` too. The street chats' context has `has`.
+- `UI/Dialogue`: an actor may carry `without` (things put on later in the scene, left off the bust: ModelPreview's
+  new `Without` prop drops accessories whose `Lately` is in it); `scene.wear(key, what)` makes the bust again once
+  the model's `Worn` lists it (within 12 s); `Dialogue.field(props)` is a glass text box for the scene.
+- `UI/EventCard`: a line with `wear` calls `scene.wear`; a bust brought in leaves off what a later heard line puts
+  on; a scene with `name` shows the name box and Done in place of the answers (an empty box sends the suggestion; a
+  refusal's reason is typed into the box's words).
+- `UI/Residents`: a worn thing's row on Lately says "Until you take it off" and has a Take off button (`TakeOff`).
+- Saved data: `profile.follow` (cleaned on load). Accessory memories in old saves stay on.
+- Specs: `FollowUps` (new: the list, the stove chain end to end, follow-ups never picked at random, fifteen chains
+  each played with the same villagers and the words they carry, piece events only with their piece and names that
+  exist, talk and street lines about pieces, typed names cleaned and built in, voiced, remembered; worn things on
+  with their line and off only when they don't suit), `Memory` (stays, stacks, own accessories kept, Worn cap, take
+  off one), `EventService` (typed names: only where asked, cleaned, filtered, rate limited, said and remembered; a
+  wear line dresses them mid event; TakeOff checked), `Events` (follow effects, name scenes, sample towns with every
+  kind of piece). Sim `event_pace`: the name box (suggestion, Done, refusal, an empty box) and a bust made again
+  from the line a hat goes on. Preview scene `event:name` (also in `audit.sh`).
+
 ## Cutscenes
 
-`Data/Stages` holds the sets (rooftop, pier, bandstand, dream, birthday, beach, park, gate, kitchen, stall; the
-wedding arch went with romance): each has three marks, named shots (wide, two, pan and a few of its own), bounds,
-light and a painted sky; `Stages.close` picks the first angle on a face clear of the set and of everyone else,
-`Stages.push` builds on it, and `inside`, `blocked` and `crowded` check clearance. `Data/Cutscenes` scripts events
-by id (`Cutscenes.forEvent(id, ev)`): which set, who stands where, and beats keyed by line number, by the lines
-after an answer, by an `icon` or `who` filter, or by a `cue` a line carries; a beat has `shot`, `on`, `act`
-(letter, `*` the speaker, `others`, `all`), `look`, `move` (to a mark), `set` (another set, with a fade) and `fx`. An event def in Data/Events may carry
-`cutscene = "<set>" | { stage, cast, extras, open, lines, after, ask, ending }`, and a line `cue = "<name>"`; both
-pass through unchanged (no server or remote change). `UI/Cutscene` plays it in a full screen ViewportFrame with a
-WorldModel: clones of the villagers on their marks playing their idle and the acts (six by Roblox's animations, the
-rest by their joints and where they stand), the camera easing between shots (a move that would pass through the set
-becomes a dip to black), letterbox bars and the sky. `Dialogue.open` takes `Stage = { script, stage, event,
-modelOf }` and the scene has `beat(line)` and `stage` (it falls back to busts if the stage can't be built);
-`EventCard` adds `line.at = { phase = "lines" | "after", n }` and sends beats for the lines, the question and the
-ending. The Cutscenes spec checks the sets (frames, z-fighting, at most 1,000 parts, marks with room), every shot
-and every move between two shots, and that every script names real events, sets, marks, shots and acts. Previews:
-`sh tools/preview/stage.sh <id> <dir>` (a set from every shot), `ui.sh cutscene:<event>[:<n>|:ask|:a<n>]`,
-`render.sh stage:<id>`.
+The user: "add cutscenes and scenes like tomodachi life as well", then "could you not move the camera around in events
+with special cutscenes? also, make them much more detailed, without fake lighting." `Data/Stages` is a folder:
+`init` (the API and types), `Kit` (drawing helpers: the old ones plus `lampPost`, `roundTree`, `tufts`, `flowers`,
+`cloud`, `item` (a catalog piece), `window`, `picture`, `books`, `spotOf` (a catalog piece's seat or bed)), `Sets` (the
+first ten: rooftop, pier, bandstand, dream, birthday, beach, park, gate, kitchen, stall; the wedding arch went with
+romance) and `More` (violetfield, bedroom, racetrack, parlour, hilltop, oddroom, square, throne, wheel, playground,
+hallway). A set has marks, named shots, bounds and a `light` of `{ hour, face, indoor?, air?, grade? }` (no painted
+sky and no ambient or light colour of its own; `face` is where its sun or moon should stand, and the set is turned in
+the world to match, `Stages.turnFor`). Shots are still: `to` is gone, `pan` is now `side`, and `sky = true` looks at the
+sun or moon wherever the hour puts it (`Stages.resolve`). `Stages.close` picks the first angle on a face clear of the
+set and of everyone else, `Stages.push` a tighter one on it, and `inside`, `blocked` and `crowded` check clearance.
+A mark may have `pose` (a `Data/Moves` move held there), `head` and `ride = { prop, part }`; a set may have `props`
+(`spots`, `start`, `scale`, `build`, `parts` with `pivot`, `motion` and `by` spot; motions `tilt`, `swing`, `spin`,
+`bob`) and `spots` (`cloud`). The rest of the API: `Stages.sunAt`, `lightAt`, `isNight`, `lampsOn`, `skyDir`,
+`propPrims`, `motionAt`, `partAt`, `Stages.Origin` (where sets are built, far out over the sea and high up),
+`Stages.Budget` (4,500 parts) and `Stages.Night`. Lamps on a set are `r:glow` with a range, lit after
+`Stages.Night.From` outdoors and always indoors (`attrs = { Stays = true }` keeps one on through a beat's `fx =
+"dark"`). Grass and flower prims are `collide = false` and left out of the camera's checks.
+
+`Data/Moves`: the villagers' own animations as keyed poses on R15 joints (degrees, the root in studs on a hip height
+of 2; `list`, `sample`, `turn`, `place`, `over`), played from code since animations can't be uploaded from here, and
+`figure` (a plain body's parts in a pose, for the previews and the spec). `Data/Cutscenes` scripts events by id
+(`Cutscenes.forEvent(id, ev)`): which set, who stands where, and beats keyed by line number, by the lines after an
+answer, by an `icon` or `who` filter, or by a `cue` a line carries; a beat has `shot`, `on`, `act` (letter, `*` the
+speaker, `others`, `all`), `look`, `move` (to a mark), `set` (another set, with a fade), `pace`, `prop` and a list of
+`fx` (`stars`, `confetti`, `dark`, `lit`, `flash`, `cloud:<letter>`, `glow:<letter>`, `dust:<letter>`;
+`Cutscenes.Fx`). `Acts` is Roblox's six gestures plus every move in Data/Moves; a script may give `hour`; `cast` 0
+keeps a star off the set; the default line cycle is wide, side, two; `Cutscenes.all()` lists these scripts and the
+events' own. An event def in Data/Events may carry `cutscene = "<set>" | { stage, cast, extras, open, lines, after,
+ask, ending }`, and a line `cue = "<name>"`; both pass through unchanged (no server or remote change).
+`Data/Events/Moments` holds fifteen events with their `cutscene` scripts beside them; its lines are tagged with a
+local `cue(s, name)` rather than counted, since bursts vary by personality.
+
+`UI/Cutscene` builds the set and its props in a `CutsceneSet` folder in Workspace at `Stages.Origin` (client only,
+quiet parts, the town's light tags taken off, drawn with `Builder`'s `Options.smooth` so balls and cylinders are
+Roblox's own round shapes). While it is up it holds Lighting's `ClockTime`, the ambients, the Atmosphere and the
+`Grading` effect at the set's hour every frame, so the real sun or moon, shadows, haze, grade and the set's own lamps
+light it; sets the player's camera Scriptable and cuts between still shots (`Focus` on the shot, for the lens blur);
+marks the camera with the attribute `Cutscene` (a screen effect that follows the camera stands down while it is
+there); stops the weather's emitters (`WeatherFx`); plays Data/Moves on the actors' Motor6D C0s (with ink outlines);
+and moves props with `BulkMoveTo`. On close it puts everything back (camera, Lighting, Atmosphere, Grading, the
+emitters) behind a dip to black in a `CutsceneFade` ScreenGui of its own. `Cutscene.current` is the one up (for the
+previews), with `where()`, `figures()`, `lampsLit()` and `propsNow()`. `Dialogue.open` takes `Stage = { script,
+stage, event, modelOf }` and the scene has `beat(line)` and `stage` (it falls back to busts if the stage can't be
+built); `EventCard` adds `line.at = { phase = "lines" | "after", n }` and sends beats for the lines, the question and
+the ending. The Cutscenes spec checks the sets (twenty or more, each with an hour and turned to its sun; frames,
+z-fighting, the part budget, marks with room), props, motions and riding marks, the moves (keyed on real joints,
+bodies standing, lying and doing push ups on the ground), and that every script from `Cutscenes.all()` names real
+events, sets, marks, shots, acts, props, paces and effects; the camera's old between-shot move check is gone, since
+it cuts. The `talk_card` sim checks the set in the world, the cuts, the held light and that everything is put back.
+Previews: `sh tools/preview/stage.sh <id> <dir> [--shots wide,two]` (`tools/preview/stage.py` draws the set in the
+game's light at its hour through look.py, with sun or moon shadows, lamps, haze, grade and bloom; posed stand-ins
+from `tools/preview/stage_lib.luau`), `ui.sh cutscene:<event>[:<n>|:ask|:a<n>]`, `render.sh stage:<id>`
+(`dump.luau stage:<id>`). `tests/sim/fake.luau`: a property given with `Fake.extend` can be set (Lighting's clock);
+`tests/sim/client.luau` exports `Lighting`.
 
 ## Using things
 
@@ -249,6 +365,56 @@ a potter kind (`Around.uses`, `can.use`, weights in `Tuning.Routine`), `Villager
 outcomeId, key)` fires when a go turns out, and `Villagers.reactNear` is shared with Interact. A brought friend is
 held with control `"chat"`. The numbers are in `Tuning.Uses`; nothing is saved. The Uses spec checks the data, the
 spots against every placed turn, the rarity bands and shares over 20,000 seeded goes, and the rules.
+
+## The bag, gifts, titles and prizes
+
+The user: "make it such that you can pick up items, and interactable items give you things ... You can then gift
+villagers different items to make them happy ... add an inventory system to the player", "make it such that heart
+level is uncapped" and "add more rewards to quests, like titles, special buildings, special gifts, etc."
+
+- `Data/Items`: every thing (`id, name, cat, color, phrase, special`): the foods from `Data/Foods` under their own ids
+  (`FoodCategories`), the rest drawn in `UI/ItemArt` with shape lists in `UI/Icons` (an item's id must not be an
+  interface icon's name: ItemArt is merged into IconArt over them). `Categories` (fruit, greens, sweet, meal, drink,
+  book, flower, craft, trinket, treasure), `get`, `capital`, `phrase`, `inCategory`, `categoryName`. `Sources`
+  (`verb, things, rare?, cook?, work?`), `source(key)`, `pick(source, rng, rareChance)`.
+- `Build/Catalog` Def: `gives` (a source key: a piece that gives something; a workplace's source has `work`) and
+  `prize` (a keepsake from a goal). 45 pieces carry `gives` (each recipe file's `Item` type has the field).
+  `Build/Recipes/Prizes`: `prize_clock`, `prize_bandstand`, `prize_wishtree`, category "keepsakes", price 0, `prize =
+  true` (the Events spec skips prizes when it looks for the event that gives each keepsake).
+- `Data/GiftLines`: by personality, `love`, `ok`, `bad`, `give` lines with `{thing}` and `{player}`, said through
+  `Sim/Voice`. `Data/Personalities`: `likes` and `dislikes` (item categories) on every personality.
+- `Data/Titles`: the titles (`id, name`). `Sim/Titles`: `give`, `has`, `wear(profile, id | false)`, `worn`, `list`,
+  `clean`. `Util/TitleTag.build(name, title)`: the name tag drawn under a BillboardGui by `Services/Titles` and in the
+  Goals menu's preview.
+- `Sim/Bag`: `count`, `total`, `room`, `add`, `take`, `owe`, `settle`, `entries`, `gathered`, `canGather`,
+  `gather(profile, day, sourceKey, rng)` (counts `stats.gathered`, and `stats.cooked` for a cook source), `clean`.
+  Numbers in `Tuning.Bag` (after Uses): 10 of one thing, 40 in all, 10 gathered a town day.
+- `Sim/Gifts`: `taste(v, item)` ("love", "ok", "bad"), `likes(pers)`, `today(v, day)`, `canGive`, `give(profile, vid,
+  id, day, rng)` -> ok, `{ taste, line, hearts, mood, wish, notices }` or why (its `mood` is the change
+  `Needs.addMood` made), `offer(profile, vid, day, rng)` -> id, line, `line(v, kind, item, rng, name?)`. Numbers in
+  `Tuning.Gifts`; `Tuning.Titles` sits after Flair.
+- `Sim/Life`: no `HeartMax` (gone from `Tuning.Life`); `heartNeed` grows with no top; `claimGoal` returns a third
+  value, the notices for its title, piece and thing (a thing that doesn't fit is owed: `Bag.owe`). `Data/Goals`:
+  `title`, `piece`, `thing` on a goal; new goals `gifts5`, `gather20`, `cook10`, `gifts30`, `heart20`.
+- Services (in `Main.server` after Work): `Bag` (prompts on giving pieces tagged `GatherPrompt`, owner only, per
+  piece rest, the day's cap; things made at work from `Work.at`; picking up traces; holding a little model in the
+  right hand, `Holding` attribute; dropping with a "Pick up" prompt for the dropper alone; owed things settled on
+  join), `Gifts` (GiftGive; a villager's gift on `Villagers.Talked`, a BindableEvent fired when the owner talks to a
+  villager, the line sent as a `Talk` message so the card shows it), `Titles` (TitleWear; the `NameTag`
+  BillboardGui on the head, Roblox's own name off while a title is worn). The GoalClaim handler notifies the extras
+  and pushes titles, keepsakes, bag and owed.
+- Client: `UI/Bag` (the menu, the Bag button in the row under the clock), `UI/GiftPicker` (a card with no `Dim`,
+  over the talk card or the villager page), `World/Gather` (shows the gather prompts on your own plot only, not in
+  Build mode), `UI/TalkCard` (a Gift answer), `UI/Residents` (a Gift button), `UI/Goals` (the reward line, the Titles
+  tab).
+- Specs: `Bag` (things, icons by the icons' rules, sources and the pieces that name them, stack and total caps,
+  gathering and its daily cap, owed things, cleaning), `Giving` (tastes, a gift a day, refusals change nothing, a
+  craving answered, every personality's lines in its own hand, a villager's gift once a day, hearts with no top,
+  goal rewards, titles, every title from exactly one goal and every prize from some goal). Preview scenes (in
+  audit.sh): `panel:Bag`, `panel:Bag:empty`, `panel:Residents:gift`, `panel:Goals:titles`, `talk:gift`. Needs a
+  Studio playtest: the gather prompts (E, or F beside another prompt) and their rests, things made at work, holding
+  a thing (the weld to RightHand or Right Arm) and dropping one, picking up a villager's book or letter, the title
+  tag, a villager's gift arriving on the talk card.
 
 ## Working at a workplace yourself
 
@@ -294,6 +460,115 @@ character for a `you` line. The camera is left alone. Specs: `PlayerWork` (the s
 the purse, the bounds, who may start, why it stops) and `WorkService` (the real Work service and the villagers' pay
 packets with their neighbours stubbed, on a wound clock).
 
+Skills and pay that grow with the town (the user: "when players work, make what they earn scale off town level.
+each skill also has a level/experience bar, which you gain while doing the work"):
+
+- `Sim/Skills` (no services): a player's own skill at each job. `toNext(level)` is `Tuning.Skills.Base * level ^
+  Grow`; `startOf(level)`, `most()`, `levelOf(xp)` (level, into, need; need 0 at the top), `info(profile, job)` (`{
+  job, name, level, into, need, xp, top }`), `level`, `add(profile, job, xp)` (whole points, known jobs only; returns
+  the levels before and after), `list(profile)` (jobs worked, best first), `payK(level)`, `townK(level)`, `clean(raw)`.
+  Saved as `profile.skills = { [jobId] = experience }`.
+- `Sim/PlayerWork`: `boost(townLevel?, skill?)` is `Skills.townK * Skills.payK`; `rate(def, townLevel?, skill?)` and
+  `dayCap(townLevel?, skill?)` grow by it (1 when not given); `earn(purse, day, rate, seconds, cap?)` and `full(purse,
+  cap?)` take the day's cap; `Say.levelUp`; `skillLine(job, level, top?)`.
+- `Services/Work` works out the town's level (`City.level(City.worth(plan))`) and the skill at start; the session
+  keeps `job`, `town`, `cap` and the carried experience; every look adds `Tuning.Skills.PerSecond` a second
+  (`learn`); a level up recomputes the rate and the cap, notifies and pushes `skills`; `Villagers.Served` adds
+  `Tuning.Skills.Serve`. It tells `Villagers.setPlayerWork` as work starts and stops. The `Work` event also sends `{
+  skill = { job, name, level, into, need, top }, cap }` (no `on`) about every `Tuning.Skills.SendEvery` seconds while
+  working, and `skill` on the `{ on = true }` message. `client/World/Work`: the notice is 84 high with the skill and
+  its bar (`Work.skillWords`; `Work.card` returns the skill's words and the bar's fill too). `UI/CityPanel` lists
+  "Your skills" (`MenuParts.progress` rows).
+
+Customers and company (the user: "villagers might come up to interact and do chats based on the work that is being
+done ... villagers might sit with each other or with you"):
+
+- `Sim/Visits` (no services): the customers' asks by job and personality (`ask(job, pers, rng)`), the worker's
+  answers (`serve(job, name, rng)`), `thanks`, a word for the player at the counter (`greet`), sitting down beside a
+  villager or the player (`sit(pers, rng, toPlayer)`), `has(job)`, `all()` (every line, for the spec) and
+  `beside(free, taken, reach)` (free seats within reach of a taken one, nearest first). Numbers in `Tuning.Visits`.
+- `Sim/Routine`: `Ctx.boost` (kinds made likelier, multiplied into their weight) and `Ctx.serving` (a call is open
+  out of work hours: the player at work).
+- `Services/Villagers`: `Villagers.setPlayerWork(player, key?, job?)`, `Villagers.Served` (an event: player, vid).
+  `visit` asks, answers and thanks from `Sim/Visits`; `visitYou` serves a villager at the player's workplace (the
+  player's answer through `Use.show` over their head, `Tuning.Jobs.VisitCoins`, `Served`). `around` adds `YOU`
+  ("@you") to `open` when the player works near, `beside` (free seats beside a sitter, by `besideSeats`), `boost`
+  and `serving`; `pickOpen` and `pickBeside` choose; `sitBeside` sits them down beside a sitter and has them chat.
+
+Work moves (the user: "let there be animations while a villager works. players can also pay gems to change this
+animation to an emote of their choosing"):
+
+- `Sim/Routine`: `Routine.move(job)` is the job's own move (`act`, `beat`); `Routine.loop` gives every step without an
+  act the job's move, and every step without a beat its beat.
+- `Data/Emotes`: Roblox's own R15 emote animations, `{ id, name, anim, looped, beat }`, ids `em_*`; every asset id was
+  checked against Roblox's asset details as an Animation made by Roblox. `Sim/WorkMove` (no services): `price()`,
+  `get(v)`, `act(v, act, beat)` (the emote at its beat, or the step's own), `check`, `set(profile, vid, id)` (takes the
+  gems), `clear` (free), `sanitize`. A villager's `move` (an emote id) is saved, `WorkMove.sanitize`d on load.
+  Numbers in `Tuning.WorkMove`.
+- `Npc`: `toollunge` among the default animations; `Npc.track` plays a `Data/Emotes` id by its own animation (looped
+  as the emote says, Action priority). `Villagers.workTurn` plays `WorkMove.act`; `Villagers.setWorkMove(player, vid,
+  id | false)` answers the `VillagerMove` remote.
+
+Work pays half (the user: "Also, halve money gain from work."): `Data/Jobs` sets each job's `income` to its written
+income times `Tuning.Jobs.Pay` (0.5), to 5 coins, at load, and keeps the written one as `listed`; so wages, the busy
+day bonus and time away are half. `Tuning.Jobs.VisitCoins` is 5 and `Tuning.Jobs.Player.DayCap` 125.
+
+Specs: `PlayerWork` (pay by town level and skill, the scaled bound at every level and skill, the skill curve and its
+save), `WorkService` (the skill on the start message, the bar while working, a level up and its pay), `Visits` (lines
+for every job and personality, the writing rule and the marks, seats side by side, a move on every step), `WorkMove`
+(the emotes, buying, going back, the save), `City` and `Wages` (bounds halved and days doubled with the pay),
+`Routine` (the walk back after an event allows a break first). Previews (in audit.sh): `ui.sh work`,
+`panel:CityPanel:skills`, `panel:Residents:quirks:move`.
+
+## Mood, and what villagers ask for
+
+The user: "Villager mood bars should also not be that easy to fill up, the factors affecting it should be: amount
+and relationship of friends, quality of bed, roof over bed, fun objects near bed. Villagers will ask for these if
+they are not fufilled", and "allow players to click on villagers anywhere to either open their profile or chat with
+them".
+
+- `Sim/Needs` (shared, no services; works on the client's copy of the town too): `Factors` (bed, comfy, roof, fun,
+  friends), `Asks` (bed, work, roof, comfy, fun, friends), `Lines` / `line(kind)` (the asks' last lines; "introduce"
+  too), `bedOf(profile, vid)`, `comfy(def)` (step and points by price), `covered(plan, item)` (a roof with `lv >=
+  item.lv` or a floor with `lv > item.lv` over its middle), `isFun(def)`, `funNear(profile, vid)`, `friends(profile,
+  vid)` (points, friends, acquainted), `factors(profile, vid)` (`{ id, points, max, have, text, step? }`), `cap(profile,
+  vid)`, `lift(d)`, `addMood(profile, vid, d)` (returns the change), `drift(profile, hours)`, `missing(profile, vid)`,
+  `ask(profile, vid)`, `stranger(profile, vid)`, `teaching(profile)` (the tutorial on its villager, bed or work step).
+- Every mood change goes through `Needs.addMood`: `Life` (wishes, fading), `EventEngine.apply` (`mood`, `moodv`),
+  `Gifts.give`, `Talk.chat`, `Villagers.addMood`, `Events.party` and room requests. `Services/Villagers`' hour calls
+  `Needs.drift(profile, 1)`; the night's `BedMoodPerNight` / `NoBedMoodPerNight` and `Villagers.roomScore` are gone.
+  `Schema.migrate` puts a missing or broken villager mood back to `StartMood` and clamps it.
+- `Tuning.Needs` (after `Tuning.Villagers`): Base, Bed, Comfy steps, Roof, FunEach, FunMax, FriendPoints (by level
+  index), FriendsMax, Rise, Fall, BoostShare, ComfyWant, FunWant, FriendsWant, AskChance by kind, AskEvery (town
+  hours), AskWait, AskGap, AskKeep (seconds).
+- The asks: `Data/Events/Needs` (loaded after Moments) holds `nobed` and `jobhunt` (moved from `Data/Events/init`),
+  `needroof`, `needcomfy`, `needfun` and `needfriends`; each ends on a narrator line from `ctx.needLine(kind)`, the
+  fixed "Villagers need ... Build it in Build mode > ..." line, whose paths are Build mode's real group and tab names
+  (the Needs spec reads `Build/BuildUI`). Context helpers `ctx.need(vid)`, `ctx.lacks(vid, kind)`,
+  `ctx.needLine(kind)`, `ctx.stranger(vid)`; the effect `wish who other` (`Life.wishToMeet(profile, vid, other, now)`:
+  a friend wish past the town's wish cap) with the service effect `wishes` (`Villagers.syncWishes`). `NewsKinds`'
+  request topic has the new ids.
+- `Services/Events`: `Events.ask(player, vid, kind, delay?)` queues an ask; the scheduler plays a due one ahead of the
+  random events (`AskGap` after the last, any hour, through the event's own weight) and drops one no longer needed or
+  older than `AskKeep`; `Villagers.Created` queues the newcomer's bed and work asks after `AskWait` (not while
+  `Needs.teaching`); `World.ClockChanged` rolls one villager's ask an hour (`AskChance`, not within `AskEvery`).
+- Clicking a villager: client `World/VillagerClick` (started in `Main.client`; `villagerAt(pos)`; a short press under
+  `Tuning.TalkClick.Tap` seconds that moved under `Slack` pixels, a ray `Reach` studs long to a model in the player's
+  own plot's `Villagers` folder; nothing in Build mode, the creator, a menu or a scene) opens `UI/VillagerMenu` as a
+  Hud panel: `Hud.open("VillagerMenu", { vid, at })` (`open`, `close`, `isOpen`), buttons named `Profile`
+  (`Hud.open("Residents", vid)`) and `Chat`. `VillagerTalk(vid, "click")` is a talk started from afar: the owner's
+  own villager, the player on their plot within `Tuning.TalkClick.Margin`; the server keeps where they stood
+  (`farFrom`) and counts standing within `Talk.Range` of there as standing by them until the talk ends. The answer
+  carries `far = true`; `UI/TalkCard` keeps the spot (`current.from`) for its own walk off check. It fires
+  `Villagers.Talked` like a held E chat. `Tuning.TalkClick` (after `Tuning.Talk`): Margin, Tap, Slack, Reach.
+- Specs: `Needs` (each factor, the cap, drift, lifts and knocks, an old save's moods, the asks and their lines against
+  Build mode's real tab names, each ask staged); `Events` (the `wish` op, an open air bed in some towns, a cold with a
+  doctor played on purpose); `EventService` (the newcomer's asks ahead of the random events, held while the tutorial
+  teaches); `TalkService` (a chat started by a click from afar, its walk off, off the plot, a visitor); `City` (the keen
+  player's town has comfy beds under a roof with fun by them; the day's mood is `Needs.drift`); `Life`, `Talk`,
+  `Giving`, `WishService` (lifts through `Needs`). Preview scenes `panel:Residents:mood` and `pick` (both in
+  `audit.sh`).
+
 ## The lights players place
 
 The user: "also, make it such that lights are on by default and dont change based on time. players can turn them off
@@ -338,6 +613,18 @@ putting out only what is near on their floor, the starting house's bedroom light
 a switched off light staying off, turning one on over a sleeper, old saves, the field's checks, undo and redo);
 `BuildService` checks a move, a repaint and undo keep the switch.
 
+Lamps in the town's own rooms (the user: "detail the town more, and make the lights and interior in them work"):
+`Build/Builder` has the tag `RoomLight`. A glow prim with `attrs.RoomLight` (never on a player's plot) is Neon and lit
+from the start, scaled by `Tuning.RoomLights` (Brightness 1.3, Range 1.15) instead of `Tuning.Lights.Town`, and the
+clock never switches it. `Interiors.fill` marks every glow it draws as a room light, and so does `TownModels`'
+pendant (the square's shops); the row houses' ceiling lamps cast light now. Street lamps, lit windows and signs stay
+`NightLight`.
+
+A placed piece's switch reaches its effects too: `Services/Lights.show` sets `LightsOff` (`Lively.Off`) on the placed
+model as it switches its glowing parts, and `World/Lively` keeps an effect made with `Lively.fx(..., { switch = true
+})` (attribute `FxSwitch`) to models without it, so the fog machine's fog stops with its switch and a sleeper puts
+it out too. Only a piece with a part that glows has a switch.
+
 ## The island's terrain
 
 `Data/Terrain` lays out the island's natural ground, which `World.buildTerrain` writes as Roblox terrain when the
@@ -368,6 +655,15 @@ which dosent have too high contrast"; a plain smooth one was tried before and ta
 keeps its own. The Terrain spec checks the shore is wavy,
 the water's edge sits on a gentle slope inside the shallows, no grass is under anything built or on a road or a
 plot, the terrain follows `Hills.at`, the tiles, the open sea, the beach props and the place's settings.
+
+Six plots and the seasons (this round): `IslandN` is 1400 (it was 940), and `Data/Hills` has `Z2` 1400,
+`Notch.depth` 660 (it was 200), the middle peaks, plateaus (lookout, observatory, radio) and the creator's meadow 460
+further north, and two new peaks behind downtown and the civic quarter, kept narrow so they add nothing under the
+stair. `Terrain.SeaFloor` (Sand, Slate): `voxels` puts the sea only over them, so no terrain water lies under a
+plot's ground part (the basement view takes that part away). `World.applySeason(s)` sets the terrain's material
+colours by `Seasons.terrain` at start and when the season changes on a new day, and a storm raises the sea's waves
+(`Tuning.Weather.StormWaves`). The Terrain spec counts the hills' grass past Ridge Road and the verge behind the new
+plots, and checks there is no sea over a plot's ground.
 
 ### The long grass
 
@@ -479,6 +775,19 @@ a new square, a square looked at again, and every time the focus has moved `Move
   the look `barrel`) wear a pale tile picture with its normal map. Walls default to WoodPlanks (`Palette.Defaults`
   `WallOut`, `WallIn` and `RoofGable`), and so do the ready-made buildings' and the starting house's wall finishes,
   `Interiors.shell`'s walls and the ceilings `Shapes` draws.
+
+Round where it should be, and doors one doorway at a time (this round):
+
+- `Geometry.Prim.smooth`: a ball or a cylinder drawn truly round (Roblox's own shape), skipping the low poly kit;
+  `Builder.makePart` honours it, as do the previews (`dump.luau` passes it, `render.py` draws it round). Keep its size
+  round (a ball the same every way, a cylinder's Y and Z alike). `Builder`'s `Options.smooth` draws every ball and
+  cylinder of a model that way (the cutscene sets). `Build/LowPoly`: every kit shape collides as its hull
+  (`CollisionFidelity.Hull`; the Gem's was `Box`), so a rock or a ball has no invisible corners.
+- `Services/World`: a door is the leaves that share a doorway (`Frame`) within a model, each door with its own prompt
+  on its biggest leaf (`Door` keeps its leaves and its middle), so a row of houses or a wall with two doors opens one
+  doorway at a time. `World.toggleDoor(leaf)` takes any of a door's leaves.
+- `Data/DetailModels`: the pocket fountain's two paving rings stand 0.03 and 0.08 off the ground, so their rims never
+  meet the end of a gravel path.
 
 ## The facade kit
 
@@ -707,9 +1016,11 @@ The passes' floors and land (docs/GAME_DESIGN.md, "Floors, a basement and bigger
 - Client: `BuildMode.setLevel(n)` clamps to `Floors.shown`; on -1 `Build/Underground` hides the ground on this
   screen alone (`hide(plotModel, frame, plan)`: the plot's `Base`, its water pieces and the `Land` model fade with
   `LocalTransparencyModifier` and `CanQuery` off, and the terrain's solid voxels under the land from -12 to 0 are
-  read and cleared locally; `refresh()` clears them again after a plan change, since the server's terrain writes
-  reach the screen; `show(plan)` puts back what it cleared except where the plan has dug since, a basement block or
-  a water; `isHidden()`; `Underground.terrain` for the sim). `BuildCamera` keeps the eye `ABOVE_GROUND` (4) over the
+  read and cleared locally; `refresh(plan)` (BuildMode passes `State.plan`) clears them again after a plan change,
+  since the server's terrain writes reach the screen, and clears any water under the land too, except in the columns
+  the plan digs (basement blocks, waters: the server owns those); what it cleared is kept as the server last had it
+  (`orig`), the plot's ground parts are faded again on each refresh, and `show(plan)` puts back only what is still
+  cleared and not dug now, so going back up leaves no water behind; `isHidden()`; `Underground.terrain` for the sim). `BuildCamera` keeps the eye `ABOVE_GROUND` (4) over the
   ground while the focus is under it. `BuildUI`'s floor arrows (`floorStep`, `floorTip`, `floorPress`,
   `paintFloorButtons`): "go", "end" (dim) or "lock" (a small `lock` icon named `Lock` on the corner, attribute
   `Locked`; pressing offers the pass with `Purchase.prompt`); the hint calls -1 "Basement".
@@ -724,6 +1035,57 @@ The passes' floors and land (docs/GAME_DESIGN.md, "Floors, a basement and bigger
   back exactly). The build client sim's "floors" step drives the arrows, the locks, the passes, the hidden ground
   and a basement room. Previews: `render.sh basement` (and `basement:open`), `ui.sh build:top` and
   `build:basement`.
+
+## Roofs and paths that meet, and ways between floors
+
+The user: "it seems like when roofs are put together, z fighting occurs", "make it such that paths dont z fight if
+interesecting each other, and their edges merge together so it outlines their entire combined shape" and "make ways
+to travel down, like different hole types, and add elevators".
+
+- `Build/Poly` (pure): convex polygons on the ground plane, `{ {x, z}, ... }` counter-clockwise: `area`, `ccw`,
+  `rect`, `clean`, `clip(p, a, b, c)` (keeps a x + b z + c >= 0), `intersect`, `subtract` (convex pieces that never
+  overlap), `subtractAll`, `inside`, `segment` (the stretch of a line inside one, with a margin), `box` (is it an axis
+  aligned rectangle).
+- `Build/Shapes.roof(r, join?)`: `join = { key, others = { { key, roof } } }` fits it to the roofs it meets.
+  `roofParts` (local) describes a roof as faces (`Face`: the call that draws it alone, its outline and its top's
+  outline on the ground, its top plane `A + Bx x + Bz z` and underside), caps and parapets. `hiders` works out what of
+  a face the others hide (zones: both rooms, the other's room, neither; in one plane the first put down keeps it),
+  taken off the underside's outline by the boards' thickness so two tops meet on a valley's line. Caps and parapets
+  are cut by `cutLine`; gable and lean-to ends get `endState` ("skip" when another roof closes it, "back" set back by
+  half their thickness, nil). `roofsMeet(a, b)`, `roofIn(plan, key)` (alone when it meets nothing).
+- `Build/Shapes.groundFloor(plan, key, holes)`: a ground floor drawn with the ground floors it touches (`floorsMeet`):
+  the newer key on top, the edging course worked out per cell between every edge of them all and those moved in and
+  out by its width (`mergeCells` joins the cells back into boxes), banks along the outside only (`Bank` wedges,
+  carried round outside corners). Alone it is `Shapes.floor`. `Builder.primsFor` draws roofs with `roofIn` and ground
+  floors with `groundFloor`.
+- `Plan`: `spans(def)`, `holeRect(item)` (a piece's `hole` turned as it stands); `holes(plan, lv)` cuts every floor a
+  piece runs up through; `validItem` refuses a piece whose top floor is past `Plan.Highest`; `affected` redraws the
+  ground floors a ground floor change touches, the roofs on its floor a roof change reaches (overhangs included), and
+  every floor a lift runs up. A roof or a floor that meets nothing draws exactly as before.
+- `Catalog.Def` gains `travel` ("stairs", "ladder", "pole", "slide", "lift"), `hole` (x1, z1, x2, z2 in its own space)
+  and `spans`. `Collide.body` gives the stepped stair body to plain stairs only. `Sim/Floors` counts a lift's
+  `spans` as the floors it reaches.
+- `Build/Recipes/Travel`: `hole_hatch`, `hole_trapdoor`, `hole_pole`, `hole_slide`, `lift_2` to `lift_5`; `stairwell`
+  is in `Recipes/Structure`. A lift's parts: `LiftCar` (the car, drawn at its own floor) and `LiftDoor` (`Floor`,
+  `Side`), never solid; `LiftFloor` and `LiftGate` (`Floor`, the gate in its doors' plane), hidden and solid;
+  `LiftUp` / `LiftDown` (`Floor`), hidden anchors for the buttons' prompts.
+- `Sim/Lifts` (pure): `isLift`, `spans`, `landingY`, `target(spans, at, dir)`, `ride(from, call, to)` (the timeline:
+  fetched, opened, boarded, shut, arrived, open, closing, done), `carAt`, `doorsAt`, `landingOf`, `inCar`, `atDoors`,
+  `spot`, `Tag` ("LiftPrompt"), `DoorSlide`, `Car`. Numbers in `Tuning.Lifts` (PerFloor, Doors, Board, Open, Hold,
+  Reach, Cooldown).
+- `Services/Lifts` (after Lights): prompts on every placed lift's buttons; `pressed(player, i, key, floor, dir)` checks
+  the lift, the landing and where the player stands, then runs the ride: it writes `LiftFrom`, `LiftCall`, `LiftTo`,
+  `LiftStart` (server clock) on the model, opens the gates while the doors are open, anchors and carries the riders,
+  and leaves `LiftAt`. `drawn(i, model)`. Client `World/Lifts` moves each lift's car and doors from those attributes
+  with `BulkMoveTo` and hides the buttons' prompts in Build mode. Anyone may ride. Playtest lifts in Studio.
+- Specs: `Travel` (the pieces, their holes and spans, the passes, ladders and the slide, what of a lift is solid, a
+  ride's timeline); `Build` ("Roofs and paths that meet"); `Terrain` (no sea over a plot's ground); the Zfight spec's
+  `joins` scope (`Z.joins` in `tools/preview/zfight_lib.luau`: roofs in a row, side by side, L, T, crossed, ends,
+  overlapping, hips, flats, lean-tos; paths crossed, T, L, overlapping, mixed; the ways between floors in their
+  floors). The build client sim's floors step has the sea's water under the plot and the server digging a room while
+  the basement is shown. Previews: `render.sh joins` (`joins:roofs`, `joins:paths`, `joins:travel`, or one case such
+  as `joins:roofs:L`), `items:hole_hatch,hole_trapdoor,hole_pole,hole_slide,stairwell,lift_3`;
+  `lune run tools/preview/zfight.luau joins`.
 
 ## Placing: collisions, angles, Fine Grid, Stretch and Any Colour
 
@@ -799,6 +1161,18 @@ way back, where it stays (not while drawing); its buttons and a step's outcome a
   "the build mode passes" run and the ready-made building turned down over chairs. Previews: `build:blocked`,
   `build:stretch`, `build:stretch:pick`, `build:colour` (in `audit.sh`), and `render.sh stretch:<id>`.
 
+- Pieces on pieces and honest stairs (the user: "make it such that you are able to put objects on top of each other or
+  on each other, respecting their collision" and "some objects, like stairs, have collission boxes that arent part of
+  the mesh but are invisible"): `Catalog.standsOn(def, below)` lets floor and ground pieces stand on any floor,
+  ground, stairs or water piece that isn't a rug or a flat floor piece (`Tuning.Unstick.Flat`, unless it is a path or
+  a shape); surface pieces and shapes stand on anything but a mark, as before. The free standing ghost looks through
+  a non-solid part (`CanCollide` false) for floor and ground pieces, and `Build/Collide` keeps a stacked piece out of
+  the other's body. The stairs' body is `StairSteps` (7) boxes from the foot (+Z) to the top (-Z), each from
+  `StairUnder` (1.2) under the line of the treads up to it (it was mirrored and solid to the floor), and
+  `Recipes/Structure`'s hidden ramp is a slab as wide as the treads, its top on the line of the treads, `RAMP_DEPTH`
+  (0.5) deep, drawn with `r:quad`. The Unstick spec checks every hidden solid part of every catalog piece has
+  something seen at it or within 1.2 over it, and that the room under every staircase's high end is open.
+
 ## Build mode's catalog: looks, shapes, pictures, marks, pillars, water
 
 - Catalog: a def may carry `style` (one of `Catalog.Styles`: cozy, modern, scifi, garden, seaside, rustic, fancy,
@@ -842,6 +1216,59 @@ way back, where it stays (not while drawing); its buttons and a step's outcome a
   foliage, or what starts above the piece's `surface`; every part on shapes, stairs and paths; workplaces, doors,
   windows and pieces with a hidden solid box keep theirs. CanQuery stays on so Build mode can pick anything.
   `Geometry.flatten` makes a shape inside a solid piece that says it isn't solid come out not solid.
+
+- Search (the user: "add searching in build mode"): `Catalog.searchWords(def)` (name, category name, style name,
+  tags and `Catalog.Tags`' words, "path"; lower case, cached), `searchTerms(query)` (up to six words of the first
+  `SearchMax` (60) characters), `search(query)` (every word in `searchWords`, a word ending in s also tried without
+  it; names starting with the query, then names holding it, then the rest, each by category order and catalog order;
+  keepsakes left out). `Build/BuildUI`'s `BuildSearch` box (`SearchBox`, `ClearSearch`) sits where the category's
+  `SubNote` was: `setSearch(text)`, `searchTray()`, `pickDef(def)`, `trayMode` "search".
+- The time of day (the user: "in build mode, allow the player to toggle what time they see their city in"): client
+  `Build/ViewTime`: `Options` (now, morning, noon, evening, night: `Tuning.ViewTime`, after `Tuning.Look`: Morning 8,
+  Noon 12.5, Evening 18.25, Night 22.5), `index()`, `current()`, `hour()`, `set(i)`, `step(dir)`, `townHour()` (Services/
+  World's hour, worked out the same way), `lookAt(h)` (the grade, ambients and air for an hour from `Tuning.Look`, by
+  the same rules as `Services/World.grade`). While an hour is picked a RenderStepped connection writes
+  `Lighting.ClockTime`, `Ambient`, `OutdoorAmbient`, the `Grading` ColorCorrection and the Atmosphere's colours every
+  frame; the town's `NightLight` parts are switched once on this screen and put back on `set(1)`. `BuildUI`'s
+  `TimeOfDay` slab sits top right (`Earlier`, `Later`, `TimeName`; hint ids `timeDown`/`timeUp`; in `AWAY`), and
+  leaving Build mode sets `ViewTime.set(1)` and clears the search.
+- A smaller Build mode (the user: "try to simplify the build mode interface so it dosent take too much of the screen
+  space"): `BuildUI`'s layout constants are EDGE 10, GAP and PAD 6, DOCK_H 46, TOOLS_H 60, TILE_H 48, VIEW_BTN 48,
+  INNER_H 136, CARD 104 x 132, CHIP_H 40, STYLE 80, HINT_H 28, and every tray page fits `INNER_H`; `SavesTray`'s cards
+  are 260 x 128. No `Kit.rim` on a rounded rectangle there (tile faces, the well, the action bar, the floors and
+  passes buttons, the picture preview, the colour strips).
+- Over water (the user: "make it such that objects can go above waters"): `Build/Water.checkItem` for a piece not made
+  for water: nil when its footprint misses every water; false for stairs or a piece under the surface (`y < Surface`);
+  nil at the ground or above (the usual rules); true when it floats (`Surface <= y < 0`) with its whole footprint over
+  one water; false otherwise. `standY(plan, def, item, y)` is what Build mode stands a piece on over water (the surface
+  when all of it is over one water, else the ground). `valid` still refuses digging a pool from under a piece standing
+  on the ground there (`0 <= y < Raised`); `piecesIn` also takes what floats (y < 0), so it goes with the pool.
+- Grand pieces (the user: "make more vehicles, buildings that cost more for the endgame"): `Catalog.Def.level` is the
+  town level a piece waits for. `Build/Recipes/Grand` holds `grand_chandelier` (14,000), `grand_front_desk` (22,000)
+  and `grand_tower_clock` (30,000 coins after `Tuning.Prices.Items`). `Sim/City.levelOf(plan)` and
+  `City.unlocked(plan, def)`; `Services/Build.levelCheck(profile, requests)` refuses one below its level ("that one
+  opens at Level n") in `Build.apply` and in a saved build's load, while one already down can still be moved, turned
+  or repainted. `Data/Presets`: `Presets.level(id)` (the highest level of its pieces, or 1); the loader also reads
+  `Data/Buildings/Grand/` (`Manor`, `Hotel`, `TownHall`: `grand_manor`, `grand_hotel`, `grand_townhall`). `BuildUI`'s
+  cards of grand pieces and buildings carry a "Level n" tag and refuse an early pick with a notice; `BuildMode`'s
+  preset tool says "opens at Level n". The City spec holds the grand buildings to at least twice the dearest of the
+  rest and at most a fifth of `City.levelValue(level)`, dearer as the level rises; the Presets spec to 110 to 300
+  pieces and the server's level check.
+- Pieces bought with gems (the user: "add a fog machine that players can place with gems"): a def may carry `gems = n`
+  (its price in gems; `price` is then 0). `Sim/GemPieces`: `price`, `owned`, `placed`, `left`, `need(profile,
+  requests)` (the gems a change costs and the pieces it buys), `buy`, `fits` (a saved build's load: no buying),
+  `clean`. Saved as `profile.gemItems = { [itemId] = count }` (at most `Tuning.GemPieces.MaxOwned`, 20, of any one),
+  sent to the client as `gemItems`. `Services/Build.apply` works out `GemPieces.need` before a change and refuses "not
+  enough gems", takes the gems before committing (gives them back if the commit fails), records what was bought and
+  pushes `gems` and `gemItems`; `prepareEach` (a saved build's load) skips gem pieces past what is owned. `BuildUI`
+  shows a gem piece's card with a gem and its price, or "Yours" while one bought isn't down.
+- Specs: `Build` (search; `standsOn` for furniture on furniture, rugs, walls, ceilings, stairs; a gem piece costs no
+  coins), `Collide` (a piece on another's top, not in it; a stack of cubes; the stairs' body from its foot, room
+  under the high end), `BuildService` (a cube on a cube taken and one in it refused; a chair floating on a pool; a tree
+  under the surface refused; gems taken once, kept, a second bought, too few refused, undo keeps the piece), `Water`,
+  `Unstick`, `GemPieces`, `City`, `Presets`. Sims: `build_client` runs "searching the catalog as you type", "standing a
+  piece on another, and over the water" and "the time of day Build mode shows the town at"; `tests/sim/client.luau`'s
+  Lighting is a real Lighting. Previews (in `audit.sh`): `build:search`, `build:search:none`, `build:time`.
 
 ## Pieces that move and give off effects
 
@@ -897,17 +1324,86 @@ player's own screen plays it near the camera; the server only builds the parts, 
   `Lively.count` are for the simulation. The numbers (ranges, rates, the server's look, `MaxAlive`) are
   `Tuning.Lively`.
 
+More decor and running water (the user: "Add much more decor and make animated pieces, such as a swarm of fireflies
+that produce light, and models that have moving pieces" and "some objects, like waterfall, can look more like a
+waterfall, along with having actual water"):
+
+- `Build/Lively`: a motion `drift` (a slow wandering loop never more than `Amount` from its pivot);
+  `Lively.blink(prim)` (attribute `Blink`: a moving part that glimmers too); running water `Lively.flow(prim, kind, {
+  faces, speed, drift })` (a part named `Flow` with `Flow`, `FlowFaces`, `FlowSpeed`, `FlowDrift`; never solid);
+  `Lively.fx(..., { switch = true })` (attribute `FxSwitch`: on only while the piece's switch is on); `Lively.Off =
+  "LightsOff"`, the attribute on a placed model while its switch is off. Client `World/Lively` reads `Blink` parts
+  into its glints and `Flow` parts into flows (Textures laid on the named faces the first time the camera comes near,
+  their offsets slid each move step), keeps `FxSwitch` effects to models without `LightsOff`, and sets a
+  ParticleEmitter's `Orientation` from a preset's `orient`.
+- `Data/Effects`: water pictures (`droplets`, `splashburst`, `splashring`, `mistpuff`, `fogband`, `cloudpuff`, and the
+  flow pictures `veil`, `caustics`, `foam`, each from the Creator Store with its decal and maker, confirmed to show with
+  `scripts/library_textures.py resolve`); `Effects.Flows` (`fall`, `pool`, `foam`: picture, studs, see-through,
+  layers); a preset's `orient`; `splash`, `spray`, `trickle`, `ripple` and `mist` redone with water pictures; presets
+  `plunge`, `foamring`, `fallmist`, `fog`, `fogbank`, `simmer`.
+- `Build/RecipeKit`: drawing helpers for recipes (a module in `Build/Recipes` is read as a list of pieces, so helpers
+  live here): `rod`, `path`, `ring`, `hoop`, `cylAt`, `disc`, `face`, `sphere` (round with `smooth`), `alongY`,
+  `hourMarks`, `hands` (a clock's two hands on the town's time), and water: `sheet`, `fall`, `spill` (curtains all
+  round a bowl's rim), `surface`, `roundSurface`, `foam`.
+- Recipe modules load in name order (`Catalog`'s `load` sorts them), and a category's cards follow that order. The
+  moving decor is `Recipes/Twirls` (garden and street movers) and `Recipes/TwirlsIndoor` (indoor movers and the fog
+  machine), named so they load after the plain furniture (they were `Animated` and `AnimatedIndoor`);
+  `Recipes/MoreDecor` is the still decor and `Recipes/Falls` the waterfalls (`water_falls`, `water_wall_fall`: place
+  "water", `water` "edge", so the water they fall into is the pool's own terrain water). Water was redone in
+  `Recipes/Garden` (`fountain`, `pond`), `Recipes/GardenMore` (`pond_raised`, `bird_bath`, now `lively`),
+  `Recipes/Moving` (`move_wall_fountain`, `move_water_wheel`, `move_koi_pond`), `Recipes/Vip`
+  (`vip_golden_fountain`) and `Recipes/Water` (`water_jet`).
+- Specs: `Lively` (running water, the fireflies' drift and blink, the fog machine's switch, `FxSwitch` only on a piece
+  that glows). `tests/sim/lively.luau` adds fireflies moving and blinking, the fountain's moving pictures, and the fog
+  machine's gems and its fog following the switch. `render.sh water:falls` (`tools/preview/water_scene.luau`) shows
+  both waterfalls on a pond and a pool.
+
 ## Tutorial, wishes, unsticking
 
-- `Sim/Tutorial` (no services): `Steps` (villager, bed, work, craving), `Count`, `Skipped` (99), `progress`,
-  `finished`, `met`, `reached`, `current`, `advance` (the server side of `TutorialStep`) and `catchUp` (on join: an old
-  town that already has a villager, a bed and a job starts at the craving). `profile.tutorial` is the steps done (0
-  to 4) or 99; `stats.cravings` counts cravings bought (`Life.buyWish`). While `current` is the craving step and no
-  food wish is open, `Life.maybeWish` gives a food craving on the next hour instead of by chance.
+- `Sim/Tutorial` (no services; the user: "make one of the player's friends (most interacted with if possible) greet
+  the player"): `Steps` is three (`villager`, `bed` with `piece = "bed_single"`, `work` with `piece =
+  "work_builder"`), `Count` 3, `Skipped` (99); `progress`, `finished`, `met`, `reached`, `current`, `advance` (the
+  server side of `TutorialStep`) and `catchUp` as before; an old `tutorial` of 3 or 4 is finished. `Lines` (the
+  friend's line for each step and `done`), `Prompts` (one a step), `Ask` (the popup's question) and `Ways` (`{ kind,
+  text, icon }` for "yourself", "friend", "custom") are the user's own words; `StandIn` (`{ name = "Juniper", torso,
+  legs }`); `Tutorial.greeter(friends)`: from `{ { id, name, online? } }` the first friend with `online == true`, else
+  the first, skipping anything without a whole id above 0 and a name; nil when there is none. `profile.tutorial` is
+  the steps done (0 to 3) or 99. `Life.maybeWish` no longer hurries a craving along (it doesn't need `Sim/Tutorial`);
+  `stats.cravings` is still counted by `Life.buyWish`. `Tuning.Tutorial` (after `Tuning.CreatorMore`):
+  `FriendsLooked`, `GreeterWait` (the client's wait for the server before Juniper speaks), `FirstAfter` (after the
+  town loads), `Dim`, `Pad`.
   `Data/StarterHouse.newPlot()` is a new plot's plan, the furnished one without `StarterHouse.Held` (`bed_single`,
-  `work_builder`); `plan()` is still the furnished one. Client: `UI/Tutorial` (`start(hud)`, `open`, `close`,
-  `isOpen`; a Hud panel; the welcome is its first page), the step card `TutorialCard` on its own layer `Tutorial`,
-  and a pointer (`TutorialRing`, `TutorialArrow`) made inside the thing to press, found by name.
+  `work_builder`); `plan()` is still the furnished one.
+- The greeter: remote `TutorialGreeter` (() -> `{ name, id?, friend, model? }`, or nil once the tutorial is over), in
+  `Services/Avatar`: once a session a player, it looks down the first `Tuning.Tutorial.FriendsLooked` friends
+  (`friendsUpTo`, whose entries carry `online` from `GetFriendsAsync`'s `IsOnline`), picks with `Tutorial.greeter`,
+  builds the look with `Avatar.fromUserId` and `Avatar.buildModel` (the stand-in from `Appearance.default()` in its
+  colours) and parents the model to `ReplicatedStorage.Greeters` as `Greeter<UserId>`, destroyed when the player
+  leaves. Roblox doesn't say who a player plays with most, hence a friend online now, else the first friend.
+- `UI/Tutorial` (a Hud panel): `start(hud)`, `refresh()`, `stop()`, `open()` / `close()` / `isOpen()` (the popup
+  "Your first villager", `Kit.panel` with `Dialog`; tiles named "Yourself", "A friend", "Custom", each with a `Way`
+  attribute, calling `Creator.openFor(kind)` and listening once to `Creator.Created`), `takeCreate()` (the Hud's
+  Create tile asks it first: on step 1 it opens the popup and returns true), `cut(sw, sh, x, y, w, h)` (the four dark
+  pieces round a hole: top and bottom the full width, the sides between, never overlapping) and `promptAt(sw, sh,
+  hole, w, h, gap)`. On its layer `Tutorial` (ZIndex 4): the scene `TutorialScene` (UI/Dialogue, actor key "greeter",
+  a `Skip` answer in its tools; a Roblox picture stands in through the actor's `image` when the look can't be built),
+  and `TutorialDim` (reaching up through the top inset): frames `Top`, `Bottom`, `Left`, `Right` (`Active`, `T.Shadow`
+  at `Tuning.Tutorial.Dim`, attribute `Hole` = side), the arrow `TutorialArrow` (attribute `HoleArrow`) and the prompt
+  card `TutorialPrompt` (`Line`, `Skip`; attributes `HoleNear`, `HoleGap`); the dim carries `HolePad`. The hole is cut
+  every frame from the target's `AbsolutePosition` / `AbsoluteSize` over the root's `UIScale`; the target gets a
+  `TutorialRing` inside it and the attribute `TutorialTarget` while it is pointed at. Targets are found by name: the
+  Create tile, the Build button and Build mode's `Dock`, `Subs` and `Tray`. The dim steps aside while a piece is held,
+  a menu, the creator or another scene is up, and while the main screen is hidden; a step finished with a piece in
+  hand puts it away. The welcome panel and the step card `TutorialCard` are gone.
+- Specs and previews: `Tutorial` (three steps, the user's words, no dashes, the greeter's pick, cravings left to
+  chance, old saves done); `tests/sim/tutorial.luau` (the friend's welcome, the dark round Create, the popup's three
+  ways, the bed and the workplace through Build mode with the dark following each card, a piece in hand put away, the
+  last line, Hide, the light look, Skip; the creator stubbed). Preview scenes (in audit.sh): `tutorial:greet`,
+  `tutorial:1`, `tutorial:ask`, `tutorial:2:say`, `tutorial:2`, `tutorial:2:build`, `tutorial:3:build`,
+  `tutorial:done`; `panel:Tutorial` is the popup. `tools/preview/ui_dump.luau` dumps the attributes `Hole`,
+  `HolePad`, `HoleNear`, `HoleGap`, `HoleArrow`, `TutorialTarget` as `attrs`, and `tools/preview/ui_render.py`'s
+  `tutorial_hole` cuts the dark pieces, the arrow and the prompt again from its own layout (the simulation has no
+  `AbsolutePosition`).
 - `UI/WishPopup` (`open(vid)`, `isOpen()`, `close()`; a Hud panel): what a villager wishes for, opened by a click on
   their wish bubble (`World/Wishes`, `Hud.open("WishPopup", vid)`). Food: the icon big, a line with `Foods.phrase`,
   Buy through `WishBuy`; a friend: Introduce through `WishGrant(vid, "friend", arg)`; cheer: Have a chat through
@@ -966,19 +1462,37 @@ profile = {
   achieved = { [achievementId] = true, group? = true },  -- achievements claimed; `group`: the group's gems paid
   saves = { ["1"] = { name, t, plan }, ... },  -- saved builds by slot (Sim/Saves; up to Sim/Passes.saveSlots slots):
                                                -- the plan as it stood, `gift` and all, at most Tuning.Saves.MaxBytes
+  plotName,  -- the town's name, "" until named (PlotName.clean; set only through Services/Visit.rename)
+  likedPlots = { [ownerId] = when }, plotKeys, plotAt,  -- towns liked, the search keys written, when the town last
+                                                       -- changed for Newest (0 until built on or named)
+  look,  -- the player's own look from the creator's You tab (an Appearance, or nil: their Roblox avatar)
+  likedLooks = { [sharerId] = at },  -- shared looks liked
+  bag = { [itemId] = n }, owed = { [itemId] = n }, gather = { day, n },  -- the bag (Sim/Bag), things owed, today's
+                                                                         -- gathering
+  titles = { [titleId] = true }, title,  -- titles from goals, and the one worn
+  skills = { [jobId] = experience },  -- the player's own skill at each job (Sim/Skills)
+  gemItems = { [itemId] = count },  -- Build mode pieces bought with gems (Sim/GemPieces)
+  follow = { { id, a, b?, c?, at, from?, w? } },  -- follow-up events waiting (Sim/FollowUps)
 }
 Villager = { id, name, pers, app, color, bday = { s, d }, fav, mood, job?, lv, xp, bed?, sick?,
              dayOff?, isYou?, born, heart, hxp, wish? = { kind, arg?, untilT }, saying?, hobby?, from?,
              memo? = { text, t },  -- their last event, which `Talk.memo` brings up for `MemoHours`
              flair? = { phrase?, ending?, thing? },  -- what the player gave them to say (Sim/Flair), bought with gems
-             lately? = { { kind, what?, name?, who?, t, untilT, acc? = { id, t } } } }  -- memories (Sim/Memory)
+             lately? = { { kind, what?, name?, who?, t, untilT, acc? = { id, t } } },  -- memories (Sim/Memory)
+             giftDay?, gifts?, gaveDay?,  -- the day's gift to them and from them (Sim/Gifts)
+             move? }  -- the work move bought for them, an emote id (Sim/WorkMove)
 rel record = { s, q?, n }  -- an old save's bond ("crush", "sweethearts", "partners": `Schema.OldBonds`) loads as
                            -- best friends: s comes up to `Schema.BestFriends` and the bond is dropped
-stats = { events, made, earned, paydays, wishes, hearts, found }  -- an old save's couples and partners are
+stats = { events, made, earned, paydays, wishes, hearts, found, cravings, gifts, gathered, cooked }
+        -- an old save's couples and partners are
                                                                   -- dropped, and so are the goals couple and partners
 ```
 
-`Schema.migrate` fills in anything missing and drops anything broken, so old saves load. Since the shop went it
+A town log line is `{ t, text, kind? }` (the kind picks its icon in the news: `Data/NewsKinds`).
+`Schema.migrate` fills in anything missing and drops anything broken, so old saves load (it runs the new fields
+through `PlotName.clean`, `Bag.clean`, `Titles.clean`, `Skills.clean`, `GemPieces.clean`, `FollowUps.clean`,
+`WorkMove.sanitize`, `Appearance.sanitize` for `look` and `Likes.clean` for `likedLooks`, and puts a broken villager
+mood back to `StartMood`). Since the shop went it
 also drops an old save's `inv` (the bag of food and things), `stats.fed`, and each villager's `hate`, `known`,
 `feedDay` and `feeds`; mends a `fav` that is no food; and drops a wish of a kind it doesn't know
 (`Schema.WishKinds`) or a craving for something that is no food. It runs each villager's `flair` through
@@ -995,9 +1509,10 @@ cottage was worth); `City.stats(...).value` is that number.
 A villager also carries `chatDay?` and `chats?` (the day index of their last chat with the owner and how many
 that day; `Sim/Talk` reads and writes them).
 
-`settings` is `Schema.Settings`: `music`, `sfx` (0 to 1), `bubbles`, `eventCamera` (true or false) and `theme`
-("dark" or "light", the interface's look). `SettingSet(key, value)` takes a value of the default's type; a number
-is clamped to 0..1 and a word must be one of `Schema.SettingChoices[key]`.
+`settings` is `Schema.Settings`: `music`, `sfx` (0 to 1), `bubbles`, `eventCamera` (true or false), `theme`
+("dark" or "light", the interface's look), `detail` ("high"; low, medium or high), `blur` (true), `blurStrength`
+(0.5), `bloom`, `sunRays` and `haze` (true). `SettingSet(key, value)` takes a value of the default's type; a number
+is clamped to 0..1 (NaN is refused) and a word must be one of `Schema.SettingChoices[key]`.
 
 ## Passes, gems, rewards and time away
 
@@ -1050,6 +1565,77 @@ The money side that isn't coins from work (docs/GAME_DESIGN.md, "Passes, gems, r
   earnings, the claims), `Offline`, `Rewards`. Previews: `panel:Store`, `panel:Store:gems`, `panel:Rewards` and its
   `:playtime`, `:achievements`, `:group`, `:member`, `welcome`, `welcome:long`.
 
+- Claim all (the user: "make a claim all button in rewards and in goals"): `Sim/ClaimAll` (shared, no services):
+  `ClaimAll.rewards(profile, today, vip, inGroup) -> Haul` (count, coins, gems, daily, playtime, achievements, group)
+  runs `Rewards.claimDaily`, `Rewards.claimPlaytime` (in order, until one isn't reached), `Rewards.claimAchievement`
+  for every achievement and `Rewards.claimGroup`; `ClaimAll.goals(profile) -> count, coins, ids` runs `Life.claimGoal`
+  for every goal. `ClaimAll.rewardsNotice(haul)` and `ClaimAll.goalsNotice(count, coins)` are the one notice (nil for
+  nothing). `Services/Claims` (after Vehicles) answers `RewardsClaimAll` and `GoalClaimAll`: the group's gems only
+  when the InGroup attribute and the save say they are owed, then Roblox is asked afresh (`Store.memberNow`); VIP from
+  `Sim/Passes`; pays with `Data.addCoins` / `Data.addGems` (quiet) and pushes what changed; each sends one `Notify`.
+  `UI/Rewards` and `UI/Goals` put `MenuParts.claimAll` in their header whenever they fill (from `Rewards.waiting()`
+  and `Goals.ready()`); `UI/Rewards`' `foot(parent, ready, label, claim)` has no status words. Data: shorter `blurb`s
+  in `Data/Passes` and `Data/Personalities` (and `Personalities.Short` / `short(p)`), shorter `desc`s in
+  `Data/Achievements` and `Data/Goals`. Spec: `ClaimAll` (everything due claimed in one go and matching the single
+  claims, nothing claimed that isn't due, goals once with their coins, the notices).
+
+## Other players' towns
+
+The user: "allow naming of plots, and the name should appear in place of the big "Level x"" and "allow players to like
+other plots. make a leaderboard for likes with plots. allow players to visit plots searching by name, sort by likes or
+by recency, allowing them to view a copy of the town they are visiting and like it, even if the player owning the
+plot is offline."
+
+- `Sim/PlotName` (shared): `PlotName.MaxLength` (`Tuning.PlotName.MaxLength`, 24), `clean(raw)` (a string of at most
+  24 characters counted with utf8, no control characters, no runs of spaces or spaces at the ends; anything else,
+  broken text included, gives ""), `title(name, owner)` (the name, or "<owner>'s town", or "Your town"). Sent to the
+  client as `plotName` (`State.on("plotName")`).
+- `Sim/PlotLikes`: one like a player a town. `isId`, `clean(raw, most)`, `size`, `has(liked, owner)`, `set(liked, me,
+  owner, on?, now, most) -> (liked, delta, why?)` (never your own; at `most` a new one waits for one to be taken
+  back), and the pending changes a server gathers: `add`, `take`, `giveBack`, `count(base, pending, owner)`.
+- `Sim/PlotBoard`: the directory's rules. `Card` { id, name, who, likes, at, level, people } and `card(raw, id?)`,
+  `title`, `sign(name, who)` (the plot board's words), `Sorts` and `sortOf`, `sorted(list, "likes"|"new", pending?)`,
+  `ranks` (1, 2, 2, 4), `matches`, `search`, `merge`, `page(list, n, size)`, and the name search's keys: `normal`,
+  `nameKeys(name, who, id, words)` ("juniper bay/123", "bay/123", "sam/123"), `idOfKey`, `prefix`, `changes(old,
+  new)`, `cleanKeys`.
+- `Sim/PlotCopy`: what a copy is made of. `plan(raw)` (sanitized, basement dropped), `ground(plan, margin)` (grass over
+  two tiers of rock as prims, cut round the water), `villagers(profile, plan, most)` (who stands where, in the plot's
+  space).
+- `Services/Visit` (after Claims): naming, likes, the directory and visits. `Visit.like(player, ownerId, on?) ->
+  (liked?, count | why)` is the one way in for likes; `Visit.likes(ownerId)`, `Visit.hasLiked(player, ownerId)`,
+  `Visit.Liked` (player, ownerId, liked), `Visit.cardOf(ownerId)`, `Visit.rename(player, name) -> (ok, name | why)` (the
+  one way a plot is named: `Avatar.filterText`, then `PlotName.clean`, `Data.push(player, "plotName")`, the board and
+  the listing), `Visit.list(player, how, query, page)`, `Visit.go(player, ownerId)`, `Visit.leave(player)`,
+  `Visit.visiting(player)`, `Visit.flush()` and `Visit.watch()` (its two loops, open for the spec). Stores, all named
+  `Tuning.Game.DataStoreName .. suffix`: `_Plots` (DataStore, a card per owner id), `_PlotLikes` (OrderedDataStore:
+  Most liked), `_PlotNew` (OrderedDataStore, when the town last changed: Newest), `_PlotNames` (DataStore of search
+  keys, searched with ListKeysAsync by prefix). Likes are gathered per server and written every
+  `Tuning.Visit.LikeFlush` seconds and at close: the card by UpdateAsync, then Most liked by SetAsync. A town is listed
+  after a save (`Data.onSaved`): its card once a visit, and Newest and its card's `at` when its plan changed
+  (`Build.Changed`) or it was renamed; a town new to the directory goes into Most liked with 0. Its search keys change
+  only when the name or the owner's display name does. Limits: each list reads the top `TopKept` (100) of its ordered
+  store, kept `ListFor` seconds; cards are kept `CardFor` seconds; the search matches the start of a word, and when the
+  server's ListAsync budget is spent it only looks through the towns it has read and its own players'; a town is in
+  Newest only once built on or named; a town whose owner hasn't been back since this shipped isn't listed; if the card
+  took a like but Most liked missed it, the next like on that town puts it right.
+- Copies: `Data.peek(userId)` reads a saved profile without its lock; the copy is drawn on viewing lot `slot`
+  (`Town.viewFrame`, `Town.viewArrival`, `Town.ViewSpot`, `Town.ViewGap`: lots 600 apart at height 600 south of the
+  island) under `workspace.TownCopies.Copy<slot>`, its water drawn as a slab (`Water.drawSurface` on while it is
+  drawn), villagers built with `Avatar.buildModel` and stood with `Npc` (anchored, idle, named, vid `copy:<vid>`). One
+  lot a viewer, `Tuning.Visit.Lots` of them; draw nothing else up there. `Services/Data`: `Data.onSaved(fn)` (fn(player,
+  profile) after every save that went in) and `Data.peek(userId)`. `Services/Plots`: `Plots.landModel(plan, frame,
+  holes?)` (the land drawing, shared with copies), `Plots.updateSign`; the board in front of a plot shows
+  `PlotBoard.sign(profile.plotName, DisplayName)`. `Tuning.Visit` sits next to `Tuning.PlotName`.
+- Client: `UI/Visit` (the Visit menu, `Visit.open({ sort?, search? })`, and the bar while visiting: `Visit.start`,
+  `Visit.visiting()`); `UI/CityPanel` opens with `{ rename = true }` and has the Name box; `UI/Hud`'s Visit cell
+  after Home and the `Rename` button on the plot's name.
+- Specs: `PlotName`, `PlotBoard` (likes, cards, sorts, ranks, search keys, pages, copies), `VisitService` (the service
+  run with in memory stores: naming, listing, likes and their batch, lists, search, visiting here and on a copy).
+  Sims: `tests/sim/hud.luau` (the strip, the row with Hide, the plot name and the level on the bar, the quests folding
+  and dropping a row after another, Hide and Show, a notice, the name tap and Save). Previews (in `audit.sh`):
+  `hud:named`, `hud:hidden`, `toasts`, `ui.sh panel:Visit` (`:new`, `:search`, `:empty`), `panel:CityPanel:named`,
+  `visiting` (`visiting:liked`); `render.sh copy`.
+
 ## Server services
 
 Start order (`Main.server`): every service's `init`, then every `start`, and only then `Data.open()`, which loads
@@ -1083,18 +1669,22 @@ loaded that hold it, saying to Load more when nothing loaded does. The mannequin
 
 | Service | Job |
 |---|---|
-| `Data` | Loads with a session lock, autosaves every two minutes, saves on leave and shutdown, pushes state patches (`State`), toasts (`Notify`), coins, the town log, the daily gift. |
+| `Data` | Loads with a session lock, autosaves every two minutes, saves on leave and shutdown, pushes state patches (`State`), toasts (`Notify`), coins, the town log (`Data.log(player, text, kind?)`), the daily gift. `Data.onSaved(fn)` and `Data.peek(userId)` (a saved profile without its lock) serve the directory and the copies of other towns. |
 | `World` | Builds the town from `Data/TownMap` (streets, plaza, street furniture, decoration, hills, prompts) and the plot bases (each `Base` from the floor down to `Terrain.PlotFloor`); sets the stylised lighting (colour grading tinted by the hour, a bloom from `Tuning.Look.Bloom`, sun rays, haze); the clock (real time, 12 minute days) and calendar; night lights; doors that open for anyone walking up; seasonal weather. |
-| `Plots` | Hands out plots, draws the saved build and the owned land (a lighter grass sheet with a curb, and patches of other greens over it from `Data/LawnPatches`: parts named `Patch`, no collision or queries, which `Water.cutGround` hides where a pool or a basement is dug under them), sells more land (`PlotExpand`). A server holds one player to a plot (`Tuning.Game.MaxPlayers`, also `MaxPlayers` on Players in default.project.json; a published game takes its server size from the game's settings). One more is put on a waiting list, gets a body in the square at once and a note, and is given the next plot that comes free (`GoHome` tells them they have none yet). Characters don't load by themselves (`Players.CharacterAutoLoads` is off in the place): `Plots.spawn` loads one once the player's plot is ready (or after 20 s if their profile never loads), and again `Players.RespawnTime` after a death; every character arrives at its plot. Once a second anyone below `Plots.FallLimit` (-40) is put back on their plot, or in the square. |
+| `Plots` | Hands out plots, draws the saved build and the owned land (a lighter grass sheet with a curb, `Plots.landModel`, shared with the copies of other towns; the lawn patches are gone), shows the plot's name on its board (`Plots.updateSign`, `PlotBoard.sign`), sells more land (`PlotExpand`). A server holds one player to a plot (`Tuning.Game.MaxPlayers`, also `MaxPlayers` on Players in default.project.json; a published game takes its server size from the game's settings). One more is put on a waiting list, gets a body in the square at once and a note, and is given the next plot that comes free (`GoHome` tells them they have none yet). Characters don't load by themselves (`Players.CharacterAutoLoads` is off in the place): `Plots.spawn` loads one once the player's plot is ready (or after 20 s if their profile never loads), and again `Players.RespawnTime` after a death; every character arrives at its plot. Once a second anyone below `Plots.FallLimit` (-40) is put back on their plot, or in the square. |
 | `Build` | `BuildApply`, `BuildUndo`, `BuildRedo`: checks requests, charges or refunds, keeps history, redraws, syncs the plan to its owner (`PlanSync`). Fires `Changed`. A batch is up to 320 requests (a whole ready-made building); an item's `wall = "@n"` means the wall made by the batch's n-th request. `Build.prepare` is exported for the specs. A group moved with the Select tool is checked lifted (`prepareMoves`), and `Build.replace` loads a saved build (see "The Select tool and saved builds"). |
 | `Saves` | `BuildSaves`: saved builds kept in `profile.saves`, renamed, saved over, deleted and loaded through `Build.replace` (see "The Select tool and saved builds"). After `Build`. |
 | `Basement` | Digs each basement room out of the terrain under the plot and fills it back exactly when it goes, and has the plot's ground cut round the rooms (see "Floors, the basement and land"). After `Water`. |
-| `Avatar` | The creator: a private stage (an empty Model `CreatorStage<slot>` with an `Origin` attribute, high over the meadow; nothing is built there) and an anchored mannequin per player, catalog search fallback, bundles, copying users, outfits, asset checks, the text filter. `toDescription`, `buildModel` for everyone else. |
+| `Avatar` | The creator: a private stage (an empty Model `CreatorStage<slot>` with an `Origin` attribute, high over the meadow; nothing is built there) and an anchored mannequin per player, catalog search fallback, bundles, copying users, outfits, asset checks, the text filter. `toDescription`, `buildModel` for everyone else. The player's own look (`LookSave`, `Avatar.dressPlayer`), likes on shared looks (`LookLike`) and the tutorial's greeter (`TutorialGreeter`). |
 | `Interact` | Puts a `UsePrompt` (E, no `Opens`) on an attachment `UseSpot` on each placed piece that has a player use (`Data/Interactions`), in every plot's Build folder; checks the player is within `Tuning.Uses.Reaches` (14 studs), a `Cooldown` per player and a `Rest` per piece; picks the outcome (`Sim/Uses`), has villagers near react to the loud ones and fires `Used`. Nothing is bought or saved. Starts after `Villagers`. |
 | `Work` | A player working at a workplace themselves (see "Working at a workplace yourself"): a `WorkPrompt` at every placed workplace's work spot, `Work.asked`, `Work.begin`, `Work.stop(player, say?)`, `Work.at(player)` (plot and key, or nil), `Work.step(now)` every `Tuning.Jobs.Player.Check` seconds, the `WorkStop` remote. Pays through `Villagers.payPlayer`. Starts after `Villagers`. Once a second `Work.markBusy(i)` marks each placed workplace somebody (villager or player) is at with `Working` (see "Pieces that move and give off effects"). |
 | `Lights` | The lights players place (see "The lights players place"): a `LightPrompt` ("Turn off" / "Turn on") on every placed light, `Lights.pressed` (owner only, within `Tuning.Lights.Reach`, a `Cooldown`), the switch saved as the item's `off`, and every `SleepCheck` seconds the lights near sleeping villagers' beds put out (`Villagers.sleepers`) until they get up. Starts after `Villagers`. |
 | `Villagers` | Creating, editing, moving out, beds, jobs, buying a craving (`Villagers.buyWish`, the `WishBuy` remote). Spawns NPCs and runs their routine (`Villagers.brain` acts out what `Sim/Routine` chooses): sleep at night; in work hours each worker goes round their job's loop at the workplace and takes breaks; those with no job or done for the day potter. Pay goes to whoever is earning at that moment: every `Tuning.Jobs.EarnStep` seconds it checks `npc.atWork` in work hours with control nil, chat or talk (an event, an outing, a day off or sickness pays nothing), keeps a purse per villager in server memory, and every `PayEvery` seconds sends the coins (`Data.addCoins(..., quiet)`, `stats.earned`, the `Earned` event); what is left goes when the player leaves. `Villagers.endOfWork` at 5 PM sends the last of it, grants skill by the share of the day earned and says "Your villagers earned {n} coins today." (it still writes `stats.paydays` and `lastPayday`). Talking: `Villagers.spawn` puts `Npc.talkPrompt(name)` on each body (a ProximityPrompt `TalkPrompt` on the HumanoidRootPart: E, held `Tuning.Talk.HoldSeconds`, from `Distance` studs, no `Opens` attribute) and `setControl` switches it with `Npc.setTalkable(Talk.free(mode))`; it is off while they sleep. `Villagers.talkedTo(who, owner, vid)` answers it: it refuses a sleeper, someone in an event or away, a player more than `Range` studs off and a second line within `Cooldown`; then holds them (`setControl(owner, vid, "talk")` for `StaySeconds`, `VisitorSeconds` for a visitor, or until the player walks off), turns them with `Npc.face`, and has them say `Talk.line`. The owner also gets `Talk.chat`'s gain and the `Talk` event. |
 | `Store` | Passes, gem packs, rewards, offline earnings and the group (see "Passes, gems, rewards and time away"). Listens for `Data.Loaded`, so it starts before `Data.open`. |
+| `Claims` | Claim all in Rewards and the goals (`RewardsClaimAll`, `GoalClaimAll`; see "Passes, gems, rewards and time away"). After Vehicles. |
+| `Visit` | Naming a plot, likes, the directory of towns and visits, here or on a copy (see "Other players' towns"). After Claims. |
+| `Bag`, `Gifts`, `Titles` | The bag's prompts, things made at work, holding and dropping; gifts both ways; titles over heads (see "The bag, gifts, titles and prizes"). After Work. |
+| `Lifts` | The elevators' buttons and rides (see "Roofs and paths that meet, and ways between floors"). After Lights. |
 | `Events` | Picks and plays random events, waits for choices, applies effects, room request rewards, small friendship gains from chats, parties. A scene's props (`Data/EventProps`) are put down by their star after the gather, facing the group on the ground (a raycast that skips villagers, characters and props), made with `Builder.instantiate(..., { plain = true })`, not collidable, queryable or touchable, in `Workspace.EventProps` (attributes `Prop`, `Owner`); a choice's props come after the choice; `leave` keeps one for some hours (at most `PropsMax` a town, oldest out); tidied every 10 s and cleared when the player leaves. It pushes `keepsakes` when one is given. |
 
 `Villagers` also runs the life sim's server side: every in-game hour wishes fade and new ones turn up (the model's
@@ -1103,7 +1693,8 @@ loaded that hold it, saying to Load more when nothing loaded does. The mannequin
 back); there is no wish for a new look (`Schema.WishKinds` is food, friend and cheer; "remove new look cravings"),
 nor the `newlook` event; `WishGrant` and `GoalClaim` answer the rest (there is no `HeartReward`: a heart level pays at once). Villagers sometimes say their
 own saying or a line about their hobby.
-| `World` (doors) | Doors stay shut; each gets a `DoorPrompt` (Open or Close, `World.toggleDoor`); a villager within 6.5 studs opens one and it shuts 1.2 s after the last villager leaves, unless a player opened it. |
+| `World` (doors) | Doors stay shut; each doorway (the leaves sharing a `Frame` in a model) gets a `DoorPrompt` on its biggest leaf (Open or Close, `World.toggleDoor(leaf)`, any of its leaves); a villager within 6.5 studs opens one and it shuts 1.2 s after the last villager leaves, unless a player opened it. |
+| `World` (weather, seasons) | Picks the weather by `Weather.pick` and eases the light and air toward it, raises the waves in a storm, and colours the terrain for the season (`World.applySeason`; see "Settings, weather and seasons"). |
 | `Explore` | `PlaceFound` checks the player stands at the place, pays its coins once and marks `found`. (The map and `Travel`, the trip back to a found place, are gone.) |
 | `Materials` | Runs `Textures.install` at start: each uploaded painted texture's MaterialVariant (built into the place) becomes its material's look. Warns when a variant is missing from the place. |
 
@@ -1137,7 +1728,7 @@ Functions (client asks, server answers): `GetState`, `BuildApply`, `BuildUndo`, 
 `VillagerFocus`, `OutfitSave`, `OutfitDelete`, `EventChoose`, `DailyClaim`, `PlotExpand`, `SettingSet`,
 `TutorialStep` (`step | 99` -> `ok, progress`: records only what `Sim/Tutorial.advance` finds true of the profile,
 then pushes `tutorial`; 99 skips it for good), `BuildPicture` (`id` -> `ok, why`: what a picture id is, at most one
-call every 0.5 s), `VisitPlot`, `WishGrant` (`vid, "friend" | "cheer", otherVid?`), `WishBuy` (`vid` -> `ok, message?`:
+call every 0.5 s), `VisitPlot` (no longer used by the client: see `PlotVisit`), `WishGrant` (`vid, "friend" | "cheer", otherVid?`), `WishBuy` (`vid` -> `ok, message?`:
 buys the villager's craving at `Life.wishPrice`; true with no message, the notices go through `Notify`; refused with
 a plain reason when there is no craving or not enough coins), `VillagerFlair` (`vid, "phrase" | "ending" | "thing",
 text | false` -> `ok, message?`: `Villagers.setFlair` checks with `Flair.check`, at most one a second a player, runs
@@ -1150,7 +1741,8 @@ takes it off for nothing),
 counts as not said), `CreatorSearch` (its query may carry `offSale` and `inside`, a bundle's `BundledItems`),
 `GoHome` (-> `ok, err`: to the caller's own plot at `Town.plotArrival`, out of any seat first, at most once every
 `Tuning.Plot.HomeCooldown` seconds), `SpawnMe` (-> the caller's `Arrival`: loads a character if they have none), `VillagerTalk` (`vid, bye?` ->
-`ok, { vid, text, note, model }` or an error: the talk card's Chat, or its Bye), `WorkStop` (-> `true`: the
+`ok, { vid, text, note, model }` or an error: the talk card's Chat, or its Bye; `"click"` in place of `bye` is a talk
+started by clicking the villager from afar, answered with `far = true`), `WorkStop` (-> `true`: the
 caller stops working at a workplace, `Services/Work`). `DailyClaim` (-> `ok, coins, gems`: `Rewards.claimDaily`, VIP's
 gem included). The rewards and the store (`Services/Store`): `PlaytimeClaim` (`index?` -> `ok, gems` or `false,
 why`: the next of today's playtime steps, which must be reached), `AchievementClaim` (`id` -> `ok, gems`: once, when
@@ -1161,14 +1753,28 @@ player was away, once; it waits up to 120 s for their save and passes). `BuildSa
 player has; a new name, or the old one kept), `"rename"`, `"delete"` -> the page, `"quote"` -> `{ cost, skipped,
 pieces }` (what a load would come to now), `"load"` -> `{ cost, skipped, pieces, page }`.
 
-Events (server pushes): `State` (patches of the client state), `PlanSync` (`{ full }` or `{ ops }`), `Notify`
-(`text, kind`; kind `action` carries `open:creator:<vid>`), `Used` (`at, puff?, text?, rarity?` to every client: `client/World/Interact` draws the puff and a bubble over the piece, a gold rim for a rare one), `EventShow`, `EventLine` (`{ token, line, last? }`, `{ token, ask = true, left? }`, `{ token, left }`), `EventEnd`, `Earned` (`{ coins, earned, lines = { { vid, n } } }` every `Tuning.Jobs.PayEvery` seconds when anyone earned: `client/World/Earnings` lifts a coin and "+N" off each earner's head and the HUD's count rolls up quietly; the player's own work is a line `{ you = true, n, today }`, its "+N" over their own character), `Say`,
-`Talk` (`{ vid, text, note, model }`: to the town's owner, what their villager said when they held E on them),
-`Work` (`{ on = true, plot, key, name, act, beat, today, cap }` when the player starts work at a workplace, `{ on
-= false }` when it stops: `client/World/Work`).
+Added this round (each in its section above): `TutorialGreeter` (-> `{ name, id?, friend, model? }` or nil),
+`LookSave` (`appearance | false` -> `ok, why`), `LookLike` (`by, at` -> `{ likes, liked }` or nil, why),
+`CreatorShared` (`page, search?, sort?, colour?`), `RewardsClaimAll` (-> `ok, { count, coins, gems }` or why),
+`GoalClaimAll` (-> `ok, { count, coins }` or why), `BagUse` (`("hold", id) | ("away") | ("drop", id)` -> `ok, why`),
+`GiftGive` (`vid, id` -> `ok, { taste, line, note }` or why), `TitleWear` (`id | false` -> `ok, why`),
+`VillagerMove` (`vid, emote id | false` -> `ok, message`), `PlotRename` (`name` -> `ok, name` or why), `PlotList`
+(`sort, search?, page?` -> `{ plots, more, here, mine }`, rows `id, name, who, likes, liked, at, level, people,
+rank?, here, mine`), `PlotLike` (`ownerId, on?` -> `{ liked, likes }` or nil, why), `PlotVisit` (`ownerId` -> `ok,
+why`), `PlotLeave` (-> `ok`), `TakeOff` (`vid, what`: a worn thing off, see "Events that need a piece, follow-ups,
+typed names and worn things"); `EventChoose` takes a third value, a typed `name`, for a scene that asks for one.
 
-Client to server events: `EventWatch` (`token, "open" | "close" | "asked"`: the scene went up, was put away, or put
-the question on screen; the server only times an answer from "asked", see Events below). `EventChoose` is accepted
+Events (server pushes): `State` (patches of the client state), `PlanSync` (`{ full }` or `{ ops }`), `Notify`
+(`text, kind`; kind `action` carries `open:creator:<vid>`), `Used` (`at, puff?, text?, rarity?, who?` to every client: `client/World/Interact` draws the puff at the piece and, with `who` (the player who had the go, `Npc/Use.show(at, puff, text, rarity, who?)`), a `Bubble.speech` card over that player's head (`World/Interact.bubble(adornee, text, rare)`, billboard `UseBubble`, one per head, its words in gold for a rare one)), `Visiting` (`{ on, id, name, who, likes, liked, copy }` / `{ on = false }`: `UI/Visit`'s bar), `EventShow` (with `name = { suggest, ask, max }` when a scene asks for a name), `EventShow`, `EventLine` (`{ token, line, last? }`, `{ token, ask = true, left? }`, `{ token, left }`), `EventEnd`, `Earned` (`{ coins, earned, lines = { { vid, n } } }` every `Tuning.Jobs.PayEvery` seconds when anyone earned: `client/World/Earnings` lifts a coin and "+N" off each earner's head and the HUD's count rolls up quietly; the player's own work is a line `{ you = true, n, today }`, its "+N" over their own character), `Say`,
+`Talk` (`{ vid, text, note, model }`: to the town's owner, what their villager said when they held E on them),
+`Work` (`{ on = true, plot, key, name, act, beat, today, cap, skill }` when the player starts work at a workplace,
+`{ skill, cap }` about every `Tuning.Skills.SendEvery` seconds while working, `{ on = false }` when it stops:
+`client/World/Work`).
+
+Client to server events: `EventWatch` (`token, "open" | "close" | "asked" | "next"`: the scene went up, was put away,
+put the question on screen, or the player has read everything and pressed for more; the server only times an answer
+from "asked", see Events below; "next" cuts the run's `pause` short (its `hurry`) only while the owner is watching
+that event). `EventChoose` is accepted
 only while the event is asking, and only once.
 
 Every handler checks its arguments: types, ranges, ownership. Build requests go through `Plan.validate` on the
@@ -1207,8 +1813,9 @@ clipping (`tools/preview/ui_render.py`).
   warning; `Skin.set(false | nil)` switches them off or lets them be tried again). The painting has no services in
   it, so the Skin spec runs it.
 - `UI/Kit` shapes. `Kit.corner(inst, radius)` gives a radius of 2 to 18 pixels, or half circle ends for `"pill"`,
-  `"round"` and `"circle"`. `Kit.rim(inst, colour?, thickness?, transparency?)` is the thin line round a card, a
-  well or a disc (a UIStroke named `Rim`; with the attribute `Follow` it takes a deeper tone of its face whenever
+  `"round"` and `"circle"`. `Kit.rim(inst, colour?, thickness?, transparency?)` is the thin line round a round
+  thing (a disc's faint ring, a dial's, a round button's, a badge's; a rounded rectangle has none) (a UIStroke
+  named `Rim`; with the attribute `Follow` it takes a deeper tone of its face whenever
   the face is recoloured, `Kit.edgeOf(colour)`). `Kit.portrait(props)` is a round frame with a `Rim` for
   somebody's face (Size in pixels, Color, Border, BorderWidth), and `Kit.rounded(picture)` cuts a ViewportFrame or
   an ImageLabel in it to the circle. `Kit.disc(props)` is a round marker with an icon on it (Size, Color, Icon,
@@ -1224,12 +1831,13 @@ clipping (`tools/preview/ui_render.py`).
   colour. (It drew a thin line just inside the edge too, until the user asked to "remove the borders".) Where pictures are off, `Kit.slant` falls back to a sharp wedge on each end (`Kit.wedge(props,
   keep)`: a box named `Wedge_<br|tl|tr|bl>` with a UIGradient `Cut` across its diagonal) and `Kit.detail` does
   nothing. `Kit.cutInto(holder, colour, cut)` lays a rounded card under what is in `holder` (a frame named `Cut`;
-  `Kit.frame({ Cut = n })` does it and adds a thin rim; `Kit.paintCut` recolours it; the names are from when two
+  `Kit.frame({ Cut = n })` does it, with no rim since "remove the borders around the rectangles ... eveywhere";
+  `Kit.paintCut` recolours it; the names are from when two
   corners were cut off). `Kit.dots(card, colour?, alpha?, radius, even?)` lays the halftone grid over a card
   (a tiled ImageLabel `Dots`, fading toward the bottom left unless `even`), `Kit.hatch(props)` a band of
   diagonal hatching (`Fade`). `Kit.stripes(props)` is a block of slanted stripes,
-  `Kit.tile(icon, caption, props, onClick)` an icon over its name on a rounded square whose bottom third is a
-  deeper band (one UIGradient `Foot` with a step in it, so the band is cut to the corners with the tile),
+  `Kit.tile(icon, caption, props, onClick)` an icon over its name on a rounded square with no rim, whose bottom
+  third is a deeper band (one UIGradient `Foot` with a step in it, so the band is cut to the corners with the tile),
   `Kit.motion(parent, accent, seed, opts)` the shapes drifting behind a menu (one Heartbeat connection, dropped
   when the layer is destroyed; `opts`: `W`, `H`, `Count`, `Faint`, `Second`, `Sizes`, `Speed`, and `Bands` for
   long leaning strips of the colour that drift sideways). `Kit.backdrop(parent, accent, seed, opts)` is a whole
@@ -1257,9 +1865,9 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   tab is its measured words (`Kit.textWidth`) and 44, the bar their sum and its paddings. `Kit.measure(text, size,
   font)` is the engine's width of a line of words or nil where it can't say; `Kit.fitWidth(frame, label, extra?)`
   turns a box that sized itself across into one as wide as its label's words plus the paddings, again when the words
-  change (a self sizing `Kit.button` and a self sizing leaning slab with one label do it themselves). The panel is `Rim` (holding
-  `Edge`, a thin line of `T.Line` a few pixels out) and in it `Card`: a rounded card (`Cut`) with a rim of its
-  own, a glow of the menu's colour, `Dots` and a `Hatch` band in its bottom right corner. `opts.Dialog = true` is
+  change (a self sizing `Kit.button` and a self sizing leaning slab with one label do it themselves). The panel is a
+  `Rim` box (no `Edge` line any more, and no stroke) and in it `Card`: a rounded card (`Cut`) with no rim, a glow of
+  the menu's colour, `Dots` and a `Hatch` band in its bottom right corner. `opts.Dialog = true` is
   a small panel in the middle: its card is two tones (a UIGradient `Wash` with a step), the darker band across the
   top holding the title and the red close button, and its body starts 70 pixels down. Details: `Corners`
   (`Kit.brackets` in the menu's colour just outside `Rim`), and on a full menu `Ghost` (the title large and faint
@@ -1274,7 +1882,7 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   Returns `{ root, card, body, close, title, header, selectTab, dim, rim, veil, glows, dialog }`.
   `Kit.row(props, onClick)` is a pill row (Title, Sub, Marker, MarkerColor, Right, LeftSpace, RightSpace, Sunk,
   Selected): its `Fill` rests in `T.Card` (a `Sunk` row in `T.PaperDark`; the colour is kept in the row's `Rest`
-  attribute) with a `Follow` rim, its marker is a round disc, and its `Lean` attribute (how far its round end
+  attribute) with no rim, its marker is a round disc, and its `Lean` attribute (how far its round end
   pushes what is on it) is 6. It returns the row and a box filling it; `Kit.setRowSelected(row, on)` turns it
   yellow with dark words and lays `PickedHatch` (dark hatching fading left) toward its right end. A row with an
   onClick has `Kit.press` of the "row" kind: `Inside` moves 4 pixels right under the pointer (no bar
@@ -1314,7 +1922,7 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   for `RightColor`, and those labels carry a `Tint` attribute so a switch makes them again. `UI/Theme` is the
   player's choice: `Theme.toggle()`, `Theme.set(name, save)`, `Theme.icon()` ("sun" or "moon": the look you
   would get), `Theme.start()` (puts the saved one on when the settings arrive). It saves with
-  `SettingSet("theme", name)`. The creator is built once and kept, so it listens with `Kit.onTheme` and builds
+  `SettingSet("theme", name)`; the switch is on `UI/Settings`' left card now. The creator is built once and kept, so it listens with `Kit.onTheme` and builds
   itself again where it was.
 - `UI/Kit`: theme and helpers. The theme opens dark (`Kit.Theme`; the names are from the light look before it):
   surfaces `PaperDark` (wells, tracks, tabs not picked), `Cream` (big panels), `Paper` (cards, buttons, bars over
@@ -1383,29 +1991,32 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   `Leave` (seconds between a piece being marked going and it going), `Moods` (symbol and colour by kind; the
   symbol's text size is counted in letters, not bytes), `MoodIcons` (the icon each mood is drawn as on a player's
   screen: heart, anger, music, water, moon, bulb, question, sparkle, rain), `MoodIcon` (28, its size), `Glass`,
-  `card(parent, props)` (the solid dark glass card with a rim and two brackets), `speech(parent, text?)` (a card of
-  words flush at its left, no bar, and an outlined point; returns the group and the `Text` label),
-  `mood(parent, kind)` (a round badge whose ring runs round its point too: in one holder, back to front, the ring's
-  colour as a turned square, the badge with its ring, the glass point, the symbol), `square(parent, px, colour)` (the
-  wish bubble's frame) and `billboard(name, adornee, wide, far)` (`AlwaysOnTop`, `StudsOffset = Anchor`). A card's
-  point is a row under it reaching up over its edge: the rim's colour as a bigger turned square, the glass as a smaller
-  one, a patch of glass over their top halves. Each piece is a CanvasGroup `Fade` (padded 2 so the rims aren't cut)
-  with its bottom middle `n` pixels over the point. `Npc.say` shows one in a billboard named `Bubble` (each line sets
+  `card(parent, props)` (the solid dark glass card, no UIStroke: "could you remove all borders in bubbles and text
+  bubbles?"), `speech(parent, text?)` (a card of words flush at its left, no bar, and its point; returns the group
+  and the `Text` label), `mood(parent, kind)` (a 38 pixel glass disc with its point and the symbol in the mood's
+  colour), `square(parent, px)` (the wish bubble's frame, glass with no rim) and `billboard(name, adornee, wide,
+  far)` (`AlwaysOnTop`, `StudsOffset = Anchor`). Each piece is a CanvasGroup `Fade` with its bottom middle `n`
+  pixels over the point. `Bubble.size(fade, measure?)` is a piece's full size worked out from its children (fixed
+  sizes, and a self sizing card's words measured by `measure(text, size, font, width)` plus its padding); nil for a
+  speech card with no measure. `Bubble.roughMeasure` stands in for the specs and previews; `Bubble.TextSize`,
+  `Bubble.Font` and `Bubble.SpeechTall` name the speech card's words. `Npc.say` shows one in a billboard named `Bubble` (each line sets
   the attribute `Said`; `Going = true` a moment, `Leave`, before it hides), `Npc.icon` one named `Mood` (`Going`,
   then destroyed `Leave` later, its kind in the attribute `Kind`). The server starts each `Fade` clear and leaves the
   motion to the clients. `World/MoodArt.dress(root, kind)` (client, no services) swaps a badge's `Symbol` for the
   mood's icon (`SymbolArt`, `MoodIcon` across, centred, in the symbol's colour) and hides the letters; once only.
   World/Bubbles does it as each `Mood` billboard comes (the user: "the icons within bubbles are too small").
-  `Bubble.card` is the glass, the rounded corners and the rim; the corner brackets it had are gone (the user: "remove
-  the two squarish corners inside the bubbles").
+  `Bubble.card` is the glass and the rounded corners; the corner brackets it had are gone (the user: "remove the two
+  squarish corners inside the bubbles"), and so is its rim.
 - `World/Prompts` (client): `Prompts.busy(humanoid, working, talking)` and a switch on `ProximityPromptService.Enabled`:
   every prompt is off on the player's screen while they sit (`Humanoid.Sit` or a `SeatPart`), work at a workplace
   (`World/Work.isWorking()`) or a conversation scene is up (State's `talking`). The user: "interaction bubbles shouldnt
   appear when you are interacting with objects".
 - `World/Bubbles` (client, started by `Wishes.start`): every 0.15 seconds it finds what is showing over each villager
-  (`Bubble`, `Mood` in the model, and what `Bubbles.track(model, gui)` was handed: the wish bubble), casts a ray from
-  the camera to `head.Position + Anchor` (excluding every `Villagers` folder and every player's character, through
-  anything with CanCollide off) and fades a blocked head's pieces out, then places the rest with
+  (`Bubble`, `Mood` in the model, and what `Bubbles.track(model, gui)` was handed: the wish bubble). There is no
+  camera ray: bubbles show through walls (the user: "could you remove the hiding of bubbles behind walls?"). Each
+  piece is sized by `Bubble.size` with TextService's GetTextSize (cached), falling back to the drawn size; a piece
+  with no size yet stays hidden and the look runs again in 0.05 s, and a new line (`Said`, or the words changing)
+  looks again at once (`Bubbles.sizeOf(fade)`). Then it places them with
   `World/BubbleLayout.arrange(heads, opts)` (pure: each head's items bottom first, `{ w, h }`, at its screen point and
   depth; returns each item's lift, the stack's rise and whether it is hidden; the nearer head keeps its place, a
   further one goes up over it up to `MaxRise` and hides past that) and tweens each `Fade` to its lift. The Bubbles
@@ -1415,6 +2026,18 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   leaves the stack, so what was over it comes down; a new line gives a showing card a small pop. A piece's size for the
   sums is its full size, whatever its pop. `Bubbles.dismiss(gui)` takes a client made bubble away the same way (the
   wish bubble), then destroys it.
+- `World/Run` (client, started in `Main.client`; the user: "also, make the ability to run, with shift"): `Run.start`,
+  `Run.update`, `Run.allowed(hum)` (not in Build mode, a seat or a vehicle, or while working at a workplace),
+  `Run.isRunning()`, `Run.setToggled(on)`. Shift held runs; on a touch screen the ScreenGui `RunButton` (a round shoe
+  over the jump button, yellow while on) switches it, and a gamepad's left stick press does the same; it hides with
+  the main screen. It is the only thing that sets the player's WalkSpeed, and Roblox's shift lock moves to Ctrl.
+  `Tuning.Run` (Walk 18, Speed 30, Button 56, ButtonGap 14) sits next to `Tuning.Vehicles`. Also from that round:
+  `World/Earnings.card` has no background or padding pill behind the coin and number; `World/Wishes` makes its frame
+  with `Bubble.square(parent, 60)`; `Services/Events` waits between lines in `pause(player, token, seconds)`, cut short
+  by the run's `hurry`; `ui_render.py` honours a `UISizeConstraint`'s MaxSize on a self sizing text box. Specs:
+  `Bubbles` (no rims; `Bubble.size` with words, a pop and a heart stacked clear of a speech card) and `EventService`
+  ("next" brings the next line at once only while watching, and only the owner's); the `event_pace` and `talk_card`
+  sims check the keys, a caught up press, a go at a piece over the player's head, and running.
 - `World/Explore` (tells the server when the player reaches a place they haven't found). There is no map screen.
 - `World/Ambience` turns the ferris wheel, carousel and windmill (parts named `Spin` round the `Hub`'s X axis;
   `Cabin` parts go round upright) and bobs the marina's boats (parts named `Boat<n>`, one group each).
@@ -1440,7 +2063,12 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
 - `UI/IconArt`: every interface icon as paths on a 24 grid (`IconArt.art[name]`), plus the coin. Each is a solid
   silhouette with its details cut out (UI/Vector's `solid`, `flat`, `hole`, `gap`, `clear`, `line` build the
   layers). `UI/ItemArt`: the foods, by id, drawn by the same rules (a silhouette in one colour with its cuts, no
-  colours of its own; the Icons spec holds them to it); IconArt folds them into the same table.
+  colours of its own; the Icons spec holds them to it, at most 6 layers and 2 cuts); IconArt folds them into the
+  same table, with the bag's things (`Data/Items`) beside the foods. `coin` and `coins` are one gold (`fill =
+  GOLD`, still art with a colour of its own, so it keeps its gold and ignores a tint) with a slot `hole` and no
+  second tone; `gem` is a single `solid` with nothing cut or drawn inside. Icons added this round, each with a shape
+  list in `Icons.defs`: `chat`, `star`, `paw`, `letter`, `book`, `aid`, `personAdd`, `personLeave`, `flag`, `stall`,
+  `coffee`, `gradcap`, `guitar`, `gear` and `fog`.
 - `UI/Icons`: `Icons.make(name, px, props)` returns a Frame holding the icon. It tries `Icons.vector` first: the art
   is painted once at 48 and once at 96 pixels (`Icons.Weight`, 3.25 and 3, is the width of a line that names none, at each) into a 512 square
   EditableImage sheet, a pixel apart, and shown by an ImageLabel named `Art` through `ImageContent`,
@@ -1463,14 +2091,26 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   so the only outline is the one round the silhouette and none crosses another part. Above 20 px a second dark copy
   sits a little lower ("InkBase"), so the outline is thicker underneath. The shade is a gradient in
   icon space (each piece's keypoints are the icon's shade at its top and bottom), so overlapping pieces join without
-  a seam. Flat icons (the default) draw every piece in one colour and cut details out in `Hole`; a shape marked
-  `dent = true` is drawn in `Icons.dentOf(colour)` instead, the same colour a step darker (the coin's middle).
-  `Icons.names()` lists them. Art with colours of its own (the coin) has a one colour form in `IconArt.mono` (its
-  indent a ring cut out of its face); `Icons.make(name, px, { Mono = true, Color })` draws that one in `Color`, and
+  a seam. Flat icons (the default) draw every piece in one colour and cut details out in `Hole` (the `dent` shapes
+  and `Icons.dentOf` are gone with the coin's indent). `Icons.names()` lists them. Art with colours of its own (the
+  coin) has a one colour form in `IconArt.mono`, the same drawing with the colour dropped; `Icons.make(name, px, {
+  Mono = true, Color })` draws that one in `Color`, and
   every marker (`Kit.leanMark`, `Kit.disc`, so `Kit.flushMark` and the rows) asks for it, so a coin on a yellow block
-  is dark. `UI/Toasts` (a rounded note whose left end is a full height block in the notice's colour, rounded with the
-  note and straight on its inner edge, the icon on it; the note's height is measured from its words with
-  `TextService:GetTextSize`, a reckoning by letters where that fails, never left to AutomaticSize), `UI/ModelPreview` (3D thumbnails in ViewportFrames).
+  is dark. `UI/Toasts` (see `UI/Hud` below: a see-through dark note with a white icon, measured from its words, never
+  left to AutomaticSize), `UI/ModelPreview` (3D thumbnails in ViewportFrames).
+- Icons for news and jobs (the user: "for work and news, make different icons for different news and work types"):
+  `Data/Jobs.Icons` (job id to icon, one table, no two alike) and `Jobs.icon(id)` (a briefcase for none);
+  `Data/NewsKinds` (shared): `Icons` (kind to icon, the one table), `Topics` (kind to the event ids it covers),
+  `Uses` (a `Data/Interactions` use id to its kind), `event(id, group, jobId)`, `use(useId)`, `icon(kind)` ("job:<id>"
+  goes through `Jobs.icon`; nil or unknown is `news`). Each event from a module of `Data/Events` gets `group` (the
+  module's name in lower case: talks, solo, pairs, town, work, asks, moments, needs) unless it has one. A town log line is `{
+  t, text, kind? }` and `Data.log(player, text, kind?)` takes the kind: an event's (`Services/Events`, from
+  `NewsKinds.event` with the event's `group` and its first star's job), `party`, `request`, `movein`, `moveout`, a
+  use's (`Services/Villagers`), `land` (`Services/Plots`), `offline` (`Services/Store`); old lines have none and show
+  the paper. `UI/News` marks each story with `NewsKinds.icon(entry.kind)`, `UI/CityPanel`'s job rows and
+  `UI/Residents`' job picker and Job button with `Jobs.icon`, and `World/Work`'s notice with the job's icon at its left
+  end (`Work.mark(pill, icon)`, `Work.iconAt(key)`, `Work.card(parent, icon?)`, named `Mark`; it was a coin named
+  `Coin`). The Icons spec holds every news kind, event, use and job to an icon with art and a shape list.
 - `Avatar/Bundles` (shared): what a bundle is and what wearing it puts on. `Bundles.kindOfLabel(label)` reads a
   `BundleType` name, enum item or number (a whole body, "BodyParts" or "DynamicHeadAvatar", before a head);
   `Bundles.part(details, wanted)` takes `{ label, looks, assets }` (the outfits' looks, the bundle's own assets)
@@ -1498,12 +2138,16 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   event's dialogue card does, offers Chat (`VillagerTalk`), Profile (`Hud.open("Residents", vid)`) and Bye, and
   closes on Bye, walking out of `Range`, waiting too long, a menu, Build mode, the creator or an event.
 - `UI/MenuParts`: what the full menus and the cards are built from, so they match: `card` (the left card: a
-  rounded card in a thin rim with a glow of the menu's colour and an inner box the caller fills), `list` (the rows
+  rounded card, no rim, with a glow of the menu's colour and an inner box the caller fills), `list` (the rows
   on the right), `heading` (its number in the group's colour, the words set wide, a count at the right and a
   hairline ending in a dot under them; numbered by how many headings its list already has), `stat` (a rounded well
   with a round mark, a label set wide, a big number and a bracket in its colour), `dial` (a round level dial), `empty` (a disc in a faint ring, a title and what to
   do), `slot` (a dim sunk pill with a ringed + or x, for something not there yet), `hint` (`Kit.hint`), `note`
-  (a round dot and a line), `progress` (a label, numbers and a bar). A menu rebuilds itself when the look switches.
+  (a round dot and a line), `progress` (a label, numbers and a bar), `claimAll(panel, waiting, onClick)` (Claim all
+  in a full menu's header, left of `TabsDock`'s tabs or at the right end with none: green with something waiting,
+  `PaperDark` and inert with nothing; made again on each call) and `input(placeholder, props)` (a leaning text box
+  for menus, with an icon: the Visit menu's search and the City hall's Name box). A menu rebuilds itself when the
+  look switches.
   Its states are previewed as `panel:<Name>:<state>` (`ui_dump.luau`).
 - `UI/Dialogue`: the scene a conversation plays in, one at a time. `Dialogue.open(opts)` (Name, OnClick, Caption)
   puts up a wide dark glass textbox across the bottom (about three quarters of the width, `KeepColors`, white
@@ -1516,53 +2160,84 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   `speak(nil)` is narration, everyone dimmed and no tags. With no model there is no bust, only a ringed mark on the
   tag. `Dialogue.modelOf(vid)` finds a villager's model in the player's plot, `Dialogue.answer(text, props,
   onClick)` is a pill for the answers row, `Dialogue.isOpen()` says whether a scene is up. While one is,
-  `State.data.talking` is true.
+  `State.data.talking` is true. The scene types its own lines: `scene.type(text, plain?, done?)` and
+  `scene.typing()` (`Dialogue.TypeEvery` 0.03 s, `TypeStep` 2 letters); `press` finishes the line being typed or
+  calls `OnClick`, and a line counts as all there the moment its last letter shows. `Dialogue.Keys` is Enter,
+  KeypadEnter, E and ButtonX: Space and a gamepad's A are left to the character, so the player can jump. The box has
+  no rim or brackets, a tag's mark no ring. An `Actor` may carry `image` (a picture standing in for a model, laid
+  `Crop` as the bust's `Avatar`), which the tutorial's greeter uses when its look can't be built.
 - `UI/EventCard`: an event never takes the screen by itself. `EventShow` brings up a small dark glass prompt at
   the bottom middle (the event's name and Watch; at a choice "They want your say" and a yellow Answer). Watch or
   Answer opens the `Dialogue` scene (the camera stays put) and plays it from the first line, one line a press (the
   user: "sometimes, chats suddenly cut to the next dialogue without the player input"): the client keeps every line it
-  hears (`heard`), and each click, tap or key (`Dialogue.Keys`: Space, Return, KeypadEnter, gamepad A, bound at high
-  priority as `Dialogue.Action` "DialogueNext" while a scene with `OnClick` is up, passed through while answers or a
-  text box have the input) first finishes a line being typed and then shows the next (`scene.next()`); the `More`
+  hears (`heard`), and each click, tap or key (`Dialogue.Keys`, bound at high priority as `Dialogue.Action`
+  "DialogueNext" while a scene with `OnClick` is up, passed through while answers or a text box have the input)
+  first finishes a line being typed and then shows the next (`scene.next()`); when the player has read everything
+  heard so far, a press sends `EventWatch "next"` and the server plays the next line at once; the `More`
   arrow sits at the words' bottom right when a line is done. The scene keeps `shown`, `page` ("line", "ask", "end")
   and `waiting`: lines that come while the player is still reading are kept, never skipped, and only once the player
   has pressed past everything does the next line, question or outcome show the moment it arrives. The answers come up
   when the player reaches the question, with the `TimeLeft` bar full, and the client sends `EventWatch "asked"`; how it
   turned out stays until a click, a press past the end closes the scene (so does a press on the last line), and
   `play()` waits for the scene to close before taking the next event (one that ended while it waited is dropped).
-  The prompt waits while another `Dialogue` (the talk card) is up. "Stop watching" puts the scene away and leaves the
+  The prompt (no brackets) waits while another `Dialogue` (the talk card) is up. `UI/TalkCard` types through
+  `scene.type` too. "Stop watching" puts the scene away and leaves the
   prompt until `EventEnd`. `EventCard.isPlaying()` is true while an event is going on, `EventCard.isWatching()` while
   its scene is up; the HUD holds an event's notices (`Notify` kind "event") until the scene closes. The prompt and the
   scene give way to a full menu.
 - `UI/Quests`: the quest list on the main screen. `Quests.mount(parent, position, open)` builds it (a header that
   folds it, a list of at most `Quests.Shown` (3) quests) and refreshes it on any state that moves a goal;
   `Quests.next(profile, count)` picks them (done and unclaimed first, then by how far along). A finished one claims
-  through `GoalClaim`; a click elsewhere calls `open` (the Hud opens the goals menu).
-- `UI/Hud`: the level card (its badge a round dial), and four glass slabs that come out of the screen's edges and
-  corners: `Pills` (one `Kit.darkPill` flush on the left edge under the level, with a `Row` of the money, people
-  and happiness cells and slanted `Divider`s between them; no + on the money), the quests under it (their rows and header start at
+  through `GoalClaim`; a click elsewhere calls `open` (the Hud opens the goals menu). Each quest (and the "every goal
+  done" note) sits in a slot named after it (a clear frame 16 wider than the list) with the slab inside it named
+  `Slab`, so look for Claim and Open inside the slab. `unroll(open, delay)` tweens each slot's height and its slab's
+  place a row after another (`STEP` 0.06; a drop 0.3 s Quint out, a fold 0.18 s Quad in); the slots clip only while
+  moving, a `refresh` that comes meanwhile waits for it to end, and the list drops once at mount after `FIRST_DROP`
+  (0.35 s).
+- `UI/Hud`: the level card `CityCard` (the round dial; `PlotName`, the plot's name from `PlotName.title`, sized to
+  fit `NAME_WIDE` from 29 down to 18 and a button `Rename` that opens the City hall's Name box; `LevelBar`, 18 tall,
+  holding the `Fill`, `Level` with `City.levelName` and `Percent`; no "Next: Level n" line), and four glass slabs
+  that come out of the screen's edges and corners: `Pills` (one `Kit.darkPill` flush on the left edge under the
+  level, with a `Row` of the coins, `Gems` and people cells and slanted `Divider`s between them; no happiness, no + on
+  the money), the quests under it (their rows and header start at
   the left edge too), `ClockTab` (hanging from the top right corner in Roblox's top inset, leaning the other way,
   72 tall with 10 more off the top, and the `Clock` box inside it, placed `-inset` up), `Menu` at the bottom left (its `MenuBar` out of the corner, leaning the
   other way, the four tiles on it packed from the left edge), and the Build button running off the bottom right corner.
-  Under the clock are the captioned round buttons in `Corner` (`HomeCell` with `Home`, then `CityPanel`, `News`
-  and the look). While `State.data.talking` is true (a dialogue scene is up: the talk card, an event the
-  player chose to watch) the `Menu`, the Build button and the quests slide off their edges, and back when it goes
-  false. `Hud.goHome()` shuts the menus, dips the screen
+  Under the clock are the captioned round buttons in `Corner`, nine cells: `HomeCell` with `Home`, then `Visit`,
+  `CityPanel` (City), `News`, `Store`, `Garage` (Cars), `Bag`, `Settings` (the `gear`) and `HideCell` last
+  (LayoutOrder `HIDE_ORDER` 100, so a button added to the row goes before it). `ShowCell` is a cell of its own in
+  the `Hud` frame at `Corner`'s position and anchor, shown only while hidden. Every piece that moves is in one list of
+  slides (`slide(frame, dx, dy, forScenes)`: frame, home, away, whether it steps aside for a scene), and one
+  `place()` decides each piece's goal from `hidden` and `talking`, cancelling any slide still under way; the pieces'
+  entrance when the game starts goes through it too. `Hud.setHidden(on)` and `Hud.isHidden()`: Hide slides the
+  level card, the strip, the quests and the quick menu off the left, the Build button off the right and the clock
+  and the row off the top, and the touch run button with them. While `State.data.talking` is true (a dialogue
+  scene is up: the talk card, an event the player chose to watch) the `Menu`, the Build button and the quests
+  slide off their edges, and back when it goes false. `Hud.goHome()` shuts the menus, dips the screen
   (a `Veil` frame) and asks `GoHome`; H does the same when the HUD shows and nothing has the keyboard. It opens one
   panel at a time:
-  `Creator`, `Residents`, `CityPanel`, `News`, `Tutorial`, `WishPopup`. `EventCard` (the dialogue box) runs all the
-  time. A `Notify` `open:creator:<vid>` waits until no `Dialogue` is open.
-  `Residents` has four tabs: About, Friends, Lately (`Memory.lately`: a row each, an icon by kind, "N more days" or
+  `Creator`, `Residents`, `CityPanel`, `News`, `Tutorial`, `WishPopup`, `Visit`, `Store`, `Garage`, `Bag`,
+  `Settings`, `VillagerMenu`, `GiftPicker` and the rest. `EventCard` (the dialogue box) runs all the time. A `Notify`
+  `open:creator:<vid>` waits until no `Dialogue` is open. `UI/Toasts`: `Toasts.show(text, kind)`; the holder
+  `Toasts` is centred at the top with its first note's middle on the clock's (`MIDDLE` 36 from the top of the
+  screen, placed `-Kit.topInset()` up). Each notice is a slot `Toast` holding a CanvasGroup `Note` (`T.Glass` at
+  0.3, corner 14, `KeepColors`) with `IconArt` (white, `Mono`, `Centre`) and `Words` (white), sized from
+  `TextService:GetTextSize` (a reckoning by letters where that fails), at most four; it drops in by growing its slot
+  and fading in, and leaves (`Going`) by fading, then closing the slot. There is no icon block and no rim.
+  `Residents` has five tabs: About, Mood (`moodOf`: how they feel, the most they can reach and a row a factor from
+  `Needs.factors`), Friends, Lately (`Memory.lately`: a row each, an icon by kind, "N more days" or
   "Ends today"; an empty state when there is nothing) and Quirks (the gems there are, then a row per `Flair.Kinds`
   with what they have and a "Set N" / "Change N" button with the gem; the button opens `FlairEditor`, a popup with a
   textbox (`FlairText`), the price and either the gems there are or how many more are needed, `SaveFlair` (dim when
   short, which then only says so) and, when one is set, `ClearFlair`; both go through `VillagerFlair`). A `gems`
-  change redraws the Quirks tab. Previews: `panel:Residents:lately`, `:quirks`, `:quirks:edit`, `:quirks:short`.
-  `UI/Weather` (rain, snow, blossom, leaves) is started by `Main.client` on its own, in a pcall, before the HUD:
-  one emitter on a clear 90 stud square 32 studs over the camera, each setting put on by itself (`set`), rain
-  as streaks (`VelocityParallel`, `Squash` 3, the most Roblox allows) with a little `LightEmission` so it shows at
-  night, and paused while a ray up from the camera hits something solid (no rain indoors). The HUD and the event box step aside in Build mode and while the creator is open. The round
-  buttons under the clock start with `Look`, which calls `Theme.toggle()` and is drawn again after a switch.
+  change redraws the Quirks tab, which also has the "Work move" row and its picker (`pickMove`, through
+  `VillagerMove`). The page's actions are Gift (`UI/GiftPicker`), Buy outfit (LayoutOrder 4, `UI/BuyLook`) and Move
+  out (5); a personality shows as its few words (`Personalities.short`). Previews: `panel:Residents:lately`,
+  `:quirks`, `:quirks:edit`, `:quirks:short`, `:quirks:move`, `:mood`, `:gift`.
+  `UI/Weather` is started by `Main.client` on its own, in a pcall, before the HUD (see "Settings, weather and
+  seasons"). The HUD and the event box step aside in Build mode and while the creator is open. There is no Look
+  button: dark or light is in `UI/Settings`, and `UI/Theme` (`set`, `toggle`, `icon`, `start`) still does the
+  switching.
 - `UI/Creator`'s view: a Scriptable camera with a 40 degree lens that orbits the mannequin at `zoom` studs
   (`ZOOM_FACE` 3.1, `ZOOM_HOME` 7.2 where it opens, `ZOOM_WHOLE` 12.5; wheel and `TouchPinch` between 2.6 and 20;
   the Zoom tool steps through the three) and looks at a height `focusAt(zoom)` gives. It stands off to one side so
@@ -1600,6 +2275,59 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   right end (the picked category's `Index`, "01 / 11", over its name set wide). `Kit.glide` slides the yellow between
   the main groups and between the categories.
 
+## The creator: your own look, colour search, Shuffle, buying and likes
+
+The user: "add another tab to edit self in the catalog just like editing villagers. also, allow players to search
+things in the creator by color, with a color picker wheel", "in the heads tab, it seems like faces tab shows nothing.
+for shuffle the whole look, make it such that it chooses from the ones roblox recommends to the player the most",
+"allow players to buy items they select from the villager customization screen, and allow players to buy the outfit
+of the villager" and "for shared avatars, could there be a liking system for it as well? allow players to sort by
+shared."
+
+- Shared modules (plain logic, specs in `Creator.spec`): `Avatar/ColorWords` (colour words with their colours and
+  other names; `lab`, `distance` (CIE Lab), `nearest(c)` (several colours a word, so a pure blue off the wheel is
+  "blue"), `named(name, word)`, `lookNear(app, c, limit)`, `lookMatches(name, app, c, limit)`, `near(list, c, limit,
+  most)`, `fromWheel(h, s, v)`); `Avatar/Shuffle` (`Slots`, `wornIn(app, type)`, `seed(app, own, type)`, `rows(result,
+  type)` and `bundleRows(result)` from GetRecommendedAssets / GetRecommendedBundles, `pick(rows, roll, top, avoid)`
+  (weighted top, top - 1 ... 1), `wear(app, row, slot)`); `Avatar/Shop` (`lines(app, bundles?, most)` -> `{ { kind =
+  "asset" | "bundle", id } }`, `forSale(row)`); `Avatar/Likes` (`key(by, at)`, `clean(map, most)`, `has`,
+  `toggle(liked, by, at)` -> liked, delta, `count(look, pending)`, `apply(list, pending)`, `Sorts`, `sorted(list, how,
+  pending)`). `Avatar/Categories`: the Faces filter is `offSale = true, browse = "MostFavorited"` (Roblox has taken
+  every classic face off sale). `Data/Personalities`: `Short` and `Personalities.short(p)`.
+- Client: `UI/ColorWheel` (`ColorWheel.new(props)` -> `{ frame, set, get, onChange, onPick }`; dots named `Swatch`,
+  hit areas `PickHue` and `PickBright`); `UI/BuyLook` (`item(id, isBundle?)`, `look(app, bundles?)`:
+  `MarketplaceService:PromptBulkPurchase` with `MarketplaceProductType.AvatarAsset / AvatarBundle` line items, else
+  `PromptPurchase` / `PromptBundlePurchase` one at a time, each after the last prompt's Finished signal). Body parts
+  and moves are only bought as their set; other creators' items may need Allow Third Party Sales.
+- `UI/Creator`: `Creator.open{ mode = "new" | "edit" | "self", vid?, start? = "me", tab? }`; `Creator.openFor(kind)`
+  with "yourself" (a new villager starting as the player's avatar and display name), "friend" (opens on Players),
+  "custom" (plain), "self" (your own look), through `Hud.open`; `Creator.Created` (an event, `(vid, name)`, fired after
+  a new villager's VillagerCreate succeeds). The mode tab is `Kit.segments` "Villager" / "You" (`switchMode`, the
+  villager kept in `stash`, undo and all). The header's colour button is `Colour` in the search well, its tag
+  `ColourTag`, the wheel card `ColourCard` over a `ColourCatcher`: the catalog only takes words, so a colour is
+  searched by its nearest word, and only what the game keeps itself (skin, the palette, a look's own colours) is
+  compared by colour. A worn card has a `Buy` button; the tools row has `Buy outfit`. The Shared tab's sort is the
+  header's sort button (`sharedSort`). No rims on its cards, tiles, swatches, notes or tool buttons; the colour grid's
+  twelve swatches and the personality tiles' eight stretch across the row.
+- Remotes: `LookSave(appearance | false) -> ok, why` (validated with `Avatar.validate`, kept in `profile.look`,
+  `LookEvery` seconds apart, put on the character at once); `LookLike(by, at) -> { likes, liked } | nil, why` (one a
+  player, never your own, `LikeEvery` apart); `CreatorShared(page, search?, sort?, colour?)` sorts ("new" / "likes"),
+  filters by a hex colour and returns `at`, `likes` and `liked` on each look; `CreatorOpen("self")` returns the saved
+  look or the Roblox avatar.
+- `Services/Avatar`: `Avatar.dressPlayer(player, char?)` (ApplyDescriptionAsync of `profile.look`, or the Roblox
+  avatar when there is none; re-adorns BillboardGuis such as the VIP tag to the new head), run on CharacterAdded when
+  a look is saved, on `Data.Loaded` for a body that came first, and on LookSave. Shared looks carry `at` (os.time when
+  shared) and `likes`; likes are gathered per server in `pendingLikes` and written into the `<name>_Looks` `recent` key
+  every `LikeFlush` seconds and on BindToClose, never once a press. The client state has `look` (false when none).
+  `Tuning.CreatorMore`: `LikeEvery`, `LikeFlush`, `LikedKept`, `ColorNear` (40, Lab), `ColorShown`, `ShuffleTop`,
+  `BuyMax`, `LookEvery`.
+- Specs: `Creator.spec` adds Faces, Searching by colour, Shuffle, Buying a look, Likes on shared looks, Your own look
+  and the saved data, Personalities in a few words. `tests/sim/creator_sections.luau` adds the faces search, the
+  colour wheel (catalog word, outfits, skin, shared, the tag), likes and sort, Buy and Buy outfit, the You tab, and
+  openFor with Created; its fake MarketplaceService records `PromptPurchase`, `PromptBundlePurchase` and
+  `PromptBulkPurchase` in `Sim.prompted`. Preview scenes (in audit.sh): `creator:colour`, `creator:colour:skin`,
+  `creator:self`, `creator:self:save`, `creator:wornbuy`; `creator:shared` shows likes and the sort.
+
 ## The drawn city
 
 - `Services/World.stylize` sets the light from `Tuning.Look.Light` (Brightness, Exposure, Ambient, OutdoorAmbient,
@@ -1621,10 +2349,6 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   (`Tuning.Look.Lens`); every frame `Focus` sets its `FocusDistance` to the camera's distance from `Camera.Focus`
   and its `InFocusRadius` to `Reach` times that (never under `InFocusRadius`), eased by `Ease`, so near things stay
   sharp and the town behind goes soft, on each player's own screen (`Focus.lens(distance)` is the rule).
-- `Data/LawnPatches`: `layout(seed, x1, z1, x2, z2)` gives the boxes of the lawn's patches `{ x, z, sx, sz, yaw,
-  top, color }`: blobs of two or three turned boxes inside a circle, the circles `Gap` apart on the land, one patch
-  for every `Every` square studs up to `Most`, each layer `Lift` over the last from `Base`. The LawnPatches spec
-  holds them on the land, at their own heights and green.
 - Vehicles (the user: "make vehicles, with faster ones with bigger capacities costing more, and gem ones being the
   fastest"): `Data/Vehicles` (`list` of { id, name, blurb, speed, seats, coins or gems, size, hover, driver,
   passengers, color, draw }, `get(id)`, `prims(v)`: drawn in its own frame, the wheels' middle at y 0, front to -Z);
@@ -1636,6 +2360,33 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   wheel and handed to the driver when they sit); `client/World/Driving` (at the wheel, every frame: the pedal and
   wheel through `Sim/Vehicles`, riding `hover` over the ground by a raycast); `UI/Garage` (the menu, the `car` icon,
   the HUD's Cars button). Preview: `render.sh vehicles`, `ui.sh panel:Garage`.
+  Since "make cars and vechicles more detailed" and "make more vehicles": thirteen vehicles (new ids `pickup`,
+  `offroad`, `coach`, `opentop`, `limo`, `hover`) drawn from `Data/VehicleKit`, the kit in a vehicle's own space (x
+  across, y up from the wheels' middle, front toward -Z). `Kit.car(r, Car)` draws a whole car from its measurements and
+  returns `{ hw, cx, nose, tail }` for extras; its parts are `Kit.wheel`, `Kit.arch`, `Kit.roundBox` (a box with its
+  upright and top edges rounded), `Kit.rod`, `Kit.lamp`, `Kit.plate`, `Kit.grille`, `Kit.mirror`, `Kit.seat`,
+  `Kit.steering`, `Kit.seam`, `Kit.handle` and `Kit.at` (draw in a frame of its own). `Car` fields: body (`len wid sill
+  belt roof hood rad`), wheels (`R tw fa ra spokes rim hub arches wheels=false`), cabin (`ws bw inset posts pillar
+  quarter roofPaint glass glassTransp mirrors chrome`), `doors`, `bed` (a pickup's open bed), `bumper`, `arch`, `lamps
+  "wide"`, `grille`, `seats` + `inside` ("full" or "simple"), `wheelName` (the town's cars name their wheels Wheel so
+  Ambience turns them), `lite` (fewer parts, for the town's cars). `Data/AmbientModels`: `car` (traffic, with front
+  seats and turning wheels) and `bus` redrawn with the kit, and `parked` (lighter, no inside) is what
+  `DetailModels.pocketParking` parks. The Vehicles spec holds every vehicle to 100 to 400 parts, none in plain
+  SmoothPlastic, real frames, smooth shapes kept round and a seat (a fabric or leather cushion) under every rider.
+  Previews: `render.sh vehicles:<id>,<id>` and `render.sh ambient:<name>` (car, parked, bus).
+- Six plots and rooms to walk into (the user: "could you make the max plots 6, expanding the map for it?" and "detail
+  the town more, and make the lights and interior in them work"): `Data/TownMap` lays the walk between plots 5 and 6
+  (its planters, trees and benches), hedges behind the new plots and along the avenues up to Ridge Road, gardens and
+  trees in the new lanes and strips, a bus stop on Ridge Road, kerb clutter on Hill Road's north side, and the hills'
+  places read from their plateaus (`Data/Places`: the observatory and the radio mast by theirs). The civic quarter's
+  pockets draw from their own seed (89), so what is added downtown no longer moves its gardens. Eight more walk-in
+  shops are in the list of shops with rooms (a bakery, a toy shop and a grocer on Quay Street, a cafe, a bookshop and
+  a clothes shop on Hillside Row, a cafe and a toy shop on the cross street south of Main Street). The Town spec holds
+  six plots in three rows (plot 1 where it was, corners on the terrain grid, the new plots flat, the backdrop clear of
+  the northmost plots) and the budgets: under 58,000 parts as served (it was 56,000), under 137,000 opened (126,000)
+  and under 320 different pieces; measured 55,966, 134,377 and 304. The World spec keeps the hills off Ridge Road and
+  the avenues up to it; the Landmarks spec has the stair from Ridge Road and its crossing there.
+
 - `client/World/Outlines`: ink outlines on people. `Outlines.step(from)` gives the `Most` (20) nearest players'
   characters and villagers within `Reach` a Highlight named `Ink` (no fill, dark outline) and takes it off the
   rest; `start` runs it every 0.4 s from the camera.
@@ -1655,8 +2406,67 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   sign's, and after dark (the same test as the lamps, `World.isNight`, on `Lighting.ClockTime` changing) raises
   Brightness and switches on a SurfaceLight on fascias, drinks machines and big low adverts.
 
+## Settings, weather and seasons
+
+The user: "add settings for graphic quality, background blur, bloom, etc.", "could you use better weather effects?",
+"make seasons more noticeable and better polished" and "remove the patches across the terrain that you made before".
+
+- `Sim/Graphics` (shared): `Keys`, `Detail`, `clean(settings)`, `level(settings)`, `blur(settings)`,
+  `blurStep(settings)`, `air(settings, kind)`. `Tuning.Graphics`: `Levels.low/medium/high` (Shadows, Reach, Particles,
+  Outlines, Layers, Puddles) and `BlurSteps`. The settings are saved in `Schema.Settings` (`detail`, `blur`,
+  `blurStrength`, `bloom`, `sunRays`, `haze`). Client `World/Graphics` (started in `Main.client` after `State.start`):
+  `settings()`, `level()`, `apply()`, `set(key, value)` (on at once, saved with `SettingSet`), `Changed`; it switches
+  Lighting's `Glow`, `Rays` and `Lens` (Enabled and FarIntensity) and `GlobalShadows`, and sets `Lively.MoveRange`,
+  `FxRange` and `Lively.RateScale`. `World/Ambience` reads the detail's `Reach` and `Particles`, `World/Outlines` takes
+  `Most` from it, and `World/Focus` rests while the lens is off. `UI/Settings`: the menu (`Settings.Rows`, `picked`,
+  `value`), with Dark and Light on its left card through `UI/Theme` and a note that Roblox's own graphics quality is
+  set in Roblox's menu (no script can set it). Preview `panel:Settings` (in `audit.sh`).
+- `Data/Weather` (shared): `Kinds` (clear, cloudy, rain, storm, snow, fog, blossom, leaves), `Textures` (a rain
+  streak, two rings, a splash, a leaf flipbook 8 by 8, a soft puff, and the petal, flake and dot Data/Effects had;
+  `scripts/library_textures.py check` checks them), `Boxes` (near, mid, far, air, mist round the camera; ground: the
+  rain's patches), `Layers[kind]` (particle data: texture, box, level 1 to 3, colors, size, transp, life, rate, speed,
+  spread, accel, drag, rot, spin, light, orient "streak" / "flat", flip, flipFps), `Wet`, `Lightning`, `known(kind)`,
+  `pick(season, roll)`, `drawn(kind, layers, particles, extra?, share?)`, `alive(layer)`. `Tuning.Weather` (after
+  `Tuning.Look`): `Every`, `Odds` (by season), `Looks[kind]` (Sun, Soft, Density, Haze, Grey, Sway, Gust; clear equals
+  `Tuning.Look`'s light and air), `Ease`, `NoHaze`, `StormWaves`, `Lightning`, `Cells`, `Cell`, `Puddles`,
+  `PuddleReach`, `PuddleSize`, `SeasonAir`. `Services/World`: `World.Weathers` is `Data/Weather.Kinds`; `setWeather`
+  keeps an unknown kind out, sets the wind and, in a storm, the sea's waves; the clock's loop eases
+  `Lighting.Brightness`, `ShadowSoftness`, the Atmosphere's Density and Haze and the grade's saturation toward the
+  weather's look; the weather loop picks with `Weather.pick`. `UI/Weather` (rewritten): emitters per layer on hidden
+  parts round the camera in a `WeatherFx` folder (a layer past 400 a second split over several), the rain's ground
+  patches set by raycasts, puddles (`Puddle`, Glass discs 0.13 over hard ground open to the sky), lightning (a
+  `Lightning` ColorCorrectionEffect and `Bolt` parts), the Atmosphere's Density and Haze eased on this screen
+  (`Sim/Graphics.air`), nothing from the sky while a roof is over the camera. `World/Ambience` reads the weather's
+  `Sway` and `Gust` for leaves, flags and boats. `fog` is in the HUD's and the news' weather names and icons.
+- `Data/Seasons` (shared): `Looks[1..4]` (grass, grassMix, snow, roofSnow, blossom, blooms, crowns, crownMix, shrub,
+  shrubMix, frost, air, notice), `at(s)`, `grass(s, c)`, `terrain(s, material, c)`, `leafKind({ material, shape,
+  merged })` ("crown" a Grass lump, "fir" a merged piece or wedge boughs, "shrub" the rest), `seed(x, z)` (one number
+  per 16 stud square, so a tree turns as a whole), `leaf(s, kind, c, seed, mid?)`, `repaints(s, kind)`, `isRoof({
+  name, material, shape, top, tall, area, kind })`, `roof(s, c)`, `light(c)`, `Snow`, `Summer` (Data/Terrain's grass),
+  `Mid`. Client `World/Seasons` dresses every part under `Town` and `Plots` for the season (Leaf parts by kind, a merged
+  fir with `UsePartColor` in winter, Grass and LeafyGrass parts by `Seasons.grass`, roofs open to the sky by
+  `Seasons.roof`), keeps a part's own colour in its `SeasonBase` attribute, dresses what is added later in batches,
+  and shows the season's notice (`Toasts.show`) when it turns. The server's side is `World.applySeason` (the terrain).
+- Gone: `Data/LawnPatches`, its spec, the `Patch` parts in `Plots.drawLand` and their hiding in `Water.cutGround`.
+- Specs: `Seasons`, `Weather` (a storm at full detail under about 5,000 particles; clear is `Tuning.Look`'s own),
+  `Settings`. Previews: `SEASON=1..4` before `render.sh` or `walk.sh` draws any scene in that season
+  (`tools/preview/dump.luau`); `walk.py --weather <kind>` draws the weather's light and air and a sketch of what falls;
+  `tools/preview/look.luau` writes `Tuning.Weather` beside `Tuning.Look`.
+
 ## Tests and tools
 
+- Round 7 (the main screen's Hide, borders and Claim all, icons, the friend's tutorial, the creator's extras,
+  bubbles, the bag and gifts, skills and work moves, six plots and visits, Build mode's search, joins and lifts,
+  vehicles, decor and water, cutscenes in the world, events with pieces and follow-ups, settings, weather and
+  seasons, earned mood): 821 specs in 66 files at the last full run. New spec files: `PlotName`, `ClaimAll`,
+  `Visits`, `WorkMove`, `Bag`, `Giving`, `Seasons`, `Settings`, `Weather`, `Travel`, `GemPieces`, `Needs`,
+  `PlotBoard`, `VisitService`, `FollowUps`; `LawnPatches` is gone. The simulations gained: `hud` (Hide and Show, the
+  plot's name, the quests' drop, a notice), `tutorial` (the friend's three steps under the dim), `creator_sections`
+  (colour, likes, buying, the You tab), `talk_card` (a go at a piece over the player's head, Shift to run, the
+  cutscene set in the world), `event_pace` (keys without Space, `EventWatch "next"`, the name box, a bust made again
+  wearing a hat), `build_client` (search, stacking and water, the time of day, the sea under the basement) and
+  `lively` (fireflies, running water, the fog machine). Every section above names its own preview scenes; all the
+  new UI scenes are in `tools/preview/audit.sh`'s list.
 - Specs added in this round: `Voice` (each personality's hand), `Tutorial`, `Water`, `Unstick`, `EventService` (the
   real Events service with stubbed neighbours and a wound clock: the answer timer held while reading). Simulations:
   `tests/sim/event_pace.luau` (a watched event moves only on presses) and `tests/sim/tutorial.luau` (the tutorial from
@@ -1666,7 +2476,8 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
   `build:shapes`, `build:pillars`, `build:markings`, `build:picture`, `build:picture:bad`, `build:picture:pick`,
   `build:water`, `build:water:pick`, `wish`, `wish:short`, `wish:friend`, `wish:cheer`, `tutorial:welcome`,
   `tutorial:1`, `tutorial:2`, `tutorial:2:build`, `tutorial:3:build`, `tutorial:4`, `tutorial:4:craving`,
-  `tutorial:4:buy`, `tutorial:done`; `panel:Tutorial` is the welcome.
+  `tutorial:4:buy`, `tutorial:done`; `panel:Tutorial` is the welcome. (Since the friend's tutorial,
+  `tutorial:welcome` and `tutorial:4*` are gone: see "Tutorial, wishes, unsticking".)
 - Pieces that move and give off effects: the `Lively` spec (every moving group has its pivot and a known motion,
   nothing that moves is solid, every effect is known and light, every workplace has a work effect, the motions stay
   near their pivots, the clocks tell the time, VIP pieces go down only with the pass) and `tests/sim/lively.luau`
