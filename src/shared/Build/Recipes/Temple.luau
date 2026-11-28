@@ -12,7 +12,8 @@
 --
 -- A roof here stands on the floor of the storey over the room it covers, its middle over the
 -- room's middle, as the glass roof does (Recipes/Showpieces): it brings the beam round the top of
--- the walls, the brackets and the eaves with it. c1 is the tiles, c2 the timber.
+-- the walls, the brackets and the eaves with it. A roof's c1 is its tiles and c2 its timber; the
+-- other pieces say what their two paints are.
 
 local Recipe = require(script.Parent.Parent.Recipe)
 local Geometry = require(script.Parent.Parent.Geometry)
@@ -859,7 +860,8 @@ local items: { any } = {
 		build = function(r: R)
 			-- A gate for a gap 8 wide in a wall running across it (x): four posts on stones, a
 			-- plastered panel each side to meet the wall's ends, beams across their heads, the two
-			-- leaves swung open inside (-z) and a small tiled roof over it all.
+			-- leaves swung open inside (-z) and a small tiled roof over it all. c1 is the timber, c2
+			-- the tiles.
 			local wood = r.c1
 			local px, pz = 3.8, 1.6
 			for _, sx in { -1, 1 } do

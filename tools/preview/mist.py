@@ -24,28 +24,31 @@ def vec(text):
 
 
 def puffs_of(e, rng):
-    """Where one piece's puffs are a moment into its run: (centre, radius, strength, flatness)."""
+    """Where one piece's puffs are a moment into its run: (centre, radius, strength, flatness).
+    As many as are alive at once: a rate times a life (Data/Effects)."""
     at = np.array(e["at"], float)
     a = math.radians(e.get("r", 0))
     ahead = np.array([math.sin(a), 0.0, math.cos(a)])
     side = np.array([ahead[2], 0.0, -ahead[0]])
     out = []
     if e["kind"] == "fog":
-        # out of the nozzle at 5 to 7 a second, slowed hard by the air and sinking, growing from
-        # 1 to 7 across over five to seven seconds; a low bank 4 to 9 across round the machine
-        for _ in range(34):
+        # fog: 7 a second living 5 to 7 seconds, out of the nozzle at 5 to 7 a second and slowed
+        # hard by the air (it gets about 7 studs), sinking, 1 to 7 across and about a third seen
+        for _ in range(42):
             t = rng.random()
-            reach = 1.5 + 9.0 * (1 - (1 - t) ** 2) + rng.normal(0, 1.2)
-            c = at + ahead * reach + side * rng.normal(0, 0.9 + 2.2 * t)
-            c[1] = 0.6 + 1.4 * (1 - t) + rng.random() * 1.6
-            out.append((c, 0.6 + 3.2 * t, 0.26 * (1 - 0.55 * t), 0.75))
-        for _ in range(14):
-            c = at + ahead * rng.normal(1.5, 2.0) + side * rng.normal(0, 2.4)
-            c[1] = 0.4 + rng.random() * 0.8
-            out.append((c, 2.2 + rng.random() * 2.4, 0.2, 0.45))
+            reach = 1.0 + 7.0 * (1 - math.exp(-3 * t)) + rng.normal(0, 0.8)
+            c = at + ahead * reach + side * rng.normal(0, 0.6 + 2.6 * t)
+            c[1] = 0.6 + 1.2 * (1 - t) + rng.random() * 1.4
+            out.append((c, 0.5 + 3.0 * min(1, t * 1.6), 0.32 * (1 - 0.5 * t), 0.8))
+        # fogbank: 5 a second living 6 to 8 seconds, a low flat bank 4 to 9 across round its feet,
+        # drifting slowly every way
+        for _ in range(36):
+            c = at + ahead * rng.normal(1.0, 3.0) + side * rng.normal(0, 3.4)
+            c[1] = 0.3 + rng.random() * 1.0
+            out.append((c, 2.0 + rng.random() * 2.6, 0.22, 0.5))
     else:
-        # a mist bowl: a few slow puffs over the water, 1 to 4 across, drifting down
-        for _ in range(10):
+        # a mist bowl: 3 a second living 4 to 6 seconds, slow puffs 1 to 4 across drifting down
+        for _ in range(15):
             c = at + side * rng.normal(0, 0.8) + ahead * rng.normal(0, 0.8)
             c[1] = at[1] + 1.0 + rng.random() * 0.8
             out.append((c, 0.6 + rng.random() * 1.4, 0.2, 0.7))
@@ -92,7 +95,7 @@ def main():
                 continue
             xs, ys = np.meshgrid(np.arange(x0, x1) + 0.5, np.arange(y0, y1) + 0.5)
             q = ((xs - px) / max(rx, 1e-3)) ** 2 + ((ys - py) / max(ry, 1e-3)) ** 2
-            a = strength * np.exp(-2.2 * q)
+            a = strength * np.exp(-1.6 * q)
             # behind what stands in front of it, softly where it meets a surface
             seen = np.clip((zbuf[y0:y1, x0:x1] - (z - rad)) / (2 * rad), 0, 1)
             a = a * seen
