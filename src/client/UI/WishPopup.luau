@@ -126,15 +126,13 @@ end
 local function words(v: any, kind: string, food: any, other: any): (string, string, string)
 	if kind == "food" then
 		local line = Text.fill("{x} would love {food}.", { x = v.name, food = Foods.phrase(food) })
-		local how = if food.id == v.fav then "It's their favourite food." else "Buy it and they'll have it right away."
+		local how = if food.id == v.fav then "Their favourite food." else "Buy it for them."
 		return line, how, ""
 	elseif kind == "friend" then
 		local line = Text.fill("{x} would like to get to know {y}.", { x = v.name, y = other.name })
-		return line, "Introduce them and they'll get talking.", "Introduce"
+		return line, "Introduce them.", "Introduce"
 	end
-	return Text.fill("{x} feels a bit down and wants to talk.", { x = v.name }),
-		"A chat with you should cheer them up.",
-		"Have a chat"
+	return Text.fill("{x} feels a bit down.", { x = v.name }), "A chat would help.", "Have a chat"
 end
 
 -- The card on the left: what they want, big, with its name under it.
@@ -261,7 +259,7 @@ local function paintAction(c: any)
 	elseif food then
 		noteText = Text.fill("You have {n} coins.", { n = Text.commas(State.data.coins or 0) })
 	else
-		noteText = "They'll thank you with a few coins."
+		noteText = "They'll tip you a few coins."
 	end
 	c.note = Kit.text(noteText, {
 		Name = "Note",

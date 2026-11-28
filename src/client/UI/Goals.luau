@@ -10,6 +10,7 @@ local Text = require(Shared.Util.Text)
 local Kit = require(script.Parent.Kit)
 local Icons = require(script.Parent.Icons)
 local MenuParts = require(script.Parent.MenuParts)
+local Toasts = require(script.Parent.Toasts)
 local State = require(script.Parent.Parent.Controllers.State)
 
 local Goals = {}
@@ -165,7 +166,8 @@ local function showDetail(g: any)
 		Wrap = false,
 		LayoutOrder = 2,
 	})
-	-- at the foot: the button to claim it, or where it stands
+	-- at the foot: the button to claim it, when it's done (nothing in its place otherwise: the ring
+	-- and the row say how far along it is)
 	if ready then
 		Kit.button(Text.fill("Claim {n}", { n = Text.commas(g.goal.reward) }), {
 			Name = "Claim",
@@ -182,35 +184,23 @@ local function showDetail(g: any)
 				Remotes.fn("GoalClaim"):InvokeServer(g.goal.id)
 			end)
 		end)
-	else
-		local foot = Kit.box({
-			Name = "Status",
-			Parent = frame,
-			Size = UDim2.new(1, 0, 0, 54),
-			Position = UDim2.new(0, 0, 1, -54),
-		})
-		Kit.title(
-			if g.claimed
-				then "Claimed"
-				else Text.fill("{a} of {b}", { a = Text.commas(g.value), b = Text.commas(g.goal.need) }),
-			{
-				Parent = foot,
-				Size = UDim2.new(1, 0, 0, 28),
-				TextSize = 22,
-				Tint = if g.claimed then T.GreenDark else nil,
-				Color = if g.claimed then nil else T.Ink,
-				AlignX = Enum.TextXAlignment.Center,
-			}
-		)
-		Kit.text(if g.claimed then "Done and paid." else "It counts up as you play.", {
-			Parent = foot,
-			Size = UDim2.new(1, 0, 0, 20),
-			Position = UDim2.fromOffset(0, 30),
-			TextSize = 15,
-			Color = T.InkSoft,
-			AlignX = Enum.TextXAlignment.Center,
-		})
 	end
+end
+
+-- Claim all, at the right end of the menu's top: every finished goal at once (the user: "make a
+-- claim all button in rewards and in goals"), claimed and paid on the server (Services/Claims),
+-- which sends the one notice of what came in.
+local function claimAll()
+	task.spawn(function()
+		local called, ok, why = pcall(function()
+			return Remotes.fn("GoalClaimAll"):InvokeServer()
+		end)
+		if not called then
+			Toasts.show("That didn't go through. Try again in a moment.", "warn")
+		elseif not ok and type(why) == "string" then
+			Toasts.show(why, "info")
+		end
+	end)
 end
 
 -- The right side: every goal as a row, in three groups: ready to claim (green), under way
@@ -220,6 +210,7 @@ local function fill()
 	if not frame then
 		return
 	end
+	MenuParts.claimAll(panel, Goals.ready(), claimAll)
 	for _, c in frame:GetChildren() do
 		if c:IsA("GuiObject") then
 			c:Destroy()

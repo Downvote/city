@@ -398,6 +398,46 @@ function MenuParts.note(text: string, accent: Color3, props: { [string]: any }?)
 	return box
 end
 
+-- Claim all: a leaning button in a full menu's header, just left of its tabs (or at its right end
+-- with none), that claims everything waiting in the menu at once (the user: "make a claim all
+-- button in rewards and in goals"). Green with something waiting, dim and inert with nothing.
+-- Made again on each call (the one before goes), so a menu calls it whenever it fills. Returns the
+-- button, or nil for a menu with no header.
+function MenuParts.claimAll(panel: any, waiting: number, onClick: () -> ()): TextButton?
+	local header: Instance? = panel and panel.header
+	if not header or panel.dialog then
+		return nil
+	end
+	local old = header:FindFirstChild("ClaimAll")
+	if old then
+		old:Destroy()
+	end
+	local dock = header:FindFirstChild("TabsDock")
+	local tabs = dock and dock:FindFirstChild("Tabs")
+	local tabsWide = if tabs and tabs:IsA("GuiObject") then tabs.Size.X.Offset else 0
+	local on = waiting > 0
+	local words = "Claim all"
+	local b = Kit.button(words, {
+		Name = "ClaimAll",
+		Parent = header,
+		Size = UDim2.fromOffset(Kit.textWidth(words, 18) + 56, 42),
+		-- (the tabs' bar sits 2 in from the right and runs 2 down, 46 tall)
+		Position = UDim2.new(1, -(2 + tabsWide + (if tabsWide > 0 then 12 else 0)), 0, 25),
+		AnchorPoint = Vector2.new(1, 0.5),
+		Color = if on then T.Green else T.PaperDark,
+		TextColor = if on then T.Dark else T.InkSoft,
+		TextSize = 18,
+		ZIndex = 2,
+	}, function()
+		if on then
+			onClick()
+		end
+	end)
+	b:SetAttribute("Disabled", not on)
+	b:SetAttribute("Waiting", waiting)
+	return b
+end
+
 -- A progress line: a label at the left, the numbers at the right, the bar under them (green once
 -- it's full). props: Parent, Size, Position, LayoutOrder, Color (the fill's), Coin (the numbers
 -- are coins).

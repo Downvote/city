@@ -52,7 +52,7 @@ Personalities.list = {
 		-- everything in order and ends on the next plan instead of a goodbye ("Let's go together!").
 		id = "sunny",
 		name = "Sunny",
-		blurb = "Chatty and upbeat, makes friends with anyone and tells you everything.",
+		blurb = "Chatty and upbeat.",
 		traits = { social = 0.95, temper = 0.2, kind = 0.65, mischief = 0.3, lazy = 0.2, brave = 0.6, focus = 0.5 },
 		color = "FFD45C",
 		lines = {
@@ -192,7 +192,7 @@ Personalities.list = {
 		-- health.
 		id = "gentle",
 		name = "Gentle",
-		blurb = "Kind and patient, asks if you've eaten and notices when someone is down.",
+		blurb = "Kind and patient.",
 		traits = { social = 0.6, temper = 0.1, kind = 0.95, mischief = 0.05, lazy = 0.3, brave = 0.4, focus = 0.7 },
 		color = "A8DB8A",
 		lines = {
@@ -332,7 +332,7 @@ Personalities.list = {
 		-- ("...Thanks, anyway."). Never trails off.
 		id = "bold",
 		name = "Bold",
-		blurb = "Brave and loud, says what they think and stands up for their friends.",
+		blurb = "Brave and loud.",
 		traits = { social = 0.7, temper = 0.7, kind = 0.5, mischief = 0.4, lazy = 0.15, brave = 0.95, focus = 0.45 },
 		color = "E8667A",
 		lines = {
@@ -472,7 +472,7 @@ Personalities.list = {
 		-- Never shouts.
 		id = "dreamy",
 		name = "Dreamy",
-		blurb = "Head in the clouds, notices odd little things and wanders off.",
+		blurb = "Head in the clouds.",
 		traits = { social = 0.5, temper = 0.2, kind = 0.6, mischief = 0.45, lazy = 0.5, brave = 0.4, focus = 0.1 },
 		color = "C4A8EB",
 		lines = {
@@ -611,7 +611,7 @@ Personalities.list = {
 		-- sentences that wander off to a nap. Laughs "Haha" and "Pfft". Cares sideways, like an old aunt.
 		id = "easygoing",
 		name = "Easygoing",
-		blurb = "Relaxed and lazy, naps a lot and calls it research.",
+		blurb = "Relaxed and lazy.",
 		traits = { social = 0.55, temper = 0.1, kind = 0.6, mischief = 0.25, lazy = 0.95, brave = 0.35, focus = 0.35 },
 		color = "8FD3E8",
 		lines = {
@@ -750,7 +750,7 @@ Personalities.list = {
 		-- can say it's good.") and stammers when caught out ("Th-that was on purpose!").
 		id = "proud",
 		name = "Proud",
-		blurb = "Confident and stubborn, wants to be the best and wants you to say so.",
+		blurb = "Confident and stubborn.",
 		traits = { social = 0.5, temper = 0.6, kind = 0.35, mischief = 0.3, lazy = 0.25, brave = 0.7, focus = 0.8 },
 		color = "F5B431",
 		lines = {
@@ -890,7 +890,7 @@ Personalities.list = {
 		-- bothering you and hardly ever raises their voice.
 		id = "shy",
 		name = "Shy",
-		blurb = "Quiet and careful, warms up slowly but means every word.",
+		blurb = "Quiet and careful.",
 		traits = { social = 0.25, temper = 0.25, kind = 0.75, mischief = 0.1, lazy = 0.35, brave = 0.2, focus = 0.75 },
 		color = "FFD1DC",
 		lines = {
@@ -1029,7 +1029,7 @@ Personalities.list = {
 		-- "jk", teases ("you're slow today") and owns up when it's over ("ok that was me").
 		id = "cheeky",
 		name = "Cheeky",
-		blurb = "A prankster with a big grin who loves getting a reaction.",
+		blurb = "A grinning prankster.",
 		traits = { social = 0.75, temper = 0.35, kind = 0.45, mischief = 0.95, lazy = 0.3, brave = 0.6, focus = 0.3 },
 		color = "F08A2E",
 		lines = {
@@ -1168,7 +1168,7 @@ Personalities.list = {
 		-- rain at four, so take a coat.") and "Later." Never raises their voice.
 		id = "cool",
 		name = "Cool",
-		blurb = "Calm and hard to impress, with few words, dry jokes and quiet pleasure.",
+		blurb = "Calm and hard to impress.",
 		traits = { social = 0.35, temper = 0.3, kind = 0.5, mischief = 0.25, lazy = 0.4, brave = 0.7, focus = 0.75 },
 		color = "7FA7C9",
 		lines = {
@@ -1307,7 +1307,7 @@ Personalities.list = {
 		-- whatever.", and softens only at the end of a line. The bark is words only.
 		id = "prickly",
 		name = "Prickly",
-		blurb = "Grumbles that they don't care, then helps anyway.",
+		blurb = "Grumbles, then helps anyway.",
 		traits = { social = 0.45, temper = 0.75, kind = 0.65, mischief = 0.3, lazy = 0.3, brave = 0.6, focus = 0.7 },
 		color = "E2795B",
 		lines = {
@@ -1446,7 +1446,7 @@ Personalities.list = {
 		-- sock treated as the end of the world, and thanks as big as the rest.
 		id = "dramatic",
 		name = "Dramatic",
-		blurb = "Everything is a big moment, with big words and big entrances.",
+		blurb = "Everything is a big moment.",
 		traits = { social = 0.85, temper = 0.5, kind = 0.5, mischief = 0.45, lazy = 0.3, brave = 0.75, focus = 0.35 },
 		color = "B36BD6",
 		lines = {
@@ -1586,7 +1586,7 @@ Personalities.list = {
 		-- a book.
 		id = "bookish",
 		name = "Bookish",
-		blurb = "Reads everything and loves telling you odd facts, sometimes for a bit too long.",
+		blurb = "Loves books and odd facts.",
 		traits = { social = 0.35, temper = 0.2, kind = 0.6, mischief = 0.15, lazy = 0.25, brave = 0.3, focus = 0.9 },
 		color = "6B8E6B",
 		lines = {
@@ -1725,7 +1725,7 @@ Personalities.list = {
 		-- it doesn't ("That was nice, which is strange."). Never shouts.
 		id = "gloomy",
 		name = "Gloomy",
-		blurb = "Expects the worst and says so, but is sweet underneath.",
+		blurb = "Expects the worst, sweet underneath.",
 		traits = { social = 0.3, temper = 0.35, kind = 0.6, mischief = 0.2, lazy = 0.55, brave = 0.35, focus = 0.55 },
 		color = "6F6A8F",
 		lines = {
@@ -1865,7 +1865,7 @@ Personalities.list = {
 		-- lovely day." Never raises their voice.
 		id = "polite",
 		name = "Polite",
-		blurb = "Proper and formal, and thanks you for everything twice.",
+		blurb = "Proper and formal.",
 		traits = { social = 0.6, temper = 0.1, kind = 0.8, mischief = 0.1, lazy = 0.2, brave = 0.45, focus = 0.8 },
 		color = "8FB8DE",
 		lines = {
@@ -2004,7 +2004,7 @@ Personalities.list = {
 		-- lunch, then we can have cake on the way back.") and compares things to food that fits.
 		id = "foodie",
 		name = "Foodie",
-		blurb = "Always thinking about the next meal, and the one after.",
+		blurb = "Always thinking about food.",
 		traits = { social = 0.7, temper = 0.3, kind = 0.6, mischief = 0.35, lazy = 0.5, brave = 0.45, focus = 0.4 },
 		color = "F2A65A",
 		lines = {
@@ -2144,7 +2144,7 @@ Personalities.list = {
 		-- ("..., phew."). Talks more than the shy ones.
 		id = "nervous",
 		name = "Nervous",
-		blurb = "Worries about what could go wrong, though it usually goes fine.",
+		blurb = "Worries a lot.",
 		traits = { social = 0.45, temper = 0.35, kind = 0.65, mischief = 0.1, lazy = 0.3, brave = 0.1, focus = 0.6 },
 		color = "A8C686",
 		lines = {

@@ -54,6 +54,7 @@ Remotes.Functions = {
 	-- price in gems (Sim/Flair), filtered on the server; false takes it off, for nothing
 	"VillagerFlair",
 	"GoalClaim", -- (goalId) -> ok, coins
+	"GoalClaimAll", -- () -> ok, { count, coins } or why: every finished goal at once (Services/Claims)
 	"PlaceFound", -- (placeId) -> ok: the player is at a place (checked against where they stand)
 	"GoHome", -- () -> ok, err: to the player's own plot
 	"SpawnMe", -- () -> status: the loading card asks for a body when none has come (Services/Plots)
@@ -63,6 +64,7 @@ Remotes.Functions = {
 	"PlaytimeClaim", -- (index?) -> ok, gems or why: the next playtime step reached today
 	"AchievementClaim", -- (id) -> ok, gems: a finished achievement's gems, once
 	"GroupClaim", -- () -> ok, gems or why: the group's gems, once, for a member
+	"RewardsClaimAll", -- () -> ok, { count, coins, gems } or why: all the Rewards menu has waiting (Services/Claims)
 	"WelcomeBack", -- () -> { secs, counted, coins, workers } or nil: what the town earned while away, once
 }
 

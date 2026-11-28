@@ -96,20 +96,12 @@ function WelcomeBack.open(info: any?)
 		LayoutOrder = 2,
 	})
 	local who = if workers == 1
-		then "Your villager at work kept going while you were out."
-		else Text.fill("Your {n} villagers at work kept going while you were out.", { n = workers })
-	local share = math.floor(Tuning.Offline.Share * 100 + 0.5)
+		then "Your villager kept working."
+		else Text.fill("Your {n} villagers kept working.", { n = workers })
 	local lines = { who }
 	if counted < secs - 60 then
-		table.insert(
-			lines,
-			Text.fill(
-				"Up to {h} hours away counts, at {p}% of what they'd earn at work in that time.",
-				{ h = Tuning.Offline.Hours, p = share }
-			)
-		)
-	else
-		table.insert(lines, Text.fill("Time away pays {p}% of what they'd earn at work in that time.", { p = share }))
+		-- (past the hours that count, the rest of the time away paid nothing)
+		table.insert(lines, Text.fill("Up to {h} hours counts.", { h = Tuning.Offline.Hours }))
 	end
 	local note = Kit.text(table.concat(lines, " "), {
 		Name = "Note",

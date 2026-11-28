@@ -83,10 +83,8 @@ draw = function()
 	})
 	Kit.text(
 		if current
-			then Text.fill("{line}. Sit at the wheel to drive, W and S for the pedal, A and D to turn.", {
-				line = Garage.line(current),
-			})
-			else "Pick one on the right and press Drive, and it waits in front of you.",
+			then Text.fill("{line}. Sit at the wheel to drive.", { line = Garage.line(current) })
+			else "Pick one and press Drive.",
 		{
 			Name = "OutLine",
 			Parent = inside,
@@ -155,7 +153,7 @@ draw = function()
 		end
 	end
 	section("For coins", T.Orange, false)
-	section("For gems, the fastest", T.Purple, true)
+	section("For gems", T.Purple, true)
 end
 
 function Garage.isOpen(): boolean
@@ -175,7 +173,7 @@ end
 
 function Garage.open()
 	Garage.close()
-	panel = Kit.panel("Garage", Kit.MenuSize, Garage.close, "car", T.Orange, { Caption = "Cars to buy and drive" })
+	panel = Kit.panel("Garage", Kit.MenuSize, Garage.close, "car", T.Orange, { Caption = "Buy and drive" })
 	draw()
 	table.insert(unbind, State.on("vehicles", draw))
 	table.insert(unbind, State.on("coins", draw))

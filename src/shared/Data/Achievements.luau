@@ -51,7 +51,7 @@ local function townLevel(i: number, gems: number): Achievement
 	return {
 		id = "level" .. i,
 		name = Text.fill("Level {n}", { n = i }),
-		desc = Text.fill("Grow your town to level {n}.", { n = i }),
+		desc = Text.fill("Reach level {n}.", { n = i }),
 		icon = "city",
 		need = i,
 		gems = gems,
@@ -83,7 +83,7 @@ Achievements.list = {
 	{
 		id = "villager5",
 		name = "Five in town",
-		desc = "Have 5 villagers living in town.",
+		desc = "5 villagers in town.",
 		icon = "people",
 		need = 5,
 		gems = 3,
@@ -93,7 +93,7 @@ Achievements.list = {
 	{
 		id = "bestfriends",
 		name = "Best friends",
-		desc = "Two of your villagers become best friends.",
+		desc = "Two villagers become best friends.",
 		icon = "heart",
 		need = 1,
 		gems = 3,
@@ -104,7 +104,7 @@ Achievements.list = {
 	{
 		id = "cravings",
 		name = "Treats",
-		desc = "Buy your villagers 10 things they were craving.",
+		desc = "Buy 10 cravings.",
 		icon = "gift",
 		need = 10,
 		gems = 3,
@@ -117,7 +117,7 @@ Achievements.list = {
 	{
 		id = "villager10",
 		name = "Ten in town",
-		desc = "Have 10 villagers living in town.",
+		desc = "10 villagers in town.",
 		icon = "people",
 		need = 10,
 		gems = 5,
@@ -127,7 +127,7 @@ Achievements.list = {
 	{
 		id = "villager16",
 		name = "Every bed taken",
-		desc = "Have 16 villagers living in town.",
+		desc = "16 villagers in town.",
 		icon = "house",
 		need = Tuning.Villagers.Start,
 		gems = 8,
@@ -139,7 +139,7 @@ Achievements.list = {
 	{
 		id = "villager30",
 		name = "A full street",
-		desc = "Have 30 villagers living in town.",
+		desc = "30 villagers in town.",
 		icon = "people",
 		need = 30,
 		gems = 3,
@@ -149,7 +149,7 @@ Achievements.list = {
 	{
 		id = "villager50",
 		name = "Fifty neighbours",
-		desc = Text.fill("Have {n} villagers living in town.", { n = Tuning.Villagers.Max }),
+		desc = Text.fill("{n} villagers in town.", { n = Tuning.Villagers.Max }),
 		icon = "house",
 		need = Tuning.Villagers.Max,
 		gems = 4,
