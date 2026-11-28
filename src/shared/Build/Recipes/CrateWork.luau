@@ -47,9 +47,9 @@ end
 
 -- A mug standing on (x, y, z): its body, a handle at its side and the drink inside.
 local function mug(r: R, x: number, y: number, z: number, col: Color3)
-	r:cyl(x, y + 0.14, z, 0.28, 0.2, "y", col, "Plastic")
-	r:cyl(x, y + 0.29, z, 0.04, 0.16, "y", Color3.fromRGB(110, 72, 50), "Plastic")
-	r:block(x + 0.1, y + 0.06, z - 0.02, x + 0.16, y + 0.22, z + 0.02, col, "Plastic")
+	r:cyl(x, y + 0.14, z, 0.28, 0.2, "y", col, "Plaster")
+	r:cyl(x, y + 0.29, z, 0.04, 0.16, "y", Color3.fromRGB(110, 72, 50), "Plaster")
+	r:block(x + 0.1, y + 0.06, z - 0.02, x + 0.16, y + 0.22, z + 0.02, col, "Plaster")
 end
 
 -- A sheet of paper lying on a top at height y, turned `turn` round its middle.
@@ -184,7 +184,7 @@ local items: { any } = {
 			end
 			-- the wand and a fan of cards in front of the hat
 			r:cyl(1.62, 2.83, -0.38, 0.7, 0.06, "x", INK, "Wood")
-			r:cyl(1.95, 2.83, -0.38, 0.1, 0.07, "x", C.White, "Plastic")
+			r:cyl(1.95, 2.83, -0.38, 0.1, 0.07, "x", C.White, "Plaster")
 			for k = 0, 3 do
 				r:boxAt(
 					CFrame.new(-1.9, 1.465 + k * 0.035, -0.9)
@@ -322,7 +322,7 @@ local items: { any } = {
 			end
 			-- two candles, lit
 			for _, x in { -0.62, 0.62 } do
-				r:cyl(x, 2.82, 0.65, 0.38, 0.12, "y", CREAM, "Plastic")
+				r:cyl(x, 2.82, 0.65, 0.38, 0.12, "y", CREAM, "Plaster")
 				r:glow(r:ball(x, 3.06, 0.65, 0.1, Color3.fromRGB(255, 200, 110), "Neon"), 8, 0.5)
 			end
 			-- the chest of charms beside the teller
@@ -378,7 +378,7 @@ local items: { any } = {
 			r:block(-1.45, 2.5, -0.23, 1.45, 2.9, -0.2, cloth, "Fabric")
 			-- the dishes, each on its plate
 			for _, x in { -0.85, 0, 0.85 } do
-				r:cyl(x, 2.92, 0.55, 0.04, 0.6, "y", china, "Plastic")
+				r:cyl(x, 2.92, 0.55, 0.04, 0.6, "y", china, "Marble")
 			end
 			-- a slice of cake, its layers and cream
 			r:boxAt(
@@ -390,9 +390,9 @@ local items: { any } = {
 				"Fabric"
 			)
 			r:boxAt(CFrame.new(-0.85, 3.13, 0.55) * CFrame.Angles(0, 0.4, 0), 0.3, 0.06, 0.22, CREAM, "Fabric")
-			r:ball(-0.84, 3.2, 0.55, 0.08, Color3.fromRGB(196, 72, 80), "Plastic")
+			r:ball(-0.84, 3.2, 0.55, 0.08, Color3.fromRGB(196, 72, 80), "Plaster")
 			-- the soup in its bowl
-			r:cyl(0, 3.02, 0.55, 0.16, 0.42, "y", china, "Plastic")
+			r:cyl(0, 3.02, 0.55, 0.16, 0.42, "y", china, "Marble")
 			r:cyl(0, 3.11, 0.55, 0.04, 0.36, "y", Color3.fromRGB(222, 150, 80), "Fabric")
 			-- the cloche and its knob
 			r:lump(CFrame.new(0.85, 2.96, 0.55), 0.5, 0.42, 0.5, STEEL, "Metal")
@@ -400,7 +400,7 @@ local items: { any } = {
 			-- notebook, pen, glass, cutlery and the bell
 			sheet(r, -0.7, 2.9, -0.02, 0.5, 0.34, 0.15, Color3.fromRGB(150, 64, 64))
 			sheet(r, -0.7, 2.94, -0.02, 0.44, 0.3, 0.15, PAPER)
-			r:cyl(-0.4, 3.0, 0.0, 0.34, 0.04, "x", INK, "Plastic")
+			r:cyl(-0.4, 3.0, 0.0, 0.34, 0.04, "x", INK, "Plaster")
 			local water = r:cyl(1.3, 3.04, 0.15, 0.28, 0.16, "y", Color3.fromRGB(206, 232, 240), "Glass")
 			water.transp = 0.3
 			for _, x in { -0.42, 0.42 } do
@@ -488,7 +488,7 @@ local items: { any } = {
 			r:boxAt(deck, 1.7, 0.2, 0.7, INK, "Metal")
 			for i = 0, 7 do
 				local x = -0.7 + i * 0.2
-				r:boxAt(deck * CFrame.new(x, 0.13, -0.12 + (i % 3) * 0.06), 0.06, 0.06, 0.1, C.White, "Plastic")
+				r:boxAt(deck * CFrame.new(x, 0.13, -0.12 + (i % 3) * 0.06), 0.06, 0.06, 0.1, C.White, "Plaster")
 				r:boxAt(deck * CFrame.new(x, 0.13, 0.22), 0.07, 0.06, 0.07, STEEL, "Metal")
 			end
 			r:block(-0.75, 2.76, 0.86, 0.75, 3.32, 1.0, INK, "Metal")
@@ -516,9 +516,9 @@ local items: { any } = {
 			r:noCollide(r:cyl(0, 4.32, -0.92, 0.03, 0.42, "z", INK, "Fabric"))
 			-- headphones lying on the desk
 			for _, x in { 1.05, 1.45 } do
-				r:cyl(x, 2.85, 0.35, 0.14, 0.22, "y", INK, "Plastic")
+				r:cyl(x, 2.85, 0.35, 0.14, 0.22, "y", INK, "Plaster")
 			end
-			r:beam(V(1.05, 2.92, 0.35), V(1.45, 2.92, 0.35), 0.05, 0.05, dark, "Plastic")
+			r:beam(V(1.05, 2.92, 0.35), V(1.45, 2.92, 0.35), 0.05, 0.05, dark, "Plaster")
 			-- the speakers at either end, their cones in front
 			for _, x in { -1.75, 1.75 } do
 				r:block(x - 0.25, 2.76, 0.3, x + 0.25, 3.5, 0.75, INK, "Wood")
@@ -532,7 +532,7 @@ local items: { any } = {
 			-- the records in their crate under the desk
 			r:block(-1.6, 0, -0.05, -0.7, 0.75, 0.6, OAK, "Wood")
 			for i = 0, 6 do
-				r:cyl(-1.5 + i * 0.12, 0.6, 0.27, 0.02, 0.56, "x", if i % 3 == 0 then panel else INK, "Plastic")
+				r:cyl(-1.5 + i * 0.12, 0.6, 0.27, 0.02, 0.56, "x", if i % 3 == 0 then panel else INK, "Plaster")
 			end
 			Lively.fx(r, "music", 0, 4.7, -0.2, { w = 0.8, d = 0.5, work = true })
 		end,
@@ -618,7 +618,7 @@ local items: { any } = {
 					n[3],
 					"Fabric"
 				)
-				r:ball(n[1], n[2] + 0.14, -0.62, 0.06, Color3.fromRGB(200, 70, 70), "Plastic")
+				r:ball(n[1], n[2] + 0.14, -0.62, 0.06, Color3.fromRGB(200, 70, 70), "Plaster")
 			end
 			for i = 1, #notes - 1 do
 				local a, b = notes[i], notes[i + 1]
@@ -699,7 +699,7 @@ local items: { any } = {
 				0.34
 			)
 			-- the keyboard's keys, and the mouse
-			r:block(-0.55, 2.62, 0.2, 0.35, 2.68, 0.5, INK, "Plastic")
+			r:block(-0.55, 2.62, 0.2, 0.35, 2.68, 0.5, INK, "Plaster")
 			r:piece(function(q: R)
 				for row = 0, 2 do
 					for k = 0, 7 do
@@ -712,14 +712,14 @@ local items: { any } = {
 							2.71,
 							0.3 + row * 0.08,
 							Color3.fromRGB(96, 98, 108),
-							"Plastic"
+							"Plaster"
 						)
 					end
 				end
 			end)
-			r:lump(CFrame.new(0.65, 2.66, 0.35), 0.14, 0.08, 0.22, INK, "Plastic")
+			r:lump(CFrame.new(0.65, 2.66, 0.35), 0.14, 0.08, 0.22, INK, "Plaster")
 			-- the gamepad: a body, two grips, the sticks and buttons
-			r:lump(CFrame.new(-1.2, 2.68, 0.4), 0.46, 0.1, 0.24, Color3.fromRGB(236, 236, 240), "Plastic")
+			r:lump(CFrame.new(-1.2, 2.68, 0.4), 0.46, 0.1, 0.24, Color3.fromRGB(236, 236, 240), "Plaster")
 			for _, s in { -1, 1 } do
 				r:lump(
 					CFrame.new(-1.2 + s * 0.2, 2.67, 0.32) * CFrame.Angles(0, s * 0.4, 0),
@@ -727,11 +727,11 @@ local items: { any } = {
 					0.1,
 					0.24,
 					Color3.fromRGB(236, 236, 240),
-					"Plastic"
+					"Plaster"
 				)
-				r:cyl(-1.2 + s * 0.09, 2.74, 0.43, 0.04, 0.07, "y", INK, "Plastic")
+				r:cyl(-1.2 + s * 0.09, 2.74, 0.43, 0.04, 0.07, "y", INK, "Plaster")
 			end
-			r:ball(-1.06, 2.74, 0.36, 0.05, Color3.fromRGB(230, 96, 96), "Plastic")
+			r:ball(-1.06, 2.74, 0.36, 0.05, Color3.fromRGB(230, 96, 96), "Plaster")
 			-- two cans and a bag of crisps
 			for k, x in { 1.2, 1.38 } do
 				r:cyl(
@@ -751,7 +751,7 @@ local items: { any } = {
 				0.18,
 				0.3,
 				Color3.fromRGB(236, 196, 90),
-				"Plastic"
+				"Plaster"
 			)
 			-- the tower and its light strip
 			r:block(-1.45, 0.05, 0.2, -0.95, 1.4, 0.95, INK, "Metal")
@@ -770,7 +770,7 @@ local items: { any } = {
 				local y = if j == 0 then 0.08 else j * 1.12 + 0.06
 				for k = 0, 3 do
 					local z = -0.27 + k * 0.15
-					r:block(2.28, y, z, 2.72, y + 0.62 + (k % 2) * 0.06, z + 0.11, box[(j + k) % #box + 1], "Plastic")
+					r:block(2.28, y, z, 2.72, y + 0.62 + (k % 2) * 0.06, z + 0.11, box[(j + k) % #box + 1], "Plaster")
 				end
 			end
 			Lively.fx(r, "glints", 0, 3.6, 0.75, { w = 1.8, h = 0.6, d = 0.2, work = true, color = light })
@@ -880,7 +880,7 @@ local items: { any } = {
 			end
 			-- the clock taken apart: its case, face and loose gears
 			r:cyl(0.9, 3.13, 0.2, 0.06, 0.6, "y", BRASS, "Metal")
-			r:cyl(0.9, 3.18, 0.2, 0.02, 0.5, "y", CREAM, "Plastic")
+			r:cyl(0.9, 3.18, 0.2, 0.02, 0.5, "y", CREAM, "Plaster")
 			for k, g in { { 1.4, 0.35, 0.22 }, { 1.25, 0.05, 0.14 }, { 0.6, -0.45, 0.16 } } do
 				r:cyl(g[1], 3.13, g[2], 0.04, g[3], "y", if k == 2 then STEEL else BRASS, "Metal")
 			end
@@ -1099,12 +1099,12 @@ local items: { any } = {
 				"Neon"
 			)
 			-- the phone, the name plate, the pens, reports and a coffee
-			r:block(-1.5, 2.9, 0.7, -1.0, 3.02, 1.1, INK, "Plastic")
-			r:cyl(-1.25, 3.08, 0.82, 0.5, 0.1, "x", INK, "Plastic")
+			r:block(-1.5, 2.9, 0.7, -1.0, 3.02, 1.1, INK, "Plaster")
+			r:cyl(-1.25, 3.08, 0.82, 0.5, 0.1, "x", INK, "Plaster")
 			r:boxAt(CFrame.new(0.65, 2.98, 0.32) * CFrame.Angles(0.5, 0, 0), 0.8, 0.18, 0.05, BRASS, "Metal")
 			r:cyl(1.5, 3.05, 1.0, 0.3, 0.2, "y", INK, "Leather")
 			for k = 0, 2 do
-				r:cyl(1.46 + k * 0.05, 3.25, 1.0, 0.3, 0.03, "y", if k == 1 then BRASS else INK, "Plastic")
+				r:cyl(1.46 + k * 0.05, 3.25, 1.0, 0.3, 0.03, "y", if k == 1 then BRASS else INK, "Plaster")
 			end
 			for k = 0, 2 do
 				sheet(
@@ -1142,7 +1142,7 @@ local items: { any } = {
 					(chair * CFrame.Angles(0, a, 0) * CFrame.new(0, 0.12, 0.62)).Position.Z,
 					0.22,
 					INK,
-					"Plastic"
+					"Plaster"
 				)
 			end
 			-- the chart on its easel, its bars climbing and the arrow
@@ -1173,7 +1173,7 @@ local items: { any } = {
 			r:cyl(-3.3, 1.2, 1.4, 2.2, 0.1, "y", WALNUT, "Wood")
 			Lively.pivot(r, CFrame.new(-3.3, 2.75, 1.4), "spin", { speed = 0.3, axis = "Y" })
 			Lively.moving(r, 1, function()
-				r:ball(-3.3, 2.75, 1.4, 0.9, Color3.fromRGB(110, 160, 190), "Plastic")
+				r:ball(-3.3, 2.75, 1.4, 0.9, Color3.fromRGB(110, 160, 190), "Plaster")
 				for k = 0, 2 do
 					local a = k * 2.1
 					r:lump(
@@ -1182,7 +1182,7 @@ local items: { any } = {
 						0.3,
 						0.36,
 						Color3.fromRGB(150, 186, 120),
-						"Plastic"
+						"Plaster"
 					)
 				end
 			end)
@@ -1301,7 +1301,7 @@ local items: { any } = {
 					"Fabric"
 				)
 			end
-			r:ball(0.25, 2.45, -1.98, 0.08, hero, "Plastic")
+			r:ball(0.25, 2.45, -1.98, 0.08, hero, "Plaster")
 			Lively.fx(
 				r,
 				"rays",
@@ -1432,7 +1432,7 @@ local items: { any } = {
 				end
 			end
 			r:cyl(-1.75, 2.78, 0.4, 0.12, 0.34, "y", dark, "Metal")
-			r:cyl(-1.75, 2.88, 0.4, 0.1, 0.26, "y", Color3.fromRGB(220, 70, 70), "Plastic")
+			r:cyl(-1.75, 2.88, 0.4, 0.1, 0.26, "y", Color3.fromRGB(220, 70, 70), "Plaster")
 			-- the warning lamp on its pole, turning
 			r:cyl(2.6, 1.6, -1.6, 3.0, 0.14, "y", dark, "Metal")
 			r:cyl(2.6, 3.15, -1.6, 0.12, 0.44, "y", dark, "Metal")
