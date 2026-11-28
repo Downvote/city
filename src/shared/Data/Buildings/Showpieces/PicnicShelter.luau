@@ -1,7 +1,7 @@
 --!strict
 -- A picnic shelter: a green shingle roof on six timber posts over a concrete pad with two picnic
--- tables and lanterns on them, a barbecue at its side. Round it a ring of stones for a fire with
--- benches and a woodpile, an oak to sit under and a pine.
+-- tables and lanterns on them, a barbecue at its side with a water butt. Round it a ring of stones
+-- for a fire with benches and a woodpile, an oak to sit under and a pine.
 --
 -- The frame: x across, z back from the street. The pad and the roof are x 6..22, z 6..16, the
 -- ridge running across.
@@ -60,6 +60,12 @@ return function(add: any)
 			put(b, "flower_bed", 10, 17.8, 0)
 			put(b, "bush", 2.4, 20, 0)
 			put(b, "rock", 6.6, 21, 50)
+			-- by the barbecue a water butt and a crate of logs, a lantern by the path and a gnome
+			-- watching the fire
+			put(b, "water_butt", 24.6, 7, 0, nil, SAGE, WALNUT)
+			put(b, "crate", 26.6, 14.2, 10, nil, OAK, OAK)
+			put(b, "lantern_garden", 16.4, 1.6, 0)
+			put(b, "gnome", 6.6, 18, 120)
 		end
 	)
 end

@@ -63,15 +63,16 @@ local LEAVES = { rgb(96, 150, 92), rgb(120, 170, 104), rgb(78, 128, 84) }
 local protos: { [string]: Prim } = {}
 
 -- What a piece is made of where its drawing doesn't say (a piece is one material), by the first
--- word of its name: windows and trims in painted timber, a balcony, a car or a lamp in painted
--- metal, beds of flowers in worn stone round their soil, leaves in grass.
+-- word of its name: trims in painted timber, windows (their glass is in the piece) and a
+-- balcony, a car or a lamp in painted metal, beds of flowers in worn stone round their soil,
+-- leaves in grass.
 local MADE_OF: { [string]: string } = {
 	flowerBed = "Concrete",
 	tubPlants = "Grass",
 	balcony = "Metal",
-	shopWindow = "Wood",
-	sideWindow = "Wood",
-	tallWindow = "Wood",
+	shopWindow = "Metal",
+	sideWindow = "Metal",
+	tallWindow = "Metal",
 	houseTrim = "Wood",
 	doorHood = "Wood",
 	carKit = "Metal",

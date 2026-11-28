@@ -1,6 +1,8 @@
 --!nocheck
--- Where the town's served parts come from: loose parts and pieces, by the line that drew them,
--- each counted as often as its model is placed.
+-- Where the town's parts go (the Town spec's budgets): loose parts and pieces by the line that
+-- drew them, or by model, each counted as often as its model is placed.
+--   lune run tools/preview/parts_by_line.luau [lines|models] [how many] [opened]
+-- Parts as served (Geometry.served) by default; `opened` counts every shape in a piece.
 local process = require("@lune/process")
 local Harness = require("../../tests/harness")
 Harness.init(".")

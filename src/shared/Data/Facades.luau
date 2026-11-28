@@ -209,13 +209,14 @@ end
 local kit: { [string]: Prim } = {}
 
 -- What a piece is made of where its drawing doesn't say (a piece is one material), by the first
--- word of its name: windows, shop fronts and doors in painted timber, the fittings on a wall in
--- painted metal, a banner in cloth. (Data/Surfaces picks for any other.)
+-- word of its name: a door in painted timber; windows and shop fronts, whose glass is drawn into
+-- the same piece, in painted metal, the plainest picture, so the glass shows no grain; the
+-- fittings on a wall in painted metal, a banner in cloth. (Data/Surfaces picks for any other.)
 local MADE_OF: { [string]: string } = {
-	win = "Wood",
-	glazed = "Wood",
+	win = "Metal",
+	glazed = "Metal",
 	door = "Wood",
-	back = "Wood",
+	back = "Metal",
 	meter = "Metal",
 	aircon = "Metal",
 	pipe = "Metal",
