@@ -3356,10 +3356,12 @@ Every choice is on at once, on that player's screen only, and saved with their p
 
 The user (2026-11-27): "could you use better weather effects?"
 
-The weathers are clear, cloudy, rain, storm, snow, fog (new), blossom and falling leaves, picked for
-the season every three hours of the town's day by each season's odds (snow only in winter, blossom in
-spring, falling leaves in autumn). Each has its own light and air: under cloud the sun is dimmer and
-the shadows soft, rain and storms thicken the haze, fog the most. What falls is drawn on each player's
+The weathers are clear, cloudy, rain, storm, snow, blossom and falling leaves, picked for the season
+by each season's odds (snow only in winter, blossom in spring, falling leaves in autumn), each lasting
+10 to 16 hours of the town's day (it was three: the user, 2026-11-28, "make it such that weathers last
+longer as well"). Each has its own light and air: under cloud the sun is dimmer and the shadows soft,
+rain and storms thicken the haze. (There was fog too, until the user, 2026-11-28: "could you also
+remove the fog weather?") What falls is drawn on each player's
 screen round the camera, in layers:
 
 - Rain: streaks close by, a thicker fall further off and a faint curtain far away; where it lands,
@@ -3369,7 +3371,6 @@ screen round the camera, in layers:
 - Storm: heavier rain blown sideways, the sea's waves up, the wind bending the trees much harder in
   gusts, and lightning: a flash over the picture and a bolt coming down far off.
 - Snow: big soft flakes near the camera, smaller ones further off, slower and drifting.
-- Fog: thick air and mist drifting low.
 - Blossom and falling leaves: petals and leaves turning over as they come down.
 
 Nothing falls indoors. The pictures are Creator Store particle images (a rain streak, water ripples,

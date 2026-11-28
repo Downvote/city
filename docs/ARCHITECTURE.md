@@ -2778,10 +2778,10 @@ The user: "add settings for graphic quality, background blur, bloom, etc.", "cou
 - (2026-11-28) The air is each screen's own: `Services/World.grade` no longer eases the Atmosphere's Density and Haze
   (it sets them once in `stylize`); `UI/Weather.stepAir(dt)` eases them every frame by `Tuning.Weather.AirRate`,
   clear at once while `ViewTime.clear()`, and skips while the camera has `Cutscene`. A streak's emitter is
-  `FacingCameraWorldUp`. `Data/Weather.Boxes` entries may carry `ring` (a hole that many studs each way round the
-  camera's spot, the box set on the ground under `camera.Focus`); `Data/Weather.ringParts(name)` gives its four
-  boxes, and `UI/Weather` splits a ring layer's rate over them by area. The fog's layers come from the rings `mist`
-  and `haze`. While `ViewTime.clear()`, `UI/Weather` turns every emitter off and strikes no
+  `FacingCameraWorldUp`. No fog weather (gone from `Data/Weather.Kinds`, its layers, `Tuning.Weather.Looks` and
+  `Odds`, the HUD's and the news' names and `Sounds.Weather`), so the mist rings went with it. `Tuning.Weather.Every`
+  is `{ least, most }` town hours, picked each time in `Services/World`'s weather loop. While `ViewTime.clear()`,
+  `UI/Weather` turns every emitter off and strikes no
   lightning, and `Controllers/Audio`'s weather loops play the clear weather's.
 - `Build/ViewTime`: `Options`, `defaultIndex()` (`Tuning.ViewTime.Default`, noon), `townHour()`, `townWeather()`,
   `lookAt(hour, weather?)` (with the weather's `brightness`, `softness` and grey), `index()`, `current()`, `hour()`

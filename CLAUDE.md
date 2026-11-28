@@ -818,8 +818,10 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
   constantly": the server's value came in every half second over the screen's own). Never write it from the server,
   nor from the client outside `UI/Weather` and a cutscene. A streak (rain) stands upright facing the camera
   (`FacingCameraWorldUp`): `VelocityParallel` lays a picture's left to right along the fall, and our vertical line fell
-  as sideways dashes ("weather like rain seems to fall sideways"). Mist comes from a `ring` box on the ground round the
-  camera's spot, low and never born where the camera is; big particles near or falling through the camera pop.
+  as sideways dashes ("weather like rain seems to fall sideways"). Big particles near or falling through the camera pop
+  in and out: keep them off it. There is no fog weather ("could you also remove the fog weather?") and no puddles
+  ("remove the puddles that appear when raining"); don't bring either back. A weather lasts `Tuning.Weather.Every`
+  town hours, a few real minutes ("make it such that weathers last longer as well").
 - Seasons ("make seasons more noticeable and better polished"): `Data/Seasons` is the colour rule for the server (the
   terrain), the client (`World/Seasons`: leaves, lawns, roofs) and the previews (`SEASON=`). A tree's crown named
   `Leaf` in the Grass material turns with the seasons, a shrub in another material only a little, a fir (a merged

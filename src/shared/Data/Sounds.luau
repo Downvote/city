@@ -67,7 +67,6 @@ Sounds.Weather = {
 	rain = { rain = 1 },
 	storm = { storm = 1, wind = 0.7 },
 	snow = { wind = 0.4 },
-	fog = { wind = 0.2 },
 	cloudy = { wind = 0.25 },
 	leaves = { wind = 0.5 },
 	blossom = { wind = 0.25 },

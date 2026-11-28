@@ -2,7 +2,7 @@
 -- What each weather drops round the camera, on each player's own screen (UI/Weather draws it).
 -- The user: "could you use better weather effects?". So every weather that falls is layers of
 -- particles: drops near the camera big and quick, a thicker fall further off, a faint far curtain,
--- and where it lands, splashes and rings on the ground (rain), mist drifting low (fog), petals and
+-- and where it lands, splashes and rings on the ground (rain), petals and
 -- leaves turning over as they come down. The light and the air for each weather are in
 -- Tuning.Weather.Looks; the odds of each in a season in Tuning.Weather.Odds.
 --
@@ -25,7 +25,7 @@ local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Weather = {}
 
 -- every weather there is (World picks one; the HUD and the news name them)
-Weather.Kinds = { "clear", "cloudy", "rain", "storm", "snow", "fog", "blossom", "leaves" }
+Weather.Kinds = { "clear", "cloudy", "rain", "storm", "snow", "blossom", "leaves" }
 
 -- stylua: ignore
 Weather.Textures = {
@@ -41,38 +41,13 @@ Weather.Textures = {
 
 -- Where a layer comes from, round the camera: a flat square `size` across `up` studs over it, or
 -- a box of that size round it (`volume`). "ground" is the rain's patches (Tuning.Weather.Cells).
--- A `ring` box sits on the ground (`up` over the ground under what the camera looks at) with a
--- square hole `ring` studs from its middle each way: four boxes round the camera's spot, so what
--- comes from it never starts where the camera is. Mist comes from rings: big soft puffs born round
--- the camera, or falling through it, popped in and out of view (the user: "it seems like the fog
--- flicker in and out constantly").
 Weather.Boxes = {
 	near = { size = Vector3.new(40, 1, 40), up = 22 },
 	mid = { size = Vector3.new(110, 1, 110), up = 34 },
 	far = { size = Vector3.new(240, 1, 240), up = 50 },
 	air = { size = Vector3.new(90, 36, 90), up = 6, volume = true },
-	mist = { size = Vector3.new(140, 4, 140), up = 1.5, volume = true, ring = 18 },
-	haze = { size = Vector3.new(320, 10, 320), up = 4, volume = true, ring = 70 },
 	ground = { size = Vector3.new(18, 0.2, 18), up = 0 },
 }
-
--- The four boxes of a ring box, as { offset from its middle, size }: the strips in front and
--- behind run its whole width, the two at the sides fill the gap between them.
-function Weather.ringParts(name: string): { { at: Vector3, size: Vector3 } }
-	local box = Weather.Boxes[name]
-	if not box or not box.ring then
-		return {}
-	end
-	local half, hole, h = box.size.X / 2, box.ring, box.size.Y
-	local depth = half - hole
-	local mid = hole + depth / 2
-	return {
-		{ at = Vector3.new(0, 0, mid), size = Vector3.new(box.size.X, h, depth) },
-		{ at = Vector3.new(0, 0, -mid), size = Vector3.new(box.size.X, h, depth) },
-		{ at = Vector3.new(mid, 0, 0), size = Vector3.new(depth, h, hole * 2) },
-		{ at = Vector3.new(-mid, 0, 0), size = Vector3.new(depth, h, hole * 2) },
-	}
-end
 
 export type Layer = {
 	texture: string, -- a key of Weather.Textures
@@ -245,40 +220,6 @@ local SNOW: { Layer } = {
 	},
 }
 
--- mist lying low over the ground round the camera's spot, a band of it near and a thinner one
--- further out, never born where the camera is (rings) and low enough to pass under it; the fog
--- itself is the air's (Tuning.Weather.Looks.fog)
-local FOG: { Layer } = {
-	{
-		texture = "mist",
-		box = "mist",
-		level = 1,
-		colors = { rgb(226, 230, 236) },
-		size = { 7, 10, 12 },
-		transp = { 1, 0.84, 0.84, 1 },
-		life = { 10, 14 },
-		rate = 6,
-		speed = { 0.3, 0.8 },
-		spread = { 180, 10 },
-		rot = { 0, 360 },
-		spin = { -6, 6 },
-	},
-	{
-		texture = "mist",
-		box = "haze",
-		level = 2,
-		colors = { rgb(220, 226, 234) },
-		size = { 22, 30 },
-		transp = { 1, 0.88, 0.88, 1 },
-		life = { 14, 18 },
-		rate = 4,
-		speed = { 0.5, 1.2 },
-		spread = { 180, 10 },
-		rot = { 0, 360 },
-		spin = { -4, 4 },
-	},
-}
-
 -- petals and leaves: turning over as they drift down and across
 local function drift(texture: string, colors: { Color3 }, size: number, flip: number?): { Layer }
 	return {
@@ -327,7 +268,6 @@ Weather.Layers = {
 	rain = rain(RAIN, 1, Vector3.new(2, 0, 1)),
 	storm = rain(STORM, 1.6, Vector3.new(14, 0, 8)),
 	snow = SNOW,
-	fog = FOG,
 	blossom = drift("petal", PETALS, 0.35, nil),
 	leaves = drift("leaf", LEAVES, 0.6, 8),
 } :: { [string]: { Layer } }
@@ -357,7 +297,7 @@ function Weather.drawn(kind: string, layers: number, particles: number, extra: s
 		end
 	end
 	add(Weather.Layers[kind], 1)
-	local hides = kind == "rain" or kind == "storm" or kind == "snow" or kind == "fog"
+	local hides = kind == "rain" or kind == "storm" or kind == "snow"
 	if extra and extra ~= kind and not hides then
 		add(Weather.Layers[extra], share or 0)
 	end

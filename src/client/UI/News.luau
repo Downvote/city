@@ -26,7 +26,6 @@ local WEATHER = {
 	rain = "rain",
 	storm = "storms",
 	snow = "snow",
-	fog = "fog",
 	blossom = "falling blossom",
 	leaves = "falling leaves",
 }

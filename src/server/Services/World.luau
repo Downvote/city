@@ -655,12 +655,14 @@ function World.weather(): string
 	return if type(w) == "string" then w else "clear"
 end
 
--- A fresh weather for the season every few hours of the town's day.
+-- A fresh weather for the season, lasting Tuning.Weather.Every hours of the town's day (a few
+-- real minutes: "make it such that weathers last longer as well").
 local function weatherLoop()
 	local rng = Rng.new()
+	local every = Tuning.Weather.Every
 	while true do
 		World.setWeather(WeatherData.pick(World.calendar().s, rng:float(0, 1)))
-		task.wait(Tuning.Day.Length * Tuning.Weather.Every / 24)
+		task.wait(Tuning.Day.Length * rng:float(every[1], every[2]) / 24)
 	end
 end
 

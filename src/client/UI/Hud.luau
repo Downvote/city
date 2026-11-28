@@ -135,7 +135,6 @@ local WEATHER = {
 	rain = "Rain",
 	storm = "Storm",
 	snow = "Snow",
-	fog = "Fog",
 	blossom = "Blossom",
 	leaves = "Falling leaves",
 }
@@ -146,7 +145,6 @@ local WEATHER_ICON = {
 	rain = "rain",
 	storm = "storm",
 	snow = "snow",
-	fog = "fog",
 	blossom = "blossom",
 	leaves = "leaves",
 }

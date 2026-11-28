@@ -1,7 +1,7 @@
 -- The weather on this player's own screen, round the camera (the user: "could you use better
 -- weather effects?"). Data/Weather says what falls: rain as streaks in three depths with splashes
--- and rings where it lands, softly falling snow, mist
--- drifting low in fog, petals in blossom and leaves turning over as they come down; spring's
+-- and rings where it lands, softly falling snow, petals in blossom and leaves turning over as
+-- they come down (no fog: the user, "could you also remove the fog weather?"); spring's
 -- petals and autumn's leaves drift a little whatever the weather. A storm adds lightning: a flash
 -- and a bolt far off. The air (the haze) eases to the weather's here too, so a player who turned
 -- the haze off in Settings keeps clear air. How much is drawn follows their detail level
@@ -32,7 +32,6 @@ local MOST_RATE = 400 -- the most one emitter is given a second (a layer past it
 
 local folder: Folder? = nil
 local boxes: { [string]: Part } = {}
-local rings: { [string]: { Part } } = {} -- a ring box's four parts (Data/Weather.ringParts)
 local cells: { Part } = {}
 local emitters: { { e: ParticleEmitter, box: string } } = {}
 local sheltered = false
@@ -181,21 +180,11 @@ local function draw()
 	clear()
 	for _, layer in layersNow() do
 		local holders: { BasePart } = {}
-		-- (a ring's four parts share its rate by their size; a patch of ground gets it all)
 		local shares: { number } = {}
 		if layer.box == "ground" then
 			for _, c in cells do
 				table.insert(holders, c)
 				table.insert(shares, 1)
-			end
-		elseif rings[layer.box] then
-			local total = 0
-			for _, p in rings[layer.box] do
-				total += p.Size.X * p.Size.Z
-			end
-			for _, p in rings[layer.box] do
-				table.insert(holders, p)
-				table.insert(shares, p.Size.X * p.Size.Z / math.max(total, 1))
 			end
 		elseif boxes[layer.box] then
 			table.insert(holders, boxes[layer.box])
@@ -343,15 +332,6 @@ local function stepAir(dt: number)
 	end
 end
 
--- Where the ground is under what the camera looks at (the rings sit on it), found a few times a
--- second.
-local groundY: number? = nil
-local function findGround(at: Vector3)
-	groundParams.FilterDescendantsInstances = skipList()
-	local hit = workspace:Raycast(at + Vector3.new(0, 40, 0), Vector3.new(0, -200, 0), groundParams)
-	groundY = if hit then hit.Position.Y else at.Y - 4
-end
-
 function Weather.start()
 	if folder then
 		return
@@ -361,13 +341,7 @@ function Weather.start()
 	f.Parent = workspace
 	folder = f
 	for name, box in Data.Boxes do
-		if box.ring then
-			local parts = {}
-			for i, piece in Data.ringParts(name) do
-				table.insert(parts, hidden("Weather" .. name .. i, piece.size))
-			end
-			rings[name] = parts
-		elseif name ~= "ground" then
+		if name ~= "ground" then
 			boxes[name] = hidden("Weather" .. name, box.size)
 		end
 	end
@@ -399,21 +373,6 @@ function Weather.start()
 			local box = Data.Boxes[name]
 			part.CFrame = CFrame.new(eye + Vector3.new(0, box.up, 0))
 		end
-		-- the rings round the spot the camera looks at, on the ground under it
-		local spot = cam.Focus.Position
-		if not groundY then
-			findGround(spot)
-		end
-		for name, parts in rings do
-			local box = Data.Boxes[name]
-			local middle = Vector3.new(spot.X, (groundY :: number) + box.up, spot.Z)
-			for i, piece in Data.ringParts(name) do
-				local part = parts[i]
-				if part then
-					part.CFrame = CFrame.new(middle + piece.at)
-				end
-			end
-		end
 		-- the creator wants a clear day: nothing falls, no lightning
 		local still = calm()
 		if still ~= wasCalm then
@@ -435,7 +394,6 @@ function Weather.start()
 		cellClock += dt
 		if cellClock > 0.4 then
 			cellClock = 0
-			findGround(spot)
 			if wet and not still and (not cellsAt or (eye - (cellsAt :: Vector3)).Magnitude > K.Cell / 2) then
 				cellsAt = eye
 				placeCells(eye)

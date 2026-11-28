@@ -1084,15 +1084,18 @@ Tuning.Look = {
 -- Weather ------------------------------------------------------------------
 -- The user: "could you use better weather effects?". World picks a weather for the season every
 -- `Every` hours of the town's day by the season's `Odds` (Schema.Seasons' order), and eases the light
--- and the air toward the weather's look. What falls (rain, snow, petals, leaves, mist) is drawn on
+-- and the air toward the weather's look. What falls (rain, snow, petals, leaves) is drawn on
 -- each player's own screen near the camera (UI/Weather, from Data/Weather's layers).
 Tuning.Weather = {
-	Every = 3, -- hours of the town's day between two weathers
+	-- hours of the town's day a weather lasts, least and most (the user: "make it such that weathers
+	-- last longer as well"; it was 3, a new weather every minute and a half)
+	Every = { 10, 16 },
+	-- (no fog: the user, "could you also remove the fog weather?")
 	Odds = {
-		{ clear = 3, blossom = 2, rain = 1, cloudy = 1, fog = 1 }, -- spring
+		{ clear = 3, blossom = 2, rain = 1, cloudy = 1 }, -- spring
 		{ clear = 4, cloudy = 1, rain = 1, storm = 1 }, -- summer
-		{ clear = 2, leaves = 2, cloudy = 1, rain = 1, fog = 1 }, -- autumn
-		{ snow = 3, clear = 1, cloudy = 1, fog = 1 }, -- winter
+		{ clear = 2, leaves = 2, cloudy = 1, rain = 1 }, -- autumn
+		{ snow = 3, clear = 1, cloudy = 1 }, -- winter
 	} :: { { [string]: number } },
 	-- The light and the air in each weather. Sun: the sun's Brightness, times Tuning.Look.Light's (an
 	-- overcast sky is dimmer); Soft: ShadowSoftness (no crisp shadow under cloud); Density and Haze:
@@ -1105,7 +1108,6 @@ Tuning.Weather = {
 		rain = { Sun = 0.55, Soft = 0.6, Density = 0.4, Haze = 2.2, Grey = -0.1, Sway = 1.6, Gust = 0.4 },
 		storm = { Sun = 0.42, Soft = 0.7, Density = 0.44, Haze = 2.4, Grey = -0.14, Sway = 3.2, Gust = 0.8 },
 		snow = { Sun = 0.78, Soft = 0.5, Density = 0.38, Haze = 2, Grey = -0.06, Sway = 0.7, Gust = 0.2 },
-		fog = { Sun = 0.62, Soft = 0.6, Density = 0.6, Haze = 3.4, Grey = -0.08, Sway = 0.4, Gust = 0.1 },
 		blossom = { Sun = 1, Soft = 0.1, Density = 0.3, Haze = 1.5, Grey = 0, Sway = 1.2, Gust = 0.3 },
 		leaves = { Sun = 0.95, Soft = 0.12, Density = 0.31, Haze = 1.6, Grey = 0, Sway = 1.8, Gust = 0.5 },
 	},
