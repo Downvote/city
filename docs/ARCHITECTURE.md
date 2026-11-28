@@ -1388,6 +1388,43 @@ change through `Services/Build.apply` (stubbed as the BuildService spec does), s
   picture's depth, and `tools/preview/mist.py` lays a sketch of the fog machines' mist (Data/Effects `fog` and
   `fogbank`) over a picture behind what stands in front of it.
 
+### The hall below the temple hill
+
+- `Build/Recipes/TempleHill.luau` (new; loads after `Temple`, so no tab's first card changed: checked against the
+  catalog before it): `hall_roof`, `hall_roof_end` (structure, floor), `hall_panel`, `hall_panel_window`,
+  `hall_panel_door` (walldecor, wall), `win_hall`, `win_hall_curtains` (windows, opening 3.4 by 4.5, sill 3.95),
+  `door_hall` (doors, opening 3.6 by 6.6: the path agent's narrowest door), `hall_porch` (structure, floor),
+  `hall_step` (structure, ground, 0.7 tall so it isn't a path), `oil_drum` (decor, floor, CorrodedMetal),
+  `temple_torii`, `temple_torii_row` (garden, floor), `hill_block`, `hill_slope`, `hill_steps` (garden, floor), all
+  style `temple` but the drum. Helpers in the file: `pieced` (shapes into pieces of at most `Geometry.PieceMax`, a
+  speck added where a run has no upright box), `hallRoof(r, x0, x1, gable?)`, `panel(r, kind)`,
+  `hallWindow(r, curtains)`, `gate(r, z)`, and for the hill `rock`, `tuft`, `dress`, `rim` (all set on a face's
+  frame and kept inside the piece's box), `hillBlock`, `bank` (an earth wedge and its grass, not solid, over
+  `BANK_STEPS` hidden solid steps).
+  - The long roof stands on the floor over the hall (its y 0 is the walls' top): the eaves reach `EAVE` 10.7 from
+    the middle (walls' faces at 8.3), pitch 0.62; the end piece's gable is at its local x -3.3 (the end wall's outer
+    face, 2 in from its side), so it goes at the hall's end x + 3, turned 180 at the other end.
+  - A hall panel's half posts are at its ends (two panels make a whole post); its window band is 3.95 to 8.45 over
+    the floor, the window's hole exactly. A door panel's head is at 6.6, the board doors' height.
+  - The hill pieces are a storey of solid earth (H) with a non-solid grass cap `Tuning.Plot.Foundation` deep: on the
+    ground the grass meets the next storey's floor, and on a storey what stands on the storey above is round its feet.
+    A slope's grass and earth are not solid; it carries what stands on it on hidden steps (2 deep, 1.5 up) under the
+    grass, inside its earth (the Unstick spec's hidden part check).
+- `Build/Recipes/Temple.luau`: `temple_pagoda_three` (decor, floor), drawn by `pagoda(r, tile, wood, storeys?)` with
+  the new `PAGODA_THREE` (a `Storey` type now types the lists); `tree_cedar` and `tree_camphor` are `place = "floor"`
+  and their root beams `noCollide`.
+- `Data/Buildings/Showpieces/LongHall.luau` (new): `show_long_hall`, "Long hall", 36 by 30, style `temple`.
+- Previews:
+  - `tools/preview/hill_hall_scene.luau` (new): the scene for `tools/preview/plan_scene.luau` (`--land 400`, Big Plot
+    and Tall Builds): the hall, a second hall, the yard, a hill of 79 cells of hill blocks and slopes climbing a
+    storey every 16 studs behind the hall and to its left, the gates up two flights of hill steps, the pagoda on a spur,
+    an upper hall on a terrace (walls, timber frames and the temple roof on floor 3), about 240 cedars and camphors.
+    About 740 changes, every one through `Services/Build.apply`.
+  - `tools/preview/plan_shot.py`: it imported `stage.py`, which went with the cutscene sets, so it no longer ran; its
+    sky painter and lamp strength are in the file now. New `--cull <studs>` (as walk.py's), and a quicker
+    rasteriser and the triangles' facings worked out at once (the same picture, about twice as fast: a million
+    triangles in about three minutes at 1600 by 900).
+
 ## Pieces that move and give off effects
 
 The user: "make animated decor, workplaces with special effects, particle makers, and more enticing types of

@@ -886,6 +886,18 @@ Scenes and pieces built for the user's pictures (a neon street, a night fairgrou
 - `tools/preview/temple_town.luau` is how a big build is put down for a picture: through `Build.apply`, so a refusal
   says what a player would be told; single floors and fences in palette colours (no Any Colour), long walls as a
   chain of at most `Tuning.Plot.MaxWallLength`.
+- The long hall (`Recipes/TempleHill`, the user with a picture of one: "Make a scene of the temple like this"): its
+  roof is `hall_roof` lengths of 8 on the floor over a hall 16 deep, centred across it, with `hall_roof_end` at each
+  end (its centre 3 in from the end wall, turned 180 at the far end). Its outside is `hall_panel`,
+  `hall_panel_window` and `hall_panel_door` every 4 studs from the wall's start, hung from the floor (y the
+  foundation on the ground storey), with `win_hall` / `win_hall_curtains` and `door_hall` in the bays. A step along
+  the front stands 0.35 off the wall, clear of the panels' posts.
+- A hill in Build mode is `hill_block`s a storey at a time with a `hill_slope` (or `hill_steps`) on top facing down
+  the hill; keep a flat cell's top level with the top of the slope in front of it, or its block's face shows as a
+  cliff. What stands on a slope stands on its hidden steps (1.5 up every 2 from its low side), never on the grass.
+- A tree's roots and anything else that dips under a piece's foot is `noCollide`, so it can stand on a solid top.
+- `sh tools/preview/plan_shot.sh` takes `--cull 20` for a whole plot; `lune run tools/preview/plan_scene.luau
+  tools/preview/hill_hall_scene.luau <out.json> --land 400` rebuilds the hill scene.
 
 ## Rules
 

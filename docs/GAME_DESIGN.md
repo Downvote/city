@@ -1090,6 +1090,38 @@ with the looks.)
   storey up on the stilt frame, stairs up to its veranda, the great roof), a Pagoda square (the pagoda in a square
   of gravel with a lantern at each corner), and a Temple gate (the roofed gate in two runs of tiled wall).
 
+### A hall below a temple hill
+
+> Make a scene of the temple like this
+
+(It came with a picture of an old single storey hall below a steep wooded hill: tall windows of small panes in a
+timber frame over white plaster, a little gabled porch, a tunnel of red gates climbing the slope beside it, a
+three storey pagoda up in the trees. It follows the earlier requests for these scenes: "Could you simulate using
+build mode tools to create a city like this, and then frame it like the way the images i sent, and send a
+screenshot of it?" and "You are allowed to create more decor and buildings for these scenes, and put them in the
+ingame build mode if you do create any". Goes under **Build mode**, with the Temple look.)
+
+- **More of the Temple look**, in Build mode's usual tabs:
+  - Structure: a long hall roof, eight studs of a straight gable roof of grey tiles for a hall 16 deep, set end to
+    end on the floor over the hall, rows of round tiles down its slopes and the rafters' pale ends under its eaves;
+    its end piece with the gable (plaster, a king post, barge boards, a tall ridge end). A small gabled porch to
+    stand over a door, its gable to the front. A long stone step to run along a hall's front.
+  - On walls: three hall panels, four studs of a hall's outside each in dark timber over white plaster with a
+    panelled skirt of dark boards: plain, round a window, over a door. Hung side by side every 4 studs.
+  - Windows: a hall window, two tall sashes of small panes, and the same with curtains inside.
+  - Doors: board doors, two plain leaves of dark boards.
+  - Decor: a three storey pagoda (it stands on a floor, so it can go up a hill), an oil drum gone rusty.
+  - Garden: a red gate of lacquered timber with black feet and top beam, and a row of five of them for a tunnel of
+    gates on the level. The hill: a hill block (a storey of mossy earth and rock, grass on top, to build a hill up a
+    storey at a time and stand trees and buildings on), a hill slope (a grassy bank climbing a storey, its face), and
+    hill steps (twenty stone steps up a slope between kerbs and banks, the size of a slope, so red gates can climb
+    them).
+  - The cedar and the camphor tree stand on a floor now, so they go on a hill block or a terrace a storey up; their
+    roots are no longer solid, so they stand on any solid top.
+- **A ready-made building**, Long hall, on the Buildings tab in the Temple look: a plastered hall 32 by 16 with a run
+  of tall windows (two curtained), board doors under the porch, the long roof, a step along its front and a drum by
+  the porch.
+
 ## 6. The villager creator
 
 Works like a catalog avatar editor:
