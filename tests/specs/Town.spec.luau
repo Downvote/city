@@ -220,8 +220,12 @@ describe("Town", function()
 		-- side with less buildings should have much more buildings, as much as in the city side",
 		-- and from 126,000 for the land round the plots north of Hill Road ("could you make the
 		-- max plots 6, expanding the map for it?") and more rooms to walk into ("detail the town
-		-- more, and make the lights and interior in them work"))
-		expect(opened < 137000).toBeTruthy()
+		-- more, and make the lights and interior in them work")), and from 137,000 for the detail
+		-- pass ("could you detail everything, including build mode buildings and decor, even
+		-- more?": quoins up the street fronts' corners, keystones over their windows, corner
+		-- boards on the houses), all of it in pieces, so the parts as served went down (the
+		-- palms' fronds became one piece each)
+		expect(opened < 142000).toBeTruthy()
 		expect(different < 320).toBeTruthy()
 	end)
 end)
