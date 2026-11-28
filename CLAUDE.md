@@ -26,23 +26,24 @@ the contract (update it with every API, remote or saved data change), `src/share
    simulations (`tests/sim/build_client.luau`: the real Build mode driven by clicks; `tests/sim/talk_card.luau`:
    the card you get by holding E on a villager; `tests/sim/creator_sections.luau`: the creator's Bodies, Body
    parts, My items, My avatars, the colour wheel, likes, buying and the You tab; `tests/sim/hud.luau`: the main
-   screen's strip, the plot's name, the quests' drop, Home, Hide and a notice; `tests/sim/event_pace.luau`: a watched
-   event moves only when the player presses, and the name box; `tests/sim/tutorial.luau`: the friend's three steps
-   under the dim, from the welcome to the last line; `tests/sim/lively.luau`: placed pieces moving and giving off
-   their effects), the dark and the light look on every screen
-   (`sh tools/preview/audit.sh`), place build.
+   screen's strip and its friends chip, the plot's name, the quests' drop, Home, Hide and a notice;
+   `tests/sim/event_pace.luau`: a watched event moves only when the player presses, and the name box;
+   `tests/sim/tutorial.luau`: the friend's three steps under the dim, from the welcome to the last line;
+   `tests/sim/lively.luau`: placed pieces moving and giving off their effects; `tests/sim/audio.luau`: the sound,
+   from a press's click and a typed line's babble to the rain and the music), the dark and the light look on every
+   screen (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
-Specs today (821 in 66 files at the last full run; `Voice`: each personality's own hand, and a villager's ending; `Memory`: what events leave
+Specs today (883 in 74 files at the last full run; `Voice`: each personality's own hand, and a villager's ending; `Memory`: what events leave
 with a villager for a few days, the accessory on and off; `FlairService`: buying flair with gems on the server, with
-stubbed neighbours; `Store`: passes owned, a gem pack's receipt paid once, the pay boost from Double Pay, VIP and the group;
+stubbed neighbours; `Store`: passes owned, a gem pack's or a crate's receipt paid once, the pay boost from Double Pay, VIP and the group;
 `Offline`: what the town earned while the player was away; `Rewards`: gems from the daily gift, playtime and
 achievements; `Collide`: what a piece bumps into, stairs, doorways, Stretch; `Group`: the Select tool's moves and
 sales of many pieces; `Saves`: saved builds, loading one onto the plot; `Lively`: moving pieces and their effects; `Tutorial`: the three steps, checked
 by the server, the friend who greets, old saves done; `Water`: pools and ponds on the terrain grid, what may stand in them; `Floors`: the floors the passes allow, an old
 save's fourth floor, the basement's rules, its dig and its lining, land and Big Plot;
 `Unstick`: finding room to stand, what of a piece is solid, villagers getting up and getting unstuck, swimmers left
-alone; `EventService`: an answer's time held while the player reads, `EventWatch "next"`, the newcomer's asks, typed names; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `PlayerWork` and `WorkService`: a player working at a workplace themselves, its pay and cap, and the server's side with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth; `Lights`: placed lights and their switch; `PlotName`, `PlotBoard` and `VisitService`: naming, likes, the directory and visits; `ClaimAll`: Claim all paying what the single claims would; `Bag` and `Giving`: things, gathering, gifts both ways, hearts with no top, goal rewards and titles; `Visits` and `WorkMove`: customers, company on a bench, work moves; `Needs`: earned mood and the asks; `Travel`: ways between floors and lifts; `GemPieces`: pieces bought with gems; `Seasons`, `Weather` and `Settings`: the look a player sets, what falls and each season's colours; `FollowUps`: events that need a piece, follow-ups, typed names, worn things): Frames (every part of every model has a right-handed frame: Roblox can't hold a
+alone; `EventService`: an answer's time held while the player reads, `EventWatch "next"`, the newcomer's asks, typed names; `Zfight`: no new z-fighting anywhere, see Rules; `Routine`: a working day at the station with breaks by personality, pottering with no job, then the real brain in the starter town; `WishService`: buying a craving on the server, with the Villagers service's neighbours stubbed; `Skin`: the painted slabs and textures; `Walk`: a villager's walk along a path, one walk and not a stop at every waypoint; `Vector`: the path reader and painter; `Street` and `Signs`: the city's street scene and its signs; `Talk` and `TalkService`: chatting with a villager by holding E, its daily cap, and the server's side of it with stubbed neighbours; `PlayerWork` and `WorkService`: a player working at a workplace themselves, its pay and cap, and the server's side with stubbed neighbours; `Pieces`: details merged into one mesh; `Facades`: the facade kit; `Landmarks`: the set pieces and street paint; `Gifts`: the starting house sells for nothing and counts toward the town's level at the old cottage's worth; `Lights`: placed lights and their switch; `PlotName`, `PlotBoard` and `VisitService`: naming, likes, the directory and visits; `ClaimAll`: Claim all paying what the single claims would; `Bag` and `Giving`: things, gathering, gifts both ways, hearts with no top, goal rewards and titles; `Visits` and `WorkMove`: customers, company on a bench, work moves; `Needs`: earned mood, a pet on top, and the asks; `Travel`: ways between floors and lifts; `GemPieces`: pieces bought with gems; `Seasons`, `Weather` and `Settings`: the look a player sets, what falls and each season's colours; `FollowUps`: events that need a piece, follow-ups, typed names, worn things; `Trust`: trusted builders, the owner paying and the budget counted; `Social`: friends' pay boost, its chip, the invite nudge, a player's card; `GuestTalk`: what villagers say to a visitor, in every voice; `Babble` and `Sounds`: villagers' voices, the library's sounds and the settings that set them; `Textured` and `Surfaces`: nothing you can see is flat plastic, in Build mode and in the town; `Crates`: work and pet crates, crate jobs paying more than any coin job, pets, their lines and walks; `Bubbles`: what hangs over heads, stacked apart; `Cutscenes`: the sets, the moves and the scripts; `Palette`: soft roofs and the light; `Terrain`: the island's ground; `Uses`: things villagers use; `Vehicles`: the list's order, seats and driving; `Wages`: the purse as villagers work): Frames (every part of every model has a right-handed frame: Roblox can't hold a
 mirrored one and turns the part some other way, which is how palms, rails and the fountain's rim came out wrong),
 Creator (sets: a body replaces the last one whole, a set knows when it's worn and comes off; what kind a bundle
 is, the outfit that holds the body, single body parts, the player's own items and avatars; preview scenes
@@ -116,19 +117,35 @@ the ground look sunk). The previews draw the terrain as triangles.
 landscaped lots (`CityModels.lot`), window bays, signs, roof details, parked cars, groves, textured ground, all
 textures from the Roblox library. Budgets (the Town spec holds them): the whole town under 58,000 parts as the game makes them (a merged piece is one
 part for its boxes and wedges plus one for each round shape in it: `Geometry.served`, since merged round shapes came
-out wrong in the game), under 137,000 with every piece opened into its shapes, and under 320 different pieces (55,966,
-134,377 and 304 with six plots, so measure before adding much more to the map; every shop, tower, house and public
-building you can walk into is a furnished room from `Data/Interiors`, preview with `render.sh inside:<kind>,<kind>`).
+out wrong in the game), under 142,000 with every piece opened into its shapes, and under 320 different pieces (55,689,
+140,736 and 311 after the detail pass, so measure before adding much more to the map: `lune run
+tools/preview/parts_by_line.luau` shows where they go, and new detail goes into pieces, where it costs no served
+parts; every shop, tower, house and public building you can walk into is a furnished room from `Data/Interiors`,
+preview with `render.sh inside:<kind>,<kind>`).
 A lamp inside one of the town's rooms is lit at every hour (the user: "make the lights and interior in them work"):
 draw it in `Interiors.fill` (which marks every glow it makes) or give its prim `attrs.RoomLight`; street lamps, lit
 windows and signs stay `NightLight` and follow the clock, and a player's piece is never a room light. A door is the
 leaves that share one doorway `Frame` (give every leaf of one door the same `frame`); a model may hold many, each with
-its own prompt. Street buildings come from the facade kit
-(`Data/Facades`): a building is a name such as `facade:24x18:4:17:shop=open:cl` (size, storeys, seed and options)
-or one of its presets, so a new one needs only a placement. Downtown is rows of them on every block edge, with a
-market square and a lantern-lit market lane south of Main Street (the user: "emulate the level of detail of these
-shaders, maps and building materials"); preview the presets with `render.sh "models:rowBakery,rowNoodles,rowCorner"
-<png> --yaw 205 --pitch 16`. The user: "remove the trees near the road", so trees keep to the
+its own prompt. Everything in the town is textured (the user: "for all buildings and decor, make it such that
+textures are used, never make them untextured"): name a material on whatever you draw for it. Whatever is left
+undressed (`Surfaces.undressed`: SmoothPlastic, Plastic or the kit's default, Plaster) is given one by its look by
+`Data/Surfaces` in `TownMap.prims` and `TownMap.ground`, and the stamps in `Facades`, `Interiors` and `CityModels`
+give theirs from `MADE_OF` first; so a town shape drawn in Plaster is dressed by its colour like a plain one (to
+keep a finish, name another material or a look). `Surfaces.plain` and the specs still mean flat plastic only; the
+Surfaces spec fails on any visible plain shape in the town and on a plain finish in a ready-made building or the
+starting house (`lune run tools/preview/untextured.luau` lists what is left). A pane drawn as paint inside a piece
+makes the piece Metal (the plainest picture), never Wood (the grain shows on the glass). Plants indoors are Fabric,
+never Grass or LeafyGrass: the client's seasons recolour every part in those, frost included. The town's made
+cylinders and even balls are drawn `smooth` by `Surfaces.round`; what grows keeps the low poly kit, and a ball of
+stone is a boulder (faceted). A top that hands or feet touch (a counter, a desk, a step) is `Data/Edging.slab`, its
+body's top kept 0.1 clear of paving under it (a step is 0.2 tall), or the far z-fighting check flags it. Street
+buildings come from the facade kit (`Data/Facades`): a building is a name such as
+`facade:24x18:4:17:shop=open:cl` (size, storeys, seed and options) or one of its presets, so a new one needs only a
+placement. Downtown is rows of them on every block edge, with a market square and a lantern-lit market lane south of
+Main Street (the user: "emulate the level of detail of these shaders, maps and building materials"); preview the
+presets with `render.sh "models:rowBakery,rowNoodles,rowCorner" <png> --yaw 205 --pitch 16`. Quoins go up the street
+fronts of rendered and brick buildings (`Facades`' `quoins`); a corner building's side face has them only at the
+street corner. The user: "remove the trees near the road", so trees keep to the
 parks, the market square, the hills and the beach; streets get flower troughs, benches and shrubs instead
 (`Data/DetailModels`), and the gaps between buildings are filled by rule with pockets (cafe terraces, fountains,
 gardens, ponds: `pockets` in `TownMap.placements`). The World spec checks the hills, the places and that nothing stands in a road; preview a district
@@ -138,9 +155,12 @@ The user asked for real low poly models in "a distinct shared style across all o
 shapes put together"). Library models can't be downloaded here (Roblox wants a login), so the style is made in the
 engine: `Build/LowPoly` cuts a kit of faceted shapes with solid modelling when the server starts, and the Builder
 draws every ball as a gem, every cylinder as an eight sided prism (sixteen when wide) and every cone as an eight
-sided one, flat shaded. So never rely on a part being smoothly round, unless it is `smooth` (`Geometry.Prim.smooth`,
-Roblox's own ball or cylinder, kept round: a wheel, a lamp, a chandelier's crystals, a cutscene's set; the user: "You
-are allowed to use spheres, curves or circles where necessary"). Draw organic things with `r:lump` (a ball
+sided one, flat shaded. A part that is `smooth` (`Geometry.Prim.smooth`) is Roblox's own ball or cylinder, kept
+round (the user: "You are allowed to use spheres, curves or circles where necessary"): made things are drawn that
+way, in Build mode by their material (`Catalog.Round`, `Catalog.rounded`) and in the town by `Surfaces.round`, and
+a cutscene's set draws everything round. What grows or was dug (crowns, rocks, logs, trunks, earth) keeps the
+facets, and so do the basic shapes; a recipe that wants facets on a made thing sets `smooth = false`. So never
+rely on a part being smoothly round unless it is `smooth`. Draw organic things with `r:lump` (a ball
 stretched and turned: crowns, rocks, bushes) and `r:cone` (pines, spires), poles and trunks with `r:cyl`; the
 previews show the facets (`--smooth` shows the fallback without the kit).
 
@@ -194,7 +214,8 @@ work, given by villagers and goals. A piece that gives something says so in its 
 thing is a line in `Data/Items` with art in `UI/ItemArt` and a shape list in `UI/Icons`, and its id must not be an
 interface icon's name (ItemArt is merged into IconArt over them). A craving is bought from the villager's page, the talk card, or the popup a click on their wish bubble brings up
 (`UI/WishPopup`: the user, "clicking the bubble ... should show a popup what they want and allow the player to satisfy
-it instead of their whole profile page") through `WishBuy` at `Life.wishPrice`. Don't add anything for sale but cravings and Build mode's pieces. The user also
+it instead of their whole profile page") through `WishBuy` at `Life.wishPrice`. Don't add anything for sale but
+cravings, Build mode's pieces and the two crates (below), the passes and gem packs aside. The user also
 asked that "progression is much more based on villagers working": wages are most of a town's income; the City spec
 holds that balance. A town level asks for worth and nothing else (the user: "make the only requirements for growing
 towns worth instead of villagers or work requirement": `City.level(value)`), has no top and no name ("uncap level ...
@@ -209,6 +230,21 @@ nothing, and Build mode prices are the recipes' times `Tuning.Prices.Items` (0.5
 never halve a recipe's own price). Then: "Also, halve money gain from work." So a job's day pays its income times
 `Tuning.Jobs.Pay` (0.5), applied in `Data/Jobs` at load (`listed` keeps the written one): never halve an income by
 hand. The City spec's bounds in days of work doubled with it.
+
+Crates (the user: "add work crates that can be bought with gems or robux ... Add pet crates as well"): `Data/Crates`
+and `Sim/Crates` (no services), `Services/Crates`, the Store's Crates tab (`UI/Crates`). The Robux products are
+`Data/Passes.crates` with id 0 until the owner makes them on Roblox (Creations > Monetization > Developer Products)
+and pastes the ids in; `Services/Store.processReceipt` pays them once per purchase. A crate workplace is a piece in
+`Build/Recipes/CrateWork` (category `crates`, price 0, `crate` = its rarity, its `loop` beside its parts, textured like
+every piece) with a job in `Data/Jobs.crateList`. Keep `Jobs.list` the coin jobs: the economy's specs bound those. A
+crate job's income is worked out from the best coin job (`Tuning.Crates.Pay`), so it stays ahead of every coin job,
+liked or not (the Crates spec holds it); never write a crate job's income by hand. Gems from crate jobs stay rare:
+`Tuning.Crates.GemDayCap` a real day, at most `Tuning.GemRewards.DayMax`. Pets move on each screen, never on the
+server: the server writes each pet's walk as attributes on its Configuration in the plot's `Pets` folder
+(`Services/Pets`) and `client/World/Pets` moves the parts. A new pet is a kind in `Data/Pets` with its bones named and
+their joints; a new thing a pet does with a villager is an act in `Sim/Pets.Acts` with a line for anybody (`_`) and
+its own for some personalities, `{pet}` in every one. A pet of their own counts toward a villager's mood (`Needs`'
+`pet`, below).
 
 Life in the town, in the spirit of the life sim the user named (its ideas only, never its content): well over two
 hundred events in `Data/Events/` (a folder: `Kit` builds weights and scenes, `Chatter` builds conversations from
@@ -275,7 +311,10 @@ Mood is earned (the user: "Villager mood bars should also not be that easy to fi
 should be: amount and relationship of friends, quality of bed, roof over bed, fun objects near bed"): `Sim/Needs`
 says the most a villager's mood can reach from what they have (`Needs.cap`), mood climbs to it each town hour
 (`Needs.drift`), and every change to a villager's mood goes through `Needs.addMood` (a lift counts for
-`Tuning.Needs.BoostShare` and stops at the cap). Never write `v.mood` by hand. Villagers ask for what they lack ("if
+`Tuning.Needs.BoostShare` and stops at the cap). Never write `v.mood` by hand. A pet of their own (a pet crate's,
+"Which increase mood") is a sixth factor, `pet`, worth `Tuning.Needs.Pet` (10) on top of the five the user named,
+which already come to `Tuning.Villagers.MoodMax`; the cap still stops there, the Mood tab lists it, and nobody asks
+for one (it stays out of `Needs.Asks`). Villagers ask for what they lack ("if
 a villager dosent have a workspace or bed, they will ask the player for it"): the asks are `Data/Events/Needs`, each
 ending on `Needs.line(kind)`, the fixed "Villagers need ... Build it in Build mode > ..." line; keep those paths Build
 mode's real group and tab names (the Needs spec reads `Build/BuildUI`), and a new kind of ask is a kind in
@@ -336,11 +375,31 @@ is true and the HUD's bottom bar, Build button and quests slide away. Preview sc
 prompt), `event:one`, `event:two`, `event:four`, `event:narration`, `event:answers`, `event:name`, `talk`, `talk:again`,
 `talk:gift`.
 
+Sound (the user: "Like tomodachi life, can you make it such that villagers have voices ... players can configure
+them just like in tomodachi life. also, add sounds where necessary, along with a calm cozy music track in the
+background. use roblox library for these, dont make your own."): every sound is a Roblox library id in
+`Data/Sounds`, from Roblox's own uploads or the libraries Roblox licensed for every game (Pro Sound Effects, APM,
+DistroKid), never one we made and never a stranger's upload that might go private. Find more with
+`python3 scripts/library_sounds.py search "<words>" --by pse --measure --sheet <png>` (`info <id> --syllables` cuts
+a babble into syllables), set a new one's `volume` from its measured loudness so it sits as softly as the rest, and
+run `python3 scripts/library_sounds.py check` now and then. Everything is played on the player's own screen by
+`client/Controllers/Audio` (never on the server), in the Music, Effects or Voices group: a new effect is a line in
+`Sounds.Effects` played with `Audio.play(key)` (or `Kit.sound(key)` from the interface, as a crate's opening plays
+`"gift"`), and the Sounds spec fails on a key with no line. Keep it quiet and soft: nothing harsh, nothing that
+repeats every frame (`Tuning.Audio.Gap`). A villager's voice is `Sim/Babble` (four sliders saved as `voice`; none
+saved: the personality's); a line babbles when it is typed through `UI/Dialogue`'s `scene.type` (give an `Actor` a
+`voice` when they are no villager) or shown over a head (`Audio.overHead`). The music is softer at night and in a
+conversation (`Sim/Sound.levels`). Audio is silent until `Audio.start`, so the previews and the other sims make no
+sound; `tests/sim/audio.luau` drives it.
+
 The user asked to "interact/chat with villagers by holding e on them": every villager carries a ProximityPrompt
 (`Npc.talkPrompt`, put on in `Villagers.spawn` and answered by `Villagers.talkedTo`), what they say and what a
 chat is worth is `Sim/Talk` (numbers in `Tuning.Talk`), and the owner's card is `UI/TalkCard`. A prompt that opens a panel carries an `Opens` attribute
-(`Hud` reads it); the talk prompts must not. A click on one of your villagers from anywhere brings up
-`UI/VillagerMenu` (Profile, Chat: "allow players to click on villagers anywhere to either open their profile or chat
+(`Hud` reads it); the talk prompts must not. Somebody holding E on a villager in another player's town is a guest
+(`Sim/GuestTalk`: the visitor is `{name}`, the mayor "the {player}"; a new kind of line needs all sixteen voices, the
+GuestTalk spec holds it): they get the words alone, no hearts and no mood, up to `Tuning.Guests.ChatsPerDay` a town
+day. A click on one of your villagers from anywhere brings up `UI/VillagerMenu` (Profile, Chat: "allow players to
+click on villagers anywhere to either open their profile or chat
 with them"); a chat started that way is `VillagerTalk(vid, "click")`, checked on the server like any other.
 
 The user: "also, allow players to interact and work at work areas". Every placed workplace (a piece with a `job`)
@@ -409,15 +468,18 @@ The HUD is a round level dial top left with the plot's name beside it over the l
 `Sim/PlotName.title`; the user: "the name should appear in place of the big "Level x""; the level is on the dial and
 small on the bar, and there is no "Next: Level x" line), the coins, gems and people in one strip under it (no
 happiness: "remove the happiness icon with the percentage"; no + beside the money: "remove the + button next to
-coins") and the quests (`UI/Quests`: the next town goals, claimable there, dropping down and folding up a row after
-another with `unroll`; a quest's row is a slot holding a `Slab`, so look for its Claim and Open inside the slab)
-under that ("put these as a tab below the level, then add quests below it as well"); the clock top right with a row
-of captioned round buttons under it: Home, Visit, City, News, Store, Cars, Bag, Settings and Hide ("make it such
+coins"; while friends are in the server, the `Friends` chip at its end, "+20% friends" from `Sim/Social.chip`, the
+strip growing by its width to hold it) and the quests (`UI/Quests`: the next town goals, claimable there, dropping
+down and folding up a row after another with `unroll`; a quest's row is a slot holding a `Slab`, so look for its
+Claim and Open inside the slab) under that ("put these as a tab below the level, then add quests below it as
+well"); the clock top right with a row of captioned round buttons under it: Home, Visit, City, News, Store, Cars,
+Bag, Settings and Hide ("make it such
 that there is a teleport home button": `Hud.goHome`, the `GoHome` remote, the H key). Hide is always last
 (`HIDE_ORDER`), so a button added to the row goes before it; it slides the whole main screen off its edges and leaves
-Show ("The light/dark button at the top of the ui should be changed to "Hide""). A new piece of the main screen goes
-in `Hud`'s list of slides (`slide(frame, dx, dy, forScenes)`) so Hide and the talking scenes move it; never tween a
-main screen piece's Position by itself, and ask with `Hud.isHidden()` / bring it back with `Hud.setHidden(false)`.
+Show ("The light/dark button at the top of the ui should be changed to "Hide""). The one-time card to invite
+friends (`UI/Invite.nudge`) comes up under the row. A new piece of the main screen goes in `Hud`'s list of slides
+(`slide(frame, dx, dy, forScenes)`) so Hide and the talking scenes move it; never tween a main screen piece's
+Position by itself, and ask with `Hud.isHidden()` / bring it back with `Hud.setHidden(false)`.
 Light or dark is no longer on the main screen: it is in Settings, and `UI/Theme` still does the switching. Notices
 (`UI/Toasts`) are see-through dark rounded notes at the top, level with the clock, a white icon and white words,
 sized to their words ("make notifications appear as a transparent, black background instead with a white icon, as
@@ -668,8 +730,12 @@ and fixed a batch of runtime bugs (starter house never given, walls refused on b
 leave, NPC network ownership, spawn races). Playtest in Studio after changing those parts, and these too: the
 gather prompts (E, or F beside another prompt) and their rests, things made at work, holding a thing and dropping
 one, the title tag over the head with Roblox's name off, a villager's gift on the talk card, and the lifts (the server
-anchors and moves the riders). In Lune, Enum items are not the same userdata twice: compare them with `==`, never use
-them as table keys.
+anchors and moves the riders), buying and opening a crate (gems, and the Robux products once they have ids), the
+opening's shake, the crate tip's scene, a crate workplace put down from the Crate tab and worked at (its loop and
+effect), the crate jobs' gems at five o'clock, pets walking about a plot (rays against real floors, furniture and
+water), meeting villagers and fetching a craving, the Pat prompt, the Pet row on a villager's page, a trusted builder
+on somebody's plot, and the sounds, voices and music. In Lune, Enum items are not the same userdata twice: compare
+them with `==`, never use them as table keys.
 
 Every plot starts with `Data/StarterHouse`: a detailed house, a workshop where the first villager works as a
 builder, and a fenced garden, all of it ordinary Build mode pieces carrying `gift` (the user: "improve the starting
@@ -707,8 +773,9 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
 - Roblox drops shadow map shadows below graphics quality 4; `PrioritizeLightingQuality` keeps them close by.
 - Walls are boards (the user: "could you use wood planks instead of stone for buildings using it for interior and
   exterior such as the default house?"): a wall finish, inside or out, is WoodPlanks in its colour (`Palette.Defaults`,
-  the ready-made buildings, the starting house, `Interiors.shell`, the ceilings under roofs). Plaster read as stone;
-  keep stone for what really is stone (pediments, porticos, paving, garden walls). The roof tiles are a pale, low
+  the ready-made buildings, the starting house, `Interiors.shell`, the ceilings under roofs). Plaster read as stone
+  on a wall (it stays the finish of small matte painted things and the kit's default); keep stone for what really is
+  stone (pediments, porticos, paving, garden walls). The roof tiles are a pale, low
   contrast picture; keep roofs soft.
 - Every material is a little glossy (the user: "making all materials at least abit glossy"): a texture without a
   roughness map of its own takes `Data/TextureIds`' `sheen` (a flat grey) as one, and the sky's reflection is up
@@ -720,7 +787,8 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
   grass: the patches are gone ("remove the patches across the terrain that you made before"); don't bring them back.
 - Settings ("add settings for graphic quality, background blur, bloom, etc."): what a player turns down is theirs
   alone, saved in `Schema.Settings` and put on by `client/World/Graphics` (`Sim/Graphics` is the rule,
-  `Tuning.Graphics.Levels` the numbers, `UI/Settings` the menu, which also holds Dark and Light). A new costly thing
+  `Tuning.Graphics.Levels` the numbers, `UI/Settings` the menu, which also holds Dark and Light, the Sound part and
+  Invite friends on its left card). A new costly thing
   on the client reads `Graphics.level()` (Reach, Particles, Layers) so Low really draws less. Roblox's own graphics
   quality can't be set by a script; the menu says where it is.
 - Weather ("could you use better weather effects?"): what falls is layers in `Data/Weather`, drawn round the camera by
@@ -805,6 +873,16 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
   never set `profile.plotName` anywhere else. A copy of an away town stands on a viewing lot high over the sea
   (`Town.viewFrame`), one a viewer, gone when the visit ends; draw nothing else up there. The directory's stores are
   written in batches and on save only (`Data.onSaved`); keep new writes off the per-press path.
+- Other players in the server (the user: "add a 10% income boosy per friend playing, and prompt the player to invite
+  friends. Allow clicking on other players to open an interface to view their profile and like their plot, add
+  trusted (allow building on your plot, player will have to set build budget). Building on another player's plot will
+  use their money, up to the set budget."): friends here are `Services/Social`'s `FriendsHere` attribute and multiply
+  pay only in `Services/Villagers`' `payBoost` (`Sim/Social.boost`); never apply it to offline earnings. Trusted
+  builders are `Services/Trust` (session only, nothing saved): a change in Build mode goes to `Build.siteOf(player)`,
+  the owner pays and the budget counts (`Sim/Trust`), and `Build.Changed` fires with the plot's OWNER, so a listener
+  must never take the player who sent the change for the plot's owner. Build mode's files read their state through
+  `Build/Site`'s `view`, never Controllers/State straight, so they follow the plot being built on; standing on your
+  own plot, Build mode opens on your own.
 - Shift runs ("make the ability to run, with shift": `World/Run`, `Tuning.Run`); a touch screen gets the shoe button
   over the jump button. Nothing else may bind Shift, and only `World/Run` sets the player's WalkSpeed.
 - Detail is at the starting house's level everywhere (the user: "the amount of detail should be similar to the
@@ -812,11 +890,25 @@ make the overall color pallete pleasing to look at as well", and "it seems like 
   the real one has, at a believable size, never one box standing for something else (books are thin spines, a
   planter has soil, stems and flowers over its rim, a stall has posts, crates and produce). Repeated detail goes
   in a piece so the part count stays low.
+- Textures on everything (the user: "for all buildings and decor, make it such that textures are used, never make
+  them untextured"): a drawing that names no material is Plaster (`Geometry.Default`), never SmoothPlastic, and
+  nothing a player can see is flat plastic. Never draw a Build mode piece in SmoothPlastic or Plastic; pick the
+  material of what it is (hard painted things are Metal, matte paint Plaster, china Marble, paper Cardboard). Only
+  marks, what glows, glass and hidden parts are exempt; the Textured spec holds Build mode to it and the Surfaces spec
+  the town (the town paragraph above). The paint tool offers no flat finish, and `Palette.Retired` keeps old saves'
+  flat paint loading, drawn as plaster. A piece is one material: give `r:piece(draw, collide, mat)` its material and
+  let its shapes name none, and let a helper that draws into a piece default to `r.mat` (`mat or r.mat or
+  "Metal"`).
+- Edges are drawn ("detail and weather them such that edges have weathering detail"): a top, a shelf, a seat or a
+  tread is `r:bevel(...)` (chamfered, `wear` a touch lighter on wood and metal, darker on stone; `round = true` for
+  soft things), not a plain block; in the town it is `Data/Edging.slab`. Run `lune run tools/preview/zfight.luau
+  catalog` after: a bevel's corner can meet a panel flush with the slab's side.
 - No z-fighting ("there is also z-fighting in alot of areas"): never leave two faces of different paint facing
   the same way within 0.02 of each other. A small thing stands at least 0.03 proud of what it sits on (paint,
   labels and chalk 0.04), big flat layers 0.1 (street paint stands 0.11 over the road), layers in one mark lie
   side by side, and what is set into paving is cut into it. Check with `lune run tools/preview/zfight.luau
-  <catalog|models|town|interiors|starter|presets|all>`; the Zfight spec fails on any new pair.
+  <catalog|models|town|interiors|starter|presets|all>`; the Zfight spec fails on any pair, and its `KNOWN` list is
+  empty: keep it so.
 - Lights players place stay on (the user: "make it such that lights are on by default and dont change based on
   time. players can turn them off or on, and villagers will turn nearby ones off when sleeping"): a placed piece's
   glowing parts carry `PlacedLight`, which the clock never switches (only the town's own `NightLight` lamps,

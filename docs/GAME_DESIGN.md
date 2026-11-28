@@ -42,10 +42,13 @@ is, not sources.
   asked for "more personalities too", Cool, Prickly, Dramatic, Bookish, Gloomy, Polite, Foodie and Nervous. Each has traits
   (social, temper, kind, mischief, lazy, brave, focus) that weight which events they start and how they react, and
   a bank of lines they say.
+- **Voice.** A babble of little syllables as their lines type out, pitched and paced by four sliders in the
+  creator, starting from their personality's (section 10, "Voices, sounds and music").
 - **Mood** (0 to 100). Earned from what they have: a bed of their own, a comfy one, a roof over it, fun things near
-  it and friends set how high it can climb, and it climbs toward that an hour at a time (see "Mood is earned from
-  what a villager has" below). Wishes, gifts, chats and good events lift it a little; quarrels and ignored requests
-  knock it down. Mood scales what they earn at work.
+  it, friends and a pet of their own set how high it can climb, and it climbs toward that an hour at a time (see
+  "Mood is earned from what a villager has" below). Wishes, gifts, chats and good events lift it a little; quarrels
+  and ignored requests knock it down. Mood scales what they earn at work.
+- **A pet**, if the player gives them one from a pet crate (section 8, "Work crates and pet crates").
 - **A favourite food.** Each villager has one, and when a craving comes it is for that half the time. There is
   nothing to feed them by hand: a craving is bought for them there and then (see Wishes).
 - **Job and skill.** A villager takes a free workplace on their own, or you assign one. Skill rises with each day
@@ -290,9 +293,14 @@ gift, a chat, a good event, a party. But a lift now counts for half of what it d
 and never goes past what they can reach; a knock counts in full. A night in bed no longer lifts mood
 by itself. Mood still scales what they earn at work, so a well kept villager earns more.
 
+A pet of their own counts too (the user, of the pets in pet crates: "Which increase mood"; section 8,
+"Work crates and pet crates"). It gives 10 on top of the factors above, so it can make up for
+something they lack, but mood still never goes past 100. Nobody asks for a pet.
+
 The villager page has a Mood tab: how they feel now, the most they can reach with what they have, and
 a row for each factor, what helps first and then what's missing, each with what it is ("Single bed",
-"Roof over it", "2 friends", "Nothing yet"), the points it gives and a bar.
+"Roof over it", "2 friends", "Nothing yet"), the points it gives and a bar. The last row is "A pet",
+with the pet's name or "No pet".
 
 ### Villagers ask for what they lack
 
@@ -567,9 +575,9 @@ Bloxburg style, all on a grid and all saved:
 - **182 pieces** in 15 tabs, each drawn from parts with two paintable colours: structure (stairs, posts, decks),
   doors, windows, seating, tables, beds, storage, kitchen, bathroom, lights (they come on at night), fun, decor,
   wall pieces, garden and workplaces.
-- **Tools**: pick (move, turn, copy, repaint, sell), paint with 48 swatches, 30 materials and ready-made finishes
-  (cream plaster, red brick, oak planks, clay tiles...) plus a colour picker, sell, undo and redo (server side, many
-  steps), a fine grid, see-through walls, hidden roofs, a free camera.
+- **Tools**: pick (move, turn, copy, repaint, sell), paint with 48 swatches, 28 materials (30 before the two flat
+  finishes went) and ready-made finishes (cream plaster, red brick, oak planks, clay tiles...) plus a colour picker,
+  sell, undo and redo (server side, many steps), a fine grid, see-through walls, hidden roofs, a free camera.
 - Selling refunds the full price, so experimenting costs nothing.
 - **Ready-made buildings**, first in Build mode's Build tab:
 
@@ -970,6 +978,48 @@ The dearest of the other ready-made buildings is held under eight days of the st
 "Work pays half"); the grand ones are held instead to a bound that grows with their level: at least twice the dearest
 of the rest, at most a fifth of the worth their level asks for, and dearer the higher their level.
 
+### Textures on everything you build, round where it is round, and worn edges
+
+> could you detail everything, including build mode buildings and decor, even more? You are allowed to use spheres,
+> curves or circles where necessary.
+
+> also, for edges and corners where faces meet, is it possible to detail and weather them such that edges have
+> weathering detail on their textures or is smoothed?
+
+> for all buildings and decor, make it such that textures are used, never make them untextured.
+
+**Textures on everything you build.** Every part of every Build mode piece you can see wears a textured material
+for what it is: wood for wood, metal for metal and for hard painted things (a fridge, a sci fi shell, a toy slide),
+marble for china, porcelain, glazed pots and glossy fruit, fabric for cloth, flowers and paintings on canvas,
+leather, rubber for tyres, floats and balloons, card for paper, books and photos, plaster for wax, icing and chalk,
+sand for bread and wicker, glass for screens, bulbs and light strips. Nothing is plain plastic any more. What stays
+as it was: what glows, glass, hidden parts and the flat paint of the markings. A part a piece's drawing names no
+material for gets paint over plaster, never flat plastic. The crate workplaces (section 8) are drawn the same way,
+their small parts in plaster, or marble for china.
+
+**No flat finishes.** The paint tool no longer offers Paint and Plastic, the two flat finishes. A wall, a floor or a
+piece an old save painted in one of them still loads and is drawn in plaster, and the picker reads it as plaster.
+
+**Round where it is round.** A ball or a cylinder of a made thing (metal, glass, china, rubber, cloth, card, paint)
+is drawn truly round: cups, knobs, wheels, pipes, lampshades, the balls in the ball pit, a pillar box. What grows or
+was dug keeps the low poly facets: crowns, rocks, logs and trunks, earth. The basic shapes keep their eight sides,
+so the sphere and the cylinder match the half cylinder and the arch beside them.
+
+**Edges.** Roblox shades no edge itself, so the edges are drawn. The tops of tables, desks, counters, shelves,
+benches, beds, cabinets and stair treads (about three hundred of them) have their top edges cut back at 45 degrees,
+painted a touch lighter where wood, metal or paint would be rubbed and a touch darker where stone would gather
+grime. Cushions, seat pads and leather tops have theirs rounded over instead. The pillar box and the wall TV were
+redrawn with more of their parts (a stepped foot, a band under the cap, the door's raised edge and its keyhole; the
+TV's wall bracket and a bezel with a softened edge), and so were the kettle, the toaster and the floor mirror.
+
+**The thinner ready-made buildings.** The garden cottage, the family house and the townhouse had the least on them,
+so they have boxes of flowers under their windows, hoods over the cottage's front windows, lanterns by the path, a
+bird bath, a lantern by the townhouse's door and a drainpipe down its blank side, and inside a clock, a picture, a
+shelf, a mirror, a kettle on the counter, flowers on the table, a lamp by the bed and books on the desk. Their inside
+walls are boards, as every wall is. The picnic shelter gets a water butt, a crate and a gnome by the fire, the garden
+temple stone lanterns at the pond and a hare and a clipped spiral behind it. (The town's own buildings got the same
+pass: section 9, "Textures, round things and worn edges in the town".)
+
 ## 6. The villager creator
 
 Works like a catalog avatar editor:
@@ -1076,7 +1126,8 @@ another Roblox avatar game. Its layout is taken, drawn our own way.)
   one's colour with its name under it (on two rows, every other one lower, now there are sixteen), and a knob you drag or click along. The picked one's name stands big over it,
   with its line of description under it in its colour. The favourite colour is a bar of the palette's 48 colours
   side by side, with a knob on the one picked and a chip beside it; it snaps to the palette's own colours, which
-  the server takes as they are. The name box, the birthday and Move them in stay.
+  the server takes as they are. The name box, the birthday and Move them in stay. Under the favourite colour is the
+  villager's voice: four sliders with Test and Reset (section 10, "Voices, sounds and music").
 
 ### Your own look, colour search, faces, Shuffle, buying, likes
 
@@ -1139,7 +1190,9 @@ another Roblox avatar game. Its layout is taken, drawn our own way.)
   each needing a city level and coins (the prices and levels are what they were for 128, 160 and 200, before the
   plots doubled: see "Bigger plots" in section 9).
 - **Jobs**: twelve workplaces (market stall, café counter, bread oven, flower cart, artist's easel, clinic desk,
-  chalkboard, little stage, builder's bench, post office desk, ice cream cart, library desk), one job each.
+  chalkboard, little stage, builder's bench, post office desk, ice cream cart, library desk), one job each. Work
+  crates give eleven more that can't be bought, each better paid than any of these (section 8, "Work crates and
+  pet crates").
 - **Wages**: each working villager earns `income x mood x skill x liking` a day, a little at a time while at their
   workplace (section 8).
 
@@ -1223,6 +1276,48 @@ in a day, times how much more room for villagers the town's level gives than a n
   and it goes when they leave it. While you look round, a bar at the bottom says whose town it is with Like and
   Home. Home, the Home button, H, wandering off or respawning ends the visit; falling off a copy puts you back on
   it. Doors, seats and lamps in a copy work as anywhere; nothing in it can be built on or worked at.
+
+### Guests, friends, players' cards and trusted builders
+
+> Create dialogue for villagers interacting with players that arent their mayor. Also, add a 10%
+> income boosy per friend playing, and prompt the player to invite friends. Allow clicking on other
+> players to open an interface to view their profile and like their plot, add trusted (allow
+> building on your plot, player will have to set build budget). Building on another player's plot
+> will use their money, up to the set budget.
+
+- **Villagers and visitors.** Somebody who holds E on a villager in another player's town is talked to as a guest:
+  by their own name (never "the" before it), in the villager's own voice. A villager says hello, talks about their
+  mayor ("the Mayor": the town's owner, never the visitor), about the town (its name, when it has one) and a little
+  about the visitor and their own town ("So you're from Old Mill?"). A free villager a visitor walks past may say
+  hello now and then, never the same one to the same visitor for a few minutes. A visitor gets the words alone: no
+  hearts, no mood, nothing for the owner to answer. After twelve talks in one town in a town day, the villagers
+  there have things to do ("I'd love to keep chatting, but I promised to help with something.") and walk on.
+- **Friends playing.** Each of a player's Roblox friends in the same server adds 10% to everything their town earns
+  at work (the villagers' wages and the player's own work), up to four friends (+40%). It comes on top of Double
+  Pay, VIP and the group. A friend joining says so ("Lee is here, so wages are up 10%."). The money strip on the main
+  screen grows a chip at its end while there are any ("+20% friends"), and the City hall has a Friends section with
+  the same line. Offline earnings never have it.
+- **Inviting friends.** Roblox's own invite box opens from Invite friends on the Settings card, the Invite button in
+  the City hall's Friends section and the "Play with friends" row at the top of the Visit menu. Once the town has its
+  second villager (and the tutorial is done), a small card comes up once under the round buttons at the top right:
+  "Play with friends. Each friend here adds 10% to your wages." with Invite and Not now. Either puts it away for
+  good.
+- **Clicking another player.** A click or a tap on another player brings up a small card by the pointer: their
+  name, their town and its level, Like (with the count), Visit and Profile, and Trust to build. Profile opens their
+  page: them standing on the card at the left with their name, level, villagers and likes; down the right their
+  town with Like and Visit, Building, and up to five of their villagers, closest to their mayor first, with their
+  faces.
+- **Trusted builders.** Trust to build asks for a budget first (0, 250, 500, 1,000, 2,500, 5,000, 10,000, 25,000 or
+  50,000 coins, stepped down and up with two buttons; 1,000 to start). The trusted player is told, and once they
+  stand on (or by) the owner's plot, the Build button opens Build mode there; standing on their own plot, it opens on
+  their own. Every change is checked as the owner's own would be (the owner's land, floors, passes and level), and
+  what it costs comes out of the owner's coins, counted against the budget: where the coins usually are, Build mode
+  shows what is left, with "Building on Sam's plot, budget 2,500" under it. A sale or an undo pays the owner back
+  and gives the budget back, never past what it was set to. Gem pieces ("Only the owner can buy gem pieces.") and
+  saved builds ("Saved builds load on your own plot.") stay the owner's, and so does everything outside Build mode
+  (land, villagers). The owner changes the budget or stops it from the card, the profile, or the City hall's Trusted
+  builders list; a trusted player building at that moment is taken out of Build mode. Trust is for the session: it
+  ends when either player leaves. One owner trusts up to twelve players at once.
 
 ## 8. Economy bounds
 
@@ -1341,7 +1436,7 @@ thirteen.
 
 > also, add group rewards, such as percentage increase of earnings
 
-**The store.** A round Store button under the clock opens it, a full menu with two tabs. Passes shows a card for
+**The store.** A round Store button under the clock opens it, a full menu with three tabs. Passes shows a card for
 each game pass: its picture, its name, what it does in a line, its price in Robux and Buy, or Owned once it's
 yours. Gems shows how many you have and five packs, from 10 gems for 49 Robux to 400 for 1,199. Pressing the gems
 on the main screen opens it on the packs. The passes are Free Placing (250), Fine Grid (100), Stretch (200),
@@ -1349,13 +1444,14 @@ Basement (150), Tall Builds (150), Big Plot (300), Double Pay (400), Any Colour 
 What each does in Build mode is in section 5; here are the two that touch money. Double Pay doubles everything your
 villagers earn at work. VIP adds a tenth to it, a gem to every daily gift, VIP pieces in Build mode and a small gold
 VIP tag over your head. A pass or a pack has to be made on the Roblox website before it can be sold; until then
-its button says Soon.
+its button says Soon. Crates holds the work crate and the pet crate (see "Work crates and pet crates" below).
 
 **Gems are rare.** Coins come every few seconds from work. Gems come a few a day: one with the daily gift (three on
 every seventh day running, one more for VIP), and one each for 15, 40 and 90 minutes played that day. That is
 four or five on a usual day. Achievements pay a few each, once: the first villager, a workplace, 5, 10 and 16
 villagers, each town level, two villagers who are best friends, ten cravings bought. All of them together come to
-44. Joining the game's group pays 10 once. A pack is the quick way.
+44. Joining the game's group pays 10 once. A pack is the quick way. The rarer crate jobs bring in a gem or two
+for a day's work, never more than three a real day between them.
 
 **Rewards.** The quick menu's fourth tile was the Gift; it is Rewards now, with the red dot while anything is
 waiting. Its menu has four tabs. Daily is today's gift and the week it's in, a row a day. Playtime is a ring of
@@ -1364,17 +1460,83 @@ reads like the town goals: ready to claim, under way, done. Group says what memb
 
 **The group.** Members earn 10% more from everything their villagers make at work, for as long as they stay in it,
 and get 10 gems once. The group has to be made on Roblox and its id put in `Tuning.Group.Id`; until then the tab
-says it isn't open yet. The boosts multiply: Double Pay, VIP and the group together make 2.42 times the pay.
+says it isn't open yet. The boosts multiply: Double Pay, VIP and the group together make 2.42 times the pay. Each
+friend playing in the same server adds a tenth more on top, up to four of them (section 7, "Guests, friends,
+players' cards and trusted builders").
 
 **Time away.** When you come back, your town has been paid a tenth of what its villagers at work would have earned
 in the time you were gone, up to eight hours of it. A welcome back card says how long you were away and what came
 in, with an OK. The builder alone makes 810 a town day (since work pays half), so eight hours away bring 3,240; an
 hour of play brings 4,050. Nothing comes on a first visit, for a rejoin inside five minutes, or for a town with nobody in work.
+The friends' boost never counts toward it.
 
 Held by `tests/specs/Rewards.spec.luau` (a usual day's gems from the gift, VIP and playtime are 6 or fewer; each
 claim pays once; playtime goes in order and starts again each day), `Offline.spec.luau` (the share, the cap, never
 more than an hour of play) and `Store.spec.luau` (passes from Roblox, a receipt pays once and is granted only once
 saved, the boost, the claims).
+
+### Work crates and pet crates
+
+> Also, add work crates that can be bought with gems or robux, which give exclusive work spaces which are unique to
+> crates, giving a random one with effectiveness scaling off rarity, some of the rarer jobs even giving gems. Crate
+> workspaces are always better than any money ones, giving more effectiveness, and are more interesting than normal
+> jobs, like "Hero", "CEO", "Abnormality Surpresser", etc. A random villager will pop up and tell the player about
+> these crates right when they have enough gems. Some work crates are also given through achievements, goals, daily
+> rewards.
+
+> Add pet crates as well. These all have unique interactions with villagers, and roam around the city. You can
+> choose to make villagers own the pet. There are pets like cats, dogs, roomba, bunny, etc. Which increase mood,
+> satisfy cravings sometimes for you, and provide more interactions.
+
+**Crates.** There are two: a work crate (25 gems or R$ 99) and a pet crate (20 gems or R$ 79). The Store's third tab,
+Crates, has a card for each: its picture, how many are waiting to be opened, and what is inside by rarity with the
+chance of each (Common 50%, Uncommon 28%, Rare 14%, Epic 6%, Legendary 2%, and the names in each), then Open, the gem
+price and the Robux price. Bought with gems, a crate opens at once; one bought with Robux or won as a reward waits in
+the tab until the player opens it. Opening plays the gift's chime and shows the crate rocking and popping, then what
+came out with its rarity and where to find it. The passes and gem packs aside, the crates are the one thing for
+sale besides cravings and Build mode's pieces.
+
+**Work crates** give a workplace you can't buy, each with a job of its own (our own names: the third example became
+the Anomaly keeper, who watches a glowing thing in a tank):
+
+- Common: Magic stage (Street magician), Fortune booth (Fortune teller), Tasting table (Food critic)
+- Uncommon: Radio booth (Radio host), Detective's desk (Detective), Game test desk (Game tester)
+- Rare: Inventor's bench (Inventor), Star telescope (Stargazer)
+- Epic: Corner office (CEO), Hero's lookout (Hero)
+- Legendary: Containment tank (Anomaly keeper)
+
+Each is drawn at the starting house's level of detail in textured materials (the small parts in plaster, or marble
+for china), with moving parts where the real thing moves (bulbs along the magic curtain, a light turning in the
+crystal ball, the inventor's gear, a globe, the hero's searchlight sweeping, the thing in the tank bobbing with rings
+round it and a warning lamp turning) and an effect while somebody works there. A crate job always pays more than any
+coin job, even one the villager loves: its day pays the best coin job's income with that job's liking bonus, times
+1.1 (common) up to 2.3 (legendary). The rarer ones also bring in gems for a day's work (half a work day or more):
+rare and epic one, legendary two, and never more than three a real day from all of a town's crate jobs together.
+The workplaces are free to put down from Build mode's Work group, on its Crate tab, as many times as crates gave
+them; one put away or sold goes down again. Customers who drop by ask for what that job is for ("Can I pick a
+card?", "Is it awake?").
+
+**Pet crates** give a pet: a cat, a dog or a bunny (common), a robot vacuum or a hedgehog (uncommon), a red panda or a
+penguin (rare), a capybara (epic) or a baby dragon (legendary), each in one of a few coats and with a name of its
+own. A town keeps up to 20. Pets wander their plot's land and the pavement in front of it, a short walk and a rest at
+a time: a cat or a dog walks with its legs going and its tail up, a bunny hops, the robot vacuum glides with its
+brushes spinning, the penguin waddles, the dragon flies a little off the ground. Now and then a pet goes up to a
+villager who is free nearby, its owner more often than not: they stop for it, do one of its things together (a pat,
+a game, a treat, watching the robot vacuum go round) and the villager says a line about it in their own voice and
+cheers up a little. On a villager's page, the Quirks tab has a Pet row with Pick: one pet each, and a pet one
+villager. An owner is a little happier every night (more for a rarer pet), their mood can climb 10 higher (section
+3, "Mood is earned from what a villager has"), and once a town day there is a chance (a quarter for a common pet,
+half for the dragon) that their pet brings them the food they are craving, which grants it for nothing ("Biscuit
+brought Mara an apple."). A player can hold E on any pet to give it a pat.
+
+**The tip.** The first time a player has the gems for a crate, one of their villagers who is up and about tells
+them, in their own voice, in a short scene with Show me (the Store's Crates tab) and Later, and says it over their
+head too. It happens once a save.
+
+**Rewards.** The daily gift brings a work crate on the seventh day running, a pet crate on the fourteenth, and so
+on by turns. Five achievements (Five in town, Ten in town, Level 5, A full street, Level 10) and four town goals
+(All hands, Close knit, Inseparable, A working town) give a crate as well. Claim all gives them too, and a notice
+says the crate is in the Store.
 
 ## 9. The town
 
@@ -1567,6 +1729,38 @@ a player's wall with two doors in it.
 Eight more shops you can walk into stand along downtown's back streets: a bakery, a toy shop and a
 grocer on Quay Street, a cafe, a bookshop and a clothes shop on Hillside Row, and a cafe and a toy
 shop on the cross street south of Main Street, each furnished and lit like the others.
+
+### Textures, round things and worn edges in the town
+
+The user: "could you detail everything, including build mode buildings and decor, even more? You are allowed to
+use spheres, curves or circles where necessary." And: "for edges and corners where faces meet, is it possible to
+detail and weather them such that edges have weathering detail on their textures or is smoothed?" And: "for all
+buildings and decor, make it such that textures are used, never make them untextured." Also: "detail the town
+more". (Build mode's own pieces and the ready-made buildings are in section 5, "Textures on everything you build,
+round where it is round, and worn edges".)
+
+- Nothing in the town is flat plastic any more. Every model names its materials where it knows them (timber doors,
+  metal fittings, cloth banners and books, glass jars, card parcels, a slate blackboard, rubber tyres), and whatever
+  is left without one is given a texture by what it looks like: leaves are grass, brown is timber, pale paint and
+  anything as big as a wall is painted render, the rest painted metal. Paint on the roads takes the asphalt's grain,
+  so the lines look worn. Plants indoors are cloth, so the seasons never frost them. What glows, glass, water and
+  what is hidden keep their own look.
+- Windows whose glass is drawn into one piece with their frame wear painted metal, the plainest picture, so the
+  glass shows no grain; doors and trims are painted timber.
+- Round things people make are truly round now: wheels, posts, pipes, pots, bowls, lamp globes, bins, the
+  fountain's tiers. What grows (leaves, trunks, logs, rocks) keeps the low poly facets.
+- Street fronts: dressed stone quoins up the corners of rendered and brick buildings (long and short by turns, the
+  wall showing in the joints, only at the street corner on a corner building's side), a keystone over every window
+  that has nothing hanging over its head, and a cove under the cornice of every flat topped front so it reads as a
+  moulding. The step in front of a shop door is a little taller with its edges worn off.
+- Houses in the civic quarter have white corner boards up their four corners, and a timber soffit.
+- Parked cars have round rubber tyres and metal hubs, and painted metal bodies.
+- The palms' fronds are one piece each, which sways in the wind.
+- Worn edges: a counter's top, a desk's, a low table's, a dresser's and a bookcase's crown in the shops and rooms
+  have their top edges cut back at 45 degrees, the cut a little darker than the top, as edges go that hands rub.
+
+All of it went into pieces, so the town's parts as the server holds them went down a little (55,966 to 55,689) and
+the shapes with every piece opened went up (134,377 to 140,736).
 
 ## 10. Look and feel
 
@@ -2510,7 +2704,8 @@ and nothing is one box standing for something else.
 - **Cost.** A detail used many times is one merged piece, made once per server and stamped where it is needed,
   so a furnished room or a detailed shop costs about as many parts as the plain one did. The town's budgets went
   up for this (36,000 parts, 110,000 shapes with every piece opened, 320 different pieces); it sits at about
-  30,500, 101,000 and 290.
+  30,500, 101,000 and 290. (Today, with six plots and the textures and worn edges of section 9, the caps are 58,000,
+  142,000 and 320, and the town comes to 55,689, 140,736 and 311.)
 
 **No z-fighting.** Two flat faces in the same plane, facing the same way, in different colours, flicker: the
 engine can't tell which is in front. Now no two faces share a plane. Paint stands a tenth of a stud over its road
@@ -3002,7 +3197,8 @@ What the main screen does now:
   and it is also written small on the left of the level bar ("Level 3"), with how far along it is at the bar's
   right end. The line under the bar ("Next: Level 2") is gone.
 - The money strip holds the coins, the gems and the people. Happiness is gone from it (the city hall still has
-  it).
+  it). While friends are playing in the server it runs on to hold a chip at its end with what they add to wages
+  ("+20% friends"; section 7, "Guests, friends, players' cards and trusted builders").
 - A notice is a see-through dark rounded note in the middle at the top, level with the clock: a white icon for
   its kind at the left and white words, as wide as its words (wrapping past 460). The newest drops in at the
   top and the others move down to make room; each fades after a few seconds and the ones under it close up.
@@ -3131,8 +3327,10 @@ The user (2026-11-27): "add settings for graphic quality, background blur, bloom
 
 A round Settings button (the cog) sits in the row under the clock, just left of Hide. It opens a full
 menu. The card on the left holds the interface's look (Dark or Light: the switch that left the top of
-the screen lives here now) and a short note that graphics quality is set in Roblox's own menu (Esc,
-then Settings), since no script can set it. Down the right, one row a choice:
+the screen lives here now), Invite friends (Roblox's own invite box), the Sound part under the look
+(Music and Effects volumes on sliders and Voices on or off: "Voices, sounds and music" below) and a
+short note that graphics quality is set in Roblox's own menu (Esc, then Settings), since no script
+can set it. Down the right, one row a choice:
 
 - Detail: Low, Medium or High. It sets how much of our own costly things this screen draws: shadows
   (off at Low), how far placed pieces move and give off effects and how far trees sway, how many
@@ -3233,6 +3431,49 @@ What the game does now:
   done three of the old four steps is done.
 - (The user wrote "work place"; the prompt says "workplace", the game's word for it, as Build mode's Workplaces
   does.)
+
+### Voices, sounds and music
+
+The user (2026-11-27):
+
+> Like tomodachi life, can you make it such that villagers have voices, talking like in tomodachi life sounds?
+> players can configure them just like in tomodachi life. also, add sounds where necessary, along with a calm cozy
+> music track in the background. use roblox library for these, dont make your own.
+
+What the game does now:
+
+- Villagers talk in voices. As a line types out in the dialogue scene (the talk card, a watched event, a
+  cutscene), whoever says it babbles: a short syllable every few letters, pitched and timed by their voice. It is a
+  babble of sounds, not words, so it works in any language. A question rises at its end, a sentence that ends in a
+  full stop falls a little, and "!" comes out a touch louder. The same words always babble the same way. A press
+  that shows the rest of the line stops it, and a line nobody says (narration) is quiet.
+- A voice is four sliders, set in the creator on the "Name and personality" step under the favourite colour: Pitch
+  (low to high), Speed (how quickly the syllables come), Tone (soft to bright: a round mouth pop, a soft wooden
+  knock, a little synth voice, a small beep) and Melody (flat to lively: how far the pitch moves along a line). Test
+  plays a line in that voice; Reset goes back to the personality's voice. A new villager's voice starts as their
+  personality's, a little their own, and follows the personality until a slider is moved. Villagers from before
+  have their personality's voice, moved a little by who they are, so two of the same personality don't sound
+  alike. Every personality has a voice of its own (gloomy is low, slow and flat, cheeky high, quick and bright,
+  dramatic all over the place).
+- A villager's line over their head (the speech card) babbles too when they are near the camera, quieter further
+  off, never while a conversation is up, and only a couple at once.
+- The friend who greets a new player in the tutorial has a voice of their own, the same every time for that player.
+- Sounds where they help, soft and quiet: a click on every press (a smaller one on a tab), a soft whoosh as a menu
+  opens and closes, a pop with each notice (a brighter one for good news, a low whistle for a warning), a soft ping
+  as villagers' coins rise near the camera (at most one every second or so), coins when a reward is claimed, a
+  little fanfare when building takes the town to its next level, a chime when a gift is given or a crate is opened,
+  a pop when something is picked up, a wooden knock when a piece goes down in Build mode, a pop when one is sold and
+  a tick when one is turned, a latch when a door near the camera opens or shuts, rain while it rains (heavier in a
+  storm, with wind), wind in snow, fog, autumn leaves and blossom, everything softer under a roof, and distant
+  thunder a moment after lightning. Player footsteps are Roblox's own.
+- Music: calm, cozy tracks (ukulele, soft piano, a music box at night) play one at a time with half a minute or so
+  of quiet between, never the same twice running, faded in and out. Two of them only play by day and two only at
+  night. The music is softer at night and while a conversation is up.
+- Settings has a Sound part on its left card, under the look: Music and Effects volumes on sliders (0 to 100%) and
+  Voices on or off. They are saved with the player like the other settings. Even all the way up nothing is loud.
+  Everything is heard on the player's own screen only.
+- Every sound comes from the Roblox library: Roblox's own uploads and the libraries Roblox licensed for every game
+  (Pro Sound Effects' sounds, APM's music). None are made by us.
 
 ## 11. Writing
 
