@@ -4,6 +4,7 @@
 
 local Recipe = require(script.Parent.Parent.Recipe)
 local Lively = require(script.Parent.Parent.Lively)
+local K = require(script.Parent.Parent.RecipeKit) -- (water that moves: K.roundSurface, K.spill)
 local Colors = require(script.Parent.Parent.Parent.Util.Colors)
 
 local C = Recipe.Colors
@@ -12,13 +13,6 @@ type R = Recipe.Recipe
 
 local function shade(c: Color3, k: number): Color3
 	return Colors.shade(c, k)
-end
-
--- A water surface: see-through enough to show what is under it, and you walk into it.
-local function water(p: Recipe.Prim, transp: number?): Recipe.Prim
-	p.transp = transp or 0.2
-	p.collide = false
-	return p
 end
 
 -- A round rod from a to b (a cylinder laid along the line).
@@ -507,10 +501,11 @@ local items: { Item } = {
 		size = Vector3.new(7, 1.6, 7),
 		c1 = "6CA6CC",
 		c2 = "A0A0A6",
+		lively = true, -- (its ripples drift: World/Lively)
 		build = function(r: R)
-			-- a dark bed with the water over it
+			-- a dark bed with the water over it, its ripples drifting
 			r:cyl(0, 0.04, 0, 0.08, 5.6, "y", Color3.fromRGB(46, 84, 90), "Slate")
-			water(r:cyl(0, 0.2, 0, 0.12, 5.8, "y", r.c1, "Glass"))
+			K.roundSurface(r, 0, 0.26, 0, 5.8, r.c1)
 			-- flat stones round the edge, a few stacked
 			for i = 0, 13 do
 				local t = i / 14 * math.pi * 2
@@ -559,26 +554,30 @@ local items: { Item } = {
 					"Cobblestone"
 				)
 			end
-			water(r:cyl(0, 1.06, 0, 0.08, 5.1, "y", r.c2, "Glass"))
+			K.roundSurface(r, 0, 1.1, 0, 5.1, r.c2)
 			-- a turned pedestal, a wide bowl, and a little top bowl with a spout
 			r:cyl(0, 1.3, 0, 0.5, 1.1, "y", dk, "Marble")
 			r:cyl(0, 2.1, 0, 1.2, 0.7, "y", r.c1, "Marble")
 			r:cyl(0, 2.8, 0, 0.2, 1.0, "y", dk, "Marble")
 			r:cyl(0, 3.1, 0, 0.2, 1.9, "y", r.c1, "Marble")
 			r:cyl(0, 3.35, 0, 0.3, 2.7, "y", r.c1, "Marble")
-			water(r:cyl(0, 3.52, 0, 0.06, 2.4, "y", r.c2, "Glass"))
+			K.roundSurface(r, 0, 3.55, 0, 2.4, r.c2)
 			r:cyl(0, 3.9, 0, 0.8, 0.4, "y", r.c1, "Marble")
 			r:cyl(0, 4.35, 0, 0.12, 0.8, "y", dk, "Marble")
 			r:cyl(0, 4.5, 0, 0.2, 1.1, "y", r.c1, "Marble")
 			r:cyl(0, 4.75, 0, 0.3, 0.3, "y", r.c1, "Marble")
-			water(r:ball(0, 5.05, 0, 0.45, r.c2, "Glass"), 0.3)
-			-- water spilling over the wide bowl
-			for i = 0, 5 do
-				local a = i * math.pi / 3 + math.pi / 6
-				water(r:cyl(math.cos(a) * 1.3, 2.35, math.sin(a) * 1.3, 2.1, 0.14, "y", r.c2, "Glass"), 0.4)
-			end
-			-- and a splash off the top, on each player's screen
+			-- a dome of water welling up out of the top, spilling over the little bowl into the wide
+			-- one, and over the wide one in a ring of curtains into the basin
+			local dome = K.sphere(r, 0, 5.0, 0, 0.5, K.Pale, "Glass")
+			dome.size = Vector3.new(0.5, 0.36, 0.5)
+			dome.transp = 0.3
+			dome.collide = false
+			K.roundSurface(r, 0, 4.66, 0, 0.94, r.c2)
+			K.spill(r, 0, 0, 4.64, 0.55, 3.58, 0.72, 6, 0.5)
+			K.spill(r, 0, 0, 3.48, 1.37, 1.12, 1.62, 10, 0.86)
+			-- and a splash off the top, rings where it lands, on each player's screen
 			Lively.fx(r, "splash", 0, 5.25, 0, { w = 0.2, d = 0.2 })
+			Lively.fx(r, "ripple", 0, 1.13, 0, { w = 3.6, d = 3.6 })
 		end,
 	},
 	{

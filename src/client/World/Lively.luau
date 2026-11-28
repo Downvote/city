@@ -8,7 +8,11 @@
 --   * lights named Twinkle glimmer (and run through soft colours with `Hue`), ten times a second
 --   * effect spots get their emitters (Data/Effects) the first time the camera comes near, and
 --     are switched off far away; a workplace's only while its model is marked `Working` (the
---     server marks it while a villager or a player is at work there: Services/Work)
+--     server marks it while a villager or a player is at work there: Services/Work), and one
+--     that follows its piece's switch only while the model isn't marked `LightsOff`
+--     (Services/Lights: a fog machine)
+--   * running water (parts named Flow) gets its moving pictures (Data/Effects' Flows) the first
+--     time the camera comes near, and they run while it is near
 -- Everything that touches an effect or a light is in a pcall: a feature missing here (the
 -- simulation, an older engine) leaves the piece still, never broken. Nothing goes to the server.
 
@@ -50,11 +54,21 @@ type Group = {
 
 type Glint = { part: BasePart, base: number, color: Color3, hue: boolean, phase: number }
 
+type Flow = {
+	part: BasePart,
+	look: Effects.Flow,
+	faces: { Enum.NormalId },
+	speed: number,
+	drift: number,
+	made: { Texture }?,
+}
+
 type Fx = {
 	part: BasePart,
 	kind: string,
 	preset: Effects.Preset,
 	work: boolean,
+	switch: boolean,
 	color: Color3,
 	made: { Instance }?,
 	on: boolean,
@@ -68,6 +82,7 @@ type Entry = {
 	groups: { Group },
 	glints: { Glint },
 	fx: { Fx },
+	flows: { Flow },
 	near: boolean,
 	fxNear: boolean,
 }
@@ -143,8 +158,19 @@ function Lively.read(model: Model): Entry?
 	local cabins: { BasePart } = {}
 	local glints: { Glint } = {}
 	local fx: { Fx } = {}
+	local flows: { Flow } = {}
 	for _, d in model:GetDescendants() do
 		if d:IsA("BasePart") then
+			-- a moving part that glimmers as it goes (a firefly: Build/Lively.blink)
+			if d:GetAttribute("Blink") == true then
+				table.insert(glints, {
+					part = d,
+					base = d.Transparency,
+					color = d.Color,
+					hue = false,
+					phase = (#glints * 2.39) % (math.pi * 2),
+				})
+			end
 			local role, g = Rules.roleOf(d.Name)
 			if role == "pivot" and g then
 				pivots[g] = d
@@ -171,10 +197,32 @@ function Lively.read(model: Model): Entry?
 						kind = kind,
 						preset = preset,
 						work = d:GetAttribute("FxWork") == true,
+						switch = d:GetAttribute("FxSwitch") == true,
 						color = if typeof(c) == "Color3" then c else Color3.new(1, 1, 1),
 						made = nil,
 						on = false,
 						due = 0,
+					})
+				end
+			elseif d.Name == Rules.Flow then
+				local kind = d:GetAttribute("Flow")
+				local look = if type(kind) == "string" then Effects.Flows[kind] else nil
+				if look then
+					local faces: { Enum.NormalId } = {}
+					local named = d:GetAttribute("FlowFaces")
+					for name in string.gmatch(if type(named) == "string" then named else "Front,Back", "%a+") do
+						local face = (Enum.NormalId :: any)[name]
+						if face then
+							table.insert(faces, face)
+						end
+					end
+					table.insert(flows, {
+						part = d,
+						look = look,
+						faces = faces,
+						speed = num(d, "FlowSpeed", 0),
+						drift = num(d, "FlowDrift", 0),
+						made = nil,
 					})
 				end
 			end
@@ -187,7 +235,7 @@ function Lively.read(model: Model): Entry?
 			table.insert(groups, readGroup(pivot, members[g] or {}, if g == 1 then cabins else nil))
 		end
 	end
-	if #groups == 0 and #glints == 0 and #fx == 0 then
+	if #groups == 0 and #glints == 0 and #fx == 0 and #flows == 0 then
 		return nil
 	end
 	local at = model:GetPivot().Position
@@ -199,6 +247,7 @@ function Lively.read(model: Model): Entry?
 		groups = groups,
 		glints = glints,
 		fx = fx,
+		flows = flows,
 		near = false,
 		fxNear = false,
 	}
@@ -260,6 +309,9 @@ local function emitter(f: Fx, color: Color3, share: number): ParticleEmitter?
 		e.LightEmission = p.light or 0
 		e.EmissionDirection = (Enum.NormalId :: any)[p.dir or "Top"] or Enum.NormalId.Top
 		e.LockedToPart = p.locked == true
+		if p.orient then
+			e.Orientation = (Enum.ParticleOrientation :: any)[p.orient] or Enum.ParticleOrientation.FacingCamera
+		end
 		e.Enabled = false
 		return e
 	end)
@@ -297,6 +349,33 @@ local function make(f: Fx): { Instance }
 			fl.Parent = f.part
 			table.insert(made, fl)
 		end)
+	end
+	return made
+end
+
+-- Running water's moving pictures: on each face, the flow's picture, and each further layer
+-- bigger, fainter and slower (Data/Effects' Flows).
+local function makeFlow(w: Flow): { Texture }
+	local made: { Texture } = {}
+	local look = w.look
+	for _, face in w.faces do
+		for layer = 1, math.max(1, look.layers) do
+			pcall(function()
+				local t = Instance.new("Texture")
+				t.Name = "Lively"
+				t.Texture = Effects.Textures[look.texture] or ""
+				t.Face = face
+				local grow = 1 + (layer - 1) * 0.6
+				t.StudsPerTileU = look.studsU * grow
+				t.StudsPerTileV = look.studsV * grow
+				t.Transparency = math.min(0.95, look.transp + (layer - 1) * 0.25)
+				t.Color3 = Color3.new(1, 1, 1)
+				t:SetAttribute("Pace", 1 / grow)
+				t:SetAttribute("Start", (layer - 1) * 1.37)
+				t.Parent = w.part
+				table.insert(made, t)
+			end)
+		end
 	end
 	return made
 end
@@ -396,10 +475,18 @@ local function look()
 		local d = (e.at - from).Magnitude
 		e.near = d < Lively.MoveRange
 		e.fxNear = d < Lively.FxRange
+		if e.near then
+			for _, w in e.flows do
+				if not w.made then
+					w.made = makeFlow(w)
+				end
+			end
+		end
 		if #e.fx > 0 then
 			local working = e.model:GetAttribute(Rules.Working) == true
+			local lit = e.model:GetAttribute(Rules.Off) ~= true
 			for _, f in e.fx do
-				local want = e.fxNear and (not f.work or working)
+				local want = e.fxNear and (not f.work or working) and (not f.switch or lit)
 				if want and not f.made then
 					f.made = make(f)
 				end
@@ -454,6 +541,26 @@ local function stepMotion()
 	end
 end
 
+-- Running water runs: every picture slides down its face (and across, if it drifts), each layer
+-- at its own pace.
+local function stepFlows()
+	for _, e in list do
+		if e.near then
+			for _, w in e.flows do
+				local made = w.made
+				if made then
+					for _, t in made do
+						local pace = (t:GetAttribute("Pace") :: number?) or 1
+						local start = (t:GetAttribute("Start") :: number?) or 0
+						t.OffsetStudsV = (start + clock * w.speed * pace) % t.StudsPerTileV
+						t.OffsetStudsU = (start + clock * w.drift * pace) % t.StudsPerTileU
+					end
+				end
+			end
+		end
+	end
+end
+
 local function stepGlints()
 	for _, e in list do
 		if e.near then
@@ -483,6 +590,7 @@ function Lively.step(dt: number)
 	if moveClock >= STEP then
 		moveClock = 0
 		stepMotion()
+		stepFlows()
 	end
 	glintClock += dt
 	if glintClock >= GLINT_STEP then

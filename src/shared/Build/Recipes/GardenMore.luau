@@ -7,6 +7,7 @@
 
 local Recipe = require(script.Parent.Parent.Recipe)
 local Colors = require(script.Parent.Parent.Parent.Util.Colors)
+local K = require(script.Parent.Parent.RecipeKit) -- (water that moves: K.surface, K.roundSurface)
 
 local C = Recipe.Colors
 
@@ -22,13 +23,6 @@ end
 local function hash(i: number, j: number): number
 	local v = math.sin(i * 12.9898 + j * 78.233) * 43758.5453
 	return v - math.floor(v)
-end
-
--- A water surface: see-through enough to show what is under it, and you walk into it.
-local function water(p: Recipe.Prim, transp: number?): Recipe.Prim
-	p.transp = transp or 0.2
-	p.collide = false
-	return p
 end
 
 -- Glass, of any shapes drawn for it (a pane at an angle, a gable's triangle).
@@ -156,6 +150,7 @@ type Item = {
 	c2: string?,
 	tags: { string }?,
 	surface: number?,
+	lively: boolean?, -- moves or gives off an effect (Build/Lively): a pond's water drifts
 	build: (r: R) -> (),
 	gives: string?, -- holding E gives the player something (Data/Items.Sources)
 }
@@ -1029,6 +1024,7 @@ local items: { Item } = {
 		size = Vector3.new(6, 2.4, 4),
 		c1 = "B0846A",
 		c2 = "6CA6CC",
+		lively = true,
 		build = function(r: R)
 			-- a long pond in a brick wall (c1) at sitting height, capped with stone slabs, the
 			-- water (c2) a little under them: lily pads with a flower and a frog, two koi showing
@@ -1038,7 +1034,7 @@ local items: { Item } = {
 			r:block(-3, 0, -1.6, -2.6, 1.4, 1.6, r.c1, "Brick")
 			r:block(2.6, 0, -1.6, 3, 1.4, 1.6, r.c1, "Brick")
 			r:block(-2.6, 0, -1.6, 2.6, 1.0, 1.6, Color3.fromRGB(46, 84, 90), "Slate")
-			water(r:block(-2.6, 1.0, -1.6, 2.6, 1.24, 1.6, r.c2, "Glass"), 0.3)
+			K.surface(r, -2.6, 1.24, -1.6, 2.6, 1.6, r.c2) -- (its ripples drift: World/Lively)
 			local stone = Color3.fromRGB(198, 192, 180)
 			r:piece(function(q: R)
 				for _, sz in { -1, 1 } do
@@ -1361,6 +1357,7 @@ local items: { Item } = {
 		size = Vector3.new(2.2, 3.2, 2.2),
 		c1 = "BDB8AE",
 		c2 = "7FB4CC",
+		lively = true,
 		build = function(r: R)
 			-- a stone bath (c1) on a turned stem: a square foot, collars, a wide shallow bowl with
 			-- a rolled lip and water (c2) in it, a sparrow on the rim
@@ -1373,7 +1370,7 @@ local items: { Item } = {
 			r:cyl(0, 2.12, 0, 0.18, 1.0, "y", r.c1, "Slate")
 			r:cyl(0, 2.3, 0, 0.18, 1.6, "y", r.c1, "Slate")
 			r:cyl(0, 2.46, 0, 0.14, 2.0, "y", r.c1, "Slate")
-			water(r:cyl(0, 2.56, 0, 0.06, 1.8, "y", r.c2, "Glass"), 0.25)
+			K.roundSurface(r, 0, 2.6, 0, 1.8, r.c2) -- (its ripples drift: World/Lively)
 			for i = 0, 9 do
 				local a1 = i / 10 * math.pi * 2
 				local a2 = (i + 1) / 10 * math.pi * 2

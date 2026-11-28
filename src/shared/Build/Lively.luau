@@ -16,10 +16,20 @@
 --       Ferris wheel's cabins): `Hang` is how far that point is over the part. Lively.cabin draws it.
 --   "Twinkle": a light that glimmers on its own (string lights, a jukebox's bulbs); with the
 --       attribute `Hue` it runs through soft colours too (a dance floor's tiles).
+--   A moving part with the attribute `Blink` glimmers as well (a firefly: Lively.blink).
 -- Effects. "Fx": a hidden box that gives off an effect from its box, up out of its top unless the
 --   effect says otherwise: `Fx` names it (Data/Effects), `FxColor` is the colour it takes when the
---   effect is tinted (the piece's first paint, so the paint tool changes it) and `FxWork` keeps it
---   off until somebody works there (a workplace: the server marks the placed model `Working`).
+--   effect is tinted (the piece's first paint, so the paint tool changes it), `FxWork` keeps it
+--   off until somebody works there (a workplace: the server marks the placed model `Working`) and
+--   `FxSwitch` keeps it to while the piece's own switch is on (a piece that glows has one, the
+--   light switch of Services/Lights, which marks the placed model `LightsOff` while it is off: a
+--   fog machine).
+-- Running water. "Flow": a see-through part with a moving picture of water laid on its faces
+--   (the user: "some objects, like waterfall, can look more like a waterfall"): `Flow` names the
+--   picture (Data/Effects' Flows: a falling sheet's streaks, a pool's ripples, foam), `FlowFaces`
+--   the faces it goes on ("Front,Back" for a sheet drawn thin across its Z, "Top" for a surface),
+--   `FlowSpeed` how fast it runs down the face (studs a second, along the picture's V) and
+--   `FlowDrift` across it (along U). Never solid. Lively.flow names one.
 -- A piece with any of these is `lively = true` in the catalog (the Lively spec checks both ways),
 -- so the client only looks inside those and the workplaces.
 
@@ -35,7 +45,9 @@ Lively.Groups = 4
 Lively.Cabin = "Cabin"
 Lively.Twinkle = "Twinkle"
 Lively.Fx = "Fx"
+Lively.Flow = "Flow"
 Lively.Working = "Working" -- the attribute on a placed workplace while somebody is at work there
+Lively.Off = "LightsOff" -- the attribute on a placed piece while its switch is off (Services/Lights)
 
 -- What a group can do, round its pivot's axis:
 --   spin     turns all the way round, `Speed` radians a second
@@ -47,7 +59,10 @@ Lively.Working = "Working" -- the attribute on a placed workplace while somebody
 --            it goes (a fish drawn facing +X, in a long tank)
 --   minute   a clock's long hand, at the town's own time (Lighting.ClockTime)
 --   hour     its short hand
+--   drift    wanders about its pivot in a slow loop that never quite repeats, never more than
+--            `Amount` studs from it (fireflies, a bee, motes in the air)
 Lively.Motions = {
+	drift = true,
 	spin = true,
 	swing = true,
 	flutter = true,
@@ -91,7 +106,11 @@ end
 
 -- Is this a part the client does something with?
 function Lively.isLively(name: string): boolean
-	return Lively.roleOf(name) ~= nil or name == Lively.Cabin or name == Lively.Twinkle or name == Lively.Fx
+	return Lively.roleOf(name) ~= nil
+		or name == Lively.Cabin
+		or name == Lively.Twinkle
+		or name == Lively.Fx
+		or name == Lively.Flow
 end
 
 export type MotionOpts = {
@@ -162,11 +181,42 @@ function Lively.twinkle(prim: Prim, hue: boolean?): Prim
 	return prim
 end
 
+-- A moving part that glimmers as it goes (a firefly): it moves with its group and fades in and
+-- out like a Twinkle.
+function Lively.blink(prim: Prim): Prim
+	local attrs: { [string]: any } = prim.attrs or {}
+	attrs.Blink = true
+	prim.attrs = attrs
+	return prim
+end
+
+export type FlowOpts = {
+	faces: string?, -- the faces the picture goes on, "Front,Back" (default) or "Top"
+	speed: number?, -- studs a second down the face (V); a sheet of falling water, about 3 to 6
+	drift: number?, -- studs a second across it (U)
+}
+
+-- Names a see-through part as running water: a moving picture (Data/Effects' Flows: "fall",
+-- "pool", "foam") laid on its faces on each player's screen. Never solid.
+function Lively.flow(prim: Prim, kind: string, opts: FlowOpts?): Prim
+	local o: FlowOpts = opts or {}
+	prim.name = Lively.Flow
+	prim.collide = false
+	local attrs: { [string]: any } = prim.attrs or {}
+	attrs.Flow = kind
+	attrs.FlowFaces = o.faces or "Front,Back"
+	attrs.FlowSpeed = o.speed or 0
+	attrs.FlowDrift = o.drift or 0
+	prim.attrs = attrs
+	return prim
+end
+
 export type FxOpts = {
 	w: number?, -- the box it gives off from (studs across, high, deep; small by default)
 	h: number?,
 	d: number?,
 	work: boolean?, -- only while somebody works there (a workplace)
+	switch: boolean?, -- only while the piece's switch is on (it must glow, so it has one)
 	color: Color3?, -- the tint, when not the piece's first paint
 	turn: CFrame?, -- turns the box (an effect that goes out sideways or down: Data/Effects' `dir`)
 }
@@ -183,6 +233,7 @@ function Lively.fx(r: R, kind: string, x: number, y: number, z: number, opts: Fx
 		Fx = kind,
 		FxColor = o.color or r.c1,
 		FxWork = if o.work then true else nil,
+		FxSwitch = if o.switch then true else nil,
 	}
 	return p
 end
@@ -231,6 +282,14 @@ function Lively.offset(
 		local face = math.clamp(math.cos(u) * 3, -1, 1)
 		local slide = axisVector(if axis == "Y" then "X" else axis) * (math.sin(u) * amount)
 		return CFrame.new(slide) * turn("Y", (1 - face) * math.pi / 2)
+	elseif motion == "drift" then
+		-- three slow waves of unrelated lengths, so the loop wanders (|offset| <= 0.92 amount)
+		local u = t * speed + phase
+		return CFrame.new(
+			math.sin(u) * amount * 0.6,
+			math.sin(u * 1.73 + 1.1) * amount * 0.35,
+			math.sin(u * 0.79 + 2.3) * amount * 0.6
+		)
 	elseif motion == "minute" or motion == "hour" then
 		-- drawn pointing at twelve; a clock seen from its front turns the other way round its
 		-- axis, so the speed is -1 for the usual face (Lively.pivot's default speed is 1: hands

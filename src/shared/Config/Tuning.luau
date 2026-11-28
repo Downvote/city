@@ -123,6 +123,12 @@ Tuning.Gems = {
 	Max = 1_000_000,
 }
 
+-- Build mode pieces bought with gems (Sim/GemPieces; the catalog's `gems` is each one's price):
+-- one bought stays the player's, put away or sold, and goes down again for nothing.
+Tuning.GemPieces = {
+	MaxOwned = 20, -- of any one piece
+}
+
 -- Running (client World/Run; the user: "also, make the ability to run, with shift"). Walk is the
 -- place's own walking speed (StarterPlayer's CharacterWalkSpeed in default.project.json), used if
 -- the speed before running is lost; Speed is held Shift's. Button: the touch switch's size, and

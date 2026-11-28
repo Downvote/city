@@ -91,6 +91,9 @@ function Lights.show(i: number, key: string)
 	for _, part in glowsOf(model) do
 		World.setLight(part, on)
 	end
+	-- (what follows the switch besides its light, on each player's screen: a fog machine's fog,
+	-- client World/Lively)
+	model:SetAttribute("LightsOff", if on then nil else true)
 	local prompt = model:FindFirstChild(PROMPT, true)
 	if prompt and prompt:IsA("ProximityPrompt") then
 		prompt.ActionText = LightsSim.action(on)

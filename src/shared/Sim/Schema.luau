@@ -9,6 +9,7 @@ local Personalities = require(script.Parent.Parent.Data.Personalities)
 local Foods = require(script.Parent.Parent.Data.Foods)
 local Colors = require(script.Parent.Parent.Util.Colors)
 local Keepsakes = require(script.Parent.Keepsakes)
+local GemPieces = require(script.Parent.GemPieces) -- (pieces bought with gems: profile.gemItems)
 local City = require(script.Parent.City) -- (the land a save already has stays theirs: City.keepLand)
 local Flair = require(script.Parent.Flair)
 local Memory = require(script.Parent.Memory)
@@ -131,6 +132,7 @@ function Schema.newProfile(): any
 		goals = {}, -- town goals claimed, by id
 		arrived = {}, -- who moved in from the road, by key, back when villagers could (kept for old saves)
 		keepsakes = {}, -- things villagers made you, by catalog id: how many of each (Sim/Keepsakes)
+		gemItems = {}, -- Build mode pieces bought with gems, by catalog id: how many of each (Sim/GemPieces)
 		-- what the player has earned at a workplace with their own hands today (Sim/PlayerWork):
 		-- the town day it is for, the part of a coin not handed over yet, the whole coins that were
 		work = { day = -1, owed = 0, paid = 0 },
@@ -237,6 +239,7 @@ function Schema.migrate(raw: any): any
 	end
 	profile.villagers = clean
 	profile.keepsakes = Keepsakes.clean(profile.keepsakes)
+	profile.gemItems = GemPieces.clean(profile.gemItems)
 	profile.plotName = PlotName.clean(profile.plotName)
 	-- the player's own look and the shared looks they liked (Services/Avatar, Avatar/Likes)
 	profile.look = if type(profile.look) == "table" then Appearance.sanitize(profile.look) else nil

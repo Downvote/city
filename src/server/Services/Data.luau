@@ -206,6 +206,7 @@ function Data.clientState(player: Player): any
 		found = p.found,
 		keepsakes = p.keepsakes, -- what villagers made you, for Build mode's Keepsakes tab
 		gems = p.gems,
+		gemItems = p.gemItems, -- Build mode pieces bought with gems (Sim/GemPieces)
 		vehicles = p.vehicles, -- the vehicles bought (the Garage)
 		passes = p.passes,
 		playtime = p.playtime, -- today's play and the steps claimed (Sim/Rewards, the Rewards menu)

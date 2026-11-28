@@ -14,6 +14,7 @@
 
 local Recipe = require(script.Parent.Parent.Recipe)
 local Lively = require(script.Parent.Parent.Lively)
+local K = require(script.Parent.Parent.RecipeKit) -- (foam that churns: K.foam)
 local Colors = require(script.Parent.Parent.Parent.Util.Colors)
 
 local C = Recipe.Colors
@@ -729,9 +730,8 @@ local list: { any } = {
 			-- the nozzle just under the surface (0.35 up), and the foam round it
 			r:cyl(0, 0.2, 0, 0.25, 0.7, "y", r.c2, "Metal")
 			r:cyl(0, 0.38, 0, 0.15, 0.25, "y", shade(r.c2, 0.8), "Metal")
-			local foam = r:cyl(0, 0.38, 0, 0.06, 1.6, "y", r.c1, "Glass")
-			foam.transp = 0.45
-			foam.collide = false
+			K.foam(r, 0, 0.36, 0, 1.6, 1.6)
+			Lively.fx(r, "foamring", 0, 0.37, 0, { w = 0.6, d = 0.6 })
 			for k = 0, 7 do
 				local a = k * math.pi / 4
 				local p = r:lump(

@@ -14,6 +14,8 @@
 --   dish; a workplace's are made while they work there: Services/Bag).
 --   level = n for one only a town of level n or more can place (Recipes/Grand; Services/Build
 --   refuses it below, Sim/City.unlocked).
+--   gems = n for one bought with gems instead of coins (price 0; the fog machine): Services/Build
+--   takes them the first time one goes down, and it stays the player's (Sim/GemPieces).
 -- place is one of:
 --   "floor"   stands on a floor or the ground
 --   "surface" small things that can also stand on a table or counter
@@ -72,6 +74,7 @@ export type Def = {
 	travel: string?, -- "stairs", "ladder", "pole", "slide" or "lift" (Sim/Lifts)
 	hole: { number }?, -- the hole it cuts in the floor above, x1, z1, x2, z2 in its own space (all of it if nil)
 	spans: number?, -- how many floors up it runs (1 if nil): a lift's floors less one
+	gems: number?, -- bought with gems, not coins (its `price` is 0): one bought stays the player's (Sim/GemPieces)
 }
 
 local Catalog = {}
