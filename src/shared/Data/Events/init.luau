@@ -19,6 +19,7 @@
 --   Town      the whole town: power cuts, talent night, a parade, a lost dog, the seasons
 --   Work      at work: big orders, a tower of bricks, the wrong letters
 --   Asks      a villager asks you: a name for a pet, which outfit, whether to tell the truth
+--   Moments   big moments that play as cutscenes on sets of their own: dreams, a race, a cat
 -- A scene may name props (Data/EventProps) to put by its stars while it plays; an answer may
 -- leave one for a while, give you a keepsake, or teach them a saying or a hobby.
 --
@@ -2978,7 +2979,7 @@ event({
 	end,
 })
 
-for _, name in { "Talks", "Solo", "Pairs", "Town", "Work", "Asks" } do
+for _, name in { "Talks", "Solo", "Pairs", "Town", "Work", "Asks", "Moments" } do
 	local module = script:FindFirstChild(name)
 	if module then
 		for _, def in require(module) :: any do

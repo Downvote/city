@@ -1,17 +1,21 @@
 --!nonstrict
 -- Which random events play as a cutscene when they are watched, and how (UI/Cutscene plays
--- them). The user: "add cutscenes and scenes like tomodachi life as well". An event with a
--- cutscene still never takes the screen by itself: the small prompt comes up as for any event,
--- and only when the player presses Watch does the scene go up, on a set of its own (Data/Stages)
--- behind the dialogue's textbox, with the villagers acting it out and the camera cutting
--- between shots. Unwatched, it plays as bubbles over their heads in town like every event.
+-- them). The user: "add cutscenes and scenes like tomodachi life as well", and later "could you
+-- not move the camera around in events with special cutscenes?" and "make custom animations for
+-- villagers for them". An event with a cutscene still never takes the screen by itself: the small
+-- prompt comes up as for any event, and only when the player presses Watch does the scene go up,
+-- on a set of its own (Data/Stages) built in the world behind the dialogue's textbox, with the
+-- villagers acting it out and the camera holding still on each shot and cutting to the next.
+-- Unwatched, it plays as bubbles over their heads in town like every event.
 --
 -- The server keeps the time (Services/Events sends each line as it is said), so a script says
 -- nothing about when: for each line it says where the camera goes and what the villagers do while
 -- that line is said. A script:
 --   stage    the set (Data/Stages), or `pick`, a function of the event that names one (a day
 --            out goes where the plan in its first line says)
---   cast     which mark each star stands on: { a = 1, b = 2, c = 3 } unless it says otherwise
+--   hour     the hour it is lit at, when not the set's own (the beach at night)
+--   cast     which mark each star stands on: { a = 1, b = 2, c = 3 } unless it says otherwise;
+--            0 keeps one off the set (in the event, but only seen as a cloud in their shape)
 --   extras   how many other villagers from town fill the marks nobody in the event stands on
 --            (a party has guests, a dance party has dancers)
 --   open     the shot the scene opens on before a line comes (wide)
@@ -20,29 +24,37 @@
 --   cues     beats for a line that carries `cue = "<name>"` (see below)
 --   ask      the beat while they wait for your say; ending: the beat for how it turned out
 -- A beat (every field may be left out):
---   shot     a shot of the set's, or "close" / "push" (a close shot, or a slow push in, on `on`)
+--   shot     a shot of the set's, or "close" / "push" (a close shot, or a tighter one, on `on`);
+--            the camera cuts to it and holds still
 --   on       whose close or push: a letter; the one talking if left out
 --   act      what someone does on this line: { [letter] = act }; "*" is whoever is talking,
---            "others" everyone else on the set, "all" everyone (Cutscenes.Acts lists the acts)
+--            "others" everyone else on the set, "all" everyone (Cutscenes.Acts lists the acts:
+--            Roblox's gestures and the keyed moves of Data/Moves)
 --   look     who turns to whom: { [letter] = letter or "camera" }
 --   move     someone walks to another mark (and sits, if it is a seat): { [letter] = mark }
+--   pace     how fast they go there, studs a second (Cutscenes.RunPace and up is a run)
+--   prop     a prop of the set's goes to one of its spots, or away (false): { [name] = spot }
 --   set      the scene moves to another set (a fade to black between), everyone to their marks
 --            (`cast` gives the marks there), and others from town fill the marks left
---   fx       something in the sky: "stars" (shooting stars)
+--   fx       what goes off (one or a list): "stars" (shooting stars), "cloud:<letter>" (a cloud
+--            in their shape, at the set's `cloud` spot), "glow:<letter>" (their hands glow),
+--            "dust:<letter>" (dust at their feet), "confetti", "dark" and "lit" (the set's lamps
+--            go out and come back), "flash" (a flash of white)
 --   icon, who  only for a line with this icon, or said by this letter (the lines after an answer
 --            differ by the answer, so a beat by number can say which one it is for)
 -- With no beat a line still plays well: whoever talks gets a close shot and the rest turn to
--- them, a line nobody says gets the wide shot (then the pan, then the two shot, taking turns),
+-- them, a line nobody says gets the wide shot (then the side, then the two shot, taking turns),
 -- a line's gesture is played and its icon picks an act (Cutscenes.IconActs).
 --
 -- An event in Data/Events can carry a cutscene of its own instead of one here: `cutscene =
 -- "<set>"` (everything else as above by default) or `cutscene = { stage = ..., ... }`, a script
 -- of the same shape. A line can carry `cue = "<name>"` or a list of names: one of the script's
--- cues, or one of Cutscenes.Cues that any event can use ("kneel", "push", "pan", "hug"...).
+-- cues, or one of Cutscenes.Cues that any event can use ("kneel", "push", "side", "hug"...).
 --
 -- The Cutscenes spec holds every script to real sets, marks, shots, acts and events.
 
 local Stages = require(script.Parent.Stages)
+local Moves = require(script.Parent.Moves)
 
 export type Beat = {
 	shot: string?,
@@ -50,15 +62,18 @@ export type Beat = {
 	act: { [string]: string }?,
 	look: { [string]: string }?,
 	move: { [string]: number }?,
+	pace: { [string]: number }?,
+	prop: { [string]: any }?,
 	set: string?,
 	cast: { [string]: number }?,
-	fx: string?,
+	fx: any?,
 	icon: string?,
 	who: string?,
 }
 export type Script = {
 	stage: string?,
 	pick: ((ev: any) -> string?)?,
+	hour: number?,
 	cast: { [string]: number }?,
 	extras: number?,
 	open: string?,
@@ -74,8 +89,8 @@ export type Place = { phase: string, n: number }
 local Cutscenes = {}
 
 -- What a villager can do on a line. The first six are Roblox's own animations, as the villagers
--- play them in town (Npc.gesture); the rest UI/Cutscene does with their joints and where they
--- stand.
+-- play them in town (Npc.gesture); the rest are the keyed moves of Data/Moves, which UI/Cutscene
+-- plays on their joints.
 Cutscenes.Acts = {
 	wave = "waves",
 	point = "points",
@@ -83,22 +98,23 @@ Cutscenes.Acts = {
 	laugh = "laughs",
 	dance = "dances",
 	dance2 = "dances another way",
-	sad = "hangs their head",
-	nod = "nods",
-	shake = "shakes their head",
-	hop = "hops on the spot",
-	jump = "jumps for joy",
-	fidget = "shifts from foot to foot",
-	stomp = "stamps a foot",
-	sway = "sways, happy",
-	tilt = "tips their head to one side",
-	doze = "nods off",
-	shy = "looks down and away",
-	gaze = "looks up at the sky",
-	bow = "bows",
-	kneel = "goes down on one knee",
-	hug = "steps in for a hug",
-	spin = "turns round on the spot",
+}
+for name, m in Moves.list do
+	if m.act then
+		Cutscenes.Acts[name] = m.act
+	end
+end
+Cutscenes.RunPace = 12 -- a `pace` this fast or more is a run (UI/Cutscene.Run)
+-- What can go off on a line (`fx`), and whether it names a star.
+Cutscenes.Fx = {
+	stars = false,
+	confetti = false,
+	dark = false,
+	lit = false,
+	flash = false,
+	cloud = true,
+	glow = true,
+	dust = true,
 }
 
 -- The act a line's icon brings when the line has no gesture of its own.
@@ -118,7 +134,7 @@ Cutscenes.IconActs = {
 Cutscenes.Cues = {
 	wide = { shot = "wide" },
 	two = { shot = "two" },
-	pan = { shot = "pan" },
+	side = { shot = "side" },
 	close = { shot = "close" },
 	push = { shot = "push" },
 	kneel = { shot = "push", act = { ["*"] = "kneel" } },
@@ -129,7 +145,7 @@ Cutscenes.Cues = {
 	nod = { act = { ["*"] = "nod" } },
 	shake = { act = { ["*"] = "shake" } },
 	gaze = { act = { all = "gaze" } },
-	party = { shot = "pan", act = { all = "dance" } },
+	party = { shot = "side", act = { all = "dance" } },
 	cheer = { act = { others = "cheer" } },
 	stars = { fx = "stars", act = { all = "gaze" } },
 	camera = { look = { ["*"] = "camera" } },
@@ -150,7 +166,7 @@ byEvent.thanks = {
 	cast = { a = 3, b = 2 },
 	open = "wide",
 	lines = {
-		[1] = { shot = "pan", act = { a = "fidget", b = "gaze" } },
+		[1] = { shot = "side", act = { a = "fidget", b = "gaze" } },
 		[2] = { shot = "close", look = { a = "camera" } },
 	},
 	ask = { shot = "sunset" },
@@ -179,7 +195,7 @@ byEvent.dayout = {
 	pick = dayPlace,
 	open = "wide",
 	lines = {
-		[1] = { shot = "pan", act = { a = "sway", b = "sway" } },
+		[1] = { shot = "side", act = { a = "sway", b = "sway" } },
 		[3] = { shot = "two", act = { a = "sway" } },
 	},
 	ending = { shot = "two", act = { all = "sway" } },
@@ -191,7 +207,7 @@ byEvent.birthday = {
 	extras = 2,
 	open = "wide",
 	lines = {
-		[1] = { shot = "pan", act = { others = "wave" } },
+		[1] = { shot = "side", act = { others = "wave" } },
 		[2] = { shot = "cake", act = { others = "cheer" } },
 		[3] = { shot = "push", act = { others = "laugh" } },
 	},
@@ -204,7 +220,7 @@ byEvent.festival = {
 	extras = 3,
 	open = "wide",
 	lines = {
-		[1] = { shot = "pan", act = { all = "dance" } },
+		[1] = { shot = "side", act = { all = "dance" } },
 	},
 	ending = { shot = "high", act = { all = "dance2" } },
 }
@@ -214,7 +230,7 @@ byEvent.dream = {
 	stage = "dream",
 	open = "float",
 	lines = {
-		[1] = { shot = "pan", act = { a = "doze" } },
+		[1] = { shot = "side", act = { a = "doze" } },
 		[2] = { shot = "push" },
 	},
 	ending = { shot = "wide", act = { a = "spin" } },
@@ -227,7 +243,7 @@ byEvent.makeup = {
 	cast = { a = 3, b = 1 },
 	open = "wide",
 	lines = {
-		[1] = { shot = "pan", act = { b = "sad" } },
+		[1] = { shot = "side", act = { b = "sad" } },
 		[3] = { shot = "close", on = "b", act = { b = "nod" } },
 	},
 	ending = { shot = "two", move = { a = 2 } },
@@ -272,6 +288,33 @@ byEvent.bigday = {
 
 local Events: any = nil
 
+local function events(): any
+	if Events == nil then
+		local ok, module = pcall(function()
+			return require(script.Parent.Events) :: any
+		end)
+		Events = if ok then module else false
+	end
+	return Events
+end
+
+-- Every script there is, by event: these and the events' own (`cutscene` on an event's def).
+function Cutscenes.all(): { [string]: Script }
+	local out: { [string]: Script } = table.clone(byEvent)
+	local ev = events()
+	for _, def in (ev and ev.list) or {} do
+		if not out[def.id] then
+			local own = def.cutscene
+			if type(own) == "string" then
+				out[def.id] = { stage = own }
+			elseif type(own) == "table" then
+				out[def.id] = own
+			end
+		end
+	end
+	return out
+end
+
 -- The cutscene an event plays as when watched (nil: it plays as the usual scene), and the set
 -- it starts on. `ev` is the event as the client has it (its lines pick a day out's set).
 function Cutscenes.forEvent(id: any, ev: any?): (Script?, string?)
@@ -281,13 +324,8 @@ function Cutscenes.forEvent(id: any, ev: any?): (Script?, string?)
 	local found: Script? = byEvent[id]
 	if not found then
 		-- an event may carry one of its own
-		if Events == nil then
-			local ok, module = pcall(function()
-				return require(script.Parent.Events) :: any
-			end)
-			Events = if ok then module else false
-		end
-		local def = Events and Events.get and Events.get(id)
+		local ev = events()
+		local def = ev and ev.get and ev.get(id)
 		local own = def and def.cutscene
 		if type(own) == "string" then
 			found = { stage = own }
@@ -348,7 +386,7 @@ local function merge(into: any, beat: Beat?, line: any)
 	if beat.who and beat.who ~= line.who then
 		return
 	end
-	for _, k in { "shot", "on", "set", "cast", "fx" } do
+	for _, k in { "shot", "on", "set", "cast", "fx", "prop", "pace" } do
 		if (beat :: any)[k] ~= nil then
 			into[k] = (beat :: any)[k]
 		end
@@ -380,9 +418,9 @@ function Cutscenes.beat(script: Script, line: any, prev: Beat?): Beat
 		if who then
 			out.shot, out.on = "close", who
 		else
-			-- a line nobody in particular says: wide, then the pan, then the two shot
+			-- a line nobody in particular says: wide, then the side, then the two shot
 			local last = prev and prev.shot
-			out.shot = if last == "wide" then "pan" elseif last == "pan" then "two" else "wide"
+			out.shot = if last == "wide" then "side" elseif last == "side" then "two" else "wide"
 		end
 		if who and type(line.gesture) == "string" and Cutscenes.Acts[line.gesture] then
 			out.act[who] = line.gesture

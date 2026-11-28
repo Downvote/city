@@ -533,6 +533,7 @@ return {
 	env = env,
 	ws = ws,
 	cam = cam,
+	Lighting = lighting,
 	player = player,
 	playerGui = playerGui,
 	UIS = UIS,

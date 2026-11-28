@@ -1,8 +1,9 @@
 #!/bin/sh
-# Draws a cutscene's set from every one of its shots: sh tools/preview/stage.sh <id> <out dir> [stage.py options]
-# The set is dumped by tools/preview/dump.luau (stage:<id>) and drawn by tools/preview/stage.py as
-# the game's viewport shows it: the set's own light and its painted sky, a stand-in on each mark.
-# Pictures land in <out dir> as <id>_<shot>.png. Write them outside the repository.
+# Draws a cutscene's set from its shots: sh tools/preview/stage.sh <id> <out dir> [stage.py options]
+# The set is dumped by tools/preview/dump.luau (stage:<id>) and drawn by tools/preview/stage.py in
+# the game's own light at the set's hour, with its lamps lit after dark and a stand-in on each mark.
+# Pictures land in <out dir> as <id>_<shot>.png (--shots wide,two for some). Write them outside
+# the repository.
 set -e
 cd "$(dirname "$0")/../.."
 export PATH="$HOME/.local/rbx-tools/bin:$PATH"
