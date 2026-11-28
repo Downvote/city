@@ -19,13 +19,13 @@
 --   preset:<id>        a ready-made building (cottage, family, townhouse, library, cafe...)
 --   presets            all of them in a row (add :inside to leave the roofs off, or :up1 to leave
 --                      the roofs off and keep the floor above the ground storey, to see upstairs)
---   ambient            the cars and the bus
+--   ambient            the cars and the bus (ambient:<name> for one: car, parked, bus)
 --   props              what random events bring into the world (props:<id>,<id> for some)
 --   inside:<kind>,...  furnished rooms with the roof off (bakery, grocer, books, clothes, cafe,
 --                      toys, flowers, post, lobby, flats, home, library, museum, cinema, station,
 --                      school, clinic, department); a kind may carry a size: library=56x28x12
 --   map                the middle of town: streets, plaza and street furniture, on the terrain
---   vehicles           every vehicle side by side (Data/Vehicles)
+--   vehicles           every vehicle side by side (Data/Vehicles); vehicles:<id>,<id> for some
 --   map:x1,z1,x2,z2    another part of town (the terrain is drawn as faceted ground of its
 --                      materials' colours, finer the smaller the part, with the sea over it)
 --   stage:<id>         a cutscene's set (Data/Stages); tools/preview/stage.sh draws it from its shots
@@ -302,11 +302,19 @@ elseif scene:sub(1, 7) == "preset:" or scene:sub(1, 7) == "presets" then
 		plan = trial
 		x += p.w + 6
 	end
-elseif scene == "vehicles" then
-	-- vehicles: every vehicle side by side (Data/Vehicles), standing on the ground
+elseif scene == "vehicles" or scene:sub(1, 9) == "vehicles:" then
+	-- vehicles: every vehicle side by side (Data/Vehicles), standing on the ground; vehicles:<id>,<id>
+	-- for some of them
 	local VehicleData = R(Shared .. "Data.Vehicles")
+	local list = VehicleData.list
+	if scene ~= "vehicles" then
+		list = {}
+		for id in scene:sub(10):gmatch("[^,]+") do
+			table.insert(list, (assert(VehicleData.get(id), "no vehicle " .. id)))
+		end
+	end
 	local x = 0
-	for _, v in VehicleData.list do
+	for _, v in list do
 		addPrims(VehicleData.prims(v), CFrame.new(x + v.size.X / 2, v.hover, 0))
 		x += v.size.X + 3
 	end
@@ -341,9 +349,14 @@ elseif scene == "basement" or scene == "basement:open" then
 elseif scene == "water" or scene:sub(1, 6) == "water:" then
 	-- (water: pools and ponds with things in them)
 	addPrims(require("./water_scene")(R, scene:sub(7)))
-elseif scene == "ambient" then
+elseif scene == "ambient" or scene:sub(1, 8) == "ambient:" then
+	-- ambient: the town's cars, the bus and a duck; ambient:<name> one of them (car, parked, bus)
 	local AmbientModels = R(Shared .. "Data.AmbientModels")
-	addPrims(AmbientModels.preview())
+	if scene == "ambient" then
+		addPrims(AmbientModels.preview())
+	else
+		addPrims(AmbientModels.prims(scene:sub(9)))
+	end
 elseif scene == "town" then
 	local TownModels = R(Shared .. "Data.TownModels")
 	addPrims(TownModels.preview())
@@ -453,6 +466,7 @@ for _, p in prims do
 		color = { p.color.R, p.color.G, p.color.B },
 		transp = p.transp or 0,
 		mat = p.mat,
+		smooth = p.smooth,
 	})
 end
 for _, t in tris do

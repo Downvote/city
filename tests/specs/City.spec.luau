@@ -650,6 +650,40 @@ describe("City", function()
 		expect(v.lv).toBe(Tuning.Jobs.SkillCap)
 	end)
 
+	it("keeps grand pieces for a town of their level", function()
+		-- a grand piece (Catalog: `level`, Recipes/Grand) goes down only in a town that has reached
+		-- its level, counted from what the town is worth before it goes down
+		local def = Catalog.get("grand_chandelier")
+		expect(def ~= nil and def.level ~= nil).toBeTruthy()
+		local plan = Plan.new(Tuning.Plot.Size)
+		expect(City.levelOf(plan)).toBe(1)
+		expect(City.unlocked(plan, def)).toBe(false)
+		expect(City.unlocked(plan, Catalog.get("chandelier"))).toBe(true)
+		-- a town worth enough for that level may
+		local rich = Plan.new(Tuning.Plot.Size)
+		rich.size = Tuning.Plot.Size
+		local fountain = Catalog.get("fountain")
+		local x1, z1 = Plan.boundsOf(rich.size)
+		local n = 0
+		while City.levelOf(rich) < def.level and n < 2000 do
+			n += 1
+			local key = Plan.newKey(rich)
+			rich.items[key] = {
+				id = fountain.id,
+				x = x1 + 4 + (n % 40) * 7,
+				y = 0,
+				z = z1 + 4 + math.floor(n / 40) * 7,
+				r = 0,
+				lv = 0,
+			}
+		end
+		expect(City.levelOf(rich) >= def.level).toBeTruthy()
+		expect(City.unlocked(rich, def)).toBe(true)
+		-- and a ready-made building that holds one waits for it too
+		expect(Presets.level("grand_manor")).toBe(def.level)
+		expect(Presets.level("cottage")).toBe(1)
+	end)
+
 	it("keeps the economy in its bounds", function()
 		-- a day's pay at the mood and skill a villager starts with buys something real (a bed and
 		-- a workplace many times over, most of a ready-made house) but not the town, and the best
@@ -677,18 +711,41 @@ describe("City", function()
 		expect(dearestWork * 3 <= builder).toBeTruthy()
 		expect(cottage / builder).toBeBetween(1, 2)
 		local dearestPreset = 0
+		local grand = {}
 		for _, preset in Presets.list do
-			dearestPreset = math.max(dearestPreset, Presets.price(preset.id))
+			if Presets.level(preset.id) > 1 then
+				table.insert(grand, preset)
+			else
+				dearestPreset = math.max(dearestPreset, Presets.price(preset.id))
+			end
 		end
 		expect(dearestPreset / builder < 4).toBeTruthy()
+		-- the grand ones are for the endgame (the user: "make more vehicles, buildings that cost
+		-- more for the endgame"): each waits for a high town level, costs at least twice the
+		-- dearest of the rest, and no more than a fifth of the worth its level asks for, so the
+		-- bound grows with the level; one that waits longer costs more
+		expect(#grand >= 3).toBeTruthy()
+		table.sort(grand, function(a, b)
+			return Presets.level(a.id) < Presets.level(b.id)
+		end)
+		local last = 0
+		for _, preset in grand do
+			local level, price = Presets.level(preset.id), Presets.price(preset.id)
+			expect(level >= 10).toBeTruthy()
+			expect(price >= 2 * dearestPreset).toBeTruthy()
+			expect(price <= 0.2 * City.levelValue(level)).toBeTruthy()
+			expect(price > last).toBeTruthy()
+			last = price
+		end
 		-- a workplace pays for itself inside half a day of the job it opens, and a ready-made
-		-- building for a trade (the workplace with its shop round it) in 1.5 to 5 days
+		-- building for a trade (the workplace with its shop round it) in 1.5 to 5 days (the grand
+		-- ones aside: they are held to their level above)
 		for _, def in Catalog.workplaces() do
 			expect(def.price / startPay(Jobs.get(def.job))).toBeBetween(0.05, 0.5)
 		end
 		local shops = 0
 		for _, preset in Presets.list do
-			for _, o in preset.objects do
+			for _, o in if Presets.level(preset.id) > 1 then {} else preset.objects do
 				local def = o.kind == "items" and Catalog.get(o.obj.id)
 				if def and def.job then
 					shops += 1

@@ -9,7 +9,8 @@
 --   job, workSpot, workYaw for workplaces (Recipes/Work),
 --   lively = true for a piece that moves or gives off an effect (Build/Lively: the client looks
 --   inside those), vip = true for one only VIP owners can place (Services/Build refuses it to
---   anyone else, Sim/Passes; Build mode tags its card).
+--   anyone else, Sim/Passes; Build mode tags its card), level = n for one only a town of level n
+--   or more can place (Recipes/Grand; Services/Build refuses it below, Sim/City.unlocked).
 -- place is one of:
 --   "floor"   stands on a floor or the ground
 --   "surface" small things that can also stand on a table or counter
@@ -59,6 +60,7 @@ export type Def = {
 	draft: number?, -- (water) how far its frame's floor is under the surface, or under the ground
 	lively: boolean?, -- moves or gives off an effect (Build/Lively, client World/Lively)
 	vip: boolean?, -- only for VIP owners (Sim/Passes.has(profile, "vip"))
+	level: number?, -- only for a town of this level or more (Sim/City.unlocked; Recipes/Grand)
 }
 
 local Catalog = {}

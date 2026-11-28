@@ -18,7 +18,9 @@ describe("Vehicles", function()
 			expect((v.coins ~= nil) ~= (v.gems ~= nil)).toBeTruthy() -- (one price, in one money)
 			table.insert(if v.gems then gems else coins, v)
 		end
-		expect(#coins >= 4 and #gems >= 1).toBeTruthy()
+		-- (more for the endgame: the user, "make more vehicles, buildings that cost more for the
+		-- endgame")
+		expect(#coins >= 9 and #gems >= 4).toBeTruthy()
 		for i = 2, #coins do
 			local a, b = coins[i - 1], coins[i]
 			expect(b.coins > a.coins).toBeTruthy()
@@ -48,6 +50,61 @@ describe("Vehicles", function()
 			end
 			-- and its words read as a person's
 			expect(string.find(v.blurb, "\u{2014}") == nil and string.find(v.blurb, "!") == nil).toBeTruthy()
+		end
+	end)
+
+	it("is drawn in detail, in textured materials, round where it is round", function()
+		-- the user: "make cars and vechicles more detailed, especially player bought ones. the
+		-- scooter dosent look like a scooter" and "You are allowed to use spheres, curves or circles
+		-- where necessary": every vehicle is a few hundred parts at most, none of them plain
+		-- SmoothPlastic, every frame a real rotation, and what is drawn smooth keeps a round size
+		for _, v in VehicleData.list do
+			local prims = Geometry.flatten(VehicleData.prims(v))
+			expect(#prims >= 100 and #prims <= 400).toBeTruthy()
+			local round = 0
+			for _, p in prims do
+				if p.mat == "SmoothPlastic" then
+					error(v.id .. ": a part in plain SmoothPlastic")
+				end
+				local _, _, _, r00, r01, r02, r10, r11, r12, r20, r21, r22 = p.cf:GetComponents()
+				local x, y, z = Vector3.new(r00, r10, r20), Vector3.new(r01, r11, r21), Vector3.new(r02, r12, r22)
+				expect((x:Cross(y) - z).Magnitude < 1e-3).toBeTruthy()
+				if p.smooth then
+					round += 1
+					if p.shape == "Ball" then
+						expect(math.abs(p.size.X - p.size.Y) < 1e-6 and math.abs(p.size.Y - p.size.Z) < 1e-6).toBeTruthy()
+					else
+						expect(p.shape).toBe("Cylinder")
+						expect(math.abs(p.size.Y - p.size.Z) < 1e-6).toBeTruthy()
+					end
+				end
+			end
+			expect(round >= 8).toBeTruthy()
+		end
+		-- a seat under everyone: a cushion in fabric or leather just under where each one sits
+		for _, v in VehicleData.list do
+			local prims = Geometry.flatten(VehicleData.prims(v))
+			for _, at in { v.driver, table.unpack(v.passengers) } do
+				local found = false
+				for _, p in prims do
+					if (p.mat == "Fabric" or p.mat == "Leather") and p.shape == "Block" then
+						local lo, hi = Geometry.bounds({ p })
+						if
+							at.X >= lo.X
+							and at.X <= hi.X
+							and at.Z >= lo.Z
+							and at.Z <= hi.Z
+							and math.abs(hi.Y - (at.Y + 0.2)) < 0.3
+						then
+							found = true
+							break
+						end
+					end
+				end
+				if not found then
+					error(v.id .. ": nothing to sit on at " .. tostring(at))
+				end
+			end
 		end
 	end)
 
