@@ -4,9 +4,9 @@
 -- stood in for here. The server tells the client a villager spoke (the "Talk" remote), the card
 -- opens, and its answers and every way it closes are tried. Then events: one nobody watches
 -- (only the small prompt, nothing slides in) and one that is watched (the scene, a second and a
--- third villager joining, the one talking lit, an answer sent), and a big moment watched as a
--- cutscene (its set in place of the busts, the camera easing between shots while the player's
--- own stays put, a villager walking to her mark, the last click closing it). Then a craving, bought for the
+-- third villager joining, the one talking lit, an answer sent), and a big moment that had a set of its
+-- own once, watched like any other (the busts, the camera and the light left as they were, the last
+-- click closing it). Then a craving, bought for the
 -- villager from the talk card and from the Villagers screen, with and without the coins, and from the
 -- popup a click on the wish bubble over their head brings up (UI/WishPopup), with the other wishes
 -- answered there too.
@@ -507,12 +507,11 @@ run("watching from the start while they wait for your say", function()
 	check(#errors == warned, "no warnings from any of it")
 end)
 
--- a cutscene: a big moment watched on a set of its own (UI/Cutscene, Data/Cutscenes) ----------------------
+-- a big moment, watched like any other event (the user: "remove the need for special cutscene
+-- backgrounds, they will just appear as normal conversations now") --------------------------------------
 
-run("a big moment, watched as a cutscene", function()
+run("a big moment, watched as the usual scene", function()
 	local warned = #errors
-	local Stages = Harness.require("ReplicatedStorage.Shared.Data.Stages")
-	local rooftop = Stages.get("rooftop")
 	local ev = {
 		token = "e5",
 		id = "thanks",
@@ -530,73 +529,28 @@ run("a big moment, watched as a cutscene", function()
 	check(scene() == nil and prompt() ~= nil, "it starts as the small prompt like any event")
 	local cam = Sim.cam
 	local camType, camAt = cam.CameraType, cam.CFrame
-	local townHour = Sim.Lighting.ClockTime -- (the town's light as it was, to be put back)
+	local townHour = Sim.Lighting.ClockTime
 	press("Watch")
 	local s = scene()
 	check(s ~= nil, "Watch puts the scene up")
-	local stage = s and s:FindFirstChild("Cutscene", true)
-	check(stage ~= nil and stage:GetAttribute("Stage") == "rooftop", "with the rooftop behind the textbox")
-	check(s and s:FindFirstChild("Bust_a", true) == nil, "and no busts sliding in")
-	check(stage and stage:FindFirstChildWhichIsA("ViewportFrame", true) == nil, "no viewport: the set is in the world")
-	local folder = Sim.ws:FindFirstChild("CutsceneSet")
-	local set = folder and folder:FindFirstChild("Set")
-	check(set ~= nil and #set:GetChildren() > 300, "the set built in the world, on this screen")
-	local far = set and set:FindFirstChildWhichIsA("BasePart", true)
-	check(
-		far ~= nil and (far.CFrame.Position - Stages.Origin).Magnitude < 200,
-		"far out over the sea, where the town can't be seen"
-	)
-	local a, b = folder and folder:FindFirstChild("Actor_a"), folder and folder:FindFirstChild("Actor_b")
-	check(a ~= nil and b ~= nil, "both of them standing on it")
-	local frame = CFrame.new(Stages.Origin)
-	local function feet(actor)
-		local root = actor and actor:FindFirstChild("HumanoidRootPart")
-		local at = root and frame:PointToObjectSpace(root.CFrame.Position)
-		return at and Vector3.new(at.X, 0, at.Z)
-	end
-	local function flat(v)
-		return Vector3.new(v.X, 0, v.Z)
-	end
-	-- (the set is turned to its sun, so where they stand is measured round the origin)
-	local function near(actor, mark)
-		local f = feet(actor)
-		return f ~= nil and math.abs(f.Magnitude - flat(mark).Magnitude) < 0.4
-	end
-	check(near(a, rooftop.marks[3].at), "the one who will say it on the mark the script gives")
-	check(near(b, rooftop.marks[2].at), "the other on theirs")
-	frames(40)
-	local top = stage and stage:FindFirstChild("BarTop")
-	check(top ~= nil and top.Position.Y.Scale == 0 and top.Size.Y.Scale > 0.05, "the letterbox slides in")
-	check(s and s:FindFirstChild("Box", true).Visible, "the textbox over it")
-	check(cam.CameraType == Enum.CameraType.Scriptable, "the camera is the scene's while it is up")
-	-- (the clock is stored as Roblox stores it, in single precision: 17.8 reads back 17.79999)
-	check(math.abs(Sim.Lighting.ClockTime - rooftop.light.hour) < 1e-3, "the town's light held at the set's hour")
+	frames(20)
+	check(s and s:FindFirstChild("Bust_a", true) ~= nil, "Mara slides in as a bust, as in any scene")
+	check(Sim.ws:FindFirstChild("CutsceneSet") == nil, "no set is built anywhere")
+	check(cam.CameraType == camType and cam.CFrame == camAt, "the camera stays where the player had it")
+	check(Sim.Lighting.ClockTime == townHour, "and the town's light is left alone")
 	local said = ((s and words(s, "Line")) or ""):gsub("<[^>]+>", "")
-	check(said == "Mara has been pacing up and down the roof for an hour.", "the line being said is typed")
-	-- the second line: a cut to a close shot on her, held still
-	local before = cam.CFrame
+	check(said == "Mara has been pacing up and down the roof for an hour.", "the first line is typed")
 	line("e5", ev.lines[2])
 	advance(2)
-	frames(2)
-	check((cam.CFrame.Position - before.Position).Magnitude < 1e-3, "the set holds its shot until the player goes on")
 	goOn()
-	frames(1)
-	local first = cam.CFrame
-	check((first.Position - before.Position).Magnitude > 1, "the camera cuts to the next shot at once")
-	advance(2)
-	frames(10)
-	check((cam.CFrame.Position - first.Position).Magnitude < 1e-3, "and holds it without drifting")
-	check(words(s:FindFirstChild("Speaker", true), "Text") == "Mara", "her name on the tag")
-	-- the answers, then she walks over and says it
+	check(words(s:FindFirstChild("Speaker", true), "Text") == "Mara", "her name on the tag when she talks")
+	check(s:FindFirstChild("Bust_b", true) ~= nil, "and Tobin slides in when she names him")
 	askNow("e5")
 	advance(1)
 	goOn()
 	check(s:FindFirstChild("Choice1", true) ~= nil, "the answers come up in the box")
 	press("Choice1")
 	line("e5", { who = "a", text = "Tobin, I never said thank you. It meant a lot.", icon = "heart" })
-	advance(3)
-	frames(2)
-	check(near(a, rooftop.marks[1].at), "she walks over to him for the line that matters")
 	Sim.remoteEvent("EventLine"):FireClient(Sim.player, {
 		token = "e5",
 		line = { who = "b", text = "Oh. I'm glad you did.", icon = "heart", gesture = "cheer" },
@@ -604,17 +558,13 @@ run("a big moment, watched as a cutscene", function()
 	})
 	frames(2)
 	advance(2)
-	check(words(s:FindFirstChild("Speaker", true), "Text") == "Mara", "the lines after the answer are said on the set")
 	goOn()
 	check(words(s:FindFirstChild("Other", true), "Text") == "Tobin", "his answer after a click")
 	goOn()
 	check(scene() == nil, "a click on the last line closes it")
 	advance(1)
-	check(gui:FindFirstChild("Cutscene", true) == nil, "and the screen goes with it")
-	check(Sim.ws:FindFirstChild("CutsceneSet") == nil, "and the set")
 	check(Sim.State.data.talking == false, "the main screen comes back")
-	check(cam.CameraType == camType and cam.CFrame == camAt, "with the player's camera where they left it")
-	check(Sim.Lighting.ClockTime == townHour, "and the town's own light")
+	check(cam.CameraType == camType and cam.CFrame == camAt, "with the camera never moved")
 	Sim.remoteEvent("EventEnd"):FireClient(Sim.player, { token = "e5", notices = {} })
 	advance(8)
 	check(prompt() == nil, "the prompt goes when it ends")

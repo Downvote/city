@@ -14,11 +14,6 @@
 -- nobody in particular says shows everyone dimmed. While a scene is up, State's "talking" is true
 -- (the main screen steps aside for it).
 --
--- A watched event that has a cutscene (Data/Cutscenes) opens the same scene with a Stage: the
--- villagers then stand on a set of their own behind the box (UI/Cutscene) instead of sliding in
--- as busts, and each line tells the set what is happening (beat). The box, the tags and the way it
--- closes are the same.
---
 -- A scene that goes on (a watched event: OnClick) moves only when the player says so: a click or
 -- a tap on the box, or Enter, E or a gamepad's X (the user: "sometimes, chats suddenly cut to the
 -- next dialogue without the player input"). Every press counts at once (the user: "sometimes,
@@ -51,7 +46,6 @@ local UserInputService = game:GetService("UserInputService")
 local Kit = require(script.Parent.Kit)
 local Icons = require(script.Parent.Icons)
 local ModelPreview = require(script.Parent.ModelPreview)
-local Cutscene = require(script.Parent.Cutscene)
 local State = require(script.Parent.Parent.Controllers.State)
 local Audio = require(script.Parent.Parent.Controllers.Audio)
 
@@ -285,11 +279,10 @@ end
 
 -- Opens a scene, putting away any other at once. opts: Name (the root's name), OnClick (a press
 -- once the line is all there, by a click, a tap or a key: go on), Caption (dim words at the box's
--- foot, left), Stage (a cutscene to play behind the box: the options UI/Cutscene takes). Returns
--- the scene: { root, box, words (the line, "Line"), note ("Note", at the foot), answers (a box
--- under the words for buttons), tools (a row at the foot's right for small buttons), more (the
--- arrow), stage (the cutscene, if any) } and its methods join(actor), speak(key?), has(key),
--- beat(line), next() (what a press does), close().
+-- foot, left). Returns the scene: { root, box, words (the line, "Line"), note ("Note", at the
+-- foot), answers (a box under the words for buttons), tools (a row at the foot's right for small
+-- buttons), more (the arrow) } and its methods join(actor), speak(key?), has(key), next() (what a
+-- press does), close().
 function Dialogue.open(opts: { [string]: any }?): any
 	local o = opts or {}
 	if current then
@@ -322,17 +315,6 @@ function Dialogue.open(opts: { [string]: any }?): any
 	})
 	local layer = Kit.box({ Name = "Cast", Size = UDim2.fromScale(1, 1), Parent = root })
 	layer.ZIndex = 1
-	-- a cutscene stands the villagers on a set behind the box, over the whole screen
-	local stage: any = nil
-	if o.Stage then
-		local ok, made = pcall(Cutscene.new, root, o.Stage)
-		if ok and made then
-			stage = made
-			fade.Visible = false
-		else
-			warn("cutscene: " .. tostring(made))
-		end
-	end
 	-- the box
 	local box = Kit.new("Frame", {
 		Name = "Box",
@@ -553,7 +535,6 @@ function Dialogue.open(opts: { [string]: any }?): any
 		more = more,
 		left = left,
 		right = right,
-		stage = stage,
 	}
 
 	local function entryOf(key: string): any
@@ -617,8 +598,7 @@ function Dialogue.open(opts: { [string]: any }?): any
 			end
 			local e = key and entryOf(key)
 			local t = if side == "left" then left else right
-			local shown = e ~= nil and (e.bust ~= nil or (stage ~= nil and stage.shows(e.actor.key)))
-			fillTag(t, e and e.actor, e ~= nil and e.actor.key == speaking, shown)
+			fillTag(t, e and e.actor, e ~= nil and e.actor.key == speaking, e ~= nil and e.bust ~= nil)
 		end
 	end
 
@@ -644,9 +624,7 @@ function Dialogue.open(opts: { [string]: any }?): any
 		local e: any = { actor = actor, bust = nil }
 		table.insert(cast, e)
 		local i = #cast
-		if stage then
-			stage.join(actor)
-		elseif (actor.model or actor.image) and i <= #SLOTS then
+		if (actor.model or actor.image) and i <= #SLOTS then
 			e.bust = bust(layer, actor, i)
 		end
 		refresh()
@@ -656,12 +634,6 @@ function Dialogue.open(opts: { [string]: any }?): any
 	function self.found(key: string, model: Model)
 		local e = entryOf(key)
 		if not e or e.bust or not root.Parent then
-			return
-		end
-		if stage then
-			e.actor.model = model
-			stage.found(key, model)
-			refresh()
 			return
 		end
 		local i = table.find(cast, e) or 1
@@ -746,14 +718,6 @@ function Dialogue.open(opts: { [string]: any }?): any
 		refresh()
 	end
 
-	-- What is being said now, for the set behind the box (a line, { ask = true } or
-	-- { ending = true }): nothing happens without one.
-	function self.beat(line: any)
-		if stage then
-			stage.beat(line)
-		end
-	end
-
 	-- Takes the scene down: everyone slides out and it goes (at once with `now`).
 	function self.close(now: boolean?)
 		if talker then
@@ -774,9 +738,6 @@ function Dialogue.open(opts: { [string]: any }?): any
 			return
 		end
 		root.Name = "Leaving"
-		if stage then
-			stage.close(now)
-		end
 		if now then
 			root:Destroy()
 			return

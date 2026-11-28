@@ -160,7 +160,6 @@ local TALENTS = {
 
 event({
 	id = "talentnight",
-	cutscene = { stage = "bandstand", extras = 2, open = "wide", ending = { shot = "wide", act = { all = "cheer" } } },
 	actors = 3,
 	when = "any",
 	weight = W({

@@ -90,11 +90,10 @@
 --   event:narration     a line nobody in particular says: both villagers in, dimmed
 --   event:answers       a watched event at its choices: the answers in the textbox
 --   event:name          a watched event that asks for a name: the box with the suggestion, and Done
---   cutscene:<event>    a big moment watched as a cutscene (UI/Cutscene, Data/Cutscenes): the
---                       event's own scene for the sample town with all its lines said;
---                       cutscene:<event>:<n> after its first n lines, :ask at its question,
---                       :a<n> n lines after the first answer (the set itself is drawn by
---                       tools/preview/stage.py into the viewport; the villagers are stand-ins)
+--   watch:<event>       any event (Data/Events, by id) watched as the usual scene, its own lines
+--                       as the server makes them for the sample town, all of them said;
+--                       watch:<event>:<n> after its first n lines, :ask at its question,
+--                       :a<n> n lines after the first answer
 --   talk                the talk card: a villager you held E on tells you their wish
 --   wish                what a click on a wish bubble brings up (UI/WishPopup): Mara craves a rice
 --                       ball and the coins are there; wish:short the same without the coins,
@@ -253,7 +252,6 @@ if look then
 end
 
 local Hud
-local stageShot = false -- a cutscene is up: its set is drawn into the picture (stagePicture)
 -- the villagers standing in the player's plot, each marked with its id (UI/Dialogue finds a
 -- talking villager's model there for their bust)
 local function villagerModels()
@@ -1893,54 +1891,13 @@ elseif scene == "signs" or scene:sub(1, 6) == "signs:" then
 		end
 		Service.drawMarquee(board(1248, 88), 1248, 88, Signs.Shops.cinema[1], Signs.Films[1])
 	end
-elseif scene:sub(1, 9) == "cutscene:" then
-	-- a big moment watched as a cutscene (see the list at the top)
-	local id, step = scene:sub(10):match("^([^:]+):?(.*)$")
+elseif scene:sub(1, 6) == "watch:" then
+	-- any event watched as the usual scene (see the list at the top)
+	local id, step = scene:sub(7):match("^([^:]+):?(.*)$")
 	local Events = Harness.require("ReplicatedStorage.Shared.Data.Events")
 	local EventEngine = Harness.require("ReplicatedStorage.Shared.Sim.EventEngine")
-	local Colors = Harness.require("ReplicatedStorage.Shared.Util.Colors")
 	local def = assert(Events.get(id), "no event " .. tostring(id))
-	-- the villagers as stand-ins: legs, a body and arms in their colour, a head with hair and
-	-- eyes on the side they face (-Z), round a root as a character has
-	local plot = Sim.ws:FindFirstChild("Plots"):FindFirstChild("Plot1")
-	local folder = plot:FindFirstChild("Villagers") or Fake.new("Folder", plot)
-	folder.Name = "Villagers"
-	local HAIR = {
-		Color3.fromRGB(96, 70, 60),
-		Color3.fromRGB(60, 50, 48),
-		Color3.fromRGB(200, 150, 90),
-		Color3.fromRGB(150, 80, 60),
-	}
-	for i, vid in order do
-		local v = villagers[vid]
-		local model = Fake.new("Model", folder)
-		model.Name = v.name
-		model:SetAttribute("Vid", vid)
-		local base = roblox.CFrame.new(i * 6, 3, 0)
-		local function part(name, x, y, z, sx, sy, sz, color, transp)
-			local p = Fake.new("Part", model)
-			p.Name = name
-			p.Size = roblox.Vector3.new(sx, sy, sz)
-			p.CFrame = base * roblox.CFrame.new(x, y, z)
-			p.Color = color
-			p.Transparency = transp or 0
-		end
-		local shirt = Colors.fromHex(v.color, Color3.fromRGB(220, 120, 110))
-		local skin = Color3.fromRGB(236, 196, 160)
-		part("HumanoidRootPart", 0, 0, 0, 2, 2, 1, skin, 1)
-		for _, x in { -0.5, 0.5 } do
-			part("Leg", x, -2, 0, 0.9, 2, 0.9, Color3.fromRGB(70, 78, 110))
-		end
-		part("Torso", 0, 0, 0, 2, 2, 1, shirt)
-		for _, x in { -1.45, 1.45 } do
-			part("Arm", x, 0, 0, 0.9, 2, 0.9, shirt)
-		end
-		part("Head", 0, 1.6, 0, 1.2, 1.2, 1.2, skin)
-		part("Hair", 0, 2.3, 0.05, 1.3, 0.35, 1.3, HAIR[i % #HAIR + 1])
-		for _, x in { -0.25, 0.25 } do
-			part("Eye", x, 1.65, -0.62, 0.16, 0.22, 0.06, Color3.fromRGB(40, 36, 44))
-		end
-	end
+	villagerModels()
 	startHud()
 	-- the event's own scene, made as the server makes it
 	local profile =
@@ -2033,7 +1990,6 @@ elseif scene:sub(1, 9) == "cutscene:" then
 	end
 	Sim.advance(2)
 	Sim.frames(60)
-	stageShot = true
 elseif scene:sub(1, 9) == "tutorial:" then
 	-- the tutorial (UI/Tutorial): the friend's scene at a step, and the darkened screen round what
 	-- to press next (see the list at the top)
@@ -2329,182 +2285,9 @@ for _, g in Sim.gui.Parent:GetChildren() do
 		end
 	end
 end
--- A cutscene's set stands in the world, not in the GUI tree: it is drawn here by
--- tools/preview/stage.py from where the cutscene's camera is, in the game's light at the set's
--- hour, with its props where they are now and the stand-ins in the poses the cutscene has them
--- in (Data/Moves), see-through where the sky shows, and laid under the screen as a picture.
-local function stagePicture(root, path, list)
-	local CutsceneUI = Harness.require(Sim.CLIENT .. "UI.Cutscene")
-	local CFrame, Color3 = roblox.CFrame, roblox.Color3
-	local cut = CutsceneUI.current
-	if not cut then
-		return
-	end
-	local Stages = Harness.require("ReplicatedStorage.Shared.Data.Stages")
-	local Moves = Harness.require("ReplicatedStorage.Shared.Data.Moves")
-	local Geometry = Harness.require("ReplicatedStorage.Shared.Build.Geometry")
-	local Lib = require("./stage_lib")
-	local frame, id, hour = cut.where()
-	local s = Stages.get(id)
-	local prims = {}
-	local function add(p, cf)
-		table.insert(prims, {
-			shape = p.shape,
-			cf = { ((cf or CFrame.identity) * p.cf):GetComponents() },
-			size = { p.size.X, p.size.Y, p.size.Z },
-			color = { p.color.R, p.color.G, p.color.B },
-			transp = p.transp or 0,
-			mat = if p.role == "glow"
-					and Stages.lampsOn(s, hour)
-					and (cut.lampsLit() or (p.attrs and p.attrs.Stays))
-				then "Neon"
-				else p.mat,
-		})
-	end
-	for _, p in Geometry.flatten(Stages.prims(id)) do
-		add(p)
-	end
-	local lit = Stages.lampsOn(s, hour)
-	local lamps = if lit then Lib.lamps(Stages.prims(id), nil, not cut.lampsLit()) else {}
-	for name, spot in cut.propsNow() do
-		local made = Stages.propPrims(id, name)
-		for _, p in Geometry.flatten(made.still) do
-			add(p, s.props[name].spots[spot])
-		end
-		for part, plist in made.parts do
-			local at = Stages.partAt(s, name, part, spot, 0.3)
-			for _, p in Geometry.flatten(plist) do
-				add(p, at)
-			end
-		end
-	end
-	local HAIR = Color3.fromRGB(96, 70, 60)
-	for _, f in cut.figures() do
-		local colors = {}
-		for _, d in f.model:GetDescendants() do
-			if d:IsA("BasePart") then
-				if d.Name == "Torso" then
-					colors.shirt = d.Color
-				elseif d.Name == "Leg" then
-					colors.legs = d.Color
-				elseif d.Name == "Head" then
-					colors.skin = d.Color
-				elseif d.Name == "Hair" then
-					colors.hair = d.Color
-				end
-			end
-		end
-		colors.hair = colors.hair or HAIR
-		for _, p in Lib.figure(Moves, f.root, f.joints, colors, if f.glow then Color3.fromRGB(150, 220, 255) else nil) do
-			table.insert(prims, p)
-		end
-	end
-	-- a cloud in somebody's shape: a big white body floating at the set's cloud spot
-	local folder = Sim.ws:FindFirstChild("CutsceneSet")
-	for _, m in folder and folder:GetChildren() or {} do
-		if m.Name:sub(1, 6) == "Cloud_" and s.spots and s.spots.cloud then
-			local j, r = Moves.sample("float", 0.8)
-			local stand = s.spots.cloud
-			for _, p in
-				Lib.figure(Moves, Moves.place(stand, r), j, {
-					shirt = Color3.fromRGB(246, 248, 252),
-					legs = Color3.fromRGB(240, 242, 248),
-					skin = Color3.fromRGB(250, 250, 252),
-					hair = Color3.fromRGB(236, 238, 244),
-				})
-			do
-				-- (the body's parts, sixteen times as big round its middle)
-				local cf = CFrame.new(table.unpack(p.cf))
-				local rel = stand:ToObjectSpace(cf)
-				local big = stand * CFrame.new(rel.Position * 16) * rel.Rotation
-				p.cf = { big:GetComponents() }
-				p.size = { p.size[1] * 16, p.size[2] * 16, p.size[3] * 16 }
-				table.insert(prims, p)
-			end
-		end
-	end
-	local base = path:gsub("%.json$", "")
-	local function v(x)
-		return { x.X, x.Y, x.Z }
-	end
-	fs.writeFile(base .. ".set.json", serde.encode("json", prims))
-	fs.writeFile(
-		base .. ".set.json.stage.json",
-		serde.encode("json", {
-			id = id,
-			light = Lib.light(s, hour),
-			sky_dir = v(Stages.skyDir(s, hour)),
-			lamps = lamps,
-			shots = {},
-		})
-	)
-	local cam = Sim.cam
-	local eye = frame:PointToObjectSpace(cam.CFrame.Position)
-	local look = frame:PointToObjectSpace(cam.CFrame.Position + cam.CFrame.LookVector * 10)
-	local function csv(x)
-		return string.format("%.4f,%.4f,%.4f", x.X, x.Y, x.Z)
-	end
-	local made = process.exec("python3", {
-		"tools/preview/stage.py",
-		base .. ".set.json",
-		base .. ".set.png",
-		"--eye=" .. csv(eye),
-		"--look=" .. csv(look),
-		"--fov=" .. tostring(cam.FieldOfView),
-		"--size",
-		"1280x720",
-	})
-	if not made.ok then
-		print("stage picture: " .. made.stderr)
-		return
-	end
-	process.exec("python3", {
-		"-c",
-		"import sys; from PIL import Image; open(sys.argv[2], 'wb').write(Image.open(sys.argv[1]).convert('RGBA').tobytes())",
-		base .. ".set.png",
-		base .. ".picture990001.rgba",
-	})
-	table.insert(list, { id = 990001, w = 1280, h = 720, file = base .. ".picture990001.rgba" })
-	local function find(node)
-		if node.name == "Cutscene" then
-			return node
-		end
-		for _, ch in node.children do
-			local f = find(ch)
-			if f then
-				return f
-			end
-		end
-		return nil
-	end
-	local node = find(root)
-	if node then
-		table.insert(node.children, 1, {
-			class = "ImageLabel",
-			name = "StageShot",
-			props = {
-				Size = { 1, 0, 1, 0 },
-				Position = { 0, 0, 0, 0 },
-				BackgroundTransparency = 1,
-				Picture = 990001,
-				ImageColor3 = { 1, 1, 1 },
-				ZIndex = 0,
-				Visible = true,
-			},
-			children = {},
-		})
-	end
-	fs.removeFile(base .. ".set.json")
-	fs.removeFile(base .. ".set.json.stage.json")
-	fs.removeFile(base .. ".set.png")
-end
-
 local function write(path)
 	local root = dump(Sim.gui)
 	local list = {}
-	if stageShot then
-		stagePicture(root, path, list)
-	end
 	for _, p in pictureList do
 		local file = path:gsub("%.json$", "") .. ".picture" .. p.id .. ".rgba"
 		fs.writeFile(file, buffer.tostring(p.image.Pixels))

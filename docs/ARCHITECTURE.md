@@ -149,7 +149,7 @@ short reactions that fit any moment; the other kinds from the personality's own 
 copied into each choice), `Chatter` (topics, dreams, debates, spats, openers by hour and weather, greetings by friendship, written as
 bursts; `Chatter.say`, `pick` and `burst` send them through `s:burst`; `Chatter.chat` builds a scene, `Chatter.small`
 two to four street lines, each burst flattened to one bubble, which `Villagers` uses for street chats), `Talks`, `Solo`, `Pairs`, `Town`, `Work` and `Asks`. A scene or a choice may carry
-`props = { { id, by } }`; a def may carry `cutscene` (see Cutscenes). `Sim/EventEngine` adds the effects `keepsake
+`props = { { id, by } }`. `Sim/EventEngine` adds the effects `keepsake
 item who?`, `memo who text`, `saying who id`, `hobby who id` (all checked) and `leave prop hours by?` (for the
 service), `ctx.stars`, `EventEngine.stage(ctx, def, order)` and a graded `recentPenalty` (`Tuning.Events.RecentMemory`
 40, `RecentFloor`). `Data/EventProps` has `list`, `get(id)` (`item:<catalogId>` shows a Build mode piece) and
@@ -293,63 +293,20 @@ it `stays`, below.)
   kind of piece). Sim `event_pace`: the name box (suggestion, Done, refusal, an empty box) and a bust made again
   from the line a hat goes on. Preview scene `event:name` (also in `audit.sh`).
 
-## Cutscenes
+## Cutscenes (gone)
 
-The user: "add cutscenes and scenes like tomodachi life as well", then "could you not move the camera around in events
-with special cutscenes? also, make them much more detailed, without fake lighting." `Data/Stages` is a folder:
-`init` (the API and types), `Kit` (drawing helpers: the old ones plus `lampPost`, `roundTree`, `tufts`, `flowers`,
-`cloud`, `item` (a catalog piece), `window`, `picture`, `books`, `spotOf` (a catalog piece's seat or bed)), `Sets` (the
-first ten: rooftop, pier, bandstand, dream, birthday, beach, park, gate, kitchen, stall; the wedding arch went with
-romance) and `More` (violetfield, bedroom, racetrack, parlour, hilltop, oddroom, square, throne, wheel, playground,
-hallway). A set has marks, named shots, bounds and a `light` of `{ hour, face, indoor?, air?, grade? }` (no painted
-sky and no ambient or light colour of its own; `face` is where its sun or moon should stand, and the set is turned in
-the world to match, `Stages.turnFor`). Shots are still: `to` is gone, `pan` is now `side`, and `sky = true` looks at the
-sun or moon wherever the hour puts it (`Stages.resolve`). `Stages.close` picks the first angle on a face clear of the
-set and of everyone else, `Stages.push` a tighter one on it, and `inside`, `blocked` and `crowded` check clearance.
-A mark may have `pose` (a `Data/Moves` move held there), `head` and `ride = { prop, part }`; a set may have `props`
-(`spots`, `start`, `scale`, `build`, `parts` with `pivot`, `motion` and `by` spot; motions `tilt`, `swing`, `spin`,
-`bob`) and `spots` (`cloud`). The rest of the API: `Stages.sunAt`, `lightAt`, `isNight`, `lampsOn`, `skyDir`,
-`propPrims`, `motionAt`, `partAt`, `Stages.Origin` (where sets are built, far out over the sea and high up),
-`Stages.Budget` (4,500 parts) and `Stages.Night`. Lamps on a set are `r:glow` with a range, lit after
-`Stages.Night.From` outdoors and always indoors (`attrs = { Stays = true }` keeps one on through a beat's `fx =
-"dark"`). Grass and flower prims are `collide = false` and left out of the camera's checks.
-
-`Data/Moves`: the villagers' own animations as keyed poses on R15 joints (degrees, the root in studs on a hip height
-of 2; `list`, `sample`, `turn`, `place`, `over`), played from code since animations can't be uploaded from here, and
-`figure` (a plain body's parts in a pose, for the previews and the spec). `Data/Cutscenes` scripts events by id
-(`Cutscenes.forEvent(id, ev)`): which set, who stands where, and beats keyed by line number, by the lines after an
-answer, by an `icon` or `who` filter, or by a `cue` a line carries; a beat has `shot`, `on`, `act` (letter, `*` the
-speaker, `others`, `all`), `look`, `move` (to a mark), `set` (another set, with a fade), `pace`, `prop` and a list of
-`fx` (`stars`, `confetti`, `dark`, `lit`, `flash`, `cloud:<letter>`, `glow:<letter>`, `dust:<letter>`;
-`Cutscenes.Fx`). `Acts` is Roblox's six gestures plus every move in Data/Moves; a script may give `hour`; `cast` 0
-keeps a star off the set; the default line cycle is wide, side, two; `Cutscenes.all()` lists these scripts and the
-events' own. An event def in Data/Events may carry `cutscene = "<set>" | { stage, cast, extras, open, lines, after,
-ask, ending }`, and a line `cue = "<name>"`; both pass through unchanged (no server or remote change).
-`Data/Events/Moments` holds fifteen events with their `cutscene` scripts beside them; its lines are tagged with a
-local `cue(s, name)` rather than counted, since bursts vary by personality.
-
-`UI/Cutscene` builds the set and its props in a `CutsceneSet` folder in Workspace at `Stages.Origin` (client only,
-quiet parts, the town's light tags taken off, drawn with `Builder`'s `Options.smooth` so balls and cylinders are
-Roblox's own round shapes). While it is up it holds Lighting's `ClockTime`, the ambients, the Atmosphere and the
-`Grading` effect at the set's hour every frame, so the real sun or moon, shadows, haze, grade and the set's own lamps
-light it; sets the player's camera Scriptable and cuts between still shots (`Focus` on the shot, for the lens blur);
-marks the camera with the attribute `Cutscene` (a screen effect that follows the camera stands down while it is
-there); stops the weather's emitters (`WeatherFx`); plays Data/Moves on the actors' Motor6D C0s (with ink outlines);
-and moves props with `BulkMoveTo`. On close it puts everything back (camera, Lighting, Atmosphere, Grading, the
-emitters) behind a dip to black in a `CutsceneFade` ScreenGui of its own. `Cutscene.current` is the one up (for the
-previews), with `where()`, `figures()`, `lampsLit()` and `propsNow()`. `Dialogue.open` takes `Stage = { script,
-stage, event, modelOf }` and the scene has `beat(line)` and `stage` (it falls back to busts if the stage can't be
-built); `EventCard` adds `line.at = { phase = "lines" | "after", n }` and sends beats for the lines, the question and
-the ending. The Cutscenes spec checks the sets (twenty or more, each with an hour and turned to its sun; frames,
-z-fighting, the part budget, marks with room), props, motions and riding marks, the moves (keyed on real joints,
-bodies standing, lying and doing push ups on the ground), and that every script from `Cutscenes.all()` names real
-events, sets, marks, shots, acts, props, paces and effects; the camera's old between-shot move check is gone, since
-it cuts. The `talk_card` sim checks the set in the world, the cuts, the held light and that everything is put back.
-Previews: `sh tools/preview/stage.sh <id> <dir> [--shots wide,two]` (`tools/preview/stage.py` draws the set in the
-game's light at its hour through look.py, with sun or moon shadows, lamps, haze, grade and bloom; posed stand-ins
-from `tools/preview/stage_lib.luau`), `ui.sh cutscene:<event>[:<n>|:ask|:a<n>]`, `render.sh stage:<id>`
-(`dump.luau stage:<id>`). `tests/sim/fake.luau`: a property given with `Fake.extend` can be set (Lighting's clock);
-`tests/sim/client.luau` exports `Lighting`.
+The big moments played as cutscenes for a while (the user: "add cutscenes and scenes like tomodachi life as well",
+then "could you not move the camera around in events with special cutscenes?"), until "remove the need for special
+cutscene backgrounds, they will just appear as normal conversations now" (2026-11-28). Gone with them: `UI/Cutscene`,
+`Data/Stages` (the sets), `Data/Cutscenes` (the scripts), `Data/Moves` (the keyed poses, which nothing else played),
+the Cutscenes spec, `tools/preview/stage.sh`, `stage.py` and `stage_lib.luau`, `dump.luau stage:<id>` and the UI
+scenes `cutscene:<event>`. An event def carries no `cutscene` and a line no `cue`; `Dialogue.open` takes no `Stage`
+and a scene has no `beat` or `stage`; `EventCard` no longer marks a line's `at`. Nothing sets the camera's `Cutscene`
+attribute, so `UI/Weather` and `Build/ViewTime` no longer check it, and `Builder`'s `Options.smooth` (every ball and
+cylinder round, for the sets) went too. `Data/Events/Moments` keeps its fifteen events, watched like any other.
+`ui.sh watch:<event>[:<n>|:ask|:a<n>]` shows any event watched as the usual scene, its own lines as the server makes
+them for the sample town. The `talk_card` sim watches one of them (`thanks`) and checks the busts come in, no set is
+built, and the camera and the light are left alone.
 
 ## Using things
 
@@ -584,7 +541,7 @@ or on, and villagers will turn nearby ones off when sleeping". A light is any ca
 `{ plain = true, placed = true }`, and `makePart` tags a placed piece's glowing parts `Builder.Tags.PlacedLight`
 instead of `NightLight`. The clock (`Services/World`'s `setAllLights`, by `World.isNight`) only ever switches
 `NightLight` parts, so the town's own lamps, lit windows (`NightColor`) and signs follow the hour as before, as do an
-event's props and a cutscene's set, while what players place never does. `World.setLight(part, on)` is exported for
+event's props, while what players place never does. `World.setLight(part, on)` is exported for
 `Services/Lights`.
 
 `Sim/Lights` (no services): `isOn(item, key, dark, kept)` is false when the item's `off` is true, else true unless a
@@ -787,8 +744,7 @@ Round where it should be, and doors one doorway at a time (this round):
 
 - `Geometry.Prim.smooth`: a ball or a cylinder drawn truly round (Roblox's own shape), skipping the low poly kit;
   `Builder.makePart` honours it, as do the previews (`dump.luau` passes it, `render.py` draws it round). Keep its size
-  round (a ball the same every way, a cylinder's Y and Z alike). `Builder`'s `Options.smooth` draws every ball and
-  cylinder of a model that way (the cutscene sets). `Build/LowPoly`: every kit shape collides as its hull
+  round (a ball the same every way, a cylinder's Y and Z alike). `Build/LowPoly`: every kit shape collides as its hull
   (`CollisionFidelity.Hull`; the Gem's was `Box`), so a rock or a ball has no invisible corners.
 - `Services/World`: a door is the leaves that share a doorway (`Frame`) within a model, each door with its own prompt
   on its biggest leaf (`Door` keeps its leaves and its middle), so a row of houses or a wall with two doors opens one
@@ -2526,8 +2482,8 @@ left sharp, `Skin.paintSlab`'s `sharp`, for a slab that meets another along it).
 - `UI/Residents`: the actions are a `UIGridLayout` of `Kit.button`s (names unchanged: Job, Bed, Look, Buy outfit,
   Gift, Move out); the Mood tab's rows are plain boxes named by factor id, each with `Icon`, `Label`, `What`,
   `Points` and a `Bar` with its `Fill`.
-- `tools/preview/ui_dump.luau`: a cutscene's `:ask` and `:a<n>` press through the last line's burst until the
-  answers show (`cutscene:thanks:a2` failed to build before, so `audit.sh` stopped at 160 of 161 screens).
+- `tools/preview/ui_dump.luau`: `watch:<event>:ask` and `:a<n>` press through the last line's burst until the
+  answers show.
 - Sims: `hud` checks the notices stand in the middle or just clear of the round buttons; `creator_sections` checks a
   card on a one kind page has no small line.
 
@@ -2701,7 +2657,7 @@ on their textures or is smoothed?" and "detail the town more".
     Ground, Sand, Mud) or a ball of stone (`Surfaces.Boulders`).
   - `Surfaces.untextured(prims)`: what is still flat plastic where it shows (pieces opened).
 - `TownMap.prims(name)` and `TownMap.ground()` hand out their shapes dressed (`Surfaces.dress`), so the World
-  service, the cutscene sets (Stages/Kit) and the previews all get textured, rounded shapes. The old body of
+  service and the previews get textured, rounded shapes. The old body of
   `TownMap.prims` is the local `made(name)`.
 - `Data/Edging` (shared): `Edging.slab(q, x1, y1, z1, x2, y2, z2, color, mat, e, sides)` draws a slab with its top
   edges on `sides` (`Edging.All`, `Edging.Open` front and ends, `Edging.Front`) worn off by `e` at 45 degrees (a
@@ -2777,7 +2733,7 @@ The user: "add settings for graphic quality, background blur, bloom, etc.", "cou
 
 - (2026-11-28) The air is each screen's own: `Services/World.grade` no longer eases the Atmosphere's Density and Haze
   (it sets them once in `stylize`); `UI/Weather.stepAir(dt)` eases them every frame by `Tuning.Weather.AirRate`,
-  clear at once while `ViewTime.clear()`, and skips while the camera has `Cutscene`. A streak's emitter is
+  clear at once while `ViewTime.clear()`. A streak's emitter is
   `FacingCameraWorldUp`. `Data/Weather.Boxes` entries may carry `ring` (a hole that many studs each way round the
   camera's spot, the box set on the ground under `camera.Focus`); `Data/Weather.ringParts(name)` gives its four
   boxes, and `UI/Weather` splits a ring layer's rate over them by area. The fog's layers come from the rings `mist`
@@ -2787,10 +2743,10 @@ The user: "add settings for graphic quality, background blur, bloom, etc.", "cou
   `lookAt(hour, weather?)` (with the weather's `brightness`, `softness` and grey), `index()`, `current()`, `hour()`
   (a hold's, else the pick's), `set(i)`, `step(dir)`, `hold(who, hour, clear?)`, `release(who)`, `clear()`. BuildUI
   sets `defaultIndex()` when Build mode opens; `UI/Creator` holds `"creator"` at `Tuning.ViewTime.Creator` with
-  `clear` while it is open. A hold is skipped while a cutscene owns the light.
+  `clear` while it is open.
 - Specs and sims: the Weather spec holds the mist's rings and `AirRate`; `creator_sections` checks the clear noon in
   a storm and the switch at the bottom left; `build_client` checks Build mode opening at noon and a hold winning over
-  the pick; `talk_card` compares the cutscene's restored light with the light before it.
+  the pick; `talk_card` checks a watched big moment leaves the light as it was.
 
 ## Sound
 
@@ -2861,8 +2817,8 @@ cozy music track in the background. use roblox library for these, dont make your
   `Crates` (which covers the pets too); `LawnPatches` is gone. A new simulation, `audio` (the real Controllers/Audio;
   see "Sound"), runs in `scripts/check.sh`. The simulations gained: `hud` (Hide and Show, the plot's name, the quests'
   drop, a notice, the friends chip), `tutorial` (the friend's three steps under the dim), `creator_sections` (colour,
-  likes, buying, the You tab), `talk_card` (a go at a piece over the player's head, Shift to run, the cutscene set in
-  the world), `event_pace` (keys without Space, `EventWatch "next"`, the name box, a bust made again wearing a hat),
+  likes, buying, the You tab), `talk_card` (a go at a piece over the player's head, Shift to run, a big moment
+  watched as the usual scene), `event_pace` (keys without Space, `EventWatch "next"`, the name box, a bust made again wearing a hat),
   `build_client` (search, stacking and water, the time of day, the sea under the basement) and `lively` (fireflies,
   running water, the fog machine). Every section above names its own preview scenes; all the new UI scenes are in
   `tools/preview/audit.sh`'s list.

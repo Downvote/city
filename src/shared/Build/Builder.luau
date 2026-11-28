@@ -86,7 +86,6 @@ export type Options = {
 	plain: boolean?, -- pieces as their shapes, never merged (what players build in Build mode)
 	placed: boolean?, -- a piece on a player's plot (Builder.render): what glows is PlacedLight
 	tint: Color3?, -- ghost colour override (red when a spot is not allowed)
-	smooth: boolean?, -- balls and cylinders as Roblox's own round shapes, not the low poly kit (a cutscene's set)
 }
 
 local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
@@ -101,10 +100,8 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 	elseif prim.shape == "CornerWedge" then
 		part = Instance.new("CornerWedgePart")
 	else
-		-- round as Roblox draws it, not the low poly kit: a shape marked `smooth` (a wheel, a lamp),
-		-- or every ball and cylinder of a build made with opts.smooth (a cutscene's set)
-		local plainRound = prim.smooth or (opts and opts.smooth and (prim.shape == "Ball" or prim.shape == "Cylinder"))
-		local name = if plainRound then nil else LowPoly.shapeFor(prim.shape, prim.size)
+		-- round as Roblox draws it, not the low poly kit: a shape marked `smooth` (a wheel, a lamp)
+		local name = if prim.smooth then nil else LowPoly.shapeFor(prim.shape, prim.size)
 		local shape = name and kit[name]
 		if shape then
 			part = shape:Clone()

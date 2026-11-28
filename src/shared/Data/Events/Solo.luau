@@ -1114,7 +1114,6 @@ event({
 
 event({
 	id = "insomnia",
-	cutscene = "kitchen",
 	when = "night",
 	weight = W({ base = 0.3, traits = { lazy = -0.3 } }),
 	scene = function(ctx, a)
@@ -1196,7 +1195,6 @@ event({
 
 event({
 	id = "midnightsnack",
-	cutscene = "kitchen",
 	when = "night",
 	weight = W({ base = 0.2, traits = { lazy = 0.4 } }),
 	scene = function(ctx, a)
@@ -1249,7 +1247,6 @@ event({
 
 event({
 	id = "nightmare",
-	cutscene = "dream",
 	when = "night",
 	weight = W({ base = 0.18 }),
 	scene = function(ctx, a)
@@ -2826,7 +2823,6 @@ event({
 
 event({
 	id = "homesick",
-	cutscene = "pier",
 	when = "any",
 	weight = W({ base = 0.12 }),
 	scene = function(ctx, a)
@@ -3281,7 +3277,6 @@ local DAYDREAMS = {
 
 event({
 	id = "daydream",
-	cutscene = "dream",
 	when = "day",
 	weight = W({ base = 0.18, traits = { focus = -0.5 } }),
 	scene = function(ctx, a)
@@ -3315,7 +3310,6 @@ event({
 
 event({
 	id = "dreamfood",
-	cutscene = "dream",
 	when = "day",
 	weight = W({ base = 0.12 }),
 	scene = function(ctx, a)
@@ -3364,7 +3358,6 @@ event({
 
 event({
 	id = "dreamsong",
-	cutscene = "dream",
 	when = "day",
 	weight = W({ base = 0.1, traits = { focus = -0.3 } }),
 	scene = function(ctx, a)
@@ -3465,7 +3458,6 @@ event({
 
 event({
 	id = "lemonade",
-	cutscene = "stall",
 	when = "day",
 	weight = W({ base = 0.18, season = 2, weather = { "clear", "cloudy" } }),
 	scene = function(ctx, a)
@@ -4487,7 +4479,6 @@ event({
 
 event({
 	id = "boatsin",
-	cutscene = "pier",
 	when = "day",
 	weight = W({
 		base = 0.12,

@@ -150,13 +150,6 @@ local function layersNow(): { Data.Layer }
 	return Data.drawn(kindNow(), level.Layers, level.Particles, look.air, K.SeasonAir)
 end
 
--- While a cutscene plays it owns the light and stops what falls itself (UI/Cutscene), so nothing
--- here touches either.
-local function inCutscene(): boolean
-	local cam = workspace.CurrentCamera
-	return cam ~= nil and cam:GetAttribute("Cutscene") == true
-end
-
 -- Whether the weather stands down on this screen: something wants a clear day (the creator: the
 -- user, "weather effects and time seems to affect the avatar creator"; Build/ViewTime.clear).
 local function calm(): boolean
@@ -455,7 +448,7 @@ function Weather.start()
 	local wasCalm = false
 	RunService.RenderStepped:Connect(function(dt)
 		local cam = workspace.CurrentCamera
-		if not cam or inCutscene() then
+		if not cam then
 			return
 		end
 		local eye = cam.CFrame.Position

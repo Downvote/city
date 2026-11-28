@@ -351,7 +351,6 @@ local BAKE_WON = {
 
 event({
 	id = "bakeoff",
-	cutscene = "kitchen",
 	when = "day",
 	weight = W({ base = 0.12 }),
 	scene = function(ctx, a, b)
@@ -463,7 +462,6 @@ event({
 
 event({
 	id = "duet",
-	cutscene = "bandstand",
 	when = "any",
 	weight = W({ base = 0.15, traits = { social = 0.2 } }),
 	scene = function(ctx, a, b)
@@ -677,7 +675,6 @@ event({
 
 event({
 	id = "promise",
-	cutscene = "rooftop",
 	when = "any",
 	weight = W({ base = 0.12, rel = 30 }),
 	scene = function(ctx, a, b)
@@ -730,7 +727,6 @@ event({
 
 event({
 	id = "picnic",
-	cutscene = "park",
 	when = "day",
 	weight = W({ base = 0.25, rel = 10, weather = { "clear", "blossom", "cloudy" } }),
 	scene = function(ctx, a, b)
@@ -844,7 +840,6 @@ event({
 
 event({
 	id = "sandcastle",
-	cutscene = "beach",
 	when = "day",
 	weight = W({ base = 0.25, season = 2, weather = { "clear", "cloudy" } }),
 	scene = function(ctx, a, b)
@@ -1026,7 +1021,6 @@ event({
 
 event({
 	id = "stargazepair",
-	cutscene = "rooftop",
 	when = "night",
 	weight = W({ base = 0.18, rel = 15, weather = "clear" }),
 	scene = function(ctx, a, b)
@@ -1062,7 +1056,6 @@ event({
 
 event({
 	id = "fishingtrip",
-	cutscene = "pier",
 	when = "day",
 	weight = W({
 		base = 0.15,
@@ -1372,7 +1365,6 @@ event({
 
 event({
 	id = "howwemet",
-	cutscene = "park",
 	when = "any",
 	weight = W({ base = 0.15, rel = 40 }),
 	scene = function(ctx, a, b)
@@ -2240,7 +2232,6 @@ event({
 
 event({
 	id = "dreamsame",
-	cutscene = "dream",
 	when = "day",
 	weight = W({ base = 0.06, rel = 20 }),
 	scene = function(ctx, a, b)
@@ -2341,7 +2332,6 @@ local BANDS =
 
 event({
 	id = "band",
-	cutscene = { stage = "bandstand", open = "wide", ending = { shot = "wide", act = { all = "dance" } } },
 	actors = 3,
 	when = "any",
 	weight = W({ base = 0.1, count = 3, traits = { social = 0.2 } }),
@@ -2495,9 +2485,7 @@ event({
 -- As close as two villagers get: there is no romance (the user: "remove any romance, just best
 -- friends is the highest"). K.BestFriends is the score for it.
 
--- A thank you that has waited too long, said up on the roof at sunset (Data/Cutscenes has its
--- script: two lines, then after the answer a heart line, a line, and the narrator; so each is
--- one message here, never a burst).
+-- A thank you that has waited too long, said up on the roof at sunset.
 event({
 	id = "thanks",
 	when = "day",
@@ -2597,8 +2585,7 @@ event({
 	end,
 })
 
--- Best friends keep a day for each other now and then. The cutscene goes where the plan in the
--- first line says (Data/Cutscenes: three lines, one message each).
+-- Best friends keep a day for each other now and then.
 local DAYS = {
 	"a picnic on the beach",
 	"a walk along the sand at sunset",

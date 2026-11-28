@@ -1,17 +1,15 @@
 --!nonstrict
--- Big moments that play as cutscenes when they are watched, each with a set of its own
--- (Data/Stages) and a script of shots, moves and props (its `cutscene`). The user: "Make more
--- cutscene events, like: villager dreams of being in a purple field with a tree of red leaves.
--- the villager tries to look behind the tree and wakes up after noting there is a man behind the
--- tree / villagers racing with each other / villager dreaming of being stuck in a pizza place,
--- with animatronics on the loose, managing cameras to make sure they dont catch them / villagers
--- petting a cat / villager(s) skywatching, pointing to the sky, remarking this cloud looks like
--- x, another villager, and cut to a giant x in the sky amongst the cloud / much more, reference
--- tomodachi life for event ideas, like in the video attached. make custom animations for
--- villagers for them". The ideas only: the scenes, the robots, the words are the town's own.
---
--- The script follows the lines by the cues they carry (cue(s, name) tags the line just said),
--- so a burst of one or two messages, whichever the personality sends, still lands on its shot.
+-- Big moments in villagers' lives: dreams, a race, a cat in the park, a cloud in somebody's shape.
+-- The user asked for them as cutscenes ("Make more cutscene events, like: villager dreams of being
+-- in a purple field with a tree of red leaves. the villager tries to look behind the tree and
+-- wakes up after noting there is a man behind the tree / villagers racing with each other /
+-- villager dreaming of being stuck in a pizza place, with animatronics on the loose, managing
+-- cameras to make sure they dont catch them / villagers petting a cat / villager(s) skywatching,
+-- pointing to the sky, remarking this cloud looks like x, another villager, and cut to a giant x
+-- in the sky amongst the cloud / much more, reference tomodachi life for event ideas"), then took
+-- the sets away: "remove the need for special cutscene backgrounds, they will just appear as
+-- normal conversations now". So they play like every other event, and the lines say where they
+-- are and what happens. The ideas only: the scenes, the robots, the words are the town's own.
 
 local K = require(script.Parent.Kit)
 
@@ -23,40 +21,16 @@ local function event(def)
 	table.insert(list, def)
 end
 
--- Tags the line just added with a cue of the event's script.
-local function cue(s, name: string)
-	local l = s.lines[#s.lines]
-	if l then
-		l.cue = name
-	end
-	return s
-end
-
 -- 1. A dream of a red tree ---------------------------------------------------------------------------
 
 event({
 	id = "redtree",
 	when = "night",
 	weight = W({ base = 0.14, bed = true, traits = { focus = -0.2 } }),
-	cutscene = {
-		stage = "violetfield",
-		open = "wide",
-		cues = {
-			field = { shot = "wide", act = { a = "gaze" } },
-			tree = { shot = "tree" },
-			walk = { shot = "walk", move = { a = 2 } },
-			peek = { shot = "walk", act = { a = "peek" } },
-			man = { shot = "behind", prop = { man = "behind" } },
-			wake = { set = "bedroom", cast = { a = 1 }, shot = "bed", act = { a = "situp" } },
-		},
-		ending = { shot = "pillow" },
-	},
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "A dream of a red tree")
 		s:n("{a} is fast asleep and dreaming of a field of purple grass.")
-		cue(s, "field")
 		s:n("In the middle of it stands one big tree, its leaves as red as jam.")
-		cue(s, "tree")
 		s:by("a", {
 			sunny = "I've never seen a tree like that before, I want a closer look.",
 			gloomy = "A purple field and a red tree... heh, it has to be a dream.",
@@ -68,7 +42,6 @@ event({
 			polite = "What a lovely tree, I would like to see it up close.",
 			_ = "That tree is so red, I want a closer look at it.",
 		})
-		cue(s, "walk")
 		s:by("a", {
 			nervous = "Is s-somebody standing behind there?",
 			shy = "Um... is somebody behind the tree?",
@@ -77,11 +50,8 @@ event({
 			dramatic = "Who goes THERE?",
 			_ = "Hang on, is somebody behind the tree?",
 		})
-		cue(s, "peek")
 		s:n("A man in a grey coat is standing behind the trunk, very still.")
-		cue(s, "man")
 		s:n("{a} woke up with a start.")
-		cue(s, "wake")
 		s:by("a", {
 			sunny = "Who was that man? I wanted to say hello, and then I woke up.",
 			gloomy = "Of course I woke up right then. I'll never know who he was now.",
@@ -112,32 +82,6 @@ event({
 	actors = 2,
 	when = "day",
 	weight = W({ base = 0.2, traits = { brave = 0.3 }, btraits = { brave = 0.2 } }),
-	cutscene = {
-		stage = "racetrack",
-		cast = { a = 1, b = 2 },
-		extras = 2,
-		open = "start",
-		cues = {
-			ready = { shot = "start", act = { a = "ready", b = "ready" } },
-			go_a = {
-				shot = "track",
-				move = { a = 4, b = 5 },
-				pace = { a = 16, b = 13 },
-				fx = { "dust:a", "dust:b" },
-				act = { others = "clap" },
-			},
-			go_b = {
-				shot = "track",
-				move = { a = 4, b = 5 },
-				pace = { a = 13, b = 16 },
-				fx = { "dust:a", "dust:b" },
-				act = { others = "clap" },
-			},
-			win = { shot = "finish", act = { ["*"] = "celebrate" } },
-			puff = { act = { ["*"] = "pant" } },
-		},
-		ending = { shot = "finish" },
-	},
 	scene = function(ctx, a, b)
 		local aWins = ctx.rng:chance(0.5)
 		local w, l = if aWins then "a" else "b", if aWins then "b" else "a"
@@ -164,9 +108,7 @@ event({
 			dramatic = "This is the race of the CENTURY.",
 			_ = "You're on, {a}.",
 		})
-		cue(s, "ready")
 		s:n("Three, two, one, go.")
-		cue(s, if aWins then "go_a" else "go_b")
 		s:n(
 			if aWins
 				then "{a} crosses the line first, with {b} right behind."
@@ -183,7 +125,6 @@ event({
 			gentle = "That was fun, you were so fast too.",
 			_ = "I won, that was so close!",
 		})
-		cue(s, "win")
 		s:by(l, {
 			gloomy = "Heh... I knew my shoes would let me down.",
 			prickly = "You only won because I tripped, and I didn't even trip.",
@@ -193,7 +134,6 @@ event({
 			foodie = "I need a snack after all that running.",
 			_ = "I need a minute to get my breath back.",
 		})
-		cue(s, "puff")
 		s:rel(3)
 		s:mood("a", 3)
 		s:mood("b", 3)
@@ -214,27 +154,9 @@ event({
 	id = "pizzanight",
 	when = "night",
 	weight = W({ base = 0.12, bed = true }),
-	cutscene = {
-		stage = "parlour",
-		open = "wide",
-		cues = {
-			office = { shot = "desk" },
-			screens = { shot = "screens", act = { a = "type" } },
-			gone = { shot = "hall", prop = { chef = "hall", waiter = "hall" } },
-			worry = { shot = "close", on = "a", act = { a = "shiver" } },
-			window = { shot = "window", prop = { chef = "window" }, act = { a = "startle" }, fx = "dark" },
-			door = { shot = "door", prop = { pepper = "door" } },
-			shut = { shot = "door", prop = { door = "shut" }, fx = "lit" },
-			face = { shot = "window", act = { a = "cower" }, fx = "flash" },
-			wake = { set = "bedroom", cast = { a = 1 }, shot = "bed", act = { a = "situp" } },
-		},
-		ask = { shot = "close", on = "a", look = { a = "camera" } },
-		ending = { shot = "pillow" },
-	},
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "A night at the pizza place")
 		s:n("{a} is dreaming about a pizza place after closing time.")
-		cue(s, "office")
 		s:by("a", {
 			nervous = "O-okay, I just have to watch the cameras until six.",
 			bold = "Night shift, easy, I just watch the cameras until six.",
@@ -244,9 +166,7 @@ event({
 			polite = "I am to watch the cameras until six, so I shall.",
 			_ = "I just have to watch these cameras until six.",
 		})
-		cue(s, "screens")
 		s:n("On the screen, the robot chef isn't on the stage any more.")
-		cue(s, "gone")
 		s:by("a", {
 			nervous = "Oh no, oh no, where did it go?",
 			prickly = "Ugh, who moved the robot?",
@@ -255,9 +175,7 @@ event({
 			foodie = "Maybe it went to make itself a pizza.",
 			_ = "Wait, where did the robot go?",
 		}, "sweat")
-		cue(s, "worry")
 		s:n("Something clanks right outside the window, and the lights go out.")
-		cue(s, "window")
 		s:by("a", {
 			nervous = "{player}, wh-what do I do?",
 			bold = "{player}, quick, door or cameras?",
@@ -266,11 +184,8 @@ event({
 		}, "sweat")
 		s:choice("Shut the door.", function(c)
 			c:n("The singing robot rolls up to the side door, and {a} pulls it shut just in time.")
-			cue(c, "door")
 			c:n("The lights come back on, and the clock on the wall says six.")
-			cue(c, "shut")
 			c:n("{a} woke up laughing.")
-			cue(c, "wake")
 			c:by("a", {
 				sunny = "I made it to six, ehehe! Thanks for telling me about the door.",
 				bold = "Hah, I beat the robots.",
@@ -284,9 +199,7 @@ event({
 		end)
 		s:choice("Check camera three.", function(c)
 			c:n("Camera three shows nothing at all. Then a big tin face fills the whole window.")
-			cue(c, "face")
 			c:n("{a} woke up with a yelp.")
-			cue(c, "wake")
 			c:by("a", {
 				nervous = "Th-that face, I'm never looking at a camera again.",
 				prickly = "Ugh, you told me to check the camera.",
@@ -311,20 +224,9 @@ event({
 	actors = 2,
 	when = "day",
 	weight = W({ base = 0.22, traits = { kind = 0.2 } }),
-	cutscene = {
-		stage = "park",
-		open = "wide",
-		cues = {
-			cat = { shot = "cat", prop = { cat = "path" } },
-			pet = { shot = "cat", move = { a = 4, b = 5 }, act = { a = "pet", b = "pet" }, prop = { cat = "petted" } },
-			purr = { shot = "cat" },
-		},
-		ending = { shot = "cat", act = { a = "pet", b = "pet" } },
-	},
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "A cat in the park")
 		s:n("A stray cat has come and sat down on the path, right in front of {a} and {b}'s bench.")
-		cue(s, "cat")
 		s:by("a", {
 			sunny = "{b}, look, look, a cat!",
 			gentle = "Oh, my, a little cat. Hello, sweetie.",
@@ -343,9 +245,7 @@ event({
 			_ = "Can we stroke it?",
 		})
 		s:n("They both crouch down, and the cat pushes its head into their hands.")
-		cue(s, "pet")
 		s:n("It purrs like a little engine.")
-		cue(s, "purr")
 		s:by("a", {
 			sunny = "It's purring, {b}, it likes us!",
 			gentle = "There you go, you're such a good cat.",
@@ -370,25 +270,13 @@ event({
 })
 
 -- 5. Shapes in the clouds -----------------------------------------------------------------------------
--- The third star is the one the cloud looks like: in the event, but only seen up in the sky.
+-- The third star is the one the cloud looks like, and never says a word.
 
 event({
 	id = "cloudfriend",
 	actors = 3,
 	when = "day",
 	weight = W({ base = 0.2, weather = { "clear", "cloudy" } }),
-	cutscene = {
-		stage = "hilltop",
-		cast = { a = 1, b = 2, c = 0 },
-		open = "wide",
-		cues = {
-			point = { shot = "two", act = { a = "pointsky" } },
-			see = { shot = "up" },
-			cloud = { shot = "sky", fx = "cloud:c" },
-			laugh = { shot = "two" },
-		},
-		ending = { shot = "two" },
-	},
 	scene = function(ctx, a, b, c)
 		local s = K.scene(ctx, "Shapes in the clouds")
 		s:n("{a} and {b} are lying on a blanket on the hill, watching the clouds go over.")
@@ -402,7 +290,6 @@ event({
 			polite = "{b}, I believe that cloud looks like {c}.",
 			_ = "{b}, that cloud looks just like {c}.",
 		})
-		cue(s, "point")
 		s:by("b", {
 			prickly = "No way, that's just a cloud... oh. Oh, it really is.",
 			gloomy = "Clouds never look like anything... huh, that one does.",
@@ -411,9 +298,7 @@ event({
 			easygoing = "Huh, look at that.",
 			_ = "No way... oh, it really does.",
 		})
-		cue(s, "see")
 		s:n("Up over the sea, a cloud as big as a hill has taken the shape of {c}.")
-		cue(s, "cloud")
 		s:by("a", {
 			sunny = "We have to tell {c}, ehehe.",
 			cheeky = "{c} is going to be so smug about this",
@@ -422,7 +307,6 @@ event({
 			proud = "I spotted it first, remember that.",
 			_ = "We have to tell {c} about this.",
 		}, "sparkle")
-		cue(s, "laugh")
 		s:relx("a", "b", 3)
 		s:relx("a", "c", 1)
 		s:mood("a", 3)
@@ -439,16 +323,6 @@ event({
 	id = "oddroom",
 	when = "night",
 	weight = W({ base = 0.12, bed = true }),
-	cutscene = {
-		stage = "oddroom",
-		open = "wide",
-		cues = {
-			ceiling = { shot = "ceiling" },
-			clock = { shot = "clock" },
-			wake = { set = "bedroom", cast = { a = 1 }, shot = "bed", act = { a = "situp" } },
-		},
-		ending = { shot = "pillow" },
-	},
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "A strange room")
 		s:n("{a} is dreaming of a room where everything is upside down.")
@@ -460,7 +334,6 @@ event({
 			cool = "The furniture is upside down.",
 			_ = "Why is the table on the ceiling?",
 		}, "question")
-		cue(s, "ceiling")
 		s:by("a", {
 			sunny = "And that clock has so many hands, ehehe.",
 			gloomy = "That clock has seven hands, and it's still late.",
@@ -468,9 +341,7 @@ event({
 			foodie = "That clock says it's lunchtime seven times over.",
 			_ = "And that clock has far too many hands.",
 		})
-		cue(s, "clock")
 		s:n("{a} floats up toward a door in the ceiling, then wakes up.")
-		cue(s, "wake")
 		s:by("a", {
 			sunny = "I was floating, {player}, actually floating!",
 			nervous = "I k-keep checking the ceiling now.",
@@ -480,7 +351,7 @@ event({
 			_ = "I wonder what was behind that door.",
 		}, "question")
 		s:mood("a", 2)
-		s:memo("a", "I dreamed about a room with the table on the ceiling and a door halfway up the wall.")
+		s:memo("a", "I dreamed about a room with the table on the ceiling and a door up there too.")
 		s:log("{a} dreamed about a room with everything in the wrong place.")
 		return s:done()
 	end,
@@ -493,19 +364,6 @@ event({
 	actors = 3,
 	when = "day",
 	weight = W({ base = 0.18, traits = { social = 0.3 } }),
-	cutscene = {
-		stage = "square",
-		extras = 2,
-		open = "wide",
-		cues = {
-			judge = { shot = "judge" },
-			aface = { shot = "close", on = "a", act = { a = "facepull", others = "laugh" } },
-			bface = { shot = "close", on = "b", act = { b = "facepull", a = "laugh" } },
-			win = { shot = "two", act = { ["*"] = "celebrate" } },
-		},
-		ask = { shot = "judge", look = { c = "camera" } },
-		ending = { shot = "wide", act = { others = "clap" } },
-	},
 	scene = function(ctx, a, b, c)
 		local s = K.scene(ctx, "A funny face contest")
 		s:n("{a} and {b} are having a funny face contest in the square, and {c} is the judge.")
@@ -516,11 +374,8 @@ event({
 			bookish = "The rules are simple, actually: whoever makes me laugh first loses, I mean wins.",
 			_ = "Okay, show me your best funny faces.",
 		})
-		cue(s, "judge")
 		s:n("{a} pulls their cheeks out wide and crosses their eyes.")
-		cue(s, "aface")
 		s:n("{b} puffs their cheeks up and wiggles their eyebrows.")
-		cue(s, "bface")
 		s:by("c", {
 			nervous = "I c-can't pick, {player}, you choose.",
 			dramatic = "This is IMPOSSIBLE, {player}, you decide.",
@@ -534,7 +389,6 @@ event({
 				cheeky = "the face of a champion",
 				_ = "I knew that face would win.",
 			}, "sparkle")
-			cue(ch, "win")
 			ch:by("b", {
 				prickly = "Ugh, mine was clearly worse, I mean better.",
 				gloomy = "Heh... my face is just normally funny, I guess.",
@@ -549,7 +403,6 @@ event({
 				cheeky = "the face of a champion",
 				_ = "I knew that face would win.",
 			}, "sparkle")
-			cue(ch, "win")
 			ch:by("a", {
 				prickly = "Ugh, mine was clearly worse, I mean better.",
 				gloomy = "Heh... my face is just normally funny, I guess.",
@@ -572,30 +425,17 @@ event({
 	actors = 2,
 	when = "day",
 	weight = W({ base = 0.16, traits = { lazy = 0.2 } }),
-	cutscene = {
-		stage = "beach",
-		hour = 11,
-		open = "wide",
-		cues = {
-			table = { shot = "table", prop = { table = "front" }, look = { a = "camera", b = "camera" } },
-			eat = { shot = "table", act = { a = "eat", b = "eat" } },
-			done = { shot = "wide", act = { ["*"] = "celebrate" } },
-		},
-		ending = { shot = "table" },
-	},
 	scene = function(ctx, a, b)
 		local aWins = ctx.rng:chance(0.5)
 		local w, l = if aWins then "a" else "b", if aWins then "b" else "a"
 		local s = K.scene(ctx, "An eating race")
 		s:n("{a} and {b} are on the beach with a table of rice balls, seeing who can eat a plate the fastest.")
-		cue(s, "table")
 		s:by("a", {
 			foodie = "Mmm, I've been training for this my whole life.",
 			bold = "Hah, you're going down, {b}.",
 			nervous = "Wait, are we st-starting now?",
 			_ = "Ready, {b}? Three, two, one, eat.",
 		})
-		cue(s, "eat")
 		s:by("b", {
 			polite = "Mmf, I do apologise for the noise.",
 			cheeky = "mmf mmf",
@@ -609,7 +449,6 @@ event({
 			sunny = "I won! Ehehe, I'm so full.",
 			_ = "Done, I win.",
 		}, "sparkle")
-		cue(s, "done")
 		s:by(l, {
 			gloomy = "I've got the hiccups now... hic.",
 			dramatic = "I'll never eat a rice ball AGAIN. Until lunch.",
@@ -641,16 +480,6 @@ event({
 	actors = 2,
 	when = "night",
 	weight = W({ base = 0.16, rel = 10, traits = { brave = 0.2 } }),
-	cutscene = {
-		stage = "beach",
-		hour = 21.5,
-		open = "wide",
-		cues = {
-			glow = { shot = "two", fx = { "glow:a", "glow:b" }, act = { a = "spar", b = "spar" } },
-			blast = { shot = "side", act = { a = "blast", b = "startle" }, fx = "flash" },
-		},
-		ending = { shot = "wide", act = { a = "laugh", b = "laugh" } },
-	},
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "A glowing play fight")
 		s:n("{a} and {b} have wrapped glow bracelets round their hands and gone down to the beach after dark.")
@@ -661,7 +490,6 @@ event({
 			nervous = "I-I'm not going to actually hit you, okay?",
 			_ = "Look, my hands are glowing, put your guard up.",
 		})
-		cue(s, "glow")
 		s:by("b", {
 			proud = "Mine glow brighter, obviously.",
 			gentle = "Okay, but gently.",
@@ -669,7 +497,6 @@ event({
 			_ = "Mine glow brighter than yours.",
 		})
 		s:n("{a} pushes both hands out with a shout, and {b} falls over laughing.")
-		cue(s, "blast")
 		s:by("b", {
 			sunny = "Ehehe, that's not fair, do it again!",
 			gloomy = "Heh... I'm defeated, leave me in the sand.",
@@ -689,23 +516,10 @@ event({
 	id = "thronedream",
 	when = "day",
 	weight = W({ base = 0.14, job = "any", traits = { focus = -0.3 } }),
-	cutscene = {
-		stage = "stall",
-		open = "counter",
-		cues = {
-			stare = { shot = "close", on = "a", act = { a = "gaze" } },
-			throne = { set = "throne", cast = { a = 1 }, shot = "wide", act = { a = "regal", others = "bow" } },
-			royal = { shot = "throne", act = { a = "regal" } },
-			back = { set = "stall", cast = { a = 1 }, shot = "counter", act = { a = "startle" } },
-		},
-		ending = { shot = "counter" },
-	},
 	scene = function(ctx, a)
 		local s = K.scene(ctx, "A daydream at work")
 		s:n("{a} has been staring at nothing behind the counter for quite a while.")
-		cue(s, "stare")
 		s:n("In {a}'s head, they're sitting on a golden throne and the whole town has come to bow.")
-		cue(s, "throne")
 		s:by("a", {
 			proud = "Bring me the finest buns in town, and polish my crown.",
 			bold = "From now on, every day is a day off.",
@@ -715,9 +529,7 @@ event({
 			bookish = "My first rule: the library stays open all night.",
 			_ = "From now on, every day is a holiday.",
 		})
-		cue(s, "royal")
 		s:n("Then a customer coughs, and the throne room is gone.")
-		cue(s, "back")
 		s:by("a", {
 			shy = "Oh... um, sorry, what would you like?",
 			prickly = "I wasn't daydreaming, I was thinking.",
@@ -739,18 +551,6 @@ event({
 	actors = 2,
 	when = "day",
 	weight = W({ base = 0.15, rel = 10 }),
-	cutscene = {
-		stage = "wheel",
-		open = "out",
-		cues = {
-			inside = { shot = "two" },
-			wait = { shot = "two", act = { a = "slump", b = "slump" } },
-			view = { shot = "view" },
-			fidget = { shot = "close", act = { ["*"] = "fidget" } },
-			moving = { shot = "out" },
-		},
-		ending = { shot = "two", act = { a = "stretch", b = "laugh" } },
-	},
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "Stuck on the big wheel")
 		s:n("{a} and {b} are at the very top of the big wheel, and it has stopped.")
@@ -761,16 +561,13 @@ event({
 			cheeky = "uh oh, did we break it",
 			_ = "Why have we stopped?",
 		})
-		cue(s, "inside")
 		s:n("A voice calls up from the bottom that it will only be a few minutes.")
-		cue(s, "wait")
 		s:by("b", {
 			easygoing = "Nice view, at least. No rush.",
 			dreamy = "You can see the whole sea from up here...",
 			foodie = "I can see the bakery from here, and now I'm hungry.",
 			_ = "At least the view is nice.",
 		})
-		cue(s, "view")
 		s:by("a", {
 			nervous = "{b}, it's been tw-twenty minutes.",
 			prickly = "Ugh, that was twenty minutes ago.",
@@ -783,9 +580,7 @@ event({
 			polite = "I am afraid I need the bathroom quite badly.",
 			_ = "And I really need the bathroom.",
 		}, "sweat")
-		cue(s, "fidget")
 		s:n("The wheel gives a jolt and starts to turn again.")
-		cue(s, "moving")
 		s:by("b", {
 			sunny = "We're moving, we're moving!",
 			cool = "There we go.",
@@ -807,16 +602,6 @@ event({
 	actors = 2,
 	when = "day",
 	weight = W({ base = 0.16 }),
-	cutscene = {
-		stage = "playground",
-		open = "wide",
-		cues = {
-			ride = { shot = "two", act = { a = "hold", b = "hold" }, prop = { seesaw = "play" } },
-			stuck = { shot = "wide", prop = { seesaw = "stuck" } },
-			play = { shot = "wide", prop = { seesaw = "play" }, act = { a = "hold", b = "hold" } },
-		},
-		ending = { shot = "two" },
-	},
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "A go on the seesaw")
 		s:n("{a} and {b} are having a go on the seesaw in the playground.")
@@ -826,9 +611,7 @@ event({
 			easygoing = "Up, down, up, down, this is nice.",
 			_ = "This is more fun than I remembered.",
 		})
-		cue(s, "ride")
 		s:n("Then {b} sits down hard and stays there, and {a} is left up in the air.")
-		cue(s, "stuck")
 		s:by("a", {
 			nervous = "{b}, l-let me down.",
 			prickly = "{b}, let me down, right now.",
@@ -843,7 +626,6 @@ event({
 			_ = "Say please first.",
 		})
 		s:n("{b} pushes off, and they go up and down again, laughing.")
-		cue(s, "play")
 		s:rel(3)
 		s:mood("a", 2)
 		s:mood("b", 3)
@@ -859,17 +641,6 @@ event({
 	actors = 2,
 	when = "day",
 	weight = W({ base = 0.16, traits = { brave = 0.2 } }),
-	cutscene = {
-		stage = "hilltop",
-		cast = { a = 3, b = 4 },
-		open = "lawn",
-		cues = {
-			down = { shot = "lawn", act = { a = "pushup", b = "crouch" } },
-			count = { shot = "lawn", act = { a = "pushup" } },
-			up = { shot = "lawn", act = { a = "pant", b = "clap" } },
-		},
-		ending = { shot = "lawn" },
-	},
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "A push up record")
 		s:by("a", {
@@ -880,15 +651,12 @@ event({
 			_ = "{b}, count for me, I'm going for thirty push ups.",
 		})
 		s:n("{a} gets down on the grass and starts.")
-		cue(s, "down")
 		s:by("b", {
 			polite = "Eight, nine, ten, you are doing very well.",
 			gentle = "Eight, nine, ten, don't hurt yourself.",
 			_ = "Eight, nine, ten...",
 		})
-		cue(s, "count")
 		s:n("At twelve, {a} gets back up, red in the face.")
-		cue(s, "up")
 		s:by("a", {
 			proud = "Twelve is a record, I'm quite sure.",
 			bold = "Twelve is a warm up, I'll do thirty tomorrow.",
@@ -916,17 +684,6 @@ event({
 	actors = 3,
 	when = "night",
 	weight = W({ base = 0.14 }),
-	cutscene = {
-		stage = "hallway",
-		open = "wide",
-		cues = {
-			listen = { shot = "two", act = { a = "listen", b = "listen" } },
-			open = { shot = "inside", prop = { door = "open" }, act = { c = "sing" } },
-			caught = { shot = "close", on = "c", act = { c = "shy" } },
-		},
-		ask = { shot = "two", look = { a = "camera", b = "camera" } },
-		ending = { shot = "door" },
-	},
 	scene = function(ctx, a, b, c)
 		local s = K.scene(ctx, "Odd sounds")
 		s:n("{a} and {b} can hear very odd sounds coming from behind {c}'s door.")
@@ -937,7 +694,6 @@ event({
 			gloomy = "It's probably a ghost. It's always a ghost.",
 			_ = "What is that noise? It sounds like a goose.",
 		})
-		cue(s, "listen")
 		s:by("b", {
 			bold = "Let's just open the door and look.",
 			polite = "Perhaps we should knock first.",
@@ -946,7 +702,6 @@ event({
 		})
 		s:choice("Open the door.", function(ch)
 			ch:n("{a} opens the door a crack, and there is {c}, singing into a hairbrush in front of the mirror.")
-			cue(ch, "open")
 			ch:by("c", {
 				shy = "...! H-how long have you been standing there?",
 				proud = "I was warming up, obviously.",
@@ -955,7 +710,6 @@ event({
 				cool = "This didn't happen.",
 				_ = "Oh. How long have you two been there?",
 			}, "sweat")
-			cue(ch, "caught")
 			ch:by("a", {
 				sunny = "Long enough, ehehe, do the chorus again!",
 				gentle = "You sounded lovely, really.",
@@ -986,21 +740,9 @@ event({
 	actors = 2,
 	when = "day",
 	weight = W({ base = 0.16, traits = { social = 0.3 }, count = 3 }),
-	cutscene = {
-		stage = "square",
-		extras = 4,
-		open = "wide",
-		cues = {
-			start = { shot = "close", on = "a", act = { a = "shuffle" } },
-			all = { shot = "high", act = { all = "dance" }, fx = "confetti" },
-			join = { shot = "two", act = { b = "shuffle" } },
-		},
-		ending = { shot = "wide", act = { all = "dance2" } },
-	},
 	scene = function(ctx, a, b)
 		local s = K.scene(ctx, "A dance in the square")
 		s:n("Music is coming out of a window over the square, and {a} has started to dance.")
-		cue(s, "start")
 		s:by("b", {
 			shy = "Um, {a}... people are looking at you.",
 			prickly = "{a}, everyone is staring, stop it.",
@@ -1015,13 +757,11 @@ event({
 			_ = "Then they should join in.",
 		})
 		s:n("One by one, everyone in the square starts dancing too.")
-		cue(s, "all")
 		s:by("b", {
 			gloomy = "Heh... fine. Just this once.",
 			prickly = "Ugh, fine, one song.",
 			_ = "Okay, okay, one song.",
 		})
-		cue(s, "join")
 		s:all(2)
 		s:rel(2)
 		s:log("{a} started a dance in the square and everyone joined in.")
