@@ -817,6 +817,16 @@ A.blossom = {
 }
 -- a leaf on the wind
 A.leaves = { flat("M3 21 Q3 7 21 3 Q21 21 3 21 Z"), gap("M6.5 17.5 L14.5 9.5", 1.75) }
+-- fog: the cloud over two bands of mist
+A.fog = weather(solid(rect(3.5, 16.75, 17, 2, 1)), solid(rect(6.5, 20.25, 11, 2, 1)))
+-- a cog for Settings: a wheel with eight teeth, its middle cut out
+A.gear = {
+	solid(
+		"M18 14 L22.25 14 L22.25 10 L18 10 Z M14.83 17.66 L17.83 20.66 L20.66 17.83 L17.66 14.83 Z M10 18 L10 22.25 L14 22.25 L14 18 Z M6.34 14.83 L3.34 17.83 L6.17 20.66 L9.17 17.66 Z M6 10 L1.75 10 L1.75 14 L6 14 Z M9.17 6.34 L6.17 3.34 L3.34 6.17 L6.34 9.17 Z M14 6 L14 1.75 L10 1.75 L10 6 Z M17.66 9.17 L20.66 6.17 L17.83 3.34 L14.83 6.34 Z"
+	),
+	flat(circle(12, 12, 7.5)),
+	hole(circle(12, 12, 3)),
+}
 
 -- the news and the jobs (Data/NewsKinds, Data/Jobs) ------------------------------------------------
 

@@ -26,6 +26,7 @@ local Lively = {}
 local K = Tuning.Lively
 Lively.MoveRange = K.MoveRange -- studs from the camera that a piece moves within
 Lively.FxRange = K.FxRange -- and gives off its effects within
+Lively.RateScale = 1 -- times every effect's rate (the player's detail level: World/Graphics)
 local STEP = 1 / K.MoveRate -- seconds between two moves
 local GLINT_STEP = 1 / K.GlintRate -- between two glimmers
 local LOOK = K.Look -- between two looks at what is near, at work, or due a burst
@@ -249,7 +250,7 @@ local function emitter(f: Fx, color: Color3, share: number): ParticleEmitter?
 		e.Size = sequence(p.size)
 		e.Transparency = sequence(p.transp)
 		e.Lifetime = range(p.life, 1)
-		e.Rate = p.rate * share
+		e.Rate = p.rate * share * Lively.RateScale
 		e.Speed = range(p.speed, 1)
 		e.SpreadAngle = Vector2.new(p.spread[1], p.spread[2] or p.spread[1])
 		e.Acceleration = p.accel or Vector3.zero

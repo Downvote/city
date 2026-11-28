@@ -10,7 +10,7 @@ local Players = game:GetService("Players")
 local Outlines = {}
 
 Outlines.Name = "Ink"
-Outlines.Most = 20 -- how many people are outlined at once
+Outlines.Most = 20 -- how many people are outlined at once (the detail level sets it: World/Graphics)
 Outlines.Reach = 170 -- studs from the camera
 Outlines.Color = Color3.fromRGB(24, 22, 34)
 
@@ -94,8 +94,13 @@ function Outlines.step(from: Vector3): number
 end
 
 function Outlines.start()
+	-- (how many: the player's detail level, World/Graphics; none at Low)
+	local ok, Graphics = pcall(require, script.Parent.Graphics)
 	task.spawn(function()
 		while true do
+			if ok and type(Graphics) == "table" then
+				Outlines.Most = Graphics.level().Outlines
+			end
 			local cam = workspace.CurrentCamera
 			if cam then
 				Outlines.step(cam.CFrame.Position)

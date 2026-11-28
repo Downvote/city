@@ -15,8 +15,25 @@ local Town = require(Shared.Data.Town)
 local TownMap = require(Shared.Data.TownMap)
 local AmbientModels = require(Shared.Data.AmbientModels)
 local Rng = require(Shared.Util.Rng)
+local Tuning = require(Shared.Config.Tuning)
 
 local Ambience = {}
+
+-- How far from the camera things move (times the player's detail level: World/Graphics), and how
+-- hard the wind blows in this weather (Tuning.Weather.Looks: a breeze, a gale in a storm, still in
+-- fog), refreshed once a second.
+local reach = 1
+local sway, gust = 1, 0.2
+local particles = 1
+local function refresh()
+	local look = Tuning.Weather.Looks[workspace:GetAttribute("Weather") :: any] or Tuning.Weather.Looks.clear
+	sway, gust = look.Sway, look.Gust
+	local ok, Graphics = pcall(require, script.Parent.Graphics)
+	if ok and type(Graphics) == "table" then
+		local level = Graphics.level()
+		reach, particles = level.Reach, level.Particles
+	end
+end
 
 local L = Town.HalfLength
 local LANE = 6.5
@@ -250,7 +267,7 @@ local function stepSpinners()
 	local cam = workspace.CurrentCamera
 	local eye = if cam then cam.CFrame.Position else Vector3.zero
 	for _, s in spinners do
-		if (s.hub.Position - eye).Magnitude < 400 then
+		if (s.hub.Position - eye).Magnitude < 400 * reach then
 			local turned = s.hub * CFrame.Angles(clock * s.speed, 0, 0)
 			for i, p in s.spin do
 				table.insert(moveParts, p)
@@ -359,9 +376,10 @@ local function stepSway(dt: number)
 	swayClock = 0
 	local cam = workspace.CurrentCamera
 	local eye = if cam then cam.CFrame.Position else Vector3.zero
-	local breeze = if workspace:GetAttribute("Weather") == "storm" then 2.5 else 1
+	-- (the wind comes and goes: a slow swell on top of the weather's strength)
+	local breeze = sway * (1 + gust * math.sin(clock * 0.37))
 	for _, s in sways do
-		if (s.base.Position - eye).Magnitude < 260 then
+		if (s.base.Position - eye).Magnitude < 260 * reach then
 			local a = math.sin(clock * 1.4 + s.phase) * s.amount * breeze
 			local rot
 			if s.axis == "flag" then
@@ -446,6 +464,7 @@ local function nightEffects()
 	local night = h < 5.5 or h > 19.5
 	for _, e in fireflies do
 		e.Enabled = night
+		e.Rate = 6 * particles
 	end
 end
 
@@ -469,9 +488,10 @@ end
 -- The wind: a slow wave that crosses the island, so things lean one after another, not all at
 -- once, with a quicker flutter on top. Stronger in a storm.
 local function wind(at: Vector3, phase: number): number
-	local gust = if workspace:GetAttribute("Weather") == "storm" then 2.4 else 1
 	local wave = math.sin(clock * 0.9 + at.X * 0.035 + at.Z * 0.021)
-	return (wave * 0.7 + math.sin(clock * 2.3 + phase) * 0.3) * gust
+	-- gusts run across the island too, harder in a storm
+	local swell = 1 + gust * math.sin(clock * 0.37 + at.X * 0.012 - at.Z * 0.008)
+	return (wave * 0.7 + math.sin(clock * 2.3 + phase) * 0.3) * sway * swell
 end
 
 -- Leaves: every clump of leaves in town (parts named Leaf: tree crowns, pine tiers, shrubs) leans
@@ -514,7 +534,7 @@ local function stepLeaves(dt: number)
 	local eye = here()
 	for _, l in leaves do
 		local d = l.pivot - eye
-		if d.X * d.X + d.Z * d.Z < 190 * 190 then
+		if d.X * d.X + d.Z * d.Z < (190 * reach) ^ 2 then
 			local a = wind(l.pivot, l.phase) * l.amount
 			local turn = CFrame.new(l.pivot) * CFrame.Angles(a, 0, a * 0.7) * CFrame.new(-l.pivot)
 			table.insert(moveParts, l.part)
@@ -667,7 +687,7 @@ end
 local function stepDucks(dt: number)
 	local eye = here()
 	for i, d in ducks do
-		if (d.center - eye).Magnitude < 260 then
+		if (d.center - eye).Magnitude < 260 * reach then
 			d.angle += d.speed * dt
 			local pos = d.center
 				+ Vector3.new(
@@ -728,8 +748,9 @@ function Ambience.start()
 			refreshCrossings()
 		end
 		nightClock += dt
-		if nightClock > 2 then
+		if nightClock > 1 then
 			nightClock = 0
+			refresh()
 			nightEffects()
 		end
 		stepCars(dt)

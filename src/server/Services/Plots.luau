@@ -7,7 +7,6 @@ local Tuning = require(Shared.Config.Tuning)
 local Town = require(Shared.Data.Town)
 local Builder = require(Shared.Build.Builder)
 local Textures = require(Shared.Data.Textures)
-local LawnPatches = require(Shared.Data.LawnPatches)
 local StarterHouse = require(Shared.Data.StarterHouse)
 local Remotes = require(Shared.Net.Remotes)
 local Plan = require(Shared.Build.Plan)
@@ -80,25 +79,6 @@ function Plots.drawLand(i: number, plan: any)
 	grass.Material = Enum.Material.Grass
 	grass.TopSurface = Enum.SurfaceType.Smooth
 	grass.Parent = land
-	-- patches of other greens over it, so it isn't one flat sheet (Data/LawnPatches); paint only:
-	-- nothing bumps into them, and a placing ray goes through to the grass
-	for _, b in LawnPatches.layout(i * 7919 + (x2 - x1), x1, z1, x2, z2) do
-		local patch = Instance.new("Part")
-		patch.Name = "Patch"
-		patch.Anchored = true
-		patch.CanCollide = false
-		patch.CanQuery = false
-		patch.CanTouch = false
-		patch.CastShadow = false
-		patch.Size = Vector3.new(b.sx, LawnPatches.Thick, b.sz)
-		patch.CFrame = frame
-			* CFrame.new(b.x, b.top - LawnPatches.Thick / 2, b.z)
-			* CFrame.Angles(0, math.rad(b.yaw), 0)
-		patch.Color = Textures.tint("Grass", Color3.fromRGB(b.color[1], b.color[2], b.color[3]))
-		patch.Material = Enum.Material.Grass
-		patch.TopSurface = Enum.SurfaceType.Smooth
-		patch.Parent = land
-	end
 	local curb = Color3.fromRGB(232, 228, 216)
 	local edges = {
 		{ (x1 + x2) / 2, z1, x2 - x1 + 0.6, 0.6 },

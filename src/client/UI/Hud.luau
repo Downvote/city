@@ -134,6 +134,7 @@ local WEATHER = {
 	rain = "Rain",
 	storm = "Storm",
 	snow = "Snow",
+	fog = "Fog",
 	blossom = "Blossom",
 	leaves = "Falling leaves",
 }
@@ -144,6 +145,7 @@ local WEATHER_ICON = {
 	rain = "rain",
 	storm = "storm",
 	snow = "snow",
+	fog = "fog",
 	blossom = "blossom",
 	leaves = "leaves",
 }
@@ -433,8 +435,9 @@ function Hud.start()
 	-- things and food and feeding" and "remove the map button and the map interface".)
 	local corner = Kit.box({
 		Name = "Corner",
-		-- (wide enough for six: the Store came in beside the news, then the Bag)
-		Size = UDim2.fromOffset(372, 76),
+		-- (eight cells of 54 and their gaps: Home, the town, the news, the Store, the Garage, the Bag,
+		-- Settings and Hide)
+		Size = UDim2.fromOffset(8 * 54 + 7 * 8, 76),
 		-- under the clock's glass, which ends 72 from the top of the screen
 		Position = UDim2.new(1, -14, 0, 88 - inset),
 		AnchorPoint = Vector2.new(1, 0),
@@ -489,6 +492,9 @@ function Hud.start()
 			{ "car", "Garage", "Cars" },
 			-- the things you carry, to hold, drop and give (the user: "add an inventory system to the player")
 			{ "bag", "Bag", "Bag" },
+			-- what this screen draws, and the look (the user: "add settings for graphic quality,
+			-- background blur, bloom, etc.")
+			{ "gear", "Settings", "Settings" },
 		}
 	do
 		cornerButton(e[1], e[2], e[3], i + 1, function()

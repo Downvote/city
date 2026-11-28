@@ -28,11 +28,19 @@ Schema.Settings = {
 	bubbles = true,
 	eventCamera = true,
 	theme = "dark", -- the interface's look: "dark" or "light"
+	-- what this player's own screen draws (Settings; client World/Graphics, Tuning.Graphics)
+	detail = "high", -- "low", "medium" or "high": shadows, how far things move, particles, outlines
+	blur = true, -- the background blur
+	blurStrength = 0.5, -- and how strong (Tuning.Graphics.BlurSteps)
+	bloom = true, -- the glow round lamps, neon and lit signs
+	sunRays = true,
+	haze = true, -- the air that fades what is far off
 }
 
 -- What a setting that is a word may be.
 Schema.SettingChoices = {
 	theme = { dark = true, light = true },
+	detail = { low = true, medium = true, high = true },
 }
 
 -- What a villager can wish for (Sim/Life): a craving, someone to meet, a chat. (A wish for a new

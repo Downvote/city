@@ -25,6 +25,8 @@ require(Build.Builder).useKit(ReplicatedStorage:WaitForChild(LowPoly.FolderName,
 
 local State = require(Controllers.State)
 State.start()
+-- this player's own Settings on their screen: the glow, the blur, the detail (World/Graphics)
+require(script.Parent.World.Graphics).start()
 
 local Hud = require(UI.Hud)
 Hud.start()
@@ -56,6 +58,7 @@ require(World.Prompts).start() -- no prompts while you sit, work or talk
 require(World.Explore).start()
 require(World.Outlines).start()
 require(World.Focus).start() -- the background blur follows what the camera looks at
+require(World.Seasons).start() -- the season on the trees, the lawns and the roofs
 require(World.Stuck).start() -- stuck and pushing: a button to slip out
 require(World.Driving).start() -- at the wheel of your own vehicle
 require(World.Run).start() -- hold Shift to run (a switch on a touch screen)
