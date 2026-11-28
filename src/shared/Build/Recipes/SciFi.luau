@@ -48,7 +48,7 @@ local function rod(r: R, a: Vector3, b: Vector3, d: number, color: Color3, mat: 
 		cf = CFrame.fromMatrix((a + b) / 2, x, y, z),
 		size = Vector3.new(len, d, d),
 		color = color,
-		mat = mat or "SmoothPlastic",
+		mat = mat or "Metal",
 	})
 end
 
@@ -117,8 +117,8 @@ local items: { Item } = {
 		tags = { "seat" },
 		build = function(r: R)
 			-- a round foot with a ring of light, and a short column
-			plate(r, 0, 0, 0, 0.16, 1.7, r.c1, "SmoothPlastic")
-			r:glow(r:cyl(0, 0.19, 0, 0.06, 1.3, "y", GLOW, "SmoothPlastic"), 12, 0.8, LIGHT)
+			plate(r, 0, 0, 0, 0.16, 1.7, r.c1, "Metal")
+			r:glow(r:cyl(0, 0.19, 0, 0.06, 1.3, "y", GLOW, "Glass"), 12, 0.8, LIGHT)
 			r:cyl(0, 0.6, 0, 0.9, 0.36, "y", SLATE, "Metal")
 			-- an egg of a shell, open at the front: bands of panels round the back, a cap over
 			-- the top and a bowl under the seat
@@ -149,18 +149,18 @@ local items: { Item } = {
 			end
 			for start = 1, #quads, 6 do
 				r:piece(function(q: R)
-					q:box(0, 1.25, -0.1, 0.2, 0.2, 0.2, r.c1, "SmoothPlastic")
+					q:box(0, 1.25, -0.1, 0.2, 0.2, 0.2, r.c1, "Metal")
 					for k = start, math.min(start + 5, #quads) do
 						local v = quads[k]
-						q:quad(v[1], v[2], v[3], v[4], 0.12, r.c1, "SmoothPlastic")
+						q:quad(v[1], v[2], v[3], v[4], 0.12, r.c1, "Metal")
 					end
-				end, true)
+				end, true, "Metal")
 			end
-			r:lump(CFrame.new(0, 4.07, -0.05), 1.76, 0.96, 1.7, r.c1, "SmoothPlastic")
-			r:lump(CFrame.new(0, 1.27, -0.05), 2.3, 1.0, 2.2, r.c1, "SmoothPlastic")
+			r:lump(CFrame.new(0, 4.07, -0.05), 1.76, 0.96, 1.7, r.c1, "Metal")
+			r:lump(CFrame.new(0, 1.27, -0.05), 2.3, 1.0, 2.2, r.c1, "Metal")
 			-- a line of light round the opening
 			local function edge(a: Vector3, b: Vector3)
-				local p = rod(r, a, b, 0.08, GLOW, "SmoothPlastic")
+				local p = rod(r, a, b, 0.08, GLOW, "Glass")
 				if p then
 					glowOnly(p)
 				end
@@ -209,14 +209,14 @@ local items: { Item } = {
 			local R = 3.0
 			for i, a in { -0.7, 0, 0.7 } do
 				local cf = CFrame.new(center) * CFrame.Angles(0, a, 0) * CFrame.new(0, 0, -R)
-				r:boxAt(cf * CFrame.new(0, 0.15, 0), 1.7, 0.3, 1.8, SLATE, "SmoothPlastic")
-				local strip = r:boxAt(cf * CFrame.new(0, 0.14, 0.92), 1.4, 0.06, 0.04, GLOW, "SmoothPlastic")
+				r:boxAt(cf * CFrame.new(0, 0.15, 0), 1.7, 0.3, 1.8, SLATE, "Metal")
+				local strip = r:boxAt(cf * CFrame.new(0, 0.14, 0.92), 1.4, 0.06, 0.04, GLOW, "Glass")
 				if i == 2 then
 					r:glow(strip, 12, 0.8, LIGHT)
 				else
 					glowOnly(strip)
 				end
-				r:boxAt(cf * CFrame.new(0, 0.7, 0), 2.0, 0.8, 2.2, r.c1, "SmoothPlastic")
+				r:boxAt(cf * CFrame.new(0, 0.7, 0), 2.0, 0.8, 2.2, r.c1, "Metal")
 				r:boxAt(cf * CFrame.new(0, 1.32, 0.2), 1.9, 0.44, 1.4, r.c2, "Fabric")
 				r:add({
 					shape = "Cylinder",
@@ -225,13 +225,13 @@ local items: { Item } = {
 					color = r.c2,
 					mat = "Fabric",
 				})
-				r:boxAt(cf * CFrame.new(0, 1.75, -0.8), 2.0, 2.1, 0.6, r.c1, "SmoothPlastic")
+				r:boxAt(cf * CFrame.new(0, 1.75, -0.8), 2.0, 2.1, 0.6, r.c1, "Metal")
 				r:add({
 					shape = "Cylinder",
 					cf = cf * CFrame.new(0, 2.8, -0.8),
 					size = Vector3.new(2.0, 0.6, 0.6),
 					color = r.c1,
-					mat = "SmoothPlastic",
+					mat = "Metal",
 				})
 				r:boxAt(
 					cf * CFrame.new(0, 1.54, -0.32) * CFrame.Angles(-0.12, 0, 0) * CFrame.new(0, 0.55, 0),
@@ -244,15 +244,15 @@ local items: { Item } = {
 				-- rounded arms on the two outer ends
 				if a ~= 0 then
 					local sx = if a < 0 then 1 else -1
-					r:boxAt(cf * CFrame.new(sx * 1.3, 1.0, 0), 0.6, 1.4, 2.2, r.c1, "SmoothPlastic")
+					r:boxAt(cf * CFrame.new(sx * 1.3, 1.0, 0), 0.6, 1.4, 2.2, r.c1, "Metal")
 					r:add({
 						shape = "Cylinder",
 						cf = cf * CFrame.new(sx * 1.3, 1.7, 0) * CFrame.Angles(0, math.pi / 2, 0),
 						size = Vector3.new(2.2, 0.6, 0.6),
 						color = r.c1,
-						mat = "SmoothPlastic",
+						mat = "Metal",
 					})
-					glowOnly(r:boxAt(cf * CFrame.new(sx * 1.62, 1.3, 0), 0.04, 0.06, 1.8, GLOW, "SmoothPlastic"))
+					glowOnly(r:boxAt(cf * CFrame.new(sx * 1.62, 1.3, 0), 0.04, 0.06, 1.8, GLOW, "Glass"))
 				end
 				local seat = (cf * CFrame.new(0, 1.54, 0.25)).Position
 				r:seat(seat.X, seat.Y, seat.Z, math.deg(a))
@@ -273,16 +273,16 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a round foot giving off a beam of light, and a padded seat riding on it
 			plate(r, 0, 0, 0, 0.12, 1.3, SLATE, "Metal")
-			r:glow(r:cyl(0, 0.14, 0, 0.04, 1.0, "y", GLOW, "SmoothPlastic"), 10, 0.7, LIGHT)
-			r:cyl(0, 0.2, 0, 0.12, 0.5, "y", r.c1, "SmoothPlastic")
+			r:glow(r:cyl(0, 0.14, 0, 0.04, 1.0, "y", GLOW, "Glass"), 10, 0.7, LIGHT)
+			r:cyl(0, 0.2, 0, 0.12, 0.5, "y", r.c1, "Metal")
 			r:cyl(0, 0.93, 0, 1.4, 0.1, "y", STEEL, "Metal")
 			local beam = r:cyl(0, 0.93, 0, 1.34, 0.36, "y", GLOW, "Neon")
 			beam.transp = 0.6
 			r:noCollide(beam)
 			r:cyl(0, 1.65, 0, 0.1, 0.44, "y", SLATE, "Metal")
-			plate(r, 0, 0, 1.7, 1.86, 1.4, r.c1, "SmoothPlastic")
+			plate(r, 0, 0, 1.7, 1.86, 1.4, r.c1, "Metal")
 			plate(r, 0, 0, 1.86, 2.02, 1.2, r.c2, "Fabric")
-			glowOnly(r:cyl(0, 1.78, 0, 0.04, 1.5, "y", GLOW, "SmoothPlastic"))
+			glowOnly(r:cyl(0, 1.78, 0, 0.04, 1.5, "y", GLOW, "Glass"))
 			r:seat(0, 2.02, 0)
 		end,
 	},
@@ -304,19 +304,19 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a stepped base with a lens on top, a column of light, and the top riding on it
 			plate(r, 0, 0, 0, 0.1, 1.8, SLATE, "Metal")
-			r:cyl(0, 0.3, 0, 0.4, 1.5, "y", r.c1, "SmoothPlastic")
-			r:cyl(0, 0.7, 0, 0.4, 1.2, "y", r.c1, "SmoothPlastic")
-			r:cyl(0, 1.1, 0, 0.4, 0.9, "y", r.c1, "SmoothPlastic")
-			r:glow(r:cyl(0, 1.33, 0, 0.06, 0.7, "y", GLOW, "SmoothPlastic"), 14, 0.9, LIGHT)
-			glowOnly(r:cyl(0, 0.52, 0, 0.04, 1.58, "y", GLOW, "SmoothPlastic"))
+			r:cyl(0, 0.3, 0, 0.4, 1.5, "y", r.c1, "Metal")
+			r:cyl(0, 0.7, 0, 0.4, 1.2, "y", r.c1, "Metal")
+			r:cyl(0, 1.1, 0, 0.4, 0.9, "y", r.c1, "Metal")
+			r:glow(r:cyl(0, 1.33, 0, 0.06, 0.7, "y", GLOW, "Glass"), 14, 0.9, LIGHT)
+			glowOnly(r:cyl(0, 0.52, 0, 0.04, 1.58, "y", GLOW, "Glass"))
 			local beam = r:cyl(0, 1.83, 0, 0.94, 0.5, "y", GLOW, "Neon")
 			beam.transp = 0.6
 			r:noCollide(beam)
 			r:cyl(0, 1.83, 0, 0.94, 0.12, "y", STEEL, "Metal")
 			r:cyl(0, 2.38, 0, 0.16, 0.8, "y", SLATE, "Metal")
-			glowOnly(r:cyl(0, 2.27, 0, 0.06, 0.6, "y", GLOW, "SmoothPlastic"))
-			plate(r, 0, 0, 2.38, 2.46, 3.1, r.c2, "SmoothPlastic")
-			plate(r, 0, 0, 2.46, 2.6, 3.4, r.c1, "SmoothPlastic")
+			glowOnly(r:cyl(0, 2.27, 0, 0.06, 0.6, "y", GLOW, "Glass"))
+			plate(r, 0, 0, 2.38, 2.46, 3.1, r.c2, "Metal")
+			plate(r, 0, 0, 2.46, 2.6, 3.4, r.c1, "Metal")
 		end,
 	},
 	{
@@ -333,20 +333,20 @@ local items: { Item } = {
 		tags = { "desk", "table" },
 		build = function(r: R)
 			-- a top with round ends on two round legs, a line of light along its front
-			r:block(-1.6, 2.76, -1.0, 1.6, 2.9, 1.0, r.c1, "SmoothPlastic")
+			r:block(-1.6, 2.76, -1.0, 1.6, 2.9, 1.0, r.c1, "Metal")
 			for _, sx in { -1, 1 } do
-				plate(r, sx * 1.6, 0, 2.76, 2.9, 2.0, r.c1, "SmoothPlastic")
+				plate(r, sx * 1.6, 0, 2.76, 2.9, 2.0, r.c1, "Metal")
 				plate(r, sx * 1.7, 0, 0, 0.12, 1.3, SLATE, "Metal")
-				r:cyl(sx * 1.7, 1.44, 0, 2.64, 0.8, "y", r.c2, "SmoothPlastic")
-				glowOnly(r:cyl(sx * 1.7, 0.5, 0, 0.08, 0.88, "y", GLOW, "SmoothPlastic"))
+				r:cyl(sx * 1.7, 1.44, 0, 2.64, 0.8, "y", r.c2, "Metal")
+				glowOnly(r:cyl(sx * 1.7, 0.5, 0, 0.08, 0.88, "y", GLOW, "Glass"))
 			end
-			r:glow(r:block(-1.6, 2.8, 1.0, 1.6, 2.86, 1.04, GLOW, "SmoothPlastic"), 12, 0.8, LIGHT)
-			r:block(-1.3, 0.9, -0.92, 1.3, 2.76, -0.82, r.c2, "SmoothPlastic")
+			r:glow(r:block(-1.6, 2.8, 1.0, 1.6, 2.86, 1.04, GLOW, "Glass"), 12, 0.8, LIGHT)
+			r:block(-1.3, 0.9, -0.92, 1.3, 2.76, -0.82, r.c2, "Metal")
 			-- a raised deck at the back with a sloped face full of buttons
-			r:ramp(-1.5, 2.9, -0.45, 1.5, 3.2, -0.05, false, r.c2, "SmoothPlastic")
+			r:ramp(-1.5, 2.9, -0.45, 1.5, 3.2, -0.05, false, r.c2, "Metal")
 			local slope = math.atan2(0.3, 0.4)
 			r:piece(function(q: R)
-				q:block(-1.5, 2.9, -0.95, 1.5, 3.2, -0.45, r.c2, "SmoothPlastic")
+				q:block(-1.5, 2.9, -0.95, 1.5, 3.2, -0.45, r.c2, "Metal")
 				local cols = { GLOW, C.Yellow, CORAL, LILAC, SHELL }
 				for row = 0, 1 do
 					for k = 0, 4 do
@@ -360,11 +360,11 @@ local items: { Item } = {
 							0.08,
 							0.14,
 							cols[((k + row * 2) % #cols) + 1],
-							"SmoothPlastic"
+							"Metal"
 						)
 					end
 				end
-			end)
+			end, nil, "Metal")
 			-- a slider and a dial on the right of the slope
 			r:boxAt(
 				CFrame.new(1.0, 3.05, -0.25) * CFrame.Angles(slope, 0, 0) * CFrame.new(0, 0.02, 0),
@@ -372,7 +372,7 @@ local items: { Item } = {
 				0.05,
 				0.06,
 				SLATE,
-				"SmoothPlastic"
+				"Metal"
 			)
 			r:boxAt(
 				CFrame.new(1.1, 3.05, -0.25) * CFrame.Angles(slope, 0, 0) * CFrame.new(0, 0.07, 0),
@@ -380,21 +380,21 @@ local items: { Item } = {
 				0.1,
 				0.14,
 				CORAL,
-				"SmoothPlastic"
+				"Metal"
 			)
 			-- a joystick and a round dial on the desk
 			r:cyl(1.3, 2.94, 0.45, 0.08, 0.4, "y", SLATE, "Metal")
 			rod(r, Vector3.new(1.3, 2.98, 0.45), Vector3.new(1.35, 3.35, 0.45), 0.06, STEEL, "Metal")
-			r:ball(1.35, 3.4, 0.45, 0.18, CORAL, "SmoothPlastic")
-			r:cyl(-1.3, 2.95, 0.4, 0.1, 0.4, "y", r.c2, "SmoothPlastic")
-			glowOnly(r:cyl(-1.3, 3.01, 0.4, 0.03, 0.2, "y", GLOW, "SmoothPlastic"))
+			r:ball(1.35, 3.4, 0.45, 0.18, CORAL, "Metal")
+			r:cyl(-1.3, 2.95, 0.4, 0.1, 0.4, "y", r.c2, "Metal")
+			glowOnly(r:cyl(-1.3, 3.01, 0.4, 0.03, 0.2, "y", GLOW, "Glass"))
 			-- two screens on a post, turned in toward you, a chart on one and a planet on the other
 			r:cyl(0, 3.55, -0.75, 0.7, 0.14, "y", SLATE, "Metal")
 			r:block(-1.0, 3.8, -0.8, 1.0, 3.9, -0.7, SLATE, "Metal")
 			for _, sx in { -1, 1 } do
 				local cf = CFrame.new(sx * 0.95, 3.95, -0.66) * CFrame.Angles(0, -sx * 0.25, 0)
-				r:boxAt(cf, 1.8, 1.1, 0.1, SLATE, "SmoothPlastic")
-				r:boxAt(cf * CFrame.new(0, 0, 0.065), 1.66, 0.96, 0.03, SCREEN, "SmoothPlastic")
+				r:boxAt(cf, 1.8, 1.1, 0.1, SLATE, "Metal")
+				r:boxAt(cf * CFrame.new(0, 0, 0.065), 1.66, 0.96, 0.03, SCREEN, "Glass")
 				if sx < 0 then
 					for k, h in { 0.3, 0.55, 0.4, 0.7, 0.5 } do
 						local p = r:boxAt(
@@ -403,24 +403,24 @@ local items: { Item } = {
 							h,
 							0.03,
 							if k % 2 == 0 then GLOW else LILAC,
-							"SmoothPlastic"
+							"Glass"
 						)
 						glowOnly(p)
 					end
-					r:boxAt(cf * CFrame.new(0.35, 0.3, 0.095), 0.5, 0.05, 0.03, PALE, "SmoothPlastic")
-					r:boxAt(cf * CFrame.new(0.3, 0.18, 0.095), 0.4, 0.05, 0.03, PALE, "SmoothPlastic")
+					r:boxAt(cf * CFrame.new(0.35, 0.3, 0.095), 0.5, 0.05, 0.03, PALE, "Metal")
+					r:boxAt(cf * CFrame.new(0.3, 0.18, 0.095), 0.4, 0.05, 0.03, PALE, "Metal")
 				else
-					discAt(r, cf * CFrame.new(-0.2, 0.02, 0.095), 0.55, 0.03, CORAL, "SmoothPlastic")
+					discAt(r, cf * CFrame.new(-0.2, 0.02, 0.095), 0.55, 0.03, CORAL, "Metal")
 					r:boxAt(
 						cf * CFrame.new(-0.2, 0.02, 0.125) * CFrame.Angles(0, 0, -0.3),
 						0.9,
 						0.07,
 						0.03,
 						PALE,
-						"SmoothPlastic"
+						"Metal"
 					)
-					r:boxAt(cf * CFrame.new(0.5, 0.25, 0.095), 0.4, 0.05, 0.03, GLOW, "SmoothPlastic")
-					r:boxAt(cf * CFrame.new(0.5, 0.12, 0.095), 0.3, 0.05, 0.03, PALE, "SmoothPlastic")
+					r:boxAt(cf * CFrame.new(0.5, 0.25, 0.095), 0.4, 0.05, 0.03, GLOW, "Glass")
+					r:boxAt(cf * CFrame.new(0.5, 0.12, 0.095), 0.3, 0.05, 0.03, PALE, "Metal")
 				end
 			end
 		end,
@@ -441,14 +441,14 @@ local items: { Item } = {
 		tags = { "bed" },
 		build = function(r: R)
 			-- a long round ended tub on a dark plinth, with lines of light down its sides
-			r:block(-1.4, 0, -2.6, 1.4, 0.3, 2.6, SLATE, "SmoothPlastic")
-			r:block(-1.8, 0.3, -2.0, 1.8, 1.45, 2.0, r.c1, "SmoothPlastic")
+			r:block(-1.4, 0, -2.6, 1.4, 0.3, 2.6, SLATE, "Metal")
+			r:block(-1.8, 0.3, -2.0, 1.8, 1.45, 2.0, r.c1, "Metal")
 			for _, sz in { -1, 1 } do
-				plate(r, 0, sz * 2.0, 0.3, 1.45, 3.6, r.c1, "SmoothPlastic")
+				plate(r, 0, sz * 2.0, 0.3, 1.45, 3.6, r.c1, "Metal")
 			end
 			for _, sx in { -1, 1 } do
 				local x1, x2 = sx * 1.8, sx * 1.84
-				local strip = r:block(math.min(x1, x2), 0.9, -1.9, math.max(x1, x2), 0.96, 1.9, GLOW, "SmoothPlastic")
+				local strip = r:block(math.min(x1, x2), 0.9, -1.9, math.max(x1, x2), 0.96, 1.9, GLOW, "Glass")
 				if sx < 0 then
 					r:glow(strip, 14, 0.8, LIGHT)
 				else
@@ -456,9 +456,9 @@ local items: { Item } = {
 				end
 			end
 			-- a small panel on the side with three lights
-			r:block(1.8, 1.05, 0.8, 1.86, 1.35, 1.5, SLATE, "SmoothPlastic")
+			r:block(1.8, 1.05, 0.8, 1.86, 1.35, 1.5, SLATE, "Metal")
 			for k, col in { GLOW, C.Yellow, CORAL } do
-				glowOnly(r:block(1.86, 1.15, 0.85 + k * 0.15, 1.9, 1.23, 0.93 + k * 0.15, col, "SmoothPlastic"))
+				glowOnly(r:block(1.86, 1.15, 0.85 + k * 0.15, 1.9, 1.23, 0.93 + k * 0.15, col, "Metal"))
 			end
 			-- the mattress set into it, a pillow and a blanket over the foot with its edge rolled
 			r:block(-1.55, 1.45, -2.0, 1.55, 1.85, 2.0, r.c2, "Fabric")
@@ -490,7 +490,7 @@ local items: { Item } = {
 				)
 				pane.transp = 0.6
 				for _, z in { -2.0, -0.3 } do
-					rod(r, p1 + Vector3.new(0, 0, z), p2 + Vector3.new(0, 0, z), 0.14, r.c1, "SmoothPlastic")
+					rod(r, p1 + Vector3.new(0, 0, z), p2 + Vector3.new(0, 0, z), 0.14, r.c1, "Metal")
 				end
 			end
 			r:sleep(0, 1.95, 0.3, 0)
@@ -515,7 +515,7 @@ local items: { Item } = {
 			local R, t = 1.6, 0.15
 			local yb, yt = 1.9, 4.5
 			plate(r, 0, 0, 0, 0.3, 1.4, SLATE, "Metal")
-			glowOnly(r:cyl(0, 0.2, 0, 0.06, 1.7, "y", GLOW, "SmoothPlastic"))
+			glowOnly(r:cyl(0, 0.2, 0, 0.06, 1.7, "y", GLOW, "Glass"))
 			for _, sx in { -1, 1 } do
 				r:block(
 					math.min(sx * R, sx * (R - t)),
@@ -525,7 +525,7 @@ local items: { Item } = {
 					yt,
 					0.7,
 					r.c1,
-					"SmoothPlastic"
+					"Metal"
 				)
 			end
 			local n = 8
@@ -537,19 +537,19 @@ local items: { Item } = {
 					local p1 = Vector3.new(math.cos(a1) * rr, arc[1] + math.sin(a1) * rr, 0)
 					local p2 = Vector3.new(math.cos(a2) * rr, arc[1] + math.sin(a2) * rr, 0)
 					local d = (p2 - p1).Unit * 0.04
-					r:beam(p1 - d, p2 + d, 1.4, t, r.c1, "SmoothPlastic")
+					r:beam(p1 - d, p2 + d, 1.4, t, r.c1, "Metal")
 				end
 			end
 			-- the back in the second colour
-			r:block(-(R - t), yb, -0.66, R - t, yt, -0.56, r.c2, "SmoothPlastic")
+			r:block(-(R - t), yb, -0.66, R - t, yt, -0.56, r.c2, "Metal")
 			for _, y in { yb, yt } do
-				discAt(r, CFrame.new(0, y, -0.61), 2 * (R - t), 0.1, r.c2, "SmoothPlastic")
+				discAt(r, CFrame.new(0, y, -0.61), 2 * (R - t), 0.1, r.c2, "Metal")
 			end
 			-- shelves, each with a line of light under its front edge
 			for i, y in { yb, 2.8, 3.7, yt, 5.3 } do
 				local w = if i == 5 then 1.18 else R - t
-				r:block(-w, y - 0.05, -0.56, w, y + 0.05, 0.65, r.c1, "SmoothPlastic")
-				local strip = r:block(-w + 0.1, y - 0.09, 0.5, w - 0.1, y - 0.05, 0.56, GLOW, "SmoothPlastic")
+				r:block(-w, y - 0.05, -0.56, w, y + 0.05, 0.65, r.c1, "Metal")
+				local strip = r:block(-w + 0.1, y - 0.09, 0.5, w - 0.1, y - 0.05, 0.56, GLOW, "Glass")
 				if i == 4 then
 					r:glow(strip, 12, 0.8, LIGHT)
 				else
@@ -557,13 +557,13 @@ local items: { Item } = {
 				end
 			end
 			-- in the round bottom a ringed toy planet
-			r:ball(0, 0.88, 0.1, 0.8, CORAL, "SmoothPlastic")
+			r:ball(0, 0.88, 0.1, 0.8, CORAL, "Metal")
 			r:add({
 				shape = "Cylinder",
 				cf = CFrame.new(0, 0.9, 0.1) * CFrame.Angles(0, 0, math.pi / 2 + 0.3),
 				size = Vector3.new(0.04, 1.2, 1.2),
 				color = PALE,
-				mat = "SmoothPlastic",
+				mat = "Metal",
 			})
 			-- data cubes and a little plant
 			local y1 = yb + 0.05
@@ -574,10 +574,10 @@ local items: { Item } = {
 					0.3,
 					0.3,
 					col,
-					"SmoothPlastic"
+					"Metal"
 				)
 			end
-			r:cyl(0.8, y1 + 0.18, 0.0, 0.36, 0.42, "y", SHELL, "SmoothPlastic")
+			r:cyl(0.8, y1 + 0.18, 0.0, 0.36, 0.42, "y", SHELL, "Metal")
 			r:lump(CFrame.new(0.8, y1 + 0.5, 0.0) * CFrame.Angles(0.3, 0.5, 0.2), 0.5, 0.38, 0.46, C.Leaf, "Grass")
 			r:lump(CFrame.new(0.9, y1 + 0.62, -0.05) * CFrame.Angles(0.6, 0.1, 0.4), 0.3, 0.3, 0.3, C.DarkLeaf, "Grass")
 			-- a row of slim data slates, and a glass lamp of drifting blobs
@@ -586,28 +586,28 @@ local items: { Item } = {
 				local cols = { SLATE, PALE, LILAC, SHELL, Color3.fromRGB(120, 170, 190), SLATE, PALE }
 				for k, col in cols do
 					local x = -1.3 + (k - 1) * 0.13
-					q:block(x, y2, -0.4, x + 0.1, y2 + 0.62 + (k % 3) * 0.06, 0.35, col, "SmoothPlastic")
+					q:block(x, y2, -0.4, x + 0.1, y2 + 0.62 + (k % 3) * 0.06, 0.35, col, "Metal")
 				end
-			end)
+			end, nil, "Metal")
 			r:cyl(0.75, y2 + 0.06, 0, 0.12, 0.42, "y", SLATE, "Metal")
 			local lamp = r:cyl(0.75, y2 + 0.395, 0, 0.55, 0.34, "y", C.Glass, "Glass")
 			lamp.transp = 0.45
 			for k = 0, 2 do
-				glowOnly(r:ball(0.75 + (k - 1) * 0.06, y2 + 0.25 + k * 0.15, 0, 0.14, CORAL, "SmoothPlastic"))
+				glowOnly(r:ball(0.75 + (k - 1) * 0.06, y2 + 0.25 + k * 0.15, 0, 0.14, CORAL, "Metal"))
 			end
 			r:cyl(0.75, y2 + 0.71, 0, 0.08, 0.3, "y", SLATE, "Metal")
 			-- a toy robot and a cup
 			local y3 = 3.75
-			r:block(-1.0, y3, -0.15, -0.6, y3 + 0.3, 0.15, SHELL, "SmoothPlastic")
-			r:block(-0.98, y3 + 0.32, -0.14, -0.62, y3 + 0.55, 0.14, SHELL, "SmoothPlastic")
-			r:block(-0.94, y3 + 0.37, 0.14, -0.66, y3 + 0.5, 0.17, SCREEN, "SmoothPlastic")
+			r:block(-1.0, y3, -0.15, -0.6, y3 + 0.3, 0.15, SHELL, "Metal")
+			r:block(-0.98, y3 + 0.32, -0.14, -0.62, y3 + 0.55, 0.14, SHELL, "Metal")
+			r:block(-0.94, y3 + 0.37, 0.14, -0.66, y3 + 0.5, 0.17, SCREEN, "Glass")
 			rod(r, Vector3.new(-0.8, y3 + 0.55, 0), Vector3.new(-0.8, y3 + 0.64, 0), 0.03, SLATE)
-			r:ball(-0.8, y3 + 0.67, 0, 0.08, CORAL, "SmoothPlastic")
-			r:cyl(0.6, y3 + 0.17, 0.1, 0.34, 0.3, "y", LILAC, "SmoothPlastic")
+			r:ball(-0.8, y3 + 0.67, 0, 0.08, CORAL, "Metal")
+			r:cyl(0.6, y3 + 0.17, 0.1, 0.34, 0.3, "y", LILAC, "Metal")
 			-- a model rocket and a small globe
 			local y4 = yt + 0.05
-			r:cyl(0.6, y4 + 0.2, 0, 0.4, 0.3, "y", SHELL, "SmoothPlastic")
-			r:cone(0.6, y4 + 0.51, 0, 0.22, 0.3, CORAL, "SmoothPlastic")
+			r:cyl(0.6, y4 + 0.2, 0, 0.4, 0.3, "y", SHELL, "Metal")
+			r:cone(0.6, y4 + 0.51, 0, 0.22, 0.3, CORAL, "Metal")
 			for k = 0, 2 do
 				local a = k * 2 * math.pi / 3
 				local o = Vector3.new(math.cos(a), 0, math.sin(a))
@@ -617,15 +617,15 @@ local items: { Item } = {
 					Vector3.new(0.6, y4 + 0.05, 0) + o * 0.34,
 					0.04,
 					CORAL,
-					"SmoothPlastic"
+					"Metal"
 				)
 			end
 			r:cyl(-0.7, y4 + 0.04, 0, 0.08, 0.3, "y", SLATE, "Metal")
 			rod(r, Vector3.new(-0.7, y4 + 0.08, 0), Vector3.new(-0.7, y4 + 0.2, 0), 0.05, SLATE)
-			r:ball(-0.7, y4 + 0.42, 0, 0.46, Color3.fromRGB(120, 170, 190), "SmoothPlastic")
+			r:ball(-0.7, y4 + 0.42, 0, 0.46, Color3.fromRGB(120, 170, 190), "Metal")
 			-- a little cactus up top
 			local y5 = 5.35
-			r:cyl(0, y5 + 0.1, 0, 0.2, 0.32, "y", LILAC, "SmoothPlastic")
+			r:cyl(0, y5 + 0.1, 0, 0.2, 0.32, "y", LILAC, "Metal")
 			r:lump(CFrame.new(0, y5 + 0.32, 0), 0.22, 0.32, 0.22, C.DarkLeaf, "Grass")
 			r:lump(CFrame.new(0.12, y5 + 0.32, 0) * CFrame.Angles(0, 0, -0.6), 0.12, 0.2, 0.12, C.DarkLeaf, "Grass")
 		end,
@@ -650,32 +650,32 @@ local items: { Item } = {
 				end
 			end
 			local function rounded(y1: number, y2: number, inset: number, col: Color3)
-				r:block(-1.2 + inset, y1, -0.7, 1.2 - inset, y2, 0.7, col, "SmoothPlastic")
-				r:block(-1.0, y1, -0.9 + inset, 1.0, y2, 0.9 - inset, col, "SmoothPlastic")
+				r:block(-1.2 + inset, y1, -0.7, 1.2 - inset, y2, 0.7, col, "Metal")
+				r:block(-1.0, y1, -0.9 + inset, 1.0, y2, 0.9 - inset, col, "Metal")
 				for _, sx in { -1, 1 } do
 					for _, sz in { -1, 1 } do
-						r:cyl(sx * 1.0, (y1 + y2) / 2, sz * 0.7, y2 - y1, 0.4 - 2 * inset, "y", col, "SmoothPlastic")
+						r:cyl(sx * 1.0, (y1 + y2) / 2, sz * 0.7, y2 - y1, 0.4 - 2 * inset, "y", col, "Metal")
 					end
 				end
 			end
 			rounded(0.15, 1.5, 0, r.c1)
-			r:block(-1.12, 1.5, -0.82, 1.12, 1.56, 0.82, SLATE, "SmoothPlastic")
+			r:block(-1.12, 1.5, -0.82, 1.12, 1.56, 0.82, SLATE, "Metal")
 			rounded(1.56, 2.0, 0, r.c2)
 			rounded(2.0, 2.1, 0.08, r.c2)
 			-- a latch with a lit button, a yellow band, and a handle at each end
-			r:block(-0.25, 1.3, 0.9, 0.25, 1.75, 0.98, SLATE, "SmoothPlastic")
-			glowOnly(r:cyl(0, 1.55, 0.99, 0.04, 0.16, "z", GLOW, "SmoothPlastic"))
-			r:block(-0.95, 0.55, 0.9, 0.95, 0.7, 0.94, C.Yellow, "SmoothPlastic")
-			r:block(-0.95, 0.55, -0.94, 0.95, 0.7, -0.9, C.Yellow, "SmoothPlastic")
+			r:block(-0.25, 1.3, 0.9, 0.25, 1.75, 0.98, SLATE, "Metal")
+			glowOnly(r:cyl(0, 1.55, 0.99, 0.04, 0.16, "z", GLOW, "Glass"))
+			r:block(-0.95, 0.55, 0.9, 0.95, 0.7, 0.94, C.Yellow, "Metal")
+			r:block(-0.95, 0.55, -0.94, 0.95, 0.7, -0.9, C.Yellow, "Metal")
 			for _, sx in { -1, 1 } do
 				for _, sz in { -0.4, 0.4 } do
 					rod(r, Vector3.new(sx * 1.18, 1.1, sz), Vector3.new(sx * 1.34, 1.1, sz), 0.08, SLATE, "Metal")
 				end
 				rod(r, Vector3.new(sx * 1.34, 1.1, -0.44), Vector3.new(sx * 1.34, 1.1, 0.44), 0.1, SLATE, "Metal")
 			end
-			r:block(0.45, 1.05, 0.9, 0.85, 1.3, 0.94, PALE, "SmoothPlastic")
+			r:block(0.45, 1.05, 0.9, 0.85, 1.3, 0.94, PALE, "Metal")
 			for k = 0, 2 do
-				r:block(0.5 + k * 0.12, 1.13, 0.94, 0.58 + k * 0.12, 1.21, 0.97, SLATE, "SmoothPlastic")
+				r:block(0.5 + k * 0.12, 1.13, 0.94, 0.58 + k * 0.12, 1.21, 0.97, SLATE, "Metal")
 			end
 		end,
 	},
@@ -696,45 +696,45 @@ local items: { Item } = {
 		tags = { "kitchen" },
 		build = function(r: R)
 			-- a tall unit on a dark plinth, with an alcove where the food appears
-			r:block(-1.5, 0, -1.1, 1.5, 0.3, 0.95, SLATE, "SmoothPlastic")
-			glowOnly(r:block(-1.3, 0.12, 0.95, 1.3, 0.18, 0.99, GLOW, "SmoothPlastic"))
-			r:block(-1.6, 0.3, -1.2, -1.0, 6.6, 1.1, r.c1, "SmoothPlastic")
-			r:block(1.0, 0.3, -1.2, 1.6, 6.6, 1.1, r.c1, "SmoothPlastic")
-			r:block(-1.0, 0.3, -1.2, 1.0, 3.0, 1.1, r.c1, "SmoothPlastic")
-			r:block(-1.0, 4.8, -1.2, 1.0, 6.6, 1.1, r.c1, "SmoothPlastic")
-			r:block(-1.0, 3.0, -1.2, 1.0, 4.8, 0.2, SLATE, "SmoothPlastic")
-			r:block(-1.0, 3.0, 0.2, 1.0, 3.04, 1.1, SLATE, "SmoothPlastic")
+			r:block(-1.5, 0, -1.1, 1.5, 0.3, 0.95, SLATE, "Metal")
+			glowOnly(r:block(-1.3, 0.12, 0.95, 1.3, 0.18, 0.99, GLOW, "Glass"))
+			r:block(-1.6, 0.3, -1.2, -1.0, 6.6, 1.1, r.c1, "Metal")
+			r:block(1.0, 0.3, -1.2, 1.6, 6.6, 1.1, r.c1, "Metal")
+			r:block(-1.0, 0.3, -1.2, 1.0, 3.0, 1.1, r.c1, "Metal")
+			r:block(-1.0, 4.8, -1.2, 1.0, 6.6, 1.1, r.c1, "Metal")
+			r:block(-1.0, 3.0, -1.2, 1.0, 4.8, 0.2, SLATE, "Metal")
+			r:block(-1.0, 3.0, 0.2, 1.0, 3.04, 1.1, SLATE, "Metal")
 			-- a rounded top
-			r:block(-1.6, 6.6, -1.2, 1.6, 6.8, 0.9, r.c1, "SmoothPlastic")
-			r:cyl(0, 6.6, 0.9, 3.2, 0.4, "x", r.c1, "SmoothPlastic")
+			r:block(-1.6, 6.6, -1.2, 1.6, 6.8, 0.9, r.c1, "Metal")
+			r:cyl(0, 6.6, 0.9, 3.2, 0.4, "x", r.c1, "Metal")
 			-- two drawers and two doors, with handles of light
 			for _, y in { { 0.35, 1.6 }, { 1.65, 2.9 } } do
-				r:block(-1.55, y[1], 1.1, 1.55, y[2], 1.14, shade(r.c1, 0.97), "SmoothPlastic")
-				glowOnly(r:block(-0.6, y[2] - 0.14, 1.14, 0.6, y[2] - 0.08, 1.18, GLOW, "SmoothPlastic"))
+				r:block(-1.55, y[1], 1.1, 1.55, y[2], 1.14, shade(r.c1, 0.97), "Metal")
+				glowOnly(r:block(-0.6, y[2] - 0.14, 1.14, 0.6, y[2] - 0.08, 1.18, GLOW, "Glass"))
 			end
 			for _, sx in { -1, 1 } do
 				local xa, xb = sx * 0.02, sx * 1.55
-				r:block(math.min(xa, xb), 4.85, 1.1, math.max(xa, xb), 6.55, 1.14, r.c2, "SmoothPlastic")
-				r:block(sx * 0.12 - 0.03, 5.1, 1.14, sx * 0.12 + 0.03, 5.7, 1.18, SHELL, "SmoothPlastic")
+				r:block(math.min(xa, xb), 4.85, 1.1, math.max(xa, xb), 6.55, 1.14, r.c2, "Metal")
+				r:block(sx * 0.12 - 0.03, 5.1, 1.14, sx * 0.12 + 0.03, 5.7, 1.18, SHELL, "Metal")
 			end
 			-- in the alcove: a lit ring on the floor, a plate with a cup and a bun, and the beam
 			r:cyl(0, 4.74, 0.65, 0.12, 0.6, "y", SLATE, "Metal")
-			r:glow(r:cyl(0, 4.66, 0.65, 0.04, 0.4, "y", GLOW, "SmoothPlastic"), 10, 0.8, LIGHT)
-			glowOnly(r:cyl(0, 3.055, 0.65, 0.03, 1.1, "y", GLOW, "SmoothPlastic"))
-			r:cyl(0, 3.085, 0.65, 0.03, 0.9, "y", SLATE, "SmoothPlastic")
-			r:cyl(0, 3.13, 0.65, 0.06, 0.8, "y", SHELL, "SmoothPlastic")
-			r:cyl(-0.12, 3.335, 0.65, 0.35, 0.3, "y", SHELL, "SmoothPlastic")
-			r:cyl(-0.12, 3.525, 0.65, 0.03, 0.22, "y", Color3.fromRGB(110, 76, 56), "SmoothPlastic")
-			r:block(-0.31, 3.25, 0.62, -0.25, 3.42, 0.68, SHELL, "SmoothPlastic")
-			r:lump(CFrame.new(0.2, 3.25, 0.72), 0.3, 0.18, 0.3, Color3.fromRGB(214, 168, 110), "SmoothPlastic")
+			r:glow(r:cyl(0, 4.66, 0.65, 0.04, 0.4, "y", GLOW, "Glass"), 10, 0.8, LIGHT)
+			glowOnly(r:cyl(0, 3.055, 0.65, 0.03, 1.1, "y", GLOW, "Glass"))
+			r:cyl(0, 3.085, 0.65, 0.03, 0.9, "y", SLATE, "Metal")
+			r:cyl(0, 3.13, 0.65, 0.06, 0.8, "y", SHELL, "Metal")
+			r:cyl(-0.12, 3.335, 0.65, 0.35, 0.3, "y", SHELL, "Metal")
+			r:cyl(-0.12, 3.525, 0.65, 0.03, 0.22, "y", Color3.fromRGB(110, 76, 56), "Metal")
+			r:block(-0.31, 3.25, 0.62, -0.25, 3.42, 0.68, SHELL, "Metal")
+			r:lump(CFrame.new(0.2, 3.25, 0.72), 0.3, 0.18, 0.3, Color3.fromRGB(214, 168, 110), "Metal")
 			local beam = r:cyl(0, 3.9, 0.65, 1.5, 0.9, "y", GLOW, "Neon")
 			beam.transp = 0.75
 			r:noCollide(beam)
 			-- a touch panel beside the alcove
-			r:block(1.1, 3.4, 1.1, 1.5, 4.4, 1.14, SCREEN, "SmoothPlastic")
+			r:block(1.1, 3.4, 1.1, 1.5, 4.4, 1.14, SCREEN, "Glass")
 			for k, col in { GLOW, C.Yellow, CORAL, LILAC } do
 				glowOnly(
-					r:block(1.2, 3.5 + (k - 1) * 0.22, 1.14, 1.4, 3.62 + (k - 1) * 0.22, 1.17, col, "SmoothPlastic")
+					r:block(1.2, 3.5 + (k - 1) * 0.22, 1.14, 1.4, 3.62 + (k - 1) * 0.22, 1.17, col, "Metal")
 				)
 			end
 		end,
@@ -753,18 +753,18 @@ local items: { Item } = {
 		tags = { "kitchen" },
 		build = function(r: R)
 			-- a body with round front corners on a dark plinth
-			r:block(-1.85, 0, -1.1, 1.85, 0.3, 0.9, SLATE, "SmoothPlastic")
-			glowOnly(r:block(-1.4, 0.12, 0.9, 1.4, 0.18, 0.94, GLOW, "SmoothPlastic"))
-			r:block(-1.7, 0.3, -1.3, 1.7, 3.2, 0.8, r.c1, "SmoothPlastic")
-			r:block(-1.4, 0.3, 0.8, 1.4, 3.2, 1.1, r.c1, "SmoothPlastic")
+			r:block(-1.85, 0, -1.1, 1.85, 0.3, 0.9, SLATE, "Metal")
+			glowOnly(r:block(-1.4, 0.12, 0.9, 1.4, 0.18, 0.94, GLOW, "Glass"))
+			r:block(-1.7, 0.3, -1.3, 1.7, 3.2, 0.8, r.c1, "Metal")
+			r:block(-1.4, 0.3, 0.8, 1.4, 3.2, 1.1, r.c1, "Metal")
 			for _, sx in { -1, 1 } do
-				r:cyl(sx * 1.4, 1.75, 0.8, 2.9, 0.6, "y", r.c1, "SmoothPlastic")
+				r:cyl(sx * 1.4, 1.75, 0.8, 2.9, 0.6, "y", r.c1, "Metal")
 			end
 			-- the top in the second colour, following the same shape a little proud
-			r:block(-1.76, 3.2, -1.3, 1.76, 3.4, 0.8, r.c2, "SmoothPlastic")
-			r:block(-1.4, 3.2, 0.8, 1.4, 3.4, 1.16, r.c2, "SmoothPlastic")
+			r:block(-1.76, 3.2, -1.3, 1.76, 3.4, 0.8, r.c2, "Metal")
+			r:block(-1.4, 3.2, 0.8, 1.4, 3.4, 1.16, r.c2, "Metal")
 			for _, sx in { -1, 1 } do
-				r:cyl(sx * 1.4, 3.3, 0.8, 0.2, 0.72, "y", r.c2, "SmoothPlastic")
+				r:cyl(sx * 1.4, 3.3, 0.8, 0.2, 0.72, "y", r.c2, "Metal")
 			end
 			-- a door either side and three drawers between, each with a handle of light
 			for _, f in { { -1.32, -0.47, 1 }, { -0.43, 0.43, 3 }, { 0.47, 1.32, 1 } } do
@@ -772,27 +772,27 @@ local items: { Item } = {
 				local h = 2.8 / n
 				for k = 0, n - 1 do
 					local y1 = 0.36 + k * h
-					r:block(f[1], y1, 1.1, f[2], y1 + h - 0.05, 1.14, shade(r.c1, 0.97), "SmoothPlastic")
+					r:block(f[1], y1, 1.1, f[2], y1 + h - 0.05, 1.14, shade(r.c1, 0.97), "Metal")
 					local xm = (f[1] + f[2]) / 2
 					glowOnly(
-						r:block(xm - 0.2, y1 + h - 0.2, 1.14, xm + 0.2, y1 + h - 0.14, 1.18, GLOW, "SmoothPlastic")
+						r:block(xm - 0.2, y1 + h - 0.2, 1.14, xm + 0.2, y1 + h - 0.14, 1.18, GLOW, "Glass")
 					)
 				end
 			end
 			-- two rings of light to cook on, a little pot on one
-			r:glow(r:cyl(-0.9, 3.415, 0.25, 0.03, 0.82, "y", GLOW, "SmoothPlastic"), 10, 0.8, LIGHT)
-			r:cyl(-0.9, 3.445, 0.25, 0.03, 0.66, "y", SLATE, "SmoothPlastic")
-			glowOnly(r:cyl(-0.9, 3.415, -0.75, 0.03, 0.62, "y", GLOW, "SmoothPlastic"))
-			r:cyl(-0.9, 3.445, -0.75, 0.03, 0.48, "y", SLATE, "SmoothPlastic")
-			r:cyl(-0.9, 3.63, 0.25, 0.34, 0.6, "y", CORAL, "SmoothPlastic")
-			r:cyl(-0.9, 3.82, 0.25, 0.04, 0.66, "y", shade(CORAL, 0.85), "SmoothPlastic")
-			r:ball(-0.9, 3.87, 0.25, 0.12, SLATE, "SmoothPlastic")
+			r:glow(r:cyl(-0.9, 3.415, 0.25, 0.03, 0.82, "y", GLOW, "Glass"), 10, 0.8, LIGHT)
+			r:cyl(-0.9, 3.445, 0.25, 0.03, 0.66, "y", SLATE, "Metal")
+			glowOnly(r:cyl(-0.9, 3.415, -0.75, 0.03, 0.62, "y", GLOW, "Glass"))
+			r:cyl(-0.9, 3.445, -0.75, 0.03, 0.48, "y", SLATE, "Metal")
+			r:cyl(-0.9, 3.63, 0.25, 0.34, 0.6, "y", CORAL, "Metal")
+			r:cyl(-0.9, 3.82, 0.25, 0.04, 0.66, "y", shade(CORAL, 0.85), "Metal")
+			r:ball(-0.9, 3.87, 0.25, 0.12, SLATE, "Metal")
 			for _, sx in { -1, 1 } do
-				r:block(-0.9 + sx * 0.3, 3.65, 0.21, -0.9 + sx * 0.4, 3.7, 0.29, SLATE, "SmoothPlastic")
+				r:block(-0.9 + sx * 0.3, 3.65, 0.21, -0.9 + sx * 0.4, 3.7, 0.29, SLATE, "Metal")
 			end
 			-- a round sink with an arched tap and a light that sees your hands
-			plate(r, 0.8, -0.2, 3.4, 3.43, 1.1, SLATE, "SmoothPlastic")
-			plate(r, 0.8, -0.2, 3.43, 3.46, 0.8, Color3.fromRGB(120, 150, 170), "SmoothPlastic")
+			plate(r, 0.8, -0.2, 3.4, 3.43, 1.1, SLATE, "Metal")
+			plate(r, 0.8, -0.2, 3.43, 3.46, 0.8, Color3.fromRGB(120, 150, 170), "Metal")
 			r:cyl(0.8, 3.475, -0.2, 0.03, 0.12, "y", STEEL, "Metal")
 			local tap = {
 				Vector3.new(0.8, 3.4, -1.0),
@@ -802,9 +802,9 @@ local items: { Item } = {
 				Vector3.new(0.8, 3.75, -0.45),
 			}
 			for k = 1, #tap - 1 do
-				rod(r, tap[k], tap[k + 1], 0.1, r.c1, "SmoothPlastic")
+				rod(r, tap[k], tap[k + 1], 0.1, r.c1, "Metal")
 			end
-			glowOnly(r:ball(0.8, 3.7, -0.95, 0.08, GLOW, "SmoothPlastic"))
+			glowOnly(r:ball(0.8, 3.7, -0.95, 0.08, GLOW, "Glass"))
 		end,
 	},
 
@@ -823,8 +823,8 @@ local items: { Item } = {
 		tags = { "bath" },
 		build = function(r: R)
 			-- a round tray, a white curved back, a curved glass front and a lid of mist jets
-			plate(r, 0, 0, 0, 0.25, 3.6, r.c2, "SmoothPlastic")
-			plate(r, 0, 0, 0.25, 0.28, 2.9, SLATE, "SmoothPlastic")
+			plate(r, 0, 0, 0, 0.25, 3.6, r.c2, "Metal")
+			plate(r, 0, 0, 0.25, 0.28, 2.9, SLATE, "Metal")
 			r:cyl(0, 0.295, 0, 0.03, 0.2, "y", STEEL, "Metal")
 			local R = 1.65
 			local n = 8
@@ -834,25 +834,25 @@ local items: { Item } = {
 				local back = m > math.pi
 				local cf = round(math.cos(m) * R, 3.63, math.sin(m) * R, m)
 				if back then
-					r:boxAt(cf, seg, 6.7, 0.14, r.c1, "SmoothPlastic")
+					r:boxAt(cf, seg, 6.7, 0.14, r.c1, "Metal")
 				else
 					local pane = r:boxAt(cf, seg, 6.7, 0.06, C.Glass, "Glass")
 					pane.transp = 0.6
 				end
 			end
-			plate(r, 0, 0, 6.98, 7.22, 3.6, r.c1, "SmoothPlastic")
-			plate(r, 0, 0, 7.22, 7.3, 2.8, r.c2, "SmoothPlastic")
+			plate(r, 0, 0, 6.98, 7.22, 3.6, r.c1, "Metal")
+			plate(r, 0, 0, 7.22, 7.3, 2.8, r.c2, "Metal")
 			r:cyl(0, 6.93, 0, 0.1, 0.9, "y", SLATE, "Metal")
 			for k = 0, 7 do
 				local a = k * math.pi / 4
-				glowOnly(r:cyl(math.cos(a) * 1.0, 6.95, math.sin(a) * 1.0, 0.06, 0.14, "y", GLOW, "SmoothPlastic"))
+				glowOnly(r:cyl(math.cos(a) * 1.0, 6.95, math.sin(a) * 1.0, 0.06, 0.14, "y", GLOW, "Glass"))
 			end
 			-- a line of light up the back, a control panel and a door handle
-			r:glow(r:block(-0.05, 0.5, -1.58, 0.05, 6.5, -1.54, GLOW, "SmoothPlastic"), 12, 0.8, LIGHT)
-			r:block(0.4, 3.7, -1.58, 0.9, 4.4, -1.52, SLATE, "SmoothPlastic")
+			r:glow(r:block(-0.05, 0.5, -1.58, 0.05, 6.5, -1.54, GLOW, "Glass"), 12, 0.8, LIGHT)
+			r:block(0.4, 3.7, -1.58, 0.9, 4.4, -1.52, SLATE, "Metal")
 			for k, col in { GLOW, C.Yellow, CORAL } do
 				glowOnly(
-					r:block(0.5, 3.8 + (k - 1) * 0.2, -1.52, 0.8, 3.9 + (k - 1) * 0.2, -1.49, col, "SmoothPlastic")
+					r:block(0.5, 3.8 + (k - 1) * 0.2, -1.52, 0.8, 3.9 + (k - 1) * 0.2, -1.49, col, "Metal")
 				)
 			end
 			rod(r, Vector3.new(0.9, 3.0, 1.55), Vector3.new(0.9, 4.4, 1.55), 0.08, r.c2, "Metal")
@@ -875,12 +875,12 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a waisted pedestal with a band of light, and a round bowl on top
 			plate(r, 0, 0, 0, 0.12, 1.1, SLATE, "Metal")
-			r:cyl(0, 0.36, 0, 0.48, 0.9, "y", r.c1, "SmoothPlastic")
-			r:cyl(0, 1.4, 0, 1.6, 0.7, "y", r.c1, "SmoothPlastic")
-			r:cyl(0, 2.35, 0, 0.3, 0.9, "y", r.c1, "SmoothPlastic")
-			r:glow(r:cyl(0, 0.9, 0, 0.06, 0.78, "y", GLOW, "SmoothPlastic"), 10, 0.7, LIGHT)
-			plate(r, 0, 0, 2.5, 2.85, 1.7, r.c1, "SmoothPlastic")
-			plate(r, 0, 0, 2.85, 2.88, 1.35, Color3.fromRGB(200, 226, 236), "SmoothPlastic")
+			r:cyl(0, 0.36, 0, 0.48, 0.9, "y", r.c1, "Metal")
+			r:cyl(0, 1.4, 0, 1.6, 0.7, "y", r.c1, "Metal")
+			r:cyl(0, 2.35, 0, 0.3, 0.9, "y", r.c1, "Metal")
+			r:glow(r:cyl(0, 0.9, 0, 0.06, 0.78, "y", GLOW, "Glass"), 10, 0.7, LIGHT)
+			plate(r, 0, 0, 2.5, 2.85, 1.7, r.c1, "Metal")
+			plate(r, 0, 0, 2.85, 2.88, 1.35, Color3.fromRGB(200, 226, 236), "Metal")
 			r:cyl(0, 2.895, 0, 0.03, 0.14, "y", STEEL, "Metal")
 			-- an arched tap with a sensor light
 			local tap = {
@@ -891,12 +891,12 @@ local items: { Item } = {
 				Vector3.new(0, 3.4, -0.25),
 			}
 			for k = 1, #tap - 1 do
-				rod(r, tap[k], tap[k + 1], 0.12, r.c2, "SmoothPlastic")
+				rod(r, tap[k], tap[k + 1], 0.12, r.c2, "Metal")
 			end
-			glowOnly(r:ball(0, 3.2, -0.65, 0.08, GLOW, "SmoothPlastic"))
+			glowOnly(r:ball(0, 3.2, -0.65, 0.08, GLOW, "Glass"))
 			-- a soap pump, and a small towel over a bar on the side
-			r:cyl(0.55, 3.0, -0.45, 0.3, 0.22, "y", r.c2, "SmoothPlastic")
-			r:cyl(0.55, 3.2, -0.45, 0.1, 0.1, "y", SLATE, "SmoothPlastic")
+			r:cyl(0.55, 3.0, -0.45, 0.3, 0.22, "y", r.c2, "Metal")
+			r:cyl(0.55, 3.2, -0.45, 0.1, 0.1, "y", SLATE, "Metal")
 			rod(r, Vector3.new(0.35, 1.9, 0), Vector3.new(0.72, 1.9, 0), 0.06, STEEL, "Metal")
 			r:block(0.45, 1.45, -0.04, 0.68, 1.93, -0.0, LILAC, "Fabric")
 			r:block(0.45, 1.55, 0.0, 0.68, 1.93, 0.04, LILAC, "Fabric")
@@ -919,24 +919,24 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a round foot, an arc that holds a glowing ball from behind
 			plate(r, 0, 0, 0, 0.12, 1.0, r.c2, "Metal")
-			r:cyl(0, 0.22, 0, 0.2, 0.7, "y", r.c1, "SmoothPlastic")
+			r:cyl(0, 0.22, 0, 0.2, 0.7, "y", r.c1, "Metal")
 			local cy = 1.05
-			rod(r, Vector3.new(0, 0.3, -0.15), Vector3.new(0, cy - 0.5, -0.2), 0.08, r.c1, "SmoothPlastic")
+			rod(r, Vector3.new(0, 0.3, -0.15), Vector3.new(0, cy - 0.5, -0.2), 0.08, r.c1, "Metal")
 			local last: Vector3? = nil
 			for k = 0, 8 do
 				local t = -1.2 + k * (3.2 / 8)
 				local p = Vector3.new(0, cy + 0.55 * math.sin(t), -0.55 * math.cos(t))
 				if last then
-					rod(r, last, p, 0.08, r.c1, "SmoothPlastic")
+					rod(r, last, p, 0.08, r.c1, "Metal")
 				end
 				last = p
 			end
 			if last then
 				r:ball(last.X, last.Y, last.Z, 0.12, r.c2, "Metal")
 			end
-			r:glow(r:ball(0, cy, 0, 0.72, GLOW, "SmoothPlastic"), 12, 1, LIGHT)
+			r:glow(r:ball(0, cy, 0, 0.72, GLOW, "Glass"), 12, 1, LIGHT)
 			r:cyl(0, cy, -0.36, 0.08, 0.2, "z", r.c2, "Metal")
-			glowOnly(r:block(-0.12, 0.15, 0.35, 0.12, 0.2, 0.39, GLOW, "SmoothPlastic"))
+			glowOnly(r:block(-0.12, 0.15, 0.35, 0.12, 0.2, 0.39, GLOW, "Glass"))
 		end,
 	},
 	{
@@ -952,7 +952,7 @@ local items: { Item } = {
 		tags = { "light" },
 		build = function(r: R)
 			-- a round mount, three fine wires, and a ring of light hanging level
-			plate(r, 0, 0, -0.08, 0, 0.9, r.c1, "SmoothPlastic")
+			plate(r, 0, 0, -0.08, 0, 0.9, r.c1, "Metal")
 			r:cyl(0, -0.12, 0, 0.08, 0.3, "y", r.c2, "Metal")
 			for k = 0, 2 do
 				local a = k * 2 * math.pi / 3 + 0.3
@@ -968,7 +968,7 @@ local items: { Item } = {
 			local R, n = 1.3, 12
 			local seg = 2 * R * math.sin(math.pi / n)
 			r:piece(function(q: R)
-				q:box(R, -1.25, 0, 0.01, 0.01, 0.01, r.c1, "SmoothPlastic")
+				q:box(R, -1.25, 0, 0.01, 0.01, 0.01, r.c1, "Metal")
 				for k = 0, n - 1 do
 					local m = k * 2 * math.pi / n
 					q:boxAt(
@@ -977,10 +977,10 @@ local items: { Item } = {
 						0.18,
 						0.24,
 						r.c1,
-						"SmoothPlastic"
+						"Metal"
 					)
 				end
-			end)
+			end, nil, "Metal")
 			for k = 0, n - 1 do
 				local m = k * 2 * math.pi / n
 				local p = r:boxAt(
@@ -989,7 +989,7 @@ local items: { Item } = {
 					0.04,
 					0.12,
 					GLOW,
-					"SmoothPlastic"
+					"Glass"
 				)
 				if k == 0 then
 					r:glow(p, 18, 1.2, LIGHT)
@@ -1014,14 +1014,14 @@ local items: { Item } = {
 			-- three flat round pads set in a row, joined by a flat cable
 			for k, x in { -1.4, 0, 1.4 } do
 				plate(r, x, 0, 0, 0.06, 1.0, r.c2, "Metal")
-				plate(r, x, 0, 0.06, 0.1, 0.86, r.c1, "SmoothPlastic")
-				local lens = r:noCollide(r:cyl(x, 0.12, 0, 0.04, 0.62, "y", GLOW, "SmoothPlastic"))
+				plate(r, x, 0, 0.06, 0.1, 0.86, r.c1, "Metal")
+				local lens = r:noCollide(r:cyl(x, 0.12, 0, 0.04, 0.62, "y", GLOW, "Glass"))
 				if k == 2 then
 					r:glow(lens, 12, 0.8, LIGHT)
 				else
 					glowOnly(lens)
 				end
-				r:noCollide(r:cyl(x, 0.155, 0, 0.03, 0.2, "y", SHELL, "SmoothPlastic"))
+				r:noCollide(r:cyl(x, 0.155, 0, 0.03, 0.2, "y", SHELL, "Metal"))
 			end
 			for _, x in { -0.7, 0.7 } do
 				r:noCollide(r:block(x - 0.25, 0, -0.04, x + 0.25, 0.03, 0.04, r.c2, "Rubber"))
@@ -1041,13 +1041,13 @@ local items: { Item } = {
 		tags = { "light" },
 		build = function(r: R)
 			-- a long round ended housing, lit along its underside and with a line on its face
-			r:block(-1.8, 0.2, 0, 1.8, 0.6, 0.3, r.c1, "SmoothPlastic")
+			r:block(-1.8, 0.2, 0, 1.8, 0.6, 0.3, r.c1, "Metal")
 			for _, sx in { -1, 1 } do
-				discAt(r, CFrame.new(sx * 1.8, 0.4, 0.15), 0.4, 0.3, r.c1, "SmoothPlastic")
+				discAt(r, CFrame.new(sx * 1.8, 0.4, 0.15), 0.4, 0.3, r.c1, "Metal")
 			end
-			r:glow(r:block(-1.7, 0.16, 0.06, 1.7, 0.2, 0.26, GLOW, "SmoothPlastic"), 16, 1.1, LIGHT)
-			glowOnly(r:block(-1.5, 0.37, 0.3, 1.5, 0.43, 0.33, GLOW, "SmoothPlastic"))
-			r:cyl(1.75, 0.4, 0.315, 0.03, 0.16, "z", r.c2, "SmoothPlastic")
+			r:glow(r:block(-1.7, 0.16, 0.06, 1.7, 0.2, 0.26, GLOW, "Glass"), 16, 1.1, LIGHT)
+			glowOnly(r:block(-1.5, 0.37, 0.3, 1.5, 0.43, 0.33, GLOW, "Glass"))
+			r:cyl(1.75, 0.4, 0.315, 0.03, 0.16, "z", r.c2, "Metal")
 		end,
 	},
 
@@ -1067,10 +1067,10 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a round projector throwing a fan of light up to a picture hanging in the air
 			plate(r, 0, 0, 0, 0.15, 1.6, SLATE, "Metal")
-			r:cyl(0, 0.35, 0, 0.4, 1.3, "y", r.c1, "SmoothPlastic")
-			r:cyl(0, 0.7, 0, 0.3, 1.0, "y", r.c1, "SmoothPlastic")
-			glowOnly(r:cyl(0, 0.58, 0, 0.04, 1.38, "y", r.c2, "SmoothPlastic"))
-			r:glow(r:cyl(0, 0.88, 0, 0.06, 0.7, "y", GLOW, "SmoothPlastic"), 14, 1, LIGHT)
+			r:cyl(0, 0.35, 0, 0.4, 1.3, "y", r.c1, "Metal")
+			r:cyl(0, 0.7, 0, 0.3, 1.0, "y", r.c1, "Metal")
+			glowOnly(r:cyl(0, 0.58, 0, 0.04, 1.38, "y", r.c2, "Metal"))
+			r:glow(r:cyl(0, 0.88, 0, 0.06, 0.7, "y", GLOW, "Glass"), 14, 1, LIGHT)
 			for _, p in
 				r:tri(
 					Vector3.new(0, 0.91, 0),
@@ -1078,13 +1078,13 @@ local items: { Item } = {
 					Vector3.new(1.3, 2.0, 0),
 					0.03,
 					GLOW,
-					"SmoothPlastic"
+					"Glass"
 				)
 			do
 				p.transp = 0.8
 				p.collide = false
 			end
-			local screen = r:block(-1.3, 2.0, -0.03, 1.3, 3.8, 0.03, GLOW, "SmoothPlastic")
+			local screen = r:block(-1.3, 2.0, -0.03, 1.3, 3.8, 0.03, GLOW, "Glass")
 			screen.transp = 0.6
 			r:noCollide(screen)
 			glowOnly(screen)
@@ -1100,12 +1100,12 @@ local items: { Item } = {
 							2.2 + h,
 							0.06,
 							PALE,
-							"SmoothPlastic"
+							"Metal"
 						)
 					)
 				)
 			end
-			discAt(r, CFrame.new(0.55, 3.0, 0.045), 0.6, 0.03, CORAL, "SmoothPlastic")
+			discAt(r, CFrame.new(0.55, 3.0, 0.045), 0.6, 0.03, CORAL, "Metal")
 			r:noCollide(
 				r:boxAt(
 					CFrame.new(0.55, 3.0, 0.075) * CFrame.Angles(0, 0, -0.3),
@@ -1113,7 +1113,7 @@ local items: { Item } = {
 					0.06,
 					0.03,
 					PALE,
-					"SmoothPlastic"
+					"Metal"
 				)
 			)
 			for k, w in { 0.9, 0.6, 0.75 } do
@@ -1126,7 +1126,7 @@ local items: { Item } = {
 						2.36 + (k - 1) * 0.16,
 						0.06,
 						PALE,
-						"SmoothPlastic"
+						"Metal"
 					)
 				)
 			end
@@ -1143,7 +1143,7 @@ local items: { Item } = {
 							yy + 0.04,
 							0.07,
 							SHELL,
-							"SmoothPlastic"
+							"Metal"
 						)
 					)
 				end
@@ -1171,16 +1171,16 @@ local items: { Item } = {
 			end
 			r:cyl(0, 1.75, 0, 0.2, 0.36, "y", SLATE, "Metal")
 			local cy = 2.6
-			r:ball(0, cy, 0, 1.5, r.c1, "SmoothPlastic")
-			r:cyl(0, cy, 0, 0.22, 1.56, "y", r.c2, "SmoothPlastic")
-			discAt(r, CFrame.new(0, cy + 0.02, 0.76), 1.0, 0.1, SLATE, "SmoothPlastic")
+			r:ball(0, cy, 0, 1.5, r.c1, "Metal")
+			r:cyl(0, cy, 0, 0.22, 1.56, "y", r.c2, "Metal")
+			discAt(r, CFrame.new(0, cy + 0.02, 0.76), 1.0, 0.1, SLATE, "Metal")
 			-- a round woofer on each side
 			for _, sx in { -1, 1 } do
 				local side = CFrame.new(sx * 0.77, cy, 0) * CFrame.Angles(0, sx * math.pi / 2, 0)
-				discAt(r, side, 0.72, 0.1, SLATE, "SmoothPlastic")
-				discAt(r, side * CFrame.new(0, 0, 0.07), 0.5, 0.04, r.c2, "SmoothPlastic")
+				discAt(r, side, 0.72, 0.1, SLATE, "Metal")
+				discAt(r, side * CFrame.new(0, 0, 0.07), 0.5, 0.04, r.c2, "Metal")
 				local cap = (side * CFrame.new(0, 0, 0.11)).Position
-				r:ball(cap.X, cap.Y, cap.Z, 0.18, SLATE, "SmoothPlastic")
+				r:ball(cap.X, cap.Y, cap.Z, 0.18, SLATE, "Metal")
 			end
 			for k, h in { 0.2, 0.42, 0.6, 0.36, 0.24 } do
 				local p = r:block(
@@ -1191,7 +1191,7 @@ local items: { Item } = {
 					cy + 0.02 + h / 2,
 					0.84,
 					if k == 3 then CORAL else GLOW,
-					"SmoothPlastic"
+					"Glass"
 				)
 				if k == 3 then
 					r:glow(p, 8, 0.6, LIGHT)
@@ -1200,7 +1200,7 @@ local items: { Item } = {
 				end
 			end
 			rod(r, Vector3.new(0.15, cy + 0.7, 0), Vector3.new(0.3, cy + 1.0, 0), 0.04, SLATE, "Metal")
-			r:ball(0.3, cy + 1.04, 0, 0.14, CORAL, "SmoothPlastic")
+			r:ball(0.3, cy + 1.04, 0, 0.14, CORAL, "Metal")
 		end,
 	},
 
@@ -1220,40 +1220,40 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a round plinth, two round toed feet and short legs
 			plate(r, 0, 0, 0, 0.2, 1.8, SLATE, "Metal")
-			plate(r, 0, 0, 0.2, 0.3, 1.5, r.c2, "SmoothPlastic")
+			plate(r, 0, 0, 0.2, 0.3, 1.5, r.c2, "Metal")
 			for _, sx in { -1, 1 } do
 				local x = sx * 0.35
-				r:block(x - 0.25, 0.3, -0.35, x + 0.25, 0.55, 0.3, r.c1, "SmoothPlastic")
-				r:cyl(x, 0.425, 0.3, 0.5, 0.25, "x", r.c1, "SmoothPlastic")
+				r:block(x - 0.25, 0.3, -0.35, x + 0.25, 0.55, 0.3, r.c1, "Metal")
+				r:cyl(x, 0.425, 0.3, 0.5, 0.25, "x", r.c1, "Metal")
 				r:cyl(x, 0.8, 0, 0.5, 0.25, "y", SLATE, "Metal")
 			end
 			-- a round body with a panel of three buttons
-			r:cyl(0, 1.0, 0, 0.1, 1.1, "y", r.c1, "SmoothPlastic")
-			r:cyl(0, 1.65, 0, 1.2, 1.3, "y", r.c1, "SmoothPlastic")
-			r:cyl(0, 2.3, 0, 0.1, 1.1, "y", r.c1, "SmoothPlastic")
-			r:block(-0.35, 1.3, 0.55, 0.35, 1.95, 0.72, r.c2, "SmoothPlastic")
+			r:cyl(0, 1.0, 0, 0.1, 1.1, "y", r.c1, "Metal")
+			r:cyl(0, 1.65, 0, 1.2, 1.3, "y", r.c1, "Metal")
+			r:cyl(0, 2.3, 0, 0.1, 1.1, "y", r.c1, "Metal")
+			r:block(-0.35, 1.3, 0.55, 0.35, 1.95, 0.72, r.c2, "Metal")
 			for k, col in { CORAL, C.Yellow, GLOW } do
-				r:cyl(-0.36 + k * 0.18, 1.62, 0.74, 0.04, 0.12, "z", col, "SmoothPlastic")
+				r:cyl(-0.36 + k * 0.18, 1.62, 0.74, 0.04, 0.12, "z", col, "Metal")
 			end
 			-- arms: one down, one up in a wave
 			for _, sx in { -1, 1 } do
-				r:ball(sx * 0.68, 2.05, 0, 0.3, r.c2, "SmoothPlastic")
+				r:ball(sx * 0.68, 2.05, 0, 0.3, r.c2, "Metal")
 			end
 			rod(r, Vector3.new(-0.68, 2.05, 0), Vector3.new(-0.86, 1.4, 0.1), 0.16, SLATE, "Metal")
-			r:ball(-0.88, 1.32, 0.1, 0.3, r.c1, "SmoothPlastic")
+			r:ball(-0.88, 1.32, 0.1, 0.3, r.c1, "Metal")
 			rod(r, Vector3.new(0.68, 2.05, 0), Vector3.new(0.96, 2.7, 0.1), 0.16, SLATE, "Metal")
-			r:ball(0.98, 2.8, 0.1, 0.3, r.c1, "SmoothPlastic")
+			r:ball(0.98, 2.8, 0.1, 0.3, r.c1, "Metal")
 			-- the head: a dome topped box with a face on a screen, round ears and an aerial
 			r:cyl(0, 2.38, 0, 0.16, 0.3, "y", SLATE, "Metal")
-			r:block(-0.65, 2.45, -0.5, 0.65, 3.2, 0.5, r.c1, "SmoothPlastic")
-			r:cyl(0, 3.2, 0, 1.3, 1.0, "x", r.c1, "SmoothPlastic")
-			r:block(-0.5, 2.58, 0.5, 0.5, 3.25, 0.54, SCREEN, "SmoothPlastic")
+			r:block(-0.65, 2.45, -0.5, 0.65, 3.2, 0.5, r.c1, "Metal")
+			r:cyl(0, 3.2, 0, 1.3, 1.0, "x", r.c1, "Metal")
+			r:block(-0.5, 2.58, 0.5, 0.5, 3.25, 0.54, SCREEN, "Glass")
 			for _, sx in { -1, 1 } do
-				glowOnly(r:cyl(sx * 0.22, 3.0, 0.555, 0.03, 0.2, "z", GLOW, "SmoothPlastic"))
-				r:cyl(sx * 0.7, 2.95, 0, 0.12, 0.45, "x", r.c2, "SmoothPlastic")
-				glowOnly(r:cyl(sx * 0.78, 2.95, 0, 0.04, 0.16, "x", GLOW, "SmoothPlastic"))
+				glowOnly(r:cyl(sx * 0.22, 3.0, 0.555, 0.03, 0.2, "z", GLOW, "Glass"))
+				r:cyl(sx * 0.7, 2.95, 0, 0.12, 0.45, "x", r.c2, "Metal")
+				glowOnly(r:cyl(sx * 0.78, 2.95, 0, 0.04, 0.16, "x", GLOW, "Glass"))
 			end
-			glowOnly(r:block(-0.12, 2.72, 0.54, 0.12, 2.77, 0.57, GLOW, "SmoothPlastic"))
+			glowOnly(r:block(-0.12, 2.72, 0.54, 0.12, 2.77, 0.57, GLOW, "Glass"))
 			for _, sx in { -1, 1 } do
 				glowOnly(
 					r:boxAt(
@@ -1262,12 +1262,12 @@ local items: { Item } = {
 						0.05,
 						0.03,
 						GLOW,
-						"SmoothPlastic"
+						"Glass"
 					)
 				)
 			end
 			rod(r, Vector3.new(0, 3.65, 0), Vector3.new(0.1, 3.95, 0), 0.05, SLATE, "Metal")
-			r:ball(0.1, 4.02, 0, 0.2, CORAL, "SmoothPlastic")
+			r:ball(0.1, 4.02, 0, 0.2, CORAL, "Metal")
 		end,
 	},
 	{
@@ -1283,20 +1283,20 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a round platform with rings of light set into it, for show
 			plate(r, 0, 0, 0, 0.15, 4.4, SLATE, "Metal")
-			plate(r, 0, 0, 0.15, 0.35, 4.0, r.c1, "SmoothPlastic")
+			plate(r, 0, 0, 0.15, 0.35, 4.0, r.c1, "Metal")
 			plate(r, 0, 0, 0.35, 0.38, 3.3, GLOW, "Neon")
-			plate(r, 0, 0, 0.38, 0.41, 3.0, r.c2, "SmoothPlastic")
+			plate(r, 0, 0, 0.38, 0.41, 3.0, r.c2, "Metal")
 			plate(r, 0, 0, 0.41, 0.44, 1.6, GLOW, "Neon")
-			plate(r, 0, 0, 0.44, 0.47, 1.3, SLATE, "SmoothPlastic")
+			plate(r, 0, 0, 0.44, 0.47, 1.3, SLATE, "Metal")
 			plate(r, 0, 0, 0.47, 0.5, 0.5, GLOW, "Neon")
 			-- three little pylons round the edge with lit tips
 			for k = 0, 2 do
 				local a = k * 2 * math.pi / 3 + math.pi / 2
 				local x, z = math.cos(a) * 1.75, math.sin(a) * 1.75
-				r:cyl(x, 0.75, z, 0.8, 0.4, "y", r.c1, "SmoothPlastic")
+				r:cyl(x, 0.75, z, 0.8, 0.4, "y", r.c1, "Metal")
 				r:cyl(x, 0.9, z, 0.08, 0.48, "y", SLATE, "Metal")
-				r:cyl(x, 1.27, z, 0.26, 0.28, "y", r.c1, "SmoothPlastic")
-				local tip = r:ball(x, 1.48, z, 0.3, GLOW, "SmoothPlastic")
+				r:cyl(x, 1.27, z, 0.26, 0.28, "y", r.c1, "Metal")
+				local tip = r:ball(x, 1.48, z, 0.3, GLOW, "Glass")
 				if k == 0 then
 					r:glow(tip, 14, 1, LIGHT)
 				else
@@ -1319,18 +1319,18 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a round base with a ring of grow light, plants inside, and a glass egg over them
 			plate(r, 0, 0, 0, 0.12, 1.6, r.c2, "Metal")
-			r:cyl(0, 0.33, 0, 0.42, 1.4, "y", r.c1, "SmoothPlastic")
-			r:glow(r:cyl(0, 0.56, 0, 0.04, 1.2, "y", GLOW, "SmoothPlastic"), 8, 0.6, LIGHT)
+			r:cyl(0, 0.33, 0, 0.42, 1.4, "y", r.c1, "Metal")
+			r:glow(r:cyl(0, 0.56, 0, 0.04, 1.2, "y", GLOW, "Glass"), 8, 0.6, LIGHT)
 			r:cyl(0, 0.6, 0, 0.04, 1.0, "y", C.Soil, "Sand")
 			r:lump(CFrame.new(-0.15, 0.85, 0.05) * CFrame.Angles(0.3, 0.6, 0.2), 0.55, 0.45, 0.5, C.Leaf, "Grass")
 			r:lump(CFrame.new(0.2, 0.95, -0.1) * CFrame.Angles(0.6, 0.1, 0.5), 0.4, 0.55, 0.4, C.DarkLeaf, "Grass")
 			rod(r, Vector3.new(0.1, 0.62, 0.2), Vector3.new(0.18, 1.5, 0.12), 0.04, C.DarkLeaf)
-			glowOnly(r:ball(0.18, 1.55, 0.12, 0.16, LILAC, "SmoothPlastic"))
+			glowOnly(r:ball(0.18, 1.55, 0.12, 0.16, LILAC, "Metal"))
 			r:ball(-0.3, 0.68, -0.25, 0.18, C.Stone, "Slate")
 			local glass = r:lump(CFrame.new(0, 1.45, 0), 1.3, 1.8, 1.3, C.Glass, "Glass")
 			glass.transp = 0.6
 			r:cyl(0, 2.38, 0, 0.08, 0.3, "y", r.c2, "Metal")
-			r:ball(0, 2.47, 0, 0.16, r.c1, "SmoothPlastic")
+			r:ball(0, 2.47, 0, 0.16, r.c1, "Metal")
 		end,
 	},
 	{
@@ -1397,14 +1397,14 @@ local items: { Item } = {
 		tags = { "art" },
 		build = function(r: R)
 			-- a dark panel in a round cornered white frame, lit at its corners
-			r:block(-1.8, 0, 0, 1.8, 2.8, 0.14, r.c1, "SmoothPlastic")
-			r:block(-2.0, 0.2, 0, 2.0, 2.6, 0.14, r.c1, "SmoothPlastic")
+			r:block(-1.8, 0, 0, 1.8, 2.8, 0.14, r.c1, "Metal")
+			r:block(-2.0, 0.2, 0, 2.0, 2.6, 0.14, r.c1, "Metal")
 			for _, sx in { -1, 1 } do
 				for _, y in { 0.2, 2.6 } do
-					r:cyl(sx * 1.8, y, 0.07, 0.14, 0.4, "z", r.c1, "SmoothPlastic")
+					r:cyl(sx * 1.8, y, 0.07, 0.14, 0.4, "z", r.c1, "Metal")
 				end
 			end
-			r:block(-1.8, 0.2, 0.14, 1.8, 2.6, 0.17, r.c2, "SmoothPlastic")
+			r:block(-1.8, 0.2, 0.14, 1.8, 2.6, 0.17, r.c2, "Metal")
 			-- stars joined into two shapes, and some loose ones
 			local stars = {
 				Vector2.new(-1.5, 2.2),
@@ -1419,7 +1419,7 @@ local items: { Item } = {
 			}
 			r:piece(function(q: R)
 				for _, s in stars do
-					q:box(s.X, s.Y, 0.195, 0.07, 0.07, 0.05, PALE, "SmoothPlastic")
+					q:box(s.X, s.Y, 0.195, 0.07, 0.07, 0.05, PALE, "Metal")
 				end
 				for _, s in
 					{
@@ -1430,24 +1430,24 @@ local items: { Item } = {
 						Vector2.new(0.2, 1.5),
 					}
 				do
-					q:box(s.X, s.Y, 0.195, 0.05, 0.05, 0.05, C.Yellow, "SmoothPlastic")
+					q:box(s.X, s.Y, 0.195, 0.05, 0.05, 0.05, C.Yellow, "Metal")
 				end
-			end)
+			end, nil, "Metal")
 			r:piece(function(q: R)
-				q:box(stars[1].X, stars[1].Y, 0.18, 0.01, 0.01, 0.01, GLOW, "SmoothPlastic")
+				q:box(stars[1].X, stars[1].Y, 0.18, 0.01, 0.01, 0.01, GLOW, "Glass")
 				for _, pair in { { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }, { 5, 2 }, { 6, 7 }, { 7, 8 }, { 8, 9 } } do
 					local a, b = stars[pair[1]], stars[pair[2]]
-					q:beam(Vector3.new(a.X, a.Y, 0.18), Vector3.new(b.X, b.Y, 0.18), 0.03, 0.02, GLOW, "SmoothPlastic")
+					q:beam(Vector3.new(a.X, a.Y, 0.18), Vector3.new(b.X, b.Y, 0.18), 0.03, 0.02, GLOW, "Glass")
 				end
-			end)
+			end, nil, "Glass")
 			-- a ringed planet and its moon
-			discAt(r, CFrame.new(1.0, 1.7, 0.185), 0.7, 0.03, CORAL, "SmoothPlastic")
-			r:boxAt(CFrame.new(1.0, 1.7, 0.215) * CFrame.Angles(0, 0, -0.3), 1.15, 0.08, 0.03, PALE, "SmoothPlastic")
-			discAt(r, CFrame.new(1.55, 2.25, 0.185), 0.24, 0.03, PALE, "SmoothPlastic")
+			discAt(r, CFrame.new(1.0, 1.7, 0.185), 0.7, 0.03, CORAL, "Metal")
+			r:boxAt(CFrame.new(1.0, 1.7, 0.215) * CFrame.Angles(0, 0, -0.3), 1.15, 0.08, 0.03, PALE, "Metal")
+			discAt(r, CFrame.new(1.55, 2.25, 0.185), 0.24, 0.03, PALE, "Metal")
 			for _, sx in { -1, 1 } do
 				for _, y in { 0.3, 2.5 } do
 					local p =
-						r:block(sx * 1.7 - 0.05, y - 0.05, 0.17, sx * 1.7 + 0.05, y + 0.05, 0.2, GLOW, "SmoothPlastic")
+						r:block(sx * 1.7 - 0.05, y - 0.05, 0.17, sx * 1.7 + 0.05, y + 0.05, 0.2, GLOW, "Glass")
 					glowOnly(p)
 				end
 			end
@@ -1466,42 +1466,42 @@ local items: { Item } = {
 		build = function(r: R)
 			-- three tall panels with gaps between, a kick strip and a line of light across
 			for _, x in { { -2.0, -0.7 }, { -0.66, 0.66 }, { 0.7, 2.0 } } do
-				r:block(x[1], 0, 0, x[2], 6.0, 0.2, r.c1, "SmoothPlastic")
+				r:block(x[1], 0, 0, x[2], 6.0, 0.2, r.c1, "Metal")
 			end
-			r:block(-2.0, 0, 0.2, 2.0, 0.3, 0.26, r.c2, "SmoothPlastic")
-			r:glow(r:block(-2.0, 0.97, 0.2, 2.0, 1.03, 0.24, GLOW, "SmoothPlastic"), 12, 0.8, LIGHT)
+			r:block(-2.0, 0, 0.2, 2.0, 0.3, 0.26, r.c2, "Metal")
+			r:glow(r:block(-2.0, 0.97, 0.2, 2.0, 1.03, 0.24, GLOW, "Glass"), 12, 0.8, LIGHT)
 			-- a vent on the left panel, and screws in the corners of each panel
 			r:piece(function(q: R)
 				for k = 0, 5 do
 					local y = 4.0 + k * 0.18
-					q:block(-1.75, y, 0.2, -0.95, y + 0.08, 0.23, r.c2, "SmoothPlastic")
+					q:block(-1.75, y, 0.2, -0.95, y + 0.08, 0.23, r.c2, "Metal")
 				end
 				for _, x in { { -2.0, -0.7 }, { -0.66, 0.66 }, { 0.7, 2.0 } } do
 					for _, xx in { x[1] + 0.15, x[2] - 0.15 } do
 						for _, y in { 0.5, 5.8 } do
-							q:block(xx - 0.04, y - 0.04, 0.2, xx + 0.04, y + 0.04, 0.23, r.c2, "SmoothPlastic")
+							q:block(xx - 0.04, y - 0.04, 0.2, xx + 0.04, y + 0.04, 0.23, r.c2, "Metal")
 						end
 					end
 				end
-			end)
+			end, nil, "Metal")
 			-- a round window with stars in it, ringed with light, on the middle panel
 			discAt(r, CFrame.new(0, 3.6, 0.215), 1.25, 0.03, GLOW, "Neon")
-			discAt(r, CFrame.new(0, 3.6, 0.23), 1.1, 0.06, SLATE, "SmoothPlastic")
+			discAt(r, CFrame.new(0, 3.6, 0.23), 1.1, 0.06, SLATE, "Metal")
 			discAt(r, CFrame.new(0, 3.6, 0.275), 0.85, 0.03, SCREEN, "Glass")
 			r:piece(function(q: R)
 				for _, s in { { -0.2, 3.75 }, { 0.15, 3.45 }, { 0.25, 3.8 }, { -0.1, 3.4 } } do
-					q:box(s[1], s[2], 0.305, 0.05, 0.05, 0.03, PALE, "SmoothPlastic")
+					q:box(s[1], s[2], 0.305, 0.05, 0.05, 0.03, PALE, "Metal")
 				end
-			end)
+			end, nil, "Metal")
 			-- a small control box with three lights and a switch on the right panel
-			r:block(1.0, 2.6, 0.2, 1.7, 3.4, 0.28, SLATE, "SmoothPlastic")
+			r:block(1.0, 2.6, 0.2, 1.7, 3.4, 0.28, SLATE, "Metal")
 			for k, col in { GLOW, C.Yellow, CORAL } do
 				glowOnly(
-					r:block(1.1 + (k - 1) * 0.2, 3.15, 0.28, 1.2 + (k - 1) * 0.2, 3.25, 0.31, col, "SmoothPlastic")
+					r:block(1.1 + (k - 1) * 0.2, 3.15, 0.28, 1.2 + (k - 1) * 0.2, 3.25, 0.31, col, "Metal")
 				)
 			end
-			r:block(1.25, 2.75, 0.28, 1.45, 2.95, 0.31, r.c2, "SmoothPlastic")
-			r:block(1.31, 2.83, 0.31, 1.39, 2.98, 0.36, SHELL, "SmoothPlastic")
+			r:block(1.25, 2.75, 0.28, 1.45, 2.95, 0.31, r.c2, "Metal")
+			r:block(1.31, 2.83, 0.31, 1.39, 2.98, 0.36, SHELL, "Metal")
 		end,
 	},
 	{
@@ -1517,10 +1517,10 @@ local items: { Item } = {
 		tags = { "clock" },
 		build = function(r: R)
 			-- a white face in a rim, its hands ending in planets round a little sun
-			discAt(r, CFrame.new(0, 1.0, 0.06), 2.0, 0.12, r.c2, "SmoothPlastic")
-			discAt(r, CFrame.new(0, 1.0, 0.135), 1.8, 0.03, r.c1, "SmoothPlastic")
+			discAt(r, CFrame.new(0, 1.0, 0.06), 2.0, 0.12, r.c2, "Metal")
+			discAt(r, CFrame.new(0, 1.0, 0.135), 1.8, 0.03, r.c1, "Metal")
 			r:piece(function(q: R)
-				q:box(0, 1.0, 0.15, 0.01, 0.01, 0.01, SLATE, "SmoothPlastic")
+				q:box(0, 1.0, 0.15, 0.01, 0.01, 0.01, SLATE, "Metal")
 				for i = 0, 11 do
 					local a = i * math.pi / 6
 					local long = i % 3 == 0
@@ -1530,10 +1530,10 @@ local items: { Item } = {
 						if long then 0.18 else 0.07,
 						0.03,
 						SLATE,
-						"SmoothPlastic"
+						"Metal"
 					)
 				end
-			end)
+			end, nil, "Metal")
 			local function hand(angle: number, len: number, z: number, ball: number, col: Color3)
 				local dir = Vector3.new(math.sin(angle), math.cos(angle), 0)
 				local c = Vector3.new(0, 1.0, z)
@@ -1543,14 +1543,14 @@ local items: { Item } = {
 					len,
 					0.03,
 					SLATE,
-					"SmoothPlastic"
+					"Metal"
 				)
 				local tip = c + dir * len
-				r:ball(tip.X, tip.Y, tip.Z, ball, col, "SmoothPlastic")
+				r:ball(tip.X, tip.Y, tip.Z, ball, col, "Metal")
 			end
 			hand(math.rad(300), 0.4, 0.195, 0.2, CORAL)
 			hand(math.rad(48), 0.6, 0.225, 0.16, Color3.fromRGB(120, 196, 186))
-			r:ball(0, 1.0, 0.25, 0.26, C.Yellow, "SmoothPlastic")
+			r:ball(0, 1.0, 0.25, 0.26, C.Yellow, "Metal")
 		end,
 	},
 
@@ -1570,33 +1570,33 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a slim pole on a round foot, a little dish on an arm and a glowing ball on top
 			plate(r, 0, 0, 0, 0.25, 1.4, SLATE, "Metal")
-			r:cyl(0, 0.35, 0, 0.2, 0.6, "y", r.c1, "SmoothPlastic")
-			r:cyl(0, 2.9, 0, 5.0, 0.16, "y", r.c1, "SmoothPlastic")
+			r:cyl(0, 0.35, 0, 0.2, 0.6, "y", r.c1, "Metal")
+			r:cyl(0, 2.9, 0, 5.0, 0.16, "y", r.c1, "Metal")
 			for _, y in { 2.0, 4.2 } do
-				r:cyl(0, y, 0, 0.15, 0.3, "y", r.c2, "SmoothPlastic")
+				r:cyl(0, y, 0, 0.15, 0.3, "y", r.c2, "Metal")
 			end
-			glowOnly(r:cyl(0, 3.2, 0, 0.3, 0.22, "y", GLOW, "SmoothPlastic"))
-			rod(r, Vector3.new(0, 4.2, 0), Vector3.new(0.42, 4.4, 0.1), 0.06, r.c1, "SmoothPlastic")
+			glowOnly(r:cyl(0, 3.2, 0, 0.3, 0.22, "y", GLOW, "Glass"))
+			rod(r, Vector3.new(0, 4.2, 0), Vector3.new(0.42, 4.4, 0.1), 0.06, r.c1, "Metal")
 			local dish = CFrame.new(0.5, 4.48, 0.12) * CFrame.Angles(0, -0.4, 0.8)
 			r:add({
 				shape = "Cylinder",
 				cf = dish,
 				size = Vector3.new(0.06, 0.8, 0.8),
 				color = r.c1,
-				mat = "SmoothPlastic",
+				mat = "Metal",
 			})
 			r:add({
 				shape = "Cylinder",
 				cf = dish * CFrame.new(0.06, 0, 0),
 				size = Vector3.new(0.06, 0.3, 0.3),
 				color = r.c2,
-				mat = "SmoothPlastic",
+				mat = "Metal",
 			})
 			local feed = (dish * CFrame.new(0.35, 0, 0)).Position
 			rod(r, (dish * CFrame.new(0.05, 0, 0)).Position, feed, 0.03, SLATE, "Metal")
-			r:ball(feed.X, feed.Y, feed.Z, 0.08, CORAL, "SmoothPlastic")
-			r:cyl(0, 5.45, 0, 0.12, 0.34, "y", r.c2, "SmoothPlastic")
-			r:glow(r:ball(0, 5.7, 0, 0.42, GLOW, "SmoothPlastic"), 18, 1.2, LIGHT)
+			r:ball(feed.X, feed.Y, feed.Z, 0.08, CORAL, "Metal")
+			r:cyl(0, 5.45, 0, 0.12, 0.34, "y", r.c2, "Metal")
+			r:glow(r:ball(0, 5.7, 0, 0.42, GLOW, "Glass"), 18, 1.2, LIGHT)
 		end,
 	},
 	{
@@ -1626,25 +1626,25 @@ local items: { Item } = {
 					)
 				end
 			end
-			r:block(-1.5, 0.15, -0.6, 1.5, 1.2, 0.6, r.c2, "SmoothPlastic")
+			r:block(-1.5, 0.15, -0.6, 1.5, 1.2, 0.6, r.c2, "Metal")
 			r:block(-1.2, 0.35, 0.6, 1.2, 0.85, 0.64, C.Water, "Glass")
 			r:block(-1.2, 0.85, 0.6, 1.2, 1.0, 0.64, PALE, "Glass")
 			r:piece(function(q: R)
 				for k = 0, 5 do
-					q:box(-1.0 + k * 0.4, 0.5 + (k % 3) * 0.1, 0.655, 0.05, 0.05, 0.03, SHELL, "SmoothPlastic")
+					q:box(-1.0 + k * 0.4, 0.5 + (k % 3) * 0.1, 0.655, 0.05, 0.05, 0.03, SHELL, "Metal")
 				end
-			end)
+			end, nil, "Metal")
 			-- three white tubes with plants growing out of cups up their fronts
 			for t, x in { -1.0, 0, 1.0 } do
 				r:cyl(x, 1.25, 0, 0.1, 0.72, "y", SLATE, "Metal")
-				r:cyl(x, 2.9, 0, 3.4, 0.6, "y", r.c1, "SmoothPlastic")
+				r:cyl(x, 2.9, 0, 3.4, 0.6, "y", r.c1, "Metal")
 				r:cyl(x, 4.65, 0, 0.1, 0.68, "y", SLATE, "Metal")
 				for k = 0, 2 do
 					local y = 1.9 + k * 0.95 + (t % 2) * 0.3
 					local a = math.pi / 2 + ((k + t) % 3 - 1) * 0.6
 					local dir = Vector3.new(math.cos(a), 0.4, math.sin(a)).Unit
 					local base = Vector3.new(x, y, 0) + Vector3.new(math.cos(a), 0, math.sin(a)) * 0.28
-					rod(r, base, base + dir * 0.18, 0.24, SLATE, "SmoothPlastic")
+					rod(r, base, base + dir * 0.18, 0.24, SLATE, "Metal")
 					local tip = base + dir * 0.3
 					r:lump(CFrame.new(tip) * CFrame.Angles(0.3 * k, a, 0.2), 0.5, 0.34, 0.45, C.Leaf, "Grass")
 					r:lump(
@@ -1665,12 +1665,12 @@ local items: { Item } = {
 					Vector3.new(sx * 1.45, 5.2, -0.45),
 					0.1,
 					r.c1,
-					"SmoothPlastic"
+					"Metal"
 				)
 			end
-			r:block(-1.5, 5.0, -0.6, 1.5, 5.25, 0.2, r.c1, "SmoothPlastic")
+			r:block(-1.5, 5.0, -0.6, 1.5, 5.25, 0.2, r.c1, "Metal")
 			r:glow(
-				r:block(-1.35, 4.96, -0.45, 1.35, 5.0, 0.1, LILAC, "SmoothPlastic"),
+				r:block(-1.35, 4.96, -0.45, 1.35, 5.0, 0.1, LILAC, "Glass"),
 				14,
 				0.8,
 				Color3.fromRGB(220, 200, 255)
@@ -1693,7 +1693,7 @@ local items: { Item } = {
 			for k, sx in { -1, 1 } do
 				local x = sx * 1.4
 				plate(r, x, 0, 0, 0.2, 1.0, SLATE, "Metal")
-				local lens = r:cyl(x, 0.23, 0, 0.06, 0.7, "y", GLOW, "SmoothPlastic")
+				local lens = r:cyl(x, 0.23, 0, 0.06, 0.7, "y", GLOW, "Glass")
 				if k == 1 then
 					r:glow(lens, 12, 0.8, LIGHT)
 				else
@@ -1705,13 +1705,13 @@ local items: { Item } = {
 				r:cyl(x, 1.15, 0, 0.2, 0.6, "y", SLATE, "Metal")
 			end
 			-- a slab with round ends, a padded top and a line of light along its front
-			r:block(-1.8, 1.25, -0.7, 1.8, 1.55, 0.7, r.c1, "SmoothPlastic")
+			r:block(-1.8, 1.25, -0.7, 1.8, 1.55, 0.7, r.c1, "Metal")
 			r:block(-1.8, 1.55, -0.6, 1.8, 1.7, 0.6, r.c2, "Fabric")
 			for _, sx in { -1, 1 } do
-				plate(r, sx * 1.8, 0, 1.25, 1.55, 1.4, r.c1, "SmoothPlastic")
+				plate(r, sx * 1.8, 0, 1.25, 1.55, 1.4, r.c1, "Metal")
 				plate(r, sx * 1.8, 0, 1.55, 1.7, 1.2, r.c2, "Fabric")
 			end
-			glowOnly(r:block(-1.8, 1.36, 0.7, 1.8, 1.42, 0.74, GLOW, "SmoothPlastic"))
+			glowOnly(r:block(-1.8, 1.36, 0.7, 1.8, 1.42, 0.74, GLOW, "Glass"))
 			for _, x in { -1.0, 1.0 } do
 				r:seat(x, 1.7, 0.1)
 			end
