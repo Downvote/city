@@ -22,6 +22,9 @@
 --                      the roofs off and keep the floor above the ground storey, to see upstairs)
 --   ambient            the cars and the bus (ambient:<name> for one: car, parked, bus)
 --   props              what random events bring into the world (props:<id>,<id> for some)
+--   things             every thing a player carries as it is held, over its fist (things:<id>,<id>
+--                      for some; things:lying as they lie dropped; holding:<id>,<id> a body holding
+--                      each in the tool pose: Data/ThingModels)
 --   inside:<kind>,...  furnished rooms with the roof off (bakery, grocer, books, clothes, cafe,
 --                      toys, flowers, post, lobby, flats, home, library, museum, cinema, station,
 --                      school, clinic, department); a kind may carry a size: library=56x28x12
@@ -379,6 +382,70 @@ elseif scene == "pets" or scene:sub(1, 5) == "pets:" then
 		for _, kind in CrateData.Order do
 			addPrims(CrateData.prims(kind), CFrame.new(x, 0, z + 2))
 			x += 4
+		end
+	end
+elseif scene == "things" or scene:sub(1, 7) == "things:" or scene:sub(1, 8) == "holding:" then
+	-- things: every thing a player carries (Data/Items, Data/ThingModels) as it is held, each over
+	-- the fist it is held in (skin coloured), eight a row; things:<id>,<id> for some;
+	-- things:lying (or things:lying:<id>,<id>) as they lie once dropped, on a patch of ground;
+	-- holding:<id>,<id> a plain body holding each, its arm out as Roblox's tool pose holds it
+	local Items = R(Shared .. "Data.Items")
+	local ThingModels = R(Shared .. "Data.ThingModels")
+	local Moves = R(Shared .. "Data.Moves")
+	local C3, V3 = roblox.Color3, roblox.Vector3
+	local holding = scene:sub(1, 8) == "holding:"
+	local rest = if holding then scene:sub(9) else scene:sub(8)
+	local lying = rest == "lying" or rest:sub(1, 6) == "lying:"
+	if lying then
+		rest = rest:sub(7)
+	end
+	local ids = {}
+	if rest == "" then
+		for _, item in Items.list do
+			table.insert(ids, item.id)
+		end
+	else
+		for id in rest:gmatch("[^,]+") do
+			table.insert(ids, id)
+		end
+	end
+	local skin = C3.fromRGB(236, 196, 160)
+	local function body(at, pose)
+		local parts = Moves.figure(at, pose)
+		for _, b in Moves.Body do
+			local name = b.name
+			local col = C3.fromRGB(110, 150, 196)
+			if name == "Head" or name:find("Hand") then
+				col = skin
+			elseif name:find("Leg") or name:find("Foot") or name == "LowerTorso" then
+				col = C3.fromRGB(70, 78, 110)
+			end
+			addPrims({ Geometry.box(parts[name], b.size, col, "Plaster") })
+		end
+		return parts
+	end
+	local step = if holding then 4.5 else 2.8
+	for i, id in ids do
+		local item = assert(Items.get(id), "no thing " .. id)
+		local thing = ThingModels.draw(item)
+		local col, row = (i - 1) % 8, (i - 1) // 8
+		local x, z = col * step, row * step
+		if holding then
+			-- facing +Z, to the camera, the arm in the carry pose
+			local root = CFrame.new(x, Moves.Lift, z) * CFrame.Angles(0, math.pi, 0)
+			local parts = body(root, ThingModels.CarryPose)
+			local hand = parts.RightHand
+			local size = V3.new(1, 0.3, 1)
+			local grip = hand * ThingModels.gripIn(size)
+			addPrims(thing.prims, ThingModels.inHand(thing, grip, size))
+		elseif lying then
+			addPrims({ Geometry.box(CFrame.new(x, -0.05, z), V3.new(2.4, 0.1, 2.4), C3.fromRGB(150, 176, 110), "Grass") })
+			addPrims(thing.prims, ThingModels.lying(thing, CFrame.new(x, 0, z)))
+		else
+			local fist = ThingModels.Fist
+			local at = CFrame.new(x, 1.6, z)
+			addPrims({ Geometry.box(at * CFrame.new(fist.at), fist.size, skin, "Plaster") })
+			addPrims(thing.prims, at)
 		end
 	end
 elseif scene == "props" or scene:sub(1, 6) == "props:" then

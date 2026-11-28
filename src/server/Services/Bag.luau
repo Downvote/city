@@ -10,9 +10,11 @@
 --   work     a player working at a workplace whose source is a workplace's (the bakery, the cafe,
 --            the florist...) makes a thing every Tuning.Bag.WorkEvery seconds there (Work.at)
 --   traces   a book or a letter a villager left on the floor (Npc/Use's traces) can be picked up
---   hold     BagUse "hold" puts a little model of a thing in the player's right hand for everyone to
---            see (only while it is in the bag); "away" takes it out of the hand
---   drop     BagUse "drop" takes one out of the bag and lays it on the ground in front of them, with
+--   hold     BagUse "hold" puts a little model of a thing (Data/ThingModels) in the player's right
+--            hand for everyone to see (only while it is in the bag), standing up in the fist the
+--            way a tool does; "away" takes it out of the hand
+--   drop     BagUse "drop" takes one out of the bag and lays it on the ground in front of them as it
+--            would lie (a cup standing, a book flat, a flower on its back), with
 --            a "Pick up" prompt for them alone, until Tuning.Bag.DropSeconds have passed
 -- The prompts open no panel, so they carry no `Opens` attribute. The client (World/Gather) shows a
 -- piece's prompt on the player's own plot only, and not in Build mode.
@@ -24,10 +26,10 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Tuning = require(Shared.Config.Tuning)
 local Catalog = require(Shared.Build.Catalog)
 local Plan = require(Shared.Build.Plan)
-local Recipe = require(Shared.Build.Recipe)
 local Builder = require(Shared.Build.Builder)
 local Town = require(Shared.Data.Town)
 local Items = require(Shared.Data.Items)
+local ThingModels = require(Shared.Data.ThingModels)
 local Bag = require(Shared.Sim.Bag)
 local Uses = require(Shared.Sim.Uses)
 local LightsSim = require(Shared.Sim.Lights)
@@ -211,33 +213,6 @@ end
 
 -- Things in the world --------------------------------------------------------------------------------
 
--- A small model of a thing, its grip at the origin: what is held in a hand and what lies dropped.
-local function drawThing(item: Items.Item): { any }
-	local color = Color3.fromHex(item.color)
-	local r = Recipe.new(color, color)
-	local cat = item.cat
-	if cat == "book" then
-		r:box(0, 0, 0, 0.9, 1.15, 0.3, color, "Fabric")
-		r:box(0.03, 0, 0, 0.84, 1.05, 0.31, Recipe.Colors.Paper, "SmoothPlastic")
-	elseif cat == "flower" then
-		r:cyl(0, -0.2, 0, 1.2, 0.1, "y", Recipe.Colors.Leaf, "Grass")
-		r:ball(0, 0.5, 0, 0.55, color, "SmoothPlastic")
-	elseif cat == "drink" then
-		r:cyl(0, 0, 0, 0.65, 0.5, "y", color, "SmoothPlastic")
-		r:cyl(0, 0.34, 0, 0.04, 0.42, "y", Recipe.Colors.Cream, "SmoothPlastic")
-	elseif cat == "craft" or cat == "trinket" then
-		r:box(0, 0, 0, 0.55, 0.55, 0.35, color, "SmoothPlastic")
-	elseif cat == "treasure" then
-		r:box(0, 0, 0, 0.65, 0.5, 0.5, color, "Metal")
-		r:ball(0, 0.38, 0, 0.3, Recipe.Colors.Gold, "Metal")
-	else
-		-- something to eat, on a little plate
-		r:cyl(0, -0.25, 0, 0.06, 0.8, "y", Recipe.Colors.White, "SmoothPlastic")
-		r:lump(CFrame.new(0, 0, 0), 0.6, 0.45, 0.55, color, "SmoothPlastic")
-	end
-	return r.prims
-end
-
 local function loose(model: Model)
 	for _, d in model:GetDescendants() do
 		if d:IsA("BasePart") then
@@ -259,7 +234,18 @@ local function letGo(player: Player)
 	player:SetAttribute("Holding", nil)
 end
 
--- Puts a thing in the player's right hand.
+-- Where the hand holds things: its RightGripAttachment (a tool's grip, R15 and R6 alike), or the
+-- same place on a hand without one.
+local function gripOf(hand: BasePart): CFrame
+	local grip = hand:FindFirstChild("RightGripAttachment")
+	if grip and grip:IsA("Attachment") then
+		return grip.WorldCFrame
+	end
+	return hand.CFrame * ThingModels.gripIn(hand.Size)
+end
+
+-- Puts a thing in the player's right hand, upright as a tool stands in a fist held out (the
+-- player's own screen holds the arm out while `Holding` is set: client World/Carry).
 local function hold(player: Player, item: Items.Item): boolean
 	local char = player.Character
 	local hand = char and (char:FindFirstChild("RightHand") or char:FindFirstChild("Right Arm"))
@@ -269,8 +255,9 @@ local function hold(player: Player, item: Items.Item): boolean
 	letGo(player)
 	local model = Instance.new("Model")
 	model.Name = "Held"
-	local grip = hand.CFrame * CFrame.new(0, -hand.Size.Y / 2 - 0.25, -0.2)
-	local parts = Builder.instantiate(drawThing(item), model, grip, { plain = true })
+	local thing = ThingModels.draw(item)
+	local at = ThingModels.inHand(thing, gripOf(hand), hand.Size)
+	local parts = Builder.instantiate(thing.prims, model, at, { plain = true })
 	loose(model)
 	for _, part in parts do
 		part.Anchored = false
@@ -289,7 +276,8 @@ local function lay(who: Player, item: Items.Item, at: CFrame, onPick: () -> bool
 	local model = Instance.new("Model")
 	model.Name = "Dropped"
 	model:SetAttribute("Thing", item.id)
-	local parts = Builder.instantiate(drawThing(item), model, at, { plain = true })
+	local thing = ThingModels.draw(item)
+	local parts = Builder.instantiate(thing.prims, model, ThingModels.lying(thing, at), { plain = true })
 	loose(model)
 	for _, part in parts do
 		part.Anchored = true
@@ -350,7 +338,8 @@ local function drop(player: Player, profile: any, item: Items.Item): (boolean, s
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	params.FilterDescendantsInstances = { player.Character :: any }
 	local hit = workspace:Raycast(front.Position + Vector3.new(0, 2, 0), Vector3.new(0, -8, 0), params)
-	local y = if hit then hit.Position.Y + 0.3 else front.Position.Y - 2.5
+	local y = if hit then hit.Position.Y + Tuning.Carry.Lift else front.Position.Y - 2.5
+	-- (its front to the player: the spot's +Z points back at them)
 	lay(player, item, CFrame.new(front.X, y, front.Z) * root.CFrame.Rotation, function(): boolean
 		local mine = Data.get(player)
 		if not mine or Bag.add(mine, item.id, 1) <= 0 then
