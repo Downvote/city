@@ -693,13 +693,14 @@ A.barrel = {
 -- a cut gem (the user, with pictures of one: "make gem and coin icons like this", then "change the
 -- gem icon to this"): its outline solid and its facets cut out of it in straight even lines. The
 -- girdle runs across; two lines from the top edge down to the girdle frame the table, a facet
--- wider at the bottom; two lines from the girdle run down toward the point, stopping short of it so
--- the point stays sharp.
+-- wider at the bottom; two lines from the girdle run down and meet at the point ("make the lines
+-- meet at the bottom for the gem too"), each cut as a long wedge narrowing to nothing there, so the
+-- point stays sharp.
 A.gem = {
 	solid("M6.5 4 H17.5 L22 9.5 L12 21.5 L2 9.5 Z"),
 	gap("M1.5 9.5 H22.5", 1.5),
 	gap("M9.6 3.5 L8 9.5 M14.4 3.5 L16 9.5", 1.5),
-	gap("M8 9.5 L10.85 18.2 M16 9.5 L13.15 18.2", 1.5),
+	hole("M7.25 9.5 H8.75 L12 21.5 Z M15.25 9.5 H16.75 L12 21.5 Z"),
 }
 -- playful: a balloon on its string
 A.balloon = {
