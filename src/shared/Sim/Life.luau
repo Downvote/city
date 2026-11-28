@@ -31,6 +31,7 @@ local Bag = require(script.Parent.Bag)
 local Titles = require(script.Parent.Titles)
 local Items = require(script.Parent.Parent.Data.Items)
 local Catalog = require(script.Parent.Parent.Build.Catalog)
+local Needs = require(script.Parent.Needs)
 
 local L = Tuning.Life
 
@@ -41,8 +42,11 @@ local function name(profile: any, vid: string): string
 	return if v then v.name else "?"
 end
 
-local function mood(v: any, d: number)
-	v.mood = math.clamp(v.mood + d, Tuning.Villagers.MoodMin, Tuning.Villagers.MoodMax)
+-- Mood goes through Sim/Needs: a lift counts for less than it says and stops at what their bed,
+-- room and friends let them reach (the user: "Villager mood bars should also not be that easy to
+-- fill up").
+local function mood(profile: any, vid: string, d: number)
+	Needs.addMood(profile, vid, d)
 end
 
 -- Hearts ---------------------------------------------------------------------------------------------
@@ -180,6 +184,19 @@ function Life.maybeWish(profile: any, vid: string, rng: any, now: number): any
 	return wish
 end
 
+-- Gives a villager a wish to get to know somebody, when they asked for friends (Data/Events/Needs)
+-- and have no wish open: the town's cap on open wishes doesn't hold them back, since they asked.
+-- `other` must be another villager in town. Returns the wish, or nil.
+function Life.wishToMeet(profile: any, vid: any, other: any, now: number): any
+	local v = if type(vid) == "string" then profile.villagers[vid] else nil
+	if not v or v.wish or type(other) ~= "string" or other == vid or not profile.villagers[other] then
+		return nil
+	end
+	local wish = { kind = "friend", arg = other, untilT = now + L.WishHours * Tuning.Day.Length / 24 }
+	v.wish = wish
+	return wish
+end
+
 -- What a villager's wish says.
 function Life.wishText(profile: any, vid: string): string?
 	local v = profile.villagers[vid]
@@ -241,14 +258,14 @@ function Life.grantWish(profile: any, vid: string, how: string, arg: any, rng: a
 			return false, 0, notices
 		end
 		Relationships.add(profile, vid, arg, L.IntroduceGain)
-		mood(other, 6)
+		mood(profile, arg, 6)
 		table.insert(notices, Text.fill("{x} and {y} got talking.", { x = v.name, y = other.name }))
 	end
 	v.wish = nil
 	profile.stats.wishes = (profile.stats.wishes or 0) + 1
 	if how == "food" then
 		local fav = arg == v.fav
-		mood(v, L.WishMood + (if fav then L.FavWishMood else 0))
+		mood(profile, vid, L.WishMood + (if fav then L.FavWishMood else 0))
 		table.insert(
 			notices,
 			Text.fill(
@@ -259,7 +276,7 @@ function Life.grantWish(profile: any, vid: string, how: string, arg: any, rng: a
 		Life.addHearts(profile, vid, L.WishHearts + (if fav then L.FavWishHearts else 0), rng, notices)
 		return true, 0, notices
 	end
-	mood(v, L.WishMood)
+	mood(profile, vid, L.WishMood)
 	local coins = rng:int(L.WishCoinsMin, L.WishCoinsMax)
 	profile.coins = math.clamp(profile.coins + coins, 0, Tuning.Economy.MaxCoins)
 	table.insert(notices, Text.fill("{x} is so pleased. +{n} coins", { x = v.name, n = coins }))
@@ -295,10 +312,10 @@ end
 -- Lets unanswered wishes fade. Returns notices.
 function Life.fadeWishes(profile: any, now: number): { string }
 	local notices = {}
-	for _, v in profile.villagers do
+	for vid, v in profile.villagers do
 		if v.wish and v.wish.untilT and now >= v.wish.untilT then
 			v.wish = nil
-			mood(v, L.WishFadeMood)
+			mood(profile, vid, L.WishFadeMood)
 			table.insert(notices, Text.fill("{x} gave up waiting.", { x = v.name }))
 		end
 	end

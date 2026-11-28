@@ -176,6 +176,13 @@ local function makeProfile(rng, count, withBeds)
 			Memory.start(p, vid, kind, opts, 900)
 		end
 	end
+	-- and in some, the third sleeps in a hammock out in the garden, with no roof over it (Sim/Needs:
+	-- so they can ask for one), drawn on a stream of its own too
+	local brng = Rng.new(#p.order * 104729 + p.villagers.v1.bday.d * 31)
+	if p.villagers.v3 and brng:chance(0.5) then
+		p.plan.items.openbed = { id = "sea_hammock", x = 160, y = 0, z = 150, r = 0, lv = 0 }
+		p.villagers.v3.bed = "openbed"
+	end
 	return p
 end
 
@@ -389,6 +396,7 @@ for _, t in
 		"leave",
 		"remember",
 		"forget",
+		"wish",
 	}
 do
 	OPS[t] = true
@@ -437,6 +445,9 @@ local function checkOps(scene, where)
 				expect(Sayings.get(e.id) ~= nil).toBeTruthy()
 			elseif e.t == "hobby" then
 				expect(Sayings.hobby(e.id) ~= nil).toBeTruthy()
+			elseif e.t == "wish" then
+				-- a wish to meet somebody, when they asked for friends (Data/Events/Needs)
+				expect(type(e.other)).toBe("string")
 			elseif e.t == "remember" or e.t == "forget" then
 				-- something that lasts a few days (Sim/Memory): a kind it knows, its words filled
 				expect(table.find(Memory.Order, e.kind) ~= nil).toBeTruthy()
@@ -557,10 +568,26 @@ describe("Event engine", function()
 				settle(p, ev, effects)
 			end
 		end
-		-- the rewritten ones came up, a cold both with a doctor in town and without
+		-- the rewritten ones came up, and colds
 		expect(cravings > 5).toBeTruthy()
-		expect(coldsSeen > 0).toBeTruthy()
-		expect(coldsSlept > 0).toBeTruthy()
+		expect(coldsSeen + coldsSlept > 0).toBeTruthy()
+		-- a cold with a doctor in town is only a few in these thousands at most, so it is played on
+		-- purpose too: the doctor sees to it
+		local doctorSaw = false
+		for seed = 1, 300 do
+			local rng = Rng.new(seed)
+			local p = busyTown(rng, rng:int(3, 7))
+			if p.villagers.v3.job == "clinic" then
+				local ev = EventEngine.stage(context(p, rng, { hour = 12 }), Events.get("cold"), { "v1" })
+				local doctor = hasOp(ev.scene.choices[1].effects, "xpv")
+				if doctor then
+					expect(doctor.vid).toBe("v3")
+					doctorSaw = true
+					break
+				end
+			end
+		end
+		expect(doctorSaw).toBeTruthy()
 		-- plenty of different ones came up
 		local n = 0
 		for _ in seen do

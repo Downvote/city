@@ -49,6 +49,7 @@ require(World.Lively).start() -- placed pieces that move and give off effects (B
 require(World.BuildFx).start()
 require(World.Materials).start()
 require(World.Wishes).start()
+require(World.VillagerClick).start() -- a click on one of your villagers: Profile or Chat (UI/VillagerMenu)
 require(World.Earnings).start() -- coins over the villagers as they earn them
 require(World.Interact).start() -- a go at a piece: a puff from it, and what happened over the player
 require(World.Work).start() -- working at a workplace yourself: its prompts, your motion and the notice

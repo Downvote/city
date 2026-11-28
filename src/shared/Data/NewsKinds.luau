@@ -287,7 +287,7 @@ local TOPIC: { [string]: { string } } = {
 	shopping = { "shopping", "marketday", "haggle" },
 	style = { "haircut", "haircut2", "newlook", "outfit", "moustache", "dyehair", "sillyhat", "wrongcoat" },
 	health = { "cold", "sneeze", "hiccups", "checkup", "drinkwater" },
-	request = { "request", "nobed" },
+	request = { "request", "nobed", "needroof", "needcomfy", "needfun", "needfriends" },
 	town = { "tourist", "inspector", "tourbus" },
 }
 NewsKinds.Topics = TOPIC

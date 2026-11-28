@@ -15,6 +15,7 @@ local Appearance = require(Shared .. "Avatar.Appearance")
 local StarterHouse = require(Shared .. "Data.StarterHouse")
 local Rng = require(Shared .. "Util.Rng")
 local Talk = require(Shared .. "Sim.Talk")
+local Town = require(Shared .. "Data.Town")
 
 local K = Tuning.Talk
 local env = Harness.env()
@@ -492,6 +493,54 @@ describe("Talk service", function()
 		Villagers.setControl(owner, "v3", "event")
 		expect(ask(owner, "v3", true)).toBe(true)
 		expect(Villagers.control(owner, "v3")).toBe("event")
+	end)
+
+	-- the user: "allow players to click on villagers anywhere to either open their profile or chat
+	-- with them"
+	it("starts a chat from a click anywhere on your own plot, and ends it when you walk off", function()
+		reset()
+		local body = bodies.v1
+		local said = #body.said
+		-- far from them, but on the plot
+		local spot = Town.plotFrame(1) * CFrame.new(200, 3, 200)
+		owner.root.Position = spot.Position
+		expect((owner.root.Position - body:position()).Magnitude > K.Range).toBeTruthy()
+		-- (holding E from out here is still too far)
+		expect((ask(owner, "v1"))).toBe(false)
+		local ok, card = ask(owner, "v1", "click")
+		expect(ok).toBe(true)
+		expect(card.vid).toBe("v1")
+		expect(card.far).toBe(true)
+		expect(#body.said).toBe(said + 1)
+		expect(Villagers.control(owner, "v1")).toBe("talk")
+		expect(profile.villagers.v1.chats).toBe(1)
+		-- Chat goes on from where they stand, a step or two is fine
+		owner.root.Position = spot.Position + Vector3.new(3, 0, 0)
+		advance(1)
+		local more, again = ask(owner, "v1")
+		expect(more).toBe(true)
+		expect(type(again.text)).toBe("string")
+		-- walking off from there ends it, and they can't be talked to from afar any more
+		owner.root.Position = spot.Position + Vector3.new(K.Range + 4, 0, 0)
+		advance(1)
+		expect(Villagers.control(owner, "v1")).toBe(nil)
+		expect((ask(owner, "v1"))).toBe(false)
+		-- off the plot it is refused, and a visitor can't start one
+		reset()
+		owner.root.Position = (Town.plotFrame(1) * CFrame.new(-200, 3, 200)).Position
+		local off, why = ask(owner, "v1", "click")
+		expect(off).toBe(false)
+		expect(type(why)).toBe("string")
+		expect(Villagers.control(owner, "v1")).toBe(nil)
+		visitor.root.Position = spot.Position
+		local theirs = remotes.VillagerTalk.OnServerInvoke(visitor, "v1", "click")
+		expect(theirs).toBe(false)
+		expect(Villagers.control(owner, "v1")).toBe(nil)
+		-- and bye ends one at once
+		owner.root.Position = spot.Position
+		expect((ask(owner, "v2", "click"))).toBe(true)
+		expect(ask(owner, "v2", true)).toBe(true)
+		expect(Villagers.control(owner, "v2")).toBe(nil)
 	end)
 
 	it("leaves a villager alone in an event, away or asleep", function()

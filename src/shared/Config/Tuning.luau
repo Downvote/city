@@ -240,8 +240,46 @@ Tuning.Villagers = {
 	ThinkMin = 4, -- seconds between idle decisions
 	ThinkMax = 9,
 	RoomRadius = 18, -- furniture this close to a villager's bed counts as their room
-	BedMoodPerNight = 4,
-	NoBedMoodPerNight = -8,
+	-- (A night in bed no longer lifts mood by itself: what they have sets how high it climbs, Needs below.)
+}
+
+-- What a villager needs, and how happy it lets them be (Sim/Needs) ------------
+-- The user: "Villager mood bars should also not be that easy to fill up, the factors affecting it
+-- should be: amount and relationship of friends, quality of bed, roof over bed, fun objects near
+-- bed. Villagers will ask for these if they are not fufilled." Each thing a villager has adds its
+-- points to the most their mood can reach (the cap); with all of it in place the cap is MoodMax.
+-- Mood climbs to the cap a little each town hour and sinks to it when over. A lift from an event, a
+-- gift, a wish or a chat counts for BoostShare of what it says and never goes past the cap.
+Tuning.Needs = {
+	Base = 20, -- what anybody can reach with nothing
+	Bed = 10, -- a bed of their own
+	-- how comfy their bed is, by its price in Build mode: the points of the dearest step it reaches
+	Comfy = {
+		{ Price = 0, Points = 0 },
+		{ Price = 120, Points = 5 },
+		{ Price = 200, Points = 10 },
+		{ Price = 280, Points = 15 },
+	},
+	Roof = 15, -- a roof over the bed, or a floor above it
+	FunEach = 5, -- each fun piece within Villagers.RoomRadius of the bed
+	FunMax = 15,
+	-- each other villager by how close they are, by Tuning.Relationships.Levels (Rivals, Cold,
+	-- Strangers, Acquainted, Friends, Good friends, Best friends)
+	FriendPoints = { 0, 0, 0, 1, 3, 5, 8 },
+	FriendsMax = 25,
+	Rise = 1, -- mood a town hour toward the cap from under it
+	Fall = 2, -- and from over it
+	BoostShare = 0.5, -- what a lift counts for (a knock counts in full)
+	-- They ask for what's missing (Data/Events/Needs): always for a bed and a workplace when they move
+	-- in, then now and then while something is short of these
+	ComfyWant = 5, -- comfy points
+	FunWant = 1, -- fun pieces
+	FriendsWant = 6, -- friend points
+	AskChance = { bed = 0.1, work = 0.1, roof = 0.04, comfy = 0.03, fun = 0.03, friends = 0.03 }, -- a villager, a town hour
+	AskEvery = 8, -- town hours a villager leaves it after asking
+	AskWait = 12, -- seconds after moving in before they ask
+	AskGap = 20, -- seconds after the last event before an ask plays
+	AskKeep = 300, -- seconds an ask waits for its turn before it's dropped
 }
 
 -- Getting stuck -------------------------------------------------------------
@@ -501,6 +539,17 @@ Tuning.Talk = {
 	StaySeconds = 60,
 	VisitorSeconds = 5, -- how long they stop for somebody visiting
 	Cooldown = 0.4, -- seconds between two lines to one player: shorter than the hold, it only stops a flood
+}
+
+-- Clicking a villager (client World/VillagerClick, UI/VillagerMenu): the user, "allow players to
+-- click on villagers anywhere to either open their profile or chat with them". A chat started that
+-- way works from any distance on your own plot (Services/Villagers), and is over once you walk
+-- Talk.Range from where you stood.
+Tuning.TalkClick = {
+	Margin = 30, -- studs past the plot's edge that still count as on it (the street in front)
+	Tap = 0.35, -- seconds a press may last and still be a click, not a drag of the camera
+	Slack = 10, -- pixels it may move
+	Reach = 600, -- studs the click looks out for a villager
 }
 
 -- A villager's own flair (Sim/Flair), bought with gems on their page. The user: "make it such that

@@ -11,6 +11,7 @@ local Services = "ServerScriptService.Server.Services."
 local Tuning = require(Shared .. "Config.Tuning")
 local Schema = require(Shared .. "Sim.Schema")
 local Life = require(Shared .. "Sim.Life")
+local Needs = require(Shared .. "Sim.Needs")
 local Foods = require(Shared .. "Data.Foods")
 local Appearance = require(Shared .. "Avatar.Appearance")
 local StarterHouse = require(Shared .. "Data.StarterHouse")
@@ -256,6 +257,7 @@ describe("Wish service", function()
 	it("takes the craving's price and grants it, with the hearts, the mood and a word of thanks", function()
 		reset(1000)
 		local v = profile.villagers.v2
+		v.mood = 0 -- (low, so the lift shows under what they can reach: Sim/Needs)
 		local food = Foods.get(plainFood(v))
 		v.wish = { kind = "food", arg = food.id, untilT = 1e12 }
 		Villagers.syncWishes(owner)
@@ -272,7 +274,7 @@ describe("Wish service", function()
 		expect(v.wish).toBe(nil)
 		expect(bodies.v2.model.attributes.Wish).toBe(nil)
 		expect(profile.stats.wishes).toBe(1)
-		expect(v.mood).toBe(Tuning.Villagers.StartMood + L.WishMood)
+		expect(v.mood).toBe(math.min(Needs.cap(profile, "v2"), Needs.lift(L.WishMood)))
 		expect(v.hxp).toBe(L.WishHearts)
 		-- they say so, naming what they got, and the player is told
 		expect(#bodies.v2.said).toBe(1)
@@ -294,12 +296,14 @@ describe("Wish service", function()
 	it("makes more of their favourite, and pays the heart level it fills at once, with a notice", function()
 		reset(1000)
 		local v = profile.villagers.v3
+		v.mood = 0
 		v.wish = { kind = "food", arg = v.fav, untilT = 1e12 }
 		v.hxp = Life.heartNeed(1) - 1
 		local price = Life.wishPrice(profile, "v3")
 		expect(buy(owner, "v3")).toBe(true)
 		expect(profile.coins).toBe(1000 - price + (Life.heartReward(2)))
-		expect(v.mood).toBe(Tuning.Villagers.StartMood + L.WishMood + L.FavWishMood)
+		expect(v.mood).toBe(math.min(Needs.cap(profile, "v3"), Needs.lift(L.WishMood + L.FavWishMood)))
+		expect(v.mood > Needs.lift(L.WishMood)).toBeTruthy()
 		expect(v.heart).toBe(2)
 		expect(#profile.offers).toBe(0)
 		local told = false

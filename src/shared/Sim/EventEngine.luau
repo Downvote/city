@@ -21,6 +21,8 @@
 --                                a dish, a garden... `with` is the letter of somebody it's about.
 --                                A quarrel is remembered by both as a falling out, until they make up
 --   forget who kind              that's over now (the race is run)
+--   wish who other               they'd like to get to know `other` (a villager id): a wish of
+--                                theirs, when they asked you for friends (Data/Events/Needs)
 -- Handled by the service (returned in `service`):
 --   away who seconds | festival | creator who? | dayoff who
 --   leave prop hours by?         a thing (Data/EventProps) left lying about for a while
@@ -44,6 +46,7 @@ local Keepsakes = require(script.Parent.Keepsakes)
 local Sayings = require(script.Parent.Parent.Data.Sayings)
 local Rng = require(script.Parent.Parent.Util.Rng)
 local Memory = require(script.Parent.Memory)
+local Needs = require(script.Parent.Needs)
 
 local EventEngine = {}
 
@@ -133,6 +136,21 @@ function EventEngine.context(profile: any, o: Options): any
 	end
 	function ctx.roomHas(vid: string, tag: string): boolean
 		return EventEngine.roomTags(profile, vid)[tag] == true
+	end
+	-- what a villager would ask you for first (Sim/Needs: "bed", "work", "roof", "comfy", "fun",
+	-- "friends"), or nil; whether they lack one of those; the line an ask ends on; somebody in town
+	-- they hardly know yet
+	function ctx.need(vid: string): string?
+		return Needs.ask(profile, vid)
+	end
+	function ctx.lacks(vid: string, kind: string): boolean
+		return table.find(Needs.missing(profile, vid), kind) ~= nil
+	end
+	function ctx.needLine(kind: string): string
+		return Needs.line(kind)
+	end
+	function ctx.stranger(vid: string): string?
+		return Needs.stranger(profile, vid)
 	end
 	function ctx.bestScore(vid: string): number
 		local best = -100
@@ -323,10 +341,10 @@ function EventEngine.apply(profile: any, ev: any, effects: { any }, now: number)
 			end
 		end
 	end
+	-- (a lift counts for less and stops at what their home and friends let them reach: Sim/Needs)
 	local function mood(id: string?, d: number)
-		local v = id and profile.villagers[id]
-		if v then
-			v.mood = math.clamp(v.mood + d, Tuning.Villagers.MoodMin, Tuning.Villagers.MoodMax)
+		if id and profile.villagers[id] and type(d) == "number" then
+			Needs.addMood(profile, id, d)
 		end
 	end
 	local list: { any } = effects or {}
@@ -441,6 +459,11 @@ function EventEngine.apply(profile: any, ev: any, effects: { any }, now: number)
 					-- what they wear changed: the service finds the thing and dresses them
 					table.insert(service, { t = "dress", vid = who })
 				end
+			end
+		elseif t == "wish" then
+			local who = vid(e.who)
+			if who and Life.wishToMeet(profile, who, e.other, now) then
+				table.insert(service, { t = "wishes", vid = who })
 			end
 		elseif t == "forget" then
 			local who = vid(e.who)

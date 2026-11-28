@@ -20,6 +20,8 @@
 --   Work      at work: big orders, a tower of bricks, the wrong letters
 --   Asks      a villager asks you: a name for a pet, which outfit, whether to tell the truth
 --   Moments   big moments that play as cutscenes on sets of their own: dreams, a race, a cat
+--   Needs     a villager asks for what they lack: a bed, work, a roof, a comfier bed, something fun,
+--             friends (Sim/Needs), each ending on the same plain line about where to get it
 -- A scene may name props (Data/EventProps) to put by its stars while it plays; an answer may
 -- leave one for a while, give you a keepsake, or teach them a saying or a hobby.
 --
@@ -1887,44 +1889,7 @@ event({
 	end,
 })
 
--- No bed to sleep in.
-event({
-	id = "nobed",
-	actors = 1,
-	when = "any",
-	weight = function(ctx: Ctx, a: string)
-		return if ctx.v(a).bed then 0 else 2.5
-	end,
-	scene = function(ctx: Ctx, a: string): Scene
-		return {
-			title = "Nowhere to sleep",
-			lines = join(
-				burst(ctx, "a", a, {
-					bold = "Right, so where's my bed?",
-					proud = "I'll need a bed, and a good one.",
-					easygoing = "So... where am I supposed to nap?",
-					sunny = "{player}, quick question.|Where do I sleep?",
-					cool = "Hm, I don't have a bed yet.",
-					prickly = "I'm not sleeping on the floor.|Just so you know.",
-					dramatic = "I have NOWHERE to sleep, {player}.",
-					bookish = "I measured the floor, and it's not long enough for me.",
-					gloomy = "It's the floor again tonight, I guess.",
-					polite = "Sorry to ask, {player}.|Is there a bed for me somewhere?",
-					foodie = "Where am I meant to sleep?|And where do I keep my snacks?",
-					nervous = "Is there a bed for me?|Where do I go tonight?",
-					shy = "Um, {player}... where do I sleep?",
-					cheeky = "found a nice bush to sleep in|kidding, where's my bed",
-					gentle = "Oh my, {player}, I don't seem to have a bed.|Whenever you have a moment, okay?",
-					dreamy = "Hmm... where do I sleep?|Maybe on a cloud.",
-					_ = "Um, where do I sleep?",
-				}, "sad"),
-				line(nil, "Every villager needs a bed. Find beds under Furniture in Build mode.")
-			),
-			effects = { { t = "mood", who = "a", d = -3 } },
-			log = ctx.f("{a} has no bed."),
-		}
-	end,
-})
+-- (No bed and no work: Data/Events/Needs, with the other things a villager asks for.)
 
 -- A dream. (Its cutscene counts on two lines, both theirs.)
 event({
@@ -2651,48 +2616,6 @@ event({
 	end,
 })
 
--- Wanting a job when there isn't one.
-event({
-	id = "jobhunt",
-	actors = 1,
-	when = "day",
-	weight = function(ctx: Ctx, a: string)
-		if ctx.job(a) then
-			return 0
-		end
-		return 1.1
-	end,
-	scene = function(ctx: Ctx, a: string): Scene
-		return {
-			title = "Looking for work",
-			lines = join(
-				burst(ctx, "a", a, {
-					proud = "I'd like a job, ideally a good one.",
-					bold = "Give me a job, any job.",
-					shy = "Um... is there any work I could do?|I don't mind what it is.",
-					sunny = "{player}, is there anything I could do?|Anything at all.",
-					cool = "Have you got any work for me?",
-					prickly = "I'm bored.|Find me something to do, please.",
-					dramatic = "I need a PURPOSE, {player}.",
-					bookish = "Actually, I've been reading about all the jobs in town.|I'd like to try one, any of them.",
-					gloomy = "Nobody needs me for anything.|Is there any work?",
-					polite = "If there is any work, I would be glad to help.",
-					foodie = "Is there a job with snacks?|Any job's fine, but snacks would be nice.",
-					nervous = "Is there a job for me?|Would I even be any good at it?",
-					easygoing = "I suppose I should get a job at some point.|Maybe today, even.",
-					gentle = "Is there any work I could help with, {player}?|I'd like to be useful.",
-					dreamy = "Hmm... I think I'd like a job.|Something with a window, maybe.",
-					cheeky = "i'm so bored i counted the clouds|give me a job, please",
-					_ = "I'd love a job, anything at all.",
-				}, "question"),
-				line(nil, "Put a workplace down from the Work tab in Build mode and they'll take it.")
-			),
-			effects = { { t = "mood", who = "a", d = -2 } },
-			log = ctx.f("{a} is looking for work."),
-		}
-	end,
-})
-
 -- A tourist likes the town.
 event({
 	id = "tourist",
@@ -2979,7 +2902,7 @@ event({
 	end,
 })
 
-for _, name in { "Talks", "Solo", "Pairs", "Town", "Work", "Asks", "Moments" } do
+for _, name in { "Talks", "Solo", "Pairs", "Town", "Work", "Asks", "Moments", "Needs" } do
 	local module = script:FindFirstChild(name)
 	if module then
 		for _, def in require(module) :: any do

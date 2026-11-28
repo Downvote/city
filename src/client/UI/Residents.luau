@@ -22,6 +22,7 @@ local Schema = require(Shared.Sim.Schema)
 local City = require(Shared.Sim.City)
 local Relationships = require(Shared.Sim.Relationships)
 local Life = require(Shared.Sim.Life)
+local Needs = require(Shared.Sim.Needs)
 local Flair = require(Shared.Sim.Flair)
 local Memory = require(Shared.Sim.Memory)
 local WorkMove = require(Shared.Sim.WorkMove)
@@ -331,6 +332,113 @@ local function about(parent: Frame, vid: string, v: any, p: any)
 		closest = Text.fill("{name}, {how}", { name = best.name, how = levelName:lower() })
 	end
 	fact(grid, "Closest to", closest, 4)
+end
+
+-- The Mood tab: what their mood is made of (Sim/Needs). The user: "Villager mood bars should also
+-- not be that easy to fill up, the factors affecting it should be: amount and relationship of
+-- friends, quality of bed, roof over bed, fun objects near bed". So how happy they are and the most
+-- they can be with what they have now, then a row for each factor: what helps first, then what's
+-- missing, each with what it is ("Single bed", "2 friends"), the points it gives and a bar.
+local FACTORS = {
+	bed = { name = "Bed", icon = "bed" },
+	comfy = { name = "Comfy bed", icon = "sofa" },
+	roof = { name = "Roof over bed", icon = "roof" },
+	fun = { name = "Fun by the bed", icon = "gamepad" },
+	friends = { name = "Friends", icon = "people" },
+}
+local function moodOf(parent: Frame, vid: string, v: any, p: any)
+	local mood = math.floor(v.mood)
+	local cap = Needs.cap(p, vid)
+	local head = Kit.box({ Name = "Now", Parent = parent, Size = UDim2.new(1, 0, 0, 40) })
+	Kit.title(Text.fill("{n}%", { n = mood }), {
+		Name = "Mood",
+		Parent = head,
+		Size = UDim2.fromOffset(84, 36),
+		TextSize = 30,
+		Tint = moodColor(mood),
+		Wrap = false,
+	})
+	Kit.caption(Text.fill("Can reach {n}%", { n = cap }), {
+		Name = "Cap",
+		Parent = head,
+		Size = UDim2.new(1, -92, 0, 16),
+		Position = UDim2.fromOffset(92, 12),
+		TextSize = 12,
+	})
+	local rows = Kit.scroll({
+		Name = "Factors",
+		Parent = parent,
+		Size = UDim2.new(1, 0, 1, -48),
+		Position = UDim2.fromOffset(0, 48),
+	})
+	Kit.list(rows, 6)
+	local list = Needs.factors(p, vid)
+	-- what helps first, then what's missing, each in Needs.Factors' order
+	local order = 0
+	for _, helps in { true, false } do
+		for _, f in list do
+			if f.have == helps then
+				order += 1
+				local info = FACTORS[f.id]
+				local row = Kit.frame({
+					Name = f.id,
+					Parent = rows,
+					Size = UDim2.new(1, -12, 0, 38),
+					Color = T.Card,
+					Radius = 10,
+					LayoutOrder = order,
+				})
+				row:SetAttribute("Helps", helps)
+				local accent = if helps then T.Green elseif f.points > 0 then T.Yellow else T.Coral
+				Icons.make(info.icon, 20, {
+					Name = "Icon",
+					Parent = row,
+					Position = UDim2.fromOffset(12, 9),
+					Color = accent,
+					Hole = T.Card,
+					Centre = true,
+				})
+				Kit.text(info.name, {
+					Name = "Label",
+					Parent = row,
+					Size = UDim2.new(0.5, -36, 0, 18),
+					Position = UDim2.fromOffset(42, 3),
+					TextSize = 15,
+					Font = Kit.Fonts.Bold,
+					Wrap = false,
+				})
+				Kit.text(f.text, {
+					Name = "What",
+					Parent = row,
+					Size = UDim2.new(0.5, -14, 0, 18),
+					Position = UDim2.new(0.5, 0, 0, 3),
+					TextSize = 14,
+					Color = if helps then T.InkSoft else nil,
+					Tint = if helps then nil else T.Coral,
+					AlignX = Enum.TextXAlignment.Right,
+					Wrap = false,
+				}).TextTruncate =
+					Enum.TextTruncate.AtEnd
+				Kit.bar({
+					Parent = row,
+					Size = UDim2.new(1, -100, 0, 6),
+					Position = UDim2.fromOffset(42, 25),
+				}, f.points / math.max(1, f.max), accent)
+				Kit.text(Text.fill("+{n}", { n = f.points }), {
+					Name = "Points",
+					Parent = row,
+					Size = UDim2.fromOffset(44, 16),
+					Position = UDim2.new(1, -52, 0, 20),
+					TextSize = 13,
+					Font = Kit.Fonts.Bold,
+					Color = if f.points > 0 then nil else T.InkSoft,
+					Tint = if f.points > 0 then T.Green else nil,
+					AlignX = Enum.TextXAlignment.Right,
+					Wrap = false,
+				})
+			end
+		end
+	end
 end
 
 -- The Friends tab: everyone else in town as a row, closest first: how they get on (their
@@ -1072,7 +1180,9 @@ local function showDetail()
 		Size = UDim2.new(1, 0, 1, -(TOP + bottom)),
 		Position = UDim2.fromOffset(0, TOP),
 	})
-	if tab == "friends" then
+	if tab == "mood" then
+		moodOf(content, vid, v, p)
+	elseif tab == "friends" then
 		friendsOf(content, vid, p)
 	elseif tab == "lately" then
 		latelyOf(content, vid, p)
@@ -1192,6 +1302,7 @@ function Residents.open(vid: string?)
 		Caption = "People in town",
 		Tabs = {
 			{ id = "about", name = "About" },
+			{ id = "mood", name = "Mood" },
 			{ id = "friends", name = "Friends" },
 			{ id = "lately", name = "Lately" },
 			{ id = "quirks", name = "Quirks" },
