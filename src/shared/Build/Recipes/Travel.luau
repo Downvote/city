@@ -267,7 +267,7 @@ local function lift(r: R, spans: number)
 	r:block(-3.5, top - 0.4, 2.6, 3.5, top, 3, dark, "Metal")
 	r:block(-3.5, top - 0.4, -2.6, -3.1, top, 2.6, dark, "Metal")
 	r:block(3.1, top - 0.4, -2.6, 3.5, top, 2.6, dark, "Metal")
-	r:bevel(-3.1, top - 0.3, -2.6, 3.1, top - 0.1, 2.6, 0.07, shade(dark, 0.9), "Metal", { wear = 1.06 })
+	r:block(-3.1, top - 0.3, -2.6, 3.1, top - 0.1, 2.6, shade(dark, 0.9), "Metal")
 	for k = 0, spans do
 		local y = k * H
 		local base = if k == 0 then 0.3 else y + 0.1
@@ -318,7 +318,7 @@ local function lift(r: R, spans: number)
 			strip.transp, strip.name, strip.collide, strip.attrs = 0.5, "LiftDoor", false, { Floor = k, Side = side }
 		end
 		-- what you stand on and what keeps you out of an empty shaft: hidden, solid
-		local plate = r:bevel(-3.1, y, -2.6, 3.1, y + 0.19, 2.4, 0.066, steel, "Metal", { wear = 1.06 })
+		local plate = r:block(-3.1, y, -2.6, 3.1, y + 0.19, 2.4, steel, "Metal")
 		plate.name, plate.transp, plate.attrs = "LiftFloor", 1, { Floor = k }
 		-- (in the doors' own plane, so what stops you is the closed doors you see)
 		local gate = r:block(-1.6, y + 0.2, 2.47, 1.6, y + 8.05, 2.55, steel, "Metal")
@@ -330,7 +330,7 @@ local function lift(r: R, spans: number)
 		return p
 	end
 	local wood = Color3.fromRGB(156, 116, 82)
-	car(r:bevel(-3.0, 0, -2.55, 3.0, 0.2, 2.35, 0.07, shade(wood, 0.8), "WoodPlanks", { wear = 1.06 }))
+	car(r:block(-3.0, 0, -2.55, 3.0, 0.2, 2.35, shade(wood, 0.8), "WoodPlanks"))
 	car(r:block(-3.0, 0.2, -2.55, 3.0, 8.8, -2.45, steel, "Metal"))
 	car(r:block(-1.2, 3.2, -2.45, 1.2, 7.2, -2.41, Color3.fromRGB(214, 226, 232), "Glass"))
 	for _, s in { -1, 1 } do
@@ -343,7 +343,7 @@ local function lift(r: R, spans: number)
 			car(r:block(hx - 0.05, 3.15, z - 0.05, s * 2.86, 3.25, z + 0.05, shade(steel, 0.8), "Metal"))
 		end
 	end
-	car(r:bevel(-3.0, 8.8, -2.55, 3.0, 9.0, 2.35, 0.07, steel, "Metal", { wear = 1.06 }))
+	car(r:block(-3.0, 8.8, -2.55, 3.0, 9.0, 2.35, steel, "Metal"))
 	car(r:block(-1.2, 8.76, -1.2, 1.2, 8.8, 1.2, Color3.fromRGB(255, 244, 214), "Glass"))
 	car(r:block(-3.0, 9.0, -0.2, 3.0, 9.4, 0.2, dark, "Metal"))
 end

@@ -418,11 +418,11 @@ local items: { Item } = {
 			r:block(-2.2, 0, -0.9, -2.04, 6.4, 0.85, r.c1, "Wood")
 			r:block(2.04, 0, -0.9, 2.2, 6.4, 0.85, r.c1, "Wood")
 			r:block(-2.04, 0.3, -0.9, 2.04, 6.4, -0.78, shade(r.c1, 0.7), "Wood")
-			r:bevel(-2.26, 6.4, -0.9, 2.26, 6.58, 0.9, 0.063, dk, "Wood", { wear = 1.06 })
-			r:bevel(-2.04, 0, -0.78, 2.04, 0.3, 0.75, 0.08, dk, "Wood", { wear = 1.06 })
+			r:block(-2.26, 6.4, -0.9, 2.26, 6.58, 0.9, dk, "Wood")
+			r:block(-2.04, 0, -0.78, 2.04, 0.3, 0.75, dk, "Wood")
 			-- two deep shelves below
 			for _, y in { 0.3, 1.5 } do
-				r:bevel(-2.04, y, -0.78, 2.04, y + 0.14, 0.82, 0.049, r.c1, "Wood", { wear = 1.06 })
+				r:block(-2.04, y, -0.78, 2.04, y + 0.14, 0.82, r.c1, "Wood")
 			end
 			parcel(r, -1.8, 0.44, -0.5, -0.5, 1.3, 0.6, KRAFT)
 			parcel(r, -0.3, 0.44, -0.6, 0.5, 1.0, 0.5, shade(KRAFT, 0.88))
@@ -431,7 +431,7 @@ local items: { Item } = {
 			parcel(r, -1.6, 1.64, -0.6, -0.2, 2.3, 0.5, shade(KRAFT, 0.92))
 			parcel(r, 0.4, 1.64, -0.5, 1.7, 2.5, 0.6, KRAFT)
 			-- four rows of four pigeonholes
-			r:bevel(-2.04, 2.7, -0.78, 2.04, 2.84, 0.82, 0.049, r.c1, "Wood", { wear = 1.06 })
+			r:block(-2.04, 2.7, -0.78, 2.04, 2.84, 0.82, r.c1, "Wood")
 			for row = 1, 4 do
 				local y = 2.84 + row * 0.89
 				r:block(-2.04, y - 0.1, -0.78, 2.04, y, 0.78, r.c1, "Wood")

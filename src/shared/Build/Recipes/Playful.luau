@@ -1552,7 +1552,7 @@ local items: { Item } = {
 			r:block(-0.7, 1.2, 1.24, -0.6, 1.4, 1.27, INK, "Metal")
 			r:block(-0.75, 1.0, 1.24, -0.55, 1.1, 1.27, RED, "Wood")
 			-- a ledge with a joystick and a big button
-			r:bevel(-1.2, 2.6, -1.2, 1.2, 2.75, 1.45, 0.052, r.c2, "Metal", { wear = 1.06 })
+			r:block(-1.2, 2.6, -1.2, 1.2, 2.75, 1.45, r.c2, "Metal")
 			r:cyl(-0.5, 2.765, 1.1, 0.03, 0.32, "y", INK, "Metal")
 			rod(r, Vector3.new(-0.5, 2.75, 1.1), Vector3.new(-0.5, 3.05, 1.1), 0.06, INK)
 			r:ball(-0.5, 3.08, 1.1, 0.2, RED, "Wood")
@@ -1567,7 +1567,7 @@ local items: { Item } = {
 				r:glass(-1.08, 2.75, sx * 1.08, 1.08, 5.25, sx * 1.11)
 			end
 			-- prizes in a heap, a chute in the corner
-			r:bevel(-1.08, 2.75, -1.08, 1.08, 2.92, 1.08, 0.059, shade(r.c1, 0.8), "Metal", { wear = 1.06 })
+			r:block(-1.08, 2.75, -1.08, 1.08, 2.92, 1.08, shade(r.c1, 0.8), "Metal")
 			r:block(0.45, 2.92, 0.45, 1.05, 3.35, 1.05, shade(r.c2, 0.9), "Metal")
 			r:block(0.52, 3.35, 0.52, 0.98, 3.38, 0.98, INK, "Metal")
 			for i, p in

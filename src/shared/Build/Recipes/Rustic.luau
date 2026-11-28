@@ -660,7 +660,7 @@ local items: { Item } = {
 			end)
 			-- a plaid blanket folded on top and hanging over the front
 			local plaid = r.c2
-			r:bevel(-1.3, 1.45, -0.7, 0.3, 1.58, 0.86, 0.059, plaid, "Fabric", { round = true })
+			r:block(-1.3, 1.45, -0.7, 0.3, 1.58, 0.86, plaid, "Fabric")
 			r:block(-1.3, 0.95, 0.86, 0.3, 1.58, 0.9, plaid, "Fabric")
 			for _, z in { -0.35, 0.35 } do
 				r:block(-1.3, 1.58, z, 0.3, 1.61, z + 0.1, shade(plaid, 0.75), "Fabric")
@@ -1494,7 +1494,7 @@ local items: { Item } = {
 		build = function(r: R)
 			local wood, iron = r.c1, r.c2
 			-- a thick board on forged brackets
-			r:bevel(-2.0, 1.4, 0, 2.0, 1.55, 1.0, 0.053, wood, "Wood", { wear = 1.06 })
+			r:block(-2.0, 1.4, 0, 2.0, 1.55, 1.0, wood, "Wood")
 			for _, x in { -1.4, 1.4 } do
 				r:block(x - 0.04, 0.7, 0, x + 0.04, 1.4, 0.08, iron, "Metal")
 				r:block(x - 0.04, 1.32, 0.08, x + 0.04, 1.4, 0.85, iron, "Metal")

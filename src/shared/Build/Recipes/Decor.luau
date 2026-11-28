@@ -676,10 +676,10 @@ local items: { Item } = {
 		build = function(r: R)
 			local dk = shade(r.c1, 0.82)
 			-- a plinth with a raised panel
-			r:bevel(-1.0, 0, -0.7, 1.0, 0.35, 0.7, 0.08, dk, "Wood", { wear = 1.06 })
+			r:block(-1.0, 0, -0.7, 1.0, 0.35, 0.7, dk, "Wood")
 			r:block(-0.9, 0.35, -0.6, 0.9, 2.2, 0.6, r.c1, "Wood")
 			r:block(-0.6, 0.75, 0.6, 0.6, 1.8, 0.64, shade(r.c1, 1.15), "Wood")
-			r:bevel(-0.95, 2.1, -0.65, 0.95, 2.25, 0.65, 0.052, dk, "Wood", { wear = 1.06 })
+			r:block(-0.95, 2.1, -0.65, 0.95, 2.25, 0.65, dk, "Wood")
 			-- the waist: a back, two sides and a glass door with the pendulum behind it
 			r:block(-0.7, 2.25, -0.5, 0.7, 5.0, -0.3, r.c1, "Wood")
 			for _, sx in { -1, 1 } do
@@ -695,7 +695,7 @@ local items: { Item } = {
 			end
 			-- the hood with the face, under an arched top with finials
 			r:block(-0.95, 5.0, -0.65, 0.95, 6.8, 0.65, r.c1, "Wood")
-			r:bevel(-0.98, 4.97, -0.68, 0.98, 5.12, 0.68, 0.053, dk, "Wood", { wear = 1.06 })
+			r:block(-0.98, 4.97, -0.68, 0.98, 5.12, 0.68, dk, "Wood")
 			r:cyl(0, 5.9, 0.66, 0.04, 1.45, "z", r.c2, "Metal")
 			r:cyl(0, 5.9, 0.69, 0.04, 1.25, "z", C.Cream, "Metal")
 			for i = 0, 11 do
@@ -715,7 +715,7 @@ local items: { Item } = {
 			end
 			r:boxAt(CFrame.new(0.15, 6.0, 0.73) * CFrame.Angles(0, 0, -1.0), 0.05, 0.4, 0.02, C.Black, "Metal")
 			r:boxAt(CFrame.new(0, 6.08, 0.74) * CFrame.Angles(0, 0, 0.1), 0.05, 0.36, 0.02, C.Black, "Metal")
-			r:bevel(-1.0, 6.8, -0.7, 1.0, 7.0, 0.7, 0.07, dk, "Wood", { wear = 1.06 })
+			r:block(-1.0, 6.8, -0.7, 1.0, 7.0, 0.7, dk, "Wood")
 			r:cyl(0, 7.0, 0, 1.2, 1.4, "z", r.c1, "Wood")
 			for _, x in { -0.85, 0.85 } do
 				r:cyl(x, 7.08, 0.2, 0.16, 0.16, "y", r.c2, "Metal")

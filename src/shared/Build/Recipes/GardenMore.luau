@@ -203,7 +203,7 @@ local items: { Item } = {
 		build = function(r: R)
 			-- clay pavers (c1) laid in a basket weave on mortar (c2): a pair of bricks to each
 			-- square, every square turned across its neighbours, the bricks in a few tones
-			r:bevel(-2, 0, -2, 2, 0.1, 2, 0.035, r.c2, "Concrete", { wear = 0.94 })
+			r:block(-2, 0, -2, 2, 0.1, 2, r.c2, "Concrete")
 			local tones = {
 				r.c1,
 				shade(r.c1, 0.9),

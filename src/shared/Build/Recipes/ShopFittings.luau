@@ -407,10 +407,10 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a scooping cabinet: eight tubs under a sloping glass, a stack of cones on the end.
 			-- c1 the cabinet, c2 its stripe and rail.
-			r:bevel(-2.5, 0, -1.2, 2.5, 0.3, 1.0, 0.08, shade(r.c1, 0.55), "Metal", { wear = 1.06 })
+			r:block(-2.5, 0, -1.2, 2.5, 0.3, 1.0, shade(r.c1, 0.55), "Metal")
 			r:block(-2.5, 0.3, -1.3, 2.5, 2.6, 1.2, r.c1, "Metal")
 			r:block(-2.5, 1.3, 1.2, 2.5, 1.9, 1.24, r.c2, "Metal")
-			r:bevel(-2.5, 2.6, -1.3, 2.5, 2.74, 1.24, 0.049, shade(r.c1, 0.9), "Metal", { wear = 1.06 })
+			r:block(-2.5, 2.6, -1.3, 2.5, 2.74, 1.24, shade(r.c1, 0.9), "Metal")
 			r:block(-2.3, 2.74, -1.0, 2.3, 2.8, 0.9, Color3.fromRGB(205, 225, 235), "Metal")
 			local tubs = { STRAWBERRY, VANILLA, CHOC, MINT, LEMON, LILAC, CHOC, STRAWBERRY }
 			for i, col in tubs do
@@ -642,7 +642,7 @@ local items: { Item } = {
 			-- round cone needs the low poly kit, and without it became a plain post: the user, "the
 			-- ice cream dosent look like an ice cream sign"), with a rim and a criss-cross of waffle.
 			r:block(-1.1, 0.04, -1.1, 1.1, 1.8, 1.1, r.c2, "Concrete")
-			r:bevel(-1.16, 1.2, -1.16, 1.16, 1.5, 1.16, 0.08, r.c1, "Plaster", { wear = 1.06 })
+			r:block(-1.16, 1.2, -1.16, 1.16, 1.5, 1.16, r.c1, "Plaster")
 			local a, h, tip = 1.3, 4.3, 1.8
 			-- (built point up about its middle, then turned over so the point is at the bottom)
 			local over = CFrame.new(0, tip + h / 2, 0) * CFrame.Angles(math.pi, 0, 0)

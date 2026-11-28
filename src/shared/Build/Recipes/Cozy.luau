@@ -97,7 +97,7 @@ end
 local function cushion(r: R, x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, color: Color3)
 	local h = y2 - y1
 	local xm, ym = (x1 + x2) / 2, (y1 + y2) / 2
-	r:bevel(x1, y1, z1 + h / 2, x2, y2, z2 - h / 2, 0.1, color, "Fabric", { round = true })
+	r:block(x1, y1, z1 + h / 2, x2, y2, z2 - h / 2, color, "Fabric")
 	r:cyl(xm, ym, z1 + h / 2, x2 - x1, h, "x", color, "Fabric")
 	r:cyl(xm, ym, z2 - h / 2, x2 - x1, h, "x", color, "Fabric")
 end
@@ -160,18 +160,7 @@ local function basket(r: R, x1: number, x2: number, y: number, z1: number, z2: n
 			q:block(x1, by, z2, x2, by + 0.07, z2 + 0.03, shade(WICKER, 0.82), "Fabric")
 		end
 	end)
-	r:bevel(
-		x1 - 0.03,
-		y + h - 0.1,
-		z1 - 0.03,
-		x2 + 0.03,
-		y + h + 0.04,
-		z2 + 0.06,
-		0.063,
-		shade(WICKER, 0.9),
-		"Fabric",
-		{ round = true }
-	)
+	r:block(x1 - 0.03, y + h - 0.1, z1 - 0.03, x2 + 0.03, y + h + 0.04, z2 + 0.06, shade(WICKER, 0.9), "Fabric")
 	local xm = (x1 + x2) / 2
 	r:block(xm - 0.17, y + h * 0.42, z2 + 0.03, xm + 0.17, y + h * 0.66, z2 + 0.07, LEATHER, "Fabric")
 end
@@ -364,13 +353,13 @@ local items: { Item } = {
 		build = function(r: R)
 			local wood = r.c1
 			-- a built in box with two cubbies, on a recessed kick
-			r:bevel(-2.95, 0, -1.15, 2.95, 0.25, 0.9, 0.08, shade(wood, 0.78), "Wood", { wear = 1.06 })
+			r:block(-2.95, 0, -1.15, 2.95, 0.25, 0.9, shade(wood, 0.78), "Wood")
 			r:block(-3, 0.25, -1.2, 3, 1.5, -1.05, wood, "Wood")
 			for _, sx in { -1, 1 } do
 				r:block(math.min(sx * 3, sx * 2.8), 0.25, -1.05, math.max(sx * 3, sx * 2.8), 1.5, 1.0, wood, "Wood")
 			end
 			r:block(-0.15, 0.25, -1.05, 0.15, 1.5, 1.0, wood, "Wood")
-			r:bevel(-2.8, 0.25, -1.05, 2.8, 0.4, 1.0, 0.053, wood, "Wood", { wear = 1.06 })
+			r:block(-2.8, 0.25, -1.05, 2.8, 0.4, 1.0, wood, "Wood")
 			r:block(-2.8, 1.3, 0.85, 2.8, 1.5, 1.0, wood, "Wood")
 			for _, sx in { -1, 1 } do
 				r:block(
@@ -384,7 +373,7 @@ local items: { Item } = {
 					"Wood"
 				)
 			end
-			r:bevel(-3.08, 1.5, -1.2, 3.08, 1.62, 1.12, 0.042, wood, "Wood", { wear = 1.06 })
+			r:block(-3.08, 1.5, -1.2, 3.08, 1.62, 1.12, wood, "Wood")
 			r:cyl(0, 1.56, 1.12, 6.16, 0.12, "x", wood, "Wood")
 			-- a basket in each cubby: blankets rolled up in one, yarn in the other
 			for _, sx in { -1, 1 } do

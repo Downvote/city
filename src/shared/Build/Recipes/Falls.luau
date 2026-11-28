@@ -191,20 +191,9 @@ local items: { Item } = {
 			local surface = -0.5
 			-- a low rendered wall on the side, capped in stone, planters at each end
 			r:block(-2.6, 0, -1.8, 2.6, 2.6, -0.6, wall, "Plaster")
-			r:bevel(-2.7, 2.6, -1.9, 2.7, 2.78, -0.5, 0.063, shade(wall, 0.92), "Concrete", { wear = 0.94 })
+			r:block(-2.7, 2.6, -1.9, 2.7, 2.78, -0.5, shade(wall, 0.92), "Concrete")
 			for _, sx in { -1, 1 } do
-				r:bevel(
-					sx * 2.1 - 0.5,
-					2.78,
-					-1.7,
-					sx * 2.1 + 0.5,
-					3.2,
-					-0.7,
-					0.08,
-					shade(wall, 0.85),
-					"Concrete",
-					{ wear = 0.94 }
-				)
+				r:block(sx * 2.1 - 0.5, 2.78, -1.7, sx * 2.1 + 0.5, 3.2, -0.7, shade(wall, 0.85), "Concrete")
 				r:block(sx * 2.1 - 0.42, 2.9, -1.62, sx * 2.1 + 0.42, 3.18, -0.78, C.Soil, "Ground")
 				for k = 0, 5 do
 					local a = k * math.pi / 3 + sx
