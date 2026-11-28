@@ -45,7 +45,7 @@ Sounds.Effects = {
 	coin = { id = 12221990, volume = 0.077, rate = 1.5, len = 0.48, name = "electronicpingshort.wav", by = "Roblox" }, -- loudest -15.7 dB, 0.48 s heard
 	coins = { id = 127645268874265, volume = 0.176, len = 0.41, name = "CoinTransfer_01", by = "Roblox" }, -- loudest -17.9 dB, 0.41 s heard
 	levelup = { id = 15675043410, volume = 0.104, len = 0.94, name = "Roblox_UI_Tonal_Stinger", by = "Roblox" }, -- loudest -9.3 dB, 0.94 s heard
-	gift = { id = 9116394876, volume = 0.724, len = 1.62, name = "Magic Glows Soft Clusters Of Chiming Hits 2 (SFX)", by = "ProSoundEffects" }, -- loudest -28.2 dB, 1.62 s heard
+	gift = { id = 9117042092, volume = 0.21, len = 2.02, name = "Music Box Swan Lake Single Notes 3 (SFX)", by = "ProSoundEffects" }, -- loudest -17.6 dB, 2.02 s heard (the user: "change the gift sound ... to something else from the roblox library"; it was a cluster of magic chimes)
 	pickup = { id = 17208204604, volume = 0.191, len = 0.41, name = "Roblox GUI - Bubble", by = "Roblox" }, -- loudest -18.6 dB, 0.41 s heard
 	place = { id = 9120898595, volume = 0.359, len = 0.99, name = "Wood Impact 1 (SFX)", by = "ProSoundEffects" }, -- loudest -22.1 dB, 0.99 s heard
 	sell = { id = 15675075163, volume = 0.234, len = 0.34, name = "Roblox_UI_Delete", by = "Roblox" }, -- loudest -21.4 dB, 0.34 s heard
