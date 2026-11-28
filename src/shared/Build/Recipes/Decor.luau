@@ -648,7 +648,7 @@ local items: { Item } = {
 				r:boxAt(at(sx * 0.93, 2.5, 0), 0.16, 5.0, 0.14, r.c1, "Metal")
 			end
 			r:boxAt(at(0, 0.03, 0), 2.02, 0.16, 0.14, r.c1, "Metal")
-			local n = 6
+			local n = 12
 			for i = 0, n - 1 do
 				local a1 = i / n * math.pi
 				local a2 = (i + 1) / n * math.pi

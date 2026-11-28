@@ -556,6 +556,10 @@ local items: { Item } = {
 			rod(r, Vector3.new(-0.3, 0.75, 0), Vector3.new(-0.5, 0.95, 0), 0.1, r.c2, "Metal")
 			rod(r, Vector3.new(-0.5, 0.95, 0), Vector3.new(-0.5, 0.35, 0), 0.1, r.c2, "Metal")
 			rod(r, Vector3.new(-0.5, 0.38, 0), Vector3.new(-0.36, 0.25, 0), 0.1, r.c2, "Metal")
+			-- a window to see how much water is in, the switch under the handle and the base's lead
+			r:block(0.12, 0.16, 0.32, 0.24, 0.5, 0.42, Color3.fromRGB(150, 190, 210), "Glass")
+			r:block(-0.48, 0.3, -0.06, -0.4, 0.38, 0.06, C.Black, "Rubber")
+			rod(r, Vector3.new(-0.36, 0.04, -0.2), Vector3.new(-0.58, 0.02, -0.4), 0.05, C.Black, "Rubber")
 		end,
 	},
 	{
@@ -589,6 +593,13 @@ local items: { Item } = {
 			-- the lever and a dial on the side
 			r:block(0.53, 0.38, -0.05, 0.6, 0.46, 0.05, C.Black, "Metal")
 			r:cyl(0.55, 0.16, 0.18, 0.06, 0.12, "x", C.Metal, "Metal")
+			-- the crumb tray's handle at the front and a chrome rim round each slot
+			r:block(-0.16, 0.08, 0.35, 0.16, 0.12, 0.39, C.Metal, "Metal")
+			for _, z in { -0.12, 0.12 } do
+				for _, sx in { -1, 1 } do
+					r:block(sx * 0.4 - 0.04, 0.65, z - 0.085, sx * 0.4 + 0.04, 0.69, z + 0.085, C.Metal, "Metal")
+				end
+			end
 		end,
 	},
 }

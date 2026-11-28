@@ -996,6 +996,8 @@ local function pickColor(hit: RaycastResult)
 			end
 		end
 	end
+	-- (a finish picked off an old save's flat paint comes up as the textured one that took its place)
+	s.paint.m = Palette.drawn(s.paint.m)
 	s.paint.pick = false
 	changed("paint")
 end
