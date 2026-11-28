@@ -67,7 +67,7 @@ local function dial(r: R, cf: CFrame, rim: Color3, hour: number, minute: number)
 		})
 	end
 	disc(0.02, 0.08, 1.75, rim, "Metal")
-	disc(0.05, 0.1, 1.5, C.Paper, "SmoothPlastic")
+	disc(0.05, 0.1, 1.5, C.Paper, "Cardboard")
 	for k = 0, 3 do
 		r:boxAt(
 			cf * CFrame.Angles(0, 0, -math.rad(k * 90)) * CFrame.new(0, 0.6, 0.12),
@@ -75,7 +75,7 @@ local function dial(r: R, cf: CFrame, rim: Color3, hour: number, minute: number)
 			0.2,
 			0.04,
 			INK,
-			"SmoothPlastic"
+			"Metal"
 		)
 	end
 	r:boxAt(cf * CFrame.Angles(0, 0, -math.rad(hour * 30)) * CFrame.new(0, 0.22, 0.16), 0.08, 0.44, 0.04, INK, "Metal")
