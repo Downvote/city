@@ -139,6 +139,11 @@ local function trustedHere(): any?
 		return nil
 	end
 	local m, size = Tuning.Trust.Reach, Tuning.Plot.Size
+	-- (standing on your own plot, it's your own you build on)
+	local own = player:GetAttribute("Plot")
+	if type(own) == "number" and (Town.toPlot(own, root.Position)) then
+		return nil
+	end
 	for _, row in State.data.trustedBy or {} do
 		if type(row) == "table" and type(row.plot) == "number" then
 			local _, at = Town.toPlot(row.plot, root.Position)

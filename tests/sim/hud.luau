@@ -41,7 +41,8 @@ run("the stats sit in a strip under the town's level", function()
 	check(pills.Position.Y.Offset >= card.Position.Y.Offset + card.Size.Y.Offset, "below the level card, not beside it")
 	local names = {}
 	for _, c in pills:FindFirstChild("Row"):GetChildren() do
-		if c:IsA("GuiObject") and c.Name ~= "Divider" then
+		-- (the friends chip only shows with friends in the server: below)
+		if c:IsA("GuiObject") and c.Name ~= "Divider" and c.Visible then
 			table.insert(names, c.Name)
 		end
 	end
@@ -60,6 +61,23 @@ run("the stats sit in a strip under the town's level", function()
 		"on one painted slab with a tone of dots on it"
 	)
 	check(pills:FindFirstChild("Plus", true) == nil, "with no + beside the money any more")
+end)
+
+-- the user: "add a 10% income boosy per friend playing" (Services/Social writes FriendsHere)
+run("friends in the server: a chip at the strip's end, the strip running on to hold it", function()
+	local pills = gui:FindFirstChild("Pills", true)
+	local chip = pills:FindFirstChild("Friends", true)
+	check(chip ~= nil and not chip.Visible, "no chip with no friends here")
+	local wide = pills.Size.X.Offset
+	Sim.player:SetAttribute("FriendsHere", 2)
+	frames(2)
+	check(chip.Visible, "two friends: the chip shows")
+	local value = chip:FindFirstChild("Value")
+	check(value ~= nil and value.Text == "+20% friends", "it says what they add")
+	check(pills.Size.X.Offset > wide, "the strip is longer")
+	Sim.player:SetAttribute("FriendsHere", 0)
+	frames(2)
+	check(not chip.Visible and pills.Size.X.Offset == wide, "and back when they go")
 end)
 
 run(
