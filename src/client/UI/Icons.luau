@@ -934,6 +934,12 @@ D.ironFence = {
 	{ "t", 79, 8, 15, "up", C.greyDark },
 }
 
+D.tiledWall = {
+	{ "r", 4, 20, 92, 16, C.greyDark, r = 0.4 },
+	{ "r", 10, 36, 80, 32, C.white, r = 0.05 },
+	{ "r", 10, 68, 80, 24, C.stone, r = 0.05 },
+}
+
 D.bamboo = {
 	{ "r", 8, 12, 16, 80, C.green, r = 0.45 },
 	{ "r", 30, 6, 16, 86, C.greenDark, r = 0.45 },
@@ -1068,6 +1074,17 @@ D.balloon = {
 	{ "t", 42, 72, 16, "up", C.pink },
 	{ "r", 48, 78, 4, 18, C.greyDark, r = 0.5 },
 	{ "c", 30, 16, 14, 18, C.white, o = false, t = 0.4 },
+}
+
+D.pagoda = {
+	{ "r", 47, 4, 6, 20, C.greyDark, r = 0.4 },
+	{ "r", 20, 24, 60, 10, C.greyDark, r = 0.4 },
+	{ "r", 36, 34, 28, 12, C.white, r = 0.1 },
+	{ "r", 12, 46, 76, 10, C.greyDark, r = 0.4 },
+	{ "r", 32, 56, 36, 12, C.white, r = 0.1 },
+	{ "r", 4, 68, 92, 10, C.greyDark, r = 0.4 },
+	{ "r", 28, 78, 44, 16, C.white, r = 0.1 },
+	{ "r", 44, 82, 12, 12, C.woodDark, r = 0.1 },
 }
 
 D.roofHip = {

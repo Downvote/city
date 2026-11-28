@@ -574,6 +574,12 @@ A.ironFence = {
 	solid(bar(2.5) .. " " .. bar(8) .. " " .. bar(13.5) .. " " .. bar(19)),
 	flat(rect(1.5, 9.5, 21, 2.25) .. " " .. rect(1.5, 16.5, 21, 2.25)),
 }
+-- a temple's wall: its tiled cap over the plaster, a line cut along the stone at its foot
+A.tiledWall = {
+	solid("M1.5 9 L5.5 4.5 H18.5 L22.5 9 Z"),
+	flat(rect(3, 10.5, 18, 11)),
+	gap("M2 16.5 H22", 1.5),
+}
 -- canes of bamboo, cut across at their joints
 A.bamboo = {
 	flat(
@@ -708,6 +714,13 @@ A.balloon = {
 	gap("M8 8.5 A4.5 4.5 0 0 1 11 4.75", 1.75),
 	flat("M10.25 16 H13.75 L12 18.25 Z"),
 	line("M12 18 Q10 20 12 22", 1.75),
+}
+-- temple: a pagoda, three roofs on their storeys under a spire, a door cut out of the foot
+A.pagoda = {
+	solid(
+		"M11.25 1.5 H12.75 V6 L17 8.25 L19.5 7.25 L17.75 9.75 H15 V11.75 L18.5 13.25 L21 12.25 L19.25 14.75 H16 V16.75 L20 18.5 L22.5 17.5 L20.75 20 H17 V22.5 H7 V20 H3.25 L1.5 17.5 L4 18.5 L8 16.75 V14.75 H4.75 L3 12.25 L5.5 13.25 L9 11.75 V9.75 H6.25 L4.5 7.25 L7 8.25 L11.25 6 Z"
+	),
+	hole(rect(10.5, 20.5, 3, 2)),
 }
 
 -- a room on a plan, its door open
