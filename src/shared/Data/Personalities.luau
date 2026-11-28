@@ -2289,6 +2289,38 @@ function Personalities.get(id: string): Personality?
 	return byId[id]
 end
 
+-- Each personality in a few words, for the creator and the villager's page (the user: "under
+-- personalities, shorten them, such as writing "Chatty and upbeat." Instead of "Chatty and upbeat,
+-- makes friends with..."). The longer `blurb` stays for anywhere that wants it.
+Personalities.Short = {
+	sunny = "Chatty and upbeat.",
+	gentle = "Kind and patient.",
+	bold = "Brave and loud.",
+	dreamy = "Head in the clouds.",
+	easygoing = "Relaxed and lazy.",
+	proud = "Confident and stubborn.",
+	shy = "Quiet and careful.",
+	cheeky = "Loves a prank.",
+	cool = "Calm and hard to impress.",
+	prickly = "Grumpy but helpful.",
+	dramatic = "Everything is a big deal.",
+	bookish = "Full of odd facts.",
+	gloomy = "Expects the worst.",
+	polite = "Proper and formal.",
+	foodie = "Always thinking about food.",
+	nervous = "A born worrier.",
+} :: { [string]: string }
+
+-- The few words for a personality (its blurb up to the first comma where none is written).
+function Personalities.short(p: Personality): string
+	local s = Personalities.Short[p.id]
+	if s then
+		return s
+	end
+	local first = string.match(p.blurb, "^[^,]+") or p.blurb
+	return if first:sub(-1) == "." then first else first .. "."
+end
+
 function Personalities.trait(id: string, trait: string): number
 	local p = byId[id]
 	if not p then

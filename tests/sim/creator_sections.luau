@@ -16,6 +16,12 @@ local gui = Sim.gui
 local Appearance = Harness.require("ReplicatedStorage.Shared.Avatar.Appearance")
 local Bundles = Harness.require("ReplicatedStorage.Shared.Avatar.Bundles")
 local Categories = Harness.require("ReplicatedStorage.Shared.Avatar.Categories")
+local ColorWords = Harness.require("ReplicatedStorage.Shared.Avatar.ColorWords")
+-- the player as Roblox would give them (the fake one has no id or name of its own)
+pcall(function()
+	Sim.player.UserId = 4242
+	Sim.player.DisplayName = "Pebble"
+end)
 
 local function pagesOf(list)
 	local i = 1
@@ -341,10 +347,7 @@ end)
 Sim.run("my items: asked first", function()
 	press("My items")
 	check(prompts == 0 and #inventoryCalls == 0, "opening the section asks nothing")
-	check(
-		noteText() ~= nil and noteText():find("Roblox will ask you first", 1, true) ~= nil,
-		"it says what will happen"
-	)
+	check(noteText() ~= nil and noteText():find("Roblox asks you first", 1, true) ~= nil, "it says what will happen")
 	check(not has("Hats"), "no filters before the answer")
 	press("Show my items")
 	check(prompts == 1 and #inventoryCalls == 0, "the button puts Roblox's question")
@@ -352,7 +355,7 @@ Sim.run("my items: asked first", function()
 	check(not has("Show my items"), "with no second button to press meanwhile")
 	Sim.advance(46)
 	check(
-		has("Show my items") and noteText():find("Roblox will ask you first", 1, true) ~= nil,
+		has("Show my items") and noteText():find("Roblox asks you first", 1, true) ~= nil,
 		"left unanswered for a while, the question can be put again"
 	)
 	press("Show my items")
@@ -441,7 +444,7 @@ Sim.run("my avatars: a saved avatar goes on whole, and Undo takes it off", funct
 	check(app.shirt == 7002 * 3, "Redo puts it on again")
 	press("Bought")
 	check(outfitCalls[#outfitCalls][1] == "Purchased", "the other filter reads what was bought")
-	check(noteText() == "You haven't bought a character on Roblox.", "and says when there is none")
+	check(noteText() == "None bought yet.", "and says when there is none")
 	press("Saved by me")
 end)
 
@@ -637,41 +640,38 @@ Sim.run("friends, shared looks, outfits, my items and my avatars can be searched
 	press("Players")
 	Sim.advance(1)
 	frames(2)
-	check(box.TextEditable and box.PlaceholderText == "Search friends and players", "Players has a search box")
+	check(box.TextEditable and box.PlaceholderText == "Search players", "Players has a search box")
 	check(not Fake.shown(sort), "and no sort")
 	check(count("Person", "TextButton") == 4, "everybody shows with nothing typed")
 	typeIn(box, "jun")
 	check(table.find(queries, "people jun") ~= nil, "what is typed goes to the server as you type")
 	check(count("Person", "TextButton") == 2, "and only the names holding it come back")
 	typeIn(box, "zz")
-	check(
-		count("Person", "TextButton") == 0 and showing("Nobody here or in your friends goes by that."),
-		"nobody, said so"
-	)
+	check(count("Person", "TextButton") == 0 and showing("Nobody by that name."), "nobody, said so")
 
 	press("Shared")
 	Sim.advance(1)
 	frames(2)
-	check(box.Text == "" and box.PlaceholderText == "Search shared looks", "Shared starts with an empty box of its own")
+	check(box.Text == "" and box.PlaceholderText == "Search looks", "Shared starts with an empty box of its own")
 	check(count("Look") == 2, "both looks show")
 	typeIn(box, "juno")
 	check(table.find(queries, "shared juno") ~= nil and count("Look") == 1, "a look is found by who shared it")
 
 	press("Outfits")
 	frames(2)
-	check(box.PlaceholderText == "Search your outfits", "Outfits has a search box")
+	check(box.PlaceholderText == "Search outfits", "Outfits has a search box")
 	check(showing("Picnic") and showing("Snow day") and showing("Sunday best"), "every saved outfit shows")
 	typeIn(box, "s")
 	check(not showing("Picnic") and showing("Snow day") and showing("Sunday best"), "only the names holding it stay")
 	typeIn(box, "SUN")
 	check(showing("Sunday best") and not showing("Snow day"), "whatever the case")
 	typeIn(box, "party")
-	check(showing("No outfit has that in its name."), "none, said so")
+	check(showing("None found."), "none, said so")
 
 	press("My items")
 	Sim.advance(1)
 	frames(2)
-	check(box.PlaceholderText == "Search your items" and box.TextEditable, "My items has a search box")
+	check(box.PlaceholderText == "Search items" and box.TextEditable, "My items has a search box")
 	check(table.concat(cardNames(), ",") == "Owned HairAccessory", "with its first page")
 	typeIn(box, "owned")
 	check(table.concat(cardNames(), ",") == "Owned HairAccessory", "a name holding the words stays")
@@ -686,7 +686,7 @@ Sim.run("friends, shared looks, outfits, my items and my avatars can be searched
 	press("My avatars")
 	Sim.advance(1)
 	frames(2)
-	check(box.Text == "" and box.PlaceholderText == "Search your avatars", "My avatars has a search box")
+	check(box.Text == "" and box.PlaceholderText == "Search avatars", "My avatars has a search box")
 	typeIn(box, "rain")
 	check(table.concat(cardNames(), ",") == "Rainy day", "and finds an avatar by name")
 
@@ -824,7 +824,7 @@ Sim.run("name and personality: faces to pick from, a grid of colours, no birthda
 	for i, p in Personalities.list do
 		tiles[i].Activated:Fire()
 		frames(1)
-		all = all and pers:FindFirstChild("Blurb").Text == p.blurb
+		all = all and pers:FindFirstChild("Blurb").Text == Personalities.short(p)
 	end
 	check(all, "pressing a face picks that personality, and its line shows under them")
 	tiles[4].Activated:Fire()
@@ -861,6 +861,352 @@ Sim.run("name and personality: faces to pick from, a grid of colours, no birthda
 	if Creator.isOpen() then
 		Creator.close()
 	end
+	frames(2)
+end)
+
+Sim.run("heads: the faces tab shows faces, off sale ones too", function()
+	-- the user: "in the heads tab, it seems like faces tab shows nothing" (Roblox took every classic
+	-- face off sale, and the search only asked for what is on sale)
+	Creator.open({ mode = "new" })
+	frames(3)
+	Sim.advance(1)
+	press("Heads")
+	-- nothing typed, and the sort back on Best match (the sections before left a word and a sort)
+	local box = gui:FindFirstChild("Search", true):FindFirstChildOfClass("TextBox")
+	box.Text = ""
+	box.FocusLost:Fire(true)
+	frames(2)
+	for _ = 1, 6 do
+		if Sim.labelOf(gui:FindFirstChild("Sort", true)):find("Best match", 1, true) then
+			break
+		end
+		press("Sort")
+	end
+	local q = searches[#searches]
+	check(q.assets ~= nil and q.assets[1] == "Face", "the first filter is faces")
+	check(q.offSale == true, "what is off sale is searched too")
+	check(q.sort == "MostFavorited", "the most liked first while nothing is typed")
+	check(#cardNames() == 4 and cardNames()[1] == "Face 1", "and the faces are cards")
+	Creator.close()
+	frames(2)
+end)
+
+-- a press on the colour wheel, let go: `dx`, `dy` from its middle, in pixels (the fake engine puts
+-- every frame at 100, 30)
+local function pickOnWheel(dx, dy)
+	local hit = Fake.find(gui, function(d)
+		return d.Name == "PickHue" and Fake.shown(d)
+	end)[1]
+	local wheel = hit.Parent
+	local half = wheel.Size.X.Offset / 2
+	local at = roblox.Vector3.new(100 + half + dx, 30 + half - dy, 0)
+	hit.InputBegan:Fire({ UserInputType = Enum.UserInputType.MouseButton1, Position = at })
+	Sim.UIS.InputEnded:Fire({ UserInputType = Enum.UserInputType.MouseButton1, Position = at }, false)
+	frames(2)
+	Sim.advance(1)
+	frames(2)
+end
+
+Sim.run("colour: the wheel searches by the colour's word, and your own things by colour", function()
+	-- the user: "allow players to search things in the creator by color, with a color picker wheel"
+	local State = Harness.require(Sim.CLIENT .. "Controllers.State")
+	local redTorso = Appearance.default()
+	redTorso.colors.torso = "E03A30"
+	State.data.outfits = {
+		{ name = "Red scarf day", app = Appearance.default() },
+		{ name = "Picnic", app = redTorso },
+		{ name = "Snow day", app = Appearance.default() },
+	}
+	local sharedAsks = {}
+	Sim.remoteFn("CreatorShared").OnServerInvoke = function(_, page, q, sort, hex)
+		table.insert(sharedAsks, { sort = sort, hex = hex })
+		return { looks = {}, more = false }
+	end
+	Creator.open({ mode = "new" })
+	frames(3)
+	Sim.advance(1)
+	press("Hair")
+	local box = gui:FindFirstChild("Search", true):FindFirstChildOfClass("TextBox")
+	box.Text = ""
+	box.FocusLost:Fire(true)
+	frames(2)
+	local before = #searches
+	local button = gui:FindFirstChild("Creator"):FindFirstChild("Colour", true)
+	check(button ~= nil and Fake.shown(button), "a colour button at the search box's end")
+	button.Activated:Fire()
+	frames(2)
+	check(#Fake.find(gui, function(d)
+		return d.Name == "ColorWheel" and Fake.shown(d)
+	end) == 1, "it opens the colour wheel")
+	pickOnWheel(80, 0)
+	check(#searches == before + 1 and searches[#searches].keyword == "red", "a red searches the catalog for red")
+	local tag = gui:FindFirstChild("ColourTag", true)
+	check(tag ~= nil and Fake.shown(tag) and tag:FindFirstChild("Word").Text == "Red", "and the word is shown")
+	pickOnWheel(79, 1)
+	check(#searches == before + 1, "the same word again searches nothing new")
+	press("Done")
+	box.Text = "long"
+	box.FocusLost:Fire(true)
+	frames(2)
+	check(searches[#searches].keyword == "long red", "typed words are searched with it")
+	-- your own outfits: by their names and their own colours
+	press("Outfits")
+	frames(2)
+	local function showing(text)
+		return #Fake.find(gui:FindFirstChild("Creator"), function(d)
+			return d:IsA("TextLabel") and d.Text == text and Fake.shown(d)
+		end) > 0
+	end
+	check(showing("Red scarf day") and showing("Picnic") and not showing("Snow day"), "outfits go by colour")
+	-- the skin: the picked colour itself, then only the colours near it
+	press("Skin")
+	frames(2)
+	check(showing("Picked colour"), "the skin offers the picked colour itself")
+	local swatches = Fake.find(gui:FindFirstChild("Creator"), function(d)
+		return d.Name == "Swatch" and d:IsA("GuiButton") and Fake.shown(d)
+	end)
+	check(#swatches >= 1 and #swatches < 20, "and only the colours near it (" .. #swatches .. ")")
+	press("Shared")
+	Sim.advance(1)
+	frames(2)
+	local hex = sharedAsks[#sharedAsks] and sharedAsks[#sharedAsks].hex
+	check(hex ~= nil and ColorWords.nearest(hex).word == "red", "shared looks are asked for by the colour")
+	-- the tag clears it
+	press("Hair")
+	tag = gui:FindFirstChild("ColourTag", true)
+	tag.Activated:Fire()
+	frames(2)
+	check(searches[#searches].keyword == "long" and not Fake.shown(tag), "the tag's cross takes it away")
+	box.Text = ""
+	box.FocusLost:Fire(true)
+	frames(2)
+	State.data.outfits = nil
+	Creator.close()
+	frames(2)
+end)
+
+Sim.run("shared: a like each, and the most liked first", function()
+	-- the user: "for shared avatars, could there be a liking system for it as well? allow players
+	-- to sort by shared"
+	local sorts, likeAsks = {}, {}
+	local liked, likes = false, 2
+	Sim.remoteFn("CreatorShared").OnServerInvoke = function(_, page, q, sort)
+		table.insert(sorts, sort)
+		return {
+			looks = {
+				{
+					name = "Beach day",
+					by = 11,
+					at = 100,
+					who = "Wren",
+					likes = likes,
+					liked = liked,
+					app = Appearance.default(),
+				},
+				{
+					name = "My own",
+					by = Sim.player.UserId,
+					at = 200,
+					who = "Me",
+					likes = 5,
+					app = Appearance.default(),
+				},
+			},
+			more = false,
+		}
+	end
+	Sim.remoteFn("LookLike").OnServerInvoke = function(_, by, at)
+		table.insert(likeAsks, { by, at })
+		liked = not liked
+		likes += if liked then 1 else -1
+		return { likes = likes, liked = liked }
+	end
+	Creator.open({ mode = "new" })
+	frames(3)
+	Sim.advance(1)
+	press("Shared")
+	Sim.advance(1)
+	frames(2)
+	local sort = gui:FindFirstChild("Sort", true)
+	check(Fake.shown(sort) and Sim.labelOf(sort):find("Newest", 1, true) ~= nil, "Shared can be sorted, newest first")
+	check(sorts[#sorts] == "new", "and asks for the newest")
+	sort.Activated:Fire()
+	Sim.advance(1)
+	frames(2)
+	check(sorts[#sorts] == "likes", "pressed, it asks for the most liked first")
+	check(Sim.labelOf(gui:FindFirstChild("Sort", true)):find("Most liked", 1, true) ~= nil, "and says so")
+	local hearts = Fake.find(gui, function(d)
+		return d.Name == "Like" and d:IsA("GuiButton") and Fake.shown(d)
+	end)
+	check(#hearts == 2, "each look has a like")
+	check(Sim.labelOf(hearts[1]):find("2", 1, true) ~= nil, "with how many like it")
+	hearts[1].Activated:Fire()
+	Sim.advance(1)
+	frames(2)
+	check(#likeAsks == 1 and likeAsks[1][1] == 11 and likeAsks[1][2] == 100, "a like goes to the server for that look")
+	check(Sim.labelOf(hearts[1]):find("3", 1, true) ~= nil, "and the count goes up")
+	hearts[1].Activated:Fire()
+	Sim.advance(1)
+	frames(2)
+	check(#likeAsks == 2 and Sim.labelOf(hearts[1]):find("2", 1, true) ~= nil, "pressed again, it is taken back")
+	hearts[2].Activated:Fire()
+	Sim.advance(1)
+	check(#likeAsks == 2, "your own look can't be liked")
+	press("Sort")
+	Creator.close()
+	frames(2)
+end)
+
+Sim.run("buying: what is on, the whole look", function()
+	-- the user: "allow players to buy items they select from the villager customization screen,
+	-- and allow players to buy the outfit of the villager"
+	Creator.open({ mode = "new" })
+	frames(3)
+	Sim.advance(1)
+	press("Reset")
+	press("Hair")
+	local function buyOn(name)
+		for _, card in cardList() do
+			if card:FindFirstChild("Name", true).Text == name then
+				local b = card:FindFirstChild("Buy")
+				return b
+			end
+		end
+		return nil
+	end
+	check(buyOn("HairAccessory 2") ~= nil and not Fake.shown(buyOn("HairAccessory 2")), "no Buy on what is not on")
+	press("HairAccessory 2")
+	look()
+	local buy = buyOn("HairAccessory 2")
+	check(buy ~= nil and Fake.shown(buy), "Buy shows on what is on")
+	table.clear(Sim.prompted)
+	buy.Activated:Fire()
+	frames(2)
+	check(#Sim.prompted == 1 and Sim.prompted[1].asset == 1002, "and asks Roblox to sell that item")
+	press("Bodies")
+	press("Body 2")
+	look()
+	table.clear(Sim.prompted)
+	press("Buy outfit")
+	frames(2)
+	local bulk = Sim.prompted[1] and Sim.prompted[1].bulk
+	check(bulk ~= nil, "Buy outfit asks for the whole look in one prompt")
+	local ids, kinds = {}, {}
+	for _, line in bulk or {} do
+		ids[line.Id] = true
+		kinds[line.Id] = line.Type.Name
+	end
+	check(ids["1002"] and kinds["1002"] == "AvatarAsset", "the hair in it")
+	check(ids["2002"] and kinds["2002"] == "AvatarBundle", "the body as the set it came in")
+	check(not ids["20021"], "and not the body's parts one by one")
+	press("Body 2")
+	Creator.close()
+	frames(2)
+end)
+
+Sim.run("you: your own look, edited like a villager's and saved", function()
+	-- the user: "add another tab to edit self in the catalog just like editing villagers"
+	local saved, opens = {}, {}
+	Sim.remoteFn("LookSave").OnServerInvoke = function(_, look)
+		table.insert(saved, look)
+		return true
+	end
+	Sim.remoteFn("CreatorOpen").OnServerInvoke = function(_, what)
+		table.insert(opens, what or "plain")
+		local app = Appearance.default()
+		if what == "self" then
+			app.shirt = 777
+		end
+		return { origin = roblox.Vector3.new(0, 420, 0), app = app }
+	end
+	Creator.open({ mode = "new" })
+	frames(3)
+	Sim.advance(1)
+	press("Hair")
+	press("HairAccessory 1")
+	check(look().acc[1].id == 1001, "the villager wears a hair")
+	press("You")
+	Sim.advance(1)
+	frames(2)
+	check(opens[#opens] == "self", "the You tab asks for your own look")
+	local title = Fake.find(gui:FindFirstChild("Creator"), function(d)
+		return d:IsA("TextLabel") and d.Text == "Your look" and Fake.shown(d)
+	end)
+	check(#title >= 1, "and the title says whose it is")
+	check(has("2  Save"), "the second step saves it")
+	press("HairAccessory 3")
+	local mine = look()
+	check(mine.shirt == 777 and mine.acc[1].id == 1003, "you are dressed from your own look")
+	-- back to the villager, as they were
+	press("Villager")
+	local theirs = look()
+	check(theirs.acc[1].id == 1001 and theirs.shirt == 0, "the villager is back as they were")
+	press("You")
+	Sim.advance(1)
+	frames(2)
+	press("HairAccessory 3")
+	press("2  Save")
+	check(has("Wear it"), "the save page has Wear it")
+	press("Wear it")
+	Sim.advance(1)
+	check(#saved == 1 and saved[1].shirt == 777 and saved[1].acc[1].id == 1003, "Wear it sends your look")
+	check(not Creator.isOpen(), "and the creator closes")
+	-- opened straight on yourself, with a look saved: a way back to the Roblox avatar
+	local State = Harness.require(Sim.CLIENT .. "Controllers.State")
+	State.data.look = Appearance.default()
+	Creator.open({ mode = "self" })
+	frames(3)
+	Sim.advance(1)
+	press("2  Save")
+	press("Back to my Roblox avatar")
+	Sim.advance(1)
+	check(#saved == 2 and saved[2] == false, "and back to the Roblox avatar")
+	State.data.look = nil
+	Sim.remoteFn("CreatorOpen").OnServerInvoke = function()
+		return { origin = roblox.Vector3.new(0, 420, 0), app = Appearance.default() }
+	end
+end)
+
+Sim.run("openFor: a villager made as yourself, from a friend or from nothing", function()
+	-- for the tutorial: "would you like to create yourself, a friend, or a custom villager"
+	local opens = {}
+	Sim.remoteFn("CreatorOpen").OnServerInvoke = function(_, what)
+		table.insert(opens, what or "plain")
+		return { origin = roblox.Vector3.new(0, 420, 0), app = Appearance.default() }
+	end
+	Sim.remoteFn("CreatorPeople").OnServerInvoke = function()
+		return { people = { { id = 11, name = "Juniper", kind = "friend" } }, more = false }
+	end
+	Sim.remoteFn("VillagerCreate").OnServerInvoke = function()
+		return true, "v77"
+	end
+	local made = {}
+	Creator.Created:Connect(function(vid, name)
+		table.insert(made, { vid, name })
+	end)
+	Creator.openFor("yourself")
+	frames(3)
+	Sim.advance(1)
+	check(Creator.isOpen() and opens[#opens] == "me", "yourself starts from your own avatar")
+	press("Name and personality")
+	local box = Fake.find(gui, function(d)
+		return d:IsA("TextBox") and d.PlaceholderText == "What are they called?" and Fake.shown(d)
+	end)[1]
+	check(box ~= nil and box.Text == Sim.player.DisplayName, "with your name")
+	press("Move them in")
+	Sim.advance(1)
+	check(#made == 1 and made[1][1] == "v77", "Created says who moved in")
+	Creator.openFor("friend")
+	frames(3)
+	Sim.advance(1)
+	check(gui:FindFirstChild("Person", true) ~= nil, "friend opens on the Players tab")
+	Creator.close()
+	frames(2)
+	Creator.openFor("custom")
+	frames(3)
+	Sim.advance(1)
+	check(Creator.isOpen() and opens[#opens] == "plain", "custom starts plain")
+	Creator.close()
 	frames(2)
 end)
 

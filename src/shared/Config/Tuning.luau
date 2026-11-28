@@ -199,6 +199,19 @@ Tuning.Creator = {
 	MaxShared = 120, -- looks players shared, newest first (one a player)
 }
 
+-- The creator's likes, colour search, Shuffle and buying (Avatar/Likes, Avatar/ColorWords,
+-- Avatar/Shuffle, Avatar/Shop), and your own look (Services/Avatar)
+Tuning.CreatorMore = {
+	LikeEvery = 0.6, -- seconds between one player's likes
+	LikeFlush = 30, -- seconds between a server writing its likes into the shared looks
+	LikedKept = 400, -- the most shared looks one profile remembers liking
+	ColorNear = 40, -- how close (Lab distance) a colour is to count as near the picked one
+	ColorShown = 12, -- the most near colours a palette shows
+	ShuffleTop = 6, -- Shuffle picks among Roblox's first few recommendations
+	BuyMax = 20, -- the most things one Buy outfit asks Roblox for
+	LookEvery = 4, -- seconds between saves of your own look
+}
+
 -- Villagers -----------------------------------------------------------------
 Tuning.Villagers = {
 	-- how many villagers a town may have: Start, and more at each milestone of the town's level, up

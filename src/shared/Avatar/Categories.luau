@@ -47,13 +47,21 @@ local function P(id: string, name: string, asset: string): Filter
 	return { id = id, name = name, assets = { asset }, offSale = true, browse = "MostFavorited", inBundles = BODIES }
 end
 
+-- Classic faces. Roblox has taken every one of them off sale (faces come with heads now), so a
+-- search for what is on sale finds none at all: the user, "in the heads tab, it seems like faces
+-- tab shows nothing". They can still be worn, so the search takes in what is off sale, browsed by
+-- the most liked while nothing is typed.
+local function FACES(): Filter
+	return { id = "faces", name = "Faces", assets = { "Face" }, offSale = true, browse = "MostFavorited" }
+end
+
 local tabs: { Tab } = {
 	{ id = "wearing", name = "Wearing" },
 	{ id = "hair", name = "Hair", filters = { A("hair", "Hair", { "HairAccessory" }) } },
 	{
 		id = "heads",
 		name = "Heads",
-		filters = { A("faces", "Faces", { "Face" }), B("dynheads", "Heads", { "DynamicHead" }, "head") },
+		filters = { FACES(), B("dynheads", "Heads", { "DynamicHead" }, "head") },
 	},
 	{
 		id = "accessories",

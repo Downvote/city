@@ -4,6 +4,7 @@
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Plan = require(script.Parent.Parent.Build.Plan)
 local Appearance = require(script.Parent.Parent.Avatar.Appearance)
+local Likes = require(script.Parent.Parent.Avatar.Likes)
 local Personalities = require(script.Parent.Parent.Data.Personalities)
 local Foods = require(script.Parent.Parent.Data.Foods)
 local Colors = require(script.Parent.Parent.Util.Colors)
@@ -89,6 +90,8 @@ function Schema.newProfile(): any
 		requests = {},
 		log = {},
 		outfits = {},
+		-- (`look`, the player's own look in this game, is nil until they save one in the creator)
+		likedLooks = {}, -- shared looks liked: the sharer's user id -> the look's `at` (Avatar/Likes)
 		settings = table.clone(Schema.Settings),
 		tutorial = 0, -- steps of the tutorial done, or Sim/Tutorial.Skipped (Tutorial.advance records it)
 		-- the daily gift: the day it was last claimed, the days running (capped: the coins) and the
@@ -208,6 +211,9 @@ function Schema.migrate(raw: any): any
 	profile.villagers = clean
 	profile.keepsakes = Keepsakes.clean(profile.keepsakes)
 	profile.plotName = PlotName.clean(profile.plotName)
+	-- the player's own look and the shared looks they liked (Services/Avatar, Avatar/Likes)
+	profile.look = if type(profile.look) == "table" then Appearance.sanitize(profile.look) else nil
+	profile.likedLooks = Likes.clean(profile.likedLooks, Tuning.CreatorMore.LikedKept)
 	-- (only true marks: Services/Vehicles also drops any vehicle there no longer is)
 	if type(profile.vehicles) ~= "table" then
 		profile.vehicles = {}

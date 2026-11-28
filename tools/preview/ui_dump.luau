@@ -103,8 +103,13 @@
 --                       pages; outfits with none saved yet)
 --   creator:outfits:saved  Outfits with three saved
 --   creator:people      Players: people here and friends, a page of them with Show more
---   creator:shared      Shared: looks other players shared, with the box to share yours
---                       (creator:shared:none before anyone has)
+--   creator:shared      Shared: looks other players shared, with the box to share yours, their
+--                       likes (one liked) and the sort (creator:shared:none before anyone has)
+--   creator:colour      the colour wheel open over Hair, a red picked (creator:colour:skin the Skin
+--                       tab with it: the colour itself and the tones near it)
+--   creator:self        the You tab: your own look (creator:self:save its second step, with a
+--                       look saved, so the way back to the Roblox avatar shows)
+--   creator:wornbuy     a hair on, with its Buy button
 --   signs               the town's signs laid flat: a shop fascia in every layout
 --   signs:boards        the boards on canopies and roofs
 --   signs:posters       adverts on posters and billboards, the cinema's posters
@@ -1174,13 +1179,46 @@ elseif scene == "creator" or scene:sub(1, 8) == "creator:" then
 				table.insert(looks, {
 					name = NAMES[(i - 1) % #NAMES + 1],
 					by = 10 + i,
+					at = 1000 - i,
 					who = ({ "Wren", "Ollie", "Fern", "Basil" })[(i - 1) % 4 + 1],
 					app = Appearance.default(),
+					likes = ({ 12, 3, 0, 41, 7 })[(i - 1) % 5 + 1],
+					liked = i == 2,
 				})
 			end
 			return { looks = looks, more = true }
 		end
 		Sim.press("Shared")
+	elseif page == "colour" or page == "colour:skin" then
+		Sim.press(if page == "colour" then "Hair" else "Skin")
+		local creator = Sim.gui:FindFirstChild("Creator")
+		creator:FindFirstChild("Colour", true).Activated:Fire()
+		Sim.frames(2)
+		-- a press on the wheel's red, let go (the fake engine puts every frame at 100, 30)
+		local hit = Fake.find(creator, function(d)
+			return d.Name == "PickHue"
+		end)[1]
+		local half = hit.Parent.Size.X.Offset / 2
+		local at = roblox.Vector3.new(100 + half + 70, 30 + half - 8, 0)
+		hit.InputBegan:Fire({ UserInputType = Enum.UserInputType.MouseButton1, Position = at })
+		Sim.UIS.InputEnded:Fire({ UserInputType = Enum.UserInputType.MouseButton1, Position = at }, false)
+		Sim.frames(2)
+		Sim.advance(1)
+		if page == "colour:skin" then
+			Sim.press("Done")
+		end
+	elseif page == "self" or page == "self:save" then
+		if page == "self:save" then
+			Sim.State.set("look", Appearance.default())
+		end
+		Sim.press("You")
+		Sim.advance(1)
+		Sim.press("Short curls")
+		if page == "self:save" then
+			Sim.press("2  Save")
+		end
+	elseif page == "wornbuy" then
+		Sim.press("Short curls")
 	elseif page ~= "" then
 		error("unknown scene " .. scene)
 	end

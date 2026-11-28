@@ -15,6 +15,8 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Appearance = require(Shared.Avatar.Appearance)
 local Bundles = require(Shared.Avatar.Bundles)
 local Categories = require(Shared.Avatar.Categories)
+local ColorWords = require(Shared.Avatar.ColorWords)
+local Likes = require(Shared.Avatar.Likes)
 local Colors = require(Shared.Util.Colors)
 local Remotes = require(Shared.Net.Remotes)
 local Tuning = require(Shared.Config.Tuning)
@@ -734,6 +736,9 @@ local function cleanShared(list: any): { any }
 					by = e.by,
 					who = if type(e.who) == "string" then e.who:sub(1, 40) else "",
 					app = Appearance.sanitize(e.app),
+					-- when it was shared (a like is kept against it) and how many have liked it
+					at = if type(e.at) == "number" and e.at == e.at then math.max(0, math.floor(e.at)) else 0,
+					likes = Likes.count(e),
 				})
 			end
 		end
@@ -763,7 +768,7 @@ local function shareLook(player: Player, name: string, app: Appearance.Appearanc
 	if not store then
 		return false, "Sharing is off in this server."
 	end
-	local entry = { name = name, by = player.UserId, who = player.DisplayName, app = app }
+	local entry = { name = name, by = player.UserId, who = player.DisplayName, app = app, at = os.time(), likes = 0 }
 	local ok = pcall(function()
 		store:UpdateAsync(SHARED_KEY, function(old)
 			local list = cleanShared(old)
@@ -787,6 +792,104 @@ local function shareLook(player: Player, name: string, app: Appearance.Appearanc
 	return true, nil
 end
 
+-- Likes on shared looks (the user: "for shared avatars, could there be a liking system for it as
+-- well? allow players to sort by shared"). Who liked what is in each liker's profile
+-- (`likedLooks`); the counts live in the shared list. A server gathers its players' likes as
+-- changes to the counts and writes them all into the list every `LikeFlush` seconds (and as it
+-- shuts down), so the list's one key is written once for many presses (Avatar/Likes).
+local pendingLikes: { [string]: number } = {}
+
+local function flushLikes()
+	if next(pendingLikes) == nil then
+		return
+	end
+	local store = sharedData()
+	if not store then
+		pendingLikes = {}
+		return
+	end
+	local batch = pendingLikes
+	pendingLikes = {}
+	local written: { any }? = nil
+	local ok = pcall(function()
+		store:UpdateAsync(SHARED_KEY, function(old)
+			local list = cleanShared(old)
+			Likes.apply(list, batch)
+			written = list
+			return list
+		end)
+	end)
+	if ok and written then
+		sharedCache = written
+		sharedAt = os.clock()
+	else
+		-- not written: back in with whatever came since, for the next time
+		for k, d in batch do
+			pendingLikes[k] = (pendingLikes[k] or 0) + d
+		end
+	end
+end
+
+local function findShared(by: number, at: number): any?
+	for _, look in sharedLooks() do
+		if look.by == by and look.at == at then
+			return look
+		end
+	end
+	return nil
+end
+
+-- Your own look --------------------------------------------------------------------------------------
+--
+-- The user: "add another tab to edit self in the catalog just like editing villagers". The look a
+-- player saves on the creator's You tab is kept in their profile (`look`), checked like any other,
+-- and put on their character as soon as it is saved and every time it spawns. With none saved
+-- they wear their Roblox avatar, as before.
+
+function Avatar.dressPlayer(player: Player, char: Model?)
+	local profile = Data.get(player)
+	local body = char or player.Character
+	if not profile or not body then
+		return
+	end
+	local hum = body:FindFirstChildOfClass("Humanoid") or body:WaitForChild("Humanoid", 10)
+	if not hum or not hum:IsA("Humanoid") then
+		return
+	end
+	local desc: HumanoidDescription? = nil
+	if profile.look then
+		desc = Avatar.toDescription(Appearance.sanitize(profile.look))
+	else
+		local ok, d = pcall(function()
+			return Players:GetHumanoidDescriptionFromUserIdAsync(player.UserId)
+		end)
+		desc = if ok then d else nil
+	end
+	-- (a description only goes on a body that is in the world)
+	local waited = os.clock()
+	while not body:IsDescendantOf(workspace) and body.Parent ~= nil and os.clock() - waited < 5 do
+		task.wait(0.1)
+	end
+	if not desc or not body:IsDescendantOf(workspace) or player.Character ~= body then
+		return
+	end
+	local applied = pcall(function()
+		(hum :: Humanoid):ApplyDescriptionAsync(desc :: HumanoidDescription, Enum.AssetTypeVerification.Always)
+	end)
+	if not applied then
+		warn("[Avatar] couldn't put " .. player.Name .. "'s look on")
+	end
+	-- a tag hung over the old head (the VIP tag) hangs over the new one
+	local head = body:FindFirstChild("Head")
+	if head and head:IsA("BasePart") then
+		for _, g in body:GetChildren() do
+			if g:IsA("BillboardGui") and (g.Adornee == nil or not g.Adornee:IsDescendantOf(body)) then
+				g.Adornee = head
+			end
+		end
+	end
+end
+
 -- Remotes ------------------------------------------------------------------------------------------
 
 local lastPreview: { [Player]: number } = {}
@@ -804,6 +907,11 @@ function Avatar.start()
 			app = v.app
 		elseif vid == "me" then
 			app = Avatar.fromUserId(player.UserId) or Appearance.default()
+		elseif vid == "self" then
+			-- your own look: the one saved here, or your Roblox avatar
+			app = if profile.look
+				then Appearance.sanitize(profile.look)
+				else Avatar.fromUserId(player.UserId) or Appearance.default()
 		else
 			app = Appearance.default()
 		end
@@ -889,22 +997,151 @@ function Avatar.start()
 		local list, more = slice(all, page)
 		return { people = list, more = more }
 	end
-	Remotes.fn("CreatorShared").OnServerInvoke = function(_, n, q)
+	-- (page, search?, sort?, colour?): sorted "new" (newest first) or "likes", and with a colour
+	-- (hex, from the creator's colour wheel) only the looks whose name says it or whose own colours
+	-- are near it. Each look says how many like it and whether this player does.
+	Remotes.fn("CreatorShared").OnServerInvoke = function(player, n, q, sort, hex)
 		local query = queryOf(q)
 		local all = sharedLooks()
-		if query ~= "" then
+		local colour = if Colors.isHex(hex) then hex :: string else nil
+		if query ~= "" or colour then
 			local found = {}
 			for _, look in all do
-				-- the look's name or who shared it
-				if Text.matches(query, look.name, look.who) then
+				-- the look's name or who shared it, and the colour
+				if
+					Text.matches(query, look.name, look.who)
+					and (
+						colour == nil
+						or ColorWords.lookMatches(look.name, look.app, colour, Tuning.CreatorMore.ColorNear)
+					)
+				then
 					table.insert(found, look)
 				end
 			end
 			all = found
 		end
+		all = Likes.sorted(all, if sort == "likes" then "likes" else "new", pendingLikes)
 		local list, more = slice(all, pageOf(n))
-		return { looks = list, more = more }
+		local profile = Data.get(player)
+		local liked = if profile and type(profile.likedLooks) == "table" then profile.likedLooks else {}
+		local out = {}
+		for _, look in list do
+			table.insert(out, {
+				name = look.name,
+				by = look.by,
+				who = look.who,
+				app = look.app,
+				at = look.at,
+				likes = Likes.count(look, pendingLikes),
+				liked = Likes.has(liked, look.by, look.at),
+			})
+		end
+		return { looks = out, more = more }
 	end
+
+	-- A like on a shared look, or the like taken back: one a player, never on your own.
+	local lastLike: { [Player]: number } = {}
+	Remotes.fn("LookLike").OnServerInvoke = function(player, by, at)
+		if not isId(by) or type(at) ~= "number" or at ~= at or at < 0 or at % 1 ~= 0 then
+			return nil, "That look isn't there."
+		end
+		local profile = Data.get(player)
+		if not profile then
+			return nil, "Still loading."
+		end
+		if by == player.UserId then
+			return nil, "That one's yours."
+		end
+		local t = os.clock()
+		if lastLike[player] and t - lastLike[player] < Tuning.CreatorMore.LikeEvery then
+			return nil, nil
+		end
+		lastLike[player] = t
+		local look = findShared(by, at)
+		if not look then
+			return nil, "That look isn't shared any more."
+		end
+		if type(profile.likedLooks) ~= "table" then
+			profile.likedLooks = {}
+		end
+		local liked, delta = Likes.toggle(profile.likedLooks, by, at)
+		if liked then
+			-- (a profile remembers so many likes; the oldest by key gives way)
+			local count = 0
+			for _ in profile.likedLooks do
+				count += 1
+			end
+			if count > Tuning.CreatorMore.LikedKept then
+				for k in profile.likedLooks do
+					if k ~= tostring(by) then
+						profile.likedLooks[k] = nil
+						break
+					end
+				end
+			end
+		end
+		local key = Likes.key(by, at)
+		pendingLikes[key] = (pendingLikes[key] or 0) + delta
+		return { likes = Likes.count(look, pendingLikes), liked = liked }
+	end
+	Players.PlayerRemoving:Connect(function(player)
+		lastLike[player] = nil
+	end)
+	task.spawn(function()
+		while true do
+			task.wait(Tuning.CreatorMore.LikeFlush)
+			flushLikes()
+		end
+	end)
+	game:BindToClose(flushLikes)
+
+	-- Your own look: saved (checked like any other) and put on at once; false goes back to the
+	-- Roblox avatar. Every new body wears it too.
+	local lastLook: { [Player]: number } = {}
+	Remotes.fn("LookSave").OnServerInvoke = function(player, raw)
+		local profile = Data.get(player)
+		if not profile then
+			return false, "Still loading."
+		end
+		if raw ~= false and type(raw) ~= "table" then
+			return false, "That isn't a look."
+		end
+		local t = os.clock()
+		if lastLook[player] and t - lastLook[player] < Tuning.CreatorMore.LookEvery then
+			return false, "Wait a moment."
+		end
+		lastLook[player] = t
+		if raw == false then
+			profile.look = nil
+		else
+			local app = Avatar.validate(Appearance.sanitize(raw), 30)
+			profile.look = app
+		end
+		Data.push(player, "look")
+		task.spawn(Avatar.dressPlayer, player, player.Character)
+		return true
+	end
+	local function watchLook(player: Player)
+		player.CharacterAdded:Connect(function(char)
+			local profile = Data.get(player)
+			if profile and profile.look then
+				task.spawn(Avatar.dressPlayer, player, char)
+			end
+		end)
+	end
+	Players.PlayerAdded:Connect(watchLook)
+	for _, player in Players:GetPlayers() do
+		watchLook(player)
+	end
+	-- (a body that came before the save did)
+	Data.Loaded:Connect(function(player, profile)
+		if profile.look and player.Character then
+			task.spawn(Avatar.dressPlayer, player, player.Character)
+		end
+	end)
+	Players.PlayerRemoving:Connect(function(player)
+		lastLook[player] = nil
+	end)
 
 	local lastCopy: { [Player]: number } = {}
 	Remotes.fn("CreatorFromUserId").OnServerInvoke = function(player, userId)
