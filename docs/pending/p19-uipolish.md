@@ -72,6 +72,8 @@ Fixed while there:
 - `UI/Residents`: the actions are a `UIGridLayout` of `Kit.button`s (names unchanged: Job, Bed, Look, Buy outfit,
   Gift, Move out); the Mood tab's rows are plain boxes named by factor id, each with `Icon`, `Label`, `What`,
   `Points` and a `Bar` with its `Fill`.
+- `tools/preview/ui_dump.luau`: a cutscene's `:ask` and `:a<n>` press through the last line's burst until the
+  answers show (`cutscene:thanks:a2` failed to build before, so `audit.sh` stopped at 160 of 161 screens).
 - Sims: `hud` checks the notices stand in the middle or just clear of the round buttons; `creator_sections` checks a
   card on a one kind page has no small line.
 
