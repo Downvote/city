@@ -234,6 +234,14 @@ draw = function()
 		Size = UDim2.new(1, 0, 0, 0),
 		Position = UDim2.fromOffset(0, 108),
 	})
+	-- friends: Roblox's invite box (UI/Invite; the user: "prompt the player to invite friends")
+	local Invite = require(script.Parent.Invite) :: any
+	Invite.button("Invite friends", {
+		Parent = inside,
+		Size = UDim2.new(1, 0, 0, 46),
+		Position = UDim2.new(0, 0, 1, -46),
+		TextSize = 18,
+	})
 
 	-- and under it, what this player hears: a line each, its name at the left and its slider or
 	-- switch at the right

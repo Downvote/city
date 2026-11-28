@@ -77,6 +77,29 @@ Tuning.Visit = {
 	Below = 40, -- studs under a copy's ground where someone who fell off it is caught
 }
 
+-- Friends playing together (Services/Social, Sim/Social). The user: "add a 10% income boosy per
+-- friend playing, and prompt the player to invite friends". Each of a player's Roblox friends in
+-- the same server adds Each to what their town earns at work, up to Most friends; it comes on top
+-- of everything else (Sim/Passes.payBoost), and offline earnings never have it.
+Tuning.Friends = {
+	Each = 0.1, -- of the town's pay, for each friend here
+	Most = 4, -- friends that count (+40% at the most)
+	NudgeAt = 2, -- villagers a town has when the one-time nudge to invite friends comes up
+	NudgeWait = 6, -- seconds after that before it shows
+	CardEvery = 0.5, -- seconds between one player's looks at somebody's card
+}
+
+-- Trusted builders (Services/Trust, Sim/Trust). The user: "add trusted (allow building on your
+-- plot, player will have to set build budget). Building on another player's plot will use their
+-- money, up to the set budget." Trust is for the session: it ends when either player leaves.
+Tuning.Trust = {
+	Budgets = { 0, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000 }, -- what an owner can pick
+	Start = 1000, -- the budget a new trust starts on
+	Most = 12, -- players one owner may trust at once
+	Every = 0.5, -- seconds between one owner's changes to their trusted list
+	Reach = 30, -- studs past a plot's edge that still count as on it, to start building there
+}
+
 -- The basement (the Basement pass, Build/Basement): floor -1, under the ground floor. Its rooms are
 -- dug out of the ground under the plot (Services/Basement) and put back when they go.
 Tuning.Basement = {
@@ -699,6 +722,19 @@ Tuning.Voices = {
 	Card = 1.4, -- seconds at most of babble for a line over a head
 	Hear = 40, -- studs: a line over a head further than this from the camera is not heard
 	Together = 2, -- lines over heads heard at once at the most
+}
+
+-- Somebody who isn't the town's mayor talking to its villagers (Sim/GuestTalk, Services/Villagers,
+-- Services/Social). The user: "Create dialogue for villagers interacting with players that arent
+-- their mayor". A visitor gets the words alone; past a few chats a day in one town the villagers
+-- have things to do.
+Tuning.Guests = {
+	ChatsPerDay = 12, -- talks one visitor can have with one town's villagers in a town day
+	GreetReach = 9, -- studs: a free villager this close to a visitor walking by may say hello
+	GreetChance = 0.4, -- that they do, each look
+	GreetEvery = 300, -- seconds before the same villager greets the same visitor again
+	GreetGap = 20, -- seconds between two greetings to one visitor in a town
+	Look = 2, -- seconds between two looks for visitors near villagers
 }
 
 -- A villager's own flair (Sim/Flair), bought with gems on their page. The user: "make it such that

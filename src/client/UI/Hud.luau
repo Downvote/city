@@ -13,6 +13,7 @@ local Text = require(Shared.Util.Text)
 local City = require(Shared.Sim.City)
 local Schema = require(Shared.Sim.Schema)
 local PlotName = require(Shared.Sim.PlotName)
+local Social = require(Shared.Sim.Social) -- (friends playing here: the chip on the money strip)
 
 local Kit = require(script.Parent.Kit)
 local Icons = require(script.Parent.Icons)
@@ -341,6 +342,29 @@ function Hud.start()
 		Hud.open("Store", "gems")
 	end)
 	local _, popLabel = cell("people", 82, 3)
+	-- friends playing in this server, a tenth more pay each (the user: "add a 10% income boosy per
+	-- friend playing"): a chip at the strip's end while there are any, the strip running on to hold it
+	local FRIENDS_W = 184
+	local friendsPill, friendsLabel = Kit.pill("person", {
+		Name = "Friends",
+		Parent = pillRow,
+		Size = UDim2.fromOffset(FRIENDS_W, 40),
+		LayoutOrder = 4,
+		IconColor = T.Green,
+		TextSize = 17,
+	})
+	Kit.paint(friendsPill, nil, 1)
+	local function refreshFriends()
+		local me = Players.LocalPlayer
+		local chip = Social.chip(if me then me:GetAttribute("FriendsHere") else 0)
+		friendsPill.Visible = chip ~= nil
+		friendsLabel.Text = chip or ""
+		pills.Size = UDim2.fromOffset(366 + (if chip then FRIENDS_W + 14 else 0), 46)
+	end
+	refreshFriends()
+	if Players.LocalPlayer then
+		Players.LocalPlayer:GetAttributeChangedSignal("FriendsHere"):Connect(refreshFriends)
+	end
 	-- and under that, the quests: the town's next goals
 	Quests.mount(hud, QUESTS_AT, function()
 		Hud.open("Goals")

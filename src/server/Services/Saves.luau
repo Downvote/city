@@ -252,6 +252,10 @@ function Saves.start()
 			end
 			lastLoad[player] = t
 		end
+		-- (saved builds are for the player's own plot, never one they are trusted to build on)
+		if what ~= "list" and Build.siteOf(player) ~= player then
+			return false, "Saved builds load on your own plot."
+		end
 		local ok, a, b = pcall(Saves.handle, player, action, slot, name)
 		if not ok then
 			warn("[Saves] error:", a)

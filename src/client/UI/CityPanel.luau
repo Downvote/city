@@ -20,6 +20,8 @@ local MenuParts = require(script.Parent.MenuParts)
 local Toasts = require(script.Parent.Toasts)
 local State = require(script.Parent.Parent.Controllers.State)
 local Purchase = require(script.Parent.Parent.Controllers.Purchase) -- (Big Plot, past the free land)
+local Social = require(Shared.Sim.Social) -- (friends playing here: the boost to wages)
+local Invite = require(script.Parent.Invite)
 
 local CityPanel = {}
 
@@ -395,6 +397,91 @@ local function landRow(list: ScrollingFrame, stats: any, coins: number, order: n
 	end
 end
 
+-- Friends playing here, a tenth more wages each (the user: "add a 10% income boosy per friend
+-- playing, and prompt the player to invite friends"), and the players you trust to build on your
+-- plot with what is left of each one's budget (Services/Trust; a player's card changes it).
+local function friendRows(list: ScrollingFrame, order: number)
+	local me = game:GetService("Players").LocalPlayer
+	local here = Social.count(if me then me:GetAttribute("FriendsHere") else 0)
+	MenuParts.heading(
+		list,
+		"Friends",
+		T.Purple,
+		order,
+		if here > 0 then Text.fill("+{n}%", { n = Social.percent(here) }) else nil
+	)
+	local _, inner = Kit.row({
+		Name = "FriendsHere",
+		Parent = list,
+		Size = MenuParts.rowSize(64),
+		Height = 64,
+		LayoutOrder = order + 1,
+		Title = Social.line(here),
+		Sub = Text.fill("Up to +{n}% with {m} friends", {
+			n = Social.percent(Tuning.Friends.Most),
+			m = Tuning.Friends.Most,
+		}),
+		Marker = "people",
+		MarkerColor = if here > 0 then T.Green else T.Purple,
+		RightSpace = 170,
+	})
+	Invite.button("Invite", {
+		Parent = inner,
+		Size = UDim2.fromOffset(146, 42),
+		Position = UDim2.new(1, -28, 0.5, 0),
+		AnchorPoint = Vector2.new(1, 0.5),
+		TextSize = 17,
+		ZIndex = 3,
+	})
+	local trusted = State.data.trusted
+	local rows = if type(trusted) == "table" then trusted else {}
+	MenuParts.heading(list, "Trusted builders", T.Purple, order + 2, if #rows > 0 then tostring(#rows) else nil)
+	if #rows == 0 then
+		MenuParts.note(
+			"Click another player to let them build here.",
+			T.Purple,
+			{ Name = "NoTrusted", Parent = list, LayoutOrder = order + 3 }
+		)
+		return
+	end
+	for i, row in rows do
+		local _, rowInner = Kit.row({
+			Name = "Trusted",
+			Parent = list,
+			Size = MenuParts.rowSize(64),
+			Height = 64,
+			LayoutOrder = order + 2 + i,
+			Title = tostring(row.name),
+			Sub = Text.fill(
+				"{left} of {budget} coins left",
+				{ left = Text.commas(row.left or 0), budget = Text.commas(row.budget or 0) }
+			),
+			Marker = "hammer",
+			MarkerColor = T.Purple,
+			RightSpace = 130,
+		})
+		Kit.button("Stop", {
+			Name = "Untrust",
+			Parent = rowInner,
+			Size = UDim2.fromOffset(104, 42),
+			Position = UDim2.new(1, -28, 0.5, 0),
+			AnchorPoint = Vector2.new(1, 0.5),
+			Color = T.Red,
+			TextSize = 17,
+			ZIndex = 3,
+		}, function()
+			task.spawn(function()
+				local ok, done, why = pcall(function()
+					return Remotes.fn("TrustSet"):InvokeServer(row.id, false)
+				end)
+				if not (ok and done) then
+					Toasts.show(if ok and type(why) == "string" then why else "Couldn't do that.", "warn")
+				end
+			end)
+		end)
+	end
+end
+
 function draw()
 	if not panel then
 		return
@@ -517,6 +604,8 @@ function draw()
 			{ Name = "Skill", Parent = list, Size = UDim2.new(1, -12, 0, 44), LayoutOrder = 1010 + n, Color = T.Purple }
 		)
 	end
+	-- friends playing here, and the players trusted to build on the plot
+	friendRows(list, 2000)
 end
 
 -- The coins moved (a pay packet, a purchase): the panel built again only if the land's button
@@ -578,6 +667,14 @@ function CityPanel.open(arg: any?)
 	table.insert(unbind, State.on("villagers", draw))
 	table.insert(unbind, State.on("passes", draw)) -- (Big Plot bought: the land row opens)
 	table.insert(unbind, State.on("skills", draw)) -- (work done: the skills grew)
+	table.insert(unbind, State.on("trusted", draw)) -- (a player trusted, or their budget spent)
+	local me = game:GetService("Players").LocalPlayer
+	if me then
+		local friends = me:GetAttributeChangedSignal("FriendsHere"):Connect(draw)
+		table.insert(unbind, function()
+			friends:Disconnect()
+		end)
+	end
 end
 
 -- a change of look builds what's open again in the new one (a row's shading is made for a look)

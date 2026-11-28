@@ -20,7 +20,9 @@ local Presets = require(Shared.Data.Presets)
 local Remotes = require(Shared.Net.Remotes)
 local Text = require(Shared.Util.Text)
 
-local State = require(script.Parent.Parent.Controllers.State)
+-- (the plot being built on: your own, or one whose owner trusts you, Build/Site, read like State)
+local Site = require(script.Parent.Site)
+local State = Site.view
 local Purchase = require(script.Parent.Parent.Controllers.Purchase)
 local Toasts = require(script.Parent.Parent.UI.Toasts)
 local Kit = require(script.Parent.Parent.UI.Kit)
@@ -2036,9 +2038,10 @@ function BuildMode.enter(): boolean
 	if s.active then
 		return true
 	end
-	local index = player:GetAttribute("Plot")
+	-- (your own plot, or the one you stand on when its owner trusts you to build there: Build/Site)
+	local index, notHere = Site.enter()
 	if type(index) ~= "number" then
-		Toasts.show("Your plot isn't ready yet.", "warn")
+		Toasts.show(notHere or "Your plot isn't ready yet.", "warn")
 		return false
 	end
 	plotIndex = index
@@ -2047,6 +2050,7 @@ function BuildMode.enter(): boolean
 	local plotModel = plots and plots:FindFirstChild("Plot" .. index)
 	buildFolder = plotModel and plotModel:FindFirstChild("Build")
 	if not buildFolder then
+		Site.leave()
 		return false
 	end
 	s.active = true
@@ -2180,6 +2184,7 @@ function BuildMode.exit()
 	s.selected = nil
 	s.placing = nil
 	SelectTool.reset() -- (the Select tool's group let go)
+	Site.leave() -- (back to your own plot, if it was somebody else's)
 	changed("active")
 end
 
@@ -2239,6 +2244,14 @@ State.on("passes", function()
 	presetCheckKey = ""
 	if s.active then
 		changed("passes")
+	end
+end)
+
+-- (the plot you were building on as a guest went: its owner took the trust back or left)
+Site.onGone(function(name: string)
+	if s.active then
+		BuildMode.exit()
+		Toasts.show(Text.fill("You can't build on {name}'s plot any more.", { name = name }), "warn")
 	end
 end)
 

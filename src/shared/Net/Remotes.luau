@@ -90,6 +90,14 @@ Remotes.Functions = {
 	-- crates and pets (Services/Crates, Sim/Crates): each checked on the server
 	"CrateOpen", -- (kind, "held" | "gems") -> ok, result or why: open a crate held, or buy one with gems and open it
 	"PetOwner", -- (petId, vid | false) -> ok, why: make a villager a pet's owner, or nobody
+	-- other players (Services/Social, Services/Trust, Sim/Social, Sim/Trust): each checked on the server
+	-- (userId) -> { id, name, user, town, level, people, likes, liked, friend, trusted?, trustsYou?,
+	-- top = { { vid, name, color, pers, heart, job } }, plot? } or nil, why: another player's card
+	"PlayerCard",
+	"TrustSet", -- (userId, on, budget?) -> ok, why: trust a player in the server to build on your plot, change their budget, or stop
+	-- (ownerId | nil) -> ok, { owner, name, plot, plan, passes, gemItems, keepsakes, budget, left } or
+	-- why: open Build mode on a plot whose owner trusts you (nil: back to your own)
+	"TrustBuild",
 }
 
 Remotes.Events = {
@@ -123,6 +131,9 @@ Remotes.Events = {
 	-- server -> client: { vid, text } once, when the player first has the gems for a crate: one of
 	-- their villagers tells them about the crates (Services/Crates, UI/Crates)
 	"CrateTip",
+	-- server -> client: (ownerId, { full } | { ops }) a change on the plot this player is building on
+	-- as somebody's trusted builder (Services/Trust), as PlanSync is for their own
+	"SitePlan",
 }
 
 local folder: Folder? = nil

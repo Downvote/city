@@ -33,6 +33,8 @@ local order = {
 	"Visit", -- other players' towns: naming yours, likes, the directory and visits (after Plots, Build and Avatar)
 	"Crates", -- work and pet crates: opening, pets' owners, the villager's tip (Sim/Crates): after Villagers
 	"Pets", -- pets about town, meeting villagers, bringing cravings (Sim/Pets): after Crates
+	"Trust", -- trusted builders and their budgets (Build reads it; it needs only Data and Plots)
+	"Social", -- other players: friends here and their pay boost, players' cards, villagers greeting visitors (after Visit)
 	-- passes, gem packs, rewards, offline earnings, the group: listens for Data.Loaded, so it starts
 	-- before Data.open lets anyone in
 	"Store",

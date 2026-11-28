@@ -26,7 +26,8 @@ local Presets = require(Shared.Data.Presets)
 local Icons = require(script.Parent.Parent.UI.Icons)
 local Toasts = require(script.Parent.Parent.UI.Toasts)
 local ModelPreview = require(script.Parent.Parent.UI.ModelPreview)
-local State = require(script.Parent.Parent.Controllers.State)
+local State = require(script.Parent.Site).view -- (the plot being built on: Build/Site)
+local TrustSim = require(Shared.Sim.Trust) -- (what is left of a trusted builder's budget, over the coins)
 local Purchase = require(script.Parent.Parent.Controllers.Purchase) -- (VIP pieces: the pass on their cards)
 local Floors = require(Shared.Sim.Floors) -- (which floors the player may go to and build on)
 local City = require(Shared.Sim.City) -- (grand pieces and buildings wait for the town's level)
@@ -3666,18 +3667,31 @@ function BuildUI.init(exitCallback: () -> ())
 	})
 	tip.AutomaticSize = Enum.AutomaticSize.X
 	Kit.pad(tip, 8, 0)
-	Kit.text(
-		if Kit.isTouch() then "One finger turns the view, two move it." else "Right drag turns the view, WASD moves it.",
-		{
-			Parent = tip,
-			Size = UDim2.fromOffset(0, TIP_H),
-			AutomaticSize = Enum.AutomaticSize.X,
-			TextSize = 14,
-			Font = Kit.Fonts.Bold,
-			Color = T.White,
-			Wrap = false,
-		}
-	)
+	local cameraTip = if Kit.isTouch()
+		then "One finger turns the view, two move it."
+		else "Right drag turns the view, WASD moves it."
+	local tipWords = Kit.text(cameraTip, {
+		Parent = tip,
+		Size = UDim2.fromOffset(0, TIP_H),
+		AutomaticSize = Enum.AutomaticSize.X,
+		TextSize = 14,
+		Font = Kit.Fonts.Bold,
+		Color = T.White,
+		Wrap = false,
+	})
+	-- on a plot whose owner trusts you the coins are what is left of your budget there, and the
+	-- tip says whose (Build/Site, Sim/Trust)
+	local Site = require(script.Parent.Site)
+	local function siteTip()
+		local g = Site.guest()
+		tipWords.Text = if g
+			then TrustSim.line({ budget = g.budget, spent = g.budget - g.left, name = "" }, g.name)
+			else cameraTip
+	end
+	Site.onChange(siteTip)
+	State.on("coins", function()
+		siteTip()
+	end)
 
 	-- The time the town is shown at, on this screen only, top right across from the coins (the
 	-- user: "in build mode, allow the player to toggle what time they see their city in"): the

@@ -11,7 +11,7 @@ local Tuning = require(Shared.Config.Tuning)
 local Remotes = require(Shared.Net.Remotes)
 local Text = require(Shared.Util.Text)
 
-local State = require(script.Parent.Parent.Controllers.State)
+local State = require(script.Parent.Site).view -- (the plot being built on: Build/Site)
 local Purchase = require(script.Parent.Parent.Controllers.Purchase)
 local Kit = require(script.Parent.Parent.UI.Kit)
 local Icons = require(script.Parent.Parent.UI.Icons)

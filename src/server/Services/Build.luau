@@ -29,13 +29,18 @@ local Gems = require(Shared.Sim.Gems)
 
 local Data = require(script.Parent.Data)
 local Plots = require(script.Parent.Plots)
+-- (a trusted builder changes the plot they build on, its owner paying, up to a budget: Services/Trust)
+local Trust = require(script.Parent.Trust)
+local TrustSim = require(Shared.Sim.Trust)
 
 local Build = {}
 
 local MAX_HISTORY = 60
 local MAX_REQUESTS = 320 -- a whole ready-made building goes in one batch
 
-local history: { [Player]: { undo: { any }, redo: { any } } } = {}
+-- (each player's undo and redo, one pair for each plot they have built on: their own, or one
+-- they were trusted with)
+local history: { [Player]: { [Player]: { undo: { any }, redo: { any } } } } = {}
 local busy: { [Player]: boolean } = {}
 local lastCall: { [Player]: number } = {}
 
@@ -44,14 +49,31 @@ local checkPictures: (plan: any, requests: { any }) -> (boolean, string?)
 local changed = Instance.new("BindableEvent")
 Build.Changed = changed.Event -- (player, ops)
 
-local function hist(player: Player)
-	local h = history[player]
+local function hist(player: Player, site: Player?)
+	local all = history[player]
+	if not all then
+		all = {}
+		history[player] = all
+	end
+	local at = site or player
+	local h = all[at]
 	if not h then
 		h = { undo = {}, redo = {} }
-		history[player] = h
+		all[at] = h
 	end
 	return h
 end
+
+-- The plot a player's change goes to: their own, or the owner's whose plot they build on as a
+-- trusted builder (Services/Trust), and that trust.
+local function siteOf(player: Player): (Player, TrustSim.Entry?)
+	local owner, entry = Trust.siteOf(player)
+	if owner and entry then
+		return owner, entry
+	end
+	return player, nil
+end
+Build.siteOf = siteOf
 
 local function sameWall(a: any, b: any): boolean
 	if a.lv ~= b.lv then
@@ -269,16 +291,27 @@ local function syncOf(plan: any, ops: { any }): any
 	return { ops = ops }
 end
 
--- Applies ready-made ops (undo, redo) after checking they still fit.
-local function commit(player: Player, ops: { any }, record: string?): (boolean, string?)
-	local profile = Data.get(player)
-	local index = Plots.indexOf(player)
+-- Applies ready-made ops (undo, redo) after checking they still fit. `site` is the owner of the
+-- plot when that isn't `player` (a trusted builder: the owner pays, up to the budget).
+local function commit(player: Player, ops: { any }, record: string?, site: Player?): (boolean, string?)
+	local owner = site or player
+	local profile = Data.get(owner)
+	local index = Plots.indexOf(owner)
 	if not profile or not index then
 		return false, "no plot"
 	end
 	local cost = Plan.changeCost(ops)
-	if cost > 0 and not Data.canAfford(player, cost) then
-		return false, "not enough coins"
+	local guest = owner ~= player
+	if guest then
+		if not Trust.trusts(owner, player) then
+			return false, TrustSim.Why.gone
+		end
+		if cost > 0 and cost > Trust.left(owner, player) then
+			return false, TrustSim.Why.budget
+		end
+	end
+	if cost > 0 and not Data.canAfford(owner, cost) then
+		return false, if guest then TrustSim.short(owner.DisplayName) else "not enough coins"
 	end
 	if record ~= "applied" then
 		-- (undo and redo move pieces back, not a light's switch: Sim/Lights)
@@ -289,12 +322,17 @@ local function commit(player: Player, ops: { any }, record: string?): (boolean, 
 		end
 	end
 	if cost ~= 0 then
-		Data.addCoins(player, -cost)
+		Data.addCoins(owner, -cost)
+		if guest then
+			Trust.spent(owner, player, cost)
+		end
 	end
 	local affected = Plan.affected(profile.plan, ops)
 	Builder.update(profile.plan, affected, Plots.buildFolder(index), Plots.frame(index))
-	Remotes.event("PlanSync"):FireClient(player, syncOf(profile.plan, ops))
-	changed:Fire(player, ops)
+	local sync = syncOf(profile.plan, ops)
+	Remotes.event("PlanSync"):FireClient(owner, sync)
+	Trust.sync(owner, sync) -- (and whoever is building on the plot with them)
+	changed:Fire(owner, ops)
 	return true
 end
 
@@ -428,11 +466,17 @@ function Build.apply(player: Player, requests: any): (boolean, string?)
 	if busy[player] or not throttle(player) then
 		return false, "slow down a little"
 	end
-	local profile = Data.get(player)
-	if not profile or not Plots.indexOf(player) then
+	-- (a trusted builder's change is to the owner's plot, held to the owner's passes and level)
+	local site, trusted = siteOf(player)
+	local profile = Data.get(site)
+	if not profile or not Plots.indexOf(site) then
 		return false, "no plot yet"
 	end
+	if busy[site] then
+		return false, "slow down a little"
+	end
 	busy[player] = true
+	busy[site] = true
 	local ok, result = pcall(function()
 		-- a keepsake goes down only as many times as a villager gave it you (Sim/Keepsakes)
 		local allowed, why = Keepsakes.check(profile, requests)
@@ -459,6 +503,9 @@ function Build.apply(player: Player, requests: any): (boolean, string?)
 		local gems, buys, gemWhy = GemPieces.need(profile, requests)
 		if not gems then
 			return { false, gemWhy }
+		end
+		if gems > 0 and trusted then
+			return { false, TrustSim.Why.gems }
 		end
 		if gems > 0 and not Gems.canAfford(profile, gems) then
 			return { false, "not enough gems" }
@@ -487,16 +534,25 @@ function Build.apply(player: Player, requests: any): (boolean, string?)
 			return { false, err }
 		end
 		local cost = Plan.changeCost(ops)
-		if cost > 0 and not Data.canAfford(player, cost) then
+		-- (a trusted builder spends the owner's coins, up to their budget: Sim/Trust)
+		local inBudget, overWhy = true, nil
+		if trusted then
+			inBudget, overWhy = TrustSim.allows(trusted, cost)
+		end
+		if not inBudget then
 			Plan.apply(profile.plan, Plan.invert(ops))
-			return { false, "not enough coins" }
+			return { false, overWhy }
+		end
+		if cost > 0 and not Data.canAfford(site, cost) then
+			Plan.apply(profile.plan, Plan.invert(ops))
+			return { false, if trusted then TrustSim.short(site.DisplayName) else "not enough coins" }
 		end
 		-- (the gems are taken first, and given back if the change can't go through after all)
 		if gems > 0 and not Gems.spend(profile, gems) then
 			Plan.apply(profile.plan, Plan.invert(ops))
 			return { false, "not enough gems" }
 		end
-		local done, why = commit(player, ops, "applied")
+		local done, why = commit(player, ops, "applied", site)
 		if not done then
 			Plan.apply(profile.plan, Plan.invert(ops))
 			if gems > 0 then
@@ -508,7 +564,7 @@ function Build.apply(player: Player, requests: any): (boolean, string?)
 			GemPieces.buy(profile, buys)
 			Data.push(player, "gems", "gemItems")
 		end
-		local h = hist(player)
+		local h = hist(player, site)
 		table.insert(h.undo, ops)
 		if #h.undo > MAX_HISTORY then
 			table.remove(h.undo, 1)
@@ -517,6 +573,7 @@ function Build.apply(player: Player, requests: any): (boolean, string?)
 		return { true }
 	end)
 	busy[player] = nil
+	busy[site] = nil
 	placing = nil -- (in case working it out failed halfway)
 	if not ok then
 		warn("[Build] error:", result)
@@ -628,6 +685,10 @@ end
 -- difference back), refused when they can't afford it. One step for Undo. With `dry`, only works
 -- out what it would come to, on a copy. Returns ok and { cost, skipped, changed }, or false and why.
 function Build.replace(player: Player, target: any, dry: boolean?): (boolean, any)
+	-- (never onto a plot the player is only trusted to build on: Services/Trust)
+	if Trust.siteOf(player) then
+		return false, TrustSim.Why.saves
+	end
 	local profile = Data.get(player)
 	if not profile or not Plots.indexOf(player) then
 		return false, "no plot yet"
@@ -674,13 +735,14 @@ function Build.replace(player: Player, target: any, dry: boolean?): (boolean, an
 end
 
 function Build.undo(player: Player): (boolean, string?)
-	local h = hist(player)
+	local site = siteOf(player)
+	local h = hist(player, site)
 	local ops = table.remove(h.undo)
 	if not ops then
 		return false, "nothing to undo"
 	end
 	local inverse = Plan.invert(ops)
-	local ok, err = commit(player, inverse)
+	local ok, err = commit(player, inverse, nil, site)
 	if not ok then
 		table.insert(h.undo, ops)
 		return false, err
@@ -690,12 +752,13 @@ function Build.undo(player: Player): (boolean, string?)
 end
 
 function Build.redo(player: Player): (boolean, string?)
-	local h = hist(player)
+	local site = siteOf(player)
+	local h = hist(player, site)
 	local ops = table.remove(h.redo)
 	if not ops then
 		return false, "nothing to redo"
 	end
-	local ok, err = commit(player, ops)
+	local ok, err = commit(player, ops, nil, site)
 	if not ok then
 		table.insert(h.redo, ops)
 		return false, err
@@ -741,6 +804,9 @@ function Build.start()
 	end
 	game:GetService("Players").PlayerRemoving:Connect(function(player)
 		history[player] = nil
+		for _, all in history do
+			all[player] = nil -- (what others did on their plot as trusted builders)
+		end
 		busy[player] = nil
 		lastCall[player] = nil
 	end)
