@@ -272,16 +272,17 @@ local function askNow(token)
 	frames(2)
 end
 -- The player goes on: a click on the box once the line is all there (a click while it is still
--- being typed only finishes it). Nothing in a scene moves without one.
+-- being typed only finishes it, so one more goes on). Nothing in a scene moves without one.
 local function goOn()
 	local box = scene() and scene():FindFirstChild("Box", true)
 	local typed = box and box:FindFirstChild("Line", true)
-	if typed then
-		typed.MaxVisibleGraphemes = -1
+	local click = { UserInputType = Enum.UserInputType.MouseButton1 }
+	if box and typed and typed.MaxVisibleGraphemes ~= -1 then
+		box.InputBegan:Fire(click)
+		frames(1)
 	end
-	frames(1)
 	if box then
-		box.InputBegan:Fire({ UserInputType = Enum.UserInputType.MouseButton1 })
+		box.InputBegan:Fire(click)
 	end
 	frames(3)
 end
@@ -876,6 +877,86 @@ run("junk from the server", function()
 	frames(2)
 	check(card() == nil, "opens nothing")
 	check(#errors == 0, "no warnings from any of it")
+end)
+
+-- the player's own controls ---------------------------------------------------------------------------------
+
+run("a go at a piece shows over the player's head", function()
+	-- the user: "for text bubbles that appear when you interact with objects like the fridge, make the
+	-- bubbles appear on top of you instead"
+	local warned = #errors
+	Harness.require(Sim.CLIENT .. "World.Interact").start()
+	-- (near the camera: further than a player can see, nothing is drawn)
+	local at = Sim.cam.CFrame.Position + Vector3.new(0, -6, 12)
+	Sim.remoteEvent("Used"):FireClient(Sim.player, at, nil, "A note from Ivy was in the fridge.", "plain", Sim.player)
+	frames(2)
+	local bubbles = Fake.find(Sim.player:FindFirstChild("PlayerGui"), function(d)
+		return d.Name == "UseBubble"
+	end)
+	local b = bubbles[1]
+	check(#bubbles == 1 and b.Adornee == myRoot, "a bubble hangs over the player who had the go")
+	check(b and b:FindFirstChild("Text", true).Text == "A note from Ivy was in the fridge.", "saying what happened")
+	check(b and #Fake.find(b, function(d)
+		return d:IsA("UIStroke")
+	end) == 0, "with no rim")
+	Sim.remoteEvent("Used"):FireClient(Sim.player, at, nil, "The bell rang.", "rare", Sim.player)
+	frames(2)
+	bubbles = Fake.find(Sim.player:FindFirstChild("PlayerGui"), function(d)
+		return d.Name == "UseBubble" and d.Parent ~= nil
+	end)
+	check(
+		#bubbles == 1 and bubbles[1]:FindFirstChild("Text", true).Text == "The bell rang.",
+		"a new one takes its place"
+	)
+	advance(Tuning.Uses.Bubble + 4)
+	bubbles = Fake.find(Sim.player:FindFirstChild("PlayerGui"), function(d)
+		return d.Name == "UseBubble"
+	end)
+	check(#bubbles == 0, "and it goes after a while")
+	check(#errors == warned, "no warnings from any of it")
+end)
+
+run("running with Shift", function()
+	-- the user: "also, make the ability to run, with shift"
+	local warned = #errors
+	local Run = Harness.require(Sim.CLIENT .. "World.Run")
+	local hum = Fake.new("Humanoid", me)
+	hum.Name = "Humanoid"
+	hum.Health = 100
+	hum.WalkSpeed = 18
+	hum.Sit = false
+	Run.start()
+	local function key(code, down)
+		local input = { KeyCode = code, UserInputType = Enum.UserInputType.Keyboard }
+		if down then
+			Sim.UIS.InputBegan:Fire(input, false)
+		else
+			Sim.UIS.InputEnded:Fire(input, false)
+		end
+		frames(2)
+	end
+	key(Enum.KeyCode.LeftShift, true)
+	check(hum.WalkSpeed == Tuning.Run.Speed and Run.isRunning(), "holding Shift runs")
+	key(Enum.KeyCode.LeftShift, false)
+	check(hum.WalkSpeed == 18 and not Run.isRunning(), "letting go walks again at the speed it had")
+	Sim.BuildMode.enter()
+	advance(0.5)
+	key(Enum.KeyCode.RightShift, true)
+	check(hum.WalkSpeed == 18, "never in Build mode")
+	key(Enum.KeyCode.RightShift, false)
+	Sim.BuildMode.exit()
+	advance(0.5)
+	Run.setToggled(true)
+	Run.update()
+	check(hum.WalkSpeed == Tuning.Run.Speed, "the touch switch runs too")
+	hum.Sit = true
+	advance(0.5)
+	check(hum.WalkSpeed == 18 and not Run.isRunning(), "sitting down stops it")
+	hum.Sit = false
+	advance(0.5)
+	check(hum.WalkSpeed == 18, "and the switch is off after")
+	hum:Destroy()
+	check(#errors == warned, "no warnings from any of it")
 end)
 
 print(

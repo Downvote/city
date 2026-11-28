@@ -580,7 +580,7 @@ local function makeBubble(self: Npc): BillboardGui
 	end
 	local head = self.model:FindFirstChild("Head") or self.root
 	-- the interface's look, drawn by Util/Bubble; the client stacks it with the wish bubble and
-	-- the mood badges over the same head and hides it behind walls (World/Bubbles)
+	-- the mood badges over the same head (World/Bubbles)
 	local gui = Bubble.billboard("Bubble", head :: BasePart, Bubble.SpeechWidth + 60, 90)
 	gui.Enabled = false
 	local fade = Bubble.speech(gui)

@@ -898,9 +898,6 @@ elseif scene == "bubbles" then
 	local Wishes = Harness.require(Sim.CLIENT .. "World.Wishes")
 	local BubbleLayout = Harness.require(Sim.CLIENT .. "World.BubbleLayout")
 	local Bubbles = Harness.require(Sim.CLIENT .. "World.Bubbles")
-	local function speechSize(text)
-		return { w = math.min(Bubble.SpeechWidth + 30, #text * 8.2 + 30), h = 51 }
-	end
 	local heads = {
 		{
 			key = "a",
@@ -914,39 +911,36 @@ elseif scene == "bubbles" then
 		{ key = "b", x = 560, y = 552, depth = 26, said = "She was on the roof again." },
 		{ key = "c", x = 930, y = 500, depth = 34, mood = "zzz", wish = "bed" },
 	}
-	local list = {}
+	-- the pieces, built first and stacked by the sizes World/Bubbles gives them (Bubble.size, from
+	-- what is in them; the words measured roughly here, with no fonts to ask)
+	local list, built = {}, {}
 	for _, h in heads do
-		local items = {}
+		local pieces = {}
 		if h.said then
-			table.insert(items, speechSize(h.said))
+			table.insert(pieces, (Bubble.speech(nil, h.said)))
 		end
 		if h.mood then
-			table.insert(items, { w = 44, h = 51 })
+			local badge = Bubble.mood(nil, h.mood)
+			Bubbles.dress(badge, h.mood)
+			table.insert(pieces, badge)
 		end
 		if h.food or h.wish then
-			table.insert(items, { w = 64, h = 73 })
+			table.insert(pieces, Wishes.face(nil, h.wish or "heart", h.food))
 		end
+		local items = {}
+		for _, fade in pieces do
+			local size = Bubble.size(fade, Bubble.roughMeasure)
+			table.insert(items, { w = size.X, h = size.Y })
+		end
+		built[h.key] = pieces
 		table.insert(list, { key = h.key, x = h.x, y = h.y, depth = h.depth, items = items })
 	end
 	local placed = BubbleLayout.arrange(list, { Base = Bubble.Base, Gap = Bubble.Gap })
 	for _, h in heads do
 		local lifts = placed[h.key].lifts
-		local i = 0
-		local function put(fade)
-			i += 1
+		for i, fade in built[h.key] do
 			fade.Parent = Sim.gui
 			fade.Position = UDim2.fromOffset(h.x, h.y - lifts[i])
-		end
-		if h.said then
-			put((Bubble.speech(nil, h.said)))
-		end
-		if h.mood then
-			local badge = Bubble.mood(nil, h.mood)
-			Bubbles.dress(badge, h.mood)
-			put(badge)
-		end
-		if h.food or h.wish then
-			put(Wishes.face(nil, h.wish or "heart", h.food))
 		end
 	end
 	-- and every mood badge in a row along the top, as a player's screen draws them

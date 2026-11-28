@@ -77,8 +77,9 @@ Remotes.Events = {
 	-- { token, left } when the time to answer changes (seconds left; none while it is held)
 	"EventLine",
 	"EventEnd", -- server -> client: (token, summary)
-	-- client -> server: (token, "open" | "close" | "asked"): the owner's scene of the event went up,
-	-- went, or reached the question. Services/Events times the answer by it (and checks it all).
+	-- client -> server: (token, "open" | "close" | "asked" | "next"): the owner's scene of the event
+	-- went up, went, reached the question, or has shown all that was said and waits for the next line
+	-- (said at once). Services/Events times the answer and the lines by it (and checks it all).
 	"EventWatch",
 	-- server -> client, every few seconds while villagers work: { coins (the town's now), earned
 	-- (all it has earned at work), lines = { { vid, n } } (who earned how many since the last) }; the
@@ -86,8 +87,8 @@ Remotes.Events = {
 	"Earned",
 	"Say", -- server -> client: (model, text) speech bubble (also visible to everyone nearby)
 	"Talk", -- server -> client: { vid, text, note, model } what your villager said when you held E on them
-	-- server -> every client: (at, puff?, text?, rarity?) a piece was used (Npc/Use.show): a puff from
-	-- it, and for a player's go what happened, over it (client World/Interact)
+	-- server -> every client: (at, puff?, text?, rarity?, who?) a piece was used (Npc/Use.show): a puff
+	-- from it, and for a player's go what happened, over that player's head (client World/Interact)
 	"Used",
 	-- server -> client: the player's own work at a workplace (Services/Work): { on = true, plot, key,
 	-- name, act, beat, today, cap } when it starts, { on = false } when it stops

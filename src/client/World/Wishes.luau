@@ -32,11 +32,11 @@ local function clear(model: Model)
 	end
 end
 
--- The wish bubble's look: a square of the dark glass with an orange rim (a craving's rim is
--- yellow), the thing they want in it and a tail toward their head
--- (Util/Bubble, as the speech cards and the mood badges are). Returns the group.
+-- The wish bubble's look: a square of the dark glass with no rim, the thing they want in it and a
+-- point toward their head (Util/Bubble, as the speech cards and the mood badges are). Returns the
+-- group.
 function Wishes.face(parent: Instance?, icon: string, food: any?): CanvasGroup
-	local g, card = Bubble.square(parent, 60, if food then T.Yellow else T.Orange)
+	local g, card = Bubble.square(parent, 60)
 	if food then
 		Icons.item(food.id, 46, Colors.fromHex(food.color), {
 			Parent = card,
@@ -68,7 +68,7 @@ local function show(model: Model, icon: string)
 		return
 	end
 	-- hung from the same point as the speech card and the mood badges, which World/Bubbles
-	-- stacks it over; it hides it while a wall is in the way
+	-- stacks it over
 	local bb = Bubble.billboard("WishBubble", head, 90, 140)
 	bb.Active = true
 	-- what they crave, if it's a craving; otherwise the wish's own icon
@@ -121,7 +121,7 @@ local function watch(model: Model)
 end
 
 function Wishes.start()
-	-- the loop that stacks the bubbles over every head and hides them behind walls
+	-- the loop that stacks the bubbles over every head
 	Bubbles.start()
 	-- a new craving (or one bought) shows on the bubbles as soon as the client hears of it
 	State.on("villagers", function()

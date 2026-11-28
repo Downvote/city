@@ -16,7 +16,9 @@
 -- after the scene was put away); watching, the time doesn't run while they are still reading the
 -- lines before it, and runs from when it reached their screen. Never past ChoiceCap after asking,
 -- whatever a client says. While the owner still has an ended event's scene up, the next event
--- waits (ReadHold at most).
+-- waits (ReadHold at most). The lines keep the town's pace, except that a watching owner who has
+-- read all there is asks for the next one (EventWatch "next") and gets it at once (the user:
+-- "sometimes, clicking on dialogue dosent advance it, lagging behind instead").
 
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
@@ -107,6 +109,24 @@ local function presentVillagers(player: Player, night: boolean): { string }
 	return out
 end
 
+-- Waits out a line, `seconds` at the town's pace, cut short when the owner is watching and has asked
+-- for the next one (EventWatch "next": the run's `hurry`).
+local function pause(player: Player, token: string, seconds: number)
+	local r = running[player]
+	if r and r.token == token then
+		r.hurry = false
+	end
+	local waited = 0
+	while waited < seconds do
+		local now = running[player]
+		if now and now.token == token and now.hurry and now.watching then
+			now.hurry = false
+			return
+		end
+		waited += task.wait(0.1)
+	end
+end
+
 -- Plays a list of lines as bubbles over the right villagers, and tells the player's client each
 -- line as it is said, so a scene that is watched shows the line the villagers are saying (the user:
 -- "clicking watch to watch a conversation restarts the conversation from the start": the client used
@@ -130,7 +150,7 @@ local function playLines(player: Player, ev: any, lines: { any }, token: string,
 				npc:gesture(l.gesture, 3)
 			end
 		end
-		task.wait(math.clamp(#l.text / 18, 2.2, 4.2))
+		pause(player, token, math.clamp(#l.text / 18, 2.2, 4.2))
 	end
 end
 
@@ -729,11 +749,12 @@ function Events.start()
 	end
 
 	-- The owner's scene of an event: up ("open": watching it from the start, so the question waits
-	-- to be reached again), down ("close"), or at the question ("asked"). Only for the event playing
-	-- now (or, for "open" and "close", the one that ended last), and it only moves the time to answer
-	-- within the server's own bounds.
+	-- to be reached again), down ("close"), at the question ("asked"), or read to the end of what has
+	-- been said ("next": the next line comes now). Only for the event playing now (or, for "open" and
+	-- "close", the one that ended last), and it only moves the time to answer within the server's own
+	-- bounds.
 	Remotes.event("EventWatch").OnServerEvent:Connect(function(player, token, what)
-		if type(token) ~= "string" or (what ~= "open" and what ~= "close" and what ~= "asked") then
+		if type(token) ~= "string" or (what ~= "open" and what ~= "close" and what ~= "asked" and what ~= "next") then
 			return
 		end
 		local r = running[player]
@@ -755,6 +776,8 @@ function Events.start()
 		elseif what == "close" then
 			r.watching = false
 			r.closedAt = now
+		elseif what == "next" then
+			r.hurry = r.watching == true
 		elseif r.asking and r.seenAt == nil then
 			r.seenAt = now
 		end

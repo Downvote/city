@@ -1,15 +1,19 @@
 -- What a go at a piece looks like on this screen. The server sends `Used` (Npc/Use.show) when a
 -- villager's go gives something off (smoke from a burnt pan, petals from a plant coming into
 -- flower) and when a player holds E on a piece (Services/Interact): a puff from the piece and, for
--- a player's go, a bubble over it saying what happened, in the look of the villagers' own speech
--- bubbles. A rare outcome gets a gold rim and a few sparkles. Only what is near the camera shows.
+-- a player's go, a bubble saying what happened over that player's own head (the user: "for text
+-- bubbles that appear when you interact with objects like the fridge, make the bubbles appear on
+-- top of you instead"), a villager's speech card (Util/Bubble) with no rim. A rare outcome has its
+-- words in gold and a few sparkles. Only what is near the camera shows.
 
+local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Tuning = require(Shared.Config.Tuning)
 local Remotes = require(Shared.Net.Remotes)
+local Bubble = require(Shared.Util.Bubble)
 
 local BuildFx = require(script.Parent.BuildFx)
 
@@ -123,68 +127,59 @@ function Interact.puff(at: Vector3, kind: string)
 	end
 end
 
--- What happened, in a bubble over the piece: the look of a villager's speech bubble (Npc's), the
--- same in the dark and the light look, since it hangs in the world like theirs.
-function Interact.bubble(at: Vector3, text: string, rare: boolean)
+-- What happened, in a speech card over `adornee` (the head of the player who had the go, or a point
+-- by the piece when there is no head to hang it from). A new one over the same head takes the old
+-- one's place. It grows out of its point and shrinks back, like the bubbles over villagers.
+local POP = TweenInfo.new(0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+local GO = TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+local over: { [Instance]: BillboardGui } = {} -- the bubble up over each head
+function Interact.bubble(adornee: BasePart, text: string, rare: boolean): BillboardGui
 	local seconds = Tuning.Uses.Bubble + math.clamp(#text / 30, 0, 2)
-	local p = anchor(at, seconds + 0.5)
-	local gui = Instance.new("BillboardGui")
-	gui.Name = "UseBubble"
-	gui.Size = UDim2.fromOffset(260, 80)
-	gui.StudsOffset = Vector3.new(0, 1.2, 0)
-	gui.MaxDistance = 90
-	gui.Adornee = p
-	local card = Instance.new("Frame")
-	card.Name = "Card"
-	card.AnchorPoint = Vector2.new(0.5, 1)
-	card.Position = UDim2.fromScale(0.5, 1)
-	card.Size = UDim2.fromScale(0, 0)
-	card.AutomaticSize = Enum.AutomaticSize.XY
-	card.BackgroundColor3 = Color3.fromRGB(37, 40, 54)
-	card.Parent = gui
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 12)
-	corner.Parent = card
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = if rare then Color3.fromRGB(240, 196, 92) else Color3.fromRGB(66, 71, 93)
-	stroke.Thickness = 2
-	stroke.Parent = card
-	local pad = Instance.new("UIPadding")
-	pad.PaddingLeft = UDim.new(0, 10)
-	pad.PaddingRight = UDim.new(0, 10)
-	pad.PaddingTop = UDim.new(0, 6)
-	pad.PaddingBottom = UDim.new(0, 6)
-	pad.Parent = card
-	local label = Instance.new("TextLabel")
-	label.Name = "Text"
-	label.BackgroundTransparency = 1
-	label.AutomaticSize = Enum.AutomaticSize.XY
-	label.Size = UDim2.fromOffset(0, 0)
-	label.Font = Enum.Font.BuilderSansMedium
-	label.TextSize = 18
-	label.TextWrapped = true
-	label.Text = text
-	label.TextColor3 = Color3.fromRGB(236, 238, 246)
-	label.Parent = card
-	local limit = Instance.new("UISizeConstraint")
-	limit.MaxSize = Vector2.new(250, 200)
-	limit.Parent = label
+	local old = over[adornee]
+	if old then
+		old:Destroy()
+	end
+	local gui = Bubble.billboard("UseBubble", adornee, Bubble.SpeechWidth + 60, 90)
+	local fade, label = Bubble.speech(gui, text)
+	if rare then
+		label.TextColor3 = Bubble.Yellow
+	end
 	local scale = Instance.new("UIScale")
-	scale.Scale = 0.85
-	scale.Parent = card
-	gui.Parent = p
-	-- it grows the last bit to its size, quick and with no bounce, like the interface's cards
-	TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Scale = 1 })
-		:Play()
+	scale.Name = "Pop"
+	scale.Scale = 0.55
+	scale.Parent = fade
+	fade.GroupTransparency = 1
+	gui.Parent = Players.LocalPlayer:FindFirstChild("PlayerGui") or adornee
+	over[adornee] = gui
+	TweenService:Create(scale, POP, { Scale = 1 }):Play()
+	TweenService:Create(fade, POP, { GroupTransparency = 0 }):Play()
 	task.delay(seconds, function()
 		if gui.Parent then
-			TweenService:Create(scale, TweenInfo.new(0.15), { Scale = 0.01 }):Play()
+			TweenService:Create(scale, GO, { Scale = 0.55 }):Play()
+			TweenService:Create(fade, GO, { GroupTransparency = 1 }):Play()
 		end
 	end)
+	task.delay(seconds + 0.25, function()
+		if over[adornee] == gui then
+			over[adornee] = nil
+		end
+		gui:Destroy()
+	end)
+	return gui
+end
+
+-- The head a player's bubble hangs over: their character's head, or its root.
+local function headOf(who: any): BasePart?
+	if typeof(who) ~= "Instance" or not who:IsA("Player") then
+		return nil
+	end
+	local char = who.Character
+	local head = char and (char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart"))
+	return if head and head:IsA("BasePart") then head else nil
 end
 
 function Interact.start()
-	Remotes.event("Used").OnClientEvent:Connect(function(at: any, puff: any, text: any, rarity: any)
+	Remotes.event("Used").OnClientEvent:Connect(function(at: any, puff: any, text: any, rarity: any, who: any)
 		if typeof(at) ~= "Vector3" then
 			return
 		end
@@ -196,7 +191,9 @@ function Interact.start()
 			Interact.puff(at, puff)
 		end
 		if type(text) == "string" and text ~= "" then
-			Interact.bubble(at + Vector3.new(0, 1, 0), text, rarity == "rare")
+			-- over the head of whoever had the go (by the piece if they have no body to hang it on)
+			local head = headOf(who) or anchor(at + Vector3.new(0, 1, 0), Tuning.Uses.Bubble + 3)
+			Interact.bubble(head, text, rarity == "rare")
 		end
 		if rarity == "rare" and puff ~= "sparkle" then
 			Interact.puff(at + Vector3.new(0, 1, 0), "sparkle")
