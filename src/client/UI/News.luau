@@ -284,7 +284,7 @@ local function draw()
 						"{name} wants {thing} by their bed",
 						{ name = v.name, thing = Catalog.Tags[r.tag] or r.tag }
 					),
-					Sub = "Put one by their bed in Build mode.",
+					Sub = "Put one by their bed.",
 					Marker = "alert",
 					MarkerColor = T.Coral,
 				})
@@ -309,7 +309,7 @@ local function draw()
 	end
 	if #log == 0 then
 		order += 1
-		MenuParts.empty("news", "No news yet", "Things that happen in town show up here.", {
+		MenuParts.empty("news", "No news yet", "Town news shows up here.", {
 			Parent = list,
 			LayoutOrder = order,
 			Color = T.Teal,

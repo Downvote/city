@@ -183,8 +183,10 @@ function Kit.corner(inst: Instance, radius: any): UICorner
 	return Kit.new("UICorner", { CornerRadius = r, Parent = inst })
 end
 
--- A thin line round a card, a well or a disc, just inside its edge: the rim every surface in
--- this look has. `transparency` 0 by default.
+-- A thin line round a disc or a ring, just inside its edge. `transparency` 0 by default. Rounded
+-- rectangles (cards, tiles, rows, wells, notes, bubbles) never get one: the user, "for bubbles
+-- and text in rounded rectangles everywhere, remove the borders". A thing that is picked may still
+-- be ringed in yellow while it is.
 function Kit.rim(inst: Instance, color: Color3?, thickness: number?, transparency: number?): UIStroke
 	local old = inst:FindFirstChild("Rim")
 	if old then
@@ -1642,9 +1644,9 @@ function Kit.frame(props: { [string]: any }?): Frame
 	if p.Cut then
 		-- two corners cut off: the frame itself is clear and the shape is laid under what is in it
 		f.BackgroundTransparency = 1
-		local shape = Kit.cutInto(f, p.Color or T.Paper, p.Cut)
-		-- a thin line round a card, a shade off its own colour
-		Kit.rim(shape, mix(p.Color or T.Paper, T.Ink, 0.08), 1)
+		Kit.cutInto(f, p.Color or T.Paper, p.Cut)
+		-- (no line round it: "for bubbles and text in rounded rectangles everywhere, remove the
+		-- borders")
 	elseif p.Radius ~= false then
 		Kit.corner(f, p.Radius or 14)
 	end
@@ -3927,7 +3929,7 @@ function Kit.tile(icon: string, caption: string, props: { [string]: any }?, onCl
 	})
 	Kit.corner(face, 9)
 	footShade(face, color)
-	Kit.rim(face, edgeOf(color), 1):SetAttribute("Follow", true)
+	-- (no line round it: the user, of a tile with one, "remove the borders around the rectangles")
 	local content = Kit.new("Frame", {
 		Name = "Content",
 		BackgroundTransparency = 1,
@@ -4314,7 +4316,9 @@ function Kit.panel(
 		Kit.motion(holder, accent, seed)
 	end
 	local _ = icon
-	-- the panel: a thin line, a gap, then the card
+	-- the panel: the card a few pixels inside its box, with no line round it (the user: "for
+	-- bubbles and text in rounded rectangles everywhere, remove the borders"; it had a thin line
+	-- round it a few pixels out, and one of its own)
 	local ROUND = if dialog then 16 else 18
 	local GAP = 5
 	local HEAD = 60 -- a dialog's band
@@ -4324,18 +4328,7 @@ function Kit.panel(
 		Position = UDim2.fromOffset(0, BAR),
 		Parent = holder,
 	})
-	local edge = Kit.new("Frame", {
-		Name = "Edge",
-		BackgroundColor3 = T.Black,
-		BackgroundTransparency = 0.35,
-		BorderSizePixel = 0,
-		Size = UDim2.fromScale(1, 1),
-		ZIndex = 0,
-		Parent = rim,
-	})
-	Kit.corner(edge, ROUND)
-	Kit.rim(edge, T.Line, 1.5)
-	-- brackets in the menu's colour on the line's corners, just outside it
+	-- brackets in the menu's colour on the box's corners, just outside it
 	local marks = Kit.brackets(rim, {
 		Name = "Corners",
 		Corners = { "tl", "tr", "bl", "br" },
@@ -4372,7 +4365,6 @@ function Kit.panel(
 			Parent = shape,
 		})
 	end
-	Kit.rim(shape, mix(T.Cream, T.Ink, 0.07), 1)
 	-- the menu's colour glowing softly into the panel from its top right corner
 	Kit.glow(frame, accent, if dialog then 0.16 else 0.14, "tr")
 	-- a tone of dots over the card, thinning out toward the bottom left
@@ -4797,11 +4789,8 @@ function Kit.bubble(props: { [string]: any }?): (Frame, Frame)
 				ZIndex = z,
 				Parent = holder,
 			})
-			-- a pill, with a thin line of a deeper tone round it
-			local core = Kit.frame({ Name = "Core", Parent = l, Color = spec[2], Radius = "pill", ZIndex = z })
-			if spec[1] == "Shape" then
-				Kit.rim(core, edgeOf(spec[2]), 1):SetAttribute("Follow", true)
-			end
+			-- a plain pill, with no line round it
+			Kit.frame({ Name = "Core", Parent = l, Color = spec[2], Radius = "pill", ZIndex = z })
 			if tail then
 				local size = p.TailSize or 16
 				local at = p.TailAt or 0.5

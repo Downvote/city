@@ -57,7 +57,7 @@ Goals.list = {
 	{
 		id = "settlers",
 		name = "Neighbours",
-		desc = "Have 3 villagers living in town.",
+		desc = "3 villagers in town.",
 		need = 3,
 		reward = 300,
 		value = function(_p, city)
@@ -77,7 +77,7 @@ Goals.list = {
 	{
 		id = "work2",
 		name = "Off to work",
-		desc = "Have 2 villagers in a job.",
+		desc = "2 villagers with jobs.",
 		need = 2,
 		reward = 300,
 		value = function(_p, city)
@@ -87,7 +87,7 @@ Goals.list = {
 	{
 		id = "heart5",
 		name = "Close to you",
-		desc = "Reach heart level 5 with a villager.",
+		desc = "Reach heart level 5.",
 		need = 5,
 		reward = 500,
 		value = function(p, _city)
@@ -116,7 +116,7 @@ Goals.list = {
 	{
 		id = "town",
 		name = "On the map",
-		desc = "Grow into a Town.",
+		desc = "Reach level 3.",
 		need = 3,
 		reward = 800,
 		value = function(_p, city)
@@ -126,7 +126,7 @@ Goals.list = {
 	{
 		id = "work6",
 		name = "All hands",
-		desc = "Have 6 villagers in a job.",
+		desc = "6 villagers with jobs.",
 		need = 6,
 		reward = 800,
 		value = function(_p, city)
@@ -146,7 +146,7 @@ Goals.list = {
 	{
 		id = "explore5",
 		name = "Out and about",
-		desc = "Find 5 places round the island.",
+		desc = "Find 5 places.",
 		need = 5,
 		reward = 400,
 		value = stat("found"),
@@ -164,7 +164,7 @@ Goals.list = {
 	{
 		id = "bestfriends3",
 		name = "Close knit",
-		desc = "Have three pairs of best friends.",
+		desc = "Three pairs of best friends.",
 		need = 3,
 		reward = 1200,
 		value = function(p, _city)
@@ -174,7 +174,7 @@ Goals.list = {
 	{
 		id = "full",
 		name = "Full house",
-		desc = "Have 10 villagers living in town.",
+		desc = "10 villagers in town.",
 		need = 10,
 		reward = 1500,
 		value = function(_p, city)
@@ -184,7 +184,7 @@ Goals.list = {
 	{
 		id = "heart10",
 		name = "Inseparable",
-		desc = "Reach heart level 10 with a villager.",
+		desc = "Reach heart level 10.",
 		need = 10,
 		reward = 1500,
 		value = function(p, _city)
@@ -194,7 +194,7 @@ Goals.list = {
 	{
 		id = "work10",
 		name = "A working town",
-		desc = "Have 10 villagers in a job.",
+		desc = "10 villagers with jobs.",
 		need = 10,
 		reward = 2000,
 		value = function(_p, city)
@@ -204,7 +204,7 @@ Goals.list = {
 	{
 		id = "exploreAll",
 		name = "Know every corner",
-		desc = "Find every place on the island.",
+		desc = "Find every place.",
 		need = 16,
 		reward = 2000,
 		value = stat("found"),
@@ -212,7 +212,7 @@ Goals.list = {
 	{
 		id = "city",
 		name = "Bright lights",
-		desc = "Grow into a City.",
+		desc = "Reach level 5.",
 		need = 5,
 		reward = 3000,
 		value = function(_p, city)

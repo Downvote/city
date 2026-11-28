@@ -216,15 +216,6 @@ local function showGems()
 		Size = UDim2.fromOffset(230, 78),
 		Tint = T.Purple,
 	})
-	MenuParts.hint(
-		"Gems are rare. A few come each day from the daily gift and time played, and more from achievements and the group.",
-		{
-			Parent = top,
-			Size = UDim2.new(1, -250, 0, 0),
-			Position = UDim2.new(0, 250, 0.5, 0),
-			AnchorPoint = Vector2.new(0, 0.5),
-		}
-	)
 	local row = Kit.box({
 		Name = "Packs",
 		Parent = body,

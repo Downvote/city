@@ -1177,8 +1177,9 @@ run("a menu takes the screen: a way back, tabs, rows", function()
 		card0:FindFirstChild("Cut") ~= nil and card0.Cut:FindFirstChildOfClass("UICorner") ~= nil,
 		"the panel is a card with round corners"
 	)
-	local edge = panel.root:FindFirstChild("Edge", true)
-	check(edge ~= nil and edge:FindFirstChild("Rim") ~= nil, "in a thin line of its own a few pixels out")
+	-- the user: "for bubbles and text in rounded rectangles everywhere, remove the borders"
+	check(panel.root:FindFirstChild("Edge", true) == nil, "with no line round it")
+	check(card0.Cut:FindFirstChildOfClass("UIStroke") == nil, "and none of its own")
 	check(card0:FindFirstChild("Dots") ~= nil, "with a tone of halftone dots over it")
 	check(card0:FindFirstChild("Hatch") ~= nil, "and a band of hatching in its corner")
 	-- the way out is red and leans, its points rounded: a painted slab

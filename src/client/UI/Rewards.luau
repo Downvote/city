@@ -134,38 +134,23 @@ local function pays(parent: Instance, coins: number, gems: number, props: { [str
 	end
 end
 
--- The left card's foot: a button that claims, or a word on where it stands.
-local function foot(parent: Instance, ready: boolean, label: string, status: string, note: string, claim: () -> ())
-	if ready then
-		Kit.button(label, {
-			Name = "Claim",
-			Parent = parent,
-			Size = UDim2.fromOffset(260, 54),
-			Position = UDim2.new(0.5, 0, 1, 0),
-			AnchorPoint = Vector2.new(0.5, 1),
-			Color = T.Green,
-			TextColor = T.Dark,
-			TextSize = 22,
-		}, claim)
+-- The left card's foot: a button that claims, when there is something to claim. (Nothing in its
+-- place otherwise: the user, "in rewards, in all tabs, remove the bottom tooltip like "Claimed"
+-- "The next gift comes tommorow"".)
+local function foot(parent: Instance, ready: boolean, label: string, claim: () -> ())
+	if not ready then
 		return
 	end
-	local box =
-		Kit.box({ Name = "Status", Parent = parent, Size = UDim2.new(1, 0, 0, 54), Position = UDim2.new(0, 0, 1, -54) })
-	Kit.title(status, {
-		Parent = box,
-		Size = UDim2.new(1, 0, 0, 28),
+	Kit.button(label, {
+		Name = "Claim",
+		Parent = parent,
+		Size = UDim2.fromOffset(260, 54),
+		Position = UDim2.new(0.5, 0, 1, 0),
+		AnchorPoint = Vector2.new(0.5, 1),
+		Color = T.Green,
+		TextColor = T.Dark,
 		TextSize = 22,
-		Color = T.Ink,
-		AlignX = Enum.TextXAlignment.Center,
-	})
-	Kit.text(note, {
-		Parent = box,
-		Size = UDim2.new(1, 0, 0, 20),
-		Position = UDim2.fromOffset(0, 30),
-		TextSize = 15,
-		Color = T.InkSoft,
-		AlignX = Enum.TextXAlignment.Center,
-	})
+	}, claim)
 end
 
 local function headline(parent: Instance, title: string, desc: string, top: number)
@@ -225,9 +210,7 @@ local function showDaily(card: Frame, list: ScrollingFrame)
 	headline(
 		card,
 		if ready then "Today's gift" else "See you tomorrow",
-		if ready
-			then "Come back each day to keep your run going. Every seventh day in a row brings more gems."
-			else "You've had today's gift. Tomorrow's is a little bigger if you keep your run going.",
+		if ready then "Come back daily for more." else "Tomorrow's is bigger.",
 		172
 	)
 	pays(card, coins, gems, {
@@ -235,7 +218,7 @@ local function showDaily(card: Frame, list: ScrollingFrame)
 		Position = UDim2.new(0.5, 0, 0, 262),
 		AnchorPoint = Vector2.new(0.5, 0),
 	})
-	foot(card, ready, "Claim", "Claimed", "The next gift comes tomorrow.", function()
+	foot(card, ready, "Claim", function()
 		task.spawn(function()
 			local ok, amount, got = Remotes.fn("DailyClaim"):InvokeServer()
 			if ok then
@@ -276,9 +259,6 @@ local function showDaily(card: Frame, list: ScrollingFrame)
 			Sunk = done,
 			Selected = now,
 		})
-	end
-	if vip then
-		MenuParts.note("VIP adds a gem to every day's gift.", T.Yellow, { Parent = list, LayoutOrder = 20 })
 	end
 end
 
@@ -322,12 +302,12 @@ local function showPlaytime(card: Frame, list: ScrollingFrame)
 	})
 	local title, desc
 	if not step then
-		title, desc = "That's all for today", "You've had every playtime reward today. They start again tomorrow."
+		title, desc = "That's all for today", "More tomorrow."
 	elseif ready then
-		title, desc = "A reward is waiting", "Gems for the time you spend in town. They start again tomorrow."
+		title, desc = "A reward is waiting", "Gems for playing."
 	else
 		title = Text.fill("{t} to go", { t = minutes(math.max(60, step.minutes * 60 - secs)) })
-		desc = "Gems for the time you spend in town. They start again tomorrow."
+		desc = "Gems for playing."
 	end
 	headline(card, title, desc, 172)
 	if step then
@@ -337,16 +317,9 @@ local function showPlaytime(card: Frame, list: ScrollingFrame)
 			AnchorPoint = Vector2.new(0.5, 0),
 		})
 	end
-	foot(
-		card,
-		ready,
-		"Claim",
-		if step then "Keep playing" else "Done for today",
-		if step then "It counts while you're in town." else "Come back tomorrow for more.",
-		function()
-			ask("PlaytimeClaim", nextIndex)
-		end
-	)
+	foot(card, ready, "Claim", function()
+		ask("PlaytimeClaim", nextIndex)
+	end)
 	MenuParts.heading(list, "Played today", T.Teal, 1, minutes(secs))
 	for i, s in Playtime.steps do
 		local claimed = i <= p.got
@@ -410,16 +383,9 @@ local function showAchievement(card: Frame, s: any)
 		Position = UDim2.new(0.5, 0, 0, if s.claimed then 250 else 292),
 		AnchorPoint = Vector2.new(0.5, 0),
 	})
-	foot(
-		card,
-		ready,
-		Text.fill("Claim {g}", { g = Text.gems(s.a.gems) }),
-		if s.claimed then "Claimed" else "Under way",
-		if s.claimed then "Done and paid." else "It counts up as your town grows.",
-		function()
-			ask("AchievementClaim", s.a.id)
-		end
-	)
+	foot(card, ready, Text.fill("Claim {g}", { g = Text.gems(s.a.gems) }), function()
+		ask("AchievementClaim", s.a.id)
+	end)
 end
 
 local function showAchievements(card: Frame, list: ScrollingFrame)
@@ -511,22 +477,18 @@ local function showGroup(card: Frame, list: ScrollingFrame)
 	})
 	local title, desc
 	if not open then
-		title = "The town's group"
-		desc = Text.fill(
-			"It isn't open yet. Once it is, members earn {p}% more from work and get {g} once.",
-			{ p = pct, g = Text.gems(gems) }
-		)
+		title, desc = "The town's group", "Not open yet."
 	elseif member then
 		title = "You're in the group"
-		desc = Text.fill("Your villagers earn {p}% more at work while you're a member.", { p = pct })
+		desc = Text.fill("{p}% more from work.", { p = pct })
 	else
 		title = "Join the group"
-		desc = Text.fill("Members earn {p}% more from work and get {g} once.", { p = pct, g = Text.gems(gems) })
+		desc = Text.fill("{p}% more from work and {g}.", { p = pct, g = Text.gems(gems) })
 	end
 	headline(card, title, desc, 160)
 	if open then
 		pays(card, 0, gems, {
-			Word = if paid then "Paid" else "Once",
+			Word = if paid then "Paid" else "Pays",
 			Position = UDim2.new(0.5, 0, 0, 250),
 			AnchorPoint = Vector2.new(0.5, 0),
 		})
@@ -561,16 +523,9 @@ local function showGroup(card: Frame, list: ScrollingFrame)
 			end)
 		end)
 	else
-		foot(
-			card,
-			open and member and not paid,
-			Text.fill("Claim {g}", { g = Text.gems(gems) }),
-			if not open then "Not open yet" elseif paid then "Claimed" else "",
-			if not open then "Check back later." elseif paid then "Thanks for joining." else "",
-			function()
-				ask("GroupClaim")
-			end
-		)
+		foot(card, open and member and not paid, Text.fill("Claim {g}", { g = Text.gems(gems) }), function()
+			ask("GroupClaim")
+		end)
 	end
 	MenuParts.heading(list, "What members get", T.Blue, 1)
 	Kit.row({
@@ -579,7 +534,6 @@ local function showGroup(card: Frame, list: ScrollingFrame)
 		Size = MenuParts.rowSize(),
 		LayoutOrder = 2,
 		Title = Text.fill("{p}% more from work", { p = pct }),
-		Sub = "Every coin your villagers earn at work",
 		Marker = "coins",
 		MarkerColor = if member then T.Green else T.Yellow,
 		Right = if member then "On" else "Members",
@@ -591,8 +545,7 @@ local function showGroup(card: Frame, list: ScrollingFrame)
 			Parent = list,
 			Size = MenuParts.rowSize(),
 			LayoutOrder = 3,
-			Title = Text.fill("{g}, once", { g = Text.gems(gems) }),
-			Sub = "For joining",
+			Title = Text.gems(gems),
 			Marker = if paid then "check" else "gem",
 			MarkerColor = if paid then T.Line else T.Purple,
 			Right = if paid then "Claimed" elseif member then "Claim" else "Members",
@@ -607,15 +560,22 @@ local function showGroup(card: Frame, list: ScrollingFrame)
 			end
 			else nil
 	)
-	MenuParts.hint("Leaving the group ends the extra pay. The gems stay yours.", { Parent = list, LayoutOrder = 4 })
 end
 
 -- The menu -------------------------------------------------------------------------------------------------------
+
+-- Claim all, at the top by the tabs: everything waiting in every tab at once (the user: "make a
+-- claim all button in rewards and in goals"). The server claims and pays it (Services/Claims) and
+-- sends the one notice of what came in.
+local function claimAll()
+	ask("RewardsClaimAll")
+end
 
 local function fill()
 	if not panel then
 		return
 	end
+	MenuParts.claimAll(panel, Rewards.waiting(), claimAll)
 	for _, c in panel.body:GetChildren() do
 		if c:IsA("GuiObject") then
 			c:Destroy()

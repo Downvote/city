@@ -177,7 +177,7 @@ local function pickJob(vid: string)
 	local options = {}
 	table.insert(options, {
 		label = "No job",
-		sub = "Stay home and potter about",
+		sub = "Stays home",
 		fn = function()
 			call("VillagerJob", vid, nil)
 		end,
@@ -192,7 +192,7 @@ local function pickJob(vid: string)
 		table.insert(options, {
 			label = Text.fill("{job} at the {place}", { job = w.job.name, place = w.def.name:lower() }),
 			sub = if worker
-				then Text.fill("{name} works here. They'll swap jobs.", { name = worker })
+				then Text.fill("Swaps with {name}", { name = worker })
 				else Text.fill("About {n} coins a day", { n = w.job.income }),
 			fn = function()
 				call("VillagerJob", vid, w.key)
@@ -293,7 +293,7 @@ local function about(parent: Frame, vid: string, v: any, p: any)
 		if w then Text.fill("{job}, {place}", { job = w.job.name, place = w.def.name:lower() }) else "No job yet",
 		1
 	)
-	local bedText, bedColor = "No bed. Build one.", T.Coral
+	local bedText, bedColor = "No bed yet", T.Coral
 	if v.bed then
 		bedText, bedColor = "Has a bed", nil
 		local item = State.plan.items[v.bed]
@@ -350,7 +350,7 @@ local function friendsOf(parent: Frame, vid: string, p: any)
 		return a.s > b.s
 	end)
 	if #rows == 0 then
-		MenuParts.empty("people", "Nobody else in town yet", "Friends show up here once someone else moves in.", {
+		MenuParts.empty("people", "Nobody else in town yet", "Friends show up here.", {
 			Parent = friends,
 			LayoutOrder = 1,
 			Color = T.Pink,
@@ -433,17 +433,12 @@ local function latelyOf(parent: Frame, vid: string, p: any)
 	local list = Kit.scroll({ Name = "Lately", Parent = parent, Size = UDim2.fromScale(1, 1) })
 	Kit.list(list, 6)
 	if #rows == 0 then
-		MenuParts.empty(
-			"sparkle",
-			"Nothing new lately",
-			"When something in an event sticks with them, a band or a new hat, it shows up here.",
-			{
-				Parent = list,
-				LayoutOrder = 1,
-				Color = T.Yellow,
-				Height = 200,
-			}
-		)
+		MenuParts.empty("sparkle", "Nothing new lately", "What events leave them with shows up here.", {
+			Parent = list,
+			LayoutOrder = 1,
+			Color = T.Yellow,
+			Height = 200,
+		})
 		return
 	end
 	for i, row in rows do
@@ -468,9 +463,9 @@ end
 -- gems". Each is a row with what they have now and a button with its price; the gems you have are
 -- over them, and the editor says when you're short.
 local FLAIR_HINTS = {
-	phrase = "A sentence they say now and then, in a chat or over their head.",
-	ending = "A word or two they put on the end of a sentence now and then.",
-	thing = "Something they love, which they bring up when you chat.",
+	phrase = "Something they say now and then.",
+	ending = "A word they add at the end.",
+	thing = "Something they love and talk about.",
 }
 local FLAIR_EXAMPLES = { phrase = "Smells like rain to me.", ending = "buddy", thing = "old maps" }
 
@@ -620,7 +615,7 @@ local function quirksOf(parent: Frame, vid: string, v: any)
 	local gems = State.data.gems or 0
 	local head = Kit.box({ Name = "Gems", Parent = list, Size = UDim2.new(1, -12, 0, 26), LayoutOrder = 0 })
 	Icons.make("gem", 20, { Parent = head, Position = UDim2.new(0, 0, 0.5, -10), Color = T.Blue, Centre = true })
-	Kit.text(Text.fill("You have {n}. Each change costs again.", { n = gemsText(gems) }), {
+	Kit.text(Text.fill("You have {n}.", { n = gemsText(gems) }), {
 		Name = "Count",
 		Parent = head,
 		Size = UDim2.new(1, -28, 1, 0),
@@ -808,15 +803,14 @@ local function showDetail()
 	local v = vid and State.villager(vid)
 	if not vid or not v then
 		-- nobody yet: say so in the middle of the stage, with the way to make someone
-		local empty =
-			MenuParts.empty("people", "Nobody lives here yet", "Make your first villager and they'll move into town.", {
-				Parent = detail,
-				Height = 250,
-				Size = UDim2.fromOffset(540, 250),
-				Position = UDim2.fromScale(0.5, 0.5),
-				AnchorPoint = Vector2.new(0.5, 0.5),
-				Color = T.Green,
-			})
+		local empty = MenuParts.empty("people", "Nobody lives here yet", "Make your first villager.", {
+			Parent = detail,
+			Height = 250,
+			Size = UDim2.fromOffset(540, 250),
+			Position = UDim2.fromScale(0.5, 0.5),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Color = T.Green,
+		})
 		Kit.button("Make a villager", {
 			Name = "MakeVillager",
 			Parent = empty,
@@ -1148,7 +1142,6 @@ function Residents.open(vid: string?)
 		Clips = true,
 	})
 	Kit.corner(detail, STAGE_ROUND)
-	Kit.rim(detail, T.Line, 1, 0.3)
 	refreshList()
 	showDetail()
 	local lastVillagers = nil

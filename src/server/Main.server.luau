@@ -25,6 +25,7 @@ local order = {
 	"Explore",
 	"Signs",
 	"Vehicles", -- buying and bringing out vehicles (Data/Vehicles)
+	"Claims", -- Claim all in the rewards and the town goals (Sim/ClaimAll)
 	-- passes, gem packs, rewards, offline earnings, the group: listens for Data.Loaded, so it starts
 	-- before Data.open lets anyone in
 	"Store",

@@ -83,10 +83,7 @@ local function town(inside: Frame, stats: any, wages: number)
 		local milestone = stats.nextMilestone
 		Kit.text(
 			if milestone and milestone.Level == stats.level + 1
-				then Text.fill(
-					"To reach level {n}, with room for {v} villagers",
-					{ n = stats.level + 1, v = milestone.Villagers }
-				)
+				then Text.fill("To reach level {n} (room for {v})", { n = stats.level + 1, v = milestone.Villagers })
 				else Text.fill("To reach level {n}", { n = stats.level + 1 }),
 			{
 				Name = "Next",
@@ -112,20 +109,18 @@ local function town(inside: Frame, stats: any, wages: number)
 		MenuParts.note(
 			if land
 				then Text.fill(
-					if locked
-						then "At level {lv} you can buy more land with Big Plot, up to {n} by {n} studs."
-						else "At level {lv} you can buy more land, up to {n} by {n} studs.",
+					if locked then "Unlocks land up to {n} by {n} with Big Plot." else "Unlocks land up to {n} by {n}.",
 					{
 						lv = stats.level + 1,
 						n = land.Size,
 					}
 				)
-				else "Worth goes up with everything you build.",
+				else "Building raises worth.",
 			accent,
 			{ Name = "Unlocks", Parent = inside, Position = UDim2.fromOffset(0, y + 4), Height = 24 }
 		)
 	else
-		Kit.text("Your town is at the top level.", {
+		Kit.text("Top level", {
 			Name = "Next",
 			Parent = inside,
 			Size = UDim2.new(1, 0, 0, 22),
@@ -134,9 +129,9 @@ local function town(inside: Frame, stats: any, wages: number)
 			Font = Kit.Fonts.Bold,
 		})
 		MenuParts.note(
-			"There are no more levels after this one.",
+			"No more levels.",
 			accent,
-			{ Name = "Unlocks", Parent = inside, Position = UDim2.fromOffset(0, 116), Height = 44 }
+			{ Name = "Unlocks", Parent = inside, Position = UDim2.fromOffset(0, 116), Height = 24 }
 		)
 	end
 
@@ -190,7 +185,7 @@ local function lockedLandRow(list: ScrollingFrame, land: any, order: number)
 		Height = 64,
 		LayoutOrder = order,
 		Title = Text.fill("{n} by {n} studs", { n = land.Size }),
-		Sub = Text.fill("Land past {n} by {n} comes with Big Plot", { n = Tuning.Passes.FreeLand }),
+		Sub = Text.fill("Past {n} needs Big Plot", { n = Tuning.Passes.FreeLand }),
 		Marker = "ruler",
 		MarkerColor = T.Purple,
 		RightSpace = 200,
@@ -224,8 +219,8 @@ local function landRow(list: ScrollingFrame, stats: any, coins: number, order: n
 			Parent = list,
 			Size = MenuParts.rowSize(),
 			LayoutOrder = order,
-			Title = "You own all the land there is",
-			Sub = Text.fill("{n} by {n} studs to build on", { n = stats.land }),
+			Title = "All the land is yours",
+			Sub = Text.fill("{n} by {n} studs", { n = stats.land }),
 			Marker = "check",
 			MarkerColor = T.Green,
 		})
@@ -238,8 +233,8 @@ local function landRow(list: ScrollingFrame, stats: any, coins: number, order: n
 	local short = land.Price - coins
 	local can = stats.level >= land.Level and short <= 0
 	local why = if stats.level < land.Level
-		then Text.fill("Your town needs to reach level {n} first.", { n = land.Level })
-		elseif short > 0 then Text.fill("You need {n} more coins.", { n = Text.commas(short) })
+		then Text.fill("Needs level {n}.", { n = land.Level })
+		elseif short > 0 then Text.fill("{n} more coins needed.", { n = Text.commas(short) })
 		else nil
 	local row, inner = Kit.row({
 		Name = "Land",
@@ -380,7 +375,7 @@ function draw()
 			Title = Text.fill("{job}, {place}", { job = w.job.name, place = w.def.name:lower() }),
 			Sub = if who
 				then Text.fill("{name}, about {n} coins a day", { name = who, n = amount or w.job.income })
-				else "Nobody works here yet. Pick someone on the Villagers screen.",
+				else "Nobody works here yet",
 			Marker = "briefcase",
 			MarkerColor = if who then T.Purple else T.Line,
 		})
@@ -390,14 +385,11 @@ function draw()
 		MenuParts.empty(
 			"briefcase",
 			"No workplaces yet",
-			"Build one from Work in Build mode, then give a villager the job.",
+			"Build one in Build mode.",
 			{ Parent = list, LayoutOrder = 11 }
 		)
 	else
-		MenuParts.hint(
-			"You can build more workplaces from Work in Build mode.",
-			{ Name = "More", Parent = list, LayoutOrder = 1000 }
-		)
+		MenuParts.hint("More workplaces are in Build mode.", { Name = "More", Parent = list, LayoutOrder = 1000 })
 	end
 	-- what work has brought in so far, at the foot of the list
 	local earned = State.data.stats and State.data.stats.earned or 0
@@ -414,7 +406,7 @@ function draw()
 		Wrap = false,
 		LayoutOrder = 2,
 	})
-	Kit.text("coins earned from work so far", {
+	Kit.text("coins from work", {
 		Parent = foot,
 		Size = UDim2.fromOffset(0, 28),
 		AutomaticSize = Enum.AutomaticSize.X,
@@ -442,7 +434,7 @@ local function onCoins()
 	local note = landNote
 	local words = note and note:FindFirstChild("Text")
 	if land and words and words:IsA("TextLabel") and land.Price > p.coins then
-		words.Text = Text.fill("You need {n} more coins.", { n = Text.commas(land.Price - p.coins) })
+		words.Text = Text.fill("{n} more coins needed.", { n = Text.commas(land.Price - p.coins) })
 	end
 	if earnedLabel and earnedLabel.Parent then
 		earnedLabel.Text = Text.commas(State.data.stats and State.data.stats.earned or 0)
