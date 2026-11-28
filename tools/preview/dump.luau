@@ -41,6 +41,9 @@
 --                      such as joins:roofs:L; Z.joins in tools/preview/zfight_lib.luau)
 --   water              a tiled pool, a pond and a stone rimmed pool with things in them
 --                      (water:pool, water:pond, water:rim for one; tools/preview/water_scene.luau)
+--   plan:<file.json>   a plot's build (a saved plan, or one tools/preview/plan_scene.luau built through
+--                      the Build service) on its grass, its lamps beside it as <out>.lamps.json for
+--                      tools/preview/plan_shot.py (tools/preview/plan_shot.sh does both)
 -- SEASON=1..4 in the environment draws any scene in that season (Data/Seasons, as the game's
 -- client World/Seasons and the server's terrain do): spring blossom, autumn reds and golds, snow on
 -- the grass, the trees and the roofs in winter (every roof here: the game asks the sky too).
@@ -497,6 +500,50 @@ elseif scene == "joins" or scene:sub(1, 6) == "joins:" then
 			end
 		end
 	end
+elseif scene:sub(1, 5) == "plan:" then
+	-- plan:<file.json> a plot's build (a saved plan, or what tools/preview/plan_scene.luau writes)
+	-- in the plot's own frame, on the plot's grass with the island's ground round it. What glows is
+	-- drawn lit, as a player's lights are at every hour unless switched off (Sim/Lights), and the
+	-- lamps among them (a light of their own, at the reach and strength the Builder gives a placed
+	-- light: Tuning.Lights.Placed) go beside the JSON as <out>.lamps.json for
+	-- tools/preview/plan_shot.py, which draws the plot at night with them.
+	local Tuning = R(Shared .. "Config.Tuning")
+	local Textures = R(Shared .. "Data.Textures")
+	local Terrain = R(Shared .. "Data.Terrain")
+	local C3, V3 = roblox.Color3, roblox.Vector3
+	local plan = Plan.sanitize(serde.decode("json", fs.readFile(scene:sub(6))))
+	local size = Tuning.Plot.Size
+	local depth = -Terrain.PlotFloor
+	local grass = Textures.tint("Grass", C3.fromRGB(138, 192, 112))
+	addPrims({ Geometry.box(CFrame.new(size / 2, -depth / 2, size / 2), V3.new(size, depth, size), grass, "Grass") })
+	addPrims({
+		Geometry.box(CFrame.new(size / 2, -depth / 2 - 0.15, size / 2), V3.new(2400, depth, 2400), grass, "Grass"),
+	})
+	local lamps = {}
+	local placed = Tuning.Lights.Placed
+	for _, kind in Plan.Kinds do
+		for key, obj in plan[kind] or {} do
+			local list = Builder.primsFor(plan, kind, key) or {}
+			for _, p in Geometry.flatten(list) do
+				if p.role == "glow" and not obj.off then
+					p.mat = "Neon"
+					local l = p.light
+					if l and l.range and l.range > 0 then
+						local at = p.cf.Position
+						table.insert(lamps, {
+							at = { at.X, at.Y, at.Z },
+							color = { l.color.R, l.color.G, l.color.B },
+							range = math.min(l.range * placed.Range, Tuning.Lights.MaxRange),
+							brightness = l.brightness * placed.Brightness,
+						})
+					end
+				end
+			end
+			addPrims(list)
+		end
+	end
+	fs.writeFile(outPath .. ".lamps.json", serde.encode("json", lamps))
+	print(string.format("%d lamps -> %s.lamps.json", #lamps, outPath))
 elseif scene == "water" or scene:sub(1, 6) == "water:" then
 	-- (water: pools and ponds with things in them)
 	addPrims(require("./water_scene")(R, scene:sub(7)))
