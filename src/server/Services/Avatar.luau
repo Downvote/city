@@ -24,6 +24,7 @@ local Tuning = require(Shared.Config.Tuning)
 local Text = require(Shared.Util.Text)
 
 local Data = require(script.Parent.Data)
+local Shopping = require(script.Parent.Shopping) -- (what is bought here gives gems back: Sim/Shopping)
 local Tutorial = require(Shared.Sim.Tutorial)
 
 local Avatar = {}
@@ -1010,6 +1011,8 @@ function Avatar.start()
 		if not lines then
 			return false
 		end
+		-- (noted first, so what is bought gives gems back and counts toward the shopping track)
+		Shopping.expect(player, lines)
 		local ok = pcall(function()
 			local kinds = (Enum :: any).MarketplaceProductType
 			local items = {}

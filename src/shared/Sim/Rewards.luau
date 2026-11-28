@@ -12,6 +12,7 @@ local Achievements = require(script.Parent.Parent.Data.Achievements)
 local Playtime = require(script.Parent.Parent.Data.Playtime)
 local City = require(script.Parent.City)
 local Crates = require(script.Parent.Crates) -- (crates in the daily gift and achievements: Sim/Crates)
+local Shopping = require(script.Parent.Shopping) -- (the track for Robux spent on looks: Sim/Shopping)
 
 local Rewards = {}
 
@@ -261,6 +262,8 @@ function Rewards.waiting(profile: any, today: number, inGroup: boolean?): number
 	if Rewards.groupReady(profile, inGroup) then
 		n += 1
 	end
+	-- and the shopping track's tiers reached (Sim/Shopping)
+	n += Shopping.ready(profile)
 	return n
 end
 

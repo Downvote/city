@@ -1,11 +1,14 @@
 -- The rewards: what the player claims for coming back and playing (the user: "allow players to
 -- buy gems, as a daily reward, certain achievements, playtime rewards, etc." and "add group
--- rewards, such as percentage increase of earnings"). A full menu (Kit.panel) with four tabs, each
+-- rewards, such as percentage increase of earnings"). A full menu (Kit.panel) with five tabs, each
 -- the picked thing on a card at the left and a list down the right, as the other menus are:
 --   Daily         today's gift (coins, and a gem; more gems on every seventh day running)
 --   Playtime      gems for minutes played today, claimed one after another
 --   Achievements  one-off milestones that pay gems once
 --   Group         what joining the game's group brings
+--   Shopping      the track for Robux spent on looks in the creator (the user: "make a reward track
+--                 based on how much you spend on accessories, giving different types of crates,
+--                 pets and coin rewards"; Sim/Shopping), each tier claimed once
 -- What is due is Sim/Rewards' to say, from the client's copy of the state; the server checks it
 -- all again when a claim comes (Services/Data's DailyClaim, Services/Store's claims). It opens
 -- from the Rewards tile in the quick menu, which carries a badge while anything is waiting.
@@ -19,6 +22,8 @@ local Playtime = require(Shared.Data.Playtime)
 local SimRewards = require(Shared.Sim.Rewards)
 local Text = require(Shared.Util.Text)
 local CrateData = require(Shared.Data.Crates) -- (a crate in the daily gift or an achievement)
+local PetData = require(Shared.Data.Pets) -- (a pet on the shopping track)
+local Shopping = require(Shared.Sim.Shopping)
 
 local Kit = require(script.Parent.Kit)
 local MenuParts = require(script.Parent.MenuParts)
@@ -33,6 +38,7 @@ local panel: any = nil
 local tab = "daily"
 local unbind: { () -> () } = {}
 local picked: string? = nil -- the achievement the left card shows
+local pickedTier: string? = nil -- the shopping track's tier the left card shows
 local pushedAt = os.clock() -- when the server last sent today's playtime (the menu counts on from it)
 
 Rewards.Tabs = {
@@ -40,6 +46,7 @@ Rewards.Tabs = {
 	{ id = "playtime", name = "Playtime" },
 	{ id = "achievements", name = "Achievements" },
 	{ id = "group", name = "Group" },
+	{ id = "shopping", name = "Shopping" },
 }
 
 -- A profile-like table from the client's state, for Sim/Rewards (copies of what it mends).
@@ -54,6 +61,16 @@ function Rewards.view(): any
 		daily = table.clone(if type(d.daily) == "table" then d.daily else {}),
 		playtime = table.clone(if type(d.playtime) == "table" then d.playtime else {}),
 		achieved = if type(d.achieved) == "table" then d.achieved else {},
+		-- the shopping track (Sim/Shopping): what was spent and claimed, and the pets and crates a
+		-- tier needs room for
+		shopping = if type(d.shopping) == "table"
+			then {
+				spent = d.shopping.spent,
+				got = if type(d.shopping.got) == "table" then table.clone(d.shopping.got) else {},
+			}
+			else nil,
+		pets = d.pets or {},
+		crates = d.crates or {},
 	}
 end
 
@@ -483,6 +500,170 @@ local function showGroup(card: Frame, list: ScrollingFrame)
 	)
 end
 
+-- Shopping ----------------------------------------------------------------------------------------------------
+
+-- What a tier gives, beside the card's picture: coins as coins; crates as how many, with the crate
+-- on a line under them; a pet as its rarity, with its name on a line under it.
+local function tierPays(card: Frame, t: Shopping.Tier, word: string)
+	if t.coins then
+		MenuParts.payout(card, word, { coins = t.coins })
+		return
+	end
+	local tone = T.Orange
+	local big = tostring(t.n or 1)
+	local name = Shopping.rewardName(t)
+	if t.pet then
+		local p = PetData.get(t.pet)
+		local rarity = if p then p.rarity else "common"
+		tone = (T :: any)[CrateData.Tones[rarity] or "Green"] or T.Green
+		big = CrateData.RarityNames[rarity] or ""
+	else
+		-- (the number is the big figure already: "2" over "Work crates")
+		local kind = CrateData.get(t.crate)
+		name = if kind then kind.name .. (if (t.n or 1) > 1 then "s" else "") else name
+	end
+	MenuParts.payout(card, word, {
+		number = { text = big, tint = tone },
+		line = { text = name, icon = Shopping.icon(t), tint = tone },
+	})
+end
+
+local function showTier(card: Frame, st: Shopping.Status, spent: number)
+	for _, c in card:GetChildren() do
+		if c:IsA("GuiObject") then
+			c:Destroy()
+		end
+	end
+	local t = st.tier
+	local ready = st.reached and not st.claimed and st.blocked == nil
+	-- the ring: how far along from the tier before this one
+	local from = 0
+	for _, other in Shopping.Tiers do
+		if other.spend < t.spend then
+			from = other.spend
+		end
+	end
+	local ratio = math.clamp((spent - from) / math.max(1, t.spend - from), 0, 1)
+	local _, middle = Kit.ring({
+		Name = "Ring",
+		Parent = card,
+		Size = MenuParts.Hero,
+		Thickness = 14,
+		Track = T.PaperDark,
+		Hole = T.Paper,
+	}, ratio, if st.reached then T.Green else T.Pink)
+	local figure = Text.commas(spent)
+	Kit.title(figure, {
+		Name = "Spent",
+		Parent = middle,
+		Size = UDim2.new(1, 0, 0.5, 0),
+		Position = UDim2.fromScale(0, 0.18),
+		TextSize = if #figure > 4 then 32 else 40,
+		AlignX = Enum.TextXAlignment.Center,
+		Wrap = false,
+	})
+	Kit.caption("R$ spent", {
+		Name = "Unit",
+		Parent = middle,
+		Size = UDim2.new(1, 0, 0, 14),
+		Position = UDim2.fromScale(0, 0.64),
+		TextSize = 10,
+		AlignX = Enum.TextXAlignment.Center,
+	})
+	local title
+	if st.claimed then
+		title = "Claimed"
+	elseif ready then
+		title = "A reward is waiting"
+	elseif st.reached then
+		title = st.blocked or "Not yet"
+	else
+		title = Text.fill("R$ {n} to go", { n = Text.commas(t.spend - spent) })
+	end
+	headline(card, title, Text.fill("1 gem per {n} R$ on looks.", { n = math.floor(1 / Tuning.Shopping.Gems + 0.5) }))
+	tierPays(card, t, Text.fill("At R$ {n}", { n = Text.commas(t.spend) }))
+	foot(card, ready, "Claim", function()
+		ask("ShoppingClaim", t.id)
+	end)
+end
+
+local function showShopping(card: Frame, list: ScrollingFrame)
+	local view = Rewards.view()
+	local spent = Shopping.state(view).spent
+	local all = Shopping.status(view)
+	-- the left card shows the tier picked, else the first to claim, else the next to reach
+	local show: Shopping.Status? = nil
+	for _, st in all do
+		if st.tier.id == pickedTier then
+			show = st
+		end
+	end
+	for _, st in all do
+		if not show and st.reached and not st.claimed and not st.blocked then
+			show = st
+		end
+	end
+	for _, st in all do
+		if not show and not st.reached then
+			show = st
+		end
+	end
+	show = show or all[#all]
+	-- the tiers in three lots, as the achievements are: ready to claim, still to come, claimed
+	local groups = { {}, {}, {} } :: { { Shopping.Status } }
+	for _, st in all do
+		local ready = st.reached and not st.claimed and not st.blocked
+		table.insert(groups[if st.claimed then 3 elseif ready then 1 else 2], st)
+	end
+	local rows: { [string]: GuiObject } = {}
+	local order = 0
+	for k, group in groups do
+		if #group > 0 then
+			order += 1
+			MenuParts.heading(
+				list,
+				if k == 1 then "Ready to claim" elseif k == 2 then "To come" else "Claimed",
+				T.Pink,
+				order,
+				tostring(#group)
+			)
+		end
+		for _, st in group do
+			order += 1
+			local t = st.tier
+			local ready = k == 1
+			rows[t.id] = Kit.row({
+				Name = t.id,
+				Parent = list,
+				Size = MenuParts.rowSize(),
+				LayoutOrder = order,
+				Title = Shopping.rewardName(t),
+				Sub = Text.fill("R$ {n}", { n = Text.commas(t.spend) }),
+				Marker = if st.claimed then "check" else Shopping.icon(t),
+				MarkerColor = if st.claimed then T.Line elseif ready then T.Green else T.Pink,
+				Right = if st.claimed
+					then "Claimed"
+					elseif ready then "Claim"
+					elseif st.reached then "Full"
+					else Text.fill("R$ {n} to go", { n = Text.commas(t.spend - spent) }),
+				RightColor = if ready then T.Green else nil,
+				Sunk = st.claimed,
+			}, function()
+				pickedTier = t.id
+				for id, r in rows do
+					Kit.setRowSelected(r, id == pickedTier)
+				end
+				showTier(card, st, spent)
+			end)
+		end
+	end
+	if show then
+		pickedTier = show.tier.id
+		Kit.setRowSelected(rows[show.tier.id], true)
+		showTier(card, show, spent)
+	end
+end
+
 -- The menu -------------------------------------------------------------------------------------------------------
 
 -- Claim all, at the top by the tabs: everything waiting in every tab at once (the user: "make a
@@ -506,6 +687,7 @@ local function fill()
 		then T.Teal
 		elseif tab == "achievements" then T.Purple
 		elseif tab == "group" then T.Blue
+		elseif tab == "shopping" then T.Pink
 		else T.Coral
 	local _, inside = MenuParts.card(panel.body, accent)
 	local list = MenuParts.list(panel.body)
@@ -515,6 +697,8 @@ local function fill()
 		showAchievements(inside, list)
 	elseif tab == "group" then
 		showGroup(inside, list)
+	elseif tab == "shopping" then
+		showShopping(inside, list)
 	else
 		showDaily(inside, list)
 	end
@@ -552,6 +736,9 @@ local function firstWaiting(): string
 	if SimRewards.groupReady(view, inGroup()) then
 		return "group"
 	end
+	if Shopping.ready(view) > 0 then
+		return "shopping"
+	end
 	return "daily"
 end
 
@@ -576,7 +763,7 @@ function Rewards.open(arg: any?)
 		panel.selectTab(tab)
 	end
 	fill()
-	for _, key in { "daily", "playtime", "achieved", "gems", "villagers", "rel", "stats" } do
+	for _, key in { "daily", "playtime", "achieved", "gems", "villagers", "rel", "stats", "shopping", "pets", "crates" } do
 		local skip = State.data[key] ~= nil
 		table.insert(
 			unbind,

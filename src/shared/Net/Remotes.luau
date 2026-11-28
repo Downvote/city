@@ -24,6 +24,9 @@ Remotes.Functions = {
 	-- ({ { kind = "asset" | "bundle", id } }) -> ok: Roblox's one prompt for a whole look, put up by the
 	-- server (only server scripts may ask for MarketplaceService:PromptBulkPurchase); false: ask one by one
 	"BuyLook",
+	-- ({ { kind = "asset" | "bundle", id } }) -> ok: the creator is about to ask Roblox to sell these one by one
+	-- (UI/BuyLook.item); the server notes them first, so what is bought gives gems back (Services/Shopping)
+	"BuyWatch",
 	-- (it also takes what the creator's tab is for: (bundleId, kind?), kind "body", "head", "shoes" or "anim")
 	"CreatorFromUser", -- (name or "") -> appearance
 	"CreatorSearch", -- (query) -> items (used when the client can't search the catalog itself)
@@ -77,6 +80,7 @@ Remotes.Functions = {
 	"AchievementClaim", -- (id) -> ok, gems: a finished achievement's gems, once
 	"GroupClaim", -- () -> ok, gems or why: the group's gems, once, for a member
 	"RewardsClaimAll", -- () -> ok, { count, coins, gems } or why: all the Rewards menu has waiting (Services/Claims)
+	"ShoppingClaim", -- (tierId) -> ok, { coins, crates, pet? } or why: a tier of the shopping track, once (Services/Claims)
 	"WelcomeBack", -- () -> { secs, counted, coins, workers } or nil: what the town earned while away, once
 	-- the bag and gifts (Services/Bag, Services/Gifts, Services/Titles): each checked on the server
 	"BagUse", -- ("hold", id) | ("away") | ("drop", id) -> ok, why: hold a thing in the hand, put it away, or drop one
@@ -137,6 +141,10 @@ Remotes.Events = {
 	-- server -> client: (ownerId, { full } | { ops }) a change on the plot this player is building on
 	-- as somebody's trusted builder (Services/Trust), as PlanSync is for their own
 	"SitePlan",
+	-- client -> server: ({ { kind = "asset" | "bundle", id } }) a whole look's prompt closed, and these were
+	-- bought, it says (Roblox lets only a client hear PromptBulkPurchaseFinished); Services/Shopping asks
+	-- Roblox about each before it counts
+	"BuyDone",
 }
 
 local folder: Folder? = nil

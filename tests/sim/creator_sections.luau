@@ -305,6 +305,17 @@ Sim.run("the sections: a row of words, every one in reach", function()
 	-- the tools along the bottom are icons that say what they do over the row
 	local footer = gui:FindFirstChild("Creator"):FindFirstChild("Footer", true)
 	local caption = gui:FindFirstChild("Creator"):FindFirstChild("ToolCaption", true)
+	-- over the tools, a small line that buying here gives gems back (Sim/Shopping), out of the way
+	-- while a tool's caption shows
+	local gemsBack = gui:FindFirstChild("Creator"):FindFirstChild("GemsBack", true)
+	check(
+		gemsBack ~= nil and Fake.shown(gemsBack) and gemsBack:FindFirstChild("Text").Text:find("gems") ~= nil,
+		"a line says buying gives gems back"
+	)
+	footer:FindFirstChild("Buy outfit", true).MouseEnter:Fire()
+	check(not gemsBack.Visible, "and steps aside for a tool's caption")
+	footer:FindFirstChild("Buy outfit", true).MouseLeave:Fire()
+	check(gemsBack.Visible, "and comes back after")
 	for _, name in { "Undo", "Redo", "Shuffle", "Reset", "Zoom", "Light" } do
 		local b = footer:FindFirstChild(name, true)
 		check(b ~= nil and b:IsA("TextButton") and b:FindFirstChild("IconArt") ~= nil, name .. " is an icon button")
@@ -1119,15 +1130,26 @@ Sim.run("buying: what is on, the whole look", function()
 	look()
 	local buy = buyOn("HairAccessory 2")
 	check(buy ~= nil and Fake.shown(buy), "Buy shows on what is on")
+	-- what is put up is noted on the server first, so buying it gives gems back (Services/Shopping)
+	local noted = {}
+	Sim.remoteFn("BuyWatch").OnServerInvoke = function(_, lines)
+		table.insert(noted, lines)
+		return true
+	end
 	table.clear(Sim.prompted)
 	buy.Activated:Fire()
 	frames(2)
 	check(#Sim.prompted == 1 and Sim.prompted[1].asset == 1002, "and asks Roblox to sell that item")
+	check(
+		#noted == 1 and #noted[1] == 1 and noted[1][1].id == 1002 and noted[1][1].kind == "asset",
+		"telling the server first, so it gives gems back"
+	)
 	press("Bodies")
 	press("Body 2")
 	look()
 	-- the whole look in one prompt, put up by the server: Roblox lets only server scripts ask for
 	-- PromptBulkPurchase (the user: "the buy outfit button isnt working")
+	local market = Harness.game():GetService("MarketplaceService")
 	local sent = {}
 	local serverSays = true
 	Sim.remoteFn("BuyLook").OnServerInvoke = function(_, lines)
@@ -1147,6 +1169,26 @@ Sim.run("buying: what is on, the whole look", function()
 	check(ids[1002] and kinds[1002] == "asset", "the hair in it")
 	check(ids[2002] and kinds[2002] == "bundle", "the body as the set it came in")
 	check(not ids[20021], "and not the body's parts one by one")
+	-- that prompt closing: what it says was bought goes to the server, which asks Roblox about each
+	local done = {}
+	local doneConn = Sim.remoteEvent("BuyDone").OnServerEvent:Connect(function(_, lines)
+		table.insert(done, lines)
+	end)
+	local kindsEnum = Enum.MarketplaceProductType
+	local status = Enum.MarketplaceItemPurchaseStatus
+	market.PromptBulkPurchaseFinished:Fire(Sim.player, Enum.MarketplaceBulkPurchasePromptStatus.Completed, {
+		RobuxSpent = 90,
+		Items = {
+			{ type = kindsEnum.AvatarAsset, id = "1002", status = status.Success },
+			{ type = kindsEnum.AvatarBundle, id = "2002", status = status.InsufficientRobux },
+		},
+	})
+	frames(1)
+	check(
+		#done == 1 and #done[1] == 1 and done[1][1].id == 1002 and done[1][1].kind == "asset",
+		"a whole look's prompt closing says what it bought"
+	)
+	doneConn:Disconnect()
 	-- where the server can't, one prompt a thing
 	serverSays = false
 	table.clear(Sim.prompted)
@@ -1155,7 +1197,7 @@ Sim.run("buying: what is on, the whole look", function()
 	frames(2)
 	local one = Sim.prompted[1]
 	check(one ~= nil and (one.asset ~= nil or one.bundle ~= nil), "where it can't, Roblox is asked one thing at a time")
-	local market = Harness.game():GetService("MarketplaceService")
+	check(#noted[#noted] >= 2, "the server told of them all before the first")
 	market.PromptPurchaseFinished:Fire(Sim.player)
 	market.PromptBundlePurchaseFinished:Fire(Sim.player)
 	Sim.advance(1)

@@ -23,7 +23,7 @@ hover hover:menu bubbles
 tutorial:greet tutorial:1 tutorial:ask tutorial:2:say tutorial:2 tutorial:2:build tutorial:3:build
 tutorial:done
 panel:Garage panel:Settings panel:Store panel:Store:gems panel:Rewards panel:Rewards:playtime panel:Rewards:achievements panel:Rewards:group
-panel:Rewards:member welcome welcome:long panel:Store:crates crate:open:work crate:open:work:drop crate:open:work:legendary:shake crate:open:pet crate:tip build:crates build:crates:empty panel:Residents:pets panel:Residents:pets:pick
+panel:Rewards:member panel:Rewards:shopping panel:Rewards:shopping:ready welcome welcome:long panel:Store:crates crate:open:work crate:open:work:drop crate:open:work:legendary:shake crate:open:pet crate:tip build:crates build:crates:empty panel:Residents:pets panel:Residents:pets:pick
 panel:Bag panel:Bag:empty panel:Residents:gift panel:Goals:titles talk:gift
 panel:Residents:mood pick player player:budget player:trusted panel:PlayerProfile panel:PlayerProfile:trusted
 panel:CityPanel:trusted hud:friends invite build:guest"

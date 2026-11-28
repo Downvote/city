@@ -8,6 +8,13 @@
 -- server for one prompt for the whole look (Services/Avatar's BuyLook: MarketplaceService:
 -- PromptBulkPurchase, which only server scripts may call), and where that fails puts up one thing
 -- at a time, each waiting for the last prompt to close.
+--
+-- What is bought gives gems back and counts toward the Rewards menu's shopping track (the user:
+-- "make it such that spending robux on accessories give you gems"; Services/Shopping, Sim/Shopping).
+-- The server only counts what it noted before the prompt went up, so a thing put up from here is
+-- told to it first (BuyWatch; a whole look is noted by BuyLook itself), and when a whole look's
+-- prompt closes this screen says what it bought (BuyDone: Roblox lets only a client hear
+-- PromptBulkPurchaseFinished). The server asks Roblox about each before it counts.
 
 local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
@@ -24,9 +31,21 @@ local BuyLook = {}
 
 local player = Players.LocalPlayer
 local busy = false
+local lastBulk: { Shop.Line }? = nil -- what the last whole look's prompt was for
 
--- Roblox's prompt for one asset or one bundle. Returns whether it could be put up.
-function BuyLook.item(id: number, isBundle: boolean?): boolean
+-- Tells the server what is about to be put up, so what is bought counts (Services/Shopping).
+local function note(lines: { Shop.Line })
+	pcall(function()
+		Remotes.fn("BuyWatch"):InvokeServer(lines)
+	end)
+end
+
+-- Roblox's prompt for one asset or one bundle. Returns whether it could be put up. `noted`: the
+-- server was told about it already.
+function BuyLook.item(id: number, isBundle: boolean?, noted: boolean?): boolean
+	if not noted then
+		note({ { kind = if isBundle then "bundle" else "asset", id = id } })
+	end
 	local ok = pcall(function()
 		if isBundle then
 			MarketplaceService:PromptBundlePurchase(player, id)
@@ -43,6 +62,7 @@ end
 -- One prompt after another, each when the last one closes (or after two minutes).
 local function oneByOne(lines: { Shop.Line })
 	busy = true
+	note(lines)
 	for _, line in lines do
 		local closed = false
 		local conns: { RBXScriptConnection } = {}
@@ -58,7 +78,7 @@ local function oneByOne(lines: { Shop.Line })
 				)
 			end)
 		end
-		local ok = BuyLook.item(line.id, line.kind == "bundle")
+		local ok = BuyLook.item(line.id, line.kind == "bundle", true)
 		local since = os.clock()
 		while ok and not closed and os.clock() - since < 120 do
 			task.wait(0.2)
@@ -97,12 +117,29 @@ function BuyLook.look(app: any, bundles: { { id: number, part: any } }?)
 		return Remotes.fn("BuyLook"):InvokeServer(lines)
 	end)
 	busy = false
-	if not (ok and bulk == true) then
+	if ok and bulk == true then
+		lastBulk = lines
+	else
 		if #lines > 1 then
 			Toasts.show("Roblox will ask about each one in turn.", "info")
 		end
 		task.spawn(oneByOne, lines)
 	end
 end
+
+-- A whole look's prompt closed: what it says was bought goes to the server (Avatar/Shop.bought,
+-- every line it was for when the results can't be read).
+pcall(function()
+	(MarketplaceService :: any).PromptBulkPurchaseFinished:Connect(function(who, _status, results)
+		if who ~= player then
+			return
+		end
+		local bought = Shop.bought(results, lastBulk)
+		lastBulk = nil
+		if #bought > 0 then
+			Remotes.event("BuyDone"):FireServer(bought)
+		end
+	end)
+end)
 
 return BuyLook

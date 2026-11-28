@@ -252,6 +252,9 @@ function Data.clientState(player: Player): any
 		crates = p.crates,
 		crateItems = p.crateItems,
 		pets = p.pets,
+		-- the Robux spent on looks and the shopping track's tiers claimed (Sim/Shopping; what was
+		-- counted stays here)
+		shopping = if type(p.shopping) == "table" then { spent = p.shopping.spent, got = p.shopping.got } else nil,
 		unsaved = unsaved[player] == true,
 		plot = player:GetAttribute("Plot"),
 		plan = p.plan,

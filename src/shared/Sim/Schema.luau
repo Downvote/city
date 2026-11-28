@@ -23,6 +23,7 @@ local PlotBoard = require(script.Parent.PlotBoard)
 local FollowUps = require(script.Parent.FollowUps) -- (events left waiting for later: profile.follow)
 local Babble = require(script.Parent.Babble)
 local Crates = require(script.Parent.Crates) -- (crates held, crate workplaces and pets: Sim/Crates)
+local Shopping = require(script.Parent.Shopping) -- (Robux spent on looks and its reward track: Sim/Shopping)
 
 local Schema = {}
 
@@ -183,6 +184,9 @@ function Schema.newProfile(): any
 		nextPet = 1,
 		crateGems = { day = -1, n = 0 },
 		crateTold = false,
+		-- avatar items bought in the creator (Sim/Shopping): the Robux counted in all, the part of a
+		-- gem not paid yet, the items counted (each once) and the reward track's tiers claimed
+		shopping = { spent = 0, carry = 0, counted = {}, got = {} },
 	}
 end
 
@@ -288,6 +292,7 @@ function Schema.migrate(raw: any): any
 	Bag.clean(profile)
 	Titles.clean(profile)
 	Crates.clean(profile)
+	Shopping.clean(profile)
 	-- (only true marks: Services/Vehicles also drops any vehicle there no longer is)
 	if type(profile.vehicles) ~= "table" then
 		profile.vehicles = {}

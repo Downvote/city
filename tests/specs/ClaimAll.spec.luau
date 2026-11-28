@@ -165,6 +165,27 @@ describe("ClaimAll", function()
 		expect(ClaimAll.goalsNotice(again, more)).toBe(nil)
 	end)
 
+	it("takes the shopping track's tiers reached along with the rest", function()
+		-- (Sim/Shopping: the user, "make a reward track based on how much you spend on accessories")
+		local Shopping = require(Shared .. "Sim.Shopping")
+		local p = town(0)
+		p.shopping.spent = Shopping.Tiers[3].spend
+		local waiting = Rewards.waiting(p, DAY, false)
+		local haul = ClaimAll.rewards(p, DAY, false, false, Rng.new(1))
+		expect(haul.count).toBe(waiting)
+		expect(haul.daily).toBe(true)
+		expect(haul.shopping).toBe(3)
+		local coins = E.DailyGift
+		for i = 1, 3 do
+			coins += Shopping.Tiers[i].coins or 0
+			expect(p.shopping.got[Shopping.Tiers[i].id]).toBe(true)
+		end
+		expect(haul.coins).toBe(coins)
+		expect(#haul.crates >= 1).toBeTruthy()
+		expect(p.shopping.got[Shopping.Tiers[4].id]).toBe(nil)
+		expect(Rewards.waiting(p, DAY, false)).toBe(0)
+	end)
+
 	it("says what came in, in one short notice", function()
 		local both = { count = 4, coins = 450, gems = 6, daily = true, playtime = 1, achievements = {}, group = false }
 		expect(ClaimAll.rewardsNotice(both)).toBe("4 rewards claimed. +450 coins, +6 gems")

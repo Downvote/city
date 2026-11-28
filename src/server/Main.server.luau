@@ -16,6 +16,7 @@ local order = {
 	"Water", -- pools and ponds as terrain water: after Build, whose changes it follows
 	"Basement", -- basement rooms dug out of the ground: after Water, whose ground cut it shares
 	"Avatar",
+	"Shopping", -- avatar items bought in the creator: gems back and the shopping track (Sim/Shopping)
 	"Villagers",
 	"Interact", -- holding E on a piece (Data/Interactions): after Villagers, whose villagers react
 	"Work", -- a player working at a workplace themselves: after Villagers, whose pay packets it uses

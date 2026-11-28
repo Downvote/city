@@ -124,6 +124,36 @@ export type Result = {
 	coat: number?,
 }
 
+-- A new pet of kind `p` joins the player's pets, with a name nobody else in town has (if one is
+-- left) and a coat at random. Returns its id, name and coat.
+local function addPet(profile: any, p: Pets.Pet, rng: any): (string, string, number)
+	if type(profile.pets) ~= "table" then
+		profile.pets = {}
+	end
+	local n = if type(profile.nextPet) == "number" and profile.nextPet >= 1 then math.floor(profile.nextPet) else 1
+	while profile.pets["p" .. n] ~= nil do
+		n += 1
+	end
+	local pid = "p" .. n
+	profile.nextPet = n + 1
+	local used = {}
+	for _, other in profile.pets do
+		if type(other) == "table" and type(other.name) == "string" then
+			used[other.name] = true
+		end
+	end
+	local free = {}
+	for _, nm in p.names do
+		if not used[nm] then
+			table.insert(free, nm)
+		end
+	end
+	local name = rng:pick(if #free > 0 then free else p.names)
+	local coat = rng:int(1, #p.coats)
+	profile.pets[pid] = { kind = p.id, name = name, coat = coat }
+	return pid, name, coat
+end
+
 -- Gives what was rolled.
 local function grant(profile: any, kind: string, e: CrateData.Entry, rng: any): Result
 	local result: Result = { kind = kind, id = e.id, name = e.name, rarity = e.rarity }
@@ -133,33 +163,7 @@ local function grant(profile: any, kind: string, e: CrateData.Entry, rng: any): 
 		end
 		profile.crateItems[e.id] = math.min(Crates.owned(profile, e.id) + 1, K.MaxOwned)
 	else
-		local p = Pets.get(e.id) :: Pets.Pet
-		if type(profile.pets) ~= "table" then
-			profile.pets = {}
-		end
-		local n = if type(profile.nextPet) == "number" and profile.nextPet >= 1 then math.floor(profile.nextPet) else 1
-		while profile.pets["p" .. n] ~= nil do
-			n += 1
-		end
-		local pid = "p" .. n
-		profile.nextPet = n + 1
-		-- a name nobody else in town has, if there is one left
-		local used = {}
-		for _, other in profile.pets do
-			if type(other) == "table" and type(other.name) == "string" then
-				used[other.name] = true
-			end
-		end
-		local free = {}
-		for _, nm in p.names do
-			if not used[nm] then
-				table.insert(free, nm)
-			end
-		end
-		local name = rng:pick(if #free > 0 then free else p.names)
-		local coat = rng:int(1, #p.coats)
-		profile.pets[pid] = { kind = p.id, name = name, coat = coat }
-		result.pet, result.petName, result.coat = pid, name, coat
+		result.pet, result.petName, result.coat = addPet(profile, Pets.get(e.id) :: Pets.Pet, rng)
 	end
 	if type(profile.stats) == "table" then
 		profile.stats.crates = (profile.stats.crates or 0) + 1
@@ -185,6 +189,20 @@ function Crates.openHeld(profile: any, kind: any, rng: any): (Result?, string?)
 	end
 	profile.crates[kind] = Crates.held(profile, kind) - 1
 	return grant(profile, kind, e, rng), nil
+end
+
+-- Gives the player a pet of a given kind outright, no crate (a reward: Sim/Shopping's track), named
+-- and coated as a crate's pet is. Returns what it gave, or nil and why.
+function Crates.givePet(profile: any, kind: any, rng: any): (Result?, string?)
+	local p = Pets.get(kind)
+	if not p then
+		return nil, "There's no pet like that."
+	end
+	if Crates.petCount(profile) >= Tuning.Pets.Max then
+		return nil, "You have as many pets as you can keep."
+	end
+	local pid, name, coat = addPet(profile, p, rng)
+	return { kind = "pet", id = p.id, name = p.name, rarity = p.rarity, pet = pid, petName = name, coat = coat }, nil
 end
 
 -- Buys a crate with gems and opens it. Returns what it gave, or nil and why.

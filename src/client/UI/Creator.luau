@@ -3853,6 +3853,37 @@ local function build()
 		AlignX = Enum.TextXAlignment.Right,
 		Wrap = false,
 	})
+	-- what is bought here gives gems back (Sim/Shopping; the user: "make it such that spending
+	-- robux on accessories give you gems"): a small line over the tools, Buy outfit among them,
+	-- where a tool's caption goes, and out of its way while one shows
+	local gemsBack = Kit.box({
+		Name = "GemsBack",
+		Parent = lookPage,
+		Size = UDim2.new(0, 360, 0, CAPTION_H),
+		Position = UDim2.new(1, -360, 1, -(BOTTOM_H + 4 + CAPTION_H)),
+	})
+	Kit.list(gemsBack, 4, true, Enum.HorizontalAlignment.Right)
+	Icons.make("gem", 14, {
+		Name = "Gem",
+		Parent = gemsBack,
+		Color = T.Purple,
+		Centre = true,
+		LayoutOrder = 1,
+	})
+	Kit.text("Buying gives gems back", {
+		Name = "Text",
+		Parent = gemsBack,
+		Size = UDim2.fromOffset(0, CAPTION_H),
+		AutomaticSize = Enum.AutomaticSize.X,
+		TextSize = 13,
+		Font = Kit.Fonts.Bold,
+		Color = T.InkSoft,
+		Wrap = false,
+		LayoutOrder = 2,
+	})
+	caption:GetPropertyChangedSignal("Text"):Connect(function()
+		gemsBack.Visible = caption.Text == ""
+	end)
 	local captionToken = 0
 	for i, t in toolList do
 		local b = Kit.new("TextButton", {
