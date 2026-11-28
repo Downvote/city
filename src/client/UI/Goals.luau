@@ -19,7 +19,6 @@ local Titles = require(Shared.Sim.Titles)
 local TitleTag = require(Shared.Util.TitleTag)
 
 local Kit = require(script.Parent.Kit)
-local Icons = require(script.Parent.Icons)
 local MenuParts = require(script.Parent.MenuParts)
 local Toasts = require(script.Parent.Toasts)
 local State = require(script.Parent.Parent.Controllers.State)
@@ -73,12 +72,13 @@ local function showDetail(g: any)
 	end
 	local ready = g.done and not g.claimed
 	local ratio = math.clamp(g.value / g.goal.need, 0, 1)
-	-- a faint line round the ring, the way a dial is drawn
+	-- the ring at the left of the band at the card's top, a faint line round it the way a dial is
+	-- drawn, what it pays beside it in big numbers, and its name flush left under them
+	local HERO = MenuParts.Hero
 	local outline = Kit.new("Frame", {
 		Name = "Outline",
 		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(186, 186),
-		Position = UDim2.new(0.5, -93, 0, 19),
+		Size = UDim2.fromOffset(HERO, HERO),
 		Parent = frame,
 	})
 	Kit.corner(outline, "round")
@@ -86,9 +86,9 @@ local function showDetail(g: any)
 	local _, middle = Kit.ring({
 		Name = "Ring",
 		Parent = frame,
-		Size = 168,
-		Position = UDim2.new(0.5, -84, 0, 28),
-		Thickness = 16,
+		Size = HERO - 16,
+		Position = UDim2.fromOffset(8, 8),
+		Thickness = 14,
 		Track = T.PaperDark,
 		Hole = T.Paper,
 	}, ratio, if g.done then T.Green else T.Yellow)
@@ -97,7 +97,7 @@ local function showDetail(g: any)
 		Kit.disc({
 			Name = "Tick",
 			Parent = middle,
-			Size = 72,
+			Size = 60,
 			Position = UDim2.fromScale(0.5, 0.5),
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Color = T.Green,
@@ -113,71 +113,11 @@ local function showDetail(g: any)
 			{
 				Parent = middle,
 				Size = UDim2.fromScale(1, 1),
-				TextSize = 34,
+				TextSize = 30,
 				AlignX = Enum.TextXAlignment.Center,
 			}
 		)
 	end
-	Kit.title(g.goal.name, {
-		Name = "GoalName",
-		Parent = frame,
-		Size = UDim2.new(1, 0, 0, 36),
-		Position = UDim2.fromOffset(0, 216),
-		TextSize = 30,
-		AlignX = Enum.TextXAlignment.Center,
-	})
-	Kit.text(g.goal.desc, {
-		Name = "Desc",
-		Parent = frame,
-		Size = UDim2.new(1, -24, 0, 44),
-		Position = UDim2.fromOffset(12, 256),
-		TextSize = 17,
-		Color = T.InkSoft,
-		AlignX = Enum.TextXAlignment.Center,
-		AlignY = Enum.TextYAlignment.Top,
-	})
-	-- what it pays
-	local pay = Kit.frame({
-		Name = "Reward",
-		Parent = frame,
-		Size = UDim2.fromOffset(0, 40),
-		AutomaticSize = Enum.AutomaticSize.X,
-		Position = UDim2.new(0.5, 0, 0, 306),
-		AnchorPoint = Vector2.new(0.5, 0),
-		Color = T.PaperDark,
-		Radius = false,
-	})
-	-- a leaning slab, its slanted ends standing out past the words (which sit in a row of their
-	-- own, so the painted slab under them stays put)
-	Kit.slant(pay, 40, true)
-	local payRow = Kit.box({
-		Name = "Row",
-		Parent = pay,
-		Size = UDim2.fromOffset(0, 40),
-		AutomaticSize = Enum.AutomaticSize.X,
-	})
-	payRow.ZIndex = 2
-	Kit.pad(payRow, 12, 3)
-	Kit.list(payRow, 8, true, Enum.HorizontalAlignment.Center)
-	Kit.text(if g.claimed then "Paid" else "Pays", {
-		Parent = payRow,
-		Size = UDim2.fromOffset(0, 34),
-		AutomaticSize = Enum.AutomaticSize.X,
-		TextSize = 17,
-		Color = T.InkSoft,
-		Wrap = false,
-		LayoutOrder = 0,
-	})
-	Icons.make("coin", 28, { Parent = payRow, LayoutOrder = 1 })
-	Kit.title(Text.commas(g.goal.reward), {
-		Parent = payRow,
-		Size = UDim2.fromOffset(0, 34),
-		AutomaticSize = Enum.AutomaticSize.X,
-		TextSize = 24,
-		Tint = T.YellowDark,
-		Wrap = false,
-		LayoutOrder = 2,
-	})
 	-- what else it pays, in a line under the coins
 	local also = {}
 	local t = TitleData.get(g.goal.title)
@@ -196,31 +136,20 @@ local function showDetail(g: any)
 	if crate then
 		table.insert(also, crate.phrase)
 	end
-	if #also > 0 then
-		Kit.text(Text.fill("Also {x}", { x = table.concat(also, ", ") }), {
-			Name = "Also",
-			Parent = frame,
-			Size = UDim2.new(1, -24, 0, 40),
-			Position = UDim2.fromOffset(12, 352),
-			TextSize = 16,
-			Tint = T.Orange,
-			AlignX = Enum.TextXAlignment.Center,
-			AlignY = Enum.TextYAlignment.Top,
-		})
-	end
+	MenuParts.payout(frame, if g.claimed then "Paid" else "Pays", {
+		coins = g.goal.reward,
+		line = if #also > 0
+			then { text = Text.fill("Also {x}", { x = table.concat(also, ", ") }), tint = T.Orange }
+			else nil,
+	})
+	MenuParts.headline(frame, g.goal.name, g.goal.desc)
 	-- at the foot: the button to claim it, when it's done (nothing in its place otherwise: the ring
 	-- and the row say how far along it is)
 	if ready then
-		Kit.button(Text.fill("Claim {n}", { n = Text.commas(g.goal.reward) }), {
+		MenuParts.footButton(frame, Text.fill("Claim {n}", { n = Text.commas(g.goal.reward) }), {
 			Name = "Claim",
-			Parent = frame,
-			Size = UDim2.fromOffset(260, 54),
-			Position = UDim2.new(0.5, 0, 1, 0),
-			AnchorPoint = Vector2.new(0.5, 1),
 			Color = T.Green,
-			TextSize = 22,
 			Icon = "coin",
-			Radius = "pill",
 		}, function()
 			task.spawn(function()
 				Remotes.fn("GoalClaim"):InvokeServer(g.goal.id)

@@ -81,118 +81,29 @@ end
 
 -- What a reward pays, on a leaning slab: the coins and the gems side by side, and a crate when it
 -- gives one (props.Crate: "work" or "pet", Data/Crates).
+-- What a reward pays, beside the card's picture: a caption (props.Word, "Pays" by default) over
+-- the coins and gems in big numbers, and a crate on a line under them (MenuParts.payout).
 local function pays(parent: Instance, coins: number, gems: number, props: { [string]: any })
-	local h = 40
-	local slab = Kit.frame({
-		Name = props.Name or "Reward",
-		Parent = parent,
-		Size = UDim2.fromOffset(0, h),
-		AutomaticSize = Enum.AutomaticSize.X,
-		Position = props.Position,
-		AnchorPoint = props.AnchorPoint,
-		Color = T.PaperDark,
-		Radius = false,
-	})
-	Kit.slant(slab, h, true)
-	local row =
-		Kit.box({ Name = "Row", Parent = slab, Size = UDim2.fromOffset(0, h), AutomaticSize = Enum.AutomaticSize.X })
-	row.ZIndex = 2
-	Kit.pad(row, 12, 3)
-	Kit.list(row, 8, true, Enum.HorizontalAlignment.Center)
-	Kit.text(props.Word or "Pays", {
-		Parent = row,
-		Size = UDim2.fromOffset(0, 34),
-		AutomaticSize = Enum.AutomaticSize.X,
-		TextSize = 17,
-		Color = T.InkSoft,
-		Wrap = false,
-		LayoutOrder = 0,
-	})
-	if coins > 0 then
-		Icons.make("coin", 26, { Name = "Coin", Parent = row, LayoutOrder = 1 })
-		Kit.title(Text.commas(coins), {
-			Name = "Coins",
-			Parent = row,
-			Size = UDim2.fromOffset(0, 34),
-			AutomaticSize = Enum.AutomaticSize.X,
-			TextSize = 23,
-			Tint = T.YellowDark,
-			Wrap = false,
-			LayoutOrder = 2,
-		})
-	end
-	if gems > 0 then
-		Icons.make("gem", 26, { Name = "Gem", Parent = row, LayoutOrder = 3, Color = T.Purple, Centre = true })
-		Kit.title(Text.commas(gems), {
-			Name = "Gems",
-			Parent = row,
-			Size = UDim2.fromOffset(0, 34),
-			AutomaticSize = Enum.AutomaticSize.X,
-			TextSize = 23,
-			Tint = T.Purple,
-			Wrap = false,
-			LayoutOrder = 4,
-		})
-	end
 	local crate = props.Crate and CrateData.get(props.Crate)
-	if crate then
-		Icons.make(
-			crate.icon,
-			26,
-			{ Name = "CrateIcon", Parent = row, LayoutOrder = 5, Color = T.Orange, Centre = true }
-		)
-		Kit.title(crate.name, {
-			Name = "Crate",
-			Parent = row,
-			Size = UDim2.fromOffset(0, 34),
-			AutomaticSize = Enum.AutomaticSize.X,
-			TextSize = 20,
-			Tint = T.Orange,
-			Wrap = false,
-			LayoutOrder = 6,
-		})
-	end
+	MenuParts.payout(parent, props.Word or "Pays", {
+		coins = coins,
+		gems = gems,
+		line = if crate then { text = crate.name, icon = crate.icon, tint = T.Orange } else nil,
+	}, { Name = props.Name })
 end
 
--- The left card's foot: a button that claims, when there is something to claim. (Nothing in its
--- place otherwise: the user, "in rewards, in all tabs, remove the bottom tooltip like "Claimed"
--- "The next gift comes tommorow"".)
+-- The left card's foot: a button across it that claims, when there is something to claim.
+-- (Nothing in its place otherwise: the user, "in rewards, in all tabs, remove the bottom tooltip
+-- like "Claimed" "The next gift comes tommorow"".)
 local function foot(parent: Instance, ready: boolean, label: string, claim: () -> ())
 	if not ready then
 		return
 	end
-	Kit.button(label, {
-		Name = "Claim",
-		Parent = parent,
-		Size = UDim2.fromOffset(260, 54),
-		Position = UDim2.new(0.5, 0, 1, 0),
-		AnchorPoint = Vector2.new(0.5, 1),
-		Color = T.Green,
-		TextColor = T.Dark,
-		TextSize = 22,
-	}, claim)
+	MenuParts.footButton(parent, label, { Color = T.Green, TextColor = T.Dark }, claim)
 end
 
-local function headline(parent: Instance, title: string, desc: string, top: number)
-	Kit.title(title, {
-		Name = "Headline",
-		Parent = parent,
-		Size = UDim2.new(1, 0, 0, 34),
-		Position = UDim2.fromOffset(0, top),
-		TextSize = 28,
-		Color = T.Ink,
-		AlignX = Enum.TextXAlignment.Center,
-	})
-	Kit.text(desc, {
-		Name = "Desc",
-		Parent = parent,
-		Size = UDim2.new(1, -24, 0, 44),
-		Position = UDim2.fromOffset(12, top + 38),
-		TextSize = 16,
-		Color = T.InkSoft,
-		AlignX = Enum.TextXAlignment.Center,
-		AlignY = Enum.TextYAlignment.Top,
-	})
+local function headline(parent: Instance, title: string, desc: string, top: number?)
+	MenuParts.headline(parent, title, desc, top)
 end
 
 -- asks the server, and says what came of it when it says no (the notice of what it paid comes
@@ -223,21 +134,16 @@ local function showDaily(card: Frame, list: ScrollingFrame)
 	MenuParts.dial(tostring(run), "DAY", T.Coral, {
 		Name = "Day",
 		Parent = card,
-		Size = 150,
-		Position = UDim2.new(0.5, 0, 0, 8),
-		AnchorPoint = Vector2.new(0.5, 0),
+		Size = MenuParts.Hero,
 	})
 	headline(
 		card,
 		if ready then "Today's gift" else "See you tomorrow",
-		if ready then "Come back daily for more." else "Tomorrow's is bigger.",
-		172
+		if ready then "Come back daily for more." else "Tomorrow's is bigger."
 	)
 	pays(card, coins, gems, {
 		Crate = SimRewards.dailyCrate(run),
 		Word = if ready then "Today" else "Had",
-		Position = UDim2.new(0.5, 0, 0, 262),
-		AnchorPoint = Vector2.new(0.5, 0),
 	})
 	foot(card, ready, "Claim", function()
 		task.spawn(function()
@@ -300,8 +206,7 @@ local function showPlaytime(card: Frame, list: ScrollingFrame)
 	local _, middle = Kit.ring({
 		Name = "Ring",
 		Parent = card,
-		Size = 150,
-		Position = UDim2.new(0.5, -75, 0, 8),
+		Size = MenuParts.Hero,
 		Thickness = 14,
 		Track = T.PaperDark,
 		Hole = T.Paper,
@@ -332,12 +237,10 @@ local function showPlaytime(card: Frame, list: ScrollingFrame)
 		title = Text.fill("{t} to go", { t = minutes(math.max(60, step.minutes * 60 - secs)) })
 		desc = "Gems for playing."
 	end
-	headline(card, title, desc, 172)
+	headline(card, title, desc)
 	if step then
 		pays(card, 0, step.gems, {
 			Word = Text.fill("At {m} min", { m = step.minutes }),
-			Position = UDim2.new(0.5, 0, 0, 262),
-			AnchorPoint = Vector2.new(0.5, 0),
 		})
 	end
 	foot(card, ready, "Claim", function()
@@ -386,26 +289,28 @@ local function showAchievement(card: Frame, s: any)
 	Kit.disc({
 		Name = "Mark",
 		Parent = card,
-		Size = 120,
-		Position = UDim2.new(0.5, 0, 0, 22),
-		AnchorPoint = Vector2.new(0.5, 0),
+		Size = 124,
+		Position = UDim2.fromOffset(13, 13),
 		Color = if s.claimed then T.Green elseif ready then T.Yellow else T.Purple,
 		Icon = if s.claimed then "check" else s.a.icon,
 	})
-	headline(card, s.a.name, s.a.desc, 160)
+	headline(card, s.a.name, s.a.desc)
 	if not s.claimed then
 		MenuParts.progress(
 			"How far",
 			Text.fill("{a} of {b}", { a = Text.commas(s.value), b = Text.commas(s.a.need) }),
 			s.value / math.max(1, s.a.need),
-			{ Parent = card, Size = UDim2.new(1, -40, 0, 44), Position = UDim2.fromOffset(20, 236), Color = T.Purple }
+			{
+				Parent = card,
+				Size = UDim2.new(1, 0, 0, 44),
+				Position = UDim2.fromOffset(0, MenuParts.HeadTop + 92),
+				Color = T.Purple,
+			}
 		)
 	end
 	pays(card, 0, s.a.gems, {
 		Crate = s.a.crate,
 		Word = if s.claimed then "Paid" else "Pays",
-		Position = UDim2.new(0.5, 0, 0, if s.claimed then 250 else 292),
-		AnchorPoint = Vector2.new(0.5, 0),
 	})
 	foot(card, ready, Text.fill("Claim {g}", { g = Text.gems(s.a.gems) }), function()
 		ask("AchievementClaim", s.a.id)
@@ -495,9 +400,8 @@ local function showGroup(card: Frame, list: ScrollingFrame)
 	Kit.disc({
 		Name = "Mark",
 		Parent = card,
-		Size = 120,
-		Position = UDim2.new(0.5, 0, 0, 22),
-		AnchorPoint = Vector2.new(0.5, 0),
+		Size = 124,
+		Position = UDim2.fromOffset(13, 13),
 		Color = if member then T.Green else T.Blue,
 		Icon = "people",
 	})
@@ -511,32 +415,24 @@ local function showGroup(card: Frame, list: ScrollingFrame)
 		title = "Join the group"
 		desc = Text.fill("{p}% more from work and {g}.", { p = pct, g = Text.gems(gems) })
 	end
-	headline(card, title, desc, 160)
+	headline(card, title, desc)
 	if open then
 		pays(card, 0, gems, {
 			Word = if paid then "Paid" else "Pays",
-			Position = UDim2.new(0.5, 0, 0, 250),
-			AnchorPoint = Vector2.new(0.5, 0),
 		})
 	end
 	if open and not member then
-		Kit.button("Join", {
+		MenuParts.footButton(card, "Join", {
 			Name = "Join",
-			Parent = card,
-			Size = UDim2.fromOffset(180, 54),
-			Position = UDim2.new(0.5, -96, 1, 0),
-			AnchorPoint = Vector2.new(0.5, 1),
+			Share = 0.5,
 			Color = T.Blue,
 			TextColor = T.Dark,
-			TextSize = 22,
 		}, joinGroup)
 		-- (joined on the site, or just now: the server asks Roblox afresh)
-		Kit.button("I've joined", {
+		MenuParts.footButton(card, "I've joined", {
 			Name = "Check",
-			Parent = card,
-			Size = UDim2.fromOffset(180, 54),
-			Position = UDim2.new(0.5, 96, 1, 0),
-			AnchorPoint = Vector2.new(0.5, 1),
+			Share = 0.5,
+			At = "right",
 			Color = T.Card,
 			TextColor = T.Ink,
 			TextSize = 20,

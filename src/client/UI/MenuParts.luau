@@ -6,6 +6,9 @@
 -- rounded cards in a thin rim, pills, round markers), coloured only from Kit.Theme, so both
 -- looks work and a switch repaints them.
 
+local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+local Text = require(Shared.Util.Text)
+
 local Kit = require(script.Parent.Kit)
 local Icons = require(script.Parent.Icons)
 
@@ -208,6 +211,150 @@ function MenuParts.stat(
 		}, p.Bar, color)
 	end
 	return tile, number
+end
+
+-- The top of a left card, the way a detail card is laid out in the menus we take the feel from:
+-- the picture (a dial, a ring, a disc) at the left of a band `Hero` tall and, beside it, what it
+-- pays or holds as big numbers under a caption; the name and a line under the band, flush left;
+-- the button across the foot. (These cards had everything in a column down the middle: a ring, a
+-- name, a line and a pill, each centred under the last.)
+MenuParts.Hero = 150 -- the band's height, and the picture's size across
+MenuParts.HeroX = 176 -- where the numbers beside the picture start
+MenuParts.HeadTop = 170 -- where the name under the band starts
+
+-- Big numbers under a caption set wide, beside a card's picture. parts: coins, gems (numbers;
+-- each shown with its icon when above 0), number ({ text, tint }: some other figure), line
+-- ({ text, icon, tint }: a smaller line under them, a crate or what else comes with it). props:
+-- Parent is `parent`; Position (MenuParts.HeroX across, in the band's middle by default), Name.
+function MenuParts.payout(parent: Instance, caption: string, parts: { [string]: any }, props: { [string]: any }?): Frame
+	local p = props or {}
+	local box = Kit.box({
+		Name = p.Name or "Reward",
+		Parent = parent,
+		Size = UDim2.new(1, -MenuParts.HeroX, 0, 96),
+		Position = p.Position or UDim2.fromOffset(MenuParts.HeroX, 28),
+	})
+	box.ZIndex = 2
+	Kit.caption(caption, {
+		Name = "Caption",
+		Parent = box,
+		Size = UDim2.new(1, 0, 0, 16),
+		TextSize = 11,
+	})
+	local row =
+		Kit.box({ Name = "Row", Parent = box, Size = UDim2.new(1, 0, 0, 44), Position = UDim2.fromOffset(0, 20) })
+	row.ZIndex = 2
+	local layout = Kit.list(row, 6, true)
+	layout.VerticalAlignment = Enum.VerticalAlignment.Center
+	local order = 0
+	local function amount(icon: string?, text: string, tint: Color3?, iconColor: Color3?)
+		if order > 0 then
+			-- a little more room between one amount and the next than inside one
+			Kit.box({ Name = "Gap", Parent = row, Size = UDim2.fromOffset(6, 10), LayoutOrder = order })
+			order += 1
+		end
+		if icon then
+			Icons.make(icon, 30, {
+				Name = "Icon",
+				Parent = row,
+				Color = iconColor,
+				Centre = true,
+				LayoutOrder = order,
+			})
+			order += 1
+		end
+		Kit.title(text, {
+			Name = "Amount",
+			Parent = row,
+			Size = UDim2.fromOffset(0, 44),
+			AutomaticSize = Enum.AutomaticSize.X,
+			TextSize = 38,
+			Tint = tint,
+			Wrap = false,
+			LayoutOrder = order,
+		})
+		order += 1
+	end
+	if (parts.coins or 0) > 0 then
+		amount("coin", Text.commas(parts.coins), T.YellowDark)
+	end
+	if (parts.gems or 0) > 0 then
+		amount("gem", Text.commas(parts.gems), T.Purple, T.Purple)
+	end
+	if parts.number then
+		amount(nil, parts.number.text, parts.number.tint)
+	end
+	local line = parts.line
+	if line then
+		local x = 0
+		if line.icon then
+			Icons.make(line.icon, 20, {
+				Name = "LineIcon",
+				Parent = box,
+				Position = UDim2.fromOffset(0, 70),
+				Color = line.tint,
+				Centre = true,
+			})
+			x = 26
+		end
+		Kit.text(line.text, {
+			Name = "Line",
+			Parent = box,
+			Size = UDim2.new(1, -x, 0, 40),
+			Position = UDim2.fromOffset(x, 69),
+			TextSize = 16,
+			Font = Kit.Fonts.Bold,
+			Tint = line.tint,
+			AlignY = Enum.TextYAlignment.Top,
+		})
+	end
+	return box
+end
+
+-- A card's name and a line under it, flush left, under the band. Returns the two labels.
+function MenuParts.headline(parent: Instance, title: string, desc: string, top: number?): (TextLabel, TextLabel)
+	local y = top or MenuParts.HeadTop
+	local name = Kit.title(title, {
+		Name = "Headline",
+		Parent = parent,
+		Size = UDim2.new(1, 0, 0, 36),
+		Position = UDim2.fromOffset(0, y),
+		TextSize = 30,
+		Color = T.Ink,
+		Wrap = false,
+	})
+	name.TextTruncate = Enum.TextTruncate.AtEnd
+	local line = Kit.text(desc, {
+		Name = "Desc",
+		Parent = parent,
+		Size = UDim2.new(1, 0, 0, 44),
+		Position = UDim2.fromOffset(0, y + 38),
+		TextSize = 16,
+		Color = T.InkSoft,
+		AlignY = Enum.TextYAlignment.Top,
+	})
+	return name, line
+end
+
+-- The button across a left card's foot (Claim, Join): the whole width, or `share` of it from the
+-- left (`at`: from the right instead). props as Kit.button's.
+function MenuParts.footButton(
+	parent: Instance,
+	label: string,
+	props: { [string]: any }?,
+	onClick: (() -> ())?
+): TextButton
+	local p = table.clone(props or {})
+	local share: number = p.Share or 1
+	local right = p.At == "right"
+	p.Share, p.At = nil, nil
+	p.Name = p.Name or "Claim"
+	p.Parent = parent
+	p.Size = UDim2.new(share, if share < 1 then -6 else 0, 0, 54)
+	p.Position = UDim2.fromScale(if right then 1 else 0, 1)
+	p.AnchorPoint = Vector2.new(if right then 1 else 0, 1)
+	p.TextSize = p.TextSize or 22
+	return Kit.button(label, p, onClick)
 end
 
 -- A round dial: a dark disc in a thick ring of the colour with a thin line inside the ring, a

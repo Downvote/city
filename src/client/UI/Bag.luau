@@ -77,12 +77,12 @@ local function showDetail(entry: Bag.Entry?)
 	end
 	local item = entry.item
 	local own = Colors.fromHex(item.color)
+	-- the thing on its disc at the left of the card's top, how many you have beside it in a big
+	-- number, who would love it under that, and its name flush left under them
 	local disc = Kit.disc({
 		Name = "Picture",
 		Parent = frame,
-		Size = 150,
-		Position = UDim2.new(0.5, 0, 0, 14),
-		AnchorPoint = Vector2.new(0.5, 0),
+		Size = MenuParts.Hero,
 		Color = T.Picture,
 	})
 	Icons.item(item.id, 96, own, {
@@ -93,63 +93,34 @@ local function showDetail(entry: Bag.Entry?)
 		Centre = true,
 		ZIndex = 3,
 	})
-	Kit.title(item.name, {
-		Name = "ThingName",
-		Parent = frame,
-		Size = UDim2.new(1, 0, 0, 36),
-		Position = UDim2.fromOffset(0, 176),
-		TextSize = 30,
-		AlignX = Enum.TextXAlignment.Center,
-	})
-	Kit.caption(Items.categoryName(item.cat), {
-		Name = "Kind",
-		Parent = frame,
-		Size = UDim2.new(1, 0, 0, 16),
-		Position = UDim2.fromOffset(0, 214),
-		TextSize = 12,
-		AlignX = Enum.TextXAlignment.Center,
-	})
 	local who = lovers(item)
-	local about = Text.fill("{n} in your bag.", { n = entry.n })
-	if #who > 0 then
-		about ..= " " .. Text.fill("{x} would love it.", { x = table.concat(who, ", ") })
-	end
-	Kit.text(about, {
-		Name = "About",
-		Parent = frame,
-		Size = UDim2.new(1, -24, 0, 44),
-		Position = UDim2.fromOffset(12, 238),
-		TextSize = 16,
-		Color = T.InkSoft,
-		AlignX = Enum.TextXAlignment.Center,
-		AlignY = Enum.TextYAlignment.Top,
-	})
+	MenuParts.payout(frame, "In your bag", {
+		number = { text = Text.commas(entry.n) },
+		line = if #who > 0
+			then {
+				text = Text.fill("{x} would love it.", { x = table.concat(who, ", ") }),
+				icon = "heart",
+				tint = T.Pink,
+			}
+			else nil,
+	}, { Name = "Count" })
+	MenuParts.headline(frame, item.name, Items.categoryName(item.cat))
 	-- at the foot: hold it (or put it away) and drop one
-	local foot = Kit.box({
-		Name = "Actions",
-		Parent = frame,
-		Size = UDim2.new(1, 0, 0, 50),
-		Position = UDim2.new(0, 0, 1, -50),
-	})
-	Kit.list(foot, 12, true, Enum.HorizontalAlignment.Center)
 	local holding = player:GetAttribute("Holding") == item.id
-	Kit.button(if holding then "Put away" else "Hold", {
+	MenuParts.footButton(frame, if holding then "Put away" else "Hold", {
 		Name = "Hold",
-		Parent = foot,
-		Size = UDim2.fromOffset(170, 48),
+		Share = 0.6,
 		Color = T.Blue,
 		TextSize = 20,
-		LayoutOrder = 1,
 	}, function()
 		call(if holding then "away" else "hold", item.id)
 	end)
-	Kit.button("Drop", {
+	MenuParts.footButton(frame, "Drop", {
 		Name = "Drop",
-		Parent = foot,
-		Size = UDim2.fromOffset(130, 48),
+		Share = 0.4,
+		At = "right",
 		Color = T.Coral,
 		TextSize = 20,
-		LayoutOrder = 2,
 	}, function()
 		call("drop", item.id)
 	end)
