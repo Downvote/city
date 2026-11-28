@@ -700,6 +700,33 @@ def item_thumb(item_id, size):
     return _thumb_cache[key]
 
 
+def item_view(item_id, size, yaw, pitch):
+    """The item turned the way a ViewportFrame's camera sees it (`view` in the dump: its yaw and
+    pitch, which tools/preview/video.sh records frame by frame), framed by its bounding sphere as
+    UI/ModelPreview frames it, so its scale stays put as it turns. Cached under out/ui_thumbs by
+    the angle to the nearest degree and a half."""
+    yaw = round(yaw / 1.5) * 1.5
+    pitch = round(pitch)
+    cache_dir = os.path.join(HERE, "..", "..", "out", "ui_thumbs")
+    os.makedirs(cache_dir, exist_ok=True)
+    scene = item_id if item_id.startswith(("preset:", "crate:")) else "item:" + item_id
+    path = os.path.join(cache_dir, f"{item_id.replace(':', '_')}_y{yaw:g}_p{pitch:g}.png")
+    if not os.path.exists(path):
+        # (drawn under a name of its own, then moved in: frames drawn side by side may want it at once)
+        tmp = f"{path[:-4]}.{os.getpid()}.png"
+        try:
+            subprocess.run(["sh", os.path.join(HERE, "render.sh"), scene, tmp, "--size", "360", "--transparent",
+                            "--sphere", "--yaw", str(yaw), "--pitch", str(pitch)],
+                           check=True, capture_output=True, cwd=os.path.join(HERE, "..", ".."))
+            os.replace(tmp, path)
+        except Exception:
+            return None
+    key = (item_id, size, yaw, pitch)
+    if key not in _thumb_cache:
+        _thumb_cache[key] = Image.open(path).convert("RGBA").resize((max(1, int(size)), max(1, int(size))), Image.LANCZOS)
+    return _thumb_cache[key]
+
+
 PICTURES = {}
 
 
@@ -865,6 +892,19 @@ def draw_figure(cv, rect, clip, shadow=None, tint=None, fade=0):
 def draw_node(cv, node, clip, item_hint=None):
     if not P(node, "Visible", True):
         return
+    # a CanvasGroup faded as a whole (GroupTransparency): drawn on its own layer, then laid on faded
+    fade = (P(node, "GroupTransparency", 0) or 0) if node["class"] == "CanvasGroup" else 0
+    if fade > 0 and not node.get("_faded"):
+        if fade >= 0.999:
+            return
+        layer = Canvas(cv.im.width / cv.ss, cv.im.height / cv.ss, cv.ss, cv.k / cv.ss)
+        layer.im = Image.new("RGBA", cv.im.size, (0, 0, 0, 0))
+        node["_faded"] = True
+        draw_node(layer, node, clip, item_hint)
+        node["_faded"] = False
+        layer.im.putalpha(layer.im.getchannel("A").point(lambda v: int(v * (1 - fade))))
+        cv.paste(layer.im, 0, 0, None)
+        return
     if node.get("itemId"):
         item_hint = node["itemId"]
     rect = node.get("_rect")
@@ -918,8 +958,16 @@ def draw_node(cv, node, clip, item_hint=None):
             target.paste(ph, x + w * 0.2, y + h * 0.2, clip)
         if node["class"] == "ViewportFrame" and item_hint:
             x, y, w, h = [target.px(v) for v in rect]
-            th = item_thumb(item_hint, int(min(w, h) * 0.86))
-            if th:
+            view = node.get("view")
+            if view:
+                th = item_view(item_hint, int(min(w, h)), view[0], view[1])
+            else:
+                th = item_thumb(item_hint, int(min(w, h) * 0.86))
+            fade = P(node, "ImageTransparency", 0) or 0
+            if th and fade > 0:
+                th = th.copy()
+                th.putalpha(th.getchannel("A").point(lambda v: int(v * (1 - fade))))
+            if th and fade < 1:
                 target.paste(th, x + (w - th.width) / 2, y + (h - th.height) / 2, clip)
     child_clip = clip
     if rect and (P(node, "ClipsDescendants", False) or node["class"] == "ScrollingFrame") and not rot:

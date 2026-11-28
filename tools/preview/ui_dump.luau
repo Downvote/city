@@ -250,6 +250,134 @@ if look then
 	Kit.setTheme(look)
 end
 
+-- Video (tools/preview/video.sh sets UI_VIDEO=1): tweens really move, on the simulation's clock and
+-- with their own easing, a frame at a time (the simulation's TweenService otherwise lands every
+-- tween at once), every sound the interface asks for is noted with its time (written beside the
+-- frames as <out>.sounds.json), and each 3D picture's camera angle goes into the dump.
+local video = process.env.UI_VIDEO == "1"
+local soundLog = {}
+local videoStart = nil
+if video then
+	local clock = Sim.env.os.clock
+	local TweenService = Harness.game():GetService("TweenService")
+	local active = {}
+	local function eased(style, dir, t)
+		local name = if style then tostring(style):match("([%w]+)$") else "Quad"
+		local function into(x)
+			if name == "Linear" then
+				return x
+			elseif name == "Sine" then
+				return 1 - math.cos(x * math.pi / 2)
+			elseif name == "Cubic" then
+				return x ^ 3
+			elseif name == "Quart" then
+				return x ^ 4
+			elseif name == "Quint" then
+				return x ^ 5
+			elseif name == "Exponential" then
+				return if x <= 0 then 0 else 2 ^ (10 * (x - 1))
+			end
+			return x * x
+		end
+		local way = if dir then tostring(dir):match("([%w]+)$") else "Out"
+		if way == "In" then
+			return into(t)
+		elseif way == "InOut" then
+			return if t < 0.5 then into(t * 2) / 2 else 1 - into((1 - t) * 2) / 2
+		end
+		return 1 - into(1 - t)
+	end
+	local function lerp(a, b, t)
+		local kind = typeof(a)
+		if type(a) == "number" and type(b) == "number" then
+			return a + (b - a) * t
+		elseif kind == "UDim2" then
+			return UDim2.new(
+				a.X.Scale + (b.X.Scale - a.X.Scale) * t,
+				a.X.Offset + (b.X.Offset - a.X.Offset) * t,
+				a.Y.Scale + (b.Y.Scale - a.Y.Scale) * t,
+				a.Y.Offset + (b.Y.Offset - a.Y.Offset) * t
+			)
+		elseif kind == "UDim" then
+			return roblox.UDim.new(a.Scale + (b.Scale - a.Scale) * t, a.Offset + (b.Offset - a.Offset) * t)
+		elseif kind == "Color3" then
+			return Color3.new(a.R + (b.R - a.R) * t, a.G + (b.G - a.G) * t, a.B + (b.B - a.B) * t)
+		elseif kind == "Vector2" then
+			return a:Lerp(b, t)
+		end
+		return if t >= 1 then b else a
+	end
+	rawset(TweenService, "Create", function(_, inst, info, goals)
+		local i = info or {}
+		local tween = { Completed = Fake.signal() }
+		local left = 0
+		function tween.Play()
+			local start = clock() + (i[6] or 0)
+			for prop, to in goals do
+				for j = #active, 1, -1 do
+					if active[j].inst == inst and active[j].prop == prop then
+						table.remove(active, j)
+					end
+				end
+				left += 1
+				table.insert(active, {
+					inst = inst,
+					prop = prop,
+					to = to,
+					start = start,
+					time = i[1] or 1,
+					style = i[2],
+					dir = i[3],
+					tween = tween,
+				})
+			end
+		end
+		function tween.Cancel()
+			for j = #active, 1, -1 do
+				if active[j].tween == tween then
+					table.remove(active, j)
+				end
+			end
+		end
+		tween.Pause = tween.Cancel
+		tween.Done = function()
+			left -= 1
+			if left <= 0 then
+				tween.Completed:Fire(Enum.PlaybackState.Completed)
+			end
+		end
+		return tween
+	end)
+	Sim.RS.Heartbeat:Connect(function()
+		local now = clock()
+		for j = #active, 1, -1 do
+			local a = active[j]
+			if a and now >= a.start then
+				if a.from == nil then
+					a.from = a.inst[a.prop]
+				end
+				local t = if a.time <= 0 then 1 else math.clamp((now - a.start) / a.time, 0, 1)
+				pcall(function()
+					a.inst[a.prop] = if t >= 1 then a.to else lerp(a.from, a.to, eased(a.style, a.dir, t))
+				end)
+				if t >= 1 then
+					table.remove(active, j)
+					a.tween.Done()
+				end
+			end
+		end
+	end)
+	Kit.sound = function(kind, opts)
+		local entry = { t = clock(), kind = kind, rate = opts and opts.Rate }
+		table.insert(soundLog, entry)
+		return {
+			Stop = function()
+				entry.stop = clock()
+			end,
+		}
+	end
+end
+
 local Hud
 -- the villagers standing in the player's plot, each marked with its id (UI/Dialogue finds a
 -- talking villager's model there for their bust)
@@ -1078,6 +1206,22 @@ elseif scene:sub(1, 11) == "crate:open:" then
 	end
 	Crates.reveal({ kind = "work", id = prize.id, name = prize.name, rarity = rarity }, beat)
 	Sim.frames(3)
+elseif scene:sub(1, 11) == "crate:play:" then
+	-- a crate opening played from its start (tools/preview/video.sh crate:play:<rarity>): the main
+	-- screen, then UI/Crates.reveal as it runs in the game
+	startHud()
+	local Crates = Harness.require(Sim.CLIENT .. "UI.Crates")
+	local Catalog = Harness.require("ReplicatedStorage.Shared.Build.Catalog")
+	local rarity = scene:sub(12)
+	local prize = Catalog.get("crate_hero")
+	for _, def in Catalog.list("crates") do
+		if def.crate == rarity then
+			prize = def
+			break
+		end
+	end
+	table.clear(soundLog)
+	Crates.reveal({ kind = "work", id = prize.id, name = prize.name, rarity = prize.crate })
 elseif scene == "crate:tip" then
 	-- a villager telling the player about the crates (UI/Crates.tip, the CrateTip event)
 	startHud()
@@ -2075,6 +2219,7 @@ end
 -- dumping ----------------------------------------------------------------------------------------------
 
 local PROPS = {
+	"GroupTransparency",
 	"Size",
 	"Position",
 	"AnchorPoint",
@@ -2227,6 +2372,14 @@ local function dump(inst)
 			node.props.Picture = pictureOf(content)
 		end
 	end
+	-- (in a video, the angle a 3D picture's camera looks from, as tools/preview/render.py takes it)
+	if video and inst.ClassName == "ViewportFrame" then
+		local cam = inst.CurrentCamera
+		if cam then
+			local d = -cam.CFrame.LookVector
+			node.view = { math.deg(math.atan2(d.X, d.Z)), math.deg(math.asin(math.clamp(d.Y, -1, 1))) }
+		end
+	end
 	local itemId = inst:GetAttribute("ItemId")
 	if itemId then
 		node.itemId = itemId
@@ -2278,20 +2431,50 @@ for _, g in Sim.gui.Parent:GetChildren() do
 		end
 	end
 end
+local written = {} -- (a video's frames share the pictures the first one wrote)
 local function write(path)
 	local root = dump(Sim.gui)
 	local list = {}
 	for _, p in pictureList do
-		local file = path:gsub("%.json$", "") .. ".picture" .. p.id .. ".rgba"
-		fs.writeFile(file, buffer.tostring(p.image.Pixels))
+		local file = written[p.id]
+		if not file then
+			file = path:gsub("%.json$", "") .. ".picture" .. p.id .. ".rgba"
+			fs.writeFile(file, buffer.tostring(p.image.Pixels))
+			if video then
+				written[p.id] = file
+			end
+		end
 		table.insert(list, { id = p.id, w = p.w, h = p.h, file = file })
 	end
 	fs.writeFile(path, serde.encode("json", { viewport = { 1280, 720 }, inset = 36, root = root, pictures = list }))
 end
 if frameCount then
 	for k = 1, frameCount do
+		if k == 1 then
+			videoStart = Sim.env.os.clock()
+		end
 		write(outPath:gsub("%.json$", "") .. "_" .. k .. ".json")
-		Sim.frames(math.max(1, math.floor(step * 60)))
+		-- (a video's frames are each exactly `step` apart on the clock)
+		if video then
+			local n = math.max(1, math.floor(step * 60 + 0.5))
+			Sim.frames(n, step / n)
+		else
+			Sim.frames(math.max(1, math.floor(step * 60)))
+		end
+	end
+	if video then
+		local list = {}
+		for _, e in soundLog do
+			if e.t >= (videoStart or 0) - 1e-6 then
+				table.insert(list, {
+					t = e.t - videoStart,
+					kind = e.kind,
+					rate = e.rate,
+					stop = e.stop and (e.stop - videoStart),
+				})
+			end
+		end
+		fs.writeFile(outPath:gsub("%.json$", "") .. ".sounds.json", serde.encode("json", { sounds = list }))
 	end
 else
 	write(outPath)

@@ -339,6 +339,8 @@ def main():
     ap.add_argument("--hour", type=float, default=13, help="the game's hour whose light and grade to show")
     ap.add_argument("--no-grade", action="store_true", help="leave off the game's colour correction")
     ap.add_argument("--plain", action="store_true", help="the old flat shading, no light model and no grade")
+    ap.add_argument("--sphere", action="store_true", help="frame the bounding sphere, as UI/ModelPreview's camera "
+                    "does, so the picture's scale stays put whichever way it is turned (tools/preview/video.sh)")
     args = ap.parse_args()
     global USE_KIT
     USE_KIT = not args.smooth
@@ -374,8 +376,13 @@ def main():
     minx, maxx, miny, maxy = sx.min(), sx.max(), sy.min(), sy.max()
     span = max(maxx - minx, maxy - miny) * (1 + 2 * pad)
     W = H = args.size
-    scale = W / span
     cx, cy = (minx + maxx) / 2, (miny + maxy) / 2
+    if args.sphere:
+        lo, hi = flat.min(axis=0), flat.max(axis=0)
+        mid = (lo + hi) / 2
+        span = np.linalg.norm(hi - lo) * 1.05
+        cx, cy = mid @ right, mid @ up
+    scale = W / span
 
     img = np.zeros((H, W, 3)); img[:] = (0.86, 0.9, 0.95)
     zbuf = np.full((H, W), np.inf)

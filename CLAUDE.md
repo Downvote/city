@@ -21,7 +21,9 @@ the contract (update it with every API, remote or saved data change), `src/share
    square) also stand in it: `sh tools/preview/walk.sh "map:x1,z1,x2,z2" <png> --eye x,y,z --look x,y,z [--hour 16]`
    draws it through a lens with the game's sun for that hour and cast shadows. For any screen, render it the
    same way: `sh tools/preview/ui.sh <scene> <png> [--bg <png>]` (scenes in `tools/preview/ui_dump.luau`; run
-   `sh tools/preview/fonts.sh` once for the font).
+   `sh tools/preview/fonts.sh` once for the font). A screen that moves can be recorded with its sounds:
+   `sh tools/preview/video.sh <scene> <mp4> [seconds] [fps] [--bg <png>]` (`crate:play:<rarity>` is a crate
+   opening).
 5. `sh scripts/check.sh` must pass: format, types (luau-lsp against Roblox's definitions), specs, the client
    simulations (`tests/sim/build_client.luau`: the real Build mode driven by clicks; `tests/sim/talk_card.luau`:
    the card you get by holding E on a villager; `tests/sim/creator_sections.luau`: the creator's Bodies, Body

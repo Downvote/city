@@ -602,7 +602,8 @@ function Crates.reveal(result: any, still: (boolean | string)?)
 	end
 
 	local turning = rays(stage, first, 980)
-	turning.Visible = beat ~= "drop"
+	-- (the rays come up once the crate has landed and the screen is dark: their rim fades into it)
+	turning.Visible = beat ~= nil and beat ~= "drop"
 	if not beat then
 		for _, r in rayFaces(turning) do
 			r.BackgroundTransparency = 1
@@ -810,6 +811,7 @@ function Crates.reveal(result: any, still: (boolean | string)?)
 			TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
 			{ Size = UDim2.fromOffset(240, 240) }
 		)
+		turning.Visible = true
 		for _, r in rayFaces(turning) do
 			Kit.tween(r, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 				BackgroundTransparency = 0,

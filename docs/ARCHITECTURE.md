@@ -2947,6 +2947,14 @@ cozy music track in the background. use roblox library for these, dont make your
   list and grid layouts, padding, automatic sizes, corners, strokes, gradients, outlined text, clipping, rotation,
   the UIScale). `fonts.sh` fetches Fredoka One for it. `ui_anim.sh <scene> <gif> [frames] [step]` renders a few moments
   as an animated GIF (the wobble and sway run on the frame clock, so they step with the simulation).
+  `video.sh <scene> <mp4> [seconds] [fps] [--bg <png>]` records a screen as it plays, with its sound: `ui_dump.luau`
+  under `UI_VIDEO=1` moves tweens for real on the simulation's clock with their own easing (the simulation lands
+  them at once otherwise), dumps a frame every 1/fps, notes each `Kit.sound` with its time, rate and stop
+  (`<out>.sounds.json`) and each ViewportFrame's camera angle (`view`); `video.py` draws the frames with
+  `ui_render.py` (a 3D picture with a `view` from `render.py --sphere`, framed by its bounding sphere so it keeps
+  its scale as it turns; a CanvasGroup's GroupTransparency), fetches the sounds from the library into out/sounds,
+  mixes them at Data/Sounds' volumes and rates, and encodes with ffmpeg. Scene `crate:play:<rarity>` is a crate
+  opening from its start.
   `render.sh <scene> <png> --textures` paints each part with the texture the game gives its material (the
   pictures are fetched once into out/library; `--painted` uses art/textures), tinted by its colour and tiled in
   the part's own space along the face's main axis, the way Roblox lays a MaterialVariant on a part.
