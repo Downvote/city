@@ -1,6 +1,6 @@
 -- The weather on this player's own screen, round the camera (the user: "could you use better
 -- weather effects?"). Data/Weather says what falls: rain as streaks in three depths with splashes
--- and rings where it lands and puddles on hard ground open to the sky, softly falling snow, mist
+-- and rings where it lands, softly falling snow, mist
 -- drifting low in fog, petals in blossom and leaves turning over as they come down; spring's
 -- petals and autumn's leaves drift a little whatever the weather. A storm adds lightning: a flash
 -- and a bolt far off. The air (the haze) eases to the weather's here too, so a player who turned
@@ -265,72 +265,8 @@ local function placeCells(at: Vector3)
 	end
 end
 
--- Puddles: dark glassy pools on hard ground open to the sky, near the camera, while it's wet.
-local HARD = {
-	Asphalt = true,
-	Concrete = true,
-	Pavement = true,
-	Cobblestone = true,
-	Brick = true,
-	Slate = true,
-	Granite = true,
-	Limestone = true,
-	Sandstone = true,
-}
-local puddles: { Part } = {}
-local puddleAt: Vector3? = nil
+-- (No puddles: the user, "remove the puddles that appear when raining".)
 local rng = Random.new()
-
-local function dropPuddles(fade: boolean)
-	for _, p in puddles do
-		if fade then
-			local t = TweenService:Create(p, TweenInfo.new(4), { Transparency = 1 })
-			t.Completed:Connect(function()
-				p:Destroy()
-			end)
-			t:Play()
-		else
-			p:Destroy()
-		end
-	end
-	table.clear(puddles)
-	puddleAt = nil
-end
-
-local function placePuddles(at: Vector3)
-	dropPuddles(false)
-	puddleAt = at
-	local skip = skipList()
-	groundParams.FilterDescendantsInstances = skip
-	local up = RaycastParams.new()
-	up.FilterType = Enum.RaycastFilterType.Exclude
-	up.FilterDescendantsInstances = skip
-	local reach = K.PuddleReach
-	for _ = 1, K.Puddles * 3 do
-		if #puddles >= K.Puddles then
-			break
-		end
-		local a, d = rng:NextNumber(0, math.pi * 2), rng:NextNumber(6, reach)
-		local from = Vector3.new(at.X + math.cos(a) * d, at.Y + 60, at.Z + math.sin(a) * d)
-		local hit = workspace:Raycast(from, Vector3.new(0, -200, 0), groundParams)
-		if hit and hit.Normal.Y > 0.97 and hit.Instance:IsA("BasePart") and HARD[hit.Material.Name] then
-			-- open to the sky
-			if not workspace:Raycast(hit.Position + Vector3.new(0, 0.3, 0), Vector3.new(0, 200, 0), up) then
-				local size = rng:NextNumber(K.PuddleSize[1], K.PuddleSize[2])
-				local p = hidden("Puddle", Vector3.new(0.02, size, size))
-				p.Shape = Enum.PartType.Cylinder
-				p.Material = Enum.Material.Glass
-				p.Color = Color3.fromRGB(70, 80, 96)
-				p.Reflectance = 0.2
-				-- (over the road's paint, which stands 0.11 above it, so no two faces lie together)
-				p.CFrame = CFrame.new(hit.Position + Vector3.new(0, 0.13, 0)) * CFrame.Angles(0, 0, math.pi / 2)
-				p.Transparency = 1
-				TweenService:Create(p, TweenInfo.new(6), { Transparency = 0.45 }):Play()
-				table.insert(puddles, p)
-			end
-		end
-	end
-end
 
 -- Lightning: a flash over the whole picture and a bolt coming down far off.
 local flash: ColorCorrectionEffect? = nil
@@ -478,14 +414,11 @@ function Weather.start()
 				end
 			end
 		end
-		-- the creator wants a clear day: nothing falls, no puddles, no lightning
+		-- the creator wants a clear day: nothing falls, no lightning
 		local still = calm()
 		if still ~= wasCalm then
 			wasCalm = still
 			enableAll()
-			if still then
-				dropPuddles(false)
-			end
 		end
 		roofClock += dt
 		if roofClock > 0.3 then
@@ -506,13 +439,6 @@ function Weather.start()
 			if wet and not still and (not cellsAt or (eye - (cellsAt :: Vector3)).Magnitude > K.Cell / 2) then
 				cellsAt = eye
 				placeCells(eye)
-			end
-			-- puddles while it rains, where the detail allows; they dry when it stops
-			local want = wet and not still and Graphics.level().Puddles
-			if want and (not puddleAt or (eye - (puddleAt :: Vector3)).Magnitude > K.PuddleReach * 0.6) then
-				placePuddles(eye)
-			elseif not want and #puddles > 0 then
-				dropPuddles(true)
 			end
 		end
 		stepAir(dt)

@@ -18,7 +18,6 @@ export type Level = {
 	Particles: number,
 	Outlines: number,
 	Layers: number,
-	Puddles: boolean,
 }
 
 -- The settings with every key there, each of the default's type and a known choice (what came from

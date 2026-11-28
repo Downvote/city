@@ -2734,7 +2734,7 @@ The user: "add settings for graphic quality, background blur, bloom, etc.", "cou
 
 - `Sim/Graphics` (shared): `Keys`, `Detail`, `clean(settings)`, `level(settings)`, `blur(settings)`,
   `blurStep(settings)`, `air(settings, kind)`. `Tuning.Graphics`: `Levels.low/medium/high` (Shadows, Reach, Particles,
-  Outlines, Layers, Puddles) and `BlurSteps`. The settings are saved in `Schema.Settings` (`detail`, `blur`,
+  Outlines, Layers) and `BlurSteps`. The settings are saved in `Schema.Settings` (`detail`, `blur`,
   `blurStrength`, `bloom`, `sunRays`, `haze`). Client `World/Graphics` (started in `Main.client` after `State.start`):
   `settings()`, `level()`, `apply()`, `set(key, value)` (on at once, saved with `SettingSet`), `Changed`; it switches
   Lighting's `Glow`, `Rays` and `Lens` (Enabled and FarIntensity) and `GlobalShadows`, and sets `Lively.MoveRange`,
@@ -2750,13 +2750,13 @@ The user: "add settings for graphic quality, background blur, bloom, etc.", "cou
   spread, accel, drag, rot, spin, light, orient "streak" / "flat", flip, flipFps), `Wet`, `Lightning`, `known(kind)`,
   `pick(season, roll)`, `drawn(kind, layers, particles, extra?, share?)`, `alive(layer)`. `Tuning.Weather` (after
   `Tuning.Look`): `Every`, `Odds` (by season), `Looks[kind]` (Sun, Soft, Density, Haze, Grey, Sway, Gust; clear equals
-  `Tuning.Look`'s light and air), `Ease`, `NoHaze`, `StormWaves`, `Lightning`, `Cells`, `Cell`, `Puddles`,
-  `PuddleReach`, `PuddleSize`, `SeasonAir`. `Services/World`: `World.Weathers` is `Data/Weather.Kinds`; `setWeather`
+  `Tuning.Look`'s light and air), `Ease`, `NoHaze`, `StormWaves`, `Lightning`, `Cells`, `Cell`,
+  `SeasonAir` (no puddles since 2026-11-28). `Services/World`: `World.Weathers` is `Data/Weather.Kinds`; `setWeather`
   keeps an unknown kind out, sets the wind and, in a storm, the sea's waves; the clock's loop eases
   `Lighting.Brightness`, `ShadowSoftness`, the Atmosphere's Density and Haze and the grade's saturation toward the
   weather's look; the weather loop picks with `Weather.pick`. `UI/Weather` (rewritten): emitters per layer on hidden
   parts round the camera in a `WeatherFx` folder (a layer past 400 a second split over several), the rain's ground
-  patches set by raycasts, puddles (`Puddle`, Glass discs 0.13 over hard ground open to the sky), lightning (a
+  patches set by raycasts, lightning (a
   `Lightning` ColorCorrectionEffect and `Bolt` parts), the Atmosphere's Density and Haze eased on this screen
   (`Sim/Graphics.air`), nothing from the sky while a roof is over the camera. `World/Ambience` reads the weather's
   `Sway` and `Gust` for leaves, flags and boats. `fog` is in the HUD's and the news' weather names and icons.
@@ -2781,7 +2781,7 @@ The user: "add settings for graphic quality, background blur, bloom, etc.", "cou
   `FacingCameraWorldUp`. `Data/Weather.Boxes` entries may carry `ring` (a hole that many studs each way round the
   camera's spot, the box set on the ground under `camera.Focus`); `Data/Weather.ringParts(name)` gives its four
   boxes, and `UI/Weather` splits a ring layer's rate over them by area. The fog's layers come from the rings `mist`
-  and `haze`. While `ViewTime.clear()`, `UI/Weather` turns every emitter off, drops the puddles and strikes no
+  and `haze`. While `ViewTime.clear()`, `UI/Weather` turns every emitter off and strikes no
   lightning, and `Controllers/Audio`'s weather loops play the clear weather's.
 - `Build/ViewTime`: `Options`, `defaultIndex()` (`Tuning.ViewTime.Default`, noon), `townHour()`, `townWeather()`,
   `lookAt(hour, weather?)` (with the weather's `brightness`, `softness` and grey), `index()`, `current()`, `hour()`

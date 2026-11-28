@@ -1122,13 +1122,10 @@ Tuning.Weather = {
 	-- Brightness), and how far off the bolt comes down
 	Lightning = { Every = { 7, 20 }, Flash = 0.45, Far = { 220, 480 } },
 	-- rain on the ground round the camera: a square of `Cells` by `Cells` patches `Cell` studs
-	-- across, each set on whatever is under it (a road, a roof, a hill), where the drops splash; and
-	-- puddles on hard ground open to the sky, up to `Puddles` of them within `Reach`
+	-- across, each set on whatever is under it (a road, a roof, a hill), where the drops splash (no
+	-- puddles: the user, "remove the puddles that appear when raining")
 	Cells = 5,
 	Cell = 18,
-	Puddles = 22,
-	PuddleReach = 60,
-	PuddleSize = { 2.5, 6.5 },
 	-- petals in spring and leaves in autumn drift about whatever the weather does, a few a second
 	SeasonAir = 0.35, -- times the blossom or leaves weather's rate
 }
@@ -1139,12 +1136,12 @@ Tuning.Weather = {
 -- costly things is drawn: Shadows (Lighting.GlobalShadows on this screen), Reach (times how far
 -- pieces move and give off effects, and leaves sway), Particles (times every rate of the weather
 -- and of the pieces' effects), Outlines (how many people wear one), Layers (how many of a
--- weather's layers fall: near, middle, far), Puddles (rain lying on the ground).
+-- weather's layers fall: near, middle, far).
 Tuning.Graphics = {
 	Levels = {
-		low = { Shadows = false, Reach = 0.45, Particles = 0.35, Outlines = 0, Layers = 1, Puddles = false },
-		medium = { Shadows = true, Reach = 0.7, Particles = 0.65, Outlines = 10, Layers = 2, Puddles = true },
-		high = { Shadows = true, Reach = 1, Particles = 1, Outlines = 20, Layers = 3, Puddles = true },
+		low = { Shadows = false, Reach = 0.45, Particles = 0.35, Outlines = 0, Layers = 1 },
+		medium = { Shadows = true, Reach = 0.7, Particles = 0.65, Outlines = 10, Layers = 2 },
+		high = { Shadows = true, Reach = 1, Particles = 1, Outlines = 20, Layers = 3 },
 	},
 	-- the background blur's strengths (the `blurStrength` setting): Soft, Medium and Strong. The
 	-- lens's FarIntensity is Tuning.Look.Lens.FarIntensity times twice the strength, so Medium is

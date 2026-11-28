@@ -3364,7 +3364,8 @@ screen round the camera, in layers:
 
 - Rain: streaks close by, a thicker fall further off and a faint curtain far away; where it lands,
   rings and small splashes on whatever is under it (a road, a roof, the sea) and a few droplets
-  bouncing up; dark glassy puddles on paving and roads open to the sky, which dry when it stops.
+  bouncing up. (There were dark glassy puddles on paving and roads too, until the user, 2026-11-28:
+  "remove the puddles that appear when raining".)
 - Storm: heavier rain blown sideways, the sea's waves up, the wind bending the trees much harder in
   gusts, and lightning: a flash over the picture and a bolt coming down far off.
 - Snow: big soft flakes near the camera, smaller ones further off, slower and drifting.
