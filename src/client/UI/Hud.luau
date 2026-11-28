@@ -76,6 +76,10 @@ local setHidden: (boolean) -> () = function(_on: boolean) end
 
 function Hud.setHidden(on: boolean)
 	hiddenNow = on
+	-- (marked on the root too, for screens of their own that follow the main screen: World/Run's button)
+	pcall(function()
+		Kit.root():SetAttribute("HudHidden", on)
+	end)
 	setHidden(on)
 end
 

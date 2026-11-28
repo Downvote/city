@@ -178,8 +178,10 @@ local function showButton()
 	if not b then
 		return
 	end
-	local hud = Kit.root():FindFirstChild("Hud")
-	local hudUp = hud == nil or not hud:IsA("GuiObject") or hud.Visible
+	local root = Kit.root()
+	local hud = root:FindFirstChild("Hud")
+	-- hidden with the main screen, whether Build mode hides its frame or Hide slides it away
+	local hudUp = (hud == nil or not hud:IsA("GuiObject") or hud.Visible) and root:GetAttribute("HudHidden") ~= true
 	b.Visible = UserInputService.TouchEnabled and hudUp and Run.allowed(humanoid())
 end
 
