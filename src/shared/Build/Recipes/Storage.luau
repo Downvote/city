@@ -256,7 +256,18 @@ end
 -- in the front.
 local function bin(r: R, x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, color: Color3)
 	r:block(x1, y1, z1, x2, y2 - 0.16, z2, color, "Fabric")
-	r:block(x1 - 0.03, y2 - 0.16, z1 - 0.03, x2 + 0.03, y2, z2 + 0.03, shade(color, 0.88), "Fabric")
+	r:bevel(
+		x1 - 0.03,
+		y2 - 0.16,
+		z1 - 0.03,
+		x2 + 0.03,
+		y2,
+		z2 + 0.03,
+		0.072,
+		shade(color, 0.88),
+		"Fabric",
+		{ round = true }
+	)
 	local xm = (x1 + x2) / 2
 	r:block(xm - 0.24, y2 - 0.42, z2, xm + 0.24, y2 - 0.28, z2 + 0.03, shade(color, 0.45), "Fabric")
 end
@@ -381,14 +392,14 @@ local items: { Item } = {
 			-- the case: sides, a top with a cove under a deeper cornice, a kick board, a back
 			r:block(-1.8, 0, -0.8, -1.62, 6.05, 0.75, r.c1, "Wood")
 			r:block(1.62, 0, -0.8, 1.8, 6.05, 0.75, r.c1, "Wood")
-			r:block(-1.8, 6.05, -0.8, 1.8, 6.17, 0.75, r.c1, "Wood")
+			r:bevel(-1.8, 6.05, -0.8, 1.8, 6.17, 0.75, 0.042, r.c1, "Wood", { wear = 1.06 })
 			r:block(-1.84, 6.17, -0.8, 1.84, 6.25, 0.79, shade(r.c1, 0.93), "Wood")
-			r:block(-1.88, 6.25, -0.8, 1.88, 6.4, 0.83, dk, "Wood")
-			r:block(-1.62, 0, -0.7, 1.62, 0.42, 0.7, dk, "Wood")
+			r:bevel(-1.88, 6.25, -0.8, 1.88, 6.4, 0.83, 0.053, dk, "Wood", { wear = 1.06 })
+			r:bevel(-1.62, 0, -0.7, 1.62, 0.42, 0.7, 0.08, dk, "Wood", { wear = 1.06 })
 			r:block(-1.62, 0.42, -0.8, 1.62, 6.05, -0.7, shade(r.c1, 0.7), "Wood")
 			-- shelves, each with a lip along its front
 			for _, y in { 0.42, 1.88, 3.33, 4.78 } do
-				r:block(-1.62, y, -0.7, 1.62, y + 0.14, 0.7, r.c1, "Wood")
+				r:bevel(-1.62, y, -0.7, 1.62, y + 0.14, 0.7, 0.049, r.c1, "Wood", { wear = 1.06 })
 				r:block(-1.62, y - 0.02, 0.7, 1.62, y + 0.14, 0.74, shade(r.c1, 0.94), "Wood")
 			end
 			-- two fabric bins at the bottom
@@ -442,7 +453,7 @@ local items: { Item } = {
 			end
 			r:block(-1.8, 0.5, -0.76, 1.8, 0.6, 0.86, shade(r.c2, 0.85), "Wood")
 			r:block(-1.96, 3.22, -0.88, 1.96, 3.28, 0.88, shade(r.c2, 0.88), "Wood")
-			r:block(-2, 3.28, -0.9, 2, 3.4, 0.9, r.c2, "Wood")
+			r:bevel(-2, 3.28, -0.9, 2, 3.4, 0.9, 0.042, r.c2, "Wood", { wear = 1.06 })
 			-- three rows of drawers, two to a row
 			local front = shade(r.c1, 1.06)
 			for _, y in { { 0.68, 1.46 }, { 1.54, 2.3 }, { 2.38, 3.14 } } do
@@ -470,11 +481,11 @@ local items: { Item } = {
 					r:cyl(sx * 1.7, 0.1, sz * 0.72, 0.2, 0.36, "y", dk, "Wood")
 				end
 			end
-			r:block(-1.9, 0.2, -0.95, 1.9, 0.44, 0.92, dk, "Wood")
+			r:bevel(-1.9, 0.2, -0.95, 1.9, 0.44, 0.92, 0.08, dk, "Wood", { wear = 1.06 })
 			r:block(-1.92, 0.44, -1.0, 1.92, 6.8, 0.98, r.c1, "Wood")
-			r:block(-1.96, 6.8, -1.03, 1.96, 6.9, 1.02, shade(r.c1, 0.94), "Wood")
+			r:bevel(-1.96, 6.8, -1.03, 1.96, 6.9, 1.02, 0.035, shade(r.c1, 0.94), "Wood", { wear = 1.06 })
 			r:block(-1.99, 6.9, -1.06, 1.99, 6.98, 1.06, r.c1, "Wood")
-			r:block(-2, 6.98, -1.08, 2, 7.2, 1.1, dk, "Wood")
+			r:bevel(-2, 6.98, -1.08, 2, 7.2, 1.1, 0.077, dk, "Wood", { wear = 1.06 })
 			-- two tall panelled doors over a wide drawer, a keyhole between the handles
 			door(r, -1.82, 1.6, -0.03, 6.7, 0.98, r.c2, -0.2)
 			door(r, 0.03, 1.6, 1.82, 6.7, 0.98, r.c2, 0.2)
@@ -510,7 +521,7 @@ local items: { Item } = {
 			end
 			r:block(-2.1, 0.55, -0.85, 2.1, 2.62, 0.85, r.c1, "Wood")
 			r:block(-2.16, 2.62, -0.88, 2.16, 2.68, 0.88, shade(r.c2, 0.88), "Wood")
-			r:block(-2.2, 2.68, -0.9, 2.2, 2.8, 0.9, r.c2, "Wood")
+			r:bevel(-2.2, 2.68, -0.9, 2.2, 2.8, 0.9, 0.042, r.c2, "Wood", { wear = 1.06 })
 			r:block(-2.04, 0.5, -0.82, 2.04, 0.58, 0.9, shade(r.c2, 0.85), "Wood")
 			-- two fluted doors with a pair of drawers between them
 			local front = shade(r.c1, 1.08)
@@ -547,8 +558,8 @@ local items: { Item } = {
 			local wall = 0.12
 			local lidCol = shade(r.c1, 0.88)
 			-- an open box: a plinth, four walls and a floor, with painted corner strips
-			r:block(-1.52, 0, -0.87, 1.52, 0.14, 0.87, r.c2, "Wood")
-			r:block(-1.5, 0.14, -0.85, 1.5, 0.3, 0.85, r.c1, "Wood")
+			r:bevel(-1.52, 0, -0.87, 1.52, 0.14, 0.87, 0.049, r.c2, "Wood", { wear = 1.06 })
+			r:bevel(-1.5, 0.14, -0.85, 1.5, 0.3, 0.85, 0.056, r.c1, "Wood", { wear = 1.06 })
 			r:block(-1.5, 0.3, 0.85 - wall, 1.5, 1.5, 0.85, r.c1, "Wood")
 			r:block(-1.5, 0.3, -0.85, 1.5, 1.5, -0.85 + wall, r.c1, "Wood")
 			for _, sx in { -1, 1 } do
@@ -644,13 +655,13 @@ local items: { Item } = {
 			-- outer box, a middle divider and two shelves: six cubbies
 			r:block(-1.7, 0, -0.75, -1.7 + t, 4.8, 0.75, r.c1, "Wood")
 			r:block(1.7 - t, 0, -0.75, 1.7, 4.8, 0.75, r.c1, "Wood")
-			r:block(-1.7 + t, 4.8 - t, -0.75, 1.7 - t, 4.8, 0.75, r.c1, "Wood")
-			r:block(-1.7 + t, 0, -0.75, 1.7 - t, 0.2, 0.75, r.c1, "Wood")
+			r:bevel(-1.7 + t, 4.8 - t, -0.75, 1.7 - t, 4.8, 0.75, 0.053, r.c1, "Wood", { wear = 1.06 })
+			r:bevel(-1.7 + t, 0, -0.75, 1.7 - t, 0.2, 0.75, 0.07, r.c1, "Wood", { wear = 1.06 })
 			r:block(-t / 2, 0.2, -0.65, t / 2, 4.65, 0.75, r.c1, "Wood")
 			r:block(-1.55, 0.2, -0.75, 1.55, 4.65, -0.65, shade(r.c1, 0.85), "Wood")
 			for _, y in { 1.68, 3.17 } do
-				r:block(-1.55, y - t / 2, -0.65, -t / 2, y + t / 2, 0.75, r.c1, "Wood")
-				r:block(t / 2, y - t / 2, -0.65, 1.55, y + t / 2, 0.75, r.c1, "Wood")
+				r:bevel(-1.55, y - t / 2, -0.65, -t / 2, y + t / 2, 0.75, 0.052, r.c1, "Wood", { wear = 1.06 })
+				r:bevel(t / 2, y - t / 2, -0.65, 1.55, y + t / 2, 0.75, 0.052, r.c1, "Wood", { wear = 1.06 })
 			end
 			-- fabric bins in three, books in two and a plant in the last
 			for _, p in { { -0.8, 0.2 }, { 0.8, 1.755 }, { 0.8, 0.2 } } do

@@ -345,14 +345,14 @@ local items: { Item } = {
 		tags = { "light" },
 		build = function(r: R)
 			-- a stepped base, a slim post with collars, and a four sided lantern
-			r:block(-0.62, 0, -0.62, 0.62, 0.3, 0.62, r.c1, "Metal")
-			r:block(-0.48, 0.3, -0.48, 0.48, 0.55, 0.48, r.c1, "Metal")
+			r:bevel(-0.62, 0, -0.62, 0.62, 0.3, 0.62, 0.08, r.c1, "Metal", { wear = 1.06 })
+			r:bevel(-0.48, 0.3, -0.48, 0.48, 0.55, 0.48, 0.08, r.c1, "Metal", { wear = 1.06 })
 			r:cyl(0, 0.85, 0, 0.6, 0.6, "y", r.c1, "Metal")
 			r:cyl(0, 1.2, 0, 0.12, 0.46, "y", shade(r.c1, 1.3), "Metal")
 			r:cyl(0, 4.2, 0, 6.0, 0.26, "y", r.c1, "Metal")
 			r:cyl(0, 6.6, 0, 0.14, 0.4, "y", shade(r.c1, 1.3), "Metal")
 			r:cyl(0, 7.25, 0, 0.2, 0.46, "y", r.c1, "Metal")
-			r:block(-0.48, 7.35, -0.48, 0.48, 7.48, 0.48, r.c1, "Metal")
+			r:bevel(-0.48, 7.35, -0.48, 0.48, 7.48, 0.48, 0.046, r.c1, "Metal", { wear = 1.06 })
 			local glass = r:block(-0.36, 7.48, -0.36, 0.36, 8.35, 0.36, r.c2, "Glass")
 			r:glow(glass, 24, 1.6)
 			for _, sx in { -1, 1 } do

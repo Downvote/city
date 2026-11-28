@@ -199,7 +199,7 @@ local items: { Item } = {
 				)
 			end
 			-- the cushion, its piping, a pillow and the towel
-			r:block(-0.9, 1.1, -0.55, 0.9, 1.3, 2.95, r.c2, "Fabric")
+			r:bevel(-0.9, 1.1, -0.55, 0.9, 1.3, 2.95, 0.09, r.c2, "Fabric", { round = true })
 			for _, z in { 0.4, 1.5, 2.5 } do
 				r:block(-0.93, 1.14, z - 0.04, 0.93, 1.33, z + 0.04, shade(r.c2, 0.85), "Fabric")
 			end
@@ -557,7 +557,7 @@ local items: { Item } = {
 			end
 			r:block(-1.0, 0.1, -0.6, 1.0, 1.0, 0.6, r.c1, "Metal")
 			r:block(-1.03, 0.82, -0.63, 1.03, 0.88, 0.63, shade(r.c1, 0.85), "Metal")
-			r:block(-1.05, 1.0, -0.65, 1.05, 1.22, 0.65, r.c2, "Metal")
+			r:bevel(-1.05, 1.0, -0.65, 1.05, 1.22, 0.65, 0.077, r.c2, "Metal", { wear = 1.06 })
 			r:block(-0.9, 1.22, -0.5, 0.9, 1.26, 0.5, shade(r.c2, 0.94), "Metal")
 			for _, x in { -0.55, 0.55 } do
 				r:block(x - 0.1, 0.9, 0.6, x + 0.1, 1.1, 0.7, shade(r.c2, 0.85), "Metal")
@@ -1116,7 +1116,7 @@ local items: { Item } = {
 			-- side, a door with its own stripes and a round window, a pitched roof (c2) with
 			-- bargeboards and a finial, a step, and a towel on a hook
 			local W, top = 1.3, 5.6
-			r:block(-1.45, 0, -1.45, 1.45, 0.25, 1.45, WOOD, "WoodPlanks")
+			r:bevel(-1.45, 0, -1.45, 1.45, 0.25, 1.45, 0.08, WOOD, "WoodPlanks", { wear = 1.06 })
 			r:block(-W, 0.25, -W, W, top, W, C.White, "WoodPlanks")
 			r:piece(function(q: R)
 				for i = 0, 3 do

@@ -333,7 +333,7 @@ local items: { Item } = {
 		tags = { "desk", "table" },
 		build = function(r: R)
 			-- a top with round ends on two round legs, a line of light along its front
-			r:block(-1.6, 2.76, -1.0, 1.6, 2.9, 1.0, r.c1, "Metal")
+			r:bevel(-1.6, 2.76, -1.0, 1.6, 2.9, 1.0, 0.049, r.c1, "Metal", { wear = 1.06 })
 			for _, sx in { -1, 1 } do
 				plate(r, sx * 1.6, 0, 2.76, 2.9, 2.0, r.c1, "Metal")
 				plate(r, sx * 1.7, 0, 0, 0.12, 1.3, SLATE, "Metal")
@@ -441,7 +441,7 @@ local items: { Item } = {
 		tags = { "bed" },
 		build = function(r: R)
 			-- a long round ended tub on a dark plinth, with lines of light down its sides
-			r:block(-1.4, 0, -2.6, 1.4, 0.3, 2.6, SLATE, "Metal")
+			r:bevel(-1.4, 0, -2.6, 1.4, 0.3, 2.6, 0.08, SLATE, "Metal", { wear = 1.06 })
 			r:block(-1.8, 0.3, -2.0, 1.8, 1.45, 2.0, r.c1, "Metal")
 			for _, sz in { -1, 1 } do
 				plate(r, 0, sz * 2.0, 0.3, 1.45, 3.6, r.c1, "Metal")
@@ -461,13 +461,13 @@ local items: { Item } = {
 				glowOnly(r:block(1.86, 1.15, 0.85 + k * 0.15, 1.9, 1.23, 0.93 + k * 0.15, col, "Metal"))
 			end
 			-- the mattress set into it, a pillow and a blanket over the foot with its edge rolled
-			r:block(-1.55, 1.45, -2.0, 1.55, 1.85, 2.0, r.c2, "Fabric")
+			r:bevel(-1.55, 1.45, -2.0, 1.55, 1.85, 2.0, 0.1, r.c2, "Fabric", { round = true })
 			for _, sz in { -1, 1 } do
 				plate(r, 0, sz * 2.0, 1.45, 1.85, 3.1, r.c2, "Fabric")
 			end
 			r:boxAt(CFrame.new(0, 2.0, -2.75) * CFrame.Angles(-0.2, 0, 0), 1.9, 0.32, 0.95, SHELL, "Fabric")
 			local blanket = shade(r.c2, 0.82)
-			r:block(-1.62, 1.6, -0.4, 1.62, 1.95, 2.0, blanket, "Fabric")
+			r:bevel(-1.62, 1.6, -0.4, 1.62, 1.95, 2.0, 0.1, blanket, "Fabric", { round = true })
 			plate(r, 0, 2.0, 1.6, 1.95, 3.24, blanket, "Fabric")
 			r:cyl(0, 1.86, -0.4, 3.24, 0.36, "x", blanket, "Fabric")
 			-- a glass hood over the head end, on a white rib at each end
@@ -650,8 +650,8 @@ local items: { Item } = {
 				end
 			end
 			local function rounded(y1: number, y2: number, inset: number, col: Color3)
-				r:block(-1.2 + inset, y1, -0.7, 1.2 - inset, y2, 0.7, col, "Metal")
-				r:block(-1.0, y1, -0.9 + inset, 1.0, y2, 0.9 - inset, col, "Metal")
+				r:bevel(-1.2 + inset, y1, -0.7, 1.2 - inset, y2, 0.7, 0.035, col, "Metal", { wear = 1.06 })
+				r:bevel(-1.0, y1, -0.9 + inset, 1.0, y2, 0.9 - inset, 0.035, col, "Metal", { wear = 1.06 })
 				for _, sx in { -1, 1 } do
 					for _, sz in { -1, 1 } do
 						r:cyl(sx * 1.0, (y1 + y2) / 2, sz * 0.7, y2 - y1, 0.4 - 2 * inset, "y", col, "Metal")
@@ -696,7 +696,7 @@ local items: { Item } = {
 		tags = { "kitchen" },
 		build = function(r: R)
 			-- a tall unit on a dark plinth, with an alcove where the food appears
-			r:block(-1.5, 0, -1.1, 1.5, 0.3, 0.95, SLATE, "Metal")
+			r:bevel(-1.5, 0, -1.1, 1.5, 0.3, 0.95, 0.08, SLATE, "Metal", { wear = 1.06 })
 			glowOnly(r:block(-1.3, 0.12, 0.95, 1.3, 0.18, 0.99, GLOW, "Glass"))
 			r:block(-1.6, 0.3, -1.2, -1.0, 6.6, 1.1, r.c1, "Metal")
 			r:block(1.0, 0.3, -1.2, 1.6, 6.6, 1.1, r.c1, "Metal")
@@ -705,7 +705,7 @@ local items: { Item } = {
 			r:block(-1.0, 3.0, -1.2, 1.0, 4.8, 0.2, SLATE, "Metal")
 			r:block(-1.0, 3.0, 0.2, 1.0, 3.04, 1.1, SLATE, "Metal")
 			-- a rounded top
-			r:block(-1.6, 6.6, -1.2, 1.6, 6.8, 0.9, r.c1, "Metal")
+			r:bevel(-1.6, 6.6, -1.2, 1.6, 6.8, 0.9, 0.07, r.c1, "Metal", { wear = 1.06 })
 			r:cyl(0, 6.6, 0.9, 3.2, 0.4, "x", r.c1, "Metal")
 			-- two drawers and two doors, with handles of light
 			for _, y in { { 0.35, 1.6 }, { 1.65, 2.9 } } do
@@ -751,7 +751,7 @@ local items: { Item } = {
 		tags = { "kitchen" },
 		build = function(r: R)
 			-- a body with round front corners on a dark plinth
-			r:block(-1.85, 0, -1.1, 1.85, 0.3, 0.9, SLATE, "Metal")
+			r:bevel(-1.85, 0, -1.1, 1.85, 0.3, 0.9, 0.08, SLATE, "Metal", { wear = 1.06 })
 			glowOnly(r:block(-1.4, 0.12, 0.9, 1.4, 0.18, 0.94, GLOW, "Glass"))
 			r:block(-1.7, 0.3, -1.3, 1.7, 3.2, 0.8, r.c1, "Metal")
 			r:block(-1.4, 0.3, 0.8, 1.4, 3.2, 1.1, r.c1, "Metal")
@@ -759,7 +759,7 @@ local items: { Item } = {
 				r:cyl(sx * 1.4, 1.75, 0.8, 2.9, 0.6, "y", r.c1, "Metal")
 			end
 			-- the top in the second colour, following the same shape a little proud
-			r:block(-1.76, 3.2, -1.3, 1.76, 3.4, 0.8, r.c2, "Metal")
+			r:bevel(-1.76, 3.2, -1.3, 1.76, 3.4, 0.8, 0.07, r.c2, "Metal", { wear = 1.06 })
 			r:block(-1.4, 3.2, 0.8, 1.4, 3.4, 1.16, r.c2, "Metal")
 			for _, sx in { -1, 1 } do
 				r:cyl(sx * 1.4, 3.3, 0.8, 0.2, 0.72, "y", r.c2, "Metal")
@@ -1632,8 +1632,8 @@ local items: { Item } = {
 				r:cyl(x, 1.15, 0, 0.2, 0.6, "y", SLATE, "Metal")
 			end
 			-- a slab with round ends, a padded top and a line of light along its front
-			r:block(-1.8, 1.25, -0.7, 1.8, 1.55, 0.7, r.c1, "Metal")
-			r:block(-1.8, 1.55, -0.6, 1.8, 1.7, 0.6, r.c2, "Fabric")
+			r:bevel(-1.8, 1.25, -0.7, 1.8, 1.55, 0.7, 0.08, r.c1, "Metal", { wear = 1.06 })
+			r:bevel(-1.8, 1.55, -0.6, 1.8, 1.7, 0.6, 0.067, r.c2, "Fabric", { round = true })
 			for _, sx in { -1, 1 } do
 				plate(r, sx * 1.8, 0, 1.25, 1.55, 1.4, r.c1, "Metal")
 				plate(r, sx * 1.8, 0, 1.55, 1.7, 1.2, r.c2, "Fabric")

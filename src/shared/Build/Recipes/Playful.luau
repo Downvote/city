@@ -116,7 +116,7 @@ end
 local function cushion(r: R, x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, color: Color3)
 	local h = y2 - y1
 	local xm, ym = (x1 + x2) / 2, (y1 + y2) / 2
-	r:block(x1, y1, z1 + h / 2, x2, y2, z2 - h / 2, color, "Fabric")
+	r:bevel(x1, y1, z1 + h / 2, x2, y2, z2 - h / 2, 0.1, color, "Fabric", { round = true })
 	r:cyl(xm, ym, z1 + h / 2, x2 - x1, h, "x", color, "Fabric")
 	r:cyl(xm, ym, z2 - h / 2, x2 - x1, h, "x", color, "Fabric")
 end
@@ -480,7 +480,7 @@ local items: { Item } = {
 			end
 			-- two bunks, each with a base, rails and panels at the ends
 			for k, y in { 0.5, 3.6 } do
-				r:block(-1.7, y + 0.1, -3.25, 1.7, y + 0.25, 3.25, shade(r.c1, 0.9), "Wood")
+				r:bevel(-1.7, y + 0.1, -3.25, 1.7, y + 0.25, 3.25, 0.052, shade(r.c1, 0.9), "Wood", { wear = 1.06 })
 				for _, sx in { -1, 1 } do
 					local x1, x2 = sx * 1.68, sx * 1.9
 					r:block(math.min(x1, x2), y, -3.2, math.max(x1, x2), y + 0.35, 3.2, r.c1, "Wood")
@@ -596,7 +596,7 @@ local items: { Item } = {
 		c2 = "F4ECDD",
 		tags = { "books", "storage" },
 		build = function(r: R)
-			r:block(-2.2, 0, -0.55, 2.2, 0.15, 0.55, r.c2, "Wood")
+			r:bevel(-2.2, 0, -0.55, 2.2, 0.15, 0.55, 0.052, r.c2, "Wood", { wear = 1.06 })
 			-- three bands of the rainbow, each an arch of short bars
 			local bands: { { rad: number, n: number, col: Color3 } } = {
 				{ rad = 1.9, n = 8, col = r.c1 },
@@ -790,7 +790,7 @@ local items: { Item } = {
 				r:cyl(x, 1.58, z, 0.34, 0.32, "y", col, "Wood")
 			end
 			-- the top with a coloured rim standing just proud of it
-			r:block(-1.75, 1.75, -1.0, 1.75, 1.95, 1.0, r.c1, "Wood")
+			r:bevel(-1.75, 1.75, -1.0, 1.75, 1.95, 1.0, 0.07, r.c1, "Wood", { wear = 1.06 })
 			r:block(-1.83, 1.72, 1.0, 1.83, 1.98, 1.08, r.c2, "Wood")
 			r:block(-1.83, 1.72, -1.08, 1.83, 1.98, -1.0, r.c2, "Wood")
 			r:block(-1.83, 1.72, -1.0, -1.75, 1.98, 1.0, r.c2, "Wood")
@@ -858,7 +858,7 @@ local items: { Item } = {
 					r:box(sx * 2.2, 0.8, sz * 1.35, 0.3, 1.6, 0.3, r.c1, "Wood")
 				end
 			end
-			r:block(-2.4, 1.4, -1.55, 2.4, 1.7, 1.55, r.c1, "Wood")
+			r:bevel(-2.4, 1.4, -1.55, 2.4, 1.7, 1.55, 0.08, r.c1, "Wood", { wear = 1.06 })
 			r:block(-2.3, 1.7, -1.45, 2.3, 1.74, 1.45, r.c2, "Grass")
 			r:block(-2.4, 1.7, 1.45, 2.4, 1.82, 1.55, r.c1, "Wood")
 			r:block(-2.4, 1.7, -1.55, 2.4, 1.82, -1.45, r.c1, "Wood")
@@ -983,7 +983,7 @@ local items: { Item } = {
 			r:block(0.1, 1.4, 0.6, 1.5, 1.8, 0.64, BUTTER, "Wood")
 			r:ball(0.8, 1.6, 0.67, 0.12, BLUE, "Wood")
 			-- the counter: two burners, a pot, a sink with a tap
-			r:block(-1.65, 1.9, -0.65, 1.65, 2.0, 0.65, WOOD, "Wood")
+			r:bevel(-1.65, 1.9, -0.65, 1.65, 2.0, 0.65, 0.035, WOOD, "Wood", { wear = 1.06 })
 			for _, x in { -1.15, -0.45 } do
 				r:cyl(x, 2.015, 0.15, 0.03, 0.5, "y", INK, "Metal")
 				r:cyl(x, 2.045, 0.15, 0.03, 0.3, "y", RED, "Wood")
@@ -1552,7 +1552,7 @@ local items: { Item } = {
 			r:block(-0.7, 1.2, 1.24, -0.6, 1.4, 1.27, INK, "Metal")
 			r:block(-0.75, 1.0, 1.24, -0.55, 1.1, 1.27, RED, "Wood")
 			-- a ledge with a joystick and a big button
-			r:block(-1.2, 2.6, -1.2, 1.2, 2.75, 1.45, r.c2, "Metal")
+			r:bevel(-1.2, 2.6, -1.2, 1.2, 2.75, 1.45, 0.052, r.c2, "Metal", { wear = 1.06 })
 			r:cyl(-0.5, 2.765, 1.1, 0.03, 0.32, "y", INK, "Metal")
 			rod(r, Vector3.new(-0.5, 2.75, 1.1), Vector3.new(-0.5, 3.05, 1.1), 0.06, INK)
 			r:ball(-0.5, 3.08, 1.1, 0.2, RED, "Wood")
@@ -1567,7 +1567,7 @@ local items: { Item } = {
 				r:glass(-1.08, 2.75, sx * 1.08, 1.08, 5.25, sx * 1.11)
 			end
 			-- prizes in a heap, a chute in the corner
-			r:block(-1.08, 2.75, -1.08, 1.08, 2.92, 1.08, shade(r.c1, 0.8), "Metal")
+			r:bevel(-1.08, 2.75, -1.08, 1.08, 2.92, 1.08, 0.059, shade(r.c1, 0.8), "Metal", { wear = 1.06 })
 			r:block(0.45, 2.92, 0.45, 1.05, 3.35, 1.05, shade(r.c2, 0.9), "Metal")
 			r:block(0.52, 3.35, 0.52, 0.98, 3.38, 0.98, INK, "Metal")
 			for i, p in
@@ -1911,7 +1911,7 @@ local items: { Item } = {
 		tags = { "toy", "seat" },
 		build = function(r: R)
 			-- a frame of two triangles on a foot, an axle through them
-			r:block(-0.7, 0, -0.6, 0.7, 0.1, 0.6, shade(r.c2, 0.85), "Metal")
+			r:bevel(-0.7, 0, -0.6, 0.7, 0.1, 0.6, 0.035, shade(r.c2, 0.85), "Metal", { wear = 1.06 })
 			for _, z in { -0.45, 0.45 } do
 				r:tri(Vector3.new(-0.6, 0.1, z), Vector3.new(0.6, 0.1, z), Vector3.new(0, 1.05, z), 0.16, r.c2, "Metal")
 			end
@@ -1951,7 +1951,7 @@ local items: { Item } = {
 		tags = { "bath" },
 		build = function(r: R)
 			-- a low cupboard with two doors and round knobs
-			r:block(-1.05, 0, -1.05, 1.05, 0.1, -0.15, shade(r.c1, 0.8), "Wood")
+			r:bevel(-1.05, 0, -1.05, 1.05, 0.1, -0.15, 0.035, shade(r.c1, 0.8), "Wood", { wear = 1.06 })
 			r:block(-1.1, 0.1, -1.1, 1.1, 2.2, -0.1, r.c1, "Wood")
 			for i, sx in { -1, 1 } do
 				local x1, x2 = sx * 0.03, sx * 1.0
@@ -1960,7 +1960,7 @@ local items: { Item } = {
 				r:cyl(sx * 0.52, 1.5, -0.04, 0.04, 0.4, "z", if i == 1 then BUTTER else PINK, "Wood")
 			end
 			-- the top, a round basin and a tap with a red and a blue handle
-			r:block(-1.2, 2.2, -1.2, 1.2, 2.32, 0.0, SNOW, "Wood")
+			r:bevel(-1.2, 2.2, -1.2, 1.2, 2.32, 0.0, 0.042, SNOW, "Wood", { wear = 1.06 })
 			r:cyl(0, 2.41, -0.55, 0.18, 1.0, "y", SNOW, "Wood")
 			r:cyl(0, 2.52, -0.55, 0.04, 1.08, "y", shade(SNOW, 0.95), "Wood")
 			r:cyl(0, 2.555, -0.55, 0.03, 0.8, "y", SKY, "Glass")

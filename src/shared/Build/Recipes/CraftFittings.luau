@@ -137,7 +137,18 @@ local items: { Item } = {
 				q:block(-2.3, 0.3, -1.26, 2.3, 0.5, -1.14, frame, "Wood")
 			end, true)
 			for i, top in tops do
-				r:block(-2.45, top - 0.14, mids[i] - 0.45, 2.45, top, mids[i] + 0.45, r.c1, "WoodPlanks")
+				r:bevel(
+					-2.45,
+					top - 0.14,
+					mids[i] - 0.45,
+					2.45,
+					top,
+					mids[i] + 0.45,
+					0.049,
+					r.c1,
+					"WoodPlanks",
+					{ wear = 1.06 }
+				)
 			end
 			-- nine zinc buckets, and a rail along the back of the top step
 			r:piece(function(q: R)
@@ -384,8 +395,8 @@ local items: { Item } = {
 			-- A carved figure, more or less, on a block of stone: three leaning forms and a head.
 			-- c1 the plinth, c2 the carving.
 			r:block(-1, 0, -1, 1, 1.5, 1, r.c1, "Concrete")
-			r:block(-1.1, 1.5, -1.1, 1.1, 1.72, 1.1, shade(r.c1, 0.86), "Concrete")
-			r:block(-0.6, 1.72, -0.5, 0.6, 1.9, 0.5, shade(r.c2, 0.84), "Marble")
+			r:bevel(-1.1, 1.5, -1.1, 1.1, 1.72, 1.1, 0.077, shade(r.c1, 0.86), "Concrete", { wear = 0.94 })
+			r:bevel(-0.6, 1.72, -0.5, 0.6, 1.9, 0.5, 0.063, shade(r.c2, 0.84), "Marble", { wear = 0.94 })
 			r:lump(CFrame.new(-0.05, 3.0, 0) * CFrame.Angles(0, 0.5, 0.16), 1.3, 2.5, 1.0, r.c2, "Marble")
 			r:lump(CFrame.new(0.22, 4.55, 0.05) * CFrame.Angles(0.2, -0.3, -0.42), 1.5, 1.5, 0.9, r.c2, "Marble")
 			r:lump(
@@ -414,7 +425,7 @@ local items: { Item } = {
 			-- A hoop of cast metal stood on edge on a low block, with a ball caught in it.
 			-- c1 the plinth, c2 the metal.
 			r:block(-1.3, 0, -0.75, 1.3, 1.5, 0.75, r.c1, "Concrete")
-			r:block(-1.4, 1.5, -0.8, 1.4, 1.7, 0.8, shade(r.c1, 0.86), "Concrete")
+			r:bevel(-1.4, 1.5, -0.8, 1.4, 1.7, 0.8, 0.07, shade(r.c1, 0.86), "Concrete", { wear = 0.94 })
 			local cy, rad = 3.6, 1.7
 			local pts = {}
 			for k = 0, 7 do
@@ -486,8 +497,8 @@ local items: { Item } = {
 			end, true)
 			for i = 0, 2 do
 				local x = -1.967 + i * 1.967
-				r:block(x - 0.82, 1.4, -0.65, x + 0.82, 1.8, 0.85, r.c1, "Fabric")
-				r:block(x - 0.82, 1.28, -0.65, x + 0.82, 1.4, 0.8, shade(r.c2, 0.85), "Wood")
+				r:bevel(x - 0.82, 1.4, -0.65, x + 0.82, 1.8, 0.85, 0.1, r.c1, "Fabric", { round = true })
+				r:bevel(x - 0.82, 1.28, -0.65, x + 0.82, 1.4, 0.8, 0.042, shade(r.c2, 0.85), "Wood", { wear = 1.06 })
 				local back = CFrame.new(x, 2.75, -0.88) * CFrame.Angles(math.rad(-9), 0, 0)
 				r:boxAt(back * CFrame.new(0, 0, -0.1), 1.72, 2.0, 0.14, r.c2, "Wood")
 				r:boxAt(back * CFrame.new(0, 0.02, 0.04), 1.6, 1.8, 0.2, r.c1, "Fabric")
@@ -680,7 +691,7 @@ local items: { Item } = {
 			local W, H = 8, 10
 			r:block(-W / 2 - 0.3, 0, -0.45, -W / 2, H + 0.3, 0.45, r.c2, "Wood")
 			r:block(W / 2, 0, -0.45, W / 2 + 0.3, H + 0.3, 0.45, r.c2, "Wood")
-			r:block(-W / 2 - 0.3, H, -0.45, W / 2 + 0.3, H + 0.3, 0.45, r.c2, "Wood")
+			r:bevel(-W / 2 - 0.3, H, -0.45, W / 2 + 0.3, H + 0.3, 0.45, 0.08, r.c2, "Wood", { wear = 1.06 })
 			for _, sx in { -1, 1 } do
 				local hinge = sx * (W / 2 - 0.05)
 				local x1, x2 = math.min(sx * 0.03, hinge), math.max(sx * 0.03, hinge)

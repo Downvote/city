@@ -130,7 +130,7 @@ local items: { Item } = {
 			end
 			-- a deep tub, rounded underneath at both ends, with a rolled rim
 			r:block(-1.55, 0.95, -2.85, 1.55, 2.1, 2.85, r.c1, "Marble")
-			r:block(-1.55, 0.45, -2.35, 1.55, 0.95, 2.35, r.c1, "Marble")
+			r:bevel(-1.55, 0.45, -2.35, 1.55, 0.95, 2.35, 0.08, r.c1, "Marble", { wear = 0.94 })
 			for _, sz in { -1, 1 } do
 				r:cyl(0, 0.95, sz * 2.35, 3.1, 1.0, "x", r.c1, "Marble")
 			end
@@ -178,7 +178,7 @@ local items: { Item } = {
 		c2 = "C9CCD3",
 		tags = { "bath" },
 		build = function(r: R)
-			r:block(-1.8, 0, -1.8, 1.8, 0.24, 1.8, shade(PORCELAIN, 0.95), "Marble")
+			r:bevel(-1.8, 0, -1.8, 1.8, 0.24, 1.8, 0.08, shade(PORCELAIN, 0.95), "Marble", { wear = 0.94 })
 			r:block(-1.6, 0.24, 1.6, 1.8, 0.3, 1.8, PORCELAIN, "Marble")
 			r:block(1.6, 0.24, -1.6, 1.8, 0.3, 1.6, PORCELAIN, "Marble")
 			r:block(0.1, 0.24, -0.2, 0.5, 0.27, 0.2, C.DarkMetal, "Metal")
@@ -250,7 +250,7 @@ local items: { Item } = {
 					r:block(sx * 0.28 - 0.03, ym - 0.03, 0.97, sx * 0.28 + 0.03, ym + 0.03, 1.02, C.Gold, "Metal")
 				end
 			end
-			r:block(-1.5, 2.9, -1.0, 1.5, 3.1, 1.0, r.c2, "Marble")
+			r:bevel(-1.5, 2.9, -1.0, 1.5, 3.1, 1.0, 0.07, r.c2, "Marble", { wear = 0.94 })
 			-- a round bowl sitting on the top: a body, then a rim round its open middle
 			r:cyl(0, 3.14, 0.1, 0.08, 0.9, "y", shade(PORCELAIN, 0.9), "Marble")
 			r:cyl(0, 3.26, 0.1, 0.2, 1.4, "y", PORCELAIN, "Marble")
@@ -328,7 +328,7 @@ local items: { Item } = {
 				end
 			end
 			r:block(-1.3, 0.1, -1.3, 1.3, 3.1, 1.2, r.c1, "Metal")
-			r:block(-1.32, 3.1, -1.32, 1.32, 3.2, 1.24, shade(r.c1, 0.94), "Metal")
+			r:bevel(-1.32, 3.1, -1.32, 1.32, 3.2, 1.24, 0.035, shade(r.c1, 0.94), "Metal", { wear = 1.06 })
 			-- a control strip: soap drawer, display, buttons and a dial
 			r:block(-1.3, 2.55, 1.2, 1.3, 3.1, 1.24, shade(r.c1, 0.92), "Metal")
 			r:block(-1.22, 2.65, 1.24, -0.6, 3.0, 1.28, r.c1, "Metal")
@@ -389,7 +389,18 @@ local items: { Item } = {
 			r:block(-0.7, 0, -0.5, 0.7, 0.08, 0.5, shade(r.c1, 0.75), "Fabric")
 			for i = 0, 3 do
 				local y = 0.08 + i * 0.28
-				r:block(-0.72, y, -0.52, 0.72, y + 0.28, 0.52, if i % 2 == 0 then r.c1 else shade(r.c1, 0.9), "Fabric")
+				r:bevel(
+					-0.72,
+					y,
+					-0.52,
+					0.72,
+					y + 0.28,
+					0.52,
+					0.1,
+					if i % 2 == 0 then r.c1 else shade(r.c1, 0.9),
+					"Fabric",
+					{ round = true }
+				)
 			end
 			r:piece(function(q: R)
 				local cane = shade(r.c1, 0.8)
@@ -404,7 +415,7 @@ local items: { Item } = {
 					q:block(-0.75, 0.08, z - 0.025, -0.72, 1.2, z + 0.025, cane, "Fabric")
 				end
 			end)
-			r:block(-0.8, 1.2, -0.6, 0.8, 1.36, 0.6, shade(r.c1, 0.82), "Fabric")
+			r:bevel(-0.8, 1.2, -0.6, 0.8, 1.36, 0.6, 0.072, shade(r.c1, 0.82), "Fabric", { round = true })
 			for _, sx in { -1, 1 } do
 				local xa, xb = sx * 0.76, sx * 0.79
 				r:block(math.min(xa, xb), 0.96, -0.18, math.max(xa, xb), 1.1, 0.18, shade(r.c1, 0.5), "Fabric")

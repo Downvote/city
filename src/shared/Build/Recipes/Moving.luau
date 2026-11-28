@@ -357,7 +357,7 @@ local items: { Item } = {
 			local wood = r.c1
 			local dark = shade(r.c1, 0.75)
 			-- a stone pit with water in it, under the wheel
-			r:block(-1.45, 0, -2.2, 1.45, 0.15, 2.2, STONE, "Slate")
+			r:bevel(-1.45, 0, -2.2, 1.45, 0.15, 2.2, 0.052, STONE, "Slate", { wear = 0.94 })
 			for _, sx in { -1, 1 } do
 				r:block(sx * 1.45 - 0.3, 0.15, -2.2, sx * 1.45, 0.75, 2.2, STONE, "Slate")
 			end
@@ -451,7 +451,7 @@ local items: { Item } = {
 		build = function(r: R)
 			local frame = Color3.fromRGB(240, 238, 232)
 			-- a paved base with a step, and the two A frames holding the axle
-			r:block(-3.1, 0, -1.4, 3.1, 0.3, 1.4, STONE, "Concrete")
+			r:bevel(-3.1, 0, -1.4, 3.1, 0.3, 1.4, 0.08, STONE, "Concrete", { wear = 0.94 })
 			r:block(-1.0, 0, 1.4, 1.0, 0.15, 1.5, STONE, "Concrete")
 			for _, z in { -0.9, 0.9 } do
 				r:beam(Vector3.new(-2.3, 0.3, z), Vector3.new(0, 4.6, z), 0.18, 0.18, frame, "Metal")
@@ -891,8 +891,8 @@ local items: { Item } = {
 				r:lump(CFrame.new(sx * 2.18, 2.1, 0), 0.04, 0.34, 0.5, r.c2, "Wood")
 			end
 			-- the mattress, a quilt, a pillow and a bear
-			r:block(-2.03, 1.02, -1.03, 2.03, 1.4, 1.03, C.White, "Fabric")
-			r:block(-0.4, 1.4, -1.0, 2.0, 1.5, 1.0, r.c2, "Fabric")
+			r:bevel(-2.03, 1.02, -1.03, 2.03, 1.4, 1.03, 0.1, C.White, "Fabric", { round = true })
+			r:bevel(-0.4, 1.4, -1.0, 2.0, 1.5, 1.0, 0.045, r.c2, "Fabric", { round = true })
 			r:block(-0.4, 1.5, -0.6, -0.2, 1.53, 0.6, shade(r.c2, 0.9), "Fabric")
 			r:lump(CFrame.new(-1.5, 1.55, 0), 0.7, 0.3, 1.1, C.White, "Fabric")
 			r:ball(-0.9, 1.62, 0.4, 0.42, Color3.fromRGB(196, 150, 110), "Fabric")
@@ -971,7 +971,7 @@ local items: { Item } = {
 					r:cyl(sx * 0.6, 0.04, sz * 0.6, 0.08, 0.14, "y", dk, "Wood")
 				end
 			end
-			r:block(-0.7, 0.08, -0.7, 0.7, 0.6, 0.7, r.c1, "Wood")
+			r:bevel(-0.7, 0.08, -0.7, 0.7, 0.6, 0.7, 0.08, r.c1, "Wood", { wear = 1.06 })
 			r:block(-0.76, 0.6, -0.76, 0.76, 0.66, 0.76, dk, "Wood")
 			r:block(-0.5, 0.2, 0.7, 0.5, 0.48, 0.73, dk, "Wood")
 			-- the crank at the side
@@ -1097,7 +1097,7 @@ local items: { Item } = {
 		lively = true,
 		build = function(r: R)
 			-- a plastic tray with wood shavings in it
-			r:block(-1.15, 0, -0.65, 1.15, 0.35, 0.65, r.c1, "Metal")
+			r:bevel(-1.15, 0, -0.65, 1.15, 0.35, 0.65, 0.08, r.c1, "Metal", { wear = 1.06 })
 			r:block(-1.08, 0.35, -0.58, 1.08, 0.38, 0.58, Color3.fromRGB(232, 214, 170), "Sand")
 			-- the wire top: bars all round, a rim and bars across the roof
 			local wire = Color3.fromRGB(236, 236, 232)
@@ -1398,7 +1398,7 @@ local items: { Item } = {
 			r:cyl(0, 2.25, 0.4, 0.4, 0.14, "z", C.Gold, "Metal")
 			K.fall(r, Vector3.new(0, 2.2, 0.58), Vector3.new(0, 0.8, 0.66), 0.16, { speed = 4, lip = false })
 			-- the basin: walls round a pool of water, on a plinth
-			r:block(-1.25, 0, 0.0, 1.25, 0.3, 1.55, dk, "Slate")
+			r:bevel(-1.25, 0, 0.0, 1.25, 0.3, 1.55, 0.08, dk, "Slate", { wear = 0.94 })
 			r:block(-1.2, 0.3, 1.3, 1.2, 0.92, 1.5, r.c1, "Slate")
 			for _, sx in { -1, 1 } do
 				r:block(

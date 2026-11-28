@@ -281,7 +281,7 @@ local items: { Item } = {
 			-- a board (c1) on two iron brackets (c2), with a row of books: thin spines of different
 			-- heights in muted colours, one leaning on the row and two lying flat, then a framed
 			-- photo and a little plant in a pot
-			r:block(-1.8, 0.4, 0, 1.8, 0.55, 0.95, r.c1, "Wood")
+			r:bevel(-1.8, 0.4, 0, 1.8, 0.55, 0.95, 0.053, r.c1, "Wood", { wear = 1.06 })
 			r:block(-1.8, 0.34, 0.9, 1.8, 0.4, 0.95, shade(r.c1, 0.8), "Wood")
 			for _, x in { -1.2, 1.2 } do
 				r:block(x - 0.05, 0.0, 0, x + 0.05, 0.4, 0.08, r.c2, "Metal")

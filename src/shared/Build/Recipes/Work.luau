@@ -246,8 +246,19 @@ end
 -- that stands proud of it all round, raised panels down the front and a dark kick at its foot.
 local function counter(r: R, w: number, d: number, h: number, body: Color3, top: Color3)
 	r:block(-w / 2, 0.2, -d / 2, w / 2, h - 0.2, d / 2, body, "Wood")
-	r:block(-w / 2 + 0.06, 0, -d / 2 + 0.06, w / 2 - 0.06, 0.2, d / 2 - 0.06, shade(body, 0.6), "Wood")
-	r:block(-w / 2 - 0.15, h - 0.2, -d / 2 - 0.1, w / 2 + 0.15, h, d / 2 + 0.15, top, "Wood")
+	r:bevel(
+		-w / 2 + 0.06,
+		0,
+		-d / 2 + 0.06,
+		w / 2 - 0.06,
+		0.2,
+		d / 2 - 0.06,
+		0.07,
+		shade(body, 0.6),
+		"Wood",
+		{ wear = 1.06 }
+	)
+	r:bevel(-w / 2 - 0.15, h - 0.2, -d / 2 - 0.1, w / 2 + 0.15, h, d / 2 + 0.15, 0.07, top, "Wood", { wear = 1.06 })
 	r:piece(function(q: R)
 		q:block(-w / 2 - 0.08, h - 0.32, -d / 2 - 0.04, w / 2 + 0.08, h - 0.2, d / 2 + 0.08, shade(top, 0.86), "Wood")
 		local panels = math.max(2, math.floor(w / 1.6 + 0.5))
@@ -296,7 +307,7 @@ local items: { any } = {
 			stripedAwning(r, 8.4, -3.1, 2.55, 8.86, 7.15, 8, r.c1, r.c2)
 			-- the counter: a dark body, boards down the front and the ends, a thick top
 			r:block(-3.4, 0, -0.55, 3.4, H - 0.2, 0.9, shade(WALNUT, 0.7), "Wood")
-			r:block(-3.6, H - 0.22, -1.12, 3.6, H, 1.1, WALNUT, "WoodPlanks")
+			r:bevel(-3.6, H - 0.22, -1.12, 3.6, H, 1.1, 0.077, WALNUT, "WoodPlanks", { wear = 1.06 })
 			r:piece(function(q: R)
 				for i = 0, 8 do
 					local x = -3.4 + i * (6.8 / 9)
@@ -732,8 +743,8 @@ local items: { any } = {
 			local HEARTH = 2.7
 			-- the base, its wood store and the hearth
 			r:block(-2.8, 0.25, -1.9, 2.8, 2.4, 1.8, brick, "Brick")
-			r:block(-3.0, 2.4, -2.0, 3.0, HEARTH, 2.2, stone, "Concrete")
-			r:block(-2.9, 0, -1.95, 2.9, 0.25, 1.86, shade(stone, 0.85), "Concrete")
+			r:bevel(-3.0, 2.4, -2.0, 3.0, HEARTH, 2.2, 0.08, stone, "Concrete", { wear = 0.94 })
+			r:bevel(-2.9, 0, -1.95, 2.9, 0.25, 1.86, 0.08, shade(stone, 0.85), "Concrete", { wear = 0.94 })
 			r:piece(function(q: R)
 				q:block(-0.9, 0.25, 1.8, 0.9, 1.1, 1.9, soot)
 				q:cyl(0, 1.1, 1.85, 0.1, 1.8, "z", soot)
@@ -765,7 +776,7 @@ local items: { any } = {
 			-- the dome and the porch round its mouth
 			r:lump(CFrame.new(0, HEARTH, -0.2), 5.0, 4.4, 3.36, brick, "Brick")
 			r:block(-1.25, HEARTH, 0.9, 1.25, 4.7, 1.9, brick, "Brick")
-			r:block(-1.38, 4.7, 0.82, 1.38, 4.9, 2.0, stone, "Concrete")
+			r:bevel(-1.38, 4.7, 0.82, 1.38, 4.9, 2.0, 0.07, stone, "Concrete", { wear = 0.94 })
 			-- the mouth: dark inside, the fire low in it, a ring of light bricks round it
 			r:piece(function(q: R)
 				q:block(-0.72, HEARTH, 1.9, 0.72, 3.5, 1.96, soot)
@@ -804,7 +815,7 @@ local items: { any } = {
 			end)
 			-- the chimney, its cap and pot
 			r:block(-0.45, 4.2, -1.35, 0.45, 6.55, -0.45, brick, "Brick")
-			r:block(-0.58, 6.55, -1.48, 0.58, 6.8, -0.32, stone, "Concrete")
+			r:bevel(-0.58, 6.55, -1.48, 0.58, 6.8, -0.32, 0.08, stone, "Concrete", { wear = 0.94 })
 			local pot = r:cyl(0, 7.05, -0.9, 0.5, 0.44, "y", Color3.fromRGB(196, 116, 80), "Brick")
 			r:smoke(pot)
 			-- the peel on the ledge with two loaves on it, its handle out past the end
@@ -1227,7 +1238,7 @@ local items: { any } = {
 			local steel = Color3.fromRGB(176, 182, 190)
 			local H = 3.2
 			-- the desk: a top, a stand of three drawers, an end panel and a modesty board
-			r:block(-2.4, H - 0.16, -1.0, 1.8, H, 1.0, body, "Metal")
+			r:bevel(-2.4, H - 0.16, -1.0, 1.8, H, 1.0, 0.056, body, "Metal", { wear = 1.06 })
 			r:block(-2.36, 0, -0.9, -1.0, H - 0.16, 0.9, body, "Metal")
 			r:block(1.56, 0, -0.9, 1.76, H - 0.16, 0.9, body, "Metal")
 			r:block(-1.0, 0.8, 0.7, 1.56, H - 0.16, 0.82, body, "Metal")
@@ -1352,7 +1363,7 @@ local items: { any } = {
 				end
 				q:block(2.4, 2.2, -2.1, 4.4, 2.34, 2.1, steel, "Metal")
 			end, true)
-			r:block(2.45, 2.34, -1.1, 4.35, 2.74, 2.1, Color3.fromRGB(150, 196, 190), "Fabric")
+			r:bevel(2.45, 2.34, -1.1, 4.35, 2.74, 2.1, 0.1, Color3.fromRGB(150, 196, 190), "Fabric", { round = true })
 			r:boxAt(
 				CFrame.new(3.4, 2.82, -1.62) * CFrame.Angles(math.rad(22), 0, 0),
 				1.9,
@@ -1507,7 +1518,7 @@ local items: { any } = {
 				end
 			end, nil, "Plaster")
 			-- the little desk: a top, a drawer to the front and four legs
-			r:block(-1.1, 2.4, 0.4, 1.1, 2.6, 1.5, wood, "Wood")
+			r:bevel(-1.1, 2.4, 0.4, 1.1, 2.6, 1.5, 0.07, wood, "Wood", { wear = 1.06 })
 			r:piece(function(q: R)
 				for _, x in { -0.95, 0.95 } do
 					for _, z in { 0.55, 1.35 } do
@@ -1599,7 +1610,7 @@ local items: { any } = {
 			local box = r.c2
 			local TOP = 0.5
 			-- the deck: a frame, boards on top, a rounded nosing and a pleated skirt
-			r:block(-3.9, 0, -2.9, 3.9, TOP - 0.08, 1.9, shade(WALNUT, 0.6), "Wood")
+			r:bevel(-3.9, 0, -2.9, 3.9, TOP - 0.08, 1.9, 0.08, shade(WALNUT, 0.6), "Wood", { wear = 1.06 })
 			r:piece(function(q: R)
 				for i = 0, 7 do
 					local z = -2.9 + i * 0.6

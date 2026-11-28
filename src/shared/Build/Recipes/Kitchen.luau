@@ -39,13 +39,13 @@ end
 
 -- A cabinet body w wide and d deep (front at d / 2) with a recessed kick plinth, up to the worktop.
 local function cabinet(r: R, w: number, d: number)
-	r:block(-w / 2, 0, -d / 2, w / 2, 0.35, d / 2 - 0.3, shade(r.c1, 0.55), "Wood")
+	r:bevel(-w / 2, 0, -d / 2, w / 2, 0.35, d / 2 - 0.3, 0.08, shade(r.c1, 0.55), "Wood", { wear = 1.06 })
 	r:block(-w / 2, 0.35, -d / 2, w / 2, TOP - 0.22, d / 2 - 0.1, r.c1, "Wood")
 end
 
 -- A worktop w wide and d deep with a slim front lip.
 local function worktop(r: R, w: number, d: number)
-	r:block(-w / 2, TOP - 0.22, -d / 2, w / 2, TOP, d / 2, r.c2, "Marble")
+	r:bevel(-w / 2, TOP - 0.22, -d / 2, w / 2, TOP, d / 2, 0.077, r.c2, "Marble", { wear = 0.94 })
 	r:block(-w / 2, TOP - 0.26, d / 2 - 0.06, w / 2, TOP - 0.22, d / 2, shade(r.c2, 0.85), "Marble")
 end
 
@@ -167,8 +167,8 @@ local items: { Item } = {
 			-- fits in the corner of a run: neighbours join on its right and front,
 			-- and a slanted door faces the room across the inside corner
 			local kick = shade(r.c1, 0.55)
-			r:block(-1.3, 0, -1.3, 1.3, 0.35, -0.2, kick, "Wood")
-			r:block(-1.3, 0, -0.2, -0.2, 0.35, 1.3, kick, "Wood")
+			r:bevel(-1.3, 0, -1.3, 1.3, 0.35, -0.2, 0.08, kick, "Wood", { wear = 1.06 })
+			r:bevel(-1.3, 0, -0.2, -0.2, 0.35, 1.3, 0.08, kick, "Wood", { wear = 1.06 })
 			r:tri(
 				Vector3.new(-0.2, 0.175, -0.2),
 				Vector3.new(1.0, 0.175, -0.2),
@@ -185,7 +185,7 @@ local items: { Item } = {
 			r:boxAt(diag * CFrame.new(0, 0.04, 0.03), 1.6, 2.7, 0.06, shade(r.c1, 1.05), "Wood")
 			r:boxAt(diag * CFrame.new(0, 0.04, 0.075), 1.28, 2.38, 0.03, shade(r.c1, 0.92), "Wood")
 			r:boxAt(diag * CFrame.new(0.56, 0.8, 0.14), 0.07, 0.7, 0.07, STEEL, "Metal")
-			r:block(-1.3, TOP - 0.22, -1.3, 1.3, TOP, 1.3, r.c2, "Marble")
+			r:bevel(-1.3, TOP - 0.22, -1.3, 1.3, TOP, 1.3, 0.077, r.c2, "Marble", { wear = 0.94 })
 		end,
 	},
 	{
@@ -205,7 +205,7 @@ local items: { Item } = {
 			-- real well in the worktop: steel sides, a floor and a plug hole
 			local y1, y2 = TOP - 0.22, TOP
 			local yb = y1 - 0.5
-			r:block(-1.5, 0, -1.3, 1.5, 0.35, 1.0, shade(r.c1, 0.55), "Wood")
+			r:bevel(-1.5, 0, -1.3, 1.5, 0.35, 1.0, 0.08, shade(r.c1, 0.55), "Wood", { wear = 1.06 })
 			r:block(-1.5, 0.35, -1.3, 1.5, yb, 1.2, r.c1, "Wood")
 			r:block(-1.5, yb, 0.72, 1.5, y1, 1.2, r.c1, "Wood")
 			r:block(-1.5, yb, -1.3, 1.5, y1, -0.78, r.c1, "Wood")
@@ -255,7 +255,7 @@ local items: { Item } = {
 		c2 = "2E2E33",
 		tags = { "kitchen" },
 		build = function(r: R)
-			r:block(-1.45, 0, -1.25, 1.45, 0.15, 1.1, C.Black, "Metal")
+			r:bevel(-1.45, 0, -1.25, 1.45, 0.15, 1.1, 0.052, C.Black, "Metal", { wear = 1.06 })
 			r:block(-1.5, 0.15, -1.3, 1.5, TOP - 0.1, 1.2, r.c1, "Metal")
 			-- a black glass cooktop with four rings
 			r:block(-1.5, TOP - 0.1, -1.3, 1.5, TOP, 1.25, C.Black, "Glass")
@@ -307,10 +307,10 @@ local items: { Item } = {
 		c2 = "C9CCD3",
 		tags = { "kitchen" },
 		build = function(r: R)
-			r:block(-1.4, 0, -1.2, 1.4, 0.3, 1.0, C.DarkMetal, "Metal")
+			r:bevel(-1.4, 0, -1.2, 1.4, 0.3, 1.0, 0.08, C.DarkMetal, "Metal", { wear = 1.06 })
 			r:block(-1.5, 0.3, -1.3, 1.5, 6.6, 1.0, r.c1, "Metal")
 			-- a rounded top, like an old fridge
-			r:block(-1.5, 6.6, -1.3, 1.5, 6.95, 0.65, r.c1, "Metal")
+			r:bevel(-1.5, 6.6, -1.3, 1.5, 6.95, 0.65, 0.08, r.c1, "Metal", { wear = 1.06 })
 			r:cyl(0, 6.6, 0.65, 3.0, 0.7, "x", r.c1, "Metal")
 			-- a short freezer door over a tall fridge door, each on a dark rubber seal that shows
 			-- as a line round it, with long chrome handles
@@ -356,13 +356,13 @@ local items: { Item } = {
 		tags = { "kitchen" },
 		build = function(r: R)
 			-- a stone top that runs down both ends to the floor
-			r:block(-3, TOP - 0.25, -1.8, 3, TOP, 1.8, r.c2, "Marble")
+			r:bevel(-3, TOP - 0.25, -1.8, 3, TOP, 1.8, 0.08, r.c2, "Marble", { wear = 0.94 })
 			for _, sx in { -1, 1 } do
 				local xa, xb = sx * 2.75, sx * 3
 				r:block(math.min(xa, xb), 0, -1.8, math.max(xa, xb), TOP - 0.25, 1.8, r.c2, "Marble")
 			end
 			-- the cabinet on the cooking side (the back), its drawers and doors facing out that way
-			r:block(-2.75, 0, -1.55, 2.75, 0.35, 0.55, shade(r.c1, 0.55), "Wood")
+			r:bevel(-2.75, 0, -1.55, 2.75, 0.35, 0.55, 0.08, shade(r.c1, 0.55), "Wood", { wear = 1.06 })
 			r:block(-2.75, 0.35, -1.62, 2.75, TOP - 0.25, 0.6, r.c1, "Wood")
 			for _, x in { -1.83, 1.83 } do
 				front(r, x - 0.86, 2.55, x + 0.86, 3.05, -1.62, "top", -1)
@@ -457,7 +457,7 @@ local items: { Item } = {
 		tags = { "kitchen", "storage" },
 		build = function(r: R)
 			local inside = shade(r.c1, 0.8)
-			r:block(-1.5, 0, -1.1, 1.5, 0.35, 0.8, shade(r.c1, 0.55), "Wood")
+			r:bevel(-1.5, 0, -1.1, 1.5, 0.35, 0.8, 0.08, shade(r.c1, 0.55), "Wood", { wear = 1.06 })
 			-- solid below; above, an open case (back, sides, shelves) behind glass doors
 			r:block(-1.5, 0.35, -1.1, 1.5, 3.9, 0.98, r.c1, "Wood")
 			r:block(-1.5, 3.9, -1.1, 1.5, 6.7, -0.92, inside, "Wood")
@@ -465,9 +465,9 @@ local items: { Item } = {
 				local xa, xb = sx * 1.5, sx * 1.38
 				r:block(math.min(xa, xb), 3.9, -0.92, math.max(xa, xb), 6.7, 0.98, r.c1, "Wood")
 			end
-			r:block(-1.38, 6.58, -0.92, 1.38, 6.7, 0.98, r.c1, "Wood")
-			r:block(-1.55, 6.7, -1.1, 1.55, 6.85, 1.06, r.c1, "Wood")
-			r:block(-1.6, 6.85, -1.1, 1.6, 7, 1.1, r.c2, "Wood")
+			r:bevel(-1.38, 6.58, -0.92, 1.38, 6.7, 0.98, 0.042, r.c1, "Wood", { wear = 1.06 })
+			r:bevel(-1.55, 6.7, -1.1, 1.55, 6.85, 1.06, 0.052, r.c1, "Wood", { wear = 1.06 })
+			r:bevel(-1.6, 6.85, -1.1, 1.6, 7, 1.1, 0.053, r.c2, "Wood", { wear = 1.06 })
 			-- two shelves of jars, tins and a bag of flour
 			local jars = { C.Yellow, Color3.fromRGB(192, 122, 96), C.Cream, Color3.fromRGB(143, 179, 154) }
 			for row, y in { 3.9, 5.25 } do

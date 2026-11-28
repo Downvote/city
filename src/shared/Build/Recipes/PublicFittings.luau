@@ -136,8 +136,8 @@ local items: { Item } = {
 				end
 				q:block(-3.45, 8.72, 1.62, 3.45, 9.0, 1.98, shade(post, 0.85), "Metal")
 			end)
-			r:block(-4, 9, -2.2, 4, 9.3, 2.2, post, "Metal")
-			r:block(-3.8, 9.3, -2.2, 3.8, 9.42, 2, shade(post, 0.9), "Metal")
+			r:bevel(-4, 9, -2.2, 4, 9.3, 2.2, 0.08, post, "Metal", { wear = 1.06 })
+			r:bevel(-3.8, 9.3, -2.2, 3.8, 9.42, 2, 0.042, shade(post, 0.9), "Metal", { wear = 1.06 })
 			r:block(-4, 8.72, -2.2, 4, 9, -2.02, shade(post, 0.85), "Metal")
 			r:piece(function(q: R)
 				q:block(-4, 9.3, 2, 4, 9.8, 2.2, r.c2)
@@ -205,11 +205,11 @@ local items: { Item } = {
 				end
 				r:block(sx * 1.66 - 0.09, 1.02, -3.5, sx * 1.66 + 0.09, 1.24, 3.5, iron, "Metal")
 			end
-			r:block(-1.6, 1.05, -3.42, 1.6, 1.2, 3.42, shade(iron, 0.8), "Metal")
+			r:bevel(-1.6, 1.05, -3.42, 1.6, 1.2, 3.42, 0.052, shade(iron, 0.8), "Metal", { wear = 1.06 })
 			r:block(-1.6, 1.2, -3.4, 1.6, 1.86, 3.4, SHEET, "Fabric")
 			r:block(-1.68, 1.36, -0.7, 1.68, 1.98, 3.44, r.c2, "Fabric")
 			r:block(-1.72, 1.36, -1.1, 1.72, 2.04, -0.66, Colors.mix(r.c2, C.White, 0.45), "Fabric")
-			r:block(-1.15, 1.86, -3.2, 1.15, 2.26, -2.25, SHEET, "Fabric")
+			r:bevel(-1.15, 1.86, -3.2, 1.15, 2.26, -2.25, 0.1, SHEET, "Fabric", { round = true })
 			-- the head and the foot: two posts, a top rail and a row of bars
 			for _, e in { { -3.55, 4.2 }, { 3.55, 3.1 } } do
 				local z, top = e[1], e[2]
@@ -246,18 +246,18 @@ local items: { Item } = {
 		build = function(r: R)
 			-- A cupboard (its doors c2) with a glazed case of bottles and jars on top.
 			local dk = shade(r.c1, 0.86)
-			r:block(-1.8, 0, -0.8, 1.8, 0.3, 0.62, dk, "Metal")
+			r:bevel(-1.8, 0, -0.8, 1.8, 0.3, 0.62, 0.08, dk, "Metal", { wear = 1.06 })
 			r:block(-1.8, 0.3, -0.8, 1.8, 2.6, 0.7, r.c1, "Metal")
 			for _, sx in { -1, 1 } do
 				local x1, x2 = math.min(sx * 0.06, sx * 1.66), math.max(sx * 0.06, sx * 1.66)
 				r:block(x1, 0.46, 0.7, x2, 2.44, 0.76, r.c2, "Metal")
 				r:block(sx * 0.3 - 0.05, 1.2, 0.76, sx * 0.3 + 0.05, 1.8, 0.82, C.Metal, "Metal")
 			end
-			r:block(-1.86, 2.6, -0.8, 1.86, 2.76, 0.78, dk, "Metal")
+			r:bevel(-1.86, 2.6, -0.8, 1.86, 2.76, 0.78, 0.056, dk, "Metal", { wear = 1.06 })
 			r:block(-1.8, 2.76, -0.8, 1.8, 6.4, -0.68, r.c1, "Metal")
 			r:block(-1.8, 2.76, -0.68, -1.66, 6.4, 0.5, r.c1, "Metal")
 			r:block(1.66, 2.76, -0.68, 1.8, 6.4, 0.5, r.c1, "Metal")
-			r:block(-1.86, 6.4, -0.8, 1.86, 6.58, 0.56, dk, "Metal")
+			r:bevel(-1.86, 6.4, -0.8, 1.86, 6.58, 0.56, 0.063, dk, "Metal", { wear = 1.06 })
 			for _, y in { 3.92, 5.14 } do
 				r:block(-1.66, y, -0.68, 1.66, y + 0.1, 0.42, r.c1, "Metal")
 			end
@@ -360,10 +360,10 @@ local items: { Item } = {
 				r:block(x - 0.1, 0.2, 0.55, x + 0.1, 1.7, 0.75, r.c2, "Metal")
 				r:block(x - 0.1, 0.2, 1.42, x + 0.1, 3.2, 1.62, r.c2, "Metal")
 			end
-			r:block(-1.9, 2.5, -1.75, 1.9, 2.7, -0.25, r.c1, "Wood")
+			r:bevel(-1.9, 2.5, -1.75, 1.9, 2.7, -0.25, 0.07, r.c1, "Wood", { wear = 1.06 })
 			r:block(-1.68, 1.0, -1.62, 1.68, 2.5, -1.5, dk, "Wood")
-			r:block(-1.68, 1.85, -1.5, 1.68, 1.97, -0.5, dk, "Wood")
-			r:block(-1.9, 1.7, 0.45, 1.9, 1.9, 1.5, r.c1, "Wood")
+			r:bevel(-1.68, 1.85, -1.5, 1.68, 1.97, -0.5, 0.042, dk, "Wood", { wear = 1.06 })
+			r:bevel(-1.9, 1.7, 0.45, 1.9, 1.9, 1.5, 0.07, r.c1, "Wood", { wear = 1.06 })
 			r:block(-1.82, 2.5, 1.5, 1.82, 3.25, 1.66, r.c1, "Wood")
 			r:piece(function(q: R)
 				q:block(-1.4, 2.7, -1.45, -0.5, 2.76, -0.75, Color3.fromRGB(150, 110, 70), "Cardboard")
@@ -418,11 +418,11 @@ local items: { Item } = {
 			r:block(-2.2, 0, -0.9, -2.04, 6.4, 0.85, r.c1, "Wood")
 			r:block(2.04, 0, -0.9, 2.2, 6.4, 0.85, r.c1, "Wood")
 			r:block(-2.04, 0.3, -0.9, 2.04, 6.4, -0.78, shade(r.c1, 0.7), "Wood")
-			r:block(-2.26, 6.4, -0.9, 2.26, 6.58, 0.9, dk, "Wood")
-			r:block(-2.04, 0, -0.78, 2.04, 0.3, 0.75, dk, "Wood")
+			r:bevel(-2.26, 6.4, -0.9, 2.26, 6.58, 0.9, 0.063, dk, "Wood", { wear = 1.06 })
+			r:bevel(-2.04, 0, -0.78, 2.04, 0.3, 0.75, 0.08, dk, "Wood", { wear = 1.06 })
 			-- two deep shelves below
 			for _, y in { 0.3, 1.5 } do
-				r:block(-2.04, y, -0.78, 2.04, y + 0.14, 0.82, r.c1, "Wood")
+				r:bevel(-2.04, y, -0.78, 2.04, y + 0.14, 0.82, 0.049, r.c1, "Wood", { wear = 1.06 })
 			end
 			parcel(r, -1.8, 0.44, -0.5, -0.5, 1.3, 0.6, KRAFT)
 			parcel(r, -0.3, 0.44, -0.6, 0.5, 1.0, 0.5, shade(KRAFT, 0.88))
@@ -431,7 +431,7 @@ local items: { Item } = {
 			parcel(r, -1.6, 1.64, -0.6, -0.2, 2.3, 0.5, shade(KRAFT, 0.92))
 			parcel(r, 0.4, 1.64, -0.5, 1.7, 2.5, 0.6, KRAFT)
 			-- four rows of four pigeonholes
-			r:block(-2.04, 2.7, -0.78, 2.04, 2.84, 0.82, r.c1, "Wood")
+			r:bevel(-2.04, 2.7, -0.78, 2.04, 2.84, 0.82, 0.049, r.c1, "Wood", { wear = 1.06 })
 			for row = 1, 4 do
 				local y = 2.84 + row * 0.89
 				r:block(-2.04, y - 0.1, -0.78, 2.04, y, 0.78, r.c1, "Wood")
@@ -491,7 +491,7 @@ local items: { Item } = {
 				r:block(-0.9, y, -1.1, 0.9, y + 0.14, -0.98, r.c1, "Metal")
 			end
 			r:cyl(0, 4.5, -1.04, 2.3, 0.2, "x", C.Black, "Metal")
-			r:block(-1.05, 0.3, -1.1, 1.05, 0.42, 0.9, r.c1, "Metal")
+			r:bevel(-1.05, 0.3, -1.1, 1.05, 0.42, 0.9, 0.042, r.c1, "Metal", { wear = 1.06 })
 			r:block(-0.14, 0, 0.6, 0.14, 0.3, 0.86, C.DarkMetal, "Metal")
 			parcel(r, -1.0, 0.42, -0.9, 1.0, 1.7, 0.8, r.c2)
 			parcel(r, -0.8, 1.7, -0.86, 0.7, 2.7, 0.5, shade(r.c2, 0.9))
@@ -597,13 +597,13 @@ local items: { Item } = {
 			r:block(-2.5, 0, zb, -2.3, 10.2, zf, r.c1, "Wood")
 			r:block(2.3, 0, zb, 2.5, 10.2, zf, r.c1, "Wood")
 			r:block(-2.3, 0.5, zb, 2.3, 10.2, zb + 0.12, shade(r.c1, 0.68), "Wood")
-			r:block(-2.3, 0, zb + 0.1, 2.3, 0.5, zf - 0.1, dk, "Wood")
-			r:block(-2.58, 10.2, zb, 2.58, 10.4, zf + 0.06, r.c1, "Wood")
-			r:block(-2.64, 10.4, zb, 2.64, 10.6, zf + 0.14, dk, "Wood")
+			r:bevel(-2.3, 0, zb + 0.1, 2.3, 0.5, zf - 0.1, 0.08, dk, "Wood", { wear = 1.06 })
+			r:bevel(-2.58, 10.2, zb, 2.58, 10.4, zf + 0.06, 0.07, r.c1, "Wood", { wear = 1.06 })
+			r:bevel(-2.64, 10.4, zb, 2.64, 10.6, zf + 0.14, 0.07, dk, "Wood", { wear = 1.06 })
 			r:block(-0.08, 0.5, zb + 0.12, 0.08, 10.2, zf - 0.04, r.c1, "Wood")
 			for i = 0, 5 do
 				local y = 0.5 + i * 1.62
-				r:block(-2.3, y, zb + 0.12, 2.3, y + 0.14, zf, r.c1, "Wood")
+				r:bevel(-2.3, y, zb + 0.12, 2.3, y + 0.14, zf, 0.049, r.c1, "Wood", { wear = 1.06 })
 				books(r, -2.24, -0.12, y + 0.14, 1.3, zf - 0.06, 5 + i * 7)
 				books(r, 0.12, 2.24, y + 0.14, 1.3, zf - 0.06, 23 + i * 11)
 			end

@@ -678,7 +678,7 @@ local items: { Item } = {
 			r:block(-0.3, 2.45, -0.55, 0.3, 2.6, 0.55, r.c2, "Wood")
 			r:beam(Vector3.new(0, 1.9, 0.12), Vector3.new(0, 2.45, 0.45), 0.12, 0.12, r.c2, "Wood")
 			-- a box with a rounded top, a front door and a red flag on the side
-			r:block(-0.45, 2.6, -0.8, 0.45, 3.1, 0.8, r.c1, "Metal")
+			r:bevel(-0.45, 2.6, -0.8, 0.45, 3.1, 0.8, 0.08, r.c1, "Metal", { wear = 1.06 })
 			r:cyl(0, 3.1, 0, 1.6, 0.9, "z", r.c1, "Metal")
 			r:block(-0.42, 2.63, 0.8, 0.42, 3.1, 0.84, shade(r.c1, 0.85), "Metal")
 			r:cyl(0, 3.1, 0.82, 0.04, 0.84, "z", shade(r.c1, 0.85), "Metal")
@@ -768,7 +768,7 @@ local items: { Item } = {
 					r:block(x - 0.04, 4.25, z - 0.04, x + 0.04, 5.1, z + 0.04, r.c1, "Metal")
 				end
 			end
-			r:block(-1.2, 4.0, -2.8, 1.2, 4.25, -1.2, shade(r.c1, 1.25), "WoodPlanks")
+			r:bevel(-1.2, 4.0, -2.8, 1.2, 4.25, -1.2, 0.08, shade(r.c1, 1.25), "WoodPlanks", { wear = 1.06 })
 			r:block(-1.1, 5.1, -2.8, 1.1, 5.22, -2.68, r.c1, "Metal")
 			r:ramp(-1.35, 6.3, -3.0, 1.35, 7.3, -2.0, true, r.c2, "Metal")
 			r:ramp(-1.35, 6.3, -2.0, 1.35, 7.3, -1.0, false, r.c2, "Metal")
@@ -795,7 +795,7 @@ local items: { Item } = {
 				)
 				r:block(x - 0.06, 0.55, 3.0, x + 0.06, 1.0, 3.9, shade(r.c2, 0.85), "Metal")
 			end
-			r:block(-0.7, 0.55, 2.95, 0.7, 0.7, 3.9, r.c2, "Metal")
+			r:bevel(-0.7, 0.55, 2.95, 0.7, 0.7, 3.9, 0.052, r.c2, "Metal", { wear = 1.06 })
 			r:block(-0.15, 0, 2.6, 0.15, 0.6, 2.9, r.c1, "Metal")
 		end,
 	},
@@ -1041,7 +1041,18 @@ local items: { Item } = {
 			end
 			for i = 0, 2 do
 				local y = 0.4 + i * 0.3
-				r:block(-2, y, -0.8, 2, y + 0.28, 0.8, if i % 2 == 0 then r.c1 else shade(r.c1, 0.92), "WoodPlanks")
+				r:bevel(
+					-2,
+					y,
+					-0.8,
+					2,
+					y + 0.28,
+					0.8,
+					0.08,
+					if i % 2 == 0 then r.c1 else shade(r.c1, 0.92),
+					"WoodPlanks",
+					{ wear = 1.06 }
+				)
 			end
 			r:piece(function(q: R)
 				q:block(-2.05, 1.3, -0.85, 2.05, 1.4, -0.65, shade(r.c1, 0.85), "Wood")
@@ -1603,7 +1614,7 @@ local items: { Item } = {
 		c2 = "A65E42",
 		build = function(r: R)
 			-- a rain barrel (c1) on a stand of bricks (c2), with a lid and a tap at the front
-			r:block(-0.8, 0, -0.8, 0.8, 0.5, 0.8, r.c2, "Brick")
+			r:bevel(-0.8, 0, -0.8, 0.8, 0.5, 0.8, 0.08, r.c2, "Brick", { wear = 0.94 })
 			r:cyl(0, 1.9, 0, 2.8, 1.92, "y", r.c1, "Metal")
 			r:cyl(0, 3.36, 0, 0.14, 2.06, "y", shade(r.c1, 0.8), "Metal")
 			r:piece(function(q: R)
@@ -1638,7 +1649,7 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a nest box (c1) with a pitched roof (c2) up a pole, and somebody at home
 			r:cyl(0, 2.6, 0, 5.2, 0.26, "y", C.Bark, "Wood")
-			r:block(-0.62, 5.1, -0.55, 0.62, 5.22, 0.55, shade(r.c1, 0.8), "Wood")
+			r:bevel(-0.62, 5.1, -0.55, 0.62, 5.22, 0.55, 0.042, shade(r.c1, 0.8), "Wood", { wear = 1.06 })
 			r:block(-0.5, 5.22, -0.45, 0.5, 6.2, 0.45, r.c1, "Wood")
 			r:tri(Vector3.new(-0.5, 6.2, 0), Vector3.new(0.5, 6.2, 0), Vector3.new(0, 6.65, 0), 0.9, r.c1, "Wood")
 			for _, sx in { -1, 1 } do

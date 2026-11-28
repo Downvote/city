@@ -117,7 +117,7 @@ local items: { Item } = {
 		lively = true,
 		build = function(r: R)
 			-- a stone pad, a drum banded in gold with stars round it, a cone with its fuse lit
-			r:block(-0.95, 0, -0.95, 0.95, 0.15, 0.95, Color3.fromRGB(186, 180, 172), "Slate")
+			r:bevel(-0.95, 0, -0.95, 0.95, 0.15, 0.95, 0.052, Color3.fromRGB(186, 180, 172), "Slate", { wear = 0.94 })
 			r:cyl(0, 0.75, 0, 1.2, 1.2, "y", r.c2, "Cardboard")
 			for _, y in { 0.28, 1.22 } do
 				r:cyl(0, y, 0, 0.1, 1.26, "y", GOLD, "Metal")
@@ -226,7 +226,7 @@ local items: { Item } = {
 			r:block(-2.8, 2.2, 2.2, 2.8, 2.35, 2.8, rim, "Concrete")
 			r:block(-2.8, 2.2, -2.2, -2.2, 2.35, 2.2, rim, "Concrete")
 			r:block(2.2, 2.2, -2.2, 2.8, 2.35, 2.2, rim, "Concrete")
-			r:block(-2.3, 0, -2.3, 2.3, 0.5, 2.3, shell, "Marble")
+			r:bevel(-2.3, 0, -2.3, 2.3, 0.5, 2.3, 0.08, shell, "Marble", { wear = 0.94 })
 			r:block(-2.3, 0.5, -2.3, 2.3, 1.2, -1.6, shell, "Marble")
 			r:block(-2.3, 0.5, 1.6, 2.3, 1.2, 2.3, shell, "Marble")
 			r:block(-2.3, 0.5, -1.6, -1.6, 1.2, 1.6, shell, "Marble")
@@ -433,13 +433,13 @@ local items: { Item } = {
 		build = function(r: R)
 			local stone = r.c2
 			-- a stepped plinth, a column banded in gold and a capital
-			r:block(-1.4, 0, -1.4, 1.4, 0.3, 1.4, shade(stone, 0.9), "Marble")
-			r:block(-1.1, 0.3, -1.1, 1.1, 0.6, 1.1, stone, "Marble")
+			r:bevel(-1.4, 0, -1.4, 1.4, 0.3, 1.4, 0.08, shade(stone, 0.9), "Marble", { wear = 0.94 })
+			r:bevel(-1.1, 0.3, -1.1, 1.1, 0.6, 1.1, 0.08, stone, "Marble", { wear = 0.94 })
 			r:cyl(0, 1.9, 0, 2.6, 1.0, "y", stone, "Marble")
 			for _, y in { 0.75, 3.05 } do
 				r:cyl(0, y, 0, 0.12, 1.08, "y", GOLD, "Metal")
 			end
-			r:block(-0.7, 3.2, -0.7, 0.7, 3.45, 0.7, stone, "Marble")
+			r:bevel(-0.7, 3.2, -0.7, 0.7, 3.45, 0.7, 0.08, stone, "Marble", { wear = 0.94 })
 			r:cyl(0, 3.85, 0, 0.8, 0.12, "y", GOLD, "Metal")
 			-- the star, turning slowly on its stem
 			Lively.pivot(r, CFrame.new(0, 4.7, 0), "spin", { speed = 0.6 })
@@ -471,8 +471,8 @@ local items: { Item } = {
 					r:ball(sx * 1.05, 0.12, sz * 0.85, 0.3, gold, "Metal")
 				end
 			end
-			r:block(-1.2, 0.8, -1.0, 1.2, 1.3, 1.1, gold, "Metal")
-			r:block(-1.05, 1.3, -0.8, 1.05, 1.58, 1.0, r.c1, "Fabric")
+			r:bevel(-1.2, 0.8, -1.0, 1.2, 1.3, 1.1, 0.08, gold, "Metal", { wear = 1.06 })
+			r:bevel(-1.05, 1.3, -0.8, 1.05, 1.58, 1.0, 0.1, r.c1, "Fabric", { round = true })
 			r:cyl(0, 1.44, 1.0, 2.1, 0.28, "x", r.c1, "Fabric")
 			-- a tall back in velvet, framed in gold, a crest of points with gems on it
 			for _, sx in { -1, 1 } do

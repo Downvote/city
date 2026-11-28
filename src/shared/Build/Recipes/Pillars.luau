@@ -516,7 +516,7 @@ local items: { Item } = {
 				square(q, 0.3, 3.72, 1.82, r.c2, "Brick")
 				square(q, 1.3, 1.5, 1.88, shade(r.c2, 0.9), "Brick")
 			end, true)
-			r:block(-1, 3.72, -1, 1, 4, 1, PALE_STONE, "Concrete")
+			r:bevel(-1, 3.72, -1, 1, 4, 1, 0.08, PALE_STONE, "Concrete", { wear = 0.94 })
 			r:piece(function(q: R)
 				square(q, 4, 4.32, 1.4, shade(r.c1, 0.97), "Wood")
 				square(q, 4.32, 4.44, 1.3, r.c1, "Wood")
@@ -892,7 +892,7 @@ local items: { Item } = {
 			-- a squared oak post (c1) with its edges taken off, on a stone pad, carrying a short
 			-- beam (c2) on its head with a knee brace each side from the post up under it, every
 			-- joint held by oak pegs
-			r:block(-0.62, 0, -0.62, 0.62, 0.36, 0.62, C.Stone, "Slate")
+			r:bevel(-0.62, 0, -0.62, 0.62, 0.36, 0.62, 0.08, C.Stone, "Slate", { wear = 0.94 })
 			local top = CEIL - 0.6
 			r:piece(function(q: R)
 				q:block(-0.4, 0.36, -0.33, 0.4, top, 0.33, r.c1, "Wood")
@@ -1538,7 +1538,7 @@ local items: { Item } = {
 		build = function(r: R)
 			-- three bamboo canes (c1) bound together into one slim post, each with its own joints,
 			-- lashed with cord (c2) at the foot, the middle and the head, on a stone pad
-			r:block(-0.45, 0, -0.45, 0.45, 0.22, 0.45, C.Stone, "Slate")
+			r:bevel(-0.45, 0, -0.45, 0.45, 0.22, 0.45, 0.077, C.Stone, "Slate", { wear = 0.94 })
 			for i, p in { { 0.15, 0 }, { -0.08, 0.14 }, { -0.08, -0.14 } } do
 				drum(r, p[1], p[2], 0.22, CEIL, 0.3, if i == 2 then shade(r.c1, 0.94) else r.c1, "Wood")
 				for j = 0, 3 do

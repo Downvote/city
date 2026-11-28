@@ -497,12 +497,12 @@ local list: { any } = {
 			for _, sx in { -1, 1 } do
 				r:lump(CFrame.new(sx * 1.5, 0.5, 0), 1.2, 1.0, 6.2, r.c2, "Metal")
 			end
-			r:block(-1.9, 0.95, -2.6, 1.9, 1.15, 2.6, r.c1, "Metal")
+			r:bevel(-1.9, 0.95, -2.6, 1.9, 1.15, 2.6, 0.07, r.c1, "Metal", { wear = 1.06 })
 			r:ramp(-1.6, 1.15, 1.6, 1.6, 1.6, 2.5, false, r.c1, "Metal")
 			-- the seat for two, with its cushions and a rolled top to the back
-			r:block(-1.3, 1.15, -1.6, 1.3, 1.65, -0.4, r.c1, "Metal")
+			r:bevel(-1.3, 1.15, -1.6, 1.3, 1.65, -0.4, 0.08, r.c1, "Metal", { wear = 1.06 })
 			for _, sx in { -1, 1 } do
-				r:block(sx * 0.1, 1.65, -1.55, sx * 1.2, 1.8, -0.45, r.c2, "Fabric")
+				r:bevel(sx * 0.1, 1.65, -1.55, sx * 1.2, 1.8, -0.45, 0.068, r.c2, "Fabric", { round = true })
 				r:seat(sx * 0.65, 1.8, -1.0, 0)
 			end
 			r:block(-1.3, 1.65, -1.78, 1.3, 2.85, -1.55, r.c1, "Metal")
@@ -921,7 +921,7 @@ local list: { any } = {
 			local grey = rgb(200, 196, 188)
 			-- a plinth on the side with a step up, two brackets holding the board's end and a
 			-- roller under it further out
-			r:block(-1.1, 0, -4.8, 1.1, 0.3, -2.4, grey, "Concrete")
+			r:bevel(-1.1, 0, -4.8, 1.1, 0.3, -2.4, 0.08, grey, "Concrete", { wear = 0.94 })
 			r:block(-0.6, 0.3, -4.78, 0.6, 0.85, -4.45, grey, "Concrete")
 			for _, sx in { -1, 1 } do
 				r:block(sx * 0.75 - 0.08, 0.3, -4.4, sx * 0.75 + 0.08, 1.45, -3.6, r.c2, "Metal")
@@ -930,7 +930,7 @@ local list: { any } = {
 			r:block(-0.6, 1.3, -4.4, 0.6, 1.45, -3.8, shade(r.c2, 0.8), "Metal")
 			r:cyl(0, 1.34, -1.25, 1.7, 0.22, "x", shade(r.c2, 0.8), "Metal")
 			-- the board and the grip along its top
-			r:block(-0.7, 1.45, -4.5, 0.7, 1.65, 4.6, r.c1, "Metal")
+			r:bevel(-0.7, 1.45, -4.5, 0.7, 1.65, 4.6, 0.07, r.c1, "Metal", { wear = 1.06 })
 			r:block(-0.6, 1.65, -2.0, 0.6, 1.69, 4.45, r.c2, "Fabric")
 			-- hand rails up from the plinth
 			for _, sx in { -1, 1 } do
@@ -966,7 +966,7 @@ local list: { any } = {
 				local z = -5.3 + (y - g) / (7.0 - g) * 0.65
 				r:cyl(0, y, z, 1.3, 0.1, "x", C.Metal, "Metal")
 			end
-			r:block(-1.0, 6.0, -4.8, 1.0, 6.2, -3.4, r.c2, "Metal")
+			r:bevel(-1.0, 6.0, -4.8, 1.0, 6.2, -3.4, 0.07, r.c2, "Metal", { wear = 1.06 })
 			for _, sx in { -1, 1 } do
 				for _, z in { -4.65, -3.55 } do
 					r:cyl(sx * 0.9, (g + 6.0) / 2, z, 6.0 - g, 0.16, "y", r.c2, "Metal")
@@ -1087,7 +1087,7 @@ local list: { any } = {
 		c2 = "F2EEE6",
 		build = function(r: R)
 			-- a post on a concrete foot, a board on its front, the ring on a hook
-			r:block(-0.45, 0, -0.45, 0.45, 0.25, 0.45, rgb(196, 192, 184), "Concrete")
+			r:bevel(-0.45, 0, -0.45, 0.45, 0.25, 0.45, 0.08, rgb(196, 192, 184), "Concrete", { wear = 0.94 })
 			r:block(-0.14, 0.25, -0.14, 0.14, 5.4, 0.14, r.c2, "Wood")
 			r:block(-0.2, 5.4, -0.2, 0.2, 5.6, 0.2, r.c1, "Wood")
 			r:block(-0.8, 2.3, 0.14, 0.8, 4.6, 0.22, r.c2, "Wood")

@@ -377,7 +377,7 @@ local items: { Item } = {
 			for _, s in { -1, 1 } do
 				r:beam(Vector3.new(s * 0.15, 3.3, 0), Vector3.new(s * 0.5, 3.78, 0), 0.08, 0.1, wood, "Wood")
 			end
-			r:block(-0.6, 3.8, -0.55, 0.6, 3.9, 0.6, shade(wood, 1.1), "Wood")
+			r:bevel(-0.6, 3.8, -0.55, 0.6, 3.9, 0.6, 0.035, shade(wood, 1.1), "Wood", { wear = 1.06 })
 			r:block(-0.45, 3.9, -0.45, 0.45, 4.7, 0.45, r.c1, "Wood")
 			r:tri(Vector3.new(-0.45, 4.7, 0), Vector3.new(0.45, 4.7, 0), Vector3.new(0, 5.05, 0), 0.9, r.c1, "Wood")
 			local slope = math.atan2(0.35, 0.45)

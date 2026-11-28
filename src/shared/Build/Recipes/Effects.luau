@@ -122,9 +122,9 @@ local items: { Item } = {
 			local stone = r.c2
 			local dk = shade(stone, 0.86)
 			-- a stone post lantern: a footing, a post, the light box and a roof with a knob
-			r:block(-0.7, 0, -0.7, 0.7, 0.2, 0.7, dk, "Slate")
+			r:bevel(-0.7, 0, -0.7, 0.7, 0.2, 0.7, 0.07, dk, "Slate", { wear = 0.94 })
 			r:cyl(0, 0.85, 0, 1.3, 0.42, "y", stone, "Slate")
-			r:block(-0.5, 1.5, -0.5, 0.5, 1.62, 0.5, dk, "Slate")
+			r:bevel(-0.5, 1.5, -0.5, 0.5, 1.62, 0.5, 0.042, dk, "Slate", { wear = 0.94 })
 			for _, sx in { -1, 1 } do
 				for _, sz in { -1, 1 } do
 					r:block(
@@ -141,7 +141,7 @@ local items: { Item } = {
 			end
 			local light = r:block(-0.3, 1.62, -0.3, 0.3, 2.2, 0.3, mix(r.c1, C.Warm, 0.5), "Glass")
 			r:glow(light, 10, 0.8, mix(r.c1, C.Warm, 0.6))
-			r:block(-0.62, 2.3, -0.62, 0.62, 2.42, 0.62, dk, "Slate")
+			r:bevel(-0.62, 2.3, -0.62, 0.62, 2.42, 0.62, 0.042, dk, "Slate", { wear = 0.94 })
 			r:add({
 				shape = "Cone",
 				cf = CFrame.new(0, 2.72, 0),

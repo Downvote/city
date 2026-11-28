@@ -322,7 +322,7 @@ local items: { Item } = {
 			local yc, zc, rad = 1.6, 0.25, 0.5
 			local s = rad * 0.4142
 			r:block(-2.6, yc - rad, zc - s, 2.6, yc, zc + s, bark, "Wood")
-			r:block(-2.6, yc - s, zc - rad, 2.6, yc, zc + rad, bark, "Wood")
+			r:bevel(-2.6, yc - s, zc - rad, 2.6, yc, zc + rad, 0.072, bark, "Wood", { wear = 1.06 })
 			for _, sz in { -1, 1 } do
 				r:tri(
 					V(0, yc - rad, zc + sz * s),
@@ -428,7 +428,7 @@ local items: { Item } = {
 			local iron, trim = r.c1, r.c2
 			local face = shade(iron, 1.18)
 			-- a stone pad, four legs, the firebox and its cooking top
-			r:block(-1.6, 0, -1.5, 1.6, 0.12, 1.5, Color3.fromRGB(150, 146, 140), "Slate")
+			r:bevel(-1.6, 0, -1.5, 1.6, 0.12, 1.5, 0.042, Color3.fromRGB(150, 146, 140), "Slate", { wear = 0.94 })
 			for _, sx in { -1, 1 } do
 				for _, sz in { -1, 1 } do
 					r:block(sx * 0.85 - 0.1, 0.12, sz * 0.7 - 0.1, sx * 0.85 + 0.1, 0.72, sz * 0.7 + 0.1, iron, "Metal")
@@ -437,7 +437,7 @@ local items: { Item } = {
 			end
 			r:block(-1.15, 0.62, -1.05, 1.15, 0.72, 0.95, iron, "Metal")
 			r:block(-1.05, 0.72, -0.95, 1.05, 2.55, 0.85, iron, "Metal")
-			r:block(-1.2, 2.55, -1.1, 1.2, 2.68, 1.0, iron, "Metal")
+			r:bevel(-1.2, 2.55, -1.1, 1.2, 2.68, 1.0, 0.046, iron, "Metal", { wear = 1.06 })
 			for _, sx in { -1, 1 } do
 				r:cyl(sx * 0.5, 2.695, 0.1, 0.03, 0.62, "y", face, "Metal")
 				for _, y in { 1.2, 1.6, 2.0 } do
@@ -592,7 +592,7 @@ local items: { Item } = {
 			for _, x in { -1.2, -0.4, 0.4, 1.2 } do
 				r:block(x - 0.04, 1.15, 3.4, x + 0.04, 1.85, 3.43, DUSK, "Fabric")
 			end
-			r:block(-1.92, 1.42, -1.0, 1.92, 1.92, 3.46, quilt, "Fabric")
+			r:bevel(-1.92, 1.42, -1.0, 1.92, 1.92, 3.46, 0.1, quilt, "Fabric", { round = true })
 			patchwork(
 				r,
 				-1.92,
@@ -613,7 +613,7 @@ local items: { Item } = {
 				bedPillow(r, sx * 0.85, 1.85, -2.85, 1.55, CREAM)
 			end
 			-- a striped wool blanket folded at the foot
-			r:block(-1.95, 1.95, 2.3, 1.95, 2.13, 3.2, WOOL, "Fabric")
+			r:bevel(-1.95, 1.95, 2.3, 1.95, 2.13, 3.2, 0.081, WOOL, "Fabric", { round = true })
 			for _, z in { 2.45, 2.95 } do
 				r:block(-1.98, 1.95, z, 1.98, 2.16, z + 0.12, GINGHAM, "Fabric")
 			end
@@ -660,7 +660,7 @@ local items: { Item } = {
 			end)
 			-- a plaid blanket folded on top and hanging over the front
 			local plaid = r.c2
-			r:block(-1.3, 1.45, -0.7, 0.3, 1.58, 0.86, plaid, "Fabric")
+			r:bevel(-1.3, 1.45, -0.7, 0.3, 1.58, 0.86, 0.059, plaid, "Fabric", { round = true })
 			r:block(-1.3, 0.95, 0.86, 0.3, 1.58, 0.9, plaid, "Fabric")
 			for _, z in { -0.35, 0.35 } do
 				r:block(-1.3, 1.58, z, 0.3, 1.61, z + 0.1, shade(plaid, 0.75), "Fabric")
@@ -701,7 +701,7 @@ local items: { Item } = {
 					r:block(sx * 1.85, 0, sz * 0.55, sx * 2.2, 0.32, sz * 0.9, dk, "Wood")
 				end
 			end
-			r:block(-2.2, 0.32, -0.92, 2.2, 0.48, 0.92, wood, "Wood")
+			r:bevel(-2.2, 0.32, -0.92, 2.2, 0.48, 0.92, 0.056, wood, "Wood", { wear = 1.06 })
 			r:block(-2.05, 0.48, -0.95, 2.05, 3.5, 0.82, shade(wood, 0.5), "Wood")
 			for _, sx in { -1, 1 } do
 				r:block(sx * 2.05, 0.48, -0.95, sx * 2.22, 3.5, -0.05, board(), "Wood")
@@ -979,7 +979,7 @@ local items: { Item } = {
 		style = "rustic",
 		build = function(r: R)
 			-- a tall tapered churn of staves on a board, a lid and the dasher's handle
-			r:block(-0.75, 0, -0.75, 0.75, 0.1, 0.75, shade(r.c1, 0.8), "Wood")
+			r:bevel(-0.75, 0, -0.75, 0.75, 0.1, 0.75, 0.035, shade(r.c1, 0.8), "Wood", { wear = 1.06 })
 			r:cyl(0, 1.4, 0, 2.56, 2 * (0.45 - 0.06), "y", INSIDE, "Wood")
 			staves(r, 0, 0, 0.1, 2.6, 0.6, 0.525, 0.45, 12, r.c1)
 			for _, y in { 0.35, 1.4, 2.45 } do
@@ -1053,7 +1053,7 @@ local items: { Item } = {
 			end
 			for i, col in { CREAM, GINGHAM, SAGE } do
 				local y = 0.08 + (i - 1) * 0.2
-				r:block(1.0, y, -0.5, 2.25, y + 0.18, 0.4, col, "Fabric")
+				r:bevel(1.0, y, -0.5, 2.25, y + 0.18, 0.4, 0.081, col, "Fabric", { round = true })
 				r:cyl(1.625, y + 0.09, 0.4, 1.25, 0.18, "x", col, "Fabric")
 			end
 			-- a watering can in one, books and a tin in the next
@@ -1118,13 +1118,13 @@ local items: { Item } = {
 		build = function(r: R)
 			local china, wood = r.c1, r.c2
 			-- a wooden base on a kick, rails either side of the sink's apron
-			r:block(-2.0, 0, -1.15, 2.0, 0.25, 0.9, shade(wood, 0.7), "Wood")
+			r:bevel(-2.0, 0, -1.15, 2.0, 0.25, 0.9, 0.08, shade(wood, 0.7), "Wood", { wear = 1.06 })
 			for _, sx in { -1, 1 } do
 				r:block(sx * 1.9, 0.25, -1.2, sx * 2.05, 2.95, 1.0, wood, "Wood")
 				r:block(sx * 1.9, 2.3, 0.85, sx * 1.3, 2.95, 1.0, wood, "Wood")
 			end
 			r:block(-1.9, 0.25, -1.2, 1.9, 2.95, -1.08, shade(wood, 0.8), "Wood")
-			r:block(-1.9, 0.25, -1.08, 1.9, 0.4, 1.0, wood, "Wood")
+			r:bevel(-1.9, 0.25, -1.08, 1.9, 0.4, 1.0, 0.053, wood, "Wood", { wear = 1.06 })
 			-- a checked curtain on a rod in place of doors
 			r:cyl(0, 2.04, 1.1, 3.8, 0.05, "x", BRASS, "Metal")
 			for _, sx in { -1, 1 } do
@@ -1160,7 +1160,7 @@ local items: { Item } = {
 			r:block(-1.3, 2.1, -0.2, 1.3, 3.2, 0.0, china, "Marble")
 			r:block(-1.3, 2.1, 0.0, -1.1, 3.2, 1.05, china, "Marble")
 			r:block(1.1, 2.1, 0.0, 1.3, 3.2, 1.05, china, "Marble")
-			r:block(-1.1, 2.1, 0.0, 1.1, 2.3, 1.05, china, "Marble")
+			r:bevel(-1.1, 2.1, 0.0, 1.1, 2.3, 1.05, 0.07, china, "Marble", { wear = 0.94 })
 			r:cyl(0, 2.315, 0.5, 0.03, 0.22, "y", C.Metal, "Metal")
 			-- a bridge tap with cross handles
 			local tap = C.Metal
@@ -1255,7 +1255,7 @@ local items: { Item } = {
 			end
 			-- a patchwork quilt folded on the lid
 			local quilt = ROSE
-			r:block(-1.3, 2.08, -0.75, 0.9, 2.26, 0.7, quilt, "Fabric")
+			r:bevel(-1.3, 2.08, -0.75, 0.9, 2.26, 0.7, 0.081, quilt, "Fabric", { round = true })
 			patchwork(
 				r,
 				-1.3,
@@ -1440,10 +1440,10 @@ local items: { Item } = {
 					r:block(sx * 1.2, 0, sz * 0.6, sx * 1.35, 3.0, sz * 0.75, wood, "Wood")
 				end
 			end
-			r:block(-1.2, 2.5, -0.6, 1.2, 3.0, 0.6, wood, "Wood")
+			r:bevel(-1.2, 2.5, -0.6, 1.2, 3.0, 0.6, 0.08, wood, "Wood", { wear = 1.06 })
 			r:block(-1.0, 2.55, 0.6, 1.0, 2.95, 0.65, shade(wood, 1.08), "Wood")
 			r:ball(0, 2.75, 0.7, 0.12, shade(wood, 0.7), "Wood")
-			r:block(-1.45, 3.0, -0.82, 1.45, 3.15, 0.82, wood, "Wood")
+			r:bevel(-1.45, 3.0, -0.82, 1.45, 3.15, 0.82, 0.052, wood, "Wood", { wear = 1.06 })
 			r:block(-1.2, 0.5, -0.6, 1.2, 0.6, 0.6, wood, "Wood")
 			-- a splashback with a round top and a round mirror on it
 			r:block(-1.4, 3.15, -0.82, 1.4, 3.9, -0.7, wood, "Wood")
@@ -1494,7 +1494,7 @@ local items: { Item } = {
 		build = function(r: R)
 			local wood, iron = r.c1, r.c2
 			-- a thick board on forged brackets
-			r:block(-2.0, 1.4, 0, 2.0, 1.55, 1.0, wood, "Wood")
+			r:bevel(-2.0, 1.4, 0, 2.0, 1.55, 1.0, 0.053, wood, "Wood", { wear = 1.06 })
 			for _, x in { -1.4, 1.4 } do
 				r:block(x - 0.04, 0.7, 0, x + 0.04, 1.4, 0.08, iron, "Metal")
 				r:block(x - 0.04, 1.32, 0.08, x + 0.04, 1.4, 0.85, iron, "Metal")
@@ -1731,10 +1731,10 @@ local items: { Item } = {
 				r:block(sx * 1.6, 0.3, -0.85, sx * 1.75, 5.2, 0.75, paint, "Wood")
 			end
 			r:block(-1.6, 0.3, -0.85, 1.6, 5.2, -0.75, shade(paint, 0.8), "Wood")
-			r:block(-1.6, 0.3, -0.75, 1.6, 0.5, 0.75, paint, "Wood")
+			r:bevel(-1.6, 0.3, -0.75, 1.6, 0.5, 0.75, 0.07, paint, "Wood", { wear = 1.06 })
 			r:block(-1.6, 0.5, -0.75, 1.6, 5.2, 0.7, shade(paint, 0.45), "Wood")
-			r:block(-1.85, 5.2, -0.92, 1.85, 5.35, 0.9, paint, "Wood")
-			r:block(-1.95, 5.35, -0.95, 1.95, 5.5, 0.98, paint, "Wood")
+			r:bevel(-1.85, 5.2, -0.92, 1.85, 5.35, 0.9, 0.052, paint, "Wood", { wear = 1.06 })
+			r:bevel(-1.95, 5.35, -0.95, 1.95, 5.5, 0.98, 0.053, paint, "Wood", { wear = 1.06 })
 			-- lower doors with raised panels, two drawers, upper doors of punched tin
 			for _, sx in { -1, 1 } do
 				local xo, xi = sx * 1.55, sx * 0.03
@@ -1943,7 +1943,7 @@ local items: { Item } = {
 					end
 				end
 			end)
-			r:block(-0.9, 0, 0.3, 0.9, 0.15, 1.45, shade(stone, 1.08), "Slate")
+			r:bevel(-0.9, 0, 0.3, 0.9, 0.15, 1.45, 0.052, shade(stone, 1.08), "Slate", { wear = 0.94 })
 			-- the cast iron body, its spout and cap
 			r:cyl(0, 0.58, -0.6, 0.16, 0.7, "y", iron, "Metal")
 			r:cyl(0, 1.75, -0.6, 2.5, 0.42, "y", iron, "Metal")

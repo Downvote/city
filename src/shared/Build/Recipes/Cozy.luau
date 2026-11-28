@@ -97,7 +97,7 @@ end
 local function cushion(r: R, x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, color: Color3)
 	local h = y2 - y1
 	local xm, ym = (x1 + x2) / 2, (y1 + y2) / 2
-	r:block(x1, y1, z1 + h / 2, x2, y2, z2 - h / 2, color, "Fabric")
+	r:bevel(x1, y1, z1 + h / 2, x2, y2, z2 - h / 2, 0.1, color, "Fabric", { round = true })
 	r:cyl(xm, ym, z1 + h / 2, x2 - x1, h, "x", color, "Fabric")
 	r:cyl(xm, ym, z2 - h / 2, x2 - x1, h, "x", color, "Fabric")
 end
@@ -160,7 +160,18 @@ local function basket(r: R, x1: number, x2: number, y: number, z1: number, z2: n
 			q:block(x1, by, z2, x2, by + 0.07, z2 + 0.03, shade(WICKER, 0.82), "Fabric")
 		end
 	end)
-	r:block(x1 - 0.03, y + h - 0.1, z1 - 0.03, x2 + 0.03, y + h + 0.04, z2 + 0.06, shade(WICKER, 0.9), "Fabric")
+	r:bevel(
+		x1 - 0.03,
+		y + h - 0.1,
+		z1 - 0.03,
+		x2 + 0.03,
+		y + h + 0.04,
+		z2 + 0.06,
+		0.063,
+		shade(WICKER, 0.9),
+		"Fabric",
+		{ round = true }
+	)
 	local xm = (x1 + x2) / 2
 	r:block(xm - 0.17, y + h * 0.42, z2 + 0.03, xm + 0.17, y + h * 0.66, z2 + 0.07, LEATHER, "Fabric")
 end
@@ -353,13 +364,13 @@ local items: { Item } = {
 		build = function(r: R)
 			local wood = r.c1
 			-- a built in box with two cubbies, on a recessed kick
-			r:block(-2.95, 0, -1.15, 2.95, 0.25, 0.9, shade(wood, 0.78), "Wood")
+			r:bevel(-2.95, 0, -1.15, 2.95, 0.25, 0.9, 0.08, shade(wood, 0.78), "Wood", { wear = 1.06 })
 			r:block(-3, 0.25, -1.2, 3, 1.5, -1.05, wood, "Wood")
 			for _, sx in { -1, 1 } do
 				r:block(math.min(sx * 3, sx * 2.8), 0.25, -1.05, math.max(sx * 3, sx * 2.8), 1.5, 1.0, wood, "Wood")
 			end
 			r:block(-0.15, 0.25, -1.05, 0.15, 1.5, 1.0, wood, "Wood")
-			r:block(-2.8, 0.25, -1.05, 2.8, 0.4, 1.0, wood, "Wood")
+			r:bevel(-2.8, 0.25, -1.05, 2.8, 0.4, 1.0, 0.053, wood, "Wood", { wear = 1.06 })
 			r:block(-2.8, 1.3, 0.85, 2.8, 1.5, 1.0, wood, "Wood")
 			for _, sx in { -1, 1 } do
 				r:block(
@@ -373,7 +384,7 @@ local items: { Item } = {
 					"Wood"
 				)
 			end
-			r:block(-3.08, 1.5, -1.2, 3.08, 1.62, 1.12, wood, "Wood")
+			r:bevel(-3.08, 1.5, -1.2, 3.08, 1.62, 1.12, 0.042, wood, "Wood", { wear = 1.06 })
 			r:cyl(0, 1.56, 1.12, 6.16, 0.12, "x", wood, "Wood")
 			-- a basket in each cubby: blankets rolled up in one, yarn in the other
 			for _, sx in { -1, 1 } do
@@ -539,7 +550,7 @@ local items: { Item } = {
 		build = function(r: R)
 			local wood = r.c1
 			-- a painted case on a plinth, a cream back and a stepped cornice
-			r:block(-2.1, 0, -0.8, 2.1, 0.35, 0.76, wood, "Wood")
+			r:bevel(-2.1, 0, -0.8, 2.1, 0.35, 0.76, 0.08, wood, "Wood", { wear = 1.06 })
 			for _, sx in { -1, 1 } do
 				r:block(
 					math.min(sx * 2.1, sx * 1.95),
@@ -553,11 +564,11 @@ local items: { Item } = {
 				)
 			end
 			r:block(-1.95, 0.35, -0.8, 1.95, 6.7, -0.68, r.c2, "Wood")
-			r:block(-2.18, 6.7, -0.86, 2.18, 6.86, 0.8, wood, "Wood")
-			r:block(-2.1, 6.86, -0.8, 2.1, 7.0, 0.74, wood, "Wood")
-			r:block(-1.95, 0.35, -0.68, 1.95, 0.5, 0.68, wood, "Wood")
+			r:bevel(-2.18, 6.7, -0.86, 2.18, 6.86, 0.8, 0.056, wood, "Wood", { wear = 1.06 })
+			r:bevel(-2.1, 6.86, -0.8, 2.1, 7.0, 0.74, 0.049, wood, "Wood", { wear = 1.06 })
+			r:bevel(-1.95, 0.35, -0.68, 1.95, 0.5, 0.68, 0.053, wood, "Wood", { wear = 1.06 })
 			for _, y in { 2.05, 3.6, 5.15 } do
-				r:block(-1.95, y - 0.12, -0.68, 1.95, y, 0.68, wood, "Wood")
+				r:bevel(-1.95, y - 0.12, -0.68, 1.95, y, 0.68, 0.042, wood, "Wood", { wear = 1.06 })
 			end
 			-- bottom: two baskets, one with a blanket rolled in it
 			basket(r, -1.85, -0.1, 0.5, -0.6, 0.5, 0.95)
@@ -730,7 +741,7 @@ local items: { Item } = {
 				return shade(stone, 0.88 + rand() * 0.2)
 			end
 			-- a slate hearth, two stone piers and a firebox lined with soot
-			r:block(-3.2, 0, -1.3, 3.2, 0.3, 1.3, Color3.fromRGB(128, 124, 124), "Slate")
+			r:bevel(-3.2, 0, -1.3, 3.2, 0.3, 1.3, 0.08, Color3.fromRGB(128, 124, 124), "Slate", { wear = 0.94 })
 			for _, sx in { -1, 1 } do
 				r:piece(function(q: R)
 					q:block(
@@ -1217,8 +1228,8 @@ local items: { Item } = {
 				end
 				r:block(-1.75, yb + 0.15, -3.2, 1.75, yb + 0.25, 3.2, dk, "Wood")
 				local top = yb + 0.85
-				r:block(-1.7, yb + 0.25, -3.2, 1.7, top - 0.1, 3.2, SHEET, "Fabric")
-				r:block(-1.76, top - 0.45, -1.4, 1.76, top - 0.03, 3.26, quilt, "Fabric")
+				r:bevel(-1.7, yb + 0.25, -3.2, 1.7, top - 0.1, 3.2, 0.1, SHEET, "Fabric", { round = true })
+				r:bevel(-1.76, top - 0.45, -1.4, 1.76, top - 0.03, 3.26, 0.1, quilt, "Fabric", { round = true })
 				local rand = rng(seed)
 				local patches = { quilt, LINEN, shade(quilt, 0.8), MUSTARD, mix(quilt, ROSE, 0.5), LINEN }
 				r:piece(function(q: R)
@@ -1596,7 +1607,7 @@ local items: { Item } = {
 				end
 			end
 			r:block(-2.5, 0.8, -0.85, 2.5, 2.7, 0.68, wood, "Wood")
-			r:block(-2.6, 2.7, -0.9, 2.6, 2.85, 0.78, wood, "Wood")
+			r:bevel(-2.6, 2.7, -0.9, 2.6, 2.85, 0.78, 0.052, wood, "Wood", { wear = 1.06 })
 			-- cane fronted doors either side of three drawers
 			local cane = Color3.fromRGB(216, 192, 150)
 			for _, sx in { -1, 1 } do
@@ -2024,7 +2035,7 @@ local items: { Item } = {
 			stack(-1.55, mix(r.c1, C.Cream, 0.35), r.c1)
 			stack(1.55, mix(r.c2, C.Cream, 0.35), r.c2)
 			-- a knitted throw folded on one and a bolster behind the other
-			r:block(1.1, 1.1, -0.6, 2.2, 1.22, 0.5, KNIT, "Fabric")
+			r:bevel(1.1, 1.1, -0.6, 2.2, 1.22, 0.5, 0.054, KNIT, "Fabric", { round = true })
 			r:block(1.4, 1.22, -0.6, 1.52, 1.25, 0.5, ROSE, "Fabric")
 			r:cyl(-1.55, 1.4, -0.75, 1.9, 0.6, "x", MUSTARD, "Fabric")
 			for _, sx in { -1, 1 } do
@@ -2070,7 +2081,7 @@ local items: { Item } = {
 					r:ball(sx * 1.0, 0.15, sz * 0.55, 0.3, shade(paint, 0.9), "Wood")
 				end
 			end
-			r:block(-1.28, 0.25, -0.78, 1.28, 0.45, 0.68, paint, "Wood")
+			r:bevel(-1.28, 0.25, -0.78, 1.28, 0.45, 0.68, 0.07, paint, "Wood", { wear = 1.06 })
 			for _, sx in { -1, 1 } do
 				r:block(
 					math.min(sx * 1.12, sx * 1.25),
@@ -2084,13 +2095,13 @@ local items: { Item } = {
 				)
 			end
 			r:block(-1.12, 0.45, -0.75, 1.12, 5.8, -0.65, shade(paint, 0.9), "Wood")
-			r:block(-1.32, 5.8, -0.8, 1.32, 5.95, 0.72, paint, "Wood")
+			r:bevel(-1.32, 5.8, -0.8, 1.32, 5.95, 0.72, 0.053, paint, "Wood", { wear = 1.06 })
 			r:block(-1.25, 5.95, -0.75, 1.25, 6.05, 0.66, paint, "Wood")
 			for _, y in { 1.5, 4.3 } do
 				r:block(-1.12, y - 0.1, -0.65, 1.12, y, 0.55, paint, "Wood")
 			end
 			r:block(-1.12, 2.3, 0.5, 1.12, 3.0, 0.6, paint, "Wood")
-			r:block(-1.12, 2.3, -0.65, 1.12, 2.4, 0.5, paint, "Wood")
+			r:bevel(-1.12, 2.3, -0.65, 1.12, 2.4, 0.5, 0.035, paint, "Wood", { wear = 1.06 })
 			-- a drawer, and a glazed door over stacks of folded towels
 			r:block(-1.08, 2.38, 0.6, 1.08, 2.9, 0.68, shade(paint, 1.05), "Wood")
 			r:ball(0, 2.64, 0.72, 0.12, BRASS, "Metal")

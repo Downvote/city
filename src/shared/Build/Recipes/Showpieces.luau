@@ -343,7 +343,7 @@ local items: { any } = {
 				end)
 			end
 			-- the coping along the top
-			r:block(-5.15, top, -1.25, 5.15, top + 0.55, 1.25, r.c2, "Limestone")
+			r:bevel(-5.15, top, -1.25, 5.15, top + 0.55, 1.25, 0.08, r.c2, "Limestone", { wear = 0.94 })
 			r:block(-4.9, top + 0.55, -1.0, 4.9, top + 0.6, 1.0, shade(r.c2, 0.9), "Limestone")
 			-- ivy up the left pier and over the arch
 			for i, p in
@@ -590,7 +590,7 @@ local items: { any } = {
 			end
 			-- the telescope on its pier, its tube out of the slit
 			r:cyl(0, 1.6, 0, 1.2, 1.4, "y", shade(r.c1, 0.7), "Metal")
-			r:block(-0.5, 2.2, -0.5, 0.5, 2.8, 0.5, C.DarkMetal, "Metal")
+			r:bevel(-0.5, 2.2, -0.5, 0.5, 2.8, 0.5, 0.08, C.DarkMetal, "Metal", { wear = 1.06 })
 			local up = math.rad(48)
 			local dir = Vector3.new(0, math.sin(up), math.cos(up))
 			local pivot = Vector3.new(0, 3.0, 0)
@@ -761,9 +761,9 @@ local items: { any } = {
 		build = function(r: R)
 			-- A stone urn (c1) on a pedestal, planted with flowers (c2) and ivy over its lip.
 			local s = r.c1
-			r:block(-1.0, 0, -1.0, 1.0, 0.3, 1.0, shade(s, 0.9), "Limestone")
+			r:bevel(-1.0, 0, -1.0, 1.0, 0.3, 1.0, 0.08, shade(s, 0.9), "Limestone", { wear = 0.94 })
 			r:block(-0.8, 0.3, -0.8, 0.8, 1.9, 0.8, s, "Limestone")
-			r:block(-0.95, 1.9, -0.95, 0.95, 2.15, 0.95, shade(s, 0.92), "Limestone")
+			r:bevel(-0.95, 1.9, -0.95, 0.95, 2.15, 0.95, 0.08, shade(s, 0.92), "Limestone", { wear = 0.94 })
 			r:cyl(0, 2.3, 0, 0.3, 0.9, "y", s, "Limestone")
 			r:cyl(0, 2.6, 0, 0.3, 0.55, "y", shade(s, 0.95), "Limestone")
 			r:lump(CFrame.new(0, 3.3, 0), 2.0, 1.4, 2.0, s, "Limestone")

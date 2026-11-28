@@ -43,7 +43,7 @@ local function top(r: R, w: number, d: number, y1: number, y2: number, color: Co
 			r:block(-w / 2, y1, z1, w / 2, y2, z1 + d / boards, if i % 2 == 0 then color else shade(color, 0.95), mat)
 		end
 	else
-		r:block(-w / 2, y1, -d / 2, w / 2, y2, d / 2, color, mat)
+		r:bevel(-w / 2, y1, -d / 2, w / 2, y2, d / 2, 0.056, color, mat, { wear = 1.06 })
 	end
 	r:block(-w / 2 + 0.04, y1 - 0.06, -d / 2 + 0.04, w / 2 - 0.04, y1, d / 2 - 0.04, shade(color, 0.82), mat)
 end
@@ -136,7 +136,7 @@ local items: { Item } = {
 		build = function(r: R)
 			top(r, 4, 2.4, 1.42, 1.6, r.c1, "Wood", 3)
 			-- a shallow drawer box under the top
-			r:block(-1.62, 1.14, -0.86, 1.62, 1.36, 0.86, shade(r.c1, 0.86), "Wood")
+			r:bevel(-1.62, 1.14, -0.86, 1.62, 1.36, 0.86, 0.077, shade(r.c1, 0.86), "Wood", { wear = 1.06 })
 			r:block(-0.8, 1.17, 0.86, 0.8, 1.33, 0.9, shade(r.c1, 1.06), "Wood")
 			r:block(-0.3, 1.22, 0.9, 0.3, 1.28, 0.95, C.Gold, "Metal")
 			for _, sx in { -1, 1 } do
@@ -251,7 +251,7 @@ local items: { Item } = {
 		tags = { "table" },
 		build = function(r: R)
 			top(r, 1.8, 1.8, 2.24, 2.4, r.c1, "Wood")
-			r:block(-0.72, 1.7, -0.72, 0.72, 2.18, 0.72, shade(r.c1, 0.93), "Wood")
+			r:bevel(-0.72, 1.7, -0.72, 0.72, 2.18, 0.72, 0.08, shade(r.c1, 0.93), "Wood", { wear = 1.06 })
 			drawer(r, -0.62, 1.76, 0.62, 2.12, 0.72, r.c2)
 			for _, sx in { -1, 1 } do
 				for _, sz in { -1, 1 } do
@@ -302,14 +302,14 @@ local items: { Item } = {
 		build = function(r: R)
 			top(r, 4.6, 2.4, 2.82, 3.0, r.c1, "Wood")
 			-- a drawer pedestal on the right, standing on a recessed plinth
-			r:block(0.92, 0, -1.0, 2.12, 0.18, 0.95, shade(r.c2, 0.7), "Wood")
+			r:bevel(0.92, 0, -1.0, 2.12, 0.18, 0.95, 0.063, shade(r.c2, 0.7), "Wood", { wear = 1.06 })
 			r:block(0.88, 0.18, -1.1, 2.18, 2.76, 1.08, r.c2, "Wood")
 			local front = shade(r.c2, 0.95)
 			drawer(r, 0.98, 0.28, 2.08, 1.1, 1.08, front)
 			drawer(r, 0.98, 1.18, 2.08, 1.94, 1.08, front)
 			drawer(r, 0.98, 2.02, 2.08, 2.7, 1.08, front)
 			-- a slim pencil drawer in the middle, and legs on the left
-			r:block(-1.85, 2.56, -1.0, 0.88, 2.76, 1.0, shade(r.c2, 0.92), "Wood")
+			r:bevel(-1.85, 2.56, -1.0, 0.88, 2.76, 1.0, 0.07, shade(r.c2, 0.92), "Wood", { wear = 1.06 })
 			r:block(-1.0, 2.6, 1.0, 0.4, 2.73, 1.04, front, "Wood")
 			r:block(-0.45, 2.64, 1.04, -0.15, 2.69, 1.08, C.Gold, "Metal")
 			for _, z in { -0.92, 0.92 } do
@@ -350,7 +350,7 @@ local items: { Item } = {
 			r:block(-1.4, 1.25, -0.04, -0.8, 1.45, 0.04, C.DarkMetal, "Metal")
 			r:block(-1.0, 2.4, 1.02, 1.0, 2.8, 1.08, shade(r.c1, 0.86), "Wood")
 			r:block(-0.3, 2.56, 1.08, 0.3, 2.64, 1.14, C.DarkMetal, "Metal")
-			r:block(-2.01, 2.35, -0.95, 2.01, 2.85, 1.02, shade(r.c2, 0.85), "Wood")
+			r:bevel(-2.01, 2.35, -0.95, 2.01, 2.85, 1.02, 0.08, shade(r.c2, 0.85), "Wood", { wear = 1.06 })
 			-- a framed pegboard with tools hung on it
 			r:block(-2.4, 3.2, -1.2, 2.4, 5.2, -1.08, r.c2, "Wood")
 			r:block(-2.25, 3.35, -1.08, 2.25, 5.05, -1.04, Color3.fromRGB(214, 190, 150), "Wood")

@@ -239,7 +239,7 @@ local items: { Item } = {
 		lively = true,
 		build = function(r: R)
 			-- a plinth, the cabinet and its round top
-			r:block(-1.4, 0, -0.8, 1.4, 0.3, 0.8, INK, "Metal")
+			r:bevel(-1.4, 0, -0.8, 1.4, 0.3, 0.8, 0.08, INK, "Metal", { wear = 1.06 })
 			r:block(-1.3, 0.3, -0.75, 1.3, 3.8, 0.7, r.c1, "Wood")
 			r:cyl(0, 3.8, -0.025, 1.45, 2.6, "z", r.c1, "Wood")
 			for _, sx in { -1, 1 } do
@@ -390,13 +390,13 @@ local items: { Item } = {
 		build = function(r: R)
 			local wall = r.c1
 			-- the booth: a floor plate, walls on three sides and half the front, a roof
-			r:block(-2.1, 0, -1.7, 2.1, 0.15, 1.7, INK, "Metal")
+			r:bevel(-2.1, 0, -1.7, 2.1, 0.15, 1.7, 0.052, INK, "Metal", { wear = 1.06 })
 			r:block(-2.1, 0.15, -1.7, 2.1, 6.0, -1.5, wall, "Fabric")
 			r:block(-2.1, 0.15, -1.5, -1.9, 6.0, 1.7, wall, "Fabric")
 			r:block(1.9, 0.15, -1.5, 2.1, 6.0, 1.7, wall, "Fabric")
 			r:block(0.1, 0.15, 1.5, 1.9, 6.0, 1.7, wall, "Fabric")
 			r:block(-1.9, 5.0, 1.5, 0.1, 6.0, 1.7, wall, "Fabric")
-			r:block(-2.2, 6.0, -1.8, 2.2, 6.2, 1.8, r.c2, "Fabric")
+			r:bevel(-2.2, 6.0, -1.8, 2.2, 6.2, 1.8, 0.09, r.c2, "Fabric", { round = true })
 			-- a lit sign box on top with stars and a camera on it, bulbs along its edge
 			local sign = r:block(-1.6, 6.2, 0.9, 1.6, 6.75, 1.4, CREAM, "Metal")
 			r:glow(sign, 10, 0.8)
@@ -478,7 +478,7 @@ local items: { Item } = {
 				r:block(x + 0.85, 0.5, 0.94, x + 0.95, 0.7, 0.98, CHROME, "Metal")
 			end
 			-- the tank: a frame, sand, rocks, coral and weed, the water and the clear front
-			r:block(-4, 1.2, -0.9, 4, 1.35, 0.9, frame, "Metal")
+			r:bevel(-4, 1.2, -0.9, 4, 1.35, 0.9, 0.053, frame, "Metal", { wear = 1.06 })
 			r:block(-3.85, 1.35, -0.75, 3.85, 1.65, 0.75, Color3.fromRGB(230, 210, 166), "Sand")
 			for _, sx in { -1, 1 } do
 				for _, sz in { -1, 1 } do
@@ -494,8 +494,8 @@ local items: { Item } = {
 					)
 				end
 			end
-			r:block(-4, 6.4, -0.9, 4, 6.6, 0.9, frame, "Metal")
-			r:block(-4, 6.6, -0.9, 4, 7.0, 0.9, r.c1, "Wood")
+			r:bevel(-4, 6.4, -0.9, 4, 6.6, 0.9, 0.07, frame, "Metal", { wear = 1.06 })
+			r:bevel(-4, 6.6, -0.9, 4, 7.0, 0.9, 0.08, r.c1, "Wood", { wear = 1.06 })
 			local strip = r:block(-3.8, 6.36, -0.7, 3.8, 6.4, 0.7, C.White, "Neon")
 			r:glow(strip, 14, 0.9, Color3.fromRGB(170, 220, 250))
 			local rocks = { { -2.6, 2.0, -0.3, 1.2 }, { 1.4, 1.9, -0.4, 1.0 }, { 3.1, 1.8, 0.2, 0.7 } }

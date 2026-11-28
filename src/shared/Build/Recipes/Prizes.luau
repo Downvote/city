@@ -91,8 +91,8 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a stone plinth (c2) of two steps with a brass plate, a cast iron column (c1) with
 			-- collars, and a head with a dial on every side, a cornice, a roof and a ball on top
-			r:block(-1.3, 0, -1.3, 1.3, 0.4, 1.3, r.c2, "Slate")
-			r:block(-0.95, 0.4, -0.95, 0.95, 0.85, 0.95, shade(r.c2, 1.06), "Slate")
+			r:bevel(-1.3, 0, -1.3, 1.3, 0.4, 1.3, 0.08, r.c2, "Slate", { wear = 0.94 })
+			r:bevel(-0.95, 0.4, -0.95, 0.95, 0.85, 0.95, 0.08, shade(r.c2, 1.06), "Slate", { wear = 0.94 })
 			r:block(-0.45, 0.5, 0.95, 0.45, 0.75, 0.99, C.Gold, "Metal")
 			r:block(-0.3, 0.58, 0.99, 0.3, 0.6, 1.03, shade(C.Gold, 0.7), "Metal")
 			r:block(-0.3, 0.65, 0.99, 0.2, 0.67, 1.03, shade(C.Gold, 0.7), "Metal")
@@ -107,14 +107,14 @@ local items: { Item } = {
 				local out = Vector3.new(math.sin(a), 0, math.cos(a))
 				rod(r, Vector3.new(0, 7.9, 0) + out * 0.25, Vector3.new(0, 8.75, 0) + out * 0.8, 0.12, r.c1)
 			end
-			r:block(-1.05, 8.75, -1.05, 1.05, 8.9, 1.05, shade(r.c1, 0.85), "Metal")
+			r:bevel(-1.05, 8.75, -1.05, 1.05, 8.9, 1.05, 0.053, shade(r.c1, 0.85), "Metal", { wear = 1.06 })
 			r:block(-0.95, 8.9, -0.95, 0.95, 10.8, 0.95, r.c1, "Metal")
 			-- a dial on each side, all at ten past two
 			for k = 0, 3 do
 				local cf = CFrame.new(0, 9.85, 0) * CFrame.Angles(0, k * math.pi / 2, 0) * CFrame.new(0, 0, 0.95)
 				dial(r, cf, shade(r.c1, 0.7), 2, 10)
 			end
-			r:block(-1.15, 10.8, -1.15, 1.15, 11.0, 1.15, shade(r.c1, 0.85), "Metal")
+			r:bevel(-1.15, 10.8, -1.15, 1.15, 11.0, 1.15, 0.07, shade(r.c1, 0.85), "Metal", { wear = 1.06 })
 			r:cone(0, 11.4, 0, 0.8, 2.1, shade(r.c1, 0.9), "Metal")
 			r:cyl(0, 11.85, 0, 0.1, 0.12, "y", C.Gold, "Metal")
 			r:ball(0, 12.0, 0, 0.26, C.Gold, "Metal")

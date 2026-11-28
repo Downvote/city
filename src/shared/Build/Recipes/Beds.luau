@@ -70,7 +70,7 @@ local function mattress(
 	zb: number,
 	blanket: Color3
 )
-	r:block(x1, y0, z1, x2, y1, z2, SHEET, "Fabric")
+	r:bevel(x1, y0, z1, x2, y1, z2, 0.1, SHEET, "Fabric", { round = true })
 	r:block(x1 - 0.03, y1 - 0.1, z1 - 0.03, x2 + 0.03, y1 - 0.05, z2 + 0.03, shade(SHEET, 0.86), "Fabric")
 	local fold = Colors.mix(blanket, C.White, 0.3)
 	r:block(x1 - 0.08, y1 - 0.5, zb + 0.3, x2 + 0.08, y1 + 0.12, z2 + 0.08, blanket, "Fabric")
@@ -164,11 +164,22 @@ local items: { Item } = {
 		build = function(r: R)
 			feet(r, 2.7, 3.5, 0.4, Color3.fromRGB(110, 76, 52))
 			-- a padded platform with a recessed base
-			r:block(-2.9, 0.4, -3.6, 2.9, 0.55, 3.6, shade(r.c1, 0.7), "Fabric")
+			r:bevel(-2.9, 0.4, -3.6, 2.9, 0.55, 3.6, 0.068, shade(r.c1, 0.7), "Fabric", { round = true })
 			r:block(-3, 0.55, -3.6, 3, 1.25, 3.8, r.c1, "Fabric")
 			mattress(r, -2.85, 2.85, -3.38, 3.55, 1.25, 1.98, -0.9, r.c2)
 			-- a folded throw across the foot
-			r:block(-2.98, 1.6, 2.05, 2.98, 2.18, 3.05, Colors.mix(r.c2, C.Black, 0.35), "Fabric")
+			r:bevel(
+				-2.98,
+				1.6,
+				2.05,
+				2.98,
+				2.18,
+				3.05,
+				0.1,
+				Colors.mix(r.c2, C.Black, 0.35),
+				"Fabric",
+				{ round = true }
+			)
 			pillow(r, -1.35, 1.98, -2.85, 2.3)
 			pillow(r, 1.35, 1.98, -2.85, 2.3)
 			local accent = Colors.mix(r.c2, C.Cream, 0.45)
@@ -258,8 +269,8 @@ local items: { Item } = {
 		tags = { "bed" },
 		build = function(r: R)
 			-- a low wooden platform on a recessed base
-			r:block(-1.9, 0, -3.25, 1.9, 0.18, 3.25, shade(r.c1, 0.6), "Wood")
-			r:block(-2.1, 0.18, -3.5, 2.1, 0.45, 3.5, r.c1, "Wood")
+			r:bevel(-1.9, 0, -3.25, 1.9, 0.18, 3.25, 0.063, shade(r.c1, 0.6), "Wood", { wear = 1.06 })
+			r:bevel(-2.1, 0.18, -3.5, 2.1, 0.45, 3.5, 0.08, r.c1, "Wood", { wear = 1.06 })
 			for _, sz in { -1, 1 } do
 				r:block(-2.1, 0.45, sz * 3.45 - 0.05, 2.1, 0.52, sz * 3.45 + 0.05, shade(r.c1, 0.86), "Wood")
 			end
@@ -274,7 +285,7 @@ local items: { Item } = {
 				end
 			end
 			-- a folded quilt at the foot and a pillow at the head
-			r:block(-1.85, 1.1, 1.75, 1.85, 1.42, 3.0, C.Cream, "Fabric")
+			r:bevel(-1.85, 1.1, 1.75, 1.85, 1.42, 3.0, 0.1, C.Cream, "Fabric", { round = true })
 			r:cyl(0, 1.26, 1.75, 3.7, 0.32, "x", C.Cream, "Fabric")
 			r:block(-1.88, 1.1, 2.3, 1.88, 1.45, 2.45, shade(C.Cream, 0.85), "Fabric")
 			r:piece(function(q: R)
@@ -345,7 +356,7 @@ local items: { Item } = {
 				r:block(sx * 2.8 - 0.06, 7.4, -3.5, sx * 2.8 + 0.06, 8.2, 3.5, r.c2, "Fabric")
 				r:block(sx * 2.79 - 0.1, 7.32, -3.45, sx * 2.79 + 0.1, 7.42, 3.45, C.Gold, "Fabric")
 			end
-			r:block(-2.75, 8.45, -3.55, 2.75, 8.55, 3.55, cloth, "Fabric")
+			r:bevel(-2.75, 8.45, -3.55, 2.75, 8.55, 3.55, 0.045, cloth, "Fabric", { round = true })
 			-- the bed itself
 			r:block(-2.7, 0.5, -3.5, 2.7, 1.25, 3.5, r.c1, "Wood")
 			r:block(-2.74, 0.47, 3.44, 2.74, 0.62, 3.56, dk, "Wood")
@@ -375,8 +386,8 @@ local items: { Item } = {
 		c2 = "7FB8D9",
 		tags = { "bed" },
 		build = function(r: R)
-			r:block(-1.7, 0.2, -3.2, 1.7, 0.7, 3.2, r.c1, "Wood")
-			r:block(-1.6, 0, -3.1, 1.6, 0.2, 3.1, shade(r.c1, 0.8), "Wood")
+			r:bevel(-1.7, 0.2, -3.2, 1.7, 0.7, 3.2, 0.08, r.c1, "Wood", { wear = 1.06 })
+			r:bevel(-1.6, 0, -3.1, 1.6, 0.2, 3.1, 0.07, shade(r.c1, 0.8), "Wood", { wear = 1.06 })
 			mattress(r, -1.55, 1.55, -3.1, 3.1, 0.7, 1.3, -0.7, r.c2)
 			-- stars on the blanket
 			for _, p in { { -0.7, 0.4 }, { 0.5, 1.3 }, { -0.2, 2.3 }, { 0.8, -0.1 } } do

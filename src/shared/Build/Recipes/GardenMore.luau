@@ -203,7 +203,7 @@ local items: { Item } = {
 		build = function(r: R)
 			-- clay pavers (c1) laid in a basket weave on mortar (c2): a pair of bricks to each
 			-- square, every square turned across its neighbours, the bricks in a few tones
-			r:block(-2, 0, -2, 2, 0.1, 2, r.c2, "Concrete")
+			r:bevel(-2, 0, -2, 2, 0.1, 2, 0.035, r.c2, "Concrete", { wear = 0.94 })
 			local tones = {
 				r.c1,
 				shade(r.c1, 0.9),
@@ -1274,12 +1274,12 @@ local items: { Item } = {
 					r:block(sx * 0.7 - 0.08, 0, sz * 0.7 - 0.08, sx * 0.7 + 0.08, 0.9, sz * 0.7 + 0.08, C.Bark, "Wood")
 				end
 			end
-			r:block(-0.85, 0.9, -0.85, 0.85, 1.05, 0.85, C.Bark, "Wood")
+			r:bevel(-0.85, 0.9, -0.85, 0.85, 1.05, 0.85, 0.053, C.Bark, "Wood", { wear = 1.06 })
 			r:block(-0.8, 1.05, -0.8, 0.8, 1.15, 0.8, shade(r.c1, 0.85), "Wood")
 			r:ramp(-0.6, 1.0, 0.8, 0.6, 1.15, 1.12, false, shade(r.c1, 0.85), "Wood")
 			-- the brood box and the super above it, each with a rim round its top and handholds
 			for _, b in { { 1.15, 1.95 }, { 1.98, 2.55 } } do
-				r:block(-0.75, b[1], -0.75, 0.75, b[2], 0.75, r.c1, "Wood")
+				r:bevel(-0.75, b[1], -0.75, 0.75, b[2], 0.75, 0.08, r.c1, "Wood", { wear = 1.06 })
 				r:block(-0.78, b[2] - 0.1, -0.78, 0.78, b[2] - 0.03, 0.78, shade(r.c1, 0.92), "Wood")
 				for _, sx in { -1, 1 } do
 					r:block(
@@ -1334,7 +1334,7 @@ local items: { Item } = {
 			-- a stone bath (c1) on a turned stem: a square foot, collars, a wide shallow bowl with
 			-- a rolled lip and water (c2) in it, a sparrow on the rim
 			local dk = shade(r.c1, 0.86)
-			r:block(-0.62, 0, -0.62, 0.62, 0.18, 0.62, dk, "Slate")
+			r:bevel(-0.62, 0, -0.62, 0.62, 0.18, 0.62, 0.063, dk, "Slate", { wear = 0.94 })
 			r:cyl(0, 0.28, 0, 0.2, 0.9, "y", r.c1, "Slate")
 			r:cyl(0, 1.2, 0, 1.64, 0.42, "y", r.c1, "Slate")
 			r:cyl(0, 0.46, 0, 0.16, 0.6, "y", dk, "Slate")
@@ -1397,11 +1397,11 @@ local items: { Item } = {
 			-- marked round its edge and a gnomon standing up across it, ivy at the foot
 			local dk = shade(r.c1, 0.88)
 			r:cyl(0, 0.08, 0, 0.16, 1.55, "y", dk, "Slate")
-			r:block(-0.52, 0.16, -0.52, 0.52, 0.42, 0.52, r.c1, "Slate")
+			r:bevel(-0.52, 0.16, -0.52, 0.52, 0.42, 0.52, 0.08, r.c1, "Slate", { wear = 0.94 })
 			r:cyl(0, 0.5, 0, 0.16, 0.66, "y", dk, "Slate")
 			r:cyl(0, 1.5, 0, 2.0, 0.46, "y", r.c1, "Slate")
 			r:cyl(0, 2.48, 0, 0.16, 0.66, "y", dk, "Slate")
-			r:block(-0.5, 2.56, -0.5, 0.5, 2.76, 0.5, r.c1, "Slate")
+			r:bevel(-0.5, 2.56, -0.5, 0.5, 2.76, 0.5, 0.07, r.c1, "Slate", { wear = 0.94 })
 			r:cyl(0, 2.8, 0, 0.08, 0.92, "y", r.c2, "Metal")
 			r:piece(function(q: R)
 				q:box(0, 2.855, -0.36, 0.03, 0.03, 0.12, shade(r.c2, 0.6), "Metal")
@@ -1495,7 +1495,7 @@ local items: { Item } = {
 			r:block(-0.7, 0.66, 0.7, 0.7, 0.95, 0.9, shade(r.c1, 0.85), "Wood")
 			r:block(-0.7, 0.86, -0.9, 0.7, 0.95, -0.7, shade(r.c1, 0.85), "Wood")
 			-- the tray: a floor, two sides, a back and a front that leans out
-			r:block(-0.62, 0.95, -1.1, 0.62, 1.05, 1.12, r.c1, "WoodPlanks")
+			r:bevel(-0.62, 0.95, -1.1, 0.62, 1.05, 1.12, 0.035, r.c1, "WoodPlanks", { wear = 1.06 })
 			for _, sx in { -1, 1 } do
 				r:quad(
 					Vector3.new(sx * 0.67, 0.95, -1.2),
@@ -1646,9 +1646,9 @@ local items: { Item } = {
 			-- its head tipped down, ears up, front paws together and a round tail, moss (c2)
 			-- in the corners
 			local dk = shade(r.c1, 0.86)
-			r:block(-0.8, 0, -0.8, 0.8, 0.16, 0.8, dk, "Slate")
+			r:bevel(-0.8, 0, -0.8, 0.8, 0.16, 0.8, 0.056, dk, "Slate", { wear = 0.94 })
 			r:block(-0.62, 0.16, -0.62, 0.62, 1.36, 0.62, r.c1, "Slate")
-			r:block(-0.74, 1.36, -0.74, 0.74, 1.52, 0.74, dk, "Slate")
+			r:bevel(-0.74, 1.36, -0.74, 0.74, 1.52, 0.74, 0.056, dk, "Slate", { wear = 0.94 })
 			r:lump(CFrame.new(0, 1.92, -0.12), 0.92, 0.8, 1.0, r.c1, "Slate")
 			r:lump(CFrame.new(0, 2.3, 0.14) * CFrame.Angles(-0.25, 0, 0), 0.7, 1.0, 0.66, r.c1, "Slate")
 			r:lump(CFrame.new(0, 2.92, 0.34) * CFrame.Angles(0.35, 0, 0), 0.5, 0.46, 0.66, r.c1, "Slate")
@@ -2075,9 +2075,9 @@ local items: { Item } = {
 				r:block(sx * 2.15, 1.82, -0.65, sx * 2.27, 2.5, 0.55, r.c2, "Metal")
 				r:block(sx * 2.08, 2.5, -0.65, sx * 2.34, 2.58, 0.6, r.c2, "Metal")
 			end
-			r:block(-2.2, 1.7, -0.65, 2.2, 1.82, 0.6, r.c2, "Metal")
+			r:bevel(-2.2, 1.7, -0.65, 2.2, 1.82, 0.6, 0.042, r.c2, "Metal", { wear = 1.06 })
 			r:boxAt(CFrame.new(0, 2.6, -0.74) * CFrame.Angles(-0.18, 0, 0), 4.4, 1.6, 0.1, r.c2, "Metal")
-			r:block(-2.12, 1.82, -0.58, 2.12, 2.08, 0.55, r.c1, "Fabric")
+			r:bevel(-2.12, 1.82, -0.58, 2.12, 2.08, 0.55, 0.1, r.c1, "Fabric", { round = true })
 			r:boxAt(CFrame.new(0, 2.62, -0.58) * CFrame.Angles(-0.18, 0, 0), 4.2, 1.3, 0.22, r.c1, "Fabric")
 			for _, sx in { -1, 1 } do
 				r:lump(
@@ -2347,7 +2347,7 @@ local items: { Item } = {
 					end
 				end
 			end, true)
-			r:block(-1.85, 1.7, -0.95, 1.85, 1.86, 0.95, r.c1, "WoodPlanks")
+			r:bevel(-1.85, 1.7, -0.95, 1.85, 1.86, 0.95, 0.056, r.c1, "WoodPlanks", { wear = 1.06 })
 			for _, x in { -1.2, 1.2 } do
 				r:block(x - 0.1, 1.86, -0.9, x + 0.1, 1.92, 0.9, r.c2, "Wood")
 			end

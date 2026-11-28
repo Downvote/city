@@ -129,7 +129,7 @@ local items: { Item } = {
 			r:block(-0.82, 1.52, -0.8, 0.82, 1.6, 0.8, wood, "Wood")
 			r:block(-0.82, 0.46, -0.8, 0.82, 1.52, -0.66, shade(r.c1, 0.5), "Wood")
 			r:block(-0.82, 0.96, -0.66, 0.82, 1.02, 0.74, wood, "Wood")
-			r:block(-2.5, 1.6, -0.85, 2.5, 1.72, 0.85, shade(r.c1, 0.88), "Wood")
+			r:bevel(-2.5, 1.6, -0.85, 2.5, 1.72, 0.85, 0.042, shade(r.c1, 0.88), "Wood", { wear = 1.06 })
 			for _, sx in { -1, 1 } do
 				local xa, xb = sx * 0.85, sx * 2.42
 				local x1, x2 = math.min(xa, xb), math.max(xa, xb)
@@ -225,7 +225,7 @@ local items: { Item } = {
 					r:cyl(sx * 0.75, 0.03, sz * 0.62, 0.06, 0.14, "y", C.Black, "Rubber")
 				end
 			end
-			r:block(-0.9, 0.06, -0.75, 0.9, 0.45, 0.75, r.c1, "Wood")
+			r:bevel(-0.9, 0.06, -0.75, 0.9, 0.45, 0.75, 0.08, r.c1, "Wood", { wear = 1.06 })
 			r:block(-0.86, 0.45, -0.71, 0.86, 0.48, 0.71, C.Black, "Rubber")
 			-- the platter, the record and its label
 			r:cyl(-0.2, 0.51, 0, 0.06, 1.18, "y", C.Metal, "Metal")
@@ -260,8 +260,8 @@ local items: { Item } = {
 			local hi = shade(r.c1, 1.35)
 			-- the upright case, with a lid and a moulding round the top
 			r:block(-2.4, 0.15, -2.0, 2.4, 4.3, -0.85, r.c1, "Wood")
-			r:block(-2.45, 0, -2.0, 2.45, 0.15, -0.8, hi, "Wood")
-			r:block(-2.5, 4.3, -2.05, 2.5, 4.45, -0.75, hi, "Wood")
+			r:bevel(-2.45, 0, -2.0, 2.45, 0.15, -0.8, 0.052, hi, "Wood", { wear = 1.06 })
+			r:bevel(-2.5, 4.3, -2.05, 2.5, 4.45, -0.75, 0.053, hi, "Wood", { wear = 1.06 })
 			r:block(-2.2, 2.9, -0.86, 2.2, 4.2, -0.82, shade(r.c1, 1.15), "Wood")
 			r:block(-2.2, 0.3, -0.86, 2.2, 2.25, -0.82, shade(r.c1, 1.15), "Wood")
 			-- side cheeks hold the keyboard, each on a toe block
@@ -271,7 +271,7 @@ local items: { Item } = {
 				r:block(sx * 2.3 - 0.14, 0, -0.85, sx * 2.3 + 0.14, 0.15, 0.25, hi, "Wood")
 				r:block(sx * 1.95 - 0.1, 0, -0.85, sx * 1.95 + 0.1, 2.3, -0.65, r.c1, "Wood")
 			end
-			r:block(-2.18, 2.25, -0.85, 2.18, 2.55, 0.12, r.c1, "Wood")
+			r:bevel(-2.18, 2.25, -0.85, 2.18, 2.55, 0.12, 0.08, r.c1, "Wood", { wear = 1.06 })
 			-- white keys with a thin gap between each, and black keys in twos and threes on them
 			r:piece(function(q: R)
 				local kw = 4.3 / 21
@@ -301,7 +301,7 @@ local items: { Item } = {
 				end
 				r:block(sx * 1.1 - 0.06, 0.4, 0.98, sx * 1.1 + 0.06, 0.5, 1.62, r.c1, "Wood")
 			end
-			r:block(-1.3, 1.5, 0.82, 1.3, 1.68, 1.78, r.c1, "Wood")
+			r:bevel(-1.3, 1.5, 0.82, 1.3, 1.68, 1.78, 0.063, r.c1, "Wood", { wear = 1.06 })
 			r:block(-1.22, 1.68, 0.88, 1.22, 1.92, 1.72, r.c2, "Fabric")
 			r:seat(0, 1.92, 1.3, 180)
 		end,
@@ -357,7 +357,7 @@ local items: { Item } = {
 			local sign = r:block(-1.0, 5.3, 0.6, 1.0, 5.9, 0.65, r.c2, "Wood")
 			r:glow(sign, 0)
 			r:block(-0.7, 5.5, 0.65, 0.7, 5.7, 0.67, C.Pink, "Glass")
-			r:block(-1.2, 6.0, -1.2, 1.2, 6.2, 0.65, r.c1, "Wood")
+			r:bevel(-1.2, 6.0, -1.2, 1.2, 6.2, 0.65, 0.07, r.c1, "Wood", { wear = 1.06 })
 		end,
 	},
 	{
@@ -373,9 +373,9 @@ local items: { Item } = {
 		tags = { "games" },
 		build = function(r: R)
 			local dk = shade(r.c1, 0.85)
-			r:block(-1.3, 2.6, -1.3, 1.3, 2.8, 1.3, r.c1, "Wood")
+			r:bevel(-1.3, 2.6, -1.3, 1.3, 2.8, 1.3, 0.07, r.c1, "Wood", { wear = 1.06 })
 			r:block(-1.24, 2.54, -1.24, 1.24, 2.6, 1.24, dk, "Wood")
-			r:block(-1.1, 2.25, -1.1, 1.1, 2.54, 1.1, dk, "Wood")
+			r:bevel(-1.1, 2.25, -1.1, 1.1, 2.54, 1.1, 0.08, dk, "Wood", { wear = 1.06 })
 			for _, sx in { -1, 1 } do
 				for _, sz in { -1, 1 } do
 					rod(
@@ -439,7 +439,7 @@ local items: { Item } = {
 		tags = { "desk", "games" },
 		build = function(r: R)
 			local frame = Color3.fromRGB(60, 62, 70)
-			r:block(-2.3, 2.82, -1.2, 2.3, 3.0, 1.2, r.c1, "Wood")
+			r:bevel(-2.3, 2.82, -1.2, 2.3, 3.0, 1.2, 0.063, r.c1, "Wood", { wear = 1.06 })
 			r:block(-2.24, 2.76, -1.14, 2.24, 2.82, 1.14, shade(r.c1, 0.8), "Wood")
 			-- two metal leg frames joined by a back rail
 			for _, sx in { -1, 1 } do

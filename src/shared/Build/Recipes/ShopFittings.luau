@@ -133,10 +133,10 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a counter with glass round its top half: the glass faces the customer and the back
 			-- is open for whoever serves. Two shelves of cakes, buns and tarts.
-			r:block(-2, 0, -1.1, 2, 0.3, 0.9, shade(r.c1, 0.55), "Wood")
+			r:bevel(-2, 0, -1.1, 2, 0.3, 0.9, 0.08, shade(r.c1, 0.55), "Wood", { wear = 1.06 })
 			r:block(-2, 0.3, -1.2, 2, 1.7, 1.1, r.c1, "Wood")
 			r:block(-1.7, 0.6, 1.1, 1.7, 1.4, 1.14, shade(r.c1, 0.9), "Wood")
-			r:block(-2, 1.7, -1.2, 2, 1.86, 1.15, r.c2, "Wood")
+			r:bevel(-2, 1.7, -1.2, 2, 1.86, 1.15, 0.056, r.c2, "Wood", { wear = 1.06 })
 			r:piece(function(q: R)
 				q:block(-2, 4.0, -1.2, 2, 4.18, 1.15, r.c2, "Wood")
 				for _, x in { -1.93, 1.93 } do
@@ -193,7 +193,7 @@ local items: { Item } = {
 				q:block(-1.96, 6.6, -0.9, 1.96, 6.78, -0.55, r.c2, "Wood")
 			end)
 			r:block(-1.76, 1.0, -0.84, 1.76, 6.4, -0.76, shade(r.c1, 0.82), "WoodPlanks")
-			r:block(-1.76, 0.5, -0.7, 1.76, 0.64, 0.7, r.c1, "WoodPlanks")
+			r:bevel(-1.76, 0.5, -0.7, 1.76, 0.64, 0.7, 0.049, r.c1, "WoodPlanks", { wear = 1.06 })
 			for i, y in { 2.0, 3.6, 5.2 } do
 				local cf = CFrame.new(0, y, 0) * CFrame.Angles(math.rad(14), 0, 0)
 				r:boxAt(cf, 3.7, 0.14, 1.5, r.c1, "WoodPlanks")
@@ -407,10 +407,10 @@ local items: { Item } = {
 		build = function(r: R)
 			-- a scooping cabinet: eight tubs under a sloping glass, a stack of cones on the end.
 			-- c1 the cabinet, c2 its stripe and rail.
-			r:block(-2.5, 0, -1.2, 2.5, 0.3, 1.0, shade(r.c1, 0.55), "Metal")
+			r:bevel(-2.5, 0, -1.2, 2.5, 0.3, 1.0, 0.08, shade(r.c1, 0.55), "Metal", { wear = 1.06 })
 			r:block(-2.5, 0.3, -1.3, 2.5, 2.6, 1.2, r.c1, "Metal")
 			r:block(-2.5, 1.3, 1.2, 2.5, 1.9, 1.24, r.c2, "Metal")
-			r:block(-2.5, 2.6, -1.3, 2.5, 2.74, 1.24, shade(r.c1, 0.9), "Metal")
+			r:bevel(-2.5, 2.6, -1.3, 2.5, 2.74, 1.24, 0.049, shade(r.c1, 0.9), "Metal", { wear = 1.06 })
 			r:block(-2.3, 2.74, -1.0, 2.3, 2.8, 0.9, Color3.fromRGB(205, 225, 235), "Metal")
 			local tubs = { STRAWBERRY, VANILLA, CHOC, MINT, LEMON, LILAC, CHOC, STRAWBERRY }
 			for i, col in tubs do
@@ -456,9 +456,9 @@ local items: { Item } = {
 		tags = { "seat" },
 		build = function(r: R)
 			-- a padded bench with a high back, for two: c1 the padding, c2 the frame
-			r:block(-2.2, 0, -1.2, 2.2, 0.3, 0.9, shade(r.c2, 0.6), "Wood")
+			r:bevel(-2.2, 0, -1.2, 2.2, 0.3, 0.9, 0.08, shade(r.c2, 0.6), "Wood", { wear = 1.06 })
 			r:block(-2.2, 0.3, -1.2, 2.2, 1.5, 1.05, r.c2, "Wood")
-			r:block(-2.15, 1.5, -0.7, 2.15, 1.95, 1.15, r.c1, "Leather")
+			r:bevel(-2.15, 1.5, -0.7, 2.15, 1.95, 1.15, 0.1, r.c1, "Leather", { round = true })
 			r:block(-2.2, 1.5, -1.2, 2.2, 4.2, -0.9, r.c2, "Wood")
 			r:block(-2.2, 4.2, -1.2, 2.2, 4.36, -0.6, r.c2, "Wood")
 			for i = 0, 5 do
@@ -510,7 +510,7 @@ local items: { Item } = {
 				q:block(w / 2, 0, -0.45, w / 2 + 0.3, h + 0.3, 0.45, r.c2, "Wood")
 				q:block(-w / 2 - 0.3, h, -0.45, w / 2 + 0.3, h + 0.3, 0.45, r.c2, "Wood")
 			end)
-			r:block(-w / 2 - 0.3, -0.28, -1.0, w / 2 + 0.3, 0, 1.3, r.c1, "WoodPlanks")
+			r:bevel(-w / 2 - 0.3, -0.28, -1.0, w / 2 + 0.3, 0, 1.3, 0.08, r.c1, "WoodPlanks", { wear = 1.06 })
 			r:block(-w / 2 - 0.3, -0.34, 1.24, w / 2 + 0.3, 0.04, 1.34, shade(r.c1, 0.8), "Wood")
 			for _, x in { -2.6, 2.6 } do
 				r:wedge(
@@ -642,7 +642,7 @@ local items: { Item } = {
 			-- round cone needs the low poly kit, and without it became a plain post: the user, "the
 			-- ice cream dosent look like an ice cream sign"), with a rim and a criss-cross of waffle.
 			r:block(-1.1, 0.04, -1.1, 1.1, 1.8, 1.1, r.c2, "Concrete")
-			r:block(-1.16, 1.2, -1.16, 1.16, 1.5, 1.16, r.c1, "Plaster")
+			r:bevel(-1.16, 1.2, -1.16, 1.16, 1.5, 1.16, 0.08, r.c1, "Plaster", { wear = 1.06 })
 			local a, h, tip = 1.3, 4.3, 1.8
 			-- (built point up about its middle, then turned over so the point is at the bottom)
 			local over = CFrame.new(0, tip + h / 2, 0) * CFrame.Angles(math.pi, 0, 0)

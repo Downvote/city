@@ -181,7 +181,7 @@ local items: { Item } = {
 				end
 			end
 			-- a square box frame: the base between the arms, the back and two block arms
-			r:block(-3.0, legH, -1.6, 3.0, 0.95, 1.45, frame, "Fabric")
+			r:bevel(-3.0, legH, -1.6, 3.0, 0.95, 1.45, 0.1, frame, "Fabric", { round = true })
 			r:block(-3.0, legH, -1.6, 3.0, 2.2, -1.05, frame, "Fabric")
 			for _, sx in { -1, 1 } do
 				r:block(
@@ -285,7 +285,7 @@ local items: { Item } = {
 			end
 			-- a slim pad on the seat
 			local pad = Color3.fromRGB(176, 174, 170)
-			r:block(-0.78, 1.64, -0.5, 0.78, 1.76, 0.82, pad, "Fabric")
+			r:bevel(-0.78, 1.64, -0.5, 0.78, 1.76, 0.82, 0.054, pad, "Fabric", { round = true })
 			r:cyl(0, 1.7, 0.82, 1.56, 0.12, "x", pad, "Fabric")
 			r:seat(0, 1.76, 0.15)
 		end,
@@ -374,7 +374,7 @@ local items: { Item } = {
 				r:block(-1.91, 1.2, sx * 1.1 - 0.07, 1.91, 1.38, sx * 1.1 + 0.07, r.c1, "Wood")
 				r:block(sx * 2.0 - 0.07, 1.2, -1.01, sx * 2.0 + 0.07, 1.38, 1.01, r.c1, "Wood")
 			end
-			r:block(-1.91, 0.3, -1.01, 1.91, 0.4, 1.01, r.c2, "Wood")
+			r:bevel(-1.91, 0.3, -1.01, 1.91, 0.4, 1.01, 0.035, r.c2, "Wood", { wear = 1.06 })
 			r:glass(-2.2, 1.38, -1.3, 2.2, 1.5, 1.3)
 			-- magazines and two big books on the shelf
 			for k = 0, 2 do
@@ -413,8 +413,8 @@ local items: { Item } = {
 		tags = { "table" },
 		build = function(r: R)
 			-- a thick oak top over a shadow rail, on two white sled frames joined by a rail
-			r:block(-3.2, 2.94, -1.7, 3.2, 3.1, 1.7, r.c1, "Wood")
-			r:block(-2.9, 2.84, -1.45, 2.9, 2.94, 1.45, shade(r.c1, 0.7), "Wood")
+			r:bevel(-3.2, 2.94, -1.7, 3.2, 3.1, 1.7, 0.056, r.c1, "Wood", { wear = 1.06 })
+			r:bevel(-2.9, 2.84, -1.45, 2.9, 2.94, 1.45, 0.035, shade(r.c1, 0.7), "Wood", { wear = 1.06 })
 			for _, sx in { -1, 1 } do
 				local x = sx * 2.3
 				r:piece(function(q: R)
@@ -478,7 +478,7 @@ local items: { Item } = {
 		tags = { "table" },
 		build = function(r: R)
 			-- the big table: a white top on a thin black frame
-			r:block(-1.15, 1.9, -0.95, 1.15, 2.0, 0.95, r.c1, "Metal")
+			r:bevel(-1.15, 1.9, -0.95, 1.15, 2.0, 0.95, 0.035, r.c1, "Metal", { wear = 1.06 })
 			for _, sx in { -1, 1 } do
 				for _, sz in { -1, 1 } do
 					rod(
@@ -526,9 +526,9 @@ local items: { Item } = {
 		c2 = "EDEBE6",
 		tags = { "desk", "table" },
 		build = function(r: R)
-			r:block(-2.4, 2.88, -1.2, 2.4, 3.0, 1.2, r.c1, "Wood")
+			r:bevel(-2.4, 2.88, -1.2, 2.4, 3.0, 1.2, 0.042, r.c1, "Wood", { wear = 1.06 })
 			-- a white pedestal of three drawers on the right, on a dark plinth
-			r:block(1.05, 0, -1.05, 2.25, 0.1, 1.0, shade(r.c2, 0.55), "Wood")
+			r:bevel(1.05, 0, -1.05, 2.25, 0.1, 1.0, 0.035, shade(r.c2, 0.55), "Wood", { wear = 1.06 })
 			r:block(1.0, 0.1, -1.1, 2.3, 2.88, 1.05, r.c2, "Wood")
 			for _, y in { { 0.14, 0.98 }, { 1.02, 1.86 }, { 1.9, 2.84 } } do
 				r:block(1.04, y[1], 1.05, 2.26, y[2], 1.1, shade(r.c2, 1.02), "Wood")
@@ -589,8 +589,8 @@ local items: { Item } = {
 		tags = { "bed" },
 		build = function(r: R)
 			-- a low oak platform on a dark plinth set back underneath, so it seems to float
-			r:block(-2.9, 0, -3.4, 2.9, 0.35, 3.5, shade(r.c1, 0.4), "Wood")
-			r:block(-3.3, 0.35, -3.7, 3.3, 0.85, 4.0, r.c1, "Wood")
+			r:bevel(-2.9, 0, -3.4, 2.9, 0.35, 3.5, 0.08, shade(r.c1, 0.4), "Wood", { wear = 1.06 })
+			r:bevel(-3.3, 0.35, -3.7, 3.3, 0.85, 4.0, 0.08, r.c1, "Wood", { wear = 1.06 })
 			-- a wide oak headboard with three padded panels
 			r:block(-3.3, 0.35, -4.0, 3.3, 3.3, -3.7, shade(r.c1, 0.92), "Wood")
 			local pad = shade(r.c2, 0.82)
@@ -601,7 +601,7 @@ local items: { Item } = {
 			-- the mattress, a turned back sheet and the duvet with its rolled top
 			r:block(-2.5, 0.85, -3.45, 2.5, 1.55, 3.6, WHITE, "Fabric")
 			r:block(-2.52, 1.55, -3.4, 2.52, 1.6, -1.0, shade(WHITE, 0.96), "Fabric")
-			r:block(-2.56, 1.4, -0.9, 2.56, 1.72, 3.66, r.c2, "Fabric")
+			r:bevel(-2.56, 1.4, -0.9, 2.56, 1.72, 3.66, 0.1, r.c2, "Fabric", { round = true })
 			r:cyl(0, 1.64, -0.95, 5.12, 0.36, "x", r.c2, "Fabric")
 			-- pillows propped on the headboard, a small one in the accent
 			for _, sx in { -1, 1 } do
@@ -669,7 +669,7 @@ local items: { Item } = {
 			-- bottom: a woven basket with a rolled blanket, and a pile of books
 			local y1 = tops[1].y
 			local basket = Color3.fromRGB(200, 170, 124)
-			r:block(-1.0, y1, -0.6, -0.1, y1 + 0.6, 0.35, basket, "Fabric")
+			r:bevel(-1.0, y1, -0.6, -0.1, y1 + 0.6, 0.35, 0.1, basket, "Fabric", { round = true })
 			r:piece(function(q: R)
 				for _, y in { 0.12, 0.27, 0.42 } do
 					q:block(-1.02, y1 + y, 0.35, -0.08, y1 + y + 0.06, 0.38, shade(basket, 0.8), "Fabric")
@@ -730,7 +730,7 @@ local items: { Item } = {
 					"Wood"
 				)
 			end
-			r:block(-2.85, 2.75, -0.9, 2.85, 2.87, 0.85, r.c1, "Wood")
+			r:bevel(-2.85, 2.75, -0.9, 2.85, 2.87, 0.85, 0.042, r.c1, "Wood", { wear = 1.06 })
 			-- fluted doors either side, two plain drawers in the middle
 			for _, sx in { -1, 1 } do
 				local xa, xb = sx * 0.97, sx * 2.76
@@ -775,12 +775,12 @@ local items: { Item } = {
 		tags = { "kitchen", "table" },
 		build = function(r: R)
 			-- a stone top that runs down both ends to the floor
-			r:block(-3, 3.24, -1.4, 3, 3.4, 1.4, r.c1, "Marble")
+			r:bevel(-3, 3.24, -1.4, 3, 3.4, 1.4, 0.056, r.c1, "Marble", { wear = 0.94 })
 			for _, sx in { -1, 1 } do
 				r:block(math.min(sx * 2.84, sx * 3), 0, -1.4, math.max(sx * 2.84, sx * 3), 3.24, 1.4, r.c1, "Marble")
 			end
 			-- the cupboards face the kitchen side (the back), handleless under a channel
-			r:block(-2.84, 0, -1.2, 2.84, 0.35, 0.45, CHAR, "Metal")
+			r:bevel(-2.84, 0, -1.2, 2.84, 0.35, 0.45, 0.08, CHAR, "Metal", { wear = 1.06 })
 			r:block(-2.84, 0.35, -1.35, 2.84, 3.24, 0.45, shade(r.c2, 0.6), "Wood")
 			for k = 0, 3 do
 				local x1 = -2.8 + k * 1.41
@@ -820,7 +820,7 @@ local items: { Item } = {
 		tags = { "kitchen" },
 		build = function(r: R)
 			-- a steel body with its brew head out over a drip tray
-			r:block(-0.55, 0, -0.5, 0.55, 0.12, 0.5, CHAR, "Metal")
+			r:bevel(-0.55, 0, -0.5, 0.55, 0.12, 0.5, 0.042, CHAR, "Metal", { wear = 1.06 })
 			r:block(-0.6, 0.12, -0.5, 0.6, 1.1, 0.25, r.c1, "Metal")
 			r:block(-0.6, 0.85, 0.25, 0.6, 1.1, 0.48, r.c1, "Metal")
 			r:piece(function(q: R)
@@ -904,7 +904,7 @@ local items: { Item } = {
 			r:block(-1.5, 1.6, -0.75, 1.5, 2.6, 0.75, shade(r.c1, 0.7), "Wood")
 			r:block(-1.48, 1.63, 0.75, 1.48, 2.57, 0.8, r.c1, "Wood")
 			r:block(-0.6, 2.38, 0.8, 0.6, 2.44, 0.86, CHAR, "Metal")
-			r:block(-1.65, 2.6, -0.85, 1.65, 2.75, 0.85, r.c2, "Marble")
+			r:bevel(-1.65, 2.6, -0.85, 1.65, 2.75, 0.85, 0.052, r.c2, "Marble", { wear = 0.94 })
 			-- a square basin standing on the top, and a tall black tap
 			local bx, bz, w, d, t = -0.15, 0.1, 1.5, 1.0, 0.08
 			r:piece(function(q: R)
@@ -962,7 +962,7 @@ local items: { Item } = {
 			-- two walls of large tiles and a low stone tray with a long drain
 			r:block(-1.8, 0, -1.8, 1.8, 7.6, -1.6, r.c1, "Marble")
 			r:block(-1.8, 0, -1.6, -1.6, 7.6, 1.8, r.c1, "Marble")
-			r:block(-1.6, 0, -1.6, 1.8, 0.18, 1.8, STONE, "Marble")
+			r:bevel(-1.6, 0, -1.6, 1.8, 0.18, 1.8, 0.063, STONE, "Marble", { wear = 0.94 })
 			r:block(-1.4, 0.18, -1.48, 1.6, 0.21, -1.32, STEEL, "Metal")
 			r:piece(function(q: R)
 				local grout = shade(r.c1, 0.8)
@@ -1032,7 +1032,7 @@ local items: { Item } = {
 		tags = { "light" },
 		build = function(r: R)
 			-- a heavy marble block, and a brass stem that arcs up and over to hang the shade
-			r:block(-2.45, 0, -0.55, -1.35, 0.5, 0.55, WHITE, "Marble")
+			r:bevel(-2.45, 0, -0.55, -1.35, 0.5, 0.55, 0.08, WHITE, "Marble", { wear = 0.94 })
 			r:cyl(-1.9, 0.56, 0, 0.12, 0.3, "y", r.c2, "Metal")
 			local p0, p1 = Vector3.new(-1.9, 0.55, 0), Vector3.new(-1.9, 7.5, 0)
 			local p2, p3 = Vector3.new(1.7, 7.4, 0), Vector3.new(1.7, 6.25, 0)
@@ -1135,7 +1135,7 @@ local items: { Item } = {
 		build = function(r: R)
 			local dark = shade(r.c1, 0.55)
 			-- a long white case on a dark plinth set well back, an open bay in the middle
-			r:block(-2.9, 0, -0.6, 2.9, 0.3, 0.5, CHAR, "Metal")
+			r:bevel(-2.9, 0, -0.6, 2.9, 0.3, 0.5, 0.08, CHAR, "Metal", { wear = 1.06 })
 			for _, sx in { -1, 1 } do
 				local xa, xb = sx * 0.8, sx * 3.14
 				r:block(math.min(xa, xb), 0.3, -0.85, math.max(xa, xb), 1.6, 0.72, dark, "Metal")
@@ -1158,7 +1158,7 @@ local items: { Item } = {
 			r:block(-0.8, 0.3, -0.85, 0.8, 1.6, -0.6, dark, "Metal")
 			r:block(-0.8, 0.3, -0.6, 0.8, 0.36, 0.72, r.c1, "Wood")
 			r:block(-0.8, 0.92, -0.6, 0.8, 0.98, 0.7, r.c1, "Wood")
-			r:block(-3.22, 1.6, -0.88, 3.22, 1.72, 0.8, r.c2, "Wood")
+			r:bevel(-3.22, 1.6, -0.88, 3.22, 1.72, 0.8, 0.042, r.c2, "Wood", { wear = 1.06 })
 			-- in the bay: a box with a light on it, and a row of records above the shelf
 			r:block(-0.55, 0.36, -0.4, 0.15, 0.5, 0.3, CHAR, "Metal")
 			glowOnly(r:block(-0.45, 0.42, 0.3, -0.35, 0.45, 0.33, Color3.fromRGB(120, 220, 160), "Neon"))
@@ -1333,9 +1333,9 @@ local items: { Item } = {
 		tags = { "books" },
 		build = function(r: R)
 			-- three oak boards set off from one another, with no brackets showing
-			r:block(-1.9, 2.9, 0, 0.4, 3.02, 0.9, r.c1, "Wood")
-			r:block(-0.4, 1.7, 0, 1.9, 1.82, 0.9, r.c1, "Wood")
-			r:block(-1.6, 0.5, 0, 0.7, 0.62, 0.9, r.c1, "Wood")
+			r:bevel(-1.9, 2.9, 0, 0.4, 3.02, 0.9, 0.042, r.c1, "Wood", { wear = 1.06 })
+			r:bevel(-0.4, 1.7, 0, 1.9, 1.82, 0.9, 0.042, r.c1, "Wood", { wear = 1.06 })
+			r:bevel(-1.6, 0.5, 0, 0.7, 0.62, 0.9, 0.042, r.c1, "Wood", { wear = 1.06 })
 			-- top: a row of books and a trailing plant
 			bookRow(r, -1.8, -0.55, 3.02, 0.4, 0.62, 1)
 			r:cyl(0.05, 3.2, 0.45, 0.36, 0.42, "y", r.c2, "Wood")
@@ -1585,7 +1585,7 @@ local items: { Item } = {
 			end
 			-- a grey pad over both, and a teal towel rolled at the head
 			local pad = Color3.fromRGB(176, 178, 182)
-			r:block(-1.0, 1.12, -0.85, 1.0, 1.3, 2.9, pad, "Fabric")
+			r:bevel(-1.0, 1.12, -0.85, 1.0, 1.3, 2.9, 0.081, pad, "Fabric", { round = true })
 			r:boxAt(hinge * CFrame.new(0, 0.15, -1.25), 2.0, 0.18, 2.3, pad, "Fabric")
 			local towel = hinge * CFrame.new(0, 0.42, -2.0)
 			r:add({ shape = "Cylinder", cf = towel, size = Vector3.new(1.6, 0.45, 0.45), color = TEAL, mat = "Fabric" })
@@ -1613,7 +1613,7 @@ local items: { Item } = {
 		c2 = "8FB1BD",
 		build = function(r: R)
 			-- a concrete block on a dark plinth, its top a frame round a bed of glass beads
-			r:block(-1.85, 0, -1.15, 1.85, 0.1, 1.15, CHAR, "Metal")
+			r:bevel(-1.85, 0, -1.15, 1.85, 0.1, 1.15, 0.035, CHAR, "Metal", { wear = 1.06 })
 			r:block(-2.0, 0.1, -1.3, 2.0, 1.38, 1.3, r.c1, "Concrete")
 			r:piece(function(q: R)
 				q:block(-2.0, 1.38, -1.3, 2.0, 1.52, -0.6, r.c1, "Concrete")

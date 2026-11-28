@@ -508,7 +508,7 @@ local items: { Item } = {
 		c2 = "F2E8D5",
 		build = function(r: R)
 			-- a stone hearth, a brick surround and a dark firebox
-			r:block(-3, 0, -1.2, 3, 0.3, 1.2, C.Stone, "Slate")
+			r:bevel(-3, 0, -1.2, 3, 0.3, 1.2, 0.08, C.Stone, "Slate", { wear = 0.94 })
 			r:block(-3, 0.3, -1.2, -1.7, 4.4, 0.55, r.c1, "Brick")
 			r:block(1.7, 0.3, -1.2, 3, 4.4, 0.55, r.c1, "Brick")
 			r:block(-1.7, 3.2, -1.2, 1.7, 4.4, 0.55, r.c1, "Brick")
@@ -523,7 +523,7 @@ local items: { Item } = {
 				r:block(sx * 2.4 - 0.55, 4.1, 0.55, sx * 2.4 + 0.55, 4.4, 0.85, shade(r.c2, 0.95), "Wood")
 			end
 			r:block(-1.95, 3.6, 0.55, 1.95, 4.4, 0.72, r.c2, "Wood")
-			r:block(-3, 4.4, -1.2, 3, 4.65, 1.0, r.c2, "Wood")
+			r:bevel(-3, 4.4, -1.2, 3, 4.65, 1.0, 0.08, r.c2, "Wood", { wear = 1.06 })
 			r:block(-2.9, 4.65, -1.2, 2.9, 4.75, 0.9, shade(r.c2, 0.9), "Wood")
 			r:block(-2.3, 4.75, -1.2, 2.3, 6.4, -0.3, r.c1, "Brick")
 			-- a grate with logs and a fire
@@ -565,7 +565,7 @@ local items: { Item } = {
 		c2 = "2B282E",
 		build = function(r: R)
 			-- a cabinet stand with two doors
-			r:block(-1.95, 0, -0.85, 1.95, 0.2, 0.8, shade(r.c1, 0.6), "Wood")
+			r:bevel(-1.95, 0, -0.85, 1.95, 0.2, 0.8, 0.07, shade(r.c1, 0.6), "Wood", { wear = 1.06 })
 			r:block(-2, 0.2, -0.9, 2, 2.2, 0.9, r.c1, "Wood")
 			for _, sx in { -1, 1 } do
 				local xa, xb = sx * 0.04, sx * 1.9
@@ -574,7 +574,7 @@ local items: { Item } = {
 				r:block(sx * 0.12 - 0.03, 0.9, 0.95, sx * 0.12 + 0.03, 1.5, 1.03, C.Gold, "Metal")
 			end
 			-- the tank: a black frame, gravel, a rock, a little castle and weed
-			r:block(-1.9, 2.2, -0.8, 1.9, 2.35, 0.8, r.c2, "Metal")
+			r:bevel(-1.9, 2.2, -0.8, 1.9, 2.35, 0.8, 0.052, r.c2, "Metal", { wear = 1.06 })
 			for _, sx in { -1, 1 } do
 				for _, sz in { -1, 1 } do
 					r:box(sx * 1.86, 3.375, sz * 0.76, 0.08, 2.05, 0.08, r.c2, "Metal")
@@ -613,7 +613,7 @@ local items: { Item } = {
 			local water = r:block(-1.82, 2.6, -0.72, 1.82, 4.2, 0.72, C.Water, "Glass")
 			water.transp = 0.6
 			-- a hood on top with a light strip under it
-			r:block(-1.92, 4.4, -0.82, 1.92, 4.75, 0.82, r.c2, "Metal")
+			r:bevel(-1.92, 4.4, -0.82, 1.92, 4.75, 0.82, 0.08, r.c2, "Metal", { wear = 1.06 })
 			r:block(-1.8, 4.36, -0.7, 1.8, 4.4, 0.7, C.White, "Neon")
 		end,
 	},
@@ -676,10 +676,10 @@ local items: { Item } = {
 		build = function(r: R)
 			local dk = shade(r.c1, 0.82)
 			-- a plinth with a raised panel
-			r:block(-1.0, 0, -0.7, 1.0, 0.35, 0.7, dk, "Wood")
+			r:bevel(-1.0, 0, -0.7, 1.0, 0.35, 0.7, 0.08, dk, "Wood", { wear = 1.06 })
 			r:block(-0.9, 0.35, -0.6, 0.9, 2.2, 0.6, r.c1, "Wood")
 			r:block(-0.6, 0.75, 0.6, 0.6, 1.8, 0.64, shade(r.c1, 1.15), "Wood")
-			r:block(-0.95, 2.1, -0.65, 0.95, 2.25, 0.65, dk, "Wood")
+			r:bevel(-0.95, 2.1, -0.65, 0.95, 2.25, 0.65, 0.052, dk, "Wood", { wear = 1.06 })
 			-- the waist: a back, two sides and a glass door with the pendulum behind it
 			r:block(-0.7, 2.25, -0.5, 0.7, 5.0, -0.3, r.c1, "Wood")
 			for _, sx in { -1, 1 } do
@@ -695,7 +695,7 @@ local items: { Item } = {
 			end
 			-- the hood with the face, under an arched top with finials
 			r:block(-0.95, 5.0, -0.65, 0.95, 6.8, 0.65, r.c1, "Wood")
-			r:block(-0.98, 4.97, -0.68, 0.98, 5.12, 0.68, dk, "Wood")
+			r:bevel(-0.98, 4.97, -0.68, 0.98, 5.12, 0.68, 0.053, dk, "Wood", { wear = 1.06 })
 			r:cyl(0, 5.9, 0.66, 0.04, 1.45, "z", r.c2, "Metal")
 			r:cyl(0, 5.9, 0.69, 0.04, 1.25, "z", C.Cream, "Metal")
 			for i = 0, 11 do
@@ -715,7 +715,7 @@ local items: { Item } = {
 			end
 			r:boxAt(CFrame.new(0.15, 6.0, 0.73) * CFrame.Angles(0, 0, -1.0), 0.05, 0.4, 0.02, C.Black, "Metal")
 			r:boxAt(CFrame.new(0, 6.08, 0.74) * CFrame.Angles(0, 0, 0.1), 0.05, 0.36, 0.02, C.Black, "Metal")
-			r:block(-1.0, 6.8, -0.7, 1.0, 7.0, 0.7, dk, "Wood")
+			r:bevel(-1.0, 6.8, -0.7, 1.0, 7.0, 0.7, 0.07, dk, "Wood", { wear = 1.06 })
 			r:cyl(0, 7.0, 0, 1.2, 1.4, "z", r.c1, "Wood")
 			for _, x in { -0.85, 0.85 } do
 				r:cyl(x, 7.08, 0.2, 0.16, 0.16, "y", r.c2, "Metal")

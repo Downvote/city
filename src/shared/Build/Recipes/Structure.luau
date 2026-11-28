@@ -244,7 +244,18 @@ local items: { any } = {
 		build = function(r: R)
 			-- three steps of concrete (c1), each with a slab tread (c2) that overhangs its riser
 			for i, s in { { -1.5, -0.44, 0.92 }, { -0.5, 0.56, 0.58 }, { 0.5, 1.5, 0.25 } } do
-				r:block(-1.94, 0, s[1], 1.94, s[3], s[2] - 0.06, shade(r.c1, 0.96 + i * 0.02), "Concrete")
+				r:bevel(
+					-1.94,
+					0,
+					s[1],
+					1.94,
+					s[3],
+					s[2] - 0.06,
+					0.08,
+					shade(r.c1, 0.96 + i * 0.02),
+					"Concrete",
+					{ wear = 0.94 }
+				)
 				r:block(-2, s[3], s[1], 2, s[3] + 0.08, s[2], r.c2, "Concrete")
 			end
 		end,
@@ -317,7 +328,7 @@ local items: { any } = {
 				q:block(-2.12, 27.4, -1.62, 2.12, 27.9, 1.62, shade(r.c1, 0.95), "Brick")
 				q:block(-2.24, 27.9, -1.74, 2.24, 28.4, 1.74, shade(r.c1, 0.92), "Brick")
 			end, true)
-			r:block(-2.32, 28.4, -1.82, 2.32, 28.8, 1.82, r.c2, "Concrete")
+			r:bevel(-2.32, 28.4, -1.82, 2.32, 28.8, 1.82, 0.08, r.c2, "Concrete", { wear = 0.94 })
 			r:piece(function(q: R)
 				local clay = Color3.fromRGB(196, 116, 84)
 				q:block(-1.5, 28.8, -0.6, 1.5, 28.92, 0.6, shade(r.c2, 0.9), "Brick")
@@ -388,10 +399,10 @@ local items: { any } = {
 			-- a slim post on a boxed foot, with a collar, a cap and a brace out to each side
 			-- under the beam it carries: c1 the post, c2 the foot, the cap and the braces
 			r:block(-0.55, 0, -0.55, 0.55, 1.3, 0.55, r.c2, "Wood")
-			r:block(-0.62, 1.3, -0.62, 0.62, 1.45, 0.62, shade(r.c2, 0.9), "Wood")
+			r:bevel(-0.62, 1.3, -0.62, 0.62, 1.45, 0.62, 0.052, shade(r.c2, 0.9), "Wood", { wear = 1.06 })
 			r:block(-0.35, 1.45, -0.35, 0.35, H - 0.8, 0.35, r.c1, "Wood")
-			r:block(-0.45, H - 2.5, -0.45, 0.45, H - 2.35, 0.45, shade(r.c1, 0.9), "Wood")
-			r:block(-0.58, H - 0.8, -0.58, 0.58, H - 0.5, 0.58, r.c2, "Wood")
+			r:bevel(-0.45, H - 2.5, -0.45, 0.45, H - 2.35, 0.45, 0.053, shade(r.c1, 0.9), "Wood", { wear = 1.06 })
+			r:bevel(-0.58, H - 0.8, -0.58, 0.58, H - 0.5, 0.58, 0.08, r.c2, "Wood", { wear = 1.06 })
 			r:block(-1.3, H - 0.5, -0.4, 1.3, H, 0.4, r.c2, "Wood")
 			for _, sx in { -1, 1 } do
 				r:beam(Vector3.new(sx * 0.3, H - 2.3, 0), Vector3.new(sx * 1.2, H - 0.55, 0), 0.24, 0.24, r.c2, "Wood")
@@ -441,7 +452,7 @@ local items: { any } = {
 			r:block(-2, 3.7, zb, 2, 7.2, zf, r.c1, "Brick")
 			r:block(-1.25, 0.3, zb, 1.25, 3.7, zb + 0.25, Color3.fromRGB(40, 36, 38), "Slate")
 			r:block(-2.2, 0, zf, 2.2, 0.3, 1.6, C.Stone, "Slate")
-			r:block(-1.25, 0, zb + 0.25, 1.25, 0.3, zf, shade(C.Stone, 0.75), "Slate")
+			r:bevel(-1.25, 0, zb + 0.25, 1.25, 0.3, zf, 0.08, shade(C.Stone, 0.75), "Slate", { wear = 0.94 })
 			r:block(-2.2, 4.4, zf - 0.1, 2.2, 4.75, zf + 0.6, r.c2, "Concrete")
 			for _, sx in { -1, 1 } do
 				r:tri(
@@ -455,8 +466,8 @@ local items: { any } = {
 			end
 			r:wedge(CFrame.new(0, 7.6, (zs + zf) / 2) * CFrame.Angles(0, math.pi, 0), 2.6, 0.8, zf - zs, r.c1, "Brick")
 			r:block(-1.3, 7.2, zb, 1.3, 21.4, zs, r.c1, "Brick")
-			r:block(-1.42, 21.4, zb - 0.1, 1.42, 21.8, zs + 0.12, shade(r.c1, 0.86), "Brick")
-			r:block(-1.55, 21.8, zb - 0.15, 1.55, 22.2, zs + 0.2, r.c2, "Concrete")
+			r:bevel(-1.42, 21.4, zb - 0.1, 1.42, 21.8, zs + 0.12, 0.08, shade(r.c1, 0.86), "Brick", { wear = 0.94 })
+			r:bevel(-1.55, 21.8, zb - 0.15, 1.55, 22.2, zs + 0.2, 0.08, r.c2, "Concrete", { wear = 0.94 })
 			r:piece(function(q: R)
 				q:block(-1.1, 22.2, zb + 0.3, 1.1, 22.32, zs - 0.3, Color3.fromRGB(150, 146, 140), "Brick")
 				for _, x in { -0.55, 0.55 } do
@@ -565,12 +576,23 @@ local items: { any } = {
 		build = function(r: R)
 			-- Two low stone steps up to a porch or a door (its back, -z, against the floor it
 			-- leads to), with a cheek block either side. c1 the treads, c2 the cheeks.
-			r:block(-2.2, 0, -1.2, 2.2, F, 0, r.c1, "Concrete")
-			r:block(-2.2, 0, 0, 2.2, F / 2, 1.2, r.c1, "Concrete")
+			r:bevel(-2.2, 0, -1.2, 2.2, F, 0, 0.08, r.c1, "Concrete", { wear = 0.94 })
+			r:bevel(-2.2, 0, 0, 2.2, F / 2, 1.2, 0.07, r.c1, "Concrete", { wear = 0.94 })
 			for _, sx in { -1, 1 } do
 				local x1, x2 = math.min(sx * 2.2, sx * 3), math.max(sx * 2.2, sx * 3)
 				r:block(x1, 0, -1.2, x2, 0.86, 1.2, r.c2, "Cobblestone")
-				r:block(x1 - 0.06, 0.86, -1.26, x2 + 0.06, 1, 1.26, shade(r.c2, 0.9), "Concrete")
+				r:bevel(
+					x1 - 0.06,
+					0.86,
+					-1.26,
+					x2 + 0.06,
+					1,
+					1.26,
+					0.049,
+					shade(r.c2, 0.9),
+					"Concrete",
+					{ wear = 0.94 }
+				)
 			end
 		end,
 	},
