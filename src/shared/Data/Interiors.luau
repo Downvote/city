@@ -23,6 +23,7 @@
 -- lights up, a blanket in the house's own colour) is a plain part.
 
 local Geometry = require(script.Parent.Parent.Build.Geometry)
+local Edging = require(script.Parent.Edging) -- (worn edges on what is handled: counters, desks, tables)
 local Recipe = require(script.Parent.Parent.Build.Recipe)
 
 type R = Recipe.Recipe
@@ -291,7 +292,7 @@ local function drawCase(q: R)
 	q:block(-2.0, 0, -0.5, -1.85, 6.3, 0.5, WOOD, M)
 	q:block(1.85, 0, -0.5, 2.0, 6.3, 0.5, WOOD, M)
 	q:block(-2.05, 6.3, -0.54, 2.05, 6.44, 0.52, WOOD, M) -- the top and its crown
-	q:block(-2.12, 6.44, -0.6, 2.12, 6.6, 0.55, shade(WOOD, 0.86), M)
+	Edging.slab(q, -2.12, 6.44, -0.6, 2.12, 6.6, 0.55, shade(WOOD, 0.86), M, 0.08, Edging.Open)
 	q:block(-1.85, 0, -0.42, 1.85, 0.35, 0.36, shade(WOOD, 0.8), M) -- the plinth, set back
 	for _, y in SHELF do
 		q:block(-1.85, y - 0.12, -0.48, 1.85, y, 0.36, WOOD, M)
@@ -597,7 +598,7 @@ local function drawCounter(q: R)
 	q:block(-2.9, 0, -0.8, 2.9, 0.3, -0.72, shade(WOOD, 0.7), M)
 	q:block(-2.9, 0, -0.72, 2.9, 0.42, 0.85, WOOD, M)
 	q:block(-2.9, 1.5, -0.72, 2.9, 1.62, 0.85, WOOD, M)
-	q:block(-3.25, 3.0, -1.05, 3.25, 3.3, 1.0, shade(WOOD, 1.08), M)
+	Edging.slab(q, -3.25, 3.0, -1.05, 3.25, 3.3, 1.0, shade(WOOD, 1.08), M, 0.12, Edging.Open)
 	q:block(-2.9, 2.55, -0.96, 2.9, 2.85, -0.9, WOOD, M)
 	q:block(-2.9, 0.3, -0.96, 2.9, 0.62, -0.9, WOOD, M)
 	for _, x in { -1.45, 0, 1.45 } do
@@ -809,7 +810,7 @@ end
 -- A low table with magazines, a mug and a bowl of fruit on it, and books on the shelf below.
 local function drawLowTable(q: R)
 	local M = "SmoothPlastic"
-	q:block(-1.6, 1.22, -0.9, 1.6, 1.38, 0.9, WALNUT, M)
+	Edging.slab(q, -1.6, 1.22, -0.9, 1.6, 1.38, 0.9, WALNUT, M, 0.08, Edging.All)
 	for _, sx in { -1, 1 } do
 		for _, sz in { -1, 1 } do
 			q:block(
@@ -875,7 +876,7 @@ end
 local function drawDesk(q: R)
 	local M = "SmoothPlastic"
 	local front = shade(WALNUT, 1.1)
-	q:block(-2.2, 2.45, -1.1, 2.2, 2.6, 1.1, WALNUT, M)
+	Edging.slab(q, -2.2, 2.45, -1.1, 2.2, 2.6, 1.1, WALNUT, M, 0.075, Edging.Open)
 	for _, sx in { -1, 1 } do
 		q:block(sx * 1.5 - 0.6, 0, -1.0, sx * 1.5 + 0.6, 2.45, 1.0, shade(WALNUT, 0.9), M)
 		for k = 0, 2 do
@@ -931,7 +932,7 @@ end
 local function drawDresser(q: R)
 	local M = "SmoothPlastic"
 	q:block(-1.5, 0.3, -0.65, 1.5, 2.85, 0.7, WALNUT, M)
-	q:block(-1.62, 2.85, -0.78, 1.62, 3.0, 0.75, shade(WALNUT, 0.9), M)
+	Edging.slab(q, -1.62, 2.85, -0.78, 1.62, 3.0, 0.75, shade(WALNUT, 0.9), M, 0.075, Edging.Open)
 	for _, sx in { -1, 1 } do
 		for _, sz in { -1, 1 } do
 			q:block(sx * 1.32 - 0.1, 0, sz * 0.45 - 0.1, sx * 1.32 + 0.1, 0.3, sz * 0.45 + 0.1, shade(WALNUT, 0.8), M)

@@ -27,6 +27,7 @@ local Recipe = require(script.Parent.Parent.Build.Recipe)
 local Geometry = require(script.Parent.Parent.Build.Geometry)
 local CityModels = require(script.Parent.CityModels)
 local Interiors = require(script.Parent.Interiors)
+local Edging = require(script.Parent.Edging) -- (worn edges on the steps)
 
 type R = Recipe.Recipe
 type Prim = Geometry.Prim
@@ -458,7 +459,8 @@ local function glazed(q: R, w: number, trim: Color3, riser: Color3, door: Color3
 	q:block(-1.6, 0.15, -0.22, 1.6, 6.4, 0, door)
 	q:block(-1.1, 2.4, -0.27, 1.1, 5.9, -0.22, PANE)
 	q:block(0.95, 3, -0.36, 1.1, 3.8, -0.27, BRASS)
-	q:block(-2.1, 0, -1, 2.1, 0.15, 0, STONE)
+	-- (a step a little taller than it was, so its worn edge keeps clear of the paving)
+	Edging.slab(q, -2.1, 0, -1, 2.1, 0.2, 0, STONE, PLAIN, 0.07, Edging.Open)
 end
 
 -- A roller shutter, half down over a dim shop with a couple of crates inside, or right down.
@@ -534,7 +536,7 @@ local function houseDoor(q: R, trim: Color3, door: Color3)
 	q:block(-0.6, 5.5, -0.25, 2.6, 5.7, 0, trim)
 	q:block(-0.6, 5.7, -0.1, 2.6, 6.4, 0, PANE)
 	q:block(0.93, 5.7, -0.2, 1.07, 6.4, -0.1, trim)
-	q:block(-1.1, 0, -0.9, 3.1, 0.15, 0, STONE)
+	Edging.slab(q, -1.1, 0, -0.9, 3.1, 0.2, 0, STONE, PLAIN, 0.07, Edging.Open)
 	-- the little window
 	q:block(-2.6, 3.4, -0.1, -1.5, 5.6, 0, PANE)
 	q:block(-2.8, 5.6, -0.3, -1.3, 5.8, 0, trim)
