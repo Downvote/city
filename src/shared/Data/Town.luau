@@ -112,6 +112,24 @@ Town.CreatorGap = 34
 -- creator can stand its own backdrop behind the mannequin.
 Town.CreatorHeight = 420
 
+-- Where copies of other players' towns stand while someone looks round one (Services/Visit): lots
+-- high over the sea south of the island, out of sight of the town, in a row eastward from here.
+Town.ViewSpot = Vector3.new(-2100, 600, -2600)
+Town.ViewGap = 600 -- from one lot to the next (a plot is 400 across)
+
+-- The frame of viewing lot `slot` (1..Tuning.Visit.Lots): like a plot's, its origin the front
+-- left corner seen from the front, so a plan drawn on it stands as it does on its own plot.
+function Town.viewFrame(slot: number): CFrame
+	return CFrame.new(Town.ViewSpot + Vector3.new((slot - 1) * Town.ViewGap, 0, 0))
+end
+
+-- Where a visitor arrives on a viewing lot: on its ground in front of the town, facing in.
+function Town.viewArrival(slot: number): CFrame
+	local f = Town.viewFrame(slot)
+	local pos = f * Vector3.new(SIZE / 2, 3, -6)
+	return CFrame.lookAt(pos, f * Vector3.new(SIZE / 2, 3, 20))
+end
+
 -- The rows of plots, a row to each side of a street: the street's middle (z), the side the plots
 -- stand on (1 north, -1 south) and how far back from the middle their fronts are. Each row has a
 -- plot at each of PlotCentersX, west to east.

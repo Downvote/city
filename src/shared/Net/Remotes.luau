@@ -77,6 +77,14 @@ Remotes.Functions = {
 	"BagUse", -- ("hold", id) | ("away") | ("drop", id) -> ok, why: hold a thing in the hand, put it away, or drop one
 	"GiftGive", -- (vid, id) -> ok, { taste, line, note } or why: give a villager a thing from the bag
 	"TitleWear", -- (id | false) -> ok, why: wear a title won from a goal, or none
+	-- other players' towns (Services/Visit, Sim/PlotBoard, Sim/PlotLikes): each checked on the server
+	"PlotRename", -- (name) -> ok, name or why: names your plot ("" for none), filtered
+	-- (sort "likes" | "new", search?, page?) -> { plots = { card + rank?, liked, here, mine }, more,
+	-- here = { cards of this server's other towns }, mine = your own card }: the Visit menu
+	"PlotList",
+	"PlotLike", -- (ownerId, on?) -> { likes, liked } or nil, why: likes a town, or takes the like back
+	"PlotVisit", -- (ownerId) -> ok, why: to their plot if they're here, else onto a copy of their town
+	"PlotLeave", -- () -> ok: off a copy and back home (or to the square without a plot)
 }
 
 Remotes.Events = {
@@ -104,6 +112,9 @@ Remotes.Events = {
 	-- server -> client: the player's own work at a workplace (Services/Work): { on = true, plot, key,
 	-- name, act, beat, today, cap } when it starts, { on = false } when it stops
 	"Work",
+	-- server -> client: { on = true, id, name, who, likes, liked, copy } while the player looks round
+	-- another player's town (`copy`: a copy of it, its owner away), { on = false } when they leave it
+	"Visiting",
 }
 
 local folder: Folder? = nil

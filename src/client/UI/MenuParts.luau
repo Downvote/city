@@ -489,4 +489,51 @@ function MenuParts.progress(label: string, numbers: string, ratio: number, props
 	return box
 end
 
+-- A box to type in, in a menu: a dark leaning well with the words kept clear of its slanted ends,
+-- and an icon at its left if asked (Icon: the magnifier on a search). props: Parent, Size (its
+-- height must be in pixels), Position, AnchorPoint, LayoutOrder, Name, Text, TextSize, Icon.
+-- Returns the text box and its holder.
+function MenuParts.input(placeholder: string, props: { [string]: any }): (TextBox, Frame)
+	local size: UDim2 = props.Size or UDim2.new(1, -12, 0, 44)
+	local h = size.Y.Offset
+	local holder = Kit.box({
+		Name = props.Name or "Input",
+		Parent = props.Parent,
+		Size = size,
+		Position = props.Position,
+		AnchorPoint = props.AnchorPoint,
+		LayoutOrder = props.LayoutOrder,
+	})
+	local well = Kit.frame({ Name = "Well", Parent = holder, Color = T.PaperDark, Radius = false })
+	local lean = Kit.slant(well, h) + 2
+	local left = lean
+	if props.Icon then
+		local px = math.floor(h * 0.42)
+		Icons.make(props.Icon, px, {
+			Name = "Glass",
+			Parent = holder,
+			Position = UDim2.new(0, lean + 4, 0.5, -px / 2),
+			Color = T.InkSoft,
+			Hole = T.PaperDark,
+			ZIndex = 2,
+		})
+		left = lean + px + 8
+	end
+	local box = Kit.textbox(placeholder, {
+		Parent = holder,
+		Size = UDim2.new(1, -left - lean, 1, 0),
+		Text = props.Text,
+		TextSize = props.TextSize or 16,
+	})
+	box.Position = UDim2.fromOffset(left, 0)
+	box.BackgroundTransparency = 1
+	box.ZIndex = 2
+	local pad = box:FindFirstChildOfClass("UIPadding")
+	if pad then
+		pad.PaddingLeft = UDim.new(0, 6)
+	end
+	Kit.mark(holder)
+	return box, holder
+end
+
 return MenuParts

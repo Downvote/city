@@ -274,6 +274,19 @@ function Hud.start()
 	cardButton.Activated:Connect(function()
 		Hud.open("CityPanel")
 	end)
+	-- the name itself: the City hall with its name box ready to type in
+	local nameButton = Kit.new("TextButton", {
+		Name = "Rename",
+		Text = "",
+		BackgroundTransparency = 1,
+		Size = cityName.Size,
+		Position = cityName.Position,
+		ZIndex = 5,
+		Parent = card,
+	})
+	nameButton.Activated:Connect(function()
+		Hud.open("CityPanel", { rename = true })
+	end)
 
 	-- money, people and happiness, in a strip under the level (the user: "put these as a tab
 	-- below the level, then add quests below it as well") --------------------------------------------
@@ -435,9 +448,9 @@ function Hud.start()
 	-- things and food and feeding" and "remove the map button and the map interface".)
 	local corner = Kit.box({
 		Name = "Corner",
-		-- (eight cells of 54 and their gaps: Home, the town, the news, the Store, the Garage, the Bag,
-		-- Settings and Hide)
-		Size = UDim2.fromOffset(8 * 54 + 7 * 8, 76),
+		-- (nine cells of 54 and their gaps: Home, Visit, the town, the news, the Store, the Garage, the
+		-- Bag, Settings and Hide)
+		Size = UDim2.fromOffset(9 * 54 + 8 * 8, 76),
 		-- under the clock's glass, which ends 72 from the top of the screen
 		Position = UDim2.new(1, -14, 0, 88 - inset),
 		AnchorPoint = Vector2.new(1, 0),
@@ -484,6 +497,10 @@ function Hud.start()
 	end
 	for i, e in
 		{
+			-- other players' towns: the leaderboard of likes, the search and visits (the user: "allow
+			-- players to like other plots. make a leaderboard for likes with plots. allow players to
+			-- visit plots searching by name")
+			{ "map", "Visit", "Visit" },
 			{ "city", "CityPanel", "City" },
 			{ "news", "News", "News" },
 			-- passes and gems for Robux (the user: "add gamepasses, just like bloxburg")

@@ -14,6 +14,7 @@
 --   walls              every wall style
 --   roofs              every roof style
 --   house              the starter house (house:inside without its roofs)
+--   copy               a copy of the starter town on the ground a visitor sees it on (Sim/PlotCopy)
 --   town               the plaza's own buildings
 --   town:<name>        one of them (fountain, board, tailor, shop, hall...)
 --   preset:<id>        a ready-made building (cottage, family, townhouse, library, cafe...)
@@ -217,6 +218,22 @@ elseif scene == "house" or scene == "house:inside" then
 			if scene == "house" or (kind ~= "roofs" and (obj.lv or 0) == 0) then
 				addPrims(Builder.primsFor(plan, kind, key))
 			end
+		end
+	end
+elseif scene == "copy" then
+	-- a copy of a town as a visitor sees it while its owner is away (Services/Visit): the starter
+	-- town on its piece of ground floating over the sea (Sim/PlotCopy), a pool dug in its garden
+	local StarterHouse = R(Shared .. "Data.StarterHouse")
+	local PlotCopy = R(Shared .. "Sim.PlotCopy")
+	local Water = R(Shared .. "Build.Water")
+	local plan = StarterHouse.plan()
+	plan.waters["990"] = { x1 = 262, z1 = 150, x2 = 278, z2 = 166, lv = 0, edge = "tile", depth = "swim" }
+	local copy = PlotCopy.plan(plan)
+	addPrims(PlotCopy.ground(copy, 16))
+	Water.drawSurface = true
+	for _, kind in Plan.Kinds do
+		for key in copy[kind] do
+			addPrims(Builder.primsFor(copy, kind, key))
 		end
 	end
 elseif scene:sub(1, 5) == "town:" then

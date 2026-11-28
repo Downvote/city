@@ -33,6 +33,7 @@ local saving: { [Player]: boolean } = {}
 local unsaved: { [Player]: boolean } = {}
 local seenBefore: { [Player]: number } = {} -- profile.seen as it loaded (offline earnings: Services/Store)
 local loadedSignal = Instance.new("BindableEvent")
+local savedHandlers: { (Player, any) -> () } = {}
 local jobId = if game.JobId ~= "" then game.JobId else "studio-" .. HttpService:GenerateGUID(false)
 
 Data.Loaded = loadedSignal.Event -- (player, profile)
@@ -152,8 +153,34 @@ function Data.save(player: Player, release: boolean?): boolean
 	saving[player] = nil
 	if not ok then
 		warn("[Data] save failed for", player.Name, err)
+	else
+		for _, fn in savedHandlers do
+			task.spawn(fn, player, profile)
+		end
 	end
 	return ok
+end
+
+-- Calls fn(player, profile) after every save that went in, the last one as they leave too: the
+-- profile itself, not a copy (Services/Visit lists the town then).
+function Data.onSaved(fn: (Player, any) -> ())
+	table.insert(savedHandlers, fn)
+end
+
+-- Someone's saved profile as it was last saved, read only: their lock is never touched, and they
+-- needn't be in this server or in the game at all (Services/Visit draws a copy of their town from
+-- it). Nil if there is none or the store can't be read.
+function Data.peek(userId: number): any
+	if not store or type(userId) ~= "number" or userId <= 0 or userId % 1 ~= 0 then
+		return nil
+	end
+	local ok, result = pcall(function()
+		return (store :: DataStore):GetAsync("p_" .. userId)
+	end)
+	if ok and type(result) == "table" and type(result.data) == "table" then
+		return result.data
+	end
+	return nil
 end
 
 function Data.get(player: Player): any
