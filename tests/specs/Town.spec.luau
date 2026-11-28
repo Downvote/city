@@ -211,13 +211,17 @@ describe("Town", function()
 		print(string.format("Town: %d parts, %d opened, %d different pieces", parts, opened, different))
 		-- (parts went up from 36,000 when round shapes stopped being merged into pieces and became
 		-- parts of their own, for the user's "alot of the objects seem to have its pieces wrong")
-		expect(parts < 56000).toBeTruthy()
+		-- (and from 56,000 for the land round the plots north of Hill Road, its roads and gardens,
+		-- about 3,000, and eight more shops to walk into, about 2,100: "could you make the max plots
+		-- 6, expanding the map for it?" and "detail the town more, and make the lights and interior
+		-- in them work")
+		expect(parts < 58000).toBeTruthy()
 		-- (opened went up from 110,000 when the civic quarter was built up for the user's "the
 		-- side with less buildings should have much more buildings, as much as in the city side",
 		-- and from 126,000 for the land round the plots north of Hill Road ("could you make the
 		-- max plots 6, expanding the map for it?") and more rooms to walk into ("detail the town
 		-- more, and make the lights and interior in them work"))
-		expect(opened < 136000).toBeTruthy()
+		expect(opened < 137000).toBeTruthy()
 		expect(different < 320).toBeTruthy()
 	end)
 end)
