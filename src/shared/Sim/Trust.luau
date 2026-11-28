@@ -88,10 +88,10 @@ function Trust.short(name: string): string
 	return Text.fill(Trust.Why.coins, { name = name })
 end
 
--- What the trusted builder sees where the coins are: "1,200 left of Sam's 2,500".
+-- What the trusted builder sees under the coins (which are what is left of the budget):
+-- "Building on Sam's plot, budget 2,500".
 function Trust.line(e: Entry, owner: string): string
-	return Text.fill("{left} left of {name}'s {budget}", {
-		left = Text.commas(Trust.left(e)),
+	return Text.fill("Building on {name}'s plot, budget {budget}", {
 		name = owner,
 		budget = Text.commas(e.budget),
 	})

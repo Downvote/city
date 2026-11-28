@@ -25,7 +25,8 @@ tutorial:done
 panel:Garage panel:Settings panel:Store panel:Store:gems panel:Rewards panel:Rewards:playtime panel:Rewards:achievements panel:Rewards:group
 panel:Rewards:member welcome welcome:long
 panel:Bag panel:Bag:empty panel:Residents:gift panel:Goals:titles talk:gift
-panel:Residents:mood pick"
+panel:Residents:mood pick player player:budget player:trusted panel:PlayerProfile panel:PlayerProfile:trusted
+panel:CityPanel:trusted hud:friends invite build:guest"
 COUNT=$(echo $SCENES | wc -w)
 status=0
 for look in dark light; do

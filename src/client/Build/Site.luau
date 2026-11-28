@@ -179,6 +179,15 @@ function Site.enter(): (number?, string?)
 	if guest then
 		setGuest(nil)
 	end
+	-- (the server still has them on somebody's plot, from a Build mode that never closed: off it)
+	for _, r in State.data.trustedBy or {} do
+		if type(r) == "table" and r.building then
+			pcall(function()
+				Remotes.fn("TrustBuild"):InvokeServer(nil)
+			end)
+			break
+		end
+	end
 	local index = player:GetAttribute("Plot")
 	if type(index) ~= "number" then
 		return nil, "Your plot isn't ready yet."

@@ -163,14 +163,15 @@ local function trust(on: boolean, amount: number?)
 end
 
 -- One line of words on the card.
-local function line(parent: Frame, text: string, y: number, color: Color3?, name: string?)
+local function line(parent: Frame, text: string, y: number, accent: Color3?, name: string?)
 	local label = Kit.text(text, {
 		Name = name or "Line",
 		Parent = parent,
 		Size = UDim2.new(1, -PAD * 2, 0, 20),
 		Position = UDim2.fromOffset(PAD, y),
 		TextSize = 15,
-		Color = color or T.InkSoft,
+		Color = if accent then nil else T.InkSoft,
+		Tint = accent, -- (an accent deepens on light paper)
 		Wrap = false,
 		ZIndex = 41,
 	})
@@ -392,7 +393,10 @@ function PlayerMenu.open(arg: any)
 	if type(id) ~= "number" then
 		return
 	end
-	local other = Players:GetPlayerByUserId(id)
+	local found, other = pcall(function()
+		return Players:GetPlayerByUserId(id)
+	end)
+	other = if found then other else nil
 	where = if type(arg) == "table" and typeof(arg.at) == "Vector2" then arg.at else Vector2.new(640, 360)
 	local mine = serial
 	local f = Kit.glass({

@@ -586,7 +586,6 @@ function draw()
 		Wrap = false,
 		LayoutOrder = 3,
 	})
-	friendRows(list, 2000)
 	-- the player's own skills: each job they have worked, its level and its bar
 	local skills = Skills.list({ skills = State.data.skills })
 	MenuParts.heading(list, "Your skills", T.Purple, 1010, nil)
@@ -605,6 +604,8 @@ function draw()
 			{ Name = "Skill", Parent = list, Size = UDim2.new(1, -12, 0, 44), LayoutOrder = 1010 + n, Color = T.Purple }
 		)
 	end
+	-- friends playing here, and the players trusted to build on the plot
+	friendRows(list, 2000)
 end
 
 -- The coins moved (a pay packet, a purchase): the panel built again only if the land's button

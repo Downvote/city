@@ -99,6 +99,15 @@
 --   panel:Residents:gift  Mara's page with the gift picker up
 --   panel:Residents:mood  Mara's Mood tab: what helps her mood and what's missing (Sim/Needs)
 --   pick                what a click on a villager brings up (UI/VillagerMenu): Profile and Chat
+--   player              what a click on another player brings up (UI/PlayerMenu): their town, Like,
+--                       Visit, Profile and Trust to build (player:budget the budget being picked,
+--                       player:trusted trusted with a budget, and they trust you on theirs)
+--   panel:PlayerProfile another player's profile (UI/PlayerProfile): their town, building, their
+--                       villagers (panel:PlayerProfile:trusted trusted, and they trust you)
+--   panel:CityPanel:trusted  the City hall with two friends here and a trusted builder
+--   hud:friends         the main screen with two friends in the server: the chip on the money strip
+--   invite              the one-time nudge to invite friends (UI/Invite)
+--   build:guest         Build mode on a plot whose owner trusts you: their budget where the coins are
 --   panel:Goals:titles  the Goals menu's Titles tab: three won, one worn, how it looks over a head
 --   earned              the main screen as a pay packet comes in, and the coins that rise over the
 --                       villagers who earned it, laid flat where three heads would be (the
@@ -286,6 +295,11 @@ elseif scene == "hud:named" then
 	startHud()
 	Sim.remoteEvent("State"):FireClient(Sim.player, { plotName = "Juniper Bay" })
 	Sim.frames(2)
+elseif scene == "hud:friends" then
+	-- (Services/Social: two of the player's friends in the server, a tenth more wages each)
+	Sim.player:SetAttribute("FriendsHere", 2)
+	startHud()
+	Sim.frames(2)
 elseif scene == "hud:hidden" then
 	startHud()
 	Sim.press("Hide")
@@ -296,6 +310,24 @@ elseif scene:sub(1, 5) == "build" then
 	startHud()
 	Sim.BuildMode.enter()
 	Sim.frames(3)
+	if scene == "build:guest" then
+		-- building on Sam's plot, who trusted the player with 2,500 coins and has seen 640 of them spent
+		-- (Build/Site: the coins are what is left, the tip says whose)
+		local Site = Harness.require(Sim.CLIENT .. "Build.Site")
+		Site.setGuest({
+			owner = 77,
+			name = "Sam",
+			plot = 1,
+			plan = Sim.State.plan,
+			passes = {},
+			gemItems = {},
+			keepsakes = {},
+			budget = 2500,
+			left = 1860,
+		})
+		Sim.frames(3)
+		Sim.press("Furniture")
+	end
 	if scene:sub(1, 13) == "build:placing" and scene:sub(15) == "touch" then
 		Sim.UIS.TouchEnabled, Sim.UIS.MouseEnabled = true, false
 	end
@@ -720,6 +752,61 @@ elseif scene:sub(1, 6) == "panel:" then
 		patch({ passes = {} })
 	elseif state == "named" and name == "CityPanel" then
 		patch({ plotName = "Juniper Bay" })
+	elseif state == "trusted" and name == "CityPanel" then
+		-- two friends here, and Sam trusted with 2,500 coins of which 640 are spent (Services/Trust)
+		Sim.player:SetAttribute("FriendsHere", 2)
+		patch({ trusted = { { id = 77, name = "Sam", budget = 2500, spent = 640, left = 1860 } } })
+	end
+	local panelArg: any = nil
+	if name == "PlayerProfile" then
+		-- Sam's profile as the server would send it (Services/Social): their town, three of their
+		-- villagers (these stand in), and with :trusted the trust both ways
+		local trusted = state == "trusted"
+		panelArg = {
+			id = 77,
+			card = {
+				id = 77,
+				name = "Sam",
+				user = "sam_builds",
+				town = "Juniper Bay",
+				named = true,
+				level = 14,
+				people = 22,
+				likes = 128,
+				liked = trusted,
+				friend = true,
+				plot = 1,
+				trusted = if trusted then { budget = 2500, spent = 640, left = 1860 } else nil,
+				trustsYou = if trusted then { budget = 1000, left = 1000 } else nil,
+				top = {
+					{
+						vid = order[1],
+						name = "Mara",
+						color = villagers[order[1]].color,
+						pers = "sunny",
+						heart = 6,
+						job = true,
+					},
+					{
+						vid = order[3],
+						name = "Ivy",
+						color = villagers[order[3]].color,
+						pers = "bold",
+						heart = 4,
+						job = true,
+					},
+					{
+						vid = order[2],
+						name = "Tobin",
+						color = villagers[order[2]].color,
+						pers = "shy",
+						heart = 2,
+						job = false,
+					},
+				},
+			},
+		}
+		villagerModels()
 	end
 	if name == "Visit" then
 		-- other players' towns as the server would list them (Services/Visit): a leaderboard, the
@@ -808,7 +895,7 @@ elseif scene:sub(1, 6) == "panel:" then
 		end
 	end
 	startHud()
-	Hud.open(name)
+	Hud.open(name, panelArg)
 	Sim.frames(3)
 	if name == "Store" and state == "gems" then
 		Sim.press("Gems")
@@ -860,6 +947,18 @@ elseif scene:sub(1, 6) == "panel:" then
 			typed.Text = "hollow"
 		end
 		Sim.advance(1)
+	elseif name == "CityPanel" and state == "trusted" then
+		-- (the friends and the trusted builders at the foot of the list, the rows over them left out
+		-- as though it were scrolled down: the previews don't scroll)
+		local row = Sim.gui:FindFirstChild("FriendsHere", true)
+		local scroll = row and row.Parent
+		if scroll then
+			for _, c in scroll:GetChildren() do
+				if c:IsA("GuiObject") and c.LayoutOrder < 2000 then
+					c.Visible = false
+				end
+			end
+		end
 	elseif state == "claimed" then
 		-- the first goal, claimed already
 		local row = Sim.gui:FindFirstChild("settlers", true)
@@ -872,6 +971,38 @@ elseif scene == "pick" then
 	startHud()
 	villagerModels()
 	Hud.open("VillagerMenu", { vid = order[1], at = roblox.Vector2.new(560, 300) })
+	Sim.frames(3)
+elseif scene == "player" or scene:sub(1, 7) == "player:" then
+	-- what a click on another player brings up (World/PlayerClick, UI/PlayerMenu): Sam's card as the
+	-- server would send it (Services/Social)
+	startHud()
+	local trusted = scene == "player:trusted"
+	Hud.open("PlayerMenu", {
+		id = 77,
+		at = roblox.Vector2.new(560, 260),
+		asking = scene == "player:budget",
+		card = {
+			id = 77,
+			name = "Sam",
+			user = "sam_builds",
+			town = "Juniper Bay",
+			named = true,
+			level = 14,
+			people = 22,
+			likes = 128,
+			liked = trusted,
+			friend = true,
+			plot = 2,
+			trusted = if trusted then { budget = 2500, spent = 640, left = 1860 } else nil,
+			trustsYou = if trusted then { budget = 1000, left = 1000 } else nil,
+			top = {},
+		},
+	})
+	Sim.frames(3)
+elseif scene == "invite" then
+	-- the one-time nudge to invite friends, once the town has its second villager (UI/Invite)
+	startHud()
+	Harness.require(Sim.CLIENT .. "UI.Invite").nudge()
 	Sim.frames(3)
 elseif scene == "visiting" or scene == "visiting:liked" then
 	-- the bar while looking round a copy of somebody's town (UI/Visit): whose it is, Like and Home

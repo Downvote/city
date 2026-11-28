@@ -95,8 +95,10 @@ local function stand(inside: Frame, id: number)
 		Parent = inside,
 		Size = UDim2.new(1, 0, 1, -150),
 	})
-	local other = Players:GetPlayerByUserId(id)
-	local char = other and other.Character
+	local found, other = pcall(function()
+		return Players:GetPlayerByUserId(id)
+	end)
+	local char = if found and other then other.Character else nil
 	if char and char:IsA("Model") then
 		local vp, shade = ModelPreview.fromModel(char, { Parent = holder, Stand = true, Shadow = true })
 		if vp then
@@ -385,11 +387,14 @@ function PlayerProfile.open(arg: any)
 	end
 	current = id
 	budget = Tuning.Trust.Start
-	local other = Players:GetPlayerByUserId(id)
-	panel =
-		Kit.panel(if other then other.DisplayName else "Player", Kit.MenuSize, PlayerProfile.close, "person", ACCENT, {
-			Caption = "Another player",
-		})
+	local found, other = pcall(function()
+		return Players:GetPlayerByUserId(id)
+	end)
+	other = if found then other else nil
+	local title = if other then other.DisplayName elseif type(arg.card) == "table" then arg.card.name else "Player"
+	panel = Kit.panel(tostring(title), Kit.MenuSize, PlayerProfile.close, "person", ACCENT, {
+		Caption = "Another player",
+	})
 	if type(arg.card) == "table" then
 		info = arg.card
 		if info.trusted then

@@ -179,7 +179,7 @@ describe("Trusted builders", function()
 		expect(TrustSim.left(e)).toBe(500)
 		TrustSim.spend(e, 0 / 0)
 		expect(TrustSim.left(e)).toBe(500)
-		expect(TrustSim.line(e, "Sam")).toBe("500 left of Sam's 500")
+		expect(TrustSim.line(e, "Sam")).toBe("Building on Sam's plot, budget 500")
 	end)
 
 	it("keeps a player nobody trusts on their own plot", function()

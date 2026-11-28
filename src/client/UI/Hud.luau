@@ -344,10 +344,16 @@ function Hud.start()
 	local _, popLabel = cell("people", 82, 3)
 	-- friends playing in this server, a tenth more pay each (the user: "add a 10% income boosy per
 	-- friend playing"): a chip at the strip's end while there are any, the strip running on to hold it
-	local FRIENDS_W = 150
-	local friendsPill, friendsLabel = cell("person", FRIENDS_W, 4)
-	friendsPill.Name = "Friends"
-	friendsLabel.TextSize = 17
+	local FRIENDS_W = 184
+	local friendsPill, friendsLabel = Kit.pill("person", {
+		Name = "Friends",
+		Parent = pillRow,
+		Size = UDim2.fromOffset(FRIENDS_W, 40),
+		LayoutOrder = 4,
+		IconColor = T.Green,
+		TextSize = 17,
+	})
+	Kit.paint(friendsPill, nil, 1)
 	local function refreshFriends()
 		local me = Players.LocalPlayer
 		local chip = Social.chip(if me then me:GetAttribute("FriendsHere") else 0)

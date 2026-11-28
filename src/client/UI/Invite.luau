@@ -22,7 +22,7 @@ local Invite = {}
 
 local T = Kit.Theme
 local player = Players.LocalPlayer
-local W, H = 330, 128 -- the nudge's card
+local W, H = 330, 140 -- the nudge's card
 
 -- Roblox's invite box, if this player can send invites here.
 function Invite.prompt()
@@ -106,9 +106,10 @@ function Invite.nudge()
 	Kit.text(Text.fill("Each friend here adds {n}% to your wages.", { n = Social.percent(1) }), {
 		Name = "Words",
 		Parent = f,
-		Size = UDim2.new(1, -32, 0, 20),
-		Position = UDim2.fromOffset(16, 40),
+		Size = UDim2.new(1, -32, 0, 38),
+		Position = UDim2.fromOffset(16, 42),
 		TextSize = 15,
+		AlignY = Enum.TextYAlignment.Top,
 		Color = T.InkSoft,
 		ZIndex = 31,
 	})
@@ -116,7 +117,7 @@ function Invite.nudge()
 		Name = "Choices",
 		Parent = f,
 		Size = UDim2.new(1, -28, 0, 40),
-		Position = UDim2.fromOffset(14, 74),
+		Position = UDim2.fromOffset(14, 86),
 		ZIndex = 31,
 	})
 	Kit.list(row, 8, true)
