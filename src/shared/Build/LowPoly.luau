@@ -82,8 +82,12 @@ local function cut(name: string): (BasePart?, string?)
 	local others = pieces(name)
 	local ok, result = pcall(function()
 		local geometry = game:GetService("GeometryService") :: any
+		-- (every shape's hull, which is the shape itself: they are all convex. A gem's used to be
+		-- its box, and a gem is turned a different way at every spot (LowPoly.turn), so a solid
+		-- ball or rock had corners nobody could see sticking out of it, the user: "collission
+		-- boxes that arent part of the mesh but are invisible")
 		return geometry:IntersectAsync(main, others, {
-			CollisionFidelity = if name == "Gem" then Enum.CollisionFidelity.Box else Enum.CollisionFidelity.Hull,
+			CollisionFidelity = Enum.CollisionFidelity.Hull,
 			RenderFidelity = Enum.RenderFidelity.Precise,
 			SplitApart = false,
 		})

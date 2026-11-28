@@ -909,6 +909,45 @@ describe("Styles, shapes, pictures, marks and fences", function()
 		expect(#Catalog.withStyle("rustic") >= 10).toBeTruthy()
 	end)
 
+	-- the user: "add searching in build mode"
+	it("finds pieces by name, kind, look and tags, every word typed, names first", function()
+		expect(#Catalog.search("")).toBe(0)
+		expect(#Catalog.search("   ")).toBe(0)
+		-- by name, whatever the case, the names that have it first
+		local chairs = Catalog.search("Chair")
+		expect(#chairs > 3).toBeTruthy()
+		local named = true
+		for _, def in chairs do
+			local has = string.find(string.lower(def.name), "chair", 1, true) ~= nil
+			expect(has or not named).toBeTruthy()
+			named = named and has
+		end
+		local lamp = Catalog.search("lamp")[1]
+		expect(string.find(string.lower(lamp.name), "lamp", 1, true) ~= nil).toBeTruthy()
+		for _, def in chairs do
+			expect(string.find(Catalog.searchWords(def), "chair", 1, true) ~= nil).toBeTruthy()
+			expect(def.cat ~= "keepsakes").toBeTruthy()
+		end
+		-- a plural finds the same pieces
+		expect(#Catalog.search("chairs")).toBe(#chairs)
+		expect(#Catalog.search("benches") > 0).toBeTruthy()
+		-- by its kind, its look, or what villagers call it
+		local seating = Catalog.search("seating")
+		expect(#seating >= #Catalog.list("seating")).toBeTruthy()
+		expect(#Catalog.search("sci-fi") >= #Catalog.withStyle("scifi")).toBeTruthy()
+		expect(#Catalog.search("somewhere to sit") > 0).toBeTruthy()
+		expect(#Catalog.search("path") >= #Catalog.paths()).toBeTruthy()
+		-- every word has to be there
+		local cozyChairs = Catalog.search("cozy chair")
+		expect(#cozyChairs > 0 and #cozyChairs < #chairs).toBeTruthy()
+		for _, def in cozyChairs do
+			expect(def.style).toBe("cozy")
+		end
+		expect(#Catalog.search("chair zzzq")).toBe(0)
+		-- a long paste is cut short, not choked on
+		expect(#Catalog.search(string.rep("a ", 500))).toBe(#Catalog.search("a a a a a a"))
+	end)
+
 	it("has every basic shape in a few sizes, one paint, stacking", function()
 		local kinds = {}
 		for _, def in Catalog.list("shapes") do
@@ -947,11 +986,23 @@ describe("Styles, shapes, pictures, marks and fences", function()
 				error("the " .. kind .. " comes in " .. tostring(kinds[kind] or 0) .. " sizes")
 			end
 		end
-		-- a cube stands on a cube; a chair doesn't stand on a table, and a cup does
+		-- a cube stands on a cube, a cup on a counter, and (the user: "make it such that you are able
+		-- to put objects on top of each other or on each other, respecting their collision") a
+		-- chair on a table or a lamp on a cupboard; nothing big stands on a small thing, a rug, or
+		-- what hangs on a wall
 		local cube = Catalog.get("shape_cube_medium")
 		expect(Catalog.standsOn(cube, cube)).toBe(true)
-		expect(Catalog.standsOn(Catalog.get("chair_wood"), Catalog.get("table_round"))).toBe(false)
+		expect(Catalog.standsOn(Catalog.get("chair_wood"), Catalog.get("table_round"))).toBe(true)
 		expect(Catalog.standsOn(Catalog.get("kettle"), Catalog.get("counter"))).toBe(true)
+		expect(Catalog.standsOn(Catalog.get("chair_wood"), Catalog.get("kettle"))).toBe(false)
+		for _, def in Catalog.all() do
+			if Catalog.hasTag(def, "rug") or def.place == "wall" or def.place == "ceiling" then
+				expect(Catalog.standsOn(Catalog.get("chair_wood"), def)).toBe(false)
+			end
+		end
+		expect(Catalog.standsOn(Catalog.get("chair_wood"), Catalog.get("path_stones"))).toBe(true)
+		-- stairs and ceiling pieces have their own heights
+		expect(Catalog.standsOn(Catalog.get("stairs_straight"), Catalog.get("table_round"))).toBe(false)
 	end)
 
 	it("lets a mark lie on floors and paths, over other marks, and holds nothing up", function()

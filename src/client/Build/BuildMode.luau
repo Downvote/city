@@ -660,14 +660,17 @@ local function placeCandidate(): (any?, string?)
 			nil
 	end
 	-- free standing: stand on whatever is under the pointer, or on the floor plane. A piece it
-	-- can't stand on (Catalog.standsOn: furniture for furniture, a mark for anything) is looked
-	-- through to what is under it, so a chair over a rug or a table over a painted line stands on
-	-- the floor.
+	-- can't stand on (Catalog.standsOn: a rug, a small thing, a mark) is looked through to what is
+	-- under it, so a chair over a rug or a table over a painted line stands on the floor. Furniture
+	-- stands on the top of other furniture (the user: "make it such that you are able to put
+	-- objects on top of each other or on each other, respecting their collision"), on a part of it
+	-- that is solid: its leaves, a cushion's tassel or a cup on it are looked through too.
 	local base = if s.level == 0 then 0 else Plan.levelBase(s.level)
 	local top = Plan.levelTop(s.level)
 	local pos: Vector3?
 	local through: { Instance } = {}
-	for _ = 1, 6 do
+	local small = def.place == "surface" or def.stack == true
+	for _ = 1, 8 do
 		if not hit then
 			break
 		end
@@ -679,6 +682,12 @@ local function placeCandidate(): (any?, string?)
 			local below = under and Catalog.get(under.id)
 			if not (below and Catalog.standsOn(def, below)) then
 				table.insert(through, hitModel)
+				hit = raycast(through)
+				continue
+			end
+			local part = hit.Instance
+			if not small and part:IsA("BasePart") and not part.CanCollide then
+				table.insert(through, part)
 				hit = raycast(through)
 				continue
 			end
@@ -712,6 +721,15 @@ local function placeCandidate(): (any?, string?)
 		y = Water.pieceY(def) -- (water: on the surface, the bottom or the side, by its kind)
 	elseif s.level ~= 0 then
 		y = math.max(y, base)
+	else
+		-- (over a pool or a pond: floating on it, or on the ground beside it when it reaches the
+		-- side: the user, "make it such that objects can go above waters")
+		y = Water.standY(
+			State.plan,
+			def,
+			{ x = x, z = z, r = pl.r % 360, lv = 0, sx = pl.sx, sy = pl.sy, sz = pl.sz },
+			y
+		)
 	end
 	return {
 		id = pl.id,

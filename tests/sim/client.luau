@@ -264,9 +264,10 @@ Harness.addService("ContextActionService", {
 	UnbindAction = function() end,
 })
 -- a real (fake) instance, so the client can look through the effects it holds
-local lighting = Fake.new("Folder")
+-- (a Lighting, so Build mode's time of day can set its clock and its light: Build/ViewTime)
+local lighting = Fake.new("Lighting")
 lighting.Name = "Lighting"
-Fake.extend(lighting, { ClockTime = 12 })
+lighting.ClockTime = 12
 Harness.addService("Lighting", lighting)
 Harness.addService("Debris", { AddItem = function() end })
 Harness.addService("ProximityPromptService", { PromptTriggered = Fake.signal() })

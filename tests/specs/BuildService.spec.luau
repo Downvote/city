@@ -346,6 +346,19 @@ describe("Build service, the passes' rules", function()
 		return nil
 	end
 
+	-- the user: "make it such that you are able to put objects on top of each other or on each
+	-- other, respecting their collision"
+	it("takes a piece standing on top of another, and turns one down in its body", function()
+		profile.passes = nil
+		local Catalog = require("ReplicatedStorage.Shared.Build.Catalog")
+		local h = Catalog.get("shape_cube_medium").size.Y
+		expect((add(cube(80, 170)))).toBe(true)
+		expect((add(cube(80, 170, { y = h })))).toBe(true)
+		local ok, why = add(cube(80, 170, { y = h * 1.5 }))
+		expect(ok).toBe(false)
+		expect(why).toBe("bumps into the medium cube")
+	end)
+
 	it("turns down a piece in another, and lets a Free Placing owner put it there", function()
 		profile.passes = nil
 		expect((add(cube(60, 150)))).toBe(true)
@@ -578,7 +591,7 @@ describe("Build service, water", function()
 		local saved = profile.plan.waters[key]
 		expect(saved.gift == nil and saved.colour == nil).toBeTruthy()
 		expect(folder:FindFirstChild(Builder.modelName("waters", key)) ~= nil).toBeTruthy()
-		-- a lily pad floats on it, and nothing else may stand in it
+		-- a lily pad floats on it, and nothing may stand in it under the surface
 		local lily = Catalog.get("water_lilies")
 		ok, err = now({
 			{
@@ -591,10 +604,22 @@ describe("Build service, water", function()
 			error(tostring(err))
 		end
 		ok, err = now({
-			{ type = "add", kind = "items", obj = { id = "tree_oak", x = x0 + 30, y = 0, z = 158, r = 0, lv = 0 } },
+			{ type = "add", kind = "items", obj = { id = "tree_oak", x = x0 + 30, y = -2, z = 158, r = 0, lv = 0 } },
 		})
 		expect(ok).toBe(false)
 		expect(err).toBe("that can't go in the water")
+		-- but anything may float on it or stand over it (the user: "make it such that objects can go
+		-- above waters")
+		ok, err = now({
+			{
+				type = "add",
+				kind = "items",
+				obj = { id = "chair_wood", x = x0 + 26, y = Water.Surface, z = 158, r = 0, lv = 0 },
+			},
+		})
+		if not ok then
+			error(tostring(err))
+		end
 	end)
 
 	it("refuses water off the plot, over other water, under a floor, or past the limit", function()

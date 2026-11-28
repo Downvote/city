@@ -1025,6 +1025,162 @@ run("a pond dug by dragging, with a lily pad floating on it", function()
 	check(#errors == warned, "no warnings from any of it")
 end)
 
+-- Searching (the user: "add searching in build mode"): the box at the right end of the category
+-- well shows every piece whose name, kind, look or tags have the words typed
+local function search(words)
+	local box = gui:FindFirstChild("SearchBox", true)
+	box.Text = words
+	box.FocusLost:Fire(true)
+	frames(3)
+	return box
+end
+
+run("searching the catalog as you type", function()
+	local warned = #errors
+	local Catalog = Sim.Harness.require("ReplicatedStorage.Shared.Build.Catalog")
+	press("Furniture")
+	local box = gui:FindFirstChild("SearchBox", true)
+	check(box ~= nil and Fake.shown(box), "the category well has a search box")
+	search("chair")
+	local want = Catalog.search("chair")
+	local cards = trayCards()
+	check(#cards == #want and #cards > 3, "typing shows every piece it finds (" .. #cards .. ")")
+	local all = true
+	for _, c in cards do
+		local def = Catalog.get(c:GetAttribute("ItemId"))
+		all = all and def ~= nil and string.find(Catalog.searchWords(def), "chair", 1, true) ~= nil
+	end
+	check(all, "and only those")
+	local clear = gui:FindFirstChild("ClearSearch", true)
+	check(clear ~= nil and Fake.shown(clear), "with a button to clear it")
+	-- a card picked from it is picked up as from any tab, and the search stays when it is put away
+	cards[1].Activated:Fire()
+	frames(2)
+	check(BuildMode.state.tool == "place" and BuildMode.state.placing ~= nil, "a card found picks the piece up")
+	putAway()
+	check(#trayCards() == #want, "the search is still there when it is put away")
+	-- a word nothing has
+	search("zzzq")
+	check(#trayCards() == 0, "a word nothing has shows no cards")
+	local said = false
+	for _, d in gui:FindFirstChild("Tray", true):GetDescendants() do
+		if d:IsA("TextLabel") and d.Text == "Nothing found" then
+			said = true
+		end
+	end
+	check(said, "and says so")
+	-- the clear button goes back to the tab
+	press("ClearSearch")
+	check(box.Text == "" and #trayCards() > 0, "clearing it brings the tab's cards back")
+	-- from the Paint tool, typing goes back to placing
+	press("Paint")
+	search("lamp")
+	check(BuildMode.state.tool == "place" and #trayCards() > 0, "typing with Paint in hand shows what it finds")
+	-- a category picked ends the search
+	press("Seating")
+	check(box.Text == "" and #trayCards() == #Catalog.list("seating"), "picking a category ends the search")
+	check(#errors == warned, "no warnings from any of it")
+end)
+
+-- the user: "make it such that you are able to put objects on top of each other or on each other,
+-- respecting their collision", and "make it such that objects can go above waters"
+run("standing a piece on another, and over the water", function()
+	local warned = #errors
+	local Catalog = Sim.Harness.require("ReplicatedStorage.Shared.Build.Catalog")
+	local Water = Sim.Harness.require("ReplicatedStorage.Shared.Build.Water")
+	local function hold(words, id)
+		search(words)
+		local cards = trayCards(id)
+		check(#cards == 1, "the " .. id .. " is found by searching " .. words)
+		cards[1].Activated:Fire()
+		frames(2)
+	end
+	-- a round table on the lawn
+	hold("round table", "table_round")
+	local items = count("items")
+	mouseAtPlot(228, 186)
+	click()
+	check(count("items") == items + 1, "a round table is put down")
+	local tbl = newest(function(it)
+		return it.id == "table_round"
+	end)
+	putAway()
+	-- a chair held over its top stands on it
+	local top = tbl.y + Catalog.get("table_round").surface
+	hold("wooden chair", "chair_wood")
+	mouseAtPlot(tbl.x, tbl.z, top)
+	check(BuildMode.state.blocked == nil, "a chair held over the table's top doesn't bump into it")
+	click()
+	check(count("items") == items + 2, "and the server takes it there")
+	local chair = newest(function(it)
+		return it.id == "chair_wood"
+	end)
+	check(
+		chair ~= nil and math.abs(chair.y - top) < 0.06,
+		"standing on the top (" .. tostring(chair and chair.y) .. ")"
+	)
+	-- out over the pond dug before, a chair floats on the water
+	mouseAtPlot(250, 162, Water.Surface)
+	click()
+	local floating = newest(function(it)
+		return it.id == "chair_wood"
+	end)
+	check(count("items") == items + 3, "a chair goes out over the pond")
+	check(
+		floating ~= nil and math.abs(floating.y - Water.Surface) < 1e-3,
+		"floating on it (" .. tostring(floating and floating.y) .. ")"
+	)
+	putAway()
+	press("ClearSearch")
+	check(#errors == warned, "no warnings from any of it")
+end)
+
+-- the user: "in build mode, allow the player to toggle what time they see their city in"
+run("the time of day Build mode shows the town at", function()
+	local warned = #errors
+	local Tuning = Sim.Harness.require("ReplicatedStorage.Shared.Config.Tuning")
+	local ViewTime = Sim.Harness.require("StarterPlayer.StarterPlayerScripts.Client.Build.ViewTime")
+	local Lighting = Sim.Harness.game():GetService("Lighting")
+	local slab = gui:FindFirstChild("TimeOfDay", true)
+	check(slab ~= nil and Fake.shown(slab), "the time's slab is at the top right")
+	check(ViewTime.index() == 1 and labelOf(slab):find("Now", 1, true) ~= nil, "on the town's own time")
+	press("Later")
+	check(Lighting.ClockTime == Tuning.ViewTime.Morning, "the later arrow shows it in the morning")
+	check(labelOf(slab):find("Morning", 1, true) ~= nil, "and says so")
+	-- the server's clock reaches this screen all the time: the hour picked is held over it
+	Lighting.ClockTime = 15
+	frames(2)
+	check(Lighting.ClockTime == Tuning.ViewTime.Morning, "the hour stays put when the server's clock comes in")
+	for _ = 1, 3 do
+		press("Later")
+	end
+	check(Lighting.ClockTime == Tuning.ViewTime.Night, "three more and it is night")
+	local night = ViewTime.lookAt(Tuning.ViewTime.Night)
+	check(Lighting.Ambient == night.ambient and Lighting.OutdoorAmbient == night.outdoor, "with the night's light")
+	-- it steps aside with the coins while a piece is held
+	press("Furniture")
+	trayCards()[1].Activated:Fire()
+	frames(2)
+	Sim.advance(0.5)
+	check(not slab.Visible, "it slides away while a piece is held")
+	putAway()
+	check(slab.Visible, "and comes back")
+	press("Earlier")
+	check(Lighting.ClockTime == Tuning.ViewTime.Evening, "the earlier arrow goes back to the evening")
+	-- leaving Build mode goes back to the town's own time
+	BuildMode.exit()
+	frames(3)
+	check(ViewTime.index() == 1, "leaving Build mode lets the town's time back")
+	check(math.abs(Lighting.ClockTime - ViewTime.townHour()) < 0.1, "the clock is the town's again")
+	Lighting.ClockTime = 15
+	frames(2)
+	check(Lighting.ClockTime == 15, "and nothing holds it any more")
+	BuildMode.enter()
+	frames(3)
+	check(labelOf(slab):find("Now", 1, true) ~= nil, "it opens on the town's time next time")
+	check(#errors == warned, "no warnings from any of it")
+end)
+
 run("a menu takes the screen: a way back, tabs, rows", function()
 	local picked = nil
 	local closed = false

@@ -21,19 +21,35 @@ end
 -- Straight stairs `w` wide and `d` deep rising H, in twelve steps. Each tread (c1) has a nosing
 -- over the riser (c2) below it. Closed stairs are housed between two sloping strings (c2) with a
 -- handrail on balusters and a newel post at each end; open stairs have no risers and sit on two
--- steel strings set in from the sides. People walk up a hidden ramp, so none of it needs to collide.
+-- steel strings set in from the sides. People walk up a hidden ramp along the line of the treads.
+-- The ramp is a slab as wide as the treads and RampDepth deep, under that line: it stays inside
+-- the stairs' own shape, under the treads and between the strings. It used to be a solid wedge
+-- down to the floor, so the open space you can see under a staircase was an invisible wall (the
+-- user: "some objects, like stairs, have collission boxes that arent part of the mesh but are
+-- invisible"). The Unstick spec holds every hidden solid part to what can be seen.
+local RAMP_DEPTH = 0.5 -- how far under the line of the treads the hidden ramp reaches, straight down
 local function stairs(r: R, w: number, d: number, rails: boolean)
 	local steps = 12
 	local run = d / steps
 	local rise = H / steps
 	local slope = run / rise -- how far back one stud up the stairs goes
-	local ramp = r:ramp(-w / 2, 0, -d / 2, w / 2, H, d / 2, false, r.c1, "Wood")
-	for _, p in ramp do
-		p.transp = 1
-	end
 	local open = not rails
 	local sw = 0.3 -- a string's thickness
 	local x0 = if open then w / 2 - 0.08 else w / 2 - sw
+	-- (the line through the back of every tread runs from the floor at the front, +z, to the top
+	-- of the last step at the back; the ramp's top lies on it)
+	local ramp = r:quad(
+		Vector3.new(0, 0, d / 2),
+		Vector3.new(0, H, -d / 2),
+		Vector3.new(0, H - RAMP_DEPTH, -d / 2),
+		Vector3.new(0, 0, d / 2 - RAMP_DEPTH * slope),
+		x0 * 2,
+		r.c1,
+		"Wood"
+	)
+	for _, p in ramp do
+		p.transp = 1
+	end
 	for half = 0, 1 do
 		r:piece(function(q: R)
 			for i = half * 6 + 1, half * 6 + 6 do

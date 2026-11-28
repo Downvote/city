@@ -21,7 +21,7 @@ local SavesTray = {}
 
 local T = Kit.Theme
 
-local CARD_W, CARD_H = 270, 152
+local CARD_W, CARD_H = 260, 128 -- (inside Build mode's smaller tray)
 local DIALOG = UDim2.fromOffset(540, 300)
 
 -- the server's last word on the page: { slots, max, free, saves = { { slot, name, t, pieces } } }
@@ -248,7 +248,6 @@ local function slotCard(kit: TrayKit, row: Instance, i: number, more: number?)
 		Radius = 10,
 		LayoutOrder = i,
 	})
-	Kit.rim(card, Kit.edgeOf(T.Card), 1)
 	card:SetAttribute("Slot", i)
 	-- the slot's number in yellow, and when it was saved at the right
 	Kit.title(Kit.index(i), {
@@ -265,14 +264,14 @@ local function slotCard(kit: TrayKit, row: Instance, i: number, more: number?)
 		Icons.make("lock", 30, {
 			Name = "Lock",
 			Parent = card,
-			Position = UDim2.new(0.5, -15, 0, 16),
+			Position = UDim2.new(0.5, -15, 0, 10),
 			Color = T.InkSoft,
 			Hole = T.Card,
 		})
 		Kit.title("More Saves", {
 			Parent = card,
 			Size = UDim2.new(1, -24, 0, 22),
-			Position = UDim2.fromOffset(12, 52),
+			Position = UDim2.fromOffset(12, 40),
 			TextSize = 18,
 			AlignX = Enum.TextXAlignment.Center,
 			Wrap = false,
@@ -285,7 +284,7 @@ local function slotCard(kit: TrayKit, row: Instance, i: number, more: number?)
 			{
 				Parent = card,
 				Size = UDim2.new(1, -24, 0, 18),
-				Position = UDim2.fromOffset(12, 76),
+				Position = UDim2.fromOffset(12, 62),
 				TextSize = 14,
 				Color = T.InkSoft,
 				AlignX = Enum.TextXAlignment.Center,
@@ -295,8 +294,8 @@ local function slotCard(kit: TrayKit, row: Instance, i: number, more: number?)
 		Kit.button("Unlock", {
 			Name = "Unlock",
 			Parent = card,
-			Size = UDim2.new(1, -24, 0, 34),
-			Position = UDim2.new(0, 12, 1, -46),
+			Size = UDim2.new(1, -24, 0, 32),
+			Position = UDim2.new(0, 12, 1, -40),
 			Color = T.Yellow,
 			TextColor = T.Dark,
 			TextSize = 17,
@@ -324,9 +323,9 @@ local function slotCard(kit: TrayKit, row: Instance, i: number, more: number?)
 		Name = "SaveName",
 		Parent = card,
 		Text = if e then e.name else (typed[i] or ""),
-		TextSize = 17,
-		Size = UDim2.new(1, -24, 0, 32),
-		Position = UDim2.fromOffset(12, 34),
+		TextSize = 16,
+		Size = UDim2.new(1, -24, 0, 28),
+		Position = UDim2.fromOffset(12, 30),
 	})
 	box.FocusLost:Connect(function()
 		local text = box.Text
@@ -345,9 +344,9 @@ local function slotCard(kit: TrayKit, row: Instance, i: number, more: number?)
 		{
 			Name = "Pieces",
 			Parent = card,
-			Size = UDim2.new(1, -24, 0, 18),
-			Position = UDim2.fromOffset(14, 72),
-			TextSize = 15,
+			Size = UDim2.new(1, -24, 0, 16),
+			Position = UDim2.fromOffset(14, 62),
+			TextSize = 14,
 			Color = T.InkSoft,
 			Wrap = false,
 		}
@@ -355,8 +354,8 @@ local function slotCard(kit: TrayKit, row: Instance, i: number, more: number?)
 	local buttons = Kit.box({
 		Name = "Buttons",
 		Parent = card,
-		Size = UDim2.new(1, -24, 0, 34),
-		Position = UDim2.new(0, 12, 1, -46),
+		Size = UDim2.new(1, -24, 0, 32),
+		Position = UDim2.new(0, 12, 1, -40),
 	})
 	Kit.list(buttons, 6, true)
 	local function button(
@@ -371,7 +370,7 @@ local function slotCard(kit: TrayKit, row: Instance, i: number, more: number?)
 		Kit.button(text, {
 			Name = name,
 			Parent = buttons,
-			Size = UDim2.fromOffset(w, 34),
+			Size = UDim2.fromOffset(w, 32),
 			Color = color,
 			TextColor = ink,
 			TextSize = 16,
@@ -393,11 +392,11 @@ local function slotCard(kit: TrayKit, row: Instance, i: number, more: number?)
 		end)
 		return
 	end
-	button("Load", "Load", 66, T.Blue, nil, 1, function()
+	button("Load", "Load", 62, T.Blue, nil, 1, function()
 		load(kit, e)
 	end)
 	if not locked then
-		button("SaveOver", "Save over", 100, T.Orange, T.Dark, 2, function()
+		button("SaveOver", "Save over", 92, T.Orange, T.Dark, 2, function()
 			confirm(
 				Text.fill("Save over {name}?", { name = e.name }),
 				{
@@ -414,7 +413,7 @@ local function slotCard(kit: TrayKit, row: Instance, i: number, more: number?)
 			)
 		end)
 	end
-	button("Delete", "Delete", 68, T.Coral, T.Dark, 3, function()
+	button("Delete", "Delete", 64, T.Coral, T.Dark, 3, function()
 		confirm(
 			Text.fill("Delete {name}?", { name = e.name }),
 			{

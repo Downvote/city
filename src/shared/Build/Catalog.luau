@@ -299,9 +299,16 @@ function Catalog.paths(): { Def }
 end
 
 -- Can a piece of `def` stand on top of a placed piece of `below`? Small things go on any top
--- (a table, a counter, a shape), the basic shapes stack on each other and on tops, and a mark
--- lies on a path or a low platform (a deck). A mark never holds anything up: what is put over
--- one stands on whatever the mark lies on (a mark over a mark is laid over it by Plan.markY).
+-- (a table, a counter, a shape) and the basic shapes stack on each other and on tops. Then the
+-- user: "make it such that you are able to put objects on top of each other or on each other,
+-- respecting their collision". So anything else that stands on a floor or the ground stands on
+-- another standing piece too: a lamp on a cupboard, a crate on a crate, a chair on a deck or a
+-- raft. Build/Collide keeps it out of the body of what it stands on, and Build mode stands it
+-- only on a part that is solid (Build/Solid). What hangs, sits in a wall or a ceiling, lies flat as
+-- a rug, or is a small thing on a surface holds nothing bigger than itself up. A mark lies on a
+-- path or a low platform (a deck). A mark never holds anything up: what is put over one stands on
+-- whatever the mark lies on (a mark over a mark is laid over it by Plan.markY).
+local HOLDS = { floor = true, ground = true, stairs = true, water = true }
 function Catalog.standsOn(def: Def, below: Def): boolean
 	if below.place == "mark" then
 		return false
@@ -314,7 +321,137 @@ function Catalog.standsOn(def: Def, below: Def): boolean
 			and below.surface <= 1.2
 			and (below.place == "floor" or below.place == "ground" or below.place == "surface")
 	end
-	return def.place == "surface" or def.stack == true
+	if def.place == "surface" or def.stack == true then
+		return true
+	end
+	if def.place ~= "floor" and def.place ~= "ground" then
+		return false
+	end
+	if not HOLDS[below.place] or Catalog.hasTag(below, "rug") then
+		return false
+	end
+	-- (a rug or a mat lying flat is stood on through, as Build/Solid walks through it)
+	local flat = below.place == "floor" and below.size.Y <= Tuning.Unstick.Flat
+	return not flat or below.stack == true or Catalog.isPath(below)
+end
+
+-- Searching the catalog --------------------------------------------------------------------------
+--
+-- The user: "add searching in build mode". Build mode's box looks through every piece as the
+-- player types: a piece is found when each word typed is in its name, its kind (Seating, Garden),
+-- its look (Cozy, Sci-fi), its tags or what a villager calls them ("somewhere to sit"), or "path"
+-- for a path. A word ending in s is also tried without it (chairs, lamps). Keepsakes are left out
+-- (they are gifts, on their own tab).
+
+local catNames: { [string]: string } = {}
+for _, cat in Catalog.Categories do
+	catNames[cat.id] = cat.name
+end
+local styleNames: { [string]: string } = {}
+for _, look in Catalog.Styles do
+	styleNames[look.id] = look.name
+end
+
+local searchText: { [string]: string } = {}
+-- Everything a search looks through for one piece, in lower case.
+function Catalog.searchWords(def: Def): string
+	local known = searchText[def.id]
+	if known then
+		return known
+	end
+	local parts = { def.name, catNames[def.cat] or def.cat }
+	if def.style then
+		table.insert(parts, styleNames[def.style] or def.style)
+	end
+	local tags: { string } = def.tags or {}
+	for _, tag in tags do
+		table.insert(parts, tag)
+		local said = (Catalog.Tags :: { [string]: string })[tag]
+		if said then
+			table.insert(parts, said)
+		end
+	end
+	if Catalog.isPath(def) then
+		table.insert(parts, "path")
+	end
+	local text = string.lower(table.concat(parts, " "))
+	searchText[def.id] = text
+	return text
+end
+
+Catalog.SearchMax = 60 -- characters of a search looked at
+
+-- The words of a search, in lower case (at most six).
+function Catalog.searchTerms(query: string?): { string }
+	local out = {}
+	local q = string.lower(string.sub(if type(query) == "string" then query else "", 1, Catalog.SearchMax))
+	for word in string.gmatch(q, "[^%s,]+") do
+		if #out < 6 then
+			table.insert(out, word)
+		end
+	end
+	return out
+end
+
+local function hasWord(text: string, word: string): boolean
+	if string.find(text, word, 1, true) then
+		return true
+	end
+	-- (chairs, lamps, benches: the word without its s)
+	if #word > 3 and string.sub(word, -1) == "s" then
+		local stem = string.sub(word, 1, -2)
+		if string.find(text, stem, 1, true) then
+			return true
+		end
+		if string.sub(stem, -1) == "e" and string.find(text, string.sub(stem, 1, -2), 1, true) then
+			return true
+		end
+	end
+	return false
+end
+
+-- The pieces a search finds: first those whose name starts with what was typed, then those whose
+-- name has it, then the rest, each in the order Build mode lists them. Nothing for an empty search.
+function Catalog.search(query: string?): { Def }
+	local terms = Catalog.searchTerms(query)
+	if #terms == 0 then
+		return {}
+	end
+	local whole = table.concat(terms, " ")
+	local found: { { def: Def, rank: number } } = {}
+	for _, def in all do
+		if def.cat ~= "keepsakes" then
+			local text = Catalog.searchWords(def)
+			local every = true
+			for _, word in terms do
+				if not hasWord(text, word) then
+					every = false
+					break
+				end
+			end
+			if every then
+				local name = string.lower(def.name)
+				local at = string.find(name, whole, 1, true)
+				local rank = if at == 1 then 1 elseif at then 2 else 3
+				table.insert(found, { def = def, rank = rank })
+			end
+		end
+	end
+	table.sort(found, function(a, b)
+		if a.rank ~= b.rank then
+			return a.rank < b.rank
+		end
+		local ca, cb = Catalog.categoryOrder(a.def.cat), Catalog.categoryOrder(b.def.cat)
+		if ca ~= cb then
+			return ca < cb
+		end
+		return (a.def.order or 0) < (b.def.order or 0)
+	end)
+	local out = table.create(#found)
+	for _, f in found do
+		table.insert(out, f.def)
+	end
+	return out
 end
 
 -- Draws an item in its own space with the given paint (hex; nil for the defaults). A piece that

@@ -41,8 +41,10 @@ Collide.Touch = 0.08
 Collide.Joins =
 	{ fence_picket = true, gate_garden = true, porch_rail = true, porch_post = true } :: { [string]: boolean }
 
--- how many steps a stair's body is cut into (Collide.body)
+-- how many steps a stair's body is cut into (Collide.body), and how far under the line of its
+-- treads it reaches, straight down (the strings and the hidden ramp are within it)
 Collide.StairSteps = 7
+Collide.StairUnder = 1.2
 
 -- Does this piece stay out of the reckoning altogether (it sits on or in others)?
 function Collide.passes(def: Catalog.Def): boolean
@@ -62,17 +64,20 @@ function Collide.body(def: Catalog.Def): { Box }
 	end
 	local out: { Box } = {}
 	if def.place == "stairs" then
-		-- stairs are their run and their width, rising toward their top end (+Z) a storey: a
-		-- stepped block under the line of the treads. Their drawing's hidden ramp is a long
-		-- tilted slab whose box reaches well past both ends, so a stair against a wall would
-		-- bump into it.
+		-- stairs are their run and their width, rising a storey from their foot (+Z) to their top
+		-- end (-Z, Recipes/Structure): a band of steps along the line of the treads, as deep under
+		-- it as the strings and the hidden ramp reach (StairUnder). Under the high end there is
+		-- room, as there is to see: a cupboard can go there. (Their drawing's ramp is tilted
+		-- wedges, whose boxes would reach past both ends.)
 		local n = Collide.StairSteps
 		local run = def.size.Z / n
+		local H = Tuning.Plot.LevelHeight
 		for i = 1, n do
-			local top = Tuning.Plot.LevelHeight * i / n
+			local top = H * i / n
+			local bottom = math.max(0, H * (i - 1) / n - Collide.StairUnder)
 			table.insert(out, {
-				cf = CFrame.new(0, top / 2, -def.size.Z / 2 + run * (i - 0.5)),
-				size = Vector3.new(def.size.X, top, run),
+				cf = CFrame.new(0, (top + bottom) / 2, def.size.Z / 2 - run * (i - 0.5)),
+				size = Vector3.new(def.size.X, top - bottom, run),
 			})
 		end
 	elseif not Collide.passes(def) then

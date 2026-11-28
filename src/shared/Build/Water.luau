@@ -24,8 +24,8 @@
 --   "bottom"  standing on the floor of shallow water (reeds, stepping stones)
 --   "edge"    on the bank, reaching out over the water (a jetty, a ladder, a diving board)
 -- and `draft`, how far their own frame's floor lies under that (a hull's depth in the water, a
--- post's reach under the bank). Nothing else may stand in water unless it is up on something
--- over it: the rim, a jetty, a raft (Water.Raised).
+-- post's reach under the bank). Anything else may stand over water but never in it: out over it
+-- from the side, up on the rim, a jetty or a raft, or floating on its surface (Water.checkItem).
 --
 -- Shared and free of services: Plan calls it to check, price and tidy water, Builder to draw it,
 -- Build mode to drag it out, and the specs run it.
@@ -57,7 +57,7 @@ Water.Snap = 4 -- a water's edges snap to every 4 studs...
 Water.Offset = 2 -- ...2 past the plot's own grid, which is the terrain's (Town.plotFrame)
 Water.Surface = -0.5 -- the water's top, a little under the ground (0)
 Water.Lining = 0.4 -- the basin's walls and floor
-Water.Raised = 0.25 -- what stands this high over water is up on something (the rim, a raft)
+Water.Raised = 0.25 -- what stands this high over the ground is up on something (a pool isn't dug from under it)
 
 -- How deep: the voxel layers dug out under the ground, and the top of the basin's floor.
 Water.Depths = {
@@ -283,15 +283,52 @@ function Water.checkItem(
 	if item.lv ~= 0 then
 		return nil
 	end
-	-- anything else stays out of the water, unless it stands up on something over it
+	-- Anything else may stand over water (the user: "make it such that objects can go above
+	-- waters"): out over it from the side or up on something, or on the water itself, floating,
+	-- when all of it is over the one pool or pond. Never under the surface, and stairs never.
 	local g = 0.05
 	local foot = rectOf(x1 + g, z1 + g, x2 - g, z2 - g)
+	local touches, holds = false, false
 	for _, w in waters do
-		if overlaps(foot, w) and (item.y < Water.Raised or def.place == "stairs") then
-			return false, "that can't go in the water"
+		if overlaps(foot, w) then
+			touches = true
+			if x1 >= w.x1 - EPS and z1 >= w.z1 - EPS and x2 <= w.x2 + EPS and z2 <= w.z2 + EPS then
+				holds = true
+			end
 		end
 	end
-	return nil
+	if not touches then
+		return nil
+	end
+	if def.place == "stairs" or item.y < Water.Surface - 1e-3 then
+		return false, "that can't go in the water"
+	end
+	if item.y >= -1e-6 then
+		return nil -- (at the ground or over it: the usual rules)
+	end
+	if not holds then
+		return false, "that can't go in the water"
+	end
+	return true -- floating on it
+end
+
+-- Where a piece put over water stands, with `y` what it would stand on there (the ground, the
+-- water's surface, a pool's floor seen through it, the top of something): the surface of the
+-- water when all of it is over one water, else the ground beside it. Build mode's ghost asks.
+function Water.standY(plan: any, def: Catalog.Def, item: any, y: number): number
+	if item.lv ~= 0 or Water.sitOf(def) or y >= 0 then
+		return y
+	end
+	local x1, z1, x2, z2 = footprint(item, def)
+	for _, w in (plan and plan.waters) or {} do
+		if overlaps(rectOf(x1, z1, x2, z2), w) then
+			if x1 >= w.x1 - EPS and z1 >= w.z1 - EPS and x2 <= w.x2 + EPS and z2 <= w.z2 + EPS then
+				return math.max(y, Water.Surface)
+			end
+			return 0
+		end
+	end
+	return y
 end
 
 -- The items that go with a water when it is taken away: the pieces made for water that touch it,
@@ -308,7 +345,8 @@ function Water.piecesIn(plan: any, key: string): { string }
 		local def = Catalog.get(item.id)
 		if def and item.lv == 0 and item.wall == nil and type(item.x) == "number" and type(item.z) == "number" then
 			local x1, z1, x2, z2 = footprint(item, def)
-			if def.place == "water" then
+			if def.place == "water" or (type(item.y) == "number" and item.y < 0) then
+				-- (a piece made for water, or one floating on it)
 				if overlaps(rectOf(x1, z1, x2, z2), w) then
 					table.insert(out, itemKey)
 				end
@@ -395,6 +433,18 @@ function Water.valid(plan: any, w: any, ignoreKey: string?, b: { number }): (boo
 			local foot = rectOf(x1, z1, x2, z2)
 			if overlaps(foot, w) or (before and overlaps(foot, before)) then
 				local ok = Water.checkItem(view, item, def, x1, z1, x2, z2)
+				-- (a pool isn't dug from under what stands on the ground there: only what is up
+				-- over the ground, or on the water already, may be over it)
+				if
+					def.place ~= "water"
+					and overlaps(foot, w)
+					and type(item.y) == "number"
+					and item.y >= 0
+					and item.y < Water.Raised
+					and not (before and overlaps(foot, before))
+				then
+					ok = false
+				end
 				if ok == false then
 					return false,
 						if def.place == "water"

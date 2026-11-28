@@ -13,6 +13,9 @@
 --   build:pick          Build mode with a gift from the starting house picked (the action bar)
 --   build:bought        Build mode with a bought armchair picked: it sells for coins
 --   build:paint         Build mode on the Paint tool (finishes and colours)
+--   build:search        Build mode with "chair" typed in the search box (build:search:none: a
+--                       word nothing has)
+--   build:time          Build mode showing the town at night, the time's later arrow under the mouse
 --   build:blocked       Build mode holding an armchair over another, without Free Placing: the
 --                       hint says what it bumps into (Build/Collide)
 --   build:stretch       Build mode with the build mode passes owned, holding an armchair stretched
@@ -415,6 +418,23 @@ elseif scene:sub(1, 5) == "build" then
 	end
 	if scene == "build:paint" then
 		Sim.press("Paint")
+	end
+	-- the search box (the user: "add searching in build mode"): "chair" typed, or a word nothing has
+	if scene == "build:search" or scene == "build:search:none" then
+		local box = Sim.gui:FindFirstChild("SearchBox", true)
+		box.Text = if scene == "build:search" then "chair" else "zzzq"
+		box.FocusLost:Fire(true)
+		Sim.frames(3)
+	end
+	-- the time of day (the user: "in build mode, allow the player to toggle what time they see
+	-- their city in"): night picked, the later arrow under the mouse
+	if scene == "build:time" then
+		for _ = 1, 4 do
+			Sim.press("Later")
+		end
+		Sim.advance(2)
+		Sim.gui:FindFirstChild("Later", true).MouseEnter:Fire()
+		Sim.frames(2)
 	end
 	-- the build mode passes (Build/Placing): a piece that bumps into another, Stretch's sliders and
 	-- Any Colour's picker; build:blocked owns none of them, the others all four

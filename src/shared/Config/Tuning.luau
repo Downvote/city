@@ -831,6 +831,16 @@ Tuning.Look = {
 	},
 }
 
+-- The time Build mode shows the town at, on the player's own screen (the user: "in build mode,
+-- allow the player to toggle what time they see their city in"; client Build/ViewTime). The hours
+-- of each choice after "Now", the town's own time.
+Tuning.ViewTime = {
+	Morning = 8,
+	Noon = 12.5,
+	Evening = 18.25,
+	Night = 22.5,
+}
+
 -- Water on a plot ---------------------------------------------------------------
 -- The user: "also, add ability to add water, along with things that can go in the water". A pool
 -- or a pond is dragged out in Build mode (Build/Water) and is Roblox terrain water in the game
