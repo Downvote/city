@@ -66,7 +66,8 @@
 --                       gems to claim
 --   welcome             the welcome back dialog after five hours away (welcome:long after two days)
 --   panel:Store:crates  the store's Crates tab with a work crate held and the gems for another
---   crate:open:work     what came out of a work crate (the Hero's lookout)
+--   crate:open:work     what came out of a work crate (the Hero's lookout); crate:open:work:<rarity>
+--                       a prize of that rarity; :drop, :shake or :burst after it, that beat
 --   crate:tip           a villager telling the player about the crates (UI/Crates.tip)
 --   build:crates        Build mode's Crate tab with three crate workplaces, one already down
 --                       (build:crates:empty before any came out)
@@ -1052,10 +1053,30 @@ elseif scene == "visiting" or scene == "visiting:liked" then
 	Sim.frames(3)
 	Sim.advance(1)
 elseif scene:sub(1, 11) == "crate:open:" then
-	-- what came out of a crate (UI/Crates.reveal), shown as it stands once the crate has popped
+	-- a crate opening (UI/Crates.reveal), one beat of it as it stands: crate:open:work is the prize up
+	-- (an Epic, the Hero's lookout), crate:open:work:<rarity> a prize of that rarity, and :drop, :shake
+	-- or :burst at the end the crate landing, late in its shaking, or bursting
 	startHud()
 	local Crates = Harness.require(Sim.CLIENT .. "UI.Crates")
-	Crates.reveal({ kind = "work", id = "crate_hero", name = "Hero's lookout", rarity = "epic" }, true)
+	local Catalog = Harness.require("ReplicatedStorage.Shared.Build.Catalog")
+	local rarity, beat = "epic", true :: any
+	for word in scene:sub(12):gmatch("[^:]+") do
+		if word == "drop" or word == "shake" or word == "burst" then
+			beat = word
+		elseif word ~= "work" then
+			rarity = word
+		end
+	end
+	local prize = Catalog.get("crate_hero")
+	if rarity ~= "epic" then
+		for _, def in Catalog.list("crates") do
+			if def.crate == rarity then
+				prize = def
+				break
+			end
+		end
+	end
+	Crates.reveal({ kind = "work", id = prize.id, name = prize.name, rarity = rarity }, beat)
 	Sim.frames(3)
 elseif scene == "crate:tip" then
 	-- a villager telling the player about the crates (UI/Crates.tip, the CrateTip event)

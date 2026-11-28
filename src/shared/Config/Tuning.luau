@@ -202,6 +202,10 @@ Tuning.Crates = {
 	DailyEvery = 7,
 	-- seconds between two opens (the opening plays meanwhile)
 	OpenEvery = 2,
+	-- the opening's beats in seconds (UI/Crates.reveal): the screen going dark, the crate falling in,
+	-- its shaking for a Common prize and how much longer for each rarity above, the flash fading and
+	-- the prize rising; and how fast the prize turns once it is up (radians a second)
+	Show = { Dark = 0.35, Drop = 0.45, Shake = 1.3, ShakeStep = 0.4, Flash = 0.45, Rise = 0.55, Spin = 0.5 },
 	-- once a player first has the gems for a crate, a villager tells them about the crates
 	-- (Services/Crates): this long after the gems came in, at most once a save
 	TipDelay = 6,

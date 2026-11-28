@@ -675,13 +675,13 @@ def item_thumb(item_id, size):
     """A picture of a catalog item from the 3D preview renderer, cached under out/ui_thumbs."""
     cache_dir = os.path.join(HERE, "..", "..", "out", "ui_thumbs")
     os.makedirs(cache_dir, exist_ok=True)
-    # a ready-made building comes as "preset:<id>"; anything else is a catalog item
+    # a ready-made building comes as "preset:<id>", a crate as "crate:<kind>"; anything else is a catalog item
     # and "top:<id>" is a flat mark, seen from above as its card shows it (BuildUI's itemTile)
     view = []
     if item_id.startswith("top:"):
         scene, view = "item:" + item_id[4:], ["--yaw", "0", "--pitch", "76"]
     else:
-        scene = item_id if item_id.startswith("preset:") else "item:" + item_id
+        scene = item_id if item_id.startswith(("preset:", "crate:")) else "item:" + item_id
     path = os.path.join(cache_dir, item_id.replace(":", "_") + ".png")
     if not os.path.exists(path):
         try:

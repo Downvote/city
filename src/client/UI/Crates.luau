@@ -4,12 +4,13 @@
 -- Crates tab (Crates.show) has a card for each kind: its picture, how many are waiting to be
 -- opened, what is inside by rarity with each one's chance (shown before buying), and Open, the gem
 -- price and the Robux price. Opening (the CrateOpen remote:
--- Services/Crates decides everything) brings up a small dialog: the crate shakes and pops, and what
--- came out stands in its place with its rarity and where to find it (Crates.reveal).
+-- Services/Crates decides everything) plays the opening over the whole screen (Crates.reveal): the
+-- crate drops in, shakes while the light climbs the rarities, bursts, and what came out rises in its
+-- place with its rarity and where to find it.
 -- Crates.tip is the scene a villager pops up in when the player first has the gems for a crate (the
 -- CrateTip event: "A random villager will pop up and tell the player about these crates right when
 -- they have enough gems").
--- Scenes: panel:Store:crates, crate:open:work, crate:tip.
+-- Scenes: panel:Store:crates, crate:open:work[:<rarity>][:drop|:shake|:burst], crate:tip.
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Tuning = require(Shared.Config.Tuning)
@@ -252,13 +253,6 @@ end
 
 -- Opening ------------------------------------------------------------------------------------------
 
-function Crates.closeReveal()
-	if reveal then
-		Kit.closePanel(reveal)
-		reveal = nil
-	end
-end
-
 function Crates.isOpen(): boolean
 	return reveal ~= nil
 end
@@ -272,114 +266,623 @@ end
 -- Where to find it, in a line.
 local WHERE = "Free to put down in Build mode, under Work > Crate."
 
--- Shows a crate opening: it shakes, pops, and what came out stands in its place. `result` is
--- Sim/Crates.Result as the server sent it. `still` (the previews) shows the prize at once.
-function Crates.reveal(result: any, still: boolean?)
+-- Opening a crate (the user: "make the opening crate cutscene much more dramatic"). The screen goes
+-- dark (all of it: the sunburst fades into that dark at its rim) and the crate drops into the middle with a thud. It rocks, harder and faster, while light
+-- gathers behind it and rays turn; the light starts at Common's colour and steps up through the
+-- rarities to the prize's own, flaring at each step, so a rarer prize shakes longer and climbs
+-- further. Then a flash, a ring and sparks, and the prize rises out of the light, turning, with its
+-- rarity, its name and where to find it. A press while it shakes skips to the burst. The beats'
+-- lengths are Tuning.Crates.Show. `still` (the previews) shows one beat as it stands: "drop" (the
+-- crate landing), "shake" (late in its shaking), "burst" or "prize" (true is "prize").
+
+local Show = Tuning.Crates.Show
+local RunService = game:GetService("RunService")
+
+local Z = { dim = 0, rays = 2, halo = 3, ring = 4, crate = 6, spark = 7, info = 8, flash = 10, skip = 12 }
+
+local function round(f: GuiObject)
+	Kit.new("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = f })
+end
+
+-- Turning rays round the middle: a sunburst (a circle in the prize's colour, its wedges cut by a
+-- conical fade) that fades into the dark at its rim; bars through the middle where the game can't
+-- shape a gradient.
+local function rays(parent: GuiObject, tone: Color3, size: number): Frame
+	local holder = Kit.box({
+		Name = "Rays",
+		Parent = parent,
+		Size = UDim2.fromOffset(size, size),
+		Position = UDim2.fromScale(0.5, 0.5),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+	})
+	holder.ZIndex = Z.rays
+	local burst = Kit.new("Frame", {
+		Name = "Burst",
+		BackgroundColor3 = tone,
+		BackgroundTransparency = 0,
+		BorderSizePixel = 0,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 1,
+		Parent = holder,
+	})
+	round(burst)
+	local wedges = Kit.shapedGradient(burst, "Conical")
+	if wedges then
+		local keys = {}
+		for i = 0, 16 do
+			table.insert(keys, NumberSequenceKeypoint.new(i / 16, if i % 2 == 0 then 0.45 else 1))
+		end
+		wedges.Transparency = NumberSequence.new(keys)
+		local edge = Kit.new("Frame", {
+			Name = "Edge",
+			BackgroundColor3 = T.Black,
+			BackgroundTransparency = 0,
+			BorderSizePixel = 0,
+			Size = UDim2.new(1, 4, 1, 4),
+			Position = UDim2.fromScale(0.5, 0.5),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			ZIndex = 2,
+			Parent = holder,
+		})
+		round(edge)
+		local fade = Kit.shapedGradient(edge, "Radial")
+		if fade then
+			fade.Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 1),
+				NumberSequenceKeypoint.new(0.3, 1),
+				NumberSequenceKeypoint.new(1, 0),
+			})
+			return holder
+		end
+		edge:Destroy()
+	end
+	burst:Destroy()
+	for i = 0, 7 do
+		local bar = Kit.new("Frame", {
+			Name = "Ray",
+			BackgroundColor3 = tone,
+			BackgroundTransparency = 0,
+			BorderSizePixel = 0,
+			Size = UDim2.new(0, if i % 2 == 0 then 46 else 26, 1, 0),
+			Position = UDim2.fromScale(0.5, 0.5),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Rotation = i * 22.5,
+			ZIndex = 1,
+			Parent = holder,
+		})
+		Kit.new("UIGradient", {
+			Rotation = 90,
+			Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 1),
+				NumberSequenceKeypoint.new(0.3, 0.8),
+				NumberSequenceKeypoint.new(0.5, 0.6),
+				NumberSequenceKeypoint.new(0.7, 0.8),
+				NumberSequenceKeypoint.new(1, 1),
+			}),
+			Parent = bar,
+		})
+	end
+	return holder
+end
+
+-- The rays' faces (the sunburst, or the bars).
+local function rayFaces(holder: Instance): { Frame }
+	local list = {}
+	for _, r in holder:GetChildren() do
+		if r:IsA("Frame") and (r.Name == "Burst" or r.Name == "Ray") then
+			table.insert(list, r)
+		end
+	end
+	return list
+end
+
+local function paintRays(holder: Instance, tone: Color3)
+	for _, r in rayFaces(holder) do
+		r.BackgroundColor3 = tone
+	end
+end
+
+-- A ring that grows out of the middle and fades: a step up, and the burst.
+local function ring(parent: GuiObject, tone: Color3, from: number, to: number, time: number, width: number)
+	local f = Kit.new("Frame", {
+		Name = "Ring",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(from, from),
+		Position = UDim2.fromScale(0.5, 0.5),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		ZIndex = Z.ring,
+		Parent = parent,
+	})
+	round(f)
+	local stroke = Kit.new("UIStroke", { Color = tone, Thickness = width, Transparency = 0.1, Parent = f })
+	local info = TweenInfo.new(time, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+	Kit.tween(f, info, { Size = UDim2.fromOffset(to, to) })
+	Kit.tween(stroke, info, { Transparency = 1, Thickness = 1 })
+	task.delay(time + 0.05, function()
+		f:Destroy()
+	end)
+end
+
+-- Sparks flying out of the middle in the prize's colour, white and yellow.
+local function sparks(parent: GuiObject, tone: Color3, count: number, still: boolean)
+	local rng = Random.new(7)
+	local colours = { tone, tone, T.White, T.Yellow }
+	for i = 1, count do
+		local angle = (i / count) * math.pi * 2 + rng:NextNumber(-0.12, 0.12)
+		local far = rng:NextNumber(170, 400)
+		local size = rng:NextInteger(6, 14)
+		local dot = Kit.new("Frame", {
+			Name = "Spark",
+			BackgroundColor3 = colours[rng:NextInteger(1, #colours)],
+			BorderSizePixel = 0,
+			Size = UDim2.fromOffset(size, size),
+			Position = UDim2.fromScale(0.5, 0.5),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			ZIndex = Z.spark,
+			Parent = parent,
+		})
+		round(dot)
+		local to = UDim2.new(0.5, math.cos(angle) * far, 0.5, math.sin(angle) * far)
+		if still then
+			dot.Position = UDim2.new(0.5, math.cos(angle) * far * 0.6, 0.5, math.sin(angle) * far * 0.6)
+		else
+			local time = rng:NextNumber(0.6, 0.95)
+			Kit.tween(dot, TweenInfo.new(time, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Position = to })
+			Kit.tween(
+				dot,
+				TweenInfo.new(time, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+				{ BackgroundTransparency = 1, Size = UDim2.fromOffset(2, 2) }
+			)
+			task.delay(time + 0.05, function()
+				dot:Destroy()
+			end)
+		end
+	end
+end
+
+-- Small glints round the prize that come and go while it is up (more for a rarer one).
+local function glints(parent: GuiObject, tone: Color3, count: number, alive: () -> boolean, still: boolean)
+	local rng = Random.new(11)
+	for i = 1, count do
+		local angle = (i / count) * math.pi * 2 + 0.4
+		local far = rng:NextNumber(120, 170)
+		local size = rng:NextInteger(5, 9)
+		local dot = Kit.new("Frame", {
+			Name = "Glint",
+			BackgroundColor3 = if i % 2 == 0 then T.White else tone,
+			BackgroundTransparency = if still then 0.2 else 1,
+			BorderSizePixel = 0,
+			Size = UDim2.fromOffset(size, size),
+			Position = UDim2.new(0.5, math.cos(angle) * far, 0.5, math.sin(angle) * far * 0.8),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			ZIndex = Z.spark,
+			Parent = parent,
+		})
+		round(dot)
+		if not still then
+			task.spawn(function()
+				task.wait(rng:NextNumber(0, 1.2))
+				while alive() do
+					local beat = rng:NextNumber(0.5, 0.9)
+					Kit.tween(dot, TweenInfo.new(beat, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+						BackgroundTransparency = 0.1,
+					})
+					task.wait(beat)
+					Kit.tween(dot, TweenInfo.new(beat, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+						BackgroundTransparency = 1,
+					})
+					task.wait(beat + rng:NextNumber(0.2, 1))
+				end
+			end)
+		end
+	end
+end
+
+-- The prize, its rarity, its name, where to find it and OK, under the light.
+local function info(p: any, result: any, tone: Color3): CanvasGroup
+	local group = Kit.new("CanvasGroup", {
+		Name = "Info",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(560, 220),
+		Position = UDim2.new(0.5, 0, 0.4, 170),
+		AnchorPoint = Vector2.new(0.5, 0),
+		ZIndex = Z.info,
+		Parent = p.root,
+	})
+	local tag = Kit.frame({
+		Name = "Rarity",
+		Parent = group,
+		Size = UDim2.fromOffset(170, 32),
+		Position = UDim2.new(0.5, 0, 0, 0),
+		AnchorPoint = Vector2.new(0.5, 0),
+		Color = tone,
+		Radius = false,
+	})
+	Kit.slant(tag, 32, true)
+	local light = tone.R * 0.3 + tone.G * 0.59 + tone.B * 0.11 > 0.5
+	local words = Kit.title(CrateData.RarityNames[result.rarity] or "", {
+		Name = "Words",
+		Parent = tag,
+		Size = UDim2.fromScale(1, 1),
+		TextSize = 18,
+		Color = if light then T.Dark else T.White,
+		AlignX = Enum.TextXAlignment.Center,
+		Wrap = false,
+	})
+	words.ZIndex = 3
+	Kit.title(result.name or "", {
+		Name = "PrizeName",
+		Parent = group,
+		Size = UDim2.new(1, 0, 0, 40),
+		Position = UDim2.fromOffset(0, 42),
+		TextSize = 34,
+		Color = T.Ink,
+		AlignX = Enum.TextXAlignment.Center,
+		Wrap = false,
+	})
+	Kit.text(WHERE, {
+		Name = "Where",
+		Parent = group,
+		Size = UDim2.new(1, 0, 0, 24),
+		Position = UDim2.fromOffset(0, 86),
+		TextSize = 17,
+		Color = T.InkSoft,
+		AlignX = Enum.TextXAlignment.Center,
+		Wrap = false,
+	})
+	Kit.button("OK", {
+		Name = "OK",
+		Parent = group,
+		Size = UDim2.fromOffset(180, 48),
+		Position = UDim2.new(0.5, 0, 0, 130),
+		AnchorPoint = Vector2.new(0.5, 0),
+		Color = T.Green,
+		TextColor = T.Dark,
+		TextSize = 20,
+	}, Crates.closeReveal)
+	return group
+end
+
+-- Shows a crate opening; `result` is Sim/Crates.Result as the server sent it.
+function Crates.reveal(result: any, still: (boolean | string)?)
 	if type(result) ~= "table" or type(result.kind) ~= "string" then
 		return
 	end
-	Crates.closeReveal()
-	local def = CrateData.get(result.kind)
-	Kit.sound("gift") -- (Controllers/Audio: the music box a gift plays)
-	local p = Kit.panel(
-		if def then def.name else "Crate",
-		UDim2.fromOffset(560, 540),
-		Crates.closeReveal,
-		nil,
-		accentOf(result.kind),
-		{ Dialog = true }
-	)
-	p.root.Name = "CrateReveal"
+	Crates.closeReveal(true)
+	local beat: string? = if still == true then "prize" elseif type(still) == "string" then still else nil
+	local rank = math.max(1, CrateData.rank(result.rarity))
+	local tone = Crates.tone(result.rarity)
+	local first = Crates.tone(CrateData.Rarities[1])
+
+	local root = Kit.box({ Name = "CrateReveal", Parent = Kit.root(), Size = UDim2.fromScale(1, 1) })
+	root.ZIndex = 8
+	root:SetAttribute("Panel", true)
+	local p: any = { root = root }
 	reveal = p
-	local body: Frame = p.body
-	local stage = Kit.frame({
-		Name = "Stage",
-		Parent = body,
-		Size = UDim2.new(1, -40, 0, 210),
-		Position = UDim2.fromOffset(20, 0),
-		Color = T.Picture,
-		Radius = 16,
+	local function alive(): boolean
+		return reveal == p and not p.done
+	end
+
+	local dim = Kit.frame({
+		Name = "Dim",
+		Parent = root,
+		Size = UDim2.fromOffset(6000, 6000),
+		Position = UDim2.fromScale(0.5, 0.5),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Color = T.Black,
+		Transparency = if beat then 0 else 1,
+		Radius = false,
+		ZIndex = Z.dim,
 	})
-	Kit.glow(stage, Crates.tone(result.rarity), 0.3, "tr")
-	local box = Kit.box({ Name = "Crate", Parent = stage, Size = UDim2.fromScale(1, 1) })
-	local function prize()
-		if reveal ~= p then
-			return
+	dim.Active = true
+	p.dim = dim
+	-- the middle of it all, a little over the screen's middle; shaken as a whole at the thud and the burst
+	local stage = Kit.box({
+		Name = "Stage",
+		Parent = root,
+		Size = UDim2.fromOffset(10, 10),
+		Position = UDim2.fromScale(0.5, 0.4),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+	})
+	stage.ZIndex = Z.rays
+	local home = stage.Position
+	local function jolt(strength: number, time: number)
+		task.spawn(function()
+			local began = os.clock()
+			local t = 0
+			while t < time and alive() do
+				local k = strength * (1 - t / time)
+				stage.Position = home
+					+ UDim2.fromOffset(math.random(-100, 100) / 100 * k, math.random(-100, 100) / 100 * k)
+				task.wait()
+				t = os.clock() - began
+			end
+			stage.Position = home
+		end)
+	end
+
+	local turning = rays(stage, first, 980)
+	turning.Visible = beat ~= "drop"
+	if not beat then
+		for _, r in rayFaces(turning) do
+			r.BackgroundTransparency = 1
 		end
-		box:Destroy()
-		local holder = Kit.box({ Name = "Prize", Parent = stage, Size = UDim2.fromScale(1, 1) })
-		ModelPreview.fromPrims(prizePrims(result), { Parent = holder })
-		local tone = Crates.tone(result.rarity)
-		local tag = Kit.frame({
-			Name = "Rarity",
-			Parent = body,
-			Size = UDim2.fromOffset(150, 30),
-			Position = UDim2.new(0.5, 0, 0, 222),
-			AnchorPoint = Vector2.new(0.5, 0),
-			Color = tone,
-			Radius = false,
-		})
-		Kit.slant(tag, 30, true)
-		local light = tone.R * 0.3 + tone.G * 0.59 + tone.B * 0.11 > 0.5
-		local words = Kit.title(CrateData.RarityNames[result.rarity] or "", {
-			Name = "Words",
-			Parent = tag,
-			Size = UDim2.fromScale(1, 1),
-			TextSize = 17,
-			Color = if light then T.Dark else T.White,
-			AlignX = Enum.TextXAlignment.Center,
-			Wrap = false,
-		})
-		words.ZIndex = 3
-		Kit.title(result.name, {
-			Name = "PrizeName",
-			Parent = body,
-			Size = UDim2.new(1, -40, 0, 34),
-			Position = UDim2.fromOffset(20, 260),
-			TextSize = 28,
-			Color = T.Ink,
-			AlignX = Enum.TextXAlignment.Center,
-			Wrap = false,
-		})
-		Kit.text(WHERE, {
-			Name = "Where",
-			Parent = body,
-			Size = UDim2.new(1, -60, 0, 44),
-			Position = UDim2.fromOffset(30, 298),
-			TextSize = 16,
-			Color = T.InkSoft,
-			AlignX = Enum.TextXAlignment.Center,
-			AlignY = Enum.TextYAlignment.Top,
-		})
-		Kit.button("OK", {
-			Name = "OK",
-			Parent = body,
-			Size = UDim2.fromOffset(180, 48),
-			Position = UDim2.new(0.5, 0, 1, -4),
-			AnchorPoint = Vector2.new(0.5, 1),
-			Color = T.Green,
-			TextColor = T.Dark,
-			TextSize = 20,
-		}, Crates.closeReveal)
 	end
-	if still then
-		prize()
-		return
+	local glow = Kit.halo(stage, 560, first, 0.55)
+	local core = Kit.halo(stage, 300, first, 0.85)
+	for _, h in { glow, core } do
+		if h then
+			h.ZIndex = Z.halo
+		end
 	end
-	-- the crate, rocking harder and harder, then gone
-	local vp = ModelPreview.fromPrims(CrateData.prims(result.kind), { Parent = box })
-	task.spawn(function()
-		for k = 1, 8 do
-			if reveal ~= p then
+	local function tint(c: Color3)
+		paintRays(turning, c)
+		for _, h in { glow, core } do
+			if h then
+				h.BackgroundColor3 = c
+			end
+		end
+	end
+	-- the rays turn while it lasts, quicker for a rarer prize
+	if not beat then
+		local conn: RBXScriptConnection? = nil
+		conn = RunService.RenderStepped:Connect(function(dt)
+			if not alive() then
+				if conn then
+					conn:Disconnect()
+				end
 				return
 			end
-			box.Rotation = (if k % 2 == 0 then -1 else 1) * (2 + k)
-			task.wait(0.1)
+			turning.Rotation = (turning.Rotation + dt * (8 + rank * 4 + (p.spin or 0))) % 360
+		end)
+	end
+
+	-- the crate
+	local crate = Kit.box({
+		Name = "Crate",
+		Parent = stage,
+		Size = UDim2.fromOffset(240, 240),
+		Position = UDim2.fromScale(0.5, 0.5),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+	})
+	crate.ZIndex = Z.crate
+	crate:SetAttribute("ItemId", "crate:" .. result.kind)
+	ModelPreview.fromPrims(CrateData.prims(result.kind), { Parent = crate })
+
+	local function showPrize()
+		if not alive() then
+			return
 		end
-		box.Rotation = 0
-		vp.ImageTransparency = 0.5
-		task.wait(0.1)
-		prize()
+		crate.Visible = false
+		local holder = Kit.box({
+			Name = "Prize",
+			Parent = stage,
+			Size = UDim2.fromOffset(300, 300),
+			Position = UDim2.fromScale(0.5, 0.5),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+		})
+		holder.ZIndex = Z.crate
+		holder:SetAttribute("ItemId", result.id)
+		local vp = ModelPreview.fromPrims(prizePrims(result), { Parent = holder })
+		glints(stage, tone, 4 + rank * 2, alive, beat ~= nil)
+		local group = info(p, result, tone)
+		if beat then
+			return
+		end
+		-- it rises out of the light and turns slowly
+		holder.Size = UDim2.fromOffset(110, 110)
+		Kit.tween(
+			holder,
+			TweenInfo.new(Show.Rise, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+			{ Size = UDim2.fromOffset(300, 300) }
+		)
+		group.GroupTransparency = 1
+		group.Position += UDim2.fromOffset(0, 18)
+		Kit.tween(
+			group,
+			TweenInfo.new(Show.Rise, Enum.EasingStyle.Quint, Enum.EasingDirection.Out, 0, false, Show.Rise * 0.5),
+			{ GroupTransparency = 0, Position = group.Position - UDim2.fromOffset(0, 18) }
+		)
+		local cam = vp.CurrentCamera
+		local model = vp:FindFirstChildOfClass("Model")
+		if cam and model then
+			local middle = model:GetBoundingBox().Position
+			local start = cam.CFrame
+			local t = 0
+			local conn: RBXScriptConnection? = nil
+			conn = RunService.RenderStepped:Connect(function(dt)
+				if not alive() then
+					if conn then
+						conn:Disconnect()
+					end
+					return
+				end
+				t += dt
+				cam.CFrame = CFrame.new(middle) * CFrame.Angles(0, t * Show.Spin, 0) * CFrame.new(-middle) * start
+			end)
+		end
+	end
+
+	local function burst()
+		if not alive() then
+			return
+		end
+		if p.hum then
+			pcall(function()
+				p.hum:Stop()
+			end)
+			p.hum = nil
+		end
+		tint(tone)
+		if beat then
+			sparks(stage, tone, 26, true)
+			if beat == "burst" then
+				crate.Visible = false
+				return
+			end
+			showPrize()
+			return
+		end
+		Kit.sound("crate_burst")
+		if rank >= 4 then
+			Kit.sound("levelup")
+		end
+		local flash = Kit.frame({
+			Name = "Flash",
+			Parent = root,
+			Size = UDim2.fromOffset(6000, 6000),
+			Position = UDim2.fromScale(0.5, 0.5),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Color = T.White,
+			Transparency = 0,
+			Radius = false,
+			ZIndex = Z.flash,
+		})
+		Kit.tween(flash, TweenInfo.new(Show.Flash, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 1,
+		})
+		task.delay(Show.Flash + 0.05, function()
+			flash:Destroy()
+		end)
+		ring(stage, tone, 240, 900, 0.7, 10)
+		ring(stage, T.White, 160, 620, 0.5, 6)
+		sparks(stage, tone, 26 + rank * 4, false)
+		jolt(10, 0.3)
+		p.spin = 30
+		for _, h in { glow, core } do
+			if h then
+				h.Size = UDim2.fromOffset(h.Size.X.Offset * 1.25, h.Size.Y.Offset * 1.25)
+			end
+		end
+		showPrize()
+	end
+
+	if beat == "drop" then
+		return
+	end
+	if beat then
+		if beat == "shake" then
+			tint(Crates.tone(CrateData.Rarities[math.max(1, rank - 1)]))
+			crate.Rotation = 9
+			if glow then
+				glow.Size = UDim2.fromOffset(640, 640)
+			end
+			return
+		end
+		burst()
+		return
+	end
+
+	-- the beats, played
+	local skip = false
+	local catcher = Kit.new("TextButton", {
+		Name = "Skip",
+		Text = "",
+		AutoButtonColor = false,
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = Z.skip,
+		Parent = root,
+	})
+	catcher.Activated:Connect(function()
+		skip = true
+	end)
+	Kit.tween(dim, TweenInfo.new(Show.Dark, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		BackgroundTransparency = 0,
+	})
+	task.spawn(function()
+		-- it falls in and lands with a thud
+		crate.Position = UDim2.new(0.5, 0, 0.5, -520)
+		Kit.tween(
+			crate,
+			TweenInfo.new(Show.Drop, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+			{ Position = UDim2.fromScale(0.5, 0.5) }
+		)
+		task.wait(Show.Drop)
+		if not alive() then
+			return
+		end
+		Kit.sound("place")
+		jolt(7, 0.22)
+		crate.Size = UDim2.fromOffset(264, 212)
+		Kit.tween(
+			crate,
+			TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+			{ Size = UDim2.fromOffset(240, 240) }
+		)
+		for _, r in rayFaces(turning) do
+			Kit.tween(r, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				BackgroundTransparency = 0,
+			})
+		end
+		-- it shakes, harder and faster, and the light climbs the rarities
+		p.hum = Kit.sound("crate_hum")
+		local long = Show.Shake + Show.ShakeStep * (rank - 1)
+		local step = 1
+		local began = os.clock()
+		local t = 0
+		while t < long and alive() and not skip do
+			local k = t / long
+			local amp = k * k
+			local speed = 16 + 34 * k
+			crate.Rotation = math.sin(t * speed) * (2 + 12 * amp)
+			crate.Position =
+				UDim2.new(0.5, math.sin(t * speed * 1.37) * 7 * amp, 0.5, math.cos(t * speed * 0.9) * 3 * amp)
+			if glow then
+				local s = 520 + 200 * k
+				glow.Size = UDim2.fromOffset(s, s)
+			end
+			if step < rank and t >= long * step / rank then
+				step += 1
+				local c = Crates.tone(CrateData.Rarities[step])
+				tint(c)
+				ring(stage, c, 220, 560, 0.45, 8)
+				Kit.sound("pickup", { Rate = 0.9 + 0.15 * step })
+				jolt(3 + step, 0.15)
+			end
+			task.wait()
+			t = os.clock() - began
+		end
+		crate.Rotation = 0
+		catcher:Destroy()
+		burst()
+	end)
+end
+
+-- Takes the opening down: it fades and is gone (`now`: at once).
+function Crates.closeReveal(now: boolean?)
+	local p = reveal
+	reveal = nil
+	if not p then
+		return
+	end
+	p.done = true
+	if p.hum then
+		pcall(function()
+			p.hum:Stop()
+		end)
+	end
+	local root: GuiObject = p.root
+	if now or not root.Parent then
+		root:Destroy()
+		return
+	end
+	pcall(function()
+		(root :: any).Interactable = false
+	end)
+	Kit.sound("close")
+	local out = TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+	for _, d in root:GetDescendants() do
+		if d:IsA("CanvasGroup") then
+			Kit.tween(d, out, { GroupTransparency = 1 })
+		elseif d:IsA("ViewportFrame") then
+			Kit.tween(d, out, { ImageTransparency = 1 })
+		elseif d:IsA("Frame") and d.BackgroundTransparency < 1 and not d:FindFirstAncestorOfClass("CanvasGroup") then
+			Kit.tween(d, out, { BackgroundTransparency = 1 })
+		end
+	end
+	task.delay(0.2, function()
+		root:Destroy()
 	end)
 end
 

@@ -1662,9 +1662,21 @@ Modules:
   `workSpot`, `workYaw`, tag `work`, and `loop`, their round of spots written beside their parts), in textured
   materials (the small parts Plaster, or Marble for china).
 - `Services/Crates` (after Visit): the `CrateOpen` remote and the tip (`CrateTip`, `TipLines`, `tipLine`).
-- `client/UI/Crates`: `show(body, helpers)` (the Store's Crates tab), `open(kind, how)`, `reveal(result, still?)`
-  (plays `Kit.sound("gift")`, the gift's sound, as it opens), `tip(msg)`, `start()` (listens for `CrateTip`),
-  `tone(rarity)`.
+- `client/UI/Crates`: `show(body, helpers)` (the Store's Crates tab), `open(kind, how)`, `reveal(result, still?)`,
+  `closeReveal(now?)`, `isOpen()`, `tip(msg)`, `start()` (listens for `CrateTip`), `tone(rarity)`. The opening (the
+  user: "make the opening crate cutscene much more dramatic") is `CrateReveal`, a full screen frame on `Kit.root()`
+  at ZIndex 8 over the menus and the main screen (attribute `Panel`): `Dim` (`T.Black`, opaque, `Active`), `Stage`
+  (the middle, 40% down; jolted as a whole) holding `Rays` (a `Burst` circle with a conical `UIGradient` of eight
+  soft wedges under an `Edge` circle in `T.Black` with a radial fade, so it fades into the dark; eight `Ray` bars
+  where `Kit.shapedGradient` can't make them), two `Kit.halo`s, `Ring`s, `Spark`s, `Glint`s, the `Crate` (attribute
+  `ItemId` `crate:<kind>`) and the `Prize` (attribute `ItemId`, the workplace's id; its camera orbits), the `Info`
+  CanvasGroup (`Rarity`, `PrizeName`, `Where`, `OK`), a `Flash` at the burst and `Skip` (a full screen button while
+  it shakes). Beats from `Tuning.Crates.Show` (`Dark, Drop, Shake, ShakeStep, Flash, Rise, Spin`), timed by
+  `os.clock()`; the light steps through `Data/Crates.Rarities` to the prize's (`Kit.sound("pickup", { Rate })` a
+  step); sounds `place` (the thud), `crate_hum` (stopped at the burst), `crate_burst`, `levelup` (Epic and up),
+  `close`. `still` draws one beat without playing anything: `"drop"`, `"shake"`, `"burst"` or `"prize"` (true).
+  Preview scenes `crate:open:work[:<rarity>][:drop|:shake|:burst]`; `ui_render.py` draws an `ItemId` of
+  `crate:<kind>` from `dump.luau`'s `crate:<kind>` scene. Sim: `tests/sim/crate_open.luau`.
 
 Elsewhere:
 
@@ -2786,18 +2798,19 @@ cozy music track in the background. use roblox library for these, dont make your
   softest first; the synth voice is a recording cut into `grains`), `Music` (with `Playlist`; `day` and `night`
   tracks), `Sounds.asset(id)`, `Sounds.all()`.
 - `client/Controllers/Audio`: makes the sounds under SoundService in three SoundGroups (Music, Effects, Voices) set
-  from the Settings by `Sim/Sound`. `Audio.play(key, opts)`, `Audio.at(key, where, opts)` (fades with distance,
+  from the Settings by `Sim/Sound`. `Audio.play(key, opts) -> Sound?` (the sound playing, so a long one can be
+  stopped early; nil when nothing plays), `Audio.at(key, where, opts)` (fades with distance,
   nothing past `Tuning.Audio.Heard`), `Audio.talker(voice, text)` (`to(shown)`, `stop()`), `Audio.babble(voice, text,
   loud?)`, `Audio.overHead(model, text)`, `Audio.setSheltered(on)`, `Audio.thunder()`, `Audio.start()` (Main.client,
   after World/Graphics: the music loop, the weather's loops, doors by their `DoorPrompt`'s ActionText, the
   preloading, and `Kit.sound`). Silent until started, so the previews and the simulations make no sound.
-- `UI/Kit`: `Kit.sound(kind)` (a hook, quiet until Controllers/Audio sets it). `Kit.press` plays "click" (a "plain"
+- `UI/Kit`: `Kit.sound(kind, opts?) -> Sound?` (a hook, quiet until Controllers/Audio sets it to `Audio.play`). `Kit.press` plays "click" (a "plain"
   tab: "tab"; `Sound` names another, false for none) on Activated; `Kit.panel` plays "open", `Kit.closePanel`
   "close", `Kit.flyCoins` "coins".
 - `UI/Dialogue`: an `Actor` may carry `voice`; otherwise a villager's comes from `State.villager(vid)` and then from
   their model's `Voice` attribute. `scene.type` babbles the line through `Audio.talker`.
 - Hooks: `UI/Toasts` (a sound by kind), `UI/Hud` (the level up, only from plan changes, not a whole plan),
-  `UI/GiftPicker` (a gift given), `UI/Crates` (the same chime as a crate opens), `UI/Weather`
+  `UI/GiftPicker` (a gift given), `UI/Crates` (the crate opening's thud, shimmer, steps, burst and fanfare), `UI/Weather`
   (`Audio.setSheltered`, `Audio.thunder`), `UI/Tutorial` (the greeter's `voice`), `UI/Creator` (the Voice sliders,
   Test and Reset; `voice` sent with `VillagerCreate` and `VillagerUpdate`), `UI/Settings` (Music and Effects sliders
   and Voices on the left card), `Build/BuildMode` (rotate), `World/BuildFx` (place, sell), `World/Earnings` (a coin

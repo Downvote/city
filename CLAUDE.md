@@ -30,7 +30,8 @@ the contract (update it with every API, remote or saved data change), `src/share
    `tests/sim/event_pace.luau`: a watched event moves only when the player presses, and the name box;
    `tests/sim/tutorial.luau`: the friend's three steps under the dim, from the welcome to the last line;
    `tests/sim/lively.luau`: placed pieces moving and giving off their effects; `tests/sim/audio.luau`: the sound,
-   from a press's click and a typed line's babble to the rain and the music), the dark and the light look on every
+   from a press's click and a typed line's babble to the rain and the music; `tests/sim/crate_open.luau`: a crate
+   opening played through, its steps up, a skip and OK), the dark and the light look on every
    screen (`sh tools/preview/audit.sh`), place build.
 6. Commit on the working branch with a short plain message.
 
@@ -253,7 +254,12 @@ were pet crates and pets for a while, and the user took them back ("remove pets.
 crates"). Don't bring back pets, pet crates or a pet factor in mood. Whatever gave a pet crate gives a work crate,
 and `Crates.clean` turns an old save's held pet crates into work crates (`Schema.migrate` drops its `pets`). A
 villager taking in a stray or naming a pet in an event is a conversation and a memory (`Sim/Memory`'s `pet`), not
-one of those pets: it stays.
+one of those pets: it stays. Opening one takes the whole screen (the user: "make the opening crate cutscene much more
+dramatic"; `Crates.reveal`): the crate drops in, shakes while a sunburst turns and its light climbs the rarities to the
+prize's own, then a flash and sparks, and the prize rises turning. Keep it that size: no small dialog, no popping
+straight to the prize. Its beats are `Tuning.Crates.Show`, timed by `os.clock()` (never by adding up what
+`task.wait()` hands back), a press while it shakes skips to the burst, and `still` draws one beat for the previews
+(`ui.sh crate:open:work[:<rarity>][:drop|:shake|:burst]`); `tests/sim/crate_open.luau` plays it through.
 
 Life in the town, in the spirit of the life sim the user named (its ideas only, never its content): well over two
 hundred events in `Data/Events/` (a folder: `Kit` builds weights and scenes, `Chatter` builds conversations from

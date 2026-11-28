@@ -355,11 +355,11 @@ elseif scene == "vehicles" or scene:sub(1, 9) == "vehicles:" then
 		addPrims(VehicleData.prims(v), CFrame.new(x + v.size.X / 2, v.hover, 0))
 		x += v.size.X + 3
 	end
-elseif scene == "crates" then
-	-- crates: every kind side by side (Data/Crates)
+elseif scene == "crates" or scene:sub(1, 6) == "crate:" then
+	-- crates: every kind side by side (Data/Crates); crate:<kind> one of them
 	local CrateData = R(Shared .. "Data.Crates")
 	local x = 0
-	for _, kind in CrateData.Order do
+	for _, kind in if scene == "crates" then CrateData.Order else { scene:sub(7) } do
 		addPrims(CrateData.prims(kind), CFrame.new(x, 0, 0))
 		x += 4
 	end

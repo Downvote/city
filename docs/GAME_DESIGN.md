@@ -1495,9 +1495,21 @@ Then, of the crate's line in the Store:
 picture, the line "Crate jobs give special workplaces that pay more than regular ones.", how many are waiting to be
 opened, and what is inside by rarity with the chance of each (Common 50%, Uncommon 28%, Rare 14%, Epic 6%, Legendary
 2%, and the names in each), then Open, the gem price and the Robux price. Bought with gems, a crate opens at once;
-one bought with Robux or won as a reward waits in the tab until the player opens it. Opening plays the gift's sound
-and shows the crate rocking and popping, then what came out with its rarity and where to find it. The passes and gem
-packs aside, the work crate is the one thing for sale besides cravings and Build mode's pieces.
+one bought with Robux or won as a reward waits in the tab until the player opens it. The passes and gem packs aside,
+the work crate is the one thing for sale besides cravings and Build mode's pieces.
+
+Then, of opening one:
+
+> make the opening crate cutscene much more dramatic
+
+**Opening a crate.** It takes the whole screen. Everything goes dark and the crate drops into the middle with a
+thud that jolts the screen. A sunburst comes up behind it and turns, and the crate rocks, harder and faster, over a
+shimmering rattle while the light gathers. The light starts in Common's green and climbs the rarities to the prize's
+own, flaring with a ring and a rising pop at each step, so a rarer prize shakes longer (1.3 seconds for a Common,
+0.4 more for each rarity above it) and climbs further: a Legendary goes green, teal, blue, purple and orange. Then a
+white flash, two rings and a spray of sparks in the prize's colour, white and yellow, with a sparkle (and a fanfare
+for an Epic or better), and the prize rises out of the light, turning slowly, with glints winking round it, its
+rarity on a slab, its name and where to find it, and OK. A press while it shakes skips to the burst.
 
 **Work crates** give a workplace you can't buy, each with a job of its own (our own names: the third example became
 the Anomaly keeper, who watches a glowing thing in a tank):
