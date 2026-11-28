@@ -387,7 +387,10 @@ level is uncapped" and "add more rewards to quests, like titles, special buildin
   `Sim/Voice`. `Data/Personalities`: `likes` and `dislikes` (item categories) on every personality.
 - `Data/Titles`: the titles (`id, name`). `Sim/Titles`: `give`, `has`, `wear(profile, id | false)`, `worn`, `list`,
   `clean`. `Util/TitleTag.build(name, title)`: the name tag drawn under a BillboardGui by `Services/Titles` and in the
-  Goals menu's preview.
+  Goals menu's preview, the title in gold over the name, no pill behind (preview `ui.sh titles`);
+  `TitleTag.chatPrefix(title, prefix)` and `TitleTag.ChatColor`: the title before a name in chat. `Services/Titles.show`
+  sets the player's `Title` attribute (the worn title's name, or nil); client `World/ChatTitles` is the one
+  `TextChatService.OnIncomingMessage`, putting it before the sender's name. Spec: `TitleTag`.
 - `Sim/Bag`: `count`, `total`, `room`, `add`, `take`, `owe`, `settle`, `entries`, `gathered`, `canGather`,
   `gather(profile, day, sourceKey, rng)` (counts `stats.gathered`, and `stats.cooked` for a cook source), `clean`.
   Numbers in `Tuning.Bag` (after Uses): 10 of one thing, 40 in all, 10 gathered a town day.

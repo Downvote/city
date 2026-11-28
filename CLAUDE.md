@@ -305,7 +305,11 @@ best friends is the highest"): no crushes, dates, proposals or bonds, and best f
 Heart levels have no top ("make it such that heart level is uncapped"): never test one against a maximum;
 `Life.heartNeed` grows with the level. A goal can pay `title`, `piece` (a prize keepsake in `Build/Recipes/Prizes`,
 `prize = true`) and `thing` as well as coins; every title comes from exactly one goal and every prize from some goal
-(the Giving spec).
+(the Giving spec). A title worn shows in gold over its wearer's name, with nothing behind the words (the user: "make
+title be above the name, with no black background"; `Util/TitleTag`), and before their name in chat ("make titles
+appear to the left of names in chat"): the server sets the player's `Title` attribute and `client/World/ChatTitles`,
+the game's one `TextChatService.OnIncomingMessage`, puts it there. Anything else that changes how a chat message reads
+goes in that same callback.
 
 Mood is earned (the user: "Villager mood bars should also not be that easy to fill up, the factors affecting it
 should be: amount and relationship of friends, quality of bed, roof over bed, fun objects near bed"): `Sim/Needs`

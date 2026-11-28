@@ -3565,6 +3565,14 @@ evening, the night or the town's own time, and leaving Build mode goes back to t
 of coins in one flat gold, the edges between the coins cut out of it, and the gem a cut gem with its girdle and
 facets cut out of one solid shape. Both are our own drawings.
 
+### Titles over the name and in chat
+
+The user (2026-11-28): "make title be above the name, with no black background. also, make titles appear to the left
+of names in chat".
+
+A title worn now sits over its wearer's name in gold, both just words with a soft dark edge and nothing behind them.
+In the chat, the title shows in gold, in brackets, before the name on every message its wearer sends.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no

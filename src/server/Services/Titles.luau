@@ -1,9 +1,10 @@
 -- The titles players wear (Sim/Titles). The user: "add more rewards to quests, like titles". A
 -- title is won from a town goal (Life.claimGoal) and picked on the Goals menu's Titles tab (the
--- TitleWear remote, checked here). Worn, it hangs under the player's name over their head for
--- everyone to see: the name and the title are drawn together (Util/TitleTag) in a BillboardGui on
+-- TitleWear remote, checked here). Worn, it hangs over the player's name over their head for
+-- everyone to see: the title and the name are drawn together (Util/TitleTag) in a BillboardGui on
 -- the head, and Roblox's own name over them is turned off while it does; with none worn, Roblox's
--- name is back.
+-- name is back. The player's `Title` attribute says what it is, and every screen puts it before
+-- their name in chat (client World/ChatTitles).
 
 local Players = game:GetService("Players")
 
@@ -21,6 +22,10 @@ local TitleService = {}
 
 -- Hangs the worn title over a player's head, or takes it down.
 function TitleService.show(player: Player)
+	local profile = Data.get(player)
+	local worn = profile and Titles.worn(profile)
+	-- (every screen puts it before their name in chat: client World/ChatTitles)
+	player:SetAttribute("Title", if worn then worn.name else nil)
 	local char = player.Character
 	local head = char and char:FindFirstChild("Head")
 	local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -31,8 +36,6 @@ function TitleService.show(player: Player)
 	if old then
 		old:Destroy()
 	end
-	local profile = Data.get(player)
-	local worn = profile and Titles.worn(profile)
 	if hum then
 		hum.DisplayDistanceType = if worn
 			then Enum.HumanoidDisplayDistanceType.None

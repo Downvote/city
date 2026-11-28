@@ -16,6 +16,9 @@ task.spawn(function()
 	end
 end)
 
+-- a title worn goes before its wearer's name in chat (World/ChatTitles)
+require(script.Parent.World.ChatTitles).start()
+
 -- the low poly kit the server cut (Build/LowPoly): whatever this client draws itself (placement
 -- ghosts, catalog pictures, the cars and clouds) uses the same faceted shapes
 local ReplicatedStorage = game:GetService("ReplicatedStorage")

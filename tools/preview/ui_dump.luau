@@ -1009,6 +1009,16 @@ elseif scene:sub(1, 6) == "panel:" then
 		row.Activated:Fire()
 	end
 	Sim.frames(3)
+elseif scene == "titles" then
+	-- a title worn over a player's name (Util/TitleTag), as the billboard over their head draws it:
+	-- the title in gold over the name, nothing behind them (the user: "make title be above the
+	-- name, with no black background")
+	startHud()
+	local TitleTag = Harness.require("ReplicatedStorage.Shared.Util.TitleTag")
+	local tag = TitleTag.build("Sam", "Town hero")
+	tag.Position = roblox.UDim2.fromOffset(530, 330)
+	tag.Parent = Sim.gui
+	Sim.frames(2)
 elseif scene == "pick" then
 	-- what a click on one of your villagers brings up (World/VillagerClick, UI/VillagerMenu): Mara's
 	-- name, Profile and Chat, by the pointer
