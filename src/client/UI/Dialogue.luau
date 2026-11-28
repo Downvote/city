@@ -53,6 +53,9 @@ local Icons = require(script.Parent.Icons)
 local ModelPreview = require(script.Parent.ModelPreview)
 local Cutscene = require(script.Parent.Cutscene)
 local State = require(script.Parent.Parent.Controllers.State)
+local Audio = require(script.Parent.Parent.Controllers.Audio)
+
+local Babble = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared").Sim.Babble)
 
 local Dialogue = {}
 
@@ -60,7 +63,8 @@ local T = Kit.Theme
 local player = Players.LocalPlayer
 
 -- (`image`: a picture standing in for a model, as a full length avatar picture: the tutorial's
--- greeter when the server couldn't build their look)
+-- greeter when the server couldn't build their look; `voice`: the voice they talk in (Sim/Babble),
+-- else a villager's own, found by `vid`)
 export type Actor = {
 	key: string,
 	name: string,
@@ -69,6 +73,7 @@ export type Actor = {
 	vid: string?,
 	image: string?,
 	without: { [string]: boolean }?, -- what they put on later in the scene, off their bust until then
+	voice: Babble.Voice?,
 }
 
 -- the layout, in the interface's own pixels (a 1280 by 720 screen is about 1350 by 720 of them)
@@ -446,10 +451,21 @@ function Dialogue.open(opts: { [string]: any }?): any
 	local right = tag(box, "Other", true)
 	-- The line being typed: a couple of letters at a time until the last one shows, which is the
 	-- moment it is all there (so no press is ever spent on a line that already looks whole).
+	-- As a line types, whoever says it babbles in their voice (Controllers/Audio, Sim/Babble: the
+	-- user, "Like tomodachi life, can you make it such that villagers have voices"), a syllable
+	-- every few letters; a press that shows the rest stops it. A line nobody says is quiet.
 	local typing = 0 -- goes up with every line and whenever one is finished, so an old typist stops
 	local typingNow = false
 	local onTyped: (() -> ())? = nil
+	local talker: Audio.Talker? = nil
+	local voiceNow: () -> Babble.Voice? = function()
+		return nil
+	end -- (the speaker's, once the cast is known: below)
 	local function finish()
+		if talker then
+			talker.stop()
+			talker = nil
+		end
 		if not typingNow then
 			return
 		end
@@ -482,10 +498,16 @@ function Dialogue.open(opts: { [string]: any }?): any
 		typingNow = true
 		onTyped = done
 		words.MaxVisibleGraphemes = 0
+		if talker then
+			talker.stop()
+		end
+		local voice = Audio.talker(voiceNow(), plain or text)
+		talker = voice
 		task.spawn(function()
 			local shown = 0
 			while typing == mine and root.Parent do
 				shown += Dialogue.TypeStep
+				voice.to(shown) -- (a word too short to type still gets its syllable)
 				if shown >= count then
 					break
 				end
@@ -541,6 +563,25 @@ function Dialogue.open(opts: { [string]: any }?): any
 			end
 		end
 		return nil
+	end
+
+	-- the voice of whoever is talking now: their own, a villager's saved one, or the one on their
+	-- model (a villager in another town)
+	voiceNow = function(): Babble.Voice?
+		local e = speaking and entryOf(speaking)
+		if not e then
+			return nil
+		end
+		local a = e.actor
+		if a.voice then
+			return a.voice
+		end
+		local v = if a.vid then State.villager(a.vid) else nil
+		if v then
+			return Babble.of(v)
+		end
+		local model = a.model
+		return if model then Babble.decode(model:GetAttribute("Voice")) else nil
 	end
 
 	-- the tags: the latest to speak on each side, bright if they're the one talking
@@ -715,6 +756,10 @@ function Dialogue.open(opts: { [string]: any }?): any
 
 	-- Takes the scene down: everyone slides out and it goes (at once with `now`).
 	function self.close(now: boolean?)
+		if talker then
+			talker.stop()
+			talker = nil
+		end
 		if current == self then
 			current = nil
 			State.set("talking", false)

@@ -12,6 +12,7 @@ local Town = require(Shared.Data.Town)
 local Plan = require(Shared.Build.Plan)
 
 local State = require(script.Parent.Parent.Controllers.State)
+local Audio = require(script.Parent.Parent.Controllers.Audio)
 
 local BuildFx = {}
 
@@ -142,6 +143,17 @@ function BuildFx.start()
 	State.onPlan(function(ops: any)
 		if type(ops) ~= "table" then
 			return -- a whole plan (joining, buying land): no show
+		end
+		-- a soft knock for what was put down, a pop for what was sold (once a change)
+		local added, removed = false, false
+		for _, op in ops do
+			added = added or op.op == "add"
+			removed = removed or op.op == "remove"
+		end
+		if added then
+			Audio.play("place")
+		elseif removed then
+			Audio.play("sell")
 		end
 		for _, op in ops do
 			if op.op == "add" and type(op.kind) == "string" and type(op.key) == "string" then

@@ -16,6 +16,8 @@ local Kit = require(script.Parent.Parent.UI.Kit)
 local Icons = require(script.Parent.Parent.UI.Icons)
 local Dialogue = require(script.Parent.Parent.UI.Dialogue)
 local State = require(script.Parent.Parent.Controllers.State)
+local Audio = require(script.Parent.Parent.Controllers.Audio)
+local Tuning = require(Shared.Config.Tuning)
 
 local Earnings = {}
 
@@ -94,21 +96,42 @@ function Earnings.pop(model: Model, n: number): BillboardGui?
 	return bb
 end
 
--- A pay packet from the server: the coins over whoever earned them, and the town's coins.
+-- A pay packet from the server: the coins over whoever earned them, and the town's coins. The
+-- nearest coin to the camera makes a soft ping, at most every Tuning.Audio.Coins seconds.
+local lastPing = 0
 function Earnings.got(msg: any)
 	if type(msg) ~= "table" then
 		return
 	end
 	local total = 0
+	local nearest: Vector3? = nil
 	for _, line in (if type(msg.lines) == "table" then msg.lines else {}) do
 		if type(line) == "table" and type(line.n) == "number" and line.n > 0 then
 			total += line.n
 			-- (`you`: the player's own work at a workplace, World/Work; the coin rises over them)
 			local model = if line.you == true then player.Character else Dialogue.modelOf(line.vid)
 			if model then
-				Earnings.pop(model, line.n)
+				local shown = Earnings.pop(model, line.n)
+				local head = shown and shown.Adornee
+				if head and head:IsA("BasePart") then
+					local cam = workspace.CurrentCamera
+					if
+						not nearest
+						or (
+							cam
+							and (cam.CFrame.Position - head.Position).Magnitude
+								< (cam.CFrame.Position - (nearest :: Vector3)).Magnitude
+						)
+					then
+						nearest = head.Position
+					end
+				end
 			end
 		end
+	end
+	if nearest and os.clock() - lastPing >= Tuning.Audio.Coins then
+		lastPing = os.clock()
+		Audio.at("coin", nearest)
 	end
 	local stats = State.data.stats
 	if type(stats) == "table" and type(msg.earned) == "number" then

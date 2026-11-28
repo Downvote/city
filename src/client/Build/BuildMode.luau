@@ -1554,6 +1554,7 @@ function BuildMode.startPreset(id: string)
 end
 
 function BuildMode.rotate(step: number?)
+	Kit.sound("rotate")
 	if s.tool == "multi" then
 		-- (the Select tool turns its group about the middle; Shift turns finer, as for one piece)
 		SelectTool.turn(selectApi, step ~= nil and step < 45)

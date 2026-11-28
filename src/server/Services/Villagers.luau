@@ -30,6 +30,7 @@ local Flair = require(Shared.Sim.Flair)
 local Memory = require(Shared.Sim.Memory)
 local Visits = require(Shared.Sim.Visits)
 local WorkMove = require(Shared.Sim.WorkMove)
+local Babble = require(Shared.Sim.Babble)
 local Appearance = require(Shared.Avatar.Appearance)
 local Categories = require(Shared.Avatar.Categories)
 local Chatter = require(Shared.Data.Events.Chatter)
@@ -310,6 +311,8 @@ function Villagers.spawn(player: Player, vid: string)
 	npc.pers = v.pers -- how they write (Sim/Voice, in Npc.say)
 	npc.ending = Flair.get(v, "ending") -- and the ending the player gave them (Sim/Flair)
 	npc:setName(v.name, Colors.fromHex(v.color))
+	-- how they sound, for every screen near them to babble their lines in (client Controllers/Audio)
+	model:SetAttribute("Voice", Babble.encode(Babble.of(v)))
 	npc:play("idle")
 	npcs[player] = npcs[player] or {}
 	npcs[player][vid] = npc
@@ -2009,6 +2012,7 @@ local function update(player: Player, vid: any, fields: any): (boolean, string?)
 		color = fields.color or v.color,
 		bday = v.bday, -- (a birthday never changes: it is the day they moved in)
 		app = fields.app or v.app,
+		voice = fields.voice or v.voice,
 	}
 	local input, err = Schema.cleanVillagerInput(merged)
 	if not input then
@@ -2030,6 +2034,12 @@ local function update(player: Player, vid: any, fields: any): (boolean, string?)
 	v.pers = input.pers
 	v.color = input.color
 	v.bday = input.bday
+	v.voice = input.voice
+	-- (their voice on the body they have now: a new voice needs no new body)
+	local npc = npcs[player] and npcs[player][vid]
+	if npc and npc.model then
+		npc.model:SetAttribute("Voice", Babble.encode(Babble.of(v)))
+	end
 	Data.push(player, "villagers")
 	if respawn then
 		task.spawn(Villagers.spawn, player, vid)

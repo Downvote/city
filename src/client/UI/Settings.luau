@@ -4,10 +4,17 @@
 -- the left holds the look and a note on Roblox's own graphics quality, which no script can set;
 -- down the right, a row for each choice with its options. Every change is on at once
 -- (World/Graphics) and saved with the player (SettingSet, checked on the server).
+--
+-- On the card under the look, what this player hears (the user: "add sounds where necessary, along
+-- with a calm cozy music track in the background"; Controllers/Audio, Sim/Sound): the music's and
+-- the effects' volume on a slider each, and the villagers' voices on or off.
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Tuning = require(Shared.Config.Tuning)
 local Rules = require(Shared.Sim.Graphics)
+local SoundRules = require(Shared.Sim.Sound)
+
+local UserInputService = game:GetService("UserInputService")
 
 local Kit = require(script.Parent.Kit)
 local MenuParts = require(script.Parent.MenuParts)
@@ -25,6 +32,9 @@ local shownKey = "" -- the settings the menu shows, so a change it made itself d
 local function keyOf(settings: { [string]: any }): string
 	local out = {}
 	for _, k in Rules.Keys do
+		table.insert(out, tostring(settings[k]))
+	end
+	for _, k in SoundRules.Keys do
 		table.insert(out, tostring(settings[k]))
 	end
 	return table.concat(out, ",")
@@ -60,6 +70,114 @@ Settings.Rows = {
 	{ key = "sunRays", title = "Sun rays", options = ON_OFF },
 	{ key = "haze", title = "Haze", sub = "Fades what is far off", options = ON_OFF },
 } :: { Choice }
+
+-- The sound's lines on the card: two volumes on sliders, and the voices.
+Settings.Volumes = {
+	{ key = "music", title = "Music" } :: { key: string, title: string, sub: string? },
+	{ key = "sfx", title = "Effects" },
+}
+Settings.Voices = { key = "voices", title = "Voices", options = ON_OFF } :: Choice
+
+-- A volume slider at the right of a line, 0 to 100%: a track, its fill and a knob, the number beside it. While it
+-- is dragged the sound follows at once; the value is saved as it moves (World/Graphics.set: only
+-- a change is sent).
+local VOLUME_W = 210
+local function volumeSlider(parent: Instance, key: string, value: number)
+	local box = Kit.box({
+		Name = "Volume",
+		Parent = parent,
+		Size = UDim2.fromOffset(VOLUME_W + 64, 40),
+		Position = UDim2.new(1, -4, 0.5, 0),
+		AnchorPoint = Vector2.new(1, 0.5),
+	})
+	local readout = Kit.text("", {
+		Name = "Amount",
+		Parent = box,
+		Size = UDim2.fromOffset(54, 40),
+		TextSize = 16,
+		Font = Kit.Fonts.Bold,
+		AlignX = Enum.TextXAlignment.Right,
+		Color = T.InkSoft,
+		Wrap = false,
+	})
+	local track = Kit.frame({
+		Name = "Track",
+		Parent = box,
+		Size = UDim2.fromOffset(VOLUME_W, 10),
+		Position = UDim2.new(1, 0, 0.5, 0),
+		AnchorPoint = Vector2.new(1, 0.5),
+		Color = T.PaperDark,
+		Radius = "pill",
+	})
+	local fill =
+		Kit.frame({ Name = "Fill", Parent = track, Size = UDim2.fromScale(0, 1), Color = T.Blue, Radius = "pill" })
+	local knob = Kit.frame({
+		Name = "Knob",
+		Parent = track,
+		Size = UDim2.fromOffset(22, 22),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0, 0.5),
+		Color = T.Ink, -- (light on the dark card, dark on the light one)
+		Radius = "circle",
+	})
+	local function show(v: number)
+		fill.Size = UDim2.fromScale(v, 1)
+		knob.Position = UDim2.fromScale(v, 0.5)
+		readout.Text = string.format("%d%%", math.floor(v * 100 + 0.5))
+	end
+	show(value)
+	local dragging = false
+	local function fromX(x: number)
+		local t = math.clamp((x - track.AbsolutePosition.X) / math.max(1, track.AbsoluteSize.X), 0, 1)
+		local v = math.floor(t * 20 + 0.5) / 20
+		show(v)
+		Graphics.set(key, v)
+		shownKey = keyOf(Graphics.settings())
+	end
+	local hit = Kit.new("TextButton", {
+		Name = "Hit",
+		Text = "",
+		BackgroundTransparency = 1,
+		Size = UDim2.new(1, 16, 0, 40),
+		Position = UDim2.new(1, 8, 0.5, 0),
+		AnchorPoint = Vector2.new(1, 0.5),
+		ZIndex = 3,
+		Parent = box,
+	}) :: TextButton
+	hit.Size = UDim2.fromOffset(VOLUME_W + 16, 40)
+	hit.InputBegan:Connect(function(input)
+		if
+			input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch
+		then
+			dragging = true
+			fromX(input.Position.X)
+		end
+	end)
+	local moved = UserInputService.InputChanged:Connect(function(input)
+		if
+			dragging
+			and (
+				input.UserInputType == Enum.UserInputType.MouseMovement
+				or input.UserInputType == Enum.UserInputType.Touch
+			)
+		then
+			fromX(input.Position.X)
+		end
+	end)
+	local ended = UserInputService.InputEnded:Connect(function(input)
+		if
+			input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch
+		then
+			dragging = false
+		end
+	end)
+	box.Destroying:Connect(function()
+		moved:Disconnect()
+		ended:Disconnect()
+	end)
+end
 
 -- The option a setting has now, by its id.
 function Settings.picked(key: string, settings: { [string]: any }): string
@@ -116,6 +234,53 @@ draw = function()
 		Size = UDim2.new(1, 0, 0, 0),
 		Position = UDim2.fromOffset(0, 108),
 	})
+
+	-- and under it, what this player hears: a line each, its name at the left and its slider or
+	-- switch at the right
+	Kit.title("Sound", {
+		Name = "SoundTitle",
+		Parent = inside,
+		Size = UDim2.new(1, 0, 0, 36),
+		Position = UDim2.fromOffset(0, 186),
+		TextSize = 28,
+		Wrap = false,
+	})
+	local function line(name: string, title: string, y: number): Frame
+		local f = Kit.box({
+			Name = name,
+			Parent = inside,
+			Size = UDim2.new(1, 0, 0, 44),
+			Position = UDim2.fromOffset(0, y),
+		})
+		Kit.text(title, {
+			Name = "Title",
+			Parent = f,
+			Size = UDim2.new(0, 120, 1, 0),
+			TextSize = 19,
+			Font = Kit.Fonts.Bold,
+			AlignY = Enum.TextYAlignment.Center,
+			Wrap = false,
+		})
+		return f
+	end
+	for i, vol in Settings.Volumes do
+		local f = line(vol.key, vol.title, 186 + 46 + (i - 1) * 52)
+		local v = settings[vol.key]
+		volumeSlider(f, vol.key, if type(v) == "number" then v else 0.5)
+	end
+	local choice = Settings.Voices
+	local f = line(choice.key, choice.title, 186 + 46 + #Settings.Volumes * 52)
+	local _, pickVoices = Kit.segments(choice.options, function(id: string)
+		Graphics.set(choice.key, Settings.value(choice.key, id))
+		shownKey = keyOf(Graphics.settings())
+	end, {
+		Parent = f,
+		Position = UDim2.new(1, -4, 0.5, 0),
+		AnchorPoint = Vector2.new(1, 0.5),
+		Height = 40,
+		TextSize = 15,
+	})
+	pickVoices(Settings.picked(choice.key, settings))
 
 	-- the rows: what this screen draws
 	local list = MenuParts.list(panel.body)

@@ -27,6 +27,8 @@ local State = require(Controllers.State)
 State.start()
 -- this player's own Settings on their screen: the glow, the blur, the detail (World/Graphics)
 require(script.Parent.World.Graphics).start()
+-- what this player hears: the music, the interface's sounds, the weather, the villagers' voices
+require(Controllers.Audio).start()
 
 local Hud = require(UI.Hud)
 Hud.start()

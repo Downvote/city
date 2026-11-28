@@ -41,6 +41,7 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Remotes = require(Shared.Net.Remotes)
 local Steps = require(Shared.Sim.Tutorial)
 local Tuning = require(Shared.Config.Tuning)
+local Babble = require(Shared.Sim.Babble)
 
 local Kit = require(script.Parent.Kit)
 local Icons = require(script.Parent.Icons)
@@ -551,6 +552,8 @@ local function sayLine(key: any, line: string)
 		model = g.model,
 		-- (their picture from Roblox when the server couldn't build their look)
 		image = if not g.model and g.id then string.format("rbxthumb://type=Avatar&id=%d&w=420&h=420", g.id) else nil,
+		-- a voice of their own, the same each time for the same player (Sim/Babble)
+		voice = Babble.forSeed(g.id or g.name),
 	})
 	s.speak("greeter")
 	s.type(line, nil, function()

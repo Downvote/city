@@ -8,6 +8,7 @@ local Players = game:GetService("Players")
 local CollectionService = game:GetService("CollectionService")
 
 local BuildMode = require(script.Parent.Parent.Build.BuildMode)
+local Audio = require(script.Parent.Parent.Controllers.Audio)
 
 local Gather = {}
 
@@ -34,9 +35,13 @@ end
 
 function Gather.start()
 	local function seen(prompt: Instance)
-		if prompt:IsA("ProximityPrompt") then
+		if prompt:IsA("ProximityPrompt") and not prompts[prompt] then
 			prompts[prompt] = true
 			refresh(prompt)
+			-- a little pop as the thing is taken (the server's notice says what it was)
+			prompt.Triggered:Connect(function()
+				Audio.play("pickup")
+			end)
 		end
 	end
 	CollectionService:GetInstanceAddedSignal(Gather.Tag):Connect(seen)

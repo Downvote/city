@@ -21,14 +21,18 @@ local Titles = require(script.Parent.Titles)
 local PlotLikes = require(script.Parent.PlotLikes)
 local PlotBoard = require(script.Parent.PlotBoard)
 local FollowUps = require(script.Parent.FollowUps) -- (events left waiting for later: profile.follow)
+local Babble = require(script.Parent.Babble)
 
 local Schema = {}
 
 Schema.Version = 1
 
 Schema.Settings = {
+	-- what this player hears (Settings; client Controllers/Audio, Sim/Sound, Tuning.Audio): the
+	-- music's and the effects' volume, and the villagers' voices on or off
 	music = 0.5,
 	sfx = 0.8,
+	voices = true,
 	bubbles = true,
 	eventCamera = true,
 	theme = "dark", -- the interface's look: "dark" or "light"
@@ -95,6 +99,9 @@ export type Villager = {
 	giftDay: number?, -- the town day they last had a gift from you, and how many that day (Sim/Gifts)
 	gifts: number?,
 	gaveDay: number?, -- the town day they last thought about giving you something (Gifts.offer)
+	-- how they sound as they talk, set in the creator (Sim/Babble); nil in an old save: their
+	-- personality's voice (Babble.of)
+	voice: Babble.Voice?,
 }
 
 function Schema.newProfile(): any
@@ -238,6 +245,7 @@ function Schema.migrate(raw: any): any
 			v.flair = Flair.sanitize(v.flair)
 			v.lately = Memory.sanitize(raw, vid, v.lately)
 			v.move = WorkMove.sanitize(v.move)
+			v.voice = Babble.clean(v.voice)
 			if type(v.fav) ~= "string" or not Foods.get(v.fav) then
 				v.fav = Foods.list[1].id
 			end
@@ -339,6 +347,7 @@ function Schema.cleanVillagerInput(raw: any): (any?, string?)
 		color = color,
 		bday = { s = s, d = d },
 		app = Appearance.sanitize(raw.app),
+		voice = Babble.clean(raw.voice), -- (nil: their personality's voice)
 	}
 end
 
@@ -351,6 +360,7 @@ function Schema.newVillager(id: string, input: any, rng: any): Villager
 	v.app = input.app
 	v.color = input.color
 	v.bday = input.bday
+	v.voice = input.voice
 	v.fav = rng:pick(Foods.list).id
 	v.born = os.time()
 	return v :: any
