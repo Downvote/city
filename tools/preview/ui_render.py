@@ -933,10 +933,17 @@ def draw_node(cv, node, clip, item_hint=None):
         inner.im.putalpha(Image.fromarray(a_.astype(np.uint8)))
         cv.paste(inner.im, 0, 0, outer_clip)
         return
+    margin = 0
     if rot and rect:
-        # a turned object is drawn upright on its own layer, turned, and only then clipped
-        target = Canvas(cv.im.width / cv.ss, cv.im.height / cv.ss, cv.ss, cv.k / cv.ss)
-        target.im = Image.new("RGBA", cv.im.size, (0, 0, 0, 0))
+        # a turned object is drawn upright on its own layer, turned, and only then clipped. The layer
+        # reaches past the screen by the object's size, so what turning brings into view was drawn
+        # (drawn on a screen-sized layer, a big turned disc came out with its off-screen caps cut flat)
+        margin = int(math.ceil(max(rect[2], rect[3])))
+        shift_rects(node, margin, margin)
+        target = Canvas(cv.im.width / cv.ss + 2 * margin * cv.k / cv.ss,
+                        cv.im.height / cv.ss + 2 * margin * cv.k / cv.ss, cv.ss, cv.k / cv.ss)
+        target.im = Image.new("RGBA", (int(cv.im.width + 2 * margin * cv.k), int(cv.im.height + 2 * margin * cv.k)),
+                              (0, 0, 0, 0))
         clip = None
     if rect and node["name"].startswith("Wedge_"):
         draw_wedge(target, node, rect, clip)
@@ -982,9 +989,21 @@ def draw_node(cv, node, clip, item_hint=None):
             c["_in_avatar"] = True
         draw_node(target, c, child_clip, item_hint)
     if target is not cv:
+        shift_rects(node, -margin, -margin)
         x, y, w, h = [cv.px(v) for v in rect]
-        rotated = target.im.rotate(-rot, resample=Image.BICUBIC, center=(x + w / 2, y + h / 2))
+        m = margin * cv.k
+        rotated = target.im.rotate(-rot, resample=Image.BICUBIC, center=(x + m + w / 2, y + m + h / 2))
+        rotated = rotated.crop((int(round(m)), int(round(m)), int(round(m)) + cv.im.width, int(round(m)) + cv.im.height))
         cv.paste(rotated, 0, 0, outer_clip)
+
+
+def shift_rects(node, dx, dy):
+    """Moves a laid out node and everything in it by (dx, dy) layout units."""
+    r = node.get("_rect")
+    if r:
+        node["_rect"] = (r[0] + dx, r[1] + dy, r[2], r[3])
+    for c in node.get("children", []):
+        shift_rects(c, dx, dy)
 
 
 def tutorial_hole(root):
