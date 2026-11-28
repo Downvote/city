@@ -39,6 +39,7 @@ local Collide = require(Shared.Build.Collide)
 local Placing = require(Shared.Build.Placing)
 local Stretch = require(Shared.Build.Stretch)
 local SimPasses = require(Shared.Sim.Passes)
+local City = require(Shared.Sim.City) -- (grand buildings wait for the town's level)
 
 local BuildMode = {}
 
@@ -798,6 +799,11 @@ local function presetTool()
 		end
 		if ok and cost > coins() then
 			ok, why = false, "not enough coins"
+		end
+		-- (a grand building waits for the town's level, as the server will say: Sim/City.unlocked)
+		local need = Presets.level(preset.id)
+		if ok and City.levelOf(State.plan) < need then
+			ok, why = false, string.format("opens at Level %d", need)
 		end
 		presetCheck = { requests = requests, valid = ok, reason = why, cost = cost }
 	end

@@ -3,11 +3,13 @@
 -- Drawn with the Recipe API like everything else, each facing +Z at the origin. The client's
 -- Ambience moves them; the parts named Wheel turn as they go.
 --
--- The user asked for detail "similar to the default house everywhere", so a car has its cabin
--- with windows split by pillars, wheel arches, bumpers with number plates, a grille, lights and
--- mirrors; the bus its windows, doors, sign and mirrors. They are plain parts, not pieces: the
--- client moves every part of a car each frame and makes a piece's shapes as parts anyway. The
--- car park in Data/DetailModels parks these same cars.
+-- The user asked for detail "similar to the default house everywhere", then "make cars and
+-- vechicles more detailed": the cars and the bus are drawn with Data/VehicleKit, the kit the
+-- vehicles players buy are drawn with (round wheels with spokes, rounded bodies, curved arches,
+-- framed windows, lamps, grilles, bumpers with blank plates, mirrors). They are plain parts, not
+-- pieces: the client moves every part of a car each frame and makes a piece's shapes as parts
+-- anyway. The car park in Data/DetailModels parks the lighter `parked` car, as the town's budget
+-- counts it.
 
 local Recipe = require(script.Parent.Parent.Build.Recipe)
 local Geometry = require(script.Parent.Parent.Build.Geometry)
@@ -27,112 +29,138 @@ AmbientModels.CarColors = {
 	Color3.fromRGB(160, 136, 200),
 }
 
-local GLASS = Color3.fromRGB(70, 110, 150)
-local TYRE = Color3.fromRGB(40, 38, 46)
-local HUB = Color3.fromRGB(200, 204, 214)
-local PLATE = Color3.fromRGB(246, 242, 226)
+local Kit = require(script.Parent.VehicleKit)
 
 local function darker(c: Color3, k: number): Color3
 	return Color3.new(c.R * k, c.G * k, c.B * k)
 end
 
--- A wheel: the tyre and the hub in it, both named Wheel so they turn. A dark round on the body
--- behind it makes the arch.
-local function wheel(r: R, x: number, z: number, d: number)
-	local side = if x > 0 then 1 else -1
-	local t = r:cyl(x, d / 2, z, 0.7, d, "x", TYRE, "SmoothPlastic")
-	t.name = "Wheel"
-	local h = r:cyl(x + side * 0.3, d / 2, z, 0.2, d * 0.5, "x", HUB, "Metal")
-	h.name = "Wheel"
+-- The town's cars are drawn with the kit the bought ones are (Data/VehicleKit: the user, "make cars
+-- and vechicles more detailed"), front toward -Z in its own space; here they are turned to face +Z
+-- with their wheels on the ground at y 0.
+local function onGround(r: R, wheel: number, draw: (R) -> ())
+	Kit.at(r, CFrame.new(0, wheel, 0) * CFrame.Angles(0, math.pi, 0), draw)
 end
 
-local function arch(r: R, x: number, z: number, d: number, face: number)
-	local side = if x > 0 then 1 else -1
-	r:cyl(side * (face + 0.07), d / 2, z, 0.06, d * 1.25, "x", Color3.fromRGB(52, 50, 58), "SmoothPlastic")
+-- A small town car in c1: a rounded body with a sloping bonnet, a boot, two doors a side, its glass
+-- framed by pillars with a seal along its foot, round lamps, a grille, bumpers with blank plates,
+-- mirrors, and wheels with spokes under curved arches. The traffic's (`seats`) has seats and a
+-- steering wheel inside and its wheels named Wheel, so Ambience turns them; a parked one keeps to
+-- fewer parts, since the town's budget counts it.
+local function townCar(r: R, traffic: boolean)
+	onGround(r, 0.8, function(q: R)
+		local front = { Vector3.new(-0.95, 0.5, -0.4), Vector3.new(0.95, 0.5, -0.4) }
+		Kit.car(q, {
+			len = 9.2,
+			wid = 4.5,
+			R = 0.8,
+			tw = 0.7,
+			fa = -2.9,
+			ra = 2.9,
+			sill = -0.25,
+			belt = 1.3,
+			hood = if traffic then 0.95 else nil,
+			roof = 3.15,
+			lite = true,
+			ws = { -1.7, -0.65 },
+			bw = { 1.9, 2.9 },
+			rad = 0.35,
+			doors = { { -1.5, 0.35 }, { 0.5, 2.35 } },
+			posts = { 0.42 },
+			roofPaint = darker(q.c1, 0.96),
+			spokes = if traffic then 3 else 2,
+			arches = if traffic then 6 else 4,
+			seats = if traffic then front else nil,
+			inside = if traffic then "simple" else nil,
+			wheelName = if traffic then "Wheel" else nil,
+		})
+	end)
 end
 
--- A small rounded city car: the body in c1 with a cabin on it, its windows split by pillars, a
--- windscreen and a rear window, bumpers with plates, a grille, headlights that light at night,
--- tail lights, mirrors, and wheels under arches.
 local function car(r: R)
-	local body = r.c1
-	local trim = darker(body, 0.75)
-	r:block(-2.3, 0.75, -4.5, 2.3, 2.2, 4.5, body, "SmoothPlastic")
-	r:block(-2.36, 0.65, -4.6, 2.36, 1.05, 4.6, trim, "SmoothPlastic")
-	r:block(-2.0, 2.2, -2.6, 2.0, 3.8, 1.6, body, "SmoothPlastic")
-	-- the windows: two each side either side of the middle pillar, front and back
-	for _, sx in { -1, 1 } do
-		r:block(sx * 2.0, 2.45, -0.4, sx * 2.04, 3.55, 1.35, GLASS, "Glass")
-		r:block(sx * 2.0, 2.45, -2.35, sx * 2.04, 3.55, -0.6, GLASS, "Glass")
-	end
-	r:block(-1.75, 2.4, 1.6, 1.75, 3.55, 1.64, GLASS, "Glass")
-	r:block(-1.75, 2.5, -2.64, 1.75, 3.5, -2.6, GLASS, "Glass")
-	-- bumpers with their plates, the grille, the lights
-	r:block(-2.4, 0.7, 4.6, 2.4, 1.25, 4.9, C.DarkMetal, "Metal")
-	r:block(-2.4, 0.7, -4.9, 2.4, 1.25, -4.6, C.DarkMetal, "Metal")
-	r:block(-0.55, 0.78, 4.9, 0.55, 1.15, 4.94, PLATE, "SmoothPlastic")
-	r:block(-0.55, 0.78, -4.94, 0.55, 1.15, -4.9, PLATE, "SmoothPlastic")
-	r:block(-0.95, 1.4, 4.5, 0.95, 1.95, 4.56, darker(body, 0.55), "SmoothPlastic")
-	for _, x in { -1.6, 1.6 } do
-		r:glow(r:block(x - 0.45, 1.6, 4.5, x + 0.45, 2.05, 4.62, C.Warm, "Neon"), 0)
-		r:block(x - 0.45, 1.6, -4.62, x + 0.45, 2.05, -4.5, C.Red, "Neon")
-	end
-	-- mirrors on the doors by the windscreen
-	for _, sx in { -1, 1 } do
-		r:block(sx * 2.0, 2.3, 1.05, sx * 2.38, 2.6, 1.3, trim, "SmoothPlastic")
-	end
-	for _, x in { -2.2, 2.2 } do
-		for _, z in { -3, 3 } do
-			arch(r, x, z, 1.6, 2.3)
-			wheel(r, x, z, 1.6)
-		end
-	end
+	townCar(r, true)
 end
 
--- The town bus: long and two-tone, a row of windows with pillars between them, folding doors
--- in the middle of the kerb side (local -X), a lit sign over the windscreen, wipers, mirrors on arms, vents on
--- the roof, bumpers, lights and wheels under arches.
+local function parked(r: R)
+	townCar(r, false)
+end
+
+-- The town bus: long and two-tone, a row of windows with pillars between them, folding doors in
+-- the middle of the kerb side (local -X), a lit sign over the windscreen, mirrors on long arms,
+-- vents on the roof, bumpers, lights and wheels under arches.
 local function bus(r: R)
 	local body = Color3.fromRGB(232, 192, 104)
 	local band = Color3.fromRGB(88, 134, 184)
-	r:block(-2.8, 0.8, -9, 2.8, 6.2, 9, body, "SmoothPlastic")
-	r:block(-2.85, 0.7, -9.1, 2.85, 1.5, 9.1, band, "SmoothPlastic")
-	r:block(-2.9, 3.2, -8.6, 2.9, 5.2, 8.2, GLASS, "Glass")
-	for z = -7, 7, 3.5 do
-		r:block(-2.95, 3.2, z - 0.15, 2.95, 5.2, z + 0.15, body, "SmoothPlastic")
-	end
-	r:block(-2.6, 2, 9, 2.6, 5.4, 9.15, GLASS, "Glass")
-	r:block(-2.6, 2.4, -9.15, 2.6, 5.2, -9, GLASS, "Glass")
-	r:block(-1.6, 5.5, 9.05, 1.6, 6.1, 9.2, Color3.fromRGB(40, 40, 50), "SmoothPlastic")
-	r:block(-1.4, 5.6, 9.2, 1.4, 6, 9.25, C.Warm, "Neon")
-	r:block(-2.9, 6.2, -9.1, 2.9, 6.5, 9.1, band, "SmoothPlastic")
-	-- the doors: two glass leaves in a dark frame, between the wheels
-	r:block(-2.98, 1.5, 1.0, -2.92, 5.6, 4.0, Color3.fromRGB(60, 64, 76), "SmoothPlastic")
-	r:block(-3.02, 1.7, 1.15, -2.98, 5.4, 2.45, GLASS, "Glass")
-	r:block(-3.02, 1.7, 2.55, -2.98, 5.4, 3.85, GLASS, "Glass")
-	-- wipers, mirrors on their arms, vents on the roof
-	for _, x in { -1.2, 1.0 } do
-		r:boxAt(CFrame.new(x, 2.4, 9.18) * CFrame.Angles(0, 0, 0.5), 1.5, 0.08, 0.05, C.Black, "SmoothPlastic")
-	end
-	for _, sx in { -1, 1 } do
-		r:block(sx * 2.8, 5.1, 8.7, sx * 3.4, 5.2, 8.8, C.DarkMetal, "Metal")
-		r:block(sx * 3.3, 4.3, 8.65, sx * 3.5, 5.15, 8.85, C.Black, "SmoothPlastic")
-	end
-	for _, z in { -4, 3 } do
-		r:block(-1, 6.5, z - 1, 1, 6.8, z + 1, Color3.fromRGB(210, 206, 196), "SmoothPlastic")
-	end
-	-- bumpers, lights, wheels
-	r:block(-2.9, 0.6, 9.1, 2.9, 1.2, 9.4, C.DarkMetal, "Metal")
-	r:block(-2.9, 0.6, -9.4, 2.9, 1.2, -9.1, C.DarkMetal, "Metal")
-	for _, x in { -1.9, 1.9 } do
-		r:glow(r:block(x - 0.5, 1.6, 9.1, x + 0.5, 2.2, 9.25, C.Warm, "Neon"), 0)
-		r:block(x - 0.5, 1.6, -9.25, x + 0.5, 2.2, -9.1, C.Red, "Neon")
-	end
-	for _, x in { -2.7, 2.7 } do
-		for _, z in { -6, 6 } do
-			arch(r, x, z, 2, 2.85)
-			wheel(r, x, z, 2)
+	local q0 = Recipe.new(body, band)
+	onGround(q0, 1.0, function(q: R)
+		local m = Kit.car(q, {
+			len = 18,
+			wid = 5.6,
+			R = 1.0,
+			tw = 0.8,
+			fa = -6.2,
+			ra = 6.0,
+			sill = -0.2,
+			belt = 2.2,
+			roof = 5.4,
+			ws = { -8.75, -8.45 },
+			bw = { 8.85, 8.95 },
+			inset = 0.18,
+			rad = 0.45,
+			posts = { -5.6, -2.6, 3.4, 6.2 },
+			roofPaint = Color3.fromRGB(246, 242, 232),
+			bumper = Kit.TRIM,
+			lamps = "wide",
+			spokes = 0,
+			wheelName = "Wheel",
+		})
+		-- a blue band along its foot, the folding doors on the kerb side between the axles
+		for _, sx in { -1, 1 } do
+			q:block(
+				sx * m.hw - sx * 0.02,
+				0.0,
+				m.nose + 0.5,
+				sx * m.hw + sx * 0.035,
+				0.7,
+				m.tail - 0.5,
+				band,
+				Kit.Paint
+			)
 		end
+		q:block(m.hw - 0.02, 0.0, -1.5, m.hw + 0.1, 4.9, 1.5, Kit.TRIM, "Rubber")
+		for _, z in { -0.72, 0.72 } do
+			q:block(m.hw + 0.1, 0.2, z - 0.62, m.hw + 0.14, 4.7, z + 0.62, Kit.GLASS, "Glass").transp = 0.3
+		end
+		-- the sign over the windscreen, the mirrors on their arms, vents on the roof
+		q:block(-1.7, 4.45, m.nose + 0.25, 1.7, 5.05, m.nose + 0.42, Kit.TRIM, "Rubber")
+		q:block(-1.55, 4.52, m.nose + 0.2, 1.55, 4.98, m.nose + 0.26, Recipe.Colors.Warm, "Neon")
+		for _, sx in { -1, 1 } do
+			q:beam(
+				Vector3.new(sx * (m.hw - 0.1), 5.0, m.nose + 0.4),
+				Vector3.new(sx * (m.hw + 0.45), 4.8, m.nose - 0.15),
+				0.1,
+				0.1,
+				Kit.TRIM,
+				"Rubber"
+			)
+			Kit.roundBox(
+				q,
+				sx * (m.hw + 0.45) - 0.18,
+				3.9,
+				m.nose - 0.35,
+				sx * (m.hw + 0.45) + 0.18,
+				4.8,
+				m.nose + 0.02,
+				0.08,
+				body
+			)
+		end
+		for _, z in { -3.5, 4 } do
+			Kit.roundBox(q, -0.9, 5.35, z - 0.9, 0.9, 5.65, z + 0.9, 0.12, Color3.fromRGB(210, 206, 196))
+		end
+	end)
+	for _, p in q0.prims do
+		r:add(p)
 	end
 end
 
@@ -164,6 +192,7 @@ end
 AmbientModels.Models = {
 	duck = duck,
 	car = car,
+	parked = parked,
 	bus = bus,
 } :: { [string]: (R) -> () }
 

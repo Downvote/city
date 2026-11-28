@@ -22,6 +22,7 @@ local Passes = require(Shared.Sim.Passes)
 local Group = require(Shared.Build.Group) -- (the Select tool's groups: wall moves, moves checked lifted)
 local SavesSim = require(Shared.Sim.Saves) -- (saved builds: what a load changes)
 local LightsSim = require(Shared.Sim.Lights) -- (a light's switch, which a move or an undo keeps)
+local City = require(Shared.Sim.City) -- (a grand piece waits for the town's level: City.unlocked)
 
 local Data = require(script.Parent.Data)
 local Plots = require(script.Parent.Plots)
@@ -389,6 +390,25 @@ function Build.vipCheck(profile: any, requests: { any }): (boolean, string?)
 	return true
 end
 
+-- Grand pieces (Catalog: `level`, Recipes/Grand) go down only in a town of their level or more
+-- (Sim/City.unlocked, the level before the change). One already on the plot can still be moved,
+-- turned or repainted (a "set" keeping its id), even by a town that has since sold below it.
+function Build.levelCheck(profile: any, requests: { any }): (boolean, string?)
+	for _, req in requests do
+		local obj = if type(req) == "table" and req.kind == "items" then req.obj else nil
+		local id = if type(obj) == "table" then obj.id else nil
+		local def = if type(id) == "string" then Catalog.get(id) else nil
+		if def and not City.unlocked(profile.plan, def) then
+			local items = profile.plan and profile.plan.items
+			local before = if req.type == "set" and type(req.key) == "string" and items then items[req.key] else nil
+			if not (type(before) == "table" and before.id == id) then
+				return false, string.format("that one opens at Level %d", def.level :: number)
+			end
+		end
+	end
+	return true
+end
+
 local function throttle(player: Player): boolean
 	local t = os.clock()
 	if lastCall[player] and t - lastCall[player] < 0.05 then
@@ -420,6 +440,11 @@ function Build.apply(player: Player, requests: any): (boolean, string?)
 		local vipOk, vipWhy = Build.vipCheck(profile, requests)
 		if not vipOk then
 			return { false, vipWhy }
+		end
+		-- a grand piece goes down only in a town of its level (Build.levelCheck)
+		local levelOk, levelWhy = Build.levelCheck(profile, requests)
+		if not levelOk then
+			return { false, levelWhy }
 		end
 		-- nothing new goes on a floor past the passes the player owns (Sim/Floors)
 		local floorOk, floorWhy = Floors.check(profile, profile.plan, requests)
@@ -516,6 +541,11 @@ local function prepareEach(
 		end
 		-- (a VIP piece comes back only for a VIP owner, as it goes down: Build.vipCheck)
 		if req.type == "add" and not Build.vipCheck(profile, { one }) then
+			skipped += 1
+			continue
+		end
+		-- (a grand piece only in a town of its level: Build.levelCheck)
+		if req.type == "add" and not Build.levelCheck(profile, { one }) then
 			skipped += 1
 			continue
 		end

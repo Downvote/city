@@ -96,7 +96,7 @@ local function makePart(prim: Prim, frame: CFrame, opts: Options?): BasePart
 	elseif prim.shape == "CornerWedge" then
 		part = Instance.new("CornerWedgePart")
 	else
-		local name = LowPoly.shapeFor(prim.shape, prim.size)
+		local name = if prim.smooth then nil else LowPoly.shapeFor(prim.shape, prim.size)
 		local shape = name and kit[name]
 		if shape then
 			part = shape:Clone()

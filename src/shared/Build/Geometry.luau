@@ -24,6 +24,10 @@ export type Prim = {
 	effect: string?, -- "fire" | "smoke" | "sparkles"
 	role: string?, -- "door" (the swinging leaf), "seat", "bed", "glow" (lit at night; a player's own: Sim/Lights)
 	attrs: { [string]: any }?,
+	-- a ball or a cylinder drawn truly round (Roblox's own shape), never in the low poly kit's
+	-- facets: a wheel, a lamp (the user: "You are allowed to use spheres, curves or circles where
+	-- necessary"). Keep its size round: a ball the same every way, a cylinder's Y and Z alike.
+	smooth: boolean?,
 	frame: CFrame?, -- a door leaf's own doorway (where its hinge is measured from), set by the Builder
 	-- a "Piece" only: the shapes it is made of, in its own frame (its box's middle), and a key
 	-- that is the same for every piece made of the same shapes (Geometry.piece)

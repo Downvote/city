@@ -550,7 +550,8 @@ if buildings then
 	-- Homes and showpieces (the user: "make much more building types, including decorative
 	-- ones"): every module in Buildings/Homes and Buildings/Showpieces is a function(add) like the
 	-- workplaces, loaded in name order, so a new one only needs its file.
-	for _, folderName in { "Homes", "Showpieces" } do
+	-- (Grand: the dear ones for a big town, each waiting for its level: Presets.level)
+	for _, folderName in { "Homes", "Showpieces", "Grand" } do
 		local folder = buildings:FindFirstChild(folderName)
 		if folder then
 			local modules = folder:GetChildren()
@@ -683,6 +684,22 @@ function Presets.check(plan: any, requests: { any }): (boolean, string?, number,
 		table.insert(made, { kind = req.kind, key = key })
 	end
 	return true, nil, cost, trial, made
+end
+
+-- The town level a preset waits for: the highest of its pieces' (Catalog: `level`, Recipes/Grand),
+-- or 1. The user: "make more vehicles, buildings that cost more for the endgame".
+function Presets.level(id: string): number
+	local p = byId[id]
+	local need = 1
+	if p then
+		for _, o in p.objects do
+			local def = if o.kind == "items" then Catalog.get(o.obj.id) else nil
+			if def and def.level then
+				need = math.max(need, def.level)
+			end
+		end
+	end
+	return need
 end
 
 -- What a preset costs, worked out on an empty plan.

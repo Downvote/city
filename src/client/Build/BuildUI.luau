@@ -27,6 +27,7 @@ local ModelPreview = require(script.Parent.Parent.UI.ModelPreview)
 local State = require(script.Parent.Parent.Controllers.State)
 local Purchase = require(script.Parent.Parent.Controllers.Purchase) -- (VIP pieces: the pass on their cards)
 local Floors = require(Shared.Sim.Floors) -- (which floors the player may go to and build on)
+local City = require(Shared.Sim.City) -- (grand pieces and buildings wait for the town's level)
 local BuildMode = require(script.Parent.BuildMode)
 -- (the build mode passes: Free Placing's switch, Fine Grid's, Stretch and Any Colour, Build/Placing;
 -- Purchase above asks Roblox to sell one)
@@ -508,6 +509,20 @@ local function itemTile(parent: Instance, def: any, order: number, onPick: () ->
 	end)
 	cardName(b, def.name, foot, 13)
 	priceTag(b, def.price, CARD_H - 22)
+	-- a grand piece says the level it opens at on its picture's corner (Sim/City.unlocked)
+	if def.level then
+		b:SetAttribute("Level", def.level)
+		Kit.leanMark({
+			Name = "Level",
+			Parent = pic,
+			Size = 18,
+			Width = 64,
+			Text = Text.fill("Level {n}", { n = def.level }),
+			Color = if City.unlocked(State.plan, def) then T.Green else T.Coral,
+			Position = UDim2.fromOffset(6, 4),
+			ZIndex = 3,
+		})
+	end
 	-- a VIP piece says so on its picture's corner (only VIP owners put one down: Sim/Passes)
 	if def.vip then
 		b:SetAttribute("Vip", true)
@@ -903,10 +918,29 @@ end
 local function presetTray()
 	local row = trayRow()
 	for i, preset in Presets.list do
+		local need = Presets.level(preset.id)
 		local b, pic, foot = card(row, preset.id, i, 150, function()
-			BuildMode.startPreset(preset.id)
+			if City.levelOf(State.plan) < need then
+				Toasts.show(Text.fill("Opens at Level {n}", { n = need }), "info")
+			else
+				BuildMode.startPreset(preset.id)
+			end
 		end)
 		b:SetAttribute("PresetId", preset.id)
+		-- a grand building says the level it opens at (Presets.level)
+		if need > 1 then
+			b:SetAttribute("Level", need)
+			Kit.leanMark({
+				Name = "Level",
+				Parent = pic,
+				Size = 18,
+				Width = 64,
+				Text = Text.fill("Level {n}", { n = need }),
+				Color = if City.levelOf(State.plan) >= need then T.Green else T.Coral,
+				Position = UDim2.fromOffset(6, 4),
+				ZIndex = 3,
+			})
+		end
 		task.spawn(function()
 			ModelPreview.fromPrims(presetLook(preset.id), { Parent = pic })
 		end)
@@ -1218,7 +1252,10 @@ local function catalogTray(cat: string)
 	local row = trayRow()
 	for i, def in list do
 		itemTile(row, def, i, function()
-			if def.vip and not Purchase.has("vip") then
+			if def.level and not City.unlocked(State.plan, def) then
+				-- a grand piece waits for the town's level (the server would turn it down anyway)
+				Toasts.show(Text.fill("Opens at Level {n}", { n = def.level }), "info")
+			elseif def.vip and not Purchase.has("vip") then
 				-- a VIP piece offers the pass instead (the server would turn it down anyway)
 				Purchase.prompt("vip")
 			elseif def.picture then

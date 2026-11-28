@@ -120,6 +120,37 @@ describe("Presets", function()
 		end
 	end)
 
+	it("keeps the grand ones for a town of their level, on the server too", function()
+		-- the user: "make more vehicles, buildings that cost more for the endgame". The grand
+		-- buildings (Data/Buildings/Grand) each hold a piece that waits for a town level
+		-- (Recipes/Grand); the server refuses it, and so the building, to a smaller town
+		local levels = {}
+		for _, id in { "grand_manor", "grand_hotel", "grand_townhall" } do
+			local p = Presets.get(id)
+			expect(p ~= nil).toBeTruthy()
+			table.insert(levels, Presets.level(id))
+			-- at the starting house's level of detail, under the server's batch limit
+			expect(#p.objects >= 110 and #p.objects <= 300).toBeTruthy()
+		end
+		expect(levels[1] < levels[2] and levels[2] < levels[3]).toBeTruthy()
+		local plan = emptyPlan()
+		local x1, z1 = Plan.boundsOf(plan.size)
+		local reqs = Presets.requests("grand_manor", x1 + 30, z1 + 30, 0)
+		local small = { plan = emptyPlan() }
+		local ok, why = Build.levelCheck(small, reqs)
+		expect(ok).toBe(false)
+		expect(why).toBe("that one opens at Level " .. levels[1])
+		expect((Build.levelCheck(small, Presets.requests("cottage", x1 + 30, z1 + 30, 0)))).toBe(true)
+		-- one already down can still be moved in a town that has since sold below its level
+		local had = emptyPlan()
+		local lamp = { id = "grand_chandelier", x = 10, y = 11, z = 10, r = 0, lv = 0 }
+		had.items["7"] = table.clone(lamp)
+		lamp.x = 14
+		expect((Build.levelCheck({ plan = had }, { { type = "set", kind = "items", key = "7", obj = lamp } }))).toBe(
+			true
+		)
+	end)
+
 	it("costs what its pieces cost, and the shops bring their workplace", function()
 		-- one building for every workplace (the user: "make much more buildings, one for each
 		-- workspace"), each with its own file under Data/Buildings
