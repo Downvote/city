@@ -160,14 +160,16 @@ function Use.act(job: Job): boolean
 end
 
 -- What everyone near sees: a puff from the piece (Data/Interactions' `puff`) and, for a player's
--- go, what happened in a bubble over it. The client's World/Interact draws them.
-function Use.show(at: Vector3, puff: string?, text: string?, rarity: string?)
+-- go, what happened in a bubble over that player's head (`who`; the user: "for text bubbles that
+-- appear when you interact with objects like the fridge, make the bubbles appear on top of you
+-- instead"). The client's World/Interact draws them.
+function Use.show(at: Vector3, puff: string?, text: string?, rarity: string?, who: Player?)
 	if not puff and not text then
 		return
 	end
 	local event: any = Remotes.event("Used")
 	if event.FireAllClients then
-		event:FireAllClients(at, puff, text, rarity)
+		event:FireAllClients(at, puff, text, rarity, who)
 	end
 end
 

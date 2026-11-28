@@ -426,6 +426,42 @@ describe("Event service: the time to answer", function()
 		toEnd()
 	end)
 
+	it("says the next line at once when the watching owner has read all there is", function()
+		-- the user: "sometimes, clicking on dialogue dosent advance it, lagging behind instead"
+		expect(Events.busy(owner)).toBe(false)
+		local from = #fired + 1
+		expect(Events.trigger(owner, "spider")).toBe(true)
+		local token = heard("EventShow", from)[1].token
+		local function lines()
+			local n = 0
+			for _, m in heard("EventLine", from) do
+				if m.token == token and m.line then
+					n += 1
+				end
+			end
+			return n
+		end
+		expect(lines()).toBe(1)
+		-- nobody watching: the lines keep the town's pace
+		watch(token, "next")
+		advance(0.5)
+		expect(lines()).toBe(1)
+		-- watching, and caught up: the next line comes now, and only that one
+		watch(token, "open")
+		watch(token, "next")
+		advance(0.3)
+		expect(lines()).toBe(2)
+		advance(1)
+		expect(lines()).toBe(2)
+		-- another player's word changes nothing
+		watch(token, "next", stranger)
+		advance(0.5)
+		expect(lines()).toBe(2)
+		watch(token, "close")
+		toEnd()
+		expect(Events.busy(owner)).toBe(false)
+	end)
+
 	it("starts the next event only once the owner has put the last one's scene away", function()
 		local token = toQuestion({ watch = true })
 		watch(token, "asked")

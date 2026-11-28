@@ -1,11 +1,10 @@
 -- What floats over a villager's head, drawn the same way by the server and the client: a speech
 -- card (what they say out loud in the town, Npc.say), a mood badge (Npc.icon) and the frame of a
--- wish bubble (World/Wishes). The user: "improve villager bubbles above their head, and make it
--- such that you cant see the bubbles through walls. also, they sometimes intersect villager speech
--- bubbles". So they wear the interface's look (the dark glass over the 3D view, a thin pale rim,
--- a short stroke of colour, a little tail pointing down at the head), and
--- they all hang from one point over the head, one above the other: World/Bubbles stacks them, keeps
--- two villagers' stacks apart and hides what a wall is in front of.
+-- wish bubble (World/Wishes). The user: "improve villager bubbles above their head ... also, they
+-- sometimes intersect villager speech bubbles". So they wear the interface's look (the dark glass
+-- over the 3D view, a little point at the bottom toward the head), and they all hang from one point
+-- over the head, one above the other: World/Bubbles stacks them and keeps two villagers' stacks
+-- apart. They have no rim (the user: "could you remove all borders in bubbles and text bubbles?").
 --
 -- Plain instances and no services, so the server can build them too. Each piece is a CanvasGroup
 -- named Fade (World/Bubbles fades it as one and moves it), its bottom edge where the stack puts it.
@@ -21,12 +20,10 @@ Bubble.Gap = 6 -- between two things in one stack
 -- seconds between a piece being marked `Going` and it going: time for its way out (World/Bubbles)
 Bubble.Leave = 0.35
 
--- the glass over the 3D view (UI/Kit's Glass), the same in both looks; solid, so a tail laid over
+-- the glass over the 3D view (UI/Kit's Glass), the same in both looks; solid, so a point laid over
 -- a card's edge doesn't show as a darker patch
 local GLASS = Color3.fromRGB(12, 12, 15)
 Bubble.Glass = GLASS
--- a speech card's thin rim: the pale white it was, mixed into the glass so it's solid too
-local RIM = Color3.fromRGB(84, 84, 88)
 -- The widest a speech card's words run before they wrap (the user: "make it such that textboxes
 -- that appear over the head of villages have a longer max width").
 Bubble.SpeechWidth = 340
@@ -80,6 +77,9 @@ local function corner(inst: Instance, radius: UDim)
 	new("UICorner", { CornerRadius = radius, Parent = inst })
 end
 
+-- (a group draws nothing past its edges: a little room all round what is in it)
+local EDGE = 2
+
 -- The group a piece is drawn in: as wide and tall as what is in it, its bottom middle on `at`
 -- pixels over the stack's point.
 local function group(parent: Instance?, at: number): CanvasGroup
@@ -100,11 +100,10 @@ local function group(parent: Instance?, at: number): CanvasGroup
 		Padding = UDim.new(0, 0),
 		Parent = g,
 	})
-	-- (a group draws nothing past its edges: room for the rims, which sit just outside a card)
 	new("UIPadding", {
-		PaddingLeft = UDim.new(0, 2),
-		PaddingRight = UDim.new(0, 2),
-		PaddingTop = UDim.new(0, 2),
+		PaddingLeft = UDim.new(0, EDGE),
+		PaddingRight = UDim.new(0, EDGE),
+		PaddingTop = UDim.new(0, EDGE),
 		Parent = g,
 	})
 	return g
@@ -125,40 +124,27 @@ local function diamond(parent: Instance, name: string, side: number, x: number, 
 	})
 end
 
--- A little point under a straight edged card, toward the head, and the card's rim running round
--- it (the user, of the mood badge's: "make the outline outline the bottom pointy part as well").
--- It sits in its own row under the card and reaches up over the card's edge: the rim's colour as a
--- bigger turned square, the glass as a smaller one on it, and a patch of glass over the top half
--- of both, so what shows is the point and its two outlined sides running into the card's rim.
-local POINT = 10 -- the glass square's side
-local function tail(g: Instance, rim: Color3, thick: number, order: number)
-	local reach = POINT * 0.7072 + thick * 1.4143 -- from the middle to the rim's tip
+-- A little point under a straight edged card, toward the head: a turned square of the glass in a
+-- row of its own under the card, its top half over the card's foot. The two are the same solid
+-- glass, so they read as one shape with no line where they meet.
+local POINT = 10 -- the turned square's side
+local function tail(g: Instance, order: number)
+	local reach = POINT * 0.7072 -- from its middle to its tip
+	local wide = math.ceil(reach * 2) + 2
 	local row = new("Frame", {
 		Name = "Tail",
 		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(math.ceil(reach * 2) + 2, math.ceil(reach) + 1),
+		Size = UDim2.fromOffset(wide, math.ceil(reach) + 1),
 		LayoutOrder = order,
 		ZIndex = 2,
 		Parent = g,
 	})
-	local mid = row.Size.X.Offset / 2
-	diamond(row, "Rim", POINT + thick * 2, mid, 0, rim, 1)
-	diamond(row, "Point", POINT, mid, 0, GLASS, 2)
-	new("Frame", {
-		Name = "Cover",
-		BackgroundColor3 = GLASS,
-		BorderSizePixel = 0,
-		Size = UDim2.fromOffset(math.ceil(reach * 2) + 2, math.ceil(reach) + 1),
-		AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.fromOffset(mid, 0),
-		ZIndex = 3,
-		Parent = row,
-	})
+	diamond(row, "Point", POINT, wide / 2, 0, GLASS, 2)
 end
 
--- The dark card things sit on: glass, round corners and a thin pale rim. (It had two small
--- brackets in its corners; the user: "for text and icon bubbles, remove the two squarish corners
--- inside the bubbles".)
+-- The dark card things sit on: glass and round corners, nothing round its edge (the user: "for
+-- bubbles and text in rounded rectangles everywhere, remove the borders"; before that, "for text
+-- and icon bubbles, remove the two squarish corners inside the bubbles").
 function Bubble.card(parent: Instance, props: { [string]: any }?): Frame
 	local p = props or {}
 	local card = new("Frame", {
@@ -173,20 +159,17 @@ function Bubble.card(parent: Instance, props: { [string]: any }?): Frame
 		Parent = parent,
 	})
 	corner(card, UDim.new(0, p.Radius or 12))
-	new("UIStroke", {
-		Name = "Rim",
-		Color = p.Rim or RIM,
-		Transparency = 0,
-		Thickness = p.RimThickness or 1.5,
-		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-		Parent = card,
-	})
 	return card
 end
 
+-- A speech card's words: their size and face, and the most they take up before they wrap.
+Bubble.TextSize = 17
+Bubble.Font = Enum.Font.FredokaOne
+Bubble.SpeechTall = 240
+
 -- A speech card in `parent` (a billboard): the words in white on the glass, flush at its left (no
--- bar in front of them any more: the user, "remove the bar"), and an outlined tail under it.
--- Returns the group and the words' label (named Text).
+-- bar in front of them any more: the user, "remove the bar"), and a point under it. Returns the
+-- group and the words' label (named Text).
 function Bubble.speech(parent: Instance?, text: string?): (CanvasGroup, TextLabel)
 	local g = group(parent, Bubble.Base)
 	local card = Bubble.card(g, { AutomaticSize = Enum.AutomaticSize.XY })
@@ -203,58 +186,49 @@ function Bubble.speech(parent: Instance?, text: string?): (CanvasGroup, TextLabe
 		BackgroundTransparency = 1,
 		AutomaticSize = Enum.AutomaticSize.XY,
 		Size = UDim2.fromOffset(0, 0),
-		Font = Enum.Font.FredokaOne,
-		TextSize = 17,
+		Font = Bubble.Font,
+		TextSize = Bubble.TextSize,
 		TextWrapped = true,
 		TextColor3 = INK,
 		ZIndex = 2,
 		Parent = card,
 	})
-	new("UISizeConstraint", { MaxSize = Vector2.new(Bubble.SpeechWidth, 240), Parent = label })
-	tail(g, RIM, 1.5, 2)
+	new("UISizeConstraint", { MaxSize = Vector2.new(Bubble.SpeechWidth, Bubble.SpeechTall), Parent = label })
+	tail(g, 2)
 	return g, label
 end
 
--- A mood badge in `parent`: a round glass badge with the symbol in its colour, a ring of it, and a
--- point under it toward the head with the ring running round the point too (the user: "make the
--- outline outline the bottom pointy part as well"). Drawn in one holder, back to front: the ring's
--- colour as a turned square, the badge with its ring, the glass point over the badge's ring where
--- the two meet, the symbol.
-local DISC = 36
-local RING = 2
+-- A mood badge in `parent`: a round glass badge with the symbol in its colour and a point under it
+-- toward the head. Drawn in one holder: the point, the badge over it, the symbol.
+local DISC = 38
 function Bubble.mood(parent: Instance?, kind: string): CanvasGroup
 	local g = group(parent, Bubble.Base)
 	local look = Bubble.Moods[kind]
 	local color = if look then look[2] else INK
-	local wide = DISC + RING * 2
-	local below = DISC + RING - 2 -- the point's middle, a little over the badge's foot
-	local reach = POINT * 1.2 * 0.7072 + RING * 1.4143
+	local below = DISC - 4 -- the point's middle, a little over the badge's foot
+	local reach = POINT * 1.2 * 0.7072
 	local holder = new("Frame", {
 		Name = "Badge",
 		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(wide, math.ceil(below + reach) + 1),
+		Size = UDim2.fromOffset(DISC, math.ceil(below + reach) + 1),
 		LayoutOrder = 1,
 		Parent = g,
 	})
-	diamond(holder, "Rim", POINT * 1.2 + RING * 2, wide / 2, below, color, 1)
+	diamond(holder, "Point", POINT * 1.2, DISC / 2, below, GLASS, 1)
 	local disc = new("Frame", {
 		Name = "Disc",
 		BackgroundColor3 = GLASS,
 		BorderSizePixel = 0,
 		Size = UDim2.fromOffset(DISC, DISC),
-		Position = UDim2.fromOffset(RING, RING),
 		ZIndex = 2,
 		Parent = holder,
 	})
 	corner(disc, UDim.new(0.5, 0))
-	new("UIStroke", { Color = color, Thickness = RING, Transparency = 0, Parent = disc })
-	diamond(holder, "Point", POINT * 1.2, wide / 2, below, GLASS, 3)
 	new("TextLabel", {
 		Name = "Symbol",
 		Text = if look then look[1] else kind,
 		BackgroundTransparency = 1,
 		Size = UDim2.fromOffset(DISC, DISC),
-		Position = UDim2.fromOffset(RING, RING),
 		Font = Enum.Font.FredokaOne,
 		-- (a symbol of one letter big, a few small: counted in letters, not bytes, since a heart
 		-- is three bytes on its own)
@@ -266,17 +240,81 @@ function Bubble.mood(parent: Instance?, kind: string): CanvasGroup
 	return g
 end
 
--- A square card for a picture (the wish bubble): `px` across, its rim in `color`, a tail under it.
--- Returns the group and the card (put the picture in the card).
-function Bubble.square(parent: Instance?, px: number, color: Color3): (CanvasGroup, Frame)
+-- A square card for a picture (the wish bubble): `px` across, with a point under it. Returns the
+-- group and the card (put the picture in the card).
+function Bubble.square(parent: Instance?, px: number): (CanvasGroup, Frame)
 	local g = group(parent, Bubble.Base)
-	local card = Bubble.card(g, { Size = UDim2.fromOffset(px, px), Radius = 14, Rim = color, RimThickness = 2 })
-	tail(g, color, 2, 2)
+	local card = Bubble.card(g, { Size = UDim2.fromOffset(px, px), Radius = 14 })
+	tail(g, 2)
 	return g, card
 end
 
+-- How big a piece is at its full size, worked out from what is in it. World/Bubbles stacks the
+-- pieces by these sizes rather than by what the screen last drew: a piece that has only just come
+-- (or whose words have just changed) hasn't been laid out yet, and one popping in is drawn smaller
+-- than it will be, so its size on the screen would put what is over it too low, into its words
+-- (the user: "it seems like bubbles like heart bubbles overlap with text sometimes when they appear
+-- at the same time"). `measure(text, size, font, width)` is how big words come out wrapped at
+-- `width` (TextService's GetTextSize on a player's screen). Nil when it can't tell.
+export type Measure = (text: string, size: number, font: Enum.Font, width: number) -> Vector2
+function Bubble.size(fade: Instance, measure: Measure?): Vector2?
+	local w, h = 0, 0
+	local any = false
+	for _, c in fade:GetChildren() do
+		if not c:IsA("GuiObject") or not c.Visible then
+			continue
+		end
+		local cw, ch = c.Size.X.Offset, c.Size.Y.Offset
+		if c.AutomaticSize ~= Enum.AutomaticSize.None then
+			-- a card that sizes itself to its words
+			local label = c:FindFirstChild("Text")
+			if not (label and label:IsA("TextLabel") and measure) then
+				return nil
+			end
+			local words = measure(label.Text, label.TextSize, label.Font, Bubble.SpeechWidth)
+			local pad = c:FindFirstChildOfClass("UIPadding")
+			local across = if pad then pad.PaddingLeft.Offset + pad.PaddingRight.Offset else 0
+			local down = if pad then pad.PaddingTop.Offset + pad.PaddingBottom.Offset else 0
+			cw = math.max(cw, math.min(math.ceil(words.X), Bubble.SpeechWidth) + across)
+			ch = math.max(ch, math.min(math.ceil(words.Y), Bubble.SpeechTall) + down)
+		end
+		any = true
+		w = math.max(w, cw)
+		h += ch
+	end
+	if not any then
+		return nil
+	end
+	local pad = fade:FindFirstChildOfClass("UIPadding")
+	if pad then
+		w += pad.PaddingLeft.Offset + pad.PaddingRight.Offset
+		h += pad.PaddingTop.Offset + pad.PaddingBottom.Offset
+	end
+	return Vector2.new(w, h)
+end
+
+-- A rough measure of words for where there are no fonts to ask (the specs, the previews): a letter
+-- a little under half the text size across, wrapped by whole words, a line the text size tall.
+function Bubble.roughMeasure(text: string, size: number, _font: Enum.Font, width: number): Vector2
+	local letter = size * 0.47
+	local lines, line, widest = 1, 0, 0
+	for word in text:gmatch("%S+") do
+		local n = (utf8.len(word) or #word) * letter
+		local wanted = if line > 0 then line + letter + n else n
+		if line > 0 and wanted > width then
+			lines += 1
+			widest = math.max(widest, line)
+			line = n
+		else
+			line = wanted
+		end
+	end
+	widest = math.max(widest, line)
+	return Vector2.new(math.min(widest, width), lines * math.ceil(size))
+end
+
 -- A head billboard to hang pieces in: tall, with the stack's point in its middle. It is drawn on
--- top (World/Bubbles hides it when something solid is between it and the camera); `wide` is how
+-- top (AlwaysOnTop: a head or a hat never cuts into it, and it shows over walls); `wide` is how
 -- wide its widest piece may get.
 function Bubble.billboard(name: string, adornee: BasePart, wide: number, far: number): BillboardGui
 	return new("BillboardGui", {

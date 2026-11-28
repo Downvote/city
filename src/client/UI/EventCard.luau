@@ -20,8 +20,10 @@
 -- next dialogue without the player input"). A line stays until a click, a tap or a key (UI/Dialogue:
 -- the first press shows the rest of a line still being typed, the next goes on), with the small
 -- arrow at the box's corner once it is all there. Lines the villagers say meanwhile wait their
--- turn, never skipped. After the last line there is, the scene waits for the next, and shows it the
--- moment it comes. The question ("What do you do?") and its answers come when the player reaches
+-- turn, never skipped. After the last line there is, the scene waits for the next and shows it the
+-- moment it comes, and it asks the server to have the villagers say it now (EventWatch "next"), so
+-- a press is never left waiting on the town's own pace (the user: "sometimes, clicking on dialogue
+-- dosent advance it, lagging behind instead"). The question ("What do you do?") and its answers come when the player reaches
 -- it, and only then does the time to answer start: the client tells the server (EventWatch
 -- "asked"; "open" and "close" as the scene goes up and down), and the server, which decides it all,
 -- holds the time while the player is still reading the lines before it, never past its own cap.
@@ -71,7 +73,6 @@ local sceneSeen: { string } = {} -- who the scene has brought in so far
 local sceneTime: Frame? = nil -- the time left to answer, over the scene's box
 local asking = false -- the event is waiting for your answer
 local timerEnds: number? = nil -- when the time to answer runs out on this screen (nil: held, not running)
-local typing = 0 -- goes up with every line typed, so an old one stops
 local cursor: Cutscenes.Place? = nil -- where the line being said falls (Cutscenes.follow)
 local CHOICE = Tuning.Events.ChoiceTimeout
 
@@ -246,8 +247,9 @@ local function bring(l: any)
 end
 
 -- Tells the server how the scene stands (the EventWatch remote): "open" when it goes up, "close"
--- when it goes, "asked" when the question reaches the screen. The server decides what that means
--- for the time to answer.
+-- when it goes, "asked" when the question reaches the screen, "next" when the player has read all
+-- there is and waits for the next line. The server decides what that means for the time to answer
+-- and for its pace.
 local function tell(what: string)
 	local ev = current
 	if not ev or type(ev.token) ~= "string" then
@@ -265,35 +267,19 @@ local function marker()
 	if not s then
 		return
 	end
-	s.more.Visible = page ~= "ask" and not waiting and s.words.MaxVisibleGraphemes == -1
+	s.more.Visible = page ~= "ask" and not waiting and not s.typing()
 end
 
--- Types a line into the scene's box, a couple of letters at a time.
+-- Types a line into the scene's box, a couple of letters at a time (UI/Dialogue's scene.type),
+-- the villagers' names in colour; the arrow comes up once it is all there.
 local function typeOut(text: string)
 	local s = scene
 	if not s then
 		return
 	end
-	typing += 1
-	local mine = typing
-	local label: TextLabel = s.words
-	label.Text = richify(text)
-	label.MaxVisibleGraphemes = 0
-	s.more.Visible = false
-	task.spawn(function()
-		local count = utf8.len(text) or #text
-		local typed = 0
-		while typed < count and typing == mine and label.Parent and label.MaxVisibleGraphemes ~= -1 do
-			typed = math.min(count, typed + 2)
-			label.MaxVisibleGraphemes = typed
-			task.wait(0.03)
-		end
-		if typing == mine then
-			label.MaxVisibleGraphemes = -1
-			typing += 1
-			if scene == s then
-				marker()
-			end
+	s.type(richify(text), text, function()
+		if scene == s then
+			marker()
 		end
 	end)
 end
@@ -348,7 +334,6 @@ local function closeScene(now: boolean?)
 		local s = scene
 		scene = nil
 		sceneTime = nil
-		typing += 1
 		page = nil
 		waiting = false
 		s.close(now)
@@ -497,9 +482,12 @@ local function goOn()
 		closeScene()
 		return
 	end
-	-- caught up: the next line shows when the villagers say it
+	-- caught up: the next line shows when the villagers say it, and the server is asked to have them
+	-- say it now rather than at the town's own pace, so the press isn't left waiting on it (the user:
+	-- "sometimes, clicking on dialogue dosent advance it, lagging behind instead")
 	waiting = true
 	marker()
+	tell("next")
 end
 
 -- Something new for the scene (a line, the question, the end): shown at once if the player is
@@ -706,13 +694,9 @@ function EventCard.start(_hud: any)
 		Parent = gui,
 	})
 	holder:SetAttribute("KeepColors", true)
-	-- a leaning slab of the glass, its slanted ends standing out past what is on it
+	-- a leaning slab of the glass, its slanted ends standing out past what is on it, with nothing
+	-- round its edge (the user: "remove all borders in bubbles and text bubbles")
 	Kit.slant(holder, 60, true)
-	-- brackets on two corners, just outside the pill
-	Kit.brackets(
-		holder,
-		{ Corners = { "tl", "br" }, Arm = 12, Thick = 2, Inset = -6, Color = T.White, Transparency = 0.5 }
-	)
 	-- a marker filling the prompt's left end, flush with it
 	local _, markReach = Kit.flushMark(holder, holder, 60, true, {
 		Name = "Mark",

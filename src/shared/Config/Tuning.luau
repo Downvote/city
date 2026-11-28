@@ -104,6 +104,17 @@ Tuning.Gems = {
 	Max = 1_000_000,
 }
 
+-- Running (client World/Run; the user: "also, make the ability to run, with shift"). Walk is the
+-- place's own walking speed (StarterPlayer's CharacterWalkSpeed in default.project.json), used if
+-- the speed before running is lost; Speed is held Shift's. Button: the touch switch's size, and
+-- ButtonGap the room between it and the jump button under it.
+Tuning.Run = {
+	Walk = 18,
+	Speed = 30,
+	Button = 56,
+	ButtonGap = 14,
+}
+
 -- Driving (Sim/Vehicles; the vehicles themselves are Data/Vehicles). Accel, Brake and Coast are
 -- fractions of a vehicle's top speed a second; Turn and TurnFast degrees a second with the wheel hard
 -- over, soon after it moves and flat out. Each player has one out at a time, ready OutRange studs
@@ -575,7 +586,7 @@ Tuning.Uses = {
 	Reaches = 14, -- studs: the server's check of where you stand
 	Cooldown = 1.2, -- seconds between two goes for one player
 	Rest = 2.5, -- seconds a piece rests between two goes
-	Bubble = 3.5, -- seconds what happened shows over the piece
+	Bubble = 3.5, -- seconds what happened shows over the head of the player who had the go
 }
 
 -- Lights ---------------------------------------------------------------------------------

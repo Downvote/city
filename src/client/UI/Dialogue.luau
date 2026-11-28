@@ -20,14 +20,20 @@
 -- closes are the same.
 --
 -- A scene that goes on (a watched event: OnClick) moves only when the player says so: a click or
--- a tap on the box, or Space, Enter or a gamepad's A (the user: "sometimes, chats suddenly cut to
--- the next dialogue without the player input"). The first press shows the rest of a line still
--- being typed, the next goes on; the keys are taken from the character while the scene is up, so
--- Space doesn't jump, and handed back while the answers are up or a text box has the keys. A
--- small arrow at the bottom right of the words says a press goes on (the caller shows it).
+-- a tap on the box, or Enter, E or a gamepad's X (the user: "sometimes, chats suddenly cut to the
+-- next dialogue without the player input"). Every press counts at once (the user: "sometimes,
+-- clicking on dialogue dosent advance it, lagging behind instead"): a press while a line is being
+-- typed shows the rest of it, and the next goes on. The scene types its lines itself (scene.type),
+-- so it always knows which of the two a press is: a line is all there the moment its last letter
+-- shows, never a beat later. Space and a gamepad's A are the character's own: the player can jump
+-- while a scene is up (the user: "make it such that the player can jump while in conversation, a
+-- bug prevents you from doing it"; the scene used to take Space for itself). The keys it does take
+-- are handed back while the answers are up or a text box has the keys. A small arrow at the bottom
+-- right of the words says a press goes on (the caller shows it).
 --
 -- The box and the name tags are dark glass with white words in both looks, like the slabs over
--- the 3D view. Each bust is a copy of the villager's own model (UI/ModelPreview, the whole of them
+-- the 3D view, with nothing round their edges (the user: "for bubbles and text in rounded
+-- rectangles everywhere, remove the borders"). Each bust is a copy of the villager's own model (UI/ModelPreview, the whole of them
 -- in a frame cut off at the hips by its holder). A villager whose model can't be found gets no
 -- bust, only a round mark in their colour on their name tag.
 
@@ -66,8 +72,12 @@ local SLOTS = {
 local DIM = Color3.fromRGB(112, 112, 122) -- a bust that isn't talking, multiplied in
 local BACK = 14 -- how far down a dimmed bust sits
 
--- The keys that go on as a click does, while a scene that goes on is up.
-Dialogue.Keys = { Enum.KeyCode.Space, Enum.KeyCode.Return, Enum.KeyCode.KeypadEnter, Enum.KeyCode.ButtonA }
+-- The keys that go on as a click does, while a scene that goes on is up (never Space or a gamepad's
+-- A: those jump).
+Dialogue.Keys = { Enum.KeyCode.Return, Enum.KeyCode.KeypadEnter, Enum.KeyCode.E, Enum.KeyCode.ButtonX }
+-- seconds between letters being typed, and how many come at a time
+Dialogue.TypeEvery = 0.03
+Dialogue.TypeStep = 2
 Dialogue.Action = "DialogueNext" -- the ContextActionService action that holds them
 
 -- the glass's own shades, the same in both looks
@@ -143,15 +153,9 @@ local function fillTag(t: any, actor: Actor?, bright: boolean, hasBust: boolean)
 	end
 	t.label.Text = actor.name
 	t.mark.BackgroundColor3 = actor.color
-	-- with no bust, the mark grows into a round mark of them in a ring
-	local d = if hasBust then 12 else 24
+	-- with no bust, the mark grows into a bigger round mark of them
+	local d = if hasBust then 12 else 22
 	t.mark.Size = UDim2.fromOffset(d, d)
-	local ring = t.mark:FindFirstChild("Ring")
-	if not hasBust and not ring then
-		Kit.rim(t.mark, T.White, 1.5, 0.35).Name = "Ring"
-	elseif hasBust and ring then
-		ring:Destroy()
-	end
 	local info = TweenInfo.new(0.18)
 	TweenService:Create(t.label, info, { TextColor3 = if bright then T.White else glass(0.5) }):Play()
 	-- (the tag is a painted slab: its picture fades, never its own background)
@@ -321,19 +325,8 @@ function Dialogue.open(opts: { [string]: any }?): any
 	})
 	box.Active = true
 	Kit.corner(box, 16)
-	Kit.rim(box, T.White, 1.5, 0.78)
 	Kit.softShadow(box, 1.2)
-	-- brackets on its four corners, just inside the edge, and a band of hatching in its bottom
-	-- right corner
-	Kit.brackets(box, {
-		Corners = { "tl", "tr", "bl", "br" },
-		Arm = 14,
-		Thick = 2,
-		Inset = 7,
-		Color = T.White,
-		Transparency = 0.55,
-		ZIndex = 6,
-	})
+	-- a band of hatching in its bottom right corner (no rim, no brackets round its edge)
 	Kit.hatch({
 		Parent = box,
 		Size = UDim2.fromOffset(110, 8),
@@ -433,13 +426,66 @@ function Dialogue.open(opts: { [string]: any }?): any
 	-- the name tags on the box's top edge
 	local left = tag(box, "Speaker", false)
 	local right = tag(box, "Other", true)
+	-- The line being typed: a couple of letters at a time until the last one shows, which is the
+	-- moment it is all there (so no press is ever spent on a line that already looks whole).
+	local typing = 0 -- goes up with every line and whenever one is finished, so an old typist stops
+	local typingNow = false
+	local onTyped: (() -> ())? = nil
+	local function finish()
+		if not typingNow then
+			return
+		end
+		typing += 1
+		typingNow = false
+		words.MaxVisibleGraphemes = -1
+		local done = onTyped
+		onTyped = nil
+		if done then
+			done()
+		end
+	end
+	-- Types `text` into the box (`plain`: the same words without rich text tags, to count its
+	-- letters); `done` runs once it is all there, typed out or shown at a press.
+	local function typeOut(text: string, plain: string?, done: (() -> ())?)
+		typing += 1
+		local mine = typing
+		onTyped = nil
+		typingNow = false
+		words.Text = text
+		more.Visible = false
+		local count = utf8.len(plain or text) or #(plain or text)
+		if count <= 0 then
+			words.MaxVisibleGraphemes = -1
+			if done then
+				done()
+			end
+			return
+		end
+		typingNow = true
+		onTyped = done
+		words.MaxVisibleGraphemes = 0
+		task.spawn(function()
+			local shown = 0
+			while typing == mine and root.Parent do
+				shown += Dialogue.TypeStep
+				if shown >= count then
+					break
+				end
+				words.MaxVisibleGraphemes = shown
+				task.wait(Dialogue.TypeEvery)
+			end
+			if typing == mine then
+				finish()
+			end
+		end)
+	end
 	-- a press shows the rest of a line being typed, or (once it is all there) goes on
 	local function press()
 		if not root.Parent then
 			return
 		end
-		if words.MaxVisibleGraphemes ~= -1 then
-			words.MaxVisibleGraphemes = -1
+		if typingNow then
+			finish()
 		elseif o.OnClick then
 			o.OnClick()
 		end
@@ -523,6 +569,12 @@ function Dialogue.open(opts: { [string]: any }?): any
 
 	-- What a click, a tap or a key does.
 	self.next = press
+
+	-- Types a line into the box (see typeOut above); is one still being typed?
+	self.type = typeOut
+	function self.typing(): boolean
+		return typingNow
+	end
 
 	-- Someone joins the scene: they slide in at the next free place (at most four stand; anyone
 	-- after that is on the tags only).
@@ -622,8 +674,8 @@ function Dialogue.open(opts: { [string]: any }?): any
 
 	current = self
 	State.set("talking", true)
-	-- the keys that go on, taken from the character while it is up (so Space doesn't jump) and
-	-- handed back while the answers are up or the player is typing somewhere
+	-- the keys that go on, taken while it is up (none of them is the character's: Space still
+	-- jumps) and handed back while the answers are up or the player is typing somewhere
 	if o.OnClick then
 		pcall(function()
 			ContextActionService:BindActionAtPriority(Dialogue.Action, function(_, state: Enum.UserInputState)

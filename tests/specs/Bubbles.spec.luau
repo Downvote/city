@@ -1,9 +1,9 @@
 --!nocheck
--- The bubbles over villagers' heads (World/BubbleLayout). The user: "improve villager bubbles above
--- their head, and make it such that you cant see the bubbles through walls. also, they sometimes
--- intersect villager speech bubbles". What hangs over one head stacks with a gap; two heads close
+-- The bubbles over villagers' heads (Util/Bubble, World/BubbleLayout). The user: "improve villager
+-- bubbles above their head ... also, they sometimes intersect villager speech bubbles". What hangs
+-- over one head stacks with a gap, by sizes worked out from what is in each piece; two heads close
 -- together keep their stacks apart, the nearer one keeping its place; and a stack that would have
--- to climb too far is hidden rather than crossing another.
+-- to climb too far is hidden rather than crossing another. No piece has a rim.
 
 local BubbleLayout = require("StarterPlayer.StarterPlayerScripts.Client.World.BubbleLayout")
 local Bubble = require("ReplicatedStorage.Shared.Util.Bubble")
@@ -133,6 +133,58 @@ describe("Bubbles", function()
 				expect(crosses(all[i], all[j])).toBe(false)
 			end
 		end
+	end)
+
+	it("draws no rim round any piece", function()
+		-- the user: "could you remove all borders in bubbles and text bubbles?"
+		local pieces = { (Bubble.speech(nil, "Hello there.")), Bubble.mood(nil, "heart"), (Bubble.square(nil, 60)) }
+		for _, g in pieces do
+			for _, d in g:GetDescendants() do
+				expect(d:IsA("UIStroke")).toBe(false)
+				expect(d.Name == "Rim").toBe(false)
+			end
+		end
+	end)
+
+	it("sizes a piece from what is in it, whatever the screen last drew", function()
+		-- the user: "it seems like bubbles like heart bubbles overlap with text sometimes when they
+		-- appear at the same time": a piece just come hasn't been laid out, and one popping in is
+		-- drawn small, so the stack goes by what is in it
+		local short = Bubble.size((Bubble.speech(nil, "Hi.")), Bubble.roughMeasure)
+		local long = Bubble.size(
+			(
+				Bubble.speech(
+					nil,
+					"Morning. Have you seen my cat anywhere? She was out all night again, and the night before."
+				)
+			),
+			Bubble.roughMeasure
+		)
+		expect(short ~= nil and long ~= nil).toBeTruthy()
+		expect(long.Y > short.Y).toBe(true) -- (two lines are taller than one)
+		expect(long.X <= Bubble.SpeechWidth + 30 + 4).toBe(true) -- (and wrap at the card's width)
+		-- a speech card can't be sized without words to measure
+		expect(Bubble.size((Bubble.speech(nil, "Hi.")), nil)).toBe(nil)
+		-- the badge and the wish bubble are the size of what they hold, popping in or not
+		local badge = Bubble.mood(nil, "heart")
+		local before = Bubble.size(badge)
+		local pop = Instance.new("UIScale")
+		pop.Name = "Pop"
+		pop.Scale = 0.55
+		pop.Parent = badge
+		expect(Bubble.size(badge)).toEqual(before)
+		expect(before.Y > 36 and before.Y < 60).toBe(true)
+		local wish = Bubble.size((Bubble.square(nil, 60)))
+		expect(wish.X >= 60 and wish.Y > 60).toBe(true)
+		-- a speech card and a heart that come together: the heart sits clear over all of the card
+		local card = Bubble.speech(nil, "Morning. Have you seen my cat anywhere? She was out all night again.")
+		local sizes = { Bubble.size(card, Bubble.roughMeasure), Bubble.size(Bubble.mood(nil, "heart")) }
+		local head = { key = "a", x = 400, y = 400, depth = 10, items = {} }
+		for _, size in sizes do
+			table.insert(head.items, { w = size.X, h = size.Y })
+		end
+		local place = BubbleLayout.arrange({ head }, { Base = Bubble.Base, Gap = Bubble.Gap })["a"]
+		expect(place.lifts[2] >= place.lifts[1] + sizes[1].Y + Bubble.Gap).toBe(true)
 	end)
 
 	it("hangs every head piece from the same point, in billboards tall enough for a stack", function()

@@ -27,13 +27,13 @@ local RISE = 1.6 -- seconds a coin takes to rise off their head and fade
 local FROM = Vector3.new(-1.3, 2.7, 0) -- where it starts, beside the head (a wish bubble is over it)
 local TO = Vector3.new(-1.3, 4.3, 0)
 
--- What floats up: the coin and "+N" side by side on a small pill of the dark glass that sits over
--- the 3D view everywhere (so a gold coin still shows on a sunny roof), in a group that fades as one.
+-- What floats up: the coin and "+N" side by side, on nothing (the user: "no need for a black
+-- background when coins appear above villagers"), the number outlined so it reads on a sunny roof,
+-- in a group that fades as one.
 function Earnings.card(n: number, parent: Instance?): CanvasGroup
 	local group = Kit.new("CanvasGroup", {
 		Name = "Coins",
-		BackgroundColor3 = T.Glass,
-		BackgroundTransparency = 0.35,
+		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		Size = UDim2.fromOffset(0, 34),
 		AutomaticSize = Enum.AutomaticSize.X,
@@ -41,8 +41,7 @@ function Earnings.card(n: number, parent: Instance?): CanvasGroup
 		Position = UDim2.fromScale(0.5, 0.5),
 		Parent = parent,
 	})
-	Kit.corner(group, "pill")
-	Kit.pad(group, 8, 0)
+	Kit.pad(group, 4, 0)
 	local row = Kit.list(group, 4, true, Enum.HorizontalAlignment.Center)
 	row.VerticalAlignment = Enum.VerticalAlignment.Center
 	Icons.make("coin", 24, { Name = "Coin", Parent = group, LayoutOrder = 1 })

@@ -243,17 +243,23 @@ run("a press a line, by key, tap and click", function()
 	check(action ~= nil, "the scene holds the keys while it is up")
 	local keys = action and action.keys or {}
 	check(
-		table.find(keys, Enum.KeyCode.Space) ~= nil
-			and table.find(keys, Enum.KeyCode.Return) ~= nil
-			and table.find(keys, Enum.KeyCode.ButtonA) ~= nil,
-		"Space, Enter and a gamepad's A"
+		table.find(keys, Enum.KeyCode.Return) ~= nil
+			and table.find(keys, Enum.KeyCode.E) ~= nil
+			and table.find(keys, Enum.KeyCode.ButtonX) ~= nil,
+		"Enter, E and a gamepad's X"
 	)
-	check(action and action.priority == Enum.ContextActionPriority.High.Value, "over the character's own (no jump)")
-	check(key(Enum.KeyCode.Space) == Enum.ContextActionResult.Sink, "Space is taken")
+	-- the user: "make it such that the player can jump while in conversation, a bug prevents you
+	-- from doing it"
+	check(
+		table.find(keys, Enum.KeyCode.Space) == nil and table.find(keys, Enum.KeyCode.ButtonA) == nil,
+		"never Space or a gamepad's A: the character keeps them to jump"
+	)
+	check(action and action.priority == Enum.ContextActionPriority.High.Value, "over anything else on those keys")
+	check(key(Enum.KeyCode.E) == Enum.ContextActionResult.Sink, "E is taken")
 	check(said() == LINES[2].text, "and goes on to the next line")
 	check(find("Bust_b") ~= nil, "bringing in who says it")
 	check(not typed(), "which is typed out")
-	key(Enum.KeyCode.Space)
+	key(Enum.KeyCode.Return)
 	check(typed() and said() == LINES[2].text, "a press while it is typed shows the rest of it")
 	check(arrow(), "and the arrow comes up")
 	key(Enum.KeyCode.Return)
@@ -269,7 +275,7 @@ run("a press a line, by key, tap and click", function()
 	check(not arrow(), "and no arrow over them")
 	check(told("p1", "asked"), "the server is told the question is on screen")
 	check(bar() ~= nil and bar() > 0.99, "and the time to answer starts from full")
-	check(key(Enum.KeyCode.Space) == Enum.ContextActionResult.Pass, "the keys are handed back over the answers")
+	check(key(Enum.KeyCode.Return) == Enum.ContextActionResult.Pass, "the keys are handed back over the answers")
 	check(said() == "What do you do?", "and do nothing to them")
 	-- the server tells how long is left; the bar follows it
 	Sim.remoteEvent("EventLine"):FireClient(Sim.player, { token = "p1", left = 30 })
@@ -305,6 +311,57 @@ run("a press a line, by key, tap and click", function()
 	check(Sim.State.data.talking == false, "and the main screen comes back")
 	advance(2)
 	check(prompt() == nil, "and the prompt doesn't come back for it")
+	check(#errors == warned, "no warnings from any of it")
+end)
+
+run("every press counts at once", function()
+	-- the user: "sometimes, clicking on dialogue dosent advance it, lagging behind instead"
+	local warned = #errors
+	local said3 = {
+		{ who = "a", text = "I have been thinking about the fountain all morning, and I want it painted blue." },
+		{ who = "b", text = "Blue is fine by me." },
+		{ who = "c", text = "Blue it is, then." },
+	}
+	local ev = quarrel("p8", false)
+	ev.lines = said3
+	show(ev)
+	line("p8", said3[1])
+	line("p8", said3[2])
+	press("Watch")
+	frames(1)
+	-- typed a couple of letters a frame: the moment the last one shows, the line is all there, so no
+	-- press is ever spent finishing a line that already looks whole
+	local label = find("Line")
+	local count = utf8.len(said3[1].text)
+	local looksWhole = false
+	for _ = 1, 300 do
+		local n = label.MaxVisibleGraphemes
+		if n == -1 then
+			break
+		end
+		if n >= count then
+			looksWhole = true
+		end
+		frames(1)
+	end
+	check(not looksWhole, "a line never shows whole while a press would only finish it")
+	check(typed() and arrow(), "typed out by itself, with the arrow up")
+	click()
+	check(said() == said3[2].text, "the first click after it goes straight on")
+	check(not typed(), "the next line is being typed")
+	click()
+	check(typed() and said() == said3[2].text, "a click while it types shows all of it")
+	check(arrow(), "with the arrow")
+	click()
+	check(said() == said3[2].text and not arrow(), "caught up with the villagers, a click waits for the next line")
+	check(told("p8", "next"), "and asks the server for it now")
+	line("p8", said3[3], true)
+	check(said() == said3[3].text, "which shows the moment it comes")
+	settle()
+	click()
+	check(scene() == nil, "a click on the last line closes the scene")
+	finish("p8", {})
+	advance(2)
 	check(#errors == warned, "no warnings from any of it")
 end)
 

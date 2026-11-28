@@ -104,25 +104,10 @@ local function apart(model: Model?): boolean
 	return false
 end
 
--- Types what they said into the box, a couple of letters at a time.
-local typing = 0
-local function typeOut(label: TextLabel, text: string)
-	typing += 1
-	local mine = typing
-	label.Text = text
-	label.MaxVisibleGraphemes = 0
-	task.spawn(function()
-		local count = utf8.len(text) or #text
-		local shown = 0
-		while shown < count and typing == mine and label.Parent and label.MaxVisibleGraphemes ~= -1 do
-			shown = math.min(count, shown + 2)
-			label.MaxVisibleGraphemes = shown
-			task.wait(0.03)
-		end
-		if typing == mine then
-			label.MaxVisibleGraphemes = -1
-		end
-	end)
+-- Types what they said into the box, a couple of letters at a time (UI/Dialogue's scene.type: a
+-- click on the box shows the rest at once).
+local function typeOut(s: any, text: string)
+	s.type(text)
 end
 
 -- Puts what they said on the card.
@@ -131,7 +116,7 @@ local function say(msg: any)
 	if not s then
 		return
 	end
-	typeOut(s.words, msg.text)
+	typeOut(s, msg.text)
 	s.note.Text = if type(msg.note) == "string" then msg.note else ""
 	current.at = os.clock()
 	if typeof(msg.model) == "Instance" and msg.model:IsA("Model") then
@@ -220,7 +205,7 @@ local function craving(s: any, vid: string, v: any)
 			if sent and ok then
 				button:Destroy()
 				typeOut(
-					s.words,
+					s,
 					Text.fill("Oh, {food}, that's just what I wanted! Thank you.", {
 						food = Foods.phrase(food),
 					})

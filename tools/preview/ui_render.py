@@ -206,11 +206,21 @@ def measure(node, pw, ph):
         return w, h
     pl, pt, pr, pb = padding(node, w, h)
     cw, ch = content_size(node, max(0, w - pl - pr), max(0, h - pt - pb), ax, ay)
+    # a UISizeConstraint's MaxSize caps a box that sizes itself across, and words wrap at it
+    cap = mods(node).get("UISizeConstraint")
+    maxw = (P(cap, "MaxSize", None) or [None])[0] if cap else None
+    if maxw is not None and maxw >= 1e6:
+        maxw = None
     if node["class"] in TEXT_CLASSES:
-        tw, th = text_metrics(node, 0 if ax else max(0, w - pl - pr))
+        if ax and maxw is not None:
+            tw, th = text_metrics(node, max(0, maxw - pl - pr))
+        else:
+            tw, th = text_metrics(node, 0 if ax else max(0, w - pl - pr))
         cw, ch = max(cw, tw), max(ch, th)
     if ax:
         w = max(w, cw + pl + pr)
+        if maxw is not None:
+            w = min(w, maxw)
     if ay:
         h = max(h, ch + pt + pb)
     node["_size"] = (w, h)

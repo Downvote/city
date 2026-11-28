@@ -4,8 +4,10 @@
 -- wherever they are placed, and a go does something small that now and then turns out another
 -- way: a tune or a mess at the piano, a note from one of the villagers in the fridge. The server
 -- decides it all (Sim/Uses picks the outcome; where the player stands and how often they ask are
--- checked here), every client near shows it (client World/Interact: a line over the piece and a
--- puff), and the villagers near react to the loud ones. Nothing is bought, paid or saved.
+-- checked here), every client near shows it (client World/Interact: a puff from the piece and what
+-- happened in a bubble over the player's own head: the user, "for text bubbles that appear when you
+-- interact with objects like the fridge, make the bubbles appear on top of you instead"), and the
+-- villagers near react to the loud ones. Nothing is bought, paid or saved.
 -- The prompts open no panel, so they carry no `Opens` attribute.
 
 local Players = game:GetService("Players")
@@ -78,7 +80,7 @@ local function go(who: Player, i: number, model: Model, id: string, spot: Attach
 	end
 	lastOutcome[who] = o
 	local text = Uses.say(o, { who = if #names > 0 then rng:pick(names) else "" }, rng)
-	Use.show(at, o.puff, text, o.rarity)
+	Use.show(at, o.puff, text, o.rarity, who)
 	if o.near and owner then
 		Villagers.reactNear(owner, at, o.near, {})
 	end
